@@ -93,10 +93,11 @@ write_macos_env_file() {
 }
 
 main() {
-    case ${1:-} in
+    local option=${1:-}
+    case $option in
         '') ;;
         -h | --help) print_usage "${BASH_SOURCE[0]}"; return ;;
-        *) fail "unknown option '$1'; expected --help" ;;
+        *) fail "unknown option '$option'; expected --help" ;;
     esac
     ensure_command_line_tools
     ensure_homebrew

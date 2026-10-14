@@ -12,14 +12,23 @@ readonly MARTENSITE_DATA="${XDG_DATA_HOME:-$HOME/.local/share}/martensite"
 readonly SHIM_DIR="$MARTENSITE_DATA/pkgconfig"
 readonly ENV_FILE="$MARTENSITE_DATA/env.sh"
 
-log() { printf '==> %s\n' "$*"; }
-fail() { printf 'error: %s\n' "$*" >&2; exit 1; }
+log() {
+    printf '==> %s\n' "$*"
+    return 0
+}
+fail() {
+    printf 'error: %s\n' "$*" >&2
+    exit 1
+}
 
 # --- Rust -------------------------------------------------------------------
 
 # Reads `key = "value"` or `key = ["a", "b"]` from rust-toolchain.toml.
 toolchain_setting() {
-    sed -n "s/^$1 *= *//p" "$REPO_ROOT/rust-toolchain.toml" | tr -d '"[] '
+    local key=$1 file="$REPO_ROOT/rust-toolchain.toml"
+    [[ -f $file ]] || fail "missing $file; expected the pinned toolchain file"
+    sed -n "s/^$key *= *//p" "$file" | tr -d '"[] '
+    return 0
 }
 
 # Installs the pinned toolchain by name, so this works with rustup releases
@@ -32,6 +41,7 @@ install_pinned_toolchain() {
     log "Installing Rust $channel with $components and llvm-tools-preview"
     # llvm-tools-preview is what cargo-llvm-cov needs for the coverage gate.
     rustup toolchain install "$channel" --profile minimal --component "$components,llvm-tools-preview"
+    return 0
 }
 
 # --- Tcl/Tk pkg-config names -------------------------------------------------
@@ -42,13 +52,17 @@ install_pinned_toolchain() {
 has_pkg_config_module() {
     # Capture first: under pipefail, `grep -q` exiting early would SIGPIPE the
     # producer and fail the check; one unreadable .pc must not hide the rest.
-    local modules
+    local module=$1 modules
     modules="$(pkg-config --list-all 2>/dev/null || true)"
-    awk '{ print $1 }' <<<"$modules" | grep -x "$1" >/dev/null
+    if awk '{ print $1 }' <<<"$modules" | grep -x "$module" >/dev/null; then
+        return 0
+    fi
+    return 1
 }
 
 tcl_pkg_config() {
     PKG_CONFIG_PATH="${TCL_SOURCE_PKG_CONFIG_PATH:-}" pkg-config "$@"
+    return $?
 }
 
 # The kernel asks pkg-config for `tcl8.6` and `tk8.6`. Only Debian and Ubuntu
@@ -77,6 +91,7 @@ write_module_shim() {
     printf 'Name: %s\nDescription: Martensite alias for %s, written by %s\nVersion: %s\nLibs: %s\nCflags: %s\n' \
         "$name" "$source" "$INSTALLER_NAME" "$version" \
         "$(tcl_pkg_config --libs "$source")" "$(tcl_pkg_config --cflags "$source")" >"$SHIM_DIR/$name.pc"
+    return 0
 }
 
 # --- Environment and verification -------------------------------------------
@@ -94,6 +109,7 @@ write_env_file() {
     } >"$ENV_FILE"
     # shellcheck source=/dev/null
     source "$ENV_FILE"
+    return 0
 }
 
 # Fails naming every command and pkg-config module that is still missing.
@@ -109,9 +125,12 @@ verify_installation() {
     log "Vulkan devices:"
     vulkaninfo --summary 2>/dev/null | grep -E 'deviceName|driverName' ||
         fail "vulkaninfo found no Vulkan device; expected at least one driver"
+    return 0
 }
 
 # Prints the comment block at the top of the calling script.
 print_usage() {
-    sed -n '2,/^set -euo/p' "$1" | sed -e '$d' -e 's/^# \{0,1\}//'
+    local script=$1
+    sed -n '2,/^set -euo/p' "$script" | sed -e '$d' -e 's/^# \{0,1\}//'
+    return 0
 }

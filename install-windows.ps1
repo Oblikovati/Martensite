@@ -43,7 +43,7 @@ $PinnedSources = @(
     @{ Name = 'freetype'; Repository = 'https://github.com/freetype/freetype.git'; Commit = '0a0221a1347e2f1e07c395263540026e9a0aa7c7'; Version = '2.14.3' }
 )
 
-function Write-Step([string]$Message) { Write-Host "==> $Message" }
+function Show-Step([string]$Message) { Write-Host "==> $Message" }
 
 # Runs a native command and throws, naming it, when it exits non-zero.
 function Invoke-Native([string]$Program, [string[]]$Arguments, [int[]]$AllowedExitCodes = @(0)) {
@@ -87,11 +87,11 @@ function Test-WingetPackage([string]$Id) {
 function Sync-WingetPackage([string]$Id, [string[]]$InstallArguments = @()) {
     $common = @('--id', $Id, '--exact', '--silent', '--accept-package-agreements', '--accept-source-agreements', '--disable-interactivity')
     if (Test-WingetPackage $Id) {
-        Write-Step "Upgrading $Id"
+        Show-Step "Upgrading $Id"
         Invoke-Native 'winget' (@('upgrade') + $common) @(0, $WingetNoApplicableUpdate)
         return
     }
-    Write-Step "Installing $Id"
+    Show-Step "Installing $Id"
     Invoke-Native 'winget' (@('install') + $common + $InstallArguments)
 }
 
@@ -128,7 +128,7 @@ function Find-VisualCpp([hashtable]$Architecture) {
 function Sync-VisualCpp([hashtable]$Architecture) {
     $override = "--wait --quiet --norestart --add Microsoft.VisualStudio.Workload.VCTools --add $($Architecture.Component) --includeRecommended"
     if ((Find-VisualCpp $Architecture) -and -not (Test-WingetPackage 'Microsoft.VisualStudio.BuildTools')) {
-        Write-Step 'Visual Studio with C++ tools found (update it with the Visual Studio Installer)'
+        Show-Step 'Visual Studio with C++ tools found (update it with the Visual Studio Installer)'
         return
     }
     Sync-WingetPackage 'Microsoft.VisualStudio.BuildTools' @('--override', $override)
@@ -147,7 +147,7 @@ function Invoke-DeveloperCommand([hashtable]$Architecture, [string]$CommandLine)
 
 function Sync-Rustup {
     if (Test-Command 'rustup') {
-        Write-Step 'rustup found; updating it'
+        Show-Step 'rustup found; updating it'
         Invoke-Native 'rustup' @('self', 'update')
         return
     }
@@ -165,7 +165,7 @@ function Get-ToolchainSetting([string]$Key) {
 function Install-PinnedToolchain {
     $channel = Get-ToolchainSetting 'channel'
     $components = Get-ToolchainSetting 'components'
-    Write-Step "Installing Rust $channel with $components and llvm-tools-preview"
+    Show-Step "Installing Rust $channel with $components and llvm-tools-preview"
     # llvm-tools-preview is what cargo-llvm-cov needs for the coverage gate.
     Invoke-Native 'rustup' @('toolchain', 'install', $channel, '--profile', 'minimal', '--component', "$components,llvm-tools-preview")
 }
@@ -174,7 +174,7 @@ function Sync-CargoToolList {
     $installed = (& cargo install --list) -join "`n"
     foreach ($tool in $CargoTools) {
         $action = if ($installed -match "(?m)^$tool v") { 'Updating' } else { 'Installing' }
-        Write-Step "$action $tool"
+        Show-Step "$action $tool"
         # `cargo install` rebuilds only when crates.io has a newer version.
         Push-Location $RepoRoot
         try { Invoke-Native 'cargo' @('install', '--locked', $tool) } finally { Pop-Location }
@@ -207,10 +207,10 @@ function Set-BuiltSource([hashtable]$Source) {
 function Build-TclTk([hashtable]$Architecture, [string]$Prefix) {
     $tcl, $tk = $PinnedSources[0], $PinnedSources[1]
     if ((Test-BuiltSource $tcl) -and (Test-BuiltSource $tk)) {
-        Write-Step "Tcl/Tk $($tcl.Version) is current"
+        Show-Step "Tcl/Tk $($tcl.Version) is current"
         return
     }
-    Write-Step "Building Tcl/Tk $($tcl.Version) with MSVC"
+    Show-Step "Building Tcl/Tk $($tcl.Version) with MSVC"
     $tclSource = Get-PinnedSource $tcl
     $tkSource = Get-PinnedSource $tk
     foreach ($source in @($tclSource, $tkSource)) {
@@ -241,10 +241,10 @@ function Write-TclPkgConfig([string]$Prefix, [string]$Version) {
 function Build-FreeType([hashtable]$Architecture, [string]$Prefix) {
     $freetype = $PinnedSources[2]
     if (Test-BuiltSource $freetype) {
-        Write-Step "FreeType $($freetype.Version) is current"
+        Show-Step "FreeType $($freetype.Version) is current"
         return
     }
-    Write-Step "Building FreeType $($freetype.Version) with MSVC"
+    Show-Step "Building FreeType $($freetype.Version) with MSVC"
     $source = Get-PinnedSource $freetype
     $build = Join-Path $DepsRoot 'build\freetype'
     $options = '-DBUILD_SHARED_LIBS=ON -DFT_DISABLE_ZLIB=ON -DFT_DISABLE_BZIP2=ON -DFT_DISABLE_PNG=ON -DFT_DISABLE_HARFBUZZ=ON -DFT_DISABLE_BROTLI=ON'
@@ -288,7 +288,7 @@ function Assert-Installation {
 
 function Show-VulkanDeviceList {
     $ErrorActionPreference = 'Continue'
-    Write-Step 'Vulkan devices:'
+    Show-Step 'Vulkan devices:'
     $devices = & vulkaninfo --summary 2> $null | Select-String 'deviceName|driverName'
     if (-not $devices) { throw 'vulkaninfo found no Vulkan device; expected a GPU driver with Vulkan support' }
     $devices | ForEach-Object { Write-Host $_.Line }
@@ -309,7 +309,7 @@ function Main {
     Build-FreeType $architecture $freetypePrefix
     Set-MartensiteEnvironment $tclPrefix $freetypePrefix
     Assert-Installation
-    Write-Step 'Done. Open a new terminal to use the updated environment.'
+    Show-Step 'Done. Open a new terminal to use the updated environment.'
 }
 
 Main
