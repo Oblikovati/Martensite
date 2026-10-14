@@ -93,15 +93,18 @@ is_installed() {
         apt-get) dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -q 'ok installed' ;;
         dnf | zypper) rpm -q "$package" >/dev/null 2>&1 ;;
         pacman) pacman -Q "$package" >/dev/null 2>&1 ;;
+        *) fail "unsupported package manager '$manager'; expected apt-get, dnf, pacman or zypper" ;;
     esac
 }
 
 refresh_package_index() {
-    case $1 in
+    local manager=$1
+    case $manager in
         apt-get) as_root apt-get update ;;
         dnf) as_root dnf -y makecache ;;
         zypper) as_root zypper --non-interactive refresh ;;
         pacman) ;; # `pacman -Syu` below refreshes and upgrades in one step.
+        *) fail "unsupported package manager '$manager'; expected apt-get, dnf, pacman or zypper" ;;
     esac
 }
 
@@ -112,6 +115,7 @@ install_packages() {
         apt-get) as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y "$@" ;;
         dnf) as_root dnf install -y "$@" ;;
         zypper) as_root zypper --non-interactive install "$@" ;;
+        *) fail "unsupported package manager '$manager'; expected apt-get, dnf, pacman or zypper" ;;
     esac
 }
 
@@ -122,6 +126,7 @@ update_packages() {
         apt-get) as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade "$@" ;;
         dnf) as_root dnf upgrade -y "$@" ;;
         zypper) as_root zypper --non-interactive update "$@" ;;
+        *) fail "unsupported package manager '$manager'; expected apt-get, dnf, pacman or zypper" ;;
     esac
 }
 
@@ -175,12 +180,12 @@ sync_cargo_tools() {
 }
 
 main() {
-    local cargo_tools=true manager
-    case ${1:-} in
+    local option=${1:-} cargo_tools=true manager
+    case $option in
         '') ;;
         --no-cargo-tools) cargo_tools=false ;;
         -h | --help) print_usage "${BASH_SOURCE[0]}"; return ;;
-        *) fail "unknown option '$1'; expected --no-cargo-tools or --help" ;;
+        *) fail "unknown option '$option'; expected --no-cargo-tools or --help" ;;
     esac
     manager="$(detect_package_manager)"
     log "Using $manager"
