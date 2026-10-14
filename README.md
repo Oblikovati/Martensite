@@ -41,4 +41,4 @@ CI has one workflow, `.github/workflows/martensite.yml`, and all its checks are
 the release process.
 
 The project is licensed GPL-2.0-only (`LICENSE`). Source files carry no per-file
-copyright or license header; do not copy OCCT headers into translated files.
+copyright or license header.

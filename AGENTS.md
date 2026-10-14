@@ -117,6 +117,7 @@ crates/
 ├── martensite-math/      Math Toolkit.
 └── martensite-*/         Other Toolkits
 
+tests/                      Integration / E2E tests which transverse multiple crates.
 docs/architecture           All architectural documentation.
 docs/architecture/decisions ADR's.
 docs/features               Supporting documentation for each feature being developed.
@@ -194,7 +195,8 @@ prior-art bug (see `docs/ARCHITECTURE.md` and `gh bug typed issue`):
   global gitconfig, so the breakage only ever shows up on a developer's box.
 - Tests must be F.I.R.S.T: fast, independent, repeatable,
   self-validating, timely.
-
+- Each crate gets its own tests project under crates/martensite-{*}/tests
+- Integration / E2E tests are placed in tests
 
 ## Formatting
 
