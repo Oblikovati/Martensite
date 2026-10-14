@@ -52,7 +52,11 @@ ensure_homebrew() {
         fi
     done
     log "Installing Homebrew"
-    NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    # HTTPS-only even across redirects (#69); the assignment lets `set -e`
+    # stop on a failed download instead of running an empty script.
+    local installer
+    installer="$(curl --proto '=https' --tlsv1.2 -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    NONINTERACTIVE=1 /bin/bash -c "$installer"
     eval "$(/opt/homebrew/bin/brew shellenv 2>/dev/null || /usr/local/bin/brew shellenv)"
 }
 
