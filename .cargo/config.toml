@@ -1,0 +1,3 @@
+[alias]
+# One entry point for CI and local runs: `cargo xtask pr`, `cargo xtask release`.
+xtask = "run --quiet --locked --package martensite-build --"

@@ -39,20 +39,27 @@ canonicalize accidental aliases without changing published commits.
 
 ## Required gates before push/merge
 
-All of these must pass; CI enforces them and so does `bin/release`. The build
-is self-contained, so none of them needs an environment variable.
+CI runs one workflow, `.github/workflows/martensite.yml`. It only installs the
+toolchain; every check is the `scripts/build` driver, so you can run the same
+gates locally before you push:
 
 ```bash
-cargo fmt --all -- --check
-git diff --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test                            # every test (alias: cargo nextest run -P full)
-cargo deny check                    # dependency policy
+cargo xtask pr                        # what CI runs on a pull request
+cargo xtask release --version 0.3.0   # release rehearsal for the host target
 ```
 
-```bash
-cargo install cargo-deny cargo-audit
-```
+`cargo xtask pr` diffs your branch, including uncommitted and untracked work,
+against `origin/main` (`--base` changes this). It checks whitespace and
+`rustfmt` on the changed files, then runs clippy (`-D warnings`), a build and
+the tests for the changed packages and every package that depends on them. A
+change to `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `rustfmt.toml`,
+`clippy.toml` or `.cargo/` checks the whole workspace.
+
+`cargo deny check` (dependency policy) is not part of the driver yet; run it
+by hand until the workspace has a `deny.toml`.
+
+See [`docs/features/ci-build-driver/`](docs/features/ci-build-driver/README.md)
+for the release pipeline and the CI trigger rules.
 
 ### The everyday loop
 
