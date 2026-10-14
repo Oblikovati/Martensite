@@ -2,15 +2,36 @@
 
 ## Dev setup
 
+Clone the repository, then run the installer for your OS from the repository
+root. Each installer is safe to run again: it installs what is missing and
+updates what is already installed.
+
 ```bash
-gh repo clone Oblikovati/Martensite
+git clone https://github.com/Oblikovati/Martensite.git
 cd Martensite
+./install-linux.sh        # apt, dnf, pacman or zypper
+./install-macos.sh        # Homebrew
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install-windows.ps1   # winget
+```
+
+The installers set up the C toolchain, Tcl/Tk 8.6, FreeType, fontconfig, the
+Vulkan loader and tools (with Mesa lavapipe on Linux and MoltenVK on macOS),
+rustup with the toolchain pinned in `rust-toolchain.toml`, and the cargo tools
+the gates use. `--no-cargo-tools` (Linux) and `-NoCargoTools` (Windows) skip
+the cargo tools, which take several minutes to compile. On Linux and macOS,
+load the environment the installer writes before you build:
+
+```bash
+source ~/.local/share/martensite/env.sh
 cargo build
 cargo test
 ```
 
-Rust 1.98.1 is required (pinned in `Cargo.toml`). The build is
-self-contained:. No system libraries need installing beyond a standard C toolchain.
+See [`docs/features/dev-environment-installers/`](docs/features/dev-environment-installers/README.md)
+for what each installer does on each platform.
 
 ## Commit attribution
 
