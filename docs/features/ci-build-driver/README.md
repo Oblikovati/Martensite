@@ -7,6 +7,10 @@ jobs. Every decision and every check is in the Rust program in
 `scripts/build` (package `martensite-build`). The `cargo xtask` alias in
 `.cargo/config.toml` runs it.
 
+Before you run the driver locally, install the development dependencies with
+`install-linux.sh`, `install-macos.sh` or `install-windows.ps1` (see
+[dev-environment-installers](../dev-environment-installers/README.md)).
+
 This gives two properties:
 
 - A contributor runs the same pipeline as CI, with the same command.
@@ -100,6 +104,10 @@ versions are marked as pre-releases.
 
 ## Known limits
 
+- The workflow installs only the Rust toolchain. The kernel crates also need
+  Tcl/Tk, FreeType, fontconfig and Vulkan. When the first kernel crate lands,
+  the workflow's setup step must run the matching installer
+  (`install-linux.sh --no-cargo-tools` and so on) on each runner.
 - `cargo deny` and `cargo audit` are not in the driver yet.
 - No build cache in CI. Adding one (for example, `actions/cache` keyed on
   `Cargo.lock` and the target) is a change to the workflow only.

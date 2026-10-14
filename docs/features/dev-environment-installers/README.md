@@ -77,6 +77,19 @@ records the commit of each build, and the installer rebuilds a library only
 when its pinned commit changes. FreeType is built without zlib, bzip2, PNG,
 HarfBuzz and Brotli, as in the kernel CI.
 
+## After installation
+
+Load the environment (Linux and macOS), then check the setup with the same
+gate that CI runs:
+
+```bash
+source ~/.local/share/martensite/env.sh
+cargo xtask pr
+```
+
+See [ci-build-driver](../ci-build-driver/README.md) for the `cargo xtask`
+commands.
+
 ## Verification
 
 At the end, each installer checks that the required commands and pkg-config

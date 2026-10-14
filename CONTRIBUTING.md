@@ -1,4 +1,4 @@
-# Contributing to ai-memory
+# Contributing to Martensite
 
 ## Dev setup
 
@@ -76,8 +76,9 @@ the tests for the changed packages and every package that depends on them. A
 change to `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `rustfmt.toml`,
 `clippy.toml` or `.cargo/` checks the whole workspace.
 
-`cargo deny check` (dependency policy) is not part of the driver yet; run it
-by hand until the workspace has a `deny.toml`.
+`cargo deny check` (dependency policy) and `cargo audit` (known
+vulnerabilities) are not part of the driver yet. The installers install both
+tools; run them by hand when you add or update a dependency.
 
 See [`docs/features/ci-build-driver/`](docs/features/ci-build-driver/README.md)
 for the release pipeline and the CI trigger rules.
@@ -85,7 +86,10 @@ for the release pipeline and the CI trigger rules.
 ### The everyday loop
 
 ```bash
-cargo test
+cargo build
+cargo test                 # every test, including doc tests
+cargo test -p <package>    # one package
+cargo xtask pr             # the full PR gate, before you push
 ```
 
 Every **user-facing** change must add a `CHANGELOG.md` entry under
@@ -96,15 +100,41 @@ observable bug fix. Internal refactors, dead-code removal, and test-only
 churn are exempt.
 
 This has been the most often forgotten obligation across review batches,
-so reviewers treat a missing entry as **blocking**, and the PR template has a
-checkbox for it. Follow the existing entry style (past-tense summary,
+so reviewers treat a missing entry as **blocking**. Follow the existing entry style (past-tense summary,
 trailing `([#NNN])` PR/issue reference) and place it under the right
 `### Added` / `### Changed` / `### Fixed` heading.
 
-`CHANGELOG.md` holds the current major line only. Older lines are archived per
-major version in [`docs/changelog/`](docs/changelog/); `bin/release` moves the
-previous major there when it cuts an X.0.0. Released sections are frozen in
-both places, and CI rejects an edit to any of them.
+The headings matter for releases: `cargo xtask release` reads the
+`## [X.Y.Z]` section and refuses a version bump smaller than its headings
+require (see [Releasing](#releasing)). Released sections are frozen; do not
+edit them.
+
+## Releasing
+
+Releases need explicit maintainer approval for the version number and the tag.
+
+1. Set the new version on every kernel crate, and rename `## [Unreleased]` in
+   `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD` with a new empty
+   `## [Unreleased]` above it.
+2. Rehearse the release locally for your host target:
+
+   ```bash
+   cargo xtask release --version X.Y.Z
+   ```
+
+   This checks the semver rules, runs fmt, clippy and the full test suite,
+   builds in release mode, and writes the packages to `target/dist/vX.Y.Z/`.
+   It never publishes.
+3. Run the full matrix on the release-candidate commit: start the `Martensite`
+   workflow manually (Actions tab, or `gh workflow run martensite.yml -f
+   mode=release -f version=X.Y.Z --ref <branch>`) and wait until all targets
+   are green. A manual run never publishes.
+4. Push the tag `vX.Y.Z` on that commit. The workflow runs the release on
+   every target again, then creates the GitHub release with the packages and
+   the changelog section as notes.
+
+[`docs/features/ci-build-driver/`](docs/features/ci-build-driver/README.md)
+describes the semver rules, the targets and the packages.
 
 ## Workflow rules (condensed from AGENTS.md)
 
