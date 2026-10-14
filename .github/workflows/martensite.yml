@@ -1,0 +1,98 @@
+# The only CI workflow. It installs host tooling and nothing else: every
+# check, build, test and packaging step is `cargo xtask` (scripts/build), so a
+# contributor runs exactly what CI runs. `cargo xtask ci plan` reads the
+# trigger and chooses the pipeline and the target matrix:
+#   pull_request        -> PR validation of changed files/packages, primary target
+#   push of a v* tag    -> release on every target, then publish the GitHub release
+#   workflow_dispatch   -> `pr` or a release rehearsal on every target (never publishes)
+name: Martensite
+
+on:
+  pull_request:
+  push:
+    tags: ['v[0-9]*']
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "pr: validate this branch against main. release: rehearse a release on every target without publishing."
+        type: choice
+        options: [pr, release]
+        default: release
+        required: true
+      version:
+        description: "Version to rehearse in release mode, e.g. 0.3.0"
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: martensite-${{ github.ref }}
+  # A newer PR push supersedes the older run; releases always finish.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: '0'
+  # Dispatch inputs reach the driver as data, never interpolated into a script.
+  MARTENSITE_CI_MODE: ${{ inputs.mode }}
+  MARTENSITE_CI_VERSION: ${{ inputs.version }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      mode: ${{ steps.plan.outputs.mode }}
+      version: ${{ steps.plan.outputs.version }}
+      publish: ${{ steps.plan.outputs.publish }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the toolchain pinned by rust-toolchain.toml
+        run: rustup toolchain install
+      - id: plan
+        run: cargo xtask ci plan
+
+  verify:
+    needs: plan
+    name: ${{ needs.plan.outputs.mode }} (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # PR validation needs the merge base; release checks need the tags.
+          fetch-depth: 0
+      - name: Install the toolchain pinned by rust-toolchain.toml
+        run: rustup toolchain install
+      - run: cargo xtask ci run --target ${{ matrix.target }}
+      - if: needs.plan.outputs.mode == 'release'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dist-${{ matrix.target }}
+          path: target/dist/v${{ needs.plan.outputs.version }}/
+          # A library-only target ships no archive; the primary target always
+          # ships the source crates, so publish still sees every asset.
+          if-no-files-found: ignore
+
+  publish:
+    needs: [plan, verify]
+    if: needs.plan.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the toolchain pinned by rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: dist-*
+          path: dist
+          merge-multiple: true
+      - run: cargo xtask ci publish --dist dist
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -121,7 +121,12 @@ docs/architecture           All architectural documentation.
 docs/architecture/decisions ADR's.
 docs/features               Supporting documentation for each feature being developed.
 experiments/                Throw away experiments to evaluate solutions for bugs and new features.
-
+scripts/build               Rust program that is responsible to build, test, lint, package Martensite.
+scripts/install             Shared steps of the Unix installers.
+install-linux.sh            Installs or updates the development dependencies (apt, dnf, pacman, zypper).
+install-macos.sh            Installs or updates the development dependencies (Homebrew).
+install-windows.ps1         Installs or updates the development dependencies (winget).
+.github/workflows/martensite.yml  The only CI workflow; it calls `cargo xtask` for every check.
 ```
 - Each crate has a single responsibility and exposes a typed API; no
 circular dependencies. Inter-crate boundaries enforce the invariants
@@ -169,7 +174,11 @@ prior-art bug (see `docs/ARCHITECTURE.md` and `gh bug typed issue`):
 
 ## Testing instructions
 
-- Tests run with a single command: `eg: cargo test`.
+- Tests run with a single command: `cargo test`. `cargo xtask pr` runs the
+  PR gate (lint of changed files, then clippy, build and tests of the affected
+  packages) exactly as CI runs it; run it before every push.
+- Set up or update the toolchain and native dependencies with the installer
+  for your OS (`install-linux.sh`, `install-macos.sh`, `install-windows.ps1`).
 - Every new function gets a test. Bug fixes get a regression test.
 - Mock external I/O (API, DB, filesystem) with named fake classes,
   not inline stubs.
@@ -300,8 +309,8 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
 
 ## Security considerations
 
-- **Never commit secrets.** gitleaks runs in CI with `.gitleaks.toml`;
-  keep real tokens out of docs, fixtures, and tests.
+- **Never commit secrets.** Keep real tokens out of docs, fixtures, and
+  tests. No secret scanner runs in CI yet.
 - **Sanitization is the trust boundary:** all untrusted hook payload text
   passes through the `ai-memory-hooks` sanitizer before storage; do not
   create paths that bypass it (or hook backpressure, or the single-writer
@@ -310,10 +319,11 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
   `.ai-memory.toml` marker) drop recognized file-tool events before they
   reach spool, transport, logs, or storage — preserve this behavior in
   native hook commands and generated integrations.
-- **Dependency policy:** `cargo deny --all-features check` and
-  `cargo audit` run in CI; do not add dependencies without checking the
-  project doesn't already have the capability, and match existing
-  versions/idioms.
+- **Dependency policy:** run `cargo deny --all-features check` and
+  `cargo audit` (both installed by the installers) when you add or update a
+  dependency; they are not CI gates yet. Do not add dependencies without
+  checking the project doesn't already have the capability, and match
+  existing versions/idioms.
 - **Destructive operations** (`purge-project`, `reset`, `restore`) must
   keep their confirmation flags and live-process checks.
 
@@ -327,10 +337,9 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
   past-tense, trailing `(#NNN)` reference) and update the relevant
   README/docs references in the same commit. Internal refactors and
   test-only churn are exempt.
-  `CHANGELOG.md` holds the current major line; when a new major ships,
-  `bin/release` moves the previous major's sections and compare links to
-  `docs/changelog/<major>.x.md` (`scripts/changelog_sections.py archive`).
-  Archived sections stay frozen, and the frozen check reads both places.
+  `cargo xtask release` reads the release's `## [X.Y.Z]` section and refuses
+  a version bump smaller than its headings require, so file each entry under
+  the heading that matches its semver impact. Released sections are frozen.
 - **Run the humanizer on new or heavily edited prose.** New documentation,
   and any large rewrite of existing text (a new doc section, a rewritten guide,
   a long CHANGELOG entry, an RFC or design note), goes through the `humanizer`
@@ -339,25 +348,24 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
   every fact. Prose only — code blocks, commands, paths, link targets and
   headings (anchors) stay unchanged, and a rewrite that adds or drops a fact is
   a defect. Released CHANGELOG sections are frozen and are not rewritten.
-- **CI pacing: fast per merge, full matrix before release.** Every
-  implementation merge gates on the fast Linux jobs. The full macOS/Windows
-  legs run on a `full-ci` PR label, nightly (windows), or manual dispatch.
-  `ci.yml` does not run on pushes to `release/*`: after pushing there
-  directly, dispatch `ci` (and `windows` if platform paths changed) on that
-  SHA. Running the full matrix is **mandatory right before a release**: 
-  dispatch `ci` (macOS legs) and `windows` on the exact
-  release-candidate SHA and wait for green before tagging. Nix follows the
-  same rule: Darwin nix build and the privileged NixOS container smoke need
-  `nix` / `full-ci`, schedule, or dispatch (not every `Cargo.lock` bump).
-  Never tag a release whose SHA lacks a green full matrix.
+- **CI pacing: fast per merge, full matrix before release.** CI is one
+  workflow, `.github/workflows/martensite.yml`, and every check in it is a
+  `cargo xtask` command that runs the same way locally. A pull request runs
+  PR validation on Linux x86_64 only. The full matrix (Linux x86_64 and
+  arm64, macOS arm64, Windows x64) runs on a `v*` tag push and on a manual
+  dispatch in `release` mode. The workflow does not run on branch pushes:
+  after pushing a branch directly, dispatch it on that SHA. Running the full
+  matrix is **mandatory right before a release**: dispatch the workflow with
+  `mode=release` and the version on the exact release-candidate SHA, and wait
+  for green before tagging. Never tag a release whose SHA lacks a green full
+  matrix.
 - **Reclaim build storage after every release — run `cargo clean`.** 
   Once a release is tagged and its artifacts are published, run
   `cargo clean` (and `cargo clean` in each release worktree / extra target dir
   you created, then remove finished `git worktree`s). This is a mandatory
-  post-release cleanup step, not optional housekeeping — treat it like the tap
-  bump above. During normal development, the weekly `cargo clean` and
-  `cargo clean-all --keep-days 7` described under Platform notes are the
-  lighter-touch equivalent.
+  post-release cleanup step, not optional housekeeping. It also removes the
+  rehearsal packages in `target/dist/`. During normal development, a weekly
+  `cargo clean` is the lighter-touch equivalent.
 - **No version bumps or release tags without explicit user approval.**
   Do not bump crate/package versions automatically.
 - **Non-negotiable quality bar.** No malicious or obfuscated code, no

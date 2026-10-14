@@ -1,16 +1,37 @@
-# Contributing to ai-memory
+# Contributing to Martensite
 
 ## Dev setup
 
+Clone the repository, then run the installer for your OS from the repository
+root. Each installer is safe to run again: it installs what is missing and
+updates what is already installed.
+
 ```bash
-gh repo clone Oblikovati/Martensite
+git clone https://github.com/Oblikovati/Martensite.git
 cd Martensite
+./install-linux.sh        # apt, dnf, pacman or zypper
+./install-macos.sh        # Homebrew
+```
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install-windows.ps1   # winget
+```
+
+The installers set up the C toolchain, Tcl/Tk 8.6, FreeType, fontconfig, the
+Vulkan loader and tools (with Mesa lavapipe on Linux and MoltenVK on macOS),
+rustup with the toolchain pinned in `rust-toolchain.toml`, and the cargo tools
+the gates use. `--no-cargo-tools` (Linux) and `-NoCargoTools` (Windows) skip
+the cargo tools, which take several minutes to compile. On Linux and macOS,
+load the environment the installer writes before you build:
+
+```bash
+source ~/.local/share/martensite/env.sh
 cargo build
 cargo test
 ```
 
-Rust 1.98.1 is required (pinned in `Cargo.toml`). The build is
-self-contained:. No system libraries need installing beyond a standard C toolchain.
+See [`docs/features/dev-environment-installers/`](docs/features/dev-environment-installers/README.md)
+for what each installer does on each platform.
 
 ## Commit attribution
 
@@ -39,25 +60,36 @@ canonicalize accidental aliases without changing published commits.
 
 ## Required gates before push/merge
 
-All of these must pass; CI enforces them and so does `bin/release`. The build
-is self-contained, so none of them needs an environment variable.
+CI runs one workflow, `.github/workflows/martensite.yml`. It only installs the
+toolchain; every check is the `scripts/build` driver, so you can run the same
+gates locally before you push:
 
 ```bash
-cargo fmt --all -- --check
-git diff --check
-cargo clippy --workspace --all-targets -- -D warnings
-cargo test                            # every test (alias: cargo nextest run -P full)
-cargo deny check                    # dependency policy
+cargo xtask pr                        # what CI runs on a pull request
+cargo xtask release --version 0.3.0   # release rehearsal for the host target
 ```
 
-```bash
-cargo install cargo-deny cargo-audit
-```
+`cargo xtask pr` diffs your branch, including uncommitted and untracked work,
+against `origin/main` (`--base` changes this). It checks whitespace and
+`rustfmt` on the changed files, then runs clippy (`-D warnings`), a build and
+the tests for the changed packages and every package that depends on them. A
+change to `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `rustfmt.toml`,
+`clippy.toml` or `.cargo/` checks the whole workspace.
+
+`cargo deny check` (dependency policy) and `cargo audit` (known
+vulnerabilities) are not part of the driver yet. The installers install both
+tools; run them by hand when you add or update a dependency.
+
+See [`docs/features/ci-build-driver/`](docs/features/ci-build-driver/README.md)
+for the release pipeline and the CI trigger rules.
 
 ### The everyday loop
 
 ```bash
-cargo test
+cargo build
+cargo test                 # every test, including doc tests
+cargo test -p <package>    # one package
+cargo xtask pr             # the full PR gate, before you push
 ```
 
 Every **user-facing** change must add a `CHANGELOG.md` entry under
@@ -68,15 +100,41 @@ observable bug fix. Internal refactors, dead-code removal, and test-only
 churn are exempt.
 
 This has been the most often forgotten obligation across review batches,
-so reviewers treat a missing entry as **blocking**, and the PR template has a
-checkbox for it. Follow the existing entry style (past-tense summary,
+so reviewers treat a missing entry as **blocking**. Follow the existing entry style (past-tense summary,
 trailing `([#NNN])` PR/issue reference) and place it under the right
 `### Added` / `### Changed` / `### Fixed` heading.
 
-`CHANGELOG.md` holds the current major line only. Older lines are archived per
-major version in [`docs/changelog/`](docs/changelog/); `bin/release` moves the
-previous major there when it cuts an X.0.0. Released sections are frozen in
-both places, and CI rejects an edit to any of them.
+The headings matter for releases: `cargo xtask release` reads the
+`## [X.Y.Z]` section and refuses a version bump smaller than its headings
+require (see [Releasing](#releasing)). Released sections are frozen; do not
+edit them.
+
+## Releasing
+
+Releases need explicit maintainer approval for the version number and the tag.
+
+1. Set the new version on every kernel crate, and rename `## [Unreleased]` in
+   `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD` with a new empty
+   `## [Unreleased]` above it.
+2. Rehearse the release locally for your host target:
+
+   ```bash
+   cargo xtask release --version X.Y.Z
+   ```
+
+   This checks the semver rules, runs fmt, clippy and the full test suite,
+   builds in release mode, and writes the packages to `target/dist/vX.Y.Z/`.
+   It never publishes.
+3. Run the full matrix on the release-candidate commit: start the `Martensite`
+   workflow manually (Actions tab, or `gh workflow run martensite.yml -f
+   mode=release -f version=X.Y.Z --ref <branch>`) and wait until all targets
+   are green. A manual run never publishes.
+4. Push the tag `vX.Y.Z` on that commit. The workflow runs the release on
+   every target again, then creates the GitHub release with the packages and
+   the changelog section as notes.
+
+[`docs/features/ci-build-driver/`](docs/features/ci-build-driver/README.md)
+describes the semver rules, the targets and the packages.
 
 ## Workflow rules (condensed from AGENTS.md)
 

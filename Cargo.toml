@@ -1,0 +1,19 @@
+[workspace]
+# scripts/build is the CI/release driver that the single GitHub workflow and
+# contributors run locally (`cargo xtask`). Add "crates/*" when the first kernel
+# crate lands: cargo rejects a member glob that matches no directory.
+members = ["scripts/build"]
+resolver = "3"
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.98.1"
+license = "GPL-2.0-only"
+publish = false
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = "warn"
