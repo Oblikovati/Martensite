@@ -68,6 +68,13 @@ native runner, so the tests run on the target platform:
 4. Run clippy with `-D warnings`, a build of all targets, and the tests for
    the affected packages.
 
+Whitespace checks retain Git diagnostics and fail on unreadable inputs or
+unexpected results. Untracked regular-file symlinks use Git's link semantics;
+directory symlinks that Git cannot compare are rejected with the command and
+diagnostic. The check never changes a symlink or its target ([#75]).
+
+[#75]: https://github.com/Oblikovati/Martensite/issues/75
+
 ## Release pipeline
 
 1. Semver gate:

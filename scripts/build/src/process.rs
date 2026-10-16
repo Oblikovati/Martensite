@@ -68,6 +68,20 @@ pub trait CommandRunner {
     fn capture(&self, spec: &CommandSpec) -> BuildResult<String>;
     /// Runs with inherited stdio and returns the raw exit code.
     fn exit_code(&self, spec: &CommandSpec) -> BuildResult<i32>;
+    /// Captures status and both byte streams, including unsuccessful exits.
+    /// Example: `runner.capture_output(&spec)?` distinguishes Git diagnostics from clean diffs.
+    fn capture_output(&self, spec: &CommandSpec) -> BuildResult<CommandOutput>;
+}
+
+/// A completed command whose nonzero status still needs tool-specific interpretation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CommandOutput {
+    /// The normal exit code; signal termination remains a command failure.
+    pub code: i32,
+    /// Exact standard-output bytes, retained even when they are not UTF-8.
+    pub stdout: Vec<u8>,
+    /// Exact diagnostic bytes, retained even when they are not UTF-8.
+    pub stderr: Vec<u8>,
 }
 
 /// The real [`CommandRunner`], backed by `std::process`.
@@ -96,6 +110,22 @@ impl CommandRunner for ProcessRunner {
         let status = spawn_status(spec)?;
         // A signal-terminated child has no code; treat it as a hard failure.
         status.code().ok_or_else(|| failure(spec, status))
+    }
+
+    fn capture_output(&self, spec: &CommandSpec) -> BuildResult<CommandOutput> {
+        let output = spec
+            .to_command()
+            .output()
+            .map_err(|cause| spawn_error(spec, cause))?;
+        let code = output
+            .status
+            .code()
+            .ok_or_else(|| failure(spec, output.status))?;
+        Ok(CommandOutput {
+            code,
+            stdout: output.stdout,
+            stderr: output.stderr,
+        })
     }
 }
 
@@ -167,5 +197,22 @@ mod tests {
         ]);
         let error = ProcessRunner.capture(&spec).unwrap_err();
         assert!(matches!(error, BuildError::CommandFailed { .. }), "{error}");
+    }
+
+    #[test]
+    fn captured_failure_preserves_status_and_diagnostic() {
+        let directory = tempfile::tempdir().unwrap();
+        let spec = CommandSpec::new("git", directory.path()).args([
+            "diff",
+            "--no-index",
+            "--check",
+            "--",
+            "/dev/null",
+            "missing.txt",
+        ]);
+        let output = ProcessRunner.capture_output(&spec).unwrap();
+        assert_ne!(output.code, 0);
+        assert!(output.stdout.is_empty());
+        assert!(String::from_utf8_lossy(&output.stderr).contains("missing.txt"));
     }
 }
