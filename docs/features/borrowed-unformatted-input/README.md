@@ -41,6 +41,21 @@ The context makes no whole-input copy; it copies only requested output bytes.
 The caller chooses its buffer allocation. Retaining a device failure allocates
 an `Arc`. There is no new lock or global input state.
 
+## Binary-header consumer
+
+`BinaryFile::read_header_checked` reads the thirteen host-order fields through
+this interface. It shares integer-byte publication and header traversal with the
+existing owned reader. A partial field is published before an error returns;
+later fields remain untouched. Reading needs no write or seek capability and
+leaves the body in the caller's source.
+
+`CheckedReadError` distinguishes a masked input failure from an insufficient
+field count. The latter describes the actual count and expected four bytes.
+When bad state has a retained device cause, the format error owns the same cause;
+a later EOF after clearing bad state does not attach stale device history.
+Existing owned diagnostics remain unchanged. This is a header operation, not a
+whole-container or document decoder.
+
 ## Owned replay and verification
 
 The existing `IoStream` methods remain the owned behavior-version-1 replay path.
