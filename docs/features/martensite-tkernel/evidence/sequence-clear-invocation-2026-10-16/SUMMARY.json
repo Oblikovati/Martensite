@@ -1,0 +1,122 @@
+{
+  "artifacts": [
+    {
+      "path": "initial-red.log.gz",
+      "sha256": "4d9b807b3fb3c48d144b4a6f826a93f6f717c2b7f1daef1da2aac5ba4db10e32",
+      "uncompressed_sha256": "29aa0f1fb62b122e90d0163e7d9c523b18e445a8e58364b7f2d8b4694499b16c"
+    },
+    {
+      "path": "red-matrix.log.gz",
+      "sha256": "1ed6840a363af83061b73cbbd26b5fb08ac9e054fae6b376e9535326593f0000",
+      "uncompressed_sha256": "6fca7012185bc75b96f40ae22a72ae7cfe02a6bd0e4971f708bc0b37a4ff493d"
+    },
+    {
+      "path": "focused-green.log.gz",
+      "sha256": "f146946a71ee52e10d0b9022bb17d1aa69848931f1ef50ab78dc99b995234104",
+      "uncompressed_sha256": "ceada9f1ba62166568347c6003800e13abf845048b1c521d72c8802a2e8db6ea"
+    },
+    {
+      "path": "initial-format-failure.log.gz",
+      "sha256": "4d1100c2157b62881b4637b15f212d4f725fe512a2d649b2dc178faaef6885a0",
+      "uncompressed_sha256": "962400bf4c37913fae351254ccde1bf4048690787616dde763eda341729f24d1"
+    },
+    {
+      "path": "pr-final.log.gz",
+      "sha256": "4e748b08781d850c922aeb81e84eb6a77de569584d9c59b86569dbc23e5909a7",
+      "uncompressed_sha256": "1a502ac2ea6d7e6d4259c9dea635f3d3c760dc0d934dd3064874a316adc0ddc6"
+    },
+    {
+      "path": "miri-final.log.gz",
+      "sha256": "c029cd0568c67023c3fda0a44bb4a635a1b637da2911e0ba02d3f56a0fc0c965",
+      "uncompressed_sha256": "7b033e3448e4ce49a03b5d9ad44ccb07472eebbed2ce0e99e419a2569e24267d"
+    },
+    {
+      "path": "build-driver-tests.log.gz",
+      "sha256": "aee7409327b74de55f6bc6a70b640055b032dc676661c2adeb357b26a860644f",
+      "uncompressed_sha256": "cc555554e97f41de6d57859123bc69dd28b1cb370a94db4712b9b69276bbd686"
+    }
+  ],
+  "base_revision": "dd94c9072c4cbdb4c79e6fca6c75d970fbbefad3",
+  "build_jobs": 2,
+  "changes_not_made": [
+    "No unsafe additions",
+    "No original checkout edits",
+    "No historical map-node replacement",
+    "No version, manifest or lock changes",
+    "No push, tag or release"
+  ],
+  "expected_contract": "Each clear token belongs to exactly one invocation; cancellation permanently invalidates it. Rejection leaves a later invocation, metadata and owned values unchanged.",
+  "implementation": "Existing sequence liveness scope and token share a fresh operation-local Arc<()> identity. Validation uses Arc::ptr_eq before visit/detach/finish. Retained stale tokens keep their identity allocation alive. Existing registry provenance, traversal, allocator, retirement and callback behavior remain unchanged.",
+  "independent_oracles": [
+    "Safe public-API refusal before mutation",
+    "Known integer sequence membership and extent",
+    "Exactly one Drop of the counted owned value",
+    "Current-token completion after moves and stale-token rejection",
+    "Repeated empty and cancelled invocation state invariants"
+  ],
+  "issue": {
+    "created_after_initial_red": true,
+    "number": 77,
+    "type": "Bug",
+    "url": "https://github.com/Oblikovati/Martensite/issues/77"
+  },
+  "limits": [
+    "Local Linux evidence; release-matrix checks belong to the coordinator.",
+    "Miri covers the six named regressions, not all foundation operations or cross-thread use."
+  ],
+  "package_versions": "main baseline 0.3.0; no version or dependency edits",
+  "platform": "Linux x86_64",
+  "post_fix": {
+    "build_driver": {
+      "command": "cargo test -p martensite-build --all-targets --locked",
+      "exit_code": 0,
+      "failed": 0,
+      "ignored": 0,
+      "passed": 80
+    },
+    "miri": {
+      "command": "cargo +nightly-2026-09-25 miri test -p martensite-tkernel --test toolkit --locked sequence_clear_invocation",
+      "failed": 0,
+      "flags": "-Zmiri-strict-provenance",
+      "ignored": 0,
+      "isolation": "default enabled",
+      "leaks_or_interpreter_errors": 0,
+      "passed": 6,
+      "target_directory": "target/sequence-clear-miri",
+      "toolchain": "nightly-2026-09-25"
+    },
+    "new_regressions_passed": 6,
+    "xtask_pr": {
+      "command": "cargo xtask pr --base main",
+      "doctests_passed": 294,
+      "exit_code": 0,
+      "failed": 0,
+      "ignored": 0,
+      "includes": [
+        "changed-file whitespace and rustfmt",
+        "strict affected-package Clippy",
+        "all-target affected build",
+        "affected unit, integration and doc tests"
+      ],
+      "native_tests_passed": 5070
+    }
+  },
+  "pre_fix": {
+    "command": "cargo test -p martensite-tkernel --test toolkit --locked sequence_clear_invocation",
+    "expanded_matrix": "2 pass, 4 fail, including counted Drop 0 instead of 1",
+    "minimal_regression": "0 pass, 1 fail: stale finish incorrectly returns Ok(())"
+  },
+  "source_sha256": {
+    ".cargo/config.toml": "dd346639c810b80e38688eaceb0e5140e4d8f116c7ac6cd65435963646438bd2",
+    "Cargo.lock": "11d3a7c39b98d7462b3b9350bda9fa9d64547eab39594bdcf39af9fab33d2551",
+    "Cargo.toml": "218040f285432d9389494b7951e00c681667b0bab584ef2d099d186ebe35de25",
+    "crates/martensite-cmath/Cargo.toml": "9e4e92267335baca2ca6132e930d67c17c4b57d5869e14b81b8d7c7a0e9aa2ba",
+    "crates/martensite-tkernel/Cargo.toml": "d2df1253a02793ff52233e3f5e2121d3812569152a7b709bd7b2a194752e0d51",
+    "crates/martensite-tkernel/src/ncollection/sequence/base_storage/node_liveness.rs": "8fbeac88d3fcfe716e35a35824bb1f42011d2cccd97b6fa299eb5686a6a295dd",
+    "crates/martensite-tkernel/src/ncollection/sequence/controlled_clear.rs": "943718a50261ee8e37116281c10fe56118c997feba84cecbaaf35710c5be7f3a",
+    "crates/martensite-tkernel/tests/sequence_clear_invocation.rs": "4e29ec7e5be2d3bf9a8680b58ea5f43598d6a659b676fdf3dbfb809a4ea5d71a",
+    "crates/martensite-tkernel/tests/suites/cases_02.rs": "98c3f76be2b1729d3ab82ec505cbb8a1fdf26ab9b816588427aa01036d387395",
+    "rust-toolchain.toml": "2ad6f15416572b4836585087f1d4abc53b8fa2dbd616f8dacfaa587ed6714228"
+  },
+  "toolchain": "1.99.0"
+}

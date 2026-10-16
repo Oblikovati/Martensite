@@ -21,6 +21,11 @@ Some tests compare output with reviewed baselines in
 `crates/martensite-tkernel/tests/fixtures/`; see
 [that README](../../../crates/martensite-tkernel/tests/fixtures/README.md).
 
+Controlled sequence-clear tokens belong to one invocation. Calling `clear`
+cancels the active invocation; its tokens cannot visit, detach or finish a later
+clear. Rejected stale tokens preserve the current invocation and its live values
+([#77](https://github.com/Oblikovati/Martensite/issues/77)).
+
 Tests whose expected values exist only for one platform are compiled only
 there, for example the glibc `printf` rows on x86_64 Linux.
 
