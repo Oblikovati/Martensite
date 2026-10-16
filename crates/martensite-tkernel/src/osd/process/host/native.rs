@@ -27,14 +27,36 @@ mod unix {
     }
 
     pub(super) fn system_names() -> SystemNames {
-        // SAFETY: utsname is a plain C struct of char arrays; zero is a valid value.
-        let mut info: libc::utsname = unsafe { std::mem::zeroed() };
+        let mut info: libc::utsname = EMPTY_SYSTEM_NAMES;
         // SAFETY: `info` is live and writable; the status is ignored on purpose.
         unsafe { libc::uname(&mut info) };
         SystemNames {
             sysname: field(&info.sysname),
             release: field(&info.release),
         }
+    }
+
+    const EMPTY_SYSTEM_NAMES: libc::utsname = libc::utsname {
+        sysname: empty_field(),
+        nodename: empty_field(),
+        release: empty_field(),
+        version: empty_field(),
+        machine: empty_field(),
+        #[cfg(any(
+            target_env = "newlib",
+            target_os = "linux",
+            target_os = "l4re",
+            target_os = "android",
+            target_os = "emscripten",
+            target_os = "redox",
+            target_os = "cygwin",
+            target_os = "hurd"
+        ))]
+        domainname: empty_field(),
+    };
+
+    const fn empty_field<const N: usize>() -> [libc::c_char; N] {
+        [0; N]
     }
 
     pub(super) fn host_name() -> Result<Vec<u8>, i32> {
@@ -70,6 +92,22 @@ mod unix {
     #[cfg(test)]
     mod field_tests {
         use super::field;
+
+        #[test]
+        fn system_name_output_fields_start_empty() {
+            let info = super::EMPTY_SYSTEM_NAMES;
+            for bytes in [
+                &info.sysname[..],
+                &info.nodename[..],
+                &info.release[..],
+                &info.version[..],
+                &info.machine[..],
+            ] {
+                assert!(bytes.iter().all(|&byte| byte == 0));
+            }
+            #[cfg(target_os = "linux")]
+            assert!(info.domainname.iter().all(|&byte| byte == 0));
+        }
 
         #[test]
         fn terminated_fields_keep_raw_bytes_and_stop_at_first_nul() {
