@@ -3,7 +3,11 @@ use super::{AtomicUsize, Launcher, Ordering, ThreadPool};
 
 fn probe_count(name: &str, fallback: usize) -> usize {
     std::env::var(name)
-        .map(|value| value.parse().expect("expected an unsigned probe count"))
+        .map(|value| {
+            value
+                .parse()
+                .unwrap_or_else(|_| panic!("{name}={value:?}; expected an unsigned probe count"))
+        })
         .unwrap_or(fallback)
 }
 

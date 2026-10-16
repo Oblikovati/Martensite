@@ -12,20 +12,20 @@ comparator = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(comparator)
 
 
-def report(candidate):
+def report(candidate: list[int]) -> dict[str, dict[str, dict[str, list[int]]]]:
     return {"samples": {"baseline": {"32": [100, 100, 100]}, "candidate": {"32": candidate}}}
 
 
 class CapturedCostComparison(unittest.TestCase):
-    def test_regression_is_red(self):
+    def test_regression_is_red(self) -> None:
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(comparator.compare(report([200, 200, 200])), 1)
 
-    def test_equal_cost_is_green(self):
+    def test_equal_cost_is_green(self) -> None:
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(comparator.compare(report([100, 100, 100])), 0)
 
-    def test_bad_measurements_are_rejected(self):
+    def test_bad_measurements_are_rejected(self) -> None:
         for values in ([True, 100, 100], [0, 100, 100], [100], [100, 100, 100, 100]):
             with self.subTest(values=values), self.assertRaises(ValueError):
                 comparator.compare(report(values))

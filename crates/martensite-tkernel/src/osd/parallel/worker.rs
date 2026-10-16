@@ -29,6 +29,7 @@ struct ScopedWorker {
 struct JoinedThreads(Vec<JoinHandle<()>>);
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    // Jobs run under catch_unwind outside these locks; recovery preserves executor/failure state.
     mutex.lock().unwrap_or_else(|poison| poison.into_inner())
 }
 
@@ -156,7 +157,7 @@ fn dispatch_tree(
     let Some((owner, remaining)) = workers.split_last() else {
         return participant_failure(caller, body);
     };
-    // Only the external caller needs a heap-backed scope; worker joins stay balanced (#109).
+    // The invoking participant stays on its current thread; worker joins stay balanced (#109).
     let mut left = Vec::new();
     let mut right = Vec::new();
     owner.executor.pool.in_place_scope(|scope| {

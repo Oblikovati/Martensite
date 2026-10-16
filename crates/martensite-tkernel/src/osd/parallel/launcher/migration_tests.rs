@@ -64,25 +64,31 @@ fn reservations_force_busy_fallback_and_release_disables_jobs() {
 
 #[test]
 fn concurrent_launches_join_their_own_borrowed_jobs() {
-    use std::sync::atomic::{AtomicUsize, Ordering};
     let pool = ThreadPool::new(3);
     let launcher = Launcher::new(&pool, 3);
     std::thread::scope(|scope| {
         for _ in 0..4 {
             let launcher = &launcher;
-            scope.spawn(move || {
-                for _ in 0..1_000 {
-                    let completed = AtomicUsize::new(0);
-                    launcher
-                        .perform_job(&|_| {
-                            completed.fetch_add(1, Ordering::SeqCst);
-                        })
-                        .unwrap();
-                    assert_eq!(completed.load(Ordering::SeqCst), 3);
-                }
-            });
+            scope.spawn(move || repeat_borrowed_completion(launcher));
         }
     });
+}
+
+fn repeat_borrowed_completion(launcher: &Launcher<'_>) {
+    for _ in 0..1_000 {
+        assert_borrowed_completion(launcher);
+    }
+}
+
+fn assert_borrowed_completion(launcher: &Launcher<'_>) {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let completed = AtomicUsize::new(0);
+    launcher
+        .perform_job(&|_| {
+            completed.fetch_add(1, Ordering::SeqCst);
+        })
+        .unwrap();
+    assert_eq!(completed.load(Ordering::SeqCst), 3);
 }
 
 #[test]
