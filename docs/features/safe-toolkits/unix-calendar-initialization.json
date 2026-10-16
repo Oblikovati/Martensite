@@ -8,6 +8,13 @@
   "compatibility": "All ten numeric fields remain zero and tm_zone remains null before the existing native calls. Time source, localtime_r invocation, failure handling and output conversion remain unchanged. No toolkit API or trait bounds change.",
   "exclusions": "Other Unix targets retain the existing zeroed initialization pending platform-specific verification. Windows is unchanged. Native time/localtime_r calls remain under investigation; this does not establish a permanent system exception.",
   "inventory": "Removes two executed unsafe initialization operations on Linux/macOS. The process zeroed block remains lexically present only for other Unix cfgs; schema initialization shared a block with FFI. Source counts therefore stay unchanged. Supported Unix compiler diagnostics should lose the process initialization block once per compilation unit; exact counts still require capture.",
-  "local_verification": ["Linux x86_64 empty_calendar field-value regression passed"],
-  "pending_verification": ["Cross-target type checks", "Existing process/schema compatibility tests", "Full PR gate", "Native four-platform validation", "Compiler baseline update after PR #117 integration"]
+  "local_verification": ["Linux x86_64 empty_calendar field-value regression passed", "Calendar conversion regression passed", "macOS arm64 and Linux arm64 test-target type checks passed", "Full PR gate passed before inventory integration"],
+  "compiler_reconciliation": {
+    "source_revision": "17648ad0fea4e65b63f7fa36b5d3940782f55ac3",
+    "linux_x86_64": "Fresh compiler report differs only in process/native.rs unsafe-block emitted spans: 12 to 10, representing the removed initialization block in library and library-test compilation.",
+    "linux_arm64_and_macos": "Candidate reductions of the same group from 12 to 10 follow the identical cfg removal; exact native reports must confirm these predictions before merge.",
+    "windows": "Unchanged baseline; no Windows code changed.",
+    "scope": "No other baseline counts changed. These counts describe emitted diagnostics, not unique unsafe sites."
+  },
+  "pending_verification": ["Full PR gate after inventory integration", "Exact-head native four-platform validation and artifact comparison"]
 }
