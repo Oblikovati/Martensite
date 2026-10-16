@@ -64,9 +64,17 @@ pub(crate) fn online_processors() -> i32 {
 #[cfg(windows)]
 pub(crate) fn online_processors() -> i32 {
     use windows_sys::Win32::System::SystemInformation::{GetSystemInfo, SYSTEM_INFO};
-    // SAFETY: SYSTEM_INFO is plain data for which all-zero bytes are valid.
-    let mut info: SYSTEM_INFO = unsafe { std::mem::zeroed() };
+    // The dependency's safe default preserves the all-zero initial state (#89).
+    let mut info = SYSTEM_INFO::default();
     // SAFETY: `info` is a valid, writable SYSTEM_INFO.
     unsafe { GetSystemInfo(&mut info) };
     info.dwNumberOfProcessors as i32
+}
+
+#[cfg(all(test, windows))]
+mod system_info_tests {
+    #[test]
+    fn native_processor_query_returns_a_positive_count() {
+        assert!(super::online_processors() > 0);
+    }
 }

@@ -20,9 +20,17 @@ pub(super) fn os_page_size() -> usize {
 #[cfg(windows)]
 pub(super) fn os_page_size() -> usize {
     use windows_sys::Win32::System::SystemInformation::{GetSystemInfo, SYSTEM_INFO};
-    // SAFETY: SYSTEM_INFO is plain data; an all-zero value is a valid initial state.
-    let mut info: SYSTEM_INFO = unsafe { std::mem::zeroed() };
+    // The dependency's safe default preserves the all-zero initial state (#89).
+    let mut info = SYSTEM_INFO::default();
     // SAFETY: info is initialized, writable and alive throughout the call.
     unsafe { GetSystemInfo(&mut info) };
     info.dwPageSize as usize
+}
+
+#[cfg(all(test, windows))]
+mod system_info_tests {
+    #[test]
+    fn native_page_size_is_nonzero_and_a_power_of_two() {
+        assert!(super::os_page_size().is_power_of_two());
+    }
 }

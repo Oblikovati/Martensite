@@ -1,0 +1,12 @@
+{
+  "task": 89,
+  "baseline_revision": "a4bfca154f31c9aac5aab05ac9cae4ee9786c86d",
+  "dependency": "windows-sys =0.61.2 (unchanged)",
+  "safe_interface": "Win32::System::SystemInformation::SYSTEM_INFO::default()",
+  "equivalence": "The pinned dependency implements Default with core::mem::zeroed(), matching the previous initialization exactly.",
+  "first_party_unsafe_blocks_removed": 2,
+  "remaining_boundary": "GetSystemInfo writes a live initialized SYSTEM_INFO; the call and its outputs are unchanged.",
+  "dependency_unsafe": "SYSTEM_INFO::default() still uses unsafe internally. This is an existing dependency interface, not relocated project code or a claim of a transitively unsafe-free program.",
+  "public_api_changes": false,
+  "native_verification": "Pending Windows CI; compile checks alone do not prove runtime behavior."
+}
