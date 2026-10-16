@@ -1,0 +1,18 @@
+{
+  "task": 87,
+  "status": "throwaway feasibility experiment; not production",
+  "question": "Can borrowed jobs use persistent physical workers and caller participation without first-party lifetime erasure?",
+  "answer": "Yes for the tested two-worker scoped composition; full Launcher compatibility is not established.",
+  "tests_passed": 3,
+  "checks": ["cargo test", "cargo clippy --all-targets -- -D warnings", "cargo deny --all-features check", "cargo audit"],
+  "check_scope": "Independent experiments/scoped-worker-slots workspace; existing root dependencies unchanged. Deny warned about unused root license allowances only.",
+  "dependency_trust": "Pinned rayon 1.12.0 uses established unsafe internals; experiment Rust forbids unsafe. No custom unsafe was moved into a dependency.",
+  "unresolved": [
+    "Lazy worker creation, slot reservations, busy fallback and concurrent or nested Launcher calls",
+    "Exact Failure aggregation, sticky caller failure, injected thread-start errors and partial construction cleanup",
+    "Recursive dispatch stack depth, allocation costs, timings and peak memory against the existing pool",
+    "Native cross-platform execution and thread sanitizer/stress coverage",
+    "Complete shutdown semantics, including panic and pool construction failure"
+  ],
+  "integration": "Do not merge this experiment into main as a replacement; retain on its experiment branch and use compatibility fixtures before production changes."
+}
