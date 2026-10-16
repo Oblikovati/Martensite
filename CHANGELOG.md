@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Fixed cancelled sequence-clear tokens completing a later invocation and
+  abandoning its live values; stale tokens now fail before changing state ([#77]).
 - Fixed `cargo xtask pr` accepting fatal Git errors as clean untracked-file
   whitespace checks; failed comparisons now retain their diagnostics ([#75]).
 
@@ -30,3 +32,4 @@ follows [Semantic Versioning](https://semver.org/).
 
 [#72]: https://github.com/Oblikovati/Martensite/pull/72
 [#75]: https://github.com/Oblikovati/Martensite/issues/75
+[#77]: https://github.com/Oblikovati/Martensite/issues/77

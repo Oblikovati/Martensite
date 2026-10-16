@@ -149,6 +149,8 @@ pub mod resource_manager_supplemental;
 pub mod runtime_type_owning_handles;
 #[path = "../sequence_borrowed_assignment_contracts.rs"]
 pub mod sequence_borrowed_assignment_contracts;
+#[path = "../sequence_clear_invocation.rs"]
+pub mod sequence_clear_invocation;
 #[path = "../sequence_method_contracts.rs"]
 pub mod sequence_method_contracts;
 #[path = "../sequence_node_method_contracts.rs"]
