@@ -19,6 +19,8 @@ mod publish;
 mod release;
 mod report;
 mod targets;
+#[cfg(test)]
+mod unsafe_inventory;
 mod version;
 mod workspace;
 

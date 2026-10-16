@@ -6,6 +6,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Checked toolkit unsafe source counts during PR validation, including inactive
+  platform code and test fixtures (#81).
+
 ## [0.3.1] - 2026-10-16
 
 ### Added

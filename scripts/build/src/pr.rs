@@ -8,7 +8,7 @@ use crate::cargo::{BuildTarget, CargoTasks, PackageSelection};
 use crate::context::BuildContext;
 use crate::error::BuildResult;
 use crate::git::ChangedFile;
-use crate::lint::{check_rust_format, check_whitespace};
+use crate::lint::{check_rust_format, check_unsafe_inventory, check_whitespace};
 use crate::workspace::CargoWorkspace;
 
 /// Validates `HEAD` plus uncommitted work against the branch it will merge into.
@@ -60,6 +60,9 @@ fn lint_changed_files(
     changed: &[ChangedFile],
 ) -> BuildResult<()> {
     let reporter = &context.reporter;
+    reporter.step("Check toolkit unsafe inventory", || {
+        check_unsafe_inventory(context.runner, context.root(), changed)
+    })?;
     let whitespace = reporter.step("Check whitespace in changed files", || {
         check_whitespace(&context.git, merge_base, changed)
     });
