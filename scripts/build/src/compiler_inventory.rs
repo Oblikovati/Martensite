@@ -17,25 +17,13 @@ pub fn capture_inventory(
     root: &Path,
     target: &BuildTarget,
 ) -> BuildResult<()> {
-    invalidate_report(root)?;
+    invalidate_previous_evidence(root)?;
     let triple = match target {
         BuildTarget::Host => CargoTasks::new(runner, root).host_triple()?,
         BuildTarget::Triple(triple) => triple.clone(),
     };
     let spec = inventory_command(root, &triple);
-    // Cargo does not reliably replay cached dependency warnings (#81).
-    runner.run(&CommandSpec::new("cargo", root).args([
-        "clean",
-        "--target-dir",
-        "target/unsafe-inventory/build",
-    ]))?;
-    let output = runner.capture_output(&spec)?;
-    preserve_compiler_output(root, &output)?;
-    require_compiler_success(&spec, &output)?;
-    let stdout =
-        std::str::from_utf8(&output.stdout).map_err(|error| output_error(error.to_string()))?;
-    let diagnostics = parser::collect_stream(stdout, output.code).map_err(output_error)?;
-    let diagnostics = ownership::classify(runner, root, diagnostics)?;
+    let diagnostics = collect_diagnostics(runner, root, &spec)?;
     let provenance = provenance::capture(runner, root, &spec)?;
     write_report(root, &triple, &diagnostics, &provenance)?;
     baseline::verify(
@@ -46,7 +34,27 @@ pub fn capture_inventory(
     )
 }
 
-fn invalidate_report(root: &Path) -> BuildResult<()> {
+fn collect_diagnostics(
+    runner: &dyn CommandRunner,
+    root: &Path,
+    spec: &CommandSpec,
+) -> BuildResult<ownership::ClassifiedDiagnostics> {
+    // Cargo does not reliably replay cached dependency warnings (#81).
+    runner.run(&CommandSpec::new("cargo", root).args([
+        "clean",
+        "--target-dir",
+        "target/unsafe-inventory/build",
+    ]))?;
+    let output = runner.capture_output(spec)?;
+    preserve_compiler_output(root, &output)?;
+    require_compiler_success(spec, &output)?;
+    let stdout =
+        std::str::from_utf8(&output.stdout).map_err(|error| output_error(error.to_string()))?;
+    let diagnostics = parser::collect_stream(stdout, output.code).map_err(output_error)?;
+    ownership::classify(runner, root, diagnostics)
+}
+
+fn invalidate_previous_evidence(root: &Path) -> BuildResult<()> {
     for name in [
         "latest.json",
         "compiler.stdout.jsonl",
@@ -147,7 +155,18 @@ mod tests {
             spec.display()
                 .contains("--locked --workspace --all-targets --target test-target")
         );
-        let runner = RecordingRunner::default()
+        let runner = successful_runner(&spec);
+        capture_inventory(
+            &runner,
+            directory.path(),
+            &BuildTarget::Triple("test-target".into()),
+        )
+        .unwrap();
+        assert_successful_report(directory.path(), &runner, &spec);
+    }
+
+    fn successful_runner(spec: &CommandSpec) -> RecordingRunner {
+        RecordingRunner::default()
             .with_stdout("git rev-parse HEAD", &"a".repeat(40))
             .with_stdout("rustc -vV", "host: test-target\n")
             .with_stdout(
@@ -157,15 +176,11 @@ mod tests {
             .with_stdout(
                 &spec.display(),
                 "{\"reason\":\"build-finished\",\"success\":true}\n",
-            );
-        capture_inventory(
-            &runner,
-            directory.path(),
-            &BuildTarget::Triple("test-target".into()),
-        )
-        .unwrap();
-        let bytes =
-            std::fs::read(directory.path().join("target/unsafe-inventory/latest.json")).unwrap();
+            )
+    }
+
+    fn assert_successful_report(root: &Path, runner: &RecordingRunner, spec: &CommandSpec) {
+        let bytes = std::fs::read(root.join("target/unsafe-inventory/latest.json")).unwrap();
         let report: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
         assert_eq!(report["target"], "test-target");
         let commands = runner.commands();
@@ -219,6 +234,10 @@ mod tests {
         )
         .unwrap_err();
         assert!(error.to_string().contains("exit 101"));
+        assert_failed_compiler_evidence(&report_dir);
+    }
+
+    fn assert_failed_compiler_evidence(report_dir: &Path) {
         assert!(!report_dir.join("latest.json").exists());
         assert_eq!(
             std::fs::read_to_string(report_dir.join("compiler.stdout.jsonl")).unwrap(),

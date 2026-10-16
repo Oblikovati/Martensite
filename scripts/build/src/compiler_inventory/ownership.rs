@@ -41,6 +41,14 @@ pub(super) fn classify(
         "--locked",
     ]);
     let members = parse_members(&runner.capture(&spec)?)?;
+    Ok(partition_diagnostics(root, diagnostics, &members))
+}
+
+fn partition_diagnostics(
+    root: &Path,
+    diagnostics: Vec<UnsafeDiagnostic>,
+    members: &BTreeMap<String, String>,
+) -> ClassifiedDiagnostics {
     let (mut workspace, mut dependencies): (Vec<_>, Vec<_>) = diagnostics
         .into_iter()
         .partition(|diagnostic| members.contains_key(&diagnostic.package_id));
@@ -51,38 +59,55 @@ pub(super) fn classify(
     }
     workspace.sort();
     dependencies.sort();
-    Ok(ClassifiedDiagnostics {
+    ClassifiedDiagnostics {
         workspace_summary: super::parser::summarize(&workspace),
         workspace,
         dependencies,
-    })
+    }
 }
 
 fn parse_members(json: &str) -> BuildResult<BTreeMap<String, String>> {
     let document: WorkspaceMembers = serde_json::from_str(json)
         .map_err(|error| super::output_error(format!("Cargo membership: {error}")))?;
     if document.workspace_members.is_empty() || document.workspace_members.contains("") {
-        return Err(super::output_error(
-            "expected nonempty Cargo workspace package IDs".into(),
-        ));
+        return Err(super::output_error(format!(
+            "Cargo workspace membership {:?}: expected a nonempty set of nonempty package IDs",
+            document.workspace_members
+        )));
     }
-    let identities: BTreeMap<_, _> = document
+    let identities = member_identities(&document);
+    require_member_identities(&document.workspace_members, &identities)?;
+    Ok(identities)
+}
+
+fn member_identities(document: &WorkspaceMembers) -> BTreeMap<String, String> {
+    document
         .packages
-        .into_iter()
+        .iter()
         .filter(|package| document.workspace_members.contains(&package.id))
         .map(|package| {
             (
-                package.id,
+                package.id.clone(),
                 format!("workspace:{}@{}", package.name, package.version),
             )
         })
-        .collect();
-    if identities.len() != document.workspace_members.len() {
-        return Err(super::output_error(
-            "missing workspace package identity in Cargo metadata".into(),
-        ));
+        .collect()
+}
+
+fn require_member_identities(
+    members: &BTreeSet<String>,
+    identities: &BTreeMap<String, String>,
+) -> BuildResult<()> {
+    if identities.len() != members.len() {
+        let missing: Vec<_> = members
+            .iter()
+            .filter(|id| !identities.contains_key(*id))
+            .collect();
+        return Err(super::output_error(format!(
+            "Cargo workspace package IDs {missing:?}: expected a package identity for every member"
+        )));
     }
-    Ok(identities)
+    Ok(())
 }
 
 #[cfg(test)]
@@ -132,7 +157,20 @@ mod tests {
 
     fn relocated_report(root: &str, reverse: bool) -> ClassifiedDiagnostics {
         let package = format!("opaque-cargo-id:{root}");
-        let mut event: serde_json::Value = serde_json::from_str(&compiler_event(&package)).unwrap();
+        let stdout = relocated_stream(root, &package, reverse);
+        let metadata = json!({"workspace_members":[package], "packages":[{
+            "id":package,"name":"same","version":"1.0.0"}]})
+        .to_string();
+        let runner = RecordingRunner::default().with_stdout(
+            "cargo metadata --format-version 1 --no-deps --locked",
+            &metadata,
+        );
+        let diagnostics = super::super::parser::collect_stream(&stdout, 0).unwrap();
+        classify(&runner, Path::new(root), diagnostics).unwrap()
+    }
+
+    fn relocated_stream(root: &str, package: &str, reverse: bool) -> String {
+        let mut event: serde_json::Value = serde_json::from_str(&compiler_event(package)).unwrap();
         event["target"]["src_path"] = json!(format!("{root}/src/lib.rs"));
         event["message"]["spans"][0]["file_name"] = json!(format!("{root}/src/lib.rs"));
         let mut other = event.clone();
@@ -149,15 +187,7 @@ mod tests {
             .collect::<Vec<_>>()
             .join("\n");
         stdout.push_str("\n{\"reason\":\"build-finished\",\"success\":true}");
-        let metadata = json!({"workspace_members":[package], "packages":[{
-            "id":package,"name":"same","version":"1.0.0"}]})
-        .to_string();
-        let runner = RecordingRunner::default().with_stdout(
-            "cargo metadata --format-version 1 --no-deps --locked",
-            &metadata,
-        );
-        let diagnostics = super::super::parser::collect_stream(&stdout, 0).unwrap();
-        classify(&runner, Path::new(root), diagnostics).unwrap()
+        stdout
     }
 
     #[test]
@@ -175,6 +205,20 @@ mod tests {
 
     #[test]
     fn declared_member_without_package_identity_is_rejected() {
-        assert!(parse_members(r#"{"workspace_members":["missing"],"packages":[]}"#).is_err());
+        let error =
+            parse_members(r#"{"workspace_members":["missing"],"packages":[]}"#).unwrap_err();
+        assert!(error.to_string().contains("missing"));
+        assert!(error.to_string().contains("expected a package identity"));
+    }
+
+    #[test]
+    fn empty_member_reports_invalid_membership_and_expected_shape() {
+        let error = parse_members(r#"{"workspace_members":[""],"packages":[]}"#).unwrap_err();
+        assert!(error.to_string().contains("{\"\"}"));
+        assert!(
+            error
+                .to_string()
+                .contains("expected a nonempty set of nonempty package IDs")
+        );
     }
 }

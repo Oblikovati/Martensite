@@ -28,12 +28,7 @@ pub(super) fn capture(
         "--porcelain=v1",
         "--untracked-files=all",
     ]))?;
-    let compiler = runner.capture(&CommandSpec::new("rustc", root).arg("-vV"))?;
-    if !compiler.lines().any(|line| line.starts_with("host: ")) {
-        return Err(super::output_error(format!(
-            "compiler {compiler:?}; expected rustc -vV with host"
-        )));
-    }
+    let compiler = capture_compiler(runner, root)?;
     Ok(Provenance {
         revision,
         working_tree_status,
@@ -42,6 +37,16 @@ pub(super) fn capture(
         rustflags: "--force-warn unsafe_code",
         observation: "Observed after compilation; dirty files are listed, not snapshotted. Not proof against concurrent edits.",
     })
+}
+
+fn capture_compiler(runner: &dyn CommandRunner, root: &Path) -> BuildResult<String> {
+    let compiler = runner.capture(&CommandSpec::new("rustc", root).arg("-vV"))?;
+    if !compiler.lines().any(|line| line.starts_with("host: ")) {
+        return Err(super::output_error(format!(
+            "compiler {compiler:?}; expected rustc -vV with host"
+        )));
+    }
+    Ok(compiler)
 }
 
 fn checked_revision(value: &str) -> BuildResult<String> {

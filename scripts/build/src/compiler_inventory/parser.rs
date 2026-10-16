@@ -162,20 +162,21 @@ pub(super) fn collect_stream(
     let mut diagnostics = Vec::new();
     let mut finished = false;
     for (index, line) in stdout.lines().enumerate() {
-        if finished {
-            return Err(format!(
-                "line {} follows terminal build-finished",
-                index + 1
-            ));
-        }
-        let event = serde_json::from_str(line)
-            .map_err(|error| format!("line {}: expected Cargo JSON event: {error}", index + 1))?;
+        let event = parse_event(line, index + 1, finished)?;
         accept_event(event, &mut diagnostics, &mut finished)?;
     }
     if !finished {
         return Err("missing build-finished; expected complete successful compiler stream".into());
     }
     Ok(diagnostics)
+}
+
+fn parse_event(line: &str, number: usize, finished: bool) -> Result<CargoEvent, String> {
+    if finished {
+        return Err(format!("line {number} follows terminal build-finished"));
+    }
+    serde_json::from_str(line)
+        .map_err(|error| format!("line {number}: expected Cargo JSON event: {error}"))
 }
 
 fn accept_event(
@@ -311,15 +312,7 @@ mod tests {
 
     #[test]
     fn workspace_normalization_preserves_external_paths_and_macro_locations() {
-        let mut event = diagnostic("path+file:///checkout#package");
-        event["target"]["src_path"] = json!("/checkout/src/lib.rs");
-        event["message"]["spans"][0]["file_name"] = json!("/checkout/src/lib.rs");
-        let mut call_site = span();
-        call_site["file_name"] = json!("/checkout/tests/caller.rs");
-        let mut definition = span();
-        definition["file_name"] = json!("/checkout-other/macros.rs");
-        event["message"]["spans"][0]["expansion"] = json!({"span":call_site,
-            "macro_decl_name":"expand!", "def_site_span":definition});
+        let event = expanded_checkout_event();
         let mut parsed = collect_stream(&stream(&[event, finished()]), 0).unwrap();
         parsed[0].normalize_workspace(Path::new("/checkout"), "workspace:package@1.0.0");
         let value = serde_json::to_value(&parsed[0]).unwrap();
@@ -333,6 +326,19 @@ mod tests {
             "/checkout-other/macros.rs"
         );
         assert_eq!(value["spans"][0]["byte_start"], 10);
+    }
+
+    fn expanded_checkout_event() -> Value {
+        let mut event = diagnostic("path+file:///checkout#package");
+        event["target"]["src_path"] = json!("/checkout/src/lib.rs");
+        event["message"]["spans"][0]["file_name"] = json!("/checkout/src/lib.rs");
+        let mut call_site = span();
+        call_site["file_name"] = json!("/checkout/tests/caller.rs");
+        let mut definition = span();
+        definition["file_name"] = json!("/checkout-other/macros.rs");
+        event["message"]["spans"][0]["expansion"] = json!({"span":call_site,
+            "macro_decl_name":"expand!", "def_site_span":definition});
+        event
     }
 
     #[test]
