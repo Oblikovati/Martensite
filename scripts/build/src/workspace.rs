@@ -141,13 +141,14 @@ pub(crate) mod tests {
     pub(crate) fn metadata_at(root: &str, version: &str) -> String {
         serde_json::json!({
             "workspace_root": root,
+            "workspace_members": ["path+file:///repo#martensite-kernel", "path+file:///repo#martensite-math"],
             "packages": [
-                {"name": "martensite-kernel", "version": version,
+                {"id":"path+file:///repo#martensite-kernel", "name": "martensite-kernel", "version": version,
                  "manifest_path": format!("{root}/crates/martensite-kernel/Cargo.toml"),
                  "dependencies": [
                     {"name": "martensite-math", "path": format!("{root}/crates/martensite-math")},
                     {"name": "serde", "path": null}]},
-                {"name": "martensite-math", "version": version,
+                {"id":"path+file:///repo#martensite-math", "name": "martensite-math", "version": version,
                  "manifest_path": format!("{root}/crates/martensite-math/Cargo.toml"),
                  "dependencies": []}
             ]

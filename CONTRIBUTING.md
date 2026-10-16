@@ -76,6 +76,16 @@ the tests for the changed packages and every package that depends on them. A
 change to `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `rustfmt.toml`,
 `clippy.toml` or `.cargo/` checks the whole workspace.
 
+Inventory-relevant PR changes also run a separate compiler check against the
+target baseline in `docs/features/safe-toolkits/compiler-baselines/`. Release
+rehearsals run this check on every matrix target. Reports and compiler logs are
+written to `target/unsafe-inventory/` and retained as CI artifacts. Collection
+cleans only its dedicated `target/unsafe-inventory/build` cache because Cargo
+can omit cached dependency warnings. The report separates dependencies from
+workspace code; counts include repeated library/test compilations, not unique
+unsafe sites. Baseline changes require review, including removals. Normal Clippy
+checks still enforce the workspace lint policy without the inventory flags.
+
 `cargo deny check` (dependency policy) and `cargo audit` (known
 vulnerabilities) are not part of the driver yet. The installers install both
 tools; run them by hand when you add or update a dependency.

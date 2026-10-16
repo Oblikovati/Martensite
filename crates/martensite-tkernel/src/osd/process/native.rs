@@ -176,13 +176,21 @@ fn local_time() -> Result<LocalTime, i32> {
     let seconds: libc::time_t = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |elapsed| elapsed.as_secs() as libc::time_t);
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    let mut broken = crate::native_calendar::empty_calendar();
     // SAFETY: tm is a plain C struct; localtime_r fills it from a valid time_t.
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     let mut broken: libc::tm = unsafe { std::mem::zeroed() };
     // SAFETY: both pointers refer to live locals for the duration of the call.
     if unsafe { libc::localtime_r(&seconds, &mut broken) }.is_null() {
         return Err(io::Error::last_os_error().raw_os_error().unwrap_or(0));
     }
-    Ok(LocalTime {
+    Ok(calendar_local_time(&broken))
+}
+
+#[cfg(unix)]
+fn calendar_local_time(broken: &libc::tm) -> LocalTime {
+    LocalTime {
         month: broken.tm_mon + 1,
         day: broken.tm_mday,
         year: broken.tm_year + 1900,
@@ -190,7 +198,22 @@ fn local_time() -> Result<LocalTime, i32> {
         minute: broken.tm_min,
         second: broken.tm_sec,
         millisecond: 0,
-    })
+    }
+}
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+#[test]
+fn calendar_conversion_preserves_offsets_and_zero_milliseconds() {
+    let mut calendar = crate::native_calendar::empty_calendar();
+    calendar.tm_year = 124;
+    calendar.tm_mon = 1;
+    calendar.tm_mday = 29;
+    calendar.tm_hour = 13;
+    calendar.tm_min = 5;
+    calendar.tm_sec = 59;
+    let actual = calendar_local_time(&calendar);
+    assert_eq!((actual.month, actual.day, actual.year), (2, 29, 2024));
+    assert_eq!((actual.hour, actual.minute, actual.second), (13, 5, 59));
+    assert_eq!(actual.millisecond, 0);
 }
 #[cfg(windows)]
 fn local_time() -> Result<LocalTime, i32> {
