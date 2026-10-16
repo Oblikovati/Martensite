@@ -90,26 +90,32 @@ fn native_open_flags(flags: OpenFlags) -> libc::c_int {
     bits | if flags.append { libc::O_APPEND } else { 0 }
 }
 
-#[cfg(all(
-    target_os = "linux",
-    target_env = "gnu",
-    target_pointer_width = "64",
-    any(target_arch = "x86_64", target_arch = "aarch64")
+#[cfg(any(
+    all(target_os = "macos", target_arch = "aarch64"),
+    all(
+        target_os = "linux",
+        target_env = "gnu",
+        target_pointer_width = "64",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    )
 ))]
 fn native_open_descriptor(name: &std::ffi::CStr, bits: i32, mode: u32) -> CallResult<i32> {
     use std::os::fd::IntoRawFd;
     let flags = rustix::fs::OFlags::from_bits_retain(bits as _);
-    let mode = rustix::fs::Mode::from_bits_retain(mode);
+    let mode = rustix::fs::Mode::from_bits_retain(mode as _);
     rustix::fs::open(name, flags, mode)
         .map(IntoRawFd::into_raw_fd)
         .map_err(|error| Errno(error.raw_os_error()))
 }
 
-#[cfg(not(all(
-    target_os = "linux",
-    target_env = "gnu",
-    target_pointer_width = "64",
-    any(target_arch = "x86_64", target_arch = "aarch64")
+#[cfg(not(any(
+    all(target_os = "macos", target_arch = "aarch64"),
+    all(
+        target_os = "linux",
+        target_env = "gnu",
+        target_pointer_width = "64",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    )
 )))]
 fn native_open_descriptor(name: &std::ffi::CStr, bits: i32, mode: u32) -> CallResult<i32> {
     // SAFETY: name is NUL-terminated; the variadic mode is passed as c_uint.

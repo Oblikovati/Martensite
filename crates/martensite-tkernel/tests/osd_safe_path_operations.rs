@@ -8,6 +8,8 @@ use std::path::PathBuf;
 mod links;
 #[path = "osd_safe_path_operations/open.rs"]
 mod open;
+#[path = "osd_safe_path_operations/open_mode.rs"]
+mod open_mode;
 #[path = "osd_safe_path_operations/permissions.rs"]
 mod permissions;
 #[path = "osd_safe_path_operations/raw_names.rs"]
