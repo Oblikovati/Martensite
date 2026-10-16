@@ -45,15 +45,31 @@ fn native_local_date() -> (u32, u32, i32) {
 #[cfg(windows)]
 fn native_local_date() -> (u32, u32, i32) {
     use windows_sys::Win32::{Foundation::SYSTEMTIME, System::SystemInformation::GetLocalTime};
-    // SAFETY: an all-zero SYSTEMTIME is valid; `GetLocalTime` only writes into it.
-    let now = unsafe {
-        let mut now: SYSTEMTIME = std::mem::zeroed();
-        GetLocalTime(&mut now);
-        now
-    };
+    let mut now = SYSTEMTIME::default();
+    // SAFETY: `now` is initialized, writable and lives through `GetLocalTime`.
+    unsafe { GetLocalTime(&mut now) };
     (
         u32::from(now.wMonth),
         u32::from(now.wDay),
         i32::from(now.wYear),
     )
+}
+
+#[cfg(all(test, windows))]
+#[test]
+fn windows_creation_date_initialization_preserves_zero_fields() {
+    let now = windows_sys::Win32::Foundation::SYSTEMTIME::default();
+    assert_eq!(
+        [
+            now.wYear,
+            now.wMonth,
+            now.wDayOfWeek,
+            now.wDay,
+            now.wHour,
+            now.wMinute,
+            now.wSecond,
+            now.wMilliseconds
+        ],
+        [0; 8]
+    );
 }

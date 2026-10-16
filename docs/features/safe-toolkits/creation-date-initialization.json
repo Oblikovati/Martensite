@@ -1,0 +1,17 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "base_revision": "ca99aca2109d8967ee7f0f3eb4ce71916b6ad839",
+  "scope": "Windows schema creation-date initialization only",
+  "change": "Replaced first-party mem::zeroed with SYSTEMTIME::default and narrowed the unsafe block to GetLocalTime alone",
+  "dependency_evidence": "Pinned windows-sys 0.61.2 derives Default for SYSTEMTIME, whose eight fields are all u16. The derived implementation uses safe field defaults; this type does not implement Default through an unsafe zeroed call.",
+  "compatibility": "Same initialized field values, native local-time call, returned month/day/year and formatting. Unix implementation and public interfaces unchanged.",
+  "inventory": "One unsafe initialization operation removed. Unsafe keyword/block count is unchanged because the required system call remains in one block.",
+  "local_verification": [
+    "cargo test -p martensite-tkernel --test toolkit storage_api_behavior::schema: 13 passed, unchanged fixtures",
+    "cargo check -p martensite-tkernel --tests --target x86_64-pc-windows-msvc: passed",
+    "cargo clippy -p martensite-tkernel --tests --target x86_64-pc-windows-msvc -- -D warnings: passed",
+    "cargo xtask pr: passed, including affected tkernel/tkmath tests and doctests"
+  ],
+  "pending_verification": "Native four-platform validation, including execution of windows_creation_date_initialization_preserves_zero_fields on Windows"
+}
