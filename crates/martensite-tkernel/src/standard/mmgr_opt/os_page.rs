@@ -1,6 +1,9 @@
 //! Narrow platform FFI boundary for the page size the manager's initialization reads.
 #![allow(unsafe_code)]
 
+#[cfg(all(test, unix, not(target_vendor = "apple")))]
+mod page_size_contracts;
+
 /// The system page size (`getpagesize()` / `GetSystemInfo`); `os_page_size() % 4096 == 0`.
 #[cfg(all(unix, not(target_vendor = "apple")))]
 pub(super) fn os_page_size() -> usize {
