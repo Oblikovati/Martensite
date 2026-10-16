@@ -1,0 +1,19 @@
+{
+  "source_revision": "8c6611e4aafb22042df8d7eebf062eab5dce8329",
+  "initial_inventory": {
+    "files": 285,
+    "unsafe_keywords": 1790,
+    "unsafe_code_mentions": 203
+  },
+  "scope": "All .rs files recursively beneath crates, including source, tests, benches and inactive cfg branches",
+  "parser": "proc-macro2 1.0.107",
+  "limitations": [
+    "Token counts do not classify unsafe constructs or prove soundness",
+    "Macro definitions are inspected, not expanded",
+    "Generated source outside crates and dependencies are excluded",
+    "Per-file counts do not detect substitutions preserving those counts",
+    "Baseline changes require review; a matching baseline is not approval for new unsafe"
+  ],
+  "parent_issue": 80,
+  "task_issue": 81
+}

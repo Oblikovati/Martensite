@@ -10,6 +10,36 @@ use crate::process::{CommandRunner, CommandSpec};
 /// Keeps each rustfmt command line well under the Windows 32 KiB limit.
 const RUSTFMT_BATCH: usize = 64;
 
+/// Checks all toolkit source tokens when a change can affect the unsafe inventory.
+/// Example: `check_unsafe_inventory(runner, root, changed)?`.
+pub fn check_unsafe_inventory(
+    runner: &dyn CommandRunner,
+    root: &Path,
+    changed: &[ChangedFile],
+) -> BuildResult<()> {
+    if !changed
+        .iter()
+        .any(|file| unsafe_inventory_input(&file.path))
+    {
+        return Ok(());
+    }
+    runner.run(&CommandSpec::new("cargo", root).args([
+        "test",
+        "--locked",
+        "--package",
+        "martensite-build",
+        "unsafe_inventory",
+    ]))
+}
+
+fn unsafe_inventory_input(path: &str) -> bool {
+    (path.starts_with("crates/") && path.ends_with(".rs"))
+        || path.starts_with("scripts/build/")
+        || path.starts_with("docs/features/safe-toolkits/")
+        || path.ends_with("Cargo.toml")
+        || path == "Cargo.lock"
+}
+
 /// Fails when the change set adds trailing whitespace or conflict markers.
 ///
 /// ```ignore
@@ -79,6 +109,29 @@ mod tests {
             deleted,
             untracked: false,
         }
+    }
+
+    #[test]
+    fn unsafe_inventory_runs_for_source_deletions_and_baseline_changes() {
+        for path in [
+            "crates/example/src/lib.rs",
+            "docs/features/safe-toolkits/baseline.json",
+            "Cargo.lock",
+        ] {
+            let runner = RecordingRunner::default();
+            check_unsafe_inventory(&runner, Path::new("/r"), &[file(path, true)]).unwrap();
+            assert_eq!(
+                runner.commands(),
+                ["cargo test --locked --package martensite-build unsafe_inventory"]
+            );
+        }
+    }
+
+    #[test]
+    fn unsafe_inventory_skips_unrelated_docs() {
+        let runner = RecordingRunner::default();
+        check_unsafe_inventory(&runner, Path::new("/r"), &[file("README.md", false)]).unwrap();
+        assert!(runner.commands().is_empty());
     }
 
     #[test]

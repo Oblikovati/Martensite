@@ -51,5 +51,12 @@ CI has one workflow, `.github/workflows/martensite.yml`, and all its checks are
 `cargo xtask` commands. [CONTRIBUTING](CONTRIBUTING.md) explains the gates and
 the release process.
 
+PR validation checks toolkit Rust source tokens against
+`docs/features/safe-toolkits/unsafe-source-baseline.json` when source, build
+tooling or inventory inputs change. Unsafe removals must update that inventory;
+increases require review against the temporary exception policy in `AGENTS.md`.
+The check includes inactive platform code and macro definitions, but does not
+expand macros or inspect dependencies. Compiler checks remain necessary (#81).
+
 The project is licensed GPL-2.0-only (`LICENSE`). Source files carry no per-file
 copyright or license header.
