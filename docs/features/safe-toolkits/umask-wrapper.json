@@ -17,8 +17,9 @@
     "revision": "1370d04fa92abbc8ff605b8f5967f4afda8e977d",
     "observed": "macOS returned 4095 (07777) after setting u32::MAX; the fixture expected Linux's 511 (0777). Earlier creation-mode and previous-mask assertions passed. Both Linux jobs passed; Windows was still running when this observation was recorded.",
     "independent_source": "Apple XNU f6217f891ac0bb64f3d375211650a4c1ff8ca1ea bsd/vfs/vfs_syscalls.c:10440 stores newmask & ALLPERMS; bsd/sys/stat.h:428 defines ALLPERMS as 07777.",
-    "next_gate": "Validate target-specific expectations against the original libc implementation, review the fixture correction, then rerun unchanged fixtures against the safe wrapper. Do not normalize production mask bits."
+    "next_gate": "Original direct-libc run 38957033863 reproduced the same macOS 4095-versus-511 failure. Reviewed correction b603dfa retains an exact 07777 expectation on macOS. Both original and replacement passed local gates with the corrected fixture; corrected native runs remain pending. Production mask bits are not normalized."
   },
+  "fixture_correction": "Bug #131 correction was merged with the full fixture preserved; its source is identical to the reviewed original-implementation fixture at b603dfa. cargo xtask pr passed after resolving the add/add fixture conflict (/tmp/martensite-umask-fixed-pr.log). Standards review found no violations; spec review requires corrected native runs for both implementations before acceptance.",
   "exclusions": [
     "No public API or package version change",
     "Existing process-wide umask semantics are preserved, not redesigned as operation-local state",
