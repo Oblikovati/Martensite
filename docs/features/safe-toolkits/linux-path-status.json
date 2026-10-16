@@ -2,7 +2,7 @@
   "task_issue": 89,
   "parent_issue": 80,
   "baseline_revision": "a261df178f2cd483392ae52bda6aa54f2458e4dc",
-  "status": "GNU/Linux x86_64 and aarch64 path stat now uses the established safe wrapper. Replacement validation and review are pending.",
+  "status": "GNU/Linux x86_64 and aarch64 path stat uses the established safe wrapper. Local and native validation and review passed; integration is pending.",
   "candidate_scope": "GNU/Linux x86_64 and aarch64, 64-bit pointer width. Other targets retain their existing paths.",
   "wrapper_evidence": "Pinned rustix 1.1.5 backend/libc/fs/syscalls.rs stat uses one c::stat call for these targets, without retry or statx fallback. backend/libc/c.rs aliases stat64 as stat, and fs/types.rs aliases Stat to libc stat64. Apple-specific negative-nanosecond normalization is excluded on Linux.",
   "libc_evidence": {
@@ -17,8 +17,9 @@
     "Leave fstat and descriptor ownership unchanged",
     "Run unchanged status and status-kind fixtures before and after replacement"
   ],
-  "validation": "All six status and status-kind fixtures passed before replacement at a261df1 (/tmp/martensite-linux-stat-baseline.log) and unchanged after replacement (/tmp/martensite-linux-stat-safe.log). cargo xtask pr passed with the implementation at 36d38f5 (/tmp/martensite-linux-stat-pr.log). Native replacement validation remains pending.",
-  "review": "Independent standards and spec reviews of a261df1...36d38f5 found no code defect or scope creep. Their stale fixture-status finding is corrected here and the full local gate has passed. Native validation remains outstanding.",
-  "inventory": "Expected Linux native_unix emitted primary spans decrease from 24 to 20 by excluding the raw stat initialization and call. Other targets and lexical counts remain unchanged because their fallback remains. Compiler confirmation is pending.",
-  "remaining": "Run local and native gates, verify compiler inventories, review and integrate. No remaining unsafe is classified as unavoidable by this investigation."
+  "validation": "All six status and status-kind fixtures passed before replacement at a261df1 (/tmp/martensite-linux-stat-baseline.log) and unchanged after replacement (/tmp/martensite-linux-stat-safe.log). cargo xtask pr passed with the implementation at 36d38f5 (/tmp/martensite-linux-stat-pr.log).",
+  "native_validation": "Run 38967155797 passed all four platforms at e8b6bb6908ed91e8559b9d37a095542ce009ce6f; publishing was skipped. Each complete compiler summary matches that revision's baseline and has clean provenance. Artifacts: /tmp/martensite-linux-stat-native.Qr1HXJ. All six status fixtures explicitly passed in each Unix job log (/tmp/martensite-linux-stat-native-{x64,arm64,macos}.log).",
+  "review": "Independent standards and spec reviews of a261df1...36d38f5 found no code defect or scope creep. Their stale fixture-status finding is corrected here. The local and native validation requirements are satisfied by the recorded runs.",
+  "inventory": "Native evidence confirms Linux native_unix emitted primary spans decreased from 24 to 20 by excluding the raw stat initialization and call. Other target summaries and lexical counts remain unchanged because their fallback remains.",
+  "remaining": "Integrate after final PR checks. No remaining unsafe is classified as unavoidable by this investigation; #89 and #80 remain incomplete."
 }
