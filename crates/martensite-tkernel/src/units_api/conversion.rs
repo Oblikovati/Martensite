@@ -1,0 +1,94 @@
+//! Conversions of a value expressed in any unit to SI or to the local system.
+use super::{SystemUnits, UnitsApi};
+use crate::standard::{Failure, Handle};
+use crate::units::Dimensions;
+
+/// Dimensions of a unit, required to be non-null before use.
+fn required(dimensions: &Handle<Dimensions>) -> Result<&Dimensions, Failure> {
+    dimensions.get().ok_or_else(|| {
+        crate::standard::exceptions::null_object(
+            "UnitsAPI: null dimensions of an invalid unit; expected an evaluable unit",
+        )
+    })
+}
+
+impl UnitsApi {
+    /// `unit` to the local system: SI, then the local unit of the quantity the
+    /// dimensions name; an invalid unit gives 0; `api.any_to_ls(3.0, b"mm")?`.
+    pub fn any_to_ls(&mut self, data: f64, unit: &[u8]) -> Result<f64, Failure> {
+        self.check_loading(self.local_system)?;
+        let mut dimensions = Handle::default();
+        let value = self.units.to_si_dimensions(data, unit, &mut dimensions)?;
+        let Some(dims) = dimensions.get() else {
+            return Ok(value);
+        };
+        self.to_local(dims, value)
+    }
+    /// `any_to_ls` also returning the dimensions. This form asks the
+    /// (possibly still null) dimensions for their quantity before its null check, so a
+    /// null result is a `Standard_NullObject` error here; `api.any_to_ls_dimensions(1.0, b"m", &mut d)?`.
+    pub fn any_to_ls_dimensions(
+        &mut self,
+        data: f64,
+        unit: &[u8],
+        dimensions: &mut Handle<Dimensions>,
+    ) -> Result<f64, Failure> {
+        self.check_loading(self.local_system)?;
+        let value = self.units.to_si_dimensions(data, unit, dimensions)?;
+        let dims = required(dimensions)?;
+        self.to_local(dims, value)
+    }
+    fn to_local(&self, dimensions: &Dimensions, value: f64) -> Result<f64, Failure> {
+        let Some(quantity) = dimensions.quantity(&self.units)? else {
+            return Ok(value);
+        };
+        self.local_system_units.convert_si_value_to_user_system(
+            &self.units,
+            quantity.as_bytes(),
+            value,
+        )
+    }
+    /// `unit` to SI (0 for an invalid unit); `api.any_to_si(1.0, b"min")?`.
+    pub fn any_to_si(&mut self, data: f64, unit: &[u8]) -> Result<f64, Failure> {
+        self.check_loading(SystemUnits::Default)?;
+        self.units.to_si(data, unit)
+    }
+    /// `any_to_si` also returning the dimensions; `api.any_to_si_dimensions(1.0, b"m", &mut d)?`.
+    pub fn any_to_si_dimensions(
+        &mut self,
+        data: f64,
+        unit: &[u8],
+        dimensions: &mut Handle<Dimensions>,
+    ) -> Result<f64, Failure> {
+        self.check_loading(SystemUnits::Default)?;
+        self.units.to_si_dimensions(data, unit, dimensions)
+    }
+    /// Local system to `unit`. The conversion is SI -> `unit` first, then
+    /// applies the local-to-SI conversion of the quantity to that result; an invalid
+    /// unit has null dimensions, so it is a `Standard_NullObject`
+    /// error; `api.any_from_ls(1.0, b"m")?`.
+    pub fn any_from_ls(&mut self, data: f64, unit: &[u8]) -> Result<f64, Failure> {
+        self.check_loading(self.local_system)?;
+        let mut dimensions = Handle::default();
+        let value = self.units.from_si_dimensions(data, unit, &mut dimensions)?;
+        let Some(quantity) = required(&dimensions)?.quantity(&self.units)? else {
+            return Ok(value);
+        };
+        self.local_system_units.convert_user_system_value_to_si(
+            &self.units,
+            quantity.as_bytes(),
+            value,
+        )
+    }
+    /// SI to `unit` (0 for an invalid unit); `api.any_from_si(273.15, b"deg.C")?`.
+    pub fn any_from_si(&mut self, data: f64, unit: &[u8]) -> Result<f64, Failure> {
+        self.check_loading(SystemUnits::Default)?;
+        self.units.from_si(data, unit)
+    }
+    /// `first` to `second` (value kept for unknown units or other dimensions);
+    /// `api.any_to_any(1.0, b"m", b"mm")?`.
+    pub fn any_to_any(&mut self, data: f64, first: &[u8], second: &[u8]) -> Result<f64, Failure> {
+        self.check_loading(SystemUnits::Default)?;
+        self.units.convert(data, first, second)
+    }
+}

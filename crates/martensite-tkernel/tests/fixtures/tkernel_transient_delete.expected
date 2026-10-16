@@ -1,0 +1,7 @@
+retained 1 0 0 0
+explicit 1
+default 1
+same_slot 1 1
+type_slot 1 Standard_Type Standard_Persistent
+null_queries 0 0
+handle_queries 1 1 0 1

@@ -1,0 +1,47 @@
+//! Construction order follows the field declaration, independently from Rust drop order.
+use super::ObjBnd;
+impl<T, B> ObjBnd<T, B> {
+    /// Pair an object with its bound; `ObjBnd::new(1, bounds)`.
+    pub fn new(object: T, bounds: B) -> Self {
+        Self { object, bounds }
+    }
+    /// Executes self-assignment phases without borrowing the same payload twice.
+    /// Object assignment precedes bounds assignment; a failure skips the remaining phase.
+    /// Example: `pair.assign_self_with(|object| object.assign_self(), |bounds| bounds.assign_self())`.
+    pub fn assign_self_with(
+        &mut self,
+        assign_object: impl FnOnce(&mut T),
+        assign_bounds: impl FnOnce(&mut B),
+    ) {
+        assign_object(&mut self.object);
+        assign_bounds(&mut self.bounds);
+    }
+}
+impl<T: Clone, B: Clone> ObjBnd<T, B> {
+    /// Copies the object before its bounds; `ObjBnd::new_ref(&1, &bounds)`.
+    pub fn new_ref(object: &T, bounds: &B) -> Self {
+        Self {
+            object: object.clone(),
+            bounds: bounds.clone(),
+        }
+    }
+}
+impl<T: Clone, B: Clone> Clone for ObjBnd<T, B> {
+    fn clone(&self) -> Self {
+        Self::new_ref(&self.object, &self.bounds)
+    }
+    fn clone_from(&mut self, source: &Self) {
+        self.object.clone_from(&source.object);
+        self.bounds.clone_from(&source.bounds);
+    }
+}
+
+impl<T: Default, B: Default> Default for ObjBnd<T, B> {
+    fn default() -> Self {
+        // Explicit initializer order keeps object-before-bounds construction.
+        Self {
+            object: T::default(),
+            bounds: B::default(),
+        }
+    }
+}

@@ -1,15 +1,18 @@
 [workspace]
-# scripts/build is the CI/release driver that the single GitHub workflow and
-# contributors run locally (`cargo xtask`). Add "crates/*" when the first kernel
-# crate lands: cargo rejects a member glob that matches no directory.
-members = ["scripts/build"]
+# crates/* are the kernel crates. scripts/build is the CI/release driver that the
+# single GitHub workflow and contributors run locally (`cargo xtask`).
+members = ["crates/*", "scripts/build"]
 resolver = "3"
 
 [workspace.package]
 edition = "2024"
 rust-version = "1.98.1"
 license = "GPL-2.0-only"
-publish = false
+repository = "https://github.com/Oblikovati/Martensite"
+# Kernel crates stay publishable: `cargo package` resolves a crate's unreleased
+# sibling dependencies through its local overlay registry only for publishable
+# packages, and the release packages every kernel crate together. Releases ship
+# the .crate files as GitHub release assets; nothing is published to crates.io.
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

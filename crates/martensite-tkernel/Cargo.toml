@@ -1,0 +1,138 @@
+[package]
+autotests = false
+name = "martensite-tkernel"
+version = "0.3.0"
+description = "Martensite kernel foundation: errors, memory, collections, strings, OS services, messages, units and resources."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+# The workspace forbids unsafe code. This crate owns the allocator, raw-memory and
+# platform FFI layers, so it denies unsafe code and lets each module that needs it
+# opt in with `#[allow(unsafe_code)]` and a SAFETY comment on every unsafe block
+# and impl (AGENTS.md, "Unsafe code exception"); clippy checks those comments. The
+# other lints match the workspace.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = "warn"
+undocumented_unsafe_blocks = "warn"
+
+[dependencies]
+allocator-api2 = "=0.4.0"
+bytemuck = { version = "=1.25.2", default-features = false }
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.0" }
+smallvec = { version = "1.16.3", default-features = false, features = ["const_generics"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "=0.2.190"
+
+[target.'cfg(target_vendor = "apple")'.dependencies]
+mach2 = "=0.7.0"
+
+[target."cfg(windows)".dependencies]
+libc = "=0.2.190"
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Globalization", "Win32_System_Console", "Win32_System_Diagnostics_Debug", "Win32_System_LibraryLoader", "Win32_System_Kernel", "Win32_System_Performance", "Win32_System_SystemInformation", "Win32_System_Threading"] }
+
+# Test modules share one executable per toolkit to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+# Mutates process locale and reexecutes exact test names.
+[[test]]
+name = "standard_c_locale_sentry"
+path = "tests/standard_c_locale_sentry.rs"
+
+# Mutates process locale and reexecutes exact test names.
+[[test]]
+name = "standard_character_locale"
+path = "tests/standard_character_locale.rs"
+
+# Installs process signals and reexecutes exact test names.
+[[test]]
+name = "osd_sec_sleep_signal"
+path = "tests/osd_sec_sleep_signal.rs"
+
+# Fatal error checks reexecute exact test names.
+[[test]]
+name = "standard_runtime_api_behavior"
+path = "tests/standard_runtime_api_behavior/main.rs"
+
+# Mutates the process-wide failure stack length.
+[[test]]
+name = "standard_runtime_stack_api_behavior"
+path = "tests/standard_runtime_stack_api_behavior.rs"
+
+# Mutates the process-wide failure stack length.
+[[test]]
+name = "aliased_array_exception_stacks"
+path = "tests/aliased_array_exception_stacks.rs"
+
+# Mutates the process-wide failure stack length.
+[[test]]
+name = "packed_map_iterator_errors"
+path = "tests/packed_map_iterator_errors.rs"
+
+# Mutates process signal and stack settings.
+[[test]]
+name = "osd_timing_api_behavior"
+path = "tests/osd_timing_api_behavior.rs"
+
+# Replaces the process-wide default messenger printers.
+[[test]]
+name = "message_defaults_behavior"
+path = "tests/message_defaults_behavior.rs"
+
+# Replaces the process-wide default messenger printers.
+[[test]]
+name = "messenger_report_case_log"
+path = "tests/messenger_report_case_log.rs"
+
+# Replaces the process-wide default messenger printers.
+[[test]]
+name = "message_messenger"
+path = "tests/message_messenger.rs"
+
+# Mutates process-wide ResourceDebug and Unicode format.
+[[test]]
+name = "resource_api_behavior"
+path = "tests/resource_api_behavior.rs"
+
+# Replaces the process-wide allocation callback.
+[[test]]
+name = "mmgr_opt_callback_unwind"
+path = "tests/mmgr_opt_callback_unwind.rs"
+
+# Observes process-wide allocations through its own global allocator.
+[[test]]
+name = "packed_map_native_rehash"
+path = "tests/packed_map_native_rehash.rs"
+
+# Observes process-wide allocations through its own global allocator.
+[[test]]
+name = "packed_map_object_storage"
+path = "tests/packed_map_object_storage.rs"
+
+# Observes the process-wide common allocator handle count.
+[[test]]
+name = "ordered_borrowed_clear"
+path = "tests/ordered_borrowed_clear.rs"
+
+# Observes the process-wide common allocator handle count.
+[[test]]
+name = "ordered_copy_lifetimes"
+path = "tests/ordered_copy_lifetimes.rs"
+
+# Replaces the process-wide allocation callback.
+[[test]]
+name = "mmgr_opt_initialize"
+path = "tests/mmgr_opt_initialize.rs"
+
+# Replaces the process-wide allocation callback.
+[[test]]
+name = "standard_services_api_behavior"
+path = "tests/standard_services_api_behavior.rs"

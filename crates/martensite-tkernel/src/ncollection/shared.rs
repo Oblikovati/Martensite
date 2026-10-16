@@ -1,0 +1,92 @@
+//! A value made shareable by handle: a transient that owns a `T`.
+use crate::standard::{RuntimeType, RuntimeTyped, StandardTransient, Transient};
+use std::any::{Any, TypeId};
+
+/// `T` with a transient reference count, so it can live in a `Handle`; `Handle::new(Shared::new(v))`.
+///
+/// Rust embeds `T` and dereferences to it. The type declares no
+/// runtime type of its own, so its dynamic type is the base transient. A guard against a
+/// `T` that already is a transient cannot be expressed; such a `T` simply nests its own count.
+#[repr(C)]
+pub struct Shared<T> {
+    parent: StandardTransient,
+    value: T,
+}
+
+impl<T> Shared<T> {
+    /// Wraps a value constructed at the call
+    /// site. Example: `Shared::new(vec![0; 3]).len() == 3`.
+    pub fn new(value: T) -> Self {
+        Self {
+            parent: StandardTransient::default(),
+            value,
+        }
+    }
+
+    /// Unwraps the value; `Shared::new(4).into_inner() == 4`.
+    pub fn into_inner(self) -> T {
+        self.value
+    }
+    /// Builds the wrapped base from captured reference arguments; `Shared::from_constructor(|| vec![7; 2])`.
+    pub fn from_constructor(construct: impl FnOnce() -> T) -> Self {
+        Self {
+            parent: StandardTransient::default(),
+            value: construct(),
+        }
+    }
+}
+impl<T: Clone> Clone for Shared<T> {
+    fn clone(&self) -> Self {
+        Self::from_constructor(|| self.value.clone())
+    }
+    fn clone_from(&mut self, source: &Self) {
+        // Transient assignment deliberately leaves the reference count unchanged.
+        self.value.clone_from(&source.value);
+    }
+}
+
+impl<T: Default> Default for Shared<T> {
+    /// A default-constructed `T`.
+    fn default() -> Self {
+        Self::new(T::default())
+    }
+}
+
+impl<T> std::ops::Deref for Shared<T> {
+    type Target = T;
+    fn deref(&self) -> &T {
+        &self.value
+    }
+}
+
+impl<T> std::ops::DerefMut for Shared<T> {
+    fn deref_mut(&mut self) -> &mut T {
+        &mut self.value
+    }
+}
+
+impl<T: Send + Sync + 'static> RuntimeTyped for Shared<T> {
+    // No runtime type of its own: it reports the base transient's name and descriptor.
+    const TYPE_NAME: &'static str = StandardTransient::TYPE_NAME;
+    fn static_type() -> &'static RuntimeType {
+        StandardTransient::static_type() // no runtime type of its own
+    }
+    fn project_from(object: &dyn crate::standard::Transient) -> Option<&Self> {
+        crate::standard::project_concrete::<Self>(object)
+    }
+}
+
+impl<T: Send + Sync + 'static> Transient for Shared<T> {
+    fn dynamic_type(&self) -> &'static RuntimeType {
+        StandardTransient::static_type()
+    }
+    fn project(&self, requested: TypeId) -> Option<&dyn Any> {
+        if requested == TypeId::of::<Self>() {
+            return Some(self);
+        }
+        self.parent.project(requested)
+    }
+    fn transient_base(&self) -> &StandardTransient {
+        &self.parent
+    }
+}

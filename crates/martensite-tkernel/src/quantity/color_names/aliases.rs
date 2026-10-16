@@ -1,0 +1,16 @@
+// Named-color table data: entry order is the `NamedColor` index, so keep entries in place.
+
+const ALIASES: [(&str, NamedColor); 12] = [
+    ("BLUE1", NamedColor::BLUE1),
+    ("CHARTREUSE1", NamedColor::CHARTREUSE1),
+    ("CYAN1", NamedColor::CYAN1),
+    ("GOLD1", NamedColor::GOLD1),
+    ("GREEN1", NamedColor::GREEN1),
+    ("LIGHTCYAN1", NamedColor::LIGHTCYAN1),
+    ("MAGENTA1", NamedColor::MAGENTA1),
+    ("ORANGE1", NamedColor::ORANGE1),
+    ("ORANGERED1", NamedColor::ORANGERED1),
+    ("RED1", NamedColor::RED1),
+    ("TOMATO1", NamedColor::TOMATO1),
+    ("YELLOW1", NamedColor::YELLOW1),
+];

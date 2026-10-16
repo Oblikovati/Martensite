@@ -1,0 +1,154 @@
+//! Transfers use the actual BaseList chain; cross-resource copies commit one node at a time.
+use super::{BaseListRawIterator, List, ListCursor};
+use crate::standard::Failure;
+impl<T: Clone> List<T> {
+    /// Copies contents while retaining this allocator; `destination.assign(&source)`.
+    pub fn assign(&mut self, source: &Self) -> &mut Self {
+        self.clear();
+        for value in source {
+            self.append_ref(value);
+        }
+        self
+    }
+    /// Appends and empties another list; `destination.append_list(&mut source)`.
+    pub fn append_list(&mut self, source: &mut Self) {
+        if self.allocator() != source.allocator() {
+            self.append_copied_list(source);
+            return;
+        }
+        self.owners.reserve(source.owners.len());
+        self.topology
+            // SAFETY: both chains are the live, disjoint chains of two exclusively borrowed
+            // lists with the same allocator (checked above), and the donor's owners move to
+            // `self` right after.
+            .edit_pair(&mut source.topology, |base, donor| unsafe {
+                base.append_list(donor)
+            });
+        self.owners.extend(source.owners.drain());
+    }
+    /// Prepends another list, panicking on failure; `destination.prepend_list(&mut source)`.
+    pub fn prepend_list(&mut self, source: &mut Self) {
+        self.prepend_list_checked(source).expect(
+            "native list prepend failed; expected a nonempty destination for a foreign allocator",
+        );
+    }
+    /// Reports cross-resource prepend failures; `destination.prepend_list_checked(&mut source)?`.
+    pub fn prepend_list_checked(&mut self, source: &mut Self) -> Result<(), Failure> {
+        if self.allocator() != source.allocator() {
+            return self.insert_copied_list_before(source, &mut self.cursor());
+        }
+        self.owners.reserve(source.owners.len());
+        self.topology
+            // SAFETY: both chains are the live, disjoint chains of two exclusively borrowed
+            // lists with the same allocator (checked above), and the donor's owners move to
+            // `self` right after.
+            .edit_pair(&mut source.topology, |base, donor| unsafe {
+                base.prepend_list(donor)
+            });
+        self.owners.extend(source.owners.drain());
+        Ok(())
+    }
+    /// Splices before a node while retaining caller cursor state; `list.insert_list_before(&mut source, &cursor)?`.
+    pub fn insert_list_before(
+        &mut self,
+        source: &mut Self,
+        cursor: &ListCursor,
+    ) -> Result<(), Failure> {
+        let mut position = *cursor;
+        self.insert_list_before_at(source, &mut position)
+    }
+    /// Splices before current and updates previous; `list.insert_list_before_at(&mut source, &mut cursor)?`.
+    pub fn insert_list_before_at(
+        &mut self,
+        source: &mut Self,
+        cursor: &mut ListCursor,
+    ) -> Result<(), Failure> {
+        if self.allocator() != source.allocator() {
+            return self.insert_copied_list_before(source, cursor);
+        }
+        let mut raw = self.locate_cursor(*cursor, "InsertBefore")?;
+        self.owners.reserve(source.owners.len());
+        self.topology
+            // SAFETY: both chains are the live, disjoint chains of two exclusively borrowed
+            // lists with the same allocator (checked above), and `raw` is a cursor
+            // locate_cursor validated in `self`.
+            .edit_pair(&mut source.topology, |base, donor| unsafe {
+                base.insert_list_before(donor, &mut raw)
+            })?;
+        self.owners.extend(source.owners.drain());
+        cursor.update_raw(raw);
+        Ok(())
+    }
+    /// Splices after current; an end cursor appends; `list.insert_list_after(&mut source, &cursor)?`.
+    pub fn insert_list_after(
+        &mut self,
+        source: &mut Self,
+        cursor: &ListCursor,
+    ) -> Result<(), Failure> {
+        if !cursor.more() {
+            self.append_list(source);
+            return Ok(());
+        }
+        let mut raw = self.locate_cursor(*cursor, "InsertAfter")?;
+        if self.allocator() != source.allocator() {
+            let mut following = *cursor;
+            following.next(self);
+            return self.insert_copied_list_before(source, &mut following);
+        }
+        self.transfer_after_same(source, &mut raw)
+    }
+    fn transfer_after_same(
+        &mut self,
+        source: &mut Self,
+        raw: &mut BaseListRawIterator,
+    ) -> Result<(), Failure> {
+        self.owners.reserve(source.owners.len());
+        self.topology
+            // SAFETY: both chains are the live, disjoint chains of two exclusively borrowed
+            // lists; the caller checked that the allocators match and passes a cursor validated
+            // in `self`.
+            .edit_pair(&mut source.topology, |base, donor| unsafe {
+                base.insert_list_after(donor, raw)
+            })?;
+        self.owners.extend(source.owners.drain());
+        Ok(())
+    }
+    fn append_copied_list(&mut self, source: &mut Self) {
+        // Appending a list commits each node before constructing the next one.
+        for value in source.iter() {
+            self.append_ref(value);
+        }
+        source.clear();
+    }
+    fn insert_copied_list_before(
+        &mut self,
+        source: &mut Self,
+        cursor: &mut ListCursor,
+    ) -> Result<(), Failure> {
+        // Checks after each copy; an empty source never validates the cursor.
+        for value in source.iter() {
+            self.insert_before_at_ref(value, cursor)?;
+        }
+        source.clear();
+        Ok(())
+    }
+}
+impl<T: Clone> Clone for List<T> {
+    fn clone(&self) -> Self {
+        let mut copy = Self::with_allocator(self.allocator().clone());
+        copy.assign(self);
+        copy
+    }
+    fn clone_from(&mut self, source: &Self) {
+        // Assignment retains the destination allocator, unlike copy construction.
+        self.assign(source);
+    }
+}
+impl<T> List<T> {
+    /// Keeps self-append's early return; `list.append_self()`.
+    pub fn append_self(&mut self) {}
+    /// Keeps self-prepend's early return; `list.prepend_self()`.
+    pub fn prepend_self(&mut self) {}
+    /// Keeps self-insertion-before's early return even at end; `list.insert_before_self(&cursor)`.
+    pub fn insert_before_self(&mut self, _cursor: &ListCursor) {}
+}

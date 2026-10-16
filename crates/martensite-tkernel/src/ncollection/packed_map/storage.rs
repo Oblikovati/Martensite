@@ -1,0 +1,121 @@
+#![allow(unsafe_code)]
+//! Authoritative bucket heads and globally allocated, stable-address node chains.
+use super::{PackedInteger, PackedMapNode};
+use std::alloc::Layout;
+use std::ptr::NonNull;
+pub(super) mod allocation;
+mod mutation;
+mod rehash;
+
+pub(super) struct PackedNodeTable<T: PackedInteger> {
+    pub(super) heads: NonNull<*mut PackedMapNode<T>>,
+    length: usize,
+}
+impl<T: PackedInteger> Default for PackedNodeTable<T> {
+    fn default() -> Self {
+        Self {
+            heads: NonNull::dangling(),
+            length: 0,
+        }
+    }
+}
+// SAFETY: The table exclusively owns every reachable node. Links cannot escape as mutable references.
+// Only the word is stored inside nodes; PackedMap's PhantomData separately tracks its key type.
+unsafe impl<T: PackedInteger> Send for PackedNodeTable<T> where T::Word: Send {}
+// SAFETY: as for Send above: shared access only reads the owned nodes' words, which needs
+// T::Word: Sync.
+unsafe impl<T: PackedInteger> Sync for PackedNodeTable<T> where T::Word: Sync {}
+impl<T: PackedInteger> PackedNodeTable<T> {
+    fn allocated(length: usize) -> Self {
+        let layout = Self::layout(length);
+        let heads = allocation::reserve(layout).cast();
+        let mut table = Self { heads, length };
+        for bucket in 0..length {
+            table.set_head(bucket, std::ptr::null_mut());
+        }
+        table
+    }
+    fn layout(length: usize) -> Layout {
+        Layout::array::<*mut PackedMapNode<T>>(length).unwrap_or_else(|_| {
+            panic!("bucket count {length}: expected a representable pointer array")
+        })
+    }
+    pub(super) fn len(&self) -> usize {
+        self.length
+    }
+    fn head_ptr(&self, bucket: usize) -> *mut PackedMapNode<T> {
+        assert!(
+            bucket < self.length,
+            "bucket {bucket}: expected index below {}",
+            self.length
+        );
+        // SAFETY: `bucket < self.length` (asserted above), and Every allocated slot is initialized, and the table retains its allocation.
+        unsafe { self.heads.as_ptr().add(bucket).read() }
+    }
+    fn set_head(&mut self, bucket: usize, node: *mut PackedMapNode<T>) {
+        assert!(
+            bucket < self.length,
+            "bucket {bucket}: expected index below {}",
+            self.length
+        );
+        // SAFETY: `bucket < self.length` (asserted above). Exclusive table access protects the initialized pointer slot.
+        unsafe { self.heads.as_ptr().add(bucket).write(node) };
+    }
+    pub(super) fn head(&self, bucket: usize) -> Option<&PackedMapNode<T>> {
+        if bucket >= self.length {
+            return None;
+        }
+        // SAFETY: `bucket < self.length`, and a non-null head is a live node owned by this table. Links are installed only from live global Box allocations owned by this table.
+        unsafe { self.head_ptr(bucket).as_ref() }
+    }
+    pub(super) fn following<'a>(
+        &'a self,
+        node: &'a PackedMapNode<T>,
+    ) -> Option<&'a PackedMapNode<T>> {
+        // SAFETY: a non-null link is a live node owned by this table, which the shared borrow keeps alive. Only internal callers supply nodes borrowed from this same immutable table.
+        unsafe { node.next().as_ref() }
+    }
+    pub(super) fn chain(&self, bucket: usize) -> impl Iterator<Item = &PackedMapNode<T>> {
+        std::iter::successors(self.head(bucket), |node| self.following(node))
+    }
+    pub(super) fn nodes(&self) -> impl Iterator<Item = &PackedMapNode<T>> {
+        (0..self.length).flat_map(|bucket| self.chain(bucket))
+    }
+    pub(super) fn find(&self, bucket: usize, index: T::Word) -> Option<&PackedMapNode<T>> {
+        self.chain(bucket).find(|node| node.is_equal(index))
+    }
+    pub(super) fn find_mut(
+        &mut self,
+        bucket: usize,
+        index: T::Word,
+    ) -> Option<&mut PackedMapNode<T>> {
+        let mut pointer = self.head_ptr(bucket);
+        // SAFETY: a non-null link is a live node owned by this table. Exclusive table access makes each reachable node exclusively accessible.
+        while let Some(node) = unsafe { pointer.as_mut() } {
+            if node.is_equal(index) {
+                return Some(node);
+            }
+            pointer = node.next();
+        }
+        None
+    }
+}
+impl<T: PackedInteger> Drop for PackedNodeTable<T> {
+    fn drop(&mut self) {
+        for bucket in 0..self.length {
+            let mut pointer = self.head_ptr(bucket);
+            while !pointer.is_null() {
+                // SAFETY: each node of the chain is a Box allocation this table owns, reclaimed once here. Remove exactly one owned global allocation; Next itself is non-owning.
+                let owner = unsafe { Box::from_raw(pointer) };
+                pointer = owner.next();
+            }
+        }
+        let address = if self.length == 0 {
+            std::ptr::null_mut()
+        } else {
+            self.heads.as_ptr().cast()
+        };
+        // SAFETY: `address` is null or the heads allocation this table made, released once. Nodes are gone; only the original optimal allocation remains to be released.
+        unsafe { allocation::release(address) };
+    }
+}

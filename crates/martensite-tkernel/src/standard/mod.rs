@@ -1,0 +1,94 @@
+//! The standard foundation package: errors, handles, runtime types, memory and streams.
+mod guid;
+pub use guid::{GUID_SIZE, GUID_SIZE_ALLOC, Guid, Uuid};
+mod array_stream_buffer;
+mod array_stream_hooks;
+mod array_stream_state;
+pub use array_stream_buffer::ArrayStreamBuffer;
+pub use array_stream_hooks::{ArrayStreamBufferHooks, NativeArrayStreamBufferHooks};
+pub use array_stream_state::{ArrayStreamBufferState, ArrayStreamSeekDirection};
+mod failure;
+mod failure_transport;
+pub use failure::Failure;
+pub use failure_transport::{catch_native_failure, raise_native_failure};
+pub mod exceptions;
+mod strtod;
+pub use strtod::{strtod, strtod_bytes};
+
+pub mod character;
+
+pub mod hashing;
+pub use hashing::hash_bytes;
+pub mod atomic;
+pub mod c_string;
+pub mod ext_character;
+pub mod short_real;
+pub mod time;
+pub mod version_info;
+
+mod handle;
+mod runtime_type;
+mod shared_state;
+mod transient;
+pub use handle::{Handle, HandleObserver, HandleView, WeakHandle};
+pub(crate) use runtime_type::c_prefix;
+pub use runtime_type::{
+    InterfaceCaster, InterfaceEntry, RuntimeType, RuntimeTyped, project_concrete, project_interface,
+};
+pub use shared_state::SharedState;
+pub use transient::{StandardTransient, Transient, TransientStorage};
+pub mod assert;
+pub mod error_handler;
+pub use error_handler::{ErrorHandler, ErrorHandlerCallback};
+mod persistent;
+pub mod type_queries;
+pub use persistent::StandardPersistent;
+mod stack_trace;
+pub use stack_trace::stack_trace;
+pub mod dump;
+pub mod integer;
+pub mod memory;
+mod mmgr_opt;
+mod mmgr_root;
+pub mod real;
+pub use mmgr_opt::{MMgrOpt, MMgrOptSystemBlock, OptCallBack};
+pub use mmgr_root::{MMgrRoot, StorageAddress};
+pub mod condition;
+pub mod memory_utils;
+pub mod mutex;
+pub use condition::StandardCondition;
+pub use mutex::StandardMutex;
+pub mod c_locale_sentry;
+mod fread_stream;
+mod istream_state;
+mod istream_stream;
+mod read_buffer;
+mod read_line_buffer;
+mod stream_fill;
+pub use fread_stream::FreadStream;
+pub use istream_state::{IstreamException, IstreamExceptionMask, IstreamReadResult};
+pub use istream_stream::IstreamStream;
+pub use read_buffer::{ReadBuffer, ReadChunkIstreamError};
+pub use read_line_buffer::ReadLineBuffer;
+mod nonrecursive_mutex;
+pub use nonrecursive_mutex::{NonRecursiveMutex, NonRecursiveMutexGuard};
+
+mod retained_handle_reference;
+pub use retained_handle_reference::RetainedHandleReference;
+mod scoped_handle_reference;
+pub use scoped_handle_reference::ScopedHandleReferenceSlot;
+mod handle_reference;
+pub use handle_reference::{HandleReference, ProjectedHandleReference};
+mod handle_field_ref;
+pub use handle_field_ref::HandleFieldRef;
+mod weak_handle_field_ref;
+pub use weak_handle_field_ref::WeakHandleFieldRef;
+
+mod weak_handle_slot_ref;
+pub use weak_handle_slot_ref::WeakHandleSlotRef;
+
+mod weak_handle_slot_assignment;
+pub use weak_handle_slot_assignment::WeakHandleSlotAssignment;
+
+mod intrusive_reference_slot;
+pub use intrusive_reference_slot::{IntrusiveReferenceSlot, IntrusiveRetirementBorrow};

@@ -1,0 +1,106 @@
+//! Appending, concatenating, prepending and their operators.
+use super::{AsciiString, c_string_prefix};
+use crate::tcollection::ExtendedString;
+
+impl AsciiString {
+    /// Appends every operand with an `AsciiString` conversion: a `&str`
+    /// is a C string (through its first NUL), a byte slice is an explicit span, `u8` is a
+    /// `char` (NUL appends nothing), `i32` is `%d` and `f64` is `%g`; `text.assign_cat(42)`.
+    pub fn assign_cat(&mut self, input: impl Into<Self>) {
+        self.append(&input.into());
+    }
+    /// A concatenated copy. Unlike `assign_cat`, a `u8` operand is
+    /// appended even when it is NUL, as appending a byte copies one byte; `text.cat("suffix")`.
+    pub fn cat(&self, input: impl CatOperand) -> Self {
+        input.cat_onto(self)
+    }
+    /// Appends a bounded C byte buffer up to its first NUL; `text.assign_cat_c_bytes(Some(b"x\0y"))`.
+    /// `None` is a no-op, like a null pointer.
+    pub fn assign_cat_c_bytes(&mut self, bytes: Option<&[u8]>) {
+        let Some(bytes) = bytes else {
+            return;
+        };
+        self.append_bytes(c_string_prefix(bytes));
+    }
+    /// Copies the string and appends a bounded C buffer; `text.cat_c_bytes(None)`.
+    /// Bounding the scan permits safe Rust callers without a raw-pointer lifetime contract.
+    pub fn cat_c_bytes(&self, bytes: Option<&[u8]>) -> Self {
+        let mut result = self.clone();
+        result.assign_cat_c_bytes(bytes);
+        result
+    }
+    /// Appends exactly one byte, NUL included; `text.cat_char(b'!')`.
+    pub fn cat_char(&self, byte: u8) -> Self {
+        Self::joined_with_char(self, byte)
+    }
+    /// Appends UTF-8, or one byte per
+    /// UTF-16 unit with `replacement` for units above 0xFF; `text.assign_cat_extended(&wide, None)`.
+    pub fn assign_cat_extended(&mut self, text: &ExtendedString, replacement: Option<u8>) {
+        self.append(&Self::from_extended(text, replacement));
+    }
+    /// Example: `text.cat_extended(&wide, Some(b'?'))`.
+    pub fn cat_extended(&self, text: &ExtendedString, replacement: Option<u8>) -> Self {
+        let mut result = self.clone();
+        result.assign_cat_extended(text, replacement);
+        result
+    }
+    /// Inserts the whole of `other` at the front; `text.prepend(&head)`.
+    pub fn prepend(&mut self, other: &Self) {
+        self.splice_bytes(0, other.as_bytes());
+    }
+    /// Appending a span of this same string: appends a copy of
+    /// the zero-based `source` span; `text.assign_cat_self(1..text.len())`.
+    pub fn assign_cat_self(&mut self, source: std::ops::Range<usize>) {
+        let copy = self.as_bytes()[source].to_vec();
+        self.append_bytes(&copy);
+    }
+}
+
+/// An operand of [`AsciiString::cat`] and `&AsciiString + operand`; each impl is one
+/// `Cat` overload. `text.cat(7_u8)` appends byte 7, `text.cat(12)` appends `"12"`.
+pub trait CatOperand {
+    /// Returns `base` followed by this operand; `CatOperand::cat_onto(b'!', &text)`.
+    fn cat_onto(self, base: &AsciiString) -> AsciiString;
+}
+impl CatOperand for u8 {
+    fn cat_onto(self, base: &AsciiString) -> AsciiString {
+        base.cat_char(self)
+    }
+}
+/// Operands whose concatenation equals appending to a copy.
+macro_rules! cat_through_assign {
+    ($($operand:ty),*) => {$(
+        impl CatOperand for $operand {
+            fn cat_onto(self, base: &AsciiString) -> AsciiString {
+                let mut result = base.clone();
+                result.assign_cat(self);
+                result
+            }
+        }
+    )*};
+}
+cat_through_assign!(
+    &str,
+    &[u8],
+    &AsciiString,
+    AsciiString,
+    i32,
+    f64,
+    &ExtendedString
+);
+impl<const N: usize> CatOperand for &[u8; N] {
+    fn cat_onto(self, base: &AsciiString) -> AsciiString {
+        base.cat(c_string_prefix(self.as_slice()))
+    }
+}
+impl<T: CatOperand> std::ops::Add<T> for &AsciiString {
+    type Output = AsciiString;
+    fn add(self, other: T) -> AsciiString {
+        self.cat(other)
+    }
+}
+impl<T: Into<AsciiString>> std::ops::AddAssign<T> for AsciiString {
+    fn add_assign(&mut self, other: T) {
+        self.assign_cat(other);
+    }
+}

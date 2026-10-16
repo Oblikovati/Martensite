@@ -1,0 +1,101 @@
+//! Rust override points for the virtual stream-buffer members.
+use std::io;
+
+use super::array_stream_state::{ArrayStreamBufferState, ArrayStreamSeekDirection};
+
+/// Customizes stream-buffer behavior while sharing one cursor and one byte range.
+///
+/// Implement only the callbacks whose behavior differs; each default matches the
+/// default implementation on valid buffer positions. Use it with
+/// `ArrayStreamBuffer::with_hooks(b"ABC", CustomHooks)`.
+pub trait ArrayStreamBufferHooks {
+    /// Reinitializes the shared buffer; example: `state.init(bytes)` resets the cursor.
+    fn init<'a>(&mut self, state: &mut ArrayStreamBufferState<'a>, bytes: &'a [u8]) {
+        state.init(bytes);
+    }
+
+    /// Implements `underflow`; example: `state.underflow()` reads the current int result.
+    fn underflow(&mut self, state: &mut ArrayStreamBufferState<'_>) -> i32 {
+        state.underflow()
+    }
+
+    /// Implements `uflow`; example: `state.uflow()` returns and consumes one int result.
+    fn uflow(&mut self, state: &mut ArrayStreamBufferState<'_>) -> i32 {
+        state.uflow()
+    }
+
+    /// Implements `pbackfail`; example: `state.pbackfail(-1)` requests EOF putback.
+    fn pbackfail(&mut self, state: &mut ArrayStreamBufferState<'_>, requested: i32) -> i32 {
+        state.pbackfail(requested)
+    }
+
+    /// Implements `showmanyc`; example: `state.available() as isize` returns unread bytes.
+    fn showmanyc(&mut self, state: &mut ArrayStreamBufferState<'_>) -> isize {
+        state.available() as isize
+    }
+
+    /// Implements `seekoff`; example: `state.seekoff(1, ArrayStreamSeekDirection::Begin)`.
+    fn seekoff(
+        &mut self,
+        state: &mut ArrayStreamBufferState<'_>,
+        offset: i64,
+        direction: ArrayStreamSeekDirection,
+    ) -> io::Result<u64> {
+        state.seekoff(offset, direction)
+    }
+
+    /// Implements `seekpos`; example: `state.seekpos(1)` selects the absolute position.
+    fn seekpos(
+        &mut self,
+        state: &mut ArrayStreamBufferState<'_>,
+        position: u64,
+    ) -> io::Result<u64> {
+        let offset = i64::try_from(position).map_err(|_| invalid_seekpos(position))?;
+        self.seekoff(state, offset, ArrayStreamSeekDirection::Begin)
+    }
+
+    /// Implements `xsgetn`; example: `state.xsgetn(output)` consumes a bounded slice.
+    fn xsgetn(&mut self, state: &mut ArrayStreamBufferState<'_>, output: &mut [u8]) -> usize {
+        state.xsgetn(output)
+    }
+
+    /// Keeps signed requests and override results; `hooks.xsgetn_signed(state, output, -2)`.
+    /// The default bridges the bounded hook, rejecting reads outside valid source/destination memory.
+    fn xsgetn_signed(
+        &mut self,
+        state: &mut ArrayStreamBufferState<'_>,
+        output: &mut [u8],
+        count: isize,
+    ) -> io::Result<isize> {
+        let requested =
+            usize::try_from(count).map_err(|_| invalid_read_count(count, output.len()))?;
+        if requested.min(state.available()) > output.len() {
+            return Err(invalid_read_count(count, output.len()));
+        }
+        let bounded = requested.min(output.len());
+        let copied = self.xsgetn(state, &mut output[..bounded]);
+        isize::try_from(copied).map_err(|_| invalid_read_count(count, output.len()))
+    }
+}
+
+fn invalid_read_count(count: isize, capacity: usize) -> io::Error {
+    io::Error::new(
+        io::ErrorKind::InvalidInput,
+        format!(
+            "read count {count}: expected nonnegative read fitting destination capacity {capacity}"
+        ),
+    )
+}
+
+/// Default callbacks with the concrete stream-buffer behavior.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct NativeArrayStreamBufferHooks;
+
+impl ArrayStreamBufferHooks for NativeArrayStreamBufferHooks {}
+
+fn invalid_seekpos(position: u64) -> io::Error {
+    io::Error::new(
+        io::ErrorKind::InvalidInput,
+        format!("position {position}: expected a signed native position"),
+    )
+}

@@ -1,0 +1,148 @@
+//! Magnitude, unit, interpolation and JSON members of the vectors.
+use super::{ElementCast, Vec2, Vec3, Vec4};
+use crate::standard::dump::{self, DumpOutput};
+use std::io;
+use std::ops::{Add, Mul};
+
+impl<T: super::super::VectorSquareComponent> Vec2<T> {
+    /// Evaluates x*x+y*y in this order; `Vec2::new(3,4).square_modulus() == 25`.
+    pub fn square_modulus(&self) -> T {
+        T::vector_component_square([self.x, self.y])
+    }
+}
+impl<T: super::super::VectorSquareComponent> Vec3<T> {
+    /// Evaluates x*x+y*y+z*z in this order; `Vec3::new(3,4,0).square_modulus() == 25`.
+    pub fn square_modulus(&self) -> T {
+        T::vector_component_square([self.x, self.y, self.z])
+    }
+}
+impl<T: super::VectorProductDifference> Vec3<T> {
+    /// Computes the right-handed cross product; `Vec3::cross(&dx, &dy) == dz`.
+    pub fn cross(first: &Self, second: &Self) -> Self {
+        Self::new(
+            T::vector_product_difference(first.y, second.z, first.z, second.y),
+            T::vector_product_difference(first.z, second.x, first.x, second.z),
+            T::vector_product_difference(first.x, second.y, first.y, second.x),
+        )
+    }
+}
+impl<T: Copy> Vec2<T>
+where
+    i32: ElementCast<T>,
+{
+    /// Builds the X unit vector; `Vec2::<f64>::dx().x == 1.0`.
+    pub fn dx() -> Self {
+        Self::new(1_i32.cast(), 0_i32.cast())
+    }
+    /// Builds the Y unit vector; `Vec2::<f64>::dy().y == 1.0`.
+    pub fn dy() -> Self {
+        Self::new(0_i32.cast(), 1_i32.cast())
+    }
+}
+impl<T: Copy> Vec3<T>
+where
+    i32: ElementCast<T>,
+{
+    /// Builds the X unit vector; `Vec3::<f64>::dx().x == 1.0`.
+    pub fn dx() -> Self {
+        Self::new(1_i32.cast(), 0_i32.cast(), 0_i32.cast())
+    }
+    /// Builds the Y unit vector; `Vec3::<f64>::dy().y == 1.0`.
+    pub fn dy() -> Self {
+        Self::new(0_i32.cast(), 1_i32.cast(), 0_i32.cast())
+    }
+    /// Builds the Z unit vector; `Vec3::<f64>::dz().z == 1.0`.
+    pub fn dz() -> Self {
+        Self::new(0_i32.cast(), 0_i32.cast(), 1_i32.cast())
+    }
+}
+impl<T> Vec3<T>
+where
+    T: super::VectorInterpolationComponent,
+    Vec3<T>: Mul<T, Output = Vec3<T>> + Add<Output = Vec3<T>>,
+{
+    /// Interpolates `from*(1-t) + to*t`; `Vec3::lerp(&a, &b, 0.5)`.
+    pub fn lerp(from: &Self, to: &Self, parameter: T) -> Self {
+        *from * parameter.vector_interpolation_complement() + *to * parameter
+    }
+}
+// The magnitude is the element type after sqrt, and normalization uses / followed by assignment.
+impl<T: super::super::VectorMagnitudeComponent> Vec2<T> {
+    /// Returns the square-root magnitude with integral promotions; `Vec2::new(3_i16, 4).modulus() == 5`.
+    pub fn modulus(&self) -> T {
+        T::vector_component_modulus([self.x, self.y])
+    }
+}
+impl<T: super::super::VectorMagnitudeComponent> Vec3<T> {
+    /// Returns the square-root magnitude; `Vec3::new(3.0_f64, 4.0, 0.0).modulus() == 5.0`.
+    pub fn modulus(&self) -> T {
+        T::vector_component_modulus([self.x, self.y, self.z])
+    }
+    /// Divides each component by its magnitude unless zero; `vector.normalize()`.
+    pub fn normalize(&mut self) {
+        let modulus: T = self.modulus();
+        if !modulus.vector_component_is_zero() {
+            self.x = self.x / modulus;
+            self.y = self.y / modulus;
+            self.z = self.z / modulus;
+        }
+    }
+    /// Returns a normalized copy; `vector.normalized()`.
+    pub fn normalized(&self) -> Self {
+        let mut copy: Self = *self;
+        copy.normalize();
+        copy
+    }
+}
+/// Implements componentwise absolute value with the element operation supplied per type.
+macro_rules! generic_absolute_members {
+    ($vector:ident, $($component:ident),+) => {
+        impl<T: super::super::VectorAbsoluteComponent> $vector<T> {
+            /// Returns componentwise absolute values; `vector.cwise_abs()`.
+            pub fn cwise_abs(&self) -> Self {
+                Self::new($(self.$component.vector_component_abs()),+)
+            }
+        }
+    };
+}
+generic_absolute_members!(Vec2, x, y);
+generic_absolute_members!(Vec3, x, y, z);
+generic_absolute_members!(Vec4, x, y, z, w);
+/// Dumps the components as numerical JSON values. Each is read as
+/// a `double`, so float components are promoted exactly; integer instantiations would read
+/// an int as a double, which is undefined, and have no `dump_json`.
+macro_rules! dump_members {
+    () => {
+        impl<T: super::super::VectorDumpComponent> Vec2<T> {
+            /// Writes `"Vec2": [x, y]`; `vector.dump_json(&mut stream)?`.
+            pub fn dump_json(&self, output: &mut impl DumpOutput) -> io::Result<()> {
+                dump::dump_vector(
+                    output,
+                    "Vec2",
+                    &self.data().map(|value| value.promote_vector_dump()),
+                )
+            }
+        }
+        impl<T: super::super::VectorDumpComponent> Vec3<T> {
+            /// Writes `"Vec3": [x, y, z]`; `vector.dump_json(&mut stream)?`.
+            pub fn dump_json(&self, output: &mut impl DumpOutput) -> io::Result<()> {
+                dump::dump_vector(
+                    output,
+                    "Vec3",
+                    &self.data().map(|value| value.promote_vector_dump()),
+                )
+            }
+        }
+        impl<T: super::super::VectorDumpComponent> Vec4<T> {
+            /// Writes `"Vec4": [x, y, z, w]`; `vector.dump_json(&mut stream)?`.
+            pub fn dump_json(&self, output: &mut impl DumpOutput) -> io::Result<()> {
+                dump::dump_vector(
+                    output,
+                    "Vec4",
+                    &self.data().map(|value| value.promote_vector_dump()),
+                )
+            }
+        }
+    };
+}
+dump_members!();

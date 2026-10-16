@@ -1,0 +1,166 @@
+//! Byte buffer whose storage retains the original allocator until released.
+use super::{AllocatedBytes, BaseAllocator};
+use crate::standard::{
+    Failure, StandardTransient,
+    dump::{DumpOutput, add_values_separator},
+};
+use std::io;
+
+mod adoption;
+mod pointers;
+mod raw_adoption;
+
+/// Owned buffer with explicit allocation state; `Buffer::new(Some(allocator), 16)`.
+///
+/// `None` stands for a null allocator handle. The buffer is a transient, so it
+/// can be shared by `Handle<Buffer>`.
+#[repr(C)]
+pub struct Buffer {
+    parent: StandardTransient,
+    allocator: Option<BaseAllocator>,
+    storage: Option<AllocatedBytes>,
+    logical_size: usize,
+}
+
+impl Buffer {
+    /// Creates and allocates a buffer.
+    ///
+    /// Construction starts with `Allocate`, whose `Free(nullptr)` raises Standard_ProgramError
+    /// for an accumulating allocator, so such a buffer cannot be built.
+    /// Example: `Buffer::new(Some(BaseAllocator::common()), 0)?.is_empty() == false`.
+    pub fn new(allocator: Option<BaseAllocator>, size: usize) -> Result<Self, Failure> {
+        let mut buffer = Self {
+            parent: StandardTransient::default(),
+            allocator,
+            storage: None,
+            logical_size: 0,
+        };
+        buffer.allocate(size)?;
+        Ok(buffer)
+    }
+
+    /// Adopts data allocated by `allocator`.
+    ///
+    /// The owned allocation carries its own length, so the size is `data.as_slice().len()`;
+    /// it is freed by the allocator that made it even when `allocator` is `None`, so it
+    /// never leaks. Example: `Buffer::with_data(Some(a.clone()), a.allocate(4).unwrap())`.
+    pub fn with_data(allocator: Option<BaseAllocator>, data: AllocatedBytes) -> Self {
+        Self {
+            parent: StandardTransient::default(),
+            allocator,
+            logical_size: data.as_slice().len(),
+            storage: Some(data),
+        }
+    }
+
+    /// Replaces storage (`Allocate`); `Ok(false)` when nothing was allocated, `Err` when the
+    /// preceding `Free` raises.
+    ///
+    /// A size without an allocator has nothing to allocate with,
+    /// so it reports `false`.
+    /// Example: `buffer.allocate(32)?`.
+    pub fn allocate(&mut self, size: usize) -> Result<bool, Failure> {
+        self.free()?;
+        self.storage = self
+            .allocator
+            .as_ref()
+            .and_then(|allocator| allocator.allocate(size));
+        self.logical_size = self
+            .storage
+            .as_ref()
+            .map_or(0, |bytes| bytes.as_slice().len());
+        Ok(self.storage.is_some())
+    }
+
+    /// Releases storage while retaining allocator selection (`Free`); `buffer.free()?`.
+    ///
+    /// The allocator frees the data even when there is none (`Free(nullptr)`),
+    /// which the accumulating allocator refuses; on failure the buffer is unchanged.
+    pub fn free(&mut self) -> Result<(), Failure> {
+        if let Some(allocator) = &self.allocator {
+            allocator.check_free(self.data_ptr())?;
+        }
+        self.storage = None;
+        self.logical_size = 0;
+        Ok(())
+    }
+
+    /// Reports missing allocation, independently of length; `buffer.is_empty()`.
+    pub fn is_empty(&self) -> bool {
+        self.storage.is_none()
+    }
+
+    /// Returns the logical byte count (`Size`); `buffer.size() == 16`.
+    pub fn size(&self) -> usize {
+        self.logical_size
+    }
+
+    /// Borrows buffer bytes (`Data`); empty when unallocated. Example: `buffer.as_slice().iter()`.
+    pub fn as_slice(&self) -> &[u8] {
+        self.storage
+            .as_ref()
+            .map_or(&[], |bytes| &bytes.as_slice()[..self.logical_size])
+    }
+
+    /// Borrows mutable buffer bytes; `buffer.as_mut_slice().fill(42)`.
+    pub fn as_mut_slice(&mut self) -> &mut [u8] {
+        self.storage.as_mut().map_or(&mut [], |bytes| {
+            &mut bytes.as_mut_slice()[..self.logical_size]
+        })
+    }
+
+    /// The data address, null when unallocated; `buffer.data_ptr()`.
+    pub fn data_ptr(&self) -> *const u8 {
+        self.storage
+            .as_ref()
+            .map_or(std::ptr::null(), AllocatedBytes::as_ptr)
+    }
+
+    /// Returns the selected allocator identity; `buffer.allocator().is_some()`.
+    pub fn allocator(&self) -> Option<&BaseAllocator> {
+        self.allocator.as_ref()
+    }
+
+    /// Frees storage before changing allocator; `buffer.set_allocator(None)?`.
+    /// When that `Free` raises, the allocator is kept.
+    pub fn set_allocator(&mut self, allocator: Option<BaseAllocator>) -> Result<(), Failure> {
+        self.free()?;
+        self.allocator = allocator;
+        Ok(())
+    }
+
+    /// Dumps data address, size and allocator address; `depth` is unused.
+    ///
+    /// Addresses use the short pointer form, which keeps the stream's
+    /// `x` after prepending `0x` (`"0xx7f..."`). Example: `buffer.dump_json(&mut stream, -1)?`.
+    pub fn dump_json(&self, output: &mut impl DumpOutput, _depth: i32) -> io::Result<()> {
+        let allocator = self.allocator.as_ref().map_or(0, |a| a.identity() as usize);
+        dump_pointer(output, "Data", self.data_ptr() as usize)?;
+        add_values_separator(output)?;
+        output.write_fragment(format!("\"Size\": {}", self.size()).as_bytes())?;
+        dump_pointer(output, "Allocator", allocator)
+    }
+}
+
+crate::impl_transient!(Buffer, "NCollection_Buffer", StandardTransient, parent);
+
+/// A pointer field: `"Name": "<pointer text>"`.
+fn dump_pointer(output: &mut impl DumpOutput, name: &str, address: usize) -> io::Result<()> {
+    add_values_separator(output)?;
+    output.write_fragment(format!("\"{name}\": \"{}\"", pointer_info(address)).as_bytes())
+}
+
+/// Short pointer text with glibc's `0x…` spelling:
+/// from the first non-`'0'` symbol (the `x`), prefixed again by `0x`; empty for null.
+///
+/// Example: `pointer_info(0x10) == "0xx10"`.
+fn pointer_info(address: usize) -> String {
+    if address == 0 {
+        return String::new();
+    }
+    let text = format!("{address:#x}");
+    match text[..text.len() - 1].find(|symbol| symbol != '0') {
+        Some(first) => format!("0x{}", &text[first..]),
+        None => text,
+    }
+}

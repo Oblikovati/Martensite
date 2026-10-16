@@ -1,0 +1,12 @@
+//! String storage: ASCII and UTF-16 strings and their shared handles.
+mod ascii_string;
+pub(crate) use ascii_string::c_string_prefix;
+pub use ascii_string::{AsciiString, AsciiStringBufferIdentity, CatOperand};
+mod extended_string;
+pub use extended_string::ExtendedString;
+mod h_ascii_string;
+pub use h_ascii_string::{HAsciiString, HAsciiStringHasher};
+mod h_extended_string;
+pub use h_extended_string::{HExtendedString, HExtendedStringHasher};
+mod primes;
+pub use primes::next_prime_for_map;

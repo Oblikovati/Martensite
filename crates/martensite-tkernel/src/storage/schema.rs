@@ -1,0 +1,200 @@
+//! The storage algorithm and its callback registry.
+//!
+//! The current data set is a process-wide slot that `write` sets and clears and that
+//! `add_persistent`, `persistent_to_add` and the type bindings read. Default Rust schemas
+//! share that slot too. An injected `SchemaContext` supports independent storage sessions.
+use super::{CallBack, Data, DefaultCallBack, InternalData, TypedCallBack};
+use crate::ncollection::{DataMap, HSequence};
+use crate::standard::{Failure, Handle, StandardTransient};
+use crate::tcollection::AsciiString;
+use std::sync::{Arc, MutexGuard};
+mod binding;
+mod context;
+mod creation_date;
+pub use context::SchemaContext;
+mod migration;
+mod write;
+pub use creation_date::{CreationDateSource, NativeCreationDate};
+pub use migration::{MigrationFile, MigrationSource, NativeMigrationSource, TypeMigration};
+
+/// A storage schema; `Schema::default()` uses the local clock for creation dates.
+///
+/// ```
+/// use martensite_tkernel::storage::Schema;
+/// use martensite_tkernel::tcollection::AsciiString;
+/// let mut schema = Schema::default();
+/// schema.set_name(&AsciiString::new("Test"));
+/// assert!(!schema.is_using_default_callback());
+/// ```
+pub struct Schema {
+    parent: StandardTransient,
+    callbacks: DataMap<AsciiString, Handle<TypedCallBack>>,
+    callback_state: bool,
+    default_callback: Handle<dyn CallBack>,
+    name: AsciiString,
+    version: AsciiString,
+    current: SchemaContext,
+    clock: Arc<dyn CreationDateSource>,
+}
+
+impl Default for Schema {
+    fn default() -> Self {
+        Self::with_clock(Arc::new(NativeCreationDate))
+    }
+}
+
+impl Schema {
+    /// A schema with an injected creation-date clock; `Schema::with_clock(clock)`.
+    pub fn with_clock(clock: Arc<dyn CreationDateSource>) -> Self {
+        Self::with_context(clock, SchemaContext::process_shared())
+    }
+
+    /// Construct using an injected clock and current-write context.
+    /// Construction clears the supplied context's current data.
+    /// Example: `Schema::with_context(clock, SchemaContext::default())`.
+    pub fn with_context(clock: Arc<dyn CreationDateSource>, context: SchemaContext) -> Self {
+        let mut schema = Self {
+            parent: StandardTransient::default(),
+            callbacks: DataMap::default(),
+            callback_state: false,
+            default_callback: Handle::default(),
+            name: AsciiString::default(),
+            version: AsciiString::default(),
+            current: context,
+            clock,
+        };
+        schema.clear();
+        schema.reset_default_callback();
+        schema
+    }
+
+    /// Example: `schema.set_version(&AsciiString::new("1"))`.
+    pub fn set_version(&mut self, version: &AsciiString) {
+        self.version = version.clone();
+    }
+
+    /// Example: `schema.version()`.
+    pub fn version(&self) -> AsciiString {
+        self.version.clone()
+    }
+
+    /// Example: `schema.set_name(&AsciiString::new("Schema"))`.
+    pub fn set_name(&mut self, name: &AsciiString) {
+        self.name = name.clone();
+    }
+
+    /// Example: `schema.name()`.
+    pub fn name(&self) -> AsciiString {
+        self.name.clone()
+    }
+
+    /// The local date as `%m/%d/%Y`; `Schema::i_creation_date()`.
+    pub fn i_creation_date() -> AsciiString {
+        NativeCreationDate.creation_date()
+    }
+
+    /// Type migration with the process-wide table loaded once from
+    /// Example: `Schema::check_type_migration(&old, &mut new)`.
+    pub fn check_type_migration(old_name: &AsciiString, new_name: &mut AsciiString) -> bool {
+        TypeMigration::process_wide().check(old_name, new_name)
+    }
+}
+
+impl Schema {
+    /// Binds a non-null `callback` to `type_name`;
+    /// `schema.add_read_unknown_type_callback(&name, &callback)`.
+    pub fn add_read_unknown_type_callback(
+        &mut self,
+        type_name: &AsciiString,
+        callback: &Handle<dyn CallBack>,
+    ) {
+        if !callback.is_null() {
+            let typed = Handle::new(TypedCallBack::new(type_name, callback));
+            self.callbacks.bind(type_name.clone(), typed);
+        }
+    }
+
+    /// Example: `schema.remove_read_unknown_type_callback(&name)`.
+    pub fn remove_read_unknown_type_callback(&mut self, type_name: &AsciiString) {
+        self.callbacks.unbind(type_name);
+    }
+
+    /// Type names in map iteration order; `schema.installed_callback_list()`.
+    pub fn installed_callback_list(&self) -> Handle<HSequence<AsciiString>> {
+        let names = HSequence::default();
+        for (name, _) in self.callbacks.items() {
+            names.append(name.clone());
+        }
+        Handle::new(names)
+    }
+
+    /// Example: `schema.clear_callback_list()`.
+    pub fn clear_callback_list(&mut self) {
+        self.callbacks.clear(false);
+    }
+
+    /// Example: `schema.use_default_callback()`.
+    pub fn use_default_callback(&mut self) {
+        self.callback_state = true;
+    }
+
+    /// Example: `schema.dont_use_default_callback()`.
+    pub fn dont_use_default_callback(&mut self) {
+        self.callback_state = false;
+    }
+
+    /// Example: `schema.is_using_default_callback()`.
+    pub fn is_using_default_callback(&self) -> bool {
+        self.callback_state
+    }
+
+    /// Example: `schema.set_default_callback(&callback)`.
+    pub fn set_default_callback(&mut self, callback: &Handle<dyn CallBack>) {
+        self.default_callback = callback.clone();
+    }
+
+    /// Back to a fresh default callback.
+    /// Example: `schema.reset_default_callback()`.
+    pub fn reset_default_callback(&mut self) {
+        self.default_callback = Handle::new(DefaultCallBack::default()).cast();
+    }
+
+    /// `DefaultCallBack`; `schema.default_callback()` returns a null handle when absent.
+    pub fn default_callback(&self) -> Handle<dyn CallBack> {
+        self.default_callback.clone()
+    }
+}
+
+impl Schema {
+    /// `ICurrentData()`.
+    fn current(&self) -> MutexGuard<'_, Handle<Data>> {
+        self.current.lock()
+    }
+
+    /// Runs `action` on the current data set and its internal data. A missing
+    /// current data set is reported as `Standard_NullObject`.
+    fn with_current<R>(
+        &self,
+        member: &str,
+        action: impl FnOnce(&Data, &InternalData) -> R,
+    ) -> Result<R, Failure> {
+        let current = self.current().clone();
+        let data = current.get().ok_or_else(|| {
+            Failure::with_type(
+                "Standard_NullObject",
+                &format!("Storage_Schema::{member}: no current data; expected a Write in progress"),
+                "",
+            )
+        })?;
+        let internal = data.internal_data();
+        let internal = internal.get().expect("Storage_Data owns its internal data");
+        Ok(action(data, internal))
+    }
+
+    /// Private `Clear`: forgets the current data set.
+    fn clear(&self) {
+        self.current().nullify();
+    }
+}
+
+crate::impl_transient!(Schema, "Storage_Schema", StandardTransient, parent);

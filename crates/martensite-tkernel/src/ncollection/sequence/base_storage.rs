@@ -1,0 +1,150 @@
+//! Raw base-sequence topology for derived containers which own their concrete node allocations.
+use super::{BaseAllocator, SeqNode};
+use crate::standard::Failure;
+mod insertion;
+mod iterator;
+mod node_liveness;
+mod removal;
+mod reorder;
+pub use iterator::BaseSequenceRawIterator;
+pub(super) use node_liveness::SequenceNodeLiveness;
+
+/// Node deletion callback type; `let delete: DelSeqNode = Sequence::<i32>::del_node`.
+pub type DelSeqNode = unsafe fn(*mut SeqNode, &mut BaseAllocator);
+
+/// Base-sequence metadata without an implicit node destructor.
+/// Example: `let base = BaseSequence::new(None); assert!(base.is_empty())`.
+/// Raw operations require exclusive, live, well-formed links. Drop never deletes nodes,
+/// so derived containers must explicitly call clear_seq.
+pub struct BaseSequence {
+    pub(super) clear_node_scope: Option<SequenceNodeLiveness>,
+    /// Protected allocator for derived-container composition.
+    pub allocator: BaseAllocator,
+    /// Protected first link; raw operations require consistent metadata.
+    pub first: *mut SeqNode,
+    /// Protected last link; raw operations require consistent metadata.
+    pub last: *mut SeqNode,
+    /// Protected cached link; must agree with current_index.
+    pub current: *mut SeqNode,
+    /// Protected one-based cached index.
+    pub current_index: usize,
+    /// Protected sequence size.
+    pub size: usize,
+}
+impl Default for BaseSequence {
+    fn default() -> Self {
+        Self::new(None)
+    }
+}
+impl BaseSequence {
+    /// Uses the common allocator when no resource is supplied; `BaseSequence::new(Some(arena))`.
+    pub fn new(allocator: Option<BaseAllocator>) -> Self {
+        Self {
+            clear_node_scope: None,
+            allocator: allocator.unwrap_or_default(),
+            first: std::ptr::null_mut(),
+            last: std::ptr::null_mut(),
+            current: std::ptr::null_mut(),
+            current_index: 0,
+            size: 0,
+        }
+    }
+    /// Returns the size; `assert_eq!(base.size(), 0)`.
+    pub fn size(&self) -> usize {
+        self.size
+    }
+    /// Returns the legacy signed Length cast; `assert_eq!(base.length(), 0)`.
+    pub fn length(&self) -> i32 {
+        self.size as i32
+    }
+    /// Tests the size field; `base.is_empty()`.
+    pub fn is_empty(&self) -> bool {
+        self.size == 0
+    }
+    /// Borrows the allocator passed to deletion callbacks; `base.allocator()`.
+    pub fn allocator(&self) -> &BaseAllocator {
+        &self.allocator
+    }
+    /// Exposes the protected allocator handle to subclasses; `*base.change_allocator() = arena`.
+    pub fn change_allocator(&mut self) -> &mut BaseAllocator {
+        &mut self.allocator
+    }
+    /// Exposes the protected first node; `base.first_node()`.
+    pub fn first_node(&self) -> *mut SeqNode {
+        self.first
+    }
+    /// Exposes the protected last node; `base.last_node()`.
+    pub fn last_node(&self) -> *mut SeqNode {
+        self.last
+    }
+    /// Exposes the protected cached node; `base.current_node()`.
+    pub fn current_node(&self) -> *mut SeqNode {
+        self.current
+    }
+    /// Exposes the protected cached one-based index; `base.current_index()`.
+    pub fn current_index(&self) -> usize {
+        self.current_index
+    }
+    /// Sets the cache as typed value access does; `unsafe { base.cache_position(2)? }`.
+    /// # Safety
+    /// All retained nodes must be live, correctly linked, and exclusively managed by this base.
+    pub unsafe fn cache_position(&mut self, index: usize) -> Result<*mut SeqNode, Failure> {
+        self.check_index(index)?;
+        // SAFETY: check_index proved `index` is in 1..=size, and the caller guarantees the
+        // links are live and exclusively managed by this base.
+        self.current = unsafe { self.find(index) };
+        self.current_index = index;
+        Ok(self.current)
+    }
+    /// Finds a one-based node using the first/current/last cache heuristic; `unsafe { base.find(1) }`.
+    /// # Safety
+    /// Index must be in 1..=size, all links live, and the cached node/index consistent.
+    pub unsafe fn find(&self, index: usize) -> *mut SeqNode {
+        let (mut node, start) = self.search_origin(index);
+        for _ in index..start {
+            // SAFETY: find's caller guarantees every link is live, and the walk stays within
+            // the `index` steps from a live origin.
+            node = unsafe { self.guarded_link(node).previous() };
+        }
+        for _ in start..index {
+            // SAFETY: find's caller guarantees every link is live, and the walk stays within
+            // the `index` steps from a live origin.
+            node = unsafe { self.guarded_link(node).next() };
+        }
+        self.require_live_link(node);
+        node
+    }
+    fn search_origin(&self, index: usize) -> (*mut SeqNode, usize) {
+        if index <= self.current_index {
+            return if index < self.current_index / 2 {
+                (self.first, 1)
+            } else {
+                (self.current, self.current_index)
+            };
+        }
+        if index < self.current_index.wrapping_add(self.size) / 2 {
+            return (self.current, self.current_index);
+        }
+        (self.last, self.size)
+    }
+    fn check_index(&self, index: usize) -> Result<(), Failure> {
+        if index == 0 || index > self.size {
+            return Err(Failure::out_of_range(&format!(
+                "BaseSequence index {index}; expected 1..={}",
+                self.size
+            )));
+        }
+        Ok(())
+    }
+    pub(super) fn nullify(&mut self) {
+        self.first = std::ptr::null_mut();
+        self.last = std::ptr::null_mut();
+        self.current = std::ptr::null_mut();
+        self.current_index = 0;
+        self.size = 0;
+    }
+    fn cache_first(&mut self) {
+        self.current = self.first;
+        self.current_index = 1;
+    }
+}

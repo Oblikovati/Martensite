@@ -1,0 +1,49 @@
+//! Keep callback targets addressable without fabricating an owning reference.
+use super::{Handle, Owner, RuntimeTyped};
+use std::{marker::PhantomData, ops::Deref};
+/// A storage-backed const handle reference; `let observed=handle.observe(); assert_eq!(observed.ref_count(),handle.ref_count());`.
+///
+/// This observer does not change the embedded reference count. Its private Arc keeps Rust
+/// storage valid if a callback invalidates the originating container; dangling-reference
+/// behavior remains outside the valid API domain. Clone the dereferenced handle to acquire ownership.
+pub struct HandleObserver<T: ?Sized + RuntimeTyped> {
+    handle: Handle<T>,
+}
+impl<T: ?Sized + RuntimeTyped> Handle<T> {
+    /// Release a container guard while retaining a const handle reference; `let observed=handle.observe(); callback(&observed);`.
+    pub fn observe(&self) -> HandleObserver<T> {
+        HandleObserver::from_owner(self.owner.clone())
+    }
+    /// Borrow a registered base/interface without retaining it; `handle.observe_as::<dyn Transient>()`.
+    pub fn observe_as<U: ?Sized + RuntimeTyped>(&self) -> HandleObserver<U> {
+        // Const handle argument conversions must not invent temporary intrusive ownership.
+        let owner = self
+            .owner
+            .clone()
+            .filter(|owner| U::project_from(owner.get()).is_some());
+        HandleObserver::from_owner(owner)
+    }
+}
+impl<T: ?Sized + RuntimeTyped> Deref for HandleObserver<T> {
+    type Target = Handle<T>;
+    fn deref(&self) -> &Self::Target {
+        &self.handle
+    }
+}
+impl<T: ?Sized + RuntimeTyped> Drop for HandleObserver<T> {
+    fn drop(&mut self) {
+        // Only storage was cloned; remove it before Handle::drop could decrement the count.
+        self.handle.owner.take();
+    }
+}
+
+impl<T: ?Sized + RuntimeTyped> HandleObserver<T> {
+    pub(super) fn from_owner(owner: Option<Owner>) -> Self {
+        Self {
+            handle: Handle {
+                owner,
+                projected: PhantomData,
+            },
+        }
+    }
+}

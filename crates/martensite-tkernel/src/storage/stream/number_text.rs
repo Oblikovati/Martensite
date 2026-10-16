@@ -1,0 +1,52 @@
+//! glibc `printf("%.*g")`, which libstdc++ uses to insert a `double`.
+
+/// Formats `value` like `printf("%.*g", precision, value)` in the "C" locale.
+///
+/// Rust's `{:.N e}` rounds the exact binary value half-to-even, as glibc does, so the
+/// significant digits agree; this function only rearranges them into `%g` layout.
+///
+/// ```
+/// use martensite_tkernel::storage::format_general;
+/// assert_eq!(format_general(0.1, 17), "0.10000000000000001");
+/// assert_eq!(format_general(1e22, 17), "1e+22");
+/// assert_eq!(format_general(2.5, 1), "2");
+/// ```
+pub fn format_general(value: f64, precision: usize) -> String {
+    if !value.is_finite() {
+        return crate::c_format::nonfinite_text(value);
+    }
+    let significant = precision.max(1);
+    let scientific = format!("{value:.*e}", significant - 1);
+    let (mantissa, exponent) = scientific.split_once('e').unwrap();
+    let exponent: i64 = exponent.parse().unwrap();
+    if exponent < -4 || exponent >= significant as i64 {
+        return format!("{}e{exponent:+03}", strip_fraction_zeros(mantissa));
+    }
+    fixed_layout(mantissa, exponent)
+}
+
+/// Rewrites the rounded digits `d.ddd` with decimal exponent `exponent` in positional form.
+fn fixed_layout(mantissa: &str, exponent: i64) -> String {
+    let negative = mantissa.starts_with('-');
+    let digits: String = mantissa.chars().filter(char::is_ascii_digit).collect();
+    let text = if exponent >= 0 {
+        let integer_length = exponent as usize + 1;
+        let (integer, fraction) = digits.split_at(integer_length.min(digits.len()));
+        format!("{integer}.{fraction}")
+    } else {
+        format!("0.{}{digits}", "0".repeat((-exponent - 1) as usize))
+    };
+    let text = strip_fraction_zeros(&text);
+    if negative {
+        format!("-{text}")
+    } else {
+        text.to_string()
+    }
+}
+
+fn strip_fraction_zeros(text: &str) -> &str {
+    if !text.contains('.') {
+        return text;
+    }
+    text.trim_end_matches('0').trim_end_matches('.')
+}

@@ -1,0 +1,133 @@
+//! Pointer-table growth preserves object addresses and zeroes unpublished occupancy.
+use super::{SparseArrayBase, SparseArrayBlock};
+use allocator_api2::alloc::{Allocator, Layout};
+use std::{ffi::c_void, ptr::NonNull};
+impl SparseArrayBase {
+    // Rust Clone preserves retained table capacity even when no live item reaches its last block.
+    pub(crate) unsafe fn reserve_clone_table(&self, count: usize) {
+        if count > self.block_slots() {
+            // SAFETY: callers reserve on a base they own exclusively, and growing replaces the
+            // table without touching any block.
+            unsafe { self.grow_table(count - 1) };
+        }
+    }
+
+    pub(super) unsafe fn ensure_block(&self, number: usize) {
+        let bytes = self.checked_block_bytes();
+        if number >= self.block_slots() {
+            // SAFETY: callers ensure a block of a base they own exclusively; growing replaces
+            // the table without touching any block.
+            unsafe { self.grow_table(number) };
+        }
+        if !self.block_address(number).is_null() {
+            return;
+        }
+        let address = self.allocate_zeroed(bytes);
+        // SAFETY: `number < block_slots` after the growth above, so the write stays inside the
+        // live table.
+        unsafe { *(*self.state.get()).table.add(number) = address.cast() };
+    }
+    pub(super) fn checked_block_bytes(&self) -> usize {
+        let (items, stride) = (self.block_size(), self.item_size());
+        SparseArrayBlock::checked_storage_size(items, stride).unwrap_or_else(|| {
+            panic!(
+                "SparseArray block {items} items of stride {stride}; expected addressable layout"
+            )
+        })
+    }
+    fn allocate_zeroed(&self, bytes: usize) -> *mut u8 {
+        // Injected arenas must honor header alignment and retain reset leases until deallocation.
+        let allocation = Allocator::allocate(&self.allocator, sparse_allocation_layout(bytes))
+            .unwrap_or_else(|_| {
+                panic!("SparseArray allocation {bytes} bytes; expected available heap storage")
+            });
+        let address = allocation.cast::<u8>().as_ptr();
+        // SAFETY: `address` is a fresh allocation of `bytes` bytes.
+        unsafe { address.write_bytes(0, bytes) };
+        address
+    }
+    unsafe fn grow_table(&self, number: usize) {
+        let old_count = self.block_slots();
+        let count = self.grown_table_count(number);
+        let replacement = self
+            .allocate_zeroed(checked_sparse_table_bytes(count))
+            .cast::<*mut c_void>();
+        // SAFETY: the state is single-threaded and no reference into it is live; the read
+        // copies the table pointer.
+        let old = unsafe { (*self.state.get()).table };
+        if old_count != 0 {
+            // SAFETY: the old table holds `old_count` pointers and the fresh replacement is
+            // larger and disjoint.
+            unsafe { std::ptr::copy_nonoverlapping(old, replacement, old_count) };
+        }
+        // SAFETY: `old` is the previous table, allocated by this base with `old_count` pointer
+        // slots, and nothing reads it after this.
+        unsafe { self.release_storage(old.cast(), old_count * size_of::<*mut c_void>()) };
+        // SAFETY: the state is single-threaded and no reference into it is live while the
+        // fields are replaced.
+        unsafe {
+            (*self.state.get()).table = replacement;
+            (*self.state.get()).block_slots = count;
+        }
+    }
+    fn grown_table_count(&self, number: usize) -> usize {
+        let mut count = if self.block_slots() == 0 {
+            self.block_size()
+        } else {
+            self.block_slots()
+        };
+        assert!(
+            count != 0,
+            "SparseArray block size {count}; expected positive size for indexed access"
+        );
+        while number >= count {
+            count = count
+                .checked_mul(2)
+                .expect("SparseArray table growth exceeds usize span");
+        }
+        count
+    }
+    pub(super) unsafe fn release_storage(&self, address: *mut u8, bytes: usize) {
+        if let Some(pointer) = NonNull::new(address) {
+            // SAFETY: callers pass `bytes` and a non-null `address` that this base's allocator
+            // returned for that size.
+            unsafe {
+                self.allocator
+                    .deallocate(pointer, sparse_allocation_layout(bytes))
+            };
+        }
+    }
+}
+
+fn checked_sparse_table_bytes(count: usize) -> usize {
+    count
+        .checked_mul(size_of::<*mut c_void>())
+        .unwrap_or_else(|| {
+            panic!("SparseArray table {count} pointer slots; expected addressable pointer span")
+        })
+}
+
+fn sparse_allocation_layout(bytes: usize) -> Layout {
+    let alignment = align_of::<usize>().max(align_of::<*mut c_void>());
+    Layout::from_size_align(bytes, alignment).unwrap_or_else(|_| {
+        panic!("SparseArray allocation {bytes} bytes, alignment {alignment}; expected a valid Rust layout")
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sparse_allocation_layout;
+
+    #[test]
+    fn sparse_layout_keeps_native_bytes_and_header_alignment() {
+        let layout = sparse_allocation_layout(25);
+        assert_eq!(layout.size(), 25);
+        assert!(layout.align() >= align_of::<usize>());
+    }
+
+    #[test]
+    #[should_panic(expected = "expected a valid Rust layout")]
+    fn sparse_layout_rejects_unrepresentable_allocation_size() {
+        sparse_allocation_layout(usize::MAX);
+    }
+}

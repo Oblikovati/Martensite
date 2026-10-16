@@ -1,0 +1,88 @@
+//! An owned sequence of UTF-16 code units.
+//!
+//! Lengths and indices count 16-bit code units: a surrogate pair counts twice.
+//! Members that raise an exception return `Result<_, Failure>` with its class.
+//! A UTF-16 C-string argument becomes a slice that ends where the C string ends; a
+//! (pointer, length) pair keeps the nullable pointer.
+/// Owned NUL-terminated UTF-16 code units; `ExtendedString::new("Hello")`.
+#[derive(Debug, Default)]
+pub struct ExtendedString {
+    terminated: Vec<u16>,
+}
+impl ExtendedString {
+    /// Widens each byte up to the first NUL (no multibyte decoding);
+    /// `ExtendedString::new("Hello")`.
+    pub fn new(text: &str) -> Self {
+        Self::from_c_string(text.as_bytes(), false)
+    }
+    /// Copies UTF-16 through the first zero code unit (the UTF-16 C-string constructor);
+    /// `ExtendedString::from_utf16(&[0x20AC, 0])`.
+    pub fn from_utf16(units: &[u16]) -> Self {
+        Self::from_raw(utf::c_units_prefix(units))
+    }
+    /// Returns the stored code units without the terminator; `text.as_utf16()`.
+    pub fn as_utf16(&self) -> &[u16] {
+        &self.terminated[..self.len()]
+    }
+    /// Returns the length in code units; `ExtendedString::new("Hello").len() == 5`.
+    pub fn len(&self) -> usize {
+        self.terminated.len().saturating_sub(1)
+    }
+    /// Checks for no code units; `ExtendedString::default().is_empty()`.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+impl super::AsciiString {
+    /// Converts UTF-16 to UTF-8, or replaces non-ASCII units; `AsciiString::from_extended(&text,Some(b'?'))`.
+    pub fn from_extended(text: &ExtendedString, replacement: Option<u8>) -> Self {
+        if let Some(byte) = replacement.filter(|&byte| byte != 0) {
+            return Self::from_raw(
+                &text
+                    .as_utf16()
+                    .iter()
+                    .map(|&unit| if unit <= 255 { unit as u8 } else { byte })
+                    .collect::<Vec<_>>(),
+            );
+        }
+        Self::new(&text.to_utf8())
+    }
+}
+impl From<&ExtendedString> for super::AsciiString {
+    fn from(text: &ExtendedString) -> Self {
+        Self::from_extended(text, None)
+    }
+}
+impl super::AsciiString {
+    /// Appends wide Unicode scalar input through its first zero; `text.assign_cat_wide(&[32,0x20AC,0])`.
+    pub fn assign_cat_wide(&mut self, units: &[u32]) {
+        let text: String = units
+            .iter()
+            .copied()
+            .take_while(|&unit| unit != 0)
+            .filter_map(char::from_u32)
+            .collect();
+        self.assign_cat(text.as_str());
+    }
+    /// Returns a copy with wide scalar input appended; `text.cat_wide(&[32,87,0])`.
+    pub fn cat_wide(&self, units: &[u32]) -> Self {
+        let mut result = self.clone();
+        result.assign_cat_wide(units);
+        result
+    }
+}
+mod adjustment;
+mod append;
+mod comparison;
+mod construction;
+mod conversion;
+mod editing;
+mod errors;
+mod queries;
+mod search;
+mod spans;
+mod traits;
+mod utf;
+
+mod method_contracts;
+mod storage;

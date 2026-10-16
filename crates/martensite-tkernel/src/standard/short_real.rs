@@ -1,0 +1,118 @@
+//! `f32` limits and the deprecated abs/max/min helpers.
+
+/// The smallest positive normal float, `FLT_MIN`.
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::short_real_small(), f32::MIN_POSITIVE);
+/// ```
+pub const fn short_real_small() -> f32 {
+    f32::MIN_POSITIVE
+}
+
+/// Decimal digits of precision, `FLT_DIG`.
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::short_real_digits(), 6);
+/// ```
+pub const fn short_real_digits() -> i32 {
+    f32::DIGITS as i32
+}
+
+/// The gap between 1.0f and the next float, `FLT_EPSILON`.
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::short_real_epsilon(), f32::EPSILON);
+/// ```
+pub const fn short_real_epsilon() -> f32 {
+    f32::EPSILON
+}
+
+/// The most negative finite float, `-FLT_MAX`.
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::short_real_first(), f32::MIN);
+/// ```
+pub const fn short_real_first() -> f32 {
+    -f32::MAX
+}
+
+/// The minimum decimal exponent of a normal float, `FLT_MIN_10_EXP`.
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::short_real_first10_exp(), -37);
+/// ```
+pub const fn short_real_first10_exp() -> i32 {
+    f32::MIN_10_EXP
+}
+
+/// The largest finite float, `FLT_MAX`.
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::short_real_last(), f32::MAX);
+/// ```
+pub const fn short_real_last() -> f32 {
+    f32::MAX
+}
+
+/// The maximum decimal exponent of a float, `FLT_MAX_10_EXP`.
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::short_real_last10_exp(), 38);
+/// ```
+pub const fn short_real_last10_exp() -> i32 {
+    f32::MAX_10_EXP
+}
+
+/// Significand bits including the hidden bit, `FLT_MANT_DIG`.
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::short_real_mantissa(), 24);
+/// ```
+pub const fn short_real_mantissa() -> i32 {
+    f32::MANTISSA_DIGITS as i32
+}
+
+/// The floating-point radix, `FLT_RADIX`.
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::short_real_radix(), 2);
+/// ```
+pub const fn short_real_radix() -> i32 {
+    f32::RADIX as i32
+}
+
+/// The size of a float in bits, `CHAR_BIT * sizeof(float)`.
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::short_real_size(), 32);
+/// ```
+pub const fn short_real_size() -> i32 {
+    (u8::BITS as usize * size_of::<f32>()) as i32
+}
+
+/// `std::abs`, which clears the sign bit.
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::abs(-1.5), 1.5);
+/// ```
+pub fn abs(value: f32) -> f32 {
+    value.abs()
+}
+
+/// `Max(float, float)`: `std::max`, i.e. `first < second ? second : first` (NaN-order sensitive).
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::max(1.0, 2.0), 2.0);
+/// ```
+pub fn max(first: f32, second: f32) -> f32 {
+    if first < second { second } else { first }
+}
+
+/// `Min(float, float)`: `std::min`, i.e. `second < first ? second : first` (NaN-order sensitive).
+///
+/// ```
+/// assert_eq!(martensite_tkernel::standard::short_real::min(1.0, 2.0), 1.0);
+/// ```
+pub fn min(first: f32, second: f32) -> f32 {
+    if second < first { second } else { first }
+}

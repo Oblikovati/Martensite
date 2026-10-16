@@ -13,3 +13,9 @@ follows [Semantic Versioning](https://semver.org/).
   manager.
 - Added the `cargo xtask` build driver and the single `Martensite` CI workflow
   for PR validation and multi-target releases.
+- Added the `martensite-tkernel` crate, the foundation toolkit: typed errors,
+  memory managers and allocators, collections, ASCII and extended strings,
+  operating-system services, messages, quantities, units and resources.
+- Added the `martensite-cmath` crate, which calls the platform C math library
+  for `asinh`, `acosh`, `atanh` and `remainder` so results match the C
+  functions bit for bit.

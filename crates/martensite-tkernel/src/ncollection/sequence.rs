@@ -1,0 +1,247 @@
+//! One-based sequences whose items live in individually allocated, stable nodes.
+use super::{AllocatedBox, BaseAllocator};
+use crate::standard::Failure;
+use owner::{SequenceNodeOwner, SequenceNodeOwners};
+use std::marker::PhantomData;
+use topology::SequenceTopology;
+/// Allocator-owned one-based sequence; `let mut s = Sequence::default(); s.append(1);`.
+pub struct Sequence<T> {
+    topology: SequenceTopology,
+    // Clearing observers need a stable registry address even when Sequence itself moves.
+    owners: Box<SequenceNodeOwners<T>>,
+}
+/// Shared double-ended iterator in index order; `sequence.iter()`.
+pub struct SequenceIter<'a, T> {
+    owners: &'a SequenceNodeOwners<T>,
+    front: *mut SeqNode,
+    back: *mut SeqNode,
+    remaining: usize,
+    item: PhantomData<&'a T>,
+}
+/// Exclusive double-ended iterator in index order; `sequence.iter_mut()`.
+pub struct SequenceIterMut<'a, T> {
+    owners: &'a SequenceNodeOwners<T>,
+    front: *mut SeqNode,
+    back: *mut SeqNode,
+    remaining: usize,
+    item: PhantomData<&'a mut T>,
+}
+/// Detached bidirectional node position: the current node
+/// and the node before it; `let cursor = sequence.cursor()`.
+///
+/// Equality compares only the current node.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct SequenceCursor {
+    address: Option<usize>,
+    previous: Option<usize>,
+}
+impl<T> Sequence<T> {
+    /// Creates an empty sequence with a chosen allocator; `Sequence::<i32>::with_allocator(arena)`.
+    pub fn with_allocator(resource: BaseAllocator) -> Self {
+        Self {
+            topology: SequenceTopology::new(resource),
+            owners: Box::default(),
+        }
+    }
+    /// Returns selected allocator identity; `sequence.allocator() == &arena`.
+    pub fn allocator(&self) -> &BaseAllocator {
+        self.topology.allocator()
+    }
+    /// Returns the element count; `sequence.len() == 3`.
+    pub fn len(&self) -> usize {
+        self.topology.size()
+    }
+    /// Returns the signed length; `sequence.length() == 3`.
+    pub fn length(&self) -> i32 {
+        self.topology.size() as i32
+    }
+    /// Checks for an empty sequence; `sequence.is_empty()`.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+    /// Returns the fixed lower bound; `sequence.lower() == 1`.
+    pub const fn lower(&self) -> usize {
+        1
+    }
+    /// Returns the upper bound, zero when empty; `sequence.upper() == sequence.len()`.
+    pub fn upper(&self) -> usize {
+        self.len()
+    }
+    /// Borrows the first item, `None` for an empty sequence; `sequence.first() == Some(&10)`.
+    pub fn first(&self) -> Option<&T> {
+        self.endpoint_value(true)
+    }
+    /// Borrows the first item exclusively; `*sequence.first_mut().unwrap() = 1`.
+    pub fn first_mut(&mut self) -> Option<&mut T> {
+        self.endpoint_mut(true)
+    }
+    /// Borrows the final item; `sequence.last() == Some(&30)`.
+    pub fn last(&self) -> Option<&T> {
+        self.endpoint_value(false)
+    }
+    /// Borrows the final item exclusively; `*sequence.last_mut().unwrap() = 3`.
+    pub fn last_mut(&mut self) -> Option<&mut T> {
+        self.endpoint_mut(false)
+    }
+    /// Borrows an item by one-based index; `sequence.value(1)?`.
+    pub fn value(&self, index: usize) -> Result<&T, Failure> {
+        self.read_indexed(index)
+    }
+    /// Borrows an item exclusively by one-based index; `*sequence.change_value(1)? = 10`.
+    pub fn change_value(&mut self, index: usize) -> Result<&mut T, Failure> {
+        self.write_indexed(index)
+    }
+    /// Replaces an existing item; `sequence.set_value(1, 10)?`.
+    pub fn set_value(&mut self, index: usize, value: T) -> Result<(), Failure> {
+        *self.change_value(index)? = value;
+        Ok(())
+    }
+    /// Borrows an item by zero-based offset; `sequence.at(0)?`.
+    pub fn at(&self, offset: usize) -> Result<&T, Failure> {
+        self.zero_based("At", offset)?;
+        self.value(offset + 1)
+    }
+    /// Borrows an item exclusively by zero-based offset; `*sequence.change_at(0)? = 5`.
+    pub fn change_at(&mut self, offset: usize) -> Result<&mut T, Failure> {
+        self.zero_based("ChangeAt", offset)?;
+        self.change_value(offset + 1)
+    }
+    /// Borrows elements in order; `sequence.iter().sum::<i32>()`.
+    pub fn iter(&self) -> SequenceIter<'_, T> {
+        self.linked_iter()
+    }
+    /// Borrows exclusive elements in order; `sequence.iter_mut().for_each(|v| *v+=1)`.
+    pub fn iter_mut(&mut self) -> SequenceIterMut<'_, T> {
+        self.linked_iter_mut()
+    }
+    /// Captures a position at the first element; `let cursor=sequence.cursor()`.
+    pub fn cursor(&self) -> SequenceCursor {
+        SequenceCursor::new(self, true)
+    }
+    /// Checks the one-based index and returns its zero-based numeric offset.
+    fn offset(&self, member: &str, index: usize) -> Result<usize, Failure> {
+        if index == 0 || index > self.len() {
+            return Err(out_of_range(member, index, &format!("1..={}", self.len())));
+        }
+        Ok(index - 1)
+    }
+    fn zero_based(&self, member: &str, offset: usize) -> Result<(), Failure> {
+        if offset >= self.len() {
+            return Err(out_of_range(member, offset, &format!("0..{}", self.len())));
+        }
+        Ok(())
+    }
+}
+impl<T> Default for Sequence<T> {
+    fn default() -> Self {
+        Self::with_allocator(BaseAllocator::common())
+    }
+}
+impl<T> FromIterator<T> for Sequence<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(items: I) -> Self {
+        let mut sequence = Self::default();
+        for item in items {
+            sequence.append(item);
+        }
+        sequence
+    }
+}
+/// `sequence[i]` panics with the out-of-range message where
+/// `value` returns the error.
+impl<T> std::ops::Index<usize> for Sequence<T> {
+    type Output = T;
+    fn index(&self, index: usize) -> &T {
+        self.value(index)
+            .unwrap_or_else(|error| panic!("{}", error.message()))
+    }
+}
+impl<T> std::ops::IndexMut<usize> for Sequence<T> {
+    fn index_mut(&mut self, index: usize) -> &mut T {
+        self.change_value(index)
+            .unwrap_or_else(|error| panic!("{}", error.message()))
+    }
+}
+/// The `Standard_OutOfRange` for a sequence member, naming index and valid range.
+fn out_of_range(member: &str, index: usize, expected: &str) -> Failure {
+    Failure::out_of_range(&format!(
+        "NCollection_Sequence::{member} index {index}; expected {expected}"
+    ))
+}
+/// The `Standard_NoSuchObject` for a cursor that names no node of this sequence.
+fn no_such_node(member: &str, cursor: SequenceCursor) -> Failure {
+    Failure::with_type(
+        "Standard_NoSuchObject",
+        &format!(
+            "NCollection_Sequence::{member} cursor {cursor:?}; expected a node of this sequence"
+        ),
+        "",
+    )
+}
+mod base_iterator;
+// Raw topology operations require the documented live-node ownership contracts.
+#[allow(unsafe_code)]
+mod base_storage;
+pub use base_iterator::BaseSequenceIterator;
+pub use base_storage::{BaseSequence, BaseSequenceRawIterator, DelSeqNode};
+#[allow(unsafe_code)]
+mod assignment;
+mod borrowed;
+// Prepared owners let collection adapters release their guards before allocator callbacks.
+#[allow(unsafe_code)]
+mod prepared_node;
+pub use prepared_node::SequencePreparedNode;
+// Detached owners keep the removal order without holding adapters' field guards during Drop.
+mod current_release;
+#[allow(unsafe_code)]
+mod retired_node;
+pub use retired_node::SequenceNodeRetirement;
+// Controlled clearing keeps real old metadata while adapters release payloads outside guards.
+#[allow(unsafe_code)]
+mod controlled_clear;
+pub use controlled_clear::SequenceClearProgress;
+mod copy_assignment;
+mod copy_construction;
+mod cursor_contracts;
+#[allow(unsafe_code)]
+mod editing;
+#[allow(unsafe_code)]
+mod iteration;
+#[allow(unsafe_code)]
+mod links;
+// Raw node callbacks restore the exact typed allocation and its original allocator.
+#[allow(unsafe_code)]
+mod node_allocation;
+// Safety contracts cover opaque link Send/Sync and preserve exclusive node mutation.
+#[allow(unsafe_code)]
+mod nodes;
+pub use nodes::{SeqNode, SequenceNode};
+mod method_contracts;
+#[allow(unsafe_code)]
+mod operations;
+mod signed_indices;
+
+// Custom-node projection and detached raw cursor access retain explicit unsafe contracts.
+#[allow(unsafe_code)]
+mod basic_iterator;
+#[allow(unsafe_code)]
+mod basic_node;
+pub use basic_iterator::BaseSequenceBasicIterator;
+pub use basic_node::{BasicSequenceNode, BasicSequenceNodeMut};
+
+// Canonical raw topology and owners are private; safe methods enforce live-node borrowing.
+#[allow(unsafe_code)]
+mod access;
+#[allow(unsafe_code)]
+mod owner;
+#[allow(unsafe_code)]
+mod topology;
+pub use topology::{SequenceBaseAccess, SequenceObservation, SequenceObserver};
+
+#[allow(unsafe_code)]
+mod native_cursor;
+pub use native_cursor::{SequenceCursorObserver, SequenceNativeCursor};
+
+#[cfg(test)]
+mod current_native_fixture;
+#[cfg(test)]
+mod current_native_replay;

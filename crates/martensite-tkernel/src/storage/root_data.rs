@@ -1,0 +1,141 @@
+//! The root section, a map from root names to roots.
+use super::{BaseDriver, OpenMode, Root, SectionStatus, StorageError, StreamException};
+use crate::ncollection::{DataMap, HSequence};
+use crate::standard::{Failure, Handle, StandardPersistent, StandardTransient};
+use crate::tcollection::AsciiString;
+use std::sync::{Mutex, MutexGuard, PoisonError};
+
+#[derive(Default)]
+struct RootFields {
+    objects: DataMap<AsciiString, Handle<Root>>,
+    status: SectionStatus,
+}
+
+/// Named roots of a set of data; `roots()` walks the map in its bucket order.
+///
+/// ```
+/// use martensite_tkernel::standard::{Handle, StandardPersistent};
+/// use martensite_tkernel::storage::{Root, RootData};
+/// use martensite_tkernel::tcollection::AsciiString;
+/// let roots = RootData::default();
+/// let name = AsciiString::new("doc");
+/// roots.add_root(&Handle::new(Root::new(&name, &Handle::<StandardPersistent>::default())));
+/// assert!(roots.is_root(&name));
+/// ```
+#[derive(Default)]
+pub struct RootData {
+    parent: StandardTransient,
+    fields: Mutex<RootFields>,
+}
+
+impl RootData {
+    fn lock(&self) -> MutexGuard<'_, RootFields> {
+        self.fields.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Binds one retrieved root per entry of the root section. A
+    /// type mismatch in a root read becomes the status; section-size failures propagate.
+    /// Example: `roots.read(&mut driver)?`.
+    pub fn read(&self, driver: &mut dyn BaseDriver) -> Result<bool, Failure> {
+        if !matches!(driver.open_mode(), OpenMode::Read | OpenMode::ReadWrite) {
+            return Ok(self.record(StorageError::ModeError, "OpenMode"));
+        }
+        let status = driver.begin_read_root_section()?;
+        if !self.record(status, "BeginReadRootSection") {
+            return Ok(false);
+        }
+        let (mut name, mut type_name, mut reference) =
+            (AsciiString::default(), AsciiString::default(), 0);
+        let length = driver.root_section_size()?;
+        for _ in 1..=length {
+            match driver.read_root(&mut name, &mut reference, &mut type_name) {
+                Err(failure) if StreamException::TypeMismatch.is(&failure) => {
+                    return Ok(self.record(StorageError::TypeMismatch, "ReadRoot"));
+                }
+                outcome => outcome?,
+            }
+            let root = Handle::new(Root::with_reference(&name, reference, &type_name));
+            self.lock().objects.bind(name.clone(), root);
+        }
+        let status = driver.end_read_root_section()?;
+        Ok(self.record(status, "EndReadRootSection"))
+    }
+
+    fn record(&self, error: StorageError, context: &str) -> bool {
+        self.lock().status.record(error, context)
+    }
+
+    /// Example: `roots.number_of_roots()`.
+    pub fn number_of_roots(&self) -> i32 {
+        self.lock().objects.extent() as i32
+    }
+
+    /// Binds (or rebinds) the root under its name; `roots.add_root(&root)`.
+    pub fn add_root(&self, root: &Handle<Root>) {
+        let name = root.get().map(Root::name).unwrap_or_default();
+        self.lock().objects.bind(name, root.clone());
+    }
+
+    /// A new sequence in map iteration order; `roots.roots()`.
+    pub fn roots(&self) -> Handle<HSequence<Handle<Root>>> {
+        let sequence = HSequence::default();
+        for root in self.lock().objects.values() {
+            sequence.append(root.clone());
+        }
+        Handle::new(sequence)
+    }
+
+    /// The root named `name`, or a null handle; `roots.find(&name)`.
+    pub fn find(&self, name: &AsciiString) -> Handle<Root> {
+        self.lock().objects.seek(name).cloned().unwrap_or_default()
+    }
+
+    /// Example: `roots.is_root(&name)`.
+    pub fn is_root(&self, name: &AsciiString) -> bool {
+        self.lock().objects.is_bound(name)
+    }
+
+    /// Unbinds the name when bound; `roots.remove_root(&name)`.
+    pub fn remove_root(&self, name: &AsciiString) {
+        self.lock().objects.unbind(name);
+    }
+
+    /// Sets the object of the bound root, which every handle holder sees;
+    /// an unknown name is `Standard_NoSuchObject`; `roots.update_root(&name, &object)?`.
+    pub fn update_root(
+        &self,
+        name: &AsciiString,
+        object: &Handle<StandardPersistent>,
+    ) -> Result<(), Failure> {
+        let root = self.find(name);
+        let Some(root) = root.get() else {
+            return Err(Failure::with_type(
+                "Standard_NoSuchObject",
+                &format!(
+                    "Storage_RootData::UpdateRoot {:?}; expected a bound root name",
+                    String::from_utf8_lossy(name.as_bytes())
+                ),
+                "",
+            ));
+        };
+        root.set_object(object);
+        Ok(())
+    }
+
+    /// Example: `roots.error_status()`.
+    pub fn error_status(&self) -> StorageError {
+        self.lock().status.error
+    }
+
+    /// Example: `roots.error_status_extension()`.
+    pub fn error_status_extension(&self) -> AsciiString {
+        self.lock().status.extension.clone()
+    }
+
+    /// Example: `roots.clear_error_status()`.
+    pub fn clear_error_status(&self) {
+        self.lock().status.clear();
+    }
+}
+
+crate::impl_transient!(RootData, "Storage_RootData", StandardTransient, parent);
