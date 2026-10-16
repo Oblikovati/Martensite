@@ -82,8 +82,7 @@ fn executable_path() -> Vec<u8> {
 
 #[cfg(unix)]
 fn is_super_user() -> Result<bool, i32> {
-    // SAFETY: getuid has no preconditions and cannot fail.
-    Ok(unsafe { libc::getuid() == 0 })
+    Ok(rustix::process::getuid().is_root())
 }
 // TODO(platform): Windows tests membership of the Administrators SID through the token
 // APIs; until implemented, ERROR_CALL_NOT_IMPLEMENTED (120) is reported.

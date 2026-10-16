@@ -297,3 +297,22 @@ fn native_super_user_query_matches_getuid_without_error() {
     let _ = process.is_super_user();
     assert!(!process.failed());
 }
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[test]
+fn native_super_user_result_matches_real_user_identity() {
+    // The independent utility asks for the real ID, not the effective ID (#89).
+    let output = std::process::Command::new("/usr/bin/id")
+        .args(["-r", "-u"])
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "id failed: {output:?}");
+    let real_uid = std::str::from_utf8(&output.stdout)
+        .unwrap()
+        .trim()
+        .parse::<u32>()
+        .unwrap();
+    let mut process = Process::new();
+    assert_eq!(process.is_super_user(), real_uid == 0);
+    assert!(!process.failed());
+}

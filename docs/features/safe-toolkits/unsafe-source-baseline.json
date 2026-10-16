@@ -152,7 +152,7 @@
   "crates/martensite-tkernel/src/osd/process/environment/native.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":2}},
   "crates/martensite-tkernel/src/osd/process/host/native.rs": {"unsafe_keywords":5,"unsafe_code_mentions":1,"kinds":{"block":4,"extern":1}},
   "crates/martensite-tkernel/src/osd/process/mem_info/native.rs": {"unsafe_keywords":3,"unsafe_code_mentions":1,"kinds":{"block":3}},
-  "crates/martensite-tkernel/src/osd/process/native.rs": {"unsafe_keywords":7,"unsafe_code_mentions":1,"kinds":{"block":7}},
+  "crates/martensite-tkernel/src/osd/process/native.rs": {"unsafe_keywords":6,"unsafe_code_mentions":1,"kinds":{"block":6}},
   "crates/martensite-tkernel/src/osd/process/shared_library.rs": {"unsafe_keywords":6,"unsafe_code_mentions":1,"kinds":{"block":6}},
   "crates/martensite-tkernel/src/osd/process/shared_library/windows_backend.rs": {"unsafe_keywords":14,"unsafe_code_mentions":2,"kinds":{"block":10,"function":4}},
   "crates/martensite-tkernel/src/osd/timing/cpu_native.rs": {"unsafe_keywords":8,"unsafe_code_mentions":1,"kinds":{"block":7,"extern":1}},
