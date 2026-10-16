@@ -1,5 +1,10 @@
 //! Hash engines and templates, C strings and the C-string hasher.
-//! The hash constants are exact results on x86-64 Linux.
+//! The hash constants are exact results on x86-64 Linux. The FNV engines widen
+//! each byte as a plain C `char`, which is signed on x86-64 and unsigned on
+//! AArch64 Linux, so their constants hold only where `char` is signed; the
+//! closed-form reference below checks them on every target.
+use std::ffi::c_char;
+
 use martensite_tkernel::ncollection::HashPolicy;
 use martensite_tkernel::standard::c_string::{self, CStringHasher};
 use martensite_tkernel::standard::hash_bytes;
@@ -17,16 +22,51 @@ fn murmur_engines_match_native_values() {
     assert_eq!(murmur_hash::murmur_hash_2a(b"hello world", 0), 0x44a8_1419);
 }
 
+/// Whether plain C `char` is signed on this target (x86-64: yes, AArch64 Linux: no).
+fn plain_char_is_signed() -> bool {
+    c_char::MIN != 0
+}
+
+/// Closed-form FNV-1a over plain C chars: each byte is widened with the
+/// platform's `char` signedness before the xor, e.g. `reference_fnv_64a(b"a", 0)`.
+fn reference_fnv_64a(key: &[u8], seed: u64) -> u64 {
+    key.iter().fold(seed, |hash, &byte| {
+        let widened = if plain_char_is_signed() {
+            byte as i8 as i64 as u64
+        } else {
+            u64::from(byte)
+        };
+        (hash ^ widened).wrapping_mul(1_099_511_628_211)
+    })
+}
+
+/// 32-bit form of [`reference_fnv_64a`], e.g. `reference_fnv_1a(b"a", 0)`.
+fn reference_fnv_1a(key: &[u8], seed: u32) -> u32 {
+    key.iter().fold(seed, |hash, &byte| {
+        let widened = if plain_char_is_signed() {
+            byte as i8 as i32 as u32
+        } else {
+            u32::from(byte)
+        };
+        (hash ^ widened).wrapping_mul(16_777_619)
+    })
+}
+
 #[test]
-fn fnv_engines_sign_extend_plain_chars() {
+fn fnv_engines_widen_plain_chars() {
     assert_eq!(fnv_hash::fnv_hash_1a(b"a", 0), 0x6100_98b3);
     assert_eq!(fnv_hash::fnv_hash_64a(b"a", 0), 0x0000_6100_0000_a4d3);
-    // 0xff and 0x80 enter as the signed chars -1 and -128 on x86-64 Linux.
-    assert_eq!(fnv_hash::fnv_hash_1a(&[0xff, 0x80], 0), 0x8003_0817);
+    let high = [0xff, 0x80];
+    assert_eq!(fnv_hash::fnv_hash_1a(&high, 0), reference_fnv_1a(&high, 0));
     assert_eq!(
-        fnv_hash::fnv_hash_64a(&[0xff, 0x80], 0),
-        0x0003_8000_0003_0f57
+        fnv_hash::fnv_hash_64a(&high, 0),
+        reference_fnv_64a(&high, 0)
     );
+    if plain_char_is_signed() {
+        // 0xff and 0x80 enter as the signed chars -1 and -128 on x86-64 Linux.
+        assert_eq!(fnv_hash::fnv_hash_1a(&high, 0), 0x8003_0817);
+        assert_eq!(fnv_hash::fnv_hash_64a(&high, 0), 0x0003_8000_0003_0f57);
+    }
 }
 
 #[test]
@@ -43,10 +83,12 @@ fn templates_hash_the_object_representation() {
     let size_hash: usize = hashing::hash(&0_i32);
     assert_eq!(size_hash as u64, 0x68c6_4920_fbde_a08f);
     assert_eq!(hashing::hash::<u32, i32>(&-1), 0x162f_8dbc);
-    assert_eq!(
-        fnv_hash::hash_combine(&[-1_i8], 1, fnv_hash::optimal_seed::<u64>()),
-        0x509c_41b3_79fe_466e
-    );
+    let fnv_seed = fnv_hash::optimal_seed::<u64>();
+    let minus_one: u64 = fnv_hash::hash_combine(&[-1_i8], 1, fnv_seed);
+    assert_eq!(minus_one, reference_fnv_64a(&[0xff], fnv_seed));
+    if plain_char_is_signed() {
+        assert_eq!(minus_one, 0x509c_41b3_79fe_466e);
+    }
     assert_eq!(hash_bytes(b"") as u64, 0x1513_eba9_820e_1cb4);
     let chained: usize = hashing::hash_combine(&[1_u8, 2, 3, 4], 2, 7);
     assert_eq!(chained, murmur_hash::hash_combine(&[1_u8, 2], 2, 7_usize));

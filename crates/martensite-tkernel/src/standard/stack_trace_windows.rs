@@ -1,105 +1,62 @@
-//! The Win64 DbgHelp stack walker.
+//! The Win64 stack capture: frames from RtlCaptureStackBackTrace, names from DbgHelp.
 //! DbgHelp's process-wide symbol state
 //! requires serialization even when callers capture different threads.
 #![allow(unsafe_code)]
 
-use std::{ffi::CStr, sync::Mutex};
+use std::{
+    ffi::{CStr, c_void},
+    sync::{Mutex, OnceLock},
+};
 use windows_sys::Win32::{
     Foundation::HANDLE,
     System::{
-        Diagnostics::Debug::*,
-        LibraryLoader::GetModuleFileNameA,
-        SystemInformation::IMAGE_FILE_MACHINE_AMD64,
-        Threading::{GetCurrentProcess, GetCurrentThread},
+        Diagnostics::Debug::*, LibraryLoader::GetModuleFileNameA, Threading::GetCurrentProcess,
     },
 };
 
+// DbgHelp keeps one symbol handler per process. It is started once and never
+// cleaned up, as Rust's own backtrace support does. The earlier walker
+// (RtlCaptureContext + StackWalk64, with SymInitialize/SymCleanup per capture)
+// crashed with an access violation on Windows x64 in the 0.3.0 release
+// rehearsal; this version uses neither.
 static SYMBOL_SESSION: Mutex<()> = Mutex::new(());
+static SYMBOLS_READY: OnceLock<bool> = OnceLock::new();
 
-struct SymbolSession(HANDLE);
-impl Drop for SymbolSession {
-    fn drop(&mut self) {
-        // SAFETY: the process symbol session remains locked until this guard drops.
-        unsafe { SymCleanup(self.0) };
-    }
+/// Starts the process symbol handler on first use; e.g. `symbols_ready(process)`.
+fn symbols_ready(process: HANDLE) -> bool {
+    *SYMBOLS_READY.get_or_init(|| {
+        // SAFETY: `process` is the current-process pseudo-handle, the caller holds
+        // SYMBOL_SESSION, and a null search path selects the default.
+        unsafe { SymInitialize(process, std::ptr::null(), 1) != 0 }
+    })
 }
 
+/// Captures and symbolizes up to `nb_traces` frames after skipping `top_skip`
+/// frames, the first being this function; e.g. `native_frames(10, 1)`.
 #[inline(never)]
 pub(super) fn native_frames(nb_traces: i32, top_skip: i32) -> Option<Vec<String>> {
+    let count = u32::try_from(nb_traces).ok()?;
+    let skip = u32::try_from(top_skip).ok()?;
+    let mut addresses: Vec<*mut c_void> = vec![std::ptr::null_mut(); count as usize];
+    // SAFETY: `addresses` is writable for `count` pointers and the hash output is
+    // optional. RtlCaptureStackBackTrace reads only the calling thread's stack.
+    let captured = unsafe {
+        RtlCaptureStackBackTrace(skip, count, addresses.as_mut_ptr(), std::ptr::null_mut())
+    };
+    addresses.truncate(usize::from(captured));
     let _lock = SYMBOL_SESSION
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-    // SAFETY: process/thread pseudo-handles are always valid in this process.
+    // SAFETY: GetCurrentProcess returns a pseudo-handle that is always valid.
     let process: HANDLE = unsafe { GetCurrentProcess() };
-    // SAFETY: GetCurrentThread returns a pseudo-handle that is always valid in this thread.
-    let thread: HANDLE = unsafe { GetCurrentThread() };
-    let mut context: CONTEXT = CONTEXT {
-        ContextFlags: CONTEXT_FULL_AMD64,
-        ..Default::default()
-    };
-    // SAFETY: aligned, writable CONTEXT; null search path selects the default.
-    unsafe { RtlCaptureContext(&mut context) };
-    // SAFETY: `process` is the current-process pseudo-handle, and SYMBOL_SESSION serializes the
-    // DbgHelp session; a null search path selects the default.
-    if unsafe { SymInitialize(process, std::ptr::null(), 1) } == 0 {
+    if !symbols_ready(process) {
         return None;
     }
-    let _session = SymbolSession(process);
-    walk_frames(process, thread, &mut context, nb_traces, top_skip)
-}
-
-fn initial_frame(context: &CONTEXT) -> STACKFRAME64 {
-    let mut frame: STACKFRAME64 = STACKFRAME64::default();
-    frame.AddrPC.Offset = context.Rip;
-    frame.AddrFrame.Offset = context.Rsp;
-    frame.AddrStack.Offset = context.Rsp;
-    frame.AddrPC.Mode = AddrModeFlat;
-    frame.AddrFrame.Mode = AddrModeFlat;
-    frame.AddrStack.Mode = AddrModeFlat;
-    frame
-}
-
-fn walk_frames(
-    process: HANDLE,
-    thread: HANDLE,
-    context: &mut CONTEXT,
-    count: i32,
-    skip: i32,
-) -> Option<Vec<String>> {
-    let mut frame: STACKFRAME64 = initial_frame(context);
-    let mut lines: Vec<String> = Vec::new();
-    for index in 0..count.checked_add(skip)? {
-        if !walk_next(process, thread, &mut frame, context) || frame.AddrPC.Offset == 0 {
-            break;
-        }
-        if index >= skip {
-            lines.push(symbolized_frame(process, frame.AddrPC.Offset));
-        }
-    }
+    let lines: Vec<String> = addresses
+        .iter()
+        .map(|address| symbolized_frame(process, *address as u64))
+        .collect();
     (!lines.is_empty()).then_some(lines)
-}
-
-fn walk_next(
-    process: HANDLE,
-    thread: HANDLE,
-    frame: &mut STACKFRAME64,
-    context: &mut CONTEXT,
-) -> bool {
-    // SAFETY: initialized x64 frame/context and live handles; the DbgHelp callbacks use
-    // the same process symbol session held under SYMBOL_SESSION for the full walk.
-    unsafe {
-        StackWalk64(
-            IMAGE_FILE_MACHINE_AMD64 as u32,
-            process,
-            thread,
-            frame,
-            std::ptr::from_mut(context).cast(),
-            None,
-            Some(SymFunctionTableAccess64),
-            Some(SymGetModuleBase64),
-            None,
-        ) != 0
-    }
 }
 
 fn module_filename(process: HANDLE, address: u64) -> String {
