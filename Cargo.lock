@@ -281,6 +281,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "flate2",
+ "proc-macro2",
  "semver",
  "serde",
  "serde_json",
