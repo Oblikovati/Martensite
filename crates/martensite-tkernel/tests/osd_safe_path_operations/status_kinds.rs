@@ -5,7 +5,7 @@ use std::os::unix::{ffi::OsStrExt, fs::MetadataExt, fs::symlink, net::UnixListen
 
 #[test]
 fn path_status_distinguishes_directory_socket_and_followed_link() {
-    let scratch = PathScratch::new("status-kinds");
+    let scratch = socket_scratch();
     std::fs::create_dir(scratch.0.join("directory")).unwrap();
     std::fs::write(scratch.0.join("file"), b"payload").unwrap();
     symlink("file", scratch.0.join("link")).unwrap();
@@ -17,6 +17,22 @@ fn path_status_distinguishes_directory_socket_and_followed_link() {
     ] {
         assert_status_fields(&scratch, name, kind);
     }
+}
+
+fn socket_scratch() -> PathScratch {
+    // macOS TMPDIR can exceed sockaddr_un's pathname budget before our suffix (#128).
+    PathScratch::under(std::path::Path::new("/tmp"), "socket")
+}
+
+#[test]
+fn socket_fixture_path_fits_macos_address_budget() {
+    let scratch = socket_scratch();
+    let path = scratch.bytes(b"socket");
+    assert!(
+        path.len() < 104,
+        "socket path has {} bytes; expected < 104",
+        path.len()
+    );
 }
 
 fn assert_status_fields(scratch: &PathScratch, name: &[u8], kind: NodeType) {

@@ -18,7 +18,10 @@ mod status_kinds;
 struct PathScratch(PathBuf);
 impl PathScratch {
     fn new(label: &str) -> Self {
-        let root = std::env::temp_dir().join(format!(
+        Self::under(&std::env::temp_dir(), label)
+    }
+    fn under(parent: &std::path::Path, label: &str) -> Self {
+        let root = parent.join(format!(
             "martensite-path-{label}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()
