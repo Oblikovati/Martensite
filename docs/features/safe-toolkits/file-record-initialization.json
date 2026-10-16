@@ -1,0 +1,49 @@
+{
+  "issue": 89,
+  "parent": 80,
+  "baseline_revision": "18c379184da18bc2250d4df5938fb06ab515bad1",
+  "fixture_revision": "ab9a5f4fff2092572e4d8e33e6a4ef12f1962e21",
+  "implementation_revision": "ae5328391f696c98b6bac91c6c074a2d7de43eba",
+  "deleted_paths": [
+    "Unsafe tm initialization in NativePosixCalls::local_time on Linux and macOS",
+    "Unsafe flock initialization on GNU Linux x86_64/aarch64 and macOS"
+  ],
+  "migration_limit": "This increment replaces the selected initialization paths directly; no parallel production implementation remains on those configurations.",
+  "preserved": [
+    "Public interfaces, lock commands, whole-file range, errno handling and localtime_r conversion",
+    "Temporary zero-initialization fallbacks on other platform layouts",
+    "Dependencies and package versions"
+  ],
+  "layout_sources": [
+    "libc 0.2.190 src/unix/linux_like/linux/gnu/b64/x86_64/mod.rs: flock",
+    "libc 0.2.190 src/unix/linux_like/linux/gnu/b64/aarch64/mod.rs: flock",
+    "libc 0.2.190 src/unix/bsd/apple/mod.rs: exhaustive flock",
+    "Existing crate::native_calendar::empty_calendar helper"
+  ],
+  "local_evidence": {
+    "pr_gate": "cargo xtask pr passed, including clean evidence revision 38e64b105e4ebc4af21a66636126e1419f442991; logs /tmp/martensite-file-records-pr.log and /tmp/martensite-file-records-evidence-pr.log",
+    "baseline_native_fixtures": "3 passed before implementation",
+    "candidate_native_fixtures": "3 passed after implementation",
+    "lock_field_fixture": "1 passed",
+    "source_inventory": "The fallback block moved to lock_record.rs; total lexical unsafe count did not decrease.",
+    "compiled_inventory": "Linux x86_64 native_unix.rs group decreased from 36 to 32 emitted primary spans. Initial capture records dirty fixture revision ab9a5f4; the subsequent clean capture at 38e64b1 and all four native artifacts match their complete reviewed summaries."
+  },
+  "review": {
+    "standards": "No findings at ae53283",
+    "spec": "No implementation defect; the outstanding native matrix requirement was subsequently satisfied by run 38941685332"
+  },
+  "native_matrix": {
+    "run": 38941685332,
+    "revision": "ae5328391f696c98b6bac91c6c074a2d7de43eba",
+    "status": "All four targets passed; publish skipped",
+    "artifacts": "All four downloaded latest.json reports identify ae5328391f696c98b6bac91c6c074a2d7de43eba and exactly match their complete reviewed compiler-baseline summaries.",
+    "artifact_directory": "/tmp/martensite-records-native-ae53283.AVoYPO",
+    "fixture_logs": "The three Unix job logs explicitly show all three native record/calendar fixtures and the zero-field unit fixture passing. Windows validates exclusion of Unix-specific code.",
+    "mode": "Nonpublishing release validation, version input 0.3.1; no version or tag change"
+  },
+  "exclusions": [
+    "No Miri claim for native system calls",
+    "Other Unix layouts remain migration work, not proven permanent system exceptions",
+    "This increment does not complete #89 or #80"
+  ]
+}

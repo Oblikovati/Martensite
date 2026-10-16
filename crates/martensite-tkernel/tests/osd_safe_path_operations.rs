@@ -8,6 +8,8 @@ use std::path::PathBuf;
 mod links;
 #[path = "osd_safe_path_operations/raw_names.rs"]
 mod raw_names;
+#[path = "osd_safe_path_operations/records.rs"]
+mod records;
 
 struct PathScratch(PathBuf);
 impl PathScratch {
