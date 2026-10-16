@@ -1,0 +1,18 @@
+{
+  "task": 89,
+  "baseline": "6fe368c",
+  "removed_unsafe_constructs": 2,
+  "records": [
+    {"type": "windows_sys::Win32::Foundation::SYSTEMTIME", "zero_initialized_fields": 8},
+    {"type": "libc::malloc_statistics_t", "zero_initialized_fields": 4}
+  ],
+  "replacement": "Explicit field initialization replaces mem::zeroed; existing OS calls and result conversion are unchanged.",
+  "compatibility": "All observable integer fields remain zero before the call. Padding is not exposed as bytes. No public interfaces, allocation policy or dependencies change.",
+  "tests": "Platform-specific tests assert every initialized field. Existing native Windows calendar/millisecond test remains unchanged.",
+  "cross_target_validation": [
+    "cargo clippy --locked -p martensite-tkernel --all-targets --target x86_64-pc-windows-msvc -- -D warnings passed",
+    "cargo clippy --locked -p martensite-tkernel --all-targets --target aarch64-apple-darwin -- -D warnings passed"
+  ],
+  "remaining_validation": ["Local PR gate", "Native Windows and macOS execution"],
+  "exclusion": "Remaining FFI calls are not classified as unavoidable by this change."
+}
