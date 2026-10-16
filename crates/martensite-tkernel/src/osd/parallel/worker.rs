@@ -141,15 +141,15 @@ fn scoped_dispatch(
     rest: &[Arc<Worker>],
     body: &JobBody<'_>,
 ) -> Vec<Failure> {
-    let failure = Mutex::new(None);
+    let mut failure = None;
     let mut remaining = Vec::new();
     if let Some(pool) = &executor.pool {
         pool.in_place_scope(|scope| {
-            scope.spawn(|_| *lock(&failure) = worker.perform(body));
+            scope.spawn(|_| failure = worker.perform(body));
             remaining = dispatch(rest, body);
         });
     }
-    let mut failures: Vec<Failure> = lock(&failure).take().into_iter().collect();
+    let mut failures: Vec<Failure> = failure.into_iter().collect();
     failures.extend(remaining);
     failures
 }
