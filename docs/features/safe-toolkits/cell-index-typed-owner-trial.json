@@ -1,0 +1,14 @@
+{
+  "baseline_commit": "b9f8b0c",
+  "candidate": "Option<allocator_api2::vec::Vec<i32, BaseAllocator>> with noncounting storage lease",
+  "status": "Not accepted: measured cost increase and unresolved private layout assertion",
+  "index_bytes": 80,
+  "elapsed_nanoseconds": [61710181, 67688827, 64105766],
+  "peak_process_rss_kib": [15076, 16144, 15956],
+  "same_workload_as": "cell-index-baseline.json",
+  "focused_tests": {"passed": 31, "failed": 1, "ignored": 1},
+  "failure": "private native layout expected index 56 8 0 40 48; observed index 80 8 0 40 72",
+  "unsafe_constructs_removed_in_candidate": 5,
+  "scope": "CellIndex and its storage helper only; the shared allocator still contains unsafe",
+  "next_investigation": "Evaluate standard owned storage after auditing common allocator observability; keep layout baseline unchanged pending review"
+}
