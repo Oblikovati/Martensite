@@ -41,7 +41,23 @@ fn tms_seconds(ticks: f64) -> (f64, f64) {
 
 /// Linux: only the user time of a thread is available (`CLOCK_THREAD_CPUTIME_ID`);
 /// the system part stays 0, and a failing call leaves both at 0.
-#[cfg(all(unix, not(target_vendor = "apple")))]
+#[cfg(all(target_os = "linux", target_pointer_width = "64"))]
+pub(super) fn thread_cpu() -> (f64, f64) {
+    use rustix::time::{ClockId, DynamicClockId, clock_gettime_dynamic};
+    // The fallible interface preserves the existing zero-on-error contract (#89).
+    let stamp = clock_gettime_dynamic(DynamicClockId::Known(ClockId::ThreadCPUTime));
+    thread_cpu_seconds(
+        stamp
+            .ok()
+            .map(|stamp| (stamp.tv_sec as f64, stamp.tv_nsec as f64)),
+    )
+}
+
+#[cfg(all(
+    unix,
+    not(target_vendor = "apple"),
+    not(all(target_os = "linux", target_pointer_width = "64"))
+))]
 pub(super) fn thread_cpu() -> (f64, f64) {
     let mut stamp: libc::timespec = libc::timespec {
         tv_sec: 0,
