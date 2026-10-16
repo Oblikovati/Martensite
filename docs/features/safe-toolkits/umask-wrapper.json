@@ -34,6 +34,7 @@
     "result": "All four platforms passed; publishing was skipped. All three Unix logs explicitly show the isolated umask fixture passed. All four inventory artifacts match this exact revision and their complete checked-in summaries."
   },
   "final_local_gate": "cargo xtask pr passed again before the evidence-only push (/tmp/martensite-umask-final-pr.log). Production and fixture sources are unchanged from combined native revision 5892482.",
+  "clock_integration": "Merged main f07c2d4 in 937fe71. The umask production and fixture sources remain byte-identical to native-tested 5892482; clock production and fixtures are identical to main's separately native-tested #134. Both inventory reductions are preserved. The combined cargo xtask pr gate passed (/tmp/martensite-umask-clock-integration-pr.log); no new full-matrix claim is made for this merge.",
   "exclusions": [
     "No public API or package version change",
     "Existing process-wide umask semantics are preserved, not redesigned as operation-local state",
