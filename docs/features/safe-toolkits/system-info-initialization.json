@@ -8,5 +8,13 @@
   "remaining_boundary": "GetSystemInfo writes a live initialized SYSTEM_INFO; the call and its outputs are unchanged.",
   "dependency_unsafe": "SYSTEM_INFO::default() still uses unsafe internally. This is an existing dependency interface, not relocated project code or a claim of a transitively unsafe-free program.",
   "public_api_changes": false,
-  "native_verification": "Pending Windows CI; compile checks alone do not prove runtime behavior."
+  "native_verification": {
+    "revision": "f865eb8babb741fd73682c2e9f8fef681217f0cd",
+    "run": "https://github.com/Oblikovati/Martensite/actions/runs/38909964891",
+    "result": "Passed on Linux x86_64, Linux arm64, macOS arm64 and Windows x64",
+    "windows_tests": [
+      "native_processor_query_returns_a_positive_count",
+      "native_page_size_is_nonzero_and_a_power_of_two"
+    ]
+  }
 }
