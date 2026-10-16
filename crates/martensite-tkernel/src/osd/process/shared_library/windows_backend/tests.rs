@@ -8,6 +8,20 @@ use std::{
     sync::{Mutex, atomic::AtomicU32},
 };
 
+#[cfg(windows)]
+#[test]
+fn native_last_error_reads_missing_module_without_consuming_the_code() {
+    let calls = super::SystemWindowsCalls;
+    let name: Vec<u16> = "martensite-absent-7a3b47c9-system-test.dll\0"
+        .encode_utf16()
+        .collect();
+    assert!(calls.module_handle(&name).is_null());
+    let first = calls.last_error_code();
+    let second = calls.last_error_code();
+    assert_eq!(first, windows_sys::Win32::Foundation::ERROR_MOD_NOT_FOUND);
+    assert_eq!(second, first);
+}
+
 #[derive(Default)]
 struct FakeWindowsCalls {
     cache: *mut c_void,
