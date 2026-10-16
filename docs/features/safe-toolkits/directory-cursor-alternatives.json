@@ -1,0 +1,41 @@
+{
+  "issue": 89,
+  "parent": 80,
+  "baseline_revision": "518968e99a893fd437c47b3a8bc0873f90c2b413",
+  "fixture_revision": "d863daf",
+  "status": "Investigation only; no dependency or production change",
+  "baseline_tests": "Three Linux x86_64 fixtures passed: dot entries and bulk/cursor order, first-NUL truncation, immediate path errors, rename isolation and thread transfer.",
+  "current_path": "osd/file/native_unix/directory_cursor.rs owns DIR, calls readdir for every next_name, copies each name once and closes the stream once. A null read returns None but does not prevent a later read.",
+  "candidates": [
+    {
+      "name": "std::fs::ReadDir",
+      "assessment": "Not a direct replacement: filters dot entries that current callers can observe. Synthesizing them does not establish preservation of native ordering."
+    },
+    {
+      "name": "rustix 1.1.5 Dir",
+      "sources": ["src/backend/libc/fs/dir.rs", "src/backend/linux_raw/fs/dir.rs"],
+      "assessment": "The default Linux backend retries interrupted reads. Both backends retain an any_errors flag that prevents subsequent reads after an error. The libc backend can avoid the Linux retry change via use-libc, but still fuses after errors. Entries own a CString; copying into the existing Vec return type adds a name allocation relative to the current path. Costs are not measured yet.",
+      "recovery_limit": "seek clears the error flag, but preserving position requires a valid cookie. The libc DirEntry::offset API is not available on macOS; no portable retry-preserving adapter has been demonstrated."
+    },
+    {
+      "name": "rustix 1.1.5 RawDir",
+      "source": "src/fs/raw_dir.rs",
+      "assessment": "Borrows a caller-owned mutable buffer, exposes borrowed names, and calls getdents_uninit without a retry loop in RawDir::next. Reconstructing it for each next_name would discard unread buffered entries. A safe owned-cursor design and supported-target coverage remain unproven; this is not a reason to hide a self-reference cast in a helper."
+    },
+    {
+      "name": "nix 0.31.3 Dir/OwningIter",
+      "source": "src/dir.rs",
+      "assessment": "OwningIter does not fuse read errors, but Dir::from_fd leaks the consumed descriptor on fdopendir failure. The isolated safe probe reproduced ENOTDIR with the descriptor still open twice under Rust 1.99.0. Tracked as Bug #126; nix was not added to Martensite. Entry owns a CString, so allocation costs also need measurement.",
+      "probe": "/tmp/martensite-nix-dir-probe.NJo72l",
+      "older_version_check": "The local 0.29.0 source closes on constructor failure but uses the older readdir_r representation; upstream v0.30.1 has the consumed-descriptor leak. No older version was adopted.",
+      "upstream_source": "https://github.com/nix-rust/nix/blob/v0.30.1/src/dir.rs"
+    }
+  ],
+  "next_requirements": [
+    "Prove safe ownership and repeated-read behavior, including injected transient read failure",
+    "Verify failure cleanup without a shim that assumes ownership of a raw descriptor after a supposedly consuming API",
+    "Measure per-entry allocations, elapsed time and peak memory before adoption",
+    "Run native fixtures on all affected supported targets"
+  ],
+  "scope_limit": "No impossibility or permanent system exception is established. The existing unsafe cursor remains temporary migration work."
+}
