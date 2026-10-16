@@ -134,9 +134,10 @@ struct PreparedWorker<'a> {
 }
 
 type IndexedFailures = Vec<(i32, Failure)>;
+type PreparedWorkers<'a> = smallvec::SmallVec<[PreparedWorker<'a>; 32]>;
 
-fn prepare_workers(workers: &[Arc<Worker>]) -> (Vec<PreparedWorker<'_>>, IndexedFailures) {
-    let mut ready = Vec::with_capacity(workers.len());
+fn prepare_workers(workers: &[Arc<Worker>]) -> (PreparedWorkers<'_>, IndexedFailures) {
+    let mut ready = PreparedWorkers::with_capacity(workers.len());
     let mut failures = Vec::new();
     for worker in workers {
         match worker.executor() {
