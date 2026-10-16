@@ -149,7 +149,7 @@
   "crates/martensite-tkernel/src/osd/parallel/job.rs": {"unsafe_keywords":3,"unsafe_code_mentions":1},
   "crates/martensite-tkernel/src/osd/parallel/thread/native.rs": {"unsafe_keywords":7,"unsafe_code_mentions":1},
   "crates/martensite-tkernel/src/osd/process/environment/native.rs": {"unsafe_keywords":4,"unsafe_code_mentions":1},
-  "crates/martensite-tkernel/src/osd/process/host/native.rs": {"unsafe_keywords":7,"unsafe_code_mentions":1},
+  "crates/martensite-tkernel/src/osd/process/host/native.rs": {"unsafe_keywords":6,"unsafe_code_mentions":1},
   "crates/martensite-tkernel/src/osd/process/mem_info/native.rs": {"unsafe_keywords":4,"unsafe_code_mentions":1},
   "crates/martensite-tkernel/src/osd/process/native.rs": {"unsafe_keywords":8,"unsafe_code_mentions":1},
   "crates/martensite-tkernel/src/osd/process/shared_library.rs": {"unsafe_keywords":6,"unsafe_code_mentions":1},
