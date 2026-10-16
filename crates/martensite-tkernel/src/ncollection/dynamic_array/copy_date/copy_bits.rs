@@ -1,5 +1,7 @@
 //! The selected trivial policy copies complete object representations without calling Clone.
 use super::{AllocVec, BaseAllocator};
+#[cfg(test)]
+mod migration_tests;
 
 pub(super) fn copy_bitwise_values<T: Copy>(values: &[T], block: &mut AllocVec<T, BaseAllocator>) {
     assert!(
