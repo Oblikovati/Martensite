@@ -7,6 +7,14 @@
   "compatibility": "Native lookup, buffer size/lifetime, identity lookup, empty-result handling and returned name bytes are unchanged. Other Unix targets retain their existing initialization; Windows is unchanged. No public API or dependency change.",
   "inventory": "One unsafe initialization operation removed on supported Unix targets. Existing lexical block remains only under other-Unix cfg. Compiler diagnostic reduction requires capture and reviewed baseline reconciliation after #117.",
   "local_verification": ["Linux x86_64 null-pointer/zero-ID regression passed", "macOS arm64 cargo check --tests passed"],
-  "pending_verification": ["Linux arm64 type check", "Full PR gate", "Native four-platform tests", "Review and compiler-baseline reconciliation"],
+  "subsequent_verification": ["Linux arm64 test-target type check passed", "Full PR gate passed before integration", "Independent standards and scope reviews found no implementation defects"],
+  "compiler_reconciliation": {
+    "source_revision": "8f32005c1e247cb6ce98f5ed06010bd5740f8e06",
+    "dependency": "Includes PR #120 calendar initialization; integrate #120 first.",
+    "linux_x86_64": "Fresh report changes only process/native.rs unsafe-block emitted spans from 10 to 8, removing the account initialization block from library and library-test compilation.",
+    "linux_arm64_and_macos": "The identical cfg removal predicts 10 to 8; native artifacts must confirm before merge.",
+    "windows": "Unchanged baseline. No other group counts changed."
+  },
+  "pending_verification": ["Full PR gate after integration", "Exact-head native four-platform tests and artifact comparisons"],
   "exclusion": "This does not prove getpwuid_r/getuid unavoidable or approve other Unix initialization as a permanent exception."
 }
