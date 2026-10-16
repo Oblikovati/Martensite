@@ -1,38 +1,38 @@
-"""Diagnostic comparison of existing workload binaries; not a CI acceptance gate.
+"""Compare captured launcher measurements without executing benchmark programs.
 
-Usage: python3 experiments/launcher-cost-check.py BASELINE CANDIDATE
-The 20% threshold flags a repeatable scheduling-cost symptom for investigation.
+Usage: python3 experiments/launcher-cost-check.py MEASUREMENTS.json
+The 20% threshold flags a scheduling-cost symptom, not a CI acceptance policy.
+Input follows docs/features/safe-toolkits/scoped-worker-cost-repeat.json.
 """
-import re
+import json
 import statistics
-import subprocess
 import sys
+from pathlib import Path
 
 
-def measure(binary):
-    result = subprocess.run(
-        [binary, "persistent_range_workload", "--ignored", "--nocapture"],
-        check=True, capture_output=True, text=True, timeout=30,
-    )
-    values = re.findall(
-        r"participants=32 sample=\d+ launches=1000 items=64000 elapsed_ns=(\d+)",
-        result.stdout,
-    )
-    assert len(values) == 3, result.stdout
-    return [int(value) for value in values]
+def participant_samples(report, implementation):
+    values = report["samples"][implementation]["32"]
+    if not isinstance(values, list) or len(values) < 3:
+        raise ValueError(f"expected at least three samples for {implementation}: {values!r}")
+    if any(type(value) is not int or value <= 0 for value in values):
+        raise ValueError(f"expected positive integer nanoseconds for {implementation}: {values!r}")
+    return values
+
+
+def compare(report):
+    baseline = participant_samples(report, "baseline")
+    candidate = participant_samples(report, "candidate")
+    if len(baseline) != len(candidate):
+        raise ValueError(f"expected paired sample counts: {len(baseline)} != {len(candidate)}")
+    old = statistics.median(baseline)
+    new = statistics.median(candidate)
+    print(f"participants=32 baseline_median_ns={old} candidate_median_ns={new} ratio={new / old:.3f}")
+    return int(new > old * 1.2)
 
 
 def main():
-    baseline, candidate = sys.argv[1:]
-    samples = {baseline: [], candidate: []}
-    for round_index in range(6):
-        order = [baseline, candidate] if round_index % 2 == 0 else [candidate, baseline]
-        for binary in order:
-            samples[binary].extend(measure(binary))
-    old = statistics.median(samples[baseline])
-    new = statistics.median(samples[candidate])
-    print(f"participants=32 baseline_median_ns={old} candidate_median_ns={new} ratio={new / old:.3f}")
-    return int(new > old * 1.2)
+    [measurement_path] = sys.argv[1:]
+    return compare(json.loads(Path(measurement_path).read_text(encoding="utf-8")))
 
 
 if __name__ == "__main__":
