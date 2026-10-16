@@ -79,3 +79,11 @@ Run `cargo deny --all-features --locked check` and `cargo audit` when changing
 dependencies. The workspace policy pins the Unicode license exception to the
 build driver's `unicode-ident` version, so an upgrade requires another review.
 Every publishable path dependency declares its package version.
+
+### Windows coherent storage release correction
+
+The 0.3.1 Windows release candidate exposed a false incompatible-release error
+when coherent ring removal paired an aligned owner with a common release policy
+(#78). All three built-in heap policies use the same layout-bearing Rust storage.
+The classifier now follows that backend; the ring assertions and allocator inputs
+are unchanged. Arena-interior release remains refused before topology changes.
