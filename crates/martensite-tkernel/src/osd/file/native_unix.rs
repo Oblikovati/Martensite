@@ -49,21 +49,33 @@ fn path_result(result: std::io::Result<()>) -> CallResult<()> {
 // mode_t is u16 on macOS and the stat field widths vary by target: the casts are needed there.
 #[allow(clippy::unnecessary_cast)]
 fn node_status(raw: &libc::stat) -> NodeStatus {
-    let mode: u32 = raw.st_mode as u32;
-    let node_type: NodeType = match mode & (libc::S_IFMT as u32) {
+    node_status_fields(
+        raw.st_mode as u32,
+        raw.st_size as u64,
+        raw.st_ctime as i64,
+        raw.st_blksize as u64,
+    )
+}
+
+#[allow(clippy::unnecessary_cast)]
+fn node_type(mode: u32) -> NodeType {
+    match mode & (libc::S_IFMT as u32) {
         kind if kind == libc::S_IFREG as u32 => NodeType::Regular,
         kind if kind == libc::S_IFDIR as u32 => NodeType::Directory,
         kind if kind == libc::S_IFLNK as u32 => NodeType::Link,
         kind if kind == libc::S_IFIFO as u32 => NodeType::Fifo,
         kind if kind == libc::S_IFSOCK as u32 => NodeType::Socket,
         _ => NodeType::Other,
-    };
+    }
+}
+
+fn node_status_fields(mode: u32, size: u64, change_time: i64, block_size: u64) -> NodeStatus {
     NodeStatus {
-        node_type,
+        node_type: node_type(mode),
         permissions: mode & 0o7777,
-        size: raw.st_size as u64,
-        change_time: raw.st_ctime as i64,
-        block_size: raw.st_blksize as u64,
+        size,
+        change_time,
+        block_size,
     }
 }
 
@@ -77,12 +89,23 @@ impl PosixFileCalls for NativePosixCalls {
         // SAFETY: name is a valid NUL-terminated string alive for the call.
         status_zero(unsafe { libc::access(name.as_ptr(), bits) })
     }
+    #[cfg(target_os = "macos")]
+    fn stat(&self, path: &[u8]) -> CallResult<NodeStatus> {
+        use std::os::unix::fs::MetadataExt;
+        let name: CString = c_path(path);
+        let metadata = std::fs::metadata(native_path(&name))
+            .map_err(|error| Errno(error.raw_os_error().unwrap_or(0)))?;
+        Ok(node_status_fields(
+            metadata.mode(),
+            metadata.size(),
+            metadata.ctime(),
+            metadata.blksize(),
+        ))
+    }
+    #[cfg(not(target_os = "macos"))]
     fn stat(&self, path: &[u8]) -> CallResult<NodeStatus> {
         let name: CString = c_path(path);
-        #[cfg(target_os = "macos")]
-        let mut raw = libc::stat::default();
         // SAFETY: an all-zero stat is a valid value of this plain C struct.
-        #[cfg(not(target_os = "macos"))]
         let mut raw: libc::stat = unsafe { std::mem::zeroed() };
         // SAFETY: name is NUL-terminated; raw is a writable stat alive for the call.
         status_zero(unsafe { libc::stat(name.as_ptr(), &mut raw) })?;
