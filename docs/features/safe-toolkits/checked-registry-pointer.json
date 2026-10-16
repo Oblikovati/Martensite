@@ -1,0 +1,17 @@
+{
+  "task": 86,
+  "baseline_revision": "f09d07a17fb1628dd6941434225035e0350e6199",
+  "change": "Checked NonNull conversion of the unchanged Box::into_raw result",
+  "first_party_unsafe_blocks_removed": 1,
+  "compatibility": "No public interface, allocation, pointer provenance, drop path or generic-bound changes. Box::into_raw guarantees a non-null result; the checked null fallback uses the allocation failure handler.",
+  "msrv": "1.98.1 focused registry test passed; Box::into_non_null requires 1.99.0 and was not used",
+  "miri": {
+    "toolchain": "nightly-2026-09-25",
+    "command": "cargo +nightly-2026-09-25 miri test -p martensite-tkernel --lib ncollection::sequence::",
+    "passed": 27,
+    "failed": 0,
+    "ignored": 0,
+    "warning": "Existing dropping_copy_types warning in allocator/typed_inc_free_failure_tests.rs:89; unchanged"
+  },
+  "remaining": "Raw registry ownership, dereference and drop remain unsafe and require the broader sequence-storage migration."
+}
