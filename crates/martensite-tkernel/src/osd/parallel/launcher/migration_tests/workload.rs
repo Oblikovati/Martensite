@@ -2,6 +2,8 @@
 use super::{Launcher, ThreadPool};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+mod retention;
+
 fn measured(launcher: &Launcher<'_>) -> u128 {
     let completed = AtomicUsize::new(0);
     let started = std::time::Instant::now();
