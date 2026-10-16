@@ -3,7 +3,7 @@
 Feature [#112](https://github.com/Oblikovati/Martensite/issues/112) adds an explicit
 failure channel for operation callers whose diagnostic sink can refuse a message.
 Existing `send` methods, buffering, defaults and printer implementations keep their
-behavior. No release or version change is included in this candidate.
+behavior. This change does not include a release or version change.
 
 ## Contract
 
@@ -52,7 +52,7 @@ unsafe code, dependencies or production fallback is added.
 
 The existing Printer Send+Sync bound remains; Messenger and Failure compile-time
 assertions, concurrent delivery tests and independent-messenger assertions guard the interface. This
-candidate does not certify every sink's thread safety, bound callback execution,
+interface does not certify every sink's thread safety, bound callback execution,
 or provide cancellation. The coordinating release gate must run the configured
 concurrency/sanitizer suite on its accepted candidate.
 
@@ -67,5 +67,5 @@ Existing foundation tests remain unchanged. Run the new cases with:
 cargo test -p martensite-tkernel --test toolkit message_fallible_delivery
 ```
 
-The full PR gate remains `cargo xtask pr`. This additive candidate is pending
-maintainer review and the usual integration and release checks.
+The full PR gate is `cargo xtask pr`. Integration and release follow the usual
+repository checks.

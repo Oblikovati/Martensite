@@ -111,39 +111,14 @@ fn callback_edits_affect_next_snapshot_and_allow_nested_delivery() {
     messenger.add_printer(original.clone());
     messenger.try_send("outer").unwrap();
     messenger.try_send("next").unwrap();
-    assert_eq!(
-        *original.records.lock().unwrap(),
-        vec![(b"outer".to_vec(), Gravity::Warning)]
-    );
-    assert_eq!(
-        *replacement.records.lock().unwrap(),
-        vec![
-            (b"inner".to_vec(), Gravity::Warning),
-            (b"next".to_vec(), Gravity::Warning)
-        ]
-    );
+    support::assert_reentrant_records(&original, &replacement);
 }
 
 #[test]
 fn messenger_overloads_share_failure_channel_and_object_filtering() {
     let refusal = Arc::new(RefusingPrinter::new());
     let messenger = Messenger::with_printer(refusal.clone());
-    assert!(messenger.try_send_c_str(b"c", Gravity::Info).is_err());
-    assert!(
-        messenger
-            .try_send_string_stream(b"s", Gravity::Info)
-            .is_err()
-    );
-    assert!(
-        messenger
-            .try_send_ascii(&AsciiString::new("a"), Gravity::Info)
-            .is_err()
-    );
-    assert!(
-        messenger
-            .try_send_extended(&ExtendedString::new("e"), Gravity::Info)
-            .is_err()
-    );
+    support::assert_text_overloads_refuse(&messenger);
     messenger
         .try_send_object(&Handle::default(), Gravity::Fail)
         .unwrap();
@@ -204,13 +179,7 @@ fn concurrent_callers_keep_owned_delivery_records() {
     let recorder = Arc::new(LegacyRecorder::default());
     let messenger = Arc::new(Messenger::with_printer(recorder.clone()));
     support::send_concurrent_workload(&messenger);
-    let mut actual: Vec<Vec<u8>> = recorder
-        .records
-        .lock()
-        .unwrap()
-        .iter()
-        .map(|r| r.0.clone())
-        .collect();
+    let mut actual = support::recorded_message_bytes(&recorder);
     let mut expected: Vec<Vec<u8>> = (0..4)
         .flat_map(|w| (0..1000).map(move |m| format!("{w}:{m}").into_bytes()))
         .collect();

@@ -1,3 +1,8 @@
+#[path = "assertions.rs"]
+mod assertions;
+pub use assertions::{
+    assert_reentrant_records, assert_text_overloads_refuse, recorded_message_bytes,
+};
 use martensite_tkernel::message::{Gravity, Messenger, Printer, PrinterBase, PrinterType};
 use martensite_tkernel::standard::{Failure, RuntimeType, RuntimeTyped};
 use martensite_tkernel::tcollection::AsciiString;
