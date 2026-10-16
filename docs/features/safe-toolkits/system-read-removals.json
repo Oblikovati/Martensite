@@ -1,0 +1,20 @@
+{
+  "task": 89,
+  "implementation_commit": "9e45443",
+  "scope": ["Unix environment reads", "Windows shared-library last-error reads"],
+  "removed_unsafe_constructs": 5,
+  "public_interface_changes": false,
+  "dependency_changes": false,
+  "compatibility_evidence": {
+    "unix": "Subprocess fixtures passed before and after replacement: non-UTF8 names and values, empty and missing values, invalid NUL/empty/equals names. Fixtures configure the child through Command without mutating the parent.",
+    "windows": "Pinned Rust 1.99.0 last_os_error reads the thread error code; conversion back to u32 retains its bit pattern. Ten existing injected Windows tests passed on Linux. Native missing-module test checks error 126 and a repeated non-consuming read; native Windows execution requires CI.",
+    "cross_compile": "cargo check -p martensite-tkernel --tests --target x86_64-pc-windows-msvc passed",
+    "local_gate": "cargo xtask pr passed before merging main; post-integration gate and native platform checks tracked in the PR"
+  },
+  "trust": "Safe standard-library interfaces replace direct first-party FFI; standard-library internals may use unsafe.",
+  "exclusions": [
+    "Unix process mutation remains unsound through its safe interface: Bug #95 requires an approved compatibility migration under #88.",
+    "std environment read locking does not synchronize arbitrary foreign-library environment writers.",
+    "This change does not complete the system-interface audit or Task #89."
+  ]
+}
