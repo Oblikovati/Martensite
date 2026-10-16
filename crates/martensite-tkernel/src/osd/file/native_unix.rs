@@ -79,14 +79,20 @@ impl PosixFileCalls for NativePosixCalls {
     }
     fn stat(&self, path: &[u8]) -> CallResult<NodeStatus> {
         let name: CString = c_path(path);
+        #[cfg(target_os = "macos")]
+        let mut raw = libc::stat::default();
         // SAFETY: an all-zero stat is a valid value of this plain C struct.
+        #[cfg(not(target_os = "macos"))]
         let mut raw: libc::stat = unsafe { std::mem::zeroed() };
         // SAFETY: name is NUL-terminated; raw is a writable stat alive for the call.
         status_zero(unsafe { libc::stat(name.as_ptr(), &mut raw) })?;
         Ok(node_status(&raw))
     }
     fn fstat(&self, fd: i32) -> CallResult<NodeStatus> {
+        #[cfg(target_os = "macos")]
+        let mut raw = libc::stat::default();
         // SAFETY: an all-zero stat is a valid value of this plain C struct.
+        #[cfg(not(target_os = "macos"))]
         let mut raw: libc::stat = unsafe { std::mem::zeroed() };
         // SAFETY: raw is a writable stat alive for the call; any fd value is accepted.
         status_zero(unsafe { libc::fstat(fd, &mut raw) })?;
