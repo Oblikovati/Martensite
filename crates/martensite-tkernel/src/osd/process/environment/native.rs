@@ -9,6 +9,8 @@
 //! callers own that precondition.
 #![allow(unsafe_code)]
 use super::EnvironmentSource;
+#[cfg(all(test, unix))]
+mod read_tests;
 
 /// The real process environment; `NativeEnvironment.get(b"HOME")`.
 #[derive(Clone, Copy, Debug, Default)]
