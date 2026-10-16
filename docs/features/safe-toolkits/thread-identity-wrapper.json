@@ -1,0 +1,18 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "starting_main": "dd1a972a754638bf743d8292e1e0b375cd8159de",
+  "status": "Baseline fixture and cargo xtask pr passed locally against unchanged production. Native validation remains pending.",
+  "local_gate": "cargo xtask pr passed; log /tmp/martensite-thread-identity-baseline-pr.log.",
+  "local_fixture": "cargo test -p martensite-tkernel --test toolkit osd_thread_identity passed one test; log /tmp/martensite-thread-identity-baseline.log. Two full gate attempts stopped at module ordering: cargo fmt --all did not traverse the included suite file. Direct rustfmt on tests/suites/cases_02.rs corrected it before the next gate run.",
+  "contract": "OsdThread::current returns pthread_self cast to usize on Unix, not a kernel thread ID or Rust ThreadId. Repeated calls on one live thread return the same value.",
+  "fixture": "A child reports two current identifiers while held alive by a channel. The parent reads its std::os::unix::thread::JoinHandleExt::as_pthread_t identifier, releases and joins the child, then compares both reported values. This uses a standard-library handle as the independent oracle and adds no unsafe code.",
+  "candidate": "The existing pinned nix 0.31.3 dependency exposes sys::pthread::pthread_self behind its pthread feature. Inspected registry source src/sys/pthread.rs defines Pthread as libc::pthread_t and forwards directly to libc::pthread_self, with no conversion, allocation or errno handling. Enabling this feature adds no package; dependency checks will still run.",
+  "deletion": "Replace the direct pthread_self unsafe block in osd/parallel/thread/native.rs after baseline validation; retain the existing cast and public API. Complete deletion in this task rather than retaining a parallel production path.",
+  "excluded": "Windows identifiers and all other thread operations are unchanged. sysconf is a separate investigation: nix clears errno and exposes the online-processor option only on Linux/Android.",
+  "remaining": [
+    "Validate the unchanged baseline locally and on the native platform matrix",
+    "Replace the direct call, update inventories, run dependency audits and the local gate",
+    "Review and verify replacement native evidence before integration"
+  ]
+}
