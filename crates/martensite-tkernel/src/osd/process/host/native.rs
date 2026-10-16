@@ -24,6 +24,22 @@ mod unix {
             .to_vec()
     }
 
+    #[cfg(test)]
+    mod field_tests {
+        use super::field;
+
+        #[test]
+        fn terminated_fields_keep_raw_bytes_and_stop_at_first_nul() {
+            let bytes: Vec<libc::c_char> = [b'h', 0xff, 0, b'x', 0]
+                .into_iter()
+                .map(|byte| byte as libc::c_char)
+                .collect();
+            assert_eq!(field(&bytes), [b'h', 0xff]);
+            assert!(field(&[0, 1, 0]).is_empty());
+            assert_eq!(field(&[65, 66, 0]), b"AB");
+        }
+    }
+
     pub(super) fn system_names() -> SystemNames {
         // SAFETY: utsname is a plain C struct of char arrays; zero is a valid value.
         let mut info: libc::utsname = unsafe { std::mem::zeroed() };
