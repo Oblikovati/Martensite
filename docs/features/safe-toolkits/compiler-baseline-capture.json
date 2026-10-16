@@ -1,0 +1,23 @@
+{
+  "task_issue": 81,
+  "source_revision": "ca99aca2109d8967ee7f0f3eb4ce71916b6ad839",
+  "collector_state": "Uncommitted work on test/81-compiler-unsafe-inventory; candidate baselines, not merged acceptance evidence",
+  "host": "x86_64-unknown-linux-gnu",
+  "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)",
+  "scope": "cargo check --locked --workspace --all-targets, default features; forced unsafe_code warnings; dedicated build cache cleaned before each capture",
+  "runs": [
+    {"target": "x86_64-unknown-linux-gnu", "workspace_diagnostics": 2628, "dependency_diagnostics": 1621, "workspace_summary_groups": 420, "local_pr_gate": "passed"},
+    {"target": "aarch64-unknown-linux-gnu", "workspace_diagnostics": 2627, "dependency_diagnostics": 1479, "workspace_summary_groups": 419, "local_pr_gate": "stopped at expected missing-baseline error after successful collection"},
+    {"target": "aarch64-apple-darwin", "workspace_diagnostics": 2615, "dependency_diagnostics": 1427, "workspace_summary_groups": 415, "local_pr_gate": "stopped at expected missing-baseline error after successful collection"},
+    {"target": "x86_64-pc-windows-msvc", "workspace_diagnostics": 2538, "dependency_diagnostics": 1648, "workspace_summary_groups": 409, "local_pr_gate": "stopped at expected missing-baseline error after successful collection"}
+  ],
+  "capture_entrypoint": "GITHUB_EVENT_NAME=workflow_dispatch MARTENSITE_CI_MODE=pr cargo xtask ci run --target TARGET",
+  "interpretation": [
+    "Nonzero cross-target entrypoint exits were missing-baseline failures, not failed compiler captures. Each accepted report required compiler exit zero and a successful terminal build-finished event before publication.",
+    "Cross-target reports were converted into candidate baseline files only after the exact target and missing-baseline failure were checked.",
+    "Counts include repeated library/test compilation diagnostics, not unique unsafe sites. Summary counts refer to primary spans; all observed workspace diagnostics had one primary span.",
+    "Dependency counts are separate observations, not a zero-unsafe claim about dependencies or a dependency baseline gate.",
+    "These checks do not link or execute foreign-target binaries and do not replace native four-platform validation.",
+    "Precompiled standard-library implementations, host build-script/procedural-macro implementations, inactive cfg branches and unselected features remain excluded from compiler collection; the lexical source gate covers inactive first-party source separately."
+  ]
+}
