@@ -1,0 +1,25 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "status": "Baseline validation and dependency evaluation only; production calls and dependencies are unchanged.",
+  "baseline_revision": "529636ed65f3e3a216f59bf6ff46f85e95c7c478",
+  "local_validation": "Three focused native temporary-path tests and cargo xtask pr passed before replacement (/tmp/martensite-temporary-baseline-reviewed.log and /tmp/martensite-temporary-baseline-pr.log). Native baseline run 38969720776 is pending completion.",
+  "expanded_baseline": "After integrating main 5147279, added a fourth temporary-path fixture proving descriptor inheritance across exec, sharing the existing open-test assertion. All 30 path fixtures passed locally (/tmp/martensite-temporary-inheritance-baseline.log). The earlier native run does not cover this additional fixture; expanded native validation remains required.",
+  "existing_capabilities": "Existing rustix 1.1.5 has no mkstemp/mkdtemp wrapper in its source. The existing tempfile dependency uses OpenOptions and its own name generation, rather than forwarding the supplied libc template. That is not a demonstrated exact replacement for these interfaces.",
+  "candidate": {
+    "package": "nix 0.31.3",
+    "features": ["fs", "feature"],
+    "default_features": false,
+    "source": "Inspected registry source src/unistd.rs: mkstemp at line 2279 and mkdtemp at line 2321.",
+    "behavior": "Copies a NUL-terminated template, calls the corresponding libc function once, removes the trailing NUL and returns raw path bytes through PathBuf. mkstemp returns an OwnedFd; into_raw_fd can preserve the toolkit's existing ownership transfer without adding first-party unsafe. Pre-normalizing through c_path is required to preserve first-NUL truncation.",
+    "license": "MIT",
+    "declared_rust_version": "1.69",
+    "caution": "The separately recorded nix directory-stream issue #126 does not justify using its directory API here; only the two inspected temporary-path wrappers are candidates. Dependency audit and review are still required."
+  },
+  "remaining": [
+    "Verify original native fixtures on supported platforms",
+    "Validate the expanded descriptor-inheritance baseline natively before replacing mkstemp",
+    "If adopted, pin the dependency and run cargo deny --all-features check and cargo audit",
+    "Run unchanged fixtures, compiler inventory, full local and native gates, and independent review before integration"
+  ]
+}

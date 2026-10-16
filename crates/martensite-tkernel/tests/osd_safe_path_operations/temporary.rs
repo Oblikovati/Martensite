@@ -2,6 +2,15 @@
 use super::{Errno, NativePosixCalls, PathScratch, PosixFileCalls};
 use std::os::unix::{ffi::OsStrExt, fs::PermissionsExt};
 
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[test]
+fn native_temporary_file_descriptor_is_inherited() {
+    let scratch = PathScratch::new("temporary-inherit");
+    let (fd, name) = NativePosixCalls.mkstemp(&scratch.bytes(b"XXXXXX")).unwrap();
+    std::fs::write(std::ffi::OsStr::from_bytes(&name), b"inherited-temporary").unwrap();
+    super::open::assert_descriptor_inherited(fd, b"inherited-temporary");
+}
+
 #[test]
 fn native_temporary_file_preserves_raw_name_and_descriptor() {
     let scratch = PathScratch::new("temporary-file");
