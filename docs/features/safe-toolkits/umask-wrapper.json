@@ -10,7 +10,7 @@
   "trust": "Established rustix/libc unsafe remains separately trusted and inventoried; no custom first-party unsafe was relocated. Enabling process exposes more dependency code and requires full workspace and native validation.",
   "inventory": "Expected native_unix source blocks 15 to 14; compiler spans Linux 28 to 26 and macOS 24 to 22 against this baseline. Windows unchanged. Full verification pending.",
   "deletion": "Old direct umask call deleted in this increment; no parallel implementation retained. Current migration milestone is the limit.",
-  "validation": "Focused Linux fixture and dependency checks passed; full local gate running, review and native matrix pending.",
+  "validation": "Focused Linux fixture, dependency checks and cargo xtask pr passed; local gate log /tmp/martensite-umask-pr.log. Independent standards and spec reviews found no production-code defects; the evidence status was updated after review. Native matrix remains pending.",
   "exclusions": [
     "No public API or package version change",
     "Existing process-wide umask semantics are preserved, not redesigned as operation-local state",
