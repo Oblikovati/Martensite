@@ -30,6 +30,10 @@ impl TemporaryGitFixture {
             ("user.email", "fixture@example.invalid"),
             ("core.hooksPath", ".fixture-hooks-disabled"),
             ("core.fsmonitor", "false"),
+            // #75: Git for Windows enables conversion warnings in otherwise clean diffs.
+            ("core.autocrlf", "false"),
+            ("core.safecrlf", "false"),
+            ("core.eol", "lf"),
             ("core.whitespace", "trailing-space,space-before-tab"),
         ] {
             self.run(&["config", name, value]);
@@ -55,6 +59,21 @@ fn real_clean_untracked_file_passes_and_whitespace_fails() {
     let fixture = TemporaryGitFixture::new();
     fixture.write("new.txt", "clean\n");
     let files = [untracked_file("new.txt")];
+    assert!(fixture.git().whitespace_clean("HEAD", &files).unwrap());
+    fixture.write("new.txt", "trailing space \n");
+    assert!(!fixture.git().whitespace_clean("HEAD", &files).unwrap());
+}
+
+#[test]
+fn real_windows_line_conversion_settings_are_reset_by_fixture_configuration() {
+    let fixture = TemporaryGitFixture::new();
+    fixture.run(&["config", "core.autocrlf", "true"]);
+    fixture.run(&["config", "core.safecrlf", "warn"]);
+    fixture.write("new.txt", "clean\n");
+    let files = [untracked_file("new.txt")];
+    let warning = fixture.git().whitespace_clean("HEAD", &files).unwrap_err();
+    assert!(warning.to_string().contains("CRLF"), "{warning}");
+    fixture.configure();
     assert!(fixture.git().whitespace_clean("HEAD", &files).unwrap());
     fixture.write("new.txt", "trailing space \n");
     assert!(!fixture.git().whitespace_clean("HEAD", &files).unwrap());
