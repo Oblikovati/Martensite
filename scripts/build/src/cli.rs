@@ -138,6 +138,7 @@ fn release_for(
 
 fn run_planned(context: &BuildContext<'_>, triple: &str) -> BuildResult<()> {
     match current_plan()? {
+        CiPlan::Sanitizer => crate::sanitizer::validate(context.runner, context.root(), triple),
         CiPlan::PullRequest { base } => {
             validate_pull_request(context, &base, &BuildTarget::Triple(triple.to_owned()))
         }

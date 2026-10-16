@@ -48,6 +48,8 @@ impl CiTrigger {
 /// The pipeline a trigger selects.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum CiPlan {
+    /// Check toolkit concurrency with ThreadSanitizer on Linux x86_64.
+    Sanitizer,
     /// Validate changes against `base` on the primary target.
     PullRequest {
         /// The remote-tracking ref to diff against, e.g. `origin/main`.
@@ -101,6 +103,7 @@ fn tag_push_plan(git_ref: &str) -> BuildResult<CiPlan> {
 /// run on a release candidate before the tag exists.
 fn dispatch_plan(mode: &str, version: &str) -> BuildResult<CiPlan> {
     match mode {
+        "sanitizer" => Ok(CiPlan::Sanitizer),
         "pr" => Ok(CiPlan::PullRequest {
             base: "origin/main".into(),
         }),
@@ -109,7 +112,7 @@ fn dispatch_plan(mode: &str, version: &str) -> BuildResult<CiPlan> {
             publish: false,
         }),
         other => Err(BuildError::Usage(format!(
-            "dispatch mode {other:?}; expected \"pr\" or \"release\""
+            "dispatch mode {other:?}; expected \"pr\", \"release\", or \"sanitizer\""
         ))),
     }
 }
@@ -117,6 +120,7 @@ fn dispatch_plan(mode: &str, version: &str) -> BuildResult<CiPlan> {
 /// The `key=value` outputs the workflow's later jobs read.
 pub fn plan_outputs(plan: &CiPlan) -> Vec<(&'static str, String)> {
     let (mode, version, publish, targets) = match plan {
+        CiPlan::Sanitizer => ("sanitizer", String::new(), false, vec![PRIMARY_TARGET]),
         CiPlan::PullRequest { .. } => ("pr", String::new(), false, vec![PRIMARY_TARGET]),
         CiPlan::Release { version, publish } => (
             "release",
@@ -163,6 +167,16 @@ pub fn write_outputs(outputs: &[(&str, String)], github_output: Option<&Path>) -
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sanitizer_is_opt_in_single_target_and_never_publishes() {
+        let plan = dispatch_plan("sanitizer", "").unwrap();
+        assert_eq!(plan, CiPlan::Sanitizer);
+        let outputs: std::collections::BTreeMap<_, _> = plan_outputs(&plan).into_iter().collect();
+        assert_eq!(outputs["publish"], "false");
+        assert_eq!(outputs["mode"], "sanitizer");
+        assert_eq!(outputs["matrix"], matrix_json(&[PRIMARY_TARGET]));
+    }
 
     fn trigger(event: &str, git_ref: &str, base_ref: &str) -> CiTrigger {
         CiTrigger {

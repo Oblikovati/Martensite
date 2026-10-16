@@ -18,6 +18,7 @@ mod process;
 mod publish;
 mod release;
 mod report;
+mod sanitizer;
 mod targets;
 #[cfg(test)]
 mod unsafe_inventory;

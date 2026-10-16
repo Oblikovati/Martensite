@@ -5,7 +5,7 @@
 use std::cell::RefCell;
 use std::collections::BTreeMap;
 
-use crate::error::BuildResult;
+use crate::error::{BuildError, BuildResult};
 use crate::process::{CommandOutput, CommandRunner, CommandSpec};
 
 /// Records commands; replies from scripted tables, defaulting to success.
@@ -50,8 +50,14 @@ impl RecordingRunner {
 
 impl CommandRunner for RecordingRunner {
     fn run(&self, spec: &CommandSpec) -> BuildResult<()> {
-        self.record(spec);
-        Ok(())
+        let command = self.record(spec);
+        match self.exit_codes.get(&command).copied().unwrap_or(0) {
+            0 => Ok(()),
+            code => Err(BuildError::CommandFailed {
+                command,
+                status: code.to_string(),
+            }),
+        }
     }
 
     fn capture(&self, spec: &CommandSpec) -> BuildResult<String> {

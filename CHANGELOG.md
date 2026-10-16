@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added an opt-in toolkit ThreadSanitizer mode to the existing CI workflow (#110).
+
 ### Fixed
 
 - Replaced shared launcher job completion with scoped borrowed execution so

@@ -4,7 +4,7 @@
 # trigger and chooses the pipeline and the target matrix:
 #   pull_request        -> PR validation of changed files/packages, primary target
 #   push of a v* tag    -> release on every target, then publish the GitHub release
-#   workflow_dispatch   -> `pr` or a release rehearsal on every target (never publishes)
+#   workflow_dispatch   -> PR, release rehearsal, or toolkit sanitizer (never publishes)
 name: Martensite
 
 on:
@@ -14,9 +14,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "pr: validate this branch against main. release: rehearse a release on every target without publishing."
+        description: "pr: validate changes. release: rehearse all targets. sanitizer: run toolkit ThreadSanitizer on Linux x86_64. None publishes."
         type: choice
-        options: [pr, release]
+        options: [pr, release, sanitizer]
         default: release
         required: true
       version:

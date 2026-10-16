@@ -69,6 +69,17 @@ cargo xtask pr                        # what CI runs on a pull request
 cargo xtask release --version 0.3.0   # release rehearsal for the host target
 ```
 
+For opt-in toolkit race checks, dispatch the existing workflow with
+`mode=sanitizer`. It installs `nightly-2026-09-25` with `rust-src`, rebuilds the
+standard library with ThreadSanitizer, and runs the `martensite-tkernel` library
+tests on Linux x86_64. Startup failures and race reports fail the job; it never
+publishes a release. This checks toolkit tests, not the kernel concurrency corpus
+tracked by #66. Locally, use:
+
+```sh
+GITHUB_EVENT_NAME=workflow_dispatch MARTENSITE_CI_MODE=sanitizer cargo xtask ci run --target x86_64-unknown-linux-gnu
+```
+
 `cargo xtask pr` diffs your branch, including uncommitted and untracked work,
 against `origin/main` (`--base` changes this). It checks whitespace and
 `rustfmt` on the changed files, then runs clippy (`-D warnings`), a build and
