@@ -2,6 +2,7 @@
   "task_issue": 89,
   "parent_issue": 80,
   "baseline_revision": "6857090069437fe06f415a8e85295320999dca33",
+  "integration_baseline": "3e677514c73bb8197cf1c9479a56cf0928fcc9c0",
   "fixture_revision": "4b0d310",
   "change": "On macOS, path-based stat uses std::fs::metadata and Unix MetadataExt. Non-macOS stat and every target's fstat remain on their existing implementation. Both representations share the same NodeStatus field and kind conversion.",
   "source_evidence": {
@@ -14,9 +15,12 @@
   "validation": {
     "baseline": "Two additional kind/error fixtures passed on Linux before implementation; three existing status fixtures were already integrated by #127.",
     "cross_check": "cargo check -p martensite-tkernel --target aarch64-apple-darwin --all-targets passed; log /tmp/martensite-path-status-macos-check.log",
+    "local_gate": "cargo xtask pr passed at 9fb6f07 and again on combined sources after integrating main 3e67751; /tmp/martensite-path-status-combined-pr.log",
+    "combined_cross_check": "macOS all-targets cargo check passed after integrating #129; /tmp/martensite-path-status-combined-macos-check.log",
+    "socket_regression": "Bug #128 corrected in 9fb6f07 with an isolated short socket root and byte-length guard. All three status-kind tests passed with the formerly failing long TMPDIR; both review axes confirmed the correction.",
     "native": "Pending; cross-check compilation is not native execution evidence"
   },
-  "inventory": "Expected macOS native_unix primary spans 28 to 26 against this branch baseline. Other target summaries and lexical source counts remain unchanged because the non-macOS stat block remains.",
+  "inventory": "Expected macOS native_unix primary spans 24 to 22 against integration baseline 3e67751, preserving #129's separate four-span reduction. Other target summaries and lexical source counts remain unchanged because the non-macOS stat block remains.",
   "deletion": "The previous direct stat call is excluded from macOS; no parallel macOS path remains. Integrate within the current migration milestone.",
   "exclusions": [
     "No negative-ctime filesystem fixture; raw field preservation is supported by inspected pinned source, not such a runtime fixture",
