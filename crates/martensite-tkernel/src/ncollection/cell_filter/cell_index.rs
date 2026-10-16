@@ -69,3 +69,5 @@ unsafe impl Send for CellIndex {}
 unsafe impl Sync for CellIndex {}
 #[cfg(test)]
 mod native_tests;
+#[cfg(test)]
+mod migration_tests;
