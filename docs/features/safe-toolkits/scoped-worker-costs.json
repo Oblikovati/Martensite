@@ -1,0 +1,14 @@
+{
+  "task": 87,
+  "baseline": "559d21a plus identical ignored workload fixture",
+  "candidate": "aaeec8b plus identical ignored workload fixture",
+  "workload": "1000 warmed launches of 64 atomic increments; exact 64000 completion assertion per sample; release profile",
+  "elapsed_nanoseconds": {
+    "1": {"baseline": [599820, 599209, 594941], "candidate": [579002, 607544, 578712]},
+    "3": {"baseline": [2931307, 2615593, 2202958], "candidate": [3029017, 3022245, 2906180]},
+    "8": {"baseline": [6104110, 9738219, 8175355], "candidate": [9639436, 4771204, 4630573]},
+    "32": {"baseline": [19694091, 19174629, 21818133], "candidate": [30479077, 43341670, 30537635]}
+  },
+  "assessment": "The candidate shows higher scheduling cost at 32 participants in this initial run. Performance acceptance is not established; investigate scoped nesting and repeat with isolated, interleaved measurements before deciding.",
+  "limitations": ["Shared host", "Other builds and tests overlapped candidate timing", "Candidate ran before baseline", "Three samples only", "No allocation or peak-memory measurements yet"]
+}
