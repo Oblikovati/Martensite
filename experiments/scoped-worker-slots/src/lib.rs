@@ -4,6 +4,7 @@
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::thread::JoinHandle;
 
+mod concurrent_launches;
 mod workload;
 
 struct Slot {
