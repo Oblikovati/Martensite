@@ -1,0 +1,29 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "status": "The two production calls use pinned nix safe wrappers. Independent reviews found no code defects or scope creep; their stale-evidence finding is corrected here. The replacement full local gate and four-platform native validation passed.",
+  "replacement_native": "Run 38972454968 passed all four platforms at f906bf71f676618c4e70764ec07c0608c7e341bb; publication was skipped. All four full compiler inventories matched that revision with clean provenance. All six temporary-path fixtures passed on each Unix target. Artifacts: /tmp/martensite-temporary-safe-native.xavvup; logs: /tmp/martensite-temporary-safe-native-{arm64,x64,macos}.log. Windows validates unchanged platform compilation and inventory; the Unix fixtures do not run there.",
+  "replacement": "Pinned nix 0.31.3 with fs/feature only. c_path preserves NUL truncation; OwnedFd::into_raw_fd preserves ownership transfer, and OsStringExt::into_vec preserves bytes. No public API or version change. Two lexical unsafe blocks are deleted; expected native_unix spans decrease Linux 20 to 16 and macOS 18 to 14.",
+  "completed_baseline": "Corrected run 38970976751 passed all four platforms at 7c14c26ef5f74dd910a0f3b98cbfbb0cbd38e113. All four full inventory summaries matched that revision with clean provenance; artifacts /tmp/martensite-temporary-corrected.3VmSeC. All six temporary fixtures explicitly passed on every Unix target, including macOS zero-X and exec inheritance; logs /tmp/martensite-temporary-corrected-{x64,arm64,macos}.log. This verifies the #140 correction before replacement, not the replacement itself.",
+  "replacement_local": "Six unchanged focused tests and cargo xtask pr passed (/tmp/martensite-temporary-safe.log and /tmp/martensite-temporary-safe-pr.log). cargo deny --all-features check and cargo audit both passed (/tmp/martensite-temporary-deny.log and /tmp/martensite-temporary-audit.log).",
+  "baseline_revision": "529636ed65f3e3a216f59bf6ff46f85e95c7c478",
+  "local_validation": "Initial three fixtures and cargo xtask pr passed locally (/tmp/martensite-temporary-baseline-reviewed.log and /tmp/martensite-temporary-baseline-pr.log). Their native run 38969720776 subsequently failed on macOS as recorded below.",
+  "expanded_baseline": "After integrating main 5147279, added descriptor inheritance across exec, sharing the existing open-test assertion. All 30 path fixtures passed locally (/tmp/martensite-temporary-inheritance-baseline.log). After the platform corrections below, run 38970976751 validated the expanded original baseline natively.",
+  "baseline_defect": "Bug #140: original native run 38969720776 failed three macOS fixtures, before production replacement. Invalid UTF-8 creation returned EILSEQ (92), and a zero-X mkstemp template succeeded instead of returning EINVAL. Both Linux targets passed. The corrected tests separate portable creation, filesystem-probed invalid-byte behavior and platform-specific zero-X contracts, retaining coverage rather than normalizing production behavior.",
+  "darwin_template_source": "https://github.com/apple-oss-distributions/Libc/blob/71bbe350ab79eef58113991d817ccc6165061a64/stdio/FreeBSD/mktemp.c — find_temp_path randomizes trailing Xs but does not require any; mkstemp and mkdtemp both call it. Empty templates are rejected before the action. This supports the observed zero-X result and the corrected empty-template error fixture.",
+  "corrected_local_validation": "All six temporary-path fixtures and cargo xtask pr passed against unchanged production on Linux (/tmp/martensite-temporary-platform-baseline.log and /tmp/martensite-temporary-corrected-pr.log). Corrected native results are recorded in completed_baseline; #140 awaits integration.",
+  "existing_capabilities": "Existing rustix 1.1.5 has no mkstemp/mkdtemp wrapper in its source. The existing tempfile dependency uses OpenOptions and its own name generation, rather than forwarding the supplied libc template. That is not a demonstrated exact replacement for these interfaces.",
+  "candidate": {
+    "package": "nix 0.31.3",
+    "features": ["fs", "feature"],
+    "default_features": false,
+    "source": "Inspected registry source src/unistd.rs: mkstemp at line 2279 and mkdtemp at line 2321.",
+    "behavior": "Copies a NUL-terminated template, calls the corresponding libc function once, removes the trailing NUL and returns raw path bytes through PathBuf. mkstemp returns an OwnedFd; into_raw_fd can preserve the toolkit's existing ownership transfer without adding first-party unsafe. Pre-normalizing through c_path is required to preserve first-NUL truncation.",
+    "license": "MIT",
+    "declared_rust_version": "1.69",
+    "caution": "The separately recorded nix directory-stream issue #126 does not justify using its directory API here; this change uses only the two inspected temporary-path wrappers. Dependency audits passed. Unknown injected errno values are not covered by the ordinary native-error fixtures."
+  },
+  "remaining": [
+    "Integrate after final PR checks; close #140 only after integration"
+  ]
+}

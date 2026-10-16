@@ -22,13 +22,18 @@ fn native_open_descriptor_remains_inherited_by_executed_child() {
     let fd = NativePosixCalls
         .open(&scratch.bytes(b"payload"), READ_ONLY, 0)
         .unwrap();
+    assert_descriptor_inherited(fd, b"inherited-open-fixture");
+}
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+pub(super) fn assert_descriptor_inherited(fd: i32, expected: &[u8]) {
     let output = std::process::Command::new("/bin/cat")
         .arg(format!("/dev/fd/{fd}"))
         .output()
         .unwrap();
     NativePosixCalls.close(fd).unwrap();
     assert!(output.status.success(), "{:?}", output.stderr);
-    assert_eq!(output.stdout, b"inherited-open-fixture");
+    assert_eq!(output.stdout, expected);
 }
 
 #[test]
