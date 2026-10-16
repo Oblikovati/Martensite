@@ -32,12 +32,15 @@ pub fn check_unsafe_inventory(
     ]))
 }
 
-fn unsafe_inventory_input(path: &str) -> bool {
+pub(crate) fn unsafe_inventory_input(path: &str) -> bool {
     (path.starts_with("crates/") && path.ends_with(".rs"))
         || path.starts_with("scripts/build/")
         || path.starts_with("docs/features/safe-toolkits/")
         || path.ends_with("Cargo.toml")
         || path == "Cargo.lock"
+        || path == "rust-toolchain.toml"
+        || path.starts_with(".cargo/")
+        || path == ".github/workflows/martensite.yml"
 }
 
 /// Fails when the change set adds trailing whitespace or conflict markers.
@@ -117,6 +120,9 @@ mod tests {
             "crates/example/src/lib.rs",
             "docs/features/safe-toolkits/baseline.json",
             "Cargo.lock",
+            "rust-toolchain.toml",
+            ".cargo/config.toml",
+            ".github/workflows/martensite.yml",
         ] {
             let runner = RecordingRunner::default();
             check_unsafe_inventory(&runner, Path::new("/r"), &[file(path, true)]).unwrap();

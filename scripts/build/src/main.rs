@@ -6,6 +6,7 @@ mod archive;
 mod cargo;
 mod changelog;
 mod cli;
+mod compiler_inventory;
 mod context;
 mod error;
 #[cfg(test)]

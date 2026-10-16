@@ -13,6 +13,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Checked toolkit unsafe source counts during PR validation, including inactive
   platform code and test fixtures (#81).
+- Checked expanded unsafe counts against target-specific compiler baselines and
+  retained separate workspace and dependency reports in CI (#81).
+- Removed stale compiler inventory reports and streams before starting a new
+  capture, including captures that failed before compilation (#118).
 
 ## [0.3.1] - 2026-10-16
 

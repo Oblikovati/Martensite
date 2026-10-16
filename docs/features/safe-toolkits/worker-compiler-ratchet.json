@@ -1,0 +1,17 @@
+{
+  "issue": 87,
+  "worker_checkpoint": "55bf1e0",
+  "integrated_main": "9b72d13cf139ce76dd2752259f001b8f451a2b0b",
+  "source_conflict_resolution": "Preserved main's per-kind inventory and other unsafe removals; kept job.rs at zero unsafe keywords with its forbid lint mention.",
+  "compiler_removal": {
+    "source": "crates/martensite-tkernel/src/osd/parallel/job.rs",
+    "unsafe_trait_implementation_emitted_spans": 2,
+    "unsafe_block_emitted_spans": 4,
+    "reason": "Removed the raw borrowed job, lifetime erasure and manual Send implementation; library/test compilations emit duplicate source diagnostics."
+  },
+  "linux_x86_64_capture": "The initial merged gate failed the old baseline. Its full report contained exactly these two removed groups and no added groups.",
+  "baseline_change": "Removed only those two groups from each of the four platform baselines; no allowances added.",
+  "remaining_native_confirmation": ["aarch64-unknown-linux-gnu", "aarch64-apple-darwin", "x86_64-pc-windows-msvc"],
+  "gate_status": "Pre-merge and post-ratchet merged cargo xtask pr both passed; merged log: /tmp/martensite-single-root-merged-gate-ratchet.log.",
+  "acceptance": "This evidence does not resolve allocation, retention, sanitizer or final integration requirements."
+}

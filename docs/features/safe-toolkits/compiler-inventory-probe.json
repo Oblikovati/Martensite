@@ -1,0 +1,56 @@
+{
+  "parent_issue": 80,
+  "task_issue": 81,
+  "status": "successful compiler probe, not an integrated inventory gate",
+  "source_revision": "ca99aca2109d8967ee7f0f3eb4ce71916b6ad839",
+  "compiler": "rustc 1.99.0 (b940084d7eb6a299eb4bfeb8e34901bc051e7ac4), LLVM 23.1.1",
+  "host": "x86_64-unknown-linux-gnu",
+  "command": "RUSTFLAGS='--force-warn unsafe_code' cargo check -p martensite-tkernel --tests --target TARGET --message-format=json",
+  "measurement": "Number of compiler-message events with message.code.code equal to unsafe_code, grouped by Cargo target name. These are emitted diagnostics, NOT unique unsafe sites. Library and library-test compilations repeat production diagnostics.",
+  "runs": [
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "build_finished_success": true,
+      "raw_log_sha256": "20102e8bbc5d4a568e871c0587b93d30857273969a570906f3cdd9aea8972ddc",
+      "workspace_target_diagnostics": {"martensite_cmath": 1, "martensite_tkernel": 1882, "osd_sec_sleep_signal": 4, "packed_map_native_rehash": 9, "packed_map_object_storage": 13, "standard_c_locale_sentry": 3, "standard_character_locale": 3, "toolkit": 712},
+      "dependency_target_diagnostics": {"allocator_api2": 224, "bytemuck": 291, "libc": 95, "smallvec": 59}
+    },
+    {
+      "target": "aarch64-unknown-linux-gnu",
+      "build_finished_success": true,
+      "raw_log_sha256": "22f9de469e137b0cd9dc7cd8b0f558e979b81e29648f7718ff788850cd3c9807",
+      "workspace_target_diagnostics": {"martensite_cmath": 1, "martensite_tkernel": 1882, "osd_sec_sleep_signal": 4, "packed_map_native_rehash": 9, "packed_map_object_storage": 13, "standard_c_locale_sentry": 3, "standard_character_locale": 3, "toolkit": 711},
+      "dependency_target_diagnostics": {"allocator_api2": 224, "bytemuck": 279, "libc": 95, "smallvec": 59}
+    },
+    {
+      "target": "aarch64-apple-darwin",
+      "build_finished_success": true,
+      "raw_log_sha256": "eeb6899a307c6aeeffc9a19e917ee5b034595432f7adc189a84797b19f798b58",
+      "workspace_target_diagnostics": {"martensite_cmath": 1, "martensite_tkernel": 1878, "packed_map_native_rehash": 9, "packed_map_object_storage": 13, "standard_c_locale_sentry": 3, "standard_character_locale": 3, "toolkit": 707},
+      "dependency_target_diagnostics": {"allocator_api2": 224, "bytemuck": 279, "libc": 23, "mach2": 57, "smallvec": 59}
+    },
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "build_finished_success": true,
+      "raw_log_sha256": "94410f8ee2b0cb8e11a0c77828acdcc04bae58a2d8a75f1a5063bed8f1e1c3c2",
+      "workspace_target_diagnostics": {"martensite_cmath": 1, "martensite_tkernel": 1809, "packed_map_native_rehash": 9, "packed_map_object_storage": 13, "toolkit": 705},
+      "dependency_target_diagnostics": {"allocator_api2": 224, "bytemuck": 291, "libc": 1, "smallvec": 59, "windows_sys": 294}
+    }
+  ],
+  "exclusions": [
+    "Only tkernel, its selected test targets and compiled dependencies were requested; this is not a workspace-wide inventory.",
+    "Precompiled standard-library unsafe and host build-script/procedural-macro implementations are not inventoried by these target checks.",
+    "Inactive cfg branches, unselected features, doctests and native runtime behavior are outside this probe.",
+    "Raw logs are temporary local evidence, not committed reproducible baselines; hashes identify the observed runs but do not archive them.",
+    "Cross-target cargo rustc --profile test --emit=metadata probes failed at linking and are excluded from these successful check results."
+  ],
+  "integration_requirements": [
+    "Keep forced-warning inventory separate from normal deny/forbid acceptance checks: force-warn overrides lint levels.",
+    "Parse package identity, target identity, full primary spans and macro expansion chains; target names alone are not package identities.",
+    "Define compilation-unit multiplicity explicitly; never label aggregate library/test diagnostics as unique constructs.",
+    "Require a successful terminal build-finished event and successful process status; reject truncated or failed compiler streams.",
+    "Use locked dependencies and the pinned compiler for the integrated collector; retain target, features, revision and toolchain provenance.",
+    "Archive normalized reports and add regression fixtures for macro expansion, cfg differences, dependencies, malformed streams and failed builds.",
+    "Integrate through the existing xtask and single CI workflow while retaining the inactive-cfg lexical ratchet."
+  ]
+}
