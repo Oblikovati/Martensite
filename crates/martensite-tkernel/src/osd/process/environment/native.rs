@@ -18,19 +18,15 @@ pub struct NativeEnvironment;
 
 #[cfg(unix)]
 mod unix {
-    use std::ffi::{CStr, CString};
+    use std::ffi::{CString, OsStr};
+    use std::os::unix::ffi::{OsStrExt, OsStringExt};
     use std::sync::Mutex;
 
     // The definitions handed to putenv, kept alive here.
     static DEFINITIONS: Mutex<Vec<CString>> = Mutex::new(Vec::new());
 
     pub(super) fn get(name: &[u8]) -> Option<Vec<u8>> {
-        let name: CString = CString::new(name).ok()?;
-        // SAFETY: `name` is a valid C string; getenv's result is copied before any other
-        // environment access by this thread.
-        let value: *const libc::c_char = unsafe { libc::getenv(name.as_ptr()) };
-        // SAFETY: a non-null getenv result is a NUL-terminated string in the environment.
-        (!value.is_null()).then(|| unsafe { CStr::from_ptr(value) }.to_bytes().to_vec())
+        std::env::var_os(OsStr::from_bytes(name)).map(OsStringExt::into_vec)
     }
 
     pub(super) fn put(name: &[u8], value: &[u8]) -> Result<(), i32> {
