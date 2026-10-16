@@ -2,16 +2,18 @@
   "task_issue": 89,
   "parent_issue": 80,
   "starting_main": "03366f26ee1777e75c79f9714f4cb7ee2ea135e6",
-  "status": "Original implementation unchanged; baseline fixtures added.",
+  "status": "Linux safe replacement implemented locally; original native baseline run 38982150367 at c3b1adfc4853867e943511e83e4fbda840a64abf remains active. Review and replacement validation pending.",
+  "replacement": "Reuse the private native_config helper merged in PR #148, retaining the c_long-to-i32 cast. No dependency, public API or version change. Both focused tests passed (/tmp/martensite-processor-count-safe.log).",
+  "inventory": "Linux thread-native unsafe spans decrease from two to zero. The lexical source count remains five because the non-Linux fallback remains. macOS and Windows summaries are unchanged.",
   "local_baseline": "Both focused tests passed (/tmp/martensite-processor-count-baseline.log), followed by the full cargo xtask pr gate (/tmp/martensite-processor-count-baseline-pr.log).",
   "contract": "Query sysconf(_SC_NPROCESSORS_ONLN) once and cast its c_long to i32. Keep the -1 sentinel and ordinary errno behavior. This is the system online count, not affinity-limited available_parallelism.",
   "fixtures": "Linux compares against getconf _NPROCESSORS_ONLN. Unix checks a positive query result and caller errno preservation for zero, EIO and an arbitrary raw sentinel, restoring original errno before assertions.",
   "limits": "The Linux count comparison assumes no CPU hotplug between its two queries. macOS currently has errno/positive-result coverage but no independent exact-count fixture. Incoming-errno-dependent interposed libc behavior is not covered.",
-  "candidate": "Existing nix SysconfVar::_NPROCESSORS_ONLN with the private errno-preserving helper introduced by PR #148, after that change is integrated. Keep the existing i32 cast; do not substitute available_parallelism.",
-  "deletion_gate": "Remove the direct Unix processor-count unsafe block only after baseline validation, reviewed replacement tests and native inventory evidence. Windows remains outside this increment.",
+  "candidate": "Existing nix 0.31.3 exposes SysconfVar::_NPROCESSORS_ONLN only under its linux_android cfg. This increment changes Linux only, matching the native matrix; Android and other Unix targets remain unchanged and require further investigation. macOS lack of this selector is not proof of system impossibility.",
+  "deletion_gate": "The direct processor-count call is excluded from Linux compilation. Integration requires baseline validation, review and replacement native inventory evidence; remaining platform paths are not accepted as permanent exceptions.",
   "remaining": [
-    "Complete local and native baseline validation",
-    "Integrate PR #148 before reusing its helper",
-    "Implement, review and validate the replacement"
+    "Complete native baseline validation",
+    "Review and validate the replacement",
+    "Investigate remaining platform paths"
   ]
 }

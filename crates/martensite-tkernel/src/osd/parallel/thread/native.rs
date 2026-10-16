@@ -55,7 +55,14 @@ pub(crate) fn apply_priority<T>(handle: &JoinHandle<T>, priority: i32) {
 pub(crate) fn apply_priority<T>(_handle: &JoinHandle<T>, _priority: i32) {}
 
 /// `sysconf(_SC_NPROCESSORS_ONLN)`, -1 on error.
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
+pub(crate) fn online_processors() -> i32 {
+    let count = crate::native_config::native_sysconf(nix::unistd::SysconfVar::_NPROCESSORS_ONLN);
+    count as i32
+}
+
+/// `sysconf(_SC_NPROCESSORS_ONLN)`, -1 on error.
+#[cfg(all(unix, not(target_os = "linux")))]
 pub(crate) fn online_processors() -> i32 {
     // SAFETY: sysconf only reads a configuration value.
     let count: libc::c_long = unsafe { libc::sysconf(libc::_SC_NPROCESSORS_ONLN) };
