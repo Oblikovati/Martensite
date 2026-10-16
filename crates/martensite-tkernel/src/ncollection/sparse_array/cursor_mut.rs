@@ -1,0 +1,157 @@
+//! Exclusive sparse cursor access edits values in place without changing occupancy.
+use super::{
+    SparseArray, SparseArrayCursor,
+    cursor_position::{SparseCursorPosition, exhausted_sparse_cursor},
+};
+use crate::standard::Failure;
+
+/// A mutable sparse cursor; `*array.cursor_mut().change_value()? = value`.
+pub struct SparseArrayCursorMut<'a, T> {
+    array: Option<&'a mut SparseArray<T>>,
+    position: SparseCursorPosition,
+}
+
+impl<T> Default for SparseArrayCursorMut<'_, T> {
+    fn default() -> Self {
+        Self {
+            array: None,
+            position: SparseCursorPosition::default(),
+        }
+    }
+}
+
+impl<T> SparseArray<T> {
+    /// Starts mutable access at an index.
+    /// Example: `array.cursor_from_mut(5).key()`.
+    pub fn cursor_from_mut(&mut self, index: usize) -> SparseArrayCursorMut<'_, T> {
+        let position = SparseCursorPosition::new(self, index);
+        SparseArrayCursorMut {
+            array: Some(self),
+            position,
+        }
+    }
+
+    /// Starts a mutable cursor at the first occupied slot (`begin`, Iterator constructor).
+    /// Example: `array.cursor_mut().change_value()?`.
+    pub fn cursor_mut(&mut self) -> SparseArrayCursorMut<'_, T> {
+        self.cursor_from_mut(0)
+    }
+
+    /// Constructs the mutable exhausted cursor (`end`); `!array.end_cursor_mut().more()`.
+    pub fn end_cursor_mut(&mut self) -> SparseArrayCursorMut<'_, T> {
+        self.cursor_from_mut(self.capacity())
+    }
+}
+
+impl<'a, T> SparseArrayCursorMut<'a, T> {
+    /// Borrows a read-only snapshot at the same position.
+    /// Example: `cursor.as_const_cursor().key() == cursor.key()`.
+    pub fn as_const_cursor(&self) -> SparseArrayCursor<'_, T> {
+        SparseArrayCursor::from_position(self.array.as_deref(), self.position)
+    }
+
+    /// Rebinds to another array; `cursor.initialize(&mut array)`.
+    pub fn initialize(&mut self, array: &'a mut SparseArray<T>) {
+        *self = array.cursor_mut();
+    }
+
+    /// Returns whether a value is available; `cursor.more()`.
+    pub fn more(&self) -> bool {
+        self.position.more()
+    }
+
+    /// Returns the current key or exhausted capacity (`Key`); `cursor.key()`.
+    pub fn key(&self) -> usize {
+        self.position.index
+    }
+
+    /// Returns the index alias; `cursor.index() == cursor.key()`.
+    pub fn index(&self) -> usize {
+        self.key()
+    }
+
+    /// Advances and returns this cursor; `cursor.advance_returning().index()`.
+    pub fn advance_returning(&mut self) -> &mut Self {
+        self.next();
+        self
+    }
+
+    /// Returns a read-only reborrow of the old position before advancing; `cursor.advance_post()`.
+    /// The snapshot holds the source borrow; mutable shallow aliases require a raw adapter.
+    pub fn advance_post(&mut self) -> SparseArrayCursor<'_, T> {
+        let previous = self.position;
+        self.next();
+        SparseArrayCursor::from_position(self.array.as_deref(), previous)
+    }
+
+    /// Reborrows a source cursor's owner and position; `target.assign_from(&mut source)`.
+    /// The source remains exclusively borrowed until this destination is released.
+    pub fn assign_from(&mut self, source: &'a mut SparseArrayCursorMut<'_, T>) -> &mut Self {
+        self.position = source.position;
+        self.array = source.array.as_deref_mut();
+        self
+    }
+
+    /// Leaves this cursor in place on self-assignment; `cursor.assign_self()`.
+    pub fn assign_self(&mut self) -> &mut Self {
+        self
+    }
+
+    /// Advances to the next occupied slot (`Next`); `cursor.next()`.
+    pub fn next(&mut self) {
+        self.position.advance(self.array.as_deref());
+    }
+
+    /// Restarts on the same array; `cursor.restart()`.
+    pub fn restart(&mut self) {
+        self.position.restart(self.array.as_deref());
+    }
+
+    /// Borrows the current value; `cursor.value()?`.
+    pub fn value(&self) -> Result<&T, Failure> {
+        self.array
+            .as_deref()
+            .and_then(|array| array.value(self.key()))
+            .ok_or_else(|| {
+                exhausted_sparse_cursor("NCollection_SparseArray::Iterator::Value", self.key())
+            })
+    }
+
+    /// Mutably borrows the current value.
+    /// Example: `*cursor.change_value()? += 1`; exhausted access is an error.
+    pub fn change_value(&mut self) -> Result<&mut T, Failure> {
+        let key = self.key();
+        self.array
+            .as_deref_mut()
+            .and_then(|array| array.change_value(key))
+            .ok_or_else(|| {
+                exhausted_sparse_cursor("NCollection_SparseArray::Iterator::ChangeValue", key)
+            })
+    }
+
+    /// Returns the mutable current value address; `cursor.value_mut_ptr()?`.
+    /// Dereferencing requires exclusive access to this live slot and compatible pointer provenance.
+    pub fn value_mut_ptr(&mut self) -> Result<*mut T, Failure> {
+        self.change_value().map(std::ptr::from_mut)
+    }
+}
+
+impl<T> PartialEq for SparseArrayCursorMut<'_, T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_const_cursor() == other.as_const_cursor()
+    }
+}
+
+impl<T> Eq for SparseArrayCursorMut<'_, T> {}
+
+impl<T> PartialEq<SparseArrayCursor<'_, T>> for SparseArrayCursorMut<'_, T> {
+    fn eq(&self, other: &SparseArrayCursor<'_, T>) -> bool {
+        self.as_const_cursor() == *other
+    }
+}
+
+impl<T> PartialEq<SparseArrayCursorMut<'_, T>> for SparseArrayCursor<'_, T> {
+    fn eq(&self, other: &SparseArrayCursorMut<'_, T>) -> bool {
+        *self == other.as_const_cursor()
+    }
+}

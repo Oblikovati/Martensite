@@ -1,0 +1,87 @@
+//! A sequence shared through handles.
+//!
+//! The type is both a sequence and a transient, and
+//! every handle holder edits the one sequence. Rust handles share `&` access only, so the
+//! sequence sits behind a lock and is lent to closures (`sequence`, `change_sequence`).
+mod borrowed_append;
+mod copy_construction;
+use super::Sequence;
+use super::generic_transient::impl_generic_transient;
+use crate::standard::StandardTransient;
+mod handle_append;
+use std::sync::{PoisonError, RwLock};
+/// Handle-shared sequence; `let items = Handle::new(HSequence::<i32>::default()); items.get().unwrap().append(1);`.
+pub struct HSequence<T> {
+    base: StandardTransient,
+    items: RwLock<Sequence<T>>,
+}
+impl<T> Default for HSequence<T> {
+    fn default() -> Self {
+        Self {
+            base: StandardTransient::default(),
+            items: RwLock::new(Sequence::default()),
+        }
+    }
+}
+impl<T: Clone> HSequence<T> {
+    /// Appends and empties `source`; `items.append_sequence(&mut more)`.
+    pub fn append_sequence(&self, source: &mut Sequence<T>) {
+        self.change_sequence(|items| items.append_sequence(source));
+    }
+}
+impl<T> HSequence<T> {
+    /// Moves sequence storage into a fresh transient wrapper; `HSequence::from_owned(values)`.
+    pub fn from_owned(items: Sequence<T>) -> Self {
+        Self {
+            base: StandardTransient::default(),
+            items: RwLock::new(items),
+        }
+    }
+    /// Moves a wrapper while leaving its source sequence empty; `HSequence::move_from(&mut source)`.
+    pub fn move_from(source: &mut Self) -> Self {
+        let items = source
+            .items
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner);
+        Self::from_owned(Sequence::move_from(items))
+    }
+    /// Moves sequence storage while retaining this transient's counter; `target.move_assign(&mut source)`.
+    pub fn move_assign(&mut self, source: &mut Self) -> &mut Self {
+        let target = self.items.get_mut().unwrap_or_else(PoisonError::into_inner);
+        let source = source
+            .items
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner);
+        target.move_assign(source);
+        self
+    }
+    /// Lends the wrapped sequence for reading, as `Sequence()`; `items.sequence(|s| s.len())`.
+    pub fn sequence<R>(&self, read: impl FnOnce(&Sequence<T>) -> R) -> R {
+        read(&self.items.read().unwrap_or_else(PoisonError::into_inner))
+    }
+    /// Lends the wrapped sequence for editing;
+    /// `items.change_sequence(|s| s.reverse())`.
+    pub fn change_sequence<R>(&self, edit: impl FnOnce(&mut Sequence<T>) -> R) -> R {
+        edit(&mut self.items.write().unwrap_or_else(PoisonError::into_inner))
+    }
+    /// Appends one item; `items.append(42)`.
+    pub fn append(&self, value: T) {
+        self.change_sequence(|items| {
+            items.append(value);
+        });
+    }
+}
+impl<T: Clone> Clone for HSequence<T> {
+    fn clone(&self) -> Self {
+        self.sequence(Self::from_sequence)
+    }
+    fn clone_from(&mut self, source: &Self) {
+        let target = self.items.get_mut().unwrap_or_else(PoisonError::into_inner);
+        source.sequence(|items| {
+            target.assign(items);
+        });
+    }
+}
+// Every instantiation is named `NCollection_HSequence`, the one runtime name
+// that all instantiations share.
+impl_generic_transient!(HSequence, "NCollection_HSequence", StandardTransient);

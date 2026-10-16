@@ -1,0 +1,9 @@
+# Recorded baselines are byte evidence: checkout must preserve their
+# recorded line endings even when Windows enables core.autocrlf, and their
+# trailing spaces and CRLF rows are data, not whitespace errors.
+*.expected -text -whitespace
+# The embedded units table is a byte-exact resource, not checkout text.
+crates/martensite-tkernel/src/units/Units.dat -text -whitespace
+# Tests compare fixtures byte for byte with include_str!, so they keep their
+# bytes on every platform.
+crates/martensite-tkernel/tests/fixtures/** -text -whitespace

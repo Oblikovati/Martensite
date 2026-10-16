@@ -1,0 +1,132 @@
+//! The global memory services, backed by the system allocator.
+//!
+//! The kernel uses the system allocator, with no pooled,
+//! TBB or jemalloc manager:
+//! `allocate` is `calloc`, `allocate_optimal` is `malloc`, `reallocate` is `realloc`,
+//! `free` is `free` and `purge` does nothing. Rust's global allocator is the same system
+//! allocator. Both memory and collections share one raw backend, whose private layout header
+//! permits correct Rust deallocation. Safe byte owners initialize otherwise unspecified bytes;
+//! layout limits and the preceding Rust header remain explicit representation adaptations.
+use super::Failure;
+use super::exceptions::out_of_memory;
+mod aligned;
+#[allow(unsafe_code)]
+pub(crate) mod raw_heap;
+mod storage;
+pub use aligned::{AlignedMemory, allocate_aligned, free_aligned, free_aligned_and_null};
+use raw_heap::MALLOC_ALIGNMENT;
+use storage::StandardByteStorage;
+
+/// The memory managers the kernel can describe; `AllocatorType::Native as i32 == 0`.
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum AllocatorType {
+    /// The C runtime allocator (`calloc`/`malloc`/`free`).
+    Native = 0,
+    /// The pooled speed-optimized manager.
+    Opt = 1,
+    /// Intel TBB's scalable allocator.
+    Tbb = 2,
+    /// jemalloc.
+    Jemalloc = 3,
+}
+
+/// Owned bytes from the `Standard` allocator; `allocate(16)?.as_slice().len() == 16`.
+#[derive(Debug, Eq, PartialEq)]
+pub struct StandardMemory {
+    bytes: StandardByteStorage,
+}
+impl StandardMemory {
+    /// Borrows the block's bytes; `block.as_slice()[0]`.
+    pub fn as_slice(&self) -> &[u8] {
+        self.bytes.as_slice()
+    }
+    /// Borrows the block's bytes for writing; `block.as_mut_slice().fill(7)`.
+    pub fn as_mut_slice(&mut self) -> &mut [u8] {
+        self.bytes.as_mut_slice()
+    }
+    /// Returns the usable size requested for the block; `allocate(3)?.len() == 3`.
+    pub fn len(&self) -> usize {
+        self.bytes.len()
+    }
+    /// Reports a zero-byte block (still a live, distinct allocation); `allocate(0)?.is_empty()`.
+    pub fn is_empty(&self) -> bool {
+        self.bytes.is_empty()
+    }
+}
+
+/// Reports the manager the kernel uses; `get_allocator_type() == AllocatorType::Native`.
+/// The kernel always uses the system allocator.
+pub fn get_allocator_type() -> AllocatorType {
+    AllocatorType::Native
+}
+
+/// Allocates zero-filled bytes like `calloc`; `allocate(4)?.as_slice() == [0; 4]`.
+/// A refused request raises Standard_OutOfMemory with the allocation message.
+pub fn allocate(size: usize) -> Result<StandardMemory, Failure> {
+    StandardByteStorage::allocate(size, MALLOC_ALIGNMENT, true)
+        .map(|bytes| StandardMemory { bytes })
+        .ok_or_else(|| out_of_memory("Standard_MMgrRaw::Allocate(): malloc failed"))
+}
+
+/// Allocates like `malloc`, returning `None` instead of raising; `allocate_optimal(8).is_some()`.
+/// `malloc` contents are unspecified; zeroed bytes are one valid outcome.
+pub fn allocate_optimal(size: usize) -> Option<StandardMemory> {
+    StandardByteStorage::allocate(size, MALLOC_ALIGNMENT, false)
+        .map(|bytes| StandardMemory { bytes })
+}
+
+/// Releases a block; `None` is the null pointer, which `free` ignores; `free(Some(block))`.
+pub fn free(memory: Option<StandardMemory>) {
+    drop(memory);
+}
+
+/// The template `Free(T*&)`: releases the block and nulls the slot; `free_and_null(&mut slot)`.
+pub fn free_and_null(slot: &mut Option<StandardMemory>) {
+    free(slot.take());
+}
+
+/// Resizes a block like `realloc`, keeping the common prefix; `reallocate(&mut slot, 64)?`.
+///
+/// The slot is the C pointer: `None` behaves as `malloc`. On success it holds the new
+/// block. A refused request raises Standard_OutOfMemory and leaves the old block in place.
+/// glibc and the MSVC runtime free the block and return null for a zero size, so this
+/// empties the slot and raises Standard_OutOfMemory there too (kept on purpose).
+pub fn reallocate(slot: &mut Option<StandardMemory>, new_size: usize) -> Result<(), Failure> {
+    let failure = || out_of_memory("Standard_MMgrRaw::Reallocate(): realloc failed");
+    if new_size == 0 && REALLOC_ZERO_FREES && slot.is_some() {
+        *slot = None;
+        return Err(failure());
+    }
+    let Some(memory) = slot.as_mut() else {
+        *slot = allocate_optimal(new_size);
+        return slot.as_ref().map(|_| ()).ok_or_else(failure);
+    };
+    memory.bytes.resize(new_size).ok_or_else(failure)
+}
+
+/// Releases cached memory; the system allocator caches nothing and returns true (1); `purge() == 1`.
+pub fn purge() -> i32 {
+    1
+}
+
+// realloc(ptr, 0) frees the block and returns NULL on glibc and MSVC; other C runtimes
+// (macOS, musl) return a live minimum-size block instead.
+pub(crate) const REALLOC_ZERO_FREES: bool = cfg!(any(
+    all(target_os = "linux", target_env = "gnu"),
+    target_os = "windows"
+));
+
+/// Reserves exactly `size` zeroed bytes, or `None` when the allocator refuses; `zeroed_bytes(3)`.
+pub(crate) fn zeroed_bytes(size: usize) -> Option<Vec<u8>> {
+    let mut bytes = Vec::new();
+    resize_bytes(&mut bytes, size)?;
+    Some(bytes)
+}
+
+fn resize_bytes(bytes: &mut Vec<u8>, size: usize) -> Option<()> {
+    if size > bytes.len() {
+        bytes.try_reserve_exact(size - bytes.len()).ok()?;
+    }
+    bytes.resize(size, 0);
+    Some(())
+}

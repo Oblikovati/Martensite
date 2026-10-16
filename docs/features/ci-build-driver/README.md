@@ -94,7 +94,10 @@ native runner, so the tests run on the target platform:
      executables or native libraries gets no archive.
    - On the primary target only: one `.crate` source package per releasable
      package from `cargo package`. Cargo builds each package from its
-     packaged sources to verify it.
+     packaged sources to verify it. A kernel crate that depends on another
+     unreleased kernel crate resolves it through cargo's local overlay
+     registry, which cargo uses only for publishable packages, so kernel
+     crates must not set `publish = false`.
    - A `<file>.sha256` file in `sha256sum` format next to each asset.
 
 The publish job downloads the files from all targets, checks every asset

@@ -1,0 +1,96 @@
+/// Seals both traits to the integral types: the packed map is defined only for
+/// built-in integers, so no caller-defined key or word exists.
+mod sealed {
+    pub trait SealedWord {}
+    pub trait SealedInteger {}
+}
+/// Unsigned storage word for packed integer blocks; implemented by `u32` and `u64` only.
+pub trait PackedWord: Copy + Default + sealed::SealedWord {
+    /// Preserve the low word bits; `u32::from_bits(42)`.
+    fn from_bits(value: u64) -> Self;
+    /// Widen without sign extension; `word.bits()`.
+    fn bits(self) -> u64;
+}
+impl sealed::SealedWord for u32 {}
+impl PackedWord for u32 {
+    fn from_bits(value: u64) -> Self {
+        value as Self
+    }
+    fn bits(self) -> u64 {
+        u64::from(self)
+    }
+}
+impl sealed::SealedWord for u64 {}
+impl PackedWord for u64 {
+    fn from_bits(value: u64) -> Self {
+        value
+    }
+    fn bits(self) -> u64 {
+        self
+    }
+}
+/// Integral type with a fixed width and bit-preserving signed conversion.
+pub trait PackedInteger: Copy + Ord + Default + std::fmt::Debug + sealed::SealedInteger {
+    /// Matching unsigned block/index storage type.
+    type Word: PackedWord;
+    /// Whether to use 64 rather than 32 bits per block.
+    const IS_64_BIT: bool;
+    /// Lowest representable value, returned by an empty maximum query.
+    const MIN: Self;
+    /// Highest representable value, returned by an empty minimum query.
+    const MAX: Self;
+    /// Convert to the unsigned representation; `value.bits()`.
+    fn bits(self) -> u64;
+    /// Restore the signed or unsigned value; `T::from_bits(bits)`.
+    fn from_bits(bits: u64) -> Self;
+}
+macro_rules! integer {
+    ($type:ty, $word:ty) => {
+        impl sealed::SealedInteger for $type {}
+        impl PackedInteger for $type {
+            type Word = $word;
+            const IS_64_BIT: bool = size_of::<Self>() > 4;
+            const MIN: Self = Self::MIN;
+            const MAX: Self = Self::MAX;
+            fn bits(self) -> u64 {
+                (self as $word) as u64
+            }
+            fn from_bits(bits: u64) -> Self {
+                bits as Self
+            }
+        }
+    };
+}
+integer!(i32, u32);
+integer!(u32, u32);
+integer!(i64, u64);
+integer!(u64, u64);
+#[cfg(target_pointer_width = "64")]
+integer!(usize, u64);
+#[cfg(target_pointer_width = "32")]
+integer!(usize, u32);
+
+integer!(i8, u32);
+integer!(u8, u32);
+integer!(i16, u32);
+integer!(u16, u32);
+#[cfg(target_pointer_width = "64")]
+integer!(isize, u64);
+#[cfg(target_pointer_width = "32")]
+integer!(isize, u32);
+impl sealed::SealedInteger for bool {}
+impl PackedInteger for bool {
+    type Word = u32;
+    const IS_64_BIT: bool = false;
+    const MIN: Self = false;
+    const MAX: Self = true;
+    fn bits(self) -> u64 {
+        u64::from(self)
+    }
+    fn from_bits(bits: u64) -> Self {
+        bits != 0
+    }
+}
+
+#[cfg(test)]
+mod native_hash_tests;

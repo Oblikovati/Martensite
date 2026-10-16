@@ -1,0 +1,22 @@
+//! Copy construction clones every element into an exact-capacity allocation.
+use super::LinearVector;
+
+impl<T: Clone> LinearVector<T> {
+    pub(super) fn construct_copy(&self) -> Self {
+        Self::construct_owned(self.len(), |destination| {
+            destination.clone_unpublished_from(self, 0)
+        })
+    }
+
+    pub(super) fn clone_unpublished_from(&mut self, source: &Self, beginning: usize) {
+        let mut index = beginning;
+        self.construct_unpublished_tail(source.len(), || {
+            let copied = source.elements[index].clone();
+            index += 1;
+            copied
+        });
+    }
+}
+
+#[cfg(test)]
+mod tests;

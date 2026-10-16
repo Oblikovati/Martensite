@@ -1,0 +1,72 @@
+//! Owners retain allocation provenance without borrowing complete nodes during link traversal.
+use super::super::node_release::release_typed_node;
+use super::{BaseAllocator, SeqNode, SequenceNode};
+use std::marker::PhantomData;
+// Canonical links alone retain order; this index retains original allocation provenance.
+pub(super) type SequenceNodeOwners<T> = std::collections::HashMap<usize, SequenceNodeOwner<T>>;
+
+pub(super) struct SequenceNodeOwner<T> {
+    pub(super) link: *mut SeqNode,
+    allocator: BaseAllocator,
+    item: PhantomData<T>,
+}
+// SAFETY: this owner uniquely owns T; all dereference is mediated by Sequence borrows.
+unsafe impl<T: Send> Send for SequenceNodeOwner<T> {}
+// SAFETY: as for Send above: shared access to the item goes through Sequence's shared borrow,
+// which needs T: Sync.
+unsafe impl<T: Sync> Sync for SequenceNodeOwner<T> {}
+// Like Box<T>, moving the allocation owner never moves its possibly !Unpin item.
+impl<T> Unpin for SequenceNodeOwner<T> {}
+impl<T> SequenceNodeOwner<T> {
+    pub(super) fn construct(allocator: &BaseAllocator, construct: impl FnOnce() -> T) -> Self {
+        let (link, allocator) =
+            SequenceNode::into_raw(SequenceNode::allocate_with(allocator, construct));
+        Self {
+            link,
+            allocator,
+            item: PhantomData,
+        }
+    }
+}
+impl<T> SequenceNodeOwner<T> {
+    pub(super) unsafe fn retire_using(self, current: impl FnOnce() -> BaseAllocator) {
+        let owner = std::mem::ManuallyDrop::new(self);
+        // SAFETY: ownership is transferred once; the suppressed owner cannot release it twice.
+        let original = unsafe { std::ptr::read(&owner.allocator) };
+        // SAFETY: caller supplies a compatible resource after payload callbacks finish.
+        unsafe {
+            super::current_release::release(owner.link.cast::<SequenceNode<T>>(), original, current)
+        };
+    }
+    pub(super) fn abandon(self) {
+        let owner = std::mem::ManuallyDrop::new(self);
+        // SAFETY: this owner exclusively owns the typed allocation and abandons it exactly once (ManuallyDrop prevents its Drop). Failed sequence construction does not destroy completed nodes. No item
+        // reference escapes this incomplete owner; reset may now reclaim its raw bytes.
+        unsafe { owner.allocator.relinquish_typed_to_raw() };
+        // SAFETY: the suppressed owner will not drop this field again. Its allocation and
+        // payload are intentionally left alive, while the allocator handle is released.
+        drop(unsafe { std::ptr::read(&owner.allocator) });
+    }
+}
+impl<T> Drop for SequenceNodeOwner<T> {
+    fn drop(&mut self) {
+        // SAFETY: this owner uniquely retains the original typed node allocation.
+        unsafe { release_typed_node(self.link.cast::<SequenceNode<T>>(), &self.allocator) };
+    }
+}
+pub(super) fn take_owner<T>(
+    owners: &mut SequenceNodeOwners<T>,
+    node: *mut SeqNode,
+) -> SequenceNodeOwner<T> {
+    owners.remove(&(node as usize)).unwrap_or_else(|| {
+        panic!("native sequence node {node:p} has no owner; expected exactly one live allocation")
+    })
+}
+pub(super) unsafe fn item_ref<'a, T>(node: *mut SeqNode) -> &'a T {
+    // SAFETY: caller supplies a live T node, shared access and a bounded owner lifetime.
+    unsafe { &*std::ptr::addr_of!((*node.cast::<SequenceNode<T>>()).value) }
+}
+pub(super) unsafe fn item_mut<'a, T>(node: *mut SeqNode) -> &'a mut T {
+    // SAFETY: caller supplies exclusive item access without borrowing the node's link prefix.
+    unsafe { &mut *std::ptr::addr_of_mut!((*node.cast::<SequenceNode<T>>()).value) }
+}

@@ -1,0 +1,357 @@
+//! Environment, shared libraries and memory statistics: every public member, through named
+//! fake sources where the answer depends on the host, plus smoke checks.
+// Most cases exercise the Linux profile; other hosts compile the shared fakes only.
+#![cfg_attr(not(target_os = "linux"), allow(unused_imports, dead_code))]
+use martensite_tkernel::osd::{
+    Environment, EnvironmentSource, LoadMode, MemCounter, MemInfo, MemInfoSource, OsdErrorAccess,
+    SharedLibrary, WhoAmI,
+};
+use std::{cell::RefCell, collections::BTreeMap};
+
+/// An in-memory environment; `refuse` makes every definition fail with that errno.
+#[derive(Default)]
+struct FakeEnvironment {
+    variables: RefCell<BTreeMap<Vec<u8>, Vec<u8>>>,
+    refuse: Option<i32>,
+}
+impl EnvironmentSource for FakeEnvironment {
+    fn get(&self, name: &[u8]) -> Option<Vec<u8>> {
+        self.variables.borrow().get(name).cloned()
+    }
+    fn put(&self, name: &[u8], value: &[u8]) -> Result<(), i32> {
+        if let Some(errno) = self.refuse {
+            return Err(errno);
+        }
+        self.variables
+            .borrow_mut()
+            .insert(name.to_vec(), value.to_vec());
+        Ok(())
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn environment_builds_reads_and_removes_to_empty_on_unix() {
+    let mut env =
+        Environment::with_value_in(FakeEnvironment::default(), "CAD_HOME", "/opt/$v").unwrap();
+    assert_eq!(env.name().as_bytes(), b"CAD_HOME");
+    env.build();
+    assert_eq!(env.value().as_bytes(), b"/opt/$v");
+    env.set_value("/srv").unwrap();
+    env.build();
+    assert_eq!(env.value().as_bytes(), b"/srv");
+    env.remove();
+    assert_eq!(
+        env.value().as_bytes(),
+        b"",
+        "Unix Remove defines the variable as empty"
+    );
+    env.set_name("UNSET").unwrap();
+    assert!(env.value().is_empty());
+    assert!(!env.failed());
+}
+
+#[cfg(unix)]
+#[test]
+fn environment_refuses_bad_spellings_with_construction_errors() {
+    let failure = Environment::named_in(FakeEnvironment::default(), "A$B")
+        .err()
+        .unwrap();
+    assert_eq!(failure.exception_type(), "Standard_ConstructionError");
+    assert_eq!(
+        failure.message(),
+        "OSD_Environment::OSD_Environment: bad argument"
+    );
+    assert!(Environment::with_value_in(FakeEnvironment::default(), "A", "tab\there").is_err());
+    let mut env = Environment::bare(FakeEnvironment::default());
+    assert!(env.name().is_empty());
+    let failure = env.set_value("$x").unwrap_err();
+    assert_eq!(failure.message(), "OSD_Environment::Change: bad argument");
+    let failure = env.set_name("é").unwrap_err();
+    assert_eq!(failure.message(), "OSD_Environment::SetName: bad argument");
+}
+
+#[cfg(unix)]
+#[test]
+fn environment_build_failure_records_set_environment_and_set_name_resets_it() {
+    let source = FakeEnvironment {
+        refuse: Some(libc::ENOMEM),
+        ..FakeEnvironment::default()
+    };
+    let mut env = Environment::with_value_in(source, "X", "1").unwrap();
+    env.build();
+    assert!(env.failed());
+    assert_eq!(env.osd_error().message().as_bytes(), b"Set Environment");
+    assert_eq!(env.osd_error().who(), Some(WhoAmI::Environment));
+    let report = env.perror().unwrap_err();
+    assert_eq!(report.message(), " :\n Not enough memory.\n\n");
+    assert_eq!(env.error(), 10);
+    env.set_name("Y").unwrap();
+    assert!(!env.failed(), "Unix SetName resets the error first");
+}
+
+#[cfg(unix)]
+#[test]
+fn native_environment_round_trips_through_putenv() {
+    let mut env = Environment::with_value("OSD_TEST_PROCESS_ROUND_TRIP", "one").unwrap();
+    env.build();
+    assert_eq!(std::env::var("OSD_TEST_PROCESS_ROUND_TRIP").unwrap(), "one");
+    env.set_value("two").unwrap();
+    env.build();
+    assert_eq!(env.value().as_bytes(), b"two");
+    env.remove();
+    assert_eq!(std::env::var("OSD_TEST_PROCESS_ROUND_TRIP").unwrap(), "");
+    assert!(
+        Environment::named("OSD_TEST_PROCESS_NEVER_SET")
+            .unwrap()
+            .value()
+            .is_empty()
+    );
+    assert!(Environment::new().name().is_empty());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn native_shared_library_opens_resolves_and_reports_errors() {
+    let mut library = SharedLibrary::named(Some("libm.so.6"));
+    assert_eq!(library.name(), Some("libm.so.6"));
+    assert!(library.dl_open(LoadMode::RtldNow));
+    let cosine = library.dl_symb("cos").expect("libm exports cos");
+    // SAFETY: libm's cos has the C signature double(double).
+    #[allow(unsafe_code)]
+    let cos: extern "C" fn(f64) -> f64 = unsafe { std::mem::transmute(cosine.as_ptr()) };
+    assert_eq!(cos(0.0), 1.0);
+    assert!(library.dl_symb("no_such_symbol_osd").is_none());
+    assert!(library.dl_error().unwrap().contains("no_such_symbol_osd"));
+    assert!(library.dl_error().is_none(), "dlerror clears after a read");
+    library.dl_close();
+    assert!(library.dl_symb("cos").is_none());
+    library.destroy();
+    assert_eq!(library.name(), None);
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn native_shared_library_failures_and_the_main_program() {
+    let mut missing = SharedLibrary::new();
+    missing.set_name(Some("libosd_missing_library.so"));
+    missing.set_name(None);
+    assert_eq!(missing.name(), Some("libosd_missing_library.so"));
+    assert!(!missing.dl_open(LoadMode::RtldLazy));
+    assert!(
+        missing
+            .dl_error()
+            .unwrap()
+            .contains("libosd_missing_library.so")
+    );
+    let mut main = SharedLibrary::default();
+    assert!(main.dl_open(LoadMode::RtldLazy));
+    assert!(main.dl_symb("malloc").is_some());
+    main.dl_close();
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn shared_library_strings_truncate_at_embedded_nul() {
+    let mut library = SharedLibrary::named(Some("libm.so.6\0ignored"));
+    assert_eq!(library.name(), Some("libm.so.6"));
+    library.set_name(Some("libm.so.6\0replaced"));
+    assert_eq!(library.name(), Some("libm.so.6"));
+    assert!(library.dl_open(LoadMode::RtldNow));
+    let plain = library.dl_symb("cos").expect("libm exports cos");
+    assert_eq!(library.dl_symb("cos\0ignored"), Some(plain));
+    assert!(library.dl_symb("\0cos").is_none());
+    library.dl_close();
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn shared_library_empty_c_string_prefix_stays_empty() {
+    let mut constructed = SharedLibrary::named(Some("\0libm.so.6"));
+    assert_eq!(constructed.name(), Some(""));
+    assert!(constructed.dl_open(LoadMode::RtldNow));
+    assert!(constructed.dl_symb("malloc").is_some());
+    let mut set = SharedLibrary::new();
+    set.set_name(Some("\0ignored"));
+    assert_eq!(set.name(), Some(""));
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn shared_library_preserves_non_utf8_names_symbols_and_loader_errors() {
+    use std::os::unix::ffi::OsStrExt;
+
+    let (directory, link) = non_utf8_libm_copy();
+    let path_bytes = link.as_os_str().as_bytes();
+    let mut library = SharedLibrary::named_bytes(Some(path_bytes));
+    assert_eq!(library.name_bytes(), Some(path_bytes));
+    assert_eq!(library.name(), None, "invalid UTF-8 has no str view");
+    assert!(library.dl_open(LoadMode::RtldNow));
+    assert_non_utf8_symbol_error(&library, path_bytes);
+    library.dl_close();
+    std::fs::remove_file(link).expect("remove isolated library");
+    std::fs::remove_dir(directory).expect("remove temporary directory");
+}
+
+#[cfg(target_os = "linux")]
+fn assert_non_utf8_symbol_error(library: &SharedLibrary, library_path: &[u8]) {
+    let cosine = library.dl_symb_bytes(b"cos").expect("libm exports cos");
+    assert_eq!(library.dl_symb_bytes(b"cos\0ignored"), Some(cosine));
+    assert!(library.dl_symb_bytes(b"missing_\xff_symbol").is_none());
+    assert_eq!(
+        library.dl_error_bytes().as_deref(),
+        Some(expected_symbol_error(library_path).as_slice())
+    );
+    assert!(
+        library.dl_error_bytes().is_none(),
+        "dlerror clears after a read"
+    );
+}
+
+#[cfg(target_os = "linux")]
+fn expected_symbol_error(library_path: &[u8]) -> Vec<u8> {
+    [library_path, b": undefined symbol: missing_\xff_symbol"].concat()
+}
+
+#[test]
+fn shared_library_byte_setter_keeps_first_nul_prefix_and_null_is_noop() {
+    let mut library = SharedLibrary::new();
+    library.set_name_bytes(Some(b"lib\xff.so\0ignored"));
+    assert_eq!(library.name_bytes(), Some(b"lib\xff.so".as_slice()));
+    assert_eq!(library.name(), None);
+    library.set_name_bytes(None);
+    assert_eq!(library.name_bytes(), Some(b"lib\xff.so".as_slice()));
+}
+
+#[cfg(target_os = "linux")]
+fn non_utf8_libm_copy() -> (std::path::PathBuf, std::path::PathBuf) {
+    use std::{ffi::OsString, os::unix::ffi::OsStringExt};
+
+    let target = [
+        "/lib/x86_64-linux-gnu/libm.so.6",
+        "/lib/aarch64-linux-gnu/libm.so.6",
+        "/lib64/libm.so.6",
+    ]
+    .iter()
+    .find(|candidate| std::path::Path::new(candidate).exists())
+    .map(std::path::PathBuf::from)
+    .expect("host libm path");
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let directory = std::env::temp_dir().join(format!("martensite-shlib-{nonce}"));
+    std::fs::create_dir(&directory).expect("unique temporary directory");
+    let link = directory.join(OsString::from_vec(b"libm-\xff.so".to_vec()));
+    // Run 38077155403: dlopen reuses an existing inode and its first-loaded alias.
+    // A private copy makes the exact diagnostic path independent of test load order.
+    std::fs::copy(&target, &link).expect("isolated non-UTF8 library copy");
+    (directory, link)
+}
+
+/// Fixed memory figures standing for mallinfo2, procfs and task_info.
+struct FakeMemInfo {
+    status: Option<&'static str>,
+}
+impl MemInfoSource for FakeMemInfo {
+    fn heap_usage(&self) -> usize {
+        3 * 1024 * 1024 + 5
+    }
+    fn proc_status(&self) -> Option<String> {
+        self.status.map(str::to_string)
+    }
+    fn task_counters(&self) -> Option<(usize, usize, usize)> {
+        Some((64 << 20, 16 << 20, 3 << 20))
+    }
+}
+
+const STATUS: &str = "Name:\tcad\nVmPeak:\t  999 kB\nVmSize:\t  204800 kB\n\nVmHWM:\t  \
+                      40960 kB\nVmRSS:\t   20480 kB\nVmData:\t    8192 kB\nVmStk:\t     \
+                      1024 kB\nVmExe:\t 12 kB\n";
+
+#[test]
+fn mem_info_starts_active_and_unknown_without_update() {
+    let mut info = MemInfo::with_source(FakeMemInfo { status: None }, false);
+    for counter in MemCounter::ALL {
+        assert!(info.is_active(counter));
+        assert_eq!(info.value(counter), usize::MAX);
+        assert_eq!(info.value_mib(counter), usize::MAX);
+        assert_eq!(info.value_precise_mib(counter), -1.0);
+    }
+    assert!(info.to_text().is_empty());
+    info.set_active(false);
+    assert!(!info.is_active(MemCounter::HeapUsage));
+    info.set_counter_active(MemCounter::HeapUsage, true);
+    assert!(info.is_active(MemCounter::HeapUsage));
+    info.clear();
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn mem_info_reads_linux_status_lines_in_native_order() {
+    let mut info = MemInfo::with_source(
+        FakeMemInfo {
+            status: Some(STATUS),
+        },
+        true,
+    );
+    assert_eq!(info.value(MemCounter::Virtual), 204_800 * 1024);
+    assert_eq!(info.value(MemCounter::WorkingSet), 20_480 * 1024);
+    assert_eq!(info.value(MemCounter::WorkingSetPeak), 40_960 * 1024);
+    assert_eq!(info.value(MemCounter::Private), (8192 + 1024) * 1024);
+    assert_eq!(info.value(MemCounter::SwapUsage), usize::MAX);
+    assert_eq!(info.value_mib(MemCounter::HeapUsage), 3);
+    assert_eq!(
+        info.value_precise_mib(MemCounter::HeapUsage),
+        3.0 + 5.0 / 1_048_576.0
+    );
+    let expected = "  Private memory:     9 MiB\n  Working Set:        20 MiB (peak: 40 MiB)\n  \
+                    Virtual memory:     200 MiB\n  Heap memory:     3 MiB\n";
+    assert_eq!(info.to_text().as_bytes(), expected.as_bytes());
+    info.set_counter_active(MemCounter::WorkingSetPeak, false);
+    info.set_counter_active(MemCounter::Private, false);
+    info.update();
+    assert_eq!(info.value(MemCounter::Private), usize::MAX);
+    assert!(
+        info.to_text()
+            .as_bytes()
+            .starts_with(b"  Working Set:        20 MiB\n")
+    );
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn mem_info_skips_procfs_when_only_heap_and_swap_are_active() {
+    let mut info = MemInfo::with_source(
+        FakeMemInfo {
+            status: Some(STATUS),
+        },
+        false,
+    );
+    info.set_active(false);
+    info.set_counter_active(MemCounter::HeapUsage, true);
+    info.set_counter_active(MemCounter::SwapUsage, true);
+    info.update();
+    assert_eq!(info.value(MemCounter::HeapUsage), 3 * 1024 * 1024 + 5);
+    assert_eq!(info.to_text().as_bytes(), b"  Heap memory:     3 MiB\n");
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn native_mem_info_fills_the_linux_counters() {
+    let info = MemInfo::new(true);
+    for counter in [
+        MemCounter::Private,
+        MemCounter::Virtual,
+        MemCounter::WorkingSet,
+        MemCounter::WorkingSetPeak,
+    ] {
+        assert_ne!(info.value(counter), usize::MAX, "{counter:?}");
+    }
+    assert_eq!(info.value(MemCounter::SwapUsage), usize::MAX);
+    assert!(
+        MemInfo::print_info()
+            .as_bytes()
+            .starts_with(b"  Private memory:")
+    );
+}

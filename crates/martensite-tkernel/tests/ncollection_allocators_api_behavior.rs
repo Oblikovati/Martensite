@@ -1,0 +1,470 @@
+//! Allocation policies of the base allocator and its incremental, accumulating, heap and aligned forms.
+// The raw Free mirrors the pointer API, which Rust marks unsafe.
+#![allow(unsafe_code)]
+use martensite_tkernel::ncollection::{
+    ACC_DEFAULT_BLOCK_SIZE, AccAlignedPtr, AccAlignedSize, AccBlockKey, AccBlockKeyHasher,
+    BaseAllocator, INC_DEFAULT_BLOCK_SIZE, IncBlock, IncBlockSizeLevel,
+};
+use std::ptr::NonNull;
+
+fn address(pointer: NonNull<u8>) -> usize {
+    pointer.as_ptr() as usize
+}
+
+fn spawn_incremental_worker(
+    allocator: std::sync::Arc<BaseAllocator>,
+    allocations: usize,
+) -> std::thread::JoinHandle<Vec<usize>> {
+    std::thread::spawn(move || {
+        (0..allocations)
+            .map(|_| address(allocator.allocate_raw(64).unwrap()))
+            .collect()
+    })
+}
+
+#[test]
+fn block_size_levels_grow_like_increase_block_size() {
+    assert_eq!(IncBlockSizeLevel::of(2048), IncBlockSizeLevel::Min);
+    assert_eq!(IncBlockSizeLevel::of(12 * 1024), IncBlockSizeLevel::Small);
+    assert_eq!(IncBlockSizeLevel::of(196 * 1024), IncBlockSizeLevel::Medium);
+    assert_eq!(IncBlockSizeLevel::of(786 * 1024), IncBlockSizeLevel::Large);
+    assert_eq!(
+        IncBlockSizeLevel::of(12 * 1024 * 1024),
+        IncBlockSizeLevel::Max
+    );
+    assert_eq!(IncBlockSizeLevel::Min.grow(2048), 16384);
+    assert_eq!(IncBlockSizeLevel::Small.grow(12288), 49152);
+    assert_eq!(IncBlockSizeLevel::Medium.grow(200_000), 400_000);
+    assert_eq!(IncBlockSizeLevel::Large.grow(1_000_001), 1_500_002); // lround(1500001.5)
+    assert_eq!(IncBlockSizeLevel::Max.grow(7), 7);
+    assert_eq!(
+        IncBlock::new(64),
+        IncBlock {
+            cursor: 0,
+            available_size: 64
+        }
+    );
+}
+
+#[test]
+fn incremental_bumps_contiguously_and_small_sizes_select_the_default_block() {
+    let allocator = BaseAllocator::incremental(100); // below the 2 KB minimum: 12 KB blocks
+    let first = allocator.allocate_raw(10).unwrap();
+    let second = allocator.allocate_raw(3).unwrap();
+    let third = allocator.allocate_raw(0).unwrap();
+    assert_eq!(address(second), address(first) + 10); // no alignment padding
+    assert_eq!(address(third), address(second) + 3);
+    let rest = allocator.allocate_raw(INC_DEFAULT_BLOCK_SIZE - 13).unwrap();
+    assert_eq!(address(rest), address(first) + 13);
+    let next = allocator.allocate_raw(1).unwrap();
+    assert_ne!(address(next), address(rest) + INC_DEFAULT_BLOCK_SIZE - 13);
+}
+
+#[test]
+fn every_fifth_incremental_block_grows() {
+    let allocator = BaseAllocator::incremental(2048);
+    let starts: Vec<usize> = (0..5)
+        .map(|_| address(allocator.allocate_raw(2048).unwrap()))
+        .collect();
+    // The fifth block is 2048 * 8 bytes, so it keeps room for more 2 KB requests.
+    let inside_fifth = address(allocator.allocate_raw(2048).unwrap());
+    assert_eq!(inside_fifth, starts[4] + 2048);
+    let more = address(allocator.allocate_raw(12 * 1024).unwrap());
+    assert_eq!(more, starts[4] + 4096);
+}
+
+#[test]
+fn incremental_reset_rewinds_newest_block_first_and_release_forgets_block_size() {
+    let allocator = BaseAllocator::incremental(4096);
+    let first = address(allocator.allocate_raw(4096).unwrap());
+    let second = address(allocator.allocate_raw(4096).unwrap());
+    assert_ne!(second, first + 4096);
+    allocator.reset(false).unwrap();
+    assert_eq!(address(allocator.allocate_raw(8).unwrap()), second);
+    allocator.reset(true).unwrap();
+    // clean() restores THE_DEFAULT_BLOCK_SIZE, so two 4 KB requests now share a 12 KB block.
+    let a = address(allocator.allocate_raw(4096).unwrap());
+    assert_eq!(address(allocator.allocate_raw(4096).unwrap()), a + 4096);
+}
+
+#[test]
+fn incremental_free_is_a_noop_and_reset_refuses_live_owners() {
+    let allocator = BaseAllocator::incremental(0);
+    let raw = allocator.allocate_raw(16).unwrap();
+    // SAFETY: raw comes from this allocator; the incremental Free does nothing.
+    unsafe { allocator.free_raw(raw) }.unwrap();
+    let owned = allocator.allocate(24).unwrap();
+    assert!(owned.as_slice().iter().all(|byte| *byte == 0));
+    let failure = allocator.reset(false).unwrap_err();
+    assert_eq!(failure.exception_type(), "Standard_ProgramError");
+    assert!(failure.message().starts_with("1 live allocations"));
+    drop(owned);
+    allocator.reset(false).unwrap();
+}
+
+#[test]
+fn nullable_free_matches_native_null_behavior_for_every_allocator_kind() {
+    // SAFETY: freeing null is the defined no-op that this test checks.
+    unsafe { BaseAllocator::common().free_raw_nullable(std::ptr::null_mut()) }.unwrap();
+    // SAFETY: freeing null is the defined no-op that this test checks.
+    unsafe { BaseAllocator::global_heap().free_raw_nullable(std::ptr::null_mut()) }.unwrap();
+    // SAFETY: freeing null is the defined no-op that this test checks.
+    unsafe { BaseAllocator::incremental(0).free_raw_nullable(std::ptr::null_mut()) }.unwrap();
+    // SAFETY: freeing null is the defined no-op that this test checks.
+    unsafe { BaseAllocator::aligned(16).free_raw_nullable(std::ptr::null_mut()) }.unwrap();
+    let accumulating = BaseAllocator::accumulating(64).unwrap();
+    // SAFETY: null is rejected by the accumulating allocator before any memory is touched.
+    let failure = unsafe { accumulating.free_raw_nullable(std::ptr::null_mut()) }.unwrap_err();
+    assert_eq!(failure.exception_type(), "Standard_ProgramError");
+    assert!(
+        failure
+            .message()
+            .ends_with("Trying to free an invalid address")
+    );
+    let raw = accumulating.allocate_raw(8).unwrap();
+    // SAFETY: `raw` is a live allocation of this allocator, freed once.
+    unsafe { accumulating.free_raw(raw) }.unwrap();
+}
+
+#[test]
+fn accumulating_protected_alignment_helpers_match_native_arithmetic() {
+    assert_acc_aligned_size_rounding();
+    assert_acc_aligned_pointer_views();
+    assert_acc_aligned_pointer_arithmetic();
+}
+
+#[test]
+fn accumulating_protected_key_hasher_matches_native_hash_and_equality() {
+    let hasher = AccBlockKeyHasher;
+    for value in [0, 1, 42, usize::MAX] {
+        let key = AccBlockKey::new(value);
+        assert_eq!(key.value(), value);
+        assert_eq!(hasher.hash(key), value);
+        assert!(hasher.equal(key, AccBlockKey::new(value)));
+        assert!(!hasher.equal(key, AccBlockKey::new(value.wrapping_add(1))));
+    }
+}
+
+#[test]
+fn accumulating_protected_key_value_mutation_changes_hash_and_equality() {
+    let hasher = AccBlockKeyHasher;
+    let mut key = AccBlockKey::new(41);
+    assert_eq!(hasher.hash(key), 41);
+    key.set_value(42);
+    assert_eq!(key.value(), 42);
+    assert_eq!(hasher.hash(key), 42);
+    assert!(hasher.equal(key, AccBlockKey::new(42)));
+    assert!(!hasher.equal(key, AccBlockKey::new(41)));
+}
+
+#[test]
+fn accumulating_key_field_borrow_updates_same_storage() {
+    let mut key = AccBlockKey::new(41);
+    let value: &mut usize = &mut key.key_value;
+    *value += 1;
+    let address: *const usize = value;
+    assert_eq!(*value, 42);
+    assert!(std::ptr::eq(address, &key.key_value));
+    assert_eq!(AccBlockKeyHasher.hash(key), 42);
+    assert!(AccBlockKeyHasher.equal(key, AccBlockKey::new(42)));
+}
+
+fn assert_acc_aligned_size_rounding() {
+    assert_eq!(
+        [0, 1, 2, 3, 4, 5, usize::MAX].map(|size| AccAlignedSize::new(size).get()),
+        [0, 4, 4, 4, 4, 8, 0]
+    );
+}
+
+fn assert_acc_aligned_pointer_views() {
+    let mut storage = AlignedBytes([0; 16]);
+    let base = storage.0.as_mut_ptr();
+    let raw = base.wrapping_add(3);
+    let aligned = AccAlignedPtr::from_ptr(raw);
+    assert_eq!(aligned.as_ptr(), base);
+    assert_eq!(AccAlignedPtr::default().as_ptr(), std::ptr::null_mut());
+}
+
+fn assert_acc_aligned_pointer_arithmetic() {
+    let mut storage = AlignedBytes([0; 16]);
+    let base = storage.0.as_mut_ptr();
+    let aligned = AccAlignedPtr::from_ptr(base);
+    let size = AccAlignedSize::new(1);
+    assert_eq!((aligned + size).as_ptr(), base.wrapping_add(4));
+    assert_eq!(((aligned + size) - size).as_ptr(), base);
+    let mut moved = aligned;
+    assert_eq!(
+        moved.wrapping_add_assign(size).as_ptr(),
+        base.wrapping_add(4)
+    );
+    assert_eq!(moved.wrapping_sub_assign(size).as_ptr(), base);
+    moved += size;
+    moved += size;
+    moved -= size;
+    assert_eq!(moved.as_ptr(), base.wrapping_add(4));
+}
+
+#[repr(align(4))]
+struct AlignedBytes([u8; 16]);
+
+#[test]
+fn incremental_thread_safety_request_keeps_parallel_allocations_unique() {
+    use std::sync::Arc;
+
+    const THREADS: usize = 4;
+    const PER_THREAD: usize = 128;
+    let allocator = Arc::new(BaseAllocator::incremental(4096));
+    allocator.set_thread_safe(true).unwrap();
+    let addresses = allocate_parallel(Arc::clone(&allocator), THREADS, PER_THREAD);
+    assert_eq!(addresses.len(), THREADS * PER_THREAD);
+    allocator.set_thread_safe(false).unwrap();
+    allocator.reset(false).unwrap();
+    assert!(allocator.allocate_raw(1).is_some());
+}
+
+fn allocate_parallel(
+    allocator: std::sync::Arc<BaseAllocator>,
+    thread_count: usize,
+    allocations_per_thread: usize,
+) -> Vec<usize> {
+    let handles: Vec<_> = (0..thread_count)
+        .map(|_| {
+            spawn_incremental_worker(std::sync::Arc::clone(&allocator), allocations_per_thread)
+        })
+        .collect();
+    let mut addresses: Vec<usize> = handles
+        .into_iter()
+        .flat_map(|handle| handle.join().unwrap())
+        .collect();
+    addresses.sort_unstable();
+    addresses.dedup();
+    addresses
+}
+
+#[test]
+fn thread_safety_request_rejects_non_incremental_allocator() {
+    let allocators = [
+        (BaseAllocator::common(), "NCollection_BaseAllocator"),
+        (BaseAllocator::fresh_common(), "NCollection_BaseAllocator"),
+        (BaseAllocator::global_heap(), "NCollection_HeapAllocator"),
+        (BaseAllocator::fresh_heap(), "NCollection_HeapAllocator"),
+        (
+            BaseAllocator::accumulating(64).unwrap(),
+            "NCollection_AccAllocator",
+        ),
+        (BaseAllocator::aligned(16), "NCollection_AlignedAllocator"),
+    ];
+    for (allocator, actual) in allocators {
+        let error = allocator.set_thread_safe(true).unwrap_err();
+        assert_eq!(error.exception_type(), "Standard_TypeMismatch");
+        assert!(error.message().contains(actual));
+        assert!(error.message().contains("NCollection_IncAllocator"));
+    }
+}
+
+#[test]
+fn accumulating_allocations_descend_rounded_to_four_bytes() {
+    let allocator = BaseAllocator::accumulating(64).unwrap();
+    let chain = allocator.accumulating_chain();
+    assert_eq!(chain.len(), 1);
+    assert_eq!((chain[0].free_size, chain[0].alloc_count), (64, 0));
+    let first = allocator.allocate_raw(5).unwrap();
+    assert_eq!(address(first), chain[0].address + 56);
+    let second = allocator.allocate_raw(0).unwrap(); // zero still counts as an allocation
+    assert_eq!(second, first);
+    let state = allocator.accumulating_block(address(first)).unwrap();
+    assert_eq!((state.free_size, state.alloc_count), (56, 2));
+}
+
+#[test]
+fn accumulating_protected_extension_finds_and_adds_owned_blocks() {
+    let allocator = BaseAllocator::accumulating(4096).unwrap();
+    let original = allocator.allocate_raw(8).unwrap();
+    let allocation = assert_extension_lookup_and_allocate(&allocator, original);
+    // SAFETY: both pointers are live allocations of this allocator.
+    unsafe { allocator.free_raw(allocation) }.unwrap();
+    // SAFETY: `original` is a live allocation of this allocator, freed once.
+    unsafe { allocator.free_raw(original) }.unwrap();
+    assert_eq!(allocator.accumulating_chain().len(), 1);
+}
+
+fn assert_extension_lookup_and_allocate(
+    allocator: &BaseAllocator,
+    original: NonNull<u8>,
+) -> NonNull<u8> {
+    let mut extension = allocator.accumulating_extension().unwrap();
+    let original_lookup = extension.find_block(address(original));
+    assert_eq!(original_lookup.block.unwrap().alloc_count, 1);
+    assert_eq!(
+        original_lookup.key.value(),
+        original_lookup.block.unwrap().address / 4096
+    );
+    let added = extension.allocate_new_block(4096).unwrap();
+    assert_eq!((added.free_size, added.alloc_count), (4096, 0));
+    let allocation = extension.allocate_from_block(added.address, 5).unwrap();
+    let lookup = extension.find_block(address(allocation));
+    assert_eq!(lookup.block.unwrap().alloc_count, 1);
+    assert_eq!(lookup.key.value(), lookup.block.unwrap().address / 4096);
+    allocation
+}
+
+#[test]
+fn accumulating_extension_rejects_other_allocator_kinds_and_block_overflow() {
+    let failure = match BaseAllocator::common().accumulating_extension() {
+        Ok(_) => panic!("common allocator unexpectedly allowed accumulating extensions"),
+        Err(failure) => failure,
+    };
+    assert_eq!(failure.exception_type(), "Standard_TypeMismatch");
+    assert!(failure.message().contains("NCollection_BaseAllocator"));
+    assert!(failure.message().contains("NCollection_AccAllocator"));
+    let allocator = BaseAllocator::accumulating(16).unwrap();
+    let mut extension = allocator.accumulating_extension().unwrap();
+    let block = extension.allocate_new_block(8).unwrap();
+    assert!(extension.allocate_from_block(block.address, 9).is_none());
+    let local = 0_u64;
+    let lookup = extension.find_block((&local as *const u64) as usize);
+    assert!(lookup.block.is_none());
+    assert_eq!(
+        lookup.key.value(),
+        ((&local as *const u64) as usize / 16).wrapping_sub(1)
+    );
+}
+
+#[test]
+fn accumulating_oversize_requests_get_a_dedicated_block_and_empty_blocks_are_freed() {
+    let allocator = BaseAllocator::accumulating(64).unwrap();
+    let small = allocator.allocate_raw(8).unwrap();
+    let big = allocator.allocate_raw(100).unwrap();
+    let chain = allocator.accumulating_chain();
+    assert_eq!(chain.len(), 2);
+    assert_eq!((chain[0].address, chain[0].free_size), (address(big), 0));
+    // SAFETY: big is a live allocation of this allocator.
+    unsafe { allocator.free_raw(big) }.unwrap();
+    assert_eq!(allocator.accumulating_chain().len(), 1);
+    // SAFETY: small is a live allocation of this allocator.
+    unsafe { allocator.free_raw(small) }.unwrap();
+    let sole = allocator.accumulating_chain();
+    assert_eq!(
+        (sole.len(), sole[0].free_size, sole[0].alloc_count),
+        (1, 64, 0)
+    );
+}
+
+#[test]
+fn accumulating_free_rejects_foreign_addresses_and_empty_blocks() {
+    let allocator = BaseAllocator::accumulating(ACC_DEFAULT_BLOCK_SIZE).unwrap();
+    let local = 0_u64;
+    let foreign = NonNull::from(&local).cast::<u8>();
+    // SAFETY: a foreign address is detected before any block is touched.
+    let failure = unsafe { allocator.free_raw(foreign) }.unwrap_err();
+    assert_eq!(failure.exception_type(), "Standard_ProgramError");
+    assert!(
+        failure
+            .message()
+            .ends_with("Trying to free an invalid address")
+    );
+    let raw = allocator.allocate_raw(4).unwrap();
+    // SAFETY: raw is live; the second free hits an empty block and is refused.
+    unsafe { allocator.free_raw(raw) }.unwrap();
+    // SAFETY: the second free of `raw` is refused by the allocator before any memory is
+    // touched.
+    assert!(unsafe { allocator.free_raw(raw) }.is_err());
+    assert!(BaseAllocator::accumulating(0).is_err());
+}
+
+#[test]
+fn accumulating_scans_previous_blocks_before_creating_one() {
+    let allocator = BaseAllocator::accumulating(64).unwrap();
+    let _fill = allocator.allocate_raw(40).unwrap(); // first block keeps 24 bytes
+    let _next = allocator.allocate_raw(40).unwrap(); // second block, 24 left
+    let _full = allocator.allocate_raw(24).unwrap(); // fills the second block
+    let reused = allocator.allocate_raw(20).unwrap(); // found in the first block
+    let chain = allocator.accumulating_chain();
+    assert_eq!(chain.len(), 2);
+    assert_eq!(address(reused), chain[1].address + 4);
+}
+
+#[test]
+fn aligned_allocator_follows_mm_malloc() {
+    for alignment in [0_usize, 3, 12, 24] {
+        assert!(BaseAllocator::aligned(alignment).allocate_raw(16).is_none());
+    }
+    for alignment in [1_usize, 2, 4, 8, 16, 64, 4096] {
+        let allocator = BaseAllocator::aligned(alignment);
+        let raw = allocator.allocate_optimal_raw(100).unwrap();
+        assert_eq!(address(raw) % alignment, 0);
+        // SAFETY: raw is a live allocation of this allocator.
+        unsafe { allocator.free_raw(raw) }.unwrap();
+    }
+}
+
+#[test]
+fn heap_and_common_allocators_are_distinct_singletons() {
+    let heap = BaseAllocator::global_heap();
+    assert_eq!(heap, BaseAllocator::global_heap());
+    assert_ne!(heap, BaseAllocator::common());
+    for allocator in [heap, BaseAllocator::common()] {
+        let raw = allocator.allocate_raw(3).unwrap();
+        assert_eq!(address(raw) % 16, 0);
+        // SAFETY: raw is a live allocation of this allocator.
+        unsafe { allocator.free_raw(raw) }.unwrap();
+    }
+}
+
+#[test]
+fn fresh_common_and_heap_handles_have_distinct_policy_identities() {
+    let common = BaseAllocator::common();
+    let heap = BaseAllocator::global_heap();
+    let fresh_common = BaseAllocator::fresh_common();
+    let second_common = BaseAllocator::fresh_common();
+    let fresh_heap = BaseAllocator::fresh_heap();
+    let second_heap = BaseAllocator::fresh_heap();
+    assert_ne!(fresh_common, common);
+    assert_ne!(fresh_common, second_common);
+    assert_ne!(fresh_heap, heap);
+    assert_ne!(fresh_heap, second_heap);
+    assert_backend_release_compatibility(&fresh_common, &common, &fresh_heap, &heap);
+    assert_probe_allocation(&fresh_common);
+    assert_probe_allocation(&fresh_heap);
+}
+
+fn assert_backend_release_compatibility(
+    fresh_common: &BaseAllocator,
+    common: &BaseAllocator,
+    fresh_heap: &BaseAllocator,
+    heap: &BaseAllocator,
+) {
+    assert!(fresh_common.can_free_from(common));
+    assert!(fresh_heap.can_free_from(heap));
+    assert!(fresh_common.can_free_from(fresh_heap));
+    assert!(fresh_heap.can_free_from(fresh_common));
+    assert!(!BaseAllocator::incremental(4096).can_free_from(&BaseAllocator::incremental(4096)));
+    assert!(
+        !BaseAllocator::accumulating(64)
+            .unwrap()
+            .can_free_from(&BaseAllocator::accumulating(64).unwrap())
+    );
+    assert!(!BaseAllocator::aligned(16).can_free_from(&BaseAllocator::aligned(16)));
+}
+
+fn assert_probe_allocation(allocator: &BaseAllocator) {
+    let allocation = allocator.allocate_raw(8).unwrap();
+    // SAFETY: the test allocation is released once through its originating allocator.
+    unsafe { allocator.free_raw(allocation) }.unwrap();
+}
+
+#[test]
+fn arenas_serve_over_aligned_typed_values() {
+    #[repr(align(64))]
+    struct Wide(u8);
+    for allocator in [
+        BaseAllocator::incremental(0),
+        BaseAllocator::accumulating(256).unwrap(),
+    ] {
+        let values: Vec<_> = (0..8).map(|i| allocator.allocate_value(Wide(i))).collect();
+        for (index, value) in values.iter().enumerate() {
+            assert_eq!((&**value as *const Wide as usize) % 64, 0);
+            assert_eq!(value.0 as usize, index);
+        }
+    }
+}

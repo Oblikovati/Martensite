@@ -1,0 +1,46 @@
+use super::{Debug, DoubleMap, HashPolicy};
+impl<A: Debug + Clone, B: Debug + Clone, H1: HashPolicy<A>, H2: HashPolicy<B>>
+    DoubleMap<A, B, H1, H2>
+{
+    /// Copies bindings retaining destination policies and allocator; `map.assign(&source)`.
+    pub fn assign(&mut self, source: &Self) -> &mut Self {
+        self.clear(false);
+        if source.is_empty() {
+            return self;
+        }
+        self.resize(source.len() - 1);
+        for (first, second) in source.items() {
+            self.copy_native_pair(first, second);
+        }
+        self
+    }
+    fn copy_native_pair(&mut self, first: &A, second: &B) {
+        // Assignment copies locals, then constructs the node base (key2) before key1.
+        let local_first = first.clone();
+        let local_second = second.clone();
+        let first_bucket = self.first_policy.hash(&local_first) % self.bucket_count() + 1;
+        let second_bucket = self.second_policy.hash(&local_second) % self.bucket_count() + 1;
+        self.storage.insert(
+            (first_bucket, second_bucket),
+            || local_first.clone(),
+            || local_second.clone(),
+        );
+    }
+}
+impl<A: Debug + Clone, B: Debug + Clone, H1: HashPolicy<A> + Clone, H2: HashPolicy<B> + Clone> Clone
+    for DoubleMap<A, B, H1, H2>
+{
+    fn clone(&self) -> Self {
+        let mut copy = Self::with_allocator(
+            self.first_policy.clone(),
+            self.second_policy.clone(),
+            self.bucket_count(),
+            self.allocator().clone(),
+        );
+        copy.assign(self);
+        copy
+    }
+    fn clone_from(&mut self, source: &Self) {
+        self.assign(source);
+    }
+}

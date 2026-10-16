@@ -1,0 +1,232 @@
+//! Handle-shared one- and two-dimensional arrays.
+//!
+//! These types are both an array and a transient, so every
+//! holder of a handle edits the same storage. A [`Handle`](crate::standard::Handle)
+//! lends only shared references, so the array sits behind a lock: [`HArray1::array1`]
+//! and [`HArray1::change_array1`] return read and write guards that expose the complete
+//! [`Array1`] API, as the base array would.
+mod copy_construction;
+mod initialization;
+mod matrix_copy_construction;
+mod matrix_initialization;
+
+use super::generic_transient::impl_generic_transient;
+use super::{Array1, Array2, ArrayError};
+use crate::standard::StandardTransient;
+use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
+
+/// A shared, bounded one-dimensional array; `Handle::new(HArray1::<f64>::with_bounds(1, 3)?)`.
+///
+/// ```
+/// use martensite_tkernel::{ncollection::HArray1, standard::Handle};
+/// let shared = Handle::new(HArray1::with_value(1, 3, 0.5).unwrap());
+/// shared.get().unwrap().change_array1().set_value(2, 1.5).unwrap();
+/// assert_eq!(*shared.get().unwrap().array1().value(2).unwrap(), 1.5);
+/// ```
+pub struct HArray1<T: Send + Sync + 'static> {
+    base: StandardTransient,
+    values: RwLock<Array1<'static, T>>,
+}
+
+/// A shared, bounded two-dimensional array; `Handle::new(HArray2::<f64>::with_bounds(1, 2, 1, 3)?)`.
+///
+/// ```
+/// use martensite_tkernel::ncollection::HArray2;
+/// let grid = HArray2::with_value(1, 2, 1, 3, 7_i32).unwrap();
+/// assert_eq!(grid.array2().upper_col(), 3);
+/// ```
+pub struct HArray2<T: Send + Sync + 'static> {
+    base: StandardTransient,
+    values: RwLock<Array2<'static, T>>,
+}
+
+impl<T: Send + Sync + 'static> Default for HArray1<T> {
+    fn default() -> Self {
+        Self::from_owned(Array1::default())
+    }
+}
+
+impl<T: Send + Sync + 'static> HArray1<T> {
+    /// Wraps an array without copying it; `HArray1::from_owned(Array1::<i32>::with_size(2))`.
+    pub fn from_owned(values: Array1<'static, T>) -> Self {
+        Self {
+            base: StandardTransient::default(),
+            values: RwLock::new(values),
+        }
+    }
+
+    /// Read access to the wrapped array; `array.array1().len()`.
+    pub fn array1(&self) -> RwLockReadGuard<'_, Array1<'static, T>> {
+        self.values.read().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Write access seen by every handle holder;
+    /// `array.change_array1().init(0)`.
+    pub fn change_array1(&self) -> RwLockWriteGuard<'_, Array1<'static, T>> {
+        self.values.write().unwrap_or_else(PoisonError::into_inner)
+    }
+    /// Moves array storage into a wrapper with a fresh transient count; `HArray1::move_from(&mut source)`.
+    pub fn move_from(source: &mut Self) -> Self {
+        let values = source
+            .values
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner);
+        Self::from_owned(std::mem::take(values))
+    }
+    /// Moves storage and bounds, preserving this transient's counter; `target.move_assign(&mut source)`.
+    pub fn move_assign(&mut self, source: &mut Self) -> &mut Self {
+        let target = self
+            .values
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner);
+        let source = source
+            .values
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner);
+        target.move_from(source);
+        self
+    }
+}
+
+impl<T: Default + Send + Sync + 'static> HArray1<T> {
+    /// Allocates default values at `lower..=upper`; `HArray1::<i32>::with_bounds(1, 3)?`.
+    pub fn with_bounds(lower: i32, upper: i32) -> Result<Self, ArrayError> {
+        Ok(Self::from_owned(Array1::with_bounds(lower, upper)?))
+    }
+    /// Borrows a writable static buffer without detaching on edits; `HArray1::from_buffer_mut(buffer, 1, 3, true)?`.
+    pub fn from_buffer_mut(
+        buffer: &'static mut [T],
+        lower: i32,
+        upper: i32,
+        use_buffer: bool,
+    ) -> Result<Self, ArrayError> {
+        if !use_buffer {
+            return Self::with_bounds(lower, upper);
+        }
+        let size = checked_extent(lower, upper)?;
+        if buffer.len() < size {
+            return Err(ArrayError::DimensionMismatch {
+                expected: size,
+                actual: buffer.len(),
+            });
+        }
+        let mut values = Array1::from_slice(&mut buffer[..size]);
+        values.update_lower_bound(lower);
+        Ok(Self::from_owned(values))
+    }
+}
+
+impl<T: Default + Clone + Send + Sync + 'static> HArray1<T> {
+    /// The buffer constructor: with `use_buffer` the array views the first
+    /// `upper - lower + 1` values of a static buffer (detached on first write, see
+    /// [`Array1::from_shared`]); without it the buffer is ignored and fresh default values
+    /// are allocated. A buffer shorter than the bounds is an error instead of
+    /// an out-of-bounds read; `HArray1::from_buffer(&VALUES, 1, 3, true)?`.
+    pub fn from_buffer(
+        buffer: &'static [T],
+        lower: i32,
+        upper: i32,
+        use_buffer: bool,
+    ) -> Result<Self, ArrayError> {
+        if !use_buffer {
+            return Self::with_bounds(lower, upper);
+        }
+        let size = checked_extent(lower, upper)?;
+        if buffer.len() < size {
+            return Err(ArrayError::DimensionMismatch {
+                expected: size,
+                actual: buffer.len(),
+            });
+        }
+        Ok(Self::from_owned(Array1::from_shared(
+            &buffer[..size],
+            lower,
+        )))
+    }
+}
+
+impl<T: Clone + Send + Sync + 'static> Clone for HArray1<T> {
+    fn clone(&self) -> Self {
+        Self::from_array(&self.array1())
+    }
+    fn clone_from(&mut self, source: &Self) {
+        let target = self
+            .values
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner);
+        target.assign(&source.array1());
+    }
+}
+
+impl<T: Send + Sync + 'static> HArray2<T> {
+    /// Wraps a rectangle without copying it; `HArray2::from_owned(Array2::<i32>::with_size(2, 2))`.
+    pub fn from_owned(values: Array2<'static, T>) -> Self {
+        Self {
+            base: StandardTransient::default(),
+            values: RwLock::new(values),
+        }
+    }
+
+    /// Read access to the wrapped rectangle; `grid.array2().len()`.
+    pub fn array2(&self) -> RwLockReadGuard<'_, Array2<'static, T>> {
+        self.values.read().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Write access seen by every handle holder;
+    /// `grid.change_array2().init(0)`.
+    pub fn change_array2(&self) -> RwLockWriteGuard<'_, Array2<'static, T>> {
+        self.values.write().unwrap_or_else(PoisonError::into_inner)
+    }
+    /// Moves the rectangle into a fresh transient wrapper; `HArray2::move_from(&mut source)`.
+    pub fn move_from(source: &mut Self) -> Self {
+        let values = source
+            .values
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner);
+        Self::from_owned(std::mem::take(values))
+    }
+    /// Moves storage and rectangle bounds, retaining this counter; `target.move_assign(&mut source)`.
+    pub fn move_assign(&mut self, source: &mut Self) -> &mut Self {
+        let target = self
+            .values
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner);
+        let source = source
+            .values
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner);
+        target.move_from(source);
+        self
+    }
+}
+
+impl<T: Default + Send + Sync + 'static> HArray2<T> {
+    /// Allocates default values in the inclusive rectangle; `HArray2::<i32>::with_bounds(1, 2, 1, 3)?`.
+    pub fn with_bounds(rl: i32, ru: i32, cl: i32, cu: i32) -> Result<Self, ArrayError> {
+        Ok(Self::from_owned(Array2::with_bounds(rl, ru, cl, cu)?))
+    }
+}
+
+impl<T: Clone + Send + Sync + 'static> Clone for HArray2<T> {
+    fn clone(&self) -> Self {
+        Self::from_array(&self.array2())
+    }
+    fn clone_from(&mut self, source: &Self) {
+        let target = self
+            .values
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner);
+        target.assign(&source.array2());
+    }
+}
+
+fn checked_extent(lower: i32, upper: i32) -> Result<usize, ArrayError> {
+    let size = i64::from(upper) - i64::from(lower) + 1;
+    if size < 0 {
+        return Err(ArrayError::Bounds { lower, upper });
+    }
+    Ok(size as usize)
+}
+
+impl_generic_transient!(HArray1, "NCollection_HArray1", StandardTransient);
+impl_generic_transient!(HArray2, "NCollection_HArray2", StandardTransient);

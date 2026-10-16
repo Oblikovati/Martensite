@@ -1,0 +1,44 @@
+//! Map shares the safe bucket-chain storage of DataMap with a unit value per key.
+use super::{Debug, HashPolicy, Map};
+use crate::ncollection::HashBucketTable;
+impl<K: Debug, H: HashPolicy<K>> Map<K, H> {
+    /// The allocated table (key-only chains yield `(&key, &())`), or `None`
+    /// before one exists.
+    ///
+    /// ```
+    /// # use martensite_tkernel::ncollection::Map;
+    /// let mut map = Map::<i32>::default();
+    /// assert!(map.buckets().is_none());
+    /// map.add(7);
+    /// assert_eq!(map.buckets().map(|table| table.len()), Some(102));
+    /// ```
+    pub fn buckets(&self) -> Option<HashBucketTable<'_, K, ()>> {
+        self.storage.buckets()
+    }
+    pub(super) fn place_key(&mut self, key: K, replace: bool) -> (bool, &K) {
+        self.prepare_emplacement();
+        let (bucket, slot) = self.storage.lookup_with_bucket(&key, &self.hasher);
+        let Some(slot) = slot else {
+            return self.insert_key(bucket, || key);
+        };
+        if replace {
+            // Emplacing destroys the stored key and reconstructs it in place.
+            *self.storage.payload_mut().key_mut(slot) = key;
+        }
+        (false, self.storage.payload().key(slot))
+    }
+    fn insert_key(&mut self, bucket: usize, construct: impl FnOnce() -> K) -> (bool, &K) {
+        let slot = self.storage.insert(bucket, construct, || ());
+        (true, self.storage.payload().key(slot))
+    }
+}
+impl<K: Debug + Clone, H: HashPolicy<K>> Map<K, H> {
+    pub(super) fn place_key_ref(&mut self, key: &K) -> (bool, &K) {
+        self.prepare_emplacement();
+        let (bucket, slot) = self.storage.lookup_with_bucket(key, &self.hasher);
+        match slot {
+            Some(slot) => (false, self.storage.payload().key(slot)),
+            None => self.insert_key(bucket, || key.clone()),
+        }
+    }
+}

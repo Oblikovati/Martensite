@@ -1,0 +1,96 @@
+//! Cursor edits allocate list value nodes before position validation.
+use super::{
+    BaseListRawIterator, List, ListCursor,
+    owner::{self, ListNodeOwner},
+};
+use crate::standard::Failure;
+impl<T> List<T> {
+    /// Inserts before a cursor while retaining its caller-visible state; `list.insert_before(20, &cursor)?`.
+    pub fn insert_before(&mut self, value: T, cursor: &ListCursor) -> Result<&mut T, Failure> {
+        self.emplace_before(cursor, || value)
+    }
+    /// Inserts after a cursor; `list.insert_after(20, &cursor)?`.
+    pub fn insert_after(&mut self, value: T, cursor: &ListCursor) -> Result<&mut T, Failure> {
+        self.emplace_after(cursor, || value)
+    }
+    /// Appends and updates both cursor links; `list.append_at(42, &mut cursor)`.
+    pub fn append_at(&mut self, value: T, cursor: &mut ListCursor) {
+        self.append_constructed_at(cursor, || value);
+    }
+    pub(super) fn append_constructed_at(
+        &mut self,
+        cursor: &mut ListCursor,
+        construct: impl FnOnce() -> T,
+    ) {
+        let owner = ListNodeOwner::construct(self.allocator(), construct);
+        let node = owner.link;
+        self.owners.insert(node as usize, owner);
+        let mut raw = BaseListRawIterator::default();
+        self.topology
+            // SAFETY: `node` is a freshly constructed node owned by this list and not yet
+            // linked.
+            .edit(|base| unsafe { base.append_at(node, &mut raw) });
+        cursor.update_raw(raw);
+    }
+    /// Allocates before evaluating construction arguments; `list.emplace_append(|| Pair(1,2.0))`.
+    pub fn emplace_append(&mut self, construct: impl FnOnce() -> T) -> &mut T {
+        let owner = ListNodeOwner::construct(self.allocator(), construct);
+        let node = owner.link;
+        self.owners.insert(node as usize, owner);
+        // SAFETY: `node` is a freshly constructed node owned by this list and not yet linked.
+        self.topology.edit(|base| unsafe { base.append_node(node) });
+        // SAFETY: `node` is live and owned by this list, and `&mut self` bounds the exclusive
+        // item borrow.
+        unsafe { owner::item_mut(node) }
+    }
+    /// Constructs a prepended element; `list.emplace_prepend(|| Pair(1,2.0))`.
+    pub fn emplace_prepend(&mut self, construct: impl FnOnce() -> T) -> &mut T {
+        self.prepend_with(construct)
+    }
+    /// Constructs before a node, retaining caller cursor state; `list.emplace_before(&cursor, || 7)?`.
+    pub fn emplace_before(
+        &mut self,
+        cursor: &ListCursor,
+        construct: impl FnOnce() -> T,
+    ) -> Result<&mut T, Failure> {
+        let mut position = *cursor;
+        self.emplace_before_at(&mut position, construct)
+    }
+    /// Constructs and updates both iterator links; `list.emplace_before_at(&mut cursor, || 7)?`.
+    pub fn emplace_before_at(
+        &mut self,
+        cursor: &mut ListCursor,
+        construct: impl FnOnce() -> T,
+    ) -> Result<&mut T, Failure> {
+        let owner = ListNodeOwner::construct(self.allocator(), construct);
+        let mut raw = self.locate_cursor(*cursor, "InsertBefore")?;
+        let node = owner.link;
+        self.owners.insert(node as usize, owner);
+        self.topology
+            // SAFETY: `node` is a freshly constructed, unlinked node owned by this list, and
+            // `raw` is a cursor locate_cursor validated in this list.
+            .edit(|base| unsafe { base.insert_before_node(node, &mut raw) })?;
+        cursor.update_raw(raw);
+        // SAFETY: `node` is live and owned by this list, and `&mut self` bounds the exclusive
+        // item borrow.
+        Ok(unsafe { owner::item_mut(node) })
+    }
+    /// Constructs after a position, preserving both cursor links; `list.emplace_after(&cursor, || 7)?`.
+    pub fn emplace_after(
+        &mut self,
+        cursor: &ListCursor,
+        construct: impl FnOnce() -> T,
+    ) -> Result<&mut T, Failure> {
+        let owner = ListNodeOwner::construct(self.allocator(), construct);
+        let mut raw = self.locate_cursor(*cursor, "InsertAfter")?;
+        let node = owner.link;
+        self.owners.insert(node as usize, owner);
+        self.topology
+            // SAFETY: `node` is a freshly constructed, unlinked node owned by this list, and
+            // `raw` is a cursor locate_cursor validated in this list.
+            .edit(|base| unsafe { base.insert_after_node(node, &mut raw) })?;
+        // SAFETY: `node` is live and owned by this list, and `&mut self` bounds the exclusive
+        // item borrow.
+        Ok(unsafe { owner::item_mut(node) })
+    }
+}

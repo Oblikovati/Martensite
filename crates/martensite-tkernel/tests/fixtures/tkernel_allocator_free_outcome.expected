@@ -1,0 +1,19 @@
+pair common common returns
+pair common heap returns
+pair common aligned returns
+null common returns
+pair heap common returns
+pair heap heap returns
+pair heap aligned returns
+null heap returns
+pair aligned common returns
+pair aligned heap returns
+pair aligned aligned returns
+null aligned returns
+inc_own returns 1 17
+inc_foreign returns
+inc_null returns
+acc_own returns
+acc_foreign raises
+acc_null raises
+acc_inc raises

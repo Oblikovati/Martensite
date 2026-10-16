@@ -1,0 +1,137 @@
+//! Metadata and cursor updates finish before each removal's destructor boundary.
+use super::super::{
+    BaseAllocator, BaseSequence, BaseSequenceRawIterator, SeqNode, Sequence, SequenceCursor,
+    SequenceNodeRetirement, iteration::pointer_address, owner::take_owner,
+    topology::SequenceTopology,
+};
+use super::{Failure, no_such_node, out_of_range};
+struct ClearMetadata<'a>(&'a mut SequenceTopology);
+impl Drop for ClearMetadata<'_> {
+    fn drop(&mut self) {
+        // Reset before remaining owners unwind: observers must never traverse freed metadata.
+        self.0
+            .edit(|base| *base = BaseSequence::new(Some(base.allocator().clone())));
+    }
+}
+impl<T> Sequence<T> {
+    /// Removes an existing item through node/cache deletion; `sequence.remove(1)?`.
+    pub fn remove(&mut self, index: usize) -> Result<(), Failure> {
+        self.offset("Remove", index)?;
+        let node = self
+            .topology
+            // SAFETY: the offset was checked, and this sequence exclusively owns every linked
+            // node and its cache.
+            .edit(|base| unsafe { base.prepare_index_removal(index) })?;
+        drop(take_owner(&mut self.owners, node));
+        Ok(())
+    }
+    /// Removes an inclusive one-based range in forward destruction order; `sequence.remove_range(2, 4)?`.
+    pub fn remove_range(&mut self, first: usize, last: usize) -> Result<(), Failure> {
+        if first == 0 || last > self.len() || first > last {
+            return Err(out_of_range(
+                "Remove",
+                first,
+                &format!("1 <= first <= last <= {} (last {last})", self.len()),
+            ));
+        }
+        let node = self
+            .topology
+            // SAFETY: the range was checked, and this sequence exclusively owns every linked
+            // node and its cache.
+            .edit(|base| unsafe { base.prepare_range_removal(first, last) })?;
+        self.destroy_detached_span(node, last - first + 1);
+        Ok(())
+    }
+    fn destroy_detached_span(&mut self, mut node: *mut SeqNode, count: usize) {
+        // Retain detached owners in link order so unwinding also releases the entire span.
+        let mut detached = Vec::with_capacity(count);
+        for _ in 0..count {
+            // SAFETY: `node` is a live node of the detached span; its link is read before its
+            // owner is taken.
+            let next = unsafe { (*node).next() };
+            detached.push(take_owner(&mut self.owners, node));
+            node = next;
+        }
+        for owner in detached {
+            drop(owner);
+        }
+    }
+    /// Removes current and advances it with previous retained; `sequence.remove_cursor(&mut cursor)?`.
+    pub fn remove_cursor(&mut self, cursor: &mut SequenceCursor) -> Result<(), Failure> {
+        drop(self.detach_cursor(cursor)?);
+        Ok(())
+    }
+    /// Unlink current and advance before returning its owner; `let retired=sequence.detach_cursor(&mut cursor)?`.
+    /// Drop the owner after releasing any surrounding field guard, so destructors can reenter.
+    pub fn detach_cursor(
+        &mut self,
+        cursor: &mut SequenceCursor,
+    ) -> Result<Option<SequenceNodeRetirement<T>>, Failure> {
+        if !cursor.more() {
+            return Ok(None);
+        }
+        let node = self
+            .owned_node(cursor.address)
+            .ok_or_else(|| no_such_node("Remove", *cursor))?;
+        Ok(Some(self.detach_owned_cursor(cursor, node)))
+    }
+    fn detach_owned_cursor(
+        &mut self,
+        cursor: &mut SequenceCursor,
+        node: *mut SeqNode,
+    ) -> SequenceNodeRetirement<T> {
+        let mut raw = BaseSequenceRawIterator {
+            current: node,
+            previous: std::ptr::null_mut(),
+        };
+        self.prepare_owned_cursor(&mut raw);
+        cursor.address = pointer_address(raw.current);
+        SequenceNodeRetirement {
+            owner: take_owner(&mut self.owners, node),
+        }
+    }
+    pub(crate) fn prepare_owned_cursor(&mut self, raw: &mut BaseSequenceRawIterator) {
+        self.topology
+            // SAFETY: callers pass a cursor validated in this sequence, which exclusively owns
+            // every linked node.
+            .edit(|base| unsafe { base.prepare_cursor_removal(raw) });
+    }
+    /// Frees items in link order and optionally replaces the allocator; `sequence.clear(Some(arena))`.
+    pub fn clear(&mut self, allocator: Option<BaseAllocator>) {
+        if self.topology.access().clear_node_scope.is_some() {
+            self.reset_interrupted_clear(allocator);
+            return;
+        }
+        self.clear_uninterrupted(allocator);
+    }
+    fn clear_uninterrupted(&mut self, allocator: Option<BaseAllocator>) {
+        let mut owners = std::mem::take(&mut self.owners);
+        let mut node = self.topology.endpoints().0;
+        let reset = ClearMetadata(&mut self.topology);
+        while !node.is_null() {
+            // SAFETY: `node` is a non-null node whose owner is still in `owners`; its link is
+            // read before that owner is released.
+            let next = unsafe { (*node).next() };
+            drop(take_owner(&mut owners, node));
+            node = next;
+        }
+        drop(reset);
+        if let Some(allocator) = allocator {
+            self.topology.edit(|base| base.allocator = allocator);
+        }
+    }
+    fn reset_interrupted_clear(&mut self, allocator: Option<BaseAllocator>) {
+        // A discarded partial traversal contains freed prefixes. Reset before cleanup;
+        // re-clearing those pointers is undefined, so safe Rust never dereferences them.
+        self.reset_clear_metadata();
+        drop(std::mem::take(&mut self.owners));
+        if let Some(allocator) = allocator {
+            self.topology.edit(|base| base.allocator = allocator);
+        }
+    }
+}
+impl<T> Drop for Sequence<T> {
+    fn drop(&mut self) {
+        self.clear(None);
+    }
+}

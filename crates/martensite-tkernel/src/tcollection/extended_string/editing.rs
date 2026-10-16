@@ -1,0 +1,281 @@
+//! In-place edits: Insert, SetValue, Remove, Trunc, Split, Copy and ownership moves.
+use super::{
+    ExtendedString,
+    errors::{int_length, leading_units, offset, out_of_range},
+    utf,
+};
+use crate::standard::Failure;
+impl ExtendedString {
+    /// Inserts one code unit, zero included, at a one-based position in 1..=len+1;
+    /// `text.insert_char(1, 0x57)?`.
+    pub fn insert_char(&mut self, index: i32, unit: u16) -> Result<(), Failure> {
+        self.check_insert_position(index)?;
+        self.ensure_owned_terminator();
+        self.terminated.insert(offset(index), unit);
+        Ok(())
+    }
+    /// Inserts a converted string or code-unit slice at a one-based position in 1..=len+1;
+    /// `text.insert(1, &ExtendedString::new("ab"))?`.
+    pub fn insert(&mut self, index: i32, input: impl Into<Self>) -> Result<(), Failure> {
+        self.check_insert_position(index)?;
+        let input = input.into();
+        if input.is_empty() {
+            return Ok(());
+        }
+        self.ensure_owned_terminator();
+        let at = offset(index);
+        self.terminated
+            .splice(at..at, input.as_utf16().iter().copied());
+        Ok(())
+    }
+    /// The (pointer, length) Insert: the position is checked first, then a null pointer or a
+    /// length <= 0 inserts nothing; `text.insert_span(1, Some(&[65]), 1)?`.
+    pub fn insert_span(
+        &mut self,
+        index: i32,
+        units: Option<&[u16]>,
+        length: i32,
+    ) -> Result<(), Failure> {
+        self.check_insert_position(index)?;
+        let (Some(units), Ok(count)) = (units, usize::try_from(length)) else {
+            return Ok(());
+        };
+        self.insert(index, leading_units(units, count))
+    }
+    /// Inserts units from a bounded null-terminated UTF-16 buffer; the index is validated
+    /// before null or empty input is ignored. `text.insert_c_units(1, Some(&[65, 0, 66]))?`.
+    pub fn insert_c_units(&mut self, index: i32, units: Option<&[u16]>) -> Result<(), Failure> {
+        self.insert(index, units.map_or(&[][..], utf::c_units_prefix))
+    }
+    /// Replaces one code unit at a one-based position in 1..=len; `text.set_value(6, 0x67)?`.
+    pub fn set_value(&mut self, index: i32, unit: u16) -> Result<(), Failure> {
+        if index < 1 || index > self.length() {
+            return Err(out_of_range(
+                "TCollection_ExtendedString::SetValue : parameter theWhere",
+                format_args!("theWhere {index}; expected 1..={}", self.len()),
+            ));
+        }
+        self.terminated[offset(index)] = unit;
+        Ok(())
+    }
+    /// Overwrites from a one-based position in 1..=len+1, growing the string when the
+    /// replacement runs past its end; `text.set_value_units(2, &[65, 66])?`.
+    pub fn set_value_units(&mut self, index: i32, units: impl AsRef<[u16]>) -> Result<(), Failure> {
+        let units = units.as_ref();
+        let at = self.set_value_position(index)?;
+        if units.is_empty() {
+            return Ok(());
+        }
+        let end = (at + units.len()).max(self.len());
+        self.terminated.resize(end + 1, 0);
+        self.terminated[at..at + units.len()].copy_from_slice(units);
+        Ok(())
+    }
+    /// The (pointer, length) SetValue: the position is checked first, then a null pointer
+    /// or a length <= 0 changes nothing; `text.set_value_span(1, Some(&[65]), 1)?`.
+    pub fn set_value_span(
+        &mut self,
+        index: i32,
+        units: Option<&[u16]>,
+        length: i32,
+    ) -> Result<(), Failure> {
+        let (Some(units), Ok(count)) = (units, usize::try_from(length)) else {
+            return self.set_value_units(index, []);
+        };
+        self.set_value_units(index, leading_units(units, count))
+    }
+    /// Replaces units from a bounded null-terminated UTF-16 buffer; validates the index before
+    /// ignoring null or empty input. `text.set_value_c_units(1, Some(&[65, 0, 66]))?`.
+    pub fn set_value_c_units(&mut self, index: i32, units: Option<&[u16]>) -> Result<(), Failure> {
+        let Some(units) = units else {
+            return self.set_value_units(index, []);
+        };
+        self.set_value_units(index, utf::c_units_prefix(units))
+    }
+    /// Replays forward overlap from a receiver offset when the write stays within the length;
+    /// `text.set_value_c_units_from_self(2, 0)?` on `[65, 66, 0, 67]`.
+    /// Extending self-alias writes are refused because setting a value reallocates first.
+    pub fn set_value_c_units_from_self(
+        &mut self,
+        index: i32,
+        source_start: usize,
+    ) -> Result<(), Failure> {
+        let target_start = self.set_value_position(index)?;
+        let source_length = self.self_c_units_length(source_start)?;
+        let target_end = target_start + source_length;
+        if target_end > self.len() {
+            return Err(crate::standard::exceptions::not_implemented(&format!(
+                "TCollection_ExtendedString::SetValue self range {target_start}..{target_end}; expected end <= Length() {}",
+                self.len()
+            )));
+        }
+        self.copy_self_units_in_order(target_start, source_start, source_length);
+        Ok(())
+    }
+    /// Erases `count` units from a one-based position; the position must be in 1..=len and
+    /// the range must end inside the string; `text.remove(2, 2)?`.
+    pub fn remove(&mut self, index: i32, count: i32) -> Result<(), Failure> {
+        // i64 keeps where + how_many exact where an `i32` sum would overflow.
+        let end = i64::from(index) + i64::from(count);
+        if index < 1 || index > self.length() || count < 0 || end > i64::from(self.length()) + 1 {
+            return Err(self.remove_error(index, count));
+        }
+        let at = offset(index);
+        self.terminated.drain(at..at + count as usize);
+        Ok(())
+    }
+    /// Removes every occurrence of a code unit, zero included; `text.remove_all(0x20)`.
+    pub fn remove_all(&mut self, unit: u16) {
+        if self.is_empty() {
+            return;
+        }
+        self.terminated.truncate(self.len());
+        self.terminated.retain(|&current| current != unit);
+        self.terminated.push(0);
+    }
+    /// Keeps the first `length` units, `length` in 0..=len; `text.trunc(3)?`.
+    pub fn trunc(&mut self, length: i32) -> Result<(), Failure> {
+        let Some(kept) = usize::try_from(length)
+            .ok()
+            .filter(|&kept| kept <= self.len())
+        else {
+            return Err(out_of_range(
+                "TCollection_ExtendedString::Trunc : parameter 'theHowMany'",
+                format_args!("theHowMany {length}; expected 0..={}", self.len()),
+            ));
+        };
+        if self.terminated.is_empty() {
+            return Ok(());
+        }
+        self.terminated.truncate(kept);
+        self.terminated.push(0);
+        Ok(())
+    }
+    /// Keeps the first `index` units (0 <= index < len) and returns the rest, built
+    /// as a C string of units, so it ends at the first
+    /// zero unit of the tail; `text.split(3)?`.
+    pub fn split(&mut self, index: i32) -> Result<Self, Failure> {
+        let Some(at) = usize::try_from(index).ok().filter(|&at| at < self.len()) else {
+            return Err(out_of_range(
+                "TCollection_ExtendedString::Split index",
+                format_args!("theWhere {index}; expected 0..{}", self.len()),
+            ));
+        };
+        let tail = Self::from_utf16(&self.as_utf16()[at..]);
+        self.trunc(index)?;
+        Ok(tail)
+    }
+    /// Replaces every occurrence of a code unit; `text.change_all(0x48, 0x4D)`.
+    pub fn change_all(&mut self, from: u16, to: u16) {
+        let length = self.len();
+        for unit in &mut self.terminated[..length] {
+            if *unit == from {
+                *unit = to;
+            }
+        }
+    }
+    /// Replaces the content with a string or code-unit slice;
+    /// `text.copy(&[65, 66])`.
+    pub fn copy(&mut self, units: impl AsRef<[u16]>) {
+        let units = units.as_ref();
+        if units.is_empty() && self.terminated.is_empty() {
+            return;
+        }
+        self.terminated.clear();
+        self.terminated.extend_from_slice(units);
+        self.terminated.push(0);
+    }
+    /// Copies another value and returns this receiver for assignment chaining; `target.copy_assign(&source).clear()`.
+    /// Rust borrowing prevents passing the same value as both receiver and source.
+    pub fn copy_assign(&mut self, source: &Self) -> &mut Self {
+        self.clone_from(source);
+        self
+    }
+    /// Models the self-assignment no-op and returns this receiver; `text.copy_assign_self()`.
+    pub fn copy_assign_self(&mut self) -> &mut Self {
+        self
+    }
+    /// Copies a bounded UTF-16 C string through its first NUL; `text.copy_c_units(Some(&[65, 0, 66]))`.
+    /// `None` and an empty prefix clear the string, as a null pointer does.
+    pub fn copy_c_units(&mut self, units: Option<&[u16]>) -> &mut Self {
+        self.copy(units.map_or(&[][..], utf::c_units_prefix));
+        self
+    }
+    /// The (pointer, length) Copy: a null pointer or a length <= 0 empties the string;
+    /// `text.copy_span(None, 3)`.
+    pub fn copy_span(&mut self, units: Option<&[u16]>, length: i32) {
+        match (units, usize::try_from(length)) {
+            (Some(units), Ok(count)) => self.copy(leading_units(units, count)),
+            _ => self.copy([]),
+        }
+    }
+    /// Empties the string; `text.clear()`.
+    pub fn clear(&mut self) {
+        self.terminated = Vec::new();
+    }
+    /// Exchanges the content of two strings; `first.swap(&mut second)`.
+    pub fn swap(&mut self, other: &mut Self) {
+        std::mem::swap(self, other);
+    }
+    /// Takes the source's content and leaves the source empty (`Move`);
+    /// `target.move_assign(&mut source)`.
+    pub fn move_assign(&mut self, source: &mut Self) {
+        if source.terminated.is_empty() {
+            self.copy([]);
+            return;
+        }
+        *self = std::mem::take(source);
+    }
+    fn remove_error(&self, index: i32, count: i32) -> Failure {
+        out_of_range(
+            "TCollection_ExtendedString::Remove: Invalid parameters",
+            format_args!(
+                "theWhere {index}, theHowMany {count}; expected 1 <= theWhere <= {}, theHowMany >= 0 and theWhere + theHowMany <= {}",
+                self.len(),
+                self.len() + 1
+            ),
+        )
+    }
+    fn set_value_position(&self, index: i32) -> Result<usize, Failure> {
+        if index < 1 || index > self.length() + 1 {
+            return Err(out_of_range(
+                "TCollection_ExtendedString::SetValue : parameter theWhere",
+                format_args!("theWhere {index}; expected 1..={}", self.len() + 1),
+            ));
+        }
+        Ok(offset(index))
+    }
+    fn self_c_units_length(&self, source_start: usize) -> Result<usize, Failure> {
+        let Some(source) = self.as_utf16_with_nul().get(source_start..=self.len()) else {
+            return Err(out_of_range(
+                "TCollection_ExtendedString::SetValue self source",
+                format_args!("start {source_start}; expected 0..={}", self.len()),
+            ));
+        };
+        Ok(source
+            .iter()
+            .position(|&unit| unit == 0)
+            .unwrap_or(source.len()))
+    }
+    fn copy_self_units_in_order(&mut self, target_start: usize, source_start: usize, count: usize) {
+        for index in 0..count {
+            self.terminated[target_start + index] = self.terminated[source_start + index];
+        }
+    }
+    /// Checks the insert position in a fixed order: too big, then below one.
+    fn check_insert_position(&self, index: i32) -> Result<(), Failure> {
+        if i64::from(index) > i64::from(int_length(self.len())) + 1 {
+            return Err(out_of_range(
+                "TCollection_ExtendedString::Insert : Parameter theWhere is too big",
+                format_args!("theWhere {index}; expected 1..={}", self.len() + 1),
+            ));
+        }
+        if index < 1 {
+            return Err(out_of_range(
+                "TCollection_ExtendedString::Insert : Parameter theWhere is out of range",
+                format_args!("theWhere {index}; expected 1..={}", self.len() + 1),
+            ));
+        }
+        Ok(())
+    }
+}

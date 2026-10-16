@@ -1,0 +1,82 @@
+use super::fixture::{Payload, SwapPolicy, SwapTrace};
+use martensite_tkernel::ncollection::{BaseAllocator, BaseMap, OrderedDataMap, OrderedMap};
+use std::rc::Rc;
+pub type Set = OrderedMap<Payload, SwapPolicy>;
+pub type Map = OrderedDataMap<Payload, Payload, SwapPolicy>;
+pub trait OrderedExchangeFixture: BaseMap {
+    const PAYLOADS_PER_NODE: usize;
+    fn construct(policy: SwapPolicy, buckets: usize, arena: BaseAllocator) -> Self;
+    fn insert(&mut self, key: i32, trace: &Rc<SwapTrace>);
+    fn policy(&self) -> &SwapPolicy;
+    fn native_exchange(&mut self, other: &mut Self);
+    fn native_assign(&mut self, other: &mut Self);
+    fn native_self_assign(&mut self);
+    fn native_self_exchange(&mut self);
+    fn keys(&self) -> Vec<i32>;
+    /// The stored first key's address (null when empty): an entry identity that moves with
+    /// the graph, as the first node does.
+    fn first_identity(&self) -> *const ();
+    /// The public `buckets()` table identity, null before one exists.
+    fn table_identity(&self) -> *const ();
+}
+macro_rules! adapter {
+    ($map:ty,$payloads:expr,$insert:expr,$keys:expr) => {
+        impl OrderedExchangeFixture for $map {
+            const PAYLOADS_PER_NODE: usize = $payloads;
+            fn construct(policy: SwapPolicy, buckets: usize, arena: BaseAllocator) -> Self {
+                Self::with_allocator(policy, buckets, arena)
+            }
+            fn insert(&mut self, key: i32, trace: &Rc<SwapTrace>) {
+                ($insert)(self, key, trace);
+            }
+            fn policy(&self) -> &SwapPolicy {
+                self.hasher()
+            }
+            fn native_exchange(&mut self, other: &mut Self) {
+                self.exchange_with(other, SwapPolicy::native_swap);
+            }
+            fn native_assign(&mut self, other: &mut Self) {
+                let address = std::ptr::from_mut(self);
+                assert_eq!(
+                    address,
+                    std::ptr::from_mut(self.move_assign_with(other, SwapPolicy::native_swap))
+                );
+            }
+            fn native_self_exchange(&mut self) {
+                self.exchange_self_with(SwapPolicy::native_self_swap);
+            }
+            fn native_self_assign(&mut self) {
+                let address = std::ptr::from_mut(self);
+                assert_eq!(address, std::ptr::from_mut(self.assign_self()));
+            }
+            fn keys(&self) -> Vec<i32> {
+                ($keys)(self)
+            }
+            fn first_identity(&self) -> *const () {
+                self.first_node().map_or(std::ptr::null(), |node| {
+                    std::ptr::from_ref(node.key()).cast()
+                })
+            }
+            fn table_identity(&self) -> *const () {
+                self.buckets()
+                    .map_or(std::ptr::null(), |table| table.identity())
+            }
+        }
+    };
+}
+adapter!(
+    Set,
+    1,
+    |map: &mut Set, key, trace| {
+        map.add(Payload::new(key, trace));
+    },
+    |map: &Set| map.iter().map(|key| key.key).collect()
+);
+adapter!(
+    Map,
+    2,
+    |map: &mut Map, key, trace| {
+        map.bind(Payload::new(key, trace), Payload::new(key * 10, trace));
+    },
+    |map: &Map| map.items().map(|(key, _)| key.key).collect()
+);

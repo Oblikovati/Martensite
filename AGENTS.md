@@ -113,6 +113,8 @@ Martensite is a parametric, feature-based, history-driven mechanical-CAD (MCAD) 
 
 ```
 crates/
+├── martensite-cmath/     Adapter to the platform C math library.
+├── martensite-tkernel/   Foundation toolkit.
 ├── martensite-kernel/    Shared kernel.
 ├── martensite-math/      Math Toolkit.
 └── martensite-*/         Other Toolkits
@@ -156,7 +158,8 @@ below.
   `docs/features/` design notes, not shipped as unreachable stubs.
 - Prefer explicit fallbacks over `unwrap`, `expect`, or `unreachable!` in
   runtime paths; panics are acceptable in tests only.
-- `unsafe` is forbidden by workspace lint; do not add it.
+- `unsafe` is forbidden by workspace lint; do not add it. The only exception
+  is described in "Unsafe code exception" below.
 - Typed boundaries are load-bearing: IDs and dialects are parsed/normalized once and reused.
 - Keep CLI commands thin: parse args, resolve config once, call typed
   library functions, render output.
@@ -166,6 +169,29 @@ below.
 - Docstrings on public functions: intent + one usage example.
 - Reference issue numbers / commit SHAs when a line exists because
   of a specific bug or upstream constraint.
+
+## Unsafe code exception
+
+The workspace sets `unsafe_code = "forbid"`. A crate may replace that with its
+own `[lints]` table only when it implements an FFI boundary, an allocator, or
+raw memory storage that safe Rust cannot express. Today two crates do:
+
+- `martensite-tkernel`: the allocators and raw-storage collections, and the
+  operating-system, standard-library and locale calls.
+- `martensite-cmath`: the declarations of the platform libm functions.
+
+Rules for such a crate:
+
+- Its `[lints]` table sets `unsafe_code = "deny"` and repeats every other
+  workspace lint. It also sets `clippy::undocumented_unsafe_blocks`, so clippy
+  fails on an unsafe block or impl without a comment.
+- Only a module that needs unsafe code opts in, with `#[allow(unsafe_code)]`
+  on that module or item.
+- Each `unsafe` block and `unsafe impl` has a `// SAFETY:` comment that states
+  why its preconditions hold. Each public `unsafe fn` documents its contract in a
+  `# Safety` section.
+- Any other crate that needs unsafe code needs a maintainer decision recorded
+  here first.
 
 ## Cross-cutting invariants (do not violate)
 

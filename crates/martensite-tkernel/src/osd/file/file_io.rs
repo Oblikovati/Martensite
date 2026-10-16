@@ -1,0 +1,230 @@
+//! File reading, writing and positioning with POSIX semantics: `read`/`write`/
+//! `seek` use the descriptor, `read_line`/`rewind` the buffered `FILE*` beside it.
+use super::{
+    calls::{Errno, SeekOrigin},
+    osd_file::{File, IAM, program_error},
+};
+use crate::{
+    osd::{FromWhere, KindFile, OpenMode, Osd},
+    standard::Failure,
+    tcollection::AsciiString,
+};
+
+fn out_of_range(message: &str) -> Failure {
+    Failure::with_type("Standard_OutOfRange", message, "")
+}
+
+/// The bytes a C string built from `bytes` holds: up to the first NUL.
+fn c_text(bytes: &[u8]) -> &[u8] {
+    &bytes[..bytes
+        .iter()
+        .position(|&byte| byte == 0)
+        .unwrap_or(bytes.len())]
+}
+
+impl File {
+    /// The common preconditions of `read`/`read_line`: not a directory, open, no pending
+    /// error (re-raised by `Perror`), readable and a positive count.
+    fn check_readable(&mut self, member: &str, count: i32) -> Result<(), Failure> {
+        if self.kind_of_file() == KindFile::Directory {
+            return Err(program_error(&format!(
+                "OSD_File::{member}(): it is a directory"
+            )));
+        }
+        self.check_open(member)?;
+        self.raise_pending()?;
+        if self.mode == OpenMode::WriteOnly {
+            return Err(program_error(&format!(
+                "OSD_File::{member}(): file is Write only"
+            )));
+        }
+        if count <= 0 {
+            return Err(program_error(&format!(
+                "OSD_File::{member}(): theNbBytes is 0"
+            )));
+        }
+        Ok(())
+    }
+    /// One descriptor `read` of `count` bytes: a failure records errno and reads nothing,
+    /// a short read marks the end of file.
+    fn read_channel(&mut self, buffer: &mut [u8]) -> usize {
+        match self.node.calls.read(self.channel, buffer) {
+            Ok(count) => {
+                self.at_end |= count < buffer.len();
+                count
+            }
+            Err(errno) => {
+                self.node.record(errno, IAM, "Read");
+                0
+            }
+        }
+    }
+    /// `Read(buffer, nbyte)`: reads up to `nbyte` bytes into `buffer`, which keeps the
+    /// text before the first NUL (empty when nothing was read); `file.read(&mut text, 80)?`.
+    pub fn read(&mut self, buffer: &mut AsciiString, count: i32) -> Result<(), Failure> {
+        self.check_readable("Read", count)?;
+        let mut bytes: Vec<u8> = vec![0; count as usize];
+        let read: usize = self.read_channel(&mut bytes);
+        *buffer = AsciiString::from_raw(c_text(&bytes[..read]));
+        Ok(())
+    }
+    /// `Read(void*, nbyte, readbyte)`: reads up to `count` bytes into `buffer`, returning
+    /// the byte count; `file.read_bytes(&mut raw, 16)?`.
+    ///
+    /// `count` above the buffer length is refused with `Standard_OutOfRange` (it would
+    /// overrun the buffer).
+    pub fn read_bytes(&mut self, buffer: &mut [u8], count: i32) -> Result<i32, Failure> {
+        self.check_readable("Read", count)?;
+        let Some(target) = buffer.get_mut(..count as usize) else {
+            let message: String = format!(
+                "OSD_File::Read(): {count} bytes into a buffer of {}",
+                buffer.len()
+            );
+            return Err(out_of_range(&message));
+        };
+        Ok(self.read_channel(target) as i32)
+    }
+    /// `fgets` of at most `count - 1` bytes through
+    /// the next newline (kept), returning the text length up to its first NUL;
+    /// `file.read_line(&mut line, 1024)?`.
+    ///
+    /// At end of file the buffer is emptied, 0 is returned and `is_at_end` becomes true. A
+    /// read error records errno and leaves both outputs untouched: the buffer is
+    /// kept and 0 is returned.
+    pub fn read_line(&mut self, buffer: &mut AsciiString, count: i32) -> Result<i32, Failure> {
+        Ok(self.read_line_observation(buffer, count)?.unwrap_or(0))
+    }
+    /// The output-reference form: `read_count` stays unchanged on a stream
+    /// error; `file.read_line_with_count(&mut line, 1024, &mut count)?`.
+    pub fn read_line_with_count(
+        &mut self,
+        buffer: &mut AsciiString,
+        count: i32,
+        read_count: &mut i32,
+    ) -> Result<(), Failure> {
+        if let Some(observed) = self.read_line_observation(buffer, count)? {
+            *read_count = observed;
+        }
+        Ok(())
+    }
+    fn read_line_observation(
+        &mut self,
+        buffer: &mut AsciiString,
+        count: i32,
+    ) -> Result<Option<i32>, Failure> {
+        self.check_readable("ReadLine", count)?;
+        self.read_stdio_line(buffer, count)
+    }
+    fn read_stdio_line(
+        &mut self,
+        buffer: &mut AsciiString,
+        count: i32,
+    ) -> Result<Option<i32>, Failure> {
+        let calls = std::sync::Arc::clone(&self.node.calls);
+        let Some(stream) = self.stream.as_mut() else {
+            // fdopen failed: there is no stream to read.
+            self.node.record(Errno(ebadf()), IAM, "ReadLine");
+            return Ok(None);
+        };
+        let Some(line) = stream.fgets(calls.as_ref(), count) else {
+            return Ok(self.record_stdio_line_end(buffer));
+        };
+        let text: &[u8] = c_text(&line);
+        *buffer = AsciiString::from_raw(text);
+        Ok(Some(text.len() as i32))
+    }
+    fn record_stdio_line_end(&mut self, buffer: &mut AsciiString) -> Option<i32> {
+        let stream = self.stream.as_ref()?;
+        if !stream.eof() {
+            let errno: i32 = stream.last_errno();
+            self.node.record(Errno(errno), IAM, "ReadLine");
+            return None;
+        }
+        self.at_end = true;
+        *buffer = AsciiString::default();
+        Some(0)
+    }
+    /// `Write(buffer, nbyte)` of a string: writes its first `count` bytes, the terminating
+    /// NUL included when `count` is its length plus one; `file.write(&text, text.length())?`.
+    pub fn write(&mut self, buffer: &AsciiString, count: i32) -> Result<(), Failure> {
+        self.write_bytes(buffer.as_bytes_with_nul(), count)
+    }
+    /// `Write(void*, nbyte)`: one descriptor `write`; a short write marks the end of file;
+    /// `file.write_bytes(b"data", 4)?`. `count` above the buffer length is refused with
+    /// `Standard_OutOfRange` (it would over-read).
+    pub fn write_bytes(&mut self, buffer: &[u8], count: i32) -> Result<(), Failure> {
+        self.check_open("Write")?;
+        self.raise_pending()?;
+        if self.mode == OpenMode::ReadOnly {
+            return Err(program_error("OSD_File::Write(): file is Read only"));
+        }
+        if count <= 0 {
+            return Err(program_error("OSD_File::Write(): theNbBytes is null"));
+        }
+        let Some(source) = buffer.get(..count as usize) else {
+            let message: String = format!(
+                "OSD_File::Write(): {count} bytes from a buffer of {}",
+                buffer.len()
+            );
+            return Err(out_of_range(&message));
+        };
+        match self.node.calls.write(self.channel, source) {
+            Ok(written) => self.at_end |= written < source.len(),
+            Err(errno) => self.node.record(errno, IAM, "Write"),
+        }
+        Ok(())
+    }
+    /// `lseek` of the descriptor (the stream buffer is not told); the end-of-file
+    /// state is kept; `file.seek(0, FromWhere::FromBeginning)?`.
+    pub fn seek(&mut self, offset: i32, whence: FromWhere) -> Result<(), Failure> {
+        self.check_open("Seek")?;
+        self.raise_pending()?;
+        let origin: SeekOrigin = match whence {
+            FromWhere::FromBeginning => SeekOrigin::Start,
+            FromWhere::FromHere => SeekOrigin::Current,
+            FromWhere::FromEnd => SeekOrigin::End,
+        };
+        if let Err(errno) = self
+            .node
+            .calls
+            .lseek(self.channel, i64::from(offset), origin)
+        {
+            self.node.record(errno, IAM, "Seek");
+        }
+        Ok(())
+    }
+    /// `rewind` of the stream, which may only move inside its buffer; a closed
+    /// file (with no stream) is left alone; `file.rewind()`.
+    pub fn rewind(&mut self) {
+        let calls = std::sync::Arc::clone(&self.node.calls);
+        if let Some(stream) = self.stream.as_mut() {
+            stream.rewind(calls.as_ref());
+        }
+    }
+    /// Up to `tries` reads of at most 1000 bytes, sleeping `delay`
+    /// seconds after each empty one; `file.read_last_line(&mut line, 1, 3)?`.
+    pub fn read_last_line(
+        &mut self,
+        line: &mut AsciiString,
+        delay: i32,
+        tries: i32,
+    ) -> Result<bool, Failure> {
+        for _ in 0..tries.max(0) {
+            self.read_line(line, 1000)?;
+            if !line.is_empty() {
+                return Ok(true);
+            }
+            Osd::sec_sleep(delay);
+        }
+        Ok(false)
+    }
+}
+
+#[cfg(unix)]
+const fn ebadf() -> i32 {
+    libc::EBADF
+}
+#[cfg(not(unix))]
+const fn ebadf() -> i32 {
+    9
+}

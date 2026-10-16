@@ -1,0 +1,88 @@
+//! `are_bound`, the output-parameter finds and the allocator-replacing `clear`.
+use super::super::BaseAllocator;
+use super::{Debug, DoubleMap, HashPolicy};
+
+impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H1, H2> {
+    /// True when both keys are bound to the same pair, as the second-key walk finds it.
+    ///
+    /// Kept on purpose: after locating the first key, the walk scans the second key's
+    /// bucket by following each node's *first-key* chain link (not the second-key link), so a
+    /// bound pair that is not reachable that way reports false. The walk is reproduced exactly.
+    ///
+    /// ```
+    /// # use martensite_tkernel::ncollection::DoubleMap;
+    /// let mut map = DoubleMap::<i32, i32>::default();
+    /// map.bind(1, 5).unwrap();
+    /// map.bind(2, 106).unwrap(); // 106 shares 5's second-key bucket among 101 buckets
+    /// assert!(map.are_bound(&2, &106));
+    /// assert!(!map.are_bound(&1, &5)); // false, although (1, 5) is bound
+    /// ```
+    pub fn are_bound(&self, first: &A, second: &B) -> bool {
+        if self.is_empty() {
+            return false;
+        }
+        let one = self.first_policy.hash(first) % self.bucket_count() + 1;
+        let two = self.second_policy.hash(second) % self.bucket_count() + 1;
+        let Some(found) = self.match_first(one, first) else {
+            return false;
+        };
+        let through_first = self
+            .storage
+            .find2_through_first(two, |stored| self.second_policy.equal(stored, second));
+        through_first == Some(found)
+    }
+
+    /// Copies the partner of a bound first key into `output`.
+    ///
+    /// ```
+    /// # use martensite_tkernel::ncollection::DoubleMap;
+    /// let mut map = DoubleMap::<i32, i32>::default();
+    /// map.bind(1, 5).unwrap();
+    /// let mut out = 0;
+    /// assert!(map.find1_into(&1, &mut out) && out == 5);
+    /// ```
+    pub fn find1_into(&self, key: &A, output: &mut B) -> bool
+    where
+        B: Clone,
+    {
+        let Some(found) = self.seek1(key) else {
+            return false;
+        };
+        output.clone_from(found);
+        true
+    }
+
+    /// Copies the partner of a bound second key into `output`.
+    ///
+    /// ```
+    /// # use martensite_tkernel::ncollection::DoubleMap;
+    /// let mut map = DoubleMap::<i32, i32>::default();
+    /// map.bind(1, 5).unwrap();
+    /// let mut out = 0;
+    /// assert!(map.find2_into(&5, &mut out) && out == 1);
+    /// ```
+    pub fn find2_into(&self, key: &B, output: &mut A) -> bool
+    where
+        A: Clone,
+    {
+        let Some(found) = self.seek2(key) else {
+            return false;
+        };
+        output.clone_from(found);
+        true
+    }
+
+    /// Unlike the other maps, DoubleMap
+    /// always releases its buckets; `None` (a null handle) selects the common allocator.
+    ///
+    /// ```
+    /// # use martensite_tkernel::ncollection::{BaseAllocator, DoubleMap};
+    /// let mut map = DoubleMap::<i32, i32>::default();
+    /// map.bind(1, 5).unwrap();
+    /// map.clear_with_allocator(None);
+    /// assert!(map.is_empty() && map.allocator() == &BaseAllocator::common());
+    /// ```
+    pub fn clear_with_allocator(&mut self, resource: Option<BaseAllocator>) {
+        self.storage.clear_with_allocator(resource);
+    }
+}

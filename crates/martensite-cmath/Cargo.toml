@@ -1,0 +1,26 @@
+[package]
+autotests = false
+name = "martensite-cmath"
+version = "0.3.0"
+description = "Adapter to the platform C math library for functions Rust re-implements differently"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+# The workspace forbids unsafe code. This adapter is the one place allowed to
+# declare foreign C math functions, so it denies unsafe code and its FFI module
+# opts in with `#[allow(unsafe_code)]` and a SAFETY comment (AGENTS.md, "Unsafe code
+# exception"); clippy checks that comment. The other lints match the workspace.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = "warn"
+undocumented_unsafe_blocks = "warn"
+
+# Test modules share one executable per crate to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"

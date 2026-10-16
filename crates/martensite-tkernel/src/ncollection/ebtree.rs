@@ -1,0 +1,129 @@
+//! Editable bounding tree maintains object-to-leaf bindings through node moves.
+use super::{BaseAllocator, BoundingNode, BoundingVolume, DataMap, HashKey, TreeSelector, UBTree};
+use crate::standard::Failure;
+mod native_insertion;
+mod removal;
+/// Unique objects with indexed removal; `EBTree::<i32, Bounds>::default()`.
+pub struct EBTree<T: Clone + Default + HashKey + PartialEq + std::fmt::Debug, B: BoundingVolume> {
+    // Derived map members are destroyed before the tree base.
+    objects: DataMap<T, usize>,
+    tree: UBTree<T, B>,
+}
+impl<T: Clone + Default + HashKey + PartialEq + std::fmt::Debug, B: BoundingVolume> Default
+    for EBTree<T, B>
+{
+    fn default() -> Self {
+        Self::with_allocator(BaseAllocator::common())
+    }
+}
+impl<T: Clone + Default + HashKey + PartialEq + std::fmt::Debug, B: BoundingVolume> EBTree<T, B> {
+    /// Inject node allocation; the object index uses its own default resource.
+    /// Example: `EBTree::with_allocator(arena)`.
+    pub fn with_allocator(resource: BaseAllocator) -> Self {
+        Self {
+            tree: UBTree::with_allocator(resource),
+            objects: DataMap::default(),
+        }
+    }
+    /// Check for no root; `tree.is_empty()`.
+    pub fn is_empty(&self) -> bool {
+        self.tree.is_empty()
+    }
+    /// Check the object index; `tree.contains(&1)`.
+    pub fn contains(&self, object: &T) -> bool {
+        self.objects.is_bound(object)
+    }
+    /// Reject duplicates without changing bounds; `tree.add(1, bounds)`.
+    pub fn add(&mut self, object: T, bounds: B) -> bool {
+        if self.contains(&object) {
+            return false;
+        }
+        let index: usize = self.tree.insert_leaf(object.clone(), bounds);
+        self.objects.bind(object, index);
+        self.rebind_previous_leaf(index);
+        true
+    }
+    /// Copies borrowed arguments only if the object is absent; `tree.add_ref(&1, &bounds)`.
+    pub fn add_ref(&mut self, object: &T, bounds: &B) -> bool {
+        if self.contains(object) {
+            return false;
+        }
+        let index = self.tree.insert_leaf(object.clone(), bounds.clone());
+        self.objects.bind_ref(object, &index);
+        self.rebind_previous_leaf(index);
+        true
+    }
+    fn rebind_previous_leaf(&mut self, index: usize) {
+        if let Some(previous) = self.tree.previous_leaf(index) {
+            self.rebind_leaf(previous);
+        }
+    }
+    fn rebind_leaf(&mut self, index: usize) -> bool {
+        // Changes only the pointer, without copying or reinserting the key.
+        if let Some(stored) = self.objects.change_seek(self.tree.node(index).object()) {
+            *stored = index;
+            return true;
+        }
+        false
+    }
+    /// Locate a leaf or return Standard_NoSuchObject; `tree.find_node(&1)?`.
+    pub fn find_node(&self, object: &T) -> Result<&BoundingNode<T, B>, Failure> {
+        Ok(self.tree.node(*self.objects.find(object)?))
+    }
+    /// Absorb the sibling and update ancestor bounds in place; `tree.remove(&1)`.
+    /// The surviving leaf is rebound before the ancestor bounds are updated.
+    pub fn remove(&mut self, object: &T) -> bool {
+        let Ok(&index) = self.objects.find(object) else {
+            return false;
+        };
+        if self.tree.node(index).is_root() {
+            self.clear();
+            return true;
+        }
+        self.objects.unbind(object);
+        self.remove_indexed_leaf(index);
+        true
+    }
+    /// Select with branch pruning and stopping; `tree.select(&mut selector)`.
+    pub fn select<S: TreeSelector<T, B> + ?Sized>(&self, selector: &mut S) -> i32 {
+        self.tree.select(selector)
+    }
+    /// Release both nodes and object bindings; `tree.clear()`.
+    pub fn clear(&mut self) {
+        self.clear_with_allocator(None);
+    }
+    /// Release nodes and bindings, then adopt `allocator` for future nodes when given
+    /// `tree.clear_with_allocator(Some(arena))`.
+    pub fn clear_with_allocator(&mut self, allocator: Option<BaseAllocator>) {
+        self.clear_object_index_and_nodes();
+        if let Some(resource) = allocator {
+            self.tree.clear_with_allocator(Some(resource));
+        }
+    }
+    fn clear_object_index_and_nodes(&mut self) {
+        self.objects.clear(false);
+        self.tree.clear();
+    }
+    /// The underlying UBTree, for the inherited read-only members (root, emptiness,
+    /// allocator, selection); `tree.as_ubtree().root()`.
+    pub fn as_ubtree(&self) -> &UBTree<T, B> {
+        &self.tree
+    }
+    /// Transfer tree and index together; `EBTree::move_from(&mut source)`.
+    pub fn move_from(source: &mut Self) -> Self {
+        let replacement: Self = Self::with_allocator(source.tree.allocator().clone());
+        std::mem::replace(source, replacement)
+    }
+    /// Clear the destination index and nodes before exchange; `tree.move_assign(&mut source)`.
+    /// The source receives the empty destination storage and its original allocator.
+    pub fn move_assign(&mut self, source: &mut Self) -> &mut Self {
+        // The overridable clear runs first, then the base handles and map storage are swapped.
+        self.clear();
+        std::mem::swap(self, source);
+        self
+    }
+    /// Preserves move self-assignment without aliasing references; `tree.move_assign_self()`.
+    pub fn move_assign_self(&mut self) -> &mut Self {
+        self
+    }
+}

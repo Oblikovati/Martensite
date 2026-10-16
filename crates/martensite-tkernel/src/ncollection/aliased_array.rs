@@ -1,0 +1,229 @@
+//! Runtime-stride arrays with checked byte views and exclusive external borrowing.
+use crate::standard::Failure;
+mod access;
+mod legacy;
+mod pointers;
+mod validation;
+use validation::access_failure;
+/// Plain bitwise value accepted by runtime-stride views; all integer and float primitives qualify.
+pub trait ArrayValue: bytemuck::Pod {}
+impl<T: bytemuck::Pod> ArrayValue for T {}
+enum ArrayStorage<'a> {
+    Empty,
+    Owned(Vec<u128>),
+    Borrowed(&'a mut [u8]),
+}
+/// Default-alignment aliased storage; `AliasedArray::new(size_of::<i32>(), 3)`.
+pub struct AliasedArray<'a> {
+    storage: ArrayStorage<'a>,
+    stride: usize,
+    count: usize,
+}
+impl<'a> AliasedArray<'a> {
+    /// Create zero-length non-owning state; `AliasedArray::empty(4)?`.
+    pub fn empty(stride: usize) -> Result<Self, Failure> {
+        let stride: usize = Self::checked_stride(stride)? as usize;
+        Ok(Self {
+            storage: ArrayStorage::Empty,
+            stride,
+            count: 0,
+        })
+    }
+    /// Allocate default 16-byte-aligned storage; `AliasedArray::new(4, 3)?`.
+    /// Fresh bytes are initialized to zero so no indeterminate byte is ever read.
+    pub fn new(stride: usize, count: usize) -> Result<Self, Failure> {
+        let mut array: Self = Self::empty(stride)?;
+        checked_count(
+            count,
+            "NCollection_AliasedArray, array size is out of supported range",
+        )?;
+        array.resize(count, false)?;
+        Ok(array)
+    }
+    /// Borrow mutable external values without copying; `AliasedArray::from_slice(&mut values)?`.
+    pub fn from_slice<T: ArrayValue>(values: &'a mut [T]) -> Result<Self, Failure> {
+        let stride: usize = Self::checked_stride(size_of::<T>())? as usize;
+        checked_count(
+            values.len(),
+            "NCollection_AliasedArray, array pointer and length should be valid",
+        )?;
+        let count: usize = values.len();
+        Ok(Self {
+            storage: ArrayStorage::Borrowed(bytemuck::cast_slice_mut(values)),
+            stride,
+            count,
+        })
+    }
+    /// Return element size in bytes; `array.stride()`.
+    pub fn stride(&self) -> usize {
+        self.stride
+    }
+    /// Return element count; `array.len()`.
+    pub fn len(&self) -> usize {
+        self.count
+    }
+    /// Return the signed length; `array.length()`.
+    pub fn length(&self) -> i32 {
+        self.count as i32
+    }
+    /// Check zero length; `array.is_empty()`.
+    pub fn is_empty(&self) -> bool {
+        self.count == 0
+    }
+    /// Report storage ownership; `array.is_deletable()`.
+    pub fn is_deletable(&self) -> bool {
+        matches!(self.storage, ArrayStorage::Owned(_))
+    }
+    /// Return the zero lower index; `array.lower() == 0`.
+    pub fn lower(&self) -> i32 {
+        0
+    }
+    /// Return the inclusive upper index `Length() - 1`; an empty array gives -1; `array.upper()`.
+    pub fn upper(&self) -> i32 {
+        (self.count as i32).wrapping_sub(1)
+    }
+    /// Report storage ownership, an alias of `is_deletable`; `array.is_allocated()`.
+    pub fn is_allocated(&self) -> bool {
+        self.is_deletable()
+    }
+    /// Take the source's storage, stride and length.
+    ///
+    /// A non-owning alias left in the source could point at
+    /// storage the destination may later free, so the
+    /// source is left empty with its stride instead; `dest.move_from(&mut source)`.
+    pub fn move_from(&mut self, source: &mut Self) -> &mut Self {
+        let stride: usize = source.stride;
+        self.storage = std::mem::replace(&mut source.storage, ArrayStorage::Empty);
+        self.stride = stride;
+        self.count = std::mem::take(&mut source.count);
+        self
+    }
+    /// Return logical byte length, excluding alignment padding; `array.size_bytes()`.
+    pub fn size_bytes(&self) -> usize {
+        self.stride * self.count
+    }
+    /// Reallocate unless the element count is unchanged; `array.resize(4, true)?`.
+    pub fn resize(&mut self, count: usize, copy: bool) -> Result<(), Failure> {
+        checked_count(
+            count,
+            "NCollection_AliasedArray::Resize, size is out of supported range",
+        )?;
+        if count == self.count {
+            return Ok(());
+        }
+        let storage = self.resized_storage(count, copy)?;
+        self.storage = ArrayStorage::Owned(storage);
+        self.count = count;
+        Ok(())
+    }
+    fn resized_storage(&self, count: usize, copy: bool) -> Result<Vec<u128>, Failure> {
+        let bytes: usize = self
+            .stride
+            .checked_mul(count)
+            .ok_or_else(|| invalid_shape(self.stride, count))?;
+        let mut storage: Vec<u128> = vec![0; bytes.div_ceil(size_of::<u128>())];
+        if copy {
+            let copied: usize = self.size_bytes().min(bytes);
+            bytemuck::cast_slice_mut::<u128, u8>(&mut storage)[..copied]
+                .copy_from_slice(&self.bytes()[..copied]);
+        }
+        Ok(storage)
+    }
+    /// Copy equal-shaped contents into existing storage; `array.assign(&source)?`.
+    pub fn assign(&mut self, source: &Self) -> Result<&mut Self, Failure> {
+        if self.stride != source.stride || self.count != source.count {
+            return Err(Failure::with_message(
+                "Standard_DimensionMismatch",
+                "NCollection_AliasedArray::Assign(), arrays have different size",
+            ));
+        }
+        self.bytes_mut().copy_from_slice(source.bytes());
+        Ok(self)
+    }
+    /// Preserve the destination for self-assignment and self-move; `array.assign_self()`.
+    pub fn assign_self(&mut self) -> &mut Self {
+        self
+    }
+    fn bytes(&self) -> &[u8] {
+        let bytes: &[u8] = match &self.storage {
+            ArrayStorage::Empty => &[],
+            ArrayStorage::Owned(words) => bytemuck::cast_slice(words),
+            ArrayStorage::Borrowed(bytes) => bytes,
+        };
+        &bytes[..self.size_bytes()]
+    }
+    fn bytes_mut(&mut self) -> &mut [u8] {
+        let size: usize = self.size_bytes();
+        let bytes: &mut [u8] = match &mut self.storage {
+            ArrayStorage::Empty => &mut [],
+            ArrayStorage::Owned(words) => bytemuck::cast_slice_mut(words),
+            ArrayStorage::Borrowed(bytes) => bytes,
+        };
+        &mut bytes[..size]
+    }
+    fn check_type<T: ArrayValue>(&self, partial: bool, method: &str) -> Result<(), Failure> {
+        let size = size_of::<T>();
+        let matches = if partial {
+            size <= self.stride
+        } else {
+            size == self.stride
+        };
+        if size != 0 && matches {
+            return Ok(());
+        }
+        Err(access_failure(
+            method,
+            "wrong type",
+            "Standard_TypeMismatch",
+        ))
+    }
+    fn offset(&self, index: usize, method: &str) -> Result<usize, Failure> {
+        if index >= self.count {
+            return Err(access_failure(
+                method,
+                "out of range index",
+                "Standard_OutOfRange",
+            ));
+        }
+        Ok(index * self.stride)
+    }
+}
+impl Clone for AliasedArray<'_> {
+    fn clone(&self) -> Self {
+        // Copy the stored stride: stride checking may have narrowed it to zero.
+        let mut copy = Self {
+            storage: ArrayStorage::Empty,
+            stride: self.stride,
+            count: 0,
+        };
+        if !self.is_empty() {
+            copy.resize(self.count, false).unwrap();
+            copy.bytes_mut().copy_from_slice(self.bytes());
+        }
+        copy
+    }
+}
+fn checked_count(count: usize, message: &str) -> Result<(), Failure> {
+    if count == 0 {
+        return Err(Failure::with_message("Standard_RangeError", message));
+    }
+    Ok(())
+}
+fn invalid_shape(stride: usize, count: usize) -> Failure {
+    Failure::with_type(
+        "Standard_RangeError",
+        &format!(
+            "AliasedArray stride {stride}, length {count}; expected positive supported dimensions without byte-size overflow"
+        ),
+        "",
+    )
+}
+fn cast_failure(error: bytemuck::PodCastError) -> Failure {
+    Failure::with_type(
+        "Standard_TypeMismatch",
+        &format!(
+            "AliasedArray cast {error:?}; expected aligned storage matching the requested type"
+        ),
+        "",
+    )
+}

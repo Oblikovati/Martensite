@@ -1,0 +1,16 @@
+//! Copy assignment returns the destination.
+use super::AsciiString;
+
+impl AsciiString {
+    /// Copies a complete string and returns the destination; `text.assign_from(&source).append(&tail)`.
+    pub fn assign_from(&mut self, source: &Self) -> &mut Self {
+        self.copy(source);
+        self
+    }
+
+    /// Models self-assignment without conflicting Rust borrows; `text.assign_self()`.
+    /// The copy guard keeps the original buffer and all embedded zero bytes.
+    pub fn assign_self(&mut self) -> &mut Self {
+        self
+    }
+}
