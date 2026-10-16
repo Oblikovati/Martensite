@@ -6,6 +6,8 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 #[path = "osd_safe_path_operations/links.rs"]
 mod links;
+#[path = "osd_safe_path_operations/raw_names.rs"]
+mod raw_names;
 
 struct PathScratch(PathBuf);
 impl PathScratch {
@@ -36,10 +38,14 @@ impl Drop for PathScratch {
 }
 
 #[test]
-fn native_rename_and_unlink_preserve_raw_names_and_nul_truncation() {
-    let scratch = PathScratch::new("raw");
-    let source = scratch.bytes(b"source-\xff");
-    let target = scratch.bytes(b"target-\xfe");
+fn native_rename_and_unlink_preserve_names_and_nul_truncation() {
+    let scratch = PathScratch::new("portable");
+    let source = scratch.bytes("source-é".as_bytes());
+    let target = scratch.bytes("target-è".as_bytes());
+    assert_rename_and_unlink_names(source, target);
+}
+
+fn assert_rename_and_unlink_names(source: Vec<u8>, target: Vec<u8>) {
     std::fs::write(std::ffi::OsStr::from_bytes(&source), b"payload").unwrap();
     let mut terminated_source = source.clone();
     terminated_source.extend_from_slice(b"\0ignored");
@@ -60,7 +66,11 @@ fn native_rename_and_unlink_preserve_raw_names_and_nul_truncation() {
 #[test]
 fn native_directory_calls_preserve_mode_and_nonempty_error() {
     let scratch = PathScratch::new("directory");
-    let directory = scratch.bytes(b"dir-\xff");
+    let directory = scratch.bytes("dir-é".as_bytes());
+    assert_directory_name(directory);
+}
+
+fn assert_directory_name(directory: Vec<u8>) {
     let mut terminated = directory.clone();
     terminated.extend_from_slice(b"\0ignored");
     NativePosixCalls.mkdir(&terminated, 0o700).unwrap();

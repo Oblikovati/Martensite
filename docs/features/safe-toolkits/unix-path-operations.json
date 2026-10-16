@@ -33,8 +33,24 @@
   },
   "local_gate": "cargo xtask pr passed after correcting suite registration, formatting suite-included files directly, and splitting the oversized directory fixture. Log: /tmp/martensite-safe-paths-final-pr.log.",
   "review": "Standards: oversized test split and independently rechecked, no remaining findings. Spec: no implementation defect; native matrix acceptance remains outstanding. Formatting discovery mismatch tracked separately as Bug #122.",
+  "native_attempt_0692a05": {
+    "run": 38936445165,
+    "revision": "0692a055906b3863161302ec68cca252d28d3b1b",
+    "linux_x86_64": "passed; downloaded inventory matches exact revision and reviewed summary",
+    "linux_arm64": "passed; downloaded inventory matches exact revision and reviewed summary",
+    "windows_x64": "passed; downloaded inventory matches exact revision and unchanged reviewed summary",
+    "macos_arm64": "failed two fixtures because the filesystem rejected invalid UTF-8 names with EILSEQ; valid-name symlink tests passed",
+    "fixture_bug": 123
+  },
+  "fixture_correction_123": {
+    "change": "Portable success fixtures use valid non-ASCII UTF-8 names. A separate raw-name fixture explicitly checks supported-name success or EILSEQ creation rejection, exact lookup errors, unchanged valid rename source, and untouched lossy-name sentinel.",
+    "linux_baseline_replay_passed": 7,
+    "linux_candidate_focused_passed": 7,
+    "review": "Standards found no issue. Spec requested invalid rename destination coverage, subsequently added and independently rechecked; no remaining implementation findings.",
+    "limit": "Filesystem rejection branch still requires native macOS execution; Linux execution covers the accepted-name branch. Full local gate passed, log /tmp/martensite-safe-paths-123-pr.log."
+  },
   "remaining_validation": [
-    "Native Linux arm64, macOS arm64 and Windows x64 validation has not run for this branch.",
+    "Corrected fixtures require a new exact-head full native matrix; the earlier matrix failed macOS and is not accepted as complete validation.",
     "Local Linux x86_64 captured compiler group verified at 36; other target reductions remain pending native artifact verification."
   ]
 }
