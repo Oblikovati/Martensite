@@ -303,6 +303,7 @@ dependencies = [
  "libc",
  "mach2",
  "martensite-cmath",
+ "rustix",
  "smallvec",
  "windows-sys",
 ]

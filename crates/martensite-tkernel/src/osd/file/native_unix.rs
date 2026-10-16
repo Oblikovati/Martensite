@@ -74,8 +74,8 @@ impl PosixFileCalls for NativePosixCalls {
         bits |= if mode.write { libc::W_OK } else { 0 };
         bits |= if mode.execute { libc::X_OK } else { 0 };
         let name: CString = c_path(path);
-        // SAFETY: name is a valid NUL-terminated string alive for the call.
-        status_zero(unsafe { libc::access(name.as_ptr(), bits) })
+        rustix::fs::access(name.as_c_str(), rustix::fs::Access::from_bits_retain(bits))
+            .map_err(|error| Errno(error.raw_os_error()))
     }
     fn stat(&self, path: &[u8]) -> CallResult<NodeStatus> {
         let name: CString = c_path(path);
@@ -174,8 +174,9 @@ impl PosixFileCalls for NativePosixCalls {
     }
     fn chmod(&self, path: &[u8], mode: u32) -> CallResult<()> {
         let name: CString = c_path(path);
-        // SAFETY: name is NUL-terminated and alive for the call.
-        status_zero(unsafe { libc::chmod(name.as_ptr(), mode as libc::mode_t) })
+        // Retain all bits: from_raw_mode would strip file-type bits before the OS sees them.
+        let mode = rustix::fs::Mode::from_bits_retain(mode as _);
+        rustix::fs::chmod(name.as_c_str(), mode).map_err(|error| Errno(error.raw_os_error()))
     }
     fn umask(&self, mask: u32) -> u32 {
         // SAFETY: umask only takes and returns a plain integer.
