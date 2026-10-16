@@ -2,7 +2,8 @@
   "task_issue": 89,
   "parent_issue": 80,
   "starting_main": "3c180e074dda0573a29a44bd92bc10833efaca0a",
-  "status": "Original baseline verified on all four platforms. The direct sysconf call now uses the existing safe nix interface. Local validation and review passed; native replacement validation remains pending.",
+  "status": "Merged in PR #147 at 03366f26ee1777e75c79f9714f4cb7ee2ea135e6 after local, native and PR gates passed. The direct sysconf call now uses the existing safe nix interface.",
+  "native_replacement": "Run 38980061190 passed all four targets at 119c0df3ba288071b4ac5fd0e60fa9923ee60157; publication skipped. Every full compiler inventory matched the exact revision and reviewed target summary with clean provenance. All three clock_tick_contracts tests passed on each Unix target; Windows excludes these tests. Artifacts: /tmp/martensite-clock-ticks-safe-native.3DClEf. All three tests passed again on merged main in /tmp/martensite-clock-ticks-postmerge.log.",
   "native_baseline": "Run 38978633292 passed at 47c6e249453b7f4aa4e6017042a484514814c339, publication skipped. Both fixtures passed on each Unix target; all four full inventories matched the exact revision with clean provenance. Artifacts /tmp/martensite-clock-ticks-original.CnM67S; logs /tmp/martensite-clock-ticks-original-{x64,arm64,macos}.log. Windows excludes the Unix fixtures.",
   "replacement": "Read the incoming raw errno, call nix sysconf once, and restore the incoming value only when the call left zero errno; preserve nonzero native errors. Map None and Err to the existing -1 numeric sentinel, retaining the c_long-to-f64 cast. No dependency, public API, version or times arithmetic change. Remove one lexical block; compiled CPU-native spans decrease Linux four to two and macOS six to four; Windows unchanged.",
   "local_baseline": "Two clock_tick_contracts tests passed (/tmp/martensite-clock-ticks-baseline.log); the full gate passed (/tmp/martensite-clock-ticks-baseline-pr.log).",
@@ -12,7 +13,5 @@
   "limits": "Native baseline fixtures establish supported-platform successful-query behavior, not every injected libc implementation. Incoming-errno-dependent interposed implementations are not covered. Processor counts and system-only exceptions remain outside this increment.",
   "deletion": "Deleted the direct sysconf unsafe block; no parallel implementation remains. No public API or version change.",
   "review": "Standards found stale evidence, corrected here. Spec found missing failure-adaptation coverage. Added a private result adapter with cases for success/zero errno, indeterminate/zero errno, error/nonzero errno and success/nonzero errno. All three focused tests passed (/tmp/martensite-clock-ticks-safe-adaptation.log); Spec re-review confirmed the coverage finding addressed at 2c08cfe. These test the adaptation rather than simulating the OS query. The earlier full gate passed, but overlapped the review changes. A fresh final-code cargo xtask pr gate passed (/tmp/martensite-clock-ticks-reviewed-pr.log).",
-  "remaining": [
-    "Verify replacement native gates with updated inventories before integration"
-  ]
+  "remaining": []
 }

@@ -2,16 +2,18 @@
   "task_issue": 89,
   "parent_issue": 80,
   "starting_main": "3c180e074dda0573a29a44bd92bc10833efaca0a",
-  "status": "Baseline fixtures added; production implementation unchanged.",
+  "status": "Safe replacement implemented locally; original native baseline run 38980838524 remains active at aab941ddf252d4dba5b9c6d1d01ae1ca9295b155. Replacement review and native validation remain pending.",
+  "replacement": "Use existing nix SysconfVar::PAGE_SIZE, retaining the c_long-to-usize checked conversion and zero fallback. Extract clock-tick errno/sentinel adaptation into a private native_config module shared by both real callers. Preserve the two original clock-tick fixtures unchanged; move the four adaptation cases to the shared module, checking native integers before caller conversion. No dependency, public API or version change.",
+  "local_replacement": "All library tests passed: 383 passed, one ignored (/tmp/martensite-page-size-safe-unit.log). Full cargo xtask pr is running in /tmp/martensite-page-size-safe-pr.log.",
+  "inventory": "One lexical unsafe block removed. Linux page-size emitted spans decrease from two to zero; Apple and Windows implementations are unchanged.",
   "scope": "The non-Apple Unix sysconf(_SC_PAGESIZE) call only. Apple Mach global access and Windows GetSystemInfo remain outside this increment.",
   "contract": "Convert the native c_long result to usize, returning zero when conversion fails. Preserve ordinary native errno behavior.",
   "fixtures": "Compare with independent getconf PAGESIZE and check successful-query errno preservation for zero, EIO and an arbitrary raw sentinel. Restore original errno before assertions.",
   "local_baseline": "Both fixtures passed in /tmp/martensite-page-size-baseline.log. Full cargo xtask pr passed in /tmp/martensite-page-size-baseline-pr.log.",
   "candidate": "Existing nix 0.31.3 exposes SysconfVar::PAGE_SIZE. Its sysconf wrapper clears errno before the native call, so compatibility requires preserving the incoming raw errno when the call leaves zero. Negative or absent values must retain the zero fallback.",
-  "deletion_gate": "After baseline native validation and reviewed replacement evidence, delete the direct non-Apple Unix sysconf unsafe block. No public API or version change is planned.",
+  "deletion_gate": "The direct non-Apple Unix sysconf unsafe block is deleted locally. Integration requires completed baseline native validation and reviewed replacement evidence.",
   "remaining": [
     "Complete the baseline native gate",
-    "Implement the safe query and cover result adaptation",
-    "Review, ratchet inventories and validate replacement on supported native targets"
+    "Review and validate replacement on supported native targets"
   ]
 }
