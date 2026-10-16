@@ -17,7 +17,8 @@
     "Leave fstat and descriptor ownership unchanged",
     "Run unchanged status and status-kind fixtures before and after replacement"
   ],
-  "validation": "All six status and status-kind fixtures passed before replacement at a261df1 (/tmp/martensite-linux-stat-baseline.log). Replacement fixtures are running; no native replacement completion claim.",
+  "validation": "All six status and status-kind fixtures passed before replacement at a261df1 (/tmp/martensite-linux-stat-baseline.log) and unchanged after replacement (/tmp/martensite-linux-stat-safe.log). cargo xtask pr passed with the implementation at 36d38f5 (/tmp/martensite-linux-stat-pr.log). Native replacement validation remains pending.",
+  "review": "Independent standards and spec reviews of a261df1...36d38f5 found no code defect or scope creep. Their stale fixture-status finding is corrected here and the full local gate has passed. Native validation remains outstanding.",
   "inventory": "Expected Linux native_unix emitted primary spans decrease from 24 to 20 by excluding the raw stat initialization and call. Other targets and lexical counts remain unchanged because their fallback remains. Compiler confirmation is pending.",
   "remaining": "Run local and native gates, verify compiler inventories, review and integrate. No remaining unsafe is classified as unavoidable by this investigation."
 }
