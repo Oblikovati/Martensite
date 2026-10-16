@@ -17,23 +17,7 @@ pub(super) fn process_cpu() -> (f64, f64) {
 
 #[cfg(unix)]
 fn clock_ticks() -> f64 {
-    use nix::{
-        errno::Errno,
-        unistd::{SysconfVar, sysconf},
-    };
-    let previous_errno = Errno::last_raw();
-    let queried = sysconf(SysconfVar::CLK_TCK);
-    clock_ticks_result(previous_errno, queried)
-}
-
-#[cfg(unix)]
-fn clock_ticks_result(previous_errno: i32, queried: nix::Result<Option<libc::c_long>>) -> f64 {
-    use nix::errno::Errno;
-    // nix clears errno; preserve the native successful-query contract (#89).
-    if Errno::last_raw() == 0 {
-        Errno::set_raw(previous_errno);
-    }
-    let ticks: libc::c_long = queried.ok().flatten().unwrap_or(-1);
+    let ticks = crate::native_config::native_sysconf(nix::unistd::SysconfVar::CLK_TCK);
     ticks as f64
 }
 
