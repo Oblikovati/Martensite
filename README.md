@@ -19,10 +19,12 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | --- | --- |
 | `martensite-cmath` | Platform C math functions behind a typed Rust interface. |
 | `martensite-tkernel` | Errors, memory, collections, strings, operating-system services, quantities and units. |
+| `martensite-tkexpress` | Symbolic expressions, differentiation, relations and a text interpreter. |
 | `martensite-tkmath` | Geometry, linear algebra, solvers, splines, bounding volumes, meshes and exact predicates. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
-[math guide](docs/features/martensite-tkmath/README.md) for module and test details.
+[math guide](docs/features/martensite-tkmath/README.md), and
+[symbolic expression guide](docs/features/martensite-tkexpress/README.md) for module and test details.
 
 ## Getting started
 
