@@ -41,3 +41,19 @@ fn persistent_large_pool_workload() {
     let elapsed_ns = measured(&launcher);
     println!("participants=128 launches=1000 items=64000 elapsed_ns={elapsed_ns}");
 }
+
+#[test]
+#[ignore = "isolated large-pool rendezvous assessment"]
+fn persistent_large_pool_rendezvous() {
+    let pool = ThreadPool::new(128);
+    let launcher = Launcher::new(&pool, 128);
+    let rendezvous = std::sync::Barrier::new(128);
+    let completed = AtomicUsize::new(0);
+    launcher
+        .perform_job(&|_| {
+            rendezvous.wait();
+            completed.fetch_add(1, Ordering::SeqCst);
+        })
+        .unwrap();
+    assert_eq!(completed.load(Ordering::SeqCst), 128);
+}

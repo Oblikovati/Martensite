@@ -50,3 +50,19 @@ fn nested_worker_failures_wait_and_do_not_poison_outer_jobs() {
         .unwrap();
     launcher.perform_job(&|_| {}).unwrap();
 }
+
+#[test]
+fn balanced_dispatch_preserves_failure_index_order() {
+    let pool = ThreadPool::new(8);
+    let launcher = Launcher::new(&pool, 8);
+    let failure = launcher
+        .perform_job(&|index| panic!("participant {index}"))
+        .unwrap_err();
+    let messages: Vec<String> = (0..8)
+        .map(|index| format!("panic: participant {index}"))
+        .collect();
+    assert_eq!(
+        failure.message(),
+        format!("Multiple exceptions:\n{}", messages.join("\n"))
+    );
+}

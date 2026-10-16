@@ -1,5 +1,5 @@
 //! Lifecycle fixtures for the scoped replacement (#87, #106).
-use super::{ScopedWorker, Worker, lock};
+use super::{JoinedThreads, ScopedWorker, Worker, lock};
 use std::sync::{
     Arc,
     atomic::{AtomicBool, Ordering},
@@ -14,8 +14,8 @@ impl RefusedThreadStart {
             .spawn_handler(|_| Err(std::io::Error::other("injected thread start refusal")))
             .build()
             .map(|pool| ScopedWorker {
-                pool: Some(pool),
-                threads: Vec::new(),
+                pool,
+                _joined_threads: JoinedThreads(Vec::new()),
             })
     }
 }
@@ -36,7 +36,7 @@ fn failed_start_is_reported_and_the_next_launch_retries() {
     assert!(failure.message().contains("injected thread start refusal"));
     assert!(lock(&worker.executor).is_none());
     let executor = worker.executor().unwrap();
-    assert!(executor.pool.is_some());
+    assert_eq!(executor.pool.current_num_threads(), 1);
     drop(executor);
     worker.shut_down();
     assert!(lock(&worker.executor).is_none());
@@ -60,7 +60,7 @@ fn shutdown_waits_for_the_physical_worker_to_exit() {
     assert!(lock(&worker.executor).is_none(), "creation remains lazy");
     let exited = Arc::new(AtomicBool::new(false));
     let executor = worker.executor().unwrap();
-    executor.pool.as_ref().unwrap().install(|| {
+    executor.pool.install(|| {
         EXIT.with(|slot| *slot.borrow_mut() = Some(ThreadExit(Arc::clone(&exited))));
     });
     assert!(!exited.load(Ordering::SeqCst));

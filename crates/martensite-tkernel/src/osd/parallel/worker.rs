@@ -21,9 +21,12 @@ pub(super) struct Worker {
 }
 
 struct ScopedWorker {
-    pool: Option<rayon::ThreadPool>,
-    threads: Vec<JoinHandle<()>>,
+    // Fields drop in declaration order: signal shutdown before joining threads.
+    pool: rayon::ThreadPool,
+    _joined_threads: JoinedThreads,
 }
+
+struct JoinedThreads(Vec<JoinHandle<()>>);
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.lock().unwrap_or_else(|poison| poison.into_inner())
@@ -31,28 +34,26 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
 
 impl ScopedWorker {
     fn new() -> Result<Self, rayon::ThreadPoolBuildError> {
-        let mut worker = Self {
-            pool: None,
-            threads: Vec::new(),
-        };
+        let mut threads = JoinedThreads(Vec::new());
         let pool = rayon::ThreadPoolBuilder::new()
             .num_threads(1)
             .spawn_handler(|thread| {
-                worker
-                    .threads
+                threads
+                    .0
                     .push(std::thread::Builder::new().spawn(|| thread.run())?);
                 Ok(())
             })
             .build()?;
-        worker.pool = Some(pool);
-        Ok(worker)
+        Ok(Self {
+            pool,
+            _joined_threads: threads,
+        })
     }
 }
 
-impl Drop for ScopedWorker {
+impl Drop for JoinedThreads {
     fn drop(&mut self) {
-        drop(self.pool.take());
-        for thread in self.threads.drain(..) {
+        for thread in self.0.drain(..) {
             let _ = thread.join();
         }
     }
@@ -118,38 +119,58 @@ impl Worker {
 
 /// Each scope owns its completion, including concurrent and nested launches (#106).
 pub(super) fn dispatch(workers: &[Arc<Worker>], body: &JobBody<'_>) -> Vec<Failure> {
-    let Some((worker, rest)) = workers.split_first() else {
+    let Some((caller, workers)) = workers.split_last() else {
         return Vec::new();
     };
-    if worker.is_self_thread {
-        return worker.perform(body).into_iter().collect();
-    }
-    let executor = match worker.executor() {
-        Ok(executor) => executor,
-        Err(failure) => {
-            let mut failures = vec![failure];
-            failures.extend(dispatch(rest, body));
-            return failures;
-        }
-    };
-    scoped_dispatch(&executor, worker, rest, body)
+    let (ready, mut failures) = prepare_workers(workers);
+    failures.extend(dispatch_tree(&ready, caller, body));
+    failures.sort_by_key(|(index, _)| *index);
+    failures.into_iter().map(|(_, failure)| failure).collect()
 }
 
-fn scoped_dispatch(
-    executor: &ScopedWorker,
-    worker: &Worker,
-    rest: &[Arc<Worker>],
-    body: &JobBody<'_>,
-) -> Vec<Failure> {
-    let mut failure = None;
-    let mut remaining = Vec::new();
-    if let Some(pool) = &executor.pool {
-        pool.in_place_scope(|scope| {
-            scope.spawn(|_| failure = worker.perform(body));
-            remaining = dispatch(rest, body);
-        });
+struct PreparedWorker<'a> {
+    worker: &'a Worker,
+    executor: Arc<ScopedWorker>,
+}
+
+type IndexedFailures = Vec<(i32, Failure)>;
+
+fn prepare_workers(workers: &[Arc<Worker>]) -> (Vec<PreparedWorker<'_>>, IndexedFailures) {
+    let mut ready = Vec::with_capacity(workers.len());
+    let mut failures = Vec::new();
+    for worker in workers {
+        match worker.executor() {
+            Ok(executor) => ready.push(PreparedWorker { worker, executor }),
+            Err(failure) => failures.push((worker.index.load(Ordering::SeqCst), failure)),
+        }
     }
-    let mut failures: Vec<Failure> = failure.into_iter().collect();
-    failures.extend(remaining);
-    failures
+    (ready, failures)
+}
+
+fn dispatch_tree(
+    workers: &[PreparedWorker<'_>],
+    caller: &Worker,
+    body: &JobBody<'_>,
+) -> IndexedFailures {
+    let Some(owner) = workers.get(workers.len() / 2) else {
+        return participant_failure(caller, body);
+    };
+    let middle = workers.len() / 2;
+    // Each branch keeps its final participant on the current physical thread (#109).
+    let mut left = Vec::new();
+    let mut right = Vec::new();
+    owner.executor.pool.in_place_scope(|scope| {
+        scope.spawn(|_| left = dispatch_tree(&workers[..middle], owner.worker, body));
+        right = dispatch_tree(&workers[middle + 1..], caller, body);
+    });
+    left.extend(right);
+    left
+}
+
+fn participant_failure(worker: &Worker, body: &JobBody<'_>) -> IndexedFailures {
+    worker
+        .perform(body)
+        .map(|failure| (worker.index.load(Ordering::SeqCst), failure))
+        .into_iter()
+        .collect()
 }
