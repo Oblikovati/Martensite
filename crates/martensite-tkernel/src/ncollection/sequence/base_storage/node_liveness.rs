@@ -2,8 +2,9 @@
 use super::{BaseSequence, SeqNode};
 use crate::standard::{exceptions::program_error, raise_native_failure};
 
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub(in crate::ncollection::sequence) struct SequenceNodeLiveness {
+    pub(in crate::ncollection::sequence) invocation: std::sync::Arc<()>,
     pub(in crate::ncollection::sequence) registry: *const (),
     pub(in crate::ncollection::sequence) contains: unsafe fn(*const (), usize) -> bool,
 }
@@ -14,7 +15,7 @@ unsafe impl Send for SequenceNodeLiveness {}
 unsafe impl Sync for SequenceNodeLiveness {}
 impl BaseSequence {
     pub(super) fn require_live_link(&self, link: *mut SeqNode) {
-        let Some(scope) = self.clear_node_scope else {
+        let Some(scope) = &self.clear_node_scope else {
             return;
         };
         // SAFETY: the controlled-clear scope retains its stable registry for this entire call.
