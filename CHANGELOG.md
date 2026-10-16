@@ -10,6 +10,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added owned storage-stream output seeking for header backpatching while preserving
   EOF, input counts and formatting state (#136).
+- Added explicit fallible printer and ordered messenger delivery with owned typed
+  failures, preserving existing infallible entry points (#112).
 
 ### Fixed
 
