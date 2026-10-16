@@ -103,7 +103,7 @@ fn longest_match(text: &[u8]) -> (ScannerRule, usize) {
     best
 }
 
-/// The scanner of one parse over a C string (the parse state), with the
+/// The scanner of one parse over a C string, with the
 /// lexical results the semantic actions read; `ExprIntrpScanner::new(b"x+1", &mut out)`.
 pub struct ExprIntrpScanner<'a> {
     input: &'a [u8],
@@ -113,7 +113,7 @@ pub struct ExprIntrpScanner<'a> {
     degree: i32,
 }
 impl<'a> ExprIntrpScanner<'a> {
-    /// Scan `text` up to its first NUL (the parse state); unmatched characters
+    /// Scan `text` up to its first NUL; unmatched characters
     /// go to `output` (`yyout`); `ExprIntrpScanner::new(b"x+1", &mut std::io::sink())`.
     pub fn new(text: &'a [u8], output: &'a mut dyn Write) -> Self {
         let end: usize = text
@@ -128,12 +128,12 @@ impl<'a> ExprIntrpScanner<'a> {
             degree: 0,
         }
     }
-    /// Release the input (the parse state); later calls see the end of the
+    /// Release the input; later calls see the end of the
     /// input; `scanner.stop()`.
     pub fn stop(&mut self) {
         self.position = self.input.len();
     }
-    /// The next token (the parse state): its external number, 0 at the end of the
+    /// The next token: its external number, 0 at the end of the
     /// input; `scanner.lex() == ExprIntrpTokenKind::Identifier as i32`.
     pub fn lex(&mut self) -> i32 {
         while self.position < self.input.len() {

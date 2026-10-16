@@ -80,7 +80,7 @@ impl ExprGeneralExpression for ExprNumericValue {
     fn derivative(&self, _x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         Ok(Self::expression(0.0))
     }
-    // Native quirk: the override accepts N <= 0 and still answers 0.
+    // the override accepts N <= 0 and still answers 0.
     fn n_derivative(&self, _x: &Handle<ExprNamedUnknown>, _n: i32) -> Result<ExprHandle, Failure> {
         Ok(Self::expression(0.0))
     }

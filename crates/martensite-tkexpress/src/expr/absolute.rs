@@ -35,7 +35,7 @@ impl ExprGeneralExpression for ExprAbsolute {
         }
         self.core.link().me()
     }
-    // Native quirk: no `Contains` guard, so the result is `Sign(u)*u'` simplified even
+    // no `Contains` guard, so the result is `Sign(u)*u'` simplified even
     // when `x` does not occur.
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         let (operand, derivative) = operand_and_derivative(self, x)?;

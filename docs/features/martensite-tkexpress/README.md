@@ -30,6 +30,9 @@ to standard output and can be redirected with `set_scanner_output`.
 This API does not publish immutable modelling results. Callers must account for
 shared node mutation and must not assume that cloned handles isolate edits.
 
+Relation-system `remove` always returns a failure and leaves the system
+unchanged. Build a new system to select a subset of relations.
+
 ## Verification
 
 Run `cargo test -p martensite-tkexpress`. The tests cover expression construction,

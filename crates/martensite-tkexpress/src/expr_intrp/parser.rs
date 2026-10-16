@@ -102,7 +102,7 @@ enum ParserStep {
     Error,
 }
 
-/// The parser of one input (the parse state), over a parse context;
+/// The parser of one input, over a parse context;
 /// `ExprIntrpParser::new(context).parse()?`.
 pub struct ExprIntrpParser<'c, 'a> {
     context: &'c mut ExprIntrpParseContext<'a>,
@@ -120,7 +120,7 @@ impl<'c, 'a> ExprIntrpParser<'c, 'a> {
             lookahead: ExprIntrpTokenKind::Yyempty as i32,
         }
     }
-    /// Parse the whole input (the parse state): `Ok(0)` on acceptance; the first syntax
+    /// Parse the whole input: `Ok(0)` on acceptance; the first syntax
     /// error, the stack exhaustion or a failing action is the error;
     /// `ExprIntrpParser::new(&mut context).parse()? == 0`.
     pub fn parse(&mut self) -> Result<i32, Failure> {

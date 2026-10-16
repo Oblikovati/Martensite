@@ -72,7 +72,7 @@ fn derivatives_and_simplification_preserve_symbolic_structure() {
         text_of(&parsed("(x^2)^2").derivative(&x).unwrap()),
         "(x^2)*x*4"
     );
-    // Native quirk: the second derivative of -x is the value -0.
+    // the second derivative of -x is the value -0.
     assert_eq!(text_of(&parsed("-1*x").n_derivative(&x, 2).unwrap()), "-0");
     let series = parsed("Sum[x^2, x, 1, 1, 4]");
     assert_eq!(text_of(&series.simplified().unwrap()), "30");
@@ -124,7 +124,7 @@ fn definitions_assignments_and_relations_leave_no_expression() {
     interpreter.process(&AsciiString::new("f(3)+x"));
     let expression = interpreter.expression().unwrap();
     assert_eq!(text_of(&expression), "f(3)+x");
-    // Native quirk: the variable of f is a copy of the global x, assigned to 2 when f
+    // the variable of f is a copy of the global x, assigned to 2 when f
     // was defined, so f(3) is 2^2 and the sum is 6.
     assert_eq!(text_of(&expression.simplified().unwrap()), "6");
 }

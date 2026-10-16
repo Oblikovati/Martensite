@@ -34,7 +34,7 @@ impl ExprSystemRelation {
     }
     /// `Remove`, which never removes anything internally.
     ///
-    /// Native quirk preserved: the test is inverted, so a relation of the system raises
+    /// Removal rejects every input: a relation of the system raises
     /// a missing-object failure; any other relation raises a dimension-mismatch failure on a
     /// system of one relation and an out-of-range failure (position 0) otherwise;
     /// `system.remove(&other)` is always an error.
