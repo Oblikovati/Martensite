@@ -37,7 +37,7 @@ impl<T> Sequence<T> {
     }
     fn clear_node_liveness(&self) -> SequenceNodeLiveness {
         SequenceNodeLiveness {
-            registry: std::ptr::from_ref(self.owners.as_ref()).cast(),
+            registry: self.owners.registry_address().cast(),
             contains: registry_contains::<T>,
         }
     }
@@ -110,7 +110,7 @@ impl<T> Sequence<T> {
     }
     fn abandon_unvisited_clear_nodes(&mut self) {
         // Clearing saves the next link before deleting: nodes appended in the last callback are lost.
-        for owner in (*std::mem::take(&mut self.owners)).into_values() {
+        for owner in std::mem::take(&mut self.owners).into_owners().into_values() {
             owner.abandon();
         }
     }

@@ -8,7 +8,7 @@ use topology::SequenceTopology;
 pub struct Sequence<T> {
     topology: SequenceTopology,
     // Clearing observers need a stable registry address even when Sequence itself moves.
-    owners: Box<SequenceNodeOwners<T>>,
+    owners: owner_registry::SequenceOwnerRegistry<T>,
 }
 /// Shared double-ended iterator in index order; `sequence.iter()`.
 pub struct SequenceIter<'a, T> {
@@ -40,7 +40,7 @@ impl<T> Sequence<T> {
     pub fn with_allocator(resource: BaseAllocator) -> Self {
         Self {
             topology: SequenceTopology::new(resource),
-            owners: Box::default(),
+            owners: Default::default(),
         }
     }
     /// Returns selected allocator identity; `sequence.allocator() == &arena`.
@@ -233,6 +233,9 @@ pub use basic_node::{BasicSequenceNode, BasicSequenceNodeMut};
 mod access;
 #[allow(unsafe_code)]
 mod owner;
+// One raw allocation pointer keeps the clear scope's saved registry address valid.
+#[allow(unsafe_code)]
+mod owner_registry;
 #[allow(unsafe_code)]
 mod topology;
 pub use topology::{SequenceBaseAccess, SequenceObservation, SequenceObserver};

@@ -85,3 +85,18 @@ fn remaining_live_nodes_keep_native_index_origin_and_exchange() {
     sequence.finish_clear_progress(progress).unwrap();
     assert!(sequence.is_empty());
 }
+#[test]
+fn liveness_registry_stays_readable_after_owner_edits_during_clear() {
+    // Regression: the clear scope's registry pointer was taken from a shared borrow of a
+    // boxed map, so the next owner removal or insertion invalidated it (Miri Stacked Borrows).
+    let mut sequence: Sequence<i32> = [1, 2, 3, 4].into_iter().collect();
+    let mut progress = sequence.begin_clear_progress();
+    assert_eq!(retire_integer_node(&mut sequence, &mut progress), 1);
+    assert_eq!(sequence.value(4).unwrap(), &4);
+    sequence.append(5);
+    assert_eq!(sequence.value(3).unwrap(), &3);
+    assert_eq!(retire_integer_node(&mut sequence, &mut progress), 2);
+    assert_eq!(sequence.value(4).unwrap(), &4);
+    sequence.clear(None);
+    assert!(sequence.is_empty());
+}
