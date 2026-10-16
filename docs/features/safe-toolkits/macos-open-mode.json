@@ -2,7 +2,7 @@
   "task_issue": 89,
   "parent_issue": 80,
   "baseline_revision": "3824f7e",
-  "status": "Investigation and baseline fixture only; production open is unchanged.",
+  "status": "The safe open wrapper now includes macOS arm64; replacement validation and review remain pending. Other unresolved Unix targets retain the original call.",
   "constraint": "The existing interface accepts a u32 mode and passes c_uint to variadic libc open. On macOS, rustix Mode uses the platform u16 mode_t before promoting it back to c_uint for that call. Compatibility therefore requires checking whether discarded high bits affect creation.",
   "kernel_source": {
     "revision": "f6217f891ac0bb64f3d375211650a4c1ff8ca1ea",
@@ -11,10 +11,10 @@
   },
   "wrapper_source": "Pinned rustix 1.1.5 backend/libc/fs/types.rs uses mode_t for RawMode on Apple. backend/libc/fs/syscalls.rs open promotes mode.bits() to c_uint and calls libc open, preserving flags and returning the owned descriptor or errno.",
   "fixture": "Creates two files in one isolated temporary directory using modes 0600 and 0xffff0000|0600. Compares the complete permission/special-bit masks and checks no bits outside 0600 remain. It does not mutate process umask. Native macOS execution is required before accepting the width conversion.",
-  "local_validation": "The focused Linux baseline fixture passed against the original libc implementation (/tmp/martensite-open-mode-baseline.log).",
+  "local_validation": "The focused Linux baseline fixture passed against the original libc implementation (/tmp/martensite-open-mode-baseline.log). After merging main a261df1, all seven open fixtures and cargo xtask pr passed at 9d9834f (/tmp/martensite-macos-open-merged-baseline.log and /tmp/martensite-macos-open-merged-pr.log).",
+  "native_baseline": "Run 38964945142 passed all four platforms at 693a5eb50c0f2ba7d1d52456ea71c54abbf8951b. The high-mode-bit fixture explicitly passed on macOS arm64 and both Linux targets. All four complete compiler summaries matched their revision's baselines; artifacts are under /tmp/martensite-open-mode-original.bOPvm9. No replacement validation is inferred from this original-implementation run.",
+  "implementation": "Reuses the existing rustix open wrapper with a platform-width mode cast. No dependency, public API, descriptor inheritance, ownership transfer, errno or retry policy changes. The expected macOS native_unix emitted unsafe span count decreases from 20 to 18; native confirmation is pending.",
   "remaining": [
-    "Run the full baseline gate and native macOS baseline validation",
-    "Reuse the reviewed descriptor-owning wrapper after PR #135 integrates",
     "Run unchanged fixtures, inventory checks and native matrix after replacement",
     "Review the platform extension separately; retain other unresolved targets under #89"
   ]
