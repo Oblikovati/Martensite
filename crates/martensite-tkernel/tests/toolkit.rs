@@ -4,3 +4,4 @@ include!("suites/cases_00.rs");
 include!("suites/cases_01.rs");
 include!("suites/cases_02.rs");
 include!("suites/cases_03.rs");
+mod safe_migration_contracts;
