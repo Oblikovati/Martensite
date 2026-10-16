@@ -4,6 +4,13 @@ use martensite_tkernel::osd::{NativePosixCalls, PosixFileCalls};
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 
+// Darwin retains the special permission bits in its stored umask (#131).
+const NATIVE_UMASK_RETAINED_BITS: u32 = if cfg!(target_os = "macos") {
+    0o7777
+} else {
+    0o777
+};
+
 struct MaskScratch(PathBuf);
 impl MaskScratch {
     fn new() -> Self {
@@ -39,7 +46,7 @@ fn umask_controls_created_modes_and_returns_previous_mask() {
         previous = mask;
     }
     assert_eq!(calls.umask(u32::MAX), previous);
-    assert_eq!(calls.umask(original), 0o777);
+    assert_eq!(calls.umask(original), NATIVE_UMASK_RETAINED_BITS);
 }
 
 fn assert_created_modes(scratch: &MaskScratch, file_mode: u32, directory_mode: u32) {

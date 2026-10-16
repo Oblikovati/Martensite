@@ -1,0 +1,18 @@
+{
+  "bug_issue": 131,
+  "task_issue": 89,
+  "parent_issue": 80,
+  "baseline_revision": "7758dd79d34bd2c38f2a255ddb925bc21e012eee",
+  "original_fixture_revision": "7491eaa934073349dfd9077703b3331a6aac0ee1",
+  "original_run": "https://github.com/Oblikovati/Martensite/actions/runs/38957033863",
+  "replacement_run": "https://github.com/Oblikovati/Martensite/actions/runs/38955639140",
+  "reproduction": "The original direct-libc implementation and the safe-wrapper candidate both failed the same macOS assertion after umask(u32::MAX): returned 4095, expected 511. All earlier creation-mode and previous-mask assertions passed. Both Linux targets passed both implementations. The baseline run changes only the fixture and its registration, not production code.",
+  "independent_source": {
+    "revision": "f6217f891ac0bb64f3d375211650a4c1ff8ca1ea",
+    "operation": "https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/vfs/vfs_syscalls.c#L10440",
+    "mask": "https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/sys/stat.h#L428",
+    "contract": "umask1 stores newmask & ALLPERMS and returns the previous stored mask. ALLPERMS includes the special permission bits and equals 07777."
+  },
+  "correction": "The fixture expects exactly 07777 on macOS and keeps the existing 0777 expectation elsewhere. No assertion is skipped; creation-mode cases and previous-mask sequencing remain unchanged. Supported Unix validation covers Linux and macOS; no claim is made for other Unix targets.",
+  "validation": "Corrected fixture validation and review pending. No production behavior or version change. Bug #131 remains open until the correction and native validation are integrated."
+}
