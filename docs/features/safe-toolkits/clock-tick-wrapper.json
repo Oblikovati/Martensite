@@ -1,0 +1,17 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "starting_main": "3c180e074dda0573a29a44bd92bc10833efaca0a",
+  "status": "Both baseline tests and cargo xtask pr passed locally; production remains unchanged. Native validation is pending.",
+  "local_baseline": "Two clock_tick_contracts tests passed (/tmp/martensite-clock-ticks-baseline.log); the full gate passed (/tmp/martensite-clock-ticks-baseline-pr.log).",
+  "contract": "clock_ticks returns libc sysconf(_SC_CLK_TCK) cast to f64, including -1 on failure. It supplies the divisor for process CPU time; the times call and arithmetic remain outside this increment.",
+  "fixtures": "Compare against the native getconf CLK_TCK utility, then separately probe successful-query errno preservation using zero, EIO and an arbitrary raw sentinel. Restore the caller errno before assertions. These are native system-boundary checks, not mocked command-I/O tests.",
+  "candidate": "Existing nix 0.31.3 unistd::sysconf exposes CLK_TCK and returns Result<Option<c_long>>. Inspected source clears errno before calling libc exactly once; unlike the direct call, that can erase a caller errno. Safe Errno::last_raw and set_raw can restore the incoming value when the call leaves zero errno. Mapping None and Err to -1 preserves the numeric sentinel; retain any nonzero errno produced by the native call.",
+  "limits": "Native fixtures establish supported-platform behavior, not every injected libc implementation. Investigate whether restoration preserves the actual platform contract before replacement. Do not broaden this into processor-count changes or claim a system-only exception.",
+  "deletion": "If compatibility is demonstrated, delete the direct sysconf unsafe block in this task; do not keep a parallel implementation. No API or version change is planned.",
+  "remaining": [
+    "Verify unchanged local and native baselines",
+    "Evaluate safe-wrapper errno and failure mapping against platform behavior",
+    "Implement, review and validate the replacement with updated inventories"
+  ]
+}

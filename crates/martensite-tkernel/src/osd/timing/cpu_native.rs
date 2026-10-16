@@ -22,6 +22,9 @@ fn clock_ticks() -> f64 {
     ticks as f64
 }
 
+#[cfg(all(test, unix))]
+mod clock_tick_contracts;
+
 #[cfg(unix)]
 fn tms_seconds(ticks: f64) -> (f64, f64) {
     let mut current: libc::tms = libc::tms {
