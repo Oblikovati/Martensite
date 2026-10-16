@@ -32,3 +32,12 @@ fn persistent_range_workload() {
         }
     }
 }
+
+#[test]
+#[ignore = "isolated large-pool stack assessment, not a default CI workload"]
+fn persistent_large_pool_workload() {
+    let pool = ThreadPool::new(128);
+    let launcher = Launcher::new(&pool, 128);
+    let elapsed_ns = measured(&launcher);
+    println!("participants=128 launches=1000 items=64000 elapsed_ns={elapsed_ns}");
+}
