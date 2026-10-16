@@ -8,9 +8,9 @@
   "source_evidence": "Pinned rustix 1.1.5 process/id.rs delegates getuid to backend/ugid/syscalls.rs. The selected libc backend makes one libc::getuid call, converts its unsigned ID to Uid, and is_root compares it with Uid::ROOT (zero). Uid construction debug-asserts that the OS did not return the invalid all-ones UID; no retry or effective-ID substitution is introduced.",
   "dependency": "Enabled process on existing rustix 1.1.5 with std/fs/use-libc unchanged. No Cargo.lock package version changes. cargo deny --all-features check and cargo audit passed. Established dependency unsafe is separate trust, not first-party elimination within the dependency.",
   "fixture": "Before replacement, the independent /usr/bin/id -r -u fixture passed on Linux. After replacement, it and the existing no-error fixture passed. The test changes no credentials, environment or current directory.",
-  "inventory": "Expected process/native.rs source blocks 7 to 6; Linux and macOS compiler primary spans 8 to 6. Windows unchanged. Full gate and native verification pending.",
+  "inventory": "Expected process/native.rs source blocks 7 to 6; Linux and macOS compiler primary spans 8 to 6. Windows unchanged. Local source and Linux compiler ratchets passed; native matrix verification pending.",
   "deletion": "The direct getuid call in is_super_user is deleted; no parallel super-user implementation remains. Integrate within the current migration milestone.",
-  "validation": "Focused Linux tests and dependency checks passed. Independent review, cargo xtask pr and native validation pending.",
+  "validation": "Focused Linux tests, dependency checks and cargo xtask pr passed (/tmp/martensite-real-user-pr.log). macOS all-targets cargo check passed (/tmp/martensite-real-user-macos-check.log). Separate standards and spec reviews found no code defects; native validation remains pending.",
   "exclusions": [
     "No fixture changes process credentials or constructs differing real and effective UIDs; the distinction is supported by pinned wrapper source",
     "The integration fixture requires the native id utility on supported Linux/macOS runners",
