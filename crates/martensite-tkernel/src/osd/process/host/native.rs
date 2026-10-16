@@ -10,7 +10,7 @@ pub struct NativeHost;
 #[cfg(unix)]
 mod unix {
     use super::SystemNames;
-    use std::ffi::{CStr, CString};
+    use std::ffi::CString;
 
     // gethostbyname is POSIX (glibc, macOS libSystem) but not bound by the libc crate.
     unsafe extern "C" {
@@ -18,26 +18,12 @@ mod unix {
     }
 
     fn field(bytes: &[libc::c_char]) -> Vec<u8> {
-        // SAFETY: uname NUL-terminates every utsname field inside its array.
-        unsafe { CStr::from_ptr(bytes.as_ptr()) }
-            .to_bytes()
-            .to_vec()
-    }
-
-    #[cfg(test)]
-    mod field_tests {
-        use super::field;
-
-        #[test]
-        fn terminated_fields_keep_raw_bytes_and_stop_at_first_nul() {
-            let bytes: Vec<libc::c_char> = [b'h', 0xff, 0, b'x', 0]
-                .into_iter()
-                .map(|byte| byte as libc::c_char)
-                .collect();
-            assert_eq!(field(&bytes), [b'h', 0xff]);
-            assert!(field(&[0, 1, 0]).is_empty());
-            assert_eq!(field(&[65, 66, 0]), b"AB");
-        }
+        bytes
+            .iter()
+            .copied()
+            .take_while(|&byte| byte != 0)
+            .map(|byte| byte as u8)
+            .collect()
     }
 
     pub(super) fn system_names() -> SystemNames {
@@ -78,6 +64,31 @@ mod unix {
             }
             let bytes: &[u8] = std::slice::from_raw_parts(first.cast::<u8>(), 4);
             Some([bytes[0], bytes[1], bytes[2], bytes[3]])
+        }
+    }
+
+    #[cfg(test)]
+    mod field_tests {
+        use super::field;
+
+        #[test]
+        fn terminated_fields_keep_raw_bytes_and_stop_at_first_nul() {
+            let bytes: Vec<libc::c_char> = [b'h', 0xff, 0, b'x', 0]
+                .into_iter()
+                .map(|byte| byte as libc::c_char)
+                .collect();
+            assert_eq!(field(&bytes), [b'h', 0xff]);
+            assert!(field(&[0, 1, 0]).is_empty());
+            assert_eq!(field(&[65, 66, 0]), b"AB");
+        }
+
+        #[test]
+        fn field_conversion_preserves_every_nonzero_byte() {
+            let expected: Vec<u8> = (1..=255).collect();
+            let mut bytes: Vec<libc::c_char> =
+                expected.iter().map(|&byte| byte as libc::c_char).collect();
+            bytes.push(0);
+            assert_eq!(field(&bytes), expected);
         }
     }
 }
