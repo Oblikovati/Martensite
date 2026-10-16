@@ -59,13 +59,13 @@ impl BinaryFile {
     /// Reads one host-order integer: a short read keeps the bytes it got and is a
     /// `Storage_StreamTypeMismatchError`; `BinaryFile::get_integer_stream(&mut input, &mut v)?`.
     pub fn get_integer_stream(stream: &mut IoStream, value: &mut i32) -> Result<(), Failure> {
-        let mut bytes = value.to_ne_bytes();
-        stream.read(&mut bytes);
-        *value = i32::from_ne_bytes(bytes);
-        if stream.gcount() != 4 {
-            return Err(type_mismatch("FSD_BinaryFile::GetInteger"));
-        }
-        Ok(())
+        super::header_input::read_integer(value, |bytes| {
+            stream.read(bytes);
+            if stream.gcount() != 4 {
+                return Err(type_mismatch("FSD_BinaryFile::GetInteger"));
+            }
+            Ok(())
+        })
     }
 
     /// Reads a reference number, encoded like an integer.
@@ -161,10 +161,7 @@ impl BinaryFile {
         stream: &mut IoStream,
         header: &mut FileHeader,
     ) -> Result<(), Failure> {
-        for field in header.fields_mut() {
-            Self::get_integer_stream(stream, field)?;
-        }
-        Ok(())
+        super::header_input::read_fields(header, |field| Self::get_integer_stream(stream, field))
     }
 }
 

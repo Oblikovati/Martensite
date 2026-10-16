@@ -10,6 +10,7 @@ use crate::storage::{BaseDriver, DriverBase, OpenMode, Position, StorageError, S
 use crate::tcollection::AsciiString;
 use std::rc::Rc;
 mod complete_info;
+mod header_input;
 mod inverse;
 mod scalars;
 mod sections;
