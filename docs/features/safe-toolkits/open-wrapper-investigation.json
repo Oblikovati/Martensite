@@ -14,6 +14,7 @@
     "revision": "fc7a2f2e17680d751392c62d9331bf502f852fcd",
     "result": "Linux x86_64/arm64, macOS arm64 and Windows x64 passed; publishing was skipped. All three Unix logs explicitly show all six open fixtures passed, including child-process inheritance. macOS exercises the unchanged fallback; Windows does not execute these Unix-only fixtures."
   },
+  "integration": "Merged main 3824f7e in 01e8247. Relative to native-tested fc7a2f2, native_unix.rs changes only by incorporating the separately validated umask replacement; the open implementation and fixtures are unchanged. Linux native_unix compiler spans now total 24, preserving both two-span reductions instead of accepting Git's identical-edit result of 26. Clock inventory reductions and macOS umask reductions are retained. Combined cargo xtask pr passed (/tmp/martensite-open-integration-pr.log), including full local compiler inventory verification. The earlier matrix is not represented as a run on this merged tree.",
   "large_file_evidence": {
     "rustix": "Pinned 1.1.5 backend/libc/c.rs aliases open64 to open on Linux-like targets except aarch64/riscv64. backend/libc/fs/syscalls.rs passes the selected mode and flags to that symbol.",
     "glibc_open": "https://github.com/bminor/glibc/blob/glibc-2.40/sysdeps/unix/sysv/linux/open64.c",
