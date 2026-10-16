@@ -90,6 +90,23 @@ fn native_open_flags(flags: OpenFlags) -> libc::c_int {
     bits | if flags.append { libc::O_APPEND } else { 0 }
 }
 
+#[cfg(all(target_os = "linux", target_env = "gnu", target_pointer_width = "64"))]
+fn native_open_descriptor(name: &std::ffi::CStr, bits: i32, mode: u32) -> CallResult<i32> {
+    use std::os::fd::IntoRawFd;
+    let flags = rustix::fs::OFlags::from_bits_retain(bits as _);
+    let mode = rustix::fs::Mode::from_bits_retain(mode);
+    rustix::fs::open(name, flags, mode)
+        .map(IntoRawFd::into_raw_fd)
+        .map_err(|error| Errno(error.raw_os_error()))
+}
+
+#[cfg(not(all(target_os = "linux", target_env = "gnu", target_pointer_width = "64")))]
+fn native_open_descriptor(name: &std::ffi::CStr, bits: i32, mode: u32) -> CallResult<i32> {
+    // SAFETY: name is NUL-terminated; the variadic mode is passed as c_uint.
+    let fd: libc::c_int = unsafe { libc::open(name.as_ptr(), bits, mode as libc::c_uint) };
+    if fd < 0 { Err(last_errno()) } else { Ok(fd) }
+}
+
 impl PosixFileCalls for NativePosixCalls {
     fn access(&self, path: &[u8], mode: AccessMode) -> CallResult<()> {
         let mut bits: libc::c_int = libc::F_OK;
@@ -135,9 +152,7 @@ impl PosixFileCalls for NativePosixCalls {
     fn open(&self, path: &[u8], flags: OpenFlags, mode: u32) -> CallResult<i32> {
         let bits = native_open_flags(flags);
         let name: CString = c_path(path);
-        // SAFETY: name is NUL-terminated; the variadic mode is passed as c_uint.
-        let fd: libc::c_int = unsafe { libc::open(name.as_ptr(), bits, mode as libc::c_uint) };
-        if fd < 0 { Err(last_errno()) } else { Ok(fd) }
+        native_open_descriptor(&name, bits, mode)
     }
     fn close(&self, fd: i32) -> CallResult<()> {
         // SAFETY: closing a descriptor number has no memory-safety requirement.
