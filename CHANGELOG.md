@@ -6,6 +6,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added the `martensite-tkexpress` crate for symbolic expressions, differentiation,
+  simplification, named functions, relations and text interpretation (#100).
+
 ### Fixed
 
 - Checked toolkit unsafe source counts during PR validation, including inactive
