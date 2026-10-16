@@ -1,0 +1,27 @@
+{
+  "issue": 87,
+  "pull_request": 107,
+  "source_revision": "153edade63c45199e2e8f84797f2817ee5ebe1aa",
+  "working_tree": "Uncommitted allocation probe; production worker code unchanged",
+  "tool": "Valgrind 3.22.0 DHAT",
+  "test": "warmed_dispatch_allocation_probe",
+  "participants": 2,
+  "profiles": "/tmp/martensite-worker-dhat.D8Y3ZV/launches-{0,100}.json",
+  "control": {"additional_launches": 0, "allocations": 301, "bytes": 191971},
+  "candidate": {"additional_launches": 100, "allocations": 402, "bytes": 199893},
+  "observations": [
+    "The do_in_place_scope -> dispatch_tree allocation path added 100 allocations totaling 6400 bytes.",
+    "The crossbeam_deque Injector::push -> Registry::inject_or_push path added one 1520-byte allocation.",
+    "The environment-value read added two bytes when the launch count changed from 0 to 100.",
+    "These differences account for the total increase of 101 allocations and 7922 bytes.",
+    "The pinned rayon-core Scope::spawn implementation creates a HeapJob for each submitted closure.",
+    "Both test executions passed their callback-completion assertion."
+  ],
+  "conclusion": "Scoped job submission explains the per-launch allocation in this minimized workload; failure collection and warmed executor preparation do not explain that allocation.",
+  "limitations": [
+    "Linux x86_64 optimized test executable only; not a whole-workload attribution or acceptance gate.",
+    "No production fix has been applied or validated.",
+    "Raw startup stacks contain process-dependent frames; compare matching worker paths, not unnormalized whole-profile stack identities."
+  ],
+  "next_step": "Evaluate safe stack-backed dispatch alternatives while preserving physical worker identity, caller participation, borrowed lifetimes and bounded stack use."
+}

@@ -1,0 +1,59 @@
+{
+  "issue": 87,
+  "base_revision": "153edade63c45199e2e8f84797f2817ee5ebe1aa",
+  "state": "Uncommitted experimental production candidate; not accepted or pushed",
+  "change": "Keep scoped submission along the caller branch; use balanced rayon join/install inside dedicated one-thread worker pools.",
+  "platform": "Linux x86_64",
+  "profile": "release",
+  "allocation_workload": "persistent_range_workload",
+  "original_baseline_allocations": 1201,
+  "previous_candidate_allocations": 123521,
+  "experimental_allocations": 30490,
+  "allocation_report": "/tmp/martensite-worker-allocations.CWfsz0",
+  "allocation_comparator_exit": 1,
+  "tests": {
+    "osd_parallel": {"passed": 11, "ignored": 7, "failed": 0},
+    "participants_128_with_65536_byte_stack": {
+      "rendezvous": "passed",
+      "thousand_launch_workload": "passed"
+    }
+  },
+  "limitations": [
+    "One allocation measurement, not repeated timing or retention evidence.",
+    "Still substantially exceeds the original allocation baseline.",
+    "No full PR gate, native platform matrix, or sanitizer validation for this candidate.",
+    "Formatting-only local pool binding followed these executions and needs recompilation."
+  ],
+  "single_root_followup": {
+    "change": "One root scope submits all background workers through the balanced join/install subtree; the calling thread executes its own participant directly.",
+    "allocations": 12484,
+    "allocation_report": "/tmp/martensite-worker-allocations.emaA3F",
+    "repeated_allocations": 12484,
+    "repeated_allocation_report": "/tmp/martensite-worker-allocations.Ys4820",
+    "allocation_comparator_exit": 1,
+    "focused_tests_passed": 12,
+    "focused_tests_ignored": 7,
+    "release_library_tests": {"passed": 381, "failed": 0, "ignored": 8},
+    "new_identity_test": "32 distinct physical participants, original calling thread at index 31, stable identities across 20 repeated launches: passed",
+    "small_stack_tests": "128 participants, 65536-byte stack: rendezvous and thousand-launch workload passed",
+    "timing_exclusion": "The exploratory timing run overlapped Valgrind and is not comparative runtime evidence.",
+    "paired_runtime_report": "single-root-worker-cost-repeat.json",
+    "median_runtime_ratios_by_participant_count": {"1": 1.135, "3": 0.800, "8": 0.768, "32": 1.058},
+    "diagnostic_runtime_comparator_exit": 0,
+    "clippy_library_and_tests": "passed with -D warnings",
+    "full_workload_dhat": {
+      "profile": "/tmp/martensite-worker-dhat.D8Y3ZV/single-root-full.json",
+      "total_allocations": 12484,
+      "total_allocated_bytes": 4055089,
+      "root_scope": {"allocations": 9003, "bytes": 504168},
+      "injector": {"allocations": 1880, "bytes": 2857600},
+      "other": {"allocations": 1601, "bytes": 693321},
+      "interpretation": "One 56-byte root job for each of 9000 measured multi-participant launches and three warmups; injector queue storage remains an additional cost.",
+      "retained_at_exit_bytes": 169596,
+      "retention_caveat": "DHAT retained-at-exit bytes are not a leak classification or proof of bounded retention."
+    },
+    "runtime_caveat": "The comparator's 20% threshold is diagnostic, not an approved acceptance policy; shared-host timings are not controlled benchmarks.",
+    "status": "Still local and experimental; original allocation baseline remains unmet"
+  },
+  "next_step": "Assess repeated teardown retention for the single-root candidate and identify whether further safe allocation reduction can preserve caller-thread execution; do not treat diagnostic thresholds as acceptance approval."
+}

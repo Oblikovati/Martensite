@@ -34,6 +34,20 @@ fn repeated_jobs_keep_worker_threads_and_caller_index() {
 }
 
 #[test]
+fn balanced_worker_subtrees_keep_distinct_physical_threads() {
+    let pool = ThreadPool::new(32);
+    let launcher = Launcher::new(&pool, 32);
+    let first = participant_ids(&launcher);
+    let distinct: std::collections::HashSet<_> = first.values().collect();
+    assert_eq!(first.len(), 32);
+    assert_eq!(distinct.len(), 32);
+    assert_eq!(first[&31], std::thread::current().id());
+    for _ in 0..20 {
+        assert_eq!(participant_ids(&launcher), first);
+    }
+}
+
+#[test]
 fn reservations_force_busy_fallback_and_release_disables_jobs() {
     let pool = ThreadPool::new(3);
     let mut reserved = Launcher::new(&pool, 3);

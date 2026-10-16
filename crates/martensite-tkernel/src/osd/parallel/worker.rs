@@ -153,17 +153,35 @@ fn dispatch_tree(
     caller: &Worker,
     body: &JobBody<'_>,
 ) -> IndexedFailures {
+    let Some((owner, remaining)) = workers.split_last() else {
+        return participant_failure(caller, body);
+    };
+    // Only the external caller needs a heap-backed scope; worker joins stay balanced (#109).
+    let mut left = Vec::new();
+    let mut right = Vec::new();
+    owner.executor.pool.in_place_scope(|scope| {
+        scope.spawn(|_| left = dispatch_on_worker(remaining, owner.worker, body));
+        right = participant_failure(caller, body);
+    });
+    left.extend(right);
+    left
+}
+
+fn dispatch_on_worker(
+    workers: &[PreparedWorker<'_>],
+    caller: &Worker,
+    body: &JobBody<'_>,
+) -> IndexedFailures {
     let Some(owner) = workers.get(workers.len() / 2) else {
         return participant_failure(caller, body);
     };
     let middle = workers.len() / 2;
-    // Each branch keeps its final participant on the current physical thread (#109).
-    let mut left = Vec::new();
-    let mut right = Vec::new();
-    owner.executor.pool.in_place_scope(|scope| {
-        scope.spawn(|_| left = dispatch_tree(&workers[..middle], owner.worker, body));
-        right = dispatch_tree(&workers[middle + 1..], caller, body);
-    });
+    // A dedicated one-thread pool keeps the joined branch on this participant.
+    let pool = &owner.executor.pool;
+    let (mut left, right) = rayon::join(
+        || pool.install(|| dispatch_on_worker(&workers[..middle], owner.worker, body)),
+        || dispatch_on_worker(&workers[middle + 1..], caller, body),
+    );
     left.extend(right);
     left
 }
