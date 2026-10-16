@@ -1,7 +1,10 @@
 {
   "task_issue": 89,
   "parent_issue": 80,
-  "status": "Baseline validation and dependency evaluation only; production calls and dependencies are unchanged.",
+  "status": "The two production calls now use pinned nix safe wrappers. Replacement full-gate, native validation and review remain pending.",
+  "replacement": "Pinned nix 0.31.3 with fs/feature only. c_path preserves NUL truncation; OwnedFd::into_raw_fd preserves ownership transfer, and OsStringExt::into_vec preserves bytes. No public API or version change. Two lexical unsafe blocks are deleted; expected native_unix spans decrease Linux 20 to 16 and macOS 18 to 14.",
+  "completed_baseline": "Corrected run 38970976751 passed all four platforms at 7c14c26ef5f74dd910a0f3b98cbfbb0cbd38e113. All four full inventory summaries matched that revision with clean provenance; artifacts /tmp/martensite-temporary-corrected.3VmSeC. All six temporary fixtures explicitly passed on every Unix target, including macOS zero-X and exec inheritance; logs /tmp/martensite-temporary-corrected-{x64,arm64,macos}.log. This verifies the #140 correction before replacement, not the replacement itself.",
+  "replacement_local": "Six unchanged focused tests passed (/tmp/martensite-temporary-safe.log). cargo deny --all-features check and cargo audit both passed (/tmp/martensite-temporary-deny.log and /tmp/martensite-temporary-audit.log).",
   "baseline_revision": "529636ed65f3e3a216f59bf6ff46f85e95c7c478",
   "local_validation": "Three focused native temporary-path tests and cargo xtask pr passed before replacement (/tmp/martensite-temporary-baseline-reviewed.log and /tmp/martensite-temporary-baseline-pr.log). Native baseline run 38969720776 is pending completion.",
   "expanded_baseline": "After integrating main 5147279, added a fourth temporary-path fixture proving descriptor inheritance across exec, sharing the existing open-test assertion. All 30 path fixtures passed locally (/tmp/martensite-temporary-inheritance-baseline.log). The earlier native run does not cover this additional fixture; expanded native validation remains required.",

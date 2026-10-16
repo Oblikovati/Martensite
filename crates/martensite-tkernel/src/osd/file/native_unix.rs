@@ -265,26 +265,18 @@ impl PosixFileCalls for NativePosixCalls {
         rustix::process::umask(mask).bits() as u32
     }
     fn mkstemp(&self, template: &[u8]) -> CallResult<(i32, Vec<u8>)> {
-        let mut name: Vec<u8> = c_path(template).into_bytes_with_nul();
-        // SAFETY: name is a writable NUL-terminated buffer that mkstemp edits in place.
-        let fd: libc::c_int = unsafe { libc::mkstemp(name.as_mut_ptr().cast()) };
-        name.pop();
-        if fd < 0 {
-            Err(last_errno())
-        } else {
-            Ok((fd, name))
-        }
+        use std::os::{fd::IntoRawFd, unix::ffi::OsStringExt};
+        let name = c_path(template);
+        nix::unistd::mkstemp(name.as_c_str())
+            .map(|(fd, path)| (fd.into_raw_fd(), path.into_os_string().into_vec()))
+            .map_err(|error| Errno(error as i32))
     }
     fn mkdtemp(&self, template: &[u8]) -> CallResult<Vec<u8>> {
-        let mut name: Vec<u8> = c_path(template).into_bytes_with_nul();
-        // SAFETY: name is a writable NUL-terminated buffer that mkdtemp edits in place.
-        let made: *mut libc::c_char = unsafe { libc::mkdtemp(name.as_mut_ptr().cast()) };
-        name.pop();
-        if made.is_null() {
-            Err(last_errno())
-        } else {
-            Ok(name)
-        }
+        use std::os::unix::ffi::OsStringExt;
+        let name = c_path(template);
+        nix::unistd::mkdtemp(name.as_c_str())
+            .map(|path| path.into_os_string().into_vec())
+            .map_err(|error| Errno(error as i32))
     }
     fn read_directory(&self, path: &[u8]) -> CallResult<Vec<Vec<u8>>> {
         let mut cursor = self.open_directory(path)?;
