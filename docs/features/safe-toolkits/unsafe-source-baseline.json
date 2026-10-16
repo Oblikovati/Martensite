@@ -114,7 +114,7 @@
   "crates/martensite-tkernel/src/ncollection/sequence/nodes.rs": {"unsafe_keywords":2,"unsafe_code_mentions":0},
   "crates/martensite-tkernel/src/ncollection/sequence/operations.rs": {"unsafe_keywords":1,"unsafe_code_mentions":0},
   "crates/martensite-tkernel/src/ncollection/sequence/owner.rs": {"unsafe_keywords":12,"unsafe_code_mentions":0},
-  "crates/martensite-tkernel/src/ncollection/sequence/owner_registry.rs": {"unsafe_keywords":6,"unsafe_code_mentions":0},
+  "crates/martensite-tkernel/src/ncollection/sequence/owner_registry.rs": {"unsafe_keywords":5,"unsafe_code_mentions":0},
   "crates/martensite-tkernel/src/ncollection/sequence/prepared_node.rs": {"unsafe_keywords":3,"unsafe_code_mentions":0},
   "crates/martensite-tkernel/src/ncollection/sequence/retired_node.rs": {"unsafe_keywords":3,"unsafe_code_mentions":0},
   "crates/martensite-tkernel/src/ncollection/sequence/topology.rs": {"unsafe_keywords":10,"unsafe_code_mentions":0},
