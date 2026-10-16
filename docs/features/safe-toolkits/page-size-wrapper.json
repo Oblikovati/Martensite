@@ -2,9 +2,10 @@
   "task_issue": 89,
   "parent_issue": 80,
   "starting_main": "3c180e074dda0573a29a44bd92bc10833efaca0a",
-  "status": "Safe replacement passed local validation and code review. Original native baseline run 38980838524 remains active at aab941ddf252d4dba5b9c6d1d01ae1ca9295b155: both Linux targets and macOS passed, Windows pending. Replacement native validation remains pending.",
+  "status": "Merged in PR #148 at fec0ef50817214252898cd0846ccaf993bfa3553. Original run 38980838524 and replacement run 38981624700 passed all four targets; publication skipped. All baseline and replacement inventories matched exact revisions with clean provenance.",
+  "native_replacement": "Verified at 93d3253d2a2c66927cc1d4e8ddae2c6be720d13e. Both Linux targets passed page-size, clock-tick and shared-adapter tests; macOS passed clock-tick and shared-adapter tests. Artifacts /tmp/martensite-page-size-safe-native.KJF3v8; logs /tmp/martensite-page-size-safe-{x64,arm64,macos}.log. All final PR checks passed; post-merge library tests passed (383 passed, one ignored) in /tmp/martensite-page-size-postmerge.log.",
   "native_baseline": "Both Linux page-size fixtures explicitly passed. Full inventories for both Linux targets and macOS matched the exact baseline revision with clean provenance. Artifacts /tmp/martensite-page-size-original.vLgGYz; logs /tmp/martensite-page-size-original-{x64,arm64,macos}.log. Apple and Windows exclude the new non-Apple Unix fixtures.",
-  "review": "Standards: zero documented violations or actionable smells. Spec: no implementation defect or scope creep; native acceptance remains incomplete. Both reviewed 03366f2...31eea16. Shared adaptation retains errno and sentinel behavior; native fixtures are unchanged.",
+  "review": "Standards: zero documented violations or actionable smells. Spec: no implementation defect or scope creep; its outstanding native acceptance requirement was subsequently satisfied. Both reviewed 03366f2...31eea16. Shared adaptation retains errno and sentinel behavior; native fixtures are unchanged.",
   "replacement": "Use existing nix SysconfVar::PAGE_SIZE, retaining the c_long-to-usize checked conversion and zero fallback. Extract clock-tick errno/sentinel adaptation into a private native_config module shared by both real callers. Preserve the two original clock-tick fixtures unchanged; move the four adaptation cases to the shared module, checking native integers before caller conversion. No dependency, public API or version change.",
   "local_replacement": "All library tests passed: 383 passed, one ignored (/tmp/martensite-page-size-safe-unit.log). Full cargo xtask pr passed in /tmp/martensite-page-size-safe-pr.log.",
   "inventory": "One lexical unsafe block removed. Linux page-size emitted spans decrease from two to zero; Apple and Windows implementations are unchanged.",
@@ -13,9 +14,6 @@
   "fixtures": "Compare with independent getconf PAGESIZE and check successful-query errno preservation for zero, EIO and an arbitrary raw sentinel. Restore original errno before assertions.",
   "local_baseline": "Both fixtures passed in /tmp/martensite-page-size-baseline.log. Full cargo xtask pr passed in /tmp/martensite-page-size-baseline-pr.log.",
   "candidate": "Existing nix 0.31.3 exposes SysconfVar::PAGE_SIZE. Its sysconf wrapper clears errno before the native call, so compatibility requires preserving the incoming raw errno when the call leaves zero. Negative or absent values must retain the zero fallback.",
-  "deletion_gate": "The direct non-Apple Unix sysconf unsafe block is deleted locally. Integration requires completed baseline native validation and reviewed replacement evidence.",
-  "remaining": [
-    "Complete the baseline native gate",
-    "Validate replacement on supported native targets"
-  ]
+  "deletion_gate": "The direct non-Apple Unix sysconf unsafe block was deleted and integrated after baseline and replacement validation. No parallel implementation remains for that scope.",
+  "remaining": []
 }
