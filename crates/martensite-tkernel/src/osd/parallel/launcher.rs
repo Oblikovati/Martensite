@@ -14,6 +14,9 @@ use std::{
     },
 };
 
+#[cfg(test)]
+mod migration_tests;
+
 /// A pool launcher; `Launcher::new(&pool, -1).perform(0, 10, |thread, index| {})?`.
 pub struct Launcher<'a> {
     // Locked pool workers followed by the self-thread.
