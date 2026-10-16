@@ -1,0 +1,20 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "baseline_revision": "3e677514c73bb8197cf1c9479a56cf0928fcc9c0",
+  "fixture_revision": "f7b6cb0",
+  "change": "Replaced the first-party libc umask unsafe block with rustix::process::umask, retaining raw mode bits and the previous-mask return value.",
+  "dependency": "Enabled process on already-pinned rustix 1.1.5; existing std/fs/use-libc features and Cargo.lock package versions are unchanged. cargo deny --all-features check and cargo audit passed.",
+  "source_evidence": "rustix 1.1.5 src/process/umask.rs delegates to backend/process/syscalls.rs. Its libc backend casts mask.bits() to libc mode_t, calls libc::umask once, and returns Mode::from_bits_retain of the result. The toolkit retains the existing input/output casts.",
+  "fixture": "Dedicated osd_umask_api_behavior test executable isolates process-global mask changes. Baseline and replacement passed on Linux x86_64: three mask/creation-mode cases, previous-mask sequencing, and u32::MAX masked to 0777. The original process mask is restored on success; a panic exits this isolated test process.",
+  "trust": "Established rustix/libc unsafe remains separately trusted and inventoried; no custom first-party unsafe was relocated. Enabling process exposes more dependency code and requires full workspace and native validation.",
+  "inventory": "Expected native_unix source blocks 15 to 14; compiler spans Linux 28 to 26 and macOS 24 to 22 against this baseline. Windows unchanged. Full verification pending.",
+  "deletion": "Old direct umask call deleted in this increment; no parallel implementation retained. Current migration milestone is the limit.",
+  "validation": "Focused Linux fixture and dependency checks passed; full local gate running, review and native matrix pending.",
+  "exclusions": [
+    "No public API or package version change",
+    "Existing process-wide umask semantics are preserved, not redesigned as operation-local state",
+    "No Miri claim for the native process call",
+    "No completion claim for #89 or #80"
+  ]
+}
