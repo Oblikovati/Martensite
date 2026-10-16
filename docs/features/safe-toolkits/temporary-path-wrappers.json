@@ -1,7 +1,8 @@
 {
   "task_issue": 89,
   "parent_issue": 80,
-  "status": "The two production calls use pinned nix safe wrappers. Independent reviews found no code defects or scope creep; their stale-evidence finding is corrected here. The replacement full local gate passed; native validation remains pending.",
+  "status": "The two production calls use pinned nix safe wrappers. Independent reviews found no code defects or scope creep; their stale-evidence finding is corrected here. The replacement full local gate and four-platform native validation passed.",
+  "replacement_native": "Run 38972454968 passed all four platforms at f906bf71f676618c4e70764ec07c0608c7e341bb; publication was skipped. All four full compiler inventories matched that revision with clean provenance. All six temporary-path fixtures passed on each Unix target. Artifacts: /tmp/martensite-temporary-safe-native.xavvup; logs: /tmp/martensite-temporary-safe-native-{arm64,x64,macos}.log. Windows validates unchanged platform compilation and inventory; the Unix fixtures do not run there.",
   "replacement": "Pinned nix 0.31.3 with fs/feature only. c_path preserves NUL truncation; OwnedFd::into_raw_fd preserves ownership transfer, and OsStringExt::into_vec preserves bytes. No public API or version change. Two lexical unsafe blocks are deleted; expected native_unix spans decrease Linux 20 to 16 and macOS 18 to 14.",
   "completed_baseline": "Corrected run 38970976751 passed all four platforms at 7c14c26ef5f74dd910a0f3b98cbfbb0cbd38e113. All four full inventory summaries matched that revision with clean provenance; artifacts /tmp/martensite-temporary-corrected.3VmSeC. All six temporary fixtures explicitly passed on every Unix target, including macOS zero-X and exec inheritance; logs /tmp/martensite-temporary-corrected-{x64,arm64,macos}.log. This verifies the #140 correction before replacement, not the replacement itself.",
   "replacement_local": "Six unchanged focused tests and cargo xtask pr passed (/tmp/martensite-temporary-safe.log and /tmp/martensite-temporary-safe-pr.log). cargo deny --all-features check and cargo audit both passed (/tmp/martensite-temporary-deny.log and /tmp/martensite-temporary-audit.log).",
@@ -23,7 +24,6 @@
     "caution": "The separately recorded nix directory-stream issue #126 does not justify using its directory API here; this change uses only the two inspected temporary-path wrappers. Dependency audits passed. Unknown injected errno values are not covered by the ordinary native-error fixtures."
   },
   "remaining": [
-    "Complete the replacement native matrix, verifying unchanged fixtures and exact compiler inventories",
     "Integrate after final PR checks; close #140 only after integration"
   ]
 }
