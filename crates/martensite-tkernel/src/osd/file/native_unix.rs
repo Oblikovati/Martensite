@@ -11,6 +11,7 @@ use crate::osd::OpenMode;
 use std::ffi::CString;
 use std::os::unix::{ffi::OsStrExt, fs::DirBuilderExt};
 mod directory_cursor;
+mod lock_record;
 
 /// The real POSIX calls; `NativePosixCalls.stat(b"/tmp")`.
 #[derive(Clone, Copy, Debug, Default)]
@@ -134,8 +135,7 @@ impl PosixFileCalls for NativePosixCalls {
         }
     }
     fn record_lock(&self, fd: i32, lock: RecordLock) -> CallResult<()> {
-        // SAFETY: an all-zero flock is a valid value of this plain C struct.
-        let mut key: libc::flock = unsafe { std::mem::zeroed() };
+        let mut key: libc::flock = lock_record::empty_lock_record();
         key.l_whence = libc::SEEK_SET as _;
         let (command, kind) = match lock {
             RecordLock::Read => (libc::F_SETLKW, libc::F_RDLCK),
@@ -206,7 +206,10 @@ impl PosixFileCalls for NativePosixCalls {
     }
     fn local_time(&self, seconds: i64) -> Option<LocalTime> {
         let time: libc::time_t = seconds as libc::time_t;
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        let mut fields = crate::native_calendar::empty_calendar();
         // SAFETY: an all-zero tm is a valid value of this plain C struct.
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
         let mut fields: libc::tm = unsafe { std::mem::zeroed() };
         // SAFETY: time and fields are valid for the call; localtime_r is reentrant.
         let result: *mut libc::tm = unsafe { libc::localtime_r(&time, &mut fields) };
