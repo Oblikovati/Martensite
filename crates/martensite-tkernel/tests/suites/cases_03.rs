@@ -1,4 +1,6 @@
 // Modules of the `toolkit` test executable: one per tests/*.rs case file, sorted.
+#[path = "../safe_migration_contracts.rs"]
+pub mod safe_migration_contracts;
 #[path = "../ubtree_add_contracts.rs"]
 pub mod ubtree_add_contracts;
 #[path = "../ubtree_clear_contracts.rs"]
