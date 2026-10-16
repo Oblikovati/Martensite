@@ -20,6 +20,14 @@
     "next_gate": "Original direct-libc run 38957033863 reproduced the same macOS 4095-versus-511 failure. Reviewed correction b603dfa retains an exact 07777 expectation on macOS. Both original and replacement passed local gates with the corrected fixture; corrected native runs remain pending. Production mask bits are not normalized."
   },
   "fixture_correction": "Bug #131 correction was merged with the full fixture preserved; its source is identical to the reviewed original-implementation fixture at b603dfa. cargo xtask pr passed after resolving the add/add fixture conflict (/tmp/martensite-umask-fixed-pr.log). Standards review found no violations; spec review requires corrected native runs for both implementations before acceptance.",
+  "corrected_native_validation": {
+    "original_run": "https://github.com/Oblikovati/Martensite/actions/runs/38958439355",
+    "original_revision": "9d1480854e1f2d9a9ea43670af60090cc50067a4",
+    "replacement_run": "https://github.com/Oblikovati/Martensite/actions/runs/38958583978",
+    "replacement_revision": "b72db2e74d62b34c85f1db2db99dc15502cbd289",
+    "verified": "Both implementations passed Linux x86_64, Linux arm64, macOS arm64 and Windows x64; publishing was skipped. All six Unix logs explicitly show the corrected isolated umask fixture passed. All eight inventory artifacts match their exact tested revisions and complete checked-in workspace summaries. Windows does not execute the Unix-only fixture.",
+    "integration": "Merged main e8e1d56 after native validation. The merge preserves the separate safe real-UID query and its inventory reductions. The combined cargo xtask pr gate passed (/tmp/martensite-umask-current-main-pr.log), including the isolated umask fixture. The earlier native revisions do not certify this combined tree; a combined native run is next."
+  },
   "exclusions": [
     "No public API or package version change",
     "Existing process-wide umask semantics are preserved, not redesigned as operation-local state",
