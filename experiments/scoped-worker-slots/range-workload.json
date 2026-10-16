@@ -1,0 +1,13 @@
+{
+  "platform": "x86_64-unknown-linux-gnu",
+  "toolchain": "1.99.0",
+  "profile": "release",
+  "baseline_source": "44cc855",
+  "participants": 3,
+  "launches_per_sample": 1000,
+  "items_per_sample": 64000,
+  "baseline_elapsed_ns": [3385327, 2884480, 5352058],
+  "candidate_elapsed_ns": [1393610, 1393820, 2607727],
+  "acceptance": "Both paths completed exactly 64000 atomic increments per sample; stable worker identity is checked separately.",
+  "limitations": ["Only three samples on a shared host", "Baseline always ran first", "No allocation or RSS comparison yet", "Two workers only; recursive scope depth not stressed", "Microbenchmark does not prove end-to-end CAD performance"]
+}

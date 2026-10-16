@@ -4,6 +4,8 @@
 use rayon::{ThreadPool, ThreadPoolBuilder};
 use std::thread::JoinHandle;
 
+mod workload;
+
 struct Slot {
     pool: Option<ThreadPool>,
     threads: Vec<JoinHandle<()>>,
