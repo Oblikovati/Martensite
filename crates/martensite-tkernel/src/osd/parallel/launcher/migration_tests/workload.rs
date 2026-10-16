@@ -2,6 +2,7 @@
 use super::{Launcher, ThreadPool};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+mod allocation_probe;
 mod retention;
 
 fn measured(launcher: &Launcher<'_>) -> u128 {

@@ -1,0 +1,19 @@
+{
+  "task": 87,
+  "production_revision": "153edade63c45199e2e8f84797f2817ee5ebe1aa",
+  "capture_state": "Uncommitted diagnostic script and ignored allocation-probe test; production code unchanged",
+  "method": "Valgrind 3.22.0 Memcheck total heap usage, one warmed launcher, one range item per launch, separate process per sample",
+  "original_workload": {"candidate_repeats": [123521, 123521], "recorded_baseline": 1201},
+  "minimized_samples": [
+    {"participants": 1, "launches": 0, "allocations": 264},
+    {"participants": 1, "launches": 1, "allocations": 264},
+    {"participants": 1, "launches": 100, "allocations": 264},
+    {"participants": 2, "launches": 0, "allocations": 301},
+    {"participants": 2, "launches": 1, "allocations": 302},
+    {"participants": 2, "launches": 100, "allocations": 402},
+    {"participants": 2, "launches": 1, "allocations": 302}
+  ],
+  "red_capable_check": "Run warmed_dispatch_allocation_probe with two participants and one launch through experiments/check-worker-allocations.sh using the measured zero-launch count 301: correctness passes, allocation comparison exits 1 with 302 allocations.",
+  "limitations": "Counts include test-harness and startup allocations. The 100-launch sample adds 101, not exactly 100; do not claim a perfectly linear allocation law. This diagnostic comparator is not a new merge-acceptance policy.",
+  "next_probe": "Distinguish scoped job allocation from success-path failure collection and prepared-worker/executor lookup using targeted allocation stacks."
+}

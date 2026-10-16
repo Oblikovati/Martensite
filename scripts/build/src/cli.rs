@@ -133,7 +133,16 @@ fn release_for(
         triple: triple.to_owned(),
         source_packages: is_primary(triple),
     };
-    run_release(context, &request).map(|_| ())
+    run_release(context, &request)?;
+    context
+        .reporter
+        .step("Check expanded unsafe inventory", || {
+            crate::compiler_inventory::capture_inventory(
+                context.runner,
+                context.root(),
+                &BuildTarget::Triple(triple.to_owned()),
+            )
+        })
 }
 
 fn run_planned(context: &BuildContext<'_>, triple: &str) -> BuildResult<()> {

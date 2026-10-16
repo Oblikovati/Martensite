@@ -25,9 +25,12 @@ unsafe impl<T> Sync for SequenceOwnerRegistry<T> where SequenceNodeOwners<T>: Sy
 impl<T> Default for SequenceOwnerRegistry<T> {
     fn default() -> Self {
         let owners = Box::into_raw(Box::<SequenceNodeOwners<T>>::default());
+        // Keep the original allocation provenance; Box::into_non_null exceeds our MSRV.
+        let owners = NonNull::new(owners).unwrap_or_else(|| {
+            std::alloc::handle_alloc_error(std::alloc::Layout::new::<SequenceNodeOwners<T>>())
+        });
         Self {
-            // SAFETY: Box::into_raw never returns null.
-            owners: unsafe { NonNull::new_unchecked(owners) },
+            owners,
             map: PhantomData,
         }
     }
@@ -61,5 +64,18 @@ impl<T> Drop for SequenceOwnerRegistry<T> {
     fn drop(&mut self) {
         // SAFETY: the pointer came from Box::into_raw and is released only here, once.
         drop(unsafe { Box::from_raw(self.owners.as_ptr()) });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn checked_registry_pointer_retains_identity_through_mutable_access() {
+        let mut registry = super::SequenceOwnerRegistry::<i32>::default();
+        let original = registry.registry_address();
+        assert!(!original.is_null());
+        registry.clear();
+        assert_eq!(registry.registry_address(), original);
+        assert!(registry.into_owners().is_empty());
     }
 }

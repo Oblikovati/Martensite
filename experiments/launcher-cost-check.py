@@ -8,9 +8,14 @@ import json
 import statistics
 import sys
 from pathlib import Path
+from typing import TypedDict
 
 
-def participant_samples(report, implementation):
+class MeasurementReport(TypedDict):
+    samples: dict[str, dict[str, list[int]]]
+
+
+def participant_samples(report: MeasurementReport, implementation: str) -> list[int]:
     values = report["samples"][implementation]["32"]
     if not isinstance(values, list) or len(values) < 3:
         raise ValueError(f"expected at least three samples for {implementation}: {values!r}")
@@ -19,7 +24,7 @@ def participant_samples(report, implementation):
     return values
 
 
-def compare(report):
+def compare(report: MeasurementReport) -> int:
     baseline = participant_samples(report, "baseline")
     candidate = participant_samples(report, "candidate")
     if len(baseline) != len(candidate):
@@ -30,7 +35,7 @@ def compare(report):
     return int(new > old * 1.2)
 
 
-def main():
+def main() -> int:
     [measurement_path] = sys.argv[1:]
     return compare(json.loads(Path(measurement_path).read_text(encoding="utf-8")))
 

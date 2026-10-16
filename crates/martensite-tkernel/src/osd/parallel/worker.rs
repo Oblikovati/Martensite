@@ -29,6 +29,7 @@ struct ScopedWorker {
 struct JoinedThreads(Vec<JoinHandle<()>>);
 
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    // Jobs run under catch_unwind outside these locks; recovery preserves executor/failure state.
     mutex.lock().unwrap_or_else(|poison| poison.into_inner())
 }
 
@@ -153,17 +154,35 @@ fn dispatch_tree(
     caller: &Worker,
     body: &JobBody<'_>,
 ) -> IndexedFailures {
+    let Some((owner, remaining)) = workers.split_last() else {
+        return participant_failure(caller, body);
+    };
+    // The invoking participant stays on its current thread; worker joins stay balanced (#109).
+    let mut left = Vec::new();
+    let mut right = Vec::new();
+    owner.executor.pool.in_place_scope(|scope| {
+        scope.spawn(|_| left = dispatch_on_worker(remaining, owner.worker, body));
+        right = participant_failure(caller, body);
+    });
+    left.extend(right);
+    left
+}
+
+fn dispatch_on_worker(
+    workers: &[PreparedWorker<'_>],
+    caller: &Worker,
+    body: &JobBody<'_>,
+) -> IndexedFailures {
     let Some(owner) = workers.get(workers.len() / 2) else {
         return participant_failure(caller, body);
     };
     let middle = workers.len() / 2;
-    // Each branch keeps its final participant on the current physical thread (#109).
-    let mut left = Vec::new();
-    let mut right = Vec::new();
-    owner.executor.pool.in_place_scope(|scope| {
-        scope.spawn(|_| left = dispatch_tree(&workers[..middle], owner.worker, body));
-        right = dispatch_tree(&workers[middle + 1..], caller, body);
-    });
+    // A dedicated one-thread pool keeps the joined branch on this participant.
+    let pool = &owner.executor.pool;
+    let (mut left, right) = rayon::join(
+        || pool.install(|| dispatch_on_worker(&workers[..middle], owner.worker, body)),
+        || dispatch_on_worker(&workers[middle + 1..], caller, body),
+    );
     left.extend(right);
     left
 }

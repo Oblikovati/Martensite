@@ -1,0 +1,25 @@
+{
+  "issue": 87,
+  "base_revision": "153edade63c45199e2e8f84797f2817ee5ebe1aa",
+  "candidate": "Uncommitted single-root scoped dispatch with balanced worker join/install",
+  "platform": "Linux x86_64",
+  "tool": "Valgrind 3.22.0 Memcheck --leak-check=full --show-leak-kinds=all",
+  "logs": "/tmp/martensite-single-root-retention.zTxZ1g",
+  "method": "Separate processes create, run and destroy eight-participant pools; each pool performs 64 increments and the test asserts the total.",
+  "results": [
+    {"cycles": 1, "test": "one_pool_shutdown", "passed": true, "allocations": 498, "allocated_bytes": 268490, "exit_bytes": 33940, "definitely_lost": 0, "indirectly_lost": 0, "possibly_lost": 13872, "reachable": 20068, "memcheck_error_contexts": 2},
+    {"cycles": 100, "test": "hundred_pool_shutdowns", "passed": true, "allocations": 23169, "allocated_bytes": 8915596, "exit_bytes": 64572, "definitely_lost": 0, "indirectly_lost": 0, "possibly_lost": 13872, "reachable": 50700, "memcheck_error_contexts": 2},
+    {"cycles": 1000, "test": "thousand_pool_shutdowns", "passed": true, "allocations": 229269, "allocated_bytes": 87525206, "exit_bytes": 64572, "definitely_lost": 0, "indirectly_lost": 0, "possibly_lost": 13872, "reachable": 50700, "memcheck_error_contexts": 2}
+  ],
+  "possibly_lost_provenance": [
+    {"bytes": 48, "blocks": 1, "path": "std::thread::Thread::new -> init_current -> test harness channel receive"},
+    {"bytes": 13824, "blocks": 6, "path": "crossbeam_epoch::Collector::register -> thread-local LocalHandle -> crossbeam_deque::Stealer::steal -> Rayon worker"}
+  ],
+  "conclusion": "Observed retention plateaus between 100 and 1000 cycles and matches the earlier candidate's retained-byte totals; changing dispatch did not eliminate the collector-related retention.",
+  "limitations": [
+    "Finite single-platform observations do not prove a general bound or absence of leaks.",
+    "Full leak checks report two possible-loss contexts; these are not clean Memcheck runs.",
+    "No suppressions or forced collector flushing were used.",
+    "The original baseline's recorded retained total is 596 bytes, so the candidate still has a resource-cost difference."
+  ]
+}
