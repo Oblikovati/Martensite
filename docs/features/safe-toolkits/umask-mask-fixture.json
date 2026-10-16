@@ -14,5 +14,5 @@
     "contract": "umask1 stores newmask & ALLPERMS and returns the previous stored mask. ALLPERMS includes the special permission bits and equals 07777."
   },
   "correction": "The fixture expects exactly 07777 on macOS and keeps the existing 0777 expectation elsewhere. No assertion is skipped; creation-mode cases and previous-mask sequencing remain unchanged. Supported Unix validation covers Linux and macOS; no claim is made for other Unix targets.",
-  "validation": "Corrected fixture validation and review pending. No production behavior or version change. Bug #131 remains open until the correction and native validation are integrated."
+  "validation": "Corrected Linux focused test and cargo xtask pr passed (/tmp/martensite-umask-original-fixed-test.log and /tmp/martensite-umask-original-fixed-pr.log). Separate standards and spec reviews found no defects; corrected native validation of both implementations remains pending. No production behavior or version change. Bug #131 remains open until integration and native acceptance."
 }
