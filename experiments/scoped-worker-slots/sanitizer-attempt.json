@@ -1,0 +1,11 @@
+{
+  "toolchain": "nightly-2026-09-25",
+  "target": "x86_64-unknown-linux-gnu",
+  "command": "RUSTFLAGS='-Zsanitizer=thread' cargo +nightly-2026-09-25 test -Zbuild-std --target x86_64-unknown-linux-gnu --target-dir target/tsan --lib",
+  "compilation": "passed, including rebuilt standard library",
+  "execution": "SIGSEGV before test results; direct --list also exited 139 without output",
+  "control": "Independent dependency-free binary with only println also compiled using the same sanitizer and rebuilt std, then exited 139 before its main output.",
+  "inference": "Sanitizer startup fails independently of the worker experiment in this environment; exact toolchain/host cause is undiagnosed.",
+  "coverage": "No passing ThreadSanitizer evidence; native stress success does not substitute for this missing gate.",
+  "excluded_attempt": "Direct rustc without rebuilt std was rejected for sanitizer ABI mismatch; no ABI override was used."
+}
