@@ -2,9 +2,11 @@
   "task_issue": 89,
   "parent_issue": 80,
   "starting_main": "3c180e074dda0573a29a44bd92bc10833efaca0a",
-  "status": "Safe replacement implemented locally; original native baseline run 38980838524 remains active at aab941ddf252d4dba5b9c6d1d01ae1ca9295b155. Replacement review and native validation remain pending.",
+  "status": "Safe replacement passed local validation and code review. Original native baseline run 38980838524 remains active at aab941ddf252d4dba5b9c6d1d01ae1ca9295b155: both Linux targets and macOS passed, Windows pending. Replacement native validation remains pending.",
+  "native_baseline": "Both Linux page-size fixtures explicitly passed. Full inventories for both Linux targets and macOS matched the exact baseline revision with clean provenance. Artifacts /tmp/martensite-page-size-original.vLgGYz; logs /tmp/martensite-page-size-original-{x64,arm64,macos}.log. Apple and Windows exclude the new non-Apple Unix fixtures.",
+  "review": "Standards: zero documented violations or actionable smells. Spec: no implementation defect or scope creep; native acceptance remains incomplete. Both reviewed 03366f2...31eea16. Shared adaptation retains errno and sentinel behavior; native fixtures are unchanged.",
   "replacement": "Use existing nix SysconfVar::PAGE_SIZE, retaining the c_long-to-usize checked conversion and zero fallback. Extract clock-tick errno/sentinel adaptation into a private native_config module shared by both real callers. Preserve the two original clock-tick fixtures unchanged; move the four adaptation cases to the shared module, checking native integers before caller conversion. No dependency, public API or version change.",
-  "local_replacement": "All library tests passed: 383 passed, one ignored (/tmp/martensite-page-size-safe-unit.log). Full cargo xtask pr is running in /tmp/martensite-page-size-safe-pr.log.",
+  "local_replacement": "All library tests passed: 383 passed, one ignored (/tmp/martensite-page-size-safe-unit.log). Full cargo xtask pr passed in /tmp/martensite-page-size-safe-pr.log.",
   "inventory": "One lexical unsafe block removed. Linux page-size emitted spans decrease from two to zero; Apple and Windows implementations are unchanged.",
   "scope": "The non-Apple Unix sysconf(_SC_PAGESIZE) call only. Apple Mach global access and Windows GetSystemInfo remain outside this increment.",
   "contract": "Convert the native c_long result to usize, returning zero when conversion fails. Preserve ordinary native errno behavior.",
@@ -14,6 +16,6 @@
   "deletion_gate": "The direct non-Apple Unix sysconf unsafe block is deleted locally. Integration requires completed baseline native validation and reviewed replacement evidence.",
   "remaining": [
     "Complete the baseline native gate",
-    "Review and validate replacement on supported native targets"
+    "Validate replacement on supported native targets"
   ]
 }
