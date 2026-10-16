@@ -1,0 +1,171 @@
+//! Allocator propagation from coherent meshes into node triangle rings.
+use martensite_tkernel::{ncollection::BaseAllocator, precision, standard::Handle};
+use martensite_tkmath::gp::{Point3, Xyz};
+use martensite_tkmath::poly::{CoherentNode, CoherentTriangulation, Triangle, Triangulation};
+
+fn source_mesh() -> Handle<Triangulation> {
+    let mesh = Triangulation::with_sizes(4, 1, false, false).unwrap();
+    for (index, (x, y)) in [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (1.0, 1.0)]
+        .into_iter()
+        .enumerate()
+    {
+        mesh.set_node(index as i32 + 1, Point3::new(x, y, 0.0))
+            .unwrap();
+    }
+    mesh.set_triangle(1, Triangle::new(1, 2, 3)).unwrap();
+    Handle::new(mesh)
+}
+
+#[test]
+fn mesh_constructor_allocator_owns_new_and_removed_incident_members() {
+    let allocator = BaseAllocator::incremental(4096);
+    let wrong = undefined_freer();
+    let mut mesh = CoherentTriangulation::new_in(allocator.clone());
+    assert_eq!(mesh.allocator(), &allocator);
+    for index in 0..4 {
+        mesh.set_node(Xyz::new(index as f64, 0.0, 0.0), index);
+    }
+    let triangle = mesh.add_triangle(0, 1, 3).unwrap().unwrap();
+    assert_allocator_rejection(mesh.change_node(0).unwrap(), triangle, &wrong);
+    assert_allocator_has_live_members(&allocator);
+    assert!(mesh.remove_triangle(triangle).unwrap());
+    mesh.add_triangle(0, 1, 3).unwrap().unwrap();
+    assert_allocator_has_live_members(&allocator);
+    drop(mesh);
+    allocator.reset(false).unwrap();
+}
+
+#[test]
+fn copied_mesh_uses_its_allocator_for_incident_rings_and_clear() {
+    let allocator = BaseAllocator::incremental(4096);
+    let wrong = undefined_freer();
+    let mut mesh =
+        CoherentTriangulation::from_triangulation_in(&source_mesh(), allocator.clone()).unwrap();
+    assert_eq!(mesh.allocator(), &allocator);
+    assert_allocator_rejection(mesh.change_node(0).unwrap(), 0, &wrong);
+    assert_allocator_has_live_members(&allocator);
+    assert!(mesh.node(0).unwrap().triangles().eq([0]));
+    mesh.change_node(0).unwrap().clear_in(&allocator).unwrap();
+    assert!(mesh.node(0).unwrap().is_free_node());
+    drop(mesh);
+    allocator.reset(false).unwrap();
+}
+
+#[test]
+fn clone_constructor_allocator_owns_the_copied_incident_rings() {
+    let source_allocator = BaseAllocator::incremental(4096);
+    let clone_allocator = BaseAllocator::incremental(4096);
+    let mesh =
+        CoherentTriangulation::from_triangulation_in(&source_mesh(), source_allocator).unwrap();
+    let mut clone = mesh
+        .clone_triangulation_in(clone_allocator.clone())
+        .unwrap()
+        .unwrap();
+    assert_eq!(clone.allocator(), &clone_allocator);
+    assert_allocator_has_live_members(&clone_allocator);
+    assert_allocator_rejection(clone.change_node(0).unwrap(), 0, &undefined_freer());
+    drop(clone);
+    clone_allocator.reset(false).unwrap();
+}
+
+#[test]
+fn node_add_remove_preserve_ring_order_and_use_explicit_allocator() {
+    let allocator = BaseAllocator::incremental(4096);
+    let wrong = undefined_freer();
+    let mut node = CoherentNode::default();
+    node.add_triangle_in(8, allocator.clone()).unwrap();
+    node.add_triangle_in(9, allocator.clone()).unwrap();
+    assert_eq!(node.triangles().collect::<Vec<_>>(), [8, 9]);
+    assert_allocator_rejection(&mut node, 8, &wrong);
+    assert!(node.remove_triangle_in(8, &allocator).unwrap());
+    assert_eq!(node.triangles().collect::<Vec<_>>(), [9]);
+}
+
+#[test]
+fn node_clear_refuses_an_undefined_release_then_resets_geometry_with_its_allocator() {
+    let allocator = BaseAllocator::incremental(4096);
+    let wrong = undefined_freer();
+    let mut node = CoherentNode::new(Xyz::new(2.0, 3.0, 4.0));
+    node.set_uv(0.25, 0.75);
+    node.set_index(14);
+    node.add_triangle_in(9, allocator.clone()).unwrap();
+    let error = node.clear_in(&wrong).unwrap_err();
+    assert_eq!(error.exception_type(), "Standard_ProgramError");
+    assert!(!node.is_free_node());
+    assert_eq!((node.get_u(), node.get_v()), (0.25, 0.75));
+    node.clear_in(&allocator).unwrap();
+    assert!(node.is_free_node());
+    assert_eq!(
+        (node.get_u(), node.get_v()),
+        (precision::infinite(), precision::infinite())
+    );
+    assert_eq!((node.x(), node.y(), node.z()), (0.0, 0.0, 0.0));
+    assert_eq!(node.get_index(), 14);
+    allocator.reset(false).unwrap();
+}
+
+#[test]
+fn common_policy_instances_can_remove_each_others_ring_members() {
+    let owner = BaseAllocator::fresh_common();
+    let remover = BaseAllocator::fresh_common();
+    let mut ring = martensite_tkmath::poly::CoherentTriPtr::new_in(7, owner.clone());
+    let member = ring.head_member().unwrap();
+    ring.remove_member(member, &remover).unwrap();
+    assert!(ring.is_empty());
+    assert_ne!(owner, remover);
+}
+
+#[test]
+fn heap_policy_instances_can_remove_each_others_ring_lists() {
+    let owner = BaseAllocator::fresh_heap();
+    let remover = BaseAllocator::fresh_heap();
+    let mut ring = martensite_tkmath::poly::CoherentTriPtr::new_in(9, owner.clone());
+    ring.remove_list_in(&remover).unwrap();
+    assert!(ring.is_empty());
+    assert_ne!(owner, remover);
+}
+
+#[test]
+fn common_and_heap_allocators_release_each_others_node_members() {
+    let common = BaseAllocator::fresh_common();
+    let heap = BaseAllocator::fresh_heap();
+    assert_cross_backend_node_removal(&heap, &common);
+    assert_cross_backend_node_removal(&common, &heap);
+}
+
+fn assert_cross_backend_node_removal(owner: &BaseAllocator, remover: &BaseAllocator) {
+    let mut node = CoherentNode::default();
+    node.add_triangle_in(12, owner.clone()).unwrap();
+    assert!(node.remove_triangle_in(12, remover).unwrap());
+    assert!(node.is_free_node());
+}
+
+#[test]
+fn another_incremental_allocator_removes_members_with_its_ignored_free() {
+    // BaseAllocator::free_raw_nullable ignores every address, so Remove only unlinks.
+    let owner = BaseAllocator::incremental(4096);
+    let other = BaseAllocator::incremental(4096);
+    let mut ring = martensite_tkmath::poly::CoherentTriPtr::new_in(11, owner.clone());
+    let member = ring.head_member().unwrap();
+    ring.remove_member(member, &other).unwrap();
+    assert!(ring.is_empty());
+    owner.reset(false).unwrap();
+}
+
+/// Unchecked, Common's free() of an incremental arena's interior address is undefined, so
+/// the Rust release is refused before the ring changes.
+fn undefined_freer() -> BaseAllocator {
+    BaseAllocator::common()
+}
+
+fn assert_allocator_rejection(node: &mut CoherentNode, triangle: usize, wrong: &BaseAllocator) {
+    let before = node.triangles().collect::<Vec<_>>();
+    let error = node.remove_triangle_in(triangle, wrong).unwrap_err();
+    assert_eq!(error.exception_type(), "Standard_ProgramError");
+    assert_eq!(node.triangles().collect::<Vec<_>>(), before);
+}
+
+fn assert_allocator_has_live_members(allocator: &BaseAllocator) {
+    let error = allocator.reset(false).unwrap_err();
+    assert_eq!(error.exception_type(), "Standard_ProgramError");
+}

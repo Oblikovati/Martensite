@@ -116,7 +116,7 @@ crates/
 ├── martensite-cmath/     Adapter to the platform C math library.
 ├── martensite-tkernel/   Foundation toolkit.
 ├── martensite-kernel/    Shared kernel.
-├── martensite-math/      Math Toolkit.
+├── martensite-tkmath/    Math toolkit.
 └── martensite-*/         Other Toolkits
 
 tests/                      Integration / E2E tests which transverse multiple crates.

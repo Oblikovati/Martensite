@@ -1,0 +1,63 @@
+[package]
+autotests = false
+name = "martensite-tkmath"
+version = "0.3.1"
+description = "Martensite math toolkit: geometric primitives, linear algebra, solvers, splines, bounding volumes, meshes and exact predicates."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.1" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.1" }
+num-bigint = { version = "=0.4.6", default-features = false }
+num-complex = "=0.4.6"
+rustc_apfloat = "=0.2.3"
+
+[features]
+# Enables the matrix index and singularity checks that are left out of release builds.
+debug-checks = []
+
+# Test modules share one executable per toolkit to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+[[bench]]
+name = "exact_roots"
+path = "benches/exact_roots.rs"
+harness = false
+
+[[bench]]
+name = "bezier_line"
+path = "benches/bezier_line.rs"
+harness = false
+
+[[bench]]
+name = "root_signs"
+path = "benches/root_signs.rs"
+harness = false
+
+[[bench]]
+name = "bezier_wire"
+path = "benches/bezier_wire.rs"
+harness = false
+
+[[bench]]
+name = "bezier_incidence"
+path = "benches/bezier_incidence.rs"
+harness = false
+
+[[bench]]
+name = "metric_bounds"
+path = "benches/metric_bounds.rs"
+harness = false
+
+[[bench]]
+name = "certified_bezier_pairs"
+path = "benches/certified_bezier_pairs.rs"
+harness = false

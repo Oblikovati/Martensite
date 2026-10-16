@@ -1,0 +1,125 @@
+//! Sampled scalar root isolation.
+use super::FunctionWithDerivative;
+mod brent;
+mod extrema;
+mod golden;
+mod results;
+mod sampling;
+/// Roots and callback states in ascending order; `FunctionRoots::new(&mut f,-2.0,2.0,20)`.
+pub struct FunctionRoots {
+    roots: Vec<f64>,
+    states: Vec<i32>,
+    done: bool,
+    all_null: bool,
+}
+#[derive(Clone, Copy)]
+struct Search {
+    lower: f64,
+    upper: f64,
+    count: usize,
+    dx: f64,
+    tolerance: f64,
+    original: f64,
+    duplicate: f64,
+    value: f64,
+    null: f64,
+    target: f64,
+}
+impl Search {
+    fn new(mut lower: f64, mut upper: f64, samples: i32, eps: [f64; 3], target: f64) -> Self {
+        if upper < lower {
+            std::mem::swap(&mut lower, &mut upper);
+        }
+        let count: usize = (i64::from(samples) * 2).max(20) as usize;
+        let duplicate: f64 = 1e-10 * (lower.abs() + upper.abs());
+        let tolerance: f64 = if eps[0] < duplicate {
+            duplicate
+        } else {
+            eps[0]
+        };
+        Self {
+            lower,
+            upper,
+            count,
+            dx: (upper - lower) / count as f64,
+            tolerance,
+            original: eps[0],
+            duplicate,
+            value: eps[1],
+            null: eps[2],
+            target,
+        }
+    }
+    fn clamp(self, mut x: f64) -> f64 {
+        if x < self.lower {
+            x = self.lower;
+        }
+        if x > self.upper {
+            x = self.upper;
+        }
+        x
+    }
+}
+impl FunctionRoots {
+    /// Uses zero default tolerances; `FunctionRoots::new(&mut f,-2.0,2.0,20)`.
+    pub fn new(
+        function: &mut impl FunctionWithDerivative,
+        lower: f64,
+        upper: f64,
+        samples: i32,
+    ) -> Self {
+        Self::with_options(function, lower, upper, samples, [0.0; 3], 0.0)
+    }
+    /// Solves F(x)=target with `[EpsX,EpsF,EpsNull]`; `FunctionRoots::with_options(&mut f,-2.0,2.0,20,[1e-8;3],0.0)`.
+    pub fn with_options(
+        function: &mut impl FunctionWithDerivative,
+        lower: f64,
+        upper: f64,
+        samples: i32,
+        eps: [f64; 3],
+        target: f64,
+    ) -> Self {
+        let search: Search = Search::new(lower, upper, samples, eps, target);
+        let mut result: Self = Self {
+            roots: Vec::new(),
+            states: Vec::new(),
+            done: true,
+            all_null: false,
+        };
+        result.sample(function, search);
+        result
+    }
+    fn append(&mut self, function: &mut impl FunctionWithDerivative, x: f64, duplicate: f64) {
+        let mut position: usize = self.roots.len();
+        for (index, &root) in self.roots.iter().enumerate() {
+            if (x - root).abs() <= duplicate {
+                return;
+            }
+            if root >= x {
+                position = index;
+                break;
+            }
+        }
+        self.roots.insert(position, x);
+        let mut value: f64 = 0.0;
+        function.value(x, &mut value);
+        self.states.insert(position, function.state_number());
+    }
+}
+impl FunctionRoots {
+    /// Writes the `Dump` text listing every root; `roots.dump(&mut text)?`.
+    pub fn dump(&self, stream: &mut impl std::fmt::Write) -> std::fmt::Result {
+        write!(stream, "math_FunctionRoots ")?;
+        if !self.done {
+            return writeln!(stream, " Status = not Done ");
+        }
+        writeln!(stream, " Status = Done ")?;
+        writeln!(stream, " Number of solutions = {}", self.roots.len())?;
+        for (offset, root) in self.roots.iter().enumerate() {
+            let text = crate::math::stream_real(*root);
+            writeln!(stream, " Solution Number {}= {text}", offset + 1)?;
+        }
+        Ok(())
+    }
+}
+display_via_dump!(FunctionRoots);

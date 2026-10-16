@@ -85,10 +85,12 @@ diagnostic. The check never changes a symlink or its target ([#75]).
    - The bump from the previous final release (the highest earlier `v*` tag
      that is not a pre-release) is at least what the headings require:
      `Fixed`/`Security` need a patch, `Added`/`Changed`/`Deprecated` need a
-     minor, and `Removed` or a `BREAKING` marker needs a major. Before 1.0.0,
-     a breaking change needs a minor bump, as cargo's compatibility rules
-     expect. The first release has no baseline, so only the section is
-     checked.
+     minor, and `Removed` or a `BREAKING` marker needs a major. Before 1.0.0
+     every level moves down one, as cargo's compatibility rules expect: an
+     additive change (`Added`, `Deprecated`, a non-breaking `Changed`) needs
+     only a patch bump, and a breaking change (`Removed` or a `BREAKING`
+     marker) needs a minor bump. The first release has no baseline, so only
+     the section is checked.
 2. `cargo fmt --all --check`, then clippy and the full test suite (with doc
    tests) for the whole workspace on the target.
 3. Release build of the releasable packages. The driver reads cargo's JSON

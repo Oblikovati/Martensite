@@ -139,13 +139,18 @@ fn heading_bump(heading: &str) -> BuildResult<BumpLevel> {
     }
 }
 
-/// Before 1.0.0 the major number stays 0, so a breaking change moves the
-/// minor number instead (the cargo compatibility convention).
+/// Before 1.0.0 cargo treats `0.x.y` and `0.x.z` as compatible, so each level moves
+/// down one: a breaking change (`Removed` or `BREAKING`) needs a minor bump and an
+/// additive change (`Added`, `Deprecated`, non-breaking `Changed`) a patch bump.
+/// From 1.0.0 the headings' own levels apply.
 fn relaxed_for_initial_development(required: BumpLevel, previous: &Version) -> BumpLevel {
-    if previous.major == 0 && required == BumpLevel::Major {
-        return BumpLevel::Minor;
+    if previous.major != 0 {
+        return required;
     }
-    required
+    match required {
+        BumpLevel::Major => BumpLevel::Minor,
+        BumpLevel::Minor | BumpLevel::Patch => BumpLevel::Patch,
+    }
 }
 
 fn actual_bump(previous: &Version, version: &Version) -> BuildResult<BumpLevel> {
@@ -218,6 +223,22 @@ mod tests {
         let added = notes(&["Fixed", "Added"], false);
         assert!(check_bump(Some(&v("1.2.0")), &v("1.2.1"), &added).is_err());
         assert!(check_bump(Some(&v("1.2.0")), &v("1.3.0"), &added).is_ok());
+    }
+
+    #[test]
+    fn additive_change_needs_only_a_patch_before_one_zero() {
+        for heading in ["Added", "Changed", "Deprecated"] {
+            let additive = notes(&["Fixed", heading], false);
+            assert!(check_bump(Some(&v("0.3.0")), &v("0.3.1"), &additive).is_ok());
+            assert!(check_bump(Some(&v("0.3.0")), &v("0.4.0"), &additive).is_ok());
+        }
+    }
+
+    #[test]
+    fn removal_needs_a_minor_before_one_zero() {
+        let removed = notes(&["Removed"], false);
+        assert!(check_bump(Some(&v("0.3.0")), &v("0.3.1"), &removed).is_err());
+        assert!(check_bump(Some(&v("0.3.0")), &v("0.4.0"), &removed).is_ok());
     }
 
     #[test]

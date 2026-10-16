@@ -171,7 +171,12 @@ This project follows [Semantic Versioning](https://semver.org/):
   changes that are not handled by a migration, removal of CLI subcommands,
   or changes to the MCP tool schema that would break existing agents.
 
-Breaking changes only ship in major releases. Deprecated items are
+Before 1.0.0 each level moves down one, as cargo's compatibility rules
+expect: additive changes ship in a patch release (`0.y.Z`) and breaking
+changes in a minor release (`0.Y.0`). `cargo xtask release` checks the bump
+this way.
+
+From 1.0.0, breaking changes only ship in major releases. Deprecated items are
 documented in the CHANGELOG under `### Deprecated` and removed no sooner
 than the following major release.
 

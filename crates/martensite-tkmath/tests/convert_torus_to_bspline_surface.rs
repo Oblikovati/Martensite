@@ -1,0 +1,142 @@
+//! Convert torus to bspline surface tests.
+#![allow(non_snake_case)]
+use martensite_tkmath::bsplslib::{self, SurfaceSpan};
+use martensite_tkmath::convert::ElementarySurfaceToBSplineSurface;
+use martensite_tkmath::gp::{Axis3, Direction3, Point3, Torus3};
+use std::f64::consts::PI;
+
+// Axis3(Point3(0.0, 0.0, 0.0), Direction3(0.0, 0.0, 1.0)).
+fn frame() -> Axis3 {
+    Axis3::from_normal(
+        Point3::new(0.0, 0.0, 0.0),
+        Direction3::new(0.0, 0.0, 1.0).unwrap(),
+    )
+    .unwrap()
+}
+
+fn torus(major: f64, minor: f64) -> Torus3 {
+    Torus3::new(frame(), major, minor).unwrap()
+}
+
+#[test]
+fn convert_torus_to_b_spline_surface_full_torus() {
+    let aTorus = torus(5.0, 2.0);
+    let aConv = ElementarySurfaceToBSplineSurface::from_torus(&aTorus).unwrap();
+
+    assert_eq!(aConv.u_degree(), 2);
+    assert_eq!(aConv.v_degree(), 2);
+    assert!(aConv.is_u_periodic());
+    assert!(aConv.is_v_periodic());
+    assert!(aConv.nb_u_poles() > 0);
+    assert!(aConv.nb_v_poles() > 0);
+}
+
+#[test]
+fn convert_torus_to_b_spline_surface_trimmed_uv() {
+    let aTorus = torus(5.0, 2.0);
+    let (aU1, aU2) = (0.0, PI);
+    let (aV1, aV2) = (0.0, PI);
+    let aConv =
+        ElementarySurfaceToBSplineSurface::from_torus_patch(&aTorus, aU1, aU2, aV1, aV2).unwrap();
+
+    assert!(!aConv.is_u_periodic());
+    assert!(!aConv.is_v_periodic());
+    assert!(aConv.nb_u_poles() > 0);
+    assert!(aConv.nb_v_poles() > 0);
+}
+
+#[test]
+fn convert_torus_to_b_spline_surface_u_trimmed() {
+    let aTorus = torus(5.0, 2.0);
+    let aConv = ElementarySurfaceToBSplineSurface::from_torus_band(&aTorus, 0.0, PI, true).unwrap();
+
+    assert!(!aConv.is_u_periodic());
+    assert!(aConv.is_v_periodic());
+}
+
+#[test]
+fn convert_torus_to_b_spline_surface_v_trimmed() {
+    let aTorus = torus(5.0, 2.0);
+    let aConv =
+        ElementarySurfaceToBSplineSurface::from_torus_band(&aTorus, 0.0, PI, false).unwrap();
+
+    assert!(aConv.is_u_periodic());
+    assert!(!aConv.is_v_periodic());
+}
+
+#[test]
+fn convert_torus_to_b_spline_surface_weights_are_positive() {
+    let aTorus = torus(5.0, 2.0);
+    let aConv = ElementarySurfaceToBSplineSurface::from_torus(&aTorus).unwrap();
+
+    let aWeights = aConv.weights();
+    for i in 1..=aConv.nb_u_poles() {
+        for j in 1..=aConv.nb_v_poles() {
+            assert!((*aWeights.value(i, j).unwrap()) > 0.0);
+        }
+    }
+}
+
+#[test]
+fn convert_torus_to_b_spline_surface_knots_are_monotonic() {
+    let aTorus = torus(5.0, 2.0);
+    let aConv = ElementarySurfaceToBSplineSurface::from_torus(&aTorus).unwrap();
+
+    let aUKnots = aConv.u_knots();
+    for i in 2..=aConv.nb_u_knots() {
+        assert!(aUKnots[i] > aUKnots[i - 1]);
+    }
+    let aVKnots = aConv.v_knots();
+    for i in 2..=aConv.nb_v_knots() {
+        assert!(aVKnots[i] > aVKnots[i - 1]);
+    }
+}
+
+#[test]
+fn convert_torus_to_b_spline_surface_geometric_verification() {
+    let aMajorRadius: f64 = 5.0;
+    let aMinorRadius: f64 = 2.0;
+    let aTorus = Torus3::new(frame(), aMajorRadius, aMinorRadius).unwrap();
+    let aConv =
+        ElementarySurfaceToBSplineSurface::from_torus_patch(&aTorus, 0.0, PI, 0.0, PI).unwrap();
+
+    let aTol: f64 = 1.0e-10;
+    let aUK = aConv.u_knots();
+    let aVK = aConv.v_knots();
+    let (aUMin, aUMax) = (aUK[aUK.lower()], aUK[aUK.upper()]);
+    let (aVMin, aVMax) = (aVK[aVK.lower()], aVK[aVK.upper()]);
+
+    for i in 0..=4 {
+        let aU: f64 = aUMin + f64::from(i) * (aUMax - aUMin) / 4.0;
+        for j in 0..=4 {
+            let aV: f64 = aVMin + f64::from(j) * (aVMax - aVMin) / 4.0;
+
+            let aSpan = SurfaceSpan {
+                u: aU,
+                v: aV,
+                u_index: 0,
+                v_index: 0,
+                u_knots: aConv.u_knots(),
+                v_knots: aConv.v_knots(),
+                u_mults: Some(aConv.u_multiplicities()),
+                v_mults: Some(aConv.v_multiplicities()),
+                u_degree: aConv.u_degree(),
+                v_degree: aConv.v_degree(),
+                u_rat: true,
+                v_rat: true,
+                u_per: false,
+                v_per: false,
+            };
+            let aPnt: Point3 = bsplslib::d0(&aSpan, aConv.poles(), Some(aConv.weights())).unwrap();
+
+            // Verify the point lies on the torus:
+            // (sqrt(x^2 + y^2) - R_major)^2 + z^2 = R_minor^2
+            let aRxy: f64 = (aPnt.x() * aPnt.x() + aPnt.y() * aPnt.y()).sqrt();
+            let aDistSq: f64 = (aRxy - aMajorRadius) * (aRxy - aMajorRadius) + aPnt.z() * aPnt.z();
+            assert!(
+                (aDistSq - aMinorRadius * aMinorRadius).abs() <= aTol,
+                "Point not on torus at U={aU} V={aV}"
+            );
+        }
+    }
+}

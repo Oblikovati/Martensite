@@ -1,0 +1,88 @@
+//! Handedness is preserved when replacing frame directions.
+#![allow(non_snake_case)]
+use martensite_tkmath::gp::{Axis1, Axis3, Direction3, Point3};
+#[test]
+fn geometry_ax3_set_direction_preserves_orientation() {
+    check_main_direction();
+    check_x_direction();
+    check_y_direction();
+}
+fn check_main_direction() {
+    for index in 0..4 {
+        let mut frame = Axis3::default();
+        if index >= 2 {
+            frame.z_reverse();
+        }
+        let direction = if index % 2 == 0 {
+            Direction3::X
+        } else {
+            Direction3::X.reversed()
+        };
+        let direct = frame.direct().unwrap();
+        frame.set_direction(direction).unwrap();
+        assert_eq!(direct, frame.direct().unwrap());
+        assert!(direction.is_equal(&frame.direction(), 1e-12));
+    }
+    for direction in [Direction3::X, Direction3::X.reversed()] {
+        let mut frame = Axis3::default();
+        let axis = Axis1::new(Point3::default(), direction);
+        let direct = frame.direct().unwrap();
+        frame.set_axis(axis).unwrap();
+        assert_eq!(direct, frame.direct().unwrap());
+        assert!(axis.direction().is_equal(&frame.direction(), 1e-12));
+    }
+}
+fn check_x_direction() {
+    for index in 0..4 {
+        let mut frame = Axis3::default();
+        if index >= 2 {
+            frame.x_reverse();
+        }
+        let direction = if index % 2 == 0 {
+            Direction3::Z
+        } else {
+            Direction3::Z.reversed()
+        };
+        let direct = frame.direct().unwrap();
+        frame.set_x_direction(direction).unwrap();
+        assert_eq!(direct, frame.direct().unwrap());
+        if index == 0 {
+            assert_x_result(frame);
+        }
+    }
+}
+fn assert_x_result(frame: Axis3) {
+    let good = frame.direction().crossed(Direction3::Z).unwrap();
+    if frame.direct().unwrap() {
+        assert!(good.is_equal(&frame.y_direction(), 1e-12));
+    } else {
+        assert!(good.is_opposite(frame.y_direction(), 1e-12));
+    }
+}
+fn check_y_direction() {
+    for index in 0..4 {
+        let mut frame = Axis3::default();
+        if index >= 2 {
+            frame.y_reverse();
+        }
+        let direction = if index % 2 == 0 {
+            Direction3::Z
+        } else {
+            Direction3::Z.reversed()
+        };
+        let direct = frame.direct().unwrap();
+        frame.set_y_direction(direction).unwrap();
+        assert_eq!(direct, frame.direct().unwrap());
+        if index == 0 {
+            assert_y_result(frame);
+        }
+    }
+}
+fn assert_y_result(frame: Axis3) {
+    let good = frame.direction().crossed(Direction3::Z).unwrap();
+    if frame.direct().unwrap() {
+        assert!(good.is_opposite(frame.x_direction(), 1e-12));
+    } else {
+        assert!(good.is_equal(&frame.x_direction(), 1e-12));
+    }
+}

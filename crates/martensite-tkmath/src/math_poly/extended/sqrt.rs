@@ -1,0 +1,78 @@
+//! Integer rounding reproduces the x87 sqrtl result without a C dependency.
+use super::{Float, LongDouble, X87DoubleExtended};
+impl LongDouble {
+    /// glibc `sqrtl`: the correctly rounded x87 square root (NaN below zero).
+    /// Example: `LongDouble::new(4.0).sqrt().narrow() == 2.0`.
+    pub fn sqrt(self) -> Self {
+        if self.0.is_zero() || self.0.is_nan() {
+            return self;
+        }
+        if self < Self::ZERO {
+            return Self(X87DoubleExtended::NAN);
+        }
+        if self.0.is_infinite() {
+            return self;
+        }
+        Self(X87DoubleExtended::from_bits(sqrt_bits(self.0.to_bits())))
+    }
+}
+fn sqrt_bits(bits: u128) -> u128 {
+    let mantissa: u64 = bits as u64;
+    let shift: u32 = mantissa.leading_zeros();
+    let stored_exponent: i32 = ((bits >> 64) & 0x7fff) as i32;
+    let exponent: i32 = stored_exponent.max(1) - 16383 - shift as i32;
+    let radicand: u128 = ((mantissa << shift) as u128) << (63 + (exponent & 1));
+    let root: u128 = radicand.isqrt();
+    let rounded: u128 = root + u128::from(radicand - root * root > root);
+    let carry: bool = rounded == 1_u128 << 64;
+    let result_exponent: i32 = (exponent >> 1) + 16383 + i32::from(carry);
+    ((result_exponent as u128) << 64) | (rounded >> u32::from(carry))
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn sqrt_rounds_all_extended_significand_bits() {
+        let two: LongDouble = LongDouble::new(2.0).sqrt();
+        assert_eq!(two.0.to_bits(), 0x3fff_b504f333f9de6484);
+        assert_eq!(
+            LongDouble::new(4.0).sqrt().0.to_bits(),
+            LongDouble::new(2.0).0.to_bits()
+        );
+        let tiny: LongDouble = LongDouble(X87DoubleExtended::from_bits(1));
+        assert_eq!(tiny.sqrt().0.to_bits(), 0x1fe0_b504f333f9de6484);
+        let largest: LongDouble = LongDouble(X87DoubleExtended::from_bits(0x7ffe_ffffffffffffffff));
+        assert_eq!(largest.sqrt().0.to_bits(), 0x5ffe_ffffffffffffffff);
+    }
+    #[test]
+    fn sqrt_retains_special_values() {
+        for value in [0.0, -0.0, f64::INFINITY] {
+            assert_eq!(
+                LongDouble::new(value).sqrt().0.to_bits(),
+                LongDouble::new(value).0.to_bits()
+            );
+        }
+        assert!(LongDouble::new(-1.0).sqrt().0.is_nan());
+        assert!(LongDouble::new(f64::NAN).sqrt().0.is_nan());
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn matches_native_x87_significands_across_exponents() {
+    // Recorded from the x86-64 glibc x87 `sqrtl`.
+    let fixture: &str = include_str!("../../../tests/fixtures/extended_sqrt_x87.txt");
+    for line in fixture.lines() {
+        let words: Vec<u128> = line
+            .split_whitespace()
+            .map(|w| u128::from_str_radix(w, 16).unwrap())
+            .collect();
+        let value: LongDouble =
+            LongDouble(X87DoubleExtended::from_bits((words[0] << 64) | words[1]));
+        assert_eq!(
+            value.sqrt().0.to_bits(),
+            (words[2] << 64) | words[3],
+            "{line}"
+        );
+    }
+}

@@ -1,0 +1,21 @@
+[graph]
+all-features = true
+
+[advisories]
+yanked = "deny"
+
+[licenses]
+allow = ["MIT", "Apache-2.0 WITH LLVM-exception", "GPL-2.0-only"]
+confidence-threshold = 0.93
+# The build driver uses generated Unicode identifier tables. Keep their notice.
+exceptions = [{ name = "unicode-ident", version = "1.0.27", allow = ["Unicode-3.0"] }]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+# Every publishable path dependency declares a version.
+allow-wildcard-paths = false
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

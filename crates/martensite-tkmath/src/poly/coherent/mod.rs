@@ -1,0 +1,12 @@
+//! The coherent (editable, connected) triangulation.
+mod link;
+mod node;
+mod tri_ptr;
+mod triangle;
+mod triangle_connect;
+mod triangulation;
+pub use link::CoherentLink;
+pub use node::CoherentNode;
+pub use tri_ptr::{CoherentTriMember, CoherentTriPtr, CoherentTriPtrIterator};
+pub use triangle::CoherentTriangle;
+pub use triangulation::{CoherentTriangulation, TwoIntegers};
