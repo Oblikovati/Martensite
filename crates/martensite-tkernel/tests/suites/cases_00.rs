@@ -257,3 +257,6 @@ pub mod forward_range_method_contracts;
 pub mod path_and_units_case_logs;
 #[path = "../timer_counter_case_log.rs"]
 pub mod timer_counter_case_log;
+
+#[path = "../borrowed_input_primitives.rs"]
+pub mod borrowed_input_primitives;
