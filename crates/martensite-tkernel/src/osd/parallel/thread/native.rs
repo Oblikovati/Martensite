@@ -6,8 +6,8 @@ use std::thread::JoinHandle;
 /// The current thread id: `pthread_self()` on Unix, `GetCurrentThreadId()` on Windows.
 #[cfg(unix)]
 pub(crate) fn current_thread_id() -> usize {
-    // SAFETY: pthread_self has no preconditions and never fails.
-    let thread: libc::pthread_t = unsafe { libc::pthread_self() };
+    // Preserve pthread identity rather than substituting a kernel thread ID (#89).
+    let thread: libc::pthread_t = nix::sys::pthread::pthread_self();
     thread as usize
 }
 
