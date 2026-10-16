@@ -6,6 +6,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added owned storage-stream output seeking for header backpatching while preserving
+  EOF, input counts and formatting state (#136).
+
 ### Fixed
 
 - Checked toolkit unsafe source counts during PR validation, including inactive

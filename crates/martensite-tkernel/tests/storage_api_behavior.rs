@@ -7,6 +7,8 @@ mod buckets;
 mod data;
 #[path = "storage_api_behavior/fakes.rs"]
 mod fakes;
+#[path = "storage_api_behavior/output_seek.rs"]
+mod output_seek;
 #[path = "storage_api_behavior/schema.rs"]
 mod schema;
 #[path = "storage_api_behavior/sections.rs"]
