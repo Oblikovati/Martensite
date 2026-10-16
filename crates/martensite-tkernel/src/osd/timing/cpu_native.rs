@@ -17,8 +17,17 @@ pub(super) fn process_cpu() -> (f64, f64) {
 
 #[cfg(unix)]
 fn clock_ticks() -> f64 {
-    // SAFETY: sysconf only reads a configuration value.
-    let ticks: libc::c_long = unsafe { libc::sysconf(libc::_SC_CLK_TCK) };
+    use nix::{
+        errno::Errno,
+        unistd::{SysconfVar, sysconf},
+    };
+    let previous_errno = Errno::last_raw();
+    let queried = sysconf(SysconfVar::CLK_TCK);
+    // nix clears errno; preserve the native successful-query contract (#89).
+    if Errno::last_raw() == 0 {
+        Errno::set_raw(previous_errno);
+    }
+    let ticks: libc::c_long = queried.ok().flatten().unwrap_or(-1);
     ticks as f64
 }
 
