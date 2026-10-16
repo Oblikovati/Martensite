@@ -3,7 +3,8 @@
   "parent_issue": 80,
   "baseline_revision": "e8e1d5622a5d5f60dd921ed676c8c3ed3ad7581f",
   "status": "64-bit x86_64 and aarch64 GNU/Linux open uses the safe wrapper locally. Other targets retain the original call and remain unfinished under #89. No API, version, dependency feature or lockfile changes.",
-  "review": "Standards review found no violations or actionable smells. Spec review found no defect on evaluated x86_64/aarch64 targets but flagged the broader architecture cfg; it is now restricted to those evaluated architectures. Full gate and native validation remain required.",
+  "review": "Standards review found no violations or actionable smells. Spec review found no defect on evaluated x86_64/aarch64 targets but flagged the broader architecture cfg; the reviewer verified the restriction in c29547d resolves that finding. Native validation remains required.",
+  "local_validation": "Both the initial full cargo xtask pr gate and the final architecture-restricted gate passed (/tmp/martensite-open-pr.log and /tmp/martensite-open-reviewed-pr.log). The Linux x86_64 compiler artifact matches the complete expected workspace summary. All six compatibility fixtures passed before and after replacement. No dependency or feature changes were introduced.",
   "fixtures": "Six Linux fixtures pass against the original libc implementation: read-only rejects writing, NUL truncation, append overriding seek, read/write creation, create preserving existing contents versus explicit truncation, missing/empty path errno, and descriptor inheritance across exec. The inheritance fixture invokes /bin/cat on /dev/fd/<fd> and compares the unique file payload; no raw descriptor is borrowed unsafely.",
   "candidate": "rustix::fs::open with exact retained flags and mode, then IntoRawFd to transfer ownership to the existing raw descriptor caller. No CLOEXEC flag may be added. The selected libc backend forwards flags and does not retry. Its old-glibc TMPFILE workaround is unreachable for the exposed OpenFlags combinations.",
   "implementation": "The GNU/Linux 64-bit path retains all flag bits with from_bits_retain after the signed-to-unsigned cast, retains the u32 mode bits, maps native errno, and transfers OwnedFd ownership with IntoRawFd. The shared flag conversion was committed separately as 683cfef after all six baseline fixtures passed. All six fixtures passed unchanged after replacement (/tmp/martensite-open-safe.log).",
@@ -16,7 +17,6 @@
   },
   "remaining": [
     "Evaluate remaining non-GNU, non-Linux and 32-bit targets without assuming mode or large-file equivalence",
-    "Verify compiler inventory changes and run the full PR gate",
     "Native cross-platform validation and two-axis review",
     "Do not declare remaining target differences unavoidable"
   ]
