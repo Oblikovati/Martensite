@@ -23,6 +23,12 @@ fn clock_ticks() -> f64 {
     };
     let previous_errno = Errno::last_raw();
     let queried = sysconf(SysconfVar::CLK_TCK);
+    clock_ticks_result(previous_errno, queried)
+}
+
+#[cfg(unix)]
+fn clock_ticks_result(previous_errno: i32, queried: nix::Result<Option<libc::c_long>>) -> f64 {
+    use nix::errno::Errno;
     // nix clears errno; preserve the native successful-query contract (#89).
     if Errno::last_raw() == 0 {
         Errno::set_raw(previous_errno);
