@@ -16,6 +16,14 @@
     {"bytes": 13824, "blocks": 6, "path": "crossbeam_epoch::Collector::register -> thread-local LocalHandle -> crossbeam_deque::Stealer::steal -> Rayon worker"}
   ],
   "conclusion": "Observed retention plateaus between 100 and 1000 cycles and matches the earlier candidate's retained-byte totals; changing dispatch did not eliminate the collector-related retention.",
+  "pinned_dependency_inspection": {
+    "version": "crossbeam-epoch 0.9.18",
+    "default_collector": "src/default.rs owns the default Collector in a process-global OnceLock and registers thread-local LocalHandles.",
+    "thread_exit": "src/internal.rs Local::finalize moves deferred work to the global queue and marks the local entry deleted; entry finalization itself uses deferred destruction.",
+    "reclamation_contract": "src/guard.rs documents no exact execution-time guarantee for deferred functions or destructors; flush may move deferred work to the global cache rather than execute it immediately.",
+    "implication": "Joining worker threads does not by itself promise immediate reclamation of all epoch-managed allocations. A forced flush loop would not establish that promise.",
+    "limit": "This lifecycle inspection is consistent with the observed retained stacks but does not prove every possible-loss record is harmless or provide a general memory bound."
+  },
   "limitations": [
     "Finite single-platform observations do not prove a general bound or absence of leaks.",
     "Full leak checks report two possible-loss contexts; these are not clean Memcheck runs.",

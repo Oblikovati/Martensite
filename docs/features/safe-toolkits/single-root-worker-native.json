@@ -8,7 +8,7 @@
     "x86_64-unknown-linux-gnu": "passed",
     "aarch64-unknown-linux-gnu": "passed",
     "aarch64-apple-darwin": "passed",
-    "x86_64-pc-windows-msvc": "pending"
+    "x86_64-pc-windows-msvc": "passed"
   },
   "artifact_checks": "Downloaded each completed target's compiler inventory and verified exact revision, workspace summary equality with its reviewed baseline, and nonempty dependency diagnostics.",
   "download_directory": "/tmp/martensite-worker-native-067323f.ZJEH4r",
@@ -21,7 +21,6 @@
     "platform": "Linux x86_64 release binary"
   },
   "limitations": [
-    "Windows remains pending; this is not a completed four-platform validation claim.",
     "Ignored stack and performance fixtures are not automatically executed by the native release matrix.",
     "Correctness validation does not resolve resource-cost acceptance."
   ]
