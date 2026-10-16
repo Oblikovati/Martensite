@@ -3,6 +3,9 @@
 #![allow(unsafe_code)]
 use std::thread::JoinHandle;
 
+#[cfg(all(test, unix))]
+mod processor_count_contracts;
+
 /// The current thread id: `pthread_self()` on Unix, `GetCurrentThreadId()` on Windows.
 #[cfg(unix)]
 pub(crate) fn current_thread_id() -> usize {
