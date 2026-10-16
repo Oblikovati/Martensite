@@ -13,7 +13,7 @@ fn dir(x: f64, y: f64) -> Direction2 {
     Direction2::new(x, y).unwrap()
 }
 
-// Geom2dLineTest::SetUp: horizontal line through origin.
+// Fixture: horizontal line through origin.
 fn setup() -> Handle<Geom2dLine> {
     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), dir(1.0, 0.0)))
 }
@@ -47,7 +47,7 @@ fn line_construct_from_axis() {
 #[test]
 fn line_parameter_bounds() {
     let myLine = setup();
-    // the geometry engine uses large finite bounds (not numeric_limits::max)
+    // Curve parameters use large finite bounds.
     assert!(myLine.first_parameter() < -1e+90);
     assert!(myLine.last_parameter() > 1e+90);
 }

@@ -1,6 +1,7 @@
-//! The state of `Geom2dBezierCurve` and `GeomBezierCurve`, which the geometry engine writes twice
-//! with the same operations in the same order; only the point dimension, the
-//! evaluation representation and the closure test ([`BezierCurveKind`]) differ.
+//! Bezier state shared across point dimensions.
+//!
+//! Arithmetic order stays the same; point types, evaluation representations and
+//! the closure test in [`BezierCurveKind`] select dimension-specific behavior.
 mod edits;
 mod eval;
 mod public_members;

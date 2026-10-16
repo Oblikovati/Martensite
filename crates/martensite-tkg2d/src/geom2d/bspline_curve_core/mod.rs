@@ -1,9 +1,8 @@
-//! The state of `Geom2dBSplineCurve` and `GeomBSplineCurve`, which the geometry engine writes
-//! twice with the same operations in the same order; only the point dimension and
-//! the members listed by [`BSplineCurveKind`] differ.
+//! B-spline state shared across point dimensions.
 //!
-//! Each curve class keeps one [`BSplineCurveCore`] behind its lock; the edits,
-//! evaluators and queries live in the submodules and run once for both dimensions.
+//! Each curve keeps one [`BSplineCurveCore`] behind its lock. Generic edits,
+//! evaluation and queries preserve arithmetic order; [`BSplineCurveKind`]
+//! supplies the dimension-specific behavior.
 mod access;
 mod eval;
 mod knots;

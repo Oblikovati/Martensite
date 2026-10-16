@@ -8,7 +8,7 @@ use martensite_tkg2d::geom2d::{Geom2dCircle, Geom2dConic, Geom2dCurve, Geom2dGeo
 use martensite_tkmath::gp::{Axis2d, Axis22d, Circle2, Direction2, Point2, Transform2, Vector2};
 use std::f64::consts::PI;
 
-// Geom2dCircleTest::SetUp: circle centered at origin, radius 5.
+// Fixture: circle centered at origin, radius 5.
 fn setup() -> Handle<Geom2dCircle> {
     let aCirc = Circle2::from_x_axis(
         Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap()),

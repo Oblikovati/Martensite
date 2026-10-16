@@ -7,7 +7,7 @@ use martensite_tkernel::standard::Handle;
 use martensite_tkg2d::geom2d::{Geom2dConic, Geom2dCurve, Geom2dGeometry, Geom2dParabola};
 use martensite_tkmath::gp::{Axis2d, Direction2, Line2, Parabola2, Point2, Transform2, Vector2};
 
-// Geom2dParabolaTest::SetUp: parabola centered at origin with focal distance 4.
+// Fixture: parabola centered at origin with focal distance 4.
 fn setup() -> Handle<Geom2dParabola> {
     let aParab = Parabola2::from_mirror_axis(
         Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap()),

@@ -13,7 +13,7 @@ fn dir(x: f64, y: f64) -> Direction2 {
     Direction2::new(x, y).unwrap()
 }
 
-// Adaptor2dLine2dTest::SetUp: the fixture lines.
+// Fixture: the fixture lines.
 struct Fixture {
     myLine: Handle<Adaptor2dLine2d>,
     myDiagLine: Handle<Adaptor2dLine2d>,

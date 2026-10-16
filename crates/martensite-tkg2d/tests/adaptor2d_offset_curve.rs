@@ -12,7 +12,7 @@ fn dir(x: f64, y: f64) -> Direction2 {
     Direction2::new(x, y).unwrap()
 }
 
-// Adaptor2dOffsetCurveTest::SetUp: horizontal line through origin, bounds [0, 10].
+// Fixture: horizontal line through origin, bounds [0, 10].
 fn setup() -> Handle<dyn Adaptor2dCurve2d> {
     Handle::new(Adaptor2dLine2d::new(
         Point2::new(0.0, 0.0),
@@ -62,7 +62,7 @@ fn adapted_offset_curve_construct_with_offset_and_bounds() {
 fn adapted_offset_curve_value_positive_offset() {
     let myBaseLine = setup();
     // Offsetting a horizontal +X line by +3 shifts Y by -3
-    // (the geometry engine 2D offset uses right-hand normal: Z cross tangent)
+    // The right-hand normal of a +X tangent points along -Y.
     let anOffset = Adaptor2dOffsetCurve::with_offset(&myBaseLine, 3.0).unwrap();
     let aPnt = anOffset.value(5.0).unwrap();
 

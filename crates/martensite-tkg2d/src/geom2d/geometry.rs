@@ -114,7 +114,7 @@ pub fn dump_geometry(stream: &mut DumpStream, _depth: i32) -> io::Result<()> {
     dump_class_name(stream, "Geom2d_Geometry")
 }
 
-/// `the geometry engine_DUMP_TRANSIENT_CLASS_BEGIN`: the `className` field of one hierarchy level;
+/// Emit the `className` field for one hierarchy level;
 /// `dump_class_name(&mut stream, "Geom2dCurve")?`.
 pub fn dump_class_name(stream: &mut DumpStream, name: &str) -> io::Result<()> {
     martensite_tkernel::standard::dump::add_values_separator(stream)?;
@@ -122,7 +122,7 @@ pub fn dump_class_name(stream: &mut DumpStream, name: &str) -> io::Result<()> {
     Ok(())
 }
 
-/// `the geometry engine_DUMP_BASE_CLASS`: dump a base level unless the depth is exhausted;
+/// Dump a base level unless the depth is exhausted;
 /// `dump_base(&mut stream, depth, dump_geometry)?`.
 pub fn dump_base(
     stream: &mut DumpStream,
@@ -136,7 +136,7 @@ pub fn dump_base(
     base(stream, depth - 1)
 }
 
-/// `the geometry engine_DUMP_FIELD_VALUES_DUMPED`: a nested field dump unless the depth is exhausted;
+/// Dump a nested field unless the depth is exhausted;
 /// `dump_field(&mut stream, depth, "pos", |s, _| frame.dump_json(s))?`.
 pub fn dump_field(
     stream: &mut DumpStream,
@@ -152,7 +152,7 @@ pub fn dump_field(
     martensite_tkernel::standard::dump::dump_key_to_class(stream, name, nested.text())
 }
 
-/// `the geometry engine_DUMP_FIELD_VALUE_NUMERICAL` of a boolean, printed as the stream does (`1`/`0`);
+/// Dump a boolean as `1` or `0`;
 /// `dump_flag(&mut stream, "Rational", true)?`.
 pub fn dump_flag(stream: &mut DumpStream, name: &str, value: bool) -> io::Result<()> {
     martensite_tkernel::standard::dump::dump_integer(stream, name, i32::from(value))

@@ -7,7 +7,7 @@ use martensite_tkernel::standard::Handle;
 use martensite_tkg2d::geom2d::{Geom2dConic, Geom2dCurve, Geom2dGeometry, Geom2dHyperbola};
 use martensite_tkmath::gp::{Axis2d, Direction2, Hyperbola2, Point2, Transform2, Vector2};
 
-// Geom2dHyperbolaTest::SetUp: hyperbola centered at origin, a=5, b=3.
+// Fixture: hyperbola centered at origin, a=5, b=3.
 fn setup() -> Handle<Geom2dHyperbola> {
     let aHypr = Hyperbola2::from_x_axis(
         Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap()),
