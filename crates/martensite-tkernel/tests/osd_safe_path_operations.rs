@@ -20,6 +20,8 @@ mod records;
 mod status;
 #[path = "osd_safe_path_operations/status_kinds.rs"]
 mod status_kinds;
+#[path = "osd_safe_path_operations/temporary.rs"]
+mod temporary;
 
 struct PathScratch(PathBuf);
 impl PathScratch {
