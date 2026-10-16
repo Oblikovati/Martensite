@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-16
+
 ### Added
 
 - Added `install-linux.sh`, `install-macos.sh` and `install-windows.ps1`, which
@@ -15,7 +17,10 @@ follows [Semantic Versioning](https://semver.org/).
   for PR validation and multi-target releases.
 - Added the `martensite-tkernel` crate, the foundation toolkit: typed errors,
   memory managers and allocators, collections, ASCII and extended strings,
-  operating-system services, messages, quantities, units and resources.
+  operating-system services, messages, quantities, units and resources
+  ([#72]).
 - Added the `martensite-cmath` crate, which calls the platform C math library
   for `asinh`, `acosh`, `atanh` and `remainder` so results match the C
-  functions bit for bit.
+  functions bit for bit ([#72]).
+
+[#72]: https://github.com/Oblikovati/Martensite/pull/72
