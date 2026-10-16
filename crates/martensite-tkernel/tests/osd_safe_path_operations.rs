@@ -65,14 +65,7 @@ fn native_directory_calls_preserve_mode_and_nonempty_error() {
     terminated.extend_from_slice(b"\0ignored");
     NativePosixCalls.mkdir(&terminated, 0o700).unwrap();
     let path = std::path::Path::new(std::ffi::OsStr::from_bytes(&directory));
-    assert_eq!(
-        std::fs::metadata(path).unwrap().permissions().mode() & 0o077,
-        0
-    );
-    assert_eq!(
-        NativePosixCalls.mkdir(&terminated, 0o700),
-        Err(Errno(libc::EEXIST))
-    );
+    assert_restricted_existing_directory(path, &terminated);
     std::fs::write(path.join("child"), b"value").unwrap();
     assert_eq!(
         NativePosixCalls.rmdir(&terminated),
@@ -81,6 +74,17 @@ fn native_directory_calls_preserve_mode_and_nonempty_error() {
     std::fs::remove_file(path.join("child")).unwrap();
     NativePosixCalls.rmdir(&terminated).unwrap();
     assert!(!path.exists());
+}
+
+fn assert_restricted_existing_directory(path: &std::path::Path, terminated: &[u8]) {
+    assert_eq!(
+        std::fs::metadata(path).unwrap().permissions().mode() & 0o077,
+        0
+    );
+    assert_eq!(
+        NativePosixCalls.mkdir(terminated, 0o700),
+        Err(Errno(libc::EEXIST))
+    );
 }
 
 #[test]

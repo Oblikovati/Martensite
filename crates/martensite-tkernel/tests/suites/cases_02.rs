@@ -83,8 +83,6 @@ pub mod ordered_resize_links;
 pub mod osd_file_system_api_behavior;
 #[path = "../osd_file_system_local_api_behavior.rs"]
 pub mod osd_file_system_local_api_behavior;
-#[path = "../osd_safe_path_operations.rs"]
-pub mod osd_safe_path_operations;
 #[path = "../osd_files_api_behavior.rs"]
 pub mod osd_files_api_behavior;
 #[path = "../osd_foundation_api_behavior.rs"]
@@ -107,6 +105,8 @@ pub mod osd_perf_meter;
 pub mod osd_process_api_behavior;
 #[path = "../osd_process_resources_api_behavior.rs"]
 pub mod osd_process_resources_api_behavior;
+#[path = "../osd_safe_path_operations.rs"]
+pub mod osd_safe_path_operations;
 #[path = "../osd_threads_api_behavior.rs"]
 pub mod osd_threads_api_behavior;
 #[path = "../osd_universal_iterator.rs"]

@@ -31,10 +31,10 @@
     "expected_unix_compiler_primary_spans_after": 36,
     "windows": "No changed native Windows implementation or baseline."
   },
+  "local_gate": "cargo xtask pr passed after correcting suite registration, formatting suite-included files directly, and splitting the oversized directory fixture. Log: /tmp/martensite-safe-paths-final-pr.log.",
+  "review": "Standards: oversized test split and independently rechecked, no remaining findings. Spec: no implementation defect; native matrix acceptance remains outstanding. Formatting discovery mismatch tracked separately as Bug #122.",
   "remaining_validation": [
-    "Initial local PR gate failed only the test-file registration check; 4476 other toolkit tests passed. Registration was corrected and its focused check passed. Full gate rerun remains required.",
     "Native Linux arm64, macOS arm64 and Windows x64 validation has not run for this branch.",
-    "Local Linux x86_64 captured compiler group verified at 36; other target reductions remain pending native artifact verification.",
-    "Final standards/spec review remains outstanding."
+    "Local Linux x86_64 captured compiler group verified at 36; other target reductions remain pending native artifact verification."
   ]
 }
