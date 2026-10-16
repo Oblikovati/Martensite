@@ -133,7 +133,10 @@ fn local_time() -> Result<LocalTime, i32> {
     let seconds: libc::time_t = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |elapsed| elapsed.as_secs() as libc::time_t);
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    let mut broken = crate::native_calendar::empty_calendar();
     // SAFETY: tm is a plain C struct; localtime_r fills it from a valid time_t.
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     let mut broken: libc::tm = unsafe { std::mem::zeroed() };
     // SAFETY: both pointers refer to live locals for the duration of the call.
     if unsafe { libc::localtime_r(&seconds, &mut broken) }.is_null() {

@@ -1,0 +1,13 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "base_revision": "8f8a6914156c9946c3a32851cbcf3e80cbd2c4cf",
+  "scope": "Linux and macOS native calendar initialization in process local_time and schema creation_date",
+  "replacement": "Shared private safe initializer: explicit zero numeric fields and null zone on Linux; libc 0.2.190 generated safe field defaults on macOS.",
+  "dependency_evidence": "Pinned libc 0.2.190 declares Linux tm in s! without Default. Apple tm is exhaustive in s2!, which generates field defaults; tm_zone uses custom_default(ptr::null_mut()). No dependency changes.",
+  "compatibility": "All ten numeric fields remain zero and tm_zone remains null before the existing native calls. Time source, localtime_r invocation, failure handling and output conversion remain unchanged. No toolkit API or trait bounds change.",
+  "exclusions": "Other Unix targets retain the existing zeroed initialization pending platform-specific verification. Windows is unchanged. Native time/localtime_r calls remain under investigation; this does not establish a permanent system exception.",
+  "inventory": "Removes two executed unsafe initialization operations on Linux/macOS. The process zeroed block remains lexically present only for other Unix cfgs; schema initialization shared a block with FFI. Source counts therefore stay unchanged. Supported Unix compiler diagnostics should lose the process initialization block once per compilation unit; exact counts still require capture.",
+  "local_verification": ["Linux x86_64 empty_calendar field-value regression passed"],
+  "pending_verification": ["Cross-target type checks", "Existing process/schema compatibility tests", "Full PR gate", "Native four-platform validation", "Compiler baseline update after PR #117 integration"]
+}
