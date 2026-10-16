@@ -6,11 +6,6 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
-
-- Fixed false incompatible-release errors for Common, Heap and Aligned storage
-  on Windows, preserving coherent ring removal and arena-release protection ([#78]).
-
 ## [0.3.1] - 2026-10-16
 
 ### Added
@@ -31,6 +26,9 @@ follows [Semantic Versioning](https://semver.org/).
   ([#76]).
 
 ### Fixed
+
+- Fixed false incompatible-release errors for Common, Heap and Aligned storage
+  on Windows, preserving coherent ring removal and arena-release protection ([#78]).
 
 - Fixed cancelled sequence-clear tokens being accepted by later clear
   invocations, preventing live values from being abandoned ([#77]).
