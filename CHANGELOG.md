@@ -8,6 +8,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Replaced shared launcher job completion with scoped borrowed execution so
+  concurrent launches waited for their own jobs (#106).
+
 - Checked toolkit unsafe source counts during PR validation, including inactive
   platform code and test fixtures (#81).
 

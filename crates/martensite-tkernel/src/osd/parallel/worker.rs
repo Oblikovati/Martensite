@@ -1,131 +1,155 @@
-//! One pool thread (or the launcher's self-thread),
-//! locked by at most one launcher, started lazily by its first job.
-use super::{
-    event::ManualResetEvent,
-    job::{JobRef, standard_program_error},
-};
+//! Reserved, lazily started persistent workers with scoped borrowed dispatch.
+use super::job::{self, JobBody, standard_program_error};
 use crate::standard::Failure;
 use std::{
     sync::{
         Arc, Mutex, MutexGuard,
-        atomic::{AtomicBool, AtomicI32, Ordering},
+        atomic::{AtomicI32, Ordering},
     },
     thread::JoinHandle,
 };
 
-/// A pool slot; shared between the pool, the launcher that locked it and its thread.
+#[cfg(test)]
+mod tests;
+
 pub(super) struct Worker {
     usage: AtomicI32,
     index: AtomicI32,
-    wake: ManualResetEvent,
-    idle: ManualResetEvent,
-    job: Mutex<Option<JobRef>>,
+    executor: Mutex<Option<Arc<ScopedWorker>>>,
     failure: Mutex<Option<Failure>>,
-    shutdown: AtomicBool,
-    handle: Mutex<Option<JoinHandle<()>>>,
     is_self_thread: bool,
 }
 
+struct ScopedWorker {
+    pool: Option<rayon::ThreadPool>,
+    threads: Vec<JoinHandle<()>>,
+}
+
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
-    // Jobs run under catch_unwind outside these locks, so poisoning never hides a torn state.
     mutex.lock().unwrap_or_else(|poison| poison.into_inner())
 }
 
+impl ScopedWorker {
+    fn new() -> Result<Self, rayon::ThreadPoolBuildError> {
+        let mut worker = Self {
+            pool: None,
+            threads: Vec::new(),
+        };
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(1)
+            .spawn_handler(|thread| {
+                worker
+                    .threads
+                    .push(std::thread::Builder::new().spawn(|| thread.run())?);
+                Ok(())
+            })
+            .build()?;
+        worker.pool = Some(pool);
+        Ok(worker)
+    }
+}
+
+impl Drop for ScopedWorker {
+    fn drop(&mut self) {
+        drop(self.pool.take());
+        for thread in self.threads.drain(..) {
+            let _ = thread.join();
+        }
+    }
+}
+
 impl Worker {
-    /// A pool thread (`is_self_thread` false) or a launcher's self-thread, with its index.
     pub(super) fn new(index: i32, is_self_thread: bool) -> Arc<Self> {
         Arc::new(Self {
             usage: AtomicI32::new(0),
             index: AtomicI32::new(index),
-            wake: ManualResetEvent::default(),
-            idle: ManualResetEvent::default(),
-            job: Mutex::new(None),
+            executor: Mutex::new(None),
             failure: Mutex::new(None),
-            shutdown: AtomicBool::new(false),
-            handle: Mutex::new(None),
             is_self_thread,
         })
     }
-    /// Claims an unused slot; false when a launcher holds it already.
     pub(super) fn lock(&self) -> bool {
         self.usage.swap(1, Ordering::SeqCst) == 0
     }
-    /// `Free`: returns the slot to the pool.
     pub(super) fn free(&self) {
         self.usage.store(0, Ordering::SeqCst);
     }
-    /// Renumbers the slot for the launcher that locked it.
     pub(super) fn set_index(&self, index: i32) {
         self.index.store(index, Ordering::SeqCst);
     }
-    /// The recorded failure of the last job, if any.
-    pub(super) fn failure(&self) -> Option<Failure> {
-        lock(&self.failure).clone()
+    pub(super) fn shut_down(&self) {
+        let executor = lock(&self.executor).take();
+        drop(executor);
     }
-    /// The self-thread runs the job at once; a pool thread gets it through the
-    /// wake event and is started by its first job.
-    pub(super) fn wake_up(self: &Arc<Self>, job: Option<JobRef>) {
-        *lock(&self.job) = job;
-        if self.is_self_thread {
-            // Kept on purpose: only the self-thread's failure is ever set, so a
-            // failure stays recorded for every later job of the same launcher.
-            if let Some(failure) =
-                job.and_then(|job| job.perform(self.index.load(Ordering::SeqCst)))
-            {
-                *lock(&self.failure) = Some(failure);
-            }
-            return;
-        }
-        self.wake.set();
-        if job.is_some() && lock(&self.handle).is_none() {
-            self.start();
-        }
+    fn executor(&self) -> Result<Arc<ScopedWorker>, Failure> {
+        self.executor_with(ScopedWorker::new)
     }
-    /// Waits for a pool thread to finish its job; the self-thread never waits.
-    pub(super) fn wait_idle(&self) {
+    fn executor_with(
+        &self,
+        create: impl FnOnce() -> Result<ScopedWorker, rayon::ThreadPoolBuildError>,
+    ) -> Result<Arc<ScopedWorker>, Failure> {
+        let mut executor = lock(&self.executor);
+        if let Some(existing) = executor.as_ref() {
+            return Ok(Arc::clone(existing));
+        }
+        let worker = create().map_err(|error| {
+            standard_program_error(
+                &format!("Error: unable to start a pool thread ({error})"),
+                "",
+            )
+        })?;
+        let worker = Arc::new(worker);
+        *executor = Some(Arc::clone(&worker));
+        Ok(worker)
+    }
+    fn perform(&self, body: &JobBody<'_>) -> Option<Failure> {
+        let failure = job::perform(body, self.index.load(Ordering::SeqCst));
         if !self.is_self_thread {
-            self.idle.wait();
-            self.idle.reset();
+            return failure;
         }
-    }
-    /// Pool `release` for this slot: asks the thread to exit and joins it (`Wait`, which
-    /// returns false for a never-started thread).
-    pub(super) fn shut_down(self: &Arc<Self>) {
-        self.shutdown.store(true, Ordering::SeqCst);
-        self.wake_up(None);
-        if let Some(handle) = lock(&self.handle).take() {
-            // The thread body never panics (jobs are caught), so join cannot fail.
-            let _ = handle.join();
+        // Preserve the caller's sticky failure, without sharing worker completion (#106).
+        let mut previous = lock(&self.failure);
+        if failure.is_some() {
+            *previous = failure;
         }
+        previous.clone()
     }
-    fn start(self: &Arc<Self>) {
-        let worker: Arc<Self> = Arc::clone(self);
-        match std::thread::Builder::new().spawn(move || worker.perform_thread()) {
-            Ok(handle) => *lock(&self.handle) = Some(handle),
-            Err(error) => self.refuse_job(&error.to_string()),
+}
+
+/// Each scope owns its completion, including concurrent and nested launches (#106).
+pub(super) fn dispatch(workers: &[Arc<Worker>], body: &JobBody<'_>) -> Vec<Failure> {
+    let Some((worker, rest)) = workers.split_first() else {
+        return Vec::new();
+    };
+    if worker.is_self_thread {
+        return worker.perform(body).into_iter().collect();
+    }
+    let executor = match worker.executor() {
+        Ok(executor) => executor,
+        Err(failure) => {
+            let mut failures = vec![failure];
+            failures.extend(dispatch(rest, body));
+            return failures;
         }
+    };
+    scoped_dispatch(&executor, worker, rest, body)
+}
+
+fn scoped_dispatch(
+    executor: &ScopedWorker,
+    worker: &Worker,
+    rest: &[Arc<Worker>],
+    body: &JobBody<'_>,
+) -> Vec<Failure> {
+    let failure = Mutex::new(None);
+    let mut remaining = Vec::new();
+    if let Some(pool) = &executor.pool {
+        pool.in_place_scope(|scope| {
+            scope.spawn(|_| *lock(&failure) = worker.perform(body));
+            remaining = dispatch(rest, body);
+        });
     }
-    /// A thread that cannot start would leave the launcher waiting
-    /// forever; here the job is dropped, recorded as a failure and the slot reports idle.
-    fn refuse_job(&self, reason: &str) {
-        *lock(&self.job) = None;
-        let message: String = format!("Error: unable to start a pool thread ({reason})");
-        *lock(&self.failure) = Some(standard_program_error(&message, ""));
-        self.idle.set();
-    }
-    /// `performThread`: waits for work until the pool shuts down.
-    fn perform_thread(&self) {
-        loop {
-            self.wake.wait();
-            self.wake.reset();
-            if self.shutdown.load(Ordering::SeqCst) {
-                return;
-            }
-            let job: Option<JobRef> = lock(&self.job).take();
-            let failure: Option<Failure> =
-                job.and_then(|job| job.perform(self.index.load(Ordering::SeqCst)));
-            *lock(&self.failure) = failure;
-            self.idle.set();
-        }
-    }
+    let mut failures: Vec<Failure> = lock(&failure).take().into_iter().collect();
+    failures.extend(remaining);
+    failures
 }
