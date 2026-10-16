@@ -1,0 +1,20 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "baseline_revision": "3e677514c73bb8197cf1c9479a56cf0928fcc9c0",
+  "integration_baseline": "7758dd79d34bd2c38f2a255ddb925bc21e012eee",
+  "fixture_revision": "39f161b",
+  "change": "The Unix super-user query uses rustix::process::getuid().is_root() instead of a direct unsafe libc call. The public result remains Ok(real UID == 0); Windows behavior and the separate account-name lookup are unchanged.",
+  "source_evidence": "Pinned rustix 1.1.5 process/id.rs delegates getuid to backend/ugid/syscalls.rs. The selected libc backend makes one libc::getuid call, converts its unsigned ID to Uid, and is_root compares it with Uid::ROOT (zero). Uid construction debug-asserts that the OS did not return the invalid all-ones UID; no retry or effective-ID substitution is introduced.",
+  "dependency": "Enabled process on existing rustix 1.1.5 with std/fs/use-libc unchanged. No Cargo.lock package version changes. cargo deny --all-features check and cargo audit passed. Established dependency unsafe is separate trust, not first-party elimination within the dependency.",
+  "fixture": "Before replacement, the independent /usr/bin/id -r -u fixture passed on Linux. After replacement, it and the existing no-error fixture passed. The test changes no credentials, environment or current directory.",
+  "inventory": "Expected process/native.rs source blocks 7 to 6; Linux and macOS compiler primary spans 8 to 6. Windows unchanged. Full gate and native verification pending.",
+  "deletion": "The direct getuid call in is_super_user is deleted; no parallel super-user implementation remains. Integrate within the current migration milestone.",
+  "validation": "Focused Linux tests and dependency checks passed. Independent review, cargo xtask pr and native validation pending.",
+  "exclusions": [
+    "No fixture changes process credentials or constructs differing real and effective UIDs; the distinction is supported by pinned wrapper source",
+    "The integration fixture requires the native id utility on supported Linux/macOS runners",
+    "No Miri claim for the native identity call",
+    "No public API, package version or completion claim for #89 or #80"
+  ]
+}
