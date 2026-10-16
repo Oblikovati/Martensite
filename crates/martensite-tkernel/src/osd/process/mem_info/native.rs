@@ -56,12 +56,38 @@ fn task_counters() -> Option<(usize, usize, usize)> {
     if status != KERN_SUCCESS {
         return None;
     }
-    // SAFETY: a zeroed statistics record is valid; a null zone means every zone.
-    let mut stats: libc::malloc_statistics_t = unsafe { std::mem::zeroed() };
-    // SAFETY: `stats` is live and writable for the call.
+    let mut stats = empty_malloc_statistics();
+    // SAFETY: `stats` is live and writable; a null zone means every zone.
     unsafe { libc::malloc_zone_statistics(std::ptr::null_mut(), &mut stats) };
     let (virtual_size, resident) = (info.virtual_size, info.resident_size);
     Some((virtual_size, resident, stats.size_in_use))
+}
+
+#[cfg(target_vendor = "apple")]
+fn empty_malloc_statistics() -> libc::malloc_statistics_t {
+    libc::malloc_statistics_t {
+        blocks_in_use: 0,
+        size_in_use: 0,
+        max_size_in_use: 0,
+        size_allocated: 0,
+    }
+}
+
+#[cfg(all(test, target_vendor = "apple"))]
+mod statistics_initialization_tests {
+    #[test]
+    fn malloc_statistics_starts_with_all_fields_zero() {
+        let stats = super::empty_malloc_statistics();
+        assert_eq!(stats.blocks_in_use, 0);
+        assert_eq!(
+            [
+                stats.size_in_use,
+                stats.max_size_in_use,
+                stats.size_allocated
+            ],
+            [0; 3]
+        );
+    }
 }
 #[cfg(not(target_vendor = "apple"))]
 fn task_counters() -> Option<(usize, usize, usize)> {
