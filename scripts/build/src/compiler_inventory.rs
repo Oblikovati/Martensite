@@ -47,12 +47,19 @@ pub fn capture_inventory(
 }
 
 fn invalidate_report(root: &Path) -> BuildResult<()> {
-    let path = root.join("target/unsafe-inventory/latest.json");
-    match std::fs::remove_file(&path) {
-        Ok(()) => Ok(()),
-        Err(cause) if cause.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(cause) => Err(io_error(&path, cause)),
+    for name in [
+        "latest.json",
+        "compiler.stdout.jsonl",
+        "compiler.stderr.txt",
+    ] {
+        let path = root.join("target/unsafe-inventory").join(name);
+        match std::fs::remove_file(&path) {
+            Ok(()) => {}
+            Err(cause) if cause.kind() == std::io::ErrorKind::NotFound => {}
+            Err(cause) => return Err(io_error(&path, cause)),
+        }
     }
+    Ok(())
 }
 
 fn preserve_compiler_output(root: &Path, output: &CommandOutput) -> BuildResult<()> {
@@ -240,5 +247,25 @@ mod tests {
             .is_err()
         );
         assert!(!report_dir.join("latest.json").exists());
+    }
+
+    #[test]
+    fn failure_before_compilation_invalidates_all_previous_evidence() {
+        let directory = tempfile::tempdir().unwrap();
+        let evidence_dir = directory.path().join("target/unsafe-inventory");
+        std::fs::create_dir_all(&evidence_dir).unwrap();
+        let names = [
+            "latest.json",
+            "compiler.stdout.jsonl",
+            "compiler.stderr.txt",
+        ];
+        for name in names {
+            std::fs::write(evidence_dir.join(name), "previous run").unwrap();
+        }
+        let runner = RecordingRunner::default();
+        assert!(capture_inventory(&runner, directory.path(), &BuildTarget::Host).is_err());
+        for name in names {
+            assert!(!evidence_dir.join(name).exists(), "stale evidence: {name}");
+        }
     }
 }
