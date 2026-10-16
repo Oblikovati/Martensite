@@ -65,13 +65,15 @@ the platform math library for the transcendental functions.
 
 ### Release matrix
 
-So far the tests ran only on Linux x86_64. Windows x64 was checked with clippy
-(all targets, `-D warnings`) but not run; Linux arm64 and macOS arm64 were not
-built. The source has no `c_char` widening or other char-signedness dependent
-code. Tests that compare exact bits of results computed through the platform
-math library (`sin`, `cos`, `atan2`, `exp`, `pow`) may differ by one ulp on
-macOS and Windows. Run the manual `release` dispatch of the workflow before the
-release and record each failing test here, with its cause.
+The release gate runs the full native suite and source-package checks on Linux
+x86_64 and arm64, macOS arm64, and Windows x64. Run the manual `release`
+workflow on the exact candidate commit and require all four targets to pass
+before tagging. Workflow runs retain the commands, diagnostics and results.
+
+The source has no `c_char` widening or other char-signedness dependent code.
+Exact-bit expectations for results computed through the platform math library
+(`sin`, `cos`, `atan2`, `exp`, `pow`) are checked on every target; a mismatch
+fails the release gate.
 
 ## Dependency checks
 
