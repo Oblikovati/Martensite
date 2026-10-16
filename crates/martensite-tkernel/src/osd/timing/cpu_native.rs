@@ -49,14 +49,19 @@ pub(super) fn thread_cpu() -> (f64, f64) {
     };
     // SAFETY: stamp is initialized, correctly aligned, writable, and alive throughout the call.
     let status: i32 = unsafe { libc::clock_gettime(libc::CLOCK_THREAD_CPUTIME_ID, &mut stamp) };
-    if status != 0 {
-        return (0.0, 0.0);
-    }
-    (
-        stamp.tv_sec as f64 + 0.000_000_001 * stamp.tv_nsec as f64,
-        0.0,
-    )
+    thread_cpu_seconds((status == 0).then(|| (stamp.tv_sec as f64, stamp.tv_nsec as f64)))
 }
+
+#[cfg(all(unix, not(target_vendor = "apple")))]
+fn thread_cpu_seconds(stamp: Option<(f64, f64)>) -> (f64, f64) {
+    let Some((seconds, nanoseconds)) = stamp else {
+        return (0.0, 0.0);
+    };
+    (seconds + 0.000_000_001 * nanoseconds, 0.0)
+}
+
+#[cfg(all(test, unix, not(target_vendor = "apple")))]
+mod thread_clock_contracts;
 
 /// macOS: the task's accumulated live-thread times (`TASK_THREAD_TIMES_INFO`).
 #[cfg(target_vendor = "apple")]
