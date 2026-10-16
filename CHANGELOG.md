@@ -6,6 +6,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed `cargo xtask pr` accepting fatal Git errors as clean untracked-file
+  whitespace checks; failed comparisons now retain their diagnostics ([#75]).
+
 ## [0.3.0] - 2026-10-16
 
 ### Added
@@ -24,3 +29,4 @@ follows [Semantic Versioning](https://semver.org/).
   functions bit for bit ([#72]).
 
 [#72]: https://github.com/Oblikovati/Martensite/pull/72
+[#75]: https://github.com/Oblikovati/Martensite/issues/75

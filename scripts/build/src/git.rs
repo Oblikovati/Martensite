@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::error::{BuildError, BuildResult};
-use crate::process::{CommandRunner, CommandSpec};
+use crate::process::{CommandOutput, CommandRunner, CommandSpec};
 
 /// One path that differs between the merge base and the working tree.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -15,10 +15,6 @@ pub struct ChangedFile {
     /// The file is not tracked yet; `git diff` does not see its content.
     pub untracked: bool,
 }
-
-/// `git diff --no-index --check` sets bit 2 for whitespace problems; bit 1
-/// only says the file differs from `/dev/null`, which a new file always does.
-const WHITESPACE_PROBLEM_BIT: i32 = 2;
 
 /// Git queries rooted at one repository.
 pub struct GitRepo<'a> {
@@ -62,18 +58,10 @@ impl<'a> GitRepo<'a> {
 
     /// Reports whitespace errors added since `base_commit`; true when clean.
     pub fn whitespace_clean(&self, base_commit: &str, files: &[ChangedFile]) -> BuildResult<bool> {
-        let tracked = self.exit_code(&["diff", "--check", base_commit])? == 0;
+        let tracked = self.diff_clean(&["diff", "--check", base_commit], false)?;
         let mut clean = tracked;
         for file in files.iter().filter(|file| file.untracked) {
-            let code = self.exit_code(&[
-                "diff",
-                "--no-index",
-                "--check",
-                "--",
-                "/dev/null",
-                &file.path,
-            ])?;
-            clean &= code & WHITESPACE_PROBLEM_BIT == 0;
+            clean &= self.untracked_whitespace_clean(&file.path)?;
         }
         Ok(clean)
     }
@@ -88,12 +76,55 @@ impl<'a> GitRepo<'a> {
         self.runner.capture(&self.command(args))
     }
 
-    fn exit_code(&self, args: &[&str]) -> BuildResult<i32> {
-        self.runner.exit_code(&self.command(args))
+    fn diff_clean(&self, args: &[&str], no_index: bool) -> BuildResult<bool> {
+        let spec = self.command(args);
+        let output = self.runner.capture_output(&spec)?;
+        let clean = diff_whitespace_result(&spec, &output, no_index)?;
+        if !clean {
+            print!("{}", String::from_utf8_lossy(&output.stdout));
+        }
+        Ok(clean)
+    }
+
+    fn untracked_whitespace_clean(&self, path: &str) -> BuildResult<bool> {
+        self.diff_clean(
+            &["diff", "--no-index", "--check", "--", "/dev/null", path],
+            true,
+        )
     }
 
     fn command(&self, args: &[&str]) -> CommandSpec {
         CommandSpec::new("git", &self.root).args(args.iter().copied())
+    }
+}
+
+fn diff_whitespace_result(
+    spec: &CommandSpec,
+    output: &CommandOutput,
+    no_index: bool,
+) -> BuildResult<bool> {
+    // #75: Git uses exit 1 for both a clean new file and fatal no-index read errors.
+    match (
+        output.code,
+        output.stdout.is_empty(),
+        output.stderr.is_empty(),
+    ) {
+        (0, true, true) => Ok(true),
+        (1, true, true) if no_index => Ok(true),
+        (2 | 3, _, true) => Ok(false),
+        _ => Err(diff_command_failure(spec, output)),
+    }
+}
+
+fn diff_command_failure(spec: &CommandSpec, output: &CommandOutput) -> BuildError {
+    BuildError::CommandFailed {
+        command: spec.display(),
+        status: format!(
+            "exit code {}; expected clean output or a whitespace diagnostic; stdout={:?}; stderr={:?}",
+            output.code,
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        ),
     }
 }
 
@@ -121,6 +152,10 @@ fn untracked_file(path: &str) -> ChangedFile {
         untracked: true,
     }
 }
+
+#[cfg(test)]
+#[path = "git_process_tests.rs"]
+mod process_tests;
 
 #[cfg(test)]
 mod tests {
@@ -181,6 +216,46 @@ mod tests {
     fn tracked_whitespace_problem_fails_the_check() {
         let runner = RecordingRunner::default().with_exit_code("git diff --check abc", 2);
         assert!(!repo(&runner).whitespace_clean("abc", &[]).unwrap());
+    }
+
+    #[test]
+    fn fatal_no_index_exit_one_preserves_the_command_and_diagnostic() {
+        let command = "git diff --no-index --check -- /dev/null missing.txt";
+        let runner = RecordingRunner::default()
+            .with_exit_code(command, 1)
+            .with_stderr(command, "error: Could not access 'missing.txt'");
+        let error = repo(&runner)
+            .whitespace_clean("abc", &[untracked_file("missing.txt")])
+            .unwrap_err();
+        assert!(matches!(error, BuildError::CommandFailed { .. }));
+        assert!(error.to_string().contains(command));
+        assert!(error.to_string().contains("Could not access 'missing.txt'"));
+    }
+
+    #[test]
+    fn unexpected_exit_status_is_never_accepted_as_clean() {
+        let command = "git diff --no-index --check -- /dev/null new.txt";
+        for code in [4, 128, 255] {
+            let runner = RecordingRunner::default().with_exit_code(command, code);
+            assert!(
+                repo(&runner)
+                    .whitespace_clean("abc", &[untracked_file("new.txt")])
+                    .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn unexpected_output_is_never_accepted_as_clean() {
+        let command = "git diff --no-index --check -- /dev/null new.txt";
+        let runner = RecordingRunner::default()
+            .with_exit_code(command, 1)
+            .with_stdout(command, "unexpected");
+        assert!(
+            repo(&runner)
+                .whitespace_clean("abc", &[untracked_file("new.txt")])
+                .is_err()
+        );
     }
 
     #[test]
