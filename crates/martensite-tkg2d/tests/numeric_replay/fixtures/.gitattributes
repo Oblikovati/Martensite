@@ -1,0 +1,2 @@
+# Trailing blanks are literal expected bytes; replay checks them without trimming.
+expected-[0-3].txt whitespace=-blank-at-eol

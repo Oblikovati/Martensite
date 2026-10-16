@@ -1,0 +1,141 @@
+//! Planar geometry construction, evaluation and boundary contracts.
+#![allow(non_snake_case)]
+mod common;
+use common::EXPECT_NEAR;
+use martensite_tkernel::precision;
+use martensite_tkernel::standard::Handle;
+use martensite_tkg2d::geom2d::{Geom2dConic, Geom2dCurve, Geom2dGeometry, Geom2dParabola};
+use martensite_tkmath::gp::{Axis2d, Direction2, Line2, Parabola2, Point2, Transform2, Vector2};
+
+// Geom2dParabolaTest::SetUp: parabola centered at origin with focal distance 4.
+fn setup() -> Handle<Geom2dParabola> {
+    let aParab = Parabola2::from_mirror_axis(
+        Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap()),
+        4.0,
+        true,
+    )
+    .unwrap();
+    Handle::new(Geom2dParabola::from_parab2d(aParab))
+}
+
+#[test]
+fn parabola_focal() {
+    let myParabola = setup();
+    EXPECT_NEAR(myParabola.focal(), 4.0, precision::confusion());
+}
+
+#[test]
+fn parabola_is_not_closed_not_periodic() {
+    let myParabola = setup();
+    assert!(!myParabola.is_closed().unwrap());
+    assert!(!myParabola.is_periodic());
+}
+
+#[test]
+fn parabola_eccentricity() {
+    let myParabola = setup();
+    EXPECT_NEAR(
+        myParabola.eccentricity().unwrap(),
+        1.0,
+        precision::confusion(),
+    );
+}
+
+#[test]
+fn parabola_focus() {
+    let myParabola = setup();
+    let aFocus: Point2 = myParabola.focus();
+    EXPECT_NEAR(aFocus.x(), 4.0, precision::confusion());
+    EXPECT_NEAR(aFocus.y(), 0.0, precision::confusion());
+}
+
+#[test]
+fn parabola_parameter() {
+    let myParabola = setup();
+    // p = 2*Focal = 8
+    EXPECT_NEAR(myParabola.parameter(), 8.0, precision::confusion());
+}
+
+#[test]
+fn parabola_eval_d0_at_zero() {
+    let myParabola = setup();
+    // At U=0: vertex
+    let aPnt: Point2 = myParabola.eval_d0(0.0).unwrap();
+    EXPECT_NEAR(aPnt.x(), 0.0, precision::confusion());
+    EXPECT_NEAR(aPnt.y(), 0.0, precision::confusion());
+}
+
+#[test]
+fn parabola_eval_d0_symmetric() {
+    let myParabola = setup();
+    // Parabola is symmetric: P(U) and P(-U) should have same X, opposite Y
+    let aU: f64 = 3.0;
+    let aPntPos: Point2 = myParabola.eval_d0(aU).unwrap();
+    let aPntNeg: Point2 = myParabola.eval_d0(-aU).unwrap();
+
+    EXPECT_NEAR(aPntPos.x(), aPntNeg.x(), precision::confusion());
+    EXPECT_NEAR(aPntPos.y(), -aPntNeg.y(), precision::confusion());
+}
+
+#[test]
+fn parabola_eval_d1_at_zero() {
+    let myParabola = setup();
+    let aD1: Vector2 = myParabola.eval_d1(0.0).unwrap().d1;
+    // At vertex: tangent is along Y axis
+    EXPECT_NEAR(aD1.x(), 0.0, precision::confusion());
+    assert!(aD1.magnitude() > precision::confusion());
+}
+
+#[test]
+fn parabola_eval_d2_at_zero() {
+    let myParabola = setup();
+    let aD2: Vector2 = myParabola.eval_d2(0.0).unwrap().d2;
+    // Second derivative at vertex should be along X (opening direction)
+    assert!(aD2.x() > 0.0);
+}
+
+#[test]
+fn parabola_point_on_parabola_focus_directrix_property() {
+    let myParabola = setup();
+    // For any point P on parabola: distance(P, Focus) = distance(P, Directrix)
+    let aFocus: Point2 = myParabola.focus();
+    let aDirectrix: Axis2d = myParabola.directrix().unwrap();
+    let aDirLine = Line2::from(aDirectrix);
+
+    let mut u: f64 = -5.0;
+    while u <= 5.0 {
+        let aPnt: Point2 = myParabola.eval_d0(u).unwrap();
+        let aDistFocus: f64 = aPnt.distance(aFocus);
+        let aDistDir: f64 = aDirLine.distance(aPnt);
+        EXPECT_NEAR(aDistFocus, aDistDir, 1e-6);
+        u += 1.0;
+    }
+}
+
+#[test]
+fn parabola_set_focal() {
+    let myParabola = setup();
+    myParabola.set_focal(10.0).unwrap();
+    EXPECT_NEAR(myParabola.focal(), 10.0, precision::confusion());
+}
+
+#[test]
+fn parabola_copy() {
+    let myParabola = setup();
+    let aCopyGeom: Handle<dyn Geom2dGeometry> = myParabola.copy().unwrap();
+    let aCopy: Handle<Geom2dParabola> = aCopyGeom.cast::<Geom2dParabola>();
+
+    assert!(!aCopy.is_null());
+    EXPECT_NEAR(aCopy.focal(), 4.0, precision::confusion());
+}
+
+#[test]
+fn parabola_transform_translation() {
+    let myParabola = setup();
+    let mut aTrsf = Transform2::default();
+    aTrsf.set_translation(Vector2::new(5.0, 10.0));
+    myParabola.transform(aTrsf).unwrap();
+
+    EXPECT_NEAR(myParabola.location().x(), 5.0, precision::confusion());
+    EXPECT_NEAR(myParabola.location().y(), 10.0, precision::confusion());
+}
