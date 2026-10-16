@@ -1,0 +1,40 @@
+{
+  "issue": 89,
+  "baseline_fixture_commit": "863f51d",
+  "toolchain": "Rust 1.99.0",
+  "operations": {
+    "rename": "std::fs::rename -> libc::rename, cvt",
+    "unlink": "std::fs::remove_file -> libc::unlink, cvt",
+    "rmdir": "std::fs::remove_dir -> libc::rmdir, cvt",
+    "mkdir": "std::fs::DirBuilder with Unix mode -> libc::mkdir, cvt"
+  },
+  "source_evidence": "Pinned rust-src library/std/src/sys/fs/unix.rs: DirBuilder::mkdir/set_mode, unlink, rename, rmdir. Each uses the corresponding native call without the cvt_r EINTR retry loop.",
+  "compatibility": [
+    "Existing CString conversion truncates at the first NUL before converting its bytes to a borrowed Unix OsStr/Path.",
+    "Errors use the returned io::Error raw OS code, not a later read of errno.",
+    "DirBuilderExt::mode narrows u32 to mode_t in the pinned implementation, as the old wrapper did.",
+    "No public signature, trait bound, dependency or version change."
+  ],
+  "excluded_operation": "chmod remains unchanged: pinned std set_perm uses cvt_r and retries EINTR, whereas the existing wrapper reports the first error.",
+  "fixtures": {
+    "command": "cargo test -p martensite-tkernel --test toolkit osd_safe_path_operations",
+    "baseline_passed": 6,
+    "replacement_passed": 6,
+    "coverage": "Non-UTF8 paths, first-NUL truncation, empty-path ENOENT, rename content/source removal, unlink ENOENT, directory permission restriction, EEXIST, ENOTEMPTY, removal, rename over a symlink without changing its target, dangling-symlink unlink, and directory-symlink rejection.",
+    "expanded_baseline_replay": "Replayed the exact 863f51d native_unix.rs implementation against all six fixtures, then restored the safe candidate. Both passed; no baseline assertion was changed.",
+    "platform": "Linux x86_64"
+  },
+  "inventory": {
+    "source_blocks_before": 22,
+    "source_blocks_after": 18,
+    "expected_unix_compiler_primary_spans_before": 44,
+    "expected_unix_compiler_primary_spans_after": 36,
+    "windows": "No changed native Windows implementation or baseline."
+  },
+  "remaining_validation": [
+    "Initial local PR gate failed only the test-file registration check; 4476 other toolkit tests passed. Registration was corrected and its focused check passed. Full gate rerun remains required.",
+    "Native Linux arm64, macOS arm64 and Windows x64 validation has not run for this branch.",
+    "Local Linux x86_64 captured compiler group verified at 36; other target reductions remain pending native artifact verification.",
+    "Final standards/spec review remains outstanding."
+  ]
+}

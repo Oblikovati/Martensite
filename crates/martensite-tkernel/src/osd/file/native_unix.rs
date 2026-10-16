@@ -9,6 +9,7 @@ use super::directory_stream::DirectoryEntries;
 use crate::osd::LocalTime;
 use crate::osd::OpenMode;
 use std::ffi::CString;
+use std::os::unix::{ffi::OsStrExt, fs::DirBuilderExt};
 mod directory_cursor;
 
 /// The real POSIX calls; `NativePosixCalls.stat(b"/tmp")`.
@@ -34,6 +35,14 @@ fn status_zero(status: libc::c_int) -> CallResult<()> {
     } else {
         Ok(())
     }
+}
+
+fn native_path(name: &std::ffi::CStr) -> &std::path::Path {
+    std::path::Path::new(std::ffi::OsStr::from_bytes(name.to_bytes()))
+}
+
+fn path_result(result: std::io::Result<()>) -> CallResult<()> {
+    result.map_err(|error| Errno(error.raw_os_error().unwrap_or(0)))
 }
 
 // mode_t is u16 on macOS and the stat field widths vary by target: the casts are needed there.
@@ -139,23 +148,23 @@ impl PosixFileCalls for NativePosixCalls {
     }
     fn rename(&self, from: &[u8], to: &[u8]) -> CallResult<()> {
         let (from, to) = (c_path(from), c_path(to));
-        // SAFETY: both names are NUL-terminated and alive for the call.
-        status_zero(unsafe { libc::rename(from.as_ptr(), to.as_ptr()) })
+        path_result(std::fs::rename(native_path(&from), native_path(&to)))
     }
     fn unlink(&self, path: &[u8]) -> CallResult<()> {
         let name: CString = c_path(path);
-        // SAFETY: name is NUL-terminated and alive for the call.
-        status_zero(unsafe { libc::unlink(name.as_ptr()) })
+        path_result(std::fs::remove_file(native_path(&name)))
     }
     fn rmdir(&self, path: &[u8]) -> CallResult<()> {
         let name: CString = c_path(path);
-        // SAFETY: name is NUL-terminated and alive for the call.
-        status_zero(unsafe { libc::rmdir(name.as_ptr()) })
+        path_result(std::fs::remove_dir(native_path(&name)))
     }
     fn mkdir(&self, path: &[u8], mode: u32) -> CallResult<()> {
         let name: CString = c_path(path);
-        // SAFETY: name is NUL-terminated and alive for the call.
-        status_zero(unsafe { libc::mkdir(name.as_ptr(), mode as libc::mode_t) })
+        path_result(
+            std::fs::DirBuilder::new()
+                .mode(mode)
+                .create(native_path(&name)),
+        )
     }
     fn chmod(&self, path: &[u8], mode: u32) -> CallResult<()> {
         let name: CString = c_path(path);
