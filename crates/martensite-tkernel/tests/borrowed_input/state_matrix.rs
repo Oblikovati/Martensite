@@ -2,20 +2,41 @@
 use super::{checked_input::*, fakes::FailingBufferedInput};
 use std::fmt::Write;
 
-struct MatrixBaseline<'a> { rows: std::str::Lines<'a>, count: usize }
+struct MatrixBaseline<'a> {
+    rows: std::str::Lines<'a>,
+    count: usize,
+}
 impl MatrixBaseline<'_> {
     fn check(&mut self, actual: String) {
-        assert_eq!(Some(actual.as_str()), self.rows.next(), "input matrix row {}", self.count + 1);
+        let expected = self.rows.next().map(|row| {
+            row.strip_suffix('|')
+                .expect("state matrix row: expected terminal | marker")
+        });
+        assert_eq!(
+            Some(actual.as_str()),
+            expected,
+            "input matrix row {}",
+            self.count + 1
+        );
         self.count += 1;
     }
 }
 fn error_kind(answer: Result<(), InputFailure>) -> &'static str {
     match answer {
         Ok(()) => "none",
-        Err(fault) => match fault.cause { InputCause::Device(_) => "device", InputCause::State => "state" }
+        Err(fault) => match fault.cause {
+            InputCause::Device(_) => "device",
+            InputCause::State => "state",
+        },
     }
 }
-fn extraction_row(length: usize, mask: u8, failure: i32, operation: &str, capacity: usize) -> String {
+fn extraction_row(
+    length: usize,
+    mask: u8,
+    failure: i32,
+    operation: &str,
+    capacity: usize,
+) -> String {
     let mut source = FailingBufferedInput::new(&b"AB>CD"[..length]);
     source.failure_at = usize::try_from(failure).ok();
     let mut buffered = PositionedInput(&mut source);
@@ -25,11 +46,26 @@ fn extraction_row(length: usize, mask: u8, failure: i32, operation: &str, capaci
     let error = extraction_error(&mut context, &mut output, operation);
     let (flags, count) = (context.state(), context.gcount());
     drop(context);
-    let mut row = format!("{length}:{mask}:{failure}:{operation}:{capacity} {flags} {count} {} {error} ", source.cursor);
-    for byte in output { write!(row, "{byte:x},").unwrap(); }
+    let prefix = format!("{length}:{mask}:{failure}:{operation}:{capacity}");
+    extraction_response(prefix, (flags, count, source.cursor, error), output)
+}
+fn extraction_response(
+    prefix: String,
+    (flags, count, cursor, error): (u8, usize, usize, &str),
+    output: Vec<u8>,
+) -> String {
+    let mut row = format!("{prefix} {flags} {count} {cursor} {error} ");
+    for byte in output {
+        write!(row, "{byte:x},").unwrap();
+    }
     row
 }
-fn extraction_error(input: &mut dyn UnformattedInput, output: &mut [u8], operation: &str) -> &'static str {
+
+fn extraction_error(
+    input: &mut dyn UnformattedInput,
+    output: &mut [u8],
+    operation: &str,
+) -> &'static str {
     error_kind(match operation {
         "get" => input.get(&mut output[0]),
         "line" => input.getline(output, b'>'),
@@ -64,23 +100,37 @@ fn position_row(origin: usize, mode: usize, mask: u8) -> String {
     reader.fail_position = mode == 2;
     let (flags, count, position, error) = if mode == 1 {
         position_result(&mut BufferedInput(&mut reader), mask)
-    } else { position_result(&mut PositionedInput(&mut reader), mask) };
-    format!("position:{origin}:{mode}:{mask} {flags} {count} {} {position} {error}", reader.cursor)
+    } else {
+        position_result(&mut PositionedInput(&mut reader), mask)
+    };
+    format!(
+        "position:{origin}:{mode}:{mask} {flags} {count} {} {position} {error}",
+        reader.cursor
+    )
 }
 fn position_rows(origin: usize, baseline: &mut MatrixBaseline<'_>) {
     for mode in [0, 1, 2] {
-        for mask in [0, 1, 2, 4, 5, 6, 7] { baseline.check(position_row(origin, mode, mask)); }
+        for mask in [0, 1, 2, 4, 5, 6, 7] {
+            baseline.check(position_row(origin, mode, mask));
+        }
     }
 }
 #[test]
 fn all_reviewed_state_count_position_and_partial_output_rows_are_retained() {
     let text = include_str!("state_matrix.txt");
     assert!(text.ends_with('\n'));
-    let mut baseline = MatrixBaseline { rows: text.lines(), count: 0 };
+    let mut baseline = MatrixBaseline {
+        rows: text.lines(),
+        count: 0,
+    };
     for length in 0..=5 {
-        for mask in [0, 1, 2, 4, 5, 6, 7] { failure_rows(length, mask, &mut baseline); }
+        for mask in [0, 1, 2, 4, 5, 6, 7] {
+            failure_rows(length, mask, &mut baseline);
+        }
     }
-    for origin in [0, 2] { position_rows(origin, &mut baseline); }
+    for origin in [0, 2] {
+        position_rows(origin, &mut baseline);
+    }
     assert_eq!(baseline.count, 3864);
     assert!(baseline.rows.next().is_none());
 }

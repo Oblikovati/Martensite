@@ -57,7 +57,9 @@ Twenty independent tests retain literal bytes, positions, state transitions,
 counts and cause identity. A separate reviewed behavior-version-1 fixture retains
 3,864 state/count/position/output rows, exercised directly through the public
 interface. It is a semantic baseline, not independently derived expected values.
-Baseline updates require review stating the reason and behavior version.
+Each stored row ends in a `|` marker outside its payload so meaningful trailing
+spaces survive text checks. The test removes only that marker; it does not trim
+whitespace. Baseline updates require review stating the reason and behavior version.
 
 The test-only experiment algorithm was deleted. Its fixtures exercise the shared
 public implementation. Q3 is the one-milestone promotion deadline for #116/#142;

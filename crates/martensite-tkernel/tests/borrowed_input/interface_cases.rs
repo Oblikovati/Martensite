@@ -29,7 +29,9 @@ fn erased_consumer_retains_the_same_device_cause_after_clearing_flags() {
     let consumer: &mut dyn UnformattedInput = &mut input;
     consumer.set_exception_mask(state::BAD).unwrap();
     let fault = consumer.get(&mut 0).unwrap_err();
-    let InputCause::Device(cause) = fault.cause else { panic!("expected device cause") };
+    let InputCause::Device(cause) = fault.cause else {
+        panic!("expected device cause")
+    };
     assert!(consumer.fail() && !consumer.eof());
     assert!(Arc::ptr_eq(&cause, consumer.last_device_error().unwrap()));
     consumer.clear().unwrap();
