@@ -13,6 +13,7 @@ pub struct CommandSpec {
     program: String,
     args: Vec<String>,
     cwd: PathBuf,
+    environment: Vec<(String, Option<String>)>,
 }
 
 impl CommandSpec {
@@ -26,6 +27,7 @@ impl CommandSpec {
             program: program.to_owned(),
             args: Vec::new(),
             cwd: cwd.to_path_buf(),
+            environment: Vec::new(),
         }
     }
 
@@ -56,7 +58,25 @@ impl CommandSpec {
     fn to_command(&self) -> Command {
         let mut command = Command::new(&self.program);
         command.args(&self.args).current_dir(&self.cwd);
+        for (name, value) in &self.environment {
+            match value {
+                Some(value) => {
+                    command.env(name, value);
+                }
+                None => {
+                    command.env_remove(name);
+                }
+            }
+        }
         command
+    }
+
+    /// Overrides a child variable without mutating the parent process environment.
+    /// Example: `spec.environment("RUSTFLAGS", Some("--force-warn unsafe_code"))`.
+    pub fn environment(mut self, name: &str, value: Option<&str>) -> Self {
+        self.environment
+            .push((name.into(), value.map(str::to_owned)));
+        self
     }
 }
 
@@ -164,6 +184,22 @@ mod tests {
     fn display_joins_program_and_arguments() {
         let spec = CommandSpec::new("cargo", Path::new(".")).args(["test", "--locked"]);
         assert_eq!(spec.display(), "cargo test --locked");
+    }
+
+    #[test]
+    fn child_environment_overrides_do_not_mutate_the_parent() {
+        let before = std::env::var_os("MARTENSITE_CHILD_TEST_SETTING");
+        let spec = CommandSpec::new("cargo", Path::new("."))
+            .environment("MARTENSITE_CHILD_TEST_SETTING", Some("child-only"))
+            .environment("CARGO_ENCODED_RUSTFLAGS", None);
+        let command = spec.to_command();
+        let settings: Vec<_> = command.get_envs().collect();
+        assert!(settings.contains(&(
+            std::ffi::OsStr::new("MARTENSITE_CHILD_TEST_SETTING"),
+            Some(std::ffi::OsStr::new("child-only"))
+        )));
+        assert!(settings.contains(&(std::ffi::OsStr::new("CARGO_ENCODED_RUSTFLAGS"), None)));
+        assert_eq!(std::env::var_os("MARTENSITE_CHILD_TEST_SETTING"), before);
     }
 
     #[test]
