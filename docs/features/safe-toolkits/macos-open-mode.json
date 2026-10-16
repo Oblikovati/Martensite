@@ -1,0 +1,21 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "baseline_revision": "3824f7e",
+  "status": "Investigation and baseline fixture only; production open is unchanged.",
+  "constraint": "The existing interface accepts a u32 mode and passes c_uint to variadic libc open. On macOS, rustix Mode uses the platform u16 mode_t before promoting it back to c_uint for that call. Compatibility therefore requires checking whether discarded high bits affect creation.",
+  "kernel_source": {
+    "revision": "f6217f891ac0bb64f3d375211650a4c1ff8ca1ea",
+    "path": "https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/vfs/vfs_syscalls.c#L5053",
+    "finding": "open calls open_nocancel, which passes mode to openat_internal. That function masks mode with ALLPERMS and then ACCESSPERMS before setting the vnode creation mode. Consequently bits above u16 do not reach the permission attributes in this inspected kernel source. This is evidence about ordinary kernel behavior, not arbitrary libc interposition."
+  },
+  "wrapper_source": "Pinned rustix 1.1.5 backend/libc/fs/types.rs uses mode_t for RawMode on Apple. backend/libc/fs/syscalls.rs open promotes mode.bits() to c_uint and calls libc open, preserving flags and returning the owned descriptor or errno.",
+  "fixture": "Creates two files in one isolated temporary directory using modes 0600 and 0xffff0000|0600. Compares the complete permission/special-bit masks and checks no bits outside 0600 remain. It does not mutate process umask. Native macOS execution is required before accepting the width conversion.",
+  "local_validation": "The focused Linux baseline fixture passed against the original libc implementation (/tmp/martensite-open-mode-baseline.log).",
+  "remaining": [
+    "Run the full baseline gate and native macOS baseline validation",
+    "Reuse the reviewed descriptor-owning wrapper after PR #135 integrates",
+    "Run unchanged fixtures, inventory checks and native matrix after replacement",
+    "Review the platform extension separately; retain other unresolved targets under #89"
+  ]
+}

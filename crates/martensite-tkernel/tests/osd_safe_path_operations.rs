@@ -6,6 +6,8 @@ use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 #[path = "osd_safe_path_operations/links.rs"]
 mod links;
+#[path = "osd_safe_path_operations/open_mode.rs"]
+mod open_mode;
 #[path = "osd_safe_path_operations/permissions.rs"]
 mod permissions;
 #[path = "osd_safe_path_operations/raw_names.rs"]
