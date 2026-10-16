@@ -94,7 +94,7 @@ fn is_super_user() -> Result<bool, i32> {
 
 #[cfg(unix)]
 fn user_name() -> Result<Vec<u8>, i32> {
-    let mut entry: libc::passwd = unsafe_zeroed_passwd();
+    let mut entry: libc::passwd = empty_passwd();
     let mut buffer: Vec<libc::c_char> = vec![0; 16 * 1024];
     let mut found: *mut libc::passwd = std::ptr::null_mut();
     // SAFETY: every pointer refers to live, writable storage of the stated length; the
@@ -116,10 +116,53 @@ fn user_name() -> Result<Vec<u8>, i32> {
         .to_bytes()
         .to_vec())
 }
-#[cfg(unix)]
-fn unsafe_zeroed_passwd() -> libc::passwd {
+#[cfg(target_os = "linux")]
+fn empty_passwd() -> libc::passwd {
+    libc::passwd {
+        pw_name: std::ptr::null_mut(),
+        pw_passwd: std::ptr::null_mut(),
+        pw_uid: 0,
+        pw_gid: 0,
+        pw_gecos: std::ptr::null_mut(),
+        pw_dir: std::ptr::null_mut(),
+        pw_shell: std::ptr::null_mut(),
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn empty_passwd() -> libc::passwd {
+    // libc 0.2.190 generates safe field defaults, including null string pointers.
+    libc::passwd::default()
+}
+
+#[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
+fn empty_passwd() -> libc::passwd {
     // SAFETY: passwd is a plain C struct of integers and pointers; all-zero is valid.
     unsafe { std::mem::zeroed() }
+}
+
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+#[test]
+fn account_initialization_preserves_null_strings_and_zero_ids() {
+    let entry = empty_passwd();
+    assert_eq!((entry.pw_uid, entry.pw_gid), (0, 0));
+    for pointer in [
+        entry.pw_name,
+        entry.pw_passwd,
+        entry.pw_gecos,
+        entry.pw_dir,
+        entry.pw_shell,
+    ] {
+        assert!(pointer.is_null());
+    }
+}
+
+#[cfg(all(test, target_os = "macos"))]
+#[test]
+fn apple_account_initialization_preserves_class_and_expiry() {
+    let entry = empty_passwd();
+    assert_eq!((entry.pw_change, entry.pw_expire), (0, 0));
+    assert!(entry.pw_class.is_null());
 }
 // TODO(platform): Windows reads the login name with GetUserNameW.
 #[cfg(not(unix))]
