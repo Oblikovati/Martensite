@@ -1,0 +1,30 @@
+{
+  "task": 87,
+  "base_revision": "548c15b",
+  "change": "SmallVec inline storage for up to 32 prepared workers; existing dependency, unchanged worker interface and dispatch tree",
+  "tests": {
+    "osd_parallel": { "passed": 11, "ignored_manual_workloads": 6 },
+    "large_pool_release": { "participants": 128, "rust_min_stack": 65536, "passed": 2 }
+  },
+  "measurement": {
+    "tool": "Valgrind 3.22.0 Memcheck, leak-check=summary",
+    "test": "persistent_range_workload --ignored --test-threads=1",
+    "profile": "release",
+    "allocations": 123522,
+    "frees": 123441,
+    "bytes_allocated": 11233727,
+    "prior_balanced_candidate_allocations": 132926,
+    "exit_bytes": 169596,
+    "definitely_lost_bytes": 0,
+    "indirectly_lost_bytes": 0,
+    "possibly_lost_bytes": 69168,
+    "still_reachable_bytes": 100428,
+    "suppressed_bytes": 0
+  },
+  "limits": [
+    "This is not a clean full-leak-check result; possibly lost memory remains.",
+    "Per-job scoped allocations remain; this does not resolve baseline allocation-cost acceptance.",
+    "No timing conclusion is drawn from instrumented execution.",
+    "Native matrix and hosted sanitizer evidence from earlier revisions do not verify this change."
+  ]
+}

@@ -5,6 +5,21 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
+#[test]
+fn prepared_workers_use_inline_storage_through_thirty_two_workers() {
+    for count in [0, 1, 32, 33] {
+        let workers: Vec<_> = (0..count).map(|index| Worker::new(index, false)).collect();
+        let (ready, failures) = super::prepare_workers(&workers);
+        assert!(failures.is_empty());
+        assert_eq!(ready.len(), count as usize);
+        assert_eq!(ready.spilled(), count > 32);
+        drop(ready);
+        for worker in workers {
+            worker.shut_down();
+        }
+    }
+}
+
 struct RefusedThreadStart;
 
 impl RefusedThreadStart {
