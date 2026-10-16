@@ -6,6 +6,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed false incompatible-release errors for Common, Heap and Aligned storage
+  on Windows, preserving coherent ring removal and arena-release protection ([#78]).
+
 ## [0.3.1] - 2026-10-16
 
 ### Added
@@ -54,3 +59,4 @@ follows [Semantic Versioning](https://semver.org/).
 [#75]: https://github.com/Oblikovati/Martensite/issues/75
 [#76]: https://github.com/Oblikovati/Martensite/issues/76
 [#77]: https://github.com/Oblikovati/Martensite/issues/77
+[#78]: https://github.com/Oblikovati/Martensite/issues/78

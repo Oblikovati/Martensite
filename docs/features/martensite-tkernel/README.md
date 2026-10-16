@@ -85,9 +85,10 @@ not shipped as stubs.
   MSVC's C-locale `wctomb` maps units 0x80..0xFF to single bytes, and its
   `printf` has no `%m`. Only the glibc behavior is implemented; `%m` is rejected as
   unsupported on Windows.
-- Aligned allocation (`src/ncollection/allocator/free_outcome.rs`): MSVC pairs
-  `_aligned_malloc` only with `_aligned_free`, so mixing the Aligned allocator
-  with Common or Heap is undefined there. The runtime evidence is Linux only.
+- Heap release (`src/ncollection/allocator/free_outcome.rs`): Common, Heap and
+  Aligned use the same Rust allocation backend on every platform. Their original
+  live allocations are compatible; arena-interior addresses remain incompatible
+  with heap release. The classifier regression runs on every platform (#78).
 
 ### Other targets
 

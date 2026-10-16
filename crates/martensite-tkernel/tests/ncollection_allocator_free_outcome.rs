@@ -38,6 +38,24 @@ fn release(owner: &BaseAllocator, address: NonNull<u8>) {
     unsafe { owner.free_raw(address) }.unwrap();
 }
 
+/// #78: built-in heap classes share layout-bearing storage on every platform.
+#[test]
+fn builtin_heap_classes_classify_each_others_live_storage_as_released() {
+    for (owner_name, owner) in heap_kinds() {
+        let address = owner.allocate_raw(64).unwrap();
+        for (freer_name, freer) in heap_kinds() {
+            assert!(
+                matches!(
+                    freer.free_outcome(&owner, address.as_ptr()),
+                    FreeOutcome::Released
+                ),
+                "owner={owner_name}, freer={freer_name}; expected shared heap release"
+            );
+        }
+        release(&owner, address);
+    }
+}
+
 #[cfg(all(target_os = "linux", target_env = "gnu"))]
 #[test]
 fn heap_classes_release_each_others_blocks_on_linux() {
