@@ -1,0 +1,21 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "baseline_revision": "e8e1d5622a5d5f60dd921ed676c8c3ed3ad7581f",
+  "status": "Baseline investigation only; production open remains unchanged.",
+  "fixtures": "Six Linux fixtures pass against the original libc implementation: read-only rejects writing, NUL truncation, append overriding seek, read/write creation, create preserving existing contents versus explicit truncation, missing/empty path errno, and descriptor inheritance across exec. The inheritance fixture invokes /bin/cat on /dev/fd/<fd> and compares the unique file payload; no raw descriptor is borrowed unsafely.",
+  "candidate": "rustix::fs::open with exact retained flags and mode, then IntoRawFd to transfer ownership to the existing raw descriptor caller. No CLOEXEC flag may be added. The selected libc backend forwards flags and does not retry. Its old-glibc TMPFILE workaround is unreachable for the exposed OpenFlags combinations.",
+  "large_file_evidence": {
+    "rustix": "Pinned 1.1.5 backend/libc/c.rs aliases open64 to open on Linux-like targets except aarch64/riscv64. backend/libc/fs/syscalls.rs passes the selected mode and flags to that symbol.",
+    "glibc_open": "https://github.com/bminor/glibc/blob/glibc-2.40/sysdeps/unix/sysv/linux/open64.c",
+    "glibc_types": "https://github.com/bminor/glibc/blob/glibc-2.40/sysdeps/unix/sysv/linux/x86/bits/typesizes.h",
+    "finding": "In the inspected glibc version, x86_64 defines __OFF_T_MATCHES_OFF64_T and open64.c aliases open to the same implementation. This supports ordinary x86_64 GNU behavior, not arbitrary symbol interposition or all libc versions/targets. aarch64 rustix uses open directly. 32-bit compatibility is not established."
+  },
+  "remaining": [
+    "Check mode-width conversion and target scope before implementation",
+    "Run fixtures unchanged after replacement",
+    "Review inventory changes and run the full PR gate",
+    "Native cross-platform validation and two-axis review",
+    "Do not declare remaining target differences unavoidable"
+  ]
+}

@@ -14,6 +14,23 @@ const CREATE_READ_WRITE: OpenFlags = OpenFlags {
     ..READ_ONLY
 };
 
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[test]
+fn native_open_descriptor_remains_inherited_by_executed_child() {
+    let scratch = PathScratch::new("open-inherit");
+    std::fs::write(scratch.0.join("payload"), b"inherited-open-fixture").unwrap();
+    let fd = NativePosixCalls
+        .open(&scratch.bytes(b"payload"), READ_ONLY, 0)
+        .unwrap();
+    let output = std::process::Command::new("/bin/cat")
+        .arg(format!("/dev/fd/{fd}"))
+        .output()
+        .unwrap();
+    NativePosixCalls.close(fd).unwrap();
+    assert!(output.status.success(), "{:?}", output.stderr);
+    assert_eq!(output.stdout, b"inherited-open-fixture");
+}
+
 #[test]
 fn native_open_preserves_read_only_and_nul_truncation() {
     let scratch = PathScratch::new("open-read");
