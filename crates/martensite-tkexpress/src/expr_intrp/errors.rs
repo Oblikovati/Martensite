@@ -3,7 +3,7 @@ use martensite_tkernel::standard::Failure;
 
 /// a syntax failure; `syntax_error("syntax error")`.
 pub fn syntax_error(message: &str) -> Failure {
-    Failure::with_type("ExprIntrp_SyntaxError", message, "")
+    Failure::with_message("ExprIntrp_SyntaxError", message)
 }
 
 #[cfg(test)]

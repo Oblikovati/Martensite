@@ -15,6 +15,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Fixed symbolic-expression message failures to honor configured stack capture while
+  preserving explicitly supplied stacks (#141).
+
 - Checked toolkit unsafe source counts during PR validation, including inactive
   platform code and test fixtures (#81).
 - Checked expanded unsafe counts against target-specific compiler baselines and

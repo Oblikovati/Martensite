@@ -18,3 +18,8 @@ martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.1" }
 [[test]]
 name = "toolkit"
 path = "tests/toolkit.rs"
+
+# Trace policy is process-wide, so this contract runs outside the parallel toolkit suite.
+[[test]]
+name = "failure_stack_contract"
+path = "tests/failure_stack_contract.rs"

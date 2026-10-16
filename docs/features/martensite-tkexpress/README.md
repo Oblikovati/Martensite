@@ -30,6 +30,11 @@ to standard output and can be redirected with `set_scanner_output`.
 This API does not publish immutable modelling results. Callers must account for
 shared node mutation and must not assume that cloned handles isolate edits.
 
+Message-only failures honor the foundation stack-capture setting (#141). An
+explicit stack is retained exactly, including an explicit empty stack. The
+stack-policy regression runs in a separate executable because the setting is
+process-wide.
+
 Relation-system `remove` always returns a failure and leaves the system
 unchanged. Build a new system to select a subset of relations.
 

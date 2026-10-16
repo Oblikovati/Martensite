@@ -3,7 +3,7 @@ use martensite_tkernel::standard::Failure;
 
 /// expression failure; `expr_failure("Expr: unexpected state")`.
 pub fn expr_failure(message: &str) -> Failure {
-    Failure::with_type("Expr_ExprFailure", message, "")
+    Failure::with_message("Expr_ExprFailure", message)
 }
 /// Expression-specific failures share one family for category queries.
 const EXPR_FAILURE_PARENT: &str = "Expr_ExprFailure";
@@ -66,19 +66,19 @@ pub fn out_of_range(message: &str) -> Failure {
 }
 /// a dimension-mismatch failure; `dimension_mismatch("RemoveOperand: 2 operands; expected > 2")`.
 pub fn dimension_mismatch(message: &str) -> Failure {
-    Failure::with_type("Standard_DimensionMismatch", message, "")
+    Failure::with_message("Standard_DimensionMismatch", message)
 }
 /// a missing-object failure; `no_such_object("ExprRelationIterator::Value: no more relation")`.
 pub fn no_such_object(message: &str) -> Failure {
-    Failure::with_type("Standard_NoSuchObject", message, "")
+    Failure::with_message("Standard_NoSuchObject", message)
 }
 /// an exhausted-iterator failure; `no_more_object("ExprUnknownIterator::Next: past the end")`.
 pub fn no_more_object(message: &str) -> Failure {
-    Failure::with_type("Standard_NoMoreObject", message, "")
+    Failure::with_message("Standard_NoMoreObject", message)
 }
 /// Report a call through a null handle; `null_object("ExprSum::Evaluate: null operand 2")`.
 pub fn null_object(message: &str) -> Failure {
-    Failure::with_type("Standard_NullObject", message, "")
+    Failure::with_message("Standard_NullObject", message)
 }
 
 #[cfg(test)]
