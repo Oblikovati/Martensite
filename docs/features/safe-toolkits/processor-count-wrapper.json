@@ -2,7 +2,10 @@
   "task_issue": 89,
   "parent_issue": 80,
   "starting_main": "03366f26ee1777e75c79f9714f4cb7ee2ea135e6",
-  "status": "Linux safe replacement implemented locally; original native baseline run 38982150367 at c3b1adfc4853867e943511e83e4fbda840a64abf remains active. Review and replacement validation pending.",
+  "status": "Linux safe replacement passed local validation and code review. Original native baseline run 38982150367 at c3b1adfc4853867e943511e83e4fbda840a64abf passed all three Unix targets; Windows remains active. Replacement native validation pending.",
+  "native_baseline": "All three Unix full inventories matched the exact baseline revision with clean provenance. Both Linux processor-count fixtures passed; the macOS errno fixture passed. Artifacts /tmp/martensite-processor-count-original.3iWkvD; logs /tmp/martensite-processor-count-original-{x64,arm64,macos}.log.",
+  "local_replacement": "Full cargo xtask pr passed in /tmp/martensite-processor-count-safe-pr.log.",
+  "review": "Standards: zero violations or actionable smells. Spec: no defect or scope creep; native validation remains outstanding. Both reviewed fec0ef5...c696311. The documented stable-topology assumption remains a test limitation.",
   "replacement": "Reuse the private native_config helper merged in PR #148, retaining the c_long-to-i32 cast. No dependency, public API or version change. Both focused tests passed (/tmp/martensite-processor-count-safe.log).",
   "inventory": "Linux thread-native unsafe spans decrease from two to zero. The lexical source count remains five because the non-Linux fallback remains. macOS and Windows summaries are unchanged.",
   "local_baseline": "Both focused tests passed (/tmp/martensite-processor-count-baseline.log), followed by the full cargo xtask pr gate (/tmp/martensite-processor-count-baseline-pr.log).",
@@ -13,7 +16,7 @@
   "deletion_gate": "The direct processor-count call is excluded from Linux compilation. Integration requires baseline validation, review and replacement native inventory evidence; remaining platform paths are not accepted as permanent exceptions.",
   "remaining": [
     "Complete native baseline validation",
-    "Review and validate the replacement",
+    "Validate the replacement on native targets",
     "Investigate remaining platform paths"
   ]
 }
