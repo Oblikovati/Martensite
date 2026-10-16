@@ -140,7 +140,31 @@ impl PosixFileCalls for NativePosixCalls {
             metadata.blksize(),
         ))
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(all(
+        target_os = "linux",
+        target_env = "gnu",
+        target_pointer_width = "64",
+        any(target_arch = "x86_64", target_arch = "aarch64")
+    ))]
+    fn stat(&self, path: &[u8]) -> CallResult<NodeStatus> {
+        let name = c_path(path);
+        let raw = rustix::fs::stat(name.as_c_str()).map_err(|error| Errno(error.raw_os_error()))?;
+        Ok(node_status_fields(
+            raw.st_mode,
+            raw.st_size as u64,
+            raw.st_ctime,
+            raw.st_blksize as u64,
+        ))
+    }
+    #[cfg(not(any(
+        target_os = "macos",
+        all(
+            target_os = "linux",
+            target_env = "gnu",
+            target_pointer_width = "64",
+            any(target_arch = "x86_64", target_arch = "aarch64")
+        )
+    )))]
     fn stat(&self, path: &[u8]) -> CallResult<NodeStatus> {
         let name: CString = c_path(path);
         // SAFETY: an all-zero stat is a valid value of this plain C struct.
