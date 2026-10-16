@@ -1,0 +1,80 @@
+//! BFGS base algorithm with its convergence order.
+use super::optimization::{Optimization, optimization_results, standard_dump};
+use super::{Matrix, MultipleVarFunctionWithGradient, Status, Vector};
+use martensite_tkernel::standard::Failure;
+mod bounds;
+mod iterate;
+mod line;
+mod update;
+/// Broyden–Fletcher–Goldfarb–Shanno minimizer; `Bfgs::new(2)?`.
+pub struct Bfgs {
+    result: Optimization,
+    bounds: Option<(Vector<'static>, Vector<'static>)>,
+}
+impl Bfgs {
+    /// Uses tolerance and iteration defaults; `Bfgs::new(2)?`.
+    pub fn new(size: i32) -> Result<Self, Failure> {
+        Self::with_options(size, 1e-8, 200, 1e-12)
+    }
+    /// Sets all solver options; `Bfgs::with_options(2,1e-8,200,1e-12)?`.
+    pub fn with_options(
+        size: i32,
+        tolerance: f64,
+        limit: i32,
+        epsilon: f64,
+    ) -> Result<Self, Failure> {
+        Ok(Self {
+            result: Optimization::new(size, [tolerance, epsilon], limit, Status::Ok)?,
+            bounds: None,
+        })
+    }
+    /// Defines the box for subsequent searches; `solver.set_boundary(&lower,&upper)?`.
+    pub fn set_boundary(&mut self, left: &Vector<'_>, right: &Vector<'_>) -> Result<(), Failure> {
+        let size: i32 = self.result.location.length();
+        let bounds: &mut (Vector<'static>, Vector<'static>) =
+            self.bounds.get_or_insert_with(|| {
+                (
+                    Vector::filled(1, size, 0.0).unwrap(),
+                    Vector::filled(1, size, 0.0).unwrap(),
+                )
+            });
+        bounds.0.initialized(left)?;
+        bounds.1.initialized(right)?;
+        Ok(())
+    }
+    /// Runs minimization, preserving callback and stopping order; `solver.perform(&mut f,&start)?`.
+    pub fn perform<F: MultipleVarFunctionWithGradient>(
+        &mut self,
+        function: &mut F,
+        start: &Vector<'_>,
+    ) -> Result<(), Failure> {
+        self.perform_with_criterion(function, start, &mut |solver: &Self, _: &mut F| {
+            solver.is_solution_reached()
+        })
+    }
+    /// Runs minimization with a replacement for the virtual `IsSolutionReached(F)`, the
+    /// hook a subtype would override; the criterion sees the protected state through
+    /// `current_minimum`, `previous_minimum`, `tolerance` and `zero_epsilon`.
+    /// `solver.perform_with_criterion(&mut f,&start,&mut |s, _| s.is_solution_reached())?`.
+    pub fn perform_with_criterion<F: MultipleVarFunctionWithGradient>(
+        &mut self,
+        function: &mut F,
+        start: &Vector<'_>,
+        criterion: &mut impl FnMut(&Self, &mut F) -> bool,
+    ) -> Result<(), Failure> {
+        if !self.result.initialize(function, start)? {
+            return Ok(());
+        }
+        let size: i32 = self.result.location.length();
+        let mut hessian: Matrix<'static> = Matrix::filled(1, size, 1, size, 0.0).unwrap();
+        let mut direction: Vector<'static> = Vector::with_bounds(1, size)?;
+        for index in 1..=size {
+            hessian[(index, index)] = 1.0;
+            direction[index] = -self.result.gradient[index];
+        }
+        self.iterate(function, &mut direction, &mut hessian, criterion);
+        Ok(())
+    }
+}
+optimization_results!(Bfgs);
+standard_dump!(Bfgs, "math_BFGS resolution: ");

@@ -13,6 +13,17 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 - [Contributing](CONTRIBUTING.md)
 - [Agentic Development Governance](AGENTS.md)
 
+## Toolkits
+
+| Crate | Capabilities |
+| --- | --- |
+| `martensite-cmath` | Platform C math functions behind a typed Rust interface. |
+| `martensite-tkernel` | Errors, memory, collections, strings, operating-system services, quantities and units. |
+| `martensite-tkmath` | Geometry, linear algebra, solvers, splines, bounding volumes, meshes and exact predicates. |
+
+See the [foundation guide](docs/features/martensite-tkernel/README.md) and
+[math guide](docs/features/martensite-tkmath/README.md) for module and test details.
+
 ## Getting started
 
 Install the development dependencies with the installer for your OS. Each

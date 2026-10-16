@@ -1,0 +1,78 @@
+//! Double-exponential integration: variable transforms.
+use super::{DOUBLE_EXP_MAX_TRANSFORM_ARGUMENT, EXP_SINH_MIN_TRANSFORM_ARGUMENT};
+use std::f64::consts::FRAC_PI_2;
+#[derive(Clone, Copy)]
+pub(super) enum Transform {
+    Finite {
+        lower: f64,
+        upper: f64,
+        mid: f64,
+        half: f64,
+    },
+    Semi(f64),
+    Infinite,
+}
+impl Transform {
+    pub(super) fn signs(self) -> [f64; 2] {
+        if matches!(self, Self::Finite { .. }) {
+            [1.0, -1.0]
+        } else {
+            [-1.0, 1.0]
+        }
+    }
+    pub(super) fn sample(self, t: f64) -> Option<(f64, f64)> {
+        let u: f64 = FRAC_PI_2 * t.sinh();
+        let cosh_t: f64 = t.cosh();
+        match self {
+            Self::Finite {
+                lower,
+                upper,
+                mid,
+                half,
+            } => finite_sample(u, cosh_t, [lower, upper, mid, half]),
+            Self::Semi(lower) => semi_sample(u, cosh_t, lower),
+            Self::Infinite => infinite_sample(u, cosh_t),
+        }
+    }
+}
+fn finite_sample(u: f64, cosh_t: f64, bounds: [f64; 4]) -> Option<(f64, f64)> {
+    if u.abs() > DOUBLE_EXP_MAX_TRANSFORM_ARGUMENT {
+        return None;
+    }
+    let cosh_u: f64 = u.cosh();
+    let sech_squared: f64 = 1.0 / (cosh_u * cosh_u);
+    let x: f64 = bounds[2] + bounds[3] * u.tanh();
+    if x <= bounds[0] || x >= bounds[1] {
+        return None;
+    }
+    let weight: f64 = bounds[3] * FRAC_PI_2 * cosh_t * sech_squared;
+    if weight <= 0.0 || !weight.is_finite() {
+        return None;
+    }
+    Some((x, weight))
+}
+fn semi_sample(u: f64, cosh_t: f64, lower: f64) -> Option<(f64, f64)> {
+    if u > DOUBLE_EXP_MAX_TRANSFORM_ARGUMENT {
+        return None;
+    }
+    let exponential: f64 = u.exp();
+    let weight: f64 = FRAC_PI_2 * cosh_t * exponential;
+    if weight < crate::math_utils::ZERO_TOL
+        || !weight.is_finite()
+        || u < EXP_SINH_MIN_TRANSFORM_ARGUMENT
+    {
+        return None;
+    }
+    Some((lower + exponential, weight))
+}
+fn infinite_sample(u: f64, cosh_t: f64) -> Option<(f64, f64)> {
+    if u.abs() > DOUBLE_EXP_MAX_TRANSFORM_ARGUMENT {
+        return None;
+    }
+    let x: f64 = u.sinh();
+    let weight: f64 = FRAC_PI_2 * cosh_t * u.cosh();
+    if weight < crate::math_utils::ZERO_TOL || !weight.is_finite() {
+        return None;
+    }
+    Some((x, weight))
+}

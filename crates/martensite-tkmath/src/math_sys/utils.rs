@@ -1,0 +1,21 @@
+//! The public `math_sys::utils` namespace.
+//!
+//! These helpers belong to the solver families (LinearAlgebra, Newton,
+//! LevenbergMarquardt, NewtonTypes, Newton2D/3D/4D); each is implemented next to the solver
+//! that uses it and re-exported here under one path, like `math_poly::utils`.
+//! `math_sys::utils::IsFinite` is the same all-entries `std::isfinite` scan as linear-algebra solver's, so the
+//! linear-algebra solver implementation is re-exported rather than duplicated.
+pub use super::linear::{
+    LinearStep, RANK_TOLERANCE, safe_norm, scaled_rank, solve_linearized, solve_qr,
+};
+pub use super::lm::{LM_DAMPING_MAX, finish_lm, lm_impl};
+pub use super::newton::{finalize_system_result, newton_impl};
+pub use super::small::{
+    ARMIJO_C1, CRITICAL_GRAD, CRITICAL_GRAD_SQ, LINE_SEARCH_MAX, NEWTON_PIVOT_TOL, clamp_2d,
+    clamp_3d, clamp_4d, is_armijo_accepted, is_bounds_valid_2d, is_bounds_valid_3d,
+    is_bounds_valid_4d, is_finite_array, is_finite_system_n, is_options_valid, is_options_valid_3d,
+    is_options_valid_4d, is_step_within_tolerance, max_step_2d, max_step_3d, max_step_4d,
+    merit_directional_derivative, safe_distance_n, safe_norm_n, solve_2x2, solve_3x3, solve_4x4,
+    solve_symmetric_2x2_svd,
+};
+pub use crate::math_lin::utils::{is_finite_matrix, is_finite_vector};

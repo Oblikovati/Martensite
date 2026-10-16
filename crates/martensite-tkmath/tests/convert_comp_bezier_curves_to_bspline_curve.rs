@@ -1,0 +1,189 @@
+//! Convert comp bezier curves to bspline curve tests.
+#![allow(non_snake_case)]
+use martensite_tkernel::ncollection::Array1;
+use martensite_tkmath::convert::{
+    CompBezierCurves2dToBSplineCurve2d, CompBezierCurvesToBSplineCurve,
+};
+use martensite_tkmath::gp::{Point2, Point3};
+
+// Array1<T>(lower, upper).
+fn array<T: Default>(lower: i32, upper: i32) -> Array1<'static, T> {
+    Array1::with_bounds(lower, upper).unwrap()
+}
+
+#[test]
+fn convert_comp_bezier_curves_to_b_spline_curve_single_linear_bezier() {
+    let mut aConv = CompBezierCurvesToBSplineCurve::default();
+
+    let mut aPoles: Array1<'static, Point3> = array(1, 2);
+    aPoles[1] = Point3::new(0.0, 0.0, 0.0);
+    aPoles[2] = Point3::new(1.0, 1.0, 0.0);
+
+    aConv.add_curve(&aPoles);
+    aConv.perform().unwrap();
+
+    assert!(aConv.degree() >= 1);
+    assert_eq!(aConv.nb_poles(), 2);
+    assert_eq!(aConv.nb_knots(), 2);
+
+    let mut aResPoles: Array1<'static, Point3> = array(1, aConv.nb_poles());
+    aConv.poles(&mut aResPoles).unwrap();
+    assert!((aResPoles[1].x() - 0.0).abs() <= 1.0e-15);
+    assert!((aResPoles[2].x() - 1.0).abs() <= 1.0e-15);
+}
+
+#[test]
+fn convert_comp_bezier_curves_to_b_spline_curve_single_cubic_bezier() {
+    let mut aConv = CompBezierCurvesToBSplineCurve::default();
+
+    let mut aPoles: Array1<'static, Point3> = array(1, 4);
+    aPoles[1] = Point3::new(0.0, 0.0, 0.0);
+    aPoles[2] = Point3::new(1.0, 2.0, 0.0);
+    aPoles[3] = Point3::new(3.0, 2.0, 0.0);
+    aPoles[4] = Point3::new(4.0, 0.0, 0.0);
+
+    aConv.add_curve(&aPoles);
+    aConv.perform().unwrap();
+
+    assert_eq!(aConv.degree(), 3);
+    assert_eq!(aConv.nb_poles(), 4);
+    assert_eq!(aConv.nb_knots(), 2);
+}
+
+#[test]
+fn convert_comp_bezier_curves_to_b_spline_curve_two_adjacent_beziers_c0() {
+    let mut aConv = CompBezierCurvesToBSplineCurve::default();
+
+    // First linear segment
+    let mut aPoles1: Array1<'static, Point3> = array(1, 2);
+    aPoles1[1] = Point3::new(0.0, 0.0, 0.0);
+    aPoles1[2] = Point3::new(1.0, 1.0, 0.0);
+
+    // Second linear segment, adjacent but not tangent
+    let mut aPoles2: Array1<'static, Point3> = array(1, 2);
+    aPoles2[1] = Point3::new(1.0, 1.0, 0.0);
+    aPoles2[2] = Point3::new(2.0, 0.0, 0.0);
+
+    aConv.add_curve(&aPoles1);
+    aConv.add_curve(&aPoles2);
+    aConv.perform().unwrap();
+
+    assert!(aConv.degree() >= 1);
+    assert_eq!(aConv.nb_knots(), 3);
+
+    let mut aResPoles: Array1<'static, Point3> = array(1, aConv.nb_poles());
+    let mut aKnots: Array1<'static, f64> = array(1, aConv.nb_knots());
+    let mut aMults: Array1<'static, i32> = array(1, aConv.nb_knots());
+    aConv.poles(&mut aResPoles).unwrap();
+    aConv.knots_and_mults(&mut aKnots, &mut aMults).unwrap();
+
+    // First and last knot multiplicities should be degree+1
+    assert_eq!(aMults[1], aConv.degree() + 1);
+    assert_eq!(aMults[aConv.nb_knots()], aConv.degree() + 1);
+}
+
+#[test]
+fn convert_comp_bezier_curves_to_b_spline_curve_two_adjacent_beziers_c1() {
+    let mut aConv = CompBezierCurvesToBSplineCurve::default();
+
+    // Two cubic Beziers with parallel tangent at junction
+    let mut aPoles1: Array1<'static, Point3> = array(1, 4);
+    aPoles1[1] = Point3::new(0.0, 0.0, 0.0);
+    aPoles1[2] = Point3::new(1.0, 1.0, 0.0);
+    aPoles1[3] = Point3::new(2.0, 1.0, 0.0);
+    aPoles1[4] = Point3::new(3.0, 0.0, 0.0);
+
+    let mut aPoles2: Array1<'static, Point3> = array(1, 4);
+    aPoles2[1] = Point3::new(3.0, 0.0, 0.0);
+    aPoles2[2] = Point3::new(4.0, -1.0, 0.0);
+    aPoles2[3] = Point3::new(5.0, -1.0, 0.0);
+    aPoles2[4] = Point3::new(6.0, 0.0, 0.0);
+
+    aConv.add_curve(&aPoles1);
+    aConv.add_curve(&aPoles2);
+    aConv.perform().unwrap();
+
+    assert_eq!(aConv.degree(), 3);
+    assert_eq!(aConv.nb_knots(), 3);
+
+    // Check that junction has multiplicity Degree-1 (C1)
+    let mut aMults: Array1<'static, i32> = array(1, aConv.nb_knots());
+    let mut aKnots: Array1<'static, f64> = array(1, aConv.nb_knots());
+    aConv.knots_and_mults(&mut aKnots, &mut aMults).unwrap();
+    assert_eq!(aMults[2], aConv.degree() - 1);
+}
+
+#[test]
+fn convert_comp_bezier_curves_to_b_spline_curve_mixed_degree_beziers() {
+    let mut aConv = CompBezierCurvesToBSplineCurve::default();
+
+    // Linear segment
+    let mut aPoles1: Array1<'static, Point3> = array(1, 2);
+    aPoles1[1] = Point3::new(0.0, 0.0, 0.0);
+    aPoles1[2] = Point3::new(1.0, 0.0, 0.0);
+
+    // Cubic segment
+    let mut aPoles2: Array1<'static, Point3> = array(1, 4);
+    aPoles2[1] = Point3::new(1.0, 0.0, 0.0);
+    aPoles2[2] = Point3::new(2.0, 1.0, 0.0);
+    aPoles2[3] = Point3::new(3.0, 1.0, 0.0);
+    aPoles2[4] = Point3::new(4.0, 0.0, 0.0);
+
+    aConv.add_curve(&aPoles1);
+    aConv.add_curve(&aPoles2);
+    aConv.perform().unwrap();
+
+    // Degree should be raised to the maximum
+    assert_eq!(aConv.degree(), 3);
+}
+
+// 2D variant tests
+#[test]
+fn convert_comp_bezier_curves2d_to_b_spline_curve2d_single_linear2d() {
+    let mut aConv = CompBezierCurves2dToBSplineCurve2d::default();
+
+    let mut aPoles: Array1<'static, Point2> = array(1, 2);
+    aPoles[1] = Point2::new(0.0, 0.0);
+    aPoles[2] = Point2::new(1.0, 1.0);
+
+    aConv.add_curve(&aPoles);
+    aConv.perform().unwrap();
+
+    assert!(aConv.degree() >= 1);
+    assert_eq!(aConv.nb_poles(), 2);
+    assert_eq!(aConv.nb_knots(), 2);
+
+    let mut aResPoles: Array1<'static, Point2> = array(1, aConv.nb_poles());
+    aConv.poles(&mut aResPoles).unwrap();
+    assert!((aResPoles[1].x() - 0.0).abs() <= 1.0e-15);
+    assert!((aResPoles[2].x() - 1.0).abs() <= 1.0e-15);
+}
+
+#[test]
+fn convert_comp_bezier_curves2d_to_b_spline_curve2d_two_adjacent2d_c1() {
+    let mut aConv = CompBezierCurves2dToBSplineCurve2d::default();
+
+    let mut aPoles1: Array1<'static, Point2> = array(1, 4);
+    aPoles1[1] = Point2::new(0.0, 0.0);
+    aPoles1[2] = Point2::new(1.0, 1.0);
+    aPoles1[3] = Point2::new(2.0, 1.0);
+    aPoles1[4] = Point2::new(3.0, 0.0);
+
+    let mut aPoles2: Array1<'static, Point2> = array(1, 4);
+    aPoles2[1] = Point2::new(3.0, 0.0);
+    aPoles2[2] = Point2::new(4.0, -1.0);
+    aPoles2[3] = Point2::new(5.0, -1.0);
+    aPoles2[4] = Point2::new(6.0, 0.0);
+
+    aConv.add_curve(&aPoles1);
+    aConv.add_curve(&aPoles2);
+    aConv.perform().unwrap();
+
+    assert_eq!(aConv.degree(), 3);
+    assert_eq!(aConv.nb_knots(), 3);
+
+    let mut aMults: Array1<'static, i32> = array(1, aConv.nb_knots());
+    let mut aKnots: Array1<'static, f64> = array(1, aConv.nb_knots());
+    aConv.knots_and_mults(&mut aKnots, &mut aMults).unwrap();
+    assert_eq!(aMults[2], aConv.degree() - 1);
+}

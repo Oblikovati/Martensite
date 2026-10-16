@@ -1,0 +1,184 @@
+//! Jacobi polynomial tables; generated data, do not edit by hand.
+//!
+//! The literals are the published Jacobi data and coefficient tables.
+#![allow(clippy::excessive_precision)]
+
+/// Fixed-size fragments of one flattened table.
+pub(super) struct ChunkedTable {
+    chunks: &'static [&'static [f64]],
+}
+impl ChunkedTable {
+    /// Returns the flattened entry, or `None` past the array end; `TABLE.get(0)`.
+    pub(super) fn get(&self, index: usize) -> Option<f64> {
+        self.chunks.get(index / CHUNK)?.get(index % CHUNK).copied()
+    }
+    /// Counts the flattened entries; `TABLE.len()`.
+    pub(super) fn len(&self) -> usize {
+        self.chunks.iter().map(|chunk| chunk.len()).sum()
+    }
+}
+const CHUNK: usize = 480;
+
+/// `TransMatrix_C0` literals (992 values).
+pub(super) const TRANS_MATRIX_C0: ChunkedTable = ChunkedTable {
+    chunks: &[
+        include!("jacobi_tables/trans_matrix_c0_0.in"),
+        include!("jacobi_tables/trans_matrix_c0_1.in"),
+        include!("jacobi_tables/trans_matrix_c0_2.in"),
+    ],
+};
+
+/// `TransMatrix_C1` literals (992 values).
+pub(super) const TRANS_MATRIX_C1: ChunkedTable = ChunkedTable {
+    chunks: &[
+        include!("jacobi_tables/trans_matrix_c1_0.in"),
+        include!("jacobi_tables/trans_matrix_c1_1.in"),
+        include!("jacobi_tables/trans_matrix_c1_2.in"),
+    ],
+};
+
+/// `TransMatrix_C2` literals (992 values).
+pub(super) const TRANS_MATRIX_C2: ChunkedTable = ChunkedTable {
+    chunks: &[
+        include!("jacobi_tables/trans_matrix_c2_0.in"),
+        include!("jacobi_tables/trans_matrix_c2_1.in"),
+        include!("jacobi_tables/trans_matrix_c2_2.in"),
+    ],
+};
+
+/// `WeightsDB_C0` literals (4761 values).
+pub(super) const WEIGHTS_DB_C0: ChunkedTable = ChunkedTable {
+    chunks: &[
+        include!("jacobi_tables/weights_db_c0_0.in"),
+        include!("jacobi_tables/weights_db_c0_1.in"),
+        include!("jacobi_tables/weights_db_c0_2.in"),
+        include!("jacobi_tables/weights_db_c0_3.in"),
+        include!("jacobi_tables/weights_db_c0_4.in"),
+        include!("jacobi_tables/weights_db_c0_5.in"),
+        include!("jacobi_tables/weights_db_c0_6.in"),
+        include!("jacobi_tables/weights_db_c0_7.in"),
+        include!("jacobi_tables/weights_db_c0_8.in"),
+        include!("jacobi_tables/weights_db_c0_9.in"),
+    ],
+};
+
+/// `WeightsDB0_C0` literals (49 values).
+pub(super) const WEIGHTS_DB0_C0: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/weights_db0_c0_0.in")],
+};
+
+/// `WeightsDB_C1` literals (4505 values).
+pub(super) const WEIGHTS_DB_C1: ChunkedTable = ChunkedTable {
+    chunks: &[
+        include!("jacobi_tables/weights_db_c1_0.in"),
+        include!("jacobi_tables/weights_db_c1_1.in"),
+        include!("jacobi_tables/weights_db_c1_2.in"),
+        include!("jacobi_tables/weights_db_c1_3.in"),
+        include!("jacobi_tables/weights_db_c1_4.in"),
+        include!("jacobi_tables/weights_db_c1_5.in"),
+        include!("jacobi_tables/weights_db_c1_6.in"),
+        include!("jacobi_tables/weights_db_c1_7.in"),
+        include!("jacobi_tables/weights_db_c1_8.in"),
+        include!("jacobi_tables/weights_db_c1_9.in"),
+    ],
+};
+
+/// `WeightsDB0_C1` literals (46 values).
+pub(super) const WEIGHTS_DB0_C1: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/weights_db0_c1_0.in")],
+};
+
+/// `WeightsDB_C2` literals (4249 values).
+pub(super) const WEIGHTS_DB_C2: ChunkedTable = ChunkedTable {
+    chunks: &[
+        include!("jacobi_tables/weights_db_c2_0.in"),
+        include!("jacobi_tables/weights_db_c2_1.in"),
+        include!("jacobi_tables/weights_db_c2_2.in"),
+        include!("jacobi_tables/weights_db_c2_3.in"),
+        include!("jacobi_tables/weights_db_c2_4.in"),
+        include!("jacobi_tables/weights_db_c2_5.in"),
+        include!("jacobi_tables/weights_db_c2_6.in"),
+        include!("jacobi_tables/weights_db_c2_7.in"),
+        include!("jacobi_tables/weights_db_c2_8.in"),
+    ],
+};
+
+/// `WeightsDB0_C2` literals (43 values).
+pub(super) const WEIGHTS_DB0_C2: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/weights_db0_c2_0.in")],
+};
+
+/// `MaxValuesDB_C0` literals (57 values).
+pub(super) const MAX_VALUES_DB_C0: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/max_values_db_c0_0.in")],
+};
+
+/// `MaxValuesDB_C1` literals (55 values).
+pub(super) const MAX_VALUES_DB_C1: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/max_values_db_c1_0.in")],
+};
+
+/// `MaxValuesDB_C2` literals (53 values).
+pub(super) const MAX_VALUES_DB_C2: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/max_values_db_c2_0.in")],
+};
+
+/// `TNorm_C0` literals (31 values).
+pub(super) const TNORM_C0: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/tnorm_c0_0.in")],
+};
+
+/// `TNorm_C1` literals (31 values).
+pub(super) const TNORM_C1: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/tnorm_c1_0.in")],
+};
+
+/// `TNorm_C2` literals (31 values).
+pub(super) const TNORM_C2: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/tnorm_c2_0.in")],
+};
+
+/// `CofA_C0` literals (31 values).
+pub(super) const COF_A_C0: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/cof_a_c0_0.in")],
+};
+
+/// `CofA_C1` literals (31 values).
+pub(super) const COF_A_C1: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/cof_a_c1_0.in")],
+};
+
+/// `CofA_C2` literals (31 values).
+pub(super) const COF_A_C2: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/cof_a_c2_0.in")],
+};
+
+/// `CofB_C0` literals (31 values).
+pub(super) const COF_B_C0: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/cof_b_c0_0.in")],
+};
+
+/// `CofB_C1` literals (31 values).
+pub(super) const COF_B_C1: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/cof_b_c1_0.in")],
+};
+
+/// `CofB_C2` literals (31 values).
+pub(super) const COF_B_C2: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/cof_b_c2_0.in")],
+};
+
+/// `Denom_C0` literals (31 values).
+pub(super) const DENOM_C0: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/denom_c0_0.in")],
+};
+
+/// `Denom_C1` literals (31 values).
+pub(super) const DENOM_C1: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/denom_c1_0.in")],
+};
+
+/// `Denom_C2` literals (31 values).
+pub(super) const DENOM_C2: ChunkedTable = ChunkedTable {
+    chunks: &[include!("jacobi_tables/denom_c2_0.in")],
+};

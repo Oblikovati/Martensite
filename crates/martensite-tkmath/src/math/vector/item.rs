@@ -1,0 +1,97 @@
+//! Element contract for `VectorBase<TheItemType>` instantiations.
+use martensite_tkernel::tcollection::AsciiString;
+use std::fmt::Debug;
+
+/// Arithmetic of one `VectorBase` element type (`double` or `int`).
+///
+/// The methods spell out the expression semantics the template relies on:
+/// same-type arithmetic stays in the item type, mixed `double` expressions are
+/// evaluated in `double` and converted back with the implicit conversion
+/// (truncation toward zero for `int`). Integer arithmetic wraps where signed overflow is
+/// undefined so that debug builds do not abort on such inputs.
+/// `assert_eq!(<i32 as VectorItem>::from_real(-2.7), -2)`.
+pub trait VectorItem: Copy + Debug + Default + PartialOrd {
+    /// The literal `0` used to seed sums.
+    const ZERO: Self;
+    /// `static_cast<double>(item)`; `3_i32.to_real()`.
+    fn to_real(self) -> f64;
+    /// Implicit `double -> TheItemType` conversion; `i32::from_real(2.9)`.
+    fn from_real(value: f64) -> Self;
+    /// `item + item`; `1_i32.item_add(2)`.
+    fn item_add(self, right: Self) -> Self;
+    /// `item - item`; `1_i32.item_sub(2)`.
+    fn item_sub(self, right: Self) -> Self;
+    /// `item * item`; `2_i32.item_mul(3)`.
+    fn item_mul(self, right: Self) -> Self;
+    /// `item / item`; callers reject zero divisors first; `7_i32.item_div(2)`.
+    fn item_div(self, right: Self) -> Self;
+    /// Unary minus; `2_i32.item_neg()`.
+    fn item_neg(self) -> Self;
+    /// Text produced by streaming an item with default flags; `1.5.stream_text()`.
+    fn stream_text(self) -> String;
+}
+
+impl VectorItem for f64 {
+    const ZERO: Self = 0.0;
+    fn to_real(self) -> f64 {
+        self
+    }
+    fn from_real(value: f64) -> Self {
+        value
+    }
+    fn item_add(self, right: Self) -> Self {
+        self + right
+    }
+    fn item_sub(self, right: Self) -> Self {
+        self - right
+    }
+    fn item_mul(self, right: Self) -> Self {
+        self * right
+    }
+    fn item_div(self, right: Self) -> Self {
+        self / right
+    }
+    fn item_neg(self) -> Self {
+        -self
+    }
+    fn stream_text(self) -> String {
+        stream_real(self)
+    }
+}
+
+impl VectorItem for i32 {
+    const ZERO: Self = 0;
+    fn to_real(self) -> f64 {
+        f64::from(self)
+    }
+    fn from_real(value: f64) -> Self {
+        // `as` truncates toward zero like the C conversion; out-of-range values are
+        // undefined there and saturate here.
+        value as i32
+    }
+    fn item_add(self, right: Self) -> Self {
+        self.wrapping_add(right)
+    }
+    fn item_sub(self, right: Self) -> Self {
+        self.wrapping_sub(right)
+    }
+    fn item_mul(self, right: Self) -> Self {
+        self.wrapping_mul(right)
+    }
+    fn item_div(self, right: Self) -> Self {
+        self.wrapping_div(right)
+    }
+    fn item_neg(self) -> Self {
+        self.wrapping_neg()
+    }
+    fn stream_text(self) -> String {
+        self.to_string()
+    }
+}
+
+/// Streaming a double with default flags, which formats like C's `%g`
+/// (six significant digits); `assert_eq!(stream_real(0.1), "0.1")`.
+pub(crate) fn stream_real(value: f64) -> String {
+    // AsciiString(double) uses the same `%g` conversion, so reuse it instead of a second formatter.
+    String::from_utf8_lossy(AsciiString::from_real(value).as_bytes()).into_owned()
+}

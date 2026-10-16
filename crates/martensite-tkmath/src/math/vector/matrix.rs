@@ -1,0 +1,132 @@
+use super::{Failure, VectorBase, VectorItem, failure};
+use crate::math::Matrix;
+impl<T: VectorItem> VectorBase<'_, T> {
+    /// Stores matrix times column vector; `result.set_matrix_vector(&matrix,&vector)?`.
+    pub fn set_matrix_vector(
+        &mut self,
+        matrix: &Matrix<'_>,
+        vector: &VectorBase<'_, T>,
+    ) -> Result<(), Failure> {
+        self.matrix_product(matrix, vector, false, false, "Multiply")
+    }
+    /// Stores row vector times matrix; `result.set_vector_matrix(&vector,&matrix)?`.
+    pub fn set_vector_matrix(
+        &mut self,
+        vector: &VectorBase<'_, T>,
+        matrix: &Matrix<'_>,
+    ) -> Result<(), Failure> {
+        self.matrix_product(matrix, vector, true, true, "Multiply")
+    }
+    /// Stores transposed matrix times column vector; `result.set_transpose_matrix_vector(&matrix,&vector)?`.
+    pub fn set_transpose_matrix_vector(
+        &mut self,
+        matrix: &Matrix<'_>,
+        vector: &VectorBase<'_, T>,
+    ) -> Result<(), Failure> {
+        self.matrix_product(matrix, vector, true, false, "TMultiply")
+    }
+    /// Stores row vector times transposed matrix; `result.set_vector_transpose_matrix(&vector,&matrix)?`.
+    pub fn set_vector_transpose_matrix(
+        &mut self,
+        vector: &VectorBase<'_, T>,
+        matrix: &Matrix<'_>,
+    ) -> Result<(), Failure> {
+        self.matrix_product(matrix, vector, false, true, "TMultiply")
+    }
+    /// Returns a row product with matrix column bounds; `vector.multiplied_matrix(&matrix)?`.
+    pub fn multiplied_matrix(&self, matrix: &Matrix<'_>) -> Result<Self, Failure> {
+        if self.length() != matrix.row_number() {
+            return Err(failure(
+                "Standard_DimensionError",
+                "math_VectorBase::Multiplied() - input matrix has wrong dimensions",
+            ));
+        }
+        let mut result = Self::with_bounds(matrix.lower_col(), matrix.upper_col())?;
+        // Multiplied(Matrix) indexes element by element, so an empty operand
+        // is not refused, unlike the pointer-walking Multiply overloads.
+        result.store_product(matrix, self, true, true);
+        Ok(result)
+    }
+    fn matrix_product(
+        &mut self,
+        matrix: &Matrix<'_>,
+        vector: &VectorBase<'_, T>,
+        transpose: bool,
+        vector_first: bool,
+        operation: &str,
+    ) -> Result<(), Failure> {
+        let (outputs, inputs) = if transpose {
+            (matrix.col_number(), matrix.row_number())
+        } else {
+            (matrix.row_number(), matrix.col_number())
+        };
+        if self.length() != outputs || vector.length() != inputs {
+            return Err(failure(
+                "Standard_DimensionError",
+                &format!(
+                    "math_VectorBase::{operation}() - input matrix and /or vector have wrong dimensions"
+                ),
+            ));
+        }
+        // The overloads walk raw pointers taken with the checked
+        // `&M(LowerRow, LowerCol)` and `&V.Array(V.Lower())`, which raise on an empty
+        // matrix, operand or result.
+        if outputs == 0 || inputs == 0 {
+            return Err(Failure::out_of_range(&format!(
+                "math_VectorBase::{operation}(): {outputs} outputs from {inputs} inputs; expected non-empty operands"
+            )));
+        }
+        self.store_product(matrix, vector, transpose, vector_first);
+        Ok(())
+    }
+    pub(crate) fn store_product(
+        &mut self,
+        matrix: &Matrix<'_>,
+        vector: &VectorBase<'_, T>,
+        transpose: bool,
+        vector_first: bool,
+    ) {
+        let inputs: i32 = vector.length();
+        for output in 0..self.length() as usize {
+            self.values_mut()[output] = matrix_component(
+                matrix,
+                vector,
+                output,
+                inputs as usize,
+                transpose,
+                vector_first,
+            );
+        }
+    }
+}
+// Operand order preserves the overloads, including NaN representation choices.
+#[allow(clippy::if_same_then_else)]
+fn matrix_component<T: VectorItem>(
+    matrix: &Matrix<'_>,
+    vector: &VectorBase<'_, T>,
+    output: usize,
+    inputs: usize,
+    transpose: bool,
+    vector_first: bool,
+) -> T {
+    // The accumulator has the item type: each `aSum += double` is a double sum
+    // converted back, which truncates every partial sum of an integer vector.
+    let mut sum = T::ZERO;
+    for input in 0..inputs {
+        let cell: usize = if transpose {
+            input * matrix.col_size() + output
+        } else {
+            output * matrix.col_size() + input
+        };
+        // In range by construction: the caller matched both extents to the matrix.
+        let coefficient: f64 = matrix.cells()[cell];
+        let value = vector.values()[input].to_real();
+        let product = if vector_first {
+            value * coefficient
+        } else {
+            coefficient * value
+        };
+        sum = T::from_real(sum.to_real() + product);
+    }
+    sum
+}

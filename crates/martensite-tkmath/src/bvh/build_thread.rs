@@ -1,0 +1,83 @@
+//! `BvhBuildTool` and `BvhBuildThread`: workers draining a build queue.
+use super::build_queue::BvhBuildQueue;
+use martensite_tkernel::standard::Failure;
+use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
+use std::thread::{Scope, ScopedJoinHandle};
+
+/// Tool object to call BVH builder subroutines; shared by all build threads,
+/// so it synchronizes internally. Example: `tool.perform(0)?`.
+pub trait BvhBuildTool: Sync {
+    /// Performs splitting of the given BVH node.
+    fn perform(&self, node: i32) -> Result<(), Failure>;
+}
+
+/// Wrapper for a BVH build thread; `OsdThread` becomes a scoped OS thread.
+/// Example: `BvhBuildThread::new(&tool, &queue).execute()?`.
+pub struct BvhBuildThread<'a> {
+    build_tool: &'a dyn BvhBuildTool,
+    build_queue: &'a BvhBuildQueue,
+}
+impl<'a> BvhBuildThread<'a> {
+    /// Creates new BVH build thread; `BvhBuildThread::new(&tool, &queue)`.
+    pub fn new(build_tool: &'a dyn BvhBuildTool, build_queue: &'a BvhBuildQueue) -> Self {
+        Self {
+            build_tool,
+            build_queue,
+        }
+    }
+
+    /// Processes queued nodes until the queue is empty and no thread is busy
+    /// (other threads may still enqueue children, so an idle thread spins).
+    /// A failing tool leaves the busy count before the error is returned.
+    /// Example: `thread.execute()?` runs the loop on the calling thread.
+    pub fn execute(&self) -> Result<(), Failure> {
+        let mut was_busy = false;
+        loop {
+            let node = self.build_queue.fetch(&mut was_busy);
+            if node != -1 {
+                self.perform_node(node, was_busy)?;
+                continue;
+            }
+            if !self.build_queue.has_busy_threads() {
+                return Ok(());
+            }
+            std::hint::spin_loop();
+        }
+    }
+
+    fn perform_node(&self, node: i32, was_busy: bool) -> Result<(), Failure> {
+        match catch_unwind(AssertUnwindSafe(|| self.build_tool.perform(node))) {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(failure)) => self.abandon_with(Err(failure), was_busy),
+            Err(payload) => {
+                self.build_queue.abandon(was_busy);
+                resume_unwind(payload)
+            }
+        }
+    }
+
+    fn abandon_with(&self, result: Result<(), Failure>, was_busy: bool) -> Result<(), Failure> {
+        self.build_queue.abandon(was_busy);
+        result
+    }
+
+    /// Starts execution on a new OS thread of `scope` (`Run`).
+    /// Example: `let handle = thread.run(scope);`.
+    pub fn run<'scope, 'env>(
+        &'scope self,
+        scope: &'scope Scope<'scope, 'env>,
+    ) -> ScopedJoinHandle<'scope, Result<(), Failure>>
+    where
+        'a: 'scope,
+    {
+        scope.spawn(move || self.execute())
+    }
+
+    /// Waits till the thread finishes execution (`Wait`); a panic becomes a failure.
+    /// Example: `BvhBuildThread::wait(handle)?`.
+    pub fn wait(handle: ScopedJoinHandle<'_, Result<(), Failure>>) -> Result<(), Failure> {
+        handle
+            .join()
+            .unwrap_or_else(|_| Err(Failure::new("BVH build thread panicked")))
+    }
+}

@@ -7,3 +7,10 @@ crates/martensite-tkernel/src/units/Units.dat -text -whitespace
 # Tests compare fixtures byte for byte with include_str!, so they keep their
 # bytes on every platform.
 crates/martensite-tkernel/tests/fixtures/** -text -whitespace
+crates/martensite-tkmath/tests/fixtures/** -text -whitespace
+crates/martensite-tkmath/tests/**/*.tsv -text -whitespace
+crates/martensite-tkmath/tests/**/*.csv -text -whitespace
+crates/martensite-tkmath/tests/**/*.json -text -whitespace
+crates/martensite-tkmath/tests/**/*.jsonl -text -whitespace
+crates/martensite-tkmath/tests/**/*.txt -text -whitespace
+crates/martensite-tkmath/src/**/*.txt -text -whitespace

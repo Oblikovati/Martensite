@@ -5,11 +5,13 @@ use super::{
     owner::{SequenceNodeOwners, take_owner},
 };
 use crate::standard::{Failure, exceptions::program_error, raise_native_failure};
+use std::sync::Arc;
 
 /// Clear traversal over actual nodes; `let progress=sequence.begin_clear_progress()`.
 /// Visit captures Next before callbacks; detach/free afterward, then reset only at completion.
 pub struct SequenceClearProgress {
     scope_identity: usize,
+    invocation: Arc<()>,
     current: SequenceCursor,
     pending: Option<SequenceCursor>,
     saved_next: SequenceCursor,
@@ -26,10 +28,12 @@ impl<T> Sequence<T> {
             return raise_native_failure(Err(clear_phase_failure("Begin", "an idle sequence")));
         }
         let scope = self.clear_node_liveness();
+        let invocation = Arc::clone(&scope.invocation);
         self.topology
             .edit(|base| base.clear_node_scope = Some(scope));
         SequenceClearProgress {
             scope_identity: self.topology.identity(),
+            invocation,
             current: self.cursor(),
             pending: None,
             saved_next: SequenceCursor::default(),
@@ -37,6 +41,8 @@ impl<T> Sequence<T> {
     }
     fn clear_node_liveness(&self) -> SequenceNodeLiveness {
         SequenceNodeLiveness {
+            // #77: retained tokens keep their invocation identity distinct after cancellation.
+            invocation: Arc::new(()),
             registry: self.owners.registry_address().cast(),
             contains: registry_contains::<T>,
         }
@@ -116,10 +122,15 @@ impl<T> Sequence<T> {
     }
     fn check_clear_progress(&self, progress: &SequenceClearProgress) -> Result<(), Failure> {
         let identity = self.topology.identity();
-        if progress.scope_identity != identity || self.topology.access().clear_node_scope.is_none()
-        {
+        let same_invocation = self
+            .topology
+            .access()
+            .clear_node_scope
+            .as_ref()
+            .is_some_and(|scope| Arc::ptr_eq(&scope.invocation, &progress.invocation));
+        if progress.scope_identity != identity || !same_invocation {
             return Err(program_error(&format!(
-                "clear token scope {}, sequence {identity}; expected the active canonical sequence",
+                "clear token scope {}, sequence {identity}; expected the active invocation of the canonical sequence",
                 progress.scope_identity
             )));
         }

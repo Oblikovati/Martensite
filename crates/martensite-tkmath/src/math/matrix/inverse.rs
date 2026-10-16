@@ -1,0 +1,31 @@
+use super::Matrix;
+use crate::math::{Gauss, not_square, singular_matrix};
+use martensite_tkernel::standard::Failure;
+impl Matrix<'_> {
+    /// Returns zero when LU regards the matrix as singular; `matrix.determinant()?`.
+    pub fn determinant(&self) -> Result<f64, Failure> {
+        let solver = Gauss::new(self)?;
+        if solver.is_done() {
+            solver.determinant()
+        } else {
+            Ok(0.0)
+        }
+    }
+    /// Inverts via LU with a fixed operation order, preserving the input on singular failure; `matrix.invert()?`.
+    pub fn invert(&mut self) -> Result<(), Failure> {
+        if self.row_number() != self.col_number() {
+            return Err(not_square("math_Matrix::Invert() - matrix is not square"));
+        }
+        let solver = Gauss::new(self)?;
+        if !solver.is_done() {
+            return Err(singular_matrix(""));
+        }
+        solver.invert(self)
+    }
+    /// Copies before inversion; `matrix.inverse()?`.
+    pub fn inverse(&self) -> Result<Self, Failure> {
+        let mut result = self.clone();
+        result.invert()?;
+        Ok(result)
+    }
+}

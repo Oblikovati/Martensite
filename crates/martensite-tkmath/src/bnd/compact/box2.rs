@@ -1,0 +1,66 @@
+use super::{BoxReal, storage::CompactBounds};
+use crate::gp::{Point2, Xy};
+/// CompactBox2 storage over f64 or f32; `CompactBox2::<f64>::new(center,half_size)`.
+pub type CompactBox2<T = f64> = CompactBounds<T, 2>;
+impl<T: BoxReal> CompactBounds<T, 2> {
+    /// Tests the double-precision vector hook.
+    ///
+    /// ```
+    /// use martensite_tkmath::{bnd::CompactBox2, gp::Xy};
+    /// assert!(CompactBox2::<f32>::compare_dist_d(Xy::new(1.0, 2.0), Xy::new(1.1, 0.0)));
+    /// ```
+    pub fn compare_dist_d(half_size: Xy, distance: Xy) -> bool {
+        CompactBounds::<f64, 2>::compare_dist(&convert::<f64>(half_size), &convert::<f64>(distance))
+    }
+
+    /// Converts double coordinates to the storage scalar; `CompactBox2::<f32>::new(center,half)`.
+    pub fn new(center: Xy, half: Xy) -> Self {
+        Self {
+            center: convert(center),
+            half: convert(half),
+        }
+    }
+    /// Replaces the center through scalar conversion; `bounds.set_center(center)`.
+    pub fn set_center(&mut self, center: Xy) {
+        self.center = convert(center);
+    }
+    /// Retains supplied half sizes without validation; `bounds.set_half_size(half)`.
+    pub fn set_half_size(&mut self, half: Xy) {
+        self.half = convert(half);
+    }
+    /// Subtracts before promotion, retaining float rounding; `bounds.corner_min()`.
+    pub fn corner_min(&self) -> Xy {
+        Xy::new(
+            (self.center[0] - self.half[0]).to_double(),
+            (self.center[1] - self.half[1]).to_double(),
+        )
+    }
+    /// Adds before promotion, retaining float rounding; `bounds.corner_max()`.
+    pub fn corner_max(&self) -> Xy {
+        Xy::new(
+            (self.center[0] + self.half[0]).to_double(),
+            (self.center[1] + self.half[1]).to_double(),
+        )
+    }
+    /// Computes the squared diagonal in the storage scalar before promotion; `bounds.square_extent()`.
+    pub fn square_extent(&self) -> f64 {
+        (T::from_double(4.0) * (self.half[0] * self.half[0] + self.half[1] * self.half[1]))
+            .to_double()
+    }
+    /// Adds a geometric point via coordinate algebra; `bounds.add_point(point)`.
+    pub fn add_point(&mut self, point: Point2) {
+        self.add_xy(point.xy());
+    }
+    /// Expands by a point in scalar arithmetic; `bounds.add_xy(point)`.
+    pub fn add_xy(&mut self, point: Xy) {
+        self.add_array(convert(point));
+    }
+    /// Checks a converted point against half extents; `bounds.is_out_point(point)`.
+    pub fn is_out_point(&self, point: Xy) -> bool {
+        self.is_out_array(convert(point))
+    }
+}
+fn convert<T: BoxReal>(xy: Xy) -> [T; 2] {
+    [T::from_double(xy.x()), T::from_double(xy.y())]
+}
+mod queries;

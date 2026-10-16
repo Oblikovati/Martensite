@@ -1,0 +1,67 @@
+use super::super::BoundingBox3;
+use super::{BoundSortBox, range_failure, uninitialized};
+use martensite_tkernel::ncollection::{Array1, List};
+use martensite_tkernel::standard::Failure;
+
+/// Bit set in the per-box mask once the box shares an X slice with the query.
+const OCCUPIED_X: u8 = 0b01;
+/// Bit set once the box also shares a Y slice.
+const OCCUPIED_Y: u8 = 0b10;
+/// Both bits: the box becomes a candidate when it also shares a Z slice.
+const OCCUPIED_XY: u8 = 0b11;
+
+impl BoundSortBox {
+    /// `Compare(BoundingBox3)`: the indices of the boxes the query touches or contains.
+    ///
+    /// Large boxes come first in insertion order, then grid boxes in the order of the Z
+    /// slices of the query (each box once, at its first shared Z slice). A void query or one
+    /// outside the enclosing box gives an empty list. Example: `sorter.compare_box(&query)?`.
+    pub fn compare_box(&mut self, query: &BoundingBox3) -> Result<&List<i32>, Failure> {
+        self.last_result.clear();
+        if query.is_void() || query.is_out_box(&self.enclosing) {
+            return Ok(&self.last_result);
+        }
+        let boxes = self.boxes.as_ref().ok_or_else(uninitialized)?;
+        for index in &self.large_boxes {
+            if !stored(boxes, *index)?.is_out_box(query) {
+                self.last_result.append(*index);
+            }
+        }
+        let voxels = self.bounding_voxels(query)?;
+        let grid = self.voxel_grid.as_ref().ok_or_else(uninitialized)?;
+        let lower = boxes.lower();
+        let mut masks = vec![0u8; boxes.len()];
+        let mut mark = |axis: usize, bit: u8| {
+            for layer in voxels[axis]..=voxels[axis + 3] {
+                for index in grid.slice(axis, layer) {
+                    masks[(index - lower) as usize] |= bit;
+                }
+            }
+        };
+        mark(0, OCCUPIED_X);
+        mark(1, OCCUPIED_Y);
+        for layer in voxels[2]..=voxels[5] {
+            for index in grid.slice(2, layer) {
+                let mask = &mut masks[(index - lower) as usize];
+                if *mask != OCCUPIED_XY {
+                    continue;
+                }
+                // Clearing the mask reports each box once.
+                *mask = 0;
+                if !stored(boxes, *index)?.is_out_box(query) {
+                    self.last_result.append(*index);
+                }
+            }
+        }
+        Ok(&self.last_result)
+    }
+}
+
+fn stored<'b>(
+    boxes: &'b Array1<'static, BoundingBox3>,
+    index: i32,
+) -> Result<&'b BoundingBox3, Failure> {
+    boxes
+        .value(index)
+        .map_err(|error| range_failure("Compare", error))
+}

@@ -24,10 +24,8 @@ pub enum FreeOutcome {
 /// The release backend of an allocator class's `Free`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum ReleaseFamily {
-    /// `free` of calloc/malloc storage (Common and Heap).
+    /// Layout-bearing shared heap storage (Common, Heap and Aligned).
     Heap,
-    /// The aligned free of aligned storage.
-    Aligned,
     /// Interior addresses of an arena block (Inc and Acc allocators).
     Arena,
 }
@@ -37,8 +35,9 @@ impl BaseAllocator {
     /// allocated (null is valid input); nothing is freed. Built-in classes only: an
     /// allocator source overriding `Free` is not described.
     ///
-    /// On Linux the Common, Heap and Aligned classes all end in glibc `free` (`_mm_free`
-    /// is `free`), so each releases the others' blocks.
+    /// Common, Heap and Aligned share the layout-bearing Rust heap backend on every
+    /// platform, so each releases the others' blocks. Arena-interior addresses remain
+    /// incompatible with heap release (#78).
     /// Example: `BaseAllocator::common().free_outcome(&BaseAllocator::global_heap(), p)`
     /// is `FreeOutcome::Released`.
     pub fn free_outcome(&self, owner: &Self, address: *const u8) -> FreeOutcome {
@@ -51,34 +50,24 @@ impl BaseAllocator {
                 }
             }
             _ if address.is_null() => FreeOutcome::Ignored,
-            _ => heap_outcome(self.release_family(), owner.release_family()),
+            _ => heap_outcome(owner.release_family()),
         }
     }
 
     fn release_family(&self) -> ReleaseFamily {
         match &*self.fields.inner {
-            AllocatorKind::Common | AllocatorKind::Heap => ReleaseFamily::Heap,
-            AllocatorKind::Aligned(_) => ReleaseFamily::Aligned,
+            AllocatorKind::Common | AllocatorKind::Heap | AllocatorKind::Aligned(_) => {
+                ReleaseFamily::Heap
+            }
             AllocatorKind::Incremental(_) | AllocatorKind::Accumulating(_) => ReleaseFamily::Arena,
         }
     }
 }
 
-/// A C-library free of `owner`'s storage through `freer`'s backend.
-fn heap_outcome(freer: ReleaseFamily, owner: ReleaseFamily) -> FreeOutcome {
+/// Classify the actual shared backend, rather than a platform C-runtime pairing (#78).
+fn heap_outcome(owner: ReleaseFamily) -> FreeOutcome {
     if owner == ReleaseFamily::Arena {
         return FreeOutcome::Undefined;
     }
-    if freer == owner || backends_interchange() {
-        return FreeOutcome::Released;
-    }
-    FreeOutcome::Undefined
-}
-
-/// glibc (and the other non-MSVC C libraries) free aligned and plain storage
-/// with the same `free`.
-// TODO(platform): MSVC pairs `_aligned_malloc` with `_aligned_free` only, so mixing the
-// Aligned class with Common/Heap is undefined there; runtime evidence is Linux-only.
-const fn backends_interchange() -> bool {
-    !cfg!(windows)
+    FreeOutcome::Released
 }

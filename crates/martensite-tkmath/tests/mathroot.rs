@@ -1,0 +1,32 @@
+//! Mathroot tests.
+#![allow(
+    clippy::excessive_precision,
+    non_snake_case,
+    unused_variables,
+    unused_mut,
+    clippy::field_reassign_with_default,
+    clippy::default_constructed_unit_structs
+)]
+include!("mathroot/fixtures.rs");
+include!("mathroot/fixture_0.rs");
+include!("mathroot/fixture_1.rs");
+include!("mathroot/fixture_2.rs");
+include!("mathroot/fixture_3.rs");
+include!("mathroot/fixture_4.rs");
+include!("mathroot/fixture_5.rs");
+include!("mathroot/fixture_6.rs");
+include!("mathroot/fixture_7.rs");
+include!("mathroot/fixture_8.rs");
+include!("mathroot/fixture_9.rs");
+include!("mathroot/fixture_10.rs");
+include!("mathroot/fixture_11.rs");
+include!("mathroot/fixture_12.rs");
+include!("mathroot/fixture_13.rs");
+include!("mathroot/fixture_14.rs");
+include!("mathroot/tests_0.rs");
+include!("mathroot/tests_1.rs");
+include!("mathroot/tests_2.rs");
+include!("mathroot/tests_3.rs");
+include!("mathroot/tests_4.rs");
+include!("mathroot/tests_5.rs");
+include!("mathroot/tests_6.rs");

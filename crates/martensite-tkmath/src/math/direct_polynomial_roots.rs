@@ -1,0 +1,117 @@
+//! Direct polynomial roots up to degree four; preserves order and multiplicity.
+use martensite_tkernel::standard::Failure;
+mod cubic;
+mod cubic_roots;
+mod ferrari;
+mod quadratic;
+mod quartic;
+mod refine;
+mod scaling;
+const ZERO: f64 = 1e-30;
+/// Algebraic real roots through degree four; `DirectPolynomialRoots::quadratic(1.0,-5.0,6.0)`.
+pub struct DirectPolynomialRoots {
+    roots: [f64; 4],
+    count: i32,
+    done: bool,
+    infinite: bool,
+}
+impl DirectPolynomialRoots {
+    fn empty() -> Self {
+        Self {
+            roots: [0.0; 4],
+            count: 0,
+            done: true,
+            infinite: false,
+        }
+    }
+    /// Solves a linear equation, including infinite solutions; `DirectPolynomialRoots::linear(2.0,-6.0)`.
+    pub fn linear(a: f64, b: f64) -> Self {
+        let mut solver: Self = Self::empty();
+        solver.solve_linear(a, b);
+        solver
+    }
+    /// Solves a quadratic with stable root ordering; `DirectPolynomialRoots::quadratic(1.0,-5.0,6.0)`.
+    pub fn quadratic(a: f64, b: f64, c: f64) -> Self {
+        let mut solver: Self = Self::empty();
+        solver.solve_quadratic(a, b, c);
+        solver
+    }
+    /// Solves a cubic with Cardano's branches; `DirectPolynomialRoots::cubic(1.0,-6.0,11.0,-6.0)`.
+    pub fn cubic(a: f64, b: f64, c: f64, d: f64) -> Self {
+        let mut solver: Self = Self::empty();
+        solver.solve_cubic(a, b, c, d);
+        solver
+    }
+    /// Solves a quartic using Ferrari factorization; `DirectPolynomialRoots::quartic(1.0,0.0,-5.0,0.0,4.0)`.
+    pub fn quartic(a: f64, b: f64, c: f64, d: f64, e: f64) -> Self {
+        let mut solver: Self = Self::empty();
+        solver.solve_quartic(a, b, c, d, e);
+        solver
+    }
+    /// Reports computation status; `solver.is_done()`.
+    pub fn is_done(&self) -> bool {
+        self.done
+    }
+    /// Reports the identity-equation flag; `solver.infinite_roots()`.
+    pub fn infinite_roots(&self) -> bool {
+        self.infinite
+    }
+    /// Counts roots with multiplicity; has no Done guard here; `solver.solutions()?`.
+    pub fn solutions(&self) -> Result<i32, Failure> {
+        self.check_finite()?;
+        Ok(self.count)
+    }
+    /// Reads a one-based root in order; `solver.value(1)?`.
+    pub fn value(&self, index: i32) -> Result<f64, Failure> {
+        self.check_finite()?;
+        if index < 1 || index > self.count {
+            return Err(Failure::with_type("Standard_RangeError", " ", ""));
+        }
+        Ok(self.roots[(index - 1) as usize])
+    }
+    fn check_finite(&self) -> Result<(), Failure> {
+        if self.infinite {
+            return Err(Failure::with_type("StdFail_InfiniteSolutions", " ", ""));
+        }
+        Ok(())
+    }
+    fn scale_refine(&mut self, scale: f64, coefficients: &[f64]) {
+        for root in &mut self.roots[..self.count as usize] {
+            *root *= scale;
+            *root = refine::refine(coefficients, *root);
+        }
+    }
+    /// Repeats protected linear Solve without clearing earlier flags; `solver.solve_linear(2.0,-6.0)`.
+    pub fn solve_linear(&mut self, a: f64, b: f64) {
+        if a.abs() <= ZERO {
+            if b.abs() <= ZERO {
+                self.infinite = true;
+                return;
+            }
+            self.count = 0;
+            return;
+        }
+        self.count = 1;
+        self.roots[0] = -b / a;
+    }
+}
+impl DirectPolynomialRoots {
+    /// Writes the `Dump` text; `roots.dump(&mut text)?`.
+    pub fn dump(&self, stream: &mut impl std::fmt::Write) -> std::fmt::Result {
+        write!(stream, "math_DirectPolynomialRoots ")?;
+        if !self.done {
+            return writeln!(stream, " Not Done ");
+        }
+        if self.infinite {
+            return writeln!(stream, " Status = Infinity Roots ");
+        }
+        writeln!(stream, " Status = Not Infinity Roots ")?;
+        writeln!(stream, " Number of solutions = {}", self.count)?;
+        for index in 1..=self.count {
+            let root = crate::math::stream_real(self.roots[(index - 1) as usize]);
+            writeln!(stream, " Solution number {index} = {root}")?;
+        }
+        Ok(())
+    }
+}
+display_via_dump!(DirectPolynomialRoots);

@@ -21,6 +21,11 @@ Some tests compare output with reviewed baselines in
 `crates/martensite-tkernel/tests/fixtures/`; see
 [that README](../../../crates/martensite-tkernel/tests/fixtures/README.md).
 
+Controlled sequence-clear tokens belong to one invocation. Calling `clear`
+cancels the active invocation; its tokens cannot visit, detach or finish a later
+clear. Rejected stale tokens preserve the current invocation and its live values
+([#77](https://github.com/Oblikovati/Martensite/issues/77)).
+
 Tests whose expected values exist only for one platform are compiled only
 there, for example the glibc `printf` rows on x86_64 Linux.
 
@@ -80,9 +85,10 @@ not shipped as stubs.
   MSVC's C-locale `wctomb` maps units 0x80..0xFF to single bytes, and its
   `printf` has no `%m`. Only the glibc behavior is implemented; `%m` is rejected as
   unsupported on Windows.
-- Aligned allocation (`src/ncollection/allocator/free_outcome.rs`): MSVC pairs
-  `_aligned_malloc` only with `_aligned_free`, so mixing the Aligned allocator
-  with Common or Heap is undefined there. The runtime evidence is Linux only.
+- Heap release (`src/ncollection/allocator/free_outcome.rs`): Common, Heap and
+  Aligned use the same Rust allocation backend on every platform. Their original
+  live allocations are compatible; arena-interior addresses remain incompatible
+  with heap release. The classifier regression runs on every platform (#78).
 
 ### Other targets
 

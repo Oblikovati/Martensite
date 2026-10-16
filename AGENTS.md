@@ -116,7 +116,7 @@ crates/
 ├── martensite-cmath/     Adapter to the platform C math library.
 ├── martensite-tkernel/   Foundation toolkit.
 ├── martensite-kernel/    Shared kernel.
-├── martensite-math/      Math Toolkit.
+├── martensite-tkmath/    Math toolkit.
 └── martensite-*/         Other Toolkits
 
 tests/                      Integration / E2E tests which transverse multiple crates.
@@ -323,8 +323,8 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
 
 ## Integration workflow
 
-- Use `main` as the integration branch. Merge completed worktree branches directly
-  into `main`; do not create pull requests.
+- Use `main` as the integration branch. Create each integration pull request with
+  `gh` and merge it with `gh` after all required checks are green.
 - The coordinating agent serializes merges, resolves conflicts, and runs the
   relevant checks. A subagent's work is complete only after its committed changes
   are integrated into `main`.

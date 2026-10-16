@@ -6,6 +6,36 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-10-16
+
+### Added
+
+- Added the `martensite-tkmath` crate, the math toolkit: geometric primitives
+  and transformations, vectors and matrices, linear algebra, root finders,
+  minimizers and integrators, B-spline and polynomial libraries, conversion of
+  conics and elementary surfaces to B-splines, bounding boxes and bounding
+  volume hierarchies, triangulations and polygons, locations, and exact
+  predicates for sketch incidences and certified Bezier roots ([#76]).
+
+### Changed
+
+- Changed the `cargo xtask release` semver check for versions before 1.0.0 to
+  cargo's compatibility rule: an additive change (`Added`, `Deprecated`, a
+  non-breaking `Changed`) needs a patch bump and a breaking change (a removal
+  or incompatible change) a minor bump. From 1.0.0 the rules are unchanged
+  ([#76]).
+
+### Fixed
+
+- Fixed false incompatible-release errors for Common, Heap and Aligned storage
+  on Windows, preserving coherent ring removal and arena-release protection ([#78]).
+
+- Fixed cancelled sequence-clear tokens being accepted by later clear
+  invocations, preventing live values from being abandoned ([#77]).
+
+- Fixed `cargo xtask pr` accepting fatal Git errors as clean untracked-file
+  whitespace checks; failed comparisons now retain their diagnostics ([#75]).
+
 ## [0.3.0] - 2026-10-16
 
 ### Added
@@ -24,3 +54,7 @@ follows [Semantic Versioning](https://semver.org/).
   functions bit for bit ([#72]).
 
 [#72]: https://github.com/Oblikovati/Martensite/pull/72
+[#75]: https://github.com/Oblikovati/Martensite/issues/75
+[#76]: https://github.com/Oblikovati/Martensite/issues/76
+[#77]: https://github.com/Oblikovati/Martensite/issues/77
+[#78]: https://github.com/Oblikovati/Martensite/issues/78

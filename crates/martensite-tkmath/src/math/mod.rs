@@ -1,0 +1,123 @@
+//! Bounded numeric storage and mathematical algorithms.
+/// Implements `Display` as the class's free `operator<<`, which forwards to `Dump`.
+macro_rules! display_via_dump {
+    ($type:ty) => {
+        /// The free `operator<<`, which forwards to `Dump`; `format!("{value}")`.
+        impl std::fmt::Display for $type {
+            fn fmt(&self, stream: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                self.dump(stream)
+            }
+        }
+    };
+}
+mod exceptions;
+pub use exceptions::{not_square, not_square_with_stack, singular_matrix};
+mod double_tab;
+pub use double_tab::DoubleTab;
+mod matrix;
+mod vector;
+pub use matrix::Matrix;
+pub(crate) use vector::stream_real;
+pub use vector::{IntegerVector, Vector, VectorBase, VectorItem};
+mod gauss;
+pub mod recipes;
+pub use gauss::Gauss;
+mod crout;
+pub use crout::Crout;
+mod least_squares;
+pub use least_squares::GaussLeastSquares;
+mod householder;
+pub use householder::Householder;
+mod jacobi;
+pub use jacobi::Jacobi;
+mod svd;
+pub use svd::Svd;
+mod eigen_values_searcher;
+pub use eigen_values_searcher::EigenValuesSearcher;
+mod kronrod;
+pub use kronrod::KronrodPointsAndWeights;
+mod function;
+pub use function::Function;
+mod bracketed_root;
+pub use bracketed_root::BracketedRoot;
+mod derivative;
+pub use derivative::FunctionWithDerivative;
+mod bissec_newton;
+pub use bissec_newton::BissecNewton;
+mod bracket_minimum;
+pub use bracket_minimum::BracketMinimum;
+mod brent_minimum;
+pub use brent_minimum::BrentMinimum;
+mod function_set;
+pub use function_set::{FunctionSet, FunctionSetWithDerivatives};
+mod newton_function_set_root;
+pub use newton_function_set_root::NewtonFunctionSetRoot;
+mod function_set_root;
+pub use function_set_root::FunctionSetRoot;
+mod function_root;
+pub use function_root::FunctionRoot;
+mod multiple_var_function;
+pub use multiple_var_function::{MultipleVarFunction, MultipleVarFunctionWithGradient};
+mod bfgs;
+mod optimization;
+pub use bfgs::Bfgs;
+mod frpr;
+pub use frpr::Frpr;
+mod powell;
+pub use multiple_var_function::MultipleVarFunctionWithHessian;
+pub use powell::Powell;
+mod status;
+pub use status::Status;
+mod newton_minimum;
+pub use newton_minimum::NewtonMinimum;
+mod newton_function_root;
+pub use newton_function_root::NewtonFunctionRoot;
+mod uzawa;
+pub use uzawa::Uzawa;
+mod direct_polynomial_roots;
+pub use direct_polynomial_roots::DirectPolynomialRoots;
+mod trigonometric_equation;
+pub use trigonometric_equation::TrigonometricEquation;
+mod trigonometric_roots;
+pub use trigonometric_roots::TrigonometricRoots;
+// f64::Epsilon moves toward the finite extreme, including from infinity.
+pub(crate) fn real_epsilon(value: f64) -> f64 {
+    martensite_tkernel::standard::real::epsilon(value)
+}
+
+mod function_roots;
+pub use function_roots::FunctionRoots;
+
+mod function_sample;
+pub use function_sample::{FunctionSample, FunctionSampling};
+mod function_all_roots;
+pub use function_all_roots::FunctionAllRoots;
+
+mod value_and_weight;
+pub use value_and_weight::ValueAndWeight;
+mod gauss_quadrature;
+pub use gauss_quadrature::GaussPointsAndWeights;
+mod quadrature_tables;
+pub use quadrature_tables::{
+    gauss_points, gauss_points_max, gauss_weights, kronrod_points_and_weights, kronrod_points_max,
+    ordered_gauss_points_and_weights,
+};
+mod gauss_integration;
+pub use gauss_integration::GaussSingleIntegration;
+mod gauss_set_integration;
+pub use gauss_set_integration::GaussSetIntegration;
+
+mod kronrod_integration;
+pub use kronrod_integration::KronrodSingleIntegration;
+
+mod bullard_generator;
+pub use bullard_generator::BullardGenerator;
+mod pso_particles;
+pub use pso_particles::{PsoParticle, PsoParticlesPool};
+mod pso;
+pub use pso::Pso;
+
+mod global_objective;
+pub use global_objective::GlobalObjective;
+mod global_optimum;
+pub use global_optimum::GlobalOptimum;

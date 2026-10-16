@@ -1,0 +1,104 @@
+//! Convert cone to bspline surface tests.
+#![allow(non_snake_case)]
+use martensite_tkmath::bsplslib::{self, SurfaceSpan};
+use martensite_tkmath::convert::ElementarySurfaceToBSplineSurface;
+use martensite_tkmath::gp::{Axis3, Cone3, Direction3, Point3};
+use std::f64::consts::PI;
+
+// Cone3(Axis3(Point3(0.0, 0.0, 0.0), Direction3(0.0, 0.0, 1.0)), semiAngle, radius).
+fn cone(semi_angle: f64, radius: f64) -> Cone3 {
+    let frame = Axis3::from_normal(
+        Point3::new(0.0, 0.0, 0.0),
+        Direction3::new(0.0, 0.0, 1.0).unwrap(),
+    )
+    .unwrap();
+    Cone3::new(frame, semi_angle, radius).unwrap()
+}
+
+#[test]
+fn convert_cone_to_b_spline_surface_full_cone() {
+    let aCone = cone(PI / 6.0, 3.0);
+    let aConv = ElementarySurfaceToBSplineSurface::from_cone(&aCone, 0.0, 10.0).unwrap();
+
+    assert_eq!(aConv.u_degree(), 2);
+    assert_eq!(aConv.v_degree(), 1);
+    assert!(aConv.is_u_periodic());
+    assert!(!aConv.is_v_periodic());
+    assert!(aConv.nb_u_poles() > 0);
+    assert!(aConv.nb_v_poles() > 0);
+}
+
+#[test]
+fn convert_cone_to_b_spline_surface_trimmed_cone() {
+    let aCone = cone(PI / 4.0, 2.0);
+    let (aU1, aU2) = (0.0, PI);
+    let (aV1, aV2) = (0.0, 5.0);
+    let aConv =
+        ElementarySurfaceToBSplineSurface::from_cone_patch(&aCone, aU1, aU2, aV1, aV2).unwrap();
+
+    assert!(!aConv.is_u_periodic());
+    assert!(!aConv.is_v_periodic());
+}
+
+#[test]
+fn convert_cone_to_b_spline_surface_weights_are_positive() {
+    let aCone = cone(PI / 6.0, 1.0);
+    let aConv = ElementarySurfaceToBSplineSurface::from_cone(&aCone, 0.0, 5.0).unwrap();
+
+    let aWeights = aConv.weights();
+    for i in 1..=aConv.nb_u_poles() {
+        for j in 1..=aConv.nb_v_poles() {
+            assert!((*aWeights.value(i, j).unwrap()) > 0.0);
+        }
+    }
+}
+
+#[test]
+fn convert_cone_to_b_spline_surface_geometric_verification() {
+    let aSemiAngle: f64 = PI / 6.0;
+    let aRadius: f64 = 3.0;
+    let aCone = cone(aSemiAngle, aRadius);
+    let aConv =
+        ElementarySurfaceToBSplineSurface::from_cone_patch(&aCone, 0.0, PI, 0.0, 10.0).unwrap();
+
+    let aTol: f64 = 1.0e-10;
+    let aUK = aConv.u_knots();
+    let aVK = aConv.v_knots();
+    let (aUMin, aUMax) = (aUK[aUK.lower()], aUK[aUK.upper()]);
+    let (aVMin, aVMax) = (aVK[aVK.lower()], aVK[aVK.upper()]);
+
+    for i in 0..=4 {
+        let aU: f64 = aUMin + f64::from(i) * (aUMax - aUMin) / 4.0;
+        for j in 0..=4 {
+            let aV: f64 = aVMin + f64::from(j) * (aVMax - aVMin) / 4.0;
+
+            let aSpan = SurfaceSpan {
+                u: aU,
+                v: aV,
+                u_index: 0,
+                v_index: 0,
+                u_knots: aConv.u_knots(),
+                v_knots: aConv.v_knots(),
+                u_mults: Some(aConv.u_multiplicities()),
+                v_mults: Some(aConv.v_multiplicities()),
+                u_degree: aConv.u_degree(),
+                v_degree: aConv.v_degree(),
+                u_rat: true,
+                v_rat: false,
+                u_per: false,
+                v_per: false,
+            };
+            let aPnt: Point3 = bsplslib::d0(&aSpan, aConv.poles(), Some(aConv.weights())).unwrap();
+
+            // Verify the point lies on the cone:
+            // For a cone with axis Z, semi-angle a, reference radius R:
+            // r(z) = R + z * tan(a), distance from axis = r
+            let aDistFromAxis: f64 = (aPnt.x() * aPnt.x() + aPnt.y() * aPnt.y()).sqrt();
+            let aExpectedR: f64 = aRadius + aPnt.z() * aSemiAngle.tan();
+            assert!(
+                (aDistFromAxis - aExpectedR).abs() <= aTol,
+                "Point not on cone at U={aU} V={aV}"
+            );
+        }
+    }
+}

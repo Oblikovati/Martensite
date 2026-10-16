@@ -153,7 +153,7 @@ fn too_small_bump_is_refused() {
     let fixture = ReleaseFixture::new();
     fs::write(
         fixture.root().join("CHANGELOG.md"),
-        "## [0.2.8]\n\n### Added\n- x\n",
+        "## [0.2.8]\n\n### Removed\n- x\n",
     )
     .unwrap();
     let runner = fixture.runner("v0.2.7\n", "0.2.8");
