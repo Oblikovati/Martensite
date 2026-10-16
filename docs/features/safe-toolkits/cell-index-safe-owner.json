@@ -1,0 +1,34 @@
+{
+  "candidate_commit": "942097e",
+  "storage": "Option<allocator_api2::boxed::Box<Vec<i32>>>",
+  "dependency_trust": "Existing allocator-api2 Global box uses the Rust global allocator; no custom unsafe moved into a dependency",
+  "allocator_audit": [
+    "The previous Common policy uses Rust global allocation with a private raw-layout header (standard/memory/raw_heap.rs)",
+    "AllocatorObject::common_base_allocator returns an immutable OnceLock handle to the concrete default AllocatorObject, not a caller-injected subclass",
+    "CellIndex does not accept a caller allocator; filter arena identity and callbacks remain in the surrounding cell/map",
+    "Typed owners eliminate the raw header and common facade bookkeeping; raw ownership is never exposed through index_data_ptr",
+    "Fallible Vec reservation and allocator-api2 Box::try_new preserve the existing allocation-failure panic shape"
+  ],
+  "index_bytes": 56,
+  "elapsed_nanoseconds": [6380919, 5663509, 5519191],
+  "peak_process_rss_kib": [9904, 9708, 9736],
+  "same_workload_as": "cell-index-baseline.json",
+  "focused_tests": {"passed": 32, "failed": 0, "ignored_benchmark": 1},
+  "miri": {
+    "toolchain": "nightly-2026-09-25",
+    "command": "cargo +nightly-2026-09-25 miri test -p martensite-tkernel --lib cell_index -- --quiet",
+    "passed": 11,
+    "ignored_benchmark": 1,
+    "exclusion": "Existing unrelated Copy drop warning in typed_inc_free_failure_tests.rs; no Miri failure"
+  },
+  "compatibility": "All existing CellIndex layout and behavior fixtures unchanged",
+  "allocation_comparison": {
+    "tool": "Valgrind 3.22.0, matching Ubuntu libc6-dbg 2.39-0ubuntu8.9 extracted under /tmp",
+    "scope": "Complete release test process; identical selected workload, including test harness",
+    "before": {"allocations": 240293, "frees": 240273, "allocated_bytes": 19215867, "definitely_lost_bytes": 0, "indirectly_lost_bytes": 0, "possibly_lost_bytes": 552, "reachable_bytes": 1355},
+    "after": {"allocations": 160276, "frees": 160273, "allocated_bytes": 12174549, "definitely_lost_bytes": 0, "indirectly_lost_bytes": 0, "possibly_lost_bytes": 48, "reachable_bytes": 548},
+    "qualification": "Summary mode reported zero errors on both runs. Full candidate leak reporting reported one possible-leak context: std::thread::Thread::new via test::console::run_tests_console (48 bytes). Reachable blocks were std stack-overflow thread_info initialization. No suppressions used."
+  },
+  "local_pr_gate": "cargo xtask pr passed including source inventory, clippy, build and affected tkernel/tkmath tests",
+  "remaining_validation": ["GitHub PR checks", "cross-platform checks"]
+}
