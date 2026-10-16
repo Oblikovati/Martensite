@@ -1,4 +1,4 @@
-use super::{fakes::FailingBufferedInput, prototype::*};
+use super::{fakes::FailingBufferedInput, checked_input::*};
 use martensite_tkernel::storage::state;
 
 #[test]

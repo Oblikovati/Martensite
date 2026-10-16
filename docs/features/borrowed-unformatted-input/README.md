@@ -1,73 +1,66 @@
-# Checked borrowed input experiment
+# Checked borrowed input
 
-Feature [#116](https://github.com/Oblikovati/Martensite/issues/116) tests a minimal
-input context over caller-owned buffered sources. The implementation is private
-test support, not an exported foundation API. Existing owned streams, public
-signatures, defaults and fixtures remain unchanged.
+Feature [#142](https://github.com/Oblikovati/Martensite/issues/142) promotes the
+input experiment from #116 into `storage::checked_input`. Callers borrow a buffered
+source without write access or a static lifetime. The context owns stream flags,
+exception masks, published counts and retained typed device causes.
 
-## Proposed seam
+```rust
+use martensite_tkernel::storage::checked_input::{BufferedInput, InputContext, UnformattedInput};
 
-`UnformattedInput` is an object-safe consumer interface for byte extraction,
-delimited lines, exact block reads, optional position, state and last count.
-`InputContext` borrows an `InputBuffer` and owns its flags, exception mask,
-last typed device error and extraction count. `BufferedInput` borrows any BufRead;
-`PositionedInput` additionally requires Seek. Neither requires write access,
-Any, a static lifetime, unsafe code or a process registry. Position is queried
-from the actual positioned reader; it is never inferred from a zero origin.
-
-The prototype distinguishes a device failure from a state-mask failure. A device
-failure keeps the original io::Error in an Arc, including an embedded typed
-Failure. A generated state failure does not replace the retained device cause.
-Each failure includes its operation, state, last published count and bytes
-extracted in this context. Clearing flags keeps the reader position and original
-cause. Updating the exception mask first stores the new mask, then checks the
-current state.
-
-Line extraction performs non-consuming lookahead through fill_buf, consumes the
-delimiter but stores a NUL instead, and leaves the next byte in the caller's
-buffer when capacity is exhausted. Consumed line bytes remain included in the published count when a following
-lookahead fails. A bad-mask failure returns immediately;
-a generated fail-mask failure occurs after normal terminator publication.
-Block failure retains the partial output but does not publish a successful count.
-These ordering rules are asserted with owned literal byte arrays.
-
-## Costs and limits
-
-The context does not allocate or copy the entire input. It copies only requested
-output bytes from the borrowed buffer. The caller chooses its buffering cost;
-the position-aware wrapper uses the reader's logical position. Error retention
-allocates an Arc on failure. There are no new locks, global mutable state or
-production fallback paths. Source buffer implementations must honor BufRead's
-fill_buf/consume contract.
-
-The object-safe source wrappers are thread-confined because their erased reader
-need not be Send. A context over a concrete Send source is automatically Send;
-owned failure values are Send and Sync. Compile-time assertions check both
-contracts. Sharing a source is not supported and no concurrent-sink or sanitizer
-certification is claimed by this experiment.
-
-## Promotion and deletion gate
-
-First integrate the checked seam into one bounded tag-header operation using the
-existing parser implementation. Preserve the owned stream fixtures unchanged;
-compare exact bytes, partial output, counts, position, masks and original causes.
-Propagate checked failures through parser control flow immediately. Do not store
-an error and continue parsing, copy the entire input, or duplicate a decoder.
-Only after that operation passes should positioned binary readers adopt it.
-
-Before promotion, extract the shared input machinery used by owned and borrowed
-streams in a separate structural change. Preserve behavior fixtures and account
-for any observable policy difference explicitly. This prototype must then be
-deleted; its tests become the shared engine's retained fixture gate. Before promotion, assign #116 to an existing milestone. The prototype
-has a one-milestone limit: promote with the complete operation or delete it by
-the end of that assigned milestone. No production replacement is kept alongside
-an accepted shared engine.
-
-Run the owned cases with:
-
-```sh
-cargo test -p martensite-tkernel --test toolkit borrowed_input_primitives
+let mut bytes = b"tag>body".as_slice();
+let mut source = BufferedInput(&mut bytes);
+let mut input = InputContext::new(&mut source);
+let mut tag = [0; 8];
+input.getline(&mut tag, b'>')?;
+assert_eq!(&tag[..4], b"tag\0");
+# Ok::<(), martensite_tkernel::storage::checked_input::InputFailure>(())
 ```
 
-The full candidate gate remains `cargo xtask pr`. This experiment adds no public
-API or user-visible behavior, so it requires no version or changelog entry.
+## State, counts and causes
+
+`UnformattedInput` is object safe. It offers get, fixed-buffer getline, block read,
+actual optional position, state/count inspection and mask control. An `Ok` return
+means no enabled exception was raised; it does not promise a complete extraction.
+Check state and count when the mask is zero. A mask change stores the new mask
+before checking existing state. Clearing flags leaves position, count and the
+retained original cause intact.
+
+Line extraction consumes its delimiter and stores a NUL. A full line leaves its
+next byte in the caller's buffer. The count includes the delimiter. A device
+failure under a bad-state mask returns immediately, before normal terminator
+publication; generated fail-state errors occur after terminator publication.
+Block failure retains partial bytes but publishes no successful count. Device
+failures retain the original `io::Error` and any typed payload through an `Arc`;
+generated state failures have a distinct classification.
+
+`BufferedInput` requires only `BufRead`; unknown position is `None`.
+`PositionedInput` additionally uses the actual `Seek` capability, including its
+nonzero origin and position errors. Position is never inferred from consumption.
+The context makes no whole-input copy; it copies only requested output bytes.
+The caller chooses its buffer allocation. Retaining a device failure allocates
+an `Arc`. There is no new lock or global input state.
+
+## Owned replay and verification
+
+The existing `IoStream` methods remain the owned behavior-version-1 replay path.
+Their signatures, flags and counts remain unchanged. Owned refill refusal still
+appears as end-of-input, and partial block reads publish their consumed count.
+Checked input has explicit retained causes and mask failures. These policies
+share byte, line and block scanning without silently replacing owned behavior.
+
+The erased borrowed adapters are thread confined. A context over a concrete Send
+source is automatically Send; failures are Send and Sync. Compile assertions
+check those bounded claims. No shared-reader or sanitizer certification is claimed.
+
+Twenty independent tests retain literal bytes, positions, state transitions,
+counts and cause identity. A separate reviewed behavior-version-1 fixture retains
+3,864 state/count/position/output rows, exercised directly through the public
+interface. It is a semantic baseline, not independently derived expected values.
+Baseline updates require review stating the reason and behavior version.
+
+The test-only experiment algorithm was deleted. Its fixtures exercise the shared
+public implementation. Q3 is the one-milestone promotion deadline for #116/#142;
+any unfinished replacement must be removed by the end of that milestone. The
+first consumer gate is a complete binary-header read using shared field decoding.
+Run `cargo test -p martensite-tkernel`; the full local gate is `cargo xtask pr`.

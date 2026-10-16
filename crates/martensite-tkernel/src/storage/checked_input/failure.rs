@@ -1,27 +1,44 @@
-//! Test-owned error vocabulary for checked input experiments.
+//! Owned checked-input failures retain the original typed cause.
 use std::{io, sync::Arc};
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum InputOperation {
+/// Operation whose state or device failed; `InputOperation::Read`.
+pub enum InputOperation {
+    /// Byte extraction.
     Get,
+    /// Delimited line extraction.
     Line,
+    /// Block extraction.
     Read,
+    /// Actual position query.
     Position,
+    /// Exception-mask update.
     Mask,
+    /// State clearing.
     Clear,
 }
 #[derive(Clone, Debug)]
-pub(crate) enum InputCause {
+/// Distinguish an original device error from a generated state failure.
+pub enum InputCause {
+    /// The retained original typed error.
     Device(Arc<io::Error>),
+    /// State intersects the configured exception mask.
     State,
 }
 #[derive(Clone, Debug)]
-pub(crate) struct InputFailure {
+/// Owned diagnostic snapshot; `failure.state` records state at failure.
+pub struct InputFailure {
+    /// The operation that failed.
     pub operation: InputOperation,
+    /// Observed state bits.
     pub state: u8,
+    /// Active exception bits.
     pub mask: u8,
+    /// Last published input count.
     pub gcount: usize,
+    /// Physical bytes consumed by this context.
     pub extracted: usize,
+    /// Original error or generated state classification.
     pub cause: InputCause,
 }
 

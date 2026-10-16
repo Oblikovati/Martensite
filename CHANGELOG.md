@@ -8,6 +8,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added checked borrowed input with state masks, position capability and owned typed
+  causes, sharing extraction with existing owned streams (#142).
+
 - Added owned storage-stream output seeking for header backpatching while preserving
   EOF, input counts and formatting state (#136).
 
