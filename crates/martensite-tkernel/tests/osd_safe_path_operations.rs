@@ -10,6 +10,8 @@ mod links;
 mod raw_names;
 #[path = "osd_safe_path_operations/records.rs"]
 mod records;
+#[path = "osd_safe_path_operations/status.rs"]
+mod status;
 
 struct PathScratch(PathBuf);
 impl PathScratch {
