@@ -1,0 +1,25 @@
+{
+  "issue": 87,
+  "pull_request_head": "067323f3727916d8f1a16f976bdacf79c454ee32",
+  "sanitizer_branch_head": "aed88965a493072baa401c06216788268066db42",
+  "source_equivalence": "git diff 067323f --exit-code -- crates/martensite-tkernel passed in the merged sanitizer checkout before commit",
+  "workflow_run": 38932346101,
+  "job": 117079412327,
+  "url": "https://github.com/Oblikovati/Martensite/actions/runs/38932346101",
+  "result": "success",
+  "platform": "Linux x86_64 hosted runner",
+  "toolchain": "nightly-2026-09-25",
+  "instrumentation": "cargo test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --target-dir target/toolkit-tsan -p martensite-tkernel --lib; child RUSTFLAGS=-Zsanitizer=thread and CARGO_ENCODED_RUSTFLAGS removed",
+  "tests": {"passed": 386, "failed": 0, "ignored": 8},
+  "confirmed_in_job_log": [
+    "concurrent_launches_join_their_own_borrowed_jobs",
+    "nested_launches_join_before_the_borrow_ends",
+    "balanced_worker_subtrees_keep_distinct_physical_threads"
+  ],
+  "local_log": "/tmp/martensite-worker-tsan-aed8896.log",
+  "limitations": [
+    "Sanitizer plumbing is on a separate validation branch; this is not an exact-PR-head workflow run.",
+    "Ignored performance, retention and 128-participant workloads were not run under TSan.",
+    "This run does not prove absence of races or resolve resource-cost acceptance."
+  ]
+}

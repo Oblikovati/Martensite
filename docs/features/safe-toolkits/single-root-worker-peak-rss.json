@@ -1,0 +1,74 @@
+{
+  "issue": 87,
+  "baseline_revision": "559d21a36f2e6d6944edad4f04d38d2e6c9c3d8a plus existing workload fixtures",
+  "candidate_revision": "067323f3727916d8f1a16f976bdacf79c454ee32",
+  "method": "GNU time maximum resident set size (%M), six alternating separate-process pairs reversing order every pair; identical persistent_range_workload with callback-count assertions; Linux x86_64 release binaries",
+  "results": [
+    {
+      "pair": 0,
+      "implementation": "baseline",
+      "peak_rss_kib": 6840
+    },
+    {
+      "pair": 0,
+      "implementation": "candidate",
+      "peak_rss_kib": 7408
+    },
+    {
+      "pair": 1,
+      "implementation": "candidate",
+      "peak_rss_kib": 7196
+    },
+    {
+      "pair": 1,
+      "implementation": "baseline",
+      "peak_rss_kib": 7084
+    },
+    {
+      "pair": 2,
+      "implementation": "baseline",
+      "peak_rss_kib": 6876
+    },
+    {
+      "pair": 2,
+      "implementation": "candidate",
+      "peak_rss_kib": 7712
+    },
+    {
+      "pair": 3,
+      "implementation": "candidate",
+      "peak_rss_kib": 7904
+    },
+    {
+      "pair": 3,
+      "implementation": "baseline",
+      "peak_rss_kib": 7068
+    },
+    {
+      "pair": 4,
+      "implementation": "baseline",
+      "peak_rss_kib": 6804
+    },
+    {
+      "pair": 4,
+      "implementation": "candidate",
+      "peak_rss_kib": 7856
+    },
+    {
+      "pair": 5,
+      "implementation": "candidate",
+      "peak_rss_kib": 7076
+    },
+    {
+      "pair": 5,
+      "implementation": "baseline",
+      "peak_rss_kib": 6876
+    }
+  ],
+  "limitations": [
+    "Whole-process resident high-water mark, not reserved virtual memory or per-worker storage attribution.",
+    "Shared host is uncontrolled; samples include the test harness and dynamic libraries.",
+    "No profiler or agent-initiated local build overlapped these samples; native CI ran remotely.",
+    "This measures costs but does not approve a regression or establish general bounds."
+  ]
+}

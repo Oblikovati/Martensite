@@ -1,0 +1,28 @@
+{
+  "issue": 87,
+  "revision": "067323f3727916d8f1a16f976bdacf79c454ee32",
+  "workflow_run": 38931930471,
+  "url": "https://github.com/Oblikovati/Martensite/actions/runs/38931930471",
+  "mode": "Non-publishing release rehearsal for existing version 0.3.1",
+  "native_jobs": {
+    "x86_64-unknown-linux-gnu": "passed",
+    "aarch64-unknown-linux-gnu": "passed",
+    "aarch64-apple-darwin": "passed",
+    "x86_64-pc-windows-msvc": "pending"
+  },
+  "artifact_checks": "Downloaded each completed target's compiler inventory and verified exact revision, workspace summary equality with its reviewed baseline, and nonempty dependency diagnostics.",
+  "download_directory": "/tmp/martensite-worker-native-067323f.ZJEH4r",
+  "local_current_revision_stack_check": {
+    "command": "RUST_MIN_STACK=65536 timeout 40s target/release/deps/martensite_tkernel-39125e3ec44c04f3 persistent_large_pool --ignored --test-threads=1 --nocapture",
+    "participants": 128,
+    "rendezvous": "passed",
+    "thousand_launch_workload": "passed",
+    "exit_code": 0,
+    "platform": "Linux x86_64 release binary"
+  },
+  "limitations": [
+    "Windows remains pending; this is not a completed four-platform validation claim.",
+    "Ignored stack and performance fixtures are not automatically executed by the native release matrix.",
+    "Correctness validation does not resolve resource-cost acceptance."
+  ]
+}
