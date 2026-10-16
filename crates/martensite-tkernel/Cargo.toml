@@ -49,6 +49,11 @@ path = "tests/toolkit.rs"
 name = "standard_c_locale_sentry"
 path = "tests/standard_c_locale_sentry.rs"
 
+# Process-wide umask mutation must not share the general toolkit test executable (#89).
+[[test]]
+name = "osd_umask_api_behavior"
+path = "tests/osd_umask_api_behavior.rs"
+
 # Mutates process locale and reexecutes exact test names.
 [[test]]
 name = "standard_character_locale"
