@@ -31,6 +31,9 @@ fn native_local_date() -> (u32, u32, i32) {
     // `localtime_r` fills and that outlives the call.
     let parts = unsafe {
         let now = libc::time(std::ptr::null_mut());
+        #[cfg(any(target_os = "linux", target_os = "macos"))]
+        let mut parts = crate::native_calendar::empty_calendar();
+        #[cfg(not(any(target_os = "linux", target_os = "macos")))]
         let mut parts: libc::tm = std::mem::zeroed();
         libc::localtime_r(&now, &mut parts);
         parts
