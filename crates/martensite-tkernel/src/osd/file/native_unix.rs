@@ -231,8 +231,8 @@ impl PosixFileCalls for NativePosixCalls {
         rustix::fs::chmod(name.as_c_str(), mode).map_err(|error| Errno(error.raw_os_error()))
     }
     fn umask(&self, mask: u32) -> u32 {
-        // SAFETY: umask only takes and returns a plain integer.
-        unsafe { libc::umask(mask as libc::mode_t) as u32 }
+        let mask = rustix::fs::Mode::from_bits_retain(mask as _);
+        rustix::process::umask(mask).bits() as u32
     }
     fn mkstemp(&self, template: &[u8]) -> CallResult<(i32, Vec<u8>)> {
         let mut name: Vec<u8> = c_path(template).into_bytes_with_nul();

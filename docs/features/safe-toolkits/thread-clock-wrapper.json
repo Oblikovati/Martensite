@@ -1,0 +1,24 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "baseline_revision": "7758dd79d34bd2c38f2a255ddb925bc21e012eee",
+  "fixture_revision": "fad133f",
+  "scope": "64-bit Linux thread CPU clock only. Public signatures and the existing first-component time / zero second-component convention are unchanged. Other Unix, Apple and Windows paths remain unchanged and unfinished under #89.",
+  "change": "Uses rustix 1.1.5 clock_gettime_dynamic with Known(ThreadCPUTime), preserving fallibility and the zero pair on error. Successful seconds and nanoseconds are cast to f64 separately and combined in the original arithmetic order.",
+  "source_evidence": "Pinned rustix src/clockid.rs maps ThreadCPUTime to CLOCK_THREAD_CPUTIME_ID. backend/libc/time/syscalls.rs clock_gettime_dynamic calls libc clock_gettime once on the selected non-fix_y2038 backend, returning its initialized timespec on success and an error otherwise. build.rs excludes the supported Linux x86_64 and aarch64 LP64 targets from fix_y2038. The infallible clock API was not selected because it would lose the error fallback.",
+  "dependency": "Enables time on existing rustix 1.1.5 with std/fs/use-libc retained. No package version or lockfile changes. cargo deny --all-features check and cargo audit passed. Dependency unsafe remains a separate trust boundary.",
+  "fixtures": "Committed conversion fixtures passed before and after replacement: missing timestamp, zero, fractional seconds and rounding at 2^53. Both components are compared by bits. These fixtures test conversion and fallback, not an injected failing native syscall.",
+  "local_validation": "cargo xtask pr passed before merging current main (/tmp/martensite-thread-clock-pr.log). Separate standards and spec reviews of 7758dd7...4c9cb49 found no implementation defects or scope creep; native coverage remains an acceptance requirement. The main e8e1d56 merge combines rustix process and time features without changing package versions; its full cargo xtask pr gate passed (/tmp/martensite-thread-clock-combined-pr.log), including the conversion fixture.",
+  "inventory": "Linux x86_64 and arm64 cpu_native.rs compiler primary spans decrease from 6 to 4. Source counts remain unchanged because the existing direct call is still compiled on other non-Apple Unix targets. macOS and Windows inventories are unchanged. All four native artifacts match the exact tested revision and complete checked-in workspace summaries.",
+  "native_validation": {
+    "run": "https://github.com/Oblikovati/Martensite/actions/runs/38960289337",
+    "revision": "12a0dc25d894f3f6313be353f77f2e9106317365",
+    "result": "Linux x86_64/arm64, macOS arm64 and Windows x64 passed; publishing was skipped. Both Linux logs explicitly show the conversion fixture passed. macOS/Windows validate the unchanged platform paths and inventories."
+  },
+  "limits": [
+    "Other Unix clock-ID availability and 32-bit time conversion require further evaluation; they are not declared unavoidable system exceptions",
+    "Native clock output changes with execution; conversion fixtures do not claim fixed native elapsed times",
+    "No Miri claim for the native syscall",
+    "No completion claim for #89 or #80"
+  ]
+}
