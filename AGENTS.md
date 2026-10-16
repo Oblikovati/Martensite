@@ -172,13 +172,23 @@ below.
 
 ## Unsafe code exception
 
-The workspace sets `unsafe_code = "forbid"`. A crate may replace that with its
-own `[lints]` table only when it implements an FFI boundary, an allocator, or
-raw memory storage that safe Rust cannot express. Today two crates do:
+The workspace sets `unsafe_code = "forbid"`. Feature #80 tracks removal of
+first-party unsafe code. The allocator and raw-storage exceptions below are
+temporary migration allowances, not permanent architecture. The final policy
+permits unsafe only at a demonstrated system API boundary after evaluating
+safe standard-library and established dependency interfaces. Today two crates
+replace the workspace lint table:
 
 - `martensite-tkernel`: the allocators and raw-storage collections, and the
   operating-system, standard-library and locale calls.
 - `martensite-cmath`: the declarations of the platform libm functions.
+
+Preserve public APIs and observable behavior during removal. An interface that
+cannot be implemented safely is an API conflict: record the exact constraint
+under #88 and request approval for its migration. It is not a system exception.
+Feature #80 remains open until those conflicts are resolved. Moving custom
+unsafe into another crate, dependency, macro or generated file does not count
+as removal; account for established dependency trust separately.
 
 Rules for such a crate:
 
