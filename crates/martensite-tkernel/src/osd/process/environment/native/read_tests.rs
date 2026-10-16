@@ -41,5 +41,7 @@ fn child_reads_owned_environment_bytes() {
     assert_eq!(source.get(b"MARTENSITE_NATIVE_MISSING"), None);
     assert_eq!(source.get(b"MARTENSITE_NATIVE_EMPTY\0suffix"), None);
     assert_eq!(source.get(b""), None);
-    assert_eq!(source.get(b"MARTENSITE_NATIVE_EMPTY="), None);
+    // Apple getenv matches the prefix before '='; the original implementation does too (#101).
+    let equals_name = cfg!(target_vendor = "apple").then(Vec::new);
+    assert_eq!(source.get(b"MARTENSITE_NATIVE_EMPTY="), equals_name);
 }
