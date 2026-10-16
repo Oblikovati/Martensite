@@ -6,6 +6,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added explicit fallible printer and ordered messenger delivery with owned typed
+  failures, preserving existing infallible entry points (#112).
+
 ### Fixed
 
 - Checked toolkit unsafe source counts during PR validation, including inactive

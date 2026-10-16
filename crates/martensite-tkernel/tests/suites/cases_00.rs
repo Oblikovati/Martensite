@@ -257,3 +257,6 @@ pub mod forward_range_method_contracts;
 pub mod path_and_units_case_logs;
 #[path = "../timer_counter_case_log.rs"]
 pub mod timer_counter_case_log;
+
+#[path = "../message_fallible_delivery.rs"]
+pub mod message_fallible_delivery;
