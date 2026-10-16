@@ -21,8 +21,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Changed the `cargo xtask release` semver check for versions before 1.0.0 to
   cargo's compatibility rule: an additive change (`Added`, `Deprecated`, a
-  non-breaking `Changed`) needs a patch bump and a breaking change (`Removed`
-  or a `BREAKING` marker) a minor bump. From 1.0.0 the rules are unchanged
+  non-breaking `Changed`) needs a patch bump and a breaking change (a removal
+  or incompatible change) a minor bump. From 1.0.0 the rules are unchanged
   ([#76]).
 
 ### Fixed
