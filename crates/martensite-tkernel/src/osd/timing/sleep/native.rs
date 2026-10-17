@@ -46,8 +46,8 @@ pub(super) fn milli_sec_sleep(milliseconds: i32) {
 }
 
 #[cfg(windows)]
+#[forbid(unsafe_code)]
 fn sleep_windows(milliseconds: u32) {
-    use windows_sys::Win32::System::Threading::Sleep;
-    // SAFETY: Sleep accepts a scalar duration and has no pointer parameters.
-    unsafe { Sleep(milliseconds) };
+    // Preserve zero yielding and the native infinite sentinel without conversion (#89).
+    winsafe::Sleep(milliseconds);
 }
