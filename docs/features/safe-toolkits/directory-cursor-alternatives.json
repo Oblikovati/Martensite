@@ -4,7 +4,7 @@
   "baseline_revision": "518968e99a893fd437c47b3a8bc0873f90c2b413",
   "fixture_revision": "d863daf",
   "status": "Baseline fixtures only; no dependency or production change. Replacement blocked on a public behavior decision under #88.",
-  "baseline_tests": "Three Linux x86_64 fixtures passed: dot entries and bulk/cursor order, first-NUL truncation, immediate path errors, rename isolation and thread transfer.",
+  "baseline_tests": "Three native fixtures: dot entries and bulk/cursor order, first-NUL truncation, immediate path errors, rename isolation and thread transfer.",
   "current_path": "osd/file/native_unix/directory_cursor.rs owns DIR, calls readdir for every next_name, copies each name once and closes the stream once. A null read returns None but does not prevent a later read.",
   "candidates": [
     {
@@ -52,5 +52,12 @@
       "Keep retry-after-error as a contract; then no current dependency satisfies it and the unsafe cursor stays until a safe API without error fusing is available."
     ],
     "not_options": "nix Dir until #126 is fixed in a release; std::fs::ReadDir because it drops dot entries and fuses at end of stream."
+  },
+  "native_rehearsal": {
+    "run": "https://github.com/Oblikovati/Martensite/actions/runs/39054855743",
+    "revision": "1d78aea9826a432a784ef91f0642b7e14a0dd486",
+    "mode": "release 0.3.1 (dispatch only; publish skipped)",
+    "result": "success on x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, aarch64-apple-darwin and x86_64-pc-windows-msvc (Unix fixtures are compiled out on Windows)",
+    "local_gate": "cargo xtask pr passed on Linux x86_64 with Rust 1.99.0"
   }
 }
