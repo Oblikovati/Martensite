@@ -1,11 +1,10 @@
 use super::{action, interrupt_handler};
 use nix::errno::Errno;
 
+#[cfg(target_os = "macos")]
 #[test]
-fn action_starts_with_an_empty_signal_mask() {
-    let expected = nix::sys::signal::SigSet::empty();
-    let record = action(libc::SIG_DFL, libc::SA_RESTART);
-    assert_eq!(&record.sa_mask, expected.as_ref());
+fn darwin_action_starts_with_a_zero_signal_mask() {
+    assert_eq!(action(libc::SIG_DFL, libc::SA_RESTART).sa_mask, 0);
 }
 
 #[test]

@@ -3,8 +3,8 @@
   "task_issue": 89,
   "starting_main": "b2bd842",
   "status": "Original production unchanged; signal-action construction baseline only.",
-  "fixtures": "Requested handler and flags, caller errno preservation, empty signal mask, and absent GNU/Linux x86_64/aarch64 restorer. These tests construct records only and do not install handlers.",
-  "local": "Four focused tests passed on GNU/Linux x86_64; log /tmp/martensite-signal-action-mask-baseline.log. cargo deny --all-features check and cargo audit passed after enabling the existing nix dependency's signal feature; no dependency versions changed.",
-  "candidate": "Evaluate explicit platform record construction using an established safe empty signal-set interface. Preserve zero restorer and original flags; construction must not change installation behavior.",
-  "limits": "Final-state full local gate and native matrix pending. An empty-mask fixture using nix signal support was added after the initial three-test gate started; that gate passed but cannot establish final-state acceptance. Signal installation and other platform layouts still need verification before accepting a replacement. No system exception or completed unsafe removal is claimed."
+  "fixtures": "Requested handler and flags, caller errno preservation, absent GNU/Linux x86_64/aarch64 restorer, and macOS scalar zero mask. These tests construct records only and do not install handlers; the macOS-specific fixture still requires native execution.",
+  "local": "Original three focused tests passed on GNU/Linux x86_64. A later whole-mask comparison passed in isolation but failed the full gate; neither establishes mask equivalence. See Bug #156 and /tmp/martensite-signal-action-final-baseline-pr.log. The invalid comparison and its signal feature were removed; dependency versions remain unchanged.",
+  "candidate": "Evaluate explicit platform record construction. The nix empty-set candidate is withdrawn pending initialization analysis: the full gate observed nonzero unused tail words against the original fully zeroed record (#156). Preserve zero restorer and original flags; construction must not change installation behavior.",
+  "limits": "Corrected final-state full gate and native matrix pending. Empty-mask membership and dependency initialization safety remain unproved. Signal installation and other platform layouts still need verification before accepting a replacement. No system exception or completed unsafe removal is claimed."
 }
