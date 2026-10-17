@@ -9,9 +9,7 @@ use std::{
 };
 use windows_sys::Win32::{
     Foundation::HANDLE,
-    System::{
-        Diagnostics::Debug::*, LibraryLoader::GetModuleFileNameA, Threading::GetCurrentProcess,
-    },
+    System::{Diagnostics::Debug::*, LibraryLoader::GetModuleFileNameA},
 };
 
 // DbgHelp keeps one symbol handler per process. It is started once and never
@@ -72,9 +70,9 @@ fn module_filename(process: HANDLE, address: u64) -> String {
     String::from_utf8_lossy(&buffer[..count as usize]).into_owned()
 }
 
+#[forbid(unsafe_code)]
 fn symbol_process_handle() -> HANDLE {
-    // SAFETY: GetCurrentProcess returns a pseudo-handle that is always valid.
-    unsafe { GetCurrentProcess() }
+    winsafe::HPROCESS::GetCurrentProcess().ptr()
 }
 
 #[cfg(test)]

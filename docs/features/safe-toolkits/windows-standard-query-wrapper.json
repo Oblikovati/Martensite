@@ -2,13 +2,12 @@
   "parent_issue": 80,
   "task_issue": 89,
   "starting_main": "aa27c1df9efce9b34e72e0a804970d7eef2c8640",
-  "status": "Original Windows GetCurrentProcess and GetSystemInfo calls retained. Baseline validation pending.",
+  "status": "Original baseline 80ee99ec071e506f022605461588ae2196ceda9b accepted: run 38999161967 passed all four native targets, with complete exact-revision clean-checkout compiler inventories verified. Windows handle/page fixtures and existing stack formatting/concurrent capture tests passed. Candidate replaces both acquisition calls with established safe wrappers and forbids unsafe on those functions; candidate native validation pending.",
   "candidate": "Reuse existing winsafe 0.0.29 kernel wrappers investigated in PRs #159 and #166. Stack symbolization needs the same current-process pseudo-handle without ownership or closing; the allocator needs the same GetSystemInfo dwPageSize field widened to usize, not allocation granularity or native-system-info substitution.",
   "fixtures": "Compare original and wrapper handle values and immediate named LastError observations on current and spawned threads. Compare original and wrapper page sizes and immediate LastError observations. Restore prior error before assertions; no handle is closed. Retain existing page-size and stack formatting/concurrent capture tests. Replacement default page-size field is checked separately.",
-  "exclusions": "No arbitrary LastError sentinels, exact stack addresses/names, DbgHelp initialization failure, stable timing, or synthetic system page sizes are claimed. This does not replace stack capture/symbolization calls or change their process-wide lock. No API, dependency, numerical or Unix changes.",
+  "exclusions": "No arbitrary LastError sentinels, exact stack addresses/names, DbgHelp initialization failure, stable timing, or synthetic system page sizes are claimed. This does not replace stack capture/symbolization calls or change their process-wide lock. No API, dependency, numerical or Unix changes. After replacement, comparison fixtures check wrapper selection, not an independent original-code oracle; accepted original execution and pinned wrapper source provide the baseline evidence.",
   "remaining": [
-    "Complete original local and four-platform native validation plus independent review",
-    "Replace the two acquisition calls only after baseline acceptance",
+    "Complete candidate local validation plus independent review",
     "Rerun unchanged fixtures and verify exact candidate full compiler inventories"
   ]
 }
