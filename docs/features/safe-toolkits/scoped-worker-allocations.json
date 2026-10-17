@@ -1,0 +1,19 @@
+{
+  "tool": "Valgrind 3.22.0 staged locally; matching loader debug symbols through symbols prefix",
+  "workload": "Same ignored release fixture: participant counts 1,3,8,32; three samples of 1000 warmed launches of 64 increments",
+  "baseline": {
+    "chunk_id": "39efe8",
+    "wall_time_seconds": 0.000010469,
+    "exit_code": 0,
+    "original_token_count": 225,
+    "output": "test osd::parallel::launcher::migration_tests::workload::persistent_range_workload ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 371 filtered out; finished in 0.90s\n\n==1636070== \n==1636070== HEAP SUMMARY:\n==1636070==     in use at exit: 596 bytes in 3 blocks\n==1636070==   total heap usage: 1,201 allocs, 1,198 frees, 257,788 bytes allocated\n==1636070== \n==1636070== LEAK SUMMARY:\n==1636070==    definitely lost: 0 bytes in 0 blocks\n==1636070==    indirectly lost: 0 bytes in 0 blocks\n==1636070==      possibly lost: 48 bytes in 1 blocks\n==1636070==    still reachable: 548 bytes in 2 blocks\n==1636070==         suppressed: 0 bytes in 0 blocks\n==1636070== Rerun with --leak-check=full to see details of leaked memory\n==1636070== \n==1636070== For lists of detected and suppressed errors, rerun with: -s\n==1636070== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)\n"
+  },
+  "candidate": {
+    "chunk_id": "1e1716",
+    "wall_time_seconds": 0.810562026,
+    "exit_code": 0,
+    "original_token_count": 230,
+    "output": "test osd::parallel::launcher::migration_tests::workload::persistent_range_workload ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 378 filtered out; finished in 8.66s\n\n==1636217== \n==1636217== HEAP SUMMARY:\n==1636217==     in use at exit: 169,596 bytes in 81 blocks\n==1636217==   total heap usage: 123,923 allocs, 123,842 frees, 8,387,046 bytes allocated\n==1636217== \n==1636217== LEAK SUMMARY:\n==1636217==    definitely lost: 0 bytes in 0 blocks\n==1636217==    indirectly lost: 0 bytes in 0 blocks\n==1636217==      possibly lost: 69,168 bytes in 31 blocks\n==1636217==    still reachable: 100,428 bytes in 50 blocks\n==1636217==         suppressed: 0 bytes in 0 blocks\n==1636217== Rerun with --leak-check=full to see details of leaked memory\n==1636217== \n==1636217== For lists of detected and suppressed errors, rerun with: -s\n==1636217== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)\n"
+  },
+  "limitations": "Whole-process allocations include test harness and pool construction. Instrumented runtimes are not native performance evidence. Possible-loss and reachable-memory provenance require follow-up; no suppression added."
+}

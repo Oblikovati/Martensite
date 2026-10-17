@@ -2,6 +2,9 @@
 use super::{Launcher, ThreadPool};
 use std::{collections::BTreeMap, sync::Mutex, thread::ThreadId};
 
+mod failure_isolation;
+mod workload;
+
 fn participant_ids(launcher: &Launcher<'_>) -> BTreeMap<i32, ThreadId> {
     let participants = Mutex::new(BTreeMap::new());
     launcher
@@ -31,6 +34,20 @@ fn repeated_jobs_keep_worker_threads_and_caller_index() {
 }
 
 #[test]
+fn balanced_worker_subtrees_keep_distinct_physical_threads() {
+    let pool = ThreadPool::new(32);
+    let launcher = Launcher::new(&pool, 32);
+    let first = participant_ids(&launcher);
+    let distinct: std::collections::HashSet<_> = first.values().collect();
+    assert_eq!(first.len(), 32);
+    assert_eq!(distinct.len(), 32);
+    assert_eq!(first[&31], std::thread::current().id());
+    for _ in 0..20 {
+        assert_eq!(participant_ids(&launcher), first);
+    }
+}
+
+#[test]
 fn reservations_force_busy_fallback_and_release_disables_jobs() {
     let pool = ThreadPool::new(3);
     let mut reserved = Launcher::new(&pool, 3);
@@ -43,4 +60,51 @@ fn reservations_force_busy_fallback_and_release_disables_jobs() {
     let available = Launcher::new(&pool, 3);
     assert_eq!(available.nb_threads(), 3);
     assert_eq!(participant_ids(&available).len(), 3);
+}
+
+#[test]
+fn concurrent_launches_join_their_own_borrowed_jobs() {
+    let pool = ThreadPool::new(3);
+    let launcher = Launcher::new(&pool, 3);
+    std::thread::scope(|scope| {
+        for _ in 0..4 {
+            let launcher = &launcher;
+            scope.spawn(move || repeat_borrowed_completion(launcher));
+        }
+    });
+}
+
+fn repeat_borrowed_completion(launcher: &Launcher<'_>) {
+    for _ in 0..1_000 {
+        assert_borrowed_completion(launcher);
+    }
+}
+
+fn assert_borrowed_completion(launcher: &Launcher<'_>) {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let completed = AtomicUsize::new(0);
+    launcher
+        .perform_job(&|_| {
+            completed.fetch_add(1, Ordering::SeqCst);
+        })
+        .unwrap();
+    assert_eq!(completed.load(Ordering::SeqCst), 3);
+}
+
+#[test]
+fn nested_launches_join_before_the_borrow_ends() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let pool = ThreadPool::new(3);
+    let launcher = Launcher::new(&pool, 3);
+    launcher
+        .perform_job(&|_| {
+            let completed = AtomicUsize::new(0);
+            launcher
+                .perform_job(&|_| {
+                    completed.fetch_add(1, Ordering::SeqCst);
+                })
+                .unwrap();
+            assert_eq!(completed.load(Ordering::SeqCst), 3);
+        })
+        .unwrap();
 }

@@ -1,0 +1,73 @@
+{
+  "revision": "ff34d0b plus identical baseline/candidate retention fixtures",
+  "method": "Valgrind 3.22.0; each process creates, runs and destroys 1, 100 or 1000 eight-participant pools; 64 increments per pool asserted; summary-mode error count is not a clean full leak check.",
+  "results": [
+    {
+      "name": "baseline",
+      "test": "one_pool_shutdown",
+      "result": {
+        "chunk_id": "f10fdd",
+        "wall_time_seconds": 0.260646755,
+        "exit_code": 0,
+        "original_token_count": 325,
+        "output": "==1867627== Memcheck, a memory error detector\n==1867627== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.\n==1867627== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info\n==1867627== Command: /home/vmiguel/git/oblikovati-workspace/Martensite-worker-baseline/target/release/deps/martensite_tkernel-64fbf62993f29f63 one_pool_shutdown --ignored\n==1867627== \n\nrunning 1 test\ntest osd::parallel::launcher::migration_tests::workload::retention::one_pool_shutdown ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 374 filtered out; finished in 0.10s\n\n==1867627== \n==1867627== HEAP SUMMARY:\n==1867627==     in use at exit: 596 bytes in 3 blocks\n==1867627==   total heap usage: 757 allocs, 754 frees, 218,065 bytes allocated\n==1867627== \n==1867627== LEAK SUMMARY:\n==1867627==    definitely lost: 0 bytes in 0 blocks\n==1867627==    indirectly lost: 0 bytes in 0 blocks\n==1867627==      possibly lost: 48 bytes in 1 blocks\n==1867627==    still reachable: 548 bytes in 2 blocks\n==1867627==         suppressed: 0 bytes in 0 blocks\n==1867627== Rerun with --leak-check=full to see details of leaked memory\n==1867627== \n==1867627== For lists of detected and suppressed errors, rerun with: -s\n==1867627== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)\n"
+      }
+    },
+    {
+      "name": "baseline",
+      "test": "hundred_pool_shutdowns",
+      "result": {
+        "chunk_id": "b1d662",
+        "wall_time_seconds": 0.368813529,
+        "exit_code": 0,
+        "original_token_count": 329,
+        "output": "==1867895== Memcheck, a memory error detector\n==1867895== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.\n==1867895== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info\n==1867895== Command: /home/vmiguel/git/oblikovati-workspace/Martensite-worker-baseline/target/release/deps/martensite_tkernel-64fbf62993f29f63 hundred_pool_shutdowns --ignored\n==1867895== \n\nrunning 1 test\ntest osd::parallel::launcher::migration_tests::workload::retention::hundred_pool_shutdowns ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 374 filtered out; finished in 0.19s\n\n==1867895== \n==1867895== HEAP SUMMARY:\n==1867895==     in use at exit: 596 bytes in 3 blocks\n==1867895==   total heap usage: 9,469 allocs, 9,466 frees, 783,603 bytes allocated\n==1867895== \n==1867895== LEAK SUMMARY:\n==1867895==    definitely lost: 0 bytes in 0 blocks\n==1867895==    indirectly lost: 0 bytes in 0 blocks\n==1867895==      possibly lost: 48 bytes in 1 blocks\n==1867895==    still reachable: 548 bytes in 2 blocks\n==1867895==         suppressed: 0 bytes in 0 blocks\n==1867895== Rerun with --leak-check=full to see details of leaked memory\n==1867895== \n==1867895== For lists of detected and suppressed errors, rerun with: -s\n==1867895== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)\n"
+      }
+    },
+    {
+      "name": "candidate",
+      "test": "one_pool_shutdown",
+      "result": {
+        "chunk_id": "801a97",
+        "wall_time_seconds": 0.286210022,
+        "exit_code": 0,
+        "original_token_count": 328,
+        "output": "==1868771== Memcheck, a memory error detector\n==1868771== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.\n==1868771== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info\n==1868771== Command: /home/vmiguel/git/oblikovati-workspace/Martensite-scoped-workers/target/release/deps/martensite_tkernel-39125e3ec44c04f3 one_pool_shutdown --ignored\n==1868771== \n\nrunning 1 test\ntest osd::parallel::launcher::migration_tests::workload::retention::one_pool_shutdown ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 384 filtered out; finished in 0.12s\n\n==1868771== \n==1868771== HEAP SUMMARY:\n==1868771==     in use at exit: 33,940 bytes in 19 blocks\n==1868771==   total heap usage: 907 allocs, 888 frees, 304,431 bytes allocated\n==1868771== \n==1868771== LEAK SUMMARY:\n==1868771==    definitely lost: 0 bytes in 0 blocks\n==1868771==    indirectly lost: 0 bytes in 0 blocks\n==1868771==      possibly lost: 13,872 bytes in 7 blocks\n==1868771==    still reachable: 20,068 bytes in 12 blocks\n==1868771==         suppressed: 0 bytes in 0 blocks\n==1868771== Rerun with --leak-check=full to see details of leaked memory\n==1868771== \n==1868771== For lists of detected and suppressed errors, rerun with: -s\n==1868771== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)\n"
+      }
+    },
+    {
+      "name": "candidate",
+      "test": "hundred_pool_shutdowns",
+      "result": {
+        "chunk_id": "2b556a",
+        "wall_time_seconds": 0.462175835,
+        "exit_code": 0,
+        "original_token_count": 332,
+        "output": "==1868905== Memcheck, a memory error detector\n==1868905== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.\n==1868905== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info\n==1868905== Command: /home/vmiguel/git/oblikovati-workspace/Martensite-scoped-workers/target/release/deps/martensite_tkernel-39125e3ec44c04f3 hundred_pool_shutdowns --ignored\n==1868905== \n\nrunning 1 test\ntest osd::parallel::launcher::migration_tests::workload::retention::hundred_pool_shutdowns ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 384 filtered out; finished in 0.30s\n\n==1868905== \n==1868905== HEAP SUMMARY:\n==1868905==     in use at exit: 64,572 bytes in 33 blocks\n==1868905==   total heap usage: 24,271 allocs, 24,238 frees, 9,001,433 bytes allocated\n==1868905== \n==1868905== LEAK SUMMARY:\n==1868905==    definitely lost: 0 bytes in 0 blocks\n==1868905==    indirectly lost: 0 bytes in 0 blocks\n==1868905==      possibly lost: 13,872 bytes in 7 blocks\n==1868905==    still reachable: 50,700 bytes in 26 blocks\n==1868905==         suppressed: 0 bytes in 0 blocks\n==1868905== Rerun with --leak-check=full to see details of leaked memory\n==1868905== \n==1868905== For lists of detected and suppressed errors, rerun with: -s\n==1868905== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)\n"
+      }
+    },
+    {
+      "name": "baseline",
+      "test": "thousand_pool_shutdowns",
+      "result": {
+        "chunk_id": "89bfe3",
+        "wall_time_seconds": 0.00001063,
+        "exit_code": 0,
+        "original_token_count": 228,
+        "output": "test osd::parallel::launcher::migration_tests::workload::retention::thousand_pool_shutdowns ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 375 filtered out; finished in 0.92s\n\n==1878645== \n==1878645== HEAP SUMMARY:\n==1878645==     in use at exit: 596 bytes in 3 blocks\n==1878645==   total heap usage: 88,669 allocs, 88,666 frees, 5,924,565 bytes allocated\n==1878645== \n==1878645== LEAK SUMMARY:\n==1878645==    definitely lost: 0 bytes in 0 blocks\n==1878645==    indirectly lost: 0 bytes in 0 blocks\n==1878645==      possibly lost: 48 bytes in 1 blocks\n==1878645==    still reachable: 548 bytes in 2 blocks\n==1878645==         suppressed: 0 bytes in 0 blocks\n==1878645== Rerun with --leak-check=full to see details of leaked memory\n==1878645== \n==1878645== For lists of detected and suppressed errors, rerun with: -s\n==1878645== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)\n"
+      }
+    },
+    {
+      "name": "candidate",
+      "test": "thousand_pool_shutdowns",
+      "result": {
+        "chunk_id": "359458",
+        "wall_time_seconds": 0.000011391,
+        "exit_code": 0,
+        "original_token_count": 232,
+        "output": "test osd::parallel::launcher::migration_tests::workload::retention::thousand_pool_shutdowns ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 385 filtered out; finished in 2.72s\n\n==1885523== \n==1885523== HEAP SUMMARY:\n==1885523==     in use at exit: 64,572 bytes in 33 blocks\n==1885523==   total heap usage: 236,671 allocs, 236,638 frees, 88,064,795 bytes allocated\n==1885523== \n==1885523== LEAK SUMMARY:\n==1885523==    definitely lost: 0 bytes in 0 blocks\n==1885523==    indirectly lost: 0 bytes in 0 blocks\n==1885523==      possibly lost: 13,872 bytes in 7 blocks\n==1885523==    still reachable: 50,700 bytes in 26 blocks\n==1885523==         suppressed: 0 bytes in 0 blocks\n==1885523== Rerun with --leak-check=full to see details of leaked memory\n==1885523== \n==1885523== For lists of detected and suppressed errors, rerun with: -s\n==1885523== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)\n"
+      }
+    }
+  ],
+  "limitations": "Finite observations only; dependency collector retention and real leaks are not distinguished by summary counts alone. No suppressions, global collector flushes or changes to production lifecycle were introduced."
+}

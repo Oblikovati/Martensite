@@ -16,6 +16,8 @@ follows [Semantic Versioning](https://semver.org/).
 - Shipped `LICENSE-APACHE` in the binary release archives and `LICENSE-GPL` in
   every source package; the release had still bundled the removed `LICENSE`
   file (#176).
+- Replaced shared launcher job completion with scoped borrowed execution so
+  concurrent launches waited for their own jobs (#106).
 - Checked toolkit unsafe source counts during PR validation, including inactive
   platform code and test fixtures (#81).
 - Checked expanded unsafe counts against target-specific compiler baselines and

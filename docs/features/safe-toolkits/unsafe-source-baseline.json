@@ -147,7 +147,7 @@
   "crates/martensite-tkernel/src/osd/file/native_unix.rs": {"unsafe_keywords":12,"unsafe_code_mentions":1,"kinds":{"block":12}},
   "crates/martensite-tkernel/src/osd/file/native_unix/lock_record.rs": {"unsafe_keywords":1,"unsafe_code_mentions":0,"kinds":{"block":1}},
   "crates/martensite-tkernel/src/osd/file/native_unix/directory_cursor.rs": {"unsafe_keywords":5,"unsafe_code_mentions":0,"kinds":{"block":4,"implementation":1}},
-  "crates/martensite-tkernel/src/osd/parallel/job.rs": {"unsafe_keywords":3,"unsafe_code_mentions":1,"kinds":{"block":2,"implementation":1}},
+  "crates/martensite-tkernel/src/osd/parallel/job.rs": {"unsafe_keywords":0,"unsafe_code_mentions":1},
   "crates/martensite-tkernel/src/osd/parallel/thread/native.rs": {"unsafe_keywords":3,"unsafe_code_mentions":3,"kinds":{"block":3}},
   "crates/martensite-tkernel/src/osd/process/environment/native.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":2}},
   "crates/martensite-tkernel/src/osd/process/host/native.rs": {"unsafe_keywords":5,"unsafe_code_mentions":1,"kinds":{"block":4,"extern":1}},

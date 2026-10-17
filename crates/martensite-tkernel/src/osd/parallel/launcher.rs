@@ -2,8 +2,8 @@
 //! joins as the last thread index, and alone when the pool is busy.
 use super::{
     ThreadPool,
-    job::{JobBody, JobRef, standard_program_error},
-    worker::Worker,
+    job::{JobBody, standard_program_error},
+    worker::{self, Worker},
 };
 use crate::standard::Failure;
 use std::{
@@ -125,16 +125,7 @@ impl<'a> Launcher<'a> {
     }
     /// `perform` = `run` then `wait`; the job must outlive both, which this frame ensures.
     fn perform_job(&self, body: &JobBody<'_>) -> Result<(), Failure> {
-        let job: JobRef = JobRef::erase(body);
-        self.threads
-            .iter()
-            .for_each(|thread| thread.wake_up(Some(job)));
-        self.wait()
-    }
-    /// Waits for every woken thread, then raises the collected failures.
-    fn wait(&self) -> Result<(), Failure> {
-        self.threads.iter().for_each(|thread| thread.wait_idle());
-        let failures: Vec<Failure> = self.threads.iter().filter_map(|t| t.failure()).collect();
+        let failures: Vec<Failure> = worker::dispatch(&self.threads, body);
         match failures.as_slice() {
             [] => Ok(()),
             [single] => Err(single.clone()),

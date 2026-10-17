@@ -1,0 +1,46 @@
+{
+  "issue": 87,
+  "scope": "Interface-preserving alternatives using pinned rayon-core 1.13.0; source inspection, not a proof that all safe implementations are exhausted",
+  "required_interface": [
+    "Borrowed callbacks without a new static lifetime requirement",
+    "Calling participant executes on the invoking physical thread",
+    "Persistent stable physical worker identities",
+    "Independent reservations and nested/concurrent completion",
+    "Worker teardown without a new intentional registry leak"
+  ],
+  "alternatives": [
+    {
+      "candidate": "Direct ThreadPool::install or ThreadPool::broadcast",
+      "evidence": "src/thread_pool/mod.rs documents callback execution inside the target pool; install blocks an external invoking thread until completion.",
+      "disposition": "Not a drop-in replacement for concurrent participation on the invoking thread; internal worker-subtree install is already used by the candidate."
+    },
+    {
+      "candidate": "ThreadPoolBuilder::use_current_thread to enable stack-backed caller joins",
+      "evidence": "src/lib.rs local-thread-pool documentation explicitly states the registry is leaked when using the current thread.",
+      "disposition": "Rejected for this migration: it introduces intentional lifecycle debt rather than resolving retention."
+    },
+    {
+      "candidate": "ThreadPool::spawn or spawn_broadcast",
+      "evidence": "src/thread_pool/mod.rs requires static callback lifetimes for asynchronous jobs.",
+      "disposition": "Rejected as a drop-in replacement: borrowed callbacks cannot satisfy that interface without changing caller requirements or reintroducing lifetime erasure."
+    },
+    {
+      "candidate": "One shared pool with broadcast selecting only reserved indices",
+      "evidence": "src/thread_pool/mod.rs broadcast executes on every pool thread and completes after all threads finish.",
+      "disposition": "Rejected as a simple replacement: the selected free worker completed, but broadcast returned only after the unrelated busy worker was released. The bounded scheduler experiment passed 20 repeated executions."
+    }
+  ],
+  "broadcast_experiment": {
+    "branch": "experiment/87-broadcast-reservations (local throwaway branch, not part of the migration PR)",
+    "commit": "7e7e28f9dd21ce7f503fd27fc4587fd59123ad1a",
+    "source": "experiments/shared-broadcast-reservation-prototype.rs",
+    "runtime": "Existing pinned Rayon release dependency; Rust 1.99.0, Linux x86_64",
+    "binary": "/tmp/martensite-broadcast-probe.MUjwVp/probe",
+    "repeat_log": "/tmp/martensite-broadcast-probe.MUjwVp/repeat.log",
+    "assertions": "Free participant signaled completion; broadcast result channel remained empty while busy participant was held; broadcast completed after release.",
+    "bound": "Five-second event waits plus an external fifteen-second process timeout; all 20 repeated runs exited successfully.",
+    "limits": "This rejects the direct broadcast substitution, not every possible shared-pool design. No production dispatch was changed."
+  },
+  "follow_up": "scoped-pool-alternatives.md examines four established scoped/thread-pool interfaces; none establishes a compatible lower-cost replacement. This is not an impossibility proof.",
+  "next_step": "Resolve resource-budget direction or demonstrate a further compatible executor before implementation; do not weaken reservation semantics to reduce allocation counts."
+}

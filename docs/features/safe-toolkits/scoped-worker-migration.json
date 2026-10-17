@@ -1,0 +1,29 @@
+{
+  "task": 87,
+  "bug": 106,
+  "status": "candidate; not accepted or integrated",
+  "replacement": "One lazy persistent Rayon worker per reserved slot; caller participates last. Scoped references replace JobRef lifetime transmute, raw dereference and manual Send.",
+  "public_interface": "Launcher signatures and bounds unchanged; reservations, busy fallback, release, ordered failure aggregation and sticky caller failure retained.",
+  "dependency_trust": "Pinned rayon 1.12.0 introduces established third-party unsafe internals. No first-party unsafe implementation moved into a dependency. cargo deny --all-features check and cargo audit passed on the candidate lockfile.",
+  "verified_local": [
+    "13 existing osd_threads_api_behavior tests",
+    "Persistent worker physical identity and caller index",
+    "Reservations, busy fallback and release",
+    "4000 concurrent launches with separate borrowed completion counters",
+    "Nested borrowed launches from every participant",
+    "400 concurrent failing launches return only their own worker error and wait for remaining participants",
+    "Nested worker failures are captured by their invocation without poisoning outer jobs or subsequent reuse",
+    "Injected Rayon thread-start refusal maps to ProgramError and leaves initialization retryable",
+    "Physical worker shutdown waits for thread-local destructor completion",
+    "Unused worker shutdown does not initialize an executor",
+    "Unsafe source inventory ratchet",
+    "Library Clippy with warnings denied"
+  ],
+  "remaining": [
+    "Full repository gate and all-target Clippy",
+    "Native four-platform execution",
+    "Applicable sanitizer coverage",
+    "Production scheduling, allocation, recursion-depth and peak-memory measurements",
+    "Review, green PR checks and integration"
+  ]
+}

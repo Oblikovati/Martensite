@@ -1,0 +1,19 @@
+{
+  "task": 87,
+  "method": "Separate release test processes with RUST_MIN_STACK=65536 and core dumps disabled; timeout 30s; identical 128-participant, 1000-launch, 64000-item asserted workload",
+  "baseline": {
+    "chunk_id": "80b7fe",
+    "wall_time_seconds": 0.00001053,
+    "exit_code": 0,
+    "original_token_count": 68,
+    "output": "\nrunning 1 test\nparticipants=128 launches=1000 items=64000 elapsed_ns=79296881\ntest osd::parallel::launcher::migration_tests::workload::persistent_large_pool_workload ... ok\n\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 372 filtered out; finished in 0.08s\n\n"
+  },
+  "candidate": {
+    "chunk_id": "1d2d49",
+    "wall_time_seconds": 0.951209736,
+    "exit_code": 134,
+    "original_token_count": 59,
+    "output": "\nrunning 1 test\n\nthread 'osd::parallel::launcher::migration_tests::workload::persistent_large_pool_workload' (1735899) has overflowed its stack\nfatal runtime error: stack overflow, aborting\ntimeout: the monitored command dumped core\n"
+  },
+  "assessment": "Regression reproduced: original succeeds, recursive scoped candidate aborts with stack overflow. Small-pool probe up to 32 participants passed for both. Merge blocked; do not silently cap participants or require larger caller stacks."
+}
