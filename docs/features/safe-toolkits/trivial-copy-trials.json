@@ -1,0 +1,40 @@
+{
+  "baseline_commit": "8aa1630",
+  "platform": "x86_64-unknown-linux-gnu",
+  "toolchain": "1.99.0",
+  "profile": "release",
+  "test": "ncollection::dynamic_array::copy_date::copy_bits::migration_tests::copy_storage_workload",
+  "elements": 65536,
+  "rounds": 1000,
+  "logical_bytes_copied": 524288000,
+  "raw_copy_baseline": {
+    "elapsed_nanoseconds": [15417832, 6086252, 13794623],
+    "peak_rss_kib": [7924, 7568, 7792]
+  },
+  "resize_with_first_then_copy_from_slice": {
+    "elapsed_nanoseconds": [22740386, 26326975, 24106996],
+    "peak_rss_kib": [7468, 7868, 8224],
+    "focused_contract_tests_passed": 4,
+    "existing_dynamic_array_copy_tests_passed": 7
+  },
+  "extend_copied_then_copy_from_slice": {
+    "elapsed_nanoseconds": [33943255, 34617302, 37453052],
+    "peak_rss_kib": [7228, 8108, 8128]
+  },
+  "indexed_resize_with_then_copy_from_slice_trial": {
+    "initialization": "let mut index = 0; block.resize_with(values.len(), || { let value = values[index]; index += 1; value });",
+    "hypothesis": "Reserving once through resize_with rather than extending an iterator may remove per-element capacity-check overhead while retaining the final representation copy.",
+    "paired_order": "Six alternating process pairs, extend first and indexed resize second; no agent-initiated build overlapped samples, host otherwise uncontrolled.",
+    "extend_elapsed_nanoseconds": [34288701, 40043954, 36846847, 39637042, 38226480, 44759122],
+    "indexed_resize_elapsed_nanoseconds": [40625812, 34061320, 32614963, 34648296, 36176415, 30600765],
+    "focused_contract_tests_passed": 4,
+    "workload_tests_passed": 1,
+    "binaries": "/tmp/martensite-copy-resize.HRSWFd/{extend-copy,indexed-resize-copy}",
+    "conclusion": "Indexed resize median was about 34.4 ms versus 38.9 ms for extend in these samples, with overlapping ranges. This does not establish the cause or eliminate the previously observed raw-copy performance gap; the raw baseline was not rerun in this paired trial.",
+    "disposition": "Rejected as sufficient evidence for migration; trial source reverted to the pre-trial safe candidate. No implementation committed or pushed."
+  },
+  "compatibility_constraint": "The existing helper explicitly promises complete object-representation copying. Both candidates finish with standard slice copy_from_slice, documented as memcpy in the pinned Rust source; value-only iteration does not establish padding preservation.",
+  "dependency_finding": "allocator-api2 0.4.0 Vec::extend_from_slice uses iter().cloned(), so it cannot preserve the observable custom-Clone bypass contract",
+  "limitations": ["Concurrent host workloads", "Only three timing samples per candidate", "Microbenchmark rather than end-to-end CAD workload", "No candidate approved or merged"],
+  "status": "Continue investigation; both safe representation-preserving candidates have measured helper overhead"
+}
