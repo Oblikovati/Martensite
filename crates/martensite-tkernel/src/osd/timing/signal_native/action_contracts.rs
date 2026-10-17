@@ -2,6 +2,13 @@ use super::{action, interrupt_handler};
 use nix::errno::Errno;
 
 #[test]
+fn action_starts_with_an_empty_signal_mask() {
+    let expected = nix::sys::signal::SigSet::empty();
+    let record = action(libc::SIG_DFL, libc::SA_RESTART);
+    assert_eq!(&record.sa_mask, expected.as_ref());
+}
+
+#[test]
 fn action_preserves_requested_handler_and_flags() {
     let interrupt = interrupt_handler as *const () as usize;
     for (handler, flags) in [
