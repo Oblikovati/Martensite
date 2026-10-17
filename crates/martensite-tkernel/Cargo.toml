@@ -6,6 +6,7 @@ description = "Martensite kernel foundation: errors, memory, collections, string
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+license-file.workspace = true
 repository.workspace = true
 
 # The workspace forbids unsafe code. This crate owns the allocator, raw-memory and

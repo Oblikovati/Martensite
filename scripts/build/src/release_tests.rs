@@ -21,18 +21,37 @@ impl ReleaseFixture {
         let dir = tempfile::tempdir().unwrap();
         let root = dir.path();
         fs::write(root.join("CHANGELOG.md"), CHANGELOG).unwrap();
-        fs::write(root.join("LICENSE"), "GPL-2.0-only").unwrap();
+        fs::write(root.join("LICENSE-APACHE"), "Apache-2.0").unwrap();
         fs::write(root.join("README.md"), "Martensite").unwrap();
         fs::write(root.join("martensite-cli"), "binary").unwrap();
         fs::create_dir_all(root.join("target/package")).unwrap();
+        let fixture = Self { dir };
         for name in ["martensite-kernel", "martensite-math"] {
-            fs::write(
-                root.join(format!("target/package/{name}-0.3.0.crate")),
-                name,
-            )
-            .unwrap();
+            fixture.write_crate(name, &["Cargo.toml", SOURCE_LICENSE]);
         }
-        Self { dir }
+        fixture
+    }
+
+    /// Writes the `.crate` that `cargo package` would leave for `name`,
+    /// holding `files` under its `<name>-0.3.0/` top directory.
+    fn write_crate(&self, name: &str, files: &[&str]) {
+        let sources = self.root().join("crate-sources");
+        fs::create_dir_all(&sources).unwrap();
+        let entries: Vec<BundleEntry> = files
+            .iter()
+            .map(|file| {
+                fs::write(sources.join(file), file).unwrap();
+                BundleEntry {
+                    source: sources.join(file),
+                    archive_path: (*file).to_owned(),
+                    executable: false,
+                }
+            })
+            .collect();
+        let crate_file = self
+            .root()
+            .join(format!("target/package/{name}-0.3.0.crate"));
+        write_tar_gz(&crate_file, &format!("{name}-0.3.0"), &entries).unwrap();
     }
 
     fn root(&self) -> &Path {
@@ -189,4 +208,54 @@ fn library_only_target_ships_no_binary_archive() {
     )
     .unwrap();
     assert!(assets.is_empty());
+}
+
+#[test]
+fn binary_archive_carries_the_apache_license_only() {
+    let fixture = ReleaseFixture::new();
+    let runner = fixture.runner("", "0.3.0");
+    let assets = run_release(
+        &context_at(&runner, fixture.root()),
+        &fixture.request(false),
+    )
+    .unwrap();
+    let members = archive_member_paths(&assets[0]).unwrap();
+    let top = "martensite-0.3.0-x86_64-unknown-linux-gnu";
+    assert!(
+        members.contains(&format!("{top}/LICENSE-APACHE")),
+        "{members:?}"
+    );
+    assert!(
+        !members
+            .iter()
+            .any(|member| member.ends_with(SOURCE_LICENSE)),
+        "{members:?}"
+    );
+}
+
+#[test]
+fn missing_apache_license_fails_naming_the_file() {
+    let fixture = ReleaseFixture::new();
+    fs::remove_file(fixture.root().join("LICENSE-APACHE")).unwrap();
+    let runner = fixture.runner("", "0.3.0");
+    let error = run_release(
+        &context_at(&runner, fixture.root()),
+        &fixture.request(false),
+    )
+    .unwrap_err();
+    assert!(error.to_string().contains("LICENSE-APACHE"), "{error}");
+}
+
+#[test]
+fn source_package_without_the_gpl_license_is_refused() {
+    let fixture = ReleaseFixture::new();
+    fixture.write_crate("martensite-math", &["Cargo.toml"]);
+    let runner = fixture.runner("", "0.3.0");
+    let error =
+        run_release(&context_at(&runner, fixture.root()), &fixture.request(true)).unwrap_err();
+    let message = error.to_string();
+    assert!(
+        message.contains("martensite-math-0.3.0.crate has no martensite-math-0.3.0/LICENSE-GPL"),
+        "{message}"
+    );
 }
