@@ -1,6 +1,9 @@
 //! Thin platform boundary for the OS `usleep` and `Sleep` calls.
 #![allow(unsafe_code)]
 
+#[cfg(all(test, unix))]
+mod contracts;
+
 #[cfg(unix)]
 pub(super) fn sec_sleep(seconds: i32) {
     let microseconds = seconds.wrapping_mul(1_000).wrapping_mul(1_000) as libc::useconds_t;
