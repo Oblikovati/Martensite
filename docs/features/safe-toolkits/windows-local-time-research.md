@@ -3,10 +3,10 @@
 Feature #80 / task #89 research at
 `c77e8d94dbb60dc2d32f910fc3c002813b21c7e8`, for
 `crates/martensite-tkernel/src/osd/process/native.rs`.
-The accompanying baseline extracts field conversion without changing the native
-call or dependencies. Native experiments remain pending; see the
-[baseline evidence](windows-local-time-wrapper.json). The unavailable humanizer
-prose pass remains for review.
+This research preceded the baseline's field-conversion extraction and native
+validation. The baseline is now validated; the safe-wrapper candidate awaits its
+own native results. See the [current evidence](windows-local-time-wrapper.json).
+The unavailable humanizer prose pass remains for review.
 
 ## Small replacement candidate
 
