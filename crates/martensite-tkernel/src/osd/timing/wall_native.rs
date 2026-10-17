@@ -1,6 +1,9 @@
 //! Narrow platform FFI boundary for the wall clock.
 #![allow(unsafe_code)]
 
+#[cfg(all(test, windows))]
+mod windows_contracts;
+
 /// Unix: `gettimeofday` seconds since the first call (a function-local static
 /// keeps `tv_sec` of its first call to avoid precision loss), 0 when the call fails.
 #[cfg(unix)]
