@@ -1,0 +1,12 @@
+# Throwaway #83 measurement: why safe allocator-api2 initialization is slower than the raw copy.
+[package]
+name = "trivial-copy-bench"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+allocator-api2 = "=0.4.0"
+
+# Standalone: not a member of the kernel workspace.
+[workspace]

@@ -8,25 +8,63 @@
   "rounds": 1000,
   "logical_bytes_copied": 524288000,
   "raw_copy_baseline": {
-    "elapsed_nanoseconds": [15417832, 6086252, 13794623],
-    "peak_rss_kib": [7924, 7568, 7792]
+    "elapsed_nanoseconds": [
+      15417832,
+      6086252,
+      13794623
+    ],
+    "peak_rss_kib": [
+      7924,
+      7568,
+      7792
+    ]
   },
   "resize_with_first_then_copy_from_slice": {
-    "elapsed_nanoseconds": [22740386, 26326975, 24106996],
-    "peak_rss_kib": [7468, 7868, 8224],
+    "elapsed_nanoseconds": [
+      22740386,
+      26326975,
+      24106996
+    ],
+    "peak_rss_kib": [
+      7468,
+      7868,
+      8224
+    ],
     "focused_contract_tests_passed": 4,
     "existing_dynamic_array_copy_tests_passed": 7
   },
   "extend_copied_then_copy_from_slice": {
-    "elapsed_nanoseconds": [33943255, 34617302, 37453052],
-    "peak_rss_kib": [7228, 8108, 8128]
+    "elapsed_nanoseconds": [
+      33943255,
+      34617302,
+      37453052
+    ],
+    "peak_rss_kib": [
+      7228,
+      8108,
+      8128
+    ]
   },
   "indexed_resize_with_then_copy_from_slice_trial": {
     "initialization": "let mut index = 0; block.resize_with(values.len(), || { let value = values[index]; index += 1; value });",
     "hypothesis": "Reserving once through resize_with rather than extending an iterator may remove per-element capacity-check overhead while retaining the final representation copy.",
     "paired_order": "Six alternating process pairs, extend first and indexed resize second; no agent-initiated build overlapped samples, host otherwise uncontrolled.",
-    "extend_elapsed_nanoseconds": [34288701, 40043954, 36846847, 39637042, 38226480, 44759122],
-    "indexed_resize_elapsed_nanoseconds": [40625812, 34061320, 32614963, 34648296, 36176415, 30600765],
+    "extend_elapsed_nanoseconds": [
+      34288701,
+      40043954,
+      36846847,
+      39637042,
+      38226480,
+      44759122
+    ],
+    "indexed_resize_elapsed_nanoseconds": [
+      40625812,
+      34061320,
+      32614963,
+      34648296,
+      36176415,
+      30600765
+    ],
     "focused_contract_tests_passed": 4,
     "workload_tests_passed": 1,
     "binaries": "/tmp/martensite-copy-resize.HRSWFd/{extend-copy,indexed-resize-copy}",
@@ -35,6 +73,119 @@
   },
   "compatibility_constraint": "The existing helper explicitly promises complete object-representation copying. Both candidates finish with standard slice copy_from_slice, documented as memcpy in the pinned Rust source; value-only iteration does not establish padding preservation.",
   "dependency_finding": "allocator-api2 0.4.0 Vec::extend_from_slice uses iter().cloned(), so it cannot preserve the observable custom-Clone bypass contract",
-  "limitations": ["Concurrent host workloads", "Only three timing samples per candidate", "Microbenchmark rather than end-to-end CAD workload", "No candidate approved or merged"],
-  "status": "Continue investigation; both safe representation-preserving candidates have measured helper overhead"
+  "limitations": [
+    "Concurrent host workloads",
+    "Only three timing samples per candidate",
+    "Microbenchmark rather than end-to-end CAD workload",
+    "No candidate approved or merged",
+    "Microbenchmark only; no end-to-end CAD workload measured",
+    "Single host, one platform"
+  ],
+  "status": "Closed for allocator-api2 0.4.0: no safe Clone-free candidate reaches raw-copy performance; maintainer decision required (see decision_required)",
+  "overhead_cause_session_2026_10_17": {
+    "base": "test/83-trivial-copy-baseline after merging origin/main f432c27",
+    "toolchain": "1.99.0",
+    "platform": "x86_64-unknown-linux-gnu, 32 hardware threads, host otherwise uncontrolled",
+    "crate_workload_alternating": {
+      "method": "Three release lib-test binaries built from the same tree (raw, resize_with first + copy_from_slice, extend copied only); eight rounds, each round runs raw, resize_memcpy, extend_only in turn; copy_storage_workload, 65536 u64 x 1000 rounds",
+      "contract_tests_passed_each_binary": 4,
+      "raw_elapsed_nanoseconds": [
+        6651929,
+        6905729,
+        7254935,
+        8019568,
+        13700673,
+        14832847,
+        15737440,
+        16917872
+      ],
+      "resize_with_first_then_copy_from_slice_elapsed_nanoseconds": [
+        36696163,
+        37225341,
+        40132456,
+        41194100,
+        42021179,
+        43952761,
+        43999858,
+        45344975
+      ],
+      "extend_copied_only_elapsed_nanoseconds": [
+        31841436,
+        32302359,
+        33486248,
+        33566897,
+        33816678,
+        33935157,
+        35442896,
+        36152257
+      ],
+      "finding": "The fastest safe sample is about 1.9x the slowest raw sample; the gap is not measurement noise. Raw samples are bimodal (about 7 ms and 15 ms) across the whole session; both modes are below every safe sample."
+    },
+    "isolated_variants": {
+      "experiment": "experiments/83-trivial-copy-bench (allocator-api2 0.4.0 Vec with Global, one process, order rotated every repetition, 9 repetitions)",
+      "median_nanoseconds": {
+        "256x256000": {
+          "raw": 2932202,
+          "memcpy_only": 2874696,
+          "extend_copied": 38948618,
+          "extend_ref": 44389739,
+          "resize_with_first": 22250341,
+          "resize_with_first_memcpy": 23257043,
+          "extend_copied_memcpy": 40741593
+        },
+        "4096x16000": {
+          "raw": 4837785,
+          "memcpy_only": 4875135,
+          "extend_copied": 38165019,
+          "extend_ref": 42323828,
+          "resize_with_first": 17245197,
+          "resize_with_first_memcpy": 21290006,
+          "extend_copied_memcpy": 42606682
+        },
+        "65536x1000": {
+          "raw": 15887998,
+          "memcpy_only": 16780818,
+          "extend_copied": 39633134,
+          "extend_ref": 43244631,
+          "resize_with_first": 16812618,
+          "resize_with_first_memcpy": 38138109,
+          "extend_copied_memcpy": 73193718
+        }
+      },
+      "note": "Each case copies 65.5 million u64 values. At the default 256-element stride the raw copy takes about 11 ns per block and the fastest safe initialization about 87 ns."
+    },
+    "cause": "allocator-api2 0.4.0 implements Extend<T>, Extend<&T> (T: Copy) and resize_with as a per-element loop that compares len with capacity, writes one element and stores len back to the Vec on every iteration (vec/mod.rs lines 2808-2835 and 2894-2913). The disassembly of extend_copied and resize_with_first shows a scalar loop with one 8-byte store, a len store and a capacity reload per element, so LLVM does not vectorize it or turn it into memcpy. std::Vec avoids this with TrustedLen/Copy specialization, which a stable crate cannot use. The second copy_from_slice pass then adds a full memcpy. Debug assertions are not involved (release profile).",
+    "documentation_mismatch": "allocator-api2 0.4.0 documents Extend<&T> as specialized to copy_from_slice for slice iterators, but the implementation is the same per-element loop; extend_ref was the slowest variant measured.",
+    "other_safe_paths_checked": {
+      "Vec::extend_from_slice / extend_from_within / resize / from_elem": "call Clone (fails the custom-Clone bypass contract)",
+      "Vec::append": "Clone-free untyped memcpy, but needs a second AllocVec that already holds the copy, so it moves the problem",
+      "Box<[T], A>::from(&[T]) for T: Copy then into_vec": "Clone-free memcpy, but allocates a new exact-length buffer from A::default(): changes capacity (increment), allocation count and allocator selection",
+      "spare_capacity_mut + <[MaybeUninit<T>]>::write_copy_of_slice": "safe single memcpy, but publishing the length needs unsafe set_len; allocator-api2 0.4.0 has no safe length publication",
+      "bytemuck": "requires Pod (no padding); cannot cover generic T: Copy",
+      "newer allocator-api2": "0.4.0 is the latest published version (cargo info, 2026-10-17)"
+    }
+  },
+  "padding_contract_determination": {
+    "decision": "Padding preservation is not an exposed contract of the safe API.",
+    "evidence": [
+      "Public docs (DynamicArray::from_copied_trivial, assign_trivial, DynamicArrayStorageExtension::copy_date_trivial) promise a bitwise copy that bypasses Clone; none promise padding bytes. Only the private copy_bits module doc says 'complete object representations'.",
+      "Safe Rust cannot read padding bytes; typed reads and writes leave padding unspecified, so no safe caller can observe it.",
+      "Only unsafe code reading through block_at/block_address can see bytes, and reading padding is defined only when the producer also wrote it as raw bytes. No crate, test, or fixture in the repository does this (grep for the trivial-copy entry points and raw block accessors, 2026-10-17)."
+    ],
+    "consequence": "A one-pass value copy (extend copied) would satisfy the contract if the private module doc is corrected; ordinary value copying is not presented as padding preservation. The blocker is performance, not representation."
+  },
+  "helper_inventory_2026_10_17": {
+    "dynamic_array/copy_date/copy_bits.rs": "1 unsafe block (copy_nonoverlapping + set_len); unchanged, blocked by performance",
+    "array1/trivial_copy.rs": "2 unsafe blocks in safe wrappers assign_trivial and copy_values_trivial that forward a safe Array1 borrow to the public unsafe raw-parts engine; a safe slice copy_from_slice / std Vec copied().collect() path looks compatible and is not affected by the allocator-api2 gap (not changed here; candidate for a separate bounded change)",
+    "array1/raw_copy.rs": "public unsafe raw-parts API with overlap (memmove) semantics; API-conflict scope (#88), not a trivial-copy helper"
+  },
+  "decision_required": {
+    "options": [
+      "A: keep the raw helper and record it under #88 as a dependency-interface gap (allocator-api2 has no Clone-free bulk append into reserved capacity); #80 stays open for it",
+      "B: accept extend(values.iter().copied()) with the measured 2-8x helper slowdown and correct the private padding claim",
+      "C: propose a Clone-free bulk copy (for example extend_from_copy_slice using append_elements) to allocator-api2 upstream and adopt it when released; the unsafe then lives in an established dependency",
+      "D: replace the block container; out of #83 scope"
+    ],
+    "recommendation": "A now, C as follow-up; reject B because the slowdown is not within noise"
+  }
 }
