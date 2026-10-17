@@ -100,7 +100,7 @@ extern "C" fn interrupt_handler(
     SignalState::global().arm_control_break();
 }
 
-#[cfg(unix)]
+#[cfg(all(unix, not(target_os = "macos")))]
 fn action(handler: libc::sighandler_t, flags: i32) -> libc::sigaction {
     // SAFETY: sigaction is plain data; all-zero is a valid empty value on every Unix.
     let mut value: libc::sigaction = unsafe { std::mem::zeroed() };
@@ -110,6 +110,11 @@ fn action(handler: libc::sighandler_t, flags: i32) -> libc::sigaction {
     unsafe { libc::sigemptyset(&mut value.sa_mask) };
     value
 }
+
+#[cfg(target_os = "macos")]
+mod action_darwin;
+#[cfg(target_os = "macos")]
+use action_darwin::action;
 
 #[cfg(all(test, unix))]
 mod action_contracts;
