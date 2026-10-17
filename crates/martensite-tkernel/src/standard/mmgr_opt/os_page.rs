@@ -30,6 +30,9 @@ pub(super) fn os_page_size() -> usize {
 }
 
 #[cfg(all(test, windows))]
+mod windows_contracts;
+
+#[cfg(all(test, windows))]
 mod system_info_tests {
     #[test]
     fn native_page_size_is_nonzero_and_a_power_of_two() {

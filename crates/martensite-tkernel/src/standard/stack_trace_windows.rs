@@ -47,8 +47,7 @@ pub(super) fn native_frames(nb_traces: i32, top_skip: i32) -> Option<Vec<String>
     let _lock = SYMBOL_SESSION
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-    // SAFETY: GetCurrentProcess returns a pseudo-handle that is always valid.
-    let process: HANDLE = unsafe { GetCurrentProcess() };
+    let process = symbol_process_handle();
     if !symbols_ready(process) {
         return None;
     }
@@ -72,6 +71,15 @@ fn module_filename(process: HANDLE, address: u64) -> String {
         unsafe { GetModuleFileNameA(module as _, buffer.as_mut_ptr(), buffer.len() as u32) };
     String::from_utf8_lossy(&buffer[..count as usize]).into_owned()
 }
+
+fn symbol_process_handle() -> HANDLE {
+    // SAFETY: GetCurrentProcess returns a pseudo-handle that is always valid.
+    unsafe { GetCurrentProcess() }
+}
+
+#[cfg(test)]
+#[path = "stack_trace_windows/handle_contracts.rs"]
+mod handle_contracts;
 
 #[repr(C)]
 struct SymbolBuffer {
