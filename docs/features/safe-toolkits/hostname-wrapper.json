@@ -12,11 +12,13 @@
   "source": "https://github.com/bminor/glibc/blob/04e750e75b73957cf1c791535a3f4319534a52fc/sysdeps/posix/gethostname.c",
   "baseline_revision": "d1f0f74747d480163989a454eb49bd482ae35472",
   "baseline_native_run": "https://github.com/Oblikovati/Martensite/actions/runs/38984682766",
+  "baseline_native_verified": "Linux x86_64, Linux arm64 and Windows x64 jobs passed. All three downloaded full inventories match their baseline revision d1f0f74747d480163989a454eb49bd482ae35472 and report clean checkouts. Both ordinary hostname fixtures explicitly passed on both Linux targets; the isolated boundary fixture was ignored there. macOS remains pending. Artifacts: /tmp/martensite-hostname-original.Z1Cdfj.",
+  "review": "Separate standards and specification re-reviews of 26b2fa8...6f92f0d reported no remaining implementation findings. The allocation-order issue is resolved; final native validation remains an acceptance prerequisite.",
+  "inventory": "The reviewed local compiler summary differs only in host/native.rs unsafe-block emissions, eight to six. Linux x86_64 and arm64 expected counts were lowered accordingly; arm64 removal still requires native confirmation. Lexical unsafe count remains unchanged because non-GNU implementations remain. The new helper explicitly forbids unsafe code.",
   "local_candidate": "The initial gethostname candidate passed three focused tests and both explicit isolated UTS boundary tests, but review found its pre-query allocation changed failure behavior. It was replaced with the stack-owned uname wrapper; these initial results do not validate the revised candidate. cargo deny and cargo audit passed; the temporary dependency feature was subsequently removed. The first full gate caught the new forbid declaration missing from the lexical inventory; that entry is now recorded. Revised local and native validation remain pending.",
   "remaining": [
     "Record native boundary coverage exclusions on other targets",
     "Complete original native validation",
-    "Complete standards and spec review of the safe adaptation",
     "Complete full local gate and exact-revision native replacement validation",
     "Remove remaining non-GNU hostname FFI after validating each native contract"
   ]
