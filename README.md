@@ -58,5 +58,8 @@ increases require review against the temporary exception policy in `AGENTS.md`.
 The check includes inactive platform code and macro definitions, but does not
 expand macros or inspect dependencies. Compiler checks remain necessary (#81).
 
-The project is licensed GPL-2.0-only (`LICENSE`). Source files carry no per-file
-copyright or license header.
+The source code is licensed GPL-2.0-only (`LICENSE-GPL`). Official release
+binaries downloaded from this repository whose files match a published hash are
+also offered under the Apache License 2.0 (`LICENSE-APACHE`). Each binary
+archive contains `LICENSE-APACHE`, and each source package contains
+`LICENSE-GPL`. Source files carry no per-file copyright or license header.

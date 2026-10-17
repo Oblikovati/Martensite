@@ -46,17 +46,29 @@ fn native_local_date() -> (u32, u32, i32) {
 }
 
 #[cfg(windows)]
+#[forbid(unsafe_code)]
 fn native_local_date() -> (u32, u32, i32) {
-    use windows_sys::Win32::{Foundation::SYSTEMTIME, System::SystemInformation::GetLocalTime};
-    let mut now = SYSTEMTIME::default();
-    // SAFETY: `now` is initialized, writable and lives through `GetLocalTime`.
-    unsafe { GetLocalTime(&mut now) };
-    (
-        u32::from(now.wMonth),
-        u32::from(now.wDay),
-        i32::from(now.wYear),
-    )
+    let now = winsafe::GetLocalTime();
+    windows_calendar_date([
+        now.wYear,
+        now.wMonth,
+        now.wDayOfWeek,
+        now.wDay,
+        now.wHour,
+        now.wMinute,
+        now.wSecond,
+        now.wMilliseconds,
+    ])
 }
+
+#[cfg(windows)]
+fn windows_calendar_date(fields: [u16; 8]) -> (u32, u32, i32) {
+    let [year, month, _, day, _, _, _, _] = fields;
+    (u32::from(month), u32::from(day), i32::from(year))
+}
+
+#[cfg(all(test, windows))]
+mod windows_contracts;
 
 #[cfg(all(test, windows))]
 #[test]

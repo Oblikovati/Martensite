@@ -7,6 +7,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use flate2::Compression;
+use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use sha2::{Digest, Sha256};
 
@@ -61,6 +62,26 @@ fn append_entry<W: Write>(
     )
 }
 
+/// The `/`-separated member paths of a `.tar.gz` (a `.crate` is one), in
+/// archive order.
+///
+/// ```ignore
+/// let members = archive_member_paths(Path::new("dist/m-1.0.0.crate"))?;
+/// ```
+pub fn archive_member_paths(archive: &Path) -> BuildResult<Vec<String>> {
+    let file = fs::File::open(archive).map_err(|cause| io_error(archive, cause))?;
+    let mut reader = tar::Archive::new(GzDecoder::new(file));
+    let entries = reader.entries().map_err(|cause| io_error(archive, cause))?;
+    let path_of = |entry: std::io::Result<tar::Entry<'_, GzDecoder<fs::File>>>| {
+        let entry = entry?;
+        Ok(entry.path()?.to_string_lossy().replace('\\', "/"))
+    };
+    entries
+        .map(path_of)
+        .collect::<std::io::Result<_>>()
+        .map_err(|cause| io_error(archive, cause))
+}
+
 /// Lowercase hex SHA-256 of a file.
 pub fn sha256_hex(path: &Path) -> BuildResult<String> {
     let bytes = fs::read(path).map_err(|cause| io_error(path, cause))?;
@@ -109,7 +130,6 @@ pub fn file_name(path: &Path) -> BuildResult<&str> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use flate2::read::GzDecoder;
 
     fn entry(dir: &Path, name: &str, executable: bool) -> BundleEntry {
         let source = dir.join(name);
@@ -151,6 +171,28 @@ mod tests {
             ("top/bin/zeta".to_owned(), 0o755),
         ];
         assert_eq!(listing(&first), expected);
+    }
+
+    #[test]
+    fn member_paths_list_every_entry_under_the_top_directory() {
+        let dir = tempfile::tempdir().unwrap();
+        let entries = [
+            entry(dir.path(), "tool", true),
+            entry(dir.path(), "lib", false),
+        ];
+        let archive = dir.path().join("m.tar.gz");
+        write_tar_gz(&archive, "m-1.0.0", &entries).unwrap();
+        let expected = ["m-1.0.0/bin/lib", "m-1.0.0/bin/tool"];
+        assert_eq!(archive_member_paths(&archive).unwrap(), expected);
+    }
+
+    #[test]
+    fn member_paths_of_a_file_that_is_not_gzip_name_the_file() {
+        let dir = tempfile::tempdir().unwrap();
+        let archive = dir.path().join("broken.crate");
+        fs::write(&archive, b"not an archive").unwrap();
+        let error = archive_member_paths(&archive).unwrap_err().to_string();
+        assert!(error.starts_with(&archive.display().to_string()), "{error}");
     }
 
     #[test]

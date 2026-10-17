@@ -1,0 +1,26 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "baseline_revision": "a261df178f2cd483392ae52bda6aa54f2458e4dc",
+  "status": "GNU/Linux x86_64 and aarch64 path stat uses the established safe wrapper. Local and native validation and review passed; integration is pending.",
+  "candidate_scope": "GNU/Linux x86_64 and aarch64, 64-bit pointer width. Other targets retain their existing paths.",
+  "wrapper_evidence": "Pinned rustix 1.1.5 backend/libc/fs/syscalls.rs stat uses one c::stat call for these targets, without retry or statx fallback. backend/libc/c.rs aliases stat64 as stat, and fs/types.rs aliases Stat to libc stat64. Apple-specific negative-nanosecond normalization is excluded on Linux.",
+  "libc_evidence": {
+    "revision": "glibc-2.40",
+    "implementation": "https://github.com/bminor/glibc/blob/glibc-2.40/sysdeps/unix/sysv/linux/stat64.c",
+    "abi": "https://github.com/bminor/glibc/blob/glibc-2.40/sysdeps/unix/sysv/linux/kernel_stat.h",
+    "finding": "stat64.c aliases stat and stat64 to the same implementation when XSTAT_IS_XSTAT64 is set. The default Linux kernel_stat.h sets that flag to 1; the source tree has no x86_64 or aarch64 override. This supports ordinary libc behavior, not arbitrary symbol interposition or all historic libc versions."
+  },
+  "preservation_requirements": [
+    "Retain c_path truncation at the first NUL, link following, and raw errno mapping",
+    "Map mode, size, ctime seconds and block size through the existing NodeStatus conversion without timestamp normalization",
+    "Leave fstat and descriptor ownership unchanged",
+    "Run unchanged status and status-kind fixtures before and after replacement"
+  ],
+  "validation": "All six status and status-kind fixtures passed before replacement at a261df1 (/tmp/martensite-linux-stat-baseline.log) and unchanged after replacement (/tmp/martensite-linux-stat-safe.log). cargo xtask pr passed with the implementation at 36d38f5 (/tmp/martensite-linux-stat-pr.log).",
+  "native_validation": "Run 38967155797 passed all four platforms at e8b6bb6908ed91e8559b9d37a095542ce009ce6f; publishing was skipped. Each complete compiler summary matches that revision's baseline and has clean provenance. Artifacts: /tmp/martensite-linux-stat-native.Qr1HXJ. All six status fixtures explicitly passed in each Unix job log (/tmp/martensite-linux-stat-native-{x64,arm64,macos}.log).",
+  "review": "Independent standards and spec reviews of a261df1...36d38f5 found no code defect or scope creep. Their stale fixture-status finding is corrected here. The local and native validation requirements are satisfied by the recorded runs.",
+  "inventory": "Native evidence confirms Linux native_unix emitted primary spans decreased from 24 to 20 by excluding the raw stat initialization and call. Other target summaries and lexical counts remain unchanged because their fallback remains.",
+  "integration_validation": "Merged main 3c2f142 in a195023. Relative to native-tested e8b6bb6, the production diff contains only the already integrated macOS open wrapper from #137; Linux stat and its fixtures are unchanged. The combined cargo xtask pr gate passed (/tmp/martensite-linux-stat-integration-pr.log). Linux native_unix remains at 20 spans, and the macOS baseline retains #137's reduction to 18. The earlier native matrix is not claimed to have run on this combined tree.",
+  "remaining": "Integrate after final PR checks. No remaining unsafe is classified as unavoidable by this investigation; #89 and #80 remain incomplete."
+}

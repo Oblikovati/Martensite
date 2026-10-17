@@ -1,0 +1,17 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "starting_main": "c77e8d94dbb60dc2d32f910fc3c002813b21c7e8",
+  "status": "Original baseline validated on all four targets. Candidate replaces native acquisition with winsafe GetLocalTime, preserving conversion and fixtures. Candidate validation remains pending.",
+  "original_native": "Run 38996254985 at 0036d8d1d12c16bf1a7a463ee2f89acb711d4a0d passed all four targets; all complete compiler inventories matched exact-revision clean-checkout artifacts. Windows job 117289446944 passed four new fixtures, original initialization, and existing process calendar/milliseconds behavior.",
+  "deletion": "Removed one native unsafe call and its obsolete initializer/test. The unchanged wrapper-default fixture covers all eight fields of the replacement record. Windows process/native.rs unsafe-block emissions fall from two to zero (one site emitted for lib and tests).",
+  "fixtures": "Unchanged literal fixtures pin all seven values including milliseconds, weekday exclusion and zero/u16 maximum widening. The unchanged replacement-initialization fixture checks all eight winsafe default fields. Named LastError fixtures compared original and wrapper in the validated baseline; after replacement they check wrapper selection, not an independent native oracle. Pinned wrapper source and original native results remain separate evidence.",
+  "native_smoke": "Keep native_windows_system_date_reads_calendar_and_milliseconds unchanged. Calendar ranges exercise the original query but do not establish exact mapping, monotonicity or timezone transition behavior.",
+  "exclusions": "No host clock or timezone mutation, DST transition, arbitrary raw LastError sentinel or equality between separately sampled clocks is claimed. Mapping fixtures use synthetic fields, not OS-produced boundary values.",
+  "dependency": "Existing winsafe =0.0.29 kernel; no pin or feature change.",
+  "remaining": [
+    "Pass candidate full local gate and separate Standards/Spec review",
+    "Validate candidate on native Windows and all four exact-revision inventories",
+    "Rerun unchanged mapping and native behavior fixtures on the candidate"
+  ]
+}

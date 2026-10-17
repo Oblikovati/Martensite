@@ -8,15 +8,30 @@ use std::path::PathBuf;
 mod cursor;
 #[path = "osd_safe_path_operations/links.rs"]
 mod links;
+#[path = "osd_safe_path_operations/open.rs"]
+mod open;
+#[path = "osd_safe_path_operations/open_mode.rs"]
+mod open_mode;
+#[path = "osd_safe_path_operations/permissions.rs"]
+mod permissions;
 #[path = "osd_safe_path_operations/raw_names.rs"]
 mod raw_names;
 #[path = "osd_safe_path_operations/records.rs"]
 mod records;
+#[path = "osd_safe_path_operations/status.rs"]
+mod status;
+#[path = "osd_safe_path_operations/status_kinds.rs"]
+mod status_kinds;
+#[path = "osd_safe_path_operations/temporary.rs"]
+mod temporary;
 
 struct PathScratch(PathBuf);
 impl PathScratch {
     fn new(label: &str) -> Self {
-        let root = std::env::temp_dir().join(format!(
+        Self::under(&std::env::temp_dir(), label)
+    }
+    fn under(parent: &std::path::Path, label: &str) -> Self {
+        let root = parent.join(format!(
             "martensite-path-{label}-{}-{}",
             std::process::id(),
             std::time::SystemTime::now()

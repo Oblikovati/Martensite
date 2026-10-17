@@ -1,0 +1,21 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "starting_main": "dd1a972a754638bf743d8292e1e0b375cd8159de",
+  "status": "Baseline and replacement verified on all four targets. Replacement focused test, dependency audits and full local gate passed. Reviews found no code defects; stale evidence corrected. Final PR checks and integration remain.",
+  "replacement_native": "Run 38976465230 passed all four targets at 1c841fd28dd4b102f67c7da4c71d26b83f5b1efa; publication skipped. All four full compiler inventories match that revision with clean provenance. The unchanged identity fixture passed on each Unix target. Artifacts: /tmp/martensite-thread-identity-safe-native.1J2lZf; logs: /tmp/martensite-thread-identity-safe-native-{arm64,x64,macos}.log. Windows excludes the Unix fixture and validates unchanged platform compilation and inventory.",
+  "replacement_gate": "The first gate failed because the filesystem filled. After reclaiming generated build artifacts, cargo xtask pr passed; log /tmp/martensite-thread-identity-safe-pr-retry.log.",
+  "native_baseline": "Run 38974882854 passed all four targets at 41fe16515283232059821af8e7efb34698c1ca0f, with publication skipped. All full inventories match that revision and have clean provenance; artifacts /tmp/martensite-thread-identity-original.Um12yN. The identity fixture passed on all three Unix targets; logs /tmp/martensite-thread-identity-original-{macos,arm64,x64}.log. Windows excludes the Unix fixture.",
+  "replacement": "Enabled the existing nix dependency pthread feature and replaced the direct call with nix::sys::pthread::pthread_self. The libc::pthread_t type and usize cast remain unchanged. One lexical unsafe block is removed; expected compiled spans for thread/native.rs decrease from four to two on each Unix target. Windows inventory is unchanged.",
+  "local_gate": "cargo xtask pr passed; log /tmp/martensite-thread-identity-baseline-pr.log.",
+  "local_fixture": "cargo test -p martensite-tkernel --test toolkit osd_thread_identity passed one test; log /tmp/martensite-thread-identity-baseline.log. Two full gate attempts stopped at module ordering: cargo fmt --all did not traverse the included suite file. Direct rustfmt on tests/suites/cases_02.rs corrected it before the next gate run.",
+  "contract": "OsdThread::current returns pthread_self cast to usize on Unix, not a kernel thread ID or Rust ThreadId. Repeated calls on one live thread return the same value.",
+  "fixture": "A child reports two current identifiers while held alive by a channel. The parent reads its std::os::unix::thread::JoinHandleExt::as_pthread_t identifier, releases and joins the child, then compares both reported values. This uses a standard-library handle as the independent oracle and adds no unsafe code.",
+  "candidate": "The existing pinned nix 0.31.3 dependency exposes sys::pthread::pthread_self behind its pthread feature. Inspected registry source src/sys/pthread.rs defines Pthread as libc::pthread_t and forwards directly to libc::pthread_self, with no conversion, allocation or errno handling. Enabling this feature adds no package; dependency audits passed.",
+  "deletion": "Replaced the direct pthread_self unsafe block after baseline verification, preserving the native type, cast and public API. No parallel production path remains.",
+  "excluded": "Windows identifiers and all other thread operations are unchanged. sysconf is a separate investigation: nix clears errno and exposes the online-processor option only on Linux/Android.",
+  "remaining": [
+    "Verify final PR checks before integration"
+  ],
+  "replacement_local": "Unchanged identity fixture passed; cargo deny --all-features check and cargo audit passed. Logs /tmp/martensite-thread-identity-{safe,deny,audit}.log."
+}
