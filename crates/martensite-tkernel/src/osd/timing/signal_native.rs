@@ -111,6 +111,9 @@ fn action(handler: libc::sighandler_t, flags: i32) -> libc::sigaction {
     value
 }
 
+#[cfg(all(test, unix))]
+mod action_contracts;
+
 /// Unix: `Unset` restores `SIG_DFL` on all eight managed signals (this also removes the
 /// Rust runtime's SIGSEGV stack-overflow reporter, as it removes any handler);
 /// `Set`/`SetUnhandled` install only the SIGINT break handler, and `SetUnhandled` puts a

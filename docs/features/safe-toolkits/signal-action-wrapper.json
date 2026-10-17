@@ -1,0 +1,10 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "starting_main": "b2bd842",
+  "status": "Original production unchanged; signal-action construction baseline only.",
+  "fixtures": "Requested handler and flags, caller errno preservation, and absent GNU/Linux x86_64/aarch64 restorer. These tests construct records only and do not install handlers.",
+  "local": "Three focused tests passed on GNU/Linux x86_64; log /tmp/martensite-signal-action-baseline.log.",
+  "candidate": "Evaluate explicit platform record construction using an established safe empty signal-set interface. Preserve zero restorer and original flags; construction must not change installation behavior.",
+  "limits": "Full local gate and native matrix pending. Empty-mask membership, dependency-feature audit, signal installation and other platform layouts still need verification before accepting a replacement. No system exception or completed unsafe removal is claimed."
+}
