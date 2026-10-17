@@ -222,16 +222,34 @@ fn local_time() -> Result<LocalTime, i32> {
     let mut clock = empty_system_time();
     // SAFETY: GetLocalTime writes exactly one live SYSTEMTIME and has no failure return.
     unsafe { GetLocalTime(&mut clock) };
-    Ok(LocalTime {
-        month: i32::from(clock.wMonth),
-        day: i32::from(clock.wDay),
-        year: i32::from(clock.wYear),
-        hour: i32::from(clock.wHour),
-        minute: i32::from(clock.wMinute),
-        second: i32::from(clock.wSecond),
-        millisecond: i32::from(clock.wMilliseconds),
-    })
+    Ok(system_time_local_time([
+        clock.wYear,
+        clock.wMonth,
+        clock.wDayOfWeek,
+        clock.wDay,
+        clock.wHour,
+        clock.wMinute,
+        clock.wSecond,
+        clock.wMilliseconds,
+    ]))
 }
+
+#[cfg(windows)]
+fn system_time_local_time(fields: [u16; 8]) -> LocalTime {
+    let [year, month, _, day, hour, minute, second, millisecond] = fields;
+    LocalTime {
+        month: i32::from(month),
+        day: i32::from(day),
+        year: i32::from(year),
+        hour: i32::from(hour),
+        minute: i32::from(minute),
+        second: i32::from(second),
+        millisecond: i32::from(millisecond),
+    }
+}
+
+#[cfg(all(test, windows))]
+mod local_time_contracts;
 
 #[cfg(windows)]
 fn empty_system_time() -> windows_sys::Win32::Foundation::SYSTEMTIME {

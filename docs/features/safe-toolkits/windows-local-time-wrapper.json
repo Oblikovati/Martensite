@@ -1,0 +1,16 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "starting_main": "c77e8d94dbb60dc2d32f910fc3c002813b21c7e8",
+  "status": "Original native call retained. Conversion extracted without changing field order or widening; Windows cross-check passed. Native baseline validation remains pending.",
+  "fixtures": "Distinct literal fields pin all seven values including milliseconds; weekday variations are ignored; zero and u16 maximum widen without normalization. The existing original initialization test remains, and a new test checks all eight winsafe default fields. Named LastError sentinels compare immediate original and wrapper observations, restoring prior thread state before assertions.",
+  "native_smoke": "Keep native_windows_system_date_reads_calendar_and_milliseconds unchanged. Calendar ranges exercise the original query but do not establish exact mapping, monotonicity or timezone transition behavior.",
+  "exclusions": "No host clock or timezone mutation, DST transition, arbitrary raw LastError sentinel or equality between separately sampled clocks is claimed. Mapping fixtures use synthetic fields, not OS-produced boundary values.",
+  "dependency": "Existing winsafe =0.0.29 kernel; no pin or feature change.",
+  "remaining": [
+    "Pass full local gate and separate Standards/Spec review",
+    "Validate original fixtures on native Windows and all four exact-revision inventories",
+    "Replace only native acquisition and delete the obsolete initializer after its replacement gate",
+    "Rerun unchanged mapping and native behavior fixtures on the candidate"
+  ]
+}
