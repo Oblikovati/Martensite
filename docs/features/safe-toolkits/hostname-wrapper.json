@@ -1,0 +1,26 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "starting_main": "26b2fa84c7d386694a3f06360443bc1089d309eb",
+  "status": "GNU/Linux replacement implemented locally; review and native replacement validation pending. Other Unix implementations remain unchanged and unclassified.",
+  "contract": "Call gethostname with length 64 into a zeroed 65-byte array, return raw bytes before NUL or raw errno on failure. Resolver and uname behavior are outside this increment.",
+  "fixtures": "Compare short native hostname bytes with uname -n and check successful-query errno preservation for zero, EIO and an arbitrary integer. The exact byte comparison requires a stable hostname. macOS applies the existing 63-byte truncation expectation.",
+  "local_baseline": "Both ordinary fixtures passed in /tmp/martensite-hostname-baseline-final.log and again after adding the boundary fixture in /tmp/martensite-hostname-boundary-final.log. The final-code cargo xtask pr gate exited 0; log: /tmp/martensite-hostname-final-baseline-pr.log. The earlier full gate overlapped fixture edits and is not final-code acceptance.",
+  "boundary_probe": "The ignored hostname_boundary_in_isolated_namespace fixture was explicitly executed locally twice, inside unshare --user --map-root-user --uts namespaces with only h bytes. Length 63 returned all bytes and preserved errno 12345; length 64 returned ENAMETOOLONG and set that errno. Both executions passed. The host machine hostname was not modified. This is local GNU/Linux x86_64 evidence, not macOS or arm64 boundary coverage.",
+  "boundary_invocation": "Set MARTENSITE_HOSTNAME_LENGTH to 63 or 64, enter unshare --user --map-root-user --uts, set the child hostname to that many h bytes, then execute the built library test binary with hostname_boundary_in_isolated_namespace --ignored --nocapture. The fixture never changes the hostname itself and is excluded from ordinary test runs.",
+  "candidate": "Pinned nix 0.31.3 uname returns a stack-owned record with borrowed raw nodename bytes. GNU libc implements gethostname through uname. The GNU/Linux adapter checks the original 64-byte boundary before allocating output, preserves ENAMETOOLONG and restores incoming errno on success; errors use raw errno, not the dependency enum discriminant. No dependency feature or version change remains. Other Unix targets retain the original call pending their separate buffer/error analysis.",
+  "source": "https://github.com/bminor/glibc/blob/04e750e75b73957cf1c791535a3f4319534a52fc/sysdeps/posix/gethostname.c",
+  "baseline_revision": "d1f0f74747d480163989a454eb49bd482ae35472",
+  "baseline_native_run": "https://github.com/Oblikovati/Martensite/actions/runs/38984682766",
+  "baseline_native_verified": "Linux x86_64, Linux arm64 and Windows x64 jobs passed. All three downloaded full inventories match their baseline revision d1f0f74747d480163989a454eb49bd482ae35472 and report clean checkouts. Both ordinary hostname fixtures explicitly passed on both Linux targets; the isolated boundary fixture was ignored there. macOS remains pending. Artifacts: /tmp/martensite-hostname-original.Z1Cdfj.",
+  "review": "Separate standards and specification re-reviews of 26b2fa8...6f92f0d reported no remaining implementation findings. The allocation-order issue is resolved; final native validation remains an acceptance prerequisite.",
+  "inventory": "The reviewed local compiler summary differs only in host/native.rs unsafe-block emissions, eight to six. Linux x86_64 and arm64 expected counts were lowered accordingly; arm64 removal still requires native confirmation. Lexical unsafe count remains unchanged because non-GNU implementations remain. The new helper explicitly forbids unsafe code.",
+  "revised_local_tests": "At c24a1b2, all three ordinary hostname tests passed in /tmp/martensite-hostname-reviewed-pr.log. The resulting martensite_tkernel-486e8f0d293f6ada test binary also passed the unchanged ignored boundary fixture twice, explicitly run in separate unshare --user --map-root-user --uts namespaces with 63 and 64 h bytes. This validates the revised uname implementation locally on GNU/Linux x86_64, not the rejected allocating candidate. The full gate remains running.",
+  "local_candidate": "The initial gethostname candidate passed three focused tests and both explicit isolated UTS boundary tests, but review found its pre-query allocation changed failure behavior. It was replaced with the stack-owned uname wrapper; these initial results do not validate the revised candidate. cargo deny and cargo audit passed; the temporary dependency feature was subsequently removed. The first full gate caught the new forbid declaration missing from the lexical inventory; that entry is now recorded. Revised local and native validation remain pending.",
+  "remaining": [
+    "Record native boundary coverage exclusions on other targets",
+    "Complete original native validation",
+    "Complete full local gate and exact-revision native replacement validation",
+    "Remove remaining non-GNU hostname FFI after validating each native contract"
+  ]
+}
