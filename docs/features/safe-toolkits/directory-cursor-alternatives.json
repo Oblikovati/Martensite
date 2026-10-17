@@ -3,19 +3,25 @@
   "parent": 80,
   "baseline_revision": "518968e99a893fd437c47b3a8bc0873f90c2b413",
   "fixture_revision": "d863daf",
-  "status": "Investigation only; no dependency or production change",
+  "status": "Baseline fixtures only; no dependency or production change. Replacement blocked on a public behavior decision under #88.",
   "baseline_tests": "Three Linux x86_64 fixtures passed: dot entries and bulk/cursor order, first-NUL truncation, immediate path errors, rename isolation and thread transfer.",
   "current_path": "osd/file/native_unix/directory_cursor.rs owns DIR, calls readdir for every next_name, copies each name once and closes the stream once. A null read returns None but does not prevent a later read.",
   "candidates": [
     {
       "name": "std::fs::ReadDir",
-      "assessment": "Not a direct replacement: filters dot entries that current callers can observe. Synthesizing them does not establish preservation of native ordering."
+      "assessment": "Not a direct replacement. Rust 1.99.0 library/std/src/sys/fs/unix.rs ReadDir::next skips '.' and '..', which the pinned fixture observes in native order, and sets end_of_stream on the first null readdir, so it fuses at end of stream and after an error. The current cursor calls readdir again on every next_name."
     },
     {
       "name": "rustix 1.1.5 Dir",
-      "sources": ["src/backend/libc/fs/dir.rs", "src/backend/linux_raw/fs/dir.rs"],
+      "sources": [
+        "src/backend/libc/fs/dir.rs",
+        "src/backend/linux_raw/fs/dir.rs"
+      ],
       "assessment": "The default Linux backend retries interrupted reads. Both backends retain an any_errors flag that prevents subsequent reads after an error. The libc backend can avoid the Linux retry change via use-libc, but still fuses after errors. Entries own a CString; copying into the existing Vec return type adds a name allocation relative to the current path. Costs are not measured yet.",
-      "recovery_limit": "seek clears the error flag, but preserving position requires a valid cookie. The libc DirEntry::offset API is not available on macOS; no portable retry-preserving adapter has been demonstrated."
+      "recovery_limit": "seek clears the error flag, but preserving position requires a valid cookie. The libc DirEntry::offset API is not available on macOS; no portable retry-preserving adapter has been demonstrated.",
+      "cleanup": "With use-libc (the feature Martensite already enables), Dir::new takes an OwnedFd and closes the raw descriptor itself when fdopendir fails, so failure cleanup needs no first-party shim. Opening with rustix::fs::open(RDONLY|DIRECTORY|CLOEXEC|NONBLOCK) matches the glibc and Apple opendir flags; ENOENT and ENOTDIR stay the same.",
+      "conflict": "Dir::read sets any_errors after a null readdir with non-zero errno and returns None on every later read until rewind or seek. End of stream does not set the flag, so EOF re-reads match. The only divergence is the next_name call after a read error: the current cursor retries readdir, rustix returns None. The public directory iterator drops the cursor at the first None, so it cannot observe the difference; a direct caller of the public PosixFileCalls::open_directory and DirectoryEntries::next_name can.",
+      "cost": "DirEntry owns a CString and exposes only file_name(&CStr), so the existing Vec<u8> return adds one allocation and copy per entry. Not measured."
     },
     {
       "name": "rustix 1.1.5 RawDir",
@@ -32,10 +38,19 @@
     }
   ],
   "next_requirements": [
-    "Prove safe ownership and repeated-read behavior, including injected transient read failure",
-    "Verify failure cleanup without a shim that assumes ownership of a raw descriptor after a supposedly consuming API",
+    "Maintainer decision on the #88 conflict above",
+    "If accepted: an injected read-failure fixture that pins the chosen post-error behavior",
     "Measure per-entry allocations, elapsed time and peak memory before adoption",
     "Run native fixtures on all affected supported targets"
   ],
-  "scope_limit": "No impossibility or permanent system exception is established. The existing unsafe cursor remains temporary migration work."
+  "scope_limit": "No impossibility or permanent system exception is established. The existing unsafe cursor remains temporary migration work.",
+  "merge_base": "origin/main merged at 38b684d before the native rehearsal",
+  "decision_request": {
+    "tracking": "#88",
+    "options": [
+      "Accept fuse-after-read-error for DirectoryEntries::next_name (document it on the trait) and adopt rustix Dir under forbid(unsafe_code).",
+      "Keep retry-after-error as a contract; then no current dependency satisfies it and the unsafe cursor stays until a safe API without error fusing is available."
+    ],
+    "not_options": "nix Dir until #126 is fixed in a release; std::fs::ReadDir because it drops dot entries and fuses at end of stream."
+  }
 }
