@@ -1,6 +1,12 @@
 //! Narrow platform FFI boundary for the wall clock.
 #![allow(unsafe_code)]
 
+#[cfg(all(test, windows))]
+mod windows_contracts;
+
+#[cfg(any(windows, test))]
+mod windows_clock;
+
 /// Unix: `gettimeofday` seconds since the first call (a function-local static
 /// keeps `tv_sec` of its first call to avoid precision loss), 0 when the call fails.
 #[cfg(unix)]
@@ -31,24 +37,25 @@ fn time_of_day() -> Option<(i64, i64)> {
 #[cfg(windows)]
 pub(super) fn wall_clock_seconds() -> f64 {
     use std::sync::OnceLock;
-    use windows_sys::Win32::System::{
-        Performance::{QueryPerformanceCounter, QueryPerformanceFrequency},
-        SystemInformation::GetTickCount64,
-    };
     static FREQUENCY: OnceLock<Option<i64>> = OnceLock::new();
-    let frequency: Option<i64> = *FREQUENCY.get_or_init(|| {
-        let mut value: i64 = 0;
-        // SAFETY: `value` is a writable i64 alive for the call.
-        (unsafe { QueryPerformanceFrequency(&mut value) } != 0).then_some(value)
-    });
-    let mut counter: i64 = 0;
-    // SAFETY: `counter` is a writable i64 alive for the call.
-    match frequency {
-        // SAFETY: `counter` is a writable i64 alive for the call.
-        Some(frequency) if unsafe { QueryPerformanceCounter(&mut counter) } != 0 => {
-            counter as f64 / frequency as f64
-        }
-        // SAFETY: GetTickCount64 has no preconditions.
-        _ => 0.001 * unsafe { GetTickCount64() } as f64,
+    windows_clock::seconds(&FREQUENCY, &mut NativeWindowsClock)
+}
+
+#[cfg(windows)]
+struct NativeWindowsClock;
+
+#[cfg(windows)]
+#[forbid(unsafe_code)]
+impl windows_clock::ClockQueries for NativeWindowsClock {
+    fn frequency(&mut self) -> Option<i64> {
+        winsafe::QueryPerformanceFrequency().ok()
+    }
+
+    fn counter(&mut self) -> Option<i64> {
+        winsafe::QueryPerformanceCounter().ok()
+    }
+
+    fn ticks(&mut self) -> u64 {
+        winsafe::GetTickCount64()
     }
 }
