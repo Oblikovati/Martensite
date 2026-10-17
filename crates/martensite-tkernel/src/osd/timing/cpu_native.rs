@@ -148,10 +148,10 @@ pub(super) fn process_cpu() -> (f64, f64) {
 }
 
 #[cfg(windows)]
+#[forbid(unsafe_code)]
 fn current_process_handle() -> windows_sys::Win32::Foundation::HANDLE {
-    use windows_sys::Win32::System::Threading::GetCurrentProcess;
-    // SAFETY: GetCurrentProcess returns a constant pseudo-handle.
-    unsafe { GetCurrentProcess() }
+    // Keep the platform-selected pseudo handle without owning or closing it (#89).
+    winsafe::HPROCESS::GetCurrentProcess().ptr()
 }
 
 #[cfg(windows)]
@@ -161,10 +161,10 @@ pub(super) fn thread_cpu() -> (f64, f64) {
 }
 
 #[cfg(windows)]
+#[forbid(unsafe_code)]
 fn current_thread_handle() -> windows_sys::Win32::Foundation::HANDLE {
-    use windows_sys::Win32::System::Threading::GetCurrentThread;
-    // SAFETY: GetCurrentThread returns a constant pseudo-handle.
-    unsafe { GetCurrentThread() }
+    // The pseudo handle is consumed on this calling thread, never transferred (#89).
+    winsafe::HTHREAD::GetCurrentThread().ptr()
 }
 
 #[cfg(all(test, windows))]

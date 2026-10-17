@@ -5,7 +5,10 @@ Research for Feature #80 / task #89 against
 main `c58eff4` extracts the original production getters without replacing their
 calls and adds the Windows-only dependency for differential fixtures. Current
 validation is recorded in [the baseline evidence](windows-pseudo-handle-wrapper.json).
-No Windows runtime result is established yet. The humanizer is unavailable;
+The original expanded baseline passed native run `38991215432` on all four
+targets, including all four Windows fixtures. The subsequent candidate replaces
+the two getters with the inspected wrappers; its native validation is pending.
+The humanizer is unavailable;
 its prose pass remains for review.
 
 ## Recommendation
@@ -139,7 +142,8 @@ calls in place. The lockfile gained winsafe; `cargo deny --all-features check`
 and `cargo audit` passed. These checks do not establish native compatibility or
 audit the whole dependency for soundness. The new trust is an independently
 maintained published wrapper, not copied Martensite unsafe. Replacing the two
-production getters remains a separate step after baseline validation.
+production getters follows baseline validation; the candidate now awaits its
+own unchanged-fixture run and exact-revision inventories.
 
 ## Evidence required before any replacement
 
@@ -162,5 +166,6 @@ production getters remains a separate step after baseline validation.
    request an explicit decision rather than asserting it is behavior-preserving.
 
 The winsafe getter/accessor path is a concrete source-supported replacement
-candidate for these two calls, pending native fixtures and dependency acceptance.
-No production migration or permanent system exception is established yet.
+candidate for these two calls. Original native fixtures passed; replacement
+validation remains pending. No completed migration or permanent system exception
+is established yet.

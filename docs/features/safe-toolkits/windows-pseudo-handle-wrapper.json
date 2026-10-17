@@ -2,14 +2,15 @@
   "parent_issue": 80,
   "task_issue": 89,
   "starting_main": "c58eff4",
-  "status": "Original getters retained in private functions for baseline fixtures; no unsafe removal claimed.",
+  "status": "Candidate replaces both original getters with winsafe safe wrappers and forbids unsafe on those private functions. Original native baseline passed before replacement; candidate native validation remains pending.",
   "dependency": "Windows-only winsafe =0.0.29, default features disabled, kernel enabled. Independently maintained MIT wrapper; no Rust dependencies. This increases dependency trust, not first-party unsafe allowance. Getter/accessor implementation was inspected for real kernel32 calls, no allocation, no destructor and no extra last-error operations.",
-  "fixtures": "Compare original getters with safe wrapper handles and last error for SUCCESS, ACCESS_DENIED and INVALID_DATA, on the test thread and a spawned thread. Restore incoming thread-local error before assertions. Exercise existing process/thread CPU queries on both threads, checking finite, nonnegative and nondecreasing components; this smoke check does not establish query failure behavior or exact timing. Do not hardcode pseudo-handle values or close them. No actual Windows execution yet.",
-  "local": "At 615380b, Windows x64 cargo check --tests, cargo xtask pr, cargo deny --all-features check and cargo audit passed. The added CPU-query smoke fixtures require renewed local and native gates.",
+  "fixtures": "Unchanged fixtures compare getter values and last error for SUCCESS, ACCESS_DENIED and INVALID_DATA, on the test thread and a spawned thread. They restore incoming thread-local error before assertions. Existing process/thread CPU queries run on both threads, checking finite, nonnegative and nondecreasing components; this smoke check does not establish query failure behavior or exact timing. No hardcoded pseudo-handle values or closing operations. After replacement the comparison guards wrapper selection, not an independent native oracle; original execution and inspected same-DLL-call source provide the compatibility evidence.",
+  "original_native": "Run 38991215432 at 3e2f6eeefbdf0e00dce79909d0da685a38d9f819 passed all four targets. All complete compiler summaries matched exact-revision clean-checkout artifacts. Windows job 117275304591 passed all four getter and CPU-query fixtures. Earlier getter-only run 38990911952 at 615380b also passed all four targets.",
+  "local": "Expanded baseline cargo xtask pr and Windows x64 cargo check --tests passed. cargo deny --all-features check and cargo audit passed for the unchanged dependency. Candidate local and native gates remain pending.",
+  "expected_reduction": "Two first-party unsafe blocks removed; Windows cpu_native compiler block spans drop from 6 to 2 because library and test compilation each emit diagnostics. Unix behavior is unchanged. Current main was merged before the candidate, retaining the separately validated Darwin signal-action reduction.",
   "exclusion": "Application-defined last-error values are not covered: winsafe 0.0.29 ERROR::from_raw and as_mut require unsafe. No unsafe test-only construction was added. The inspected getter/accessor path performs no error conversion or error-slot writes; named nonzero sentinels cover the baseline's observed preservation claim only.",
   "remaining": [
-    "Validate original fixtures on native Windows x64",
-    "Review dependency and behavioral evidence before replacing the two getters",
+    "Complete candidate Standards and Spec review",
     "Verify exact-revision native inventories and test results for the replacement",
     "Keep process/thread time query and failed-output behavior unchanged"
   ]
