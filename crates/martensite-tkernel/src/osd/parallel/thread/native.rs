@@ -78,8 +78,16 @@ pub(crate) fn online_processors() -> i32 {
     let mut info = SYSTEM_INFO::default();
     // SAFETY: `info` is a valid, writable SYSTEM_INFO.
     unsafe { GetSystemInfo(&mut info) };
-    info.dwNumberOfProcessors as i32
+    windows_processor_count(info.dwNumberOfProcessors)
 }
+
+#[cfg(windows)]
+fn windows_processor_count(count: u32) -> i32 {
+    count as i32
+}
+
+#[cfg(all(test, windows))]
+mod windows_query_contracts;
 
 #[cfg(all(test, windows))]
 mod system_info_tests {

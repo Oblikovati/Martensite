@@ -1,0 +1,16 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "starting_main": "c77e8d94dbb60dc2d32f910fc3c002813b21c7e8",
+  "status": "Original Windows calls retained; processor count cast extracted unchanged. Windows cross-check passed; native baseline remains pending.",
+  "identity_fixture": "A child reports original and safe-wrapper current IDs, then waits for a channel to close. The parent queries the original JoinHandle identity while the child is live, releases it and joins before assertions. IDs must agree for the child, differ from its live parent and remain stable on the parent.",
+  "count_fixtures": "Literal u32 boundary values pin the existing signed cast. Existing positive-count native smoke fixture is unchanged. Candidate initialization checks selected public scalar and pointer fields without reading the private reserved field or padding.",
+  "last_error": "Original current-ID and processor queries are each compared against the pinned wrapper with three named error sentinels. Error capture is immediate and prior thread state is restored before assertions. No unconditional sentinel-preservation assumption is made.",
+  "exclusions": "No WOW64, multiple processor groups, CPU topology change, arbitrary raw LastError sentinel, priority mutation or handle-conversion replacement is claimed. Native x64 evidence is still pending. No exact equality of separately sampled processor counts is asserted.",
+  "remaining": [
+    "Pass full local gate and Standards/Spec review",
+    "Run original native fixtures and verify exact-revision inventories on all four targets",
+    "Replace only current-thread ID and processor-count acquisition",
+    "Validate unchanged fixtures and candidate inventories before integration"
+  ]
+}
