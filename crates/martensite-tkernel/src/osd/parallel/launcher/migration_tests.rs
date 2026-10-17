@@ -2,6 +2,8 @@
 use super::{Launcher, ThreadPool};
 use std::{collections::BTreeMap, sync::Mutex, thread::ThreadId};
 
+mod workload;
+
 fn participant_ids(launcher: &Launcher<'_>) -> BTreeMap<i32, ThreadId> {
     let participants = Mutex::new(BTreeMap::new());
     launcher
