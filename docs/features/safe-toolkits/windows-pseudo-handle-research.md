@@ -1,8 +1,11 @@
 # Windows current-object pseudo handles
 
 Research for Feature #80 / task #89 against
-`0e5f37b96932b1885834d9e05f6560a887ed77c4`. No production changes, dependency
-changes, or Windows runtime tests were performed. The humanizer is unavailable;
+`0e5f37b96932b1885834d9e05f6560a887ed77c4`. The subsequent baseline at starting
+main `c58eff4` extracts the original production getters without replacing their
+calls and adds the Windows-only dependency for differential fixtures. Current
+validation is recorded in [the baseline evidence](windows-pseudo-handle-wrapper.json).
+No Windows runtime result is established yet. The humanizer is unavailable;
 its prose pass remains for review.
 
 ## Recommendation
@@ -130,12 +133,13 @@ types. It is still a pre-1.0 library, not a compatibility guarantee or safety
 certification. Its broad kernel module increases compiled/trusted source beyond
 these two methods; compile-time, binary, and audit costs have not been measured.
 
-A proposed Windows-only dependency would pin `=0.0.29`, disable defaults, and
-enable only `kernel`, leaving the existing windows-sys APIs in place. This is a
-proposal, not a manifest edit. Check existing lockfile availability, repository
-license policy, `cargo deny --all-features check`, and `cargo audit` before
-adoption; no policy or security pass is claimed here. The new trust is an
-independently maintained published wrapper, not copied Martensite unsafe.
+The baseline adds a Windows-only dependency pinned to `=0.0.29`, disables
+defaults, and enables only `kernel`, leaving the existing windows-sys production
+calls in place. The lockfile gained winsafe; `cargo deny --all-features check`
+and `cargo audit` passed. These checks do not establish native compatibility or
+audit the whole dependency for soundness. The new trust is an independently
+maintained published wrapper, not copied Martensite unsafe. Replacing the two
+production getters remains a separate step after baseline validation.
 
 ## Evidence required before any replacement
 
