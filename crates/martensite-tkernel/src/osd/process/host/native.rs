@@ -12,6 +12,9 @@ mod unix {
     use super::SystemNames;
     use std::ffi::CString;
 
+    #[cfg(test)]
+    mod hostname_contracts;
+
     // gethostbyname is POSIX (glibc, macOS libSystem) but not bound by the libc crate.
     unsafe extern "C" {
         fn gethostbyname(name: *const libc::c_char) -> *mut libc::hostent;
