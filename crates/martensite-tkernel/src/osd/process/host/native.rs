@@ -14,6 +14,8 @@ mod unix {
 
     #[cfg(test)]
     mod hostname_contracts;
+    #[cfg(test)]
+    mod system_name_contracts;
 
     #[cfg(all(target_os = "linux", target_env = "gnu"))]
     mod hostname;
