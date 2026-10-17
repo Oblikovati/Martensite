@@ -1,0 +1,16 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "starting_main": "c77e8d94dbb60dc2d32f910fc3c002813b21c7e8",
+  "status": "Original baseline validated. Candidate replaces only current-thread ID and processor-count acquisition with pinned winsafe wrappers; candidate validation pending.",
+  "original_native": "Run 38996544830 at d120764f6a6d23ed1a2a9ecb2b6410e91419cd07 passed all four targets. All complete compiler summaries matched exact-revision clean-checkout artifacts. Windows job 117290344459 passed all five new fixtures and the unchanged positive-count smoke fixture.",
+  "expected_reduction": "Two first-party unsafe blocks removed; Windows thread/native.rs emissions fall from eight to four (lib/test duplication). Borrowed-handle and priority calls remain unchanged, as do Unix paths.",
+  "identity_fixture": "A child reports original and safe-wrapper current IDs, then waits for a channel to close. The parent queries the original JoinHandle identity while the child is live, releases it and joins before assertions. IDs must agree for the child, differ from its live parent and remain stable on the parent.",
+  "count_fixtures": "Literal u32 boundary values pin the existing signed cast. Existing positive-count native smoke fixture is unchanged. Candidate initialization checks selected public scalar and pointer fields without reading the private reserved field or padding.",
+  "last_error": "The validated baseline compared original current-ID and processor queries against pinned wrappers with three named sentinels, immediate capture and prior-state restoration. After replacement these unchanged comparisons check wrapper selection, not an independent original oracle. Pinned source and original runtime evidence remain separate.",
+  "exclusions": "No WOW64, multiple processor groups, CPU topology change, arbitrary raw LastError sentinel, priority mutation or handle-conversion replacement is claimed. Candidate native x64 evidence is pending. No exact equality of separately sampled processor counts is asserted.",
+  "remaining": [
+    "Pass candidate full local gate and Standards/Spec review",
+    "Validate unchanged fixtures and candidate inventories before integration"
+  ]
+}

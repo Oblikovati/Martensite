@@ -390,7 +390,7 @@ impl IoStream {
         self
     }
 
-    /// `pubseekpos(pos, in)`: true when the device accepted the absolute position.
+    /// `pubseekpos(pos, in/out)`: true when the device accepted the absolute position.
     fn seek_device(&mut self, position: i64) -> bool {
         let Some(mut device) = self.device.take() else {
             return false;
@@ -400,6 +400,26 @@ impl IoStream {
             .is_ok_and(|offset| device.seek(SeekFrom::Start(offset)).is_ok());
         self.device = Some(device);
         moved
+    }
+
+    /// Move the output position without clearing EOF or input-count state (#136).
+    ///
+    /// ```
+    /// use martensite_tkernel::storage::IoStream;
+    /// let mut stream = IoStream::from_bytes(b"00payload".to_vec());
+    /// stream.seekp(0).write(b"08");
+    /// assert_eq!(stream.tellp(), 2);
+    /// ```
+    pub fn seekp(&mut self, position: i64) -> &mut Self {
+        // EOF alone does not forbid positioning, even though the output sentry is false.
+        self.output_sentry();
+        if self.fail() {
+            return self;
+        }
+        if !self.writable || !self.seek_device(position) {
+            self.set_state(state::FAIL);
+        }
+        self
     }
 
     /// `tellp()`: the output position, or -1 when `fail()`; end of file does not matter.

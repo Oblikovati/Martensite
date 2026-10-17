@@ -12,6 +12,16 @@ mod unix {
     use super::SystemNames;
     use std::ffi::CString;
 
+    #[cfg(test)]
+    mod hostname_contracts;
+    #[cfg(test)]
+    mod system_name_contracts;
+
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    mod hostname;
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    pub(super) use hostname::host_name;
+
     // gethostbyname is POSIX (glibc, macOS libSystem) but not bound by the libc crate.
     unsafe extern "C" {
         fn gethostbyname(name: *const libc::c_char) -> *mut libc::hostent;
@@ -59,6 +69,7 @@ mod unix {
         [0; N]
     }
 
+    #[cfg(not(all(target_os = "linux", target_env = "gnu")))]
     pub(super) fn host_name() -> Result<Vec<u8>, i32> {
         let mut value: [libc::c_char; 65] = [0; 65];
         // SAFETY: at most 64 bytes are written into the 65-byte buffer, whose last byte

@@ -1,0 +1,44 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "baseline_revision": "3e677514c73bb8197cf1c9479a56cf0928fcc9c0",
+  "integration_baseline": "7758dd79d34bd2c38f2a255ddb925bc21e012eee",
+  "fixture_revision": "f7b6cb0",
+  "change": "Replaced the first-party libc umask unsafe block with rustix::process::umask, retaining raw mode bits and the previous-mask return value.",
+  "dependency": "Enabled process on already-pinned rustix 1.1.5; existing std/fs/use-libc features and Cargo.lock package versions are unchanged. cargo deny --all-features check and cargo audit passed.",
+  "source_evidence": "rustix 1.1.5 src/process/umask.rs delegates to backend/process/syscalls.rs. Its libc backend casts mask.bits() to libc mode_t, calls libc::umask once, and returns Mode::from_bits_retain of the result. The toolkit retains the existing input/output casts.",
+  "fixture": "Dedicated osd_umask_api_behavior test executable isolates process-global mask changes. Baseline and replacement passed on Linux x86_64: three mask/creation-mode cases, previous-mask sequencing, and u32::MAX masked to 0777. The original process mask is restored on success; a panic exits this isolated test process.",
+  "trust": "Established rustix/libc unsafe remains separately trusted and inventoried; no custom first-party unsafe was relocated. Enabling process exposes more dependency code and requires full workspace and native validation.",
+  "inventory": "Verified native_unix source blocks 15 to 14; compiler spans Linux 28 to 26 and macOS 22 to 20 against integration baseline 7758dd7, preserving #130's separate two-span reduction. Windows unchanged. All four combined-tree native artifacts match the exact tested revision and complete expected workspace summaries.",
+  "deletion": "Old direct umask call deleted in this increment; no parallel implementation retained. Current migration milestone is the limit.",
+  "validation": "Focused Linux fixture, dependency checks and cargo xtask pr passed; local gate log /tmp/martensite-umask-pr.log. Independent standards and spec reviews found no production-code defects. After integrating main 7758dd7, cargo xtask pr passed again (/tmp/martensite-umask-combined-pr.log), as did cargo check -p martensite-tkernel --target aarch64-apple-darwin --all-targets (/tmp/martensite-umask-macos-check.log). Native run 38955639140 failed the macOS high-bit mask assertion; see Bug #131. No native completion claim.",
+  "native_failure": {
+    "run": "https://github.com/Oblikovati/Martensite/actions/runs/38955639140",
+    "revision": "1370d04fa92abbc8ff605b8f5967f4afda8e977d",
+    "observed": "macOS returned 4095 (07777) after setting u32::MAX; the fixture expected Linux's 511 (0777). Earlier creation-mode and previous-mask assertions passed. Both Linux jobs passed; Windows was still running when this observation was recorded.",
+    "independent_source": "Apple XNU f6217f891ac0bb64f3d375211650a4c1ff8ca1ea bsd/vfs/vfs_syscalls.c:10440 stores newmask & ALLPERMS; bsd/sys/stat.h:428 defines ALLPERMS as 07777.",
+    "resolution": "Original direct-libc run 38957033863 reproduced the same macOS 4095-versus-511 failure. Reviewed correction b603dfa retains an exact 07777 expectation on macOS. Both original and replacement passed local gates and the corrected native matrices recorded below. Production mask bits are not normalized."
+  },
+  "fixture_correction": "Bug #131 correction was merged with the full fixture preserved; its source is identical to the reviewed original-implementation fixture at b603dfa. cargo xtask pr passed after resolving the add/add fixture conflict (/tmp/martensite-umask-fixed-pr.log). Standards review found no violations; spec review requires corrected native runs for both implementations before acceptance.",
+  "corrected_native_validation": {
+    "original_run": "https://github.com/Oblikovati/Martensite/actions/runs/38958439355",
+    "original_revision": "9d1480854e1f2d9a9ea43670af60090cc50067a4",
+    "replacement_run": "https://github.com/Oblikovati/Martensite/actions/runs/38958583978",
+    "replacement_revision": "b72db2e74d62b34c85f1db2db99dc15502cbd289",
+    "verified": "Both implementations passed Linux x86_64, Linux arm64, macOS arm64 and Windows x64; publishing was skipped. All six Unix logs explicitly show the corrected isolated umask fixture passed. All eight inventory artifacts match their exact tested revisions and complete checked-in workspace summaries. Windows does not execute the Unix-only fixture.",
+    "integration": "Merged main e8e1d56 after native validation. The merge preserves the separate safe real-UID query and its inventory reductions. The combined cargo xtask pr gate passed (/tmp/martensite-umask-current-main-pr.log), including the isolated umask fixture."
+  },
+  "combined_native_validation": {
+    "run": "https://github.com/Oblikovati/Martensite/actions/runs/38960265078",
+    "revision": "5892482d6adaa61f6a8d60ef4fed8454f5e8f14b",
+    "result": "All four platforms passed; publishing was skipped. All three Unix logs explicitly show the isolated umask fixture passed. All four inventory artifacts match this exact revision and their complete checked-in summaries."
+  },
+  "final_local_gate": "cargo xtask pr passed again before the evidence-only push (/tmp/martensite-umask-final-pr.log). Production and fixture sources are unchanged from combined native revision 5892482.",
+  "clock_integration": "Merged main f07c2d4 in 937fe71. The umask production and fixture sources remain byte-identical to native-tested 5892482; clock production and fixtures are identical to main's separately native-tested #134. Both inventory reductions are preserved. The combined cargo xtask pr gate passed (/tmp/martensite-umask-clock-integration-pr.log); no new full-matrix claim is made for this merge.",
+  "exclusions": [
+    "No public API or package version change",
+    "Existing process-wide umask semantics are preserved, not redesigned as operation-local state",
+    "No Miri claim for the native process call",
+    "No completion claim for #89 or #80"
+  ]
+}

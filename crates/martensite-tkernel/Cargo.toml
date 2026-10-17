@@ -6,6 +6,7 @@ description = "Martensite kernel foundation: errors, memory, collections, string
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+license-file.workspace = true
 repository.workspace = true
 
 # The workspace forbids unsafe code. This crate owns the allocator, raw-memory and
@@ -30,12 +31,16 @@ smallvec = { version = "1.16.3", default-features = false, features = ["const_ge
 
 [target.'cfg(unix)'.dependencies]
 libc = "=0.2.190"
+nix = { version = "=0.31.3", default-features = false, features = ["fs", "feature", "pthread"] }
+# Preserve libc access/chmod error behavior during the safe-wrapper migration (#89).
+rustix = { version = "=1.1.5", default-features = false, features = ["std", "fs", "process", "time", "use-libc"] }
 
 [target.'cfg(target_vendor = "apple")'.dependencies]
 mach2 = "=0.7.0"
 
 [target."cfg(windows)".dependencies]
 libc = "=0.2.190"
+winsafe = { version = "=0.0.29", default-features = false, features = ["kernel"] }
 windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Globalization", "Win32_System_Console", "Win32_System_Diagnostics_Debug", "Win32_System_LibraryLoader", "Win32_System_Kernel", "Win32_System_Performance", "Win32_System_SystemInformation", "Win32_System_Threading"] }
 
 # Test modules share one executable per toolkit to avoid repeated linkage.
@@ -47,6 +52,11 @@ path = "tests/toolkit.rs"
 [[test]]
 name = "standard_c_locale_sentry"
 path = "tests/standard_c_locale_sentry.rs"
+
+# Process-wide umask mutation must not share the general toolkit test executable (#89).
+[[test]]
+name = "osd_umask_api_behavior"
+path = "tests/osd_umask_api_behavior.rs"
 
 # Mutates process locale and reexecutes exact test names.
 [[test]]

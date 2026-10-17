@@ -17,10 +17,12 @@ pub(super) fn process_cpu() -> (f64, f64) {
 
 #[cfg(unix)]
 fn clock_ticks() -> f64 {
-    // SAFETY: sysconf only reads a configuration value.
-    let ticks: libc::c_long = unsafe { libc::sysconf(libc::_SC_CLK_TCK) };
+    let ticks = crate::native_config::native_sysconf(nix::unistd::SysconfVar::CLK_TCK);
     ticks as f64
 }
+
+#[cfg(all(test, unix))]
+mod clock_tick_contracts;
 
 #[cfg(unix)]
 fn tms_seconds(ticks: f64) -> (f64, f64) {
@@ -41,7 +43,23 @@ fn tms_seconds(ticks: f64) -> (f64, f64) {
 
 /// Linux: only the user time of a thread is available (`CLOCK_THREAD_CPUTIME_ID`);
 /// the system part stays 0, and a failing call leaves both at 0.
-#[cfg(all(unix, not(target_vendor = "apple")))]
+#[cfg(all(target_os = "linux", target_pointer_width = "64"))]
+pub(super) fn thread_cpu() -> (f64, f64) {
+    use rustix::time::{ClockId, DynamicClockId, clock_gettime_dynamic};
+    // The fallible interface preserves the existing zero-on-error contract (#89).
+    let stamp = clock_gettime_dynamic(DynamicClockId::Known(ClockId::ThreadCPUTime));
+    thread_cpu_seconds(
+        stamp
+            .ok()
+            .map(|stamp| (stamp.tv_sec as f64, stamp.tv_nsec as f64)),
+    )
+}
+
+#[cfg(all(
+    unix,
+    not(target_vendor = "apple"),
+    not(all(target_os = "linux", target_pointer_width = "64"))
+))]
 pub(super) fn thread_cpu() -> (f64, f64) {
     let mut stamp: libc::timespec = libc::timespec {
         tv_sec: 0,
@@ -49,14 +67,19 @@ pub(super) fn thread_cpu() -> (f64, f64) {
     };
     // SAFETY: stamp is initialized, correctly aligned, writable, and alive throughout the call.
     let status: i32 = unsafe { libc::clock_gettime(libc::CLOCK_THREAD_CPUTIME_ID, &mut stamp) };
-    if status != 0 {
-        return (0.0, 0.0);
-    }
-    (
-        stamp.tv_sec as f64 + 0.000_000_001 * stamp.tv_nsec as f64,
-        0.0,
-    )
+    thread_cpu_seconds((status == 0).then(|| (stamp.tv_sec as f64, stamp.tv_nsec as f64)))
 }
+
+#[cfg(all(unix, not(target_vendor = "apple")))]
+fn thread_cpu_seconds(stamp: Option<(f64, f64)>) -> (f64, f64) {
+    let Some((seconds, nanoseconds)) = stamp else {
+        return (0.0, 0.0);
+    };
+    (seconds + 0.000_000_001 * nanoseconds, 0.0)
+}
+
+#[cfg(all(test, unix, not(target_vendor = "apple")))]
+mod thread_clock_contracts;
 
 /// macOS: the task's accumulated live-thread times (`TASK_THREAD_TIMES_INFO`).
 #[cfg(target_vendor = "apple")]
@@ -120,14 +143,29 @@ fn windows_times(query: TimesQuery, object: windows_sys::Win32::Foundation::HAND
 
 #[cfg(windows)]
 pub(super) fn process_cpu() -> (f64, f64) {
-    use windows_sys::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
-    // SAFETY: GetCurrentProcess returns a constant pseudo-handle.
-    windows_times(GetProcessTimes, unsafe { GetCurrentProcess() })
+    use windows_sys::Win32::System::Threading::GetProcessTimes;
+    windows_times(GetProcessTimes, current_process_handle())
+}
+
+#[cfg(windows)]
+#[forbid(unsafe_code)]
+fn current_process_handle() -> windows_sys::Win32::Foundation::HANDLE {
+    // Keep the platform-selected pseudo handle without owning or closing it (#89).
+    winsafe::HPROCESS::GetCurrentProcess().ptr()
 }
 
 #[cfg(windows)]
 pub(super) fn thread_cpu() -> (f64, f64) {
-    use windows_sys::Win32::System::Threading::{GetCurrentThread, GetThreadTimes};
-    // SAFETY: GetCurrentThread returns a constant pseudo-handle.
-    windows_times(GetThreadTimes, unsafe { GetCurrentThread() })
+    use windows_sys::Win32::System::Threading::GetThreadTimes;
+    windows_times(GetThreadTimes, current_thread_handle())
 }
+
+#[cfg(windows)]
+#[forbid(unsafe_code)]
+fn current_thread_handle() -> windows_sys::Win32::Foundation::HANDLE {
+    // The pseudo handle is consumed on this calling thread, never transferred (#89).
+    winsafe::HTHREAD::GetCurrentThread().ptr()
+}
+
+#[cfg(all(test, windows))]
+mod pseudo_handle_contracts;

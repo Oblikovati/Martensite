@@ -1,0 +1,14 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "starting_main": "51d680a",
+  "status": "Original baseline accepted at 2d3ee762e6da52bcc44b4c400f6f524bb125df4c: run 38997600087 passed all four native targets; exact revision, clean checkout and complete compiler summaries verified. Candidate replaces Windows acquisition with winsafe GetLocalTime and forbids unsafe in that function; date conversion and fixtures remain unchanged. Candidate native validation pending.",
+  "candidate": "Reuse existing winsafe =0.0.29 GetLocalTime, whose pinned implementation initializes all eight u16 SYSTEMTIME fields, calls the same native function once and returns the record without status filtering or LastError access. Process-local-time investigation in PR #165 covers that wrapper; schema behavior is validated separately here.",
+  "source": "https://github.com/rodrigocfd/winsafe/blob/71ed88c2a0d18b03ee452f6d4261f4c22f443483/src/kernel/funcs.rs#L537",
+  "fixtures": "Literal conversion fixtures pin month/day/year widening and exclusion of weekday/hour/minute/second/millisecond. A named fixed date source pins minimum-width formatting without normalization or truncation. Original default initialization remains, with a separate replacement-default check. Named LastError observations restore prior thread state before assertions.",
+  "exclusions": "No equality of separately sampled dates, timezone or host-clock mutation, DST transition, or arbitrary raw LastError sentinel is claimed. Synthetic field boundaries do not assert OS reachability. After replacement, the LastError comparison checks wrapper selection rather than providing an independent original-code oracle; the accepted original run supplies that baseline.",
+  "remaining": [
+    "Pass Windows cross-check, full local gate and separate Standards/Spec review",
+    "Rerun unchanged behavior fixtures and verify candidate native inventories"
+  ]
+}
