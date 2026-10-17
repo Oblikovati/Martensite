@@ -1,0 +1,30 @@
+{
+  "issue": 87,
+  "method": "Valgrind 3.22.0 DHAT, separate sequential processes running persistent_range_workload in release mode; all callback-count assertions passed",
+  "profiles": "/tmp/martensite-worker-peak.vKTDrC",
+  "baseline": {
+    "revision": "559d21a36f2e6d6944edad4f04d38d2e6c9c3d8a plus existing measurement fixtures",
+    "binary_sha256": "9ff98bf7c84d53612e843f89a903eccc6f994b08439c53941bc732322406323f",
+    "allocations": 799,
+    "allocated_bytes": 222350,
+    "peak_live_heap_bytes": 142930,
+    "retained_at_exit_bytes": 596,
+    "repeat": "Second DHAT process produced identical totals and peak; Memcheck with the same binary and --test-threads=1 also reported 799 allocations and 222350 allocated bytes",
+    "harness_control": "Removing --test-threads=1 yielded 803 allocations and 224056 allocated bytes, so the harness-thread setting alone does not explain the historical 1201 count"
+  },
+  "candidate": {
+    "revision": "067323f3727916d8f1a16f976bdacf79c454ee32",
+    "binary_sha256": "a6b4cc22cecaba74d309237e9dd62b5630491873453fe5bae5a22f04728940db",
+    "allocations": 12484,
+    "allocated_bytes": 4055701,
+    "peak_live_heap_bytes": 449767,
+    "retained_at_exit_bytes": 169596
+  },
+  "conclusion": "Candidate peak live heap is approximately 3.15 times this baseline for the measured workload; resource costs remain unresolved.",
+  "limitations": [
+    "DHAT peak live heap excludes thread stacks, allocator overhead and other mapped memory; it is not whole-process peak RSS.",
+    "The baseline allocation count differs from the historical 1201 count. Its cause is not established; retain historical observations separately and do not silently substitute them into this paired comparison.",
+    "Shared host with an unrelated local build gate running; no runtime comparison is inferred from these instrumented executions.",
+    "These profiles do not classify retained allocations as harmless or establish a general retention bound."
+  ]
+}

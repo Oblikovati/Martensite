@@ -6,6 +6,7 @@ description = "Adapter to the platform C math library for functions Rust re-impl
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+license-file.workspace = true
 repository.workspace = true
 
 # The workspace forbids unsafe code. This adapter is the one place allowed to
