@@ -4,8 +4,9 @@
   "starting_main": "c58eff4",
   "status": "Original getters retained in private functions for baseline fixtures; no unsafe removal claimed.",
   "dependency": "Windows-only winsafe =0.0.29, default features disabled, kernel enabled. Independently maintained MIT wrapper; no Rust dependencies. This increases dependency trust, not first-party unsafe allowance. Getter/accessor implementation was inspected for real kernel32 calls, no allocation, no destructor and no extra last-error operations.",
-  "fixtures": "Compare original getters with safe wrapper handles and last error for SUCCESS, ACCESS_DENIED and INVALID_DATA, on the test thread and a spawned thread. Restore incoming thread-local error before assertions. Do not hardcode pseudo-handle values or close them. No actual Windows execution yet.",
-  "local": "Windows x64 cargo check --tests passed before the added explicit incoming-error assertion. cargo deny --all-features check and cargo audit passed. Full final-state local and native gates pending.",
+  "fixtures": "Compare original getters with safe wrapper handles and last error for SUCCESS, ACCESS_DENIED and INVALID_DATA, on the test thread and a spawned thread. Restore incoming thread-local error before assertions. Exercise existing process/thread CPU queries on both threads, checking finite, nonnegative and nondecreasing components; this smoke check does not establish query failure behavior or exact timing. Do not hardcode pseudo-handle values or close them. No actual Windows execution yet.",
+  "local": "At 615380b, Windows x64 cargo check --tests, cargo xtask pr, cargo deny --all-features check and cargo audit passed. The added CPU-query smoke fixtures require renewed local and native gates.",
+  "exclusion": "Application-defined last-error values are not covered: winsafe 0.0.29 ERROR::from_raw and as_mut require unsafe. No unsafe test-only construction was added. The inspected getter/accessor path performs no error conversion or error-slot writes; named nonzero sentinels cover the baseline's observed preservation claim only.",
   "remaining": [
     "Validate original fixtures on native Windows x64",
     "Review dependency and behavioral evidence before replacing the two getters",

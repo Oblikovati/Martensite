@@ -11,6 +11,29 @@ fn current_handles_match_safe_wrapper_on_a_spawned_thread() {
     std::thread::spawn(compare_current_handles).join().unwrap();
 }
 
+#[test]
+fn current_cpu_queries_are_monotonic_on_the_calling_thread() {
+    check_current_cpu_queries();
+}
+
+#[test]
+fn current_cpu_queries_are_monotonic_on_a_spawned_thread() {
+    std::thread::spawn(check_current_cpu_queries)
+        .join()
+        .unwrap();
+}
+
+fn check_current_cpu_queries() {
+    for query in [super::process_cpu, super::thread_cpu] {
+        let before = query();
+        let after = query();
+        for (earlier, later) in [(before.0, after.0), (before.1, after.1)] {
+            assert!(earlier.is_finite() && earlier >= 0.0);
+            assert!(later.is_finite() && later >= earlier);
+        }
+    }
+}
+
 fn compare_current_handles() {
     for sentinel in [ERROR::SUCCESS, ERROR::ACCESS_DENIED, ERROR::INVALID_DATA] {
         compare_handle(
