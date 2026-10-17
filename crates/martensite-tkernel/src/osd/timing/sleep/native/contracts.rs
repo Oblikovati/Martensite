@@ -1,11 +1,23 @@
 //! Pin native sleep errno and interruption without wall-clock timing assertions (#89).
 
+#[cfg(all(target_os = "linux", target_env = "gnu"))]
 #[test]
 fn successful_native_sleeps_preserve_callers_errno() {
     for sentinel in [0, libc::EIO, 12345] {
         assert_sleep_errno(super::sec_sleep, 0, sentinel, sentinel);
         assert_sleep_errno(super::milli_sec_sleep, 0, sentinel, sentinel);
         assert_sleep_errno(super::milli_sec_sleep, 1, sentinel, sentinel);
+    }
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn successful_native_sleeps_leave_darwin_timeout_errno() {
+    // Darwin reports the successful timed wait through ETIMEDOUT (#155).
+    for sentinel in [0, libc::EIO, 12345] {
+        assert_sleep_errno(super::sec_sleep, 0, sentinel, libc::ETIMEDOUT);
+        assert_sleep_errno(super::milli_sec_sleep, 0, sentinel, libc::ETIMEDOUT);
+        assert_sleep_errno(super::milli_sec_sleep, 1, sentinel, libc::ETIMEDOUT);
     }
 }
 
