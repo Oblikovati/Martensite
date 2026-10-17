@@ -143,14 +143,29 @@ fn windows_times(query: TimesQuery, object: windows_sys::Win32::Foundation::HAND
 
 #[cfg(windows)]
 pub(super) fn process_cpu() -> (f64, f64) {
-    use windows_sys::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
+    use windows_sys::Win32::System::Threading::GetProcessTimes;
+    windows_times(GetProcessTimes, current_process_handle())
+}
+
+#[cfg(windows)]
+fn current_process_handle() -> windows_sys::Win32::Foundation::HANDLE {
+    use windows_sys::Win32::System::Threading::GetCurrentProcess;
     // SAFETY: GetCurrentProcess returns a constant pseudo-handle.
-    windows_times(GetProcessTimes, unsafe { GetCurrentProcess() })
+    unsafe { GetCurrentProcess() }
 }
 
 #[cfg(windows)]
 pub(super) fn thread_cpu() -> (f64, f64) {
-    use windows_sys::Win32::System::Threading::{GetCurrentThread, GetThreadTimes};
-    // SAFETY: GetCurrentThread returns a constant pseudo-handle.
-    windows_times(GetThreadTimes, unsafe { GetCurrentThread() })
+    use windows_sys::Win32::System::Threading::GetThreadTimes;
+    windows_times(GetThreadTimes, current_thread_handle())
 }
+
+#[cfg(windows)]
+fn current_thread_handle() -> windows_sys::Win32::Foundation::HANDLE {
+    use windows_sys::Win32::System::Threading::GetCurrentThread;
+    // SAFETY: GetCurrentThread returns a constant pseudo-handle.
+    unsafe { GetCurrentThread() }
+}
+
+#[cfg(all(test, windows))]
+mod pseudo_handle_contracts;

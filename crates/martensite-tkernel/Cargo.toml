@@ -38,6 +38,7 @@ mach2 = "=0.7.0"
 
 [target."cfg(windows)".dependencies]
 libc = "=0.2.190"
+winsafe = { version = "=0.0.29", default-features = false, features = ["kernel"] }
 windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Globalization", "Win32_System_Console", "Win32_System_Diagnostics_Debug", "Win32_System_LibraryLoader", "Win32_System_Kernel", "Win32_System_Performance", "Win32_System_SystemInformation", "Win32_System_Threading"] }
 
 # Test modules share one executable per toolkit to avoid repeated linkage.
