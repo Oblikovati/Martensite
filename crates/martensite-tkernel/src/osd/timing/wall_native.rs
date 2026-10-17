@@ -45,24 +45,17 @@ pub(super) fn wall_clock_seconds() -> f64 {
 struct NativeWindowsClock;
 
 #[cfg(windows)]
+#[forbid(unsafe_code)]
 impl windows_clock::ClockQueries for NativeWindowsClock {
     fn frequency(&mut self) -> Option<i64> {
-        use windows_sys::Win32::System::Performance::QueryPerformanceFrequency;
-        let mut value: i64 = 0;
-        // SAFETY: `value` is a writable i64 alive for the call.
-        (unsafe { QueryPerformanceFrequency(&mut value) } != 0).then_some(value)
+        winsafe::QueryPerformanceFrequency().ok()
     }
 
     fn counter(&mut self) -> Option<i64> {
-        use windows_sys::Win32::System::Performance::QueryPerformanceCounter;
-        let mut counter: i64 = 0;
-        // SAFETY: `counter` is a writable i64 alive for the call.
-        (unsafe { QueryPerformanceCounter(&mut counter) } != 0).then_some(counter)
+        winsafe::QueryPerformanceCounter().ok()
     }
 
     fn ticks(&mut self) -> u64 {
-        use windows_sys::Win32::System::SystemInformation::GetTickCount64;
-        // SAFETY: GetTickCount64 has no preconditions.
-        unsafe { GetTickCount64() }
+        winsafe::GetTickCount64()
     }
 }

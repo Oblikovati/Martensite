@@ -2,17 +2,18 @@
   "parent_issue": 80,
   "task_issue": 89,
   "starting_main": "258bba2",
-  "status": "Original native success baseline validated. Structural test seam now separates cache/fallback logic from the same three native queries; no unsafe removal yet. The production function retains its original OnceLock.",
+  "status": "Original and structural native baselines validated. Candidate replaces the three Windows native queries with existing winsafe wrappers. The production function retains its original OnceLock, branch logic and arithmetic; candidate native validation remains pending.",
   "fixtures": "A parent test launches a fresh filtered test process per named LastError sentinel. Each child tests the first wall-clock call and two warmed calls. Separate native counter samples divided by the positive boot frequency bracket each observation. LastError is captured immediately, restored before assertions, and compared with the inspected safe performance-query wrappers.",
   "assumptions": "Supported modern Windows with valid performance-counter parameters and ordered same-thread counter samples. The child filter isolates the production OnceLock from other tests; no reset hook or production state change is introduced.",
   "original_native": "Run 38993892762 at d943032 passed all four targets. All complete compiler summaries matched exact-revision clean-checkout artifacts. Windows job 117282088717 passed the parent fixture, which verifies child completion markers after all three observations. This result precedes the structural seam.",
   "branch_fixtures": "A named ScriptedClockQueries adapter drives the production cache/fallback logic with local caches. Fixtures check successful and failed frequency caching, no counter after cached failure, fallback only on failure, recovery without frequency invalidation, exact call ordering and selected zero/negative/rounding arithmetic. They establish synthetic branch behavior, not native failure reachability.",
-  "exclusions": "Native failure/fallback reachability, arbitrary interposition and application-defined LastError sentinels are not covered. Structural-seam checks and native rerun remain pending; no safe-wrapper candidate runtime result is claimed.",
+  "structural_native": "Run 38994920441 at d4c4ad00236e53e26a7f9990699fb3af2830fac4 passed all four targets. All complete compiler summaries matched exact-revision clean-checkout artifacts. Windows job 117285332410 passed all five branch fixtures and the unchanged fresh-process native parent fixture.",
+  "expected_reduction": "Three first-party Windows unsafe blocks removed; Windows wall_native.rs compiler emissions fall from six to zero because lib and test builds each emit the three sites. The Unix gettimeofday block remains unchanged.",
+  "exclusions": "Native failure/fallback reachability, arbitrary interposition and application-defined LastError sentinels are not covered. Synthetic branch fixtures establish cache and fallback behavior, not native failure reachability. No safe-wrapper candidate native runtime result is claimed yet.",
   "dependency": "Reuse winsafe =0.0.29 kernel from PR #159 without changing its pin or features.",
   "remaining": [
-    "Pass branch fixtures, Windows cross-check and full local gate",
-    "Review the structural seam and rerun unchanged native success fixtures",
-    "Replace the three native calls after the structural gate",
+    "Pass candidate Windows cross-check and full local gate",
+    "Review the safe-wrapper replacement separately from the structural seam",
     "Run unchanged fixtures and verify candidate exact-revision inventories"
   ]
 }
