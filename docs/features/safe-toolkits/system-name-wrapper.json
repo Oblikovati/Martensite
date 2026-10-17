@@ -1,0 +1,17 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "starting_main": "beb339438d6d192daeac565d7213c569c39befed",
+  "status": "Original implementation unchanged; baseline fixtures and failure-contract investigation in progress.",
+  "contract": "Zero-initialize utsname, call native uname, ignore status and return raw sysname/release bytes before their first NUL, including any partial output on failure.",
+  "fixtures": "Successful native fields are compared with separate uname -s and uname -r commands, removing only the final newline. This assumes stable system identification across calls. Successful-query errno is checked for zero, EIO and an arbitrary integer, with the caller errno restored before assertions.",
+  "failure_fixture": "The ignored Linux fixture passed explicitly (one test executed) under strace 6.8 with -f -e trace=uname -e inject=uname:error=EIO. The trace /tmp/martensite-system-names-rejected.trace contains exactly one uname call returning injected EIO; both names were empty and errno was EIO. Local kernel: 7.1.5-76070105-generic, GNU/Linux x86_64. This is pre-syscall rejection, not partial-output coverage; no global fault-injection controls were changed.",
+  "local_validation": "Both successful-call fixtures passed again after adding the ignored rejected-call fixture (/tmp/martensite-system-names-rejected-build.log). The first full gate overlapped addition of that fixture and is not final-code acceptance. A fresh final-code cargo xtask pr exited zero; log: /tmp/martensite-system-names-final-baseline-pr.log.",
+  "limits": "No partial-output failure coverage has been established. Windows excludes the Unix adapter fixtures. No failure equivalence or system exception has been established.",
+  "remaining": [
+    "Validate original fixtures locally and on native targets",
+    "Determine whether a safe interface preserves relevant failed-call output and errno",
+    "Review replacement scope and implement only after compatibility evidence",
+    "Validate the replacement and remove each replaced first-party unsafe path"
+  ]
+}
