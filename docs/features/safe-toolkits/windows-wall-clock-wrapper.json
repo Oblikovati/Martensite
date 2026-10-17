@@ -2,15 +2,17 @@
   "parent_issue": 80,
   "task_issue": 89,
   "starting_main": "258bba2",
-  "status": "Initial native success-path baseline only. All original production wall-clock statements and unsafe calls remain unchanged.",
+  "status": "Original native success baseline validated. Structural test seam now separates cache/fallback logic from the same three native queries; no unsafe removal yet. The production function retains its original OnceLock.",
   "fixtures": "A parent test launches a fresh filtered test process per named LastError sentinel. Each child tests the first wall-clock call and two warmed calls. Separate native counter samples divided by the positive boot frequency bracket each observation. LastError is captured immediately, restored before assertions, and compared with the inspected safe performance-query wrappers.",
   "assumptions": "Supported modern Windows with valid performance-counter parameters and ordered same-thread counter samples. The child filter isolates the production OnceLock from other tests; no reset hook or production state change is introduced.",
-  "exclusions": "Native failure/fallback reachability, arbitrary interposition and application-defined LastError sentinels are not covered. Branch-order, failure-cache and exact synthetic arithmetic fixtures remain required before replacement. No native runtime result is claimed yet.",
+  "original_native": "Run 38993892762 at d943032 passed all four targets. All complete compiler summaries matched exact-revision clean-checkout artifacts. Windows job 117282088717 passed the parent fixture, which verifies child completion markers after all three observations. This result precedes the structural seam.",
+  "branch_fixtures": "A named ScriptedClockQueries adapter drives the production cache/fallback logic with local caches. Fixtures check successful and failed frequency caching, no counter after cached failure, fallback only on failure, recovery without frequency invalidation, exact call ordering and selected zero/negative/rounding arithmetic. They establish synthetic branch behavior, not native failure reachability.",
+  "exclusions": "Native failure/fallback reachability, arbitrary interposition and application-defined LastError sentinels are not covered. Structural-seam checks and native rerun remain pending; no safe-wrapper candidate runtime result is claimed.",
   "dependency": "Reuse winsafe =0.0.29 kernel from PR #159 without changing its pin or features.",
   "remaining": [
-    "Pass Windows cross-check and full local gate",
-    "Review fixtures and execute the original baseline on native targets",
-    "Add scoped named-fake branch fixtures before replacing the three calls",
+    "Pass branch fixtures, Windows cross-check and full local gate",
+    "Review the structural seam and rerun unchanged native success fixtures",
+    "Replace the three native calls after the structural gate",
     "Run unchanged fixtures and verify candidate exact-revision inventories"
   ]
 }
