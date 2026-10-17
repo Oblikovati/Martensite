@@ -215,13 +215,11 @@ fn calendar_conversion_preserves_offsets_and_zero_milliseconds() {
     assert_eq!(actual.millisecond, 0);
 }
 #[cfg(windows)]
+#[forbid(unsafe_code)]
 fn local_time() -> Result<LocalTime, i32> {
-    use windows_sys::Win32::System::SystemInformation::GetLocalTime;
     // The Windows system date uses GetLocalTime, including milliseconds.
     // CI job 114325767580 exposed the previous ERROR_CALL_NOT_IMPLEMENTED fallback.
-    let mut clock = empty_system_time();
-    // SAFETY: GetLocalTime writes exactly one live SYSTEMTIME and has no failure return.
-    unsafe { GetLocalTime(&mut clock) };
+    let clock = winsafe::GetLocalTime();
     Ok(system_time_local_time([
         clock.wYear,
         clock.wMonth,
@@ -251,40 +249,6 @@ fn system_time_local_time(fields: [u16; 8]) -> LocalTime {
 #[cfg(all(test, windows))]
 mod local_time_contracts;
 
-#[cfg(windows)]
-fn empty_system_time() -> windows_sys::Win32::Foundation::SYSTEMTIME {
-    windows_sys::Win32::Foundation::SYSTEMTIME {
-        wYear: 0,
-        wMonth: 0,
-        wDayOfWeek: 0,
-        wDay: 0,
-        wHour: 0,
-        wMinute: 0,
-        wSecond: 0,
-        wMilliseconds: 0,
-    }
-}
-
-#[cfg(all(test, windows))]
-mod clock_initialization_tests {
-    #[test]
-    fn system_time_starts_with_all_fields_zero() {
-        let clock = super::empty_system_time();
-        assert_eq!(
-            [
-                clock.wYear,
-                clock.wMonth,
-                clock.wDayOfWeek,
-                clock.wDay,
-                clock.wHour,
-                clock.wMinute,
-                clock.wSecond,
-                clock.wMilliseconds
-            ],
-            [0; 8]
-        );
-    }
-}
 // TODO(platform): hosts with neither the Unix nor the Windows clock API.
 #[cfg(not(any(unix, windows)))]
 fn local_time() -> Result<LocalTime, i32> {
