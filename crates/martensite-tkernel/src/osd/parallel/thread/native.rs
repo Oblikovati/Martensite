@@ -16,9 +16,9 @@ pub(crate) fn current_thread_id() -> usize {
 
 /// The current thread id: `pthread_self()` on Unix, `GetCurrentThreadId()` on Windows.
 #[cfg(windows)]
+#[forbid(unsafe_code)]
 pub(crate) fn current_thread_id() -> usize {
-    // SAFETY: GetCurrentThreadId has no preconditions and never fails.
-    unsafe { windows_sys::Win32::System::Threading::GetCurrentThreadId() as usize }
+    winsafe::GetCurrentThreadId() as usize
 }
 
 /// The identifier `Run` records: the `pthread_t` on Unix, the Win32 thread id on Windows.
@@ -72,12 +72,10 @@ pub(crate) fn online_processors() -> i32 {
 /// `GetSystemInfo().dwNumberOfProcessors` (the WOW64 `GetNativeSystemInfo` branch reports
 /// the same count for a 64-bit Rust process).
 #[cfg(windows)]
+#[forbid(unsafe_code)]
 pub(crate) fn online_processors() -> i32 {
-    use windows_sys::Win32::System::SystemInformation::{GetSystemInfo, SYSTEM_INFO};
-    // The dependency's safe default preserves the all-zero initial state (#89).
-    let mut info = SYSTEM_INFO::default();
-    // SAFETY: `info` is a valid, writable SYSTEM_INFO.
-    unsafe { GetSystemInfo(&mut info) };
+    // The dependency's safe wrapper preserves the all-zero initial state (#89).
+    let info = winsafe::GetSystemInfo();
     windows_processor_count(info.dwNumberOfProcessors)
 }
 

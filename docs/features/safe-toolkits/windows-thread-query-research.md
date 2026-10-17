@@ -3,9 +3,10 @@
 Feature #80 / task #89 research at
 `c77e8d94dbb60dc2d32f910fc3c002813b21c7e8`, covering
 `crates/martensite-tkernel/src/osd/parallel/thread/native.rs`.
-The accompanying baseline extracts the existing processor-count cast and adds
-fixtures without replacing native calls or changing dependencies. Native
-experiments remain pending. The unavailable humanizer prose pass remains for review.
+This research preceded the original-call baseline, now validated on all four
+native targets. The two direct-query replacements await candidate validation;
+see the [current evidence](windows-thread-query-wrapper.json). The unavailable
+humanizer prose pass remains for review.
 
 ## Two direct candidates
 
