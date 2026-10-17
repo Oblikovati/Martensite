@@ -20,14 +20,14 @@ pub(super) fn os_page_size() -> usize {
 
 /// The system page size (`getpagesize()` / `GetSystemInfo`); `os_page_size() % 4096 == 0`.
 #[cfg(windows)]
+#[forbid(unsafe_code)]
 pub(super) fn os_page_size() -> usize {
-    use windows_sys::Win32::System::SystemInformation::{GetSystemInfo, SYSTEM_INFO};
-    // The dependency's safe default preserves the all-zero initial state (#89).
-    let mut info = SYSTEM_INFO::default();
-    // SAFETY: info is initialized, writable and alive throughout the call.
-    unsafe { GetSystemInfo(&mut info) };
+    let info = winsafe::GetSystemInfo();
     info.dwPageSize as usize
 }
+
+#[cfg(all(test, windows))]
+mod windows_contracts;
 
 #[cfg(all(test, windows))]
 mod system_info_tests {
