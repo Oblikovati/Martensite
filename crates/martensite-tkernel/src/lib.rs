@@ -3,6 +3,10 @@
 
 mod c_format;
 mod error;
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+mod native_calendar;
+#[cfg(unix)]
+mod native_config;
 pub mod quantity;
 pub use error::{Error, ErrorKind};
 pub mod fsd;

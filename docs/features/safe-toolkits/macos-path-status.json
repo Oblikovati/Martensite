@@ -1,0 +1,33 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "baseline_revision": "6857090069437fe06f415a8e85295320999dca33",
+  "integration_baseline": "3e677514c73bb8197cf1c9479a56cf0928fcc9c0",
+  "fixture_revision": "4b0d310",
+  "change": "On macOS, path-based stat uses std::fs::metadata and Unix MetadataExt. Non-macOS stat and every target's fstat remain on their existing implementation. Both representations share the same NodeStatus field and kind conversion.",
+  "source_evidence": {
+    "compiler": "Rust 1.99.0",
+    "call": "library/std/src/sys/fs/unix.rs imports libc::stat as stat64 for Apple targets. stat at line 1964 performs a single cvt(stat64(...)) outside the Linux-GNU statx cfg, without an EINTR retry loop.",
+    "record": "FileAttr::from_stat64 retains the record unchanged on Apple. os/darwin/fs.rs MetadataExt reads st_mode, st_size, st_ctime and st_blksize directly with the same casts used by the existing toolkit conversion.",
+    "alternative": "Pinned rustix 1.1.5 adjusts negative Apple timestamp nanoseconds and seconds; it is not used for this replacement because NodeStatus exposes raw st_ctime seconds.",
+    "path": "The existing c_path truncation and native_path conversion are retained, so interior NUL suffixes are discarded before metadata is called."
+  },
+  "validation": {
+    "baseline": "Two additional kind/error fixtures passed on Linux before implementation; three existing status fixtures were already integrated by #127.",
+    "cross_check": "cargo check -p martensite-tkernel --target aarch64-apple-darwin --all-targets passed; log /tmp/martensite-path-status-macos-check.log",
+    "local_gate": "cargo xtask pr passed at 9fb6f07 and again on combined sources after integrating main 3e67751; /tmp/martensite-path-status-combined-pr.log",
+    "combined_cross_check": "macOS all-targets cargo check passed after integrating #129; /tmp/martensite-path-status-combined-macos-check.log",
+    "socket_regression": "Bug #128 corrected in 9fb6f07 with an isolated short socket root and byte-length guard. All three status-kind tests passed with the formerly failing long TMPDIR; both review axes confirmed the correction.",
+    "native": "Run 38952853434 passed Linux x86_64, Linux arm64, macOS arm64 and Windows x64 at 46ba3ce8769e12caa1e34b6c69f34dea8fce363e; publishing was skipped. All four retained inventory artifacts match that exact revision and the full checked-in workspace summaries. The macOS job explicitly passed all six status and status-kind fixtures.",
+    "native_run": "https://github.com/Oblikovati/Martensite/actions/runs/38952853434",
+    "review": "Independent standards and spec reviews found the long socket-path fixture defect tracked by #128; both confirmed its correction in 9fb6f07. No remaining production-code findings."
+  },
+  "inventory": "Native artifacts verified macOS native_unix primary spans 24 to 22 against integration baseline 3e67751, preserving #129's separate four-span reduction. Other target summaries and lexical source counts remain unchanged because the non-macOS stat block remains.",
+  "deletion": "The previous direct stat call is excluded from macOS; no parallel macOS path remains. Integrate within the current migration milestone.",
+  "exclusions": [
+    "No negative-ctime filesystem fixture; raw field preservation is supported by inspected pinned source, not such a runtime fixture",
+    "No claim that Linux std statx error behavior is identical to the existing stat call",
+    "No Miri coverage for native system calls",
+    "No completion claim for #89 or #80"
+  ]
+}

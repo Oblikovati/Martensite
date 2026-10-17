@@ -1,0 +1,8 @@
+{
+  "task": 89,
+  "change": "Replace utsname zeroed initialization with explicit zero character arrays; infer each field length from its libc type.",
+  "source_evidence": "Pinned libc 0.2.190 unix/mod.rs routing and utsname definitions in linux_like, bsd, newlib, aix, cygwin, redox, nto, hurd, solarish and haiku. Five common fields; domainname additionally exists in newlib, Linux-like, Redox, Cygwin and Hurd definitions.",
+  "compatibility": "No interface, dependency, OS call, result decoding or ignored-status behavior changes. Zero-filled output storage remains available if uname fails. No unsafe initialization fallback remains.",
+  "inventory": "host/native.rs unsafe keyword count decreases from six to five; residual FFI and pointer use remain part of task 89.",
+  "validation": "Focused initializer test passed on Linux x86_64; other-platform compilation and native CI gates remain pending. Source inspection of additional Unix layouts is not runtime coverage."
+}

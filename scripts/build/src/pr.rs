@@ -29,6 +29,16 @@ pub fn validate_pull_request(
     );
     context.reporter.note(&summary);
     lint_changed_files(context, &merge_base, &changed)?;
+    if changed
+        .iter()
+        .any(|file| crate::lint::unsafe_inventory_input(&file.path))
+    {
+        context
+            .reporter
+            .step("Collect expanded unsafe diagnostics", || {
+                crate::compiler_inventory::capture_inventory(context.runner, context.root(), target)
+            })?;
+    }
     check_affected_packages(context, &changed, target)
 }
 
@@ -113,19 +123,25 @@ mod tests {
 
     #[test]
     fn math_change_checks_math_and_its_dependent_kernel() {
-        let runner = runner_with_changes("M\0crates/martensite-math/src/lib.rs\0");
+        let directory = tempfile::tempdir().unwrap();
+        crate::compiler_inventory::baseline::install_empty_fixture(directory.path());
+        let runner = runner_with_changes("M\0crates/martensite-math/src/lib.rs\0")
+            .with_stdout("git rev-parse --show-toplevel", directory.path().to_str().unwrap())
+            .with_stdout("rustc -vV", "host: test-target\n")
+            .with_stdout("git rev-parse HEAD", &"a".repeat(40))
+            .with_stdout("cargo check --locked --workspace --all-targets --target test-target --message-format=json --target-dir target/unsafe-inventory/build",
+                "{\"reason\":\"build-finished\",\"success\":true}\n");
         validate_pull_request(
-            &context_at(&runner, Path::new("/repo")),
+            &context_at(&runner, directory.path()),
             "origin/main",
             &BuildTarget::Host,
         )
         .unwrap();
         let selection = "--package martensite-kernel --package martensite-math";
-        let tail: Vec<_> = runner.commands().into_iter().rev().take(5).rev().collect();
+        let tail: Vec<_> = runner.commands().into_iter().rev().take(4).rev().collect();
         assert_eq!(
             tail,
             [
-                "rustfmt --check -- crates/martensite-math/src/lib.rs".to_owned(),
                 "cargo metadata --format-version 1 --no-deps --locked".to_owned(),
                 format!("cargo clippy --locked {selection} --all-targets -- -D warnings"),
                 format!("cargo build --locked {selection} --all-targets"),

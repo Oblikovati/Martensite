@@ -1,0 +1,35 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "baseline_revision": "6857090",
+  "fixture_revision": "982140f",
+  "implementation_revision": "581873058b88d69f9d4ec4bfdfc0a3592cddac9d",
+  "change": "Replaced first-party libc access and chmod unsafe blocks with safe rustix wrappers; retained the existing C-string conversion and all input mode bits.",
+  "dependency": {
+    "package": "rustix 1.1.5, already pinned in Cargo.lock",
+    "direct_features": ["std", "fs", "use-libc"],
+    "source_evidence": "src/fs/abs.rs delegates access/chmod to the selected backend. src/backend/libc/fs/syscalls.rs calls libc access/chmod once and returns the OS error without a retry loop.",
+    "mode_conversion": "Mode::from_raw_mode strips S_IFMT; from_bits_retain preserves the original cast-to-mode_t behavior instead.",
+    "trust": "Established dependency unsafe is separately trusted and inventoried; this is not a claim that rustix contains no unsafe. No custom first-party implementation was moved into the dependency.",
+    "feature_unification": "use-libc also selects rustix's libc backend for other users of the same package, including tempfile; full workspace tests and native validation must cover this shared feature selection.",
+    "policy_checks": "cargo deny --all-features check and cargo audit passed"
+  },
+  "compatibility": {
+    "fixtures": "Three Linux tests passed before and after replacement: all access combinations, first-NUL truncation, non-ASCII paths, chmod through symlinks, permission bits, and ENOENT/ENOTDIR cases.",
+    "source_contract": "Both paths continue through c_path, preserve libc constants and raw errno, and use the same libc entrypoints. No public signature, trait bound or package version changed.",
+    "limits": "Fixtures do not simulate interrupted syscalls or alternate real/effective credentials. One-shot behavior and use of access rather than effective-credential access are established by inspected pinned backend source."
+  },
+  "validation": {
+    "local_gate": "cargo xtask pr passed across the full workspace; /tmp/martensite-path-permissions-pr.log",
+    "review": "Standards: no findings. Spec: no implementation defect; full-workspace and native validation required for shared rustix feature selection.",
+    "native_run": 38949760679,
+    "native_revision": "581873058b88d69f9d4ec4bfdfc0a3592cddac9d",
+    "native_status": "Passed on Linux x86_64, Linux arm64, macOS arm64 and Windows x64; publish skipped",
+    "fixtures": "All three permission fixtures passed in each completed Unix job; logs /tmp/martensite-permissions-linux-x64.log, /tmp/martensite-permissions-linux-arm64.log and /tmp/martensite-permissions-macos.log",
+    "artifacts": "All four target inventories downloaded to /tmp/martensite-permissions-native-5818730.YVARzp. Each provenance revision matches the implementation and each complete workspace summary matches the reviewed target baseline."
+  },
+  "deletion": "Deleted both selected unsafe blocks directly; no parallel legacy access/chmod implementation remains.",
+  "inventory": "Source blocks 17 to 15; verified native_unix compiler spans Linux 32 to 28 and macOS 28 to 24. Windows baseline unchanged and native artifact verified.",
+  "migration_limit": "Direct replacement in this increment, within the current migration milestone.",
+  "exclusions": ["No Miri claim for system calls", "No completion claim for #89 or #80"]
+}

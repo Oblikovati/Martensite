@@ -1,0 +1,39 @@
+{
+  "issue": 89,
+  "parent": 80,
+  "baseline_revision": "518968e99a893fd437c47b3a8bc0873f90c2b413",
+  "fixture_revision": "6a34048b47c17307143cdbc5c6551f79e1e8e41f",
+  "implementation_revision": "bf1c21832e2a69717e660a280d2dbeaf6aec48c4",
+  "change": "Replaced unsafe zero initialization of the two macOS stat records with libc::stat::default(); stat/fstat calls and field conversion remain unchanged.",
+  "dependency_evidence": "Pinned libc 0.2.190 src/unix/bsd/apple/mod.rs defines stat through s2! with exhaustive public integer/array fields. src/macros.rs custom_struct emits field-wise Default. No new dependency or feature is required.",
+  "preserved": [
+    "Public interfaces, first-NUL path truncation, error propagation and NodeStatus fields",
+    "Descriptor status after unlink",
+    "Non-macOS initialization and all native system calls",
+    "Dependency versions and package versions"
+  ],
+  "local_validation": {
+    "baseline_fixtures": "Three Linux x86_64 status fixtures passed before implementation",
+    "macos_cross_check": "cargo check -p martensite-tkernel --target aarch64-apple-darwin --all-targets passed; log /tmp/martensite-stat-macos-check.log",
+    "pr_gate": "cargo xtask pr passed; log /tmp/martensite-stat-records-pr.log"
+  },
+  "review": {
+    "standards": "No findings at bf1c218 against 518968e",
+    "spec": "No implementation defect; native macOS status fixtures and exact-revision compiler inventory verified"
+  },
+  "native_validation": {
+    "run": 38946277401,
+    "revision": "bf1c21832e2a69717e660a280d2dbeaf6aec48c4",
+    "status": "Passed on Linux x86_64, Linux arm64, macOS arm64 and Windows x64; publish skipped",
+    "macos_status_fixtures": "All three status fixtures passed in native job 117126241926; log /tmp/martensite-stat-native-macos.log",
+    "verified_inventories": "Downloaded all four target artifacts to /tmp/martensite-stat-native-bf1c218.bJktHK; each provenance revision equals the implementation revision and each complete workspace summary equals its reviewed target baseline",
+    "mode": "Nonpublishing release validation with version input 0.3.1; no version change or tag"
+  },
+  "inventory": "Verified macOS native_unix.rs group decreased from 32 to 28 emitted primary spans. Other target baselines and lexical source inventory are unchanged; non-macOS fallback blocks remain counted.",
+  "migration_limit": "Both selected macOS initialization paths are replaced directly in this increment; no parallel macOS initialization path is retained.",
+  "exclusions": [
+    "No Miri claim for native system calls",
+    "No proof that the remaining stat/fstat calls or other target initializers are unavoidable",
+    "This increment does not complete #89 or #80"
+  ]
+}

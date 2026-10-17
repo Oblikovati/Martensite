@@ -1,0 +1,65 @@
+{
+  "issue": 89,
+  "baseline_fixture_commit": "863f51d",
+  "toolchain": "Rust 1.99.0",
+  "operations": {
+    "rename": "std::fs::rename -> libc::rename, cvt",
+    "unlink": "std::fs::remove_file -> libc::unlink, cvt",
+    "rmdir": "std::fs::remove_dir -> libc::rmdir, cvt",
+    "mkdir": "std::fs::DirBuilder with Unix mode -> libc::mkdir, cvt"
+  },
+  "source_evidence": "Pinned rust-src library/std/src/sys/fs/unix.rs: DirBuilder::mkdir/set_mode, unlink, rename, rmdir. Each uses the corresponding native call without the cvt_r EINTR retry loop.",
+  "compatibility": [
+    "Existing CString conversion truncates at the first NUL before converting its bytes to a borrowed Unix OsStr/Path.",
+    "Errors use the returned io::Error raw OS code, not a later read of errno.",
+    "DirBuilderExt::mode narrows u32 to mode_t in the pinned implementation, as the old wrapper did.",
+    "No public signature, trait bound, dependency or version change."
+  ],
+  "excluded_operation": "chmod remains unchanged: pinned std set_perm uses cvt_r and retries EINTR, whereas the existing wrapper reports the first error.",
+  "fixtures": {
+    "command": "cargo test -p martensite-tkernel --test toolkit osd_safe_path_operations",
+    "baseline_passed": 6,
+    "replacement_passed": 6,
+    "coverage": "Non-UTF8 paths, first-NUL truncation, empty-path ENOENT, rename content/source removal, unlink ENOENT, directory permission restriction, EEXIST, ENOTEMPTY, removal, rename over a symlink without changing its target, dangling-symlink unlink, and directory-symlink rejection.",
+    "expanded_baseline_replay": "Replayed the exact 863f51d native_unix.rs implementation against all six fixtures, then restored the safe candidate. Both passed; no baseline assertion was changed.",
+    "platform": "Linux x86_64"
+  },
+  "inventory": {
+    "source_blocks_before": 22,
+    "source_blocks_after": 18,
+    "expected_unix_compiler_primary_spans_before": 44,
+    "expected_unix_compiler_primary_spans_after": 36,
+    "windows": "No changed native Windows implementation or baseline."
+  },
+  "local_gate": "cargo xtask pr passed after correcting suite registration, formatting suite-included files directly, and splitting the oversized directory fixture. Log: /tmp/martensite-safe-paths-final-pr.log.",
+  "review": "Standards: oversized test split and independently rechecked, no remaining findings. Spec: no implementation defect; native matrix acceptance subsequently completed below. Formatting discovery mismatch tracked separately as Bug #122.",
+  "native_attempt_0692a05": {
+    "run": 38936445165,
+    "revision": "0692a055906b3863161302ec68cca252d28d3b1b",
+    "linux_x86_64": "passed; downloaded inventory matches exact revision and reviewed summary",
+    "linux_arm64": "passed; downloaded inventory matches exact revision and reviewed summary",
+    "windows_x64": "passed; downloaded inventory matches exact revision and unchanged reviewed summary",
+    "macos_arm64": "failed two fixtures because the filesystem rejected invalid UTF-8 names with EILSEQ; valid-name symlink tests passed",
+    "fixture_bug": 123
+  },
+  "fixture_correction_123": {
+    "change": "Portable success fixtures use valid non-ASCII UTF-8 names. A separate raw-name fixture explicitly checks supported-name success or EILSEQ creation rejection, exact lookup errors, unchanged valid rename source, and untouched lossy-name sentinel.",
+    "linux_baseline_replay_passed": 7,
+    "linux_candidate_focused_passed": 7,
+    "review": "Standards found no issue. Spec requested invalid rename destination coverage, subsequently added and independently rechecked; no remaining implementation findings.",
+    "validation": "Seven path fixtures passed on native macOS and Linux. Full local gate passed, log /tmp/martensite-safe-paths-123-pr.log."
+  },
+  "completed_native_validation": {
+    "run": 38938102429,
+    "url": "https://github.com/Oblikovati/Martensite/actions/runs/38938102429",
+    "revision": "b970efa664ab4ec61834544fd116fc66cf247e73",
+    "linux_x86_64": "passed",
+    "linux_arm64": "passed",
+    "macos_arm64": "passed; job log confirms all seven path fixtures",
+    "windows_x64": "passed; Unix fixtures excluded by cfg",
+    "artifacts": "All four downloaded inventories match the exact revision and corresponding reviewed workspace summary. Unix native_unix.rs group is 36; Windows remains unchanged.",
+    "artifact_directory": "/tmp/martensite-paths-native-b970efa.hM7qHC",
+    "publication": "Non-publishing release-mode rehearsal; no version bump or tag."
+  },
+  "scope_limit": "This bounded removal does not complete #89 or establish permanent exceptions for the remaining system calls. Integration status is tracked on GitHub."
+}

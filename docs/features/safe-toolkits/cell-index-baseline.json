@@ -1,0 +1,20 @@
+{
+  "production_revision": "8c6611e4aafb22042df8d7eebf062eab5dce8329",
+  "platform": "x86_64-unknown-linux-gnu",
+  "toolchain": "1.99.0",
+  "profile": "release",
+  "workload_test": "ncollection::cell_filter::cell_index::migration_tests::cell_index_storage_workload",
+  "rounds_per_length": 20000,
+  "lengths": [0, 10, 11, 24],
+  "checksum": 900000,
+  "index_bytes": 56,
+  "elapsed_nanoseconds": [43374948, 43212065, 47095463],
+  "peak_process_rss_kib": [9872, 10224, 10024],
+  "measurement": "Three separate invocations of the compiled release test binary under /usr/bin/time; compilation excluded",
+  "exclusions": [
+    "Allocation counts are not measured; valgrind and heaptrack are unavailable",
+    "RSS includes test harness and process overhead",
+    "Other build workloads were running on the host; timings are not isolated",
+    "Other platforms and Miri are not covered by these measurements"
+  ]
+}

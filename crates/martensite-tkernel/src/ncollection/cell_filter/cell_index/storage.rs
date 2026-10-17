@@ -1,5 +1,5 @@
-//! Free-by-address allocator metadata keeps empty heap ownership after moves.
-use super::{BaseAllocator, CellIndex};
+//! Typed owners retain the full allocation even after the logical index is emptied.
+use super::{AllocBox, CellIndex};
 impl CellIndex {
     pub(super) fn allocate(length: usize) -> Self {
         Self {
@@ -24,24 +24,22 @@ impl CellIndex {
         self.length = std::mem::replace(&mut source.length, 0);
     }
     pub(super) fn release_heap(&mut self) {
-        if let Some(heap) = self.heap.take() {
-            // SAFETY: `heap` came from the common allocator and this index owns it uniquely; take() ensures it is freed once. Common Free is infallible for this uniquely owned pointer, even when length is
-            // zero: its private header retains the real allocation layout and capacity.
-            unsafe { BaseAllocator::common().free_raw(heap.cast()).unwrap() };
-        }
+        self.heap = None;
     }
 }
 
-fn allocate_heap(length: usize) -> std::ptr::NonNull<i32> {
+fn allocate_heap(length: usize) -> AllocBox<Vec<i32>> {
     let bytes = length
         .checked_mul(std::mem::size_of::<i32>())
         .unwrap_or_else(|| {
             panic!("CellIndex length {length}: expected byte size representable by usize")
         });
-    // Index storage uses the global allocator independently of the filter's arena.
-    // The existing common policy's private header retains the layout after a source is emptied.
-    super::BaseAllocator::common()
-        .allocate_raw(bytes)
-        .unwrap_or_else(|| panic!("CellIndex allocation {bytes}: expected available heap bytes"))
-        .cast()
+    // The common allocator uses Rust's global allocator, independently of the filter arena.
+    // Typed ownership needs neither its raw header nor its virtual-dispatch bookkeeping (#82).
+    let mut heap = Vec::new();
+    heap.try_reserve_exact(length)
+        .unwrap_or_else(|_| panic!("CellIndex allocation {bytes}: expected available heap bytes"));
+    heap.resize(length, 0);
+    AllocBox::try_new(heap)
+        .unwrap_or_else(|_| panic!("CellIndex allocation {bytes}: expected available heap bytes"))
 }

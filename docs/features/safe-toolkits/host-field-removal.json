@@ -1,0 +1,16 @@
+{
+  "task": 89,
+  "baseline_commit": "517047e",
+  "scope": "osd/process/host/native.rs bounded character-array decoding",
+  "removed_unsafe_constructs": 1,
+  "replacement": "Safe slice iteration stops at the first zero and takes the one-byte native representation of each c_char, without signedness-dependent casts (#102).",
+  "compatibility": [
+    "uname fields and the gethostname buffer are already bounded and NUL-terminated by their existing call contracts.",
+    "The baseline fixture passed before and after replacement, preserving empty strings, first-NUL truncation and non-UTF8 bytes.",
+    "An additional fixture covers every nonzero byte for signed and unsigned platform c_char types.",
+    "No public signatures, dependencies, system calls or resolver behavior changed."
+  ],
+  "local_pr_gate": "cargo xtask pr passed, including source inventory, formatting, clippy, builds and affected toolkit tests",
+  "remaining_validation": ["Native platform checks"],
+  "exclusions": "This does not prove the remaining host FFI unavoidable or complete Task #89."
+}

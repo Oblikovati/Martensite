@@ -157,8 +157,7 @@ impl WindowsCalls for SystemWindowsCalls {
     }
 
     fn last_error_code(&self) -> u32 {
-        // SAFETY: GetLastError only reads the calling thread's last-error value.
-        unsafe { system::last_error_code() }
+        std::io::Error::last_os_error().raw_os_error().unwrap_or(0) as u32
     }
 
     fn format_message(&self, code: u32, name: Option<&[u8]>, target: &mut [u16]) -> bool {
@@ -175,7 +174,7 @@ impl WindowsCalls for SystemWindowsCalls {
 mod system {
     use std::ffi::{CString, c_void};
     use windows_sys::Win32::{
-        Foundation::{FreeLibrary, GetLastError, HMODULE},
+        Foundation::{FreeLibrary, HMODULE},
         Globalization::{CP_UTF8, WideCharToMultiByte},
         System::{
             Diagnostics::Debug::{
@@ -219,11 +218,6 @@ mod system {
     pub unsafe fn close(handle: *mut c_void) {
         // SAFETY: the caller passes a module handle this loader returned, released once.
         unsafe { FreeLibrary(handle as HMODULE) };
-    }
-
-    pub unsafe fn last_error_code() -> u32 {
-        // SAFETY: GetLastError only reads the calling thread's last-error value.
-        unsafe { GetLastError() }
     }
 
     pub fn format_message(code: u32, name: Option<&[u8]>, target: &mut [u16]) -> bool {

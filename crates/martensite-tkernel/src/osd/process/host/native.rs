@@ -10,7 +10,17 @@ pub struct NativeHost;
 #[cfg(unix)]
 mod unix {
     use super::SystemNames;
-    use std::ffi::{CStr, CString};
+    use std::ffi::CString;
+
+    #[cfg(test)]
+    mod hostname_contracts;
+    #[cfg(test)]
+    mod system_name_contracts;
+
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    mod hostname;
+    #[cfg(all(target_os = "linux", target_env = "gnu"))]
+    pub(super) use hostname::host_name;
 
     // gethostbyname is POSIX (glibc, macOS libSystem) but not bound by the libc crate.
     unsafe extern "C" {
@@ -18,15 +28,16 @@ mod unix {
     }
 
     fn field(bytes: &[libc::c_char]) -> Vec<u8> {
-        // SAFETY: uname NUL-terminates every utsname field inside its array.
-        unsafe { CStr::from_ptr(bytes.as_ptr()) }
-            .to_bytes()
-            .to_vec()
+        bytes
+            .iter()
+            .copied()
+            .take_while(|&byte| byte != 0)
+            .map(|byte| byte.to_ne_bytes()[0])
+            .collect()
     }
 
     pub(super) fn system_names() -> SystemNames {
-        // SAFETY: utsname is a plain C struct of char arrays; zero is a valid value.
-        let mut info: libc::utsname = unsafe { std::mem::zeroed() };
+        let mut info: libc::utsname = EMPTY_SYSTEM_NAMES;
         // SAFETY: `info` is live and writable; the status is ignored on purpose.
         unsafe { libc::uname(&mut info) };
         SystemNames {
@@ -35,6 +46,30 @@ mod unix {
         }
     }
 
+    const EMPTY_SYSTEM_NAMES: libc::utsname = libc::utsname {
+        sysname: empty_field(),
+        nodename: empty_field(),
+        release: empty_field(),
+        version: empty_field(),
+        machine: empty_field(),
+        #[cfg(any(
+            target_env = "newlib",
+            target_os = "linux",
+            target_os = "l4re",
+            target_os = "android",
+            target_os = "emscripten",
+            target_os = "redox",
+            target_os = "cygwin",
+            target_os = "hurd"
+        ))]
+        domainname: empty_field(),
+    };
+
+    const fn empty_field<const N: usize>() -> [libc::c_char; N] {
+        [0; N]
+    }
+
+    #[cfg(not(all(target_os = "linux", target_env = "gnu")))]
     pub(super) fn host_name() -> Result<Vec<u8>, i32> {
         let mut value: [libc::c_char; 65] = [0; 65];
         // SAFETY: at most 64 bytes are written into the 65-byte buffer, whose last byte
@@ -62,6 +97,47 @@ mod unix {
             }
             let bytes: &[u8] = std::slice::from_raw_parts(first.cast::<u8>(), 4);
             Some([bytes[0], bytes[1], bytes[2], bytes[3]])
+        }
+    }
+
+    #[cfg(test)]
+    mod field_tests {
+        use super::field;
+
+        #[test]
+        fn system_name_output_fields_start_empty() {
+            let info = super::EMPTY_SYSTEM_NAMES;
+            for bytes in [
+                &info.sysname[..],
+                &info.nodename[..],
+                &info.release[..],
+                &info.version[..],
+                &info.machine[..],
+            ] {
+                assert!(bytes.iter().all(|&byte| byte == 0));
+            }
+            #[cfg(target_os = "linux")]
+            assert!(info.domainname.iter().all(|&byte| byte == 0));
+        }
+
+        #[test]
+        fn terminated_fields_keep_raw_bytes_and_stop_at_first_nul() {
+            let bytes: Vec<libc::c_char> = [b'h', 0xff, 0, b'x', 0]
+                .into_iter()
+                .map(|byte| byte as libc::c_char)
+                .collect();
+            assert_eq!(field(&bytes), [b'h', 0xff]);
+            assert!(field(&[0, 1, 0]).is_empty());
+            assert_eq!(field(&[65, 66, 0]), b"AB");
+        }
+
+        #[test]
+        fn field_conversion_preserves_every_nonzero_byte() {
+            let expected: Vec<u8> = (1..=255).collect();
+            let mut bytes: Vec<libc::c_char> =
+                expected.iter().map(|&byte| byte as libc::c_char).collect();
+            bytes.push(0);
+            assert_eq!(field(&bytes), expected);
         }
     }
 }

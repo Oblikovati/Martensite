@@ -82,8 +82,7 @@ fn executable_path() -> Vec<u8> {
 
 #[cfg(unix)]
 fn is_super_user() -> Result<bool, i32> {
-    // SAFETY: getuid has no preconditions and cannot fail.
-    Ok(unsafe { libc::getuid() == 0 })
+    Ok(rustix::process::getuid().is_root())
 }
 // TODO(platform): Windows tests membership of the Administrators SID through the token
 // APIs; until implemented, ERROR_CALL_NOT_IMPLEMENTED (120) is reported.
@@ -94,7 +93,7 @@ fn is_super_user() -> Result<bool, i32> {
 
 #[cfg(unix)]
 fn user_name() -> Result<Vec<u8>, i32> {
-    let mut entry: libc::passwd = unsafe_zeroed_passwd();
+    let mut entry: libc::passwd = empty_passwd();
     let mut buffer: Vec<libc::c_char> = vec![0; 16 * 1024];
     let mut found: *mut libc::passwd = std::ptr::null_mut();
     // SAFETY: every pointer refers to live, writable storage of the stated length; the
@@ -116,10 +115,53 @@ fn user_name() -> Result<Vec<u8>, i32> {
         .to_bytes()
         .to_vec())
 }
-#[cfg(unix)]
-fn unsafe_zeroed_passwd() -> libc::passwd {
+#[cfg(target_os = "linux")]
+fn empty_passwd() -> libc::passwd {
+    libc::passwd {
+        pw_name: std::ptr::null_mut(),
+        pw_passwd: std::ptr::null_mut(),
+        pw_uid: 0,
+        pw_gid: 0,
+        pw_gecos: std::ptr::null_mut(),
+        pw_dir: std::ptr::null_mut(),
+        pw_shell: std::ptr::null_mut(),
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn empty_passwd() -> libc::passwd {
+    // libc 0.2.190 generates safe field defaults, including null string pointers.
+    libc::passwd::default()
+}
+
+#[cfg(all(unix, not(any(target_os = "linux", target_os = "macos"))))]
+fn empty_passwd() -> libc::passwd {
     // SAFETY: passwd is a plain C struct of integers and pointers; all-zero is valid.
     unsafe { std::mem::zeroed() }
+}
+
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+#[test]
+fn account_initialization_preserves_null_strings_and_zero_ids() {
+    let entry = empty_passwd();
+    assert_eq!((entry.pw_uid, entry.pw_gid), (0, 0));
+    for pointer in [
+        entry.pw_name,
+        entry.pw_passwd,
+        entry.pw_gecos,
+        entry.pw_dir,
+        entry.pw_shell,
+    ] {
+        assert!(pointer.is_null());
+    }
+}
+
+#[cfg(all(test, target_os = "macos"))]
+#[test]
+fn apple_account_initialization_preserves_class_and_expiry() {
+    let entry = empty_passwd();
+    assert_eq!((entry.pw_change, entry.pw_expire), (0, 0));
+    assert!(entry.pw_class.is_null());
 }
 // TODO(platform): Windows reads the login name with GetUserNameW.
 #[cfg(not(unix))]
@@ -133,13 +175,21 @@ fn local_time() -> Result<LocalTime, i32> {
     let seconds: libc::time_t = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |elapsed| elapsed.as_secs() as libc::time_t);
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    let mut broken = crate::native_calendar::empty_calendar();
     // SAFETY: tm is a plain C struct; localtime_r fills it from a valid time_t.
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
     let mut broken: libc::tm = unsafe { std::mem::zeroed() };
     // SAFETY: both pointers refer to live locals for the duration of the call.
     if unsafe { libc::localtime_r(&seconds, &mut broken) }.is_null() {
         return Err(io::Error::last_os_error().raw_os_error().unwrap_or(0));
     }
-    Ok(LocalTime {
+    Ok(calendar_local_time(&broken))
+}
+
+#[cfg(unix)]
+fn calendar_local_time(broken: &libc::tm) -> LocalTime {
+    LocalTime {
         month: broken.tm_mon + 1,
         day: broken.tm_mday,
         year: broken.tm_year + 1900,
@@ -147,27 +197,58 @@ fn local_time() -> Result<LocalTime, i32> {
         minute: broken.tm_min,
         second: broken.tm_sec,
         millisecond: 0,
-    })
+    }
+}
+#[cfg(all(test, any(target_os = "linux", target_os = "macos")))]
+#[test]
+fn calendar_conversion_preserves_offsets_and_zero_milliseconds() {
+    let mut calendar = crate::native_calendar::empty_calendar();
+    calendar.tm_year = 124;
+    calendar.tm_mon = 1;
+    calendar.tm_mday = 29;
+    calendar.tm_hour = 13;
+    calendar.tm_min = 5;
+    calendar.tm_sec = 59;
+    let actual = calendar_local_time(&calendar);
+    assert_eq!((actual.month, actual.day, actual.year), (2, 29, 2024));
+    assert_eq!((actual.hour, actual.minute, actual.second), (13, 5, 59));
+    assert_eq!(actual.millisecond, 0);
 }
 #[cfg(windows)]
+#[forbid(unsafe_code)]
 fn local_time() -> Result<LocalTime, i32> {
-    use windows_sys::Win32::{Foundation::SYSTEMTIME, System::SystemInformation::GetLocalTime};
     // The Windows system date uses GetLocalTime, including milliseconds.
     // CI job 114325767580 exposed the previous ERROR_CALL_NOT_IMPLEMENTED fallback.
-    // SAFETY: SYSTEMTIME consists of eight WORD fields, all valid when zeroed.
-    let mut clock: SYSTEMTIME = unsafe { std::mem::zeroed() };
-    // SAFETY: GetLocalTime writes exactly one live SYSTEMTIME and has no failure return.
-    unsafe { GetLocalTime(&mut clock) };
-    Ok(LocalTime {
-        month: i32::from(clock.wMonth),
-        day: i32::from(clock.wDay),
-        year: i32::from(clock.wYear),
-        hour: i32::from(clock.wHour),
-        minute: i32::from(clock.wMinute),
-        second: i32::from(clock.wSecond),
-        millisecond: i32::from(clock.wMilliseconds),
-    })
+    let clock = winsafe::GetLocalTime();
+    Ok(system_time_local_time([
+        clock.wYear,
+        clock.wMonth,
+        clock.wDayOfWeek,
+        clock.wDay,
+        clock.wHour,
+        clock.wMinute,
+        clock.wSecond,
+        clock.wMilliseconds,
+    ]))
 }
+
+#[cfg(windows)]
+fn system_time_local_time(fields: [u16; 8]) -> LocalTime {
+    let [year, month, _, day, hour, minute, second, millisecond] = fields;
+    LocalTime {
+        month: i32::from(month),
+        day: i32::from(day),
+        year: i32::from(year),
+        hour: i32::from(hour),
+        minute: i32::from(minute),
+        second: i32::from(second),
+        millisecond: i32::from(millisecond),
+    }
+}
+
+#[cfg(all(test, windows))]
+mod local_time_contracts;
+
 // TODO(platform): hosts with neither the Unix nor the Windows clock API.
 #[cfg(not(any(unix, windows)))]
 fn local_time() -> Result<LocalTime, i32> {

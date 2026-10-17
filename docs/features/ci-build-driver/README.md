@@ -59,13 +59,17 @@ native runner, so the tests run on the target platform:
 2. Check whitespace (`git diff --check`) and `rustfmt --check` on the changed
    files only. Both checks run before the step fails, so one run shows all
    problems.
-3. Find the affected packages: the package that owns each changed file (the
+3. For changes to crate Rust sources, the build driver, safe-toolkit evidence,
+   Cargo manifests or lockfile, the pinned toolchain, `.cargo/`, or the workflow,
+   collect expanded unsafe diagnostics and compare the host-target baseline.
+   This runs even when no package is affected, including baseline-only changes.
+4. Find the affected packages: the package that owns each changed file (the
    longest package directory that contains it), plus every workspace package
    that depends on an affected package. A change to `Cargo.toml`,
    `Cargo.lock`, `rust-toolchain.toml`, `rustfmt.toml`, `clippy.toml` or
    `.cargo/` affects the whole workspace. A change that touches no package
-   (for example, documentation only) stops here.
-4. Run clippy with `-D warnings`, a build of all targets, and the tests for
+   stops here after any required inventory check.
+5. Run clippy with `-D warnings`, a build of all targets, and the tests for
    the affected packages.
 
 Whitespace checks retain Git diagnostics and fail on unreadable inputs or
@@ -97,17 +101,24 @@ diagnostic. The check never changes a symlink or its target ([#75]).
    messages to find executables and native libraries (`cdylib`, `staticlib`,
    `dylib`).
 4. Packaging into `target/dist/v<version>/`:
-   - `martensite-<version>-<target>.tar.gz` with `bin/`, `lib/`, `LICENSE`,
-     `README.md` and `CHANGELOG.md`. The archive is reproducible: entries are
-     sorted, and owners, timestamps and modes are fixed. A target without
-     executables or native libraries gets no archive.
+   - `martensite-<version>-<target>.tar.gz` with `bin/`, `lib/`,
+     `LICENSE-APACHE`, `README.md` and `CHANGELOG.md`. The archive is
+     reproducible: entries are sorted, and owners, timestamps and modes are
+     fixed. A target without executables or native libraries gets no
+     archive.
    - On the primary target only: one `.crate` source package per releasable
      package from `cargo package`. Cargo builds each package from its
      packaged sources to verify it. A kernel crate that depends on another
      unreleased kernel crate resolves it through cargo's local overlay
      registry, which cargo uses only for publishable packages, so kernel
-     crates must not set `publish = false`.
+     crates must not set `publish = false`. Each `.crate` must contain
+     `LICENSE-GPL`, which cargo copies from the workspace `license-file`; the
+     release stops when a crate does not set `license-file.workspace = true`.
    - A `<file>.sha256` file in `sha256sum` format next to each asset.
+5. Collect expanded unsafe diagnostics for the selected target and compare its
+   compiler baseline. Collection cleans only its dedicated build cache and
+   retains workspace and dependency diagnostics separately. CI uploads the
+   report and raw compiler streams, including fresh evidence from failed checks.
 
 The publish job downloads the files from all targets, checks every asset
 against its `.sha256`, and runs `gh release create v<version> --verify-tag`.
