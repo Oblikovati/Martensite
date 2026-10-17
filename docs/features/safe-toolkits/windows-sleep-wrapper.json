@@ -1,0 +1,16 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "starting_main": "258bba2",
+  "status": "Original Windows Sleep call retained. Pure conversion helpers preserve the original expressions; baseline validation precedes replacement.",
+  "mapping_fixtures": "Independent literal expectations cover zero, one, negative one, signed extrema, signed multiplication overflow and DWORD wrap. The milliseconds infinite sentinel is checked only as a value; no large or infinite wait is executed.",
+  "native_fixtures": "Compare original seconds-zero and milliseconds-zero/one with winsafe Sleep for SUCCESS, ACCESS_DENIED and INVALID_DATA. Capture LastError immediately and restore the test thread's prior value before assertions. No duration, scheduler fairness, APC or cancellation claim. Native execution remains pending.",
+  "exclusion": "Application-defined error values are not covered because winsafe raw ERROR construction requires unsafe. Named sentinels test observed equivalence, not a general LastError preservation guarantee. After replacement, the wrapper comparison will not be an independent oracle; original execution and same-native-call source inspection remain the compatibility evidence.",
+  "dependency": "Reuse the Windows-only winsafe =0.0.29 kernel feature integrated by PR #159; no manifest, lockfile or feature change.",
+  "remaining": [
+    "Pass focused mapping tests, Windows cross-check and full local gate",
+    "Review baseline and run original fixtures natively on all four supported targets",
+    "Replace only the Windows Sleep call and forbid unsafe on that function",
+    "Run unchanged fixtures and verify exact-revision compiler inventories before integration"
+  ]
+}
