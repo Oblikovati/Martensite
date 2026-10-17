@@ -173,7 +173,7 @@
   "crates/martensite-tkernel/src/standard/mmgr_opt/os_page.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":2}},
   "crates/martensite-tkernel/src/standard/stack_trace.rs": {"unsafe_keywords":4,"unsafe_code_mentions":1,"kinds":{"block":4}},
   "crates/martensite-tkernel/src/standard/stack_trace_windows.rs": {"unsafe_keywords":7,"unsafe_code_mentions":1,"kinds":{"block":7}},
-  "crates/martensite-tkernel/src/storage/schema/creation_date.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":2}},
+  "crates/martensite-tkernel/src/storage/schema/creation_date.rs": {"unsafe_keywords":1,"unsafe_code_mentions":2,"kinds":{"block":1}},
   "crates/martensite-tkernel/src/tcollection/ascii_string/allocation.rs": {"unsafe_keywords":6,"unsafe_code_mentions":1,"kinds":{"block":5,"implementation":1}},
   "crates/martensite-tkernel/tests/acc_allocator_aligned_reservation.rs": {"unsafe_keywords":0,"unsafe_code_mentions":1},
   "crates/martensite-tkernel/tests/acc_allocator_alignment_safety.rs": {"unsafe_keywords":1,"unsafe_code_mentions":1,"kinds":{"block":1}},
