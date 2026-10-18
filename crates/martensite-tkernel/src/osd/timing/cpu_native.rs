@@ -2,6 +2,9 @@
 //! Each function returns (user seconds, system seconds).
 #![allow(unsafe_code)]
 
+#[cfg(all(test, target_os = "linux", target_env = "gnu"))]
+mod process_query_contracts;
+
 /// Linux (and every non-Apple Unix): `times()` ticks over `sysconf(_SC_CLK_TCK)`.
 #[cfg(all(unix, not(target_vendor = "apple")))]
 pub(super) fn process_cpu() -> (f64, f64) {

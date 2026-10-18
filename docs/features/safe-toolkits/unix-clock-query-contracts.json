@@ -1,0 +1,31 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "baseline_revision": "b9d38b160e07de4d2e5c4e4db23fbbda40a5a736",
+  "scope": "Original native clock behavior; tests only, no implementation replacement",
+  "inventory_change": "Two new fixture-file entries each record zero unsafe keywords and one forbid(unsafe_code) lint mention; no unsafe construct counts change",
+  "local_platform": {"architecture": "x86_64", "libc": "glibc 2.39", "tracer": "strace 6.8"},
+  "success_fixtures": {
+    "wall": "successful_time_of_day_preserves_raw_errno_and_microsecond_shape passed with incoming errno 0, EIO and 12345; microseconds were normalized",
+    "process": "process_ticks_preserve_incoming_errno passed with incoming errno 0, EIO and 12345; CPU seconds were finite and nonnegative"
+  },
+  "process_failure_fixture": {
+    "name": "injected_process_ticks_failure_keeps_zero_output_and_errno",
+    "command_shape": "strace -f -e trace=times -e inject=times:error=ERROR TEST_BINARY injected_process_ticks_failure_keeps_zero_output_and_errno --ignored --test-threads=1",
+    "injected_errors": ["EIO", "EPERM", "4095"],
+    "trace_verification": "Each separate process showed exactly one times call with the requested error and the INJECTED marker",
+    "observations": "All three passed: user/system output stayed zero and incoming errno 12345 remained unchanged",
+    "acceptance_warning": "A standalone pass without a matching injected syscall trace is not failure-path evidence"
+  },
+  "wall_failure_exclusion": {
+    "command_shape": "strace -f -e trace=gettimeofday -e inject=gettimeofday:error=EIO TEST_BINARY successful_time_of_day_preserves_raw_errno_and_microsecond_shape --test-threads=1",
+    "observation": "Test passed, but no gettimeofday syscall or INJECTED marker appeared",
+    "conclusion": "No wall-clock failure was exercised; userspace/vDSO execution is consistent with this result but is not independently proved by the empty trace"
+  },
+  "limits": [
+    "No native Linux arm64 or macOS execution yet",
+    "Injected times failures skip the syscall, so partial output writes are not covered",
+    "No host clock changes, invalid pointers, unsafe test shims or global handlers",
+    "No safe replacement, performance equivalence or permanent system exception established"
+  ]
+}
