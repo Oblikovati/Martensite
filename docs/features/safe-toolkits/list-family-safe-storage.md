@@ -4,6 +4,12 @@ Feature #80 / task #86, List/BaseList family only. Baseline checkout
 `f432c27af57bac48cb0f92ffa903d2804dd438f2`. No production code changes.
 The humanizer prose pass is left for review.
 
+The investigation concluded with the partial closeout of #80. Its throwaway
+implementation and measurement harness were removed after v0.3.2 at the
+maintainer's request. Paths and commands below describe historical commit
+`0afcbb3`, not files available in the current checkout. The findings, limitations
+and measurements remain as evidence for future design decisions.
+
 Scope: `ncollection/list.rs`, `list/`, `list_node.rs`, `base_list.rs`,
 `base_list/`, `node_release.rs`.
 
@@ -86,7 +92,7 @@ compatible.
 
 ## Prototype
 
-Source: `experiments/list_safe_storage.rs`, with fixtures in
+Historical source: `experiments/list_safe_storage.rs`, with fixtures in
 `experiments/list_safe_storage/tests.rs`, which is throwaway and
 `#![forbid(unsafe_code)]`. Run it with
 `rustc --edition=2024 -D warnings --test`. Result: 11 passed, 0 failed

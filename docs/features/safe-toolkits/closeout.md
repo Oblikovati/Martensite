@@ -35,8 +35,8 @@ adds documentation and release metadata, not another storage or executor rewrite
 Detailed evidence is kept in this directory's per-change JSON files and the
 associated merged PRs. Some JSON files record pre-merge pending checks; the final
 PR checks and exact-release-SHA matrix are the authoritative integration evidence.
-Research and benchmark sources under `experiments/` are not replacement production
-implementations. Already integrated output-seek and release-license fixes also
+Throwaway research implementations were removed after the investigation; their
+findings and measurements remain documented. Already integrated output-seek and release-license fixes also
 ship from main and are separately listed in the changelog.
 
 ## Performance evidence and its limits
@@ -89,8 +89,8 @@ Alternatives had to preserve borrowed lifetimes, physical worker identity, calle
 participation, reservations, nested progress, deterministic failure order and
 bounded stack use. Broadcast waited on unrelated busy workers; other explored
 scoped pools lacked targeted dispatch or nested progress. Those failed trials do
-not prove that a better safe executor is impossible. PR #107 is excluded; its
-branch and measurement evidence remain available. Bugs #106 and #109 are not
+not prove that a better safe executor is impossible. PR #107 is excluded and
+closed unmerged; its findings remain here and on #87. Bugs #106 and #109 are not
 claimed fixed by shipping the existing executor.
 
 ### Clone-free bulk copy (#83)
@@ -138,8 +138,8 @@ passed for success and an injected account-file access failure.
 
 The explicit ARM byte/errno comparison and timing tests were ignored by ordinary
 CI. Shared-host timing medians are not controlled no-regression evidence. This
-candidate is therefore **not included**, despite green CI. Its branch
-`experiment/89-bounded-account-name` retains the code and evidence.
+candidate is therefore **not included**, despite green CI. Its throwaway branch
+was discarded after investigation; the measured results remain recorded on #89.
 
 ## API and system constraints that remain
 
@@ -173,12 +173,15 @@ permanent exception or public API break is approved by this closeout.
 
 #82 is complete. #81 and #83–#90 remain open with their unmet criteria; bugs remain
 open independently. #80 is closed as a maintainer-directed partial delivery, not
-as satisfaction of its original all-safe objective. PR #107 and unmerged
-experiments are preserved, not merged or deleted as completed work.
+as satisfaction of its original all-safe objective. Rejected PR #107 was closed
+unmerged and finished experiment implementations were discarded at the maintainer's
+request. Unrelated unfinished feature work and contract proposals remain separate.
 
-The release requires `cargo xtask pr`, a local `cargo xtask release --version 0.3.2`,
-and a green four-platform release rehearsal on the exact main commit before its
-tag. The tag workflow must publish the three source crates and checksums. Final
-run/tag links are recorded on #80 after publication. No experimental performance
-exception is part of that approval. The humanizer skill was unavailable; its
+The release passed `cargo xtask pr`, a local `cargo xtask release --version 0.3.2`,
+and [four-platform rehearsal 39132218999](https://github.com/Oblikovati/Martensite/actions/runs/39132218999)
+on exact main commit `e6fa4786db05961359becd709059bf2c0925c928` before tagging.
+[Tag workflow 39133041751](https://github.com/Oblikovati/Martensite/actions/runs/39133041751)
+passed all four platforms and published the three source crates and checksums in
+[v0.3.2](https://github.com/Oblikovati/Martensite/releases/tag/v0.3.2).
+No experimental performance exception was part of that approval. The humanizer skill was unavailable; its
 prose pass is left to maintainer review.
