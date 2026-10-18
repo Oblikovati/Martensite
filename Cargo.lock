@@ -334,6 +334,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkg3d"
+version = "0.3.1"
+dependencies = [
+ "flate2",
+ "martensite-cmath",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkmath",
+]
+
+[[package]]
 name = "martensite-tkmath"
 version = "0.3.2"
 dependencies = [

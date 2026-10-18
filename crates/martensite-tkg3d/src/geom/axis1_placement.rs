@@ -1,0 +1,75 @@
+//! `GeomAxis1Placement`: a transient Axis1.
+use super::axis_placement::GeomAxisPlacement;
+use super::geometry::GeomGeometry;
+use super::protected::ProtectedAccess;
+use martensite_tkernel::impl_transient;
+use martensite_tkernel::standard::SharedState;
+use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkmath::gp::{Axis1, Direction3, Point3, Transform3};
+
+/// An axis; `Handle::new(GeomAxis1Placement::new(axis))`.
+pub struct GeomAxis1Placement {
+    parent: StandardTransient,
+    state: SharedState<Axis1>,
+}
+impl_transient!(
+    GeomAxis1Placement,
+    "Geom_Axis1Placement",
+    dyn GeomAxisPlacement,
+    parent,
+    interfaces: [dyn GeomGeometry, dyn GeomAxisPlacement]
+);
+impl Clone for GeomAxis1Placement {
+    fn clone(&self) -> Self {
+        Self::new(self.ax1())
+    }
+}
+impl GeomAxis1Placement {
+    /// Placement from a gp axis (`GeomAxis1Placement(Axis1)`); `GeomAxis1Placement::new(axis)`.
+    pub fn new(axis: Axis1) -> Self {
+        Self {
+            parent: StandardTransient::default(),
+            state: SharedState::new(axis),
+        }
+    }
+    /// Placement from origin and direction (`GeomAxis1Placement(P, V)`);
+    /// `GeomAxis1Placement::from_location(p, d)`.
+    pub fn from_location(location: Point3, direction: Direction3) -> Self {
+        Self::new(Axis1::new(location, direction))
+    }
+    /// The gp axis (`Ax1`); `placement.ax1()`.
+    pub fn ax1(&self) -> Axis1 {
+        *self.state.read()
+    }
+    /// Reverse the direction in place (`Reverse`); `placement.reverse()`.
+    pub fn reverse(&self) {
+        self.state.write().reverse();
+    }
+    /// Reversed copy (`Reversed`); `placement.reversed()`.
+    pub fn reversed(&self) -> Handle<GeomAxis1Placement> {
+        let mut axis: Axis1 = self.ax1();
+        axis.reverse();
+        Handle::new(Self::new(axis))
+    }
+}
+impl GeomGeometry for GeomAxis1Placement {
+    fn transform(&self, transform: Transform3) -> Result<(), Failure> {
+        self.state.write().transform(transform);
+        Ok(())
+    }
+    fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
+        Ok(Handle::new(self.clone()).cast())
+    }
+}
+impl GeomAxisPlacement for GeomAxis1Placement {
+    fn axis(&self) -> Axis1 {
+        *self.state.read()
+    }
+    fn change_axis(&self, _access: ProtectedAccess, change: &mut dyn FnMut(&mut Axis1)) {
+        change(&mut self.state.write());
+    }
+    fn set_direction(&self, direction: Direction3) -> Result<(), Failure> {
+        self.state.write().set_direction(direction);
+        Ok(())
+    }
+}
