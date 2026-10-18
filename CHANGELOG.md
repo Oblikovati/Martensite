@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-10-18
+
 ### Added
 
 - Added owned storage-stream output seeking for header backpatching while preserving
@@ -22,6 +24,13 @@ follows [Semantic Versioning](https://semver.org/).
   retained separate workspace and dependency reports in CI (#81).
 - Removed stale compiler inventory reports and streams before starting a new
   capture, including captures that failed before compilation (#118).
+
+### Changed
+
+- Replaced selected toolkit raw ownership, record initialization and native calls
+  with safe ownership and established safe interfaces; preserved public APIs and
+  excluded candidates with rejected or unproven performance. Recorded the partial
+  migration results and outstanding constraints in the safe-toolkit closeout (#80).
 
 ## [0.3.1] - 2026-10-16
 
