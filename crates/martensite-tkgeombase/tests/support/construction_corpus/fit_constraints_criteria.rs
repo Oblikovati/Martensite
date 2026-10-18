@@ -1,0 +1,209 @@
+//! The `ad_criteria` requests: LinearCriteria through its base handle.
+use super::common::{self as p, Reader, attempt, end};
+use super::constraint_line_fixtures::read_line;
+use super::print::Output;
+use super::{
+    finite_element_driver::shape,
+    linear_tokens::{read_vector, vector},
+    matrix_tokens::matrix,
+};
+use martensite_tkernel::ncollection::{Array1, Array2, HArray1};
+use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkgeombase::app_def::{LinearCriteria, SmoothCriterion};
+use martensite_tkgeombase::fem_tool::{AssemblyTable, Curve};
+use martensite_tkmath::math::{Matrix, Vector};
+use martensite_tkmath::plib::HermitJacobi;
+
+/// `gb_ad_read_curve`: `dim nbelm workdeg shape knots... coefficients...`.
+fn read_curve(r: &mut Reader<'_>) -> Result<Handle<Curve>, Failure> {
+    let (dim, nb, wd, sh) = (r.integer(), r.integer(), r.integer(), r.integer());
+    let knots: Vec<f64> = (0..=nb).map(|_| r.real()).collect();
+    let coeffs: Vec<f64> = (0..nb * (wd + 1) * dim).map(|_| r.real()).collect();
+    let curve = Curve::new(dim, nb, &HermitJacobi::new(wd, shape(sh))?, 1e-7)?;
+    for (i, k) in (1..).zip(&knots) {
+        curve.knots()[i] = *k;
+    }
+    let mut values = coeffs.into_iter();
+    for el in 1..=nb {
+        let mut a = Array2::with_bounds(0, wd, 1, dim).unwrap();
+        for i in 0..=wd {
+            for d in 1..=dim {
+                a.set_value(i, d, values.next().unwrap_or(0.)).unwrap();
+            }
+        }
+        curve.set_element(el, &a)?;
+    }
+    Ok(Handle::new(curve))
+}
+
+fn table(output: &Output, t: &AssemblyTable) {
+    let cells = t.array2();
+    [
+        cells.lower_row(),
+        cells.upper_row(),
+        cells.lower_col(),
+        cells.upper_col(),
+    ]
+    .into_iter()
+    .for_each(|value| p::int(output, value));
+    for i in cells.lower_row()..=cells.upper_row() {
+        for j in cells.lower_col()..=cells.upper_col() {
+            let a = (*cells.value(i, j).unwrap()).array1();
+            p::int(output, a.lower());
+            p::int(output, a.upper());
+            a.iter().for_each(|&v| p::int(output, v));
+        }
+    }
+}
+
+fn harray(v: &Vector<'_>) -> Handle<HArray1<f64>> {
+    let values: Vec<f64> = (v.lower()..=v.upper()).map(|i| v[i]).collect();
+    Handle::new(HArray1::from_array(&Array1::from_shared(
+        &values,
+        v.lower(),
+    )))
+}
+
+fn curve_elements(output: &Output, j: &dyn SmoothCriterion) -> Result<(), Failure> {
+    let handle = j.curve();
+    let c = handle
+        .get()
+        .ok_or_else(|| Failure::new("probe: null curve"))?;
+    for el in 1..=c.nb_elements() {
+        p::int(output, c.degree(el)?);
+        let mut a = Array2::with_bounds(0, c.base().work_degree(), 1, c.dimension()).unwrap();
+        a.init(-7.);
+        c.get_element(el, &mut a)?;
+        a.iter().for_each(|&v| p::real(output, v));
+    }
+    Ok(())
+}
+
+fn estimation(output: &Output, j: &dyn SmoothCriterion) {
+    j.get_estimation()
+        .into_iter()
+        .for_each(|value| p::real(output, value));
+}
+
+fn criteria_command(
+    output: &Output,
+    r: &mut Reader<'_>,
+    j: &dyn SmoothCriterion,
+) -> Result<(), Failure> {
+    let code = r.integer();
+    match code {
+        1 => {
+            j.set_parameters(&harray(&read_vector(r)));
+            Ok(())
+        }
+        2 => j.set_curve(&read_curve(r)?),
+        3 => j.set_curve(&j.curve()),
+        4 => {
+            let (a, b, c) = (r.real(), r.real(), r.real());
+            j.set_estimation(a, b, c);
+            Ok(())
+        }
+        5 => {
+            estimation(output, j);
+            Ok(())
+        }
+        6 => {
+            j.set_est_length(r.real());
+            Ok(())
+        }
+        7 => {
+            p::real(output, j.est_length());
+            Ok(())
+        }
+        8 => j.assembly_table().map(|t| table(output, &t)),
+        9 => {
+            let t = j.dependence_table()?;
+            let t = t.array2();
+            p::int(output, t.lower_row());
+            p::int(output, t.upper_row());
+            t.iter().for_each(|&v| p::int(output, v));
+            Ok(())
+        }
+        10 => {
+            let (a, b, c) = (r.real(), r.real(), r.real());
+            let q = j.quality_values(a, b, c)?;
+            p::int(output, q.icdana);
+            q.criteria
+                .into_iter()
+                .for_each(|value| p::real(output, value));
+            estimation(output, j);
+            Ok(())
+        }
+        11 => {
+            let e = j.error_values()?;
+            [e.max_error, e.quadratic_error, e.average_error]
+                .into_iter()
+                .for_each(|value| p::real(output, value));
+            Ok(())
+        }
+        12 => {
+            let (el, d1, d2, rl, cl, n) = (
+                r.integer(),
+                r.integer(),
+                r.integer(),
+                r.integer(),
+                r.integer(),
+                r.integer(),
+            );
+            let mut h = Matrix::filled(rl, rl + n - 1, cl, cl + n - 1, -7.).unwrap();
+            j.hessian(el, d1, d2, &mut h)?;
+            matrix(output, &h);
+            Ok(())
+        }
+        13 => {
+            let (el, d, lower, n) = (r.integer(), r.integer(), r.integer(), r.integer());
+            let mut g = Vector::filled(lower, lower + n - 1, -7.)?;
+            j.gradient(el, d, &mut g)?;
+            vector(output, &g);
+            Ok(())
+        }
+        14 => {
+            let x = read_vector(r);
+            j.input_vector(&x, &j.assembly_table()?)?;
+            curve_elements(output, j)
+        }
+        15 => {
+            let w = [0; 5].map(|_| r.real());
+            j.set_weight(w[0], w[1], [w[2], w[3], w[4]])
+        }
+        16 => {
+            let (a, b) = j.get_weight();
+            p::real(output, a);
+            p::real(output, b);
+            Ok(())
+        }
+        17 => {
+            let v = read_vector(r);
+            let values: Vec<f64> = (v.lower()..=v.upper()).map(|i| v[i]).collect();
+            j.set_point_weights(&Array1::from_shared(&values, v.lower()));
+            Ok(())
+        }
+        _ => {
+            p::flag(output, j.curve().is_null());
+            Ok(())
+        }
+    }
+}
+
+pub fn criteria_case(output: &Output, values: &[f64]) {
+    let mut r = Reader::new(values);
+    let line = read_line(&mut r);
+    let (first, last, count) = (r.integer(), r.integer(), r.integer());
+    attempt(output, || {
+        let j: Handle<dyn SmoothCriterion> =
+            Handle::new(LinearCriteria::new(&line, first, last)?).cast();
+        let j = j
+            .get()
+            .ok_or_else(|| Failure::new("probe: null criterion"))?;
+        for _ in 0..count {
+            attempt(output, || criteria_command(output, &mut r, j));
+        }
+        Ok(())
+    });
+    end(output);
+}

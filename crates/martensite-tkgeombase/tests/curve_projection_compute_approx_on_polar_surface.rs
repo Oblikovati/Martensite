@@ -1,0 +1,71 @@
+//! Proj lib compute approx on polar surface contracts.
+#![allow(non_snake_case)]
+use martensite_tkernel::standard::Handle;
+use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dCurve};
+use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
+use martensite_tkg3d::geom::{GeomCircle, GeomCurve, GeomCylindricalSurface, GeomSurface};
+use martensite_tkg3d::geom_adaptor::{GeomAdaptorCurve, GeomAdaptorSurface};
+use martensite_tkgeombase::proj_lib::ComputeApproxOnPolarSurface;
+use martensite_tkmath::gp::{Axis2, Axis3, Direction3, Point2, Point3};
+
+fn checkProjectionAtParam(
+    thePCurve: &Geom2dBSplineCurve,
+    theSurface: &GeomCylindricalSurface,
+    theCurve: &GeomCircle,
+    theParam: f64,
+    theTol: f64,
+) {
+    let aUV: Point2 = thePCurve.value(theParam).unwrap();
+    let aProjP: Point3 = theSurface.value(aUV.x(), aUV.y()).unwrap();
+    let aRefP: Point3 = theCurve.value(theParam).unwrap();
+    assert!(aProjP.distance(&aRefP) <= theTol);
+}
+
+#[test]
+fn compute_approx_on_polar_surface_build_initial_curve_and_project_on_cylinder_done() {
+    let z = Direction3::new(0.0, 0.0, 1.0).unwrap();
+    let x = Direction3::new(1.0, 0.0, 0.0).unwrap();
+    let aCurve = Handle::new(
+        GeomCircle::new(
+            Axis2::with_x_direction(Point3::new(0.0, 0.0, 2.0), z, x).unwrap(),
+            5.0,
+        )
+        .unwrap(),
+    );
+    let aSurface = Handle::new(
+        GeomCylindricalSurface::new(Axis3::new(Point3::new(0.0, 0.0, 0.0), z, x).unwrap(), 5.0)
+            .unwrap(),
+    );
+
+    let aCurveAdaptor: Handle<dyn Adaptor3dCurve> =
+        Handle::new(GeomAdaptorCurve::with_curve(&aCurve.clone().cast::<dyn GeomCurve>()).unwrap())
+            .cast();
+    let aSurfAdaptor: Handle<dyn Adaptor3dSurface> = Handle::new(
+        GeomAdaptorSurface::with_surface(&aSurface.clone().cast::<dyn GeomSurface>()).unwrap(),
+    )
+    .cast();
+
+    let mut aProjector = ComputeApproxOnPolarSurface::new();
+    aProjector.set_tolerance(1.0e-6);
+
+    let anInitCurve2d = aProjector
+        .build_initial_curve2d(&aCurveAdaptor, &aSurfAdaptor)
+        .unwrap();
+    assert!(aProjector.is_done());
+    assert!(!anInitCurve2d.is_null());
+
+    let aPCurve = aProjector
+        .project_using_initial_curve2d(&aCurveAdaptor, &aSurfAdaptor, &anInitCurve2d)
+        .unwrap();
+    assert!(aProjector.is_done());
+    assert!(!aPCurve.is_null());
+    let aPCurve = aPCurve.get().unwrap();
+
+    let aFirst: f64 = aCurve.first_parameter().max(aPCurve.first_parameter());
+    let aLast: f64 = aCurve.last_parameter().min(aPCurve.last_parameter());
+    assert!(aFirst < aLast);
+
+    checkProjectionAtParam(aPCurve, &aSurface, &aCurve, aFirst, 1.0e-3);
+    checkProjectionAtParam(aPCurve, &aSurface, &aCurve, 0.5 * (aFirst + aLast), 1.0e-3);
+    checkProjectionAtParam(aPCurve, &aSurface, &aCurve, aLast, 1.0e-3);
+}

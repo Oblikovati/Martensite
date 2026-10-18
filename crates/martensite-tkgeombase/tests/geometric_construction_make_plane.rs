@@ -1,0 +1,56 @@
+//! Gc make plane contracts.
+#![allow(non_snake_case)]
+#[path = "support/geometric_test_support/mod.rs"]
+mod common;
+use common::EXPECT_NEAR;
+use martensite_tkernel::precision;
+use martensite_tkgeombase::gc::{ErrorType, MakePlane, Root};
+use martensite_tkmath::gp::{Axis1, Direction3, Plane3, Point3};
+
+fn base_plane() -> Plane3 {
+    Plane3::new(
+        Point3::new(0.0, 0.0, 0.0),
+        Direction3::new(0.0, 0.0, 1.0).unwrap(),
+    )
+    .unwrap()
+}
+
+#[test]
+fn make_plane_from_plane_and_dist_done() {
+    let aBase = base_plane();
+
+    let aMaker = MakePlane::from_plane_distance(aBase, 5.0).unwrap();
+    assert!(aMaker.is_done());
+    assert_eq!(aMaker.status(), ErrorType::Done);
+    EXPECT_NEAR(
+        aMaker.value().unwrap().pln().location().z(),
+        5.0,
+        precision::confusion(),
+    );
+}
+
+#[test]
+fn make_plane_from_plane_and_point_done() {
+    let aBase = base_plane();
+    let aPoint = Point3::new(2.0, -3.0, 7.0);
+
+    let aMaker = MakePlane::from_plane_point(aBase, aPoint).unwrap();
+    assert!(aMaker.is_done());
+    assert_eq!(aMaker.status(), ErrorType::Done);
+    let aLocation: Point3 = aMaker.value().unwrap().pln().location();
+    assert!(aLocation.is_equal(&aPoint, precision::confusion()));
+}
+
+#[test]
+fn make_plane_from_axis_done() {
+    let aAxis = Axis1::new(
+        Point3::new(1.0, 2.0, 3.0),
+        Direction3::new(0.0, 1.0, 0.0).unwrap(),
+    );
+
+    let aMaker = MakePlane::from_axis(aAxis).unwrap();
+    assert!(aMaker.is_done());
+    assert_eq!(aMaker.status(), ErrorType::Done);
+    let aNormal: Direction3 = aMaker.value().unwrap().pln().axis().direction();
+    assert!(aNormal.is_parallel(aAxis.direction(), precision::angular()));
+}

@@ -1,0 +1,129 @@
+//! `ExtElSS`: the extrema between two elementary surfaces. Only two parallel
+//! planes are computed natively; every sphere pair raises NotImplemented.
+use super::failures::{extremum_index, not_done, not_implemented, null_object};
+use super::pon::POnSurf;
+use martensite_tkernel::precision;
+use martensite_tkernel::standard::Failure;
+use martensite_tkmath::gp::{Cone3, Cylinder3, Plane3, Sphere3, Torus3};
+
+/// `ExtElSS`. The retained class never assigns its point arrays, so `Points`
+/// raises null-object failure where the retained member dereferences a null handle;
+/// `ExtElSS::planes(plane1, plane2)?.is_parallel()?`.
+#[derive(Clone, Debug, Default)]
+pub struct ExtElSS {
+    done: bool,
+    is_par: bool,
+    nb_ext: i32,
+    sq_dist: Option<Vec<f64>>,
+    points1: Option<Vec<POnSurf>>,
+    points2: Option<Vec<POnSurf>>,
+}
+
+// The body of the sphere overloads: done, not parallel, no extremum, then
+// NotImplemented.
+macro_rules! not_implemented_pair {
+    ($(#[$doc:meta])* $ctor:ident, $perform:ident, $first:ty, $second:ty, $name:literal) => {
+        $(#[$doc])*
+        pub fn $ctor(first: $first, second: $second) -> Result<Self, Failure> {
+            let mut extrema: Self = Self::new();
+            extrema.$perform(&first, &second)?;
+            Ok(extrema)
+        }
+        /// The matching `Perform`: sets done with no extremum, then raises
+        /// NotImplemented as natively.
+        pub fn $perform(&mut self, _first: &$first, _second: &$second) -> Result<(), Failure> {
+            self.done = true;
+            self.is_par = false;
+            self.nb_ext = 0;
+            Err(not_implemented(concat!("Extrema_ExtElSS::Perform(", $name, ")")))
+        }
+    };
+}
+
+impl ExtElSS {
+    /// `ExtElSS()`: not done; `ExtElSS::new().is_done() == false`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+    /// `ExtElSS(Pln, Pln)`; `ExtElSS::planes(plane1, plane2)`.
+    pub fn planes(first: Plane3, second: Plane3) -> Self {
+        let mut extrema: Self = Self::new();
+        extrema.perform_planes(&first, &second);
+        extrema
+    }
+    /// `Perform(Pln, Pln)`: always done; parallel planes (axes within
+    /// Precision::Angular()) give their square distance, others no extremum;
+    /// `extrema.perform_planes(&plane1, &plane2)`.
+    pub fn perform_planes(&mut self, first: &Plane3, second: &Plane3) {
+        self.done = true;
+        self.is_par = false;
+        self.nb_ext = 0;
+        let (d1, d2) = (first.axis().direction(), second.axis().direction());
+        if d1.is_parallel(d2, precision::angular()) {
+            self.is_par = true;
+            self.nb_ext = 1;
+            self.sq_dist = Some(vec![first.square_distance_plane(*second)]);
+        }
+    }
+    not_implemented_pair!(
+        /// `ExtElSS(Pln, Sphere)`: NotImplemented.
+        plane_sphere, perform_plane_sphere, Plane3, Sphere3, "gp_Pln, gp_Sphere");
+    not_implemented_pair!(
+        /// `ExtElSS(Sphere, Sphere)`: NotImplemented.
+        spheres, perform_spheres, Sphere3, Sphere3, "gp_Sphere, gp_Sphere");
+    not_implemented_pair!(
+        /// `ExtElSS(Sphere, Cylinder)`: NotImplemented.
+        sphere_cylinder, perform_sphere_cylinder, Sphere3, Cylinder3, "gp_Sphere, gp_Cylinder");
+    not_implemented_pair!(
+        /// `ExtElSS(Sphere, Cone)`: NotImplemented.
+        sphere_cone, perform_sphere_cone, Sphere3, Cone3, "gp_Sphere, gp_Cone");
+    not_implemented_pair!(
+        /// `ExtElSS(Sphere, Torus)`: NotImplemented.
+        sphere_torus, perform_sphere_torus, Sphere3, Torus3, "gp_Sphere, gp_Torus");
+}
+
+impl ExtElSS {
+    /// `IsDone()`; `extrema.is_done()`.
+    pub fn is_done(&self) -> bool {
+        self.done
+    }
+    /// `IsParallel()`: not-done failure when not done; `extrema.is_parallel()?`.
+    pub fn is_parallel(&self) -> Result<bool, Failure> {
+        if !self.done {
+            return Err(not_done("Extrema_ExtElSS::IsParallel()"));
+        }
+        Ok(self.is_par)
+    }
+    /// `NbExt()`: not-done failure when not done; `extrema.nb_ext()?`.
+    pub fn nb_ext(&self) -> Result<i32, Failure> {
+        if !self.done {
+            return Err(not_done("Extrema_ExtElSS::NbExt()"));
+        }
+        Ok(self.nb_ext)
+    }
+    /// `SquareDistance(N)` (the retained default is 1); `extrema.square_distance(1)?`.
+    pub fn square_distance(&self, n: i32) -> Result<f64, Failure> {
+        let member: &str = "Extrema_ExtElSS::SquareDistance()";
+        extremum_index(member, n, || self.nb_ext())?;
+        handle_value(member, self.sq_dist.as_deref(), n)
+    }
+    /// `Points(N, P1, P2)`, returned as `(P1, P2)`; `extrema.points(1)?`.
+    pub fn points(&self, n: i32) -> Result<(POnSurf, POnSurf), Failure> {
+        let member: &str = "Extrema_ExtElSS::Points()";
+        extremum_index(member, n, || self.nb_ext())?;
+        let first: POnSurf = handle_value(member, self.points1.as_deref(), n)?;
+        Ok((first, handle_value(member, self.points2.as_deref(), n)?))
+    }
+}
+
+/// `theHandle->Value(N)` of an `HArray1`: null-object failure for a null
+/// handle, index-range failure outside the array.
+pub(super) fn handle_value<T: Copy>(
+    member: &str,
+    values: Option<&[T]>,
+    n: i32,
+) -> Result<T, Failure> {
+    let values: &[T] = values.ok_or_else(|| null_object(member))?;
+    let index: usize = super::failures::check_index(member, n, values.len() as i32)?;
+    Ok(values[index])
+}

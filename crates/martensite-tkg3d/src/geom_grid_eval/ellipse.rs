@@ -1,0 +1,69 @@
+//! `GeomGridEvalEllipse`: `P(u) = C + MajR * cos(u) * X + MinR * sin(u) * Y` on a grid.
+use super::conic::{
+    ConicTerms, conic_grid, conic_grid_d1, conic_grid_d2, conic_grid_d3, conic_grid_dn,
+    conic_grid_members,
+};
+use super::frame::{GridFrame3, RadiiFrame3};
+use super::{GeomGridEvalCurveD1, GeomGridEvalCurveD2, GeomGridEvalCurveD3};
+use crate::geom::GeomEllipse;
+use martensite_tkernel::ncollection::Array1;
+use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkg2d::geom2d_grid_eval::grid_loops::{cyclic_coefficients, empty};
+use martensite_tkmath::gp::{Ellipse3, Point3, Vector3};
+
+/// Batch evaluator of a `GeomEllipse` (`GeomGridEvalEllipse`).
+///
+/// The ellipse is read once per call (`Elips()`, X and Y from `XAxis()`/`YAxis()`); a
+/// null ellipse or empty parameters give an empty result;
+/// `GeomGridEvalEllipse::new(ellipse).evaluate_grid(&params)?`.
+pub struct GeomGridEvalEllipse {
+    geom: Handle<GeomEllipse>,
+}
+
+impl ConicTerms for RadiiFrame3 {
+    type Local = (f64, f64);
+    fn local(&self, u: f64) -> (f64, f64) {
+        (u.cos(), u.sin())
+    }
+    fn point(&self, (c, s): (f64, f64)) -> Point3 {
+        RadiiFrame3::point(self, c, s)
+    }
+    fn d1(&self, (c, s): (f64, f64)) -> Vector3 {
+        self.vector(-s, c)
+    }
+    fn d2(&self, (c, s): (f64, f64)) -> Vector3 {
+        self.vector(-c, -s)
+    }
+    fn d3(&self, (c, s): (f64, f64)) -> Vector3 {
+        self.vector(s, -c)
+    }
+    // `aMajR * aCoeffMajR * aXX + aMinR * aCoeffMinR * aYX`, cyclic with period 4.
+    fn dn(&self, u: f64, n: i32) -> Vector3 {
+        let (a, b) = cyclic_coefficients(n, u.cos(), u.sin());
+        self.vector(a, b)
+    }
+}
+
+impl GeomGridEvalEllipse {
+    /// Evaluator of `ellipse` (`GeomGridEvalEllipse(theEllipse)`); a null handle is
+    /// accepted; `GeomGridEvalEllipse::new(ellipse)`.
+    pub fn new(ellipse: Handle<GeomEllipse>) -> Self {
+        Self { geom: ellipse }
+    }
+    fn terms(&self, params: &Array1<'_, f64>) -> Result<Option<RadiiFrame3>, Failure> {
+        let Some(ellipse) = self.geom.get() else {
+            return Ok(None);
+        };
+        if params.is_empty() {
+            return Ok(None);
+        }
+        let elips: Ellipse3 = ellipse.elips()?;
+        let (x_dir, y_dir) = (elips.x_axis().direction(), elips.y_axis().direction());
+        Ok(Some(RadiiFrame3 {
+            frame: GridFrame3::new(elips.location(), x_dir, y_dir),
+            major: elips.major_radius(),
+            minor: elips.minor_radius(),
+        }))
+    }
+    conic_grid_members!(GeomEllipse);
+}

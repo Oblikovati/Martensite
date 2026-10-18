@@ -1,0 +1,40 @@
+//! Approx: the approximation drivers of TKGeomBase — the multi-line drivers over
+//! AppParCurves ([`ComputeLine`], [`BSplComputeLine`], [`ComputeCLine`] and its
+//! instantiations [`FitAndDivide`], [`FitAndDivide2d`]), the join of Bezier
+//! MultiCurves ([`MCurvesToBSpCurve`]), and the AdvApprox-based approximations of
+//! curves, curves on surfaces, curvilinear parametrizations, same-parameter pcurves
+//! and sweeps.
+//!
+//! Multiline drivers accept any representation implementing
+//! [`crate::app_par_curves::LineTool`], sharing the same fitting pipeline.
+mod bspl_compute_line;
+mod check_multi_curve;
+mod compute_c_line;
+mod compute_line;
+mod curve_2d;
+mod curve_3d;
+mod curve_on_surface;
+mod curvilinear_parameter;
+mod curvlin_func;
+mod mcurves_to_bsp_curve;
+mod same_parameter;
+mod status;
+mod sweep_approximation;
+mod sweep_function;
+mod tangency;
+
+pub use bspl_compute_line::BSplComputeLine;
+pub use compute_c_line::{ComputeCLine, ComputeCLineOptions, FitAndDivide, FitAndDivide2d};
+pub use compute_line::{ComputeLine, ComputeLineOptions};
+pub use curve_2d::Curve2d;
+pub use curve_3d::Curve3d;
+pub use curve_on_surface::{CurveOnSurface, CurveOnSurfaceOptions};
+pub use curvilinear_parameter::{CurvilinearOptions, CurvilinearParameter};
+pub use curvlin_func::CurvlinFunc;
+pub use mcurves_to_bsp_curve::MCurvesToBSpCurve;
+pub use same_parameter::SameParameter;
+pub use status::{ParametrizationType, Status};
+pub use sweep_approximation::{
+    SweepApproximation, SweepCurve2d, SweepOptions, SweepSurface, SweepSurfaceShape,
+};
+pub use sweep_function::{SweepD1, SweepD2, SweepFunction};

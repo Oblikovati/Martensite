@@ -2,6 +2,7 @@
 //! Planar geometry construction, evaluation and boundary contracts.
 #![allow(non_snake_case)]
 mod common;
+use common::EXPECT_DOUBLE_EQ;
 use common::{EXPECT_NEAR as assert_modeling_near, modeling_circle as analytic_circle_fixture};
 use martensite_tkernel::{precision, standard::Handle};
 use martensite_tkg2d::geom2d::{
@@ -95,7 +96,7 @@ fn curve_eval_offset_curve_eval_d1_degenerate_at_collapsed() {
 fn offset_curve_copy_constructor_basic_properties() {
     let original = regular_offset_fixture();
     let copy = Geom2dOffsetCurve::copy_of(&original).unwrap();
-    assert_eq!(original.offset(), copy.offset());
+    EXPECT_DOUBLE_EQ(original.offset(), copy.offset());
     assert_eq!(original.is_periodic(), copy.is_periodic());
     assert_eq!(original.is_closed(), copy.is_closed());
 }
@@ -107,8 +108,8 @@ fn offset_curve_copy_constructor_basis_curve() {
     let first = original.basis_curve();
     let second = copy.basis_curve();
     assert!(first != second);
-    assert_eq!(first.first_parameter(), second.first_parameter());
-    assert_eq!(first.last_parameter(), second.last_parameter());
+    EXPECT_DOUBLE_EQ(first.first_parameter(), second.first_parameter());
+    EXPECT_DOUBLE_EQ(first.last_parameter(), second.last_parameter());
 }
 
 #[test]
@@ -116,7 +117,7 @@ fn offset_curve_copy_method_uses_optimized_constructor() {
     let original = regular_offset_fixture();
     let copy = original.copy().unwrap().cast::<Geom2dOffsetCurve>();
     assert!(!copy.is_null());
-    assert_eq!(original.offset(), copy.offset());
+    EXPECT_DOUBLE_EQ(original.offset(), copy.offset());
     let mut u = original.first_parameter();
     let last = original.last_parameter();
     let step = (last - u) / 4.0;
@@ -137,6 +138,6 @@ fn offset_curve_copy_independence() {
     let copy = Geom2dOffsetCurve::copy_of(&original).unwrap();
     let offset = copy.offset();
     original.set_offset_value(10.0);
-    assert_eq!(copy.offset(), offset);
+    EXPECT_DOUBLE_EQ(copy.offset(), offset);
     assert_ne!(copy.offset(), original.offset());
 }

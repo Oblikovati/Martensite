@@ -1,0 +1,89 @@
+//! `Constraint` and `ConstraintCouple`: the constraint of
+//! one point of a MultiLine.
+
+/// `Constraint`; the order matters (the algorithms compare
+/// `Cons >= TangencyPoint`); `Constraint::PassPoint < Constraint::TangencyPoint`.
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub enum Constraint {
+    /// `NoConstraint`.
+    #[default]
+    NoConstraint = 0,
+    /// `PassPoint`: the curve passes through the point.
+    PassPoint = 1,
+    /// `TangencyPoint`: passes through it with the given tangent.
+    TangencyPoint = 2,
+    /// `CurvaturePoint`: passes with the given tangent and curvature.
+    CurvaturePoint = 3,
+}
+
+impl Constraint {
+    /// The retained enumeration value; `Constraint::TangencyPoint.code() == 2`.
+    pub fn code(self) -> i32 {
+        self as i32
+    }
+
+    /// The constraint of a retained value (0 to 3), None otherwise;
+    /// `Constraint::from_code(1) == Some(Constraint::PassPoint)`.
+    pub fn from_code(code: i32) -> Option<Self> {
+        [
+            Self::NoConstraint,
+            Self::PassPoint,
+            Self::TangencyPoint,
+            Self::CurvaturePoint,
+        ]
+        .get(usize::try_from(code).ok()?)
+        .copied()
+    }
+}
+
+/// `ConstraintCouple`: a point index and its constraint.
+///
+/// ```
+/// use martensite_tkgeombase::app_par_curves::{Constraint, ConstraintCouple};
+/// let mut couple = ConstraintCouple::default();
+/// assert_eq!((couple.index(), couple.constraint()), (-1, Constraint::NoConstraint));
+/// couple.set_constraint(Constraint::PassPoint);
+/// assert_eq!(ConstraintCouple::new(3, Constraint::PassPoint).index(), 3);
+/// ```
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ConstraintCouple {
+    index: i32,
+    constraint: Constraint,
+}
+
+impl Default for ConstraintCouple {
+    /// `ConstraintCouple()`: index -1, no constraint.
+    fn default() -> Self {
+        Self {
+            index: -1,
+            constraint: Constraint::NoConstraint,
+        }
+    }
+}
+
+impl ConstraintCouple {
+    /// `ConstraintCouple(TheIndex, Cons)`; `ConstraintCouple::new(1, Constraint::PassPoint)`.
+    pub fn new(index: i32, constraint: Constraint) -> Self {
+        Self { index, constraint }
+    }
+
+    /// `Index()`; `couple.index()`.
+    pub fn index(&self) -> i32 {
+        self.index
+    }
+
+    /// `Constraint()`; `couple.constraint()`.
+    pub fn constraint(&self) -> Constraint {
+        self.constraint
+    }
+
+    /// `SetIndex(TheIndex)`; `couple.set_index(2)`.
+    pub fn set_index(&mut self, index: i32) {
+        self.index = index;
+    }
+
+    /// `SetConstraint(Cons)`; `couple.set_constraint(Constraint::PassPoint)`.
+    pub fn set_constraint(&mut self, constraint: Constraint) {
+        self.constraint = constraint;
+    }
+}

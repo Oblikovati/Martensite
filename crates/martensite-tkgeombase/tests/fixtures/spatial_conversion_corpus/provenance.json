@@ -1,0 +1,213 @@
+{
+  "source_revision": "7474b5ca19721e6a30e0435ab732623db47a04e7",
+  "native_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "new_complete_families": {
+    "gcv_to_bspline": 90,
+    "gcv_surf_to_bspline": 29,
+    "gcv_split": 130,
+    "gcv_split_surface": 220,
+    "gcv_knot_split": 25,
+    "gcv_knot_split_surface": 28,
+    "gcv_bezier": 35,
+    "gcv_bezier_surface": 36,
+    "gcv_comp": 60,
+    "gcv_comp_bezier": 24,
+    "gcv_concat": 24,
+    "gcv_c0c1": 45,
+    "gcv_approx_curve": 48,
+    "gcv_approx_surface": 30,
+    "gcv_ana_curve": 484,
+    "gcv_ana_empty": 2,
+    "gcv_is_linear": 14,
+    "gcv_get_line": 3,
+    "gcv_get_circle": 6,
+    "gcv_ana_surf": 308,
+    "gcv_ana_surf_empty": 1,
+    "gcv_same_surf": 28,
+    "gcv_ls_dist": 41,
+    "gcv_units": 133
+  },
+  "new_requests": 1844,
+  "new_families": 24,
+  "cumulative_owned_requests": 31959,
+  "cumulative_owned_families": 153,
+  "full_original_requests": 45635,
+  "full_original_families": 328,
+  "remaining_requests": 13676,
+  "remaining_families": 175,
+  "inputs": {
+    "bytes": 320059,
+    "sha256": "45188443a1120802f4c738bd0f8551f2a899bdae2f9366581ec5789284e9c777"
+  },
+  "native_expected": {
+    "bytes": 2281017,
+    "sha256": "e981512f27250c5d3d284982992546bd9310caf800d0ff623faa9d593f50059a"
+  },
+  "expected_origin": "Fresh pinned native captures before GeomConvert driver edits. Two sequential runs, two selected original64 partitions and two original38555-row prefix64 partitions agree. Historical full answer cache unavailable; no Rust-generated legacy expected results.",
+  "comparison_policy": "Exact finite/infinity/signed-zero bits, exception/text/whitespace; original decimal NaN classification and word boundaries.",
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/tkgeombase_corpus_geomconvert.py": {
+      "bytes": 13939,
+      "sha256": "be8eaacf5b792b93f0f55c3469f4720d5a9218b5f8be9cfa8a8b3a7fe67d7ac7"
+    },
+    "tools/tkgeombase_corpus_geomconvert_ana.py": {
+      "bytes": 9753,
+      "sha256": "bc0e455d8349e5905669a06db6cc87e14238db3d1178cbde09d17cb0812b8e24"
+    },
+    "tools/probe_shards.py": {
+      "bytes": 5096,
+      "sha256": "ca562f6174402fc029138603e11d8280ad7a7060139780c127f60b7fc1369ea1"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_lprop_build.cxx": {
+      "bytes": 5563,
+      "sha256": "01be6f919d6869b0cb531f633563262e886b74f05c8279a99f5fe32c8bf6285e"
+    },
+    "tools/oracle/tkgeombase_probe_geomconvert.cxx": {
+      "bytes": 18672,
+      "sha256": "88196a0c54d0391701c92c3465e5108be6491aed2e260d300d9c6c53182c8f41"
+    },
+    "tools/oracle/tkgeombase_probe_geomconvert_ana.cxx": {
+      "bytes": 7902,
+      "sha256": "4433b1091ea8d07f779af2c9cf040a3bb3bc10dd3f6c2c3904d4752846674168"
+    },
+    "tools/oracle/tkgeombase_probe_geomtools_build.cxx": {
+      "bytes": 7327,
+      "sha256": "99cd86a9144d34012fe49b1abd5d12bc068d466bb659dfee3fec7bf37ca18b0e"
+    }
+  },
+  "fixture_files": {
+    "inputs-01.txt": {
+      "bytes": 81573,
+      "sha256": "0156202c2eae1717babb6996f5e2168b78a526e321fab681b866ebd72a4577cf"
+    },
+    "inputs-07.txt": {
+      "bytes": 8370,
+      "sha256": "7a60805f81970bb9d83b8ae50a2f00ef5596b27133a6a90f7d83b8e333d50dfe"
+    },
+    "native-01.txt": {
+      "bytes": 97379,
+      "sha256": "ba68764a014c135a8ef7b72d18c1a4fa46af8f24e365cf85a1b75a6fefbf7431"
+    },
+    "inputs-06.txt": {
+      "bytes": 48289,
+      "sha256": "63dfb82d633d126ee8f297e0d5e9ce343c8d2fb498a18ec94ee6e2df91f0309f"
+    },
+    "native-02.txt": {
+      "bytes": 218066,
+      "sha256": "32ba929a3934b891bca4a2d70c975aec69b959f405b9245961d7df1c27ecb88b"
+    },
+    "native-06.txt": {
+      "bytes": 41897,
+      "sha256": "c5fd447e1eeadab76ba49eb24b55b8336fbec6f0dd5006999fd89515bf65d0f2"
+    },
+    "native-00.txt": {
+      "bytes": 187640,
+      "sha256": "5e47f1a4527c090438ceb395213831678400d4afc13fc6e9fc69c8b02d43732f"
+    },
+    "native-03.txt": {
+      "bytes": 1664945,
+      "sha256": "07620ce6d048bb272e7093bf60089f2f49896b43bb54ce911de4067e1d293273"
+    },
+    "inputs-00.txt": {
+      "bytes": 35673,
+      "sha256": "de0d6332ac67977ae51c1f73c32dc7fdd22d375cc6f350a0cc549e47567b9b7f"
+    },
+    "inputs-03.txt": {
+      "bytes": 30796,
+      "sha256": "c1c056b4d0fe9182f95be5482ff3c38052f9607979a2e4218c4efdde039158d7"
+    },
+    "inputs-04.txt": {
+      "bytes": 24184,
+      "sha256": "12eff7c8116ee9b30306eea236f7bc30313e17057fafa7fa6dec59762f2aba81"
+    },
+    "inputs-02.txt": {
+      "bytes": 55800,
+      "sha256": "0287e82d8883dff86d42f45fcb0a75f04e39ecea5837b8968d0b7169d287730c"
+    },
+    "inputs-05.txt": {
+      "bytes": 35374,
+      "sha256": "ce89d34e6c966c31aa5b65533d7b952c602a0cf82e81755abf4c8431ba434ff5"
+    },
+    "native-07.txt": {
+      "bytes": 8139,
+      "sha256": "69561d98f6d23673461dfd50495ef22e213825e7961aa67b62b79c2bf33c7d4c"
+    },
+    "native-04.txt": {
+      "bytes": 28937,
+      "sha256": "f9c5e2a1b5470d513b98c669949019117fb7d25999385c7f5d085a533944482b"
+    },
+    "native-05.txt": {
+      "bytes": 34014,
+      "sha256": "d5216c28a1ebf1a81e48414b024d26cc079677db9b95f639c09b24b9a212fd5f"
+    }
+  },
+  "history_validation_chronology": "All selected sequential/shard native expectations and both complete original-prefix validations were frozen before Rust edits.",
+  "production_algorithm_changes": 0,
+  "new_legacy_declaration_mappings": 0,
+  "new_exclusions": 0,
+  "tolerance_changes": 0,
+  "checks": {
+    "all_targets": {
+      "passed": 1485,
+      "failed": 0,
+      "ignored": 0,
+      "library": 68,
+      "toolkit": 1386,
+      "separate_reference_cache_tests": 2,
+      "numeric_example": 13,
+      "isolated_fem_replay": 16
+    },
+    "doctests": {
+      "passed": 66,
+      "failed": 0,
+      "ignored_preexisting": 19
+    },
+    "focused_cumulative_corpus_tests": 235,
+    "new_distinct_test_functions": 33,
+    "strict_all_target_clippy": "passed",
+    "format_and_diff_check": "passed",
+    "package_local_static_test_references": 441,
+    "required_owned_packaged_files": 375,
+    "native_sequential_repetitions": 2,
+    "native_original64_selected_repetitions": 2,
+    "native_original64_full_prefix_repetitions": 2,
+    "full_prefix_rows": 38555,
+    "original_rust_cli_sequential_repetitions": 2,
+    "extracted_rust_cli_sequential_repetitions": 2,
+    "extracted_rust_cli_original64_repetitions": 2,
+    "new_ordinary_runtime_subprocesses": 0,
+    "cache_reset_or_global_state_changes": 0,
+    "prior_native_requests_preserved": 30115,
+    "prior_cli_native_requests_preserved": 26675,
+    "prior_gcpnts_frozen_rows_in_current_native_suite": 2210,
+    "prior_fem_frozen_rows_in_current_isolated_suite": 1230,
+    "prior_native_requests_profile": "debug",
+    "new_cli_process_profile": "debug",
+    "prior_gprop_release_different_rows": 14,
+    "prior_gprop_release_parity": "unresolved supplemental check",
+    "inherited_planar_slice_retained_family_timeouts": 4,
+    "inherited_planar_slice_timeout_rows": 427,
+    "current_retained_transport_status": "Original64 selected-consumer debug runs bounded at60seconds;62complete matchedshards4964rows,2pre-edit timedoutshards160rows unresolved. No timeout counts as parity.",
+    "retained_compared_shards": 62,
+    "retained_compared_requests": 4964,
+    "retained_unresolved_shards": 2,
+    "retained_unresolved_requests": 160,
+    "retained_whole_selected_families_verified": 20
+  }
+}

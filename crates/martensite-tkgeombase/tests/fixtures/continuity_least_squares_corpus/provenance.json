@@ -1,0 +1,194 @@
+{
+  "source_revision": "aefd358b132829f239f15d6fd0a60b8effed003f",
+  "native_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "new_complete_families": {
+    "acc_ls": 2598
+  },
+  "new_requests": 2598,
+  "new_families": 1,
+  "cumulative_owned_requests": 27576,
+  "cumulative_owned_families": 108,
+  "full_original_requests": 45635,
+  "full_original_families": 328,
+  "remaining_requests": 18059,
+  "remaining_families": 220,
+  "inputs": {
+    "bytes": 1062564,
+    "sha256": "bc2a1c7d79e7e21382d7e8595f5bd01a5a52f1a6957128b79ff0a21dfc9109b5"
+  },
+  "native_expected": {
+    "bytes": 1772797,
+    "sha256": "43daef23cbaeaae2d3424e770072223eb91b3f55f823b4200b907b4ec05bc792"
+  },
+  "expected_origin": "Fresh pinned native capture before AppCont least-squares driver edits; historical full answer cache unavailable, no Rust-derived legacy expectations.",
+  "comparison_policy": "Exact finite/infinity/signed-zero bits, exception/text/whitespace; original decimal NaN classification and word boundaries.",
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/tkgeombase_corpus_appcont.py": {
+      "bytes": 8596,
+      "sha256": "6d76c963e6fb061cb6283141d751aa8a58a2fb398ccdeadd52db7af0fb0f48bc"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_lprop.cxx": {
+      "bytes": 8545,
+      "sha256": "cc1ea54964f4e502989c9306bdb3bb6bc855cfdc23f54736840c08da301095d7"
+    },
+    "tools/oracle/tkgeombase_probe_lprop_build.cxx": {
+      "bytes": 5563,
+      "sha256": "01be6f919d6869b0cb531f633563262e886b74f05c8279a99f5fe32c8bf6285e"
+    },
+    "tools/oracle/tkgeombase_probe_appcont.cxx": {
+      "bytes": 4754,
+      "sha256": "a70e91eaa2dacf142c8e3355e8ef9f0a0c05362471efa51c22a4ca226c6f66fb"
+    },
+    "tools/oracle/tkgeombase_probe_appparcurves.cxx": {
+      "bytes": 7892,
+      "sha256": "fe6fe3a8ade4d196d725019c28a891f48d3abf42e10e59dc30da88a7a0721db2"
+    }
+  },
+  "fixture_files": {
+    "inputs-01.txt": {
+      "bytes": 92945,
+      "sha256": "5113d80e24e8171edef2ed9e1779d57bac0c8800c2b9303533ab8e5463e19493"
+    },
+    "native-09.txt": {
+      "bytes": 75991,
+      "sha256": "d182aa981e4652c2351a2e812dc9221c672c63f024b68867682bc5d83beb5075"
+    },
+    "inputs-07.txt": {
+      "bytes": 115532,
+      "sha256": "70370c64841cbc7cafa025c07d09204f2e3d46c00e6c42e1ec01dcdd13172462"
+    },
+    "native-01.txt": {
+      "bytes": 151400,
+      "sha256": "67f349974d671d670609453d3b3717afa041b658a994e16d8226be14519b1c07"
+    },
+    "inputs-08.txt": {
+      "bytes": 53134,
+      "sha256": "eb66be268bbd6d839c630a92cd3e0df1f4b827e47db0ff42b58cd95eaae52e96"
+    },
+    "inputs-06.txt": {
+      "bytes": 133673,
+      "sha256": "d427fd9790edf21d2bb37dac266bafb020f0d6164bea1951cb663d8f8c8e71a8"
+    },
+    "native-02.txt": {
+      "bytes": 356251,
+      "sha256": "1c6b4be8e330cba14cb83a438231d70e1dea00ca1236772c53e0028ec51111d9"
+    },
+    "native-06.txt": {
+      "bytes": 218043,
+      "sha256": "d9237f683868ce73336c43914b2610198dc53c63ad6b8839a30b0f572611e7b0"
+    },
+    "native-00.txt": {
+      "bytes": 127352,
+      "sha256": "2db84f0c1dac815a6d937552888dfe09d272c254159ddd1b9cad93fbd87bf79e"
+    },
+    "native-03.txt": {
+      "bytes": 222066,
+      "sha256": "6cd0b5916f59f3c6319ec226284ce51703d83321fc44e2d9d2615a43189c5db4"
+    },
+    "inputs-00.txt": {
+      "bytes": 79811,
+      "sha256": "baddb5dd03ad83a5ebd1c1c9754d14c93957d657a35fbb809b2050ef9e01301b"
+    },
+    "inputs-03.txt": {
+      "bytes": 103484,
+      "sha256": "a25694084f40af3182665edc747011610fb7bb876bf9daf8e8d6ff77c2b1a006"
+    },
+    "inputs-04.txt": {
+      "bytes": 60162,
+      "sha256": "811cfd1c0d477c012ab8fa199e40113d8feaf645685b729db2a7a4c38ae579e8"
+    },
+    "inputs-02.txt": {
+      "bytes": 218494,
+      "sha256": "cc85eaaf6ffea30e781f502d8739d9891bebe4bd6df57af5ac0f510697173ca7"
+    },
+    "native-08.txt": {
+      "bytes": 94662,
+      "sha256": "3c7e720d0f1ae60a3fd87015a024379adfb30643b85451389034baacc90535b0"
+    },
+    "inputs-09.txt": {
+      "bytes": 88131,
+      "sha256": "95e97ee845bdb7acf14b3c082fd2e76a52529e5e8bcb124d7ced23e2de9001c4"
+    },
+    "inputs-05.txt": {
+      "bytes": 114463,
+      "sha256": "4431c06cb00fd4eb0ac80900670d15728e3632b33fcd76d9b09a5c0757621d09"
+    },
+    "inputs-10.txt": {
+      "bytes": 2735,
+      "sha256": "1921d155e0180d5716a4d65fbd869bbb1dbbf8a95651c4a7e6f5cf8c41df77b7"
+    },
+    "native-10.txt": {
+      "bytes": 1726,
+      "sha256": "89e11614c7e5166143d793786076f0b014682020498d3fcff5f2d475f54961bf"
+    },
+    "native-07.txt": {
+      "bytes": 185531,
+      "sha256": "099c849443b2288b6ec29db17ac41ed10e7cfed5e998cbb64d26446aff7c372d"
+    },
+    "native-04.txt": {
+      "bytes": 158044,
+      "sha256": "fb4d0e45e1f9f21eb535a793acbb4c35494d1fa0e0ecda6dc9f49d1823d93b15"
+    },
+    "native-05.txt": {
+      "bytes": 181731,
+      "sha256": "10aca9ec2fd83bff9440fb2e479177b15f70652779dd455948ee77129068eae2"
+    }
+  },
+  "production_algorithm_changes": 0,
+  "new_legacy_declaration_mappings": 0,
+  "new_exclusions": 0,
+  "tolerance_changes": 0,
+  "checks": {
+    "all_targets": {
+      "passed": 1393,
+      "failed": 0,
+      "ignored": 0,
+      "library": 68,
+      "toolkit": 1317,
+      "separate_reference_cache_tests": 2,
+      "numeric_example": 6
+    },
+    "doctests": {
+      "passed": 66,
+      "failed": 0,
+      "ignored_preexisting": 19
+    },
+    "focused_cumulative_corpus_tests": 153,
+    "new_distinct_test_functions": 8,
+    "strict_all_target_clippy": "passed",
+    "format_and_diff_check": "passed",
+    "package_local_static_test_references": 396,
+    "required_owned_packaged_files": 302,
+    "native_processes_byte_identical": 2,
+    "pre_extraction_cli_processes_match_native": 2,
+    "extracted_cli_processes_match_native": 2,
+    "native_original64shard_positions_match": true,
+    "prior_native_requests_preserved": 24978,
+    "prior_cli_native_requests_preserved": 22768,
+    "prior_gcpnts_frozen_rows_in_current_native_suite": 2210,
+    "prior_native_requests_profile": "debug",
+    "new_cli_process_profile": "debug",
+    "prior_gprop_release_different_rows": 14,
+    "prior_gprop_release_parity": "unresolved supplemental check",
+    "retained_serializer_consumer_requests": 3886,
+    "retained_serializer_consumer_families": 18,
+    "pre_edit_retained_consumer_requests": 3576,
+    "historical_rust_transport_recapture_requests": 310
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "source_revision": "3e4dabfa9d3eddd7d361271f80170e3d0684e0b6",
+  "native_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "new_complete_families": {
+    "g2c_to_bspline": 306,
+    "g2c_split": 120,
+    "g2c_knot_split": 42,
+    "g2c_bezier": 40,
+    "g2c_comp": 56,
+    "g2c_concat": 145,
+    "g2c_c0c1": 63,
+    "g2c_approx": 51,
+    "g2c_arcs": 76,
+    "g2c_ppoint": 9
+  },
+  "new_requests": 908,
+  "new_families": 10,
+  "cumulative_owned_requests": 30115,
+  "cumulative_owned_families": 129,
+  "full_original_requests": 45635,
+  "full_original_families": 328,
+  "remaining_requests": 15520,
+  "remaining_families": 199,
+  "inputs": {
+    "bytes": 120288,
+    "sha256": "0a970dbc3d3b645ea0c090d6dd37ff837d9bd495a462508da30e2b46a7cbcb9e"
+  },
+  "native_expected": {
+    "bytes": 2076151,
+    "sha256": "6f33bdb6272be0265ce2bcc18450075988fd083e5f32706dc0ebb539f3b45880"
+  },
+  "expected_origin": "Fresh pinned native captures before Geom2dConvert driver edits. Two sequential runs, two selected original64 partitions and two original34777-row prefix64 partitions agree. Historical full answer cache unavailable; no Rust-generated legacy expected results.",
+  "comparison_policy": "Exact finite/infinity/signed-zero bits, exception/text/whitespace; original decimal NaN classification and word boundaries.",
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/tkgeombase_corpus_geom2dconvert.py": {
+      "bytes": 13344,
+      "sha256": "79db1afecdb259f65731fdd85ebd894ebfb41b72697f12724b0a76e601e5e7d4"
+    },
+    "tools/probe_shards.py": {
+      "bytes": 5096,
+      "sha256": "ca562f6174402fc029138603e11d8280ad7a7060139780c127f60b7fc1369ea1"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_lprop_build.cxx": {
+      "bytes": 5563,
+      "sha256": "01be6f919d6869b0cb531f633563262e886b74f05c8279a99f5fe32c8bf6285e"
+    },
+    "tools/oracle/tkgeombase_probe_geom2dconvert.cxx": {
+      "bytes": 9833,
+      "sha256": "5acfc92c80b62c3b5866d8f50c3f2e9ba3f6009014e962fdda5d5672ae4ad756"
+    }
+  },
+  "fixture_files": {
+    "inputs-01.txt": {
+      "bytes": 31558,
+      "sha256": "f3d8a4c7c88bda7c01212fab7c24eba32ecc8c0a210cbc541dc2b7f6a2ca162d"
+    },
+    "native-01.txt": {
+      "bytes": 67384,
+      "sha256": "897af23d4931cc99bc455bf064b5a720f0a0799c3aaad55760be3e41a8d5e22d"
+    },
+    "native-02.txt": {
+      "bytes": 256310,
+      "sha256": "894dd5e042ff5d44e5745e72f0bbc2f704f339efb3b22c5d121847ddb49452df"
+    },
+    "native-00.txt": {
+      "bytes": 118879,
+      "sha256": "e887559ad165ee0cc37c16c5b7953a6a3ea24743251fc4ca208e77681bf492ef"
+    },
+    "native-03.txt": {
+      "bytes": 1633578,
+      "sha256": "5d1a7b9012a069448bcbbc25a21e9947d365f27978c3808831b7b821ab2bf2a0"
+    },
+    "inputs-00.txt": {
+      "bytes": 14240,
+      "sha256": "26417dbd7f6432836b6867c4e725032e2cfcad39fc146d996c1098bd98ab5dc0"
+    },
+    "inputs-03.txt": {
+      "bytes": 12773,
+      "sha256": "a96106a2bbd6f6e54bc581cd8b5edb86ce8b44be5f8c9ce194693425da58bdc7"
+    },
+    "inputs-02.txt": {
+      "bytes": 61717,
+      "sha256": "a53377abd7b74f3e404b75bc41e51340aa722e4d6ef63151ecb5811893274e7f"
+    }
+  },
+  "history_validation_chronology": "Selected sequential/shard native expectations were frozen before Rust edits. Supplemental full-original-prefix validation ran afterward against unchanged original native sources and matched those already-frozen expectations.",
+  "production_algorithm_changes": 0,
+  "new_legacy_declaration_mappings": 0,
+  "new_exclusions": 0,
+  "tolerance_changes": 0,
+  "checks": {
+    "all_targets": {
+      "passed": 1452,
+      "failed": 0,
+      "ignored": 0,
+      "library": 68,
+      "toolkit": 1355,
+      "separate_reference_cache_tests": 2,
+      "numeric_example": 11,
+      "isolated_fem_replay": 16
+    },
+    "doctests": {
+      "passed": 66,
+      "failed": 0,
+      "ignored_preexisting": 19
+    },
+    "focused_cumulative_corpus_tests": 202,
+    "new_distinct_test_functions": 16,
+    "strict_all_target_clippy": "passed",
+    "format_and_diff_check": "passed",
+    "package_local_static_test_references": 424,
+    "required_owned_packaged_files": 352,
+    "native_sequential_repetitions": 2,
+    "native_original64_selected_repetitions": 2,
+    "native_original64_full_prefix_repetitions": 2,
+    "full_prefix_rows": 34777,
+    "original_rust_cli_sequential_repetitions": 2,
+    "extracted_rust_cli_sequential_repetitions": 2,
+    "extracted_rust_cli_original64_repetitions": 2,
+    "new_ordinary_runtime_subprocesses": 0,
+    "cache_reset_or_global_state_changes": 0,
+    "prior_native_requests_preserved": 29207,
+    "prior_cli_native_requests_preserved": 25767,
+    "prior_gcpnts_frozen_rows_in_current_native_suite": 2210,
+    "prior_fem_frozen_rows_in_current_isolated_suite": 1230,
+    "prior_native_requests_profile": "debug",
+    "new_cli_process_profile": "debug",
+    "prior_gprop_release_different_rows": 14,
+    "prior_gprop_release_parity": "unresolved supplemental check",
+    "retained_transport_complete_families": 59,
+    "retained_transport_complete_requests": 5334,
+    "retained_transport_unresolved_families": 4,
+    "retained_transport_unresolved_requests": 427,
+    "retained_transport_unresolved_status": "Pre-extraction executable timeout at20seconds per complete family; combined superset stopped after561seconds. Not a parity pass or exclusion."
+  }
+}

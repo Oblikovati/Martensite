@@ -1,0 +1,2 @@
+inputs-*.txt -text
+expected-*.txt -text -whitespace

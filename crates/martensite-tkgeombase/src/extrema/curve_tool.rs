@@ -1,0 +1,265 @@
+//! `CurveTool` and `Curve2dTool`: the static curve access of the
+//! Extrema templates, and the [`ExtremaCurveTool`] trait that makes them (with the
+//! point, vector and elementary types of their dimension) one template parameter.
+use super::elementary_point_curve::ElementaryPointCurve;
+use super::gp_space::{GpPoint, GpVector};
+use crate::gcpnts::{PoleCurve, TCurveTypes, TangentialCriteria, TangentialDeflection};
+use martensite_tkernel::ncollection::Array1;
+use martensite_tkernel::precision;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkg2d::geom2d::Geom2dBSplineCurve;
+use martensite_tkg2d::geom2d::native::std_max;
+use martensite_tkg3d::geom::GeomBSplineCurve;
+use martensite_tkmath::geom_abs::{CurveType, Shape};
+use std::f64::consts::PI;
+
+/// The knot access of `BSplineCurve` and `BSplineCurve` that
+/// GGExtPC reads.
+pub trait SplineKnots: PoleCurve {
+    /// `FirstUKnotIndex()`; `spline.first_knot_index()?`.
+    fn first_knot_index(&self) -> Result<i32, Failure>;
+    /// `LastUKnotIndex()`; `spline.last_knot_index()?`.
+    fn last_knot_index(&self) -> Result<i32, Failure>;
+    /// `Knots()`, the 1-based knot values; `spline.knot_values()`.
+    fn knot_values(&self) -> Array1<'static, f64>;
+}
+
+macro_rules! spline_knots {
+    ($($spline:ty),*) => {$(
+        impl SplineKnots for $spline {
+            fn first_knot_index(&self) -> Result<i32, Failure> {
+                self.first_u_knot_index()
+            }
+            fn last_knot_index(&self) -> Result<i32, Failure> {
+                self.last_u_knot_index()
+            }
+            fn knot_values(&self) -> Array1<'static, f64> {
+                self.knots()
+            }
+        }
+    )*};
+}
+spline_knots!(GeomBSplineCurve, Geom2dBSplineCurve);
+
+/// A point with its first derivative.
+pub type ToolD1<T> = (
+    <T as ExtremaCurveTool>::Point,
+    <T as ExtremaCurveTool>::Vector,
+);
+/// A point with its first two derivatives.
+pub type ToolD2<T> = (
+    <T as ExtremaCurveTool>::Point,
+    <T as ExtremaCurveTool>::Vector,
+    <T as ExtremaCurveTool>::Vector,
+);
+/// A point with its first three derivatives.
+pub type ToolD3<T> = (
+    <T as ExtremaCurveTool>::Point,
+    <T as ExtremaCurveTool>::Vector,
+    <T as ExtremaCurveTool>::Vector,
+    <T as ExtremaCurveTool>::Vector,
+);
+
+/// A point with its first derivative, through [`ExtremaCurveAccess`].
+pub type AccessD1<T> = (
+    <T as ExtremaCurveAccess>::Point,
+    <T as ExtremaCurveAccess>::Vector,
+);
+/// A point with its first two derivatives, through [`ExtremaCurveAccess`].
+pub type AccessD2<T> = (
+    <T as ExtremaCurveAccess>::Point,
+    <T as ExtremaCurveAccess>::Vector,
+    <T as ExtremaCurveAccess>::Vector,
+);
+
+/// The members of [`ExtremaCurveTool`] that the point-curve locating templates
+/// (`GCurveLocator`, `GFuncExtPC`, `GenLocateExtPC`) call.
+/// Every [`ExtremaCurveTool`] provides it; a tool that only serves those templates
+/// (`curve-tool provider` on the projected curves of TKHLR) implements it directly;
+/// `<CurveTool as ExtremaCurveAccess>::first_parameter(&adaptor)?`.
+pub trait ExtremaCurveAccess: 'static {
+    /// The curve type the tool reads.
+    type Curve: ?Sized;
+    /// `Point3` or `Point2`.
+    type Point: GpPoint<Vector = Self::Vector>;
+    /// `Vector3` or `Vec2d`.
+    type Vector: GpVector;
+    /// `FirstParameter(C)`.
+    fn first_parameter(curve: &Self::Curve) -> Result<f64, Failure>;
+    /// `LastParameter(C)`.
+    fn last_parameter(curve: &Self::Curve) -> Result<f64, Failure>;
+    /// `GetType(C)`.
+    fn get_type(curve: &Self::Curve) -> Result<CurveType, Failure>;
+    /// `Value(C, U)`.
+    fn value(curve: &Self::Curve, u: f64) -> Result<Self::Point, Failure>;
+    /// `D0(C, U, P)`.
+    fn d0(curve: &Self::Curve, u: f64) -> Result<Self::Point, Failure>;
+    /// `D1(C, U, P, V)`.
+    fn d1(curve: &Self::Curve, u: f64) -> Result<AccessD1<Self>, Failure>;
+    /// `D2(C, U, P, V1, V2)`.
+    fn d2(curve: &Self::Curve, u: f64) -> Result<AccessD2<Self>, Failure>;
+    /// `DN(C, U, N)`.
+    fn dn(curve: &Self::Curve, u: f64, n: i32) -> Result<Self::Vector, Failure>;
+}
+
+impl<T: ExtremaCurveTool> ExtremaCurveAccess for T {
+    type Curve = <T as ExtremaCurveTool>::Curve;
+    type Point = <T as ExtremaCurveTool>::Point;
+    type Vector = <T as ExtremaCurveTool>::Vector;
+    fn first_parameter(curve: &Self::Curve) -> Result<f64, Failure> {
+        <T as ExtremaCurveTool>::first_parameter(curve)
+    }
+    fn last_parameter(curve: &Self::Curve) -> Result<f64, Failure> {
+        <T as ExtremaCurveTool>::last_parameter(curve)
+    }
+    fn get_type(curve: &Self::Curve) -> Result<CurveType, Failure> {
+        <T as ExtremaCurveTool>::get_type(curve)
+    }
+    fn value(curve: &Self::Curve, u: f64) -> Result<Self::Point, Failure> {
+        <T as ExtremaCurveTool>::value(curve, u)
+    }
+    fn d0(curve: &Self::Curve, u: f64) -> Result<Self::Point, Failure> {
+        <T as ExtremaCurveTool>::d0(curve, u)
+    }
+    fn d1(curve: &Self::Curve, u: f64) -> Result<AccessD1<Self>, Failure> {
+        <T as ExtremaCurveTool>::d1(curve, u)
+    }
+    fn d2(curve: &Self::Curve, u: f64) -> Result<AccessD2<Self>, Failure> {
+        <T as ExtremaCurveTool>::d2(curve, u)
+    }
+    fn dn(curve: &Self::Curve, u: f64, n: i32) -> Result<Self::Vector, Failure> {
+        <T as ExtremaCurveTool>::dn(curve, u, n)
+    }
+}
+
+/// The `TheCurve`/`TheCurveTool`/`ThePoint`/`TheVector`/`ThePOnC`/`TheExtPElC`
+/// parameters of the Extrema templates, implemented by `CurveTool` (3D) and
+/// `Curve2dTool` (2D). Each member is the static tool member of the same name;
+/// an adaptor exception is the returned `Failure`;
+/// `CurveTool::first_parameter(&adaptor)?`.
+pub trait ExtremaCurveTool: 'static {
+    /// The adaptor (`Adaptor3dCurve` or `Adaptor2dCurve2d`).
+    type Curve: ?Sized + TCurveTypes<BSplineCurve = Self::BSpline, BezierCurve = Self::Bezier>;
+    /// `Point3` or `Point2`.
+    type Point: GpPoint<Vector = Self::Vector>;
+    /// `Vector3` or `Vec2d`.
+    type Vector: GpVector;
+    /// `Lin` or `Lin2d`.
+    type Line: Copy;
+    /// `Circ` or `Circ2d`.
+    type Circle: Copy;
+    /// `Elips` or `Elips2d`.
+    type Ellipse: Copy;
+    /// `Hypr` or `Hypr2d`.
+    type Hyperbola: Copy;
+    /// `Parab` or `Parab2d`.
+    type Parabola: Copy;
+    /// `BezierCurve` or `BezierCurve`.
+    type Bezier: PoleCurve + RuntimeTyped;
+    /// `BSplineCurve` or `BSplineCurve`.
+    type BSpline: SplineKnots + RuntimeTyped;
+    /// `ExtPElC` or `ExtPElC2d`.
+    type ExtPElC: ElementaryPointCurve<Self> + Default;
+
+    /// `FirstParameter(C)`.
+    fn first_parameter(curve: &Self::Curve) -> Result<f64, Failure>;
+    /// `LastParameter(C)`.
+    fn last_parameter(curve: &Self::Curve) -> Result<f64, Failure>;
+    /// `Continuity(C)`.
+    fn continuity(curve: &Self::Curve) -> Result<Shape, Failure>;
+    /// `NbIntervals(C, S)`.
+    fn nb_intervals(curve: &Self::Curve, shape: Shape) -> Result<i32, Failure>;
+    /// `Intervals(C, T, S)`.
+    fn intervals(
+        curve: &Self::Curve,
+        bounds: &mut Array1<'_, f64>,
+        shape: Shape,
+    ) -> Result<(), Failure>;
+    /// `IsClosed(C)` (a member of Curve2dTool; the adaptor's for 3D).
+    fn is_closed(curve: &Self::Curve) -> Result<bool, Failure>;
+    /// `IsPeriodic(C)`.
+    fn is_periodic(curve: &Self::Curve) -> Result<bool, Failure>;
+    /// `Period(C)`.
+    fn period(curve: &Self::Curve) -> Result<f64, Failure>;
+    /// `Resolution(C, R3d)`.
+    fn resolution(curve: &Self::Curve, r3d: f64) -> Result<f64, Failure>;
+    /// `GetType(C)`.
+    fn get_type(curve: &Self::Curve) -> Result<CurveType, Failure>;
+    /// `Value(C, U)`.
+    fn value(curve: &Self::Curve, u: f64) -> Result<Self::Point, Failure>;
+    /// `D0(C, U, P)`.
+    fn d0(curve: &Self::Curve, u: f64) -> Result<Self::Point, Failure>;
+    /// `D1(C, U, P, V)`.
+    fn d1(curve: &Self::Curve, u: f64) -> Result<ToolD1<Self>, Failure>;
+    /// `D2(C, U, P, V1, V2)`.
+    fn d2(curve: &Self::Curve, u: f64) -> Result<ToolD2<Self>, Failure>;
+    /// `D3(C, U, P, V1, V2, V3)`.
+    fn d3(curve: &Self::Curve, u: f64) -> Result<ToolD3<Self>, Failure>;
+    /// `DN(C, U, N)`.
+    fn dn(curve: &Self::Curve, u: f64, n: i32) -> Result<Self::Vector, Failure>;
+    /// `Line(C)`.
+    fn line(curve: &Self::Curve) -> Result<Self::Line, Failure>;
+    /// `Circle(C)`.
+    fn circle(curve: &Self::Curve) -> Result<Self::Circle, Failure>;
+    /// `Ellipse(C)`.
+    fn ellipse(curve: &Self::Curve) -> Result<Self::Ellipse, Failure>;
+    /// `Hyperbola(C)`.
+    fn hyperbola(curve: &Self::Curve) -> Result<Self::Hyperbola, Failure>;
+    /// `Parabola(C)`.
+    fn parabola(curve: &Self::Curve) -> Result<Self::Parabola, Failure>;
+    /// `Degree(C)`.
+    fn degree(curve: &Self::Curve) -> Result<i32, Failure>;
+    /// `IsRational(C)`.
+    fn is_rational(curve: &Self::Curve) -> Result<bool, Failure>;
+    /// `NbPoles(C)`.
+    fn nb_poles(curve: &Self::Curve) -> Result<i32, Failure>;
+    /// `NbKnots(C)`.
+    fn nb_knots(curve: &Self::Curve) -> Result<i32, Failure>;
+    /// `Bezier(C)`.
+    fn bezier(curve: &Self::Curve) -> Result<Handle<Self::Bezier>, Failure>;
+    /// `BSpline(C)`.
+    fn bspline(curve: &Self::Curve) -> Result<Handle<Self::BSpline>, Failure>;
+    /// `DeflCurvIntervals(C)`: the parameters of a TangentialDeflection
+    /// sampling sized from the curve length, the values of the 1-based retained array.
+    fn defl_curv_intervals(curve: &Self::Curve) -> Result<Vec<f64>, Failure> {
+        let (tf, tl) = (Self::first_parameter(curve)?, Self::last_parameter(curve)?);
+        let origin: Self::Point = Self::value(curve, tf)?;
+        let mut length: f64 = 0.0;
+        for i in 2..=23 {
+            let t: f64 = (tf * f64::from(23 - i) + f64::from(i - 1) * tl) / f64::from(23 - 1);
+            // The sum accumulates distances from the first point (not a polyline).
+            length += origin.distance_to(&Self::value(curve, t)?);
+        }
+        deflection_parameters(curve, (tf, tl), length)
+    }
+}
+
+// The deflection-sized sampling of `[tf, tl]`, or its two bounds for a short, slow,
+// long-range or strongly deflected curve.
+fn deflection_parameters<C: TCurveTypes + ?Sized>(
+    curve: &C,
+    (tf, tl): (f64, f64),
+    length: f64,
+) -> Result<Vec<f64>, Failure> {
+    let (epsd, maxdefl, mindefl) = (1.0e-3, 1.0e3, 1.0e-3);
+    let dl_dt: f64 = length / (tl - tf);
+    // (tl - tf) > 10000: to avoid problem with GCPnts
+    if length <= precision::confusion() || dl_dt < epsd || (tl - tf) > 10000.0 {
+        return Ok(vec![tf, tl]);
+    }
+    let defl: f64 = std_max(0.01 * length / (2.0 * PI), mindefl);
+    if defl > maxdefl {
+        return Ok(vec![tf, tl]);
+    }
+    let criteria = TangentialCriteria {
+        angular_deflection: PI / 6.0,
+        curvature_deflection: defl,
+        minimum_of_points: 2,
+        u_tol: std_max(0.00001 * (tl - tf), precision::p_confusion()),
+        min_len: std_max(0.00001 * length, precision::confusion()),
+    };
+    let generator = TangentialDeflection::with_curve(curve, criteria)?;
+    (1..=generator.nb_points())
+        .map(|i| generator.parameter(i))
+        .collect()
+}

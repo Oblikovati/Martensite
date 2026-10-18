@@ -1,0 +1,301 @@
+//! Complete bounding families retain original requests, retained outputs and comparison policies.
+const CHUNKS: &[(&str, &str)] = &[
+    (
+        include_str!("fixtures/bounding_corpus/inputs-00.txt"),
+        include_str!("fixtures/bounding_corpus/expected-00.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-01.txt"),
+        include_str!("fixtures/bounding_corpus/expected-01.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-02.txt"),
+        include_str!("fixtures/bounding_corpus/expected-02.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-03.txt"),
+        include_str!("fixtures/bounding_corpus/expected-03.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-04.txt"),
+        include_str!("fixtures/bounding_corpus/expected-04.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-05.txt"),
+        include_str!("fixtures/bounding_corpus/expected-05.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-06.txt"),
+        include_str!("fixtures/bounding_corpus/expected-06.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-07.txt"),
+        include_str!("fixtures/bounding_corpus/expected-07.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-08.txt"),
+        include_str!("fixtures/bounding_corpus/expected-08.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-09.txt"),
+        include_str!("fixtures/bounding_corpus/expected-09.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-10.txt"),
+        include_str!("fixtures/bounding_corpus/expected-10.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-11.txt"),
+        include_str!("fixtures/bounding_corpus/expected-11.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-12.txt"),
+        include_str!("fixtures/bounding_corpus/expected-12.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-13.txt"),
+        include_str!("fixtures/bounding_corpus/expected-13.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-14.txt"),
+        include_str!("fixtures/bounding_corpus/expected-14.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-15.txt"),
+        include_str!("fixtures/bounding_corpus/expected-15.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-16.txt"),
+        include_str!("fixtures/bounding_corpus/expected-16.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-17.txt"),
+        include_str!("fixtures/bounding_corpus/expected-17.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-18.txt"),
+        include_str!("fixtures/bounding_corpus/expected-18.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-19.txt"),
+        include_str!("fixtures/bounding_corpus/expected-19.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-20.txt"),
+        include_str!("fixtures/bounding_corpus/expected-20.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-21.txt"),
+        include_str!("fixtures/bounding_corpus/expected-21.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-22.txt"),
+        include_str!("fixtures/bounding_corpus/expected-22.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-23.txt"),
+        include_str!("fixtures/bounding_corpus/expected-23.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-24.txt"),
+        include_str!("fixtures/bounding_corpus/expected-24.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-25.txt"),
+        include_str!("fixtures/bounding_corpus/expected-25.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-26.txt"),
+        include_str!("fixtures/bounding_corpus/expected-26.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-27.txt"),
+        include_str!("fixtures/bounding_corpus/expected-27.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-28.txt"),
+        include_str!("fixtures/bounding_corpus/expected-28.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-29.txt"),
+        include_str!("fixtures/bounding_corpus/expected-29.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-30.txt"),
+        include_str!("fixtures/bounding_corpus/expected-30.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-31.txt"),
+        include_str!("fixtures/bounding_corpus/expected-31.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-32.txt"),
+        include_str!("fixtures/bounding_corpus/expected-32.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-33.txt"),
+        include_str!("fixtures/bounding_corpus/expected-33.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-34.txt"),
+        include_str!("fixtures/bounding_corpus/expected-34.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-35.txt"),
+        include_str!("fixtures/bounding_corpus/expected-35.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-36.txt"),
+        include_str!("fixtures/bounding_corpus/expected-36.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-37.txt"),
+        include_str!("fixtures/bounding_corpus/expected-37.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-38.txt"),
+        include_str!("fixtures/bounding_corpus/expected-38.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-39.txt"),
+        include_str!("fixtures/bounding_corpus/expected-39.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-40.txt"),
+        include_str!("fixtures/bounding_corpus/expected-40.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-41.txt"),
+        include_str!("fixtures/bounding_corpus/expected-41.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-42.txt"),
+        include_str!("fixtures/bounding_corpus/expected-42.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-43.txt"),
+        include_str!("fixtures/bounding_corpus/expected-43.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-44.txt"),
+        include_str!("fixtures/bounding_corpus/expected-44.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-45.txt"),
+        include_str!("fixtures/bounding_corpus/expected-45.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-46.txt"),
+        include_str!("fixtures/bounding_corpus/expected-46.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-47.txt"),
+        include_str!("fixtures/bounding_corpus/expected-47.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-48.txt"),
+        include_str!("fixtures/bounding_corpus/expected-48.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-49.txt"),
+        include_str!("fixtures/bounding_corpus/expected-49.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-50.txt"),
+        include_str!("fixtures/bounding_corpus/expected-50.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-51.txt"),
+        include_str!("fixtures/bounding_corpus/expected-51.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-52.txt"),
+        include_str!("fixtures/bounding_corpus/expected-52.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-53.txt"),
+        include_str!("fixtures/bounding_corpus/expected-53.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-54.txt"),
+        include_str!("fixtures/bounding_corpus/expected-54.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-55.txt"),
+        include_str!("fixtures/bounding_corpus/expected-55.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-56.txt"),
+        include_str!("fixtures/bounding_corpus/expected-56.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-57.txt"),
+        include_str!("fixtures/bounding_corpus/expected-57.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-58.txt"),
+        include_str!("fixtures/bounding_corpus/expected-58.txt"),
+    ),
+    (
+        include_str!("fixtures/bounding_corpus/inputs-59.txt"),
+        include_str!("fixtures/bounding_corpus/expected-59.txt"),
+    ),
+];
+#[test]
+fn bnd_curve3d_complete_family() {
+    super::replay_family(CHUNKS, "bnd_curve3d", 3337);
+}
+#[test]
+fn bnd_curve2d_complete_family() {
+    super::replay_family(CHUNKS, "bnd_curve2d", 4186);
+}
+#[test]
+fn bnd_surface_complete_family() {
+    super::replay_family(CHUNKS, "bnd_surface", 2470);
+}
+#[test]
+fn bnd_gp_complete_family() {
+    super::replay_family(CHUNKS, "bnd_gp", 4978);
+}
+#[test]
+fn bnd_helpers_complete_family() {
+    super::replay_family(CHUNKS, "bnd_helpers", 227);
+}
+#[test]
+fn bounding_requests_and_retained_answers_stay_frozen() {
+    assert_eq!(
+        super::fixture_hash(CHUNKS.iter().map(|(q, _)| *q)),
+        0x192e421d011ca555
+    );
+    assert_eq!(
+        super::fixture_hash(CHUNKS.iter().map(|(_, a)| *a)),
+        0x87a93fdb401ff74
+    );
+}
+fn assert_closed_box(request: &[f64], flags: usize, limits: &[f64]) {
+    let output = super::construction_corpus::run_values("bnd_gp", request).unwrap();
+    let tokens: Vec<&str> = output.split_whitespace().collect();
+    assert_eq!(tokens.len(), flags + 1 + limits.len());
+    assert!(tokens[..=flags].iter().all(|token| *token == "0"));
+    for (token, expected) in tokens[flags + 1..].iter().zip(limits) {
+        assert_eq!(*token, expected.to_bits().to_string());
+    }
+}
+#[test]
+fn circle_box_matches_independent_coordinate_extrema() {
+    assert_closed_box(
+        &[
+            1.0, 2.0, 0.0, 1.0, 2.0, 3.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 2.0, 0.0,
+        ],
+        8,
+        &[-1.0, 3.0, 0.0, 4.0, 3.0, 3.0],
+    );
+}
+#[test]
+fn line_box_matches_independent_endpoint_extrema() {
+    assert_closed_box(
+        &[1.0, 0.0, 0.0, 1.0, 2.0, 3.0, 1.0, 0.0, 0.0, -2.0, 4.0, 0.0],
+        8,
+        &[-1.0, 5.0, 2.0, 2.0, 3.0, 3.0],
+    );
+}

@@ -1,0 +1,65 @@
+{
+  "source_revision": "b4d068927c6414f0bdfa1505d85987538bba2292",
+  "native_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "new_complete_families": {
+    "gprop_points": 59,
+    "gprop_pequation": 49,
+    "gprop_hoperator": 3,
+    "gprop_elementary": 72,
+    "gprop_compose": 6
+  },
+  "new_requests": 189,
+  "new_families": 5,
+  "cumulative_owned_requests": 5583,
+  "cumulative_owned_families": 76,
+  "full_original_requests": 45635,
+  "full_original_families": 328,
+  "remaining_requests": 40052,
+  "remaining_families": 252,
+  "inputs": {
+    "bytes": 41528,
+    "sha256": "7be75a3bdd9bcb49ba21a81e8924764ce0535660b907e5b94b4a3bfa617d36af"
+  },
+  "native_expected": {
+    "bytes": 117068,
+    "sha256": "cb92b4409f5c556ec437045f2f10b41cb69b4cb59d4528acc1160514707aece2"
+  },
+  "expected_origin": "Fresh pinned native capture before GProp edits; historical full answer cache unavailable, no Rust-derived legacy expectations.",
+  "comparison_policy": "Exact finite/infinity/signed-zero bits, exception/text/whitespace; original decimal NaN classification and word boundaries.",
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_gprop.cxx": {
+      "bytes": 6641,
+      "sha256": "63d602a027c12ff3d4c22c2ce0a48af4e42d3b7359b7cd543c0e3a9aa21c2afa"
+    }
+  },
+  "fixture_files": {
+    "inputs.txt": {
+      "bytes": 41528,
+      "sha256": "7be75a3bdd9bcb49ba21a81e8924764ce0535660b907e5b94b4a3bfa617d36af"
+    },
+    "native.txt": {
+      "bytes": 117068,
+      "sha256": "cb92b4409f5c556ec437045f2f10b41cb69b4cb59d4528acc1160514707aece2"
+    }
+  },
+  "production_algorithm_changes": 0,
+  "new_legacy_declaration_mappings": 0,
+  "new_exclusions": 0,
+  "tolerance_changes": 0
+}

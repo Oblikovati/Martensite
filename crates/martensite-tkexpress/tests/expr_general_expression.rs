@@ -97,8 +97,7 @@ fn numeric_literal_repeated_parsing() {
 #[test]
 fn tab_input_does_not_panic() {
     let a_generator: Handle<ExprIntrpGenExp> = ExprIntrpGenExp::create();
-    // Keep the scanner echo local so this check does not write to standard output.
-    a_generator.set_scanner_output(Box::new(std::io::sink()));
+    // Exercise the default scanner output, including its tab echo.
     // The void processing API must return without panicking.
     a_generator.process(&AsciiString::new("\t"));
 }
