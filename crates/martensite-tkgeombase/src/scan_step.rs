@@ -37,9 +37,9 @@ pub fn advanced_scan_parameter(par: f64, step: f64) -> Option<f64> {
 ///
 /// ```
 /// use martensite_tkgeombase::scan_step::next_scan_parameter;
-/// let next = next_scan_parameter("ComputeApprox", 0.2, 0.1, [0.0, 1.0]);
+/// let next = next_scan_parameter("ProjLib_ComputeApprox", 0.2, 0.1, [0.0, 1.0]);
 /// assert_eq!(next.unwrap(), 0.30000000000000004);
-/// let stalled = next_scan_parameter("ComputeApprox", 1.0, 0.0, [1.0, 1.0]);
+/// let stalled = next_scan_parameter("ProjLib_ComputeApprox", 1.0, 0.0, [1.0, 1.0]);
 /// assert!(stalled.unwrap_err().message().contains("never ends"));
 /// ```
 pub fn next_scan_parameter(

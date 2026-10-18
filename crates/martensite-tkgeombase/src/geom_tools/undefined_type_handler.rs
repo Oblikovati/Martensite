@@ -114,14 +114,14 @@ fn report_unknown(console: &dyn ConsoleOutput, stream: &mut IoStream, compact: b
     }
 }
 
-/// An instance of the retained class itself (`new UndefinedTypeHandler`), the
-/// handler GeomTools starts with; its dynamic type is `UndefinedTypeHandler`.
+/// The default handler for unsupported geometry types.
+/// Its registered runtime identity remains stable for dynamic type queries.
 ///
 /// ```
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkgeombase::geom_tools::UndefinedTypeHandlerBase;
 /// let handler = Handle::new(UndefinedTypeHandlerBase::default());
-/// assert!(handler.is_instance_name("UndefinedTypeHandler"));
+/// assert!(handler.is_instance_name("GeomTools_UndefinedTypeHandler"));
 /// ```
 pub struct UndefinedTypeHandlerBase {
     parent: StandardTransient,
