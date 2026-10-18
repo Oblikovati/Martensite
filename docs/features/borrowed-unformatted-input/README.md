@@ -59,7 +59,9 @@ Existing owned diagnostics remain unchanged. This header entry alone does not de
 
 `BinaryFile::read_complete_info_checked` shares the existing owned reader's
 primitive, metadata and section decoding. It consumes the caller's actual buffer
-and leaves remaining caller bytes unread. Section dispatch needs an actual position capability;
+and leaves remaining caller bytes unread. Offsets outside 0..=2147483647 return a
+typed range failure without changing the input state or mask. Section dispatch
+needs an actual position capability;
 the operation never seeks or assumes an origin of zero. It does not copy the
 complete input into an owned buffer; decoded metadata fields allocate normally.
 

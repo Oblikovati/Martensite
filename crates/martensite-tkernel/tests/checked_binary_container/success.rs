@@ -4,7 +4,7 @@ use martensite_tkernel::standard::Handle;
 use martensite_tkernel::storage::{Data, HeaderData};
 
 #[test]
-fn read_only_buffer_keeps_unread_body_and_dataset_identity() {
+fn read_only_buffer_keeps_unread_tail_and_dataset_identity() {
     let mut source = support::source(&baseline::empty_container());
     let mut set = Handle::new(Data::default());
     let identity = set.as_ptr();
@@ -37,7 +37,7 @@ fn actual_shifted_origin_controls_section_dispatch() {
 }
 
 #[test]
-fn complete_metadata_preserves_text_units_comments_and_body() {
+fn complete_metadata_preserves_text_units_comments_and_tail() {
     let mut source = support::source(&fixture::metadata());
     let mut set = Handle::<Data>::default();
     support::with_input(&mut source, |input| {

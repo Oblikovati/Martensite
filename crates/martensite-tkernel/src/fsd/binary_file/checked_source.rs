@@ -1,5 +1,6 @@
 //! Checked source policy retains failures without replacing field decoding.
 use super::{CheckedReadError, input_source::BinaryReadSource};
+use crate::standard::Failure;
 use crate::storage::{StreamException, checked_input::UnformattedInput, state};
 use std::{io, sync::Arc};
 
@@ -49,7 +50,7 @@ impl BinaryReadSource for CheckedReadSource<'_> {
     }
     fn position(&mut self) -> Result<i32, CheckedReadError> {
         if let Some(position) = self.input.position().map_err(CheckedReadError::Input)? {
-            return Ok(position as i32);
+            return section_offset(position);
         }
         Err(CheckedReadError::PositionUnavailable {
             state: self.input.state(),
@@ -77,4 +78,15 @@ impl BinaryReadSource for CheckedReadSource<'_> {
             ),
         )
     }
+}
+
+fn section_offset(position: u64) -> Result<i32, CheckedReadError> {
+    // #181: wide caller origins must not alias the format's section offsets.
+    i32::try_from(position).map_err(|_| {
+        CheckedReadError::Domain(Failure::with_type(
+            "Standard_OutOfRange",
+            &format!("binary container position {position}; expected 0..=2147483647"),
+            "",
+        ))
+    })
 }

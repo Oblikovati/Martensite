@@ -13,3 +13,5 @@ mod process_contract;
 mod success;
 #[path = "checked_binary_container/support.rs"]
 mod support;
+#[path = "checked_binary_container/position_range.rs"]
+mod position_range;
