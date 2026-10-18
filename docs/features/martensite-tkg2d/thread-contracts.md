@@ -37,8 +37,8 @@ to transfer or share.
 | --- | --- |
 | `EvalCoord`, `EvalPole`, `OffsetBasisCurve`, `SplineCurveKind`, `BezierCurveKind`, `BSplineCurveKind` | These extension traits do not themselves require `Send + Sync`. A caller that crosses a thread boundary must require the appropriate bounds for its implementation and associated types. |
 | `BasisSums<C>`, pole storage, basis views, `BezierCurveArrays<P>`, `CacheSource<P>` | Owned elements and borrowed element references determine the auto traits. A borrow also keeps its original lifetime; a compiler assertion using `'static` does not extend a real borrow. |
-| `BezierCurveCore<K>`, `BSplineCurveCore<K>` | Bounds depend on `K::Point` and `K::EvalRep`, including any referenced geometry. The shipped planar instantiations are transitively checked by the concrete Bezier and B-spline object assertions. No guarantee is made for an arbitrary custom representation. |
-| `KindVector<K>`, `KindD1<K>`, `KindD2<K>`, `KindD3<K>` | These aliases inherit the associated point/vector bounds; the aliases add no thread guarantee. |
+| `BezierCurveCore<K>`, `BSplineCurveCore<K>` | Bounds depend on `K::Point` and `K::EvalRep`, including any referenced geometry. The private-module test `planar_spline_storage_and_result_aliases_have_direct_thread_bounds` checks the shipped planar storage types directly, without wrapping them in a lock. No guarantee is made for an arbitrary custom representation. |
+| `KindVector<K>`, `KindD1<K>`, `KindD2<K>`, `KindD3<K>` | These aliases inherit the associated point/vector bounds. The same private-module test checks all four shipped planar aliases directly; arbitrary implementations need their own bounds. |
 | `MappedCurveState<C>`, `TrimmedBounds<B>`, `TrimBasis` | The retained handle and its geometry contract determine the bounds. Structural bounds do not make shared geometry an isolated input. |
 
 ## Thread-confined callback view

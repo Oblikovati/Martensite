@@ -243,7 +243,12 @@ macro_rules! assert_empty_low_level_orders {
         assert!(evaluator.evaluate_grid_d2(parameters).unwrap().is_empty());
         assert!(evaluator.evaluate_grid_d3(parameters).unwrap().is_empty());
         for order in [-1, 0, 1, 2, 3, 4] {
-            assert!(evaluator.evaluate_grid_dn(parameters, order).unwrap().is_empty());
+            assert!(
+                evaluator
+                    .evaluate_grid_dn(parameters, order)
+                    .unwrap()
+                    .is_empty()
+            );
         }
     }};
 }

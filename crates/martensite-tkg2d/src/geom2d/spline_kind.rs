@@ -93,3 +93,21 @@ impl BSplineCurveKind for Geom2dSplineKind {
         Ok(v1.angle(v2)?.abs() <= ang_tol)
     }
 }
+
+#[cfg(test)]
+mod thread_type_contracts {
+    use super::{BSplineState, BezierState, Geom2dSplineKind};
+    use crate::geom2d::spline_curve_kind::{KindD1, KindD2, KindD3, KindVector};
+
+    fn require_send_sync<T: Send + Sync>() {}
+
+    #[test]
+    fn planar_spline_storage_and_result_aliases_have_direct_thread_bounds() {
+        require_send_sync::<BezierState>();
+        require_send_sync::<BSplineState>();
+        require_send_sync::<KindVector<Geom2dSplineKind>>();
+        require_send_sync::<KindD1<Geom2dSplineKind>>();
+        require_send_sync::<KindD2<Geom2dSplineKind>>();
+        require_send_sync::<KindD3<Geom2dSplineKind>>();
+    }
+}
