@@ -1,0 +1,145 @@
+//! `Geom2dLine`: an infinite line parameterized by arc length from its origin.
+use super::curve::{Geom2dCurve, Geom2dCurveD1, Geom2dCurveD2, Geom2dCurveD3, dump_curve};
+use super::errors;
+use super::geometry::{Geom2dGeometry, dump_base, dump_class_name, dump_field};
+use martensite_tkernel::impl_transient;
+use martensite_tkernel::precision;
+use martensite_tkernel::standard::dump::DumpStream;
+use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkmath::elclib;
+use martensite_tkmath::gp::{Axis2d, Direction2, Line2, Point2, Transform2, Vector2};
+use std::io;
+
+/// A line through a point along a direction; `Handle::new(Geom2dLine::new(axis))`.
+pub struct Geom2dLine {
+    parent: StandardTransient,
+    state: SharedState<Axis2d>,
+}
+impl_transient!(
+    Geom2dLine,
+    "Geom2d_Line",
+    dyn Geom2dCurve,
+    parent,
+    interfaces: [dyn Geom2dGeometry, dyn Geom2dCurve]
+);
+impl Clone for Geom2dLine {
+    fn clone(&self) -> Self {
+        Self::new(self.position())
+    }
+}
+impl Geom2dLine {
+    /// Line on an axis (`Geom2dLine(Axis2d)`); `Geom2dLine::new(axis)`.
+    pub fn new(axis: Axis2d) -> Self {
+        Self {
+            parent: StandardTransient::default(),
+            state: SharedState::new(axis),
+        }
+    }
+    /// Line from a gp line (`Geom2dLine(Line2)`); `Geom2dLine::from_lin2d(line)`.
+    pub fn from_lin2d(line: Line2) -> Self {
+        Self::new(line.position())
+    }
+    /// Line through a point along a direction (`Geom2dLine(P, V)`);
+    /// `Geom2dLine::from_point(p, d)`.
+    pub fn from_point(point: Point2, direction: Direction2) -> Self {
+        Self::new(Axis2d::new(point, direction))
+    }
+    /// Replace by a gp line (`SetLin2d`); `line.set_lin2d(l)`.
+    pub fn set_lin2d(&self, line: Line2) {
+        *self.state.write() = line.position();
+    }
+    /// Replace the direction (`SetDirection`); `line.set_direction(d)`.
+    pub fn set_direction(&self, direction: Direction2) {
+        self.state.write().set_direction(direction);
+    }
+    /// The direction (`Direction`); `line.direction()`.
+    pub fn direction(&self) -> Direction2 {
+        self.state.read().direction()
+    }
+    /// Replace the origin (`SetLocation`); `line.set_location(p)`.
+    pub fn set_location(&self, point: Point2) {
+        self.state.write().set_location(point);
+    }
+    /// The origin (`Location`); `line.location()`.
+    pub fn location(&self) -> Point2 {
+        self.state.read().location()
+    }
+    /// Replace the axis (`SetPosition`); `line.set_position(axis)`.
+    pub fn set_position(&self, axis: Axis2d) {
+        *self.state.write() = axis;
+    }
+    /// The axis (`Position`); `line.position()`.
+    pub fn position(&self) -> Axis2d {
+        *self.state.read()
+    }
+    /// The gp line (`Lin2d`); `line.lin2d()`.
+    pub fn lin2d(&self) -> Line2 {
+        Line2::from(self.position())
+    }
+    /// Distance from `point` to the line (`Distance`); `line.distance(p)`.
+    pub fn distance(&self, point: Point2) -> f64 {
+        self.lin2d().distance(point)
+    }
+}
+impl Geom2dGeometry for Geom2dLine {
+    fn transform(&self, transform: Transform2) -> Result<(), Failure> {
+        self.state.write().transform(transform);
+        Ok(())
+    }
+    fn copy(&self) -> Result<Handle<dyn Geom2dGeometry>, Failure> {
+        Ok(Handle::new(self.clone()).cast())
+    }
+    fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
+        let position: Axis2d = self.position();
+        dump_class_name(stream, "Geom2d_Line")?;
+        dump_base(stream, depth, dump_curve)?;
+        dump_field(stream, depth, "pos", |nested, level| {
+            position.dump_json(nested, level)
+        })
+    }
+}
+impl Geom2dCurve for Geom2dLine {
+    fn reverse(&self) -> Result<(), Failure> {
+        self.state.write().reverse();
+        Ok(())
+    }
+    fn reversed_parameter(&self, u: f64) -> Result<f64, Failure> {
+        Ok(-u)
+    }
+    crate::scaled_parameter_members!(Transform2);
+    crate::open_curve_range!(-precision::infinite(), precision::infinite());
+    crate::non_periodic_cn_curve!();
+    fn eval_d0(&self, u: f64) -> Result<Point2, Failure> {
+        Ok(elclib::line_value_2d(u, self.position()))
+    }
+    fn eval_d1(&self, u: f64) -> Result<Geom2dCurveD1, Failure> {
+        let (point, d1) = elclib::line_d1_2d(u, self.position());
+        Ok(Geom2dCurveD1 { point, d1 })
+    }
+    fn eval_d2(&self, u: f64) -> Result<Geom2dCurveD2, Failure> {
+        let (point, d1) = elclib::line_d1_2d(u, self.position());
+        let d2 = Vector2::new(0.0, 0.0);
+        Ok(Geom2dCurveD2 { point, d1, d2 })
+    }
+    fn eval_d3(&self, u: f64) -> Result<Geom2dCurveD3, Failure> {
+        let (point, d1) = elclib::line_d1_2d(u, self.position());
+        let zero = Vector2::new(0.0, 0.0);
+        Ok(Geom2dCurveD3 {
+            point,
+            d1,
+            d2: zero,
+            d3: zero,
+        })
+    }
+    fn eval_dn(&self, _u: f64, n: i32) -> Result<Vector2, Failure> {
+        if n < 1 {
+            return Err(errors::undefined_derivative(&format!(
+                "Geom2d_Line::EvalDN: N = {n}; expected N >= 1"
+            )));
+        }
+        if n == 1 {
+            return Ok(Vector2::from(self.direction()));
+        }
+        Ok(Vector2::new(0.0, 0.0))
+    }
+}

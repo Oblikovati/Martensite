@@ -325,6 +325,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkg2d"
+version = "0.3.1"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkernel",
+ "martensite-tkmath",
+]
+
+[[package]]
 name = "martensite-tkmath"
 version = "0.3.1"
 dependencies = [

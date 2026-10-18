@@ -19,6 +19,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added the `martensite-tkexpress` crate for symbolic expressions, differentiation,
   simplification, named functions, relations and text interpretation (#100).
+- Added the `martensite-tkg2d` crate for planar curves, splines, offsets, adaptors,
+  derivative and grid evaluation, and quantized geometry hashes (#105).
 
 ### Fixed
 
