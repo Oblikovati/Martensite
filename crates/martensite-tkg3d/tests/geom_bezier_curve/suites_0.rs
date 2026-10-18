@@ -1,4 +1,3 @@
-
 #[test]
 fn bezier_curve_copy_constructor_basic_properties() {
     let myOriginalCurve = SetUp();
@@ -253,8 +252,18 @@ fn bezier_curve_reverse() {
     let aStart = myOriginalCurve.start_point().unwrap();
     let anEnd = myOriginalCurve.end_point().unwrap();
     myOriginalCurve.reverse().unwrap();
-    assert!(myOriginalCurve.start_point().unwrap().is_equal(&anEnd, 1e-10));
-    assert!(myOriginalCurve.end_point().unwrap().is_equal(&aStart, 1e-10));
+    assert!(
+        myOriginalCurve
+            .start_point()
+            .unwrap()
+            .is_equal(&anEnd, 1e-10)
+    );
+    assert!(
+        myOriginalCurve
+            .end_point()
+            .unwrap()
+            .is_equal(&aStart, 1e-10)
+    );
 }
 
 #[test]

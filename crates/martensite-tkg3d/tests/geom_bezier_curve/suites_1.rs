@@ -1,4 +1,3 @@
-
 #[test]
 fn bezier_curve_poles_access() {
     let myOriginalCurve = SetUp();

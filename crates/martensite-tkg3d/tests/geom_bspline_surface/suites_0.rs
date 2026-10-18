@@ -1,4 +1,3 @@
-
 #[test]
 fn b_spline_surface_copy_constructor_basic_properties() {
     let myOriginalSurface = SetUp();

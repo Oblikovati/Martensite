@@ -1,4 +1,3 @@
-
 #[test]
 fn bezier_surface_copy_constructor_basic_properties() {
     let myOriginalSurface = SetUp();
@@ -10,8 +9,14 @@ fn bezier_surface_copy_constructor_basic_properties() {
     assert_eq!(myOriginalSurface.v_degree(), aCopiedSurface.v_degree());
     assert_eq!(myOriginalSurface.nb_u_poles(), aCopiedSurface.nb_u_poles());
     assert_eq!(myOriginalSurface.nb_v_poles(), aCopiedSurface.nb_v_poles());
-    assert_eq!(myOriginalSurface.is_u_rational(), aCopiedSurface.is_u_rational());
-    assert_eq!(myOriginalSurface.is_v_rational(), aCopiedSurface.is_v_rational());
+    assert_eq!(
+        myOriginalSurface.is_u_rational(),
+        aCopiedSurface.is_u_rational()
+    );
+    assert_eq!(
+        myOriginalSurface.is_v_rational(),
+        aCopiedSurface.is_v_rational()
+    );
 }
 
 #[test]
@@ -63,7 +68,8 @@ fn bezier_surface_rational_surface_copy_constructor() {
     let aPoles = unit_poles(0.0);
     let aWeights = weights22(1.0, 2.0, 2.0, 1.0);
 
-    let aRationalSurface = Handle::new(GeomBezierSurface::with_weights(&aPoles, &aWeights).unwrap());
+    let aRationalSurface =
+        Handle::new(GeomBezierSurface::with_weights(&aPoles, &aWeights).unwrap());
     let aCopiedRational = copied(&aRationalSurface);
 
     assert!(aCopiedRational.is_u_rational() || aCopiedRational.is_v_rational());
@@ -71,7 +77,10 @@ fn bezier_surface_rational_surface_copy_constructor() {
     // Verify weights are copied correctly
     for i in 1..=aRationalSurface.nb_u_poles() {
         for j in 1..=aRationalSurface.nb_v_poles() {
-            EXPECT_DOUBLE_EQ(aRationalSurface.weight(i, j).unwrap(), aCopiedRational.weight(i, j).unwrap());
+            EXPECT_DOUBLE_EQ(
+                aRationalSurface.weight(i, j).unwrap(),
+                aCopiedRational.weight(i, j).unwrap(),
+            );
         }
     }
 }
@@ -153,7 +162,12 @@ fn bezier_surface_set_pole() {
     let myOriginalSurface = SetUp();
     let aNewPole = pnt(5.0, 5.0, 5.0);
     myOriginalSurface.set_pole(2, 2, aNewPole).unwrap();
-    assert!(myOriginalSurface.pole(2, 2).unwrap().is_equal(&aNewPole, 1e-10));
+    assert!(
+        myOriginalSurface
+            .pole(2, 2)
+            .unwrap()
+            .is_equal(&aNewPole, 1e-10)
+    );
 }
 
 #[test]
@@ -192,5 +206,10 @@ fn bezier_surface_segment() {
     let aPntBefore = myOriginalSurface.value(0.5, 0.5).unwrap();
     myOriginalSurface.segment(0.25, 0.75, 0.25, 0.75).unwrap();
 
-    assert!(myOriginalSurface.value(0.5, 0.5).unwrap().is_equal(&aPntBefore, 1e-6));
+    assert!(
+        myOriginalSurface
+            .value(0.5, 0.5)
+            .unwrap()
+            .is_equal(&aPntBefore, 1e-6)
+    );
 }

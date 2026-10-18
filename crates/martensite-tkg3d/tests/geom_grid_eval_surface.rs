@@ -1,4 +1,3 @@
-
 //! The retained `CreateUniformParams` of the anonymous namespace is the shared one of
 //! `common` (same body).
 #![allow(non_snake_case)]

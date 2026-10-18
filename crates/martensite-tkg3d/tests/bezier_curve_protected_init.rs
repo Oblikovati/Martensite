@@ -123,8 +123,5 @@ fn space_poles(count: i32) -> Array1<'static, Point3> {
 #[test]
 fn protected_initialization_preserves_dimensions_and_failure_order() {
     let observed = format!("2d\n{}3d\n{}", plane::receipt(), space::receipt());
-    assert_eq!(
-        observed,
-        include_str!("fixtures/bezier-initialization.txt")
-    );
+    assert_eq!(observed, include_str!("fixtures/bezier-initialization.txt"));
 }

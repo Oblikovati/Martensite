@@ -9,7 +9,10 @@ fn surface_hasher_plane_copied_planes_same_hash() {
     let aPlane1 = plane(anAxis);
     let aPlane2: Handle<GeomPlane> = copied(&aPlane1);
 
-    assert_eq!(myHasher.hash(&surface(&aPlane1)), myHasher.hash(&surface(&aPlane2)));
+    assert_eq!(
+        myHasher.hash(&surface(&aPlane1)),
+        myHasher.hash(&surface(&aPlane2))
+    );
     assert!(myHasher.equal(&surface(&aPlane1), &surface(&aPlane2)));
 }
 
@@ -19,7 +22,10 @@ fn surface_hasher_plane_different_planes_different_hash() {
     let aPlane1 = plane(ax3(pnt(0.0, 0.0, 0.0), dir(0.0, 0.0, 1.0)));
     let aPlane2 = plane(ax3(pnt(0.0, 0.0, 1.0), dir(0.0, 0.0, 1.0)));
 
-    assert_ne!(myHasher.hash(&surface(&aPlane1)), myHasher.hash(&surface(&aPlane2)));
+    assert_ne!(
+        myHasher.hash(&surface(&aPlane1)),
+        myHasher.hash(&surface(&aPlane2))
+    );
     assert!(!myHasher.equal(&surface(&aPlane1), &surface(&aPlane2)));
 }
 
@@ -34,7 +40,10 @@ fn surface_hasher_cylindrical_surface_copied_surfaces_same_hash() {
     let aCyl1 = Handle::new(GeomCylindricalSurface::new(anAxis, 5.0).unwrap());
     let aCyl2: Handle<GeomCylindricalSurface> = copied(&aCyl1);
 
-    assert_eq!(myHasher.hash(&surface(&aCyl1)), myHasher.hash(&surface(&aCyl2)));
+    assert_eq!(
+        myHasher.hash(&surface(&aCyl1)),
+        myHasher.hash(&surface(&aCyl2))
+    );
     assert!(myHasher.equal(&surface(&aCyl1), &surface(&aCyl2)));
 }
 
@@ -45,7 +54,10 @@ fn surface_hasher_cylindrical_surface_different_radius_different_hash() {
     let aCyl1 = Handle::new(GeomCylindricalSurface::new(anAxis, 5.0).unwrap());
     let aCyl2 = Handle::new(GeomCylindricalSurface::new(anAxis, 10.0).unwrap());
 
-    assert_ne!(myHasher.hash(&surface(&aCyl1)), myHasher.hash(&surface(&aCyl2)));
+    assert_ne!(
+        myHasher.hash(&surface(&aCyl1)),
+        myHasher.hash(&surface(&aCyl2))
+    );
     assert!(!myHasher.equal(&surface(&aCyl1), &surface(&aCyl2)));
 }
 
@@ -60,7 +72,10 @@ fn surface_hasher_conical_surface_copied_surfaces_same_hash() {
     let aCone1 = Handle::new(GeomConicalSurface::new(anAxis, PI / 6.0, 5.0).unwrap());
     let aCone2: Handle<GeomConicalSurface> = copied(&aCone1);
 
-    assert_eq!(myHasher.hash(&surface(&aCone1)), myHasher.hash(&surface(&aCone2)));
+    assert_eq!(
+        myHasher.hash(&surface(&aCone1)),
+        myHasher.hash(&surface(&aCone2))
+    );
     assert!(myHasher.equal(&surface(&aCone1), &surface(&aCone2)));
 }
 
@@ -71,7 +86,10 @@ fn surface_hasher_conical_surface_different_angle_different_hash() {
     let aCone1 = Handle::new(GeomConicalSurface::new(anAxis, PI / 6.0, 5.0).unwrap());
     let aCone2 = Handle::new(GeomConicalSurface::new(anAxis, PI / 4.0, 5.0).unwrap());
 
-    assert_ne!(myHasher.hash(&surface(&aCone1)), myHasher.hash(&surface(&aCone2)));
+    assert_ne!(
+        myHasher.hash(&surface(&aCone1)),
+        myHasher.hash(&surface(&aCone2))
+    );
     assert!(!myHasher.equal(&surface(&aCone1), &surface(&aCone2)));
 }
 
@@ -86,7 +104,10 @@ fn surface_hasher_spherical_surface_copied_surfaces_same_hash() {
     let aSphere1 = Handle::new(GeomSphericalSurface::new(anAxis, 5.0).unwrap());
     let aSphere2: Handle<GeomSphericalSurface> = copied(&aSphere1);
 
-    assert_eq!(myHasher.hash(&surface(&aSphere1)), myHasher.hash(&surface(&aSphere2)));
+    assert_eq!(
+        myHasher.hash(&surface(&aSphere1)),
+        myHasher.hash(&surface(&aSphere2))
+    );
     assert!(myHasher.equal(&surface(&aSphere1), &surface(&aSphere2)));
 }
 
@@ -97,7 +118,10 @@ fn surface_hasher_spherical_surface_different_radius_different_hash() {
     let aSphere1 = Handle::new(GeomSphericalSurface::new(anAxis, 5.0).unwrap());
     let aSphere2 = Handle::new(GeomSphericalSurface::new(anAxis, 10.0).unwrap());
 
-    assert_ne!(myHasher.hash(&surface(&aSphere1)), myHasher.hash(&surface(&aSphere2)));
+    assert_ne!(
+        myHasher.hash(&surface(&aSphere1)),
+        myHasher.hash(&surface(&aSphere2))
+    );
     assert!(!myHasher.equal(&surface(&aSphere1), &surface(&aSphere2)));
 }
 
@@ -112,7 +136,10 @@ fn surface_hasher_toroidal_surface_copied_surfaces_same_hash() {
     let aTorus1 = Handle::new(GeomToroidalSurface::new(anAxis, 10.0, 3.0).unwrap());
     let aTorus2: Handle<GeomToroidalSurface> = copied(&aTorus1);
 
-    assert_eq!(myHasher.hash(&surface(&aTorus1)), myHasher.hash(&surface(&aTorus2)));
+    assert_eq!(
+        myHasher.hash(&surface(&aTorus1)),
+        myHasher.hash(&surface(&aTorus2))
+    );
     assert!(myHasher.equal(&surface(&aTorus1), &surface(&aTorus2)));
 }
 
@@ -123,7 +150,10 @@ fn surface_hasher_toroidal_surface_different_radii_different_hash() {
     let aTorus1 = Handle::new(GeomToroidalSurface::new(anAxis, 10.0, 3.0).unwrap());
     let aTorus2 = Handle::new(GeomToroidalSurface::new(anAxis, 10.0, 5.0).unwrap());
 
-    assert_ne!(myHasher.hash(&surface(&aTorus1)), myHasher.hash(&surface(&aTorus2)));
+    assert_ne!(
+        myHasher.hash(&surface(&aTorus1)),
+        myHasher.hash(&surface(&aTorus2))
+    );
     assert!(!myHasher.equal(&surface(&aTorus1), &surface(&aTorus2)));
 }
 
@@ -139,7 +169,10 @@ fn surface_hasher_bezier_surface_copied_surfaces_same_hash() {
     let aSurf1 = Handle::new(GeomBezierSurface::new(&aPoles).unwrap());
     let aSurf2: Handle<GeomBezierSurface> = copied(&aSurf1);
 
-    assert_eq!(myHasher.hash(&surface(&aSurf1)), myHasher.hash(&surface(&aSurf2)));
+    assert_eq!(
+        myHasher.hash(&surface(&aSurf1)),
+        myHasher.hash(&surface(&aSurf2))
+    );
     assert!(myHasher.equal(&surface(&aSurf1), &surface(&aSurf2)));
 }
 
@@ -180,7 +213,10 @@ fn surface_hasher_b_spline_surface_copied_surfaces_same_hash() {
     );
     let aSurf2: Handle<GeomBSplineSurface> = copied(&aSurf1);
 
-    assert_eq!(myHasher.hash(&surface(&aSurf1)), myHasher.hash(&surface(&aSurf2)));
+    assert_eq!(
+        myHasher.hash(&surface(&aSurf1)),
+        myHasher.hash(&surface(&aSurf2))
+    );
     assert!(myHasher.equal(&surface(&aSurf1), &surface(&aSurf2)));
 }
 
@@ -196,7 +232,10 @@ fn surface_hasher_surface_of_revolution_copied_surfaces_same_hash() {
     let aRev1 = Handle::new(GeomSurfaceOfRevolution::new(&curve(&aLine), anAxis).unwrap());
     let aRev2: Handle<GeomSurfaceOfRevolution> = copied(&aRev1);
 
-    assert_eq!(myHasher.hash(&surface(&aRev1)), myHasher.hash(&surface(&aRev2)));
+    assert_eq!(
+        myHasher.hash(&surface(&aRev1)),
+        myHasher.hash(&surface(&aRev2))
+    );
     assert!(myHasher.equal(&surface(&aRev1), &surface(&aRev2)));
 }
 
@@ -212,7 +251,10 @@ fn surface_hasher_surface_of_linear_extrusion_copied_surfaces_same_hash() {
     let anExt1 = Handle::new(GeomSurfaceOfLinearExtrusion::new(&curve(&aLine), aDir).unwrap());
     let anExt2: Handle<GeomSurfaceOfLinearExtrusion> = copied(&anExt1);
 
-    assert_eq!(myHasher.hash(&surface(&anExt1)), myHasher.hash(&surface(&anExt2)));
+    assert_eq!(
+        myHasher.hash(&surface(&anExt1)),
+        myHasher.hash(&surface(&anExt2))
+    );
     assert!(myHasher.equal(&surface(&anExt1), &surface(&anExt2)));
 }
 
@@ -237,7 +279,10 @@ fn surface_hasher_rectangular_trimmed_surface_copied_surfaces_same_hash() {
     let aTrimmed1 = trimmed(&surface(&aPlane), (0.0, 10.0), (0.0, 10.0));
     let aTrimmed2: Handle<GeomRectangularTrimmedSurface> = copied(&aTrimmed1);
 
-    assert_eq!(myHasher.hash(&surface(&aTrimmed1)), myHasher.hash(&surface(&aTrimmed2)));
+    assert_eq!(
+        myHasher.hash(&surface(&aTrimmed1)),
+        myHasher.hash(&surface(&aTrimmed2))
+    );
     assert!(myHasher.equal(&surface(&aTrimmed1), &surface(&aTrimmed2)));
 }
 
@@ -249,7 +294,10 @@ fn surface_hasher_rectangular_trimmed_surface_different_bounds_different_hash() 
     let aTrimmed1 = trimmed(&surface(&aPlane), (0.0, 10.0), (0.0, 10.0));
     let aTrimmed2 = trimmed(&surface(&aPlane), (0.0, 20.0), (0.0, 10.0));
 
-    assert_ne!(myHasher.hash(&surface(&aTrimmed1)), myHasher.hash(&surface(&aTrimmed2)));
+    assert_ne!(
+        myHasher.hash(&surface(&aTrimmed1)),
+        myHasher.hash(&surface(&aTrimmed2))
+    );
     assert!(!myHasher.equal(&surface(&aTrimmed1), &surface(&aTrimmed2)));
 }
 
@@ -265,7 +313,10 @@ fn surface_hasher_offset_surface_copied_surfaces_same_hash() {
     let anOffset1 = Handle::new(GeomOffsetSurface::new(&surface(&aPlane), 5.0, false).unwrap());
     let anOffset2: Handle<GeomOffsetSurface> = copied(&anOffset1);
 
-    assert_eq!(myHasher.hash(&surface(&anOffset1)), myHasher.hash(&surface(&anOffset2)));
+    assert_eq!(
+        myHasher.hash(&surface(&anOffset1)),
+        myHasher.hash(&surface(&anOffset2))
+    );
     assert!(myHasher.equal(&surface(&anOffset1), &surface(&anOffset2)));
 }
 
@@ -277,7 +328,10 @@ fn surface_hasher_offset_surface_different_offset_different_hash() {
     let anOffset1 = Handle::new(GeomOffsetSurface::new(&surface(&aPlane), 5.0, false).unwrap());
     let anOffset2 = Handle::new(GeomOffsetSurface::new(&surface(&aPlane), 10.0, false).unwrap());
 
-    assert_ne!(myHasher.hash(&surface(&anOffset1)), myHasher.hash(&surface(&anOffset2)));
+    assert_ne!(
+        myHasher.hash(&surface(&anOffset1)),
+        myHasher.hash(&surface(&anOffset2))
+    );
     assert!(!myHasher.equal(&surface(&anOffset1), &surface(&anOffset2)));
 }
 
@@ -350,7 +404,10 @@ fn surface_hasher_b_spline_surface_weighted_copied_surfaces_same_hash() {
     let aSurf1 = weighted_bilinear(&aPoles, &aWeights, &reals(&[0.0, 1.0]));
     let aSurf2: Handle<GeomBSplineSurface> = copied(&aSurf1);
 
-    assert_eq!(myHasher.hash(&surface(&aSurf1)), myHasher.hash(&surface(&aSurf2)));
+    assert_eq!(
+        myHasher.hash(&surface(&aSurf1)),
+        myHasher.hash(&surface(&aSurf2))
+    );
     assert!(myHasher.equal(&surface(&aSurf1), &surface(&aSurf2)));
 }
 

@@ -10,7 +10,10 @@ fn curve_hasher_line_copied_lines_same_hash() {
     let aLine1 = line(aLoc, aDir);
     let aLine2: Handle<GeomLine> = copied(&aLine1);
 
-    assert_eq!(myHasher.hash(&curve(&aLine1)), myHasher.hash(&curve(&aLine2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aLine1)),
+        myHasher.hash(&curve(&aLine2))
+    );
     assert!(myHasher.equal(&curve(&aLine1), &curve(&aLine2)));
 }
 
@@ -20,7 +23,10 @@ fn curve_hasher_line_different_lines_different_hash() {
     let aLine1 = line(pnt(0.0, 0.0, 0.0), dir(1.0, 0.0, 0.0));
     let aLine2 = line(pnt(1.0, 0.0, 0.0), dir(1.0, 0.0, 0.0));
 
-    assert_ne!(myHasher.hash(&curve(&aLine1)), myHasher.hash(&curve(&aLine2)));
+    assert_ne!(
+        myHasher.hash(&curve(&aLine1)),
+        myHasher.hash(&curve(&aLine2))
+    );
     assert!(!myHasher.equal(&curve(&aLine1), &curve(&aLine2)));
 }
 
@@ -35,7 +41,10 @@ fn curve_hasher_circle_copied_circles_same_hash() {
     let aCircle1 = circle(anAxis, 5.0);
     let aCircle2: Handle<GeomCircle> = copied(&aCircle1);
 
-    assert_eq!(myHasher.hash(&curve(&aCircle1)), myHasher.hash(&curve(&aCircle2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aCircle1)),
+        myHasher.hash(&curve(&aCircle2))
+    );
     assert!(myHasher.equal(&curve(&aCircle1), &curve(&aCircle2)));
 }
 
@@ -46,7 +55,10 @@ fn curve_hasher_circle_different_radius_different_hash() {
     let aCircle1 = circle(anAxis, 5.0);
     let aCircle2 = circle(anAxis, 10.0);
 
-    assert_ne!(myHasher.hash(&curve(&aCircle1)), myHasher.hash(&curve(&aCircle2)));
+    assert_ne!(
+        myHasher.hash(&curve(&aCircle1)),
+        myHasher.hash(&curve(&aCircle2))
+    );
     assert!(!myHasher.equal(&curve(&aCircle1), &curve(&aCircle2)));
 }
 
@@ -61,7 +73,10 @@ fn curve_hasher_ellipse_copied_ellipses_same_hash() {
     let anEllipse1 = Handle::new(GeomEllipse::new(anAxis, 10.0, 5.0).unwrap());
     let anEllipse2: Handle<GeomEllipse> = copied(&anEllipse1);
 
-    assert_eq!(myHasher.hash(&curve(&anEllipse1)), myHasher.hash(&curve(&anEllipse2)));
+    assert_eq!(
+        myHasher.hash(&curve(&anEllipse1)),
+        myHasher.hash(&curve(&anEllipse2))
+    );
     assert!(myHasher.equal(&curve(&anEllipse1), &curve(&anEllipse2)));
 }
 
@@ -72,7 +87,10 @@ fn curve_hasher_ellipse_different_radii_different_hash() {
     let anEllipse1 = Handle::new(GeomEllipse::new(anAxis, 10.0, 5.0).unwrap());
     let anEllipse2 = Handle::new(GeomEllipse::new(anAxis, 10.0, 7.0).unwrap());
 
-    assert_ne!(myHasher.hash(&curve(&anEllipse1)), myHasher.hash(&curve(&anEllipse2)));
+    assert_ne!(
+        myHasher.hash(&curve(&anEllipse1)),
+        myHasher.hash(&curve(&anEllipse2))
+    );
     assert!(!myHasher.equal(&curve(&anEllipse1), &curve(&anEllipse2)));
 }
 
@@ -145,7 +163,10 @@ fn curve_hasher_bezier_curve_copied_curves_same_hash() {
     let aCurve1 = Handle::new(GeomBezierCurve::new(&aPoles).unwrap());
     let aCurve2: Handle<GeomBezierCurve> = copied(&aCurve1);
 
-    assert_eq!(myHasher.hash(&curve(&aCurve1)), myHasher.hash(&curve(&aCurve2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aCurve1)),
+        myHasher.hash(&curve(&aCurve2))
+    );
     assert!(myHasher.equal(&curve(&aCurve1), &curve(&aCurve2)));
 }
 
@@ -182,7 +203,10 @@ fn curve_hasher_b_spline_curve_copied_curves_same_hash() {
     let aCurve1 = bspline(&aPoles, &aKnots, &aMults, 3);
     let aCurve2: Handle<GeomBSplineCurve> = copied(&aCurve1);
 
-    assert_eq!(myHasher.hash(&curve(&aCurve1)), myHasher.hash(&curve(&aCurve2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aCurve1)),
+        myHasher.hash(&curve(&aCurve2))
+    );
     assert!(myHasher.equal(&curve(&aCurve1), &curve(&aCurve2)));
 }
 
@@ -198,7 +222,10 @@ fn curve_hasher_trimmed_curve_copied_curves_same_hash() {
         Handle::new(GeomTrimmedCurve::new(&curve(&aLine), 0.0, 10.0, true, true).unwrap());
     let aTrimmed2: Handle<GeomTrimmedCurve> = copied(&aTrimmed1);
 
-    assert_eq!(myHasher.hash(&curve(&aTrimmed1)), myHasher.hash(&curve(&aTrimmed2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aTrimmed1)),
+        myHasher.hash(&curve(&aTrimmed2))
+    );
     assert!(myHasher.equal(&curve(&aTrimmed1), &curve(&aTrimmed2)));
 }
 
@@ -211,7 +238,10 @@ fn curve_hasher_trimmed_curve_different_bounds_different_hash() {
     let aTrimmed2 =
         Handle::new(GeomTrimmedCurve::new(&curve(&aLine), 0.0, 20.0, true, true).unwrap());
 
-    assert_ne!(myHasher.hash(&curve(&aTrimmed1)), myHasher.hash(&curve(&aTrimmed2)));
+    assert_ne!(
+        myHasher.hash(&curve(&aTrimmed1)),
+        myHasher.hash(&curve(&aTrimmed2))
+    );
     assert!(!myHasher.equal(&curve(&aTrimmed1), &curve(&aTrimmed2)));
 }
 
@@ -224,11 +254,13 @@ fn curve_hasher_offset_curve_copied_curves_same_hash() {
     let myHasher = SetUp();
     let aLine = line(pnt(0.0, 0.0, 0.0), dir(1.0, 0.0, 0.0));
     let aRefDir = dir(0.0, 0.0, 1.0);
-    let anOffset1 =
-        Handle::new(GeomOffsetCurve::new(&curve(&aLine), 5.0, aRefDir, false).unwrap());
+    let anOffset1 = Handle::new(GeomOffsetCurve::new(&curve(&aLine), 5.0, aRefDir, false).unwrap());
     let anOffset2: Handle<GeomOffsetCurve> = copied(&anOffset1);
 
-    assert_eq!(myHasher.hash(&curve(&anOffset1)), myHasher.hash(&curve(&anOffset2)));
+    assert_eq!(
+        myHasher.hash(&curve(&anOffset1)),
+        myHasher.hash(&curve(&anOffset2))
+    );
     assert!(myHasher.equal(&curve(&anOffset1), &curve(&anOffset2)));
 }
 
@@ -237,12 +269,14 @@ fn curve_hasher_offset_curve_different_offset_different_hash() {
     let myHasher = SetUp();
     let aLine = line(pnt(0.0, 0.0, 0.0), dir(1.0, 0.0, 0.0));
     let aRefDir = dir(0.0, 0.0, 1.0);
-    let anOffset1 =
-        Handle::new(GeomOffsetCurve::new(&curve(&aLine), 5.0, aRefDir, false).unwrap());
+    let anOffset1 = Handle::new(GeomOffsetCurve::new(&curve(&aLine), 5.0, aRefDir, false).unwrap());
     let anOffset2 =
         Handle::new(GeomOffsetCurve::new(&curve(&aLine), 10.0, aRefDir, false).unwrap());
 
-    assert_ne!(myHasher.hash(&curve(&anOffset1)), myHasher.hash(&curve(&anOffset2)));
+    assert_ne!(
+        myHasher.hash(&curve(&anOffset1)),
+        myHasher.hash(&curve(&anOffset2))
+    );
     assert!(!myHasher.equal(&curve(&anOffset1), &curve(&anOffset2)));
 }
 
@@ -300,7 +334,10 @@ fn curve_hasher_b_spline_curve_weighted_copied_curves_same_hash() {
     );
     let aCurve2: Handle<GeomBSplineCurve> = copied(&aCurve1);
 
-    assert_eq!(myHasher.hash(&curve(&aCurve1)), myHasher.hash(&curve(&aCurve2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aCurve1)),
+        myHasher.hash(&curve(&aCurve2))
+    );
     assert!(myHasher.equal(&curve(&aCurve1), &curve(&aCurve2)));
 }
 
@@ -342,6 +379,9 @@ fn curve_hasher_bezier_curve_weighted_copied_curves_same_hash() {
     let aCurve1 = Handle::new(GeomBezierCurve::with_weights(&aPoles, &aWeights).unwrap());
     let aCurve2: Handle<GeomBezierCurve> = copied(&aCurve1);
 
-    assert_eq!(myHasher.hash(&curve(&aCurve1)), myHasher.hash(&curve(&aCurve2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aCurve1)),
+        myHasher.hash(&curve(&aCurve2))
+    );
     assert!(myHasher.equal(&curve(&aCurve1), &curve(&aCurve2)));
 }

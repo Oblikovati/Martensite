@@ -123,7 +123,7 @@ fn check_torus_v_samples(surface: &GeomToroidalSurface, coefficients: &Array1<'_
     }
 }
 #[test]
-fn gp_torus_coefficients_correct() {
+fn torus_polynomial_coefficients_match_surface_samples() {
     let surface = torus_surface_fixture();
     let mut coefficients = Array1::with_bounds(5, 39).unwrap();
     surface

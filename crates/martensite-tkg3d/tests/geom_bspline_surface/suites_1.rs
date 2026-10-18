@@ -1,4 +1,3 @@
-
 #[test]
 fn b_spline_surface_weights_access_non_rational() {
     let myOriginalSurface = SetUp();
@@ -10,7 +9,9 @@ fn b_spline_surface_weights_access_non_rational() {
 fn b_spline_surface_periodic_surface_set_u_not_periodic() {
     let _myOriginalSurface = SetUp();
     // U-periodic surface: degree 2, 4 U-knots of mult 1 -> NbUPoles = 1+2 = 3
-    let aPoles = grid(3, 3, |i, j| pnt(third(i).cos(), third(i).sin(), f64::from(j) * 0.5));
+    let aPoles = grid(3, 3, |i, j| {
+        pnt(third(i).cos(), third(i).sin(), f64::from(j) * 0.5)
+    });
     let ((anUKnots, anUMults), (aVKnots, aVMults)) = periodic_knots();
 
     let aSurf = GeomBSplineSurface::new(
@@ -34,7 +35,9 @@ fn b_spline_surface_periodic_surface_set_u_not_periodic() {
 fn b_spline_surface_periodic_surface_set_v_not_periodic() {
     let _myOriginalSurface = SetUp();
     // V-periodic surface: degree 2, 4 V-knots of mult 1 -> NbVPoles = 1+2 = 3
-    let aPoles = grid(3, 3, |i, j| pnt(f64::from(i) * 0.5, third(j).cos(), third(j).sin()));
+    let aPoles = grid(3, 3, |i, j| {
+        pnt(f64::from(i) * 0.5, third(j).cos(), third(j).sin())
+    });
     let ((aVKnots, aVMults), (anUKnots, anUMults)) = periodic_knots();
 
     let aSurf = GeomBSplineSurface::new(
@@ -82,14 +85,20 @@ fn b_spline_surface_local_evaluation() {
     assert_eq!(myOriginalSurface.nb_u_knots(), 3);
 
     let aGlobal = myOriginalSurface.value(0.25, 0.5).unwrap();
-    let aLocal = myOriginalSurface.local_d0(0.25, 0.5, ((1, 2), (1, 2))).unwrap();
+    let aLocal = myOriginalSurface
+        .local_d0(0.25, 0.5, ((1, 2), (1, 2)))
+        .unwrap();
     assert!(aGlobal.is_equal(&aLocal, 1e-10));
 }
 
 #[test]
 fn b_spline_surface_set_pole_row() {
     let myOriginalSurface = SetUp();
-    let aNewRow = array(&[pnt(10.0, 1.0, 0.0), pnt(10.0, 2.0, 0.0), pnt(10.0, 3.0, 0.0)]);
+    let aNewRow = array(&[
+        pnt(10.0, 1.0, 0.0),
+        pnt(10.0, 2.0, 0.0),
+        pnt(10.0, 3.0, 0.0),
+    ]);
 
     myOriginalSurface.set_pole_row(2, &aNewRow).unwrap();
     for j in 1..=3 {
@@ -100,7 +109,11 @@ fn b_spline_surface_set_pole_row() {
 #[test]
 fn b_spline_surface_set_pole_col() {
     let myOriginalSurface = SetUp();
-    let aNewCol = array(&[pnt(1.0, 10.0, 0.0), pnt(2.0, 10.0, 0.0), pnt(3.0, 10.0, 0.0)]);
+    let aNewCol = array(&[
+        pnt(1.0, 10.0, 0.0),
+        pnt(2.0, 10.0, 0.0),
+        pnt(3.0, 10.0, 0.0),
+    ]);
 
     myOriginalSurface.set_pole_col(2, &aNewCol).unwrap();
     for i in 1..=3 {
@@ -190,7 +203,9 @@ fn b_spline_surface_locate_v() {
 fn b_spline_surface_rational_surface_set_u_not_periodic() {
     let _myOriginalSurface = SetUp();
     // Rational U-periodic surface: exercises the SetUNotPeriodic weight-handling code
-    let aPoles = grid(3, 3, |i, j| pnt(third(i).cos(), third(i).sin(), f64::from(j) * 0.5));
+    let aPoles = grid(3, 3, |i, j| {
+        pnt(third(i).cos(), third(i).sin(), f64::from(j) * 0.5)
+    });
     let aWeights = grid(3, 3, |i, _| 1.0 + 0.5 * f64::from(i - 1));
     let ((anUKnots, anUMults), (aVKnots, aVMults)) = periodic_knots();
 
@@ -217,7 +232,9 @@ fn b_spline_surface_rational_surface_set_u_not_periodic() {
 fn b_spline_surface_rational_surface_set_v_not_periodic() {
     let _myOriginalSurface = SetUp();
     // Rational V-periodic surface
-    let aPoles = grid(3, 3, |i, j| pnt(f64::from(i) * 0.5, third(j).cos(), third(j).sin()));
+    let aPoles = grid(3, 3, |i, j| {
+        pnt(f64::from(i) * 0.5, third(j).cos(), third(j).sin())
+    });
     let aWeights = grid(3, 3, |_, j| 1.0 + 0.5 * f64::from(j - 1));
     let ((aVKnots, aVMults), (anUKnots, anUMults)) = periodic_knots();
 
@@ -281,7 +298,9 @@ fn b_spline_surface_set_v_knot() {
 #[test]
 fn b_spline_surface_rational_surface_u_iso() {
     let _myOriginalSurface = SetUp();
-    let aPoles = grid(3, 3, |i, j| pnt(f64::from(i), f64::from(j), f64::from(i + j) * 0.1));
+    let aPoles = grid(3, 3, |i, j| {
+        pnt(f64::from(i), f64::from(j), f64::from(i + j) * 0.1)
+    });
     let aWeights = grid(3, 3, |i, j| 1.0 + 0.5 * f64::from((i - 1) + (j - 1)));
 
     let aSurf = rational_patch(&aPoles, &aWeights);
@@ -325,7 +344,10 @@ fn b_spline_surface_weights_array_non_rational_returns_unit_weights() {
         }
         std::ptr::from_ref(aWeights)
     });
-    assert_eq!(aAddress, myOriginalSurface.weights_array(std::ptr::from_ref));
+    assert_eq!(
+        aAddress,
+        myOriginalSurface.weights_array(std::ptr::from_ref)
+    );
 }
 
 #[test]

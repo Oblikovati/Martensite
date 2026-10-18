@@ -10,7 +10,11 @@ fn CheckGridPoints(
     for iU in 1..=theCounts.0 {
         for iV in 1..=theCounts.1 {
             let aExpected: Point3 = theSurf.value(theUParams[iU], theVParams[iV]).unwrap();
-            EXPECT_NEAR((*theGrid.value(iU, iV).unwrap()).distance(&aExpected), 0.0, THE_TOLERANCE);
+            EXPECT_NEAR(
+                (*theGrid.value(iU, iV).unwrap()).distance(&aExpected),
+                0.0,
+                THE_TOLERANCE,
+            );
         }
     }
 }

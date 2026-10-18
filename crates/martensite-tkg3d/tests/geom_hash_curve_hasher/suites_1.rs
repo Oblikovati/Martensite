@@ -10,7 +10,10 @@ fn curve_hasher_circle_different_axis_orientation_different_hash() {
     let aCircle1 = circle(anAxis1, 5.0);
     let aCircle2 = circle(anAxis2, 5.0);
 
-    assert_ne!(myHasher.hash(&curve(&aCircle1)), myHasher.hash(&curve(&aCircle2)));
+    assert_ne!(
+        myHasher.hash(&curve(&aCircle1)),
+        myHasher.hash(&curve(&aCircle2))
+    );
     assert!(!myHasher.equal(&curve(&aCircle1), &curve(&aCircle2)));
 }
 
@@ -20,7 +23,10 @@ fn curve_hasher_line_different_direction_different_hash() {
     let aLine1 = line(pnt(0.0, 0.0, 0.0), dir(1.0, 0.0, 0.0));
     let aLine2 = line(pnt(0.0, 0.0, 0.0), dir(0.0, 1.0, 0.0));
 
-    assert_ne!(myHasher.hash(&curve(&aLine1)), myHasher.hash(&curve(&aLine2)));
+    assert_ne!(
+        myHasher.hash(&curve(&aLine1)),
+        myHasher.hash(&curve(&aLine2))
+    );
     assert!(!myHasher.equal(&curve(&aLine1), &curve(&aLine2)));
 }
 
@@ -63,7 +69,10 @@ fn curve_hasher_b_spline_curve_quadratic_bezier_equivalent_copied_curves_same_ha
     let aCurve1 = bspline(&aPoles, &aKnots, &aMults, 2);
     let aCurve2: Handle<GeomBSplineCurve> = copied(&aCurve1);
 
-    assert_eq!(myHasher.hash(&curve(&aCurve1)), myHasher.hash(&curve(&aCurve2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aCurve1)),
+        myHasher.hash(&curve(&aCurve2))
+    );
     assert!(myHasher.equal(&curve(&aCurve1), &curve(&aCurve2)));
 }
 
@@ -105,7 +114,10 @@ fn curve_hasher_circle_translated_different_hash() {
     let aCircle2: Handle<GeomCircle> = copied(&aCircle1);
     aCircle2.translate(Vector3::new(1.0, 0.0, 0.0)).unwrap();
 
-    assert_ne!(myHasher.hash(&curve(&aCircle1)), myHasher.hash(&curve(&aCircle2)));
+    assert_ne!(
+        myHasher.hash(&curve(&aCircle1)),
+        myHasher.hash(&curve(&aCircle2))
+    );
     assert!(!myHasher.equal(&curve(&aCircle1), &curve(&aCircle2)));
 }
 
@@ -117,7 +129,10 @@ fn curve_hasher_circle_scaled_different_hash() {
     let aCircle2: Handle<GeomCircle> = copied(&aCircle1);
     aCircle2.scale(pnt(0.0, 0.0, 0.0), 2.0).unwrap();
 
-    assert_ne!(myHasher.hash(&curve(&aCircle1)), myHasher.hash(&curve(&aCircle2)));
+    assert_ne!(
+        myHasher.hash(&curve(&aCircle1)),
+        myHasher.hash(&curve(&aCircle2))
+    );
     assert!(!myHasher.equal(&curve(&aCircle1), &curve(&aCircle2)));
 }
 
@@ -143,7 +158,10 @@ fn curve_hasher_b_spline_curve_higher_degree_copied_curves_same_hash() {
     let aCurve1 = bspline(&aPoles, &aKnots, &aMults, 5);
     let aCurve2: Handle<GeomBSplineCurve> = copied(&aCurve1);
 
-    assert_eq!(myHasher.hash(&curve(&aCurve1)), myHasher.hash(&curve(&aCurve2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aCurve1)),
+        myHasher.hash(&curve(&aCurve2))
+    );
     assert!(myHasher.equal(&curve(&aCurve1), &curve(&aCurve2)));
 }
 
@@ -190,7 +208,10 @@ fn curve_hasher_b_spline_curve_linear_multiple_spans_copied_curves_same_hash() {
     let aCurve1 = bspline(&aPoles, &aKnots, &aMults, 1);
     let aCurve2: Handle<GeomBSplineCurve> = copied(&aCurve1);
 
-    assert_eq!(myHasher.hash(&curve(&aCurve1)), myHasher.hash(&curve(&aCurve2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aCurve1)),
+        myHasher.hash(&curve(&aCurve2))
+    );
     assert!(myHasher.equal(&curve(&aCurve1), &curve(&aCurve2)));
 }
 
@@ -244,7 +265,10 @@ fn curve_hasher_circle_very_small_radius_copied_circles_same_hash() {
     let aCircle1 = circle(anAxis, 1e-10);
     let aCircle2: Handle<GeomCircle> = copied(&aCircle1);
 
-    assert_eq!(myHasher.hash(&curve(&aCircle1)), myHasher.hash(&curve(&aCircle2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aCircle1)),
+        myHasher.hash(&curve(&aCircle2))
+    );
     assert!(myHasher.equal(&curve(&aCircle1), &curve(&aCircle2)));
 }
 
@@ -255,7 +279,10 @@ fn curve_hasher_circle_very_large_radius_copied_circles_same_hash() {
     let aCircle1 = circle(anAxis, 1e10);
     let aCircle2: Handle<GeomCircle> = copied(&aCircle1);
 
-    assert_eq!(myHasher.hash(&curve(&aCircle1)), myHasher.hash(&curve(&aCircle2)));
+    assert_eq!(
+        myHasher.hash(&curve(&aCircle1)),
+        myHasher.hash(&curve(&aCircle2))
+    );
     assert!(myHasher.equal(&curve(&aCircle1), &curve(&aCircle2)));
 }
 
@@ -265,6 +292,9 @@ fn curve_hasher_line_at_origin_vs_far_from_origin_different_hash() {
     let aLine1 = line(pnt(0.0, 0.0, 0.0), dir(1.0, 0.0, 0.0));
     let aLine2 = line(pnt(1e10, 1e10, 1e10), dir(1.0, 0.0, 0.0));
 
-    assert_ne!(myHasher.hash(&curve(&aLine1)), myHasher.hash(&curve(&aLine2)));
+    assert_ne!(
+        myHasher.hash(&curve(&aLine1)),
+        myHasher.hash(&curve(&aLine2))
+    );
     assert!(!myHasher.equal(&curve(&aLine1), &curve(&aLine2)));
 }

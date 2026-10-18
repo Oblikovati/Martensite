@@ -125,10 +125,10 @@ pub mod owned_axis_placements;
 pub mod owned_geometry_calculus;
 #[path = "../test_support_contracts.rs"]
 pub mod test_support_contracts;
-#[path = "../tkmath_gp_torus.rs"]
-pub mod tkmath_gp_torus;
 #[path = "../top_abs_behavior.rs"]
 pub mod top_abs_behavior;
+#[path = "../torus_polynomial_sampling.rs"]
+pub mod torus_polynomial_sampling;
 #[path = "../transformed_surface_cache.rs"]
 pub mod transformed_surface_cache;
 #[path = "../transformed_surface_shallow_copy.rs"]

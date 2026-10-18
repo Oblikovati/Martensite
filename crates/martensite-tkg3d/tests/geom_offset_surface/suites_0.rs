@@ -1,4 +1,3 @@
-
 #[test]
 fn offset_surface_copy_constructor_basic_properties() {
     let myOriginalSurface = SetUp();
@@ -7,8 +6,14 @@ fn offset_surface_copy_constructor_basic_properties() {
 
     // Verify basic properties are identical
     EXPECT_DOUBLE_EQ(myOriginalSurface.offset(), aCopiedSurface.offset());
-    assert_eq!(myOriginalSurface.is_u_periodic(), aCopiedSurface.is_u_periodic());
-    assert_eq!(myOriginalSurface.is_v_periodic(), aCopiedSurface.is_v_periodic());
+    assert_eq!(
+        myOriginalSurface.is_u_periodic(),
+        aCopiedSurface.is_u_periodic()
+    );
+    assert_eq!(
+        myOriginalSurface.is_v_periodic(),
+        aCopiedSurface.is_v_periodic()
+    );
     assert_eq!(
         myOriginalSurface.is_u_closed().unwrap(),
         aCopiedSurface.is_u_closed().unwrap()
@@ -102,7 +107,11 @@ fn offset_surface_equivalent_surface_plane_returns_translated_plane() {
     // Verify the plane is translated by offset along normal.
     let anOrigLoc: Point3 = aPlane.location();
     let anEquivLoc: Point3 = anEquivPlane.location();
-    EXPECT_NEAR(anEquivLoc.z() - anOrigLoc.z(), anOffset, precision::confusion());
+    EXPECT_NEAR(
+        anEquivLoc.z() - anOrigLoc.z(),
+        anOffset,
+        precision::confusion(),
+    );
     EXPECT_NEAR(anEquivLoc.x(), anOrigLoc.x(), precision::confusion());
     EXPECT_NEAR(anEquivLoc.y(), anOrigLoc.y(), precision::confusion());
 }
@@ -212,7 +221,11 @@ fn offset_surface_equivalent_surface_cone_positive_offset_returns_offset_cone() 
 
     // Reference radius should change by offset * cos(alpha).
     let anExpectedRadius: f64 = aRefRadius + anOffset * aSemiAngle.cos();
-    EXPECT_NEAR(anEquivCone.ref_radius(), anExpectedRadius, precision::confusion());
+    EXPECT_NEAR(
+        anEquivCone.ref_radius(),
+        anExpectedRadius,
+        precision::confusion(),
+    );
 }
 
 // `new GeomToroidalSurface(Axis3(origin, Z), major, minor)` offset by `offset`, and
@@ -239,7 +252,11 @@ fn offset_surface_equivalent_surface_torus_positive_offset_returns_larger_torus(
     let anEquivTorus = equivalent_torus(aMajorRadius, aMinorRadius, anOffset);
 
     // Major radius should remain the same.
-    EXPECT_NEAR(anEquivTorus.major_radius(), aMajorRadius, precision::confusion());
+    EXPECT_NEAR(
+        anEquivTorus.major_radius(),
+        aMajorRadius,
+        precision::confusion(),
+    );
     // Minor radius should increase by offset.
     EXPECT_NEAR(
         anEquivTorus.minor_radius(),
@@ -255,7 +272,11 @@ fn offset_surface_equivalent_surface_torus_negative_offset_returns_smaller_torus
     let anOffset: f64 = -2.0;
     let anEquivTorus = equivalent_torus(aMajorRadius, aMinorRadius, anOffset);
 
-    EXPECT_NEAR(anEquivTorus.major_radius(), aMajorRadius, precision::confusion());
+    EXPECT_NEAR(
+        anEquivTorus.major_radius(),
+        aMajorRadius,
+        precision::confusion(),
+    );
     EXPECT_NEAR(
         anEquivTorus.minor_radius(),
         aMinorRadius - 2.0,
@@ -270,7 +291,11 @@ fn offset_surface_equivalent_surface_torus_negative_minor_radius_flip_returns_fl
     let anOffset: f64 = -5.0; // Results in minor radius = -2
     let anEquivTorus = equivalent_torus(aMajorRadius, aMinorRadius, anOffset);
 
-    EXPECT_NEAR(anEquivTorus.major_radius(), aMajorRadius, precision::confusion());
+    EXPECT_NEAR(
+        anEquivTorus.major_radius(),
+        aMajorRadius,
+        precision::confusion(),
+    );
     EXPECT_NEAR(anEquivTorus.minor_radius(), 2.0, precision::confusion());
 }
 
@@ -301,8 +326,7 @@ fn offset_surface_equivalent_surface_trimmed_plane_returns_trimmed_translated_pl
 
     // Create trimmed surface.
     let aTrimmed: Handle<dyn GeomSurface> = Handle::new(
-        GeomRectangularTrimmedSurface::new(&aPlane, (0.0, 10.0), (0.0, 5.0), (true, true))
-            .unwrap(),
+        GeomRectangularTrimmedSurface::new(&aPlane, (0.0, 10.0), (0.0, 5.0), (true, true)).unwrap(),
     )
     .cast();
 

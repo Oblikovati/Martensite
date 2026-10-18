@@ -1,13 +1,19 @@
-
 #[test]
 fn bezier_surface_insert_pole_row_before() {
     let myOriginalSurface = SetUp();
     let aNewRow = line(&[pnt(0.5, 1.0, 0.0), pnt(0.5, 2.0, 0.0), pnt(0.5, 3.0, 0.0)]);
 
     let aNbUBefore = myOriginalSurface.nb_u_poles();
-    myOriginalSurface.insert_pole_row_before(2, &aNewRow).unwrap();
+    myOriginalSurface
+        .insert_pole_row_before(2, &aNewRow)
+        .unwrap();
     assert_eq!(myOriginalSurface.nb_u_poles(), aNbUBefore + 1);
-    assert!(myOriginalSurface.pole(2, 1).unwrap().is_equal(&pnt(0.5, 1.0, 0.0), 1e-10));
+    assert!(
+        myOriginalSurface
+            .pole(2, 1)
+            .unwrap()
+            .is_equal(&pnt(0.5, 1.0, 0.0), 1e-10)
+    );
 }
 
 #[test]
@@ -16,9 +22,16 @@ fn bezier_surface_insert_pole_col_before() {
     let aNewCol = line(&[pnt(1.0, 0.5, 0.0), pnt(2.0, 0.5, 0.0), pnt(3.0, 0.5, 0.0)]);
 
     let aNbVBefore = myOriginalSurface.nb_v_poles();
-    myOriginalSurface.insert_pole_col_before(2, &aNewCol).unwrap();
+    myOriginalSurface
+        .insert_pole_col_before(2, &aNewCol)
+        .unwrap();
     assert_eq!(myOriginalSurface.nb_v_poles(), aNbVBefore + 1);
-    assert!(myOriginalSurface.pole(1, 2).unwrap().is_equal(&pnt(1.0, 0.5, 0.0), 1e-10));
+    assert!(
+        myOriginalSurface
+            .pole(1, 2)
+            .unwrap()
+            .is_equal(&pnt(1.0, 0.5, 0.0), 1e-10)
+    );
 }
 
 #[test]
@@ -30,7 +43,9 @@ fn bezier_surface_rational_segment() {
         for j in 1..=3 {
             let (x, y) = (f64::from(i), f64::from(j));
             aPoles.set_value(i, j, pnt(x, y, (x + y) * 0.1)).unwrap();
-            aWeights.set_value(i, j, 1.0 + 0.3 * (f64::from(i - 1) + f64::from(j - 1))).unwrap();
+            aWeights
+                .set_value(i, j, 1.0 + 0.3 * (f64::from(i - 1) + f64::from(j - 1)))
+                .unwrap();
         }
     }
 
@@ -100,7 +115,9 @@ fn bezier_surface_insert_pole_row_after_with_weights() {
     let aNewRow = line(&[pnt(0.0, 0.5, 0.0), pnt(1.0, 0.5, 0.0)]);
     let aNewWeights = line_weights(&[3.0, 4.0]);
 
-    aSurf.insert_pole_row_after_weighted(1, &aNewRow, &aNewWeights).unwrap();
+    aSurf
+        .insert_pole_row_after_weighted(1, &aNewRow, &aNewWeights)
+        .unwrap();
     assert_eq!(aSurf.nb_u_poles(), 3);
     EXPECT_DOUBLE_EQ(aSurf.weight(2, 1).unwrap(), 3.0);
     EXPECT_DOUBLE_EQ(aSurf.weight(2, 2).unwrap(), 4.0);
@@ -151,8 +168,15 @@ fn bezier_surface_set_pole_col_with_weights() {
     let aNewCol = line(&[pnt(5.0, 0.0, 0.0), pnt(5.0, 1.0, 0.0)]);
     let aNewWeights = line_weights(&[3.0, 4.0]);
 
-    aSurf.set_pole_col_weighted(2, &aNewCol, &aNewWeights).unwrap();
-    assert!(aSurf.pole(1, 2).unwrap().is_equal(&pnt(5.0, 0.0, 0.0), 1e-10));
+    aSurf
+        .set_pole_col_weighted(2, &aNewCol, &aNewWeights)
+        .unwrap();
+    assert!(
+        aSurf
+            .pole(1, 2)
+            .unwrap()
+            .is_equal(&pnt(5.0, 0.0, 0.0), 1e-10)
+    );
     EXPECT_DOUBLE_EQ(aSurf.weight(1, 2).unwrap(), 3.0);
     EXPECT_DOUBLE_EQ(aSurf.weight(2, 2).unwrap(), 4.0);
 }
@@ -174,7 +198,10 @@ fn bezier_surface_weights_array_non_rational_returns_unit_weights() {
         }
         std::ptr::from_ref(aWeights)
     });
-    assert_eq!(aAddress, myOriginalSurface.weights_array(std::ptr::from_ref));
+    assert_eq!(
+        aAddress,
+        myOriginalSurface.weights_array(std::ptr::from_ref)
+    );
 }
 
 #[test]

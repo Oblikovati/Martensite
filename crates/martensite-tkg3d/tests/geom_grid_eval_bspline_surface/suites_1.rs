@@ -140,7 +140,11 @@ fn b_spline_surface_derivative_dn_beyond_degree() {
 
     for iU in 1..=5 {
         for iV in 1..=5 {
-            EXPECT_NEAR((*aGrid.value(iU, iV).unwrap()).magnitude(), 0.0, THE_TOLERANCE);
+            EXPECT_NEAR(
+                (*aGrid.value(iU, iV).unwrap()).magnitude(),
+                0.0,
+                THE_TOLERANCE,
+            );
         }
     }
 }

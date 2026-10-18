@@ -1,4 +1,3 @@
-
 // The offset of `basis` by `offset`, an adaptor on it and an adaptor on its equivalent
 // surface (with the ASSERT_FALSE(anEquiv.IsNull()) of every test).
 fn adaptors(

@@ -1,4 +1,3 @@
-
 #[test]
 fn bezier_surface_exchange_uv() {
     let myOriginalSurface = SetUp();
@@ -89,7 +88,9 @@ fn bezier_surface_insert_pole_row_after() {
     let aNewRow = line(&[pnt(1.5, 1.0, 0.0), pnt(1.5, 2.0, 0.0), pnt(1.5, 3.0, 0.0)]);
 
     let aNbUBefore = myOriginalSurface.nb_u_poles();
-    myOriginalSurface.insert_pole_row_after(1, &aNewRow).unwrap();
+    myOriginalSurface
+        .insert_pole_row_after(1, &aNewRow)
+        .unwrap();
     assert_eq!(myOriginalSurface.nb_u_poles(), aNbUBefore + 1);
     assert_eq!(myOriginalSurface.u_degree(), 3);
 }
@@ -100,7 +101,9 @@ fn bezier_surface_insert_pole_col_after() {
     let aNewCol = line(&[pnt(1.0, 1.5, 0.0), pnt(2.0, 1.5, 0.0), pnt(3.0, 1.5, 0.0)]);
 
     let aNbVBefore = myOriginalSurface.nb_v_poles();
-    myOriginalSurface.insert_pole_col_after(1, &aNewCol).unwrap();
+    myOriginalSurface
+        .insert_pole_col_after(1, &aNewCol)
+        .unwrap();
     assert_eq!(myOriginalSurface.nb_v_poles(), aNbVBefore + 1);
     assert_eq!(myOriginalSurface.v_degree(), 3);
 }
@@ -110,7 +113,9 @@ fn bezier_surface_remove_pole_row() {
     let myOriginalSurface = SetUp();
     // Insert a row first so we have 4 rows (need at least 2 to remove)
     let aNewRow = line(&[pnt(1.5, 1.0, 0.0), pnt(1.5, 2.0, 0.0), pnt(1.5, 3.0, 0.0)]);
-    myOriginalSurface.insert_pole_row_after(1, &aNewRow).unwrap();
+    myOriginalSurface
+        .insert_pole_row_after(1, &aNewRow)
+        .unwrap();
     assert_eq!(myOriginalSurface.nb_u_poles(), 4);
 
     myOriginalSurface.remove_pole_row(2).unwrap();
@@ -121,7 +126,9 @@ fn bezier_surface_remove_pole_row() {
 fn bezier_surface_remove_pole_col() {
     let myOriginalSurface = SetUp();
     let aNewCol = line(&[pnt(1.0, 1.5, 0.0), pnt(2.0, 1.5, 0.0), pnt(3.0, 1.5, 0.0)]);
-    myOriginalSurface.insert_pole_col_after(1, &aNewCol).unwrap();
+    myOriginalSurface
+        .insert_pole_col_after(1, &aNewCol)
+        .unwrap();
     assert_eq!(myOriginalSurface.nb_v_poles(), 4);
 
     myOriginalSurface.remove_pole_col(2).unwrap();
@@ -131,7 +138,11 @@ fn bezier_surface_remove_pole_col() {
 #[test]
 fn bezier_surface_set_pole_row() {
     let myOriginalSurface = SetUp();
-    let aNewRow = line(&[pnt(10.0, 1.0, 0.0), pnt(10.0, 2.0, 0.0), pnt(10.0, 3.0, 0.0)]);
+    let aNewRow = line(&[
+        pnt(10.0, 1.0, 0.0),
+        pnt(10.0, 2.0, 0.0),
+        pnt(10.0, 3.0, 0.0),
+    ]);
 
     myOriginalSurface.set_pole_row(2, &aNewRow).unwrap();
     for j in 1..=3 {
@@ -142,7 +153,11 @@ fn bezier_surface_set_pole_row() {
 #[test]
 fn bezier_surface_set_pole_col() {
     let myOriginalSurface = SetUp();
-    let aNewCol = line(&[pnt(1.0, 10.0, 0.0), pnt(2.0, 10.0, 0.0), pnt(3.0, 10.0, 0.0)]);
+    let aNewCol = line(&[
+        pnt(1.0, 10.0, 0.0),
+        pnt(2.0, 10.0, 0.0),
+        pnt(3.0, 10.0, 0.0),
+    ]);
 
     myOriginalSurface.set_pole_col(2, &aNewCol).unwrap();
     for i in 1..=3 {

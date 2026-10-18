@@ -1,4 +1,3 @@
-
 #[test]
 fn b_spline_curve_periodic_curve() {
     let _myOriginalCurve = SetUp();
@@ -199,7 +198,9 @@ fn b_spline_curve_rational_curve_segment() {
     assert!(aCurve.is_rational());
 
     let aMid = aCurve.value(0.5).unwrap();
-    aCurve.segment(0.25, 0.75, precision::p_confusion()).unwrap();
+    aCurve
+        .segment(0.25, 0.75, precision::p_confusion())
+        .unwrap();
     let aMidAfter = aCurve.value(0.5).unwrap();
     assert!(aMid.is_equal(&aMidAfter, 1e-6));
     assert!(aCurve.is_rational());

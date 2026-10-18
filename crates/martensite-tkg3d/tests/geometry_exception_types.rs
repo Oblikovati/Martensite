@@ -14,10 +14,7 @@ fn geometry_exception_names_preserve_base_dispatch() {
         space_errors::undefined_value,
     ];
     let observed: String = factories.into_iter().map(exception_type_receipt).collect();
-    assert_eq!(
-        observed,
-        include_str!("fixtures/geometry-failures.txt")
-    );
+    assert_eq!(observed, include_str!("fixtures/geometry-failures.txt"));
 }
 
 /// Undefined geometry failures preserve domain ancestry across base dispatch.

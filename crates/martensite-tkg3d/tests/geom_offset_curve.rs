@@ -7,7 +7,7 @@ use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::{GeomCircle, GeomCurve, GeomGeometry, GeomOffsetCurve};
 use martensite_tkmath::gp::{Axis2, Circle3, Direction3, Point3, StandardDirection3};
 
-// GeomOffsetCurveTest::SetUp: offset by 2 along Z of a circle of radius 5.
+// Offset the radius-five circle by two along its Z direction.
 fn setup() -> Handle<GeomOffsetCurve> {
     let aCircle = Circle3::new(
         Axis2::with_standard(Point3::new(0.0, 0.0, 0.0), StandardDirection3::Z),
