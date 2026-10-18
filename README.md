@@ -62,6 +62,10 @@ increases require review against the temporary exception policy in `AGENTS.md`.
 The check includes inactive platform code and macro definitions, but does not
 expand macros or inspect dependencies. Compiler checks remain necessary (#81).
 
+The [safe-toolkit migration closeout](docs/features/safe-toolkits/closeout.md)
+records the accepted refactors, rejected performance trade-offs, and remaining
+unsafe code. This release does not claim a fully safe toolkit implementation.
+
 The source code is licensed GPL-2.0-only (`LICENSE-GPL`). Official release
 binaries downloaded from this repository whose files match a published hash are
 also offered under the Apache License 2.0 (`LICENSE-APACHE`). Each binary

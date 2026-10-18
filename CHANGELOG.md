@@ -12,8 +12,6 @@ follows [Semantic Versioning](https://semver.org/).
   causes, sharing extraction with existing owned streams and binary container
   metadata decoding with checked offset-range rejection (#142, #181).
 
-- Added owned storage-stream output seeking for header backpatching while preserving
-  EOF, input counts and formatting state (#136).
 - Added explicit fallible printer and ordered messenger delivery with owned typed
   failures, preserving existing infallible entry points (#112).
 
@@ -27,6 +25,15 @@ follows [Semantic Versioning](https://semver.org/).
 - Fixed symbolic-expression message failures to honor configured stack capture while
   preserving explicitly supplied stacks (#141).
 
+## [0.3.2] - 2026-10-18
+
+### Added
+
+- Added owned storage-stream output seeking for header backpatching while preserving
+  EOF, input counts and formatting state (#136).
+
+### Fixed
+
 - Shipped `LICENSE-APACHE` in the binary release archives and `LICENSE-GPL` in
   every source package; the release had still bundled the removed `LICENSE`
   file (#176).
@@ -36,6 +43,13 @@ follows [Semantic Versioning](https://semver.org/).
   retained separate workspace and dependency reports in CI (#81).
 - Removed stale compiler inventory reports and streams before starting a new
   capture, including captures that failed before compilation (#118).
+
+### Changed
+
+- Replaced selected toolkit raw ownership, record initialization and native calls
+  with safe ownership and established safe interfaces; preserved public APIs and
+  excluded candidates with rejected or unproven performance. Recorded the partial
+  migration results and outstanding constraints in the safe-toolkit closeout (#80).
 
 ## [0.3.1] - 2026-10-16
 
