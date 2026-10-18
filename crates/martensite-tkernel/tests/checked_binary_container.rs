@@ -7,11 +7,11 @@ mod failures;
 mod fakes;
 #[path = "checked_binary_container/fixture.rs"]
 mod fixture;
+#[path = "checked_binary_container/position_range.rs"]
+mod position_range;
 #[path = "checked_binary_container/process_contract.rs"]
 mod process_contract;
 #[path = "checked_binary_container/success.rs"]
 mod success;
 #[path = "checked_binary_container/support.rs"]
 mod support;
-#[path = "checked_binary_container/position_range.rs"]
-mod position_range;
