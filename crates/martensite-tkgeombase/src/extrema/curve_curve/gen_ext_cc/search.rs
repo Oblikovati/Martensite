@@ -1,6 +1,4 @@
-// GGenExtCC_PointsInspector at .
-
-//! The global search of GGenExtCC: math_GlobOptMin on each pair of
+//! The global search of GGenExtCC: GlobOptMin on each pair of
 //! intervals; the points of the best value (within `SameTol * 1e-2`) are kept once,
 //! a cell filter merging points closer than the cell size.
 use super::super::glob_opt_func_cc::GlobOptFuncCCC2;
@@ -25,7 +23,7 @@ pub(super) struct FoundMinima {
     pub points: Vec<[f64; 2]>,
 }
 
-/// `GGenExtCC_PointsInspector`: finds a kept point within the cell size.
+/// `nearby-point inspector`: finds a kept point within the cell size.
 struct PointsInspector {
     tol: f64,
     current: [f64; 2],

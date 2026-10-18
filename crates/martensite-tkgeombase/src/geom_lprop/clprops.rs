@@ -45,7 +45,7 @@ pub type CLProps = CLPropsBase<Vector3, Handle<dyn GeomCurve>>;
 /// `CLProps2d`: the curve local properties of a `Curve` handle.
 pub type CLProps2d = CLPropsBase<Vector2, Handle<dyn Geom2dCurve>>;
 
-// The retained `OutOfRange_Raise_if(N < 0 || N > 3, ...)` of the constructors.
+// Constructor derivative orders must lie in the inclusive range 0..=3.
 fn check_level(n: i32) -> Result<(), Failure> {
     if !(0..=3).contains(&n) {
         return Err(Failure::out_of_range(&format!(

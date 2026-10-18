@@ -187,7 +187,7 @@ pub fn udefl_case(output: &Output, values: &[f64]) {
     gcp_case!(output, values, udefl_run);
 }
 
-// `GeomAbs_Shape(int)`.
+// `Shape(int)`.
 fn shape(value: i32) -> Shape {
     match value {
         0 => Shape::C0,

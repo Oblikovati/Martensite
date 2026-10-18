@@ -1,7 +1,6 @@
 // branch of Perform in the implementation at
-// .
 
-//! The GeomAdaptor_TransformedCurve support of ExtremaPC_Curve: a 3D curve is solved in
+//! The GeomAdaptorTransformedCurve support of extrema_pc::Curve: a 3D curve is solved in
 //! its original space so that its parameterization is kept; a curve on a surface is
 //! evaluated through the transformed adaptor.
 use super::super::{

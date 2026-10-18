@@ -1,4 +1,4 @@
-//! Carries a retained exception raised inside a `math_Function` callback across a math
+//! Carries a retained exception raised inside a `Function` callback across a math
 //! solver.
 //!
 //! Natively the exception unwinds through the solver to the caller's `catch`. The

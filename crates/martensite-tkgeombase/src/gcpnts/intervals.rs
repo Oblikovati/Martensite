@@ -1,5 +1,4 @@
 // (`Array1<double> aTI(1, NbIntervals + 1); C.Intervals(aTI, S);`) at
-// .
 
 //! The continuity intervals of a curve, as the GCPnts algorithms read them.
 use crate::cpnts::PntsCurve;

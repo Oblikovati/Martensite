@@ -17,7 +17,7 @@ use quasi_fleche::{FlecheEnd, QuasiFleche};
 /// `QuasiUniformDeflection`;
 /// `QuasiUniformDeflection::with_curve(curve, 0.01, Shape::C1)?`.
 ///
-/// `theContinuity` defaults to GeomAbs_C1 natively; the port takes it explicitly.
+/// `theContinuity` defaults to Shape::C1 natively; this implementation takes it explicitly.
 pub struct QuasiUniformDeflection {
     my_done: bool,
     my_deflection: f64,

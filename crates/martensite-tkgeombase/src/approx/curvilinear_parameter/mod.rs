@@ -37,7 +37,7 @@ pub struct CurvilinearOptions {
 
 /// `CurvilinearParameter`: the reparametrized 3D curve and 2D curves with
 /// their errors. The case 2 constructor leaves `myMaxError2d2` uninitialized
-/// natively; the port reads 0.
+/// natively; this implementation reads 0.
 ///
 /// ```ignore
 /// let options = CurvilinearOptions { order: Shape::C2, max_degree: 14, max_segments: 16 };

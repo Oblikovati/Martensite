@@ -4,7 +4,7 @@
 //! The retained `mmfmca8_`, `mmfmca9_` and the file-static `mmarc41_` are also called
 //! with the same array as input and output; each reads a coefficient before any
 //! write can reach it, so an in-place call is the copy of the input followed by the
-//! call, which is how the port's callers make it.
+//! call, which is how this implementation's callers make it.
 use super::reparam::mmarc41_;
 use crate::adv_app2var::f2c::{F2cArray, F2cArrayMut};
 use crate::adv_app2var::sys_base::mcrfill_;

@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC_Curve`: the evaluator of a 3D curve's kind, chosen once at construction.
+//! `extrema_pc::Curve`: the evaluator of a 3D curve's kind, chosen once at construction.
 use super::adaptor_curve::CurveRef3d;
 use super::{
     BSplineCurve, BezierCurve, Circle, Domain1D, Ellipse, ExtremaResult, Hyperbola, Line,
@@ -22,29 +20,29 @@ mod transform;
 pub enum EvaluatorVariant<'a> {
     /// No evaluator (`std::monostate`).
     Uninitialized,
-    /// `ExtremaPC_Line`.
+    /// `extrema_pc::Line`.
     Line(Line),
-    /// `ExtremaPC_Circle`.
+    /// `extrema_pc::Circle`.
     Circle(Circle),
-    /// `ExtremaPC_Ellipse`.
+    /// `extrema_pc::Ellipse`.
     Ellipse(Ellipse),
-    /// `ExtremaPC_Hyperbola`.
+    /// `extrema_pc::Hyperbola`.
     Hyperbola(Hyperbola),
-    /// `ExtremaPC_Parabola`.
+    /// `extrema_pc::Parabola`.
     Parabola(Parabola),
-    /// `ExtremaPC_BezierCurve`.
+    /// `extrema_pc::BezierCurve`.
     Bezier(BezierCurve),
-    /// `ExtremaPC_BSplineCurve`.
+    /// `extrema_pc::BSplineCurve`.
     BSpline(BSplineCurve),
-    /// `ExtremaPC_OffsetCurve`.
+    /// `extrema_pc::OffsetCurve`.
     Offset(OffsetCurve<'a>),
-    /// `ExtremaPC_OtherCurve`.
+    /// `extrema_pc::OtherCurve`.
     Other(OtherCurve<'a>),
 }
 
-/// Point-curve extrema on any 3D curve (`ExtremaPC_Curve`).
+/// Point-curve extrema on any 3D curve (`extrema_pc::Curve`).
 ///
-/// The domain is fixed at construction. A GeomAdaptor_Curve dispatched as an offset or
+/// The domain is fixed at construction. A GeomAdaptorCurve dispatched as an offset or
 /// general curve is borrowed and must outlive the evaluator; a Geom curve gets its own
 /// adaptor. A transformed 3D curve is solved in the original space (the query is
 /// inverse-transformed, the tolerance divided by the scale) and the points mapped back;
@@ -65,7 +63,7 @@ impl<'a> Curve<'a> {
             transform_result: ExtremaResult::default(),
         }
     }
-    /// Evaluator over the adaptor bounds (`ExtremaPC_Curve(const GeomAdaptor_Curve&)`);
+    /// Evaluator over the adaptor bounds (`extrema_pc::Curve(const GeomAdaptorCurve&)`);
     /// uninitialized without a loaded curve; `Curve::from_adaptor(&adaptor)?`.
     pub fn from_adaptor(curve: &'a GeomAdaptorCurve) -> Result<Self, Failure> {
         if curve.curve().is_null() {
@@ -77,7 +75,7 @@ impl<'a> Curve<'a> {
             domain,
         )?))
     }
-    /// Evaluator over `[u_min, u_max]` (`ExtremaPC_Curve(theCurve, theUMin, theUMax)`);
+    /// Evaluator over `[u_min, u_max]` (`extrema_pc::Curve(theCurve, theUMin, theUMax)`);
     /// `Curve::from_adaptor_range(&adaptor, 0.0, 1.0)?`.
     pub fn from_adaptor_range(
         curve: &'a GeomAdaptorCurve,
@@ -94,12 +92,12 @@ impl<'a> Curve<'a> {
         )?))
     }
     /// Evaluator of a transformed curve over its bounds
-    /// (`ExtremaPC_Curve(const GeomAdaptor_TransformedCurve&)`); `Curve::from_transformed(&adaptor)?`.
+    /// (`extrema_pc::Curve(const GeomAdaptorTransformedCurve&)`); `Curve::from_transformed(&adaptor)?`.
     pub fn from_transformed(curve: &'a GeomAdaptorTransformedCurve) -> Result<Self, Failure> {
         Self::transformed(curve, None)
     }
     /// Evaluator of a transformed curve over `[u_min, u_max]`
-    /// (`ExtremaPC_Curve(theCurve, theUMin, theUMax)`); `Curve::from_transformed_range(&a, 0.0, 1.0)?`.
+    /// (`extrema_pc::Curve(theCurve, theUMin, theUMax)`); `Curve::from_transformed_range(&a, 0.0, 1.0)?`.
     pub fn from_transformed_range(
         curve: &'a GeomAdaptorTransformedCurve,
         u_min: f64,
@@ -121,7 +119,7 @@ impl<'a> Curve<'a> {
             ..Self::with_evaluator(evaluator)
         })
     }
-    /// Evaluator of a Geom curve (`ExtremaPC_Curve(const occ::handle<Curve>&)`): the
+    /// Evaluator of a Geom curve (`extrema_pc::Curve(const occ::handle<Curve>&)`): the
     /// natural domain, the trimmed bounds of a trimmed curve; a null curve stays
     /// uninitialized; `Curve::from_geom(&curve)?`.
     pub fn from_geom(curve: &Handle<dyn GeomCurve>) -> Result<Self, Failure> {
@@ -136,7 +134,7 @@ impl<'a> Curve<'a> {
         Ok(Self::with_evaluator(dispatch::from_geom(curve, None)?))
     }
     /// Evaluator over `[u_min, u_max]`, intersected with the bounds of a trimmed curve
-    /// (`ExtremaPC_Curve(theCurve, theUMin, theUMax)`); `Curve::from_geom_range(&curve, 0.0, 1.0)?`.
+    /// (`extrema_pc::Curve(theCurve, theUMin, theUMax)`); `Curve::from_geom_range(&curve, 0.0, 1.0)?`.
     pub fn from_geom_range(
         curve: &Handle<dyn GeomCurve>,
         u_min: f64,
@@ -213,7 +211,7 @@ pub(super) fn non_identity(trsf: Transform3) -> Option<Transform3> {
     (trsf.form() != TransformForm::Identity).then_some(trsf)
 }
 
-/// A shared handle on an owned GeomAdaptor_Curve.
+/// A shared handle on an owned GeomAdaptorCurve.
 pub(super) fn shared(adaptor: Handle<GeomAdaptorCurve>) -> CurveRef3d<'static> {
     PcCurveRef::Shared(adaptor.cast())
 }

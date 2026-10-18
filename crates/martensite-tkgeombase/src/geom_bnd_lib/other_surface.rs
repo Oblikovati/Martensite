@@ -6,7 +6,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkmath::bnd::BoundingBox3;
 
-/// `OtherSurface`: grid-sampled boxes of an arbitrary `Adaptor3d_Surface`.
+/// `OtherSurface`: grid-sampled boxes of an arbitrary `Adaptor3dSurface`.
 pub struct OtherSurface<'a> {
     surface: &'a dyn Adaptor3dSurface,
 }

@@ -1,5 +1,4 @@
 // solveCubic in the implementation and the implementation at
-// .
 
 //! The cached frame of the 3D hyperbola and parabola evaluators (`cacheGeometry`).
 use martensite_tkmath::gp::{Axis2, Point3};

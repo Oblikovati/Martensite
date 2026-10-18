@@ -126,7 +126,7 @@ pub(super) fn surface_bounds(surf: &dyn Adaptor3dSurface) -> Result<[f64; 4], Fa
 }
 
 impl FuncData<'_> {
-    /// `Function_Value(theU, theData)`: the projected point of parameter `u`.
+    /// `parameter evaluation(theU, theData)`: the projected point of parameter `u`.
     pub(super) fn value(&self, u: f64) -> Result<Point2, Failure> {
         let mut p2d: Point2 = self.init_curve2d.value(u)?;
         let p: Point3 = self.curve.value(u)?;

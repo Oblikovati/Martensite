@@ -99,7 +99,7 @@ impl_transient_interface!(
     StandardTransient
 );
 
-/// The element coefficients, or the error the port gives where the retained code
+/// The element coefficients, or the error this implementation gives where the retained code
 /// dereferences a null `myCoeff` (a crash natively);
 /// `coefficients(&fields, "LinearFlexion::Value")?`.
 pub(crate) fn coefficients(

@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC_Line`: the projection of a 3D point on a line.
+//! `extrema_pc::Line`: the projection of a 3D point on a line.
 use super::planar::{PlanarQuery, perform_planar};
 use super::{CurveEvaluator, Domain1D, ExtremaResult, ExtremumResult, SearchMode, Status};
 use crate::extrema_pc_core::analytic::{self, AnalyticEvaluator};
@@ -11,7 +9,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::{Line3, Plane3, Point3, Vector3};
 use std::convert::Infallible;
 
-/// Point-line extrema (`ExtremaPC_Line`): solved by `ExtremaPC2d_Line` in the plane of
+/// Point-line extrema (`extrema_pc::Line`): solved by `extrema_pc2d::Line` in the plane of
 /// [`super::line_plane`], or by `u = (P - O) . D` when the 2D solve fails;
 /// `Line::new(line).perform(point, 1e-9, SearchMode::MinMax)?.nb_ext() == 1`.
 pub struct Line {
@@ -27,7 +25,7 @@ fn line_value(line: &Line3, u: f64) -> Point3 {
 }
 
 impl Line {
-    /// Evaluator on the unbounded line (`ExtremaPC_Line(theLine)`); `Line::new(line)`.
+    /// Evaluator on the unbounded line (`extrema_pc::Line(theLine)`); `Line::new(line)`.
     pub fn new(line: Line3) -> Self {
         Self {
             line,
@@ -35,7 +33,7 @@ impl Line {
             result: ExtremaResult::default(),
         }
     }
-    /// Evaluator on `domain` (`ExtremaPC_Line(theLine, theDomain)`);
+    /// Evaluator on `domain` (`extrema_pc::Line(theLine, theDomain)`);
     /// `Line::with_domain(line, Domain1D::new(0.0, 1.0))`.
     pub fn with_domain(line: Line3, domain: Domain1D) -> Self {
         Self {

@@ -57,7 +57,7 @@ impl Curve {
 
     /// `GetElement(IndexOfElement, Coeffs)`: the element rows scaled back by
     /// `(2/h)^k`. The retained rescaling loop runs over the columns
-    /// `LowerCol..=Dimension` (not `LowerCol..LowerCol + Dimension`), which the port
+    /// `LowerCol..=Dimension` (not `LowerCol..LowerCol + Dimension`), which this implementation
     /// keeps; `curve.get_element(1, &mut coeffs)?`.
     pub fn get_element(
         &self,
@@ -151,7 +151,7 @@ impl Curve {
         Ok(())
     }
 
-    // PLib_HermitJacobi::ToCoefficients of the element into myPoly.
+    // Hermite-Jacobi basis::ToCoefficients of the element into myPoly.
     fn convert_element(&self, state: &mut CurveState, index: i32) -> Result<(), Failure> {
         let degree: i32 = state.degree(index)?;
         let start: usize = state.element_start(index)?;

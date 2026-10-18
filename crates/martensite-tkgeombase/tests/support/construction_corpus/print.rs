@@ -6,7 +6,7 @@ use martensite_tkernel::standard::Failure;
 // Some probes consume only encoders, others also consume the field reader.
 pub use reader::Reader;
 
-/// Prints a fallible value or the raised exception type (the G2_TRY macro).
+/// Prints a fallible value or the raised exception type (the fallible result capture macro).
 pub fn attempt(output: &Output, block: impl FnOnce() -> Result<(), Failure>) {
     if let Err(error) = block() {
         output.write(format_args!("{} ", error.exception_type()));

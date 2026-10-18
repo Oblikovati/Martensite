@@ -1,8 +1,8 @@
 // (the implementation `f3d`, `f2d`, `order`; the implementation `D03d`,
 // `D02d`, `D23d`, `D22d`) at .
 
-//! The curve that CPnts and GCPnts evaluate: an `Adaptor3d_Curve` or an
-//! `Adaptor2d_Curve2d`, the `void* myCurve` plus `bool my3d` of the retained classes.
+//! The curve that CPnts and GCPnts evaluate: an `Adaptor3dCurve` or an
+//! `Adaptor2dCurve2d`, the `void* myCurve` plus `bool my3d` of the retained classes.
 //!
 //! The retained overloads and the static helpers repeat each evaluation for both curve
 //! kinds; [`PntsCurve`] holds the pair once. A 2D point or vector is lifted to 3D with
@@ -18,14 +18,14 @@ use martensite_tkmath::gp::{Point2, Point3, Vector2, Vector3};
 
 /// A borrowed 3D or 2D adapted curve; `PntsCurve::from(&adaptor as &dyn Adaptor3dCurve)`.
 ///
-/// Every CPnts and GCPnts member that takes an `Adaptor3d_Curve` or an
-/// `Adaptor2d_Curve2d` takes `impl Into<PntsCurve>`, so a `&GeomAdaptorCurve`, a
+/// Every CPnts and GCPnts member that takes an `Adaptor3dCurve` or an
+/// `Adaptor2dCurve2d` takes `impl Into<PntsCurve>`, so a `&GeomAdaptorCurve`, a
 /// `&Geom2dAdaptorCurve` or a `&dyn` adaptor can be passed directly.
 #[derive(Clone, Copy)]
 pub enum PntsCurve<'a> {
-    /// An `Adaptor3d_Curve`.
+    /// An `Adaptor3dCurve`.
     Curve3d(&'a dyn Adaptor3dCurve),
-    /// An `Adaptor2d_Curve2d`, evaluated in the plane Z = 0.
+    /// An `Adaptor2dCurve2d`, evaluated in the plane Z = 0.
     Curve2d(&'a dyn Adaptor2dCurve2d),
 }
 

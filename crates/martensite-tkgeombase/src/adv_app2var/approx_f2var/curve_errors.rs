@@ -6,7 +6,7 @@ use super::curve_integers::{CurveCoefficientCount, CurveIntegerOutputs};
 use super::curve_workspace::CurveProjectionFrame;
 use crate::adv_app2var::f2c::F2cArray;
 use crate::adv_app2var::math_base::{
-    TruncationPrecisionAccess, mmaperx_with_real_access, mmtrpjj_with_real_access, pow_di,
+    TruncationPrecisionAccess, mmaperx_with_real_access, mmtrpjj_with_real_access, pow__di,
 };
 #[path = "curve_truncation_access.rs"]
 mod original_access;
@@ -179,9 +179,9 @@ pub(super) fn mma1noc_(
     let ratio_u: f64 = (dfuvin[1] - dfuvin[0]) / (duvout[1] - duvout[0]);
     let ratio_v: f64 = (dfuvin[3] - dfuvin[2]) / (duvout[3] - duvout[2]);
     let (rider, riord) = if isofav == 1 {
-        (pow_di(ratio_u, ideriv), pow_di(ratio_v, iordre))
+        (pow__di(ratio_u, ideriv), pow__di(ratio_v, iordre))
     } else {
-        (pow_di(ratio_v, ideriv), pow_di(ratio_u, iordre))
+        (pow__di(ratio_v, ideriv), pow__di(ratio_u, iordre))
     };
     let bid: f64 = rider * riord;
     for value in values.iter_mut().take(ndimen.max(0) as usize) {

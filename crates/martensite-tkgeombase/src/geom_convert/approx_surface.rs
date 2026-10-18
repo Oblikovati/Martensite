@@ -215,12 +215,12 @@ fn v_cuts(surf: &dyn Adaptor3dSurface, shape: Shape) -> Result<Array1<'static, f
     Ok(cuts)
 }
 
-/// `ApproxSurface_Eval`: the derivatives of the adapted surface on an
+/// `surface derivative evaluator`: the derivatives of the adapted surface on an
 /// iso, the adaptor re-trimmed to the patch at every call (its mutable member).
 ///
 /// The retained switch writes nothing for the orders it does not handle: order 3 with
 /// UOrder 0 or 3 (D3 is computed but only D3UUV and D3UVV are copied), and any order
-/// above 4, so the kernel's result buffer keeps its previous values; the port leaves
+/// above 4, so the kernel's result buffer keeps its previous values; this implementation leaves
 /// `result` untouched in the same cases.
 struct SurfaceEvaluator {
     my_adaptor: RefCell<Handle<dyn Adaptor3dSurface>>,

@@ -95,7 +95,7 @@ fn from_type(kind: SurfaceType, s: &Handle<dyn GeomSurface>) -> Option<Evaluator
     })
 }
 
-// `initFromSurface`: the exact dynamic type (`DynamicType() == STANDARD_TYPE(...)`,
+// Select the concrete geometry type rather than an inherited adaptor category,
 // subclasses do not match) selects the kind.
 fn exact_kind(surface: &Handle<dyn GeomSurface>) -> Option<SurfaceType> {
     fn is<T: RuntimeTyped>(surface: &Handle<dyn GeomSurface>) -> bool {

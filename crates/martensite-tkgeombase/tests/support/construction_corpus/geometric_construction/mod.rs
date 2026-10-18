@@ -125,7 +125,7 @@ where
     H::try_from(maker)
 }
 
-/// gb_gc_root inside GB_TRY: status, IsDone, IsError, Value() and the conversion.
+/// geometry construction serialization inside fallible result capture: status, IsDone, IsError, Value() and the conversion.
 macro_rules! gc_root {
     ($output:expr, $print:path, $maker:expr) => {
         super::super::common::attempt($output, || {
@@ -143,7 +143,7 @@ macro_rules! gc_root {
     };
 }
 
-/// gb_gc_trsf inside GB_TRY: Value() and the conversion of a transformation maker.
+/// geometry transformation serialization inside fallible result capture: Value() and the conversion of a transformation maker.
 macro_rules! gc_trsf {
     ($output:expr, $print:path, $maker:expr) => {
         super::super::common::attempt($output, || {

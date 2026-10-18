@@ -1,5 +1,3 @@
-// .
-
 //! `GlobOptFuncCQuadric`: `F(t)`, the square distance from `C(t)` to a
 //! trimmed quadric (its projection when inside the trimming, and its corners), false
 //! outside the curve range or for another surface.

@@ -1,5 +1,3 @@
-// .
-
 //! The classic Extrema package: the extrema of the distance between points, curves
 //! and surfaces.
 //!
@@ -85,21 +83,21 @@ pub enum ElementType {
 /// `ExtAlgo`: the point-surface search algorithm.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum ExtAlgo {
-    /// `ExtAlgo_Grad`: grid sampling with a gradient refinement.
+    /// `ExtAlgo::Grad`: grid sampling with a gradient refinement.
     #[default]
     Grad,
-    /// `ExtAlgo_Tree`: a bounding-sphere tree over the grid.
+    /// `ExtAlgo::Tree`: a bounding-sphere tree over the grid.
     Tree,
 }
 
 /// `ExtFlag`: which extrema a search returns.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 pub enum ExtFlag {
-    /// `ExtFlag_MIN`: the minima.
+    /// `ExtFlag::Min`: the minima.
     Min,
-    /// `ExtFlag_MAX`: the maxima.
+    /// `ExtFlag::Max`: the maxima.
     Max,
-    /// `ExtFlag_MINMAX`: both.
+    /// `ExtFlag::MinMax`: both.
     #[default]
     MinMax,
 }

@@ -1,5 +1,3 @@
-// .
-
 //! `Framework`: the constraint frame of the approximation, the nodes
 //! and the iso-curves of the cutting grid.
 use super::iso::AdvApp2VarIso;

@@ -16,7 +16,7 @@ fn near(check: f64, with: f64, toler: f64) -> bool {
     (check - with).abs() < toler
 }
 
-/// The cone case of `Function_SetUVBounds`.
+/// The cone case of `parameter-window selection`.
 pub(super) fn cone_bounds(
     p: &Projection<'_>,
     mut s: Samples,

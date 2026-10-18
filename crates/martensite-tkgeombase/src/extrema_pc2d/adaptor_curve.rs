@@ -1,6 +1,6 @@
 // the implementation at .
 
-//! `ExtremaPC2d_OffsetCurve` and `ExtremaPC2d_OtherCurve`: numerical extrema through an
+//! `extrema_pc2d::OffsetCurve` and `extrema_pc2d::OtherCurve`: numerical extrema through an
 //! adaptor over a curve-aware partition (C2 intervals refined by
 //! `Curve2dTool::DeflCurvIntervals`). The two retained classes have the same
 //! code; [`AdaptorExtrema`] holds it and each public type wraps it.
@@ -164,12 +164,12 @@ macro_rules! adaptor_evaluator {
 }
 
 adaptor_evaluator!(
-    /// Point-offset-curve extrema through an adaptor (`ExtremaPC2d_OffsetCurve`).
+    /// Point-offset-curve extrema through an adaptor (`extrema_pc2d::OffsetCurve`).
     OffsetCurve,
     "ExtremaPC2d_OffsetCurve"
 );
 adaptor_evaluator!(
-    /// Point-curve extrema through any adaptor (`ExtremaPC2d_OtherCurve`).
+    /// Point-curve extrema through any adaptor (`extrema_pc2d::OtherCurve`).
     OtherCurve,
     "ExtremaPC2d_OtherCurve"
 );

@@ -1,5 +1,4 @@
 // the implementation and the implementation at
-// .
 
 //! `Criterion`: an extra condition an approximation must satisfy.
 use super::context::AdvApp2VarContext;

@@ -1,5 +1,3 @@
-// .
-
 //! `EvaluatorFunc2Var`: the function of two parameters an approximation
 //! samples.
 //!

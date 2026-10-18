@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC_Ellipse`: the extrema on an ellipse in space.
+//! `extrema_pc::Ellipse`: the extrema on an ellipse in space.
 use super::planar::{PlanarQuery, perform_planar};
 use super::{
     CurveEvaluator, Domain1D, ExtremaResult, ExtremumResult, SearchMode, Status,
@@ -17,7 +15,7 @@ use martensite_tkmath::math_root::trigonometric;
 use std::convert::Infallible;
 use std::f64::consts::PI;
 
-/// Point-ellipse extrema (`ExtremaPC_Ellipse`): solved by `ExtremaPC2d_Ellipse` in the
+/// Point-ellipse extrema (`extrema_pc::Ellipse`): solved by `extrema_pc2d::Ellipse` in the
 /// ellipse plane; when that fails, the trigonometric equation of the 2D evaluator is
 /// solved for the point projected on the plane, and each extremum is kept once inside
 /// the domain (no periodic repetition, unlike the 2D evaluator);
@@ -29,7 +27,7 @@ pub struct Ellipse {
 }
 
 impl Ellipse {
-    /// Evaluator on the full ellipse (`ExtremaPC_Ellipse(theEllipse)`); `Ellipse::new(ellipse)`.
+    /// Evaluator on the full ellipse (`extrema_pc::Ellipse(theEllipse)`); `Ellipse::new(ellipse)`.
     pub fn new(ellipse: Ellipse3) -> Self {
         Self {
             ellipse,
@@ -37,7 +35,7 @@ impl Ellipse {
             result: ExtremaResult::default(),
         }
     }
-    /// Evaluator on `domain` (`ExtremaPC_Ellipse(theEllipse, theDomain)`);
+    /// Evaluator on `domain` (`extrema_pc::Ellipse(theEllipse, theDomain)`);
     /// `Ellipse::with_domain(ellipse, Domain1D::new(0.0, PI))`.
     pub fn with_domain(ellipse: Ellipse3, domain: Domain1D) -> Self {
         Self {
@@ -95,7 +93,7 @@ impl Ellipse {
     ) -> Result<&ExtremaResult, Failure> {
         analytic::perform_with_endpoints(self, point, tol, mode)
     }
-    // ExtremaPC2d_Ellipse in the ellipse plane.
+    // extrema_pc2d::Ellipse in the ellipse plane.
     fn perform_in_plane(
         &mut self,
         point: Point3,

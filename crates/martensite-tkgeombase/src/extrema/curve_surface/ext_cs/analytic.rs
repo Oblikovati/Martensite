@@ -1,5 +1,3 @@
-// .
-
 //! The results of ExtElCS: the parallel distance, or the extrema within
 //! the bounds; when all of them are outside, the projections of the curve ends on
 //! the elementary surface (the nearer one, or both when their distances are within

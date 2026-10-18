@@ -1,5 +1,3 @@
-// .
-
 //! The ExtremaPC2d package: the extrema of the distance between a 2D point and a
 //! curve.
 //!
@@ -54,9 +52,9 @@ pub use martensite_tkmath::math_utils::Domain1D;
 pub type ExtremumResult = core::PcExtremum<Point2>;
 /// The extrema of one computation (`ExtremaPC2d::Result`).
 pub type ExtremaResult = core::PcResult<Point2>;
-/// The normalized stationarity function (`ExtremaPC2d_DistanceFunction`).
+/// The normalized stationarity function (`extrema_pc2d::DistanceFunction`).
 pub type DistanceFunction<'a> = core::PcDistanceFunction<'a, Space2d>;
-/// The numerical evaluator over a parameter partition (`ExtremaPC2d_GridEvaluator`).
+/// The numerical evaluator over a parameter partition (`extrema_pc2d::GridEvaluator`).
 pub type GridEvaluator = core::PcGridEvaluator<Space2d>;
 
 /// Maximum ratio of the parameter range for the one-sided endpoint classification

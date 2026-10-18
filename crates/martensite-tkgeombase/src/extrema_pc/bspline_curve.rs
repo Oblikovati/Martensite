@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC_BSplineCurve`: numerical extrema on a 3D BSpline curve.
+//! `extrema_pc::BSplineCurve`: numerical extrema on a 3D BSpline curve.
 use super::spline::{SplineExtrema, SplineKind};
 use super::{CurveEvaluator, Domain1D, ExtremaResult, SearchMode, project_bspline};
 use crate::extrema_pc_core::knot_params::{KnotGrid, knot_aware_params};
@@ -57,17 +55,17 @@ impl SplineKind for BSplineKind {
     }
 }
 
-/// Point-BSpline extrema in space (`ExtremaPC_BSplineCurve`).
+/// Point-BSpline extrema in space (`extrema_pc::BSplineCurve`).
 ///
 /// A BSpline curve with an exactly planar control polygon is solved by
-/// `ExtremaPC2d_BSplineCurve` in its plane; otherwise by the grid evaluator over the
+/// `extrema_pc2d::BSplineCurve` in its plane; otherwise by the grid evaluator over the
 /// knot-aware partition built at construction (range failure for a grid too large
 /// for an `int` count). A null curve gives NotDone;
 /// `BSplineCurve::new(curve)?.perform(point, 1e-9, SearchMode::MinMax)?`.
 pub struct BSplineCurve(SplineExtrema<BSplineKind>);
 
 impl BSplineCurve {
-    /// Evaluator over the curve bounds (`ExtremaPC_BSplineCurve(theCurve)`); a null curve
+    /// Evaluator over the curve bounds (`extrema_pc::BSplineCurve(theCurve)`); a null curve
     /// keeps the domain `[0, 1]`; `BSplineCurve::new(curve)?`.
     pub fn new(curve: Handle<GeomBSplineCurve>) -> Result<Self, Failure> {
         let domain: Domain1D = match curve.get() {
@@ -76,7 +74,7 @@ impl BSplineCurve {
         };
         Self::with_domain(curve, domain)
     }
-    /// Evaluator over `domain` (`ExtremaPC_BSplineCurve(theCurve, theDomain)`);
+    /// Evaluator over `domain` (`extrema_pc::BSplineCurve(theCurve, theDomain)`);
     /// `BSplineCurve::with_domain(curve, Domain1D::new(0.0, 0.5))?`.
     pub fn with_domain(curve: Handle<GeomBSplineCurve>, domain: Domain1D) -> Result<Self, Failure> {
         SplineExtrema::new(curve, domain).map(Self)

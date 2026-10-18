@@ -1,6 +1,6 @@
 // the implementation at .
 
-//! `ExtremaPC_OffsetCurve` and `ExtremaPC_OtherCurve`: numerical extrema through a 3D
+//! `extrema_pc::OffsetCurve` and `extrema_pc::OtherCurve`: numerical extrema through a 3D
 //! adaptor over a curve-aware partition built at construction. The offset evaluator
 //! first tries the exact 2D offset curve of a planar offset (ExtremaPC::ProjectOffset).
 use super::spline::not_done;
@@ -107,7 +107,7 @@ impl<'a> AdaptorExtrema<'a> {
         Ok(self.evaluator.result())
     }
     // `performPlanar` of the offset evaluator: false when the adaptor is not a
-    // GeomAdaptor_Curve on an exactly planar offset (every failure there is caught).
+    // GeomAdaptorCurve on an exactly planar offset (every failure there is caught).
     fn perform_planar_offset(
         &mut self,
         point: Point3,
@@ -159,13 +159,13 @@ impl<'a> AdaptorExtrema<'a> {
     }
 }
 
-/// Point-offset-curve extrema through a 3D adaptor (`ExtremaPC_OffsetCurve`): a planar
-/// offset of a GeomAdaptor_Curve is solved by `ExtremaPC2d_OffsetCurve` on its exact 2D
+/// Point-offset-curve extrema through a 3D adaptor (`extrema_pc::OffsetCurve`): a planar
+/// offset of a GeomAdaptorCurve is solved by `extrema_pc2d::OffsetCurve` on its exact 2D
 /// offset; otherwise by the grid evaluator. The adaptor must outlive the evaluator;
 /// `OffsetCurve::with_domain(&adaptor, domain)?.perform(point, 1e-9, SearchMode::MinMax)?`.
 pub struct OffsetCurve<'a>(AdaptorExtrema<'a>);
 
-/// Point-curve extrema through any 3D adaptor (`ExtremaPC_OtherCurve`), by the grid
+/// Point-curve extrema through any 3D adaptor (`extrema_pc::OtherCurve`), by the grid
 /// evaluator; `OtherCurve::with_domain(&adaptor, domain)?.perform(point, 1e-9, SearchMode::MinMax)?`.
 pub struct OtherCurve<'a>(AdaptorExtrema<'a>);
 

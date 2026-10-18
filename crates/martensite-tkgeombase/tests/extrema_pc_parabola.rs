@@ -6,7 +6,7 @@ use common::*;
 #[allow(unused_imports)]
 use prelude::*;
 
-// Test fixture for ExtremaPC_Parabola tests.
+// Test fixture for extrema_pc::Parabola tests.
 const THE_TOL: f64 = 1.0e-8;
 
 //==================================================================================================

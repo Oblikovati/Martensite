@@ -28,7 +28,7 @@ pub struct ApproxCurve {
 }
 
 impl ApproxCurve {
-    /// Approximates `curve` through a Geom2dAdaptor_Curve within `tol2d`, with the
+    /// Approximates `curve` through a Geom2dAdaptorCurve within `tol2d`, with the
     /// continuity `order`, at most `max_segments` spans of degree `max_degree`
     /// (`ApproxCurve(Curve, Tol2d, Order, MaxSegments, MaxDegree)`);
     /// `ApproxCurve::from_curve(&curve, 1e-4, Shape::C2, 16, 14)?`.
@@ -45,7 +45,7 @@ impl ApproxCurve {
     }
 
     /// Approximates the adapted `curve` (`ApproxCurve(const
-    /// occ::handle<Adaptor2d_Curve2d>&, Tol2d, Order, MaxSegments, MaxDegree)`); an
+    /// occ::handle<Adaptor2dCurve2d>&, Tol2d, Order, MaxSegments, MaxDegree)`); an
     /// exception of the adaptor propagates;
     /// `ApproxCurve::from_adaptor(&adaptor, 1e-4, Shape::C2, 16, 14)?`.
     pub fn from_adaptor(
@@ -95,7 +95,7 @@ impl ApproxCurve {
     }
 
     // Approximate: one 2D subspace of tolerance tol2d on the curve range, cut with
-    // AdvApprox_PrefAndRec at the C2 (recommended) and C3 (preferred) breaks.
+    // PrefAndRec at the C2 (recommended) and C3 (preferred) breaks.
     fn approximate(
         &mut self,
         curve: &Handle<dyn Adaptor2dCurve2d>,

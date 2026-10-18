@@ -1,5 +1,3 @@
-// .
-
 //! `Dump`: the debugger helper that dumps any geometric transient.
 use super::console::ConsoleOutput;
 use super::{curve_print, curve2d_print, surface_print};

@@ -1,5 +1,3 @@
-// .
-
 //! The degenerated boundary isos of ExtPS.
 use crate::scan_step::next_scan_parameter;
 use martensite_tkernel::precision;
@@ -21,7 +19,7 @@ pub(super) fn iso_is_deg(
 ) -> Result<bool, Failure> {
     let (u1, u2) = (surface.first_u_parameter()?, surface.last_u_parameter()?);
     let (v1, v2) = (surface.first_v_parameter()?, surface.last_v_parameter()?);
-    // GeomAbs_IsoV samples along U, GeomAbs_IsoU along V.
+    // IsoType::IsoV samples along U, IsoType::IsoU along V.
     let (first, last) = if is_u { (v1, v2) } else { (u1, u2) };
     if precision::is_infinite(first) || precision::is_infinite(last) {
         return Ok(true);

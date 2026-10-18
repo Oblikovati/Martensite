@@ -15,7 +15,7 @@ use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::{Point2, Point3};
 
 /// The arguments of `Perform` after the range, with the retained defaults
-/// `Continuity = GeomAbs_C0`, `Degmax = 11`, `Segmax = 50`.
+/// `Continuity = Shape::C0`, `Degmax = 11`, `Segmax = 50`.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct SweepOptions {
     /// `Tol3d`.

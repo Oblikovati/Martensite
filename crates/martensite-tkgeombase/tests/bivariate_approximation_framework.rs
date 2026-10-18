@@ -104,7 +104,7 @@ fn framework_update_in_u_inserts_cut_iso_and_nodes() {
     EXPECT_DOUBLE_EQ(aCutIso.t0(), 0.0);
     EXPECT_DOUBLE_EQ(aCutIso.t1(), 1.0);
 
-    // ASSERT_FALSE(IsNull()): a missing node is an error here, so unwrap asserts it.
+    // A missing node is an error here, so unwrap asserts its presence.
     let aBottomCutNode = aFramework.node_at(0.5, 0.0).unwrap();
     let aTopCutNode = aFramework.node_at(0.5, 1.0).unwrap();
     EXPECT_DOUBLE_EQ(aBottomCutNode.coord().x(), 0.5);

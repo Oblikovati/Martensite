@@ -1,5 +1,3 @@
-// .
-
 //! MakeTrimmedCone and MakeTrimmedCylinder: cones and cylinders trimmed to
 //! a full turn in U and a height in V.
 use super::{MakeConicalSurface, MakeCylindricalSurface};

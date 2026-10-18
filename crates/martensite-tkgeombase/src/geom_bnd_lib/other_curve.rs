@@ -39,7 +39,7 @@ fn sampled_box<C: ?Sized + SampledCurve>(
     Ok(bounds)
 }
 
-/// `OtherCurve`: sampled boxes of an arbitrary `Adaptor3d_Curve`.
+/// `OtherCurve`: sampled boxes of an arbitrary `Adaptor3dCurve`.
 pub struct OtherCurve<'a> {
     curve: &'a dyn Adaptor3dCurve,
 }
@@ -81,7 +81,7 @@ impl<'a> OtherCurve<'a> {
     }
 }
 
-/// `OtherCurve2d`: sampled boxes of an arbitrary `Adaptor2d_Curve2d`.
+/// `OtherCurve2d`: sampled boxes of an arbitrary `Adaptor2dCurve2d`.
 pub struct OtherCurve2d<'a> {
     curve: &'a dyn Adaptor2dCurve2d,
 }
@@ -112,7 +112,7 @@ impl<'a> OtherCurve2d<'a> {
         self.bounding_box_optimal_range(u1, u2, tolerance)
     }
     /// `BoxOptimal(U1, U2, Tol)`: ComputeNbSamples2d samples refined by the retained
-    /// `Pso` + `math_BrentMinimum` search of the curve bounds implementation (not the MathOpt one the
+    /// `Pso` + `BrentMinimum` search of the curve bounds implementation (not the MathOpt one the
     /// other classes use); `evaluator.bounding_box_optimal_range(0.0, 1.0, 0.0)?`.
     pub fn bounding_box_optimal_range(
         &self,
@@ -133,8 +133,8 @@ impl<'a> OtherCurve2d<'a> {
     }
 }
 
-// `AdjustExtr2dCurve` of the implementation: math_BrentMinimum on a small range,
-// otherwise Pso then math_BrentMinimum around the swarm optimum.
+// `AdjustExtr2dCurve` of the implementation: BrentMinimum on a small range,
+// otherwise Pso then BrentMinimum around the swarm optimum.
 fn adjust_extr_2d_curve(
     curve: &dyn Adaptor2dCurve2d,
     (u_min, u_max): (f64, f64),

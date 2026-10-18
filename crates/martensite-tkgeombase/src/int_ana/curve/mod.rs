@@ -53,7 +53,7 @@ pub struct Curve {
 
 impl Default for Curve {
     /// Curve(): every coefficient null, an unrestricted domain and no
-    /// quadric (GeomAbs_OtherSurface).
+    /// quadric (SurfaceType::OtherSurface).
     fn default() -> Self {
         Self {
             z0: TrigTerms::default(),

@@ -45,7 +45,7 @@ pub struct SampledSquare<'a> {
 ///
 /// retained quirk: for `isofav == 1` the tables are transposed back with
 /// `mmfmtb1_` after the sampling whatever its outcome, and that call clears
-/// `iercod`, so an evaluator failure is lost; the port keeps this.
+/// `iercod`, so an evaluator failure is lost; this implementation keeps this.
 /// `mma2ds1_(&square, &f, &mut tables, &mut fpntab, &mut ttable, &mut ier)`.
 pub fn mma2ds1_(
     square: &SampledSquare<'_>,

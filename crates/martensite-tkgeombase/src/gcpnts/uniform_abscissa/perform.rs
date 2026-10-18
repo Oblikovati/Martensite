@@ -1,7 +1,5 @@
 // `Perform` and `PerformLengthParametrized` of
 
-// .
-
 //! The two distributions of `UniformAbscissa`.
 use crate::gcpnts::t_curve_types::live;
 use crate::gcpnts::{AbscissaPoint, AbscissaType, PoleCurve, TCurveTypes};

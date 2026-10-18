@@ -219,7 +219,7 @@ impl Variational {
     /// constraints, its knots placed at (or between) the constrained parameters from
     /// both ends; construction failure when a constraint needs more than
     /// MaxDegree - Continuity or the elements exceed MaxSegment. The retained knots
-    /// start uninitialized (the port's at 0); the back cutting may read the knot it
+    /// start uninitialized (this implementation's at 0); the back cutting may read the knot it
     /// is about to set.
     pub(super) fn init_cutting(
         &self,

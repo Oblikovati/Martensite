@@ -1,5 +1,5 @@
 //! `GGenExtPC`: every root of [`GFuncExtPC`] on a parameter range, found by
-//! math_FunctionRoots on a sampling.
+//! FunctionRoots on a sampling.
 use super::func_ext_pc::GFuncExtPC;
 use crate::extrema::curve_reference::CurveReference;
 use crate::extrema::curve_tool::ExtremaCurveTool;
@@ -150,7 +150,7 @@ impl<'a, T: ExtremaCurveTool> GGenExtPC<'a, T> {
         self.tol_u = tol_u;
         self.tol_f = tol_f;
     }
-    /// `Perform(P)`: math_FunctionRoots on `[Umin, Usup]` with `NbSample` samples; not
+    /// `Perform(P)`: FunctionRoots on `[Umin, Usup]` with `NbSample` samples; not
     /// done when it fails or finds F null everywhere; `extrema.perform(point)?`.
     pub fn perform(&mut self, point: T::Point) -> Result<(), Failure> {
         self.function.set_point(point);

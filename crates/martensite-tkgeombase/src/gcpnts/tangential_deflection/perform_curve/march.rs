@@ -1,5 +1,4 @@
 // TangentialDeflection::PerformCurve (the implementation) at
-// .
 
 //! The march of `PerformCurve`: each step is adjusted until the deflection and angle
 //! coefficients of its span are between 0.55 and 1, then the next step is predicted.

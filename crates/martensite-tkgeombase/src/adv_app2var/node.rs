@@ -1,5 +1,3 @@
-// .
-
 //! `Node`: the constraints of the approximation at one (U, V) point.
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array2;

@@ -1,7 +1,7 @@
 // the implementation at .
 
 //! The numerical point-curve extrema over a cached parameter partition
-//! (`ExtremaPC2d_GridEvaluator`, `ExtremaPC_GridEvaluator`).
+//! (`extrema_pc2d::GridEvaluator`, `extrema_pc::GridEvaluator`).
 //!
 //! Each adjacent parameter pair is solved independently with the derivative-aware
 //! multiple-root solver, so non-uniform knot- and curvature-aware partitions are
@@ -40,7 +40,7 @@ struct RootCandidate {
     right_bound: f64,
 }
 
-/// The grid evaluator (`ExtremaPC2d_GridEvaluator`, `ExtremaPC_GridEvaluator`): the
+/// The grid evaluator (`extrema_pc2d::GridEvaluator`, `extrema_pc::GridEvaluator`): the
 /// cached partition and the reusable result and work arrays;
 /// `let mut evaluator = GridEvaluator::default(); evaluator.set_params(&params);`.
 pub struct PcGridEvaluator<S: PcSpace> {

@@ -21,9 +21,9 @@ pub use glob_opt_func_cc::{GlobOptFuncCCC0, GlobOptFuncCCC1, GlobOptFuncCCC2};
 
 use super::curve_tools::{Curve2dTool, CurveTool};
 
-/// `ECC`: `GGenExtCC` over Adaptor3d_Curve.
+/// `ECC`: `GGenExtCC` over Adaptor3dCurve.
 pub type ECC<'a> = GGenExtCC<'a, CurveTool>;
-/// `ECC2d`: `GGenExtCC` over Adaptor2d_Curve2d.
+/// `ECC2d`: `GGenExtCC` over Adaptor2dCurve2d.
 pub type ECC2d<'a> = GGenExtCC<'a, Curve2dTool>;
-/// `CCLocFOfLocECC`: `GFuncExtCC` over Adaptor3d_Curve.
+/// `CCLocFOfLocECC`: `GFuncExtCC` over Adaptor3dCurve.
 pub type CCLocFOfLocECC<'a> = GFuncExtCC<'a, CurveTool>;

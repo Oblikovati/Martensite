@@ -42,7 +42,7 @@ pub(super) fn change_of_parameter(
     Ok(result)
 }
 
-/// `SameParameter_Evaluator`: the pcurve at the changed parameter (its
+/// `same-parameter evaluator`: the pcurve at the changed parameter (its
 /// derivative times the parameter derivative). The retained evaluator writes nothing
 /// for a second derivative and returns 0.
 pub(super) struct SameParameterEvaluator<'d> {

@@ -1,5 +1,3 @@
-// .
-
 //! The extrema of the distance between a point and a surface: the functions
 //! (FuncPSNorm, FuncPSDist), the local search (GenLocateExtPS), the sampled search
 //! (GenExtPS), the swept surfaces (ExtPExtS, ExtPRevS) and the general class ExtPS.

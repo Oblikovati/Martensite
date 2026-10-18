@@ -1,5 +1,4 @@
 // the implementation and the implementation at
-// .
 
 //! The body the 3D Bezier and BSpline evaluators share: the curve, its adaptor, the
 //! domain and a partition built once at construction (so, unlike ExtremaPC2d, later
@@ -56,7 +55,7 @@ impl<G: GeomCurve + RuntimeTyped> CurveEvaluator<Point3> for SplineShape<G> {
     }
 }
 
-/// The shared state of `ExtremaPC_BezierCurve` and `ExtremaPC_BSplineCurve`.
+/// The shared state of `extrema_pc::BezierCurve` and `extrema_pc::BSplineCurve`.
 pub(crate) struct SplineExtrema<K: SplineKind> {
     pub shape: SplineShape<K::Geom>,
     adaptor: GeomAdaptorCurve,

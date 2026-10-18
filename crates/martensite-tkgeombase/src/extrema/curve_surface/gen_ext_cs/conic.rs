@@ -1,5 +1,3 @@
-// .
-
 //! The global search of a conic and a surface over `(u, v)`: a particle swarm on
 //! the distance from `S(u, v)` to the conic, then the conic parameter; a solution
 //! whose chord lies along the surface everywhere around it is refined by

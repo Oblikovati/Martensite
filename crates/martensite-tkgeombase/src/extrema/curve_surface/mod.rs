@@ -1,5 +1,3 @@
-// .
-
 //! The extrema of the distance between a curve and a surface: the function
 //! FuncExtCS, the global-optimization functions (GlobOptFuncCS, GlobOptFuncConicS,
 //! GlobOptFuncCQuadric), the global search GenExtCS and the general class ExtCS.

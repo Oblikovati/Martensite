@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC_BezierCurve`: numerical extrema on a 3D Bezier curve.
+//! `extrema_pc::BezierCurve`: numerical extrema on a 3D Bezier curve.
 use super::spline::{SplineExtrema, SplineKind};
 use super::{
     CurveEvaluator, Domain1D, ExtremaResult, GridEvaluator, SearchMode,
@@ -55,16 +53,16 @@ fn sample_count(degree: i32) -> usize {
     THE_BEZIER_MIN_SAMPLES.max(THE_BEZIER_DEGREE_MULTIPLIER * (degree + 1) as usize)
 }
 
-/// Point-Bezier extrema in space (`ExtremaPC_BezierCurve`).
+/// Point-Bezier extrema in space (`extrema_pc::BezierCurve`).
 ///
 /// A Bezier curve with an exactly planar control polygon is solved by
-/// `ExtremaPC2d_BezierCurve` in its plane; otherwise by the grid evaluator over
+/// `extrema_pc2d::BezierCurve` in its plane; otherwise by the grid evaluator over
 /// max(24, 3 (degree + 1)) uniform samples built at construction. A null curve gives
 /// NotDone; `BezierCurve::new(curve)?.perform(point, 1e-9, SearchMode::MinMax)?`.
 pub struct BezierCurve(SplineExtrema<BezierKind>);
 
 impl BezierCurve {
-    /// Evaluator over the curve bounds (`ExtremaPC_BezierCurve(theCurve)`); a null curve
+    /// Evaluator over the curve bounds (`extrema_pc::BezierCurve(theCurve)`); a null curve
     /// keeps the domain `[0, 1]`; `BezierCurve::new(curve)?`.
     pub fn new(curve: Handle<GeomBezierCurve>) -> Result<Self, Failure> {
         let domain: Domain1D = match curve.get() {
@@ -73,7 +71,7 @@ impl BezierCurve {
         };
         Self::with_domain(curve, domain)
     }
-    /// Evaluator over `domain` (`ExtremaPC_BezierCurve(theCurve, theDomain)`);
+    /// Evaluator over `domain` (`extrema_pc::BezierCurve(theCurve, theDomain)`);
     /// `BezierCurve::with_domain(curve, Domain1D::new(0.0, 0.5))?`.
     pub fn with_domain(curve: Handle<GeomBezierCurve>, domain: Domain1D) -> Result<Self, Failure> {
         SplineExtrema::new(curve, domain).map(Self)

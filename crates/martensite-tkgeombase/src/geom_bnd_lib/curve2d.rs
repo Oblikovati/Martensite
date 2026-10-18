@@ -105,7 +105,7 @@ fn detect(curve: &Handle<dyn Geom2dCurve>) -> Option<(CurveType, Evaluator)> {
 }
 
 // The evaluator of an adaptor kind: analytic kinds are rebuilt as Geom objects from the
-// adaptor's gp value; an offset needs a Geom2dAdaptor_Curve on a OffsetCurve.
+// adaptor's gp value; an offset needs a Geom2dAdaptorCurve on a OffsetCurve.
 fn from_adaptor_kind(
     curve: &dyn Adaptor2dCurve2d,
     kind: CurveType,
@@ -133,7 +133,7 @@ fn from_adaptor_kind(
     }))
 }
 
-// `dynamic_cast<const Geom2dAdaptor_Curve*>` then `occ::down_cast<OffsetCurve>`.
+// `dynamic_cast<const Geom2dAdaptorCurve*>` then `occ::down_cast<OffsetCurve>`.
 fn adaptor_offset(curve: &dyn Adaptor2dCurve2d) -> Option<Evaluator> {
     let geom_adaptor = Geom2dAdaptorCurve::project_from(curve)?;
     let offset: Handle<Geom2dOffsetCurve> = geom_adaptor.curve().cast();
@@ -141,8 +141,8 @@ fn adaptor_offset(curve: &dyn Adaptor2dCurve2d) -> Option<Evaluator> {
 }
 
 impl<'a> Curve2d<'a> {
-    /// `Curve2d(const Adaptor2d_Curve2d&)`: the adaptor's `GetType` selects the
-    /// evaluator; an offset adaptor that is not a Geom2dAdaptor_Curve on a OffsetCurve,
+    /// `Curve2d(const Adaptor2dCurve2d&)`: the adaptor's `GetType` selects the
+    /// evaluator; an offset adaptor that is not a Geom2dAdaptorCurve on a OffsetCurve,
     /// and every other kind, falls back to OtherCurve2d with the type OtherCurve;
     /// `Curve2d::from_adaptor(&adaptor)?`.
     pub fn from_adaptor(curve: &'a dyn Adaptor2dCurve2d) -> Result<Self, Failure> {
@@ -269,7 +269,7 @@ impl<'a> Curve2d<'a> {
 impl Curve2d<'static> {
     /// `Curve2d(const occ::handle<Curve>&)`: the down_cast chain on the
     /// curve, or on the basis of a TrimmedCurve (whose adaptor then gives the range
-    /// of `Box(Tol)`); other kinds use OtherCurve2d on a Geom2dAdaptor_Curve;
+    /// of `Box(Tol)`); other kinds use OtherCurve2d on a Geom2dAdaptorCurve;
     /// `Curve2d::from_curve(&handle)?`.
     pub fn from_curve(curve: &Handle<dyn Geom2dCurve>) -> Result<Self, Failure> {
         let mut detection: Handle<dyn Geom2dCurve> = curve.clone();

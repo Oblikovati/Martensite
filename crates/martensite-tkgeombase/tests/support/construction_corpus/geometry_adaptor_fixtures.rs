@@ -36,7 +36,7 @@ pub fn adapted_surface(
     Ok(Handle::new(GeomAdaptorSurface::with_surface(&surface(r)?)?).cast())
 }
 
-/// `GeomAbs_Shape(code)`: the retained enumeration order.
+/// `Shape(code)`: the retained enumeration order.
 pub fn shape(code: i32) -> Shape {
     [
         Shape::C0,

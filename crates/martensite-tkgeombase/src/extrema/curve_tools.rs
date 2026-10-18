@@ -1,5 +1,3 @@
-// .
-
 //! The two tool classes: [`CurveTool`] (`CurveTool`, 3D) and [`Curve2dTool`]
 //! (`Curve2dTool`). They differ only in their types and in `IsPeriodic`.
 use super::curve_tool::{ExtremaCurveTool, ToolD1, ToolD2, ToolD3};
@@ -16,11 +14,11 @@ use martensite_tkmath::gp::{
     Parabola3, Point2, Point3, Vector2, Vector3,
 };
 
-/// `CurveTool`: the static access to an `Adaptor3d_Curve`;
+/// `CurveTool`: the static access to an `Adaptor3dCurve`;
 /// `CurveTool::is_periodic(&adaptor)?`.
 pub struct CurveTool;
 
-/// `Curve2dTool`: the static access to an `Adaptor2d_Curve2d`;
+/// `Curve2dTool`: the static access to an `Adaptor2dCurve2d`;
 /// `Curve2dTool::is_periodic(&adaptor)?`.
 pub struct Curve2dTool;
 

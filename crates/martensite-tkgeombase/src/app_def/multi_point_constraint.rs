@@ -69,7 +69,7 @@ fn check_index(member: &str, index: i32, low: i32, high: i32) -> Result<(), Fail
 }
 
 // The retained reads dereference the array handle unchecked: a crash when the tangents
-// or curvatures were never set; the port reports null-object failure.
+// or curvatures were never set; this implementation reports null-object failure.
 fn read<T: Copy + Send + Sync + 'static>(
     array: &Handle<HArray1<T>>,
     member: &str,

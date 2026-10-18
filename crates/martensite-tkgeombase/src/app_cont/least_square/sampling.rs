@@ -129,7 +129,7 @@ impl LeastSquare {
 
 // `math::GaussPoints` and `math::GaussWeights` of order `n`. Past the 61 tabulated
 // orders the retained functions read beyond their tables (undefined behavior) before
-// VBernstein rejects `n > 24`; the port raises that DimensionError first.
+// VBernstein rejects `n > 24`; this implementation raises that DimensionError first.
 fn gauss_tables(n: i32) -> Result<(Vector<'static>, Vector<'static>), Failure> {
     if n > gauss_points_max() {
         return Err(failure(

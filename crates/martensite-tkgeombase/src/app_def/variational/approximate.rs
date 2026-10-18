@@ -18,7 +18,7 @@ fn array_error(error: martensite_tkernel::ncollection::ArrayError) -> Failure {
     array_failure(error, CONTEXT)
 }
 
-/// The Convert_CompPolynomialToPoles inputs: the span of each element, the
+/// The CompPolynomialToPoles inputs: the span of each element, the
 /// coefficient count of each, the coefficients and the breakpoints.
 struct ConvertInputs {
     intervals: Array2<'static, f64>,
@@ -112,7 +112,7 @@ impl Variational {
         adjusted
     }
 
-    // The Convert_CompPolynomialToPoles inputs: one span per element on [-1, 1],
+    // The CompPolynomialToPoles inputs: one span per element on [-1, 1],
     // the element polynomials and degrees, the knots as breakpoints.
     fn convert(&mut self, the_curve: &Handle<Curve>) -> Result<(), Failure> {
         let curve: &Curve = the_curve
@@ -129,7 +129,7 @@ impl Variational {
         Ok(())
     }
 
-    // Convert_CompPolynomialToPoles of the `nb_elem` element polynomials with the
+    // CompPolynomialToPoles of the `nb_elem` element polynomials with the
     // continuity of the smoothing and MaxDegree.
     fn polynomial_converter(
         &self,

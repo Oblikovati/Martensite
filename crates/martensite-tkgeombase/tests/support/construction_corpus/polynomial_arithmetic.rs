@@ -30,7 +30,7 @@ pub fn norms_case(output: &Output, values: &[f64]) {
     let (x, k) = (r.real(), r.integer());
     real(output, mb::mzsnorm_(n, &v));
     real(output, mb::msc_(n, &v, &w));
-    real(output, mb::pow_di(x, k));
+    real(output, mb::pow__di(x, k));
     epsilons(output);
     end(output);
 }

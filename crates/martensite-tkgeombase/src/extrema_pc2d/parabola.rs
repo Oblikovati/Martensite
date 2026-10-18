@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC2d_Parabola`: the extrema on a parabola from a cubic.
+//! `extrema_pc2d::Parabola`: the extrema on a parabola from a cubic.
 use super::{CurveEvaluator, Domain1D, ExtremaResult, ExtremumResult, SearchMode, Status};
 use crate::extrema_pc_core::NeighborStep;
 use crate::extrema_pc_core::analytic::{self, AnalyticEvaluator};
@@ -9,7 +7,7 @@ use martensite_tkmath::gp::{self, Parabola2, Point2, Vector2};
 use martensite_tkmath::math_poly::{PolyResult, cubic};
 use std::convert::Infallible;
 
-/// Point-parabola extrema (`ExtremaPC2d_Parabola`): for `C(u) = (u^2 / 4F, u)` the
+/// Point-parabola extrema (`extrema_pc2d::Parabola`): for `C(u) = (u^2 / 4F, u)` the
 /// roots of `u^3 / (4F) + (2F - X) u - 2F Y = 0` (up to three extrema). A parabola of
 /// focal length below gp::Resolution() is its mirror axis, a line;
 /// `Parabola::new(parabola).perform(point, 1e-9, SearchMode::MinMax)`.
@@ -53,7 +51,7 @@ impl ParabolaCache {
 }
 
 impl Parabola {
-    /// Evaluator on the whole parabola (`ExtremaPC2d_Parabola(theParabola)`);
+    /// Evaluator on the whole parabola (`extrema_pc2d::Parabola(theParabola)`);
     /// `Parabola::new(parabola)`.
     pub fn new(parabola: Parabola2) -> Self {
         Self {
@@ -63,7 +61,7 @@ impl Parabola {
             result: ExtremaResult::default(),
         }
     }
-    /// Evaluator on `domain` (`ExtremaPC2d_Parabola(theParabola, theDomain)`);
+    /// Evaluator on `domain` (`extrema_pc2d::Parabola(theParabola, theDomain)`);
     /// `Parabola::with_domain(parabola, Domain1D::new(-1.0, 1.0))`.
     pub fn with_domain(parabola: Parabola2, domain: Domain1D) -> Self {
         Self {

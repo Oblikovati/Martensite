@@ -7,7 +7,7 @@ pub use curves::*;
 pub use surfaces::*;
 pub use transformations::*;
 
-/// gb_gce_root inside GB_TRY: status, IsDone, IsError, Value() and Operator(), or the
+/// construction result serialization inside fallible result capture: status, IsDone, IsError, Value() and Operator(), or the
 /// exception that the constructor raised.
 macro_rules! gce_root {
     ($output:expr, $print:path, $maker:expr) => {
@@ -23,7 +23,7 @@ macro_rules! gce_root {
     };
 }
 
-/// gb_gce_trsf inside GB_TRY: Value() and Operator() of a transformation maker.
+/// transformation serialization inside fallible result capture: Value() and Operator() of a transformation maker.
 macro_rules! gce_trsf {
     ($output:expr, $print:path, $maker:expr) => {
         super::super::common::attempt($output, || {

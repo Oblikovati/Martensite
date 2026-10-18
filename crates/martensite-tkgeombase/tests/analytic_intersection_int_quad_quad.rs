@@ -8,7 +8,7 @@ use martensite_tkmath::gp::{
 };
 use std::f64::consts::PI;
 
-/// The IntQuadQuad_Test fixture (SetUp).
+/// The quadric-intersection fixture (SetUp).
 #[allow(dead_code)]
 struct Fixture {
     my_sphere1: Sphere3,

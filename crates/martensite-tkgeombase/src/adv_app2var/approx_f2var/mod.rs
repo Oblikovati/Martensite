@@ -1,5 +1,3 @@
-// .
-
 //! `bivariate approximation`: the f2c routines of the two-variable approximation.
 //!
 //! [`mma2fnc_`] approximates the iso-curves of the constraint frame, [`mma2cdi_`]
@@ -9,7 +7,7 @@
 //! [`mma2fx6_`] lowers the degrees. [`mma1her_`], [`mma2roo_`], [`mma2jmx_`] and
 //! [`mmapptt_`] give the fixed bases.
 //!
-//! The retained routines take up to 26 pointers; the port groups the arrays that
+//! The retained routines take up to 26 pointers; this implementation groups the arrays that
 //! travel together (the corner constraints, the iso tables, the four symmetric
 //! square tables, the request and output of a patch or iso approximation) into
 //! structs whose fields keep the retained names and order.

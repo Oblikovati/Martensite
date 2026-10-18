@@ -1,5 +1,3 @@
-// GGenExtCC_ChangeIntervals at .
-
 //! The search intervals of GGenExtCC: the C2 intervals of both curves (C1
 //! when their product exceeds 100), the longer curve split for balance, and a
 //! closed curve of one interval split in three.
@@ -109,7 +107,7 @@ fn balanced_split<T: ExtremaCurveTool>(
     Ok(Some((indmax, nb_int_opt)))
 }
 
-/// `GGenExtCC_ChangeIntervals(theInts, theNbInts)`: `theNbInts` intervals,
+/// `interval partitioning(theInts, theNbInts)`: `theNbInts` intervals,
 /// evenly split from one interval, or by halving the longest interval (the first of
 /// equals) until the count is reached. index-range failure when fewer intervals are
 /// asked than there are.

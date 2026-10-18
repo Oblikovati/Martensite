@@ -1,5 +1,3 @@
-// .
-
 //! The offset and other curves of GGExtPC: each C2 interval (or, for a C2
 //! curve, each interval of `DeflCurvIntervals`) that meets the range is searched with
 //! a sample count proportional to its length; a sign change of `(C - P).C'` across an

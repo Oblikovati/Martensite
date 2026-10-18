@@ -25,7 +25,7 @@ fn spline_count(degree: i32, nb_knots: i32) -> i32 {
         .wrapping_mul(nb_knots.wrapping_sub(1))
 }
 
-/// `ComputeNbSamples(Adaptor3d_Curve, UMin, UMax)`: 2 per pole for a Bezier curve,
+/// `ComputeNbSamples(Adaptor3dCurve, UMin, UMax)`: 2 per pole for a Bezier curve,
 /// 2 per degree+1 per span for a B-spline (both shrunk on a range below 0.9 of the
 /// parameter span), 33 otherwise, capped at 500; `compute_nb_samples(&adaptor, 0.0, 1.0)?`.
 pub fn compute_nb_samples(
@@ -47,7 +47,7 @@ pub fn compute_nb_samples(
     Ok(count.min(500))
 }
 
-/// `ComputeNbSamples2d(Adaptor2d_Curve2d, UMin, UMax)`: the 2D rule, 17 samples for
+/// `ComputeNbSamples2d(Adaptor2dCurve2d, UMin, UMax)`: the 2D rule, 17 samples for
 /// other curves and a cap of 23; `compute_nb_samples_2d(&adaptor, 0.0, 1.0)?`.
 pub fn compute_nb_samples_2d(
     curve: &dyn Adaptor2dCurve2d,
@@ -120,7 +120,7 @@ fn bspline_surface_samples(
     }))
 }
 
-/// `ComputeNbUSamples(Adaptor3d_Surface, UMin, UMax)`: the U count of a range, capped
+/// `ComputeNbUSamples(Adaptor3dSurface, UMin, UMax)`: the U count of a range, capped
 /// at 50; `compute_nb_u_samples(&adaptor, 0.0, 1.0)?`.
 pub fn compute_nb_u_samples(
     surface: &dyn Adaptor3dSurface,
@@ -130,7 +130,7 @@ pub fn compute_nb_u_samples(
     surface_samples(surface, SampleDirection::U, Some((u_min, u_max)))
 }
 
-/// `ComputeNbVSamples(Adaptor3d_Surface, VMin, VMax)`: the V count of a range, capped
+/// `ComputeNbVSamples(Adaptor3dSurface, VMin, VMax)`: the V count of a range, capped
 /// at 50; `compute_nb_v_samples(&adaptor, 0.0, 1.0)?`.
 pub fn compute_nb_v_samples(
     surface: &dyn Adaptor3dSurface,
@@ -140,13 +140,13 @@ pub fn compute_nb_v_samples(
     surface_samples(surface, SampleDirection::V, Some((v_min, v_max)))
 }
 
-/// `ComputeNbUSamples(Adaptor3d_Surface)`: the full-range U count (no shrinking);
+/// `ComputeNbUSamples(Adaptor3dSurface)`: the full-range U count (no shrinking);
 /// `compute_nb_u_samples_full(&adaptor)?`.
 pub fn compute_nb_u_samples_full(surface: &dyn Adaptor3dSurface) -> Result<i32, Failure> {
     surface_samples(surface, SampleDirection::U, None)
 }
 
-/// `ComputeNbVSamples(Adaptor3d_Surface)`: the full-range V count (no shrinking);
+/// `ComputeNbVSamples(Adaptor3dSurface)`: the full-range V count (no shrinking);
 /// `compute_nb_v_samples_full(&adaptor)?`.
 pub fn compute_nb_v_samples_full(surface: &dyn Adaptor3dSurface) -> Result<i32, Failure> {
     surface_samples(surface, SampleDirection::V, None)

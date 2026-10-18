@@ -1,5 +1,3 @@
-// .
-
 //! `SysBase`: the Fortran system layer of the f2c kernels.
 //!
 //! The static members are memory fills, trace hooks that do nothing, and the unit

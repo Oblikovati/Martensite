@@ -1,5 +1,3 @@
-// .
-
 //! The searches of ExtCS by GenExtCS: a line restricted to the
 //! parameters facing the surface box (a single point projected by ExtPS when
 //! nothing remains), and the general case with the projections of the sharp points

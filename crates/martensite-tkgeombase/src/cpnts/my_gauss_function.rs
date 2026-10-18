@@ -12,7 +12,7 @@ use martensite_tkmath::math::Function;
 /// exception is an `Err`; `let f: RealFunction = Box::new(|x| Ok(x * x));`.
 pub type RealFunction<'a> = Box<dyn Fn(f64) -> Result<f64, Failure> + 'a>;
 
-/// `MyGaussFunction`: the `math_Function` whose value is `F(X)`;
+/// `MyGaussFunction`: the `Function` whose value is `F(X)`;
 /// `MyGaussFunction::new()`.
 ///
 /// The math integrators take functions that report success as a flag, so an `Err` of

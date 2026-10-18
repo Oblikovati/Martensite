@@ -1,9 +1,7 @@
-// the implementation at .
-
 //! `DistFunction` and `DistFunction2d`: minus the square distance from
 //! `C(u)`, `U1 <= u <= U2`, to the chord line through `C(U1)` and `C(U2)`.
 //!
-//! The two retained classes have the same body over `Lin` and `Lin2d`; the port
+//! The two retained classes have the same body over `Lin` and `Lin2d`; this implementation
 //! has one generic class over the curve type and the retained names as aliases.
 use super::TCurveTypes;
 use crate::failure_capture::FailureCapture;
@@ -26,9 +24,9 @@ pub struct TDistFunction<'a, C: TCurveTypes + ?Sized> {
     failure: FailureCapture,
 }
 
-/// `DistFunction` on an `Adaptor3d_Curve`.
+/// `DistFunction` on an `Adaptor3dCurve`.
 pub type DistFunction<'a> = TDistFunction<'a, dyn Adaptor3dCurve>;
-/// `DistFunction2d` on an `Adaptor2d_Curve2d`.
+/// `DistFunction2d` on an `Adaptor2dCurve2d`.
 pub type DistFunction2d<'a> = TDistFunction<'a, dyn Adaptor2dCurve2d>;
 
 impl<'a, C: TCurveTypes + ?Sized> TDistFunction<'a, C> {
@@ -91,16 +89,16 @@ impl<C: TCurveTypes + ?Sized> Function for TDistFunction<'_, C> {
     }
 }
 
-/// The one-variable `math_MultipleVarFunction` view of a [`TDistFunction`]
+/// The one-variable `MultipleVarFunction` view of a [`TDistFunction`]
 /// (`TCurveTypes<C>::DistFunctionMV`), used by `Pso`;
 /// `TDistFunctionMV::new(&mut function)`.
 pub struct TDistFunctionMV<'f, 'a, C: TCurveTypes + ?Sized> {
     my_max_curv_lin_dist: &'f mut TDistFunction<'a, C>,
 }
 
-/// `DistFunctionMV` on an `Adaptor3d_Curve`.
+/// `DistFunctionMV` on an `Adaptor3dCurve`.
 pub type DistFunctionMV<'f, 'a> = TDistFunctionMV<'f, 'a, dyn Adaptor3dCurve>;
-/// `DistFunction2dMV` on an `Adaptor2d_Curve2d`.
+/// `DistFunction2dMV` on an `Adaptor2dCurve2d`.
 pub type DistFunction2dMV<'f, 'a> = TDistFunctionMV<'f, 'a, dyn Adaptor2dCurve2d>;
 
 impl<'f, 'a, C: TCurveTypes + ?Sized> TDistFunctionMV<'f, 'a, C> {

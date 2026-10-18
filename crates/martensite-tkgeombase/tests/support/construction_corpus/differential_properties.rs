@@ -46,7 +46,7 @@ impl Out for Direction2 {
     }
 }
 
-/// A printable Result, or the exception type (the body of GB_TRY).
+/// A printable Result, or the exception type (the body of fallible result capture).
 fn out<T: Out>(output: &Output, value: Result<T, Failure>) {
     p::show(output, value, |value| value.out(output));
 }

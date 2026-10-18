@@ -6,7 +6,7 @@ use common::*;
 #[allow(unused_imports)]
 use prelude::*;
 
-// Test fixture for ExtremaPC_Line tests.
+// Test fixture for extrema_pc::Line tests.
 // With endpoint handling enabled, line extrema include:
 // - 1 minimum (the projection or clamped point)
 // - 0-2 maxima at endpoints (when they are local maxima)

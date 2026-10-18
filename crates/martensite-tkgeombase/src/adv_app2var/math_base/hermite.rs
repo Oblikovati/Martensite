@@ -3,7 +3,7 @@
 //!
 //! Natively `MMCMHER` is a process-global memo: `mmherm0_` fills it for one interval
 //! and `mmherm1_` recomputes it only when the interval changes. The values depend
-//! only on the interval, so the port computes them into a [`Mmcmher`] per call of
+//! only on the interval, so this implementation computes them into a [`Mmcmher`] per call of
 //! `mmherm1_`; the results and error codes are the ones the cached path returns.
 use super::linear::mmmrslwd_;
 use crate::adv_app2var::sys_base::{msrfill_, mvriraz_};

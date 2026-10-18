@@ -1,5 +1,3 @@
-// .
-
 //! `Patch`: the approximation of the function on one rectangle of the
 //! cutting grid. `Discretise` lives in `patch_discretise`, `MakeApprox` in
 //! `patch_make`, `AddConstraints` and `AddErrors` in `patch_constraints`.
@@ -214,7 +212,7 @@ impl AdvApp2VarPatch {
     }
 
     /// The Bezier poles of the patch on [-1,1]x[-1,1] (`Poles`), converted by
-    /// `Convert_GridPolynomialToPoles`; construction failure for another
+    /// `GridPolynomialToPoles`; construction failure for another
     /// subspace. `patch.poles(1, &ctx)?`.
     pub fn poles(
         &self,

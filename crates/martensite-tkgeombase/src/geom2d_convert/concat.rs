@@ -1,5 +1,3 @@
-// (ConcatG1, ConcatC1) at .
-
 //! `Geom2dConvert::ConcatG1` and `Geom2dConvert::ConcatC1`: the concatenation of an
 //! array of B-splines into as few B-splines as the G1 junctions allow.
 use super::comp_curve::CompCurveToBSplineCurve;
@@ -249,7 +247,7 @@ impl GroupPlan {
 }
 
 // The G1 flag of each junction (tabG1, indexed from 0): true from G1 on. The retained
-// loop calls Continuity twice with the same arguments (a `< GeomAbs_C0` test that
+// loop calls Continuity twice with the same arguments (a `< Shape::C0` test that
 // cannot hold, then the G1 test); the call has no side effect, so it runs once.
 fn junction_flags(
     curves: &Array1<'_, Handle<Geom2dBSplineCurve>>,

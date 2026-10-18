@@ -8,7 +8,7 @@ use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::bnd::{BoundingBox2, BoundingBox3};
 
-/// `Add3dCurve`: the box of an `Adaptor3d_Curve` added to a `Bnd_Box`.
+/// `Add3dCurve`: the box of an `Adaptor3dCurve` added to a `BoundingBox3`.
 pub struct Add3dCurve;
 
 impl Add3dCurve {
@@ -65,7 +65,7 @@ impl Add3dCurve {
 }
 
 /// `Add2dCurve`: the box of a 2D curve (adaptor or Geom2d handle) added to a
-/// `Bnd_Box2d`.
+/// `BoundingBox2`.
 pub struct Add2dCurve;
 
 // `N = 33` points of the non-Geom2dAdaptor fallback.
@@ -86,7 +86,7 @@ impl Add2dCurve {
             bounds,
         )
     }
-    /// `Add(C, U1, U2, Tol, B)`: a Geom2dAdaptor_Curve goes through its Geom2d curve;
+    /// `Add(C, U1, U2, Tol, B)`: a Geom2dAdaptorCurve goes through its Geom2d curve;
     /// any other adaptor adds 33 points `U1 + j (U2 - U1) / 32` (the parameter
     /// accumulated by addition, the last point at U2 exactly) and enlarges by `tol`;
     /// `Add2dCurve::add_adaptor_range(&adaptor, 0.0, 1.0, 0.0, &mut bounds)?`.

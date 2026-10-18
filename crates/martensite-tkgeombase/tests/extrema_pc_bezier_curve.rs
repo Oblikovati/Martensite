@@ -6,7 +6,7 @@ use common::*;
 #[allow(unused_imports)]
 use prelude::*;
 
-// Test fixture for ExtremaPC_BezierCurve tests.
+// Test fixture for extrema_pc::BezierCurve tests.
 const THE_TOL: f64 = 1.0e-6;
 // The fixture helpers: Bezier curves from their poles (and weights).
 fn bezier(thePoles: &[Point3]) -> Handle<GeomBezierCurve> {

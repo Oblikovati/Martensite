@@ -62,7 +62,7 @@ pub(crate) fn null_handle(what: &str) -> Failure {
     )
 }
 
-/// `Adaptor3d_CurveOnSurface CurOnSur; CurOnSur.Load(C2D); CurOnSur.Load(S);`.
+/// `Adaptor3dCurveOnSurface CurOnSur; CurOnSur.Load(C2D); CurOnSur.Load(S);`.
 pub(crate) fn curve_on_surface(
     c2d: &Handle<dyn Adaptor2dCurve2d>,
     surf: &Handle<dyn Adaptor3dSurface>,

@@ -1,5 +1,3 @@
-// .
-
 //! `polynomial arithmetic`: the f2c polynomial, Jacobi and linear-algebra routines.
 //!
 //! Every public static member is a free function with the retained name; the
@@ -10,7 +8,7 @@
 //! sorting, and vectors.
 //!
 //! The precision common `MMPRCSN` is the one piece of process-global state that
-//! the port keeps global: see [`mmwprcs_`].
+//! this implementation keeps global: see [`mmwprcs_`].
 #![allow(clippy::too_many_arguments)] // The f2c routines keep the Fortran argument lists.
 
 mod approx_errors;
@@ -141,16 +139,16 @@ pub fn mmveps3_(eps03: &mut f64) -> i32 {
 }
 
 /// `x` to the integer power `n` by repeated multiplication, inverted for
-/// a negative `n`; `pow_di(2.0, -1) == 0.5`.
+/// a negative `n`; `pow__di(2.0, -1) == 0.5`.
 #[allow(non_snake_case)] // Keep the established numerical entrypoint spelling.
-pub fn pow_di(x: f64, n: i32) -> f64 {
+pub fn pow__di(x: f64, n: i32) -> f64 {
     pow_by_loop(x, n)
 }
 
 /// Integer powers use truncating integer division for negative exponents.
-/// `pow_ii(2, 3) == 8`.
+/// `pow__ii(2, 3) == 8`.
 #[allow(non_snake_case)] // Keep the established numerical entrypoint spelling.
-fn pow_ii(x: i32, n: i32) -> i32 {
+fn pow__ii(x: i32, n: i32) -> i32 {
     let mut result: i32 = 1;
     for _ in 0..n.unsigned_abs() {
         result *= x;
@@ -225,9 +223,9 @@ mod tests {
 
     #[test]
     fn powers_and_factorials_follow_the_integer_loops() {
-        assert_eq!(pow_di(2.0, -1), 0.5);
-        assert_eq!(pow_ii(2, 5), 32);
-        assert_eq!(pow_ii(2, -1), 0);
+        assert_eq!(pow__di(2.0, -1), 0.5);
+        assert_eq!(pow__ii(2, 5), 32);
+        assert_eq!(pow__ii(2, -1), 0);
         let mut f: [f64; 4] = [0.0; 4];
         mfac_(&mut f, 4);
         assert_eq!(f, [1.0, 2.0, 6.0, 24.0]);

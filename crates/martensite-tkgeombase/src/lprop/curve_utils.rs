@@ -1,7 +1,7 @@
 //! `CurveUtils`: the algorithms of the curve local property classes.
 //!
 //! The retained helpers take the property object and references to its own fields;
-//! the port passes the object (a [`CurveProps`]) and reads the fields it needs after
+//! this implementation passes the object (a [`CurveProps`]) and reads the fields it needs after
 //! the object has upgraded them, through [`CurveProps::view`]. The in/out fields the
 //! helpers write (status, significant order, stored curvature) are passed as
 //! `&mut` copies that the property class stores back, which is equivalent because

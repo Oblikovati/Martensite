@@ -1,5 +1,3 @@
-// .
-
 //! `QuasiFleche`: the recursive subdivision of `QuasiUniformDeflection`.
 use crate::cpnts::PntsCurve;
 use crate::gcpnts::point_sequence::PointSequence;

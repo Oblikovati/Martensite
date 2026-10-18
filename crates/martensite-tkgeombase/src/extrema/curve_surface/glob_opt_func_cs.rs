@@ -1,5 +1,3 @@
-// .
-
 //! `GlobOptFuncCS`: `F(cu, su, sv) = |C(cu) - S(su, sv)|²` with its gradient
 //! and Hessian (natively the half gradient and half Hessian), false outside the
 //! curve and surface bounds.

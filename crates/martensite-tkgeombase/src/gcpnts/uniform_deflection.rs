@@ -12,7 +12,7 @@ use martensite_tkmath::gp::Point3;
 
 /// `UniformDeflection`; `UniformDeflection::with_curve(curve, 0.01, true)?`.
 ///
-/// `theWithControl` defaults to true natively; the port takes it explicitly.
+/// `theWithControl` defaults to true natively; this implementation takes it explicitly.
 #[derive(Default)]
 pub struct UniformDeflection {
     my_done: bool,

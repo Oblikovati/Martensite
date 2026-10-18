@@ -1,6 +1,6 @@
-//! The `Gradient_BFGS` and `BSpGradient_BFGS` template
+//! The `GradientBfgs` and `BSpGradientBfgs` template
 //! parameters of the gradients (instantiated natively as AppDef/GeomInt/BRepApprox
-//! `*_BFGSOf*` classes): math_BFGS stopping on the fit tolerances too.
+//! `*_BFGSOf*` classes): BFGS stopping on the fit tolerances too.
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::math::{Bfgs, MultipleVarFunctionWithGradient, Vector};
 
@@ -13,7 +13,7 @@ pub trait FitFunction: MultipleVarFunctionWithGradient {
     fn fit_error_2d(&self) -> f64;
 }
 
-/// `Gradient_BFGS`: `math_BFGS(NbVariables, Eps, NbIterations, Eps)`
+/// `GradientBfgs`: `BFGS(NbVariables, Eps, NbIterations, Eps)`
 /// with `IsSolutionReached` true when the minimum is stable
 /// (`2 |F - Fprev| <= 1e-10 (|F| + |Fprev|) + 1e-12`) or both fit errors are within
 /// the tolerances.
@@ -74,7 +74,7 @@ impl GradientBfgs {
         solution_reached(&self.bfgs, function, [self.tol3d, self.tol2d])
     }
 
-    /// The underlying math_BFGS; `bfgs.bfgs().is_done()`.
+    /// The underlying BFGS; `bfgs.bfgs().is_done()`.
     pub fn bfgs(&self) -> &Bfgs {
         &self.bfgs
     }

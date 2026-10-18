@@ -1,6 +1,4 @@
-// .
-
-//! The evaluator selection of ExtremaPC_Curve and the call of the selected evaluator.
+//! The evaluator selection of extrema_pc::Curve and the call of the selected evaluator.
 use super::super::adaptor_curve::CurveRef3d;
 use super::super::{
     BSplineCurve, BezierCurve, Circle, Domain1D, Ellipse, ExtremaResult, Hyperbola, Line,

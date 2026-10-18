@@ -7,7 +7,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkmath::math::recipes::{dactcl_decompose, dactcl_solve};
 use martensite_tkmath::math::{IntegerVector, Matrix, Vector};
 
-/// The retained `MinPivot` default of DACTCL_Decompose and DACTCL_Solve.
+/// The retained `MinPivot` default of matrix decomposition and matrix solution.
 const MIN_PIVOT: f64 = 1.0e-20;
 
 impl LeastSquare {

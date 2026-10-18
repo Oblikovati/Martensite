@@ -36,7 +36,7 @@ pub(crate) fn zero_based<T: Default>(count: i32) -> Result<Array1<'static, T>, F
     Array1::with_bounds(0, count - 1).map_err(|error| array_failure(error, "NCollection_Array1"))
 }
 
-/// `math_Matrix(RowLower, RowUpper, ColLower, ColUpper, InitialValue)`;
+/// `Matrix(RowLower, RowUpper, ColLower, ColUpper, InitialValue)`;
 /// `matrix(1, 3, 1, 3, 0.0)?`.
 pub(crate) fn matrix(
     rl: i32,

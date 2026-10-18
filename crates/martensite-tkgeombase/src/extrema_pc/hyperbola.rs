@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC_Hyperbola`: the extrema on a hyperbola in space.
+//! `extrema_pc::Hyperbola`: the extrema on a hyperbola in space.
 use super::conic_frame::ConicFrame;
 use super::planar::{PlanarQuery, perform_planar};
 use super::{CurveEvaluator, Domain1D, ExtremaResult, SearchMode, Status};
@@ -14,7 +12,7 @@ use martensite_tkmath::gp::{Axis3, Hyperbola3, Plane3, Point3};
 use martensite_tkmath::math_poly::{PolyResult, quartic};
 use std::convert::Infallible;
 
-/// Point-hyperbola extrema (`ExtremaPC_Hyperbola`): solved by `ExtremaPC2d_Hyperbola`
+/// Point-hyperbola extrema (`extrema_pc::Hyperbola`): solved by `extrema_pc2d::Hyperbola`
 /// in the hyperbola plane; when that fails, the quartic in `v = e^u` of the 2D evaluator
 /// for the point projected on the plane;
 /// `Hyperbola::new(hyperbola).perform(point, 1e-9, SearchMode::MinMax)?`.
@@ -34,7 +32,7 @@ fn hyperbola_value(frame: &ConicFrame, major: f64, minor: f64, u: f64) -> Point3
 }
 
 impl Hyperbola {
-    /// Evaluator on the whole hyperbola (`ExtremaPC_Hyperbola(theHyperbola)`);
+    /// Evaluator on the whole hyperbola (`extrema_pc::Hyperbola(theHyperbola)`);
     /// `Hyperbola::new(hyperbola)`.
     pub fn new(hyperbola: Hyperbola3) -> Self {
         let (major, minor) = (hyperbola.major_radius(), hyperbola.minor_radius());
@@ -48,7 +46,7 @@ impl Hyperbola {
             r2_plus_r2_over_4: (major * major + minor * minor) / 4.0,
         }
     }
-    /// Evaluator on `domain` (`ExtremaPC_Hyperbola(theHyperbola, theDomain)`);
+    /// Evaluator on `domain` (`extrema_pc::Hyperbola(theHyperbola, theDomain)`);
     /// `Hyperbola::with_domain(hyperbola, Domain1D::new(-1.0, 1.0))`.
     pub fn with_domain(hyperbola: Hyperbola3, domain: Domain1D) -> Self {
         Self {
@@ -96,7 +94,7 @@ impl Hyperbola {
     ) -> Result<&ExtremaResult, Failure> {
         analytic::perform_with_endpoints(self, point, tol, mode)
     }
-    // ExtremaPC2d_Hyperbola in the hyperbola plane.
+    // extrema_pc2d::Hyperbola in the hyperbola plane.
     fn perform_in_plane(
         &mut self,
         point: Point3,

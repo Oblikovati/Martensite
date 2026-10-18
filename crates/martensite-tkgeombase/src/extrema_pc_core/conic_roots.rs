@@ -1,5 +1,4 @@
 // the implementation, the implementation and the implementation at
-// .
 
 //! The extrema of the hyperbola and parabola evaluators from the real roots of their
 //! stationary polynomial. The polynomial has a positive leading coefficient, so the

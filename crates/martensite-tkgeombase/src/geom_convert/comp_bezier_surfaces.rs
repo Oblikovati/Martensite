@@ -46,7 +46,7 @@ impl CompBezierSurfacesToBSplineSurface {
     /// RemoveKnots = true)`).
     ///
     /// Natively the V reduction loop tests the last U multiplicity (`multU`) instead
-    /// of `multV`, and the port does the same: when that value exceeds the lower
+    /// of `multV`, and this implementation does the same: when that value exceeds the lower
     /// limit, V knots are removed until one removal fails;
     /// `CompBezierSurfacesToBSplineSurface::with_tolerance(&patches, 1e-7, true)?`.
     pub fn with_tolerance(
@@ -88,7 +88,7 @@ impl CompBezierSurfacesToBSplineSurface {
     /// when a removal fails within `tolerance`. construction failure for a
     /// continuity above C3 or when `Degree - k <= 0` with inner knots
     /// (`CompBezierSurfacesToBSplineSurface(Beziers, UKnots, VKnots,
-    /// UContinuity = GeomAbs_C0, VContinuity = GeomAbs_C0, Tolerance = 1e-4)`);
+    /// UContinuity = Shape::C0, VContinuity = Shape::C0, Tolerance = 1e-4)`);
     /// `CompBezierSurfacesToBSplineSurface::with_knots(&patches, &uk, &vk, (Shape::C1, Shape::C1), 1e-4)?`.
     pub fn with_knots(
         beziers: &Array2<'_, Handle<GeomBezierSurface>>,
@@ -261,7 +261,7 @@ fn index_knots(count: i32) -> Result<Array1<'static, f64>, Failure> {
     Ok(knots)
 }
 
-// GeomAbs_C0 .. C3 as 0 .. 3; construction failure otherwise.
+// Shape::C0 .. C3 as 0 .. 3; construction failure otherwise.
 fn continuity_rank(shape: Shape, which: &str) -> Result<i32, Failure> {
     match shape {
         Shape::C0 => Ok(0),

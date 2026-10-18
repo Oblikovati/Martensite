@@ -4,7 +4,7 @@ use super::{MyGaussFunction, RealFunction};
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::math::{Function, FunctionWithDerivative, GaussSingleIntegration};
 
-/// `MyRootFunction`: the `math_FunctionWithDerivative` solved by
+/// `MyRootFunction`: the `FunctionWithDerivative` solved by
 /// `AbscissaPoint`; `MyRootFunction::new()`.
 ///
 /// A failure of the integrand is kept by the inner [`MyGaussFunction`] and read back

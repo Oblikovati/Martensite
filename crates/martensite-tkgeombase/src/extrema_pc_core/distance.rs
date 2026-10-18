@@ -8,8 +8,8 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp;
 use martensite_tkmath::math::{Function, FunctionWithDerivative};
 
-/// The point-curve distance function (`ExtremaPC2d_DistanceFunction`,
-/// `ExtremaPC_DistanceFunction`), borrowing the curve adaptor as natively.
+/// The point-curve distance function (`extrema_pc2d::DistanceFunction`,
+/// `extrema_pc::DistanceFunction`), borrowing the curve adaptor as natively.
 ///
 /// A retained evaluation always returns true; an adaptor exception becomes the `Err`
 /// of the Rust members. At a singular parameter (`|C'| <= gp::Resolution()`) the

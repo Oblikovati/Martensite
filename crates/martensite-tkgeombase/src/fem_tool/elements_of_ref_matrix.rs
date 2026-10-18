@@ -106,7 +106,7 @@ impl FunctionSet for ElementsOfRefMatrix {
         self.nb_equations()
     }
 
-    // math_FunctionSet::Value has no error channel: a short F (the retained
+    // FunctionSet::Value has no error channel: a short F (the retained
     // index-range failure) reports a failed evaluation.
     fn value(&mut self, point: &Vector<'_>, residual: &mut Vector<'_>) -> bool {
         self.evaluate(point, residual).unwrap_or(false)

@@ -1,5 +1,5 @@
 //! `TCurveTypes`: the types that the GCPnts templates take from their curve
-//! parameter, `Adaptor3d_Curve` or `Adaptor2d_Curve2d`.
+//! parameter, `Adaptor3dCurve` or `Adaptor2dCurve2d`.
 use crate::cpnts::PntsCurve;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;

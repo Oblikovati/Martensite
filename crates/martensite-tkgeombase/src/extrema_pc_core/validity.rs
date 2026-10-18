@@ -1,5 +1,3 @@
-// .
-
 //! The tolerances, sampling constants and input checks that the implementation and
 //! the implementation both declare with the same values (the neighbor step ratio, which
 //! differs, stays in each package).

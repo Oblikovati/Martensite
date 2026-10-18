@@ -14,7 +14,7 @@ use perform::{AbscissaRun, abs_type, perform, perform_length_parametrized};
 /// `UniformAbscissa::with_abscissa(curve, 0.5, -1.0)?`.
 ///
 /// The tolerance arguments default to -1 natively (Precision::Confusion() is used when
-/// larger); the port takes them explicitly.
+/// larger); this implementation takes them explicitly.
 #[derive(Default)]
 pub struct UniformAbscissa {
     my_done: bool,

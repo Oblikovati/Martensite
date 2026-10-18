@@ -105,7 +105,7 @@ fn detect(curve: &Handle<dyn GeomCurve>) -> Option<(CurveType, Evaluator)> {
 }
 
 // The evaluator of an adaptor kind: analytic kinds are rebuilt as Geom objects from the
-// adaptor's gp value; an offset needs a GeomAdaptor_Curve on a OffsetCurve.
+// adaptor's gp value; an offset needs a GeomAdaptorCurve on a OffsetCurve.
 fn from_adaptor_kind(
     curve: &dyn Adaptor3dCurve,
     kind: CurveType,
@@ -133,7 +133,7 @@ fn from_adaptor_kind(
     }))
 }
 
-// `dynamic_cast<const GeomAdaptor_Curve*>` then `occ::down_cast<OffsetCurve>`.
+// `dynamic_cast<const GeomAdaptorCurve*>` then `occ::down_cast<OffsetCurve>`.
 fn adaptor_offset(curve: &dyn Adaptor3dCurve) -> Option<Evaluator> {
     let geom_adaptor = GeomAdaptorCurve::project_from(curve)?;
     let offset: Handle<GeomOffsetCurve> = geom_adaptor.curve().cast();
@@ -141,8 +141,8 @@ fn adaptor_offset(curve: &dyn Adaptor3dCurve) -> Option<Evaluator> {
 }
 
 impl<'a> Curve<'a> {
-    /// `Curve(const Adaptor3d_Curve&)`: the adaptor's `GetType` selects the
-    /// evaluator; an offset adaptor that is not a GeomAdaptor_Curve on a OffsetCurve,
+    /// `Curve(const Adaptor3dCurve&)`: the adaptor's `GetType` selects the
+    /// evaluator; an offset adaptor that is not a GeomAdaptorCurve on a OffsetCurve,
     /// and every other kind, falls back to OtherCurve with the type OtherCurve;
     /// `Curve::from_adaptor(&adaptor)?`.
     pub fn from_adaptor(curve: &'a dyn Adaptor3dCurve) -> Result<Self, Failure> {
@@ -269,7 +269,7 @@ impl<'a> Curve<'a> {
 impl Curve<'static> {
     /// `Curve(const occ::handle<Curve>&)`: the down_cast chain on the
     /// curve, or on the basis of a TrimmedCurve (whose adaptor then gives the range
-    /// of `Box(Tol)`); other kinds use OtherCurve on a GeomAdaptor_Curve;
+    /// of `Box(Tol)`); other kinds use OtherCurve on a GeomAdaptorCurve;
     /// `Curve::from_curve(&handle)?`.
     pub fn from_curve(curve: &Handle<dyn GeomCurve>) -> Result<Self, Failure> {
         let mut detection: Handle<dyn GeomCurve> = curve.clone();

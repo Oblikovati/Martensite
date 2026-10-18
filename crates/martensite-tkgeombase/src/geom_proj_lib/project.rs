@@ -1,5 +1,4 @@
 // (the implementation) at
-// .
 
 //! The 3D projections of GeomProjLib: the normal projection on a surface and the
 //! projection on a plane along a direction.

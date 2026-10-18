@@ -1,7 +1,5 @@
 // `TangentialDeflection::PerformCurve` of
 
-// .
-
 //! `PerformCurve`: the adaptive march of `TangentialDeflection` on a general
 //! curve, then the refinement of its spans.
 mod march;

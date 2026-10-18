@@ -1,5 +1,4 @@
 // of the implementation and the implementation at
-// .
 
 //! The classification of the isolated roots, the C2 junctions and the periodic seam
 //! from the stationarity sign on both sides of each candidate.

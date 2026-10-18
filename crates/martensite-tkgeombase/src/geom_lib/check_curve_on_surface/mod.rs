@@ -1,5 +1,3 @@
-// (the class and CheckCurveOnSurface_Local) at .
-
 //! `CheckCurveOnSurface`: the maximum distance between a 3D curve and a
 //! curve on surface at the same parameters.
 mod min_computing;
@@ -21,7 +19,7 @@ use target_func::TargetFunc;
 ///
 /// Natively the parallel mode spreads the sub-intervals over threads on shallow
 /// copies of the curves; the sub-interval results do not depend on the order, and
-/// the port computes them in sequence in both modes.
+/// this implementation computes them in sequence in both modes.
 ///
 /// `let mut check = CheckCurveOnSurface::with_curve(&c3d, 1e-9); check.perform(&cos);`
 #[derive(Clone)]

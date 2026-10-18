@@ -209,10 +209,9 @@ pub struct ProfileSystem<'a> {
 /// problem; returns 0. The sixteen retained arguments are the fields of
 /// [`ProfileSystem`], in the retained order.
 ///
-/// Natively `mmresol_` dereferences a null pointer when a scratch vector fits in
-/// its 100-entry threshold (`macrar8_` then allocates nothing and the f2c code
-/// dropped the Fortran local arrays); the port always uses owned scratch vectors,
-/// which is what the Fortran declared. `mmresol_(&system, &mut sol, &mut ier)`.
+/// Owned scratch vectors provide every working slot for small and large systems,
+/// including systems within the 100-entry threshold.
+/// `mmresol_(&system, &mut sol, &mut ier)`.
 pub fn mmresol_(system: &ProfileSystem<'_>, vecsol: &mut [f64], iercod: &mut i32) -> i32 {
     *iercod = match resolve(system, vecsol) {
         Ok(()) => 0,

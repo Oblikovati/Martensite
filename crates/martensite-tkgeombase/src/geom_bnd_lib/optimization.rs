@@ -17,7 +17,7 @@ use martensite_tkmath::math_opt::{PSOConfig, brent, powell_with_directions, pso}
 use martensite_tkmath::math_utils::{Config, ScalarResult, Status, VectorResult};
 
 /// A curve adaptor whose points expose coordinate `index` (1-based) at a parameter:
-/// `Adaptor3d_Curve` (X, Y, Z) and `Adaptor2d_Curve2d` (X, Y).
+/// `Adaptor3dCurve` (X, Y, Z) and `Adaptor2dCurve2d` (X, Y).
 pub trait CurveCoordinate {
     /// `Value(U).Coord(index)`; `curve.coordinate(0.5, 1)?`.
     fn coordinate(&self, u: f64, index: i32) -> Result<f64, Failure>;

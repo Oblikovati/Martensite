@@ -1,9 +1,8 @@
 // the implementation repeat (Clear, Add, the indexed getter, Index, Dump, Write,
-// Read) at .
 
 //! The indexed table of geometry handles behind the three GeomTools sets. The retained
 //! classes differ only in their labels, their element type and whether `Add` and
-//! `Index` accept a null handle, so the port writes the members once.
+//! `Index` accept a null handle, so this implementation writes the members once.
 use super::console::ConsoleOutput;
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
 use martensite_tkernel::ncollection::{HashPolicy, IndexedMap};
@@ -21,7 +20,7 @@ pub(crate) struct TableLabels {
     pub(crate) dump_plural: &'static [u8],
     /// The tag `Write` puts before the count and `Read` expects (`Curves`).
     pub(crate) tag: &'static [u8],
-    /// The Message_ProgressScope name of Write and Read (`3D Curves`).
+    /// The ProgressScope name of Write and Read (`3D Curves`).
     pub(crate) scope: &'static str,
     /// The console line of a Read that finds another tag (`Not a Curve table`).
     pub(crate) not_a_table: &'static [u8],

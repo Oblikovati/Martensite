@@ -1,6 +1,4 @@
-// torus cases, at .
-
-//! `Function_SetUVBounds`: the parameter window of the projected curve. The curve
+//! `parameter-window selection`: the parameter window of the projected curve. The curve
 //! is sampled, the parameter angle unwrapped across the seam, and the window is
 //! either the natural range or a period centred on the sampled range.
 use super::function::{Projection, UvBounds, compute_step};
@@ -143,7 +141,7 @@ impl Samples {
     }
 }
 
-/// `Function_SetUVBounds`: the window of a curve on an elementary surface (no seam
+/// `parameter-window selection`: the window of a curve on an elementary surface (no seam
 /// for a plane or any other surface); `set_uv_bounds(&projection)?`.
 pub(super) fn set_uv_bounds(projection: &Projection<'_>) -> Result<UvBounds, Failure> {
     let samples: Samples = Samples::of(projection)?;

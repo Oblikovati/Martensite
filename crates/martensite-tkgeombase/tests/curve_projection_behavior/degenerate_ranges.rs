@@ -1,6 +1,6 @@
 //! Rust deviation: ComputeApprox refuses a range that the UV-bounds scan cannot
 //! advance over (a zero-length range, or one shorter than the rounding step at its
-//! ends), where the retained `Function_SetUVBounds` loop never ends
+//! ends), where the retained `parameter-window selection` loop never ends
 //! (docs/tkgeombase-progress.md, Rust deviations).
 use super::support::{cone, cylinder, dir, flat_patch_within, line, ranged, sphere, torus};
 use martensite_tkernel::standard::{Failure, Handle};

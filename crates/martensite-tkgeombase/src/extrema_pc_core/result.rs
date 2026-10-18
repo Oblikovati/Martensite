@@ -1,5 +1,3 @@
-// .
-
 //! The result types of the point-curve extrema packages, generic over the point type:
 //! `ExtremaPC2d::Result` is `PcResult<Point2>` and `ExtremaPC::Result` is
 //! `PcResult<Point3>`. The two retained declarations are identical apart from the point.

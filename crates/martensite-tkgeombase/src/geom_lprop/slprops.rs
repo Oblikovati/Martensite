@@ -46,7 +46,7 @@ pub struct SLPropsBase<S, A = DirectAccess> {
 /// `SLProps`: the surface local properties of a `Surface` handle.
 pub type SLProps = SLPropsBase<Handle<dyn GeomSurface>>;
 
-// The retained `OutOfRange_Raise_if(N < 0 || N > 2, ...)` of the constructors.
+// Constructor derivative orders must lie in the inclusive range 0..=2.
 fn check_level(n: i32) -> Result<(), Failure> {
     if !(0..=2).contains(&n) {
         return Err(Failure::out_of_range(&format!(

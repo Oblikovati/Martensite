@@ -4,7 +4,7 @@ use super::derivatives::mmdrvcb_;
 use super::evaluation::mmpocrb_;
 use super::hermite::mmherm1_;
 use super::jacobi::mmjacan_;
-use super::{pow_di, pow_ii};
+use super::{pow__di, pow__ii};
 use crate::adv_app2var::data::getminombr;
 use crate::adv_app2var::f2c::{F2cArray, F2cArrayMut};
 use crate::adv_app2var::sys_base::mvriraz_;
@@ -56,7 +56,7 @@ pub fn mmhjcan_(
             mvriraz_(ncoeff, &mut taux1);
             for k in 1..=aux2 {
                 for i in 1..=aux1 {
-                    let mfact: f64 = pow_di(ctenor, i - 1);
+                    let mfact: f64 = pow__di(ctenor, i - 1);
                     taux1[(k - 1) as usize] += (old[d + (i + e * dim2) * dim1]
                         * hermit[(k + (i + 2) * 6 - 19) as usize]
                         + old[d + (i + aux1 + e * dim2) * dim1]
@@ -283,7 +283,7 @@ fn mmpojac_(
             aux2 = aux2 * f64::from(kk1 + iordre + jj) / f64::from(kk1 + jj);
         }
         let scale: f64 = f64::from(kk1) * 2. + f64::from(iordre << 1) + 1.;
-        tnorm[(ii - 1) as usize] = (aux2 * scale / f64::from(pow_ii(2, (iordre << 1) + 1))).sqrt();
+        tnorm[(ii - 1) as usize] = (aux2 * scale / f64::from(pow__ii(2, (iordre << 1) + 1))).sqrt();
     }
     let mut v = F2cArrayMut::new(valjac, 1);
     jacobi_start(&mut v, tparam, iordre, dim1, nderiv);

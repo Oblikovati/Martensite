@@ -33,7 +33,7 @@ fn extrema_pc2d_grid_evaluator_uniform_params_cover_domain_exactly() {
 
 #[test]
 fn extrema_pc2d_grid_evaluator_uniform_params_reject_invalid_sample_count() {
-    // The pinned build raises range failure (No_Exception is not defined).
+    // Checked evaluation raises a range failure for this out-of-bounds input.
     let aFailure = GridEvaluator::build_uniform_params(0.0, 1.0, 1).unwrap_err();
     assert_eq!(aFailure.exception_type(), "Standard_RangeError");
 }

@@ -1,5 +1,5 @@
 //! `GGExtPC`: every extremum of the distance between a point and a curve on
-//! a parameter range: the closed form for the conics, math_FunctionRoots on the
+//! a parameter range: the closed form for the conics, FunctionRoots on the
 //! Bezier range, on selected B-spline spans and on the C2 (or deflection) intervals
 //! of the other curves, and the range ends that touch the point.
 mod bspline;

@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC_Planar`: solving a planar 3D curve with the 2D evaluator in its plane.
+//! `extrema_pc::Planar`: solving a planar 3D curve with the 2D evaluator in its plane.
 //! The projections keep the curve parameterization, so the 2D parameters are the 3D
 //! ones and only the points and distances are re-evaluated in 3D.
 use super::{Domain1D, ExtremaResult, ExtremumResult, SearchMode, Status};

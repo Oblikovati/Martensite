@@ -1,5 +1,4 @@
 // the implementation and the implementation at
-// .
 
 //! The root isolation of the grid evaluator: every partition cell is solved with
 //! `MathRoot::FindAllRootsWithDerivative` on the curve trimmed to the cell.

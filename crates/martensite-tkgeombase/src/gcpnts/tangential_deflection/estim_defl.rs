@@ -1,5 +1,3 @@
-// .
-
 //! The maximal deflection of a span: a Brent search of the chord distance, retried
 //! around a particle swarm estimate.
 use super::TangentialDeflection;

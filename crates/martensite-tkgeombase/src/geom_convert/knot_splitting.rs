@@ -1,5 +1,3 @@
-// and the implementation at .
-
 //! `BSplineCurveKnotSplitting` and
 //! `BSplineSurfaceKnotSplitting`: the knots where a B-spline must be
 //! split to get arcs or patches of a required continuity.
@@ -75,7 +73,7 @@ impl BSplineCurveKnotSplitting {
 /// Natively, when `VContinuityRange` is positive and the surface is already C
 /// `VContinuityRange` in V, the constructor stores the V bounds into the U table
 /// (`usplitIndexes`) and leaves the V table null, so every V accessor dereferences a
-/// null handle; the port keeps both effects: the U table holds the two V bound
+/// null handle; this implementation keeps both effects: the U table holds the two V bound
 /// indices and the V accessors return null-object failure.
 ///
 /// `let split = BSplineSurfaceKnotSplitting::new(&surface, 1, 1)?;`
@@ -236,7 +234,7 @@ fn copy_indexes(table: &Array1<'static, i32>, target: &mut Array1<'_, i32>) -> R
     Ok(())
 }
 
-// RangeError_Raise_if(Index < 1 || Index > Length).
+// Require a one-based index within the knot-splitting result length.
 fn indexed_value(table: &Array1<'static, i32>, index: i32, member: &str) -> Result<i32, Failure> {
     if index < 1 || index > table.length() {
         return Err(failure(

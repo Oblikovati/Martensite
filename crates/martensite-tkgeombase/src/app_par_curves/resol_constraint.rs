@@ -19,9 +19,9 @@ use martensite_tkmath::math::{Matrix, Uzawa, Vector};
 /// line is read by the constructor and `ConstraintDerivative` only, so the struct is
 /// not generic.
 ///
-/// The retained header declares `Error()` without defining it (a link error if
-/// called); the port has no counterpart. Without pass points the constructor stops
-/// with IsDone true and leaves CTCinv and Vardua uninitialized natively (0 here).
+/// Use completion status to inspect the fit; there is no separate error accessor.
+/// Without pass points construction completes immediately with zero-initialized
+/// inverse-constraint and dual-variable storage.
 ///
 /// ```
 /// use martensite_tkgeombase::app_def::MultiLine;

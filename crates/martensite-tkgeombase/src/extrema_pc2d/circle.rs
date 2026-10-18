@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC2d_Circle`: the nearest and farthest points of a circle.
+//! `extrema_pc2d::Circle`: the nearest and farthest points of a circle.
 use super::{
     CurveEvaluator, Domain1D, ExtremaResult, ExtremumResult, SearchMode, Status,
     THE_PARAM_TOLERANCE, found_status, is_closed_periodic_domain,
@@ -14,7 +12,7 @@ use martensite_tkmath::math_root::utils::compute_periodic_root_count;
 use std::convert::Infallible;
 use std::f64::consts::PI;
 
-/// Point-circle extrema (`ExtremaPC2d_Circle`): the angle of the center-to-point vector
+/// Point-circle extrema (`extrema_pc2d::Circle`): the angle of the center-to-point vector
 /// is the minimum and the opposite angle the maximum. A point at the center (or a
 /// circle of zero radius) has infinitely many solutions. With a domain each solution
 /// is lifted into it and repeated once per period it contains;
@@ -26,7 +24,7 @@ pub struct Circle {
 }
 
 impl Circle {
-    /// Evaluator on the full circle (`ExtremaPC2d_Circle(theCircle)`); `Circle::new(circle)`.
+    /// Evaluator on the full circle (`extrema_pc2d::Circle(theCircle)`); `Circle::new(circle)`.
     pub fn new(circle: Circle2) -> Self {
         Self {
             circle,
@@ -34,7 +32,7 @@ impl Circle {
             result: ExtremaResult::default(),
         }
     }
-    /// Evaluator on `domain` (`ExtremaPC2d_Circle(theCircle, theDomain)`);
+    /// Evaluator on `domain` (`extrema_pc2d::Circle(theCircle, theDomain)`);
     /// `Circle::with_domain(circle, Domain1D::new(0.0, PI))`.
     pub fn with_domain(circle: Circle2, domain: Domain1D) -> Self {
         Self {

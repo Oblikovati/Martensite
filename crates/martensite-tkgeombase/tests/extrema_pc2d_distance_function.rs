@@ -1,7 +1,7 @@
 //! Extrema pc2d distance function contracts.
 //!
 //! A retained member returns true and writes its outputs; the Rust one returns them
-//! (`ASSERT_TRUE(f.Values(u, v, d))` is `f.values(u).unwrap()`).
+//! (`f.values(u).unwrap()` asserts successful evaluation).
 #![allow(non_snake_case)]
 mod common;
 use common::{EXPECT_NEAR, dir2};

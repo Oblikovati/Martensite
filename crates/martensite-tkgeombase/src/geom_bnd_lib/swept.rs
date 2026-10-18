@@ -1,5 +1,4 @@
 // and the implementation (addRevolutionCircle, buildRevolutionBox) at
-// .
 
 //! Sweeping a basis curve box: along a direction (extrusion) or around an axis
 //! (revolution).

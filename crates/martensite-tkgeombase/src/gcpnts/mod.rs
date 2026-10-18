@@ -2,7 +2,7 @@
 //! (uniform, quasi-uniform, tangential) and the curve length.
 //!
 //! The retained classes implement each member once as a template over
-//! `Adaptor3d_Curve` and `Adaptor2d_Curve2d` (`TCurveTypes`); the port has one
+//! `Adaptor3dCurve` and `Adaptor2dCurve2d` (`TCurveTypes`); this implementation has one
 //! generic member over [`TCurveTypes`], implemented for both adaptor traits and the
 //! GeomAdaptor and Geom2dAdaptor curves. 2D points are returned in the plane Z = 0, as
 //! natively. Every retained exception, including the ones the adaptors raise, is `Err`.

@@ -1,5 +1,3 @@
-// .
-
 //! `GlobOptFuncConicS`: `F(u, v)`, the square distance from `S(u, v)` to a
 //! trimmed conic (its projection when inside the trimming, and its end points),
 //! false outside the surface bounds or for another curve.

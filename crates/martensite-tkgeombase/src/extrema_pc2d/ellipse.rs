@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC2d_Ellipse`: the stationary points of the distance to an ellipse from a
+//! `extrema_pc2d::Ellipse`: the stationary points of the distance to an ellipse from a
 //! trigonometric equation.
 use super::circle::lift;
 use super::{
@@ -17,7 +15,7 @@ use martensite_tkmath::math_root::utils::compute_periodic_root_count;
 use std::convert::Infallible;
 use std::f64::consts::PI;
 
-/// Point-ellipse extrema (`ExtremaPC2d_Ellipse`): the roots of
+/// Point-ellipse extrema (`extrema_pc2d::Ellipse`): the roots of
 /// `(B^2 - A^2) cos(u) sin(u) - B Y cos(u) + A X sin(u) = 0` in the ellipse frame,
 /// classified by the sign of that function between neighboring roots (up to four
 /// extrema). A point at the center of a circular ellipse has infinitely many solutions;
@@ -47,7 +45,7 @@ impl EllipseFrame {
 }
 
 impl Ellipse {
-    /// Evaluator on the full ellipse (`ExtremaPC2d_Ellipse(theEllipse)`); `Ellipse::new(ellipse)`.
+    /// Evaluator on the full ellipse (`extrema_pc2d::Ellipse(theEllipse)`); `Ellipse::new(ellipse)`.
     pub fn new(ellipse: Ellipse2) -> Self {
         Self {
             ellipse,
@@ -55,7 +53,7 @@ impl Ellipse {
             result: ExtremaResult::default(),
         }
     }
-    /// Evaluator on `domain` (`ExtremaPC2d_Ellipse(theEllipse, theDomain)`);
+    /// Evaluator on `domain` (`extrema_pc2d::Ellipse(theEllipse, theDomain)`);
     /// `Ellipse::with_domain(ellipse, Domain1D::new(0.0, PI))`.
     pub fn with_domain(ellipse: Ellipse2, domain: Domain1D) -> Self {
         Self {

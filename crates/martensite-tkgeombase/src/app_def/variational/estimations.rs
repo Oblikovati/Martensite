@@ -8,7 +8,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkmath::math::Vector;
 
 /// A `Vector(1, Dimension)` as plain values (index `k` is `V(k + 1)`); the
-/// retained estimation vectors start uninitialized, the port's at 0.
+/// retained estimation vectors start uninitialized, this implementation's at 0.
 type EstVector = Vec<f64>;
 
 // Vector::Norm2 over the values (its four-accumulator sum).

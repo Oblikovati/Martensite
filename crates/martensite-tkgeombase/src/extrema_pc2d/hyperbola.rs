@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC2d_Hyperbola`: the extrema on a hyperbola from a quartic in `v = e^u`.
+//! `extrema_pc2d::Hyperbola`: the extrema on a hyperbola from a quartic in `v = e^u`.
 use super::{CurveEvaluator, Domain1D, ExtremaResult, SearchMode, Status};
 use crate::extrema_pc_core::NeighborStep;
 use crate::extrema_pc_core::analytic::{self, AnalyticEvaluator};
@@ -9,7 +7,7 @@ use martensite_tkmath::gp::{Hyperbola2, Point2};
 use martensite_tkmath::math_poly::{PolyResult, quartic};
 use std::convert::Infallible;
 
-/// Point-hyperbola extrema (`ExtremaPC2d_Hyperbola`): for `C(u) = (R cosh u, r sinh u)`
+/// Point-hyperbola extrema (`extrema_pc2d::Hyperbola`): for `C(u) = (R cosh u, r sinh u)`
 /// the substitution `v = e^u` gives
 /// `(R^2 + r^2)/4 v^4 - (X R + Y r)/2 v^3 + (X R - Y r)/2 v - (R^2 + r^2)/4 = 0`; each
 /// positive root of odd multiplicity is an extremum (up to four);
@@ -50,7 +48,7 @@ impl HyperbolaCache {
 }
 
 impl Hyperbola {
-    /// Evaluator on the whole hyperbola (`ExtremaPC2d_Hyperbola(theHyperbola)`);
+    /// Evaluator on the whole hyperbola (`extrema_pc2d::Hyperbola(theHyperbola)`);
     /// `Hyperbola::new(hyperbola)`.
     pub fn new(hyperbola: Hyperbola2) -> Self {
         Self {
@@ -60,7 +58,7 @@ impl Hyperbola {
             result: ExtremaResult::default(),
         }
     }
-    /// Evaluator on `domain` (`ExtremaPC2d_Hyperbola(theHyperbola, theDomain)`);
+    /// Evaluator on `domain` (`extrema_pc2d::Hyperbola(theHyperbola, theDomain)`);
     /// `Hyperbola::with_domain(hyperbola, Domain1D::new(-1.0, 1.0))`.
     pub fn with_domain(hyperbola: Hyperbola2, domain: Domain1D) -> Self {
         Self {

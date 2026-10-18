@@ -95,7 +95,7 @@ impl ApproxCurve {
     }
 
     // Approximate: one 3D subspace of tolerance tol3d on the curve range, cut with
-    // AdvApprox_PrefAndRec at the C2 (recommended) and C3 (preferred) breaks.
+    // PrefAndRec at the C2 (recommended) and C3 (preferred) breaks.
     fn approximate(
         &mut self,
         curve: &Handle<dyn Adaptor3dCurve>,

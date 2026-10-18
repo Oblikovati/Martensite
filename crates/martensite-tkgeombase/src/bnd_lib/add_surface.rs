@@ -5,7 +5,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkmath::bnd::BoundingBox3;
 
-/// `AddSurface`: the box of an `Adaptor3d_Surface` added to a `Bnd_Box`.
+/// `AddSurface`: the box of an `Adaptor3dSurface` added to a `BoundingBox3`.
 pub struct AddSurface;
 
 // `[FirstU, LastU, FirstV, LastV]` of the adaptor.

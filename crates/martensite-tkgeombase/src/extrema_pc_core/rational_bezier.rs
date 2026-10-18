@@ -1,5 +1,3 @@
-// .
-
 //! The certification of a constant distance from a rational 2D Bezier curve: the
 //! square distance is `|Q(t)|^2 / w(t)^2` with the homogeneous polynomials `Q` and `w`,
 //! so it is constant exactly when the Bernstein coefficients of `|Q|^2` are a multiple

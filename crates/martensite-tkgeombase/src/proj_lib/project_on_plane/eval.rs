@@ -36,7 +36,7 @@ impl Oblique {
         projected
     }
 
-    /// The derivative part of `OnPlane_D1`..`OnPlane_DN`: `V - ((V . Z) / (D . Z)) D`.
+    /// The derivative part of `first projected derivative`..`nth projected derivative`: `V - ((V . Z) / (D . Z)) D`.
     pub(super) fn project_derivative(&self, vector: Vector3) -> Vector3 {
         let alpha: f64 = self.vector_alpha(vector);
         Vector3::from(*vector.xyz() - scaled(self.direction.xyz(), alpha))
@@ -51,12 +51,12 @@ impl Oblique {
         Ok(vector - Vector3::from(self.direction) * ratio)
     }
 
-    /// `OnPlane_Value(U, C, Pl, D)`; `oblique.value(curve, 0.5)?`.
+    /// `projected value(U, C, Pl, D)`; `oblique.value(curve, 0.5)?`.
     pub(super) fn value(&self, curve: &dyn Adaptor3dCurve, u: f64) -> Result<Point3, Failure> {
         Ok(self.project_point(curve.value(u)?))
     }
 
-    /// `OnPlane_D1(U, P, V, C, Pl, D)`; `oblique.d1(curve, 0.5)?`.
+    /// `first projected derivative(U, P, V, C, Pl, D)`; `oblique.d1(curve, 0.5)?`.
     pub(super) fn d1(
         &self,
         curve: &dyn Adaptor3dCurve,
@@ -66,7 +66,7 @@ impl Oblique {
         Ok((self.project_point(point), self.project_derivative(vector)))
     }
 
-    /// `OnPlane_D2(U, P, V1, V2, C, Pl, D)`; `oblique.d2(curve, 0.5)?`.
+    /// `second projected derivative(U, P, V1, V2, C, Pl, D)`; `oblique.d2(curve, 0.5)?`.
     pub(super) fn d2(
         &self,
         curve: &dyn Adaptor3dCurve,
@@ -81,7 +81,7 @@ impl Oblique {
         ))
     }
 
-    /// `OnPlane_D3(U, P, V1, V2, V3, C, Pl, D)`; `oblique.d3(curve, 0.5)?`.
+    /// `third projected derivative(U, P, V1, V2, V3, C, Pl, D)`; `oblique.d3(curve, 0.5)?`.
     pub(super) fn d3(
         &self,
         curve: &dyn Adaptor3dCurve,
@@ -93,7 +93,7 @@ impl Oblique {
         Ok((point, v1, v2, self.project_derivative(v3)))
     }
 
-    /// `OnPlane_DN(U, N, C, Pl, D)`; `oblique.dn(curve, 0.5, 2)?`.
+    /// `nth projected derivative(U, N, C, Pl, D)`; `oblique.dn(curve, 0.5, 2)?`.
     pub(super) fn dn(
         &self,
         curve: &dyn Adaptor3dCurve,

@@ -1,5 +1,3 @@
-// .
-
 //! The global searches over `(t, u, v)` (a general curve and surface) and over `t`
 //! (a curve and a quadric): the best samples seed a particle swarm.
 use super::super::glob_opt_func_c_quadric::GlobOptFuncCQuadric;

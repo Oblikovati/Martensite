@@ -1,6 +1,5 @@
 // `Sequence<Point3> myPoints` pair of UniformDeflection,
 // QuasiUniformDeflection and TangentialDeflection at
-// .
 
 //! The parameters and points of a deflection distribution, edited in step.
 use martensite_tkernel::ncollection::Sequence;

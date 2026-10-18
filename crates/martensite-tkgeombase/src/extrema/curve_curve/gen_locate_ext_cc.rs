@@ -1,5 +1,3 @@
-// .
-
 //! `GenLocateExtCC` (`LocECC`): the curve-curve extremum nearest to
 //! a start pair, by FunctionSetRoot on [`GFuncExtCC`]; and `LocateExtCC`,
 //! which calls it on 3D curves with the resolutions of Precision::Confusion().

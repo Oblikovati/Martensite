@@ -70,14 +70,14 @@ pub type MyGradientbisOfBSplineCompute = Gradient;
 /// MultiLine, the B-spline parameter optimizer of [`BSplineCompute`].
 pub type MyBSplGradientOfBSplineCompute = BSpGradient;
 
-/// `Gradient_BFGSOfTheGradient`: `Gradient_BFGS`, math_BFGS
+/// `GradientBfgsOfTheGradient`: `GradientBfgs`, BFGS
 /// stopping on the fit tolerances too.
 pub type GradientBfgsOfTheGradient = GradientBfgs;
-/// `Gradient_BFGSOfMyGradientOfCompute`: see [`GradientBfgsOfTheGradient`].
+/// `GradientBfgsOfMyGradientOfCompute`: see [`GradientBfgsOfTheGradient`].
 pub type GradientBfgsOfMyGradientOfCompute = GradientBfgs;
-/// `Gradient_BFGSOfMyGradientbisOfBSplineCompute`: see
+/// `GradientBfgsOfMyGradientbisOfBSplineCompute`: see
 /// [`GradientBfgsOfTheGradient`].
 pub type GradientBfgsOfMyGradientbisOfBSplineCompute = GradientBfgs;
-/// `BSpGradient_BFGSOfMyBSplGradientOfBSplineCompute`:
-/// `BSpGradient_BFGS`, the same criterion over the B-spline function.
+/// `BSpGradientBfgsOfMyBSplGradientOfBSplineCompute`:
+/// `BSpGradientBfgs`, the same criterion over the B-spline function.
 pub type BSpGradientBfgsOfMyBSplGradientOfBSplineCompute = GradientBfgs;

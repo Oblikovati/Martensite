@@ -93,7 +93,7 @@ impl CurveOnSurface {
     }
 
     // `buildC3dOnIsoLine`: false for a surface adaptor that is not a
-    // GeomAdaptor_Surface, a sphere, or an iso range out of the surface.
+    // GeomAdaptorSurface, a sphere, or an iso range out of the surface.
     fn build_c3d_on_iso_line(
         &mut self,
         c2d: &dyn Adaptor2dCurve2d,

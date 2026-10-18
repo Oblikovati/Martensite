@@ -8,7 +8,7 @@ use martensite_tkmath::gp::{self, Direction2, Direction3};
 /// A direction whose infinite parameter opens sides of its box type (the 3D and 2D
 /// template specializations); `Direction3::new(1.0, 0.0, 0.0)?.open_min(&mut bounds)`.
 pub trait InfiniteDirection: Copy {
-    /// `Bnd_Box` for `Direction3`, `Bnd_Box2d` for `Dir2d`.
+    /// `BoundingBox3` for `Direction3`, `BoundingBox2` for `Dir2d`.
     type Bounds;
     /// `OpenMin`: open the sides reached as the parameter decreases to -infinity.
     fn open_min(self, bounds: &mut Self::Bounds);

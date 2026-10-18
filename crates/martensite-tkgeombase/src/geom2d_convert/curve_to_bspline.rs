@@ -1,5 +1,3 @@
-// (CurveToBSplineCurve, BSplineCurveBuilder) at .
-
 //! `Geom2dConvert::CurveToBSplineCurve`: the B-spline of a bounded Geom2d curve.
 use super::approx_curve::ApproxCurve;
 use super::comp_curve::CompCurveToBSplineCurve;
@@ -19,7 +17,7 @@ use martensite_tkmath::gp::{
     self, Axis22d, Circle2, Ellipse2, Hyperbola2, Parabola2, Point2, Transform2,
 };
 
-/// `Geom2dConvert::CurveToBSplineCurve(C, Parameterisation = Convert_TgtThetaOver2)`:
+/// `Geom2dConvert::CurveToBSplineCurve(C, Parameterisation = ParameterisationType::TgtThetaOver2)`:
 /// the B-spline of a circle, an ellipse, a Bezier, B-spline or offset curve, or of a
 /// trimmed line, conic, Bezier, B-spline or offset curve.
 ///

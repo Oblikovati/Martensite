@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC_Parabola`: the extrema on a parabola in space.
+//! `extrema_pc::Parabola`: the extrema on a parabola in space.
 use super::conic_frame::ConicFrame;
 use super::planar::{PlanarQuery, perform_planar};
 use super::{CurveEvaluator, Domain1D, ExtremaResult, ExtremumResult, SearchMode, Status};
@@ -14,7 +12,7 @@ use martensite_tkmath::gp::{self, Axis3, Parabola3, Plane3, Point3, Vector3};
 use martensite_tkmath::math_poly::{PolyResult, cubic};
 use std::convert::Infallible;
 
-/// Point-parabola extrema (`ExtremaPC_Parabola`): solved by `ExtremaPC2d_Parabola` in
+/// Point-parabola extrema (`extrema_pc::Parabola`): solved by `extrema_pc2d::Parabola` in
 /// the parabola plane; when that fails, the cubic of the 2D evaluator for the point
 /// projected on the plane. A focal length below gp::Resolution() is the X axis line;
 /// `Parabola::new(parabola).perform(point, 1e-9, SearchMode::MinMax)?`.
@@ -62,7 +60,7 @@ impl ParabolaShape {
 }
 
 impl Parabola {
-    /// Evaluator on the whole parabola (`ExtremaPC_Parabola(theParabola)`);
+    /// Evaluator on the whole parabola (`extrema_pc::Parabola(theParabola)`);
     /// `Parabola::new(parabola)`.
     pub fn new(parabola: Parabola3) -> Self {
         Self {
@@ -72,7 +70,7 @@ impl Parabola {
             result: ExtremaResult::default(),
         }
     }
-    /// Evaluator on `domain` (`ExtremaPC_Parabola(theParabola, theDomain)`);
+    /// Evaluator on `domain` (`extrema_pc::Parabola(theParabola, theDomain)`);
     /// `Parabola::with_domain(parabola, Domain1D::new(-1.0, 1.0))`.
     pub fn with_domain(parabola: Parabola3, domain: Domain1D) -> Self {
         Self {
@@ -120,7 +118,7 @@ impl Parabola {
     ) -> Result<&ExtremaResult, Failure> {
         analytic::perform_with_endpoints(self, point, tol, mode)
     }
-    // ExtremaPC2d_Parabola in the parabola plane.
+    // extrema_pc2d::Parabola in the parabola plane.
     fn perform_in_plane(
         &mut self,
         point: Point3,

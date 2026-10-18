@@ -83,9 +83,8 @@ impl ErrorType {
 
 /// Root: the status of a gce construction algorithm.
 ///
-/// Every retained constructor assigns the status except in the paths that
-/// docs/tkgeombase-progress.md lists; there the port reads [`ErrorType::Done`],
-/// the value that the zeroing the geometry contract allocator gives a heap-allocated algorithm.
+/// Construction status starts as [`ErrorType::Done`]. Constructors that detect
+/// a failure replace it with the corresponding typed status.
 /// `assert!(MakeDir::from_coordinates(1.0, 0.0, 0.0)?.is_done())`.
 pub trait Root {
     /// Root::Status: `Done`, or the reason why the construction failed.

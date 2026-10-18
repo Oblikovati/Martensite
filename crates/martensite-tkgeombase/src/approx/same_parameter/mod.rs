@@ -23,7 +23,7 @@ const MAX_ARRAY_SIZE: i32 = 1000;
 /// whether the input already had the same parameter.
 ///
 /// When the initial distribution cannot be built (more than 999 samples on the C1
-/// breaks), the retained object leaves `myTolReached` uninitialized; the port reads 0.
+/// breaks), the retained object leaves `myTolReached` uninitialized; this implementation reads 0.
 ///
 /// ```ignore
 /// let same = SameParameter::from_adaptors(&c3d, &pcurve, &surface, 1e-6)?;
@@ -42,7 +42,7 @@ pub struct SameParameter {
     curve_on_surface: Handle<Adaptor3dCurveOnSurface>,
 }
 
-/// `SameParameter_Data`: the curve on surface, the sampled parameters on the
+/// `same-parameter workspace`: the curve on surface, the sampled parameters on the
 /// 3D and 2D curves (and a second pair of arrays for the loop over poles), the
 /// parameter ranges and the working tolerance.
 pub(super) struct SameParameterData {

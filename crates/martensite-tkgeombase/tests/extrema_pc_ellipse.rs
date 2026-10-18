@@ -6,7 +6,7 @@ use common::*;
 #[allow(unused_imports)]
 use prelude::*;
 
-// Test fixture for ExtremaPC_Ellipse tests.
+// Test fixture for extrema_pc::Ellipse tests.
 const THE_TOL: f64 = 1.0e-8;
 const THE_2PI: f64 = 2.0 * PI;
 const THE_PI: f64 = PI;

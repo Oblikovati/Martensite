@@ -1,5 +1,3 @@
-// the implementation and the implementation at .
-
 //! The grid-sampled surface box (`Box` of OtherSurface, and of the Bezier/B-spline
 //! surfaces outside their pole shortcut) and the optimal surface box (`BoxOptimal` of
 //! the three classes, identical bodies).
@@ -35,7 +33,7 @@ fn array_failure(error: impl std::fmt::Display) -> Failure {
 }
 
 /// The box of the `nu x nv` grid `min + (max - min) (i - 1) / (n - 1)` evaluated by
-/// GeomGridEval_Surface, enlarged by `tol`; `grid_box(surface, patch, (33, 33), 0.0)?`.
+/// GeomGridEvalSurface, enlarged by `tol`; `grid_box(surface, patch, (33, 33), 0.0)?`.
 pub fn grid_box(
     surface: &dyn Adaptor3dSurface,
     patch: Patch,
@@ -157,7 +155,7 @@ impl SurfaceSweep {
 
 /// The `BoxOptimal(UMin, UMax, VMin, VMax, Tol)` body of OtherSurface,
 /// _BezierSurface and _BSplineSurface: a doubled grid (nodes and midpoints) evaluated by
-/// GeomGridEval_Surface, then PSO + Powell refinement near every coordinate extremum
+/// GeomGridEvalSurface, then PSO + Powell refinement near every coordinate extremum
 /// whose deflection exceeds `eps = max(tol, Precision::Confusion())`;
 /// `surface_box_optimal(surface, patch, 1e-7)?`.
 pub fn surface_box_optimal(

@@ -22,7 +22,7 @@ fn shape_of(curve: &Curve) -> CurveShape {
     }
 }
 
-// The switch on Order; an order above 2 keeps GeomAbs_C0, as natively.
+// The switch on Order; an order above 2 keeps Shape::C0, as natively.
 fn constraint_order(order: i32) -> Shape {
     match order {
         1 => Shape::C1,

@@ -1,5 +1,4 @@
-// The `const Adaptor3d_Surface*` members of the Extrema surface classes at
-// .
+// The `const Adaptor3dSurface*` members of the Extrema surface classes at
 
 //! The surface an Extrema object keeps. Natively a raw pointer to an adaptor that
 //! the caller owns, or that a handle held by an enclosing object keeps alive

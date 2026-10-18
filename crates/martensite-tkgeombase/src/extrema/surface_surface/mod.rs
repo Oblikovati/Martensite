@@ -1,5 +1,3 @@
-// .
-
 //! The extrema of the distance between two surfaces: the function FuncExtSS, the
 //! sampled search GenExtSS and the general class ExtSS.
 mod ext_ss;

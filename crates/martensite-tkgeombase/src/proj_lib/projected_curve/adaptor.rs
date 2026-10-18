@@ -21,7 +21,7 @@ fn not_implemented(member: &str) -> Failure {
 
 impl ProjectedCurve {
     // The spline result when the kind is one of `kinds`, NoSuchObject
-    // otherwise (the retained `NoSuchObject_Raise_if`).
+    // otherwise return a no-such-object failure.
     fn spline_state(&self, kinds: &[CurveType], member: &str) -> Result<ProjectedState, Failure> {
         let state: ProjectedState = self.snapshot();
         if !kinds.contains(&state.result.get_type()) {

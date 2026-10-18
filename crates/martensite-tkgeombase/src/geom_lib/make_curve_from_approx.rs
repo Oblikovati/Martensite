@@ -12,7 +12,7 @@ use martensite_tkmath::gp::{Point2, Point3};
 /// The Geom and Geom2d B-splines of the subspaces of an approximation, polynomial
 /// or rational (a 1D subspace as the weights).
 ///
-/// The retained class copies the approximation; the port borrows it, since the
+/// The retained class copies the approximation; this implementation borrows it, since the
 /// approximation is not modified.
 ///
 /// `let maker = MakeCurvefromApprox::new(&approx); let curve = maker.curve(1)?;`
@@ -205,7 +205,7 @@ impl<'a> MakeCurvefromApprox<'a> {
     }
 }
 
-// OutOfRange_Raise_if(Index < 0 || Index > NbSpaces) for each pair.
+// Each pair index must lie in the inclusive range 0..=NbSpaces.
 fn check_index(member: &str, indices: &[(i32, i32)]) -> Result<(), Failure> {
     for &(index, count) in indices {
         if index < 0 || index > count {

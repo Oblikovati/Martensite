@@ -248,7 +248,7 @@ impl AbscissaPoint<'_> {
             .init_target_with_tolerance(u0, abscissa, resolution / 10.0);
         self.solve(ui, resolution)
     }
-    // The bounded math_FunctionRoot search; the validity test of the root that the
+    // The bounded FunctionRoot search; the validity test of the root that the
     // retained code comments out ("lbo 21/03/97") stays out.
     fn solve(&mut self, ui: f64, resolution: f64) -> Result<(), Failure> {
         self.my_done = false;

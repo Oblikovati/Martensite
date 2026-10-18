@@ -1,5 +1,3 @@
-// .
-
 //! The start points of the grid algorithm: each cell whose nearest point is inside
 //! it, or is a boundary element, or is an element it shares and sees first; and
 //! each node no neighbour of which is farther.

@@ -127,7 +127,7 @@ impl<'a> ExtPS<'a> {
     }
     /// `Initialize(S, Uinf, Usup, Vinf, Vsup, TolU, TolV)` on a surface kept alive by
     /// its handle, for an owner that keeps this object and the adaptor side by side
-    /// (GeomAPI_ProjectPointOnSurf keeps both as members natively, and the grid, the
+    /// (point-on-surface projection keeps both as members natively, and the grid, the
     /// tree and the swept-surface algorithms persist from one Perform to the next);
     /// `extrema.initialize_shared(&surface, (0., 1.), (0., 1.), (1e-9, 1e-9))?`.
     pub fn initialize_shared(

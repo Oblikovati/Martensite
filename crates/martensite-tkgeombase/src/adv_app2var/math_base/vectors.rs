@@ -1,5 +1,5 @@
 //! Vector utilities: `mdsptpt_`, `mmunivt_` and `mmvncol_`.
-use super::{mzsnorm_, pow_di};
+use super::{mzsnorm_, pow__di};
 use crate::adv_app2var::f2c::{F2cArray, F2cArrayMut};
 use crate::adv_app2var::sys_base::{maovsr8_, mvriraz_};
 
@@ -8,7 +8,7 @@ use crate::adv_app2var::sys_base::{maovsr8_, mvriraz_};
 ///
 /// Natively the difference vector is allocated only above 100 components and the
 /// f2c code dropped the Fortran local array, so a smaller call writes through a null
-/// pointer; the port computes the allocated path for every size.
+/// pointer; this implementation computes the allocated path for every size.
 /// `mdsptpt_(3, &p1, &p2, &mut d)`.
 pub fn mdsptpt_(ndimen: i32, point1: &[f64], point2: &[f64], distan: &mut f64) -> i32 {
     let (point1, point2) = (F2cArray::new(point1, 1), F2cArray::new(point2, 1));
@@ -32,7 +32,7 @@ pub fn mmunivt_(
     let mut nchif: i32 = 0;
     maovsr8_(&mut nchif);
     let eps0: f64 = if epsiln <= 0. {
-        pow_di(10., -nchif)
+        pow__di(10., -nchif)
     } else {
         epsiln
     };
@@ -44,7 +44,7 @@ pub fn mmunivt_(
     }
     let vector = F2cArray::new(vector, 1);
     let mut unit = F2cArrayMut::new(vecnrm, 1);
-    let eps0: f64 = pow_di(10., (-nchif - 1) / 2);
+    let eps0: f64 = pow__di(10., (-nchif - 1) / 2);
     let (mut izero, mut iunit) = (0, 1);
     for ii in 1..=ndimen {
         unit[ii] = vector[ii] / vnorm;

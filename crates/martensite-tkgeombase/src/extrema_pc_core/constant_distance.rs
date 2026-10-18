@@ -1,9 +1,8 @@
 // the implementation and the implementation at
-// .
 
 //! `constantSquareDistance`: the grid evaluators report infinite solutions only when
 //! the geometry proves the distance constant. The 2D and 3D evaluators prove it
-//! differently: the 2D one looks through a Geom2dAdaptor_Curve at the Geom2d classes
+//! differently: the 2D one looks through a Geom2dAdaptorCurve at the Geom2d classes
 //! (including offsets and rational Bezier curves), the 3D one only at the adaptor.
 //! A failure anywhere is caught natively and means "not proven" (`Err` here).
 use super::rational_bezier::rational_bezier_square_distance;

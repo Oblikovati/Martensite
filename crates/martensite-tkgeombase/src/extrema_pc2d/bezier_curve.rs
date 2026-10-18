@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC2d_BezierCurve`: numerical extrema on a Bezier curve over a uniform
+//! `extrema_pc2d::BezierCurve`: numerical extrema on a Bezier curve over a uniform
 //! partition sized from its degree.
 use super::{
     CurveEvaluator, Domain1D, ExtremaResult, GridEvaluator, SearchMode, Status,
@@ -12,7 +10,7 @@ use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
 use martensite_tkmath::gp::Point2;
 use martensite_tkmath::math::Vector;
 
-/// Point-Bezier extrema (`ExtremaPC2d_BezierCurve`).
+/// Point-Bezier extrema (`extrema_pc2d::BezierCurve`).
 ///
 /// The partition (max(24, 3 (degree + 1)) uniform samples) is rebuilt on every query,
 /// so changes to the shared curve are observed; a null curve gives NotDone;
@@ -56,7 +54,7 @@ pub(crate) fn bezier_sample_count(degree: i32) -> usize {
 }
 
 impl BezierCurve {
-    /// Evaluator over the curve bounds (`ExtremaPC2d_BezierCurve(theCurve)`); a null
+    /// Evaluator over the curve bounds (`extrema_pc2d::BezierCurve(theCurve)`); a null
     /// curve keeps the domain `[0, 1]`; `BezierCurve::new(curve)`.
     pub fn new(curve: Handle<Geom2dBezierCurve>) -> Self {
         let domain: Domain1D = match curve.get() {
@@ -65,7 +63,7 @@ impl BezierCurve {
         };
         Self::with_domain(curve, domain)
     }
-    /// Evaluator over `domain` (`ExtremaPC2d_BezierCurve(theCurve, theDomain)`);
+    /// Evaluator over `domain` (`extrema_pc2d::BezierCurve(theCurve, theDomain)`);
     /// `BezierCurve::with_domain(curve, Domain1D::new(0.0, 0.5))`.
     pub fn with_domain(curve: Handle<Geom2dBezierCurve>, domain: Domain1D) -> Self {
         let nb_samples: usize = match curve.get() {

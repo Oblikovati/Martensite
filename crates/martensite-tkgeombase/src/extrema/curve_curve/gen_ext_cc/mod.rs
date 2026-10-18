@@ -1,5 +1,5 @@
 //! `GGenExtCC` (`ECC`, `ECC2d`): the minima of the distance
-//! between two curves by math_GlobOptMin (Evtushenko's method) on the products of
+//! between two curves by GlobOptMin (Evtushenko's method) on the products of
 //! their C2 (or C1) intervals, with a Lipschitz constant estimated from the curves.
 mod intervals;
 mod lipschitz;

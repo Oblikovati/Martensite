@@ -1,5 +1,5 @@
 //! `GenLocateExtPC`: the root of [`GFuncExtPC`] nearest to a start parameter,
-//! found by math_FunctionRoot.
+//! found by FunctionRoot.
 use super::func_ext_pc::GFuncExtPC;
 use crate::extrema::curve_reference::CurveReference;
 use crate::extrema::curve_tool::ExtremaCurveAccess;
@@ -83,7 +83,7 @@ impl<'a, T: ExtremaCurveAccess> GenLocateExtPC<'a, T> {
         self.tol_u = tol_u;
         Ok(())
     }
-    /// `Perform(P, U0)`: math_FunctionRoot from `U0` in `[Umin, Usup]`; the root counts
+    /// `Perform(P, U0)`: FunctionRoot from `U0` in `[Umin, Usup]`; the root counts
     /// only when F at the saved point is below 1e-7 in absolute value;
     /// `extrema.perform(point, 0.5)?`.
     // The negated test keeps the retained NaN semantics.

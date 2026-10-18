@@ -1,5 +1,3 @@
-// .
-
 //! The results of ExtCC: the extrema whose parameters, moved into the period
 //! of a periodic curve, lie in the ranges within RealEpsilon().
 use super::ExtCC;

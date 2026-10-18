@@ -1,8 +1,8 @@
 //! The code shared by the ExtremaPC2d and ExtremaPC packages (not a retained package).
 //!
 //! The two retained packages declare the same result types, distance function and grid
-//! evaluator, once for `Point2`/`Adaptor2d_Curve2d` and once for
-//! `Point3`/`Adaptor3d_Curve`. The port writes each of them once, generic over a
+//! evaluator, once for `Point2`/`Adaptor2dCurve2d` and once for
+//! `Point3`/`Adaptor3dCurve`. This implementation writes each of them once, generic over a
 //! [`PcSpace`], and each package names its instantiation with the retained class name
 //! (`extrema_pc2d::GridEvaluator` is `PcGridEvaluator<Space2d>`). Where the two
 //! retained copies differ, the difference is a member of [`PcSpace`] or an argument.

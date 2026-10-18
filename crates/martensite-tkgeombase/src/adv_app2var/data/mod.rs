@@ -1,4 +1,4 @@
-// Data_*.pxx at .
+// Fixed numerical tables preserve their established literal rounding.
 
 //! `Data`: the Fortran common blocks of the f2c kernels.
 //!
@@ -141,7 +141,7 @@ pub struct GaussProjection {
 /// Returns `MDNOMBR` (`Data::Getmdnombr`); `getmdnombr().deuxpi`.
 pub fn getmdnombr() -> &'static Mdnombr {
     // The literals are the retained ones, not std::f64::consts: `pisur2` rounds to a
-    // different double than FRAC_PI_2, and the port keeps that value.
+    // different double than FRAC_PI_2, and this implementation keeps that value.
     #[allow(clippy::approx_constant)]
     static MDNOMBR: Mdnombr = Mdnombr {
         pi: 3.141592653589793,

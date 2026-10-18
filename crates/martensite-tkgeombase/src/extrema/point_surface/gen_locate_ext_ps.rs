@@ -1,8 +1,6 @@
-// .
-
 //! `GenLocateExtPS`: the point-surface extremum nearest to a start `(u, v)`,
 //! by the roots of [`FuncPSNorm`] (FunctionSetRoot, then Newton) or by the
-//! minimum of [`FuncPSDist`] (math_BFGS, then math_FRPR).
+//! minimum of [`FuncPSDist`] (BFGS, then FRPR).
 use super::func_ps_dist::FuncPSDist;
 use super::func_ps_norm::FuncPSNorm;
 use crate::extrema::failures::not_done;
@@ -140,7 +138,7 @@ impl<'a> GenLocateExtPS<'a> {
         self.perform_normal(point, u0, v0)
     }
 
-    // The distance criteria: math_BFGS, then math_FRPR when it fails.
+    // The distance criteria: BFGS, then FRPR when it fails.
     fn perform_distance(&mut self, point: Point3, start: Vector<'static>) -> Result<(), Failure> {
         let rel_tol: f64 = 1.0e-8;
         let mut function = FuncPSDist::new(self.surf, point);
@@ -168,7 +166,7 @@ impl<'a> GenLocateExtPS<'a> {
     }
 
     // The normal projection criteria: FunctionSetRoot, then
-    // math_NewtonFunctionSetRoot when it fails or when the tolerances were corrected.
+    // NewtonFunctionSetRoot when it fails or when the tolerances were corrected.
     fn perform_normal(&mut self, point: Point3, u0: f64, v0: f64) -> Result<(), Failure> {
         let start: Vector<'static> = pair(u0, v0)?;
         let bound_inf = pair(

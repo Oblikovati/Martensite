@@ -38,7 +38,7 @@ pub const fn ibt_matrix_offset(the_classe: i32) -> i32 {
 }
 
 // `sum(i * i)` for `first <= i < end`, the loop the three offset functions share. The
-// retained `int` sum overflows (undefined behavior) past classe 1861; the port wraps.
+// retained `int` sum overflows (undefined behavior) past classe 1861; this implementation wraps.
 const fn squares_below(first: i32, end: i32) -> i32 {
     let mut offset: i32 = 0;
     let mut i: i32 = first;
@@ -60,7 +60,7 @@ fn dimension_error(member: &str, value: i32, limit: i32, what: &str) -> Failure 
 // A block of `rows x cols` table entries, row-major from `offset`, written at
 // `origin + (i - 1, j - 1)`. A read past the retained array (undefined behavior natively)
 // is index-range failure; a cell outside the matrix is the index-range failure of
-// `math_Matrix::operator()`.
+// `Matrix::operator()`.
 fn fill_block(
     table: &ContMatrixTable,
     offset: i64,

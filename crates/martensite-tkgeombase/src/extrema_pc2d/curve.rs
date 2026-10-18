@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC2d_Curve`: the evaluator of a curve's kind, chosen once at construction.
+//! `extrema_pc2d::Curve`: the evaluator of a curve's kind, chosen once at construction.
 use super::adaptor_curve::CurveRef2d;
 use super::{
     BSplineCurve, BezierCurve, Circle, Domain1D, Ellipse, ExtremaResult, Hyperbola, Line,
@@ -22,27 +20,27 @@ use martensite_tkmath::gp::Point2;
 pub enum EvaluatorVariant<'a> {
     /// No evaluator (`std::monostate`).
     Uninitialized,
-    /// `ExtremaPC2d_Line`.
+    /// `extrema_pc2d::Line`.
     Line(Line),
-    /// `ExtremaPC2d_Circle`.
+    /// `extrema_pc2d::Circle`.
     Circle(Circle),
-    /// `ExtremaPC2d_Ellipse`.
+    /// `extrema_pc2d::Ellipse`.
     Ellipse(Ellipse),
-    /// `ExtremaPC2d_Hyperbola`.
+    /// `extrema_pc2d::Hyperbola`.
     Hyperbola(Hyperbola),
-    /// `ExtremaPC2d_Parabola`.
+    /// `extrema_pc2d::Parabola`.
     Parabola(Parabola),
-    /// `ExtremaPC2d_BezierCurve`.
+    /// `extrema_pc2d::BezierCurve`.
     Bezier(BezierCurve),
-    /// `ExtremaPC2d_BSplineCurve`.
+    /// `extrema_pc2d::BSplineCurve`.
     BSpline(BSplineCurve),
-    /// `ExtremaPC2d_OffsetCurve`.
+    /// `extrema_pc2d::OffsetCurve`.
     Offset(OffsetCurve<'a>),
-    /// `ExtremaPC2d_OtherCurve`.
+    /// `extrema_pc2d::OtherCurve`.
     Other(OtherCurve<'a>),
 }
 
-/// Point-curve extrema on any 2D curve (`ExtremaPC2d_Curve`).
+/// Point-curve extrema on any 2D curve (`extrema_pc2d::Curve`).
 ///
 /// The domain is fixed at construction. An adaptor given as such must outlive the
 /// evaluator when it is dispatched as an offset or general curve; a Geom2d curve gets
@@ -60,13 +58,13 @@ impl<'a> Curve<'a> {
             not_done: ExtremaResult::not_done(),
         }
     }
-    /// Evaluator over the adaptor bounds (`ExtremaPC2d_Curve(const Adaptor2d_Curve2d&)`);
+    /// Evaluator over the adaptor bounds (`extrema_pc2d::Curve(const Adaptor2dCurve2d&)`);
     /// `Curve::from_adaptor(&adaptor)?`.
     pub fn from_adaptor(curve: &'a dyn Adaptor2dCurve2d) -> Result<Self, Failure> {
         let domain = Domain1D::new(curve.first_parameter()?, curve.last_parameter()?);
         Ok(Self::with_evaluator(from_adaptor(curve, domain)?))
     }
-    /// Evaluator over `[u_min, u_max]` (`ExtremaPC2d_Curve(theCurve, theUMin, theUMax)`);
+    /// Evaluator over `[u_min, u_max]` (`extrema_pc2d::Curve(theCurve, theUMin, theUMax)`);
     /// `Curve::from_adaptor_range(&adaptor, 0.0, 1.0)?`.
     pub fn from_adaptor_range(
         curve: &'a dyn Adaptor2dCurve2d,
@@ -78,7 +76,7 @@ impl<'a> Curve<'a> {
             Domain1D::new(u_min, u_max),
         )?))
     }
-    /// Evaluator of a Geom2d curve (`ExtremaPC2d_Curve(const occ::handle<Curve>&)`):
+    /// Evaluator of a Geom2d curve (`extrema_pc2d::Curve(const occ::handle<Curve>&)`):
     /// the natural domain, the trimmed bounds of a trimmed curve; a null curve stays
     /// uninitialized; `Curve::from_geom(&curve)?`.
     pub fn from_geom(curve: &Handle<dyn Geom2dCurve>) -> Result<Self, Failure> {
@@ -96,7 +94,7 @@ impl<'a> Curve<'a> {
         Ok(Self::with_evaluator(from_geom(curve, None)?))
     }
     /// Evaluator over `[u_min, u_max]`, intersected with the bounds of a trimmed curve
-    /// (`ExtremaPC2d_Curve(theCurve, theUMin, theUMax)`);
+    /// (`extrema_pc2d::Curve(theCurve, theUMin, theUMax)`);
     /// `Curve::from_geom_range(&curve, 0.0, 1.0)?`.
     pub fn from_geom_range(
         curve: &Handle<dyn Geom2dCurve>,

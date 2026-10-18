@@ -1,5 +1,3 @@
-// the implementation at .
-
 //! The sorted, verified roots of a trigonometric polynomial that the line-conic
 //! extrema solve, and the snapping of nearly axial directions.
 use martensite_tkernel::standard::Failure;
@@ -8,7 +6,7 @@ use martensite_tkmath::gp::Direction3;
 use martensite_tkmath::math::TrigonometricRoots;
 use std::f64::consts::PI;
 
-/// `ExtremaExtElC_TrigonometricRoots`: the roots in `[0, 2 PI]` of
+/// `periodic trigonometric roots`: the roots in `[0, 2 PI]` of
 /// `CC cos² + 2 SC cos sin + C cos + S sin + Cte`, sorted. A second attempt zeroes
 /// the coefficients below 1e-10 when TrigonometricFunctionRoots fails; a root
 /// whose residual (with the original coefficients) exceeds

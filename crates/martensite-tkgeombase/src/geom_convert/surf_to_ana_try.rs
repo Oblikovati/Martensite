@@ -1,5 +1,3 @@
-// (TryCylinerCone, TryTorusSphere, ComputeGap) at .
-
 //! The cylinder, cone, sphere and torus builders of `SurfToAnaSurf`
 //! from recognized isolines, and the gap of a candidate surface.
 use super::{AnaCurveFit, ConvType, CurveToAnaCurve};
@@ -19,7 +17,7 @@ use martensite_tkmath::gp::{
 };
 use std::f64::consts::PI;
 
-// `ComputeCurve(curve, toler, p1, p2, ..., Target, GeomAbs_Circle)`
+// `ComputeCurve(curve, toler, p1, p2, ..., Target, CurveType::Circle)`
 // cast to a circle (null when not a circle).
 fn target_circle(
     curve: &Handle<dyn GeomCurve>,

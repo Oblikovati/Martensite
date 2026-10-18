@@ -1,5 +1,5 @@
 //! `FuncPSDist`: the square distance `|S(u,v) - P|²` and the half gradient
-//! `((P - S).Su, (P - S).Sv)`, for math_BFGS; false outside the surface bounds.
+//! `((P - S).Su, (P - S).Sv)`, for BFGS; false outside the surface bounds.
 use crate::failure_capture::FailureCapture;
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;

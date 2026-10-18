@@ -1,13 +1,11 @@
-// .
-
-//! `ExtremaPC2d_Line`: the projection of a point on a line.
+//! `extrema_pc2d::Line`: the projection of a point on a line.
 use super::{CurveEvaluator, Domain1D, ExtremaResult, ExtremumResult, SearchMode, Status};
 use crate::extrema_pc_core::NeighborStep;
 use crate::extrema_pc_core::analytic::{self, AnalyticEvaluator};
 use martensite_tkmath::gp::{Line2, Point2, Vector2};
 use std::convert::Infallible;
 
-/// Point-line extrema (`ExtremaPC2d_Line`): the closest point is at `u = (P - O) . D`,
+/// Point-line extrema (`extrema_pc2d::Line`): the closest point is at `u = (P - O) . D`,
 /// the only extremum, a minimum. The domain is fixed at construction;
 /// `Line::new(line).perform(point, 1e-9, SearchMode::MinMax).nb_ext() == 1`.
 pub struct Line {
@@ -17,7 +15,7 @@ pub struct Line {
 }
 
 impl Line {
-    /// Evaluator on the unbounded line (`ExtremaPC2d_Line(theLine)`); `Line::new(line)`.
+    /// Evaluator on the unbounded line (`extrema_pc2d::Line(theLine)`); `Line::new(line)`.
     pub fn new(line: Line2) -> Self {
         Self {
             line,
@@ -25,7 +23,7 @@ impl Line {
             result: ExtremaResult::default(),
         }
     }
-    /// Evaluator on `domain` (`ExtremaPC2d_Line(theLine, theDomain)`);
+    /// Evaluator on `domain` (`extrema_pc2d::Line(theLine, theDomain)`);
     /// `Line::with_domain(line, Domain1D::new(0.0, 1.0))`.
     pub fn with_domain(line: Line2, domain: Domain1D) -> Self {
         Self {

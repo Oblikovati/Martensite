@@ -99,7 +99,7 @@ fn setup(
 
 /// The tolerance of each subspace for the iso's position: the cutting tolerance of
 /// an inner line, the frontier tolerance of a border (`HEPSAPR`). Another position
-/// leaves the retained array uninitialised; the port uses zeros.
+/// leaves the retained array uninitialised; this implementation uses zeros.
 fn tolerances(position: i32, conditions: &AdvApp2VarContext) -> Result<Vec<f64>, Failure> {
     let nbsesp: i32 = conditions.total_number_ssp();
     let table: Option<&Array2<'static, f64>> = match position {

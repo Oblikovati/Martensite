@@ -1,8 +1,6 @@
-//! The AdvApprox evaluators of one adapted curve. The retained files repeat the same
-//! class (`ApproxCurve_Eval`, `Curve3d_Eval`,
-//! `CurveOnSurface_Eval3d`; `ApproxCurve_Eval`,
-//! `Curve2d_Eval`, and `CurveOnSurface_Eval2d` without the parameter
-//! check); the port keeps one of each, with the NbIntervals/Intervals break helpers.
+//! Shared planar and spatial adapted-curve evaluation.
+//! Parameter checks distinguish the spatial and planar paths; continuity-interval
+//! helpers supply their common break points.
 use crate::failure_capture::FailureCapture;
 use crate::native_failure::failure;
 use martensite_tkernel::ncollection::Array1;
@@ -139,7 +137,7 @@ impl AdvApproxEvaluatorFunction for Curve3dEvaluator {
 }
 
 /// The 2D evaluator; `check_parameter` adds the error code 2 for a parameter out of
-/// the interval (ApproxCurve_Eval, Curve2d_Eval; the curve on
+/// the interval (adapted-curve evaluation, planar curve evaluation; the curve on
 /// surface evaluator has no such check).
 pub(crate) struct Curve2dEvaluator {
     fonct: Handle<dyn Adaptor2dCurve2d>,

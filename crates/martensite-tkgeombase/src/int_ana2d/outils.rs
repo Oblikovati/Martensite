@@ -37,7 +37,7 @@ impl MyDirectPolynomialRoots {
     /// MyDirectPolynomialRoots(A4, A3, A2, A1, A0): the roots of
     /// `A4 x^4 + A3 x^3 + A2 x^2 + A1 x + A0`. When a root does not cancel the
     /// polynomial within Epsilon(100), or the number of roots is odd, the roots of
-    /// `A4..A1`, `A3..A0` and `A3 x^2 + A2 x + A1` (the retained "MATH_A210") are
+    /// `A4..A1`, `A3..A0` and `A3 x^2 + A2 x + A1` (the retained "quadratic polynomial") are
     /// added, sorted by increasing residual, and the first ones are kept. More than
     /// four roots mean identical elements. `MyDirectPolynomialRoots::quartic(1.0, 0.0, -5.0, 0.0, 4.0)?`.
     pub fn quartic(a4: f64, a3: f64, a2: f64, a1: f64, a0: f64) -> Result<Self, Failure> {
@@ -236,13 +236,13 @@ fn root_separation(magnitudes: [f64; 5]) -> f64 {
     std_min(1.0e-4, epsilon(1000. * largest / smallest))
 }
 
-/// Points_Confondus: true when both coordinates of the points differ by less than
+/// coincident-point check: true when both coordinates of the points differ by less than
 /// Epsilon of the first point's coordinate. `points_confondus(1.0, 2.0, 1.0, 2.0)`.
 pub fn points_confondus(x1: f64, y1: f64, x2: f64, y2: f64) -> bool {
     (x1 - x2).abs() < epsilon(x1) && (y1 - y2).abs() < epsilon(y1)
 }
 
-/// Traitement_Points_Confondus: removes from the first `nb_pts` points each one
+/// duplicate-point removal: removes from the first `nb_pts` points each one
 /// that coincides with an earlier point, shifting the following points down with
 /// the implicit SetValue (the second parameter becomes RealLast()), and returns
 /// the new count. `let count = traitement_points_confondus(2, &mut points);`
@@ -275,7 +275,7 @@ fn shift_down(pts: &mut [IntPoint], from: i32, count: i32) {
     }
 }
 
-/// Coord_Ancien_Repere: the absolute coordinates of the point `(x, y)` given in
+/// basis-coordinate transformation: the absolute coordinates of the point `(x, y)` given in
 /// the frame of `axis`. `let (x, y) = coord_ancien_repere(1.0, 0.0, axis);`
 pub fn coord_ancien_repere(x: f64, y: f64, axis: Axis2d) -> (f64, f64) {
     let (t11, t21) = (axis.direction().x(), axis.direction().y());

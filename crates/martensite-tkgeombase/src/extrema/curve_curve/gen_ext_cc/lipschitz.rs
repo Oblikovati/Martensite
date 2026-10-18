@@ -12,7 +12,7 @@ use std::f64::consts::SQRT_2;
 
 const MAX_LC: f64 = 10000.;
 
-/// The constant of math_GlobOptMin and whether it is locked.
+/// The constant of GlobOptMin and whether it is locked.
 pub(super) struct Lipschitz {
     pub constant: f64,
     pub locked: bool,

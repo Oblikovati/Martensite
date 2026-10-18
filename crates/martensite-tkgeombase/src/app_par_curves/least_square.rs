@@ -25,7 +25,7 @@ use martensite_tkmath::math::{IntegerVector, Matrix, Vector};
 /// The retained matrices start uninitialized (0 here). With curvature constraints,
 /// `Perform(Parameters)` leaves pole rows unassigned (the retained documentation says
 /// the case is not treated there), and the lambdas are unassigned without a
-/// tangency constraint: the port reads 0 where the retained code reads indeterminate
+/// tangency constraint: this implementation reads 0 where the retained code reads indeterminate
 /// values.
 ///
 /// ```

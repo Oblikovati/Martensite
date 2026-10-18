@@ -1,5 +1,3 @@
-// .
-
 //! The line-conic extrema of ExtElC. Each solves `P1P2.D = 0`,
 //! `P1P2.T = 0` for the conic parameter in the conic's frame, then projects the
 //! conic point on the line (`u1 = O1P2.D`).

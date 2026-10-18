@@ -2,7 +2,6 @@
 // GGExtPC, GLocateExtPC, GCurveLocator and their
 // ExtPC*, LocateExtPC*, EPCOf*, ELPCOf*,
 // LocEPCOf*, PCFOf* and PCLocFOf* aliases) at
-// .
 
 //! The point-curve extrema: the class templates, generic over [`ExtremaCurveTool`],
 //! and the retained aliases of their 3D and 2D instantiations.
@@ -22,15 +21,15 @@ pub use locate_ext_pc::GLocateExtPC;
 
 use super::curve_tools::{Curve2dTool, CurveTool};
 
-/// `ExtPC`: `GGExtPC` over Adaptor3d_Curve.
+/// `ExtPC`: `GGExtPC` over Adaptor3dCurve.
 pub type ExtPC<'a> = GGExtPC<'a, CurveTool>;
-/// `ExtPC2d`: `GGExtPC` over Adaptor2d_Curve2d.
+/// `ExtPC2d`: `GGExtPC` over Adaptor2dCurve2d.
 pub type ExtPC2d<'a> = GGExtPC<'a, Curve2dTool>;
 /// `ELPCOfLocateExtPC`: the closed-form search of LocateExtPC.
 pub type ELPCOfLocateExtPC<'a> = GGExtPC<'a, CurveTool>;
 /// `ELPCOfLocateExtPC2d`.
 pub type ELPCOfLocateExtPC2d<'a> = GGExtPC<'a, Curve2dTool>;
-/// `EPCOfExtPC`: `GGenExtPC` over Adaptor3d_Curve.
+/// `EPCOfExtPC`: `GGenExtPC` over Adaptor3dCurve.
 pub type EPCOfExtPC<'a> = GGenExtPC<'a, CurveTool>;
 /// `EPCOfExtPC2d`.
 pub type EPCOfExtPC2d<'a> = GGenExtPC<'a, Curve2dTool>;
@@ -38,7 +37,7 @@ pub type EPCOfExtPC2d<'a> = GGenExtPC<'a, Curve2dTool>;
 pub type EPCOfELPCOfLocateExtPC<'a> = GGenExtPC<'a, CurveTool>;
 /// `EPCOfELPCOfLocateExtPC2d`.
 pub type EPCOfELPCOfLocateExtPC2d<'a> = GGenExtPC<'a, Curve2dTool>;
-/// `PCFOfEPCOfExtPC`: `GFuncExtPC` over Adaptor3d_Curve.
+/// `PCFOfEPCOfExtPC`: `GFuncExtPC` over Adaptor3dCurve.
 pub type PCFOfEPCOfExtPC<'a> = GFuncExtPC<'a, CurveTool>;
 /// `PCFOfEPCOfExtPC2d`.
 pub type PCFOfEPCOfExtPC2d<'a> = GFuncExtPC<'a, Curve2dTool>;
@@ -50,11 +49,11 @@ pub type PCFOfEPCOfELPCOfLocateExtPC2d<'a> = GFuncExtPC<'a, Curve2dTool>;
 pub type PCLocFOfLocEPCOfLocateExtPC<'a> = GFuncExtPC<'a, CurveTool>;
 /// `PCLocFOfLocEPCOfLocateExtPC2d`.
 pub type PCLocFOfLocEPCOfLocateExtPC2d<'a> = GFuncExtPC<'a, Curve2dTool>;
-/// `LocEPCOfLocateExtPC`: `GenLocateExtPC` over Adaptor3d_Curve.
+/// `LocEPCOfLocateExtPC`: `GenLocateExtPC` over Adaptor3dCurve.
 pub type LocEPCOfLocateExtPC<'a> = GenLocateExtPC<'a, CurveTool>;
 /// `LocEPCOfLocateExtPC2d`.
 pub type LocEPCOfLocateExtPC2d<'a> = GenLocateExtPC<'a, Curve2dTool>;
-/// `LocateExtPC`: `GLocateExtPC` over Adaptor3d_Curve.
+/// `LocateExtPC`: `GLocateExtPC` over Adaptor3dCurve.
 pub type LocateExtPC<'a> = GLocateExtPC<'a, CurveTool>;
 /// `LocateExtPC2d`.
 pub type LocateExtPC2d<'a> = GLocateExtPC<'a, Curve2dTool>;

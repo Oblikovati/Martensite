@@ -14,7 +14,7 @@ use std::f64::consts::PI;
 // The tolerance of the seam and pole tests.
 const TOL: f64 = 1.0e-10;
 
-/// The sphere case of `Function_SetUVBounds`.
+/// The sphere case of `parameter-window selection`.
 pub(super) fn sphere_bounds(
     p: &Projection<'_>,
     s: &Samples,

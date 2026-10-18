@@ -1,5 +1,3 @@
-// .
-
 //! `Context`: the fixed parameters of an approximation.
 use super::approx_f2var::{mma2jmx_, mma2roo_, mmapptt_};
 use martensite_tkernel::ncollection::{Array1, Array2, ArrayError};

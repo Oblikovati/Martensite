@@ -1,9 +1,9 @@
 //! The dimension of a point-curve extrema computation: the point, vector and curve
 //! adaptor types, and the few behaviors in which ExtremaPC2d and ExtremaPC differ.
 //!
-//! ExtremaPC2d evaluates through `Adaptor2d_Curve2d` and ExtremaPC through
-//! `Adaptor3d_Curve`; apart from those types their distance functions and grid
-//! evaluators are the same code, which [`PcSpace`] lets the port share.
+//! ExtremaPC2d evaluates through `Adaptor2dCurve2d` and ExtremaPC through
+//! `Adaptor3dCurve`; apart from those types their distance functions and grid
+//! evaluators are the same code, which [`PcSpace`] lets this implementation share.
 use super::grid::GridFailurePolicy;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
@@ -111,9 +111,9 @@ pub trait PcSpace: 'static {
     fn first_parameter(curve: &Self::Curve) -> Result<f64, Failure>;
     /// `LastParameter()`.
     fn last_parameter(curve: &Self::Curve) -> Result<f64, Failure>;
-    /// `NbIntervals(GeomAbs_C2)`.
+    /// `NbIntervals(Shape::C2)`.
     fn nb_c2_intervals(curve: &Self::Curve) -> Result<i32, Failure>;
-    /// `Intervals(theArray, GeomAbs_C2)`.
+    /// `Intervals(theArray, Shape::C2)`.
     fn c2_intervals(curve: &Self::Curve, bounds: &mut Array1<'_, f64>) -> Result<(), Failure>;
     /// `Trim(First, Last, Tol)`.
     fn trim(

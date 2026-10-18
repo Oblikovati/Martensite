@@ -1,4 +1,4 @@
-//! `CurveOnSurface_Eval`: the 2D curve and the curve on surface together (5
+//! `paired curve-on-surface evaluation`: the 2D curve and the curve on surface together (5
 //! values: u, v, x, y, z).
 use crate::failure_capture::FailureCapture;
 use crate::native_failure::failure;

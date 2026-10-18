@@ -1,6 +1,6 @@
 // the implementation at .
 
-//! `ExtremaPC2d_GridEvaluator::Perform`, which never raises: every failure of its
+//! `extrema_pc2d::GridEvaluator::Perform`, which never raises: every failure of its
 //! search is caught and reported as NumericalError.
 use super::{Domain1D, ExtremaResult, GridEvaluator, SearchMode, Status};
 use crate::extrema_pc_core::{GridFailurePolicy, PcSpace, Space2d};

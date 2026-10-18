@@ -1,5 +1,4 @@
 // the implementation and the implementation at
-// .
 
 //! The type codes that open each compact record. The 3D and 2D curve files define
 //! the same values.

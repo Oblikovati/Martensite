@@ -31,7 +31,7 @@ impl Default for ExtPElS {
     }
 }
 
-// ExtPElS_MyEps: an angle within Epsilon(2 PI) of zero is zero.
+// angular zero test: an angle within Epsilon(2 PI) of zero is zero.
 fn snap_zero(angle: f64) -> f64 {
     let eps: f64 = real::epsilon(2. * PI);
     if angle > -eps && angle < eps {

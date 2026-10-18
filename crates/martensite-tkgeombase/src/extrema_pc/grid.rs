@@ -1,6 +1,6 @@
 // the implementation at .
 
-//! `ExtremaPC_GridEvaluator::Perform`: unlike the 2D evaluator, a failing curve
+//! `extrema_pc::GridEvaluator::Perform`: unlike the 2D evaluator, a failing curve
 //! evaluation during the classification escapes it (only the stationarity signs are
 //! caught), so the Rust member returns `Result`.
 use super::{Domain1D, ExtremaResult, GridEvaluator, SearchMode};

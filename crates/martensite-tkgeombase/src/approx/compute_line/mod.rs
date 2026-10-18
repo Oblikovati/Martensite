@@ -59,11 +59,11 @@ impl Default for ComputeLineOptions {
 }
 
 /// `ComputeLine` over any [`crate::app_par_curves::LineTool`] (Compute,
-/// GeomInt_TheComputeLineBezierOfWLApprox...): the Bezier pieces, their parameters
+/// multiline Bezier fitting...): the Bezier pieces, their parameters
 /// and errors.
 ///
 /// The retained constructors leave `tolreached` and the current errors
-/// uninitialized; the port starts them at false and 0.
+/// uninitialized; this implementation starts them at false and 0.
 ///
 /// ```
 /// use martensite_tkgeombase::app_def::MultiLine;

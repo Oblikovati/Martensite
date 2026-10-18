@@ -1,5 +1,3 @@
-// .
-
 //! The Jacobian of GFuncExtCC: analytic, or for a row whose curve has a
 //! vanishing first derivative, three-point differences of that row of F.
 use super::func_ext_cc::GFuncExtCC;

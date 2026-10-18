@@ -1,5 +1,3 @@
-// .
-
 //! The abscissa search of `AbscissaPoint` by curve classification.
 //!
 //! `Compute` and `AdvCompute` walk the continuity intervals with the same loop; the

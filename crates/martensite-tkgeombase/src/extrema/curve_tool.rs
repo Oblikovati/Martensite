@@ -1,5 +1,3 @@
-// .
-
 //! `CurveTool` and `Curve2dTool`: the static curve access of the
 //! Extrema templates, and the [`ExtremaCurveTool`] trait that makes them (with the
 //! point, vector and elementary types of their dimension) one template parameter.
@@ -77,7 +75,7 @@ pub type AccessD2<T> = (
 /// The members of [`ExtremaCurveTool`] that the point-curve locating templates
 /// (`GCurveLocator`, `GFuncExtPC`, `GenLocateExtPC`) call.
 /// Every [`ExtremaCurveTool`] provides it; a tool that only serves those templates
-/// (`HLRBRep_CurveTool` on the projected curves of TKHLR) implements it directly;
+/// (`curve-tool provider` on the projected curves of TKHLR) implements it directly;
 /// `<CurveTool as ExtremaCurveAccess>::first_parameter(&adaptor)?`.
 pub trait ExtremaCurveAccess: 'static {
     /// The curve type the tool reads.
@@ -140,7 +138,7 @@ impl<T: ExtremaCurveTool> ExtremaCurveAccess for T {
 /// an adaptor exception is the returned `Failure`;
 /// `CurveTool::first_parameter(&adaptor)?`.
 pub trait ExtremaCurveTool: 'static {
-    /// The adaptor (`Adaptor3d_Curve` or `Adaptor2d_Curve2d`).
+    /// The adaptor (`Adaptor3dCurve` or `Adaptor2dCurve2d`).
     type Curve: ?Sized + TCurveTypes<BSplineCurve = Self::BSpline, BezierCurve = Self::Bezier>;
     /// `Point3` or `Point2`.
     type Point: GpPoint<Vector = Self::Vector>;

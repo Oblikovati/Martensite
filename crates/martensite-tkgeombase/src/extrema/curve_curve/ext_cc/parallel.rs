@@ -1,5 +1,3 @@
-// .
-
 //! The parallel results of ExtCC on trimmed curves: kept for other curve
 //! kinds; for a line and a circle when the circle point projects on the line range;
 //! for two lines or two circles, reduced to the overlap of the projected ranges, to

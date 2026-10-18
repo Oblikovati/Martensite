@@ -271,7 +271,7 @@ impl SweepCache {
     }
 }
 
-/// `SweepApproximation_Eval`: `Tool.Eval(...)`; a function exception unwinds
+/// `sweep evaluator`: `Tool.Eval(...)`; a function exception unwinds
 /// natively and is carried to the end of AdvApprox here.
 pub(super) struct SweepEvaluator<'c> {
     pub(super) cache: &'c mut SweepCache,

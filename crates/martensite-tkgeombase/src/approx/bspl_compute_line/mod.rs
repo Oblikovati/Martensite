@@ -15,10 +15,10 @@ use martensite_tkernel::standard::real::real_last;
 use martensite_tkmath::math::Vector;
 
 /// `BSplComputeLine` over any [`crate::app_par_curves::LineTool`]
-/// (BSplineCompute, GeomInt_TheComputeLineOfWLApprox...).
+/// (BSplineCompute, multiline B-spline fitting...).
 ///
 /// `realfirstC`/`reallastC` and the lambdas are uninitialized natively until
-/// Perform; the port starts them at `NoConstraint` and 0.
+/// Perform; this implementation starts them at `NoConstraint` and 0.
 ///
 /// ```
 /// use martensite_tkgeombase::app_def::MultiLine;

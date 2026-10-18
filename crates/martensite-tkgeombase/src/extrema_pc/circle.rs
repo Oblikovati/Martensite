@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC_Circle`: the nearest and farthest points of a circle in space.
+//! `extrema_pc::Circle`: the nearest and farthest points of a circle in space.
 use super::planar::{PlanarQuery, perform_planar};
 use super::{CurveEvaluator, Domain1D, ExtremaResult, ExtremumResult, SearchMode, Status};
 use crate::extrema_pc_core::analytic::{self, AnalyticEvaluator};
@@ -14,7 +12,7 @@ use martensite_tkmath::gp::{self, Axis3, Circle3, Direction3, Plane3, Point3, Ve
 use std::convert::Infallible;
 use std::f64::consts::PI;
 
-/// Point-circle extrema (`ExtremaPC_Circle`): solved by `ExtremaPC2d_Circle` in the
+/// Point-circle extrema (`extrema_pc::Circle`): solved by `extrema_pc2d::Circle` in the
 /// circle plane; when that fails, the angle of the projected point is the minimum and
 /// its opposite the maximum, kept within the domain widened by `tol / R`. A point on the
 /// axis (or a zero radius) has infinitely many solutions;
@@ -26,7 +24,7 @@ pub struct Circle {
 }
 
 impl Circle {
-    /// Evaluator on the full circle (`ExtremaPC_Circle(theCircle)`); `Circle::new(circle)`.
+    /// Evaluator on the full circle (`extrema_pc::Circle(theCircle)`); `Circle::new(circle)`.
     pub fn new(circle: Circle3) -> Self {
         Self {
             circle,
@@ -34,7 +32,7 @@ impl Circle {
             result: ExtremaResult::default(),
         }
     }
-    /// Evaluator on `domain` (`ExtremaPC_Circle(theCircle, theDomain)`);
+    /// Evaluator on `domain` (`extrema_pc::Circle(theCircle, theDomain)`);
     /// `Circle::with_domain(circle, Domain1D::new(0.0, PI))`.
     pub fn with_domain(circle: Circle3, domain: Domain1D) -> Self {
         Self {
@@ -86,7 +84,7 @@ impl Circle {
     ) -> Result<&ExtremaResult, Failure> {
         analytic::perform_with_endpoints(self, point, tol, mode)
     }
-    // ExtremaPC2d_Circle in the circle plane.
+    // extrema_pc2d::Circle in the circle plane.
     fn perform_in_plane(
         &mut self,
         point: Point3,

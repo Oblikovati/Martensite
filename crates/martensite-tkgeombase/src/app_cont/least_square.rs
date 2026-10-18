@@ -102,7 +102,7 @@ impl LeastSquare {
     /// or `nb_points < 0`, which overrun the stack buffer natively), while the empty
     /// ranges (`deg == -1`, `nb_points == 0`, no coordinate) fit over empty tables;
     /// index-range failure when a fixed end needs a pole row that degree -1 lacks;
-    /// math_SingularMatrix if a mixed-constraint normal matrix is singular.
+    /// singular-matrix failure if a mixed-constraint normal matrix is singular.
     /// `LeastSquare::new(&f, 0.0, 1.0, Constraint::NoConstraint, Constraint::NoConstraint, 4, 10)?`
     pub fn new(
         ssp: &dyn Function,

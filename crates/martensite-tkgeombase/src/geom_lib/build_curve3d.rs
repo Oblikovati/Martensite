@@ -1,5 +1,3 @@
-// (CurveOnSurfaceEvaluator, BuildCurve3d) at .
-
 //! `GeomLib::BuildCurve3d`: the 3D curve of a curve on a surface, exact on planes
 //! and isolines, approximated by AdvApprox otherwise.
 use super::iso_line::{build_c3d_on_iso_line, is_iso_line};
@@ -24,7 +22,7 @@ use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::Point3;
 
 /// `GeomLib::BuildCurve3d(Tolerance, CurvePtr, FirstParameter, LastParameter,
-/// NewCurvePtr, MaxDeviation, AverageDeviation, Continuity = GeomAbs_C1, MaxDegree =
+/// NewCurvePtr, MaxDeviation, AverageDeviation, Continuity = Shape::C1, MaxDegree =
 /// 14, MaxSegment = 30)`: the 3D curve of `curve` on `[first_parameter,
 /// last_parameter]` into `new_curve_ptr`, and the maximum and average deviations
 /// of the approximation (0 for the exact cases).

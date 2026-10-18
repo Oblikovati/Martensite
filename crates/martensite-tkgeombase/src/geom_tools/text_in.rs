@@ -1,18 +1,14 @@
-// `operator>>` for Point3, Direction3, Point2 and Dir2d repeated in
-// the implementation, the implementation and the implementation at
-// .
-
 //! The token readers of the GeomTools text formats.
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::{Failure, strtod};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkmath::gp::{Direction2, Direction3, Point2, Point3};
 
-/// `char aBuffer[THE_BUFFER_SIZE]` of GetReal: "the most optimal buffer length not
-/// less then 25" for an IEEE-754 double in a standard stream.
+/// A fixed 32-byte buffer accommodates ordinary IEEE-754 real tokens without
+/// per-token allocation.
 const REAL_BUFFER: usize = 32;
 
-/// `GeomTools::GetReal`: one word of at most 30 characters (the stream width is set
+/// Reads one word of at most 30 characters (the stream width is set
 /// to 31 for the extraction, then restored), converted by `Strtod`. The value is 0
 /// when the stream is already at end of file, when no word can be extracted, and when
 /// the word has no numeric prefix; a longer word leaves its tail for the next read.

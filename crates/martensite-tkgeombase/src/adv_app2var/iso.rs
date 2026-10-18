@@ -1,5 +1,3 @@
-// .
-
 //! `Iso`: the constraints of the approximation on one iso-curve.
 use super::iso_approx::IsoResult;
 use martensite_tkernel::impl_transient;

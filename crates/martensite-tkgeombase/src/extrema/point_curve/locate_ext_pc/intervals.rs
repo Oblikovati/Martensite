@@ -1,5 +1,4 @@
 // GLocateExtPC::Perform and of its accessors at
-// .
 
 //! The interval search of GLocateExtPC: the C2 interval holding the start,
 //! then the intervals at increasing distance on both sides, where a sign change of
@@ -20,7 +19,7 @@ struct BoundSigns {
 }
 
 impl<'a, T: ExtremaCurveTool> GLocateExtPC<'a, T> {
-    /// The GeomAbs_OtherCurve, GeomAbs_OffsetCurve and GeomAbs_BSplineCurve case.
+    /// The CurveType::OtherCurve, CurveType::OffsetCurve and CurveType::BSplineCurve case.
     pub(super) fn perform_intervals(&mut self, point: T::Point, u0: f64) -> Result<(), Failure> {
         let bounds: Vec<f64> = Self::c2_bounds(self.curve()?)?;
         let n: i32 = bounds.len() as i32 - 1;

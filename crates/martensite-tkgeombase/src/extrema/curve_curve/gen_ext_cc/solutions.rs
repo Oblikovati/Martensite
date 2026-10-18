@@ -1,5 +1,3 @@
-// GGenExtCC_ProjPOnC at .
-
 //! The solutions of GGenExtCC: the sorted minima are grouped into runs whose
 //! middles keep the minimal value; when every middle does and the runs move in one
 //! direction, the curves are checked for parallelism by projecting the range ends.
@@ -20,7 +18,7 @@ struct Runs {
     dirs_coinside: bool,
 }
 
-// `GGenExtCC_comp`: X then Y.
+// `point comparison`: X then Y.
 fn compare(a: &[f64; 2], b: &[f64; 2]) -> std::cmp::Ordering {
     use std::cmp::Ordering;
     if a[0] < b[0] || (a[0] == b[0] && a[1] < b[1]) {
@@ -32,7 +30,7 @@ fn compare(a: &[f64; 2], b: &[f64; 2]) -> std::cmp::Ordering {
     Ordering::Equal
 }
 
-/// `GGenExtCC_ProjPOnC(P, ProjTool)`: the smallest square distance of the
+/// `point-to-curve projection(P, ProjTool)`: the smallest square distance of the
 /// projection of `point`, RealLast() when there is none.
 fn project_on_curve<T: ExtremaCurveTool>(
     point: T::Point,

@@ -1,5 +1,3 @@
-// .
-
 //! The B-spline case of GGExtPC: the knot spans of the range (shifted by
 //! whole periods), searched span by span for degree 1 and around the local extrema
 //! of `Degree + 1` samples per span otherwise.
@@ -69,7 +67,7 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
             let first_knot: f64 = spans.knot(first_idx)?;
             // `(int)` of a quotient beyond the int range gives INT_MIN on x86-64 (the Rust
             // cast saturates to it for a large negative range start, as for
-            // GeomAPI_ProjectPointOnCurve on [-2e100, 2e100]), and `shift - 1` then wraps
+            // point-on-curve projection on [-2e100, 2e100]), and `shift - 1` then wraps
             // to INT_MAX natively.
             let mut shift: i32 = ((self.uinf - first_knot) / T::period(curve)?) as i32;
             if self.uinf < first_knot - tol_coeff {
@@ -98,7 +96,7 @@ impl<'a, T: ExtremaCurveTool> GGExtPC<'a, T> {
         Ok(spans)
     }
 
-    /// The GeomAbs_BSplineCurve case of `Perform`.
+    /// The CurveType::BSplineCurve case of `Perform`.
     pub(super) fn perform_bspline(
         &mut self,
         point: T::Point,

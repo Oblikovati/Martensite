@@ -1,5 +1,4 @@
 // the implementation and the implementation at
-// .
 
 //! The text layout every GeomTools printer repeats: the dump (`compact` false) adds
 //! labels and commas, the compact form (the BRep ASCII geometry sections) writes a

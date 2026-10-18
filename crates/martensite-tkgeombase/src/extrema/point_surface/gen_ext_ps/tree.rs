@@ -1,5 +1,4 @@
 // CorrectNbSamples, BuildTree and the tree part of GenExtPS::Perform at
-// .
 
 //! The tree algorithm of GenExtPS: the grid nodes as null spheres in a
 //! UB-tree, and one search from the nearest node and one from the farthest.
@@ -18,7 +17,7 @@ use martensite_tkmath::geom_abs::SurfaceType;
 use martensite_tkmath::gp::{Point3, Xyz};
 use std::cell::Cell;
 
-/// `Bnd_Sphere` as the bounding volume of `UBTree<int, Bnd_Sphere>`.
+/// `BoundingSphere` as the bounding volume of `UBTree<int, BoundingSphere>`.
 #[derive(Clone, Copy, Debug, Default)]
 pub(super) struct TreeSphere(BoundingSphere);
 

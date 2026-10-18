@@ -1,5 +1,3 @@
-// (CheckCurveOnSurface_TargetFunc) at .
-
 //! The negated square distance between a 3D curve and a curve on surface at the
 //! same parameter, with its derivatives and the exact maximum of elementary pairs.
 use martensite_tkernel::standard::Failure;
@@ -14,7 +12,7 @@ use martensite_tkmath::math::{
 };
 use std::f64::consts::PI;
 
-/// `CheckCurveOnSurface_TargetFunc`: `-|C1(t) - C2(t)|^2` on `[first, last]`.
+/// `curve-on-surface deviation objective`: `-|C1(t) - C2(t)|^2` on `[first, last]`.
 /// The evaluations fail (false) outside the range or when a curve raises (the retained
 /// try/catch).
 pub(super) struct TargetFunc<'c> {

@@ -1,12 +1,10 @@
-// (algorithms) at .
-
 //! `SurfaceUtils`: the algorithms of the surface local property classes.
 //!
 //! As in `CurveUtils`, the helpers take the property object (a
 //! [`SurfaceProps`]) and read its fields after the calls that upgrade them
 //! ([`SurfaceProps::view`]); the fields they write are `&mut` copies stored back
 //! by the caller. The retained helpers that take a field *by value* read it before
-//! those calls; the port passes that earlier value explicitly (see
+//! those calls; this implementation passes that earlier value explicitly (see
 //! [`tangent_u`], [`require_curvature`] and [`is_umbilic`]).
 use super::surface_access::SurfaceAccess;
 pub use super::surface_curvatures::{SurfaceCurvatures, compute_surf_curvatures};
@@ -185,7 +183,7 @@ pub fn compute_surf_tangent<A: SurfaceAccess<S>, S>(
 }
 
 /// `ComputeSurfNormal`: `CSLib::Normal(D1U, D1V, LinTol)`; writes `normal` and
-/// returns true when the status is CSLib_Done;
+/// returns true when the status is completed normal evaluation;
 /// `compute_surf_normal(d1u, d1v, 1e-7, &mut normal)?`.
 pub fn compute_surf_normal(
     d1u: Vector3,

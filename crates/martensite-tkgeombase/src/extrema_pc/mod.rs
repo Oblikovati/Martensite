@@ -1,12 +1,10 @@
-// .
-
 //! The ExtremaPC package: the extrema of the distance between a 3D point and a curve.
 //!
 //! One evaluator per curve kind, as in [`crate::extrema_pc2d`]. A planar curve (every
 //! conic, and a Bezier, BSpline or offset curve whose poles lie exactly in one plane)
 //! is first solved by the 2D evaluator in its plane, at unchanged parameters; the 3D
 //! algorithm runs only when that fails. [`Curve`] picks the evaluator of a
-//! GeomAdaptor_Curve, a GeomAdaptor_TransformedCurve or a Geom curve.
+//! GeomAdaptorCurve, a GeomAdaptorTransformedCurve or a Geom curve.
 //!
 //! Every `perform` returns `Result`: the plane projections construct gp and Geom2d
 //! objects whose retained constructors can raise, and a retained exception propagates out
@@ -56,9 +54,9 @@ pub use martensite_tkmath::math_utils::Domain1D;
 pub type ExtremumResult = core::PcExtremum<Point3>;
 /// The extrema of one computation (`ExtremaPC::Result`).
 pub type ExtremaResult = core::PcResult<Point3>;
-/// The normalized stationarity function (`ExtremaPC_DistanceFunction`).
+/// The normalized stationarity function (`extrema_pc::DistanceFunction`).
 pub type DistanceFunction<'a> = core::PcDistanceFunction<'a, Space3d>;
-/// The numerical evaluator over a parameter partition (`ExtremaPC_GridEvaluator`).
+/// The numerical evaluator over a parameter partition (`extrema_pc::GridEvaluator`).
 pub type GridEvaluator = core::PcGridEvaluator<Space3d>;
 
 /// Ratio of the parameter range for the neighbor point of the endpoint classification

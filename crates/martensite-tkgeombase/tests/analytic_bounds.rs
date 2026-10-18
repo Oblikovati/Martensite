@@ -1,5 +1,5 @@
 //! Bnd lib contracts.
-//! The suites are split across `bnd_lib/suites_N.rs` in the defined order.
+//! The suites are split across `analytic_bounds/suites_N.rs` in the defined order.
 #![allow(non_snake_case)]
 mod bnd_support;
 #[path = "support/geometric_test_support/mod.rs"]

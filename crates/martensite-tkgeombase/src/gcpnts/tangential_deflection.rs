@@ -22,7 +22,7 @@ const US3: f64 = 1.0 / 3.0;
 /// `TangentialDeflection`;
 /// `TangentialDeflection::with_curve(curve, 0.1, 0.01, 2, 1.0e-9, 1.0e-7)?`.
 ///
-/// The retained defaults of the last three arguments are 2, 1.0e-9 and 1.0e-7; the port
+/// The retained defaults of the last three arguments are 2, 1.0e-9 and 1.0e-7; this implementation
 /// takes them explicitly. The curve type `C` of the generic members is
 /// `dyn Adaptor3dCurve`, `dyn Adaptor2dCurve2d` or a concrete adaptor.
 #[derive(Default)]

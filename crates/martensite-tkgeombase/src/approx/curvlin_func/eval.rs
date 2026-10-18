@@ -148,7 +148,7 @@ impl CurvlinFunc {
                 ));
             }
         };
-        // Adaptor3d_CurveOnSurface(C2D, Surf) loads the surface first, unlike the
+        // Adaptor3dCurveOnSurface(C2D, Surf) loads the surface first, unlike the
         // Load(C2D), Load(Surf) sequence of the other members.
         let cons = Adaptor3dCurveOnSurface::with_curve(c2d, surf)?;
         let u: f64 = self.get_u_parameter(&cons, s, number)?;

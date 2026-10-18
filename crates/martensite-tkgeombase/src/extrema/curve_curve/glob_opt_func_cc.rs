@@ -1,7 +1,5 @@
-// .
-
 //! `GlobOptFuncCCC0`, `CCC1` and `CCC2`: the distance `|C2(v) - C1(u)|` and
-//! the gradient and Hessian of its square, for math_GlobOptMin. The retained classes
+//! the gradient and Hessian of its square, for GlobOptMin. The retained classes
 //! hold either two 3D or two 2D adaptors (`myType`); here they are generic over the
 //! [`ExtremaCurveTool`] of the pair. Outside the curve ranges they return false.
 use crate::extrema::curve_tool::ExtremaCurveTool;

@@ -1,6 +1,4 @@
-// .
-
-//! `ExtremaPC2d_BSplineCurve`: numerical extrema on a BSpline curve over a knot-aware
+//! `extrema_pc2d::BSplineCurve`: numerical extrema on a BSpline curve over a knot-aware
 //! partition.
 use super::bezier_curve::spline_value;
 use super::{
@@ -14,7 +12,7 @@ use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
 use martensite_tkmath::gp::Point2;
 use martensite_tkmath::math::Vector;
 
-/// Point-BSpline extrema (`ExtremaPC2d_BSplineCurve`).
+/// Point-BSpline extrema (`extrema_pc2d::BSplineCurve`).
 ///
 /// Each knot span of the domain (every period of it for a periodic curve) gets
 /// 2 (degree + 1) samples; the partition is rebuilt on every query, and a grid too
@@ -37,7 +35,7 @@ impl CurveEvaluator<Point2> for BSplineShape {
 }
 
 impl BSplineCurve {
-    /// Evaluator over the curve bounds (`ExtremaPC2d_BSplineCurve(theCurve)`); a null
+    /// Evaluator over the curve bounds (`extrema_pc2d::BSplineCurve(theCurve)`); a null
     /// curve keeps the domain `[0, 1]`; `BSplineCurve::new(curve)`.
     pub fn new(curve: Handle<Geom2dBSplineCurve>) -> Self {
         let domain: Domain1D = match curve.get() {
@@ -46,7 +44,7 @@ impl BSplineCurve {
         };
         Self::with_domain(curve, domain)
     }
-    /// Evaluator over `domain` (`ExtremaPC2d_BSplineCurve(theCurve, theDomain)`);
+    /// Evaluator over `domain` (`extrema_pc2d::BSplineCurve(theCurve, theDomain)`);
     /// `BSplineCurve::with_domain(curve, Domain1D::new(0.0, 0.5))`.
     pub fn with_domain(curve: Handle<Geom2dBSplineCurve>, domain: Domain1D) -> Self {
         Self {

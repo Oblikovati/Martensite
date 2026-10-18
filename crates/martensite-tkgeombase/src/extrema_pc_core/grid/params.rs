@@ -1,5 +1,4 @@
 // insertParameter and buildPartition of the implementation and
-// the implementation at .
 
 //! The parameter partitions of the grid evaluator.
 use super::PcGridEvaluator;
@@ -97,7 +96,7 @@ fn closed_domain<S: PcSpace>(curve: &S::Curve, domain: &Domain1D) -> Result<bool
     Ok(first.square_distance_to(&S::value(curve, domain.max)?) == 0.0)
 }
 
-/// `NbIntervals(GeomAbs_C2)` then `Intervals`: the C2 bounds of the curve.
+/// `NbIntervals(Shape::C2)` then `Intervals`: the C2 bounds of the curve.
 fn c2_bounds<S: PcSpace>(curve: &S::Curve) -> Result<Vec<f64>, Failure> {
     let count: i32 = S::nb_c2_intervals(curve)?;
     let mut bounds: Array1<'static, f64> =

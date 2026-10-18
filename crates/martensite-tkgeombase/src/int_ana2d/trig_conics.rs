@@ -21,7 +21,7 @@ impl AnaIntersection {
     /// equation along `x = R cos(a)`, `y = R sin(a)` in the circle frame, without
     /// the coincident points; identical elements for an identity equation. The
     /// retained member also prints "math_TrigonometricFunctionRoots -> NotDone" on
-    /// std::cout when the solver fails; the port does not print.
+    /// std::cout when the solver fails; this implementation does not print.
     /// `inter.perform_circle_conic(circle, &conic)?`.
     pub fn perform_circle_conic(&mut self, circle: Circle2, conic: &Conic) -> Result<(), Failure> {
         let direct: bool = circle.is_direct();

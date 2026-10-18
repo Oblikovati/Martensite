@@ -1,5 +1,3 @@
-// .
-
 //! The circle-plane, circle-cylinder and circle-sphere extrema of ExtElCS.
 use super::{ExtElCS, minimal_square_distance, parallel_square_distance, surface_point};
 use crate::extrema::ExtElC;

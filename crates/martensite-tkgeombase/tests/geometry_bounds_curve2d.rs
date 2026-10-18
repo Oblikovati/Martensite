@@ -1,5 +1,5 @@
 //! Geom bnd lib curve2d contracts.
-//! The suites are split across `geom_bnd_lib_curve2d/suites_N.rs` in the defined order.
+//! The suites are split across `geometry_bounds_curve2d/suites_N.rs` in the defined order.
 #![allow(non_snake_case)]
 mod bnd_support;
 #[path = "support/geometric_test_support/mod.rs"]

@@ -96,7 +96,7 @@ impl BSplineCurveKnotSplitting {
 
 // The retained Split table: the first knot, each inner knot below the continuity, then
 // the last knot. GeomConvert's curve and surface knot splittings and TKGeomAlgo's
-// Law_BSplineKnotSplitting compute the same table word for word, so they share it.
+// B-spline knot-splitting tool compute the same table word for word, so they share it.
 /// The split table of the B-spline knot splittings: `first_index`, each knot strictly
 /// between the bounds with `Degree - Mult < ContinuityRange`, then the last bound.
 ///

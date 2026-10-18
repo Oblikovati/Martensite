@@ -12,7 +12,7 @@ pub(super) const SMALL_VALUE: f64 = 1.0e-6;
 const SMALLEST_VALUE: f64 = 1.0e-9;
 
 /// The local variables of TheMotor that live across its phases. The retained
-/// `VALCRI`, `ERRQUA`, `ERRMOY` and `NumPnt` start uninitialized; the port's at 0.
+/// `VALCRI`, `ERRQUA`, `ERRMOY` and `NumPnt` start uninitialized; this implementation's at 0.
 #[derive(Default)]
 pub(super) struct MotorState {
     pub(super) vocri: [f64; 3],

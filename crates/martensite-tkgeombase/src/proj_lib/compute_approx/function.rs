@@ -1,8 +1,6 @@
-// Function (the implementation) at .
-
 //! The projected curve of ComputeApprox as a continuous 2D function: the
 //! ElSLib parameters of each curve point, moved into the bounds that
-//! `Function_SetUVBounds` chose across the seams.
+//! `parameter-window selection` chose across the seams.
 use crate::app_cont::{Function, FunctionBase};
 use crate::failure_capture::FailureCapture;
 use crate::gcpnts::AbscissaPoint;
@@ -56,7 +54,7 @@ pub(in crate::proj_lib) fn elementary_parameters(
 }
 
 impl Projection<'_> {
-    /// `Function_Value(U, ...)`: the surface parameters of `C(u)` in the window.
+    /// `parameter evaluation(U, ...)`: the surface parameters of `C(u)` in the window.
     pub(super) fn value(&self, u: f64, b: &UvBounds) -> Result<Point2, Failure> {
         let p3d: Point3 = self.curve.value(u)?;
         let (mut s, mut t) =
@@ -82,7 +80,7 @@ impl Projection<'_> {
         Ok(Point2::new(s, t))
     }
 
-    /// `Function_D1(U, P, D, ...)`: the point and `(C'.Su / |Su|^2, C'.Sv / |Sv|^2)`;
+    /// `first-derivative evaluation(U, P, D, ...)`: the point and `(C'.Su / |Su|^2, C'.Sv / |Sv|^2)`;
     /// None when a surface derivative is (almost) null.
     pub(super) fn d1(&self, u: f64, b: &UvBounds) -> Result<Option<(Point2, Vector2)>, Failure> {
         let p: Point2 = self.value(u, b)?;
@@ -100,7 +98,7 @@ impl Projection<'_> {
     }
 }
 
-/// `Function_ComputeStep(C, R)`: the sampling step of the seam search, about a
+/// `seam-search step calculation(C, R)`: the sampling step of the seam search, about a
 /// quarter turn of radius `r` along the curve and at most 0.1;
 /// `compute_step(curve, 2.0)?`.
 pub(super) fn compute_step(curve: &dyn Adaptor3dCurve, r: f64) -> Result<f64, Failure> {

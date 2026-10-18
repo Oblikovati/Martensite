@@ -94,10 +94,10 @@ impl FitTargets {
     }
 }
 
-/// The math_MultipleVarFunctionWithGradient callbacks and the BFGS criterion of a
+/// The MultipleVarFunctionWithGradient callbacks and the BFGS criterion of a
 /// parameter function with `evaluate`, `evaluate_gradient`, `evaluate_values`,
 /// `nb_variables`, and the fields `failure`, `err3d`, `err2d`. A retained exception
-/// unwinds through math_BFGS; a callback cannot return one, so it keeps the first
+/// unwinds through BFGS; a callback cannot return one, so it keeps the first
 /// in `failure` (see `take_failure`) and reports false.
 macro_rules! impl_par_function {
     ($function:ident) => {

@@ -5,7 +5,7 @@ pub(crate) mod layout;
 use super::super::curve_endpoint_storage::{ConstraintEnd, EndpointPieceTables};
 use super::super::curve_workspace::CurveProjectionFrame;
 use crate::adv_app2var::evaluator::AdvApp2VarEvaluatorFunc2Var;
-use crate::adv_app2var::math_base::pow_di;
+use crate::adv_app2var::math_base::pow__di;
 use crate::adv_app2var::{
     AdvApp2VarBufferEvaluation, AdvApp2VarDerivativeOrders, AdvApp2VarEvaluationBuffers,
 };
@@ -51,7 +51,7 @@ fn sample_iso(
     let (ndimen, nbroot, iordre) = (req.ndimen, req.nbroot, req.iordre);
     let (ideb, ifin) = sampling_limits(iordre, nbroot);
     let (u_axis, span) = sampling_axis(req.isofav, uvfonc);
-    let renor = pow_di(span / 2., req.ideriv);
+    let renor = pow__di(span / 2., req.ideriv);
     let mut state = sampling_call(ndimen, *uvfonc, req, ifin - ideb + 1, u_axis);
     let fd1 = entry.dimension;
     initial_sample(&mut state, foncnp, workspace, ideb, fd1, iercod);

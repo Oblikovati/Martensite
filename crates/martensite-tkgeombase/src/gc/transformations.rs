@@ -1,5 +1,4 @@
 // MakeScale, MakeScale2d, MakeTranslation and MakeTranslation2d (the implementation) at
-// .
 
 //! The GC transformation makers: a new Transformation or
 //! Transformation set by its own setter. They are not Root algorithms.

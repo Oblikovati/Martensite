@@ -1,5 +1,3 @@
-// .
-
 //! `Network`: the grid of patches of the approximation.
 use super::patch::AdvApp2VarPatch;
 use martensite_tkernel::ncollection::Sequence;

@@ -1,5 +1,3 @@
-// .
-
 //! GeomTools: text dump, write and read of Geom curves and surfaces and of Geom2d
 //! curves, the geometry sections of the BRep ASCII format.
 //!

@@ -1,5 +1,4 @@
-//! `ExtPExtS` and `ExtPRevS` are Transient classes
-//! (DEFINE_STANDARD_RTTIEXT(..., Transient)); the Rust types register the same
+//! `ExtPExtS` and `ExtPRevS` implement Transient. Their concrete types register the
 //! descriptor name and parent, which `get_type_name`, `get_type_descriptor` and
 //! `DynamicType` answer.
 use martensite_tkernel::standard::{RuntimeTyped, Transient};

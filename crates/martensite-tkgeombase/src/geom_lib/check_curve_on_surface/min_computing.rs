@@ -1,5 +1,3 @@
-// (PSO_Perform, MinComputing) at .
-
 //! The minimum of the target function on one sub-interval: the exact elementary
 //! maximum, or a particle swarm refined by Newton (or a second swarm).
 use super::target_func::TargetFunc;
@@ -58,7 +56,7 @@ fn min_computing_checked(
     Ok(Some((best_value, best_parameter)))
 }
 
-// `PSO_Perform`: the worst particles replaced by the best of 3 NbParticles regular
+// `particle-swarm refinement`: the worst particles replaced by the best of 3 NbParticles regular
 // samples of the range, then Pso; None for a range below precision::parametric().
 fn pso_perform(
     function: &mut TargetFunc<'_>,

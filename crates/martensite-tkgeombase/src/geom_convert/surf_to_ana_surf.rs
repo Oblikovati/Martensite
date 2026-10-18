@@ -1,5 +1,4 @@
 // (constructors, accessors, ConvertToAnalytical(InitialToler), CheckVTrimForRevSurf,
-// IsSame, IsCanonical) at .
 
 //! `SurfToAnaSurf`: the recognition of a plane, a cylinder, a cone, a
 //! sphere or a torus in an arbitrary surface, within a tolerance.
@@ -67,7 +66,7 @@ impl SurfToAnaSurf {
         self.my_conv_type = conv_type;
     }
 
-    /// `SetTarget(theSurfType = GeomAbs_Plane)`: the surface type of
+    /// `SetTarget(theSurfType = SurfaceType::Plane)`: the surface type of
     /// ConvType::Target; `conv.set_target(SurfaceType::Cylinder)`.
     pub fn set_target(&mut self, target: SurfaceType) {
         self.my_target = target;

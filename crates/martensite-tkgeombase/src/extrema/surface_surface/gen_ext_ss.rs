@@ -1,7 +1,7 @@
 // FuncDistSS) at .
 
 //! `GenExtSS`: the nearest and farthest pairs of the samples of two
-//! surfaces, the nearest refined by math_BFGS on the square distance (by
+//! surfaces, the nearest refined by BFGS on the square distance (by
 //! FunctionSetRoot on [`FuncExtSS`] when BFGS fails), the farthest by
 //! FunctionSetRoot.
 use super::func_ext_ss::FuncExtSS;
@@ -291,7 +291,7 @@ impl<'a> GenExtSS<'a> {
         (min_pair, max_pair)
     }
 
-    // The minimum by math_BFGS from `uv` (stored in the function by Value and
+    // The minimum by BFGS from `uv` (stored in the function by Value and
     // GetStateNumber), or by FunctionSetRoot when BFGS fails.
     fn refine_minimum(
         &mut self,
