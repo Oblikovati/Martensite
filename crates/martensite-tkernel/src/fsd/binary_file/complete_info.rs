@@ -6,7 +6,8 @@
 //! The reference section creates objects with the callbacks registered by the type
 //! section, and the type section registers none, so a non-empty reference section
 //! has no callback to call and is reported as `Standard_NullObject`.
-use super::{BinaryFile, FileHeader};
+use super::input_source::{BinaryReadSource, OwnedReadSource};
+use super::{BinaryFile, FileHeader, input_fields, input_info};
 use crate::ncollection::{ArrayError, HArray1, Sequence};
 use crate::standard::{Failure, Handle, StandardPersistent};
 use crate::storage::PersistentNumbers;
@@ -71,42 +72,56 @@ impl BinaryFile {
         stream: &mut IoStream,
         data: &mut Handle<Data>,
     ) -> Result<(), Failure> {
-        let mut offsets = FileHeader::default();
-        Self::read_header_stream(stream, &mut offsets)?;
-        if data.is_null() {
-            *data = Handle::new(Data::default());
-        }
-        let set = data.get().ok_or_else(|| null_failure("the data set"))?;
-        Self::read_header_data(stream, &set.header_data())?;
-        let mut target = Target {
-            set,
-            internal: set.internal_data(),
-            callbacks: None,
-        };
-        read_sections(stream, &offsets, &mut target)?;
-        attach_roots(&target)?;
-        if let Some(internal) = target.internal.get() {
-            internal.clear();
-        }
-        Ok(())
+        read_container(&mut OwnedReadSource(stream), data)
     }
 }
 
+pub(super) fn read_container<I: BinaryReadSource>(
+    stream: &mut I,
+    data: &mut Handle<Data>,
+) -> Result<(), I::Error> {
+    let mut offsets = FileHeader::default();
+    input_fields::header(stream, &mut offsets)?;
+    let mut target = read_target(stream, data)?;
+    read_sections(stream, &offsets, &mut target)?;
+    attach_roots(&target)?;
+    if let Some(internal) = target.internal.get() {
+        internal.clear();
+    }
+    Ok(())
+}
+
+fn read_target<'a, I: BinaryReadSource>(
+    stream: &mut I,
+    data: &'a mut Handle<Data>,
+) -> Result<Target<'a>, I::Error> {
+    if data.is_null() {
+        *data = Handle::new(Data::default());
+    }
+    let set = data.get().ok_or_else(|| null_failure("the data set"))?;
+    input_info::header_data(stream, &set.header_data())?;
+    Ok(Target {
+        set,
+        internal: set.internal_data(),
+        callbacks: None,
+    })
+}
+
 /// Dispatches on `tellg()` until the end of the data section.
-fn read_sections(
-    stream: &mut IoStream,
+fn read_sections<I: BinaryReadSource>(
+    stream: &mut I,
     offsets: &FileHeader,
     target: &mut Target<'_>,
-) -> Result<(), Failure> {
+) -> Result<(), I::Error> {
     while stream.good() && !stream.eof() {
-        let position = stream.tellg() as i32;
+        let position = stream.position()?;
         match section_at(position, offsets) {
             Section::End => break,
             Section::Comment => read_comments(stream, target)?,
             Section::Type => read_types(stream, target)?,
             Section::Root => read_roots(stream, target)?,
             Section::Reference => read_references(stream, target)?,
-            Section::Stuck(position) => return Err(stuck(position)),
+            Section::Stuck(position) => return Err(stuck(position).into()),
         }
     }
     Ok(())
@@ -125,9 +140,9 @@ fn internal<'t>(target: &'t Target<'_>) -> Result<&'t InternalData, Failure> {
         .ok_or_else(|| null_failure("the internal data"))
 }
 
-fn read_comments(stream: &mut IoStream, target: &Target<'_>) -> Result<(), Failure> {
+fn read_comments<I: BinaryReadSource>(stream: &mut I, target: &Target<'_>) -> Result<(), I::Error> {
     let mut comments: Sequence<ExtendedString> = Sequence::default();
-    BinaryFile::read_comment_stream(stream, &mut comments)?;
+    input_fields::comments(stream, &mut comments)?;
     let header = target.set.header_data();
     if let Some(header) = header.get() {
         for comment in comments.iter() {
@@ -139,13 +154,16 @@ fn read_comments(stream: &mut IoStream, target: &Target<'_>) -> Result<(), Failu
     Ok(())
 }
 
-fn read_types(stream: &mut IoStream, target: &mut Target<'_>) -> Result<(), Failure> {
-    let size = BinaryFile::type_section_size_stream(stream)?;
+fn read_types<I: BinaryReadSource>(
+    stream: &mut I,
+    target: &mut Target<'_>,
+) -> Result<(), I::Error> {
+    let size = input_fields::section_size(stream)?;
     let mut callbacks = CallBackTable::new(size)?;
     let (mut name, mut number) = (AsciiString::default(), 0);
     let types = target.set.type_data();
     for _ in 1..=size {
-        BinaryFile::read_type_informations_stream(stream, &mut number, &mut name)?;
+        input_fields::type_entry(stream, &mut number, &mut name)?;
         if let Some(types) = types.get() {
             types.add_type(&name, number);
         }
@@ -155,13 +173,13 @@ fn read_types(stream: &mut IoStream, target: &mut Target<'_>) -> Result<(), Fail
     Ok(())
 }
 
-fn read_roots(stream: &mut IoStream, target: &Target<'_>) -> Result<(), Failure> {
-    let size = BinaryFile::root_section_size_stream(stream)?;
+fn read_roots<I: BinaryReadSource>(stream: &mut I, target: &Target<'_>) -> Result<(), I::Error> {
+    let size = input_fields::section_size(stream)?;
     let (mut name, mut type_name, mut reference) =
         (AsciiString::default(), AsciiString::default(), 0);
     let roots = target.set.root_data();
     for _ in 1..=size {
-        BinaryFile::read_root_stream(stream, &mut name, &mut reference, &mut type_name)?;
+        input_fields::root_entry(stream, &mut name, &mut reference, &mut type_name)?;
         let root = Root::new(&name, &Handle::default());
         root.set_reference(reference);
         root.set_type(&type_name);
@@ -172,11 +190,14 @@ fn read_roots(stream: &mut IoStream, target: &Target<'_>) -> Result<(), Failure>
     Ok(())
 }
 
-fn read_references(stream: &mut IoStream, target: &Target<'_>) -> Result<(), Failure> {
-    let size = BinaryFile::ref_section_size_stream(stream)?;
+fn read_references<I: BinaryReadSource>(
+    stream: &mut I,
+    target: &Target<'_>,
+) -> Result<(), I::Error> {
+    let size = input_fields::section_size(stream)?;
     let (mut type_number, mut reference) = (0, 0);
     for _ in 1..=size {
-        BinaryFile::read_reference_type_stream(stream, &mut reference, &mut type_number)?;
+        input_fields::reference_entry(stream, &mut reference, &mut type_number)?;
         let callbacks = target
             .callbacks
             .as_ref()

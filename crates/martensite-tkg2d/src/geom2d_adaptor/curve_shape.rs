@@ -1,0 +1,141 @@
+//! Continuity and continuity intervals of `Geom2dAdaptorCurve`.
+//!
+//! A B-spline is `C(Degree - m)` on the adaptor range, `m` the highest interior
+//! multiplicity; its intervals come from bsplclib::intervals. An offset curve has
+//! the intervals of its basis one continuity order higher. Every other curve is
+//! one interval.
+use super::curve::Geom2dAdaptorCurve;
+use super::curve_query::resolution;
+use super::curve_state::{AdaptorState, BSplineData, CurveData};
+use crate::adaptor2d::Adaptor2dCurve2d;
+use crate::geom2d::errors::{array_bounds, no_such_object};
+use crate::geom2d::{Geom2dBSplineCurve, Geom2dCurve, Geom2dOffsetCurve};
+use crate::geom2d_adaptor::knot_continuity::{self, KnotSpans, interval_order, offset_basis_shape};
+use martensite_tkernel::ncollection::Array1;
+use martensite_tkernel::precision;
+use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkmath::bsplclib;
+use martensite_tkmath::geom_abs::Shape;
+
+/// `Continuity`; a no-such-object failure for an unknown curve kind or a C0 offset basis;
+/// `continuity(&state)?`.
+pub(super) fn continuity(state: &AdaptorState) -> Result<Shape, Failure> {
+    match &state.data {
+        CurveData::BSpline(data) => bspline_continuity(&data.curve, state.first, state.last),
+        CurveData::Offset(_) => offset_continuity(state),
+        CurveData::None => Err(no_such_object("Geom2dAdaptor_Curve::Continuity")),
+        _ => Ok(Shape::CN),
+    }
+}
+
+// An offset loses one order: C1 becomes C0; G1 and G2 stay, C0 has no continuity.
+fn offset_continuity(state: &AdaptorState) -> Result<Shape, Failure> {
+    let offset_curve: Handle<Geom2dOffsetCurve> = state.curve.cast();
+    knot_continuity::offset_continuity(offset_curve.basis_curve_continuity(), "Geom2dAdaptor_Curve")
+}
+
+/// `LocalContinuity` over the knots of `curve`; `bspline_continuity(&curve, 0.0, 1.0)?`.
+fn bspline_continuity(curve: &Geom2dBSplineCurve, u1: f64, u2: f64) -> Result<Shape, Failure> {
+    let (knots, mults) = (curve.knots(), curve.multiplicities());
+    let spans = KnotSpans {
+        knots: &knots,
+        mults: &mults,
+        degree: curve.degree(),
+        periodic: curve.is_periodic(),
+    };
+    knot_continuity::local_continuity(&spans, u1, u2)
+}
+
+// Whether a B-spline answers one interval: non-periodic and already `shape` over the
+// range, or `shape` is C0.
+fn bspline_single(state: &AdaptorState, data: &BSplineData, shape: Shape) -> Result<bool, Failure> {
+    Ok((!data.curve.is_periodic() && shape <= continuity(state)?) || shape == Shape::C0)
+}
+
+// The bsplclib::intervals request of a B-spline: continuity order and knot tolerance.
+fn bspline_order(
+    state: &AdaptorState,
+    data: &BSplineData,
+    shape: Shape,
+    member: &str,
+) -> Result<(i32, f64), Failure> {
+    let order: i32 = interval_order(shape, data.curve.degree(), "Geom2dAdaptor_Curve", member)?;
+    let tolerance: f64 = resolution(state, precision::confusion())?.min(precision::p_confusion());
+    Ok((order, tolerance))
+}
+
+fn bspline_intervals(
+    state: &AdaptorState,
+    data: &BSplineData,
+    shape: Shape,
+    out: Option<&mut Array1<'_, f64>>,
+    member: &str,
+) -> Result<i32, Failure> {
+    let (order, tolerance) = bspline_order(state, data, shape, member)?;
+    let curve: &Geom2dBSplineCurve = &data.curve;
+    let (knots, mults) = (curve.knots(), curve.multiplicities());
+    bsplclib::intervals(
+        &knots,
+        &mults,
+        curve.degree(),
+        curve.is_periodic(),
+        order,
+        state.first,
+        state.last,
+        tolerance,
+        out,
+    )
+}
+
+// A temporary adaptor on the offset basis over the same range.
+fn offset_basis_adaptor(state: &AdaptorState) -> Result<Geom2dAdaptorCurve, Failure> {
+    let basis: Handle<dyn Geom2dCurve> = state.curve.cast::<Geom2dOffsetCurve>().basis_curve();
+    Geom2dAdaptorCurve::with_range(&basis, state.first, state.last)
+}
+
+/// `NbIntervals`; a domain-error failure for G1/G2 on a B-spline or an offset;
+/// `nb_intervals(&state, Shape::C2)?`.
+pub(super) fn nb_intervals(state: &AdaptorState, shape: Shape) -> Result<i32, Failure> {
+    match &state.data {
+        CurveData::BSpline(data) => {
+            if bspline_single(state, data, shape)? {
+                return Ok(1);
+            }
+            bspline_intervals(state, data, shape, None, "NbIntervals")
+        }
+        CurveData::Offset(_) => {
+            let basis_shape: Shape = offset_basis_shape(shape)?;
+            offset_basis_adaptor(state)?.nb_intervals(basis_shape)
+        }
+        _ => Ok(1),
+    }
+}
+
+/// `Intervals`: `out` gets `NbIntervals + 1` bounds from its lower index, the first
+/// and last being the adaptor bounds; `intervals(&state, &mut out, Shape::C2)?`.
+pub(super) fn intervals(
+    state: &AdaptorState,
+    out: &mut Array1<'_, f64>,
+    shape: Shape,
+) -> Result<(), Failure> {
+    match &state.data {
+        CurveData::BSpline(data) if !bspline_single(state, data, shape)? => {
+            bspline_intervals(state, data, shape, Some(out), "Intervals").map(|_| ())
+        }
+        CurveData::Offset(_) => {
+            let basis_shape: Shape = offset_basis_shape(shape)?;
+            let adaptor: Geom2dAdaptorCurve = offset_basis_adaptor(state)?;
+            let count: i32 = adaptor.nb_intervals(basis_shape)?;
+            adaptor.intervals(out, basis_shape)?;
+            let lower: i32 = out.lower();
+            out.set_value(lower, state.first).map_err(array_bounds)?;
+            out.set_value(lower + count, state.last)
+                .map_err(array_bounds)
+        }
+        _ => {
+            let lower: i32 = out.lower();
+            out.set_value(lower, state.first).map_err(array_bounds)?;
+            out.set_value(lower + 1, state.last).map_err(array_bounds)
+        }
+    }
+}
