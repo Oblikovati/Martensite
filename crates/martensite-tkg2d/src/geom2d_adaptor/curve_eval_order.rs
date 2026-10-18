@@ -219,6 +219,13 @@ impl EvalOrder for EvalD3 {
 mod low_level_failure_contracts {
     use super::{EvalD0, EvalD1, EvalD2, EvalD3, EvalOrder};
 
+    const CATEGORIES: [&str; 4] = [
+        "Geom2d_UndefinedValue",
+        "Geom2d_UndefinedDerivative",
+        "Geom2d_UndefinedDerivative",
+        "Geom2d_UndefinedDerivative",
+    ];
+
     #[test]
     fn undefined_offset_failures_keep_their_exact_categories_and_messages() {
         let failures = [
@@ -227,13 +234,7 @@ mod low_level_failure_contracts {
             EvalD2::failure(),
             EvalD3::failure(),
         ];
-        let categories = [
-            "Geom2d_UndefinedValue",
-            "Geom2d_UndefinedDerivative",
-            "Geom2d_UndefinedDerivative",
-            "Geom2d_UndefinedDerivative",
-        ];
-        for (order, (failure, category)) in failures.iter().zip(categories).enumerate() {
+        for (order, (failure, category)) in failures.iter().zip(CATEGORIES).enumerate() {
             assert_eq!(failure.exception_type(), category);
             assert_eq!(
                 failure.message(),
