@@ -1,0 +1,52 @@
+[package]
+autotests = false
+name = "martensite-tkgeombase"
+version = "0.3.1"
+description = "Martensite geometric construction, approximation, bounds and analysis."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.1" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.1" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.1" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.1" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.1" }
+
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+[[test]]
+name = "finite_element_reference_cache"
+path = "tests/finite_element_reference_cache.rs"
+
+[[test]]
+name = "fit_constraints_reference_cache"
+path = "tests/fit_constraints_reference_cache.rs"
+
+[[test]]
+name = "finite_element_corpus_replay"
+path = "tests/finite_element_corpus_replay.rs"
+
+[[test]]
+name = "polynomial_arithmetic_corpus_replay"
+path = "tests/polynomial_arithmetic_corpus_replay.rs"
+
+[[test]]
+name = "bivariate_retained_corpus"
+path = "tests/bivariate_retained_corpus.rs"
+
+[[test]]
+name = "geometry_text_corpus_replay"
+path = "tests/geometry_text_corpus_replay.rs"
+
+[[test]]
+name = "bivariate_output_capacity"
+path = "tests/bivariate_output_capacity.rs"

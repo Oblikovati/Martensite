@@ -1,0 +1,85 @@
+//! Gcpnts quasi uniform deflection contracts.
+#![allow(non_snake_case)]
+mod common;
+use common::prelude::*;
+use martensite_tkgeombase::gcpnts::QuasiUniformDeflection as GCPnts_QuasiUniformDeflection;
+use martensite_tkmath::geom_abs::Shape;
+
+fn makeOCC33828Curve() -> Handle<GeomBSplineCurve> {
+    let mut aKnots: Array1<'static, f64> = Array1::with_bounds(1, 7).unwrap();
+    aKnots[1] = 0.0;
+    aKnots[2] = 0.17;
+    aKnots[3] = 0.33;
+    aKnots[4] = 0.5;
+    aKnots[5] = 0.67;
+    aKnots[6] = 0.83;
+    aKnots[7] = 1.0;
+
+    let mut aMultiplicities: Array1<'static, i32> = Array1::with_bounds(1, 7).unwrap();
+    aMultiplicities[1] = 4;
+    aMultiplicities[2] = 2;
+    aMultiplicities[3] = 2;
+    aMultiplicities[4] = 2;
+    aMultiplicities[5] = 2;
+    aMultiplicities[6] = 2;
+    aMultiplicities[7] = 4;
+
+    let aPoleCoordinates: [[f64; 3]; 14] = [
+        [0.163, 0.233, 0.0],
+        [0.158, 0.204, 0.0],
+        [0.139, 0.180, 0.0],
+        [0.086, 0.159, 0.0],
+        [0.055, 0.163, 0.0],
+        [0.009, 0.196, 0.0],
+        [-0.004, 0.225, 0.0],
+        [0.002, 0.281, 0.0],
+        [0.019, 0.307, 0.0],
+        [0.070, 0.332, 0.0],
+        [0.101, 0.331, 0.0],
+        [0.149, 0.301, 0.0],
+        [0.164, 0.274, 0.0],
+        [0.163, 0.246, 0.0],
+    ];
+
+    let mut aPoles: Array1<'static, Point3> = Array1::with_bounds(1, 14).unwrap();
+    for anIndex in 0..14 {
+        aPoles[anIndex + 1] = Point3::new(
+            aPoleCoordinates[anIndex as usize][0],
+            aPoleCoordinates[anIndex as usize][1],
+            aPoleCoordinates[anIndex as usize][2],
+        );
+    }
+
+    Handle::new(GeomBSplineCurve::new(&aPoles, &aKnots, &aMultiplicities, 3, false).unwrap())
+}
+
+fn checkOCC33828Deflection(
+    theCurve: &GeomAdaptorCurve,
+    theDeflection: f64,
+    theExpectedNbPoints: i32,
+) {
+    let anAlgo =
+        GCPnts_QuasiUniformDeflection::with_curve(theCurve, theDeflection, Shape::C1).unwrap();
+    assert!(anAlgo.is_done());
+    assert_eq!(anAlgo.nb_points().unwrap(), theExpectedNbPoints);
+    EXPECT_LE(anAlgo.deflection().unwrap(), theDeflection);
+}
+
+// Migrated from tests/the regression fixture Small changes in requested
+// deflection must produce the stable point counts recorded by the geometry command test.
+#[test]
+fn pnts_quasi_uniform_deflection_mod_data_stable_point_counts() {
+    let aCurve: Handle<GeomBSplineCurve> = makeOCC33828Curve();
+    let anAdaptor = GeomAdaptorCurve::with_curve(&aCurve.cast()).unwrap();
+
+    checkOCC33828Deflection(&anAdaptor, 0.5, 2);
+    checkOCC33828Deflection(&anAdaptor, 0.1, 3);
+    checkOCC33828Deflection(&anAdaptor, 0.05, 5);
+    checkOCC33828Deflection(&anAdaptor, 0.025, 5);
+    checkOCC33828Deflection(&anAdaptor, 0.007, 9);
+    checkOCC33828Deflection(&anAdaptor, 0.005, 17);
+    checkOCC33828Deflection(&anAdaptor, 0.0005, 33);
+    checkOCC33828Deflection(&anAdaptor, 0.0003, 65);
+    checkOCC33828Deflection(&anAdaptor, 0.0002, 65);
+    checkOCC33828Deflection(&anAdaptor, 0.0001, 73);
+}

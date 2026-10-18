@@ -1,0 +1,144 @@
+{
+  "source_revision": "470cb9eda443f0e45b9ef89825eeefabda3096f5",
+  "native_source_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "full_original_generator": {
+    "bytes": 15817430,
+    "sha256": "8882e4abe7fc2066465e074b5fe0818379cbcc3d1326e21e8b114f0b4c243057"
+  },
+  "full_original_requests": 45635,
+  "full_families": 328,
+  "owned_families": 24,
+  "owned_requests": 2540,
+  "remaining_families": 304,
+  "remaining_requests": 43095,
+  "selected_inputs": {
+    "bytes": 340614,
+    "sha256": "1b51c77dc8a6dc6f9aedfcdfdd6987496324c1257c8845621cff0aef946b5ea2"
+  },
+  "native_expected": {
+    "bytes": 701539,
+    "sha256": "31e44f42517efb4cd1864cab5bdab7616022645062619f0696d12b15729d151e"
+  },
+  "expected_origin": "Fresh capture from unchanged pinned native C++ construction probe functions; old raw45635answercache absent. This is not a replay or verification of historical full native output hash9b11ceb9... .",
+  "historical_receipt": "docs/evidence/toolkit-migration-readiness-2026-10-16/TKGeomBase-numeric-report.json",
+  "original_generator_input_hash_matches_historical": true,
+  "native_capture_before_refactor": true,
+  "native_processes_byte_identical": 2,
+  "pre_extraction_rust_processes_byte_identical": 2,
+  "comparison_policy": "Original exact finite/infinity/signed-zero bits, exception names/text/whitespace; decimal NaN classification with original word boundaries.",
+  "fixture_files": {
+    "inputs-00.txt": {
+      "bytes": 36551,
+      "sha256": "dc37c1cc1ef24f777de0fc4a0cc14faf45a95dd04b3cb31c59bba666ba818313"
+    },
+    "inputs-01.txt": {
+      "bytes": 32127,
+      "sha256": "19107403025d3b31f0fb982075dfc4dd9925d21e5bec92b7a3ee9fffd85eca4d"
+    },
+    "inputs-02.txt": {
+      "bytes": 44973,
+      "sha256": "73d02d67bcb615c61334ef30ac02912a1a0ac7fcffff8ece061ed70fed453877"
+    },
+    "inputs-03.txt": {
+      "bytes": 41927,
+      "sha256": "c50eb6df94d0eb239efaedbd37ec6aa3155b3e784a4c01eda8f23f784421e085"
+    },
+    "inputs-04.txt": {
+      "bytes": 36647,
+      "sha256": "3ba36c84fdeccd2481f6e082a5b3c3a0838b952b4737e1efe5c0b3881ee5e10a"
+    },
+    "inputs-05.txt": {
+      "bytes": 41140,
+      "sha256": "f2246378216b40c17bf17bb68d0d474cc03977a6329a83efc58c346fe2b47781"
+    },
+    "inputs-06.txt": {
+      "bytes": 25547,
+      "sha256": "2771fb7e34210f7e9935f3483c9f8d6aac803023e90e8f99b8dc53a444a56704"
+    },
+    "inputs-07.txt": {
+      "bytes": 30400,
+      "sha256": "a353cac94060d93a4cf1a2b9b0baefbcf7a35527549b129a94c77ea686543c8b"
+    },
+    "inputs-08.txt": {
+      "bytes": 24723,
+      "sha256": "179e7bbb0e8f90d130f67b15a1f926915a599d6955c232f5b15c9f9c0a915cf6"
+    },
+    "inputs-09.txt": {
+      "bytes": 26579,
+      "sha256": "7ff594e146a4039b1bc6ba8df655d327ab4ea5091de059d6380ca06999c6ccac"
+    },
+    "native-00.txt": {
+      "bytes": 72366,
+      "sha256": "b895b89164f0900ca140022e1d1d286678a9944dffc777a08fc1316703fd93e8"
+    },
+    "native-01.txt": {
+      "bytes": 62604,
+      "sha256": "102a28a8f9cddb4ce15e77507e8e57cf56f916881c6b249873f83a0b5a2d7c8e"
+    },
+    "native-02.txt": {
+      "bytes": 85764,
+      "sha256": "0fbf7386160f48c4d4e21f2ba7e12877764357074ac29ab18a86b4ef105ece86"
+    },
+    "native-03.txt": {
+      "bytes": 79458,
+      "sha256": "eb22d49cb02a346521dbc3e241b5b0f2a69474cff0a265c6174d5617df1fc67c"
+    },
+    "native-04.txt": {
+      "bytes": 92358,
+      "sha256": "737933452adbe0a4020ba56698d75ac1c5d97e246155784ec6c80dfe2e1841fc"
+    },
+    "native-05.txt": {
+      "bytes": 89164,
+      "sha256": "93d263236208f9ade6c672859ccfebc25f3eb630d2ab0c96cefca2508c55802f"
+    },
+    "native-06.txt": {
+      "bytes": 44169,
+      "sha256": "777ef5817e445ad6375dcd728f85ee25e5476dac6d43a0190778858fecc8fa04"
+    },
+    "native-07.txt": {
+      "bytes": 53147,
+      "sha256": "71cbb2f821c7550730c03e54ab32091f6a7036d99fbcbbe76c64507430518223"
+    },
+    "native-08.txt": {
+      "bytes": 48026,
+      "sha256": "5d36d66f6b22e16ca55b857ba920d12380c0d1f709ab989ba21def5ba11de245"
+    },
+    "native-09.txt": {
+      "bytes": 74483,
+      "sha256": "b20b5b6f21907c6c29876fa51026c87702e03bde1d2a397686ae7fd2746030f7"
+    }
+  },
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/numeric_probe_runner.py": {
+      "bytes": 3812,
+      "sha256": "df6a34d0e25e4b8b6aed6727c846dadf79dabb1ff5f42d241de32af648544a17"
+    },
+    "tools/probe_shards.py": {
+      "bytes": 5096,
+      "sha256": "ca562f6174402fc029138603e11d8280ad7a7060139780c127f60b7fc1369ea1"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_gce.cxx": {
+      "bytes": 13951,
+      "sha256": "05f54f6d8e48d65e94ae5b54fbefb7502d842c13bd679132ad18d9febaf91fe0"
+    }
+  },
+  "algorithms_changed": false,
+  "tolerances_or_exception_policies_changed": false,
+  "new_exclusions_or_declaration_mapping_changes": 0
+}

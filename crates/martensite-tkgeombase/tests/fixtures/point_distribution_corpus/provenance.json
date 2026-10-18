@@ -1,0 +1,178 @@
+{
+  "source_revision": "2dda3cfa2095d17768eec037bf3aa053e9f6cccf",
+  "native_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "new_complete_families": {
+    "gcp_length": 192,
+    "cpnts_abscissa": 608,
+    "gcp_abscissa": 640,
+    "cpnts_udefl": 256,
+    "gcp_uabs": 32,
+    "gcp_quabs": 32,
+    "gcp_udefl": 35,
+    "gcp_qudefl": 35,
+    "gcp_tdefl": 32,
+    "gcp_dist": 96,
+    "gcp_arc_step": 252
+  },
+  "new_requests": 2210,
+  "new_families": 11,
+  "cumulative_owned_requests": 23635,
+  "cumulative_owned_families": 100,
+  "full_original_requests": 45635,
+  "full_original_families": 328,
+  "remaining_requests": 22000,
+  "remaining_families": 228,
+  "inputs": {
+    "bytes": 245842,
+    "sha256": "377b03f95993fa1381cd35b58dd9c951ef55aa028d1bd0ac39ba0855f5f01c47"
+  },
+  "native_expected": {
+    "bytes": 2595001,
+    "sha256": "f33d7c45953e18130e97eefec267ed918d2460e7aa1ca2704649bfb89a06f068"
+  },
+  "expected_origin": "Fresh pinned native capture before CPnts/GCPnts edits; historical full answer cache unavailable, no Rust-derived legacy expectations.",
+  "comparison_policy": "Exact finite/infinity/signed-zero bits, exception/text/whitespace; original decimal NaN classification and word boundaries.",
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/tkgeombase_corpus_lprop.py": {
+      "bytes": 12860,
+      "sha256": "fbd03c2be24eaaeea420517b650d0031d880527e4ba8a20578d994250fd2575b"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_lprop.cxx": {
+      "bytes": 8545,
+      "sha256": "cc1ea54964f4e502989c9306bdb3bb6bc855cfdc23f54736840c08da301095d7"
+    },
+    "tools/oracle/tkgeombase_probe_lprop_build.cxx": {
+      "bytes": 5563,
+      "sha256": "01be6f919d6869b0cb531f633563262e886b74f05c8279a99f5fe32c8bf6285e"
+    },
+    "tools/oracle/tkgeombase_probe_gcpnts.cxx": {
+      "bytes": 12506,
+      "sha256": "7c7ef2df5d180afd3ff10b6a1dab3c854bb89173b95454828248bbc5a88cb50c"
+    }
+  },
+  "fixture_files": {
+    "inputs-01.txt": {
+      "bytes": 21362,
+      "sha256": "fed641203e56748b16642526627ff8989061ba17a81359f45d137b0c933c2f95"
+    },
+    "inputs-07.txt": {
+      "bytes": 36360,
+      "sha256": "569710d189c88f5b9648e4e682b417fe2d58b9849bbcd63dbd94f4955a26b643"
+    },
+    "native-01.txt": {
+      "bytes": 35223,
+      "sha256": "38c1ce3003ae0b62b9c6e4f0800a3b790cccf21c3f5040a38ac0c93e7355b22f"
+    },
+    "inputs-08.txt": {
+      "bytes": 5273,
+      "sha256": "96e59c1ea1311193860fda1da05879167f1620db0a41e51cc954ffee780b082d"
+    },
+    "inputs-06.txt": {
+      "bytes": 46677,
+      "sha256": "67ab0a5f5bdc0043ff6afa9b3fbdd59cba152cdc7dc1afdb9c9da8e97f8b27c7"
+    },
+    "native-02.txt": {
+      "bytes": 33791,
+      "sha256": "b79c06ab60170f59ef2baa7e472c5418dddc56e4b98a2522f2e7675937a26275"
+    },
+    "native-06.txt": {
+      "bytes": 526352,
+      "sha256": "0c574e2b71faba7652971cb88553b8b85ebf8d2e9ca71c4dac5f3facfa1f5a65"
+    },
+    "native-00.txt": {
+      "bytes": 35970,
+      "sha256": "36cd8d34a06f881e7df02e5ae77d28733e951efe7caa19d857ccee62e49c05e8"
+    },
+    "native-03.txt": {
+      "bytes": 34108,
+      "sha256": "12fc7cbc35ca8a8c687a4499080c895c7bb5ba3893113f6d71721ae19382edf7"
+    },
+    "inputs-00.txt": {
+      "bytes": 21928,
+      "sha256": "a9a3435070c3590733055df7a2b87536e5f82a2fb6cc5aae128d3d6296700b9b"
+    },
+    "inputs-03.txt": {
+      "bytes": 35496,
+      "sha256": "c693566c11cfb69533b922ccd4cd05a1b2aec5ca2d4c46f75065a5eb570cab1b"
+    },
+    "inputs-04.txt": {
+      "bytes": 30048,
+      "sha256": "679c379cb2b729fae86c873f4f212c2f68befafa7ac09429bc3a302db3d4e9ce"
+    },
+    "inputs-02.txt": {
+      "bytes": 23272,
+      "sha256": "2a817179c548cb51b2da196f875e02319856c12253884033f5d3e33d2bb4daeb"
+    },
+    "native-08.txt": {
+      "bytes": 3402,
+      "sha256": "5e5b888bc5c88795b3f5278c2f0ea3f68cef1212bff70ad2bea20a0d200fe195"
+    },
+    "inputs-05.txt": {
+      "bytes": 25426,
+      "sha256": "355d7bd00bd06ef0ed10e4452adfdb2fe4f000f70afc37edfe235a6b12330b4d"
+    },
+    "native-07.txt": {
+      "bytes": 1741913,
+      "sha256": "f1bd24e0c16a4d17aa5791aab477216f4f4100d2a01b622f7ff1092d2c52ad52"
+    },
+    "native-04.txt": {
+      "bytes": 34977,
+      "sha256": "3ce7e9188436e9da55f70706aff829b8ba9b8e597fecf2ede6186ed11183da8c"
+    },
+    "native-05.txt": {
+      "bytes": 149265,
+      "sha256": "c896b619dd7e675e307ef88cb5572cb69579688082857c14337aab0d56596dfa"
+    }
+  },
+  "production_algorithm_changes": 0,
+  "new_legacy_declaration_mappings": 0,
+  "new_exclusions": 0,
+  "tolerance_changes": 0,
+  "checks": {
+    "all_targets": {
+      "passed": 1366,
+      "failed": 0,
+      "ignored": 0,
+      "library": 68,
+      "toolkit": 1290,
+      "separate_reference_cache_tests": 2,
+      "numeric_example": 6
+    },
+    "doctests": {
+      "passed": 66,
+      "failed": 0,
+      "ignored_preexisting": 19
+    },
+    "focused_cumulative_corpus_tests": 126,
+    "new_distinct_test_functions": 14,
+    "strict_all_target_clippy": "passed",
+    "format_and_diff_check": "passed",
+    "package_local_static_test_references": 356,
+    "required_owned_packaged_files": 246,
+    "native_processes_byte_identical": 2,
+    "pre_extraction_cli_processes_match_native": 2,
+    "extracted_cli_processes_match_native": 2,
+    "native_original64shard_positions_match": true,
+    "prior_native_requests_preserved": 21425,
+    "prior_native_requests_profile": "debug",
+    "new_cli_process_profile": "release",
+    "prior_gprop_release_different_rows": 14,
+    "prior_gprop_release_parity": "unresolved supplemental check"
+  }
+}

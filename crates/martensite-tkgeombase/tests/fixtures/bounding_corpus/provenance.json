@@ -1,0 +1,576 @@
+{
+  "source_revision": "310684bd0d740e0dbd0511ee3899dd108374e26f",
+  "native_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "new_complete_families": {
+    "bnd_curve3d": 3337,
+    "bnd_curve2d": 4186,
+    "bnd_surface": 2470,
+    "bnd_gp": 4978,
+    "bnd_helpers": 227
+  },
+  "new_requests": 15198,
+  "new_families": 5,
+  "cumulative_owned_requests": 21425,
+  "cumulative_owned_families": 89,
+  "full_original_requests": 45635,
+  "full_original_families": 328,
+  "remaining_requests": 24210,
+  "remaining_families": 239,
+  "inputs": {
+    "bytes": 1998698,
+    "sha256": "b692855d508c2bc4b7f57f67c41126cbac1046d9026a17dc8bbfc2239248ef65"
+  },
+  "native_expected": {
+    "bytes": 1884280,
+    "sha256": "db85a0465360ec5b0c9e515b8440477dbbc7d3d8254c9107ab94ec96a2966fca"
+  },
+  "expected_origin": "Fresh pinned native capture before BndLib edits; historical full answer cache unavailable, no Rust-derived legacy expectations.",
+  "comparison_policy": "Exact finite/infinity/signed-zero bits, exception/text/whitespace; original decimal NaN classification and word boundaries.",
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/tkgeombase_corpus_lprop.py": {
+      "bytes": 12860,
+      "sha256": "fbd03c2be24eaaeea420517b650d0031d880527e4ba8a20578d994250fd2575b"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_lprop.cxx": {
+      "bytes": 8545,
+      "sha256": "cc1ea54964f4e502989c9306bdb3bb6bc855cfdc23f54736840c08da301095d7"
+    },
+    "tools/oracle/tkgeombase_probe_lprop_build.cxx": {
+      "bytes": 5563,
+      "sha256": "01be6f919d6869b0cb531f633563262e886b74f05c8279a99f5fe32c8bf6285e"
+    },
+    "tools/oracle/tkgeombase_probe_bndlib.cxx": {
+      "bytes": 14322,
+      "sha256": "6e72bcceb39d5e3aed6afff701f7e5b85f7f8a0f3788158cee0a12115cea15f7"
+    }
+  },
+  "fixture_files": {
+    "inputs-01.txt": {
+      "bytes": 53760,
+      "sha256": "596845a28c442f63ed68950d33564f4d03bb1427f63fbb19d0bf9909de61a3f7"
+    },
+    "inputs-37.txt": {
+      "bytes": 86782,
+      "sha256": "f688f13bf755c746502125d7511e1694d944235f9caa6d06131466c2d45ad438"
+    },
+    "inputs-21.txt": {
+      "bytes": 22876,
+      "sha256": "cdb0459c9a7e0361b3ea848e4a597045d8cb1c30601313f2ea9beb48d0537eb7"
+    },
+    "inputs-33.txt": {
+      "bytes": 100351,
+      "sha256": "099856d48c501852458762e0cd28a932cdedcc878e2536842ae9dd183ba249fc"
+    },
+    "inputs-16.txt": {
+      "bytes": 30849,
+      "sha256": "9e3452a5d5f01944088a95d9d277f3442e766287aa33de5f87069a71bf39954b"
+    },
+    "inputs-57.txt": {
+      "bytes": 23461,
+      "sha256": "aca195b48b4673998642d17be434e18bf7b1aaec734983620e7c2341af8ba533"
+    },
+    "inputs-13.txt": {
+      "bytes": 28394,
+      "sha256": "8cf5fd960e91ed8fbf0f6fc21d350581176b4f76e5c32120fa72865cbc0cdef0"
+    },
+    "native-28.txt": {
+      "bytes": 26796,
+      "sha256": "67ea28356233cd128a3b6a65e5c932f518359ac7666a9c59f5bdc65811b7e788"
+    },
+    "native-50.txt": {
+      "bytes": 24019,
+      "sha256": "16b166b68e0b9d7fbd2b14ec9e02fd22c4d32b3ff7ec6867bd812a53e4ab00ed"
+    },
+    "native-09.txt": {
+      "bytes": 38183,
+      "sha256": "466dfd0757456698522245cf2ebc631f096cf9033ad9b3fd98b0f74a151caaea"
+    },
+    "inputs-29.txt": {
+      "bytes": 72726,
+      "sha256": "5313bd81024ea16fcf4a88c82de1f78901c95e840e79ebdd507ea063f7b5608a"
+    },
+    "inputs-30.txt": {
+      "bytes": 108568,
+      "sha256": "2bb6c8854a58e40601d293cd2700713dd845da30c78e33caf0332491fdd83613"
+    },
+    "inputs-07.txt": {
+      "bytes": 12578,
+      "sha256": "a31bf21827974058629cfee1c1413b85df85b350bab8d7be9d7d1deb1eac15f8"
+    },
+    "inputs-20.txt": {
+      "bytes": 22563,
+      "sha256": "6df447f80bcc4781a03bcba108ee5de974be153df5eb3dbe8a237f5972e3d063"
+    },
+    "native-35.txt": {
+      "bytes": 37556,
+      "sha256": "5b551f39e7f9763c1478fcedc0ae706664cda990f5e94ffe0505eab9ebf612c1"
+    },
+    "native-24.txt": {
+      "bytes": 27619,
+      "sha256": "ced63d5c9de29b9db5a340c7132384e8026ec86e573867aeb28cc32044e19fa4"
+    },
+    "native-48.txt": {
+      "bytes": 27214,
+      "sha256": "8f1ce1ec34e79be8b4b2edfa23403a8838be8922229f7311f5b44fcb5cd7340a"
+    },
+    "native-58.txt": {
+      "bytes": 27905,
+      "sha256": "697ce894ab47964b6b2e1977d47d0526597d9e7027780cd1fb3164e599d81ed8"
+    },
+    "native-29.txt": {
+      "bytes": 34416,
+      "sha256": "c23c4003aaaa8e6451c7d010c47d6845953e607231350b4074b76edb66c84a1f"
+    },
+    "inputs-26.txt": {
+      "bytes": 19104,
+      "sha256": "0b61412cd460fab6397d37fe8aeb3c057a9d5eace382459650ab04f1719890d6"
+    },
+    "inputs-28.txt": {
+      "bytes": 17467,
+      "sha256": "513fdc35a261772b9d33b0127f47ce16a8621cb330bb95c36a8e9fd10dc37413"
+    },
+    "native-13.txt": {
+      "bytes": 26725,
+      "sha256": "1c8dfbddb07a5ed8d404359d04a31e3f2bf32879bd43b9b0243f3cc1a274b9ea"
+    },
+    "inputs-55.txt": {
+      "bytes": 21716,
+      "sha256": "04ab384c608f860b5e0bd79c96bce3ff5486f81d1805e61561130ebbbc54c017"
+    },
+    "inputs-42.txt": {
+      "bytes": 16025,
+      "sha256": "2f5c4bf9a6c8bb4f93ec30ec12dff9b31f7bb336bea535644547b349953314cb"
+    },
+    "native-01.txt": {
+      "bytes": 38400,
+      "sha256": "ea6779a642f0296433a97d35b108008e8f6d4015a01c4bad0e1e5910963977cc"
+    },
+    "native-17.txt": {
+      "bytes": 25776,
+      "sha256": "4187f79afd2981bc2fd1f7d449fcd47c0a3ad7817283f84d199c9e782a5e6380"
+    },
+    "native-56.txt": {
+      "bytes": 33572,
+      "sha256": "d4e5034a2df7ae361ab10e9bcbfe4d5e6088f5825908d0c6610d7e5cd37ba8a8"
+    },
+    "native-42.txt": {
+      "bytes": 32606,
+      "sha256": "4c65d3298d85fef7d4bc8dfea0471bcacdf8b5698afe455474d9dfbadfd11de5"
+    },
+    "native-43.txt": {
+      "bytes": 29425,
+      "sha256": "057eb2a4623551efc14d971712dedcebf698d9df206fecd27dfa4c138bedb416"
+    },
+    "inputs-56.txt": {
+      "bytes": 22838,
+      "sha256": "7454fa735e1b642d63dc40f1043e287da37df981e65e5f8b7535c8064dc1d5e7"
+    },
+    "native-53.txt": {
+      "bytes": 34511,
+      "sha256": "f94fd733e9fceef14bb8938d92fee87f131df64bd8ba8a345365a68d75c0d02b"
+    },
+    "inputs-27.txt": {
+      "bytes": 20609,
+      "sha256": "cb13bd24084e1d458c73b13cd88e0a7fa20a88ac56b96dae92ebf164ae399eb1"
+    },
+    "inputs-08.txt": {
+      "bytes": 17113,
+      "sha256": "5c0a67233532d0c5f9a2f91d2606f2b229c05d05ce6589d79b43f40f5bbdc0c2"
+    },
+    "inputs-22.txt": {
+      "bytes": 26301,
+      "sha256": "21cdfd0349b21e391b8dc6beb63f1e7f34b85218d6a4b295745ddeee81193534"
+    },
+    "inputs-41.txt": {
+      "bytes": 16041,
+      "sha256": "3b32c40663e20311bfa05345d4a2c48069928f7ccb921f99fe0601641fdd2ee4"
+    },
+    "native-40.txt": {
+      "bytes": 26690,
+      "sha256": "7fa6de00b7f20a1b98a85e4d32c537a85bb235266fc072eaf29f6812a385306a"
+    },
+    "native-57.txt": {
+      "bytes": 35592,
+      "sha256": "715e2748c35ddf0d7c411f82d044f944ff184e8ba26e6a73307d56f33a2afc22"
+    },
+    "native-21.txt": {
+      "bytes": 27851,
+      "sha256": "296c144bab8312d0bbc87fb4b176b71a2a5e6b8646aca606e4503c00b6f99f95"
+    },
+    "native-33.txt": {
+      "bytes": 39220,
+      "sha256": "acc2f44bbe904fa15677c596a1922d235ea72433f595545e99e68fa980cbaa36"
+    },
+    "native-12.txt": {
+      "bytes": 35832,
+      "sha256": "2acdd6e343126d25d31283eba946c9c8865db753e484ee10a2e931bf203de5ec"
+    },
+    "native-47.txt": {
+      "bytes": 24358,
+      "sha256": "6952a0d58014ecb061c5a86e6e245286ea51e4ba1194553c0262818189da3fb4"
+    },
+    "inputs-12.txt": {
+      "bytes": 18584,
+      "sha256": "b021f174d772bebf94412f1a6611a60c300b3f334eb9b35e4f941b0f2b0e401e"
+    },
+    "inputs-31.txt": {
+      "bytes": 99425,
+      "sha256": "fb9c870b7cbd28c4417f106e77060f35f793dd1c32a8877a142df343a48fc609"
+    },
+    "native-23.txt": {
+      "bytes": 28298,
+      "sha256": "fc4e59aa3dc0342e81fac9e7f33e8d46bb5d68879cc566df66d37d3e4ac15425"
+    },
+    "inputs-43.txt": {
+      "bytes": 15806,
+      "sha256": "f03e75d8bd276e9d5b5f33281510c21aa7b4d276c8680c1d62f59ba9dcf51dff"
+    },
+    "inputs-06.txt": {
+      "bytes": 25099,
+      "sha256": "317d87a404989fc00a119af46d35bd1693efed3ada6ced78b5365050a92b9393"
+    },
+    "native-02.txt": {
+      "bytes": 35252,
+      "sha256": "847c54ed4c07287180e3071e7e7d36176cef94fe253c399fdeb98878f47edc75"
+    },
+    "native-06.txt": {
+      "bytes": 36262,
+      "sha256": "8ab0513ea1b7d14fd9a4a19185ff5de365bd7f7960f6b47a49c25ab29d882b2a"
+    },
+    "native-20.txt": {
+      "bytes": 27719,
+      "sha256": "847fe47ccb8b341e9691552bad92a63edef3b3621e547845fab0ef5f8b4b4153"
+    },
+    "inputs-45.txt": {
+      "bytes": 14046,
+      "sha256": "169967cc40057abfd28e11630adfb994268288e7df7a9eaf2d0f15ae65ce15d8"
+    },
+    "native-45.txt": {
+      "bytes": 28906,
+      "sha256": "b66dac136349ddb13356c504729fdaf0fb02098bd6abc4453292c2f16b6fee08"
+    },
+    "native-30.txt": {
+      "bytes": 37871,
+      "sha256": "2d5cfd10cc99d9d7a398e601dea33a9a7edd06eae30f790d4d167b16645538fc"
+    },
+    "native-00.txt": {
+      "bytes": 36503,
+      "sha256": "84dab33f64f83b6542e5e05a9113f059929335a9256f5e0e5bbda779a4bef960"
+    },
+    "inputs-50.txt": {
+      "bytes": 15265,
+      "sha256": "345646faac18284e5481cc2e5697cc08ff9072bd8de4c14f86b2abc653c64c9f"
+    },
+    "inputs-19.txt": {
+      "bytes": 13884,
+      "sha256": "87dc8b49bc0ffeb433a16e2e669d717ba5ebeec1ad52386a54a137eb034656d9"
+    },
+    "native-16.txt": {
+      "bytes": 25836,
+      "sha256": "4ad27e8b870f2de0bce3c4755b3939f67b3fecded83f9dfebea2e5e3ef9dad96"
+    },
+    "inputs-32.txt": {
+      "bytes": 82311,
+      "sha256": "53d088a27dae45ba4c8043ca9128a1163e3a623e2e347e01b326aa9743fd2497"
+    },
+    "inputs-38.txt": {
+      "bytes": 67530,
+      "sha256": "fd5ada349231198d2497a645b6c500e58b7574973f7766fe3d9655bdedf0151b"
+    },
+    "native-54.txt": {
+      "bytes": 33039,
+      "sha256": "ce5e90cba8b97add2de7736492ab42bd9c060c16003378b6dba74002bae5dc5b"
+    },
+    "native-26.txt": {
+      "bytes": 26092,
+      "sha256": "4387fbeed51efe1a05d64b5214ec5d0e3272f7c563132bca2e58ec30aa33f86d"
+    },
+    "inputs-52.txt": {
+      "bytes": 18993,
+      "sha256": "87a2deb973f91a219ccad4e614cfe8641e1977e5e7e78e109068fb495fb501a4"
+    },
+    "inputs-47.txt": {
+      "bytes": 14449,
+      "sha256": "039f8aa212bd4fe2b7403026be7c5b5d7aa48d469b4108e87bcda6dc626329b3"
+    },
+    "native-11.txt": {
+      "bytes": 36951,
+      "sha256": "cc3a47ae04a089d1b6ed519dca1548728c9bc9bf608a4508fe83eb4830886aa9"
+    },
+    "inputs-15.txt": {
+      "bytes": 30270,
+      "sha256": "60b27b98673e5b61a0f304f668f6a20466f74c013624135833477b220040d190"
+    },
+    "native-03.txt": {
+      "bytes": 37507,
+      "sha256": "76cdbabea5eed97ffd74ad6e6af0a0d1e2644c18f99954fd8e88ecdc03d8d1de"
+    },
+    "native-39.txt": {
+      "bytes": 32706,
+      "sha256": "b526effa53d9e12ebf61cca2e076313db3df85a4fe6c48a3524b4a90a590e5c3"
+    },
+    "native-22.txt": {
+      "bytes": 27692,
+      "sha256": "efdbc23383ff73fa682d6a37df08e2e8255b4f4e9038cbd398fef2b91e1fb118"
+    },
+    "native-55.txt": {
+      "bytes": 35229,
+      "sha256": "8b3a3a6a212139bd105e55c872c55ca164d529090bc8d6ace5233418e628f044"
+    },
+    "inputs-35.txt": {
+      "bytes": 67458,
+      "sha256": "94e58385b38bb026f3f3391cdadfbcab29d6b33bc0a2196737cbd5854f0c129a"
+    },
+    "inputs-17.txt": {
+      "bytes": 29817,
+      "sha256": "968661744f543815d2d66176340db8df96f70fd2d0ca0111b10897d88346b377"
+    },
+    "inputs-36.txt": {
+      "bytes": 101673,
+      "sha256": "aa9e2a83c506c6beba774f0120652d0f009fe9138e23761e034af3ec142644e7"
+    },
+    "inputs-00.txt": {
+      "bytes": 42177,
+      "sha256": "ffdf3f7a8d7ff04a55b643bacef846912499df64ef9c9a97d1cef35f69e87ebd"
+    },
+    "inputs-03.txt": {
+      "bytes": 23749,
+      "sha256": "635f66217547c19ef91e248d469d9afb59c514d91f2bc6c590145af8f978f930"
+    },
+    "native-18.txt": {
+      "bytes": 27534,
+      "sha256": "07512a0698ff28869ade9899c43d81d9037f18b0f672525f12e056be007d235c"
+    },
+    "native-19.txt": {
+      "bytes": 27702,
+      "sha256": "5b99cb5b9dbe1741869236ea83a317a886d10797c83a2ab300cd2b5c2cc85ef4"
+    },
+    "inputs-59.txt": {
+      "bytes": 11135,
+      "sha256": "ede35d5fe1d2e25b974b18d160ae742005a1521975e32d8559ddec1af734217e"
+    },
+    "inputs-04.txt": {
+      "bytes": 36696,
+      "sha256": "50a862c92e85877d1b1ed7169daf43a7cc0b4b1b2b052c4759710156cd5390f7"
+    },
+    "inputs-02.txt": {
+      "bytes": 53858,
+      "sha256": "ece83cf25f4676b5cf559ca9098cbe3ddad4e7fb37c06a16db7409724e0f1a47"
+    },
+    "native-37.txt": {
+      "bytes": 38960,
+      "sha256": "5af7e52694aaa9ef7878d06d673e6d3620c432fa8a07da084bc9fe57ea78d0f0"
+    },
+    "native-38.txt": {
+      "bytes": 38550,
+      "sha256": "da3ccad06c8dc4a7eee25e9cf685e0b38ff342a53858e977209021765f41418d"
+    },
+    "inputs-18.txt": {
+      "bytes": 14856,
+      "sha256": "5112d66d618a23e5a1e8cf90660a1419c49c39f61e1c7eade5bd878676416a89"
+    },
+    "native-08.txt": {
+      "bytes": 36736,
+      "sha256": "e929801c74ea55d8c9dd9b027f72d9c26b5393cfce06b3362572a487a2ee7a0c"
+    },
+    "inputs-40.txt": {
+      "bytes": 11959,
+      "sha256": "eb30c0cb925a7524e8b4ba206f5c5bba5b82776942ee769d4e6619928e92750b"
+    },
+    "inputs-48.txt": {
+      "bytes": 15281,
+      "sha256": "94bee1c3891b03db909c6091e76114d6b64157852db4c26d68e6ae4a6b770b38"
+    },
+    "native-36.txt": {
+      "bytes": 38277,
+      "sha256": "222b17e7db312f0bfb2d8eef1607485337365d0961c29f24d90f836b129c89fc"
+    },
+    "inputs-09.txt": {
+      "bytes": 35768,
+      "sha256": "59dd17047304a2c46e0201b8821b989a6c8f0796a045c384da5ac1d6834abc98"
+    },
+    "native-49.txt": {
+      "bytes": 31736,
+      "sha256": "2e5ca17cfd9fc70de6b3250dc7e2f0881ddcaa7fb8e2c57ddecaf4253f3522d0"
+    },
+    "native-44.txt": {
+      "bytes": 24610,
+      "sha256": "e3eb426d7626a92b1a380e97e0e541a136b75a1ac17e91661e0c67f84678f66f"
+    },
+    "inputs-23.txt": {
+      "bytes": 28717,
+      "sha256": "b295ef10007aa7a3b734de6490dd848ecb71efadb0dce3740aaeb7e1749d2ba6"
+    },
+    "inputs-34.txt": {
+      "bytes": 69236,
+      "sha256": "b1c898244b7bbdf53d7cec52708e5eba683edfe5f6f66550a5085fcdc024cf8b"
+    },
+    "native-46.txt": {
+      "bytes": 30264,
+      "sha256": "b5a5ccf9a7d506a8350f2e9123bdaf1dfb5b8dfbfbfaa475fd6bd5efdd270876"
+    },
+    "inputs-05.txt": {
+      "bytes": 27696,
+      "sha256": "0cc89adad1fcde96a3ae855ea888dba0ceb4d2fbcf8f7d74bdae321303145a57"
+    },
+    "inputs-10.txt": {
+      "bytes": 14078,
+      "sha256": "fe6379a03925000e1fdf713bd0ebe41ab2add86caebdcfcdc385d3637a5b9ee7"
+    },
+    "native-10.txt": {
+      "bytes": 28277,
+      "sha256": "582700a7a3ae01bf73f9dccd0438b617d524733e939bf407f30f6e19b1e93e67"
+    },
+    "inputs-58.txt": {
+      "bytes": 30121,
+      "sha256": "e82db9094b1f64ab61da01703a267cc37c13fda905b33865034119d27ed6c893"
+    },
+    "inputs-46.txt": {
+      "bytes": 13093,
+      "sha256": "73a92b3e34beb8cb18574d1be975036c0246d008919ed0b48c5c10876bb45001"
+    },
+    "native-14.txt": {
+      "bytes": 26867,
+      "sha256": "a33a94e56395164d1283841da6f080be3ed783085d2838143f9763f13dd96ef5"
+    },
+    "native-32.txt": {
+      "bytes": 39049,
+      "sha256": "9c4d70aa27460f35440d1f6dfaef94ff491ad2b6fea98a2889974544b7e7eca7"
+    },
+    "native-59.txt": {
+      "bytes": 5110,
+      "sha256": "1d99885d2ab7974cda6e897f4869d84f467b1566b95aa10217c783f2a61ec283"
+    },
+    "inputs-53.txt": {
+      "bytes": 18725,
+      "sha256": "ab3b7e17242e114c5d042715916542a1efd3143c04930e62efb98de012777b2e"
+    },
+    "native-52.txt": {
+      "bytes": 32787,
+      "sha256": "83d7b92bcf19d833c0e648e4105f3564b6f7439c71afd6f9194a026d847e4c13"
+    },
+    "native-34.txt": {
+      "bytes": 39216,
+      "sha256": "c360f03f5bb141e5d61d6ab3047e2400d4cc5d1daba778bb479d9eec1667a5ab"
+    },
+    "inputs-49.txt": {
+      "bytes": 17162,
+      "sha256": "b51a6a4130ff2eeb49054ec9dd717fdc2dff55ea8914a8db640449ba2eeaccfb"
+    },
+    "native-51.txt": {
+      "bytes": 26475,
+      "sha256": "a3f38bfde178d2e9e5b6ceb09429ea463b30d51e949bc8c0ecf4fd0fa7fab805"
+    },
+    "native-07.txt": {
+      "bytes": 31974,
+      "sha256": "cdb08dc0fe7bc83a85bdcca88b4fa4e7a0b29eadde3ad1e901b2a529216d74ef"
+    },
+    "native-04.txt": {
+      "bytes": 37350,
+      "sha256": "92fd1b80dddc6c04cde7d5b062f4d01c03ac3082c1f9920ce63cd2581dae1f1a"
+    },
+    "native-31.txt": {
+      "bytes": 39406,
+      "sha256": "49fc0a58e4bce0a75880dde0ef2f407b5a9d354842441df3789ac4d89b0e3f44"
+    },
+    "native-27.txt": {
+      "bytes": 25695,
+      "sha256": "4f5dc6a6188901e97bebd40ad5091a62e9b6d4832c1c8f82c3306b996bbf5074"
+    },
+    "native-15.txt": {
+      "bytes": 27858,
+      "sha256": "0c6822bd90cede29c94f97b57b36e708b441c0a058b11850c5880751f7dc210f"
+    },
+    "native-41.txt": {
+      "bytes": 24473,
+      "sha256": "93800ab9ce4c62b8e1c9aff68d5e9d859538ba409c1dc03755db0c492b23caca"
+    },
+    "native-25.txt": {
+      "bytes": 27698,
+      "sha256": "b3f1acce73fad09440601e00c2df931e0a9bf8769b36ad9cc03a22216bba1513"
+    },
+    "inputs-14.txt": {
+      "bytes": 29382,
+      "sha256": "5c8388ef0798fcc9d1f8ca6e6f420a44c6b69e70e5f4233195b2a23a02375d8e"
+    },
+    "inputs-51.txt": {
+      "bytes": 18120,
+      "sha256": "f9650316daa64f8c24f201eca53738703ae9a231c6606389b0cd50e653fd3b0c"
+    },
+    "inputs-54.txt": {
+      "bytes": 20016,
+      "sha256": "b7fa6ff1dd829fb16eb07222a0f7640754e33e18603723a7b86cec76d781c4f8"
+    },
+    "native-05.txt": {
+      "bytes": 37547,
+      "sha256": "95fa667cc9ec15836db33fb50f4368bef55f918f6c0bda0789a1fe6faebe4caa"
+    },
+    "inputs-11.txt": {
+      "bytes": 34145,
+      "sha256": "42e90bd6897414271a09f4cee05b2504f71bad20fcbbdfa499c13e619d0744fc"
+    },
+    "inputs-24.txt": {
+      "bytes": 24777,
+      "sha256": "df370105d8cfa9f68aa1fc978c6e46680df20353093e44f535eeb091bbbea870"
+    },
+    "inputs-39.txt": {
+      "bytes": 15508,
+      "sha256": "86760ad6730729e8450ea348e1765934f6c75c7484abf19937ac8b877e559bcb"
+    },
+    "inputs-44.txt": {
+      "bytes": 18592,
+      "sha256": "409840e4f5ad9275408b86499a4f5399b17baba96ec932b5f0b6c6dde6afac31"
+    },
+    "inputs-25.txt": {
+      "bytes": 19119,
+      "sha256": "43a5f9b40b7027c2c726ea104a3805190170342fc61244571faf3e614afa38e3"
+    }
+  },
+  "production_algorithm_changes": 0,
+  "new_legacy_declaration_mappings": 0,
+  "new_exclusions": 0,
+  "tolerance_changes": 0,
+  "checks": {
+    "all_targets": {
+      "passed": 1352,
+      "failed": 0,
+      "ignored": 0,
+      "library": 68,
+      "toolkit": 1276,
+      "separate_reference_cache_tests": 2,
+      "numeric_example": 6
+    },
+    "doctests": {
+      "passed": 66,
+      "failed": 0,
+      "ignored_preexisting": 19
+    },
+    "focused_cumulative_corpus_tests": 112,
+    "new_distinct_test_functions": 8,
+    "strict_all_target_clippy": "passed",
+    "format_and_diff_check": "passed",
+    "package_local_static_test_references": 337,
+    "required_owned_packaged_files": 223,
+    "native_processes_byte_identical": 2,
+    "pre_extraction_cli_processes_match_native": 2,
+    "extracted_cli_processes_match_native": 2,
+    "native_original64shard_positions_match": true,
+    "prior_native_requests_preserved": 6227
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "source_revision": "8f351e163cb395fbb8d17bd0b8bb70e3310612c4",
+  "native_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "new_complete_families": {
+    "acc_matrix": 945
+  },
+  "new_requests": 945,
+  "new_families": 1,
+  "cumulative_owned_requests": 24978,
+  "cumulative_owned_families": 107,
+  "full_original_requests": 45635,
+  "full_original_families": 328,
+  "remaining_requests": 20657,
+  "remaining_families": 221,
+  "inputs": {
+    "bytes": 25908,
+    "sha256": "b3feb4eba2586fd0aa03e4382cf68e822c7d57f20f3d0b70cca5906c25b61ec1"
+  },
+  "native_expected": {
+    "bytes": 3424926,
+    "sha256": "65f977f78af224ea73a4a15a050006be5d64e8da14b04d4fc8bc751b8ec148c4"
+  },
+  "expected_origin": "Fresh pinned native capture before AppCont matrix driver edits; historical full answer cache unavailable, no Rust-derived legacy expectations.",
+  "comparison_policy": "Exact finite/infinity/signed-zero bits, exception/text/whitespace; original decimal NaN classification and word boundaries.",
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/tkgeombase_corpus_appcont.py": {
+      "bytes": 8596,
+      "sha256": "6d76c963e6fb061cb6283141d751aa8a58a2fb398ccdeadd52db7af0fb0f48bc"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_lprop.cxx": {
+      "bytes": 8545,
+      "sha256": "cc1ea54964f4e502989c9306bdb3bb6bc855cfdc23f54736840c08da301095d7"
+    },
+    "tools/oracle/tkgeombase_probe_lprop_build.cxx": {
+      "bytes": 5563,
+      "sha256": "01be6f919d6869b0cb531f633563262e886b74f05c8279a99f5fe32c8bf6285e"
+    },
+    "tools/oracle/tkgeombase_probe_appcont.cxx": {
+      "bytes": 4754,
+      "sha256": "a70e91eaa2dacf142c8e3355e8ef9f0a0c05362471efa51c22a4ca226c6f66fb"
+    },
+    "tools/oracle/tkgeombase_probe_femtool.cxx": {
+      "bytes": 5810,
+      "sha256": "5f9aa1a2587bfd02d745f72f7ca8f3fde5ba83a0b2f5373fa6a62526a599babe"
+    }
+  },
+  "fixture_files": {
+    "inputs-01.txt": {
+      "bytes": 6832,
+      "sha256": "a0a5ea82caa1c4b052c6c5df107398e59d665092a1b6ba8590e872fc1f99a4c1"
+    },
+    "native-01.txt": {
+      "bytes": 426670,
+      "sha256": "aa548a1a7f8e3e191b71042a7cbb89b63784a0f219f79929ad8cc7f697c917bd"
+    },
+    "native-02.txt": {
+      "bytes": 1023716,
+      "sha256": "4afc494252dfb12d583391b68ad86a2152facf83697012d085f185a40181d66b"
+    },
+    "native-00.txt": {
+      "bytes": 894761,
+      "sha256": "ca1815456ea6662b5b2ad86d1f9a8bb0717be85b948ea799d605c55617642ffa"
+    },
+    "native-03.txt": {
+      "bytes": 1079779,
+      "sha256": "9b43e2f29c5cb79bdf0fabb469d0e3450badad40afd348d8f7eb80de9c378ede"
+    },
+    "inputs-00.txt": {
+      "bytes": 6858,
+      "sha256": "6dbd360dc16ad606d8fd60a0e92fa71b6e3331c1820c0080c0bd7ff07728aeb2"
+    },
+    "inputs-03.txt": {
+      "bytes": 4989,
+      "sha256": "2ac28ecfc5b23235fe0ac963b3e45e6a19178b09d9d06cf7fb1c94123d0c7a2a"
+    },
+    "inputs-02.txt": {
+      "bytes": 7229,
+      "sha256": "402b7252f4aeacd001b7b21649dbc20a911c03b4479ec072be0b87b4200af4fa"
+    }
+  },
+  "production_algorithm_changes": 0,
+  "new_legacy_declaration_mappings": 0,
+  "new_exclusions": 0,
+  "tolerance_changes": 0,
+  "checks": {
+    "all_targets": {
+      "passed": 1385,
+      "failed": 0,
+      "ignored": 0,
+      "library": 68,
+      "toolkit": 1309,
+      "separate_reference_cache_tests": 2,
+      "numeric_example": 6
+    },
+    "doctests": {
+      "passed": 66,
+      "failed": 0,
+      "ignored_preexisting": 19
+    },
+    "focused_cumulative_corpus_tests": 145,
+    "new_distinct_test_functions": 5,
+    "strict_all_target_clippy": "passed",
+    "format_and_diff_check": "passed",
+    "package_local_static_test_references": 373,
+    "required_owned_packaged_files": 274,
+    "native_processes_byte_identical": 2,
+    "pre_extraction_cli_processes_match_native": 2,
+    "extracted_cli_processes_match_native": 2,
+    "native_original64shard_positions_match": true,
+    "prior_native_requests_preserved": 24033,
+    "prior_cli_native_requests_preserved": 21823,
+    "prior_gcpnts_frozen_rows_in_current_native_suite": 2210,
+    "prior_native_requests_profile": "debug",
+    "new_cli_process_profile": "debug",
+    "prior_gprop_release_different_rows": 14,
+    "prior_gprop_release_parity": "unresolved supplemental check"
+  }
+}

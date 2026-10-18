@@ -1,0 +1,302 @@
+// (sampling, analytic surfaces and the resulting curve)
+
+//! `BuildInitialCurve2d`: a degree-1 B-spline through the projections of 61
+//! quasi-uniform points of the curve. Analytic surfaces take the ElSLib parameters
+//! unwrapped across the seams; the others a chain of extremum searches.
+use super::ComputeApproxOnPolarSurface;
+use super::function::{compute_periodicity, surface_bounds};
+use crate::gcpnts::QuasiUniformAbscissa;
+use crate::native_failure::failure;
+use crate::proj_lib::new_array;
+use crate::scan_step::next_scan_parameter;
+use martensite_tkernel::ncollection::Array1;
+use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
+use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dCurve, Geom2dGeometry};
+use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
+use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
+use martensite_tkmath::elslib;
+use martensite_tkmath::geom_abs::SurfaceType;
+use martensite_tkmath::gp::{self, Point2, Point3, Vector2};
+use std::f64::consts::PI;
+
+/// The sampled curve and the data every projection step shares.
+pub(super) struct Sampling<'a> {
+    pub(super) surf: &'a dyn Adaptor3dSurface,
+    pub(super) pts: Array1<'static, Point3>,
+    pub(super) param: Array1<'static, f64>,
+    pub(super) pts2d: Array1<'static, Point2>,
+    pub(super) nb_of_pnts: i32,
+    pub(super) tol_u: f64,
+    pub(super) tol_v: f64,
+    pub(super) dist_tol3d2: f64,
+    pub(super) uperiod: f64,
+    pub(super) vperiod: f64,
+    pub(super) bounds: [f64; 4],
+}
+
+impl ComputeApproxOnPolarSurface {
+    /// `BuildInitialCurve2d(Curve, S)`: the initial 2D curve, also stored as the
+    /// B-spline result; a null handle when the projection fails. NoSuchObject
+    /// for a plane or another surface that is neither elementary nor a Bezier,
+    /// B-spline or offset surface; `polar.build_initial_curve2d(&curve, &surface)?`.
+    pub fn build_initial_curve2d(
+        &mut self,
+        curve: &Handle<dyn Adaptor3dCurve>,
+        surface: &Handle<dyn Adaptor3dSurface>,
+    ) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
+        self.proj_is_done = false;
+        let (c, s) = (super::live_curve(curve)?, super::live_surface(surface)?);
+        let mut sampling: Sampling<'_> = self.sample(c, s)?;
+        let kind: SurfaceType = s.get_type()?;
+        if matches!(
+            kind,
+            SurfaceType::BSplineSurface | SurfaceType::BezierSurface | SurfaceType::OffsetSurface
+        ) {
+            self.proj_is_done = false;
+            self.project_by_extrema(&mut sampling)?;
+        } else {
+            analytic_points(&mut sampling, kind)?;
+            self.proj_is_done = true;
+        }
+        if !self.proj_is_done {
+            return Ok(Handle::default());
+        }
+        self.initial_curve(&sampling)
+    }
+
+    // The quasi-uniform samples and the tolerances of the projection.
+    fn sample<'a>(
+        &self,
+        curve: &'a dyn Adaptor3dCurve,
+        surf: &'a dyn Adaptor3dSurface,
+    ) -> Result<Sampling<'a>, Failure> {
+        let tol3d: f64 = self.tolerance;
+        let (tol_u, tol_v) = (surf.u_resolution(tol3d)?, surf.v_resolution(tol3d)?);
+        let dist_tol3d: f64 = if self.max_dist > 0. {
+            self.max_dist
+        } else {
+            100.0 * tol3d
+        };
+        let (uperiod, vperiod) = compute_periodicity(surf)?;
+        let qua = QuasiUniformAbscissa::with_nb_points(curve, 61)?;
+        let nb_of_pnts: i32 = qua.nb_points()?;
+        let mut pts: Array1<'static, Point3> = new_array(nb_of_pnts)?;
+        let mut param: Array1<'static, f64> = new_array(nb_of_pnts)?;
+        for i in 1..=nb_of_pnts {
+            param[i] = qua.parameter(i)?;
+            pts[i] = curve.value(param[i])?;
+        }
+        Ok(Sampling {
+            surf,
+            pts,
+            param,
+            pts2d: new_array(nb_of_pnts)?,
+            nb_of_pnts,
+            tol_u,
+            tol_v,
+            dist_tol3d2: dist_tol3d * dist_tol3d,
+            uperiod,
+            vperiod,
+            bounds: surface_bounds(surf)?,
+        })
+    }
+
+    // The degree-1 B-spline through the points, retained by whole periods so
+    // that its middle lies in the surface bounds.
+    fn initial_curve(&mut self, s: &Sampling<'_>) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
+        let mut mult: Array1<'static, i32> = new_array(s.nb_of_pnts)?;
+        for i in 1..=s.nb_of_pnts {
+            mult[i] = 1;
+        }
+        mult[1] = 2;
+        mult[s.nb_of_pnts] = 2;
+        let spline = Geom2dBSplineCurve::new(&s.pts2d, &s.param, &mult, 1, false)?;
+        let mid: Point2 =
+            spline.value(0.5 * (spline.first_parameter() + spline.last_parameter()))?;
+        let [uinf, usup, vinf, vsup] = s.bounds;
+        let test_u: f64 = into_range(mid.x(), uinf - s.tol_u, usup + s.tol_u, s.uperiod)?;
+        let test_v: f64 = into_range(mid.y(), vinf - s.tol_v, vsup + s.tol_v, s.vperiod)?;
+        let offset: Vector2 = Vector2::new(test_u - mid.x(), test_v - mid.y());
+        if offset.x().abs() > gp::resolution() || offset.y().abs() > gp::resolution() {
+            spline.translate(offset)?;
+        }
+        let spline: Handle<Geom2dBSplineCurve> = Handle::new(spline);
+        self.bspline = spline.clone();
+        let adaptor = Geom2dAdaptorCurve::with_curve(&spline.cast::<dyn Geom2dCurve>())?;
+        Ok(Handle::new(adaptor).cast())
+    }
+}
+
+// `x` moved by whole periods into `[low, high]`; unchanged when not periodic.
+//
+// Rust deviation: the retained `while (TestU < Uinf - TolU || TestU > Usup + TolU)
+// TestU += sense * uperiod;` never ends when the period does not move `x` (a huge or
+// infinite `x`) or when `x` jumps over a window narrower than the period (a trimmed
+// periodic surface); both raise domain failure here.
+fn into_range(x: f64, low: f64, high: f64, period: f64) -> Result<f64, Failure> {
+    if period == 0. {
+        return Ok(x);
+    }
+    let sense: f64 = if x < low {
+        1.
+    } else if x > high {
+        -1.
+    } else {
+        0.
+    };
+    let mut x: f64 = x;
+    while x < low || x > high {
+        x = next_scan_parameter(POLAR_OWNER, x, sense * period, [low, high])?;
+        refuse_jump_over(x, sense, [low, high], period)?;
+    }
+    Ok(x)
+}
+
+const POLAR_OWNER: &str = "ProjLib_ComputeApproxOnPolarSurface";
+
+// A step past the far side of the window: the retained loop then moves `x` away forever.
+fn refuse_jump_over(x: f64, sense: f64, [low, high]: [f64; 2], period: f64) -> Result<(), Failure> {
+    let jumped: bool = (sense > 0. && x > high) || (sense < 0. && x < low);
+    if !jumped {
+        return Ok(());
+    }
+    Err(failure(
+        "Standard_DomainError",
+        &format!(
+            "{POLAR_OWNER}: the period {period} moves the parameter to {x}, past the window \
+             [{low}, {high}], so the native shift loop never ends; expected a window at \
+             least one period wide"
+        ),
+    ))
+}
+
+/// The unwrapped ElSLib parameters on a cylinder, cone, sphere or torus;
+/// NoSuchObject for any other analytic surface (a plane included).
+fn analytic_points(s: &mut Sampling<'_>, kind: SurfaceType) -> Result<(), Failure> {
+    let params = |point: Point3| -> Result<(f64, f64), Failure> {
+        Ok(match kind {
+            SurfaceType::Cylinder => elslib::parameters(&s.surf.cylinder()?, point),
+            SurfaceType::Cone => elslib::parameters(&s.surf.cone()?, point),
+            SurfaceType::Sphere => elslib::parameters(&s.surf.sphere()?, point),
+            SurfaceType::Torus => elslib::parameters(&s.surf.torus()?, point),
+            _ => {
+                return Err(failure(
+                    "Standard_NoSuchObject",
+                    "ProjLib_ComputeApproxOnPolarSurface::BuildInitialCurve2d",
+                ));
+            }
+        })
+    };
+    let mut uv: Vec<(f64, f64)> = Vec::with_capacity(s.nb_of_pnts as usize);
+    for i in 1..=s.nb_of_pnts {
+        uv.push(params(s.pts[i])?);
+    }
+    let unwrapped: Vec<Point2> = match kind {
+        SurfaceType::Sphere => unwrap_sphere(&uv, s.bounds),
+        SurfaceType::Torus => unwrap_torus(&uv),
+        _ => unwrap_u(&uv),
+    };
+    for (index, point) in unwrapped.into_iter().enumerate() {
+        s.pts2d[index as i32 + 1] = point;
+    }
+    Ok(())
+}
+
+// A jump of the angle by more than PI between neighbours crosses the seam.
+fn turn_step(previous: f64, current: f64) -> i32 {
+    if (previous - current).abs() <= PI {
+        return 0;
+    }
+    if previous > current { 1 } else { -1 }
+}
+
+// Cylinder and cone: U unwrapped by whole turns, V as is.
+fn unwrap_u(uv: &[(f64, f64)]) -> Vec<Point2> {
+    let mut usens: i32 = 0;
+    let mut points: Vec<Point2> = vec![Point2::new(uv[0].0, uv[0].1)];
+    for pair in uv.windows(2) {
+        usens += turn_step(pair[0].0, pair[1].0);
+        let (s, t) = pair[1];
+        points.push(Point2::new(s + f64::from(usens * 2) * PI, t));
+    }
+    points
+}
+
+// Torus: both angles unwrapped by whole turns.
+fn unwrap_torus(uv: &[(f64, f64)]) -> Vec<Point2> {
+    let (mut usens, mut vsens): (i32, i32) = (0, 0);
+    let mut points: Vec<Point2> = vec![Point2::new(uv[0].0, uv[0].1)];
+    for pair in uv.windows(2) {
+        usens += turn_step(pair[0].0, pair[1].0);
+        vsens += turn_step(pair[0].1, pair[1].1);
+        let (s, t) = pair[1];
+        points.push(Point2::new(
+            s + f64::from(usens * 2) * PI,
+            t + f64::from(vsens * 2) * PI,
+        ));
+    }
+    points
+}
+
+// Sphere: U steps by half turns; a jump of about half a turn goes over a pole,
+// which mirrors V (`vparit`) and moves it by PI up or down.
+fn unwrap_sphere(uv: &[(f64, f64)], bounds: [f64; 4]) -> Vec<Point2> {
+    let (vinf, vsup) = (bounds[2], bounds[3]);
+    let (mut usens, mut vsens): (i32, i32) = (0, 0);
+    let mut vparit: bool = false;
+    let mut points: Vec<Point2> = vec![Point2::new(uv[0].0, uv[0].1)];
+    for pair in uv.windows(2) {
+        let ((sloc, tloc), (s, t)) = (pair[0], pair[1]);
+        let jump: f64 = (sloc - s).abs();
+        if 1.6 * PI < jump {
+            usens += if sloc > s { 2 } else { -2 };
+        }
+        if 1.6 * PI > jump && jump > 0.4 * PI {
+            vparit = !vparit;
+            usens += if sloc > s { 1 } else { -1 };
+            vsens += if (tloc - vsup).abs() < (vsup - vinf) / 5. {
+                1
+            } else {
+                -1
+            };
+        }
+        let u: f64 = s + f64::from(usens) * PI;
+        let v: f64 = if vparit {
+            (PI - t) * f64::from(vsens - 1)
+        } else {
+            t + f64::from(vsens) * PI
+        };
+        points.push(Point2::new(u, v));
+    }
+    points
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn into_range_shifts_by_whole_periods() {
+        let period: f64 = 2. * PI;
+        assert_eq!(into_range(7.0, 0., period, period).unwrap(), 7.0 - period);
+        assert_eq!(into_range(-1.0, 0., period, period).unwrap(), -1.0 + period);
+        assert_eq!(into_range(1.0, 0., period, 0.).unwrap(), 1.0);
+    }
+
+    #[test]
+    fn into_range_refuses_the_shifts_that_never_end() {
+        // A period below the half ulp of the parameter never moves it.
+        let stalled = into_range(1e20, 0., 2. * PI, 2. * PI).unwrap_err();
+        assert!(
+            stalled.message().contains("never ends"),
+            "{}",
+            stalled.message()
+        );
+        // A window narrower than the period is jumped over, then left behind.
+        let jumped = into_range(3.0, 0., 1., 2. * PI).unwrap_err();
+        assert_eq!(jumped.exception_type(), "Standard_DomainError");
+        let message: &str = jumped.message();
+        assert!(message.contains("past the window [0, 1]"), "{message}");
+    }
+}

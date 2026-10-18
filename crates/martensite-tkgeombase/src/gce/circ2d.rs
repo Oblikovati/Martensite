@@ -1,0 +1,176 @@
+//! MakeCirc2d: construction of Circ2d.
+use super::{ErrorType, gce_result};
+use crate::int_ana2d::AnaIntersection;
+use martensite_tkernel::standard::Failure;
+use martensite_tkmath::elclib;
+use martensite_tkmath::gp::{
+    self, Axis2d, Axis22d, Circle2, Direction2, Line2, Point2, StandardDirection2,
+};
+
+/// MakeCirc2d: builds a 2D circle from an axis, a frame, three points, a
+/// center, or a parallel circle.
+///
+/// `let circle = MakeCirc2d::from_center(Point2::default(), 1.0, true)?.value()?;`
+#[derive(Clone, Copy, Debug, Default)]
+pub struct MakeCirc2d {
+    the_result: Circle2,
+    the_error: ErrorType,
+}
+gce_result!(MakeCirc2d, Circle2, "gce_MakeCirc2d");
+
+impl MakeCirc2d {
+    fn failed(error: ErrorType) -> Self {
+        Self {
+            the_error: error,
+            ..Self::default()
+        }
+    }
+    fn built(circle: Circle2) -> Self {
+        Self {
+            the_result: circle,
+            the_error: ErrorType::Done,
+        }
+    }
+
+    /// MakeCirc2d(XAxis, Radius, Sense): the circle whose X axis is `x_axis`;
+    /// NegativeRadius when `radius < 0`. `MakeCirc2d::new(axis, 1.0, true)?`.
+    pub fn new(x_axis: Axis2d, radius: f64, sense: bool) -> Result<Self, Failure> {
+        if radius.is_nan() || radius < 0.0 {
+            return Ok(Self::failed(ErrorType::NegativeRadius));
+        }
+        Ok(Self::built(Circle2::from_x_axis(x_axis, radius, sense)?))
+    }
+
+    /// MakeCirc2d(Axis, Radius): the circle of frame `frame`;
+    /// NegativeRadius when `radius < 0`. `MakeCirc2d::from_frame(frame, 1.0)?`.
+    pub fn from_frame(frame: Axis22d, radius: f64) -> Result<Self, Failure> {
+        if radius.is_nan() || radius < 0.0 {
+            return Ok(Self::failed(ErrorType::NegativeRadius));
+        }
+        Ok(Self::built(Circle2::new(frame, radius)?))
+    }
+
+    /// MakeCirc2d(Circ, Dist1): the circle of `circle`'s frame with radius
+    /// `|Radius + dist|`; always done. `MakeCirc2d::from_circ_distance(c, 1.0)?`.
+    pub fn from_circ_distance(circle: Circle2, dist: f64) -> Result<Self, Failure> {
+        Ok(Self::built(Circle2::new(
+            circle.axis(),
+            (circle.radius() + dist).abs(),
+        )?))
+    }
+
+    /// MakeCirc2d(Circ, Point): the circle of `circle`'s frame through
+    /// `point`. `MakeCirc2d::from_circ_point(circle, p)?`.
+    pub fn from_circ_point(circle: Circle2, point: Point2) -> Result<Self, Failure> {
+        Ok(Self::built(Circle2::new(
+            circle.axis(),
+            point.distance(circle.location()),
+        )?))
+    }
+
+    /// MakeCirc2d(Center, Radius, Sense): the circle of center `center` and X
+    /// direction gp::DX2d(); NegativeRadius when `radius < 0`.
+    /// `MakeCirc2d::from_center(p, 1.0, true)?`.
+    pub fn from_center(center: Point2, radius: f64, sense: bool) -> Result<Self, Failure> {
+        if radius.is_nan() || radius < 0.0 {
+            return Ok(Self::failed(ErrorType::NegativeRadius));
+        }
+        Ok(Self::built(Circle2::from_x_axis(
+            x_axis_at(center),
+            radius,
+            sense,
+        )?))
+    }
+
+    /// MakeCirc2d(Center, Point, Sense): the circle of center `center` through
+    /// `point`, X direction gp::DX2d(). `MakeCirc2d::from_center_point(c, p, true)?`.
+    pub fn from_center_point(center: Point2, point: Point2, sense: bool) -> Result<Self, Failure> {
+        let radius: f64 = point.distance(center);
+        Ok(Self::built(Circle2::from_x_axis(
+            x_axis_at(center),
+            radius,
+            sense,
+        )?))
+    }
+
+    /// MakeCirc2d(P1, P2, P3): the circle through three points, centered at
+    /// the intersection of two perpendicular bisectors and oriented so that the
+    /// points follow each other; IntersectionError when the line intersection
+    /// is not done (never: IntAna2d always completes two lines). Points within gp::Resolution() give a
+    /// null circle; collinear points leave the status unassigned natively (see
+    /// [`super::Root`]) and the circle at its default value.
+    /// `MakeCirc2d::through_points(a, b, c)?`.
+    pub fn through_points(p1: Point2, p2: Point2, p3: Point2) -> Result<Self, Failure> {
+        let resolution: f64 = gp::resolution();
+        let dists: [f64; 3] = [p1.distance(p2), p1.distance(p3), p2.distance(p3)];
+        if dists.iter().all(|&dist| dist < resolution) {
+            return Ok(Self::built(Circle2::from_x_axis(x_axis_at(p1), 0.0, true)?));
+        }
+        let (l1, l2) = bisectors([p1, p2, p3], dists)?;
+        let intersection = AnaIntersection::lines(l1, l2);
+        if !intersection.is_done() {
+            return Ok(Self::failed(ErrorType::IntersectionError));
+        }
+        if intersection.is_empty()? {
+            return Ok(Self::default());
+        }
+        Self::around_center(intersection.point(1)?.value(), [p1, p2, p3])
+    }
+
+    /// The circle of center `center` through `points`, of mean radius, reversed
+    /// unless the points' parameters increase.
+    fn around_center(center: Point2, points: [Point2; 3]) -> Result<Self, Failure> {
+        let [p1, p2, p3] = points;
+        let (dist1, dist2, dist3) = (
+            p1.distance(center),
+            p2.distance(center),
+            p3.distance(center),
+        );
+        let (xc, yc) = (center.x(), center.y());
+        let d1 = Direction2::new(p1.x() - xc, p1.y() - yc)?;
+        let d2 = Direction2::new(xc - p3.x(), yc - p3.y())?;
+        let frame = Axis22d::with_directions(center, d1, d2)?;
+        let mut circle = Circle2::new(frame, (dist1 + dist2 + dist3) / 3.0)?;
+        let alpha1: f64 = elclib::parameter(&circle, p1)?;
+        let alpha2: f64 = elclib::parameter(&circle, p2)?;
+        let alpha3: f64 = elclib::parameter(&circle, p3)?;
+        if alpha1 > alpha2 || alpha2 > alpha3 {
+            circle.reverse();
+        }
+        Ok(Self::built(circle))
+    }
+}
+
+/// `Ax2d(Center, Dir2d(Dir2d::D::X))`.
+fn x_axis_at(center: Point2) -> Axis2d {
+    Axis2d::new(center, Direction2::from_standard(StandardDirection2::X))
+}
+
+/// The two bisectors of MakeCirc2d(P1, P2, P3): of P1P2 and P1P3, or, when
+/// two points are within gp::Resolution(), the normal through P1 that replaces
+/// the missing one. A line never assigned stays the default Lin2d().
+fn bisectors(points: [Point2; 3], dists: [f64; 3]) -> Result<(Line2, Line2), Failure> {
+    let [p1, p2, p3] = points;
+    let [dist1, dist2, dist3] = dists;
+    let resolution: f64 = gp::resolution();
+    let (mut l1, mut l2) = (Line2::default(), Line2::default());
+    if dist1 > resolution {
+        l1 = Line2::new(Point2::from((p1.xy() + p2.xy()) / 2.0), normal_to(p1, p2)?);
+    }
+    if dist2 > resolution {
+        l2 = Line2::new(Point2::from((p1.xy() + p3.xy()) / 2.0), normal_to(p1, p3)?);
+    }
+    if dist2 <= resolution {
+        l2 = Line2::new(p1, normal_to(p1, p2)?);
+    } else if dist1 <= resolution {
+        l1 = Line2::new(p1, normal_to(p1, p3)?);
+    } else if dist3 <= resolution {
+        l2 = Line2::new(p1, normal_to(p1, p2)?);
+    }
+    Ok((l1, l2))
+}
+
+/// `Dir2d(A.Y() - B.Y(), B.X() - A.X())`: the normal of the segment AB.
+fn normal_to(a: Point2, b: Point2) -> Result<Direction2, Failure> {
+    Direction2::new(a.y() - b.y(), b.x() - a.x())
+}
