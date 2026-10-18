@@ -1,6 +1,6 @@
 //! retained answers were frozen with the original full-corpus index modulo 64.
 pub const ORIGINAL_INDICES: &[usize] =
-    include!("../../fixtures/finite_element_corpus/original_indices.rs");
+    include!("../../fixtures/finite_element_corpus/original_indices.inc");
 pub const CHUNKS: &[(&str, &str)] = &[
     (
         include_str!("../../fixtures/finite_element_corpus/inputs-00.txt"),
