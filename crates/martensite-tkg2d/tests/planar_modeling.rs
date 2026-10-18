@@ -2,9 +2,8 @@
 //! Planar geometry construction, evaluation and boundary contracts.
 #![allow(non_snake_case)]
 mod common;
-use common::{
-    EXPECT_DOUBLE_EQ, EXPECT_NEAR as assert_modeling_near, modeling_circle as analytic_circle_fixture,
-};
+use common::EXPECT_DOUBLE_EQ;
+use common::{EXPECT_NEAR as assert_modeling_near, modeling_circle as analytic_circle_fixture};
 use martensite_tkernel::{precision, standard::Handle};
 use martensite_tkg2d::geom2d::{
     Geom2dCircle, Geom2dCurve, Geom2dEllipse, Geom2dGeometry, Geom2dLine, Geom2dOffsetCurve,
