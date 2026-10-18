@@ -99,7 +99,7 @@ fn bspline() -> Handle<dyn GeomCurve> {
     curve(GeomBSplineCurve::new(&aPoles, &aKnots, &aMults, 2, false).unwrap())
 }
 
-// Surface(anExtr) and AddSurface on a GeomAdaptor_Surface over the
+// Surface(anExtr) and AddSurface on a GeomAdaptorSurface over the
 // patch: `Add`, or `AddOptimal` when `theOptimal`.
 fn boxes(
     theSurf: &Handle<dyn GeomSurface>,

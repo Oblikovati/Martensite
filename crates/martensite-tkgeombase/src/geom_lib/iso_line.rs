@@ -109,7 +109,7 @@ fn line_of(curve: &dyn Adaptor2dCurve2d) -> Result<Option<(Point2, Direction2)>,
 /// `GeomLib::buildC3dOnIsoLine(theC2D, theSurf, theFirst, theLast, theTolerance,
 /// theIsU, theParam, theIsForward)`: the surface isoline over the pcurve's range,
 /// converted to a B-spline (quasi-angular), reversed when backward and
-/// reparametrized as the pcurve; null when the surface is not a GeomAdaptor_Surface
+/// reparametrized as the pcurve; null when the surface is not a GeomAdaptorSurface
 /// or is a sphere, when the range misses the surface bounds (within the tolerance)
 /// or is null, or when the deviation from the pcurve at 24 samples of
 /// `[theFirst, theLast]` exceeds `tolerance` (as on isolines of a sphere);

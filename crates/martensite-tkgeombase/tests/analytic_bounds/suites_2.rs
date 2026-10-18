@@ -2,7 +2,7 @@
 // Add3dCurve Tests
 //=================================================================================================
 
-// `GeomAdaptor_Curve aCurve(new Circle(Axis2(Point3(0,0,0), theNormal), theRadius))`.
+// `GeomAdaptorCurve aCurve(new Circle(Axis2(Point3(0,0,0), theNormal), theRadius))`.
 fn circle_adaptor(theNormal: Direction3, theRadius: f64) -> GeomAdaptorCurve {
     let aCircle = curve(GeomCircle::new(ax2(pnt(0., 0., 0.), theNormal), theRadius).unwrap());
     GeomAdaptorCurve::with_curve(&aCircle).unwrap()

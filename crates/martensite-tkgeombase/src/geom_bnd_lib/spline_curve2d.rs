@@ -11,7 +11,7 @@ use martensite_tkmath::bnd::BoundingBox2;
 use martensite_tkmath::bvh::{std_max, std_min};
 use martensite_tkmath::gp::Point2;
 
-/// A `Geom2dAdaptor_Curve` on a typed curve handle; `adaptor2d_of(&bezier)?`.
+/// A `Geom2dAdaptorCurve` on a typed curve handle; `adaptor2d_of(&bezier)?`.
 pub(super) fn adaptor2d_of<T: Geom2dCurve + RuntimeTyped>(
     curve: &Handle<T>,
 ) -> Result<Geom2dAdaptorCurve, Failure> {
@@ -75,7 +75,7 @@ impl BezierCurve2d {
         copy.segment(trim.0, trim.1)?;
         pole_hull((1..=copy.nb_poles()).map(|i| copy.pole(i)), tolerance)
     }
-    /// `BoxOptimal(U1, U2, Tol)`: `CurveBoxOptimal` on a `Geom2dAdaptor_Curve`;
+    /// `BoxOptimal(U1, U2, Tol)`: `CurveBoxOptimal` on a `Geom2dAdaptorCurve`;
     /// `evaluator.bounding_box_optimal_range(0.0, 1.0, 0.0)?`.
     pub fn bounding_box_optimal_range(
         &self,
@@ -130,7 +130,7 @@ impl BSplineCurve2d {
         copy.segment(trim.0, trim.1, precision::p_confusion())?;
         pole_hull((1..=copy.nb_poles()).map(|i| copy.pole(i)), tolerance)
     }
-    /// `BoxOptimal(U1, U2, Tol)`: `CurveBoxOptimal` on a `Geom2dAdaptor_Curve`;
+    /// `BoxOptimal(U1, U2, Tol)`: `CurveBoxOptimal` on a `Geom2dAdaptorCurve`;
     /// `evaluator.bounding_box_optimal_range(0.0, 1.0, 0.0)?`.
     pub fn bounding_box_optimal_range(
         &self,

@@ -1,4 +1,4 @@
-//! The `Adaptor2d_Curve2d` interface of `CompProjectedCurve`. The members
+//! The `Adaptor2dCurve2d` interface of `CompProjectedCurve`. The members
 //! the class does not override (the conic accessors, D3, Resolution, IsClosed,
 //! IsPeriodic, Period) keep the NotImplemented of the base class.
 use super::eval::{eval_d0, eval_d1, eval_d2, eval_dn};

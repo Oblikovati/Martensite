@@ -61,7 +61,7 @@ fn circle(theRadius: f64) -> Handle<dyn GeomCurve> {
     curve(GeomCircle::new(gp::xoy(), theRadius).unwrap())
 }
 
-// Curve(anOff) against Add3dCurve on a GeomAdaptor_Curve: `Add`
+// Curve(anOff) against Add3dCurve on a GeomAdaptorCurve: `Add`
 // over the natural range, `AddOptimal` when `theOptimal`, or `Add(U1, U2)` for a range.
 fn boxes(
     theCurve: &Handle<dyn GeomCurve>,
@@ -132,7 +132,7 @@ fn offset_curve_circle_offset_x_arc_compare_with_bnd_lib() {
 // =========================================================================
 // Circle offset in Y direction - degenerate case
 // Offset direction Y is in the circle plane (XOY), so T(t) x V can be zero.
-// Old BndLib throws "GeomAdaptor_Curve::EvalD0: evaluation failed".
+// The failing curve reports "GeomAdaptor_Curve::EvalD0: evaluation failed".
 // Test only containment for our implementation.
 // =========================================================================
 

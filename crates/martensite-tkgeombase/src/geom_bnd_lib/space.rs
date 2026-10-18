@@ -1,6 +1,6 @@
 //! The 3D/2D abstraction of the GeomBndLib templates: `PointOps<TPoint>` and the
-//! `std::is_same_v<TBox, Bnd_Box>` branches become one trait per concept, implemented
-//! once for (`Point3`, `Bnd_Box`, `Adaptor3d_Curve`) and once for the 2D types.
+//! Shared traits express the bounding-box and adaptor concepts, implemented
+//! once for (`Point3`, `BoundingBox3`, `Adaptor3dCurve`) and once for the 2D types.
 use super::optimization::{CurveCoordinate, adjust_extr_curve};
 use super::sampling::{compute_nb_samples, compute_nb_samples_2d};
 use martensite_tkernel::standard::Failure;
@@ -54,7 +54,7 @@ impl SamplePoint for Point2 {
     }
 }
 
-/// A bounding box of the sampled space (`Bnd_Box` or `Bnd_Box2d`).
+/// A bounding box of the sampled space (`BoundingBox3` or `BoundingBox2`).
 pub trait SampleBounds: Default {
     /// The point type added to the box.
     type Point: SamplePoint;
@@ -113,8 +113,8 @@ impl SampleBounds for BoundingBox2 {
     }
 }
 
-/// A curve adaptor sampled by the GeomBndLib templates (`Adaptor3d_Curve` or
-/// `Adaptor2d_Curve2d`): its point type, box type and sampling rules.
+/// A curve adaptor sampled by the curve-bounds sampling (`Adaptor3dCurve` or
+/// `Adaptor2dCurve2d`): its point type, box type and sampling rules.
 pub trait SampledCurve: CurveCoordinate {
     /// The box of the curve's space.
     type Bounds: SampleBounds;

@@ -177,7 +177,7 @@ impl Torus {
         GeomAdaptorSurface::with_surface(&self.geom.cast::<dyn GeomSurface>())
     }
     /// `BoxOptimal(UMin, UMax, VMin, VMax, Tol)`: OtherSurface on a
-    /// GeomAdaptor_Surface; `evaluator.bounding_box_optimal_range(0.0, 1.5, 0.0, 3.1, 0.0)?`.
+    /// GeomAdaptorSurface; `evaluator.bounding_box_optimal_range(0.0, 1.5, 0.0, 3.1, 0.0)?`.
     pub fn bounding_box_optimal_range(
         &self,
         u_min: f64,

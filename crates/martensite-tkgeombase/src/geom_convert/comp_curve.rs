@@ -28,7 +28,7 @@ pub struct CompCurveToBSplineCurve {
 impl CompCurveToBSplineCurve {
     /// The empty algorithm; `parameterisation` converts the circles and ellipses added
     /// later (`CompCurveToBSplineCurve(Parameterisation =
-    /// Convert_TgtThetaOver2)`); `CompCurveToBSplineCurve::new(ParameterisationType::TgtThetaOver2)`.
+    /// ParameterisationType::TgtThetaOver2)`); `CompCurveToBSplineCurve::new(ParameterisationType::TgtThetaOver2)`.
     pub fn new(parameterisation: ParameterisationType) -> Self {
         Self {
             my_curve: Handle::default(),
@@ -39,7 +39,7 @@ impl CompCurveToBSplineCurve {
 
     /// The algorithm started with a copy of `basis_curve`, converted to a B-spline
     /// unless it is one (`CompCurveToBSplineCurve(BasisCurve,
-    /// Parameterisation = Convert_TgtThetaOver2)`);
+    /// Parameterisation = ParameterisationType::TgtThetaOver2)`);
     /// `CompCurveToBSplineCurve::with_curve(&arc, ParameterisationType::TgtThetaOver2)?`.
     pub fn with_curve(
         basis_curve: &Handle<dyn GeomBoundedCurve>,

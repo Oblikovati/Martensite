@@ -82,11 +82,11 @@ impl CompProjectedCurve {
     pub fn get_proj3d(&self) -> bool {
         self.state.read().proj3d
     }
-    /// `Load(const occ::handle<Adaptor3d_Surface>&)`; `projection.load_surface(&surface)`.
+    /// `Load(const Handle<Adaptor3dSurface>&)`; `projection.load_surface(&surface)`.
     pub fn load_surface(&self, surface: &Handle<dyn Adaptor3dSurface>) {
         self.state.write().surface = surface.clone();
     }
-    /// `Load(const occ::handle<Adaptor3d_Curve>&)`; `projection.load_curve(&curve)`.
+    /// `Load(const Handle<Adaptor3dCurve>&)`; `projection.load_curve(&curve)`.
     pub fn load_curve(&self, curve: &Handle<dyn Adaptor3dCurve>) {
         self.state.write().curve = curve.clone();
     }

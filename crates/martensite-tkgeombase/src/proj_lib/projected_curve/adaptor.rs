@@ -1,4 +1,4 @@
-//! The `Adaptor2d_Curve2d` interface of `ProjectedCurve`: the bounds of the
+//! The `Adaptor2dCurve2d` interface of `ProjectedCurve`: the bounds of the
 //! 3D curve and the kind and data of the result. The continuity, intervals, trim,
 //! closure, period and resolution raise NotImplemented, as natively, and
 //! the point evaluators keep the NotImplemented of the base class.

@@ -4,7 +4,7 @@ mod common;
 use common::prelude::*;
 use martensite_tkgeombase::gcpnts::AbscissaPoint as GCPnts_AbscissaPoint;
 
-// `GeomAdaptor_Curve(aLine, 0.0, 10.0)` on the X axis.
+// `GeomAdaptorCurve(aLine, 0.0, 10.0)` on the X axis.
 fn lineAdaptor() -> GeomAdaptorCurve {
     let aLine: Handle<GeomLine> = Handle::new(GeomLine::from_point(
         Point3::new(0.0, 0.0, 0.0),
@@ -13,7 +13,7 @@ fn lineAdaptor() -> GeomAdaptorCurve {
     GeomAdaptorCurve::with_range(&aLine.cast(), 0.0, 10.0).unwrap()
 }
 
-// `GeomAdaptor_Curve(aCircle, 0.0, theLast)` on a circle of the XY plane.
+// `GeomAdaptorCurve(aCircle, 0.0, theLast)` on a circle of the XY plane.
 fn circleAdaptor(theRadius: f64, theLast: f64) -> GeomAdaptorCurve {
     let aCircle: Handle<GeomCircle> = Handle::new(
         GeomCircle::new(

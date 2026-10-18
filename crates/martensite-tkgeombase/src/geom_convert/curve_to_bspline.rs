@@ -21,7 +21,7 @@ use martensite_tkmath::gp::{
     self, Axis3, Circle2, Ellipse2, Hyperbola2, Parabola2, Point2, Point3, Transform3,
 };
 
-/// `GeomConvert::CurveToBSplineCurve(C, Parameterisation = Convert_TgtThetaOver2)`:
+/// `curve_to_bspline_curve(C, Parameterisation = ParameterisationType::TgtThetaOver2)`:
 /// the B-spline of a circle, an ellipse, a Bezier, B-spline or offset curve, or of a
 /// trimmed line, conic, Bezier, B-spline or offset curve.
 ///

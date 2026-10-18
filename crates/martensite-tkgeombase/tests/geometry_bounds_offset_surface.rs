@@ -99,7 +99,7 @@ fn plane() -> Handle<dyn GeomSurface> {
     surface(GeomPlane::new(xoy()))
 }
 
-// Surface(anOff) and AddSurface on a GeomAdaptor_Surface: `Add` over
+// Surface(anOff) and AddSurface on a GeomAdaptorSurface: `Add` over
 // the patch, or the natural bounds when None.
 fn boxes(
     theSurf: &Handle<dyn GeomSurface>,

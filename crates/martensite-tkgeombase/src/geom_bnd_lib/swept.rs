@@ -40,7 +40,7 @@ pub fn clamped_basis_range(curve: &dyn GeomCurve, (mut a, mut b): (f64, f64)) ->
     (a, b)
 }
 
-/// A `Bnd_Box::OpenXmin`-like member.
+/// A `BoundingBox3::OpenXmin`-like member.
 type BoxOpener = fn(&mut BoundingBox3);
 
 fn copy_open_flags(from: &BoundingBox3, to: &mut BoundingBox3) {
@@ -200,7 +200,7 @@ pub fn basis_curve_box(
 }
 
 /// The fallback of the swept surfaces (their `catch (Failure)` and void curve
-/// box): OtherSurface on a GeomAdaptor_Surface of `surface`;
+/// box): OtherSurface on a GeomAdaptorSurface of `surface`;
 /// `other_surface_box(&handle, [0.0, 1.0, 0.0, 1.0], 0.0, BasisBox::Box)?`.
 pub fn other_surface_box<T: GeomSurface + RuntimeTyped>(
     surface: &Handle<T>,

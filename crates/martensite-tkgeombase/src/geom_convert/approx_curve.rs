@@ -28,7 +28,7 @@ pub struct ApproxCurve {
 }
 
 impl ApproxCurve {
-    /// Approximates `curve` through a GeomAdaptor_Curve within `tol3d`, with the
+    /// Approximates `curve` through a GeomAdaptorCurve within `tol3d`, with the
     /// continuity `order`, at most `max_segments` spans of degree `max_degree`
     /// (`ApproxCurve(Curve, Tol3d, Order, MaxSegments, MaxDegree)`);
     /// `ApproxCurve::from_curve(&curve, 1e-4, Shape::C2, 16, 14)?`.
@@ -45,7 +45,7 @@ impl ApproxCurve {
     }
 
     /// Approximates the adapted `curve` (`ApproxCurve(const
-    /// occ::handle<Adaptor3d_Curve>&, Tol3d, Order, MaxSegments, MaxDegree)`); an
+    /// Handle<Adaptor3dCurve>&, Tol3d, Order, MaxSegments, MaxDegree)`); an
     /// exception of the adaptor propagates;
     /// `ApproxCurve::from_adaptor(&adaptor, 1e-4, Shape::C2, 16, 14)?`.
     pub fn from_adaptor(

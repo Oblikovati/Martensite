@@ -4,7 +4,7 @@
 //! points of a curve ([`CIType`]) and their sorted store ([`CurAndInf`]), the two
 //! retained exceptions (as [`Failure`] constructors), and `CurveUtils`, the
 //! algorithms of the curve property classes ([`curve_utils`]). `CLProps3d` is
-//! the curve property class on an `Adaptor3d_Curve` handle ([`CLProps3d`]).
+//! the curve property class on an `Adaptor3dCurve` handle ([`CLProps3d`]).
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::gp::Vector3;
@@ -60,6 +60,6 @@ pub fn bad_continuity(message: &str) -> Failure {
     Failure::with_type("LProp_BadContinuity", message, "")
 }
 
-/// `CLProps3d`: the curve local properties of an `Adaptor3d_Curve` handle;
+/// `CLProps3d`: the curve local properties of an `Adaptor3dCurve` handle;
 /// `CLProps3d::with_parameter(adaptor, 0.5, 2, 1e-7)?.curvature()?`.
 pub type CLProps3d = crate::geom_lprop::CLPropsBase<Vector3, Handle<dyn Adaptor3dCurve>>;

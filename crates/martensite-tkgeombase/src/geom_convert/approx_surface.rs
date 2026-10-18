@@ -33,7 +33,7 @@ pub struct ApproxSurface {
 }
 
 impl ApproxSurface {
-    /// Approximates `surf` through a GeomAdaptor_Surface within `tol3d`, with the U
+    /// Approximates `surf` through a GeomAdaptorSurface within `tol3d`, with the U
     /// and V continuities (C0 to C2), maximum degrees, at most `max_segments`
     /// patches and the AdvApp2Var precision code (`ApproxSurface(Surf,
     /// Tol3d, UContinuity, VContinuity, MaxDegU, MaxDegV, MaxSegments, PrecisCode)`);
@@ -60,7 +60,7 @@ impl ApproxSurface {
     }
 
     /// Approximates the adapted `surf` (`ApproxSurface(const
-    /// occ::handle<Adaptor3d_Surface>&, ...)`); an exception of the adaptor propagates;
+    /// Handle<Adaptor3dSurface>&, ...)`); an exception of the adaptor propagates;
     /// `ApproxSurface::from_adaptor(&adaptor, 1e-4, (Shape::C1, Shape::C1), (14, 14), 16, 1)?`.
     pub fn from_adaptor(
         surf: &Handle<dyn Adaptor3dSurface>,

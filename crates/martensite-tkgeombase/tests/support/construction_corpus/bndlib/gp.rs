@@ -19,7 +19,7 @@ use martensite_tkmath::gp::{
     Parabola2, Parabola3, Sphere3, Torus3,
 };
 
-// The kinds of bnd_gp whose box is a Bnd_Box2d.
+// The kinds of bnd_gp whose box is a BoundingBox2.
 fn flat(kind: i32) -> bool {
     matches!(kind, 1 | 4 | 5 | 8 | 9 | 11 | 13)
 }

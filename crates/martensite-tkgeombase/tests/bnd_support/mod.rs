@@ -1,5 +1,5 @@
 //! Construction shorthands shared by the retained BndLib and GeomBndLib suites: the
-//! gp/Geom values the C++ tests build inline, and the structured `Bnd_Box::Get()`.
+//! Inline analytic geometry fixtures and structured bounding-box accessors.
 #![allow(non_snake_case, dead_code)]
 use martensite_tkernel::ncollection::{Array1, Array2};
 use martensite_tkernel::standard::{Handle, RuntimeTyped};

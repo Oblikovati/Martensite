@@ -88,7 +88,7 @@ impl OnPlaneState {
     }
 }
 
-/// `ProjectOnPlane`: an `Adaptor3d_Curve` whose members answer for the
+/// `ProjectOnPlane`: an `Adaptor3dCurve` whose members answer for the
 /// projected curve.
 ///
 /// ```ignore

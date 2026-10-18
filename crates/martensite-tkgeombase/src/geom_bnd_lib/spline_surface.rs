@@ -12,7 +12,7 @@ use martensite_tkg3d::geom::{GeomBSplineSurface, GeomBezierSurface, GeomSurface}
 use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
 use martensite_tkmath::bnd::BoundingBox3;
 
-/// A `GeomAdaptor_Surface` on a typed surface handle; `surface_adaptor_of(&bezier)?`.
+/// A `GeomAdaptorSurface` on a typed surface handle; `surface_adaptor_of(&bezier)?`.
 pub(super) fn surface_adaptor_of<T: GeomSurface + RuntimeTyped>(
     surface: &Handle<T>,
 ) -> Result<GeomAdaptorSurface, Failure> {

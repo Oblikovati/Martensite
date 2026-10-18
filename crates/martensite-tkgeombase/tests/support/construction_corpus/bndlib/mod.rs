@@ -139,7 +139,7 @@ fn unit_box2d() -> BoundingBox2 {
     b
 }
 
-// Add3dCurve on a GeomAdaptor_Curve and the box [-1, 1]^3.
+// Add3dCurve on a GeomAdaptorCurve and the box [-1, 1]^3.
 fn add3d(
     output: &Output,
     c: &Handle<dyn GeomCurve>,
@@ -180,8 +180,8 @@ pub fn curve3d_case(output: &Output, values: &[f64]) {
     end(output);
 }
 
-// Add2dCurve on the handle (source 3), an Adaptor2d_OffsetCurve (source 4) or a
-// Geom2dAdaptor_Curve (source 5); every box starts as [-1, 1]^2.
+// Add2dCurve on the handle (source 3), an Adaptor2dOffsetCurve (source 4) or a
+// Geom2dAdaptorCurve (source 5); every box starts as [-1, 1]^2.
 fn add2d(
     output: &Output,
     c: &Handle<dyn Geom2dCurve>,
@@ -204,7 +204,7 @@ fn add2d(
     Ok(())
 }
 
-// The Adaptor2d_OffsetCurve (offset 0.5) source of bnd_curve2d.
+// The Adaptor2dOffsetCurve (offset 0.5) source of bnd_curve2d.
 fn offset_adaptor(
     output: &Output,
     c: &Handle<dyn Geom2dCurve>,
@@ -275,7 +275,7 @@ fn surface_op(
     Ok(())
 }
 
-// AddSurface on a GeomAdaptor_Surface and the box [-1, 1]^3.
+// AddSurface on a GeomAdaptorSurface and the box [-1, 1]^3.
 fn add_surface(
     output: &Output,
     s: &Handle<dyn GeomSurface>,

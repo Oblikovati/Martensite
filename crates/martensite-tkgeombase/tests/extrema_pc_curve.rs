@@ -159,7 +159,7 @@ fn extrema_pc_curve_circle_point_at_center_degenerate() {
 }
 
 //==================================================================================================
-// Aggregator tests with GeomAdaptor_Curve
+// Aggregator tests with GeomAdaptorCurve
 //==================================================================================================
 
 #[test]
@@ -679,7 +679,7 @@ fn extrema_pc_curve_result_max_square_distance() {
 }
 
 //==================================================================================================
-// GeomAdaptor_TransformedCurve tests - helpers
+// GeomAdaptorTransformedCurve tests - helpers
 //==================================================================================================
 
 // Helper: create a cubic BSpline for reuse across tests.
@@ -713,7 +713,7 @@ fn MakeTestBezier() -> Handle<GeomBezierCurve> {
 }
 
 //==================================================================================================
-// GeomAdaptor_TransformedCurve - Identity transform
+// GeomAdaptorTransformedCurve - Identity transform
 //==================================================================================================
 
 #[test]
@@ -775,7 +775,7 @@ fn extrema_pc_curve_transformed_curve_identity_b_spline_matches_non_transformed(
 }
 
 //==================================================================================================
-// GeomAdaptor_TransformedCurve - Translation
+// GeomAdaptorTransformedCurve - Translation
 //==================================================================================================
 
 #[test]
@@ -883,7 +883,7 @@ fn extrema_pc_curve_transformed_curve_translation_b_spline() {
 }
 
 //==================================================================================================
-// GeomAdaptor_TransformedCurve - Rotation
+// GeomAdaptorTransformedCurve - Rotation
 //==================================================================================================
 
 #[test]
@@ -960,7 +960,7 @@ fn extrema_pc_curve_transformed_curve_rotation_b_spline() {
 }
 
 //==================================================================================================
-// GeomAdaptor_TransformedCurve - Compound transform (rotation + translation)
+// GeomAdaptorTransformedCurve - Compound transform (rotation + translation)
 //==================================================================================================
 
 #[test]
@@ -1013,7 +1013,7 @@ fn extrema_pc_curve_transformed_curve_compound_b_spline() {
 }
 
 //==================================================================================================
-// GeomAdaptor_TransformedCurve - Uniform scale
+// GeomAdaptorTransformedCurve - Uniform scale
 //==================================================================================================
 
 #[test]
@@ -1152,7 +1152,7 @@ fn extrema_pc_curve_transformed_curve_compound_scale_parabola_preserves_paramete
 }
 
 //==================================================================================================
-// GeomAdaptor_TransformedCurve - Offset curve via Adaptor3d_Curve interface
+// GeomAdaptorTransformedCurve - Offset curve via Adaptor3dCurve interface
 //==================================================================================================
 
 #[test]
@@ -1186,7 +1186,7 @@ fn extrema_pc_curve_transformed_curve_translation_offset_curve() {
 }
 
 //==================================================================================================
-// GeomAdaptor_TransformedCurve - Domain-limited
+// GeomAdaptorTransformedCurve - Domain-limited
 //==================================================================================================
 
 #[test]
@@ -1241,7 +1241,7 @@ fn extrema_pc_curve_transformed_curve_domain_limited_constructor() {
 }
 
 //==================================================================================================
-// GeomAdaptor_TransformedCurve - PerformWithEndpoints
+// GeomAdaptorTransformedCurve - PerformWithEndpoints
 //==================================================================================================
 
 #[test]
@@ -1308,7 +1308,7 @@ fn extrema_pc_curve_transformed_curve_perform_with_endpoints_scaled_b_spline() {
 }
 
 //==================================================================================================
-// GeomAdaptor_TransformedCurve - Bezier with transform
+// GeomAdaptorTransformedCurve - Bezier with transform
 //==================================================================================================
 
 #[test]
@@ -1382,7 +1382,7 @@ fn extrema_pc_curve_transformed_curve_compound_bezier() {
 }
 
 //==================================================================================================
-// GeomAdaptor_TransformedCurve - SearchMode with transform
+// GeomAdaptorTransformedCurve - SearchMode with transform
 //==================================================================================================
 
 #[test]

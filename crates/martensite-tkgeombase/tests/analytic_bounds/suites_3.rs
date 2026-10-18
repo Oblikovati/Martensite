@@ -7,7 +7,7 @@ fn z_frame(theX: f64, theY: f64, theZ: f64) -> Axis3 {
     ax3(pnt(theX, theY, theZ), dir(0., 0., 1.))
 }
 
-// `GeomAdaptor_Surface aSurf(theSurface)`.
+// `GeomAdaptorSurface aSurf(theSurface)`.
 fn surface_adaptor(
     theSurface: &martensite_tkernel::standard::Handle<dyn martensite_tkg3d::geom::GeomSurface>,
 ) -> GeomAdaptorSurface {

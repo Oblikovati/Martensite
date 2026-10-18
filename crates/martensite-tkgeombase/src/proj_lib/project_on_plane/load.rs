@@ -318,7 +318,7 @@ impl OnPlaneState {
     ) -> Result<(), Failure> {
         let adaptor: &dyn Adaptor3dCurve = curve.get().ok_or_else(null_curve)?;
         let approximated = perform_approx(adaptor, self.oblique())?;
-        // A failed fit leaves a null curve, which GeomAdaptor_Curve refuses.
+        // A failed fit leaves a null curve, which GeomAdaptorCurve refuses.
         let approximated: Handle<dyn GeomCurve> = approximated.cast();
         self.result = Handle::new(GeomAdaptorCurve::with_curve(&approximated)?);
         Ok(())

@@ -21,14 +21,14 @@ use martensite_tkmath::geom_abs::SurfaceType;
 use martensite_tkmath::gp::{self, Axis3, Cone3};
 use std::f64::consts::PI;
 
-// Helper: compare two Bnd_Box results within tolerance.
+// Helper: compare two BoundingBox3 results within tolerance.
 fn CompareBoxes(theNew: &BoundingBox3, theOld: &BoundingBox3, theTol: f64) {
     for (aN, aO) in get3(theNew).iter().zip(get3(theOld)) {
         EXPECT_NEAR(*aN, aO, theTol);
     }
 }
 
-// The C++ tests' `ExpectNoLarger` blocks: every side of `theNew` inside `theOld`.
+// Check that every side of `theNew` lies inside `theOld`.
 fn expect_no_larger(theNew: &BoundingBox3, theOld: &BoundingBox3) {
     let [aXminN, aXmaxN, aYminN, aYmaxN, aZminN, aZmaxN] = get3(theNew);
     let [aXminO, aXmaxO, aYminO, aYmaxO, aZminO, aZmaxO] = get3(theOld);
@@ -62,7 +62,7 @@ fn new_box(theSurf: &Handle<dyn GeomSurface>, thePatch: Option<[f64; 4]>) -> Bou
     aBox
 }
 
-// AddSurface::Add on a GeomAdaptor_Surface over the patch or the adaptor bounds.
+// AddSurface::Add on a GeomAdaptorSurface over the patch or the adaptor bounds.
 fn old_box(theAdaptor: &dyn Adaptor3dSurface, thePatch: Option<[f64; 4]>) -> BoundingBox3 {
     let mut aBox = BoundingBox3::default();
     match thePatch {

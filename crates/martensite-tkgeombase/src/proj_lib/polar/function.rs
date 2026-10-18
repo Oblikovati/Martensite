@@ -237,7 +237,7 @@ fn little_range(x: f64, inf: f64, sup: f64) -> (f64, f64) {
 }
 
 impl FuncData<'_> {
-    // The surface patch around (U0, V0) as a GeomAdaptor_Surface.
+    // The surface patch around (U0, V0) as a GeomAdaptorSurface.
     fn little_surface(
         &self,
         kind: SurfaceType,

@@ -61,7 +61,7 @@ fn ellipse() -> Handle<dyn Geom2dCurve> {
     curve2d(Geom2dEllipse::new(aFrame, 8.0, 3.0).unwrap())
 }
 
-// Curve2d(anOff).Add against Add2dCurve::Add on a Geom2dAdaptor_Curve,
+// Curve2d(anOff).Add against Add2dCurve::Add on a Geom2dAdaptorCurve,
 // over the natural range or `theRange`.
 fn boxes(
     theCurve: &Handle<dyn Geom2dCurve>,

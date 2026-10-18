@@ -21,7 +21,7 @@ use martensite_tkmath::geom_abs::CurveType;
 use martensite_tkmath::gp;
 use std::f64::consts::PI;
 
-// Helper: compare two Bnd_Box results within tolerance.
+// Helper: compare two BoundingBox3 results within tolerance.
 fn CompareBoxes(theNew: &BoundingBox3, theOld: &BoundingBox3, theTol: f64) {
     let aNew = get3(theNew);
     let aOld = get3(theOld);

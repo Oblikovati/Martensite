@@ -14,7 +14,7 @@ use martensite_tkmath::elclib;
 // `1.5`: the factor applied to the sampled deflection before the hull reduction.
 const WEAKNESS: f64 = 1.5;
 
-/// A `GeomAdaptor_Curve` on a typed curve handle; `adaptor_of(&bezier)?`.
+/// A `GeomAdaptorCurve` on a typed curve handle; `adaptor_of(&bezier)?`.
 pub(super) fn adaptor_of<T: GeomCurve + martensite_tkernel::standard::RuntimeTyped>(
     curve: &Handle<T>,
 ) -> Result<GeomAdaptorCurve, Failure> {
@@ -60,7 +60,7 @@ impl BezierCurve {
         bounds.enlarge(tolerance);
         Ok(bounds)
     }
-    /// `BoxOptimal(U1, U2, Tol)`: `CurveBoxOptimal` on a `GeomAdaptor_Curve`;
+    /// `BoxOptimal(U1, U2, Tol)`: `CurveBoxOptimal` on a `GeomAdaptorCurve`;
     /// `evaluator.bounding_box_optimal_range(0.0, 1.0, 0.0)?`.
     pub fn bounding_box_optimal_range(
         &self,
@@ -160,7 +160,7 @@ impl BSplineCurve {
         }
         Ok(bounds)
     }
-    /// `BoxOptimal(U1, U2, Tol)`: `CurveBoxOptimal` on a `GeomAdaptor_Curve`;
+    /// `BoxOptimal(U1, U2, Tol)`: `CurveBoxOptimal` on a `GeomAdaptorCurve`;
     /// `evaluator.bounding_box_optimal_range(0.0, 1.0, 0.0)?`.
     pub fn bounding_box_optimal_range(
         &self,

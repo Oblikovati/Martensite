@@ -128,8 +128,8 @@ fn exact_kind(surface: &Handle<dyn GeomSurface>) -> Option<SurfaceType> {
         .map(|(_, kind)| kind)
 }
 
-// The Geom surface behind an adaptor: a GeomAdaptor_Surface's surface or a
-// GeomAdaptor_TransformedSurface's transformed surface, else null.
+// The Geom surface behind an adaptor: a GeomAdaptorSurface's surface or a
+// GeomAdaptorTransformedSurface's transformed surface, else null.
 fn adaptor_geometry(surface: &dyn Adaptor3dSurface) -> Result<Handle<dyn GeomSurface>, Failure> {
     if let Some(geom_adaptor) = GeomAdaptorSurface::project_from(surface) {
         return Ok(geom_adaptor.surface());
@@ -169,9 +169,9 @@ fn from_adaptor_value(
 }
 
 impl<'a> Surface<'a> {
-    /// `Surface(const Adaptor3d_Surface&)`: the Geom surface behind a
-    /// GeomAdaptor_Surface (or the transformed surface of a
-    /// GeomAdaptor_TransformedSurface), without trimming wrappers, selects the evaluator
+    /// `Surface(const Adaptor3dSurface&)`: the Geom surface behind a
+    /// GeomAdaptorSurface (or the transformed surface of a
+    /// GeomAdaptorTransformedSurface), without trimming wrappers, selects the evaluator
     /// of the adaptor's `GetType`; otherwise the adaptor's gp value or spline handle;
     /// every other kind uses OtherSurface on the adaptor; `Surface::from_adaptor(&adaptor)?`.
     pub fn from_adaptor(surface: &'a dyn Adaptor3dSurface) -> Result<Self, Failure> {
@@ -297,7 +297,7 @@ impl<'a> Surface<'a> {
 impl Surface<'static> {
     /// `Surface(const occ::handle<Surface>&)`: the exact dynamic type
     /// selects the evaluator; a rectangular trimmed surface uses its basis (one level) with
-    /// a GeomAdaptor_Surface on the trimmed surface for the patch of `Box(Tol)`; any
+    /// a GeomAdaptorSurface on the trimmed surface for the patch of `Box(Tol)`; any
     /// other surface uses OtherSurface with the type OtherSurface;
     /// `Surface::from_surface(&handle)?`.
     pub fn from_surface(surface: &Handle<dyn GeomSurface>) -> Result<Self, Failure> {

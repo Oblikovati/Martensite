@@ -46,7 +46,7 @@ impl ProjectedState {
     }
 }
 
-/// `ProjectedCurve`: an `Adaptor2d_Curve2d` answering for the projected
+/// `ProjectedCurve`: an `Adaptor2dCurve2d` answering for the projected
 /// curve. Its point evaluators are not overridden natively, so they raise
 /// NotImplemented; the result is read through `GetType` and the typed
 /// accessors (`Line`, `BSpline`...), or `proj_lib::make_pcurve_of_type`.
@@ -135,7 +135,7 @@ impl ProjectedCurve {
     pub fn load_tolerance(&self, tolerance: f64) {
         self.state.write().tolerance = tolerance;
     }
-    /// `Load(const occ::handle<Adaptor3d_Surface>&)`; `projected.load_surface(&surface)`.
+    /// `Load(const Handle<Adaptor3dSurface>&)`; `projected.load_surface(&surface)`.
     pub fn load_surface(&self, surface: &Handle<dyn Adaptor3dSurface>) {
         self.state.write().surface = surface.clone();
     }

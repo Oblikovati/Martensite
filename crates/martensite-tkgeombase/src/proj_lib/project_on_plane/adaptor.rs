@@ -1,4 +1,4 @@
-//! The `Adaptor3d_Curve` interface of `ProjectOnPlane`: the bounds,
+//! The `Adaptor3dCurve` interface of `ProjectOnPlane`: the bounds,
 //! continuity and intervals of the original curve, the evaluation and the kind of
 //! the projected result.
 use super::{OnPlaneState, ProjectOnPlane};

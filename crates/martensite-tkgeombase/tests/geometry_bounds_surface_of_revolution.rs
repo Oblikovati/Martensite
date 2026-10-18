@@ -104,7 +104,7 @@ fn bspline() -> Handle<dyn GeomCurve> {
 }
 
 // Surface(aRevSurf).Add against AddSurface::Add on a
-// GeomAdaptor_Surface over the patch.
+// GeomAdaptorSurface over the patch.
 fn boxes(theSurf: &Handle<dyn GeomSurface>, thePatch: [f64; 4]) -> (BoundingBox3, BoundingBox3) {
     let anAdaptor = GeomAdaptorSurface::with_surface(theSurf).unwrap();
     let aTol = precision::confusion();

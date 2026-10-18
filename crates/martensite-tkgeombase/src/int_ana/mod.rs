@@ -6,8 +6,8 @@
 //! plane special cases) and [`IntLinTorus`] the line-torus intersection.
 //! [`Quadric`] is a quadric equation and [`ResultType`] the kind of a geometric
 //! result. Each retained constructor overload is a named constructor and each
-//! Perform overload a `perform_*` method; C++ exceptions are `Err` values of
-//! the same type. The deprecated alias ListOfCurve is [`ListOfCurve`].
+//! evaluation overload is a `perform_*` method. Failures return typed `Err`
+//! values. The deprecated list alias is [`ListOfCurve`].
 mod curve;
 mod int_conic_quad;
 mod int_lin_torus;
@@ -24,6 +24,6 @@ pub use quad_quad_geo::QuadQuadGeo;
 pub use quadric::Quadric;
 pub use result_type::ResultType;
 
-/// ListOfCurve (Deprecated/NCollectionAliases): a list of [`Curve`].
+/// Deprecated alias for a list of [`Curve`].
 #[deprecated(note = "Use martensite_tkernel::ncollection::List<Curve> directly")]
 pub type ListOfCurve = martensite_tkernel::ncollection::List<Curve>;

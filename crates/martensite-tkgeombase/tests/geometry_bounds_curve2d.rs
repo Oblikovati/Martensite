@@ -21,7 +21,7 @@ use martensite_tkmath::geom_abs::CurveType;
 use martensite_tkmath::gp::{Axis2d, Axis22d, Point2};
 use std::f64::consts::PI;
 
-// Helper: compare two Bnd_Box2d results within tolerance.
+// Helper: compare two BoundingBox2 results within tolerance.
 fn CompareBoxes2d(theNew: &BoundingBox2, theOld: &BoundingBox2, theTol: f64) {
     for (aN, aO) in get2(theNew).iter().zip(get2(theOld)) {
         EXPECT_NEAR(*aN, aO, theTol);

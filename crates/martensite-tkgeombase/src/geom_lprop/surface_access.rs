@@ -3,7 +3,7 @@
 //! The access policies of `SurfaceUtils` and its bounds helpers.
 //!
 //! `DirectAccess` evaluates a surface through its own members ([`DirectSurface`],
-//! implemented by the `Surface` and `Adaptor3d_Surface` handles) and
+//! implemented by the `Surface` and `Adaptor3dSurface` handles) and
 //! `ToolAccess<Tool>` through the static members of a tool ([`SurfaceTool`]). A null
 //! handle gives null-object failure where the retained `Deref` dereferences it.
 use crate::lprop::curve_access::live;
@@ -23,7 +23,7 @@ pub fn get_surf_bounds_geom(surface: &dyn GeomSurface) -> PropsBounds {
     (u1, v1, u2, v2)
 }
 
-/// `GetSurfBounds(const Adaptor3d_Surface&, ...)`: the four parameter bounds read
+/// `GetSurfBounds(const Adaptor3dSurface&, ...)`: the four parameter bounds read
 /// in the order U1, V1, U2, V2; `get_surf_bounds_adaptor(&*adaptor)?`.
 pub fn get_surf_bounds_adaptor(surface: &dyn Adaptor3dSurface) -> Result<PropsBounds, Failure> {
     let u1: f64 = surface.first_u_parameter()?;

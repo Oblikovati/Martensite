@@ -1,5 +1,5 @@
 //! The three geometry families of GeomTools behind one interface, so the probe cases are
-//! written once, as the C++ templates over GtCurves, GtCurves2d and GtSurfaces are.
+//! Shared generic serialization for spatial curves, planar curves and surfaces.
 use super::super::common::{Reader, attempt, pnt, pnt2d};
 use super::super::geometry_record_fixtures as build;
 use super::console::Context;

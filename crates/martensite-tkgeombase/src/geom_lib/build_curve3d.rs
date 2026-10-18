@@ -29,7 +29,7 @@ use martensite_tkmath::gp::Point3;
 /// last_parameter]` into `new_curve_ptr`, and the maximum and average deviations
 /// of the approximation (0 for the exact cases).
 ///
-/// When the curve on surface is a Geom2dAdaptor_Curve on a GeomAdaptor_Surface: on a
+/// When the curve on surface is a Geom2dAdaptorCurve on a GeomAdaptorSurface: on a
 /// plane (or a trimmed plane) the pcurve is placed in the plane (To3d of the whole
 /// pcurve); on an isoline the surface isoline is used when within the tolerance (a
 /// null isoline result is written to `new_curve_ptr` before the fallback, as
@@ -63,7 +63,7 @@ pub fn build_curve3d(
     )
 }
 
-// The planar and isoline cases of a Geom2dAdaptor_Curve on a GeomAdaptor_Surface.
+// The planar and isoline cases of a Geom2dAdaptorCurve on a GeomAdaptorSurface.
 // True when the result is final.
 fn exact_curve(
     tolerance: f64,
