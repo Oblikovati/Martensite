@@ -16,8 +16,8 @@ must not outlive their source, even when their types satisfy these bounds.
 
 | Public types | Compiler check |
 | --- | --- |
-| `Geom2dCurveD1`, `Geom2dCurveD2`, `Geom2dCurveD3`; Cartesian point, direction, vector with magnitude, axis placement, transformation; line, circle, ellipse, hyperbola, parabola, Bezier, B-spline, trimmed and offset curve objects | `geometry_values_and_curve_objects_have_structural_thread_bounds` |
-| `ProtectedAccess`, `KnotData`, `GivenWeights`, `TrimmedBounds<dyn Geom2dCurve>` | Same geometry-value check |
+| `Geom2dCurveD1`, `Geom2dCurveD2`, `Geom2dCurveD3`; Cartesian point, direction, vector with magnitude, axis placement, transformation; line, circle, ellipse, hyperbola, parabola, Bezier, B-spline, trimmed and offset curve objects | `geometry_values_have_structural_thread_bounds` and `curve_objects_have_structural_thread_bounds` |
+| `ProtectedAccess`, `KnotData`, `GivenWeights`, `TrimmedBounds<dyn Geom2dCurve>` | Same curve-object check |
 | Geometry, curve, bounded-curve, conic, point, vector, adaptor and representation-descriptor trait objects | `public_geometry_interfaces_have_structural_thread_bounds` |
 | `Adaptor2dD3`, `Adaptor2dCurve2dBase`, `Adaptor2dLine2d`, `Adaptor2dOffsetCurve`, `Geom2dAdaptorCurve` | `adaptors_and_their_public_snapshots_have_structural_thread_bounds` |
 | `OffsetData`, `BezierData`, `BSplineData`, `CurveDataVariant`, re-exported `SharedBSplineCache`, `KnotSpans`, `CacheSource<Point2>` and `CacheSource<Point3>` | Same adaptor check |
