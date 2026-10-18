@@ -258,8 +258,12 @@ pub mod path_and_units_case_logs;
 #[path = "../timer_counter_case_log.rs"]
 pub mod timer_counter_case_log;
 
+#[path = "../binary_container_replay.rs"]
+pub mod binary_container_replay;
 #[path = "../borrowed_input_primitives.rs"]
 pub mod borrowed_input_primitives;
+#[path = "../checked_binary_container.rs"]
+pub mod checked_binary_container;
 #[path = "../checked_binary_header.rs"]
 pub mod checked_binary_header;
 #[path = "../message_fallible_delivery.rs"]

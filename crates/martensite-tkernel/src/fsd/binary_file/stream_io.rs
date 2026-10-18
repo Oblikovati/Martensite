@@ -1,7 +1,7 @@
 //! Binary file reads and writes through an [`IoStream`] instead of the driver's `FILE*`.
 //! The writers return the byte size and, with `only_count`, write nothing.
-use super::strings::{bytes_from_units, units_from_bytes};
-use super::{BinaryFile, FileHeader, type_mismatch};
+use super::strings::bytes_from_units;
+use super::{BinaryFile, FileHeader, input_fields, input_info, input_source::OwnedReadSource};
 use crate::ncollection::Sequence;
 use crate::standard::{Failure, Handle};
 use crate::storage::{HeaderData, IoStream, StorageError, StreamException};
@@ -16,31 +16,6 @@ fn stream_write(stream: &mut IoStream, bytes: &[u8], member: &str) -> Result<(),
         )));
     }
     Ok(())
-}
-
-fn read_error(member: &str) -> Failure {
-    StreamException::Read.raise(&format!("{member}: the stream ended inside a string"))
-}
-
-/// `if (!good()) throw; read(n); if (gcount() != n) throw` of the string readers. The read
-/// goes in steps so a corrupt length fails at the end of the stream instead of allocating
-/// the whole length first.
-fn stream_block(stream: &mut IoStream, size: usize, member: &str) -> Result<Vec<u8>, Failure> {
-    const STEP: usize = 1 << 16;
-    if !stream.good() {
-        return Err(read_error(member));
-    }
-    let mut block = Vec::new();
-    while block.len() < size {
-        let start = block.len();
-        let step = (size - start).min(STEP);
-        block.resize(start + step, 0);
-        stream.read(&mut block[start..]);
-        if stream.gcount() != step as i64 {
-            return Err(read_error(member));
-        }
-    }
-    Ok(block)
 }
 
 impl BinaryFile {
@@ -59,19 +34,13 @@ impl BinaryFile {
     /// Reads one host-order integer: a short read keeps the bytes it got and is a
     /// `Storage_StreamTypeMismatchError`; `BinaryFile::get_integer_stream(&mut input, &mut v)?`.
     pub fn get_integer_stream(stream: &mut IoStream, value: &mut i32) -> Result<(), Failure> {
-        super::header_input::read_integer(value, |bytes| {
-            stream.read(bytes);
-            if stream.gcount() != 4 {
-                return Err(type_mismatch("FSD_BinaryFile::GetInteger"));
-            }
-            Ok(())
-        })
+        input_fields::integer(&mut OwnedReadSource(stream), value)
     }
 
     /// Reads a reference number, encoded like an integer.
     /// Example: `BinaryFile::get_reference_stream(&mut input, &mut reference)?`.
     pub fn get_reference_stream(stream: &mut IoStream, value: &mut i32) -> Result<(), Failure> {
-        Self::get_integer_stream(stream, value)
+        input_fields::integer(&mut OwnedReadSource(stream), value)
     }
 
     /// Writes the length and the bytes, `4 + length` bytes.
@@ -94,15 +63,7 @@ impl BinaryFile {
         stream: &mut IoStream,
         text: &mut AsciiString,
     ) -> Result<(), Failure> {
-        let mut size = 0;
-        Self::get_integer_stream(stream, &mut size)?;
-        if size <= 0 {
-            *text = AsciiString::default();
-            return Ok(());
-        }
-        let block = stream_block(stream, size as usize, "FSD_BinaryFile::ReadString")?;
-        *text = AsciiString::from_bytes(&block);
-        Ok(())
+        input_fields::ascii(&mut OwnedReadSource(stream), text)
     }
 
     /// Writes the unit count and the host-order UTF-16 units.
@@ -126,19 +87,7 @@ impl BinaryFile {
         stream: &mut IoStream,
         text: &mut ExtendedString,
     ) -> Result<(), Failure> {
-        let mut size = 0;
-        Self::get_integer_stream(stream, &mut size)?;
-        if size <= 0 {
-            *text = ExtendedString::default();
-            return Ok(());
-        }
-        let block = stream_block(
-            stream,
-            size as usize * 2,
-            "FSD_BinaryFile::ReadExtendedString",
-        )?;
-        *text = ExtendedString::from_utf16(&units_from_bytes(&block));
-        Ok(())
+        input_fields::extended(&mut OwnedReadSource(stream), text)
     }
 
     /// Writes the 52-byte file header.
@@ -161,7 +110,7 @@ impl BinaryFile {
         stream: &mut IoStream,
         header: &mut FileHeader,
     ) -> Result<(), Failure> {
-        super::header_input::read_fields(header, |field| Self::get_integer_stream(stream, field))
+        input_fields::header(&mut OwnedReadSource(stream), header)
     }
 }
 
@@ -216,16 +165,7 @@ impl BinaryFile {
         stream: &mut IoStream,
         comments: &mut Sequence<ExtendedString>,
     ) -> Result<(), Failure> {
-        let mut length = 0;
-        Self::get_integer_stream(stream, &mut length)?;
-        let mut line = ExtendedString::default();
-        let mut index = 1;
-        while index <= length && stream.good() {
-            Self::read_extended_string_stream(stream, &mut line)?;
-            comments.append(line.clone());
-            index += 1;
-        }
-        Ok(())
+        input_fields::comments(&mut OwnedReadSource(stream), comments)
     }
 
     /// Reads the info section into locals, then stores them in `header`.
@@ -234,86 +174,14 @@ impl BinaryFile {
         stream: &mut IoStream,
         header: &Handle<HeaderData>,
     ) -> Result<(), Failure> {
-        let info = InfoFields::read(stream)?;
-        let header = header.get().ok_or_else(null_header)?;
-        info.store(header);
-        Ok(())
+        input_info::header_data(&mut OwnedReadSource(stream), header)
     }
-}
-
-/// The info section as the header-data read reads it into locals before storing it.
-#[derive(Default)]
-struct InfoFields {
-    object_count: i32,
-    texts: [AsciiString; 5],
-    names: [ExtendedString; 2],
-    user_info: Sequence<AsciiString>,
-}
-
-impl InfoFields {
-    fn read(stream: &mut IoStream) -> Result<Self, Failure> {
-        let mut info = Self::default();
-        BinaryFile::get_integer_stream(stream, &mut info.object_count)?;
-        for text in info.texts.iter_mut().take(4) {
-            BinaryFile::read_string_stream(stream, text)?;
-        }
-        BinaryFile::read_extended_string_stream(stream, &mut info.names[0])?;
-        BinaryFile::read_string_stream(stream, &mut info.texts[4])?;
-        BinaryFile::read_extended_string_stream(stream, &mut info.names[1])?;
-        info.user_info = read_user_info(stream)?;
-        Ok(info)
-    }
-
-    fn store(&self, header: &HeaderData) {
-        let [
-            version,
-            date,
-            schema_name,
-            schema_version,
-            application_version,
-        ] = &self.texts;
-        header.set_number_of_objects(self.object_count);
-        header.set_storage_version(version);
-        header.set_creation_date(date);
-        header.set_schema_name(schema_name);
-        header.set_schema_version(schema_version);
-        header.set_application_name(&self.names[0]);
-        header.set_application_version(application_version);
-        header.set_data_type(&self.names[1]);
-        for line in self.user_info.iter() {
-            header.add_to_user_info(line);
-        }
-    }
-}
-
-fn read_user_info(stream: &mut IoStream) -> Result<Sequence<AsciiString>, Failure> {
-    let mut length = 0;
-    BinaryFile::get_integer_stream(stream, &mut length)?;
-    let mut lines = Sequence::default();
-    let mut line = AsciiString::default();
-    let mut index = 1;
-    while index <= length && stream.good() {
-        BinaryFile::read_string_stream(stream, &mut line)?;
-        lines.append(line.clone());
-        index += 1;
-    }
-    Ok(lines)
-}
-
-fn null_header() -> Failure {
-    Failure::with_type(
-        "Standard_NullObject",
-        "FSD_BinaryFile::ReadHeaderData: null header; expected a Storage_HeaderData",
-        "",
-    )
 }
 
 impl BinaryFile {
     /// Reads the type section size; `BinaryFile::type_section_size_stream(&mut input)?`.
     pub fn type_section_size_stream(stream: &mut IoStream) -> Result<i32, Failure> {
-        let mut size = 0;
-        Self::get_integer_stream(stream, &mut size)?;
-        Ok(size)
+        input_fields::section_size(&mut OwnedReadSource(stream))
     }
 
     /// Reads one type entry: its number and its name.
@@ -323,13 +191,12 @@ impl BinaryFile {
         number: &mut i32,
         name: &mut AsciiString,
     ) -> Result<(), Failure> {
-        Self::get_integer_stream(stream, number)?;
-        Self::read_string_stream(stream, name)
+        input_fields::type_entry(&mut OwnedReadSource(stream), number, name)
     }
 
     /// Reads the root section size; `BinaryFile::root_section_size_stream(&mut input)?`.
     pub fn root_section_size_stream(stream: &mut IoStream) -> Result<i32, Failure> {
-        Self::type_section_size_stream(stream)
+        input_fields::section_size(&mut OwnedReadSource(stream))
     }
 
     /// Reads one root entry: reference, name, type name.
@@ -340,14 +207,12 @@ impl BinaryFile {
         reference: &mut i32,
         type_name: &mut AsciiString,
     ) -> Result<(), Failure> {
-        Self::get_reference_stream(stream, reference)?;
-        Self::read_string_stream(stream, name)?;
-        Self::read_string_stream(stream, type_name)
+        input_fields::root_entry(&mut OwnedReadSource(stream), name, reference, type_name)
     }
 
     /// Reads the reference section size; `BinaryFile::ref_section_size_stream(&mut input)?`.
     pub fn ref_section_size_stream(stream: &mut IoStream) -> Result<i32, Failure> {
-        Self::type_section_size_stream(stream)
+        input_fields::section_size(&mut OwnedReadSource(stream))
     }
 
     /// Reads one reference entry: its reference and type numbers.
@@ -357,8 +222,7 @@ impl BinaryFile {
         reference: &mut i32,
         type_number: &mut i32,
     ) -> Result<(), Failure> {
-        Self::get_reference_stream(stream, reference)?;
-        Self::get_integer_stream(stream, type_number)
+        input_fields::reference_entry(&mut OwnedReadSource(stream), reference, type_number)
     }
 
     /// Records `tellp()` as the info section end.
