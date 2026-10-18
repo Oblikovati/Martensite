@@ -298,11 +298,11 @@ dependencies = [
 
 [[package]]
 name = "martensite-cmath"
-version = "0.3.1"
+version = "0.3.2"
 
 [[package]]
 name = "martensite-tkernel"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "allocator-api2",
  "bytemuck",
@@ -318,7 +318,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkmath"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
