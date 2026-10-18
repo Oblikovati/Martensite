@@ -264,3 +264,5 @@ pub mod binary_container_replay;
 pub mod borrowed_input_primitives;
 #[path = "../checked_binary_header.rs"]
 pub mod checked_binary_header;
+#[path = "../message_fallible_delivery.rs"]
+pub mod message_fallible_delivery;

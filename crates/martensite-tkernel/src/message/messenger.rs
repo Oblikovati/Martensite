@@ -168,3 +168,6 @@ impl Messenger {
         super::json::field_integer(output, "Printers.Size", self.printers().len() as i32);
     }
 }
+
+#[path = "messenger_fallible.rs"]
+mod fallible;

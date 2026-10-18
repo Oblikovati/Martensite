@@ -1,6 +1,6 @@
 //! An output context for text messages filtered by gravity.
 use super::Gravity;
-use crate::standard::{Handle, RuntimeType, StandardTransient};
+use crate::standard::{Failure, Handle, RuntimeType, StandardTransient};
 use crate::tcollection::{AsciiString, ExtendedString};
 use std::any::Any;
 use std::sync::atomic::{AtomicI32, Ordering};
@@ -61,6 +61,54 @@ pub trait Printer: Any + Send + Sync {
     fn dynamic_type(&self) -> &'static RuntimeType;
     /// Receives one message that passed the filter.
     fn send(&self, text: &AsciiString, gravity: Gravity);
+
+    /// Delivers an already filtered message with an owned failure channel.
+    /// Existing printers delegate to `send`; `printer.try_send(&text, g)?`.
+    fn try_send(&self, text: &AsciiString, gravity: Gravity) -> Result<(), Failure> {
+        self.send(text, gravity);
+        Ok(())
+    }
+
+    /// Filters and delivers an ASCII message; `printer.try_send_ascii(&text, g)?`.
+    fn try_send_ascii(&self, text: &AsciiString, gravity: Gravity) -> Result<(), Failure> {
+        if gravity < self.trace_level() {
+            return Ok(());
+        }
+        self.try_send(text, gravity)
+    }
+
+    /// Filters before UTF-8 conversion; `printer.try_send_extended(&text, g)?`.
+    fn try_send_extended(&self, text: &ExtendedString, gravity: Gravity) -> Result<(), Failure> {
+        if gravity < self.trace_level() {
+            return Ok(());
+        }
+        self.try_send(&AsciiString::from(text), gravity)
+    }
+
+    /// Delivers bytes up to the first NUL; `printer.try_send_c_str(b"text", g)?`.
+    fn try_send_c_str(&self, text: &[u8], gravity: Gravity) -> Result<(), Failure> {
+        if gravity < self.trace_level() {
+            return Ok(());
+        }
+        self.try_send(&AsciiString::from_bytes(text), gravity)
+    }
+
+    /// Delivers stream bytes up to the first NUL; `printer.try_send_string_stream(b"x", g)?`.
+    fn try_send_string_stream(&self, stream: &[u8], gravity: Gravity) -> Result<(), Failure> {
+        self.try_send_c_str(stream, gravity)
+    }
+
+    /// Delivers a non-null object's description; `printer.try_send_object(&object, g)?`.
+    fn try_send_object(
+        &self,
+        object: &Handle<StandardTransient>,
+        gravity: Gravity,
+    ) -> Result<(), Failure> {
+        if !object.is_some() || gravity < self.trace_level() {
+            return Ok(());
+        }
+        self.try_send(&object_description(object), gravity)
+    }
 
     /// Example: `printer.trace_level()`.
     fn trace_level(&self) -> Gravity {
