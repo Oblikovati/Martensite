@@ -16,6 +16,10 @@ use martensite_tkmath::gp::{Point2, Vector2};
 /// polynomial. Missing support at the last knot returns an out-of-range failure.
 /// The curve's evaluation representation is not used;
 /// `Geom2dGridEvalBSplineCurve::new(bspline).evaluate_grid(&params)?`.
+///
+/// Empty output is a low-level convention, not evidence of bound geometry or
+/// modelling completion. Check `geometry().is_null()` and requested sample
+/// coverage separately; an empty request does not validate its geometry (#105).
 pub struct Geom2dGridEvalBSplineCurve {
     geom: Handle<Geom2dBSplineCurve>,
 }

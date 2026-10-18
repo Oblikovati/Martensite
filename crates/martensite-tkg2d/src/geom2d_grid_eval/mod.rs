@@ -5,6 +5,12 @@
 //! order below 1 give an empty array. `Geom2dGridEvalCurve` picks the specialized
 //! evaluator from the curve class. Evaluators that can raise internally (through the
 //! gp getters, bsplclib, the offset utilities or an adaptor) return `Result`.
+//!
+//! These low-level arrays do not report modelling-operation completion or validity.
+//! In particular, `Ok(empty)` cannot distinguish an unbound evaluator from no
+//! requested samples. Where `geometry()` is exposed, inspect that handle before
+//! evaluation and compare output coverage with the requested samples. An operation publishing
+//! geometry must report its own typed completion, diagnostics and validation.
 use crate::geom2d::{Geom2dCurveD1, Geom2dCurveD2, Geom2dCurveD3};
 
 /// Point and first derivative of a grid evaluation (`Geom2dGridEval::CurveD1`); the

@@ -33,7 +33,9 @@ pub(super) trait EvalOrder {
         basis: &Geom2dAdaptorCurve,
         offset: f64,
     ) -> Result<Option<Self::Output>, Failure>;
-    /// The exception of a failed offset evaluation.
+    /// Stable low-level failure for an undefined offset evaluation (#105).
+    /// The enclosing modelling operation must attach its own typed parameter and
+    /// entity context; this message does not carry `u`, offset or validity evidence.
     fn failure() -> Failure;
 }
 
@@ -210,5 +212,33 @@ impl EvalOrder for EvalD3 {
     }
     fn failure() -> Failure {
         undefined_derivative("Geom2dAdaptor_Curve::EvalD3: evaluation failed")
+    }
+}
+
+#[cfg(test)]
+mod low_level_failure_contracts {
+    use super::{EvalD0, EvalD1, EvalD2, EvalD3, EvalOrder};
+
+    #[test]
+    fn undefined_offset_failures_keep_their_exact_categories_and_messages() {
+        let failures = [
+            EvalD0::failure(),
+            EvalD1::failure(),
+            EvalD2::failure(),
+            EvalD3::failure(),
+        ];
+        let categories = [
+            "Geom2d_UndefinedValue",
+            "Geom2d_UndefinedDerivative",
+            "Geom2d_UndefinedDerivative",
+            "Geom2d_UndefinedDerivative",
+        ];
+        for (order, (failure, category)) in failures.iter().zip(categories).enumerate() {
+            assert_eq!(failure.exception_type(), category);
+            assert_eq!(
+                failure.message(),
+                format!("Geom2dAdaptor_Curve::EvalD{order}: evaluation failed")
+            );
+        }
     }
 }

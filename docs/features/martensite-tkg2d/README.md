@@ -48,3 +48,11 @@ the reason and behavior version.
 
 This preparation has been executed on Linux x86_64. The combined release candidate
 must pass the full supported platform matrix before publication.
+
+See [thread bounds](thread-contracts.md) for compile-time type coverage, generic
+bounds and the thread-confined knot callback view. These bounds do not establish
+input isolation or immutable geometry.
+
+The [evaluation boundary](evaluation-boundary.md) records the behavior-version-1
+empty-grid and failure-message conventions. The low-level APIs do not certify
+modelling completion or validation coverage.

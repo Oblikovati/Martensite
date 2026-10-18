@@ -19,6 +19,10 @@ use martensite_tkmath::gp::{Point2, Vector2, resolution};
 /// evaluator (an eval curve), gives an empty grid; orders above 3 are the basis
 /// derivatives. The offset curve's own evaluation representation is ignored;
 /// `Geom2dGridEvalOffsetCurve::new(offset).evaluate_grid(&params)?`.
+///
+/// Empty output is a low-level convention, not evidence of bound geometry or
+/// modelling completion. Check `geometry().is_null()` and requested sample
+/// coverage separately; an empty request does not validate its geometry (#105).
 pub struct Geom2dGridEvalOffsetCurve {
     geom: Handle<Geom2dOffsetCurve>,
     basis: Handle<dyn Geom2dCurve>,

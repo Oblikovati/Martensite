@@ -233,3 +233,47 @@ fn offset_grid_is_empty_at_a_degenerate_normal() {
         2
     );
 }
+
+macro_rules! assert_empty_low_level_orders {
+    ($evaluator:expr, $parameters:expr) => {{
+        let evaluator = &$evaluator;
+        let parameters = &$parameters;
+        assert!(evaluator.evaluate_grid(parameters).unwrap().is_empty());
+        assert!(evaluator.evaluate_grid_d1(parameters).unwrap().is_empty());
+        assert!(evaluator.evaluate_grid_d2(parameters).unwrap().is_empty());
+        assert!(evaluator.evaluate_grid_d3(parameters).unwrap().is_empty());
+        for order in [-1, 0, 1, 2, 3, 4] {
+            assert!(evaluator.evaluate_grid_dn(parameters, order).unwrap().is_empty());
+        }
+    }};
+}
+
+#[test]
+fn null_bspline_grid_preserves_empty_outputs_without_establishing_geometry() {
+    let evaluator = Geom2dGridEvalBSplineCurve::new(Handle::default());
+    assert!(evaluator.geometry().is_null());
+    for parameters in [Array1::default(), params(-3, &[0.25, 0.75])] {
+        assert_empty_low_level_orders!(evaluator, parameters);
+    }
+}
+
+#[test]
+fn null_offset_grid_preserves_empty_outputs_without_establishing_geometry() {
+    let evaluator = Geom2dGridEvalOffsetCurve::new(Handle::default());
+    assert!(evaluator.geometry().is_null());
+    for parameters in [Array1::default(), params(-3, &[0.25, 0.75])] {
+        assert_empty_low_level_orders!(evaluator, parameters);
+    }
+}
+
+#[test]
+fn bound_bspline_and_offset_grids_also_return_empty_for_no_parameters() {
+    let spline = polyline();
+    let offset = Handle::new(Geom2dOffsetCurve::new(&spline.clone().cast(), 0.25, true).unwrap());
+    let spline_grid = Geom2dGridEvalBSplineCurve::new(spline);
+    let offset_grid = Geom2dGridEvalOffsetCurve::new(offset);
+    assert!(!spline_grid.geometry().is_null());
+    assert!(!offset_grid.geometry().is_null());
+    assert_empty_low_level_orders!(spline_grid, Array1::default());
+    assert_empty_low_level_orders!(offset_grid, Array1::default());
+}

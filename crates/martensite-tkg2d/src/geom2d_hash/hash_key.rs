@@ -94,6 +94,16 @@ pub fn same_poles_and_weights<I: Copy, P>(
 
 /// The knot value and multiplicity accessors of one knot sequence (`Knot(i)`,
 /// `Multiplicity(i)`, or their U/V forms).
+///
+/// This borrowed callback pair is thread-confined: its erased callbacks do not
+/// require `Sync`, so callers must invoke it on the owning thread. Copying the
+/// references does not change that contract.
+///
+/// ```compile_fail,E0277
+/// use martensite_tkg2d::geom2d_hash::hash_key::KnotAccess;
+/// fn requires_send_sync<T: Send + Sync>() {}
+/// requires_send_sync::<KnotAccess<'static>>();
+/// ```
 pub type KnotAccess<'a> = (
     &'a dyn Fn(i32) -> Result<f64, Failure>,
     &'a dyn Fn(i32) -> Result<i32, Failure>,

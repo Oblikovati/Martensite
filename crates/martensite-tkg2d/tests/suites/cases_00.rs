@@ -89,3 +89,5 @@ pub mod geom2d_vector_with_magnitude;
 pub mod grid_eval_behavior;
 #[path = "../planar_modeling.rs"]
 pub mod planar_modeling;
+#[path = "../thread_type_contracts.rs"]
+pub mod thread_type_contracts;
