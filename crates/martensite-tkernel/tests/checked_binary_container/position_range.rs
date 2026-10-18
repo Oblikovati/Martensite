@@ -51,8 +51,19 @@ fn assert_range(error: CheckedReadError, position: u64) {
         format!("binary container position {position}; expected 0..=2147483647")
     );
 }
+fn existing_dataset() -> Handle<Data> {
+    let set = Handle::new(Data::default());
+    set.get()
+        .unwrap()
+        .header_data()
+        .get()
+        .unwrap()
+        .set_number_of_objects(99);
+    set
+}
 fn assert_unrepresentable(source: &mut ReportedOffsetInput, mask: u8, offset: u64) {
-    let mut set = Handle::<Data>::default();
+    let mut set = existing_dataset();
+    let identity = set.as_ptr();
     let mut positioned = PositionedInput(&mut *source);
     let mut input = InputContext::new(&mut positioned);
     input.set_exception_mask(mask).unwrap();
@@ -65,6 +76,7 @@ fn assert_unrepresentable(source: &mut ReportedOffsetInput, mask: u8, offset: u6
         (0, mask, 4)
     );
     assert!(input.last_device_error().is_none());
+    assert_eq!(set.as_ptr(), identity);
     assert_eq!(set.get().unwrap().number_of_objects(), 0);
     assert_untouched_sections(source);
 }

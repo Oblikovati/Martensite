@@ -10,7 +10,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added checked borrowed input with state masks, position capability and owned typed
   causes, sharing extraction with existing owned streams and binary container
-  metadata decoding (#142).
+  metadata decoding with checked offset-range rejection (#142, #181).
 
 - Added owned storage-stream output seeking for header backpatching while preserving
   EOF, input counts and formatting state (#136).
