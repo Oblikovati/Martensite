@@ -47,8 +47,7 @@ macro_rules! gce_result {
             }
         }
         impl $maker {
-            #[doc = "Returns the constructed result; `maker.value()`."]
-            #[doc = "when the construction failed; `maker.value()?`."]
+            #[doc = "Returns the constructed result or a not-done failure when construction failed; `maker.value()?`."]
             pub fn value(&self) -> Result<$result, martensite_tkernel::standard::Failure> {
                 $crate::gce::check_done(self.the_error, concat!($native, "::Value()"))?;
                 Ok(self.the_result)

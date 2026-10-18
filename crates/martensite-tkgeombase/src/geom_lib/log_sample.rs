@@ -55,7 +55,7 @@ impl FunctionSampling for LogSample {
         self.base.number_of_points()
     }
 
-    /// The trait cannot raise: math_FunctionAllRoots only asks for `1..=N`, where
+    /// The trait cannot raise: FunctionAllRoots only asks for `1..=N`, where
     /// GetParameter succeeds; an index outside gives NaN instead of
     /// index-range failure.
     fn parameter(&self, index: i32) -> f64 {
