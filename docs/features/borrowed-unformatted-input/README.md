@@ -59,7 +59,7 @@ Existing owned diagnostics remain unchanged. This header entry alone does not de
 
 `BinaryFile::read_complete_info_checked` shares the existing owned reader's
 primitive, metadata and section decoding. It consumes the caller's actual buffer
-and leaves the body unread. Section dispatch needs an actual position capability;
+and leaves remaining caller bytes unread. Section dispatch needs an actual position capability;
 the operation never seeks or assumes an origin of zero. It does not copy the
 complete input into an owned buffer; decoded metadata fields allocate normally.
 
@@ -75,6 +75,10 @@ Independent literal containers cover nonempty text and UTF-16 metadata, user
 info, comments, shifted origins, untouched bodies and publication/failure order.
 Persistent-object construction and document parsing remain separate concerns;
 this operation reads container metadata through the existing storage contracts.
+The success fixtures declare an empty persistent-data section; their unread
+trailing bytes lie beyond its end. A declared nonempty persistent-data section
+retains the existing decoder's typed no-progress refusal; it is not decoded by
+this capability.
 
 ## Owned replay and verification
 
