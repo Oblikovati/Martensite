@@ -4,6 +4,8 @@ use martensite_tkernel::osd::{Errno, NativePosixCalls, PosixFileCalls};
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
+#[path = "osd_safe_path_operations/cursor.rs"]
+mod cursor;
 #[path = "osd_safe_path_operations/links.rs"]
 mod links;
 #[path = "osd_safe_path_operations/open.rs"]
@@ -20,6 +22,8 @@ mod records;
 mod status;
 #[path = "osd_safe_path_operations/status_kinds.rs"]
 mod status_kinds;
+#[path = "osd_safe_path_operations/temporary.rs"]
+mod temporary;
 
 struct PathScratch(PathBuf);
 impl PathScratch {

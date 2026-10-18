@@ -101,16 +101,19 @@ diagnostic. The check never changes a symlink or its target ([#75]).
    messages to find executables and native libraries (`cdylib`, `staticlib`,
    `dylib`).
 4. Packaging into `target/dist/v<version>/`:
-   - `martensite-<version>-<target>.tar.gz` with `bin/`, `lib/`, `LICENSE`,
-     `README.md` and `CHANGELOG.md`. The archive is reproducible: entries are
-     sorted, and owners, timestamps and modes are fixed. A target without
-     executables or native libraries gets no archive.
+   - `martensite-<version>-<target>.tar.gz` with `bin/`, `lib/`,
+     `LICENSE-APACHE`, `README.md` and `CHANGELOG.md`. The archive is
+     reproducible: entries are sorted, and owners, timestamps and modes are
+     fixed. A target without executables or native libraries gets no
+     archive.
    - On the primary target only: one `.crate` source package per releasable
      package from `cargo package`. Cargo builds each package from its
      packaged sources to verify it. A kernel crate that depends on another
      unreleased kernel crate resolves it through cargo's local overlay
      registry, which cargo uses only for publishable packages, so kernel
-     crates must not set `publish = false`.
+     crates must not set `publish = false`. Each `.crate` must contain
+     `LICENSE-GPL`, which cargo copies from the workspace `license-file`; the
+     release stops when a crate does not set `license-file.workspace = true`.
    - A `<file>.sha256` file in `sha256sum` format next to each asset.
 5. Collect expanded unsafe diagnostics for the selected target and compare its
    compiler baseline. Collection cleans only its dedicated build cache and

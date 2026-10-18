@@ -8,6 +8,8 @@ resolver = "3"
 edition = "2024"
 rust-version = "1.98.1"
 license = "GPL-2.0-only"
+# Copied into every .crate, so each released source package carries the GPL text (#176).
+license-file = "LICENSE-GPL"
 repository = "https://github.com/Oblikovati/Martensite"
 # Kernel crates stay publishable: `cargo package` resolves a crate's unreleased
 # sibling dependencies through its local overlay registry only for publishable

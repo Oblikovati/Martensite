@@ -17,10 +17,12 @@ pub(super) fn process_cpu() -> (f64, f64) {
 
 #[cfg(unix)]
 fn clock_ticks() -> f64 {
-    // SAFETY: sysconf only reads a configuration value.
-    let ticks: libc::c_long = unsafe { libc::sysconf(libc::_SC_CLK_TCK) };
+    let ticks = crate::native_config::native_sysconf(nix::unistd::SysconfVar::CLK_TCK);
     ticks as f64
 }
+
+#[cfg(all(test, unix))]
+mod clock_tick_contracts;
 
 #[cfg(unix)]
 fn tms_seconds(ticks: f64) -> (f64, f64) {
@@ -141,14 +143,29 @@ fn windows_times(query: TimesQuery, object: windows_sys::Win32::Foundation::HAND
 
 #[cfg(windows)]
 pub(super) fn process_cpu() -> (f64, f64) {
-    use windows_sys::Win32::System::Threading::{GetCurrentProcess, GetProcessTimes};
-    // SAFETY: GetCurrentProcess returns a constant pseudo-handle.
-    windows_times(GetProcessTimes, unsafe { GetCurrentProcess() })
+    use windows_sys::Win32::System::Threading::GetProcessTimes;
+    windows_times(GetProcessTimes, current_process_handle())
+}
+
+#[cfg(windows)]
+#[forbid(unsafe_code)]
+fn current_process_handle() -> windows_sys::Win32::Foundation::HANDLE {
+    // Keep the platform-selected pseudo handle without owning or closing it (#89).
+    winsafe::HPROCESS::GetCurrentProcess().ptr()
 }
 
 #[cfg(windows)]
 pub(super) fn thread_cpu() -> (f64, f64) {
-    use windows_sys::Win32::System::Threading::{GetCurrentThread, GetThreadTimes};
-    // SAFETY: GetCurrentThread returns a constant pseudo-handle.
-    windows_times(GetThreadTimes, unsafe { GetCurrentThread() })
+    use windows_sys::Win32::System::Threading::GetThreadTimes;
+    windows_times(GetThreadTimes, current_thread_handle())
 }
+
+#[cfg(windows)]
+#[forbid(unsafe_code)]
+fn current_thread_handle() -> windows_sys::Win32::Foundation::HANDLE {
+    // The pseudo handle is consumed on this calling thread, never transferred (#89).
+    winsafe::HTHREAD::GetCurrentThread().ptr()
+}
+
+#[cfg(all(test, windows))]
+mod pseudo_handle_contracts;

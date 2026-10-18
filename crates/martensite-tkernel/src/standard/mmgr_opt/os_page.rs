@@ -1,11 +1,13 @@
 //! Narrow platform FFI boundary for the page size the manager's initialization reads.
 #![allow(unsafe_code)]
 
+#[cfg(all(test, unix, not(target_vendor = "apple")))]
+mod page_size_contracts;
+
 /// The system page size (`getpagesize()` / `GetSystemInfo`); `os_page_size() % 4096 == 0`.
 #[cfg(all(unix, not(target_vendor = "apple")))]
 pub(super) fn os_page_size() -> usize {
-    // SAFETY: sysconf takes a plain integer selector and touches no caller memory.
-    let size: libc::c_long = unsafe { libc::sysconf(libc::_SC_PAGESIZE) };
+    let size = crate::native_config::native_sysconf(nix::unistd::SysconfVar::PAGE_SIZE);
     usize::try_from(size).unwrap_or(0)
 }
 
@@ -18,14 +20,14 @@ pub(super) fn os_page_size() -> usize {
 
 /// The system page size (`getpagesize()` / `GetSystemInfo`); `os_page_size() % 4096 == 0`.
 #[cfg(windows)]
+#[forbid(unsafe_code)]
 pub(super) fn os_page_size() -> usize {
-    use windows_sys::Win32::System::SystemInformation::{GetSystemInfo, SYSTEM_INFO};
-    // The dependency's safe default preserves the all-zero initial state (#89).
-    let mut info = SYSTEM_INFO::default();
-    // SAFETY: info is initialized, writable and alive throughout the call.
-    unsafe { GetSystemInfo(&mut info) };
+    let info = winsafe::GetSystemInfo();
     info.dwPageSize as usize
 }
+
+#[cfg(all(test, windows))]
+mod windows_contracts;
 
 #[cfg(all(test, windows))]
 mod system_info_tests {
