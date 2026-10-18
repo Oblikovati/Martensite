@@ -1,5 +1,5 @@
 //! Geometry regression fixtures separated by their actual algorithm dependencies.
-//! Original inputs/assertions at .
+//! The retained length baseline pins rational offset approximation behavior.
 #![allow(non_snake_case)]
 mod common;
 use common::EXPECT_NEAR as legacy_near;
@@ -20,7 +20,7 @@ use martensite_tkmath::{
 };
 
 #[test]
-// Keep the reference length from fclasses/bug31381 verbatim.
+// Preserve the full recorded precision of the owned reference-length baseline.
 #[allow(clippy::excessive_precision)]
 fn geom2d_offset_curve_additional_rational_b_spline_approximation() {
     let circle: Handle<dyn Geom2dCurve> = Handle::new(

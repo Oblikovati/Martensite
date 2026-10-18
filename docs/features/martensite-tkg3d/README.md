@@ -1,7 +1,7 @@
 # Spatial geometry
 
 `martensite-tkg3d` provides spatial curves and surfaces, geometry evaluation,
-adaptors, parameter grids, geometry hashes and one-parameter approximation.
+adaptors, parameter grids, geometry hashes and one-parameter approximation (#192).
 
 | Module | Capabilities |
 | --- | --- |

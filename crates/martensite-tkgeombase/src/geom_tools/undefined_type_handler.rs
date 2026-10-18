@@ -105,7 +105,7 @@ impl_transient_interface!(
 );
 
 /// The retained base behaviour of the print members: the dump gets the line, while the
-/// compact form writes it to `std::cout` and leaves the stream untouched.
+/// compact form writes it to standard output and leaves the stream untouched.
 fn report_unknown(console: &dyn ConsoleOutput, stream: &mut IoStream, compact: bool, line: &[u8]) {
     if compact {
         console.write(&[line, b"\n"].concat());

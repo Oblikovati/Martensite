@@ -2,7 +2,7 @@
 
 `martensite-tkgeombase` provides elementary construction, curve and surface
 conversion, approximation, extrema, parameter sampling, analytic intersections,
-bounds, local differential properties and mass properties.
+bounds, local differential properties and mass properties (#193).
 
 ## Evaluation and ownership boundaries
 
