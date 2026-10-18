@@ -53,8 +53,28 @@ leaves the body in the caller's source.
 field count. The latter describes the actual count and expected four bytes.
 When bad state has a retained device cause, the format error owns the same cause;
 a later EOF after clearing bad state does not attach stale device history.
-Existing owned diagnostics remain unchanged. This is a header operation, not a
-whole-container or document decoder.
+Existing owned diagnostics remain unchanged. This header entry alone does not decode container sections.
+
+## Container metadata consumer
+
+`BinaryFile::read_complete_info_checked` shares the existing owned reader's
+primitive, metadata and section decoding. It consumes the caller's actual buffer
+and leaves the body unread. Section dispatch needs an actual position capability;
+the operation never seeks or assumes an origin of zero. It does not copy the
+complete input into an owned buffer; decoded metadata fields allocate normally.
+
+A complete header precedes dataset allocation. Info fields are collected before
+header metadata publication. A short header leaves a null dataset unchanged; a
+short info record leaves the allocated dataset or existing header intact.
+`Domain` retains typed storage failures separately from incomplete fields.
+`PositionUnavailable` retains state, mask, count and any original device cause
+when section dispatch cannot obtain an actual offset. Masked query failures
+remain typed input failures. Existing owned diagnostics stay unchanged.
+
+Independent literal containers cover nonempty text and UTF-16 metadata, user
+info, comments, shifted origins, untouched bodies and publication/failure order.
+Persistent-object construction and document parsing remain separate concerns;
+this operation reads container metadata through the existing storage contracts.
 
 ## Owned replay and verification
 

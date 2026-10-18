@@ -10,6 +10,7 @@ use crate::storage::{BaseDriver, DriverBase, OpenMode, Position, StorageError, S
 use crate::tcollection::AsciiString;
 use std::rc::Rc;
 mod checked_input;
+mod checked_source;
 mod complete_info;
 pub use checked_input::CheckedReadError;
 mod header_input;
