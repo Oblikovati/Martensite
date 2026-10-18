@@ -1,6 +1,9 @@
 //! Narrow platform FFI boundary for the wall clock.
 #![allow(unsafe_code)]
 
+#[cfg(all(test, unix))]
+mod unix_contracts;
+
 #[cfg(all(test, windows))]
 mod windows_contracts;
 
