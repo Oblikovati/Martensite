@@ -1,0 +1,10 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "starting_main": "aa27c1df9efce9b34e72e0a804970d7eef2c8640",
+  "status": "Original baseline 80ee99ec071e506f022605461588ae2196ceda9b accepted: run 38999161967 passed all four native targets. Candidate 68e12679f555005bdae913c95320c9dd2068b16f (wrappers merged with main f432c27) accepted: run 39054603815 passed all four native targets, including the Windows x64 compiler inventory against the reduced target baseline; the unchanged handle/page fixtures and existing stack formatting/concurrent capture tests passed.",
+  "candidate": "Reuse existing winsafe 0.0.29 kernel wrappers investigated in PRs #159 and #166. Stack symbolization needs the same current-process pseudo-handle without ownership or closing; the allocator needs the same GetSystemInfo dwPageSize field widened to usize, not allocation granularity or native-system-info substitution.",
+  "fixtures": "Compare original and wrapper handle values and immediate named LastError observations on current and spawned threads. Compare original and wrapper page sizes and immediate LastError observations. Restore prior error before assertions; no handle is closed. Retain existing page-size and stack formatting/concurrent capture tests. Replacement default page-size field is checked separately.",
+  "exclusions": "No arbitrary LastError sentinels, exact stack addresses/names, DbgHelp initialization failure, stable timing, or synthetic system page sizes are claimed. This does not replace stack capture/symbolization calls or change their process-wide lock. No API, dependency, numerical or Unix changes. After replacement, comparison fixtures check wrapper selection, not an independent original-code oracle; accepted original execution and pinned wrapper source provide the baseline evidence.",
+  "remaining": []
+}

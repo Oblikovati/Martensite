@@ -1,0 +1,17 @@
+{
+  "parent_issue": 80,
+  "task_issue": 89,
+  "starting_main": "b2bd842",
+  "status": "Original production unchanged; baseline and safe-interface investigation in progress.",
+  "local_success": "successful_native_sleeps_preserve_callers_errno passed for second zero and millisecond zero/one with errno sentinels zero, EIO and 12345. Log: /tmp/martensite-sleep-baseline.log.",
+  "local_rejection": "The original implementation passed one explicitly selected ignored test under a five-second timeout and strace EINTR injection. Trace /tmp/martensite-sleep-original-eintr.trace shows exactly six clock_nanosleep(CLOCK_REALTIME, 0, request, NULL) calls, each injected EINTR and no retry. Requests in seconds/nanoseconds were (0,0), (0,0), (1,0), (0,1000000), (4293,967296000), (4294,966296000), for seconds then milliseconds at inputs 0, 1, -1. No long sleep was executed.",
+  "injection_safety": "The original calls use a null remainder pointer. Do not reuse synthetic EINTR injection on a candidate that assumes initialized remainder output on interruption; the injector does not populate it. This is syscall-rejection evidence, not an actual delivered-signal or pthread-cancellation test.",
+  "unnamed_error_fixture": "The additional ignored GNU/Linux fixture passed explicitly (one test) under a five-second timeout with strace error=4094 injection. Trace /tmp/martensite-sleep-original-unnamed.trace records exactly two zero-duration clock_nanosleep calls with NULL remainder, each returning injected errno 4094. Both entry points preserved that raw value. Unlike incoming sentinel 12345, 4094 is within the Linux syscall error range and is not a named nix errno variant.",
+  "local_gate": "The corrected Bug #155 cargo xtask pr gate passed (exit zero). Log: /tmp/martensite-sleep-darwin-corrected-pr.log. GNU/Linux preservation passed; injection-only tests were compiled but ignored and the macOS-specific assertion was excluded. Native macOS validation is still required. Earlier gate results do not establish corrected-state acceptance.",
+  "limits": "Native run 38988376147 at 2317cc2 exposed an incorrect cross-platform fixture: macOS zero-duration sleep left errno 60 (ETIMEDOUT), not incoming zero (#155). Apple UNIX03 nanosleep returns success after a timed wait without restoring ETIMEDOUT. The corrected fixtures separate GNU/Linux preservation from macOS timeout errno; corrected native gates remain pending. Cancellation and replacement compatibility remain unverified. No permanent exception is proposed; Windows is unchanged and excluded.",
+  "remaining": [
+    "Review cancellation, errno, syscall and remainder-output differences in safe interfaces",
+    "Validate original baseline on native platforms",
+    "Implement only a reviewed compatible replacement or record the exact unresolved conflict"
+  ]
+}

@@ -16,6 +16,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Shipped `LICENSE-APACHE` in the binary release archives and `LICENSE-GPL` in
+  every source package; the release had still bundled the removed `LICENSE`
+  file (#176).
 - Checked toolkit unsafe source counts during PR validation, including inactive
   platform code and test fixtures (#81).
 - Checked expanded unsafe counts against target-specific compiler baselines and

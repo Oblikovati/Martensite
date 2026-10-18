@@ -6,16 +6,21 @@ use std::path::{Path, PathBuf};
 
 use semver::Version;
 
-use crate::archive::{BundleEntry, file_name, write_checksum, write_tar_gz};
+use crate::archive::{BundleEntry, archive_member_paths, file_name, write_checksum, write_tar_gz};
 use crate::cargo::{BuildTarget, CargoTasks, PackageSelection, ShippedArtifact};
 use crate::changelog::release_notes;
 use crate::context::{BUILD_TOOL_PACKAGE, BuildContext};
-use crate::error::{BuildResult, io_error};
+use crate::error::{BuildError, BuildResult, io_error};
 use crate::version::{check_bump, check_package_versions, previous_release};
 use crate::workspace::{CargoWorkspace, WorkspacePackage};
 
-/// Repository documents shipped inside every binary archive.
-const BUNDLED_DOCUMENTS: [&str; 3] = ["LICENSE", "README.md", "CHANGELOG.md"];
+/// Repository documents shipped inside every binary archive. Official binaries
+/// are offered under the Apache license; the source stays GPL (#176).
+const BUNDLED_DOCUMENTS: [&str; 3] = ["LICENSE-APACHE", "README.md", "CHANGELOG.md"];
+
+/// The license text every released source package must carry (#176). Cargo
+/// copies it into each `.crate` from the workspace `license-file`.
+const SOURCE_LICENSE: &str = "LICENSE-GPL";
 
 /// What to release and where to put the packages.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -196,10 +201,23 @@ fn package_sources(
 fn ship_crate(root: &Path, request: &ReleaseRequest, name: &str) -> BuildResult<[PathBuf; 2]> {
     let crate_file = format!("{name}-{}.crate", request.version);
     let packaged = root.join("target").join("package").join(&crate_file);
+    require_source_license(&packaged, &format!("{name}-{}", request.version))?;
     let shipped = request.dist_dir.join(&crate_file);
     fs::copy(&packaged, &shipped).map_err(|cause| io_error(&packaged, cause))?;
     let checksum = write_checksum(&shipped)?;
     Ok([shipped, checksum])
+}
+
+/// Refuses a `.crate` whose top directory `package_dir` lacks the GPL text.
+fn require_source_license(crate_file: &Path, package_dir: &str) -> BuildResult<()> {
+    let expected = format!("{package_dir}/{SOURCE_LICENSE}");
+    if archive_member_paths(crate_file)?.contains(&expected) {
+        return Ok(());
+    }
+    Err(BuildError::ReleaseRule(format!(
+        "{} has no {expected}; expected the crate to set `license-file.workspace = true`",
+        crate_file.display()
+    )))
 }
 
 #[cfg(test)]

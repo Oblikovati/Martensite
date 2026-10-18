@@ -1,0 +1,21 @@
+{
+  "task_issue": 89,
+  "parent_issue": 80,
+  "starting_main": "03366f26ee1777e75c79f9714f4cb7ee2ea135e6",
+  "status": "Merged in PR #149 at 26b2fa84c7d386694a3f06360443bc1089d309eb. Original run 38982150367 and replacement run 38982987352 passed all four targets; publication skipped. All full inventories matched exact revisions with clean provenance.",
+  "native_replacement": "Verified at d8971602744e030568ea325efa0c35fa9fe1ef88. Both Linux targets passed count/errno fixtures and shared adaptation; macOS passed errno/shared-adapter fixtures with unchanged production code. Artifacts /tmp/martensite-processor-count-safe-native.I6fd5V; logs /tmp/martensite-processor-count-safe-{x64,arm64,macos}.log. Final PR checks and both post-merge processor-count fixtures passed (/tmp/martensite-processor-count-postmerge.log).",
+  "native_baseline": "All three Unix full inventories matched the exact baseline revision with clean provenance. Both Linux processor-count fixtures passed; the macOS errno fixture passed. Artifacts /tmp/martensite-processor-count-original.3iWkvD; logs /tmp/martensite-processor-count-original-{x64,arm64,macos}.log.",
+  "local_replacement": "Full cargo xtask pr passed in /tmp/martensite-processor-count-safe-pr.log.",
+  "review": "Standards: zero violations or actionable smells. Spec: no defect or scope creep; its outstanding native validation requirement was subsequently satisfied. Both reviewed fec0ef5...c696311. The documented stable-topology assumption remains a test limitation.",
+  "replacement": "Reuse the private native_config helper merged in PR #148, retaining the c_long-to-i32 cast. No dependency, public API or version change. Both focused tests passed (/tmp/martensite-processor-count-safe.log).",
+  "inventory": "Linux thread-native unsafe spans decrease from two to zero. The lexical source count remains five because the non-Linux fallback remains. macOS and Windows summaries are unchanged.",
+  "local_baseline": "Both focused tests passed (/tmp/martensite-processor-count-baseline.log), followed by the full cargo xtask pr gate (/tmp/martensite-processor-count-baseline-pr.log).",
+  "contract": "Query sysconf(_SC_NPROCESSORS_ONLN) once and cast its c_long to i32. Keep the -1 sentinel and ordinary errno behavior. This is the system online count, not affinity-limited available_parallelism.",
+  "fixtures": "Linux compares against getconf _NPROCESSORS_ONLN. Unix checks a positive query result and caller errno preservation for zero, EIO and an arbitrary raw sentinel, restoring original errno before assertions.",
+  "limits": "The Linux count comparison assumes no CPU hotplug between its two queries. macOS currently has errno/positive-result coverage but no independent exact-count fixture. Incoming-errno-dependent interposed libc behavior is not covered.",
+  "candidate": "Existing nix 0.31.3 exposes SysconfVar::_NPROCESSORS_ONLN only under its linux_android cfg. This increment changes Linux only, matching the native matrix; Android and other Unix targets remain unchanged and require further investigation. macOS lack of this selector is not proof of system impossibility.",
+  "deletion_gate": "The direct processor-count call is excluded from Linux compilation and the replacement was integrated after validation. Remaining platform paths are not accepted as permanent exceptions.",
+  "remaining": [
+    "Investigate remaining platform paths"
+  ]
+}
