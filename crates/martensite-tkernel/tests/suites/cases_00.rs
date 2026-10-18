@@ -258,5 +258,9 @@ pub mod path_and_units_case_logs;
 #[path = "../timer_counter_case_log.rs"]
 pub mod timer_counter_case_log;
 
+#[path = "../borrowed_input_primitives.rs"]
+pub mod borrowed_input_primitives;
+#[path = "../checked_binary_header.rs"]
+pub mod checked_binary_header;
 #[path = "../message_fallible_delivery.rs"]
 pub mod message_fallible_delivery;
