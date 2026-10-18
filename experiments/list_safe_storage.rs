@@ -25,6 +25,7 @@ pub struct Reservation {
     ledger: Arc<Ledger>,
 }
 impl Ledger {
+    /// Selects optional event capture; for example, `Ledger::new(false)`.
     pub fn new(record_events: bool) -> Arc<Self> {
         let events = record_events.then(|| Mutex::new(Vec::new()));
         Arc::new(Self {
@@ -32,6 +33,7 @@ impl Ledger {
             events,
         })
     }
+    /// Captures an event when enabled; for example, `ledger.record("reserve")`.
     pub fn record(&self, event: &str) {
         if let Some(events) = &self.events {
             events
@@ -40,9 +42,11 @@ impl Ledger {
                 .push(event.to_owned());
         }
     }
+    /// Counts outstanding reservations; for example, `assert_eq!(ledger.live(), 0)`.
     pub fn live(&self) -> usize {
         self.live.load(Ordering::SeqCst)
     }
+    /// Snapshots captured ordering evidence; for example, `let recorded = ledger.events()`.
     pub fn events(&self) -> Vec<String> {
         let Some(events) = &self.events else {
             return Vec::new();
@@ -98,6 +102,7 @@ pub struct Meta {
 #[derive(Clone)]
 pub struct Observer(Arc<Mutex<Meta>>);
 impl Observer {
+    /// Snapshots owner metadata during mutation phases; for example, `observer.read().size`.
     pub fn read(&self) -> Meta {
         *self.0.lock().unwrap_or_else(PoisonError::into_inner)
     }
@@ -127,6 +132,7 @@ pub struct SafeList<T> {
 }
 
 impl<T> SafeList<T> {
+    /// Binds accounting to a shared resource; for example, `SafeList::<u32>::with_ledger(ledger)`.
     pub fn with_ledger(ledger: Arc<Ledger>) -> Self {
         Self {
             ledger,
@@ -139,30 +145,36 @@ impl<T> SafeList<T> {
             published: OnceLock::new(),
         }
     }
+    /// Counts linked values; for example, `assert_eq!(list.len(), 0)`.
     pub fn len(&self) -> usize {
         self.len
     }
+    /// Keeps metadata associated with this owner; for example, `let observer = list.observer()`.
     pub fn observer(&self) -> Observer {
         Observer(Arc::clone(
             self.published
                 .get_or_init(|| Arc::new(Mutex::new(self.meta()))),
         ))
     }
+    /// Borrows the leading value if present; for example, `assert_eq!(list.first(), Some(&7))`.
     pub fn first(&self) -> Option<&T> {
         self.first.map(|slot| self.value_at(slot))
     }
+    /// Creates a detached starting position; for example, `let mut cursor = list.cursor()`.
     pub fn cursor(&self) -> Cursor {
         Cursor {
             current: self.first.map(|slot| self.id_at(slot)),
             previous: None,
         }
     }
+    /// Borrows values in link order; for example, `list.iter().copied().collect::<Vec<_>>()`.
     pub fn iter(&self) -> Iter<'_, T> {
         Iter {
             list: self,
             next: self.first,
         }
     }
+    /// Yields disjoint values in link order; for example, `list.iter_mut().for_each(|v| *v += 1)`.
     pub fn iter_mut(&mut self) -> IterMut<'_, T> {
         let next = self.first;
         IterMut {
@@ -171,15 +183,18 @@ impl<T> SafeList<T> {
         }
     }
     /// Reserves, allocates the node, then constructs in it, as the current List orders it.
+    /// Example: `list.emplace_append(|| 7)`.
     pub fn emplace_append(&mut self, construct: impl FnOnce() -> T) -> &mut T {
         let slot = self.allocate(construct);
         self.link_append(slot);
         self.publish();
         self.value_mut(slot)
     }
+    /// Places a value after the tail; for example, `list.append(7)`.
     pub fn append(&mut self, value: T) -> &mut T {
         self.emplace_append(|| value)
     }
+    /// Places a value before the head; for example, `list.prepend(7)`.
     pub fn prepend(&mut self, value: T) -> &mut T {
         let slot = self.allocate(|| value);
         self.slot_mut(slot).next = self.first;
@@ -189,6 +204,7 @@ impl<T> SafeList<T> {
         self.publish();
         self.value_mut(slot)
     }
+    /// Reverses links without moving values; for example, `list.reverse()`.
     pub fn reverse(&mut self) {
         let (mut previous, mut current) = (None, self.first);
         self.last = self.first;
@@ -199,6 +215,7 @@ impl<T> SafeList<T> {
         self.first = previous;
         self.publish();
     }
+    /// Exchanges storage while observers stay with owners; for example, `list.exchange(&mut other)`.
     pub fn exchange(&mut self, other: &mut Self) {
         // Observers stay bound to their owner object, so `published` is not swapped.
         std::mem::swap(&mut self.ledger, &mut other.ledger);
@@ -211,6 +228,7 @@ impl<T> SafeList<T> {
         self.publish();
         other.publish();
     }
+    /// Removes rejected values in link order; for example, `list.retain(|v| *v > 0)`.
     pub fn retain(&mut self, mut keep: impl FnMut(&T) -> bool) {
         let mut cursor = self.cursor();
         while let Some(value) = cursor.value(self) {
@@ -223,6 +241,7 @@ impl<T> SafeList<T> {
         }
     }
     /// Removes current; destructor runs after detach, before final metadata, as today.
+    /// Example: `list.remove(&mut cursor)?`.
     pub fn remove(&mut self, cursor: &mut Cursor) -> Result<(), String> {
         let (current, previous) = self.locate(*cursor).ok_or_else(|| {
             format!("Remove on {cursor:?} outside this list; expected a live node")
@@ -235,6 +254,7 @@ impl<T> SafeList<T> {
         Ok(())
     }
     /// Drops in link order; after a destructor panic, metadata resets before the rest.
+    /// Example: `list.clear()`.
     pub fn clear(&mut self) {
         // Detach the storage first: a panic reset below must not free unvisited nodes early.
         let mut slots = std::mem::take(&mut self.slots);
@@ -258,6 +278,7 @@ impl<T> SafeList<T> {
 
 impl<T: Clone> SafeList<T> {
     /// Same ledger: moves nodes (identity and address kept). Foreign: copies, then clears.
+    /// Example: `list.append_list(&mut source)`.
     pub fn append_list(&mut self, source: &mut Self) {
         if !Arc::ptr_eq(&self.ledger, &source.ledger) {
             source
@@ -403,21 +424,26 @@ impl<T> Drop for SafeList<T> {
 }
 
 impl Cursor {
+    /// Reports a current identity, not membership; for example, `while cursor.more() { break; }`.
     pub fn more(self) -> bool {
         self.current.is_some()
     }
+    /// Exposes opaque current identity; for example, `let identity = cursor.current_node()`.
     pub fn current_node(self) -> Option<usize> {
         self.current
     }
+    /// Exposes opaque preceding identity; for example, `let previous = cursor.previous_node()`.
     pub fn previous_node(self) -> Option<usize> {
         self.previous
     }
     /// Membership-checked read: stale or foreign identities return None.
+    /// Example: `assert_eq!(cursor.value(&list), Some(&7))`.
     pub fn value<T>(self, list: &SafeList<T>) -> Option<&T> {
         list.index
             .get(&self.current?)
             .map(|slot| list.value_at(*slot))
     }
+    /// Advances through the supplied owner's links; for example, `cursor.next(&list)`.
     pub fn next<T>(&mut self, list: &SafeList<T>) {
         let Some(current) = self.current else { return };
         self.previous = Some(current);
@@ -459,293 +485,5 @@ impl<'a, T> Iterator for IterMut<'a, T> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::cell::Cell;
-    use std::rc::Rc;
-
-    struct Traced {
-        value: i32,
-        ledger: Arc<Ledger>,
-        panic_once: Rc<Cell<bool>>,
-        observer: Option<Observer>,
-    }
-    impl Drop for Traced {
-        fn drop(&mut self) {
-            let address = std::ptr::from_ref(&self.value).addr();
-            self.ledger
-                .record(&format!("drop {} at {address:x}", self.value));
-            if let Some(observer) = &self.observer {
-                let meta = observer.read();
-                self.ledger.record(&format!(
-                    "meta {} {}",
-                    meta.size,
-                    u8::from(meta.first.is_none())
-                ));
-            }
-            if self.value == 2 && self.panic_once.replace(false) {
-                panic!("injected drop failure for value 2");
-            }
-        }
-    }
-    fn traced(
-        ledger: &Arc<Ledger>,
-        panics: bool,
-        count: i32,
-    ) -> (SafeList<Traced>, Rc<Cell<bool>>) {
-        let flag = Rc::new(Cell::new(panics));
-        let mut list = SafeList::with_ledger(Arc::clone(ledger));
-        for value in 1..=count {
-            list.emplace_append(|| {
-                ledger.record(&format!("construct {value}"));
-                Traced {
-                    value,
-                    ledger: Arc::clone(ledger),
-                    panic_once: flag.clone(),
-                    observer: None,
-                }
-            });
-        }
-        (list, flag)
-    }
-    fn values(list: &SafeList<Traced>) -> Vec<i32> {
-        list.iter().map(|item| item.value).collect()
-    }
-    fn drops(ledger: &Ledger) -> Vec<String> {
-        let events = ledger.events().into_iter();
-        events
-            .filter(|e| e.starts_with("drop"))
-            .map(|e| e[5..6].to_owned())
-            .collect()
-    }
-
-    #[test]
-    fn complete_insert_traverse_remove_drop_lifecycle() {
-        let ledger = Ledger::new(true);
-        let (mut list, _) = traced(&ledger, false, 3);
-        let address = std::ptr::from_ref(&list.iter().nth(1).unwrap().value).addr();
-        assert_eq!(values(&list), [1, 2, 3]);
-        let mut cursor = list.cursor();
-        cursor.next(&list);
-        list.remove(&mut cursor).unwrap();
-        assert_eq!(cursor.value(&list).unwrap().value, 3);
-        assert_eq!((values(&list), ledger.live()), (vec![1, 3], 2));
-        drop(list);
-        let expected_drop = format!("drop 2 at {address:x}");
-        let events = ledger.events();
-        assert_eq!(
-            events[..6],
-            [
-                "reserve",
-                "construct 1",
-                "reserve",
-                "construct 2",
-                "reserve",
-                "construct 3"
-            ]
-        );
-        assert_eq!(
-            events[6..],
-            [
-                expected_drop.as_str(),
-                "release",
-                "drop 1 at",
-                "release",
-                "drop 3 at",
-                "release"
-            ]
-            .map(|e| if e.ends_with(" at") {
-                events.iter().find(|x| x.starts_with(e)).unwrap().as_str()
-            } else {
-                e
-            })
-        );
-        assert_eq!(ledger.live(), 0);
-    }
-    #[test]
-    fn same_ledger_splice_moves_nodes_keeping_identity_and_address() {
-        let ledger = Ledger::new(false);
-        let mut first = SafeList::with_ledger(Arc::clone(&ledger));
-        [1, 2].into_iter().for_each(|v| _ = first.append(v));
-        let cursor = first.cursor();
-        let original = std::ptr::from_ref(cursor.value(&first).unwrap());
-        first.reverse();
-        let mut destination = SafeList::with_ledger(Arc::clone(&ledger));
-        destination.append(3);
-        first.append_list(&mut destination);
-        destination.append_list(&mut first);
-        assert_eq!(
-            std::ptr::from_ref(cursor.value(&destination).unwrap()),
-            original
-        );
-        assert!(cursor.value(&first).is_none());
-        assert_eq!(destination.iter().copied().collect::<Vec<_>>(), [2, 1, 3]);
-        assert_eq!((first.len(), ledger.live()), (0, 3));
-    }
-    #[test]
-    fn foreign_ledger_splice_copies_then_releases_source() {
-        let (left, right) = (Ledger::new(false), Ledger::new(false));
-        let mut destination = SafeList::with_ledger(Arc::clone(&left));
-        let mut source = SafeList::with_ledger(Arc::clone(&right));
-        destination.append(1);
-        [2, 3].into_iter().for_each(|v| _ = source.append(v));
-        let foreign = source.cursor();
-        destination.append_list(&mut source);
-        assert_eq!(destination.iter().copied().collect::<Vec<_>>(), [1, 2, 3]);
-        assert!(foreign.value(&destination).is_none());
-        assert_eq!((left.live(), right.live()), (3, 0));
-    }
-    #[test]
-    fn destruction_follows_link_order_after_reverse_and_removal() {
-        let ledger = Ledger::new(true);
-        let (mut list, _) = traced(&ledger, false, 4);
-        list.reverse();
-        let mut cursor = list.cursor();
-        cursor.next(&list);
-        list.remove(&mut cursor).unwrap();
-        list.clear();
-        assert_eq!(drops(&ledger), ["3", "4", "2", "1"]);
-        assert_eq!(ledger.live(), 0);
-    }
-    #[test]
-    fn clear_panic_resets_metadata_first_and_drops_each_value_once() {
-        let ledger = Ledger::new(true);
-        let (mut list, _) = traced(&ledger, true, 3);
-        let observer = list.observer();
-        list.iter_mut()
-            .for_each(|item| item.observer = Some(observer.clone()));
-        assert!(catch_unwind(AssertUnwindSafe(|| list.clear())).is_err());
-        let metas: Vec<_> = ledger
-            .events()
-            .into_iter()
-            .filter(|e| e.starts_with("meta"))
-            .collect();
-        assert_eq!(metas, ["meta 3 0", "meta 3 0", "meta 0 1"]);
-        assert_eq!(drops(&ledger), ["1", "2", "3"]);
-        assert_eq!(
-            (list.len(), observer.read(), ledger.live()),
-            (0, Meta::default(), 0)
-        );
-    }
-    #[test]
-    fn removal_panic_keeps_cursor_tail_and_releases_node() {
-        let ledger = Ledger::new(true);
-        let (mut list, _) = traced(&ledger, true, 4);
-        let mut cursor = list.cursor();
-        cursor.next(&list);
-        assert!(catch_unwind(AssertUnwindSafe(|| list.remove(&mut cursor))).is_err());
-        assert_eq!(values(&list), [1, 3, 4]);
-        assert_eq!(
-            (
-                cursor.value(&list).unwrap().value,
-                list.len(),
-                ledger.live()
-            ),
-            (3, 3, 3)
-        );
-        list.clear();
-        assert_eq!(drops(&ledger), ["2", "1", "3", "4"]);
-        assert_eq!(ledger.live(), 0);
-    }
-    #[test]
-    fn constructor_panic_releases_reservation_and_keeps_chain() {
-        let ledger = Ledger::new(false);
-        let mut list = SafeList::with_ledger(Arc::clone(&ledger));
-        list.append(9);
-        let head = list.cursor().current_node();
-        let failed = catch_unwind(AssertUnwindSafe(|| {
-            list.emplace_append(|| {
-                assert_eq!(ledger.live(), 2, "node is reserved before construction");
-                panic!("injected construction failure")
-            });
-        }));
-        assert!(failed.is_err());
-        assert_eq!(
-            (
-                list.iter().copied().collect::<Vec<i32>>(),
-                list.cursor().current_node()
-            ),
-            (vec![9], head)
-        );
-        assert_eq!(ledger.live(), 1);
-    }
-    #[test]
-    fn stale_cursors_are_rejected_and_stale_predecessors_repaired() {
-        let mut list = SafeList::with_ledger(Ledger::new(false));
-        [1, 2, 3, 4].into_iter().for_each(|v| _ = list.append(v));
-        let mut removed_previous = list.cursor();
-        removed_previous.next(&list);
-        let mut cursor = removed_previous;
-        cursor.next(&list);
-        let stale = removed_previous;
-        list.remove(&mut removed_previous).unwrap();
-        assert!(stale.value(&list).is_none());
-        assert!(list.remove(&mut stale.clone()).is_err());
-        let remembered = cursor.previous_node();
-        list.remove(&mut cursor).unwrap();
-        assert_eq!(
-            (cursor.previous_node(), cursor.value(&list)),
-            (remembered, Some(&4))
-        );
-        assert_eq!(list.iter().copied().collect::<Vec<_>>(), [1, 4]);
-        list.prepend(0);
-        assert_eq!(list.first(), Some(&0));
-    }
-    #[test]
-    fn observer_sees_detach_phase_and_stays_with_owner() {
-        let ledger = Ledger::new(true);
-        let (mut list, _) = traced(&ledger, false, 1);
-        let observer = list.observer();
-        list.iter_mut()
-            .for_each(|item| item.observer = Some(observer.clone()));
-        list.remove(&mut list.cursor()).unwrap();
-        assert!(ledger.events().contains(&"meta 1 1".to_owned()));
-        let mut other = SafeList::with_ledger(Arc::clone(&ledger));
-        other.emplace_append(|| Traced {
-            value: 7,
-            ledger: Arc::clone(&ledger),
-            panic_once: Rc::default(),
-            observer: None,
-        });
-        let head = other.observer().read().first;
-        list.exchange(&mut other);
-        assert_eq!((observer.read().size, observer.read().first), (1, head));
-        drop(list);
-        assert_eq!(observer.read(), Meta::default());
-        let reader = observer.clone();
-        assert_eq!(
-            std::thread::spawn(move || reader.read().size)
-                .join()
-                .unwrap(),
-            0
-        );
-    }
-    #[test]
-    fn iter_mut_yields_disjoint_items_in_link_order() {
-        let mut list = SafeList::with_ledger(Ledger::new(false));
-        [1, 2, 3].into_iter().for_each(|v| _ = list.prepend(v));
-        let mut items = list.iter_mut();
-        let (a, b, c) = (
-            items.next().unwrap(),
-            items.next().unwrap(),
-            items.next().unwrap(),
-        );
-        assert!(items.next().is_none());
-        (*a, *b, *c) = (*a + 10, *b + 20, *c + 30);
-        list.retain(|v| *v != 22);
-        assert_eq!(list.iter().copied().collect::<Vec<_>>(), [13, 31]);
-    }
-    fn require_send_sync<T: Send + Sync>() {}
-    fn require_unpin<T: Unpin>() {}
-    fn require_unwind<T: std::panic::UnwindSafe + std::panic::RefUnwindSafe>() {}
-    #[test]
-    fn auto_traits_follow_items_without_manual_impls() {
-        require_send_sync::<SafeList<i32>>();
-        require_send_sync::<Iter<'_, i32>>();
-        require_send_sync::<IterMut<'_, i32>>();
-        require_send_sync::<Observer>();
-        require_unpin::<SafeList<std::marker::PhantomPinned>>();
-        require_unwind::<SafeList<i32>>();
-        require_unwind::<Observer>();
-    }
-}
+#[path = "list_safe_storage/tests.rs"]
+mod tests;

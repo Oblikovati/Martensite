@@ -1,0 +1,17 @@
+[package]
+name = "list-safe-storage-measurement"
+version = "0.0.0"
+edition = "2024"
+license = "GPL-2.0-only"
+publish = false
+
+# Keep instrumentation out of the toolkit dependency graph.
+[workspace]
+
+[dependencies]
+alloc_tracker = "=0.7.13"
+martensite-tkernel = { version = "=0.3.1", path = "../../crates/martensite-tkernel" }
+
+[[bin]]
+name = "list-safe-storage-measurement"
+path = "../list_safe_storage_bench.rs"

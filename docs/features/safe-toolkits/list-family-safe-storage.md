@@ -36,7 +36,9 @@ it). The non-dereferencing parts of `BaseListRawIterator`, `BaseListStorage`
 and `BaseListBasicIterator` (constructors, `more`, equality, endpoint pointer
 getters, `exchange`).
 
-**B: internal migration with the same public signatures (6).**
+**B: internal migration candidates, conditional on the raw-view decision (6).**
+These items cannot migrate independently of C while `base_storage()` must
+remain a dereferenceable chain. Preserving signatures is not enough.
 1. `List<T>` ownership and links: the `owners` HashMap of raw nodes, all edits
    and `Drop`, and its manual `Send`/`Sync`.
 2. `ListIter` / `ListIterMut`: the raw `next` field and manual `Send`/`Sync`.
@@ -70,9 +72,10 @@ getters, `exchange`).
 All six describe raw intrusive ownership. They are not system APIs. Minimal
 replacement: the safe `List<T>` already covers owned use. Identity and size
 reads already exist on `ListObserver` and `ListCursor` (`first_node`,
-`last_node`, `size`, `current_node`). Staged migration: (1) migrate `List<T>`
-internally (B) and stop backing it with `BaseListStorage`. (2) In an approved
-breaking release, replace `base_storage()` with identity and size accessors,
+`last_node`, `size`, `current_node`). Staged migration: (1) obtain the #88
+decision and an approved migration for the dereferenceable `base_storage()`
+contract. (2) Only within that approved transition, migrate `List<T>`
+internally (B), replace `base_storage()` with identity and size accessors,
 and deprecate then remove the raw BaseList engine, `BasicListNode`,
 `into_raw` and `del_node`. Pinned rows that need the raw engine
 (`base_list_storage_contracts`, `base_list_basic_iterator_contracts`,
@@ -83,7 +86,8 @@ compatible.
 
 ## Prototype
 
-Source: `experiments/list_safe_storage.rs`, which is throwaway and
+Source: `experiments/list_safe_storage.rs`, with fixtures in
+`experiments/list_safe_storage/tests.rs`, which is throwaway and
 `#![forbid(unsafe_code)]`. Run it with
 `rustc --edition=2024 -D warnings --test`. Result: 11 passed, 0 failed
 (rustc 1.99.0).
@@ -143,9 +147,10 @@ Contracts that the prototype does not yet preserve:
 
 ## Measurement
 
-Harness: `experiments/list_safe_storage_bench.rs`. A counting
-`GlobalAlloc` forwards to `System` and is measurement tooling only. The
-workload is identical for both lists, release build (`-C opt-level=3`),
+Harness: `experiments/list_safe_storage_bench.rs`. The original measurements
+below used a custom counting `GlobalAlloc` at commit `187f3cc`; that unsafe
+instrumentation is not an approved exception and has been replaced locally.
+The workload is identical for both lists, release build (`-C opt-level=3`),
 9 runs, median, with `u64` items and N = 100 000. Machine: AMD Ryzen AI
 MAX+ 395, Linux 7.1.5.
 
@@ -163,6 +168,30 @@ MAX+ 395, Linux 7.1.5.
 The totals were stable over three repetitions: current 130–135 ms,
 prototype 20.0–20.8 ms.
 
+The replacement harness forbids first-party unsafe and uses `alloc_tracker`
+0.7.13 in an isolated, unpublished experiment package. Run it with
+`cargo run --release --manifest-path experiments/list_safe_storage/Cargo.toml`.
+The dependency wraps `System`, including forwarding reallocation, and remains
+part of the dependency trust inventory, not a claim of zero transitive unsafe.
+Thread-local spans cover this single-threaded workload; whole-workload peak
+bytes exclude measurement setup and reporting. Instrumented timings are not
+uninstrumented production timings.
+
+Local rerun on 2026-10-18 (nine runs, same N and phase order): every phase's
+allocation count matched the historical table, as did both peak-byte totals.
+Current phase medians were 43,262 / 2,760 / 158 / 28,435 / 40,636 / 42,195 µs;
+prototype medians were 4,514 / 1,389 / 280 / 6,480 / 8,882 / 1,813 µs.
+Median total times were 161,732 and 23,308 µs respectively. These are fresh
+instrumented observations, not evidence of a production performance change.
+The isolated package passed all 12 tests, including a measurement regression
+that checks six disjoint 800-byte allocations produce six allocations but an
+800-byte peak. `cargo deny` with the repository configuration and `cargo audit`
+passed for its lockfile. The local PR gate passed its inventory, whitespace,
+formatting and expanded-unsafe checks; it found no affected workspace package
+and skipped workspace builds/tests. The isolated experiment tests above cover
+the harness. Standards and spec re-review confirmed the substantive research
+blockers resolved; integration still requires green checks on the pushed commit.
+
 The comparison is not like for like. A separate measurement shows that
 `ListValueNode::allocate_with` through `BaseAllocator::common()` alone makes
 500 043 global allocations for 100 000 nodes (5 per node). Thus most of the
@@ -172,12 +201,17 @@ prototype is slower (1.8×) because of its pointer table.
 
 ## Recommended next step
 
-Keep `List<T>`'s public signatures. Replace its private `owners`,
-`topology` and `BaseListStorage` backing with the owned slot representation,
-starting with `append`, `iter`, `remove` and `Drop` only. Gate it on the
+Resolve the #88 raw-view contract before replacing `BaseListStorage` backing.
+An identity-only `base_storage()` is not a compatible intermediate view:
+existing raw iterators dereference it. Keep the current production backing
+until an approved migration exists or a genuinely compatible safe
+representation has been demonstrated. After that decision, prove the owned
+slot representation for `append`, `iter`, `remove` and `Drop`. Gate it on the
 unchanged `ncollection_list`, `list_owner_registry_contracts`,
 `list_topology_contracts/destruction.rs` and `list_observer_contracts`
-fixtures. `base_storage()` stays as an identity-only view for that step.
-Do this only after #84 decides how an owned node obtains `BaseAllocator`
-physical storage: the allocation-order and arena-reuse
-fixtures depend on that decision. The C items wait for a #88 decision.
+fixtures, with any intentionally changed raw-view expectations reviewed as
+part of the approved migration rather than silently rewritten.
+Also wait for #84 to decide how an owned node obtains `BaseAllocator`
+physical storage: the allocation-order and arena-reuse fixtures depend on that
+decision. These remain production-migration prerequisites; the research harness
+now uses the separately accounted instrumentation dependency described above.
