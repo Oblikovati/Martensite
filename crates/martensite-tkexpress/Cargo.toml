@@ -6,6 +6,7 @@ description = "Martensite symbolic expressions, relations, functions and text in
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+license-file.workspace = true
 repository.workspace = true
 
 [lints]
