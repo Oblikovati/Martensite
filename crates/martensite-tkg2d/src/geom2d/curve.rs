@@ -71,6 +71,17 @@ pub trait Geom2dCurve: Geom2dGeometry {
     fn first_parameter(&self) -> f64;
     /// Last parameter; may be `precision::infinite()` (`LastParameter`); `curve.last_parameter()`.
     fn last_parameter(&self) -> f64;
+    /// Fallible first-bound extension hook; defaults to the existing bound query.
+    /// `let first = curve.try_first_parameter()?;`
+    fn try_first_parameter(&self) -> Result<f64, Failure> {
+        Ok(self.first_parameter())
+    }
+    /// Fallible last-bound extension hook; defaults to the existing bound query.
+    /// `let last = curve.try_last_parameter()?;`
+    fn try_last_parameter(&self) -> Result<f64, Failure> {
+        Ok(self.last_parameter())
+    }
+
     /// Whether the curve is closed (`IsClosed`); `curve.is_closed()?`.
     fn is_closed(&self) -> Result<bool, Failure>;
     /// Whether the parameterization is periodic (`IsPeriodic`); `curve.is_periodic()`.

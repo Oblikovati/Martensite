@@ -1,13 +1,13 @@
 //! The fields, constructor checks and evaluation of `Geom2dEvalTBezierCurve` and
 //! `GeomEvalTBezierCurve`, generic over the pole type; the classes convert the
 //! returned coordinates into their points and vectors.
-use super::bezier_curve_data::{check_weights, owned};
+use super::bezier_curve_data::{check_weights, curve_construction, owned};
 use super::eval_basis::EvalPole;
 use super::eval_basis::sums::BasisSums;
 use super::eval_basis::tbezier::{
     TBezierView, curve_basis, non_rational_dn, rational_derivatives, rational_dn, rational_point,
 };
-use crate::geom2d::{dump_flag, errors};
+use crate::geom2d::dump_flag;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::dump::{self, DumpStream};
@@ -30,14 +30,18 @@ pub struct TBezierData<P: EvalPole + 'static> {
 // The checks both constructors share, in defined order.
 fn check_poles_and_alpha(class: &str, count: usize, alpha: f64) -> Result<(), Failure> {
     if count < 3 || count.is_multiple_of(2) {
-        return Err(errors::construction(&format!(
-            "{class}: {count} poles; expected an odd count >= 3"
-        )));
+        return Err(curve_construction(
+            class,
+            "number of poles must be odd and >= 3",
+            &format!("{count} poles; expected an odd count >= 3"),
+        ));
     }
     if alpha <= 0.0 {
-        return Err(errors::construction(&format!(
-            "{class}: alpha = {alpha}; expected > 0"
-        )));
+        return Err(curve_construction(
+            class,
+            "alpha must be > 0",
+            &format!("alpha = {alpha}; expected > 0"),
+        ));
     }
     Ok(())
 }

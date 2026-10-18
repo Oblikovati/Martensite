@@ -128,3 +128,17 @@ fn clearing_curve_clears_every_derivative_grid() {
             .is_empty()
     );
 }
+
+#[test]
+fn fallible_parameter_bounds_preserve_infinite_line_limits() {
+    let (line, _) = line_and_circle();
+    assert_eq!(line.try_first_parameter().unwrap(), line.first_parameter());
+    assert_eq!(line.try_last_parameter().unwrap(), line.last_parameter());
+}
+
+#[test]
+fn fallible_parameter_bounds_preserve_circle_period() {
+    let (_, circle) = line_and_circle();
+    assert_eq!(circle.try_first_parameter().unwrap(), 0.0);
+    assert_eq!(circle.try_last_parameter().unwrap(), std::f64::consts::TAU);
+}

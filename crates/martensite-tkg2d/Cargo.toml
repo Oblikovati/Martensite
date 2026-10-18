@@ -6,6 +6,7 @@ description = "Martensite planar geometry: analytic curves, splines, evaluation 
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
+license-file.workspace = true
 repository.workspace = true
 
 [lints]

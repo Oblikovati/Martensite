@@ -1,7 +1,7 @@
 //! The fields, constructor checks and evaluation of `Geom2dEvalAHTBezierCurve` and
 //! `GeomEvalAHTBezierCurve`, generic over the pole type; the classes convert the
 //! returned coordinates into their points and vectors.
-use super::bezier_curve_data::{check_weights, owned};
+use super::bezier_curve_data::{check_weights, curve_construction, owned};
 use super::eval_basis::EvalPole;
 use super::eval_basis::aht::{
     AhtView, basis_dimension, mixed, polynomial, quotient_d1, quotient_d2, quotient_d3,
@@ -41,12 +41,18 @@ fn check_basis(
     [alpha, beta]: [f64; 2],
 ) -> Result<(), Failure> {
     let negative = |name: &str, value: f64| {
-        errors::construction(&format!("{class}: {name} = {value}; expected >= 0"))
+        curve_construction(
+            class,
+            &format!("{name} must be >= 0"),
+            &format!("{name} = {value}; expected >= 0"),
+        )
     };
     if alg_degree < 0 {
-        return Err(errors::construction(&format!(
-            "{class}: algebraic degree = {alg_degree}; expected >= 0"
-        )));
+        return Err(curve_construction(
+            class,
+            "algebraic degree must be >= 0",
+            &format!("algebraic degree = {alg_degree}; expected >= 0"),
+        ));
     }
     if alpha < 0.0 {
         return Err(negative("alpha", alpha));
@@ -56,9 +62,11 @@ fn check_basis(
     }
     let dimension: i32 = basis_dimension(alg_degree, alpha, beta);
     if count as i64 != i64::from(dimension) {
-        return Err(errors::construction(&format!(
-            "{class}: {count} poles; expected basisDimension = {dimension}"
-        )));
+        return Err(curve_construction(
+            class,
+            "NbPoles must equal basisDimension",
+            &format!("{count} poles; expected basisDimension = {dimension}"),
+        ));
     }
     Ok(())
 }

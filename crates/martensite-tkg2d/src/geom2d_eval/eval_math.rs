@@ -91,6 +91,11 @@ pub(crate) use local_frame_evaluators;
 #[macro_export]
 macro_rules! sine_wave_members {
     ($axis:ty) => {
+        $crate::sine_wave_members!($axis, |name: &str, value: f64| errors::construction(
+            &format!("{CLASS}: {name} = {value}; expected > 0")
+        ));
+    };
+    ($axis:ty, $failure:expr) => {
         /// Sine wave (`Geom2dEvalSineWaveCurve` or `GeomEvalSineWaveCurve(Position,
         /// Amplitude, Omega, Phase = 0)`); a construction-error failure unless
         /// `amplitude > 0` and `omega > 0`; `Self::new(axis, 2.0, 3.0, 0.0)?`.
@@ -101,14 +106,10 @@ macro_rules! sine_wave_members {
             phase: f64,
         ) -> Result<Self, Failure> {
             if amplitude <= 0.0 {
-                return Err(errors::construction(&format!(
-                    "{CLASS}: amplitude = {amplitude}; expected > 0"
-                )));
+                return Err(($failure)("amplitude", amplitude));
             }
             if omega <= 0.0 {
-                return Err(errors::construction(&format!(
-                    "{CLASS}: omega = {omega}; expected > 0"
-                )));
+                return Err(($failure)("omega", omega));
             }
             Ok(Self {
                 parent: StandardTransient::default(),
