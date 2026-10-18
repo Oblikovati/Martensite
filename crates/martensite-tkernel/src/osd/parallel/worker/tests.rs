@@ -22,6 +22,26 @@ fn prepared_workers_use_inline_storage_through_thirty_two_workers() {
 
 struct RefusedThreadStart;
 
+#[test]
+fn caller_only_dispatch_keeps_identity_borrows_and_sticky_failure() {
+    let worker = Worker::new(7, true);
+    let caller = std::thread::current().id();
+    let calls = std::sync::atomic::AtomicUsize::new(0);
+    let body = |index| {
+        assert_eq!(index, 7);
+        assert_eq!(std::thread::current().id(), caller);
+        calls.fetch_add(1, Ordering::SeqCst);
+    };
+    assert!(super::dispatch(&[Arc::clone(&worker)], &body).is_empty());
+    let failed = super::dispatch(&[Arc::clone(&worker)], &|_| panic!("caller failure"));
+    assert_eq!(failed.len(), 1);
+    let retained = super::dispatch(&[Arc::clone(&worker)], &body);
+    assert_eq!(retained.len(), 1);
+    assert_eq!(retained[0].message(), failed[0].message());
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
+    assert!(lock(&worker.executor).is_none());
+}
+
 impl RefusedThreadStart {
     fn create() -> Result<ScopedWorker, rayon::ThreadPoolBuildError> {
         rayon::ThreadPoolBuilder::new()

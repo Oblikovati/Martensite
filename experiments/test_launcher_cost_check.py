@@ -25,6 +25,23 @@ class CapturedCostComparison(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(comparator.compare(report([100, 100, 100])), 0)
 
+    def test_small_regression_is_red(self) -> None:
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(comparator.compare(report([101, 101, 101])), 1)
+
+    def test_regression_at_any_participant_count_is_red(self) -> None:
+        measured = report([90, 90, 90])
+        measured["samples"]["baseline"]["1"] = [100, 100, 100]
+        measured["samples"]["candidate"]["1"] = [101, 101, 101]
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(comparator.compare(measured), 1)
+
+    def test_missing_participant_measurements_are_rejected(self) -> None:
+        measured = report([100, 100, 100])
+        measured["samples"]["baseline"]["1"] = [100, 100, 100]
+        with self.assertRaises(ValueError):
+            comparator.compare(measured)
+
     def test_bad_measurements_are_rejected(self) -> None:
         for values in ([True, 100, 100], [0, 100, 100], [100], [100, 100, 100, 100]):
             with self.subTest(values=values), self.assertRaises(ValueError):
