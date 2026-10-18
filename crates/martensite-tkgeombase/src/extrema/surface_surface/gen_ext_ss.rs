@@ -2,8 +2,8 @@
 
 //! `GenExtSS`: the nearest and farthest pairs of the samples of two
 //! surfaces, the nearest refined by math_BFGS on the square distance (by
-//! math_FunctionSetRoot on [`FuncExtSS`] when BFGS fails), the farthest by
-//! math_FunctionSetRoot.
+//! FunctionSetRoot on [`FuncExtSS`] when BFGS fails), the farthest by
+//! FunctionSetRoot.
 use super::func_ext_ss::FuncExtSS;
 use crate::extrema::failures::{extremum_index, not_done, null_object};
 use crate::extrema::pon::POnSurf;
@@ -292,7 +292,7 @@ impl<'a> GenExtSS<'a> {
     }
 
     // The minimum by math_BFGS from `uv` (stored in the function by Value and
-    // GetStateNumber), or by math_FunctionSetRoot when BFGS fails.
+    // GetStateNumber), or by FunctionSetRoot when BFGS fails.
     fn refine_minimum(
         &mut self,
         s1: &dyn Adaptor3dSurface,
@@ -318,7 +318,7 @@ impl<'a> GenExtSS<'a> {
         Ok(())
     }
 
-    // math_FunctionSetRoot on the function from `uv` within the bounds.
+    // FunctionSetRoot on the function from `uv` within the bounds.
     fn solve_roots(&mut self, uv: &Vector<'_>) -> Result<(), Failure> {
         let mut tol: Vector<'static> = Vector::with_bounds(1, 4)?;
         (tol[1], tol[2], tol[3], tol[4]) = (self.tol1, self.tol1, self.tol2, self.tol2);

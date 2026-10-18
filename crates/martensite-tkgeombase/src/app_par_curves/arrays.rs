@@ -30,7 +30,7 @@ pub(crate) fn line_points(
     ssp.value_3d(index, points)
 }
 
-/// An owned copy of `v` with its bounds (the retained math_Vector copy);
+/// An owned copy of `v` with its bounds (the retained Vector copy);
 /// `owned_vector(&parameters)?`.
 pub(crate) fn owned_vector(v: &Vector<'_>) -> Result<Vector<'static>, Failure> {
     let mut copy: Vector<'static> = Vector::with_bounds(v.lower(), v.upper())?;

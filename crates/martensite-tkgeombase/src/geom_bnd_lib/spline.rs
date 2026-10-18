@@ -15,7 +15,7 @@ use martensite_tkmath::bvh::{std_max, std_min};
 
 /// `FillBox`: add `2 * n + 1` points of `[first, last]` to `bounds` and return the
 /// largest distance between a middle sample and the chord midpoint; a range shorter
-/// than Precision::PConfusion() adds its two ends only;
+/// than precision::parametric() adds its two ends only;
 /// `fill_box(&mut bounds, curve, 0.0, 1.0, 3)?`.
 pub fn fill_box<C: ?Sized + SampledCurve>(
     bounds: &mut C::Bounds,

@@ -141,7 +141,7 @@ fn candidates(
     }))
 }
 
-// `math_DirectPolynomialRoots(A, B, C)` when it has exactly two solutions.
+// `DirectPolynomialRoots(A, B, C)` when it has exactly two solutions.
 fn two_roots(a: f64, b: f64, c: f64) -> Result<Option<[f64; 2]>, Failure> {
     let roots = DirectPolynomialRoots::quadratic(a, b, c);
     if roots.solutions()? != 2 {

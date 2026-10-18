@@ -296,7 +296,7 @@ fn centered_samples(
 }
 
 // The coefficients (A, B, C, D, E) of the conic A*x2 + B*x*y + C*y2 + D*x + E*y
-// = -1 through the samples in the frame of `tr` (math_Gauss), and the Z of the
+// = -1 through the samples in the frame of `tr` (Gauss), and the Z of the
 // last sample there; None when the system is singular.
 fn conic_coefficients(
     samples: &[Point3; 5],

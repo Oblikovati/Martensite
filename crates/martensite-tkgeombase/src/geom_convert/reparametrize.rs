@@ -19,7 +19,7 @@ use martensite_tkmath::gp::{Point3, Vector3};
 /// `MultNumandDenom(a, BS)`: the rational B-spline `a(u) BS(u)`, where `a` is the
 /// Hermit law of `BS` (a 2D curve whose ordinate is the factor) reparametrized onto
 /// the parameter range of `BS`; numerators and weights are multiplied separately.
-/// The knots merge within Precision::PConfusion(), or a fifth of the range when that
+/// The knots merge within precision::parametric(), or a fifth of the range when that
 /// is smaller (the 2D member uses 10 Epsilon(|end|)).
 pub(super) fn mult_num_and_denom(
     a: &Handle<Geom2dBSplineCurve>,

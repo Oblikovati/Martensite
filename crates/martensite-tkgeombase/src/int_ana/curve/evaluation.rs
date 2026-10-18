@@ -94,7 +94,7 @@ impl Curve {
     }
 
     /// The root V of `A Z² + B Z + C` at the angles: `-C/B` (or 0) when A vanishes
-    /// within Precision::PConfusion(), else `(-B ± sqrt(disc)) / 2A`.
+    /// within precision::parametric(), else `(-B ± sqrt(disc)) / 2A`.
     fn solve_z(&self, t: &Angles, dt: f64, second: bool, result: &mut UvValue) {
         let a: f64 = self.z2.value(t);
         let da: f64 = self.z2.derivative(t, self.z2.cos_sin * self.z2.cos_sin);

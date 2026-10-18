@@ -25,11 +25,11 @@ pub struct InertiaAxes {
 }
 
 /// `GeomLib::Inertia(Points, Bary, XDir, YDir, Xgap, YGap, ZGap)`: the eigen
-/// decomposition (math_Jacobi) of the covariance matrix of `points`.
+/// decomposition (Jacobi) of the covariance matrix of `points`.
 ///
 /// The eigenvalues are ordered with the retained equality tests on `min`, so ties keep
 /// the lower index. The retained code reads the eigenvalues without testing IsDone, so a
-/// Jacobi failure is not-done failure from math_Jacobi::Value; a null eigenvector is
+/// Jacobi failure is not-done failure from Jacobi::Value; a null eigenvector is
 /// construction failure (Direction3::SetCoord);
 /// `let axes = geom_lib::inertia(&points)?;`.
 pub fn inertia(points: &Array1<'_, Point3>) -> Result<InertiaAxes, Failure> {

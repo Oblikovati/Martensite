@@ -22,7 +22,7 @@ pub(super) struct SubIntervals {
 /// `FillSubIntervals(theCurve3d, theCurve2d, theFirst, theLast, theNbParticles,
 /// theSubIntervals)`: the knots of each B-spline (a uniform sampling of 101 values
 /// when it has more knots), or `[first, last]`, merged within
-/// Precision::PConfusion(); the count is 0 when the merge fails (the retained catch).
+/// precision::parametric(); the count is 0 when the merge fails (the retained catch).
 pub(super) fn fill_sub_intervals(
     curve3d: &dyn Adaptor3dCurve,
     curve2d: &Handle<dyn Adaptor2dCurve2d>,
@@ -111,7 +111,7 @@ fn spline_knots(
 }
 
 // The merge of the two sorted knot lists: `first`, every value strictly inside
-// (first, last), a pair within Precision::PConfusion() counted once, then `last`.
+// (first, last), a pair within precision::parametric() counted once, then `last`.
 fn merged_bounds(knots_3d: &[f64], knots_2d: &[f64], first: f64, last: f64) -> Vec<f64> {
     let mut bounds: Vec<f64> = vec![first];
     let (mut index_3d, mut index_2d): (usize, usize) = (0, 0);

@@ -22,7 +22,7 @@ pub(super) fn local_inertia(diagonal: [f64; 3], off: [f64; 3]) -> [[f64; 3]; 3] 
 }
 
 /// The retained tail of every elementary `Perform`: diagonalize `Dm` with
-/// math_Jacobi, map each eigenvector through `Passage` and scale it by
+/// Jacobi, map each eigenvector through `Passage` and scale it by
 /// `factor * eigenvalue` (the vectors become the columns' rows of the inertia),
 /// then move the result to the location with the Huygens operator.
 ///
@@ -73,7 +73,7 @@ fn passage_rows(frame: Frame) -> [[f64; 3]; 3] {
     ]
 }
 
-// math_VectorBase::Multiply(Left, Right) with Right aliasing the result: each
+// VectorBase::Multiply(Left, Right) with Right aliasing the result: each
 // row sum starts at 0.0 and is stored before the next row reads the operand.
 fn multiply_aliased(passage: &[[f64; 3]; 3], v: &mut [f64; 3]) {
     for (r, row) in passage.iter().enumerate() {

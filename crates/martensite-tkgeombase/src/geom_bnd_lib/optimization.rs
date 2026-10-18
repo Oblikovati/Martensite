@@ -319,7 +319,7 @@ fn surface_start(swarm: &VectorResult, patch: [f64; 4]) -> Result<Vector<'static
     pair_vector(u, *solution.at(1)?)
 }
 
-// A 0-based two-component `math_Vector(size_t{2})`.
+// A 0-based two-component `Vector(size_t{2})`.
 pub(super) fn pair_vector(first: f64, second: f64) -> Result<Vector<'static>, Failure> {
     let mut vector: Vector<'static> = Vector::with_size(2);
     *vector.change_at(0)? = first;

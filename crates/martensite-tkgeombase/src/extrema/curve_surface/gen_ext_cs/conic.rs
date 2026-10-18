@@ -17,7 +17,7 @@ use martensite_tkmath::gp::{Point3, Vector3};
 use martensite_tkmath::math::{Pso, Vector};
 use std::f64::consts::{FRAC_PI_2, PI};
 
-// A 1-based math_Vector of two values.
+// A 1-based Vector of two values.
 fn pair(first: f64, second: f64) -> Result<Vector<'static>, Failure> {
     let mut vector: Vector<'static> = Vector::with_bounds(1, 2)?;
     (vector[1], vector[2]) = (first, second);

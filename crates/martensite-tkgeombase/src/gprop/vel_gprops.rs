@@ -86,7 +86,7 @@ impl VelGProps {
     }
 
     /// `Perform(S, Alpha1, Alpha2, Z1, Z2)` on a cylinder sector; not-done failure
-    /// when math_Jacobi fails; `props.perform_cylinder(c, 0.0, 1.0, 0.0, 2.0)?`.
+    /// when Jacobi fails; `props.perform_cylinder(c, 0.0, 1.0, 0.0, 2.0)?`.
     pub fn perform_cylinder(
         &mut self,
         solid: Cylinder3,

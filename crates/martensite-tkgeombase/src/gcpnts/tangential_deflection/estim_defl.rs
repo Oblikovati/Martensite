@@ -27,7 +27,7 @@ fn brent_maximum(opt_loc: &BrentMinimum) -> Result<(f64, f64), Failure> {
     Ok(((-opt_loc.minimum()?).sqrt(), opt_loc.location()?))
 }
 
-// A math_Vector(1, 1) holding `value`.
+// A Vector(1, 1) holding `value`.
 fn single(value: f64) -> Result<Vector<'static>, Failure> {
     let mut vector: Vector<'static> = Vector::with_bounds(1, 1)?;
     vector[1] = value;
@@ -55,7 +55,7 @@ impl TangentialDeflection {
         self.estim_defl_by_swarm(&mut a_func, &mut an_opt_loc, (u1, u2), du)
     }
 
-    // The math_PSO estimate on [u1, u2] with a step max(Du / 10, 100 UTol), refined by
+    // The Pso estimate on [u1, u2] with a step max(Du / 10, 100 UTol), refined by
     // a Brent search one step around it; the swarm value when that search fails.
     fn estim_defl_by_swarm<C: TCurveTypes + ?Sized>(
         &self,

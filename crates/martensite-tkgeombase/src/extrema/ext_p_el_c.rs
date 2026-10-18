@@ -176,7 +176,7 @@ impl ExtPElC {
         Ok(extrema)
     }
     /// `Perform(P, Elips, Tol, Uinf, Usup)`: the roots in `[Uinf, Usup]` of
-    /// `(B² - A²)/2 sin 2u - B Y cos u + A X sin u` (math_TrigonometricFunctionRoots);
+    /// `(B² - A²)/2 sin 2u - B Y cos u + A X sin u` (TrigonometricFunctionRoots);
     /// not done at the centre of a circular ellipse or when the solver fails;
     /// `extrema.perform_ellipse(point, &ellipse, 1e-7, 0.0, 2.0 * PI)`.
     pub fn perform_ellipse(
@@ -292,7 +292,7 @@ impl ExtPElC {
     }
 }
 
-/// The roots of a done math_DirectPolynomialRoots, in the solver order;
+/// The roots of a done DirectPolynomialRoots, in the solver order;
 /// InfiniteSolutions for an identity polynomial, as NbSolutions() raises.
 pub(super) fn polynomial_roots(roots: &DirectPolynomialRoots) -> Result<Vec<f64>, Failure> {
     (1..=roots.solutions()?).map(|i| roots.value(i)).collect()

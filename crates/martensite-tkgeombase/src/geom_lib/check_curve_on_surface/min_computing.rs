@@ -35,7 +35,7 @@ fn min_computing_checked(
         return Ok(None);
     };
     let mut best_parameter: f64 = output_param;
-    // The parameter is near the optimum; math_NewtonMinimum makes it precise.
+    // The parameter is near the optimum; NewtonMinimum makes it precise.
     let mut start: Vector<'static> = Vector::filled(1, 1, output_param)?;
     let mut min_sol = NewtonMinimum::new(function)?;
     min_sol.perform(function, &start)?;
@@ -45,7 +45,7 @@ fn min_computing_checked(
         best_value = min_sol.minimum()?;
         return Ok(Some((best_value, best_parameter)));
     }
-    // Use math_PSO again but on a smaller range.
+    // Use Pso again but on a smaller range.
     let step: f64 = epsilon * (par_sup - par_inf);
     let range = [best_parameter - 0.5 * step, best_parameter + 0.5 * step];
     if let Some((value, param)) = pso_perform(function, range, epsilon, nb_particles)? {
@@ -59,7 +59,7 @@ fn min_computing_checked(
 }
 
 // `PSO_Perform`: the worst particles replaced by the best of 3 NbParticles regular
-// samples of the range, then math_PSO; None for a range below Precision::PConfusion().
+// samples of the range, then Pso; None for a range below precision::parametric().
 fn pso_perform(
     function: &mut TargetFunc<'_>,
     [par_inf, par_sup]: [f64; 2],

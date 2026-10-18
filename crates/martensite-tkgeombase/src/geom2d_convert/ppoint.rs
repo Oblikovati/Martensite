@@ -5,7 +5,7 @@ use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkmath::gp::{Point2, Vector2, Xy};
 
 /// A point of a curve with its parameter and tangent; two points are equal when
-/// their parameters are within Precision::PConfusion().
+/// their parameters are within precision::parametric().
 ///
 /// `let p = PPoint::from_adaptor(0.5, &adaptor)?; let d = p.dist(&PPoint::default());`
 #[derive(Clone, Copy, Debug)]
@@ -76,7 +76,7 @@ impl PPoint {
     }
 }
 
-/// `operator==` compares the parameters within Precision::PConfusion(); `operator!=`
+/// `operator==` compares the parameters within precision::parametric(); `operator!=`
 /// is its own test (`> PConfusion()`), so both are false for a NaN parameter.
 #[allow(clippy::partialeq_ne_impl)] // The retained operator!= is not the negation of operator==.
 impl PartialEq for PPoint {

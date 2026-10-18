@@ -196,7 +196,7 @@ fn newton_maximum(
 }
 
 /// `Tool::ComputeDeviation(theCurve, theFPar, theLPar, theNbSubIntervals,
-/// theNbIters = 10, thePrmOnCurve)`: the greatest deviation found by math_PSO with
+/// theNbIters = 10, thePrmOnCurve)`: the greatest deviation found by Pso with
 /// `nb_sub_intervals` particles and `nb_iters` iterations (a rough start for the
 /// Newton overload), with its parameter; -1 when the chord is degenerate or the
 /// search finds nothing; `geom_lib::compute_deviation_pso(&curve, 0.0, 1.0, 10, 10)?`.

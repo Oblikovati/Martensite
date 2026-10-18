@@ -1,7 +1,7 @@
 //! `GenExtPS`: all the extrema of the distance between a point and a
 //! surface, from the extrema of the distance to a sampling grid (or, with
 //! [`ExtAlgo::Tree`], from the nearest and farthest grid nodes of a sphere tree),
-//! each refined by math_FunctionSetRoot on [`FuncPSNorm`].
+//! each refined by FunctionSetRoot on [`FuncPSNorm`].
 mod candidates;
 mod grid;
 mod param_grid;
@@ -243,7 +243,7 @@ impl<'a> GenExtPS<'a> {
         }
         Ok(())
     }
-    // `FindSolution(P, theParams)`: math_FunctionSetRoot from the parameters of
+    // `FindSolution(P, theParams)`: FunctionSetRoot from the parameters of
     // `params` within the bounds; the function saves the root. Done in any case.
     fn find_solution(&mut self, params: &POnSurfParams) -> Result<(), Failure> {
         let mut tol: Vector<'static> = Vector::with_bounds(1, 2)?;

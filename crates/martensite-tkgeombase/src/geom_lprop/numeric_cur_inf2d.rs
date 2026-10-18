@@ -204,7 +204,7 @@ impl NumericCurInf2d {
 
     /// `PerformCurExt(C, UMin, UMax, Result)`: the roots of dKC/dU sampled on 100
     /// points (tolerances 1e-4 of the interval), each refined by a bracketed root
-    /// within `EpsH` (tolerance Precision::PConfusion()).
+    /// within `EpsH` (tolerance precision::parametric()).
     pub(super) fn perform_cur_ext_on(
         &mut self,
         curve: &Handle<dyn Geom2dCurve>,

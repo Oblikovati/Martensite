@@ -145,7 +145,7 @@ impl GProps {
     }
 
     /// `PrincipalProperties()`: the eigenvalues and eigenvectors of the matrix of
-    /// inertia (math_Jacobi, not-done failure when it does not converge);
+    /// inertia (Jacobi, not-done failure when it does not converge);
     /// `system.principal_properties()?`.
     pub fn principal_properties(&self) -> Result<PrincipalProps, Failure> {
         let axis_inertia: Matrix3 = self.matrix_of_inertia();

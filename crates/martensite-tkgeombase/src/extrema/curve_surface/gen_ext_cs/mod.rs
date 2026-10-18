@@ -1,6 +1,6 @@
 //! `GenExtCS`: the minimum of the distance between a curve and a surface: a
-//! particle swarm (math_PSO) seeded from samples, over `(t, u, v)`, over `(u, v)`
-//! for a conic or over `t` for a quadric, refined by math_FunctionSetRoot on
+//! particle swarm (Pso) seeded from samples, over `(t, u, v)`, over `(u, v)`
+//! for a conic or over `t` for a quadric, refined by FunctionSetRoot on
 //! [`FuncExtCS`] on each half of a closed curve.
 mod conic;
 mod glob_min;
@@ -24,7 +24,7 @@ const MAX_PARAM_VAL: f64 = 1.0e+10;
 const BORDER_DIVISOR: f64 = 1.0e+4;
 /// `HyperbolaLimit`: `ln(MaxParamVal)`, the bound on a hyperbola parameter.
 const HYPERBOLA_LIMIT: f64 = 23.;
-/// The number of particles of math_PSO.
+/// The number of particles of Pso.
 const NB_PARTICLES: i32 = 48;
 
 // `IsQuadric`.
@@ -341,7 +341,7 @@ impl<'a> GenExtCS<'a> {
     }
 }
 
-/// A 1-based math_Vector of three values.
+/// A 1-based Vector of three values.
 pub(super) fn triple(a: f64, b: f64, c: f64) -> Result<Vector<'static>, Failure> {
     let mut vector: Vector<'static> = Vector::with_bounds(1, 3)?;
     (vector[1], vector[2], vector[3]) = (a, b, c);

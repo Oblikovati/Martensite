@@ -1,6 +1,6 @@
 //! `ExtCC2d`: the extrema between two 2D curves: ExtElC2d for the
 //! elementary pairs it solves, ECC2d (over the whole curves) otherwise; the
-//! extrema are filtered to the ranges within Precision::PConfusion().
+//! extrema are filtered to the ranges within precision::parametric().
 use super::ECC2d;
 use crate::extrema::ExtElC2d;
 use crate::extrema::curve_tool::ExtremaCurveTool;
@@ -230,7 +230,7 @@ impl<'a> ExtCC2d<'a> {
 
 impl ExtCC2d<'_> {
     // `(U, U2)` moved into the periods (0 for none) and checked against the ranges
-    // within Precision::PConfusion().
+    // within precision::parametric().
     fn in_ranges(u: f64, u2: f64, [ut11, ut12, ut21, ut22]: [f64; 4]) -> bool {
         let tol: f64 = precision::p_confusion();
         (u >= ut11 - tol) && (u <= ut12 + tol) && (u2 >= ut21 - tol) && (u2 <= ut22 + tol)

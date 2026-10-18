@@ -250,7 +250,7 @@ impl AdvApp2VarEvaluatorFunc2Var for SurfaceEvaluator {
 }
 
 impl SurfaceEvaluator {
-    // myAdaptor = myAdaptor->UTrim(...)->VTrim(...), with Precision::PConfusion().
+    // myAdaptor = myAdaptor->UTrim(...)->VTrim(...), with precision::parametric().
     fn retrim(&self, request: &AdvApp2VarEvaluation<'_>) -> Result<(), Failure> {
         let mut adaptor = self.my_adaptor.borrow_mut();
         let [u0, u1] = request.u_start_end;

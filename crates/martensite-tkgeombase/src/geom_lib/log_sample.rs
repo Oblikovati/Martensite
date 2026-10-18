@@ -3,7 +3,7 @@ use crate::native_failure::failure;
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::math::{FunctionSample, FunctionSampling};
 
-/// The math_FunctionSample of `n` points of `[a, b]` whose inner points follow
+/// The FunctionSample of `n` points of `[a, b]` whose inner points follow
 /// `a - 1 + (b - a)^(i / n)`.
 ///
 /// `let sample = LogSample::new(1e-3, 50.0, 100); let t = sample.get_parameter(2)?;`

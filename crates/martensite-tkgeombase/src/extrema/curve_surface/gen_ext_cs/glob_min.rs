@@ -197,7 +197,7 @@ impl GenExtCS<'_> {
     }
 }
 
-/// A 1-based math_Vector of one value.
+/// A 1-based Vector of one value.
 pub(super) fn single(value: f64) -> Result<Vector<'static>, Failure> {
     let mut vector: Vector<'static> = Vector::with_bounds(1, 1)?;
     vector[1] = value;

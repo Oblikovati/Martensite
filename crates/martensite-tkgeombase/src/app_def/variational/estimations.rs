@@ -7,11 +7,11 @@ use martensite_tkernel::precision;
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::math::Vector;
 
-/// A `math_Vector(1, Dimension)` as plain values (index `k` is `V(k + 1)`); the
+/// A `Vector(1, Dimension)` as plain values (index `k` is `V(k + 1)`); the
 /// retained estimation vectors start uninitialized, the port's at 0.
 type EstVector = Vec<f64>;
 
-// math_Vector::Norm2 over the values (its four-accumulator sum).
+// Vector::Norm2 over the values (its four-accumulator sum).
 fn norm2(v: &[f64]) -> Result<f64, Failure> {
     let mut values: Vec<f64> = v.to_vec();
     let upper: i32 = values.len() as i32;

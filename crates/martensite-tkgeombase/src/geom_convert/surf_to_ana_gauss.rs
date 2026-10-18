@@ -232,7 +232,7 @@ struct CylFit {
 }
 
 // `GetCylByLS(thePoints, theTol, thePos, theR, theGap)`: the cylinder minimizing
-// FuncCylinderLSDist by math_PSO within 20% of the radius, then math_Powell
+// FuncCylinderLSDist by Pso within 20% of the radius, then Powell
 // across the axis; done when the gap is within Confusion after PSO or `tol` after
 // Powell.
 fn get_cyl_by_ls(
@@ -284,7 +284,7 @@ fn get_cyl_by_ls(
     })
 }
 
-// The math_PSO minimum of the location and radius, within 20% of the radius of
+// The Pso minimum of the location and radius, within 20% of the radius of
 // the start (10 steps per variable).
 fn pso_start(
     func: &mut FuncCylinderLSDist,

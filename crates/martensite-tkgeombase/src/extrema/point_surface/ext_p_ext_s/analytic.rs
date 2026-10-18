@@ -3,7 +3,7 @@
 //! The analytical case of ExtPExtS: the extrema of the distance from the
 //! projection of the point to the conic in its plane. When the extrusion is normal
 //! to that plane they are the extrema; otherwise each one (and its symmetric
-//! parameter) starts a math_FunctionSetRoot on the surface.
+//! parameter) starts a FunctionSetRoot on the surface.
 use super::{ExtPExtS, NB_EXT_MAX, get_value, is_original_pnt, perform_ext_p_el_c, project_pnt};
 use crate::extrema::ExtPElC;
 use crate::extrema::pon::POnSurf;
@@ -26,7 +26,7 @@ struct Section {
     uv_sup: Vector<'static>,
 }
 
-// A 1-based math_Vector of two values.
+// A 1-based Vector of two values.
 fn pair(first: f64, second: f64) -> Result<Vector<'static>, Failure> {
     let mut vector: Vector<'static> = Vector::with_bounds(1, 2)?;
     (vector[1], vector[2]) = (first, second);
@@ -106,7 +106,7 @@ impl ExtPExtS {
         self.keep_new_roots(true)
     }
 
-    // MakePreciser from `u`, then math_FunctionSetRoot from `(u, v)` where `v` is the
+    // MakePreciser from `u`, then FunctionSetRoot from `(u, v)` where `v` is the
     // extrusion parameter of the curve point in the section (natively one solver
     // object serves the start and its symmetric one).
     fn solve_from(

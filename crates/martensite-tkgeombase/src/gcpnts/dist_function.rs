@@ -92,7 +92,7 @@ impl<C: TCurveTypes + ?Sized> Function for TDistFunction<'_, C> {
 }
 
 /// The one-variable `math_MultipleVarFunction` view of a [`TDistFunction`]
-/// (`TCurveTypes<C>::DistFunctionMV`), used by `math_PSO`;
+/// (`TCurveTypes<C>::DistFunctionMV`), used by `Pso`;
 /// `TDistFunctionMV::new(&mut function)`.
 pub struct TDistFunctionMV<'f, 'a, C: TCurveTypes + ?Sized> {
     my_max_curv_lin_dist: &'f mut TDistFunction<'a, C>,

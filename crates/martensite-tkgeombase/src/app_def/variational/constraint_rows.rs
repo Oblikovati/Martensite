@@ -31,8 +31,8 @@ struct BasisForms {
 }
 
 impl BasisForms {
-    // The linear form `G(order)` (the retained math_Vector over G), or its product
-    // `scale * G(order)` (math_Vector::Multiplied, each value times the scalar).
+    // The linear form `G(order)` (the retained Vector over G), or its product
+    // `scale * G(order)` (Vector::Multiplied, each value times the scalar).
     fn form(&self, order: usize, scale: Option<f64>) -> Result<Vector<'static>, Failure> {
         let g: &Array1<'static, f64> = &self.g[order];
         let mut form: Vector<'static> = Vector::with_bounds(g.lower(), g.upper())?;

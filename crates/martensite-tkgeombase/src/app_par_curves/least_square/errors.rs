@@ -96,7 +96,7 @@ impl LeastSquare {
     }
 }
 
-// Px(j) of the 1-based pole column (math_Vector Px(1, nbpoles)).
+// Px(j) of the 1-based pole column (Vector Px(1, nbpoles)).
 fn pole_at(column: &[f64], j: i32) -> Result<f64, Failure> {
     usize::try_from(j - 1)
         .ok()

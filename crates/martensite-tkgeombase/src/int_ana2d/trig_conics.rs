@@ -1,6 +1,6 @@
 //! AnaIntersection::Perform(Circ2d, Conic) and
 //! Perform(Elips2d, Conic): the conic equation in the angular
-//! parameter of the closed curve, solved by math_TrigonometricFunctionRoots.
+//! parameter of the closed curve, solved by TrigonometricFunctionRoots.
 use super::{AnaIntersection, Conic, coord_ancien_repere, traitement_points_confondus};
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::{Axis2d, Circle2, Ellipse2};

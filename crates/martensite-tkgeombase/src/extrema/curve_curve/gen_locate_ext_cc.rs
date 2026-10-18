@@ -1,7 +1,7 @@
 // .
 
 //! `GenLocateExtCC` (`LocECC`): the curve-curve extremum nearest to
-//! a start pair, by math_FunctionSetRoot on [`GFuncExtCC`]; and `LocateExtCC`,
+//! a start pair, by FunctionSetRoot on [`GFuncExtCC`]; and `LocateExtCC`,
 //! which calls it on 3D curves with the resolutions of Precision::Confusion().
 use super::func_ext_cc::GFuncExtCC;
 use crate::extrema::curve_tool::ExtremaCurveTool;
@@ -36,7 +36,7 @@ fn ordered_range<T: ExtremaCurveTool>(curve: &T::Curve) -> Result<(f64, f64), Fa
     })
 }
 
-// A 1-based math_Vector of two values.
+// A 1-based Vector of two values.
 fn pair(first: f64, second: f64) -> Result<Vector<'static>, Failure> {
     let mut vector: Vector<'static> = Vector::with_bounds(1, 2)?;
     (vector[1], vector[2]) = (first, second);
@@ -44,7 +44,7 @@ fn pair(first: f64, second: f64) -> Result<Vector<'static>, Failure> {
 }
 
 impl<P: Copy + Default> GenLocateExtCC<P> {
-    /// `GenLocateExtCC(C1, C2, U0, V0, TolU, TolV)`: math_FunctionSetRoot from
+    /// `GenLocateExtCC(C1, C2, U0, V0, TolU, TolV)`: FunctionSetRoot from
     /// `(U0, V0)` within the curve ranges; done when a root was saved and F at it is
     /// below 1e-10 in both components (signed, not in absolute value);
     /// `GenLocateExtCC::new::<CurveTool>(&c1, &c2, 0.5, 0.5, 1e-9, 1e-9)?`.

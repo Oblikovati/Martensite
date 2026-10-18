@@ -48,7 +48,7 @@ impl CheckCurveOnSurface {
     }
 
     /// The check of `curve` with the parameter tolerance `tol_range`
-    /// (`CheckCurveOnSurface(theCurve, theTolRange = Precision::PConfusion())`);
+    /// (`CheckCurveOnSurface(theCurve, theTolRange = precision::parametric())`);
     /// `CheckCurveOnSurface::with_curve(&c3d, 1e-9)`.
     pub fn with_curve(curve: &Handle<dyn Adaptor3dCurve>, tol_range: f64) -> Self {
         Self {
@@ -62,7 +62,7 @@ impl CheckCurveOnSurface {
     }
 
     /// Sets the curve and the tolerance and resets the results; the parallel flag is
-    /// kept (`Init(theCurve, theTolRange = Precision::PConfusion())`);
+    /// kept (`Init(theCurve, theTolRange = precision::parametric())`);
     /// `check.init(&c3d, 1e-9)`.
     pub fn init(&mut self, curve: &Handle<dyn Adaptor3dCurve>, tol_range: f64) {
         self.my_curve = curve.clone();

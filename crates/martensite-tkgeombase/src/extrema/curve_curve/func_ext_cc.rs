@@ -1,6 +1,6 @@
 //! `GFuncExtCC`: `F(u, v) = ((C2(v) - C1(u)).C1'(u)/|C1'|, (C2(v) - C1(u)).C2'(v)/|C2'|)`,
 //! whose roots are the extrema of the distance between two curves, for
-//! math_FunctionSetRoot.
+//! FunctionSetRoot.
 use crate::extrema::curve_tool::ExtremaCurveTool;
 use crate::extrema::failures::{null_object, out_of_range, sequence_value};
 use crate::extrema::gp_space::{GpPoint, GpVector};

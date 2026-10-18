@@ -112,7 +112,7 @@ impl<'a> OtherCurve2d<'a> {
         self.bounding_box_optimal_range(u1, u2, tolerance)
     }
     /// `BoxOptimal(U1, U2, Tol)`: ComputeNbSamples2d samples refined by the retained
-    /// `math_PSO` + `math_BrentMinimum` search of the curve bounds implementation (not the MathOpt one the
+    /// `Pso` + `math_BrentMinimum` search of the curve bounds implementation (not the MathOpt one the
     /// other classes use); `evaluator.bounding_box_optimal_range(0.0, 1.0, 0.0)?`.
     pub fn bounding_box_optimal_range(
         &self,
@@ -134,7 +134,7 @@ impl<'a> OtherCurve2d<'a> {
 }
 
 // `AdjustExtr2dCurve` of the implementation: math_BrentMinimum on a small range,
-// otherwise math_PSO then math_BrentMinimum around the swarm optimum.
+// otherwise Pso then math_BrentMinimum around the swarm optimum.
 fn adjust_extr_2d_curve(
     curve: &dyn Adaptor2dCurve2d,
     (u_min, u_max): (f64, f64),
@@ -183,7 +183,7 @@ fn adjust_extr_2d_curve(
     Ok(sign * extr)
 }
 
-// `math_PSO aFinder(&aFunc, Low, Upp, Steps, NbParticles); aFinder.Perform(Steps, extr,
+// `Pso aFinder(&aFunc, Low, Upp, Steps, NbParticles); aFinder.Perform(Steps, extr,
 // aT)`: the best value and its parameter.
 fn legacy_pso(
     curve: &dyn Adaptor2dCurve2d,
@@ -196,7 +196,7 @@ fn legacy_pso(
     let upper: Vector<'static> = Vector::filled(1, 1, u_max)?;
     let steps: Vector<'static> = Vector::filled(1, 1, step)?;
     let mut point: Vector<'static> = Vector::filled(1, 1, 0.0)?;
-    // `extr` enters Perform holding `sign * extr0`; math_PSO always overwrites it.
+    // `extr` enters Perform holding `sign * extr0`; Pso always overwrites it.
     let mut value: f64 = seed;
     let mut func = CurveCoordFunc::new(curve, u_min, u_max, index, sign);
     let mut finder = Pso::with_options(&mut func, &lower, &upper, &steps, particles, 100)?;

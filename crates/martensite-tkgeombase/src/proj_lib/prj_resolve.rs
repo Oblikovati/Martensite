@@ -1,6 +1,6 @@
 //! `PrjResolve`: the orthogonal projection of a curve point on a surface
 //! near a start point, by a Newton search on [`PrjFunc`] with a fallback to the
-//! general `math_FunctionSetRoot`.
+//! general `FunctionSetRoot`.
 use super::prj_func::PrjFunc;
 use crate::native_failure::failure;
 use martensite_tkernel::standard::Failure;

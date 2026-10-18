@@ -14,7 +14,7 @@ impl ApproxArcsSegments<'_> {
     /// `makeApproximation`: a checked segment when the points are closer than the
     /// tolerance, else a biarc, else the same on the two parts split at 55% of the
     /// parameter range; false (nothing done) for parameters within
-    /// Precision::PConfusion(). A chord below Precision::Confusion() whose segment
+    /// precision::parametric(). A chord below Precision::Confusion() whose segment
     /// is refused still appends the null segment, as natively.
     pub(super) fn make_approximation(
         &mut self,
@@ -22,7 +22,7 @@ impl ApproxArcsSegments<'_> {
         last_param: &mut PPoint,
     ) -> Result<bool, Failure> {
         // If the difference between the parameters is less than
-        // Precision::PConfusion(), no approximation is made.
+        // precision::parametric(), no approximation is made.
         if !(*last_param != *first_param) {
             return Ok(false);
         }

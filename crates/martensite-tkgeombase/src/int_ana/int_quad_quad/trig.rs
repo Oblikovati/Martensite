@@ -22,7 +22,7 @@ pub(super) struct SortedTrigRoots {
 }
 
 impl SortedTrigRoots {
-    /// Solves with math_TrigonometricFunctionRoots on `[binf, bsup]`, brings the
+    /// Solves with TrigonometricFunctionRoots on `[binf, bsup]`, brings the
     /// roots into `[0, 2 PI]`, checks their residual and sorts them; a polynomial
     /// below 1e-10 without roots is an identity.
     pub fn new(coefficients: [f64; 5], binf: f64, bsup: f64) -> Result<Self, Failure> {

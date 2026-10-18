@@ -242,7 +242,7 @@ impl TangentialDeflection {
 
 impl TangentialDeflection {
     /// Insert a point in parameter order, or replace (when `is_replace`) the point
-    /// within Precision::PConfusion() of `param`; returns its index (`AddPoint`);
+    /// within precision::parametric() of `param`; returns its index (`AddPoint`);
     /// `algo.add_point(point, 0.5, true)?`.
     pub fn add_point(&mut self, pnt: Point3, param: f64, is_replace: bool) -> Result<i32, Failure> {
         let tol: f64 = precision::p_confusion();

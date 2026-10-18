@@ -10,7 +10,7 @@ use std::f64::consts::PI;
 
 /// `ExtremaExtElC_TrigonometricRoots`: the roots in `[0, 2 PI]` of
 /// `CC cos² + 2 SC cos sin + C cos + S sin + Cte`, sorted. A second attempt zeroes
-/// the coefficients below 1e-10 when math_TrigonometricFunctionRoots fails; a root
+/// the coefficients below 1e-10 when TrigonometricFunctionRoots fails; a root
 /// whose residual (with the original coefficients) exceeds
 /// `max(1e-8, 1e-12 max(CC, SC, C, S, Cte))` is dropped. (Code duplicated from
 /// the implementation natively, but not the same code.)

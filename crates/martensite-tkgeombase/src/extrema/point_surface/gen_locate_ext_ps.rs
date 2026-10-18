@@ -1,7 +1,7 @@
 // .
 
 //! `GenLocateExtPS`: the point-surface extremum nearest to a start `(u, v)`,
-//! by the roots of [`FuncPSNorm`] (math_FunctionSetRoot, then Newton) or by the
+//! by the roots of [`FuncPSNorm`] (FunctionSetRoot, then Newton) or by the
 //! minimum of [`FuncPSDist`] (math_BFGS, then math_FRPR).
 use super::func_ps_dist::FuncPSDist;
 use super::func_ps_norm::FuncPSNorm;
@@ -26,7 +26,7 @@ pub struct GenLocateExtPS<'a> {
     point: POnSurf,
 }
 
-// A 1-based math_Vector of two values.
+// A 1-based Vector of two values.
 fn pair(first: f64, second: f64) -> Result<Vector<'static>, Failure> {
     let mut vector: Vector<'static> = Vector::with_bounds(1, 2)?;
     (vector[1], vector[2]) = (first, second);
@@ -167,7 +167,7 @@ impl<'a> GenLocateExtPS<'a> {
         Ok(())
     }
 
-    // The normal projection criteria: math_FunctionSetRoot, then
+    // The normal projection criteria: FunctionSetRoot, then
     // math_NewtonFunctionSetRoot when it fails or when the tolerances were corrected.
     fn perform_normal(&mut self, point: Point3, u0: f64, v0: f64) -> Result<(), Failure> {
         let start: Vector<'static> = pair(u0, v0)?;

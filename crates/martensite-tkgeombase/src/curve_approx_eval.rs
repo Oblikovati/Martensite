@@ -75,7 +75,7 @@ impl Curve3dEvaluator {
         self.capture.take()
     }
 
-    // fonct = fonct->Trim(StartEnd[0], StartEnd[1], Precision::PConfusion()).
+    // fonct = fonct->Trim(StartEnd[0], StartEnd[1], precision::parametric()).
     fn retrim(&mut self, start_end: [f64; 2]) -> bool {
         let trimmed = match self.fonct.get() {
             Some(fonct) => fonct.trim(start_end[0], start_end[1], precision::p_confusion()),

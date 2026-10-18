@@ -56,7 +56,7 @@ fn shift(point: [f64; 2], tol: f64) -> [f64; 2] {
     [point[0] + tol, point[1] + tol]
 }
 
-// A 1-based math_Vector of two values.
+// A 1-based Vector of two values.
 fn pair(first: f64, second: f64) -> Result<Vector<'static>, Failure> {
     let mut vector: Vector<'static> = Vector::with_bounds(1, 2)?;
     (vector[1], vector[2]) = (first, second);

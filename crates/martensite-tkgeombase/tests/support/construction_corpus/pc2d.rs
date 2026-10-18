@@ -260,7 +260,7 @@ pub fn grid_case(output: &Output, values: &[f64]) {
     guarded(output, grid_body, values);
 }
 
-/// A math_Vector as its size and values.
+/// A Vector as its size and values.
 pub fn vector(output: &Output, v: &Vector<'_>) {
     int(output, v.size() as i32);
     v.array1().iter().for_each(|x| real(output, *x));

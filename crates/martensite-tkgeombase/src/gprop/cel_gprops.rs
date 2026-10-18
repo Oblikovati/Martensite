@@ -72,7 +72,7 @@ impl CelGProps {
 
     /// `Perform(C, U1, U2)` on a circle: arc length, centroid in the circle plane
     /// (the retained centre keeps the Z of the circle location) and inertia;
-    /// not-done failure when math_Jacobi fails; `props.perform_circle(c, 0.0, 1.0)?`.
+    /// not-done failure when Jacobi fails; `props.perform_circle(c, 0.0, 1.0)?`.
     pub fn perform_circle(&mut self, circle: Circle3, u1: f64, u2: f64) -> Result<(), Failure> {
         let (x0, y0, z0) = coordinates(&circle.location().xyz());
         let xa1: Xyz = circle.x_axis().direction().xyz();
