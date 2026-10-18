@@ -17,7 +17,13 @@ follows [Semantic Versioning](https://semver.org/).
 - Added explicit fallible printer and ordered messenger delivery with owned typed
   failures, preserving existing infallible entry points (#112).
 
+- Added the `martensite-tkexpress` crate for symbolic expressions, differentiation,
+  simplification, named functions, relations and text interpretation (#100).
+
 ### Fixed
+
+- Fixed symbolic-expression message failures to honor configured stack capture while
+  preserving explicitly supplied stacks (#141).
 
 - Shipped `LICENSE-APACHE` in the binary release archives and `LICENSE-GPL` in
   every source package; the release had still bundled the removed `LICENSE`
