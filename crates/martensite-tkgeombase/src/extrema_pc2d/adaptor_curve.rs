@@ -112,12 +112,12 @@ macro_rules! adaptor_evaluator {
         pub struct $name<'a>(AdaptorExtrema<'a>);
 
         impl<'a> $name<'a> {
-            #[doc = concat!("Evaluator over the adaptor bounds (`", $native, "(theCurve)`); ")]
+            #[doc = "Evaluates extrema over the adaptor bounds; `new(&adaptor)?`."]
             #[doc = "the adaptor must outlive it; `new(&adaptor)?`."]
             pub fn new(curve: &'a dyn Adaptor2dCurve2d) -> Result<Self, Failure> {
                 AdaptorExtrema::over_bounds(PcCurveRef::Borrowed(curve)).map(Self)
             }
-            #[doc = concat!("Evaluator over `domain` (`", $native, "(theCurve, theDomain)`); ")]
+            #[doc = "Evaluates extrema over an explicit domain; `with_domain(&adaptor, domain)?`."]
             #[doc = "`with_domain(&adaptor, Domain1D::new(0.0, 1.0))`."]
             pub fn with_domain(curve: &'a dyn Adaptor2dCurve2d, domain: Domain1D) -> Self {
                 Self(AdaptorExtrema::new(PcCurveRef::Borrowed(curve), domain))

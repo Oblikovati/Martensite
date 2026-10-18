@@ -1,6 +1,3 @@
-// Parabola(2d).cxx, Hyperbola(2d).cxx and the implementation at
-// .
-
 //! The infinite-parameter case analysis that the line, parabola and hyperbola boxes of
 //! GeomBndLib and BndLib repeat with identical bodies: one function per shape of the
 //! analysis, each keeping the retained order of point additions.

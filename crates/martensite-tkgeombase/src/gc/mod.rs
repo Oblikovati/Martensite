@@ -18,7 +18,7 @@ macro_rules! gc_result {
             }
         }
         impl $maker {
-            #[doc = concat!("`", $native, "::Value`: the constructed handle, or StdFail_NotDone ")]
+            #[doc = "Returns the constructed result; `maker.value()`."]
             #[doc = "when the construction failed; `maker.value()?`."]
             pub fn value(
                 &self,
@@ -45,7 +45,7 @@ macro_rules! gc_result {
                 }
             }
         }
-        #[doc = concat!("The conversion operator of `", $native, "`; `Handle::try_from(&maker)?`.")]
+        #[doc = "Converts a completed maker to its handle; `Handle::try_from(&maker)?`."]
         impl TryFrom<&$maker> for martensite_tkernel::standard::Handle<$result> {
             type Error = martensite_tkernel::standard::Failure;
             fn try_from(maker: &$maker) -> Result<Self, Self::Error> {
@@ -59,12 +59,12 @@ macro_rules! gc_result {
 macro_rules! gc_transformation {
     ($maker:ident, $result:ty, $native:literal) => {
         impl $maker {
-            #[doc = concat!("`", $native, "::Value`: the transformation; `maker.value()`.")]
+            #[doc = "Returns the constructed result; `maker.value()`."]
             pub fn value(&self) -> martensite_tkernel::standard::Handle<$result> {
                 self.the_result.clone()
             }
         }
-        #[doc = concat!("The conversion operator of `", $native, "`; `Handle::from(&maker)`.")]
+        #[doc = "Converts a maker to its transformation handle; `Handle::from(&maker)`."]
         impl From<&$maker> for martensite_tkernel::standard::Handle<$result> {
             fn from(maker: &$maker) -> Self {
                 maker.value()
@@ -95,7 +95,7 @@ macro_rules! gc_from_gce {
 /// gp conic between two points, a point and a parameter, or two parameters.
 macro_rules! conic_arc {
     ($maker:ident, $native:literal, $conic:ty, $point:ty, $geom:path, $curve:ident, $trimmed:ident) => {
-        #[doc = concat!("`", $native, "`: an arc of a conic, as a trimmed curve.")]
+        #[doc = "An arc of a conic represented by a trimmed curve."]
         #[doc = ""]
         #[doc = concat!("`", stringify!($maker), "::from_parameters(conic, 0.0, 1.0, true)?.value()?`.")]
         #[derive(Clone, Default)]
@@ -106,8 +106,8 @@ macro_rules! conic_arc {
         gc_result!($maker, $trimmed, $native);
 
         impl $maker {
-            #[doc = concat!("`", $native, "(Conic, P1, P2, Sense)`: the arc from the parameter of `p1`")]
-            #[doc = "to that of `p2` (`ElCLib::Parameter`); always done."]
+            #[doc = "Constructs an arc between the parameters of two points."]
+            #[doc = "The endpoints are converted to conic parameters; always done."]
             #[doc = concat!("`", stringify!($maker), "::from_points(conic, p1, p2, true)?`.")]
             pub fn from_points(
                 conic: $conic,
@@ -120,7 +120,7 @@ macro_rules! conic_arc {
                 Self::from_parameters(conic, alpha1, alpha2, sense)
             }
 
-            #[doc = concat!("`", $native, "(Conic, P, Alpha, Sense)`: the arc from the parameter of")]
+            #[doc = "Constructs an arc from a point parameter to a specified parameter."]
             #[doc = "`point` to `alpha`; always done."]
             #[doc = concat!("`", stringify!($maker), "::from_point_parameter(conic, p, 1.0, true)?`.")]
             pub fn from_point_parameter(
@@ -133,8 +133,8 @@ macro_rules! conic_arc {
                 Self::from_parameters(conic, alpha_first, alpha, sense)
             }
 
-            #[doc = concat!("`", $native, "(Conic, Alpha1, Alpha2, Sense)`: the arc between two")]
-            #[doc = "parameters; the trimmed curve raises Standard_ConstructionError for equal ones."]
+            #[doc = "Constructs an arc between two specified parameters."]
+            #[doc = "The trimmed curve rejects equal parameters with a construction error."]
             #[doc = concat!("`", stringify!($maker), "::from_parameters(conic, 0.0, 1.0, true)?`.")]
             pub fn from_parameters(
                 conic: $conic,

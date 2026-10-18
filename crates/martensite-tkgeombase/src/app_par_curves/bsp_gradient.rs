@@ -1,4 +1,4 @@
-//! `BSpGradient` (BSpGradient.gxx): the parameters of a
+//! `BSpGradient`: the parameters of a
 //! B-spline fit improved by one projection step then BFGS.
 use super::Constraints;
 use super::arrays::{line_points, scratch};

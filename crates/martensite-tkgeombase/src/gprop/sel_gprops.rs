@@ -82,25 +82,25 @@ impl SelGProps {
         from_cylinder,
         Cylinder3,
         perform_cylinder,
-        "`GProp_SelGProps(S, Alpha1, Alpha2, Z1, Z2, SLocation)` on a cylinder; `SelGProps::from_cylinder(c, 0.0, 1.0, 0.0, 2.0, p)?`."
+        "Constructs mass properties on a cylinder; `SelGProps::from_cylinder(c, 0.0, 1.0, 0.0, 2.0, p)?`."
     );
     sel_constructor!(
         from_cone,
         Cone3,
         perform_cone,
-        "`GProp_SelGProps(S, Alpha1, Alpha2, Z1, Z2, SLocation)` on a cone; `SelGProps::from_cone(c, 0.0, 1.0, 0.0, 2.0, p)?`."
+        "Constructs mass properties on a cone; `SelGProps::from_cone(c, 0.0, 1.0, 0.0, 2.0, p)?`."
     );
     sel_constructor!(
         from_sphere,
         Sphere3,
         perform_sphere,
-        "`GProp_SelGProps(S, Teta1, Teta2, Alpha1, Alpha2, SLocation)` on a sphere; `SelGProps::from_sphere(s, 0.0, 1.0, -0.5, 0.5, p)?`."
+        "Constructs mass properties on a sphere; `SelGProps::from_sphere(s, 0.0, 1.0, -0.5, 0.5, p)?`."
     );
     sel_constructor!(
         from_torus,
         Torus3,
         perform_torus,
-        "`GProp_SelGProps(S, Teta1, Teta2, Alpha1, Alpha2, SLocation)` on a torus; `SelGProps::from_torus(t, 0.0, 1.0, 0.0, 1.0, p)?`."
+        "Constructs mass properties on a torus; `SelGProps::from_torus(t, 0.0, 1.0, 0.0, 1.0, p)?`."
     );
 
     /// `SetLocation(SLocation)`: the point the inertia is accumulated at;

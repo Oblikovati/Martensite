@@ -1,4 +1,4 @@
-//! Development-test helpers owned by the porting repository, not a toolkit checkout.
+//! Shared geometry fixtures and assertions for the owned numerical tests.
 #[path = "assertions.rs"]
 mod assertions;
 #[path = "parameters.rs"]

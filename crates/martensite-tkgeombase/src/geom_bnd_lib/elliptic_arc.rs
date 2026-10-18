@@ -1,5 +1,3 @@
-// Ellipse(2d).cxx at .
-
 //! The analytic box of a circle or ellipse, 3D or 2D: the four GeomBndLib classes run
 //! the same per-coordinate extremum analysis on `O + Ra cos(t) Xd + Rb sin(t) Yd`. They
 //! differ only by the extremal-parameter tangent (`Yk / Xk` for a circle, `(Rb Yk) /

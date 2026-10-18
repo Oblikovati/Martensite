@@ -25,7 +25,5 @@ pub use quadric::Quadric;
 pub use result_type::ResultType;
 
 /// ListOfCurve (Deprecated/NCollectionAliases): a list of [`Curve`].
-#[deprecated(
-    note = "IntAna_ListOfCurve is deprecated, use NCollection_List<IntAna_Curve> directly"
-)]
+#[deprecated(note = "Use martensite_tkernel::ncollection::List<Curve> directly")]
 pub type ListOfCurve = martensite_tkernel::ncollection::List<Curve>;

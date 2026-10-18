@@ -13,16 +13,16 @@ use martensite_tkmath::gp::{
 macro_rules! transformation_result {
     ($maker:ident, $result:ty, $native:literal) => {
         impl $maker {
-            #[doc = concat!("`", $native, "::Value`: the transformation; `maker.value()`.")]
+            #[doc = "Returns the constructed result; `maker.value()`."]
             pub fn value(&self) -> $result {
                 self.the_result
             }
-            #[doc = concat!("`", $native, "::Operator`: the transformation; `maker.operator()`.")]
+            #[doc = "Returns the constructed result; `maker.operator()`."]
             pub fn operator(&self) -> $result {
                 self.value()
             }
         }
-        #[doc = concat!("The conversion operator of `", $native, "`; `Type::from(&maker)`.")]
+        #[doc = "Converts a maker to its transformation; `Type::from(&maker)`."]
         impl From<&$maker> for $result {
             fn from(maker: &$maker) -> Self {
                 maker.operator()

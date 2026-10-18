@@ -140,16 +140,16 @@ pub fn mmveps3_(eps03: &mut f64) -> i32 {
     0
 }
 
-/// `x` to the integer power `n` by repeated multiplication (`pow__di`), inverted for
-/// a negative `n`; `pow__di(2.0, -1) == 0.5`.
-#[allow(non_snake_case)] // The f2c name, kept for traceability.
+/// `x` to the integer power `n` by repeated multiplication, inverted for
+/// a negative `n`; `pow_di(2.0, -1) == 0.5`.
+#[allow(non_snake_case)] // Keep the established numerical entrypoint spelling.
 pub fn pow_di(x: f64, n: i32) -> f64 {
     pow_by_loop(x, n)
 }
 
-/// The integer power of the file-static `pow__ii`, with C integer division for a
-/// negative exponent; `pow__ii(2, 3) == 8`.
-#[allow(non_snake_case)] // The f2c name, kept for traceability.
+/// Integer powers use truncating integer division for negative exponents.
+/// `pow_ii(2, 3) == 8`.
+#[allow(non_snake_case)] // Keep the established numerical entrypoint spelling.
 fn pow_ii(x: i32, n: i32) -> i32 {
     let mut result: i32 = 1;
     for _ in 0..n.unsigned_abs() {

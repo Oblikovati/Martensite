@@ -3,8 +3,7 @@
 //! `EvaluatorFunc2Var`: the function of two parameters an approximation
 //! samples.
 //!
-//! The retained virtual `Evaluate` passes every argument through a pointer. Legacy
-//! evaluators can use the read-only `evaluate` view; `evaluate_native` exposes the
+//! Evaluators can use the read-only `evaluate` view; `evaluate_native` exposes the
 //! mutable argument values to callbacks that need them. `evaluate_slots` also
 //! exposes derivative-argument alias identity without duplicate mutable borrows.
 //! `evaluate_iso_callers` carries actual caller controls separately from local

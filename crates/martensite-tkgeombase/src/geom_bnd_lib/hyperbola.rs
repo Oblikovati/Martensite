@@ -10,8 +10,7 @@ use martensite_tkmath::bnd::{BoundingBox2, BoundingBox3};
 use martensite_tkmath::elclib;
 use martensite_tkmath::gp::{Hyperbola2, Hyperbola3};
 
-/// The finite-arc analysis `computeHyperbolaBox` (Hyperbola(2d).cxx) and
-/// `ComputeBox` (the implementation), identical bodies: both ends, the vertex when the arc
+/// Finite-arc bounds include both endpoints, the vertex when the arc
 /// crosses 0, and per coordinate the extremum `t = log(|B - A| / |A + B|) / 2` of
 /// `A sinh(t) + B cosh(t)` (A = Rmin Yk, B = Rmaj Xk) when it lies in `[t1, t2]`.
 pub struct HyperbolaArc<'a, P: SamplePoint> {

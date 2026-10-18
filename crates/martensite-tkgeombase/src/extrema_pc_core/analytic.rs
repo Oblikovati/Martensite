@@ -1,5 +1,3 @@
-// Hyperbola and Parabola evaluators of ModelingData/TKGeomBase/ExtremaPC2d and
-
 //! The `PerformWithEndpoints` flow the ten analytical evaluators share: validate,
 //! handle a degenerate domain by its single point, compute the interior extrema, then
 //! add the ends of a bounded domain.

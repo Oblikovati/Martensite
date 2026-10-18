@@ -1,4 +1,4 @@
-//! `LeastSquare` (LeastSquare.gxx): the least-squares
+//! `LeastSquare`: the least-squares
 //! fit of the poles of a MultiCurve (Bezier or B-spline) to a MultiLine, with the
 //! extremity constraints eliminated from the unknowns.
 mod errors;

@@ -254,7 +254,7 @@ impl Assembly {
 
     /// `GetAssemblyTable(AssTable)` (deprecated natively): a copy of the table
     /// handle; `let table = assembly.get_assembly_table();`.
-    #[deprecated(note = "Use AssemblyTable() returning const reference instead")]
+    #[deprecated(note = "Use assembly_table() to borrow the assembly table")]
     pub fn get_assembly_table(&self) -> AssemblyTable {
         self.ref_table.clone()
     }

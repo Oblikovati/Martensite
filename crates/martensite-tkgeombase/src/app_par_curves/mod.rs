@@ -5,8 +5,7 @@
 //! ([`Function`], [`BSpFunction`]) and the parameter optimizers ([`Gradient`],
 //! [`BSpGradient`]).
 //!
-//! The retained `.gxx` generics take a `MultiLine` and its `ToolLine`; the port takes
-//! any type implementing [`LineTool`].
+//! Fitting accepts any multiline representation implementing [`LineTool`].
 pub(crate) mod arrays;
 mod bernstein;
 mod bsp_function;

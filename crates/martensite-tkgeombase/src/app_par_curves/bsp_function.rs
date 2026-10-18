@@ -1,4 +1,4 @@
-//! `BSpFunction` (BSpFunction.gxx): F(u) and its gradient
+//! `BSpFunction`: F(u) and its gradient
 //! for the B-spline fit of a MultiLine, for the parameter optimizer.
 use super::Constraints;
 use super::constraint::Constraint;

@@ -1,9 +1,8 @@
 //! `OtherCurve` and `OtherCurve2d`: the sampling fallback for any
 //! curve adaptor.
 //!
-//! Both local `FillBox` copies of the .cxx files have the body of
-//! `SplineHelpers::FillBox` (their degenerate branch adds the first point a
-//! second time, which does not change a box), so [`fill_box`] serves them.
+//! [`fill_box`] shares sampling for planar and spatial curves. Degenerate
+//! curves add the first point twice, which leaves the resulting bounds unchanged.
 use super::optimization::{CurveCoordFunc, CurveCoordinate};
 use super::sampling::compute_nb_samples_2d;
 use super::space::{SampleBounds, SampledCurve};
@@ -113,7 +112,7 @@ impl<'a> OtherCurve2d<'a> {
         self.bounding_box_optimal_range(u1, u2, tolerance)
     }
     /// `BoxOptimal(U1, U2, Tol)`: ComputeNbSamples2d samples refined by the retained
-    /// `math_PSO` + `math_BrentMinimum` search of the .cxx file (not the MathOpt one the
+    /// `math_PSO` + `math_BrentMinimum` search of the curve bounds implementation (not the MathOpt one the
     /// other classes use); `evaluator.bounding_box_optimal_range(0.0, 1.0, 0.0)?`.
     pub fn bounding_box_optimal_range(
         &self,

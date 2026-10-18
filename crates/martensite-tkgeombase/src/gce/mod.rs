@@ -47,18 +47,18 @@ macro_rules! gce_result {
             }
         }
         impl $maker {
-            #[doc = concat!("`", $native, "::Value`: the constructed result, or StdFail_NotDone ")]
+            #[doc = "Returns the constructed result; `maker.value()`."]
             #[doc = "when the construction failed; `maker.value()?`."]
             pub fn value(&self) -> Result<$result, martensite_tkernel::standard::Failure> {
                 $crate::gce::check_done(self.the_error, concat!($native, "::Value()"))?;
                 Ok(self.the_result)
             }
-            #[doc = concat!("`", $native, "::Operator`: the same result as `value`; `maker.operator()?`.")]
+            #[doc = "Returns the constructed result; `maker.operator()`."]
             pub fn operator(&self) -> Result<$result, martensite_tkernel::standard::Failure> {
                 self.value()
             }
         }
-        #[doc = concat!("The conversion operator of `", $native, "`; `Type::try_from(&maker)?`.")]
+        #[doc = "Converts a completed maker to its result; `Type::try_from(&maker)?`."]
         impl TryFrom<&$maker> for $result {
             type Error = martensite_tkernel::standard::Failure;
             fn try_from(maker: &$maker) -> Result<Self, Self::Error> {

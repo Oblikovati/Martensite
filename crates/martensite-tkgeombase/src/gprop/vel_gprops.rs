@@ -58,25 +58,25 @@ impl VelGProps {
         from_cylinder,
         Cylinder3,
         perform_cylinder,
-        "`GProp_VelGProps(S, Alpha1, Alpha2, Z1, Z2, VLocation)` on a cylinder; `VelGProps::from_cylinder(c, 0.0, 1.0, 0.0, 2.0, p)?`."
+        "Constructs mass properties on a cylinder; `VelGProps::from_cylinder(c, 0.0, 1.0, 0.0, 2.0, p)?`."
     );
     vel_constructor!(
         from_cone,
         Cone3,
         perform_cone,
-        "`GProp_VelGProps(S, Alpha1, Alpha2, Z1, Z2, VLocation)` on a cone; `VelGProps::from_cone(c, 0.0, 1.0, 0.0, 2.0, p)?`."
+        "Constructs mass properties on a cone; `VelGProps::from_cone(c, 0.0, 1.0, 0.0, 2.0, p)?`."
     );
     vel_constructor!(
         from_sphere,
         Sphere3,
         perform_sphere,
-        "`GProp_VelGProps(S, Teta1, Teta2, Alpha1, Alpha2, VLocation)` on a sphere; `VelGProps::from_sphere(s, 0.0, 1.0, -0.5, 0.5, p)?`."
+        "Constructs mass properties on a sphere; `VelGProps::from_sphere(s, 0.0, 1.0, -0.5, 0.5, p)?`."
     );
     vel_constructor!(
         from_torus,
         Torus3,
         perform_torus,
-        "`GProp_VelGProps(S, Teta1, Teta2, Alpha1, Alpha2, VLocation)` on a torus; `VelGProps::from_torus(t, 0.0, 1.0, 0.0, 1.0, p)?`."
+        "Constructs mass properties on a torus; `VelGProps::from_torus(t, 0.0, 1.0, 0.0, 1.0, p)?`."
     );
 
     /// `SetLocation(VLocation)`: the point the inertia is accumulated at;

@@ -144,7 +144,7 @@ impl ComputeCLine {
         };
     }
 
-    // The hang check (occ265): after aNbComp cuts, stop when they did not improve.
+    // The hang check (the uniform-scale boundary case): after aNbComp cuts, stop when they did not improve.
     fn hang_detected(&self, state: &mut Cutting) -> bool {
         if !self.hang_checking || state.nb_cut < NB_COMPARED_CUTS {
             return false;

@@ -5,9 +5,8 @@
 //! curves, curves on surfaces, curvilinear parametrizations, same-parameter pcurves
 //! and sweeps.
 //!
-//! The retained `.gxx` generics take a `MultiLine` and its `LineTool`; the port takes
-//! any type implementing [`crate::app_par_curves::LineTool`] (the AppDef, GeomInt and
-//! BRepApprox instantiations are the same structs over their own lines).
+//! Multiline drivers accept any representation implementing
+//! [`crate::app_par_curves::LineTool`], sharing the same fitting pipeline.
 mod bspl_compute_line;
 mod check_multi_curve;
 mod compute_c_line;

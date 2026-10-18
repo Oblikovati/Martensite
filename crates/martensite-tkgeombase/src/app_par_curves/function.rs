@@ -1,4 +1,4 @@
-//! `Function` (Function.gxx): F(u) = the sum of the
+//! `Function`: F(u) = the sum of the
 //! squared distances between a MultiLine and its Bezier fit for the parameters u,
 //! and its gradient, for the parameter optimizer.
 mod constrained;

@@ -1,4 +1,4 @@
-//! `Gradient` (Gradient.gxx): the parameters of a
+//! `Gradient`: the parameters of a
 //! constrained Bezier fit improved by one projection step then BFGS.
 use super::Constraints;
 use super::arrays::scratch;

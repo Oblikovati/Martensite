@@ -173,17 +173,23 @@ pub struct OtherCurve<'a>(AdaptorExtrema<'a>);
 macro_rules! adaptor_members {
     ($name:ident, $native:literal) => {
         impl<'a> $name<'a> {
-            #[doc = concat!("Evaluator over the adaptor bounds (`", $native, "(theCurve)`); `new(&adaptor)?`.")]
+            #[doc = "Evaluates extrema over the adaptor bounds; `new(&adaptor)?`."]
             pub fn new(curve: &'a dyn Adaptor3dCurve) -> Result<Self, Failure> {
                 AdaptorExtrema::new(PcCurveRef::Borrowed(curve), None).map(Self)
             }
-            #[doc = concat!("Evaluator over `domain` (`", $native, "(theCurve, theDomain)`); `with_domain(&adaptor, domain)?`.")]
-            pub fn with_domain(curve: &'a dyn Adaptor3dCurve, domain: Domain1D) -> Result<Self, Failure> {
+            #[doc = "Evaluates extrema over an explicit domain; `with_domain(&adaptor, domain)?`."]
+            pub fn with_domain(
+                curve: &'a dyn Adaptor3dCurve,
+                domain: Domain1D,
+            ) -> Result<Self, Failure> {
                 AdaptorExtrema::new(PcCurveRef::Borrowed(curve), Some(domain)).map(Self)
             }
             /// Evaluator over a borrowed or shared adaptor, with the adaptor bounds when
             /// `domain` is `None`; `from_curve_ref(PcCurveRef::Shared(handle), None)?`.
-            pub fn from_curve_ref(curve: CurveRef3d<'a>, domain: Option<Domain1D>) -> Result<Self, Failure> {
+            pub fn from_curve_ref(
+                curve: CurveRef3d<'a>,
+                domain: Option<Domain1D>,
+            ) -> Result<Self, Failure> {
                 AdaptorExtrema::new(curve, domain).map(Self)
             }
             /// The adaptor point at `u` (`Value`); `extrema.value(0.5)?`.

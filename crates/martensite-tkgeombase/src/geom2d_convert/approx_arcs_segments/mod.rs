@@ -1,7 +1,7 @@
 //! `ApproxArcsSegments`: the approximation of a 2D curve by a chain of
 //! line segments and circular arcs (biarcs) within a distance and an angle.
 //!
-//! The retained `.cxx` is split by responsibility: the elementary builders
+//! The implementation separates the elementary builders
 //! (`builders.rs`), the free-form scan for straight and inflection parts
 //! (`freeform.rs`), the recursive biarc approximation (`biarcs.rs`) and the file
 //! static functions (`curve_tests.rs`).

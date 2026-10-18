@@ -1,4 +1,4 @@
-//! `ResolConstraint` (ResolConstraint.gxx): the poles of
+//! `ResolConstraint`: the poles of
 //! a MultiCurve moved by the Uzawa method onto the pass-point and tangency
 //! constraints of a MultiLine.
 mod derivative;

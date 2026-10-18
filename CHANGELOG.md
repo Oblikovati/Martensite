@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added geometric construction, conversion, approximation, extrema, bounds and mass-property tools with retained numerical fixtures.
+
 - Added spatial curves, surfaces, adaptors, evaluation grids and retained numerical fixtures.
 
 - Added checked borrowed input with state masks, position capability and owned typed

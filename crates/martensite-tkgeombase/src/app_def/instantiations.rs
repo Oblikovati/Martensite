@@ -1,11 +1,8 @@
-// the implementation and the implementation (the generic instantiations)
-
-//! The AppDef instantiations of the AppParCurves and Approx generics over
-//! MultiLine and MyLineTool. Each retained `the implementation` defines the generic
-//! parameters and includes the `.gxx`; the port's generics take any
-//! [`crate::app_par_curves::LineTool`], so every instantiation is an alias of the
-//! generic over [`MultiLine`] (the generics that take the line per call are the same
-//! type for every line).
+//! Multiline fitting aliases over [`MultiLine`].
+//!
+//! The shared fitting algorithms accept any [`crate::app_par_curves::LineTool`].
+//! These aliases select the multiline representation; algorithms receiving their
+//! line per call retain the same type for every supported line.
 use super::multi_line::MultiLine;
 use crate::app_par_curves::{
     BSpFunction, BSpGradient, Function, Gradient, GradientBfgs, LeastSquare, ResolConstraint,

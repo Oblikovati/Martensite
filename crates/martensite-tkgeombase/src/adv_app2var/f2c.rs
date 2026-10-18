@@ -84,9 +84,9 @@ fn slot(k: i32, offset: i32) -> usize {
     })
 }
 
-/// The f2c `pow_di` of the kernels: `x` multiplied `|n|` times, inverted for a
-/// negative `n` (`polynomial arithmetic::pow__di` and the file-static `pow__ii`
-/// share this loop); `pow_by_loop(2.0, 3) == 8.0`.
+/// Repeated multiplication of `x` by itself, inverted for negative `n`.
+/// The scalar power routines share this multiplication order;
+/// `pow_by_loop(2.0, 3) == 8.0`.
 pub(crate) fn pow_by_loop(x: f64, n: i32) -> f64 {
     let mut result: f64 = 1.0;
     for _ in 0..n.unsigned_abs() {
