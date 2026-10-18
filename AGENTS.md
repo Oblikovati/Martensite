@@ -154,6 +154,9 @@ below.
   surface without a shipped caller, persisted data, or an explicit
   requirement.
 - New features get a dedicated directory at `docs/features/` for all their supporting documents.
+- Remove throwaway experiment implementations and their branches/worktrees once the
+  investigation concludes; retain findings and measurements in `docs/features/`,
+  not dormant experiment code. Preserve unrelated unfinished feature work.
 - No dead code or half-built public surface. Future work is documented in
   `docs/features/` design notes, not shipped as unreachable stubs.
 - Prefer explicit fallbacks over `unwrap`, `expect`, or `unreachable!` in
