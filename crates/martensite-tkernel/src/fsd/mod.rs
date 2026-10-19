@@ -9,7 +9,7 @@ mod file_system;
 mod text_file;
 
 pub use base64::Base64;
-pub use binary_file::BinaryFile;
+pub use binary_file::{BinaryFile, CheckedReadError};
 pub(crate) use c_file::CFile;
 pub use file_header::FileHeader;
 pub use file_system::{DriverFileSystem, FileOpenMode, MemoryFileSystem, NativeDriverFileSystem};

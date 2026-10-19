@@ -1,0 +1,156 @@
+{
+  "source_revision": "d9c38f4d97c1f0ad5ba5ed4a1b3e4729d4d6e6a6",
+  "native_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "new_complete_families": {
+    "gc_arc_circle": 99,
+    "gc_arc_ellipse": 60,
+    "gc_arc_hyperbola": 60,
+    "gc_arc_parabola": 60,
+    "gc_arc_circle2d": 96,
+    "gc_arc_ellipse2d": 60,
+    "gc_arc_hyperbola2d": 60,
+    "gc_arc_parabola2d": 60,
+    "gc_circle": 136,
+    "gc_circle2d": 101,
+    "gc_ellipse": 42,
+    "gc_hyperbola": 42,
+    "gc_ellipse2d": 54,
+    "gc_hyperbola2d": 54,
+    "gc_parabola2d": 52,
+    "gc_line": 20,
+    "gc_line2d": 29,
+    "gc_segment": 27,
+    "gc_segment2d": 36,
+    "gc_plane": 58,
+    "gc_conical": 96,
+    "gc_trimmed_cone": 54,
+    "gc_cylindrical": 293,
+    "gc_trimmed_cylinder": 134,
+    "gc_mirror": 18,
+    "gc_mirror2d": 12,
+    "gc_rotation": 36,
+    "gc_rotation2d": 12,
+    "gc_scale": 18,
+    "gc_scale2d": 18,
+    "gc_translation": 6,
+    "gc_translation2d": 6
+  },
+  "new_requests": 1909,
+  "new_families": 32,
+  "cumulative_owned_requests": 4449,
+  "cumulative_owned_families": 56,
+  "full_original_requests": 45635,
+  "full_original_families": 328,
+  "remaining_requests": 41186,
+  "remaining_families": 272,
+  "inputs": {
+    "bytes": 292285,
+    "sha256": "b005603ef9f52f98187e9db4acdb267a19352fe00cd3da98ea8f747633f5a045"
+  },
+  "native_expected": {
+    "bytes": 690117,
+    "sha256": "73d394fac39a16406850452bf11fda675154bcd1af5cffabff5f9bc2e02f11dc"
+  },
+  "expected_origin": "Fresh pinned native capture before GC source edits; original historical full answer cache unavailable, no Rust-generated expectations.",
+  "comparison_policy": "Exact finite/infinity/signed-zero bits, exceptions/text/whitespace; original decimal NaN classification and word boundaries.",
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_gc.cxx": {
+      "bytes": 5069,
+      "sha256": "d65a27b7479db91a0536b50f20bd280be1684196a8561409a23d45262ef56bd4"
+    },
+    "tools/oracle/tkgeombase_probe_gc_curves.cxx": {
+      "bytes": 11401,
+      "sha256": "a94490e1c2f782f55a1aff28fd0a68b848bb9094839186e523b58c41be63bf4a"
+    },
+    "tools/oracle/tkgeombase_probe_gc_surfaces.cxx": {
+      "bytes": 6253,
+      "sha256": "6746c96de6a889a369f70b41fc2542286fb03a8180d9109f0586661873821714"
+    }
+  },
+  "fixture_files": {
+    "inputs-00.txt": {
+      "bytes": 56000,
+      "sha256": "472c92b6875e34dd2790c88f5ff28ec91a5f05cc4ff415c4d3b297fb932fac27"
+    },
+    "inputs-01.txt": {
+      "bytes": 49181,
+      "sha256": "28d0e143a212a44a8658125f621e28f29c7cbbdd5e9edf01c3dfdeaa60db033c"
+    },
+    "inputs-02.txt": {
+      "bytes": 30463,
+      "sha256": "bf5aabef9a6a4b9a2196fb3d77785065a92d96b884ab46fcf04dabc24eeb4323"
+    },
+    "inputs-03.txt": {
+      "bytes": 31977,
+      "sha256": "2b4a0abfed5a036869dc104a1e80a1765a72a21c77060107962fb70adc2553d9"
+    },
+    "inputs-04.txt": {
+      "bytes": 35774,
+      "sha256": "b7107a939816b38f9465f167e54aaf44deff56f30233158669927668c0432640"
+    },
+    "inputs-05.txt": {
+      "bytes": 34479,
+      "sha256": "a00941918079224052b5dc44d8676d1e25c0e6ec03ccf0358e0663918a2bcd78"
+    },
+    "inputs-06.txt": {
+      "bytes": 43067,
+      "sha256": "3d4a39d44d86bd6f00011cdbd40dfe29c966a6cdf23c1a118ceccac7125707f7"
+    },
+    "inputs-07.txt": {
+      "bytes": 11344,
+      "sha256": "b0eb845a42c9c4b28887d93a5d783f412d673f81db13002714f44ef43a0d9249"
+    },
+    "native-00.txt": {
+      "bytes": 111676,
+      "sha256": "2a6975d3946489d945cd9161af05ef750c97ae12a2126d0992a88989c07f1215"
+    },
+    "native-01.txt": {
+      "bytes": 102364,
+      "sha256": "d1cbc2aedf783e1b2a7a01aa9db116a4aa035fecd42e4f1a4180d9b0722deadc"
+    },
+    "native-02.txt": {
+      "bytes": 75848,
+      "sha256": "2c55190f550cc67b69c2b80fee1323958342044f00518f74928cd91fd8451604"
+    },
+    "native-03.txt": {
+      "bytes": 63214,
+      "sha256": "4598107c014a6219ca99625e01a201c7459072494e48cf46de5a94d26c591204"
+    },
+    "native-04.txt": {
+      "bytes": 74119,
+      "sha256": "baec900cce642cc29d932dacdfd28d05239ca873dd6c468002e84f5bd80ec999"
+    },
+    "native-05.txt": {
+      "bytes": 103195,
+      "sha256": "910e83f20f8b6a4d18e0490d11f7441aeb0893a0ea9db68b2c6569df05b99d9e"
+    },
+    "native-06.txt": {
+      "bytes": 115279,
+      "sha256": "6365c2fb8f43c87e12d71c89e8594d1db1fa541459a6721ae96170b8eda23235"
+    },
+    "native-07.txt": {
+      "bytes": 44422,
+      "sha256": "638824fe146c76393e50b04ef97476328ca7f071fa5c159839b68a1b025fdd5d"
+    }
+  },
+  "new_legacy_declaration_mappings": 0,
+  "new_exclusions": 0,
+  "numerical_algorithm_changes": 0,
+  "tolerance_changes": 0
+}

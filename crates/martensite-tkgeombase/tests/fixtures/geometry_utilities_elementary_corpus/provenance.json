@@ -1,0 +1,117 @@
+{
+  "source_revision": "13762d50c6c185c8f18a985d5bfee5d9cda6959f",
+  "native_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "new_complete_families": {
+    "gl_inertia": 16,
+    "gl_arrays": 76,
+    "gl_log_sample": 6,
+    "gl_poly_func": 12
+  },
+  "new_requests": 110,
+  "new_families": 4,
+  "cumulative_owned_requests": 23745,
+  "cumulative_owned_families": 104,
+  "full_original_requests": 45635,
+  "full_original_families": 328,
+  "remaining_requests": 21890,
+  "remaining_families": 224,
+  "inputs": {
+    "bytes": 7351,
+    "sha256": "3b80d626c10084055576d9a261cf61a56944eff1daf410ae70683a9a8af670aa"
+  },
+  "native_expected": {
+    "bytes": 11529,
+    "sha256": "b682558c9f4a4f3cdd314158ce4a492d44cce1efb7d45481b74a42a82c032f59"
+  },
+  "expected_origin": "Fresh pinned native capture before elementary GeomLib edits; historical full answer cache unavailable, no Rust-derived legacy expectations.",
+  "comparison_policy": "Exact finite/infinity/signed-zero bits, exception/text/whitespace; original decimal NaN classification and word boundaries.",
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/tkgeombase_corpus_geomlib.py": {
+      "bytes": 16575,
+      "sha256": "9e5988dad5e75ca5fa0869610006603fbb16792a91188168bbcf1c720cabbcde"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_lprop.cxx": {
+      "bytes": 8545,
+      "sha256": "cc1ea54964f4e502989c9306bdb3bb6bc855cfdc23f54736840c08da301095d7"
+    },
+    "tools/oracle/tkgeombase_probe_lprop_build.cxx": {
+      "bytes": 5563,
+      "sha256": "01be6f919d6869b0cb531f633563262e886b74f05c8279a99f5fe32c8bf6285e"
+    },
+    "tools/oracle/tkgeombase_probe_geomlib.cxx": {
+      "bytes": 8304,
+      "sha256": "315ba7119ff8cc9fa47a905926c0b99f08930afe636db07ca717410fd8d2ddbc"
+    },
+    "tools/oracle/tkgeombase_probe_geomlib_classes.cxx": {
+      "bytes": 8940,
+      "sha256": "3f7bbdbc22befb5e150c08353181a612c11e317203a8e0ccb5127e523701b207"
+    },
+    "tools/oracle/tkgeombase_probe_geomconvert_ana.cxx": {
+      "bytes": 7902,
+      "sha256": "4433b1091ea8d07f779af2c9cf040a3bb3bc10dd3f6c2c3904d4752846674168"
+    }
+  },
+  "fixture_files": {
+    "native.txt": {
+      "bytes": 11529,
+      "sha256": "b682558c9f4a4f3cdd314158ce4a492d44cce1efb7d45481b74a42a82c032f59"
+    },
+    "inputs.txt": {
+      "bytes": 7351,
+      "sha256": "3b80d626c10084055576d9a261cf61a56944eff1daf410ae70683a9a8af670aa"
+    }
+  },
+  "production_algorithm_changes": 0,
+  "new_legacy_declaration_mappings": 0,
+  "new_exclusions": 0,
+  "tolerance_changes": 0,
+  "checks": {
+    "all_targets": {
+      "passed": 1374,
+      "failed": 0,
+      "ignored": 0,
+      "library": 68,
+      "toolkit": 1298,
+      "separate_reference_cache_tests": 2,
+      "numeric_example": 6
+    },
+    "doctests": {
+      "passed": 66,
+      "failed": 0,
+      "ignored_preexisting": 19
+    },
+    "focused_cumulative_corpus_tests": 134,
+    "new_distinct_test_functions": 8,
+    "strict_all_target_clippy": "passed",
+    "format_and_diff_check": "passed",
+    "package_local_static_test_references": 359,
+    "required_owned_packaged_files": 253,
+    "native_processes_byte_identical": 2,
+    "pre_extraction_cli_processes_match_native": 2,
+    "extracted_cli_processes_match_native": 2,
+    "native_original64shard_positions_match": true,
+    "prior_native_requests_preserved": 23635,
+    "prior_cli_native_requests_preserved": 21425,
+    "prior_gcpnts_frozen_rows_in_current_native_suite": 2210,
+    "prior_native_requests_profile": "debug",
+    "new_cli_process_profile": "debug",
+    "prior_gprop_release_different_rows": 14,
+    "prior_gprop_release_parity": "unresolved supplemental check"
+  }
+}

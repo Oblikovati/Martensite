@@ -66,7 +66,7 @@ gates locally before you push:
 
 ```bash
 cargo xtask pr                        # what CI runs on a pull request
-cargo xtask release --version 0.3.0   # release rehearsal for the host target
+cargo xtask release --version X.Y.Z   # release rehearsal for the approved candidate version
 ```
 
 `cargo xtask pr` diffs your branch, including uncommitted and untracked work,

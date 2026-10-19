@@ -1,0 +1,103 @@
+//! The Geom package: transient 3D points, vectors, axes, transformations, curves
+//! and surfaces.
+pub mod basis_eval;
+pub mod errors;
+pub use basis_eval::{BasisCurveEvaluator, BasisSurfaceEvaluator};
+pub mod protected;
+
+mod geometry;
+pub use geometry::{GeomGeometry, dump_geometry};
+mod point;
+pub use point::GeomPoint;
+mod vector;
+pub use vector::GeomVector;
+mod axis_placement;
+pub use axis_placement::GeomAxisPlacement;
+mod curve;
+pub use curve::{GeomCurve, GeomCurveD1, GeomCurveD2, GeomCurveD3, dump_curve};
+mod bounded_curve;
+pub use bounded_curve::{GeomBoundedCurve, dump_bounded_curve};
+mod conic;
+pub use conic::{GeomConic, dump_conic, reverse_conic_position};
+mod surface;
+pub use surface::{
+    GeomSurface, GeomSurfaceD1, GeomSurfaceD2, GeomSurfaceD3, SurfaceBounds, check_dn_orders,
+    dump_surface,
+};
+mod bounded_surface;
+pub use bounded_surface::GeomBoundedSurface;
+mod elementary_surface;
+pub(crate) use elementary_surface::impl_elementary_position;
+pub use elementary_surface::{
+    GeomElementarySurface, dump_elementary_surface, elementary_u_reverse, elementary_v_reverse,
+};
+mod swept_surface;
+pub use swept_surface::{GeomSweptSurface, dump_swept_surface};
+
+mod cartesian_point;
+pub use cartesian_point::GeomCartesianPoint;
+mod direction;
+pub use direction::GeomDirection;
+mod vector_with_magnitude;
+pub use vector_with_magnitude::GeomVectorWithMagnitude;
+mod axis1_placement;
+pub use axis1_placement::GeomAxis1Placement;
+mod axis2_placement;
+pub use axis2_placement::GeomAxis2Placement;
+mod transformation;
+pub use transformation::GeomTransformation;
+
+mod line;
+pub use line::GeomLine;
+mod circle;
+pub use circle::GeomCircle;
+mod ellipse;
+pub use ellipse::GeomEllipse;
+mod hyperbola;
+pub use hyperbola::GeomHyperbola;
+mod parabola;
+pub use parabola::GeomParabola;
+mod trimmed_curve;
+pub use trimmed_curve::GeomTrimmedCurve;
+pub mod offset_curve_utils;
+
+pub(crate) mod elementary_results;
+pub mod extrusion_utils;
+mod parametric;
+mod plane;
+pub(crate) mod quadric;
+pub mod revolution_utils;
+pub use plane::GeomPlane;
+mod cylindrical_surface;
+pub use cylindrical_surface::GeomCylindricalSurface;
+mod conical_surface;
+pub use conical_surface::GeomConicalSurface;
+mod spherical_surface;
+pub use spherical_surface::GeomSphericalSurface;
+mod toroidal_surface;
+pub use toroidal_surface::GeomToroidalSurface;
+mod surface_of_linear_extrusion;
+pub use surface_of_linear_extrusion::GeomSurfaceOfLinearExtrusion;
+mod surface_of_revolution;
+pub use surface_of_revolution::GeomSurfaceOfRevolution;
+
+mod bezier_curve;
+pub use bezier_curve::GeomBezierCurve;
+mod bspline_curve;
+mod spline_kind;
+pub use bspline_curve::GeomBSplineCurve;
+mod offset_curve;
+pub use offset_curve::GeomOffsetCurve;
+mod bezier_surface;
+pub mod offset_surface_utils;
+pub use bezier_surface::GeomBezierSurface;
+
+mod bspline_surface;
+pub use bspline_surface::{GeomBSplineSurface, KnotVector, LocalKnots, ModifiedPoles};
+
+mod osculating_surface;
+pub use osculating_surface::GeomOsculatingSurface;
+mod offset_surface;
+pub use offset_surface::{GeomOffsetSurface, equivalent_surface};
+mod rectangular_trimmed_surface;
+pub use rectangular_trimmed_surface::GeomRectangularTrimmedSurface;

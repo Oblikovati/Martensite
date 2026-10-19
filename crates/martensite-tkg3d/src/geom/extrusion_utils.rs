@@ -1,0 +1,130 @@
+//! `GeomExtrusionUtils`: the evaluation of a surface of linear extrusion
+//! `P(u, v) = C(u) + v * Dir` from the basis curve values, shared by
+//! GeomSurfaceOfLinearExtrusion and the adaptors.
+//!
+//! The retained templates over the curve type become functions generic over the
+//! [`BasisCurveEvaluator`] (Geom curves and adaptors); the `Calculate*` functions
+//! work on already evaluated values.
+use super::basis_eval::BasisCurveEvaluator;
+use super::curve::{GeomCurveD1, GeomCurveD2, GeomCurveD3};
+use super::surface::{GeomSurfaceD1, GeomSurfaceD2, GeomSurfaceD3};
+use martensite_tkernel::standard::Failure;
+use martensite_tkmath::gp::{Point3, Vector3, Xyz};
+
+fn zero() -> Vector3 {
+    Vector3::new(0.0, 0.0, 0.0)
+}
+
+/// `CalculateD0`: the curve point moved by `v * dir`; `calculate_d0(p, 2.0, dir)`.
+pub fn calculate_d0(curve_point: Point3, v: f64, dir: Xyz) -> Point3 {
+    Point3::from(curve_point.xyz() + v * dir)
+}
+
+/// `CalculateD1`: D1U is the curve derivative and D1V the direction;
+/// `calculate_d1(&basis_d1, 2.0, dir)`.
+pub fn calculate_d1(curve: &GeomCurveD1, v: f64, dir: Xyz) -> GeomSurfaceD1 {
+    GeomSurfaceD1 {
+        point: calculate_d0(curve.point, v, dir),
+        d1u: curve.d1,
+        d1v: Vector3::from(dir),
+    }
+}
+
+/// `CalculateD2`: the only non-null second derivative is D2U, the curve one;
+/// `calculate_d2(&basis_d2, 2.0, dir)`.
+pub fn calculate_d2(curve: &GeomCurveD2, v: f64, dir: Xyz) -> GeomSurfaceD2 {
+    GeomSurfaceD2 {
+        point: calculate_d0(curve.point, v, dir),
+        d1u: curve.d1,
+        d1v: Vector3::from(dir),
+        d2u: curve.d2,
+        d2v: zero(),
+        d2uv: zero(),
+    }
+}
+
+/// `CalculateD3`: D3U is the curve third derivative, the other third ones are null;
+/// `calculate_d3(&basis_d3, 2.0, dir)`.
+pub fn calculate_d3(curve: &GeomCurveD3, v: f64, dir: Xyz) -> GeomSurfaceD3 {
+    GeomSurfaceD3 {
+        point: calculate_d0(curve.point, v, dir),
+        d1u: curve.d1,
+        d1v: Vector3::from(dir),
+        d2u: curve.d2,
+        d2v: zero(),
+        d2uv: zero(),
+        d3u: curve.d3,
+        d3v: zero(),
+        d3uuv: zero(),
+        d3uvv: zero(),
+    }
+}
+
+/// `CalculateDN`: the curve derivative for `DerV == 0`, the direction for
+/// `(0, 1)`, null otherwise; `calculate_dn(curve_dn, dir, 2, 0)`.
+pub fn calculate_dn(curve_dn: Vector3, dir: Xyz, der_u: i32, der_v: i32) -> Vector3 {
+    if der_v == 0 {
+        return curve_dn;
+    }
+    if der_u == 0 && der_v == 1 {
+        return Vector3::from(dir);
+    }
+    zero()
+}
+
+/// `D0<CurveType>`: evaluate the basis at `u`, then CalculateD0; `d0(u, v, &*basis, dir)?`.
+pub fn d0<C: BasisCurveEvaluator + ?Sized>(
+    u: f64,
+    v: f64,
+    basis: &C,
+    dir: Xyz,
+) -> Result<Point3, Failure> {
+    Ok(calculate_d0(basis.basis_d0(u)?, v, dir))
+}
+
+/// `D1<CurveType>`; `d1(u, v, &*basis, dir)?`.
+pub fn d1<C: BasisCurveEvaluator + ?Sized>(
+    u: f64,
+    v: f64,
+    basis: &C,
+    dir: Xyz,
+) -> Result<GeomSurfaceD1, Failure> {
+    Ok(calculate_d1(&basis.basis_d1(u)?, v, dir))
+}
+
+/// `D2<CurveType>`; `d2(u, v, &*basis, dir)?`.
+pub fn d2<C: BasisCurveEvaluator + ?Sized>(
+    u: f64,
+    v: f64,
+    basis: &C,
+    dir: Xyz,
+) -> Result<GeomSurfaceD2, Failure> {
+    Ok(calculate_d2(&basis.basis_d2(u)?, v, dir))
+}
+
+/// `D3<CurveType>`; `d3(u, v, &*basis, dir)?`.
+pub fn d3<C: BasisCurveEvaluator + ?Sized>(
+    u: f64,
+    v: f64,
+    basis: &C,
+    dir: Xyz,
+) -> Result<GeomSurfaceD3, Failure> {
+    Ok(calculate_d3(&basis.basis_d3(u)?, v, dir))
+}
+
+/// `DN<CurveType>`: the basis derivative of order `der_u` is evaluated only when
+/// `der_v == 0`; `dn(u, &*basis, dir, 2, 0)?`.
+pub fn dn<C: BasisCurveEvaluator + ?Sized>(
+    u: f64,
+    basis: &C,
+    dir: Xyz,
+    der_u: i32,
+    der_v: i32,
+) -> Result<Vector3, Failure> {
+    let curve_dn: Vector3 = if der_v == 0 {
+        basis.basis_dn(u, der_u)?
+    } else {
+        Vector3::default()
+    };
+    Ok(calculate_dn(curve_dn, dir, der_u, der_v))
+}

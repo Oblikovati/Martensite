@@ -6,6 +6,31 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-10-19
+
+### Added
+
+- Added geometric construction, conversion, approximation, extrema, bounds and mass-property tools with retained numerical fixtures (#193).
+
+- Added spatial curves, surfaces, adaptors, evaluation grids and retained numerical fixtures (#192).
+
+- Added checked borrowed input with state masks, position capability and owned typed
+  causes, sharing extraction with existing owned streams and binary container
+  metadata decoding with checked offset-range rejection (#142, #181).
+
+- Added explicit fallible printer and ordered messenger delivery with owned typed
+  failures, preserving existing infallible entry points (#112).
+
+- Added the `martensite-tkexpress` crate for symbolic expressions, differentiation,
+  simplification, named functions, relations and text interpretation (#100).
+- Added the `martensite-tkg2d` crate for planar curves, splines, offsets, adaptors,
+  derivative and grid evaluation, and quantized geometry hashes (#105).
+
+### Fixed
+
+- Fixed symbolic-expression message failures to honor configured stack capture while
+  preserving explicitly supplied stacks (#141).
+
 ## [0.3.2] - 2026-10-18
 
 ### Added

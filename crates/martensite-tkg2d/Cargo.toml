@@ -1,0 +1,26 @@
+[package]
+autotests = false
+name = "martensite-tkg2d"
+version = "0.3.3"
+description = "Martensite planar geometry: analytic curves, splines, evaluation and adaptors."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.3" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.3" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.3" }
+
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+[[test]]
+name = "numeric_replay"
+path = "tests/numeric_replay.rs"

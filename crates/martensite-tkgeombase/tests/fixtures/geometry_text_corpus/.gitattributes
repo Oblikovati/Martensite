@@ -1,0 +1,3 @@
+# Stream output includes significant trailing spaces and exact newline bytes.
+requests.txt -text
+expected.txt -text -whitespace

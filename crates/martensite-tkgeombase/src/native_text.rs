@@ -1,0 +1,30 @@
+//! The text a retained `OStream << double` writes, shared by the Dump and
+//! Out members of the TKGeomBase ports.
+use martensite_tkernel::tcollection::AsciiString;
+
+/// `OStream << double` with default flags, which formats like C's `%g`
+/// (six significant digits); `stream_real(0.5) == "0.5"`.
+pub(crate) fn stream_real(value: f64) -> String {
+    // AsciiString(double) uses the same `%g` conversion.
+    String::from_utf8_lossy(AsciiString::from_real(value).as_bytes()).into_owned()
+}
+
+/// `OStream << double` after `setf(std::ios::scientific)` and
+/// `setprecision(precision)`: C's `%.*e` (a sign and at least two exponent digits;
+/// `inf`, `nan` and their negative forms); `stream_scientific(1.5, 3) == "1.500e+00"`.
+pub(crate) fn stream_scientific(value: f64, precision: usize) -> String {
+    let sign: &str = if value.is_sign_negative() { "-" } else { "" };
+    if value.is_nan() {
+        return format!("{sign}nan");
+    }
+    if value.is_infinite() {
+        return format!("{sign}inf");
+    }
+    // Rust's `{:e}` rounds the exact binary value as glibc's printf does; only the
+    // exponent spelling differs.
+    let text: String = format!("{value:.precision$e}");
+    let (mantissa, exponent) = text.split_once('e').unwrap_or((text.as_str(), "0"));
+    let exponent: i32 = exponent.parse().unwrap_or(0);
+    let exponent_sign: char = if exponent < 0 { '-' } else { '+' };
+    format!("{mantissa}e{exponent_sign}{:02}", exponent.abs())
+}

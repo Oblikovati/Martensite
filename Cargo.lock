@@ -298,11 +298,11 @@ dependencies = [
 
 [[package]]
 name = "martensite-cmath"
-version = "0.3.2"
+version = "0.3.3"
 
 [[package]]
 name = "martensite-tkernel"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "allocator-api2",
  "bytemuck",
@@ -317,8 +317,47 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkexpress"
+version = "0.3.3"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkernel",
+]
+
+[[package]]
+name = "martensite-tkg2d"
+version = "0.3.3"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkernel",
+ "martensite-tkmath",
+]
+
+[[package]]
+name = "martensite-tkg3d"
+version = "0.3.3"
+dependencies = [
+ "flate2",
+ "martensite-cmath",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkmath",
+]
+
+[[package]]
+name = "martensite-tkgeombase"
+version = "0.3.3"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkmath",
+]
+
+[[package]]
 name = "martensite-tkmath"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",

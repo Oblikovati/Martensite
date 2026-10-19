@@ -1,0 +1,41 @@
+//! The GeomAdaptor package: Geom curves and surfaces behind the Adaptor3d
+//! interfaces, the swept and transformed adaptors, and the way back from an adapted
+//! curve or surface to a Geom one.
+mod curve;
+mod curve_eval;
+mod curve_eval_order;
+mod curve_query;
+mod curve_shape;
+mod curve_state;
+pub use curve::GeomAdaptorCurve;
+mod public_surface_data;
+mod surface;
+mod surface_eval;
+mod surface_eval_order;
+mod surface_query;
+mod surface_shape;
+mod surface_span;
+mod surface_state;
+pub use public_surface_data::SurfaceDataVariant as GeomAdaptorSurfaceDataVariant;
+pub use public_surface_data::{
+    BSplineData as GeomAdaptorSurfaceBSplineData, BezierData as GeomAdaptorSurfaceBezierData,
+    ExtrusionData as GeomAdaptorSurfaceExtrusionData, OffsetData as GeomAdaptorSurfaceOffsetData,
+    RevolutionData as GeomAdaptorSurfaceRevolutionData, SurfaceDataVariant,
+};
+pub use surface::GeomAdaptorSurface;
+pub use surface_state::LoadRange as GeomAdaptorSurfaceRange;
+mod extrusion_kind;
+mod surface_of_linear_extrusion;
+pub use surface_of_linear_extrusion::GeomAdaptorSurfaceOfLinearExtrusion;
+mod revolution_kind;
+mod surface_of_revolution;
+pub use surface_of_revolution::GeomAdaptorSurfaceOfRevolution;
+mod transformed_surface;
+pub use transformed_surface::GeomAdaptorTransformedSurface;
+mod make;
+pub use make::{make_curve, make_surface};
+mod transformed_curve;
+pub use transformed_curve::GeomAdaptorTransformedCurve;
+
+mod public_curve_data;
+pub use public_curve_data::{CurveBSplineData, CurveBezierData, CurveDataVariant, CurveOffsetData};

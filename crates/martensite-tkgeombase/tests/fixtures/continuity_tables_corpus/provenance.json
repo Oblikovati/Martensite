@@ -1,0 +1,119 @@
+{
+  "source_revision": "56fd4cb8b26867ab054e3e7769131e74838856e4",
+  "native_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "new_complete_families": {
+    "acc_table": 254,
+    "acc_offsets": 34
+  },
+  "new_requests": 288,
+  "new_families": 2,
+  "cumulative_owned_requests": 24033,
+  "cumulative_owned_families": 106,
+  "full_original_requests": 45635,
+  "full_original_families": 328,
+  "remaining_requests": 21602,
+  "remaining_families": 222,
+  "inputs": {
+    "bytes": 6014,
+    "sha256": "20dd65e8b5b06445dd4aae3bfd2cbdc10c0b10413c5d254ed18e32b5f439730e"
+  },
+  "native_expected": {
+    "bytes": 2530000,
+    "sha256": "a04fab1c63eb848210b011901bfd5ff4264d183b5d747377e988df7cd5761a23"
+  },
+  "expected_origin": "Fresh pinned native capture before AppCont table driver edits; historical full answer cache unavailable, no Rust-derived legacy expectations.",
+  "comparison_policy": "Exact finite/infinity/signed-zero bits, exception/text/whitespace; original decimal NaN classification and word boundaries.",
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/tkgeombase_corpus_appcont.py": {
+      "bytes": 8596,
+      "sha256": "6d76c963e6fb061cb6283141d751aa8a58a2fb398ccdeadd52db7af0fb0f48bc"
+    },
+    "tools/generate_appcont_tables.py": {
+      "bytes": 7448,
+      "sha256": "7295f998c93c3c5cb5da2bef8183a52582e68acc5dc056b55a994f15cbc9a214"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_lprop.cxx": {
+      "bytes": 8545,
+      "sha256": "cc1ea54964f4e502989c9306bdb3bb6bc855cfdc23f54736840c08da301095d7"
+    },
+    "tools/oracle/tkgeombase_probe_lprop_build.cxx": {
+      "bytes": 5563,
+      "sha256": "01be6f919d6869b0cb531f633563262e886b74f05c8279a99f5fe32c8bf6285e"
+    },
+    "tools/oracle/tkgeombase_probe_appcont.cxx": {
+      "bytes": 4754,
+      "sha256": "a70e91eaa2dacf142c8e3355e8ef9f0a0c05362471efa51c22a4ca226c6f66fb"
+    }
+  },
+  "fixture_files": {
+    "inputs-01.txt": {
+      "bytes": 470,
+      "sha256": "4e4cf8e9a6ccd937e70d0ca62ae58bfc6a17154e4fa692e83178022f1e23a6e6"
+    },
+    "native-01.txt": {
+      "bytes": 404,
+      "sha256": "5161d66abd775b15856e74dca43e5d040d484b6fe95538e7c039d5f41ba6d703"
+    },
+    "native-00.txt": {
+      "bytes": 2529596,
+      "sha256": "5b5ae2f56bbe965add533e298fe5282d91fe75121c1a9fbadcbe26e52ec3e477"
+    },
+    "inputs-00.txt": {
+      "bytes": 5544,
+      "sha256": "3b40a6604a7a0514fe1f2bd62e4ece2aa10931f09fe22249e16947cd5600ad4d"
+    }
+  },
+  "production_algorithm_changes": 0,
+  "new_legacy_declaration_mappings": 0,
+  "new_exclusions": 0,
+  "tolerance_changes": 0,
+  "checks": {
+    "all_targets": {
+      "passed": 1380,
+      "failed": 0,
+      "ignored": 0,
+      "library": 68,
+      "toolkit": 1304,
+      "separate_reference_cache_tests": 2,
+      "numeric_example": 6
+    },
+    "doctests": {
+      "passed": 66,
+      "failed": 0,
+      "ignored_preexisting": 19
+    },
+    "focused_cumulative_corpus_tests": 140,
+    "new_distinct_test_functions": 6,
+    "strict_all_target_clippy": "passed",
+    "format_and_diff_check": "passed",
+    "package_local_static_test_references": 364,
+    "required_owned_packaged_files": 261,
+    "native_processes_byte_identical": 2,
+    "pre_extraction_cli_processes_match_native": 2,
+    "extracted_cli_processes_match_native": 2,
+    "native_original64shard_positions_match": true,
+    "prior_native_requests_preserved": 23745,
+    "prior_cli_native_requests_preserved": 21535,
+    "prior_gcpnts_frozen_rows_in_current_native_suite": 2210,
+    "prior_native_requests_profile": "debug",
+    "new_cli_process_profile": "debug",
+    "prior_gprop_release_different_rows": 14,
+    "prior_gprop_release_parity": "unresolved supplemental check"
+  }
+}

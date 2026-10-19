@@ -1,0 +1,59 @@
+//! The Geom2d package: transient 2D points, vectors, axes, transformations and curves.
+pub mod arrays;
+pub mod bezier_curve_core;
+pub mod bspline_curve_core;
+pub mod errors;
+pub mod native;
+pub mod protected;
+pub mod spline_curve_kind;
+pub mod spline_data;
+pub mod trim_bounds;
+
+mod geometry;
+pub use geometry::{
+    Geom2dGeometry, dump_base, dump_class_name, dump_field, dump_flag, dump_geometry,
+};
+mod curve;
+mod curve_members;
+mod spline_pole_members;
+pub use curve::{Geom2dCurve, Geom2dCurveD1, Geom2dCurveD2, Geom2dCurveD3, dump_curve};
+mod bounded_curve;
+pub use bounded_curve::{Geom2dBoundedCurve, dump_bounded_curve};
+mod conic;
+pub use conic::{Geom2dConic, dump_conic, reverse_conic_position};
+mod point;
+pub use point::{Geom2dPoint, dump_point};
+mod vector;
+pub use vector::Geom2dVector;
+
+mod cartesian_point;
+pub use cartesian_point::Geom2dCartesianPoint;
+mod direction;
+pub use direction::Geom2dDirection;
+mod vector_with_magnitude;
+pub use vector_with_magnitude::Geom2dVectorWithMagnitude;
+mod axis_placement;
+pub use axis_placement::Geom2dAxisPlacement;
+mod transformation;
+pub use transformation::Geom2dTransformation;
+
+mod line;
+pub use line::Geom2dLine;
+mod circle;
+pub use circle::Geom2dCircle;
+mod ellipse;
+pub use ellipse::Geom2dEllipse;
+mod hyperbola;
+pub use hyperbola::Geom2dHyperbola;
+mod parabola;
+pub use parabola::Geom2dParabola;
+mod trimmed_curve;
+pub use trimmed_curve::Geom2dTrimmedCurve;
+mod bezier_curve;
+pub use bezier_curve::Geom2dBezierCurve;
+mod bspline_curve;
+mod spline_kind;
+pub use bspline_curve::Geom2dBSplineCurve;
+mod offset_curve;
+pub mod offset_curve_utils;
+pub use offset_curve::Geom2dOffsetCurve;

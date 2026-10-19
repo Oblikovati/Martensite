@@ -1,0 +1,72 @@
+//! Bezier surface construction and evaluation contracts.
+#![allow(non_snake_case)]
+#[path = "common/mod.rs"]
+mod common;
+use common::{EXPECT_DOUBLE_EQ, EXPECT_NEAR};
+use martensite_tkernel::ncollection::{Array1, Array2};
+use martensite_tkernel::standard::Handle;
+use martensite_tkg3d::geom::{GeomBezierSurface, GeomCurve, GeomGeometry, GeomSurface};
+use martensite_tkmath::gp::{Point3, Transform3, Vector3};
+
+fn pnt(x: f64, y: f64, z: f64) -> Point3 {
+    Point3::new(x, y, z)
+}
+
+// The fixture SetUp: a 3x3 Bezier surface with poles (i, j, (i + j) * 0.1).
+fn SetUp() -> Handle<GeomBezierSurface> {
+    let mut aPoles: Array2<'static, Point3> = Array2::with_bounds(1, 3, 1, 3).unwrap();
+    for i in 1..=3 {
+        for j in 1..=3 {
+            let (x, y) = (f64::from(i), f64::from(j));
+            aPoles.set_value(i, j, pnt(x, y, (x + y) * 0.1)).unwrap();
+        }
+    }
+    Handle::new(GeomBezierSurface::new(&aPoles).unwrap())
+}
+
+// The 2x2 grid (0,0,0) (1,0,0) / (0,1,0) (1,1,z22) that many tests build.
+fn unit_poles(z22: f64) -> Array2<'static, Point3> {
+    let mut aPoles: Array2<'static, Point3> = Array2::with_bounds(1, 2, 1, 2).unwrap();
+    aPoles.set_value(1, 1, pnt(0.0, 0.0, 0.0)).unwrap();
+    aPoles.set_value(1, 2, pnt(1.0, 0.0, 0.0)).unwrap();
+    aPoles.set_value(2, 1, pnt(0.0, 1.0, 0.0)).unwrap();
+    aPoles.set_value(2, 2, pnt(1.0, 1.0, z22)).unwrap();
+    aPoles
+}
+
+// A 2x2 weight grid in the retained assignment order.
+fn weights22(w11: f64, w12: f64, w21: f64, w22: f64) -> Array2<'static, f64> {
+    let mut aWeights: Array2<'static, f64> = Array2::with_bounds(1, 2, 1, 2).unwrap();
+    aWeights.set_value(1, 1, w11).unwrap();
+    aWeights.set_value(1, 2, w12).unwrap();
+    aWeights.set_value(2, 1, w21).unwrap();
+    aWeights.set_value(2, 2, w22).unwrap();
+    aWeights
+}
+
+// A one-based line of points.
+fn line(points: &[Point3]) -> Array1<'static, Point3> {
+    let mut aLine: Array1<'static, Point3> = Array1::with_bounds(1, points.len() as i32).unwrap();
+    for (k, p) in points.iter().enumerate() {
+        aLine[k as i32 + 1] = *p;
+    }
+    aLine
+}
+
+// A one-based line of weights.
+fn line_weights(values: &[f64]) -> Array1<'static, f64> {
+    let mut aLine: Array1<'static, f64> = Array1::with_bounds(1, values.len() as i32).unwrap();
+    for (k, w) in values.iter().enumerate() {
+        aLine[k as i32 + 1] = *w;
+    }
+    aLine
+}
+
+// `new GeomBezierSurface(*surface)`.
+fn copied(surface: &GeomBezierSurface) -> Handle<GeomBezierSurface> {
+    Handle::new(GeomBezierSurface::copy_of(surface).unwrap())
+}
+
+include!("geom_bezier_surface/suites_0.rs");
+include!("geom_bezier_surface/suites_1.rs");
+include!("geom_bezier_surface/suites_2.rs");

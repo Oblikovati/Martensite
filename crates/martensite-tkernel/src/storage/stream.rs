@@ -7,6 +7,7 @@
 //! byte device, so drivers never touch the process file system directly.
 use std::io::{Read, Seek, SeekFrom, Write};
 mod formatted;
+pub(crate) mod input_engine;
 mod number_text;
 pub use number_text::format_general;
 
@@ -285,20 +286,19 @@ impl IoStream {
     /// `get(char&)`: one byte, or `eofbit|failbit` leaving `value` unchanged; `stream.get(&mut c)`.
     pub fn get(&mut self, value: &mut u8) -> &mut Self {
         self.gcount = 0;
-        let mut error = 0;
+        let mut count = 0;
         if self.input_sentry(true) {
-            match self.bump_byte() {
-                Some(byte) => {
-                    self.gcount = 1;
-                    *value = byte;
-                }
-                None => error |= state::EOF,
-            }
+            let _ = input_engine::scan_byte(self, value, &mut count);
         }
-        if self.gcount == 0 {
-            error |= state::FAIL;
+        self.gcount = count as i64;
+        if count == 0 {
+            let bits = if self.good() {
+                state::EOF | state::FAIL
+            } else {
+                state::FAIL
+            };
+            self.set_state(bits);
         }
-        self.set_state(error);
         self
     }
 
@@ -321,22 +321,18 @@ impl IoStream {
     }
 
     fn getline_body(&mut self, buffer: &mut Vec<u8>, size: i64, delimiter: u8) -> u8 {
-        loop {
-            let next = self.peek_byte();
-            match next {
-                None => return state::EOF,
-                Some(byte) if byte == delimiter => {
-                    self.gcount += 1;
-                    self.cursor += 1;
-                    return 0;
-                }
-                Some(_) if self.gcount + 1 >= size => return state::FAIL,
-                Some(byte) => {
-                    buffer.push(byte);
-                    self.cursor += 1;
-                    self.gcount += 1;
-                }
-            }
+        let mut count = 0;
+        let mut output = input_engine::VectorLine {
+            bytes: buffer,
+            limit: size,
+        };
+        let end = input_engine::scan_line(self, &mut output, delimiter, &mut count)
+            .unwrap_or(input_engine::LineEnd::Eof);
+        self.gcount = count as i64;
+        match end {
+            input_engine::LineEnd::Delimiter => 0,
+            input_engine::LineEnd::Eof => state::EOF,
+            input_engine::LineEnd::Capacity => state::FAIL,
         }
     }
 
@@ -347,13 +343,11 @@ impl IoStream {
         if !self.input_sentry(true) {
             return self;
         }
-        for slot in buffer.iter_mut() {
-            let Some(byte) = self.bump_byte() else {
-                self.set_state(state::EOF | state::FAIL);
-                return self;
-            };
-            *slot = byte;
-            self.gcount += 1;
+        let mut count = 0;
+        let _ = input_engine::scan_block(self, buffer, &mut count);
+        self.gcount = count as i64;
+        if count != buffer.len() {
+            self.set_state(state::EOF | state::FAIL);
         }
         self
     }

@@ -3,6 +3,7 @@
 mod base_driver;
 mod bucket;
 mod callback;
+pub mod checked_input;
 mod data;
 mod header_data;
 mod internal_data;

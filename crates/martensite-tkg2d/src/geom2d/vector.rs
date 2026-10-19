@@ -1,0 +1,58 @@
+//! `Geom2dVector`: vectors (unit or not) of the plane as transient geometry.
+use super::geometry::Geom2dGeometry;
+use super::protected::{PROTECTED, ProtectedAccess};
+use martensite_tkernel::impl_transient_interface;
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
+use martensite_tkmath::gp::Vector2;
+
+/// A vector with the defined protected `gpVec2d` storage; `vector.dot(&*other)`.
+pub trait Geom2dVector: Geom2dGeometry {
+    /// The protected `gpVec2d` cell; only Geom2d calls it.
+    #[doc(hidden)]
+    fn vector_cell(&self, access: ProtectedAccess) -> &SharedState<Vector2>;
+    /// Length (`Magnitude`); `vector.magnitude()`.
+    fn magnitude(&self) -> f64;
+    /// Squared length (`SquareMagnitude`); `vector.square_magnitude()`.
+    fn square_magnitude(&self) -> f64;
+    /// Cross product `self ^ other` (`Crossed`); `vector.crossed(&*other)`.
+    fn crossed(&self, other: &dyn Geom2dVector) -> f64;
+    /// Reverse in place (`Reverse`); `vector.reverse()`.
+    fn reverse(&self) {
+        self.vector_cell(PROTECTED).write().reverse();
+    }
+    /// Reversed copy (`Reversed`); `let reversed = vector.reversed()?;`.
+    fn reversed(&self) -> Result<Handle<dyn Geom2dVector>, Failure> {
+        let copy: Handle<dyn Geom2dVector> = self.copy()?.cast::<dyn Geom2dVector>();
+        copy.reverse();
+        Ok(copy)
+    }
+    /// Signed angle in (-Pi, Pi] to `other`; fails for a null vector (`Angle`);
+    /// `vector.angle(&*other)?`.
+    fn angle(&self, other: &dyn Geom2dVector) -> Result<f64, Failure> {
+        let own: Vector2 = self.vec2d();
+        own.angle(other.vec2d())
+    }
+    /// Coordinates as `(x, y)` (`Coord`); `vector.coord()`.
+    fn coord(&self) -> (f64, f64) {
+        let own: Vector2 = self.vec2d();
+        (own.x(), own.y())
+    }
+    /// X coordinate (`X`); `vector.x()`.
+    fn x(&self) -> f64 {
+        self.vec2d().x()
+    }
+    /// Y coordinate (`Y`); `vector.y()`.
+    fn y(&self) -> f64 {
+        self.vec2d().y()
+    }
+    /// Scalar product (`Dot`); `vector.dot(&*other)`.
+    fn dot(&self, other: &dyn Geom2dVector) -> f64 {
+        let own: Vector2 = self.vec2d();
+        own.dot(other.vec2d())
+    }
+    /// A gp copy (`Vec2d`); `vector.vec2d()`.
+    fn vec2d(&self) -> Vector2 {
+        *self.vector_cell(PROTECTED).read()
+    }
+}
+impl_transient_interface!(dyn Geom2dVector, "Geom2d_Vector", dyn Geom2dGeometry);

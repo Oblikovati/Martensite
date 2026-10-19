@@ -1,0 +1,103 @@
+{
+  "source_revision": "81034e2d9188b6dee4459847ae7508e60db0c83e",
+  "native_revision": "3d097a0328e71b826377d4814ab05ec3c3d23871",
+  "new_complete_families": {
+    "ia2_lines": 93,
+    "ia2_circles": 29,
+    "ia2_line_circle": 68,
+    "ia2_conic": 109,
+    "ia2_conic_eval": 15,
+    "ia2_roots": 44,
+    "ia2_outils": 21,
+    "ia2_int_point": 4,
+    "ia_quadric": 14,
+    "ia_conic_quad": 80,
+    "ia_conic_plane": 52,
+    "ia_lin_torus": 21,
+    "ia_qqgeo": 313,
+    "ia_qq": 70,
+    "ia_curve": 12
+  },
+  "new_requests": 945,
+  "new_families": 15,
+  "cumulative_owned_requests": 5394,
+  "cumulative_owned_families": 71,
+  "full_original_requests": 45635,
+  "full_original_families": 328,
+  "remaining_requests": 40241,
+  "remaining_families": 257,
+  "inputs": {
+    "bytes": 169908,
+    "sha256": "57034a20e1d8175b5323969585ea7f089e9dc97fa4aa26a7efd30b0ff8be79b7"
+  },
+  "native_expected": {
+    "bytes": 240155,
+    "sha256": "185c4ce796cfa2a04d89eb6eb898b64c8f82066f902182ef0e7cbb37339934f8"
+  },
+  "expected_origin": "Fresh pinned native capture before analytic source edits; missing historical full raw answer cache not regenerated from Rust.",
+  "comparison_policy": "Exact finite/infinity/signed-zero bits, exception/text/whitespace; original decimal NaN classification and word boundaries.",
+  "source_files": {
+    "tools/tkgeombase_corpus.py": {
+      "bytes": 4543,
+      "sha256": "86dbfa23caa7f17fba352f9e3b7d45885e5594a6795f41329b33fa086b09ccab"
+    },
+    "tools/verify_tkgeombase_numeric.py": {
+      "bytes": 1436,
+      "sha256": "f4b07e4c9c22eb53c6c53f7a7e497373f14d65650e0207690d45b8c974a7362b"
+    },
+    "tools/oracle/tkgeombase_probe.cxx": {
+      "bytes": 18103,
+      "sha256": "ee4f42dd35f3ddd956e010d770e0c8fee961258b926aad37eafbb5ccb73a8bfb"
+    },
+    "tools/oracle/tkgeombase_probe_common.cxx": {
+      "bytes": 4321,
+      "sha256": "a795e797de6c0e65e5c207d5470fb4daf5e0f2d2a5120636ac3543bdfa37de88"
+    },
+    "tools/oracle/tkgeombase_probe_intana2d.cxx": {
+      "bytes": 6207,
+      "sha256": "aac50e623846ba309c44c6d4247f6d80031dfc7792c4bbe40ae1e625ab808791"
+    },
+    "tools/oracle/tkgeombase_probe_intana.cxx": {
+      "bytes": 10116,
+      "sha256": "6a656b8f1b857c3750b72ffd5db71d97867b875d69ea9f53e6be2b18b82a5014"
+    }
+  },
+  "fixture_files": {
+    "inputs-00.txt": {
+      "bytes": 36236,
+      "sha256": "4d48f2147b07fc90f6bed31ba5b2ff5821b472960d8fda838ae2f2e7073badb4"
+    },
+    "inputs-01.txt": {
+      "bytes": 53397,
+      "sha256": "c2d7d0fd1c078f775187cce0a5e32b40394561baad7bfe3e0da410cb9cbcd871"
+    },
+    "inputs-02.txt": {
+      "bytes": 49088,
+      "sha256": "80028ce66d4729babb72f59c5d2946746b8092de4174348b553e2dd026656e68"
+    },
+    "inputs-03.txt": {
+      "bytes": 31187,
+      "sha256": "8a6685290100e32d0c8784b0118d2b033e9dc731db344259d6b2fda121482207"
+    },
+    "native-00.txt": {
+      "bytes": 24076,
+      "sha256": "bd98ac9d8f3a135666bcb6dad0dfd3e4fc1b5e77d2d8da3a2e558eafbbb3c9c8"
+    },
+    "native-01.txt": {
+      "bytes": 37658,
+      "sha256": "8401b8b36c8306573fa41fcf3c9d2b4088b1560c2ca671d39fdc68e54a08d6c8"
+    },
+    "native-02.txt": {
+      "bytes": 55804,
+      "sha256": "6f5c31eded94b374b83993a19bf66b6325e949ff127e1e72885acdf16afe4458"
+    },
+    "native-03.txt": {
+      "bytes": 122617,
+      "sha256": "63861b7953eb2f53c440059520f51a4d9bebb4b5f980121919e6258928ff25a3"
+    }
+  },
+  "new_legacy_declaration_mappings": 0,
+  "new_exclusions": 0,
+  "production_algorithm_changes": 0,
+  "tolerance_changes": 0
+}
