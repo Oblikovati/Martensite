@@ -132,3 +132,6 @@ fn real_file_symlink_uses_git_link_semantics_without_modifying_its_target() {
         "trailing space \n"
     );
 }
+
+#[path = "fixture_checkout_tests.rs"]
+mod fixture_checkout_tests;
