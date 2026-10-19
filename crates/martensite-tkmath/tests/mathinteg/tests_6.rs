@@ -6,7 +6,11 @@ fn math_integ_gauss_adaptive_exponential_function() {
 
     let mut aResult: IntegResult = gauss_adaptive(&mut aFunc, 0.0, 1.0, &aConfig);
     assert!(aResult.is_done());
-    near(aResult.value.unwrap(), martensite_cmath::exp(1.0_f64) - 1.0, 1.0e-11);
+    near(
+        aResult.value.unwrap(),
+        martensite_cmath::exp(1.0_f64) - 1.0,
+        1.0e-11,
+    );
 }
 
 #[test]

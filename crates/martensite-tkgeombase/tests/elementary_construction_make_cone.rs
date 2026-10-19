@@ -43,7 +43,8 @@ fn make_cone_from_cone_and_dist_valid_done() {
     assert_eq!(aMaker.status(), ErrorType::Done);
 
     let aCone: Cone3 = aMaker.value().unwrap();
-    let anExpectedRadius: f64 = aBaseCone.ref_radius() + aDist / martensite_cmath::cos(aBaseCone.semi_angle());
+    let anExpectedRadius: f64 =
+        aBaseCone.ref_radius() + aDist / martensite_cmath::cos(aBaseCone.semi_angle());
     EXPECT_NEAR(aCone.ref_radius(), anExpectedRadius, precision::confusion());
     EXPECT_NEAR(
         aCone.semi_angle(),
@@ -66,7 +67,8 @@ fn make_cone_from_cone_and_dist_valid_done() {
 #[test]
 fn make_cone_from_cone_and_dist_too_negative_negative_radius() {
     let aBaseCone = base_cone();
-    let aDist: f64 = -(aBaseCone.ref_radius() * martensite_cmath::cos(aBaseCone.semi_angle()) + 1.0);
+    let aDist: f64 =
+        -(aBaseCone.ref_radius() * martensite_cmath::cos(aBaseCone.semi_angle()) + 1.0);
 
     let aMaker = MakeCone::from_cone_distance(aBaseCone, aDist).unwrap();
     assert!(!aMaker.is_done());

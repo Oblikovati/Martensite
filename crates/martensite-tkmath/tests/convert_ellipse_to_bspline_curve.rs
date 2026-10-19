@@ -69,14 +69,22 @@ fn convert_ellipse_to_b_spline_curve_arc_tgt_theta_over2() {
     let aXDir = anElips.x_axis().direction();
     let aYDir = anElips.y_axis().direction();
 
-    let aFirstX: f64 = aCenter.x() + aMajR * martensite_cmath::cos(aU1) * aXDir.x() + aMinR * martensite_cmath::sin(aU1) * aYDir.x();
-    let aFirstY: f64 = aCenter.y() + aMajR * martensite_cmath::cos(aU1) * aXDir.y() + aMinR * martensite_cmath::sin(aU1) * aYDir.y();
+    let aFirstX: f64 = aCenter.x()
+        + aMajR * martensite_cmath::cos(aU1) * aXDir.x()
+        + aMinR * martensite_cmath::sin(aU1) * aYDir.x();
+    let aFirstY: f64 = aCenter.y()
+        + aMajR * martensite_cmath::cos(aU1) * aXDir.y()
+        + aMinR * martensite_cmath::sin(aU1) * aYDir.y();
     assert!((aPoles[1].x() - aFirstX).abs() <= 1.0e-10);
     assert!((aPoles[1].y() - aFirstY).abs() <= 1.0e-10);
 
     // Verify last pole matches ellipse point at U2
-    let aLastX: f64 = aCenter.x() + aMajR * martensite_cmath::cos(aU2) * aXDir.x() + aMinR * martensite_cmath::sin(aU2) * aYDir.x();
-    let aLastY: f64 = aCenter.y() + aMajR * martensite_cmath::cos(aU2) * aXDir.y() + aMinR * martensite_cmath::sin(aU2) * aYDir.y();
+    let aLastX: f64 = aCenter.x()
+        + aMajR * martensite_cmath::cos(aU2) * aXDir.x()
+        + aMinR * martensite_cmath::sin(aU2) * aYDir.x();
+    let aLastY: f64 = aCenter.y()
+        + aMajR * martensite_cmath::cos(aU2) * aXDir.y()
+        + aMinR * martensite_cmath::sin(aU2) * aYDir.y();
     assert!((aPoles[aConv.nb_poles()].x() - aLastX).abs() <= 1.0e-10);
     assert!((aPoles[aConv.nb_poles()].y() - aLastY).abs() <= 1.0e-10);
 

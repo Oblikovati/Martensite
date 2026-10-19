@@ -402,9 +402,21 @@ fn hyperbola2d_simple_arc() {
     let [aXmin, aYmin, aXmax, aYmax] = get2d(&aBox);
 
     EXPECT_NEAR(aXmin, 3., precision::confusion());
-    EXPECT_NEAR(aXmax, 3. * martensite_cmath::cosh(1.), precision::confusion());
-    EXPECT_NEAR(aYmin, 2. * martensite_cmath::sinh(-1.), precision::confusion());
-    EXPECT_NEAR(aYmax, 2. * martensite_cmath::sinh(1.), precision::confusion());
+    EXPECT_NEAR(
+        aXmax,
+        3. * martensite_cmath::cosh(1.),
+        precision::confusion(),
+    );
+    EXPECT_NEAR(
+        aYmin,
+        2. * martensite_cmath::sinh(-1.),
+        precision::confusion(),
+    );
+    EXPECT_NEAR(
+        aYmax,
+        2. * martensite_cmath::sinh(1.),
+        precision::confusion(),
+    );
 }
 
 #[test]

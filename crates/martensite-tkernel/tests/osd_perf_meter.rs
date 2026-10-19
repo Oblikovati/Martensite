@@ -14,7 +14,9 @@ fn computational_work() {
     let mut result: f64 = 0.0;
     for i in 0..10000 {
         let value: f64 = f64::from(i);
-        result = black_box(result + martensite_cmath::sin(value * 0.001) * martensite_cmath::cos(value * 0.002));
+        result = black_box(
+            result + martensite_cmath::sin(value * 0.001) * martensite_cmath::cos(value * 0.002),
+        );
         result = black_box(result + (value + 1.0).sqrt());
         result = black_box(result + martensite_cmath::pow(value * 0.1, 1.5));
         let mut text = AsciiString::new("Test");

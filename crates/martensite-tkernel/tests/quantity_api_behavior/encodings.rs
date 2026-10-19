@@ -67,8 +67,14 @@ fn gamma_vector_and_approx22_conversions() {
         [Color::srgb_to_linear_f32(0.5); 3]
     );
     // Naming quirk: the "linear to sRGB" approximation raises to 2.2.
-    assert_eq!(Color::linear_to_srgb_approx22(0.5), martensite_cmath::powf(0.5_f32, 2.2));
-    assert_eq!(Color::srgb_to_linear_approx22(0.5), martensite_cmath::powf(0.5_f32, 1.0 / 2.2));
+    assert_eq!(
+        Color::linear_to_srgb_approx22(0.5),
+        martensite_cmath::powf(0.5_f32, 2.2)
+    );
+    assert_eq!(
+        Color::srgb_to_linear_approx22(0.5),
+        martensite_cmath::powf(0.5_f32, 1.0 / 2.2)
+    );
     assert_eq!(Color::linear_to_srgb_approx22_vec3([1.0; 3]), [1.0; 3]);
     assert_eq!(Color::srgb_to_linear_approx22_vec3([0.0; 3]), [0.0; 3]);
 }

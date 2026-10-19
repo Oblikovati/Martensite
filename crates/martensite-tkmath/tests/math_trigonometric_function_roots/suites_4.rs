@@ -15,8 +15,11 @@ fn math_trigonometric_function_roots_all_coefficients() {
     // Check that found solutions are valid
     for i in 1..=solver.solutions().unwrap() {
         let x: f64 = solver.value(i).unwrap();
-        let result: f64 =
-            a * martensite_cmath::cos(x) * martensite_cmath::cos(x) + 2.0 * b * martensite_cmath::cos(x) * martensite_cmath::sin(x) + c * martensite_cmath::cos(x) + d * martensite_cmath::sin(x) + e;
+        let result: f64 = a * martensite_cmath::cos(x) * martensite_cmath::cos(x)
+            + 2.0 * b * martensite_cmath::cos(x) * martensite_cmath::sin(x)
+            + c * martensite_cmath::cos(x)
+            + d * martensite_cmath::sin(x)
+            + e;
         assert_near(result, 0.0, TOLERANCE);
     }
 }

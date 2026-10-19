@@ -145,7 +145,8 @@ fn corpus_exposes_false_ties_and_nonfinite_rounded_metric_results() {
 }
 fn rounded_disagrees(row: &str) -> bool {
     let ([a, b, c, d], expected) = fixture(row);
-    let distance = (martensite_cmath::powi(b[0] - a[0], 2) + martensite_cmath::powi(b[1] - a[1], 2))
+    let distance = (martensite_cmath::powi(b[0] - a[0], 2)
+        + martensite_cmath::powi(b[1] - a[1], 2))
         - (martensite_cmath::powi(c[0] - a[0], 2) + martensite_cmath::powi(c[1] - a[1], 2));
     let projection = (b[0] - a[0]) * (c[0] - d[0]) + (b[1] - a[1]) * (c[1] - d[1]);
     [distance, projection]

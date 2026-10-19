@@ -88,7 +88,11 @@ fn math_integration_gauss_exponential_function() {
     let mut f = ExponentialFunction;
     let s = Gauss::new(&mut f, 0.0, 1.0, 15);
     assert!(s.is_done());
-    near(s.value().unwrap(), martensite_cmath::exp(1.0_f64) - 1.0, 1e-8);
+    near(
+        s.value().unwrap(),
+        martensite_cmath::exp(1.0_f64) - 1.0,
+        1e-8,
+    );
 }
 #[test]
 fn math_integration_gauss_different_orders() {

@@ -19,7 +19,11 @@ fn math_root_multiple_find_all_roots_exponential() {
     let mut aResult = find_all_roots_samples(&mut aFunc, -1.0, 2.0, 50);
     assert!(aResult.is_done());
     assert_eq!(aResult.nb_roots(), 1);
-    near(aResult.roots[0], martensite_cmath::log(2.0_f64), THE_TOLERANCE);
+    near(
+        aResult.roots[0],
+        martensite_cmath::log(2.0_f64),
+        THE_TOLERANCE,
+    );
 }
 
 #[test]

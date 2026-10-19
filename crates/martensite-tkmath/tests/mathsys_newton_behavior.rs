@@ -57,6 +57,9 @@ fn invalid_tolerance_precedes_function_evaluation() {
 #[test]
 fn safe_norm_does_not_overflow_finite_hypotenuse() {
     let vector = Vector::filled(-1, 0, 1e200).unwrap();
-    assert_eq!(linear::safe_norm(&vector), martensite_cmath::hypot(1e200_f64, 1e200));
+    assert_eq!(
+        linear::safe_norm(&vector),
+        martensite_cmath::hypot(1e200_f64, 1e200)
+    );
     assert!(linear::safe_norm(&vector).is_finite());
 }

@@ -75,7 +75,11 @@ pub fn u_periodic() -> GeomBSplineSurface {
     let (vk, vm) = (array(&[0.0, 1.0]), array(&[2, 2]));
     let poles = grid(5, 2, |i, j| {
         let angle = f64::from(i) * 1.2566370614359172;
-        Point3::new(martensite_cmath::cos(angle), martensite_cmath::sin(angle), f64::from(j))
+        Point3::new(
+            martensite_cmath::cos(angle),
+            martensite_cmath::sin(angle),
+            f64::from(j),
+        )
     });
     GeomBSplineSurface::new(&poles, (&uk, &um), (&vk, &vm), (2, 1), (true, false)).unwrap()
 }

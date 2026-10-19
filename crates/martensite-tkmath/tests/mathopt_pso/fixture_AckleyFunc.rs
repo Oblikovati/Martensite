@@ -15,7 +15,8 @@ impl MultipleVarFunction for AckleyFunc {
             aSum2 += martensite_cmath::cos(2.0 * aPI * *theX.at(i).unwrap());
         }
 
-        *theF = -20.0 * martensite_cmath::exp(-0.2 * (aSum1 / aN as f64).sqrt()) - martensite_cmath::exp(aSum2 / aN as f64)
+        *theF = -20.0 * martensite_cmath::exp(-0.2 * (aSum1 / aN as f64).sqrt())
+            - martensite_cmath::exp(aSum2 / aN as f64)
             + 20.0
             + std::f64::consts::E;
         true

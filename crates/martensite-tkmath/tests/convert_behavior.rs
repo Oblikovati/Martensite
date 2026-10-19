@@ -173,7 +173,10 @@ fn sphere_lune_weights_its_meridian_middles_with_one_half() {
         Surface::from_sphere_band(&Sphere3::new(z_frame(), 2.0).unwrap(), 0.0, PI, true).unwrap();
     assert_eq!((lune.nb_u_poles(), lune.nb_v_poles()), (5, 5));
     assert_eq!((*lune.weights().value(1, 2).unwrap()), 0.5);
-    assert_eq!((*lune.weights().value(2, 1).unwrap()), martensite_cmath::cos(PI / 4.0));
+    assert_eq!(
+        (*lune.weights().value(2, 1).unwrap()),
+        martensite_cmath::cos(PI / 4.0)
+    );
 }
 
 #[test]

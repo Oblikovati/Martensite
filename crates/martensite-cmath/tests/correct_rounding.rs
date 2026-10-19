@@ -86,6 +86,9 @@ fn powi_multiplies_by_repeated_squaring() {
     assert_eq!(martensite_cmath::powi(x, 5), x * (squared * squared));
     assert_eq!(martensite_cmath::powi(x, -3), 1.0 / (x * squared));
     assert_eq!(martensite_cmath::powi(f64::NAN, 0), 1.0);
-    assert_eq!(martensite_cmath::powi(-0.0, 3).to_bits(), (-0.0f64).to_bits());
+    assert_eq!(
+        martensite_cmath::powi(-0.0, 3).to_bits(),
+        (-0.0f64).to_bits()
+    );
     assert_eq!(martensite_cmath::powi(2.0, i32::MIN), 0.0);
 }

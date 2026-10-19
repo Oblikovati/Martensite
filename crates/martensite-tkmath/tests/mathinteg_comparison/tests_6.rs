@@ -28,7 +28,11 @@ fn math_integ_comparison_large_interval() {
         aNewResult.value.unwrap(),
         1.0e-6,
     );
-    near(aNewResult.value.unwrap(), martensite_cmath::exp(10.0_f64) - 1.0, 1.0e-6);
+    near(
+        aNewResult.value.unwrap(),
+        martensite_cmath::exp(10.0_f64) - 1.0,
+        1.0e-6,
+    );
 }
 
 #[test]

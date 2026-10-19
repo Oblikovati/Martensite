@@ -49,8 +49,16 @@ fn extrema_pc2d_distance_function_circle_normalized_formula_is_exact() {
     let aFunction = DistanceFunction::new(&anAdaptor, Point2::new(3.0, -4.0));
     let aU: f64 = 0.7;
     let (aValue, aDerivative) = aFunction.values(aU).unwrap();
-    EXPECT_NEAR(aValue, 3.0 * martensite_cmath::sin(aU) + 4.0 * martensite_cmath::cos(aU), 1.0e-11);
-    EXPECT_NEAR(aDerivative, 3.0 * martensite_cmath::cos(aU) - 4.0 * martensite_cmath::sin(aU), 1.0e-11);
+    EXPECT_NEAR(
+        aValue,
+        3.0 * martensite_cmath::sin(aU) + 4.0 * martensite_cmath::cos(aU),
+        1.0e-11,
+    );
+    EXPECT_NEAR(
+        aDerivative,
+        3.0 * martensite_cmath::cos(aU) - 4.0 * martensite_cmath::sin(aU),
+        1.0e-11,
+    );
 }
 
 #[test]

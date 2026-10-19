@@ -35,8 +35,8 @@ impl MultipleVarFunctionWithGradient for BraninFunction {
     fn gradient(&mut self, x: &Vector<'_>, g: &mut Vector<'_>) -> bool {
         let (u, v): (f64, f64) = (x[1], x[2]);
         let square: f64 = v - self.b * u * u + self.c * u - self.r;
-        g[1] =
-            2.0 * self.a * square * (self.c - 2.0 * self.b * u) - self.s * (1.0 - self.t) * martensite_cmath::sin(u);
+        g[1] = 2.0 * self.a * square * (self.c - 2.0 * self.b * u)
+            - self.s * (1.0 - self.t) * martensite_cmath::sin(u);
         g[2] = 2.0 * self.a * square;
         true
     }

@@ -84,7 +84,10 @@ fn coefficient_scaling_retains_extreme_power_of_two_results() {
         martensite_cmath::powi(2.0_f64, 100)
     );
     assert_eq!(compute_scale_factor(&[f64::from_bits(1)]), f64::INFINITY);
-    assert_eq!(compute_scale_factor(&[f64::MAX]), martensite_cmath::powi(2.0_f64, -1023));
+    assert_eq!(
+        compute_scale_factor(&[f64::MAX]),
+        martensite_cmath::powi(2.0_f64, -1023)
+    );
 }
 #[test]
 fn convergence_uses_finite_absolute_and_relative_tests() {

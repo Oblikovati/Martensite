@@ -376,7 +376,8 @@ fn count_shrink_retains_initial_error_table_strides_across_three_pieces() {
     {
         let expected = [
             martensite_cmath::powi(middle, 3),
-            3. * martensite_cmath::powi(middle, 2) * half_span + 0.6 * martensite_cmath::powi(half_span, 3),
+            3. * martensite_cmath::powi(middle, 2) * half_span
+                + 0.6 * martensite_cmath::powi(half_span, 3),
             3. * middle * martensite_cmath::powi(half_span, 2),
         ];
         for (actual, expected) in output.courbe[piece * 6..piece * 6 + 3].iter().zip(expected) {

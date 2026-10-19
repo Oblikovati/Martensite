@@ -30,14 +30,22 @@ fn assert_initial_line(eval: &GeomGridEvalCurve<'_>) {
 fn assert_circle_replacement(eval: &mut GeomGridEvalCurve<'_>, circle: &Handle<dyn GeomCurve>) {
     eval.initialization_curve(circle);
     assert_eq!(eval.get_type(), CurveType::Circle);
-    let expected = Point3::new(2.0 * martensite_cmath::cos(0.5f64), 2.0 * martensite_cmath::sin(0.5f64), 0.0);
+    let expected = Point3::new(
+        2.0 * martensite_cmath::cos(0.5f64),
+        2.0 * martensite_cmath::sin(0.5f64),
+        0.0,
+    );
     assert_point(grid_point(eval, 0.5), expected);
 }
 
 fn assert_trimmed_replacement(eval: &mut GeomGridEvalCurve<'_>, circle: &Handle<dyn GeomCurve>) {
     eval.initialization_curve(&trimmed_circle(circle));
     assert_eq!(eval.get_type(), CurveType::Circle);
-    let expected = Point3::new(2.0 * martensite_cmath::cos(2.0f64), 2.0 * martensite_cmath::sin(2.0f64), 0.0);
+    let expected = Point3::new(
+        2.0 * martensite_cmath::cos(2.0f64),
+        2.0 * martensite_cmath::sin(2.0f64),
+        0.0,
+    );
     assert_point(grid_point(eval, 2.0), expected);
 }
 
