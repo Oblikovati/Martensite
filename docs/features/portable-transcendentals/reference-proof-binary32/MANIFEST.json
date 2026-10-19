@@ -1,0 +1,13 @@
+{
+  "README.md": "ca6bc12f6bfbface68d9a08823d3abc43061b191e0f2aaa5a9dacb0d48fced71",
+  "binary32_cells.py": "caa6311c866baa594b1562aa16c9c9141da798f503157f7d00395ee64d5458be",
+  "borrowed-source.json": "b8d36f53fe7cf4f1ca37ce415a182afe9e4cb03a26221444113bf61d525e1327",
+  "correct-rounding-2b1f0e6.rs.txt": "383189ea5ccb75860485de7091d06584d72925acf0d42b8241dc0ea5a21ec603",
+  "correct-rounding-2e20418.rs.txt": "da7e775d67743be83e9935ae6f8e9372a48d5f452287dfc5c84b75b2696305cb",
+  "enclosures.json": "fdbf17baccdade2f572939b2fe38d35937fe7e5ff6f94c3fb3d3fb530ccff1fa",
+  "prove_binary32.py": "43e3f330222d29c1ffcc03f463ed65617532ad4eabde96becf904eb7744443b5",
+  "test_binary32.py": "daaebc19405073e08d72d75e1dab4be1942986a7e3cf61d2b74781ea855abf8f",
+  "tests.log": "598bee35ea9e43b9614371fa734b3b709265c3760736d40b7e86271de2584b0e",
+  "verify.log": "6fd53044f1a05f1b83f7ba91f9b92238c1139e5e76e59cc1c806df4a11d4f127",
+  "verify_binary32.py": "98577ee97fe2a6dc1d802b2a0da05ba69385e71b5f153992ed3ffbdad53b314b"
+}
