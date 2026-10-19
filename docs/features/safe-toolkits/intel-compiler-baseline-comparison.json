@@ -1,0 +1,408 @@
+{
+  "product_source_revision": "534e7d6134c4a43926736d8c13b99c591126a8d9",
+  "target": "x86_64-apple-darwin",
+  "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)",
+  "captured_report_sha256": "ab3948e4bc966723ed79341503fc52e63eeba3ed8679d6b2b2d091fa048b9799",
+  "emitted_counts_not_unique_sites": true,
+  "comparisons": [
+    {
+      "baseline_target": "aarch64-apple-darwin",
+      "baseline_path": "docs/features/safe-toolkits/compiler-baselines/aarch64-apple-darwin.json",
+      "baseline_sha256": "9ed57f7a0849d70ab282f2551782f0918078a7cec523bf7d0991b71d20286461",
+      "intel_groups": 415,
+      "baseline_groups": 415,
+      "intel_spans": 2573,
+      "baseline_spans": 2571,
+      "same_groups": 414,
+      "changes": [
+        {
+          "kind": "count_changed",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/src/osd/file/native_unix.rs",
+            "target": "martensite_tkernel",
+            "target_kinds": [
+              "lib"
+            ]
+          },
+          "intel_emitted_primary_spans": 16,
+          "baseline_emitted_primary_spans": 14,
+          "signed_delta": 2,
+          "explanation": "macOS ARM64 and Linux GNU64 use rustix open. Intel macOS selects the existing libc::open fallback. One additional unsafe block is emitted twice; no source unsafe was introduced.",
+          "source_path": "crates/martensite-tkernel/src/osd/file/native_unix.rs",
+          "source_sha256": "1937f6639c391a7ab47c7f9e6f257568f44d93e2aac29083d8c478259386a2de",
+          "source_line_ranges": [
+            [
+              93,
+              122
+            ]
+          ]
+        }
+      ],
+      "kind_counts": {
+        "intel_only": 0,
+        "baseline_only": 0,
+        "count_changed": 1
+      },
+      "baseline_file_revision": "534e7d6134c4a43926736d8c13b99c591126a8d9",
+      "baseline_declared_source_revision": "8f32005c1e247cb6ce98f5ed06010bd5740f8e06",
+      "baseline_scope": "workspace all-targets, default features; dependencies included by package_id"
+    },
+    {
+      "baseline_target": "x86_64-unknown-linux-gnu",
+      "baseline_path": "docs/features/safe-toolkits/compiler-baselines/x86_64-unknown-linux-gnu.json",
+      "baseline_sha256": "28e4a6bdb07e1ee8f7fd9b53b3abbeb2621b5c0cde43690f00a43b5416dbd11c",
+      "intel_groups": 415,
+      "baseline_groups": 418,
+      "intel_spans": 2573,
+      "baseline_spans": 2582,
+      "same_groups": 408,
+      "changes": [
+        {
+          "kind": "baseline_only",
+          "location": {
+            "diagnostic": "usage of an `unsafe extern` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/src/osd/timing/signal_native.rs",
+            "target": "martensite_tkernel",
+            "target_kinds": [
+              "lib"
+            ]
+          },
+          "intel_emitted_primary_spans": 0,
+          "baseline_emitted_primary_spans": 2,
+          "signed_delta": -2,
+          "explanation": "The GNU floating-point environment extern declarations are Linux-only and not compiled on Apple.",
+          "source_path": "crates/martensite-tkernel/src/osd/timing/signal_native.rs",
+          "source_sha256": "b1fda50cd596ddec449df4b1d53a818f2cb98a514ebec59a5852a5d92d88a8b0",
+          "source_line_ranges": [
+            [
+              6,
+              19
+            ]
+          ]
+        },
+        {
+          "kind": "intel_only",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/src/osd/parallel/thread/native.rs",
+            "target": "martensite_tkernel",
+            "target_kinds": [
+              "lib"
+            ]
+          },
+          "intel_emitted_primary_spans": 2,
+          "baseline_emitted_primary_spans": 0,
+          "signed_delta": 2,
+          "explanation": "Apple uses the existing libc::sysconf processor-count boundary; Linux uses native_sysconf safe wrapper. Two emitted occurrences add this Apple-only location.",
+          "source_path": "crates/martensite-tkernel/src/osd/parallel/thread/native.rs",
+          "source_sha256": "fa8b07202ee36d7619e9ee0147d290e9deda3635a0bb8ac132d61c19dcd31dd8",
+          "source_line_ranges": [
+            [
+              58,
+              70
+            ]
+          ]
+        },
+        {
+          "kind": "count_changed",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/src/osd/process/host/native.rs",
+            "target": "martensite_tkernel",
+            "target_kinds": [
+              "lib"
+            ]
+          },
+          "intel_emitted_primary_spans": 8,
+          "baseline_emitted_primary_spans": 6,
+          "signed_delta": 2,
+          "explanation": "Linux GNU selects the separate safe hostname module; Apple selects the existing unsafe libc::gethostname fallback. Two emitted occurrences add to the shared host-query count.",
+          "source_path": "crates/martensite-tkernel/src/osd/process/host/native.rs",
+          "source_sha256": "ad57f60918bafee30479174b474a30d319c87f4e05032959c3e088bc290716ca",
+          "source_line_ranges": [
+            [
+              20,
+              23
+            ],
+            [
+              72,
+              80
+            ]
+          ]
+        },
+        {
+          "kind": "count_changed",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/src/osd/process/mem_info/native.rs",
+            "target": "martensite_tkernel",
+            "target_kinds": [
+              "lib"
+            ]
+          },
+          "intel_emitted_primary_spans": 4,
+          "baseline_emitted_primary_spans": 2,
+          "signed_delta": 2,
+          "explanation": "Linux emits one mallinfo2 block twice. Apple emits task_info and malloc_zone_statistics blocks twice each; net plus two emitted spans.",
+          "source_path": "crates/martensite-tkernel/src/osd/process/mem_info/native.rs",
+          "source_sha256": "8a2efbc44e2b967506a253f475de8750079cce058a4343d9e4ba8ca4cddc2878",
+          "source_line_ranges": [
+            [
+              26,
+              33
+            ],
+            [
+              36,
+              63
+            ]
+          ]
+        },
+        {
+          "kind": "count_changed",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/src/osd/timing/cpu_native.rs",
+            "target": "martensite_tkernel",
+            "target_kinds": [
+              "lib"
+            ]
+          },
+          "intel_emitted_primary_spans": 4,
+          "baseline_emitted_primary_spans": 2,
+          "signed_delta": 2,
+          "explanation": "Both targets retain times. Apple adds the existing Mach task_info thread-time boundary; Linux64 uses safe rustix clock retrieval. Net plus two emitted spans.",
+          "source_path": "crates/martensite-tkernel/src/osd/timing/cpu_native.rs",
+          "source_sha256": "ab4003711f49702e3fa5df621ab8286e353f46fdec828ea09738240a67cef2f4",
+          "source_line_ranges": [
+            [
+              30,
+              60
+            ],
+            [
+              87,
+              108
+            ]
+          ]
+        },
+        {
+          "kind": "count_changed",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/src/osd/timing/signal_native.rs",
+            "target": "martensite_tkernel",
+            "target_kinds": [
+              "lib"
+            ]
+          },
+          "intel_emitted_primary_spans": 4,
+          "baseline_emitted_primary_spans": 12,
+          "signed_delta": -8,
+          "explanation": "GNU floating-point trap-control blocks and the non-macOS sigaction zero/init blocks are excluded on Apple. Shared signal install/reinstall blocks remain; eight emitted spans disappear.",
+          "source_path": "crates/martensite-tkernel/src/osd/timing/signal_native.rs",
+          "source_sha256": "b1fda50cd596ddec449df4b1d53a818f2cb98a514ebec59a5852a5d92d88a8b0",
+          "source_line_ranges": [
+            [
+              31,
+              59
+            ],
+            [
+              121,
+              135
+            ],
+            [
+              168,
+              179
+            ]
+          ]
+        },
+        {
+          "kind": "intel_only",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/src/standard/mmgr_opt/os_page.rs",
+            "target": "martensite_tkernel",
+            "target_kinds": [
+              "lib"
+            ]
+          },
+          "intel_emitted_primary_spans": 2,
+          "baseline_emitted_primary_spans": 0,
+          "signed_delta": 2,
+          "explanation": "Apple reads the existing immutable Mach vm_page_size global in one unsafe block emitted twice. Other Unix hosts use the safe sysconf adapter.",
+          "source_path": "crates/martensite-tkernel/src/standard/mmgr_opt/os_page.rs",
+          "source_sha256": "6c4132aed5b9c4c3d9a282e0cb0af02a116b3cecf1f1f4b1dd7cf855b647873a",
+          "source_line_ranges": [
+            [
+              7,
+              19
+            ]
+          ]
+        },
+        {
+          "kind": "baseline_only",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/tests/osd_sec_sleep_signal.rs",
+            "target": "osd_sec_sleep_signal",
+            "target_kinds": [
+              "test"
+            ]
+          },
+          "intel_emitted_primary_spans": 0,
+          "baseline_emitted_primary_spans": 4,
+          "signed_delta": -4,
+          "explanation": "The entire test module is Linux-only. Four signal setup/delivery unsafe blocks are not compiled on Apple.",
+          "source_path": "crates/martensite-tkernel/tests/osd_sec_sleep_signal.rs",
+          "source_sha256": "0ba3db51c8cef8bb9a1557c4ae555fd5c359d50be8747daf9570394f5e06db8c",
+          "source_line_ranges": [
+            [
+              1,
+              3
+            ],
+            [
+              73,
+              93
+            ]
+          ]
+        },
+        {
+          "kind": "baseline_only",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/tests/suites/../osd_process_resources_api_behavior.rs",
+            "target": "toolkit",
+            "target_kinds": [
+              "test"
+            ]
+          },
+          "intel_emitted_primary_spans": 0,
+          "baseline_emitted_primary_spans": 1,
+          "signed_delta": -1,
+          "explanation": "The libc cosine-pointer transmute belongs to a Linux-only shared-library test; it is not compiled on Apple.",
+          "source_path": "crates/martensite-tkernel/tests/osd_process_resources_api_behavior.rs",
+          "source_sha256": "be2c963131620db05f61bc3b1cebafa239688652cbaec217f94d10b27ddffe6c",
+          "source_line_ranges": [
+            [
+              113,
+              123
+            ]
+          ]
+        },
+        {
+          "kind": "baseline_only",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/tests/suites/../standard_c_string_format_full.rs",
+            "target": "toolkit",
+            "target_kinds": [
+              "test"
+            ]
+          },
+          "intel_emitted_primary_spans": 0,
+          "baseline_emitted_primary_spans": 1,
+          "signed_delta": -1,
+          "explanation": "The direct GNU errno setter belongs to the Linux GNU x86_64-only test module; it is not compiled on Apple.",
+          "source_path": "crates/martensite-tkernel/tests/standard_c_string_format_full.rs",
+          "source_sha256": "702e66c7b799bebb875fe94c15bf8b616729ca1bd5fc8603745c9ed36d7cc748",
+          "source_line_ranges": [
+            [
+              8,
+              9
+            ],
+            [
+              118,
+              121
+            ]
+          ]
+        },
+        {
+          "kind": "baseline_only",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/tests/suites/../standard_mapped_region_behavior.rs",
+            "target": "toolkit",
+            "target_kinds": [
+              "test"
+            ]
+          },
+          "intel_emitted_primary_spans": 0,
+          "baseline_emitted_primary_spans": 2,
+          "signed_delta": -2,
+          "explanation": "The entire mapped-page residency test module is Linux-only. Its two mincore blocks are not compiled on Apple.",
+          "source_path": "crates/martensite-tkernel/tests/standard_mapped_region_behavior.rs",
+          "source_sha256": "13be8a5584713678b3edbe54302a3c265cb7068f8827d71b84ea74e8d5dc96bd",
+          "source_line_ranges": [
+            [
+              1,
+              3
+            ],
+            [
+              73,
+              87
+            ]
+          ]
+        },
+        {
+          "kind": "count_changed",
+          "location": {
+            "diagnostic": "usage of an `unsafe` block",
+            "expansion_depth": 0,
+            "package": "workspace:martensite-tkernel@0.3.3",
+            "source": "crates/martensite-tkernel/tests/suites/../typed_allocator_method_contracts.rs",
+            "target": "toolkit",
+            "target_kinds": [
+              "test"
+            ]
+          },
+          "intel_emitted_primary_spans": 8,
+          "baseline_emitted_primary_spans": 9,
+          "signed_delta": -1,
+          "explanation": "The live-zero reallocate test is enabled on Linux GNU or MSVC, not Apple. Its single unsafe block is absent; the other eight test blocks remain.",
+          "source_path": "crates/martensite-tkernel/tests/typed_allocator_method_contracts.rs",
+          "source_sha256": "c0df0fc6b7a9452c9876914dca810419eca9210ab1a1a8d5b56d410a80e975a4",
+          "source_line_ranges": [
+            [
+              130,
+              136
+            ]
+          ]
+        }
+      ],
+      "kind_counts": {
+        "intel_only": 2,
+        "baseline_only": 5,
+        "count_changed": 5
+      },
+      "baseline_file_revision": "534e7d6134c4a43926736d8c13b99c591126a8d9",
+      "baseline_declared_source_revision": "8f32005c1e247cb6ce98f5ed06010bd5740f8e06",
+      "baseline_scope": "workspace all-targets, default features; dependencies included by package_id"
+    }
+  ],
+  "qualification": "Existing baseline files as committed at534e; internal declared source revisions preserved. Not a fresh ARM/Linux collection. All changed location groups explained from unchanged534e cfg selection; no safety or numerical acceptance.",
+  "candidate_only": true
+}
