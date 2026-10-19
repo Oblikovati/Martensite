@@ -2,6 +2,7 @@
 // Generated with mpmath 1.4.1: the exact value at 256 bits or more, rounded once to
 // nearest-even binary64 after a Ziv check at twice the precision. `glibc` marks inputs
 // where glibc 2.39 on x86_64 returns a different bit pattern.
+/// Unary reference cases as function name, input bits and expected result bits.
 pub const UNARY: &[(&str, u64, u64)] = &[
     ("acos", 0x3fd5205bc01a36e3, 0x3ff3c00c63a7b423), // chosen: acos(0.3301) = 1.2343868153359459
     ("acos", 0xbfe8000000000000, 0x400359d26f93b6c3), // chosen: acos(-0.75) = 2.4188584057763776
@@ -85,6 +86,7 @@ pub const UNARY: &[(&str, u64, u64)] = &[
     ("tanh", 0x4008000000000000, 0x3fefd77d111a0b00), // chosen: tanh(3.0) = 0.9950547536867305
     ("tanh", 0x3fdbdb9513651f8f, 0x3fda38e323567bb4), // glibc: tanh(0.4352772416500494) = 0.40972212267837027
 ];
+/// Binary reference cases as function name, both input words and expected result bits.
 pub const BINARY: &[(&str, u64, u64, u64)] = &[
     ("atan2", 0x3fd3333333333333, 0xc000000000000000, 0x4007f10e1dc6b048), // chosen: atan2(0.3, -2.0) = 2.992702705980296
     ("atan2", 0xbff0000000000000, 0x4008000000000000, 0xbfd4978fa3269ee1), // chosen: atan2(-1.0, 3.0) = -0.3217505543966422
