@@ -325,3 +325,6 @@ fn elementary_curve_parabola2_d_above_resolution_focal_not_degenerate() {
     let aD2 = elclib::parabola_dn_2d(aU, anAxis, aFocal, 2);
     assert!(aD2.magnitude() > 1.0);
 }
+
+#[path = "support/elementary_reference_checks.rs"]
+mod independent_reference_checks;

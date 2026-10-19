@@ -158,3 +158,6 @@ fn assert_coordinate_pair(actual: [f64; 2], expected: [f64; 2], label: &str) {
         );
     }
 }
+
+#[path = "support/analytic_reference_checks.rs"]
+mod independent_reference_checks;
