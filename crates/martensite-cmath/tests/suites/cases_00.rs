@@ -7,3 +7,13 @@ pub mod correct_rounding;
 pub mod powi_sequence;
 #[path = "../reference_values.rs"]
 pub mod reference_values;
+#[path = "../special_angles.rs"]
+pub mod special_angles;
+#[path = "../special_contract_support.rs"]
+pub mod special_contract_support;
+#[path = "../special_powers.rs"]
+pub mod special_powers;
+#[path = "../special_remainder.rs"]
+pub mod special_remainder;
+#[path = "../special_unary.rs"]
+pub mod special_unary;
