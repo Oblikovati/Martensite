@@ -1,0 +1,11 @@
+{
+  "product_revision": "f06d4ac",
+  "sha256": {
+    "crates/martensite-tkernel/src/quantity/color_encoding.rs": "086e8e50bc2a81d81af8901705d14e0174334b90443a789e6e40f6ecc2637200",
+    "docs/features/portable-transcendentals/reference-proof/generate.py": "0df0421280848941e0c37e93071edb498f7a6cbf4c278fd0352e5932df95054c",
+    "docs/features/portable-transcendentals/reference-proof/exact_cells.py": "33069ba2e7206d59ab5c6a08d619829f78026b258852a80c6ec1fa2c9ad52eab",
+    "docs/features/portable-transcendentals/reference-proof-binary32/prove_binary32.py": "43e3f330222d29c1ffcc03f463ed65617532ad4eabde96becf904eb7744443b5",
+    "docs/features/portable-transcendentals/reference-proof-binary32/binary32_cells.py": "caa6311c866baa594b1562aa16c9c9141da798f503157f7d00395ee64d5458be",
+    "docs/features/portable-transcendentals/reference-proof-binary32/verify_binary32.py": "98577ee97fe2a6dc1d802b2a0da05ba69385e71b5f153992ed3ffbdad53b314b"
+  }
+}

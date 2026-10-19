@@ -80,6 +80,25 @@ fn gamma_vector_and_approx22_conversions() {
 }
 
 #[test]
+fn approximate_gamma_matches_independent_binary32_references() {
+    // Directed high-precision bounds certify these binary32 rounding cells;
+    // see docs/features/portable-transcendentals/{reference-proof-binary32,gamma-reference} (#201).
+    // Keep the expected side independent of the production power adapter.
+    let encoded: u32 = 0x3e5e_dc66;
+    let decoded: u32 = 0x3f3a_d03f;
+    assert_eq!(Color::linear_to_srgb_approx22(0.5).to_bits(), encoded);
+    assert_eq!(Color::srgb_to_linear_approx22(0.5).to_bits(), decoded);
+    assert_eq!(
+        Color::linear_to_srgb_approx22_vec3([0.5; 3]).map(f32::to_bits),
+        [encoded; 3]
+    );
+    assert_eq!(
+        Color::srgb_to_linear_approx22_vec3([0.5; 3]).map(f32::to_bits),
+        [decoded; 3]
+    );
+}
+
+#[test]
 fn hash_uses_truncated_bytes() {
     let color = Color::new(1.0, 0.5, 0.0, ColorSpace::Rgb).expect("valid");
     assert_eq!(color.kernel_hash(), hash_bytes(&[255, 127, 0]));
