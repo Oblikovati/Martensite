@@ -47,9 +47,25 @@ The release targets are in `scripts/build/src/targets.rs`. Each one builds on a
 native runner, so the tests run on the target platform:
 
 - `x86_64-unknown-linux-gnu` on `ubuntu-24.04` (primary)
-- `aarch64-unknown-linux-gnu` on `ubuntu-24.04-arm`
+- `x86_64-apple-darwin` on `macos-15-intel`
 - `aarch64-apple-darwin` on `macos-15`
 - `x86_64-pc-windows-msvc` on `windows-2025`
+
+ARM64 release support is limited to macOS. Both macOS architectures run their
+own native tests; Linux and Windows release support is x86_64 only ([#198]).
+The [GitHub runner reference] lists `macos-15-intel` for Intel macOS hosts.
+
+The current kernel packages are Rust source crates. Supporting both macOS
+architectures does not produce a universal Mach-O binary. If native binary
+assets are added, the current packager keeps each target separate; a universal
+binary would need an explicit combine-and-verify step.
+
+The macOS Intel compiler inventory must be captured on its native runner and
+reviewed before release approval. A missing target baseline fails the release
+gate; the ARM baseline must not be substituted.
+
+[#198]: https://github.com/Oblikovati/Martensite/issues/198
+[GitHub runner reference]: https://docs.github.com/en/actions/reference/runners/github-hosted-runners
 
 ## PR validation
 
