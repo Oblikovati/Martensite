@@ -1,0 +1,348 @@
+{
+  "source_revision": "2e204184644a697823e5e1b8ac6ad2c608ce5e66",
+  "command": "cargo +1.99.0 xtask pr --base 534e7d6134c4a43926736d8c13b99c591126a8d9",
+  "target_directory": "/tmp/martensite-portable-201-review-target",
+  "exit_code": 1,
+  "log_sha256": "00295e5ec4c68749e7210dac0f9221d14050ac53846ad3a735f41b9407288953",
+  "test_result_lines": [
+    {
+      "outcome": "ok",
+      "passed": 9,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 121,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 403,
+      "failed": 0,
+      "ignored": 6
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 13,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 19,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 30,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 40,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 73,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 4585,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 15,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 27,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 34,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 618,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 897,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 259,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "FAILED",
+      "passed": 21,
+      "failed": 1,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 30,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 20,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 20,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 2018,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 294,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 3099,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 294,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "outcome": "ok",
+      "passed": 71,
+      "failed": 0,
+      "ignored": 19
+    },
+    {
+      "outcome": "ok",
+      "passed": 56,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "reported_totals": {
+    "passed": 13195,
+    "failed": 1,
+    "ignored": 25
+  },
+  "scope": "Reported result lines include doctests and build-driver tests; totals are not unique API coverage.",
+  "failure": "bivariate_retained_corpus::nineteen_families_preserve_all_requests_outputs_and_order: retained answer byte hash differs before replay",
+  "baseline_admission": false,
+  "release_gate_passed": false
+}
