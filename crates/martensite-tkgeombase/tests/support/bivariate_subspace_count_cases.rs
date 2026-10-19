@@ -353,7 +353,7 @@ fn count_shrink_retains_initial_error_table_strides_across_three_pieces() {
             .chunks_mut(dimension)
             .zip(&call.parameters()[..count])
         {
-            sample.fill(parameter.powi(3));
+            sample.fill(martensite_cmath::powi(*parameter, 3));
         }
         call.set_integer(Integer::Dimension, 1);
         *error = 0;
@@ -375,15 +375,15 @@ fn count_shrink_retains_initial_error_table_strides_across_three_pieces() {
         .enumerate()
     {
         let expected = [
-            middle.powi(3),
-            3. * middle.powi(2) * half_span + 0.6 * half_span.powi(3),
-            3. * middle * half_span.powi(2),
+            martensite_cmath::powi(middle, 3),
+            3. * martensite_cmath::powi(middle, 2) * half_span + 0.6 * martensite_cmath::powi(half_span, 3),
+            3. * middle * martensite_cmath::powi(half_span, 2),
         ];
         for (actual, expected) in output.courbe[piece * 6..piece * 6 + 3].iter().zip(expected) {
             assert!((actual - expected).abs() <= 8. * f64::EPSILON);
         }
         assert_eq!(&output.courbe[piece * 6 + 3..piece * 6 + 6], &[0.; 3]);
-        let maximum = (2. * half_span).powi(3) / 20.;
+        let maximum = martensite_cmath::powi(2. * half_span, 3) / 20.;
         assert!((output.errmax[piece * 2] - maximum).abs() <= 8. * f64::EPSILON);
         assert!((output.errmoy[piece * 2] - maximum / 7_f64.sqrt()).abs() <= 8. * f64::EPSILON);
         assert_eq!(output.errmax[piece * 2 + 1], 7.);

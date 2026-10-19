@@ -122,9 +122,9 @@ fn powers(values: &Vector<'_>, power: f64) -> Option<Vector<'static>> {
             return None;
         }
         result[i] = if values[i] >= 0.0 {
-            values[i].powf(power)
+            martensite_cmath::pow(values[i], power)
         } else {
-            (-values[i]).powf(power)
+            martensite_cmath::pow(-values[i], power)
         };
         if values[i] < 0.0 && power.abs() % 2.0 == 1.0 {
             result[i] = -result[i];

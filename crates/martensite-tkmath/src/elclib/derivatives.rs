@@ -6,19 +6,34 @@ use martensite_tkernel::standard::integer::{is_even, is_odd};
 /// (`N == 1` first); wrapping arithmetic keeps `i32::MAX` defined.
 fn elliptic_coefficients(u: f64, major: f64, minor: f64, n: i32) -> (f64, f64) {
     if n == 1 {
-        return (major * -u.sin(), minor * u.cos());
+        return (
+            major * -martensite_cmath::sin(u),
+            minor * martensite_cmath::cos(u),
+        );
     }
     if n.wrapping_add(2) % 4 == 0 {
-        return (major * -u.cos(), minor * -u.sin());
+        return (
+            major * -martensite_cmath::cos(u),
+            minor * -martensite_cmath::sin(u),
+        );
     }
     if n.wrapping_add(1) % 4 == 0 {
-        return (major * u.sin(), minor * -u.cos());
+        return (
+            major * martensite_cmath::sin(u),
+            minor * -martensite_cmath::cos(u),
+        );
     }
     if n % 4 == 0 {
-        return (major * u.cos(), minor * u.sin());
+        return (
+            major * martensite_cmath::cos(u),
+            minor * martensite_cmath::sin(u),
+        );
     }
     if n.wrapping_sub(1) % 4 == 0 {
-        return (major * -u.sin(), minor * u.cos());
+        return (
+            major * -martensite_cmath::sin(u),
+            minor * martensite_cmath::cos(u),
+        );
     }
     (0.0, 0.0)
 }
@@ -26,10 +41,16 @@ fn elliptic_coefficients(u: f64, major: f64, minor: f64, n: i32) -> (f64, f64) {
 /// under i32's `n % 2 == 1` test, so its coefficients stay zero.
 fn hyperbolic_coefficients(u: f64, major: f64, minor: f64, n: i32) -> (f64, f64) {
     if is_odd(n) {
-        return (major * u.sinh(), minor * u.cosh());
+        return (
+            major * martensite_cmath::sinh(u),
+            minor * martensite_cmath::cosh(u),
+        );
     }
     if is_even(n) {
-        return (major * u.cosh(), minor * u.sinh());
+        return (
+            major * martensite_cmath::cosh(u),
+            minor * martensite_cmath::sinh(u),
+        );
     }
     (0.0, 0.0)
 }

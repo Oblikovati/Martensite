@@ -132,8 +132,8 @@ fn curve2d_hyperbola_finite_arc() {
 
     let [aXmin, aXmax, aYmin, aYmax] = get2(&aBox);
 
-    let aXEnd = aMajR * f64::cosh(aU);
-    let aYEnd = aMinR * f64::sinh(aU);
+    let aXEnd = aMajR * martensite_cmath::cosh(aU);
+    let aYEnd = aMinR * martensite_cmath::sinh(aU);
 
     assert!(aXmin <= aMajR + precision::confusion());
     assert!(aXmax >= aXEnd - precision::confusion());

@@ -9,7 +9,7 @@ fn sine_roots(d: f64, e: f64, interval: &Interval, epsilon: f64, out: &mut TrigR
     if value.abs() > 1.0 {
         return;
     }
-    let principal: f64 = value.asin();
+    let principal: f64 = martensite_cmath::asin(value);
     interval.add_all(out, &[principal, PI - principal]);
 }
 fn cosine_roots(c: f64, e: f64, interval: &Interval, out: &mut TrigResult) {
@@ -17,7 +17,7 @@ fn cosine_roots(c: f64, e: f64, interval: &Interval, out: &mut TrigResult) {
     if value.abs() > 1.0 {
         return;
     }
-    let principal: f64 = value.acos();
+    let principal: f64 = martensite_cmath::acos(value);
     interval.add_all(out, &[principal, -principal]);
 }
 fn linear_roots(c: f64, d: f64, e: f64, interval: &Interval, epsilon: f64, out: &mut TrigResult) {
@@ -29,14 +29,14 @@ fn linear_roots(c: f64, d: f64, e: f64, interval: &Interval, epsilon: f64, out: 
         cosine_roots(c, e, interval, out);
         return;
     }
-    let radius: f64 = c.hypot(d);
+    let radius: f64 = martensite_cmath::hypot(c, d);
     let mut ratio: f64 = -e / radius;
     if ratio.abs() > 1.0 + epsilon {
         return;
     }
     ratio = ratio.clamp(-1.0, 1.0);
-    let phase: f64 = d.atan2(c);
-    let offset: f64 = ratio.acos();
+    let phase: f64 = martensite_cmath::atan2(d, c);
+    let offset: f64 = martensite_cmath::acos(ratio);
     interval.add_all(out, &[phase + offset, phase - offset]);
 }
 fn factored_sine(b: f64, d: f64, interval: &Interval, out: &mut TrigResult) {
@@ -48,7 +48,7 @@ fn factored_sine(b: f64, d: f64, interval: &Interval, out: &mut TrigResult) {
         } else if value <= -1.0 {
             [PI, PI]
         } else {
-            let angle: f64 = value.acos();
+            let angle: f64 = martensite_cmath::acos(value);
             [angle, TAU - angle]
         };
         roots.extend(pair);
@@ -64,7 +64,7 @@ fn factored_cosine(b: f64, c: f64, interval: &Interval, out: &mut TrigResult) {
         } else if value <= -1.0 {
             [PI * 3.0 / 2.0, PI * 3.0 / 2.0]
         } else {
-            let angle: f64 = value.asin();
+            let angle: f64 = martensite_cmath::asin(value);
             [angle, PI - angle]
         };
         roots.extend(pair);

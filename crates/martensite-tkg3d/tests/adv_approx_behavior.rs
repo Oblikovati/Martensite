@@ -18,7 +18,7 @@ fn table(values: &[f64]) -> Array1<'static, f64> {
 
 // A helix (cos t, sin t, t / 4) and its derivatives.
 fn helix(_: i32, _: [f64; 2], t: f64, d: i32, r: &mut [f64]) -> i32 {
-    let (c, s) = (t.cos(), t.sin());
+    let (c, s) = (martensite_cmath::cos(t), martensite_cmath::sin(t));
     let values = match d {
         0 => [c, s, 0.25 * t],
         1 => [-s, c, 0.25],

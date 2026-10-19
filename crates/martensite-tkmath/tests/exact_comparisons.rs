@@ -145,8 +145,8 @@ fn corpus_exposes_false_ties_and_nonfinite_rounded_metric_results() {
 }
 fn rounded_disagrees(row: &str) -> bool {
     let ([a, b, c, d], expected) = fixture(row);
-    let distance = ((b[0] - a[0]).powi(2) + (b[1] - a[1]).powi(2))
-        - ((c[0] - a[0]).powi(2) + (c[1] - a[1]).powi(2));
+    let distance = (martensite_cmath::powi(b[0] - a[0], 2) + martensite_cmath::powi(b[1] - a[1], 2))
+        - (martensite_cmath::powi(c[0] - a[0], 2) + martensite_cmath::powi(c[1] - a[1], 2));
     let projection = (b[0] - a[0]) * (c[0] - d[0]) + (b[1] - a[1]) * (c[1] - d[1]);
     [distance, projection]
         .into_iter()
@@ -183,13 +183,13 @@ fn assert_recorded_case(row: &str, corpus: &[&str]) {
 }
 #[test]
 fn finite_rounded_ties_do_not_replace_true_orderings() {
-    let small = 2.0_f64.powi(-27);
+    let small = martensite_cmath::powi(2.0_f64, -27);
     assert_eq!(1.0 + small * small, 1.0);
     assert_eq!(
         compare_squared_distances_2d([0., 0.], [1., 0.], [1., small]),
         Ok(Ordering::Less)
     );
-    let displacement = 2.0_f64.powi(-54);
+    let displacement = martensite_cmath::powi(2.0_f64, -54);
     assert_eq!((1.0 - displacement) - 1.0, 0.0);
     assert_eq!(
         compare_line_projections_2d([0., 0.], [1., 1.], [1., -1.], [displacement, 0.]),

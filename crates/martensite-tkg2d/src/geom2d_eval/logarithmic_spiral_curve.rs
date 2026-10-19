@@ -136,10 +136,10 @@ impl Geom2dEvalLogarithmicSpiralCurve {
     }
     fn terms(&self, u: f64) -> SpiralTerms {
         SpiralTerms {
-            exp: self.scale * (self.growth_exponent * u).exp(),
+            exp: self.scale * martensite_cmath::exp(self.growth_exponent * u),
             b: self.growth_exponent,
-            cos: u.cos(),
-            sin: u.sin(),
+            cos: martensite_cmath::cos(u),
+            sin: martensite_cmath::sin(u),
         }
     }
 }

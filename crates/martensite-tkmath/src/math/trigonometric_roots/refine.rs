@@ -49,7 +49,7 @@ impl TrigonometricRoots {
     }
 }
 fn periodic_angle(zero: f64, interval: &Interval) -> f64 {
-    let mut angle: f64 = zero.atan();
+    let mut angle: f64 = martensite_cmath::atan(zero);
     angle += angle;
     if zero <= -EPS {
         angle = PERIOD - angle.abs();

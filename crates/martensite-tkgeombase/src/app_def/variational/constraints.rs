@@ -111,7 +111,11 @@ fn curvature_frames(ndimen: i32, t: Vector3, frames: &[Vector3]) -> Vec<Vector3>
 // F = (|T|^2 I - T T^t) theta for the curvature frames; the 2D formula has no z
 // terms at all (adding the zero ones could flip the sign of a zero result).
 fn curvature_frame(ndimen: i32, t: Vector3, theta: Vector3) -> Vector3 {
-    let (xx, xy, yy) = (t.x().powf(2.), t.x() * t.y(), t.y().powf(2.));
+    let (xx, xy, yy) = (
+        martensite_cmath::pow(t.x(), 2.),
+        t.x() * t.y(),
+        martensite_cmath::pow(t.y(), 2.),
+    );
     if ndimen == 2 {
         return Vector3::new(
             yy * theta.x() - xy * theta.y(),
@@ -119,7 +123,11 @@ fn curvature_frame(ndimen: i32, t: Vector3, theta: Vector3) -> Vector3 {
             0.,
         );
     }
-    let (xz, yz, zz) = (t.x() * t.z(), t.y() * t.z(), t.z().powf(2.));
+    let (xz, yz, zz) = (
+        t.x() * t.z(),
+        t.y() * t.z(),
+        martensite_cmath::pow(t.z(), 2.),
+    );
     Vector3::new(
         (zz + yy) * theta.x() - xy * theta.y() - xz * theta.z(),
         (xx + zz) * theta.y() - xy * theta.x() - yz * theta.z(),

@@ -45,7 +45,7 @@ impl<P: SamplePoint> HyperbolaArc<'_, P> {
             if sum < eps || difference < eps {
                 continue;
             }
-            let t3: f64 = 0.5 * (difference / sum).ln();
+            let t3: f64 = 0.5 * martensite_cmath::log(difference / sum);
             if t3 < t1 || t3 > t2 {
                 continue;
             }

@@ -65,7 +65,7 @@ impl MakeCone {
         }
         let axis = Line3::new(p1, d1);
         let dif_rad: f64 = axis.distance(p3) - axis.distance(p4);
-        let angle: f64 = (dif_rad / (dist13 - dist14)).atan().abs();
+        let angle: f64 = martensite_cmath::atan(dif_rad / (dist13 - dist14)).abs();
         if (PI / 2.0 - angle).abs() < gp::resolution() || angle.abs() < gp::resolution() {
             return Ok(Self::failed(ErrorType::NullRadius));
         }
@@ -142,8 +142,8 @@ impl MakeCone {
         let to_point: Xyz = point.xyz() - cone.location().xyz();
         let v_param: f64 = to_point.dot(cone.axis().direction().xyz());
         let radius: f64 = Line3::from_axis(cone.axis()).distance(point);
-        let tan: f64 = cone.semi_angle().tan();
-        let cos: f64 = cone.semi_angle().cos();
+        let tan: f64 = martensite_cmath::tan(cone.semi_angle());
+        let cos: f64 = martensite_cmath::cos(cone.semi_angle());
         let candidates: (f64, f64) = (radius - v_param * tan, -radius - v_param * tan);
         let result_radius: f64 = nearest_candidate(candidates, cone.ref_radius(), cos);
         if result_radius < 0.0 {
@@ -161,7 +161,7 @@ impl MakeCone {
     /// NullAngle when the cosine is null, NegativeRadius when the radius
     /// is negative. `MakeCone::from_cone_distance(cone, 1.0)?`.
     pub fn from_cone_distance(cone: Cone3, dist: f64) -> Result<Self, Failure> {
-        let cos: f64 = cone.semi_angle().cos();
+        let cos: f64 = martensite_cmath::cos(cone.semi_angle());
         if cos.abs() <= gp::resolution() {
             return Ok(Self::failed(ErrorType::NullAngle));
         }
@@ -187,7 +187,7 @@ impl MakeCone {
         if r1 < 0.0 || r2 < 0.0 {
             return Ok(Self::failed(ErrorType::NegativeRadius));
         }
-        let angle: f64 = ((r1 - r2) / dist).atan().abs();
+        let angle: f64 = martensite_cmath::atan((r1 - r2) / dist).abs();
         if (PI / 2.0 - angle).abs() < gp::resolution() || angle.abs() < gp::resolution() {
             return Ok(Self::failed(ErrorType::NullAngle));
         }

@@ -10,7 +10,7 @@ impl MultipleVarFunction for RastriginFunc {
         *theF = 10.0 * aN as f64;
         for i in 0..theX.length() as usize {
             *theF += *theX.at(i).unwrap() * *theX.at(i).unwrap()
-                - 10.0 * (2.0 * aPI * *theX.at(i).unwrap()).cos();
+                - 10.0 * martensite_cmath::cos(2.0 * aPI * *theX.at(i).unwrap());
         }
         true
     }

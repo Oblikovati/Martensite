@@ -22,7 +22,7 @@ impl ExprGeneralExpression for ExprTanh {
     unary_expression_members!();
     function_members!(ExprTanh, "Tanh(");
     fn shallow_simplified(&self) -> Result<ExprHandle, Failure> {
-        function_shallow_simplified::<ExprArgTanh, _>(self, f64::tanh)
+        function_shallow_simplified::<ExprArgTanh, _>(self, martensite_cmath::tanh)
     }
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         quotient_rule(self, x, |operand| {
@@ -32,6 +32,9 @@ impl ExprGeneralExpression for ExprTanh {
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok((value.exp() - (-value).exp()) / (value.exp() + (-value).exp()))
+        Ok(
+            (martensite_cmath::exp(value) - martensite_cmath::exp(-value))
+                / (martensite_cmath::exp(value) + martensite_cmath::exp(-value)),
+        )
     }
 }

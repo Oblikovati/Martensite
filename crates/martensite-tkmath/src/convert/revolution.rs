@@ -19,7 +19,7 @@ pub(super) fn spans(delta: f64) -> (i32, f64) {
 /// Meridian `(x, z)` at the span ends and middles of `[v1, v1 + delta]`, in a
 /// fixed buffer of `capacity` entries (the `std::array`); the middle points
 /// are the tangent intersections, divided by the half-opening cosine;
-/// `arc_profile(v1, v2, 5, |a| (r * a.cos(), r * a.sin()), |a, c| (r * a.cos() / c, r * a.sin() / c))?`.
+/// `arc_profile(v1, v2, 5, |a| (r * cos(a), r * sin(a)), |a, c| (r * cos(a) / c, r * sin(a) / c))?`.
 pub(super) fn arc_profile(
     v1: f64,
     v2: f64,
@@ -39,7 +39,7 @@ pub(super) fn arc_profile(
     let mut profile: Vec<(f64, f64)> = vec![end(v1)];
     let mut v_start: f64 = v1;
     for _ in 1..=nb_v_spans {
-        profile.push(middle(v_start + alfa_v, alfa_v.cos()));
+        profile.push(middle(v_start + alfa_v, martensite_cmath::cos(alfa_v)));
         profile.push(end(v_start + 2.0 * alfa_v));
         v_start += 2.0 * alfa_v;
     }
@@ -58,18 +58,24 @@ pub(super) fn revolve(
     let (nb_u_spans, alfa_u) = spans(u2 - u1);
     let mut u_start: f64 = u1;
     write_row(poles, 1, profile, count, |x| {
-        (x * u_start.cos(), x * u_start.sin())
+        (
+            x * martensite_cmath::cos(u_start),
+            x * martensite_cmath::sin(u_start),
+        )
     })?;
     for i in 1..=nb_u_spans {
         let (middle, end) = (u_start + alfa_u, u_start + 2.0 * alfa_u);
         write_row(poles, 2 * i, profile, count, |x| {
             (
-                x * middle.cos() / alfa_u.cos(),
-                x * middle.sin() / alfa_u.cos(),
+                x * martensite_cmath::cos(middle) / martensite_cmath::cos(alfa_u),
+                x * martensite_cmath::sin(middle) / martensite_cmath::cos(alfa_u),
             )
         })?;
         write_row(poles, 2 * i + 1, profile, count, |x| {
-            (x * end.cos(), x * end.sin())
+            (
+                x * martensite_cmath::cos(end),
+                x * martensite_cmath::sin(end),
+            )
         })?;
         u_start += 2.0 * alfa_u;
     }

@@ -30,7 +30,7 @@ fn math_trigonometric_function_roots_linear_sine_only() {
 
     if solver.solutions().unwrap() >= 1 {
         let x1: f64 = solver.value(1).unwrap();
-        let sin_val: f64 = x1.sin();
+        let sin_val: f64 = martensite_cmath::sin(x1);
         assert_near(sin_val, 0.5, TOLERANCE);
     }
 }

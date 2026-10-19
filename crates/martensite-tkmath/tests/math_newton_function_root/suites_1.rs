@@ -36,7 +36,7 @@ fn math_newton_function_root_exponential_root_finding() {
     let mut aSolver = NewtonFunctionRoot::new(&mut aFunc, 1.0, 1.0e-10, 1.0e-10); // Guess near ln(2)
 
     assert!(aSolver.is_done());
-    assert_near(aSolver.root().unwrap(), 2.0_f64.ln(), 1.0e-8);
+    assert_near(aSolver.root().unwrap(), martensite_cmath::log(2.0_f64), 1.0e-8);
     assert_near(aSolver.value().unwrap(), 0.0, 1.0e-10);
     assert_near(aSolver.derivative().unwrap(), 2.0, 1.0e-8);
 }

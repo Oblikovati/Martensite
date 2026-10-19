@@ -106,8 +106,8 @@ impl Geom2dEvalCircleInvoluteCurve {
         InvoluteTerms {
             radius: self.radius,
             u,
-            cos: u.cos(),
-            sin: u.sin(),
+            cos: martensite_cmath::cos(u),
+            sin: martensite_cmath::sin(u),
         }
     }
 }

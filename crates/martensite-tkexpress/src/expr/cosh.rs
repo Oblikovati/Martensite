@@ -21,7 +21,7 @@ impl ExprGeneralExpression for ExprCosh {
     unary_expression_members!();
     function_members!(ExprCosh, "Cosh(");
     fn shallow_simplified(&self) -> Result<ExprHandle, Failure> {
-        function_shallow_simplified::<ExprArgCosh, _>(self, f64::cosh)
+        function_shallow_simplified::<ExprArgCosh, _>(self, martensite_cmath::cosh)
     }
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         chain(self, x, |operand| {
@@ -30,6 +30,6 @@ impl ExprGeneralExpression for ExprCosh {
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok((value.exp() + (-value).exp()) / 2.0)
+        Ok((martensite_cmath::exp(value) + martensite_cmath::exp(-value)) / 2.0)
     }
 }

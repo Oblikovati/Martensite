@@ -15,7 +15,10 @@ pub fn plane_parameters(position: Axis3, point: Point3) -> (f64, f64) {
 /// Normalized longitude and local height (the radius is unused); `cylinder_parameters(frame,2.0,point)`.
 pub fn cylinder_parameters(position: Axis3, _radius: f64, point: Point3) -> (f64, f64) {
     let point = local(position, point);
-    (normalize_angle(point.y().atan2(point.x())), point.z())
+    (
+        normalize_angle(martensite_cmath::atan2(point.y(), point.x())),
+        point.z(),
+    )
 }
 /// Longitude (zero on the axis, flipped past the apex) and the generatrix distance;
 /// `cone_parameters(frame,2.0,0.3,point)`.
@@ -24,13 +27,15 @@ pub fn cone_parameters(position: Axis3, radius: f64, semi_angle: f64, point: Poi
     let (x, y, z) = (point.x(), point.y(), point.z());
     let u = if x.abs() < f64::MIN_POSITIVE && y.abs() < f64::MIN_POSITIVE {
         0.0
-    } else if -radius > z * semi_angle.tan() {
-        (-y).atan2(-x)
+    } else if -radius > z * martensite_cmath::tan(semi_angle) {
+        martensite_cmath::atan2(-y, -x)
     } else {
-        y.atan2(x)
+        martensite_cmath::atan2(y, x)
     };
     let u = normalize_angle(u);
-    let v = semi_angle.sin() * (x * u.cos() + y * u.sin() - radius) + semi_angle.cos() * z;
+    let v = martensite_cmath::sin(semi_angle)
+        * (x * martensite_cmath::cos(u) + y * martensite_cmath::sin(u) - radius)
+        + martensite_cmath::cos(semi_angle) * z;
     (u, v)
 }
 /// Normalized longitude and latitude in `[-PI/2, PI/2]`; on the axis the latitude is ±PI/2 and
@@ -47,14 +52,17 @@ pub fn sphere_parameters(position: Axis3, _radius: f64, point: Point3) -> (f64, 
         };
         return (0.0, v);
     }
-    (normalize_angle(y.atan2(x)), (z / planar).atan())
+    (
+        normalize_angle(martensite_cmath::atan2(y, x)),
+        martensite_cmath::atan(z / planar),
+    )
 }
 /// Longitude (choosing the nearer tube section when `R < r`) and the tube angle measured from
 /// the outward radial direction; `torus_parameters(frame,5.0,1.0,point)`.
 pub fn torus_parameters(position: Axis3, major: f64, minor: f64, point: Point3) -> (f64, f64) {
     let point = local(position, point);
     let (x, y, z) = (point.x(), point.y(), point.z());
-    let mut u = y.atan2(x);
+    let mut u = martensite_cmath::atan2(y, x);
     if major < minor && nearer_opposite_section(x, y, z, u, major, minor) {
         u += std::f64::consts::PI;
     }
@@ -62,7 +70,7 @@ pub fn torus_parameters(position: Axis3, major: f64, minor: f64, point: Point3) 
     (u, tube_angle(x, y, z, u, major))
 }
 fn nearer_opposite_section(x: f64, y: f64, z: f64, u: f64, major: f64, minor: f64) -> bool {
-    let (cos_u, sin_u) = (u.cos(), u.sin());
+    let (cos_u, sin_u) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
     let squared_z = z * z;
     let squared_minor = minor * minor;
     let (radial_x, radial_y) = (major * cos_u, major * sin_u);
@@ -73,7 +81,7 @@ fn nearer_opposite_section(x: f64, y: f64, z: f64, u: f64, major: f64, minor: f6
     far.abs() < near.abs()
 }
 fn tube_angle(x: f64, y: f64, z: f64, u: f64, major: f64) -> f64 {
-    let (cos_u, sin_u) = (u.cos(), u.sin());
+    let (cos_u, sin_u) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
     // Surface parameter evaluation uses unchecked normalization to preserve its zero-norm policy.
     let radial = Direction3::normalize_unchecked([cos_u, sin_u, 0.0]);
     let offset = [x - major * cos_u, y - major * sin_u, z];

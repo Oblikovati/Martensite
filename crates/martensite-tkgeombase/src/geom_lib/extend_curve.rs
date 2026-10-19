@@ -157,10 +157,10 @@ impl Boundary {
         let count: i32 = continuity + 2;
         let mut cont: Vec<Xyz> = vec![self.point.xyz(), *self.d1.xyz() * lambda];
         if continuity >= 2 {
-            cont.push(*self.d2.xyz() * lambda.powf(2.0));
+            cont.push(*self.d2.xyz() * martensite_cmath::pow(lambda, 2.0));
         }
         if continuity >= 3 {
-            cont.push(*self.d3.xyz() * lambda.powf(3.0));
+            cont.push(*self.d3.xyz() * martensite_cmath::pow(lambda, 3.0));
         }
         cont.push(point.xyz());
         let mut extra_coeffs: Array1<'static, Point3> = one_based(count)?;

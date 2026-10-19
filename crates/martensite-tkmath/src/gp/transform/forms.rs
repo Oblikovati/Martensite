@@ -109,9 +109,9 @@ impl Transform3 {
             )));
         }
         let scale = if determinant > 0.0 {
-            determinant.powf(1.0 / 3.0)
+            martensite_cmath::pow(determinant, 1.0 / 3.0)
         } else {
-            -(-determinant).powf(1.0 / 3.0)
+            -martensite_cmath::pow(-determinant, 1.0 / 3.0)
         };
         matrix.divide(scale)?;
         self.scale = scale;

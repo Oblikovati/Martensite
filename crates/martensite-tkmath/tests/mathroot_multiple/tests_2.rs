@@ -28,7 +28,7 @@ fn math_root_multiple_find_all_roots_null_function() {
 #[test]
 fn math_root_multiple_find_all_roots_lambda_function() {
     let mut aFunc = make_scalar(|x: f64, y: &mut f64| {
-        *y = (x).cos() - 0.5;
+        *y = martensite_cmath::cos(x) - 0.5;
         true
     });
 

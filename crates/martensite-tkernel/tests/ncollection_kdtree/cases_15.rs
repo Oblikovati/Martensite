@@ -4,7 +4,7 @@ fn NCollection_KDTreeTest__NearestPoints_CirclePoints() {
     let mut aPoints = vec![TestPoint2D::default(); THE_N as usize];
     for i in (0)..(THE_N) {
         let mut anAngle: f64 = 2.0 * 3.14159265358979323846 * (i as f64) / (THE_N as f64);
-        aPoints[(i) as usize] = TestPoint2D::new(10.0 * (anAngle).cos(), 10.0 * (anAngle).sin());
+        aPoints[(i) as usize] = TestPoint2D::new(10.0 * martensite_cmath::cos(anAngle), 10.0 * martensite_cmath::sin(anAngle));
     }
     let mut aTree: KDTree<TestPoint2D, 2> = KDTree::default();
     aTree.build(&(&aPoints)[..THE_N as usize]);

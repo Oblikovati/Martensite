@@ -22,7 +22,7 @@ impl ExprGeneralExpression for ExprTangent {
     unary_expression_members!();
     function_members!(ExprTangent, "Tan(");
     fn shallow_simplified(&self) -> Result<ExprHandle, Failure> {
-        function_shallow_simplified::<ExprArcTangent, _>(self, f64::tan)
+        function_shallow_simplified::<ExprArcTangent, _>(self, martensite_cmath::tan)
     }
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         quotient_rule(self, x, |operand| {
@@ -32,6 +32,6 @@ impl ExprGeneralExpression for ExprTangent {
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok(value.tan())
+        Ok(martensite_cmath::tan(value))
     }
 }

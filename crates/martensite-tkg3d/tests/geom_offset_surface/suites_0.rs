@@ -220,7 +220,7 @@ fn offset_surface_equivalent_surface_cone_positive_offset_returns_offset_cone() 
     EXPECT_NEAR(anEquivCone.semi_angle(), aSemiAngle, precision::confusion());
 
     // Reference radius should change by offset * cos(alpha).
-    let anExpectedRadius: f64 = aRefRadius + anOffset * aSemiAngle.cos();
+    let anExpectedRadius: f64 = aRefRadius + anOffset * martensite_cmath::cos(aSemiAngle);
     EXPECT_NEAR(
         anEquivCone.ref_radius(),
         anExpectedRadius,

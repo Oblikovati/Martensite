@@ -41,7 +41,7 @@ fn fixture_bytes_and_all_911_rows_are_preserved() {
         super::fixture_hash(CHUNKS.iter().map(|(_, r)| *r)),
     );
     assert_eq!(rows, (911, 911));
-    assert_eq!(bytes, (3065578449484268981, 14643687034539557212));
+    assert_eq!(bytes, (3065578449484268981, 9664045463093483268));
 }
 
 #[test]

@@ -65,7 +65,7 @@ fn planar_conversion_inputs_and_retained_answers_stay_frozen() {
     );
     assert_eq!(
         super::fixture_hash(CHUNKS.iter().map(|(_, a)| *a)),
-        0x0a5e5fbf606e17c0
+        0x1ad45ebb455ca9ee
     );
 }
 use martensite_tkernel::{ncollection::Array1, standard::Handle};

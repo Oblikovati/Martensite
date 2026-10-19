@@ -26,7 +26,7 @@ impl MultipleVarFunction for MultiModalFunction {
         2
     }
     fn value(&mut self, x: &Vector<'_>, value: &mut f64) -> bool {
-        *value = x[1].sin() + x[2].sin() + 0.1 * (x[1] * x[1] + x[2] * x[2]);
+        *value = martensite_cmath::sin(x[1]) + martensite_cmath::sin(x[2]) + 0.1 * (x[1] * x[1] + x[2] * x[2]);
         true
     }
 }
@@ -36,7 +36,7 @@ impl MultipleVarFunction for MultiModal1DFunction {
         1
     }
     fn value(&mut self, x: &Vector<'_>, value: &mut f64) -> bool {
-        *value = x[1].sin() + 0.5 * (3.0 * x[1]).sin();
+        *value = martensite_cmath::sin(x[1]) + 0.5 * martensite_cmath::sin(3.0 * x[1]);
         true
     }
 }

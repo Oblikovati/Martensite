@@ -35,7 +35,7 @@ struct PowerFunction(i32);
 impl Function for PowerFunction {
     fn value(&mut self, x: f64, value: &mut f64) -> bool {
         let _ = x;
-        *value = x.powf(f64::from(self.0));
+        *value = martensite_cmath::pow(x, f64::from(self.0));
         true
     }
 }
@@ -43,7 +43,7 @@ struct SineFunction;
 impl Function for SineFunction {
     fn value(&mut self, x: f64, value: &mut f64) -> bool {
         let _ = x;
-        *value = x.sin();
+        *value = martensite_cmath::sin(x);
         true
     }
 }
@@ -51,7 +51,7 @@ struct ExponentialFunction;
 impl Function for ExponentialFunction {
     fn value(&mut self, x: f64, value: &mut f64) -> bool {
         let _ = x;
-        *value = x.exp();
+        *value = martensite_cmath::exp(x);
         true
     }
 }
@@ -88,7 +88,7 @@ fn math_integration_gauss_exponential_function() {
     let mut f = ExponentialFunction;
     let s = Gauss::new(&mut f, 0.0, 1.0, 15);
     assert!(s.is_done());
-    near(s.value().unwrap(), 1.0_f64.exp() - 1.0, 1e-8);
+    near(s.value().unwrap(), martensite_cmath::exp(1.0_f64) - 1.0, 1e-8);
 }
 #[test]
 fn math_integration_gauss_different_orders() {

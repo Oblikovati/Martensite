@@ -2,7 +2,7 @@
 fn math_integ_gauss_reciprocal_function() {
     let mut aFunc: ReciprocalFunc = ReciprocalFunc;
 
-    let mut aResult: IntegResult = gauss(&mut aFunc, 1.0, (1.0_f64).exp(), 15);
+    let mut aResult: IntegResult = gauss(&mut aFunc, 1.0, martensite_cmath::exp(1.0_f64), 15);
     assert!(aResult.is_done());
     near(aResult.value.unwrap(), 1.0, THE_TOLERANCE);
 }

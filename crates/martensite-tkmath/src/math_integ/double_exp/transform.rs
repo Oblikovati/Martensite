@@ -21,8 +21,8 @@ impl Transform {
         }
     }
     pub(super) fn sample(self, t: f64) -> Option<(f64, f64)> {
-        let u: f64 = FRAC_PI_2 * t.sinh();
-        let cosh_t: f64 = t.cosh();
+        let u: f64 = FRAC_PI_2 * martensite_cmath::sinh(t);
+        let cosh_t: f64 = martensite_cmath::cosh(t);
         match self {
             Self::Finite {
                 lower,
@@ -39,9 +39,9 @@ fn finite_sample(u: f64, cosh_t: f64, bounds: [f64; 4]) -> Option<(f64, f64)> {
     if u.abs() > DOUBLE_EXP_MAX_TRANSFORM_ARGUMENT {
         return None;
     }
-    let cosh_u: f64 = u.cosh();
+    let cosh_u: f64 = martensite_cmath::cosh(u);
     let sech_squared: f64 = 1.0 / (cosh_u * cosh_u);
-    let x: f64 = bounds[2] + bounds[3] * u.tanh();
+    let x: f64 = bounds[2] + bounds[3] * martensite_cmath::tanh(u);
     if x <= bounds[0] || x >= bounds[1] {
         return None;
     }
@@ -55,7 +55,7 @@ fn semi_sample(u: f64, cosh_t: f64, lower: f64) -> Option<(f64, f64)> {
     if u > DOUBLE_EXP_MAX_TRANSFORM_ARGUMENT {
         return None;
     }
-    let exponential: f64 = u.exp();
+    let exponential: f64 = martensite_cmath::exp(u);
     let weight: f64 = FRAC_PI_2 * cosh_t * exponential;
     if weight < crate::math_utils::ZERO_TOL
         || !weight.is_finite()
@@ -69,8 +69,8 @@ fn infinite_sample(u: f64, cosh_t: f64) -> Option<(f64, f64)> {
     if u.abs() > DOUBLE_EXP_MAX_TRANSFORM_ARGUMENT {
         return None;
     }
-    let x: f64 = u.sinh();
-    let weight: f64 = FRAC_PI_2 * cosh_t * u.cosh();
+    let x: f64 = martensite_cmath::sinh(u);
+    let weight: f64 = FRAC_PI_2 * cosh_t * martensite_cmath::cosh(u);
     if weight < crate::math_utils::ZERO_TOL || !weight.is_finite() {
         return None;
     }

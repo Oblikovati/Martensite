@@ -41,7 +41,7 @@ fn mix(a: f64, dir: [f64; 3], b: f64, z: [f64; 3]) -> Vector3 {
 
 impl SphereData {
     fn v_terms(&self, v: f64) -> VTerms {
-        let (cos_v, sin_v) = (v.cos(), v.sin());
+        let (cos_v, sin_v) = (martensite_cmath::cos(v), martensite_cmath::sin(v));
         VTerms {
             r_cos: self.radius * cos_v,
             r_sin: self.radius * sin_v,
@@ -118,7 +118,7 @@ impl QuadricTerms for SphereData {
     // `R * (coeffVXY * dir + zTerm)`, with the Z term only when `nu == 0` (a zero is
     // added otherwise, which turns a -0 into +0 as natively).
     fn dn(&self, ctx: &UContext, v: f64, nu: i32, nv: i32) -> Vector3 {
-        let (coeff_xy, coeff_z) = v_phase(nv, v.cos(), v.sin());
+        let (coeff_xy, coeff_z) = v_phase(nv, martensite_cmath::cos(v), martensite_cmath::sin(v));
         let dir: [f64; 3] = ctx.dir_derivative(nu);
         let z: [f64; 3] = if nu == 0 {
             self.frame.z.map(|c| coeff_z * c)

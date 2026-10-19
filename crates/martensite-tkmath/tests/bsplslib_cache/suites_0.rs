@@ -131,7 +131,7 @@ fn wavy_poles(rows: i32, cols: i32) -> Array2<'static, Point3> {
         [
             x,
             y,
-            (f64::from(i - 1) * 0.5).sin() * (f64::from(j - 1) * 0.5).cos(),
+            martensite_cmath::sin(f64::from(i - 1) * 0.5) * martensite_cmath::cos(f64::from(j - 1) * 0.5),
         ]
     })
 }

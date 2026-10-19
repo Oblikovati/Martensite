@@ -52,7 +52,7 @@ impl MultipleVarFunction for Rastrigin {
     fn value(&mut self, point: &Vector<'_>, value: &mut f64) -> bool {
         *value = self.a * f64::from(point.length());
         for x in point.values() {
-            *value += x * x - self.a * (TWO_PI * x).cos();
+            *value += x * x - self.a * martensite_cmath::cos(TWO_PI * x);
         }
         true
     }
@@ -60,7 +60,8 @@ impl MultipleVarFunction for Rastrigin {
 impl MultipleVarFunctionWithGradient for Rastrigin {
     fn gradient(&mut self, point: &Vector<'_>, gradient: &mut Vector<'_>) -> bool {
         for (index, x) in point.values().iter().enumerate() {
-            *gradient.change_at(index).unwrap() = 2.0 * x + self.a * TWO_PI * (TWO_PI * x).sin();
+            *gradient.change_at(index).unwrap() =
+                2.0 * x + self.a * TWO_PI * martensite_cmath::sin(TWO_PI * x);
         }
         true
     }
@@ -88,7 +89,7 @@ impl Ackley {
                 return None;
             }
             squared += x * x;
-            cosine += (self.c * x).cos();
+            cosine += martensite_cmath::cos(self.c * x);
             if !squared.is_finite() || !cosine.is_finite() {
                 return None;
             }
@@ -109,7 +110,8 @@ impl MultipleVarFunction for Ackley {
             return false;
         };
         let divisor: f64 = f64::from(point.length());
-        *value = -self.a * (-self.b * (squared / divisor).sqrt()).exp() - (cosine / divisor).exp()
+        *value = -self.a * martensite_cmath::exp(-self.b * (squared / divisor).sqrt())
+            - martensite_cmath::exp(cosine / divisor)
             + self.a
             + EULER_NUMBER;
         value.is_finite()

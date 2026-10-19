@@ -13,7 +13,7 @@ fn all_requests_and_expected_bytes_are_frozen() {
     );
     assert_eq!(
         super::fixture_hash(CHUNKS.iter().map(|(_, r)| *r)),
-        5776126982196172594
+        6809075476512575850
     );
 }
 #[test]

@@ -128,8 +128,8 @@ fn wrap_angle(angle: f64) -> f64 {
 /// `|cost| <= 0.707`, else arcsin, mirrored to `PI - angle` for a negative cosine.
 fn positive_sine_angle(cost: f64, sint: f64) -> f64 {
     if cost.abs() <= 0.707 {
-        return cost.acos();
+        return martensite_cmath::acos(cost);
     }
-    let angle: f64 = sint.asin();
+    let angle: f64 = martensite_cmath::asin(sint);
     if cost < 0.0 { PI - angle } else { angle }
 }

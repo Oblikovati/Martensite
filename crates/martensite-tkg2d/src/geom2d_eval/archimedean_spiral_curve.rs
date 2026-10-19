@@ -111,8 +111,8 @@ impl Geom2dEvalArchimedeanSpiralCurve {
         SpiralTerms {
             r: self.radius_at(u),
             b: self.growth_rate,
-            cos: u.cos(),
-            sin: u.sin(),
+            cos: martensite_cmath::cos(u),
+            sin: martensite_cmath::sin(u),
         }
     }
 }

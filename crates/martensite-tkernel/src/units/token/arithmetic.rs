@@ -95,7 +95,7 @@ impl Token {
     }
     fn raised(&self, word: &[u8], exponent: f64) -> Result<Handle<Token>, Failure> {
         let dimensions = object(&self.dimensions(), "Units_Token::Power")?.power(exponent);
-        let value = self.value().powf(exponent);
+        let value = martensite_cmath::pow(self.value(), exponent);
         Ok(Handle::new(Token::with_dimensions(
             word,
             b" ",

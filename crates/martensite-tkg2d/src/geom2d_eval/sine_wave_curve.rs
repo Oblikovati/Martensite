@@ -43,21 +43,25 @@ impl Geom2dEvalSineWaveCurve {
     }
     // `anO + U * aXD + A * sin(aArg) * aYD`.
     fn point_at(&self, frame: &LocalFrame, u: f64) -> Point2 {
-        frame.point(u, self.amplitude * self.argument(u).sin())
+        frame.point(u, self.amplitude * martensite_cmath::sin(self.argument(u)))
     }
     // `aXD + A * omega * cos(aArg) * aYD`: the X direction is added unscaled.
     fn first_derivative(&self, frame: &LocalFrame, u: f64) -> Vector2 {
-        let b: f64 = self.amplitude * self.omega * self.argument(u).cos();
+        let b: f64 = self.amplitude * self.omega * martensite_cmath::cos(self.argument(u));
         Vector2::from(frame.x_dir + b * frame.y_dir)
     }
     // `A * (-omega^2) * sin(aArg) * aYD`: no X term, so a zero X keeps the sign of the product.
     fn second_derivative(&self, frame: &LocalFrame, u: f64) -> Vector2 {
         let om2: f64 = self.omega * self.omega;
-        Vector2::from(self.amplitude * (-om2) * self.argument(u).sin() * frame.y_dir)
+        Vector2::from(
+            self.amplitude * (-om2) * martensite_cmath::sin(self.argument(u)) * frame.y_dir,
+        )
     }
     fn third_derivative(&self, frame: &LocalFrame, u: f64) -> Vector2 {
         let om3: f64 = self.omega * self.omega * self.omega;
-        Vector2::from(self.amplitude * (-om3) * self.argument(u).cos() * frame.y_dir)
+        Vector2::from(
+            self.amplitude * (-om3) * martensite_cmath::cos(self.argument(u)) * frame.y_dir,
+        )
     }
 }
 impl Geom2dGeometry for Geom2dEvalSineWaveCurve {
@@ -108,7 +112,11 @@ impl Geom2dCurve for Geom2dEvalSineWaveCurve {
         check_derivative_order("Geom2dEval_SineWaveCurve::EvalDN", n)?;
         let frame: LocalFrame = self.frame();
         let argument: f64 = self.argument(u);
-        let (sin_n, _) = trig_shift(argument.sin(), argument.cos(), n);
+        let (sin_n, _) = trig_shift(
+            martensite_cmath::sin(argument),
+            martensite_cmath::cos(argument),
+            n,
+        );
         let mut result: Xy = self.amplitude * pow_int(self.omega, n) * sin_n * frame.y_dir;
         if n == 1 {
             result += frame.x_dir;

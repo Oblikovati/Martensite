@@ -33,7 +33,10 @@ pub fn non_rational_dn<P: EvalPole>(view: &AhtView<'_, P>, u: f64, n: i32) -> P:
     }
     let mut index: usize = view.alg_degree + 1;
     if view.alpha > 0.0 {
-        let (sinh, cosh) = ((view.alpha * u).sinh(), (view.alpha * u).cosh());
+        let (sinh, cosh) = (
+            martensite_cmath::sinh(view.alpha * u),
+            martensite_cmath::cosh(view.alpha * u),
+        );
         let (sinh_n, cosh_n) = hyperbolic_derivative(pow_int(view.alpha, n), sinh, cosh, n);
         sum += view.poles[index].coord() * sinh_n;
         sum += view.poles[index + 1].coord() * cosh_n;
@@ -41,7 +44,11 @@ pub fn non_rational_dn<P: EvalPole>(view: &AhtView<'_, P>, u: f64, n: i32) -> P:
     }
     if view.beta > 0.0 {
         let beta_pow: f64 = pow_int(view.beta, n);
-        let (sin_n, cos_n) = trig_shift((view.beta * u).sin(), (view.beta * u).cos(), n);
+        let (sin_n, cos_n) = trig_shift(
+            martensite_cmath::sin(view.beta * u),
+            martensite_cmath::cos(view.beta * u),
+            n,
+        );
         sum += view.poles[index].coord() * (beta_pow * sin_n);
         sum += view.poles[index + 1].coord() * (beta_pow * cos_n);
     }
@@ -69,12 +76,15 @@ impl<P: EvalPole> RationalPairs<P> {
             hyperbolic: (view.alpha > 0.0).then(|| pair(hyper_index)),
             trigonometric: (view.beta > 0.0).then(|| pair(trig_index)),
             sinh_cosh: if view.alpha > 0.0 {
-                (alpha_u.sinh(), alpha_u.cosh())
+                (
+                    martensite_cmath::sinh(alpha_u),
+                    martensite_cmath::cosh(alpha_u),
+                )
             } else {
                 (0.0, 0.0)
             },
             sin_cos: if view.beta > 0.0 {
-                (beta_u.sin(), beta_u.cos())
+                (martensite_cmath::sin(beta_u), martensite_cmath::cos(beta_u))
             } else {
                 (0.0, 0.0)
             },

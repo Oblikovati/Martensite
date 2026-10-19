@@ -30,6 +30,6 @@ impl ExprGeneralExpression for ExprArgTanh {
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok(((1.0 + value) / (1.0 - value)).ln() / 2.0)
+        Ok(martensite_cmath::log((1.0 + value) / (1.0 - value)) / 2.0)
     }
 }

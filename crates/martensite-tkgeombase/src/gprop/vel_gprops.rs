@@ -100,7 +100,12 @@ impl VelGProps {
         let rayon: f64 = solid.radius();
         let base: &mut GProps = &mut self.base;
         base.dim = rayon * rayon * (z2 - z1) / 2.0;
-        let (sa2, sa1, ca2, ca1) = (alpha2.sin(), alpha1.sin(), alpha2.cos(), alpha1.cos());
+        let (sa2, sa1, ca2, ca1) = (
+            martensite_cmath::sin(alpha2),
+            martensite_cmath::sin(alpha1),
+            martensite_cmath::cos(alpha2),
+            martensite_cmath::cos(alpha1),
+        );
         let (dsin, dcos): (f64, f64) = (sa2 - sa1, ca1 - ca2);
         let coef: f64 = rayon / (alpha2 - alpha1);
         let [a1, a2, a3] = frame.map(|d| d.xyz());
@@ -138,9 +143,14 @@ impl VelGProps {
     ) -> Result<(), Failure> {
         let frame: Frame = placement_frame(solid.position());
         let t: f64 = solid.semi_angle();
-        let (cnt, snt): (f64, f64) = (t.cos(), t.sin());
+        let (cnt, snt): (f64, f64) = (martensite_cmath::cos(t), martensite_cmath::sin(t));
         let r: f64 = solid.ref_radius();
-        let (sn2, sn1, cn2, cn1) = (alpha2.sin(), alpha1.sin(), alpha2.cos(), alpha1.cos());
+        let (sn2, sn1, cn2, cn1) = (
+            martensite_cmath::sin(alpha2),
+            martensite_cmath::sin(alpha1),
+            martensite_cmath::cos(alpha2),
+            martensite_cmath::cos(alpha1),
+        );
         let zz: f64 = (z2 - z1) * (z2 - z1) * cnt * snt;
         let auxi1: f64 = 2.0 * r + (z2 + z1) * snt;
         let base: &mut GProps = &mut self.base;
@@ -185,8 +195,18 @@ impl VelGProps {
     ) -> Result<(), Failure> {
         let frame: Frame = placement_frame(solid.position());
         let r: f64 = solid.radius();
-        let (cnt1, snt1, cnt2, snt2) = (teta1.cos(), teta1.sin(), teta2.cos(), teta2.sin());
-        let (cnf1, snf1, cnf2, snf2) = (alpha1.cos(), alpha1.sin(), alpha2.cos(), alpha2.sin());
+        let (cnt1, snt1, cnt2, snt2) = (
+            martensite_cmath::cos(teta1),
+            martensite_cmath::sin(teta1),
+            martensite_cmath::cos(teta2),
+            martensite_cmath::sin(teta2),
+        );
+        let (cnf1, snf1, cnf2, snf2) = (
+            martensite_cmath::cos(alpha1),
+            martensite_cmath::sin(alpha1),
+            martensite_cmath::cos(alpha2),
+            martensite_cmath::sin(alpha2),
+        );
         let base: &mut GProps = &mut self.base;
         base.dim = (teta2 - teta1) * r * r * r * (snf2 - snf1) / 3.0;
         let lat: f64 = alpha2 - alpha1 + snf2 * cnf2 - snf1 * cnf1;
@@ -225,10 +245,14 @@ impl VelGProps {
     ) -> Result<(), Failure> {
         let frame: Frame = placement_frame(solid.position());
         let (rmax, rmin): (f64, f64) = (solid.major_radius(), solid.minor_radius());
-        let (cnt1, snt1) = (teta1.cos(), teta1.sin());
-        let (cnt2, snt2) = (alpha2.cos(), alpha2.sin());
-        let (snf2, snf1, cnf1) = (alpha2.sin(), alpha1.sin(), alpha1.cos());
-        let cnf2: f64 = alpha2.cos();
+        let (cnt1, snt1) = (martensite_cmath::cos(teta1), martensite_cmath::sin(teta1));
+        let (cnt2, snt2) = (martensite_cmath::cos(alpha2), martensite_cmath::sin(alpha2));
+        let (snf2, snf1, cnf1) = (
+            martensite_cmath::sin(alpha2),
+            martensite_cmath::sin(alpha1),
+            martensite_cmath::cos(alpha1),
+        );
+        let cnf2: f64 = martensite_cmath::cos(alpha2);
         let base: &mut GProps = &mut self.base;
         base.dim = rmax * rmin * rmin * (teta2 - teta1) * (alpha2 - alpha1) / 2.0;
         let ring: f64 = rmin * (snf2 - snf1) / (alpha2 - alpha1) + rmax;

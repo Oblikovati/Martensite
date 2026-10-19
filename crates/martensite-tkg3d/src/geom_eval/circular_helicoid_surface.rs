@@ -146,8 +146,8 @@ impl EvalElementarySurface for GeomEvalCircularHelicoidSurface {
             pitch: state.pitch,
             u,
             v,
-            cos_u: u.cos(),
-            sin_u: u.sin(),
+            cos_u: martensite_cmath::cos(u),
+            sin_u: martensite_cmath::sin(u),
         }
     }
     // Linear in V (zero for Nv >= 2) and linear in U on ZDir (only Nu == 1 keeps it).
@@ -158,7 +158,10 @@ impl EvalElementarySurface for GeomEvalCircularHelicoidSurface {
         let state: HelicoidState = *self.state.read();
         let frame: EvalFrame = EvalFrame::new(state.pos);
         let phase_u: f64 = f64::from(nu) * PI / 2.0;
-        let (cos_n, sin_n) = ((u + phase_u).cos(), (u + phase_u).sin());
+        let (cos_n, sin_n) = (
+            martensite_cmath::cos(u + phase_u),
+            martensite_cmath::sin(u + phase_u),
+        );
         if nv == 1 {
             return Vector3::from(frame.x * cos_n + frame.y * sin_n);
         }

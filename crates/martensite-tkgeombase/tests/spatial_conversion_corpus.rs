@@ -137,7 +137,7 @@ fn spatial_conversion_inputs_and_retained_answers_stay_frozen() {
     );
     assert_eq!(
         super::fixture_hash(CHUNKS.iter().map(|(_, a)| *a)),
-        0x24fb59fbff9f2d11
+        0xc0ac25cf28ca4d68
     );
 }
 use martensite_tkernel::{

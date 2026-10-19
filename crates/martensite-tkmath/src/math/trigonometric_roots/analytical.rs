@@ -38,7 +38,7 @@ impl TrigonometricRoots {
         if ratio.abs() > 1.0 {
             return;
         }
-        let first: f64 = ratio.asin();
+        let first: f64 = martensite_cmath::asin(ratio);
         for mut zero in [first, PI - first] {
             if zero <= -EPS {
                 zero = PERIOD - zero.abs();
@@ -55,7 +55,7 @@ impl TrigonometricRoots {
         if ratio.abs() > 1.0 {
             return;
         }
-        let first: f64 = ratio.acos();
+        let first: f64 = martensite_cmath::acos(ratio);
         for mut zero in [first, -first] {
             if zero <= -EPS {
                 zero = PERIOD - zero.abs();
@@ -106,7 +106,7 @@ fn cross_pair(ratio: f64, sine_factor: bool) -> [f64; 2] {
         if ratio <= -1.0 {
             return [PI, PI];
         }
-        let first: f64 = ratio.acos();
+        let first: f64 = martensite_cmath::acos(ratio);
         return [first, PERIOD - first];
     }
     if ratio >= 1.0 {
@@ -115,6 +115,6 @@ fn cross_pair(ratio: f64, sine_factor: bool) -> [f64; 2] {
     if ratio <= -1.0 {
         return [PI * 3.0 / 2.0, PI * 3.0 / 2.0];
     }
-    let first: f64 = ratio.asin();
+    let first: f64 = martensite_cmath::asin(ratio);
     [first, PI - first]
 }

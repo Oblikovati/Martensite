@@ -2,7 +2,7 @@
 struct SinFunc;
 impl Function for SinFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (theX).sin();
+        *theF = martensite_cmath::sin(theX);
         true
     }
 }
@@ -12,8 +12,8 @@ impl FunctionWithDerivative for SinFunc {
         self.values(theX, &mut value, theDf)
     }
     fn values(&mut self, theX: f64, theF: &mut f64, theDf: &mut f64) -> bool {
-        *theF = (theX).sin();
-        *theDf = (theX).cos();
+        *theF = martensite_cmath::sin(theX);
+        *theDf = martensite_cmath::cos(theX);
         true
     }
 }

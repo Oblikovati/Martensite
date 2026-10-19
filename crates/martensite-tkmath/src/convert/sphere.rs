@@ -26,8 +26,18 @@ fn compute_poles(
         v1,
         v2,
         SPHERE_SIZES.v_poles as usize,
-        |angle| (radius * angle.cos(), radius * angle.sin()),
-        |angle, cosine| (radius * angle.cos() / cosine, radius * angle.sin() / cosine),
+        |angle| {
+            (
+                radius * martensite_cmath::cos(angle),
+                radius * martensite_cmath::sin(angle),
+            )
+        },
+        |angle, cosine| {
+            (
+                radius * martensite_cmath::cos(angle) / cosine,
+                radius * martensite_cmath::sin(angle) / cosine,
+            )
+        },
     )?;
     let nb_v_poles: i32 = spans(v2 - v1).0.wrapping_mul(2).wrapping_add(1);
     revolve(&profile, nb_v_poles, u1, u2, poles)
@@ -74,7 +84,10 @@ impl ElementarySurfaceToBSplineSurface {
             result.nb_v_knots,
             alfa_v,
         )?;
-        result.weigh_and_place(sphere.position(), (alfa_u.cos(), alfa_v.cos()))?;
+        result.weigh_and_place(
+            sphere.position(),
+            (martensite_cmath::cos(alfa_u), martensite_cmath::cos(alfa_v)),
+        )?;
         result.finalize()?;
         Ok(result)
     }
@@ -150,7 +163,7 @@ impl ElementarySurfaceToBSplineSurface {
             self.nb_v_knots,
             alfa_v,
         )?;
-        Ok((0.5, alfa_v.cos()))
+        Ok((0.5, martensite_cmath::cos(alfa_v)))
     }
 
     // The lune between two meridians over the whole latitude range; the V weights
@@ -179,7 +192,7 @@ impl ElementarySurfaceToBSplineSurface {
             self.nb_u_knots,
             alfa_u,
         )?;
-        Ok((alfa_u.cos(), 0.5))
+        Ok((martensite_cmath::cos(alfa_u), 0.5))
     }
 
     // V knots -PI/2, 0, PI/2 with multiplicities 3, 2, 3.

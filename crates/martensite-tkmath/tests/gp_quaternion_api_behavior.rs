@@ -50,7 +50,7 @@ fn operators_match_named_members() {
     let rotation = Quaternion::from_axis_angle(Vector3::new(0.0, 0.0, 1.0), 0.75).unwrap();
     assert!((rotation.rotation_angle() - 0.75).abs() < 1e-15);
     let turned = rotation * Vector3::new(1.0, 0.0, 0.0);
-    assert!((turned.x() - 0.75_f64.cos()).abs() < 1e-15);
+    assert!((turned.x() - martensite_cmath::cos(0.75_f64)).abs() < 1e-15);
 }
 
 #[test]

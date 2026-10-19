@@ -20,7 +20,7 @@ impl LogSample {
         Self {
             base: FunctionSample::new(a, b, n),
             my_f: a - 1.0,
-            myexp: (b - a).ln() / f64::from(n),
+            myexp: martensite_cmath::log(b - a) / f64::from(n),
         }
     }
 
@@ -42,7 +42,7 @@ impl LogSample {
                 &format!("GeomLib_LogSample::GetParameter: Index = {index}; expected 1..={a_n}"),
             ));
         }
-        Ok(self.my_f + (self.myexp * f64::from(index)).exp())
+        Ok(self.my_f + martensite_cmath::exp(self.myexp * f64::from(index)))
     }
 }
 

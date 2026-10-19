@@ -2,7 +2,7 @@
 struct ScaledExpFunc;
 impl Function for ScaledExpFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = theX * (theX).exp() - 100.0;
+        *theF = theX * martensite_cmath::exp(theX) - 100.0;
         true
     }
 }
@@ -12,7 +12,7 @@ impl FunctionWithDerivative for ScaledExpFunc {
         self.values(theX, &mut value, theDf)
     }
     fn values(&mut self, theX: f64, theF: &mut f64, theDf: &mut f64) -> bool {
-        let anExp: f64 = (theX).exp();
+        let anExp: f64 = martensite_cmath::exp(theX);
         *theF = theX * anExp - 100.0;
         *theDf = (theX + 1.0) * anExp;
         true

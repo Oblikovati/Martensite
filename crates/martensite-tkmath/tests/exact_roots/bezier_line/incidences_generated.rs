@@ -37,7 +37,11 @@ fn alternating_homogeneous_controls(weights: &[f64], degree: usize) -> Vec<[f64;
 
 #[test]
 fn repeated_quartic_incidence_is_exact_across_scale_axis_orientation_and_reversal() {
-    for scale in [2_f64.powi(-900), 1., 2_f64.powi(900)] {
+    for scale in [
+        martensite_cmath::powi(2_f64, -900),
+        1.,
+        martensite_cmath::powi(2_f64, 900),
+    ] {
         for reflected in [false, true] {
             verify_transformed_quartic(scale, reflected);
         }

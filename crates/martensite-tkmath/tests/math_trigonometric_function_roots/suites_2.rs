@@ -36,6 +36,6 @@ fn math_trigonometric_function_roots_custom_bounds() {
         let x: f64 = solver.value(i).unwrap();
         assert!(x >= PI / 2.0);
         assert!(x <= 3.0 * PI / 2.0);
-        assert_near((x.sin()).abs(), 0.0, TOLERANCE);
+        assert_near((martensite_cmath::sin(x)).abs(), 0.0, TOLERANCE);
     }
 }

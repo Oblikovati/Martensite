@@ -16,7 +16,7 @@ pub(super) fn resolution(state: &AdaptorState, r_uv: f64) -> Result<f64, Failure
         CurveData::Circle(circle) => {
             let radius: f64 = circle.radius();
             if radius > r_uv / 2.0 {
-                return Ok(2.0 * (r_uv / (2.0 * radius)).asin());
+                return Ok(2.0 * martensite_cmath::asin(r_uv / (2.0 * radius)));
             }
             Ok(2.0 * PI)
         }

@@ -79,10 +79,10 @@ impl Curve {
             second = self.take_z_positive;
         }
         let angles = Angles {
-            cost: theta.cos(),
-            sint: theta.sin(),
-            sin2t: (theta + theta).sin(),
-            cos2t: (theta + theta).cos(),
+            cost: martensite_cmath::cos(theta),
+            sint: martensite_cmath::sin(theta),
+            sin2t: martensite_cmath::sin(theta + theta),
+            cos2t: martensite_cmath::cos(theta + theta),
         };
         let mut result = UvValue {
             u: theta,
@@ -131,7 +131,7 @@ impl Curve {
         let v: f64 = v.clamp(-100000.0, 100000.0);
         match self.typequadric {
             SurfaceType::Cone => {
-                let generatrix: f64 = (v - self.rcyl) / self.angle.sin();
+                let generatrix: f64 = (v - self.rcyl) / martensite_cmath::sin(self.angle);
                 elslib::cone_value(u, generatrix, self.ax3, self.rcyl, self.angle)
             }
             SurfaceType::Cylinder => elslib::cylinder_value(u, v, self.ax3, self.rcyl),

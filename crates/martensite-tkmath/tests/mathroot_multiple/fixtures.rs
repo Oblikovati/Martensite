@@ -5,18 +5,18 @@ fn near(a: f64, b: f64, tol: f64) {
 struct SineWithDerivative;
 impl Function for SineWithDerivative {
     fn value(&mut self, x: f64, y: &mut f64) -> bool {
-        *y = x.sin();
+        *y = martensite_cmath::sin(x);
         true
     }
 }
 impl FunctionWithDerivative for SineWithDerivative {
     fn derivative(&mut self, x: f64, dy: &mut f64) -> bool {
-        *dy = x.cos();
+        *dy = martensite_cmath::cos(x);
         true
     }
     fn values(&mut self, x: f64, y: &mut f64, dy: &mut f64) -> bool {
-        *y = x.sin();
-        *dy = x.cos();
+        *y = martensite_cmath::sin(x);
+        *dy = martensite_cmath::cos(x);
         true
     }
 }

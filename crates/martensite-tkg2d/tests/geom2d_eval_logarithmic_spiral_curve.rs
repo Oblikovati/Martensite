@@ -56,7 +56,7 @@ fn evaluated_logarithmic_spiral_curve_self_similarity() {
 
     // C(t+k) should be a scaled version of C(t) by factor e^(b*k)
     let aK: f64 = 2.0;
-    let aScaleFactor: f64 = (aB * aK).exp();
+    let aScaleFactor: f64 = martensite_cmath::exp(aB * aK);
     let anO: Point2 = anAx2d.location();
 
     let aParams: [f64; 4] = [0.0, 1.0, 2.0, PI];
@@ -80,7 +80,7 @@ fn evaluated_logarithmic_spiral_curve_constant_angle() {
     let aCurve = Geom2dEvalLogarithmicSpiralCurve::new(anAx2d, aA, aB).unwrap();
 
     // Angle between tangent and radial direction = atan(1/b)
-    let aExpAngle: f64 = (1.0 / aB).atan();
+    let aExpAngle: f64 = martensite_cmath::atan(1.0 / aB);
     let anO: Point2 = anAx2d.location();
 
     let aParams: [f64; 4] = [1.0, 2.0, PI, 5.0];
@@ -89,7 +89,7 @@ fn evaluated_logarithmic_spiral_curve_constant_angle() {
         let aRadial = Vector2::between(anO, aD1.point);
         let aDot: f64 = aD1.d1.dot(aRadial);
         let aCross: f64 = aD1.d1.crossed(aRadial);
-        let anAngle: f64 = aCross.abs().atan2(aDot).abs();
+        let anAngle: f64 = martensite_cmath::atan2(aCross.abs(), aDot).abs();
         EXPECT_NEAR(anAngle, aExpAngle, 1e-10);
     }
 }

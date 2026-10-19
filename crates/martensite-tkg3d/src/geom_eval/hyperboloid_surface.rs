@@ -195,7 +195,7 @@ impl GeomEvalHyperboloidSurface {
     // The radii and the hyperbolic pairs of the current mode, as HyperboloidPatch
     // documents them.
     fn mode_terms(state: &HyperboloidState, v: f64) -> (f64, f64, [f64; 2], [f64; 2]) {
-        let (cosh, sinh) = (v.cosh(), v.sinh());
+        let (cosh, sinh) = (martensite_cmath::cosh(v), martensite_cmath::sinh(v));
         match state.mode {
             HyperboloidSheetMode::OneSheet => (state.r1, state.r2, [cosh, sinh], [sinh, cosh]),
             HyperboloidSheetMode::TwoSheets => (state.r2, state.r1, [sinh, cosh], [cosh, sinh]),
@@ -218,8 +218,8 @@ impl EvalElementarySurface for GeomEvalHyperboloidSurface {
             axial,
             f,
             g,
-            cos_u: u.cos(),
-            sin_u: u.sin(),
+            cos_u: martensite_cmath::cos(u),
+            sin_u: martensite_cmath::sin(u),
         }
     }
     // `cos/sin(U + Nu * Pi/2)`; the V derivative alternates the hyperbolic pair.
@@ -228,7 +228,10 @@ impl EvalElementarySurface for GeomEvalHyperboloidSurface {
         let state: HyperboloidState = *self.state.read();
         let frame: EvalFrame = EvalFrame::new(state.pos);
         let u_shift: f64 = u + f64::from(nu) * FRAC_PI_2;
-        let (dn_cos_u, dn_sin_u) = (u_shift.cos(), u_shift.sin());
+        let (dn_cos_u, dn_sin_u) = (
+            martensite_cmath::cos(u_shift),
+            martensite_cmath::sin(u_shift),
+        );
         let (radial, axial, f, g) = Self::mode_terms(&state, v);
         let k: usize = if nv % 2 == 0 { 0 } else { 1 };
         let x_coeff: f64 = radial * f[k] * dn_cos_u;

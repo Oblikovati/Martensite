@@ -44,7 +44,7 @@ fn SinPoles3x3() -> Array2<'static, Point3> {
                 .set_value(
                     i,
                     j,
-                    Point3::new(f64::from(i), f64::from(j), f64::from(i + j).sin()),
+                    Point3::new(f64::from(i), f64::from(j), martensite_cmath::sin(f64::from(i + j))),
                 )
                 .unwrap();
         }
@@ -59,7 +59,7 @@ fn ShiftedSinPoles(theNb: i32) -> Array2<'static, Point3> {
         for j in 1..=theNb {
             let (x, y) = (f64::from(i - 1), f64::from(j - 1));
             aPoles
-                .set_value(i, j, Point3::new(x, y, (x * 0.5 + y * 0.5).sin()))
+                .set_value(i, j, Point3::new(x, y, martensite_cmath::sin(x * 0.5 + y * 0.5)))
                 .unwrap();
         }
     }

@@ -58,14 +58,14 @@ fn project_on_plane_surface(
 
 // The first CompProjectedCurve part, trimmed to its bounds, approximated in 3D
 // (16 segments, degree 14, C2). The retained tolerances: Tol = 1e-4 and
-// TolU = TolV = pow(Tol, 2/3) (std::pow, the libm pow as powf).
+// TolU = TolV = pow(Tol, 2/3) (std::pow, the correctly rounded `martensite_cmath::pow`).
 fn project_by_approximation(
     hc: &Handle<dyn Adaptor3dCurve>,
     hs: &Handle<dyn Adaptor3dSurface>,
 ) -> Result<Handle<dyn GeomCurve>, Failure> {
     let tol: f64 = 0.0001;
-    let tol_u: f64 = tol.powf(2. / 3.);
-    let tol_v: f64 = tol.powf(2. / 3.);
+    let tol_u: f64 = martensite_cmath::pow(tol, 2. / 3.);
+    let tol_v: f64 = martensite_cmath::pow(tol, 2. / 3.);
     let projection = CompProjectedCurve::with_max_dist(hs, hc, tol_u, tol_v, -1.)?;
     let (first, last) = projection.bounds(1)?;
     let hc2d: Handle<dyn Adaptor2dCurve2d> = projection.trim(first, last, tol_u)?;

@@ -38,7 +38,7 @@ pub(crate) struct EllipseFrame {
 impl EllipseFrame {
     /// The stationarity lambda: the sign of the distance derivative at `u`.
     pub fn stationarity(&self, u: f64) -> f64 {
-        let (cos, sin) = (u.cos(), u.sin());
+        let (cos, sin) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
         (self.b * self.b - self.a * self.a) * cos * sin - self.b * self.y * cos
             + self.a * self.x * sin
     }

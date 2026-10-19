@@ -16,7 +16,7 @@ fn math_trigonometric_function_roots_all_coefficients() {
     for i in 1..=solver.solutions().unwrap() {
         let x: f64 = solver.value(i).unwrap();
         let result: f64 =
-            a * x.cos() * x.cos() + 2.0 * b * x.cos() * x.sin() + c * x.cos() + d * x.sin() + e;
+            a * martensite_cmath::cos(x) * martensite_cmath::cos(x) + 2.0 * b * martensite_cmath::cos(x) * martensite_cmath::sin(x) + c * martensite_cmath::cos(x) + d * martensite_cmath::sin(x) + e;
         assert_near(result, 0.0, TOLERANCE);
     }
 }
@@ -49,6 +49,6 @@ fn math_trigonometric_function_roots_negative_bounds() {
         let x: f64 = solver.value(i).unwrap();
         assert!(x >= -PI);
         assert!(x <= PI);
-        assert_near((x.cos()).abs(), 0.0, TOLERANCE);
+        assert_near((martensite_cmath::cos(x)).abs(), 0.0, TOLERANCE);
     }
 }

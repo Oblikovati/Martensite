@@ -151,7 +151,7 @@ impl IntConicQuad {
             if t < f64::EPSILON || t.is_nan() {
                 return None;
             }
-            let parameter: f64 = t.ln();
+            let parameter: f64 = martensite_cmath::log(t);
             Some((
                 parameter,
                 elclib::hyperbola_value(parameter, position, big, small),

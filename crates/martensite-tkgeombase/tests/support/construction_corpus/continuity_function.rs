@@ -43,7 +43,7 @@ impl AccFunction {
     }
     pub fn coord(&self, d: i32, u: f64) -> f64 {
         let a = &self.coef[5 * (d as usize - 1)..];
-        let mut v = a[0] + a[1] * u + a[2] * u * u + a[3] * (a[4] * u).sin();
+        let mut v = a[0] + a[1] * u + a[2] * u * u + a[3] * martensite_cmath::sin(a[4] * u);
         if u == self.u0 {
             v += self.jump0;
         }
@@ -58,7 +58,7 @@ impl AccFunction {
     }
     pub fn deriv(&self, d: i32, u: f64) -> f64 {
         let a = &self.coef[5 * (d as usize - 1)..];
-        a[1] + 2. * a[2] * u + a[3] * a[4] * (a[4] * u).cos()
+        a[1] + 2. * a[2] * u + a[3] * a[4] * martensite_cmath::cos(a[4] * u)
     }
 }
 

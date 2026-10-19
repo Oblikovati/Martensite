@@ -25,7 +25,7 @@ pub(super) fn axis_derivs(t: f64, alpha: f64, order: usize, max: usize) -> AxisB
     for k in 1..=order {
         let freq: f64 = k as f64 * alpha;
         let arg: f64 = freq * t;
-        let (sin, cos) = (arg.sin(), arg.cos());
+        let (sin, cos) = (martensite_cmath::sin(arg), martensite_cmath::cos(arg));
         let freq2: f64 = freq * freq;
         let freq3: f64 = freq2 * freq;
         let values: [[f64; 2]; 4] = [
@@ -51,7 +51,7 @@ pub(super) fn axis_nth_deriv(t: f64, alpha: f64, order: usize, n: i32) -> AxisBa
     for k in 1..=order {
         let freq: f64 = k as f64 * alpha;
         let arg: f64 = freq * t;
-        let (sin, cos) = (arg.sin(), arg.cos());
+        let (sin, cos) = (martensite_cmath::sin(arg), martensite_cmath::cos(arg));
         let (value_sin, value_cos) = if n == 0 {
             (sin, cos)
         } else {

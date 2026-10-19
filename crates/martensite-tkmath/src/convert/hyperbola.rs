@@ -19,14 +19,20 @@ impl ConicToBSplineCurve {
         let (major, minor) = (hyperbola.major_radius(), hyperbola.minor_radius());
         let s: f64 = orientation(&hyperbola.axis());
         (result.weights[1], result.weights[2], result.weights[3]) =
-            (1., ((ul - uf) / 2.).cosh(), 1.);
+            (1., martensite_cmath::cosh((ul - uf) / 2.), 1.);
         // The middle pole is the intersection of the tangents at P(UF) and P(UL).
-        let delta: f64 = (ul - uf).sinh();
-        let x: f64 = major * (ul.sinh() - uf.sinh()) / delta;
-        let y: f64 = s * minor * (ul.cosh() - uf.cosh()) / delta;
-        result.poles[1] = Point2::new(major * uf.cosh(), s * minor * uf.sinh());
+        let delta: f64 = martensite_cmath::sinh(ul - uf);
+        let x: f64 = major * (martensite_cmath::sinh(ul) - martensite_cmath::sinh(uf)) / delta;
+        let y: f64 = s * minor * (martensite_cmath::cosh(ul) - martensite_cmath::cosh(uf)) / delta;
+        result.poles[1] = Point2::new(
+            major * martensite_cmath::cosh(uf),
+            s * minor * martensite_cmath::sinh(uf),
+        );
         result.poles[2] = Point2::new(x, y);
-        result.poles[3] = Point2::new(major * ul.cosh(), s * minor * ul.sinh());
+        result.poles[3] = Point2::new(
+            major * martensite_cmath::cosh(ul),
+            s * minor * martensite_cmath::sinh(ul),
+        );
         place_in_frame(&mut result, hyperbola.axis().x_axis());
         Ok(result)
     }

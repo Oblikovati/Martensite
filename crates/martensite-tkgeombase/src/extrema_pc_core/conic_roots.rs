@@ -38,7 +38,7 @@ impl<'r> PolynomialRoots<'r> {
         if !self.exponential {
             return Some(root);
         }
-        (root > 0.0).then(|| root.ln())
+        (root > 0.0).then(|| martensite_cmath::log(root))
     }
     // Whether root `index` takes part in the sign count after a root.
     fn counts(&self, index: usize) -> bool {

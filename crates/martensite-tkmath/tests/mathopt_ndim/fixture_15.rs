@@ -5,7 +5,7 @@ impl MultipleVarFunction for MathOptTest_ExponentialQuadraticFunction {
         2
     }
     fn value(&mut self, theX: &Vector<'_>, theF: &mut f64) -> bool {
-        let anExp: f64 = (*theX.at(0).unwrap() + *theX.at(1).unwrap()).exp();
+        let anExp: f64 = martensite_cmath::exp(*theX.at(0).unwrap() + *theX.at(1).unwrap());
         let aDx: f64 = *theX.at(0).unwrap() - 1.0;
         let aDy: f64 = *theX.at(1).unwrap() + 1.0;
         *theF = anExp + aDx * aDx + 2.0 * aDy * aDy;
@@ -14,7 +14,7 @@ impl MultipleVarFunction for MathOptTest_ExponentialQuadraticFunction {
 }
 impl MultipleVarFunctionWithGradient for MathOptTest_ExponentialQuadraticFunction {
     fn gradient(&mut self, theX: &Vector<'_>, theG: &mut Vector<'_>) -> bool {
-        let anExp: f64 = (*theX.at(0).unwrap() + *theX.at(1).unwrap()).exp();
+        let anExp: f64 = martensite_cmath::exp(*theX.at(0).unwrap() + *theX.at(1).unwrap());
         *theG.change_at(0).unwrap() = anExp + 2.0 * (*theX.at(0).unwrap() - 1.0);
         *theG.change_at(1).unwrap() = anExp + 4.0 * (*theX.at(1).unwrap() + 1.0);
         true

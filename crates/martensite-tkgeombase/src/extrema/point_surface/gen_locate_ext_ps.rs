@@ -44,7 +44,7 @@ fn corrected_tolerance(value: f64) -> Option<f64> {
         return None;
     }
     let tolog10: f64 = 0.43429;
-    let n: i32 = real::real_to_int(tolog10 * (eps / eps_ref).ln() + 1.) + 1;
+    let n: i32 = real::real_to_int(tolog10 * martensite_cmath::log(eps / eps_ref) + 1.) + 1;
     let mut tol: f64 = precision::p_confusion();
     for _ in 1..=n {
         tol *= 10.;

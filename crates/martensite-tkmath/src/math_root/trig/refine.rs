@@ -5,8 +5,8 @@ use crate::math_root::utils::{
 };
 fn derivatives(c: &[f64; 5], x: f64) -> (f64, f64, f64) {
     let [a, b, c, d, e] = *c;
-    let cosine: f64 = x.cos();
-    let sine: f64 = x.sin();
+    let cosine: f64 = martensite_cmath::cos(x);
+    let sine: f64 = martensite_cmath::sin(x);
     let cosine_sq: f64 = cosine * cosine;
     let sine_sq: f64 = sine * sine;
     let product: f64 = cosine * sine;
@@ -58,7 +58,7 @@ pub(super) fn add_polynomial_root(
     out: &mut TrigResult,
     root: f64,
 ) {
-    let mut angle: f64 = 2.0 * root.atan();
+    let mut angle: f64 = 2.0 * martensite_cmath::atan(root);
     if root <= -epsilon {
         angle = TAU - angle.abs();
     }

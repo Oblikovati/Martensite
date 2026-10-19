@@ -13,7 +13,7 @@ fn fixture_bytes_and_row_counts_are_locked() {
     );
     assert_eq!(
         super::fixture_hash([CHUNKS[0].1].into_iter()),
-        17988265713607758292
+        788904924921980280
     );
 }
 

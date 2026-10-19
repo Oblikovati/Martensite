@@ -47,8 +47,8 @@ impl NormalPolyDef {
     fn value_term(&self, index: usize, cos: f64, sin: f64) -> f64 {
         let i: f64 = index as f64;
         self.binomials[index]
-            * cos.powf(i)
-            * sin.powf(f64::from(self.k0) - i)
+            * martensite_cmath::pow(cos, i)
+            * martensite_cmath::pow(sin, f64::from(self.k0) - i)
             * self.coefficients[index]
     }
 
@@ -57,8 +57,8 @@ impl NormalPolyDef {
         let i: f64 = index as f64;
         let k0: f64 = f64::from(self.k0);
         self.binomials[index]
-            * cos.powf(i - 1.0)
-            * sin.powf(k0 - i - 1.0)
+            * martensite_cmath::pow(cos, i - 1.0)
+            * martensite_cmath::pow(sin, k0 - i - 1.0)
             * (k0 * cos * cos - i)
             * self.coefficients[index]
     }
@@ -77,8 +77,8 @@ fn read_coefficient(li: &Array1<'_, f64>, index: i32) -> Result<f64, Failure> {
 /// Returns `(cos X, sin X)`, or `None` at the singular points where the
 /// formula returns zero to avoid `0^n` terms (|cos| or |sin| <= RealSmall()).
 fn regular_trigonometry(x: f64) -> Option<(f64, f64)> {
-    let cos: f64 = x.cos();
-    let sin: f64 = x.sin();
+    let cos: f64 = martensite_cmath::cos(x);
+    let sin: f64 = martensite_cmath::sin(x);
     if cos.abs() <= f64::MIN_POSITIVE || sin.abs() <= f64::MIN_POSITIVE {
         return None;
     }

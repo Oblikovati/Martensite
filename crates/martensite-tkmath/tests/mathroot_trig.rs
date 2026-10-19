@@ -9,8 +9,8 @@ fn near(a: f64, b: f64, tol: f64) {
 fn verify_roots(result: &TrigResult, c: [f64; 5], tolerance: f64) {
     for i in 0..result.nb_roots {
         let x: f64 = result.roots[i];
-        let cosine: f64 = x.cos();
-        let sine: f64 = x.sin();
+        let cosine: f64 = martensite_cmath::cos(x);
+        let sine: f64 = martensite_cmath::sin(x);
         let [a, b, c, d, e] = c;
         let value: f64 = a * cosine * cosine + 2.0 * b * cosine * sine + c * cosine + d * sine + e;
         near(value, 0.0, tolerance);

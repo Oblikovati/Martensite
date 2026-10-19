@@ -269,7 +269,11 @@ pub fn mmgaus1_case(output: &Output, values: &[f64]) {
     let mut r = Reader::new(values);
     let (nf, k, xd, xf, kind) = (r.integer(), r.integer(), r.real(), r.real(), r.integer());
     let mut integrand = |n: i32, t: f64, f: &mut [f64], ier: &mut i32| {
-        let v: [f64; 3] = [t * t * t - 2. * t, (3. * t).sin(), (-t).exp()];
+        let v: [f64; 3] = [
+            t * t * t - 2. * t,
+            martensite_cmath::sin(3. * t),
+            martensite_cmath::exp(-t),
+        ];
         for i in 0..n as usize {
             f[i] = v[i % 3] + i as f64;
         }

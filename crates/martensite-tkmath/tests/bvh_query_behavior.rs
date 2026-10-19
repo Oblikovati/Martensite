@@ -309,7 +309,7 @@ impl BvhTraverse<BvhVec3d> for NearestTriangle<'_> {
     fn accept(&mut self, index: i32, _: &f64) -> Result<bool, Failure> {
         let set = self.set.as_deref().unwrap();
         let bounding = set.element_box(index)?;
-        let distance = (bounding.corner_min().x - self.state.object().x).powi(2);
+        let distance = martensite_cmath::powi(bounding.corner_min().x - self.state.object().x, 2);
         if distance < self.state.distance() {
             self.state.set_distance(distance);
             return Ok(true);

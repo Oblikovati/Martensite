@@ -23,7 +23,11 @@ fn verify_fixture(line: &str) {
     let result = isolate(&coefficients, [-16., 16.]);
     assert_eq!(result.roots().len(), roots.len(), "{}", fields[0]);
     verify_order_and_width(&result, 0.0001);
-    for scale in [-1., 2_f64.powi(900), 2_f64.powi(-900)] {
+    for scale in [
+        -1.,
+        martensite_cmath::powi(2_f64, 900),
+        martensite_cmath::powi(2_f64, -900),
+    ] {
         let scaled: Vec<f64> = coefficients.iter().map(|value| value * scale).collect();
         assert_eq!(
             isolate(&scaled, [-16., 16.]),

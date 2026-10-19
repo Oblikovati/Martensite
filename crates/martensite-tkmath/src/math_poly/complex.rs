@@ -29,11 +29,14 @@ impl Complex {
     }
     /// `std::polar`: `(rho*cos(theta), rho*sin(theta))`; `Complex::polar(2.0, 0.0)`.
     pub fn polar(rho: f64, theta: f64) -> Self {
-        Self::new(rho * theta.cos(), rho * theta.sin())
+        Self::new(
+            rho * martensite_cmath::cos(theta),
+            rho * martensite_cmath::sin(theta),
+        )
     }
-    /// `std::abs` through glibc `cabs`/`hypot`; `Complex::new(3.0,4.0).abs()` is 5.
+    /// `std::abs` through the correctly rounded `hypot`; `Complex::new(3.0,4.0).abs()` is 5.
     pub fn abs(self) -> f64 {
-        self.real().hypot(self.imag())
+        martensite_cmath::hypot(self.real(), self.imag())
     }
     /// `std::norm` as libstdc++ 13 computes it, `x*x + y*y`; `Complex::new(3.0,4.0).norm()`.
     pub fn norm(self) -> f64 {

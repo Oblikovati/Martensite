@@ -156,7 +156,7 @@ impl EmbeddedRule {
 }
 fn roundoff_error(mut error: f64, variability: f64, absolute: f64) -> f64 {
     if variability != 0.0 && error != 0.0 {
-        let scale: f64 = (200.0 * error / variability).powf(1.5);
+        let scale: f64 = martensite_cmath::pow(200.0 * error / variability, 1.5);
         error = variability * scale.min(1.0);
     }
     if absolute > f64::MIN_POSITIVE / (50.0 * f64::EPSILON) {

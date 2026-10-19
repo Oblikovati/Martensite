@@ -90,7 +90,11 @@ impl AnaIntersection {
                 let ty: f64 = 0.5 * minor * (s - 1.0 / s);
                 valid += 1;
                 let (tx, ty) = coord_ancien_repere(tx, ty, axis);
-                let parameter: f64 = if direct { s.ln() } else { -s.ln() };
+                let parameter: f64 = if direct {
+                    martensite_cmath::log(s)
+                } else {
+                    -martensite_cmath::log(s)
+                };
                 self.lpnt[(valid - 1) as usize].set_implicit_value(tx, ty, parameter);
             }
         }

@@ -2,7 +2,7 @@
 struct CosMinusXFunc;
 impl Function for CosMinusXFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (theX).cos() - theX;
+        *theF = martensite_cmath::cos(theX) - theX;
         true
     }
 }
@@ -12,8 +12,8 @@ impl FunctionWithDerivative for CosMinusXFunc {
         self.values(theX, &mut value, theDf)
     }
     fn values(&mut self, theX: f64, theF: &mut f64, theDf: &mut f64) -> bool {
-        *theF = (theX).cos() - theX;
-        *theDf = -(theX).sin() - 1.0;
+        *theF = martensite_cmath::cos(theX) - theX;
+        *theDf = -martensite_cmath::sin(theX) - 1.0;
         true
     }
 }

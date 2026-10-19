@@ -25,8 +25,11 @@ fn zero() -> Vector3 {
 /// Cone point with derivatives up to the second; `cone_d2(0.5,1.0,frame,2.0,0.3)`.
 pub fn cone_d2(u: f64, v: f64, position: Axis3, radius: f64, semi_angle: f64) -> SurfaceD2 {
     let frame = Frame::of(position);
-    let (cos_u, sin_u) = (u.cos(), u.sin());
-    let (cos_a, sin_a) = (semi_angle.cos(), semi_angle.sin());
+    let (cos_u, sin_u) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
+    let (cos_a, sin_a) = (
+        martensite_cmath::cos(semi_angle),
+        martensite_cmath::sin(semi_angle),
+    );
     let ring = radius + v * sin_a;
     let (a1, a2, a3) = (ring * cos_u, ring * sin_u, v * cos_a);
     let (r1, r2) = (sin_a * cos_u, sin_a * sin_u);
@@ -43,7 +46,10 @@ pub fn cone_d2(u: f64, v: f64, position: Axis3, radius: f64, semi_angle: f64) ->
 /// Cylinder point with derivatives up to the second; `cylinder_d2(0.5,1.0,frame,2.0)`.
 pub fn cylinder_d2(u: f64, v: f64, position: Axis3, radius: f64) -> SurfaceD2 {
     let frame = Frame::of(position);
-    let (a1, a2) = (radius * u.cos(), radius * u.sin());
+    let (a1, a2) = (
+        radius * martensite_cmath::cos(u),
+        radius * martensite_cmath::sin(u),
+    );
     let circle = frame.pair(a1, a2);
     SurfaceD2 {
         point: frame.point(circle + frame.z * v),
@@ -57,8 +63,11 @@ pub fn cylinder_d2(u: f64, v: f64, position: Axis3, radius: f64) -> SurfaceD2 {
 /// Sphere point with derivatives up to the second; `sphere_d2(0.5,0.2,frame,2.0)`.
 pub fn sphere_d2(u: f64, v: f64, position: Axis3, radius: f64) -> SurfaceD2 {
     let frame = Frame::of(position);
-    let (cos_u, sin_u) = (u.cos(), u.sin());
-    let (ring, height) = (radius * v.cos(), radius * v.sin());
+    let (cos_u, sin_u) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
+    let (ring, height) = (
+        radius * martensite_cmath::cos(v),
+        radius * martensite_cmath::sin(v),
+    );
     let (a1, a2, a3, a4) = (ring * cos_u, ring * sin_u, height * cos_u, height * sin_u);
     let circle = frame.pair(a1, a2);
     let axial = frame.z * height;
@@ -75,8 +84,11 @@ pub fn sphere_d2(u: f64, v: f64, position: Axis3, radius: f64) -> SurfaceD2 {
 /// `torus_d2(0.5,0.2,frame,5.0,1.0)`.
 pub fn torus_d2(u: f64, v: f64, position: Axis3, major: f64, minor: f64) -> SurfaceD2 {
     let frame = Frame::of(position);
-    let (cos_u, sin_u) = (u.cos(), u.sin());
-    let (tube_cos, tube_sin) = (minor * v.cos(), minor * v.sin());
+    let (cos_u, sin_u) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
+    let (tube_cos, tube_sin) = (
+        minor * martensite_cmath::cos(v),
+        minor * martensite_cmath::sin(v),
+    );
     let ring = major + tube_cos;
     let tolerance = torus_tolerance(major, minor);
     let [a1, a2, a3, a4, a5, a6] = [

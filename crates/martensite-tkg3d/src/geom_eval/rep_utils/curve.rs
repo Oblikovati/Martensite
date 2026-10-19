@@ -31,7 +31,7 @@ pub fn try_eval_curve_dn(
         order,
         u,
         |curve, u| curve.eval_dn(u, n),
-        |vector, map| vector * map.scale.powf(f64::from(n)),
+        |vector, map| vector * martensite_cmath::pow(map.scale, f64::from(n)),
     )
 }
 

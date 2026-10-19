@@ -36,7 +36,7 @@ pub fn solve_symmetric_2x2_svd(
 fn eigen_step(a: &[f64; 3], b: &[f64; 2], tol: f64) -> Option<[f64; 2]> {
     let trace: f64 = a[0] + a[2];
     let diff: f64 = (a[0] - a[2]) * 0.5;
-    let discrim: f64 = diff.hypot(a[1]);
+    let discrim: f64 = martensite_cmath::hypot(diff, a[1]);
     let lambdas: [f64; 2] = [trace * 0.5 + discrim, trace * 0.5 - discrim];
     let cutoff: f64 = std_max(lambdas[0].abs(), lambdas[1].abs()) * tol;
     if lambdas.iter().all(|v| v.abs() < cutoff) {
@@ -63,7 +63,7 @@ fn eigenvector(a: &[f64; 3], diff: f64, lambda: f64, tol: f64) -> Option<[f64; 2
     } else {
         [lambda - a[2], a[1]]
     };
-    let length: f64 = v[0].hypot(v[1]);
+    let length: f64 = martensite_cmath::hypot(v[0], v[1]);
     if length < tol {
         return None;
     }
@@ -95,7 +95,7 @@ fn fallback(j: &[[f64; 2]; 2], f: &[f64; 2], residual: f64) -> Option<[f64; 2]> 
         a[0][0] * (f[0] / fs) + a[0][1] * (f[1] / fs),
         a[0][1] * (f[0] / fs) + a[1][1] * (f[1] / fs),
     ];
-    let length: f64 = g[0].hypot(g[1]);
+    let length: f64 = martensite_cmath::hypot(g[0], g[1]);
     // `!(|g| >= CRITICAL_GRAD)` also reports a NaN gradient as singular.
     if length.partial_cmp(&CRITICAL_GRAD).is_none_or(|v| v.is_lt()) {
         return None;

@@ -88,7 +88,7 @@ impl Quadric {
     /// `quadric.set_cone(cone)`.
     pub fn set_cone(&mut self, cone: Cone3) {
         self.coefficients = cone.coefficients();
-        let apex_parameter: f64 = -cone.ref_radius() / cone.semi_angle().sin();
+        let apex_parameter: f64 = -cone.ref_radius() / martensite_cmath::sin(cone.semi_angle());
         self.special_points
             .append(elslib::value(0.0, apex_parameter, &cone));
     }

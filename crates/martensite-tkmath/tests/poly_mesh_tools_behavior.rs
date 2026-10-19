@@ -308,7 +308,7 @@ fn perform_refuses_a_start_link_that_consumes_nothing() {
     let points: Vec<Xy> = (0..5)
         .map(|k| {
             let angle = f64::from(k) * std::f64::consts::TAU / 5.0;
-            Xy::new(angle.cos(), angle.sin())
+            Xy::new(martensite_cmath::cos(angle), martensite_cmath::sin(angle))
         })
         .collect();
     let flags = [0, 3, 1, 3, 1];

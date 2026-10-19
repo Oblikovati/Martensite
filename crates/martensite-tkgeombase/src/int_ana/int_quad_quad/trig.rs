@@ -140,7 +140,7 @@ fn periodic_root(root: f64) -> f64 {
 
 /// `cos (CC cos + 2 SC sin + C) + S sin + Cte` at `root`.
 fn trig_residual([cc, sc, c, s, cte]: [f64; 5], root: f64) -> f64 {
-    let (co, si) = (root.cos(), root.sin());
+    let (co, si) = (martensite_cmath::cos(root), martensite_cmath::sin(root));
     co * (cc * co + (sc + sc) * si + c) + s * si + cte
 }
 
@@ -158,7 +158,7 @@ pub(super) struct TrigFunction {
 impl TrigFunction {
     /// The value at `u`.
     pub fn value(&self, u: f64) -> f64 {
-        let (sinus, cosinus) = (u.sin(), u.cos());
+        let (sinus, cosinus) = (martensite_cmath::sin(u), martensite_cmath::cos(u));
         self.cc * cosinus * cosinus
             + self.ss * sinus * sinus
             + 2.0 * (sinus * (self.sc * cosinus + self.s) + cosinus * self.c)

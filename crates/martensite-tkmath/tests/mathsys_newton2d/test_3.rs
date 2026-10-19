@@ -2,7 +2,7 @@
 fn math_sys_newton2_d_solve2_d_line_search_rejects_increasing_full_step() {
     let mut aFunc = |x: &[f64; 2], theF: &mut [f64; 2], theJ: &mut [[f64; 2]; 2]| -> bool {
         let [theU, theV] = *x;
-        theF[0] = (theU).atan();
+        theF[0] = martensite_cmath::atan(theU);
         theF[1] = theV;
         theJ[0][0] = 1.0 / (1.0 + theU * theU);
         theJ[0][1] = 0.0;
@@ -24,7 +24,7 @@ fn math_sys_newton2_d_solve2_d_line_search_rejects_increasing_full_step() {
     aOptions.enable_line_search = true;
     let aBacktracked: NewtonResultN<2> = solve_2d(&mut aFunc, [2.0, 0.0], &aBounds, &aOptions);
 
-    let anInitialResidual: f64 = (2.0_f64).atan();
+    let anInitialResidual: f64 = martensite_cmath::atan(2.0_f64);
     assert!(aFullStep.residual_norm > anInitialResidual);
     assert!(aBacktracked.residual_norm < anInitialResidual);
     assert_ne!(aBacktracked.x[0], aFullStep.x[0]);

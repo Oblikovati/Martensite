@@ -13,9 +13,9 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::Point3;
 
 /// `pow(x, n)` of the C++ code: `std::pow(double, int)` promotes the exponent and
-/// calls the libm `pow`, which `powf` also reaches.
+/// calls the general `pow`, here the correctly rounded `martensite_cmath::pow`.
 pub(super) fn cpp_pow(x: f64, n: i32) -> f64 {
-    x.powf(f64::from(n))
+    martensite_cmath::pow(x, f64::from(n))
 }
 
 /// The number of roots a direction samples: the context roots minus the two end

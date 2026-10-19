@@ -63,7 +63,10 @@ fn algebraic(basis: &mut AxisBasis, t: f64, max: usize, degree: usize) {
 // Even orders keep (sinh, cosh), odd orders swap them; alpha^d is a running product.
 fn hyperbolic(basis: &mut AxisBasis, t: f64, max: usize, alpha: f64, index: usize) {
     let alpha_t: f64 = alpha * t;
-    let (sinh, cosh) = (alpha_t.sinh(), alpha_t.cosh());
+    let (sinh, cosh) = (
+        martensite_cmath::sinh(alpha_t),
+        martensite_cmath::cosh(alpha_t),
+    );
     let mut alpha_pow: f64 = 1.0;
     for d in 0..=max {
         let (first, second) = if d % 2 == 0 {
@@ -80,7 +83,7 @@ fn hyperbolic(basis: &mut AxisBasis, t: f64, max: usize, alpha: f64, index: usiz
 // The (sin, cos) pair shifted by d quarter turns, times the running beta^d.
 fn trigonometric(basis: &mut AxisBasis, t: f64, max: usize, beta: f64, index: usize) {
     let beta_t: f64 = beta * t;
-    let (sin, cos) = (beta_t.sin(), beta_t.cos());
+    let (sin, cos) = (martensite_cmath::sin(beta_t), martensite_cmath::cos(beta_t));
     let mut beta_pow: f64 = 1.0;
     for d in 0..=max {
         let (sin_d, cos_d) = trig_shift(sin, cos, d as i32);

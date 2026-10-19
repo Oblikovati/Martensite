@@ -4,7 +4,7 @@ fn surface_class2d_lazy_grid_remains_exact_away_from_boundary() {
     let mut aPnts = Array1::with_bounds(1, THE_POINT_COUNT).unwrap();
     for anIdx in 0..THE_POINT_COUNT {
         let anAngle: f64 = 2.0 * PI * f64::from(anIdx) / f64::from(THE_POINT_COUNT);
-        aPnts[anIdx + 1] = Point2::new(0.5 + 0.4 * anAngle.cos(), 0.5 + 0.4 * anAngle.sin());
+        aPnts[anIdx + 1] = Point2::new(0.5 + 0.4 * martensite_cmath::cos(anAngle), 0.5 + 0.4 * martensite_cmath::sin(anAngle));
     }
 
     let aClassifier = Class2d::from_array(&aPnts, 1.0e-8, 1.0e-8, 0.0, 0.0, 1.0, 1.0);
@@ -60,7 +60,7 @@ fn surface_class2d_lazy_grid_matches_exact_path_for_concave_diagonal_polygon() {
             0.34
         };
         aPnts[anIdx + 1] =
-            Point2::new(0.5 + aRadius * anAngle.cos(), 0.5 + aRadius * anAngle.sin());
+            Point2::new(0.5 + aRadius * martensite_cmath::cos(anAngle), 0.5 + aRadius * martensite_cmath::sin(anAngle));
     }
 
     let aCached = Class2d::from_array(&aPnts, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0);
@@ -95,7 +95,7 @@ fn surface_class2d_lazy_grid_concurrent_activation_queries_are_thread_safe() {
     let mut aPnts = Array1::with_bounds(1, THE_POINT_COUNT).unwrap();
     for anIdx in 0..THE_POINT_COUNT {
         let anAngle: f64 = 2.0 * PI * f64::from(anIdx) / f64::from(THE_POINT_COUNT);
-        aPnts[anIdx + 1] = Point2::new(0.5 + 0.4 * anAngle.cos(), 0.5 + 0.4 * anAngle.sin());
+        aPnts[anIdx + 1] = Point2::new(0.5 + 0.4 * martensite_cmath::cos(anAngle), 0.5 + 0.4 * martensite_cmath::sin(anAngle));
     }
 
     let aClassifier = Class2d::from_array(&aPnts, 1.0e-8, 1.0e-8, 0.0, 0.0, 1.0, 1.0);

@@ -25,7 +25,7 @@ struct TrigRecurrence {
 }
 impl TrigRecurrence {
     fn new(theta: f64) -> Self {
-        let (sin1, cos1) = (theta.sin(), theta.cos());
+        let (sin1, cos1) = (martensite_cmath::sin(theta), martensite_cmath::cos(theta));
         Self {
             sin1,
             cos1,

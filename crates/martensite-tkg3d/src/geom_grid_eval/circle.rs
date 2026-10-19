@@ -40,7 +40,7 @@ impl CircleCoords {
 impl ConicTerms for CircleCoords {
     type Local = (f64, f64);
     fn local(&self, u: f64) -> (f64, f64) {
-        (u.cos(), u.sin())
+        (martensite_cmath::cos(u), martensite_cmath::sin(u))
     }
     fn point(&self, (c, s): (f64, f64)) -> Point3 {
         self.frame.translated(self.vector(c, s))
@@ -56,7 +56,7 @@ impl ConicTerms for CircleCoords {
     }
     // Cyclic with period 4: `(theN - 1) % 4` selects the coefficients.
     fn dn(&self, u: f64, n: i32) -> Vector3 {
-        let (a, b) = cyclic_coefficients(n, u.cos(), u.sin());
+        let (a, b) = cyclic_coefficients(n, martensite_cmath::cos(u), martensite_cmath::sin(u));
         self.vector(a, b)
     }
 }

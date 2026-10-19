@@ -132,7 +132,7 @@ fn polynomial_hermit_jacobi_coefficient_conversion() {
     // Use 0-based arrays to match the ToCoefficients indexing expectations
     let mut aHermJacCoeff = reals(0, aHermJacSize - 1);
     for i in aHermJacCoeff.lower()..=aHermJacCoeff.upper() {
-        aHermJacCoeff[i] = (f64::from(i) * 0.3).sin(); // Some test values
+        aHermJacCoeff[i] = martensite_cmath::sin(f64::from(i) * 0.3); // Some test values
     }
 
     let mut aCoefficients = reals(0, aCoeffSize - 1);

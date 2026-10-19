@@ -10,7 +10,7 @@ impl FunctionSet for ExponentialFit {
         for i in 0..5 {
             *theF.change_at(i).unwrap() = [1.0_f64, 2.7, 7.4, 20.1, 54.6][i]
                 - *theX.at(0).unwrap()
-                    * (*theX.at(1).unwrap() * [0.0_f64, 1.0, 2.0, 3.0, 4.0][i]).exp();
+                    * martensite_cmath::exp(*theX.at(1).unwrap() * [0.0_f64, 1.0, 2.0, 3.0, 4.0][i]);
         }
         true
     }
@@ -18,7 +18,7 @@ impl FunctionSet for ExponentialFit {
 impl FunctionSetWithDerivatives for ExponentialFit {
     fn derivatives(&mut self, theX: &Vector<'_>, theD: &mut Matrix<'_>) -> bool {
         for i in 0..5 {
-            let aExp: f64 = (*theX.at(1).unwrap() * [0.0_f64, 1.0, 2.0, 3.0, 4.0][i]).exp();
+            let aExp: f64 = martensite_cmath::exp(*theX.at(1).unwrap() * [0.0_f64, 1.0, 2.0, 3.0, 4.0][i]);
             *theD.change_at(i, 0).unwrap() = -aExp;
             *theD.change_at(i, 1).unwrap() =
                 -*theX.at(0).unwrap() * [0.0_f64, 1.0, 2.0, 3.0, 4.0][i] * aExp;

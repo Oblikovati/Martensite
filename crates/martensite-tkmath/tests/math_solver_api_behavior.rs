@@ -15,7 +15,7 @@ impl MultipleVarFunction for Bowl {
         2
     }
     fn value(&mut self, x: &Vector<'_>, v: &mut f64) -> bool {
-        *v = (x[1] - 1.0).powi(2) + (x[2] - 2.0).powi(2);
+        *v = martensite_cmath::powi(x[1] - 1.0, 2) + martensite_cmath::powi(x[2] - 2.0, 2);
         true
     }
 }

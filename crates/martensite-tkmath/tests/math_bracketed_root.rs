@@ -21,7 +21,7 @@ impl Function for CubicFunction {
 struct SineFunction;
 impl Function for SineFunction {
     fn value(&mut self, x: f64, result: &mut f64) -> bool {
-        *result = x.sin();
+        *result = martensite_cmath::sin(x);
         true
     }
 }

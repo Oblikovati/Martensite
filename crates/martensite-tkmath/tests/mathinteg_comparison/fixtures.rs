@@ -6,7 +6,7 @@ fn near(a: f64, b: f64, tol: f64) {
 struct SinFuncOld;
 impl Function for SinFuncOld {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (theX).sin();
+        *theF = martensite_cmath::sin(theX);
         true
     }
 }
@@ -22,7 +22,7 @@ impl Function for QuadraticFuncOld {
 struct ExpFuncOld;
 impl Function for ExpFuncOld {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (theX).exp();
+        *theF = martensite_cmath::exp(theX);
         true
     }
 }
@@ -30,7 +30,7 @@ impl Function for ExpFuncOld {
 struct CosFuncOld;
 impl Function for CosFuncOld {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (theX).cos();
+        *theF = martensite_cmath::cos(theX);
         true
     }
 }
@@ -71,7 +71,7 @@ impl Function for ConstantFuncOld {
 struct SinFuncNew;
 impl Function for SinFuncNew {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (theX).sin();
+        *theF = martensite_cmath::sin(theX);
         true
     }
 }
@@ -87,7 +87,7 @@ impl Function for QuadraticFuncNew {
 struct ExpFuncNew;
 impl Function for ExpFuncNew {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (theX).exp();
+        *theF = martensite_cmath::exp(theX);
         true
     }
 }
@@ -95,7 +95,7 @@ impl Function for ExpFuncNew {
 struct CosFuncNew;
 impl Function for CosFuncNew {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (theX).cos();
+        *theF = martensite_cmath::cos(theX);
         true
     }
 }

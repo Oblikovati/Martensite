@@ -25,24 +25,24 @@ fn quadric(q: [f64; 10], p: Point3) -> f64 {
 fn quartic(c: &[f64], p: Point3) -> f64 {
     let (x, y, z) = (p.x(), p.y(), p.z());
     let monomials = [
-        x.powi(4),
-        y.powi(4),
-        z.powi(4),
-        x.powi(3) * y,
-        x.powi(3) * z,
-        y.powi(3) * x,
-        y.powi(3) * z,
-        z.powi(3) * x,
-        z.powi(3) * y,
+        martensite_cmath::powi(x, 4),
+        martensite_cmath::powi(y, 4),
+        martensite_cmath::powi(z, 4),
+        martensite_cmath::powi(x, 3) * y,
+        martensite_cmath::powi(x, 3) * z,
+        martensite_cmath::powi(y, 3) * x,
+        martensite_cmath::powi(y, 3) * z,
+        martensite_cmath::powi(z, 3) * x,
+        martensite_cmath::powi(z, 3) * y,
         x * x * y * y,
         x * x * z * z,
         y * y * z * z,
         x * x * y * z,
         x * y * y * z,
         x * y * z * z,
-        x.powi(3),
-        y.powi(3),
-        z.powi(3),
+        martensite_cmath::powi(x, 3),
+        martensite_cmath::powi(y, 3),
+        martensite_cmath::powi(z, 3),
         x * x * y,
         x * x * z,
         y * y * x,
@@ -126,7 +126,7 @@ fn measures_follow_native_formulas() {
     let cone = Cone3::new(frame(), 0.25, 2.0).unwrap();
     let apex = cone.apex();
     // The apex is where the ring radius R + v·sin(a) vanishes.
-    let v = -2.0 / 0.25_f64.sin();
+    let v = -2.0 / martensite_cmath::sin(0.25_f64);
     assert!(apex.distance(&cone.value(1.0, v)) < 1e-12);
 }
 

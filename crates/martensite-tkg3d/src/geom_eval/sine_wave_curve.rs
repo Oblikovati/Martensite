@@ -43,23 +43,27 @@ impl GeomEvalSineWaveCurve {
     });
     // `anO + U * aXD + A * sin(aArg) * aYD`.
     fn point_at(&self, frame: &AxisFrame, u: f64) -> Point3 {
-        let wave: f64 = self.amplitude * self.argument(u).sin();
+        let wave: f64 = self.amplitude * martensite_cmath::sin(self.argument(u));
         Point3::from(frame.origin + frame.x_dir * u + frame.y_dir * wave)
     }
     // `aXD + A * omega * cos(aArg) * aYD`: the X direction is added unscaled.
     fn first_derivative(&self, frame: &AxisFrame, u: f64) -> Vector3 {
-        let b: f64 = self.amplitude * self.omega * self.argument(u).cos();
+        let b: f64 = self.amplitude * self.omega * martensite_cmath::cos(self.argument(u));
         Vector3::from(frame.x_dir + frame.y_dir * b)
     }
     // `A * (-omega^2) * sin(aArg) * aYD`.
     fn second_derivative(&self, frame: &AxisFrame, u: f64) -> Vector3 {
         let om2: f64 = self.omega * self.omega;
-        Vector3::from(frame.y_dir * (self.amplitude * (-om2) * self.argument(u).sin()))
+        Vector3::from(
+            frame.y_dir * (self.amplitude * (-om2) * martensite_cmath::sin(self.argument(u))),
+        )
     }
     // `A * (-omega^3) * cos(aArg) * aYD`, with `aOm3 = aOm2 * omega`.
     fn third_derivative(&self, frame: &AxisFrame, u: f64) -> Vector3 {
         let om3: f64 = self.omega * self.omega * self.omega;
-        Vector3::from(frame.y_dir * (self.amplitude * (-om3) * self.argument(u).cos()))
+        Vector3::from(
+            frame.y_dir * (self.amplitude * (-om3) * martensite_cmath::cos(self.argument(u))),
+        )
     }
 }
 impl GeomGeometry for GeomEvalSineWaveCurve {
@@ -114,7 +118,8 @@ impl GeomCurve for GeomEvalSineWaveCurve {
         // The retained local loop multiplies omega into 1.0 N times, as `powInt` does.
         let om_n: f64 = pow_int(self.omega, n);
         let shifted: f64 = self.omega * u + self.phase + f64::from(n) * PI / 2.0;
-        let mut result: Xyz = frame.y_dir * (self.amplitude * om_n * shifted.sin());
+        let mut result: Xyz =
+            frame.y_dir * (self.amplitude * om_n * martensite_cmath::sin(shifted));
         if n == 1 {
             result += frame.x_dir;
         }

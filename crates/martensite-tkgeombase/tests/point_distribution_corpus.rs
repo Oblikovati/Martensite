@@ -89,7 +89,7 @@ fn point_distribution_inputs_and_answers_stay_frozen() {
     );
     assert_eq!(
         super::fixture_hash(CHUNKS.iter().map(|(_, a)| *a)),
-        0x9e672c9fd0c6a6be
+        0x40d3cad86189f8d0
     );
 }
 fn assert_unit_speed_lengths(request: &[f64]) {

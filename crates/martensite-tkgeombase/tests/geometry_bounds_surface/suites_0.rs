@@ -96,7 +96,7 @@ fn surface_cone_patch() {
     let [aXmin, aXmax, aYmin, aYmax, _aZmin, _aZmax] = get3(&aBox);
 
     // At V=5, radius = aRefRadius + 5*sin(PI/4)
-    let aMaxR = aRefRadius + 5.0 * aSemiAngle.sin();
+    let aMaxR = aRefRadius + 5.0 * martensite_cmath::sin(aSemiAngle);
 
     assert!(aXmax >= aMaxR - precision::confusion());
     assert!(aYmax >= aMaxR - precision::confusion());

@@ -43,36 +43,36 @@ impl FunctionWithDerivative for CubicWithDerivative {
 struct SineWithDerivative;
 impl Function for SineWithDerivative {
     fn value(&mut self, x: f64, value: &mut f64) -> bool {
-        *value = x.sin();
+        *value = martensite_cmath::sin(x);
         true
     }
 }
 impl FunctionWithDerivative for SineWithDerivative {
     fn derivative(&mut self, x: f64, derivative: &mut f64) -> bool {
-        *derivative = x.cos();
+        *derivative = martensite_cmath::cos(x);
         true
     }
     fn values(&mut self, x: f64, value: &mut f64, derivative: &mut f64) -> bool {
-        *value = x.sin();
-        *derivative = x.cos();
+        *value = martensite_cmath::sin(x);
+        *derivative = martensite_cmath::cos(x);
         true
     }
 }
 struct ExponentialWithDerivative;
 impl Function for ExponentialWithDerivative {
     fn value(&mut self, x: f64, value: &mut f64) -> bool {
-        *value = x.exp() - 2.0;
+        *value = martensite_cmath::exp(x) - 2.0;
         true
     }
 }
 impl FunctionWithDerivative for ExponentialWithDerivative {
     fn derivative(&mut self, x: f64, derivative: &mut f64) -> bool {
-        *derivative = x.exp();
+        *derivative = martensite_cmath::exp(x);
         true
     }
     fn values(&mut self, x: f64, value: &mut f64, derivative: &mut f64) -> bool {
-        *value = x.exp() - 2.0;
-        *derivative = x.exp();
+        *value = martensite_cmath::exp(x) - 2.0;
+        *derivative = martensite_cmath::exp(x);
         true
     }
 }

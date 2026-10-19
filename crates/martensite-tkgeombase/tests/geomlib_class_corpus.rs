@@ -25,7 +25,7 @@ fn fixture_bytes_and_all_rows_are_preserved() {
     );
     assert_eq!(
         super::fixture_hash(CHUNKS.iter().map(|(_, r)| *r)),
-        210354488069086800
+        725986058349513287
     );
 }
 #[test]

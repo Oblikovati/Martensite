@@ -235,7 +235,7 @@ impl TangentialDeflection {
                 min_size_ang = std_min(min_length / radius, FRAC_PI_2);
             }
         }
-        du = 2.0 * f64::acos(du);
+        du = 2.0 * martensite_cmath::acos(du);
         Ok(std_max(std_min(du, angular_deflection), min_size_ang))
     }
 }

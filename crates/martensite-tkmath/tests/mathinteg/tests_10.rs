@@ -5,7 +5,7 @@ fn math_integ_special_sqrt_function() {
     let mut aResult: IntegResult = gauss_composite(&mut aFunc, 0.001, 1.0, 20, 15);
     assert!(aResult.is_done());
 
-    let aExpected: f64 = (2.0 / 3.0) * (1.0 - (0.001_f64).powf(1.5));
+    let aExpected: f64 = (2.0 / 3.0) * (1.0 - martensite_cmath::pow(0.001_f64, 1.5));
     near(aResult.value.unwrap(), aExpected, 1.0e-6);
 }
 

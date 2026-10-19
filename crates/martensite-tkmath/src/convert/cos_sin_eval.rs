@@ -38,7 +38,12 @@ pub(super) fn build_algorithmic(
         rational_c1_curve(result, &mut flat_knots, layout, u_first, alpha)?
     };
     algorithmic_cos_and_sin(result, &flat_knots, &curve)?;
-    rotate(result, layout.num_poles, beta.cos(), beta.sin());
+    rotate(
+        result,
+        layout.num_poles,
+        martensite_cmath::cos(beta),
+        martensite_cmath::sin(beta),
+    );
     Ok(())
 }
 
@@ -80,7 +85,7 @@ fn quasi_angular_curve(alpha: f64) -> Result<EvalCurve, Failure> {
             // According to Taylor approximation: b (gamma) = -6.0 / 15.0 + o(gamma^2)
             p_param = -6.0 / 15.0;
         } else {
-            let tan_alpha_2: f64 = alpha_2.tan();
+            let tan_alpha_2: f64 = martensite_cmath::tan(alpha_2);
             let value1: f64 = 3.0e0 * (tan_alpha_2 - alpha_2);
             p_param += alpha_2 / value1;
         }
@@ -108,7 +113,7 @@ fn rational_c1_curve(
     result.knots[2] = u_first + alpha;
     result.mults[2] = result.degree - 1;
     let alpha_4: f64 = alpha * 0.25e0;
-    let tan_alpha_2: f64 = (alpha * 0.5e0).tan();
+    let tan_alpha_2: f64 = martensite_cmath::tan(alpha * 0.5e0);
     let middle: f64 = 1.0e0 + alpha_4 * tan_alpha_2;
     let mut curve: EvalCurve = eval_curve(2, cos_and_sin_rational_c1)?;
     curve.poles[1] = Point2::new(-tan_alpha_2, 1.0e0);

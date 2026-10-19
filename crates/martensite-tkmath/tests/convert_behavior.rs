@@ -55,7 +55,7 @@ fn periodic_tangent_circle_drops_the_closing_pole_and_uses_degree_multiplicities
     assert_eq!((circle.nb_poles(), circle.nb_knots()), (6, 4));
     assert_eq!(circle.multiplicities().as_slice(), &[2, 2, 2, 2]);
     assert_eq!(circle.knots()[4], 2.0 * PI);
-    assert_eq!(circle.weights()[2], (PI / 3.0).cos());
+    assert_eq!(circle.weights()[2], martensite_cmath::cos(PI / 3.0));
 }
 
 #[test]
@@ -125,7 +125,7 @@ fn hyperbola_orders_its_bounds_and_rejects_an_empty_range() {
     let hyperbola = Hyperbola2::from_x_axis(Axis2d::default(), 3.0, 2.0, true).unwrap();
     let arc = ConicToBSplineCurve::from_hyperbola(&hyperbola, 1.0, -1.0).unwrap();
     assert_eq!(arc.knots().as_slice(), &[-1.0, 1.0]);
-    assert_eq!(arc.weights()[2], 1.0_f64.cosh());
+    assert_eq!(arc.weights()[2], martensite_cmath::cosh(1.0_f64));
     let error = ConicToBSplineCurve::from_hyperbola(&hyperbola, 2.0, 2.0).unwrap_err();
     assert_eq!(error.exception_type(), "Standard_DomainError");
 }
@@ -173,7 +173,7 @@ fn sphere_lune_weights_its_meridian_middles_with_one_half() {
         Surface::from_sphere_band(&Sphere3::new(z_frame(), 2.0).unwrap(), 0.0, PI, true).unwrap();
     assert_eq!((lune.nb_u_poles(), lune.nb_v_poles()), (5, 5));
     assert_eq!((*lune.weights().value(1, 2).unwrap()), 0.5);
-    assert_eq!((*lune.weights().value(2, 1).unwrap()), (PI / 4.0).cos());
+    assert_eq!((*lune.weights().value(2, 1).unwrap()), martensite_cmath::cos(PI / 4.0));
 }
 
 #[test]

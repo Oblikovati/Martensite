@@ -156,8 +156,8 @@ impl QuadQuadGeo {
         self.pt1 = axes.pt_intersect();
         self.pt2 = self.pt1;
         let angle: f64 = d1.angle(&d2);
-        let b: f64 = (0.5 * (PI - angle)).sin().abs();
-        let a: f64 = (0.5 * angle).sin().abs();
+        let b: f64 = martensite_cmath::sin(0.5 * (PI - angle)).abs();
+        let a: f64 = martensite_cmath::sin(0.5 * angle).abs();
         if a == 0.0 || b == 0.0 {
             self.typeres = ResultType::Same;
             return Ok(());
@@ -267,7 +267,7 @@ impl QuadQuadGeo {
             return Ok(());
         }
         let apex: Point3 = cone.apex();
-        let dist: f64 = cylinder.radius() / cone.semi_angle().tan();
+        let dist: f64 = cylinder.radius() / martensite_cmath::tan(cone.semi_angle());
         let dir: Direction3 = cylinder.position().direction();
         self.pt1 = offset(apex, dist, dir);
         self.pt2 = offset(apex, -dist, dir);

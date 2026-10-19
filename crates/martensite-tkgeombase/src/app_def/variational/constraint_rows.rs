@@ -65,7 +65,7 @@ impl BasisForms {
     fn scale_constraint_terms(&mut self, typ: i32, coeff: f64, order: i32) -> Result<(), Failure> {
         let used: usize = (typ.clamp(0, 2) + 1) as usize;
         for k in 1..order {
-            let mfact: f64 = coeff.powf(f64::from(k));
+            let mfact: f64 = martensite_cmath::pow(coeff, f64::from(k));
             for g in self.g.iter_mut().take(used) {
                 scale(g, k, mfact)?;
                 scale(g, k + order, mfact)?;

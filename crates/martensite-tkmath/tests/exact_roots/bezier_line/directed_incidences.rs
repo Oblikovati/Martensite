@@ -34,7 +34,7 @@ fn assert_half_parameter(result: &DirectedBezierIncidenceReport) {
 #[test]
 fn generated_dyadic_contacts_cover_five_positions_and_line_reversal() {
     for exponent in -4..=4 {
-        let scale = 2_f64.powi(exponent);
+        let scale = martensite_cmath::powi(2_f64, exponent);
         for (offset, forward, backward) in [
             (-1., BeforeOrigin, BeyondTerminal),
             (0., AtOrigin, AtTerminal),

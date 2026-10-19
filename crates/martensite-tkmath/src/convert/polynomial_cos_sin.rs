@@ -97,7 +97,7 @@ fn locate(
     while (umax - umin).abs() >= u_tol {
         let ptest: f64 = (umax + umin) / 2.;
         let value: Point2 = bsplclib::bezier_d0(ptest, t_poles, None)?;
-        let mut theta: f64 = value.y().atan2(value.x());
+        let mut theta: f64 = martensite_cmath::atan2(value.y(), value.x());
         if theta < 0. {
             theta += 2. * PI;
         }
@@ -152,7 +152,7 @@ fn one_based_values<T: Copy + Default>(values: &[T]) -> Array1<'static, T> {
 // Readjustment (obviously redundant, says the comment): the end poles move
 // onto the exact arc ends with the end tangent lengths kept.
 fn readjust_ends(arc: &mut Array1<'_, Point2>, num_poles: i32, delta: f64) -> Result<(), Failure> {
-    let (sin_d, cos_d) = (delta.sin(), delta.cos());
+    let (sin_d, cos_d) = (martensite_cmath::sin(delta), martensite_cmath::cos(delta));
     let start: Point2 = Point2::new(1., 0.);
     let end: Point2 = Point2::new(cos_d, sin_d);
     let mut dtg: f64 = checked(arc, 1)?.distance(checked(arc, 2)?);

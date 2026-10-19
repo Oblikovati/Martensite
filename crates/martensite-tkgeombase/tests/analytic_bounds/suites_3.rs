@@ -111,8 +111,8 @@ fn add_surface_cone_full() {
     let [_aXmin, _aYmin, _aZmin, aXmax, aYmax, aZmax] = get(&aBox);
 
     // V=5: radius = 2 + 5*sin(PI/4), Z = 5*cos(PI/4)
-    let aMaxRadius = 2. + 5. * (PI / 4.).sin();
-    let aMaxZ = 5. * (PI / 4.).cos();
+    let aMaxRadius = 2. + 5. * martensite_cmath::sin(PI / 4.);
+    let aMaxZ = 5. * martensite_cmath::cos(PI / 4.);
 
     EXPECT_NEAR(aXmax, aMaxRadius, precision::confusion());
     EXPECT_NEAR(aYmax, aMaxRadius, precision::confusion());

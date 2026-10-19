@@ -123,7 +123,7 @@ fn owned_report_does_not_observe_later_source_edits() {
 fn exact_accumulation_is_permutation_independent() {
     let tiny = f64::from_bits(1);
     for power in -20..20 {
-        let large = 2_f64.powi(power);
+        let large = martensite_cmath::powi(2_f64, power);
         let mut components = [[large; 2], [tiny; 2], [large; 2]];
         let first = sum_nonnegative_enclosures(&components, options(1.), || false).unwrap();
         components.reverse();

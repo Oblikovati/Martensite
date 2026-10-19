@@ -133,9 +133,9 @@ impl Quaternion {
     pub fn rotation_angle(self) -> f64 {
         let length = (self.x * self.x + self.y * self.y + self.z * self.z).sqrt();
         if self.w < 0.0 {
-            return 2.0 * (-length).atan2(-self.w);
+            return 2.0 * martensite_cmath::atan2(-length, -self.w);
         }
-        2.0 * length.atan2(self.w)
+        2.0 * martensite_cmath::atan2(length, self.w)
     }
 }
 impl ops::Neg for Quaternion {

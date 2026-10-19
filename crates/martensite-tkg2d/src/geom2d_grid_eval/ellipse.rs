@@ -21,7 +21,7 @@ pub struct Geom2dGridEvalEllipse {
 struct EllipseTerms(RadiiFrame);
 impl ConicTerms for EllipseTerms {
     fn pair(u: f64) -> (f64, f64) {
-        (u.cos(), u.sin())
+        (martensite_cmath::cos(u), martensite_cmath::sin(u))
     }
     fn point(&self, cos_u: f64, sin_u: f64) -> Point2 {
         self.0.point(cos_u, sin_u)
@@ -77,7 +77,7 @@ impl Geom2dGridEvalEllipse {
             return Ok(empty());
         };
         Ok(map_grid(params, |u| {
-            let (a, b) = cyclic_coefficients(n, u.cos(), u.sin());
+            let (a, b) = cyclic_coefficients(n, martensite_cmath::cos(u), martensite_cmath::sin(u));
             e.0.vector(a, b)
         }))
     }

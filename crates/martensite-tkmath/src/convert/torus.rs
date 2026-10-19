@@ -26,11 +26,16 @@ fn compute_poles(
         v1,
         v2,
         TORUS_SIZES.v_poles as usize,
-        |angle| (major + minor * angle.cos(), minor * angle.sin()),
+        |angle| {
+            (
+                major + minor * martensite_cmath::cos(angle),
+                minor * martensite_cmath::sin(angle),
+            )
+        },
         |angle, cosine| {
             (
-                major + minor * angle.cos() / cosine,
-                minor * angle.sin() / cosine,
+                major + minor * martensite_cmath::cos(angle) / cosine,
+                minor * martensite_cmath::sin(angle) / cosine,
             )
         },
     )?;
@@ -82,7 +87,10 @@ impl ElementarySurfaceToBSplineSurface {
             result.nb_v_knots,
             alfa_v,
         )?;
-        result.weigh_and_place(torus.position(), (alfa_u.cos(), alfa_v.cos()))?;
+        result.weigh_and_place(
+            torus.position(),
+            (martensite_cmath::cos(alfa_u), martensite_cmath::cos(alfa_v)),
+        )?;
         result.finalize()?;
         Ok(result)
     }
@@ -158,7 +166,7 @@ impl ElementarySurfaceToBSplineSurface {
             self.nb_v_knots,
             alfa_v,
         )?;
-        Ok((0.5, alfa_v.cos()))
+        Ok((0.5, martensite_cmath::cos(alfa_v)))
     }
 
     // Trimmed in U on [param1, param2], periodic in V.
@@ -181,6 +189,6 @@ impl ElementarySurfaceToBSplineSurface {
             self.nb_u_knots,
             alfa_u,
         )?;
-        Ok((alfa_u.cos(), 0.5))
+        Ok((martensite_cmath::cos(alfa_u), 0.5))
     }
 }

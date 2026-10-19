@@ -72,15 +72,15 @@ impl Cone {
         let angular: f64 = precision::angular();
         let mut u: f64 = if x.abs() <= angular && y.abs() <= angular {
             0.
-        } else if -self.cone.ref_radius() > z * self.cone.semi_angle().tan() {
-            (-y).atan2(-x)
+        } else if -self.cone.ref_radius() > z * martensite_cmath::tan(self.cone.semi_angle()) {
+            martensite_cmath::atan2(-y, -x)
         } else {
-            y.atan2(x)
+            martensite_cmath::atan2(y, x)
         };
         if u < 0. {
             u += 2. * PI;
         }
-        Point2::new(u, z / self.cone.semi_angle().cos())
+        Point2::new(u, z / martensite_cmath::cos(self.cone.semi_angle()))
     }
 }
 

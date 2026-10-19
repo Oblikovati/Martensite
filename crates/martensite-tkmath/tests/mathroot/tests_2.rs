@@ -22,7 +22,7 @@ fn math_root_brent_exp_function() {
     let mut aFunc: ExpMinusThreeFunc = ExpMinusThreeFunc::default();
     let aResult: ScalarResult = brent(&mut aFunc, 0.0, 2.0, &Config::default());
     assert!(aResult.is_done());
-    near(aResult.root.unwrap(), (3.0_f64).ln(), THE_TOLERANCE);
+    near(aResult.root.unwrap(), martensite_cmath::log(3.0_f64), THE_TOLERANCE);
 }
 
 #[test]

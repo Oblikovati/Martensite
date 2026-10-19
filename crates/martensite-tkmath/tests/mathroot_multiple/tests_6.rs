@@ -1,8 +1,8 @@
 #[test]
 fn math_root_multiple_find_all_roots_with_derivative_negative_extrema_asymmetric_roots() {
     let mut aFunc = make_scalar_with_derivative(|theX: f64, theY: &mut f64, theDY: &mut f64| {
-        *theY = -(theX).sin();
-        *theDY = -(theX).cos();
+        *theY = -martensite_cmath::sin(theX);
+        *theDY = -martensite_cmath::cos(theX);
         true
     });
 

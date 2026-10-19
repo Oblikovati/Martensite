@@ -133,7 +133,10 @@ fn add_pair_at<const MAX: usize, P: EvalPole>(
 
 // sinh(a t), cosh(a t) and their derivatives 1..3.
 fn hyperbolic_pair(alpha: f64, u: f64) -> [BasisDerivatives; 2] {
-    let (sinh, cosh) = ((alpha * u).sinh(), (alpha * u).cosh());
+    let (sinh, cosh) = (
+        martensite_cmath::sinh(alpha * u),
+        martensite_cmath::cosh(alpha * u),
+    );
     let alpha2: f64 = alpha * alpha;
     let alpha3: f64 = alpha2 * alpha;
     [
@@ -144,7 +147,10 @@ fn hyperbolic_pair(alpha: f64, u: f64) -> [BasisDerivatives; 2] {
 
 // sin(b t), cos(b t) and their derivatives 1..3.
 fn trigonometric_pair(beta: f64, u: f64) -> [BasisDerivatives; 2] {
-    let (sin, cos) = ((beta * u).sin(), (beta * u).cos());
+    let (sin, cos) = (
+        martensite_cmath::sin(beta * u),
+        martensite_cmath::cos(beta * u),
+    );
     let beta2: f64 = beta * beta;
     let beta3: f64 = beta2 * beta;
     [

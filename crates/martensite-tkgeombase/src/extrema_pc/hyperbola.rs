@@ -28,7 +28,10 @@ pub struct Hyperbola {
 
 /// `C + R cosh(u) X + r sinh(u) Y` from the cached geometry.
 fn hyperbola_value(frame: &ConicFrame, major: f64, minor: f64, u: f64) -> Point3 {
-    frame.point(major * u.cosh(), minor * u.sinh())
+    frame.point(
+        major * martensite_cmath::cosh(u),
+        minor * martensite_cmath::sinh(u),
+    )
 }
 
 impl Hyperbola {

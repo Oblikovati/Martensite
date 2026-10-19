@@ -303,8 +303,8 @@ fn high_degree_loop() -> (Vec<[f64; 2]>, Vec<f64>) {
         .map(|i| {
             let angle = f64::from(i) * 0.39;
             [
-                (4. * angle.cos()).round() / 4.,
-                (4. * angle.sin()).round() / 4.,
+                (4. * martensite_cmath::cos(angle)).round() / 4.,
+                (4. * martensite_cmath::sin(angle)).round() / 4.,
             ]
         })
         .collect();

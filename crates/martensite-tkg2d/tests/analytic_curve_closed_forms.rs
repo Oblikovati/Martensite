@@ -32,13 +32,13 @@ fn local_derivatives(family: AnalyticFamily, u: f64, scale: f64) -> DerivativeJe
 }
 
 fn hyperbolic_derivatives(u: f64, scale: f64) -> DerivativeJet {
-    let even = [2.0 * scale * u.cosh(), scale * u.sinh()];
-    let odd = [2.0 * scale * u.sinh(), scale * u.cosh()];
+    let even = [2.0 * scale * martensite_cmath::cosh(u), scale * martensite_cmath::sinh(u)];
+    let odd = [2.0 * scale * martensite_cmath::sinh(u), scale * martensite_cmath::cosh(u)];
     [even, odd, even, odd]
 }
 
 fn trigonometric_derivatives(u: f64, a: f64, b: f64) -> DerivativeJet {
-    let (sine, cosine) = u.sin_cos();
+    let (sine, cosine) = martensite_cmath::sincos(u);
     [
         [a * cosine, b * sine],
         [-a * sine, b * cosine],

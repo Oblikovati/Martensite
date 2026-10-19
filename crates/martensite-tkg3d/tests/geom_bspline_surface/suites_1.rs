@@ -10,7 +10,7 @@ fn b_spline_surface_periodic_surface_set_u_not_periodic() {
     let _myOriginalSurface = SetUp();
     // U-periodic surface: degree 2, 4 U-knots of mult 1 -> NbUPoles = 1+2 = 3
     let aPoles = grid(3, 3, |i, j| {
-        pnt(third(i).cos(), third(i).sin(), f64::from(j) * 0.5)
+        pnt(martensite_cmath::cos(third(i)), martensite_cmath::sin(third(i)), f64::from(j) * 0.5)
     });
     let ((anUKnots, anUMults), (aVKnots, aVMults)) = periodic_knots();
 
@@ -36,7 +36,7 @@ fn b_spline_surface_periodic_surface_set_v_not_periodic() {
     let _myOriginalSurface = SetUp();
     // V-periodic surface: degree 2, 4 V-knots of mult 1 -> NbVPoles = 1+2 = 3
     let aPoles = grid(3, 3, |i, j| {
-        pnt(f64::from(i) * 0.5, third(j).cos(), third(j).sin())
+        pnt(f64::from(i) * 0.5, martensite_cmath::cos(third(j)), martensite_cmath::sin(third(j)))
     });
     let ((aVKnots, aVMults), (anUKnots, anUMults)) = periodic_knots();
 
@@ -204,7 +204,7 @@ fn b_spline_surface_rational_surface_set_u_not_periodic() {
     let _myOriginalSurface = SetUp();
     // Rational U-periodic surface: exercises the SetUNotPeriodic weight-handling code
     let aPoles = grid(3, 3, |i, j| {
-        pnt(third(i).cos(), third(i).sin(), f64::from(j) * 0.5)
+        pnt(martensite_cmath::cos(third(i)), martensite_cmath::sin(third(i)), f64::from(j) * 0.5)
     });
     let aWeights = grid(3, 3, |i, _| 1.0 + 0.5 * f64::from(i - 1));
     let ((anUKnots, anUMults), (aVKnots, aVMults)) = periodic_knots();
@@ -233,7 +233,7 @@ fn b_spline_surface_rational_surface_set_v_not_periodic() {
     let _myOriginalSurface = SetUp();
     // Rational V-periodic surface
     let aPoles = grid(3, 3, |i, j| {
-        pnt(f64::from(i) * 0.5, third(j).cos(), third(j).sin())
+        pnt(f64::from(i) * 0.5, martensite_cmath::cos(third(j)), martensite_cmath::sin(third(j)))
     });
     let aWeights = grid(3, 3, |_, j| 1.0 + 0.5 * f64::from(j - 1));
     let ((aVKnots, aVMults), (anUKnots, anUMults)) = periodic_knots();
@@ -383,7 +383,7 @@ fn b_spline_surface_cache_consistency_at_knots() {
         pnt(
             f64::from(i - 1),
             f64::from(j - 1),
-            (f64::from(i) * 0.5).sin() * (f64::from(j) * 0.7).cos(),
+            martensite_cmath::sin(f64::from(i) * 0.5) * martensite_cmath::cos(f64::from(j) * 0.7),
         )
     });
 

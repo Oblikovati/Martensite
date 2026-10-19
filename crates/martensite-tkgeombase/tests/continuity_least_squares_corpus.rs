@@ -57,7 +57,7 @@ fn least_squares_inputs_and_retained_answers_stay_frozen() {
     );
     assert_eq!(
         super::fixture_hash(CHUNKS.iter().map(|(_, a)| *a)),
-        0xf97158cb1e4f4fae
+        0x5ff68cd2362f89c6
     );
 }
 use super::construction_corpus::{common::Reader, continuity_function::AccFunction};

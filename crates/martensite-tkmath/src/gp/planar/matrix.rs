@@ -59,8 +59,8 @@ impl Matrix2 {
     }
     /// Replaces the matrix with a counter-clockwise rotation; `matrix.set_rotation(0.5)`.
     pub fn set_rotation(&mut self, angle: f64) {
-        let sine = angle.sin();
-        let cosine = angle.cos();
+        let sine = martensite_cmath::sin(angle);
+        let cosine = martensite_cmath::cos(angle);
         self.coefficients = [[cosine, -sine], [sine, cosine]];
     }
     /// Replaces the matrix with a uniform scale; `matrix.set_scale(2.0)`.

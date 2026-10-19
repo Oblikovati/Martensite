@@ -42,15 +42,24 @@ pub fn line_value_2d(u: f64, position: Axis2d) -> Point2 {
 }
 /// Planar circle point; `circle_value_2d(0.5,frame,2.0)`.
 pub fn circle_value_2d(u: f64, position: Axis22d, radius: f64) -> Point2 {
-    Frame::of(position).point(radius * u.cos(), radius * u.sin())
+    Frame::of(position).point(
+        radius * martensite_cmath::cos(u),
+        radius * martensite_cmath::sin(u),
+    )
 }
 /// Planar ellipse point; `ellipse_value_2d(0.5,frame,3.0,2.0)`.
 pub fn ellipse_value_2d(u: f64, position: Axis22d, major: f64, minor: f64) -> Point2 {
-    Frame::of(position).point(major * u.cos(), minor * u.sin())
+    Frame::of(position).point(
+        major * martensite_cmath::cos(u),
+        minor * martensite_cmath::sin(u),
+    )
 }
 /// Planar hyperbola point; `hyperbola_value_2d(0.5,frame,3.0,2.0)`.
 pub fn hyperbola_value_2d(u: f64, position: Axis22d, major: f64, minor: f64) -> Point2 {
-    Frame::of(position).point(major * u.cosh(), minor * u.sinh())
+    Frame::of(position).point(
+        major * martensite_cmath::cosh(u),
+        minor * martensite_cmath::sinh(u),
+    )
 }
 /// Planar parabola point, or the X axis line when `|F| <= resolution`; `parabola_value_2d(1.0,frame,2.0)`.
 pub fn parabola_value_2d(u: f64, position: Axis22d, focal: f64) -> Point2 {
@@ -71,13 +80,16 @@ pub fn line_d1_2d(u: f64, position: Axis2d) -> PlaneD1 {
 }
 /// Planar circle point and first derivative; `circle_d1_2d(0.5,frame,2.0)`.
 pub fn circle_d1_2d(u: f64, position: Axis22d, radius: f64) -> PlaneD1 {
-    let (x, y) = (radius * u.cos(), radius * u.sin());
+    let (x, y) = (
+        radius * martensite_cmath::cos(u),
+        radius * martensite_cmath::sin(u),
+    );
     let frame = Frame::of(position);
     (frame.point(x, y), Vector2::from(frame.span(-y, x)))
 }
 /// Planar ellipse point and first derivative; `ellipse_d1_2d(0.5,frame,3.0,2.0)`.
 pub fn ellipse_d1_2d(u: f64, position: Axis22d, major: f64, minor: f64) -> PlaneD1 {
-    let (cosine, sine) = (u.cos(), u.sin());
+    let (cosine, sine) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
     let frame = Frame::of(position);
     (
         frame.point(cosine * major, sine * minor),
@@ -86,7 +98,7 @@ pub fn ellipse_d1_2d(u: f64, position: Axis22d, major: f64, minor: f64) -> Plane
 }
 /// Planar hyperbola point and first derivative; `hyperbola_d1_2d(0.5,frame,3.0,2.0)`.
 pub fn hyperbola_d1_2d(u: f64, position: Axis22d, major: f64, minor: f64) -> PlaneD1 {
-    let (cosh, sinh) = (u.cosh(), u.sinh());
+    let (cosh, sinh) = (martensite_cmath::cosh(u), martensite_cmath::sinh(u));
     let frame = Frame::of(position);
     (
         frame.point(cosh * major, sinh * minor),
@@ -111,7 +123,10 @@ pub fn parabola_d1_2d(u: f64, position: Axis22d, focal: f64) -> PlaneD1 {
 
 /// Planar circle point and derivatives up to the second; `circle_d2_2d(0.5,frame,2.0)`.
 pub fn circle_d2_2d(u: f64, position: Axis22d, radius: f64) -> PlaneD2 {
-    let (x, y) = (radius * u.cos(), radius * u.sin());
+    let (x, y) = (
+        radius * martensite_cmath::cos(u),
+        radius * martensite_cmath::sin(u),
+    );
     let frame = Frame::of(position);
     let centred = frame.span(x, y);
     (
@@ -122,7 +137,7 @@ pub fn circle_d2_2d(u: f64, position: Axis22d, radius: f64) -> PlaneD2 {
 }
 /// Planar ellipse point and derivatives up to the second; `ellipse_d2_2d(0.5,frame,3.0,2.0)`.
 pub fn ellipse_d2_2d(u: f64, position: Axis22d, major: f64, minor: f64) -> PlaneD2 {
-    let (cosine, sine) = (u.cos(), u.sin());
+    let (cosine, sine) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
     let frame = Frame::of(position);
     let centred = frame.span(cosine * major, sine * minor);
     (
@@ -133,7 +148,7 @@ pub fn ellipse_d2_2d(u: f64, position: Axis22d, major: f64, minor: f64) -> Plane
 }
 /// Planar hyperbola point and derivatives up to the second; `hyperbola_d2_2d(0.5,frame,3.0,2.0)`.
 pub fn hyperbola_d2_2d(u: f64, position: Axis22d, major: f64, minor: f64) -> PlaneD2 {
-    let (cosh, sinh) = (u.cosh(), u.sinh());
+    let (cosh, sinh) = (martensite_cmath::cosh(u), martensite_cmath::sinh(u));
     let frame = Frame::of(position);
     let centred = frame.span(cosh * major, sinh * minor);
     (

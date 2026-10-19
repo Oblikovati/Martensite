@@ -64,7 +64,7 @@ pub fn consolidate_real_roots(
     };
     let count: usize = result.nb_roots;
     stl::sort_by(&mut result.roots[..count], |a, b| a < b);
-    let merge: f64 = tolerance.powf(1.0 / degree as f64);
+    let merge: f64 = martensite_cmath::pow(tolerance, 1.0 / degree as f64);
     let (mut source, mut written): (usize, usize) = (0, 0);
     while source < count {
         let roots: [f64; MAX_POLY_DEGREE] = result.roots;
@@ -153,7 +153,7 @@ pub fn consolidate_complex_roots(
     };
     let (roots, count) = positive_roots(result)?;
     let positive: &[Complex] = &roots[..count];
-    let resolution: f64 = tolerance.powf(1.0 / degree as f64);
+    let resolution: f64 = martensite_cmath::pow(tolerance, 1.0 / degree as f64);
     let (mut source, mut written): (usize, usize) = (0, 0);
     while source < positive.len() {
         let end: usize = cluster_end(source, positive.len(), |k| {

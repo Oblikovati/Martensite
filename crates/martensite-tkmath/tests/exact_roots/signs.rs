@@ -33,7 +33,11 @@ fn check_fixture(row: &str) {
     verify_sign_scaling(&source, &query, &result);
 }
 fn verify_sign_scaling(source: &[f64], query: &[f64], expected: &RootSignEvaluation) {
-    for factor in [-1., 2_f64.powi(900), 2_f64.powi(-900)] {
+    for factor in [
+        -1.,
+        martensite_cmath::powi(2_f64, 900),
+        martensite_cmath::powi(2_f64, -900),
+    ] {
         let scaled: Vec<f64> = source.iter().map(|v| v * factor).collect();
         assert_eq!(classify(&scaled, query, [-16., 16.], 0.0001), *expected);
         let scaled: Vec<f64> = query.iter().map(|v| v * factor).collect();

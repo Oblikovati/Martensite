@@ -59,12 +59,12 @@ impl Quaternion {
     pub fn from_axis_angle(axis: Vector3, angle: f64) -> Result<Self, Failure> {
         let normal = axis.normalized()?;
         let half = 0.5 * angle;
-        let sine = half.sin();
+        let sine = martensite_cmath::sin(half);
         Ok(Self::new(
             normal.x() * sine,
             normal.y() * sine,
             normal.z() * sine,
-            half.cos(),
+            martensite_cmath::cos(half),
         ))
     }
     /// Uses quaternion-vector products and squared-norm division; `quaternion.multiply_vector(vector)`.

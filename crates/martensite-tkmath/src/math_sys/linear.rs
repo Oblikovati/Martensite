@@ -26,7 +26,7 @@ pub fn safe_norm(vector: &Vector<'_>) -> f64 {
     vector
         .values()
         .iter()
-        .fold(0.0_f64, |norm, value| norm.hypot(*value))
+        .fold(0.0_f64, |norm, value| martensite_cmath::hypot(norm, *value))
 }
 fn equilibrate(matrix: &Matrix<'_>) -> (Matrix<'static>, Vector<'static>) {
     let mut scaled: Matrix<'static> =
@@ -34,7 +34,7 @@ fn equilibrate(matrix: &Matrix<'_>) -> (Matrix<'static>, Vector<'static>) {
     let mut scales: Vector<'static> = Vector::with_size(matrix.col_number() as usize);
     for col in 0..matrix.col_number() as usize {
         let norm: f64 = (0..matrix.row_number() as usize).fold(0.0_f64, |norm, row| {
-            norm.hypot(*matrix.at(row, col).unwrap())
+            martensite_cmath::hypot(norm, *matrix.at(row, col).unwrap())
         });
         let scale: f64 = if norm > 0.0 { norm } else { 1.0 };
         *scales.change_at(col).unwrap() = scale;

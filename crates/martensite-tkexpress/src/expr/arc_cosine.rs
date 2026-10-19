@@ -21,7 +21,7 @@ impl ExprGeneralExpression for ExprArcCosine {
     unary_expression_members!();
     function_members!(ExprArcCosine, "ACos(");
     fn shallow_simplified(&self) -> Result<ExprHandle, Failure> {
-        function_shallow_simplified::<ExprCosine, _>(self, f64::acos)
+        function_shallow_simplified::<ExprCosine, _>(self, martensite_cmath::acos)
     }
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         chain(self, x, |operand| {
@@ -32,6 +32,6 @@ impl ExprGeneralExpression for ExprArcCosine {
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok(value.acos())
+        Ok(martensite_cmath::acos(value))
     }
 }

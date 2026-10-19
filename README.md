@@ -17,7 +17,7 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 
 | Crate | Capabilities |
 | --- | --- |
-| `martensite-cmath` | Platform C math functions behind a typed Rust interface. |
+| `martensite-cmath` | Correctly rounded transcendental functions with identical results on every platform. |
 | `martensite-tkernel` | Errors, memory, collections, strings, operating-system services, quantities and units. |
 | `martensite-tkexpress` | Symbolic expressions, differentiation, relations and a text interpreter. |
 | `martensite-tkg2d` | Planar curves, splines, offsets, adaptors, evaluation and hashing. |

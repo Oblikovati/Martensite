@@ -110,7 +110,7 @@ pub(super) fn projected_gradient_norm(
         {
             component = 0.0;
         }
-        norm = norm.hypot(component);
+        norm = martensite_cmath::hypot(norm, component);
     }
     norm
 }

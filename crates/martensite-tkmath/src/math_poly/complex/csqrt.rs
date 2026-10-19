@@ -69,7 +69,7 @@ fn scaled_input(re: f64, im: f64) -> (f64, f64, i32) {
 }
 fn general(re: f64, im: f64) -> (f64, f64) {
     let (re, im, scale) = scaled_input(re, im);
-    let d: f64 = re.hypot(im);
+    let d: f64 = martensite_cmath::hypot(re, im);
     // 2 Re(res) Im(res) = Im(x) avoids cancellation in d +/- Re(x).
     let (mut r, mut s, scale): (f64, f64, i32) = if re > 0.0 {
         positive_real(re, im, d, scale)

@@ -161,7 +161,10 @@ fn surface_scaling(
         return Ok(Scaling::Factors(angle, 1.0));
     }
     if let Some(cone) = surf.cast::<GeomConicalSurface>().get() {
-        return Ok(Scaling::Factors(angle, length * cone.semi_angle().cos()));
+        return Ok(Scaling::Factors(
+            angle,
+            length * martensite_cmath::cos(cone.semi_angle()),
+        ));
     }
     if surf.cast::<GeomPlane>().is_some() {
         return Ok(Scaling::Plane(length));
@@ -176,7 +179,10 @@ fn surface_scaling_inverse(
     length: f64,
 ) -> Result<Scaling, Failure> {
     if let Some(cone) = surf.cast::<GeomConicalSurface>().get() {
-        return Ok(Scaling::Factors(angle, length / cone.semi_angle().cos()));
+        return Ok(Scaling::Factors(
+            angle,
+            length / martensite_cmath::cos(cone.semi_angle()),
+        ));
     }
     surface_scaling(surf, angle, length)
 }

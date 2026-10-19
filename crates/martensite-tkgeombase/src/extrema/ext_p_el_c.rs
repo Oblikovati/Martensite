@@ -268,7 +268,7 @@ impl ExtPElC {
         let parameters: Vec<f64> = polynomial_roots(&roots)?
             .into_iter()
             .filter(|&v| v > 0.)
-            .map(f64::ln)
+            .map(martensite_cmath::log)
             .collect();
         self.push_distinct(point, hyperbola, &parameters, (uinf, usup), tol * tol);
         self.result.done = true;

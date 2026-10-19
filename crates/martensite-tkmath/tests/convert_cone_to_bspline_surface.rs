@@ -94,7 +94,7 @@ fn convert_cone_to_b_spline_surface_geometric_verification() {
             // For a cone with axis Z, semi-angle a, reference radius R:
             // r(z) = R + z * tan(a), distance from axis = r
             let aDistFromAxis: f64 = (aPnt.x() * aPnt.x() + aPnt.y() * aPnt.y()).sqrt();
-            let aExpectedR: f64 = aRadius + aPnt.z() * aSemiAngle.tan();
+            let aExpectedR: f64 = aRadius + aPnt.z() * martensite_cmath::tan(aSemiAngle);
             assert!(
                 (aDistFromAxis - aExpectedR).abs() <= aTol,
                 "Point not on cone at U={aU} V={aV}"

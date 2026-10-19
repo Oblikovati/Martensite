@@ -27,8 +27,8 @@ impl QuadQuadGeo {
     /// solution. `inter.perform_cones(k1, k2, 1e-7)?`.
     pub fn perform_cones(&mut self, first: Cone3, second: Cone3, tol: f64) -> Result<(), Failure> {
         self.done = true;
-        let tg1: f64 = first.semi_angle().tan();
-        let mut tg2: f64 = second.semi_angle().tan();
+        let tg1: f64 = martensite_cmath::tan(first.semi_angle());
+        let mut tg2: f64 = martensite_cmath::tan(second.semi_angle());
         if (tg1 * tg2) < 0. {
             tg2 = -tg2;
         }
@@ -303,8 +303,8 @@ impl QuadQuadGeo {
     /// apex, found in 3D on the line of the two sections at equal generatrix length.
     fn common_apex_cones(&mut self, first: Cone3, second: Cone3, tol: f64) -> Result<(), Failure> {
         let (ax1, mut ax2) = (first.axis(), second.axis());
-        let tgb1: f64 = first.semi_angle().tan().abs();
-        let tgb2: f64 = second.semi_angle().tan().abs();
+        let tgb1: f64 = martensite_cmath::tan(first.semi_angle()).abs();
+        let tgb2: f64 = martensite_cmath::tan(second.semi_angle()).abs();
         let Some(two_lines) = apex_configuration(ax1.angle(ax2), tgb1, tgb2, tol)? else {
             self.typeres = ResultType::Empty;
             return Ok(());
@@ -358,7 +358,7 @@ fn apex_configuration(gamma: f64, tgb1: f64, tgb2: f64, tol: f64) -> Result<Opti
     let d1: f64 = 1.;
     let origin = Point2::new(0., 0.);
     let p1 = Point2::new(d1, d1 * tgb1);
-    let v_ax2 = Vector2::new(gamma.cos(), gamma.sin());
+    let v_ax2 = Vector2::new(martensite_cmath::cos(gamma), martensite_cmath::sin(gamma));
     let d_ax2: Direction2 = Direction2::from_vector(v_ax2)?;
     let dx: f64 = v_ax2.dot(Vector2::between(origin, p1));
     let pa2: Point2 = origin.translated(dx * Vector2::from(d_ax2));

@@ -91,7 +91,7 @@ impl QuadQuadGeo {
             cone.position().direction()
         };
         let rad: f64 = sphere.radius();
-        let tga: f64 = cone.semi_angle().tan();
+        let tga: f64 = martensite_cmath::tan(cone.semi_angle());
         let tgatga: f64 = tga * tga;
         let eq = DirectPolynomialRoots::quadratic(
             1.0 + tgatga,

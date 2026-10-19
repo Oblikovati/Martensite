@@ -4,9 +4,9 @@ use super::*;
 #[test]
 fn opposing_extreme_scales_remain_exact_until_final_sqrt() {
     for (native, world, expected) in [(-500, 600, 200), (500, -600, -200)] {
-        let poles = CUBIC.map(|point| point.map(|x| x * 2f64.powi(native)));
+        let poles = CUBIC.map(|point| point.map(|x| x * martensite_cmath::powi(2f64, native)));
         let mut support = frame();
-        support.scale = 2f64.powi(world);
+        support.scale = martensite_cmath::powi(2f64, world);
         let options = unrestricted_rounding_budget();
         let report = certify_polynomial_plane_measure(
             &[polynomial(&poles)],
@@ -16,14 +16,16 @@ fn opposing_extreme_scales_remain_exact_until_final_sqrt() {
             || false,
         )
         .unwrap();
-        let area = rational("12", "5").multiply(&ExactRatio::from_finite(2f64.powi(expected)));
+        let area = rational("12", "5").multiply(&ExactRatio::from_finite(martensite_cmath::powi(
+            2f64, expected,
+        )));
         assert_squared_enclosure(&report, &area.multiply(&area));
     }
 }
 #[test]
 fn subnormal_area_enclosure_retains_nonzero_exact_square() {
     let mut support = frame();
-    support.scale = 2f64.powi(-600);
+    support.scale = martensite_cmath::powi(2f64, -600);
     let report = plane_report(&square_occurrences(), support);
     assert_eq!(report.enclosure(), [0., f64::from_bits(1)]);
     assert_eq!(report.absolute_error_bound(), f64::from_bits(1));

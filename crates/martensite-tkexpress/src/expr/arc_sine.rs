@@ -20,13 +20,13 @@ impl ExprGeneralExpression for ExprArcSine {
     unary_expression_members!();
     function_members!(ExprArcSine, "ASin(");
     fn shallow_simplified(&self) -> Result<ExprHandle, Failure> {
-        function_shallow_simplified::<ExprSine, _>(self, f64::asin)
+        function_shallow_simplified::<ExprSine, _>(self, martensite_cmath::asin)
     }
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         quotient_rule(self, x, root_of_one_minus_square)
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok(value.asin())
+        Ok(martensite_cmath::asin(value))
     }
 }

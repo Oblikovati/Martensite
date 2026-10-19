@@ -102,7 +102,7 @@ fn cone_rejected_circle_keeps_the_line_type() {
 #[test]
 fn cone_line_through_the_apex_uses_the_next_point() {
     let cone = Cone3::new(xoy(), 0.5, 1.0).unwrap();
-    let direction = dir(0.5_f64.sin(), 0.0, 0.5_f64.cos());
+    let direction = dir(martensite_cmath::sin(0.5_f64), 0.0, martensite_cmath::cos(0.5_f64));
     let through_apex = Line3::new(cone.apex(), direction);
     let projection = Cone::with_line(&cone, &through_apex).unwrap();
     assert!(projection.is_done());
