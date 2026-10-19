@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "issue": 201,
+  "status": "proposed_not_admitted",
+  "candidate_behavior_version": 2,
+  "previous_behavior": {
+    "version": 1,
+    "published_foundation_math_release": "0.3.2",
+    "unreleased_expression_geometry_reference": "534e7d6134c4a43926736d8c13b99c591126a8d9",
+    "replay_requirement": "Retain original fixtures and implementations until the reviewed migration is recorded. Existing released applications can select the pinned 0.3.2 crates; this does not provide per-operation selection inside the new candidate."
+  },
+  "proposed_contract": {
+    "transcendental_primitives": "Correctly rounded binary64 results from the version-pinned owned adapter; binary32 pow uses direct binary32 rounding.",
+    "composition": "Preserve the declared binary64 or binary32 operation sequence between calls. A composition is not claimed to equal one rounding of a real-arithmetic whole operation.",
+    "integer_power": "Fixed repeated-squaring sequence followed by a reciprocal for negative exponents. Intermediate overflow and compiler-folding differences require separate migration evidence.",
+    "special_values": "NaN signs/payloads, signed zeros, infinities, domain results and formatted text require explicit per-function policy and independent controls. Finite rounding certificates do not establish this policy.",
+    "extended_arithmetic": "Existing extended-precision paths retain their precision and order.",
+    "cpu_support": "Do not raise the minimum supported CPU instruction set to obtain passing results."
+  },
+  "required_admission": [
+    "Independent high-precision verification of every changed expected value and causal accounting against previous primitive behavior",
+    "Separate review of changes in counts, branches, iteration histories, achieved error, formatting and nonfinite values",
+    "Recorded treatment of integer-power/compiler-folding changes and replaced cube-root implementation",
+    "Unchanged requests, assertions and tolerances; reviewed new integrity seals only after row admission",
+    "Reviewed replay/migration mechanism for published behavior and explicit semver decision",
+    "All four supported platform release gates passing on the actual release candidate"
+  ],
+  "current_evidence": {
+    "binary64_reference_pairs": 95,
+    "binary32_reference_pairs": 4,
+    "changed_fixture_rows": 975,
+    "changed_fixture_rows_admitted": 0,
+    "full_release_gate": "not_passed"
+  },
+  "version_publication": "No package version bump, tag or publication is authorized by this proposed record."
+}
