@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Routed transcendental calculations through a version-pinned Rust math adapter; numerical baseline validation and replay migration are tracked in the portable-transcendentals feature record (#201).
+
 ### Fixed
 
 - Corrected release coverage to Linux x64, Windows x64, and both macOS architectures, with native Intel macOS validation replacing Linux ARM64 (#198).
