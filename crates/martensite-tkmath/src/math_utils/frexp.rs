@@ -1,6 +1,7 @@
 //! `frexp` for the solver scale factors.
 
-/// Splits a finite nonzero `x` into a mantissa in [0.5, 1) and a power of two, like `frexp`;
+/// Splits a finite nonzero `x` into a signed mantissa with magnitude in [0.5, 1)
+/// and a power of two, like `frexp`;
 /// zero, infinity and NaN come back unchanged with exponent 0 (glibc's convention).
 pub(crate) fn frexp(x: f64) -> (f64, i32) {
     let bits: u64 = x.to_bits();
@@ -16,3 +17,7 @@ pub(crate) fn frexp(x: f64) -> (f64, i32) {
     let mantissa: f64 = f64::from_bits((bits & !(0x7ff << 52)) | (1022 << 52));
     (mantissa, field - 1022)
 }
+
+#[cfg(test)]
+#[path = "frexp_tests.rs"]
+mod tests;
