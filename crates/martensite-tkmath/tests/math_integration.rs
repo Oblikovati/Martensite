@@ -93,6 +93,8 @@ fn math_integration_gauss_exponential_function() {
         martensite_cmath::exp(1.0_f64) - 1.0,
         1e-8,
     );
+    // Independent real integral of exp(x) over exact [0,1]; see #201 certificates.
+    near(s.value().unwrap(), f64::from_bits(0x3ffb7e151628aed3), 1e-8);
 }
 #[test]
 fn math_integration_gauss_different_orders() {

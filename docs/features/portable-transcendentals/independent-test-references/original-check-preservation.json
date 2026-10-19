@@ -1,0 +1,36 @@
+{
+  "base": "7fb63ee2f79464abd087e5e793c99b84ee18ce7b",
+  "files": [
+    {
+      "path": "crates/martensite-tkg2d/tests/analytic_curve_closed_forms.rs",
+      "before_sha256": "a27c7581eb90a5b85ea4e20d9760ef2ba16ca6c764c59c338f87b55901a587f9",
+      "after_sha256": "bac00504fa517dfbea5d24bf53af0d8ad864e4c224ed545fb3c8f4d92da13487",
+      "all_original_lines_preserved_in_order": true
+    },
+    {
+      "path": "crates/martensite-tkmath/tests/elclib.rs",
+      "before_sha256": "8200684cffca85cef118894420320a24df68e300089237fcf3ce4e6cac713ca2",
+      "after_sha256": "79d784ebb73cd5b0ae98418b002a4965ebdc7fab5d56d22c45b260e119415182",
+      "all_original_lines_preserved_in_order": true
+    },
+    {
+      "path": "crates/martensite-tkmath/tests/math_integration.rs",
+      "before_sha256": "1f63c90a61e8b0a8eb1d9ac94b8973d5591ed1776b66e86d3a2c335dffc1c631",
+      "after_sha256": "a5473c4aced7f6bcaecfcfd0095c2414397dda412066feae54fa61254f39248d",
+      "all_original_lines_preserved_in_order": true
+    },
+    {
+      "path": "crates/martensite-tkmath/tests/mathinteg/tests_6.rs",
+      "before_sha256": "1075dd99746e8358200096de313012e32d33a5c40b9e5fcecb8e9947cb7a5cfa",
+      "after_sha256": "3887495cbc1f6f2da5f72d6919365e6034840fcec70ca6ccfb3c011f53ee83c1",
+      "all_original_lines_preserved_in_order": true
+    },
+    {
+      "path": "crates/martensite-tkmath/tests/mathsys_newton_behavior.rs",
+      "before_sha256": "58df9d8a1b1944308e4bbd435f9db35f7c3076109d729390b999bfb538170966",
+      "after_sha256": "7e13ca31ac969c5db185936bf82d7753e40450777ce63966906e9bb88980db91",
+      "all_original_lines_preserved_in_order": true
+    }
+  ],
+  "scope": "Only additive checks and child-module registrations; original request expressions, assertions and tolerances remain byte-identical lines."
+}

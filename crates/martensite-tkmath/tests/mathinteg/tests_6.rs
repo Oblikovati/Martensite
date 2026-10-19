@@ -11,6 +11,8 @@ fn math_integ_gauss_adaptive_exponential_function() {
         martensite_cmath::exp(1.0_f64) - 1.0,
         1.0e-11,
     );
+    // Independent real integral of exp(x) over exact [0,1]; see #201 certificates.
+    near(aResult.value.unwrap(), f64::from_bits(0x3ffb7e151628aed3), 1.0e-11);
 }
 
 #[test]
