@@ -2,7 +2,7 @@
 
 /// `x^n` by a fixed binary repeated-squaring sequence.
 ///
-/// The result is not correctly rounded: each multiplication rounds. It is
+/// The result is not correctly rounded: each multiplication rounds.
 /// Negative exponents take the reciprocal after computing the positive power.
 /// Intermediate overflow can therefore produce zero even when the mathematical
 /// result is a representable subnormal. This sequence can differ from compiler

@@ -1,9 +1,12 @@
-//! Transcendental functions with the same bits on every platform.
+//! Transcendental functions with portable rounding for real-valued results.
 //!
 //! Every transcendental function the kernel uses comes from this crate. Each one is
 //! correctly rounded: it returns the exact mathematical result rounded once to the
-//! nearest `f64` (ties to even). A correctly rounded result is unique, so Linux,
-//! Windows and macOS on x86_64 and arm64 all produce identical bits (#201).
+//! nearest result in its destination format (ties to even). This gives unique
+//! finite nonzero results across the supported release platforms (#201).
+//! NaN sign and payload are not specified by correct rounding, and this adapter
+//! does not canonicalize them. Domain-error NaNs are tested by classification;
+//! signed zeros and infinities follow each function's special-value contract.
 //!
 //! The standard `f64` methods (`sin`, `exp`, `powf`, ...) lower to each platform's C
 //! math library, whose last bit differs between platforms, and the compiler folds
@@ -13,8 +16,9 @@
 //!
 //! The functions are a thin layer over the pure-Rust `metallic` crate, pinned to an
 //! exact version because its results are part of the kernel's recorded behavior.
-//! `powi` keeps the repeated-squaring product the compiler runtime uses, and the
-//! IEEE `remainder`, which Rust lacks, is exact and taken from the platform libm.
+//! `powi` uses a fixed repeated-squaring sequence with separately documented
+//! intermediate rounding. IEEE `remainder`, which Rust lacks, is taken from the
+//! platform libm; its finite valid results are exact.
 //!
 //! ```
 //! assert_eq!(martensite_cmath::sin(0.0), 0.0);
