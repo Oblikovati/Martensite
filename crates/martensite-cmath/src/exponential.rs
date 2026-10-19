@@ -79,6 +79,14 @@ pub fn pow(x: f64, y: f64) -> f64 {
 /// assert_eq!(martensite_cmath::powf(4.0, 0.5), 2.0);
 /// ```
 pub fn powf(x: f32, y: f32) -> f32 {
+    // The pinned dependency's NaN-exponent path reaches an unchecked integer
+    // conversion. Preserve the power identities before guarding that path (#202).
+    if y == 0.0 || x == 1.0 {
+        return 1.0;
+    }
+    if x.is_nan() || y.is_nan() {
+        return f32::NAN;
+    }
     metallic::powf(x, y)
 }
 

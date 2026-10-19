@@ -4,6 +4,27 @@ use martensite_cmath::{
 };
 
 #[test]
+fn single_precision_nan_exponents_do_not_enter_the_dependency() {
+    let bases = [0.5_f32, 2.0, -2.0, 0.0, f32::INFINITY, f32::NEG_INFINITY];
+    for exponent in [f32::NAN, f32::from_bits(0xffc00042)] {
+        for base in bases {
+            assert!(martensite_cmath::powf(base, exponent).is_nan());
+        }
+    }
+}
+
+#[test]
+fn single_precision_power_identities_precede_nan_propagation() {
+    for nan in [f32::NAN, f32::from_bits(0xffc00042)] {
+        assert_eq!(martensite_cmath::powf(1.0, nan), 1.0);
+        assert_eq!(martensite_cmath::powf(nan, 0.0), 1.0);
+        assert_eq!(martensite_cmath::powf(nan, -0.0), 1.0);
+        assert!(martensite_cmath::powf(nan, 2.0).is_nan());
+        assert!(martensite_cmath::powf(nan, nan).is_nan());
+    }
+}
+
+#[test]
 fn special_values_follow_c99() {
     assert!(asinh(-0.0).is_sign_negative() && asinh(f64::INFINITY) == f64::INFINITY);
     assert!(acosh(0.5).is_nan() && acosh(f64::INFINITY) == f64::INFINITY);

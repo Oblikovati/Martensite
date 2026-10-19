@@ -12,6 +12,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Guarded single-precision powers with NaN arguments before dependency evaluation, while preserving zero-exponent and unit-base identities (#202).
+
 - Corrected release coverage to Linux x64, Windows x64, and both macOS architectures, with native Intel macOS validation replacing Linux ARM64 (#198).
 
 - Preserved frozen fixture bytes during Windows checkouts with automatic line-ending conversion (#197).
