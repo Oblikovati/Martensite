@@ -79,6 +79,12 @@ diagnostic. The check never changes a symlink or its target ([#75]).
 
 [#75]: https://github.com/Oblikovati/Martensite/issues/75
 
+Frozen fixture paths use byte-preserving Git attributes so automatic line-ending
+conversion cannot alter embedded inputs or expected answers. A real checkout
+regression exercises this policy with `core.autocrlf=true` ([#197]).
+
+[#197]: https://github.com/Oblikovati/Martensite/issues/197
+
 ## Release pipeline
 
 1. Semver gate:

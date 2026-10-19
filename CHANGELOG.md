@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserved frozen fixture bytes during Windows checkouts with automatic line-ending conversion (#197).
+
 ## [0.3.3] - 2026-10-19
 
 ### Added
