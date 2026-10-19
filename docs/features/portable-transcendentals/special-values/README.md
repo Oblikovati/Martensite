@@ -68,8 +68,15 @@ The final source passed both one-worker and four-worker runs, scoped strict
 Clippy, scoped format checking and `git diff --check`. The initial scoped run
 also passed; there was no test failure or altered expected result.
 
-`receipt.json` records the exact commands, compiler, source hashes and compressed
-raw log hashes. The cache was a new exclusive, crate-scoped directory; no
+`receipt.json` and its logs remain unchanged historical evidence for
+`d0582606d8eebd3bcad0849d9852c9eb7b4fbdae`. Review corrected the misleading
+group name `odd_functions_preserve_both_zero_signs` (because `expm1` is not odd)
+to `functions_preserving_both_zero_signs`. Only that test identifier changed;
+all cases and assertions remain identical. `receipt-renamed.json` supersedes
+the current-source/hash qualification with refreshed one/four-worker runs and
+strict Clippy logs; the same 33 ordinary and 28 doc tests pass without failures
+or ignores. Both receipts record exact commands, compiler, source hashes and
+compressed raw log hashes. The cache was a new exclusive, crate-scoped directory; no
 workspace build or canonical PR gate was run. This Linux result does not claim
 execution on the other supported release targets or universal domain coverage.
 The new shared helper is test-only and introduces no public library API,

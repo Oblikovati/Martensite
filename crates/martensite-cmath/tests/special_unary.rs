@@ -9,7 +9,7 @@ const POSITIVE_INFINITY: u64 = 0x7ff0_0000_0000_0000;
 const NEGATIVE_INFINITY: u64 = 0xfff0_0000_0000_0000;
 
 #[test]
-fn odd_functions_preserve_both_zero_signs() {
+fn functions_preserving_both_zero_signs() {
     let operations: [(&str, UnaryFunction); 10] = [
         ("sin", math::sin), ("tan", math::tan), ("asin", math::asin),
         ("atan", math::atan), ("sinh", math::sinh), ("asinh", math::asinh),
