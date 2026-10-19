@@ -393,8 +393,8 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
 - **CI pacing: fast per merge, full matrix before release.** CI is one
   workflow, `.github/workflows/martensite.yml`, and every check in it is a
   `cargo xtask` command that runs the same way locally. A pull request runs
-  PR validation on Linux x86_64 only. The full matrix (Linux x86_64 and
-  arm64, macOS arm64, Windows x64) runs on a `v*` tag push and on a manual
+  PR validation on Linux x86_64 only. The full matrix (Linux x86_64,
+  macOS x86_64 and arm64, Windows x64) runs on a `v*` tag push and on a manual
   dispatch in `release` mode. The workflow does not run on branch pushes:
   after pushing a branch directly, dispatch it on that SHA. Running the full
   matrix is **mandatory right before a release**: dispatch the workflow with

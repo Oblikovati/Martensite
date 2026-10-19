@@ -187,6 +187,19 @@ mod tests {
         assert!(outputs[3].1.contains("ubuntu-24.04") && !outputs[3].1.contains("windows"));
     }
 
+    fn assert_release_matrix(plan: &CiPlan) {
+        let matrix: serde_json::Value = serde_json::from_str(&plan_outputs(plan)[3].1).unwrap();
+        assert_eq!(
+            matrix,
+            serde_json::json!({"include": [
+                {"target": "x86_64-unknown-linux-gnu", "runner": "ubuntu-24.04"},
+                {"target": "x86_64-apple-darwin", "runner": "macos-15-intel"},
+                {"target": "aarch64-apple-darwin", "runner": "macos-15"},
+                {"target": "x86_64-pc-windows-msvc", "runner": "windows-2025"}
+            ]})
+        );
+    }
+
     #[test]
     fn tag_push_publishes_on_every_target() {
         let plan = plan_for(&trigger("push", "refs/tags/v0.3.0", "")).unwrap();
@@ -199,6 +212,7 @@ mod tests {
         );
         let matrix = &plan_outputs(&plan)[3].1;
         assert_eq!(matrix.matches("\"target\"").count(), RELEASE_TARGETS.len());
+        assert_release_matrix(&plan);
     }
 
     #[test]
@@ -219,6 +233,7 @@ mod tests {
         };
         let plan = plan_for(&trigger).unwrap();
         assert_eq!(plan_outputs(&plan)[2], ("publish", "false".to_owned()));
+        assert_release_matrix(&plan);
         let bad = CiTrigger {
             dispatch_mode: "deploy".into(),
             ..trigger

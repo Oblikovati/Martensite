@@ -17,8 +17,8 @@ pub const RELEASE_TARGETS: [ReleaseTarget; 4] = [
         runner: "ubuntu-24.04",
     },
     ReleaseTarget {
-        triple: "aarch64-unknown-linux-gnu",
-        runner: "ubuntu-24.04-arm",
+        triple: "x86_64-apple-darwin",
+        runner: "macos-15-intel",
     },
     ReleaseTarget {
         triple: "aarch64-apple-darwin",
@@ -46,6 +46,23 @@ pub fn is_primary(triple: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn release_platforms_bind_exact_native_runners() {
+        let actual: Vec<_> = RELEASE_TARGETS
+            .iter()
+            .map(|target| (target.triple, target.runner))
+            .collect();
+        assert_eq!(
+            actual,
+            [
+                ("x86_64-unknown-linux-gnu", "ubuntu-24.04"),
+                ("x86_64-apple-darwin", "macos-15-intel"),
+                ("aarch64-apple-darwin", "macos-15"),
+                ("x86_64-pc-windows-msvc", "windows-2025"),
+            ]
+        );
+    }
 
     #[test]
     fn triples_are_unique_and_primary_is_listed() {

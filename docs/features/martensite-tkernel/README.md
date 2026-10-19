@@ -100,8 +100,8 @@ not shipped as stubs.
 
 ### Release matrix
 
-The release matrix runs the full test suite on Linux x86_64 and arm64, macOS
-arm64 and Windows x64. So far the crates' tests ran only on Linux x86_64. Windows x64 and macOS arm64 were checked with clippy (all targets,
-`-D warnings`) but not run; Linux arm64 was not built. Run the
-manual `release` dispatch of the workflow before the first tag and record each
-failing test here, with its cause, before the release.
+The release matrix targets Linux x86_64, macOS x86_64 and arm64, and Windows
+x64. ARM64 release support is limited to macOS (#198). Run the manual `release`
+dispatch on the exact candidate commit and require all four native targets to
+pass before tagging. Target configuration is not evidence of a successful run;
+retain the commands, diagnostics and results from that candidate.

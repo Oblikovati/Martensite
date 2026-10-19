@@ -66,7 +66,7 @@ the platform math library for the transcendental functions.
 ### Release matrix
 
 The release gate runs the full native suite and source-package checks on Linux
-x86_64 and arm64, macOS arm64, and Windows x64. Run the manual `release`
+x86_64, macOS x86_64 and arm64, and Windows x64. Run the manual `release`
 workflow on the exact candidate commit and require all four targets to pass
 before tagging. Workflow runs retain the commands, diagnostics and results.
 
