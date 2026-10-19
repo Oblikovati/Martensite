@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-10-19
+
 ### Added
 
 - Added geometric construction, conversion, approximation, extrema, bounds and mass-property tools with retained numerical fixtures (#193).
