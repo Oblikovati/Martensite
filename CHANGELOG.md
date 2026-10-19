@@ -6,10 +6,6 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Added
-
-- Pinned integer-power operation order with 700 independent exact-arithmetic cases, including signed zeros, subnormals and exponent boundaries (#201).
-
 ### Changed
 
 - Routed transcendental calculations through a version-pinned Rust math adapter; numerical baseline validation and replay migration are tracked in the portable-transcendentals feature record (#201).
