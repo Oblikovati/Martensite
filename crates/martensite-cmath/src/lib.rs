@@ -48,8 +48,8 @@ mod ffi {
 /// IEEE 754 remainder from the platform libm, the C `remainder(x, y)`:
 /// `x - n*y` with `n` the integer nearest to `x/y` (ties to even).
 ///
-/// The result is always exactly representable, so every conforming libm returns the
-/// same bits.
+/// A finite result for valid inputs is exactly representable. Invalid inputs
+/// produce NaN, whose sign and payload are not part of this interface's contract.
 ///
 /// ```
 /// assert_eq!(martensite_cmath::remainder(7.0, 2.0), -1.0);
