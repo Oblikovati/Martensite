@@ -2,7 +2,7 @@
 autotests = false
 name = "martensite-cmath"
 version = "0.3.3"
-description = "Correctly rounded transcendental functions with identical results on every platform"
+description = "Portable rounding for transcendental functions behind a typed Rust interface"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true

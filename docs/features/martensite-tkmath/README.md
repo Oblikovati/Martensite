@@ -61,8 +61,9 @@ The crate has no platform-specific code. Some values reproduce the GCC and
 glibc results on x86-64 Linux in software (x87 `long double`, complex
 arithmetic, `std::sort` tie order), so they do not depend on the host C
 library. Every transcendental function, `cbrt` included, comes from
-`martensite-cmath`, which is correctly rounded and returns the same bits on
-every platform (#201).
+`martensite-cmath`, whose correctly rounded finite nonzero results have the same
+bits on every supported platform (#201). Correct rounding does not prescribe a
+NaN sign or payload; domain-error NaNs are compared by classification.
 
 ### Release matrix
 
