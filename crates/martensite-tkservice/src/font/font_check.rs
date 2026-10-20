@@ -8,15 +8,38 @@ use super::{FontFTLibrary, FontFontAspect, FontSystemFont};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use std::ffi::{CStr, CString, c_char};
+use std::ptr::NonNull;
 
-/// An open FreeType face, released on drop.
-struct FaceOwner(*mut FtFaceRec);
+/// An open FreeType face, released on drop. Only `open_face` builds one, from a face that
+/// `FT_New_Face` returned with success, so the pointer is non-null and stays valid until
+/// the owner drops.
+struct FaceOwner(NonNull<FtFaceRec>);
+
+impl FaceOwner {
+    /// The face record, borrowed from the owner: it cannot outlive the open face, and a
+    /// FreeType call that changes the face (`select_unicode_charmap`) needs `&mut self`,
+    /// so no record borrow is alive across it. Example: `owner.record().num_faces`.
+    fn record(&self) -> &FtFaceRec {
+        // SAFETY: the pointer is non-null and the face stays open while `self` lives (type
+        // invariant above); FreeType changes the record only in calls that take `&mut self`.
+        unsafe { self.0.as_ref() }
+    }
+
+    /// `FT_Select_Charmap(face, FT_ENCODING_UNICODE) == 0`; false without FreeType.
+    fn select_unicode_charmap(&mut self) -> bool {
+        let Some(api) = freetype() else {
+            return false;
+        };
+        // SAFETY: an open face (type invariant) and the Unicode encoding tag.
+        unsafe { (api.FT_Select_Charmap)(self.0.as_ptr(), FT_ENCODING_UNICODE) == 0 }
+    }
+}
 
 impl Drop for FaceOwner {
     fn drop(&mut self) {
         if let Some(api) = freetype() {
             // SAFETY: the face came from FT_New_Face and is released once, here.
-            unsafe { (api.FT_Done_Face)(self.0) };
+            unsafe { (api.FT_Done_Face)(self.0.as_ptr()) };
         }
     }
 }
@@ -34,7 +57,10 @@ fn open_face(library: &FontFTLibrary, path: &AsciiString, face_id: FtLong) -> Op
     let mut face: *mut FtFaceRec = std::ptr::null_mut();
     // SAFETY: a valid library handle, a NUL-terminated path and an output pointer.
     let error = unsafe { (api.FT_New_Face)(library.instance(), name.as_ptr(), face_id, &mut face) };
-    (error == 0 && !face.is_null()).then_some(FaceOwner(face))
+    if error != 0 {
+        return None;
+    }
+    NonNull::new(face).map(FaceOwner)
 }
 
 /// Removes the first `word` of `style` (its length is `word.len()`).
@@ -103,21 +129,16 @@ pub(crate) fn check_font(
     face_id: FtLong,
 ) -> Result<bool, Failure> {
     let opened_id = if face_id != -1 { face_id } else { 0 };
-    let Some(face) = open_face(library, path, opened_id) else {
+    let Some(mut face) = open_face(library, path, opened_id) else {
         return Ok(false);
     };
-    // SAFETY: the face is open for the rest of this function.
-    let record = unsafe { &*face.0 };
-    let Some(family) = c_text(record.family_name) else {
+    let Some(family) = c_text(face.record().family_name) else {
         return Ok(false);
     };
-    let api = freetype().ok_or_else(|| {
-        Failure::new("FreeType is not loaded; expected the library of the open face")
-    })?;
-    // SAFETY: an open face and the Unicode encoding tag.
-    if unsafe { (api.FT_Select_Charmap)(face.0, FT_ENCODING_UNICODE) } != 0 {
+    if !face.select_unicode_charmap() {
         return Ok(false);
     }
+    let record = face.record();
     let mut style = c_text(record.style_name).unwrap_or_default();
     let aspect = aspect_of(record.style_flags, &mut style)?;
     let font = FontSystemFont::new(&family_with_style(family, style)?)?;
@@ -157,3 +178,7 @@ fn visit_sub_faces(
     }
     Ok(())
 }
+
+#[cfg(test)]
+#[path = "font_check_tests.rs"]
+mod tests;
