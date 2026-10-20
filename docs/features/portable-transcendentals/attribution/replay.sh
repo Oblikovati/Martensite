@@ -17,13 +17,16 @@ FEATURE=martensite-cmath/libm-attribution
 mkdir -p "$OUT/calls-platform_original" "$OUT/calls-portable_candidate"
 
 run_tests() { # name selection
-    MARTENSITE_CMATH_SELECT=$2 MARTENSITE_CMATH_ATTRIBUTION_LOG="$OUT/calls-$1" \
+    local name=$1 selection=$2
+    MARTENSITE_CMATH_SELECT=$selection MARTENSITE_CMATH_ATTRIBUTION_LOG="$OUT/calls-$name" \
         cargo test --locked --workspace --features "$FEATURE" --no-fail-fast \
-        >"$OUT/$1.cargo-test.log" 2>&1 || true
+        >"$OUT/$name.cargo-test.log" 2>&1 || true
 }
 
 original_test_paths() { # status pathspec...: test files changed since the original commit
-    git diff --name-only --diff-filter="$1" "$ORIGINAL" HEAD -- "${@:2}"
+    local status=$1
+    shift
+    git diff --name-only --diff-filter="$status" "$ORIGINAL" HEAD -- "$@"
 }
 
 restore_candidate() { git checkout HEAD -- crates; git clean -fdq crates; }

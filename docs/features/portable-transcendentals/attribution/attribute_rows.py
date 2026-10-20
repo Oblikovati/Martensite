@@ -29,9 +29,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
 INVENTORY = HERE.parent
+# The inventory's changed-row shards, changed-rows-000.json to changed-rows-006.json.
+SHARDS = [INVENTORY / f'changed-rows-{index:03d}.json' for index in range(7)]
 EVIDENCE = 'docs/features/portable-transcendentals/attribution/README.md'
 
-RUNNING = re.compile(r'^\s+Running \S+ \(target/[^)]*/deps/([^)]+)\)$')
 RESULT = re.compile(r'^test (\S+) \.\.\. (ok|FAILED|ignored)$')
 
 # Consumers whose test name is not derived from the row's request family.
@@ -55,8 +56,8 @@ def test_results(log: Path, binaries: dict) -> dict:
     """(package, test name) -> 'ok' | 'FAILED' | 'ignored' for one cargo test log."""
     results, package = {}, None
     for line in log.read_text(errors='replace').splitlines():
-        if match := RUNNING.match(line):
-            package = binaries[match.group(1)]
+        if line.lstrip().startswith('Running ') and '/deps/' in line:
+            package = binaries[line.rstrip().rstrip(')').rsplit('/deps/', 1)[1]]
         elif (match := RESULT.match(line)) and package:
             results[(package, match.group(1))] = match.group(2)
     return results
@@ -192,10 +193,9 @@ def main() -> None:
             calls[key] |= value
     verdicts = mpfr_verdicts(evidence / 'calls.tsv.xz')
     all_tests = set(runs['portable_candidate']) | set(runs['platform_original'])
-    inventory = INVENTORY
     summary = defaultdict(int)
     request_cache: dict[str, list[str]] = {}
-    for shard in sorted(inventory.glob('changed-rows-*.json')):
+    for shard in SHARDS:
         rows = json.loads(shard.read_text())
         for row in rows:
             path = row['path']

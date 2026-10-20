@@ -34,8 +34,8 @@ from pathlib import Path
 import gmpy2
 from gmpy2 import mpfr
 
-BINARY64 = dict(precision=53, emin=-1073, emax=1024, subnormalize=True)
-BINARY32 = dict(precision=24, emin=-148, emax=128, subnormalize=True)
+BINARY64 = {'precision': 53, 'emin': -1073, 'emax': 1024, 'subnormalize': True}
+BINARY32 = {'precision': 24, 'emin': -148, 'emax': 128, 'subnormalize': True}
 WIDE_BITS = 256
 HERE = Path(__file__).resolve().parent
 
@@ -160,16 +160,23 @@ def glibc_call(name: str, args: list[float], single: bool) -> float:
     return entry(*args)
 
 
+def glibc_agreement(libc: list[str] | None, platform: list[str], single: bool) -> str:
+    if libc is None:
+        return 'n/a'
+    if libc == platform:
+        return 'equal'
+    if all(is_nan_word(w, single) for w in libc + platform):
+        return 'nan_differs'
+    return 'differs'
+
+
 def check(call: dict) -> dict:
     function = call['function']
     single = function == 'powf'
     if function == 'powi':
         return dict(call, mpfr=None, glibc='n/a', verdict='not_a_libm_function')
     args = [f32(w) if single else f64(w) for w in call['inputs']]
-    libc = glibc_words(function, args)
-    call = dict(call, glibc='n/a' if libc is None else
-                ('equal' if libc == call['platform'] else 'nan_differs' if
-                 all(is_nan_word(w, single) for w in libc + call['platform']) else 'differs'))
+    call = dict(call, glibc=glibc_agreement(glibc_words(function, args), call['platform'], single))
     fmt = BINARY32 if single else BINARY64
     direct = words_of(reference(function, args, fmt), single)
     wide = words_of(wide_then_round(function, args, fmt), single)
