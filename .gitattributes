@@ -199,10 +199,13 @@ crates/martensite-tkservice/src/font/dejavu_sans_latin.LICENSE -whitespace
 # The shader manager embeds its GLSL tables byte for byte.
 crates/martensite-tkservice/src/graphic3d/shader_manager/glsl/** -text -whitespace
 
-# Boundary representation, geometric and topological algorithm fixtures are compared
+# Boundary representation, algorithm, hidden line, primitive and helix fixtures are compared
 # byte for byte or sealed by hash.
 crates/martensite-tkgeomalgo/tests/fixtures/** -text -whitespace
 crates/martensite-tkgeomalgo/tests/sketch_line_incidences/*.csv -text -whitespace
 crates/martensite-tkgeomalgo/tests/sketch_spline/*.csv -text -whitespace
 crates/martensite-tktopalgo/tests/data/** -text -whitespace
 crates/martensite-tkhlr/tests/fixtures/** -text -whitespace
+crates/martensite-tkprim/tests/fixtures/** -text -whitespace
+crates/martensite-tkprim/tests/graph_fuzz/inputs/** -text -whitespace
+crates/martensite-tkhelix/tests/fixtures/** -text -whitespace

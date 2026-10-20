@@ -402,6 +402,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkhelix"
+version = "0.3.5"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tktopalgo",
+]
+
+[[package]]
 name = "martensite-tkhlr"
 version = "0.3.5"
 dependencies = [
@@ -413,6 +428,7 @@ dependencies = [
  "martensite-tkgeomalgo",
  "martensite-tkgeombase",
  "martensite-tkmath",
+ "martensite-tkprim",
  "martensite-tktopalgo",
  "sha2",
 ]
@@ -434,6 +450,23 @@ dependencies = [
  "num-bigint",
  "num-complex",
  "rustc_apfloat",
+]
+
+[[package]]
+name = "martensite-tkprim"
+version = "0.3.5"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkhlr",
+ "martensite-tkmath",
+ "martensite-tktopalgo",
+ "sha2",
 ]
 
 [[package]]
