@@ -31,12 +31,12 @@ impl LineEnds {
             return Ok(None);
         }
         let (mut indices_v1, mut indices_v2) = (Vec::new(), Vec::new());
-        for iv in 1..=nbvtx {
-            let plin: i32 = native_int_cast(wline.vertex(iv)?.parameter_on_line());
+        for vertex_index in 1..=nbvtx {
+            let plin: i32 = native_int_cast(wline.vertex(vertex_index)?.parameter_on_line());
             if plin == param_min {
-                indices_v1.push(iv);
+                indices_v1.push(vertex_index);
             } else if plin == param_max {
-                indices_v2.push(iv);
+                indices_v2.push(vertex_index);
             }
         }
         Ok(Some(Self {
@@ -69,8 +69,8 @@ impl Resolved {
             params: vec![0.0; nbvtx + 1],
         };
         let (surf, domain) = domains.side(on_first);
-        for iv in 1..=nbvtx {
-            let vertex: IntPatchPoint = wline.vertex(iv as i32)?;
+        for vertex_index in 1..=nbvtx {
+            let vertex: IntPatchPoint = wline.vertex(vertex_index as i32)?;
             if is_on_dom(&vertex, on_first) {
                 continue;
             }
@@ -82,7 +82,11 @@ impl Resolved {
                 let arc: TheArc = domain.value()?;
                 let (ok, par, dist) = project_on_arc(uv, &arc, surf, tol_arc)?;
                 if ok && dist < distmin {
-                    (resolved.arcs[iv], resolved.params[iv], distmin) = (Some(arc), par, dist);
+                    (
+                        resolved.arcs[vertex_index],
+                        resolved.params[vertex_index],
+                        distmin,
+                    ) = (Some(arc), par, dist);
                 }
                 domain.next();
             }
@@ -90,15 +94,15 @@ impl Resolved {
         Ok(resolved)
     }
 
-    /// The arc of the vertex `iv`: its own when it is on the domain, else the resolved
+    /// The arc of the vertex `vertex_index`: its own when it is on the domain, else the resolved
     /// one (or none).
     fn arc_of(
         &self,
         wline: &IntPatchWLine,
-        iv: i32,
+        vertex_index: i32,
         on_first: bool,
     ) -> Result<Option<TheArc>, Failure> {
-        let vertex: IntPatchPoint = wline.vertex(iv)?;
+        let vertex: IntPatchPoint = wline.vertex(vertex_index)?;
         if is_on_dom(&vertex, on_first) {
             let arc: TheArc = if on_first {
                 vertex.arc_on_s1()?
@@ -107,12 +111,12 @@ impl Resolved {
             };
             return Ok((!arc.is_null()).then_some(arc));
         }
-        Ok(self.arcs[iv as usize].clone())
+        Ok(self.arcs[vertex_index as usize].clone())
     }
 
-    /// Whether an arc was resolved for the vertex `iv`.
-    fn is_resolved(&self, iv: i32) -> bool {
-        self.arcs[iv as usize].is_some()
+    /// Whether an arc was resolved for the vertex `vertex_index`.
+    fn is_resolved(&self, vertex_index: i32) -> bool {
+        self.arcs[vertex_index as usize].is_some()
     }
 }
 
@@ -133,16 +137,16 @@ fn common_arcs(
     on_first: bool,
 ) -> Result<Vec<TheArc>, Failure> {
     let mut map_arcs_v1: Vec<TheArc> = Vec::new();
-    for &iv in &ends.indices_v1 {
-        if let Some(arc) = resolved.arc_of(wline, iv, on_first)?
+    for &vertex_index in &ends.indices_v1 {
+        if let Some(arc) = resolved.arc_of(wline, vertex_index, on_first)?
             && !map_arcs_v1.contains(&arc)
         {
             map_arcs_v1.push(arc);
         }
     }
     let mut map_arcs: Vec<TheArc> = Vec::new();
-    for &iv in &ends.indices_v2 {
-        if let Some(arc) = resolved.arc_of(wline, iv, on_first)?
+    for &vertex_index in &ends.indices_v2 {
+        if let Some(arc) = resolved.arc_of(wline, vertex_index, on_first)?
             && map_arcs_v1.contains(&arc)
             && !map_arcs.contains(&arc)
         {
@@ -159,29 +163,29 @@ fn vertex_on_arc(
     indices: &[i32],
     arc: &TheArc,
 ) -> Result<i32, Failure> {
-    for &iv in indices {
-        if resolved.arc_of(wline, iv, on_first)?.as_ref() == Some(arc) {
-            return Ok(iv);
+    for &vertex_index in indices {
+        if resolved.arc_of(wline, vertex_index, on_first)?.as_ref() == Some(arc) {
+            return Ok(vertex_index);
         }
     }
     Ok(0)
 }
 
-/// The parameter on the arc of the vertex `iv`: its own, or the resolved one.
+/// The parameter on the arc of the vertex `vertex_index`: its own, or the resolved one.
 fn param_on_arc(
     wline: &IntPatchWLine,
     (resolved, on_first): (&Resolved, bool),
-    iv: i32,
+    vertex_index: i32,
 ) -> Result<f64, Failure> {
-    if !resolved.is_resolved(iv) {
-        let vertex: IntPatchPoint = wline.vertex(iv)?;
+    if !resolved.is_resolved(vertex_index) {
+        let vertex: IntPatchPoint = wline.vertex(vertex_index)?;
         return if on_first {
             vertex.parameter_on_arc1()
         } else {
             vertex.parameter_on_arc2()
         };
     }
-    Ok(resolved.params[iv as usize])
+    Ok(resolved.params[vertex_index as usize])
 }
 
 /// The restriction line built from the walking line on one arc.
@@ -194,12 +198,12 @@ struct RLineCoding<'a> {
 }
 
 impl RLineCoding<'_> {
-    /// The vertex `iv` at the parameter `par` on the arc (linked with the arc when it
+    /// The vertex `vertex_index` at the parameter `par` on the arc (linked with the arc when it
     /// was resolved), with its transitions reversed for a reversed line.
-    fn vertex(&self, iv: i32, par: f64) -> Result<IntPatchPoint, Failure> {
-        let mut vtx: IntPatchPoint = self.wline.vertex(iv)?;
+    fn vertex(&self, vertex_index: i32, par: f64) -> Result<IntPatchPoint, Failure> {
+        let mut vtx: IntPatchPoint = self.wline.vertex(vertex_index)?;
         vtx.set_parameter(par);
-        if self.resolved.is_resolved(iv) {
+        if self.resolved.is_resolved(vertex_index) {
             let undecided = IntSurfTransition::default();
             vtx.set_arc(self.on_first, &self.arc, par, &undecided, &undecided);
         }
@@ -218,8 +222,8 @@ impl RLineCoding<'_> {
         skip: i32,
         par: f64,
     ) -> Result<(), Failure> {
-        for &iv in indices.iter().filter(|&&iv| iv != skip) {
-            rlig.add_vertex(&self.vertex(iv, par)?, false);
+        for &vertex_index in indices.iter().filter(|&&vertex_index| vertex_index != skip) {
+            rlig.add_vertex(&self.vertex(vertex_index, par)?, false);
         }
         Ok(())
     }
@@ -242,18 +246,18 @@ fn line_points(
     Ok(points)
 }
 
-/// Codes the walking line as a restriction line on `arc` (from the vertex `iv1` of the
-/// first end to `iv2` of the last end), when its middle point is on the arc.
+/// Codes the walking line as a restriction line on `arc` (from the vertex `first_vertex` of the
+/// first end to `last_vertex` of the last end), when its middle point is on the arc.
 // The negated comparison sends the NaN operands where the native one does.
 #[allow(clippy::neg_cmp_op_on_partial_ord)]
 fn code_on_arc(
     wline: &IntPatchWLine,
     (ends, resolved): (&LineEnds, &Resolved),
     (domains, tol_arc, on_first): (&Domains<'_>, f64, bool),
-    (arc, iv1, iv2): (&TheArc, i32, i32),
+    (arc, first_vertex, last_vertex): (&TheArc, i32, i32),
 ) -> Result<Option<IntPatchRLine>, Failure> {
-    let par1: f64 = param_on_arc(wline, (resolved, on_first), iv1)?;
-    let par2: f64 = param_on_arc(wline, (resolved, on_first), iv2)?;
+    let par1: f64 = param_on_arc(wline, (resolved, on_first), first_vertex)?;
+    let par2: f64 = param_on_arc(wline, (resolved, on_first), last_vertex)?;
     // Check that the middle point is on the arc.
     let mid_ind: i32 = (ends.param_max + ends.param_min) / 2;
     let (mut utst, mut vtst) = params_on(&wline.point(mid_ind)?, on_first);
@@ -273,9 +277,9 @@ fn code_on_arc(
     let reverse: bool = !(par1 < par2);
     rlig.add(&line_points(wline, ends, reverse)?);
     let (ivmin, ivmax, parmin, parmax) = if reverse {
-        (iv2, iv1, par2, par1)
+        (last_vertex, first_vertex, par2, par1)
     } else {
-        (iv1, iv2, par1, par2)
+        (first_vertex, last_vertex, par1, par2)
     };
     let (ind_vmin, ind_vmax) = if reverse {
         (&ends.indices_v2, &ends.indices_v1)
@@ -311,13 +315,19 @@ fn code_side(
     let mut is_rline = false;
     for arc in common_arcs(wline, ends, &resolved, on_first)? {
         // The end vertices of the line linked with this arc.
-        let iv1: i32 = vertex_on_arc(wline, (&resolved, on_first), &ends.indices_v1, &arc)?;
-        let iv2: i32 = vertex_on_arc(wline, (&resolved, on_first), &ends.indices_v2, &arc)?;
-        if iv1 == 0 || iv2 == 0 {
+        let first_vertex: i32 =
+            vertex_on_arc(wline, (&resolved, on_first), &ends.indices_v1, &arc)?;
+        let last_vertex: i32 = vertex_on_arc(wline, (&resolved, on_first), &ends.indices_v2, &arc)?;
+        if first_vertex == 0 || last_vertex == 0 {
             continue;
         }
         let side = (domains, tol_arc, on_first);
-        if let Some(rlig) = code_on_arc(wline, (ends, &resolved), side, (&arc, iv1, iv2))? {
+        if let Some(rlig) = code_on_arc(
+            wline,
+            (ends, &resolved),
+            side,
+            (&arc, first_vertex, last_vertex),
+        )? {
             slin.push(Handle::new(rlig).cast());
             is_rline = true;
         }
