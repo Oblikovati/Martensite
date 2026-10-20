@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-10-20
+
 ### Added
 
 - Added the `martensite-tkcdf` crate for application documents, references between

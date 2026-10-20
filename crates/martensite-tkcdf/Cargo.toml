@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkcdf"
-version = "0.3.3"
+version = "0.3.4"
 description = "Martensite document framework: documents, applications, metadata, storage drivers and a light XML parser."
 edition.workspace = true
 rust-version.workspace = true
@@ -13,7 +13,7 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.3" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.4" }
 
 # Test modules share one executable per toolkit to avoid repeated linkage.
 [[test]]
