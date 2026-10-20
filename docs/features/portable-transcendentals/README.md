@@ -48,6 +48,24 @@ Behavior version 2 and its migration notes are recorded in `CHANGELOG.md` and
 `behavior-migration.json`. Version 1 is not selectable inside the release, and
 applications that need its exact results stay on the 0.3.2 crates.
 
+## Platform C library replay (`host-libm`)
+
+The opt-in `host-libm` feature of `martensite-cmath` makes every transcendental
+function return the platform C library result instead of the portable one: the
+same entry points the attribution builds call (glibc on Linux, the pre-#201 cube
+root, the C inverse hyperbolic symbols). It keeps behavior version 1 selectable for
+replay, as AGENTS.md requires until a recorded migration, for one purpose only:
+verification against a program linked with the platform C library. A project that
+compares kernel results with such a program enables it once for its whole build;
+Cargo's feature unification then applies it to every crate. It is never enabled in
+releases or Martensite CI gates (`cargo xtask` selects default features only, which
+a build-tool test pins), and results under it are platform dependent.
+
+`crates/martensite-cmath/tests/host_libm_mode.rs` checks both modes on Linux: on the
+reference inputs where glibc differs, portable mode returns the correctly rounded
+reference and `host-libm` returns the glibc word. The correctly rounded reference
+tests are ignored under `host-libm`, since they state the portable contract.
+
 The dependency review is complete: license compatibility, exact pins, and
 `cargo deny` and `cargo audit` results are in `dependency-review/review.json`.
 CPUs without FMA are not qualified, and the four supported release targets are

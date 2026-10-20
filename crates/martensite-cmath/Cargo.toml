@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-cmath"
-version = "0.3.3"
+version = "0.3.4"
 description = "Portable rounding for transcendental functions behind a typed Rust interface"
 edition.workspace = true
 rust-version.workspace = true
@@ -20,6 +20,10 @@ metallic = "=0.3.0"
 # docs/features/portable-transcendentals/attribution/README.md. Never enabled by a
 # release build or a CI gate.
 libm-attribution = []
+# For verification against the platform C library: every transcendental function
+# returns the platform libm result (behavior version 1 replay). Never enabled in
+# releases or Martensite CI gates.
+host-libm = []
 
 # The workspace forbids unsafe code. This adapter is the one place allowed to
 # declare foreign C math functions (the exact IEEE `remainder`), so it denies unsafe

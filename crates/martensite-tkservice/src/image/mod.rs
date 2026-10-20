@@ -1,0 +1,57 @@
+//! Image: pixel maps, pixel formats and image comparison.
+mod alien_pix_map;
+mod colors;
+mod compressed_pix_map;
+mod dds_parser;
+mod diff;
+mod diff_save;
+mod formats;
+mod pix_map;
+mod pix_map_data;
+mod pix_map_init;
+mod pix_map_ops;
+#[cfg(test)]
+mod pix_map_owned_contract_tests;
+mod pix_map_source;
+mod pix_map_source_error;
+#[cfg(test)]
+mod pix_map_source_fixture;
+#[cfg(test)]
+mod pix_map_source_tests;
+mod pix_map_typed_refs;
+mod pixel;
+mod pixel_bytes;
+mod pixel_convert;
+mod texture;
+mod texture_io;
+mod video_recorder;
+
+pub use alien_pix_map::{ImageAlienPixMap, ImageIwicPalette};
+pub use colors::*;
+pub use compressed_pix_map::{
+    ImageCompressedPixMap, ImageCompressedPixMapFields, ImageSupportedFormats,
+};
+pub use dds_parser::ImageDdsParser;
+pub use diff::{
+    ImageDiff, ImageDiffFields, image_diff_pack_xy, image_diff_unpack_x, image_diff_unpack_y,
+};
+pub use formats::{
+    IMAGE_COMPRESSED_FORMAT_NB, IMAGE_FORMAT_NB, ImageCompressedFormat, ImageFormat,
+};
+pub use pix_map::{ImagePixMap, ImagePixMapState};
+pub use pix_map_data::{IMAGE_BOTTOM_UP, ImagePixMapData};
+pub use pix_map_source::{
+    ImagePixMapSource, image_pix_map_allocate, image_pix_map_clear, image_pix_map_original_base,
+};
+pub use pix_map_source_error::{
+    ImageAllocationRequest, ImageSourceError, ImageSourceFailureClass, ImageSourceOperation,
+};
+pub use pixel::{ImagePixel, ImagePixelPod};
+pub use pixel_convert::{
+    image_color_from_raw_pixel, image_color_to_raw_pixel, image_convert_from_half_float,
+    image_convert_to_half_float,
+};
+pub use texture::{
+    ImageTexture, ImageTextureBase, ImageTextureHashPolicy, ImageTextureMembers, ImageTextureSource,
+};
+pub use video_recorder::{ImageVideoParams, ImageVideoRational, ImageVideoRecorder};

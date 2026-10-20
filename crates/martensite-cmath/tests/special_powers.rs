@@ -5,6 +5,10 @@ use super::special_contract_support::{
 };
 use martensite_cmath as math;
 
+#[cfg_attr(
+    feature = "host-libm",
+    ignore = "portable contract; host-libm returns the platform C library result"
+)]
 #[test]
 fn power_identities_precede_nan_propagation() {
     for nan in signed_nan_arguments() {
@@ -109,6 +113,10 @@ fn negative_finite_bases_require_integral_finite_exponents() {
     ]);
 }
 
+#[cfg_attr(
+    feature = "host-libm",
+    ignore = "portable contract; host-libm returns the platform C library result"
+)]
 #[test]
 fn hypot_zero_is_positive_and_infinity_takes_precedence_over_nan() {
     for zero in [0.0, -0.0] {

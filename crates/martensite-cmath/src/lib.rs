@@ -27,6 +27,16 @@
 //! assert_eq!(martensite_cmath::sin(0.0), 0.0);
 //! assert_eq!(martensite_cmath::pow(2.0, 10.0), 1024.0);
 //! ```
+//!
+//! # The `host-libm` feature
+//!
+//! For verification against the platform C library only, the opt-in `host-libm`
+//! feature makes every transcendental function return the platform C library result
+//! (glibc on Linux) instead of the portable one: the pre-#201 numerical behavior
+//! version 1, kept selectable for replay as AGENTS.md requires until a recorded
+//! migration. A project that compares kernel results with a program linked against
+//! the platform libm enables it once for its whole build. It is never enabled in
+//! releases or in Martensite CI gates, and results under it are platform dependent.
 
 /// Returns the portable result of one adapter call.
 ///
@@ -34,10 +44,18 @@
 /// test-only `libm-attribution` feature also evaluates the platform libm for the
 /// same call, records any differing result and returns the selected one, so changed
 /// test outputs can be attributed to individual elementary-function results (#201).
-#[cfg(not(feature = "libm-attribution"))]
+#[cfg(not(any(feature = "libm-attribution", feature = "host-libm")))]
 macro_rules! observed {
     ($name:ident($($arg:expr),*) => $portable:expr) => {
         $portable
+    };
+}
+
+/// With `host-libm` alone, returns the platform C library result (behavior version 1).
+#[cfg(all(feature = "host-libm", not(feature = "libm-attribution")))]
+macro_rules! observed {
+    ($name:ident($($arg:expr),*) => $portable:expr) => {
+        crate::host_platform::$name($($arg),*)
     };
 }
 
@@ -48,7 +66,7 @@ macro_rules! observed {
             stringify!($name),
             &[$(crate::attribution::Words::words(&$arg)),*],
             $portable,
-            crate::attribution::platform::$name($($arg),*),
+            crate::host_platform::$name($($arg),*),
         )
     };
 }
@@ -56,6 +74,8 @@ macro_rules! observed {
 #[cfg(feature = "libm-attribution")]
 mod attribution;
 mod exponential;
+#[cfg(any(feature = "libm-attribution", feature = "host-libm"))]
+mod host_platform;
 mod hyperbolic;
 mod integer_power;
 mod invalid;
@@ -72,14 +92,15 @@ mod ffi {
     // SAFETY: these are C99 libm signatures, linked from the platform C library that
     // std already links. Each function reads only its arguments, has no
     // preconditions and touches no memory, so each is declared `safe`. The
-    // feature-gated entries exist only in test attribution builds, never in releases.
+    // feature-gated entries exist only in attribution and host-libm builds, never in
+    // releases.
     unsafe extern "C" {
         pub safe fn remainder(numerator: f64, denominator: f64) -> f64;
-        #[cfg(feature = "libm-attribution")]
+        #[cfg(any(feature = "libm-attribution", feature = "host-libm"))]
         pub safe fn asinh(value: f64) -> f64;
-        #[cfg(feature = "libm-attribution")]
+        #[cfg(any(feature = "libm-attribution", feature = "host-libm"))]
         pub safe fn acosh(value: f64) -> f64;
-        #[cfg(feature = "libm-attribution")]
+        #[cfg(any(feature = "libm-attribution", feature = "host-libm"))]
         pub safe fn atanh(value: f64) -> f64;
     }
 }

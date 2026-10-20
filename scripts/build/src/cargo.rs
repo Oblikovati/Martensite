@@ -264,6 +264,29 @@ mod tests {
     }
 
     #[test]
+    fn gate_commands_build_default_features_only() {
+        // `host-libm` (platform C library results) and `libm-attribution` must never reach
+        // a PR or release gate, so no gate command selects features.
+        let runner = RecordingRunner::default();
+        let tasks = CargoTasks::new(&runner, Path::new("/r"));
+        let target = BuildTarget::Host;
+        tasks.clippy(&PackageSelection::Workspace, &target).unwrap();
+        tasks
+            .build_all_targets(&PackageSelection::Workspace, &target)
+            .unwrap();
+        tasks.test(&PackageSelection::Workspace, &target).unwrap();
+        tasks.package_sources(&PackageSelection::Workspace).unwrap();
+        let commands = runner.commands();
+        assert_eq!(commands.len(), 4);
+        for command in commands {
+            assert!(
+                !command.contains("--features") && !command.contains("--all-features"),
+                "{command}"
+            );
+        }
+    }
+
+    #[test]
     fn clippy_denies_warnings_for_an_explicit_target() {
         let runner = RecordingRunner::default();
         let target = BuildTarget::Triple("aarch64-apple-darwin".into());

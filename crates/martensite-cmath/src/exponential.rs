@@ -97,7 +97,7 @@ fn guarded_powf(x: f32, y: f32) -> f32 {
 /// Cube root, correctly rounded.
 ///
 /// ```
-/// assert_eq!(martensite_cmath::cbrt(-27.0), -3.0);
+/// assert_eq!(martensite_cmath::cbrt(-8.0), -2.0);
 /// ```
 pub fn cbrt(x: f64) -> f64 {
     observed!(cbrt(x) => metallic::cbrt(x))

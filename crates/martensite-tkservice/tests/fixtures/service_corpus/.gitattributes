@@ -1,0 +1,3 @@
+# Frozen protocol bytes retain line endings and intentional token-separator spaces.
+inputs-*.txt -text
+native-*.txt -text -whitespace

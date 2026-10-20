@@ -66,8 +66,31 @@ jobs:
         with:
           # PR validation needs the merge base; release checks need the tags.
           fetch-depth: 0
+          # Dataset-backed tests read their inputs from external/martensite-test-data.
+          submodules: true
       - name: Install the toolchain pinned by rust-toolchain.toml
         run: rustup toolchain install
+      # The visualization tests load FreeType at run time. Windows runners have none, so
+      # build the version install-windows.ps1 pins, with the same options.
+      - name: Build FreeType for the visualization tests (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $source = Join-Path $env:RUNNER_TEMP 'freetype-src'
+          $build = Join-Path $env:RUNNER_TEMP 'freetype-build'
+          $prefix = Join-Path $env:RUNNER_TEMP 'freetype'
+          git clone --quiet https://github.com/freetype/freetype.git $source
+          git -C $source checkout --quiet 0a0221a1347e2f1e07c395263540026e9a0aa7c7
+          cmake -S $source -B $build -A x64 -DBUILD_SHARED_LIBS=ON -DFT_DISABLE_ZLIB=ON -DFT_DISABLE_BZIP2=ON -DFT_DISABLE_PNG=ON -DFT_DISABLE_HARFBUZZ=ON -DFT_DISABLE_BROTLI=ON "-DCMAKE_INSTALL_PREFIX=$prefix"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build $build --config Release --parallel
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --install $build --config Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Add-Content $env:GITHUB_PATH (Join-Path $prefix 'bin')
+      - name: Install FreeType for the visualization tests (macOS)
+        if: runner.os == 'macOS'
+        run: brew list freetype >/dev/null 2>&1 || brew install freetype
       - run: cargo xtask ci run --target ${{ matrix.target }}
       - name: Retain compiler unsafe inventory evidence
         if: always()

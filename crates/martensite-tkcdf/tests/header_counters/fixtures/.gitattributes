@@ -1,0 +1,2 @@
+# The container byte layouts include significant whitespace and NULs.
+*.fsd binary

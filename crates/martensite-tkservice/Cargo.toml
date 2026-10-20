@@ -1,0 +1,50 @@
+[package]
+autotests = false
+name = "martensite-tkservice"
+version = "0.3.4"
+description = "Martensite visualization services: windows and events, images, fonts, graphic aspects, cameras, lights, textures, shaders and media."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+# The workspace forbids unsafe code. This crate loads the display, font and font
+# configuration libraries at run time and calls them through C interfaces, and keeps
+# raw pixel storage, so it denies unsafe code and lets each module that needs it opt
+# in with `#[allow(unsafe_code)]` and a SAFETY comment on every unsafe block and impl
+# (AGENTS.md, "Unsafe code exception"); clippy checks those comments. The other lints
+# match the workspace.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = "warn"
+undocumented_unsafe_blocks = "warn"
+
+[features]
+# Native display assertions require a live X11 server; enable explicitly in that environment.
+x11-integration-tests = []
+# The font corpus families compare the host font database and faces with a recording
+# made on the reference Linux machine; enable them only on a machine with those fonts.
+host-font-corpus = []
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.4" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.4" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.4" }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+x11-dl = "=2.21.0"
+
+[target.'cfg(unix)'.dependencies]
+libc = "=0.2.190"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Registry", "Win32_System_SystemInformation"] }
+
+# Test modules share one executable per toolkit to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"

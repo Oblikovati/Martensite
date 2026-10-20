@@ -1,0 +1,2 @@
+# These are protocol bytes: spaces, NULs and line endings are acceptance inputs.
+*.fsd binary
