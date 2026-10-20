@@ -6,7 +6,7 @@
 //! Both checks are kept with their numbers. The dump is `*** Dump of MTM ***`, the
 //! manager's `DumpTransaction` text and `***     End     ***`, as the dump command prints.
 mod document_commands;
-use document_commands::{get_real, word_at, word_index, new_document, set_real, word_list};
+use document_commands::{get_real, new_document, set_real, word_at, word_index, word_list};
 use martensite_tkernel::standard::Handle;
 use martensite_tkernel::tcollection::ExtendedString;
 use martensite_tklcaf::tdoc_std::{TDocStdDocument, TDocStdMultiTransactionManager};

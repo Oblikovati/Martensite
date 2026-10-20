@@ -5,7 +5,9 @@
 //! stays. The tests assert that outcome: the integer is gone when the scenario reads it, the
 //! real attribute is there when the scenario reads it, and every `DFUndo` is applicable.
 mod document_commands;
-use document_commands::{add_label, get_integer, get_real, new_named_document, set_integer, set_real};
+use document_commands::{
+    add_label, get_integer, get_real, new_named_document, set_integer, set_real,
+};
 use martensite_tkernel::standard::Handle;
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tklcaf::tdf::{TdfDelta, TdfTransaction};
