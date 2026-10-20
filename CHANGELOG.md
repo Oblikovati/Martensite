@@ -6,6 +6,21 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added the `martensite-tkcdf` crate for application documents, references between
+  documents, document metadata, format-driver lookup, container header reading and a
+  light XML parser and writer.
+- Added the `martensite-tklcaf` crate for the application data framework: labels and
+  attributes, transactions with undo and redo, standard attributes, the function
+  mechanism, documents, external links and multi-document transactions.
+- Added the `martensite-tkservice` crate for visualization services: windows and input
+  events, pixel maps, fonts and text layout, the presentation data model, shader
+  program generation and the graphic driver interfaces. Linux is complete; the Windows,
+  macOS and canvas windows are defined interfaces that return a typed
+  `Standard_NotImplemented` error until their backends exist. FreeType, fontconfig and
+  Xlib are loaded at run time.
+
 ### Fixed
 
 - Recorded the Intel macOS compiler-inventory baseline from a clean native capture (#198).
