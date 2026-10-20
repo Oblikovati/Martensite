@@ -205,3 +205,4 @@ crates/martensite-tkgeomalgo/tests/fixtures/** -text -whitespace
 crates/martensite-tkgeomalgo/tests/sketch_line_incidences/*.csv -text -whitespace
 crates/martensite-tkgeomalgo/tests/sketch_spline/*.csv -text -whitespace
 crates/martensite-tktopalgo/tests/data/** -text -whitespace
+crates/martensite-tkhlr/tests/fixtures/** -text -whitespace

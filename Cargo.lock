@@ -402,6 +402,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkhlr"
+version = "0.3.4"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tktopalgo",
+ "sha2",
+]
+
+[[package]]
 name = "martensite-tklcaf"
 version = "0.3.4"
 dependencies = [
