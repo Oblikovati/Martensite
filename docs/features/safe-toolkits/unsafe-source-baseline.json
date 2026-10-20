@@ -1,6 +1,7 @@
 {
   "crates/martensite-cmath/src/lib.rs": {"unsafe_keywords":1,"unsafe_code_mentions":1,"kinds":{"extern":1}},
   "crates/martensite-tkernel/src/c_format/errno_text.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":1,"extern":1}},
+  "crates/martensite-tkernel/src/c_format/nonfinite.rs": {"unsafe_keywords":1,"unsafe_code_mentions":1,"kinds":{"block":1}},
   "crates/martensite-tkernel/src/message/printer_ostream/console.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":1,"extern":1}},
   "crates/martensite-tkernel/src/message/printer_system_log/system.rs": {"unsafe_keywords":10,"unsafe_code_mentions":1,"kinds":{"block":6,"extern":2,"implementation":2}},
   "crates/martensite-tkernel/src/ncollection/allocator.rs": {"unsafe_keywords":13,"unsafe_code_mentions":0,"kinds":{"block":7,"function":5,"implementation":1}},

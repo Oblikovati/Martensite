@@ -143,6 +143,11 @@ fn general_format_matches_printf_g() {
     assert_eq!(format_general(-0.0, 17), "-0");
     assert_eq!(format_general(f64::NAN, 17), "nan");
     assert_eq!(format_general(-f64::INFINITY, 17), "-inf");
+    // The x86-64 default NaN, which Windows UCRT would spell `-nan(ind)` (#201).
+    assert_eq!(
+        format_general(f64::from_bits(0xfff8_0000_0000_0000), 17),
+        "-nan"
+    );
     assert_eq!(
         format_general(8796093022208.0 + 0.03125, 17),
         "8796093022208.0312"

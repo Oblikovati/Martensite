@@ -13,7 +13,7 @@
 /// ```
 pub fn format_general(value: f64, precision: usize) -> String {
     if !value.is_finite() {
-        return crate::c_format::nonfinite_text(value);
+        return glibc_nonfinite(value);
     }
     let significant = precision.max(1);
     let scientific = format!("{value:.*e}", significant - 1);
@@ -23,6 +23,14 @@ pub fn format_general(value: f64, precision: usize) -> String {
         return format!("{}e{exponent:+03}", strip_fraction_zeros(mantissa));
     }
     fixed_layout(mantissa, exponent)
+}
+
+/// glibc's `inf`/`nan` spelling, signed by the sign bit, on every target. Stream
+/// text is compared across platforms, so Windows UCRT's `-nan(ind)` is not used
+/// here (#201).
+fn glibc_nonfinite(value: f64) -> String {
+    let word = if value.is_nan() { "nan" } else { "inf" };
+    format!("{}{word}", if value.is_sign_negative() { "-" } else { "" })
 }
 
 /// Rewrites the rounded digits `d.ddd` with decimal exponent `exponent` in positional form.

@@ -62,10 +62,11 @@ follows [Semantic Versioning](https://semver.org/).
   their text and words differed from x86-64; x86-64 results are unchanged. The
   new `martensite_cmath::quotient` and `INVALID_OPERATION_NAN` provide this (#201).
 
-- Spelled infinities and NaNs in formatted text by their sign alone (`inf`,
-  `-inf`, `nan`, `-nan`) on every target. Windows previously printed the x86-64
-  default NaN as UCRT's `-nan(ind)`; that host call and its unsafe block are
-  removed (#201).
+- Spelled infinities and NaNs in stream text (`format_general` and `IoStream`
+  real insertion) by their sign alone (`inf`, `-inf`, `nan`, `-nan`) on every
+  target, as the glibc layout it documents. Windows previously printed the
+  x86-64 default NaN as UCRT's `-nan(ind)` there; the C `sprintf` emulation
+  keeps the host spelling (#201).
 
 ### Fixed
 

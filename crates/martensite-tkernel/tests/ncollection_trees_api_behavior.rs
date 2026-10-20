@@ -153,7 +153,8 @@ fn filler_drop_fills_reset_discards_and_check_tree_reports_balance() {
         let mut text: String = String::new();
         assert_eq!(filler.check_tree(&mut text).unwrap(), 1);
         let zero = std::hint::black_box(0.0_f64);
-        let native_nan = martensite_tkernel::storage::format_general(zero / zero, 2);
+        // The balance line is C `printf` text, so its NaN follows the host C spelling.
+        let native_nan = host_printf_g(zero / zero);
         assert_eq!(
             text,
             format!("Checking UBTree:       1 leaves, balance ={native_nan:>7}\n")
@@ -241,4 +242,11 @@ fn kdtree_array_builds_and_moves() {
     assert!(moved.is_empty() && tree.len() == 2);
     let copy = tree.clone();
     assert_eq!(copy.point(1).unwrap(), &[1.0, 1.0]);
+}
+
+fn host_printf_g(value: f64) -> String {
+    use martensite_tkernel::standard::c_string::{FormatArg, sprintf_into_slice};
+    let mut buffer = [0_u8; 64];
+    let count = sprintf_into_slice(&mut buffer, b"%g", &[FormatArg::Real(value)]).unwrap();
+    String::from_utf8(buffer[..count].to_vec()).unwrap()
 }
