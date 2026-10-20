@@ -1,9 +1,9 @@
-//! The `restore` and `save` on the Rust API (Draw_VariableCommands.cxx `restore`/`save`,
-//! the DrawTrSurf and DBRep_DrawableShape `Save`/`Restore` factories).
+//! The `restore` and `save` on the Rust API (`restore`/`save`,
+//! the geometry and shape variable save and restore).
 //!
 //! `restore` reads the first word of the file as the drawable type and lets that type's
 //! factory read the rest; an unknown type rereads the whole file as a
-//! `DBRep_DrawableShape`, which is what a header-less `.brep` file gets.
+//! a shape, which is what a header-less `.brep` file gets.
 use super::dataset::located_bytes;
 use super::script::{Reply, Script, ScriptStep};
 use super::value::Value;
@@ -34,7 +34,7 @@ pub fn restore(d: &mut Script, name: &str, var: &str) -> ScriptStep {
 
 /// Whether the file names the generic `DrawTrSurf_Curve`, `DrawTrSurf_Curve2d` or
 /// `DrawTrSurf_Surface` drawable, which draws any geometry without its poles and knots
-/// (`DrawTrSurf::Set` picks the B-spline or Bezier drawable from the geometry instead).
+/// (setting a variable picks the B-spline or Bezier drawable from the geometry instead).
 fn generic_drawable(bytes: &[u8]) -> bool {
     matches!(
         first_word(bytes).0,
@@ -91,7 +91,7 @@ pub fn saved_curve(curve: &Handle<dyn GeomCurve>, drawable: &str) -> Result<Vec<
     Ok(bytes)
 }
 
-/// `DBRep_DrawableShape::Restore`: a BRepTools shape set, then the shape reference.
+/// The shape variable restore: a BRepTools shape set, then the shape reference.
 fn drawable_shape(stream: &mut IoStream) -> Result<Shape, Failure> {
     let mut shape = Shape::default();
     brep_tools::read(

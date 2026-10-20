@@ -1,4 +1,4 @@
-//! The case variable commands the cases call (Draw_VariableCommands.cxx): `copy`,
+//! The case variable commands the cases call: `copy`,
 //! `renamevar`, `dump`, `isdraw` and `whatis`, plus `point` and `dval` arithmetic.
 use crate::support::numbers::{e, g17};
 use crate::support::script::{Reply, Script, ScriptStep};
@@ -9,7 +9,7 @@ use martensite_tkgeombase::geom_tools;
 use martensite_tkmath::gp::Point3;
 use std::io::{Read, Seek, SeekFrom};
 
-/// `copy from to`: `Draw_Drawable3D::Copy`, a deep copy of geometry and the same shape.
+/// `copy from to`: the variable copy, a deep copy of geometry and the same shape.
 pub fn copy(d: &mut Script, from: &str, to: &str) -> ScriptStep {
     d.command(&["copy", from, to], |d| {
         let Some(value) = d.get(from).cloned() else {
@@ -70,7 +70,7 @@ pub fn logged_dump(d: &mut Script, name: &str) -> ScriptStep<String> {
     Ok(info)
 }
 
-/// `point name x y z`: a 3D `DrawTrSurf_Point`.
+/// `point name x y z`: a 3D point variable.
 pub fn point(d: &mut Script, name: &str, xyz: [f64; 3]) -> ScriptStep {
     let [x, y, z] = xyz.map(g17);
     d.command(&["point", name, &x, &y, &z], |d| {
@@ -80,7 +80,7 @@ pub fn point(d: &mut Script, name: &str, xyz: [f64; 3]) -> ScriptStep {
     Ok(())
 }
 
-/// `dump names...`: the banner and `Draw_Drawable3D::Dump` of each variable at precision
+/// `dump names...`: the banner and the dump of each variable at precision
 /// 15.
 pub fn dump(d: &mut Script, names: &[&str]) -> ScriptStep<String> {
     let args: Vec<&str> = std::iter::once("dump")
@@ -98,7 +98,7 @@ pub fn dump(d: &mut Script, names: &[&str]) -> ScriptStep<String> {
     })
 }
 
-/// `Draw_Drawable3D::Dump` of one value.
+/// The dump of one value.
 fn dumped(value: &Value) -> Result<String, Failure> {
     Ok(match value {
         Value::Point(p) => format!(

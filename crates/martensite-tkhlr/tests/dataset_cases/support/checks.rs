@@ -55,7 +55,7 @@ pub fn compound(
 }
 
 /// `nbshapes name [-t]`: `Number of shapes in name` then the counts, from
-/// BRepTools_ShapeSet::DumpExtent, or with `-t` from `DBRep` DumpExtent (TopExp::MapShapes
+/// BRepTools_ShapeSet::DumpExtent, or with `-t` from DumpExtent (TopExp::MapShapes
 /// per type, located shapes distinct); nothing for a null shape.
 pub fn nbshapes(draw: &mut Script, name: &str, total: bool) -> ScriptStep<String> {
     let words: &[&str] = if total { &[name, "-t"] } else { &[name] };
@@ -84,7 +84,7 @@ fn shape_set_extent(shape: &Shape) -> Result<String, Failure> {
     Ok(String::from_utf8_lossy(text.as_bytes()).into_owned())
 }
 
-/// `DBRep` `DumpExtent`: VERTEX up to COMPOUND, then their sum as SHAPE.
+/// `DumpExtent`: VERTEX up to COMPOUND, then their sum as SHAPE.
 fn total_extent(shape: &Shape) -> Result<String, Failure> {
     const LABELS: [(&str, ShapeEnum); 8] = [
         (" VERTEX    : ", ShapeEnum::Vertex),

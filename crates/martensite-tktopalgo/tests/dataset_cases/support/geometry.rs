@@ -225,7 +225,7 @@ pub fn extrema2d(c1: &Handle<dyn Geom2dCurve>, c2: &Handle<dyn Geom2dCurve>) -> 
     count
 }
 
-/// `dump name` of a point variable (DrawTrSurf_Point::Dump at precision 15).
+/// `dump name` of a point variable (the point dump at precision 15).
 pub fn dump_point(name: &str, p: Point3) -> String {
     format!(
         "\n\n*********** Dump of {name} *************\nPoint : {}, {}, {}\n",

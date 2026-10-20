@@ -39,10 +39,10 @@ pub enum ViewStep<'a> {
     Xwd(&'a str),
 }
 
-/// A drawable a command draws with `dout <<` (not a variable).
+/// A drawable a command displays without a variable.
 #[derive(Clone)]
 pub enum Marker {
-    /// `xdistcs`: `Draw_Marker3D(point, Draw_Plus, Draw_rouge, 3)`.
+    /// `xdistcs`: a red plus marker of size 3 at the point.
     SpacePlus(Point3),
     /// `2dintersect`: the cross of an intersection point.
     PlaneCross(Point2),
@@ -50,8 +50,8 @@ pub enum Marker {
     PlaneSegments(Handle<dyn Geom2dCurve>, Handle<dyn Geom2dCurve>),
 }
 
-/// A curve color a command sets in `DrawTrSurf::Parameters()` before `Script::Set`
-/// (`DBRep_ColorOrientation` of an edge: red forward, blue reversed, pink external,
+/// A curve color a command sets in the curve parameters before `Script::Set`
+/// (the orientation color of an edge: red forward, blue reversed, pink external,
 /// orange internal).
 #[derive(Clone, Copy, Debug)]
 pub enum CurveColor {
@@ -64,7 +64,7 @@ pub enum CurveColor {
 /// How the drawable of a variable is made.
 #[derive(Clone, Copy, Debug)]
 pub enum Look {
-    /// `DrawTrSurf::Set`/`DBRep::Set` with the default parameters: B-spline and Bezier
+    /// Setting a variable with the default parameters: B-spline and Bezier
     /// geometry gets its specialized drawable (poles, knots).
     Default,
     /// The default drawable in a curve color the command set.
@@ -85,7 +85,7 @@ pub trait Session {
     fn unset(&mut self, name: &str);
     /// `renamevar from to`: the drawable keeps its display under the new name.
     fn rename(&mut self, from: &str, to: &str);
-    /// `dout << marker`.
+    /// A marker displayed without a variable.
     fn marker(&mut self, marker: Marker);
     /// One view command.
     fn step(&mut self, step: ViewStep<'_>);

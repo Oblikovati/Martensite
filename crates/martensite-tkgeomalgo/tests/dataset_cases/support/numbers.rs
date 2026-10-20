@@ -1,4 +1,4 @@
-//! How the case harness prints reals: `Draw_Interpretor << double` is `%.17g`, `xdistcs` uses `%lg`,
+//! How the case harness prints reals: printing a real is `%.17g`, `xdistcs` uses `%lg`,
 //! and a `std::ostream` at precision `p` in scientific mode is `%.{p}e`; the cases cut
 //! that text with script string commands and compare numbers through script `expr`.
 
@@ -18,7 +18,7 @@ pub fn g(value: f64, precision: usize) -> String {
     c_exponent(&trim_fraction(mantissa), exponent)
 }
 
-/// `Draw_Interpretor << double`: `%.17g`.
+/// Printing a real: `%.17g`.
 pub fn g17(value: f64) -> String {
     g(value, 17)
 }

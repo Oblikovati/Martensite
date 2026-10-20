@@ -27,7 +27,7 @@ pub enum ViewStep<'a> {
     RotateUp,
     /// `r`: rotate every AXON/PERS view right by DEFROTATE about screen Y.
     RotateRight,
-    /// `normals shape length`: display the face normals of the shape (DBRep `normals`).
+    /// `normals shape length`: display the face normals of the shape.
     Normals(&'a martensite_tkbrep::topods::Shape, f64),
     /// `reverse c` / a variable redraw: repaint view 1 with the current geometry.
     Repaint,

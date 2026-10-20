@@ -71,13 +71,13 @@ impl Script {
         }
     }
 
-    /// `DBRep::Set(name, shape)`; `draw.set_shape("b", &shape)`.
+    /// `Set(name, shape)`; `draw.set_shape("b", &shape)`.
     pub fn set_shape(&mut self, name: &str, shape: &Shape) {
         self.shapes.retain(|(variable, _)| variable != name);
         self.shapes.push((name.to_string(), shape.clone()));
     }
 
-    /// `DBRep::Get(name)`: the null shape for an unknown variable; `draw.shape("b")`.
+    /// `Get(name)`: the null shape for an unknown variable; `draw.shape("b")`.
     pub fn shape(&self, name: &str) -> Shape {
         self.shapes
             .iter()

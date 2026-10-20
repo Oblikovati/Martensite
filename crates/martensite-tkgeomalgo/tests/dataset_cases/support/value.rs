@@ -9,24 +9,24 @@ use martensite_tkmath::gp::{Point2, Point3};
 /// A case variable's value.
 #[derive(Clone)]
 pub enum Value {
-    /// `DBRep_DrawableShape`.
+    /// A shape variable.
     Shape(Shape),
-    /// `DrawTrSurf_Curve` and its B-spline/Bezier subclasses.
+    /// A 3D curve variable and its B-spline/Bezier subclasses.
     Curve(Handle<dyn GeomCurve>),
-    /// `DrawTrSurf_Curve2d` and its subclasses.
+    /// A 2D curve variable and its subclasses.
     Curve2d(Handle<dyn Geom2dCurve>),
-    /// `DrawTrSurf_Surface` and its subclasses.
+    /// A surface variable and its subclasses.
     Surface(Handle<dyn GeomSurface>),
-    /// A 3D `DrawTrSurf_Point`.
+    /// A 3D point variable.
     Point(Point3),
-    /// A 2D `DrawTrSurf_Point`.
+    /// A 2D point variable.
     Point2d(Point2),
-    /// `Draw_Number`.
+    /// A number variable.
     Number(f64),
 }
 
 impl Value {
-    /// The `whatis` text of the drawable (`Draw_Drawable3D::Whatis` overrides).
+    /// The `whatis` text of the drawable.
     pub fn whatis(&self) -> String {
         match self {
             Value::Shape(shape) => format!(
@@ -41,7 +41,7 @@ impl Value {
         }
     }
 
-    /// Whether the drawable lives in 3D views (`Draw_Drawable3D::Is3D`).
+    /// Whether the drawable lives in 3D views.
     pub fn is_3d(&self) -> bool {
         !matches!(self, Value::Curve2d(_) | Value::Point2d(_))
     }

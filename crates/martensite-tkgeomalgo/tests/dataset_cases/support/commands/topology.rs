@@ -68,7 +68,7 @@ pub fn mksurface(d: &mut Script, name: &str, face: &str) -> ScriptStep {
     Ok(())
 }
 
-/// `DBRep_ColorOrientation`: the curve color of an edge orientation.
+/// The curve color of an edge orientation.
 fn orientation_color(orientation: Orientation) -> CurveColor {
     match orientation {
         Orientation::Forward => CurveColor::Rouge,

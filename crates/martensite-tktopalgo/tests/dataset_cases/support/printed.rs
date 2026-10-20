@@ -1,4 +1,4 @@
-//! How the case harness prints a real into the script result: `Draw_Interpretor::Append(double)` uses
+//! How the case harness prints a real into the script result: appending a real uses
 //! `Sprintf(s, "%.17g", r)`; the cases then cut that text with script string commands.
 
 /// C `printf("%.17g", value)` for a finite value; `g17(0.5) == "0.5"`.

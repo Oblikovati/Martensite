@@ -1,9 +1,9 @@
 //! `restore` and `binrestore` on the Rust API: the variable-file reader, the
-//! geometry and `DBRep_DrawableShape` `Restore` factories and the binary shape reader.
+//! geometry and shape variable restore and the binary shape reader.
 //!
 //! `restore` reads the first word of the file as the drawable type and lets that type's
 //! factory read the rest; an unknown type rereads the whole file as a
-//! `DBRep_DrawableShape`, which is what a header-less `.brep` file gets.
+//! a shape, which is what a header-less `.brep` file gets.
 use super::dataset::located_bytes;
 use martensite_tkbrep::{bintools, brep::BRepBuilder, brep_tools, topods::Shape};
 use martensite_tkernel::{message::ProgressRange, standard::Handle, storage::IoStream};
@@ -123,7 +123,7 @@ pub fn binrestore(name: &str) -> Shape {
     shape
 }
 
-/// `DBRep_DrawableShape::Restore`: a BRepTools shape set, then the shape reference.
+/// The shape variable restore: a BRepTools shape set, then the shape reference.
 fn drawable_shape(stream: &mut IoStream) -> Shape {
     let mut shape = Shape::default();
     brep_tools::read(

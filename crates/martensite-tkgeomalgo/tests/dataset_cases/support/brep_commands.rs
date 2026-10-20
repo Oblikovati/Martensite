@@ -28,7 +28,7 @@ use martensite_tkgeombase::{
 };
 use std::io::{Read, Seek, SeekFrom};
 
-/// DBRep.cxx `explode name`: the direct sub-shapes, in iteration order.
+/// `explode name`: the direct sub-shapes, in iteration order.
 pub fn explode(shape: &Shape) -> Vec<Shape> {
     let mut parts = Vec::new();
     let mut iterator = ShapeIterator::new(shape, true, true);
@@ -39,7 +39,7 @@ pub fn explode(shape: &Shape) -> Vec<Shape> {
     parts
 }
 
-/// DBRep.cxx `explode name type`: the sub-shapes of `kind` in exploration order, each
+/// `explode name type`: the sub-shapes of `kind` in exploration order, each
 /// once (the map is seeded with the shape itself).
 pub fn explode_type(shape: &Shape, kind: ShapeEnum) -> Vec<Shape> {
     let mut seen = MapOfShape::default();
@@ -96,7 +96,7 @@ pub fn project(
     (!projected.is_null()).then_some(projected)
 }
 
-/// Draw_VariableCommands.cxx `dump name`: the banner, then `print` at precision 15.
+/// `dump name`: the banner, then `print` at precision 15.
 fn dump_text(name: &str, print: impl FnOnce(&mut IoStream)) -> String {
     let mut stream = IoStream::from_bytes(Vec::new());
     stream.set_precision(15);
@@ -108,21 +108,21 @@ fn dump_text(name: &str, print: impl FnOnce(&mut IoStream)) -> String {
     format!("\n\n*********** Dump of {name} *************\n{body}")
 }
 
-/// `dump name` of a 2D curve (DrawTrSurf_Curve2d::Dump, GeomTools_Curve2dSet::PrintCurve2d).
+/// `dump name` of a 2D curve (GeomTools_Curve2dSet::PrintCurve2d).
 pub fn dump_curve2d(name: &str, curve: &Handle<dyn Geom2dCurve>) -> String {
     dump_text(name, |stream| {
         geom_tools::dump_curve2d(curve, stream).unwrap()
     })
 }
 
-/// `dump name` of a 3D curve (DrawTrSurf_Curve::Dump, GeomTools_CurveSet::PrintCurve).
+/// `dump name` of a 3D curve (GeomTools_CurveSet::PrintCurve).
 pub fn dump_curve(name: &str, curve: &Handle<dyn GeomCurve>) -> String {
     dump_text(name, |stream| {
         geom_tools::dump_curve(curve, stream).unwrap()
     })
 }
 
-/// `dump name` of a surface (DrawTrSurf_Surface::Dump, GeomTools_SurfaceSet::PrintSurface).
+/// `dump name` of a surface (GeomTools_SurfaceSet::PrintSurface).
 pub fn dump_surface(name: &str, surface: &Handle<dyn GeomSurface>) -> String {
     dump_text(name, |stream| {
         geom_tools::dump_surface(surface, stream).unwrap()
@@ -242,7 +242,7 @@ pub fn crvtpoints_count(
         .nb_points()
 }
 
-/// DBRep.cxx `tclean [-force] name`: `BRepTools::Clean` of a compound holding the shape.
+/// `tclean [-force] name`: `BRepTools::Clean` of a compound holding the shape.
 pub fn tclean(shape: &Shape, force: bool) {
     let builder = BRepBuilder::default();
     let mut compound = Compound::default();

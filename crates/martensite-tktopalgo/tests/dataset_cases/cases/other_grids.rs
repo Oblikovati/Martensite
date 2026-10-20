@@ -150,7 +150,7 @@ pub mod intss {
         let s2 = set(s, "S2", mksurface(&b));
         for (name, x, y) in [("I1", &s1, &s2), ("I2", &s2, &s1)] {
             intersect_surfaces(s, name, x, y);
-            // DBRep::Get of a curve variable is a null shape: no vertex.
+            // Getting a curve variable is a null shape: no vertex.
             if checksection(&Shape::default()) != 0 {
                 log::puts(" Faulty : Intersection is not correct");
             }

@@ -1,6 +1,6 @@
 //! The script state a case body works on: its variables, its log and its viewer session.
 //!
-//! A command runs through [`Script::command`], which logs it the way `Draw_Interpretor`
+//! A command runs through [`Script::command`], which logs it the way the script interpreter
 //! does (the arguments, the output written while it runs and its result) and turns a
 //! non-zero status or a `Standard_Failure` into a script error, which the body propagates
 //! with `?` unless the script catches it.
@@ -48,7 +48,7 @@ impl Reply {
 pub struct Script<'s> {
     session: &'s mut dyn Session,
     variables: Vec<(String, Value)>,
-    /// The variables whose drawable is displayed (`Draw_Drawable3D::Visible`).
+    /// The variables whose drawable is displayed.
     visible: Vec<String>,
     pub log: ScriptLog,
 }
@@ -209,7 +209,7 @@ impl<'s> Script<'s> {
         self.session.rename(from, to);
     }
 
-    /// `dout << marker`.
+    /// A marker displayed without a variable.
     pub fn marker(&mut self, marker: Marker) {
         self.session.marker(marker);
     }
@@ -219,7 +219,7 @@ impl<'s> Script<'s> {
         self.session.step(step);
     }
 
-    /// `DrawTrSurf::GetCurve(name)`: a null handle unless `name` is a 3D curve.
+    /// `GetCurve(name)`: a null handle unless `name` is a 3D curve.
     pub fn curve(&self, name: &str) -> Handle<dyn GeomCurve> {
         match self.get(name) {
             Some(Value::Curve(curve)) => curve.clone(),
@@ -227,7 +227,7 @@ impl<'s> Script<'s> {
         }
     }
 
-    /// `DrawTrSurf::GetCurve2d(name)`.
+    /// `GetCurve2d(name)`.
     pub fn curve2d(&self, name: &str) -> Handle<dyn Geom2dCurve> {
         match self.get(name) {
             Some(Value::Curve2d(curve)) => curve.clone(),
@@ -235,7 +235,7 @@ impl<'s> Script<'s> {
         }
     }
 
-    /// `DrawTrSurf::GetSurface(name)`.
+    /// `GetSurface(name)`.
     pub fn surface(&self, name: &str) -> Handle<dyn GeomSurface> {
         match self.get(name) {
             Some(Value::Surface(surface)) => surface.clone(),
@@ -243,7 +243,7 @@ impl<'s> Script<'s> {
         }
     }
 
-    /// `DBRep::Get(name)`: a null shape unless `name` is a shape.
+    /// `Get(name)`: a null shape unless `name` is a shape.
     pub fn shape(&self, name: &str) -> Shape {
         match self.get(name) {
             Some(Value::Shape(shape)) => shape.clone(),
@@ -251,7 +251,7 @@ impl<'s> Script<'s> {
         }
     }
 
-    /// `DrawTrSurf::GetPoint(name)`.
+    /// `GetPoint(name)`.
     pub fn point(&self, name: &str) -> Option<Point3> {
         match self.get(name) {
             Some(Value::Point(point)) => Some(*point),
@@ -259,7 +259,7 @@ impl<'s> Script<'s> {
         }
     }
 
-    /// `DrawTrSurf::GetPoint2d(name)`.
+    /// `GetPoint2d(name)`.
     pub fn point2d(&self, name: &str) -> Option<Point2> {
         match self.get(name) {
             Some(Value::Point2d(point)) => Some(*point),

@@ -26,7 +26,7 @@ use martensite_tktopalgo::{
 };
 use std::io::{Read, Seek, SeekFrom};
 
-/// DBRep.cxx `setflags name locked`: `Locked(true)` on the shape and on every explored
+/// `setflags name locked`: `Locked(true)` on the shape and on every explored
 /// vertex, edge and face (the flags live on the shared TShapes).
 pub fn setflags_locked(shape: &Shape) {
     shape.tshape().get().unwrap().set_locked(true);
@@ -88,7 +88,7 @@ pub fn mkedge(curve: &Handle<dyn GeomCurve>) -> Shape {
         .into_shape()
 }
 
-/// DBRep.cxx `compound s1 s2 ... name`: a compound of the shapes, in order.
+/// `compound s1 s2 ... name`: a compound of the shapes, in order.
 pub fn compound(shapes: &[&Shape]) -> Shape {
     let builder = BRepBuilder::default();
     let mut compound = Compound::default();
@@ -299,8 +299,8 @@ pub fn checksection(shape: &Shape) -> usize {
     alone
 }
 
-/// Draw_VariableCommands.cxx `whatis name` of a shape: `name is a shape TYPE ...`
-/// (`DBRep_DrawableShape::Whatis`); the type word the cases read.
+/// `whatis name` of a shape: `name is a shape TYPE ...`
+/// (the shape `whatis` text); the type word the cases read.
 pub fn shape_type_word(shape: &Shape) -> &'static str {
     match shape.shape_type().unwrap() {
         ShapeEnum::Compound => "COMPOUND",
@@ -315,8 +315,8 @@ pub fn shape_type_word(shape: &Shape) -> &'static str {
     }
 }
 
-/// Draw_VariableCommands.cxx `dump name` of a shape: the banner, then
-/// `DBRep_DrawableShape::Dump` (`BRepTools::Dump`) at precision 15.
+/// `dump name` of a shape: the banner, then
+/// the shape dump (`BRepTools::Dump`) at precision 15.
 pub fn dump_shape(name: &str, shape: &Shape) -> String {
     let mut stream = IoStream::from_bytes(Vec::new());
     stream.set_precision(15);

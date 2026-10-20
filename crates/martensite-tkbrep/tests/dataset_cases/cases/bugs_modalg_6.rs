@@ -10,7 +10,7 @@ use martensite_tkernel::precision;
 use martensite_tkg3d::top_abs::ShapeEnum;
 
 /// A file written by the other `BRepTools::Write` overload has no shape-set
-/// header; `restore` falls back to reading it as a DBRep_DrawableShape and must give a
+/// header; `restore` falls back to reading it as a shape and must give a
 /// null shape, so `nbshapes a` prints nothing.
 fn restores_null_shape(s: &mut dyn Session, file: &str) {
     let a = restore_as(s, file, "a").shape();
