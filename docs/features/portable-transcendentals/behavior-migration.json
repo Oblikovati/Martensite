@@ -29,7 +29,7 @@
     "binary64_reference_pairs": 95,
     "binary32_reference_pairs": 4,
     "changed_fixture_rows": 975,
-    "changed_fixture_rows_admitted": 975,
+    "changed_fixture_rows_admitted": 971,
     "full_release_gate": "pending release-mode dispatch on the pull request branch",
     "independent_integer_power_vectors": 700,
     "special_value_regressions": 23,
@@ -44,11 +44,12 @@
       "platform_scope": "local Linux x86_64 only"
     },
     "attribution": {
-      "rows_attributed": 975,
+      "rows_attributed": 971,
       "distinct_differing_calls": 1372286,
       "finite_calls_mpfr_confirmed": 1371767,
       "platform_replay_of_original_tests": "13187 passed; only failure is the new cbrt(-27) doctest",
-      "portable_replay_of_candidate_tests": "13225 passed, 0 failed"
+      "portable_replay_of_candidate_tests": "13225 passed, 0 failed",
+      "rows_not_admitted": "4 acosh/atanh domain-error NaN-sign rows, owned by #203"
     }
   },
   "version_publication": "No package version bump, tag or publication is authorized by this proposed record.",

@@ -29,8 +29,12 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[3]
 INVENTORY = HERE.parent
-# The inventory's changed-row shards, changed-rows-000.json to changed-rows-006.json.
-SHARDS = [INVENTORY / f'changed-rows-{index:03d}.json' for index in range(7)]
+SHARD_COUNT = 7  # changed-rows-000.json to changed-rows-006.json
+
+
+def shard_path(index: int) -> Path:
+    """Fixed inventory shard location; never derived from input data."""
+    return INVENTORY / f'changed-rows-{index:03d}.json'
 EVIDENCE = 'docs/features/portable-transcendentals/attribution/README.md'
 
 RESULT = re.compile(r'^test (\S+) \.\.\. (ok|FAILED|ignored)$')
@@ -153,8 +157,12 @@ def attribute(row: dict, tests: list, runs: dict, calls: set, verdicts: dict) ->
     functions = defaultdict(int)
     for function, _ in calls:
         functions[function] += 1
+    status = 'unexplained' if reasons else 'attributed'
+    if status == 'attributed' and cause == 'domain_error_nan_sign':
+        # A NaN sign is not a correctly rounded result; #203 owns these rows.
+        status = 'not_admitted_nan_sign_issue_203'
     return {
-        'independent_validation': 'unexplained' if reasons else 'attributed',
+        'independent_validation': status,
         'attribution': {
             'evidence': EVIDENCE,
             'cause': cause,
@@ -195,8 +203,8 @@ def main() -> None:
     all_tests = set(runs['portable_candidate']) | set(runs['platform_original'])
     summary = defaultdict(int)
     request_cache: dict[str, list[str]] = {}
-    for shard in SHARDS:
-        rows = json.loads(shard.read_text())
+    for index in range(SHARD_COUNT):
+        rows = json.loads(shard_path(index).read_text())
         for row in rows:
             path = row['path']
             if path not in FIXED_CONSUMERS and path not in request_cache:
@@ -207,7 +215,8 @@ def main() -> None:
             row.update(attribute(row, tests, runs, row_calls, verdicts))
             summary[row['independent_validation']] += 1
         lines = ',\n'.join(json.dumps(row, separators=(',', ':')) for row in rows)
-        shard.write_text(f'[\n{lines}\n]\n')
+        with open(shard_path(index), 'w', encoding='utf-8') as stream:
+            stream.write(f'[\n{lines}\n]\n')
     per_test = {f'{p}::{t}': call_digest(v) for (p, t), v in sorted(calls.items())}
     (HERE / 'test-call-digests.json').write_text(json.dumps(per_test, indent=1, sort_keys=True) + '\n')
     print(json.dumps(summary))

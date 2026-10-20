@@ -53,8 +53,8 @@ on the branch change only test formatting and documentation.
 | --- | --- |
 | `portable_candidate` | 13,225 passed, 0 failed, 25 ignored |
 | `platform_original` | 13,187 passed, 1 failed, 25 ignored |
-| Changed fixture rows attributed | **975 of 975** (73 files, consumed by 73 tests): 971 by rounding, 4 by a domain-error NaN sign |
-| Unexplained rows | **0** |
+| Changed fixture rows attributed to rounding | **971 of 975** (73 files, consumed by 73 tests) |
+| Rows not explained by rounding | **4**, all NaN signs of domain errors, not admitted and owned by #203 |
 | Distinct differing calls | 1,372,286 |
 | Finite calls: portable = MPFR, glibc ≠ MPFR | **1,371,767 of 1,371,767** |
 | MPFR direct vs 256-bit disagreements | 0 |
@@ -93,9 +93,10 @@ portable function returns `7ff8000000000000`. MPFR has no NaN sign, so it cannot
 decide between them. The replay attributes the change to exactly these two calls
 (`nan_payload_or_sign_only`). These rows are recorded with
 `cause: domain_error_nan_sign`. All other rows are recorded with
-`cause: rounding`. The NaN sign is outside the correct-rounding contract.
-`martensite-cmath` documents that it does not canonicalize NaNs, so the release
-matrix's exact comparison of this text on every target is the platform check.
+`cause: rounding`. A NaN sign is not a correctly rounded result, so these four
+rows are **not admitted** by this proof
+(`independent_validation: not_admitted_nan_sign_issue_203`). Issue #203 restores
+their original bytes through an explicit domain-error NaN contract.
 
 Each changed row's record in `../changed-rows-*.json` lists its test, the
 pass status in both runs, the number of differing calls in that test, and the

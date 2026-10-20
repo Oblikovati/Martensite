@@ -2,7 +2,7 @@
   "schema_version": 1,
   "old_revision": "534e7d6134c4a43926736d8c13b99c591126a8d9",
   "candidate_revision": "2b1f0e601f05eb14147171b0487bd4dcfe1e4425",
-  "acceptance": "admitted_by_attribution",
+  "acceptance": "admitted_by_attribution_except_4_nan_sign_rows_issue_203",
   "behavior_migration": "version_2_approved_recorded_migration",
   "scope": "Every changed test .txt/.txt.gz fixture; decoded byte lines compared positionally. Source-coded test changes separately listed, not asserted semantic case mappings.",
   "fixture_files": 73,
@@ -13,7 +13,7 @@
     {
       "path": "changed-rows-000.json",
       "records": 150,
-      "sha256": "0167bdeeeabfeb9af6c3b91ced5e40deff7f2e80bcaf419415582101fd5f20e1"
+      "sha256": "1f4ebc2c24121b4d0e5a7c9d8cd7fd383d554483840dc880247356da317b16a0"
     },
     {
       "path": "changed-rows-001.json",
@@ -211,13 +211,18 @@
   "admission": {
     "date": "2026-10-20",
     "method": "attribution/README.md",
-    "rows_attributed": 975,
+    "rows_attributed": 971,
     "rows_unexplained": 0,
     "rows_by_cause": {
       "rounding": 971,
       "domain_error_nan_sign": 4
     },
     "distinct_differing_calls": 1372286,
-    "finite_calls_mpfr_confirmed": 1371767
+    "finite_calls_mpfr_confirmed": 1371767,
+    "rows_not_admitted": {
+      "count": 4,
+      "cause": "domain_error_nan_sign",
+      "owner": "#203"
+    }
   }
 }

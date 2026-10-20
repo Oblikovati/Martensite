@@ -38,18 +38,19 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Computed every transcendental function (trigonometric, hyperbolic, exponential,
   logarithmic, power, cube root and `hypot`) with one portable, correctly rounded
-  library, so the kernel returns bit-identical results on Linux x64, Windows x64
-  and both macOS architectures. This is numerical behavior version 2 (#201).
+  library, so finite transcendental results are bit-identical on Linux x64,
+  Windows x64 and both macOS architectures. This is numerical behavior version 2
+  (#201).
 
   Migration from behavior version 1 (0.3.2 and earlier): a result changes only
   where the platform C math library did not round correctly. On Linux, 975 rows
   in 73 retained fixtures and the expected values of 3 test literals and 20
   fixture seals changed. Each change was traced to individual function results
   that MPFR confirms the new library rounds correctly and glibc did not, except
-  four expression-text rows that now print `nan` instead of `-nan` for `acosh`
-  and `atanh` outside their domain. Composite results such as curves, projections, iteration
-  counts and formatted text can differ by more than one unit in the last place
-  where they amplify such a difference. NaN sign and payload remain unspecified.
+  four expression-text rows that only print the NaN sign of an `acosh`/`atanh`
+  domain error differently; #203 restores those rows. Composite results such as
+  curves, projections, iteration counts and formatted text can differ by more
+  than one unit in the last place where they amplify such a difference. NaN sign and payload remain unspecified.
   Version 1 cannot be selected inside this release; applications that need its
   exact results stay on the 0.3.2 crates. The maintainer approved behavior
   version 2 with this recorded migration instead of version-1 replay; the
