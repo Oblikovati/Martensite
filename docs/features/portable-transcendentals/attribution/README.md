@@ -46,7 +46,8 @@ counts with this proof attached.
 ## Results
 
 Environment: Linux x86_64, glibc 2.39, rustc 1.99.0, a CPU with FMA
-(`environment.json`).
+(`environment.json`). The replayed crates are those of `76679cd`; later commits
+on the branch change only test formatting and documentation.
 
 | Check | Result |
 | --- | --- |
@@ -140,12 +141,11 @@ export CARGO_PROFILE_DEV_DEBUG=0 CARGO_INCREMENTAL=0
 docs/features/portable-transcendentals/attribution/replay.sh /tmp/replay   # about 1 h
 python3 -m venv /tmp/mpfr && /tmp/mpfr/bin/pip install --require-hashes \
     -r docs/features/portable-transcendentals/reference-proof/requirements.txt
-cd docs/features/portable-transcendentals/attribution
-/tmp/mpfr/bin/python -I verify_mpfr.py /tmp/replay/calls-platform_original \
-    /tmp/replay/calls-portable_candidate --out calls.tsv.xz --summary mpfr-summary.json
-cp calls.tsv.xz /tmp/replay/ && cd ../../../..
-python3 -I docs/features/portable-transcendentals/attribution/attribute_rows.py \
-    --repo . --evidence /tmp/replay
+A=docs/features/portable-transcendentals/attribution
+/tmp/mpfr/bin/python -I $A/verify_mpfr.py /tmp/replay/calls-platform_original \
+    /tmp/replay/calls-portable_candidate          # writes calls.tsv.xz, mpfr-summary.json
+cp $A/calls.tsv.xz /tmp/replay/
+python3 -I $A/attribute_rows.py --evidence /tmp/replay   # updates ../changed-rows-*.json
 ```
 
 The raw call logs (about 790 MB across 19 files) are not retained. Their

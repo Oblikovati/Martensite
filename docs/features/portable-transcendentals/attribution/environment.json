@@ -8,8 +8,8 @@
  "cpu_fma": true,
  "profile": "dev (opt-level 0) with CARGO_PROFILE_DEV_DEBUG=0 (no debug info) and CARGO_INCREMENTAL=0",
  "command": "docs/features/portable-transcendentals/attribution/replay.sh OUT",
- "mpfr_command": "python3 -I verify_mpfr.py OUT/calls-platform_original OUT/calls-portable_candidate --out calls.tsv.xz --summary mpfr-summary.json",
- "attribution_command": "python3 -I attribute_rows.py --repo . --evidence OUT",
+ "mpfr_command": "python3 -I verify_mpfr.py OUT/calls-platform_original OUT/calls-portable_candidate",
+ "attribution_command": "python3 -I attribute_rows.py --evidence OUT",
  "python_requirements": "../reference-proof/requirements.txt (gmpy2==2.3.2, hash pinned)",
  "raw_call_logs": {
   "calls-platform_original": {

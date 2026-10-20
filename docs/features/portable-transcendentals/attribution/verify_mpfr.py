@@ -12,8 +12,9 @@ Both must agree. The verdict records whether the portable word and the platform
 (glibc) word equal that reference. Run with the pinned gmpy2 from
 ../reference-proof/requirements.txt:
 
-    python3 -I verify_mpfr.py LOG_DIR [LOG_DIR ...] --out calls.tsv.xz --summary mpfr-summary.json
+    python3 -I verify_mpfr.py LOG_DIR [LOG_DIR ...]
 
+It writes `calls.tsv.xz` and `mpfr-summary.json` next to this script.
 `calls.tsv.xz` holds one line per distinct call: function, comma-separated input
 words, platform result words, portable result words, MPFR result words, value
 class, verdict, and whether calling the running C library (ctypes) again gives the
@@ -36,6 +37,7 @@ from gmpy2 import mpfr
 BINARY64 = dict(precision=53, emin=-1073, emax=1024, subnormalize=True)
 BINARY32 = dict(precision=24, emin=-148, emax=128, subnormalize=True)
 WIDE_BITS = 256
+HERE = Path(__file__).resolve().parent
 
 
 def f64(word: str) -> float:
@@ -193,8 +195,6 @@ def distinct_calls(directories: list[Path]) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('logs', nargs='+', type=Path)
-    parser.add_argument('--out', type=Path, required=True)
-    parser.add_argument('--summary', type=Path, required=True)
     options = parser.parse_args()
     calls = distinct_calls(options.logs)
     results = [check(calls[key]) for key in sorted(calls)]
@@ -211,13 +211,13 @@ def main() -> None:
         'distinct_calls': len(results),
         'summary': summary,
     }
-    with lzma.open(options.out, 'wt', preset=9) as stream:
+    with lzma.open(HERE / 'calls.tsv.xz', 'wt', preset=9) as stream:
         stream.write('function\tinputs\tplatform\tportable\tmpfr\tvalue_class\tverdict\tglibc\n')
         for r in results:
             words = [','.join(r[k] or []) for k in ('inputs', 'platform', 'portable', 'mpfr')]
             fields = [r['function'], *words, r.get('value_class', 'n/a'), r['verdict'], r['glibc']]
             stream.write('\t'.join(fields) + '\n')
-    options.summary.write_text(json.dumps(document, indent=1, sort_keys=True) + '\n')
+    (HERE / 'mpfr-summary.json').write_text(json.dumps(document, indent=1, sort_keys=True) + '\n')
     print(json.dumps(document, indent=1, sort_keys=True))
 
 

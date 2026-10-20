@@ -12,7 +12,9 @@ expected bytes under platform libm, new expected bytes under portable functions)
 those tests made at least one differing call, and every finite differing call in
 them was verified against MPFR as portable correctly rounded and platform not.
 
-    python3 -I attribute_rows.py --repo ../../../.. --evidence .
+    python3 -I attribute_rows.py --evidence REPLAY_OUT_DIR
+
+It updates ../changed-rows-*.json and writes test-call-digests.json next to this script.
 """
 
 import argparse
@@ -24,7 +26,9 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-INVENTORY = Path('docs/features/portable-transcendentals')
+HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[3]
+INVENTORY = HERE.parent
 EVIDENCE = 'docs/features/portable-transcendentals/attribution/README.md'
 
 RUNNING = re.compile(r'^\s+Running \S+ \(target/[^)]*/deps/([^)]+)\)$')
@@ -79,8 +83,11 @@ def request_path(path: str) -> str:
     raise ValueError(f'no request file paired with {path}; expected an answer fixture name')
 
 
-def read_lines(repo: Path, path: str) -> list[str]:
-    raw = (repo / path).read_bytes()
+def read_lines(path: str) -> list[str]:
+    source = (REPO / path).resolve()
+    if not source.is_relative_to(REPO / 'crates'):
+        raise ValueError(f'fixture path {path!r} leaves the crates directory; expected crates/...')
+    raw = source.read_bytes()
     text = gzip.decompress(raw) if path.endswith('.gz') else raw
     return text.decode().split('\n')
 
@@ -173,7 +180,6 @@ def call_digest(calls: set) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--repo', type=Path, required=True)
     parser.add_argument('--evidence', type=Path, required=True)
     options = parser.parse_args()
     evidence = options.evidence
@@ -186,7 +192,7 @@ def main() -> None:
             calls[key] |= value
     verdicts = mpfr_verdicts(evidence / 'calls.tsv.xz')
     all_tests = set(runs['portable_candidate']) | set(runs['platform_original'])
-    inventory = options.repo / INVENTORY
+    inventory = INVENTORY
     summary = defaultdict(int)
     request_cache: dict[str, list[str]] = {}
     for shard in sorted(inventory.glob('changed-rows-*.json')):
@@ -194,7 +200,7 @@ def main() -> None:
         for row in rows:
             path = row['path']
             if path not in FIXED_CONSUMERS and path not in request_cache:
-                request_cache[path] = read_lines(options.repo, request_path(path))
+                request_cache[path] = read_lines(request_path(path))
             requests = request_cache.get(path, [])
             tests = consumers(row, requests, all_tests)
             row_calls = set().union(*(calls[t] for t in tests)) if tests else set()
@@ -203,7 +209,7 @@ def main() -> None:
         lines = ',\n'.join(json.dumps(row, separators=(',', ':')) for row in rows)
         shard.write_text(f'[\n{lines}\n]\n')
     per_test = {f'{p}::{t}': call_digest(v) for (p, t), v in sorted(calls.items())}
-    (evidence / 'test-call-digests.json').write_text(json.dumps(per_test, indent=1, sort_keys=True) + '\n')
+    (HERE / 'test-call-digests.json').write_text(json.dumps(per_test, indent=1, sort_keys=True) + '\n')
     print(json.dumps(summary))
 
 
