@@ -38,6 +38,10 @@ fn binary(name: &str) -> fn(f64, f64) -> f64 {
     }
 }
 
+#[cfg_attr(
+    feature = "host-libm",
+    ignore = "portable contract; host-libm returns the platform C library result"
+)]
 #[test]
 fn unary_functions_return_the_correctly_rounded_reference() {
     for &(name, input, expected) in UNARY {
@@ -46,6 +50,10 @@ fn unary_functions_return_the_correctly_rounded_reference() {
     }
 }
 
+#[cfg_attr(
+    feature = "host-libm",
+    ignore = "portable contract; host-libm returns the platform C library result"
+)]
 #[test]
 fn binary_functions_return_the_correctly_rounded_reference() {
     for &(name, first, second, expected) in BINARY {

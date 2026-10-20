@@ -3,6 +3,8 @@
 pub mod cmath_behavior;
 #[path = "../correct_rounding.rs"]
 pub mod correct_rounding;
+#[path = "../host_libm_mode.rs"]
+pub mod host_libm_mode;
 #[path = "../invalid_quotient.rs"]
 pub mod invalid_quotient;
 #[path = "../powi_sequence.rs"]

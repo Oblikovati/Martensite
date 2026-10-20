@@ -54,6 +54,10 @@ fn nan_operands_have_no_new_sign_payload_or_quieting_promise() {
     }
 }
 
+#[cfg_attr(
+    feature = "host-libm",
+    ignore = "portable contract; host-libm returns the platform C library result"
+)]
 #[test]
 fn valid_neighbors_keep_independently_certified_finite_results() {
     assert_eq!(

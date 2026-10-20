@@ -20,6 +20,10 @@ follows [Semantic Versioning](https://semver.org/).
   macOS and canvas windows are defined interfaces that return a typed
   `Standard_NotImplemented` error until their backends exist. FreeType, fontconfig and
   Xlib are loaded at run time.
+- Added the opt-in `host-libm` feature of `martensite-cmath`: every transcendental
+  function returns the platform C library result (numerical behavior version 1
+  replay), for verification against programs linked with that library. It is
+  never enabled in releases or Martensite CI gates.
 
 ### Fixed
 
