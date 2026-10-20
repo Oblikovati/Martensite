@@ -38,9 +38,9 @@ Each changed row now carries an `independent_validation` status and
 its attribution: the test that replays it, the pass status of that test in both
 replays, and the differing elementary-function calls in that test.
 [attribution/README.md](attribution/README.md) explains the method and the
-results: 971 of 975 rows are attributed to rounding. The other 4 changed only the
-NaN sign of an `acosh`/`atanh` domain error. They are not admitted here, and #203
-restores their original bytes. Every one of the 1,371,767 finite
+results: 971 of 975 rows are attributed to rounding. The other 4 had changed only
+the NaN sign of an `acosh`/`atanh` domain error; #203 restores their original
+bytes. Every one of the 1,371,767 finite
 differing calls was confirmed against MPFR. The proof also reviews every changed
 test source; no input, comparison or tolerance was weakened.
 

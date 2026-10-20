@@ -2,7 +2,7 @@
   "schema_version": 1,
   "old_revision": "534e7d6134c4a43926736d8c13b99c591126a8d9",
   "candidate_revision": "2b1f0e601f05eb14147171b0487bd4dcfe1e4425",
-  "acceptance": "admitted_by_attribution_except_4_nan_sign_rows_issue_203",
+  "acceptance": "admitted_by_attribution",
   "behavior_migration": "version_2_approved_recorded_migration",
   "scope": "Every changed test .txt/.txt.gz fixture; decoded byte lines compared positionally. Source-coded test changes separately listed, not asserted semantic case mappings.",
   "fixture_files": 73,
@@ -13,37 +13,37 @@
     {
       "path": "changed-rows-000.json",
       "records": 150,
-      "sha256": "1f4ebc2c24121b4d0e5a7c9d8cd7fd383d554483840dc880247356da317b16a0"
+      "sha256": "f6bad322bf97c053b5ee72ab4064a13b104c826b1b99b9ff6970962fb1316df2"
     },
     {
       "path": "changed-rows-001.json",
       "records": 150,
-      "sha256": "c9c5c35a529059e964a1c0414d52b64dc5b13942d279cb05ca73b2d84cdcb7d7"
+      "sha256": "f9d54da41e21ce6c826fdec87030940f597133387c682af2175e2a964bea5f83"
     },
     {
       "path": "changed-rows-002.json",
       "records": 150,
-      "sha256": "2a606a13a62e9d5d61488fc1aa1da1aefc1c2981f37a0a8bdec39893e01bd77d"
+      "sha256": "3a108ecdf56ab2c99b240081c16d9d315c295b13d52a36602ed0e155e64ef0c2"
     },
     {
       "path": "changed-rows-003.json",
       "records": 150,
-      "sha256": "5a1e1b7855928fa59ae00ab8f73ef5f22100191dac9f82ff1b7da57fa9fe436a"
+      "sha256": "4f9fc7ce388801177a6836795cf9c696e1bb334d1b943f61afcaa34d496899cc"
     },
     {
       "path": "changed-rows-004.json",
       "records": 150,
-      "sha256": "877bc30fb3695610fcad1457afa9df3451c1a7a53481eb0f6601823cc342e0d8"
+      "sha256": "18def45a9ea34816e327a5c2fc13bd88c4dc089dbffac0f668a4754e1c7d1c22"
     },
     {
       "path": "changed-rows-005.json",
       "records": 150,
-      "sha256": "73cfece8ee774e72218aafeb34ef6434092237f3889fb670e6f620dd9b697857"
+      "sha256": "61ccb9bd7f9b370a77bff0e91362d73d23af4e7e154a5c1adce6ce40d0262f10"
     },
     {
       "path": "changed-rows-006.json",
       "records": 75,
-      "sha256": "f233252c188dc9dfb4dbfb4b11e41c95a23d429645abdf89db4e33ea1b38abae"
+      "sha256": "d46181cc5ed408279bac4374c730ce9bcf8346f253c8b8a650f936fcebcfcd9f"
     }
   ],
   "changed_test_source_files": [
@@ -219,10 +219,10 @@
     },
     "distinct_differing_calls": 1372286,
     "finite_calls_mpfr_confirmed": 1371767,
-    "rows_not_admitted": {
+    "rows_restored_to_original": {
       "count": 4,
       "cause": "domain_error_nan_sign",
-      "owner": "#203"
+      "by": "#203"
     }
   }
 }

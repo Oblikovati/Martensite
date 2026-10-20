@@ -57,7 +57,7 @@ results bit for bit, so no expected output changes.
 | `portable_candidate` | 13,225 passed, 0 failed, 25 ignored |
 | `platform_original` | 13,187 passed, 1 failed, 25 ignored |
 | Changed fixture rows attributed to rounding | **971 of 975** (73 files, consumed by 73 tests) |
-| Rows not explained by rounding | **4**, all NaN signs of domain errors, not admitted and owned by #203 |
+| Rows not explained by rounding | **0**; the 4 domain-error NaN-sign rows are restored to their original bytes (#203) |
 | Distinct differing calls | 1,372,286 |
 | Finite calls: portable = MPFR, glibc ≠ MPFR | **1,371,767 of 1,371,767** |
 | MPFR direct vs 256-bit disagreements | 0 |
@@ -96,10 +96,11 @@ portable function returns `7ff8000000000000`. MPFR has no NaN sign, so it cannot
 decide between them. The replay attributes the change to exactly these two calls
 (`nan_payload_or_sign_only`). These rows are recorded with
 `cause: domain_error_nan_sign`. All other rows are recorded with
-`cause: rounding`. A NaN sign is not a correctly rounded result, so these four
-rows are **not admitted** by this proof
-(`independent_validation: not_admitted_nan_sign_issue_203`). Issue #203 restores
-their original bytes through an explicit domain-error NaN contract.
+`cause: rounding`. A NaN sign is not a correctly rounded result, so these rows
+are not admitted as changes. Issue #203 gives these domain errors the documented
+word `0xfff8000000000000` on every target, which restores their original bytes
+(`independent_validation: restored_original_bytes_issue_203`). Independent
+certificates for the valid neighbours are in `../issue-203-domain-serialization/`.
 
 Each changed row's record in `../changed-rows-*.json` lists its test, the
 pass status in both runs, the number of differing calls in that test, and the

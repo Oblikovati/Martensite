@@ -18,6 +18,7 @@ It updates ../changed-rows-*.json and writes test-call-digests.json next to this
 """
 
 import argparse
+import functools
 import gzip
 import hashlib
 import json
@@ -88,6 +89,7 @@ def request_path(path: str) -> str:
     raise ValueError(f'no request file paired with {path}; expected an answer fixture name')
 
 
+@functools.lru_cache(maxsize=None)
 def read_lines(path: str) -> list[str]:
     source = (REPO / path).resolve()
     if not source.is_relative_to(REPO / 'crates'):
@@ -111,6 +113,13 @@ def consumers(row: dict, requests: list[str], tests: set) -> list[tuple[str, str
              (t.split('::')[-1] in (family, f'{family}_complete_family')) and
              (corpus in t.split('::') or 'numeric_replay' in path)]
     return sorted(found)
+
+
+def current_row_sha256(path: str, row: dict) -> str:
+    """SHA-256 of the row's current decoded bytes including its line feed, as the
+    inventory records them."""
+    line = read_lines(path)[row['line_one_based'] - 1]
+    return hashlib.sha256(f'{line}\n'.encode()).hexdigest()
 
 
 def mpfr_verdicts(path: Path) -> dict:
@@ -158,8 +167,10 @@ def attribute(row: dict, tests: list, runs: dict, calls: set, verdicts: dict) ->
     for function, _ in calls:
         functions[function] += 1
     status = 'unexplained' if reasons else 'attributed'
-    if status == 'attributed' and cause == 'domain_error_nan_sign':
-        # A NaN sign is not a correctly rounded result; #203 owns these rows.
+    if cause == 'domain_error_nan_sign' and row.get('current_matches_original'):
+        # #203 gives these domain errors the original word, so the bytes are restored.
+        status, reasons = 'restored_original_bytes_issue_203', []
+    elif status == 'attributed' and cause == 'domain_error_nan_sign':
         status = 'not_admitted_nan_sign_issue_203'
     return {
         'independent_validation': status,
@@ -210,6 +221,7 @@ def main() -> None:
             if path not in FIXED_CONSUMERS and path not in request_cache:
                 request_cache[path] = read_lines(request_path(path))
             requests = request_cache.get(path, [])
+            row['current_matches_original'] = current_row_sha256(path, row) == row['old_row_sha256']
             tests = consumers(row, requests, all_tests)
             row_calls = set().union(*(calls[t] for t in tests)) if tests else set()
             row.update(attribute(row, tests, runs, row_calls, verdicts))

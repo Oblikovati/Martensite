@@ -49,7 +49,7 @@
       "finite_calls_mpfr_confirmed": 1371767,
       "platform_replay_of_original_tests": "13187 passed; only failure is the new cbrt(-27) doctest",
       "portable_replay_of_candidate_tests": "13225 passed, 0 failed",
-      "rows_not_admitted": "4 acosh/atanh domain-error NaN-sign rows, owned by #203"
+      "rows_restored_to_original": "4 acosh/atanh domain-error NaN-sign rows restored by #203"
     }
   },
   "version_publication": "No package version bump, tag or publication is authorized by this proposed record.",

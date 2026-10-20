@@ -9,6 +9,8 @@ pub mod invalid_quotient;
 pub mod powi_sequence;
 #[path = "../reference_values.rs"]
 pub mod reference_values;
+#[path = "../selected_inverse_domain_nan.rs"]
+pub mod selected_inverse_domain_nan;
 #[path = "../special_angles.rs"]
 pub mod special_angles;
 #[path = "../special_contract_support.rs"]

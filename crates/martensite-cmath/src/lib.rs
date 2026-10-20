@@ -4,9 +4,11 @@
 //! correctly rounded: it returns the exact mathematical result rounded once to the
 //! nearest result in its destination format (ties to even). This gives unique
 //! finite nonzero results across the supported release platforms (#201).
-//! NaN sign and payload are not specified by correct rounding, and this adapter
-//! does not canonicalize them. Domain-error NaNs are tested by classification;
-//! signed zeros and infinities follow each function's special-value contract.
+//! Correct rounding does not specify NaN sign or payload. NaN operands retain
+//! a classification-only contract. The real-domain errors of `acosh` and `atanh`
+//! return [`INVALID_OPERATION_NAN`] (#203); other NaN results remain
+//! classification-only unless documented otherwise. Signed zeros and
+//! infinities follow each function's special-value contract.
 //!
 //! The standard `f64` methods (`sin`, `exp`, `powf`, ...) lower to each platform's C
 //! math library, whose last bit differs between platforms, and the compiler folds
