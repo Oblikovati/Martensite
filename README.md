@@ -28,6 +28,7 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkbrep` | Topological shapes, their exploration and tools, geometric shapes, the shape graph and the binary shape stream. |
 | `martensite-tkgeomalgo` | Curve and surface intersections, hatching, tangent constraints, filling, plates, laws and sketch splines. |
 | `martensite-tktopalgo` | Classification, shape construction and sewing, checks, extrema, bounding boxes and global properties. |
+| `martensite-tkhlr` | Hidden line removal, contour lines of surfaces and the visible and hidden lines as shapes. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [math guide](docs/features/martensite-tkmath/README.md), and
@@ -37,8 +38,9 @@ See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [application data framework](docs/features/martensite-tklcaf/README.md) and
 [visualization services](docs/features/martensite-tkservice/README.md) guides, and the
 [boundary representation](docs/features/martensite-tkbrep/README.md),
-[geometric algorithm](docs/features/martensite-tkgeomalgo/README.md) and
-[topological algorithm](docs/features/martensite-tktopalgo/README.md) guides for module and test details.
+[geometric algorithm](docs/features/martensite-tkgeomalgo/README.md),
+[topological algorithm](docs/features/martensite-tktopalgo/README.md) and
+[hidden line removal](docs/features/martensite-tkhlr/README.md) guides for module and test details.
 
 ## Getting started
 

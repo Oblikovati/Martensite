@@ -19,6 +19,9 @@ follows [Semantic Versioning](https://semver.org/).
   classification, shape construction and sewing, validity checks, distance and
   proximity extrema, bounding boxes, global properties and the medial axis of faces
   (#208).
+- Added the `martensite-tkhlr` crate for hidden line removal: interval sets, the
+  polyhedral and exact hidden line algorithms, contour lines of surfaces seen from a
+  direction or a point and the conversion of the results back to shapes (#208).
 
 ## [0.3.4] - 2026-10-20
 
