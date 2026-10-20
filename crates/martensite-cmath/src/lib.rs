@@ -76,8 +76,6 @@ mod ffi {
         pub safe fn acosh(value: f64) -> f64;
         #[cfg(feature = "libm-attribution")]
         pub safe fn atanh(value: f64) -> f64;
-        #[cfg(feature = "libm-attribution")]
-        pub safe fn cbrt(value: f64) -> f64;
     }
 }
 
