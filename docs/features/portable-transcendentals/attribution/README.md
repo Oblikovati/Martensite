@@ -46,8 +46,11 @@ counts with this proof attached.
 ## Results
 
 Environment: Linux x86_64, glibc 2.39, rustc 1.99.0, a CPU with FMA
-(`environment.json`). The replayed crates are those of `76679cd`; later commits
-on the branch change only test formatting and documentation.
+(`environment.json`). The replayed crates are those of `76679cd`. Later commits
+change test formatting and documentation. They also give invalid divisions and
+NaN text one form on every target: `martensite_cmath::quotient` and the portable
+non-finite spelling. On x86-64 Linux these reproduce the hardware and glibc
+results bit for bit, so no expected output changes.
 
 | Check | Result |
 | --- | --- |

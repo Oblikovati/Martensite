@@ -18,7 +18,8 @@
 //! exact version because its results are part of the kernel's recorded behavior.
 //! `powi` uses a fixed repeated-squaring sequence with separately documented
 //! intermediate rounding. IEEE `remainder`, which Rust lacks, is taken from the
-//! platform libm; its finite valid results are exact.
+//! platform libm; its finite valid results are exact. [`quotient`] gives invalid
+//! divisions one NaN word on every target instead of the hardware default NaN.
 //!
 //! ```
 //! assert_eq!(martensite_cmath::sin(0.0), 0.0);
@@ -55,11 +56,13 @@ mod attribution;
 mod exponential;
 mod hyperbolic;
 mod integer_power;
+mod invalid;
 mod trigonometric;
 
 pub use exponential::{cbrt, exp, exp2, expm1, hypot, log, log1p, log2, log10, pow, powf};
 pub use hyperbolic::{acosh, asinh, atanh, cosh, sinh, tanh};
 pub use integer_power::powi;
+pub use invalid::{INVALID_OPERATION_NAN, quotient};
 pub use trigonometric::{acos, asin, atan, atan2, cos, sin, sincos, tan};
 
 #[allow(unsafe_code)]

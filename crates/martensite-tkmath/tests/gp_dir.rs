@@ -204,3 +204,11 @@ fn geometry_dir_mirror_through_ax2_correct_result() {
     assert!((aToSym.y() - aExpected).abs() <= 1e-7);
     assert!((aToSym.z() - aExpected).abs() <= 1e-7);
 }
+
+#[test]
+fn infinite_component_normalizes_to_the_documented_nan_word() {
+    // inf/inf is the hardware default NaN, whose sign differs by target (#201).
+    let direction = Direction3::new(f64::INFINITY, 0.0, 0.0).unwrap();
+    assert_eq!(direction.x().to_bits(), 0xfff8_0000_0000_0000);
+    assert_eq!((direction.y(), direction.z()), (0.0, 0.0));
+}

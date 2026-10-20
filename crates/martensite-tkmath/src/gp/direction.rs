@@ -36,7 +36,7 @@ impl Direction3 {
         }
         let magnitude = squared.sqrt();
         Ok(Self {
-            coordinates: coordinates.map(|value| value / magnitude),
+            coordinates: coordinates.map(|value| martensite_cmath::quotient(value, magnitude)),
         })
     }
     /// Normalizes without a zero-norm check for elementary-surface evaluation.
@@ -48,7 +48,7 @@ impl Direction3 {
         }
         let magnitude = squared.sqrt();
         Self {
-            coordinates: coordinates.map(|value| value / magnitude),
+            coordinates: coordinates.map(|value| martensite_cmath::quotient(value, magnitude)),
         }
     }
     /// Borrows normalized coordinates; `direction.coordinates()`.

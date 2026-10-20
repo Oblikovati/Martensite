@@ -56,6 +56,17 @@ follows [Semantic Versioning](https://semver.org/).
   version 2 with this recorded migration instead of version-1 replay; the
   evidence is in `docs/features/portable-transcendentals/attribution/`.
 
+- Returned one NaN word, `0xfff8000000000000` (the x86-64 default NaN), for
+  invalid divisions in expression evaluation and for directions normalized from
+  infinite components. Arm targets previously produced a positive NaN here, so
+  their text and words differed from x86-64; x86-64 results are unchanged. The
+  new `martensite_cmath::quotient` and `INVALID_OPERATION_NAN` provide this (#201).
+
+- Spelled infinities and NaNs in formatted text by their sign alone (`inf`,
+  `-inf`, `nan`, `-nan`) on every target. Windows previously printed the x86-64
+  default NaN as UCRT's `-nan(ind)`; that host call and its unsafe block are
+  removed (#201).
+
 ### Fixed
 
 - Guarded single-precision powers with NaN arguments before dependency evaluation, while preserving zero-exponent and unit-base identities (#202).
