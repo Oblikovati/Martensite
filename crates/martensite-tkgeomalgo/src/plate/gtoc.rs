@@ -64,9 +64,9 @@ impl PlateGtoCConstraint {
         }
     }
 
-    fn push(&mut self, value: Xyz, iu: i32, iv: i32) {
+    fn push(&mut self, value: Xyz, u_order: i32, v_order: i32) {
         let slot: usize = self.nb_pp_constraints as usize;
-        self.my_ppc[slot] = PlatePinpointConstraint::new(self.pnt2d, value, iu, iv);
+        self.my_ppc[slot] = PlatePinpointConstraint::new(self.pnt2d, value, u_order, v_order);
         self.nb_pp_constraints += 1;
     }
 
@@ -187,14 +187,15 @@ impl PlateGtoCConstraint {
             s[2] - d3s.duvv,
             s[3] - d3s.dvvv,
         ];
-        for (difference, (iu, iv)) in differences
-            .into_iter()
-            .zip([(3, 0), (2, 1), (1, 2), (0, 3)])
+        for (difference, (u_order, v_order)) in
+            differences
+                .into_iter()
+                .zip([(3, 0), (2, 1), (1, 2), (0, 3)])
         {
             constraint.push(
                 projected(g1.0.dir, g1.0.normale, difference, g1.0.invcos),
-                iu,
-                iv,
+                u_order,
+                v_order,
             );
         }
         Ok(constraint)

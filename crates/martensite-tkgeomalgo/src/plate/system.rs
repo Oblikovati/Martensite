@@ -52,27 +52,27 @@ impl Nodes<'_> {
     /// `signe_j * SolEm(P_i - P_j, Deru_i + Deru_j, Derv_i + Derv_j)`, the kernel
     /// between nodes `i` and `j`.
     pub(super) fn kernel(&self, plate: &PlatePlate, i: usize, j: usize) -> Result<f64, Failure> {
-        let iu: i32 = self.deru[i] + self.deru[j];
-        let iv: i32 = self.derv[i] + self.derv[j];
+        let u_order: i32 = self.deru[i] + self.deru[j];
+        let v_order: i32 = self.derv[i] + self.derv[j];
         Ok(signe(self.deru[j], self.derv[j])
-            * plate.sol_em(self.points[i] - self.points[j], iu, iv)?)
+            * plate.sol_em(self.points[i] - self.points[j], u_order, v_order)?)
     }
 
-    /// `Polm(P_j, iu, iv, Deru_j, Derv_j)`, the monomial row entry of node `j`.
+    /// `Polm(P_j, u_order, v_order, Deru_j, Derv_j)`, the monomial row entry of node `j`.
     pub(super) fn monomial(
         &self,
         plate: &PlatePlate,
         j: usize,
-        iu: i32,
-        iv: i32,
+        u_order: i32,
+        v_order: i32,
     ) -> Result<f64, Failure> {
-        plate.polm(self.points[j], iu, iv, self.deru[j], self.derv[j])
+        plate.polm(self.points[j], u_order, v_order, self.deru[j], self.derv[j])
     }
 }
 
-/// `(iu, iv)` of the monomials `u^iu v^iv` with `iu + iv < order`, in the native order.
+/// `(u_order, v_order)` of the monomials `u^u_order v^v_order` with `u_order + v_order < order`, in the native order.
 pub(super) fn monomials(order: i32) -> impl Iterator<Item = (i32, i32)> {
-    (0..order).flat_map(move |iu| (0..order - iu).map(move |iv| (iu, iv)))
+    (0..order).flat_map(move |u_order| (0..order - u_order).map(move |v_order| (u_order, v_order)))
 }
 
 /// Copies the lower triangle of the `size` block at `(i0, j0)` onto the upper one.
@@ -191,16 +191,16 @@ pub(super) fn kernel_block(
     Ok(tmp)
 }
 
-/// `vmat(ippc) = Polm(node, iu, iv)` for the `count` nodes of a block.
+/// `vmat(ippc) = Polm(node, u_order, v_order)` for the `count` nodes of a block.
 pub(super) fn node_monomials(
     plate: &PlatePlate,
     nodes: &Nodes<'_>,
     (kppc, count): (i32, i32),
-    (iu, iv): (i32, i32),
+    (u_order, v_order): (i32, i32),
 ) -> Result<Vector<'static>, Failure> {
     let mut vmat: Vector<'static> = Vector::with_bounds(1, count)?;
     for ippc in 1..=count {
-        vmat[ippc] = nodes.monomial(plate, (kppc + ippc - 1) as usize, iu, iv)?;
+        vmat[ippc] = nodes.monomial(plate, (kppc + ippc - 1) as usize, u_order, v_order)?;
     }
     Ok(vmat)
 }
@@ -213,13 +213,18 @@ fn xyz_monomial_rows(
     mat: &mut Matrix<'_>,
     (first_row, j0, ncc1): (i32, i32, i32),
 ) -> Result<(), Failure> {
-    for (i, (iu, iv)) in (first_row..).zip(monomials(plate.order)) {
+    for (i, (u_order, v_order)) in (first_row..).zip(monomials(plate.order)) {
         for a_j in 0..ncc1 {
-            mat[(i, j0 + a_j)] = nodes.monomial(plate, a_j as usize, iu, iv)?;
+            mat[(i, j0 + a_j)] = nodes.monomial(plate, a_j as usize, u_order, v_order)?;
         }
         let (mut k2, mut kppc2): (i32, i32) = (ncc1, ncc1);
         for block in xyz {
-            let vmat = node_monomials(plate, nodes, (kppc2, block.row_length()), (iu, iv))?;
+            let vmat = node_monomials(
+                plate,
+                nodes,
+                (kppc2, block.row_length()),
+                (u_order, v_order),
+            )?;
             for irow2 in 1..=block.col_length() {
                 for icol2 in 1..=block.row_length() {
                     mat[(i, j0 + k2 + irow2 - 1)] += block.coeff(irow2, icol2)? * vmat[icol2];

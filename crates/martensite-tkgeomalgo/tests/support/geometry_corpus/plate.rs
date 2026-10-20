@@ -10,8 +10,8 @@ use martensite_tkmath::gp::{Line3, Plane3, Xy, Xyz};
 fn ppc(r: &mut Reader) -> PlatePinpointConstraint {
     let (u, v) = (r.real(), r.real());
     let p = r.xyz();
-    let (iu, iv) = (r.integer(), r.integer());
-    PlatePinpointConstraint::new(Xy::new(u, v), p, iu, iv)
+    let (u_order, v_order) = (r.integer(), r.integer());
+    PlatePinpointConstraint::new(Xy::new(u, v), p, u_order, v_order)
 }
 
 fn print_ppc(output: &Output, c: &PlatePinpointConstraint) {
@@ -83,10 +83,11 @@ fn report(output: &Output, p: &PlatePlate, uv: &[f64]) {
     for q in uv.chunks(2).filter(|c| c.len() == 2) {
         let q = Xy::new(q[0], q[1]);
         xyz(output, p.evaluate(q).expect("corpus evaluate"));
-        for (iu, iv) in [(1, 0), (0, 1), (1, 1), (2, 0)] {
+        for (u_order, v_order) in [(1, 0), (0, 1), (1, 1), (2, 0)] {
             xyz(
                 output,
-                p.evaluate_derivative(q, iu, iv).expect("corpus derivative"),
+                p.evaluate_derivative(q, u_order, v_order)
+                    .expect("corpus derivative"),
             );
         }
     }
@@ -205,13 +206,13 @@ fn constraint(output: &Output, r: &mut Reader, kind: i32, uv: Xy) -> Result<(), 
     match kind {
         0 | 1 => {
             let (o, d) = (r.pnt(), r.dir());
-            let (iu, iv) = (r.integer(), r.integer());
+            let (u_order, v_order) = (r.integer(), r.integer());
             if kind == 0 {
-                let c = PlateLineConstraint::new(uv, &Line3::new(o, d), iu, iv)?;
+                let c = PlateLineConstraint::new(uv, &Line3::new(o, d), u_order, v_order)?;
                 print_lsc(output, c.lsc());
                 return solve_with(output, |p| p.load_line(&c));
             }
-            let c = PlatePlaneConstraint::new(uv, &Plane3::new(o, d)?, iu, iv)?;
+            let c = PlatePlaneConstraint::new(uv, &Plane3::new(o, d)?, u_order, v_order)?;
             print_lsc(output, c.lsc());
             solve_with(output, |p| p.load_plane(&c))
         }

@@ -28,8 +28,8 @@ pub(super) struct SolEmTerms {
 }
 
 /// `DUV` for `(IU, IV)`, 0 for the combinations the native switch does not list.
-pub(super) fn duv(iu: i32, iv: i32, t: &SolEmTerms) -> f64 {
-    match (iu, iv) {
+pub(super) fn duv(u_order: i32, v_order: i32, t: &SolEmTerms) -> f64 {
+    match (u_order, v_order) {
         (0, 0) => duv_0_0(t),
         (1, 0) => duv_1_0(t),
         (1, 1) => duv_1_1(t),

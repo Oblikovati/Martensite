@@ -212,8 +212,8 @@ impl PlatePlate {
         mat: &mut Matrix<'static>,
         (k, kppc, layout): (i32, i32, Layout),
     ) -> Result<(), Failure> {
-        for (j, (iu, iv)) in (layout.ncc1 + layout.ncc2..).zip(monomials(self.order)) {
-            let vmat = node_monomials(self, nodes, (kppc, block.row_length()), (iu, iv))?;
+        for (j, (u_order, v_order)) in (layout.ncc1 + layout.ncc2..).zip(monomials(self.order)) {
+            let vmat = node_monomials(self, nodes, (kppc, block.row_length()), (u_order, v_order))?;
             for irow in 1..=block.col_length() {
                 for icol in 1..=block.row_length() {
                     add_xyz(

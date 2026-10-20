@@ -241,10 +241,15 @@ impl PlatePlate {
         self.evaluate_derivative(point2d, 0, 0)
     }
 
-    /// The `(iu, iv)` derivative at `point2d` (`EvaluateDerivative`); the null vector
+    /// The `(u_order, v_order)` derivative at `point2d` (`EvaluateDerivative`); the null vector
     /// before a successful solve. Standard_OutOfRange when a derivative order reaches
     /// past the ten scale factors (undefined natively). `plate.evaluate_derivative(uv, 1, 0)?`.
-    pub fn evaluate_derivative(&self, point2d: Xy, iu: i32, iv: i32) -> Result<Xyz, Failure> {
+    pub fn evaluate_derivative(
+        &self,
+        point2d: Xy,
+        u_order: i32,
+        v_order: i32,
+    ) -> Result<Xyz, Failure> {
         let Some(solution) = self.solution.as_deref().filter(|_| self.ok) else {
             return Ok(Xyz::new(0.0, 0.0, 0.0));
         };
@@ -256,18 +261,18 @@ impl PlatePlate {
                 .zip(nodes.points.iter().zip(nodes.deru.iter().zip(nodes.derv)));
             for (&coefficient, (&point, (&deru, &derv))) in terms.take(self.n_el as usize) {
                 let signe: f64 = if (deru + derv) % 2 == 1 { -1.0 } else { 1.0 };
-                let sol_em: f64 = self.sol_em(point2d - point, deru + iu, derv + iv)?;
+                let sol_em: f64 = self.sol_em(point2d - point, deru + u_order, derv + v_order)?;
                 valeur += coefficient * (signe * sol_em);
             }
         }
         let polynomial = solution.iter().skip(self.n_el as usize);
         for (&coefficient, (idu, idv)) in polynomial.zip(super::system::monomials(self.order)) {
-            valeur += coefficient * self.polm(point2d, idu, idv, iu, iv)?;
+            valeur += coefficient * self.polm(point2d, idu, idv, u_order, v_order)?;
         }
         Ok(valeur)
     }
 
-    /// The power-basis coefficients `(iu, iv)` of the polynomial part, zero above the
+    /// The power-basis coefficients `(u_order, v_order)` of the polynomial part, zero above the
     /// total degree `order - 1` (`CoefPol`). Standard_NullObject for a plate never
     /// solved with a polynomial part (a null dereference natively).
     /// `plate.coef_pol()?`.
@@ -276,12 +281,13 @@ impl PlatePlate {
         let coefs = HArray2::with_value(0, self.order - 1, 0, self.order - 1, zero)
             .map_err(errors::array_bounds)?;
         let mut i: usize = self.n_el as usize;
-        for iu in 0..self.order {
-            for iv in 0..self.order - iu {
-                let value: Xyz = self.solution_at(i)? * self.scale_u(iu)? * self.scale_v(iv)?;
+        for u_order in 0..self.order {
+            for v_order in 0..self.order - u_order {
+                let value: Xyz =
+                    self.solution_at(i)? * self.scale_u(u_order)? * self.scale_v(v_order)?;
                 coefs
                     .change_array2()
-                    .set_value(iu, iv, value)
+                    .set_value(u_order, v_order, value)
                     .map_err(errors::array_bounds)?;
                 i += 1;
             }

@@ -60,16 +60,16 @@ impl PlateFreeGtoCConstraint {
         }
     }
 
-    fn push_ppc(&mut self, value: Xyz, iu: i32, iv: i32) {
+    fn push_ppc(&mut self, value: Xyz, u_order: i32, v_order: i32) {
         self.my_ppc[self.nb_pp_constraints as usize] =
-            PlatePinpointConstraint::new(self.pnt2d, value, iu, iv);
+            PlatePinpointConstraint::new(self.pnt2d, value, u_order, v_order);
         self.nb_pp_constraints += 1;
     }
 
     /// Stores scalar constraints `value . normale` from slot 0.
     fn set_lsc(&mut self, values: &[(Xyz, i32, i32)], normale: Xyz) {
-        for (slot, &(value, iu, iv)) in values.iter().enumerate() {
-            let ppc = PlatePinpointConstraint::new(self.pnt2d, value, iu, iv);
+        for (slot, &(value, u_order, v_order)) in values.iter().enumerate() {
+            let ppc = PlatePinpointConstraint::new(self.pnt2d, value, u_order, v_order);
             self.my_lsc[slot] = PlateLinearScalarConstraint::single(ppc, normale);
         }
         self.nb_ls_constraints = values.len() as i32;

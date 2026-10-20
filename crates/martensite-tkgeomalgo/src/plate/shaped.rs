@@ -114,14 +114,17 @@ pub struct PlateLineConstraint {
 }
 
 impl PlateLineConstraint {
-    /// The constraint of `D^(iu,iv)` at `point2d` on `lin`
-    /// (`Plate_LineConstraint(point2d, lin, iu, iv)`; the native defaults of `iu`, `iv`
+    /// The constraint of `D^(u_order,v_order)` at `point2d` on `lin`
+    /// (`Plate_LineConstraint(point2d, lin, u_order, v_order)`; the native defaults of `u_order`, `v_order`
     /// are 0). The first normal is `X ^ dir` or `Y ^ dir`, whichever is longer.
     /// `PlateLineConstraint::new(uv, &line, 0, 0)?`.
-    pub fn new(point2d: Xy, lin: &Line3, iu: i32, iv: i32) -> Result<Self, Failure> {
+    pub fn new(point2d: Xy, lin: &Line3, u_order: i32, v_order: i32) -> Result<Self, Failure> {
         let my_lsc = PlateLinearScalarConstraint::with_size(2, 1)?;
         let point: Xyz = lin.location().xyz();
-        my_lsc.set_ppc(1, PlatePinpointConstraint::new(point2d, point, iu, iv))?;
+        my_lsc.set_ppc(
+            1,
+            PlatePinpointConstraint::new(point2d, point, u_order, v_order),
+        )?;
         let dir: Xyz = lin.direction().xyz();
         let mut d1: Xyz = Xyz::new(1.0, 0.0, 0.0) ^ dir;
         let mut d2: Xyz = Xyz::new(0.0, 1.0, 0.0) ^ dir;
@@ -152,12 +155,15 @@ pub struct PlatePlaneConstraint {
 }
 
 impl PlatePlaneConstraint {
-    /// The constraint of `D^(iu,iv)` at `point2d` on `pln`
-    /// (`Plate_PlaneConstraint(point2d, pln, iu, iv)`). `PlatePlaneConstraint::new(uv, &plane, 0, 0)?`.
-    pub fn new(point2d: Xy, pln: &Plane3, iu: i32, iv: i32) -> Result<Self, Failure> {
+    /// The constraint of `D^(u_order,v_order)` at `point2d` on `pln`
+    /// (`Plate_PlaneConstraint(point2d, pln, u_order, v_order)`). `PlatePlaneConstraint::new(uv, &plane, 0, 0)?`.
+    pub fn new(point2d: Xy, pln: &Plane3, u_order: i32, v_order: i32) -> Result<Self, Failure> {
         let my_lsc = PlateLinearScalarConstraint::with_size(1, 1)?;
         let point: Xyz = pln.location().xyz();
-        my_lsc.set_ppc(1, PlatePinpointConstraint::new(point2d, point, iu, iv))?;
+        my_lsc.set_ppc(
+            1,
+            PlatePinpointConstraint::new(point2d, point, u_order, v_order),
+        )?;
         let mut dir: Xyz = pln.axis().direction().xyz();
         dir.normalize()?;
         my_lsc.set_coeff(1, 1, dir)?;

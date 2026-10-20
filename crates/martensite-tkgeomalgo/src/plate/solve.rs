@@ -232,9 +232,9 @@ impl PlatePlate {
                 mat[(i as i32, j as i32)] = nodes.kernel(self, i, j)?;
             }
         }
-        for (i, (iu, iv)) in (self.n_el..).zip(monomials(self.order)) {
+        for (i, (u_order, v_order)) in (self.n_el..).zip(monomials(self.order)) {
             for j in 0..self.n_el {
-                mat[(i, j)] = nodes.monomial(self, j as usize, iu, iv)?;
+                mat[(i, j)] = nodes.monomial(self, j as usize, u_order, v_order)?;
             }
         }
         symmetrize(mat, (0, 0), self.n_dim);

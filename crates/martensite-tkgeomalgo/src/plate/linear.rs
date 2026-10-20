@@ -17,15 +17,15 @@ pub struct PlatePinpointConstraint {
 }
 
 impl PlatePinpointConstraint {
-    /// The derivative `D^(iu,iv)` equal to `imposed_value` at `point2d`
-    /// (`Plate_PinpointConstraint(point2d, ImposedValue, iu, iv)`; the native defaults of
-    /// `iu`, `iv` are 0). `PlatePinpointConstraint::new(uv, value, 0, 0)`.
-    pub const fn new(point2d: Xy, imposed_value: Xyz, iu: i32, iv: i32) -> Self {
+    /// The derivative `D^(u_order,v_order)` equal to `imposed_value` at `point2d`
+    /// (`Plate_PinpointConstraint(point2d, ImposedValue, u_order, v_order)`; the native defaults of
+    /// `u_order`, `v_order` are 0). `PlatePinpointConstraint::new(uv, value, 0, 0)`.
+    pub const fn new(point2d: Xy, imposed_value: Xyz, u_order: i32, v_order: i32) -> Self {
         Self {
             value: imposed_value,
             pnt2d: point2d,
-            idu: iu,
-            idv: iv,
+            idu: u_order,
+            idv: v_order,
         }
     }
 

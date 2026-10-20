@@ -67,18 +67,18 @@ fn integer_power(r: f64, expo: i32) -> f64 {
 }
 
 impl PlatePlate {
-    /// `SolEm`: the `(iu, iv)` derivative of the fundamental solution at `point2d`,
-    /// scaled by `ddu[iu] * ddv[iv]`; the case table is symmetric, so `iv > iu` swaps
+    /// `SolEm`: the `(u_order, v_order)` derivative of the fundamental solution at `point2d`,
+    /// scaled by `ddu[u_order] * ddv[v_order]`; the case table is symmetric, so `v_order > u_order` swaps
     /// the coordinates.
     ///
     /// Standard_OutOfRange for a derivative order outside `0..=9`, where the native
     /// `ddu`/`ddv` read is undefined.
-    pub(super) fn sol_em(&self, point2d: Xy, iu: i32, iv: i32) -> Result<f64, Failure> {
+    pub(super) fn sol_em(&self, point2d: Xy, u_order: i32, v_order: i32) -> Result<f64, Failure> {
         let (ddu1, ddv1) = (self.ddu[1], self.ddv[1]);
-        let (big_iu, big_iv, u, v) = if iv > iu {
-            (iv, iu, point2d.y() * ddv1, point2d.x() * ddu1)
+        let (big_iu, big_iv, u, v) = if v_order > u_order {
+            (v_order, u_order, point2d.y() * ddv1, point2d.x() * ddu1)
         } else {
-            (iu, iv, point2d.x() * ddu1, point2d.y() * ddv1)
+            (u_order, v_order, point2d.x() * ddu1, point2d.y() * ddv1)
         };
         let cached = self
             .sol_em_cache
@@ -88,7 +88,7 @@ impl PlatePlate {
         let Some((u2, r, l)) = cached else {
             return Ok(0.0);
         };
-        let (ddu_iu, ddv_iv) = (self.scale_u(iu)?, self.scale_v(iv)?);
+        let (ddu_iu, ddv_iv) = (self.scale_u(u_order)?, self.scale_v(v_order)?);
         let m: i32 = self.order;
         let terms = SolEmTerms {
             u,
@@ -103,47 +103,47 @@ impl PlatePlate {
         Ok(duv(big_iu, big_iv, &terms) * ddu_iu * ddv_iv)
     }
 
-    /// `ddu[iu]`, Standard_OutOfRange outside the ten scale factors.
-    pub(super) fn scale_u(&self, iu: i32) -> Result<f64, Failure> {
-        scale_factor(&self.ddu, iu, "U")
+    /// `ddu[u_order]`, Standard_OutOfRange outside the ten scale factors.
+    pub(super) fn scale_u(&self, u_order: i32) -> Result<f64, Failure> {
+        scale_factor(&self.ddu, u_order, "U")
     }
 
-    /// `ddv[iv]`, Standard_OutOfRange outside the ten scale factors.
-    pub(super) fn scale_v(&self, iv: i32) -> Result<f64, Failure> {
-        scale_factor(&self.ddv, iv, "V")
+    /// `ddv[v_order]`, Standard_OutOfRange outside the ten scale factors.
+    pub(super) fn scale_v(&self, v_order: i32) -> Result<f64, Failure> {
+        scale_factor(&self.ddv, v_order, "V")
     }
 
-    /// `Polm`: the `(idu, idv)` derivative of the monomial `u^iu v^iv` at `point2d`,
-    /// scaled by `ddu[iu] * ddv[iv]` (which the native comment says improves the
+    /// `Polm`: the `(idu, idv)` derivative of the monomial `u^u_order v^v_order` at `point2d`,
+    /// scaled by `ddu[u_order] * ddv[v_order]` (which the native comment says improves the
     /// conditioning).
     pub(super) fn polm(
         &self,
         point2d: Xy,
-        iu: i32,
-        iv: i32,
+        u_order: i32,
+        v_order: i32,
         idu: i32,
         idv: i32,
     ) -> Result<f64, Failure> {
-        if idu > iu || idv > iv {
+        if idu > u_order || idv > v_order {
             return Ok(0.0);
         }
         let (u, v) = (point2d.x(), point2d.y());
         let mut value: f64 = 1.0;
-        let degu: i32 = iu - idu;
+        let degu: i32 = u_order - idu;
         for _ in 0..degu {
             value *= u;
         }
-        for i in (degu + 1..=iu).rev() {
+        for i in (degu + 1..=u_order).rev() {
             value *= f64::from(i);
         }
-        let degv: i32 = iv - idv;
+        let degv: i32 = v_order - idv;
         for _ in 0..degv {
             value *= v;
         }
-        for i in (degv + 1..=iv).rev() {
+        for i in (degv + 1..=v_order).rev() {
             value *= f64::from(i);
         }
-        Ok(value * self.scale_u(iu)? * self.scale_v(iv)?)
+        Ok(value * self.scale_u(u_order)? * self.scale_v(v_order)?)
     }
 }
 
