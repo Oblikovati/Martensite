@@ -1,0 +1,135 @@
+//! `EditorView::VertexOps`: vertex creation and the vertex setters.
+use super::guards::{mutate_node, mutate_ref};
+use super::helpers::require_settable;
+use crate::brep_graph::mut_guard::MutGuard;
+use crate::brep_graph::{BRepGraph, VertexId, VertexRefId, VertexRefTag, VertexTag};
+use crate::brep_graph_inc::ParityOrientation;
+use martensite_tkernel::standard::Failure;
+use martensite_tkmath::gp::Point3;
+
+/// `EditorView::VertexOps`.
+#[derive(Debug)]
+pub struct VertexOps<'g> {
+    pub(super) graph: &'g mut BRepGraph,
+}
+
+impl<'g> VertexOps<'g> {
+    /// `Add(thePoint, theTolerance)`: a new vertex definition.
+    ///
+    /// ```
+    /// use martensite_tkbrep::brep_graph::BRepGraph;
+    /// use martensite_tkmath::gp::Point3;
+    /// let mut graph = BRepGraph::new();
+    /// let vertex = graph.editor().vertices().add(Point3::new(1.0, 2.0, 3.0), 0.1);
+    /// assert_eq!(graph.topo().vertices().definition(vertex).tolerance, 0.1);
+    /// ```
+    pub fn add(&mut self, point: Point3, tolerance: f64) -> VertexId {
+        let vertex = self.graph.inc_storage_mut().append_vertex();
+        let def = self.graph.inc_storage_mut().change_vertex(vertex);
+        def.point = point;
+        def.tolerance = tolerance;
+        self.graph.allocate_uid(vertex.into());
+        self.graph.mark_modified(vertex.into());
+        vertex
+    }
+
+    /// `Mut(theVertex)`: the scoped guard of an active, unlocked, unguarded vertex.
+    pub fn mutate(self, vertex: VertexId) -> Result<MutGuard<'g, VertexTag>, Failure> {
+        mutate_node(self.graph, vertex)
+    }
+
+    /// `MutRef(theVertexRef)`: the scoped guard of a vertex reference.
+    pub fn mutate_ref(self, reference: VertexRefId) -> Result<MutGuard<'g, VertexRefTag>, Failure> {
+        mutate_ref(self.graph, reference)
+    }
+
+    /// `SetPoint(theVertex, thePoint)`: immediate notification; a locked vertex raises
+    /// Standard_ProgramError.
+    pub fn set_point(&mut self, vertex: VertexId, point: Point3) -> Result<(), Failure> {
+        require_settable(self.graph, vertex)?;
+        self.graph.inc_storage_mut().change_vertex(vertex).point = point;
+        self.graph.mark_modified(vertex.into());
+        Ok(())
+    }
+
+    /// `SetPoint(theMut, thePoint)`: inside a guard scope, notified when it closes.
+    pub fn set_point_guarded(guard: &mut MutGuard<'_, VertexTag>, point: Point3) {
+        guard.internal().point = point;
+    }
+
+    /// `SetTolerance(theVertex, theTolerance)`.
+    pub fn set_tolerance(&mut self, vertex: VertexId, tolerance: f64) -> Result<(), Failure> {
+        require_settable(self.graph, vertex)?;
+        self.graph.inc_storage_mut().change_vertex(vertex).tolerance = tolerance;
+        self.graph.mark_modified(vertex.into());
+        Ok(())
+    }
+
+    /// `SetTolerance(theMut, theTolerance)`.
+    pub fn set_tolerance_guarded(guard: &mut MutGuard<'_, VertexTag>, tolerance: f64) {
+        guard.internal().tolerance = tolerance;
+    }
+
+    /// `SetRefOrientation(theVertexRef, theOrientation)`.
+    pub fn set_ref_orientation(
+        &mut self,
+        reference: VertexRefId,
+        orientation: ParityOrientation,
+    ) -> Result<(), Failure> {
+        require_settable(self.graph, reference)?;
+        self.graph
+            .inc_storage_mut()
+            .change_vertex_ref(reference)
+            .orientation = orientation;
+        self.graph.mark_ref_modified(reference.into());
+        Ok(())
+    }
+
+    /// `SetRefOrientation(theMut, theOrientation)`.
+    pub fn set_ref_orientation_guarded(
+        guard: &mut MutGuard<'_, VertexRefTag>,
+        orientation: ParityOrientation,
+    ) {
+        guard.internal().orientation = orientation;
+    }
+
+    /// `SetRefChildVertexId(theVertexRef, theVertex)`: retargets the reference and
+    /// rebinds the vertex-to-edge relation of its edge.
+    pub fn set_ref_child_vertex_id(
+        &mut self,
+        reference: VertexRefId,
+        vertex: VertexId,
+    ) -> Result<(), Failure> {
+        require_settable(self.graph, reference)?;
+        let old = self
+            .graph
+            .inc_storage()
+            .vertex_ref(reference)
+            .child_vertex_id;
+        if old == vertex {
+            return Ok(());
+        }
+        self.graph
+            .inc_storage_mut()
+            .rebind_vertex_ref(reference, old, vertex);
+        self.graph.mark_ref_modified(reference.into());
+        Ok(())
+    }
+
+    /// `SetRefChildVertexId(theMut, theVertex)`: the rebind writes the reference
+    /// directly, without flagging the guard dirty, as natively.
+    pub fn set_ref_child_vertex_id_guarded(
+        guard: &mut MutGuard<'_, VertexRefTag>,
+        vertex: VertexId,
+    ) {
+        let old = guard.child_vertex_id;
+        if old == vertex {
+            return;
+        }
+        let reference = guard.id();
+        guard
+            .graph_mut()
+            .inc_storage_mut()
+            .rebind_vertex_ref(reference, old, vertex);
+    }
+}

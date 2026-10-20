@@ -1,0 +1,58 @@
+//! BRepGraphInc: the incidence-table backend of [`BRepGraph`](crate::brep_graph::BRepGraph).
+//!
+//! [`Storage`] holds the definition, reference and representation tables, the relation
+//! tables, the UID indexes and the shape bindings; [`populate`] fills it from a
+//! `TopoDS_Shape` and [`reconstruct`] rebuilds shapes from it. The records are the
+//! `*Def`, `*Ref` and `*Rep` structs. the
+//! mapping.
+mod bit_flags;
+mod definition;
+mod instance;
+mod load;
+mod parity_orientation;
+pub mod populate;
+pub mod reconstruct;
+mod reference;
+mod relations;
+mod representation;
+mod shared_bit_flags;
+mod storage;
+
+pub use bit_flags::BitFlags;
+pub use definition::{
+    BaseDef, CoEdgeDef, CompSolidDef, CompoundDef, EdgeDef, FaceDef, HasBaseDef, OccurrenceDef,
+    ProductDef, ShellDef, SolidDef, VertexDef, WireDef,
+};
+pub use instance::{
+    CoEdgeInstance, CompSolidInstance, CompoundInstance, FaceInstance, Instance, InstanceId,
+    NodeInstance, OccurrenceInstance, ProductInstance, ShellInstance, SolidInstance,
+    VertexInstance, WireInstance,
+};
+pub use load::LoadCounts;
+pub use parity_orientation::ParityOrientation;
+pub use reference::{
+    BaseRef, ChildRef, FaceRef, HasBaseRef, OccurrenceRef, ShellRef, SolidRef, VertexRef, WireRef,
+};
+pub use relations::{
+    CompSolidRelations, CompoundRelations, EdgeRelations, FaceRelations, OccurrenceRelations,
+    ProductRelations, ShellRelations, SolidRelations, VertexRelations, WireRelations,
+};
+pub use representation::{
+    CoEdgeCurve2DRep, CoEdgePolygon2DRep, CoEdgePolygonOnTriRep, EdgeCurve3DRep, EdgePolygon3DRep,
+    FaceSurfaceRep, FaceTriangulationRep,
+};
+pub use shared_bit_flags::SharedBitFlags;
+pub use storage::{
+    CachedShape, EntityStore, FlagPlane, NodeTag, OwnershipPlanes, RefTag, RemovalPlanes, RepStore,
+    RepTag, ShapeBindings, Storage, StoredTag, WireCoEdgeOrderStatus, check_index,
+    check_typed_index, check_untyped_index,
+};
+pub(crate) use storage::{
+    append_unique, build_co_edge_order, co_edge_ids_are_unique, co_edge_oriented_vertices,
+};
+
+/// `std::max(a, b)`: `b` only when `a < b`, so a NaN in `b` keeps `a` and a NaN in `a` is
+/// kept, unlike `f64::max` (the tolerance comparisons use `std::max`).
+pub(crate) fn std_max(a: f64, b: f64) -> f64 {
+    if a < b { b } else { a }
+}

@@ -313,6 +313,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkbrep"
+version = "0.3.4"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "sha2",
+]
+
+[[package]]
 name = "martensite-tkcdf"
 version = "0.3.4"
 dependencies = [
@@ -364,6 +377,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkgeomalgo"
+version = "0.3.4"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "sha2",
+]
+
+[[package]]
 name = "martensite-tkgeombase"
 version = "0.3.4"
 dependencies = [
@@ -403,6 +430,21 @@ dependencies = [
  "martensite-tkmath",
  "windows-sys",
  "x11-dl",
+]
+
+[[package]]
+name = "martensite-tktopalgo"
+version = "0.3.4"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "sha2",
 ]
 
 [[package]]

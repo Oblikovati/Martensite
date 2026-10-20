@@ -1,0 +1,70 @@
+//! TopExp: exploration of the topological data structure.
+//!
+//! The static members of the `TopExp` class are the free functions of this module;
+//! `TopExp_Explorer` is [`Explorer`]. `TopExp.cxx` defines `No_Standard_TypeMismatch`,
+//! so its casts to vertices and edges never check the shape type (they are
+//! [`crate::topods::Vertex::unchecked`]).
+mod ancestors;
+mod explorer;
+mod vertices;
+
+pub use ancestors::{map_shapes_and_ancestors, map_shapes_and_unique_ancestors};
+pub use explorer::{Explorer, ExplorerShapeSlot};
+pub use vertices::{common_vertex, first_vertex, last_vertex, vertices, wire_vertices};
+
+use crate::topods::{Shape, ShapeIterator};
+use crate::toptools::{IndexedMapOfShape, MapOfShape};
+use martensite_tkernel::standard::Failure;
+use martensite_tkg3d::top_abs::ShapeEnum;
+
+/// `MapShapes(S, T, M)`: adds to `map` every sub-shape of `shape` of type `kind`, in
+/// exploration order; the map is not cleared first.
+///
+/// ```
+/// use martensite_tkbrep::topexp;
+/// use martensite_tkbrep::topods::{Builder, Compound};
+/// use martensite_tkbrep::toptools::IndexedMapOfShape;
+/// use martensite_tkg3d::top_abs::ShapeEnum;
+/// let mut compound = Compound::default();
+/// Builder.make_compound(&mut compound);
+/// let mut map = IndexedMapOfShape::default();
+/// topexp::map_shapes_of_type(&compound, ShapeEnum::Compound, &mut map).unwrap();
+/// assert_eq!(map.extent(), 1);
+/// ```
+pub fn map_shapes_of_type(
+    shape: &Shape,
+    kind: ShapeEnum,
+    map: &mut IndexedMapOfShape,
+) -> Result<(), Failure> {
+    let mut explorer = Explorer::new(shape, kind, ShapeEnum::Shape)?;
+    while explorer.more() {
+        map.add(explorer.current().clone());
+        explorer.next()?;
+    }
+    Ok(())
+}
+
+/// `MapShapes(S, M, cumOri, cumLoc)` into an indexed map: `shape` then, depth first,
+/// every sub-shape. Only the first level uses `cum_ori` and `cum_loc`: the recursion
+/// calls the native defaults (both true); `topexp::map_shapes(&shape, &mut map, true, true)`.
+pub fn map_shapes(shape: &Shape, map: &mut IndexedMapOfShape, cum_ori: bool, cum_loc: bool) {
+    map.add(shape.clone());
+    let mut iterator = ShapeIterator::new(shape, cum_ori, cum_loc);
+    while let Ok(child) = iterator.value() {
+        map_shapes(child, map, true, true);
+        iterator.next();
+    }
+}
+
+/// `MapShapes(S, M, cumOri, cumLoc)` into a plain map (iteration order follows the
+/// hash, hence the TShape addresses); `topexp::map_shapes_into_map(&shape, &mut map, true, true)`.
+pub fn map_shapes_into_map(shape: &Shape, map: &mut MapOfShape, cum_ori: bool, cum_loc: bool) {
+    map.add(shape.clone());
+    let mut iterator = ShapeIterator::new(shape, cum_ori, cum_loc);
+    while let Ok(child) = iterator.value() {
+        map_shapes_into_map(child, map, true, true);
+        iterator.next();
+    }
+}
+#[cfg(test)]
+mod explorer_reference_tests;

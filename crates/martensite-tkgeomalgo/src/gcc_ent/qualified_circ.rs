@@ -1,0 +1,61 @@
+//! GccEnt_QualifiedCirc: a 2d circle with a qualifier.
+use super::Position;
+use martensite_tkmath::gp::Circle2;
+
+/// GccEnt_QualifiedCirc: a circle argument of a construction algorithm and the
+/// position its solutions must have relative to it.
+/// ```
+/// use martensite_tkgeomalgo::gcc_ent::{Position, QualifiedCirc};
+/// use martensite_tkmath::gp::Circle2;
+/// let qualified = QualifiedCirc::new(Circle2::default(), Position::Outside);
+/// assert!(qualified.is_outside());
+/// ```
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct QualifiedCirc {
+    the_qualified: Circle2,
+    the_qualifier: Position,
+}
+
+impl QualifiedCirc {
+    /// GccEnt_QualifiedCirc(Qualified, Qualifier);
+    /// `QualifiedCirc::new(circle, Position::Enclosing)`.
+    pub fn new(qualified: Circle2, qualifier: Position) -> Self {
+        Self {
+            the_qualified: qualified,
+            the_qualifier: qualifier,
+        }
+    }
+
+    /// Qualified: the circle; `qualified.qualified().radius()`.
+    pub fn qualified(&self) -> Circle2 {
+        self.the_qualified
+    }
+
+    /// Qualifier: the stored position. The native documentation promises
+    /// GccEnt_noqualifier for an unqualified circle, but the code returns the stored
+    /// GccEnt_unqualified, as this port does; `qualified.qualifier()`.
+    pub fn qualifier(&self) -> Position {
+        self.the_qualifier
+    }
+
+    /// IsUnqualified: true when all solutions apply; `qualified.is_unqualified()`.
+    pub fn is_unqualified(&self) -> bool {
+        self.the_qualifier == Position::Unqualified
+    }
+
+    /// IsEnclosing: the solution encloses the circle; `qualified.is_enclosing()`.
+    pub fn is_enclosing(&self) -> bool {
+        self.the_qualifier == Position::Enclosing
+    }
+
+    /// IsEnclosed: the solution is enclosed by the circle; `qualified.is_enclosed()`.
+    pub fn is_enclosed(&self) -> bool {
+        self.the_qualifier == Position::Enclosed
+    }
+
+    /// IsOutside: the solution and the circle are outside each other;
+    /// `qualified.is_outside()`.
+    pub fn is_outside(&self) -> bool {
+        self.the_qualifier == Position::Outside
+    }
+}

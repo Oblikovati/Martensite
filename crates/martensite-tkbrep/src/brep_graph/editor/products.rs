@@ -1,0 +1,264 @@
+//! `EditorView::ProductOps`: product creation and assembly links. The removals are
+//! in `product_removal`.
+use super::guards::mutate_node;
+use super::helpers::{
+    is_active_node, is_active_topology_node, node_item, remove_from_root_products, require_mutable,
+};
+use crate::brep_graph::mut_guard::MutGuard;
+use crate::brep_graph::{BRepGraph, NodeId, OccurrenceId, OccurrenceRefId, ProductId, ProductTag};
+use martensite_tkernel::standard::Failure;
+use martensite_tkmath::toploc::Location;
+
+/// `EditorView::ProductOps`.
+#[derive(Debug)]
+pub struct ProductOps<'g> {
+    pub(super) graph: &'g mut BRepGraph,
+}
+
+impl<'g> ProductOps<'g> {
+    /// `Add(theShapeRoot, thePlacement)`: a part product with one occurrence of the
+    /// active topology root, placed by `placement`; invalid for another root.
+    ///
+    /// ```
+    /// use martensite_tkbrep::brep_graph::{BRepGraph, NodeId};
+    /// use martensite_tkmath::toploc::Location;
+    /// let mut graph = BRepGraph::new();
+    /// let product = graph.editor().products().add(NodeId::default(), &Location::default());
+    /// assert!(!product.is_valid());
+    /// ```
+    pub fn add(&mut self, shape_root: NodeId, placement: &Location) -> ProductId {
+        if !is_active_topology_node(self.graph, shape_root) {
+            return ProductId::default();
+        }
+        let product = self.graph.inc_storage_mut().append_product();
+        self.graph.allocate_uid(product.into());
+        let occurrence = self.graph.inc_storage_mut().append_occurrence();
+        self.graph
+            .inc_storage_mut()
+            .change_occurrence(occurrence)
+            .child_node_id = shape_root;
+        // The native kind assertion cannot fail after the topology check above.
+        self.graph.allocate_uid(occurrence.into());
+        let storage = self.graph.inc_storage_mut();
+        let occurrence_ref = storage.attach_occurrence_to_product(product, occurrence, placement);
+        self.graph.allocate_ref_uid(occurrence_ref.into());
+        self.graph.mark_modified(occurrence.into());
+        self.graph.mark_ref_modified(occurrence_ref.into());
+        product
+    }
+
+    /// `Add()`: an empty product.
+    pub fn add_empty(&mut self) -> ProductId {
+        let product = self.graph.inc_storage_mut().append_product();
+        self.graph.allocate_uid(product.into());
+        self.graph.mark_modified(product.into());
+        product
+    }
+
+    /// `AppendDocumentRoot(theProductId)`: records an active product as a document root
+    /// once; a locked or guarded product raises Standard_ProgramError.
+    pub fn append_document_root(&mut self, product: ProductId) -> Result<(), Failure> {
+        let storage = self.graph.inc_storage();
+        if !product.is_valid_for(storage.nb_products()) || storage.is_removed(product) {
+            return Ok(());
+        }
+        require_mutable(
+            self.graph,
+            node_item(product),
+            "BRepGraph::EditorView::AppendDocumentRoot(): locked product",
+            "BRepGraph::EditorView::AppendDocumentRoot(): guard active on product",
+        )?;
+        let roots = self.graph.inc_storage_mut().change_root_product_ids();
+        if roots.contains(&product) {
+            return Ok(());
+        }
+        roots.push(product);
+        self.graph.mark_modified(product.into());
+        Ok(())
+    }
+
+    /// `Append(theParentProduct, theReferencedProduct, thePlacement,
+    /// theParentOccurrence, theOutOccurrenceRefId)`: an occurrence of the referenced
+    /// product under the parent (which leaves the document roots); the invalid ids when
+    /// a product is inactive, the two are the same, or the parent occurrence does not
+    /// instantiate the parent. Locked or guarded parents raise Standard_ProgramError.
+    pub fn append(
+        &mut self,
+        parent: ProductId,
+        referenced: ProductId,
+        placement: &Location,
+        parent_occurrence: OccurrenceId,
+    ) -> Result<(OccurrenceId, OccurrenceRefId), Failure> {
+        let invalid = (OccurrenceId::default(), OccurrenceRefId::default());
+        if !self.can_append(parent, referenced, parent_occurrence) {
+            return Ok(invalid);
+        }
+        self.require_append_parents(parent, parent_occurrence)?;
+        let occurrence = self.graph.inc_storage_mut().append_occurrence();
+        self.graph
+            .inc_storage_mut()
+            .change_occurrence(occurrence)
+            .child_node_id = referenced.into();
+        self.graph.allocate_uid(occurrence.into());
+        let storage = self.graph.inc_storage_mut();
+        let occurrence_ref = storage.attach_occurrence_to_product(parent, occurrence, placement);
+        self.graph.allocate_ref_uid(occurrence_ref.into());
+        remove_from_root_products(self.graph, referenced);
+        self.graph.mark_modified(occurrence.into());
+        self.graph.mark_ref_modified(occurrence_ref.into());
+        self.graph.mark_modified(referenced.into());
+        Ok((occurrence, occurrence_ref))
+    }
+
+    /// `Append(theParentProduct, theChildProducts, thePlacements)`: one occurrence per
+    /// child product (checked first: active and not the parent); empty when the
+    /// placement count differs, a check fails, or an occurrence is refused midway (the
+    /// earlier occurrences stay, as natively). A locked or guarded parent raises
+    /// Standard_ProgramError.
+    pub fn append_many(
+        &mut self,
+        parent: ProductId,
+        children: &[ProductId],
+        placements: &[Location],
+    ) -> Result<Vec<OccurrenceRefId>, Failure> {
+        if placements.len() != children.len() || !is_active_node(self.graph, parent) {
+            return Ok(Vec::new());
+        }
+        require_mutable(
+            self.graph,
+            node_item(parent),
+            "BRepGraph::EditorView::Append(): locked product",
+            "BRepGraph::EditorView::Append(): guard active on product",
+        )?;
+        let usable = |child: &ProductId| is_active_node(self.graph, *child) && *child != parent;
+        if !children.iter().all(usable) {
+            return Ok(Vec::new());
+        }
+        let mut references = Vec::with_capacity(children.len());
+        for (child, placement) in children.iter().zip(placements) {
+            let (occurrence, reference) =
+                self.append(parent, *child, placement, OccurrenceId::default())?;
+            if !occurrence.is_valid() {
+                return Ok(Vec::new());
+            }
+            references.push(reference);
+        }
+        Ok(references)
+    }
+
+    /// `Mut(theProduct)`: the scoped guard of a product definition.
+    pub fn mutate(self, product: ProductId) -> Result<MutGuard<'g, ProductTag>, Failure> {
+        mutate_node(self.graph, product)
+    }
+
+    // The validity checks of `Append` before the lock checks.
+    fn can_append(
+        &self,
+        parent: ProductId,
+        referenced: ProductId,
+        occurrence: OccurrenceId,
+    ) -> bool {
+        let graph = &*self.graph;
+        if !is_active_node(graph, parent) || !is_active_node(graph, referenced) {
+            return false;
+        }
+        if parent == referenced {
+            return false;
+        }
+        if !occurrence.is_valid() {
+            return true;
+        }
+        is_active_node(graph, occurrence)
+            && graph.inc_storage().occurrence(occurrence).child_node_id == NodeId::from(parent)
+    }
+
+    fn require_append_parents(
+        &self,
+        parent: ProductId,
+        occurrence: OccurrenceId,
+    ) -> Result<(), Failure> {
+        require_mutable(
+            self.graph,
+            node_item(parent),
+            "BRepGraph::EditorView::Append(): locked parent product",
+            "BRepGraph::EditorView::Append(): guard active on parent product",
+        )?;
+        if !occurrence.is_valid() {
+            return Ok(());
+        }
+        require_mutable(
+            self.graph,
+            node_item(occurrence),
+            "BRepGraph::EditorView::Append(): locked parent occurrence",
+            "BRepGraph::EditorView::Append(): guard active on parent occurrence",
+        )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::brep_graph::NodeKind;
+
+    #[test]
+    fn products_wrap_roots_and_nest() {
+        let mut graph = BRepGraph::new();
+        let solid = graph.inc_storage_mut().append_solid();
+        let part = graph
+            .editor()
+            .products()
+            .add(solid.into(), &Location::default());
+        assert!(part.is_valid());
+        graph
+            .editor()
+            .products()
+            .append_document_root(part)
+            .unwrap();
+        graph
+            .editor()
+            .products()
+            .append_document_root(part)
+            .unwrap();
+        assert_eq!(graph.root_product_ids(), &[part]);
+        let assembly = graph.editor().products().add_empty();
+        let (occurrence, reference) = graph
+            .editor()
+            .products()
+            .append(
+                assembly,
+                part,
+                &Location::default(),
+                OccurrenceId::default(),
+            )
+            .unwrap();
+        assert!(occurrence.is_valid() && reference.is_valid());
+        assert!(graph.root_product_ids().is_empty());
+        assert_eq!(
+            graph
+                .topo()
+                .occurrences()
+                .definition(occurrence)
+                .child_node_id
+                .kind,
+            NodeKind::PRODUCT
+        );
+        let same = graph.editor().products().append(
+            part,
+            part,
+            &Location::default(),
+            OccurrenceId::default(),
+        );
+        assert!(!same.unwrap().0.is_valid());
+        graph.inc_storage_mut().set_owned(assembly, true);
+        let locked = graph.editor().products().append(
+            assembly,
+            part,
+            &Location::default(),
+            OccurrenceId::default(),
+        );
+        assert_eq!(
+            locked.unwrap_err().exception_type(),
+            "Standard_ProgramError"
+        );
+    }
+}

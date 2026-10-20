@@ -1,0 +1,21 @@
+//! `BinTools_FormatVersion`: the versions of the binary shape format. The enumeration
+//! and its LOWER/UPPER bounds are `i32` constants, because `FormatNb` is an `int` and
+//! `THE_ASCII_VERSIONS` is indexed by it.
+
+/// `BinTools_FormatVersion_VERSION_1`: no CurveOnSurface UV points; reading resets the
+/// Checked flag and updates the UV points of each face.
+pub const VERSION_1: i32 = 1;
+/// `BinTools_FormatVersion_VERSION_2`: stores the CurveOnSurface UV points.
+pub const VERSION_2: i32 = 2;
+/// `BinTools_FormatVersion_VERSION_3`: the vertex point representations
+/// start with their type byte (#0009745).
+pub const VERSION_3: i32 = 3;
+/// `BinTools_FormatVersion_VERSION_4`: stores the per-vertex normals of the
+/// triangulations, and no UV points any more.
+pub const VERSION_4: i32 = 4;
+/// `BinTools_FormatVersion_CURRENT`.
+pub const CURRENT: i32 = VERSION_4;
+/// `BinTools_FormatVersion_LOWER`.
+pub const LOWER: i32 = VERSION_1;
+/// `BinTools_FormatVersion_UPPER`.
+pub const UPPER: i32 = VERSION_4;
