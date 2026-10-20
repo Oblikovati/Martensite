@@ -72,4 +72,6 @@ value: the second scale/bias pair of request 901 (`sv_pbr_lut 8.0 2.0 64.0`) in
 `service_corpus/native-03.txt` moved by one single-precision unit in the last
 place, because the importance-sampling angles of the split-sum lookup table are
 now computed by the portable library instead of the platform's single-precision
-functions. The FNV-1a lock of the result set was updated with it.
+functions. The FNV-1a lock of the result set was updated with it. One binary32 sine
+causes it; an MPFR certificate shows the new result is the correctly rounded one
+([attribution](../../../docs/features/martensite-tkservice/pbr-lut-attribution/README.md)).

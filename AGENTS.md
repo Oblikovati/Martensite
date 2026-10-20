@@ -189,8 +189,9 @@ replace the workspace lint table:
 - `martensite-cmath`: the declarations of the platform libm functions.
 - `martensite-tkservice`: the run-time loading of and calls into Xlib, FreeType,
   fontconfig and the Windows font registry, the X event union, the raw pixel
-  storage views and the clip-plane allocator replays. This entry is pending
-  maintainer approval with the crate's migration.
+  storage views and the clip-plane allocator replays. Approved on the same terms
+  as `martensite-tkernel` by the 2026-10-20 coordinator decision under the user's
+  delegation.
 
 Preserve public APIs and observable behavior during removal. An interface that
 cannot be implemented safely is an API conflict: record the exact constraint

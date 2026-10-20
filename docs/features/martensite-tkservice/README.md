@@ -97,7 +97,7 @@ These names are part of the current behavior and are kept:
 Transcendental functions go through `martensite-cmath` (behavior version 2, #201).
 Single-precision helpers compute in double precision and round once. Compared with the
 platform single-precision functions, one value of the frozen corpus changed by one unit
-in the last place; `crates/martensite-tkservice/tests/README.md` records it.
+in the last place; `crates/martensite-tkservice/tests/README.md` records it and [pbr-lut-attribution](pbr-lut-attribution/README.md) attributes it, with an MPFR certificate, to one binary32 sine the platform rounded incorrectly.
 
 ## Verification
 
