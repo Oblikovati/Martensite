@@ -29,6 +29,8 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkgeomalgo` | Curve and surface intersections, hatching, tangent constraints, filling, plates, laws and sketch splines. |
 | `martensite-tktopalgo` | Classification, shape construction and sewing, checks, extrema, bounding boxes and global properties. |
 | `martensite-tkhlr` | Hidden line removal, contour lines of surfaces and the visible and hidden lines as shapes. |
+| `martensite-tkprim` | Primitive solids (boxes, wedges, cylinders, cones, spheres, tori, revolutions, half-spaces) and sweeps. |
+| `martensite-tkhelix` | Helix curves, their B-spline approximation and composite helix wires. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [math guide](docs/features/martensite-tkmath/README.md), and
@@ -39,8 +41,10 @@ See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [visualization services](docs/features/martensite-tkservice/README.md) guides, and the
 [boundary representation](docs/features/martensite-tkbrep/README.md),
 [geometric algorithm](docs/features/martensite-tkgeomalgo/README.md),
-[topological algorithm](docs/features/martensite-tktopalgo/README.md) and
-[hidden line removal](docs/features/martensite-tkhlr/README.md) guides for module and test details.
+[topological algorithm](docs/features/martensite-tktopalgo/README.md),
+[hidden line removal](docs/features/martensite-tkhlr/README.md),
+[primitive solid](docs/features/martensite-tkprim/README.md) and
+[helix](docs/features/martensite-tkhelix/README.md) guides for module and test details.
 
 ## Getting started
 

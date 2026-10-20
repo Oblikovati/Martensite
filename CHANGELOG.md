@@ -24,6 +24,12 @@ follows [Semantic Versioning](https://semver.org/).
 - Added the `martensite-tkhlr` crate for hidden line removal: interval sets, the
   polyhedral and exact hidden line algorithms, contour lines of surfaces seen from a
   direction or a point and the conversion of the results back to shapes (#208).
+- Added the `martensite-tkprim` crate for primitive solids: boxes, wedges, cylinders,
+  cones, spheres, tori, revolved bodies and half-spaces, and the linear and rotational
+  sweeps of any shape with their history (#208).
+- Added the `martensite-tkhelix` crate for helix curves: the analytic helix, its
+  B-spline approximation coil by coil and composite helix wires of several parts
+  (#208).
 
 ## [0.3.4] - 2026-10-20
 
