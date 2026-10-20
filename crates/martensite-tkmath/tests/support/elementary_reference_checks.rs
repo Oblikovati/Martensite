@@ -1,7 +1,10 @@
 //! Closed-form jets at the existing exact inputs, independently enclosed by MPFR (#201).
 use super::{checkPointsEqual, checkVectorsEqual, standard_frame};
 use martensite_tkernel::precision::confusion;
-use martensite_tkmath::{elclib, gp::{Circle3, Ellipse3, Hyperbola3, Point3, Vector3}};
+use martensite_tkmath::{
+    elclib,
+    gp::{Circle3, Ellipse3, Hyperbola3, Point3, Vector3},
+};
 #[path = "elementary_reference_words.rs"]
 mod words;
 
@@ -16,7 +19,9 @@ fn reference_vector(words: [u64; 3]) -> Vector3 {
 }
 
 fn check_reference_jet<C>(curve: &C, parameter: f64, expected: [[u64; 3]; 4])
-where C: elclib::ThirdDerivativeCurve<Point = Point3, Vector = Vector3> {
+where
+    C: elclib::ThirdDerivativeCurve<Point = Point3, Vector = Vector3>,
+{
     let reference = reference_point(expected[0]);
     checkPointsEqual(elclib::value(parameter, curve), reference, confusion());
     let (point, first, second, third) = elclib::d3(parameter, curve);
@@ -39,14 +44,22 @@ fn original_quarter_pi_input() -> f64 {
 fn circle_jet_matches_independent_exact_quarter_pi_input() {
     let frame = standard_frame(Point3::new(0.0, 0.0, 0.0));
     let circle = Circle3::new(frame, 2.0).unwrap();
-    check_reference_jet(&circle, original_quarter_pi_input(), words::CIRCLE_REFERENCE_JET);
+    check_reference_jet(
+        &circle,
+        original_quarter_pi_input(),
+        words::CIRCLE_REFERENCE_JET,
+    );
 }
 
 #[test]
 fn ellipse_jet_matches_independent_exact_quarter_pi_input() {
     let frame = standard_frame(Point3::new(0.0, 0.0, 0.0));
     let ellipse = Ellipse3::new(frame, 3.0, 2.0).unwrap();
-    check_reference_jet(&ellipse, original_quarter_pi_input(), words::ELLIPSE_REFERENCE_JET);
+    check_reference_jet(
+        &ellipse,
+        original_quarter_pi_input(),
+        words::ELLIPSE_REFERENCE_JET,
+    );
 }
 
 #[test]

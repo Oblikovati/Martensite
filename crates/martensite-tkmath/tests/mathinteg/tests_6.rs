@@ -12,7 +12,11 @@ fn math_integ_gauss_adaptive_exponential_function() {
         1.0e-11,
     );
     // Independent real integral of exp(x) over exact [0,1]; see #201 certificates.
-    near(aResult.value.unwrap(), f64::from_bits(0x3ffb7e151628aed3), 1.0e-11);
+    near(
+        aResult.value.unwrap(),
+        f64::from_bits(0x3ffb7e151628aed3),
+        1.0e-11,
+    );
 }
 
 #[test]
