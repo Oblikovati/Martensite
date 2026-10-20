@@ -313,6 +313,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkcdf"
+version = "0.3.3"
+dependencies = [
+ "martensite-tkernel",
+]
+
+[[package]]
 name = "martensite-tkernel"
 version = "0.3.3"
 dependencies = [
@@ -368,6 +375,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tklcaf"
+version = "0.3.3"
+dependencies = [
+ "martensite-tkcdf",
+ "martensite-tkernel",
+]
+
+[[package]]
 name = "martensite-tkmath"
 version = "0.3.3"
 dependencies = [
@@ -376,6 +391,18 @@ dependencies = [
  "num-bigint",
  "num-complex",
  "rustc_apfloat",
+]
+
+[[package]]
+name = "martensite-tkservice"
+version = "0.3.3"
+dependencies = [
+ "libc",
+ "martensite-cmath",
+ "martensite-tkernel",
+ "martensite-tkmath",
+ "windows-sys",
+ "x11-dl",
 ]
 
 [[package]]
@@ -463,6 +490,12 @@ name = "once_cell_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
+
+[[package]]
+name = "pkg-config"
+version = "0.3.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 
 [[package]]
 name = "proc-macro2"
@@ -672,6 +705,17 @@ name = "winsafe"
 version = "0.0.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ef0ffc427f045c0cc9ebffd6f4f91153dcd2a1547b5c3c29ee3f541e16e95c6"
+
+[[package]]
+name = "x11-dl"
+version = "2.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38735924fedd5314a6e548792904ed8c6de6636285cb9fec04d5b1db85c1516f"
+dependencies = [
+ "libc",
+ "once_cell",
+ "pkg-config",
+]
 
 [[package]]
 name = "xattr"

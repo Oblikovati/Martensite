@@ -120,6 +120,7 @@ crates/
 └── martensite-*/         Other Toolkits
 
 tests/                      Integration / E2E tests which transverse multiple crates.
+external/martensite-test-data  Submodule with the public datasets that dataset-backed tests read.
 docs/architecture           All architectural documentation.
 docs/architecture/decisions ADR's.
 docs/features               Supporting documentation for each feature being developed.
@@ -180,12 +181,16 @@ recorded in `docs/features/safe-toolkits/closeout.md`; consult it before resumin
 the remaining migrations tracked by #81 and #83–#90. The allocator and raw-storage exceptions below are
 temporary migration allowances, not permanent architecture. The final policy
 permits unsafe only at a demonstrated system API boundary after evaluating
-safe standard-library and established dependency interfaces. Today two crates
+safe standard-library and established dependency interfaces. Today three crates
 replace the workspace lint table:
 
 - `martensite-tkernel`: the allocators and raw-storage collections, and the
   operating-system, standard-library and locale calls.
 - `martensite-cmath`: the declarations of the platform libm functions.
+- `martensite-tkservice`: the run-time loading of and calls into Xlib, FreeType,
+  fontconfig and the Windows font registry, the X event union, the raw pixel
+  storage views and the clip-plane allocator replays. This entry is pending
+  maintainer approval with the crate's migration.
 
 Preserve public APIs and observable behavior during removal. An interface that
 cannot be implemented safely is an API conflict: record the exact constraint

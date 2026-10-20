@@ -1,0 +1,21 @@
+[package]
+autotests = false
+name = "martensite-tkcdf"
+version = "0.3.3"
+description = "Martensite document framework: documents, applications, metadata, storage drivers and a light XML parser."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.3" }
+
+# Test modules share one executable per toolkit to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"

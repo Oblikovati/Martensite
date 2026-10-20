@@ -190,3 +190,7 @@ crates/martensite-tkgeombase/tests/fixtures/projlib_elementary_corpus/inputs-03.
 crates/martensite-tkgeombase/tests/fixtures/projlib_elementary_corpus/inputs-04.txt -text
 crates/martensite-tkgeombase/tests/fixtures/projlib_elementary_corpus/inputs-05.txt -text
 crates/martensite-tkgeombase/tests/fixtures/spatial_conversion_corpus/provenance.json -text
+
+# Document-framework and visualization fixtures are compared byte for byte.
+crates/martensite-tkcdf/tests/data/** -text -whitespace
+crates/martensite-tkservice/tests/fixtures/** -text -whitespace

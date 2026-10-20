@@ -1,0 +1,2 @@
+# Frozen persistence protocol bytes retain spaces, NULs and original line endings.
+*.fsd binary

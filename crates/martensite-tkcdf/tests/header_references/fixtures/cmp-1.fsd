@@ -1,0 +1,24 @@
+CMPFILE
+BEGIN_INFO_SECTION
+0
+1.3
+date
+Schema
+v
+0 
+v
+0 
+7
+START_REF
+invalid
+3 9 /already//absolute.std
+4 11 sub//part.std
+5 13 ./dot.std
+6 15 ../
+END_REF
+END_INFO_SECTION
+BEGIN_COMMENT_SECTION
+0
+END_COMMENT_SECTION
+BEGIN_DATA_SECTION
+END_DATA_SECTION
