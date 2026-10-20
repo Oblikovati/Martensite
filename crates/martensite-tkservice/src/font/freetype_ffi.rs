@@ -264,6 +264,9 @@ fn load() -> Option<FreeTypeApi> {
         "libfreetype.so.6",
         "libfreetype.so",
         "libfreetype.6.dylib",
+        // Homebrew's prefixes; the arm64 one is outside the default dynamic-library path.
+        "/opt/homebrew/lib/libfreetype.6.dylib",
+        "/usr/local/lib/libfreetype.6.dylib",
         "freetype.dll",
         "libfreetype.dll",
         "freetype6.dll",

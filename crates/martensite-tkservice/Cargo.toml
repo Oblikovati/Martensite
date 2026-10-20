@@ -26,6 +26,9 @@ undocumented_unsafe_blocks = "warn"
 [features]
 # Native display assertions require a live X11 server; enable explicitly in that environment.
 x11-integration-tests = []
+# The font corpus families compare the host font database and faces with a recording
+# made on the reference Linux machine; enable them only on a machine with those fonts.
+host-font-corpus = []
 
 [dependencies]
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.4" }

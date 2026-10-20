@@ -20,6 +20,12 @@ and pure event-layout assertions still run, but real X11 dispatch, pointer
 failure propagation and delivered destruction are not exercised. These are
 separate configurations, not equivalent acceptance runs.
 
+The `host-font-corpus` feature enables the three font families of the service corpus
+(`sv_fontmgr`, `sv_ftfont`, `sv_textfmt`, 81 requests). They describe the host font
+database and the faces it resolves, as recorded on the reference Linux machine, so they
+pass only on a machine with the same installed fonts and stay off elsewhere, including
+CI. The other requests replay on every platform (the 24 window requests on Linux).
+
 The video recorder is built without a codec backend. Three recorder scenarios
 need that backend for their bodies; they are not part of this suite.
 `image_video_recorder_disabled_backend.rs` pins the disabled behavior: open

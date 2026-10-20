@@ -196,3 +196,5 @@ crates/martensite-tkcdf/tests/data/** -text -whitespace
 crates/martensite-tkservice/tests/fixtures/** -text -whitespace
 # The bundled font license keeps its distributed text byte for byte.
 crates/martensite-tkservice/src/font/dejavu_sans_latin.LICENSE -whitespace
+# The shader manager embeds its GLSL tables byte for byte.
+crates/martensite-tkservice/src/graphic3d/shader_manager/glsl/** -text -whitespace

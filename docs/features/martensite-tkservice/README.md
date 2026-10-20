@@ -108,5 +108,10 @@ requests in process, the shader-manager corpus checks the digest and length of e
 generated program, and dedicated replays cover clip-plane sequences, light sets,
 primitive buffers, XR actions and frame statistics.
 
+The font families of the service corpus depend on the installed fonts and run only with
+the `host-font-corpus` feature on a machine with the reference fonts. CI builds FreeType
+on Windows and installs it with Homebrew on macOS; FreeType is also looked up in the
+Homebrew prefixes there.
+
 The preparation ran on Linux x86-64. The Windows and macOS targets were checked with
 Clippy only; the release candidate still needs the full supported platform matrix.

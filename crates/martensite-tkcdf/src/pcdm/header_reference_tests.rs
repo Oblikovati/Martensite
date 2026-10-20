@@ -20,7 +20,10 @@ fn fixture(kind: &str, scenario: usize) -> ExtendedString {
     ExtendedString::from_c_string(path.as_bytes(), true)
 }
 fn expected(scenario: usize) -> Vec<(i32, i32, String)> {
-    let base = format!("{}/tests/header_references", env!("CARGO_MANIFEST_DIR"));
+    // The Windows reference syntax spells every separator as '/', including the
+    // document folder's own.
+    let manifest = env!("CARGO_MANIFEST_DIR").replace('\\', "/");
+    let base = format!("{manifest}/tests/header_references");
     let folder = format!("{base}/fixtures");
     match scenario {
         0 => vec![

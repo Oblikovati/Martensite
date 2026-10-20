@@ -74,9 +74,14 @@ service_families! {
     sv_cubemap:320, sv_segment:28, sv_marker:172, sv_aspects_dump:120, sv_array:165,
     sv_camera:61, sv_camera_fit:40, sv_camera_interp:30, sv_clip:81, sv_clip_capping:40,
     sv_light:84, sv_light_set:41, sv_tpers:120, sv_tutils:60, sv_params:54,
-    sv_fontmgr:1, sv_ftfont:40, sv_textfmt:40, sv_culling:60, sv_stats:120,
+    sv_culling:60, sv_stats:120,
     sv_scene:180, sv_media:40, sv_mtex:6,
 }
+// The font families describe the host font database and its faces, recorded on the
+// reference Linux machine; they run only with the `host-font-corpus` feature there.
+#[cfg(feature = "host-font-corpus")]
+service_families! { sv_fontmgr:1, sv_ftfont:40, sv_textfmt:40 }
+
 #[cfg(target_os = "linux")]
 #[test]
 fn sv_window() {
