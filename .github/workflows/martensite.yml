@@ -66,6 +66,8 @@ jobs:
         with:
           # PR validation needs the merge base; release checks need the tags.
           fetch-depth: 0
+          # Dataset-backed tests read their inputs from external/martensite-test-data.
+          submodules: true
       - name: Install the toolchain pinned by rust-toolchain.toml
         run: rustup toolchain install
       - run: cargo xtask ci run --target ${{ matrix.target }}
