@@ -13,6 +13,10 @@
 /// assert_eq!(martensite_cmath::powi(2.0, -2), 0.25);
 /// ```
 pub fn powi(x: f64, n: i32) -> f64 {
+    observed!(powi(x, n) => repeated_squaring(x, n))
+}
+
+fn repeated_squaring(x: f64, n: i32) -> f64 {
     let mut square = x;
     let mut remaining = n.unsigned_abs();
     let mut product = 1.0;

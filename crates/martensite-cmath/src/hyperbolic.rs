@@ -6,7 +6,7 @@
 /// assert_eq!(martensite_cmath::sinh(0.0), 0.0);
 /// ```
 pub fn sinh(x: f64) -> f64 {
-    metallic::sinh(x)
+    observed!(sinh(x) => metallic::sinh(x))
 }
 
 /// Hyperbolic cosine, correctly rounded.
@@ -15,7 +15,7 @@ pub fn sinh(x: f64) -> f64 {
 /// assert_eq!(martensite_cmath::cosh(0.0), 1.0);
 /// ```
 pub fn cosh(x: f64) -> f64 {
-    metallic::cosh(x)
+    observed!(cosh(x) => metallic::cosh(x))
 }
 
 /// Hyperbolic tangent, correctly rounded.
@@ -24,7 +24,7 @@ pub fn cosh(x: f64) -> f64 {
 /// assert_eq!(martensite_cmath::tanh(f64::INFINITY), 1.0);
 /// ```
 pub fn tanh(x: f64) -> f64 {
-    metallic::tanh(x)
+    observed!(tanh(x) => metallic::tanh(x))
 }
 
 /// Inverse hyperbolic sine, correctly rounded.
@@ -33,7 +33,7 @@ pub fn tanh(x: f64) -> f64 {
 /// assert_eq!(martensite_cmath::asinh(0.0), 0.0);
 /// ```
 pub fn asinh(x: f64) -> f64 {
-    metallic::asinh(x)
+    observed!(asinh(x) => metallic::asinh(x))
 }
 
 /// Inverse hyperbolic cosine, correctly rounded; NaN below 1.
@@ -42,7 +42,7 @@ pub fn asinh(x: f64) -> f64 {
 /// assert_eq!(martensite_cmath::acosh(1.0), 0.0);
 /// ```
 pub fn acosh(x: f64) -> f64 {
-    metallic::acosh(x)
+    observed!(acosh(x) => metallic::acosh(x))
 }
 
 /// Inverse hyperbolic tangent, correctly rounded; infinite at `±1`, NaN beyond.
@@ -51,5 +51,5 @@ pub fn acosh(x: f64) -> f64 {
 /// assert_eq!(martensite_cmath::atanh(0.0), 0.0);
 /// ```
 pub fn atanh(x: f64) -> f64 {
-    metallic::atanh(x)
+    observed!(atanh(x) => metallic::atanh(x))
 }
