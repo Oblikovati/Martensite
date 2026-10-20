@@ -19,6 +19,17 @@ fn fixture(kind: &str, scenario: usize) -> ExtendedString {
     );
     ExtendedString::from_c_string(path.as_bytes(), true)
 }
+/// The recorded `/already//absolute.std` reference: absolute on Unix, so kept as it is;
+/// without a drive or UNC prefix the Windows syntax joins it under the document folder
+/// (as `C:\a\` + `\child` gives `C:/a//child` in the reference path rules).
+fn rooted_reference(folder: &str) -> String {
+    if cfg!(windows) {
+        format!("{folder}//already/absolute.std")
+    } else {
+        "/already//absolute.std".into()
+    }
+}
+
 fn expected(scenario: usize) -> Vec<(i32, i32, String)> {
     // The Windows reference syntax spells every separator as '/', including the
     // document folder's own.
@@ -31,7 +42,7 @@ fn expected(scenario: usize) -> Vec<(i32, i32, String)> {
             (2, 7, format!("{base}/sibling.std")),
         ],
         1 => vec![
-            (3, 9, "/already//absolute.std".into()),
+            (3, 9, rooted_reference(&folder)),
             (4, 11, format!("{folder}/sub/part.std")),
             (5, 13, format!("{folder}/./dot.std")),
             (6, 15, format!("{folder}/..")),
