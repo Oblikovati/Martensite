@@ -2,8 +2,8 @@
   "schema_version": 1,
   "old_revision": "534e7d6134c4a43926736d8c13b99c591126a8d9",
   "candidate_revision": "2b1f0e601f05eb14147171b0487bd4dcfe1e4425",
-  "acceptance": "not_admitted",
-  "behavior_migration": "proposed_version_2_pending_review",
+  "acceptance": "admitted_by_attribution",
+  "behavior_migration": "version_2_approved_recorded_migration",
   "scope": "Every changed test .txt/.txt.gz fixture; decoded byte lines compared positionally. Source-coded test changes separately listed, not asserted semantic case mappings.",
   "fixture_files": 73,
   "changed_rows": 975,
@@ -13,37 +13,37 @@
     {
       "path": "changed-rows-000.json",
       "records": 150,
-      "sha256": "7d3e6db84575310b8be719e24798a97253bc3f77202cf0df89a3f9ba6fc1d173"
+      "sha256": "0167bdeeeabfeb9af6c3b91ced5e40deff7f2e80bcaf419415582101fd5f20e1"
     },
     {
       "path": "changed-rows-001.json",
       "records": 150,
-      "sha256": "237d262bc8643ea59eb9d5fd634fc8659788d88472accf9351a5c78844d31a99"
+      "sha256": "c9c5c35a529059e964a1c0414d52b64dc5b13942d279cb05ca73b2d84cdcb7d7"
     },
     {
       "path": "changed-rows-002.json",
       "records": 150,
-      "sha256": "e10ea0f11028b5c7d90e1a719ad9849ac41d1076c08965c1680c1e0e7d8e43fa"
+      "sha256": "2a606a13a62e9d5d61488fc1aa1da1aefc1c2981f37a0a8bdec39893e01bd77d"
     },
     {
       "path": "changed-rows-003.json",
       "records": 150,
-      "sha256": "f7b1119b24fad30bc7ef37a57cf2511a56ba7f79eea86a01318143e263465722"
+      "sha256": "5a1e1b7855928fa59ae00ab8f73ef5f22100191dac9f82ff1b7da57fa9fe436a"
     },
     {
       "path": "changed-rows-004.json",
       "records": 150,
-      "sha256": "d5ebfcb7f1f76848d5ae8b782b333c69d63d86cd3e756f7acda25edbc17d7c51"
+      "sha256": "877bc30fb3695610fcad1457afa9df3451c1a7a53481eb0f6601823cc342e0d8"
     },
     {
       "path": "changed-rows-005.json",
       "records": 150,
-      "sha256": "e621f3f167d86893852630d4ebbbc17fb773dcd89338a9f23b9dcb79fb37b571"
+      "sha256": "73cfece8ee774e72218aafeb34ef6434092237f3889fb670e6f620dd9b697857"
     },
     {
       "path": "changed-rows-006.json",
       "records": 75,
-      "sha256": "8d82b37dc85af29ed9e09e7d56fbe8d2cd6ff9b153a17b12624c29738b3da546"
+      "sha256": "f233252c188dc9dfb4dbfb4b11e41c95a23d429645abdf89db4e33ea1b38abae"
     }
   ],
   "changed_test_source_files": [
@@ -207,5 +207,17 @@
     "crates/martensite-tkmath/tests/sketch_line_incidences/conics.rs",
     "crates/martensite-tkmath/tests/sketch_line_incidences/splines.rs"
   ],
-  "changed_test_source_count": 159
+  "changed_test_source_count": 159,
+  "admission": {
+    "date": "2026-10-20",
+    "method": "attribution/README.md",
+    "rows_attributed": 975,
+    "rows_unexplained": 0,
+    "rows_by_cause": {
+      "rounding": 971,
+      "domain_error_nan_sign": 4
+    },
+    "distinct_differing_calls": 1372286,
+    "finite_calls_mpfr_confirmed": 1371767
+  }
 }

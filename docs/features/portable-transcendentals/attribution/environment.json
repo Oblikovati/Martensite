@@ -1,0 +1,32 @@
+{
+ "schema": 1,
+ "candidate_revision": "76679cd40f6a6c5c05ce16dbcbb7da1015eff4e7",
+ "original_revision": "534e7d6134c4a43926736d8c13b99c591126a8d9",
+ "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+ "host": "Linux-7.1.5-76070105-generic-x86_64-with-glibc2.39",
+ "glibc": "ldd (Ubuntu GLIBC 2.39-0ubuntu8.9) 2.39",
+ "cpu_fma": true,
+ "profile": "dev (opt-level 0) with CARGO_PROFILE_DEV_DEBUG=0 (no debug info) and CARGO_INCREMENTAL=0",
+ "command": "docs/features/portable-transcendentals/attribution/replay.sh OUT",
+ "mpfr_command": "python3 -I verify_mpfr.py OUT/calls-platform_original OUT/calls-portable_candidate --out calls.tsv.xz --summary mpfr-summary.json",
+ "attribution_command": "python3 -I attribute_rows.py --repo . --evidence OUT",
+ "python_requirements": "../reference-proof/requirements.txt (gmpy2==2.3.2, hash pinned)",
+ "raw_call_logs": {
+  "calls-platform_original": {
+   "files": 9,
+   "lines": 1679927
+  },
+  "calls-portable_candidate": {
+   "files": 10,
+   "lines": 1745201
+  }
+ },
+ "files_sha256": {
+  "binaries.json": "05cf76c837f297a3186004b8edd6747f6fbb592be5c1e63584584754b03a433f",
+  "calls.tsv.xz": "84186422ab05f1b5f1e8c35712f959c25f28346ffb75c6bf5a7bbaf49a6ca245",
+  "mpfr-summary.json": "d843dd6f598580bca10d25dd587160aeb7ccecd13c8493cf06bd7c3f5cc02f5d",
+  "platform_original.cargo-test.log.gz": "557ff947b0a71df55a4d843608719e38f4afd5b6d84fb9c9889cf6189029a9ed",
+  "portable_candidate.cargo-test.log.gz": "e2f59cc6826c03a5833f5dea475f56b42c6344233bcaa8bad126b3025939ab24",
+  "test-call-digests.json": "dbe1b8c1a6bc2678b46ff8d9fb750733b71b65870c9fd5a52a7355b5f00aec05"
+ }
+}

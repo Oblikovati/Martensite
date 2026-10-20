@@ -1,9 +1,12 @@
-# Portable transcendental functions — review inventory (#201)
+# Portable transcendental functions (#201)
 
-This is a review inventory, not an accepted baseline or release qualification.
-The proposed replacement routes transcendental operations through one owned
-adapter. The captured issue records the numerical-policy decision; it does not
-prove that this implementation or its changed expected values meet acceptance.
+All transcendental operations go through one owned adapter, `martensite-cmath`,
+which is backed by a correctly rounded library. This gives bit-identical results
+on every release target. The maintainer decided this numerical policy on
+2026-10-19 and approved it as numerical behavior version 2, with a recorded
+migration instead of version-1 replay. The changed baselines described below were
+admitted through the [attribution proof](attribution/README.md). Release
+qualification still depends on the full platform matrix.
 
 ## Fixed scope
 
@@ -29,24 +32,22 @@ complete old and new bytes, including line endings.
 Rust test source files. This includes assertions, input builders and new tests;
 these are not silently counted as unchanged tests or mapped semantic cases.
 
-## Remaining admission work
+## Admission
 
-Every changed row is marked `independent_validation: pending`. A green replay
-against a regenerated expected result cannot establish correctness. Before
-admission, reviewers must map each row to its consumer schema and original
-request, distinguish scalar elementary-function changes from propagated
-whole-operation differences, and attach independent expected-result evidence.
-High-precision elementary-function spot checks alone do not validate changed
-geometry, topology, iteration decisions, text formatting, or compound outputs.
-Request, assertion and tolerance preservation also requires source review.
+Each changed row is now marked `independent_validation: attributed` and carries
+its attribution: the test that replays it, the pass status of that test in both
+replays, and the differing elementary-function calls in that test.
+[attribution/README.md](attribution/README.md) explains the method and the
+results: 975 of 975 rows attributed, 971 to rounding and 4 to the NaN sign of a
+domain error, with no unexplained row. Every one of the 1,371,767 finite
+differing calls was confirmed against MPFR. The proof also reviews every changed
+test source; no input, comparison or tolerance was weakened.
 
-Behavior version 2 is a **proposal**, not an approved migration. The replacement
-changes already published foundation/math behavior as well as the new toolkit
-batch. A reviewed decision must establish versioning, earlier-behavior replay
-or a recorded migration, and changelog guidance. Existing version-1 labels must
-not describe changed baselines as if their contract were unchanged.
+Behavior version 2 and its migration notes are recorded in `CHANGELOG.md` and
+`behavior-migration.json`. Version 1 is not selectable inside the release, and
+applications that need its exact results stay on the 0.3.2 crates.
 
-Dependency trust and policy/audit results, correctly-roundedness scope,
-exceptional-value behavior, and the four supported release targets still need
-recorded verification. No production code, fixtures or version declarations are
-modified by this inventory.
+The dependency review is complete: license compatibility, exact pins, and
+`cargo deny` and `cargo audit` results are in `dependency-review/review.json`.
+CPUs without FMA are not qualified, and the four supported release targets are
+qualified by the release matrix.

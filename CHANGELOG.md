@@ -6,13 +6,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Changed
-
-- Routed transcendental calculations through a version-pinned Rust math adapter; numerical baseline validation and replay migration are tracked in the portable-transcendentals feature record (#201).
-
 ### Fixed
-
-- Guarded single-precision powers with NaN arguments before dependency evaluation, while preserving zero-exponent and unit-base identities (#202).
 
 - Recorded the Intel macOS compiler-inventory baseline from a clean native capture (#198).
 
@@ -40,7 +34,30 @@ follows [Semantic Versioning](https://semver.org/).
 - Added the `martensite-tkg2d` crate for planar curves, splines, offsets, adaptors,
   derivative and grid evaluation, and quantized geometry hashes (#105).
 
+### Changed
+
+- Computed every transcendental function (trigonometric, hyperbolic, exponential,
+  logarithmic, power, cube root and `hypot`) with one portable, correctly rounded
+  library, so the kernel returns bit-identical results on Linux x64, Windows x64
+  and both macOS architectures. This is numerical behavior version 2 (#201).
+
+  Migration from behavior version 1 (0.3.2 and earlier): a result changes only
+  where the platform C math library did not round correctly. On Linux, 975 rows
+  in 73 retained fixtures and the expected values of 3 test literals and 20
+  fixture seals changed. Each change was traced to individual function results
+  that MPFR confirms the new library rounds correctly and glibc did not, except
+  four expression-text rows that now print `nan` instead of `-nan` for `acosh`
+  and `atanh` outside their domain. Composite results such as curves, projections, iteration
+  counts and formatted text can differ by more than one unit in the last place
+  where they amplify such a difference. NaN sign and payload remain unspecified.
+  Version 1 cannot be selected inside this release; applications that need its
+  exact results stay on the 0.3.2 crates. The maintainer approved behavior
+  version 2 with this recorded migration instead of version-1 replay; the
+  evidence is in `docs/features/portable-transcendentals/attribution/`.
+
 ### Fixed
+
+- Guarded single-precision powers with NaN arguments before dependency evaluation, while preserving zero-exponent and unit-base identities (#202).
 
 - Fixed symbolic-expression message failures to honor configured stack capture while
   preserving explicitly supplied stacks (#141).

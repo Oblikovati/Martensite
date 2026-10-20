@@ -48,8 +48,9 @@ check rational curves; bilinear surface and transform formulas check values and
 mixed derivatives. Additional controls cover axis placement, cache identity,
 request isolation and exact comparison policies.
 
-The behavior-version-1 corpus contains all 4,695 request/result pairs across
-71 families. Compressed fixtures are compiled into the test program and decoded
+The corpus contains all 4,695 request/result pairs across 71 families. Its
+expected results follow numerical behavior version 2, with correctly rounded
+elementary functions ([#201](../portable-transcendentals/attribution/README.md)). Compressed fixtures are compiled into the test program and decoded
 through a small owned interface over the pure Rust gzip backend. Each request
 uses an explicit output buffer and parameter context. No interpreter, external
 geometry engine, subprocess or fixture-file read supplies those test results.

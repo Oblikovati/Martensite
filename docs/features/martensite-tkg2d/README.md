@@ -38,7 +38,9 @@ uses line, circle, parabola and quadratic Bernstein closed forms for 17 cases.
 Original numeric policies remain unchanged; the supplemental 1,320-sample check
 uses an explicit roundoff allowance, not a certified error bound.
 
-The behavior-version-1 corpus retains all 1,787 requests across 25 families.
+The corpus retains all 1,787 requests across 25 families. Its expected results
+follow numerical behavior version 2, with correctly rounded elementary functions
+([#201](../portable-transcendentals/attribution/README.md)).
 Tests run directly in Rust with compiled fixtures and request-local buffers.
 Finite values, infinities, signed zeros, failure categories, hashes, JSON and
 whitespace compare exactly. Only complete numeric words representing NaNs are

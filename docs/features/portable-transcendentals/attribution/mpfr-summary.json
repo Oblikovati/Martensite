@@ -1,0 +1,114 @@
+{
+ "distinct_calls": 1372286,
+ "gmp": "GMP 6.3.0",
+ "gmpy2": "2.3.2",
+ "mpfr": "MPFR 4.2.2",
+ "python": "3.12.3",
+ "schema": 1,
+ "summary": {
+  "acos": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 308,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 4
+  },
+  "acosh": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 9,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 81
+  },
+  "asin": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 5079,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 5
+  },
+  "asinh": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 4786,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 2
+  },
+  "atan": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 52168,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 2
+  },
+  "atan2": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 58785,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 52
+  },
+  "atanh": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 10,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 54
+  },
+  "cbrt": {
+   "finite:portable_correctly_rounded_platform_not:glibc_n/a": 5,
+   "special_value:nan_payload_or_sign_only:glibc_n/a": 2
+  },
+  "cos": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 27516,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 7
+  },
+  "cosh": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 483419,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 2
+  },
+  "exp": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 33,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 2
+  },
+  "exp2": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 2,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 2
+  },
+  "expm1": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 2,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 2
+  },
+  "hypot": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 436,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 18,
+   "special_value:portable_correctly_rounded_platform_not:glibc_equal": 8
+  },
+  "log": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 3,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 109
+  },
+  "log10": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 12,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 2
+  },
+  "log1p": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 18,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 4
+  },
+  "log2": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 6,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 4
+  },
+  "pow": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 57,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 107,
+   "special_value:portable_correctly_rounded_platform_not:glibc_equal": 6
+  },
+  "powf": {
+   "special_value:nan_payload_or_sign_only:glibc_equal": 20
+  },
+  "powi": {
+   "n/a:not_a_libm_function:glibc_n/a": 1
+  },
+  "sin": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 35582,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 7
+  },
+  "sincos": {
+   "special_value:nan_payload_or_sign_only:glibc_equal": 6
+  },
+  "sinh": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 702704,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 2
+  },
+  "tan": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 2,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 6
+  },
+  "tanh": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 825,
+   "special_value:nan_payload_or_sign_only:glibc_equal": 2
+  }
+ },
+ "wide_precision_bits": 256
+}

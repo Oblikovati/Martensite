@@ -55,5 +55,41 @@
   ],
   "correctness_status": "Independent finite reference proof and changed-operation validation are separate requirements. Dependency policy success does not prove correct rounding.",
   "cpu_policy": "No CPU requirement changed. Generic x64 uses runtime FMA detection; actual non-FMA qualification remains pending.",
-  "baseline_admission": false
+  "baseline_admission": false,
+  "status": "completed",
+  "reviewed_on": "2026-10-20",
+  "tool_versions": {
+    "cargo-deny": "0.20.2",
+    "cargo-audit": "0.22.2",
+    "advisory_database_entries": 1338
+  },
+  "rerun": {
+    "date": "2026-10-20",
+    "lockfile_sha256": "0b5bb2dc10320799166a8c1af150cf2921eb3075149c79a66f634e2f4ca591b6",
+    "deny": "advisories ok, bans ok, licenses ok, sources ok (exit 0, identical to deny.log)",
+    "audit": "no vulnerabilities in 80 locked crates (exit 0, identical to audit.log)"
+  },
+  "license": {
+    "project": "GPL-2.0-only",
+    "packages": {
+      "metallic 0.3.0": "MIT",
+      "fast_polynomial 0.4.1": "MIT",
+      "num-traits 0.2.19": "MIT OR Apache-2.0 (MIT used)",
+      "autocfg 1.5.1": "Apache-2.0 OR MIT (MIT used; build-time only)"
+    },
+    "compatibility": "MIT is a permissive license compatible with distribution under GPL-2.0-only; Apache-2.0 alone is not, so the MIT alternative is the one relied on for dual-licensed packages. deny.toml allows MIT and rejects other licenses for these packages.",
+    "optional_dependency": "metallic declares an optional `rug` (GMP, LGPL) dependency for its own tests/tools; martensite-cmath uses default features, `rug` is absent from Cargo.lock and is never built."
+  },
+  "pinning": {
+    "manifest": "metallic = \"=0.3.0\" (exact requirement in crates/martensite-cmath/Cargo.toml)",
+    "lockfile": "all four packages pinned by version and crates.io checksum (packages list above)",
+    "change_policy": "Changing the pin changes recorded results and is a reviewed behavior change (#201)."
+  },
+  "trust": {
+    "metallic_unsafe": "58 `unsafe` occurrences in src: target_feature FMA dispatch after runtime CPU detection and similar intrinsics; accounted for as an established dependency, not as workspace unsafe code.",
+    "build_script": "build.rs only emits a cargo warning when x86 targets lack compile-time FMA; it reads no files and runs no programs.",
+    "correct_rounding_claim": "Upstream states every f32/f64 function is correctly rounded (ties to even), checked against CORE-MATH and MPFR. For the kernel, every differing call reached by the workspace tests was checked against MPFR in ../attribution/.",
+    "cpu": "x86-64 builds use runtime FMA detection; on CPUs without FMA some polynomial paths fall back to unfused multiply-add. The release matrix compares exact result words on its four runners; CPUs without FMA are not qualified, and no minimum CPU requirement was raised."
+  },
+  "decision": "Accepted: license compatible with GPL-2.0-only, versions pinned exactly, cargo deny and cargo audit clean. The finite-CPU qualification limit above remains recorded."
 }
