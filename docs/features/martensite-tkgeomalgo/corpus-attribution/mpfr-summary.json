@@ -1,0 +1,20 @@
+{
+ "distinct_calls": 56,
+ "gmp": "GMP 6.3.0",
+ "gmpy2": "2.3.2",
+ "mpfr": "MPFR 4.2.2",
+ "python": "3.12.3",
+ "schema": 1,
+ "summary": {
+  "cos": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 2
+  },
+  "pow": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 53
+  },
+  "sin": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 1
+  }
+ },
+ "wide_precision_bits": 256
+}
