@@ -307,14 +307,14 @@ dependencies = [
 
 [[package]]
 name = "martensite-cmath"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "metallic",
 ]
 
 [[package]]
 name = "martensite-tkbrep"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -327,14 +327,14 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkcdf"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "martensite-tkernel",
 ]
 
 [[package]]
 name = "martensite-tkernel"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "allocator-api2",
  "bytemuck",
@@ -350,7 +350,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkexpress"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -358,7 +358,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkg2d"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -367,7 +367,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkg3d"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "flate2",
  "martensite-cmath",
@@ -378,7 +378,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkgeomalgo"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -392,7 +392,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkgeombase"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -403,7 +403,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkhlr"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -419,7 +419,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tklcaf"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "martensite-tkcdf",
  "martensite-tkernel",
@@ -427,7 +427,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkmath"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -438,7 +438,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkservice"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "libc",
  "martensite-cmath",
@@ -450,7 +450,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tktopalgo"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
