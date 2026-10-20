@@ -10,20 +10,20 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added the `martensite-tkcdf` crate for application documents, references between
   documents, document metadata, format-driver lookup, container header reading and a
-  light XML parser and writer.
+  light XML parser and writer (#205).
 - Added the `martensite-tklcaf` crate for the application data framework: labels and
   attributes, transactions with undo and redo, standard attributes, the function
-  mechanism, documents, external links and multi-document transactions.
+  mechanism, documents, external links and multi-document transactions (#205).
 - Added the `martensite-tkservice` crate for visualization services: windows and input
   events, pixel maps, fonts and text layout, the presentation data model, shader
   program generation and the graphic driver interfaces. Linux is complete; the Windows,
   macOS and canvas windows are defined interfaces that return a typed
   `Standard_NotImplemented` error until their backends exist. FreeType, fontconfig and
-  Xlib are loaded at run time.
+  Xlib are loaded at run time (#205).
 - Added the opt-in `host-libm` feature of `martensite-cmath`: every transcendental
   function returns the platform C library result (numerical behavior version 1
   replay), for verification against programs linked with that library. It is
-  never enabled in releases or Martensite CI gates.
+  never enabled in releases or Martensite CI gates (#205).
 
 ### Fixed
 
