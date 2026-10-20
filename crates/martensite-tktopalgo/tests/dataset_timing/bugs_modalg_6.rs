@@ -3,11 +3,11 @@ use super::*;
 
 /// The boxed 2D face classifier must beat the unboxed one by 4, 3, 15 and 15 percent.
 ///
-/// The measured improvements on Linux x86-64 stay below the first two strict thresholds
-/// in debug and optimized builds alike (for example 2.85 and -1.10 percent), so the
-/// ratio is not reproducible yet; run it explicitly with `--ignored`.
+/// The edge-to-plane projection dominates the measured time (#207), so the first two
+/// strict thresholds are not met reliably (one Linux x86-64 run measured 2.85 and -1.10
+/// percent); run it explicitly with `--ignored` until #207 is fixed.
 #[test]
-#[ignore = "the 4 and 3 percent classifier speed-ups are not reproduced on the measured hosts; run with --ignored"]
+#[ignore = "the 4 and 3 percent classifier speed-ups are not reproducible until #207; run with --ignored"]
 fn bug27884() {
     let identity = "bugs_modalg_6::bug27884";
     run_case(identity, BUGS_SECONDS, || {
