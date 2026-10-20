@@ -4,4 +4,5 @@
 pub mod common;
 pub mod contour_surface_fixture;
 pub mod curve2d;
+pub mod intersection_report;
 mod numeric_tokens;

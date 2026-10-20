@@ -27,7 +27,10 @@ computation does not validate its result as a modelling operation.
 Run `cargo test -p martensite-tkhlr`. The tests cover the interval sets, the
 interference records, the contour records, functions, search and walking, the
 hidden line value classes, the curve, surface and intersector tools of the exact
-algorithm and the area limits. The `dataset_cases` target runs the two hidden-line
+algorithm and the area limits. The `*_numeric` tests replay frozen requests against
+frozen answers bit for bit; their inputs build primitive solids with `martensite-tkprim`,
+a development dependency. The answers that changed with the correctly rounded
+transcendental functions are attributed in [`corpus-attribution`](corpus-attribution/README.md). The `dataset_cases` target runs the two hidden-line
 regression cases (`bugs_modalg_6::bug25214` and `bug25908`) with inputs from the public
 test dataset in the `external/martensite-test-data` submodule; each runs alone in a
 child process under its group's time budget, and its log must get the `OK` or
