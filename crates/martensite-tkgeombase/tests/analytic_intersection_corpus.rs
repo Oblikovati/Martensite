@@ -101,7 +101,7 @@ fn analytic_request_and_retained_answer_bytes_stay_frozen() {
     );
     assert_eq!(
         super::fixture_hash(CHUNKS.iter().map(|(_, a)| *a)),
-        0xc34a03b8570f44c1
+        0x9d8fea0da96f29e3
     );
 }
 

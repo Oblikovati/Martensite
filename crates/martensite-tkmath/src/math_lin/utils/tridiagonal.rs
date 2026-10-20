@@ -89,7 +89,7 @@ pub fn compute_wilkinson_shift(
 ) -> f64 {
     let coupling: f64 = entry(subdiag, start);
     let ratio: f64 = (entry(diag, start + 1) - entry(diag, start)) / (2.0 * coupling);
-    let radius: f64 = 1.0_f64.hypot(ratio);
+    let radius: f64 = martensite_cmath::hypot(1.0_f64, ratio);
     // Keeps both branches spelled out; `ratio - radius` avoids cancellation when negative.
     let denominator: f64 = if ratio < 0.0 {
         ratio - radius
@@ -128,7 +128,7 @@ impl QlSweep {
     ) -> bool {
         let temp: f64 = self.sine * entry(subdiag, row);
         let subtemp: f64 = self.cosine * entry(subdiag, row);
-        let radius: f64 = temp.hypot(self.shift);
+        let radius: f64 = martensite_cmath::hypot(temp, self.shift);
         *entry_mut(subdiag, row + 1) = radius;
         if radius == 0.0 {
             *entry_mut(diag, row + 1) -= self.previous;

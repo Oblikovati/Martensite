@@ -58,7 +58,7 @@ impl WorldLimit {
     // so skip envelope checks that cannot yet succeed. Certification is unchanged.
     fn halvings(&self, achieved: Option<f64>) -> u32 {
         let ratio = achieved.map_or(2., |value| value / self.requested);
-        (ratio.log2().floor() as u32).clamp(1, 64)
+        (martensite_cmath::log2(ratio).floor() as u32).clamp(1, 64)
     }
 }
 // Inside one binary64 gap per axis, no refinement can bring any representable

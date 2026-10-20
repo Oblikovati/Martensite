@@ -109,7 +109,7 @@ impl Sphere {
         }
         let z: f64 = Vector3::between(self.sphere.location(), circle.location())
             .dot(Vector3::from(frames.zs));
-        let v: f64 = (z / self.sphere.radius()).asin();
+        let v: f64 = martensite_cmath::asin(z / self.sphere.radius());
         let normal_c: Direction3 = frames.xc.crossed(frames.yc)?;
         Ok(Line2::new(
             Point2::new(u, v),
@@ -129,11 +129,11 @@ fn eval_pnt2d(point: Vector3, sphere: &Sphere3) -> Point2 {
         .clamp(-1., 1.);
     let pconf: f64 = precision::p_confusion();
     let u: f64 = if x.abs() > pconf || y.abs() > pconf {
-        elclib::in_period(y.atan2(x), 0., 2. * PI)
+        elclib::in_period(martensite_cmath::atan2(y, x), 0., 2. * PI)
     } else {
         0.
     };
-    Point2::new(u, z.asin())
+    Point2::new(u, martensite_cmath::asin(z))
 }
 
 impl Project for Sphere {

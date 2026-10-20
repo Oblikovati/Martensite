@@ -91,7 +91,7 @@ impl Rule<'_> {
         *error = (*value - gauss_value).abs();
         let mut scale: f64 = 1.0;
         if asc != 0.0 && *error != 0.0 {
-            scale = (200.0 * *error / asc).powf(1.5);
+            scale = martensite_cmath::pow(200.0 * *error / asc, 1.5);
         }
         if scale < 1.0 {
             let scaled: f64 = asc * scale;

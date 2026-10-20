@@ -41,7 +41,7 @@ pub fn cylinder_coefficients(pos: Axis3, radius: f64) -> [f64; 10] {
 /// `GeomConicalSurface::Coefficients`: the third row is scaled by `tan(SemiAngle)`;
 /// `cone_coefficients(pos, 2.0, 0.3)`.
 pub fn cone_coefficients(pos: Axis3, radius: f64, semi_angle: f64) -> [f64; 10] {
-    let k_ang: f64 = semi_angle.tan();
+    let k_ang: f64 = martensite_cmath::tan(semi_angle);
     let [[t11, t12, t13, t14], [t21, t22, t23, t24], third] = frame_rows(pos);
     let (t31, t32, t33, t34) = (
         third[0] * k_ang,

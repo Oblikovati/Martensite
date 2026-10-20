@@ -70,9 +70,13 @@ impl Direction2 {
                 xy.y()
             )));
         }
-        Ok(Self {
-            coordinates: xy / squared.sqrt(),
-        })
+        let magnitude = squared.sqrt();
+        // An infinite component gives inf/inf; quotient keeps that NaN target-independent.
+        let coordinates = Xy::new(
+            martensite_cmath::quotient(xy.x(), magnitude),
+            martensite_cmath::quotient(xy.y(), magnitude),
+        );
+        Ok(Self { coordinates })
     }
     /// Constructs from planar algebra; `Direction2::from_xy(xy)?`.
     pub fn from_xy(xy: Xy) -> Result<Self, Failure> {

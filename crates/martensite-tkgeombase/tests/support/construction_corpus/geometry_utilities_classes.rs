@@ -213,9 +213,15 @@ fn aa_value(kind: i32, c: i32, t: f64, d: i32) -> f64 {
             _ => 6.0 * s * t - 4.0,
         },
         1 => match d {
-            0 => (s * t).sin() + f64::from(c) * (0.5 * t).cos(),
-            1 => s * (s * t).cos() - 0.5 * f64::from(c) * (0.5 * t).sin(),
-            _ => -s * s * (s * t).sin() - 0.25 * f64::from(c) * (0.5 * t).cos(),
+            0 => martensite_cmath::sin(s * t) + f64::from(c) * martensite_cmath::cos(0.5 * t),
+            1 => {
+                s * martensite_cmath::cos(s * t)
+                    - 0.5 * f64::from(c) * martensite_cmath::sin(0.5 * t)
+            }
+            _ => {
+                -s * s * martensite_cmath::sin(s * t)
+                    - 0.25 * f64::from(c) * martensite_cmath::cos(0.5 * t)
+            }
         },
         _ => helix_value(c, t, d),
     }
@@ -224,12 +230,12 @@ fn aa_value(kind: i32, c: i32, t: f64, d: i32) -> f64 {
 fn helix_value(c: i32, t: f64, d: i32) -> f64 {
     let rad = 2.0 + f64::from(c / 3);
     match (c % 3, d) {
-        (0, 0) => rad * t.cos(),
-        (0, 1) => -rad * t.sin(),
-        (0, _) => -rad * t.cos(),
-        (1, 0) => rad * t.sin(),
-        (1, 1) => rad * t.cos(),
-        (1, _) => -rad * t.sin(),
+        (0, 0) => rad * martensite_cmath::cos(t),
+        (0, 1) => -rad * martensite_cmath::sin(t),
+        (0, _) => -rad * martensite_cmath::cos(t),
+        (1, 0) => rad * martensite_cmath::sin(t),
+        (1, 1) => rad * martensite_cmath::cos(t),
+        (1, _) => -rad * martensite_cmath::sin(t),
         (_, 0) => 1.0 + 0.3 * t,
         (_, 1) => 0.3,
         _ => 0.0,

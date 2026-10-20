@@ -224,7 +224,7 @@ fn dn_rejects_negative_orders_and_vanishes_beyond_support() {
     // ConeDN(0,0) adds the location to the ring term but omits the axial v·cos(a)·Z
     // term, so it is not the surface point; that result is kept.
     let partial = elslib::cone_dn(0.3, 0.2, frame(), 2.0, 0.4, 0, 0);
-    let axial = Vector3::from(frame().direction()) * (0.2 * 0.4_f64.cos());
+    let axial = Vector3::from(frame().direction()) * (0.2 * martensite_cmath::cos(0.4_f64));
     close_points(
         Point3::from(*(partial + axial).xyz()),
         cone.value(0.3, 0.2),

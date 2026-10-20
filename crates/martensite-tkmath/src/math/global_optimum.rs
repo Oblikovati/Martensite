@@ -90,7 +90,8 @@ impl<'a> GlobalOptimum<'a> {
             epsilon2: 0.0,
             epsilon3: 0.0,
             last_step: 0.0,
-            cell_threshold: (2 * 3.0_f64.powf(f64::from(dimension)) as i32).max(200),
+            cell_threshold: (2 * martensite_cmath::pow(3.0_f64, f64::from(dimension)) as i32)
+                .max(200),
         };
         result.copy_global_bounds(lower, upper)?;
         result.initial_solutions()?;

@@ -43,7 +43,7 @@ impl QuadricFrame {
     }
     /// `computeUContext`.
     pub(super) fn u_context(&self, u: f64) -> UContext {
-        let (cos_u, sin_u) = (u.cos(), u.sin());
+        let (cos_u, sin_u) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
         let (x, y) = (self.x, self.y);
         UContext {
             cos_u,

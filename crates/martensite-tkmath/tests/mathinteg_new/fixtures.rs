@@ -14,7 +14,7 @@ impl Function for PolynomialFunc {
 struct SineFunc;
 impl Function for SineFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (theX).sin();
+        *theF = martensite_cmath::sin(theX);
         true
     }
 }
@@ -22,7 +22,7 @@ impl Function for SineFunc {
 struct GaussianFunc;
 impl Function for GaussianFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (-theX * theX).exp();
+        *theF = martensite_cmath::exp(-theX * theX);
         true
     }
 }
@@ -30,7 +30,7 @@ impl Function for GaussianFunc {
 struct OscillatoryFunc;
 impl Function for OscillatoryFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (10.0 * theX).cos();
+        *theF = martensite_cmath::cos(10.0 * theX);
         true
     }
 }
@@ -52,7 +52,7 @@ impl Function for LogSingularityFunc {
         if theX <= 0.0 {
             return false;
         }
-        *theF = -(theX).ln();
+        *theF = -martensite_cmath::log(theX);
         true
     }
 }
@@ -60,7 +60,7 @@ impl Function for LogSingularityFunc {
 struct ExponentialDecayFunc;
 impl Function for ExponentialDecayFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (-theX).exp();
+        *theF = martensite_cmath::exp(-theX);
         true
     }
 }
@@ -68,7 +68,7 @@ impl Function for ExponentialDecayFunc {
 struct InfiniteGaussianFunc;
 impl Function for InfiniteGaussianFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (-theX * theX).exp();
+        *theF = martensite_cmath::exp(-theX * theX);
         true
     }
 }
@@ -76,7 +76,7 @@ impl Function for InfiniteGaussianFunc {
 struct SineFuncOld;
 impl Function for SineFuncOld {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (theX).sin();
+        *theF = martensite_cmath::sin(theX);
         true
     }
 }

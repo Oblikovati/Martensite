@@ -128,11 +128,14 @@ fn point_hessian(
     let (order, mx_deg): (i32, i32) = (order as i32, mx_deg as i32);
     let deg_h: i32 = 2 * order + 1;
     for i in 0..=deg_h {
-        let curcoeff: f64 = coeff.powf(f64::from(hermite_power(i, order))) * poid * bv[i as usize];
+        let curcoeff: f64 = martensite_cmath::pow(coeff, f64::from(hermite_power(i, order)))
+            * poid
+            * bv[i as usize];
         // Hermite*Hermite part of matrix
         for j in i..=deg_h {
-            *aux_h.change_value(i, j)? +=
-                curcoeff * coeff.powf(f64::from(hermite_power(j, order))) * bv[j as usize];
+            *aux_h.change_value(i, j)? += curcoeff
+                * martensite_cmath::pow(coeff, f64::from(hermite_power(j, order)))
+                * bv[j as usize];
         }
         // Hermite*Jacobi part of matrix
         for j in deg_h + 1..=mx_deg {
@@ -323,7 +326,8 @@ pub(super) fn gradient(
     }
     g.multiply(2. * state.quadratic_weight);
     for i in 0..=2 * order + 1 {
-        *g.change_value(i0 + i)? *= coeff.powf(f64::from(hermite_power(i, order)));
+        *g.change_value(i0 + i)? *=
+            martensite_cmath::pow(coeff, f64::from(hermite_power(i, order)));
     }
     Ok(())
 }

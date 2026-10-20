@@ -30,7 +30,7 @@ fn extrema_pc2d_hyperbola_center_has_vertex_minimum() {
 
 #[test]
 fn extrema_pc2d_hyperbola_major_axis_point_has_three_extrema() {
-    let aRoot: f64 = 2.0_f64.acosh();
+    let aRoot: f64 = martensite_cmath::acosh(2.0_f64);
     let mut anEvaluator = ExtremaPC2d::Hyperbola::new(makeHyperbola(2.0, 1.0));
     let aResult = anEvaluator.perform(Point2::new(5.0, 0.0), THE_TOL, MM);
     assert_eq!(aResult.nb_ext(), 3);
@@ -54,7 +54,7 @@ fn extrema_pc2d_hyperbola_major_axis_point_has_three_extrema() {
 
 #[test]
 fn extrema_pc2d_hyperbola_root_within_parameter_tolerance_is_clamped_to_boundary() {
-    let aRoot: f64 = 2.0_f64.acosh();
+    let aRoot: f64 = martensite_cmath::acosh(2.0_f64);
     let anUpper: f64 = aRoot - 0.5 * ExtremaPC2d::THE_PARAM_TOLERANCE;
     let mut anEvaluator = bounded((0.5, anUpper));
     let aResult = anEvaluator.perform(Point2::new(5.0, 0.0), THE_TOL, MM);

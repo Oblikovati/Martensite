@@ -23,7 +23,7 @@ impl<T: Clone + Default, B: BoundingVolume, Tree: BoundingTreeInsertion<T, B> + 
         let (length, number): (f64, i32) = depth_squares(self.tree.tree_view(), root);
         let count: f64 = f64::from(number);
         let spread: f64 = (length / count).sqrt();
-        let depth: f64 = count.ln() / 2.0_f64.ln();
+        let depth: f64 = martensite_cmath::log(count) / martensite_cmath::log(2.0_f64);
         writeln!(
             stream,
             "Checking UBTree:{number:8} leaves, balance ={}",

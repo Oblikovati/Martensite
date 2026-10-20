@@ -285,7 +285,7 @@ fn relaxed_tolerances(
     if dangle <= tolang || dangle.is_nan() {
         return Ok((tolang, tol, false));
     }
-    let sinda: f64 = dangle.sin().abs();
+    let sinda: f64 = martensite_cmath::sin(dangle).abs();
     let dif: f64 = (sinda - tol).abs();
     // A small deviation of the axis over the known face height H means the axis
     // is effectively parallel: use the line solution, not a degenerate ellipse.

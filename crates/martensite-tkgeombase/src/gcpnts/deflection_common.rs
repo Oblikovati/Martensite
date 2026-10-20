@@ -67,7 +67,7 @@ pub(super) fn perform_circular(
     (u1, u2): (f64, f64),
 ) -> Result<bool, Failure> {
     let mut angle: f64 = std_max(1.0 - (deflection / curve.circle_radius()?), 0.0);
-    angle = 2.0e0 * angle.acos();
+    angle = 2.0e0 * martensite_cmath::acos(angle);
     let mut nb_points: i32 = ElementCast::<i32>::cast((u2 - u1) / angle);
     nb_points = nb_points.wrapping_add(2);
     angle = (u2 - u1) / f64::from(nb_points.wrapping_sub(1));

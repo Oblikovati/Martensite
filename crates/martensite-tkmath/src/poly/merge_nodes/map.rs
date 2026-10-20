@@ -74,7 +74,7 @@ impl MergedNodesMap {
     }
     pub(super) fn set_merge_angle(&mut self, angle: f64) {
         self.angle = angle as f32;
-        self.angle_cos = angle.cos() as f32;
+        self.angle_cos = martensite_cmath::cos(angle) as f32;
     }
     pub(super) fn has_merge_angle(&self) -> bool {
         self.angle > 0.0

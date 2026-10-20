@@ -21,18 +21,18 @@ pub use vector::Vector2;
 fn oriented_angle(cosine: f64, sine: f64, threshold: f64) -> f64 {
     if cosine > -threshold && cosine < threshold {
         return if sine > 0.0 {
-            cosine.acos()
+            martensite_cmath::acos(cosine)
         } else {
-            -cosine.acos()
+            -martensite_cmath::acos(cosine)
         };
     }
     if cosine > 0.0 {
-        return sine.asin();
+        return martensite_cmath::asin(sine);
     }
     if sine > 0.0 {
-        std::f64::consts::PI - sine.asin()
+        std::f64::consts::PI - martensite_cmath::asin(sine)
     } else {
-        -std::f64::consts::PI - sine.asin()
+        -std::f64::consts::PI - martensite_cmath::asin(sine)
     }
 }
 mod line;

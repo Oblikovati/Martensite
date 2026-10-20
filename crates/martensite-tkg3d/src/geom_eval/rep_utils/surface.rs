@@ -207,6 +207,7 @@ pub fn try_eval_surface_dn(
     };
     let (nu_rep, nv_rep) = if map.swap_uv { (nv, nu) } else { (nu, nv) };
     let rep: Vector3 = target.surface.eval_dn(target.u, target.v, nu_rep, nv_rep)?;
-    let scale: f64 = map.scale_u.powf(f64::from(nu_rep)) * map.scale_v.powf(f64::from(nv_rep));
+    let scale: f64 = martensite_cmath::pow(map.scale_u, f64::from(nu_rep))
+        * martensite_cmath::pow(map.scale_v, f64::from(nv_rep));
     Ok(Some(rep * scale))
 }

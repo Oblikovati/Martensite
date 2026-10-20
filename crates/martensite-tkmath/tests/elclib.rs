@@ -98,22 +98,38 @@ fn elementary_curve_circle3_d() {
     let aCircle = Circle3::new(anAxis, aRadius).unwrap();
     let aParam = PI / 4.0;
     let aPoint = elclib::value(aParam, &aCircle);
-    let aExpectedPoint = Point3::new(aRadius * aParam.cos(), aRadius * aParam.sin(), 0.0);
+    let aExpectedPoint = Point3::new(
+        aRadius * martensite_cmath::cos(aParam),
+        aRadius * martensite_cmath::sin(aParam),
+        0.0,
+    );
     checkPointsEqual(aPoint, aExpectedPoint, confusion());
     let (aPointD1, aVecD1) = elclib::d1(aParam, &aCircle);
     checkPointsEqual(aPointD1, aExpectedPoint, confusion());
-    let aExpectedVecD1 = Vector3::new(-aRadius * aParam.sin(), aRadius * aParam.cos(), 0.0);
+    let aExpectedVecD1 = Vector3::new(
+        -aRadius * martensite_cmath::sin(aParam),
+        aRadius * martensite_cmath::cos(aParam),
+        0.0,
+    );
     checkVectorsEqual(aVecD1, aExpectedVecD1, confusion());
     let (aPointD2, aVecD2_1, aVecD2_2) = elclib::d2(aParam, &aCircle);
     checkPointsEqual(aPointD2, aExpectedPoint, confusion());
     checkVectorsEqual(aVecD2_1, aExpectedVecD1, confusion());
-    let aExpectedVecD2_2 = Vector3::new(-aRadius * aParam.cos(), -aRadius * aParam.sin(), 0.0);
+    let aExpectedVecD2_2 = Vector3::new(
+        -aRadius * martensite_cmath::cos(aParam),
+        -aRadius * martensite_cmath::sin(aParam),
+        0.0,
+    );
     checkVectorsEqual(aVecD2_2, aExpectedVecD2_2, confusion());
     let (aPointD3, aVecD3_1, aVecD3_2, aVecD3_3) = elclib::d3(aParam, &aCircle);
     checkPointsEqual(aPointD3, aExpectedPoint, confusion());
     checkVectorsEqual(aVecD3_1, aExpectedVecD1, confusion());
     checkVectorsEqual(aVecD3_2, aExpectedVecD2_2, confusion());
-    let aExpectedVecD3_3 = Vector3::new(aRadius * aParam.sin(), -aRadius * aParam.cos(), 0.0);
+    let aExpectedVecD3_3 = Vector3::new(
+        aRadius * martensite_cmath::sin(aParam),
+        -aRadius * martensite_cmath::cos(aParam),
+        0.0,
+    );
     checkVectorsEqual(aVecD3_3, aExpectedVecD3_3, confusion());
     let aVecDN1 = elclib::dn(aParam, &aCircle, 1);
     checkVectorsEqual(aVecDN1, aExpectedVecD1, confusion());
@@ -134,16 +150,16 @@ fn elementary_curve_ellipse3_d() {
     let aParam = PI / 4.0;
     let aPoint = elclib::value(aParam, &anEllipse);
     let aExpectedPoint = Point3::new(
-        aMajorRadius * aParam.cos(),
-        aMinorRadius * aParam.sin(),
+        aMajorRadius * martensite_cmath::cos(aParam),
+        aMinorRadius * martensite_cmath::sin(aParam),
         0.0,
     );
     checkPointsEqual(aPoint, aExpectedPoint, confusion());
     let (aPointD1, aVecD1) = elclib::d1(aParam, &anEllipse);
     checkPointsEqual(aPointD1, aExpectedPoint, confusion());
     let aExpectedVecD1 = Vector3::new(
-        -aMajorRadius * aParam.sin(),
-        aMinorRadius * aParam.cos(),
+        -aMajorRadius * martensite_cmath::sin(aParam),
+        aMinorRadius * martensite_cmath::cos(aParam),
         0.0,
     );
     checkVectorsEqual(aVecD1, aExpectedVecD1, confusion());
@@ -160,16 +176,16 @@ fn elementary_curve_hyperbola3_d() {
     let aParam = 0.5;
     let aPoint = elclib::value(aParam, &aHyperbola);
     let aExpectedPoint = Point3::new(
-        aMajorRadius * aParam.cosh(),
-        aMinorRadius * aParam.sinh(),
+        aMajorRadius * martensite_cmath::cosh(aParam),
+        aMinorRadius * martensite_cmath::sinh(aParam),
         0.0,
     );
     checkPointsEqual(aPoint, aExpectedPoint, confusion());
     let (aPointD1, aVecD1) = elclib::d1(aParam, &aHyperbola);
     checkPointsEqual(aPointD1, aExpectedPoint, confusion());
     let aExpectedVecD1 = Vector3::new(
-        aMajorRadius * aParam.sinh(),
-        aMinorRadius * aParam.cosh(),
+        aMajorRadius * martensite_cmath::sinh(aParam),
+        aMinorRadius * martensite_cmath::cosh(aParam),
         0.0,
     );
     checkVectorsEqual(aVecD1, aExpectedVecD1, confusion());
@@ -309,3 +325,6 @@ fn elementary_curve_parabola2_d_above_resolution_focal_not_degenerate() {
     let aD2 = elclib::parabola_dn_2d(aU, anAxis, aFocal, 2);
     assert!(aD2.magnitude() > 1.0);
 }
+
+#[path = "support/elementary_reference_checks.rs"]
+mod independent_reference_checks;

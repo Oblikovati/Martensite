@@ -198,6 +198,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fast_polynomial"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0a0db42615e971ab610b46ff2865e6edee7eb447ce867dbfb3f79f292c4cd54"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -299,6 +308,9 @@ dependencies = [
 [[package]]
 name = "martensite-cmath"
 version = "0.3.3"
+dependencies = [
+ "metallic",
+]
 
 [[package]]
 name = "martensite-tkernel"
@@ -371,6 +383,15 @@ name = "memchr"
 version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
+
+[[package]]
+name = "metallic"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c93c1301b4423171c9ac8235383a713969ce16656d1d02b2c7835b122a4a0167"
+dependencies = [
+ "fast_polynomial",
+]
 
 [[package]]
 name = "miniz_oxide"

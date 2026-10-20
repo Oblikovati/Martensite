@@ -113,7 +113,8 @@ impl<K: LinearKind> LinearCriterion<K> {
         let mut scaled: Array2<'static, f64> = Array2::with_bounds(1, nb_dim, 0, deg)
             .map_err(|error| array_failure(error, K::NAME))?;
         for i in 0..=deg {
-            let factor: Option<f64> = (i <= deg_h).then(|| half.powf(self.hermite_order(i) as f64));
+            let factor: Option<f64> =
+                (i <= deg_h).then(|| martensite_cmath::pow(half, self.hermite_order(i) as f64));
             for dim in 1..=nb_dim {
                 let value: f64 = *coeff
                     .value(j0 + i, dim)
@@ -214,10 +215,11 @@ impl<K: LinearKind> LinearCriterion<K> {
         let coeff: f64 = self.half_length();
         let cteh3: f64 = K::scale(coeff);
         for i in 0..=deg_h {
-            let mfact: f64 = coeff.powf(self.hermite_order(i) as f64) * cteh3;
+            let mfact: f64 = martensite_cmath::pow(coeff, self.hermite_order(i) as f64) * cteh3;
             for j in i..=deg_h {
-                let value: f64 =
-                    mfact * coeff.powf(self.hermite_order(j) as f64) * self.ref_matrix[(i, j)];
+                let value: f64 = mfact
+                    * martensite_cmath::pow(coeff, self.hermite_order(j) as f64)
+                    * self.ref_matrix[(i, j)];
                 put(h, i0 + i, j0 + j, value)?;
                 if i != j {
                     put(h, j0 + j, i0 + i, value)?;

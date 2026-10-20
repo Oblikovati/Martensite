@@ -80,18 +80,24 @@ impl Sine {
 }
 impl Function for Sine {
     fn value(&mut self, x: f64, value: &mut f64) -> bool {
-        *value = self.amplitude * (self.frequency * x + self.phase).sin() + self.offset;
+        *value =
+            self.amplitude * martensite_cmath::sin(self.frequency * x + self.phase) + self.offset;
         true
     }
 }
 impl FunctionWithDerivative for Sine {
     fn derivative(&mut self, x: f64, derivative: &mut f64) -> bool {
-        *derivative = self.amplitude * self.frequency * (self.frequency * x + self.phase).cos();
+        *derivative = self.amplitude
+            * self.frequency
+            * martensite_cmath::cos(self.frequency * x + self.phase);
         true
     }
     fn values(&mut self, x: f64, value: &mut f64, derivative: &mut f64) -> bool {
-        *value = self.amplitude * (self.frequency * x + self.phase).sin() + self.offset;
-        *derivative = self.amplitude * self.frequency * (self.frequency * x + self.phase).cos();
+        *value =
+            self.amplitude * martensite_cmath::sin(self.frequency * x + self.phase) + self.offset;
+        *derivative = self.amplitude
+            * self.frequency
+            * martensite_cmath::cos(self.frequency * x + self.phase);
         true
     }
 }
@@ -122,18 +128,24 @@ impl Cosine {
 }
 impl Function for Cosine {
     fn value(&mut self, x: f64, value: &mut f64) -> bool {
-        *value = self.amplitude * (self.frequency * x + self.phase).cos() + self.offset;
+        *value =
+            self.amplitude * martensite_cmath::cos(self.frequency * x + self.phase) + self.offset;
         true
     }
 }
 impl FunctionWithDerivative for Cosine {
     fn derivative(&mut self, x: f64, derivative: &mut f64) -> bool {
-        *derivative = -self.amplitude * self.frequency * (self.frequency * x + self.phase).sin();
+        *derivative = -self.amplitude
+            * self.frequency
+            * martensite_cmath::sin(self.frequency * x + self.phase);
         true
     }
     fn values(&mut self, x: f64, value: &mut f64, derivative: &mut f64) -> bool {
-        *value = self.amplitude * (self.frequency * x + self.phase).cos() + self.offset;
-        *derivative = -self.amplitude * self.frequency * (self.frequency * x + self.phase).sin();
+        *value =
+            self.amplitude * martensite_cmath::cos(self.frequency * x + self.phase) + self.offset;
+        *derivative = -self.amplitude
+            * self.frequency
+            * martensite_cmath::sin(self.frequency * x + self.phase);
         true
     }
 }
@@ -162,18 +174,18 @@ impl Exponential {
 }
 impl Function for Exponential {
     fn value(&mut self, x: f64, value: &mut f64) -> bool {
-        *value = self.scale * (self.rate * x).exp() + self.offset;
+        *value = self.scale * martensite_cmath::exp(self.rate * x) + self.offset;
         true
     }
 }
 impl FunctionWithDerivative for Exponential {
     fn derivative(&mut self, x: f64, derivative: &mut f64) -> bool {
-        *derivative = self.scale * self.rate * (self.rate * x).exp();
+        *derivative = self.scale * self.rate * martensite_cmath::exp(self.rate * x);
         true
     }
     fn values(&mut self, x: f64, value: &mut f64, derivative: &mut f64) -> bool {
-        *value = self.scale * (self.rate * x).exp() + self.offset;
-        *derivative = self.scale * self.rate * (self.rate * x).exp();
+        *value = self.scale * martensite_cmath::exp(self.rate * x) + self.offset;
+        *derivative = self.scale * self.rate * martensite_cmath::exp(self.rate * x);
         true
     }
 }

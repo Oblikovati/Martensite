@@ -108,7 +108,7 @@ fn sine_wave_curve_eval_d2_analytical() {
     let aD2: GeomCurveD2 = aCurve.eval_d2(aT).unwrap();
 
     // D2 = -A*omega^2*sin(omega*t+phi)*YDir = (0, -A*om^2*sin(...), 0)
-    let aExpY: f64 = -aA * aOm * aOm * (aOm * aT + aPhi).sin();
+    let aExpY: f64 = -aA * aOm * aOm * martensite_cmath::sin(aOm * aT + aPhi);
     EXPECT_NEAR(aD2.d2.x(), 0.0, precision::confusion());
     EXPECT_NEAR(aD2.d2.y(), aExpY, precision::confusion());
     EXPECT_NEAR(aD2.d2.z(), 0.0, precision::confusion());

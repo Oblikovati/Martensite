@@ -117,7 +117,13 @@ fn search<const N: usize, P: Policy<N>>(
         return Ok((candidate(&result.x, delta, 1.0, bounds, options), None));
     }
     for iteration in 0..LINE_SEARCH_MAX as i32 {
-        let next: [f64; N] = candidate(&result.x, delta, 2.0_f64.powi(-iteration), bounds, options);
+        let next: [f64; N] = candidate(
+            &result.x,
+            delta,
+            martensite_cmath::powi(2.0_f64, -iteration),
+            bounds,
+            options,
+        );
         let step: [f64; N] = std::array::from_fn(|i| next[i] - result.x[i]);
         let derivative: E = merit_directional_derivative(f, j, &step);
         if P::SYMMETRIC && derivative.partial_cmp(&E::ZERO) != Some(std::cmp::Ordering::Less) {

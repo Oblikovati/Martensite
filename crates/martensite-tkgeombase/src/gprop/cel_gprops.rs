@@ -80,8 +80,8 @@ impl CelGProps {
         let ray: f64 = circle.radius();
         let base: &mut GProps = &mut self.base;
         base.dim = ray * (u2 - u1).abs();
-        let xloc: f64 = ray * (u2.sin() - u1.sin()) / (u2 - u1);
-        let yloc: f64 = ray * (u1.cos() - u2.cos()) / (u2 - u1);
+        let xloc: f64 = ray * (martensite_cmath::sin(u2) - martensite_cmath::sin(u1)) / (u2 - u1);
+        let yloc: f64 = ray * (martensite_cmath::cos(u1) - martensite_cmath::cos(u2)) / (u2 - u1);
         base.g.set_coordinates(
             xloc * xa1.x() + yloc * xa2.x() + x0,
             xloc * xa1.y() + yloc * xa2.y() + y0,
@@ -90,12 +90,16 @@ impl CelGProps {
         let ray3: f64 = ray * ray * ray;
         let dm = local_inertia(
             [
-                ray3 * (u2 / 2.0 - u1 / 2.0 - (2.0 * u2).sin() / 4.0 + (2.0 * u1).sin() / 4.0),
-                ray3 * (u2 / 2.0 - u1 / 2.0 + (2.0 * u2).sin() / 4.0 - (2.0 * u1).sin() / 4.0),
+                ray3 * (u2 / 2.0 - u1 / 2.0 - martensite_cmath::sin(2.0 * u2) / 4.0
+                    + martensite_cmath::sin(2.0 * u1) / 4.0),
+                ray3 * (u2 / 2.0 - u1 / 2.0 + martensite_cmath::sin(2.0 * u2) / 4.0
+                    - martensite_cmath::sin(2.0 * u1) / 4.0),
                 ray * ray * base.dim,
             ],
             [
-                -ray3 * ((2.0 * u1).cos() / 4.0 - (2.0 * u2).cos() / 4.0),
+                -ray3
+                    * (martensite_cmath::cos(2.0 * u1) / 4.0
+                        - martensite_cmath::cos(2.0 * u2) / 4.0),
                 0.0,
                 0.0,
             ],

@@ -41,7 +41,7 @@ impl Curve {
         }
         let niv_constr: i32 = self.base.niv_constr();
         for i in 1..=niv_constr {
-            let mfact: f64 = stenor.powf(i as f64);
+            let mfact: f64 = martensite_cmath::pow(stenor, i as f64);
             for j in 1..=dimension {
                 for address in [
                     base + i * dimension + j,
@@ -80,7 +80,7 @@ impl Curve {
         let (i2, niv_constr) = (coeffs.lower_row(), self.base.niv_constr());
         let i3: i32 = i2 + niv_constr + 1;
         for i in 1..=niv_constr {
-            let mfact: f64 = stenor.powf(i as f64);
+            let mfact: f64 = martensite_cmath::pow(stenor, i as f64);
             for j in j1 + 1..=dimension {
                 *cell(coeffs, i2 + i, j)? *= mfact;
                 *cell(coeffs, i3 + i, j)? *= mfact;

@@ -71,16 +71,16 @@ impl QuaternionSLerp {
         if cosine > 0.9999 {
             cosine = 0.9999;
         }
-        self.omega = cosine.acos();
-        let inverse_sine = 1.0 / self.omega.sin();
+        self.omega = martensite_cmath::acos(cosine);
+        let inverse_sine = 1.0 / martensite_cmath::sin(self.omega);
         self.start.scale(inverse_sine);
         self.end.scale(inverse_sine);
     }
     /// `start*sin((1-t)*omega) + end*sin(t*omega)`, as `Interpolate(t, result)`;
     /// `lerp.interpolate(0.25)`.
     pub fn interpolate(&self, parameter: f64) -> Quaternion {
-        self.start * ((1.0 - parameter) * self.omega).sin()
-            + self.end * (parameter * self.omega).sin()
+        self.start * martensite_cmath::sin((1.0 - parameter) * self.omega)
+            + self.end * martensite_cmath::sin(parameter * self.omega)
     }
     /// The static `Interpolate(start, end, t)`; `QuaternionSLerp::interpolated(a, b, 0.5)`.
     pub fn interpolated(start: Quaternion, end: Quaternion, parameter: f64) -> Quaternion {

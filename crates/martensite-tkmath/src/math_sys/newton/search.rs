@@ -61,7 +61,7 @@ impl NewtonState {
         self.within_x = true;
         for i in 0..self.solution.length() as usize {
             let step: f64 = trial.at(i).unwrap() - self.solution.at(i).unwrap();
-            self.result.step_norm = self.result.step_norm.hypot(step);
+            self.result.step_norm = martensite_cmath::hypot(self.result.step_norm, step);
             self.within_x = self.within_x && step.abs() <= *self.tolerance.at(i).unwrap();
         }
         self.solution = trial;

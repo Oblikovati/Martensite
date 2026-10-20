@@ -125,3 +125,19 @@ fn completed_semantic_lines_reset_the_buffer() {
     line.boolean(false);
     assert_eq!(line.end(), " 0");
 }
+
+#[test]
+fn inverse_hyperbolic_constants_keep_the_owned_negative_nan_text() {
+    for encoded in [
+        "x61636f736828302e323529",
+        "x41436f736828302e323529",
+        "x6174616e68283229",
+        "x4154616e68283229",
+    ] {
+        let result = semantic_support::text::text_case(&[encoded]);
+        let fields = result.split(' ').collect::<Vec<_>>();
+        for index in [3, 8, 9, 10] {
+            assert_eq!(fields[index], "x2d6e616e");
+        }
+    }
+}

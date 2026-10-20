@@ -34,7 +34,7 @@ impl CircleCoords {
 
 impl ConicTerms for CircleCoords {
     fn pair(u: f64) -> (f64, f64) {
-        (u.cos(), u.sin())
+        (martensite_cmath::cos(u), martensite_cmath::sin(u))
     }
     fn point(&self, cos_u: f64, sin_u: f64) -> Point2 {
         self.frame.translated(self.vector(cos_u, sin_u))
@@ -89,7 +89,7 @@ impl Geom2dGridEvalCircle {
             return Ok(empty());
         };
         Ok(map_grid(params, |u| {
-            let (a, b) = cyclic_coefficients(n, u.cos(), u.sin());
+            let (a, b) = cyclic_coefficients(n, martensite_cmath::cos(u), martensite_cmath::sin(u));
             c.vector(a, b)
         }))
     }

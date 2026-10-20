@@ -17,7 +17,7 @@ fn shifted_line(position: Axis3, offset: Vector3, direction: Direction3) -> Line
 fn meridian_frame(position: Axis3, u: f64) -> (Axis2, Direction3) {
     let dx = Vector3::from(position.x_direction());
     let dy = Vector3::from(position.y_direction());
-    let radial = unchecked_direction(dx * u.cos() + dy * u.sin());
+    let radial = unchecked_direction(dx * martensite_cmath::cos(u) + dy * martensite_cmath::sin(u));
     let Ok(normal) = UncheckedProducts::crossed(radial, position.direction());
     let Ok(frame) = Axis2::frame_using::<UncheckedProducts>(position.location(), normal, radial);
     (frame, radial)
@@ -68,16 +68,19 @@ pub fn cylinder_v_iso(position: Axis3, radius: f64, v: f64) -> Circle3 {
 /// The parallel circle at generatrix distance `v`; a negative ring radius reverses X/Y;
 /// `cone_v_iso(frame,2.0,0.3,1.0)`.
 pub fn cone_v_iso(position: Axis3, radius: f64, semi_angle: f64, v: f64) -> Circle3 {
-    let frame = position.translated(axial_offset(position, v * semi_angle.cos()));
-    let ring = radius + v * semi_angle.sin();
+    let frame = position.translated(axial_offset(
+        position,
+        v * martensite_cmath::cos(semi_angle),
+    ));
+    let ring = radius + v * martensite_cmath::sin(semi_angle);
     reversed_ring_circle(frame, ring)
 }
 /// The parallel circle at latitude `v`; beyond the poles the normal is reversed;
 /// `sphere_v_iso(frame,2.0,0.3)`.
 pub fn sphere_v_iso(position: Axis3, radius: f64, v: f64) -> Circle3 {
-    let offset = axial_offset(position, radius * v.sin());
+    let offset = axial_offset(position, radius * martensite_cmath::sin(v));
     let mut frame = position.ax2_unchecked().translated(offset);
-    let mut ring = radius * v.cos();
+    let mut ring = radius * martensite_cmath::cos(v);
     if ring < 0.0 {
         frame.set_direction_unchecked(frame.direction().reversed());
         ring = -ring;
@@ -88,8 +91,8 @@ pub fn sphere_v_iso(position: Axis3, radius: f64, v: f64) -> Circle3 {
 /// `torus_v_iso(frame,5.0,1.0,0.3)`.
 pub fn torus_v_iso(position: Axis3, major: f64, minor: f64, v: f64) -> Circle3 {
     let frame = Axis3::from_axis2(position.ax2_unchecked())
-        .translated(axial_offset(position, minor * v.sin()));
-    reversed_ring_circle(frame, major + minor * v.cos())
+        .translated(axial_offset(position, minor * martensite_cmath::sin(v)));
+    reversed_ring_circle(frame, major + minor * martensite_cmath::cos(v))
 }
 fn reversed_ring_circle(mut frame: Axis3, ring: f64) -> Circle3 {
     let mut ring = ring;

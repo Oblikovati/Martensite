@@ -50,7 +50,7 @@ fn math_root_bisection_cos_minus_x() {
     let mut aFunc: CosMinusXFunc = CosMinusXFunc::default();
     let aResult: ScalarResult = bisection(&mut aFunc, 0.0, 1.0, &Config::default());
     assert!(aResult.is_done());
-    let aFx: f64 = (aResult.root.unwrap()).cos() - aResult.root.unwrap();
+    let aFx: f64 = martensite_cmath::cos(aResult.root.unwrap()) - aResult.root.unwrap();
     near(aFx, 0.0, THE_TOLERANCE);
 }
 

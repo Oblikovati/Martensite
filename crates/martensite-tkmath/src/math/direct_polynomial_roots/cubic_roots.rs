@@ -17,12 +17,15 @@ impl Cubic {
             return;
         }
         let sign: f64 = if self.beta >= 0.0 { 1.0 } else { -1.0 };
-        let omega: f64 = (0.5 * self.q / (-self.discriminant).sqrt()).atan();
+        let omega: f64 = martensite_cmath::atan(0.5 * self.q / (-self.discriminant).sqrt());
         let sp3: f64 = (-self.p / 3.0).sqrt();
-        let y1: f64 = -2.0 * sign * sp3 * (std::f64::consts::PI / 6.0 - sign * omega / 3.0).cos();
+        let y1: f64 = -2.0
+            * sign
+            * sp3
+            * martensite_cmath::cos(std::f64::consts::PI / 6.0 - sign * omega / 3.0);
         roots[0] = -self.beta / 3.0 + y1;
         roots[1] = if self.beta * self.q <= 0.0 {
-            -self.beta / 3.0 + 2.0 * sp3 * (omega / 3.0).sin()
+            -self.beta / 3.0 + 2.0 * sp3 * martensite_cmath::sin(omega / 3.0)
         } else {
             self.alternative_second(y1)
         };
@@ -39,9 +42,9 @@ impl Cubic {
     fn one(&self) -> f64 {
         let mut u: f64 = self.discriminant.sqrt() + (self.q / 2.0).abs();
         u = if u >= 0.0 {
-            u.powf(1.0 / 3.0)
+            martensite_cmath::pow(u, 1.0 / 3.0)
         } else {
-            -u.abs().powf(1.0 / 3.0)
+            -martensite_cmath::pow(u.abs(), 1.0 / 3.0)
         };
         let h: f64 = if self.p >= 0.0 {
             u * u + self.p / 3.0 + (self.p / u) * (self.p / u) / 9.0

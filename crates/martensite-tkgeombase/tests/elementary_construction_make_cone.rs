@@ -43,7 +43,8 @@ fn make_cone_from_cone_and_dist_valid_done() {
     assert_eq!(aMaker.status(), ErrorType::Done);
 
     let aCone: Cone3 = aMaker.value().unwrap();
-    let anExpectedRadius: f64 = aBaseCone.ref_radius() + aDist / aBaseCone.semi_angle().cos();
+    let anExpectedRadius: f64 =
+        aBaseCone.ref_radius() + aDist / martensite_cmath::cos(aBaseCone.semi_angle());
     EXPECT_NEAR(aCone.ref_radius(), anExpectedRadius, precision::confusion());
     EXPECT_NEAR(
         aCone.semi_angle(),
@@ -66,7 +67,8 @@ fn make_cone_from_cone_and_dist_valid_done() {
 #[test]
 fn make_cone_from_cone_and_dist_too_negative_negative_radius() {
     let aBaseCone = base_cone();
-    let aDist: f64 = -(aBaseCone.ref_radius() * aBaseCone.semi_angle().cos() + 1.0);
+    let aDist: f64 =
+        -(aBaseCone.ref_radius() * martensite_cmath::cos(aBaseCone.semi_angle()) + 1.0);
 
     let aMaker = MakeCone::from_cone_distance(aBaseCone, aDist).unwrap();
     assert!(!aMaker.is_done());
@@ -78,7 +80,7 @@ fn make_cone_from_cone_and_point_valid_done() {
     let aBaseCone = base_cone();
     let aVParam: f64 = 4.0;
     let aTargetRadius: f64 = 12.0;
-    let aPointRadius: f64 = aTargetRadius + aVParam * aBaseCone.semi_angle().tan();
+    let aPointRadius: f64 = aTargetRadius + aVParam * martensite_cmath::tan(aBaseCone.semi_angle());
     let aPoint = Point3::new(aPointRadius, 0.0, aVParam);
 
     let aMaker = MakeCone::from_cone_point(aBaseCone, aPoint).unwrap();
@@ -111,8 +113,8 @@ fn make_cone_from_cone_and_point_two_candidates_chooses_nearest_to_base_cone() {
     let aRadius: f64 = Line3::from_axis(aBaseCone.axis()).distance(aPoint);
     let aVParam: f64 =
         (aPoint.xyz() - aBaseCone.location().xyz()).dot(aBaseCone.axis().direction().xyz());
-    let aTan: f64 = aBaseCone.semi_angle().tan();
-    let aCos: f64 = aBaseCone.semi_angle().cos();
+    let aTan: f64 = martensite_cmath::tan(aBaseCone.semi_angle());
+    let aCos: f64 = martensite_cmath::cos(aBaseCone.semi_angle());
     let aCand1: f64 = aRadius - aVParam * aTan;
     let aCand2: f64 = -aRadius - aVParam * aTan;
     let aDist1: f64 = ((aCand1 - aBaseCone.ref_radius()) * aCos).abs();

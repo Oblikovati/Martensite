@@ -26,10 +26,10 @@ fn harmonic(cosine: bool, order: i32, value: f64) -> f64 {
     }
     let angle = 6. * value;
     let wave = match (order + if cosine { 0 } else { 3 }) % 4 {
-        0 => angle.cos(),
-        1 => -angle.sin(),
-        2 => -angle.cos(),
-        _ => angle.sin(),
+        0 => martensite_cmath::cos(angle),
+        1 => -martensite_cmath::sin(angle),
+        2 => -martensite_cmath::cos(angle),
+        _ => martensite_cmath::sin(angle),
     };
     scale * wave
 }

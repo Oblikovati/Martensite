@@ -168,10 +168,10 @@ impl Test<'_> {
         let (pole0, pole3): (f64, f64) = (self.poles[0], self.poles[3]);
         let mut dercas: bool = false;
         if pole0 < pole3 {
-            dercas |= self.mean_shift((pole3 / pole0).log10(), pole3, pole0, tol);
+            dercas |= self.mean_shift(martensite_cmath::log10(pole3 / pole0), pole3, pole0, tol);
         }
         if pole0 > pole3 {
-            dercas |= self.mean_shift((pole0 / pole3).log10(), pole0, pole3, tol);
+            dercas |= self.mean_shift(martensite_cmath::log10(pole0 / pole3), pole0, pole3, tol);
         }
         dercas
     }
@@ -181,11 +181,18 @@ impl Test<'_> {
     // and sets dercas.
     fn mean_shift(&mut self, a: f64, high: f64, low: f64, tol: f64) -> bool {
         if *self.boucle == 2 {
-            self.shift(high * 10.0_f64.powf(-0.5 * tol.log10() - a / 2.0));
+            self.shift(
+                high * martensite_cmath::pow(
+                    10.0_f64,
+                    -0.5 * martensite_cmath::log10(tol) - a / 2.0,
+                ),
+            );
             return false;
         }
         if *self.boucle == 1 {
-            self.shift(low * 10.0_f64.powf(a / 2.0 + 0.5 * tol.log10()));
+            self.shift(
+                low * martensite_cmath::pow(10.0_f64, a / 2.0 + 0.5 * martensite_cmath::log10(tol)),
+            );
             return true;
         }
         false

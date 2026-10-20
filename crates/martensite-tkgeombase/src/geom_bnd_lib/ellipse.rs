@@ -103,8 +103,8 @@ pub struct Ellipse2d {
 fn ellipse2d_eval(ellipse: &Ellipse2, u: f64) -> Point2 {
     let frame = ellipse.axis();
     let origin: Xy = frame.location().xy();
-    let x_part: Xy = frame.x_direction().xy() * (ellipse.major_radius() * u.cos());
-    let y_part: Xy = frame.y_direction().xy() * (ellipse.minor_radius() * u.sin());
+    let x_part: Xy = frame.x_direction().xy() * (ellipse.major_radius() * martensite_cmath::cos(u));
+    let y_part: Xy = frame.y_direction().xy() * (ellipse.minor_radius() * martensite_cmath::sin(u));
     Point2::from(origin + x_part + y_part)
 }
 

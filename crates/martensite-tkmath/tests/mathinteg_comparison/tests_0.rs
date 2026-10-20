@@ -66,7 +66,7 @@ fn math_integ_comparison_gauss_exponential() {
     );
     near(
         aNewResult.value.unwrap(),
-        (1.0_f64).exp() - 1.0,
+        martensite_cmath::exp(1.0_f64) - 1.0,
         THE_TOLERANCE,
     );
 }

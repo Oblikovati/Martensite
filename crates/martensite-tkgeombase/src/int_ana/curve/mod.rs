@@ -141,7 +141,7 @@ impl Curve {
         self.ax3 = cone.position();
         self.rcyl = cone.ref_radius();
         self.angle = cone.semi_angle();
-        let un_sur_tg: f64 = 1.0 / cone.semi_angle().tan();
+        let un_sur_tg: f64 = 1.0 / martensite_cmath::tan(cone.semi_angle());
         self.typequadric = SurfaceType::Cone;
         self.z0 = TrigTerms {
             cte: q1,

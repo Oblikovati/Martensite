@@ -4,7 +4,7 @@ mod convergence;
 mod core;
 mod domain;
 mod extended;
-mod glibc_cbrt;
+mod frexp;
 mod types;
 pub use config::*;
 pub use convergence::*;

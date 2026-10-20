@@ -123,7 +123,7 @@ impl ExtPElS {
         let oz: Vector3 = Vector3::from(position.direction());
         let mp: Vector3 = Vector3::between(apex, point);
         let l2: f64 = mp.square_magnitude();
-        let vm: f64 = -(cone.ref_radius() / semi_angle.sin());
+        let vm: f64 = -(cone.ref_radius() / martensite_cmath::sin(semi_angle));
         // Case when P is mixed with the apex.
         if l2 < tol * tol {
             self.sq_dist[0] = l2;
@@ -176,9 +176,15 @@ fn cone_heights(mp: Vector3, dir_z: Vector3, a: f64, same: bool) -> Result<(f64,
     let l: f64 = mp.square_magnitude().sqrt();
     if !same {
         let b: f64 = PI - b;
-        return Ok((-l * (b - a).cos(), -l * (b + a).cos()));
+        return Ok((
+            -l * martensite_cmath::cos(b - a),
+            -l * martensite_cmath::cos(b + a),
+        ));
     }
-    Ok((l * (b - a).cos(), l * (b + a).cos()))
+    Ok((
+        l * martensite_cmath::cos(b - a),
+        l * martensite_cmath::cos(b + a),
+    ))
 }
 
 impl ExtPElS {

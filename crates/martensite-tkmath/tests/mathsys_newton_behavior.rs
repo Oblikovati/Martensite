@@ -57,6 +57,14 @@ fn invalid_tolerance_precedes_function_evaluation() {
 #[test]
 fn safe_norm_does_not_overflow_finite_hypotenuse() {
     let vector = Vector::filled(-1, 0, 1e200).unwrap();
-    assert_eq!(linear::safe_norm(&vector), 1e200_f64.hypot(1e200));
+    for index in 0..2 {
+        assert_eq!(vector.at(index).unwrap().to_bits(), 0x6974e718d7d7625a);
+    }
+    assert_eq!(
+        linear::safe_norm(&vector),
+        martensite_cmath::hypot(1e200_f64, 1e200)
+    );
     assert!(linear::safe_norm(&vector).is_finite());
+    // Independent sqrt(2*x*x) enclosure uses x's actual binary64 word (#201).
+    assert_eq!(linear::safe_norm(&vector).to_bits(), 0x697d8f9811335b57);
 }

@@ -18,7 +18,7 @@ fn zero_width_skips_callbacks_and_adaptive_has_absolute_error() {
 #[test]
 fn adaptive_budget_retains_estimates() {
     let mut f = |x: f64, value: &mut f64| {
-        *value = x.exp();
+        *value = martensite_cmath::exp(x);
         true
     };
     let config = IntegConfig {
@@ -40,7 +40,7 @@ fn adaptive_child_failure_preserves_parent_estimate() {
     let mut calls: usize = 0;
     let mut f = |x: f64, value: &mut f64| {
         calls += 1;
-        *value = x.exp();
+        *value = martensite_cmath::exp(x);
         calls != 4
     };
     let config = IntegConfig {

@@ -23,7 +23,7 @@ pub struct GeomGridEvalEllipse {
 impl ConicTerms for RadiiFrame3 {
     type Local = (f64, f64);
     fn local(&self, u: f64) -> (f64, f64) {
-        (u.cos(), u.sin())
+        (martensite_cmath::cos(u), martensite_cmath::sin(u))
     }
     fn point(&self, (c, s): (f64, f64)) -> Point3 {
         RadiiFrame3::point(self, c, s)
@@ -39,7 +39,7 @@ impl ConicTerms for RadiiFrame3 {
     }
     // `aMajR * aCoeffMajR * aXX + aMinR * aCoeffMinR * aYX`, cyclic with period 4.
     fn dn(&self, u: f64, n: i32) -> Vector3 {
-        let (a, b) = cyclic_coefficients(n, u.cos(), u.sin());
+        let (a, b) = cyclic_coefficients(n, martensite_cmath::cos(u), martensite_cmath::sin(u));
         self.vector(a, b)
     }
 }

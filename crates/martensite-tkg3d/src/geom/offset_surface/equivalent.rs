@@ -87,7 +87,7 @@ fn cone_offset(cone: &GeomConicalSurface, offset: f64) -> Result<Handle<dyn Geom
     let mut axis: Axis3 = cone.position();
     let sign: f64 = direct_sign(&axis)?;
     let alpha: f64 = cone.semi_angle();
-    let (cos, sin) = (alpha.cos(), alpha.sin());
+    let (cos, sin) = (martensite_cmath::cos(alpha), martensite_cmath::sin(alpha));
     let radius: f64 = cone.ref_radius() + sign * offset * cos;
     if radius < 0. {
         return Ok(Handle::default());

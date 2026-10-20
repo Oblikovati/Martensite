@@ -48,7 +48,9 @@ impl MultipleVarFunction for MultiModalFunction {
     fn value(&mut self, x: &Vector<'_>, value: &mut f64) -> bool {
         let dx: f64 = x[1] - PI;
         let dy: f64 = x[2] - PI;
-        *value = -x[1].cos() * x[2].cos() * (-(dx * dx + dy * dy)).exp();
+        *value = -martensite_cmath::cos(x[1])
+            * martensite_cmath::cos(x[2])
+            * martensite_cmath::exp(-(dx * dx + dy * dy));
         true
     }
 }

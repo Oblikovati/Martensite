@@ -65,7 +65,7 @@ impl Transform2 {
     /// Returns `atan2(a21, a11)` of the unscaled matrix; `transform.rotation_part()`.
     pub fn rotation_part(&self) -> f64 {
         let m = self.matrix.coefficients;
-        m[1][0].atan2(m[0][0])
+        martensite_cmath::atan2(m[1][0], m[0][0])
     }
     /// Sets a general similarity from a 2x3 matrix, factoring `sqrt(|det|)` out and
     /// orthogonalizing the rest. A failed orthogonalization leaves the scale, form and divided

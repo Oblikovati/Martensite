@@ -22,7 +22,7 @@ impl ExprGeneralExpression for ExprCosine {
     unary_expression_members!();
     function_members!(ExprCosine, "Cos(");
     fn shallow_simplified(&self) -> Result<ExprHandle, Failure> {
-        function_shallow_simplified::<ExprArcCosine, _>(self, f64::cos)
+        function_shallow_simplified::<ExprArcCosine, _>(self, martensite_cmath::cos)
     }
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         chain(self, x, |operand| {
@@ -32,6 +32,6 @@ impl ExprGeneralExpression for ExprCosine {
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok(value.cos())
+        Ok(martensite_cmath::cos(value))
     }
 }

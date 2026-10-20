@@ -106,7 +106,7 @@ impl ExtElC2d {
         let teta: f64 = if dy.abs() <= f64::EPSILON {
             PI / 2.0
         } else {
-            (-dx / dy).atan()
+            martensite_cmath::atan(-dx / dy)
         };
         extrema.push_opposite_pair(&line, &circle, teta);
         Ok(extrema)
@@ -123,7 +123,7 @@ impl ExtElC2d {
         let teta: f64 = if dy.abs() <= f64::EPSILON {
             PI / 2.0
         } else {
-            (-dx * r2 / (dy * r1)).atan()
+            martensite_cmath::atan(-dx * r2 / (dy * r1))
         };
         extrema.push_opposite_pair(&line, &ellipse, teta);
         Ok(extrema)
@@ -143,7 +143,11 @@ impl ExtElC2d {
             return Ok(extrema);
         }
         let v2: f64 = (r_major + r_minor * dx / dy) / (r_major - r_minor * dx / dy);
-        let u2: f64 = if v2 > 0.0 { v2.sqrt().ln() } else { 0.0 };
+        let u2: f64 = if v2 > 0.0 {
+            martensite_cmath::log(v2.sqrt())
+        } else {
+            0.0
+        };
         extrema.push_conic_parameter(&line, &hyperbola, u2);
         extrema.result.done = true;
         Ok(extrema)

@@ -80,7 +80,7 @@ pub fn is_valid_bounds(lower: &Vector<'_>, upper: &Vector<'_>) -> bool {
 pub fn norm(vector: &Vector<'_>) -> f64 {
     let mut value: f64 = 0.0;
     for component in vector.values() {
-        value = value.hypot(*component);
+        value = martensite_cmath::hypot(value, *component);
     }
     value
 }

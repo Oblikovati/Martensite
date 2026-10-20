@@ -28,7 +28,9 @@ pub fn solve_qr(a: &Matrix<'_>, b: &Vector<'_>, x: &mut Vector<'_>, tolerance: f
 }
 fn reflect_column(work: &mut Matrix<'_>, rhs: &mut Vector<'_>, col: usize) -> bool {
     let rows: usize = work.row_number() as usize;
-    let norm: f64 = (col..rows).fold(0.0_f64, |norm, row| norm.hypot(*work.at(row, col).unwrap()));
+    let norm: f64 = (col..rows).fold(0.0_f64, |norm, row| {
+        martensite_cmath::hypot(norm, *work.at(row, col).unwrap())
+    });
     if !(norm > 0.0 && norm.is_finite()) {
         return false;
     }

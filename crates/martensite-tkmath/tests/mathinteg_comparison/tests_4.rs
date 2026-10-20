@@ -39,7 +39,7 @@ fn math_integ_comparison_order41_comparison() {
 fn math_integ_comparison_higher_order_more_accurate() {
     let mut aFunc: ExpFuncNew = ExpFuncNew;
 
-    let aExact: f64 = (1.0_f64).exp() - 1.0;
+    let aExact: f64 = martensite_cmath::exp(1.0_f64) - 1.0;
 
     let aResult3: IntegResult = gauss(&mut aFunc, 0.0, 1.0, 3_usize);
     let aResult7: IntegResult = gauss(&mut aFunc, 0.0, 1.0, 7_usize);

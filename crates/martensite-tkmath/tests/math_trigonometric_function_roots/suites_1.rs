@@ -13,7 +13,7 @@ fn math_trigonometric_function_roots_linear_cosine_and_sine() {
 
     if solver.solutions().unwrap() >= 1 {
         let x1: f64 = solver.value(1).unwrap();
-        let result: f64 = x1.cos() + x1.sin();
+        let result: f64 = martensite_cmath::cos(x1) + martensite_cmath::sin(x1);
         assert_near(result, 0.0, TOLERANCE);
     }
 }
@@ -32,7 +32,7 @@ fn math_trigonometric_function_roots_pure_cosine_equation() {
 
     if solver.solutions().unwrap() >= 1 {
         let x1: f64 = solver.value(1).unwrap();
-        assert_near((x1.cos()).abs(), 0.0, TOLERANCE);
+        assert_near((martensite_cmath::cos(x1)).abs(), 0.0, TOLERANCE);
     }
 }
 
@@ -49,6 +49,6 @@ fn math_trigonometric_function_roots_pure_sine_equation() {
 
     if solver.solutions().unwrap() >= 1 {
         let x1: f64 = solver.value(1).unwrap();
-        assert_near((x1.sin()).abs(), 0.0, TOLERANCE);
+        assert_near((martensite_cmath::sin(x1)).abs(), 0.0, TOLERANCE);
     }
 }

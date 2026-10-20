@@ -273,13 +273,13 @@ impl RevolutionSweep {
             (&mut new_poles, &mut new_weights),
         )?;
         let mut aff = GeneralTransform3::default();
-        aff.set_affinity_axis(self.axis, 1.0 / self.alfa_u.cos());
+        aff.set_affinity_axis(self.axis, 1.0 / martensite_cmath::cos(self.alfa_u));
         for j in 1..=nb_v_poles {
             let mut coord: Xyz = poles[j].xyz();
             aff.transforms(&mut coord);
             poles[j].set_xyz(coord);
         }
-        let cos_alfa: f64 = self.alfa_u.cos();
+        let cos_alfa: f64 = martensite_cmath::cos(self.alfa_u);
         self.fill_rows(
             2,
             &poles,

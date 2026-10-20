@@ -64,13 +64,18 @@ fn normalized_arc(p1: f64, p2: f64) -> (f64, f64, f64) {
 /// (modulo 8) to `bounds`; `compute(&mut bounds, 0.0, 1.0, &frame)`.
 pub fn compute<B: SampleBounds>(bounds: &mut B, p1: f64, p2: f64, frame: &ArcFrame<B::Point>) {
     let (teta1, teta2, delta) = normalized_arc(p1, p2);
-    let (cn1, sn1, cn2, sn2) = (teta1.cos(), teta1.sin(), teta2.cos(), teta2.sin());
+    let (cn1, sn1, cn2, sn2) = (
+        martensite_cmath::cos(teta1),
+        martensite_cmath::sin(teta1),
+        martensite_cmath::cos(teta2),
+        martensite_cmath::sin(teta2),
+    );
     bounds.add_sample(frame.point(frame.ra * cn1, frame.rb * sn1));
     bounds.add_sample(frame.point(frame.ra * cn2, frame.rb * sn2));
     let (ram, rbm): (f64, f64) = if delta > PI / 8.0 {
         (frame.ra / COS_PI8, frame.rb / COS_PI8)
     } else {
-        let arrow: f64 = (delta / 2.0).cos();
+        let arrow: f64 = martensite_cmath::cos(delta / 2.0);
         (frame.ra / arrow, frame.rb / arrow)
     };
     bounds.add_sample(frame.point(ram * cn1, rbm * sn1));

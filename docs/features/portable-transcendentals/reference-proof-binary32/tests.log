@@ -1,0 +1,12 @@
+test_adjacent_expected_word_fails (test_binary32.Binary32ProofControls.test_adjacent_expected_word_fails) ... ok
+test_all_sources_and_enclosures_recompute (test_binary32.Binary32ProofControls.test_all_sources_and_enclosures_recompute) ... ok
+test_binary32_cells_and_negative_order (test_binary32.Binary32ProofControls.test_binary32_cells_and_negative_order) ... ok
+test_embedding_and_special_rejection (test_binary32.Binary32ProofControls.test_embedding_and_special_rejection) ... ok
+test_tampered_boundary_and_identity_fail (test_binary32.Binary32ProofControls.test_tampered_boundary_and_identity_fail) ... ok
+test_wrong_source_cardinality_fails (test_binary32.Binary32ProofControls.test_wrong_source_cardinality_fails) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.001s
+
+OK
+4 binary32 power identities and strict rational rounding cells verified

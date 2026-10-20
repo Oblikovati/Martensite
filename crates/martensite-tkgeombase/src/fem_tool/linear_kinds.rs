@@ -24,7 +24,7 @@ impl LinearKind for Flexion {
     const ONE_BASED_TABLE: bool = false;
     const HESSIAN_FROM_LOWER: bool = false;
     fn scale(coeff: f64) -> f64 {
-        2. / coeff.powf(3.)
+        2. / martensite_cmath::pow(coeff, 3.)
     }
     fn cache() -> &'static Mutex<ReferenceCache> {
         &FLEXION_CACHE
@@ -38,7 +38,7 @@ impl LinearKind for Jerk {
     const ONE_BASED_TABLE: bool = false;
     const HESSIAN_FROM_LOWER: bool = true;
     fn scale(coeff: f64) -> f64 {
-        2. / coeff.powf(5.)
+        2. / martensite_cmath::pow(coeff, 5.)
     }
     fn cache() -> &'static Mutex<ReferenceCache> {
         &JERK_CACHE

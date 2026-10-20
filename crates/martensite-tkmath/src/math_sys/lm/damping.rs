@@ -60,7 +60,7 @@ impl LMState {
         }
         for col in 0..n {
             let norm: f64 = (0..m).fold(0.0_f64, |norm, row| {
-                norm.hypot(*self.jacobian.at(row, col).unwrap())
+                martensite_cmath::hypot(norm, *self.jacobian.at(row, col).unwrap())
             });
             *matrix.change_at(m + col, col).unwrap() = self.lambda.sqrt() * norm.max(1.0);
         }
@@ -106,17 +106,17 @@ impl LMState {
                 value += self.jacobian.at(row, col).unwrap()
                     * (trial.at(col).unwrap() - self.solution.at(col).unwrap());
             }
-            norm = norm.hypot(value);
+            norm = martensite_cmath::hypot(norm, value);
         }
         predicted - merit(norm)
     }
     fn accept(&mut self, trial: Vector<'static>, trial_merit: E, rho: E) {
         self.result.step_norm = 0.0;
         for col in 0..self.solution.length() as usize {
-            self.result.step_norm = self
-                .result
-                .step_norm
-                .hypot(trial.at(col).unwrap() - self.solution.at(col).unwrap());
+            self.result.step_norm = martensite_cmath::hypot(
+                self.result.step_norm,
+                trial.at(col).unwrap() - self.solution.at(col).unwrap(),
+            );
         }
         self.solution = trial;
         self.residual = owned(&self.trial_residual);

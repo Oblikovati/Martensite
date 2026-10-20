@@ -22,9 +22,9 @@ fn polynomial(s: f64, c: f64, t: f64, d: i32) -> f64 {
 
 fn trigonometric(s: f64, c: f64, t: f64, d: i32) -> f64 {
     match d {
-        0 => (s * t).sin() + c * (0.5 * t).cos(),
-        1 => s * (s * t).cos() - 0.5 * c * (0.5 * t).sin(),
-        _ => -s * s * (s * t).sin() - 0.25 * c * (0.5 * t).cos(),
+        0 => martensite_cmath::sin(s * t) + c * martensite_cmath::cos(0.5 * t),
+        1 => s * martensite_cmath::cos(s * t) - 0.5 * c * martensite_cmath::sin(0.5 * t),
+        _ => -s * s * martensite_cmath::sin(s * t) - 0.25 * c * martensite_cmath::cos(0.5 * t),
     }
 }
 
@@ -40,12 +40,12 @@ fn rational(s: f64, t: f64, d: i32) -> f64 {
 fn helix(c: i32, t: f64, d: i32) -> f64 {
     let r: f64 = 2.0 + f64::from(c / 3);
     match (c % 3, d) {
-        (0, 0) => r * t.cos(),
-        (0, 1) => -r * t.sin(),
-        (0, _) => -r * t.cos(),
-        (1, 0) => r * t.sin(),
-        (1, 1) => r * t.cos(),
-        (1, _) => -r * t.sin(),
+        (0, 0) => r * martensite_cmath::cos(t),
+        (0, 1) => -r * martensite_cmath::sin(t),
+        (0, _) => -r * martensite_cmath::cos(t),
+        (1, 0) => r * martensite_cmath::sin(t),
+        (1, 1) => r * martensite_cmath::cos(t),
+        (1, _) => -r * martensite_cmath::sin(t),
         (_, 0) => 0.3 * t,
         (_, 1) => 0.3,
         _ => 0.0,
@@ -56,17 +56,17 @@ fn kink(s: f64, t: f64, d: i32) -> f64 {
     let x: f64 = t - 0.3;
     let a: f64 = x.abs();
     match d {
-        0 => s * a.powf(2.5),
-        1 => s * 2.5 * a.powf(1.5) * if x < 0.0 { -1.0 } else { 1.0 },
-        _ => s * 3.75 * a.powf(0.5),
+        0 => s * martensite_cmath::pow(a, 2.5),
+        1 => s * 2.5 * martensite_cmath::pow(a, 1.5) * if x < 0.0 { -1.0 } else { 1.0 },
+        _ => s * 3.75 * martensite_cmath::pow(a, 0.5),
     }
 }
 
 fn exponential(s: f64, t: f64, d: i32) -> f64 {
     match d {
-        0 => (0.5 * s * t).exp(),
-        1 => 0.5 * s * (0.5 * s * t).exp(),
-        _ => 0.25 * s * s * (0.5 * s * t).exp(),
+        0 => martensite_cmath::exp(0.5 * s * t),
+        1 => 0.5 * s * martensite_cmath::exp(0.5 * s * t),
+        _ => 0.25 * s * s * martensite_cmath::exp(0.5 * s * t),
     }
 }
 

@@ -192,8 +192,8 @@ fn paraboloid_surface_eval_d2_known_analytical() {
     let aFocal: f64 = 2.0;
     let (aU, aV) = (PI / 4.0, 2.0);
     let aD2: GeomSurfaceD2 = paraboloid(aFocal).eval_d2(aU, aV).unwrap();
-    let aExpX: f64 = -aV * aU.cos();
-    let aExpY: f64 = -aV * aU.sin();
+    let aExpX: f64 = -aV * martensite_cmath::cos(aU);
+    let aExpY: f64 = -aV * martensite_cmath::sin(aU);
     let aExpZ: f64 = 0.0;
     EXPECT_NEAR(aD2.d2u.x(), aExpX, precision::angular());
     EXPECT_NEAR(aD2.d2u.y(), aExpY, precision::angular());

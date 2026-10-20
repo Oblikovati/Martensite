@@ -132,21 +132,33 @@ fn allocate(layout: SpanLayout) -> Result<CosAndSin, Failure> {
 fn fill_tangent_half_angle(result: &mut CosAndSin, num_spans: i32, u_first: f64, delta: f64) {
     let alpha: f64 = delta / (2.0e0 * f64::from(num_spans));
     let mut param: f64 = u_first;
-    set_pole(result, 1, u_first.cos(), u_first.sin(), 1.0e0);
+    set_pole(
+        result,
+        1,
+        martensite_cmath::cos(u_first),
+        martensite_cmath::sin(u_first),
+        1.0e0,
+    );
     result.knots[1] = param;
     result.mults[1] = result.degree + 1;
-    let direct: f64 = alpha.cos();
+    let direct: f64 = martensite_cmath::cos(alpha);
     let inverse: f64 = 1.0e0 / direct;
     for ii in 1..=num_spans {
         let (middle, end) = (param + alpha, param + 2.0 * alpha);
         set_pole(
             result,
             2 * ii,
-            inverse * middle.cos(),
-            inverse * middle.sin(),
+            inverse * martensite_cmath::cos(middle),
+            inverse * martensite_cmath::sin(middle),
             direct,
         );
-        set_pole(result, 2 * ii + 1, end.cos(), end.sin(), 1.0e0);
+        set_pole(
+            result,
+            2 * ii + 1,
+            martensite_cmath::cos(end),
+            martensite_cmath::sin(end),
+            1.0e0,
+        );
         result.knots[ii + 1] = param + 2.0 * alpha;
         result.mults[ii + 1] = 2;
         param += 2.0 * alpha;

@@ -1,0 +1,363 @@
+{
+  "base": "7fb63ee2f79464abd087e5e793c99b84ee18ce7b",
+  "borrowed_proof_source_sha256": {
+    "exact_cells.py": "33069ba2e7206d59ab5c6a08d619829f78026b258852a80c6ec1fa2c9ad52eab",
+    "generate.py": "0df0421280848941e0c37e93071edb498f7a6cbf4c278fd0352e5932df95054c"
+  },
+  "certificates": {
+    "count": 154,
+    "exact_zero": 2,
+    "sha256": "babd07f1dd288a86b0d7a02cf8b15279661b1d6fd15933cdce2866b048afa2d4",
+    "strict_cells": 152
+  },
+  "clippy": {
+    "argv": [
+      "cargo",
+      "+1.99.0",
+      "clippy",
+      "--locked",
+      "-p",
+      "martensite-tkmath",
+      "-p",
+      "martensite-tkg2d",
+      "--test",
+      "toolkit",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit": 0
+  },
+  "commands": [
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkmath",
+        "--test",
+        "toolkit",
+        "elclib::",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit": 0,
+      "log": "elclib-1.log.gz",
+      "passed": 15
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkmath",
+        "--test",
+        "toolkit",
+        "elclib::",
+        "--",
+        "--test-threads=4"
+      ],
+      "exit": 0,
+      "log": "elclib-4.log.gz",
+      "passed": 15
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkmath",
+        "--test",
+        "toolkit",
+        "mathsys_newton_behavior::",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit": 0,
+      "log": "newton-1.log.gz",
+      "passed": 3
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkmath",
+        "--test",
+        "toolkit",
+        "mathsys_newton_behavior::",
+        "--",
+        "--test-threads=4"
+      ],
+      "exit": 0,
+      "log": "newton-4.log.gz",
+      "passed": 3
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkmath",
+        "--test",
+        "toolkit",
+        "math_integration::",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit": 0,
+      "log": "integration-1.log.gz",
+      "passed": 16
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkmath",
+        "--test",
+        "toolkit",
+        "math_integration::",
+        "--",
+        "--test-threads=4"
+      ],
+      "exit": 0,
+      "log": "integration-4.log.gz",
+      "passed": 16
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkmath",
+        "--test",
+        "toolkit",
+        "mathinteg::",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit": 0,
+      "log": "adaptive-1.log.gz",
+      "passed": 60
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkmath",
+        "--test",
+        "toolkit",
+        "mathinteg::",
+        "--",
+        "--test-threads=4"
+      ],
+      "exit": 0,
+      "log": "adaptive-4.log.gz",
+      "passed": 60
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkg2d",
+        "--test",
+        "toolkit",
+        "analytic_curve_closed_forms::",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit": 0,
+      "log": "planar-1.log.gz",
+      "passed": 2
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkg2d",
+        "--test",
+        "toolkit",
+        "analytic_curve_closed_forms::",
+        "--",
+        "--test-threads=4"
+      ],
+      "exit": 0,
+      "log": "planar-4.log.gz",
+      "passed": 2
+    }
+  ],
+  "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "environment": {
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_TARGET_DIR": "/tmp/martensite-independent-references-201-target",
+    "PATH": "/home/vmiguel/.cargo/bin:/usr/bin:/bin"
+  },
+  "format": {
+    "argv": [
+      "cargo",
+      "+1.99.0",
+      "fmt",
+      "--package",
+      "martensite-tkmath",
+      "--package",
+      "martensite-tkg2d",
+      "--",
+      "--check"
+    ],
+    "exit": 0
+  },
+  "logs": {
+    "adaptive-1.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "28b55ad243cdcf22695860f7778398a006e71f94f35c206b634555ba0e0e79a0",
+      "sha256": "04c103c6a940ce2f22b90866605ec4c0ed26a8f9a37fc6ed78e02fa6f490895e"
+    },
+    "adaptive-4.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "0256302fd5b115067d59dd134a1809f9938251486526025b431152531316ae00",
+      "sha256": "25cb6fd7f5c3828bb67134657ee096a643932f0bf0ee00aa7dc91579c5e9cd96"
+    },
+    "elclib-1.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "3e49243f571c550ebd7ff8a5db0c21fd1186c9ddc51a9fcb7140b6d532238014",
+      "sha256": "6dc3ecf733bcfd1b1b675fd5e31df7e95787d069ca5a6dfbab302c45584de0da"
+    },
+    "elclib-4.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "88a17540bc1487c352303c0e51957d2efaeb033e765598038b37636806e6f64b",
+      "sha256": "d42fa2b8b693476642ec9d43d5ba6c5f7b986f443b87a27a14fd8a47e7ee347c"
+    },
+    "integration-1.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "761c0ec018341f09b1d17b2629b13fb85942123551a1da22639a770c97633a1f",
+      "sha256": "f82fd8058a9483986c043f263cfe992a37779032caf0374b698ed34abe9b905f"
+    },
+    "integration-4.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "dba6999478f0be11c00ffa0ec5e0418b6375b7b7837c6ed2ef4ce5105f01806b",
+      "sha256": "354573cd8c0d41546697a4d3c9181d6f446e8d7ca76d316976610bc8f7606c95"
+    },
+    "martensite-independent-adaptive-compile-attempt.log.gz": {
+      "kind": "retained-attempt",
+      "raw_sha256": "76b80c14368a23ffbe055e119a47e837d06799e03cc49b3cdfb4973575c3931f",
+      "sha256": "3b0f9d49aff648cc5a51dea6197faecbff80dc3f3bc8934b91d5337910510166"
+    },
+    "martensite-independent-clippy.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "765f95e2159a2851dfa8304bad73af1d830596b240e12c17d8dc6459519e0c13",
+      "sha256": "cbe375dcfd0a3be837194e329be966859433b10c380cdf6f16a3c31540f02f25"
+    },
+    "martensite-independent-elclib-compile-attempt.log.gz": {
+      "kind": "retained-attempt",
+      "raw_sha256": "83e076d56fa80ed97e12efd4d85d37d88c5a4be9fe72f160197ccc053655f35d",
+      "sha256": "1a54fe0330a273cdc943a61ead32acc0192656cfbcd26255d08cd1d273f21484"
+    },
+    "martensite-independent-elclib-index-type-attempt.log.gz": {
+      "kind": "retained-attempt",
+      "raw_sha256": "eea26721ec5b318c8f93094cb6645acca391be6b13e449efc3a187458c43b8c7",
+      "sha256": "217e8418789a9e960a073ffa6dc21a902cfc277f954ffc46b549d3554f5e528f"
+    },
+    "martensite-independent-elclib-ordinal-type-attempt.log.gz": {
+      "kind": "retained-attempt",
+      "raw_sha256": "7319961b6f7b803e90e5bd2a86154830b32291333945d4dcf5102f9b4faab970",
+      "sha256": "2616b0d1a4790c3cad5dd47478429547146296978d1a1e708c06f2ca489141b0"
+    },
+    "martensite-independent-integration-compile-attempt.log.gz": {
+      "kind": "retained-attempt",
+      "raw_sha256": "76b80c14368a23ffbe055e119a47e837d06799e03cc49b3cdfb4973575c3931f",
+      "sha256": "3b0f9d49aff648cc5a51dea6197faecbff80dc3f3bc8934b91d5337910510166"
+    },
+    "martensite-independent-newton-compile-attempt.log.gz": {
+      "kind": "retained-attempt",
+      "raw_sha256": "76b80c14368a23ffbe055e119a47e837d06799e03cc49b3cdfb4973575c3931f",
+      "sha256": "3b0f9d49aff648cc5a51dea6197faecbff80dc3f3bc8934b91d5337910510166"
+    },
+    "martensite-independent-references-first.log.gz": {
+      "kind": "retained-attempt",
+      "raw_sha256": "e9cef8e51335543fbabc53c6d42d145421fe630735815df7096a1451d6ae6508",
+      "sha256": "e36bf8b9c0feac66255e8a7bac3c96662bc9f0939e5af7ddb88b72e21a689f90"
+    },
+    "martensite-independent-references-planar-1.log.gz": {
+      "kind": "retained-attempt",
+      "raw_sha256": "7b6d288813ec0a06f33bf9de6ef501e30dbf97c47bf166ee5efb31fe83180bcc",
+      "sha256": "148df54301bceadc4d488721ec6898df96674ab1f3fed918d25ad17a9e78b7c1"
+    },
+    "martensite-independent-references-proof-tests.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "b162d53f56de4813fdbc9620c41df8acccfe9485db96fa22791a608cef2315a5",
+      "sha256": "062f0ea8331ba731c7d442e760cbba5e9017e21b6feac87904c38766abf70cc7"
+    },
+    "newton-1.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "2c8d99250d85ce163b6bf7881a693a4b175ec49ba21f46e59973acdc0e7f18a3",
+      "sha256": "f6db69d53fa480539ebc9b532f470e6183a2b47365b06a7f72503e01299fdd1d"
+    },
+    "newton-4.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "ee36e95b259428adc41d8b838b8c363da5a533e21e1dc0ac1e6104d170126d08",
+      "sha256": "29fe140422695eaa511971ac5ac2fc3f1b5584ac9760fc50bd7e9b56fca25e03"
+    },
+    "planar-1.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "6dc58fa5019f218970656427842c246d700be4ccc6012757e58580508597c760",
+      "sha256": "e7489e635f4749f443a57f77c1de19415efd53e2b609a5ac5cf7afc80874d3a5"
+    },
+    "planar-4.log.gz": {
+      "kind": "final-source",
+      "raw_sha256": "eba7a7fc85f8c70a0d61e7ee7109def12fc31bb5d1847eeb71f45fa184de36d2",
+      "sha256": "1c6b19cff114aaf341e0b78c84ac34f8e5e9b2b169c0bc17eb47d7b160928ba4"
+    }
+  },
+  "mpfr_environment_sha256": "0d016de3c9fbe030cefc62363eebb78e7ebe9cc03f6b8fb5e6964b468f63aa08",
+  "preservation_sha256": "2bad17cdb9c4b07256fcaa79b1d51dcbf1e36f64942d9f6f02c55cec89f9b8d0",
+  "scope": "96 selected tests per final worker count; no whole-workspace, cross-platform, or unrelated expected-fixture approval",
+  "source_sha256": {
+    "crates/martensite-tkg2d/tests/analytic_curve_closed_forms.rs": "bac00504fa517dfbea5d24bf53af0d8ad864e4c224ed545fb3c8f4d92da13487",
+    "crates/martensite-tkg2d/tests/support/analytic_reference_checks.rs": "03895ed830389eac80abe6d04652e28a06163f2bb94157e497954c6815005b43",
+    "crates/martensite-tkg2d/tests/support/analytic_reference_words.rs": "a8aff2d81b64ec11332bc9f2122ccef6e03e963bbb23b2e6db46c781ee55f167",
+    "crates/martensite-tkmath/tests/elclib.rs": "79d784ebb73cd5b0ae98418b002a4965ebdc7fab5d56d22c45b260e119415182",
+    "crates/martensite-tkmath/tests/math_integration.rs": "a5473c4aced7f6bcaecfcfd0095c2414397dda412066feae54fa61254f39248d",
+    "crates/martensite-tkmath/tests/mathinteg/tests_6.rs": "3887495cbc1f6f2da5f72d6919365e6034840fcec70ca6ccfb3c011f53ee83c1",
+    "crates/martensite-tkmath/tests/mathsys_newton_behavior.rs": "7e13ca31ac969c5db185936bf82d7753e40450777ce63966906e9bb88980db91",
+    "crates/martensite-tkmath/tests/support/elementary_reference_checks.rs": "9a458d6ec519a126818405f209bbc96fe39999b83456be5d68225fd77501c6dc",
+    "crates/martensite-tkmath/tests/support/elementary_reference_words.rs": "406770b6f1a891c9cf043a0db8e9cb6d21b503c12a5976d913a17fe08153f6f2"
+  },
+  "terminal_executable_qualification": "Captured after final gates; raw logs bind the same two executable paths. No claim of independently recorded before/after binary bookends.",
+  "terminal_executables": {
+    "/tmp/martensite-independent-references-201-target/debug/deps/toolkit-7d49ae6f130025a8": {
+      "ldd": "\tlinux-vdso.so.1 (0x00007e1812078000)\n\t/usr/local/lib/AppProtection/libAppProtection.so (0x00007e180f800000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007e1812026000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007e180f400000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007e181207a000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007e1812021000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007e181201c000)\n\tlibX11.so.6 => /lib/x86_64-linux-gnu/libX11.so.6 (0x00007e180fac2000)\n\tlibxcb.so.1 => /lib/x86_64-linux-gnu/libxcb.so.1 (0x00007e1811ff1000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007e180f000000)\n\tlibXi.so.6 => /lib/x86_64-linux-gnu/libXi.so.6 (0x00007e1811fde000)\n\tlibXau.so.6 => /lib/x86_64-linux-gnu/libXau.so.6 (0x00007e1811fd8000)\n\tlibXdmcp.so.6 => /lib/x86_64-linux-gnu/libXdmcp.so.6 (0x00007e1811fce000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007e180f717000)\n\tlibXext.so.6 => /lib/x86_64-linux-gnu/libXext.so.6 (0x00007e1811fba000)\n\tlibbsd.so.0 => /lib/x86_64-linux-gnu/libbsd.so.0 (0x00007e180faac000)\n\tlibmd.so.0 => /lib/x86_64-linux-gnu/libmd.so.0 (0x00007e1811fab000)\n",
+      "sha256": "60b7da514500f40f1b4e000809eebb0dd820669b618b9897b94c0812ec37d7b3"
+    },
+    "/tmp/martensite-independent-references-201-target/debug/deps/toolkit-ddd132189a65b327": {
+      "ldd": "\tlinux-vdso.so.1 (0x000071f482a01000)\n\t/usr/local/lib/AppProtection/libAppProtection.so (0x000071f482000000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x000071f4829af000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x000071f482317000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000071f481c00000)\n\t/lib64/ld-linux-x86-64.so.2 (0x000071f482a03000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x000071f4829aa000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x000071f4829a3000)\n\tlibX11.so.6 => /lib/x86_64-linux-gnu/libX11.so.6 (0x000071f481ec2000)\n\tlibxcb.so.1 => /lib/x86_64-linux-gnu/libxcb.so.1 (0x000071f48297a000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x000071f481800000)\n\tlibXi.so.6 => /lib/x86_64-linux-gnu/libXi.so.6 (0x000071f482967000)\n\tlibXau.so.6 => /lib/x86_64-linux-gnu/libXau.so.6 (0x000071f482311000)\n\tlibXdmcp.so.6 => /lib/x86_64-linux-gnu/libXdmcp.so.6 (0x000071f482309000)\n\tlibXext.so.6 => /lib/x86_64-linux-gnu/libXext.so.6 (0x000071f4822f5000)\n\tlibbsd.so.0 => /lib/x86_64-linux-gnu/libbsd.so.0 (0x000071f4822df000)\n\tlibmd.so.0 => /lib/x86_64-linux-gnu/libmd.so.0 (0x000071f4822d0000)\n",
+      "sha256": "397eb5d4e742a225fd9ba231dcaf9dfd783db802034b499b3453f943dab80aa0"
+    }
+  }
+}

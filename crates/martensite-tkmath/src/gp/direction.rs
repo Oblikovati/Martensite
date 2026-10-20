@@ -36,7 +36,7 @@ impl Direction3 {
         }
         let magnitude = squared.sqrt();
         Ok(Self {
-            coordinates: coordinates.map(|value| value / magnitude),
+            coordinates: coordinates.map(|value| martensite_cmath::quotient(value, magnitude)),
         })
     }
     /// Normalizes without a zero-norm check for elementary-surface evaluation.
@@ -48,7 +48,7 @@ impl Direction3 {
         }
         let magnitude = squared.sqrt();
         Self {
-            coordinates: coordinates.map(|value| value / magnitude),
+            coordinates: coordinates.map(|value| martensite_cmath::quotient(value, magnitude)),
         }
     }
     /// Borrows normalized coordinates; `direction.coordinates()`.
@@ -61,14 +61,14 @@ impl Direction3 {
     pub fn angle(&self, other: &Self) -> f64 {
         let cosine = dot(self.coordinates, other.coordinates);
         if cosine > -0.70710678118655 && cosine < 0.70710678118655 {
-            return cosine.acos();
+            return martensite_cmath::acos(cosine);
         }
         let normal = cross(self.coordinates, other.coordinates);
         let sine = dot(normal, normal).sqrt();
         if cosine < 0.0 {
-            std::f64::consts::PI - sine.asin()
+            std::f64::consts::PI - martensite_cmath::asin(sine)
         } else {
-            sine.asin()
+            martensite_cmath::asin(sine)
         }
     }
     /// Compares angular distance with a tolerance; `direction.is_equal(&other,1e-12)`.

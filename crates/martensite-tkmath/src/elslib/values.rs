@@ -11,29 +11,44 @@ pub fn plane_value(u: f64, v: f64, position: Axis3) -> Point3 {
 /// `cone_value(0.5,1.0,frame,2.0,0.3)`.
 pub fn cone_value(u: f64, v: f64, position: Axis3, radius: f64, semi_angle: f64) -> Point3 {
     let frame = Frame::of(position);
-    let ring = radius + v * semi_angle.sin();
-    let height = v * semi_angle.cos();
-    frame.point(frame.triple(ring * u.cos(), ring * u.sin(), height))
+    let ring = radius + v * martensite_cmath::sin(semi_angle);
+    let height = v * martensite_cmath::cos(semi_angle);
+    frame.point(frame.triple(
+        ring * martensite_cmath::cos(u),
+        ring * martensite_cmath::sin(u),
+        height,
+    ))
 }
 /// Cylinder point `R·cos(u)·X + R·sin(u)·Y + v·Z + origin`; `cylinder_value(0.5,1.0,frame,2.0)`.
 pub fn cylinder_value(u: f64, v: f64, position: Axis3, radius: f64) -> Point3 {
     let frame = Frame::of(position);
-    frame.point(frame.triple(radius * u.cos(), radius * u.sin(), v))
+    frame.point(frame.triple(
+        radius * martensite_cmath::cos(u),
+        radius * martensite_cmath::sin(u),
+        v,
+    ))
 }
 /// Sphere point with longitude `u` and latitude `v`; `sphere_value(0.5,0.2,frame,2.0)`.
 pub fn sphere_value(u: f64, v: f64, position: Axis3, radius: f64) -> Point3 {
     let frame = Frame::of(position);
-    let ring = radius * v.cos();
-    let height = radius * v.sin();
-    frame.point(frame.triple(ring * u.cos(), ring * u.sin(), height))
+    let ring = radius * martensite_cmath::cos(v);
+    let height = radius * martensite_cmath::sin(v);
+    frame.point(frame.triple(
+        ring * martensite_cmath::cos(u),
+        ring * martensite_cmath::sin(u),
+        height,
+    ))
 }
 /// Torus point with terms within `10·(r+R)·ε` flushed to zero; `torus_value(0.5,0.2,frame,5.0,1.0)`.
 pub fn torus_value(u: f64, v: f64, position: Axis3, major: f64, minor: f64) -> Point3 {
     let frame = Frame::of(position);
-    let ring = major + minor * v.cos();
-    let height = minor * v.sin();
+    let ring = major + minor * martensite_cmath::cos(v);
+    let height = minor * martensite_cmath::sin(v);
     let tolerance = torus_tolerance(major, minor);
-    let (a1, a2) = (ring * u.cos(), ring * u.sin());
+    let (a1, a2) = (
+        ring * martensite_cmath::cos(u),
+        ring * martensite_cmath::sin(u),
+    );
     frame.point(frame.triple(
         flush(a1, tolerance),
         flush(a2, tolerance),

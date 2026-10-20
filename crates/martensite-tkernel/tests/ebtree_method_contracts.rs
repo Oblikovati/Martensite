@@ -24,7 +24,7 @@ impl BoundingVolume for Bounds {
         self.high < other.low || other.high < self.low
     }
     fn square_extent(&self) -> f64 {
-        (self.high - self.low).powi(2)
+        martensite_cmath::powi(self.high - self.low, 2)
     }
 }
 #[derive(Debug, Default)]

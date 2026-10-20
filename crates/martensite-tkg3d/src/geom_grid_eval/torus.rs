@@ -124,14 +124,14 @@ impl QuadricTerms for TorusData {
         &self.frame
     }
     fn d0(&self, ctx: &UContext, v: f64) -> Point3 {
-        self.point(ctx, v.cos(), v.sin())
+        self.point(ctx, martensite_cmath::cos(v), martensite_cmath::sin(v))
     }
     fn d1(&self, ctx: &UContext, v: f64) -> GeomGridEvalSurfD1 {
-        self.first(ctx, v.cos(), v.sin())
+        self.first(ctx, martensite_cmath::cos(v), martensite_cmath::sin(v))
     }
     // D2U = -K * DirU, D2V = -r*cosV*DirU - r*sinV*Z, D2UV = -r*sinV*dDirU.
     fn d2(&self, ctx: &UContext, v: f64) -> GeomGridEvalSurfD2 {
-        let (cos_v, sin_v) = (v.cos(), v.sin());
+        let (cos_v, sin_v) = (martensite_cmath::cos(v), martensite_cmath::sin(v));
         let first: GeomGridEvalSurfD1 = self.first(ctx, cos_v, sin_v);
         let (r, z) = (self.minor, self.frame.z);
         let k: f64 = self.major + r * cos_v;
@@ -145,12 +145,12 @@ impl QuadricTerms for TorusData {
         }
     }
     fn d3(&self, ctx: &UContext, v: f64) -> GeomGridEvalSurfD3 {
-        self.third(ctx, v.cos(), v.sin())
+        self.third(ctx, martensite_cmath::cos(v), martensite_cmath::sin(v))
     }
     // nv == 0: K(v) * d^nu(DirU); nu == 0: dK * DirU + r * d^nv(sin) * Z; mixed:
     // r * d^nv(cos) * d^nu(DirU).
     fn dn(&self, ctx: &UContext, v: f64, nu: i32, nv: i32) -> Vector3 {
-        let (cos_v, sin_v) = (v.cos(), v.sin());
+        let (cos_v, sin_v) = (martensite_cmath::cos(v), martensite_cmath::sin(v));
         let dir: [f64; 3] = ctx.dir_derivative(nu);
         let (d_cos, d_sin) = v_phase(nv, cos_v, sin_v);
         let r: f64 = self.minor;

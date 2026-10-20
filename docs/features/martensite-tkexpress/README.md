@@ -43,7 +43,9 @@ unchanged. Build a new system to select a subset of relations.
 Run `cargo test -p martensite-tkexpress`. The tests cover expression construction,
 differentiation, simplification, interpreter boundaries and state isolation.
 
-The frozen behavior-version-1 corpus retains 7,340 request/result pairs: 3,318
+The frozen corpus (numerical behavior version 2, with correctly rounded
+elementary functions, [#201](../portable-transcendentals/attribution/README.md))
+retains 7,340 request/result pairs: 3,318
 text sequences, 2,200 unary cases, 1,800 binary cases, 13 relation cases and nine
 direct API scenarios. It includes 3,000 invalid-token requests with seed 20261008.
 Replay runs in process using compiled fixtures. Finite values, infinity, signed

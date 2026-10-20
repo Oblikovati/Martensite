@@ -22,7 +22,7 @@ pub struct Geom2dGridEvalHyperbola {
 struct HyperbolaTerms(RadiiFrame);
 impl ConicTerms for HyperbolaTerms {
     fn pair(u: f64) -> (f64, f64) {
-        (u.cosh(), u.sinh())
+        (martensite_cmath::cosh(u), martensite_cmath::sinh(u))
     }
     fn point(&self, cosh_u: f64, sinh_u: f64) -> Point2 {
         self.0.point(cosh_u, sinh_u)
@@ -85,7 +85,7 @@ impl Geom2dGridEvalHyperbola {
         };
         let is_odd: bool = n % 2 == 1;
         Ok(map_grid(params, |u| {
-            let (c, s) = (u.cosh(), u.sinh());
+            let (c, s) = (martensite_cmath::cosh(u), martensite_cmath::sinh(u));
             if is_odd {
                 odd(&e.0, c, s)
             } else {

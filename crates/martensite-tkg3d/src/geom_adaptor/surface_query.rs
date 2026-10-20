@@ -18,7 +18,7 @@ use std::f64::consts::PI;
 // The last step of both resolutions: the angle subtended by a chord of 2 * Res.
 fn angle_of(res: f64) -> f64 {
     if res <= 1. {
-        return 2. * res.asin();
+        return 2. * martensite_cmath::asin(res);
     }
     2. * PI
 }

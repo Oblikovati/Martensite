@@ -162,8 +162,8 @@ fn curve_hyperbola_finite_arc() {
     let [aXmin, aXmax, aYmin, aYmax, _aZmin, _aZmax] = get3(&aBox);
 
     // Hyperbola: x = aMajR * cosh(t), y = aMinR * sinh(t)
-    let aXEnd = aMajR * f64::cosh(aU);
-    let aYEnd = aMinR * f64::sinh(aU);
+    let aXEnd = aMajR * martensite_cmath::cosh(aU);
+    let aYEnd = aMinR * martensite_cmath::sinh(aU);
 
     // Box should contain the vertex (aMajR, 0) and endpoints
     assert!(aXmin <= aMajR + precision::confusion());

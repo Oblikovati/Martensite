@@ -265,7 +265,7 @@ fn degenerate_torus_patch(
         p.z() - ri,
         p.z() + ri,
     ];
-    let phi: f64 = (-ra / ri).acos();
+    let phi: f64 = martensite_cmath::acos(-ra / ri);
     let u_period: f64 = 2.0 * PI - precision::p_confusion();
     let v_period: f64 = 2.0 * phi - precision::p_confusion();
     if patch.u_max - patch.u_min >= u_period && patch.v_max - patch.v_min >= v_period {

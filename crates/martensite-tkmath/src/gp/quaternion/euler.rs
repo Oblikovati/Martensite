@@ -47,8 +47,16 @@ fn input_angles(parameters: Parameters, mut angles: [f64; 3]) -> [f64; 3] {
 }
 fn half_products(a: f64, b: f64, c: f64) -> [f64; 6] {
     let (ti, tj, th) = (0.5 * a, 0.5 * b, 0.5 * c);
-    let (ci, cj, ch) = (ti.cos(), tj.cos(), th.cos());
-    let (si, sj, sh) = (ti.sin(), tj.sin(), th.sin());
+    let (ci, cj, ch) = (
+        martensite_cmath::cos(ti),
+        martensite_cmath::cos(tj),
+        martensite_cmath::cos(th),
+    );
+    let (si, sj, sh) = (
+        martensite_cmath::sin(ti),
+        martensite_cmath::sin(tj),
+        martensite_cmath::sin(th),
+    );
     [cj, sj, ci * ch, ci * sh, si * ch, si * sh]
 }
 fn euler_components(p: Parameters, products: [f64; 6]) -> [f64; 4] {
@@ -70,18 +78,26 @@ fn euler_components(p: Parameters, products: [f64; 6]) -> [f64; 4] {
 fn proper_angles(m: [[f64; 3]; 3], p: Parameters) -> [f64; 3] {
     let (i, j, k) = (p.i, p.j, p.k);
     let sy = (m[i][j] * m[i][j] + m[i][k] * m[i][k]).sqrt();
-    let beta = sy.atan2(m[i][i]);
+    let beta = martensite_cmath::atan2(sy, m[i][i]);
     if sy > 16.0 * f64::EPSILON {
-        return [m[i][j].atan2(m[i][k]), beta, m[j][i].atan2(-m[k][i])];
+        return [
+            martensite_cmath::atan2(m[i][j], m[i][k]),
+            beta,
+            martensite_cmath::atan2(m[j][i], -m[k][i]),
+        ];
     }
-    [(-m[j][k]).atan2(m[j][j]), beta, 0.0]
+    [martensite_cmath::atan2(-m[j][k], m[j][j]), beta, 0.0]
 }
 fn tait_bryan_angles(m: [[f64; 3]; 3], p: Parameters) -> [f64; 3] {
     let (i, j, k) = (p.i, p.j, p.k);
     let cy = (m[i][i] * m[i][i] + m[j][i] * m[j][i]).sqrt();
-    let beta = (-m[k][i]).atan2(cy);
+    let beta = martensite_cmath::atan2(-m[k][i], cy);
     if cy > 16.0 * f64::EPSILON {
-        return [m[k][j].atan2(m[k][k]), beta, m[j][i].atan2(m[i][i])];
+        return [
+            martensite_cmath::atan2(m[k][j], m[k][k]),
+            beta,
+            martensite_cmath::atan2(m[j][i], m[i][i]),
+        ];
     }
-    [(-m[j][k]).atan2(m[j][j]), beta, 0.0]
+    [martensite_cmath::atan2(-m[j][k], m[j][j]), beta, 0.0]
 }

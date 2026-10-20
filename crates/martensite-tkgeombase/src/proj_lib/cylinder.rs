@@ -133,7 +133,7 @@ fn eval_pnt2d(point: Point3, cylinder: &Cylinder3) -> Point2 {
     let z: f64 = op.dot(Vector3::from(position.direction()));
     let pconf: f64 = precision::p_confusion();
     let u: f64 = if x.abs() > pconf || y.abs() > pconf {
-        y.atan2(x)
+        martensite_cmath::atan2(y, x)
     } else {
         0.
     };

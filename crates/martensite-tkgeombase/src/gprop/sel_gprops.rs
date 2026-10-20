@@ -50,7 +50,12 @@ pub(super) fn local_point(origin: Point3, frame: Frame, [ix, iy, iz]: [f64; 3]) 
 
 // The four angle functions of [angle1, angle2]: (sin a2, sin a1, cos a2, cos a1).
 fn trig(angle1: f64, angle2: f64) -> (f64, f64, f64, f64) {
-    (angle2.sin(), angle1.sin(), angle2.cos(), angle1.cos())
+    (
+        martensite_cmath::sin(angle2),
+        martensite_cmath::sin(angle1),
+        martensite_cmath::cos(angle2),
+        martensite_cmath::cos(angle1),
+    )
 }
 
 macro_rules! sel_constructor {
@@ -154,7 +159,7 @@ impl SelGProps {
     ) -> Result<(), Failure> {
         let frame: Frame = placement_frame(surface.position());
         let t: f64 = surface.semi_angle();
-        let (cnt, snt): (f64, f64) = (t.cos(), t.sin());
+        let (cnt, snt): (f64, f64) = (martensite_cmath::cos(t), martensite_cmath::sin(t));
         let r: f64 = surface.ref_radius();
         let (sn2, sn1, cn2, cn1) = trig(alpha1, alpha2);
         let auxi1: f64 = r + (z2 + z1) * snt / 2.0;

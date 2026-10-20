@@ -114,12 +114,12 @@ fn grid_search(
     let u: &Matrix<'_> = factors.u.as_ref().unwrap();
     let s: &Vector<'_> = factors.singular_values.as_ref().unwrap();
     let (projection, orthogonal) = normalized_projection(u, b)?;
-    let log_min: f64 = minimum.log10();
-    let log_step: f64 = (maximum.log10() - log_min) / (points - 1) as f64;
+    let log_min: f64 = martensite_cmath::log10(minimum);
+    let log_step: f64 = (martensite_cmath::log10(maximum) - log_min) / (points - 1) as f64;
     let mut best_score: f64 = f64::INFINITY;
     let mut best_lambda: Option<f64> = None;
     for k in 0..points {
-        let lambda: f64 = 10.0_f64.powf(log_min + k as f64 * log_step);
+        let lambda: f64 = martensite_cmath::pow(10.0_f64, log_min + k as f64 * log_step);
         let score: f64 = gcv_score(s, &projection, orthogonal, u.row_number(), lambda);
         if score.is_finite() && score < best_score {
             best_score = score;

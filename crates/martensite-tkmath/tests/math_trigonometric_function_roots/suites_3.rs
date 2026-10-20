@@ -28,7 +28,7 @@ fn math_trigonometric_function_roots_quadratic_terms() {
 
     if solver.solutions().unwrap() >= 1 {
         let x1: f64 = solver.value(1).unwrap();
-        let cos_squared: f64 = x1.cos() * x1.cos();
+        let cos_squared: f64 = martensite_cmath::cos(x1) * martensite_cmath::cos(x1);
         assert_near(cos_squared, 0.5, TOLERANCE);
     }
 }
@@ -50,7 +50,7 @@ fn math_trigonometric_function_roots_mixed_terms() {
 
     if solver.solutions().unwrap() >= 1 {
         let x1: f64 = solver.value(1).unwrap();
-        let result: f64 = x1.cos() + x1.sin();
+        let result: f64 = martensite_cmath::cos(x1) + martensite_cmath::sin(x1);
         assert_near(result, 2.0_f64.sqrt(), TOLERANCE);
     }
 }

@@ -8,8 +8,8 @@ fn math_root_trig_cde_no_solution() {
 #[test]
 fn math_root_trig_cde_tangent_root_at_lower_bound() {
     let aLower: f64 = -0.989;
-    let aC: f64 = (aLower).cos();
-    let aD: f64 = (aLower).sin();
+    let aC: f64 = martensite_cmath::cos(aLower);
+    let aD: f64 = martensite_cmath::sin(aLower);
     let aResult: TrigResult = trigonometric_cde(aC, aD, -1.0, aLower, aLower + 0.1);
 
     assert_eq!(aResult.status, Status::Ok);

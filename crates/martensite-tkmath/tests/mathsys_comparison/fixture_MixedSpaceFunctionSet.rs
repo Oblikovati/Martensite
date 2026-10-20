@@ -11,8 +11,8 @@ impl FunctionSet for MixedSpaceFunctionSet {
         let aY: f64 = *theX.at(1).unwrap();
         let aZ: f64 = *theX.at(2).unwrap();
         *theF.change_at(0).unwrap() = aX * aX + aY + aZ - 2.5;
-        *theF.change_at(1).unwrap() = (aX).sin() + aY * aY - aZ - 1.0;
-        *theF.change_at(2).unwrap() = (aZ).exp() + aX * aY - 2.8;
+        *theF.change_at(1).unwrap() = martensite_cmath::sin(aX) + aY * aY - aZ - 1.0;
+        *theF.change_at(2).unwrap() = martensite_cmath::exp(aZ) + aX * aY - 2.8;
         true
     }
 }
@@ -24,12 +24,12 @@ impl FunctionSetWithDerivatives for MixedSpaceFunctionSet {
         *theD.change_at(0, 0).unwrap() = 2.0 * aX;
         *theD.change_at(0, 1).unwrap() = 1.0;
         *theD.change_at(0, 2).unwrap() = 1.0;
-        *theD.change_at(1, 0).unwrap() = (aX).cos();
+        *theD.change_at(1, 0).unwrap() = martensite_cmath::cos(aX);
         *theD.change_at(1, 1).unwrap() = 2.0 * aY;
         *theD.change_at(1, 2).unwrap() = -1.0;
         *theD.change_at(2, 0).unwrap() = aY;
         *theD.change_at(2, 1).unwrap() = aX;
-        *theD.change_at(2, 2).unwrap() = (aZ).exp();
+        *theD.change_at(2, 2).unwrap() = martensite_cmath::exp(aZ);
         true
     }
     fn values(&mut self, theX: &Vector<'_>, theF: &mut Vector<'_>, theD: &mut Matrix<'_>) -> bool {

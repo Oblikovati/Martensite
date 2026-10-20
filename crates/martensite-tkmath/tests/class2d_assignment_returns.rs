@@ -8,8 +8,8 @@ fn classifier() -> Class2d {
     for index in 0..32 {
         let angle = std::f64::consts::TAU * f64::from(index) / 32.0;
         points.append(Point2::new(
-            0.5 + angle.cos() * 0.4,
-            0.5 + angle.sin() * 0.4,
+            0.5 + martensite_cmath::cos(angle) * 0.4,
+            0.5 + martensite_cmath::sin(angle) * 0.4,
         ));
     }
     Class2d::from_dynamic_array(&points, 1e-10, 1e-10, 0.0, 0.0, 1.0, 1.0)

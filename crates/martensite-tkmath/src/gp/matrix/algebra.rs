@@ -92,8 +92,8 @@ fn binary_power(mut base: Matrix3, mut exponent: u32) -> Matrix3 {
 }
 fn rotation_coefficients(vector: Xyz, angle: f64) -> [[f64; 3]; 3] {
     let [a, b, c] = *vector.coordinates();
-    let cosine = angle.cos();
-    let sine = angle.sin();
+    let cosine = martensite_cmath::cos(angle);
+    let sine = martensite_cmath::sin(angle);
     let complement = 1.0 - cosine;
     let (aa, bb, cc, ab, ac, bc) = (a * a, b * b, c * c, a * b, a * c, b * c);
     [

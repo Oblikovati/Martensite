@@ -204,9 +204,9 @@ impl GeneralTransform3 {
             )));
         }
         let root = if determinant > 0.0 {
-            determinant.powf(1.0 / 3.0)
+            martensite_cmath::pow(determinant, 1.0 / 3.0)
         } else {
-            -(-determinant).powf(1.0 / 3.0)
+            -martensite_cmath::pow(-determinant, 1.0 / 3.0)
         };
         let normalized = self.matrix.divided(root)?;
         let mut identity = Matrix3::default();

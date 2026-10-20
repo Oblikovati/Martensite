@@ -19,7 +19,11 @@ fn math_root_comparison_newton_exp_minus_three() {
         aNewResult.root.unwrap(),
         THE_TOLERANCE,
     );
-    near(aNewResult.root.unwrap(), (3.0_f64).ln(), THE_TOLERANCE);
+    near(
+        aNewResult.root.unwrap(),
+        martensite_cmath::log(3.0_f64),
+        THE_TOLERANCE,
+    );
 }
 
 #[test]

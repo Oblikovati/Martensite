@@ -110,13 +110,13 @@ fn factors(icurve: i32, iordre: i32, pieces: &Pieces<'_, '_>) -> Result<Factors,
         if divizor.abs() < toler {
             return 0.0;
         }
-        (dividend / divizor).powf(order)
+        martensite_cmath::pow(dividend / divizor, order)
     };
     Ok(Factors {
         facteur1: scaled(f1_dividend, f1_divizor),
         facteur2: scaled(f2_dividend, f2_divizor),
-        normal1: f1_divizor.powf(order),
-        normal2: f2_divizor.powf(order),
+        normal1: martensite_cmath::pow(f1_divizor, order),
+        normal2: martensite_cmath::pow(f2_divizor, order),
     })
 }
 

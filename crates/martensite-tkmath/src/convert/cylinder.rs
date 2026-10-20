@@ -36,8 +36,14 @@ fn cone_generatrix(cone: &Cone3, v1: f64, v2: f64) -> Generatrix {
     let (radius, angle) = (cone.ref_radius(), cone.semi_angle());
     Generatrix {
         ends: [
-            (radius + v1 * angle.sin(), v1 * angle.cos()),
-            (radius + v2 * angle.sin(), v2 * angle.cos()),
+            (
+                radius + v1 * martensite_cmath::sin(angle),
+                v1 * martensite_cmath::cos(angle),
+            ),
+            (
+                radius + v2 * martensite_cmath::sin(angle),
+                v2 * martensite_cmath::cos(angle),
+            ),
         ],
         position: cone.position(),
         class: "Convert_ConeToBSplineSurface",
@@ -126,7 +132,7 @@ fn ruled_patch(
         alfa_u,
     )?;
     result.set_generatrix_knots(v1, v2);
-    result.weigh_and_place(generatrix.position, (alfa_u.cos(), 1.))?;
+    result.weigh_and_place(generatrix.position, (martensite_cmath::cos(alfa_u), 1.))?;
     result.finalize()?;
     Ok(result)
 }

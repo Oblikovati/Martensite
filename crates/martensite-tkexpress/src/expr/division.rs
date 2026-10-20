@@ -38,7 +38,9 @@ impl ExprGeneralExpression for ExprDivision {
         match (value_of(&first), value_of(&second)) {
             // `0/b` is 0 whatever b is, even 0 or NaN.
             (Some(0.0), _) => Ok(ExprNumericValue::expression(0.0)),
-            (Some(a), Some(b)) => Ok(ExprNumericValue::expression(a / b)),
+            (Some(a), Some(b)) => Ok(ExprNumericValue::expression(martensite_cmath::quotient(
+                a, b,
+            ))),
             (None, Some(1.0)) => Ok(first),
             _ => {
                 deref(&second, "Expr_Division::ShallowSimplified")?;
@@ -87,7 +89,8 @@ impl ExprGeneralExpression for ExprDivision {
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let (first, second) = evaluate_operands(self, vars, vals)?;
-        Ok(first / second)
+        // 0/0 and inf/inf get one NaN word on every target, not the hardware default NaN.
+        Ok(martensite_cmath::quotient(first, second))
     }
     fn string(&self) -> Result<AsciiString, Failure> {
         infix_text(&[self.first_operand(), self.second_operand()], "/")

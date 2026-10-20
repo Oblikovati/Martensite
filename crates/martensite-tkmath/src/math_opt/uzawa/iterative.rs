@@ -55,7 +55,7 @@ fn step_size(problem: &Problem<'_, '_, '_>) -> Result<f64, Status> {
     let mut norm: f64 = 0.0;
     for row in 0..problem.rows {
         for col in 0..problem.cols {
-            norm = norm.hypot(problem.c(row, col));
+            norm = martensite_cmath::hypot(norm, problem.c(row, col));
         }
     }
     if !norm.is_finite() || norm <= f64::MIN_POSITIVE.sqrt() {

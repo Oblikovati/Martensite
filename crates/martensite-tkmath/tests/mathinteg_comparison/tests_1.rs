@@ -46,7 +46,11 @@ fn math_integ_comparison_gauss_log_integrand() {
         aNewResult.value.unwrap(),
         THE_TOLERANCE,
     );
-    near(aNewResult.value.unwrap(), (2.0_f64).ln(), THE_TOLERANCE);
+    near(
+        aNewResult.value.unwrap(),
+        martensite_cmath::log(2.0_f64),
+        THE_TOLERANCE,
+    );
 }
 
 #[test]

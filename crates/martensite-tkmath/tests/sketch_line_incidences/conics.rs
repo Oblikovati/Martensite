@@ -191,7 +191,7 @@ fn rotated_ellipse_meets_its_major_axis_at_the_major_radius() {
     let contacts = ordered(&report);
     assert_eq!(contacts.len(), 2);
     for contact in contacts {
-        let radius = contact.point()[0].hypot(contact.point()[1]);
+        let radius = martensite_cmath::hypot(contact.point()[0], contact.point()[1]);
         let slack = contact.achieved_world_error() + 4. * f64::EPSILON;
         assert!((radius - 2.).abs() <= slack, "{contact:?}");
         assert_eq!(

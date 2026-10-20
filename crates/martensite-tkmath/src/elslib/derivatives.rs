@@ -39,9 +39,9 @@ pub fn cone_dn(
 ) -> Vector3 {
     let frame = Frame::of(position);
     let turned = u + f64::from(nu) * std::f64::consts::FRAC_PI_2;
-    let radial = frame.x * turned.cos() + frame.y * turned.sin();
+    let radial = frame.x * martensite_cmath::cos(turned) + frame.y * martensite_cmath::sin(turned);
     if nv == 0 {
-        let scaled = radial * (radius + v * semi_angle.sin());
+        let scaled = radial * (radius + v * martensite_cmath::sin(semi_angle));
         return vector(if nu == 0 {
             scaled + frame.origin
         } else {
@@ -49,8 +49,8 @@ pub fn cone_dn(
         });
     }
     if nv == 1 {
-        let scaled = radial * semi_angle.sin();
-        let axial = frame.z * semi_angle.cos();
+        let scaled = radial * martensite_cmath::sin(semi_angle);
+        let axial = frame.z * martensite_cmath::cos(semi_angle);
         return vector(if nu == 0 { scaled + axial } else { scaled });
     }
     zero()
@@ -62,7 +62,10 @@ pub fn cylinder_dn(u: f64, _v: f64, position: Axis3, radius: f64, nu: i32, nv: i
         return Vector3::default();
     }
     if nv == 0 {
-        let (cosine, sine) = (radius * u.cos(), radius * u.sin());
+        let (cosine, sine) = (
+            radius * martensite_cmath::cos(u),
+            radius * martensite_cmath::sin(u),
+        );
         let (a, b) = if quarter(nu, 6) {
             (-cosine, -sine)
         } else if quarter(nu, 5) {
@@ -87,10 +90,14 @@ pub fn sphere_dn(u: f64, v: f64, position: Axis3, radius: f64, nu: i32, nv: i32)
     if invalid_order(nu, nv) {
         return Vector3::default();
     }
-    let (cos_u, sin_u, ring) = (u.cos(), u.sin(), radius * v.cos());
+    let (cos_u, sin_u, ring) = (
+        martensite_cmath::cos(u),
+        martensite_cmath::sin(u),
+        radius * martensite_cmath::cos(v),
+    );
     let frame = Frame::of(position);
     if nu == 0 {
-        let height = radius * v.sin();
+        let height = radius * martensite_cmath::sin(v);
         let local = if is_odd(nv) {
             frame.triple(-height * cos_u, -height * sin_u, ring)
         } else {
@@ -106,7 +113,13 @@ pub fn sphere_dn(u: f64, v: f64, position: Axis3, radius: f64, nu: i32, nv: i32)
         };
         return negated_unless(local, !(quarter(nu, 2) || quarter(nu, 1)));
     }
-    sphere_mixed(frame, (cos_u, sin_u), (ring, radius * v.sin()), nu, nv)
+    sphere_mixed(
+        frame,
+        (cos_u, sin_u),
+        (ring, radius * martensite_cmath::sin(v)),
+        nu,
+        nv,
+    )
 }
 fn sphere_mixed(
     frame: Frame,
@@ -162,10 +175,10 @@ struct TorusTerms {
 impl TorusTerms {
     fn new(u: f64, v: f64, major: f64, minor: f64) -> Self {
         Self {
-            cos_u: u.cos(),
-            sin_u: u.sin(),
-            tube_cos: minor * v.cos(),
-            tube_sin: minor * v.sin(),
+            cos_u: martensite_cmath::cos(u),
+            sin_u: martensite_cmath::sin(u),
+            tube_cos: minor * martensite_cmath::cos(v),
+            tube_sin: minor * martensite_cmath::sin(v),
             tolerance: torus_tolerance(major, minor),
         }
     }

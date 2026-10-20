@@ -142,7 +142,7 @@ fn polynomial_binomial_coefficient_sum_property() {
     // Test sum property: Sum of C(n,k) for k=0 to n equals 2^n
     for n in 0..=20 {
         let mut sum: f64 = 0.0;
-        let expected: f64 = 2.0_f64.powi(n);
+        let expected: f64 = martensite_cmath::powi(2.0_f64, n);
 
         for k in 0..=n {
             sum += plib::bin(n, k).unwrap();

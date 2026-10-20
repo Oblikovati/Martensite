@@ -170,8 +170,8 @@ impl EvalElementarySurface for GeomEvalParaboloidSurface {
             frame: EvalFrame::new(state.pos),
             focal: state.focal,
             v,
-            cos_u: u.cos(),
-            sin_u: u.sin(),
+            cos_u: martensite_cmath::cos(u),
+            sin_u: martensite_cmath::sin(u),
         }
     }
     // XD and YD carry `d^Nu cos/sin(u) * d^Nv v`, ZD `d^Nv (v^2 / 4F)` when Nu == 0.
@@ -184,8 +184,8 @@ impl EvalElementarySurface for GeomEvalParaboloidSurface {
             _ => 0.0,
         };
         let phase: f64 = u + f64::from(nu) * FRAC_PI_2;
-        let x_coeff: f64 = phase.cos() * v_derivative;
-        let y_coeff: f64 = phase.sin() * v_derivative;
+        let x_coeff: f64 = martensite_cmath::cos(phase) * v_derivative;
+        let y_coeff: f64 = martensite_cmath::sin(phase) * v_derivative;
         let z_coeff: f64 = if nu == 0 {
             z_derivative(v, state.focal, nv)
         } else {

@@ -32,6 +32,6 @@ impl ExprGeneralExpression for ExprArgCosh {
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok((value + (value * value - 1.0).sqrt()).ln())
+        Ok(martensite_cmath::log(value + (value * value - 1.0).sqrt()))
     }
 }

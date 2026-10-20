@@ -54,11 +54,11 @@ fn wilkinson_shift_follows_native_sign_branches() {
     let d: Vector<'static> = vector(&[1.0, 3.0]);
     let e: Vector<'static> = vector(&[1.0, 0.0]);
     let ratio: f64 = (3.0 - 1.0) / 2.0;
-    let expected: f64 = 3.0 - 1.0 + 1.0 / (ratio + 1.0_f64.hypot(ratio));
+    let expected: f64 = 3.0 - 1.0 + 1.0 / (ratio + martensite_cmath::hypot(1.0_f64, ratio));
     assert_eq!(utils::compute_wilkinson_shift(&d, &e, 0, 1), expected);
     let reversed: Vector<'static> = vector(&[3.0, 1.0]);
     let negative: f64 = -1.0;
-    let expected: f64 = 1.0 - 3.0 + 1.0 / (negative - 1.0_f64.hypot(negative));
+    let expected: f64 = 1.0 - 3.0 + 1.0 / (negative - martensite_cmath::hypot(1.0_f64, negative));
     assert_eq!(
         utils::compute_wilkinson_shift(&reversed, &e, 0, 1),
         expected

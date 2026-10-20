@@ -220,8 +220,9 @@ fn cont_matrices_v_bernstein_matches_bernstein_eval() {
                 let aBinom = testBinomCoeff(n, aI);
                 for j in 1..=aNbPts {
                     let aT: f64 = aParams[j];
-                    let anExpected =
-                        aBinom * aT.powf(f64::from(aI)) * (1.0 - aT).powf(f64::from(n - aI));
+                    let anExpected = aBinom
+                        * martensite_cmath::pow(aT, f64::from(aI))
+                        * martensite_cmath::pow(1.0 - aT, f64::from(n - aI));
                     EXPECT_NEAR(aVB[(i, j)], anExpected, THE_FORMULA_TOL);
                 }
             }

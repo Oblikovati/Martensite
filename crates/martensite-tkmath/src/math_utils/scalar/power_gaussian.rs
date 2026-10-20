@@ -27,7 +27,7 @@ impl Function for Power {
         if !self.valid(x) {
             return false;
         }
-        *value = self.scale * x.powf(self.exponent) + self.offset;
+        *value = self.scale * martensite_cmath::pow(x, self.exponent) + self.offset;
         value.is_finite()
     }
 }
@@ -44,7 +44,7 @@ impl FunctionWithDerivative for Power {
             *derivative = 0.0;
             return value.is_finite();
         }
-        let power: f64 = x.powf(self.exponent);
+        let power: f64 = martensite_cmath::pow(x, self.exponent);
         *value = self.scale * power + self.offset;
         if x == 0.0 {
             if self.exponent < 1.0 {
@@ -95,7 +95,7 @@ impl Function for Gaussian {
             return false;
         }
         let z: f64 = (x - self.mean) / self.sigma;
-        *value = self.amplitude * (-0.5 * z * z).exp();
+        *value = self.amplitude * martensite_cmath::exp(-0.5 * z * z);
         value.is_finite()
     }
 }
@@ -108,7 +108,7 @@ impl FunctionWithDerivative for Gaussian {
             return false;
         }
         let z: f64 = (x - self.mean) / self.sigma;
-        let exponential: f64 = (-0.5 * z * z).exp();
+        let exponential: f64 = martensite_cmath::exp(-0.5 * z * z);
         *value = self.amplitude * exponential;
         *derivative = -self.amplitude * z * exponential / self.sigma;
         value.is_finite() && derivative.is_finite()

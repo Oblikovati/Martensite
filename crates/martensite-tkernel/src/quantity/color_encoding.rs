@@ -25,12 +25,12 @@ impl Color {
     /// The 2.2 approximation. Kept on purpose: despite its name it
     /// raises to the power 2.2 (the decoding direction); `Color::linear_to_srgb_approx22(1.0)`.
     pub fn linear_to_srgb_approx22(value: f32) -> f32 {
-        value.powf(2.2)
+        martensite_cmath::powf(value, 2.2)
     }
     /// The inverse 2.2 approximation. Kept on purpose: it raises to 1/2.2
     /// (the encoding direction); `Color::srgb_to_linear_approx22(1.0) == 1.0`.
     pub fn srgb_to_linear_approx22(value: f32) -> f32 {
-        value.powf(1.0 / 2.2)
+        martensite_cmath::powf(value, 1.0 / 2.2)
     }
     /// Vector form of `linear_to_srgb_approx22`; `Color::linear_to_srgb_approx22_vec3([1.0; 3])`.
     pub fn linear_to_srgb_approx22_vec3(rgb: [f32; 3]) -> [f32; 3] {

@@ -56,8 +56,8 @@ fn extrema_pc2d_circle_indirect_orientation_preserves_sense() {
     let aCircle = Circle2::new(aPosition, 4.0).unwrap();
     let anAngle: f64 = 0.7;
     let aQuery: Point2 = aCircle.location().translated(
-        (Vector2::from(aPosition.x_direction()) * anAngle.cos()
-            + Vector2::from(aPosition.y_direction()) * anAngle.sin())
+        (Vector2::from(aPosition.x_direction()) * martensite_cmath::cos(anAngle)
+            + Vector2::from(aPosition.y_direction()) * martensite_cmath::sin(anAngle))
             * 7.0,
     );
     let mut anEvaluator = ExtremaPC2d::Circle::new(aCircle);

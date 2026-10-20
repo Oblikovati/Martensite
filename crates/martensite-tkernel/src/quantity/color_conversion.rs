@@ -11,28 +11,28 @@ impl Color {
         if value <= 0.0031308 {
             return value * 12.92;
         }
-        value.powf(1.0 / 2.4) * 1.055 - 0.055
+        martensite_cmath::pow(value, 1.0 / 2.4) * 1.055 - 0.055
     }
     /// Decodes a double channel; `Color::srgb_to_linear(0.0) == 0.0`.
     pub fn srgb_to_linear(value: f64) -> f64 {
         if value <= 0.04045 {
             return value / 12.92;
         }
-        ((value + 0.055) / 1.055).powf(2.4)
+        martensite_cmath::pow((value + 0.055) / 1.055, 2.4)
     }
     /// Gamma-encodes a float channel; `Color::linear_to_srgb_f32(0.0) == 0.0`.
     pub fn linear_to_srgb_f32(value: f32) -> f32 {
         if value <= 0.0031308 {
             return value * 12.92;
         }
-        value.powf(1.0 / 2.4) * 1.055 - 0.055
+        martensite_cmath::powf(value, 1.0 / 2.4) * 1.055 - 0.055
     }
     /// Decodes a float channel; `Color::srgb_to_linear_f32(0.0) == 0.0`.
     pub fn srgb_to_linear_f32(value: f32) -> f32 {
         if value <= 0.04045 {
             return value / 12.92;
         }
-        ((value + 0.055) / 1.055).powf(2.4)
+        martensite_cmath::powf((value + 0.055) / 1.055, 2.4)
     }
     /// Converts gamma-encoded channels to HLS; `Color::srgb_to_hls([1.0,0.0,0.0])`.
     pub fn srgb_to_hls([r, g, b]: [f32; 3]) -> [f32; 3] {
@@ -130,7 +130,7 @@ impl Color {
         let (a, b) = (f64::from(a), f64::from(b));
         let chroma = (a * a + b * b).sqrt();
         let mut hue = if chroma > Self::epsilon() {
-            b.atan2(a) * RAD_TO_DEG
+            martensite_cmath::atan2(b, a) * RAD_TO_DEG
         } else {
             0.0
         };
@@ -144,14 +144,14 @@ impl Color {
         let (chroma, hue) = (f64::from(chroma), f64::from(hue) * DEG_TO_RAD);
         [
             light,
-            (chroma * hue.cos()) as f32,
-            (chroma * hue.sin()) as f32,
+            (chroma * martensite_cmath::cos(hue)) as f32,
+            (chroma * martensite_cmath::sin(hue)) as f32,
         ]
     }
 }
 fn lab_curve(value: f64) -> f64 {
     if value > LAB_EPSILON {
-        return value.powf(1.0 / 3.0);
+        return martensite_cmath::pow(value, 1.0 / 3.0);
     }
     LAB_KAPPA * value + 16.0 / 116.0
 }

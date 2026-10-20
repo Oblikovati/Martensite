@@ -72,7 +72,7 @@ impl Default for ComputeLineOptions {
 /// use martensite_tkmath::gp::Point2;
 /// let points: Vec<Point2> = (0..12).map(|i| {
 ///     let t = f64::from(i) / 11.0;
-///     Point2::new(t, (3.0 * t).sin())
+///     Point2::new(t, martensite_cmath::sin(3.0 * t))
 /// }).collect();
 /// let line = MultiLine::from_points2d(&Array1::from_shared(&points, 1));
 /// let compute = ComputeLine::with_line(&line, ComputeLineOptions::default())?;

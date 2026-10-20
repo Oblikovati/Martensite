@@ -1,0 +1,13 @@
+test_all_records_recompute_identically (test_proof.ReferenceProofControls.test_all_records_recompute_identically) ... ok
+test_boundary_and_wrong_word_rejected (test_proof.ReferenceProofControls.test_boundary_and_wrong_word_rejected) ... ok
+test_directed_exact_value_and_scoped_special_rejection (test_proof.ReferenceProofControls.test_directed_exact_value_and_scoped_special_rejection) ... ok
+test_multiline_parser (test_proof.ReferenceProofControls.test_multiline_parser) ... ok
+test_positive_negative_and_asymmetric_cells (test_proof.ReferenceProofControls.test_positive_negative_and_asymmetric_cells) ... ok
+test_tampered_endpoint_or_identity_rejected (test_proof.ReferenceProofControls.test_tampered_endpoint_or_identity_rejected) ... ok
+test_word_decoding (test_proof.ReferenceProofControls.test_word_decoding) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.013s
+
+OK
+95 exact identities and strict rational rounding-cell inclusions verified

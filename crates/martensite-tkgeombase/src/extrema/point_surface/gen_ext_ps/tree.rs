@@ -142,9 +142,9 @@ fn correct_nb_samples(
     let max_step_u: f64 = std_max(len_v1 / f64::from(nb_u), len_v2 / f64::from(nb_u));
     let ratio: f64 = max_step_v / max_step_u;
     let mult: i32 = if ratio > 10. {
-        real::real_to_int(ratio.ln())
+        real::real_to_int(martensite_cmath::log(ratio))
     } else if ratio < 0.1 {
-        real::real_to_int(-ratio.ln())
+        real::real_to_int(-martensite_cmath::log(ratio))
     } else {
         return Ok(());
     };

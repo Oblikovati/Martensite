@@ -21,16 +21,16 @@ impl ExprGeneralExpression for ExprLogOf10 {
     unary_expression_members!();
     function_members!(ExprLogOf10, "log(");
     fn shallow_simplified(&self) -> Result<ExprHandle, Failure> {
-        value_shallow_simplified(self, f64::log10)
+        value_shallow_simplified(self, martensite_cmath::log10)
     }
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         quotient_rule(self, x, |operand| {
-            let ln10: ExprHandle = ExprNumericValue::expression(10.0_f64.ln());
+            let ln10: ExprHandle = ExprNumericValue::expression(martensite_cmath::log(10.0_f64));
             shallow_of(&expr_multiply(&copy_share(operand)?, &ln10))
         })
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok(value.log10())
+        Ok(martensite_cmath::log10(value))
     }
 }

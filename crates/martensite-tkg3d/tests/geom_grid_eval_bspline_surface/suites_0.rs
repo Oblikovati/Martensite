@@ -106,7 +106,7 @@ fn b_spline_surface_higher_degree() {
         for j in 1..=4 {
             let x: f64 = f64::from(i - 1) * 1.0;
             let y: f64 = f64::from(j - 1) * 1.0;
-            let z: f64 = (f64::from(i + j - 2) * PI / 6.0).cos();
+            let z: f64 = martensite_cmath::cos(f64::from(i + j - 2) * PI / 6.0);
             aPoles.set_value(i, j, Point3::new(x, y, z)).unwrap();
         }
     }

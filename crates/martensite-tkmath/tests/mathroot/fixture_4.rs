@@ -2,7 +2,7 @@
 struct ExpMinusThreeFunc;
 impl Function for ExpMinusThreeFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
-        *theF = (theX).exp() - 3.0;
+        *theF = martensite_cmath::exp(theX) - 3.0;
         true
     }
 }
@@ -12,8 +12,8 @@ impl FunctionWithDerivative for ExpMinusThreeFunc {
         self.values(theX, &mut value, theDf)
     }
     fn values(&mut self, theX: f64, theF: &mut f64, theDf: &mut f64) -> bool {
-        *theF = (theX).exp() - 3.0;
-        *theDf = (theX).exp();
+        *theF = martensite_cmath::exp(theX) - 3.0;
+        *theDf = martensite_cmath::exp(theX);
         true
     }
 }

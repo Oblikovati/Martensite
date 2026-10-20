@@ -34,7 +34,9 @@ impl ExprExponentiate {
             return Some(first.clone());
         }
         let base: f64 = first.cast::<ExprNumericValue>().get()?.get_value();
-        Some(ExprNumericValue::expression(base.powf(exponent)))
+        Some(ExprNumericValue::expression(martensite_cmath::pow(
+            base, exponent,
+        )))
     }
     /// `h * g^(h-1) * g'`, the first member of the derivative of `g^h`.
     fn base_member(
@@ -111,7 +113,7 @@ impl ExprGeneralExpression for ExprExponentiate {
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let (base, exponent) = evaluate_operands(self, vars, vals)?;
-        Ok(base.powf(exponent))
+        Ok(martensite_cmath::pow(base, exponent))
     }
     fn string(&self) -> Result<AsciiString, Failure> {
         infix_text(&[self.first_operand(), self.second_operand()], "^")

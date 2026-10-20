@@ -154,11 +154,14 @@ fn term_count(value: &ExactRatio, bits: u64) -> usize {
     let limit = ExactRatio::new(BigInt::from(1), BigInt::from(1) << (bits + 2));
     let magnitude = value_f64(value).abs().max(f64::MIN_POSITIVE);
     let mut count = 3usize;
-    let mut log_term = 3. * magnitude.ln() - (1..=3).map(|k| (k as f64).ln()).sum::<f64>();
+    let mut log_term = 3. * martensite_cmath::log(magnitude)
+        - (1..=3)
+            .map(|k| martensite_cmath::log(k as f64))
+            .sum::<f64>();
     let target = -((bits + 2) as f64) * std::f64::consts::LN_2 - 8.;
     while log_term > target {
         count += 1;
-        log_term += magnitude.ln() - (count as f64).ln();
+        log_term += martensite_cmath::log(magnitude) - martensite_cmath::log(count as f64);
     }
     while remainder(value, count) > limit {
         count += 4;

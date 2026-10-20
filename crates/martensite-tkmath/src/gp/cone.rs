@@ -72,7 +72,8 @@ impl Cone3 {
     }
     /// Computes the apex on the axis at `-radius/tan(angle)`; `cone.apex()`.
     pub fn apex(&self) -> Point3 {
-        let offset = Xyz::from(self.position.direction()) * (-self.radius / self.semi_angle.tan())
+        let offset = Xyz::from(self.position.direction())
+            * (-self.radius / martensite_cmath::tan(self.semi_angle))
             + self.location().xyz();
         Point3::from(offset)
     }
@@ -85,7 +86,7 @@ impl Cone3 {
     /// `tan(angle)`; `cone.coefficients()`.
     pub fn coefficients(&self) -> [f64; 10] {
         let mut rows = Transform3::frame_rows(self.position);
-        let slope = self.semi_angle.tan();
+        let slope = martensite_cmath::tan(self.semi_angle);
         rows[2] = rows[2].map(|value| value * slope);
         let planar = |i: usize, j: usize| column_product(&rows[..2], i, j);
         let (axial, radius) = (rows[2], self.radius);

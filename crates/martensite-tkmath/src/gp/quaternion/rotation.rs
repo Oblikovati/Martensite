@@ -67,9 +67,9 @@ impl Quaternion {
             let inverse = 1.0 / length;
             let axis = Vector3::new(self.x * inverse, self.y * inverse, self.z * inverse);
             if self.w < 0.0 {
-                return (axis, 2.0 * (-length).atan2(-self.w));
+                return (axis, 2.0 * martensite_cmath::atan2(-length, -self.w));
             }
-            return (axis, 2.0 * length.atan2(self.w));
+            return (axis, 2.0 * martensite_cmath::atan2(length, self.w));
         }
         (Vector3::new(0.0, 0.0, 1.0), 0.0)
     }

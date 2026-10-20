@@ -167,8 +167,8 @@ fn accumulate(pol4: &mut Vector<'static>, pol2: &[f64], gw: f64) -> Result<(), F
             *pol4.change_at(first_index + second_index)? +=
                 2.0 * gw * pol2[first_index] * pol2[second_index];
         }
-        // std::pow(x, 2) is the libm pow, as powf.
-        *pol4.change_at(2 * first_index)? += gw * pol2[first_index].powf(2.0);
+        // std::pow(x, 2) is the general correctly rounded pow, not a square.
+        *pol4.change_at(2 * first_index)? += gw * martensite_cmath::pow(pol2[first_index], 2.0);
     }
     Ok(())
 }

@@ -189,7 +189,7 @@ fn extreme_ratios(top: &[BigInt], bottom: &[BigInt]) -> [ExactRatio; 2] {
     [ratio(low), ratio(high)]
 }
 fn denominator_sign(span: &DyadicSpan) -> RationalIntegralFailure {
-    let width = 2f64.powi(-(span.level.min(1074) as i32));
+    let width = martensite_cmath::powi(2f64, -(span.level.min(1074) as i32));
     let start = approximate(&span.index, 0) * width;
     RationalIntegralFailure::DenominatorSign {
         start,

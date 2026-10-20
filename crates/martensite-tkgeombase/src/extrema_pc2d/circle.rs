@@ -98,9 +98,10 @@ impl Circle {
     // into the domain.
     fn canonical_solutions(&self, center_to_point: Vector2) -> [f64; 2] {
         let position: Axis22d = self.circle.position();
-        let mut us1: f64 = center_to_point
-            .dot(Vector2::from(position.y_direction()))
-            .atan2(center_to_point.dot(Vector2::from(position.x_direction())));
+        let mut us1: f64 = martensite_cmath::atan2(
+            center_to_point.dot(Vector2::from(position.y_direction())),
+            center_to_point.dot(Vector2::from(position.x_direction())),
+        );
         let ang_tol: f64 = precision::angular();
         if us1 + PI < ang_tol {
             us1 = -PI;

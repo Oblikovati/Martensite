@@ -16,21 +16,21 @@ impl TrigonometricEquation {
 }
 impl Function for TrigonometricEquation {
     fn value(&mut self, x: f64, value: &mut f64) -> bool {
-        let (cn, sn): (f64, f64) = (x.cos(), x.sin());
+        let (cn, sn): (f64, f64) = (martensite_cmath::cos(x), martensite_cmath::sin(x));
         *value = cn * (self.a * cn + (self.b + self.b) * sn + self.c) + self.d * sn + self.e;
         true
     }
 }
 impl FunctionWithDerivative for TrigonometricEquation {
     fn derivative(&mut self, x: f64, derivative: &mut f64) -> bool {
-        let (cn, sn): (f64, f64) = (x.cos(), x.sin());
+        let (cn, sn): (f64, f64) = (martensite_cmath::cos(x), martensite_cmath::sin(x));
         *derivative = -self.a * cn * sn + self.b * (cn * cn - sn * sn);
         *derivative += *derivative;
         *derivative += -self.c * sn + self.d * cn;
         true
     }
     fn values(&mut self, x: f64, value: &mut f64, derivative: &mut f64) -> bool {
-        let (cn, sn): (f64, f64) = (x.cos(), x.sin());
+        let (cn, sn): (f64, f64) = (martensite_cmath::cos(x), martensite_cmath::sin(x));
         let a_cn: f64 = self.a * cn;
         let b_sn: f64 = self.b * sn;
         *value = a_cn * cn + b_sn * (cn + cn) + self.c * cn + self.d * sn + self.e;

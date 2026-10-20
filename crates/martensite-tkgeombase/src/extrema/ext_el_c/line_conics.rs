@@ -269,7 +269,7 @@ impl ExtElC {
         }
         for v in polynomial_roots(&roots)? {
             if v > 0.0 {
-                extrema.push_conic_parameter(&line, &hyperbola, v.ln());
+                extrema.push_conic_parameter(&line, &hyperbola, martensite_cmath::log(v));
             }
         }
         extrema.result.done = true;

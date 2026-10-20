@@ -135,7 +135,7 @@ fn periodic_root(root: f64) -> f64 {
 
 // `cos (CC cos + 2 SC sin + C) + S sin + Cte` at `root`.
 fn trig_residual([cc, sc, c, s, cte]: [f64; 5], root: f64) -> f64 {
-    let (co, si) = (root.cos(), root.sin());
+    let (co, si) = (martensite_cmath::cos(root), martensite_cmath::sin(root));
     co * (cc * co + (sc + sc) * si + c) + s * si + cte
 }
 

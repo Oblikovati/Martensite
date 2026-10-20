@@ -34,7 +34,7 @@ struct SinFunc;
 impl Function for SinFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
         let _ = (&theX, &theF);
-        *theF = (theX).sin();
+        *theF = martensite_cmath::sin(theX);
         true
     }
 }
@@ -43,7 +43,7 @@ struct CosFunc;
 impl Function for CosFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
         let _ = (&theX, &theF);
-        *theF = (theX).cos();
+        *theF = martensite_cmath::cos(theX);
         true
     }
 }
@@ -52,7 +52,7 @@ struct ExpFunc;
 impl Function for ExpFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
         let _ = (&theX, &theF);
-        *theF = (theX).exp();
+        *theF = martensite_cmath::exp(theX);
         true
     }
 }
@@ -72,7 +72,7 @@ struct GaussianFunc;
 impl Function for GaussianFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
         let _ = (&theX, &theF);
-        *theF = (-theX * theX).exp();
+        *theF = martensite_cmath::exp(-theX * theX);
         true
     }
 }
@@ -90,7 +90,7 @@ struct OscillatoryFunc;
 impl Function for OscillatoryFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
         let _ = (&theX, &theF);
-        *theF = (10.0 * theX).sin();
+        *theF = martensite_cmath::sin(10.0 * theX);
         true
     }
 }
@@ -134,7 +134,7 @@ struct DampedCosineFunc;
 impl Function for DampedCosineFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
         let _ = (&theX, &theF);
-        *theF = (-theX).exp() * (2.0 * theX).cos();
+        *theF = martensite_cmath::exp(-theX) * martensite_cmath::cos(2.0 * theX);
         true
     }
 }
@@ -143,7 +143,7 @@ struct ExponentialSineFunc;
 impl Function for ExponentialSineFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
         let _ = (&theX, &theF);
-        *theF = ((theX).sin()).exp();
+        *theF = martensite_cmath::exp(martensite_cmath::sin(theX));
         true
     }
 }
@@ -162,7 +162,7 @@ impl Function for ShiftedGaussianFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
         let _ = (&theX, &theF);
         let aShift: f64 = theX - 0.4;
-        *theF = (-2.3 * aShift * aShift).exp();
+        *theF = martensite_cmath::exp(-2.3 * aShift * aShift);
         true
     }
 }
@@ -171,7 +171,7 @@ struct RationalOscillationFunc;
 impl Function for RationalOscillationFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
         let _ = (&theX, &theF);
-        *theF = (37.0 * theX).cos() / (1.0 + theX * theX);
+        *theF = martensite_cmath::cos(37.0 * theX) / (1.0 + theX * theX);
         true
     }
 }
@@ -180,7 +180,7 @@ struct LogCosineFunc;
 impl Function for LogCosineFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
         let _ = (&theX, &theF);
-        *theF = (theX * theX).ln_1p() * (0.5 * theX).cos();
+        *theF = martensite_cmath::log1p(theX * theX) * martensite_cmath::cos(0.5 * theX);
         true
     }
 }
@@ -189,7 +189,7 @@ struct SquareRootLogFunc;
 impl Function for SquareRootLogFunc {
     fn value(&mut self, theX: f64, theF: &mut f64) -> bool {
         let _ = (&theX, &theF);
-        *theF = (theX).sqrt() * (theX).ln_1p();
+        *theF = (theX).sqrt() * martensite_cmath::log1p(theX);
         true
     }
 }

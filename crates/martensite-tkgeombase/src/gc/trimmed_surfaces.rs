@@ -47,7 +47,7 @@ impl MakeTrimmedCone {
         let p5: Point3 = *ext1.point(1)?.value();
         let p6: Point3 = *ext2.point(1)?.value();
         let surface = cone.value()?;
-        let slant: f64 = p6.distance(&p5) / surface.semi_angle().cos();
+        let slant: f64 = p6.distance(&p5) / martensite_cmath::cos(surface.semi_angle());
         Ok(Self::built(full_turn(surface.cast(), slant)?))
     }
 
@@ -60,7 +60,7 @@ impl MakeTrimmedCone {
             return Ok(Self::failed(cone.status()));
         }
         let surface = cone.value()?;
-        let slant: f64 = p2.distance(&p1) / surface.semi_angle().cos();
+        let slant: f64 = p2.distance(&p1) / martensite_cmath::cos(surface.semi_angle());
         Ok(Self::built(full_turn(surface.cast(), slant)?))
     }
 }

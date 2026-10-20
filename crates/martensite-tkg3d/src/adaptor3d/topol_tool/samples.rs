@@ -321,18 +321,19 @@ pub(super) fn cone_apex_param(cone: &Cone3) -> (f64, f64) {
     let local: Point3 = cone.apex().transformed(transform);
     let mut u: f64 = if local.x() == 0.0 && local.y() == 0.0 {
         0.0
-    } else if -radius > local.z() * semi_angle.tan() {
+    } else if -radius > local.z() * martensite_cmath::tan(semi_angle) {
         // The point is at the `wrong` side of the apex.
-        (-local.y()).atan2(-local.x())
+        martensite_cmath::atan2(-local.y(), -local.x())
     } else {
-        local.y().atan2(local.x())
+        martensite_cmath::atan2(local.y(), local.x())
     };
     if u < -1.0e-16 {
         u += PI + PI;
     } else if u < 0. {
         u = 0.;
     }
-    let v: f64 = semi_angle.sin() * (local.x() * u.cos() + local.y() * u.sin() - radius)
-        + semi_angle.cos() * local.z();
+    let v: f64 = martensite_cmath::sin(semi_angle)
+        * (local.x() * martensite_cmath::cos(u) + local.y() * martensite_cmath::sin(u) - radius)
+        + martensite_cmath::cos(semi_angle) * local.z();
     (u, v)
 }

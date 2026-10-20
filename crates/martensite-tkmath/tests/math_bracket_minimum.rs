@@ -28,21 +28,21 @@ impl Function for QuarticFunction {
 struct CosineFunction;
 impl Function for CosineFunction {
     fn value(&mut self, x: f64, result: &mut f64) -> bool {
-        *result = x.cos();
+        *result = martensite_cmath::cos(x);
         true
     }
 }
 struct ExponentialFunction;
 impl Function for ExponentialFunction {
     fn value(&mut self, x: f64, result: &mut f64) -> bool {
-        *result = x.exp();
+        *result = martensite_cmath::exp(x);
         true
     }
 }
 struct MultipleMinFunction;
 impl Function for MultipleMinFunction {
     fn value(&mut self, x: f64, result: &mut f64) -> bool {
-        *result = x.sin() + 0.1 * x;
+        *result = martensite_cmath::sin(x) + 0.1 * x;
         true
     }
 }

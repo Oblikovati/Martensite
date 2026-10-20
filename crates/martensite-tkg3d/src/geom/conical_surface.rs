@@ -134,7 +134,7 @@ impl GeomConicalSurface {
     pub fn apex(&self) -> Point3 {
         let state: ConeState = self.snapshot();
         let mut coord: Xyz = state.pos.direction().xyz();
-        coord *= -state.radius / state.semi_angle.tan();
+        coord *= -state.radius / martensite_cmath::tan(state.semi_angle);
         coord += state.pos.location().xyz();
         Point3::from(coord)
     }

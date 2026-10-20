@@ -218,9 +218,9 @@ fn hyperbola_simple_arc() {
     // At t=1:  (3*cosh(1), 2*sinh(1))   = (4.629...,  2.350...)
     // At t=0:  (3, 0) - minimum X
     let aExpectedXmin = 3.; // at t=0
-    let aExpectedXmax = 3. * f64::cosh(1.); // at t=+-1
-    let aExpectedYmin = 2. * f64::sinh(-1.); // at t=-1
-    let aExpectedYmax = 2. * f64::sinh(1.); // at t=1
+    let aExpectedXmax = 3. * martensite_cmath::cosh(1.); // at t=+-1
+    let aExpectedYmin = 2. * martensite_cmath::sinh(-1.); // at t=-1
+    let aExpectedYmax = 2. * martensite_cmath::sinh(1.); // at t=1
 
     EXPECT_NEAR(aXmin, aExpectedXmin, precision::confusion());
     EXPECT_NEAR(aXmax, aExpectedXmax, precision::confusion());

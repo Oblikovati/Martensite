@@ -9,7 +9,7 @@ use super::unary_expression::ExprUnaryExpression;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 
 /// `ExprNumericValue::new(f(value))` when `operand` is a numeric value, else `None`:
-/// the first step of each `ShallowSimplified`; `simplified_value(&two, f64::sin)`.
+/// the first step of each `ShallowSimplified`; `simplified_value(&two, martensite_cmath::sin)`.
 pub fn simplified_value(operand: &ExprHandle, function: impl Fn(f64) -> f64) -> Option<ExprHandle> {
     let value: Handle<ExprNumericValue> = operand.cast();
     value
@@ -32,7 +32,7 @@ pub fn cancelled_inverse<I: ?Sized + RuntimeTyped>(
 
 /// The `ShallowSimplified` of a function with an inverse `I`: the value of a numeric
 /// operand, the operand of an inverse, or the expression itself;
-/// `function_shallow_simplified::<ExprArcSine, _>(&sine, f64::sin)?`.
+/// `function_shallow_simplified::<ExprArcSine, _>(&sine, martensite_cmath::sin)?`.
 pub fn function_shallow_simplified<I: ?Sized + RuntimeTyped, T: ExprUnaryExpression + ?Sized>(
     me: &T,
     function: impl Fn(f64) -> f64,
@@ -61,7 +61,7 @@ pub fn operand_is_identical<C: ?Sized + RuntimeTyped>(
 }
 
 /// The value of the operand: the first step of each unary `Evaluate`;
-/// `evaluate_operand(&sine, &vars, &vals)?.sin()`.
+/// `martensite_cmath::sin(evaluate_operand(&sine, &vars, &vals)?)`.
 pub fn evaluate_operand<T: ExprUnaryExpression + ?Sized>(
     me: &T,
     vars: &ExprVariables<'_>,
@@ -150,7 +150,7 @@ pub(crate) use function_members;
 
 /// The `ShallowSimplified` of a function without an inverse (`ExprLogOf10`,
 /// `ExprSign`): the value of a numeric operand, or the expression itself;
-/// `value_shallow_simplified(&logarithm, f64::log10)?`.
+/// `value_shallow_simplified(&logarithm, martensite_cmath::log10)?`.
 pub fn value_shallow_simplified<T: ExprUnaryExpression + ?Sized>(
     me: &T,
     function: impl Fn(f64) -> f64,

@@ -22,12 +22,14 @@ pub fn is_finite_array<const N: usize>(values: &[f64; N]) -> bool {
 pub fn safe_norm_n<const N: usize>(values: &[f64; N]) -> f64 {
     values
         .iter()
-        .fold(0.0_f64, |norm, value| norm.hypot(*value))
+        .fold(0.0_f64, |norm, value| martensite_cmath::hypot(norm, *value))
 }
 
 /// Sequential `hypot` distance `|left - right|`; `safe_distance_n(&[3.0, 4.0], &[0.0; 2]) == 5.0`.
 pub fn safe_distance_n<const N: usize>(left: &[f64; N], right: &[f64; N]) -> f64 {
-    (0..N).fold(0.0_f64, |norm, i| norm.hypot(left[i] - right[i]))
+    (0..N).fold(0.0_f64, |norm, i| {
+        martensite_cmath::hypot(norm, left[i] - right[i])
+    })
 }
 
 /// True unless some `|left - right|` exceeds the tolerance (a NaN difference passes, as

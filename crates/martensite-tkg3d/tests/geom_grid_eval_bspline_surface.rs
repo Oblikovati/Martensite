@@ -99,7 +99,8 @@ fn CreateMultiSpanBSplineSurface() -> Handle<GeomBSplineSurface> {
         for j in 1..=5 {
             let x: f64 = f64::from(i - 1) * 1.0;
             let y: f64 = f64::from(j - 1) * 1.0;
-            let z: f64 = (f64::from(i - 1) * PI / 4.0).sin() * (f64::from(j - 1) * PI / 4.0).sin();
+            let z: f64 = martensite_cmath::sin(f64::from(i - 1) * PI / 4.0)
+                * martensite_cmath::sin(f64::from(j - 1) * PI / 4.0);
             aPoles.set_value(i, j, Point3::new(x, y, z)).unwrap();
         }
     }

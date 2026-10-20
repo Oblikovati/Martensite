@@ -159,7 +159,7 @@ impl ExtElCS {
         if !(b.abs() > a.abs()) {
             return;
         }
-        let t: f64 = -0.5 * ((a + b) / (b - a)).ln();
+        let t: f64 = -0.5 * martensite_cmath::log((a + b) / (b - a));
         let (major, minor) = (hyperbola.major_radius(), hyperbola.minor_radius());
         let ph: Point3 = elclib::hyperbola_value(t, position, major, minor);
         self.points1 = Some(vec![POnCurv::new(t, ph)]);

@@ -202,7 +202,7 @@ fn geometric_construction_request_and_answer_bytes_stay_frozen() {
     );
     assert_eq!(
         super::fixture_hash(CHUNKS.iter().map(|(_, a)| *a)),
-        0x06f394d5afac92e4
+        0x7818c2cc70123f94
     );
 }
 

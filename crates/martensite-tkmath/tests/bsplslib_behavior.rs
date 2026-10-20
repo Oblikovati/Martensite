@@ -41,7 +41,11 @@ struct Fixture {
 fn fixture() -> Fixture {
     let pole = |i: i32, j: i32| {
         let (x, y) = (f64::from(i), f64::from(j));
-        Point3::new(x, y, (x * 0.7).sin() + (y * 0.4).cos() * x)
+        Point3::new(
+            x,
+            y,
+            martensite_cmath::sin(x * 0.7) + martensite_cmath::cos(y * 0.4) * x,
+        )
     };
     Fixture {
         uk: reals(&[0.0, 1.0, 2.0]),

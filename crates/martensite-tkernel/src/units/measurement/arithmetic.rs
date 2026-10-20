@@ -61,7 +61,7 @@ impl Measurement {
     }
     /// Raises value and token; `a.power(2.0)?`.
     pub fn power(&self, exponent: f64) -> Result<Measurement, Failure> {
-        let value = self.measurement.powf(exponent);
+        let value = martensite_cmath::pow(self.measurement, exponent);
         let token: Handle<Token> =
             object(&self.token, "Units_Measurement::Power")?.power(exponent)?;
         Ok(Measurement::with_token(value, &token))

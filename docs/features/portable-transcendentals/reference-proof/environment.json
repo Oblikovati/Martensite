@@ -1,0 +1,31 @@
+{
+  "gmp": "GMP 6.3.0",
+  "gmpy2": "2.3.2",
+  "loaded_proof_libraries": {
+    "/tmp/martensite-reference-proof-python/gmpy2.libs/libgmp-a6f47472.so.10.5.0": "af9a8973755d91abf7b49378cb0342bbc2004998dcb3c0b620ffd808f5992cf6",
+    "/tmp/martensite-reference-proof-python/gmpy2.libs/libmpc-93977c64.so.3.4.1": "0b3f749d9052c7b6c114a40c8add75a8fc06daa81231612ffbc425794bd73e94",
+    "/tmp/martensite-reference-proof-python/gmpy2.libs/libmpfr-bb88ce0c.so.6.2.2": "b937cae570f8d8790832e36bf1609ef4096a6b7fb54b86596c77f228a1adee27",
+    "/tmp/martensite-reference-proof-python/gmpy2/gmpy2.cpython-312-x86_64-linux-gnu.so": "0d9ff005ed65c5c86172557ef53f01d583b264b59846f18da537ee5b561a82a6"
+  },
+  "mpfr": "MPFR 4.2.2",
+  "platform": "Linux-7.1.5-76070105-generic-x86_64-with-glibc2.39",
+  "product_base": "2e204184644a697823e5e1b8ac6ad2c608ce5e66",
+  "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "reference_pin": "2b1f0e601f05eb14147171b0487bd4dcfe1e4425",
+  "schema": 1,
+  "scope": "95 literal binary64 cases only; no binary32/signed-zero/NaN/infinity/domain-error or whole-domain correctness claim",
+  "special_case_census": {
+    "finite_normal_inputs": 109,
+    "finite_normal_outputs": 95,
+    "nonfinite_inputs": 0,
+    "nonfinite_outputs": 0,
+    "subnormal_inputs": 0,
+    "subnormal_outputs": 0,
+    "zero_inputs": 0,
+    "zero_outputs": 0
+  },
+  "wheel": {
+    "name": "gmpy2-2.3.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+    "sha256": "c3021ec352e1b26baf4752f99d88adc9e930f115a053162c127d1c1b2f5783c2"
+  }
+}

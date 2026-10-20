@@ -509,7 +509,7 @@ fn norm_estim_handles_regular_and_pole_parameters() {
 
     let aSphere: Handle<dyn GeomSurface> =
         Handle::new(GeomSphericalSurface::new(aPosition, 2.0).unwrap()).cast();
-    let aHalfPi: f64 = 0.5 * (-1.0f64).acos();
+    let aHalfPi: f64 = 0.5 * martensite_cmath::acos(-1.0f64);
     assert_eq!(
         GeomLib::norm_estim(&aSphere, Point2::new(0.4, aHalfPi), 1.0e-9, &mut aNormal).unwrap(),
         1

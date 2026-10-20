@@ -82,8 +82,8 @@ impl GeomEvalCircularHelixCurve {
     fn at(&self, u: f64) -> HelixPoint {
         HelixPoint {
             frame: AxisFrame::new(self.position),
-            cos: u.cos(),
-            sin: u.sin(),
+            cos: martensite_cmath::cos(u),
+            sin: martensite_cmath::sin(u),
         }
     }
     // `anO + R*cos*aXD + R*sin*aYD + (P*U/(2 Pi))*aZD`, summed left to right.
@@ -161,8 +161,8 @@ impl GeomCurve for GeomEvalCircularHelixCurve {
         check_derivative_order("GeomEval_CircularHelixCurve::EvalDN", n)?;
         let f = AxisFrame::new(self.position);
         let phase: f64 = f64::from(n) * PI / 2.0;
-        let coeff_x: f64 = self.radius * (u + phase).cos();
-        let coeff_y: f64 = self.radius * (u + phase).sin();
+        let coeff_x: f64 = self.radius * martensite_cmath::cos(u + phase);
+        let coeff_y: f64 = self.radius * martensite_cmath::sin(u + phase);
         let mut result: Xyz = f.x_dir * coeff_x + f.y_dir * coeff_y;
         if n == 1 {
             result += f.z_dir * (self.pitch / (2.0 * PI));

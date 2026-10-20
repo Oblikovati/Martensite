@@ -44,15 +44,24 @@ pub fn line_value(u: f64, position: Axis1) -> Point3 {
 }
 /// Circle point `R·cos(u)·X + R·sin(u)·Y + origin`; `circle_value(0.5,frame,2.0)`.
 pub fn circle_value(u: f64, position: Axis2, radius: f64) -> Point3 {
-    Frame::of(position).point(radius * u.cos(), radius * u.sin())
+    Frame::of(position).point(
+        radius * martensite_cmath::cos(u),
+        radius * martensite_cmath::sin(u),
+    )
 }
 /// Ellipse point `a·cos(u)·X + b·sin(u)·Y + origin`; `ellipse_value(0.5,frame,3.0,2.0)`.
 pub fn ellipse_value(u: f64, position: Axis2, major: f64, minor: f64) -> Point3 {
-    Frame::of(position).point(major * u.cos(), minor * u.sin())
+    Frame::of(position).point(
+        major * martensite_cmath::cos(u),
+        minor * martensite_cmath::sin(u),
+    )
 }
 /// Hyperbola point `a·cosh(u)·X + b·sinh(u)·Y + origin`; `hyperbola_value(0.5,frame,3.0,2.0)`.
 pub fn hyperbola_value(u: f64, position: Axis2, major: f64, minor: f64) -> Point3 {
-    Frame::of(position).point(major * u.cosh(), minor * u.sinh())
+    Frame::of(position).point(
+        major * martensite_cmath::cosh(u),
+        minor * martensite_cmath::sinh(u),
+    )
 }
 /// Parabola point `u²/(4F)·X + u·Y + origin`, or the X axis line when `|F| <= resolution`;
 /// `parabola_value(1.0,frame,2.0)`.
@@ -74,13 +83,16 @@ pub fn line_d1(u: f64, position: Axis1) -> SpaceD1 {
 }
 /// Circle point and first derivative; `circle_d1(0.5,frame,2.0)`.
 pub fn circle_d1(u: f64, position: Axis2, radius: f64) -> SpaceD1 {
-    let (x, y) = (radius * u.cos(), radius * u.sin());
+    let (x, y) = (
+        radius * martensite_cmath::cos(u),
+        radius * martensite_cmath::sin(u),
+    );
     let frame = Frame::of(position);
     (frame.point(x, y), vector(frame.span(-y, x)))
 }
 /// Ellipse point and first derivative; `ellipse_d1(0.5,frame,3.0,2.0)`.
 pub fn ellipse_d1(u: f64, position: Axis2, major: f64, minor: f64) -> SpaceD1 {
-    let (cosine, sine) = (u.cos(), u.sin());
+    let (cosine, sine) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
     let frame = Frame::of(position);
     (
         frame.point(cosine * major, sine * minor),
@@ -89,7 +101,7 @@ pub fn ellipse_d1(u: f64, position: Axis2, major: f64, minor: f64) -> SpaceD1 {
 }
 /// Hyperbola point and first derivative; `hyperbola_d1(0.5,frame,3.0,2.0)`.
 pub fn hyperbola_d1(u: f64, position: Axis2, major: f64, minor: f64) -> SpaceD1 {
-    let (cosh, sinh) = (u.cosh(), u.sinh());
+    let (cosh, sinh) = (martensite_cmath::cosh(u), martensite_cmath::sinh(u));
     let frame = Frame::of(position);
     (
         frame.point(cosh * major, sinh * minor),
@@ -109,14 +121,17 @@ pub fn parabola_d1(u: f64, position: Axis2, focal: f64) -> SpaceD1 {
 
 /// Circle point and derivatives up to the second; `circle_d2(0.5,frame,2.0)`.
 pub fn circle_d2(u: f64, position: Axis2, radius: f64) -> SpaceD2 {
-    let (x, y) = (radius * u.cos(), radius * u.sin());
+    let (x, y) = (
+        radius * martensite_cmath::cos(u),
+        radius * martensite_cmath::sin(u),
+    );
     let frame = Frame::of(position);
     let (point, first) = (frame.point(x, y), vector(frame.span(-y, x)));
     (point, first, vector(frame.span(-x, -y)))
 }
 /// Ellipse point and derivatives up to the second; `ellipse_d2(0.5,frame,3.0,2.0)`.
 pub fn ellipse_d2(u: f64, position: Axis2, major: f64, minor: f64) -> SpaceD2 {
-    let (cosine, sine) = (u.cos(), u.sin());
+    let (cosine, sine) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
     let frame = Frame::of(position);
     (
         frame.point(cosine * major, sine * minor),
@@ -127,7 +142,7 @@ pub fn ellipse_d2(u: f64, position: Axis2, major: f64, minor: f64) -> SpaceD2 {
 /// Hyperbola point and derivatives up to the second (the second derivative is the centred
 /// point); `hyperbola_d2(0.5,frame,3.0,2.0)`.
 pub fn hyperbola_d2(u: f64, position: Axis2, major: f64, minor: f64) -> SpaceD2 {
-    let (cosh, sinh) = (u.cosh(), u.sinh());
+    let (cosh, sinh) = (martensite_cmath::cosh(u), martensite_cmath::sinh(u));
     let frame = Frame::of(position);
     let centred = frame.span(cosh * major, sinh * minor);
     (
@@ -155,7 +170,10 @@ pub fn parabola_d2(u: f64, position: Axis2, focal: f64) -> SpaceD2 {
 
 /// Circle point and derivatives up to the third; `circle_d3(0.5,frame,2.0)`.
 pub fn circle_d3(u: f64, position: Axis2, radius: f64) -> SpaceD3 {
-    let (x, y) = (radius * u.cos(), radius * u.sin());
+    let (x, y) = (
+        radius * martensite_cmath::cos(u),
+        radius * martensite_cmath::sin(u),
+    );
     let (point, first, second) = circle_d2(u, position, radius);
     (
         point,
@@ -166,7 +184,7 @@ pub fn circle_d3(u: f64, position: Axis2, radius: f64) -> SpaceD3 {
 }
 /// Ellipse point and derivatives up to the third; `ellipse_d3(0.5,frame,3.0,2.0)`.
 pub fn ellipse_d3(u: f64, position: Axis2, major: f64, minor: f64) -> SpaceD3 {
-    let (cosine, sine) = (u.cos(), u.sin());
+    let (cosine, sine) = (martensite_cmath::cos(u), martensite_cmath::sin(u));
     let (point, first, second) = ellipse_d2(u, position, major, minor);
     let third = Frame::of(position).span(sine * major, -cosine * minor);
     (point, first, second, vector(third))

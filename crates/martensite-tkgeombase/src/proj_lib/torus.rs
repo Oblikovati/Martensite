@@ -67,7 +67,7 @@ impl Torus {
         } else if z < -1. {
             -PI / 2.
         } else {
-            z.asin()
+            martensite_cmath::asin(z)
         };
         if circle.radius() < self.torus.major_radius() {
             v = PI - v;
@@ -119,7 +119,7 @@ fn eval_pnt2d(direction: Vector3, torus: &Torus3) -> Point2 {
     let y: f64 = direction.dot(Vector3::from(torus.position().y_direction()));
     let pconf: f64 = precision::p_confusion();
     let u: f64 = if x.abs() > pconf || y.abs() > pconf {
-        y.atan2(x)
+        martensite_cmath::atan2(y, x)
     } else {
         0.
     };

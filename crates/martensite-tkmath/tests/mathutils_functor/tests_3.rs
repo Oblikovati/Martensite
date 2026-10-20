@@ -7,7 +7,7 @@ fn math_utils_functor_scalar_exponential_value() {
     near(aValue, 1.0, THE_TOLERANCE);
 
     assert!(aExp.value(1.0, &mut aValue));
-    near(aValue, (1.0_f64).exp(), THE_TOLERANCE);
+    near(aValue, martensite_cmath::exp(1.0_f64), THE_TOLERANCE);
 }
 
 #[test]
@@ -50,7 +50,7 @@ fn math_utils_functor_scalar_gaussian_value() {
     near(aValue, 1.0, THE_TOLERANCE);
 
     assert!(aGauss.value(1.0, &mut aValue));
-    near(aValue, (-0.5_f64).exp(), THE_TOLERANCE);
+    near(aValue, martensite_cmath::exp(-0.5_f64), THE_TOLERANCE);
 }
 
 #[test]

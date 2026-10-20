@@ -70,7 +70,10 @@ impl Hyperbola {
     /// `extrema.value(0.5)`.
     pub fn value(&self, u: f64) -> Point2 {
         let c = &self.cache;
-        let (r_cosh, r_sinh) = (c.major * u.cosh(), c.minor * u.sinh());
+        let (r_cosh, r_sinh) = (
+            c.major * martensite_cmath::cosh(u),
+            c.minor * martensite_cmath::sinh(u),
+        );
         Point2::new(
             c.center.0 + r_cosh * c.x_dir.0 + r_sinh * c.y_dir.0,
             c.center.1 + r_cosh * c.x_dir.1 + r_sinh * c.y_dir.1,

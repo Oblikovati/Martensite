@@ -76,15 +76,18 @@ fn coefficient_scaling_retains_extreme_power_of_two_results() {
     assert_eq!(compute_scale_factor(&[0.0]), 1.0);
     assert_eq!(compute_scale_factor(&[2.0]), 1.0);
     assert_eq!(
-        compute_scale_factor(&[2.0_f64.powi(100)]),
-        2.0_f64.powi(-100)
+        compute_scale_factor(&[martensite_cmath::powi(2.0_f64, 100)]),
+        martensite_cmath::powi(2.0_f64, -100)
     );
     assert_eq!(
-        compute_scale_factor(&[2.0_f64.powi(-100)]),
-        2.0_f64.powi(100)
+        compute_scale_factor(&[martensite_cmath::powi(2.0_f64, -100)]),
+        martensite_cmath::powi(2.0_f64, 100)
     );
     assert_eq!(compute_scale_factor(&[f64::from_bits(1)]), f64::INFINITY);
-    assert_eq!(compute_scale_factor(&[f64::MAX]), 2.0_f64.powi(-1023));
+    assert_eq!(
+        compute_scale_factor(&[f64::MAX]),
+        martensite_cmath::powi(2.0_f64, -1023)
+    );
 }
 #[test]
 fn convergence_uses_finite_absolute_and_relative_tests() {

@@ -27,7 +27,7 @@ struct HyperbolaTerms(RadiiFrame3);
 impl ConicTerms for HyperbolaTerms {
     type Local = (f64, f64);
     fn local(&self, u: f64) -> (f64, f64) {
-        (u.cosh(), u.sinh())
+        (martensite_cmath::cosh(u), martensite_cmath::sinh(u))
     }
     fn point(&self, (ch, sh): (f64, f64)) -> Point3 {
         self.0.point(ch, sh)

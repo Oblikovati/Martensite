@@ -120,8 +120,8 @@ impl GeomGridEvalCone {
         Ok(Some(ConeData {
             frame: QuadricFrame::new(cone.location(), cone.position()),
             ref_radius: cone.ref_radius(),
-            sin_ang: cone.semi_angle().sin(),
-            cos_ang: cone.semi_angle().cos(),
+            sin_ang: martensite_cmath::sin(cone.semi_angle()),
+            cos_ang: martensite_cmath::cos(cone.semi_angle()),
         }))
     }
     quadric_grid_members!(GeomConicalSurface);

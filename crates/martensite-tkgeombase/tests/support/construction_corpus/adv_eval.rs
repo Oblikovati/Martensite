@@ -33,14 +33,14 @@ fn factor(f: Factor, k: i32, x: f64) -> f64 {
     }
     let t = a * x;
     if kind == 3 {
-        return s * t.exp();
+        return s * martensite_cmath::exp(t);
     }
     let phase = (if kind == 1 { k } else { k + 3 }) % 4;
     let v = match phase {
-        0 => t.cos(),
-        1 => -t.sin(),
-        2 => -t.cos(),
-        _ => t.sin(),
+        0 => martensite_cmath::cos(t),
+        1 => -martensite_cmath::sin(t),
+        2 => -martensite_cmath::cos(t),
+        _ => martensite_cmath::sin(t),
     };
     s * v
 }

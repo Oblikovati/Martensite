@@ -11,7 +11,7 @@ impl FunctionSet for CubicSpaceFunctionSet {
         let aY: f64 = *theX.at(1).unwrap();
         let aZ: f64 = *theX.at(2).unwrap();
         *theF.change_at(0).unwrap() = aX * aY + aZ * aZ - 1.5;
-        *theF.change_at(1).unwrap() = (aX).cos() + aY - aZ - 0.6;
+        *theF.change_at(1).unwrap() = martensite_cmath::cos(aX) + aY - aZ - 0.6;
         *theF.change_at(2).unwrap() = aX * aX * aX + aY * aY + aZ - 2.2;
         true
     }
@@ -24,7 +24,7 @@ impl FunctionSetWithDerivatives for CubicSpaceFunctionSet {
         *theD.change_at(0, 0).unwrap() = aY;
         *theD.change_at(0, 1).unwrap() = aX;
         *theD.change_at(0, 2).unwrap() = 2.0 * aZ;
-        *theD.change_at(1, 0).unwrap() = -(aX).sin();
+        *theD.change_at(1, 0).unwrap() = -martensite_cmath::sin(aX);
         *theD.change_at(1, 1).unwrap() = 1.0;
         *theD.change_at(1, 2).unwrap() = -1.0;
         *theD.change_at(2, 0).unwrap() = 3.0 * aX * aX;

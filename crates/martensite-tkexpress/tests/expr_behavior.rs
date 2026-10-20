@@ -239,3 +239,21 @@ fn system_remove_never_removes() {
 fn text_of_relation(relation: &ExprRelationHandle) -> String {
     String::from_utf8(relation.string().unwrap().as_bytes().to_vec()).unwrap()
 }
+
+#[test]
+fn invalid_division_has_one_nan_word_on_every_target() {
+    // The hardware default NaN of 0/0 is negative on x86-64 and positive on Arm (#201).
+    const INVALID_WORD: u64 = 0xfff8_0000_0000_0000;
+    let zero_by_zero: ExprHandle = real_divide(0.0, &ExprNumericValue::expression(0.0)).cast();
+    assert_eq!(
+        zero_by_zero.evaluate_numeric().unwrap().to_bits(),
+        INVALID_WORD
+    );
+    let infinity = ExprNumericValue::expression(f64::INFINITY);
+    let infinite_quotient: ExprHandle = real_divide(f64::INFINITY, &infinity).cast();
+    let folded = infinite_quotient.shallow_simplified();
+    assert_eq!(
+        folded.unwrap().evaluate_numeric().unwrap().to_bits(),
+        INVALID_WORD
+    );
+}

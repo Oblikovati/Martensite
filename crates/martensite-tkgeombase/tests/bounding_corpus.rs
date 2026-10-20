@@ -269,7 +269,7 @@ fn bounding_requests_and_retained_answers_stay_frozen() {
     );
     assert_eq!(
         super::fixture_hash(CHUNKS.iter().map(|(_, a)| *a)),
-        0x87a93fdb401ff74
+        0x9baa5e92ec2a444e
     );
 }
 fn assert_closed_box(request: &[f64], flags: usize, limits: &[f64]) {

@@ -58,10 +58,12 @@ The crate has no unsafe code and uses the workspace lints.
 ## Platform support
 
 The crate has no platform-specific code. Some values reproduce the GCC and
-glibc results on x86-64 Linux in software (x87 `long double`, `cbrt`, complex
+glibc results on x86-64 Linux in software (x87 `long double`, complex
 arithmetic, `std::sort` tie order), so they do not depend on the host C
-library. The other floating-point results use Rust's `f64` methods, which call
-the platform math library for the transcendental functions.
+library. Every transcendental function, `cbrt` included, comes from
+`martensite-cmath`, whose correctly rounded finite nonzero results have the same
+bits on every supported platform (#201). Correct rounding does not prescribe a
+NaN sign or payload; domain-error NaNs are compared by classification.
 
 ### Release matrix
 
@@ -71,9 +73,9 @@ workflow on the exact candidate commit and require all four targets to pass
 before tagging. Workflow runs retain the commands, diagnostics and results.
 
 The source has no `c_char` widening or other char-signedness dependent code.
-Exact-bit expectations for results computed through the platform math library
-(`sin`, `cos`, `atan2`, `exp`, `pow`) are checked on every target; a mismatch
-fails the release gate.
+Exact-bit expectations for results computed through the transcendental
+functions (`sin`, `cos`, `atan2`, `exp`, `pow`) are checked on every target; a
+mismatch fails the release gate.
 
 ## Dependency checks
 

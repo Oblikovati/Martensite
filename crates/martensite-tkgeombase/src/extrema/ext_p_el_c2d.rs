@@ -125,8 +125,8 @@ fn snap_to_start(circle: &Circle2, (u, p): (f64, Point2), uinf: f64, tol: f64) -
     if !(shift < tol && shift > -tol) {
         return (u, p);
     }
-    let x: Xy = circle.x_axis().direction().xy() * uinf.cos();
-    let y: Xy = circle.y_axis().direction().xy() * uinf.sin();
+    let x: Xy = circle.x_axis().direction().xy() * martensite_cmath::cos(uinf);
+    let y: Xy = circle.y_axis().direction().xy() * martensite_cmath::sin(uinf);
     (
         uinf,
         Point2::from(circle.location().xy() + (x + y) * circle.radius()),
@@ -226,7 +226,7 @@ impl ExtPElC2d {
         let parameters: Vec<f64> = polynomial_roots(&roots)?
             .into_iter()
             .filter(|&v| v > 0.)
-            .map(f64::ln)
+            .map(martensite_cmath::log)
             .collect();
         let value = |u: f64| elclib::value(u, hyperbola);
         let never_min = |_: f64, _: f64| false;

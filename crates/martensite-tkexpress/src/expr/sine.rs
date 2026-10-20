@@ -21,7 +21,7 @@ impl ExprGeneralExpression for ExprSine {
     unary_expression_members!();
     function_members!(ExprSine, "Sin(");
     fn shallow_simplified(&self) -> Result<ExprHandle, Failure> {
-        function_shallow_simplified::<ExprArcSine, _>(self, f64::sin)
+        function_shallow_simplified::<ExprArcSine, _>(self, martensite_cmath::sin)
     }
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         chain(self, x, |operand| {
@@ -30,6 +30,6 @@ impl ExprGeneralExpression for ExprSine {
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok(value.sin())
+        Ok(martensite_cmath::sin(value))
     }
 }

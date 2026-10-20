@@ -19,13 +19,13 @@ impl ExprGeneralExpression for ExprExponential {
     unary_expression_members!();
     function_members!(ExprExponential, "Exp(");
     fn shallow_simplified(&self) -> Result<ExprHandle, Failure> {
-        function_shallow_simplified::<ExprLogOfe, _>(self, f64::exp)
+        function_shallow_simplified::<ExprLogOfe, _>(self, martensite_cmath::exp)
     }
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         chain(self, x, |_| self.copy())
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok(value.exp())
+        Ok(martensite_cmath::exp(value))
     }
 }

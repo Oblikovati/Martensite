@@ -12,10 +12,11 @@ impl MultipleVarFunction for AckleyFunc {
 
         for i in 0..theX.length() as usize {
             aSum1 += *theX.at(i).unwrap() * *theX.at(i).unwrap();
-            aSum2 += (2.0 * aPI * *theX.at(i).unwrap()).cos();
+            aSum2 += martensite_cmath::cos(2.0 * aPI * *theX.at(i).unwrap());
         }
 
-        *theF = -20.0 * (-0.2 * (aSum1 / aN as f64).sqrt()).exp() - (aSum2 / aN as f64).exp()
+        *theF = -20.0 * martensite_cmath::exp(-0.2 * (aSum1 / aN as f64).sqrt())
+            - martensite_cmath::exp(aSum2 / aN as f64)
             + 20.0
             + std::f64::consts::E;
         true

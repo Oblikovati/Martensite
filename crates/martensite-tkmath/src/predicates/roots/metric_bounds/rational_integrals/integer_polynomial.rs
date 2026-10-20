@@ -100,7 +100,7 @@ pub(super) fn approximate(value: &BigInt, shift: u64) -> f64 {
     let dropped = bits.saturating_sub(62);
     let top = i64::try_from(value >> dropped).unwrap_or(0) as f64;
     let exponent = dropped as i64 - shift as i64;
-    top * 2f64.powi(exponent.clamp(-2000, 2000) as i32)
+    top * martensite_cmath::powi(2f64, exponent.clamp(-2000, 2000) as i32)
 }
 /// Exact `(signed mantissa, exponent)` with `value = mantissa * 2^exponent`.
 pub(super) fn decompose(value: f64) -> (i64, i64) {
@@ -154,7 +154,9 @@ mod tests {
         for value in [1.5, -0.1, f64::from_bits(1), -f64::MAX] {
             let (mantissa, exponent) = decompose(value);
             let half = (exponent / 2) as i32;
-            let rebuilt = mantissa as f64 * 2f64.powi(half) * 2f64.powi(exponent as i32 - half);
+            let rebuilt = mantissa as f64
+                * martensite_cmath::powi(2f64, half)
+                * martensite_cmath::powi(2f64, exponent as i32 - half);
             assert_eq!(rebuilt, value);
         }
         assert_eq!(

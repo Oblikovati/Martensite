@@ -24,14 +24,14 @@ impl Function for QuarticFunction {
 struct CosineFunction;
 impl Function for CosineFunction {
     fn value(&mut self, x: f64, result: &mut f64) -> bool {
-        *result = x.cos();
+        *result = martensite_cmath::cos(x);
         true
     }
 }
 struct ShiftedExponentialFunction;
 impl Function for ShiftedExponentialFunction {
     fn value(&mut self, x: f64, result: &mut f64) -> bool {
-        *result = (x - 3.0).exp();
+        *result = martensite_cmath::exp(x - 3.0);
         true
     }
 }

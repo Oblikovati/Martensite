@@ -99,7 +99,7 @@ impl QuadQuadGeo {
         self.pt2 = self.pt1;
         self.dir1 = Direction3::from_xyz(s.normp)?;
         self.dir2.set_xyz(s.axex)?;
-        self.param1 = (s.dist / s.angl.tan()).abs();
+        self.param1 = (s.dist / martensite_cmath::tan(s.angl)).abs();
         self.param2 = self.param1;
         self.param1bis = s.dist.abs();
         self.param2bis = self.param1bis;
@@ -120,7 +120,7 @@ impl QuadQuadGeo {
         let center: Point3 = inter.point(1)?;
         let distance: f64 = s.apex.distance(&center);
         // The parameter of the apex on the axis is negative (see the cone definition).
-        if inter.param_on_conic(1)? + cone.ref_radius() / s.angl.tan() < 0. {
+        if inter.param_on_conic(1)? + cone.ref_radius() / martensite_cmath::tan(s.angl) < 0. {
             s.axex.reverse();
             s.axey.reverse();
         }
@@ -138,7 +138,7 @@ impl QuadQuadGeo {
             self.pt1 = center;
             self.dir1 = cone.position().direction();
             self.dir2 = cone.position().x_direction();
-            self.param1 = s.apex.distance(&center) * s.angl.tan().abs();
+            self.param1 = s.apex.distance(&center) * martensite_cmath::tan(s.angl).abs();
         } else if s.cost < s.sina {
             self.section_hyperbola(&mut s, center, distance)?;
         } else {
@@ -225,7 +225,10 @@ fn cone_section(plane: Plane3, cone: Cone3) -> Result<ConeSection, Failure> {
     let axey: Xyz = normp.crossed(axis);
     let axex: Xyz = axey.crossed(normp);
     let angl: f64 = cone.semi_angle();
-    let (cosa, sina) = (angl.cos(), angl.sin().abs());
+    let (cosa, sina) = (
+        martensite_cmath::cos(angl),
+        martensite_cmath::sin(angl).abs(),
+    );
     let sint: f64 = axey.modulus();
     let cost: f64 = axis.dot(normp).abs();
     Ok(ConeSection {

@@ -1,0 +1,121 @@
+{
+  "angle_constant_interval_check": {
+    "exit": 0,
+    "library_environment": "../reference-proof/environment.json",
+    "precision": 256,
+    "reproducer": "README.md Python block",
+    "signed_constants": 8
+  },
+  "base": "148217f91efe6bb8ce0c9f96c6bff7d3b8834305",
+  "commands": [
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-cmath"
+      ],
+      "exit": 0,
+      "log": "first.log.gz"
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-cmath",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit": 0,
+      "log": "final-1.log.gz"
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-cmath",
+        "--",
+        "--test-threads=4"
+      ],
+      "exit": 0,
+      "log": "final-4.log.gz"
+    },
+    {
+      "argv": [
+        "cargo",
+        "+1.99.0",
+        "clippy",
+        "--locked",
+        "-p",
+        "martensite-cmath",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "log": "clippy.log.gz"
+    }
+  ],
+  "doctests_per_final_run": 28,
+  "environment": {
+    "CARGO_BUILD_JOBS": "1",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_TARGET_DIR": "/tmp/martensite-cmath-special-201-target",
+    "PATH": "/home/vmiguel/.cargo/bin:/usr/bin:/bin"
+  },
+  "failures": 0,
+  "format_check": {
+    "argv": [
+      "cargo",
+      "+1.99.0",
+      "fmt",
+      "--package",
+      "martensite-cmath",
+      "--",
+      "--check"
+    ],
+    "exit": 0
+  },
+  "ignores": 0,
+  "limits": "Linux-only scoped crate execution; no workspace/cross-platform/canonical-PR qualification",
+  "logs": {
+    "clippy.log.gz": {
+      "raw_sha256": "0325ddaf31cfd5f3ee5df3c630fe75ea685826a7da5a30e20688fc83586f7856",
+      "sha256": "2c19e30964f4636db6ffd9e211044548b0d9be48b0c551b5379882925bd24aae"
+    },
+    "final-1.log.gz": {
+      "raw_sha256": "103df3e4ac6b00d48f5f68ea3f9a9f47e36cf9ec22eabb1747e0c951a7dc27b6",
+      "sha256": "d3dd59acbf7b0fb56207878747f9aeaeecb2159ac1c9db6be2f4a5846149a674"
+    },
+    "final-4.log.gz": {
+      "raw_sha256": "e3fdadc3a926756b1d2ee4419af516792c116a3579d30c7cbae852d216cba7d5",
+      "sha256": "a1104dc91db06bfa099d72fdd16fab258c0f026a51d3b6e63a67f07a1b4729b1"
+    },
+    "first.log.gz": {
+      "raw_sha256": "ae11e7e02ea696f7f3a0f3b78b31c444918d13d998bc500a2fd9bcd5077c7dec",
+      "sha256": "7ae63f94305c0d30594c5d6a50d94bc28b6153bbe3c8ef74eabb7b60940f98c6"
+    }
+  },
+  "new_tests": 23,
+  "ordinary_tests_per_final_run": 33,
+  "source_sha256": {
+    "crates/martensite-cmath/tests/special_angles.rs": "538e14b5995600ef509e5ceaf2b92ab7e4bab09a30624fb0aeec9af5a18d7e13",
+    "crates/martensite-cmath/tests/special_contract_support.rs": "643643eaa047defa6ff2bfbc4a869b9942163d9d80f5bc9d3074978407bbd5fd",
+    "crates/martensite-cmath/tests/special_powers.rs": "3497dbe689286b543cddb40818b201985e4c96a3f82202bdaf673e5719cb6b95",
+    "crates/martensite-cmath/tests/special_remainder.rs": "0f0b0cc890068e563da9a5f818512bd28567d3728425a7d6a72c8294ac6e1927",
+    "crates/martensite-cmath/tests/special_unary.rs": "a2c30a761da3a2279c6c496f4f8124e71f1fb0893d5e5cd000eff759c6c2cffa",
+    "crates/martensite-cmath/tests/suites/cases_00.rs": "bc93979ff61e476da640f9d2622ba6838c4a24411a46fd3ba1b63ee30007685d"
+  },
+  "toolchain": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n"
+}

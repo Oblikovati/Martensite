@@ -151,7 +151,7 @@ fn rational_quarter_circle_meets_the_diagonal_on_the_unit_circle() {
     assert_eq!(contacts.len(), 1);
     let [x, y] = contacts[0].point();
     let slack = contacts[0].achieved_world_error() + 4. * f64::EPSILON;
-    assert!((x.hypot(y) - 1.).abs() <= slack);
+    assert!((martensite_cmath::hypot(x, y) - 1.).abs() <= slack);
     assert!((x - y).abs() <= 2. * ERROR);
     // u = sqrt(2) - 1 solves u^2 + 2u - 1 = 0.
     let [lower, upper] = contacts[0].target_parameter_bounds().unwrap();

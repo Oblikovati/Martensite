@@ -13,7 +13,7 @@ fn fixture_hashes_and_all_rows_are_preserved() {
     );
     assert_eq!(
         super::fixture_hash(CHUNKS.iter().map(|(_, r)| *r)),
-        9146267533082118241
+        9872480739077290917
     );
 }
 

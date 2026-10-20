@@ -253,7 +253,7 @@ fn polynomial_jacobi_polynomial_coefficient_conversion() {
     // Use 0-based arrays to match the ToCoefficients indexing expectations
     let mut aJacCoeff = reals(0, aJacSize - 1);
     for i in aJacCoeff.lower()..=aJacCoeff.upper() {
-        aJacCoeff[i] = (f64::from(i) * 0.1).sin(); // Some test values
+        aJacCoeff[i] = martensite_cmath::sin(f64::from(i) * 0.1); // Some test values
     }
 
     let mut aCoefficients = reals(0, aCoeffSize - 1);

@@ -41,7 +41,7 @@ impl IntQuadQuad {
         frame.set_location(cone.apex());
         let q: [f64; 10] = quadric.new_coefficients(quadric.coefficients(), frame)?;
         let [qxx, qyy, qzz, qxy, qxz, qyz, qx, qy, qz, q1] = q;
-        let tg: f64 = 1. / cone.semi_angle().tan();
+        let tg: f64 = 1. / martensite_cmath::tan(cone.semi_angle());
         // 1. A(t) = 0.
         let (z2_cte, z2_c, z2_s) = (qzz * tg * tg, tg * qxz, tg * qyz);
         let pol_z2 = SortedTrigRoots::new(

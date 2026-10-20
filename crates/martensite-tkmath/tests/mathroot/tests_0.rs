@@ -13,7 +13,7 @@ fn math_root_newton_cos_minus_x() {
     let aResult: ScalarResult = newton(&mut aFunc, 0.5, &Config::default());
     assert!(aResult.is_done());
 
-    let aFx: f64 = (aResult.root.unwrap()).cos() - aResult.root.unwrap();
+    let aFx: f64 = martensite_cmath::cos(aResult.root.unwrap()) - aResult.root.unwrap();
     near(aFx, 0.0, THE_TOLERANCE);
 }
 
@@ -42,7 +42,11 @@ fn math_root_newton_exp_function() {
     let mut aFunc: ExpMinusThreeFunc = ExpMinusThreeFunc::default();
     let aResult: ScalarResult = newton(&mut aFunc, 1.0, &Config::default());
     assert!(aResult.is_done());
-    near(aResult.root.unwrap(), (3.0_f64).ln(), THE_TOLERANCE);
+    near(
+        aResult.root.unwrap(),
+        martensite_cmath::log(3.0_f64),
+        THE_TOLERANCE,
+    );
 }
 
 #[test]

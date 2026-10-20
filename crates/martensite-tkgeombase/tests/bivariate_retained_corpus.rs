@@ -34,7 +34,7 @@ fn check_frozen_scope() {
     );
     assert_eq!(
         construction_corpus::replay::fixture_hash([ANSWERS].into_iter()),
-        9740997477497599429
+        17538326652504145611
     );
     for &(family, expected) in FAMILIES {
         assert_eq!(

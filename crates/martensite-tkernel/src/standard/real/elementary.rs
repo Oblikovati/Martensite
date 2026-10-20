@@ -1,10 +1,9 @@
 //! The deprecated real-number wrappers of `<cmath>` (acos, cosh, next_after, max, ...).
 //!
-//! They are deprecated but public API. Each calls the same C library
-//! function as the header: Rust's float methods reach the platform libm for the
-//! transcendental functions, and the inverse hyperbolic functions, which Rust computes
-//! with its own formulas, go through `martensite_cmath`. `Max`/`Min` keep the
-//! `std::max`/`std::min` comparison, not IEEE `fmax`/`fmin`.
+//! They are deprecated but public API. Each transcendental function calls the
+//! correctly rounded function of `martensite_cmath`, so every platform returns the
+//! same bits (#201). `Max`/`Min` keep the `std::max`/`std::min` comparison, not
+//! IEEE `fmax`/`fmin`.
 
 /// `std::acos`.
 ///
@@ -12,7 +11,7 @@
 /// assert_eq!(martensite_tkernel::standard::real::acos(1.0), 0.0);
 /// ```
 pub fn acos(value: f64) -> f64 {
-    value.acos()
+    martensite_cmath::acos(value)
 }
 
 /// `std::asin`.
@@ -21,7 +20,7 @@ pub fn acos(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::asin(0.0), 0.0);
 /// ```
 pub fn asin(value: f64) -> f64 {
-    value.asin()
+    martensite_cmath::asin(value)
 }
 
 /// `std::atan`.
@@ -30,7 +29,7 @@ pub fn asin(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::atan(0.0), 0.0);
 /// ```
 pub fn atan(value: f64) -> f64 {
-    value.atan()
+    martensite_cmath::atan(value)
 }
 
 /// `std::atan2(y, x)`; the first argument is named `x` on purpose.
@@ -39,7 +38,7 @@ pub fn atan(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::atan2(0.0, 1.0), 0.0);
 /// ```
 pub fn atan2(first: f64, second: f64) -> f64 {
-    first.atan2(second)
+    martensite_cmath::atan2(first, second)
 }
 
 /// The C library `atanh` (NaN outside [-1, 1], infinities at the ends).
@@ -75,7 +74,7 @@ pub fn asinh(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::cosh(0.0), 1.0);
 /// ```
 pub fn cosh(value: f64) -> f64 {
-    value.cosh()
+    martensite_cmath::cosh(value)
 }
 
 /// `std::sinh`.
@@ -84,7 +83,7 @@ pub fn cosh(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::sinh(0.0), 0.0);
 /// ```
 pub fn sinh(value: f64) -> f64 {
-    value.sinh()
+    martensite_cmath::sinh(value)
 }
 
 /// `std::tanh`.
@@ -93,7 +92,7 @@ pub fn sinh(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::tanh(0.0), 0.0);
 /// ```
 pub fn tanh(value: f64) -> f64 {
-    value.tanh()
+    martensite_cmath::tanh(value)
 }
 
 /// `std::cos`.
@@ -102,7 +101,7 @@ pub fn tanh(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::cos(0.0), 1.0);
 /// ```
 pub fn cos(value: f64) -> f64 {
-    value.cos()
+    martensite_cmath::cos(value)
 }
 
 /// `std::sin`.
@@ -111,7 +110,7 @@ pub fn cos(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::sin(0.0), 0.0);
 /// ```
 pub fn sin(value: f64) -> f64 {
-    value.sin()
+    martensite_cmath::sin(value)
 }
 
 /// `std::tan`.
@@ -120,7 +119,7 @@ pub fn sin(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::tan(0.0), 0.0);
 /// ```
 pub fn tan(value: f64) -> f64 {
-    value.tan()
+    martensite_cmath::tan(value)
 }
 
 /// `std::exp`.
@@ -129,7 +128,7 @@ pub fn tan(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::exp(0.0), 1.0);
 /// ```
 pub fn exp(value: f64) -> f64 {
-    value.exp()
+    martensite_cmath::exp(value)
 }
 
 /// The natural logarithm `std::log`.
@@ -138,7 +137,7 @@ pub fn exp(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::log(1.0), 0.0);
 /// ```
 pub fn log(value: f64) -> f64 {
-    value.ln()
+    martensite_cmath::log(value)
 }
 
 /// `std::log10`.
@@ -147,7 +146,7 @@ pub fn log(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::log10(100.0), 2.0);
 /// ```
 pub fn log10(value: f64) -> f64 {
-    value.log10()
+    martensite_cmath::log10(value)
 }
 
 /// `std::pow`.
@@ -156,7 +155,7 @@ pub fn log10(value: f64) -> f64 {
 /// assert_eq!(martensite_tkernel::standard::real::pow(2.0, 10.0), 1024.0);
 /// ```
 pub fn pow(value: f64, power: f64) -> f64 {
-    value.powf(power)
+    martensite_cmath::pow(value, power)
 }
 
 /// The correctly rounded `std::sqrt`.

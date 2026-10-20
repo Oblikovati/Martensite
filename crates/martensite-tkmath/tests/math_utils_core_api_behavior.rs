@@ -1,6 +1,6 @@
 //! Supplemental tests for the public math_utils core members
 //! (the `utils` helpers, the iteration-count BracketMinimum overload, the Kronrod and
-//! ordered Gauss wrappers, and the glibc-exact CubeRoot).
+//! ordered Gauss wrappers, and the correctly rounded CubeRoot).
 use martensite_tkernel::precision;
 use martensite_tkmath::math::Vector;
 use martensite_tkmath::math_utils::{utils, *};
@@ -139,13 +139,13 @@ fn kronrod_and_ordered_gauss_wrappers_validate_sizes() {
 }
 
 #[test]
-fn cube_root_reproduces_glibc_bits() {
-    // Regression: Rust's correctly rounded cbrt returns ...164 here; glibc 2.39 returns ...165.
-    assert_eq!(cube_root(2e100).to_bits(), 5107287141773884165);
+fn cube_root_is_correctly_rounded() {
+    // Behavior version 2 (#201): the mpmath reference rounds to ...164; glibc 2.39 gave ...165.
+    assert_eq!(cube_root(2e100).to_bits(), 5107287141773884164);
     assert_eq!(cube_root(-8.0), -2.0);
-    // glibc's kernel is not exact on perfect cubes: cbrt(27) and cbrt(0.125) are one ulp off.
-    assert_eq!(cube_root(27.0), 3.0000000000000004);
-    assert_eq!(cube_root(0.125), 0.49999999999999994);
+    // Perfect cubes are exact; glibc's kernel was one ulp off for both.
+    assert_eq!(cube_root(27.0), 3.0);
+    assert_eq!(cube_root(0.125), 0.5);
     assert!(cube_root(f64::NAN).is_nan());
     assert_eq!(cube_root(f64::INFINITY), f64::INFINITY);
     assert_eq!(cube_root(-0.0).to_bits(), (-0.0_f64).to_bits());

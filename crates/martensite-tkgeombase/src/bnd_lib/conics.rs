@@ -67,10 +67,14 @@ impl Conic3 {
             } else {
                 (self.minor * yk) / (self.major * xk)
             };
-            t_min = elclib::in_period(ratio.atan(), 0.0, 2.0 * PI);
+            t_min = elclib::in_period(martensite_cmath::atan(ratio), 0.0, 2.0 * PI);
         }
         let t_max: f64 = if t_min <= PI { t_min + PI } else { t_min - PI };
-        let value = |t: f64| self.major * t.cos() * xk + self.minor * t.sin() * yk + self.origin[k];
+        let value = |t: f64| {
+            self.major * martensite_cmath::cos(t) * xk
+                + self.minor * martensite_cmath::sin(t) * yk
+                + self.origin[k]
+        };
         let (v_min, v_max) = (value(t_min), value(t_max));
         if v_min > v_max {
             return ((v_max, t_max), (v_min, t_min));

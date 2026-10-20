@@ -20,13 +20,13 @@ impl ExprGeneralExpression for ExprLogOfe {
     unary_expression_members!();
     function_members!(ExprLogOfe, "Ln(");
     fn shallow_simplified(&self) -> Result<ExprHandle, Failure> {
-        function_shallow_simplified::<ExprExponential, _>(self, f64::ln)
+        function_shallow_simplified::<ExprExponential, _>(self, martensite_cmath::log)
     }
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         quotient_rule(self, x, copy_share)
     }
     fn evaluate(&self, vars: &ExprVariables<'_>, vals: &ExprValues<'_>) -> Result<f64, Failure> {
         let value: f64 = evaluate_operand(self, vars, vals)?;
-        Ok(value.ln())
+        Ok(martensite_cmath::log(value))
     }
 }

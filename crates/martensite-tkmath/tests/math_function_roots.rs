@@ -47,20 +47,20 @@ struct SineWithDerivative;
 impl Function for SineWithDerivative {
     fn value(&mut self, x: f64, value: &mut f64) -> bool {
         let _ = x;
-        *value = x.sin();
+        *value = martensite_cmath::sin(x);
         true
     }
 }
 impl FunctionWithDerivative for SineWithDerivative {
     fn derivative(&mut self, x: f64, derivative: &mut f64) -> bool {
         let _ = x;
-        *derivative = x.cos();
+        *derivative = martensite_cmath::cos(x);
         true
     }
     fn values(&mut self, x: f64, value: &mut f64, derivative: &mut f64) -> bool {
         let _ = x;
-        *value = x.sin();
-        *derivative = x.cos();
+        *value = martensite_cmath::sin(x);
+        *derivative = martensite_cmath::cos(x);
         true
     }
 }

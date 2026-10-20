@@ -2,17 +2,30 @@
 autotests = false
 name = "martensite-cmath"
 version = "0.3.3"
-description = "Adapter to the platform C math library for functions Rust re-implements differently"
+description = "Portable rounding for transcendental functions behind a typed Rust interface"
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 license-file.workspace = true
 repository.workspace = true
 
+# Correctly rounded, pure-Rust transcendental functions. The exact pin keeps the
+# kernel's recorded results stable; changing it is a reviewed behavior change (#201).
+[dependencies]
+metallic = "=0.3.0"
+
+[features]
+# Test-only instrumentation that compares every call with the platform libm the
+# kernel used before #201 and can return either result; see
+# docs/features/portable-transcendentals/attribution/README.md. Never enabled by a
+# release build or a CI gate.
+libm-attribution = []
+
 # The workspace forbids unsafe code. This adapter is the one place allowed to
-# declare foreign C math functions, so it denies unsafe code and its FFI module
-# opts in with `#[allow(unsafe_code)]` and a SAFETY comment (AGENTS.md, "Unsafe code
-# exception"); clippy checks that comment. The other lints match the workspace.
+# declare foreign C math functions (the exact IEEE `remainder`), so it denies unsafe
+# code and its FFI module opts in with `#[allow(unsafe_code)]` and a SAFETY comment
+# (AGENTS.md, "Unsafe code exception"); clippy checks that comment. The other lints
+# match the workspace.
 [lints.rust]
 unsafe_code = "deny"
 missing_docs = "warn"

@@ -38,7 +38,7 @@ fn math_root_comparison_bisection_newton_cos_minus_x() {
         THE_TOLERANCE,
     );
 
-    let aFx: f64 = (aNewResult.root.unwrap()).cos() - aNewResult.root.unwrap();
+    let aFx: f64 = martensite_cmath::cos(aNewResult.root.unwrap()) - aNewResult.root.unwrap();
     near(aFx, 0.0, THE_TOLERANCE);
 }
 

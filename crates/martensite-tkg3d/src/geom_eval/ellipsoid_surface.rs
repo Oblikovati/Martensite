@@ -182,10 +182,10 @@ impl EvalElementarySurface for GeomEvalEllipsoidSurface {
         EllipsoidPatch {
             frame: EvalFrame::new(state.pos),
             axes: [state.a, state.b, state.c],
-            cos_u: u.cos(),
-            sin_u: u.sin(),
-            cos_v: v.cos(),
-            sin_v: v.sin(),
+            cos_u: martensite_cmath::cos(u),
+            sin_u: martensite_cmath::sin(u),
+            cos_v: martensite_cmath::cos(v),
+            sin_v: martensite_cmath::sin(v),
         }
     }
     // The phase-shift identities `d^n cos(t) = cos(t + n Pi/2)`; the Z term is
@@ -195,9 +195,12 @@ impl EvalElementarySurface for GeomEvalEllipsoidSurface {
         let frame: EvalFrame = EvalFrame::new(state.pos);
         let phase_u: f64 = f64::from(nu) * PI / 2.0;
         let phase_v: f64 = f64::from(nv) * PI / 2.0;
-        let x_coeff: f64 = state.a * (v + phase_v).cos() * (u + phase_u).cos();
-        let y_coeff: f64 = state.b * (v + phase_v).cos() * (u + phase_u).sin();
-        let z_coeff: f64 = state.c * (v + phase_v).sin() * if nu == 0 { 1.0 } else { 0.0 };
+        let x_coeff: f64 =
+            state.a * martensite_cmath::cos(v + phase_v) * martensite_cmath::cos(u + phase_u);
+        let y_coeff: f64 =
+            state.b * martensite_cmath::cos(v + phase_v) * martensite_cmath::sin(u + phase_u);
+        let z_coeff: f64 =
+            state.c * martensite_cmath::sin(v + phase_v) * if nu == 0 { 1.0 } else { 0.0 };
         Vector3::from(frame.x * x_coeff + frame.y * y_coeff + frame.z * z_coeff)
     }
     fn dump_parameters(&self, stream: &mut DumpStream) -> io::Result<()> {

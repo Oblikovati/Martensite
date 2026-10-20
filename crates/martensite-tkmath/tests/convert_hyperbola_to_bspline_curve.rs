@@ -19,16 +19,22 @@ fn check_ends_and_tables(aConv: &ConicToBSplineCurve, aHypr: &Hyperbola2, aU1: f
     let aXDir = aHypr.x_axis().direction();
     let aYDir = aHypr.y_axis().direction();
 
-    let aFirstX: f64 =
-        aCenter.x() + aMajR * aU1.cosh() * aXDir.x() + aMinR * aU1.sinh() * aYDir.x();
-    let aFirstY: f64 =
-        aCenter.y() + aMajR * aU1.cosh() * aXDir.y() + aMinR * aU1.sinh() * aYDir.y();
+    let aFirstX: f64 = aCenter.x()
+        + aMajR * martensite_cmath::cosh(aU1) * aXDir.x()
+        + aMinR * martensite_cmath::sinh(aU1) * aYDir.x();
+    let aFirstY: f64 = aCenter.y()
+        + aMajR * martensite_cmath::cosh(aU1) * aXDir.y()
+        + aMinR * martensite_cmath::sinh(aU1) * aYDir.y();
     assert!((aPoles[1].x() - aFirstX).abs() <= 1.0e-10);
     assert!((aPoles[1].y() - aFirstY).abs() <= 1.0e-10);
 
     // Verify last pole matches hyperbola point at U2
-    let aLastX: f64 = aCenter.x() + aMajR * aU2.cosh() * aXDir.x() + aMinR * aU2.sinh() * aYDir.x();
-    let aLastY: f64 = aCenter.y() + aMajR * aU2.cosh() * aXDir.y() + aMinR * aU2.sinh() * aYDir.y();
+    let aLastX: f64 = aCenter.x()
+        + aMajR * martensite_cmath::cosh(aU2) * aXDir.x()
+        + aMinR * martensite_cmath::sinh(aU2) * aYDir.x();
+    let aLastY: f64 = aCenter.y()
+        + aMajR * martensite_cmath::cosh(aU2) * aXDir.y()
+        + aMinR * martensite_cmath::sinh(aU2) * aYDir.y();
     assert!((aPoles[aConv.nb_poles()].x() - aLastX).abs() <= 1.0e-10);
     assert!((aPoles[aConv.nb_poles()].y() - aLastY).abs() <= 1.0e-10);
 

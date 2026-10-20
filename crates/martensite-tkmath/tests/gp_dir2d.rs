@@ -114,3 +114,11 @@ fn geometry_dir2d_zero_magnitude_throws() {
         "Standard_ConstructionError"
     );
 }
+
+#[test]
+fn infinite_component_normalizes_to_the_documented_nan_word() {
+    // inf/inf is the hardware default NaN, whose sign differs by target (#201).
+    let direction = Direction2::new(f64::INFINITY, 0.0).unwrap();
+    assert_eq!(direction.x().to_bits(), 0xfff8_0000_0000_0000);
+    assert_eq!(direction.y(), 0.0);
+}

@@ -101,7 +101,11 @@ fn circle2d_eval(circle: &Circle2, u: f64) -> Point2 {
     let x_dir: Xy = frame.x_direction().xy();
     let y_dir: Xy = frame.y_direction().xy();
     let radius: f64 = circle.radius();
-    Point2::from(origin + x_dir * (radius * u.cos()) + y_dir * (radius * u.sin()))
+    Point2::from(
+        origin
+            + x_dir * (radius * martensite_cmath::cos(u))
+            + y_dir * (radius * martensite_cmath::sin(u)),
+    )
 }
 
 fn circle2d_arc<'a>(circle: &Circle2, eval: &'a dyn Fn(f64) -> Point2) -> EllipticArc<'a, Point2> {

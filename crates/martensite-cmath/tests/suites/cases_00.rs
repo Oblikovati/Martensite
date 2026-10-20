@@ -1,3 +1,23 @@
 // Modules of the `toolkit` test executable: one per tests/*.rs case file, sorted.
 #[path = "../cmath_behavior.rs"]
 pub mod cmath_behavior;
+#[path = "../correct_rounding.rs"]
+pub mod correct_rounding;
+#[path = "../invalid_quotient.rs"]
+pub mod invalid_quotient;
+#[path = "../powi_sequence.rs"]
+pub mod powi_sequence;
+#[path = "../reference_values.rs"]
+pub mod reference_values;
+#[path = "../selected_inverse_domain_nan.rs"]
+pub mod selected_inverse_domain_nan;
+#[path = "../special_angles.rs"]
+pub mod special_angles;
+#[path = "../special_contract_support.rs"]
+pub mod special_contract_support;
+#[path = "../special_powers.rs"]
+pub mod special_powers;
+#[path = "../special_remainder.rs"]
+pub mod special_remainder;
+#[path = "../special_unary.rs"]
+pub mod special_unary;
