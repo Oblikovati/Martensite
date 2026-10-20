@@ -6,6 +6,20 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added the `martensite-tkbrep` crate for the boundary representation: topological
+  shapes and their exploration, the geometric shapes with their builder and queries,
+  shape tools and adaptors, local continuity, the graph form of a shape and the binary
+  shape stream (#208).
+- Added the `martensite-tkgeomalgo` crate for geometric algorithms: curve and surface
+  intersections, hatching, 2d tangent constraint solving, filling, plate surfaces,
+  evolution laws, local continuity analysis and the sketch spline construction (#208).
+- Added the `martensite-tktopalgo` crate for topological algorithms: point and solid
+  classification, shape construction and sewing, validity checks, distance and
+  proximity extrema, bounding boxes, global properties and the medial axis of faces
+  (#208).
+
 ## [0.3.4] - 2026-10-20
 
 ### Added

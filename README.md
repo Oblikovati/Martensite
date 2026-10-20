@@ -25,6 +25,9 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkcdf` | Application documents, document references and metadata, format drivers and a light XML parser. |
 | `martensite-tklcaf` | Labels and attributes, transactions with undo and redo, standard attributes, functions and documents. |
 | `martensite-tkservice` | Windows and events, images, fonts, the presentation data model and graphic driver interfaces. |
+| `martensite-tkbrep` | Topological shapes, their exploration and tools, geometric shapes, the shape graph and the binary shape stream. |
+| `martensite-tkgeomalgo` | Curve and surface intersections, hatching, tangent constraints, filling, plates, laws and sketch splines. |
+| `martensite-tktopalgo` | Classification, shape construction and sewing, checks, extrema, bounding boxes and global properties. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [math guide](docs/features/martensite-tkmath/README.md), and
@@ -32,7 +35,10 @@ See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [planar geometry guide](docs/features/martensite-tkg2d/README.md), and the
 [document framework](docs/features/martensite-tkcdf/README.md),
 [application data framework](docs/features/martensite-tklcaf/README.md) and
-[visualization services](docs/features/martensite-tkservice/README.md) guides for module and test details.
+[visualization services](docs/features/martensite-tkservice/README.md) guides, and the
+[boundary representation](docs/features/martensite-tkbrep/README.md),
+[geometric algorithm](docs/features/martensite-tkgeomalgo/README.md) and
+[topological algorithm](docs/features/martensite-tktopalgo/README.md) guides for module and test details.
 
 ## Getting started
 
