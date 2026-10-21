@@ -7,8 +7,6 @@ use super::direct_modification::copied_pcurve;
 use super::edge_copy::copy_edge_curve;
 use super::modification::{ShapeCustomModification, ShapeCustomModificationFields};
 use martensite_cmath as cmath;
-use martensite_cmath as cmath;
-use martensite_cmath as cmath;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::brep_tools::{BRepToolsModification, NewCurve, NewSurface};
 use martensite_tkbrep::topods::{Edge, Face, Vertex};
@@ -32,10 +30,8 @@ use std::f64::consts::PI;
 /// p-curve on such a surface are copied (the p-curves of a sphere moved by 2*PI in V).
 ///
 /// ```
-/// use martensite_cmath as cmath;
-use martensite_tkbrep::brep_tools::{BRepToolsModification, NewSurface};
-/// use martensite_cmath as cmath;
-use martensite_tkbrep::topods::Face;
+/// use martensite_tkbrep::brep_tools::{BRepToolsModification, NewSurface};
+/// use martensite_tkbrep::topods::Face;
 /// use martensite_tkshhealing::shape_custom::ShapeCustomConvertToRevolution;
 /// let modification = ShapeCustomConvertToRevolution::new();
 /// assert!(modification.new_surface(&Face::default(), &mut NewSurface::default()).is_err());
