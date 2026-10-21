@@ -52,7 +52,7 @@ fn successful_body(context: &CaseContext, owned: PreparedOwner) -> Result<(), Bo
 
 fn refusing_preparation(events: &Events) -> Result<PreparedOwner, Box<dyn Error>> {
     events.borrow_mut().push("prepare");
-    Err(Box::new(io::Error::from_raw_os_error(libc::EIO)))
+    Err(Box::new(io::Error::from_raw_os_error(5)))
 }
 
 #[test]
@@ -69,7 +69,7 @@ fn preparation_error_retains_typed_cause_without_policy_body_or_completion() {
     )
     .unwrap_err();
     assert!(matches!(error, CaseFailure::Preparation(_)));
-    assert_errno(&error, libc::EIO);
+    assert_errno(&error, 5);
     assert_eq!(*events.borrow(), ["prepare"]);
     assert!(!context.directory.join("prepared.txt").exists());
     assert_not_completed(&context);
@@ -89,7 +89,7 @@ fn policy_failure_drops_prepared_owner_and_retains_its_original_cause() {
     )
     .unwrap_err();
     assert!(matches!(error, CaseFailure::Policy(_)));
-    assert_errno(&error, libc::EPERM);
+    assert_errno(&error, 1);
     assert_eq!(*events.borrow(), ["prepare", "policy", "drop"]);
     context.require_record("prepared.txt").unwrap();
     assert_not_completed(&context);
@@ -97,7 +97,7 @@ fn policy_failure_drops_prepared_owner_and_retains_its_original_cause() {
 
 fn refusing_body(owned: PreparedOwner) -> Result<(), Box<dyn Error>> {
     owned.events.borrow_mut().push("body");
-    Err(Box::new(io::Error::from_raw_os_error(libc::EINVAL)))
+    Err(Box::new(io::Error::from_raw_os_error(22)))
 }
 
 #[test]
@@ -114,7 +114,7 @@ fn body_failure_drops_owner_and_never_publishes_completion() {
     )
     .unwrap_err();
     assert!(matches!(error, CaseFailure::Body(_)));
-    assert_errno(&error, libc::EINVAL);
+    assert_errno(&error, 22);
     assert_eq!(*events.borrow(), ["prepare", "policy", "body", "drop"]);
     assert_not_completed(&context);
 }

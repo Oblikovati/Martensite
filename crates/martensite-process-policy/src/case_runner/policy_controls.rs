@@ -16,7 +16,7 @@ impl PolicyInstaller for RecordingChildPolicy<'_> {
         assert_eq!(seconds, 60);
         self.events.borrow_mut().push("policy");
         if self.refuse {
-            return Err(Box::new(io::Error::from_raw_os_error(libc::EPERM)));
+            return Err(Box::new(io::Error::from_raw_os_error(1)));
         }
         Ok(())
     }
@@ -54,7 +54,7 @@ fn installation_refusal_retains_typed_cause_and_prevents_body_completion() {
     )
     .unwrap_err();
     assert!(matches!(error, CaseFailure::Policy(_)));
-    assert_errno(&error, libc::EPERM);
+    assert_errno(&error, 1);
     assert_eq!(*events.borrow(), ["policy"]);
     assert!(!context.directory.join("complete.txt").exists());
 }
@@ -86,11 +86,11 @@ fn returned_body_error_remains_the_original_source_without_completion() {
     let error = execute_with(
         &context,
         spec(),
-        || Err(Box::new(io::Error::from_raw_os_error(libc::EINVAL))),
+        || Err(Box::new(io::Error::from_raw_os_error(22))),
         &policy(&events, false),
     )
     .unwrap_err();
     assert!(matches!(error, CaseFailure::Body(_)));
-    assert_errno(&error, libc::EINVAL);
+    assert_errno(&error, 22);
     assert!(!context.directory.join("complete.txt").exists());
 }

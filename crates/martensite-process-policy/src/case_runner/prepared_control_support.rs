@@ -32,7 +32,7 @@ impl PolicyInstaller for OrderedPolicy<'_> {
         self.context.require_record("prepared.txt").unwrap();
         self.events.borrow_mut().push("policy");
         if self.refuse {
-            return Err(Box::new(io::Error::from_raw_os_error(libc::EPERM)));
+            return Err(Box::new(io::Error::from_raw_os_error(1)));
         }
         Ok(())
     }
