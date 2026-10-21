@@ -1,0 +1,493 @@
+use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
+use martensite_tkbrep::brep_tools::{ReShape, WireExplorer, outer_wire};
+use martensite_tkbrep::topexp::Explorer;
+use martensite_tkbrep::topods::{Edge, Face, Shape, Vertex, Wire};
+use martensite_tkernel::ncollection::Array1;
+use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
+use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dCurve, Geom2dTrimmedCurve};
+use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
+use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
+use martensite_tkmath::gp::{Axis2, Direction3, Point2, Point3, StandardDirection3};
+use martensite_tkprim::brep_prim_api::{BRepPrimAPIMakeCylinder, BRepPrimAPIMakeOneAxis};
+use martensite_tkshhealing::shape_build::ShapeBuildReShape;
+use martensite_tkshhealing::shape_upgrade::ShapeUpgradeUnifySameDomain;
+use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
+use martensite_tktopalgo::brep_check::BRepCheckAnalyzer;
+
+const NATIVE_SEAM: &str =
+    include_str!("../fixtures/behavior/tkshhealing_unify_seam_pcurve.expected");
+const NATIVE_MULTI_SUPPORT: &str =
+    include_str!("../fixtures/behavior/tkshhealing_unify_multi_support.expected");
+
+#[test]
+fn adjacent_segments_of_a_native_cylinder_seam_merge_back_to_one_seam() {
+    let input = split_cylinder_seam();
+    assert_eq!(unique_edge_count(&input), native_value("input_edges"));
+    assert!(is_valid(&input));
+    assert!(NATIVE_SEAM.contains("input_valid 1"));
+    let unifier = ShapeUpgradeUnifySameDomain::new(&input, true, false, true);
+    unifier.build().unwrap();
+    let result = unifier.shape();
+    assert_eq!(unique_edge_count(&result), native_value("result_edges"));
+    assert!(is_valid(&result));
+    assert_native_seam_pair(&result);
+}
+
+#[test]
+fn split_tangent_cylinder_boundary_merges_pcurves_on_both_supports() {
+    assert_eq!(native_support_row_count(), 2);
+    let input = tangent_cylinder_shell();
+    assert!(is_valid(&input));
+    assert_eq!(
+        tangent_input_bspline_pcurve_count(&input),
+        native_value_from(NATIVE_MULTI_SUPPORT, "input_bspline_pcurves")
+    );
+    assert_eq!(
+        unique_edge_count(&input),
+        native_value_from(NATIVE_MULTI_SUPPORT, "input_edges")
+    );
+    let unifier = ShapeUpgradeUnifySameDomain::new(&input, true, false, true);
+    unifier.build().unwrap();
+    let result = unifier.shape();
+    assert!(is_valid(&result));
+    assert_eq!(
+        unique_edge_count(&result),
+        native_value_from(NATIVE_MULTI_SUPPORT, "result_edges")
+    );
+    assert_two_support_seam_pcurves(&result);
+}
+
+fn native_support_row_count() -> usize {
+    NATIVE_MULTI_SUPPORT
+        .lines()
+        .filter(|line| line.starts_with("support "))
+        .count()
+}
+
+fn tangent_cylinder_shell() -> Shape {
+    let first = cylinder_face_at(Axis2::with_standard(
+        Point3::default(),
+        StandardDirection3::Z,
+    ));
+    let second_axes = Axis2::with_x_direction(
+        Point3::new(4.0, 0.0, 0.0),
+        Direction3::new(0.0, 0.0, 1.0).unwrap(),
+        Direction3::new(-1.0, 0.0, 0.0).unwrap(),
+    )
+    .unwrap();
+    let second = cylinder_face_at(second_axes);
+    let first_seam = seam_edge(&first).unwrap();
+    let second_seam = seam_edge(&second).unwrap();
+    let segments = split_edge_pair(&first_seam, &first).unwrap();
+    attach_split_bspline_pcurves(&segments, &first_seam, &first).unwrap();
+    attach_split_bspline_pcurves(&segments, &second_seam, &second).unwrap();
+    let first_face = rebuild_lateral_face(&first, &first_seam, &segments).unwrap();
+    let second_face = rebuild_shared_vertex_face(&second, &second_seam, &segments).unwrap();
+    make_shell(&first_face, &second_face)
+}
+
+fn cylinder_face_at(axes: Axis2) -> Face {
+    let mut maker = BRepPrimAPIMakeCylinder::with_axes(axes, 2.0, 5.0);
+    maker.face().unwrap()
+}
+
+fn attach_split_bspline_pcurves(
+    segments: &(Edge, Edge),
+    seam: &Edge,
+    face: &Face,
+) -> Result<(), Failure> {
+    set_split_bspline_pcurves(&segments.0, seam, face, (0.0, 2.5))?;
+    set_split_bspline_pcurves(&segments.1, seam, face, (2.5, 5.0))
+}
+
+fn set_split_bspline_pcurves(
+    segment: &Edge,
+    source: &Edge,
+    face: &Face,
+    range: (f64, f64),
+) -> Result<(), Failure> {
+    let mut reversed = source.clone();
+    reversed.reverse();
+    let first = linear_bspline(&BRepTool::curve_on_face(source, face)?.pcurve, range)?;
+    let second = linear_bspline(&BRepTool::curve_on_face(&reversed, face)?.pcurve, range)?;
+    update_bspline_pcurve_pair(segment, (&first, &second), face, range)
+}
+
+fn linear_bspline(
+    source: &Handle<dyn Geom2dCurve>,
+    range: (f64, f64),
+) -> Result<Handle<dyn Geom2dCurve>, Failure> {
+    let poles = [source.eval_d0(range.0)?, source.eval_d0(range.1)?];
+    let knots = [range.0, range.1];
+    let multiplicities = [2, 2];
+    let poles = Array1::from_shared(&poles, 1);
+    let knots = Array1::from_shared(&knots, 1);
+    let multiplicities = Array1::from_shared(&multiplicities, 1);
+    let curve = Geom2dBSplineCurve::new(&poles, &knots, &multiplicities, 1, false)?;
+    Ok(Handle::new(curve).cast())
+}
+
+fn update_bspline_pcurve_pair(
+    edge: &Edge,
+    pcurves: (&Handle<dyn Geom2dCurve>, &Handle<dyn Geom2dCurve>),
+    face: &Face,
+    range: (f64, f64),
+) -> Result<(), Failure> {
+    let builder = BRepBuilder::default();
+    builder.update_edge_pcurves_on_face(edge, pcurves, face, BRepTool::edge_tolerance(edge)?)?;
+    let (surface, location) = BRepTool::surface_with_location(face)?;
+    builder.range_on_surface(edge, &surface, &location, range.0, range.1)
+}
+
+fn tangent_input_bspline_pcurve_count(shape: &Shape) -> usize {
+    let mut count = 0;
+    for face_shape in Explorer::new(shape, ShapeEnum::Face, ShapeEnum::Shape).unwrap() {
+        let face = martensite_tkbrep::topods::face(&face_shape).unwrap();
+        let mut visited = Vec::new();
+        for candidate in Explorer::new(
+            &face.clone().into_shape(),
+            ShapeEnum::Edge,
+            ShapeEnum::Shape,
+        )
+        .unwrap()
+        {
+            let edge = martensite_tkbrep::topods::edge(&candidate).unwrap();
+            if !BRepTool::is_closed_on_face(&edge, &face).unwrap()
+                || visited.iter().any(|known: &Edge| known.is_same(&edge))
+            {
+                continue;
+            }
+            visited.push(edge.clone());
+            count += linear_bspline_pair_count(&edge, &face);
+        }
+    }
+    count
+}
+
+fn linear_bspline_pair_count(edge: &Edge, face: &Face) -> usize {
+    let forward = BRepTool::curve_on_face(edge, face).unwrap();
+    let adaptor = Geom2dAdaptorCurve::with_curve(&forward.pcurve).unwrap();
+    assert_eq!(
+        adaptor.get_type().unwrap(),
+        martensite_tkmath::geom_abs::CurveType::BSplineCurve
+    );
+    let mut reversed = edge.clone();
+    reversed.reverse();
+    let backward = BRepTool::curve_on_face(&reversed, face).unwrap();
+    let adaptor = Geom2dAdaptorCurve::with_curve(&backward.pcurve).unwrap();
+    assert_eq!(
+        adaptor.get_type().unwrap(),
+        martensite_tkmath::geom_abs::CurveType::BSplineCurve
+    );
+    2
+}
+
+fn rebuild_shared_vertex_face(
+    source: &Face,
+    seam: &Edge,
+    segments: &(Edge, Edge),
+) -> Result<Face, Failure> {
+    let result = rebuild_lateral_face(source, seam, segments)?;
+    let (old_first, old_last) = martensite_tkbrep::topexp::vertices(seam, false);
+    let (new_first, _) = martensite_tkbrep::topexp::vertices(&segments.0, false);
+    let (_, new_last) = martensite_tkbrep::topexp::vertices(&segments.1, false);
+    let reshaper = ShapeBuildReShape::new();
+    reshaper.replace(&old_first.into_shape(), &new_first.into_shape())?;
+    reshaper.replace(&old_last.into_shape(), &new_last.into_shape())?;
+    let changed = reshaper.apply(&result.into_shape(), ShapeEnum::Vertex)?;
+    martensite_tkbrep::topods::face(&changed)
+}
+
+fn make_shell(first: &Face, second: &Face) -> Shape {
+    let builder = BRepBuilder::default();
+    let mut shell = martensite_tkbrep::topods::Shell::default();
+    builder.make_shell(&mut shell);
+    builder
+        .add(&mut shell, &first.clone().into_shape())
+        .unwrap();
+    builder
+        .add(&mut shell, &second.clone().into_shape())
+        .unwrap();
+    shell.into_shape()
+}
+
+fn assert_two_support_seam_pcurves(shape: &Shape) {
+    let faces = Explorer::new(shape, ShapeEnum::Face, ShapeEnum::Shape)
+        .unwrap()
+        .map(|candidate| martensite_tkbrep::topods::face(&candidate).unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(faces.len(), 2);
+    assert_distinct_cylinder_supports(&faces[0], &faces[1]);
+    let seams = faces
+        .iter()
+        .map(|face| seam_edge(face).unwrap())
+        .collect::<Vec<_>>();
+    assert!(seams[0].is_same(&seams[1]));
+    for (edge, face) in seams.iter().zip(&faces) {
+        assert_seam_matches_native(edge, face);
+    }
+}
+
+fn assert_distinct_cylinder_supports(first: &Face, second: &Face) {
+    let (first_surface, _) = BRepTool::surface_with_location(first).unwrap();
+    let (second_surface, _) = BRepTool::surface_with_location(second).unwrap();
+    assert!(first_surface != second_surface);
+}
+
+fn assert_seam_matches_native(edge: &Edge, face: &Face) {
+    assert!(BRepTool::is_closed_on_face(edge, face).unwrap());
+    let forward = BRepTool::curve_on_face(edge, face).unwrap();
+    let mut reversed = edge.clone();
+    reversed.reverse();
+    let backward = BRepTool::curve_on_face(&reversed, face).unwrap();
+    assert_curve_endpoints(&forward);
+    assert_curve_endpoints(&backward);
+    assert_line_curve(&forward.pcurve);
+    assert_line_curve(&backward.pcurve);
+    assert_eq!((forward.first, forward.last), (0.0, 5.0));
+}
+
+fn assert_line_curve(curve: &Handle<dyn Geom2dCurve>) {
+    let adaptor = Geom2dAdaptorCurve::with_curve(curve).unwrap();
+    assert_eq!(
+        adaptor.get_type().unwrap(),
+        martensite_tkmath::geom_abs::CurveType::Line
+    );
+}
+
+fn assert_curve_endpoints(curve: &martensite_tkbrep::brep::EdgePCurve) {
+    let first = pcurve_value(curve, curve.first);
+    let last = pcurve_value(curve, curve.last);
+    assert_eq!((first.y(), last.y()), (5.0, 0.0));
+    assert!(is_native_seam_u(first.x()));
+    assert_eq!(first.x(), last.x());
+}
+
+fn split_cylinder_seam() -> Shape {
+    let mut maker = BRepPrimAPIMakeCylinder::new(2.0, 5.0);
+    let face = maker.face().unwrap();
+    let seam = seam_edge(&face).unwrap();
+    let segments = split_edge_pair(&seam, &face).unwrap();
+    rebuild_lateral_face(&face, &seam, &segments)
+        .unwrap()
+        .into_shape()
+}
+
+fn seam_edge(face: &Face) -> Option<Edge> {
+    Explorer::new(
+        &face.clone().into_shape(),
+        ShapeEnum::Edge,
+        ShapeEnum::Shape,
+    )
+    .ok()?
+    .map(|candidate| martensite_tkbrep::topods::edge(&candidate))
+    .collect::<Result<Vec<_>, _>>()
+    .ok()?
+    .into_iter()
+    .find(|edge| BRepTool::is_closed_on_face(edge, face).unwrap_or(false))
+}
+
+fn split_edge_pair(edge: &Edge, face: &Face) -> Result<(Edge, Edge), Failure> {
+    let mut canonical = edge.clone();
+    canonical.set_orientation(Orientation::Forward);
+    let (curve, first, last) = BRepTool::curve(&canonical)?;
+    let middle_parameter = (first + last) * 0.5;
+    let mut middle_vertex = Vertex::default();
+    BRepBuilder::default().make_vertex_at(
+        &mut middle_vertex,
+        curve
+            .get()
+            .ok_or_else(null_curve)?
+            .value(middle_parameter)?,
+        BRepTool::edge_tolerance(edge)?,
+    )?;
+    split_edge_segments(
+        &canonical,
+        face,
+        &curve,
+        &middle_vertex,
+        (first, middle_parameter, last),
+    )
+}
+
+fn split_edge_segments(
+    edge: &Edge,
+    face: &Face,
+    curve: &Handle<dyn martensite_tkg3d::geom::GeomCurve>,
+    middle: &Vertex,
+    range: (f64, f64, f64),
+) -> Result<(Edge, Edge), Failure> {
+    let (start, finish) = martensite_tkbrep::topexp::vertices(edge, false);
+    let lower = make_split_segment(curve, &start, middle, (range.0, range.1))?;
+    let upper = make_split_segment(curve, middle, &finish, (range.1, range.2))?;
+    set_split_pcurves(&lower, edge, face, (range.0, range.1))?;
+    set_split_pcurves(&upper, edge, face, (range.1, range.2))?;
+    Ok((lower, upper))
+}
+
+fn make_split_segment(
+    curve: &Handle<dyn martensite_tkg3d::geom::GeomCurve>,
+    first: &Vertex,
+    last: &Vertex,
+    range: (f64, f64),
+) -> Result<Edge, Failure> {
+    BRepBuilderAPIMakeEdge::from_curve_vertices_params(curve, first, last, range.0, range.1)?.edge()
+}
+
+fn set_split_pcurves(
+    segment: &Edge,
+    source: &Edge,
+    face: &Face,
+    range: (f64, f64),
+) -> Result<(), Failure> {
+    let mut reversed = source.clone();
+    reversed.reverse();
+    let first = trimmed_pcurve(&BRepTool::curve_on_face(source, face)?.pcurve, range)?;
+    let second = trimmed_pcurve(&BRepTool::curve_on_face(&reversed, face)?.pcurve, range)?;
+    BRepBuilder::default().update_edge_pcurves_on_face(
+        segment,
+        (&first, &second),
+        face,
+        BRepTool::edge_tolerance(source)?,
+    )
+}
+
+fn trimmed_pcurve(
+    curve: &Handle<dyn Geom2dCurve>,
+    range: (f64, f64),
+) -> Result<Handle<dyn Geom2dCurve>, Failure> {
+    Ok(Handle::new(Geom2dTrimmedCurve::new(
+        curve, range.0, range.1, true, false,
+    )?)
+    .cast())
+}
+
+fn rebuild_lateral_face(
+    source: &Face,
+    seam: &Edge,
+    segments: &(Edge, Edge),
+) -> Result<Face, Failure> {
+    let wire = rebuild_wire(source, seam, segments)?;
+    let (surface, location) = BRepTool::surface_with_location(source)?;
+    let mut result = Face::default();
+    let builder = BRepBuilder::default();
+    builder.make_face_on_located_surface(
+        &mut result,
+        &surface,
+        &location,
+        BRepTool::face_tolerance(source)?,
+    )?;
+    builder.add(&mut result, &wire.into_shape())?;
+    Ok(result)
+}
+
+fn rebuild_wire(source: &Face, seam: &Edge, segments: &(Edge, Edge)) -> Result<Wire, Failure> {
+    let mut wire = Wire::default();
+    BRepBuilder::default().make_wire(&mut wire);
+    let mut explorer = WireExplorer::with_wire_on_face(&outer_wire(source)?, source)?;
+    while explorer.more() {
+        add_wire_occurrence(&mut wire, explorer.current(), seam, segments)?;
+        explorer.next()?;
+    }
+    Ok(wire)
+}
+
+fn add_wire_occurrence(
+    wire: &mut Wire,
+    current: &Edge,
+    seam: &Edge,
+    segments: &(Edge, Edge),
+) -> Result<(), Failure> {
+    let builder = BRepBuilder::default();
+    if !current.is_same(seam) {
+        return builder.add(wire, &current.clone().into_shape());
+    }
+    let (first, second) = ordered_segments(current, segments);
+    builder.add(wire, &first.into_shape())?;
+    builder.add(wire, &second.into_shape())
+}
+
+fn ordered_segments(current: &Edge, segments: &(Edge, Edge)) -> (Edge, Edge) {
+    if current.orientation() == Orientation::Reversed {
+        let mut first = segments.1.clone();
+        let mut second = segments.0.clone();
+        first.reverse();
+        second.reverse();
+        return (first, second);
+    }
+    (segments.0.clone(), segments.1.clone())
+}
+
+fn assert_native_seam_pair(shape: &Shape) {
+    let face = martensite_tkbrep::topods::face(
+        &Explorer::new(shape, ShapeEnum::Face, ShapeEnum::Shape)
+            .unwrap()
+            .current()
+            .clone(),
+    )
+    .unwrap();
+    let edge = seam_edge(&face).expect("unified result retains its cylinder seam");
+    let forward = BRepTool::curve_on_face(&edge, &face).unwrap();
+    let mut reversed = edge.clone();
+    reversed.reverse();
+    let backward = BRepTool::curve_on_face(&reversed, &face).unwrap();
+    assert_eq!((forward.first, forward.last), (0.0, 5.0));
+    assert_seam_pcurve_bounds(&forward);
+    assert_seam_pcurve_bounds(&backward);
+    assert!((pcurve_value(&forward, 0.0).x() - pcurve_value(&backward, 0.0).x()).abs() > 6.0);
+    assert!(NATIVE_SEAM.contains("seam 0 5 0 5 0 0 6.2831853071795862 5 6.2831853071795862 0"));
+}
+
+fn assert_seam_pcurve_bounds(curve: &martensite_tkbrep::brep::EdgePCurve) {
+    let first = pcurve_value(curve, curve.first);
+    let last = pcurve_value(curve, curve.last);
+    assert_eq!((first.y(), last.y()), (5.0, 0.0));
+    assert!(is_native_seam_u(first.x()));
+    assert_eq!(first.x(), last.x());
+}
+
+fn pcurve_value(curve: &martensite_tkbrep::brep::EdgePCurve, parameter: f64) -> Point2 {
+    curve.pcurve.get().unwrap().value(parameter).unwrap()
+}
+
+fn is_native_seam_u(value: f64) -> bool {
+    value.abs() < 1e-12 || (value - std::f64::consts::TAU).abs() < 1e-12
+}
+
+fn unique_edge_count(shape: &Shape) -> usize {
+    let mut edges: Vec<Edge> = Vec::new();
+    for edge in Explorer::new(shape, ShapeEnum::Edge, ShapeEnum::Shape).unwrap() {
+        let edge = martensite_tkbrep::topods::edge(&edge).unwrap();
+        if !edges.iter().any(|known| known.is_same(&edge)) {
+            edges.push(edge);
+        }
+    }
+    edges.len()
+}
+
+fn native_value(key: &str) -> usize {
+    native_value_from(NATIVE_SEAM, key)
+}
+
+fn native_value_from(fixture: &str, key: &str) -> usize {
+    fixture
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .windows(2)
+        .find(|pair| pair[0] == key)
+        .unwrap()[1]
+        .parse()
+        .unwrap()
+}
+
+fn is_valid(shape: &Shape) -> bool {
+    BRepCheckAnalyzer::new(shape, true, false, false)
+        .unwrap()
+        .is_valid()
+        .unwrap()
+}
+
+fn null_curve() -> Failure {
+    Failure::with_type("Standard_NullObject", "cylinder seam lacks a 3D curve", "")
+}

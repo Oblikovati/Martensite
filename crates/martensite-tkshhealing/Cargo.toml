@@ -1,0 +1,53 @@
+[package]
+autotests = false
+name = "martensite-tkshhealing"
+version = "0.3.5"
+description = "Martensite shape healing: analysis, repair, conversion and subdivision of boundary shapes."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.5" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.5" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.5" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.5" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.5" }
+martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.5" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.3.5" }
+
+[dev-dependencies]
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.5" }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.3.5", features = ["case-runner"] }
+sha2 = "=0.11.1"
+
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+[[test]]
+name = "shape_extend_messages"
+path = "tests/shape_extend_messages.rs"
+
+[[test]]
+name = "shape_fix_face_orientation"
+path = "tests/shape_fix_face_orientation.rs"
+
+[[test]]
+name = "shape_fix_wireframe_merge_branches"
+path = "tests/shape_fix_wireframe_merge_branches.rs"
+
+[[test]]
+name = "dataset_cases"
+path = "tests/dataset_cases/main.rs"
+
+[[test]]
+name = "dataset_timing"
+path = "tests/dataset_timing.rs"

@@ -1,0 +1,46 @@
+//! The case bodies, one module per upstream test grid. Each body follows its script line
+//! by line, logs what the script and its scenario commands print and reports every variable
+//! and view step to its [`crate::support::session::Session`].
+pub mod bugs_common;
+pub mod bugs_demo;
+pub mod bugs_heal;
+pub mod bugs_modalg_1;
+pub mod bugs_modalg_2;
+pub mod bugs_modalg_5;
+pub mod bugs_modalg_6;
+pub mod bugs_modalg_7;
+pub mod bugs_modalg_8;
+pub mod bugs_moddata_1;
+pub mod bugs_moddata_3;
+pub mod bugs_xde;
+pub mod cr_bugs;
+pub mod heal_direct_faces;
+pub mod heal_drop_small_edges;
+pub mod heal_drop_small_solids;
+pub mod heal_elementary_to_revolution;
+pub mod heal_fix_face_size;
+pub mod heal_fix_gaps;
+pub mod heal_fix_shape;
+pub mod heal_split_angle;
+pub mod heal_split_closed_faces;
+pub mod heal_split_continuity;
+pub mod heal_split_number;
+pub mod heal_split_two_numbers;
+pub mod heal_surface_to_bezier;
+pub mod heal_surface_to_bspline;
+pub mod heal_wire_tails_composed;
+pub mod lowalgos_intss;
+pub mod mkface_after_extsurf_and_offset;
+pub mod mkface_after_extsurf_and_trim;
+pub mod mkface_after_offset;
+pub mod mkface_after_revsurf_and_offset;
+pub mod mkface_after_trim;
+pub mod mkface_grid;
+pub mod mkface_mkplane;
+pub mod perf_heal;
+pub mod perf_modalg;
+pub mod perf_moddata;
+pub mod sewing_grid;
+pub mod sewing_tol_0_01;
+pub mod sewing_tol_1;
+pub mod sewing_tol_100;

@@ -1,0 +1,51 @@
+[package]
+autotests = false
+name = "martensite-tkmesh"
+version = "0.3.5"
+description = "Martensite discrete mesh models and boundary-shape meshing algorithms."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.5" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.5" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.5" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.5" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.5" }
+martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.5" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.3.5" }
+martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.5" }
+allocator-api2 = "0.4"
+
+[dev-dependencies]
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.5" }
+martensite-test-support = { path = "../martensite-test-support", version = "0.3.5" }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.3.5", features = ["case-runner"] }
+
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+[[test]]
+name = "dataset_cases"
+path = "tests/dataset_cases/main.rs"
+
+[[test]]
+name = "brep_mesh_discret_algo_factory_legacy"
+path = "tests/brep_mesh_discret_algo_factory_legacy.rs"
+
+[[test]]
+name = "proximity_actual_mesher"
+path = "tests/proximity_actual_mesher.rs"
+
+[[test]]
+name = "tktopalgo_bnd_original_mesher"
+path = "tests/tktopalgo_bnd_original_mesher.rs"

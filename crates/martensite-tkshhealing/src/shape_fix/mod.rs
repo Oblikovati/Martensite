@@ -1,0 +1,54 @@
+// Rust translation of ModelingAlgorithms/TKShHealing/ShapeFix at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+
+//! the retained behavior package ShapeFix: the fixing tools that correct the problems that ShapeAnalysis
+//! detects. docs/shhealing-design.md section 4 fixes how its classes map;
+//! docs/tkshhealing-progress.md lists the ported classes.
+mod compose_shell;
+mod edge;
+mod edge_connect;
+mod edge_proj_aux;
+mod face;
+mod face_connect;
+mod fix_small_face;
+mod fix_small_solid;
+mod intersection;
+mod root;
+mod shape;
+mod shape_tolerance;
+mod split_common_vertex;
+mod wire;
+mod wire_vertex;
+
+pub use compose_shell::ShapeFixComposeShell;
+pub use edge::ShapeFixEdge;
+pub use edge_connect::ShapeFixEdgeConnect;
+pub use edge_proj_aux::ShapeFixEdgeProjAux;
+pub use face::{ShapeFixFace, ShapeFixFaceWireMap};
+pub use face_connect::ShapeFixFaceConnect;
+pub use fix_small_face::ShapeFixFixSmallFace;
+pub use fix_small_solid::ShapeFixFixSmallSolid;
+pub use intersection::{PcurveCrossing, line_pcurve_crossing};
+pub use root::{FixRoot, FixRootData, FixRootFields, ShapeFixRoot, need_fix};
+pub use shape::ShapeFixShape;
+pub use shape_tolerance::ShapeFixShapeTolerance;
+pub use split_common_vertex::ShapeFixSplitCommonVertex;
+pub use wire::{ShapeFixIntersectionTool, ShapeFixSplitTool, ShapeFixWire};
+pub use wire_vertex::ShapeFixWireVertex;
+
+mod wire_segment;
+pub use wire_segment::{ShapeFixWireSegment, WirePatchIndex};
+
+mod free_bounds;
+pub use free_bounds::ShapeFixFreeBounds;
+
+mod package;
+pub use package::{ShapeFix, ShapeFixRemovedSmallEdges};
+
+mod shell;
+pub use shell::ShapeFixShell;
+
+mod solid;
+pub use solid::ShapeFixSolid;
+
+mod wireframe;
+pub use wireframe::{ShapeFixWireframe, ShapeFixWireframeShapeLists};

@@ -1,0 +1,6 @@
+infinite_plane changed=0 same=1 done=0 fail=0 calls=none u=0 v=0
+open_plane changed=0 same=1 done=0 fail=0 calls=none u=0 v=0
+no_done_segment changed=0 same=1 done=0 fail=0 calls=C1B1 u=3 v=2
+no_done_unsegmented changed=0 same=1 done=0 fail=0 calls=C0B0 u=3 v=2
+placed_0 changed=1 faces=3 edges=12 seams=0 reversed=0 done2=1 fail=0 context=1
+placed_1 changed=1 faces=3 edges=12 seams=0 reversed=3 done2=1 fail=0 context=1

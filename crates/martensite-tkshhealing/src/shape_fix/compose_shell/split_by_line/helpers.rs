@@ -1,0 +1,144 @@
+use super::SplitIntersection;
+use martensite_tkbrep::topods::Edge;
+use martensite_tkernel::standard::Failure;
+
+pub(in crate::shape_fix::compose_shell) const IOR_BOTH: i32 = 3;
+pub(in crate::shape_fix::compose_shell) const ITP_INTER: i32 = 8;
+pub(in crate::shape_fix::compose_shell) const ITP_BEGSEG: i32 = 16;
+pub(in crate::shape_fix::compose_shell) const ITP_ENDSEG: i32 = 32;
+pub(in crate::shape_fix::compose_shell) const ITP_TANG: i32 = 64;
+pub(in crate::shape_fix::compose_shell) const IOR_POS: i32 = 4;
+pub(in crate::shape_fix::compose_shell) const TOLINT: f64 = 1.0e-10;
+
+#[derive(Default)]
+pub(super) struct JunctionState {
+    pub(super) start_code: i32,
+    pub(super) previous_code: i32,
+    pub(super) start_point: Option<martensite_tkmath::gp::Point2>,
+    pub(super) start_deviation: f64,
+    pub(super) previous_point: martensite_tkmath::gp::Point2,
+    pub(super) previous_deviation: f64,
+    pub(super) last_parameter: f64,
+}
+
+pub(super) struct SplitArguments {
+    pub(super) indices: martensite_tkernel::ncollection::Sequence<i32>,
+    pub(super) values: martensite_tkernel::ncollection::Sequence<f64>,
+    pub(super) segment_codes: martensite_tkernel::ncollection::Sequence<i32>,
+}
+
+pub(super) fn edge_start_parameter(edge: &Edge, first: f64, last: f64) -> f64 {
+    if edge.orientation() == martensite_tkg3d::top_abs::Orientation::Reversed {
+        last
+    } else {
+        first
+    }
+}
+
+pub(super) fn edge_end_parameter(edge: &Edge, first: f64, last: f64) -> f64 {
+    if edge.orientation() == martensite_tkg3d::top_abs::Orientation::Reversed {
+        first
+    } else {
+        last
+    }
+}
+
+pub(super) fn oriented_range_endpoint(edge: &Edge, range: (f64, f64), start: bool) -> f64 {
+    match (edge.orientation(), start) {
+        (martensite_tkg3d::top_abs::Orientation::Forward, true)
+        | (martensite_tkg3d::top_abs::Orientation::Reversed, false) => range.0,
+        _ => range.1,
+    }
+}
+
+pub(super) fn shared_tangential_point(segment_codes: &[i32]) -> Option<usize> {
+    let count = segment_codes.len();
+    (0..count)
+        .find(|index| segment_codes[(index + count - 1) % count] == 0 && segment_codes[*index] == 0)
+}
+
+pub(super) fn point_code(
+    index: usize,
+    segment_codes: &[i32],
+    intersections: &[SplitIntersection],
+    is_internal: bool,
+) -> i32 {
+    let count = segment_codes.len();
+    let previous = (index + count - 1) % count;
+    let code_before = segment_codes[previous];
+    let code_after = segment_codes[index];
+    let mut code = code_before | code_after;
+    if code_before == 0 {
+        return tangential_start_code(index, previous, intersections, code);
+    }
+    if code_after == 0 {
+        return tangential_end_code(index, count, intersections, code);
+    }
+    if index == previous {
+        return single_segment_code(code, is_internal);
+    }
+    if is_internal || code_before == code_after {
+        code |= ITP_TANG;
+        return code;
+    }
+    if (code_before | code_after) == IOR_BOTH {
+        code |= ITP_INTER;
+        return code;
+    }
+    code | ITP_TANG
+}
+
+fn tangential_start_code(
+    index: usize,
+    previous: usize,
+    intersections: &[SplitIntersection],
+    code: i32,
+) -> i32 {
+    let next = intersections[index].line_parameter;
+    let prior = intersections[previous].line_parameter;
+    code | if next > prior { ITP_ENDSEG } else { ITP_BEGSEG }
+}
+
+fn tangential_end_code(
+    index: usize,
+    count: usize,
+    intersections: &[SplitIntersection],
+    code: i32,
+) -> i32 {
+    let next = intersections[(index + 1) % count].line_parameter;
+    let current = intersections[index].line_parameter;
+    code | if next > current {
+        ITP_BEGSEG
+    } else {
+        ITP_ENDSEG
+    }
+}
+
+fn single_segment_code(code: i32, is_internal: bool) -> i32 {
+    if code & IOR_BOTH == IOR_BOTH && !is_internal {
+        code | ITP_INTER
+    } else {
+        code | ITP_TANG
+    }
+}
+
+pub(super) fn null_wire() -> Failure {
+    Failure::with_message(
+        "Standard_NullObject",
+        "ShapeFix_ComposeShell::SplitByLine: null wire data",
+    )
+}
+
+pub(super) fn null_context() -> Failure {
+    Failure::with_message(
+        "Standard_NullObject",
+        "ShapeFix_ComposeShell::SplitByLine: null context",
+    )
+}
+
+pub(super) fn null_pcurve() -> Failure {
+    Failure::with_message(
+        "Standard_NullObject",
+        "ShapeFix_ComposeShell::SplitByLine: null p-curve",
+    )
+}

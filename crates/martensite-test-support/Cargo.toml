@@ -1,0 +1,21 @@
+[package]
+autotests = false
+name = "martensite-test-support"
+version = "0.3.5"
+description = "Shared named fakes and fixture helpers for Martensite regression tests."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.5" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.5" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.5" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.5" }

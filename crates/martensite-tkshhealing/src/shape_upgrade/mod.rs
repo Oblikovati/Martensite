@@ -1,0 +1,110 @@
+// Rust translation of ModelingAlgorithms/TKShHealing/ShapeUpgrade at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+
+//! the retained behavior package ShapeUpgrade: the tools that split and convert shapes (division by
+//! continuity, angle or area, UnifySameDomain).
+//!
+//! Ported so far (docs/tkshhealing-progress.md): the package functions [`ShapeUpgrade`]
+//! (C0 B-splines split into C1 pieces), [`ShapeUpgradeTool`] (the context and
+//! tolerances of the tools), [`ShapeUpgradeRemoveLocations`] and the base curve splitter
+//! [`SplitCurve`] with [`ShapeUpgradeSplitCurve`]. docs/shhealing-design.md section 8
+//! fixes how they map. The classes that use ShapeAnalysis or ShapeFix classes wait for
+//! those packages.
+mod package;
+mod remove_locations;
+mod split_curve;
+mod tool;
+mod unify_same_domain;
+
+pub use package::{BoundedCurve2dSequence, BoundedCurveSequence, ShapeUpgrade};
+pub use remove_locations::{ShapeReplacements, ShapeUpgradeRemoveLocations};
+pub use split_curve::{ShapeUpgradeSplitCurve, SplitCurve, SplitCurveData, SplitCurveFields};
+pub use tool::ShapeUpgradeTool;
+pub use unify_same_domain::{
+    DataMapOfFacePlane, DataMapOfShapeMapOfShape, ShapeUpgradeUnifySameDomain,
+};
+
+mod shell_sewing;
+pub use shell_sewing::ShapeUpgradeShellSewing;
+
+mod split_curve_3d;
+pub use split_curve_3d::{ShapeUpgradeSplitCurve3d, SplitCurves3d};
+
+mod split_surface;
+pub use split_surface::{
+    ShapeUpgradeSplitSurface, SplitSurface, SplitSurfaceData, SplitSurfaceFields,
+    SurfaceSplitValues,
+};
+
+mod split_curve_2d;
+mod split_curve_geometry;
+pub use split_curve_2d::{ShapeUpgradeSplitCurve2d, SplitCurves2d};
+mod convert_curve2d_to_bezier;
+pub use convert_curve2d_to_bezier::ShapeUpgradeConvertCurve2dToBezier;
+mod convert_curve3d_to_bezier;
+pub use convert_curve3d_to_bezier::ShapeUpgradeConvertCurve3dToBezier;
+
+mod edge_divide;
+pub use edge_divide::{
+    EdgeDivideData, EdgeDivideFields, EdgeDivider, EdgeSplitKnots, ShapeUpgradeEdgeDivide,
+};
+
+mod fix_small_curves;
+pub use fix_small_curves::{
+    FixSmallCurves, FixSmallCurvesData, FixSmallCurvesFields, ShapeUpgradeFixSmallCurves,
+};
+
+mod wire_divide;
+pub use wire_divide::{ShapeUpgradeWireDivide, WireDivideData, WireDivideFields, WireDivider};
+
+mod face_divide;
+pub use face_divide::{FaceDivideData, FaceDivideFields, FaceDivider, ShapeUpgradeFaceDivide};
+
+mod split_curve3d_continuity;
+pub use split_curve3d_continuity::ShapeUpgradeSplitCurve3dContinuity;
+
+mod closed_edge_divide;
+pub use closed_edge_divide::ShapeUpgradeClosedEdgeDivide;
+mod closed_face_divide;
+pub use closed_face_divide::ShapeUpgradeClosedFaceDivide;
+
+mod split_surface_angle;
+pub use split_surface_angle::ShapeUpgradeSplitSurfaceAngle;
+mod split_surface_area;
+pub use split_surface_area::ShapeUpgradeSplitSurfaceArea;
+
+mod convert_surface_bezier;
+pub use convert_surface_bezier::ShapeUpgradeConvertSurfaceToBezierBasis;
+
+mod split_curve2d_continuity;
+pub use split_curve2d_continuity::ShapeUpgradeSplitCurve2dContinuity;
+mod curve_continuity;
+
+mod fix_small_bezier_curves;
+pub use fix_small_bezier_curves::ShapeUpgradeFixSmallBezierCurves;
+mod split_surface_continuity;
+pub use split_surface_continuity::ShapeUpgradeSplitSurfaceContinuity;
+
+mod remove_internal_wires;
+pub use remove_internal_wires::ShapeUpgradeRemoveInternalWires;
+
+mod face_divide_area;
+pub use face_divide_area::ShapeUpgradeFaceDivideArea;
+
+mod shape_divide;
+pub use shape_divide::{ShapeDivideFields, ShapeDivider, ShapeUpgradeShapeDivide};
+mod shape_divide_continuity;
+pub use shape_divide_continuity::ShapeUpgradeShapeDivideContinuity;
+
+mod shape_divide_angle;
+pub use shape_divide_angle::ShapeUpgradeShapeDivideAngle;
+mod shape_divide_closed_edges;
+pub use shape_divide_closed_edges::ShapeUpgradeShapeDivideClosedEdges;
+mod shape_divide_closed;
+pub use shape_divide_closed::ShapeUpgradeShapeDivideClosed;
+mod shape_divide_area;
+pub use shape_divide_area::ShapeUpgradeShapeDivideArea;
+mod shape_convert_to_bezier;
+pub use shape_convert_to_bezier::ShapeUpgradeShapeConvertToBezier;
+
+#[cfg(test)]
+mod uv_setter_defined_cases;

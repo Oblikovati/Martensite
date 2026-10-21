@@ -1,0 +1,194 @@
+//! Rust translation of ShapeFix_EdgeProjAux at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+mod init_2d;
+mod init_3d;
+mod parameter_update;
+mod projection;
+
+use martensite_tkbrep::topods::{Edge, Face};
+use martensite_tkernel::impl_transient;
+use martensite_tkernel::standard::{SharedState, StandardTransient};
+
+/// Project edge endpoints onto the p-curve to determine its usable parameter range.
+///
+/// ```
+/// use martensite_tkshhealing::shape_fix::ShapeFixEdgeProjAux;
+/// let projection = ShapeFixEdgeProjAux::new();
+/// assert!(!projection.is_first_done());
+/// ```
+pub struct ShapeFixEdgeProjAux {
+    parent: StandardTransient,
+    state: SharedState<EdgeProjAuxState>,
+}
+impl_transient!(
+    ShapeFixEdgeProjAux,
+    "ShapeFix_EdgeProjAux",
+    StandardTransient,
+    parent
+);
+
+#[derive(Clone, Default)]
+struct EdgeProjAuxState {
+    pub(super) face: Face,
+    pub(super) edge: Edge,
+    pub(super) first_param: f64,
+    pub(super) last_param: f64,
+    pub(super) first_done: bool,
+    pub(super) last_done: bool,
+}
+
+impl Default for ShapeFixEdgeProjAux {
+    fn default() -> Self {
+        Self {
+            parent: StandardTransient::default(),
+            state: SharedState::new(EdgeProjAuxState::default()),
+        }
+    }
+}
+
+impl ShapeFixEdgeProjAux {
+    /// Construct without an edge; `ShapeFixEdgeProjAux::new()`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Construct and initialize the edge projection; `ShapeFixEdgeProjAux::with_face_edge(&face, &edge)`.
+    pub fn with_face_edge(face: &Face, edge: &Edge) -> Self {
+        let projection = Self::new();
+        projection.init(face, edge);
+        projection
+    }
+
+    /// Replace the current face and edge and reset computed endpoints; `tool.init(&face, &edge)`.
+    pub fn init(&self, face: &Face, edge: &Edge) {
+        *self.state.write() = EdgeProjAuxState {
+            face: face.clone(),
+            edge: edge.clone(),
+            ..EdgeProjAuxState::default()
+        };
+    }
+
+    /// Recompute the p-curve range from 3D endpoints; `tool.compute(1e-7)?`.
+    pub fn compute(&self, precision: f64) -> Result<(), martensite_tkernel::standard::Failure> {
+        modify_projection_state(&self.state, |state| {
+            reset_projection(state);
+            init_2d::initialize(state, precision)?;
+            finish_computation(state);
+            Ok(())
+        })
+    }
+
+    /// Initialize projected endpoints from the edge's 3D vertices and face p-curve.
+    ///
+    /// This exposes the retained behavior's protected `Init2d` operation for derived repair tools.
+    ///
+    /// ```
+    /// use martensite_tkshhealing::shape_fix::ShapeFixEdgeProjAux;
+    /// let projection = ShapeFixEdgeProjAux::new();
+    /// let _ = projection.init_2d(1.0e-7);
+    /// ```
+    pub fn init_2d(&self, precision: f64) -> Result<(), martensite_tkernel::standard::Failure> {
+        modify_projection_state(&self.state, |state| init_2d::initialize(state, precision))
+    }
+
+    /// Initialize the range from a bounded p-curve or nearest endpoint extrema.
+    ///
+    /// This exposes the retained behavior's protected `Init3d` operation for derived repair tools.
+    ///
+    /// ```
+    /// use martensite_tkshhealing::shape_fix::ShapeFixEdgeProjAux;
+    /// let projection = ShapeFixEdgeProjAux::new();
+    /// let _ = projection.init_3d(1.0e-7);
+    /// ```
+    pub fn init_3d(&self, precision: f64) -> Result<(), martensite_tkernel::standard::Failure> {
+        modify_projection_state(&self.state, |state| init_3d::initialize(state, precision))
+    }
+
+    /// Adjust an endpoint parameter pair to the supplied p-curve's orientation and period.
+    ///
+    /// This exposes the retained behavior's protected `UpdateParam2d` operation for derived repair tools.
+    ///
+    /// ```
+    /// use martensite_tkshhealing::shape_fix::ShapeFixEdgeProjAux;
+    /// use martensite_tkernel::standard::Handle;
+    /// use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dLine};
+    /// use martensite_tkmath::gp::{Direction2, Point2};
+    /// let projection = ShapeFixEdgeProjAux::new();
+    /// let line: Handle<dyn Geom2dCurve> =
+    ///     Handle::new(Geom2dLine::from_point(Point2::default(), Direction2::new(1.0, 0.0).unwrap())).cast();
+    /// let _ = projection.update_param_2d(&line);
+    /// ```
+    pub fn update_param_2d(
+        &self,
+        curve: &martensite_tkernel::standard::Handle<dyn martensite_tkg2d::geom2d::Geom2dCurve>,
+    ) -> Result<(), martensite_tkernel::standard::Failure> {
+        modify_projection_state(&self.state, |state| {
+            parameter_update::update_parameters(state, curve)
+        })
+    }
+
+    /// Whether the first endpoint was projected; `tool.is_first_done()`.
+    pub fn is_first_done(&self) -> bool {
+        self.state.read().first_done
+    }
+
+    /// Whether the last endpoint was projected; `tool.is_last_done()`.
+    pub fn is_last_done(&self) -> bool {
+        self.state.read().last_done
+    }
+
+    /// The usable first p-curve parameter; `tool.first_param()`.
+    pub fn first_param(&self) -> f64 {
+        self.state.read().first_param
+    }
+
+    /// The usable last p-curve parameter; `tool.last_param()`.
+    pub fn last_param(&self) -> f64 {
+        self.state.read().last_param
+    }
+
+    /// Report whether `curve` is an ISO; the current the retained behavior implementation always returns false.
+    ///
+    /// ```
+    /// use martensite_tkernel::standard::Handle;
+    /// use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dLine};
+    /// use martensite_tkmath::gp::{Direction2, Point2};
+    /// use martensite_tkshhealing::shape_fix::ShapeFixEdgeProjAux;
+    /// let curve: Handle<dyn Geom2dCurve> =
+    ///     Handle::new(Geom2dLine::from_point(Point2::default(), Direction2::new(1.0, 0.0).unwrap())).cast();
+    /// assert!(!ShapeFixEdgeProjAux::new().is_iso(&curve));
+    /// ```
+    pub fn is_iso(
+        &self,
+        _curve: &martensite_tkernel::standard::Handle<dyn martensite_tkg2d::geom2d::Geom2dCurve>,
+    ) -> bool {
+        false
+    }
+}
+
+fn reset_projection(state: &mut EdgeProjAuxState) {
+    state.first_done = false;
+    state.last_done = false;
+    state.first_param = 0.0;
+    state.last_param = 0.0;
+}
+
+fn modify_projection_state<T>(
+    shared: &SharedState<EdgeProjAuxState>,
+    operation: impl FnOnce(&mut EdgeProjAuxState) -> Result<T, martensite_tkernel::standard::Failure>,
+) -> Result<T, martensite_tkernel::standard::Failure> {
+    let mut local = shared.read().clone();
+    let result = operation(&mut local);
+    *shared.write() = local;
+    result
+}
+
+fn finish_computation(state: &mut EdgeProjAuxState) {
+    if !(state.first_done && state.last_done) {
+        return;
+    }
+    if state.first_param >= state.last_param {
+        std::mem::swap(&mut state.first_param, &mut state.last_param);
+    }
+    state.first_done = true;
+    state.last_done = true;
+}

@@ -1,0 +1,61 @@
+//! Exact Rust port of the selected BRepMesh incremental-mesh legacy declaration.
+use martensite_tkbrep::topods::{Builder, Compound, Shape, Wire};
+use martensite_tkernel::message::ProgressRange;
+use martensite_tkmesh::{
+    brep_mesh::{BRepMeshDiscretRoot, BRepMeshIncrementalMesh},
+    imesh_tools::MeshParameters,
+};
+
+#[test]
+#[allow(non_snake_case)]
+fn BRepMesh_IncrementalMeshTest__OCC31125_EmptyCompoundDoesNotCrash() {
+    let mut empty_compound = Compound::default();
+    Builder.make_compound(&mut empty_compound);
+    let parameters = MeshParameters {
+        deflection: 1.0,
+        ..Default::default()
+    };
+    let result = BRepMeshIncrementalMesh::with_parameters(
+        &empty_compound,
+        &parameters,
+        &ProgressRange::default(),
+    );
+    assert!(result.is_ok(), "empty compound meshing should not throw");
+}
+
+#[test]
+fn invalid_linear_deflection_returns_native_numeric_error() {
+    let mut empty_compound = Compound::default();
+    Builder.make_compound(&mut empty_compound);
+    let parameters = MeshParameters {
+        deflection: 0.0,
+        ..Default::default()
+    };
+    let result = BRepMeshIncrementalMesh::with_parameters(
+        &empty_compound,
+        &parameters,
+        &ProgressRange::default(),
+    );
+    let failure = match result {
+        Ok(_) => panic!("zero deflection must raise Standard_NumericError"),
+        Err(failure) => failure,
+    };
+    assert_eq!(failure.exception_type(), "Standard_NumericError");
+}
+
+#[test]
+fn empty_wire_meshes_as_native_done_without_status() {
+    // Native BRepMesh_IncrementalMesh on an empty wire: done, status 0 (measured with
+    // the pinned the retained behavior build).
+    let mut wire = Wire::default();
+    Builder.make_wire(&mut wire);
+    let parameters = MeshParameters::default();
+    let mesher = BRepMeshIncrementalMesh::with_parameters(
+        &Shape::from(wire),
+        &parameters,
+        &ProgressRange::default(),
+    )
+    .unwrap();
+    assert!(mesher.is_done());
+    assert_eq!(mesher.get_status_flags(), 0);
+}

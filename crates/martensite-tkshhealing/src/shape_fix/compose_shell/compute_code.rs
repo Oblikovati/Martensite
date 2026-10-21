@@ -1,0 +1,471 @@
+use super::{ShapeFixComposeShell, geometry};
+use crate::shape_analysis::ShapeAnalysisEdge;
+use crate::shape_extend::{ShapeExtend, ShapeExtendStatus, ShapeExtendWireData};
+use crate::shape_fix::FixRoot;
+use martensite_tkbrep::brep::BRepTool;
+use martensite_tkernel::precision;
+use martensite_tkernel::standard::Failure;
+use martensite_tkg3d::top_abs::Orientation;
+use martensite_tkmath::gp::{Line2, Point2};
+
+const LEFT: i32 = 1;
+const RIGHT: i32 = 2;
+const BOTH: i32 = LEFT | RIGHT;
+const SAMPLE_COUNT: i32 = 5;
+
+pub(super) struct ComputeCodeInput<'a> {
+    pub(super) wire: &'a ShapeExtendWireData,
+    pub(super) line: Line2,
+    pub(super) begin_edge: i32,
+    pub(super) end_edge: i32,
+    pub(super) begin_parameter: f64,
+    pub(super) end_parameter: f64,
+    pub(super) internal: bool,
+}
+
+pub(super) fn compute_code(
+    composer: &ShapeFixComposeShell,
+    input: ComputeCodeInput<'_>,
+) -> Result<i32, Failure> {
+    let fields = composer.fields.read().clone();
+    let bounds = segment_bounds(
+        (input.begin_edge, input.end_edge),
+        (input.begin_parameter, input.end_parameter),
+    );
+    let special = special_segment(input.wire, bounds, &fields, input.internal)?;
+    sample_and_finish(composer, &fields, input.wire, input.line, bounds, special)
+}
+
+fn segment_bounds(edges: (i32, i32), params: (f64, f64)) -> SegmentBounds {
+    SegmentBounds {
+        begin_edge: edges.0,
+        end_edge: edges.1,
+        begin_parameter: params.0,
+        end_parameter: params.1,
+    }
+}
+
+fn sample_and_finish(
+    composer: &ShapeFixComposeShell,
+    fields: &super::ComposeShellFields,
+    wire: &ShapeExtendWireData,
+    line: Line2,
+    bounds: SegmentBounds,
+    special: i32,
+) -> Result<i32, Failure> {
+    let result = sample_segment(composer, fields, wire, line, bounds, special)?;
+    finish_code(composer, fields, result, line)
+}
+
+fn special_segment(
+    wire: &ShapeExtendWireData,
+    bounds: SegmentBounds,
+    fields: &super::ComposeShellFields,
+    internal: bool,
+) -> Result<i32, Failure> {
+    let edge = wire.edge(bounds.begin_edge)?;
+    let same_direction = matches!(
+        edge.orientation(),
+        Orientation::Forward | Orientation::Internal
+    ) == (bounds.begin_parameter > bounds.end_parameter);
+    if bounds.begin_edge == bounds.end_edge && same_direction {
+        return Ok(1);
+    }
+    Ok(i32::from(
+        bounds.begin_edge == bounds.end_edge
+            && bounds.begin_parameter == bounds.end_parameter
+            && (fields.closed_mode || internal),
+    ))
+}
+
+fn sample_segment(
+    composer: &ShapeFixComposeShell,
+    fields: &super::ComposeShellFields,
+    wire: &ShapeExtendWireData,
+    line: Line2,
+    bounds: SegmentBounds,
+    mut special: i32,
+) -> Result<SampleResult, Failure> {
+    let mut result = SampleResult::default();
+    let mut edge_index = bounds.begin_edge;
+    loop {
+        sample_edge(EdgeSampleInput {
+            composer,
+            fields,
+            wire,
+            line,
+            result: &mut result,
+            edge_index,
+            bounds,
+            special,
+        })?;
+        if !continue_sampling(&result, edge_index, bounds.end_edge, &mut special) {
+            break;
+        }
+        edge_index = next_edge(edge_index, wire.nb_edges());
+    }
+    Ok(result)
+}
+
+fn continue_sampling(
+    result: &SampleResult,
+    edge_index: i32,
+    end_edge: i32,
+    special: &mut i32,
+) -> bool {
+    if result.stopped || (edge_index == end_edge && *special <= 0) {
+        return false;
+    }
+    if edge_index == end_edge {
+        *special = -1;
+    }
+    true
+}
+
+struct EdgeSampleInput<'a> {
+    composer: &'a ShapeFixComposeShell,
+    fields: &'a super::ComposeShellFields,
+    wire: &'a ShapeExtendWireData,
+    line: Line2,
+    result: &'a mut SampleResult,
+    edge_index: i32,
+    bounds: SegmentBounds,
+    special: i32,
+}
+
+fn sample_edge(input: EdgeSampleInput<'_>) -> Result<(), Failure> {
+    let edge = input.wire.edge(input.edge_index)?;
+    let (curve, first, last) =
+        ShapeAnalysisEdge::new().pcurve_on_face(&edge, &input.fields.face, false)?;
+    let Some(curve) = curve.get() else {
+        mark_failure(input.composer, ShapeExtendStatus::Fail3);
+        return Ok(());
+    };
+    input.result.tolerance = input
+        .composer
+        .limit_tolerance(BRepTool::edge_tolerance(&edge)?);
+    let (start, end) = sample_parameters(
+        input.edge_index,
+        input.bounds,
+        input.special,
+        edge.orientation(),
+        (first, last),
+    );
+    sample_parameters_on_edge(input.fields, input.line, input.result, curve, start, end)?;
+    Ok(())
+}
+
+fn sample_parameters_on_edge(
+    fields: &super::ComposeShellFields,
+    line: Line2,
+    result: &mut SampleResult,
+    curve: &dyn martensite_tkg2d::geom2d::Geom2dCurve,
+    start: f64,
+    end: f64,
+) -> Result<(), Failure> {
+    let (step, count) = sample_interval(start, end);
+    for index in 0..count {
+        sample_point(
+            fields,
+            line,
+            result,
+            curve,
+            start + step * index as f64,
+            index == 0,
+        )?;
+        if result.stopped {
+            break;
+        }
+    }
+    Ok(())
+}
+
+fn sample_interval(start: f64, end: f64) -> (f64, i32) {
+    let step = (end - start) / (SAMPLE_COUNT - 1) as f64;
+    (
+        step,
+        if step.abs() < precision::p_confusion() {
+            1
+        } else {
+            SAMPLE_COUNT
+        },
+    )
+}
+
+fn sample_point(
+    fields: &super::ComposeShellFields,
+    line: Line2,
+    result: &mut SampleResult,
+    curve: &dyn martensite_tkg2d::geom2d::Geom2dCurve,
+    parameter: f64,
+    first: bool,
+) -> Result<(), Failure> {
+    let mut point = curve.value(parameter)?;
+    adjust_sample(fields, line, result, &mut point, first);
+    classify_sample_point(fields, line, result, point)
+}
+
+fn classify_sample_point(
+    fields: &super::ComposeShellFields,
+    line: Line2,
+    result: &mut SampleResult,
+    point: Point2,
+) -> Result<(), Failure> {
+    let position = geometry::point_line_position(point, line).0;
+    if position == 0 || coincides_with_line(point, line, fields, result.tolerance) {
+        return Ok(());
+    }
+    record_position(fields, result, position);
+    Ok(())
+}
+
+fn record_position(fields: &super::ComposeShellFields, result: &mut SampleResult, position: i32) {
+    if fields.closed_mode {
+        result.code |= position;
+        return;
+    }
+    result.code = position;
+    result.stopped = true;
+}
+
+fn sample_parameters(
+    index: i32,
+    bounds: SegmentBounds,
+    special: i32,
+    orientation: Orientation,
+    range: (f64, f64),
+) -> (f64, f64) {
+    let reversed = orientation == Orientation::Reversed;
+    let start = if index == bounds.begin_edge && special >= 0 {
+        bounds.begin_parameter
+    } else if reversed {
+        range.1
+    } else {
+        range.0
+    };
+    let stop = if index == bounds.end_edge && special <= 0 {
+        bounds.end_parameter
+    } else if reversed {
+        range.0
+    } else {
+        range.1
+    };
+    (start, stop)
+}
+
+fn adjust_sample(
+    fields: &super::ComposeShellFields,
+    line: Line2,
+    result: &mut SampleResult,
+    point: &mut Point2,
+    first_in_segment: bool,
+) {
+    if !fields.closed_mode {
+        record_point(result, *point);
+        return;
+    }
+    adjust_periodic_sample(fields, line, result, point, first_in_segment);
+    record_point(result, *point);
+}
+
+fn adjust_periodic_sample(
+    fields: &super::ComposeShellFields,
+    line: Line2,
+    result: &mut SampleResult,
+    point: &mut Point2,
+    first_in_segment: bool,
+) {
+    adjust_closed_axis(
+        point,
+        line,
+        fields.u_closed,
+        fields.u_period,
+        true,
+        result,
+        first_in_segment,
+    );
+    adjust_closed_axis(
+        point,
+        line,
+        fields.v_closed,
+        fields.v_period,
+        false,
+        result,
+        first_in_segment,
+    );
+}
+
+fn record_point(result: &mut SampleResult, point: Point2) {
+    result.previous_point = point;
+    result.begin = false;
+}
+
+fn adjust_closed_axis(
+    point: &mut Point2,
+    line: Line2,
+    closed: bool,
+    period: f64,
+    is_u: bool,
+    result: &mut SampleResult,
+    first_in_segment: bool,
+) {
+    if !closed || !closed_line_direction(line, is_u) {
+        return;
+    }
+    let value = axis_value(*point, is_u);
+    let old_value = axis_value(result.previous_point, is_u);
+    let origin = axis_value(line.location(), is_u);
+    let shift = if result.begin {
+        crate::shape_analysis::adjust_by_period(value, origin, period)
+    } else if first_in_segment {
+        crate::shape_analysis::adjust_by_period(value - old_value, 0.0, period)
+    } else if is_u {
+        result.u_shift
+    } else {
+        result.v_shift
+    };
+    set_axis_value(point, is_u, value + shift);
+    if is_u {
+        result.u_shift = shift;
+    } else {
+        result.v_shift = shift;
+    }
+}
+
+fn closed_line_direction(line: Line2, is_u: bool) -> bool {
+    let component = if is_u {
+        line.direction().x()
+    } else {
+        line.direction().y()
+    };
+    component.abs() < precision::p_confusion()
+}
+
+fn axis_value(point: Point2, is_u: bool) -> f64 {
+    if is_u { point.x() } else { point.y() }
+}
+
+fn set_axis_value(point: &mut Point2, is_u: bool, value: f64) {
+    if is_u {
+        *point = Point2::new(value, point.y());
+    } else {
+        *point = Point2::new(point.x(), value);
+    }
+}
+
+fn coincides_with_line(
+    point: Point2,
+    line: Line2,
+    fields: &super::ComposeShellFields,
+    tolerance: f64,
+) -> bool {
+    let projected = geometry::project_point_on_line(point, line);
+    let u_tol = larger(INTERSECTION_TOLERANCE, fields.u_resolution * tolerance);
+    let v_tol = larger(INTERSECTION_TOLERANCE, fields.v_resolution * tolerance);
+    (point.x() - projected.x()).abs() <= u_tol && (point.y() - projected.y()).abs() <= v_tol
+}
+
+const INTERSECTION_TOLERANCE: f64 = 1.0e-10;
+fn larger(first: f64, second: f64) -> f64 {
+    if second > first { second } else { first }
+}
+fn next_edge(index: i32, count: i32) -> i32 {
+    if index == count { 1 } else { index + 1 }
+}
+
+fn finish_code(
+    composer: &ShapeFixComposeShell,
+    fields: &super::ComposeShellFields,
+    sample: SampleResult,
+    line: Line2,
+) -> Result<i32, Failure> {
+    if fields.closed_mode {
+        return Ok(close_periodic_code(
+            sample.code,
+            sample.previous_point,
+            sample.begin,
+            line,
+            fields,
+        ));
+    }
+    if !sample.stopped {
+        return Ok(0);
+    }
+    Ok(resolve_parity_code(composer, sample.code))
+}
+
+fn resolve_parity_code(composer: &ShapeFixComposeShell, code: i32) -> i32 {
+    if code != BOTH {
+        return code;
+    }
+    mark_failure(composer, ShapeExtendStatus::Fail2);
+    LEFT
+}
+
+fn close_periodic_code(
+    code: i32,
+    point: Point2,
+    begin: bool,
+    line: Line2,
+    fields: &super::ComposeShellFields,
+) -> i32 {
+    if code == 0 || begin {
+        return code;
+    }
+    let mut result = code;
+    let deviation = geometry::point_line_deviation(point, line);
+    if fields.u_closed && closed_line_direction(line, true) {
+        result = periodic_axis_code(result, deviation, fields.u_period);
+    }
+    if fields.v_closed && closed_line_direction(line, false) {
+        result = periodic_axis_code(result, deviation, fields.v_period);
+    }
+    result
+}
+
+fn periodic_axis_code(code: i32, deviation: f64, period: f64) -> i32 {
+    if (deviation.abs() - period).abs() < 0.1 * period {
+        BOTH | if deviation > 0.0 { 4 } else { 0 }
+    } else if code == BOTH {
+        0
+    } else {
+        code
+    }
+}
+
+fn mark_failure(composer: &ShapeFixComposeShell, status: ShapeExtendStatus) {
+    let mut fields = composer.fields.write();
+    fields.status |= ShapeExtend::encode_status(status);
+}
+
+struct SampleResult {
+    code: i32,
+    stopped: bool,
+    begin: bool,
+    previous_point: Point2,
+    tolerance: f64,
+    u_shift: f64,
+    v_shift: f64,
+}
+
+#[derive(Clone, Copy)]
+struct SegmentBounds {
+    begin_edge: i32,
+    end_edge: i32,
+    begin_parameter: f64,
+    end_parameter: f64,
+}
+
+impl Default for SampleResult {
+    fn default() -> Self {
+        Self {
+            code: 0,
+            stopped: false,
+            begin: true,
+            previous_point: Point2::default(),
+            tolerance: 0.0,
+            u_shift: 0.0,
+            v_shift: 0.0,
+        }
+    }
+}

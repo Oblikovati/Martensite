@@ -1,0 +1,79 @@
+// Translation of ShapeFix_Edge parameter and vertex repair at
+// the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+mod add_pcurve;
+mod curves;
+mod parameter;
+mod range;
+mod seam;
+mod vertex;
+
+use crate::shape_build::ShapeBuildReShape;
+use crate::shape_construct::ShapeConstructProjectCurveOnSurface;
+use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
+use martensite_tkernel::impl_transient;
+use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+
+/// Repair missing or inconsistent edge curves, parameterization and vertex tolerances.
+///
+/// ```
+/// use martensite_tkshhealing::shape_fix::ShapeFixEdge;
+/// use martensite_tkshhealing::shape_extend::ShapeExtendStatus;
+/// assert!(ShapeFixEdge::new().status_flag(ShapeExtendStatus::Ok));
+/// ```
+pub struct ShapeFixEdge {
+    parent: StandardTransient,
+    status: SharedState<i32>,
+    context: SharedState<Handle<ShapeBuildReShape>>,
+    projector: Handle<ShapeConstructProjectCurveOnSurface>,
+}
+impl_transient!(ShapeFixEdge, "ShapeFix_Edge", StandardTransient, parent);
+
+impl Default for ShapeFixEdge {
+    fn default() -> Self {
+        Self {
+            parent: StandardTransient::default(),
+            status: SharedState::new(0),
+            context: SharedState::new(Handle::default()),
+            projector: Handle::new(ShapeConstructProjectCurveOnSurface::new()),
+        }
+    }
+}
+
+impl ShapeFixEdge {
+    /// Share the projector so callers can configure projection; `tool.projector()`.
+    pub fn projector(&self) -> Handle<ShapeConstructProjectCurveOnSurface> {
+        self.projector.clone()
+    }
+
+    /// Construct a repair tool with no replacement context; `ShapeFixEdge::new()`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Query flags from the latest repair; `tool.status_flag(ShapeExtendStatus::Done)`.
+    pub fn status_flag(&self, flag: ShapeExtendStatus) -> bool {
+        ShapeExtend::decode_status(*self.status.read(), flag)
+    }
+
+    /// Share the vertex-replacement context; `tool.set_context(&context)`.
+    pub fn set_context(&self, context: &Handle<ShapeBuildReShape>) {
+        *self.context.write() = context.clone();
+    }
+
+    /// Return the current replacement context; `let context = tool.context()`.
+    pub fn context(&self) -> Handle<ShapeBuildReShape> {
+        self.context.read().clone()
+    }
+
+    fn add_status(&self, flag: ShapeExtendStatus) {
+        *self.status.write() |= ShapeExtend::encode_status(flag);
+    }
+
+    fn reset_status(&self) {
+        *self.status.write() = 0;
+    }
+
+    fn set_status(&self, status: i32) {
+        *self.status.write() = status;
+    }
+}
