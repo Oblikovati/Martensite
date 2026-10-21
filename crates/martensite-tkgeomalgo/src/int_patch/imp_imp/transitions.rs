@@ -1,0 +1,61 @@
+//! The transitions of a line from the sign of the mixed product of its tangent and the
+//! two normals, and the transitions of a point on a restriction.
+use super::super::line::IntPatchLineTransitions;
+use crate::int_surf::{IntSurfQuadric, IntSurfTransition, IntSurfTypeTrans, make_transition};
+use martensite_tkernel::standard::Failure;
+use martensite_tkmath::gp::{Direction3, Point3, Vector3};
+
+/// `if (x > 0.) {Out, In} else {In, Out}`: the transitions of a crossing line.
+pub(super) fn by_sign(x: f64) -> IntPatchLineTransitions {
+    if x > 0.0 {
+        return IntPatchLineTransitions::Types(IntSurfTypeTrans::Out, IntSurfTypeTrans::In);
+    }
+    IntPatchLineTransitions::Types(IntSurfTypeTrans::In, IntSurfTypeTrans::Out)
+}
+
+/// `if (x > tol) {Out, In} else if (x < -tol) {In, Out} else {Undecided, Undecided}`.
+pub(super) fn by_sign_tol(x: f64, tol: f64) -> IntPatchLineTransitions {
+    let (t1, t2) = if x > tol {
+        (IntSurfTypeTrans::Out, IntSurfTypeTrans::In)
+    } else if x < -tol {
+        (IntSurfTypeTrans::In, IntSurfTypeTrans::Out)
+    } else {
+        (IntSurfTypeTrans::Undecided, IntSurfTypeTrans::Undecided)
+    };
+    IntPatchLineTransitions::Types(t1, t2)
+}
+
+/// `Tgt.DotCross(Quad2.Normale(P), Quad1.Normale(P))`: the mixed product of a tangent at
+/// `p` and the two quadric normals there.
+pub(super) fn dot_cross(
+    tgt: Vector3,
+    quad1: &IntSurfQuadric,
+    quad2: &IntSurfQuadric,
+    p: Point3,
+) -> Result<f64, Failure> {
+    Ok(tgt.dot_cross(quad2.normale_at(p)?, quad1.normale_at(p)?))
+}
+
+/// The transitions of the line and of the arc at a point on a restriction: undecided
+/// on a null normal (the apex of a cone), `IntSurf::MakeTransition` otherwise.
+pub(super) fn line_arc_transitions(
+    vtgint: Vector3,
+    vtgrst: Vector3,
+    normale: Vector3,
+    transline: &mut IntSurfTransition,
+    transarc: &mut IntSurfTransition,
+) -> Result<(), Failure> {
+    if normale.square_magnitude() < 1e-16 {
+        transline.set_type(true, IntSurfTypeTrans::Undecided);
+        transarc.set_type(true, IntSurfTypeTrans::Undecided);
+        return Ok(());
+    }
+    make_transition(
+        vtgint,
+        vtgrst,
+        Direction3::from_vector(normale)?,
+        transline,
+        transarc,
+    );
+    Ok(())
+}

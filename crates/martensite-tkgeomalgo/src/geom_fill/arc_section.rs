@@ -1,0 +1,75 @@
+//! The arguments of the circular-arc convertors (`Section` of
+//! `GeomFill_PolynomialConvertor` and `GeomFill_QuasiAngularConvertor`), grouped as
+//! structs because the native members take up to eighteen of them.
+use martensite_tkernel::ncollection::Array1;
+use martensite_tkmath::gp::{Point3, Vector3};
+
+/// An arc of centre `center` from `first_pnt`, turning by `angle` around `dir`
+/// (`FirstPnt`, `Center`, `Dir`, `Angle`).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ArcSectionD0 {
+    /// `FirstPnt`.
+    pub first_pnt: Point3,
+    /// `Center`.
+    pub center: Point3,
+    /// `Dir`.
+    pub dir: Vector3,
+    /// `Angle`.
+    pub angle: f64,
+}
+
+/// The arc and the first derivatives of its data (`DFirstPnt`, `DCenter`, `DDir`,
+/// `DAngle`).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ArcSectionD1 {
+    /// The arc itself.
+    pub arc: ArcSectionD0,
+    /// `DFirstPnt`.
+    pub d_first_pnt: Vector3,
+    /// `DCenter`.
+    pub d_center: Vector3,
+    /// `DDir`.
+    pub d_dir: Vector3,
+    /// `DAngle`.
+    pub d_angle: f64,
+}
+
+/// The arc and the first two derivatives of its data (`D2FirstPnt`, `D2Center`,
+/// `D2Dir`, `D2Angle`).
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ArcSectionD2 {
+    /// The arc and its first derivatives.
+    pub d1: ArcSectionD1,
+    /// `D2FirstPnt`.
+    pub d2_first_pnt: Vector3,
+    /// `D2Center`.
+    pub d2_center: Vector3,
+    /// `D2Dir`.
+    pub d2_dir: Vector3,
+    /// `D2Angle`.
+    pub d2_angle: f64,
+}
+
+/// The rational section and its first derivatives (`Poles`, `DPoles`, `Weigths`,
+/// `DWeigths` outputs).
+pub struct ArcPolesD1<'a, 'b> {
+    /// `Poles`.
+    pub poles: &'a mut Array1<'b, Point3>,
+    /// `DPoles`.
+    pub d_poles: &'a mut Array1<'b, Vector3>,
+    /// `Weigths`.
+    pub weights: &'a mut Array1<'b, f64>,
+    /// `DWeigths`.
+    pub d_weights: &'a mut Array1<'b, f64>,
+}
+
+/// The rational section and its first two derivatives (adds `D2Poles`,
+/// `D2Weigths`).
+pub struct ArcPolesD2<'a, 'b> {
+    /// The value and first derivatives.
+    pub d1: ArcPolesD1<'a, 'b>,
+    /// `D2Poles`.
+    pub d2_poles: &'a mut Array1<'b, Vector3>,
+    /// `D2Weigths`.
+    pub d2_weights: &'a mut Array1<'b, f64>,
+}

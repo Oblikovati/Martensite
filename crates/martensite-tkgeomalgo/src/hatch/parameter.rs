@@ -1,0 +1,30 @@
+//! Hatch_Parameter: one intersection on a hatching line.
+
+/// Hatch_Parameter: an intersection on a line: its parameter on the line, whether
+/// it starts an interval, the index of the trimming curve and the parameter on it.
+/// Only the hatching classes read the fields, as native friends do.
+/// ```
+/// use martensite_tkgeomalgo::hatch::Parameter;
+/// let parameter = Parameter::new(1.5, true, 3, 0.25);
+/// assert_ne!(parameter, Parameter::default());
+/// ```
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Parameter {
+    pub(super) par1: f64,
+    pub(super) start: bool,
+    pub(super) index: i32,
+    pub(super) par2: f64,
+}
+
+impl Parameter {
+    /// Hatch_Parameter(Par1, Start, Index = 0, Par2 = 0);
+    /// `Parameter::new(1.0, true, 0, 0.0)`. The default constructor is `Default`.
+    pub fn new(par1: f64, start: bool, index: i32, par2: f64) -> Self {
+        Self {
+            par1,
+            start,
+            index,
+            par2,
+        }
+    }
+}

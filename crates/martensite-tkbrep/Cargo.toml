@@ -1,0 +1,41 @@
+[package]
+autotests = false
+name = "martensite-tkbrep"
+version = "0.3.5"
+description = "Martensite boundary representation: topological shapes, their exploration, tools and geometric attachments."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.5" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.5" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.5" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.5" }
+
+[dev-dependencies]
+sha2 = "0.10"
+
+# Test modules share one executable per toolkit to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+[[test]]
+name = "dataset_cases"
+path = "tests/dataset_cases/main.rs"
+
+[[test]]
+name = "adaptor_value_copy"
+path = "tests/adaptor_value_copy.rs"
+
+[[test]]
+name = "bintools_location_wire"
+path = "tests/bintools_location_wire.rs"

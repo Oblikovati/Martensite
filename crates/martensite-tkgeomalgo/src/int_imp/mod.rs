@@ -1,0 +1,41 @@
+//! The implicit-function toolkit of the walking and
+//! curve-surface intersections.
+//!
+//! Besides `IntImp_ComputeTangence` and the isoparametric choice, the package is
+//! generic code: `IntImp_ZerParFunc`,
+//! `IntImp_ZerImpFunc`, `IntImp_ZerCSParFunc`, `IntImp_Int2S` and `IntImp_IntCS` are
+//! implemented once as generics over the traits of `tools` (`ThePSurfaceTool`,
+//! `TheISurfaceTool`, `TheCurveTool`, `TheFunction`). The packages that instantiate them natively
+//! (IntWalk, IntPatch, GeomInt, IntCurveSurface) declare the instances as aliases.
+pub(crate) mod captured;
+mod compute_tangence;
+mod int2s;
+mod int_cs;
+mod tools;
+mod zer_cs_par_func;
+mod zer_imp_func;
+mod zer_par_func;
+
+pub use compute_tangence::{choix_ref, compute_tangence};
+pub use int_cs::IntImpIntCS;
+pub use int2s::IntImpInt2S;
+pub use tools::{
+    HSurfaceTool, TheCurve3dTool, TheCurveTool, TheFunction, TheISurfaceTool, ThePSurfaceTool,
+};
+pub use zer_cs_par_func::IntImpZerCSParFunc;
+pub use zer_imp_func::IntImpZerImpFunc;
+pub use zer_par_func::IntImpZerParFunc;
+
+/// `IntImp_ConstIsoparametric`: the isoparametric line a walking step fixes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum IntImpConstIsoparametric {
+    /// U constant on the first patch.
+    #[default]
+    UIsoparametricOnCaro1,
+    /// V constant on the first patch.
+    VIsoparametricOnCaro1,
+    /// U constant on the second patch.
+    UIsoparametricOnCaro2,
+    /// V constant on the second patch.
+    VIsoparametricOnCaro2,
+}

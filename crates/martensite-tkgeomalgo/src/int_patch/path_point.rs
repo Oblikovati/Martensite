@@ -1,0 +1,225 @@
+//! The solution points and segments of `IntPatch_TheSOnBounds`: the IntStart
+//! `IntStart_ThePathPoint` and `IntStart_TheSegment` of the IntPatch instance.
+use crate::int_start::{TheArc, ThePathPoint, TheSegment, TheVertex};
+use martensite_tkernel::standard::Failure;
+use martensite_tkmath::gp::Point3;
+
+/// `IntPatch_ThePathPointOfTheSOnBounds`: a solution point on an arc, on a vertex of the
+/// domain or new.
+///
+/// ```
+/// use martensite_tkgeomalgo::int_patch::IntPatchThePathPointOfTheSOnBounds;
+/// let p = IntPatchThePathPointOfTheSOnBounds::new();
+/// assert!(p.is_new() && p.vertex().is_err());
+/// ```
+#[derive(Clone)]
+pub struct IntPatchThePathPointOfTheSOnBounds {
+    point: Point3,
+    tol: f64,
+    isnew: bool,
+    vtx: TheVertex,
+    arc: TheArc,
+    param: f64,
+}
+
+impl Default for IntPatchThePathPointOfTheSOnBounds {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl IntPatchThePathPointOfTheSOnBounds {
+    /// The empty constructor: a new point at the origin. `IntPatchThePathPointOfTheSOnBounds::new()`.
+    pub fn new() -> Self {
+        Self {
+            point: Point3::default(),
+            tol: 0.0,
+            isnew: true,
+            vtx: TheVertex::default(),
+            arc: TheArc::default(),
+            param: 0.0,
+        }
+    }
+
+    /// `(P, Tol, V, A, Parameter)`: a point on the vertex `v` of the arc.
+    /// `IntPatchThePathPointOfTheSOnBounds::on_vertex(p, 1e-7, &v, &a, 0.5)`.
+    pub fn on_vertex(p: Point3, tol: f64, v: &TheVertex, a: &TheArc, parameter: f64) -> Self {
+        let mut point: Self = Self::new();
+        point.set_value_on_vertex(p, tol, v, a, parameter);
+        point
+    }
+
+    /// `(P, Tol, A, Parameter)`: a new point on the arc.
+    /// `IntPatchThePathPointOfTheSOnBounds::on_arc(p, 1e-7, &a, 0.5)`.
+    pub fn on_arc(p: Point3, tol: f64, a: &TheArc, parameter: f64) -> Self {
+        let mut point: Self = Self::new();
+        point.set_value_on_arc(p, tol, a, parameter);
+        point
+    }
+
+    /// `SetValue(P, Tol, V, A, Parameter)`: not new. `p.set_value_on_vertex(pt, tol, &v, &a, 0.5)`.
+    pub fn set_value_on_vertex(
+        &mut self,
+        p: Point3,
+        tol: f64,
+        v: &TheVertex,
+        a: &TheArc,
+        parameter: f64,
+    ) {
+        (self.isnew, self.point, self.tol, self.param) = (false, p, tol, parameter);
+        (self.vtx, self.arc) = (v.clone(), a.clone());
+    }
+
+    /// `SetValue(P, Tol, A, Parameter)`: new; the vertex is kept, as natively.
+    /// `p.set_value_on_arc(pt, tol, &a, 0.5)`.
+    pub fn set_value_on_arc(&mut self, p: Point3, tol: f64, a: &TheArc, parameter: f64) {
+        (self.isnew, self.point, self.tol, self.param) = (true, p, tol, parameter);
+        self.arc = a.clone();
+    }
+
+    /// `Value()`. `p.value()`.
+    pub fn value(&self) -> Point3 {
+        self.point
+    }
+
+    /// `Tolerance()`. `p.tolerance()`.
+    pub fn tolerance(&self) -> f64 {
+        self.tol
+    }
+
+    /// `IsNew()`. `p.is_new()`.
+    pub fn is_new(&self) -> bool {
+        self.isnew
+    }
+
+    /// `Vertex()`: Standard_DomainError on a new point. `p.vertex()?`.
+    pub fn vertex(&self) -> Result<TheVertex, Failure> {
+        if self.isnew {
+            return Err(search_record_domain_failure());
+        }
+        Ok(self.vtx.clone())
+    }
+
+    /// `Arc()`. `p.arc()`.
+    pub fn arc(&self) -> TheArc {
+        self.arc.clone()
+    }
+
+    /// `Parameter()`. `p.parameter()`.
+    pub fn parameter(&self) -> f64 {
+        self.param
+    }
+}
+
+/// `IntStart_ThePathPoint` of the IntPatch instance.
+impl ThePathPoint for IntPatchThePathPointOfTheSOnBounds {
+    fn on_vertex(p: Point3, tol: f64, vertex: &TheVertex, arc: &TheArc, param: f64) -> Self {
+        IntPatchThePathPointOfTheSOnBounds::on_vertex(p, tol, vertex, arc, param)
+    }
+    fn on_arc(p: Point3, tol: f64, arc: &TheArc, param: f64) -> Self {
+        IntPatchThePathPointOfTheSOnBounds::on_arc(p, tol, arc, param)
+    }
+    fn set_value_on_vertex(
+        &mut self,
+        p: Point3,
+        tol: f64,
+        vertex: &TheVertex,
+        arc: &TheArc,
+        param: f64,
+    ) {
+        IntPatchThePathPointOfTheSOnBounds::set_value_on_vertex(self, p, tol, vertex, arc, param);
+    }
+    fn set_value_on_arc(&mut self, p: Point3, tol: f64, arc: &TheArc, param: f64) {
+        IntPatchThePathPointOfTheSOnBounds::set_value_on_arc(self, p, tol, arc, param);
+    }
+    fn is_new(&self) -> bool {
+        self.isnew
+    }
+    fn vertex(&self) -> Result<TheVertex, Failure> {
+        IntPatchThePathPointOfTheSOnBounds::vertex(self)
+    }
+    fn arc(&self) -> TheArc {
+        self.arc.clone()
+    }
+    fn parameter(&self) -> f64 {
+        self.param
+    }
+}
+
+/// `IntPatch_TheSegmentOfTheSOnBounds`: a part of an arc that is solution, with its
+/// optional first and last points.
+///
+/// ```
+/// use martensite_tkgeomalgo::int_patch::IntPatchTheSegmentOfTheSOnBounds;
+/// let s = IntPatchTheSegmentOfTheSOnBounds::new();
+/// assert!(!s.has_first_point() && s.first_point().is_err());
+/// ```
+#[derive(Clone, Default)]
+pub struct IntPatchTheSegmentOfTheSOnBounds {
+    arc: TheArc,
+    first: Option<IntPatchThePathPointOfTheSOnBounds>,
+    last: Option<IntPatchThePathPointOfTheSOnBounds>,
+}
+
+// These native default exceptions carry empty messages and retain configured capture.
+fn search_record_domain_failure() -> Failure {
+    Failure::with_message("Standard_DomainError", "")
+}
+
+impl IntPatchTheSegmentOfTheSOnBounds {
+    /// The empty constructor: no arc, no point. `IntPatchTheSegmentOfTheSOnBounds::new()`.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// `SetValue(A)`: the arc; forgets the points (their values stay unread).
+    /// `s.set_value(&arc)`.
+    pub fn set_value(&mut self, a: &TheArc) {
+        (self.first, self.last, self.arc) = (None, None, a.clone());
+    }
+
+    /// `SetLimitPoint(V, First)`: the first (or last) point. `s.set_limit_point(&p, true)`.
+    pub fn set_limit_point(&mut self, v: &IntPatchThePathPointOfTheSOnBounds, first: bool) {
+        if first {
+            self.first = Some(v.clone());
+        } else {
+            self.last = Some(v.clone());
+        }
+    }
+
+    /// `Curve()`: the arc. `s.curve()`.
+    pub fn curve(&self) -> TheArc {
+        self.arc.clone()
+    }
+
+    /// `HasFirstPoint()`. `s.has_first_point()`.
+    pub fn has_first_point(&self) -> bool {
+        self.first.is_some()
+    }
+
+    /// `FirstPoint()`: Standard_DomainError without a first point. `s.first_point()?`.
+    pub fn first_point(&self) -> Result<&IntPatchThePathPointOfTheSOnBounds, Failure> {
+        self.first.as_ref().ok_or_else(search_record_domain_failure)
+    }
+
+    /// `HasLastPoint()`. `s.has_last_point()`.
+    pub fn has_last_point(&self) -> bool {
+        self.last.is_some()
+    }
+
+    /// `LastPoint()`: Standard_DomainError without a last point. `s.last_point()?`.
+    pub fn last_point(&self) -> Result<&IntPatchThePathPointOfTheSOnBounds, Failure> {
+        self.last.as_ref().ok_or_else(search_record_domain_failure)
+    }
+}
+
+/// `IntStart_TheSegment` of the IntPatch instance.
+impl TheSegment for IntPatchTheSegmentOfTheSOnBounds {
+    type PathPoint = IntPatchThePathPointOfTheSOnBounds;
+    fn set_value(&mut self, arc: &TheArc) {
+        IntPatchTheSegmentOfTheSOnBounds::set_value(self, arc);
+    }
+    fn set_limit_point(&mut self, point: &IntPatchThePathPointOfTheSOnBounds, first: bool) {
+        IntPatchTheSegmentOfTheSOnBounds::set_limit_point(self, point, first);
+    }
+}

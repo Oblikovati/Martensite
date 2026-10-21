@@ -1,0 +1,41 @@
+{
+ "distinct_calls": 13263,
+ "gmp": "GMP 6.3.0",
+ "gmpy2": "2.3.2",
+ "mpfr": "MPFR 4.2.2",
+ "python": "3.12.3",
+ "schema": 1,
+ "summary": {
+  "acos": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 71
+  },
+  "asin": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 131
+  },
+  "atan": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 772
+  },
+  "atan2": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 538
+  },
+  "cos": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 5592
+  },
+  "cosh": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 17
+  },
+  "log": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 4
+  },
+  "pow": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 5
+  },
+  "sin": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 6095
+  },
+  "sinh": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 38
+  }
+ },
+ "wide_precision_bits": 256
+}

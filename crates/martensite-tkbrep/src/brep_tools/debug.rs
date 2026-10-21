@@ -1,0 +1,67 @@
+//! The debugger helpers of BRepTools_Debug.cxx: global functions that no header
+//! declares, meant to be called from a debugger prompt. Their text goes to the
+//! injected console that stands for `std::cout`, and a failure is returned as its
+//! message, as the native `catch` returns `what()`.
+use super::io::{dump, write_file};
+use crate::topods::Shape;
+use crate::toptools::LocationSet;
+use martensite_tkernel::message::ProgressRange;
+use martensite_tkernel::storage::IoStream;
+use martensite_tkernel::tcollection::AsciiString;
+use martensite_tkgeombase::geom_tools::ConsoleOutput;
+use martensite_tkmath::toploc::Location;
+use std::io::{Read, Seek, SeekFrom};
+
+/// `BRepTools_Write(theFileStr, theShape)`: the file name on success, "Error: write
+/// failed" or the failure message otherwise;
+/// `debug_write("a.brep", &shape)`.
+pub fn debug_write(file: &str, shape: &Shape) -> String {
+    match write_file(
+        shape,
+        &AsciiString::from_bytes(file.as_bytes()),
+        &ProgressRange::default(),
+    ) {
+        Ok(true) => file.to_string(),
+        Ok(false) => "Error: write failed".to_string(),
+        Err(failure) => failure.message().to_string(),
+    }
+}
+
+/// `BRepTools_Dump(theShape)`: the dump of the shape between blank lines on the console;
+/// "Shape dumped to std::cout" or the failure message; `debug_dump(&shape, &console)`.
+pub fn debug_dump(shape: &Shape, console: &dyn ConsoleOutput) -> String {
+    console.write(b"\n\n");
+    let mut stream = IoStream::from_bytes(Vec::new());
+    let result = dump(shape, &mut stream);
+    console.write(&stream_bytes(stream));
+    if let Err(failure) = result {
+        return failure.message().to_string();
+    }
+    console.write(b"\n");
+    "Shape dumped to std::cout".to_string()
+}
+
+/// `BRepTools_DumpLoc(theShape)`: the location set of the shape's location on the
+/// console; "Location dumped to std::cout"; `debug_dump_location(&location, &console)`.
+pub fn debug_dump_location(location: &Location, console: &dyn ConsoleOutput) -> String {
+    console.write(b"\n\n");
+    let mut set = LocationSet::default();
+    set.add(location);
+    let mut stream = IoStream::from_bytes(Vec::new());
+    set.dump(&mut stream);
+    console.write(&stream_bytes(stream));
+    console.write(b"\n");
+    "Location dumped to std::cout".to_string()
+}
+
+/// The bytes written to an in-memory stream.
+fn stream_bytes(stream: IoStream) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    if let Some(mut device) = stream.into_device() {
+        let rewound = device.seek(SeekFrom::Start(0)).is_ok();
+        if rewound && device.read_to_end(&mut bytes).is_err() {
+            bytes.clear();
+        }
+    }
+    bytes
+}
