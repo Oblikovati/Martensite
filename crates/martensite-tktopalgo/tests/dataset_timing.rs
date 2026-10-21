@@ -10,7 +10,7 @@ mod cases;
 #[path = "dataset_cases/support/mod.rs"]
 mod support;
 
-use support::process::{BUGS_SECONDS, run_case};
+use support::process::{BUGS_SECONDS, run_ignored_case};
 use support::session::NoView;
 
 #[path = "dataset_timing/bugs_modalg_6.rs"]

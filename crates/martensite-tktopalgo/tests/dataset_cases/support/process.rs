@@ -45,3 +45,8 @@ pub(crate) use dataset_cases;
 pub fn run_case(identity: &str, seconds: i64, body: impl FnOnce()) {
     isolated_case::run_isolated(identity, seconds, body);
 }
+
+/// Run an ignored case in its child process with libtest’s ignored-test switch.
+pub fn run_ignored_case(identity: &str, seconds: i64, body: impl FnOnce()) {
+    isolated_case::run_ignored(identity, seconds, body);
+}
