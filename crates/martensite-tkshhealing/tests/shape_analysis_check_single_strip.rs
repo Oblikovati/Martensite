@@ -9,7 +9,8 @@ use martensite_tkshhealing::shape_analysis::ShapeAnalysisCheckSmallFace;
 use martensite_tkshhealing::shape_extend::ShapeExtendStatus;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
 
-const REFERENCE: &str = include_str!("fixtures/behavior/shape_analysis_check_single_strip.expected");
+const REFERENCE: &str =
+    include_str!("fixtures/behavior/shape_analysis_check_single_strip.expected");
 
 #[test]
 fn check_single_strip_matches_native_topology_and_status() {

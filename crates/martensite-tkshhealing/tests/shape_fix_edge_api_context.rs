@@ -271,5 +271,8 @@ fn assert_native_row(label: &str, actual: &[f64]) {
         .skip(1)
         .map(|value| value.parse().unwrap())
         .collect();
-    assert_eq!(actual, expected, "native the reference implementation row {label}");
+    assert_eq!(
+        actual, expected,
+        "native the reference implementation row {label}"
+    );
 }

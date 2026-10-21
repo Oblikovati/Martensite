@@ -11,8 +11,7 @@ use martensite_tkshhealing::{
     },
 };
 use martensite_tktopalgo::{
-    brep_builder_api::BRepBuilderAPIMakeFace,
-    brep_check::BRepCheckAnalyzer,
+    brep_builder_api::BRepBuilderAPIMakeFace, brep_check::BRepCheckAnalyzer,
 };
 
 fn configure(divider: &ShapeUpgradeFaceDivideArea, mode: usize) {
@@ -202,9 +201,10 @@ fn split_two_numbers_hemisphere_cases() {
 
 fn hemisphere(radius: f64) -> martensite_tkbrep::topods::Face {
     use martensite_tkg3d::geom::{GeomSphericalSurface, GeomSurface};
-    let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomSphericalSurface::new(martensite_tkmath::gp::Axis3::default(), radius).unwrap())
-            .cast();
+    let surface: Handle<dyn GeomSurface> = Handle::new(
+        GeomSphericalSurface::new(martensite_tkmath::gp::Axis3::default(), radius).unwrap(),
+    )
+    .cast();
     BRepBuilderAPIMakeFace::from_surface_bounds(
         &surface,
         (0.0, std::f64::consts::TAU, 0.0, std::f64::consts::FRAC_PI_2),
@@ -221,8 +221,20 @@ fn split_number_sphere_cases() {
     for (radius, v_min, v_max, parts, expected_faces) in [
         (10.0, 0.0, std::f64::consts::FRAC_PI_2, 10, 10),
         (10.0, 0.0, std::f64::consts::FRAC_PI_2, 100, 102),
-        (10.0, -std::f64::consts::FRAC_PI_2, std::f64::consts::FRAC_PI_2, 10, 10),
-        (10.0, -std::f64::consts::FRAC_PI_2, std::f64::consts::FRAC_PI_2, 100, 136),
+        (
+            10.0,
+            -std::f64::consts::FRAC_PI_2,
+            std::f64::consts::FRAC_PI_2,
+            10,
+            10,
+        ),
+        (
+            10.0,
+            -std::f64::consts::FRAC_PI_2,
+            std::f64::consts::FRAC_PI_2,
+            100,
+            136,
+        ),
     ] {
         let face = spherical_face(radius, v_min, v_max);
         let divider = ShapeUpgradeFaceDivideArea::new(face);
@@ -238,9 +250,10 @@ fn split_number_sphere_cases() {
 
 fn spherical_face(radius: f64, v_min: f64, v_max: f64) -> martensite_tkbrep::topods::Face {
     use martensite_tkg3d::geom::{GeomSphericalSurface, GeomSurface};
-    let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomSphericalSurface::new(martensite_tkmath::gp::Axis3::default(), radius).unwrap())
-            .cast();
+    let surface: Handle<dyn GeomSurface> = Handle::new(
+        GeomSphericalSurface::new(martensite_tkmath::gp::Axis3::default(), radius).unwrap(),
+    )
+    .cast();
     BRepBuilderAPIMakeFace::from_surface_bounds(
         &surface,
         (0.0, std::f64::consts::TAU, v_min, v_max),
@@ -253,14 +266,7 @@ fn spherical_face(radius: f64, v_min: f64, v_max: f64) -> martensite_tkbrep::top
 
 fn finish_native_split_command(result: &Shape) {
     let messages = Handle::new(ShapeExtendMsgRegistrator::new()).cast();
-    ShapeFix::same_parameter(
-        result,
-        false,
-        0.0,
-        &ProgressRange::default(),
-        &messages,
-    )
-    .unwrap();
+    ShapeFix::same_parameter(result, false, 0.0, &ProgressRange::default(), &messages).unwrap();
     assert!(
         BRepCheckAnalyzer::new(result, true, false, false)
             .unwrap()
