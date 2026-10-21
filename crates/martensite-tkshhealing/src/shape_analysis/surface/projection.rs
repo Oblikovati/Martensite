@@ -1,6 +1,7 @@
 use super::closure::restricted_bounds;
 use super::*;
 use crate::shape_analysis::curve::adjust_by_period;
+use martensite_cmath as cmath;
 use martensite_tkernel::precision;
 use martensite_tkg2d::geom2d::native::std_min;
 use martensite_tkgeombase::extrema::{ExtFlag, ExtPS};
@@ -240,7 +241,7 @@ impl ShapeAnalysisSurface {
         }
         let product = residual.dot(normal);
         Ok(residual.square_magnitude() - product * product / squared
-            < precision::confusion().powi(2))
+            < cmath::powi(precision::confusion(), 2))
     }
 }
 

@@ -3,6 +3,7 @@ use super::shift::shift_wire_pcurves;
 use crate::shape_analysis::ShapeAnalysisSurface;
 use crate::shape_build::ShapeBuildReShape;
 use crate::shape_fix::ShapeFixFace;
+use martensite_cmath as cmath;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::{self, Builder, Shape, ShapeIterator, Wire};
 use martensite_tkernel::precision;
@@ -59,7 +60,7 @@ fn shift_natural_wires(
     shift: Vector2,
     surface: &ShapeAnalysisSurface,
 ) -> Result<(), Failure> {
-    if shift.x().hypot(shift.y()) < precision::p_confusion() {
+    if cmath::hypot(shift.x(), shift.y()) < precision::p_confusion() {
         return Ok(());
     }
     for wire in wires {

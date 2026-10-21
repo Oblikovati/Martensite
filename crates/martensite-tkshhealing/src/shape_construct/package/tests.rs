@@ -1,5 +1,6 @@
 use super::*;
 use crate::shape_construct::{ShapeConstructApproxSettings, ShapeConstructSurfaceBounds};
+use martensite_cmath as cmath;
 use martensite_tkbrep::topods::{Edge, Face, Shape};
 use martensite_tkernel::ncollection::Sequence;
 use martensite_tkg2d::geom2d::{Geom2dCircle, Geom2dLine};
@@ -36,7 +37,7 @@ fn circle_arc_is_approximated_on_the_trimmed_range() {
     let start = spline.value(spline.first_parameter()).unwrap();
     assert!(start.distance(&Point3::new(2., 0., 0.)) < 1e-4);
     let end = spline.value(spline.last_parameter()).unwrap();
-    assert!(end.distance(&Point3::new(2. * 1f64.cos(), 2. * 1f64.sin(), 0.)) < 1e-4);
+    assert!(end.distance(&Point3::new(2. * cmath::cos(1.), 2. * cmath::sin(1.), 0.)) < 1e-4);
 }
 
 #[test]
@@ -62,7 +63,7 @@ fn line2d_is_converted_exactly_and_conic2d_is_approximated() {
         ShapeConstruct::convert_curve2d_to_bspline(&circle, 0., 1., 1e-6, Continuity::C1, 9, 9)
             .unwrap();
     let end = spline.value(spline.last_parameter()).unwrap();
-    assert!(end.distance(Point2::new(1f64.cos(), 1f64.sin())) < 1e-6);
+    assert!(end.distance(Point2::new(cmath::cos(1.), cmath::sin(1.))) < 1e-6);
 }
 
 fn bounds(uf: f64, ul: f64, vf: f64, vl: f64) -> ShapeConstructSurfaceBounds {
@@ -105,7 +106,7 @@ fn extrusion_is_the_converted_basis_swept_between_the_v_bounds() {
     let low = spline.value(u1, v1).unwrap();
     assert!(low.distance(&Point3::new(2., 0., 1.)) < 1e-4);
     let high = spline.value(u2, v2).unwrap();
-    assert!(high.distance(&Point3::new(2. * 1f64.cos(), 2. * 1f64.sin(), 4.)) < 1e-4);
+    assert!(high.distance(&Point3::new(2. * cmath::cos(1.), 2. * cmath::sin(1.), 4.)) < 1e-4);
 }
 
 #[test]

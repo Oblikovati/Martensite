@@ -1,4 +1,5 @@
 use super::*;
+use martensite_cmath as cmath;
 use martensite_tkg2d::geom2d::native::{std_max, std_min};
 use martensite_tkg3d::geom::{GeomConicalSurface, GeomToroidalSurface};
 
@@ -87,7 +88,7 @@ fn surface_singularities(
     bounds: SurfaceBounds,
 ) -> Result<Vec<SurfaceSingularity>, Failure> {
     if let Some(cone) = surface.cast::<GeomConicalSurface>().get() {
-        let apex_v = -cone.ref_radius() / cone.semi_angle().sin();
+        let apex_v = -cone.ref_radius() / cmath::sin(cone.semi_angle());
         return Ok(vec![v_singularity(cone.apex(), 0., bounds, apex_v, false)]);
     }
     if let Some(torus) = surface.cast::<GeomToroidalSurface>().get() {
@@ -153,7 +154,7 @@ fn torus_singularities(
     bounds: SurfaceBounds,
 ) -> Result<Vec<SurfaceSingularity>, Failure> {
     let (minor, major) = (torus.minor_radius(), torus.major_radius());
-    let angle = std_min(1., major / minor).acos();
+    let angle = cmath::acos(std_min(1., major / minor));
     let precision = std_max(0., major - minor);
     let north = std::f64::consts::PI - angle;
     let south = std::f64::consts::PI + angle;

@@ -1,4 +1,5 @@
 use super::*;
+use martensite_cmath as cmath;
 use martensite_tkernel::precision;
 use martensite_tkg2d::geom2d::native::std_max;
 use martensite_tkg3d::geom::GeomSurfaceD2;
@@ -147,7 +148,8 @@ impl NewtonStep {
         }
         let normal_residual = self.residual.dot(self.normal);
         let deviation = squared - normal_residual * normal_residual / self.normal_squared;
-        deviation.partial_cmp(&precision::confusion().powi(2)) != Some(std::cmp::Ordering::Greater)
+        deviation.partial_cmp(&cmath::powi(precision::confusion(), 2))
+            != Some(std::cmp::Ordering::Greater)
     }
 }
 

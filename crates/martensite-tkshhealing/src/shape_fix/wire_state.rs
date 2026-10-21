@@ -3,6 +3,7 @@ use super::ShapeFixWire;
 use crate::shape_analysis::{ShapeAnalysisSurface, ShapeAnalysisWire};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use crate::shape_fix::FixRoot;
+use martensite_cmath as cmath;
 use martensite_tkbrep::topods::{Face, Wire};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::GeomSurface;
@@ -54,7 +55,7 @@ impl ShapeFixWire {
 
     /// Sets the native maximum tail angle in radians; `fixer.set_max_tail_angle(0.25)`.
     pub fn set_max_tail_angle(&self, angle: f64) {
-        let sine = angle.sin();
+        let sine = cmath::sin(angle);
         // `(sine >= 0) ? sine : 0`: keeps -0.0 and maps NaN to 0, unlike f64::max.
         self.state.write().max_tail_angle_sine = if sine >= 0.0 { sine } else { 0.0 };
     }

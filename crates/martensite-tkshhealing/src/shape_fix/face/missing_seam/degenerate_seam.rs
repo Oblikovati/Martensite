@@ -1,4 +1,5 @@
 use super::plan::MissingSeamPlan;
+use martensite_cmath as cmath;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{Builder, Edge, Vertex, Wire};
 use martensite_tkernel::precision;
@@ -55,7 +56,7 @@ impl MissingSeamPlan {
                 "ShapeFix_Face: expected toroidal surface",
             )
         })?;
-        let phi = (-torus.major_radius() / torus.minor_radius()).acos();
+        let phi = cmath::acos(-torus.major_radius() / torus.minor_radius());
         let v = if self.direction.u > 0 {
             std::f64::consts::PI + phi
         } else {

@@ -3,6 +3,7 @@ use super::{
     FixRoot, ShapeFixFace,
     periodic_cone::{build_apex_face, conical_bounds_on_surface, face_wires},
 };
+use martensite_cmath as cmath;
 use martensite_tkbrep::{
     brep::BRepTool,
     brep_tools::ReShape,
@@ -49,7 +50,7 @@ fn periodic_apex_face(face: &Face, tolerance: f64) -> Result<Option<Shape>, Fail
     if cone.semi_angle().abs() <= precision::confusion() {
         return Ok(None);
     }
-    let apex_v = -cone.ref_radius() / cone.semi_angle().sin();
+    let apex_v = -cone.ref_radius() / cmath::sin(cone.semi_angle());
     if (apex_v - bounds.min_v).abs() <= tolerance
         || (apex_v - bounds.max_v).abs() <= tolerance
         || (apex_v < bounds.max_v && apex_v > bounds.min_v)

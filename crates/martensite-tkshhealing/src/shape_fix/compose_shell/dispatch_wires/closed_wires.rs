@@ -1,5 +1,6 @@
 use crate::shape_build::ShapeBuildEdge;
 use crate::shape_fix::{FixRoot, ShapeFixWire, ShapeFixWireSegment};
+use martensite_cmath as cmath;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::{self, Edge, Face};
 use martensite_tkernel::ncollection::Sequence;
@@ -87,7 +88,7 @@ fn same_or_near_pcurve(
     }
     let first_curve = first.get().ok_or_else(null_pcurve)?;
     let second_curve = second.get().ok_or_else(null_pcurve)?;
-    let tolerance = precision::p_confusion().powi(2);
+    let tolerance = cmath::powi(precision::p_confusion(), 2);
     let starts_near = first_curve
         .value(first_range.0)?
         .square_distance(second_curve.value(second_range.0)?)
