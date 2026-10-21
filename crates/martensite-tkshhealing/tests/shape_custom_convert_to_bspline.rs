@@ -36,9 +36,9 @@ fn plane_mode_converts_the_plane_on_the_face_bounds() {
     assert_eq!(spline.bounds(), (-0.5, 0.5, -0.5, 0.5));
     assert!(!surface.rev_wires && !surface.rev_face);
     let edge = &edges_of(&face.clone().into_shape())[0];
-    // BRepBuilderAPI stores no p-curve on a plane: no curve on surface asks for a copy.
+    // The edge carries a p-curve on the converted plane, so its 3D curve is copied.
     assert!(
-        !modification
+        modification
             .new_curve(edge, &mut NewCurve::default())
             .unwrap()
     );
