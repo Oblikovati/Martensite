@@ -1,4 +1,6 @@
-//! The dataset reader of the boundary representation regression cases: the exact public dataset member.
+//! The dataset reader of the primitive regression cases: the exact public
+//! dataset member, or a file of the submodule's `github-issues/` folder for an input that
+//! only an issue attachment publishes (the manifest row then names it with a `path=` field).
 //!
 //! The members are read from the `external/martensite-test-data` submodule (its
 //! unchanged `dataset-7.9.0/` tree), or from `$MARTENSITE_TEST_DATA_DIR` when set. A
@@ -15,6 +17,9 @@ pub struct PinnedMember<'a> {
     pub directory: &'a str,
     pub bytes: usize,
     pub sha256: &'a str,
+    /// The submodule path when the member is not in `dataset-7.9.0/` (an issue
+    /// attachment stored under another name).
+    pub path: Option<&'a str>,
 }
 
 /// The manifest row of `name`; panics for a name the cases never pinned.
@@ -28,8 +33,12 @@ pub fn pinned(name: &str) -> PinnedMember<'static> {
 
 fn parse_row(row: &'static str) -> PinnedMember<'static> {
     let fields: Vec<&str> = row.split(' ').collect();
-    let [name, directory, bytes, sha256] = fields[..] else {
-        panic!("manifest row {row:?}: expected `name directory bytes sha256`");
+    let (name, directory, bytes, sha256, path) = match fields[..] {
+        [name, directory, bytes, sha256] => (name, directory, bytes, sha256, None),
+        [name, directory, bytes, sha256, path] => {
+            (name, directory, bytes, sha256, path.strip_prefix("path="))
+        }
+        _ => panic!("manifest row {row:?}: expected `name directory bytes sha256 [path=...]`"),
     };
     let bytes = bytes.parse().expect("manifest byte count");
     PinnedMember {
@@ -37,6 +46,7 @@ fn parse_row(row: &'static str) -> PinnedMember<'static> {
         directory,
         bytes,
         sha256,
+        path,
     }
 }
 
@@ -60,7 +70,10 @@ pub fn located_bytes(name: &str) -> Vec<u8> {
          external/martensite-test-data` (or set MARTENSITE_TEST_DATA_DIR)",
         directory.display()
     );
-    let path = directory.join(member.directory).join(member.name);
+    let path = match member.path {
+        Some(path) => directory.join("..").join(path),
+        None => directory.join(member.directory).join(member.name),
+    };
     let bytes = std::fs::read(&path).unwrap_or_else(|error| {
         panic!(
             "dataset member {}: {error}; run `git submodule update --init \

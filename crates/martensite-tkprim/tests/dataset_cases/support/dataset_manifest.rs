@@ -4,7 +4,9 @@
 //! Taken from the dataset archive of release 7.9.0 (archive SHA-256
 //! a92ed91c3271c299287c1c404bb9454d463251094bfc848acc44aee60e6a026c). One row per member: file name, directory under
 //! `dataset-7.9.0/` of the `external/martensite-test-data` submodule, size in bytes and
-//! SHA-256.
+//! SHA-256. A row with `path=` names a file outside the dataset folder: bug_gh469.brep is
+//! the unchanged `cutCompound2.shape` of an issue attachment
+//! (`github-issues/`, see its SOURCES.json).
 
 /// `name directory bytes sha256` per pinned member, sorted by name.
 pub const PINNED_MEMBERS: &str = "\
@@ -24,4 +26,5 @@ bug26560_planarspline.brep brep 758 be31bd5388c13d0ecec8b5ce82b53549b1e68b5acad0
 bug28003_Surf_Bezier.brep brep 1813 ee121192be7865bbf74fd3d68ea5f571ce6f243c322803c5063e341cf288db5a
 bug28402_hugeassembly.brep brep 46366 6dda75ac4cfb78b0865edf23760254eb31983b469110fad517907462d0e2084d
 bug31995.brep brep 9179 f80f4d7e3add11b13fd8e27fc84149f662ffb24417e03bc253e1b88420dbc160
-bug61037.brep brep 29750 a3f8a0399f33a3be067b3e53de34931f863eedc048e01cc81dc0bc81e9fbdc3d";
+bug61037.brep brep 29750 a3f8a0399f33a3be067b3e53de34931f863eedc048e01cc81dc0bc81e9fbdc3d
+bug_gh469.brep github-issues 418891 222f67f07136a5dc1475ef9f23acfce3e3840d1ab47b8452b834dcdcf878861c path=github-issues/OCCT-469/cutCompound2.shape";

@@ -1,12 +1,32 @@
-//! `bugs_modalg_8` case bodies.
+//! `bugs_modalg_8` case bodies (the input of bug_gh469 is an issue attachment in the
+//! test-data submodule).
 use crate::support::{
+    bounding::{Bounding, bounding},
     curves::{shape_set, transform_copy},
     log,
     prim::psphere,
+    restore::restore_as,
     session::Session,
     topology::dump_shape,
 };
 use martensite_tkmath::gp::{Axis1, Direction3, Point3, Transform3, Vector3};
+
+/// GH469: BRepBndLib::AddOptimal of the restored compound gives a box, not a void one,
+/// and raises no exception.
+pub fn bug_gh469(s: &mut dyn Session) {
+    log::puts("=========================================================================");
+    log::puts("GH469: Bounding box is void when using BRepBndLib::AddOptimal");
+    log::puts("=========================================================================");
+    log::puts("");
+    let result = restore_as(s, "bug_gh469.brep", "result").shape();
+    bounding(
+        s,
+        Bounding {
+            optimal: true,
+            ..Bounding::of(&result)
+        },
+    );
+}
 
 /// 0033591: a sphere rotated then translated with `-copy` keeps one surface (the old one
 /// is not left in the shape).
