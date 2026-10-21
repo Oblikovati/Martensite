@@ -1,5 +1,6 @@
 use super::*;
 use crate::brep_mesh::DefaultRangeSplitter;
+use martensite_cmath as cmath;
 use martensite_tkmath::bvh::BvhScalar;
 use martensite_tkmath::geom_abs::{CurveType, SurfaceType};
 impl GeomTool<'_> {
@@ -29,7 +30,9 @@ impl GeomTool<'_> {
     }
 }
 fn count(estimate: f64) -> i32 {
-    2_f64.powf(estimate.log10()).ceil().truncate_to_int()
+    cmath::pow(2., cmath::log10(estimate))
+        .ceil()
+        .truncate_to_int()
 }
 fn error_factors(
     surface: &dyn Adaptor3dSurface,

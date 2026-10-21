@@ -1,4 +1,5 @@
 use super::*;
+use martensite_cmath as cmath;
 use martensite_tkgeombase::gcpnts::TangentialDeflection;
 use martensite_tkmath::bvh::BvhScalar;
 /// Conical interior-node distribution; `ConeRangeSplitter::default()`.
@@ -28,7 +29,7 @@ impl ConeRangeSplitter {
         let diff_u = self.range_u.1 - self.range_u.0;
         let diff_v = self.range_v.1 - self.range_v.0;
         let scale = step * radius;
-        let ratio = std_max(1.0, (diff_v / scale).ln());
+        let ratio = std_max(1.0, cmath::log(diff_v / scale));
         *counts = (
             (diff_u / step).truncate_to_int(),
             (diff_v / scale / ratio).truncate_to_int(),
@@ -41,8 +42,8 @@ impl ConeRangeSplitter {
     fn angular_step(&self, parameters: &MeshParameters) -> Result<(f64, f64), Failure> {
         let cone = self.get_surface().cone()?;
         let radius = std_max(
-            (cone.ref_radius() + self.range_v.0 * cone.semi_angle().sin()).abs(),
-            (cone.ref_radius() + self.range_v.1 * cone.semi_angle().sin()).abs(),
+            (cone.ref_radius() + self.range_v.0 * cmath::sin(cone.semi_angle())).abs(),
+            (cone.ref_radius() + self.range_v.1 * cmath::sin(cone.semi_angle())).abs(),
         );
         let step = TangentialDeflection::arc_angular_step(
             radius,
