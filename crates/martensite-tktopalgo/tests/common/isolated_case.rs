@@ -24,6 +24,15 @@ static WATCHDOG_STARTED: AtomicBool = AtomicBool::new(false);
 /// Run `body` as the test `identity` (its full libtest name) in a fresh child process with
 /// a budget of `seconds`; `run_isolated("cases::point", 1000, || assert_eq!(1 + 1, 2))`.
 pub fn run_isolated(identity: &str, seconds: i64, body: impl FnOnce()) {
+    run_with_mode(identity, seconds, false, body);
+}
+
+/// Run an ignored test body alone in a fresh child process.
+pub fn run_ignored(identity: &str, seconds: i64, body: impl FnOnce()) {
+    run_with_mode(identity, seconds, true, body);
+}
+
+fn run_with_mode(identity: &str, seconds: i64, include_ignored: bool, body: impl FnOnce()) {
     if std::env::var(CHILD_CASE).as_deref() == Ok(identity) {
         restart_budget(seconds);
         assert_eq!(budget_seconds(), seconds, "group time budget");
@@ -32,8 +41,12 @@ pub fn run_isolated(identity: &str, seconds: i64, body: impl FnOnce()) {
     }
     let executable = std::env::current_exe()
         .unwrap_or_else(|error| panic!("case {identity}: no test executable path: {error}"));
-    let output = Command::new(&executable)
-        .args([identity, "--exact", "--nocapture", "--test-threads=1"])
+    let mut command = Command::new(&executable);
+    command.args([identity, "--exact", "--nocapture", "--test-threads=1"]);
+    if include_ignored {
+        command.arg("--ignored");
+    }
+    let output = command
         .env(CHILD_CASE, identity)
         .output()
         .unwrap_or_else(|error| panic!("case {identity}: cannot start {executable:?}: {error}"));

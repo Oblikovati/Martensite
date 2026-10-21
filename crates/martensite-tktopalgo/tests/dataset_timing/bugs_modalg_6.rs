@@ -10,7 +10,7 @@ use super::*;
 #[ignore = "the 4 and 3 percent classifier speed-ups are not reproducible until #207; run with --ignored"]
 fn bug27884() {
     let identity = "bugs_modalg_6::bug27884";
-    run_case(identity, BUGS_SECONDS, || {
+    run_ignored_case(identity, BUGS_SECONDS, || {
         let mut session = NoView;
         crate::cases::bugs_modalg_6::bug27884(&mut session);
         crate::support::log::finish(crate::support::process::group_of("bugs_modalg_6"));
