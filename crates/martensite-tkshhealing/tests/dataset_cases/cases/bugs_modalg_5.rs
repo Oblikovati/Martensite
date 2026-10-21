@@ -15,6 +15,9 @@ use crate::support::{
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::storage::format_general;
 use martensite_tkmath::gp::Point3;
+#[allow(clippy::approx_constant)]
+const SEWN_AREA_EXPECTED: f64 = 3.14159;
+
 use std::f64::consts::PI;
 
 /// tests/bugs/modalg_5/bug24203.
@@ -111,7 +114,7 @@ pub fn bug24817(s: &mut dyn Session) {
         .map(|shape| set(s, "sr2", shape))
         .expect("checknbshapes: sr2 is not a shape");
     counts(&sr1, [2, 3, 2, 2, 10]);
-    checkprops(&sr1, Prop::Area, 3.14159);
+    checkprops(&sr1, Prop::Area, SEWN_AREA_EXPECTED);
     s.step(ViewStep::Clear);
     s.step(ViewStep::SmallView("AXON"));
     s.step(ViewStep::Donly(&["sr1"]));

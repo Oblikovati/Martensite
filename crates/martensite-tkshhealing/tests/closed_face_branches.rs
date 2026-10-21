@@ -150,7 +150,7 @@ fn check_cylinder_points(face: &Face) {
     for (u, v) in [(u0, v0), (u1, v1), ((u0 + u1) / 2., (v0 + v1) / 2.)] {
         let mut point = surface.get().unwrap().value(u, v).unwrap();
         point.transform(location.transformation());
-        assert!(((point.x() - 7.).hypot(point.y() + 3.) - 2.).abs() <= 1e-10);
+        assert!((martensite_cmath::hypot(point.x() - 7., point.y() + 3.) - 2.).abs() <= 1e-10);
         assert!((point.z() - (v + 11.)).abs() <= 1e-10);
     }
 }

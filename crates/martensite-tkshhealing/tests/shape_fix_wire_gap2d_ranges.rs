@@ -411,13 +411,17 @@ fn parabolic_extension_retains_native_not_done_failure_state() {
 fn intersecting_ellipses_use_the_full_conic_search_domain() {
     let first = edge_between(
         Point3::new(3.0, 0.0, 0.0),
-        Point3::new(3.0 * 0.1_f64.cos(), 0.1_f64.sin(), 0.0),
+        Point3::new(
+            3.0 * martensite_cmath::cos(0.1),
+            martensite_cmath::sin(0.1),
+            0.0,
+        ),
     );
     let second = edge_between(
         Point3::new(2.0, 0.0, 0.0),
         Point3::new(
-            5.0 + 3.0 * (std::f64::consts::PI + 0.1).cos(),
-            (std::f64::consts::PI + 0.1).sin(),
+            5.0 + 3.0 * martensite_cmath::cos(std::f64::consts::PI + 0.1),
+            martensite_cmath::sin(std::f64::consts::PI + 0.1),
             0.0,
         ),
     );

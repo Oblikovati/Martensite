@@ -1,7 +1,10 @@
 #[test]
 fn NearPoleOnSphere_K1() {
     let latitude = PI / 2. - 0.01;
-    let curve = circle(10. * latitude.cos(), 10. * latitude.sin());
+    let curve = circle(
+        10. * martensite_cmath::cos(latitude),
+        10. * martensite_cmath::sin(latitude),
+    );
     successful(perform(
         &fixture(&sphere(), precision::confusion()),
         &curve,

@@ -19,6 +19,9 @@ use crate::support::{
     session::{Session, checkview_display, set},
     swdraw::{dt_split_angle, fixshape, removeloc, scaleshape},
 };
+#[allow(clippy::approx_constant)]
+const FULL_TURN_INPUT: f64 = 6.28318530717959;
+
 use martensite_tkbrep::topods::{self, Shape};
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::{geom::GeomCurve, top_abs::ShapeEnum};
@@ -159,7 +162,7 @@ pub fn bug23174(s: &mut dyn Session) {
     s.set("c3D", &Restored::Curve(c3d.clone()));
     let e1 = set(s, "e1", mkedge_range(&c3d, 0., 2.));
     let e2 = set(s, "e2", mkedge_range(&c3d, 2., 4.));
-    let e3 = set(s, "e3", mkedge_range(&c3d, 4., 6.28318530717959));
+    let e3 = set(s, "e3", mkedge_range(&c3d, 4., FULL_TURN_INPUT));
     let cyl_3_r = set(s, "cyl_3_r", edges[2].reversed());
     let w = wire(&[&e1, &e2, &e3, &edges[2], &edges[1], &cyl_3_r]).unwrap();
     let w = set(s, "w", w);

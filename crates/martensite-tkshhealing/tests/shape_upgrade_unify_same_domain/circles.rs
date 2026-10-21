@@ -1,4 +1,5 @@
 use super::*;
+use martensite_cmath as cmath;
 use martensite_tkbrep::brep_adaptor::BRepAdaptorCurve;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::geom_abs::CurveType;
@@ -106,14 +107,14 @@ fn nonconcentric_circle_arcs_leave_adjacent_edges_separate() {
         Point3::new(2.0, 0.0, 0.0),
         Point3::new(0.1, 3.99_f64.sqrt(), 0.0),
     );
-    let second_angle = 3.99_f64.sqrt().atan2(-0.1);
+    let second_angle = cmath::atan2(3.99_f64.sqrt(), -0.1);
     let second_end_angle = second_angle + std::f64::consts::FRAC_PI_2;
     let second = circle_arc_between(
         second_frame,
         Point3::new(0.1, 3.99_f64.sqrt(), 0.0),
         Point3::new(
-            0.2 + 2.0 * second_end_angle.cos(),
-            2.0 * second_end_angle.sin(),
+            0.2 + 2.0 * cmath::cos(second_end_angle),
+            2.0 * cmath::sin(second_end_angle),
             0.0,
         ),
     );

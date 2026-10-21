@@ -66,7 +66,9 @@ fn force_and_tolerance_select_geometric_projection() {
     );
     tool.set_force_projection(true);
     assert!(!tool.is_same_range());
-    assert!((tool.perform_parameter(3.5, true).unwrap() - 0.5_f64.cbrt()).abs() < 1e-7);
+    assert!(
+        (tool.perform_parameter(3.5, true).unwrap() - martensite_cmath::cbrt(0.5)).abs() < 1e-7
+    );
     assert!((tool.perform_parameter(0.5, false).unwrap() - 2.375).abs() < 1e-7);
     tool.set_force_projection(false);
     tool.set_max_tolerance(0.);

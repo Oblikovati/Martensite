@@ -14,6 +14,9 @@ use crate::support::{
     topology::{mkplane, vertex},
 };
 use martensite_tkbrep::topods::Shape;
+#[allow(clippy::approx_constant)]
+const DIAGONAL_TAIL_LENGTH: f64 = 1.4142135623730949;
+
 use martensite_tkmath::gp::Point3;
 
 /// `vertex name x y z`.
@@ -241,7 +244,7 @@ pub fn a13(s: &mut dyn Session) {
         &s_face,
         "1.5",
         [1, 1, 1, 1, 0, 0, 0, 0],
-        1.4142135623730949,
+        DIAGONAL_TAIL_LENGTH,
     );
 }
 
@@ -256,7 +259,7 @@ pub fn a14(s: &mut dyn Session) {
         &s_face,
         "1.5",
         [1, 1, 1, 1, 0, 0, 0, 0],
-        1.4142135623730949,
+        DIAGONAL_TAIL_LENGTH,
     );
 }
 
@@ -271,7 +274,7 @@ pub fn a15(s: &mut dyn Session) {
         &s_face,
         "1.5",
         [1, 1, 1, 1, 0, 0, 0, 0],
-        1.4142135623730949,
+        DIAGONAL_TAIL_LENGTH,
     );
 }
 
@@ -286,7 +289,7 @@ pub fn a16(s: &mut dyn Session) {
         &s_face,
         "1.5",
         [1, 1, 1, 1, 0, 0, 0, 0],
-        1.4142135623730949,
+        DIAGONAL_TAIL_LENGTH,
     );
 }
 
@@ -301,7 +304,7 @@ pub fn a17(s: &mut dyn Session) {
         &s_face,
         "1.5",
         [1, 1, 1, 1, 0, 0, 0, 0],
-        1.4142135623730949,
+        DIAGONAL_TAIL_LENGTH,
     );
 }
 
@@ -316,7 +319,7 @@ pub fn a18(s: &mut dyn Session) {
         &s_face,
         "1.5",
         [1, 1, 1, 1, 0, 0, 0, 0],
-        1.4142135623730949,
+        DIAGONAL_TAIL_LENGTH,
     );
 }
 

@@ -333,7 +333,7 @@ fn surface_edge(
 ) -> Edge {
     let builder = BRepBuilder::default();
     let vector = Point2::new(last.x() - first.x(), last.y() - first.y());
-    let length = vector.x().hypot(vector.y());
+    let length = martensite_cmath::hypot(vector.x(), vector.y());
     let direction = Direction2::new(vector.x(), vector.y()).unwrap();
     let pcurve: Handle<dyn Geom2dCurve> =
         Handle::new(Geom2dLine::new(Axis2d::new(first, direction))).cast();

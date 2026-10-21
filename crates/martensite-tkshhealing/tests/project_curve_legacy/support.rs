@@ -109,7 +109,11 @@ fn helical_bspline(radius: f64, count: i32) -> Handle<dyn GeomCurve> {
     let points: Vec<Point3> = (1..=count)
         .map(|i| {
             let angle = f64::from(i - 1) * PI / 4.;
-            Point3::new(radius * angle.cos(), radius * angle.sin(), f64::from(i - 1))
+            Point3::new(
+                radius * martensite_cmath::cos(angle),
+                radius * martensite_cmath::sin(angle),
+                f64::from(i - 1),
+            )
         })
         .collect();
     fit(&points, (3, 8)).cast()

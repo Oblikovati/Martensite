@@ -32,7 +32,10 @@ fn EquatorOnSphere_C1() {
 fn LatitudeOnSphere_C2() {
     let projector = fixture(&sphere(), precision::confusion());
     let latitude = PI / 4.;
-    let curve = circle(10. * latitude.cos(), 10. * latitude.sin());
+    let curve = circle(
+        10. * martensite_cmath::cos(latitude),
+        10. * martensite_cmath::sin(latitude),
+    );
     let pcurve = successful(perform(&projector, &curve, (0., 2. * PI)));
     near(
         pcurve.value(0.).unwrap().y(),
@@ -64,7 +67,7 @@ fn CircleOnCone_D1() {
     let cone =
         Handle::new(GeomConicalSurface::new(Axis3::from_axis2(frame(0.)), semi_angle, 5.).unwrap())
             .cast();
-    let curve = circle(5. + 5. * semi_angle.tan(), 5.);
+    let curve = circle(5. + 5. * martensite_cmath::tan(semi_angle), 5.);
     successful(perform(
         &fixture(&cone, precision::confusion()),
         &curve,

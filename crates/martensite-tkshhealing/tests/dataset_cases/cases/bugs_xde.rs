@@ -167,7 +167,6 @@ fn wire_count(shape: &Shape) -> f64 {
             text[at + 4..]
                 .trim_start()
                 .trim_start_matches(':')
-                .trim_start()
                 .split_whitespace()
                 .next()
                 .unwrap()

@@ -115,7 +115,7 @@ fn assert_repeated_mapping(count: usize) {
     let before = endpoint_coordinates(&original_boundary(&source), &source);
     assert_eq!(before, UNIT_ENDPOINTS);
     let segment = dispatch_repeated(&source, &grid, count);
-    let scale = 0.5_f64.powi(count as i32);
+    let scale = martensite_cmath::powi(0.5, count as i32);
     let expected: Vec<_> = before
         .iter()
         .map(|row| row.map(|value| value * scale))

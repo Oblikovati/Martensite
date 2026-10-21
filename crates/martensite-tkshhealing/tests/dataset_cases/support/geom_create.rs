@@ -242,7 +242,7 @@ pub fn mkface_bounds_checked(
         .map_err(|failure| format!("{failure:?}"))?;
     maker
         .shape()
-        .map(Clone::clone)
+        .cloned()
         .map_err(|failure| format!("{failure:?}"))
 }
 

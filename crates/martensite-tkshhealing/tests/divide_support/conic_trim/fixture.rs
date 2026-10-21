@@ -54,9 +54,21 @@ impl ConicCase {
     }
     fn point(&self, parameter: f64) -> Point3 {
         match self.kind {
-            0 => Point3::new(2. * parameter.cos(), 2. * parameter.sin(), 0.),
-            1 => Point3::new(3. * parameter.cos(), 2. * parameter.sin(), 0.),
-            2 => Point3::new(3. * parameter.cosh(), 2. * parameter.sinh(), 0.),
+            0 => Point3::new(
+                2. * martensite_cmath::cos(parameter),
+                2. * martensite_cmath::sin(parameter),
+                0.,
+            ),
+            1 => Point3::new(
+                3. * martensite_cmath::cos(parameter),
+                2. * martensite_cmath::sin(parameter),
+                0.,
+            ),
+            2 => Point3::new(
+                3. * martensite_cmath::cosh(parameter),
+                2. * martensite_cmath::sinh(parameter),
+                0.,
+            ),
             3 => Point3::new(parameter * parameter / 8., parameter, 0.),
             value => panic!("conic kind {value}; expected conic index in 0..4"),
         }

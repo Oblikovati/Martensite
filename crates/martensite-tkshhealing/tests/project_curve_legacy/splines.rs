@@ -25,7 +25,7 @@ fn HighDegreeBSpline_B3() {
     let points: Vec<Point3> = (1..=50)
         .map(|i| {
             let x = f64::from(i - 1) * 0.5;
-            Point3::new(x, 5. * (x * PI / 10.).sin(), 0.)
+            Point3::new(x, 5. * martensite_cmath::sin(x * PI / 10.), 0.)
         })
         .collect();
     let curve: Handle<dyn GeomCurve> = fit(&points, (3, 8)).cast();

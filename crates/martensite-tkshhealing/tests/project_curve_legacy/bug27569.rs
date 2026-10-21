@@ -112,8 +112,12 @@ fn bug27569_uniform_poles() -> Vec<Point3> {
         .map(|i| {
             let t = (f64::from(i) - 1.) / 16.;
             let angle = t * 2. * PI;
-            let radius = 50. + 20. * (3. * angle).cos();
-            Point3::new(radius * angle.cos(), -30. * t, radius * angle.sin())
+            let radius = 50. + 20. * martensite_cmath::cos(3. * angle);
+            Point3::new(
+                radius * martensite_cmath::cos(angle),
+                -30. * t,
+                radius * martensite_cmath::sin(angle),
+            )
         })
         .collect()
 }
