@@ -102,6 +102,13 @@ fn make_face_from_a_wire_finds_its_plane_and_orients_it() -> Result<(), Failure>
         assert_eq!(surface.plane()?.position().direction().z().abs(), 1.);
         let classifier = BRepTopAdaptorFClass2d::new(&face, 0.)?;
         assert_eq!(classifier.perform_infinite_point()?, State::Out);
+        for edge in Explorer::new(
+            &face.clone().into_shape(),
+            ShapeEnum::Edge,
+            ShapeEnum::Shape,
+        )? {
+            assert!(BRepTool::curve_on_face(&Edge::unchecked(edge.clone()), &face)?.is_stored);
+        }
     }
     let skew = polygon(&[p(0., 0., 0.), p(1., 0., 0.), p(1., 1., 0.), p(0., 1., 0.5)])?;
     assert_eq!(

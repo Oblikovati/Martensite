@@ -3,6 +3,7 @@
 use super::BRepLibMakeFace;
 use crate::brep_lib::errors::BRepLibFaceError;
 use crate::brep_lib::find_surface::BRepLibFindSurface;
+use crate::brep_lib::pcurve_on_plane::build_pcurve_for_edge_on_plane;
 use crate::brep_lib::same_parameter::same_parameter_shape;
 use crate::brep_lib::update_tolerances::update_tolerances;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
@@ -167,8 +168,22 @@ impl BRepLibMakeFace {
         if BRepTool::is_closed(&bounding)? {
             maker.check_inside()?;
         }
+        store_planar_pcurves(&bounding, &maker.face()?)?;
         Ok(maker)
     }
+}
+
+/// Stores the planar parameter curves that face classification reuses for every edge.
+fn store_planar_pcurves(wire: &Wire, face: &Face) -> Result<(), Failure> {
+    if BRepTool::surface(face)?.cast::<GeomPlane>().get().is_none() {
+        return Ok(());
+    }
+    let mut edges = ShapeIterator::new(wire, true, true);
+    while let Ok(shape) = edges.value() {
+        build_pcurve_for_edge_on_plane(&Edge::unchecked(shape.clone()), face)?;
+        edges.next();
+    }
+    Ok(())
 }
 
 /// "get rid of degenerative edges in the input wire": a new wire of the other edges
