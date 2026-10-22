@@ -49,3 +49,7 @@ path = "tests/proximity_actual_mesher.rs"
 [[test]]
 name = "tktopalgo_bnd_original_mesher"
 path = "tests/tktopalgo_bnd_original_mesher.rs"
+
+[[test]]
+name = "tkbo_trimmed_torus"
+path = "tests/tkbo_trimmed_torus.rs"
