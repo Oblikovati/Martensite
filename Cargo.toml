@@ -4,6 +4,11 @@
 members = ["crates/*", "scripts/build"]
 resolver = "3"
 
+# Every isolated dataset case verifies its executable three times (#228).
+# Keep kernel code and assertions in debug mode, but avoid unoptimized SHA rounds.
+[profile.dev.package.sha2]
+opt-level = 3
+
 [workspace.package]
 edition = "2024"
 rust-version = "1.98.1"

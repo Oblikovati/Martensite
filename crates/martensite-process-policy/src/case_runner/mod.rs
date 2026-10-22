@@ -25,6 +25,8 @@ pub use spec::{CaseSpec, FactorProfile};
 #[cfg(test)]
 mod fake_controls;
 #[cfg(test)]
+mod fingerprint_tests;
+#[cfg(test)]
 mod graphics_controls;
 #[cfg(test)]
 mod harness_tests;
