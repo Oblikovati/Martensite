@@ -23,6 +23,22 @@ use martensite_tkmath::gp::Point3;
 /// estimate says it is not.
 const FIXED_DOMAIN_ERROR_LIMIT: f64 = 1.0e-5;
 
+/// Whether a face can only contribute through its triangulation.
+///
+/// The Gauss-Kronrod route accepts geometric surfaces only. The fixed-properties
+/// contract also integrates mesh-only faces when `UseTriangulation` is false, so such
+/// a shape keeps the established face-by-face route.
+fn has_mesh_only_face(shape: &Shape) -> Result<bool, Failure> {
+    for shape in sub_shapes(shape, ShapeEnum::Face)? {
+        let face = topods::face(&shape)?;
+        let sources = FaceSources::of(&face)?;
+        if sources.no_surface && !sources.no_mesh {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 /// The flags of the volume computations (`SkipShared`, `UseTriangulation`).
 #[derive(Clone, Copy, Debug)]
 pub(super) struct VolumeFlags {
@@ -42,7 +58,7 @@ impl BRepGProp {
         skip_shared: bool,
         use_triangulation: bool,
     ) -> Result<(), Failure> {
-        if use_triangulation {
+        if use_triangulation || has_mesh_only_face(shape)? {
             let flags = VolumeFlags {
                 skip_shared,
                 use_triangulation,
