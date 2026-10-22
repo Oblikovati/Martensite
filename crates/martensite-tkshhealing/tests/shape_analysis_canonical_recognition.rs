@@ -246,7 +246,7 @@ fn CanonicalRecognitionBaseSurfaceTest__ComplexCylindricalRecognitionWithSection
         ],
     );
     let shape = canonical_nurbs(&shape);
-    // The upstream regression uses sewn cylindrical faces; its TCL source also used a section.
+    // The sewn cylindrical faces exercise the section branch.
     let mut recognizer = canonical_recognizer(&shape);
     let mut result = Cylinder3::default();
     assert!(recognizer.is_cylinder(1e-7, &mut result).unwrap());

@@ -8,7 +8,7 @@ use super::dataset_manifest::PINNED_MEMBERS;
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 
-/// One pinned dataset member; `pinned("OCC141.draw").bytes`.
+/// One pinned dataset member; `pinned(name).bytes`.
 #[derive(Clone, Copy, Debug)]
 pub struct PinnedMember<'a> {
     pub name: &'a str,
@@ -50,7 +50,7 @@ pub fn dataset_directory() -> PathBuf {
         .join("../../external/martensite-test-data/dataset-7.9.0")
 }
 
-/// The exact bytes of the pinned member `name`; `located_bytes("OCC141.draw")`.
+/// The exact bytes of the pinned member `name`; `located_bytes(name)`.
 pub fn located_bytes(name: &str) -> Vec<u8> {
     let member = pinned(name);
     let directory = dataset_directory();

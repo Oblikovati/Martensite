@@ -1,4 +1,4 @@
-//! Draw `dchrono name restart` / `dchrono name stop counter text` (Draw_BasicCommands.cxx):
+//! Named stopwatch measurements for scenario execution:
 //! a process CPU chronometer whose stop prints `COUNTER text: cpu-seconds`.
 use super::log;
 use martensite_tkernel::osd::Chronometer;

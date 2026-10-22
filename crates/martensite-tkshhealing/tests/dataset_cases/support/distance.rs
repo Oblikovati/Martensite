@@ -18,7 +18,7 @@ use martensite_tktopalgo::{
 pub struct Distmini {
     pub value: f64,
     pub solutions: Vec<Shape>,
-    /// The Tcl result text (`"distmini" command returns: ...`).
+    /// The formatted minimum-distance result.
     pub text: String,
 }
 

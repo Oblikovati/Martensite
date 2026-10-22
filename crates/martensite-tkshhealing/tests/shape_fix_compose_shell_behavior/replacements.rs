@@ -199,7 +199,7 @@ fn null_edge_replacement_is_a_typed_failure_not_empty_success() {
 }
 
 // This pins a known legacy defect, not successful modelling acceptance. The checked
-// publication boundary must reject this invalid face; the port keeps native behavior.
+// publication boundary must reject this invalid face while this compatibility case remains explicit.
 #[test]
 fn incompatible_empty_container_keeps_legacy_invalid_success_and_cache_status_loss() {
     let face = face_fixture();

@@ -1,5 +1,5 @@
-//! How scenario prints a real into the Tcl result: `Draw_Interpretor::Append(double)` uses
-//! `Sprintf(s, "%.17g", r)`; the cases then cut that text with Tcl string commands.
+//! How the scenario formatter renders a real: it uses `Sprintf(s, "%.17g", r)` and
+//! then applies its text operations.
 
 /// C `printf("%.17g", value)` for a finite value; `g17(0.5) == "0.5"`.
 pub fn g17(value: f64) -> String {

@@ -1,4 +1,4 @@
-//! The case bodies, one module per upstream test grid. Each body follows its script line
+//! Case bodies, grouped by scenario family. Each body follows its defined sequence
 //! by line, logs what the script and its scenario commands print and reports every variable
 //! and view step to its [`crate::support::session::Session`].
 pub mod bugs_common;

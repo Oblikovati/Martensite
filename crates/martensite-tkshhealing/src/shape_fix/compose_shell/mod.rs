@@ -239,7 +239,7 @@ impl ShapeFixComposeShell {
     }
 
     /// Classifies a wire interval relative to a patch line; `composer.compute_code(&wire, line, 1, 1, 0.25, 0.75, false)?`.
-    // Keep the retained behavior's argument list intact so callers can port existing code directly.
+    // Keep the complete argument list so callers can configure the operation directly.
     #[allow(clippy::too_many_arguments)]
     pub fn compute_code(
         &self,

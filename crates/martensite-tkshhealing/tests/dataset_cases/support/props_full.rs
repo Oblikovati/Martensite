@@ -120,7 +120,7 @@ pub fn parseprops(text: &str) -> Vec<f64> {
     values
 }
 
-/// `cmpprops cmd a b`: 1 when every parsed value differs by at most 1e-8 (the Tcl loop
+/// Compares parsed values with a 1e-8 tolerance (the scenario loop
 /// starts at index 1 of the `regexp -inline` list, past its full match, so it compares
 /// every captured value).
 pub fn cmpprops(kind: Prop, a: &Shape, b: &Shape) -> bool {

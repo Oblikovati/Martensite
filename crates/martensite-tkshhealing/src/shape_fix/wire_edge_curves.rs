@@ -12,7 +12,7 @@ use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 
 impl ShapeFixWire {
-    /// Runs native edge-curve repairs in upstream order; `fixer.fix_edge_curves()?`.
+    /// Runs edge-curve repairs in their documented order; `fixer.fix_edge_curves()?`.
     pub fn fix_edge_curves(&self) -> Result<bool, Failure> {
         self.set_edge_curves_status(ShapeExtendStatus::Ok);
         if !self.is_loaded() {

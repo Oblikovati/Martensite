@@ -1,5 +1,5 @@
 //! The SWscenario shape healing commands the TKShHealing scripts call, on the Rust API
-//! (src/Draw/TKTopTest/SWscenario at 3d097a0328e71b826377d4814ab05ec3c3d23871). Each returns
+//! Each operation returns
 //! what the command sets and the text it prints (`di << ...`), which the callers log.
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{message::ProgressRange, standard::Handle};
@@ -140,13 +140,13 @@ fn fixshape_switch(fixer: &ShapeFixShape, bytes: &[u8]) {
         b's' => wire.set_fix_small_mode(value),
         b'i' => wire.set_fix_self_intersection_mode(value),
         b'n' => wire.set_fix_notched_edges_mode(value),
-        b'?' => panic!("fixshape +?: the message summary is not ported here"),
+        b'?' => panic!("fixshape +?: the message summary is unsupported"),
         _ => {}
     }
 }
 
-/// `Draw::Atof` of a plain number word.
+/// Parses a plain numeric word.
 pub fn atof(word: &str) -> f64 {
     word.parse()
-        .unwrap_or_else(|_| panic!("Draw::Atof {word:?}: expected a number"))
+        .unwrap_or_else(|_| panic!("numeric token {word:?}: expected a number"))
 }

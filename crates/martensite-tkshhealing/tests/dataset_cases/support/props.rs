@@ -1,5 +1,4 @@
-//! BRepTest_GPropCommands.cxx `lprops`/`sprops`/`vprops` and the CheckCommands.tcl
-//! `checkprops` built on them.
+//! Property-check formatting and comparisons used by scenario cases.
 //!
 //! The commands print `Mass : ` with `std::setw(15)` and the stream's default precision
 //! (6 significant digits, `%g`); `checkprops` reads that printed value back with
@@ -47,7 +46,7 @@ impl PropsResult {
         format_general(self.mass, 6)
     }
 
-    /// The printed mass read back as `regexp` and Tcl see it.
+    /// The printed mass as parsed by the scenario result reader.
     pub fn read_mass(&self) -> f64 {
         self.printed_mass().parse().unwrap()
     }

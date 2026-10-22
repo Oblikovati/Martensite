@@ -3,7 +3,7 @@
 //! the retained behavior package ShapeCustom: the modifications that convert the geometry of shapes (to
 //! B-splines, to revolutions, restrictions), applied with `BRepTools_Modifier`.
 //!
-//! Ported so far (docs/tkshhealing-progress.md): [`ShapeCustomCurve2d`] (linear p-curves
+//! [`ShapeCustomCurve2d`] (linear p-curves
 //! as lines, knot removal), [`ShapeCustomRestrictionParameters`], the abstract
 //! [`ShapeCustomModification`] and the modifications [`ShapeCustomTrsfModification`],
 //! [`ShapeCustomDirectModification`], [`ShapeCustomConvertToRevolution`] and

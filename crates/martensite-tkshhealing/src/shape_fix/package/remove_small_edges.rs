@@ -61,7 +61,7 @@ mod tests {
 
     #[test]
     fn null_shape_fails_in_shape_fix_shape() {
-        // Native ShapeFix_Shape::Perform dereferences the null shape; the port fails.
+        // A null shape cannot be processed, so return a typed failure.
         let Err(failure) = ShapeFix::remove_small_edges(&Shape::default(), 1.0e-3) else {
             panic!("a null shape must fail");
         };

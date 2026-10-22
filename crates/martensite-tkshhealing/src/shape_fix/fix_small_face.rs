@@ -117,7 +117,7 @@ impl ShapeFixFixSmallFace {
         true
     }
 
-    /// Splits detected crossing-vertex faces; upstream precision is uninitialized in this call path.
+    /// Splits detected crossing-vertex faces; this path begins without a precision value.
     /// Example: `let repaired = fixer.fix_split_face(&input)?`.
     pub fn fix_split_face(&self, _shape: &Shape) -> Result<Shape, Failure> {
         split::fix_split_face(self)

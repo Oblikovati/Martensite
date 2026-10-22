@@ -1,4 +1,4 @@
-//! The test log of one case and its verdict, as TestCommands.tcl `_check_log` gives it.
+//! The test log of one case and its verdict.
 //!
 //! The test harness runs scenario with `dlog on`, so the result of every scenario command is
 //! logged, even inside `set v [cmd ...]`, together with the script's `puts` lines. The
@@ -139,7 +139,7 @@ fn is_word_char(c: char) -> bool {
 impl BadWord {
     fn matches(&self, line: &str) -> bool {
         if self.text == "Tcl Exception: " {
-            // SKIPPED /Tcl Exception: .*[fF]ile .* could not be found/: a missing data file.
+            // A missing data file produces this skipped-case result.
             return line.contains("Tcl Exception: ") && line.contains("could not be found");
         }
         let (hay, needle) = if self.ignore_case {

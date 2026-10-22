@@ -1,4 +1,4 @@
-//! The DrawResources/CheckCommands.tcl checks as the scripts run them: each prints its
+//! The checks used by the scenarios: each prints its
 //! `Error` or `OK` line to the case's log ([`super::log`]), which gets the verdict.
 use super::analysis::trinfo;
 use super::checks::{NBSHAPES_ENTITIES, nbshapes};

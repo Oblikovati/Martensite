@@ -1,4 +1,4 @@
-//! The DrawResources/CheckCommands.tcl checks the cases call. A check that would print
+//! The consistency checks used by the cases. A check that would print
 //! `Error` (which the test grid's parse rules turn into a failure) panics instead.
 use super::commands::{length2d, length3d};
 use martensite_tkbrep::{brep_tools::BRepToolsShapeSet, topods::Shape, toptools::ShapeSet};

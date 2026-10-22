@@ -1,4 +1,4 @@
-//! The QABugs commands the TKShHealing cases call (src/Draw/TKQADraw/QABugs at
+//! Supplemental quality-assurance operations used by the shape-healing cases.
 //! 3d097a0328e71b826377d4814ab05ec3c3d23871), on the Rust API. Each returns what it sets
 //! and the text it prints; a `Standard_Failure` the command catches becomes its
 //! `... Exception` text, as natively.

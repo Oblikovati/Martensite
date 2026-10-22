@@ -1,8 +1,7 @@
 //! The tests/sewing commands and checks: BRepTest `sewing result tol shapes...`
 //! (BRepBuilderAPI_Sewing with its Dump), SWscenario `tolerance shape`
 //! (ShapeAnalysis_ShapeTolerance) and `freebounds shape tol` (ShapeAnalysis_FreeBounds),
-//! and the CheckCommands.tcl procs `checkmaxtol`, `checkfreebounds` and `checkfaults`
-//! built on them.
+//! and the associated consistency checks built on them.
 use super::checkshape::checkshape;
 use super::commands::explode_type;
 use super::log;
@@ -95,7 +94,7 @@ impl SewingModes {
             Some(b'p') => self.same_parameter = on,
             Some(b'e') => self.floating_edges = on,
             Some(b'f') => self.faces = on,
-            _ => panic!("sewing switch {switch:?}: the -mint/-maxt values are not ported here"),
+            _ => panic!("sewing switch {switch:?}: the -mint/-maxt values are unsupported"),
         }
     }
 }

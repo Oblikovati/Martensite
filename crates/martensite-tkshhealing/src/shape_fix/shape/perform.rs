@@ -17,7 +17,7 @@ impl ShapeFixShape {
             ));
         }
         // Native dereferences the null TShape in myShape.ShapeType() (undefined behaviour);
-        // the port reports it as the Standard_NullObject failure the retained behavior raises elsewhere.
+        // report it as the Standard_NullObject failure used throughout this API.
         if input.is_null() {
             return Err(Failure::with_type(
                 "Standard_NullObject",

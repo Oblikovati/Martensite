@@ -1,5 +1,5 @@
 //! Shapes for the ShapeAnalysis, ShapeConstruct and ShapeFix behavior tests, built with the
-//! ported BRepBuilderAPI makers: planar polygon faces, shells and compounds.
+//! shared BRepBuilderAPI makers: planar polygon faces, shells and compounds.
 #![allow(dead_code)]
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topexp::Explorer;

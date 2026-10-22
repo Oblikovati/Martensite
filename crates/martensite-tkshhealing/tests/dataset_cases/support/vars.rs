@@ -1,6 +1,6 @@
 //! The named scenario variables of a script that builds its inputs command by command: each
 //! command reads its arguments by name and sets its result, which the session displays
-//! as `Draw::Set` does. `vars.set("line", line([0., 0., 0., 0., 0., 1.]))`.
+//! as the session store does. `vars.set("line", line([0., 0., 0., 0., 0., 1.]))`.
 use super::restore::Restored;
 use super::session::Session;
 use martensite_tkbrep::topods::Shape;
@@ -28,7 +28,7 @@ impl<'a> Vars<'a> {
         &mut *self.session
     }
 
-    /// `Draw::Set(name, value)`: (re)defines and displays the variable.
+    /// Defines or replaces a displayed variable.
     pub fn set(&mut self, name: &str, value: impl Into<Restored>) {
         let value = value.into();
         self.session.set(name, &value);

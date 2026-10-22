@@ -229,7 +229,7 @@ pub fn offset(basis: &Handle<dyn GeomSurface>, distance: f64) -> Handle<dyn Geom
     surface(GeomOffsetSurface::new(basis, distance, false).unwrap())
 }
 
-/// BRepTest `mkface name surface umin umax vmin vmax` inside a Tcl `catch`: the face, or
+/// Builds a face from a surface and bounds, returning the resulting face or
 /// the StdFail_NotDone its conversion raises when BRepBuilderAPI_MakeFace is not done.
 pub fn mkface_bounds_checked(
     surface: &Handle<dyn GeomSurface>,
