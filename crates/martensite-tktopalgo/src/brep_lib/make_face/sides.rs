@@ -106,20 +106,30 @@ pub(super) fn sides(
     ])
 }
 
-/// The closed flags: a closed direction whose bounds are the natural ones.
+/// The closed flags: a closed direction bounded by exactly one period. The parameter
+/// origin may be shifted, so comparing against the natural bounds would create duplicate
+/// coincident boundary edges for a full-period face such as `[PI, 3*PI]`.
 pub(super) fn closed_flags(
     s: &dyn GeomSurface,
-    natural: SurfaceBounds,
+    _natural: SurfaceBounds,
     bounds: SurfaceBounds,
 ) -> Result<(bool, bool), Failure> {
-    let epsilon: f64 = precision::p_confusion();
-    let (nu1, nu2, nv1, nv2) = natural;
     let (umin, umax, vmin, vmax) = bounds;
-    let uclosed: bool =
-        s.is_u_closed()? && (umin - nu1).abs() < epsilon && (umax - nu2).abs() < epsilon;
-    let vclosed: bool =
-        s.is_v_closed()? && (vmin - nv1).abs() < epsilon && (vmax - nv2).abs() < epsilon;
+    let uclosed = spans_full_period(s.is_u_closed()?, || s.u_period(), umax - umin)?;
+    let vclosed = spans_full_period(s.is_v_closed()?, || s.v_period(), vmax - vmin)?;
     Ok((uclosed, vclosed))
+}
+
+/// Whether a closed parameter span covers one period within parameter confusion.
+fn spans_full_period(
+    closed: bool,
+    period: impl FnOnce() -> Result<f64, Failure>,
+    span: f64,
+) -> Result<bool, Failure> {
+    if !closed {
+        return Ok(false);
+    }
+    Ok((span - period()?).abs() < precision::p_confusion())
 }
 
 /// "compute vertices": V00, V10, V11, V01 at the finite corners, then shared by the
