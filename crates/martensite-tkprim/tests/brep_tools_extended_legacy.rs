@@ -285,7 +285,7 @@ fn BRepTools_Test__DemoBinPersist_1_BinaryStreamRoundTrip() {
             subshape_count(&source, kind)
         );
     }
-    for (kind, expected) in [(0, 4800.0), (1, 220000.0), (2, 6000000.0)] {
+    for (kind, expected) in [(0, 4800.0_f64), (1, 220000.0), (2, 6000000.0)] {
         let mut original = GProps::default();
         let mut copy = GProps::default();
         match kind {
@@ -303,6 +303,11 @@ fn BRepTools_Test__DemoBinPersist_1_BinaryStreamRoundTrip() {
             }
         }
         assert!((copy.mass() - original.mass()).abs() <= 1.0e-7);
-        assert_eq!(original.mass(), expected);
+        let rounding_bound = 4.0 * f64::EPSILON * expected.abs();
+        assert!(
+            (original.mass() - expected).abs() <= rounding_bound,
+            "computed mass {} differs from the closed-form value {expected} by more than {rounding_bound}",
+            original.mass()
+        );
     }
 }
