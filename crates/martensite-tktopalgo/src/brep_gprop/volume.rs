@@ -4,6 +4,7 @@ use super::face::BRepGPropFace;
 use super::mesh_props::{BRepGPropMeshProps, MeshObjType};
 use super::package::{BRepGProp, FaceSources, located_origin};
 use super::vinert::BRepGPropVinert;
+use super::volume_gk::VolumeGKFlags;
 use super::volume_solids::volume_props;
 use crate::brep_check::explore::sub_shapes;
 use martensite_tkbrep::brep::BRepTool;
@@ -32,8 +33,8 @@ pub(super) struct VolumeFlags {
 impl BRepGProp {
     /// `VolumeProperties(S, VProps, OnlyClosed, SkipShared, UseTriangulation)`: `props`
     /// becomes a framework at the located origin holding the volume of `shape` (of each
-    /// closed shell with `only_closed`); fixed Gauss orders, meshes when asked or when a
-    /// face has no surface; `BRepGProp::volume_properties(&shape, &mut props, false, false, false)?`.
+    /// closed shell with `only_closed`); error-bounded Gauss-Kronrod integration, meshes
+    /// when asked or when a face has no surface; `BRepGProp::volume_properties(&shape, &mut props, false, false, false)?`.
     pub fn volume_properties(
         shape: &Shape,
         props: &mut GProps,
@@ -41,11 +42,21 @@ impl BRepGProp {
         skip_shared: bool,
         use_triangulation: bool,
     ) -> Result<(), Failure> {
-        let flags = VolumeFlags {
+        if use_triangulation {
+            let flags = VolumeFlags {
+                skip_shared,
+                use_triangulation,
+            };
+            volume_by_shells(shape, props, 1.0, only_closed, flags)?;
+            return Ok(());
+        }
+        let flags = VolumeGKFlags {
+            cg_flag: true,
+            i_flag: true,
             skip_shared,
-            use_triangulation,
+            ..VolumeGKFlags::default()
         };
-        volume_by_shells(shape, props, 1.0, only_closed, flags)?;
+        Self::volume_properties_gk(shape, props, FIXED_DOMAIN_ERROR_LIMIT, only_closed, flags)?;
         Ok(())
     }
 
@@ -184,37 +195,6 @@ fn volume_face(
         volume.perform(tool)?;
         return Ok(0.0);
     }
-    fixed_domain_volume(tool, domain, volume)
-}
-
-/// Estimates a fixed domain integral before accepting it, then refines the same face
-/// when two Gauss orders disagree beyond [`FIXED_DOMAIN_ERROR_LIMIT`].
-fn fixed_domain_volume(
-    tool: &mut BRepGPropFace,
-    domain: &mut BRepGPropDomain,
-    volume: &mut BRepGPropVinert,
-) -> Result<f64, Failure> {
-    let estimate = volume.perform_domain_eps(tool, domain, -FIXED_DOMAIN_ERROR_LIMIT)?;
-    if !requires_domain_refinement(estimate) {
-        return Ok(estimate);
-    }
-    domain.init()?;
-    volume.perform_domain_eps(tool, domain, FIXED_DOMAIN_ERROR_LIMIT)
-}
-
-/// Whether a two-order estimate must use the bounded adaptive domain integrator.
-fn requires_domain_refinement(estimate: f64) -> bool {
-    !estimate.is_finite() || estimate > FIXED_DOMAIN_ERROR_LIMIT
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{FIXED_DOMAIN_ERROR_LIMIT, requires_domain_refinement};
-
-    #[test]
-    fn domain_error_estimate_refines_only_outside_the_accepted_bound() {
-        assert!(!requires_domain_refinement(FIXED_DOMAIN_ERROR_LIMIT));
-        assert!(requires_domain_refinement(FIXED_DOMAIN_ERROR_LIMIT * 1.01));
-        assert!(requires_domain_refinement(f64::INFINITY));
-    }
+    volume.perform_domain(tool, domain)?;
+    Ok(0.0)
 }

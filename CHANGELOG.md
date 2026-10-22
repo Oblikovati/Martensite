@@ -20,7 +20,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- Corrected volume properties of trimmed faces by refining fixed quadrature when its error estimate exceeds the accepted bound (#221).
+- Corrected volume properties of trimmed faces with bounded Gauss-Kronrod integration (#221).
 
 ## [0.3.5] - 2026-10-20
 
