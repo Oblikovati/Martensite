@@ -107,7 +107,7 @@ fn connects_coincident_boundaries() {
         .build(&shell, 1.0e-6, 1.0e-7)
         .unwrap();
     assert_eq!(edge_count(&result.clone().into_shape()), 7);
-    assert_eq!(area(&shell.clone().into_shape()), 2.0);
+    assert!((area(&shell.clone().into_shape()) - 2.0).abs() <= 1.0e-12);
     assert!((area(&result.clone().into_shape()) - 2.0).abs() <= 1.0e-12);
     assert!(is_valid(&result.clone().into_shape()));
 }
