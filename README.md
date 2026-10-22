@@ -69,6 +69,10 @@ cargo test
 cargo xtask pr
 ```
 
+Development and test builds optimize SHA-256 to keep isolated dataset tests from
+spending most of their time fingerprinting their executables (#228). Kernel code
+keeps its normal debug profile; executable identity checks remain enabled.
+
 CI has one workflow, `.github/workflows/martensite.yml`, and all its checks are
 `cargo xtask` commands. [CONTRIBUTING](CONTRIBUTING.md) explains the gates and
 the release process.
