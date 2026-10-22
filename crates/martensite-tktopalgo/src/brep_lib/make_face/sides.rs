@@ -111,25 +111,45 @@ pub(super) fn sides(
 /// coincident boundary edges for a full-period face such as `[PI, 3*PI]`.
 pub(super) fn closed_flags(
     s: &dyn GeomSurface,
-    _natural: SurfaceBounds,
+    natural: SurfaceBounds,
     bounds: SurfaceBounds,
 ) -> Result<(bool, bool), Failure> {
+    let (nu1, nu2, nv1, nv2) = natural;
     let (umin, umax, vmin, vmax) = bounds;
-    let uclosed = spans_full_period(s.is_u_closed()?, || s.u_period(), umax - umin)?;
-    let vclosed = spans_full_period(s.is_v_closed()?, || s.v_period(), vmax - vmin)?;
+    let uclosed = closed_direction(
+        s.is_u_closed()?,
+        s.is_u_periodic(),
+        (nu1, nu2),
+        (umin, umax),
+        || s.u_period(),
+    )?;
+    let vclosed = closed_direction(
+        s.is_v_closed()?,
+        s.is_v_periodic(),
+        (nv1, nv2),
+        (vmin, vmax),
+        || s.v_period(),
+    )?;
     Ok((uclosed, vclosed))
 }
 
-/// Whether a closed parameter span covers one period within parameter confusion.
-fn spans_full_period(
+/// A periodic closed direction may start at any parameter origin. A geometrically closed
+/// but non-periodic surface only shares its boundary when it uses its natural bounds.
+fn closed_direction(
     closed: bool,
+    periodic: bool,
+    natural: (f64, f64),
+    bounds: (f64, f64),
     period: impl FnOnce() -> Result<f64, Failure>,
-    span: f64,
 ) -> Result<bool, Failure> {
     if !closed {
         return Ok(false);
     }
-    Ok((span - period()?).abs() < precision::p_confusion())
+    if periodic {
+        return Ok((bounds.1 - bounds.0 - period()?).abs() < precision::p_confusion());
+    }
+    Ok((bounds.0 - natural.0).abs() < precision::p_confusion()
+        && (bounds.1 - natural.1).abs() < precision::p_confusion())
 }
 
 /// "compute vertices": V00, V10, V11, V01 at the finite corners, then shared by the
