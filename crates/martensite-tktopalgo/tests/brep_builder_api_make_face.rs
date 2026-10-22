@@ -156,14 +156,16 @@ fn u_closed_non_periodic_surface() -> Handle<dyn GeomSurface> {
     knots.as_mut_slice().copy_from_slice(&[0.0, 1.0]);
     let mut mults = Array1::with_bounds(1, 2).unwrap();
     mults.as_mut_slice().copy_from_slice(&[2, 2]);
-    Handle::new(GeomBSplineSurface::new(
-        &poles,
-        (&knots, &mults),
-        (&knots, &mults),
-        (1, 1),
-        (false, false),
+    Handle::new(
+        GeomBSplineSurface::new(
+            &poles,
+            (&knots, &mults),
+            (&knots, &mults),
+            (1, 1),
+            (false, false),
+        )
+        .unwrap(),
     )
-    .unwrap())
     .cast()
 }
 
