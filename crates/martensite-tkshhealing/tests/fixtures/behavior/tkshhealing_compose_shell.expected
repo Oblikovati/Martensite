@@ -1,0 +1,32 @@
+default 0 0 1 ShapeAnalysis_TransferParametersProj
+closed_mode 1
+transfer_type ShapeAnalysis_TransferParameters
+init 0 0 1
+load_wires 1 4 reversed
+load_wires_mixed 2 1 internal 3 reversed
+compute_code 1
+compute_code_right 2
+compute_code_tangent 0
+compute_code_closed_mode 3
+split_wire 6 2 -32000:1:-32000:32000@0:1 1:32000:-32000:32000@1:2 1:32000:-32000:32000@0:2 1:32000:-32000:32000@0:1 -32000:1:-32000:32000@1:2 -32000:1:-32000:32000@0:2
+split_wire_internal 2 1 1 0
+split_by_line 1 6 2 2 2 0:11:1:0 2:11:1:2
+split_by_line_closed 1 6 2 2 2 0:11:1:0 2:11:1:2
+split_by_line_vertex 1 1 1 64 1:1
+split_by_line_periodic 1 4 4 4 4 0:18:2:0:0 0:17:2:0:0 2:33:2:0:2 2:34:2:0:2
+split_by_line_periodic_shifted 1 4 4 4 4 0:18:2:0:0 0:17:2:0:0 2:33:2:0:2 2:34:2:0:2
+break_wires 3 2:0:4,5 2:0:6,3 1:3:-32000
+break_wires_internal_external 2 1:3 1:2
+patch_limits 2 2 3 32000
+split_edges 5:2 6 5:2 6
+collect_wires 1 4 1 2 0
+collect_wires_split 1 4 2 2 2 0
+perform_plane_face 1 4 0 1 1
+perform_two_patches 1 3 0 2 1 0 2000000 0 2000000
+perform_no_wires 0 1 1 0
+split_edges_closed 5:2 6 5:2 6
+split_edges_periodic 6 6 6 6
+perform_periodic_cylinder_open 1 4 0 1 1 0 0 6283185 0
+perform_periodic_cylinder_closed 1 4 0 1 1 0 0 6283185 0
+perform_periodic_cylinder_patches_open 1 3 0 2 1 0 6283185 0 2000000
+perform_periodic_cylinder_patches_closed 1 4 0 1 1 0 6283185 0 2000000

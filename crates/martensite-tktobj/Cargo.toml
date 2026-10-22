@@ -1,0 +1,27 @@
+[package]
+autotests = false
+name = "martensite-tktobj"
+version = "0.3.5"
+description = "Martensite object model for documents, partitions, references and attributes."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.5" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
+martensite-tkcdf = { path = "../martensite-tkcdf", version = "0.3.5" }
+martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.3.5" }
+
+[dev-dependencies]
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.3.5", features = ["case-runner"] }
+
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"

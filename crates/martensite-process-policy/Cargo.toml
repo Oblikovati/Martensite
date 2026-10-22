@@ -1,0 +1,23 @@
+[package]
+name = "martensite-process-policy"
+version = "0.3.5"
+description = "Process-wide CPU limits and watchdog controls for isolated regression cases."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+case-runner = ["dep:sha2"]
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.5" }
+sha2 = { version = "=0.11.1", optional = true }
+
+[target.'cfg(unix)'.dependencies]
+rustix = { version = "=1.1.5", default-features = false, features = ["std", "process"] }

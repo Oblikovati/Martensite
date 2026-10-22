@@ -1,0 +1,67 @@
+use super::super::wire_gap_topology::{copy_gap_vertex, preserve_gap_nonmanifold};
+use super::{
+    Failure, FixRoot, GapCurve, GapPair, GeomBSplineCurve, GeomCurve, Handle, ShapeFixWire, Vertex,
+};
+use crate::{shape_build::ShapeBuildEdge, shape_fix::ShapeFixShapeTolerance};
+use martensite_tkbrep::{
+    brep::BRepBuilder,
+    brep_tools::ReShape,
+    topods::{self},
+};
+use martensite_tkernel::precision;
+use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
+pub(super) struct CurveRepair {
+    pub curve: Handle<dyn GeomCurve>,
+    pub first: f64,
+    pub last: f64,
+}
+impl CurveRepair {
+    pub fn spline(curve: &Handle<GeomBSplineCurve>) -> Option<Self> {
+        if curve.is_null() {
+            return None;
+        }
+        Some(Self {
+            curve: curve.cast(),
+            first: curve.first_parameter(),
+            last: curve.last_parameter(),
+        })
+    }
+}
+pub(super) fn replace_gap_curves(
+    tool: &ShapeFixWire,
+    pair: &GapPair,
+    first: Option<&CurveRepair>,
+    second: Option<&CurveRepair>,
+) -> Result<(), Failure> {
+    let last = copy_gap_vertex(tool, &pair.vertices.1)?;
+    let before = if pair.vertices.0.is_same(&pair.vertices.1) {
+        topods::vertex(&last.oriented(Orientation::Reversed))?
+    } else {
+        copy_gap_vertex(tool, &pair.vertices.0)?
+    };
+    if let Some(first) = first {
+        replace_gap_curve(tool, &pair.first, first, &Vertex::default(), &before)?;
+    }
+    if let Some(second) = second {
+        replace_gap_curve(tool, &pair.second, second, &last, &Vertex::default())?;
+    }
+    Ok(())
+}
+fn replace_gap_curve(
+    tool: &ShapeFixWire,
+    entry: &GapCurve,
+    curve: &CurveRepair,
+    first: &Vertex,
+    last: &Vertex,
+) -> Result<(), Failure> {
+    let mut replacement = ShapeBuildEdge.copy_replace_vertices(&entry.edge, first, last)?;
+    let forward = topods::edge(&replacement.oriented(Orientation::Forward))?;
+    let builder = BRepBuilder::default();
+    builder.update_edge_curve(&forward, &curve.curve, 0.)?;
+    ShapeBuildEdge.set_range_3d(&forward, curve.first, curve.last)?;
+    ShapeFixShapeTolerance.set_tolerance(&replacement, precision::confusion(), ShapeEnum::Edge)?;
+    builder.same_range(&replacement, false)?;
+    preserve_gap_nonmanifold(tool, &entry.edge, &mut replacement)?;
+    ReShape::replace(&*tool.context(), &entry.edge, &replacement)?;
+    tool.wire_data()?.set(&replacement, entry.index)
+}

@@ -209,3 +209,6 @@ crates/martensite-tkhlr/tests/fixtures/** -text -whitespace
 crates/martensite-tkprim/tests/fixtures/** -text -whitespace
 crates/martensite-tkprim/tests/graph_fuzz/inputs/** -text -whitespace
 crates/martensite-tkhelix/tests/fixtures/** -text -whitespace
+# Exact message and repair-resource fixtures retain their source bytes.
+crates/martensite-tkshhealing/src/sh_message/SHAPE.* -text -whitespace
+crates/martensite-tkshhealing/tests/dataset_cases/data/heal/MDTV -text -whitespace

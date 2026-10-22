@@ -1,0 +1,7 @@
+changed=1 count=0 done3=1 fail2=1
+replace=1 count=1 degenerated=1 done2=1
+bulk=1 count=1 done2=1
+duplicate_check=1 done2=1 done1=0
+duplicate_first_check=1 done2=1
+duplicate=1 count=1 degenerated=1 status2=1
+unready=0 prior_fail2=1 after_fail2=1

@@ -1,0 +1,113 @@
+//! Concrete BRepMesh algorithms and topology support.
+mod shape_tool;
+pub use shape_tool::ShapeTool;
+
+mod incremental_mesh;
+pub use incremental_mesh::BRepMeshIncrementalMesh;
+
+mod discret_root;
+pub use discret_root::{BRepMeshDiscretRoot, DiscretRootBase};
+
+mod discret_factory;
+pub use discret_factory::{
+    BRepMeshDiscretAlgoFactory, BRepMeshDiscretFactory, BRepMeshIncrementalMeshFactory,
+    default_factory, factories, find_factory, register_factory, unregister_factory,
+};
+
+mod model_builder;
+mod shape_visitor;
+pub use model_builder::BRepMeshModelBuilder;
+pub use shape_visitor::BRepMeshShapeVisitor;
+
+mod deflection;
+pub use deflection::Deflection;
+
+mod post_processor;
+pub use post_processor::BRepMeshModelPostProcessor;
+
+mod edge_parameter;
+pub use edge_parameter::{EdgeParameterCollection, EdgeParameterProvider};
+
+mod tessellation_extractor;
+pub use tessellation_extractor::EdgeTessellationExtractor;
+
+mod curve_tessellator;
+pub use curve_tessellator::BRepMeshCurveTessellator;
+
+mod edge_discret;
+pub use edge_discret::BRepMeshEdgeDiscret;
+
+mod range_splitter;
+pub use range_splitter::{
+    BoundaryParamsRangeSplitter, ConeRangeSplitter, CylinderRangeSplitter, DefaultRangeSplitter,
+    ExtrusionRangeSplitter, IMapOfReal, NURBSRangeSplitter, NurbsRangeSplitterHooks, RangeSplitter,
+    SphereRangeSplitter, SurfaceNodes, TorusRangeSplitter, UVParamRangeSplitter,
+    UndefinedRangeSplitter, nurbs_adjust_range, nurbs_generate_surface_nodes,
+};
+
+mod pre_processor;
+pub use pre_processor::BRepMeshModelPreProcessor;
+
+mod geom_tool;
+pub use geom_tool::{GeomTool, IntersectionFlag};
+
+mod face_checker;
+pub use face_checker::{
+    BRepMeshFaceChecker, CurvePointReference, FaceBoundsTree, FaceBoundsTreeArray,
+    FaceCheckerParameters, FaceEdgeSet, FaceEdgeSetArray, FaceSegment, FaceSegmentArray,
+    FaceSegments,
+};
+
+mod model_healer;
+pub use model_healer::BRepMeshModelHealer;
+
+mod elements;
+pub use elements::{
+    BRepMeshEdge, BRepMeshOrientedEdge, BRepMeshTriangle, BRepMeshVertex, DegreeOfFreedom,
+    PairOfIndex,
+};
+
+mod vertex_tool;
+pub use vertex_tool::{
+    BRepMeshVertexInspector, BRepMeshVertexTool, DeletedVertexIndices, MeshVertexCollection,
+    MeshVertexCollectionSlot, VertexInspectorPoint, VertexInspectorTarget, VertexSlotRead,
+    VertexSlotWrite,
+};
+
+mod delaun_structure;
+pub use delaun_structure::BRepMeshDataStructureOfDelaun;
+
+mod delaun_selector;
+pub use delaun_selector::BRepMeshSelectorOfDataStructureOfDelaun;
+
+mod circle_tool;
+pub use circle_tool::{
+    BRepMeshCircle, BRepMeshCircleInspector, BRepMeshCircleTool, CircleInspectorPoint,
+    CircleInspectorTarget,
+};
+
+mod delaun;
+pub use delaun::BRepMeshDelaun;
+
+mod classifier;
+pub use classifier::BRepMeshClassifier;
+
+mod mesh_tool;
+pub use mesh_tool::{BRepMeshMeshTool, MapOfIntegerInteger, NodeClassifier};
+
+mod face_discret;
+pub use face_discret::BRepMeshFaceDiscret;
+
+mod context;
+pub use context::BRepMeshContext;
+
+pub mod delabella;
+
+mod triangulator;
+pub use triangulator::BRepMeshTriangulator;
+
+pub mod mesh_algo;
+pub use mesh_algo::{
+    BRepMeshDelabellaBaseMeshAlgo, BRepMeshDelabellaMeshAlgoFactory, BRepMeshDelaunayBaseMeshAlgo,
+    BRepMeshMeshAlgoFactory,
+};
