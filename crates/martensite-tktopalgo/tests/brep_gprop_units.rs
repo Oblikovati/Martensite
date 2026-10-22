@@ -366,6 +366,21 @@ fn surface_and_linear_properties_of_a_ring() {
 }
 
 #[test]
+fn default_surface_properties_match_adaptive_spline_patch_area() {
+    let patch = read(&SPLINE_PATCH).shape;
+    let mut fixed = GProps::new();
+    BRepGProp::surface_properties(&patch, &mut fixed, false, false).unwrap();
+    let mut adaptive = GProps::new();
+    BRepGProp::surface_properties_eps(&patch, &mut adaptive, 1e-8, false).unwrap();
+    assert!(
+        near(fixed.mass(), adaptive.mass(), 2e-8),
+        "{} != {}",
+        fixed.mass(),
+        adaptive.mass()
+    );
+}
+
+#[test]
 fn a_face_without_wires_uses_its_natural_bounds() {
     let f: Face = read(&BOX_1).faces[0].clone();
     let tool = BRepGPropFace::with_face(&f, false).unwrap();

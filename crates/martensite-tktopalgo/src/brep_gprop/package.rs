@@ -135,8 +135,8 @@ impl BRepGProp {
     }
 
     /// `SurfaceProperties(S, SProps, SkipShared, UseTriangulation)`: `props` becomes a
-    /// framework at the located origin holding the areas of the faces (fixed Gauss
-    /// orders; meshes when asked or when a face has no surface);
+    /// framework at the located origin holding the areas of the faces (adaptive
+    /// integration with relative error `1e-5`; meshes when asked or when a face has no surface);
     /// `BRepGProp::surface_properties(&shape, &mut props, false, false)?`.
     pub fn surface_properties(
         shape: &Shape,
@@ -145,7 +145,7 @@ impl BRepGProp {
         use_triangulation: bool,
     ) -> Result<(), Failure> {
         *props = GProps::with_location(located_origin(shape));
-        surface_props(shape, props, 1.0, (skip_shared, use_triangulation))?;
+        surface_props(shape, props, 1e-5, (skip_shared, use_triangulation))?;
         Ok(())
     }
 

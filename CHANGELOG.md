@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Bounded default trimmed-face surface integration error (#230).
+
 - Reduced isolated dataset-test overhead by optimizing SHA-256 in development and test builds without removing executable identity checks (#228).
 
 - Preserved natural-bound face construction for closed non-periodic surfaces (#225)
