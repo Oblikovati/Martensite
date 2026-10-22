@@ -1,4 +1,4 @@
-//! Behavior tests of ShapeExtend_WireData, including the native quirks the port keeps.
+//! Behavior tests of ShapeExtend_WireData, including its established edge cases.
 mod support;
 use martensite_tkbrep::topods::Edge;
 use martensite_tkg3d::top_abs::Orientation;

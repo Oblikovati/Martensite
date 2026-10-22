@@ -151,7 +151,7 @@ mod tests {
 
     #[test]
     fn perform_on_a_null_shape_fails() {
-        // Native dereferences the null shape (undefined behaviour); the port fails.
+        // A null shape cannot be repaired, so return a typed failure.
         let input = Shape::default();
         let fixer = ShapeFixShape::new(input.clone());
         let failure = fixer.perform().unwrap_err();

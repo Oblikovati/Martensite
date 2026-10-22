@@ -1,7 +1,5 @@
-//! The TKShHealing-owned the retained behavior scenario cases that restore inputs from the retained behavior's public test
-//! dataset or build them with scenario commands, as native Rust tests: the same inputs,
-//! assertions and tolerances, without Tcl, scenario or the retained behavior at run time. One module per
-//! upstream test grid; each test runs in a child process under its group's `cpulimit`.
+//! Dataset-backed shape-healing cases. Each module groups related inputs, assertions, and tolerances;
+//! each case runs in a child process under its configured CPU limit.
 //!
 //! These tests check the kernel results with [`support::session::NoView`]; the TKDraw
 //! `shhealing_dataset_view_native` target runs the same bodies with a live scenario viewer

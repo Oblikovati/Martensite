@@ -16,7 +16,7 @@ fn check_pin_edges_matches_native_projection_and_derivative_branches() {
 }
 
 // `toler == -1` takes the shared vertex tolerance (1e-3 here) for the end matching and
-// for the projection, so the answer equals the one for an explicit 1e-3. The port used
+// for the projection, so the answer equals the one for an explicit 1e-3. Earlier code used
 // -1 in the projection and always answered false (found by sh_fix_shape op 16 on two
 // crossing circles).
 #[test]

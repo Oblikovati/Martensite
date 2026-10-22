@@ -63,7 +63,7 @@ pub(crate) use dataset_cases;
 /// Run `body` as the libtest case `identity` (its path below the target root) under the
 /// group's CPU and elapsed budget; `run_case("heal_fix_shape::a2", HEAL_SECONDS, || {})`.
 pub fn run_case(identity: &str, seconds: i64, body: impl FnOnce()) {
-    let artifacts = std::env::temp_dir().join("martensite-tkshhealing-draw-case-receipts");
+    let artifacts = std::env::temp_dir().join("martensite-tkshhealing-case-receipts");
     let spec = CaseSpec::new(identity, seconds, FactorProfile::RequireUnset);
     let receipt = CaseRunner::new(&artifacts, None)
         .run(spec, || {

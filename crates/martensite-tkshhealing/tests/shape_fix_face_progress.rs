@@ -1,4 +1,4 @@
-//! Port-only check: ShapeFix_Face::Perform with a progress range keeps a removed face removed.
+//! ShapeFix_Face::Perform with a progress range keeps a removed face removed.
 use martensite_tkbrep::brep_tools::ReShape;
 use martensite_tkernel::standard::Handle;
 use martensite_tkshhealing::shape_build::ShapeBuildReShape;

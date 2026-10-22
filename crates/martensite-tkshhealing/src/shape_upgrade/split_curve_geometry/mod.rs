@@ -1,4 +1,4 @@
-//! Shared native 2D/3D splitter control flow; family policies retain upstream differences.
+//! Shared 2D/3D splitter control flow; family policies retain their distinct rules.
 use super::{ShapeUpgradeSplitCurve, SplitCurve, SplitCurveData};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkernel::{

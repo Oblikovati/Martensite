@@ -39,7 +39,7 @@ pub enum ViewStep<'a> {
 
 /// What a case body needs from scenario besides the kernel.
 pub trait Session {
-    /// `Draw::Set(name, value)`: the variable is (re)defined and displayed.
+    /// Defines or replaces a displayed variable.
     fn set(&mut self, name: &str, value: &Restored);
     /// One view command.
     fn step(&mut self, step: ViewStep<'_>);

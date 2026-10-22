@@ -2,7 +2,7 @@
 
 //! the retained behavior package ShapeFix: the fixing tools that correct the problems that ShapeAnalysis
 //! detects. docs/shhealing-design.md section 4 fixes how its classes map;
-//! docs/tkshhealing-progress.md lists the ported classes.
+//! The module groups repair algorithms by the topology they transform.
 mod compose_shell;
 mod edge;
 mod edge_connect;

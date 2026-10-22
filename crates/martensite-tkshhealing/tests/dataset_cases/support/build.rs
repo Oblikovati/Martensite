@@ -1,7 +1,7 @@
 //! The construction and count commands of the scripts that build their inputs: BRepTest
 //! `polyline` and `polyvertex` (BRepBuilderAPI_MakePolygon), `psphere`
 //! (BRepPrimAPI_MakeSphere), and DBRep `nbshapes shape -t` with the `checknbshapes -t`
-//! check of DrawResources/CheckCommands.tcl.
+//! shape-count consistency check.
 use super::log;
 use super::logged_checks::nbshapes_count;
 use martensite_tkbrep::{
@@ -142,7 +142,7 @@ pub fn brestore(file: &str) -> Shape {
     shape
 }
 
-/// Draw `whatis name` of a shape (DBRep_DrawableShape::Whatis): its type, orientation and
+/// A shape summary: its type, orientation and
 /// set TShape flags (Free, Modified, Orientable, Closed, Infinite, Convex).
 pub fn whatis(name: &str, shape: &Shape) -> String {
     use martensite_tkg3d::top_abs::{shape_orientation_to_string, shape_type_to_string};

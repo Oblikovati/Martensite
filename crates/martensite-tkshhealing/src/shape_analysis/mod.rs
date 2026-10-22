@@ -2,7 +2,7 @@
 
 //! the retained behavior package ShapeAnalysis: the analysis tools that detect problems of shapes (wires,
 //! edges, surfaces, free bounds, contents). docs/shhealing-design.md section 4 fixes how
-//! its classes map; docs/tkshhealing-progress.md lists the ported classes.
+//! its classes and their relationships.
 mod check_small_face;
 mod edge;
 mod free_bound_data;

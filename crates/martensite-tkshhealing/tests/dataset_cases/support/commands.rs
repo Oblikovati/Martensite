@@ -141,7 +141,7 @@ pub fn trim_to_basis(curve: &Handle<dyn GeomCurve>) -> Handle<dyn GeomCurve> {
 
 /// GeomliteTest_CurveCommands.cxx `segment name f l`: `Segment(f, l, PConfusion)` of a
 /// B-spline curve (a Bezier curve segments without tolerance); any other curve makes the
-/// command fail, which the cases see as a Tcl error.
+/// command fail, which the cases surface as an evaluation error.
 pub fn segment(curve: &Handle<dyn GeomCurve>, first: f64, last: f64) -> Result<(), String> {
     if let Some(bspline) = curve.cast::<GeomBSplineCurve>().get() {
         return bspline

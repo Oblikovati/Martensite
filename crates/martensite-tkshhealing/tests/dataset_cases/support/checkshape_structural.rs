@@ -14,7 +14,7 @@ use martensite_tktopalgo::brep_check::{BRepCheckAnalyzer, BRepCheckStatus, ListO
 /// `NumberOfStatus`: the count of the `BRepCheck_Status` values without `NoError`.
 const NUMBER_OF_STATUS: usize = 36;
 
-/// `checkshape name prefix [-top]` of a shape named `name`: the Tcl result text, logged.
+/// The logged result of checking a named shape.
 pub fn checkshape_structural(
     shape: &Shape,
     name: &str,

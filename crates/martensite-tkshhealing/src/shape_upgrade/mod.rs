@@ -3,7 +3,7 @@
 //! the retained behavior package ShapeUpgrade: the tools that split and convert shapes (division by
 //! continuity, angle or area, UnifySameDomain).
 //!
-//! Ported so far (docs/tkshhealing-progress.md): the package functions [`ShapeUpgrade`]
+//! Package functions [`ShapeUpgrade`]
 //! (C0 B-splines split into C1 pieces), [`ShapeUpgradeTool`] (the context and
 //! tolerances of the tools), [`ShapeUpgradeRemoveLocations`] and the base curve splitter
 //! [`SplitCurve`] with [`ShapeUpgradeSplitCurve`]. docs/shhealing-design.md section 8

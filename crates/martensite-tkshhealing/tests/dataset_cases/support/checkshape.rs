@@ -27,7 +27,7 @@ pub struct CheckOptions {
     pub exact: bool,
 }
 
-/// What `checkshape` prints: the Tcl result text and the number of faulty shapes it names.
+/// The shape-check result text and the number of faulty shapes it names.
 #[derive(Clone, Debug)]
 pub struct CheckReport {
     pub text: String,

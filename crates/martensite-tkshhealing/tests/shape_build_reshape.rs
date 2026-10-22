@@ -1,4 +1,4 @@
-//! Behavior tests of ShapeBuild_ReShape and ShapeFix_Shape from the upstream
+//! Behavior tests of ShapeBuild_ReShape and ShapeFix_Shape.
 //! regressions/ShapeBuild_ReShape_Test.cxx.
 use martensite_tkbrep::brep_tools::ReShape;
 use martensite_tkbrep::topexp;

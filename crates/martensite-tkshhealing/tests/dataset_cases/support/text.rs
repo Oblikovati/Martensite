@@ -1,4 +1,4 @@
-//! The Tcl text handling the case scripts apply to scenario results: `regexp` captures of
+//! Text handling applied to scenario results: captures of
 //! numbers after a literal prefix, `lindex` and `llength` of a result list.
 
 /// The `[-0-9.+eE]+` word at the start of `text` (after the spaces the pattern allows).
@@ -28,7 +28,7 @@ pub fn numbers_after(text: &str, prefix: &str, count: usize, sep: &str) -> Optio
     Some(values)
 }
 
-/// `llength text`: the number of words of a Tcl list (none of the results the cases count
+/// The number of words in a result list (none of the cases count
 /// has braces).
 pub fn llength(text: &str) -> usize {
     text.split_whitespace().count()
