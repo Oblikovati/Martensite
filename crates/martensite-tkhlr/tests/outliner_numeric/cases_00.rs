@@ -2,400 +2,400 @@
 
 #[test]
 fn outliner_request_0000() {
-    super::run_case(0..119, 0..9092);
+    super::run_case(super::outliner_case(0));
 }
 
 #[test]
 fn outliner_request_0001() {
-    super::run_case(119..281, 9092..14846);
+    super::run_case(super::outliner_case(1));
 }
 
 #[test]
 fn outliner_request_0002() {
-    super::run_case(281..403, 14846..20555);
+    super::run_case(super::outliner_case(2));
 }
 
 #[test]
 fn outliner_request_0003() {
-    super::run_case(403..519, 20555..26315);
+    super::run_case(super::outliner_case(3));
 }
 
 #[test]
 fn outliner_request_0004() {
-    super::run_case(519..631, 26315..43908);
+    super::run_case(super::outliner_case(4));
 }
 
 #[test]
 fn outliner_request_0005() {
-    super::run_case(631..831, 43908..55579);
+    super::run_case(super::outliner_case(5));
 }
 
 #[test]
 fn outliner_request_0006() {
-    super::run_case(831..979, 55579..59189);
+    super::run_case(super::outliner_case(6));
 }
 
 #[test]
 fn outliner_request_0007() {
-    super::run_case(979..1154, 59189..94470);
+    super::run_case(super::outliner_case(7));
 }
 
 #[test]
 fn outliner_request_0008() {
-    super::run_case(1154..1317, 94470..103510);
+    super::run_case(super::outliner_case(8));
 }
 
 #[test]
 fn outliner_request_0009() {
-    super::run_case(1317..1478, 103510..109321);
+    super::run_case(super::outliner_case(9));
 }
 
 #[test]
 fn outliner_request_0010() {
-    super::run_case(1478..1596, 109321..112243);
+    super::run_case(super::outliner_case(10));
 }
 
 #[test]
 fn outliner_request_0011() {
-    super::run_case(1596..1760, 112243..114816);
+    super::run_case(super::outliner_case(11));
 }
 
 #[test]
 fn outliner_request_0012() {
-    super::run_case(1760..1879, 114816..128835);
+    super::run_case(super::outliner_case(12));
 }
 
 #[test]
 fn outliner_request_0013() {
-    super::run_case(1879..2333, 128835..141700);
+    super::run_case(super::outliner_case(13));
 }
 
 #[test]
 fn outliner_request_0014() {
-    super::run_case(2333..2476, 141700..143229);
+    super::run_case(super::outliner_case(14));
 }
 
 #[test]
 fn outliner_request_0015() {
-    super::run_case(2476..2657, 143229..171290);
+    super::run_case(super::outliner_case(15));
 }
 
 #[test]
 fn outliner_request_0016() {
-    super::run_case(2657..2822, 171290..180268);
+    super::run_case(super::outliner_case(16));
 }
 
 #[test]
 fn outliner_request_0017() {
-    super::run_case(2822..2940, 180268..208662);
+    super::run_case(super::outliner_case(17));
 }
 
 #[test]
 fn outliner_request_0018() {
-    super::run_case(2940..3108, 208662..226826);
+    super::run_case(super::outliner_case(18));
 }
 
 #[test]
 fn outliner_request_0019() {
-    super::run_case(3108..3218, 226826..237255);
+    super::run_case(super::outliner_case(19));
 }
 
 #[test]
 fn outliner_request_0020() {
-    super::run_case(3218..3382, 237255..244335);
+    super::run_case(super::outliner_case(20));
 }
 
 #[test]
 fn outliner_request_0021() {
-    super::run_case(3382..3634, 244335..262865);
+    super::run_case(super::outliner_case(21));
 }
 
 #[test]
 fn outliner_request_0022() {
-    super::run_case(3634..3798, 262865..268556);
+    super::run_case(super::outliner_case(22));
 }
 
 #[test]
 fn outliner_request_0023() {
-    super::run_case(3798..4027, 268556..273447);
+    super::run_case(super::outliner_case(23));
 }
 
 #[test]
 fn outliner_request_0024() {
-    super::run_case(4027..4145, 273447..306929);
+    super::run_case(super::outliner_case(24));
 }
 
 #[test]
 fn outliner_request_0025() {
-    super::run_case(4145..4307, 306929..312661);
+    super::run_case(super::outliner_case(25));
 }
 
 #[test]
 fn outliner_request_0026() {
-    super::run_case(4307..4427, 312661..316661);
+    super::run_case(super::outliner_case(26));
 }
 
 #[test]
 fn outliner_request_0027() {
-    super::run_case(4427..4537, 316661..318917);
+    super::run_case(super::outliner_case(27));
 }
 
 #[test]
 fn outliner_request_0028() {
-    super::run_case(4537..4703, 318917..324604);
+    super::run_case(super::outliner_case(28));
 }
 
 #[test]
 fn outliner_request_0029() {
-    super::run_case(4703..4957, 324604..342752);
+    super::run_case(super::outliner_case(29));
 }
 
 #[test]
 fn outliner_request_0030() {
-    super::run_case(4957..5105, 342752..346282);
+    super::run_case(super::outliner_case(30));
 }
 
 #[test]
 fn outliner_request_0031() {
-    super::run_case(5105..5284, 346282..354609);
+    super::run_case(super::outliner_case(31));
 }
 
 #[test]
 fn outliner_request_0032() {
-    super::run_case(5284..5399, 354609..388011);
+    super::run_case(super::outliner_case(32));
 }
 
 #[test]
 fn outliner_request_0033() {
-    super::run_case(5399..5564, 388011..425108);
+    super::run_case(super::outliner_case(33));
 }
 
 #[test]
 fn outliner_request_0034() {
-    super::run_case(5564..5728, 425108..446892);
+    super::run_case(super::outliner_case(34));
 }
 
 #[test]
 fn outliner_request_0035() {
-    super::run_case(5728..5888, 446892..449463);
+    super::run_case(super::outliner_case(35));
 }
 
 #[test]
 fn outliner_request_0036() {
-    super::run_case(5888..6000, 449463..459646);
+    super::run_case(super::outliner_case(36));
 }
 
 #[test]
 fn outliner_request_0037() {
-    super::run_case(6000..6376, 459646..474450);
+    super::run_case(super::outliner_case(37));
 }
 
 #[test]
 fn outliner_request_0038() {
-    super::run_case(6376..6519, 474450..477011);
+    super::run_case(super::outliner_case(38));
 }
 
 #[test]
 fn outliner_request_0039() {
-    super::run_case(6519..6793, 477011..546134);
+    super::run_case(super::outliner_case(39));
 }
 
 #[test]
 fn outliner_request_0040() {
-    super::run_case(6793..6916, 546134..592353);
+    super::run_case(super::outliner_case(40));
 }
 
 #[test]
 fn outliner_request_0041() {
-    super::run_case(6916..7076, 592353..598133);
+    super::run_case(super::outliner_case(41));
 }
 
 #[test]
 fn outliner_request_0042() {
-    super::run_case(7076..7242, 598133..603884);
+    super::run_case(super::outliner_case(42));
 }
 
 #[test]
 fn outliner_request_0043() {
-    super::run_case(7242..7356, 603884..614313);
+    super::run_case(super::outliner_case(43));
 }
 
 #[test]
 fn outliner_request_0044() {
-    super::run_case(7356..7470, 614313..636385);
+    super::run_case(super::outliner_case(44));
 }
 
 #[test]
 fn outliner_request_0045() {
-    super::run_case(7470..7712, 636385..664729);
+    super::run_case(super::outliner_case(45));
 }
 
 #[test]
 fn outliner_request_0046() {
-    super::run_case(7712..7860, 664729..678829);
+    super::run_case(super::outliner_case(46));
 }
 
 #[test]
 fn outliner_request_0047() {
-    super::run_case(7860..8135, 678829..720167);
+    super::run_case(super::outliner_case(47));
 }
 
 #[test]
 fn outliner_request_0048() {
-    super::run_case(8135..8256, 720167..765708);
+    super::run_case(super::outliner_case(48));
 }
 
 #[test]
 fn outliner_request_0049() {
-    super::run_case(8256..8372, 765708..802932);
+    super::run_case(super::outliner_case(49));
 }
 
 #[test]
 fn outliner_request_0050() {
-    super::run_case(8372..8486, 802932..836639);
+    super::run_case(super::outliner_case(50));
 }
 
 #[test]
 fn outliner_request_0051() {
-    super::run_case(8486..8596, 836639..839201);
+    super::run_case(super::outliner_case(51));
 }
 
 #[test]
 fn outliner_request_0052() {
-    super::run_case(8596..8753, 839201..846260);
+    super::run_case(super::outliner_case(52));
 }
 
 #[test]
 fn outliner_request_0053() {
-    super::run_case(8753..8994, 846260..861997);
+    super::run_case(super::outliner_case(53));
 }
 
 #[test]
 fn outliner_request_0054() {
-    super::run_case(8994..9149, 861997..864563);
+    super::run_case(super::outliner_case(54));
 }
 
 #[test]
 fn outliner_request_0055() {
-    super::run_case(9149..9383, 864563..877456);
+    super::run_case(super::outliner_case(55));
 }
 
 #[test]
 fn outliner_request_0056() {
-    super::run_case(9383..9543, 877456..886508);
+    super::run_case(super::outliner_case(56));
 }
 
 #[test]
 fn outliner_request_0057() {
-    super::run_case(9543..9654, 886508..917782);
+    super::run_case(super::outliner_case(57));
 }
 
 #[test]
 fn outliner_request_0058() {
-    super::run_case(9654..9775, 917782..923661);
+    super::run_case(super::outliner_case(58));
 }
 
 #[test]
 fn outliner_request_0059() {
-    super::run_case(9775..9932, 923661..933446);
+    super::run_case(super::outliner_case(59));
 }
 
 #[test]
 fn outliner_request_0060() {
-    super::run_case(9932..10052, 933446..939135);
+    super::run_case(super::outliner_case(60));
 }
 
 #[test]
 fn outliner_request_0061() {
-    super::run_case(10052..10301, 939135..947582);
+    super::run_case(super::outliner_case(61));
 }
 
 #[test]
 fn outliner_request_0062() {
-    super::run_case(10301..10427, 947582..953356);
+    super::run_case(super::outliner_case(62));
 }
 
 #[test]
 fn outliner_request_0063() {
-    super::run_case(10427..10657, 953356..1008835);
+    super::run_case(super::outliner_case(63));
 }
 
 #[test]
 fn outliner_request_0064() {
-    super::run_case(10657..10821, 1008835..1017735);
+    super::run_case(super::outliner_case(64));
 }
 
 #[test]
 fn outliner_request_0065() {
-    super::run_case(10821..10940, 1017735..1055077);
+    super::run_case(super::outliner_case(65));
 }
 
 #[test]
 fn outliner_request_0066() {
-    super::run_case(10940..11060, 1055077..1058996);
+    super::run_case(super::outliner_case(66));
 }
 
 #[test]
 fn outliner_request_0067() {
-    super::run_case(11060..11218, 1058996..1061591);
+    super::run_case(super::outliner_case(67));
 }
 
 #[test]
 fn outliner_request_0068() {
-    super::run_case(11218..11377, 1061591..1075745);
+    super::run_case(super::outliner_case(68));
 }
 
 #[test]
 fn outliner_request_0069() {
-    super::run_case(11377..11619, 1075745..1080447);
+    super::run_case(super::outliner_case(69));
 }
 
 #[test]
 fn outliner_request_0070() {
-    super::run_case(11619..11772, 1080447..1081947);
+    super::run_case(super::outliner_case(70));
 }
 
 #[test]
 fn outliner_request_0071() {
-    super::run_case(11772..12001, 1081947..1093322);
+    super::run_case(super::outliner_case(71));
 }
 
 #[test]
 fn outliner_request_0072() {
-    super::run_case(12001..12122, 1093322..1102286);
+    super::run_case(super::outliner_case(72));
 }
 
 #[test]
 fn outliner_request_0073() {
-    super::run_case(12122..12243, 1102286..1139276);
+    super::run_case(super::outliner_case(73));
 }
 
 #[test]
 fn outliner_request_0074() {
-    super::run_case(12243..12412, 1139276..1162875);
+    super::run_case(super::outliner_case(74));
 }
 
 #[test]
 fn outliner_request_0075() {
-    super::run_case(12412..12521, 1162875..1165425);
+    super::run_case(super::outliner_case(75));
 }
 
 #[test]
 fn outliner_request_0076() {
-    super::run_case(12521..12632, 1165425..1175752);
+    super::run_case(super::outliner_case(76));
 }
 
 #[test]
 fn outliner_request_0077() {
-    super::run_case(12632..12865, 1175752..1179940);
+    super::run_case(super::outliner_case(77));
 }
 
 #[test]
 fn outliner_request_0078() {
-    super::run_case(12865..13092, 1179940..1181378);
+    super::run_case(super::outliner_case(78));
 }
 
 #[test]
 fn outliner_request_0079() {
-    super::run_case(13092..13363, 1181378..1235406);
+    super::run_case(super::outliner_case(79));
 }

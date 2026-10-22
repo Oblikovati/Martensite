@@ -9,25 +9,97 @@ use martensite_tkhlr::{
     hlr_algo::Projector,
     hlr_topo_brep::{MapOfShapeTool, OutLiner},
 };
-use std::{ops::Range, sync::Mutex};
+use std::{
+    ops::Range,
+    sync::{
+        Mutex,
+        atomic::{AtomicUsize, Ordering},
+    },
+};
 // Compatibility replay retains the historical sampler called by the contour pipeline.
 // This guard establishes no independent-production operation or thread-safety claim.
 static HISTORICAL_OUTLINER_CONTEXT: Mutex<()> = Mutex::new(());
+static OUTLINER_REPLAY_COUNT: AtomicUsize = AtomicUsize::new(0);
 const REQUESTS: &str = include_str!("fixtures/outliner_numeric/requests.txt");
 const EXPECTATIONS: &str = include_str!("fixtures/outliner_numeric/reference-expected.txt");
-fn run_case(request: Range<usize>, expected: Range<usize>) {
-    let _context = HISTORICAL_OUTLINER_CONTEXT.lock().unwrap();
-    replay_support::check_request_slice(&REQUESTS[request], &EXPECTATIONS[expected]);
+const CASE_SLICES: &str = include_str!("fixtures/outliner_numeric/case-slices.csv");
+
+#[derive(Clone)]
+struct OutlinerCaseSlice {
+    request: Range<usize>,
+    expected: Range<usize>,
 }
+
+fn parse_slice_boundary(value: Option<&str>, index: usize, field: &str) -> usize {
+    value
+        .unwrap_or_else(|| panic!("case {index} lacks {field} boundary"))
+        .parse()
+        .unwrap_or_else(|_| panic!("case {index} has an invalid {field} boundary"))
+}
+
+fn parse_case_slice(index: usize, line: &str) -> OutlinerCaseSlice {
+    let mut boundaries = line.split(',');
+    let request_start = parse_slice_boundary(boundaries.next(), index, "request start");
+    let request_end = parse_slice_boundary(boundaries.next(), index, "request end");
+    let expected_start = parse_slice_boundary(boundaries.next(), index, "expected start");
+    let expected_end = parse_slice_boundary(boundaries.next(), index, "expected end");
+    assert!(
+        boundaries.next().is_none(),
+        "case {index} has extra boundaries"
+    );
+    OutlinerCaseSlice {
+        request: request_start..request_end,
+        expected: expected_start..expected_end,
+    }
+}
+
+fn outliner_case(index: usize) -> OutlinerCaseSlice {
+    let line = CASE_SLICES
+        .lines()
+        .nth(index)
+        .unwrap_or_else(|| panic!("outliner case index {index} is not mapped"));
+    parse_case_slice(index, line)
+}
+
+fn all_outliner_cases() -> Vec<OutlinerCaseSlice> {
+    CASE_SLICES
+        .lines()
+        .enumerate()
+        .map(|(index, line)| parse_case_slice(index, line))
+        .collect()
+}
+
+fn run_case(case: OutlinerCaseSlice) {
+    let _context = HISTORICAL_OUTLINER_CONTEXT.lock().unwrap();
+    OUTLINER_REPLAY_COUNT.fetch_add(1, Ordering::Relaxed);
+    replay_support::check_request_slice(&REQUESTS[case.request], &EXPECTATIONS[case.expected]);
+}
+
+fn assert_complete_original_outliner_layout(cases: &[OutlinerCaseSlice]) {
+    assert_eq!(cases.len(), 240);
+    assert_eq!(REQUESTS.lines().count(), cases.len());
+    assert_eq!(EXPECTATIONS.lines().count(), cases.len());
+
+    let mut request_end = 0;
+    let mut expected_end = 0;
+    for case in cases {
+        assert_eq!(case.request.start, request_end);
+        assert_eq!(case.expected.start, expected_end);
+        assert!(REQUESTS[case.request.clone()].starts_with("ht_outliner "));
+        assert!(EXPECTATIONS[case.expected.clone()].ends_with('\n'));
+        request_end = case.request.end;
+        expected_end = case.expected.end;
+    }
+    assert_eq!(request_end, REQUESTS.len());
+    assert_eq!(expected_end, EXPECTATIONS.len());
+}
+
 #[test]
 fn complete_original_outliner_count_and_order_are_exact() {
     let _context = HISTORICAL_OUTLINER_CONTEXT.lock().unwrap();
-    assert_eq!(REQUESTS.lines().count(), 240);
-    assert_eq!(EXPECTATIONS.lines().count(), 240);
-    for (request, expected) in REQUESTS.lines().zip(EXPECTATIONS.split_inclusive('\n')) {
-        assert!(request.starts_with("ht_outliner "));
-        replay_support::check_request_slice(request, expected);
-    }
+    let replay_count = OUTLINER_REPLAY_COUNT.load(Ordering::Relaxed);
+    assert_complete_original_outliner_layout(&all_outliner_cases());
+    assert_eq!(OUTLINER_REPLAY_COUNT.load(Ordering::Relaxed), replay_count);
 }
 fn empty_compound() -> Shape {
     let mut compound = Compound::default();
