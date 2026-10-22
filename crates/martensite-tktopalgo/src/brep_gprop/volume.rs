@@ -14,6 +14,14 @@ use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkgeombase::gprop::GProps;
 use martensite_tkmath::gp::Point3;
 
+/// The largest relative quadrature error accepted by the fixed-properties route.
+///
+/// A trimmed boundary can make a single Gauss pass under-resolve an otherwise smooth
+/// surface.  This limit preserves the inexpensive fixed route where it is adequate and
+/// switches to the existing adaptive integrator only when its independent two-order
+/// estimate says it is not.
+const FIXED_DOMAIN_ERROR_LIMIT: f64 = 1.0e-5;
+
 /// The flags of the volume computations (`SkipShared`, `UseTriangulation`).
 #[derive(Clone, Copy, Debug)]
 pub(super) struct VolumeFlags {
@@ -156,7 +164,7 @@ pub(super) fn volume_faces(
 }
 
 /// The Vinert integration of one face: adaptive below `eps` 1 (its error), else on the
-/// natural bounds or along the domain (error 0).
+/// natural bounds or with an error-bounded domain pass.
 fn volume_face(
     face: &Face,
     (tool, domain): (&mut BRepGPropFace, &mut BRepGPropDomain),
@@ -174,8 +182,39 @@ fn volume_face(
     }
     if is_natural {
         volume.perform(tool)?;
-    } else {
-        volume.perform_domain(tool, domain)?;
+        return Ok(0.0);
     }
-    Ok(0.0)
+    fixed_domain_volume(tool, domain, volume)
+}
+
+/// Estimates a fixed domain integral before accepting it, then refines the same face
+/// when two Gauss orders disagree beyond [`FIXED_DOMAIN_ERROR_LIMIT`].
+fn fixed_domain_volume(
+    tool: &mut BRepGPropFace,
+    domain: &mut BRepGPropDomain,
+    volume: &mut BRepGPropVinert,
+) -> Result<f64, Failure> {
+    let estimate = volume.perform_domain_eps(tool, domain, -FIXED_DOMAIN_ERROR_LIMIT)?;
+    if !requires_domain_refinement(estimate) {
+        return Ok(estimate);
+    }
+    domain.init()?;
+    volume.perform_domain_eps(tool, domain, FIXED_DOMAIN_ERROR_LIMIT)
+}
+
+/// Whether a two-order estimate must use the bounded adaptive domain integrator.
+fn requires_domain_refinement(estimate: f64) -> bool {
+    !estimate.is_finite() || estimate > FIXED_DOMAIN_ERROR_LIMIT
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{FIXED_DOMAIN_ERROR_LIMIT, requires_domain_refinement};
+
+    #[test]
+    fn domain_error_estimate_refines_only_outside_the_accepted_bound() {
+        assert!(!requires_domain_refinement(FIXED_DOMAIN_ERROR_LIMIT));
+        assert!(requires_domain_refinement(FIXED_DOMAIN_ERROR_LIMIT * 1.01));
+        assert!(requires_domain_refinement(f64::INFINITY));
+    }
 }
