@@ -13,7 +13,8 @@ debug executable. At `cbd543a2`, it passed in 19.28 seconds; a traced repeat too
 reads were each followed by approximately 6.3 seconds of hashing. The child
 entry-to-completion interval was 56 milliseconds.
 
-At the fix baseline `4df6d1ec`, an unoptimized repeat took 29.24 seconds. With
+At the fix baseline `4df6d1ec`, unoptimized repeats took 29.24 and 29.62 seconds
+(the latter used 29.03 user CPU seconds and 335500 KiB peak RSS). With
 the profile override it took 1.65 seconds, then 1.29 seconds (0.79 user CPU
 seconds, 335816 KiB peak RSS). This was a shared, busy host, not a controlled
 benchmark. The measurements show a substantial CPU improvement, not a memory
