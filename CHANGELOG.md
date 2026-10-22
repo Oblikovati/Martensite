@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserved natural-bound face construction for closed non-periodic surfaces (#225)
+
 ### Added
 
 - Added shape healing, mesh construction and document-object model crates ([#215], [#216], [#217]).

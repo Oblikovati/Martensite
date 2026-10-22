@@ -106,20 +106,50 @@ pub(super) fn sides(
     ])
 }
 
-/// The closed flags: a closed direction whose bounds are the natural ones.
+/// The closed flags: a closed direction bounded by exactly one period. The parameter
+/// origin may be shifted, so comparing against the natural bounds would create duplicate
+/// coincident boundary edges for a full-period face such as `[PI, 3*PI]`.
 pub(super) fn closed_flags(
     s: &dyn GeomSurface,
     natural: SurfaceBounds,
     bounds: SurfaceBounds,
 ) -> Result<(bool, bool), Failure> {
-    let epsilon: f64 = precision::p_confusion();
     let (nu1, nu2, nv1, nv2) = natural;
     let (umin, umax, vmin, vmax) = bounds;
-    let uclosed: bool =
-        s.is_u_closed()? && (umin - nu1).abs() < epsilon && (umax - nu2).abs() < epsilon;
-    let vclosed: bool =
-        s.is_v_closed()? && (vmin - nv1).abs() < epsilon && (vmax - nv2).abs() < epsilon;
+    let uclosed = closed_direction(
+        s.is_u_closed()?,
+        s.is_u_periodic(),
+        (nu1, nu2),
+        (umin, umax),
+        || s.u_period(),
+    )?;
+    let vclosed = closed_direction(
+        s.is_v_closed()?,
+        s.is_v_periodic(),
+        (nv1, nv2),
+        (vmin, vmax),
+        || s.v_period(),
+    )?;
     Ok((uclosed, vclosed))
+}
+
+/// A periodic closed direction may start at any parameter origin. A geometrically closed
+/// but non-periodic surface only shares its boundary when it uses its natural bounds.
+fn closed_direction(
+    closed: bool,
+    periodic: bool,
+    natural: (f64, f64),
+    bounds: (f64, f64),
+    period: impl FnOnce() -> Result<f64, Failure>,
+) -> Result<bool, Failure> {
+    if !closed {
+        return Ok(false);
+    }
+    if periodic {
+        return Ok((bounds.1 - bounds.0 - period()?).abs() < precision::p_confusion());
+    }
+    Ok((bounds.0 - natural.0).abs() < precision::p_confusion()
+        && (bounds.1 - natural.1).abs() < precision::p_confusion())
 }
 
 /// "compute vertices": V00, V10, V11, V01 at the finite corners, then shared by the

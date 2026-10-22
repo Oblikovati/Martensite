@@ -1,12 +1,19 @@
 //! Tests of `BRepBuilderAPI_MakeFace`.
 #![allow(non_snake_case)]
 
+use martensite_tkbrep::topexp;
 use martensite_tkbrep::topods::{Face, Shape};
+use martensite_tkbrep::toptools::IndexedMapOfShape;
+use martensite_tkernel::ncollection::{Array1, Array2};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::Handle;
-use martensite_tkg3d::geom::{GeomCylindricalSurface, GeomPlane, GeomSurface};
+use martensite_tkg3d::geom::{
+    GeomBSplineSurface, GeomCylindricalSurface, GeomPlane, GeomRectangularTrimmedSurface,
+    GeomSphericalSurface, GeomSurface,
+};
+use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkgeombase::gprop::GProps;
-use martensite_tkmath::gp::{Axis3, Direction3, Plane3, Point3};
+use martensite_tkmath::gp::{Axis3, Cone3, Cylinder3, Direction3, Plane3, Point3, Sphere3, Torus3};
 use martensite_tktopalgo::brep_builder_api::{
     BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeFace, BRepBuilderAPIMakeShape, BRepBuilderAPIMakeWire,
 };
@@ -136,4 +143,101 @@ fn BRepBuilderAPI_MakeFaceTest__FaceFromCylindricalSurface() {
     // Area of cylinder: 2*PI*R*H = 2*PI*5*10 = 100*PI
     let mass = face_area(&a_face);
     assert!((mass - 2.0 * PI * 5.0 * 10.0).abs() <= 0.01);
+}
+
+/// A geometrically U-closed B-spline need not be parameter-periodic.
+fn u_closed_non_periodic_surface() -> Handle<dyn GeomSurface> {
+    let mut poles = Array2::with_bounds(1, 2, 1, 2).unwrap();
+    for row in 1..=2 {
+        poles.set_value(row, 1, Point3::new(0.0, 0.0, 0.0)).unwrap();
+        poles.set_value(row, 2, Point3::new(0.0, 1.0, 0.0)).unwrap();
+    }
+    let mut knots = Array1::with_bounds(1, 2).unwrap();
+    knots.as_mut_slice().copy_from_slice(&[0.0, 1.0]);
+    let mut mults = Array1::with_bounds(1, 2).unwrap();
+    mults.as_mut_slice().copy_from_slice(&[2, 2]);
+    Handle::new(
+        GeomBSplineSurface::new(
+            &poles,
+            (&knots, &mults),
+            (&knots, &mults),
+            (1, 1),
+            (false, false),
+        )
+        .unwrap(),
+    )
+    .cast()
+}
+
+#[test]
+fn BRepBuilderAPI_MakeFaceTest__ClosedNonPeriodicSurfaceUsesNaturalBounds() {
+    let surface = u_closed_non_periodic_surface();
+    let geometry = surface.get().unwrap();
+    assert!(geometry.is_u_closed().unwrap());
+    assert!(!geometry.is_u_periodic());
+
+    let maker = BRepBuilderAPIMakeFace::from_surface(&surface, precision::confusion()).unwrap();
+    assert!(maker.is_done());
+    assert!(!maker.face().unwrap().is_null());
+}
+
+fn unique_shape_count(face: &Face, kind: ShapeEnum) -> usize {
+    let mut shapes = IndexedMapOfShape::default();
+    topexp::map_shapes_of_type(&face.clone().into_shape(), kind, &mut shapes).unwrap();
+    shapes.extent()
+}
+
+fn assert_full_period_face(face: Face, expected_edges: usize, expected_vertices: usize) {
+    assert!(is_valid(&face));
+    assert_eq!(unique_shape_count(&face, ShapeEnum::Edge), expected_edges);
+    assert_eq!(
+        unique_shape_count(&face, ShapeEnum::Vertex),
+        expected_vertices
+    );
+}
+
+#[test]
+fn shifted_full_period_bounds_share_periodic_seams() {
+    let axis = Axis3::from_normal(Point3::new(0.0, 0.0, 0.0), z_dir()).unwrap();
+    let cylinder = Cylinder3::new(axis, 10.0).unwrap();
+    let cone = Cone3::new(axis, 30.0_f64.to_radians(), 0.0).unwrap();
+    let sphere = Sphere3::new(axis, 10.0).unwrap();
+    let torus = Torus3::new(axis, 20.0, 5.0).unwrap();
+
+    let cylinder =
+        BRepBuilderAPIMakeFace::from_cylinder_bounds(cylinder, (PI, 3.0 * PI, -10.0, 10.0))
+            .unwrap()
+            .face()
+            .unwrap();
+    assert_full_period_face(cylinder, 3, 2);
+
+    let sphere_basis: Handle<dyn GeomSurface> =
+        Handle::new(GeomSphericalSurface::from_sphere(sphere)).cast();
+    let trimmed_sphere: Handle<dyn GeomSurface> = Handle::new(
+        GeomRectangularTrimmedSurface::new(
+            &sphere_basis,
+            (PI, 3.0 * PI),
+            (-0.5 * PI, 0.5 * PI),
+            (true, true),
+        )
+        .unwrap(),
+    )
+    .cast();
+    let sphere = BRepBuilderAPIMakeFace::from_surface(&trimmed_sphere, precision::confusion())
+        .unwrap()
+        .face()
+        .unwrap();
+    assert_full_period_face(sphere, 3, 2);
+
+    let cone = BRepBuilderAPIMakeFace::from_cone_bounds(cone, (PI, 3.0 * PI, 0.0, 20.0))
+        .unwrap()
+        .face()
+        .unwrap();
+    assert_full_period_face(cone, 3, 2);
+
+    let torus = BRepBuilderAPIMakeFace::from_torus_bounds(torus, (PI, 3.0 * PI, 0.0, 2.0 * PI))
+        .unwrap()
+        .face()
+        .unwrap();
+    assert_full_period_face(torus, 2, 1);
 }
