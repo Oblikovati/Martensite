@@ -200,12 +200,33 @@ fn add_wline(
     Ok(())
 }
 
-/// `AddLine` on a restriction: the vertices from `i` to `j` (`AppendSameVertexR` is
-/// compiled out natively, `XPU1009` being undefined, and the last index is 2 even for
-/// one vertex).
+/// Preserve separate boundary incidences at coincident restriction endpoints (#238).
+fn append_same_vertex_r(
+    target: &IntPatchRLine,
+    source: &IntPatchRLine,
+    index: i32,
+    tab_index: &mut [i32],
+) -> Result<i32, Failure> {
+    let vertices = vertices_of(source.nb_vertex(), |rank| source.vertex(rank))?;
+    let parameter = source.vertex(index)?.parameter_on_line();
+    let mut appended = 0;
+    for (rank, point, distance, tolerance) in other_vertices(&vertices, index) {
+        if distance < tolerance {
+            let mut rebound = point.clone();
+            rebound.set_parameter(parameter);
+            target.add_vertex(&rebound, false);
+            tab_index[rank as usize] = tab_index[index as usize];
+            appended += 1;
+        }
+    }
+    Ok(appended)
+}
+
+/// Restricts a line while retaining the endpoint boundary ownership records.
 fn add_rline(
     l: &Handle<dyn IntPatchLine>,
     (i, j): (i32, i32),
+    tab_index: &mut [i32],
     slin: &mut Vec<Handle<dyn IntPatchLine>>,
 ) -> Result<(), Failure> {
     let rline: Handle<IntPatchRLine> = l.cast::<IntPatchRLine>();
@@ -223,12 +244,14 @@ fn add_rline(
     }
     let mut index_last_vertex: i32 = 2;
     rlig.add_vertex(&rline.vertex(i)?, false);
+    index_last_vertex += append_same_vertex_r(&rlig, &rline, i, tab_index)?;
     for k in i + 1..j {
         rlig.add_vertex(&rline.vertex(k)?, false);
         index_last_vertex += 1;
     }
     if i != j {
         rlig.add_vertex(&rline.vertex(j)?, false);
+        index_last_vertex += append_same_vertex_r(&rlig, &rline, j, tab_index)?;
     }
     rlig.set_first_point(1);
     rlig.set_last_point(index_last_vertex);
@@ -298,7 +321,11 @@ pub(super) fn add_line(
     match l.arc_type() {
         IntPatchIType::Analytic => add_aline(l, ij, tab_index, slin),
         IntPatchIType::Walking => add_wline(l, ij, tab_index, slin),
-        IntPatchIType::Restriction => add_rline(l, ij, slin),
+        IntPatchIType::Restriction => add_rline(l, ij, tab_index, slin),
         _ => add_gline(l, ij, tab_index, slin),
     }
 }
+
+#[cfg(test)]
+#[path = "restriction_incidence_tests.rs"]
+mod restriction_incidence_tests;

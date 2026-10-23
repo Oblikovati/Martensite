@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Preserved distinct boundary incidences at restriction-line endpoints during interval construction (#238).
+
 - Bounded default trimmed-face surface integration error (#230).
 
 - Reduced isolated dataset-test overhead by optimizing SHA-256 in development and test builds without removing executable identity checks (#228).
