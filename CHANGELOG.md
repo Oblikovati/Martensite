@@ -6,13 +6,13 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
-
-- Preserved document files when model preparation or storage failed, and published completed file writes before recording the final storage path; preserved symbolic links classified publication failures, and retained Linux file access policies during replacement (#245).
-
 ## [0.3.6] - 2026-10-23
 
 ### Fixed
+
+- Staged document writes so preparation failures and incomplete driver output leave existing files intact; verified access policies before publication and retained requested paths and symbolic links (#245).
+
+- Rejected incomplete geometric volume integration and preserved caller properties on failure while retaining completed empty selections (#246).
 
 - Preserved planar wire geometry during face construction and reused finite curve bounds within classification operations without storing projection caches on input edges (#242).
 
