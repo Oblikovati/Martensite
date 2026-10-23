@@ -38,13 +38,13 @@ pub trait ShapeCustomModification: BRepToolsModification {
         *self.modification_messages().msg_reg.write() = registrator.clone();
     }
 
-    /// `MsgRegistrator()`: the registrator, null by default;
+    /// the registrator, null by default;
     /// `modification.msg_registrator()`.
     fn msg_registrator(&self) -> Handle<dyn BasicMsgRegistrator> {
         self.modification_messages().msg_reg.read().clone()
     }
 
-    /// `SendMsg(shape, message, gravity)`: sends the message to the registrator, if any
+    /// sends the message to the registrator, if any
     /// (the default gravity is Message_Info);
     /// `modification.send_msg(&shape, &message, Gravity::Info)`.
     fn send_msg(&self, shape: &Shape, message: &Msg, gravity: Gravity) {

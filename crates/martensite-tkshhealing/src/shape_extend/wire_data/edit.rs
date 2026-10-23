@@ -14,7 +14,7 @@ fn is_manifold(shape: &Shape) -> bool {
 }
 
 impl WireDataFields {
-    /// `myEdges->Append(edge)` for position 0, `InsertBefore(atnum, edge)` otherwise.
+    /// Append at position zero; otherwise insert before the requested rank.
     fn insert_edge(&mut self, edge: Shape, atnum: i32) -> Result<(), Failure> {
         if atnum == 0 {
             self.edges.append(edge);
@@ -27,7 +27,7 @@ impl WireDataFields {
 }
 
 impl ShapeExtendWireData {
-    /// `SetLast(num)`: rotates the list so that the edge of rank `num` is the last one;
+    /// rotates the list so that the edge of rank `num` is the last one;
     /// nothing for 0; `data.set_last(2)?`.
     pub fn set_last(&self, num: i32) -> Result<(), Failure> {
         if num == 0 {
@@ -45,7 +45,7 @@ impl ShapeExtendWireData {
         Ok(())
     }
 
-    /// `SetDegeneratedLast()`: makes the first degenerated edge the last one (`SetLast`);
+    /// makes the first degenerated edge the last one (`SetLast`);
     /// `data.set_degenerated_last()?`.
     pub fn set_degenerated_last(&self) -> Result<(), Failure> {
         for i in 1..=self.nb_edges() {
@@ -56,10 +56,10 @@ impl ShapeExtendWireData {
         Ok(())
     }
 
-    /// `Add(edge, atnum)`: appends the edge (inserts it before rank `atnum` when not 0);
+    /// appends the edge (inserts it before rank `atnum` when not 0);
     /// in the manifold mode an INTERNAL or EXTERNAL edge goes to the non-manifold edges
-    /// instead. The orientation is tested before the null check, so a null edge (EXTERNAL
-    /// in this implementation) joins the non-manifold edges in the manifold mode; `data.add_edge(&e, 0)?`.
+    /// instead. Orientation is checked first, so an absent edge with External orientation
+    /// joins the non-manifold list in manifold mode; `data.add_edge(&e, 0)?`.
     pub fn add_edge(&self, edge: &Edge, atnum: i32) -> Result<(), Failure> {
         let mut fields = self.fields.write();
         if !is_manifold(edge) && fields.manifold_mode {
@@ -74,7 +74,7 @@ impl ShapeExtendWireData {
         Ok(())
     }
 
-    /// `Add(wire, atnum)`: the edges of the wire in order, appended or inserted from rank
+    /// the edges of the wire in order, appended or inserted from rank
     /// `atnum`; its INTERNAL and EXTERNAL edges go to the non-manifold edges in the
     /// manifold mode, else after all the edges; nothing for a null wire;
     /// `data.add_wire(&w, 0)?`.
@@ -108,13 +108,12 @@ impl ShapeExtendWireData {
         Ok(())
     }
 
-    /// `Add(wire data, atnum)`: the edges of `other` in order, appended or inserted from
+    /// the edges of `other` in order, appended or inserted from
     /// rank `atnum`, its INTERNAL and EXTERNAL edges after all the edges. Its non-manifold
-    /// edges go to the non-manifold edges in the manifold mode; without it, the native
-    /// loop inserts `other->Edge(i)` for i up to the number of non-manifold edges (the
-    /// ordinary edges, not the non-manifold ones), which is kept. Both loops read the
-    /// counts of `other` again at each step, so adding a list to itself does
-    /// not end (in this implementation neither); `data.add_wire_data(&other, 0)?`.
+    /// edges go to the non-manifold list in manifold mode. Otherwise, the second loop
+    /// reads ordinary edges up to the non-manifold count. Both loops reread the counts
+    /// at each step, so adding a list to itself does not terminate;
+    /// `data.add_wire_data(&other, 0)?`.
     pub fn add_wire_data(&self, other: &ShapeExtendWireData, atnum: i32) -> Result<(), Failure> {
         let mut non_manifold = Vec::new();
         let mut n = atnum;
@@ -152,7 +151,7 @@ impl ShapeExtendWireData {
                 let edge = other.nonmanifold_edge(i)?.into_shape();
                 self.fields.read().nonmanifold.append(edge);
             } else {
-                // Natively `wire->Edge(i)`, not `NonmanifoldEdge(i)`.
+                // Intentionally read the ordinary edge list, not the non-manifold list.
                 let edge = other.edge(i)?.into_shape();
                 self.fields.write().insert_edge(edge, n)?;
                 n += i32::from(n != 0);
@@ -162,8 +161,8 @@ impl ShapeExtendWireData {
         Ok(())
     }
 
-    /// `Add(shape, atnum)`: `Add` of the edge or of the wire; any other shape is ignored;
-    /// Standard_NullObject for a null shape (a null dereference in this implementation);
+    /// `Add` of the edge or of the wire; any other shape is ignored;
+    /// Standard_NullObject for a null shape;
     /// `data.add_shape(&s, 0)?`.
     pub fn add_shape(&self, shape: &Shape, atnum: i32) -> Result<(), Failure> {
         match shape.shape_type()? {
@@ -173,7 +172,7 @@ impl ShapeExtendWireData {
         }
     }
 
-    /// `AddOriented(edge, mode)`: mode 0 appends, 1 appends reversed, 2 prepends, 3
+    /// mode 0 appends, 1 appends reversed, 2 prepends, 3
     /// prepends reversed; nothing for a null edge or a negative mode (a mode above 3
     /// inserts at `mode / 2`); `data.add_oriented_edge(&e, 1)?`.
     pub fn add_oriented_edge(&self, edge: &Edge, mode: i32) -> Result<(), Failure> {
@@ -187,7 +186,7 @@ impl ShapeExtendWireData {
         self.add_edge(&oriented, mode / 2)
     }
 
-    /// `AddOriented(wire, mode)`: as [`Self::add_oriented_edge`] with the wire reversed
+    /// as [`Self::add_oriented_edge`] with the wire reversed
     /// for modes 1 and 3; `data.add_oriented_wire(&w, 2)?`.
     pub fn add_oriented_wire(&self, wire: &Wire, mode: i32) -> Result<(), Failure> {
         if wire.is_null() || mode < 0 {
@@ -200,8 +199,8 @@ impl ShapeExtendWireData {
         self.add_wire(&oriented, mode / 2)
     }
 
-    /// `AddOriented(shape, mode)`: of the edge or of the wire; Standard_NullObject for a
-    /// null shape (a null dereference in this implementation); `data.add_oriented_shape(&s, 0)?`.
+    /// of the edge or of the wire; Standard_NullObject for a
+    /// null shape; `data.add_oriented_shape(&s, 0)?`.
     pub fn add_oriented_shape(&self, shape: &Shape, mode: i32) -> Result<(), Failure> {
         match shape.shape_type()? {
             ShapeEnum::Edge => self.add_oriented_edge(&topods::edge(shape)?, mode),
@@ -210,7 +209,7 @@ impl ShapeExtendWireData {
         }
     }
 
-    /// `Remove(num)`: removes the edge of rank `num` (the last one for 0);
+    /// removes the edge of rank `num` (the last one for 0);
     /// Standard_OutOfRange outside the list; `data.remove(0)?`.
     pub fn remove(&self, num: i32) -> Result<(), Failure> {
         let mut fields = self.fields.write();
@@ -221,7 +220,7 @@ impl ShapeExtendWireData {
         Ok(())
     }
 
-    /// `Set(edge, num)`: replaces the edge of rank `num` (the last one for 0 or below); in
+    /// replaces the edge of rank `num` (the last one for 0 or below); in
     /// the manifold mode an INTERNAL or EXTERNAL edge replaces the non-manifold edge of
     /// rank `num` instead, or is appended to them when `num` is past their end;
     /// Standard_OutOfRange outside the list; `data.set(&e, 1)?`.
@@ -247,7 +246,7 @@ impl ShapeExtendWireData {
         Ok(())
     }
 
-    /// `Reverse()`: reverses the order of the edges and each edge;
+    /// reverses the order of the edges and each edge;
     /// `data.reverse()?`.
     pub fn reverse(&self) -> Result<(), Failure> {
         let mut fields = self.fields.write();

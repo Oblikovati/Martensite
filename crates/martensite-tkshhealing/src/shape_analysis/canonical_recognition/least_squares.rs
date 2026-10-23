@@ -19,7 +19,7 @@ use martensite_tkmath::gp::{Axis3, Direction3, Plane3, Point3, Vector3, Xyz};
 use martensite_tkmath::math::{Matrix, MultipleVarFunction, Powell, Pso, Vector};
 use std::f64::consts::FRAC_PI_2;
 
-/// The edge lengths of the sample points: `GCPnts_AbscissaPoint::Length(C, tol)`.
+/// Measure each sampled edge’s curve length within the requested tolerance.
 fn curve_length(curve: &BRepAdaptorCurve, tol: f64) -> Result<f64, Failure> {
     let adaptor: &dyn Adaptor3dCurve = curve;
     AbscissaPoint::length_with_tolerance(adaptor, tol)
@@ -206,7 +206,7 @@ fn powell_directions(
 }
 
 /// The least-squares functions, whose failures inside the solvers are given back after
-/// them (in this implementation they propagate as exceptions).
+/// them; failures propagate to the caller.
 trait LsFunction: MultipleVarFunction {
     fn take_failure(&mut self) -> Result<(), Failure>;
 }

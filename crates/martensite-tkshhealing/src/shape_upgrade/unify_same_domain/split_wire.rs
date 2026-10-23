@@ -105,7 +105,7 @@ fn next_branch(
     Ok(Some(rightest_branch(list, direction, face)?))
 }
 
-/// `SplitWire(theWire, theFace, theVmap, theWireSeq)`: from each splitting vertex, each
+/// from each splitting vertex, each
 /// branch followed until it comes back to the vertex or stops, as a new wire.
 pub(super) fn split_wire(
     wire: &Wire,

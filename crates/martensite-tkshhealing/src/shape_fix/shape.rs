@@ -40,7 +40,7 @@ impl ShapeFixShape {
         Self::default()
     }
 
-    /// `ShapeFixShape(shape)`: initialize the input and result to `shape`;
+    /// initialize the input and result to `shape`;
     /// `ShapeFixShape::new(Shape::default())`.
     pub fn new(shape: Shape) -> Self {
         let fixer = Self::default();
@@ -48,7 +48,7 @@ impl ShapeFixShape {
         fixer
     }
 
-    /// `Init(shape)`: replace the input and the result with `shape`;
+    /// replace the input and the result with `shape`;
     /// `fixer.init(Shape::default())`.
     ///
     /// ```
@@ -69,7 +69,7 @@ impl ShapeFixShape {
         *self.result.write() = shape;
     }
 
-    /// `Perform()`: dispatch the loaded shape to its repair tool;
+    /// dispatch the loaded shape to its repair tool;
     /// `assert!(!fixer.perform()?)`.
     ///
     /// ```
@@ -85,7 +85,7 @@ impl ShapeFixShape {
         self.perform_with_progress(&martensite_tkernel::message::ProgressRange::default())
     }
 
-    /// `Shape()`: return the result of the latest `Perform()` or `Init()`;
+    /// return the result of the latest `Perform()` or `Init()`;
     /// `let result = fixer.shape()`.
     ///
     /// ```
@@ -98,43 +98,43 @@ impl ShapeFixShape {
         self.result.read().clone()
     }
 
-    /// `Status(status)`: query the aggregate status of the last `Perform()`;
+    /// query the aggregate status of the last `Perform()`;
     /// `!fixer.status(ShapeExtendStatus::Fail)`.
     pub fn status(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(*self.status.read(), status)
     }
 
-    /// `SetPrecision(preci)`: delegate the root precision update;
+    /// delegate the root precision update;
     /// `fixer.set_precision(0.01)`.
     pub fn set_precision(&self, precision: f64) {
         FixRoot::set_precision(self, precision);
     }
 
-    /// `Precision()`: return the root precision;
+    /// return the root precision;
     /// `fixer.precision()`.
     pub fn precision(&self) -> f64 {
         FixRoot::precision(self)
     }
 
-    /// `SetMinTolerance(tol)`: update the minimum root tolerance;
+    /// update the minimum root tolerance;
     /// `fixer.set_min_tolerance(0.001)`.
     pub fn set_min_tolerance(&self, tolerance: f64) {
         FixRoot::set_min_tolerance(self, tolerance);
     }
 
-    /// `MinTolerance()`: return the minimum root tolerance;
+    /// return the minimum root tolerance;
     /// `fixer.min_tolerance()`.
     pub fn min_tolerance(&self) -> f64 {
         FixRoot::min_tolerance(self)
     }
 
-    /// `SetMaxTolerance(tol)`: update the maximum root tolerance;
+    /// update the maximum root tolerance;
     /// `fixer.set_max_tolerance(0.1)`.
     pub fn set_max_tolerance(&self, tolerance: f64) {
         FixRoot::set_max_tolerance(self, tolerance);
     }
 
-    /// `MaxTolerance()`: return the maximum root tolerance;
+    /// return the maximum root tolerance;
     /// `fixer.max_tolerance()`.
     pub fn max_tolerance(&self) -> f64 {
         FixRoot::max_tolerance(self)

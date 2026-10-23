@@ -16,8 +16,7 @@ impl ShapeFixShape {
                 "ShapeFix_Shape::Perform: null context; expected Init(shape) before Perform()",
             ));
         }
-        // dereferences the null TShape in myShape.ShapeType() (undefined behaviour);
-        // report it as the Standard_NullObject failure used throughout this API.
+        // Reject an absent input with the typed null-object failure used by this API.
         if input.is_null() {
             return Err(Failure::with_type(
                 "Standard_NullObject",

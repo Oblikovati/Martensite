@@ -17,7 +17,7 @@ struct MapCounts {
     fn_: i32,
 }
 
-/// `Messenger::Send(Message_Msg, gravity)`: the text with the pending arguments filled
+/// Format a message with its pending arguments and severity
 /// with UNKNOWN (`Message_Msg::Get`).
 pub(in crate::shape_process) fn send(
     messenger: &Messenger,
@@ -33,7 +33,7 @@ pub(in crate::shape_process) fn message(key: &str) -> Msg {
 }
 
 impl ShapeProcessShapeContext {
-    /// `PrintStatistics()`: the mapping counts and the preparation ratios of shells and
+    /// the mapping counts and the preparation ratios of shells and
     /// faces sent as information messages; `context.print_statistics()?`.
     pub fn print_statistics(&self) -> Result<(), Failure> {
         let counts = self.map_counts()?;

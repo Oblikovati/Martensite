@@ -13,7 +13,7 @@ use martensite_tkmath::gp::{Point3, Transform3};
 use martensite_tkmath::poly::{Polygon3D, PolygonOnTriangulation, Triangulation};
 
 /// `ShapeCustomTrsfModification`: `TrsfModification` whose output tolerance
-/// is the tolerance stored in the TShape (not raised to `Precision::Confusion()` as
+/// is the tolerance stored in the TShape (not raised to `precision::confusion()` as
 /// `BRep_Tool::Tolerance` does) times `|ScaleFactor|`, after the inherited member ran.
 ///
 /// ```
@@ -34,7 +34,7 @@ impl_transient!(
 );
 
 impl ShapeCustomTrsfModification {
-    /// `ShapeCustomTrsfModification(T)`; `ShapeCustomTrsfModification::new(trsf)`.
+    /// Initialize the transformation modifier; `ShapeCustomTrsfModification::new(trsf)`.
     pub fn new(trsf: Transform3) -> Self {
         Self {
             parent: TrsfModification::new(trsf),
@@ -121,9 +121,8 @@ impl BRepToolsModification for ShapeCustomTrsfModification {
         Ok(done)
     }
 
-    /// The inherited result, with the TVertex tolerance times `|ScaleFactor|`; a null
-    /// vertex (an infinite edge), which the member dereferences after the
-    /// inherited call, is Standard_NullObject.
+    /// Scale the inherited vertex tolerance by the absolute scale factor.
+    /// Reject an absent vertex, as can occur on an infinite edge.
     fn new_parameter(
         &self,
         vertex: &Vertex,
@@ -152,13 +151,13 @@ impl BRepToolsModification for ShapeCustomTrsfModification {
     }
 }
 
-/// `BRepTEdge::tolerance()` of the edge's TShape.
+/// Read the tolerance stored on the edge topology.
 fn edge_tolerance(edge: &Edge, member: &str) -> Result<f64, Failure> {
     let context = format!("ShapeCustom_TrsfModification::{member}");
     Ok(edge_tshape(edge, &context)?.tolerance())
 }
 
-/// `BRepTVertex::tolerance()` of the vertex's TShape.
+/// Read the tolerance stored on the vertex topology.
 fn vertex_tolerance(vertex: &Vertex, member: &str) -> Result<f64, Failure> {
     let context = format!("ShapeCustom_TrsfModification::{member}");
     Ok(vertex_tshape(vertex, &context)?.tolerance())

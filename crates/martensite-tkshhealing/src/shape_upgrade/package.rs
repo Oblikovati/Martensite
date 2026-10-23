@@ -6,10 +6,10 @@ use martensite_tkg3d::geom::{GeomBSplineCurve, GeomBoundedCurve, GeomCurve};
 use martensite_tkmath::bsplclib;
 use martensite_tkmath::gp::{self, Point2, Point3};
 
-/// The C1 pieces of a 3D B-spline (`NCollection_HSequence<occ::handle<Geom_BoundedCurve>>`).
+/// Shared sequence of bounded spatial curve pieces with C1 continuity.
 pub type BoundedCurveSequence = Handle<HSequence<Handle<dyn GeomBoundedCurve>>>;
 
-/// The C1 pieces of a 2D B-spline (`NCollection_HSequence<occ::handle<Geom2dBoundedCurve>>`).
+/// Shared sequence of bounded planar curve pieces with C1 continuity.
 pub type BoundedCurve2dSequence = Handle<HSequence<Handle<dyn Geom2dBoundedCurve>>>;
 
 /// `ShapeUpgrade`: the package functions of ShapeUpgrade.
@@ -40,7 +40,7 @@ fn at<T: Copy>(values: &Array1<'_, T>, index: i32) -> Result<T, Failure> {
 
 /// The knots and multiplicities of one C1 piece, `TempKnots`/`TempMults` of the native
 /// loop: the flat knots from `start_flat - deg` to `end_flat + deg`, equal ones (within
-/// `gp::Resolution()`) merged, and the first and last knots of multiplicity 1 merged into
+/// `gp::resolution()`) merged, and the first and last knots of multiplicity 1 merged into
 /// their neighbours.
 fn piece_knots(
     knot_sequence: &Array1<'_, f64>,
@@ -197,8 +197,7 @@ impl ShapeUpgrade {
     }
 }
 
-/// The null dereference of `occ::down_cast<Geom_BSplineCurve>(seqBS3d->Value(i))`, which
-/// never happens (every piece is a B-spline).
+/// Report an absent B-spline piece when converting a split sequence.
 fn null_piece() -> Failure {
     Failure::with_type(
         "Standard_NullObject",

@@ -41,8 +41,8 @@ impl Default for ShapeUpgradeTool {
 }
 
 impl ShapeUpgradeTool {
-    /// `ShapeUpgradeTool()`: no context, precision and minimal tolerance
-    /// `Precision::Confusion()`, maximal tolerance 1 ("Precision::Infinite() ?? pdn");
+    /// no context, precision and minimal tolerance
+    /// `precision::confusion()`, maximum tolerance 1;
     /// `ShapeUpgradeTool::new()`.
     pub fn new() -> Self {
         Self {
@@ -56,8 +56,8 @@ impl ShapeUpgradeTool {
         }
     }
 
-    /// `Set(tool)`: copies the context, the precision and the tolerances of `tool`;
-    /// Standard_NullObject for a null tool (a null dereference in this implementation);
+    /// copies the context, the precision and the tolerances of `tool`;
+    /// Standard_NullObject for a null tool;
     /// `tool.set(&other)?`.
     pub fn set(&self, tool: &Handle<ShapeUpgradeTool>) -> Result<(), Failure> {
         let source = tool.get().ok_or_else(|| {
@@ -82,7 +82,7 @@ impl ShapeUpgradeTool {
         self.fields.read().context.clone()
     }
 
-    /// `SetPrecision(preci)`: the precision, the maximal tolerance raised to it and the
+    /// the precision, the maximal tolerance raised to it and the
     /// minimal one lowered to it; `tool.set_precision(1e-3)`.
     pub fn set_precision(&self, preci: f64) {
         let mut fields = self.fields.write();
@@ -120,7 +120,7 @@ impl ShapeUpgradeTool {
         self.fields.read().max_tol
     }
 
-    /// `LimitTolerance(toler)`: `std::min(MaxTolerance(), toler)` (the maximal tolerance
+    /// `std::min(MaxTolerance(), toler)` (the maximal tolerance
     /// when `toler` is NaN, as `std::min`); `tool.limit_tolerance(5.0)`.
     pub fn limit_tolerance(&self, toler: f64) -> f64 {
         let max_tol = self.fields.read().max_tol;

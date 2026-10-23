@@ -80,12 +80,12 @@ fn check_edges(
 }
 
 impl ShapeAnalysisShell {
-    /// `ShapeAnalysisShell()`; `ShapeAnalysisShell::new()`.
+    /// `ShapeAnalysisShell::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `Clear()`: forgets the loaded shells and the checked edges; `tool.clear()`.
+    /// forgets the loaded shells and the checked edges; `tool.clear()`.
     pub fn clear(&mut self) {
         self.shells.clear(true);
         self.bad.clear(true);
@@ -93,7 +93,7 @@ impl ShapeAnalysisShell {
         self.conex = false;
     }
 
-    /// `LoadShells(shape)`: loads `shape` if it is a shell, else each shell it holds
+    /// loads `shape` if it is a shell, else each shell it holds
     /// (nothing for a null shape); `tool.load_shells(&shape)?`.
     pub fn load_shells(&mut self, shape: &Shape) -> Result<(), Failure> {
         if shape.is_null() {
@@ -109,7 +109,7 @@ impl ShapeAnalysisShell {
         Ok(())
     }
 
-    /// `CheckOrientedShells(shape, alsofree, checkinternaledges)`: records the bad edges
+    /// records the bad edges
     /// of the shells of `shape` (a shell with a bad edge is loaded, and the result is
     /// true). With `also_free` the edges used once are
     /// recorded as free, and the connected flag is set; with `check_internal_edges` an
@@ -165,47 +165,46 @@ impl ShapeAnalysisShell {
         Ok(())
     }
 
-    /// `IsLoaded(shape)`: `shape` is a loaded shell (false for a null shape);
+    /// `shape` is a loaded shell (false for a null shape);
     /// `tool.is_loaded(&shell)`.
     pub fn is_loaded(&self, shape: &Shape) -> bool {
         !shape.is_null() && self.shells.contains(shape)
     }
 
-    /// `NbLoaded()`: the count of loaded shells; `tool.nb_loaded()`.
+    /// the count of loaded shells; `tool.nb_loaded()`.
     pub fn nb_loaded(&self) -> i32 {
         self.shells.extent() as i32
     }
 
-    /// `Loaded(num)`: the loaded shell of rank `num`; Standard_OutOfRange outside
-    /// `1..=NbLoaded()` (in this implementation `FindKey` raises, although the header promises a null
-    /// shape); `tool.loaded(1)?`.
+    /// the loaded shell of rank `num`; Standard_OutOfRange outside
+    /// the one-based loaded-shell range; `tool.loaded(1)?`.
     pub fn loaded(&self, num: i32) -> Result<Shape, Failure> {
         find_key(&self.shells, num, "ShapeAnalysis_Shell::Loaded")
     }
 
-    /// `HasBadEdges()`: an edge is recorded as bad; `tool.has_bad_edges()`.
+    /// an edge is recorded as bad; `tool.has_bad_edges()`.
     pub fn has_bad_edges(&self) -> bool {
         self.bad.extent() > 0
     }
 
-    /// `BadEdges()`: the bad edges in a compound (empty, not null, when there is none);
+    /// the bad edges in a compound (empty, not null, when there is none);
     /// `tool.bad_edges()?`.
     pub fn bad_edges(&self) -> Result<Compound, Failure> {
         compound_of(&self.bad)
     }
 
-    /// `HasFreeEdges()`: an edge is recorded as free; `tool.has_free_edges()`.
+    /// an edge is recorded as free; `tool.has_free_edges()`.
     pub fn has_free_edges(&self) -> bool {
         self.free.extent() > 0
     }
 
-    /// `FreeEdges()`: the free edges in a compound (empty, not null, when there is none);
+    /// the free edges in a compound (empty, not null, when there is none);
     /// `tool.free_edges()?`.
     pub fn free_edges(&self) -> Result<Compound, Failure> {
         compound_of(&self.free)
     }
 
-    /// `HasConnectedEdges()`: an edge is shared twice or more; `tool.has_connected_edges()`.
+    /// an edge is shared twice or more; `tool.has_connected_edges()`.
     pub fn has_connected_edges(&self) -> bool {
         self.conex
     }

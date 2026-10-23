@@ -16,7 +16,7 @@ fn new_joints(n: i32, member: &str) -> Result<JointValues, Failure> {
     Ok(Handle::new(array))
 }
 
-/// `joints->SetValue(i, value)`.
+/// Update one joint value through the shared array.
 fn set_joint(joints: &JointValues, i: i32, value: f64) -> Result<(), Failure> {
     joints
         .change_array1()
@@ -25,29 +25,29 @@ fn set_joint(joints: &JointValues, i: i32, value: f64) -> Result<(), Failure> {
 }
 
 impl ShapeExtendCompositeSurface {
-    /// `UJointValues()`: the handle of the U joint values (null before `Init`), shared:
+    /// the handle of the U joint values (null before `Init`), shared:
     /// `SetUFirstValue` shifts them in place; `surface.u_joint_values()`.
     pub fn u_joint_values(&self) -> JointValues {
         self.fields.read().u_joints.clone()
     }
 
-    /// `VJointValues()`: the handle of the V joint values; `surface.v_joint_values()`.
+    /// the handle of the V joint values; `surface.v_joint_values()`.
     pub fn v_joint_values(&self) -> JointValues {
         self.fields.read().v_joints.clone()
     }
 
-    /// `UJointValue(i)`: the U joint of rank `i`; `surface.u_joint_value(1)?`.
+    /// the U joint of rank `i`; `surface.u_joint_value(1)?`.
     pub fn u_joint_value(&self, i: i32) -> Result<f64, Failure> {
         joint(&self.joints(true, "UJointValue")?, i, "UJointValue")
     }
 
-    /// `VJointValue(j)`: the V joint of rank `j`; `surface.v_joint_value(1)?`.
+    /// the V joint of rank `j`; `surface.v_joint_value(1)?`.
     pub fn v_joint_value(&self, j: i32) -> Result<f64, Failure> {
         joint(&self.joints(false, "VJointValue")?, j, "VJointValue")
     }
 
-    /// `SetUJointValues(UJoints)`: takes `NbUPatches() + 1` increasing values (each step
-    /// at least `Precision::PConfusion()`); false and no change otherwise;
+    /// takes `NbUPatches() + 1` increasing values (each step
+    /// at least `precision::p_confusion()`); false and no change otherwise;
     /// `surface.set_u_joint_values(&joints)?`.
     pub fn set_u_joint_values(&self, joints: &Array1<'_, f64>) -> Result<bool, Failure> {
         let nb = self.nb_u_patches()?;
@@ -58,7 +58,7 @@ impl ShapeExtendCompositeSurface {
         Ok(true)
     }
 
-    /// `SetVJointValues(VJoints)`: as [`Self::set_u_joint_values`] for V;
+    /// as [`Self::set_u_joint_values`] for V;
     /// `surface.set_v_joint_values(&joints)?`.
     pub fn set_v_joint_values(&self, joints: &Array1<'_, f64>) -> Result<bool, Failure> {
         let nb = self.nb_v_patches()?;
@@ -69,13 +69,13 @@ impl ShapeExtendCompositeSurface {
         Ok(true)
     }
 
-    /// `SetUFirstValue(UFirst)`: shifts the U joints so that the first one is `u_first`;
+    /// shifts the U joints so that the first one is `u_first`;
     /// nothing before they exist; `surface.set_u_first_value(0.0)?`.
     pub fn set_u_first_value(&self, u_first: f64) -> Result<(), Failure> {
         shift_joints(&self.u_joint_values(), u_first)
     }
 
-    /// `SetVFirstValue(VFirst)`: as [`Self::set_u_first_value`] for V;
+    /// as [`Self::set_u_first_value`] for V;
     /// `surface.set_v_first_value(0.0)?`.
     pub fn set_v_first_value(&self, v_first: f64) -> Result<(), Failure> {
         shift_joints(&self.v_joint_values(), v_first)
@@ -83,7 +83,7 @@ impl ShapeExtendCompositeSurface {
 }
 
 /// The body of `SetUJointValues`: a new `[1, nb + 1]` array of the values, or `None` when
-/// the length differs or a step is below `Precision::PConfusion()`.
+/// the length differs or a step is below `precision::p_confusion()`.
 fn checked_joints(
     joints: &Array1<'_, f64>,
     nb: i32,
@@ -123,7 +123,7 @@ fn shift_joints(joints: &JointValues, first: f64) -> Result<(), Failure> {
 }
 
 impl ShapeExtendCompositeSurface {
-    /// `ComputeJointValues(param)`: new joint values: Natural adds the ranges of the patches
+    /// new joint values: Natural adds the ranges of the patches
     /// of the first column (U) and of the first row (V), starting at their first bound;
     /// Uniform gives the steps 1 from 0, Unitary the steps `1 / NbU` and `1 / NbV`;
     /// `surface.compute_joint_values(ShapeExtendParametrisation::Unitary)?`.
@@ -180,7 +180,7 @@ impl ShapeExtendCompositeSurface {
         Ok(())
     }
 
-    /// `CheckConnectivity(prec)`: samples 23 points along each joint (and along the joint
+    /// samples 23 points along each joint (and along the joint
     /// of the last row or column with the first one, which only sets the closed flags) and
     /// returns whether the patches meet within `prec`; infinite bounds are limited to
     /// +/-10000; `surface.check_connectivity(1e-7)?`.

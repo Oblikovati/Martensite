@@ -42,7 +42,7 @@ fn untrimmed_surface(surface: &Handle<dyn GeomSurface>) -> Handle<dyn GeomSurfac
     current
 }
 
-/// `IsIndirectSurface(S, L)`: the kind of the untrimmed elementary surface (indirect
+/// the kind of the untrimmed elementary surface (indirect
 /// when `(IsNegative != (det < 0)) == Direct()`, which the location never changes, plus
 /// 2 for a cone of negative semi-angle); when it is not `None`, `surface` becomes the
 /// untrimmed surface.
@@ -51,7 +51,7 @@ fn indirection(
     location: &Location,
 ) -> Result<Indirection, Failure> {
     if surface.is_null() {
-        // Natively `TS->IsKind(...)` dereferences the null surface of the face.
+        // Reject a face without a surface before classifying its geometry.
         return Err(Failure::with_type(
             "Standard_NullObject",
             "ShapeCustom_DirectModification: the face has no surface",
@@ -109,7 +109,7 @@ impl_transient!(
 );
 
 impl ShapeCustomDirectModification {
-    /// `ShapeCustomDirectModification()`; `ShapeCustomDirectModification::new()`.
+    /// `ShapeCustomDirectModification::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -276,7 +276,7 @@ impl BRepToolsModification for ShapeCustomDirectModification {
     }
 }
 
-/// `occ::down_cast<Geom2dCurve>(C->Copy())`, a null curve staying null.
+/// Copy the planar curve, retaining an absent handle when the input is absent.
 pub(super) fn copied_pcurve(
     curve: &Handle<dyn Geom2dCurve>,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {

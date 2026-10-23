@@ -187,12 +187,12 @@ impl Default for ShapeFixWire {
 }
 
 impl ShapeFixWire {
-    /// `ShapeFixWire()`: an unloaded fixer with closed-wire mode enabled.
+    /// an unloaded fixer with closed-wire mode enabled.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `Init(analyzer)`: share an existing ShapeAnalysisWire instance.
+    /// share an existing ShapeAnalysisWire instance.
     pub fn init(&self, analyzer: &Handle<ShapeAnalysisWire>) {
         self.clear_statuses();
         self.state.write().analyzer = analyzer.clone();
@@ -200,7 +200,7 @@ impl ShapeFixWire {
             .with_mut(|fields| fields.shape = Shape::default());
     }
 
-    /// `Load(wire)`: replace the analyzer edge list and clear prior statuses.
+    /// replace the analyzer edge list and clear prior statuses.
     pub fn load(&self, wire: &Wire) -> Result<(), Failure> {
         self.clear_statuses();
         let working_wire = self.context_wire(wire)?;
@@ -211,7 +211,7 @@ impl ShapeFixWire {
         Ok(())
     }
 
-    /// `Load(wireData)`: share data and apply context replacements in place;
+    /// share data and apply context replacements in place;
     /// `fixer.load_wire_data(&data)?`.
     pub fn load_wire_data(&self, wire_data: &Handle<ShapeExtendWireData>) -> Result<(), Failure> {
         self.clear_statuses();
@@ -258,7 +258,7 @@ impl ShapeFixWire {
         self.ensure_analyzer().wire_data().wire_api_make()
     }
 
-    /// `SetFace(face)`: update the shared analyzer support face.
+    /// update the shared analyzer support face.
     pub fn set_face(&self, face: &Face) -> Result<(), Failure> {
         self.ensure_analyzer().set_face(face)
     }
@@ -312,22 +312,22 @@ impl ShapeFixWire {
         Ok(true)
     }
 
-    /// `StatusSelfIntersection(status)`: query the implemented wire-intersection flags.
+    /// query the implemented wire-intersection flags.
     pub fn status_self_intersection(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(self.state.read().intersections_status, status)
     }
 
-    /// `StatusReorder(status)`: query reorder flags.
+    /// query reorder flags.
     pub fn status_reorder(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(self.state.read().reorder_status, status)
     }
 
-    /// `StatusGaps3d(status)`: query 3D gap-fixing flags.
+    /// query 3D gap-fixing flags.
     pub fn status_gaps_3d(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(self.state.read().gaps_3d_status, status)
     }
 
-    /// `StatusGaps2d(status)`: query 2D gap-fixing flags.
+    /// query 2D gap-fixing flags.
     pub fn status_gaps_2d(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(self.state.read().gaps_2d_status, status)
     }

@@ -74,7 +74,7 @@ impl ShapeCustomBSplineRestriction {
         Ok(converted)
     }
 
-    /// `ConvertSurface(aSurface, S, UF, UL, VF, VL, IsOf)`: whether `S` received the
+    /// whether `S` received the
     /// conversion of `surface` on the box; with `is_of` an offset keeps its offset over the
     /// converted basis when that is not C0.
     /// Example: `restriction.convert_surface(&surface, &mut result, bounds, true)?`.
@@ -336,7 +336,7 @@ fn swept_spline(
     b: ShapeCustomRestrictionBox,
 ) -> Result<Handle<dyn GeomSurface>, Failure> {
     let spline = curve.cast::<GeomBSplineCurve>();
-    // Natively the down-cast B-spline is dereferenced unchecked.
+    // Require a live B-spline after conversion before accessing its poles.
     let spline = spline.get().ok_or_else(|| {
         Failure::with_type("Standard_NullObject", "ShapeCustom_BSplineRestriction::ConvertExtrusion: the converted basis is not a Geom_BSplineCurve", "")
     })?;

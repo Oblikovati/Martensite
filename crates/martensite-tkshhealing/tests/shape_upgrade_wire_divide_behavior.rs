@@ -239,7 +239,7 @@ fn pcurve_only_internal_vertex_preserves_crash_divergence_and_partial_status() {
         .unwrap();
     let tool = divider(&edge, &face);
     let wire = tool.wire();
-    // CopyNMVertex dereferences the absent spatial curve.
+    // Copying a non-manifold vertex must reject an absent spatial curve.
     assert_eq!(
         tool.perform().unwrap_err().exception_type(),
         "Standard_NullObject"

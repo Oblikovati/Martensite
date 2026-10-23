@@ -7,7 +7,7 @@ use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::{GeomCurve, GeomPlane, GeomSurface};
 use martensite_tkg3d::top_abs::Orientation;
 
-/// `RebuildShape(theFace, theNewFace)`: a face on the surface transformed by the face
+/// a face on the surface transformed by the face
 /// location, with the face tolerance; false (the new face untouched) for a face
 /// without location.
 pub(super) fn rebuild_face(face: &Face, new_face: &mut Face) -> Result<bool, Failure> {
@@ -29,7 +29,7 @@ pub(super) fn rebuild_face(face: &Face, new_face: &mut Face) -> Result<bool, Fai
     Ok(true)
 }
 
-/// `RebuildShape(theEdge, theNewEdge, theFace, theNewFace, isBound)`: when the edge is
+/// when the edge is
 /// not bound yet, a new edge on the 3D curve transformed by its location, with the edge
 /// range, orientation, tolerance and degenerated flag; then, off a plane, the p-curves
 /// on `face` put on `new_face` (both of a seam, ordered by the orientation of the new
@@ -118,7 +118,7 @@ fn copy_pcurves(edge: &Edge, new_edge: &Edge, face: &Face, new_face: &Face) -> R
     Ok(())
 }
 
-/// `RebuildShape(theVertex, theNewVertex)`: a new vertex at the located point, with the
+/// a new vertex at the located point, with the
 /// orientation and tolerance of the vertex; always true.
 pub(super) fn rebuild_vertex(vertex: &Vertex, new_vertex: &mut Vertex) -> Result<bool, Failure> {
     let builder = BRepBuilder::default();
@@ -129,7 +129,7 @@ pub(super) fn rebuild_vertex(vertex: &Vertex, new_vertex: &mut Vertex) -> Result
     Ok(true)
 }
 
-/// The null dereference of a missing surface or curve.
+/// Build the typed failure for an absent surface or curve.
 fn null_geometry(what: &str) -> Failure {
     Failure::with_type(
         "Standard_NullObject",

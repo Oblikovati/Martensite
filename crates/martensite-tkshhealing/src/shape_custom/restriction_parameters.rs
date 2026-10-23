@@ -70,7 +70,7 @@ macro_rules! restriction_flag {
 }
 
 impl ShapeCustomRestrictionParameters {
-    /// `ShapeCustomRestrictionParameters()`: degree 15, 10000 segments; planes, Bezier
+    /// degree 15, 10000 segments; planes, Bezier
     /// surfaces and the cones, spheres, cylinders and tori are kept, every other flag
     /// is set; `ShapeCustomRestrictionParameters::new()`.
     pub fn new() -> Self {
@@ -98,11 +98,11 @@ impl ShapeCustomRestrictionParameters {
     }
 
     restriction_flag!(
-        /// `GMaxDegree()`: the maximal degree; `parameters.g_max_degree()`.
+        /// the maximal degree; `parameters.g_max_degree()`.
         g_max_degree, set_g_max_degree, g_max_degree, i32
     );
     restriction_flag!(
-        /// `GMaxSeg()`: the maximal number of segments; `parameters.g_max_seg()`.
+        /// the maximal number of segments; `parameters.g_max_seg()`.
         g_max_seg, set_g_max_seg, g_max_seg, i32
     );
     restriction_flag!(
@@ -126,7 +126,7 @@ impl ShapeCustomRestrictionParameters {
         convert_offset_surf, set_convert_offset_surf, conv_offset_surf, bool
     );
     restriction_flag!(
-        /// `ConvertCylindricalSurf()`: in this implementation a reference to `myConvToroidalSurf`;
+        /// Read or write the toroidal-conversion flag through this cylindrical accessor;
         /// `parameters.convert_cylindrical_surf()`.
         convert_cylindrical_surf, set_convert_cylindrical_surf, conv_toroidal_surf, bool
     );
@@ -135,7 +135,7 @@ impl ShapeCustomRestrictionParameters {
         convert_conical_surf, set_convert_conical_surf, conv_conical_surf, bool
     );
     restriction_flag!(
-        /// `ConvertToroidalSurf()`: in this implementation a reference to `myConvCylindricalSurf`;
+        /// Read or write the cylindrical-conversion flag through this toroidal accessor;
         /// `parameters.convert_toroidal_surf()`.
         convert_toroidal_surf, set_convert_toroidal_surf, conv_cylindrical_surf, bool
     );

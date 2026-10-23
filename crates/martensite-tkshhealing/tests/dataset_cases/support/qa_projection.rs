@@ -12,7 +12,7 @@ use martensite_tkshhealing::shape_fix::{FixRoot, ShapeFixEdgeProjAux, ShapeFixWi
 
 type Projected = Result<Handle<dyn Geom2dCurve>, martensite_tkernel::standard::Failure>;
 
-/// ShapeConstructProjectCurveOnSurface on `surface` at Precision::Confusion(), projecting
+/// ShapeConstructProjectCurveOnSurface on `surface` at precision::confusion(), projecting
 /// `curve` over `range`: the pcurve (null when not created), or the failure it raised.
 fn project(
     curve: &Handle<dyn GeomCurve>,

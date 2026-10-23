@@ -16,7 +16,7 @@ struct Rebuilt {
 }
 
 impl ShapeBuildReShape {
-    /// `Apply(shape, until, buildmode)`: a shape with a recorded status gives its new shape
+    /// a shape with a recorded status gives its new shape
     /// (null when removed); a compound or composite solid becomes a compound of its items'
     /// new shapes (the removed ones dropped; the shape itself when nothing changed); a
     /// solid or a shell is rebuilt from its items applied recursively. `build_mode` says

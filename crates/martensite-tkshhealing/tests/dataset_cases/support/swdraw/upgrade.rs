@@ -1,6 +1,6 @@
 //! `DT_ShapeDivide`, `DT_ShapeConvert`, `DT_SplitAngle`,
 //! `DT_ClosedSplit`, `DT_ToBspl` and `DT_SplitByNumber`: the tool on the input shape,
-//! its `Status: ...` lines, then `ShapeFix::same_parameter(res, false)` on the result.
+//! its status diagnostics, then non-forced same-parameter repair of the result.
 use super::{same_parameter_fix, status_lines};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkshhealing::shape_custom::ShapeCustom;

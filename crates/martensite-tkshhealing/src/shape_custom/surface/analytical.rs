@@ -70,7 +70,7 @@ fn iso_sample(iso: &Handle<dyn GeomCurve>, first: f64, last: f64) -> Result<IsoS
 }
 
 impl ShapeCustomSurface {
-    /// `ConvertToAnalytical(tol, substitute)`: the analytic surface equivalent within `tol`
+    /// the analytic surface equivalent within `tol`
     /// to the B-spline or Bezier surface (a plane for a bilinear patch, a cylinder, cone or
     /// sphere for a surface closed in one direction, a torus for one closed in both),
     /// checked on 21 x 21 iso points; a null handle otherwise. With `substitute` the result
@@ -294,7 +294,7 @@ fn reversed_unless(
     Ok(surface)
 }
 
-// The cone is always U-reversed in this implementation ("if (!uClosed)" is commented out); with the
+// Always reverse the cone in U; with the
 // larger radius first the cone is built from the second circle, axis reversed.
 fn cone(
     s: &[IsoSample],

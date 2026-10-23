@@ -12,11 +12,11 @@ use martensite_tkgeombase::{approx::Curve3d as ApproxCurve, geom_convert};
 use martensite_tkmath::{convert::ParameterisationType, geom_abs::Shape};
 
 impl ShapeConstructCurve {
-    /// `ConvertToBSpline(C, first, last, prec)`: a B-spline (the curve itself when it is
+    /// a B-spline (the curve itself when it is
     /// one, else its B-spline form for a Bezier curve or a line, trimmed to
     /// `[first, last]`), segmented to `[first, last]` on a copy when its range is wider;
     /// conics, other curves and failed conversions are approximated
-    /// (`Approx_Curve3d(prec, C1)`, in this implementation with at most 9 segments of degree 1000). A null
+    /// (C1 continuity, at most 9 segments and degree 1000). A null
     /// handle when everything fails; `ShapeConstructCurve.convert_to_bspline(&c, 0.0, 1.0, 1e-7)?`.
     pub fn convert_to_bspline(
         &self,
@@ -60,7 +60,7 @@ fn initial_bspline(
     )
 }
 
-/// `bspl->Copy()` then `Segment(f, l)` on the copy.
+/// Copy the B-spline before restricting it to the requested parameter range.
 fn segment_copy(
     spline: &mut Handle<GeomBSplineCurve>,
     first: f64,

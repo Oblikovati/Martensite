@@ -8,8 +8,7 @@ use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, Trans
 use martensite_tkernel::{impl_transient, impl_transient_interface};
 use std::fmt;
 
-/// A transient object compared by identity: the key of `MapTransient`
-/// (`NCollection_DefaultHasher` of a handle hashes the address and compares pointers).
+/// A transient object keyed by handle identity rather than object contents.
 #[derive(Clone)]
 pub struct TransientKey(pub Handle<StandardTransient>);
 
@@ -19,7 +18,7 @@ impl fmt::Debug for TransientKey {
     }
 }
 
-/// The address hash and pointer equality of `occ::handle<Standard_Transient>`.
+/// Hash and compare transient handles by identity.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct TransientKeyHasher;
 
@@ -32,10 +31,10 @@ impl HashPolicy<TransientKey> for TransientKeyHasher {
     }
 }
 
-/// `NCollection_DataMap<occ::handle<Standard_Transient>, NCollection_List<Message_Msg>>`.
+/// Messages grouped by transient object identity.
 pub type TransientMessageMap = DataMap<TransientKey, List<Msg>, TransientKeyHasher>;
 
-/// `NCollection_DataMap<TopoDS_Shape, NCollection_List<Message_Msg>, TopTools_ShapeMapHasher>`.
+/// Messages grouped by shape identity.
 pub type ShapeMessageMap = DataMap<Shape, List<Msg>, ShapeMapHasher>;
 
 /// `ShapeExtendBasicMsgRegistrator`: the three virtual `Send` members, whose bodies
@@ -88,7 +87,7 @@ impl_transient!(
 );
 
 impl ShapeExtendBasicMsgRegistrator {
-    /// `ShapeExtendBasicMsgRegistrator()`; `ShapeExtendBasicMsgRegistrator::new()`.
+    /// `ShapeExtendBasicMsgRegistrator::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -135,18 +134,18 @@ impl Default for ShapeExtendMsgRegistrator {
 }
 
 impl ShapeExtendMsgRegistrator {
-    /// `ShapeExtendMsgRegistrator()`: empty maps; `ShapeExtendMsgRegistrator::new()`.
+    /// empty maps; `ShapeExtendMsgRegistrator::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `MapTransient()`: lends the map of objects and their messages (in this implementation a
-    /// reference to the field); `registrator.map_transient(|map| map.len())`.
+    /// Read object messages through a callback while holding the map guard;
+    /// `registrator.map_transient(|map| map.len())`.
     pub fn map_transient<R>(&self, read: impl FnOnce(&TransientMessageMap) -> R) -> R {
         read(&self.maps.read().transients)
     }
 
-    /// `MapShape()`: lends the map of shapes and their messages;
+    /// lends the map of shapes and their messages;
     /// `registrator.map_shape(|map| map.len())`.
     pub fn map_shape<R>(&self, read: impl FnOnce(&ShapeMessageMap) -> R) -> R {
         read(&self.maps.read().shapes)

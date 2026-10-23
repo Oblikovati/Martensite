@@ -118,7 +118,7 @@ fn face_vertex_tolerance(face: &Face) -> Result<f64, Failure> {
     Ok(maximum)
 }
 
-/// `std::max(a, b)`, that is `a < b ? b : a`; `native_max(1.0, 2.0) == 2.0`.
+/// Choose `b` when `a < b`, otherwise `a`; `native_max(1.0, 2.0) == 2.0`.
 pub(super) fn native_max(first: f64, second: f64) -> f64 {
     if first < second { second } else { first }
 }
@@ -203,7 +203,7 @@ fn scan_wire_pair(
     Ok(true)
 }
 
-// `SeqWir.SetValue(n, sewd->Wire()); Context()->Replace(wire, sewd->Wire());`: each
+// Update both the wire sequence and its replacement context: each
 // `Wire()` call builds another wire, so the sequence entry and the replacement differ.
 fn update_wire_slot(
     tool: &ShapeFixIntersectionTool,

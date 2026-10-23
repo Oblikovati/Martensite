@@ -249,7 +249,7 @@ fn store_single(
     Ok(())
 }
 
-/// `TransformPCurves(theRefFace, theFace, theMapEdgesWithTemporaryPCurves)`: each edge of
+/// each edge of
 /// the face without a p-curve pair on the reference face gets the p-curves of the face
 /// moved onto the reference surface (or the projection of its 3D curve when the surfaces
 /// differ); the edges updated are recorded as having temporary p-curves.
@@ -320,7 +320,7 @@ fn transform_edge(
     BRepBuilder::default().range(&forward, range.0, range.1, false)
 }
 
-/// `AddPCurves(theFaces, theRefFace, theMapEdgesWithTemporaryPCurves)`: on a non-planar
+/// on a non-planar
 /// reference face, `TransformPCurves` for every other face (taken forward).
 pub(super) fn add_pcurves(
     faces: &[Shape],

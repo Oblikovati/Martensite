@@ -21,7 +21,7 @@ use types::{
 };
 
 impl ShapeFixWire {
-    /// `FixLacking(num, force)`: repair one analyzed p-curve gap.
+    /// repair one analyzed p-curve gap.
     /// Example: `let repaired = fixer.fix_lacking_at(2, false)?;`.
     /// A successful bend runs both self-edge checks and the adjacent-edge repair.
     pub fn fix_lacking_at(&self, index: i32, force: bool) -> Result<bool, Failure> {
@@ -39,7 +39,7 @@ impl ShapeFixWire {
         self.repair_lacking_pair(&analyzer, index, first, last)
     }
 
-    /// `FixLacking(force)`: process all eligible adjacent edge pairs.
+    /// process all eligible adjacent edge pairs.
     /// Example: `let changed = fixer.fix_lacking(false)?;`.
     /// The bend branch includes self-edge and adjacent-edge follow-ups.
     pub fn fix_lacking(&self, force: bool) -> Result<bool, Failure> {

@@ -51,7 +51,7 @@ impl SameParameterCheck {
 }
 
 impl ShapeAnalysisEdge {
-    /// `CheckSameParameter(edge, maxdev, NbControl)`: [`Self::check_same_parameter_on_face`]
+    /// [`Self::check_same_parameter_on_face`]
     /// against every p-curve; `sae.check_same_parameter(&edge, 23)?`.
     pub fn check_same_parameter(
         &mut self,
@@ -61,13 +61,12 @@ impl ShapeAnalysisEdge {
         self.check_same_parameter_on_face(edge, &Face::default(), nb_control)
     }
 
-    /// `CheckSameParameter(theEdge, theFace, theMaxdev, theNbControl)`: the largest
+    /// the largest
     /// deviation between the 3D curve and each p-curve (those on the face only, or the
     /// projection on a planar face without p-curve) at `nb_control` points, as
     /// `BRepCheck` measures it: DONE1 when above the edge tolerance, DONE2 without the
     /// SameParameter flag, FAIL1 without 3D curve, FAIL2 when a validation failed; true
-    /// for DONE. A degenerated edge gives false with the deviation untouched in this implementation (0
-    /// here); `sae.check_same_parameter_on_face(&edge, &face, 23)?`.
+    /// for DONE. A degenerated edge returns false and zero deviation; `sae.check_same_parameter_on_face(&edge, &face, 23)?`.
     pub fn check_same_parameter_on_face(
         &mut self,
         edge: &Edge,

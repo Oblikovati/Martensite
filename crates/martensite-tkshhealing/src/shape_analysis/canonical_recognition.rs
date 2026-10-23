@@ -51,13 +51,13 @@ impl Default for ShapeAnalysisCanonicalRecognition {
 }
 
 impl ShapeAnalysisCanonicalRecognition {
-    /// `ShapeAnalysisCanonicalRecognition()`: no shape, status -1, gap -1;
+    /// no shape, status -1, gap -1;
     /// `ShapeAnalysisCanonicalRecognition::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeAnalysisCanonicalRecognition(theShape)`: [`Self::set_shape`] on a new tool;
+    /// [`Self::set_shape`] on a new tool;
     /// `ShapeAnalysisCanonicalRecognition::with_shape(&face)?`.
     pub fn with_shape(shape: &Shape) -> Result<Self, Failure> {
         let mut tool = Self::default();
@@ -65,9 +65,9 @@ impl ShapeAnalysisCanonicalRecognition {
         Ok(tool)
     }
 
-    /// `SetShape(theShape)`: takes a shell, face, wire or edge (status 0); any other type
+    /// takes a shell, face, wire or edge (status 0); any other type
     /// sets the status 1 and keeps the previous shape. A null shape is
-    /// Standard_NullObject (in this implementation its type is read through a null pointer);
+    /// A null shape returns a typed null-object failure;
     /// `recognizer.set_shape(&edge)?`.
     pub fn set_shape(&mut self, shape: &Shape) -> Result<(), Failure> {
         self.init(shape)
@@ -92,7 +92,7 @@ impl ShapeAnalysisCanonicalRecognition {
         &self.shape
     }
 
-    /// `GetGap()`: the deviation of the input geometry from the last recognized entity;
+    /// the deviation of the input geometry from the last recognized entity;
     /// `recognizer.get_gap()`.
     pub fn get_gap(&self) -> f64 {
         self.gap
@@ -103,7 +103,7 @@ impl ShapeAnalysisCanonicalRecognition {
         self.status
     }
 
-    /// `ClearStatus()`: sets the status to 0; `recognizer.clear_status()`.
+    /// sets the status to 0; `recognizer.clear_status()`.
     pub fn clear_status(&mut self) {
         self.status = 0;
     }
@@ -185,7 +185,7 @@ impl ShapeAnalysisCanonicalRecognition {
         }
     }
 
-    /// `IsPlane(theTol, thePln)`: the plane of the face or shell geometry within `tol`;
+    /// the plane of the face or shell geometry within `tol`;
     /// for a wire or an edge, else a plane found through them (`BRepLibFindSurface`, the
     /// gap is its reached tolerance); `recognizer.is_plane(1e-7, &mut plane)?`.
     pub fn is_plane(&mut self, tol: f64, pln: &mut Plane3) -> Result<bool, Failure> {
@@ -262,7 +262,7 @@ impl ShapeAnalysisCanonicalRecognition {
         least_squares::surface_by_ls(&wire, tol, target, &mut fit)
     }
 
-    /// `IsCylinder(theTol, theCyl)`: the cylinder of the geometry within `tol`; for a wire
+    /// the cylinder of the geometry within `tol`; for a wire
     /// or an edge, else a least-squares cylinder seeded by `cyl` (only when its radius is
     /// set); `recognizer.is_cylinder(1e-7, &mut cylinder)?`.
     pub fn is_cylinder(&mut self, tol: f64, cyl: &mut Cylinder3) -> Result<bool, Failure> {
@@ -278,7 +278,7 @@ impl ShapeAnalysisCanonicalRecognition {
         Ok(found)
     }
 
-    /// `IsCone(theTol, theCone)`: the cone of the geometry within `tol`; for a wire or an
+    /// the cone of the geometry within `tol`; for a wire or an
     /// edge, else a least-squares cone seeded by `cone` (only when its radius is set);
     /// `recognizer.is_cone(1e-7, &mut cone)?`.
     pub fn is_cone(&mut self, tol: f64, cone: &mut Cone3) -> Result<bool, Failure> {
@@ -295,7 +295,7 @@ impl ShapeAnalysisCanonicalRecognition {
         Ok(found)
     }
 
-    /// `IsSphere(theTol, theSphere)`: the sphere of the geometry within `tol`; for a wire
+    /// the sphere of the geometry within `tol`; for a wire
     /// or an edge, else a least-squares sphere seeded by `sphere` (only when its radius is
     /// set); `recognizer.is_sphere(1e-7, &mut sphere)?`.
     pub fn is_sphere(&mut self, tol: f64, sphere: &mut Sphere3) -> Result<bool, Failure> {

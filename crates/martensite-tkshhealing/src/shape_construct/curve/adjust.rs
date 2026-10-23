@@ -11,7 +11,7 @@ use martensite_tkmath::gp::{
 };
 
 impl ShapeConstructCurve {
-    /// `AdjustCurve(C3D, P1, P2, take1, take2)`: a B-spline gets its first pole at `p1`
+    /// a B-spline gets its first pole at `p1`
     /// (when `take1`) and its last pole at `p2` (when `take2`); a line becomes the line
     /// through `p1` and `p2` (both are used), located at the projection of its old
     /// location; true for these two kinds, false for others, true when neither end is
@@ -31,7 +31,7 @@ impl ShapeConstructCurve {
         c3d.get().ok_or_else(|| null_curve("AdjustCurve"))?;
         adjust_3d(c3d, p1, p2, take1, take2)
     }
-    /// `AdjustCurve2d(C2D, P1, P2, take1, take2)`: [`Self::adjust_curve`] for a p-curve
+    /// [`Self::adjust_curve`] for a p-curve
     /// (a 2D B-spline or line); `ShapeConstructCurve.adjust_curve_2d(&c, p1, p2, true, true)?`.
     pub fn adjust_curve_2d(
         &self,
@@ -47,7 +47,7 @@ impl ShapeConstructCurve {
         c2d.get().ok_or_else(|| null_curve("AdjustCurve2d"))?;
         adjust_2d(c2d, p1, p2, take1, take2)
     }
-    /// `AdjustCurveSegment(C3D, P1, P2, U1, U2)`: a B-spline is segmented to
+    /// a B-spline is segmented to
     /// `[max(U1, first), min(U2, last)]` (false when `U1 >= U2`) and gets its end poles at
     /// `p1` and `p2`; a line is adjusted as by `AdjustCurve` (U1 and U2 unused); false
     /// for other curves; `ShapeConstructCurve.adjust_curve_segment(&c, p1, p2, 0.0, 1.0)?`.

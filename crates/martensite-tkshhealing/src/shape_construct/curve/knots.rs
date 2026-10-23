@@ -14,7 +14,7 @@ impl ShapeConstructCurve {
         })?;
         Self::fix_knots(&mut array.change_array1())
     }
-    /// `FixKnots(knots)`: moves each knot that is not above the previous one by more than
+    /// moves each knot that is not above the previous one by more than
     /// `Epsilon(previous)` to `previous + 2 * Epsilon(previous)`; true when a knot moved.
     /// The knots are read from rank 1 to `Length()`, whatever the lower bound, as natively
     /// (Standard_OutOfRange when that leaves the array); `ShapeConstructCurve::fix_knots(&mut knots)?`.

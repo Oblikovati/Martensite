@@ -19,7 +19,7 @@ struct JoinedPCurves {
 }
 
 impl ShapeConstruct {
-    /// `JoinPCurves(edges, face, edge)`: joins the p-curves (both seam p-curves on a seam)
+    /// joins the p-curves (both seam p-curves on a seam)
     /// of the chain `edges` on `face` and stores the result on `edge` with its range,
     /// clearing SameRange and SameParameter. A plane needs no p-curve: true at once.
     ///

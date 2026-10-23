@@ -36,7 +36,7 @@ pub struct ShapeFixSplitCommonVertex {
 impl_transient!(ShapeFixSplitCommonVertex, "ShapeFix_SplitCommonVertex", ShapeFixRoot, parent, interfaces: [dyn FixRoot]);
 
 impl ShapeFixSplitCommonVertex {
-    /// `ShapeFixSplitCommonVertex()`: initializes the root precision and an empty shape;
+    /// initializes the root precision and an empty shape;
     /// `ShapeFixSplitCommonVertex::new()`.
     pub fn new() -> Self {
         let fixer = Self::default();
@@ -44,7 +44,7 @@ impl ShapeFixSplitCommonVertex {
         fixer
     }
 
-    /// `Init(shape)`: retains the input while ensuring a context exists; `fixer.init(&shape)?`.
+    /// retains the input while ensuring a context exists; `fixer.init(&shape)?`.
     pub fn init(&self, shape: &Shape) -> Result<(), Failure> {
         *self.shape.write() = shape.clone();
         let context = self.context();
@@ -56,7 +56,7 @@ impl ShapeFixSplitCommonVertex {
         Ok(())
     }
 
-    /// `Perform()`: replaces matching vertices on the later wire of each face;
+    /// replaces matching vertices on the later wire of each face;
     /// `fixer.perform()?`.
     pub fn perform(&self) -> Result<(), Failure> {
         let original = self.shape.read().clone();
@@ -69,7 +69,7 @@ impl ShapeFixSplitCommonVertex {
         Ok(())
     }
 
-    /// `Shape()`: the retained input after recorded replacements are applied;
+    /// the retained input after recorded replacements are applied;
     /// `let result = fixer.shape()?`.
     pub fn shape(&self) -> Result<Shape, Failure> {
         Ok(self.shape.read().clone())

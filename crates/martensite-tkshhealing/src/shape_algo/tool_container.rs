@@ -24,17 +24,17 @@ impl_transient!(
 );
 
 impl ShapeAlgoToolContainer {
-    /// `ShapeAlgoToolContainer()`; `ShapeAlgoToolContainer::new()`.
+    /// Create a tool factory; `ShapeAlgoToolContainer::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `FixShape()`: a new empty `ShapeFixShape`; `tools.fix_shape()`.
+    /// a new empty `ShapeFixShape`; `tools.fix_shape()`.
     pub fn fix_shape(&self) -> Handle<ShapeFixShape> {
         Handle::new(ShapeFixShape::empty())
     }
 
-    /// `EdgeProjAux()`: a new empty `ShapeFixEdgeProjAux`; `tools.edge_proj_aux()`.
+    /// a new empty `ShapeFixEdgeProjAux`; `tools.edge_proj_aux()`.
     pub fn edge_proj_aux(&self) -> Handle<ShapeFixEdgeProjAux> {
         Handle::new(ShapeFixEdgeProjAux::new())
     }

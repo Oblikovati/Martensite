@@ -5,7 +5,7 @@ use martensite_tkbrep::topods::Edge;
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 
 impl ShapeAnalysisWire {
-    /// `CheckGaps3d()`: measure every edge-to-edge 3D gap and retain the maximum;
+    /// measure every edge-to-edge 3D gap and retain the maximum;
     /// `analyzer.check_gaps_3d()?`.
     pub fn check_gaps_3d(&self) -> Result<bool, Failure> {
         self.reset_gap_status(true);
@@ -25,7 +25,7 @@ impl ShapeAnalysisWire {
         Ok(self.status_gaps_3d(ShapeExtendStatus::Done))
     }
 
-    /// `CheckGaps2d()`: measure every p-curve gap using surface resolution;
+    /// measure every p-curve gap using surface resolution;
     /// `analyzer.check_gaps_2d()?`.
     pub fn check_gaps_2d(&self) -> Result<bool, Failure> {
         self.reset_gap_status(false);
@@ -47,7 +47,7 @@ impl ShapeAnalysisWire {
         Ok(self.status_gaps_2d(ShapeExtendStatus::Done))
     }
 
-    /// `CheckGap3d(num)`: compare the preceding curve end with this curve start.
+    /// compare the preceding curve end with this curve start.
     pub fn check_gap_3d_at(&self, index: i32) -> Result<bool, Failure> {
         self.set_last_status(ShapeExtendStatus::Ok);
         if !self.is_loaded() {
@@ -79,7 +79,7 @@ impl ShapeAnalysisWire {
         Ok(Some(distance))
     }
 
-    /// `CheckGap2d(num)`: compare the preceding p-curve end with this p-curve start.
+    /// compare the preceding p-curve end with this p-curve start.
     pub fn check_gap_2d_at(&self, index: i32) -> Result<bool, Failure> {
         if self.face().is_null() || self.surface().is_null() {
             return Ok(self.fail_gap());
@@ -116,12 +116,12 @@ impl ShapeAnalysisWire {
         Ok(Some(distance))
     }
 
-    /// `StatusGaps3d(status)`: query the accumulated 3D gap flags.
+    /// query the accumulated 3D gap flags.
     pub fn status_gaps_3d(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(self.fields.read().status_gaps3d, status)
     }
 
-    /// `StatusGaps2d(status)`: query the accumulated 2D gap flags.
+    /// query the accumulated 2D gap flags.
     pub fn status_gaps_2d(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(self.fields.read().status_gaps2d, status)
     }

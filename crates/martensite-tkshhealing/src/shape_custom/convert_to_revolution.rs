@@ -47,7 +47,7 @@ impl_transient!(
 );
 
 impl ShapeCustomConvertToRevolution {
-    /// `ShapeCustomConvertToRevolution()`; `ShapeCustomConvertToRevolution::new()`.
+    /// `ShapeCustomConvertToRevolution::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -67,7 +67,7 @@ fn is_to_convert(
     surface: &Handle<dyn GeomSurface>,
 ) -> Result<(bool, Handle<dyn GeomElementarySurface>), Failure> {
     if surface.is_null() {
-        // Natively `S->IsKind(...)` dereferences the null surface.
+        // Surface classification requires a live surface handle.
         return Err(Failure::with_type(
             "Standard_NullObject",
             "ShapeCustom_ConvertToRevolution: null surface",

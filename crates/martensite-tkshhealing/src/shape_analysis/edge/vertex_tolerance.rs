@@ -88,7 +88,7 @@ fn all_pcurves(sae: &ShapeAnalysisEdge, edge: &Edge, gaps: &mut EndGaps) -> Resu
 }
 
 impl ShapeAnalysisEdge {
-    /// `CheckVertexTolerance(edge, face, toler1, toler2)`: the tolerances the start and end
+    /// the tolerances the start and end
     /// vertices need to hold the ends of the 3D curve and of the p-curve on the face
     /// (1.0000001 times the largest distance, at least the edge tolerance): DONE1/DONE2
     /// when larger than the current ones, FAIL1 without vertices, FAIL2 without 3D curve
@@ -104,7 +104,7 @@ impl ShapeAnalysisEdge {
         Ok((changed, tolerances.0, tolerances.1))
     }
 
-    /// `CheckVertexTolerance(edge, toler1, toler2)`: the same with every p-curve stored in
+    /// the same with every p-curve stored in
     /// the edge; `sae.check_vertex_tolerance(&edge)?`.
     pub fn check_vertex_tolerance(&mut self, edge: &Edge) -> Result<(bool, f64, f64), Failure> {
         let mut tolerances = (0.0, 0.0);
@@ -168,7 +168,7 @@ impl EndGaps {
         if face.is_null() {
             return Ok(());
         }
-        // :abv 10.06.02: C40 -> dev (CC670-12608.stp): include planes without stored p-curves.
+        // Include planar surfaces even when no p-curves are stored.
         let (surface, location) = BRepTool::surface_with_location(face)?;
         if !self.add_pcurve(analyzer, edge, &surface, &location)? {
             *status |= ShapeExtend::encode_status(ShapeExtendStatus::Fail3);

@@ -17,7 +17,7 @@ use martensite_tktopalgo::brep_builder_api::BRepBuilderAPISewing;
 
 /// `sewing result tol shapes...` with the default switches: Init(tol, sewing, analysis,
 /// cutting, no non-manifold), same parameter on, no floating edges, faces on, the minimal
-/// tolerance 1e-4 of tol (at least Precision::Confusion()) and no maximal one; its Dump is
+/// tolerance 1e-4 of tol (at least precision::confusion()) and no maximal one; its Dump is
 /// logged. `None` when the sewed shape is null (the command then sets nothing).
 pub fn sewing(tolerance: f64, shapes: &[&Shape]) -> Option<Shape> {
     sewing_with(tolerance, shapes, &[])

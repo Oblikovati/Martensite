@@ -6,7 +6,7 @@ use martensite_tkbrep::topods::Edge;
 use martensite_tkernel::standard::{Failure, Handle};
 
 impl ShapeFixWire {
-    /// `FixReorder(theModeBoth)`: checks the order of the loaded edges (in both directions
+    /// checks the order of the loaded edges (in both directions
     /// on a bi-periodic surface when `mode_both`), then applies it and sets StatusReorder.
     /// Example: `let reordered = fixer.fix_reorder(false)?;`.
     pub fn fix_reorder(&self, mode_both: bool) -> Result<bool, Failure> {
@@ -23,7 +23,7 @@ impl ShapeFixWire {
         Ok(self.last_fix_status(ShapeExtendStatus::Done))
     }
 
-    /// `FixReorder(wi)`: reorders the wire data by the signed indices of `order`; the
+    /// reorders the wire data by the signed indices of `order`; the
     /// outcome is in LastFixStatus (FAIL1 bad order, FAIL2 count mismatch, FAIL3 hole).
     /// Example: `fixer.fix_reorder_with(&order)?`.
     pub fn fix_reorder_with(&self, order: &ShapeAnalysisWireOrder) -> Result<bool, Failure> {
@@ -49,7 +49,7 @@ impl ShapeFixWire {
             return false;
         };
         let geometry = analysis.surface();
-        // dereferences the surface unguarded; a null one cannot be bi-periodic.
+        // A missing surface cannot supply two periodic directions.
         !geometry.is_null() && geometry.is_u_periodic() && geometry.is_v_periodic()
     }
 

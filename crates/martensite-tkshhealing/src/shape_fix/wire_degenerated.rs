@@ -9,7 +9,7 @@ use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dLine};
 use martensite_tkmath::gp::{Axis2d, Direction2, Point2, Vector2};
 
 impl ShapeFixWire {
-    /// `FixDegenerated(num)`: mark or insert a collapsed edge at an analyzed surface singularity.
+    /// mark or insert a collapsed edge at an analyzed surface singularity.
     /// `fixer.fix_degenerated_at(2)?`.
     pub fn fix_degenerated_at(&self, index: i32) -> Result<bool, Failure> {
         self.set_last_fix_status(ShapeExtendStatus::Ok);
@@ -28,7 +28,7 @@ impl ShapeFixWire {
         self.apply_degenerated_edge(&analyzer, index, first, last)
     }
 
-    /// `FixDegenerated()`: process edges from the end, respecting the closed-mode boundary.
+    /// process edges from the end, respecting the closed-mode boundary.
     /// `fixer.fix_degenerated()?`.
     pub fn fix_degenerated(&self) -> Result<bool, Failure> {
         self.set_degenerated_status(ShapeExtendStatus::Ok);
@@ -39,12 +39,12 @@ impl ShapeFixWire {
         self.fix_degenerated_edges(&analyzer)
     }
 
-    /// `StatusDegenerated(status)`: query accumulated bulk-fix flags.
+    /// query accumulated bulk-fix flags.
     pub fn status_degenerated(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(self.state.read().degenerated_status, status)
     }
 
-    /// `LastFixStatus(status)`: query flags from the most recent single-edge repair.
+    /// query flags from the most recent single-edge repair.
     /// `fixer.last_fix_status(ShapeExtendStatus::Done3)`.
     pub fn last_fix_status(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(self.state.read().last_fix_status, status)

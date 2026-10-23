@@ -40,7 +40,7 @@ impl ShapeAlgoAlgoContainer {
     ///
     /// quirk (kept): once a piece is cut, the poles after the last coincident pair
     /// are dropped; the knots of a piece are read from the pole index, so a knot index past
-    /// the end is Standard_OutOfRange (undefined behaviour in this implementation).
+    /// the end returns a typed out-of-range error.
     /// Example: `let pieces = container.approx_bspline_curve(&polyline)?;`.
     pub fn approx_bspline_curve(
         &self,

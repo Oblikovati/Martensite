@@ -39,7 +39,7 @@ struct ChainKinds {
 }
 
 impl UnifyState {
-    /// `MergeSubSeq(theChain, theVFmap, OutEdge)`: the merged edge, None when the chain
+    /// the merged edge, None when the chain
     /// cannot be merged.
     pub(super) fn merge_sub_seq(
         &self,

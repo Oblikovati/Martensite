@@ -1,5 +1,5 @@
 //! The parameters of the recognized entities (radii, angles) and their comparisons.
-//! A parameter array is 1-based in this implementation; here `params[0]` is `theParams(1)`.
+//! Parameter arrays use zero-based Rust slices.
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};

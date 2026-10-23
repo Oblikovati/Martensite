@@ -30,7 +30,7 @@ struct ShiftedTraversal {
 }
 
 impl ShapeFixWire {
-    /// `FixShifted()`: align p-curves on a closed periodic surface before degenerated repair.
+    /// align p-curves on a closed periodic surface before degenerated repair.
     /// `fixer.fix_shifted()?`.
     pub fn fix_shifted(&self) -> Result<bool, Failure> {
         self.set_last_fix_status(ShapeExtendStatus::Ok);

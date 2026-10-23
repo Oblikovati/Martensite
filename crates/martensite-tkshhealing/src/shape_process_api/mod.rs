@@ -24,7 +24,7 @@ pub struct ShapeProcessAPIApplySequence {
 }
 
 impl ShapeProcessAPIApplySequence {
-    /// `ShapeProcessAPIApplySequence(rscName, seqName)`: a shape context on the resource
+    /// a shape context on the resource
     /// file (detalisation FACE) and the operator library initialized.
     /// Example: `ShapeProcessAPIApplySequence::new("DEXCAF", "read.step")?`.
     pub fn new(resource: &str, sequence: &str) -> Result<Self, Failure> {
@@ -37,7 +37,7 @@ impl ShapeProcessAPIApplySequence {
         })
     }
 
-    /// `Context()`: the shape context (shared).
+    /// the shape context (shared).
     pub fn context(&self) -> Handle<ShapeProcessShapeContext> {
         self.context.clone()
     }
@@ -47,9 +47,9 @@ impl ShapeProcessAPIApplySequence {
         self.context = context.clone();
     }
 
-    /// `PrepareShape(shape, fillmap, until, theProgress)`: the context initialized on the
+    /// the context initialized on the
     /// shape, the sequence run when the resource file defines `<seq>.exec.op`, and the
-    /// result; a null shape is returned as is. `fillmap` and `until` are unused in this implementation.
+    /// result; a null shape is returned as is. The `fillmap` and `until` arguments are unused.
     /// Example: `api.prepare_shape(&shape, false, ShapeEnum::Shape, &range)?`.
     pub fn prepare_shape(
         &mut self,
@@ -72,15 +72,15 @@ impl ShapeProcessAPIApplySequence {
         Ok(ctx.result())
     }
 
-    /// `ClearMap()`: does nothing ("myContext->Map().Clear()" is commented out in this implementation).
+    /// Leave the context map unchanged; `api.clear_map()` is a no-op.
     pub fn clear_map(&mut self) {}
 
-    /// `Map()`: a copy of the map of the context.
+    /// a copy of the map of the context.
     pub fn map(&self) -> Result<ShapeProcessShapeMap, Failure> {
         Ok(self.context.get().ok_or_else(null_context)?.map())
     }
 
-    /// `PrintPreparationResult()`: the same report as
+    /// the same report as
     /// `ShapeProcessShapeContext::print_statistics` (the bodies are identical).
     pub fn print_preparation_result(&self) -> Result<(), Failure> {
         self.context

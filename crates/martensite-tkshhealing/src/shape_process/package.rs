@@ -160,7 +160,7 @@ impl Drop for ScopeLock<'_> {
 pub struct ShapeProcess;
 
 impl ShapeProcess {
-    /// `RegisterOperator(name, op)`: false (and nothing changed) when the name is taken;
+    /// false (and nothing changed) when the name is taken;
     /// `ShapeProcess::register_operator("MyOp", &op)`.
     pub fn register_operator(name: &str, operator: &Handle<dyn ShapeProcessOperator>) -> bool {
         let mut map = operators();
@@ -172,7 +172,7 @@ impl ShapeProcess {
         true
     }
 
-    /// `FindOperator(name, op)`: the registered operator; `None` for an unknown name or a
+    /// the registered operator; `None` for an unknown name or a
     /// null operator; `ShapeProcess::find_operator("FixShape")`.
     pub fn find_operator(name: &str) -> Option<Handle<dyn ShapeProcessOperator>> {
         let map = operators();
@@ -180,7 +180,7 @@ impl ShapeProcess {
         (!operator.is_null()).then_some(operator)
     }
 
-    /// `ToOperationFlag(theName)`: the operation of a name, `(First, false)` for an unknown
+    /// the operation of a name, `(First, false)` for an unknown
     /// or missing name.
     pub fn to_operation_flag(name: Option<&str>) -> (ShapeProcessOperation, bool) {
         let Some(name) = name else {
@@ -194,7 +194,7 @@ impl ShapeProcess {
             })
     }
 
-    /// `Perform(context, seq, theProgress)`: runs the operators listed in the `exec.op`
+    /// runs the operators listed in the `exec.op`
     /// parameter of scope `seq` (separated by blanks, tabs, commas or semicolons), each
     /// under its own scope; true when one of them reported a change. A missing sequence
     /// or operator and an operator exception are reported to the messenger.
@@ -223,7 +223,7 @@ impl ShapeProcess {
         run_sequence(context, ctx, &names, progress)
     }
 
-    /// `Perform(theContext, theOperations, theProgress)`: runs the registered operators of
+    /// runs the registered operators of
     /// the set flags in the order, each under its own scope; false without a
     /// context or operator. Example:
     /// `ShapeProcess::perform_operations(&context, flags, &ProgressRange::default())?`.

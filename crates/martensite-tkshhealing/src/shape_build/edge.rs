@@ -26,7 +26,7 @@ use martensite_tkmath::toploc::Location;
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ShapeBuildEdge;
 
-/// The curve representations of an edge (`TEdge->ChangeCurves()`), in order.
+/// Return the edge curve representations in their stored order.
 pub(crate) fn representations(
     edge: &Edge,
 ) -> Result<Vec<Handle<dyn BRepCurveRepresentation>>, Failure> {
@@ -79,7 +79,7 @@ pub(crate) fn is_periodic_2d(curve: &Handle<dyn Geom2dCurve>) -> bool {
 }
 
 impl ShapeBuildEdge {
-    /// `CopyReplaceVertices(edge, V1, V2)`: a copy of the edge (a new TEdge with the same
+    /// a copy of the edge (a new TEdge with the same
     /// representations) whose FORWARD vertex is `v1` and REVERSED vertex `v2`; a null
     /// vertex keeps the vertex of the edge, and when both are null the INTERNAL and
     /// EXTERNAL vertices are kept too. The ranges are copied (S4054: 3D and p-curve ranges
@@ -253,7 +253,7 @@ fn collect_vertices(
 }
 
 impl ShapeBuildEdge {
-    /// `CopyRanges(toedge, fromedge, alpha, beta)`: for each 3D curve and p-curve of
+    /// for each 3D curve and p-curve of
     /// `from`, the range `[first + alpha * len, first + beta * len]` goes to the first
     /// representation of the same kind (same surface and location for a p-curve) of `to`;
     /// on a periodic curve a range starting before the curve (beyond `PConfusion`) or at
@@ -371,7 +371,7 @@ fn periodic_range(gc: &Handle<dyn BRepGCurve>) -> Result<Option<(f64, f64, f64)>
 }
 
 impl ShapeBuildEdge {
-    /// `SetRange3d(edge, first, last)`: the range of the first 3D curve representation only;
+    /// the range of the first 3D curve representation only;
     /// `ShapeBuildEdge.set_range_3d(&e, 0.0, 1.0)?`.
     pub fn set_range_3d(&self, edge: &Edge, first: f64, last: f64) -> Result<(), Failure> {
         let found = representations(edge)?
@@ -384,7 +384,7 @@ impl ShapeBuildEdge {
         }
     }
 
-    /// `Copy(edge, sharepcurves)`: [`Self::copy_replace_vertices`] with the vertices of the
+    /// [`Self::copy_replace_vertices`] with the vertices of the
     /// edge; unless `share_pcurves`, the p-curves are replaced by copies
     /// ([`Self::copy_pcurves`]); `ShapeBuildEdge.copy(&e, true)?`.
     pub fn copy(&self, edge: &Edge, share_pcurves: bool) -> Result<Edge, Failure> {
@@ -395,7 +395,7 @@ impl ShapeBuildEdge {
         Ok(copy)
     }
 
-    /// `CopyPCurves(toedge, fromedge)`: each curve on surface of `from` is copied into `to`:
+    /// each curve on surface of `from` is copied into `to`:
     /// over the representation on the same surface and location when `to` has one, else
     /// into a copy of the representation appended to `to`; the p-curves are copies and the
     /// location becomes `(fromLoc * L).Predivided(toLoc)` (bug OCC209);
@@ -440,7 +440,7 @@ fn copy_pcurve(to: &Edge, from: &Edge, from_gc: &dyn BRepGCurve) -> Result<(), F
     Ok(())
 }
 
-/// `occ::down_cast<Geom2dCurve>(pcurve->Copy())`; Standard_NullObject for a null p-curve.
+/// Copy a p-curve and retain its planar curve interface; reject a null input.
 pub(crate) fn copied_pcurve(
     pcurve: &Handle<dyn Geom2dCurve>,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {

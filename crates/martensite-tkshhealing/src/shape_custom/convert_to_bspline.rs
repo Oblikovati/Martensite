@@ -75,7 +75,7 @@ impl Default for ShapeCustomConvertToBSpline {
 }
 
 impl ShapeCustomConvertToBSpline {
-    /// `ShapeCustomConvertToBSpline()`: extrusion, revolution and offset modes on, plane
+    /// extrusion, revolution and offset modes on, plane
     /// mode off; `ShapeCustomConvertToBSpline::new()`.
     pub fn new() -> Self {
         Self::default()
@@ -91,7 +91,7 @@ impl ShapeCustomConvertToBSpline {
         self.modes.write().revolution = mode;
     }
 
-    /// `SetOffsetMode(offsetMode)`: off, an offset surface keeps its offset and only its
+    /// off, an offset surface keeps its offset and only its
     /// basis is converted; `modification.set_offset_mode(false)`.
     pub fn set_offset_mode(&self, mode: bool) {
         self.modes.write().offset = mode;
@@ -110,7 +110,7 @@ impl ShapeCustomConvertToBSpline {
         surface: &Handle<dyn GeomSurface>,
     ) -> Result<(bool, Handle<dyn GeomSurface>), Failure> {
         if surface.is_null() {
-            // Natively `S->IsKind(...)` dereferences the null surface.
+            // Surface classification requires a live surface handle.
             return Err(Failure::with_type(
                 "Standard_NullObject",
                 "ShapeCustom_ConvertToBSpline::IsToConvert: null surface; expected a Geom_Surface",

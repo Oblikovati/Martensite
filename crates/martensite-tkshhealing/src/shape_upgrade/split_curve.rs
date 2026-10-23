@@ -54,7 +54,7 @@ pub trait SplitCurve: Transient {
     /// The embedded protected fields.
     fn split_curve_data(&self) -> &SplitCurveData;
 
-    /// `Init(First, Last)`: status OK, one curve, the split values `[First, Last]`;
+    /// status OK, one curve, the split values `[First, Last]`;
     /// `splitter.init(0.0, 1.0)`.
     fn init(&self, first: f64, last: f64) {
         let values = Handle::new(HSequence::default());
@@ -67,10 +67,9 @@ pub trait SplitCurve: Transient {
         });
     }
 
-    /// `SetSplitValues(SplitValues)`: inserts the given values (increasing) that lie
-    /// inside each current interval by more than `Precision::PConfusion()`; nothing for
-    /// a null or empty sequence. Standard_NullObject before `Init` (a null dereference
-    /// in this implementation); `splitter.set_split_values(&values)?`.
+    /// inserts the given values (increasing) that lie
+    /// inside each current interval by more than `precision::p_confusion()`; nothing for
+    /// a null or empty sequence. Standard_NullObject before `Init`; `splitter.set_split_values(&values)?`.
     fn set_split_values(&self, split_values: &Handle<HSequence<f64>>) -> Result<(), Failure> {
         let Some(given) = split_values.get() else {
             return Ok(());
@@ -87,7 +86,7 @@ pub trait SplitCurve: Transient {
             )
         })?;
         if std::ptr::eq(own, given) {
-            // The same sequence is both read and edited in this implementation.
+            // Read and edit the same shared sequence so later insertions see prior edits.
             return own.change_sequence(|values| insert_split_values(values, None));
         }
         let given: Vec<f64> = given.sequence(|s| s.iter().copied().collect());
@@ -103,7 +102,7 @@ pub trait SplitCurve: Transient {
         Ok(())
     }
 
-    /// `SplitValues()`: the handle of the split values (null before `Init`);
+    /// the handle of the split values (null before `Init`);
     /// `splitter.split_values()`.
     fn split_values(&self) -> Handle<HSequence<f64>> {
         self.split_curve_data()
@@ -119,14 +118,14 @@ pub trait SplitCurve: Transient {
         Ok(())
     }
 
-    /// `Perform(Segment)`: `Compute()` then `Build(Segment)` (the default
+    /// `Compute()` then `Build(Segment)` (the default
     /// `Segment` is true); `splitter.perform(true)?`.
     fn perform(&self, segment: bool) -> Result<(), Failure> {
         self.compute()?;
         self.build(segment)
     }
 
-    /// `Status(status)`: the flag of the status bits;
+    /// the flag of the status bits;
     /// `splitter.status_flag(ShapeExtendStatus::Ok)`.
     fn status_flag(&self, status: ShapeExtendStatus) -> bool {
         let bits = self.split_curve_data().with(|fields| fields.status);
@@ -190,7 +189,7 @@ impl_transient!(
 );
 
 impl ShapeUpgradeSplitCurve {
-    /// `ShapeUpgradeSplitCurve()`: no split values, no curve, status 0;
+    /// no split values, no curve, status 0;
     /// `ShapeUpgradeSplitCurve::new()`.
     pub fn new() -> Self {
         Self::default()

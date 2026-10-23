@@ -38,7 +38,7 @@ impl_transient!(ShapeUpgradeSplitCurve2dContinuity, "ShapeUpgrade_SplitCurve2dCo
     ShapeUpgradeSplitCurve2d, parent, interfaces: [dyn SplitCurve]);
 
 impl ShapeUpgradeSplitCurve2dContinuity {
-    /// defaults are C1 and `Precision::PConfusion()`;
+    /// defaults are C1 and `precision::p_confusion()`;
     /// `ShapeUpgradeSplitCurve2dContinuity::new()`.
     pub fn new() -> Self {
         Self::default()

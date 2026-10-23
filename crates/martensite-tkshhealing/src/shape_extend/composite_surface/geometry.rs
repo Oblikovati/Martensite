@@ -21,7 +21,7 @@ impl ShapeExtendCompositeSurface {
         Ok((self.live_patch(i, j)?, local))
     }
 
-    /// `Value(pnt)`: the point of the global parameters `pnt`; `surface.value_at(p)?`.
+    /// the point of the global parameters `pnt`; `surface.value_at(p)?`.
     pub fn value_at(&self, pnt: Point2) -> Result<Point3, Failure> {
         let (patch, local) = self.located(pnt.x(), pnt.y())?;
         patch.d0(local.x(), local.y())
@@ -53,7 +53,7 @@ impl ShapeExtendCompositeSurface {
 }
 
 impl GeomGeometry for ShapeExtendCompositeSurface {
-    /// `Transform(T)`: transforms each patch; nothing without a grid.
+    /// transforms each patch; nothing without a grid.
     fn transform(&self, transform: Transform3) -> Result<(), Failure> {
         if self.patches().is_null() {
             return Ok(());
@@ -66,7 +66,7 @@ impl GeomGeometry for ShapeExtendCompositeSurface {
         Ok(())
     }
 
-    /// `Copy()`: a composite surface of copies of the patches, initialized with the natural
+    /// a composite surface of copies of the patches, initialized with the natural
     /// parametrisation (the joint values are not copied); an empty surface
     /// without a grid.
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
@@ -100,13 +100,11 @@ impl GeomSurface for ShapeExtendCompositeSurface {
     fn v_reversed_parameter(&self, v: f64) -> Result<f64, Failure> {
         Ok(v)
     }
-    /// The first and last joint values (`Bounds`). Without a grid or joint values (a null
-    /// dereference in this implementation) the bounds are all zero.
+    /// Return the first and last joint values, or all zeros when bounds are unavailable.
     fn bounds(&self) -> SurfaceBounds {
         self.joint_bounds().unwrap_or((0.0, 0.0, 0.0, 0.0))
     }
-    /// The flag `CheckConnectivity` sets (`IsUClosed`); false before any check (the
-    /// field is uninitialized then).
+    /// Read the U-closure flag set by connectivity checking; initially false.
     fn is_u_closed(&self) -> Result<bool, Failure> {
         Ok(self.fields.read().u_closed)
     }

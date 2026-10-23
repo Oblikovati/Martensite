@@ -11,7 +11,7 @@ enum Number {
 }
 
 impl ShapeProcessContext {
-    /// `IsParamSet(param)`: a manager is loaded and holds the scoped parameter.
+    /// a manager is loaded and holds the scoped parameter.
     /// Example: `context.is_param_set("Tolerance3d")`.
     pub fn is_param_set(&self, param: &str) -> bool {
         let Some(resource) = self.resource_manager() else {
@@ -21,7 +21,7 @@ impl ShapeProcessContext {
         resource.read().find(&name)
     }
 
-    /// `GetString(param, str)`: the scoped value, `None` when no manager is loaded or the
+    /// the scoped value, `None` when no manager is loaded or the
     /// parameter is not defined; `context.get_string("exec.op")`.
     pub fn get_string(&self, param: &str) -> Option<AsciiString> {
         let resource = self.resource_manager()?;
@@ -33,7 +33,7 @@ impl ShapeProcessContext {
         manager.value(&name).ok().cloned()
     }
 
-    /// `GetReal(param, val)`: the scoped value read as a real, or the real of the
+    /// the scoped value read as a real, or the real of the
     /// (unscoped) parameter named after a leading `&`; `None` for the native false.
     /// quirk kept: a blank value raises Standard_OutOfRange (`Value(1)` of the empty
     /// adjusted string); `context.get_real("Tolerance3d")?`.
@@ -41,7 +41,7 @@ impl ShapeProcessContext {
         self.number(param, Number::Real)
     }
 
-    /// `GetInteger(param, val)`: as `get_real` for integers; `context.get_integer("Mode")?`.
+    /// as `get_real` for integers; `context.get_integer("Mode")?`.
     pub fn get_integer(&self, param: &str) -> Result<Option<i32>, Failure> {
         Ok(self
             .number(param, Number::Integer)?
@@ -74,7 +74,7 @@ impl ShapeProcessContext {
         Ok(read_number(manager.value(&name)?, kind))
     }
 
-    /// `GetBoolean(param, val)`: the scoped integer of the manager is nonzero; `None` when
+    /// the scoped integer of the manager is nonzero; `None` when
     /// it raises (missing or not an integer); `context.get_boolean("FixShape")`.
     pub fn get_boolean(&self, param: &str) -> Option<bool> {
         let resource = self.resource_manager()?;
@@ -98,7 +98,7 @@ impl ShapeProcessContext {
         self.get_boolean(param).unwrap_or(default)
     }
 
-    /// `StringVal(param, def)`: the scoped value of the manager, `default` when no manager
+    /// the scoped value of the manager, `default` when no manager
     /// is loaded or the value raises; `context.string_val("exec.op", "")`.
     pub fn string_val(&self, param: &str, default: &str) -> AsciiString {
         let Some(resource) = self.resource_manager() else {

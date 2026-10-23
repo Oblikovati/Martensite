@@ -102,7 +102,7 @@ impl ShapeAnalysisCanonicalRecognition {
         Ok(true)
     }
 
-    /// `IsLine(theTol, theLin)`: the line of the edge or of every edge of the wire within
+    /// the line of the edge or of every edge of the wire within
     /// `tol`; `recognizer.is_line(1e-7, &mut line)?`.
     pub fn is_line(&mut self, tol: f64, lin: &mut Line3) -> Result<bool, Failure> {
         let mut pos = Axis2::default();
@@ -114,7 +114,7 @@ impl ShapeAnalysisCanonicalRecognition {
         Ok(found)
     }
 
-    /// `IsCircle(theTol, theCirc)`: the circle of the edge or of every edge of the wire
+    /// the circle of the edge or of every edge of the wire
     /// within `tol`; `recognizer.is_circle(1e-7, &mut circle)?`.
     pub fn is_circle(&mut self, tol: f64, circ: &mut Circle3) -> Result<bool, Failure> {
         let mut pos = Axis2::default();
@@ -127,7 +127,7 @@ impl ShapeAnalysisCanonicalRecognition {
         Ok(found)
     }
 
-    /// `IsEllipse(theTol, theElips)`: the ellipse of the edge or of every edge of the wire
+    /// the ellipse of the edge or of every edge of the wire
     /// within `tol`; `recognizer.is_ellipse(1e-7, &mut ellipse)?`.
     pub fn is_ellipse(&mut self, tol: f64, elips: &mut Ellipse3) -> Result<bool, Failure> {
         let mut pos = Axis2::default();

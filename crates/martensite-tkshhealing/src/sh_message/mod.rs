@@ -2,8 +2,7 @@
 //!
 //! The message catalog preserves its resource bytes, without a terminating NUL.
 //! `ShapeExtend::init` loads these messages into the catalog.
-/// `SHMessage_SHAPE_us`: the English message texts, the bytes of the literal without its
-/// terminating NUL (`sizeof(SHMessage_SHAPE_us) - 1` in this implementation).
+/// English message resource bytes, embedded without a terminating NUL.
 ///
 /// ```
 /// use martensite_tkshhealing::sh_message::SHAPE_US;
@@ -12,8 +11,8 @@
 /// ```
 pub const SHAPE_US: &[u8] = include_bytes!("SHAPE.us");
 
-/// `SHMessage_SHAPE_fr`: the French message texts. The file ships with the package but is
-/// not compiled in this implementation; no Shape Healing member reads it.
+/// French message resource bytes, embedded for callers that select this catalog.
+/// Automatic catalog initialization loads the English resource instead.
 ///
 /// ```
 /// use martensite_tkshhealing::sh_message::SHAPE_FR;

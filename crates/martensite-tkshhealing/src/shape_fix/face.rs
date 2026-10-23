@@ -68,7 +68,7 @@ pub type ShapeFixFaceWireMap =
     DataMap<Shape, List<Shape>, martensite_tkbrep::toptools::ShapeMapHasher>;
 
 impl ShapeFixFace {
-    /// `ShapeFixFace(face)`: initialize the root shape and working face;
+    /// initialize the root shape and working face;
     /// `ShapeFixFace::new(face.into_shape())`.
     pub fn new(face: Shape) -> Self {
         let fixer = Self::default();
@@ -76,7 +76,7 @@ impl ShapeFixFace {
         fixer
     }
 
-    /// `Init(face)`: replace the root shape and working face with `face`.
+    /// replace the root shape and working face with `face`.
     pub fn init(&self, face: Shape) {
         self.parent
             .fix_root_data()
@@ -197,17 +197,17 @@ impl ShapeFixFace {
         self.perform_wire_enabled(progress)
     }
 
-    /// `Result()`: return the last performed shape, including non-face context results.
+    /// return the last performed shape, including non-face context results.
     pub fn result(&self) -> Shape {
         self.result.read().clone()
     }
 
-    /// `Face()`: return the last result as a face when it has face topology.
+    /// return the last result as a face when it has face topology.
     pub fn face(&self) -> Result<Face, Failure> {
         topods::face(&self.face_state.read())
     }
 
-    /// `Status(status)`: decode a flag from the last `Perform()`.
+    /// decode a flag from the last `Perform()`.
     pub fn status(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(*self.status.read(), status)
     }
@@ -224,7 +224,7 @@ fn initialize_face_surface(face_shape: &Shape) -> Handle<ShapeAnalysisSurface> {
     let Ok(face) = topods::face(face_shape) else {
         return Handle::default();
     };
-    // BRepTool::surface(face): the surface with the face location applied.
+    // Use the surface with the face location applied.
     let Ok(surface) = BRepTool::surface(&face) else {
         return Handle::default();
     };

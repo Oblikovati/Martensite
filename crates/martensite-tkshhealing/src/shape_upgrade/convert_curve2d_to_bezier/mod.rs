@@ -34,7 +34,7 @@ pub struct ShapeUpgradeConvertCurve2dToBezier {
 impl_transient!(ShapeUpgradeConvertCurve2dToBezier, "ShapeUpgrade_ConvertCurve2dToBezier", ShapeUpgradeSplitCurve2d, parent, interfaces: [dyn SplitCurve]);
 
 impl ShapeUpgradeConvertCurve2dToBezier {
-    /// Create an uninitialized p-curve converter; `ShapeUpgradeConvertCurve2dToBezier::new()`.
+    /// Create an p-curve converter without an input curve; `ShapeUpgradeConvertCurve2dToBezier::new()`.
     pub fn new() -> Self {
         Self::default()
     }

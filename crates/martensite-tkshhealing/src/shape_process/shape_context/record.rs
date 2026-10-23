@@ -22,7 +22,7 @@ struct Recorder<'a> {
 }
 
 impl ShapeProcessShapeContext {
-    /// `RecordModification(repl, msg)`: the replacement map applied down to the
+    /// the replacement map applied down to the
     /// detalisation level (containers rebuilt from replaced children), with the messages
     /// of `msg` moved to the original shapes; the result follows the shape.
     /// Example: `context.record_modification_map(&replacements, &Handle::default())?`.
@@ -75,7 +75,7 @@ impl ShapeProcessShapeContext {
         Ok(())
     }
 
-    /// `RecordModification(repl)`: the reshape overload without messages.
+    /// the reshape overload without messages.
     pub fn record_modification_reshape_only(
         &self,
         reshape: &Handle<ShapeBuildReShape>,
@@ -83,7 +83,7 @@ impl ShapeProcessShapeContext {
         self.record_modification_reshape(reshape, &Handle::default())
     }
 
-    /// `RecordModification(S, repl, msg)`: the modified shapes of `modifier` from `shape`
+    /// the modified shapes of `modifier` from `shape`
     /// down to the detalisation level, recorded as a replacement map.
     /// Example: `context.record_modification_modifier(&shape, &modifier, &Handle::default())?`.
     pub fn record_modification_modifier(

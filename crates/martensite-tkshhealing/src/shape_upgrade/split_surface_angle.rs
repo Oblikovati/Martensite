@@ -87,7 +87,7 @@ fn strictly_inside_trim(range: Option<(f64, f64)>, length: f64, maximum: f64) ->
 }
 fn segment_count(length: f64, maximum: f64) -> Result<i32, Failure> {
     let quotient = ((length - precision::angular()) / maximum).trunc();
-    // float-to-int conversion or subsequent addition is undefined outside this range.
+    // Reject values that cannot be converted and incremented within the integer range.
     if !quotient.is_finite() || quotient < i32::MIN as f64 || quotient >= i32::MAX as f64 {
         return Err(Failure::with_type(
             "Standard_OutOfRange",

@@ -68,7 +68,7 @@ fn is_overlap_part_edges(
 }
 
 impl ShapeAnalysisEdge {
-    /// `CheckOverlapping(theEdge1, theEdge2, theTolOverlap, theDomainDist)`: the shorter
+    /// the shorter
     /// edge lies within `tol_overlap` of the other one along its whole length (DONE3), or,
     /// when `domain_dist` is not 0, along a part of that length around each closest point
     /// (DONE4). On the second path `tol_overlap` receives the distance between the edges;

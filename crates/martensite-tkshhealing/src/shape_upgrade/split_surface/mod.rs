@@ -152,7 +152,7 @@ impl SplitSurface for ShapeUpgradeSplitSurface {
     }
 }
 impl ShapeUpgradeSplitSurface {
-    /// Create an uninitialized surface splitter; `ShapeUpgradeSplitSurface::new()`.
+    /// Create an surface splitter without an input surface; `ShapeUpgradeSplitSurface::new()`.
     pub fn new() -> Self {
         Self::default()
     }

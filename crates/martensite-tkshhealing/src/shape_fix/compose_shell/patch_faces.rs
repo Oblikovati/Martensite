@@ -9,7 +9,7 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::GeomSurface;
 
 impl ShapeFixComposeShell {
-    /// `SplitByGrid(seqw)`: splits the loaded segments by every joint line of the grid and
+    /// splits the loaded segments by every joint line of the grid and
     /// adds the interior joint segments; `composer.split_by_grid(&mut segments)?`.
     pub fn split_by_grid(
         &self,
@@ -18,7 +18,7 @@ impl ShapeFixComposeShell {
         super::split_by_grid::split_by_grid(self, segments)
     }
 
-    /// `DispatchWires(faces, wires)`: moves every collected wire onto the patch that holds
+    /// moves every collected wire onto the patch that holds
     /// its middle point and appends the faces built on each patch to `faces`.
     /// Example: `composer.dispatch_wires(&mut faces, &mut wires)?`.
     pub fn dispatch_wires(
@@ -36,7 +36,7 @@ impl ShapeFixComposeShell {
         Ok(())
     }
 
-    /// `MakeFacesOnPatch(faces, surf, loops)`: builds the faces of one patch from its loops
+    /// builds the faces of one patch from its loops
     /// (outer wires with their holes) and appends them to `faces`.
     /// Example: `composer.make_faces_on_patch(&mut faces, &patch, &mut loops)?`.
     pub fn make_faces_on_patch(

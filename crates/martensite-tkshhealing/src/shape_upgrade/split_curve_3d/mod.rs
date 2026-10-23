@@ -25,7 +25,7 @@ impl SplitCurve for ShapeUpgradeSplitCurve3d {
     }
 }
 impl ShapeUpgradeSplitCurve3d {
-    /// Creates an uninitialized splitter; `ShapeUpgradeSplitCurve3d::new()`.
+    /// Creates an splitter without an input curve; `ShapeUpgradeSplitCurve3d::new()`.
     pub fn new() -> Self {
         Self::default()
     }

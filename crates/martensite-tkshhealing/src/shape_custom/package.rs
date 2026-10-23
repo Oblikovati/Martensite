@@ -54,7 +54,7 @@ pub struct ShapeCustomRestrictionRequest {
 }
 
 impl ShapeCustom {
-    /// `ApplyModifier(S, M, context, MD, theProgress, aReShape)`: the shape rebuilt by the
+    /// the shape rebuilt by the
     /// modification; a compound is processed child by child so that shared children
     /// (`context`, keyed without location) are rebuilt once, and the result is recorded in
     /// the optional reshape. The input is returned unchanged when nothing changed, when the
@@ -180,7 +180,7 @@ impl ShapeCustom {
         )
     }
 
-    /// `DirectFaces(S)`: the shape without indirect surfaces
+    /// the shape without indirect surfaces
     /// (ShapeCustomDirectModification); `ShapeCustom::direct_faces(&shape)?`.
     pub fn direct_faces(shape: &Shape) -> Result<Shape, Failure> {
         Self::apply_fresh(
@@ -189,7 +189,7 @@ impl ShapeCustom {
         )
     }
 
-    /// `ScaleShape(S, scale)`: the shape scaled about the origin
+    /// the shape scaled about the origin
     /// (ShapeCustomTrsfModification); `ShapeCustom::scale_shape(&shape, 2.0)?`.
     pub fn scale_shape(shape: &Shape, scale: f64) -> Result<Shape, Failure> {
         let mut transform = Transform3::default();

@@ -54,7 +54,7 @@ const OPERATORS: [(&str, ShapeProcessOperFunc); 18] = [
 ];
 
 impl ShapeProcessOperLibrary {
-    /// `Init()`: once per process, loads the Shape Healing messages (`ShapeExtend::init`)
+    /// once per process, loads the Shape Healing messages (`ShapeExtend::init`)
     /// and registers the predefined operators; `ShapeProcessOperLibrary::init()?`.
     pub fn init() -> Result<(), Failure> {
         let mut outcome = Ok(());
@@ -69,7 +69,7 @@ impl ShapeProcessOperLibrary {
         outcome
     }
 
-    /// `ApplyModifier(S, context, M, map, msg, theMutableInput)`: the shape modified by
+    /// the shape modified by
     /// `M`; a compound is processed child by child (without location, shared children
     /// once through `map`, and without messages), any other shape with a
     /// Modifier whose modifications are recorded in the context.
@@ -145,7 +145,7 @@ impl ShapeProcessOperLibrary {
     }
 }
 
-/// The `occ::down_cast<ShapeProcessShapeContext>(context)` that starts every operator.
+/// Require a shape-processing context before running an operator.
 fn shape_context(context: &Handle<ShapeProcessContext>) -> Handle<ShapeProcessShapeContext> {
     context.cast::<ShapeProcessShapeContext>()
 }

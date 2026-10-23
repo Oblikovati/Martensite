@@ -103,8 +103,8 @@ pub fn bclassify_default(solid: &Shape, point: Point3) -> State {
     bclassify(solid, point, 1.0e-7)
 }
 
-/// `b2dclassify face point2d`: `BRepClassFaceClassifier::perform(F, P, tol =
-/// BRep_Tool::Tolerance(F), UseBox = false, GapCheckTol = 0.1)`.
+/// Classify a parameter-space point using the face tolerance, no box acceleration,
+/// and a gap-check tolerance of 0.1.
 pub fn b2dclassify(face: &Shape, point: Point2) -> State {
     let face = topods::face(face).expect("b2dclassify: a face");
     let tolerance = martensite_tkbrep::brep::BRepTool::face_tolerance(&face).unwrap();

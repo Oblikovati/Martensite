@@ -143,7 +143,7 @@ fn sweep_patch(
     if multiple {
         return trimmed_surface(surface, (natural.0, natural.1, range.0, range.1));
     }
-    // std::max(U1, UFirst), std::min(ULast, U2), std::max(VFirst, V1), std::min(VLast, V2).
+    // Clamp both parameter intervals to their overlap, preserving comparison order.
     trimmed_surface(
         surface,
         (
@@ -155,12 +155,12 @@ fn sweep_patch(
     )
 }
 
-/// `std::max(a, b)`: `a < b ? b : a`.
+/// Choose `b` when `a < b`, otherwise `a`, retaining comparison order for NaN.
 fn native_max(first: f64, second: f64) -> f64 {
     if first < second { second } else { first }
 }
 
-/// `std::min(a, b)`: `b < a ? b : a`.
+/// Choose `b` when `b < a`, otherwise `a`, retaining comparison order for NaN.
 fn native_min(first: f64, second: f64) -> f64 {
     if second < first { second } else { first }
 }

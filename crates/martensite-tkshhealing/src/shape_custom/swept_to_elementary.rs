@@ -51,7 +51,7 @@ impl_transient!(
 );
 
 impl ShapeCustomSweptToElementary {
-    /// `ShapeCustomSweptToElementary()`; `ShapeCustomSweptToElementary::new()`.
+    /// `ShapeCustomSweptToElementary::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -70,7 +70,7 @@ fn is_to_convert(
     surface: &Handle<dyn GeomSurface>,
 ) -> Result<(bool, Handle<dyn GeomSweptSurface>), Failure> {
     if surface.is_null() {
-        // Natively `S->IsKind(...)` dereferences the null surface.
+        // Surface classification requires a live surface handle.
         return Err(Failure::with_type(
             "Standard_NullObject",
             "ShapeCustom_SweptToElementary: null surface; expected a Geom_Surface",
@@ -87,9 +87,8 @@ fn basis_adaptor(curve: &Handle<dyn GeomCurve>) -> Result<Handle<dyn Adaptor3dCu
     Ok(Handle::new(adaptor).cast())
 }
 
-/// The elementary surface of a surface of revolution, if its adaptor recognizes one (the
-/// plane case is disabled in this implementation: "skl 18.12.2003 - plane not used, problems in
-/// PRO14665.igs").
+/// Return an elementary surface recognized by the revolution adaptor.
+/// Planes are deliberately excluded from this conversion.
 fn revolution_elementary(
     revolution: &GeomSurfaceOfRevolution,
 ) -> Result<Option<Handle<dyn GeomSurface>>, Failure> {
@@ -184,7 +183,7 @@ fn shifted_onto_new_surface(
     if !to_torus && sphere.is_null() {
         return Ok(());
     }
-    // Natively `SS->IsKind(...)` dereferences a null swept surface here.
+    // Swept-surface classification requires a live surface handle.
     if swept.is_null() {
         return Err(null_swept());
     }

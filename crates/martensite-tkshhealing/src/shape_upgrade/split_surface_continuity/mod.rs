@@ -47,7 +47,7 @@ impl Default for ShapeUpgradeSplitSurfaceContinuity {
 impl_transient!(ShapeUpgradeSplitSurfaceContinuity,"ShapeUpgrade_SplitSurfaceContinuity",ShapeUpgradeSplitSurface,parent,interfaces:[dyn SplitSurface]);
 
 impl ShapeUpgradeSplitSurfaceContinuity {
-    /// Create the C1 splitter with `Precision::Confusion()` tolerance;
+    /// Create the C1 splitter with `precision::confusion()` tolerance;
     /// `ShapeUpgradeSplitSurfaceContinuity::new()`.
     pub fn new() -> Self {
         Self::default()

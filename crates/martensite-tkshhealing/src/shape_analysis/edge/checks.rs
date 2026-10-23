@@ -38,7 +38,7 @@ impl ShapeAnalysisEdge {
         self.check_curve_3d_with_pcurve_on_surface(edge, &surface, &location)
     }
 
-    /// `CheckCurve3dWithPCurve(edge, surface, location)`: true when the ends of the 3D
+    /// true when the ends of the 3D
     /// curve and of the p-curve (both unoriented) do not match within the vertex
     /// tolerances, with DONE1 when they match better crossed (the orientations differ).
     /// False on a plane, FAIL1 without p-curve, FAIL2 without 3D curve, false without
@@ -86,9 +86,8 @@ impl ShapeAnalysisEdge {
         true
     }
 
-    /// Adds the raw enumerator `ShapeExtendDONE1` or `DONE2` (in this implementation
-    /// `myStatus |= ShapeExtendDONE1`, not encoded; the bits happen to be the encoded
-    /// ones) when the vertex is farther than its precision from the point.
+    /// Add the raw Done1 or Done2 enumerator when the vertex exceeds its precision.
+    /// Their integer values coincide with the corresponding encoded status bits.
     fn check_end(
         &mut self,
         vertex: &Vertex,
@@ -103,7 +102,7 @@ impl ShapeAnalysisEdge {
         Ok(())
     }
 
-    /// `CheckVerticesWithCurve3d(edge, preci, vtx)`: checks the start (`vtx` 1), end (2)
+    /// checks the start (`vtx` 1), end (2)
     /// or both (0) vertices against the ends of the oriented 3D curve, within `preci` or
     /// their own tolerances when `preci < 0`: DONE1 for the start, DONE2 for the end,
     /// FAIL1 without 3D curve; true when a vertex is off;
@@ -138,7 +137,7 @@ impl ShapeAnalysisEdge {
         self.check_vertices_with_pcurve_on_surface(edge, &surface, &location, preci, vtx)
     }
 
-    /// `CheckVerticesWithPCurve(edge, surface, location, preci, vtx)`: as
+    /// as
     /// [`Self::check_vertices_with_curve_3d`] with the surface points of the ends of the
     /// oriented p-curve (FAIL1 without p-curve);
     /// `sae.check_vertices_with_pcurve_on_surface(&e, &s, &l, -1.0, 0)?`.
@@ -171,7 +170,7 @@ impl ShapeAnalysisEdge {
         Ok(self.status_flag(ShapeExtendStatus::Done))
     }
 
-    /// `CheckPCurveRange(theFirst, theLast, thePC)`: the range fits the p-curve (the basis
+    /// the range fits the p-curve (the basis
     /// of a trimmed curve): at most one period on a periodic curve, else inside its
     /// bounds within `PConfusion`; `sae.check_pcurve_range(0.0, 1.0, &pcurve)?`.
     pub fn check_pcurve_range(

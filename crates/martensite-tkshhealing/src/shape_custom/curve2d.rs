@@ -77,11 +77,11 @@ fn get_line(p1: Point2, p2: Point2, c1: f64) -> Result<(Line2, f64, f64), Failur
 }
 
 impl ShapeCustomCurve2d {
-    /// `IsLinear(thePoles, theTolerance, theDeviation)`: the deviation (the largest
+    /// the deviation (the largest
     /// distance of a pole from the line through the two farthest poles) when every pole
     /// lies within `tolerance` of that line; `None` (false, the deviation left
     /// unchanged) otherwise, and for fewer than two poles or poles closer than
-    /// `Precision::PConfusion()`; `ShapeCustomCurve2d::is_linear(&poles, 1e-7)?`.
+    /// `precision::p_confusion()`; `ShapeCustomCurve2d::is_linear(&poles, 1e-7)?`.
     pub fn is_linear(poles: &Array1<'_, Point2>, tolerance: f64) -> Result<Option<f64>, Failure> {
         if poles.length() < 2 {
             return Ok(None);
@@ -107,7 +107,7 @@ impl ShapeCustomCurve2d {
         Ok(Some(a_max.sqrt()))
     }
 
-    /// `ConvertToLine2d(theCurve, c1, c2, theTolerance, cf, cl, theDeviation)`: a line
+    /// a line
     /// through the points at `c1` and `c2` when the curve is a B-spline or a Bezier curve
     /// whose poles are linear within `tolerance`, located so that `c1` is the parameter of
     /// its own point, with the parameters of both points and the deviation; `None` (the
@@ -146,7 +146,7 @@ impl ShapeCustomCurve2d {
         }))
     }
 
-    /// `SimplifyBSpline2d(theBSpline2d, theTolerance)`: walks the inner knots from the
+    /// walks the inner knots from the
     /// last one down and removes one multiplicity of each knot where the curve is
     /// `C(degree - mult)` and the two local derivatives of that order are parallel
     /// (a failed `RemoveKnot` is ignored, as the `try/catch`); true when a knot
@@ -186,7 +186,7 @@ fn linear_candidate_poles(curve: &Handle<dyn Geom2dCurve>) -> Option<Array1<'sta
 
 /// One step of the `SimplifyBSpline2d` loop at `knot_index`: `RemoveKnot(index, mult -
 /// 1, tolerance)` when the derivatives of order `degree - mult` (above 1) on both sides
-/// of the knot are parallel within `Precision::Angular()`.
+/// of the knot are parallel within `precision::angular()`.
 fn remove_parallel_knot(
     bspline: &Geom2dBSplineCurve,
     knot_index: i32,

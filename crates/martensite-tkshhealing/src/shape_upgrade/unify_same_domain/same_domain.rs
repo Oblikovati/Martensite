@@ -75,7 +75,7 @@ fn same_sample_points(
     Ok(true)
 }
 
-/// `IsSameDomain(aFace, aCheckedFace, theLinTol, theAngTol, theFacePlaneMap)`: the same
+/// the same
 /// located surface; or two planar surfaces (IsPlanarSurface) on parallel planes
 /// closer than `lin_tol`, both bound to one plane in the map; or two elementary surfaces
 /// whose IntPatch_ImpImpIntersection finds tangent faces; or two cylinders (cylindrical

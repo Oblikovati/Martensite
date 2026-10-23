@@ -442,7 +442,7 @@ fn is_shift(main: &[i32]) -> bool {
 }
 
 impl ShapeAnalysisWireOrder {
-    /// `Perform(closed)`: computes the order (`closed` is not used in this implementation). With no
+    /// Compute the order; the `closed` argument is unused. With no
     /// edge, nothing is done and the status is 0. Each step joins the remaining edge
     /// whose end is nearest to an end of the current sequence (in the miscible mode, an
     /// edge joined in both 3D and 2D first), or starts a new loop when closing is better;

@@ -31,8 +31,8 @@ pub struct FixRootData {
 }
 
 impl Default for FixRootData {
-    /// The fields of `ShapeFixRoot()`: no context, a basic message registrator, and the
-    /// precision and both tolerance limits at `Precision::Confusion()`.
+    /// Default fixing-root state: no context, a basic message registrator, and the
+    /// precision and both tolerance limits at `precision::confusion()`.
     fn default() -> Self {
         let registrator = Handle::new(ShapeExtendBasicMsgRegistrator::new());
         let confusion = precision::confusion();
@@ -147,13 +147,13 @@ pub trait FixRoot: Transient {
         self.fix_root_data().with(|fields| fields.max_tol)
     }
 
-    /// `LimitTolerance(toler)`: `toler` limited by the maximal tolerance ("only maximal
+    /// `toler` limited by the maximal tolerance ("only maximal
     /// restriction implemented"); `tool.limit_tolerance(0.5)`.
     fn limit_tolerance(&self, toler: f64) -> f64 {
         self.max_tolerance().min(toler)
     }
 
-    /// `SendMsg(shape, message, gravity)`: gives the message to the registrator, if any;
+    /// gives the message to the registrator, if any;
     /// `tool.send_msg(&shape, &message, Gravity::Info)`.
     fn send_msg(&self, shape: &Shape, message: &Msg, gravity: Gravity) {
         let registrator = self.msg_registrator();
@@ -162,32 +162,32 @@ pub trait FixRoot: Transient {
         }
     }
 
-    /// `SendMsg(message, gravity)`: [`FixRoot::send_msg`] on the tool's shape;
+    /// [`FixRoot::send_msg`] on the tool's shape;
     /// `tool.send_msg_on_shape(&message, Gravity::Info)`.
     fn send_msg_on_shape(&self, message: &Msg, gravity: Gravity) {
         let shape = self.fix_root_data().with(|fields| fields.shape.clone());
         self.send_msg(&shape, message, gravity);
     }
 
-    /// `SendWarning(shape, message)`: [`FixRoot::send_msg`] with `Message_Warning`;
+    /// [`FixRoot::send_msg`] with `Message_Warning`;
     /// `tool.send_warning(&shape, &message)`.
     fn send_warning(&self, shape: &Shape, message: &Msg) {
         self.send_msg(shape, message, Gravity::Warning);
     }
 
-    /// `SendWarning(message)`: [`FixRoot::send_warning`] on the tool's shape;
+    /// [`FixRoot::send_warning`] on the tool's shape;
     /// `tool.send_warning_on_shape(&message)`.
     fn send_warning_on_shape(&self, message: &Msg) {
         self.send_msg_on_shape(message, Gravity::Warning);
     }
 
-    /// `SendFail(shape, message)`: [`FixRoot::send_msg`] with `Message_Fail`;
+    /// [`FixRoot::send_msg`] with `Message_Fail`;
     /// `tool.send_fail(&shape, &message)`.
     fn send_fail(&self, shape: &Shape, message: &Msg) {
         self.send_msg(shape, message, Gravity::Fail);
     }
 
-    /// `SendFail(message)`: [`FixRoot::send_fail`] on the tool's shape;
+    /// [`FixRoot::send_fail`] on the tool's shape;
     /// `tool.send_fail_on_shape(&message)`.
     fn send_fail_on_shape(&self, message: &Msg) {
         self.send_msg_on_shape(message, Gravity::Fail);
@@ -217,7 +217,7 @@ impl_transient!(
 );
 
 impl ShapeFixRoot {
-    /// `ShapeFixRoot()`: no context, a basic registrator, `Precision::Confusion()` for
+    /// no context, a basic registrator, `precision::confusion()` for
     /// the precision and both limits; `ShapeFixRoot::new()`.
     pub fn new() -> Self {
         Self::default()

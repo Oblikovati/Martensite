@@ -21,7 +21,7 @@ pub struct ShapeFixWireVertex {
 }
 
 impl ShapeFixWireVertex {
-    /// Construct an uninitialized fixer (`ShapeFixWireVertex()`);
+    /// Construct a fixer without an input wire;
     /// `ShapeFixWireVertex::new()`.
     pub fn new() -> Self {
         Self::default()

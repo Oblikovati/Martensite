@@ -37,13 +37,13 @@ impl_transient!(
 );
 
 impl ShapeBuildReShape {
-    /// `ShapeBuildReShape()`: no request, status -1 (as the base class);
+    /// no request, status -1 (as the base class);
     /// `ShapeBuildReShape::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `Status(ShapeExtendStatus)`: the flags of the last `Apply(shape, until)`: OK when
+    /// the flags of the last `Apply(shape, until)`: OK when
     /// nothing was replaced or removed, DONE1 the shape itself replaced, DONE2 removed,
     /// DONE3 sub-shapes replaced, DONE4 sub-shapes removed, FAIL1 a replacement of an
     /// incompatible type ignored; `reshape.status_flag(ShapeExtendStatus::Done3)`.

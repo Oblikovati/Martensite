@@ -129,7 +129,7 @@ impl ShapeCustomModification for ShapeCustomBSplineRestriction {
 }
 
 impl ShapeCustomBSplineRestriction {
-    /// `ShapeCustomBSplineRestriction()`: tolerances 0.01 / 1e-6, C1 / C2, degree 9,
+    /// tolerances 0.01 / 1e-6, C1 / C2, degree 9,
     /// 10000 segments, degree priority, no rational conversion and default restriction
     /// parameters; `ShapeCustomBSplineRestriction::new()`.
     pub fn new() -> Self {
@@ -179,8 +179,7 @@ impl ShapeCustomBSplineRestriction {
         self.state.read().clone()
     }
 
-    /// The restriction parameters; dereferences them unchecked, so a null handle is
-    /// a Standard_NullObject failure.
+    /// Return the restriction parameters, rejecting an absent handle with a typed failure.
     fn parameters(&self) -> Result<Handle<ShapeCustomRestrictionParameters>, Failure> {
         let parameters = self.state.read().parameters.clone();
         if parameters.is_null() {

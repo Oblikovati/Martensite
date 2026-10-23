@@ -73,21 +73,21 @@ impl WireDataFields {
 }
 
 impl ShapeExtendWireData {
-    /// `ComputeSeams(enforce)`: finds the seams (an edge FORWARD whose REVERSED twin is in
+    /// finds the seams (an edge FORWARD whose REVERSED twin is in
     /// the list): the first pair is kept apart, the others in the seam list; without
     /// `enforce`, nothing when the seams are known; `data.compute_seams(true)?`.
     pub fn compute_seams(&self, enforce: bool) -> Result<(), Failure> {
         self.fields.write().compute_seams(enforce)
     }
 
-    /// `IsSeam(num)`: whether the edge of rank `num` is one of a seam pair (the seams are
+    /// whether the edge of rank `num` is one of a seam pair (the seams are
     /// computed first when needed); `data.is_seam(1)`.
     pub fn is_seam(&self, num: i32) -> bool {
         // ComputeSeams cannot fail on the edges of the list: they all are edges.
         self.fields.write().is_seam(num).unwrap_or(false)
     }
 
-    /// `Reverse(face)`: [`ShapeExtendWireData::reverse`], then, for a non-null face, the
+    /// [`ShapeExtendWireData::reverse`], then, for a non-null face, the
     /// two p-curves of every seam edge on the face are swapped (a seam reversed changes
     /// its role); `data.reverse_on_face(&face)?`.
     pub fn reverse_on_face(&self, face: &Face) -> Result<(), Failure> {

@@ -91,7 +91,7 @@ impl ShapeCustomBSplineRestriction {
         )
     }
 
-    /// `ConvertCurve2d(aCurve, C, IsConvert, First, Last, TolCur, IsOf)`: the 2D twin of
+    /// the 2D twin of
     /// `ConvertCurve` (copies get Precision::PConfusion). quirk kept: when an offset
     /// basis converts to C0 and the second pass succeeds, the result is reported but `C` is
     /// left unchanged.

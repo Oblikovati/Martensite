@@ -22,12 +22,12 @@ pub struct ShapeCustomSurface {
 }
 
 impl ShapeCustomSurface {
-    /// `ShapeCustomSurface()`: no surface, gap 0; `ShapeCustomSurface::new()`.
+    /// no surface, gap 0; `ShapeCustomSurface::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeCustomSurface(S)`: the tool on `surface`;
+    /// the tool on `surface`;
     /// `ShapeCustomSurface::with_surface(&surface)`.
     pub fn with_surface(surface: &Handle<dyn GeomSurface>) -> Self {
         let mut tool = Self::new();
@@ -35,12 +35,12 @@ impl ShapeCustomSurface {
         tool
     }
 
-    /// `Init(S)`: replaces the surface (the gap is kept); `tool.init(&surface)`.
+    /// replaces the surface (the gap is kept); `tool.init(&surface)`.
     pub fn init(&mut self, surface: &Handle<dyn GeomSurface>) {
         self.surface = surface.clone();
     }
 
-    /// `Gap()`: the deviation computed by the last `ConvertToAnalytical`; `tool.gap()`.
+    /// the deviation computed by the last `ConvertToAnalytical`; `tool.gap()`.
     pub fn gap(&self) -> f64 {
         self.gap
     }

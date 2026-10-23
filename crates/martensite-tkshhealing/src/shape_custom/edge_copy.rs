@@ -38,7 +38,7 @@ pub(super) fn copy_edge_curve(
     Ok(false)
 }
 
-/// `occ::down_cast<Geom_Curve>(C->Copy())`, a null curve staying null.
+/// Copy the spatial curve, retaining an absent handle when the input is absent.
 fn copied_curve(curve: &Handle<dyn GeomCurve>) -> Result<Handle<dyn GeomCurve>, Failure> {
     match curve.get() {
         Some(stored) => Ok(stored.copy()?.cast::<dyn GeomCurve>()),

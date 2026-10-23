@@ -10,7 +10,7 @@ use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::Arc;
 
-/// The shared resource manager of a context (the `occ::handle<Resource_Manager>`).
+/// Shared resource settings used by a processing context.
 pub type ShapeProcessResource = Arc<SharedState<ResourceManager>>;
 
 /// The private fields of `ShapeProcessContext`.
@@ -59,12 +59,12 @@ impl Default for ShapeProcessContext {
 }
 
 impl ShapeProcessContext {
-    /// `ShapeProcessContext()`; `ShapeProcessContext::new()`.
+    /// `ShapeProcessContext::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeProcessContext(file, scope)`: `Init(file, scope)`, then the default messenger
+    /// `Init(file, scope)`, then the default messenger
     /// and trace level 1; `ShapeProcessContext::with_file("DE", "read")?`.
     pub fn with_file(file: &str, scope: &str) -> Result<Self, Failure> {
         let context = Self::new();
@@ -72,7 +72,7 @@ impl ShapeProcessContext {
         Ok(context)
     }
 
-    /// `Init(file, scope)`: the scopes are cleared, the resource manager of `file` loaded
+    /// the scopes are cleared, the resource manager of `file` loaded
     /// (an empty one for an empty name) and `scope` pushed when not empty; always true
     /// ("NOT IMPLEMENTED"); `context.init("DE", "read")?`.
     pub fn init(&self, file: &str, scope: &str) -> Result<bool, Failure> {
@@ -91,12 +91,12 @@ impl ShapeProcessContext {
         Ok(true)
     }
 
-    /// `ResourceManager()`: the current manager, `None` for the null handle.
+    /// the current manager, `None` for the null handle.
     pub fn resource_manager(&self) -> Option<ShapeProcessResource> {
         self.fields.read().resource.clone()
     }
 
-    /// `SetScope(scope)`: pushes `scope` appended (with a dot) to the current one.
+    /// pushes `scope` appended (with a dot) to the current one.
     /// Example: `context.set_scope("FixShape")`.
     pub fn set_scope(&self, scope: &str) {
         let mut fields = self.fields.write();
@@ -113,14 +113,14 @@ impl ShapeProcessContext {
         stack.push(name);
     }
 
-    /// `UnSetScope()`: pops the current scope, if any; `context.un_set_scope()`.
+    /// pops the current scope, if any; `context.un_set_scope()`.
     pub fn un_set_scope(&self) {
         if let Some(stack) = self.fields.write().scope.as_mut() {
             stack.pop();
         }
     }
 
-    /// `SetMessenger(messenger)`: `None` (the null handle) restores the default
+    /// `None` (the null handle) restores the default
     /// messenger; `context.set_messenger(Some(messenger))`.
     pub fn set_messenger(&self, messenger: Option<Arc<Messenger>>) {
         self.fields.write().messenger =

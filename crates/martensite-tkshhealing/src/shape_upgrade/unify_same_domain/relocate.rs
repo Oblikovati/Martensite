@@ -93,7 +93,7 @@ fn start_edge(
     Ok(start)
 }
 
-/// `RelocatePCurvesToNewUorigin(...)`: false when an edge of a contour has no p-curve.
+/// false when an edge of a contour has no p-curve.
 pub(super) fn relocate_pcurves_to_new_uorigin(
     edges: &[Shape],
     first_face: &Shape,

@@ -13,7 +13,7 @@ use martensite_tkgeombase::{approx::Curve2d as ApproxCurve, geom2d_convert};
 use martensite_tkmath::{convert::ParameterisationType, geom_abs::Shape};
 
 impl ShapeConstructCurve {
-    /// `ConvertToBSpline(C2d, first, last, prec)`: [`Self::convert_to_bspline`] for a
+    /// [`Self::convert_to_bspline`] for a
     /// p-curve (`Approx_Curve2d(first, last, prec, prec, C1)`, degree 9, 1000 segments);
     /// `ShapeConstructCurve.convert_to_bspline_2d(&c, 0.0, 1.0, 1e-7)?`.
     pub fn convert_to_bspline_2d(
@@ -58,7 +58,7 @@ fn initial_bspline(
     )
 }
 
-/// `bspl->Copy()` then `Segment(f, l)` on the copy.
+/// Copy the B-spline before restricting it to the requested parameter range.
 fn segment_copy(
     spline: &mut Handle<Geom2dBSplineCurve>,
     first: f64,

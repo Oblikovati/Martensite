@@ -65,7 +65,7 @@ impl ShapeCustomBSplineRestriction {
         self.state.write().nb_max_seg = segments;
     }
 
-    /// `SetPriority(Degree)`: true gives priority to the degree, false to the number of
+    /// true gives priority to the degree, false to the number of
     /// segments; `restriction.set_priority(false)`.
     pub fn set_priority(&self, degree: bool) {
         self.state.write().degree_priority = degree;
@@ -76,7 +76,7 @@ impl ShapeCustomBSplineRestriction {
         self.state.write().rational = rational;
     }
 
-    /// `GetRestrictionParameters()`: the shared modes; `restriction.restriction_parameters()`.
+    /// the shared modes; `restriction.restriction_parameters()`.
     pub fn restriction_parameters(&self) -> Handle<ShapeCustomRestrictionParameters> {
         self.state.read().parameters.clone()
     }
@@ -86,22 +86,22 @@ impl ShapeCustomBSplineRestriction {
         self.state.write().parameters = modes.clone();
     }
 
-    /// `Curve3dError()`: the largest 3D curve approximation error so far.
+    /// the largest 3D curve approximation error so far.
     pub fn curve_3d_error(&self) -> f64 {
         self.state.read().curve_3d_error
     }
 
-    /// `Curve2dError()`: the largest p-curve approximation error so far.
+    /// the largest p-curve approximation error so far.
     pub fn curve_2d_error(&self) -> f64 {
         self.state.read().curve_2d_error
     }
 
-    /// `SurfaceError()`: the largest surface approximation error so far.
+    /// the largest surface approximation error so far.
     pub fn surface_error(&self) -> f64 {
         self.state.read().surface_error
     }
 
-    /// `MaxErrors(aCurve3dErr, aCurve2dErr)`: (surface, 3D curve, p-curve) errors, the
+    /// (surface, 3D curve, p-curve) errors, the
     /// native return value first; `let (surface, c3d, c2d) = restriction.max_errors();`.
     pub fn max_errors(&self) -> (f64, f64, f64) {
         let state = self.state.read();
@@ -112,7 +112,7 @@ impl ShapeCustomBSplineRestriction {
         )
     }
 
-    /// `NbOfSpan()`: the number of spans of the approximated surfaces so far.
+    /// the number of spans of the approximated surfaces so far.
     pub fn nb_of_span(&self) -> i32 {
         self.state.read().nb_of_span
     }

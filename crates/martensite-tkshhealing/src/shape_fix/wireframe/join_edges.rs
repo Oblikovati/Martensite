@@ -40,7 +40,7 @@ fn joined_orientation(edge: &Edge, reversed: bool) -> Orientation {
     }
 }
 
-/// `JoinEdges(E1, E2, E3, faces)`: an exception aborts the join with the `ReplaceFirst`
+/// an exception aborts the join with the `ReplaceFirst`
 /// computed so far and a null edge, as the try/catch.
 pub(super) fn join_edges(e1: &Edge, e2: &Edge, faces: &[Shape]) -> JoinedEdges {
     let mut replace_first = true;

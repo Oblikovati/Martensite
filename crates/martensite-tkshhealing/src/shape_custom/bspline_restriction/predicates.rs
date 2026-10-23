@@ -21,7 +21,7 @@ pub(super) struct Limits {
     pub rational: bool,
 }
 
-/// `IntegerToGeomAbsShape(i)`: 0 C0, 1 C1, 2 C2, 3 C3, any other CN.
+/// 0 C0, 1 C1, 2 C2, 3 C3, any other CN.
 pub(super) fn integer_to_continuity(i: i32) -> Continuity {
     match i {
         0 => Continuity::C0,
@@ -32,7 +32,7 @@ pub(super) fn integer_to_continuity(i: i32) -> Continuity {
     }
 }
 
-/// `ContToInteger(Cont)`: C0/G1 0, C1/G2 1, C2 2, C3 3, CN 4.
+/// C0/G1 0, C1/G2 1, C2 2, C3 3, CN 4.
 pub(super) fn continuity_to_integer(continuity: Continuity) -> i32 {
     match continuity {
         Continuity::C0 | Continuity::G1 => 0,

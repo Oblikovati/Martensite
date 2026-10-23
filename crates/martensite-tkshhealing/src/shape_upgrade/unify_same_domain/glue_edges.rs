@@ -107,7 +107,7 @@ fn concatenated(
     Ok(concat.bspline_curve())
 }
 
-/// `GlueEdgesWith3DCurves(aChain, FirstVertex, LastVertex)`: the new edge on the
+/// the new edge on the
 /// concatenated curve between the two vertices, made same parameter.
 pub(super) fn glue_edges_with_3d_curves(
     chain: &[Shape],

@@ -39,7 +39,7 @@ impl EdgeCursor {
         Ok(cursor)
     }
 
-    /// `edge = TopoDS::Edge(It.Value())` and `BRepTool::curve(edge, loc, first, last)`;
+    /// Read each edge curve together with its location and parameter range;
     /// Standard_NoSuchObject past the end (the Value() of a finished iterator).
     fn load(&mut self) -> Result<(), Failure> {
         let edge = self
@@ -102,10 +102,10 @@ struct HomoStep {
 }
 
 impl ShapeAlgoAlgoContainer {
-    /// `HomoWires(wireIn1, wireIn2, wireOut1, wireOut2, byParam)`: both wires reordered
+    /// both wires reordered
     /// (ShapeFixWire::fix_reorder), then cut so that edge k of one spans the same share of
     /// the total 3D parameter range as edge k of the other; `None` is the false
-    /// (after nEdges1 + nEdges2 - 1 edges). `byParam` is unused in this implementation.
+    /// (after nEdges1 + nEdges2 - 1 edges). The parameter-selection flag is unused.
     ///
     /// quirks (kept): one edge in each wire returns the reordered wires; a wire of
     /// nearly null total range becomes its first edge repeated once per edge of the other.
@@ -197,7 +197,7 @@ fn homo_step(
     })
 }
 
-/// `sfw->Load(wire); sfw->FixReorder(); sfw->Wire()`.
+/// Load the wire, repair edge ordering and return the rebuilt wire.
 fn reordered(fix: &ShapeFixWire, wire: &Wire) -> Result<Wire, Failure> {
     fix.load(wire)?;
     fix.fix_reorder(false)?;

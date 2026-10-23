@@ -18,7 +18,7 @@ use martensite_tkmath::gp::{Point3, Vector3};
 pub struct ShapeBuildVertex;
 
 impl ShapeBuildVertex {
-    /// `CombineVertex(V1, V2, tolFactor)`: [`Self::combine_points`] on the points and
+    /// [`Self::combine_points`] on the points and
     /// tolerances of the two vertices; the default factor is 1.0001;
     /// `ShapeBuildVertex.combine_vertices(&v1, &v2, 1.0001)?`.
     pub fn combine_vertices(
@@ -36,7 +36,7 @@ impl ShapeBuildVertex {
         )
     }
 
-    /// `CombineVertex(pnt1, pnt2, tol1, tol2, tolFactor)`: a new vertex whose sphere holds
+    /// a new vertex whose sphere holds
     /// both spheres `(pnt, tol)`: one of them when it holds the other, else the sphere
     /// through both far ends; its tolerance is the radius times `tol_factor`;
     /// `ShapeBuildVertex.combine_points(p1, p2, 1e-3, 1e-3, 1.0001)?`.

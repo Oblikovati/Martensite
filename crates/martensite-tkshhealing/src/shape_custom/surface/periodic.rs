@@ -10,8 +10,8 @@ use martensite_tkg3d::geom::{GeomBSplineSurface, GeomSurface};
 type KnotData = (Vec<f64>, Vec<i32>);
 
 impl ShapeCustomSurface {
-    /// `ConvertToPeriodic(substitute, preci)`: the periodic form of a B-spline surface
-    /// closed (ShapeAnalysisSurface::is_u_closed/IsVClosed with `preci`) in U or V with more
+    /// the periodic form of a B-spline surface
+    /// closed in U or V within `preci`, with more
     /// than 3 poles in that direction; a null handle when nothing was converted.
     ///
     /// quirk (kept): when the end multiplicities need no rearrangement, SetUPeriodic

@@ -40,7 +40,7 @@ pub fn setflags_locked(shape: &Shape) {
 }
 
 /// `sameparameter shape [tol]` (`fsameparameter` when
-/// `forced`): `BRepLib::SameParameter(S, tol, force)` in place; `tol` 1e-7 when absent.
+/// `forced`): repair parameter consistency in place; use tolerance 1e-7 when absent.
 pub fn sameparameter_in_place(shape: &Shape, tolerance: f64, forced: bool) {
     brep_lib::same_parameter_shape(shape, tolerance, forced).unwrap();
 }
@@ -57,7 +57,7 @@ pub fn sameparameter_reshaped(shape: &Shape, tolerance: f64, forced: bool) -> Sh
 }
 
 /// `updatetolerance result shape param`: with a fourth word
-/// that names no shape, `BRepLib::UpdateTolerances(S, ReShape, true)` (face tolerances
+/// that names no shape, update tolerances with a replacement context (face tolerances
 /// verified), the result being the re-shaped input.
 pub fn updatetolerance_reshaped(shape: &Shape) -> Shape {
     let reshaper = BRepToolsReShape::new();
@@ -131,7 +131,7 @@ pub fn mkplane(wire: &Shape) -> Result<Shape, String> {
 }
 
 /// `mkface name surface`: `BRepBuilderAPIMakeFace(S,
-/// Precision::Confusion())`.
+/// precision::confusion())`.
 pub fn mkface(surface: &Handle<dyn GeomSurface>) -> Shape {
     let mut maker = BRepBuilderAPIMakeFace::from_surface(surface, precision::confusion()).unwrap();
     maker.shape().unwrap().clone()

@@ -26,7 +26,7 @@ use martensite_tkmath::gp::{
 pub struct ShapeAnalysisGeom;
 
 impl ShapeAnalysisGeom {
-    /// `NearestPlane(Pnts, aPln, Dmax)`: the plane through the barycentre normal to the
+    /// the plane through the barycentre normal to the
     /// principal axis of smallest extent, when that extent is at most half of each other
     /// one, with the largest distance of the points to it; `None` (false) for a
     /// cloud that fits no plane. The `Dmax` is `RealFirst()` when no point is
@@ -58,7 +58,7 @@ impl ShapeAnalysisGeom {
         Ok(Some((plane, max_dist)))
     }
 
-    /// `PositionTrsf(coefs, trsf, unit, prec)`: the transformation of a 3 x 4 matrix
+    /// the transformation of a 3 x 4 matrix
     /// (the rotation columns must have equal norms within `prec` times their mean and be
     /// orthogonal within `prec`); the translation is multiplied by `unit`. A null matrix
     /// gives the identity and true; a matrix that is not a similarity gives false with the

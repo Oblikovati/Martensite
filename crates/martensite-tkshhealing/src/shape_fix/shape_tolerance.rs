@@ -48,14 +48,14 @@ fn is_simple_kind(kind: ShapeEnum) -> bool {
 }
 
 impl ShapeFixShapeTolerance {
-    /// `ShapeFixShapeTolerance()`; `ShapeFixShapeTolerance::new()`.
+    /// `ShapeFixShapeTolerance::new()`.
     pub fn new() -> Self {
         Self
     }
 
-    /// `LimitTolerance(shape, tmin, tmax, styp)`: raises the tolerances below `tmin` to it
+    /// raises the tolerances below `tmin` to it
     /// and, when `tmax >= tmin`, lowers those above `tmax` to it; true when a tolerance
-    /// changed (false for a null shape or a negative `tmin`). With `Wire`, in this implementation only
+    /// changed (false for a null shape or a negative `tmin`). With `Wire`, only
     /// the vertex changes count in the result, not the edge ones;
     /// `tool.limit_tolerance(&shape, 1e-7, 1e-3, ShapeEnum::Shape)?`.
     pub fn limit_tolerance(
@@ -95,7 +95,7 @@ impl ShapeFixShapeTolerance {
         Ok(fait)
     }
 
-    /// `SetTolerance(shape, preci, styp)`: forces the tolerances of the selected
+    /// forces the tolerances of the selected
     /// sub-shapes to `preci` (nothing for a null shape or a non-positive `preci`);
     /// `tool.set_tolerance(&shape, 1e-5, ShapeEnum::Shape)?`.
     pub fn set_tolerance(&self, shape: &Shape, preci: f64, styp: ShapeEnum) -> Result<(), Failure> {

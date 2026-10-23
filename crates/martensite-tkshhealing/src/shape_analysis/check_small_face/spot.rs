@@ -41,8 +41,7 @@ impl ShapeAnalysisCheckSmallFace {
         Ok(false)
     }
 
-    /// Decodes the native overall status field when known; leaves that field
-    /// uninitialized in its constructor, so a fresh analyzer returns `None`.
+    /// Decode the overall status when known; a fresh analyzer returns `None`.
     pub fn status(&self, status: ShapeExtendStatus) -> Option<bool> {
         self.overall_status
             .map(|value| ShapeExtend::decode_status(value, status))
@@ -68,7 +67,7 @@ impl ShapeAnalysisCheckSmallFace {
         ShapeExtend::decode_status(self.twisted_status, status)
     }
 
-    /// Decodes `StatusPinFace` only after native code has written its uninitialized field;
+    /// Decode the pin-face status only after it has been recorded;
     /// `analyzer.status_pin_face(ShapeExtendStatus::Done) == None` on a fresh analyzer.
     pub fn status_pin_face(&self, status: ShapeExtendStatus) -> Option<bool> {
         self.pin_face_status
@@ -88,7 +87,7 @@ impl ShapeAnalysisCheckSmallFace {
     }
 
     /// Reads the checker precision after `SetTolerance`; `analyzer.tolerance() == Some(0.01)`.
-    /// leaves this field uninitialized until its setter has been called.
+    /// Return `None` until the tolerance setter has been called.
     pub fn tolerance(&self) -> Option<f64> {
         self.tolerance
     }

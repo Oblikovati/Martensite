@@ -19,7 +19,7 @@ mod topology;
 use state::{ContentCounts, ContentRecordings};
 /// Counts topology occurrences and selected geometry properties, optionally retaining matching shapes.
 /// Example: `let mut contents = ShapeAnalysisShapeContents::new(); contents.perform(&shape)?;`.
-/// counters are uninitialized until Clear/Perform; Rust initializes this undefined domain to zero.
+/// counters start at zero and are reset before each content scan.
 #[derive(Clone, Default)]
 pub struct ShapeAnalysisShapeContents {
     counts: ContentCounts,

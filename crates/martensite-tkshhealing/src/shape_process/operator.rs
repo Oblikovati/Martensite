@@ -20,7 +20,7 @@ pub type ShapeProcessOperFunc =
 /// assert!(op.perform(&context, &Default::default()).unwrap());
 /// ```
 pub trait ShapeProcessOperator: Transient {
-    /// `Perform(context, theProgress)`: runs the operator on the context.
+    /// runs the operator on the context.
     fn perform(
         &self,
         context: &Handle<ShapeProcessContext>,
@@ -47,7 +47,7 @@ impl_transient!(
 );
 
 impl ShapeProcessUOperator {
-    /// `ShapeProcessUOperator(func)`; `ShapeProcessUOperator::new(my_operator)`.
+    /// Wrap the processing callback; `ShapeProcessUOperator::new(my_operator)`.
     pub fn new(function: ShapeProcessOperFunc) -> Self {
         Self {
             parent: StandardTransient::default(),

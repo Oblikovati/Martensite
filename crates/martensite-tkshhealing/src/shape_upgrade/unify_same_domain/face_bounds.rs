@@ -31,7 +31,7 @@ fn other_face(faces: &[Shape], face: &Shape) -> Option<Shape> {
     Some(first.clone())
 }
 
-/// `GetFaceFromSeq(theFaces, theRefFace, theMapEF, theUsedFaces, theIndFace)`: the first
+/// the first
 /// face when none is used yet; else a face sharing a non-seam edge with a used face (or
 /// a seam edge when there is no other), added to the used faces with its index in the
 /// sequence (`index` unchanged when the face is not found from the second one on).
@@ -100,7 +100,7 @@ fn bordering_face(
     Ok(other_face(&list, used_face).unwrap_or_default())
 }
 
-/// `RemoveEdgeFromMap(theEdge, theVertexToEdges)`: the edge removed from the lists of
+/// the edge removed from the lists of
 /// both its vertices; true when it was found.
 pub(super) fn remove_edge_from_map(
     edge: &Shape,
@@ -119,7 +119,7 @@ pub(super) fn remove_edge_from_map(
     Ok(removed)
 }
 
-/// `ComputeMinEdgeSize(theEdges, theRefFace, theEdgesMap)`: the smallest 2D chord (to
+/// the smallest 2D chord (to
 /// the middle point for a closed non-degenerated edge) of the edges with a p-curve on
 /// the reference face; every edge is added to `edges_map`.
 pub(super) fn compute_min_edge_size(
@@ -156,7 +156,7 @@ pub(super) struct CoordBounds {
     pub face_max: usize,
 }
 
-/// `FindCoordBounds(...)`: the intervals of coordinate `index` covered by the faces (in
+/// the intervals of coordinate `index` covered by the faces (in
 /// bordering order) on the reference face, merged; the minimum is that of the first
 /// interval (of the second one less the period with two intervals) and the maximum that
 /// of the first. None when an edge has no p-curve or no interval is found.
@@ -259,7 +259,7 @@ fn insert_interval(intervals: &mut Vec<(f64, f64)>, (min, max): (f64, f64)) {
     }
 }
 
-/// `AddOrdinaryEdges(edges, aShape, anIndex, theRemovedEdges)`: the edges of `shape`
+/// the edges of `shape`
 /// added to `edges`, the edges met twice (seams) and those already in `edges` removed
 /// (into `removed`); `index` receives the 1-based position before the first edge removed
 /// from `edges` (true is returned then).

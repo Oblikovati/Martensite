@@ -34,7 +34,7 @@ impl ShapeFixFixSmallSolid {
         Self::default()
     }
 
-    /// `SetFixMode(mode)`: invalid modes reset to `0`; `fixer.set_fix_mode(2)`.
+    /// invalid modes reset to `0`; `fixer.set_fix_mode(2)`.
     pub fn set_fix_mode(&self, mode: i32) {
         self.config.write().mode = if (0..=2).contains(&mode) { mode } else { 0 };
     }

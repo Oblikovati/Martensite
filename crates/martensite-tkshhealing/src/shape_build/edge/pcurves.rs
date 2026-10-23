@@ -19,13 +19,13 @@ use martensite_tkmath::gp::{
 };
 use martensite_tkmath::toploc::Location;
 
-/// A null p-curve handle (`occ::handle<Geom2dCurve> c2dNull`).
+/// Create an absent p-curve handle for removing a representation.
 fn null_pcurve() -> Handle<dyn Geom2dCurve> {
     Handle::default()
 }
 
 impl ShapeBuildEdge {
-    /// `RemovePCurve(edge, face)`: removes the p-curve (both of a seam) of the edge on the
+    /// removes the p-curve (both of a seam) of the edge on the
     /// face; `ShapeBuildEdge.remove_pcurve_on_face(&e, &f)?`.
     pub fn remove_pcurve_on_face(&self, edge: &Edge, face: &Face) -> Result<(), Failure> {
         let builder = BRepBuilder::default();
@@ -37,7 +37,7 @@ impl ShapeBuildEdge {
         builder.update_edge_pcurve_on_face(edge, &null, face, 0.0)
     }
 
-    /// `RemovePCurve(edge, surf)`: on the surface at the identity location;
+    /// on the surface at the identity location;
     /// `ShapeBuildEdge.remove_pcurve_on_surface(&e, &s)?`.
     pub fn remove_pcurve_on_surface(
         &self,
@@ -47,7 +47,7 @@ impl ShapeBuildEdge {
         self.remove_pcurve_on_located_surface(edge, surface, &Location::default())
     }
 
-    /// `RemovePCurve(edge, surf, loc)`: removes the p-curve (both of a seam) on the
+    /// removes the p-curve (both of a seam) on the
     /// located surface; `ShapeBuildEdge.remove_pcurve_on_located_surface(&e, &s, &l)?`.
     pub fn remove_pcurve_on_located_surface(
         &self,
@@ -63,7 +63,7 @@ impl ShapeBuildEdge {
         builder.update_edge_pcurve(edge, &null, surface, location, 0.0, None)
     }
 
-    /// `ReplacePCurve(edge, pcurve, face)`: sets `pcurve` as the p-curve of the edge on
+    /// sets `pcurve` as the p-curve of the edge on
     /// the face; on a seam (two p-curves on the face taken FORWARD) only the one of the
     /// edge's orientation is replaced. The range on the face is then set to the range of
     /// the p-curve of the reversed edge (the last one read); `ShapeBuildEdge.replace_pcurve(&e, &c, &f)?`.
@@ -75,7 +75,7 @@ impl ShapeBuildEdge {
     ) -> Result<(), Failure> {
         let builder = BRepBuilder::default();
         let edge_rev = Edge::unchecked(edge.reversed());
-        // reverse face to take second pcurve for seams like SA_Edge::PCurve() does
+        // Reverse the face to select the second p-curve of a seam.
         let forward = Face::unchecked(face.oriented(Orientation::Forward));
         let pcurve0 = BRepTool::curve_on_face(edge, &forward)?.pcurve;
         let other = BRepTool::curve_on_face(&edge_rev, &forward)?;
@@ -110,7 +110,7 @@ fn count_pcurves(edge: &Edge, face: &Face) -> Result<i32, Failure> {
 }
 
 impl ShapeBuildEdge {
-    /// `ReassignPCurve(edge, old, sub)`: moves the p-curve of the edge on face `old` to
+    /// moves the p-curve of the edge on face `old` to
     /// face `sub` (one of the two of a seam, the other one stays on `old`; on `sub` it
     /// becomes the first of a seam when `sub` has one already). False when the edge has
     /// no p-curve on `old`; `ShapeBuildEdge.reassign_pcurve(&e, &old, &sub)?`.
@@ -157,7 +157,7 @@ impl ShapeBuildEdge {
         builder.update_edge_pcurves_on_face(edge, (pc, &pcs), sub, 0.0)
     }
 
-    /// `TransformPCurve(pcurve, trans, uFact, aFirst, aLast)`: a copy of the p-curve
+    /// a copy of the p-curve
     /// transformed by `trans` (the range follows), then scaled by `u_fact` along U (the
     /// affinity of axis OY): a line stays a line through the scaled ends of the range, a
     /// Bezier curve has its poles scaled, a conic is approximated (C1, 100 segments, degree

@@ -29,7 +29,7 @@ static INITIALIZED: AtomicBool = AtomicBool::new(false);
 pub struct ShapeAlgo;
 
 impl ShapeAlgo {
-    /// `Init()`: once per process, a new algorithm container becomes current and
+    /// once per process, a new algorithm container becomes current and
     /// ShapeExtend::init loads the messages; `ShapeAlgo::init()?`.
     pub fn init() -> Result<(), Failure> {
         if INITIALIZED.swap(true, Ordering::SeqCst) {
@@ -39,13 +39,13 @@ impl ShapeAlgo {
         ShapeExtend::init()
     }
 
-    /// `SetAlgoContainer(aContainer)`: the current container (a null handle is kept);
+    /// the current container (a null handle is kept);
     /// `ShapeAlgo::set_algo_container(&container)`.
     pub fn set_algo_container(container: &Handle<ShapeAlgoAlgoContainer>) {
         *lock() = Some(container.clone());
     }
 
-    /// `AlgoContainer()`: the current container, null before `Init` or `SetAlgoContainer`;
+    /// the current container, null before `Init` or `SetAlgoContainer`;
     /// `ShapeAlgo::algo_container()`.
     pub fn algo_container() -> Handle<ShapeAlgoAlgoContainer> {
         lock().clone().unwrap_or_default()

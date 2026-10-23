@@ -68,7 +68,7 @@ impl Deref for ShapeUpgradeShapeDivideContinuity {
 }
 
 impl ShapeUpgradeShapeDivideContinuity {
-    /// Create an uninitialized continuity divider with native defaults.
+    /// Create an continuity divider with default settings and no input shape.
     /// `ShapeUpgradeShapeDivideContinuity::empty()`.
     pub fn empty() -> Self {
         Self::default()

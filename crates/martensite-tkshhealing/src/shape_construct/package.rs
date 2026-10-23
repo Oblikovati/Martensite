@@ -59,7 +59,7 @@ impl ShapeConstruct {
         }
     }
 
-    /// `ConvertCurveToBSpline(C2D, ...)`: a conic is trimmed to `[first, last]` and
+    /// a conic is trimmed to `[first, last]` and
     /// approximated (the exact conversion of the trimmed conic when the approximation has
     /// no result); another non-B-spline curve is converted exactly; a B-spline is returned
     /// as is. catches nothing here, so every failure propagates.

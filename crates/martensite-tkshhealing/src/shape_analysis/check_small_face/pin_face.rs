@@ -279,7 +279,7 @@ fn initial_scale(length: f64, local_tolerance: f64, tolerance: f64) -> f64 {
 }
 
 fn bind_pin_pair(map: &mut PinFaceEdgeMap, first: &Edge, second: &Edge) -> Result<(), Failure> {
-    // NCollection_DataMap::Bind rebinds a bound key; CheckPinFace ignores its result.
+    // Rebinding replaces the existing entry; the insertion result is intentionally ignored.
     let _ = map.bind(first.clone().into_shape(), second.clone().into_shape());
     Ok(())
 }
