@@ -3,7 +3,7 @@ use super::*;
 
 /// The boxed 2D face classifier must beat the unboxed one by 4, 3, 15 and 15 percent.
 ///
-/// Planar face construction stores each edge parameter curve, so classification reuses it.
+/// Classification reuses finite planar bounds within one operation without storing curves on input edges.
 #[test]
 fn bug27884() {
     let identity = "bugs_modalg_6::bug27884";

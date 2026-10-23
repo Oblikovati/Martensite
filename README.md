@@ -31,6 +31,9 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkhlr` | Hidden line removal, contour lines of surfaces and the visible and hidden lines as shapes. |
 | `martensite-tkprim` | Primitive solids (boxes, wedges, cylinders, cones, spheres, tori, revolutions, half-spaces) and sweeps. |
 | `martensite-tkhelix` | Helix curves, their B-spline approximation and composite helix wires. |
+| `martensite-tkshhealing` | Shape analysis, repair, geometry conversion and subdivision. |
+| `martensite-tkmesh` | Mesh elements, discretization, triangulation and incremental meshing. |
+| `martensite-tktobj` | Document objects, partitions, references, attributes and model iteration. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [math guide](docs/features/martensite-tkmath/README.md), and
@@ -45,6 +48,10 @@ See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [hidden line removal](docs/features/martensite-tkhlr/README.md),
 [primitive solid](docs/features/martensite-tkprim/README.md) and
 [helix](docs/features/martensite-tkhelix/README.md) guides for module and test details.
+The [shape healing](docs/features/martensite-tkshhealing/README.md),
+[mesh construction](docs/features/martensite-tkmesh/README.md) and
+[document object model](docs/features/martensite-tktobj/README.md) guides describe
+the added toolkits and their verification limits.
 
 ## Getting started
 

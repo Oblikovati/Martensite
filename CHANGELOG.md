@@ -31,7 +31,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added shape healing, mesh construction and document-object model crates ([#215], [#216], [#217]).
+- Added shape healing, mesh construction and document-object model crates (#215, #216, #217).
 
 ## [0.3.5] - 2026-10-20
 
