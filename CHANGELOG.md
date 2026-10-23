@@ -6,13 +6,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
-
-- Preserve planar wire geometry during face construction and reuse finite curve bounds within classification operations without storing projection caches on input edges (#242).
-
 ## [0.3.6] - 2026-10-23
 
 ### Fixed
+
+- Preserved planar wire geometry during face construction and reused finite curve bounds within classification operations without storing projection caches on input edges (#242).
 
 - Removed the reciprocal hidden-line/primitive test dependency while preserving the two-solid projection check, so dependency policy and source packaging agree (#241).
 
