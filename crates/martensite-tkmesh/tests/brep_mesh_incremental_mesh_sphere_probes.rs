@@ -1,6 +1,5 @@
-//! Port-only sphere probes of AllowQualityDecrease and of the BRepTools cleanup/reuse
-//! order on a sphere face and solid; the upstream OCC31461 declaration itself is mirrored in
-//! brep_mesh_incremental_mesh_suite.rs.
+//! Spherical face and solid probes for quality-decrease settings and cleanup/reuse order.
+//! The incremental mesh suite covers the broader sphere meshing contract.
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkmath::gp::{Axis3, Point3, Sphere3, StandardDirection3};

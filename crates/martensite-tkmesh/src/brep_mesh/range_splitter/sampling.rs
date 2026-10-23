@@ -9,7 +9,7 @@ pub(super) fn update_range(first: f64, last: f64, periodic: bool, range: &mut (f
         }
         return;
     }
-    // the retained behavior #23675: wholly disjoint domains are intentionally retained.
+    // Retain wholly disjoint domains so boundary sampling keeps their separate intervals.
     if range.0 < last && range.1 > first {
         if first > range.0 {
             range.0 = first;

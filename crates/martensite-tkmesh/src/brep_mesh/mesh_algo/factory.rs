@@ -1,5 +1,4 @@
-// Rust translation of BRepMesh_MeshAlgoFactory.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Choose a face meshing strategy from the requested algorithm and surface kind.
 use super::algo_object::{BRepMeshDelaunayBaseMeshAlgo, FaceMeshingCore};
 use super::deflection_control::DelaunayDeflectionControlMeshAlgo;
 use super::delaunay_insertion::DelaunayNodeInsertionMeshAlgo;
@@ -14,7 +13,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
 use martensite_tkmath::geom_abs::SurfaceType;
 
-/// `BRepMesh_MeshAlgoFactory`: the Watson algorithm suited to each surface type.
+/// `BRepMeshMeshAlgoFactory`: the Watson algorithm suited to each surface type.
 ///
 /// ```
 /// use martensite_tkmath::geom_abs::SurfaceType;
@@ -37,7 +36,7 @@ impl_transient!(
 );
 
 impl BRepMeshMeshAlgoFactory {
-    /// `BRepMesh_MeshAlgoFactory()`; `BRepMeshMeshAlgoFactory::new()`.
+    /// `BRepMeshMeshAlgoFactory()`; `BRepMeshMeshAlgoFactory::new()`.
     pub fn new() -> Self {
         Self::default()
     }

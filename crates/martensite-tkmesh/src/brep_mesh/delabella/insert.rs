@@ -25,9 +25,7 @@ SOFTWARE.
 
 */
 
-// Rust translation of CDelaBella::Triangulate() of delabella.cpp: "ACTUAL ALGORITHM",
-// the incremental insertion of each lifted point into the convex hull, and
-// Face::Next.
+// Insert lifted points by replacing visible hull faces along their silhouette.
 
 //! Each new point deletes the hull faces it sees and is joined to their silhouette by
 //! a cone of new faces.

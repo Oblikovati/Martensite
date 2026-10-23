@@ -22,7 +22,7 @@ struct PolygonEdit {
     finish: bool,
 }
 impl BRepMeshDelaun {
-    /// Internal native polygon meshing entry for differential probes; `triangulator.mesh_polygon_links(&mut links)?`.
+    /// Expose polygon meshing for direct connectivity checks; `triangulator.mesh_polygon_links(&mut links)?`.
     #[doc(hidden)]
     pub fn mesh_polygon_links(&mut self, links: &mut Sequence<i32>) -> Result<(), Failure> {
         let mut polygon = self.boxed_polygon(links)?;

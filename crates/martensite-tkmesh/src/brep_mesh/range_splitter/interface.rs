@@ -176,11 +176,11 @@ nurbs_range_splitter!(NURBSRangeSplitter, default_add_point);
 nurbs_range_splitter!(BoundaryParamsRangeSplitter, params_add_point);
 nurbs_range_splitter!(ExtrusionRangeSplitter, default_add_point);
 nurbs_range_splitter!(UndefinedRangeSplitter, default_add_point);
-/// `BRepMesh_DefaultRangeSplitter::AddPoint` on a NURBS-family splitter.
+/// `DefaultRangeSplitter::AddPoint` on a NURBS-family splitter.
 fn default_add_point<T: RangeSplitter>(splitter: &mut T, point: Point2) {
     splitter.range_state_mut().add_point(point);
 }
-/// `BRepMesh_BoundaryParamsRangeSplitter::AddPoint`: the range and both parameters.
+/// `BoundaryParamsRangeSplitter::AddPoint`: the range and both parameters.
 fn params_add_point(splitter: &mut BoundaryParamsRangeSplitter, point: Point2) {
     splitter.add_point_params(point);
 }

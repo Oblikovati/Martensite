@@ -1,11 +1,10 @@
-// Rust translation of BRepMesh_TorusRangeSplitter.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Choose toroidal sampling ranges from boundary parameters and deflection limits.
 use super::uv_param::IMapOfReal;
 use super::*;
 use martensite_tkgeombase::gcpnts::TangentialDeflection;
 use martensite_tkmath::bvh::BvhScalar;
 
-/// `BRepMesh_TorusRangeSplitter`: interior nodes of a torus from the filtered boundary
+/// `TorusRangeSplitter`: interior nodes of a torus from the filtered boundary
 /// parameters; `TorusRangeSplitter::default()`.
 #[derive(Default)]
 pub struct TorusRangeSplitter {

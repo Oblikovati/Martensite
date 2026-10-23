@@ -1,5 +1,4 @@
-// Rust translation of BRepMesh_BaseMeshAlgo.hxx/.cxx and BRepMesh_ConstrainedBaseMeshAlgo.hxx
-// at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Shared face meshing stages and boundary-constraint hooks.
 use crate::brep_mesh::{
     BRepMeshDataStructureOfDelaun, BRepMeshDelaun, BRepMeshEdge, BRepMeshVertex, DegreeOfFreedom,
 };
@@ -13,7 +12,7 @@ use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::gp::{Point2, Point3};
 
-/// The protected and private data of `BRepMesh_BaseMeshAlgo`, live during one Perform.
+/// The protected and private data of `BaseMeshAlgo`, live during one Perform.
 #[derive(Default)]
 pub struct BaseMeshAlgoData {
     face: FaceHandle,
@@ -64,9 +63,8 @@ impl BaseMeshAlgoData {
     }
 }
 
-/// The virtual protected members of `BRepMesh_BaseMeshAlgo` over its data. The default
-/// bodies are the native ones; an override reaches the base version through the
-/// `base_*` functions, as the C++ calls `BaseAlgo::member`.
+/// Overridable face meshing stages over shared base state.
+/// The `base_*` functions expose the default implementations to specialized stages.
 pub trait BaseMeshAlgoHooks {
     /// The base data; `algo.base_data().get_structure()`.
     fn base_data(&self) -> &BaseMeshAlgoData;
@@ -106,7 +104,7 @@ pub trait BaseMeshAlgoHooks {
     fn generate_mesh(&mut self, range: &ProgressRange<'_>) -> Result<(), Failure>;
 }
 
-/// The two virtual members `BRepMesh_ConstrainedBaseMeshAlgo` adds, with their native
+/// The two virtual members `ConstrainedBaseMeshAlgo` adds, with their native
 /// defaults.
 pub trait ConstrainedBaseMeshAlgoHooks: BaseMeshAlgoHooks {
     /// `getCellsCount`: `(-1, -1)`, the default circle grid; `algo.get_cells_count(10)?`.
@@ -123,7 +121,7 @@ pub trait ConstrainedBaseMeshAlgoHooks: BaseMeshAlgoHooks {
     }
 }
 
-/// `BRepMesh_BaseMeshAlgo::Perform`: any failure inside is caught (the native
+/// `BaseMeshAlgo::Perform`: any failure inside is caught (the native
 /// `catch (Standard_Failure)`), and no link to the face is kept afterwards;
 /// `base_perform(&mut algo, &face, &parameters, &range)`.
 pub fn base_perform<A: BaseMeshAlgoHooks + ?Sized>(
@@ -150,7 +148,7 @@ fn perform_steps<A: BaseMeshAlgoHooks + ?Sized>(
     commit_surface_triangulation(algo)
 }
 
-/// `BRepMesh_BaseMeshAlgo::registerNode`: frontier and fixed nodes are pre-bound to
+/// `BaseMeshAlgo::registerNode`: frontier and fixed nodes are pre-bound to
 /// their own index so pcurve indices stay valid in the compact triangulation.
 pub fn base_register_node<A: BaseMeshAlgoHooks + ?Sized>(
     algo: &mut A,
@@ -171,7 +169,7 @@ pub fn base_register_node<A: BaseMeshAlgoHooks + ?Sized>(
     Ok(node_index)
 }
 
-/// `BRepMesh_BaseMeshAlgo::initDataStructure`: the frontier nodes and links of every
+/// `BaseMeshAlgo::initDataStructure`: the frontier nodes and links of every
 /// wire that does not self-intersect.
 pub fn base_init_data_structure<A: BaseMeshAlgoHooks + ?Sized>(
     algo: &mut A,

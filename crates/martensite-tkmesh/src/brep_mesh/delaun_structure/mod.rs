@@ -1,4 +1,4 @@
-//! Indexed planar mesh connectivity, retaining the retained behavior's deletion and compaction order.
+//! Indexed planar mesh connectivity with deterministic deletion and compaction order.
 use super::{
     BRepMeshEdge, BRepMeshTriangle, BRepMeshVertex, BRepMeshVertexTool, DegreeOfFreedom,
     PairOfIndex,
@@ -18,8 +18,7 @@ mod dump;
 mod elements;
 mod links;
 
-// Native RemoveLink mutates a const map key without rehashing it. Movability
-// changes equality but not the endpoint hash (the retained behavior 3d097a0328e71).
+// Removing a link changes movability and equality; the endpoint hash remains stable.
 #[derive(Debug)]
 struct MeshLinkKey(SharedState<BRepMeshEdge>);
 impl PartialEq for MeshLinkKey {

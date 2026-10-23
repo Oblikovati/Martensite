@@ -33,7 +33,7 @@ impl ModelAlgo for BRepMeshModelPostProcessor {
         if model.is_null() {
             return Ok(false);
         }
-        // the retained behavior 3d097a03 forces edge publication sequentially because edges may share TShapes.
+        // Publish edges sequentially because several edges can share the same topology state.
         for index in 0..model.edges_nb() {
             polygons::commit_edge(&model.get_edge(index)?)?;
         }

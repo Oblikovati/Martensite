@@ -1,10 +1,9 @@
-// Rust translation of BRepMesh_CylinderRangeSplitter.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Scale cylindrical parameter steps to the requested spatial deflection.
 use super::*;
 use martensite_tkgeombase::gcpnts::TangentialDeflection;
 use martensite_tkmath::bvh::BvhScalar;
 
-/// `BRepMesh_CylinderRangeSplitter`: interior nodes along the U rows of a cylinder, with
+/// `CylinderRangeSplitter`: interior nodes along the U rows of a cylinder, with
 /// the U delta scaled by the arc angular step; `CylinderRangeSplitter::default()`.
 pub struct CylinderRangeSplitter {
     base: DefaultRangeSplitter,
@@ -49,9 +48,8 @@ impl CylinderRangeSplitter {
         Ok(())
     }
 
-    /// `GenerateSurfaceNodes`: `(int)(su / myDu)` U steps when the arc is longer than
-    /// the deflection, a single V row step (the native V count stays 0: its formula is
-    /// commented out upstream); `splitter.generate_surface_nodes()?`.
+    /// Generate U steps from arc length and deflection, with a single V row.
+    /// The V subdivision count stays zero; `splitter.generate_surface_nodes()?`.
     pub fn generate_surface_nodes(&self) -> Result<SurfaceNodes, Failure> {
         let radius = self.get_surface().cylinder()?.radius();
         let su = self.range_u.1 - self.range_u.0;

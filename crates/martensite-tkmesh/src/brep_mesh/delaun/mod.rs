@@ -1,4 +1,4 @@
-//! BRepMesh_Delaun from the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871: the existing-mesh core
+//! Delaunay refinement of existing mesh connectivity: the core is defined
 //! here, vertex insertion, constraints and frontier adjustment in the submodules.
 use super::{
     BRepMeshCircleTool, BRepMeshDataStructureOfDelaun, BRepMeshEdge, BRepMeshTriangle,

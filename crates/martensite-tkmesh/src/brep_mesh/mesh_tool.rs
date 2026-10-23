@@ -1,8 +1,6 @@
-// Rust translation of BRepMesh_MeshTool.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+// Connectivity edits keep frontier constraints intact while triangles are legalized.
 
-//! `BRepMesh_MeshTool`: edits of a BRepMesh_DataStructureOfDelaun (triangle insertion
-//! with legalization, cleanup of frontier and free links).
+//! Edit triangle connectivity with legalization and frontier/free-link cleanup.
 use super::{
     BRepMeshCircleTool, BRepMeshDataStructureOfDelaun, BRepMeshEdge,
     BRepMeshSelectorOfDataStructureOfDelaun, BRepMeshTriangle, DegreeOfFreedom,
@@ -25,7 +23,7 @@ pub(crate) fn new_loop_edges() -> MapOfIntegerInteger {
     DataMap::with_allocator(DefaultHashPolicy, 1, BaseAllocator::incremental(0))
 }
 
-/// `BRepMesh_MeshTool::NodeClassifier`: whether a node lies strictly on the upper side
+/// `BRepMeshMeshTool::NodeClassifier`: whether a node lies strictly on the upper side
 /// of a constraint link (orientation normalized so that the link points to +X).
 pub struct NodeClassifier {
     structure: Handle<BRepMeshDataStructureOfDelaun>,
@@ -69,7 +67,7 @@ impl NodeClassifier {
     }
 }
 
-/// `BRepMesh_MeshTool` over a shared mesh structure.
+/// `BRepMeshMeshTool` over a shared mesh structure.
 ///
 /// ```
 /// use martensite_tkernel::ncollection::IncrementalAllocatorObject;
@@ -98,7 +96,7 @@ impl_transient!(
 );
 
 impl BRepMeshMeshTool {
-    /// `BRepMesh_MeshTool(theStructure)`; `BRepMeshMeshTool::new(&mesh)`.
+    /// `BRepMeshMeshTool(theStructure)`; `BRepMeshMeshTool::new(&mesh)`.
     pub fn new(structure: &Handle<BRepMeshDataStructureOfDelaun>) -> Self {
         Self {
             transient: StandardTransient::default(),

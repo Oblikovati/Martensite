@@ -1,4 +1,4 @@
-//! The native template adds no descriptor: dynamic RTTI remains Standard_Transient.
+//! Edge parameter tools share the transient runtime descriptor.
 use super::EdgeParameterProvider;
 use martensite_tkernel::standard::{RuntimeType, RuntimeTyped, StandardTransient, Transient};
 impl RuntimeTyped for EdgeParameterProvider {

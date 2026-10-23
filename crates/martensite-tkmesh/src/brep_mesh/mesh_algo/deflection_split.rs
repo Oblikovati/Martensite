@@ -1,5 +1,4 @@
-// Rust translation of the triangle splitting of BRepMesh_DelaunayDeflectionControlMeshAlgo.hxx
-// (splitTriangleGeometry and its helpers) at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Split triangles whose geometric error requires additional surface samples.
 use super::base::BaseMeshAlgoData;
 use super::delaunay_insertion::DelaunayInsertionHooks;
 use crate::brep_mesh::{

@@ -1,7 +1,6 @@
-// Rust translation of BRepMesh_IncrementalMesh.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+// One context keeps the shape meshing stages on the same configuration and status.
 
-//! `BRepMesh_IncrementalMesh`: the meshing of a shape through BRepMesh_Context.
+//! Coordinate shape meshing through one configured context.
 use super::BRepMeshContext;
 use super::discret_root::{BRepMeshDiscretRoot, DiscretRootBase};
 use crate::imesh_data::{MeshModel, Status};
@@ -17,7 +16,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 /// `IS_IN_PARALLEL`: the parallel flag given to the algorithms of the factories.
 static IS_IN_PARALLEL: AtomicBool = AtomicBool::new(false);
 
-/// `BRepMesh_IncrementalMesh`: builds the triangulation of every face and the
+/// `BRepMeshIncrementalMesh`: builds the triangulation of every face and the
 /// polygons of every edge of a shape.
 ///
 /// ```
@@ -47,7 +46,7 @@ impl Default for BRepMeshIncrementalMesh {
 }
 
 impl BRepMeshIncrementalMesh {
-    /// `BRepMesh_IncrementalMesh()`: not modified, status IMeshData_NoError;
+    /// `BRepMeshIncrementalMesh()`: not modified, status IMeshData_NoError;
     /// `BRepMeshIncrementalMesh::new()`.
     pub fn new() -> Self {
         Self::default()
@@ -63,7 +62,7 @@ impl BRepMeshIncrementalMesh {
         }
     }
 
-    /// `BRepMesh_IncrementalMesh(theShape, theLinDeflection, isRelative,
+    /// `BRepMeshIncrementalMesh(theShape, theLinDeflection, isRelative,
     /// theAngDeflection, isInParallel)`: meshes at once; Standard_NumericError for a
     /// deflection below Precision::Confusion() or an angle below Precision::Angular();
     /// `BRepMeshIncrementalMesh::with_shape(&shape, 0.1, false, 0.5, false)?`.
@@ -84,7 +83,7 @@ impl BRepMeshIncrementalMesh {
         Self::with_parameters(shape, &parameters, &ProgressRange::default())
     }
 
-    /// `BRepMesh_IncrementalMesh(theShape, theParameters, theRange)`: meshes at once.
+    /// `BRepMeshIncrementalMesh(theShape, theParameters, theRange)`: meshes at once.
     /// The native constructor leaves myModified and myStatus uninitialized; Rust starts
     /// them as the default constructor does;
     /// `BRepMeshIncrementalMesh::with_parameters(&shape, &parameters, &range)?`.
@@ -204,7 +203,7 @@ impl BRepMeshDiscretRoot for BRepMeshIncrementalMesh {
     fn discret_root_base(&self) -> &DiscretRootBase {
         &self.root
     }
-    /// `Perform(theRange)`: through a new BRepMesh_Context of the parameters' type.
+    /// `Perform(theRange)`: through a new BRepMeshContext of the parameters' type.
     fn perform(&self, range: &ProgressRange<'_>) -> Result<(), Failure> {
         let context = BRepMeshContext::new(self.parameters().mesh_algo)?;
         self.perform_with_context(&Handle::new(context).cast(), range)

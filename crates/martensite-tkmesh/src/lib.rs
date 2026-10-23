@@ -1,4 +1,4 @@
-//! Rust translation of TKMesh at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Mesh construction, refinement and topology-aware sampling.
 //! Discrete model interfaces and their default BRep implementations.
 pub mod brep_mesh_data;
 pub mod imesh_data;

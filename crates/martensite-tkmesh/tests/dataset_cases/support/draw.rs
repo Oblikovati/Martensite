@@ -1,20 +1,19 @@
-//! The scenario state a TKMesh case body works on: its shape variables and its log.
+//! Fixture state tracks shape variables and their command log.
 //!
-//! A command runs through [`Draw::command`], which logs it the way `Draw_Interpretor`
-//! does in the harness's echo mode (the arguments, then the result) and turns a non-zero
-//! status or a `Standard_Failure` into a Tcl error, which the body propagates with `?`.
+//! [`Draw::command`] records arguments and results. Unsuccessful status or kernel
+//! failure propagates through the fixture error type.
 use super::log::DrawLog;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::Failure;
 
-/// A Tcl error: an uncaught one ends the script with `Tcl Exception: <message>`.
+/// A fixture step failure propagates after its diagnostic has been recorded.
 #[derive(Debug)]
 pub struct TclError(pub String);
 
-/// The result of a script step.
+/// The result of a fixture step.
 pub type Tcl<T = ()> = Result<T, TclError>;
 
-/// What a scenario command returns: its result text and whether it returned 0.
+/// A command result contains its text and successful-status flag.
 pub struct Reply {
     pub text: String,
     pub ok: bool,
@@ -51,7 +50,7 @@ impl Draw {
         self.log.add(text);
     }
 
-    /// One scenario command `args`, logged with its result; `draw.command(&["box", "b"], body)?`.
+    /// One fixture command `args`, logged with its result; `draw.command(&["box", "b"], body)?`.
     pub fn command(
         &mut self,
         args: &[&str],

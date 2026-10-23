@@ -41,7 +41,7 @@ impl BRepMeshDelaun {
         v: i32,
     ) -> Result<(), Failure> {
         let [min_x, min_y, max_x, max_y] = bounds.get()?;
-        // Pinned the retained behavior tests >100 before >1000, making the later scaler=7 branch unreachable.
+        // The >100 threshold takes precedence, leaving the later scaler=7 branch unreachable.
         let scaler = if self.mesh_ref()?.nb_nodes() > 100 {
             5
         } else {

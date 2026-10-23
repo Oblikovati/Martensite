@@ -1,13 +1,8 @@
-//! The test log a scenario case writes and the verdict the test harness draws from it
-//! (`testgrid`, `_run_test` and `_check_log` of resources/DrawResources/TestCommands.tcl).
-//!
-//! `testgrid` runs each case in its own scenario process in echo mode (`_run_test ... t`) and
-//! takes that process's standard output as the log: `puts` text, and with `decho on` every
-//! scenario command's arguments and result. While `dlog on`, a command's arguments, output
-//! and result go to the `dlog` buffer instead. The verdict scans the log line by line
-//! against the `parse.rules` of the grid, the group and the root, in that order: a line
-//! matching a bad word is a failure unless a `TODO` pattern matches it; a `TODO` that
-//! never matches is an "IMPROVEMENT", and a log without `TEST COMPLETED` failed.
+//! Fixture logs retain emitted text and configured command echoes.
+//! Command arguments, output and results can instead enter the diagnostic buffer.
+//! Verdicts scan fixture-family, group and root rules in order. An error requires
+//! a matching expected-failure rule; an unmatched expected failure reports an
+//! improvement. A missing completion marker fails the case.
 use super::pattern::Pattern;
 
 /// The standard output of one case and its `decho`/`dlog` state.

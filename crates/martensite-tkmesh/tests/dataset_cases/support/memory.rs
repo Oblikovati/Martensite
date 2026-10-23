@@ -1,5 +1,4 @@
-//! `meminfo h` (Draw_BasicCommands.cxx dmeminfo) and the `checktrend` procedure
-//! (resources/DrawResources/TestCommands.tcl) the memory-leak cases use.
+//! Heap-usage observations and trend checks for memory regression fixtures.
 use super::draw::{Draw, Reply, Tcl, TclError};
 use martensite_tkernel::osd::{MemCounter, MemInfo};
 
@@ -22,7 +21,7 @@ pub fn meminfo_heap(draw: &mut Draw) -> Tcl<f64> {
 /// `checktrend listval delta tolerance message`: with three values or more, raise
 /// `message` when the mean step deviates from `delta` by more than `tolerance` plus two
 /// standard deviations of the steps; returns whether the trend is clearly within range
-/// (always false below three values). `delta` is the script's word, as Tcl prints it;
+/// (always false below three values). The supplied `delta` label is printed verbatim;
 /// `checktrend(&mut draw, &values, "0", 1., "leak")?`.
 pub fn checktrend(
     draw: &mut Draw,

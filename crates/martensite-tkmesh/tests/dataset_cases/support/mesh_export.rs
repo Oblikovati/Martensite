@@ -1,6 +1,4 @@
-//! `wavefront` of Draw/TKTopTest/MeshTest/MeshTest.cxx at
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871: mesh a shape and write its triangulations as
-//! a Wavefront OBJ file.
+//! Mesh a shape and write its triangulations as a Wavefront OBJ file.
 use super::draw::{Draw, Reply, Tcl};
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::brep_adaptor::BRepAdaptorSurface;

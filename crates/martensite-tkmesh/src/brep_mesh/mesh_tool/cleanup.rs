@@ -1,5 +1,4 @@
-// Rust translation of the erase and cleanup members of BRepMesh_MeshTool.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Erase stale connectivity and reconcile links after triangle removal.
 use super::{BRepMeshMeshTool, MapOfIntegerInteger, new_loop_edges};
 use crate::brep_mesh::{BRepMeshEdge, DegreeOfFreedom};
 use martensite_tkernel::ncollection::PackedMap;

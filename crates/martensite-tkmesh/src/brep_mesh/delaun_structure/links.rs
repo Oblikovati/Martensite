@@ -53,7 +53,7 @@ impl BRepMeshDataStructureOfDelaun {
         Ok(index)
     }
     /// Change the movability of a stored link in place, as the native callers do through
-    /// `const_cast<BRepMesh_Edge&>(GetLink(i)).SetMovability(...)`: the key is not
+    /// `const_cast<BRepMeshEdge&>(GetLink(i)).SetMovability(...)`: the key is not
     /// rehashed (movability is not part of the link hash) and the element pair and node
     /// link lists are untouched; `mesh.set_link_movability(1, DegreeOfFreedom::Fixed)?`.
     pub fn set_link_movability(

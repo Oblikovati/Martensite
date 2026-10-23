@@ -1,4 +1,4 @@
-//! Native BRep construction used identically by ShapeTool tests and differential probes.
+//! Boundary constructions shared by shape-tool geometry checks.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topods::{Edge, Face, Vertex, Wire},

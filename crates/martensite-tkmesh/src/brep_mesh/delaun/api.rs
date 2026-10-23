@@ -1,5 +1,4 @@
-// Rust translation of the BRepMesh_Delaun constructors, Init and RemoveVertex of
-// BRepMesh_Delaun.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Initialize mesh connectivity and remove vertices without discarding the active allocator.
 use super::{BRepMeshCircleTool, BRepMeshDataStructureOfDelaun, BRepMeshDelaun, BRepMeshVertex};
 use crate::brep_mesh::BRepMeshSelectorOfDataStructureOfDelaun;
 use martensite_tkernel::ncollection::{
@@ -23,7 +22,7 @@ impl BRepMeshDelaun {
         }
     }
 
-    /// `BRepMesh_Delaun(theVertices)`: the triangulation of the vertices in a new
+    /// `BRepMeshDelaun(theVertices)`: the triangulation of the vertices in a new
     /// structure (null when there are two vertices or fewer, as natively);
     /// `BRepMeshDelaun::with_vertices(&vertices)?`.
     pub fn with_vertices(vertices: &[BRepMeshVertex]) -> Result<Self, Failure> {
@@ -39,7 +38,7 @@ impl BRepMeshDelaun {
         Ok(result)
     }
 
-    /// `BRepMesh_Delaun(theOldMesh, theVertices)`: the vertices added to an existing
+    /// `BRepMeshDelaun(theOldMesh, theVertices)`: the vertices added to an existing
     /// structure and triangulated; `BRepMeshDelaun::with_mesh_vertices(&mesh, &vertices)?`.
     pub fn with_mesh_vertices(
         mesh: &Handle<BRepMeshDataStructureOfDelaun>,
@@ -52,7 +51,7 @@ impl BRepMeshDelaun {
         Ok(result)
     }
 
-    /// `BRepMesh_Delaun(theOldMesh, theVertexIndices[, theCellsCountU, theCellsCountV])`:
+    /// `BRepMeshDelaun(theOldMesh, theVertexIndices[, theCellsCountU, theCellsCountV])`:
     /// the triangulation of nodes already in the structure; the indices are sorted in
     /// place; `(-1, -1)` cells select the default grid;
     /// `BRepMeshDelaun::with_indices(&mesh, &mut indices, (-1, -1))?`.

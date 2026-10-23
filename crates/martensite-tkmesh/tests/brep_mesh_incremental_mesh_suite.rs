@@ -1,4 +1,4 @@
-//! Rust mirrors for the full BRepMesh_IncrementalMesh regression source.
+//! Incremental meshing completion, geometry and triangulation contracts.
 #![allow(non_snake_case)]
 use martensite_tkbrep::{
     brep::BRepTool,

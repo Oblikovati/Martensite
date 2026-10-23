@@ -17,7 +17,7 @@ use martensite_tkgeombase::gcpnts::TangentialDeflection;
 use martensite_tkmath::{geom_abs::SurfaceType, gp::Point3};
 mod initialize;
 mod refine;
-/// Native BRepMesh_CurveTessellator; `BRepMeshCurveTessellator::new(&edge, &parameters, 2)?`.
+/// Native BRepMeshCurveTessellator; `BRepMeshCurveTessellator::new(&edge, &parameters, 2)?`.
 pub struct BRepMeshCurveTessellator {
     transient: StandardTransient,
     edge: Edge,
@@ -101,7 +101,7 @@ impl CurveTessellator for BRepMeshCurveTessellator {
     fn value(&self, index: i32, point: &mut Point3, parameter: &mut f64) -> Result<bool, Failure> {
         *point = self.distribution.value(index)?;
         *parameter = self.distribution.parameter(index)?;
-        // the retained behavior 3d097a03 leaves the vertex-tolerance rejection commented out.
+        // Vertex tolerance does not reject this sample; surface deflection controls refinement.
         self.within_surface_bounds(*point, *parameter)
     }
 }

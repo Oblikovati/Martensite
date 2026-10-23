@@ -1,7 +1,6 @@
-// Rust translation of BRepMesh_Context.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+// The context supplies each meshing stage with one configured strategy set.
 
-//! `BRepMesh_Context`: the IMeshTools context with the BRepMesh strategies.
+//! Store configured mesh-generation strategies and their staged results.
 use super::{
     BRepMeshDelabellaMeshAlgoFactory, BRepMeshEdgeDiscret, BRepMeshFaceDiscret,
     BRepMeshMeshAlgoFactory, BRepMeshModelBuilder, BRepMeshModelHealer, BRepMeshModelPostProcessor,
@@ -15,7 +14,7 @@ use martensite_tkernel::message::Message;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 
-/// `BRepMesh_Context(theMeshType)`: model builder, edge discretizer, healer,
+/// `BRepMeshContext(theMeshType)`: model builder, edge discretizer, healer,
 /// pre-processor, face discretizer over the algorithm factory of the mesh type, and
 /// post-processor.
 ///
@@ -29,12 +28,12 @@ use martensite_tkernel::tcollection::AsciiString;
 pub struct BRepMeshContext {
     context: Context,
 }
-// The parent is named through `dyn MeshContext` (whose descriptor is IMeshTools_Context's):
+// The parent runtime identity is named through `dyn MeshContext`:
 // the bare leaf `Context` also names IntTools_Context, so the RTTI ledger could not prove it.
 impl_transient!(BRepMeshContext, "BRepMesh_Context", dyn MeshContext, context, interfaces: [dyn MeshShape, dyn MeshContext]);
 
 impl BRepMeshContext {
-    /// `BRepMesh_Context(theMeshType)`, reading `CSF_MeshAlgo` from the process
+    /// `BRepMeshContext(theMeshType)`, reading `CSF_MeshAlgo` from the process
     /// environment for the default type; `BRepMeshContext::new(MeshAlgoType::Default)?`.
     pub fn new(mesh_type: MeshAlgoType) -> Result<Self, Failure> {
         Self::with_environment(mesh_type, &|name: &str| std::env::var(name).ok())

@@ -133,7 +133,7 @@ impl ParameterProjectionState {
         self.projector.perform(point, self.found)?;
         if self.projector.is_done() {
             let projected = self.projector.point()?.parameter();
-            // the retained behavior 3d097a03 rejects projections crossing the previous result to avoid self-intersections.
+            // Reject projections crossing the previous result to avoid self-intersections.
             if (previous_found < self.found && previous_found < projected)
                 || (previous_found > self.found && previous_found > projected)
             {

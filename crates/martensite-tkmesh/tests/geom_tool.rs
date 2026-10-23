@@ -1,4 +1,4 @@
-//! Focused native output-state and threshold regressions supplement OCC25547.
+//! Segment-intersection output state and geometric threshold contracts.
 use martensite_tkbrep::brep_adaptor::BRepAdaptorCurve;
 use martensite_tkernel::{precision, standard::Handle};
 use martensite_tkmath::{
@@ -44,7 +44,7 @@ fn native_point_on_segment_reports_opposite_endpoint() {
         GeomTool::int_seg_seg(a, b, c, d, false, true, &mut point),
         IntersectionFlag::PointOnSegment
     );
-    // the retained behavior 3d097a03 selects a rather than the geometrically incident c.
+    // The point-on-segment result publishes the first endpoint of the first segment.
     assert_eq!(point, Point2::new(a.x(), a.y()));
 }
 #[test]

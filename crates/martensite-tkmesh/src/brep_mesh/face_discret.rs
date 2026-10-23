@@ -1,8 +1,6 @@
-// Rust translation of BRepMesh_FaceDiscret.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+// Each face obtains its algorithm through the configured factory.
 
-//! `BRepMesh_FaceDiscret`: the face stage of the mesher, one algorithm per face from
-//! the algorithm factory.
+//! Run one factory-selected triangulation strategy per face.
 use crate::imesh_data::{FaceHandle, MeshModel, Status};
 use crate::imesh_tools::{MeshAlgoFactory, MeshParameters, ModelAlgo};
 use martensite_tkernel::impl_transient;
@@ -10,7 +8,7 @@ use martensite_tkernel::message::{ProgressRange, ProgressScope};
 use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 
-/// `BRepMesh_FaceDiscret(theAlgoFactory)`: each face that is neither failed nor
+/// `BRepMeshFaceDiscret(theAlgoFactory)`: each face that is neither failed nor
 /// reused is meshed by the algorithm the factory gives for its surface type; a
 /// failure marks the face (IMeshData_Failure) and the other faces go on.
 ///
@@ -27,7 +25,7 @@ pub struct BRepMeshFaceDiscret {
 impl_transient!(BRepMeshFaceDiscret, "BRepMesh_FaceDiscret", dyn ModelAlgo, transient, interfaces: [dyn ModelAlgo]);
 
 impl BRepMeshFaceDiscret {
-    /// `BRepMesh_FaceDiscret(theAlgoFactory)`; `BRepMeshFaceDiscret::new(&factory)`.
+    /// `BRepMeshFaceDiscret(theAlgoFactory)`; `BRepMeshFaceDiscret::new(&factory)`.
     pub fn new(algo_factory: &Handle<dyn MeshAlgoFactory>) -> Self {
         Self {
             transient: StandardTransient::default(),

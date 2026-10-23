@@ -1,4 +1,4 @@
-//! Direct Rust mirrors of the retained behavior's internal-face-vertex meshing regressions.
+//! Meshing contracts for internal vertices on a face.
 #![allow(non_snake_case)]
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},

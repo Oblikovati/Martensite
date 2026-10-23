@@ -1,5 +1,4 @@
-// Rust translation of BRepMesh_DiscretAlgoFactory, BRepMesh_IncrementalMeshFactory and
-// BRepMesh_DiscretFactory (.hxx/.cxx) at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+// Named factories let a meshing context select its face algorithm consistently.
 
 //! The registry of named meshing algorithm factories.
 use super::BRepMeshIncrementalMesh;
@@ -9,7 +8,7 @@ use martensite_tkernel::standard::{Handle, StandardTransient, Transient};
 use martensite_tkernel::{impl_transient, impl_transient_interface};
 use std::sync::{Mutex, OnceLock, PoisonError, RwLock};
 
-/// `BRepMesh_DiscretAlgoFactory`: a named maker of meshing algorithms.
+/// `BRepMeshDiscretAlgoFactory`: a named maker of meshing algorithms.
 pub trait BRepMeshDiscretAlgoFactory: Transient + Send + Sync {
     /// `Name()`: the registry name; `factory.name()`.
     fn name(&self) -> &str;
@@ -97,8 +96,8 @@ fn same_name(factory: &FactoryHandle, name: &str) -> bool {
         .is_some_and(|f| f.name().eq_ignore_ascii_case(name))
 }
 
-/// `BRepMesh_IncrementalMeshFactory`: the "FastDiscret" factory of
-/// BRepMesh_IncrementalMesh.
+/// `BRepMeshIncrementalMeshFactory`: the "FastDiscret" factory of
+/// BRepMeshIncrementalMesh.
 ///
 /// ```
 /// use martensite_tkmesh::brep_mesh::{BRepMeshDiscretAlgoFactory, find_factory};
@@ -111,7 +110,7 @@ pub struct BRepMeshIncrementalMeshFactory {
 impl_transient!(BRepMeshIncrementalMeshFactory, "BRepMesh_IncrementalMeshFactory", dyn BRepMeshDiscretAlgoFactory, transient, interfaces: [dyn BRepMeshDiscretAlgoFactory]);
 
 impl BRepMeshIncrementalMeshFactory {
-    /// `BRepMesh_IncrementalMeshFactory()`: a factory registered as preferred;
+    /// `BRepMeshIncrementalMeshFactory()`: a factory registered as preferred;
     /// `BRepMeshIncrementalMeshFactory::new()`.
     pub fn new() -> Handle<Self> {
         let factory = Handle::new(Self::unregistered());
@@ -128,7 +127,7 @@ impl BRepMeshDiscretAlgoFactory for BRepMeshIncrementalMeshFactory {
     fn name(&self) -> &str {
         "FastDiscret"
     }
-    /// `CreateAlgorithm`: a BRepMesh_IncrementalMesh with these deflections and the
+    /// `CreateAlgorithm`: a BRepMeshIncrementalMesh with these deflections and the
     /// default parallel flag, not yet performed.
     fn create_algorithm(
         &self,
@@ -140,7 +139,7 @@ impl BRepMeshDiscretAlgoFactory for BRepMeshIncrementalMeshFactory {
     }
 }
 
-/// `BRepMesh_DiscretFactory`: the global selector of the default algorithm name.
+/// `BRepMeshDiscretFactory`: the global selector of the default algorithm name.
 pub struct BRepMeshDiscretFactory {
     default_name: Mutex<String>,
 }

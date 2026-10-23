@@ -1,7 +1,6 @@
-// Rust translation of BRepMesh_Classifier.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+// Registered wires define the parametric region accepted for a face.
 
-//! `BRepMesh_Classifier`: point-in-face classification against the registered wires.
+//! Classify parametric face points against the registered wire boundaries.
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
@@ -19,7 +18,7 @@ struct ClassifierWires {
     tab_orient: Vec<bool>,
 }
 
-/// `BRepMesh_Classifier`: a point is IN when no registered wire rejects it; a point ON
+/// `BRepMeshClassifier`: a point is IN when no registered wire rejects it; a point ON
 /// a wire counts as OUT.
 ///
 /// ```
@@ -45,7 +44,7 @@ impl_transient!(
 );
 
 impl BRepMeshClassifier {
-    /// `BRepMesh_Classifier()`: no wire; `BRepMeshClassifier::new()`.
+    /// `BRepMeshClassifier()`: no wire; `BRepMeshClassifier::new()`.
     pub fn new() -> Self {
         Self::default()
     }

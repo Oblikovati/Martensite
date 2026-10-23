@@ -1,4 +1,4 @@
-//! Rust translations of the three Bug30655 BVH regression declarations.
+//! Mesh geometry bounds and distance queries across placed shapes.
 #![allow(non_snake_case)]
 
 use martensite_tkbrep::{
@@ -97,7 +97,7 @@ fn face_triangles_from_mesh(
             "Bug30655 face triangulation is null; expected a meshed face",
         )
     })?;
-    // the retained behavior transforms nodes by the location returned from Triangulation; triangle winding stays raw.
+    // Apply the triangulation location to node coordinates while retaining triangle winding.
     let transform = location.transformation();
     let mut triangles = Vec::new();
     for index in 1..=triangulation.nb_triangles() {

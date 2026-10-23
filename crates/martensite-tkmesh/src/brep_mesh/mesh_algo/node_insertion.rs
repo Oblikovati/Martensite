@@ -1,5 +1,4 @@
-// Rust translation of BRepMesh_NodeInsertionMeshAlgo.hxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Refine triangulations by inserting surface nodes while retaining frontier constraints.
 use super::base::{
     BaseMeshAlgoData, ConstrainedBaseMeshAlgoHooks, base_init_data_structure, base_perform,
 };
@@ -16,7 +15,7 @@ use martensite_tkg3d::top_abs::{Orientation, ShapeEnum, State};
 use martensite_tkmath::gp::Point2;
 use std::marker::PhantomData;
 
-/// The data `BRepMesh_NodeInsertionMeshAlgo` adds: the range splitter and the
+/// The data `NodeInsertionMeshAlgo` adds: the range splitter and the
 /// classifier of the face wires (live during one Perform).
 #[derive(Default)]
 pub struct NodeInsertionData<R: RangeSplitter> {
@@ -40,7 +39,7 @@ impl<R: RangeSplitter> NodeInsertionData<R> {
 }
 
 /// Access to the node-insertion data of an algorithm built on
-/// `BRepMesh_NodeInsertionMeshAlgo`.
+/// `NodeInsertionMeshAlgo`.
 pub trait NodeInsertionHooks: ConstrainedBaseMeshAlgoHooks {
     /// The range splitter type (`RangeSplitter` template argument).
     type Splitter: RangeSplitter;
@@ -50,7 +49,7 @@ pub trait NodeInsertionHooks: ConstrainedBaseMeshAlgoHooks {
     fn insertion_mut(&mut self) -> &mut NodeInsertionData<Self::Splitter>;
 }
 
-/// `BRepMesh_NodeInsertionMeshAlgo::Perform`: resets the splitter (a failure there
+/// `NodeInsertionMeshAlgo::Perform`: resets the splitter (a failure there
 /// leaves the algorithm, as the native exception does), makes the classifier, then
 /// the base Perform.
 pub fn node_insertion_perform<A: NodeInsertionHooks + ?Sized>(
@@ -71,7 +70,7 @@ pub fn node_insertion_perform<A: NodeInsertionHooks + ?Sized>(
     Ok(())
 }
 
-/// `BRepMesh_NodeInsertionMeshAlgo::initDataStructure`: the wire points (which also
+/// `NodeInsertionMeshAlgo::initDataStructure`: the wire points (which also
 /// bound the splitter range), the vertex tool grid, the classifier wires, the internal
 /// vertices, then the base data structure. Failure status and false for an invalid
 /// range.
@@ -193,7 +192,7 @@ fn insert_internal_vertex<A: NodeInsertionHooks + ?Sized>(
     Ok(())
 }
 
-/// `BRepMesh_NodeInsertionMeshAlgo::addNodeToStructure`: the point scaled to the
+/// `NodeInsertionMeshAlgo::addNodeToStructure`: the point scaled to the
 /// face basis, then the base version.
 pub fn node_insertion_add_node_to_structure<A: NodeInsertionHooks + ?Sized>(
     algo: &mut A,
@@ -211,7 +210,7 @@ pub fn node_insertion_add_node_to_structure<A: NodeInsertionHooks + ?Sized>(
     algo.base_data().get_structure().add_node(&vertex, force)
 }
 
-/// `BRepMesh_NodeInsertionMeshAlgo::getNodePoint2d`: the node scaled back to the
+/// `NodeInsertionMeshAlgo::getNodePoint2d`: the node scaled back to the
 /// surface parameters.
 pub fn node_insertion_point2d<A: NodeInsertionHooks + ?Sized>(
     algo: &A,
@@ -223,7 +222,7 @@ pub fn node_insertion_point2d<A: NodeInsertionHooks + ?Sized>(
         .scale(Point2::from(*vertex.coord()), false)
 }
 
-/// `BRepMesh_NodeInsertionMeshAlgo<RangeSplitter, BaseAlgo>`: the base algorithm `G`
+/// `NodeInsertionMeshAlgo<RangeSplitter, BaseAlgo>`: the base algorithm `G`
 /// over the scaled face basis of the splitter, with internal vertices;
 /// `NodeInsertionMeshAlgo::<DefaultRangeSplitter, DelaunayGenerator>::default()`.
 pub struct NodeInsertionMeshAlgo<R: RangeSplitter, G: MeshGenerator> {

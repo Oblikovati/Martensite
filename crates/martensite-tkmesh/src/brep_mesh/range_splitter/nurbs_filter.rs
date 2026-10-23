@@ -1,6 +1,4 @@
-// Rust translation of BRepMesh_NURBSRangeSplitter::GenerateSurfaceNodes, its parameter
-// filters and the AnalyticalFilter of BRepMesh_NURBSRangeSplitter.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Filter boundary-derived parameters before generating interior surface nodes.
 use super::uv_param::IMapOfReal;
 use super::*;
 use crate::brep_mesh::GeomTool;
@@ -13,7 +11,7 @@ use martensite_tkmath::gp::Vector3;
 /// `IMeshData::MapOfReal`: the unordered set of parameters.
 type MapOfReal = Map<f64>;
 
-/// The body of `BRepMesh_NURBSRangeSplitter::GenerateSurfaceNodes` once the parameters
+/// The body of `NURBSRangeSplitter::GenerateSurfaceNodes` once the parameters
 /// are initialized: the filtered U x V grid less the parameters the analytical filters
 /// remove (minus those another iso line forbids removing).
 pub(super) fn generate_nurbs_nodes(
