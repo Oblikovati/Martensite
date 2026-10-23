@@ -136,6 +136,9 @@ regression exercises this policy with `core.autocrlf=true` ([#197]).
      crates must not set `publish = false`. Each `.crate` must contain
      `LICENSE-GPL`, which cargo copies from the workspace `license-file`; the
      release stops when a crate does not set `license-file.workspace = true`.
+     Test dependencies also declare versions. Keep them acyclic: a reciprocal
+     development dependency can pass local tests but cannot be ordered for the
+     temporary package registry (#241).
    - A `<file>.sha256` file in `sha256sum` format next to each asset.
 5. Collect expanded unsafe diagnostics for the selected target and compare its
    compiler baseline. Collection cleans only its dedicated build cache and

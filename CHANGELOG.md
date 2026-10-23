@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Removed the reciprocal hidden-line/primitive test dependency while preserving the two-solid projection check, so dependency policy and source packaging agree (#241).
+
 - Preserved distinct boundary incidences at restriction-line endpoints during interval construction (#238).
 
 - Bounded default trimmed-face surface integration error (#230).
