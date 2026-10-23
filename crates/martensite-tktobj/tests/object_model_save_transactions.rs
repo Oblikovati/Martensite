@@ -251,3 +251,24 @@ fn direct_application_save_refuses_a_read_only_destination() {
     assert_eq!(std::fs::read_dir(&directory).unwrap().count(), 1);
     assert!(model.close().unwrap());
 }
+
+#[cfg(unix)]
+#[test]
+fn saving_through_a_dangling_relative_symlink_creates_its_target() {
+    use std::os::unix::fs::symlink;
+    let _serial = serial();
+    let directory = scratch("save_through_dangling_symlink");
+    let target = directory.join("new-target.object_model");
+    let link = directory.join("link.object_model");
+    symlink("new-target.object_model", &link).unwrap();
+    let model = model_with_writer(WriterOutcome::Complete);
+    assert!(model.save_as(&extended(&link)).unwrap());
+    assert_eq!(std::fs::read(&target).unwrap(), b"fixed document bytes");
+    let link_type = std::fs::symlink_metadata(&link).unwrap().file_type();
+    assert!(link_type.is_symlink());
+    assert_eq!(
+        model.get_file().unwrap().string().to_utf8(),
+        link.to_str().unwrap()
+    );
+    assert!(model.close().unwrap());
+}

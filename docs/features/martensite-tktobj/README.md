@@ -7,7 +7,11 @@ an isolated directory beside the destination, and a completed file is synced
 and renamed into place before its final path is recorded. A missing driver,
 preparation error, writer error, or rejected writer status leaves an existing
 destination unchanged and leaves a new destination absent (#245). Preparation
-errors also restore the document's modification mode.
+errors also restore the document's modification mode. Saving through a symbolic
+link preserves the link, including when its target file does not yet exist.
+Publication failures distinguish missing output, denied permissions, missing
+destinations, and invalid paths; diagnostics retain the operation, destination,
+I/O error kind, OS error code, and cause text.
 
 Publication is atomic for each file. A document and its referenced documents
 are not committed as one transaction. The containing directory is not synced,

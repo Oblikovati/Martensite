@@ -27,23 +27,30 @@ pub(super) fn write_document(
     range: &ProgressRange<'_>,
 ) -> Result<PcdmStoreStatus, Failure> {
     let stage = StagedStore::new(Path::new(&destination.to_utf8()))
-        .map_err(|error| storage_failure(destination, error))?;
+        .map_err(|error| storage_failure(destination, error, "prepare"))?;
     let staged_name = ExtendedString::new(&stage.file.to_string_lossy());
     writer.write_file(document, &staged_name, range)?;
     let status = writer.get_store_status();
     if status == PcdmStoreStatus::Ok {
         stage
             .commit()
-            .map_err(|error| storage_failure(destination, error))?;
+            .map_err(|error| storage_failure(destination, error, "publish"))?;
     }
     Ok(status)
 }
 
-fn storage_failure(destination: &ExtendedString, error: io::Error) -> Failure {
-    Failure::new(&format!(
-        "Cannot publish document {}: expected a completed writable file: {error}",
-        destination.to_utf8()
-    ))
+fn storage_failure(destination: &ExtendedString, error: io::Error, phase: &str) -> Failure {
+    let exception = match (phase, error.kind()) {
+        ("publish", io::ErrorKind::NotFound) => "DocumentStore_MissingOutput",
+        (_, io::ErrorKind::PermissionDenied) => "DocumentStore_PermissionDenied",
+        (_, io::ErrorKind::NotFound) => "DocumentStore_DestinationNotFound",
+        (_, io::ErrorKind::InvalidInput) => "DocumentStore_InvalidDestination",
+        _ => "DocumentStore_PublicationFailure",
+    };
+    Failure::with_message(exception, &format!(
+        "DocumentStore::{phase} {}: expected a completed writable file; cause_kind={:?}; cause_os_code={:?}; cause={error}",
+        destination.to_utf8(), error.kind(), error.raw_os_error(),
+    )).with_exception_parent("Standard_Failure")
 }
 
 impl StagedStore {
@@ -82,12 +89,32 @@ impl Drop for StagedStore {
 }
 
 fn resolved_destination(destination: &Path) -> io::Result<PathBuf> {
-    match fs::symlink_metadata(destination) {
-        Ok(metadata) if metadata.file_type().is_symlink() => fs::canonicalize(destination),
-        Ok(_) => Ok(destination.to_owned()),
-        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(destination.to_owned()),
-        Err(error) => Err(error),
+    let mut resolved = destination.to_owned();
+    for _ in 0..=40 {
+        match fs::symlink_metadata(&resolved) {
+            Ok(metadata) if metadata.file_type().is_symlink() => {
+                let link = fs::read_link(&resolved)?;
+                resolved = resolved
+                    .parent()
+                    .unwrap_or_else(|| Path::new("."))
+                    .join(link);
+            }
+            Ok(_) => return Ok(resolved),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(resolved),
+            Err(error) => return Err(error),
+        }
     }
+    Err(excessive_symlinks(destination))
+}
+
+fn excessive_symlinks(destination: &Path) -> io::Error {
+    io::Error::new(
+        io::ErrorKind::InvalidInput,
+        format!(
+            "symbolic link chain at {} exceeded 40 links; expected a finite destination",
+            destination.display(),
+        ),
+    )
 }
 
 fn ensure_destination_writable(destination: &Path) -> io::Result<()> {
@@ -137,3 +164,6 @@ fn private_directory(directory: &Path) -> io::Result<()> {
     }
     builder.create(directory)
 }
+
+#[cfg(test)]
+mod tests;
