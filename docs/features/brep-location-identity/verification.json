@@ -1,0 +1,39 @@
+{
+  "issue": 237,
+  "base_revision": "e4544ed505589e1d5beecfc8912a4d780a3a9dae",
+  "platform": "Linux-7.2.6-76070206-generic-x86_64-with-glibc2.39",
+  "rust": "1.99.0",
+  "production_changes": false,
+  "fixture": "crates/martensite-tkbrep/tests/fixtures/repeated-location-solids.brep",
+  "fixture_sha256": "e3eef9575055616325c838341d4068777d25b84a20ade4a8e6c794d080edac46",
+  "expected_counts": {
+    "face_definitions": 14,
+    "face_instances": 15,
+    "shells": 3,
+    "solids": 3
+  },
+  "verification": {
+    "package_test_command": "cargo +1.99.0 test -p martensite-tkbrep",
+    "environment": {
+      "MARTENSITE_TEST_DATA_DIR": "<populated dataset checkout>",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "CARGO_INCREMENTAL": "0"
+    },
+    "test_results": [
+      113,
+      2,
+      16,
+      89,
+      183,
+      211,
+      3
+    ],
+    "passed_total": 617,
+    "failed": 0,
+    "ignored": 0,
+    "clippy_command": "cargo +1.99.0 clippy -p martensite-tkbrep --all-targets --no-deps -- -D warnings",
+    "clippy_exit_code": 0
+  },
+  "scope": "Test-only guard for the existing distinction between shared face definitions and their placements; no numerical behavior or baseline changed."
+}
