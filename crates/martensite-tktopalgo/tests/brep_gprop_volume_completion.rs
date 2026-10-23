@@ -18,10 +18,13 @@ fn empty_wire_face() -> Shape {
     let basis: Handle<dyn GeomSurface> = Handle::new(GeomPlane::from_pln(Plane3::default())).cast();
     let surface: Handle<dyn GeomSurface> = Handle::new(
         GeomRectangularTrimmedSurface::new(&basis, (0., 1.), (0., 1.), (true, true)).unwrap(),
-    ).cast();
+    )
+    .cast();
     let builder = BRepBuilder::default();
     let mut face = Face::default();
-    builder.make_face_on_surface(&mut face, &surface, 1e-7).unwrap();
+    builder
+        .make_face_on_surface(&mut face, &surface, 1e-7)
+        .unwrap();
     let mut wire = Wire::default();
     builder.make_wire(&mut wire);
     builder.add(&mut face, &wire).unwrap();
@@ -39,7 +42,12 @@ fn compound(parts: &[Shape]) -> Shape {
 }
 
 fn sentinel() -> GProps {
-    GProps { dim: 17., g: Point3::new(2., 3., 4.), loc: Point3::new(5., 6., 7.), ..GProps::new() }
+    GProps {
+        dim: 17.,
+        g: Point3::new(2., 3., 4.),
+        loc: Point3::new(5., 6., 7.),
+        ..GProps::new()
+    }
 }
 
 fn assert_unit_box(props: &GProps) {
@@ -64,7 +72,11 @@ fn complete_unit_box_publishes_closed_form_properties() {
 fn assert_incomplete_rollback(parts: &[Shape]) {
     let mut props = sentinel();
     let result = BRepGProp::volume_properties(&compound(parts), &mut props, false, false, false);
-    assert!(result.is_err(), "incomplete integration returned {result:?}, mass {}", props.mass());
+    assert!(
+        result.is_err(),
+        "incomplete integration returned {result:?}, mass {}",
+        props.mass()
+    );
     let failure = result.unwrap_err();
     assert_eq!(failure.exception_type(), "BRepGProp_IncompleteIntegration");
     assert!(failure.message().contains("integration status -1"));
@@ -93,7 +105,11 @@ fn incomplete_face_before_box_preserves_caller_properties() {
 #[test]
 fn empty_and_filtered_shapes_publish_completed_empty_properties() {
     let open = cube(&[0]);
-    for shape in [compound(&[]), empty_wire_face(), open.shell(&open.faces).into_shape()] {
+    for shape in [
+        compound(&[]),
+        empty_wire_face(),
+        open.shell(&open.faces).into_shape(),
+    ] {
         let mut props = sentinel();
         BRepGProp::volume_properties(&shape, &mut props, true, false, false).unwrap();
         assert_eq!(props.mass(), 0.);
@@ -119,9 +135,12 @@ fn closed_filter_excludes_unrelated_incomplete_face() {
 fn explicit_numeric_status_contract_is_preserved() {
     let mut props = sentinel();
     let flags = VolumeGKFlags::default();
-    let status = BRepGProp::volume_properties_gk(&empty_wire_face(), &mut props, 1e-5, false, flags).unwrap();
+    let status =
+        BRepGProp::volume_properties_gk(&empty_wire_face(), &mut props, 1e-5, false, flags)
+            .unwrap();
     assert!(status < 0.);
-    let status = BRepGProp::volume_properties_gk(&compound(&[]), &mut props, 1e-5, true, flags).unwrap();
+    let status =
+        BRepGProp::volume_properties_gk(&compound(&[]), &mut props, 1e-5, true, flags).unwrap();
     assert_eq!(status, -1.);
 }
 
@@ -129,11 +148,23 @@ fn explicit_numeric_status_contract_is_preserved() {
 fn explicit_plane_numeric_status_contract_is_preserved() {
     let mut props = sentinel();
     let status = BRepGProp::volume_properties_gk_plane(
-        &empty_wire_face(), &mut props, Plane3::default(), 1e-5, false, VolumeGKFlags::default(),
-    ).unwrap();
+        &empty_wire_face(),
+        &mut props,
+        Plane3::default(),
+        1e-5,
+        false,
+        VolumeGKFlags::default(),
+    )
+    .unwrap();
     assert!(status < 0.);
     let status = BRepGProp::volume_properties_gk_plane(
-        &compound(&[]), &mut props, Plane3::default(), 1e-5, true, VolumeGKFlags::default(),
-    ).unwrap();
+        &compound(&[]),
+        &mut props,
+        Plane3::default(),
+        1e-5,
+        true,
+        VolumeGKFlags::default(),
+    )
+    .unwrap();
     assert_eq!(status, -1.);
 }
