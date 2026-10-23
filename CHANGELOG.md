@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Rejected incomplete geometric volume integration and preserved caller properties on failure while retaining completed empty selections (#246).
+
 ## [0.3.6] - 2026-10-23
 
 ### Fixed
