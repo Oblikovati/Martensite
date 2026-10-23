@@ -12,7 +12,7 @@ use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkmath::gp::{Point3, Transform3};
 use martensite_tkmath::poly::{Polygon3D, PolygonOnTriangulation, Triangulation};
 
-/// `ShapeCustomTrsfModification`: `BRepTools_TrsfModification` whose output tolerance
+/// `ShapeCustomTrsfModification`: `TrsfModification` whose output tolerance
 /// is the tolerance stored in the TShape (not raised to `Precision::Confusion()` as
 /// `BRep_Tool::Tolerance` does) times `|ScaleFactor|`, after the inherited member ran.
 ///
@@ -41,7 +41,7 @@ impl ShapeCustomTrsfModification {
         }
     }
 
-    /// The inherited `BRepTools_TrsfModification` part (`Trsf()`, `IsCopyMesh()`);
+    /// The inherited `TrsfModification` part (`Trsf()`, `IsCopyMesh()`);
     /// `modification.trsf_modification().trsf()`.
     pub fn trsf_modification(&self) -> &TrsfModification {
         &self.parent
@@ -152,13 +152,13 @@ impl BRepToolsModification for ShapeCustomTrsfModification {
     }
 }
 
-/// `BRep_TEdge::Tolerance()` of the edge's TShape.
+/// `BRepTEdge::tolerance()` of the edge's TShape.
 fn edge_tolerance(edge: &Edge, member: &str) -> Result<f64, Failure> {
     let context = format!("ShapeCustom_TrsfModification::{member}");
     Ok(edge_tshape(edge, &context)?.tolerance())
 }
 
-/// `BRep_TVertex::Tolerance()` of the vertex's TShape.
+/// `BRepTVertex::tolerance()` of the vertex's TShape.
 fn vertex_tolerance(vertex: &Vertex, member: &str) -> Result<f64, Failure> {
     let context = format!("ShapeCustom_TrsfModification::{member}");
     Ok(vertex_tshape(vertex, &context)?.tolerance())

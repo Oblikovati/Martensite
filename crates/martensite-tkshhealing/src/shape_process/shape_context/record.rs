@@ -1,6 +1,6 @@
-//! The `RecordModification` overloads of ShapeProcess_ShapeContext and their static
-//! recursions (`RecModif` for a replacement map and for a ShapeBuild_ReShape,
-//! `ExplodeModifier` for a BRepTools_Modifier).
+//! The `RecordModification` overloads of ShapeProcessShapeContext and their static
+//! recursions (`RecModif` for a replacement map and for a ShapeBuildReShape,
+//! `ExplodeModifier` for a Modifier).
 use super::{ShapeProcessShapeContext, ShapeProcessShapeMap};
 use crate::shape_build::ShapeBuildReShape;
 use crate::shape_extend::{BasicMsgRegistrator, ShapeExtendMsgRegistrator};

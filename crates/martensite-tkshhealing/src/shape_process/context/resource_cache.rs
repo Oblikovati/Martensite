@@ -1,4 +1,4 @@
-//! `ShapeProcess_Context::LoadResourceManager`: the process-wide cache of the last loaded
+//! `ShapeProcessContext::load_resource_manager`: the process-wide cache of the last loaded
 //! resource file, reloaded when its name or the modification time of its files changes.
 use super::{ShapeProcessContext, ShapeProcessResource};
 use martensite_tkernel::resource::{ResourceHost, ResourceManager};

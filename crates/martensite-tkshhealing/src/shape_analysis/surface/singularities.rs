@@ -3,7 +3,7 @@ use martensite_cmath as cmath;
 use martensite_tkg2d::geom2d::native::{std_max, std_min};
 use martensite_tkg3d::geom::{GeomConicalSurface, GeomToroidalSurface};
 
-/// Native singularity record, including its directed boundary endpoints.
+/// singularity record, including its directed boundary endpoints.
 #[derive(Clone, Copy, Debug)]
 pub struct SurfaceSingularity {
     /// Tolerance required to regard this boundary as degenerate.
@@ -212,7 +212,7 @@ fn boundary_singularity(
 }
 
 fn sort_singularities(entries: &mut [SurfaceSingularity]) {
-    // Selection order preserves the retained behavior ties, including their directed endpoints.
+    // Selection order preserves ties, including their directed endpoints.
     for index in 0..entries.len().saturating_sub(1) {
         let mut minimum = index;
         for next in index + 1..entries.len() {

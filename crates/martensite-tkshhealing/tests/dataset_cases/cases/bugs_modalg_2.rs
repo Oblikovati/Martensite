@@ -31,7 +31,7 @@ use martensite_tktopalgo::brep_builder_api::{
 };
 use martensite_tktopalgo::brep_check::BRepCheckAnalyzer;
 
-/// tests/bugs/modalg_2/bug21.
+/// modalg 2 — bug21.
 /// DT_SplitAngle at 90 degrees of two faces sharing an edge.
 pub fn bug21(s: &mut dyn Session) {
     banner(&["================", "OCC21", "================", ""]);
@@ -47,7 +47,7 @@ pub fn bug21(s: &mut dyn Session) {
     checkview_display(s, Some("result"), "bug21");
 }
 
-/// tests/bugs/modalg_2/bug22968.
+/// modalg 2 — bug22968.
 /// Removing the locations of a cylindrical face keeps it valid.
 pub fn bug22968(s: &mut dyn Session) {
     banner(&["================", "OCC22968", "================", ""]);
@@ -65,7 +65,7 @@ pub fn bug22968(s: &mut dyn Session) {
     checkview_display(s, Some("result"), "bug22968");
 }
 
-/// tests/bugs/modalg_2/bug398.
+/// modalg 2 — bug398.
 /// `scaleshape result a 10`.
 pub fn bug398(s: &mut dyn Session) {
     banner(&["========", "OCC398", "========", ""]);
@@ -81,7 +81,7 @@ pub fn bug398(s: &mut dyn Session) {
     checkview_display(s, Some("result"), "bug398");
 }
 
-/// tests/bugs/modalg_2/bug535.
+/// modalg 2 — bug535.
 /// fixshape keeps the number of sub-shapes.
 pub fn bug535(s: &mut dyn Session) {
     banner(&["=======", "OCC535", "=======", ""]);
@@ -102,7 +102,7 @@ pub fn bug535(s: &mut dyn Session) {
     checkview_display(s, Some("result"), "bug535");
 }
 
-/// tests/bugs/modalg_2/bug548.
+/// modalg 2 — bug548.
 /// fixshape at 0.001 leaves no problem in the structural check (OCC548, OCC628).
 pub fn bug548(s: &mut dyn Session) {
     banner(&["========", "OCC548", "OCC628", "========", ""]);
@@ -140,7 +140,7 @@ fn plane_of(s: &mut dyn Session, w: &Shape) -> Shape {
     set(s, "f", mkplane(w).unwrap_or_else(|error| panic!("{error}")))
 }
 
-/// tests/bugs/modalg_2/bug23174.
+/// modalg 2 — bug23174.
 /// A planar face is rebuilt from the healed cylinder face edges without changing the
 /// plane (the cylinder face is closed by a seam and two arcs).
 pub fn bug23174(s: &mut dyn Session) {

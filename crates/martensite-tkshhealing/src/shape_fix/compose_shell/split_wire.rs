@@ -111,7 +111,7 @@ impl<'a> SplitWireState<'a> {
             self.values,
         )?;
         if count <= 0 {
-            // SplitWire retries this dismissed edge and the pinned probe crashes.
+            // Do not retry a dismissed edge: its required curve representation is absent.
             return Err(not_implemented(
                 "SplitWire cannot process a removed source edge",
             ));

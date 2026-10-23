@@ -1,4 +1,4 @@
-//! Native small-edge maps and wireframe state preservation.
+//! small-edge maps and wireframe state preservation.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topexp::Explorer,

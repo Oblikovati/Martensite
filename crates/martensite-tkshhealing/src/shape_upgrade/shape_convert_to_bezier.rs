@@ -1,4 +1,4 @@
-//! Whole-shape Bezier conversion from the retained behavior ShapeUpgrade_ShapeConvertToBezier.
+//! Whole-shape Bezier conversion from ShapeUpgradeShapeConvertToBezier.
 use super::{
     ShapeDivider, ShapeUpgradeConvertCurve2dToBezier, ShapeUpgradeConvertCurve3dToBezier,
     ShapeUpgradeConvertSurfaceToBezierBasis, ShapeUpgradeFaceDivide,

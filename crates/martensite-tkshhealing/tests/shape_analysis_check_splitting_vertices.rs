@@ -1,4 +1,4 @@
-//! Native-backed cases for `ShapeAnalysis_CheckSmallFace::CheckSplittingVertices`.
+//! Native-backed cases for `ShapeAnalysisCheckSmallFace::check_splitting_vertices`.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{self, Builder, Compound, Face, Vertex, Wire};
 use martensite_tkernel::standard::Handle;

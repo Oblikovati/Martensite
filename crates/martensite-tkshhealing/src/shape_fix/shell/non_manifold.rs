@@ -1,4 +1,4 @@
-//! Native CreateNonManifoldShells replacement-chain ordering.
+//! CreateNonManifoldShells replacement-chain ordering.
 use super::{build_groups::empty_shell, groups::ShapeMap};
 use martensite_tkbrep::{
     brep::BRepBuilder,

@@ -1,4 +1,4 @@
-//! The inline accessors of ShapeCustom_BSplineRestriction.lxx and its error queries.
+//! The inline accessors of ShapeCustomBSplineRestriction.lxx and its error queries.
 use super::ShapeCustomBSplineRestriction;
 use crate::shape_custom::ShapeCustomRestrictionParameters;
 use martensite_tkernel::standard::Handle;

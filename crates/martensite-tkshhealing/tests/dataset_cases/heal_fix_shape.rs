@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/fix_shape.
+//! The TKShHealing (no view) tests of fix shape.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_fix_shape, HEAL_SECONDS;

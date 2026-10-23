@@ -1,4 +1,4 @@
-//! Native SplitSurface contracts; the differential corpus covers dynamic geometry.
+//! SplitSurface contracts; the differential corpus covers dynamic geometry.
 use martensite_tkernel::{
     ncollection::{Array2, HSequence},
     standard::Handle,

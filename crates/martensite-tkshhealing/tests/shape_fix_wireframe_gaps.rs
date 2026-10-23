@@ -1,4 +1,4 @@
-//! Native wireframe gap orchestration and 3D spline endpoint repair.
+//! wireframe gap orchestration and 3D spline endpoint repair.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topexp::Explorer,

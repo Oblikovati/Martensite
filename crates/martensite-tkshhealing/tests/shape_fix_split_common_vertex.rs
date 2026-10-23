@@ -1,4 +1,4 @@
-//! Pinned source behavior for ShapeFix_SplitCommonVertex.
+//! Regression coverage for ShapeFixSplitCommonVertex.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::brep_tools::ReShape;
 use martensite_tkbrep::topexp::Explorer;

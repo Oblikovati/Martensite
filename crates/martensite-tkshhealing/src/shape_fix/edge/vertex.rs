@@ -40,7 +40,7 @@ impl ShapeFixEdge {
     fn vertex_status(&self, analyzer: &ShapeAnalysisEdge) {
         for flag in [ShapeExtendStatus::Done1, ShapeExtendStatus::Done2] {
             if analyzer.status_flag(flag) {
-                // Native assignment lets DONE2 replace DONE1 when both vertices need repair.
+                // assignment lets DONE2 replace DONE1 when both vertices need repair.
                 self.set_status(ShapeExtend::encode_status(flag));
             }
         }

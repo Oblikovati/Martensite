@@ -1,4 +1,4 @@
-//! Regressions for caller-owned outputs that the retained behavior leaves unchanged on early return.
+//! Regressions for caller-owned outputs that leaves unchanged on early return.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::Edge;
 use martensite_tkernel::standard::Handle;

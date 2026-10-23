@@ -1,4 +1,4 @@
-//! Native parity probes for the periodic-cone `ShapeFix_Wire::FixGaps2d` path.
+//! parity probes for the periodic-cone `ShapeFix_Wire::FixGaps2d` path.
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::brep_tools::ReShape;
 use martensite_tkbrep::topods::{Face, Shape, ShapeIterator, Wire};
@@ -133,7 +133,7 @@ fn assert_native_gap_result(
 
 fn assert_closed_native_pcurve(edge: &martensite_tkbrep::topods::Edge, face: &Face) {
     let pcurve = BRepTool::curve_on_face(edge, face).unwrap();
-    // Pinned native FixGap2d uses the oriented second endpoint when the same-edge
+    // FixGap2d uses the oriented second endpoint when the same-edge
     // branch has no second spline; this reversed ring closes at U=2*pi.
     let native = native_cone_gap();
     let expected = Point2::new(native[4], native[5]);

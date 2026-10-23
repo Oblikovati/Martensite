@@ -1,5 +1,4 @@
-//! Behavior tests of ShapeCustom_Surface (the native comparison is the sc_surface requests
-//! of tools/tkshhealing_corpus_construct_package.py).
+//! Surface customization regression tests.
 use martensite_tkernel::ncollection::{Array1, Array2};
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::{

@@ -21,7 +21,7 @@ pub(super) fn break_wires(
     Ok(())
 }
 
-/// Collects vertices from external edges using the retained behavior `IsSame` identity.
+/// Collects vertices from external edges using `IsSame` identity.
 fn collect_split_vertices(
     segments: &Sequence<ShapeFixWireSegment>,
 ) -> Result<Vec<Vertex>, Failure> {
@@ -237,7 +237,7 @@ fn finish_rebuild(
     Ok(source_index + progress.inserted + 1)
 }
 
-/// Maps traversal positions through the retained behavior's one-based cyclic rotation.
+/// Maps traversal positions through one-based cyclic rotation.
 fn rotated_index(position: usize, shift: usize, edge_count: usize) -> usize {
     1 + (position - 1 + shift) % edge_count
 }

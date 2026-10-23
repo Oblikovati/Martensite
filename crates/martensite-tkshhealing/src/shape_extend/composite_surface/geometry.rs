@@ -67,7 +67,7 @@ impl GeomGeometry for ShapeExtendCompositeSurface {
     }
 
     /// `Copy()`: a composite surface of copies of the patches, initialized with the natural
-    /// parametrisation (the joint values are not copied, as in this implementation); an empty surface
+    /// parametrisation (the joint values are not copied); an empty surface
     /// without a grid.
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
         let surface = ShapeExtendCompositeSurface::new();
@@ -84,7 +84,7 @@ impl GeomGeometry for ShapeExtendCompositeSurface {
 }
 
 impl GeomSurface for ShapeExtendCompositeSurface {
-    /// Does nothing, as in this implementation (`UReverse`).
+    /// Does nothing (`UReverse`).
     fn u_reverse(&self) -> Result<(), Failure> {
         Ok(())
     }
@@ -92,7 +92,7 @@ impl GeomSurface for ShapeExtendCompositeSurface {
     fn u_reversed_parameter(&self, u: f64) -> Result<f64, Failure> {
         Ok(u)
     }
-    /// Does nothing, as in this implementation (`VReverse`).
+    /// Does nothing (`VReverse`).
     fn v_reverse(&self) -> Result<(), Failure> {
         Ok(())
     }
@@ -143,7 +143,7 @@ impl GeomSurface for ShapeExtendCompositeSurface {
         let (patch, local) = self.located(u, v)?;
         patch.eval_d0(local.x(), local.y())
     }
-    /// The derivatives of the patch, not scaled to the global parameters, as in this implementation.
+    /// The derivatives of the patch, not scaled to the global parameters.
     fn eval_d1(&self, u: f64, v: f64) -> Result<GeomSurfaceD1, Failure> {
         let (patch, local) = self.located(u, v)?;
         patch.eval_d1(local.x(), local.y())

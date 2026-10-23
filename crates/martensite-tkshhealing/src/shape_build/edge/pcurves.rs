@@ -19,7 +19,7 @@ use martensite_tkmath::gp::{
 };
 use martensite_tkmath::toploc::Location;
 
-/// A null p-curve handle (`occ::handle<Geom2d_Curve> c2dNull`).
+/// A null p-curve handle (`occ::handle<Geom2dCurve> c2dNull`).
 fn null_pcurve() -> Handle<dyn Geom2dCurve> {
     Handle::default()
 }

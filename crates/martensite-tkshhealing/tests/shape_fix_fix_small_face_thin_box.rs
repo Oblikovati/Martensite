@@ -1,4 +1,4 @@
-//! Regression for ShapeFixFixSmallFace::Perform on a thin box: the strip faces are
+//! Regression for ShapeFixFixSmallFace::perform on a thin box: the strip faces are
 //! replaced by shared edges, and `Shape()` returns the shape after FixShape (native
 //! `myShape = FixShape()`), whose wires ShapeFixFace has reordered.
 use martensite_tkbrep::topexp::Explorer;

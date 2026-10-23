@@ -73,7 +73,7 @@ impl ShapeFixFace {
         wire.set_fix_degenerated_mode(saved.degenerated);
     }
 
-    /// One wire of the second pass: ShapeFix_Wire::Perform (its output replacing the wire
+    /// One wire of the second pass: ShapeFixWire::perform (its output replacing the wire
     /// when a lacking, self-intersection, notch or tail fix ran), then, whatever Perform
     /// returned, the removed-segment check and the loop split of the loaded wire.
     fn process_second_pass_wire(

@@ -11,9 +11,9 @@ use martensite_tkg3d::geom::GeomCurve;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::gp::Point3;
 
-/// Native map from each splitting vertex to affected edges.
+/// map from each splitting vertex to affected edges.
 pub type SplittingVertexEdges = DataMap<Shape, List<Shape>, ShapeMapHasher>;
-/// Native map from each splitting vertex to edge parameters in matching list order.
+/// map from each splitting vertex to edge parameters in matching list order.
 pub type SplittingVertexParameters = DataMap<Shape, List<f64>, ShapeMapHasher>;
 
 const PROJECT_TOLERANCE_SCALE: f64 = 10.0;
@@ -189,7 +189,7 @@ fn project_split_parameter(
         candidate.point,
         candidate.tolerance * PROJECT_TOLERANCE_SCALE,
         range,
-        // ShapeAnalysis_Curve::Project with its default AdjustToEnds = true.
+        // ShapeAnalysisCurve::project with its default AdjustToEnds = true.
         true,
     )?;
     let found = distance != 0.0
@@ -234,7 +234,7 @@ fn bind_split_data(
     edge_map: &mut SplittingVertexEdges,
     parameter_map: &mut SplittingVertexParameters,
 ) -> Result<(), Failure> {
-    // the retained behavior ignores Bind's false result when TopExp_Explorer repeats a split vertex.
+    // ignores Bind's false result when TopExp_Explorer repeats a split vertex.
     let _ = edge_map.bind(vertex.clone(), edges);
     let _ = parameter_map.bind(vertex, parameters);
     Ok(())

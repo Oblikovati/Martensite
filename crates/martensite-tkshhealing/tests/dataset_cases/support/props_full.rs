@@ -1,6 +1,6 @@
 //! `lprops|sprops|vprops shape [-skip]` without an epsilon, with
 //! the matrix of inertia it prints (iostream default floats, `%g` 6 digits, `setw(15)`),
-//! and the `parseprops` reading of tests/heal/drop_small_solids/end.
+//! and the `parseprops` reading of drop small solids — end.
 use super::log;
 use super::props::Prop;
 use martensite_tkbrep::topods::Shape;

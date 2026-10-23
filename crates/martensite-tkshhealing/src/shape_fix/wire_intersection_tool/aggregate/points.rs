@@ -1,4 +1,4 @@
-//! Point-intersection repair helpers for `ShapeFix_IntersectionTool::FixSelfIntersectWire`.
+//! Point-intersection repair helpers for `ShapeFixIntersectionTool::fix_self_intersect_wire`.
 use super::super::{ShapeFixIntersectionTool, boxes, point_on_edge};
 use super::INTERSECTION_TOLERANCE;
 use super::{PairAction, PairCurves, RepairCounts};

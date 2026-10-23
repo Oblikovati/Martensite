@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/mkface/after_revsurf_and_offset.
+//! The TKShHealing (no view) tests of after revsurf and offset.
 use super::*;
 
 dataset_cases!(run_case, NoView, mkface_after_revsurf_and_offset, MKFACE_SECONDS;

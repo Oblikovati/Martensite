@@ -1,5 +1,5 @@
 //! `checkshape [-top] shape [-parallel] [-exact]` with its
-//! contextual dump (the form without a result prefix), on BRepCheck_Analyzer.
+//! contextual dump (the form without a result prefix), on BRepCheckAnalyzer.
 //!
 //! A valid shape prints `This shape seems to be valid`; an invalid one prints each faulty
 //! sub-shape with its statuses and `Faulty shapes in variables faulty_1 to faulty_N`,

@@ -1,4 +1,4 @@
-//! Native p-curve range repair behavior for `ShapeFix_Wire::FixGap2d(..., false)`.
+//! p-curve range repair behavior for `ShapeFix_Wire::FixGap2d(..., false)`.
 #[path = "support/wire_gap2d_cubic.rs"]
 mod cubic;
 #[path = "support/wire_gap2d_ranges.rs"]

@@ -134,7 +134,7 @@ pub fn splitc12d(curve: &Handle<dyn Geom2dCurve>) -> Result<(), String> {
 }
 
 /// `tocanon r c [tol]` on a curve: whether
-/// GeomConvert_CurveToAnaCurve (Simplest) converts it; false prints `Conversion failed`.
+/// CurveToAnaCurve (Simplest) converts it; false prints `Conversion failed`.
 pub fn tocanon_curve(curve: &Handle<dyn GeomCurve>, tolerance: f64) -> bool {
     let mut conversion = CurveToAnaCurve::with_curve(curve);
     conversion.set_conv_type(ConvType::Simplest);

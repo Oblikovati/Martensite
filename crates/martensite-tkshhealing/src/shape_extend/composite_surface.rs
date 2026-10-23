@@ -82,7 +82,7 @@ impl ShapeExtendCompositeSurface {
     }
 
     /// `ShapeExtendCompositeSurface(GridSurf, param)`: [`Self::init`] on a new surface
-    /// (its result is dropped, as in this implementation); `ShapeExtendCompositeSurface::with_grid(&grid, p)?`.
+    /// (its result is dropped); `ShapeExtendCompositeSurface::with_grid(&grid, p)?`.
     pub fn with_grid(
         grid: &SurfaceGrid,
         param: ShapeExtendParametrisation,

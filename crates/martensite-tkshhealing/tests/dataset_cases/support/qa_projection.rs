@@ -39,7 +39,7 @@ pub fn occ24008(curve: &Handle<dyn GeomCurve>, surface: &Handle<dyn GeomSurface>
 }
 
 /// `OCC26930 surface curve start end`: the projection over `[start, end]` must be a
-/// Geom2d_Line (a caught failure leaves the pcurve null).
+/// Geom2dLine (a caught failure leaves the pcurve null).
 pub fn occ26930(
     surface: &Handle<dyn GeomSurface>,
     curve: &Handle<dyn GeomCurve>,

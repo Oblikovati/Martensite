@@ -1,4 +1,4 @@
-//! Native seam ordering and output-reference preservation.
+//! seam ordering and output-reference preservation.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topods::{Edge, Face},

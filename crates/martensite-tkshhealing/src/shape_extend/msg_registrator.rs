@@ -155,7 +155,7 @@ impl ShapeExtendMsgRegistrator {
 
 impl BasicMsgRegistrator for ShapeExtendMsgRegistrator {
     /// Appends the message to the list of the object (a new list for a new object); a
-    /// null object is ignored. The gravity is not kept, as in this implementation.
+    /// null object is ignored. The gravity is not kept.
     fn send_transient(&self, object: &Handle<StandardTransient>, message: &Msg, _gravity: Gravity) {
         if object.is_null() {
             return;

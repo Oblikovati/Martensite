@@ -1,4 +1,4 @@
-//! Closed-form fallbacks retain the retained behavior's parameter-only periodic correction.
+//! Closed-form fallbacks retain parameter-only periodic correction.
 use super::projection_state::{CurveProjection, ProjectionSearch};
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;

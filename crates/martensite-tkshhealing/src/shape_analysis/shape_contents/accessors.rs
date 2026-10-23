@@ -180,7 +180,7 @@ impl ShapeAnalysisShapeContents {
     pub fn trimmed_2d_sequence(&self) -> Handle<HSequence<Shape>> {
         self.recordings.trimmed_2d.shapes.clone()
     }
-    /// Preserve the retained behavior's deprecated misspelling as an alias; `*contents.modify_offest_surface_mode()=true`.
+    /// Preserve deprecated misspelling as an alias; `*contents.modify_offest_surface_mode()=true`.
     pub fn modify_offest_surface_mode(&mut self) -> &mut bool {
         self.modify_offset_surface_mode()
     }

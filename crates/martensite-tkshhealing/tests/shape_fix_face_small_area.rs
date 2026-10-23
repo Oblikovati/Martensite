@@ -1,4 +1,4 @@
-//! Native face, context, root, and result effects of removing small contours.
+//! face, context, root, and result effects of removing small contours.
 mod support;
 use martensite_tkbrep::{
     brep_tools::ReShape,

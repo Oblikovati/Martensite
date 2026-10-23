@@ -150,7 +150,7 @@ impl ShapeCustomCurve2d {
     /// last one down and removes one multiplicity of each knot where the curve is
     /// `C(degree - mult)` and the two local derivatives of that order are parallel
     /// (a failed `RemoveKnot` is ignored, as the `try/catch`); true when a knot
-    /// was removed. A null derivative raises, as in this implementation;
+    /// was removed. A null derivative raises;
     /// `ShapeCustomCurve2d::simplify_bspline2d(&bspline, 1e-7)?`.
     pub fn simplify_bspline2d(
         bspline: &Geom2dBSplineCurve,

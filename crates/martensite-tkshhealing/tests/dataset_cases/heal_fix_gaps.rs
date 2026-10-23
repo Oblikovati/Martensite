@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/fix_gaps.
+//! The TKShHealing (no view) tests of fix gaps.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_fix_gaps, HEAL_SECONDS;

@@ -1,4 +1,4 @@
-//! Native tolerance and status behavior for `ShapeFix_Wire::FixLacking`.
+//! tolerance and status behavior for `ShapeFixWire::fix_lacking`.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     brep_tools::ReShape,

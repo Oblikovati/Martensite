@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/direct_faces.
+//! The TKShHealing (no view) tests of direct faces.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_direct_faces, HEAL_SECONDS;

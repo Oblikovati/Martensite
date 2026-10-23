@@ -1,4 +1,4 @@
-//! Native sampled spatial area and infinite-point outer-bound classification.
+//! sampled spatial area and infinite-point outer-bound classification.
 use super::{ShapeAnalysis, ShapeAnalysisCurve};
 use crate::shape_extend::ShapeExtendWireData;
 use martensite_tkbrep::{

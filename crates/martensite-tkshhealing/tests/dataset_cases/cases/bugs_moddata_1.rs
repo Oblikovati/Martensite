@@ -11,7 +11,7 @@ use crate::support::{
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// tests/bugs/moddata_1/buc60868.
+/// moddata 1 — buc60868.
 /// The free bounds of the shell chain into three wires (`BUC60868`).
 pub fn buc60868(s: &mut dyn Session) {
     banner(&["========", "BUC60868", "========", ""]);
@@ -32,7 +32,7 @@ pub fn buc60868(s: &mut dyn Session) {
     checkview_display(s, Some("result"), "buc60868");
 }
 
-/// tests/bugs/moddata_1/buc60924.
+/// moddata 1 — buc60924.
 /// The ellipse in the plane z = 1 is planar (`BUC60924 el 0 0 1`).
 pub fn buc60924(s: &mut dyn Session) {
     banner(&["========", "BUC60924", "========", ""]);

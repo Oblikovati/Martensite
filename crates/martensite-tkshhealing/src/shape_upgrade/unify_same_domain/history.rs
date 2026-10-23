@@ -1,4 +1,4 @@
-//! `ShapeUpgrade_UnifySameDomain::FillHistory`: the history of the context filtered to
+//! `ShapeUpgradeUnifySameDomain::fill_history`: the history of the context filtered to
 //! the vertices, edges, faces and solids of the input and the result.
 use super::UnifyState;
 use martensite_tkbrep::brep_tools::{History, ReShape};

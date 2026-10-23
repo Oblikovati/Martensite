@@ -1,4 +1,4 @@
-//! Free contour properties and lifecycle compared with pinned the retained behavior.
+//! Free contour measurement and lifecycle regressions.
 use martensite_tkbrep::{
     topexp::Explorer,
     topods::{Shape, Wire},

@@ -1,4 +1,4 @@
-//! `NewSurface` and `ConvertSurface` of ShapeCustom_BSplineRestriction: the exact
+//! `NewSurface` and `ConvertSurface` of ShapeCustomBSplineRestriction: the exact
 //! conversions (planes, Beziers, extrusions) and the dispatch on wrapped surfaces.
 use super::ShapeCustomBSplineRestriction;
 use super::predicates::{Limits, is_convert_surface};

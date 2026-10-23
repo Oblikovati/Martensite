@@ -1,4 +1,4 @@
-//! The tests/bugs/heal cases of ShapeUpgrade_UnifySameDomain (`unifysamedom`).
+//! The heal cases of ShapeUpgradeUnifySameDomain (`unifysamedom`).
 use super::banner;
 use crate::support::{
     checkshape::checkshape,

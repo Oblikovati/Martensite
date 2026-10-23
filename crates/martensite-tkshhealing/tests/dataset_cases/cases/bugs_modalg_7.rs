@@ -120,7 +120,7 @@ pub fn bug30396_2(s: &mut dyn Session) {
     set(s, "r", fixshape(&a, &[]));
 }
 
-/// tests/bugs/modalg_7/bug31430.
+/// modalg 7 — bug31430.
 /// 0031430: offset surfaces on C1 surfaces with full multiplicity must not throw; the
 /// missing seam of face 4 is added (ShapeAnalysisSurface closure), giving 4 faces.
 pub fn bug31430(s: &mut dyn Session) {

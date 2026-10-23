@@ -1,4 +1,4 @@
-//! Native projection/extrema range adjustment, separate from spline conversion.
+//! projection/extrema range adjustment, separate from spline conversion.
 mod candidates;
 mod extrema;
 use super::{
@@ -133,7 +133,7 @@ fn adjust_pair(
         return Ok((false, false));
     };
     let mut done = (true, true);
-    // the retained behavior catches trimming failures after mutating the corresponding range and flags.
+    // catches trimming failures after mutating the corresponding range and flags.
     if first.apply_parameter(u, &mut done.0).is_ok() {
         let _ = second.apply_parameter(v, &mut done.1);
     }

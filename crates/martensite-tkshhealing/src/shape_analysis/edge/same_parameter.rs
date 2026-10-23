@@ -26,7 +26,7 @@ struct SameParameterCheck {
 }
 
 impl SameParameterCheck {
-    /// One `BRepLib_ValidateEdge` of the 3D curve against the p-curve on the surface
+    /// One `BRepLibValidateEdge` of the 3D curve against the p-curve on the surface
     /// (moved by its location): widens `maxdev`, false when the validation failed.
     fn validate(
         &self,
@@ -222,7 +222,7 @@ fn located_surface(
 }
 
 impl ShapeAnalysisEdge {
-    /// Preserves the caller's deviation for a degenerate edge, as does;
+    /// Preserves the caller's deviation for a degenerate edge;
     /// `analyzer.check_same_parameter_into(&edge, 23, &mut deviation)?`.
     pub fn check_same_parameter_into(
         &mut self,

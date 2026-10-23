@@ -73,7 +73,7 @@ impl ShapeFixWire {
             self.set_last_fix_status(ShapeExtendStatus::Fail1);
             return Ok(false);
         };
-        // Native exits a closed range-only junction before inspecting endpoint vertices.
+        // exits a closed range-only junction before inspecting endpoint vertices.
         if !convert && first.point.distance(&second.point) <= self.precision() {
             return Ok(false);
         }

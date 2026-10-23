@@ -211,7 +211,7 @@ impl ShapeExtendCompositeSurface {
     }
 
     /// For the first joint, sets the closed flag of the direction; for the others,
-    /// whether the gap is within `prec` (compared squared, as in this implementation).
+    /// whether the gap is within `prec` (compared squared).
     fn record_gap(&self, i: i32, max_dist2: f64, prec: f64, u_direction: bool) -> bool {
         if i != 1 {
             // `else if (maxdist2 > Prec * Prec) ok = false;`: a NaN gap does not fail.

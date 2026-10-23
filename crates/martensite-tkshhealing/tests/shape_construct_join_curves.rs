@@ -1,4 +1,4 @@
-//! Native differential tests for ShapeConstruct curve joining.
+//! differential tests for ShapeConstruct curve joining.
 use martensite_tkbrep::{
     brep_tools::ReShape,
     topexp::Explorer,

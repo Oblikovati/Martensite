@@ -1,4 +1,4 @@
-//! Replays the pinned ShapeAnalysis_WireVertex native reference.
+//! Wire vertex connection and tolerance regressions.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkernel::standard::Handle;
 use martensite_tkmath::gp::{Point3, Xyz};

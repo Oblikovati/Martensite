@@ -1,4 +1,4 @@
-//! Pinned the retained behavior ShapeFix_Shape no-change and tolerance behavior.
+//! ShapeFixShape no-change and tolerance behavior.
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, Builder, Compound, ShapeIterator, Wire};
 use martensite_tkernel::standard::Handle;

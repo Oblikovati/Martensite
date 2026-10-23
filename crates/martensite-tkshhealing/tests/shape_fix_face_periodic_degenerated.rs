@@ -1,4 +1,4 @@
-//! Native cone apex repair without subsequent seam creation.
+//! cone apex repair without subsequent seam creation.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     brep_tools::ReShape,

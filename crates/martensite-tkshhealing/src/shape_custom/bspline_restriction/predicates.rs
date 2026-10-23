@@ -65,7 +65,7 @@ pub(super) fn is_convert_curve_3d(
         return p.convert_offset_curv3d() || is_convert_curve_3d(&offset.basis_curve(), limits, p);
     }
     if let Some(spline) = curve.cast::<GeomBSplineCurve>().get() {
-        // Native `(NbKnots() - 1) >= NbSeg`: at least NbSeg spans.
+        // `(NbKnots() - 1) >= NbSeg`: at least NbSeg spans.
         if spline.degree() > limits.degree || spline.nb_knots() > limits.segments {
             return true;
         }

@@ -14,7 +14,7 @@ use crate::support::{
     vars::Vars,
 };
 
-/// tests/mkface/after_extsurf_and_offset/C9.
+/// after extsurf and offset — C9.
 pub fn c9(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -47,7 +47,7 @@ pub fn c9(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/D1.
+/// after extsurf and offset — D1.
 pub fn d1(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -77,7 +77,7 @@ pub fn d1(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/D2.
+/// after extsurf and offset — D2.
 pub fn d2(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(

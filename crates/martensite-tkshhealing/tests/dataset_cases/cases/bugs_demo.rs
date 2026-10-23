@@ -10,7 +10,7 @@ use crate::support::{
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// tests/bugs/demo/bug25020.
+/// demo — bug25020.
 /// `catch {checkoverlapedges b_1 b_2} info` reports the degenerated edge.
 pub fn bug25020(s: &mut dyn Session) {
     banner(&["============", "CR25020", "============", ""]);

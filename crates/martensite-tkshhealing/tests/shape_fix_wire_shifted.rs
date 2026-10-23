@@ -1,4 +1,4 @@
-//! Native parity regressions for ShapeFix_Wire::FixShifted periodic behavior.
+//! Periodic wire shifting regression cases.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{self, Builder, Edge, Face, Vertex};
 use martensite_tkernel::standard::Handle;

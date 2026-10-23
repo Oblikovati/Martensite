@@ -16,7 +16,7 @@ pub struct ShapeCustomModificationFields {
 }
 
 /// `ShapeCustomModification`: the abstract modification of the ShapeCustom tools; it
-/// adds a message registrator to `BRepTools_Modification`. A concrete modification
+/// adds a message registrator to `BRepToolsModification`. A concrete modification
 /// implements the `BRepToolsModification` members and lends its
 /// [`ShapeCustomModificationFields`].
 ///

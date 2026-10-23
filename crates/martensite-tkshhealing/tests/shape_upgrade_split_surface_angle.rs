@@ -1,4 +1,4 @@
-//! Native angular parameter/status fixtures; invalid native integer conversions stay explicit.
+//! angular parameter/status fixtures; invalid native integer conversions stay explicit.
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::{
     GeomConicalSurface, GeomCurve, GeomCylindricalSurface, GeomLine, GeomOffsetSurface, GeomPlane,

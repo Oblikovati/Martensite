@@ -1,4 +1,4 @@
-//! The general grid segments spline patches even when Segment is false, as the retained behavior does.
+//! The general grid segments spline patches even when Segment is false.
 use super::*;
 impl SplitSurfaceData {
     pub(super) fn fill_single(
@@ -48,7 +48,7 @@ impl SplitSurfaceData {
             return trimmed_surface(&copy, bounds);
         }
         if segment_patch(&copy, bounds).is_err() {
-            // Native fallback trims the possibly mutated copy, not a fresh supimplementation surface.
+            // fallback trims the possibly mutated copy, not a fresh supimplementation surface.
             return trimmed_surface(&copy, bounds);
         }
         self.add_status(ShapeExtendStatus::Done3);

@@ -95,8 +95,8 @@ fn assert_merged_edge_pcurve(shape: &Shape, native: &str) {
     let edges = edge_shapes(shape);
     let merged = find_bspline_edge(&edges);
     // Natively the merged edge gets no stored p-curve on the plane (GlueEdgesWith3DCurves
-    // builds none and ShapeFix_Face sees the planar projection); the native probe reads it
-    // through BRep_Tool::CurveOnSurface, which projects onto the plane.
+    // builds none and ShapeFixFace sees the planar projection); the native probe reads it
+    // through BRepTool::curve_on_surface, which projects onto the plane.
     let pcurve = BRepTool::curve_on_face(merged, &face).unwrap();
     assert!(!pcurve.pcurve.is_null());
     let adaptor = BRepAdaptorCurve2d::with_edge_on_face(merged, &face).unwrap();

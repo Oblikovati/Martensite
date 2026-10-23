@@ -1,4 +1,4 @@
-//! `ShapeFixWire::FixReorder`: analyze the edge order and apply a ShapeAnalysisWireOrder.
+//! `ShapeFixWire::fix_reorder`: analyze the edge order and apply a ShapeAnalysisWireOrder.
 use super::ShapeFixWire;
 use crate::shape_analysis::ShapeAnalysisWireOrder;
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus, ShapeExtendWireData};

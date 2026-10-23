@@ -1,4 +1,4 @@
-//! Ordered-wire state, reorder application and the pinned periodic p-curve repair.
+//! Ordered-wire state, reorder application and periodic p-curve repair.
 #[path = "wire_closed.rs"]
 mod wire_closed;
 #[path = "wire_connected.rs"]

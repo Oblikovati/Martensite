@@ -1,5 +1,5 @@
 //! `ApproxBSplineCurve`: a polyline B-spline cut at its coincident poles, each piece
-//! smoothed by GeomInt_WLApprox through its poles.
+//! smoothed by GeomIntWLApprox through its poles.
 use super::ShapeAlgoAlgoContainer;
 use super::algo_container::null_object;
 use martensite_tkernel::ncollection::{Array1, Sequence};
@@ -25,7 +25,7 @@ struct PolePiece {
 }
 
 /// The knots, multiplicities and weights of one piece (the end multiplicities set to
-/// degree + 1, every weight that of the first pole of the piece, as in this implementation).
+/// degree + 1, every weight that of the first pole of the piece).
 struct PieceData {
     knots: Array1<'static, f64>,
     mults: Array1<'static, i32>,
@@ -35,7 +35,7 @@ struct PieceData {
 impl ShapeAlgoAlgoContainer {
     /// `ApproxBSplineCurve(bspline, seq)` (3D): a curve of degree other than 1 as is;
     /// else the pieces between coincident poles (Precision::Confusion), each of more than
-    /// 2 poles replaced by its GeomInt_WLApprox through the poles (Precision::Approximation,
+    /// 2 poles replaced by its GeomIntWLApprox through the poles (Precision::Approximation,
     /// degrees 4 to 8) when that gives one multi-curve.
     ///
     /// quirk (kept): once a piece is cut, the poles after the last coincident pair
@@ -207,7 +207,7 @@ fn piece_curve_2d(
     )
 }
 
-/// GeomInt_WLApprox through the points of `line` (`SetParameters(tol, tol, 4, 8, 0, 30,
+/// GeomIntWLApprox through the points of `line` (`SetParameters(tol, tol, 4, 8, 0, 30,
 /// true)`); the multi-curve when it is done and single.
 fn approximate(
     line: IntSurfLineOn2S,

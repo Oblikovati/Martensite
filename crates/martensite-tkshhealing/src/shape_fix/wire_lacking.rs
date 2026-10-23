@@ -41,7 +41,7 @@ impl ShapeFixWire {
 
     /// `FixLacking(force)`: process all eligible adjacent edge pairs.
     /// Example: `let changed = fixer.fix_lacking(false)?;`.
-    /// The bend branch includes the retained behavior's self-edge and adjacent-edge follow-ups.
+    /// The bend branch includes self-edge and adjacent-edge follow-ups.
     pub fn fix_lacking(&self, force: bool) -> Result<bool, Failure> {
         self.state.write().lacking_status = ShapeExtend::encode_status(ShapeExtendStatus::Ok);
         let analyzer = self.analyzer()?;

@@ -235,7 +235,7 @@ impl ShapeExtendExplorer {
             if sorted.is_null() {
                 continue;
             }
-            // `sh = sh0` before the flattening loop, as in this implementation.
+            // `sh = sh0` before the flattening loop.
             last = sorted.clone();
             let parts = if flatten && sorted.shape_type()? == ShapeEnum::Compound {
                 children(&sorted)?

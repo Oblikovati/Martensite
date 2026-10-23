@@ -1,11 +1,11 @@
-//! `ShapeFix::RemoveSmallEdges`: a ShapeFixShape run restricted to FixSmall.
+//! `ShapeFix::remove_small_edges`: a ShapeFixShape run restricted to FixSmall.
 use super::ShapeFix;
 use crate::shape_build::ShapeBuildReShape;
 use crate::shape_fix::{FixRoot, ShapeFixShape};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Failure, Handle};
 
-/// The result of `ShapeFix::RemoveSmallEdges`: the healed shape and the reshape context
+/// The result of `ShapeFix::remove_small_edges`: the healed shape and the reshape context
 /// that records the removed edges (the `context` out argument).
 pub struct ShapeFixRemovedSmallEdges {
     /// The shape returned by `RemoveSmallEdges`.

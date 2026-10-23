@@ -1,4 +1,4 @@
-// TranslatePCurve retains the retained behavior's choice of the farther periodic boundary (S4135).
+// TranslatePCurve retains choice of the farther periodic boundary (S4135).
 use crate::shape_analysis::ShapeAnalysisSurface;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dBoundedCurve, Geom2dCurve, Geom2dLine};

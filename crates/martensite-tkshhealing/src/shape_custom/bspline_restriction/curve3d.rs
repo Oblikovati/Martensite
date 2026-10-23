@@ -1,4 +1,4 @@
-//! `NewCurve` and `ConvertCurve` of ShapeCustom_BSplineRestriction: the exact conversions
+//! `NewCurve` and `ConvertCurve` of ShapeCustomBSplineRestriction: the exact conversions
 //! of lines, conics and Beziers and the dispatch on trimmed and offset curves.
 use super::ShapeCustomBSplineRestriction;
 use super::predicates::{is_convert_curve_2d, is_convert_surface};

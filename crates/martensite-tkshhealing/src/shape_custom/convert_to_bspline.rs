@@ -185,7 +185,7 @@ fn approx_settings(continuity: Continuity) -> ShapeConstructApproxSettings {
 impl ShapeCustomConvertToBSpline {
     // The offset of a converted basis (offset mode off), or the converted surface itself,
     // whose continuity is C0 for an offset ("pdn 30.06.99 because of hang-up in
-    // GeomConvert_ApproxSurface").
+    // ApproxSurface").
     fn converted(
         &self,
         surface: &Handle<dyn GeomSurface>,

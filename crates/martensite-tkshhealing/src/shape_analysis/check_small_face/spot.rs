@@ -6,7 +6,7 @@ use martensite_tkernel::{precision, standard::Failure};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::gp::Point3;
 
-/// Spot-face analysis from `ShapeAnalysis_CheckSmallFace`.
+/// Spot-face analysis from `ShapeAnalysisCheckSmallFace`.
 #[derive(Default)]
 pub struct ShapeAnalysisCheckSmallFace {
     overall_status: Option<i32>,
@@ -41,7 +41,7 @@ impl ShapeAnalysisCheckSmallFace {
         Ok(false)
     }
 
-    /// Decodes the native overall status field when known; the retained behavior leaves that field
+    /// Decodes the native overall status field when known; leaves that field
     /// uninitialized in its constructor, so a fresh analyzer returns `None`.
     pub fn status(&self, status: ShapeExtendStatus) -> Option<bool> {
         self.overall_status
@@ -88,7 +88,7 @@ impl ShapeAnalysisCheckSmallFace {
     }
 
     /// Reads the checker precision after `SetTolerance`; `analyzer.tolerance() == Some(0.01)`.
-    /// the retained behavior leaves this field uninitialized until its setter has been called.
+    /// leaves this field uninitialized until its setter has been called.
     pub fn tolerance(&self) -> Option<f64> {
         self.tolerance
     }

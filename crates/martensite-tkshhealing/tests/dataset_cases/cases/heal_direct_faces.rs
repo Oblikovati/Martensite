@@ -1,7 +1,7 @@
 //! heal direct faces regression cases whose
 //! inputs are in the public dataset: each restores `a`, then the grid end runs
 //! `puts [directfaces result a]`, `set s [statshape result particul]`, `puts $s` and
-//! reports an `Error` when an `indsur : Indirect Surface` row remains; tests/heal/end
+//! reports an `Error` when an `indsur : Indirect Surface` row remains; end
 //! shows `result` with `checkview -display result -2d`.
 use crate::support::{
     log,
@@ -31,32 +31,32 @@ fn direct_faces(s: &mut dyn Session, file: &str, image: &str) {
     checkview_display(s, Some("result"), image);
 }
 
-/// tests/heal/direct_faces/A2.
+/// direct faces — A2.
 pub fn a2(s: &mut dyn Session) {
     direct_faces(s, "CCV_2_e1_gsx.rle", "A2");
 }
 
-/// tests/heal/direct_faces/A6.
+/// direct faces — A6.
 pub fn a6(s: &mut dyn Session) {
     direct_faces(s, "CIN001_b50.rle", "A6");
 }
 
-/// tests/heal/direct_faces/A7.
+/// direct faces — A7.
 pub fn a7(s: &mut dyn Session) {
     direct_faces(s, "CIN001_b51.rle", "A7");
 }
 
-/// tests/heal/direct_faces/B1.
+/// direct faces — B1.
 pub fn b1(s: &mut dyn Session) {
     direct_faces(s, "DF1.rle", "B1");
 }
 
-/// tests/heal/direct_faces/B7.
+/// direct faces — B7.
 pub fn b7(s: &mut dyn Session) {
     direct_faces(s, "revface.rle", "B7");
 }
 
-/// tests/heal/direct_faces/B8.
+/// direct faces — B8.
 pub fn b8(s: &mut dyn Session) {
     direct_faces(s, "shljapa.rle", "B8");
 }

@@ -1,4 +1,4 @@
-//! Pinned native gap metrics, statuses and parameter-space tolerances.
+//! gap metrics, statuses and parameter-space tolerances.
 mod support;
 use martensite_tkbrep::{
     brep::BRepBuilder,

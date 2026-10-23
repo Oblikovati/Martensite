@@ -1,4 +1,4 @@
-//! Native wire-map splitting, hole orientation and resulting working-face state.
+//! wire-map splitting, hole orientation and resulting working-face state.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     brep_tools::ReShape,

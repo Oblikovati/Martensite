@@ -1,6 +1,6 @@
 // Reordering is independent of tolerance and retains the edge order of a complete torus.
 
-//! `ShapeAnalysisWireOrder::Perform`: chains the edges into loops by the nearest ends,
+//! `ShapeAnalysisWireOrder::perform`: chains the edges into loops by the nearest ends,
 //! then merges the loops.
 use super::{ModeType, ShapeAnalysisWireOrder};
 use martensite_tkernel::precision;
@@ -8,7 +8,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::real::{real_last, real_small};
 use martensite_tkmath::gp::{Point2, Point3};
 
-/// The ends of every edge, 1-based as in this implementation (index 0 unused).
+/// The ends of every edge, 1-based (index 0 unused).
 struct EdgeEnds {
     begins_3d: Vec<Point3>,
     ends_3d: Vec<Point3>,

@@ -42,7 +42,7 @@ impl ShapeFixWireframe {
         for wire in Explorer::new(&shape, ShapeEnum::Wire, ShapeEnum::Face)? {
             analyzer.set_precision(self.precision());
             analyzer.load_wire(&topods::wire(&wire)?)?;
-            // the retained behavior stops even if caller-owned maps already contain small edges.
+            // stops even if caller-owned maps already contain small edges.
             if !analyzer.is_loaded() {
                 return Ok(false);
             }

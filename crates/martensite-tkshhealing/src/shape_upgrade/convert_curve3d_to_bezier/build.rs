@@ -1,4 +1,4 @@
-//! Native conversion from split parameters into an inherited result array.
+//! conversion from split parameters into an inherited result array.
 use super::{super::SplitCurve, ShapeUpgradeConvertCurve3dToBezier};
 use martensite_tkernel::{
     ncollection::HArray1,

@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/surface_to_bspline.
+//! The TKShHealing (no view) tests of surface to bspline.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_surface_to_bspline, HEAL_SECONDS;

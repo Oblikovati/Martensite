@@ -1,4 +1,4 @@
-//! Free-boundary measurements from the retained behavior ShapeAnalysis_FreeBoundsProperties.
+//! Free-boundary measurements from ShapeAnalysisFreeBoundsProperties.
 use super::{ShapeAnalysisFreeBoundData, ShapeAnalysisFreeBounds};
 use crate::shape_extend::ShapeExtendExplorer;
 use martensite_tkbrep::topods::{self, Shape};

@@ -1,4 +1,4 @@
-//! `ShapeFix_IntersectionTool::FixIntersectingWires`, line by line: every pair of direct
+//! `ShapeFixIntersectionTool::fix_intersecting_wires`, line by line: every pair of direct
 //! face wires, every pair of their edges with point then segment repairs, and the face
 //! rebuilt from the repaired wires.
 use super::ShapeFixIntersectionTool;

@@ -1,4 +1,4 @@
-//! The approximation loop of `ShapeCustom_BSplineRestriction::ConvertSurface`: growing
+//! The approximation loop of `ShapeCustomBSplineRestriction::convert_surface`: growing
 //! tolerances, decreasing continuities on exceptions, then more segments (degree priority)
 //! or a higher degree.
 use super::ShapeCustomBSplineRestriction;
@@ -23,7 +23,7 @@ struct ApproxLoop {
     shift: (f64, f64),
 }
 
-/// The outcome of one GeomConvert_ApproxSurface attempt inside the native `try`.
+/// The outcome of one ApproxSurface attempt inside the native `try`.
 enum Attempt {
     Accepted,
     Rejected(f64),

@@ -54,7 +54,7 @@ impl HashPolicy<Shape> for ShapeDefaultHasher {
     }
 }
 
-/// `NCollection_DataMap<TopoDS_Shape, occ::handle<Geom2d_Curve>>`: the new p-curve of each
+/// `NCollection_DataMap<TopoDS_Shape, occ::handle<Geom2dCurve>>`: the new p-curve of each
 /// edge.
 pub(super) type EdgePCurveMap = DataMap<Shape, Handle<dyn Geom2dCurve>, ShapeDefaultHasher>;
 
@@ -88,7 +88,7 @@ pub(super) struct UnifyState {
 }
 
 /// `ShapeUpgradeUnifySameDomain`: merges the faces of a shape lying on the same surface
-/// (planes compared with GeomLib_IsPlanarSurface, elementary surfaces with
+/// (planes compared with IsPlanarSurface, elementary surfaces with
 /// IntPatch_ImpImpIntersection, cylinders also as swept surfaces) and the edges lying on
 /// the same line or circle (or any B-spline chain with `ConcatBSplines`).
 ///

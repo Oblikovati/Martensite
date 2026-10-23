@@ -118,7 +118,7 @@ fn is_flat(dev: [f64; 3], axis: usize) -> bool {
     !(2.0 * dev[axis] > dev[a] || 2.0 * dev[axis] > dev[b])
 }
 
-/// The `gp_GTrsf` of the 3 x 4 coefficients, set cell by cell as in this implementation.
+/// The `gp_GTrsf` of the 3 x 4 coefficients, set cell by cell.
 fn general_transform(matrix: &HArray2<f64>) -> Result<GeneralTransform3, Failure> {
     let cells = matrix.array2();
     let mut gtrsf = GeneralTransform3::default();

@@ -316,7 +316,7 @@ fn cone(
 }
 
 /// The torus of a surface closed in both directions, tried on U isos then (bounds
-/// swapped) on V isos; the frame keeps the swap for the verification, as in this implementation.
+/// swapped) on V isos; the frame keeps the swap for the verification.
 fn toroid(
     surface: &Handle<dyn GeomSurface>,
     frame: IsoFrame,

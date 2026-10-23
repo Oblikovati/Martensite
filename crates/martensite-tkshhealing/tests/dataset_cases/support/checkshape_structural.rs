@@ -11,7 +11,7 @@ use martensite_tkernel::ncollection::DataMap;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tktopalgo::brep_check::{BRepCheckAnalyzer, BRepCheckStatus, ListOfStatus};
 
-/// `NumberOfStatus`: the count of the `BRepCheck_Status` values without `NoError`.
+/// `NumberOfStatus`: the count of the `BRepCheckStatus` values without `NoError`.
 const NUMBER_OF_STATUS: usize = 36;
 
 /// The logged result of checking a named shape.

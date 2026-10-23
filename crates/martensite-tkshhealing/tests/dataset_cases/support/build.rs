@@ -1,6 +1,6 @@
 //! The construction and count commands of the scripts that build their inputs: BRepTest
-//! `polyline` and `polyvertex` (BRepBuilderAPI_MakePolygon), `psphere`
-//! (BRepPrimAPI_MakeSphere), and DBRep `nbshapes shape -t` with the `checknbshapes -t`
+//! `polyline` and `polyvertex` (BRepBuilderAPIMakePolygon), `psphere`
+//! (BRepPrimAPIMakeSphere), and DBRep `nbshapes shape -t` with the `checknbshapes -t`
 //! shape-count consistency check.
 use super::log;
 use super::logged_checks::nbshapes_count;
@@ -183,7 +183,7 @@ pub fn maxtolerance_printed(name: &str, shape: &Shape) -> [f64; 3] {
     })
 }
 
-/// BRepTest `edge name v1 v2`: BRepBuilderAPI_MakeEdge between the vertices.
+/// BRepTest `edge name v1 v2`: BRepBuilderAPIMakeEdge between the vertices.
 pub fn edge(v1: &Shape, v2: &Shape) -> Shape {
     use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
     let v1 = topods::vertex(v1).expect("edge: a vertex");

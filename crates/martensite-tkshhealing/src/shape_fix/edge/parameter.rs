@@ -55,7 +55,7 @@ fn vertex_tolerance(vertex: Vertex) -> Result<(Vertex, f64), Failure> {
 }
 
 impl ShapeFixEdge {
-    /// Use the retained behavior's default zero tolerance for `FixSameParameter(edge, tolerance=0)`: `tool.fix_same_parameter_default(&edge)?`.
+    /// Use default zero tolerance for `FixSameParameter(edge, tolerance=0)`: `tool.fix_same_parameter_default(&edge)?`.
     pub fn fix_same_parameter_default(&self, edge: &Edge) -> Result<bool, Failure> {
         self.fix_same_parameter(edge, 0.0)
     }

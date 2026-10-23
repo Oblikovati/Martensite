@@ -10,7 +10,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::ShapeEnum;
 
 /// `ShapeBuildReShape`: records requests to replace or remove shapes, then applies them
-/// to any shape that contains them, rebuilding it (`BRepTools_ReShape` with its own
+/// to any shape that contains them, rebuilding it (`BRepToolsReShape` with its own
 /// `Apply`, a build-mode `Apply` for solids and shells, and the ShapeExtend status of the
 /// last `Apply`).
 ///

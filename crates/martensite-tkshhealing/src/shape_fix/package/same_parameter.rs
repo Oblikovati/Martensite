@@ -1,4 +1,4 @@
-//! Preserve ShapeFix::SameParameter edge order, messages and cancellation points.
+//! Preserve ShapeFix::same_parameter edge order, messages and cancellation points.
 use super::ShapeFix;
 use crate::{
     shape_extend::{BasicMsgRegistrator, ShapeExtendStatus},
@@ -83,7 +83,7 @@ fn repair_edge(
     if enforce {
         clear_flags(edge)?;
     }
-    // Native source computes a requested tolerance, but calls these overloads with their default zero.
+    // source computes a requested tolerance, but calls these overloads with their default zero.
     let faces = ancestors.find_from_key(edge)?;
     if faces.is_empty() {
         tool.fix_same_parameter_default(edge)?;

@@ -229,7 +229,7 @@ pub fn offset(basis: &Handle<dyn GeomSurface>, distance: f64) -> Handle<dyn Geom
 }
 
 /// Builds a face from a surface and bounds, returning the resulting face or
-/// the StdFail_NotDone its conversion raises when BRepBuilderAPI_MakeFace is not done.
+/// the StdFail_NotDone its conversion raises when BRepBuilderAPIMakeFace is not done.
 pub fn mkface_bounds_checked(
     surface: &Handle<dyn GeomSurface>,
     [u_min, u_max, v_min, v_max]: [f64; 4],

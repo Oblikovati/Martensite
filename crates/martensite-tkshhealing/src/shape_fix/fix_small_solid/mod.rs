@@ -1,4 +1,4 @@
-//! Small-solid thresholds, removal, and shell merging from `ShapeFix_FixSmallSolid`.
+//! Small-solid thresholds, removal, and shell merging from `ShapeFixFixSmallSolid`.
 mod config;
 mod merge;
 mod remove;
@@ -11,7 +11,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle, SharedState};
 
-/// `ShapeFix_FixSmallSolid`: removes small solids or merges them into adjacent solids.
+/// `ShapeFixFixSmallSolid`: removes small solids or merges them into adjacent solids.
 /// Threshold mode `0` uses both tests, mode `1` only width factor, and mode `2` only volume.
 ///
 /// ```

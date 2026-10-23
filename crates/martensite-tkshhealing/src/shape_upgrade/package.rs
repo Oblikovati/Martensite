@@ -9,7 +9,7 @@ use martensite_tkmath::gp::{self, Point2, Point3};
 /// The C1 pieces of a 3D B-spline (`NCollection_HSequence<occ::handle<Geom_BoundedCurve>>`).
 pub type BoundedCurveSequence = Handle<HSequence<Handle<dyn GeomBoundedCurve>>>;
 
-/// The C1 pieces of a 2D B-spline (`NCollection_HSequence<occ::handle<Geom2d_BoundedCurve>>`).
+/// The C1 pieces of a 2D B-spline (`NCollection_HSequence<occ::handle<Geom2dBoundedCurve>>`).
 pub type BoundedCurve2dSequence = Handle<HSequence<Handle<dyn Geom2dBoundedCurve>>>;
 
 /// `ShapeUpgrade`: the package functions of ShapeUpgrade.

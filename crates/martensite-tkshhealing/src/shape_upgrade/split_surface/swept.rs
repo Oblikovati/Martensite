@@ -166,7 +166,7 @@ fn native_min(first: f64, second: f64) -> f64 {
 }
 
 fn sweep_ranges(along: &[f64]) -> Vec<(f64, f64)> {
-    // the retained behavior allocates one cross-direction patch even for a one-value shared sequence.
+    // allocates one cross-direction patch even for a one-value shared sequence.
     if along.len() <= 2 {
         return vec![(along[0], along[along.len() - 1])];
     }

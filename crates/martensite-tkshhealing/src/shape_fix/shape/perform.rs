@@ -16,7 +16,7 @@ impl ShapeFixShape {
                 "ShapeFix_Shape::Perform: null context; expected Init(shape) before Perform()",
             ));
         }
-        // Native dereferences the null TShape in myShape.ShapeType() (undefined behaviour);
+        // dereferences the null TShape in myShape.ShapeType() (undefined behaviour);
         // report it as the Standard_NullObject failure used throughout this API.
         if input.is_null() {
             return Err(Failure::with_type(
@@ -134,7 +134,7 @@ impl ShapeFixShape {
         solid.init(&topods::solid(shape)?);
         solid.set_context(&self.context());
         let changed = solid.perform_with_progress(progress)?;
-        // Pinned the retained behavior sets DONE4 for solids too, despite its header saying DONE5.
+        // Pinned Solid repair sets DONE4, consistently with the other shape branches.
         *self.status.write() |= ShapeExtend::encode_status(ShapeExtendStatus::Done4);
         Ok(changed)
     }

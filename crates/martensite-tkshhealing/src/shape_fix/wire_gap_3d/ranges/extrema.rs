@@ -16,7 +16,7 @@ pub(super) fn closest(
     if extrema.nb_extrema() == 0 {
         return Ok(None);
     }
-    // Native catches failures only after constructing the extrema object.
+    // catches failures only after constructing the extrema object.
     Ok(select_and_validate(pair, first, second, &extrema).unwrap_or(None))
 }
 fn select_and_validate(

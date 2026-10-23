@@ -1,6 +1,6 @@
 //! The tests/sewing commands and checks: BRepTest `sewing result tol shapes...`
-//! (BRepBuilderAPI_Sewing with its Dump), SWscenario `tolerance shape`
-//! (ShapeAnalysis_ShapeTolerance) and `freebounds shape tol` (ShapeAnalysis_FreeBounds),
+//! (BRepBuilderAPISewing with its Dump), SWscenario `tolerance shape`
+//! (ShapeAnalysisShapeTolerance) and `freebounds shape tol` (ShapeAnalysisFreeBounds),
 //! and the associated consistency checks built on them.
 use super::checkshape::checkshape;
 use super::commands::explode_type;
@@ -156,7 +156,7 @@ fn max_of(shape: &Shape, name: &str) -> f64 {
 }
 
 /// `freebounds shape tol`: `name_c` (closed wires) and `name_o` (open wires) of
-/// ShapeAnalysis_FreeBounds, actual bounds for tol <= 0 and forecast ones otherwise.
+/// ShapeAnalysisFreeBounds, actual bounds for tol <= 0 and forecast ones otherwise.
 pub fn freebounds(shape: &Shape, name: &str, tolerance: f64) -> (Shape, Shape) {
     let bounds = if tolerance <= 0. {
         ShapeAnalysisFreeBounds::from_shape(shape, false, false, false)

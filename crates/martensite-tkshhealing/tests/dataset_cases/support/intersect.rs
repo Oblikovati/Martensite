@@ -62,7 +62,7 @@ pub fn bounds(c: &Handle<dyn GeomCurve>) -> (f64, f64) {
 }
 
 /// `xdistcs curve surface t1 t2 nbpoints tol`: the distance from `nbpoints` curve points
-/// to the surface (GeomAPI_ProjectPointOnSurf, Grad), `Error in name:` before each one
+/// to the surface (ProjectPointOnSurf, Grad), `Error in name:` before each one
 /// above `tol`; returns the text and the largest distance.
 pub fn xdistcs(
     name: &str,

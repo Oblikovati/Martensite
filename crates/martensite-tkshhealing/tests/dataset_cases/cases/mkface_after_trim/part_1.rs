@@ -14,7 +14,7 @@ use crate::support::{
     vars::Vars,
 };
 
-/// tests/mkface/after_trim/A1.
+/// after trim — A1.
 pub fn a1(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", plane(&[0.0, 0.0, 0.0]));
@@ -33,7 +33,7 @@ pub fn a1(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/A2.
+/// after trim — A2.
 pub fn a2(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", plane(&[0.0, 0.0, 0.0]));
@@ -54,7 +54,7 @@ pub fn a2(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/A3.
+/// after trim — A3.
 pub fn a3(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", cylinder(&[10.0]));
@@ -73,7 +73,7 @@ pub fn a3(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/A4.
+/// after trim — A4.
 pub fn a4(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", cylinder(&[10.0]));
@@ -94,7 +94,7 @@ pub fn a4(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/A5.
+/// after trim — A5.
 pub fn a5(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", cone(&[30.0, 30.0]));
@@ -113,7 +113,7 @@ pub fn a5(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/A6.
+/// after trim — A6.
 pub fn a6(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", cone(&[30.0, 30.0]));
@@ -134,7 +134,7 @@ pub fn a6(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/A7.
+/// after trim — A7.
 pub fn a7(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", sphere(&[30.0]));
@@ -153,7 +153,7 @@ pub fn a7(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/A8.
+/// after trim — A8.
 pub fn a8(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", sphere(&[30.0]));
@@ -174,7 +174,7 @@ pub fn a8(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/A9.
+/// after trim — A9.
 pub fn a9(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", torus(&[0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 30.0, 10.0]));
@@ -193,7 +193,7 @@ pub fn a9(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/B1.
+/// after trim — B1.
 pub fn b1(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", torus(&[0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 30.0, 10.0]));
@@ -214,7 +214,7 @@ pub fn b1(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/B2.
+/// after trim — B2.
 pub fn b2(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -241,7 +241,7 @@ pub fn b2(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/B3.
+/// after trim — B3.
 pub fn b3(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -270,7 +270,7 @@ pub fn b3(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/B4.
+/// after trim — B4.
 pub fn b4(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -297,7 +297,7 @@ pub fn b4(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/B5.
+/// after trim — B5.
 pub fn b5(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -326,7 +326,7 @@ pub fn b5(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/B6.
+/// after trim — B6.
 pub fn b6(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_np_r"));
@@ -345,7 +345,7 @@ pub fn b6(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/B7.
+/// after trim — B7.
 pub fn b7(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_np_r"));

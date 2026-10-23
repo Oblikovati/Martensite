@@ -1,7 +1,7 @@
 //! heal wire tails composed regression cases:
 //! each builds planar faces from polygons of vertices (`polyvertex`, `mkplane`; A19 sews
-//! four of them), runs `fixshape r s -maxtaila 10 -maxtailw w` (ShapeFixWire::FixTails)
-//! and checks the counts and the length of `r`. tests/heal/end then shows `r` in the 3D
+//! four of them), runs `fixshape r s -maxtaila 10 -maxtailw w` (ShapeFixWire::fix_tails)
+//! and checks the counts and the length of `r`. end then shows `r` in the 3D
 //! viewer (`checkview -display r -3d -vdispmode 0`), which these crate tests do not
 //! reproduce.
 use crate::support::{
@@ -48,12 +48,12 @@ fn fix_tails(s: &mut dyn Session, face: &Shape, width: &str, counts: [usize; 8],
     }
     checknbshapes_some(&r, expected);
     checkprops(&r, Prop::Length, length);
-    // tests/heal/end: `isdraw result` is false and `isdraw r` true, so it displays
+    // end: `isdraw result` is false and `isdraw r` true, so it displays
     // r in the AXON 3D view, fits it, and captures the result.
     checkview_display(s, Some("r"), "wire-tails-composed.xwd");
 }
 
-/// tests/heal/wire_tails_composed/A1.
+/// wire tails composed — A1.
 pub fn a1(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-1.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -68,7 +68,7 @@ pub fn a1(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A2.
+/// wire tails composed — A2.
 pub fn a2(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-1.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -83,7 +83,7 @@ pub fn a2(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A3.
+/// wire tails composed — A3.
 pub fn a3(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-1.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -98,7 +98,7 @@ pub fn a3(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A4.
+/// wire tails composed — A4.
 pub fn a4(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-1.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -113,7 +113,7 @@ pub fn a4(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A5.
+/// wire tails composed — A5.
 pub fn a5(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-1.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -128,7 +128,7 @@ pub fn a5(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A6.
+/// wire tails composed — A6.
 pub fn a6(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-1.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -143,7 +143,7 @@ pub fn a6(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A7.
+/// wire tails composed — A7.
 pub fn a7(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-2.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -158,7 +158,7 @@ pub fn a7(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A8.
+/// wire tails composed — A8.
 pub fn a8(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-2.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -173,7 +173,7 @@ pub fn a8(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A9.
+/// wire tails composed — A9.
 pub fn a9(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-2.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -188,7 +188,7 @@ pub fn a9(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A10.
+/// wire tails composed — A10.
 pub fn a10(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-2.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -203,7 +203,7 @@ pub fn a10(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A11.
+/// wire tails composed — A11.
 pub fn a11(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-2.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -218,7 +218,7 @@ pub fn a11(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A12.
+/// wire tails composed — A12.
 pub fn a12(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-2.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -233,7 +233,7 @@ pub fn a12(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A13.
+/// wire tails composed — A13.
 pub fn a13(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [0.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -248,7 +248,7 @@ pub fn a13(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A14.
+/// wire tails composed — A14.
 pub fn a14(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [0.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -263,7 +263,7 @@ pub fn a14(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A15.
+/// wire tails composed — A15.
 pub fn a15(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [0.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -278,7 +278,7 @@ pub fn a15(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A16.
+/// wire tails composed — A16.
 pub fn a16(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [0.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -293,7 +293,7 @@ pub fn a16(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A17.
+/// wire tails composed — A17.
 pub fn a17(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [0.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -308,7 +308,7 @@ pub fn a17(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A18.
+/// wire tails composed — A18.
 pub fn a18(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [0.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);
@@ -323,7 +323,7 @@ pub fn a18(s: &mut dyn Session) {
     );
 }
 
-/// tests/heal/wire_tails_composed/A19.
+/// wire tails composed — A19.
 pub fn a19(s: &mut dyn Session) {
     let v1 = vertex_at(s, "v1", [-1.0, 0.0, 0.0]);
     let v2 = vertex_at(s, "v2", [9.0, 0.0, 0.0]);

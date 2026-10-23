@@ -11,7 +11,7 @@ impl ShapeFixSolid {
     pub fn solid_from_shell(&self, shell: &Shell) -> Result<Solid, Failure> {
         shell.set_free(true)?;
         let solid = build_solid(shell)?;
-        // the retained behavior catches classification failures and returns its already built solid.
+        // catches classification failures and returns its already built solid.
         if infinite_state(&solid).ok() != Some(State::In) {
             return Ok(solid);
         }

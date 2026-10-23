@@ -1,5 +1,5 @@
-//! `fixwgaps` and `fixsmall` (ShapeFix_Wireframe) and
-//! `directfaces` (ShapeCustom::DirectFaces).
+//! `fixwgaps` and `fixsmall` (ShapeFixWireframe) and
+//! `directfaces` (ShapeCustom::direct_faces).
 use martensite_tkbrep::topods::Shape;
 use martensite_tkshhealing::shape_custom::ShapeCustom;
 use martensite_tkshhealing::shape_fix::{FixRoot, ShapeFixShapeTolerance, ShapeFixWireframe};
@@ -64,7 +64,7 @@ pub fn directfaces(shape: &Shape, result_name: &str) -> MaybeSet {
     }
 }
 
-/// `settolerance shape val`: ShapeFix_ShapeTolerance::LimitTolerance
+/// `settolerance shape val`: ShapeFixShapeTolerance::limit_tolerance
 /// to `[val, val]` on every sub-shape; prints `Setting Tolerance to val` (`%.17g`).
 pub fn settolerance(shape: &Shape, value: f64) -> String {
     ShapeFixShapeTolerance::new()

@@ -1,4 +1,4 @@
-//! Native reconstruction of wires branching through repeated vertices.
+//! reconstruction of wires branching through repeated vertices.
 mod graph;
 mod join;
 use super::{ShapeExtend, ShapeExtendStatus, ShapeFixFace};
@@ -15,7 +15,7 @@ use martensite_tkernel::{ncollection::Sequence, precision, standard::Failure};
 use martensite_tkg3d::{adaptor3d::Adaptor3dSurface, top_abs::Orientation};
 use martensite_tkmath::geom_abs::SurfaceType;
 impl ShapeFixFace {
-    /// Append reconstructed loop wires in the retained behavior order; `tool.fix_loop_wire(&mut wires)?`.
+    /// Append reconstructed loop wires in order; `tool.fix_loop_wire(&mut wires)?`.
     pub fn fix_loop_wire(&self, output: &mut Sequence<Shape>) -> Result<bool, Failure> {
         let Some(mut graph) = graph::LoopGraph::analyze(self)? else {
             return Ok(false);

@@ -1,4 +1,4 @@
-//! the retained behavior `ShapeUpgrade_ConvertCurve2dToBezier` at the pinned source revision.
+//! Convert planar curves to Bezier pieces with shared split parameters.
 use super::{ShapeUpgradeSplitCurve2d, SplitCurve, SplitCurveData, SplitCurves2d};
 use martensite_tkernel::{
     impl_transient,

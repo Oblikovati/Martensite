@@ -1,4 +1,4 @@
-//! Package utility results compared with pinned the retained behavior.
+//! Shape repair package utility regressions.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topexp::Explorer,

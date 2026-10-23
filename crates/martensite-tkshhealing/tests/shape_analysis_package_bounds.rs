@@ -1,4 +1,4 @@
-//! Pinned native ShapeAnalysis package rows, separate from legacy declarations.
+//! Endpoint and p-curve bounds regression cases.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topexp,

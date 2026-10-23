@@ -1,4 +1,4 @@
-//! Wire-enabled ShapeFix_Face::Perform orchestration.
+//! Wire-enabled ShapeFixFace::perform orchestration.
 use super::{ShapeExtend, ShapeExtendStatus, ShapeFixFace};
 use crate::shape_fix::{FixRoot, need_fix};
 use martensite_tkbrep::{

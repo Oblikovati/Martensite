@@ -1,4 +1,4 @@
-//! Wrapper behavior compared with the pinned ShapeUpgrade_ShapeDivideArea reference.
+//! Whole-shape area subdivision configuration regressions.
 use martensite_tkernel::precision;
 use martensite_tkshhealing::shape_upgrade::{
     ShapeDivider, ShapeUpgradeFaceDivideArea, ShapeUpgradeShapeDivideArea,

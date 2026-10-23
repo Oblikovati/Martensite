@@ -1,4 +1,4 @@
-//! Native-backed ShapeFix_Wire::FixNotchedEdges edge split and status.
+//! Native-backed ShapeFixWire::fix_notched_edges edge split and status.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Face, Wire};
 use martensite_tkernel::standard::Handle;

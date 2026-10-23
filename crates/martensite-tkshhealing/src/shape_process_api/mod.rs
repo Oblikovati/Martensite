@@ -81,7 +81,7 @@ impl ShapeProcessAPIApplySequence {
     }
 
     /// `PrintPreparationResult()`: the same report as
-    /// `ShapeProcessShapeContext::PrintStatistics` (the bodies are identical).
+    /// `ShapeProcessShapeContext::print_statistics` (the bodies are identical).
     pub fn print_preparation_result(&self) -> Result<(), Failure> {
         self.context
             .get()

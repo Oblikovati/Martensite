@@ -144,7 +144,7 @@ pub trait ShapeExtendComplexCurve: GeomCurve {
     }
 
     /// `TransformDN(V, ind, N)` (protected): multiplies `v` by the scale factor of segment
-    /// `ind`, `n` times (one product per order, not a power, as in this implementation).
+    /// `ind`, `n` times (one product per order, not a power).
     fn transform_dn(&self, v: &mut Vector3, ind: i32, n: i32) -> Result<(), Failure> {
         let factor = self.get_scale_factor(ind)?;
         for _ in 1..=n {

@@ -1,5 +1,5 @@
 //! ShapeCustom: the modifications that convert the geometry of shapes (to
-//! B-splines, to revolutions, restrictions), applied with `BRepTools_Modifier`.
+//! B-splines, to revolutions, restrictions), applied with `Modifier`.
 //!
 //! [`ShapeCustomCurve2d`] (linear p-curves
 //! as lines, knot removal), [`ShapeCustomRestrictionParameters`], the abstract

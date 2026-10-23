@@ -60,7 +60,7 @@ impl ShapeUpgradeSplitCurve3dContinuity {
         nested.set_tolerance(settings.tolerance);
         nested.set_criterion(settings.criterion);
         nested.compute()?;
-        // Native recursion copies the sequence into the existing shared handle.
+        // recursion copies the sequence into the existing shared handle.
         copy_nested_results(
             nested.split_curve_data(),
             &nested.split_values(),

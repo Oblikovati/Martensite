@@ -12,7 +12,7 @@ use martensite_tkgeombase::geom_convert;
 use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkmath::gp::{Point3, Transform3};
 
-/// The `GeomAbs_Shape` values, indexed by their integer value.
+/// The continuity values, indexed by their integer value.
 const CONTINUITIES: [Continuity; 7] = [
     Continuity::C0,
     Continuity::G1,

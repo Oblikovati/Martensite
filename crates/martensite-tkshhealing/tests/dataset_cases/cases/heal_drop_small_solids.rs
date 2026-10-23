@@ -3,7 +3,7 @@
 //! end points `CSF_resDefaults` to the directory of `res`, runs `DT_ApplySeq result a res
 //! $cmd` on test.brep, then compares `result` with the reference shape `$ref.brep`: the
 //! checkshape text, the statshape tables and the printed properties (centre of gravity
-//! and matrix of inertia of vprops, sprops and lprops, within 1e-8); tests/heal/end shows
+//! and matrix of inertia of vprops, sprops and lprops, within 1e-8); end shows
 //! `result` with `checkview -display result -2d`.
 use crate::support::{
     checkshape::checkshape,
@@ -49,57 +49,57 @@ fn drop_small_solids(s: &mut dyn Session, cmd: &str, reference: &str, image: &st
     checkview_display(s, Some("result"), image);
 }
 
-/// tests/heal/drop_small_solids/M1.
+/// drop small solids — M1.
 pub fn m1(s: &mut dyn Session) {
     drop_small_solids(s, "merge0v", "test", "M1");
 }
 
-/// tests/heal/drop_small_solids/M2.
+/// drop small solids — M2.
 pub fn m2(s: &mut dyn Session) {
     drop_small_solids(s, "merge1v", "merge1", "M2");
 }
 
-/// tests/heal/drop_small_solids/M3.
+/// drop small solids — M3.
 pub fn m3(s: &mut dyn Session) {
     drop_small_solids(s, "merge2v", "merge2", "M3");
 }
 
-/// tests/heal/drop_small_solids/R1.
+/// drop small solids — R1.
 pub fn r1(s: &mut dyn Session) {
     drop_small_solids(s, "remove0v", "test", "R1");
 }
 
-/// tests/heal/drop_small_solids/R2.
+/// drop small solids — R2.
 pub fn r2(s: &mut dyn Session) {
     drop_small_solids(s, "remove1v", "remove1", "R2");
 }
 
-/// tests/heal/drop_small_solids/R3.
+/// drop small solids — R3.
 pub fn r3(s: &mut dyn Session) {
     drop_small_solids(s, "remove2v", "remove2", "R3");
 }
 
-/// tests/heal/drop_small_solids/R4.
+/// drop small solids — R4.
 pub fn r4(s: &mut dyn Session) {
     drop_small_solids(s, "remove0w", "test", "R4");
 }
 
-/// tests/heal/drop_small_solids/R5.
+/// drop small solids — R5.
 pub fn r5(s: &mut dyn Session) {
     drop_small_solids(s, "remove1w", "remove1", "R5");
 }
 
-/// tests/heal/drop_small_solids/R6.
+/// drop small solids — R6.
 pub fn r6(s: &mut dyn Session) {
     drop_small_solids(s, "remove2w", "remove2", "R6");
 }
 
-/// tests/heal/drop_small_solids/R7.
+/// drop small solids — R7.
 pub fn r7(s: &mut dyn Session) {
     drop_small_solids(s, "remove1vw", "remove1", "R7");
 }
 
-/// tests/heal/drop_small_solids/R8.
+/// drop small solids — R8.
 pub fn r8(s: &mut dyn Session) {
     drop_small_solids(s, "remove1wv", "remove1", "R8");
 }

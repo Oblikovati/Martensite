@@ -1,4 +1,4 @@
-//! Face-ready `ShapeFix_Wire::Perform` native pass-order regression.
+//! Face-ready `ShapeFixWire::perform` native pass-order regression.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::Face;
 use martensite_tkernel::standard::Handle;

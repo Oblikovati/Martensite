@@ -1,4 +1,4 @@
-//! Differential loop graph reconstruction against the pinned the retained behavior fixture.
+//! Differential loop graph reconstruction against the fixture.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topexp::Explorer,

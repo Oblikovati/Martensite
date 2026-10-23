@@ -35,7 +35,7 @@ struct WireDataFields {
 
 impl WireDataFields {
     /// The state `Clear` leaves: no edge, no seam known, the manifold mode. The seam
-    /// cache keeps its content, as in this implementation (it is refilled before it is read again).
+    /// cache keeps its content (it is refilled before it is read again).
     fn clear(&mut self) {
         self.edges = Sequence::default();
         self.nonmanifold = Handle::new(HSequence::default());
@@ -241,7 +241,7 @@ impl ShapeExtendWireData {
         Ok(wire)
     }
 
-    /// `WireAPIMake()`: the wire `BRepBuilderAPI_MakeWire` builds from the edges (then
+    /// `WireAPIMake()`: the wire `BRepBuilderAPIMakeWire` builds from the edges (then
     /// the non-manifold edges in the manifold mode); a null wire when it fails;
     /// `data.wire_api_make()?`.
     pub fn wire_api_make(&self) -> Result<Wire, Failure> {
@@ -291,7 +291,7 @@ impl ShapeExtendWireData {
     /// order for a REVERSED wire), its INTERNAL and EXTERNAL edges apart (after the others
     /// without the manifold mode). Returns false when two consecutive edges are not
     /// connected (only checked in the manifold mode); then, unless `chained`, the list is
-    /// rebuilt in the order of `BRepTools_WireExplorer`; `data.init_wire(&w, true, true)?`.
+    /// rebuilt in the order of `WireExplorer`; `data.init_wire(&w, true, true)?`.
     pub fn init_wire(
         &self,
         wire: &Wire,

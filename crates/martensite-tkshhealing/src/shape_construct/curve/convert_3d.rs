@@ -80,7 +80,7 @@ fn segment_copy(
     spline.segment(first, last, precision::p_confusion())
 }
 
-/// `Approx_Curve3d(new GeomAdaptor_Curve(newc, first, last), prec, GeomAbs_C1, 9, 1000)`:
+/// `Approx_Curve3d(new GeomAdaptorCurve(newc, first, last), prec, C1 continuity, 9, 1000)`:
 /// its curve when it is done or has a result.
 fn approximate(
     newc: &Handle<dyn GeomCurve>,

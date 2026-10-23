@@ -17,7 +17,7 @@ use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::gp::Point3;
 impl ShapeFixSplitTool {
     /// Split at a p-curve parameter, preserving rejected outputs; `tool.split_edge(&edge, p, &vertex, &face, &mut a, &mut b, 1e-7, 1e-9)?`.
-    #[allow(clippy::too_many_arguments)] // Native SplitEdge output and tolerance parameters.
+    #[allow(clippy::too_many_arguments)] // SplitEdge output and tolerance parameters.
     pub fn split_edge(
         &self,
         edge: &Edge,
@@ -127,7 +127,7 @@ fn finish_split(
 }
 /// The point of a split as SplitEdge computes it natively: on the unlocated 3D curve of a
 /// SameParameter edge (not a degenerated one when `skip_degenerated`), else through a
-/// ShapeAnalysis_Surface on the unlocated face surface, then moved by the location when it
+/// ShapeAnalysisSurface on the unlocated face surface, then moved by the location when it
 /// is not the identity; None for a SameParameter edge without 3D curve.
 /// `split_point_on(&edge, &face, 0.5, false)?`.
 pub(in crate::shape_fix::wire) fn split_point_on(

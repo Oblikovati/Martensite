@@ -28,7 +28,7 @@ struct PeriodicSeamBounds {
     ring_v: f64,
 }
 
-/// The direct wire children of a face with the orientations accepted by the retained behavior's fix.
+/// The direct wire children of a face with the orientations accepted by fix.
 pub(super) fn face_wires(face: &Face) -> Result<Vec<Wire>, Failure> {
     let mut wires = Vec::new();
     for child in ShapeIterator::new(&face.clone().into_shape(), false, true) {

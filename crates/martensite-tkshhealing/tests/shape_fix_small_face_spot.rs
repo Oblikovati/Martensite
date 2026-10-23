@@ -26,8 +26,8 @@ fn regular_box_is_preserved_by_the_spot_phase() {
     let result = fixer.fix_spot_face().unwrap();
     assert!(result.is_same(&input));
     assert!(fixer.shape().is_same(&input));
-    // FixShape replaces each face by ShapeFixFace::Face(), a new face even when
-    // nothing is fixed (checked against: FixShape().IsSame(box) is false).
+    // Repair replaces each face with a newly built face, even when
+    // nothing needs repair; the returned shape has a different identity.
     assert!(!fixer.fix_shape().unwrap().is_same(&input));
     let mut first_face = first_face(&input);
     let before = first_face.clone().into_shape();

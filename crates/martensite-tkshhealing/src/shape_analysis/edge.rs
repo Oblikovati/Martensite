@@ -163,7 +163,7 @@ impl ShapeAnalysisEdge {
         Ok(Some((c2d.value(uf)?, c2d.value(ul)?)))
     }
 
-    /// `IsSeam(edge, face)`: `BRep_Tool::IsClosed(edge, face)`; `sae.is_seam_on_face(&e, &f)?`.
+    /// `IsSeam(edge, face)`: `BRepTool::is_closed(edge, face)`; `sae.is_seam_on_face(&e, &f)?`.
     pub fn is_seam_on_face(&self, edge: &Edge, face: &Face) -> Result<bool, Failure> {
         BRepTool::is_closed_on_face(edge, face)
     }

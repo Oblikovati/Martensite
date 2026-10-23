@@ -1,4 +1,4 @@
-//! Native `ShapeFix_Wire::Perform` behavior on unloaded and free wires.
+//! `ShapeFixWire::perform` behavior on unloaded and free wires.
 use martensite_tkmath::gp::Point3;
 use martensite_tkshhealing::{shape_extend::ShapeExtendStatus, shape_fix::ShapeFixWire};
 use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeWire};

@@ -440,7 +440,7 @@ fn copy_pcurve(to: &Edge, from: &Edge, from_gc: &dyn BRepGCurve) -> Result<(), F
     Ok(())
 }
 
-/// `occ::down_cast<Geom2d_Curve>(pcurve->Copy())`; Standard_NullObject for a null p-curve.
+/// `occ::down_cast<Geom2dCurve>(pcurve->Copy())`; Standard_NullObject for a null p-curve.
 pub(crate) fn copied_pcurve(
     pcurve: &Handle<dyn Geom2dCurve>,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {

@@ -67,7 +67,7 @@ impl ShapeUpgradeRemoveLocations {
 
     /// `Remove(theShape)`: rebuilds the shape; true when a sub-shape was rebuilt (the
     /// result is then [`Self::get_result`]). The map of new shapes is kept from earlier
-    /// calls, as in this implementation. Standard_NullObject for a null shape;
+    /// calls. Standard_NullObject for a null shape;
     /// `remover.remove(&shape)?`.
     pub fn remove(&self, shape: &Shape) -> Result<bool, Failure> {
         let shape_type = shape.shape_type()?;

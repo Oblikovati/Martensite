@@ -1,5 +1,5 @@
 //! The scenario topology and geometry commands the cases call, on the Rust API.
-//! Each function names the command and the the retained behavior source it follows.
+//! Each function names the operation and its argument conventions.
 
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
@@ -226,7 +226,7 @@ pub fn explode_all(shape: &Shape, kind: ShapeEnum) -> Vec<Shape> {
 }
 
 /// `crvtpoints r c defl angle minpoints`: the number of
-/// points of GCPnts_TangentialDeflection on the GeomAdaptor_Curve.
+/// points of GCPnts_TangentialDeflection on the GeomAdaptorCurve.
 pub fn crvtpoints_count(
     curve: &Handle<dyn GeomCurve>,
     deflection: f64,

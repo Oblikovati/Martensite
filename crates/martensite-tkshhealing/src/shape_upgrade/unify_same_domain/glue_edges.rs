@@ -1,6 +1,6 @@
 //! `GlueEdgesWith3DCurves`: the 3D curves of a chain
 //! converted to C1 B-splines, concatenated (GeomConvert::ConcatC1 then
-//! GeomConvert_CompCurveToBSplineCurve) into the curve of one new edge.
+//! CompCurveToBSplineCurve) into the curve of one new edge.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topexp;
 use martensite_tkbrep::topods::{self, Edge, Shape, Vertex};

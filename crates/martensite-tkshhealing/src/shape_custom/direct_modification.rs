@@ -276,7 +276,7 @@ impl BRepToolsModification for ShapeCustomDirectModification {
     }
 }
 
-/// `occ::down_cast<Geom2d_Curve>(C->Copy())`, a null curve staying null.
+/// `occ::down_cast<Geom2dCurve>(C->Copy())`, a null curve staying null.
 pub(super) fn copied_pcurve(
     curve: &Handle<dyn Geom2dCurve>,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
@@ -288,7 +288,7 @@ pub(super) fn copied_pcurve(
 
 /// For a really closed edge, when the reversed new edge has no p-curve on the new face,
 /// the original p-curve and the mirrored one are set as the seam of the new edge, with
-/// the original range ("anyway, tmp will be removed later by BRepTools_Modifier").
+/// the original range ("anyway, tmp will be removed later by Modifier").
 fn keep_seam_trimming(
     edge: &Edge,
     face: &Face,

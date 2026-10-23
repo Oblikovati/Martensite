@@ -113,7 +113,7 @@ impl ShapeExtendWireData {
     /// edges go to the non-manifold edges in the manifold mode; without it, the native
     /// loop inserts `other->Edge(i)` for i up to the number of non-manifold edges (the
     /// ordinary edges, not the non-manifold ones), which is kept. Both loops read the
-    /// counts of `other` again at each step, as in this implementation, so adding a list to itself does
+    /// counts of `other` again at each step, so adding a list to itself does
     /// not end (in this implementation neither); `data.add_wire_data(&other, 0)?`.
     pub fn add_wire_data(&self, other: &ShapeExtendWireData, atnum: i32) -> Result<(), Failure> {
         let mut non_manifold = Vec::new();
@@ -175,7 +175,7 @@ impl ShapeExtendWireData {
 
     /// `AddOriented(edge, mode)`: mode 0 appends, 1 appends reversed, 2 prepends, 3
     /// prepends reversed; nothing for a null edge or a negative mode (a mode above 3
-    /// inserts at `mode / 2`, as in this implementation); `data.add_oriented_edge(&e, 1)?`.
+    /// inserts at `mode / 2`); `data.add_oriented_edge(&e, 1)?`.
     pub fn add_oriented_edge(&self, edge: &Edge, mode: i32) -> Result<(), Failure> {
         if edge.is_null() || mode < 0 {
             return Ok(());

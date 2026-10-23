@@ -1,4 +1,4 @@
-//! Native-backed endpoint projection cases for ShapeFix_EdgeProjAux.
+//! Native-backed endpoint projection cases for ShapeFixEdgeProjAux.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{Edge, Face, Vertex};
 use martensite_tkernel::ncollection::Array1;

@@ -1,4 +1,4 @@
-//! The body every tests/sewing case runs at its grid's tolerance ():
+//! Shared sewing acceptance checks at each case’s configured tolerance:
 //! ```text
 //! restore [locate_data_file file] a
 //! sewing result $tol a
@@ -7,7 +7,7 @@
 //! checkfreebounds result free_edges
 //! checkfaults result a faults
 //! ```
-//! then tests/sewing/end: `checkview -display result -2d`, or `Error : The sewing cannot
+//! then end: `checkview -display result -2d`, or `Error : The sewing cannot
 //! be built.` when `result` is not drawn.
 use crate::support::{
     logged_checks::checknbshapes_some,

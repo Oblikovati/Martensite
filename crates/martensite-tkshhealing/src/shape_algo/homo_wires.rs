@@ -39,7 +39,7 @@ impl EdgeCursor {
         Ok(cursor)
     }
 
-    /// `edge = TopoDS::Edge(It.Value())` and `BRep_Tool::Curve(edge, loc, first, last)`;
+    /// `edge = TopoDS::Edge(It.Value())` and `BRepTool::curve(edge, loc, first, last)`;
     /// Standard_NoSuchObject past the end (the Value() of a finished iterator).
     fn load(&mut self) -> Result<(), Failure> {
         let edge = self
@@ -103,7 +103,7 @@ struct HomoStep {
 
 impl ShapeAlgoAlgoContainer {
     /// `HomoWires(wireIn1, wireIn2, wireOut1, wireOut2, byParam)`: both wires reordered
-    /// (ShapeFixWire::FixReorder), then cut so that edge k of one spans the same share of
+    /// (ShapeFixWire::fix_reorder), then cut so that edge k of one spans the same share of
     /// the total 3D parameter range as edge k of the other; `None` is the false
     /// (after nEdges1 + nEdges2 - 1 edges). `byParam` is unused in this implementation.
     ///
@@ -210,7 +210,7 @@ fn wire_edges(wire: &Wire) -> Result<Vec<Edge>, Failure> {
         .collect()
 }
 
-/// The sum of the 3D parameter ranges (`last - first` of BRep_Tool::Curve).
+/// The sum of the 3D parameter ranges (`last - first` of BRepTool::curve).
 fn total_range(edges: &[Edge]) -> Result<f64, Failure> {
     let mut length = 0.;
     for edge in edges {

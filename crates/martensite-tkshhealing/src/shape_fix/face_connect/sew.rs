@@ -1,4 +1,4 @@
-//! `sewConnectedFaces` of ShapeFix_FaceConnect: the resulting free edges of each pair
+//! `sewConnectedFaces` of ShapeFixFaceConnect: the resulting free edges of each pair
 //! of connected faces sewn (each in its own wire of an empty copy of its face), and the
 //! sewn edges moved to the resulting free or shared edges of their original free edge.
 use super::{ShapeFixFaceConnect, ShapeListMap};
@@ -56,7 +56,7 @@ impl ShapeFixFaceConnect {
                 if already_processed(&processed, &first, &second) {
                     continue;
                 }
-                // Native quirk kept: the count of faces to sew is never reset to 1.
+                // quirk kept: the count of faces to sew is never reset to 1.
                 if !first.is_same(&second) {
                     count = 2;
                 }

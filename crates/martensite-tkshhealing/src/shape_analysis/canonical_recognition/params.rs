@@ -9,7 +9,7 @@ use martensite_tkmath::geom_abs::{CurveType, SurfaceType};
 use martensite_tkmath::gp::{Axis2, Axis3, Cone3};
 use std::f64::consts::PI;
 
-/// The static `GetNbPars(GeomAbs_CurveType)`: 1 for a circle, 2 for an ellipse, else 0.
+/// The static `curve parameter count`: 1 for a circle, 2 for an ellipse, else 0.
 pub(super) fn curve_nb_pars(target: CurveType) -> usize {
     match target {
         CurveType::Circle => 1,
@@ -18,7 +18,7 @@ pub(super) fn curve_nb_pars(target: CurveType) -> usize {
     }
 }
 
-/// The static `GetNbPars(GeomAbs_SurfaceType)`: 1 for a cylinder or a sphere, 2 for a
+/// The static `surface parameter count`: 1 for a cylinder or a sphere, 2 for a
 /// cone, else 0.
 pub(super) fn surface_nb_pars(target: SurfaceType) -> usize {
     match target {

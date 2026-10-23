@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/bugs/heal.
+//! The TKShHealing (no view) tests of heal.
 use super::*;
 
 dataset_cases!(run_case, NoView, bugs_heal, BUGS_SECONDS;

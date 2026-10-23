@@ -1,4 +1,4 @@
-//! Native closure orchestration and status lifetime.
+//! closure orchestration and status lifetime.
 mod support;
 use martensite_tkbrep::{
     brep::BRepBuilder,

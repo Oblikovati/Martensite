@@ -1,4 +1,4 @@
-//! Native loop detection, output-map accumulation and precision/status lifetime.
+//! loop detection, output-map accumulation and precision/status lifetime.
 mod support;
 use martensite_tkbrep::{
     brep::BRepBuilder,

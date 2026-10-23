@@ -1,4 +1,4 @@
-//! Shell composition state and public operations from `ShapeFix_ComposeShell`.
+//! Shell composition state and public operations from `ShapeFixComposeShell`.
 mod break_wires;
 mod collect_wires;
 mod compute_code;
@@ -24,7 +24,7 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::toploc::Location;
 
-/// Mutable native fields of `ShapeFix_ComposeShell`.
+/// Mutable native fields of `ShapeFixComposeShell`.
 #[derive(Clone)]
 struct ComposeShellFields {
     grid: Handle<ShapeExtendCompositeSurface>,
@@ -294,7 +294,7 @@ impl ShapeFixComposeShell {
 
     /// Splits one oriented wire at intersections with a parameter-space line.
     /// `composer.split_by_line(&mut wire, line, true, 1, &mut parameters, &mut codes, &mut vertices)?`.
-    // Keep the retained behavior's protected parameter list intact for direct implementation of derived classes.
+    // Keep protected parameter list intact for direct implementation of derived classes.
     #[allow(clippy::too_many_arguments)]
     pub fn split_by_line(
         &self,

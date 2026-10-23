@@ -9,7 +9,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 /// The message whose presence tells that the Shape Healing messages are loaded.
 const PROBE_KEY: &str = "ShapeFix.FixSmallSolid.MSG0";
 
-/// The `static bool init` of `ShapeExtend::Init`: set before the first load, so a later
+/// The `static bool init` of `ShapeExtend::init`: set before the first load, so a later
 /// call does nothing even when the first one failed.
 static INITIALIZED: AtomicBool = AtomicBool::new(false);
 

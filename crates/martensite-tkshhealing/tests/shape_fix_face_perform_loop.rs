@@ -1,7 +1,5 @@
-//! Regression: ShapeFix_Face::Perform splits a wire through one vertex twice even when
-//! ShapeFix_Wire::Perform changes nothing (natively FixLoopWire runs after every wire of
-//! the second pass). The native comparison is the sh_fix_face requests of
-//! tools/tkshhealing_corpus_fix_face.py.
+//! Face repair splits a wire passing through one vertex twice, even when wire
+//! repair changes nothing. Loop repair follows every wire in the second pass.
 use martensite_tkmath::gp::Point3;
 use martensite_tkshhealing::shape_extend::ShapeExtendStatus;
 use martensite_tkshhealing::shape_fix::ShapeFixFace;

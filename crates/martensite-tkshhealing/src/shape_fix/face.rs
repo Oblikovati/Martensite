@@ -224,7 +224,7 @@ fn initialize_face_surface(face_shape: &Shape) -> Handle<ShapeAnalysisSurface> {
     let Ok(face) = topods::face(face_shape) else {
         return Handle::default();
     };
-    // BRep_Tool::Surface(face): the surface with the face location applied.
+    // BRepTool::surface(face): the surface with the face location applied.
     let Ok(surface) = BRepTool::surface(&face) else {
         return Handle::default();
     };

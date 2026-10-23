@@ -22,7 +22,7 @@ const HEAL_RESOURCES: [(&str, &str); 2] = [
     ),
 ];
 
-/// tests/heal/data: the directory the heal grids point `CSF_<name>Defaults` to (the same
+/// data: the directory the heal grids point `CSF_<name>Defaults` to (the same
 /// path from crates/tkshhealing and crates/tkdraw, which include this module).
 pub fn heal_data_directory() -> PathBuf {
     let directory = PathBuf::from(concat!(

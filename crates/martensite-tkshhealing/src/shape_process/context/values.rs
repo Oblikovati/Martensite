@@ -1,4 +1,4 @@
-//! The parameter getters of `ShapeProcess_Context`.
+//! The parameter getters of `ShapeProcessContext`.
 use super::ShapeProcessContext;
 use martensite_tkernel::standard::Failure;
 use martensite_tkernel::tcollection::AsciiString;
@@ -35,7 +35,7 @@ impl ShapeProcessContext {
 
     /// `GetReal(param, val)`: the scoped value read as a real, or the real of the
     /// (unscoped) parameter named after a leading `&`; `None` for the native false.
-    /// Native quirk kept: a blank value raises Standard_OutOfRange (`Value(1)` of the empty
+    /// quirk kept: a blank value raises Standard_OutOfRange (`Value(1)` of the empty
     /// adjusted string); `context.get_real("Tolerance3d")?`.
     pub fn get_real(&self, param: &str) -> Result<Option<f64>, Failure> {
         self.number(param, Number::Real)
@@ -48,7 +48,7 @@ impl ShapeProcessContext {
             .map(|value| value as i32))
     }
 
-    // Native reads the value as a number, else follows one `&name` alias.
+    // reads the value as a number, else follows one `&name` alias.
     fn number(&self, param: &str, kind: Number) -> Result<Option<f64>, Failure> {
         let Some(mut text) = self.get_string(param) else {
             return Ok(None);

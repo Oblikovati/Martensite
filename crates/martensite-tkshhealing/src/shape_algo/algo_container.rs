@@ -163,7 +163,7 @@ impl ShapeAlgoAlgoContainer {
         ShapeConstruct::convert_surface_to_bspline(surface, bounds, settings)
     }
 
-    /// `OuterWire(face)`: ShapeAnalysis::OuterWire; `container.outer_wire(&face)?`.
+    /// `OuterWire(face)`: ShapeAnalysis::outer_wire; `container.outer_wire(&face)?`.
     pub fn outer_wire(&self, face: &Face) -> Result<Wire, Failure> {
         ShapeAnalysis::outer_wire(face)
     }
@@ -177,7 +177,7 @@ impl ShapeAlgoAlgoContainer {
         ShapeCustomSurface::with_surface(surface).convert_to_periodic(false, -1.)
     }
 
-    /// `GetFaceUVBounds(F, Umin, Umax, Vmin, Vmax)`: ShapeAnalysis::GetFaceUVBounds;
+    /// `GetFaceUVBounds(F, Umin, Umax, Vmin, Vmax)`: ShapeAnalysis::get_face_uv_bounds;
     /// `let (umin, umax, vmin, vmax) = container.get_face_uv_bounds(&face)?;`.
     pub fn get_face_uv_bounds(&self, face: &Face) -> Result<(f64, f64, f64, f64), Failure> {
         ShapeAnalysis::get_face_uv_bounds(face)

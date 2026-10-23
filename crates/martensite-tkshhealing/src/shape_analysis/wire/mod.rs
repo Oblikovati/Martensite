@@ -1,4 +1,4 @@
-//! ShapeAnalysis_Wire state, ordering and connection checks; other native checks remain unported.
+//! ShapeAnalysisWire state, ordering and connection checks; other native checks remain unported.
 use super::{ShapeAnalysisEdge, ShapeAnalysisSurface, ShapeAnalysisWireOrder};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus, ShapeExtendWireData};
 use martensite_tkbrep::{
@@ -51,7 +51,7 @@ struct WireAnalysisFields {
     min_2d: f64,
     max_2d: f64,
 }
-/// Native wire analyzer foundation; `ShapeAnalysisWire::from_wire(&wire, &face, 1e-7)?`.
+/// wire analyzer foundation; `ShapeAnalysisWire::from_wire(&wire, &face, 1e-7)?`.
 /// Implements state initialization, ordering and connection checks.
 pub struct ShapeAnalysisWire {
     parent: StandardTransient,

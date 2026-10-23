@@ -1,4 +1,4 @@
-//! Native solid-from-shell orientation and retained state.
+//! solid-from-shell orientation and retained state.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topexp::Explorer,

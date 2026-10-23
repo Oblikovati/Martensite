@@ -1,4 +1,4 @@
-//! The operators of ShapeProcess_OperLibrary built on ShapeUpgrade_ShapeDivide tools:
+//! The operators of ShapeProcessOperLibrary built on ShapeUpgradeShapeDivide tools:
 //! SplitAngle, ToBezier, SplitContinuity, SplitClosedFaces and SplitClosedEdges.
 use super::modifications::registrator;
 use super::{operator_messages, shape_context};

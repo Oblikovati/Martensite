@@ -1,4 +1,4 @@
-//! Native linear transfer over matching geometry with independent parameter ranges.
+//! linear transfer over matching geometry with independent parameter ranges.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topods::Face,

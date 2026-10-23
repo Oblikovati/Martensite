@@ -1,5 +1,5 @@
 //! The TKTopAlgo-level scenario topology commands the cases call, on the Rust API. Each
-//! function names the command and the the retained behavior source it follows.
+//! function names the operation and its argument conventions.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     brep_tools::{self, BRepToolsReShape, ReShape, WireExplorer},
@@ -49,7 +49,7 @@ pub fn sameparameter_in_place(shape: &Shape, tolerance: f64, forced: bool) {
 pub const SAMEPARAMETER_TOLERANCE: f64 = 1.0e-7;
 
 /// `sameparameter result shape tol`: `BRepLib::SameParameter`
-/// with a `BRepTools_ReShape`, the result being the re-shaped input.
+/// with a `BRepToolsReShape`, the result being the re-shaped input.
 pub fn sameparameter_reshaped(shape: &Shape, tolerance: f64, forced: bool) -> Shape {
     let reshaper = BRepToolsReShape::new();
     brep_lib::same_parameter_shape_with_reshape(shape, &reshaper, tolerance, forced).unwrap();
@@ -65,7 +65,7 @@ pub fn updatetolerance_reshaped(shape: &Shape) -> Shape {
     reshaper.apply(shape, ShapeEnum::Shape).unwrap()
 }
 
-/// `vertex name x y z`: `BRepBuilderAPI_MakeVertex`.
+/// `vertex name x y z`: `BRepBuilderAPIMakeVertex`.
 pub fn vertex(point: Point3) -> Shape {
     BRepBuilderAPIMakeVertex::new(point)
         .unwrap()
@@ -79,7 +79,7 @@ pub fn mkpoint(vertex: &Shape) -> Point3 {
     BRepTool::pnt(&topods::vertex(vertex).expect("mkpoint: a vertex")).unwrap()
 }
 
-/// `mkedge name curve`: `BRepBuilderAPI_MakeEdge(C)`.
+/// `mkedge name curve`: `BRepBuilderAPIMakeEdge(C)`.
 pub fn mkedge(curve: &Handle<dyn GeomCurve>) -> Shape {
     BRepBuilderAPIMakeEdge::from_curve(curve)
         .unwrap()
@@ -100,7 +100,7 @@ pub fn compound(shapes: &[&Shape]) -> Shape {
     shape
 }
 
-/// `wire name e1/w1 e2/w2 ...`: `BRepBuilderAPI_MakeWire`
+/// `wire name e1/w1 e2/w2 ...`: `BRepBuilderAPIMakeWire`
 /// adding each edge or wire; `None` with the error when it is not done.
 pub fn wire(parts: &[&Shape]) -> Result<Shape, String> {
     let mut maker = BRepBuilderAPIMakeWire::new();
@@ -117,7 +117,7 @@ pub fn wire(parts: &[&Shape]) -> Result<Shape, String> {
     }
 }
 
-/// `mkplane name wire`: `BRepBuilderAPI_MakeFace(W,
+/// `mkplane name wire`: `BRepBuilderAPIMakeFace(W,
 /// OnlyPlane = false)`; `Err` with the command's `Error. mkplane ...` line otherwise.
 pub fn mkplane(wire: &Shape) -> Result<Shape, String> {
     let wire = topods::wire(wire).map_err(|_| "mkplane: not a wire".to_string())?;
@@ -130,7 +130,7 @@ pub fn mkplane(wire: &Shape) -> Result<Shape, String> {
     }
 }
 
-/// `mkface name surface`: `BRepBuilderAPI_MakeFace(S,
+/// `mkface name surface`: `BRepBuilderAPIMakeFace(S,
 /// Precision::Confusion())`.
 pub fn mkface(surface: &Handle<dyn GeomSurface>) -> Shape {
     let mut maker = BRepBuilderAPIMakeFace::from_surface(surface, precision::confusion()).unwrap();
@@ -147,7 +147,7 @@ pub fn mkface_bounds(surface: &Handle<dyn GeomSurface>, bounds: [f64; 4]) -> Sha
     maker.shape().unwrap().clone()
 }
 
-/// `tcopy shape copy`: `BRepBuilderAPI_Copy(S, copyGeom =
+/// `tcopy shape copy`: `BRepBuilderAPICopy(S, copyGeom =
 /// true, copyMesh = false)`.
 pub fn tcopy(shape: &Shape) -> Shape {
     let mut copy = BRepBuilderAPICopy::with_shape(shape, true, false).unwrap();
@@ -156,7 +156,7 @@ pub fn tcopy(shape: &Shape) -> Shape {
 
 /// `transform` (`ttranslate`, `trotate`, `tmirror`, `tscale`)
 /// of one shape without `-copy`: `S.Moved(L)` for an identity, else
-/// `BRepBuilderAPI_Transform(T)` with `-copymesh` as given.
+/// `BRepBuilderAPITransform(T)` with `-copymesh` as given.
 pub fn transform(shape: &Shape, trsf: Transform3, copy_mesh: bool) -> Shape {
     if trsf.form() == martensite_tkmath::gp::TransformForm::Identity {
         return shape
@@ -212,7 +212,7 @@ pub fn ttranslate(shape: &Shape, vector: [f64; 3], copy_mesh: bool) -> Shape {
     transform(shape, trsf, copy_mesh)
 }
 
-/// `deform new name cx cy cz`: `BRepBuilderAPI_GTransform`
+/// `deform new name cx cy cz`: `BRepBuilderAPIGTransform`
 /// with the diagonal vectorial part.
 pub fn deform(shape: &Shape, coefficients: [f64; 3]) -> Shape {
     let mut gtrsf = GeneralTransform3::from(Transform3::default());
@@ -223,7 +223,7 @@ pub fn deform(shape: &Shape, coefficients: [f64; 3]) -> Shape {
     maker.shape().unwrap().clone()
 }
 
-/// `nurbsconvert result shape`: `BRepBuilderAPI_NurbsConvert`.
+/// `nurbsconvert result shape`: `BRepBuilderAPINurbsConvert`.
 pub fn nurbsconvert(shape: &Shape) -> Shape {
     let mut maker = BRepBuilderAPINurbsConvert::new();
     maker.perform(shape, false).unwrap();
@@ -231,7 +231,7 @@ pub fn nurbsconvert(shape: &Shape) -> Shape {
 }
 
 /// `wexplo wire [face]`: the `WEDGE_i` edges of
-/// `BRepTools_WireExplorer`, in order.
+/// `WireExplorer`, in order.
 pub fn wexplo(wire: &Shape, face: Option<&Shape>) -> Vec<Shape> {
     let wire = topods::wire(wire).expect("wexplo: a wire");
     let mut explorer = match face {

@@ -1,4 +1,4 @@
-//! Native FixSmallEdges orchestration for empty repair sets.
+//! FixSmallEdges orchestration for empty repair sets.
 use martensite_tkbrep::{
     brep::BRepTool,
     brep_tools::ReShape,

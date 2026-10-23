@@ -71,7 +71,7 @@ impl SharedShellSearch {
         if self.selected.is_none() {
             return Ok(None);
         }
-        // Native stores a pointer to TopoDS_Iterator::Value()'s reused slot, so a later
+        // stores a pointer to TopoDS_Iterator::Value()'s reused slot, so a later
         // child overwrites the selected shell before it is copied to output.
         let selected = self.last_child.clone().ok_or_else(|| {
             Failure::new("ShapeFix_FixSmallSolid::Merge expected a direct solid child")

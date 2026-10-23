@@ -14,7 +14,7 @@ use crate::support::{
     vars::Vars,
 };
 
-/// tests/mkface/after_offset/B8.
+/// after offset — B8.
 pub fn b8(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_np_nr"));
@@ -33,7 +33,7 @@ pub fn b8(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_offset/B9.
+/// after offset — B9.
 pub fn b9(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_np_nr"));
@@ -54,7 +54,7 @@ pub fn b9(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_offset/C1.
+/// after offset — C1.
 pub fn c1(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_p_nr"));
@@ -73,7 +73,7 @@ pub fn c1(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_offset/C2.
+/// after offset — C2.
 pub fn c2(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_p_nr"));

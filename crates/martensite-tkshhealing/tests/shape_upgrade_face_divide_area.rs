@@ -178,7 +178,7 @@ fn patch_observation(shape: &Shape) -> [f64; 5] {
     [u1, u2, v1, v2, properties.mass()]
 }
 
-/// `tests/heal/split_two_numbers/A1..A3`: a hemisphere split by exact U/V counts.
+/// `split two numbers — A1..A3`: a hemisphere split by exact U/V counts.
 #[test]
 fn split_two_numbers_hemisphere_cases() {
     for (u_splits, v_splits, expected_faces) in [(3, 5, 15), (1, 5, 5), (5, 1, 5)] {
@@ -215,7 +215,7 @@ fn hemisphere(radius: f64) -> martensite_tkbrep::topods::Face {
     .unwrap()
 }
 
-/// `tests/heal/split_number/A1,A2,A7,A8`: requested part counts on spheres.
+/// `split number — A1,A2,A7,A8`: requested part counts on spheres.
 #[test]
 fn split_number_sphere_cases() {
     for (radius, v_min, v_max, parts, expected_faces) in [

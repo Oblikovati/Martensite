@@ -14,7 +14,7 @@ use crate::support::{
     vars::Vars,
 };
 
-/// tests/mkface/after_extsurf_and_offset/A1.
+/// after extsurf and offset — A1.
 pub fn a1(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("line", line([0.0, 0.0, 0.0, 0.0, 0.0, 1.0]));
@@ -35,7 +35,7 @@ pub fn a1(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/A2.
+/// after extsurf and offset — A2.
 pub fn a2(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("line", line([0.0, 0.0, 0.0, 0.0, 0.0, 1.0]));
@@ -58,7 +58,7 @@ pub fn a2(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/A3.
+/// after extsurf and offset — A3.
 pub fn a3(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("circle", circle(&[0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 30.0]));
@@ -79,7 +79,7 @@ pub fn a3(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/A4.
+/// after extsurf and offset — A4.
 pub fn a4(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("circle", circle(&[0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 30.0]));
@@ -102,7 +102,7 @@ pub fn a4(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/A5.
+/// after extsurf and offset — A5.
 pub fn a5(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("ellipse", ellipse(&[0.0, 0.0, 0.0, 30.0, 10.0]));
@@ -123,7 +123,7 @@ pub fn a5(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/A6.
+/// after extsurf and offset — A6.
 pub fn a6(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("ellipse", ellipse(&[0.0, 0.0, 0.0, 30.0, 10.0]));
@@ -146,7 +146,7 @@ pub fn a6(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/A7.
+/// after extsurf and offset — A7.
 pub fn a7(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("hyperbola", hyperbola(&[0.0, 0.0, 0.0, 30.0, 10.0]));
@@ -167,7 +167,7 @@ pub fn a7(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/A8.
+/// after extsurf and offset — A8.
 pub fn a8(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("hyperbola", hyperbola(&[0.0, 0.0, 0.0, 30.0, 10.0]));
@@ -190,7 +190,7 @@ pub fn a8(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/A9.
+/// after extsurf and offset — A9.
 pub fn a9(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("parabola", parabola(&[0.0, 0.0, 0.0, 30.0]));
@@ -211,7 +211,7 @@ pub fn a9(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/B1.
+/// after extsurf and offset — B1.
 pub fn b1(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("parabola", parabola(&[0.0, 0.0, 0.0, 30.0]));
@@ -234,7 +234,7 @@ pub fn b1(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/B2.
+/// after extsurf and offset — B2.
 pub fn b2(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -264,7 +264,7 @@ pub fn b2(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/B3.
+/// after extsurf and offset — B3.
 pub fn b3(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -296,7 +296,7 @@ pub fn b3(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/B4.
+/// after extsurf and offset — B4.
 pub fn b4(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -326,7 +326,7 @@ pub fn b4(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/B5.
+/// after extsurf and offset — B5.
 pub fn b5(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(

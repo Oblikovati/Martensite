@@ -1,4 +1,4 @@
-//! Native two-coincident-edge wire removal and state preservation.
+//! two-coincident-edge wire removal and state preservation.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     brep_tools::ReShape,

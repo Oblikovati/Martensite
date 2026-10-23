@@ -65,7 +65,7 @@ fn run_surface_phase(
     tool.set_3d_conversion(false);
     let changed = run_base_divide(policy, new_context)?;
     tool.set_source_to_result();
-    // Native restores only the two flags it masks, retaining callback policy edits.
+    // restores only the two flags it masks, retaining callback policy edits.
     tool.set_2d_conversion(modes.curves_2d);
     tool.set_3d_conversion(modes.curves_3d);
     Ok(changed)

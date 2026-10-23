@@ -1,4 +1,4 @@
-//! The operators of ShapeProcess_OperLibrary built on ShapeFix tools: SameParameter,
+//! The operators of ShapeProcessOperLibrary built on ShapeFix tools: SameParameter,
 //! SetTolerance, FixWireGaps, FixFaceSize, DropSmallSolids, DropSmallEdges and
 //! SplitCommonVertex.
 use super::modifications::registrator;
@@ -87,7 +87,7 @@ pub(super) fn set_tolerance(
     Ok(true)
 }
 
-/// The operator FixFaceSize: Tolerance, then ShapeFix_FixSmallFace.
+/// The operator FixFaceSize: Tolerance, then ShapeFixFixSmallFace.
 pub(super) fn fix_face_size(
     context: &Handle<ShapeProcessContext>,
     _: &ProgressRange<'_>,
@@ -109,7 +109,7 @@ pub(super) fn fix_face_size(
     record_changed(ctx, &fixer.shape(), &reshape, &messages)
 }
 
-/// The operator FixWireGaps: Tolerance3d, then ShapeFix_Wireframe::FixWireGaps.
+/// The operator FixWireGaps: Tolerance3d, then ShapeFixWireframe::fix_wire_gaps.
 pub(super) fn fix_wire_gaps(
     context: &Handle<ShapeProcessContext>,
     _: &ProgressRange<'_>,
@@ -130,7 +130,7 @@ pub(super) fn fix_wire_gaps(
 }
 
 /// The operator DropSmallEdges (native mergesmalledges): Tolerance3d, then
-/// ShapeFix_Wireframe::FixSmallEdges; only the reshape is recorded (the result is kept).
+/// ShapeFixWireframe::fix_small_edges; only the reshape is recorded (the result is kept).
 pub(super) fn merge_small_edges(
     context: &Handle<ShapeProcessContext>,
     _: &ProgressRange<'_>,
@@ -184,7 +184,7 @@ pub(super) fn drop_small_solids(
     record_changed(ctx, &result, &reshape, &messages)
 }
 
-/// The operator SplitCommonVertex: ShapeFix_SplitCommonVertex on the result.
+/// The operator SplitCommonVertex: ShapeFixSplitCommonVertex on the result.
 pub(super) fn split_common_vertex(
     context: &Handle<ShapeProcessContext>,
     _: &ProgressRange<'_>,

@@ -10,7 +10,7 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 
 /// `ShapeAnalysisShapeTolerance`: tolerances of faces, edges and vertices.
 ///
-/// `type` selects the sub-shapes as in this implementation: `Shape` all faces, edges and vertices,
+/// `type` selects the sub-shapes: `Shape` all faces, edges and vertices,
 /// `Vertex`, `Edge` or `Face` only those, `Shell` (for `InTolerance`) the shells and faces
 /// that hold a face, edge or vertex in the interval.
 ///

@@ -30,7 +30,7 @@ pub struct ShapeAlgo;
 
 impl ShapeAlgo {
     /// `Init()`: once per process, a new algorithm container becomes current and
-    /// ShapeExtend::Init loads the messages; `ShapeAlgo::init()?`.
+    /// ShapeExtend::init loads the messages; `ShapeAlgo::init()?`.
     pub fn init() -> Result<(), Failure> {
         if INITIALIZED.swap(true, Ordering::SeqCst) {
             return Ok(());

@@ -250,7 +250,7 @@ fn fix_shape_faces(fixer: &ShapeFixFixSmallFace, shape: &Shape) -> Result<Shape,
     ReShape::apply(context.get().unwrap(), shape, ShapeEnum::Shape)
 }
 
-/// `FixFace`: ShapeFix_Face Perform with the shared context; the fixed face (`Face()`).
+/// `FixFace`: ShapeFixFace Perform with the shared context; the fixed face (`Face()`).
 pub(super) fn fix_face(fixer: &ShapeFixFixSmallFace, face: &Face) -> Result<Face, Failure> {
     let fixer_face = ShapeFixFace::default();
     fixer_face.set_context(&context(fixer)?);

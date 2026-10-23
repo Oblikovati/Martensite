@@ -1,4 +1,4 @@
-//! Global extrema followed by the retained behavior's elementary or sampled fallback.
+//! Global extrema followed by elementary or sampled fallback.
 use super::projection_elementary::elementary_projection;
 use super::projection_segments::sample_projection;
 use super::projection_state::{CurveProjection, ProjectionSearch};
@@ -31,7 +31,7 @@ pub(super) fn project_act(
     output: &mut CurveProjection,
 ) -> Result<f64, Failure> {
     output.parameter = 0.0;
-    // Native catches Standard_Failure only around the global extrema attempt.
+    // catches Standard_Failure only around the global extrema attempt.
     let found = extrema_projection(curve, point, output).unwrap_or(false);
     let mut search = ProjectionSearch::new(curve, *output)?;
     if found {

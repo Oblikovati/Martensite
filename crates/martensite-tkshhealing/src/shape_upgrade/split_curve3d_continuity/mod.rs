@@ -33,7 +33,7 @@ impl ShapeUpgradeSplitCurve3dContinuity {
     pub fn new() -> Self {
         Self::default()
     }
-    /// Set the required continuity; geometric criteria use order one as in the retained behavior.
+    /// Set the required continuity; geometric criteria use order one.
     /// `splitter.set_criterion(Shape::C2)`.
     pub fn set_criterion(&self, criterion: Shape) {
         self.settings.write().set_criterion(criterion);

@@ -1,4 +1,4 @@
-//! Behavior tests of ShapeBuild_Edge and ShapeBuild_Vertex.
+//! Behavior tests of ShapeBuildEdge and ShapeBuildVertex.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{Edge, Face, Vertex};
 use martensite_tkernel::standard::Handle;

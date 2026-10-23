@@ -48,7 +48,7 @@ fn compose_and_cleanup(
     cleanup_composed_result(fixer, &live_context)
 }
 
-/// `mySurf->IsUClosed()` and `mySurf->IsVClosed()`: the ShapeAnalysis_Surface spatial
+/// `mySurf->IsUClosed()` and `mySurf->IsVClosed()`: the ShapeAnalysisSurface spatial
 /// closure at its default precision (-1), not the Geom_Surface flags.
 fn surface_closure(surface: &ShapeAnalysisSurface) -> Result<(bool, bool), Failure> {
     if surface.surface().is_null() {

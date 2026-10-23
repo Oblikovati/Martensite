@@ -103,7 +103,7 @@ impl ShapeBuildEdge {
     }
 
     /// `MakeEdge(edge, curve, L, p1, p2)`: `edge` becomes the edge
-    /// `BRepBuilderAPI_MakeEdge(curve, p1, p2)` builds (unchanged when it fails); with a
+    /// `BRepBuilderAPIMakeEdge(curve, p1, p2)` builds (unchanged when it fails); with a
     /// location, the curve is set again at that location and the vertices are moved by
     /// it; `ShapeBuildEdge.make_edge_on_curve_range(&mut e, &c, &l, 0.0, 1.0)?`.
     pub fn make_edge_on_curve_range(
@@ -176,7 +176,7 @@ impl ShapeBuildEdge {
     }
 
     /// `MakeEdge(edge, pcurve, S, L, p1, p2)`: `edge` becomes the edge
-    /// `BRepBuilderAPI_MakeEdge(pcurve, S, p1, p2)` builds (unchanged when it fails); with a
+    /// `BRepBuilderAPIMakeEdge(pcurve, S, p1, p2)` builds (unchanged when it fails); with a
     /// location, the p-curve is moved onto the located surface and the vertices are moved;
     /// `ShapeBuildEdge.make_edge_on_surface_range(&mut e, &c, &s, &l, 0.0, 1.0)?`.
     pub fn make_edge_on_surface_range(

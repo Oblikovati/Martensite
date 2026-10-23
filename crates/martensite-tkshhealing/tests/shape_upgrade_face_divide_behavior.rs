@@ -1,4 +1,4 @@
-//! Native face subdivision tools, results and aggregate status.
+//! face subdivision tools, results and aggregate status.
 use martensite_tkbrep::{
     brep_tools::ReShape,
     topexp::Explorer,

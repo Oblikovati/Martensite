@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/elementary_to_revolution.
+//! The TKShHealing (no view) tests of elementary to revolution.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_elementary_to_revolution, HEAL_SECONDS;

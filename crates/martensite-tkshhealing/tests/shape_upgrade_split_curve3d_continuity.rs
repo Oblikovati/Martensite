@@ -1,4 +1,4 @@
-//! Native reference rows at tools/reference/tkshhealing_split_curve3d_continuity.expected.
+//! Spatial curve continuity splitting regression fixtures.
 use martensite_tkernel::{ncollection::Array1, standard::Handle};
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomCurve, GeomLine, GeomOffsetCurve, GeomTrimmedCurve,

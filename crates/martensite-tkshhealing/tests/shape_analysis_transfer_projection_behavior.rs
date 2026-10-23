@@ -221,7 +221,7 @@ fn copying_vertex_to_changed_range_projects_its_spatial_parameter() {
         .unwrap()
         .parameter();
     assert_eq!(stored, 3.5);
-    // BRep_Tool::Parameter treats an interval shorter than vertex tolerance as closed.
+    // BRepTool::parameter treats an interval shorter than vertex tolerance as closed.
     assert_eq!(BRepTool::parameter(&copy, &target).unwrap(), 6.);
     assert_eq!(BRepTool::range(&edge).unwrap(), (2., 5.));
 }

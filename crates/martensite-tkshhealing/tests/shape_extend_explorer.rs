@@ -1,4 +1,4 @@
-//! Behavior tests of ShapeExtend_Explorer.
+//! Behavior tests of ShapeExtendExplorer.
 mod support;
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Compound, Shape};

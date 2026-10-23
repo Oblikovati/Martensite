@@ -186,7 +186,7 @@ impl ShapeAnalysisCanonicalRecognition {
     }
 
     /// `IsPlane(theTol, thePln)`: the plane of the face or shell geometry within `tol`;
-    /// for a wire or an edge, else a plane found through them (`BRepLib_FindSurface`, the
+    /// for a wire or an edge, else a plane found through them (`BRepLibFindSurface`, the
     /// gap is its reached tolerance); `recognizer.is_plane(1e-7, &mut plane)?`.
     pub fn is_plane(&mut self, tol: f64, pln: &mut Plane3) -> Result<bool, Failure> {
         let mut pos = pln.position();
@@ -201,7 +201,7 @@ impl ShapeAnalysisCanonicalRecognition {
         self.find_plane(tol, pln)
     }
 
-    /// The planar wire/edge fallback also recovers a prior error status, as does.
+    /// The planar wire/edge fallback also recovers a prior error status.
     fn find_plane(&mut self, tol: f64, pln: &mut Plane3) -> Result<bool, Failure> {
         let finder = BRepLibFindSurface::new(&self.shape, tol, true, false)?;
         if !finder.found() {

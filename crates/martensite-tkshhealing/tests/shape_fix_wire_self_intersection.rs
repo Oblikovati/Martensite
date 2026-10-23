@@ -1,4 +1,4 @@
-//! Native `ShapeFix_Wire::FixSelfIntersection` aggregate control flow.
+//! `ShapeFixWire::fix_self_intersection` aggregate control flow.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::Face;
 use martensite_tkernel::standard::Handle;

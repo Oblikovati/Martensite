@@ -1,4 +1,4 @@
-//! Native reference rows at tools/reference/tkshhealing_split_curve2d_continuity.expected.
+//! Planar curve continuity splitting regression fixtures.
 use martensite_tkernel::{ncollection::Array1, standard::Handle};
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dCurve, Geom2dLine, Geom2dOffsetCurve, Geom2dTrimmedCurve,

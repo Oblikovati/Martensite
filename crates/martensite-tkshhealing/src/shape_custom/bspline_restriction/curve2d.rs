@@ -1,4 +1,4 @@
-//! `NewCurve2d` and `ConvertCurve2d` of ShapeCustom_BSplineRestriction.
+//! `NewCurve2d` and `ConvertCurve2d` of ShapeCustomBSplineRestriction.
 use super::ShapeCustomBSplineRestriction;
 use super::curve3d::any_curve_on_surface;
 use super::predicates::{is_convert_curve_2d, is_convert_curve_3d, is_convert_surface};
@@ -92,7 +92,7 @@ impl ShapeCustomBSplineRestriction {
     }
 
     /// `ConvertCurve2d(aCurve, C, IsConvert, First, Last, TolCur, IsOf)`: the 2D twin of
-    /// `ConvertCurve` (copies get Precision::PConfusion). Native quirk kept: when an offset
+    /// `ConvertCurve` (copies get Precision::PConfusion). quirk kept: when an offset
     /// basis converts to C0 and the second pass succeeds, the result is reported but `C` is
     /// left unchanged.
     /// Example: `restriction.convert_curve_2d(&c, &mut out, false, (0., 1.), &mut tol, true)?`.

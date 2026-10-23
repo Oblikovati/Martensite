@@ -1,4 +1,4 @@
-//! Native p-curve conversion from split parameters into the base result array.
+//! p-curve conversion from split parameters into the base result array.
 use super::{super::SplitCurve, ShapeUpgradeConvertCurve2dToBezier};
 use martensite_tkernel::{
     ncollection::HArray1,
