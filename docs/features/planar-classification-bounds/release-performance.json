@@ -111,5 +111,21 @@
         63.6364
       ]
     }
-  ]
+  ],
+  "source_revision": "6f0df97303f3f0050f19ce8e72a587baf997ea71",
+  "production_scope": "crates/martensite-tktopalgo/src; no changes to projection arithmetic or public APIs",
+  "build_command": "cargo +1.99.0 test --release -p martensite-tktopalgo --test dataset_timing -- --nocapture",
+  "repeated_test_arguments": [
+    "bugs_modalg_6::bug27884",
+    "--exact",
+    "--nocapture"
+  ],
+  "repeat_count": 10,
+  "runtime_options": {
+    "scheduler_affinity": "inherited; no CPU pinning",
+    "thresholds": "unchanged",
+    "input_counts": "unchanged",
+    "classification_iterations": 100
+  },
+  "test_executable_sha256": "4803db61a17b08d9d703df4332ed4dc6db58b3a2c300b07f569731702596b6b6"
 }
