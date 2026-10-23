@@ -405,6 +405,7 @@ name = "martensite-tkcdf"
 version = "0.3.6"
 dependencies = [
  "martensite-tkernel",
+ "xattr",
 ]
 
 [[package]]

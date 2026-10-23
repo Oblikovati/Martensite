@@ -13,6 +13,12 @@ Publication failures distinguish missing output, denied permissions, missing
 destinations, and invalid paths; diagnostics retain the operation, destination,
 I/O error kind, OS error code, and cause text.
 
+Saving requires write access to the file and create/rename access to its parent
+directory. On Linux, replacement preserves and verifies the owner, group, mode,
+POSIX access ACL, and SELinux/Smack file labels. Unknown system/security access
+attributes and set-user/group-ID files are refused before publication. Content
+capabilities and integrity signatures are not copied onto changed bytes.
+
 Publication is atomic for each file. A document and its referenced documents
 are not committed as one transaction. The containing directory is not synced,
 so this contract does not guarantee recovery after power loss. Drivers must

@@ -14,6 +14,9 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
+#[cfg(target_os = "linux")]
+mod access_metadata;
+
 struct StagedStore {
     directory: PathBuf,
     destination: PathBuf,
@@ -72,6 +75,9 @@ impl StagedStore {
 
     fn commit(&self) -> io::Result<()> {
         let staged_file = fs::OpenOptions::new().write(true).open(&self.file)?;
+        #[cfg(target_os = "linux")]
+        access_metadata::preserve_access(&self.destination, &self.file)?;
+        #[cfg(not(target_os = "linux"))]
         if let Ok(metadata) = fs::metadata(&self.destination) {
             fs::set_permissions(&self.file, metadata.permissions())?;
         }

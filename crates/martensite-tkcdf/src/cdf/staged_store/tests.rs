@@ -3,12 +3,12 @@ use super::{StagedStore, ensure_destination_writable, staging_directory, storage
 use martensite_tkernel::tcollection::ExtendedString;
 use std::{fs, io, path::PathBuf};
 
-struct TemporaryDestination {
-    directory: PathBuf,
-    file: PathBuf,
+pub(super) struct TemporaryDestination {
+    pub(super) directory: PathBuf,
+    pub(super) file: PathBuf,
 }
 impl TemporaryDestination {
-    fn new() -> Self {
+    pub(super) fn new() -> Self {
         let directory = staging_directory(&std::env::temp_dir()).unwrap();
         let file = directory.join("document");
         Self { directory, file }
