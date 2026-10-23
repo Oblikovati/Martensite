@@ -360,14 +360,14 @@ dependencies = [
 
 [[package]]
 name = "martensite-cmath"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "metallic",
 ]
 
 [[package]]
 name = "martensite-process-policy"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -377,7 +377,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-test-support"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -389,7 +389,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkbrep"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -402,14 +402,14 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkcdf"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-tkernel",
 ]
 
 [[package]]
 name = "martensite-tkernel"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "allocator-api2",
  "bytemuck",
@@ -425,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkexpress"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -433,7 +433,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkg2d"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -442,7 +442,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkg3d"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "flate2",
  "martensite-cmath",
@@ -453,7 +453,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkgeomalgo"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -467,7 +467,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkgeombase"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -478,7 +478,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkhelix"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -493,7 +493,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkhlr"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -510,7 +510,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tklcaf"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-tkcdf",
  "martensite-tkernel",
@@ -518,7 +518,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkmath"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -529,7 +529,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkmesh"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "allocator-api2",
  "martensite-cmath",
@@ -549,7 +549,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkprim"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -565,7 +565,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkservice"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "libc",
  "martensite-cmath",
@@ -577,7 +577,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkshhealing"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-process-policy",
@@ -595,7 +595,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tktobj"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-process-policy",
@@ -607,7 +607,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tktopalgo"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",

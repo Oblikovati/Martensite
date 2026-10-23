@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-10-23
+
 ### Fixed
 
 - Removed the reciprocal hidden-line/primitive test dependency while preserving the two-solid projection check, so dependency policy and source packaging agree (#241).
@@ -18,13 +20,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Preserved natural-bound face construction for closed non-periodic surfaces (#225)
 
+- Corrected volume properties of trimmed faces with bounded Gauss-Kronrod integration (#221).
+
 ### Added
 
 - Added shape healing, mesh construction and document-object model crates ([#215], [#216], [#217]).
-
-### Fixed
-
-- Corrected volume properties of trimmed faces with bounded Gauss-Kronrod integration (#221).
 
 ## [0.3.5] - 2026-10-20
 

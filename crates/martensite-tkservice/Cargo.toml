@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkservice"
-version = "0.3.5"
+version = "0.3.6"
 description = "Martensite visualization services: windows and events, images, fonts, graphic aspects, cameras, lights, textures, shaders and media."
 edition.workspace = true
 rust-version.workspace = true
@@ -31,9 +31,9 @@ x11-integration-tests = []
 host-font-corpus = []
 
 [dependencies]
-martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.5" }
-martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.6" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.6" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 x11-dl = "=2.21.0"
