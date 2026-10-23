@@ -29,6 +29,7 @@ martensite-cmath = { path = "../martensite-cmath", version = "0.3.6" }
 smallvec = { version = "1.16.3", default-features = false, features = ["const_generics"] }
 
 [target.'cfg(unix)'.dependencies]
+xattr = "=1.6.1"
 libc = "=0.2.190"
 nix = { version = "=0.31.3", default-features = false, features = ["fs", "feature", "pthread"] }
 # Preserve libc access/chmod error behavior during the safe-wrapper migration (#89).

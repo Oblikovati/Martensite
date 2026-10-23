@@ -11,15 +11,24 @@ const ACCESS_ATTRIBUTES: [&str; 3] = [
     "security.SMACK64",
 ];
 
+#[path = "linux/new_access.rs"]
+mod new_access;
+
 struct AccessSnapshot {
     metadata: fs::Metadata,
     attributes: [Option<Vec<u8>>; 3],
 }
 
+pub(super) fn create_private_directory(directory: &Path) -> io::Result<()> {
+    super::unix::create_private_directory(directory)
+}
+
 pub(super) fn preserve_access(destination: &Path, staged: &Path) -> io::Result<()> {
     let snapshot = match AccessSnapshot::read(destination) {
         Ok(snapshot) => snapshot,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            new_access::snapshot_for_new_destination(destination)?
+        }
         Err(error) => return Err(error),
     };
     reject_privileged_mode(destination, snapshot.metadata.mode())?;
@@ -94,6 +103,7 @@ fn reject_privileged_mode(destination: &Path, mode: u32) -> io::Result<()> {
 }
 
 #[cfg(test)]
+#[path = "linux/tests.rs"]
 mod tests;
 
 fn validate_attribute_name(name: &std::ffi::OsStr) -> io::Result<()> {

@@ -25,6 +25,9 @@ pub use path::*;
 mod file;
 pub use file::*;
 
+mod document_file;
+pub use document_file::{create_private_document_directory, preserve_document_access};
+
 // Stream file systems: the file-system trait and its local, cached and selector variants.
 mod file_system;
 pub use file_system::*;

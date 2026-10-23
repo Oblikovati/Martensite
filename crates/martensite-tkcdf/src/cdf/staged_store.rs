@@ -14,9 +14,6 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-#[cfg(target_os = "linux")]
-mod access_metadata;
-
 struct StagedStore {
     directory: PathBuf,
     destination: PathBuf,
@@ -75,12 +72,7 @@ impl StagedStore {
 
     fn commit(&self) -> io::Result<()> {
         let staged_file = fs::OpenOptions::new().write(true).open(&self.file)?;
-        #[cfg(target_os = "linux")]
-        access_metadata::preserve_access(&self.destination, &self.file)?;
-        #[cfg(not(target_os = "linux"))]
-        if let Ok(metadata) = fs::metadata(&self.destination) {
-            fs::set_permissions(&self.file, metadata.permissions())?;
-        }
+        martensite_tkernel::osd::preserve_document_access(&self.destination, &self.file)?;
         staged_file.sync_all()?;
         // The sibling directory keeps rename on the same filesystem. No failed driver
         // can publish partial bytes, and document metadata retains the requested path.
@@ -162,13 +154,7 @@ fn staging_directory(parent: &Path) -> io::Result<PathBuf> {
 }
 
 fn private_directory(directory: &Path) -> io::Result<()> {
-    let mut builder = fs::DirBuilder::new();
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::DirBuilderExt;
-        builder.mode(0o700);
-    }
-    builder.create(directory)
+    martensite_tkernel::osd::create_private_document_directory(directory)
 }
 
 #[cfg(test)]

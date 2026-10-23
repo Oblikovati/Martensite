@@ -405,7 +405,6 @@ name = "martensite-tkcdf"
 version = "0.3.6"
 dependencies = [
  "martensite-tkernel",
- "xattr",
 ]
 
 [[package]]
@@ -422,6 +421,7 @@ dependencies = [
  "smallvec",
  "windows-sys",
  "winsafe",
+ "xattr",
 ]
 
 [[package]]
