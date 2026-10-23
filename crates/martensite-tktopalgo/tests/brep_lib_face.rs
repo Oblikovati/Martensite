@@ -198,7 +198,10 @@ fn extend_face_widens_a_plane_face() -> Result<(), Failure> {
 
 #[test]
 fn planar_face_construction_preserves_shared_input_curve_representations() -> Result<(), Failure> {
-    for points in [SQUARE, SQUARE.map(|v| p(3. + v.y(), -2. + v.z(), 7. + v.x()))] {
+    for points in [
+        SQUARE,
+        SQUARE.map(|v| p(3. + v.y(), -2. + v.z(), 7. + v.x())),
+    ] {
         check_planar_input_storage(&points)?;
         check_planar_input_storage(&[points[3], points[2], points[1], points[0]])?;
     }
@@ -208,7 +211,8 @@ fn planar_face_construction_preserves_shared_input_curve_representations() -> Re
 fn check_planar_input_storage(points: &[Point3]) -> Result<(), Failure> {
     let wire = polygon(points)?;
     let edges: Vec<Edge> = Explorer::new(&wire, ShapeEnum::Edge, ShapeEnum::Shape)?
-        .map(|edge| Edge::unchecked(edge.clone())).collect();
+        .map(|edge| Edge::unchecked(edge.clone()))
+        .collect();
     for edge in &edges {
         assert!(BRepTool::first_curve_on_surface(edge)?.pcurve.is_null());
     }
@@ -221,7 +225,8 @@ fn check_planar_input_storage(points: &[Point3]) -> Result<(), Failure> {
 }
 
 fn check_planar_lookup_without_storing(
-    edge: &Edge, face: &martensite_tkbrep::topods::Face,
+    edge: &Edge,
+    face: &martensite_tkbrep::topods::Face,
 ) -> Result<(), Failure> {
     let plane = BRepTool::surface(face)?;
     let spatial = BRepTool::curve(edge)?;
@@ -229,7 +234,11 @@ fn check_planar_lookup_without_storing(
         let planar = BRepTool::curve_on_face(edge, face)?;
         assert!(!planar.is_stored);
         assert_eq!((planar.first, planar.last), (spatial.1, spatial.2));
-        for t in [planar.first, (planar.first + planar.last) * 0.5, planar.last] {
+        for t in [
+            planar.first,
+            (planar.first + planar.last) * 0.5,
+            planar.last,
+        ] {
             let uv = planar.pcurve.get().unwrap().value(t)?;
             let reconstructed = plane.get().unwrap().value(uv.x(), uv.y())?;
             assert!(reconstructed.distance(&spatial.0.get().unwrap().value(t)?) < 1e-14);
@@ -242,8 +251,10 @@ fn check_planar_lookup_without_storing(
 fn projected_circle_lookup_preserves_analytic_geometry_without_storage() -> Result<(), Failure> {
     let frame = Axis2::new(p(3., -4., 5.), Direction3::new(1., 2., 3.)?)?;
     let curve: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(frame, 2.0)?).cast();
-    let edge = martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge::from_curve(&curve)?.edge()?;
-    let face = BRepLibMakeFace::from_plane(Plane3::from_position(Axis3::from_axis2(frame)))?.face()?;
+    let edge = martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge::from_curve(&curve)?
+        .edge()?;
+    let face =
+        BRepLibMakeFace::from_plane(Plane3::from_position(Axis3::from_axis2(frame)))?.face()?;
     check_planar_lookup_without_storing(&edge, &face)?;
     assert!(BRepTool::first_curve_on_surface(&edge)?.pcurve.is_null());
     Ok(())
