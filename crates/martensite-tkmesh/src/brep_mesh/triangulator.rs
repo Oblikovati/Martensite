@@ -15,7 +15,7 @@ use martensite_tkmath::gp::{Direction3, Plane3, Point3, Xyz};
 use martensite_tkmath::poly::{Triangle, Triangulation};
 use std::sync::Arc;
 
-/// `BRepMeshTriangulator(theXYZs, theWires, theNorm)`: the wires are 0-based indices
+/// Wires use zero-based indices
 /// into the nodes; the output triangles use 1-based node indices.
 ///
 /// ```
@@ -40,8 +40,7 @@ pub struct BRepMeshTriangulator<'a> {
 }
 
 impl<'a> BRepMeshTriangulator<'a> {
-    /// `BRepMeshTriangulator(theXYZs, theWires, theNorm)`: the projection plane
-    /// through the origin; `BRepMeshTriangulator::new(&nodes, &wires, normal)?`.
+    /// Construct a triangulator with its projection plane through the origin; `BRepMeshTriangulator::new(&nodes, &wires, normal)?`.
     pub fn new(
         xyzs: &'a [Xyz],
         wires: &'a [Vec<i32>],

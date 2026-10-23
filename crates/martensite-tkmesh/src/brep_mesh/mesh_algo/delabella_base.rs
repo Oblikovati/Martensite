@@ -19,7 +19,7 @@ use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::bnd::CompactBox2;
 use martensite_tkmath::gp::Xy;
 
-/// `BRepMeshDelabellaBaseMeshAlgo::buildBaseTriangulation`: the Delaunay triangulation
+/// Delaunay triangulation
 /// of the registered nodes (normalized into the unit square around the origin, with
 /// the 4 corners of their enlarged bounding box added as auxiliary nodes) by DelaBella.
 pub struct DelabellaTriangulation;
@@ -214,11 +214,11 @@ impl Default for BRepMeshDelabellaBaseMeshAlgo {
 }
 
 impl BRepMeshDelabellaBaseMeshAlgo {
-    /// `BRepMeshDelabellaBaseMeshAlgo()`; `BRepMeshDelabellaBaseMeshAlgo::new()`.
+    /// Create the plain point-cloud meshing strategy; `BRepMeshDelabellaBaseMeshAlgo::new()`.
     pub fn new() -> Self {
         Self::default()
     }
-    /// A template instance over this class (`new NodeInsertionMeshAlgo<...>::Type`);
+    /// Wrap a concrete face meshing strategy with this handle's runtime identity;
     /// `BRepMeshDelabellaBaseMeshAlgo::from_core(algo)`.
     pub fn from_core(core: impl FaceMeshingCore + 'static) -> Self {
         Self {

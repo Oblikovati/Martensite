@@ -51,7 +51,7 @@ fn delabella_algo(core: impl FaceMeshingCore + 'static) -> Handle<dyn MeshAlgo> 
     Handle::new(BRepMeshDelabellaBaseMeshAlgo::from_core(core)).cast()
 }
 
-/// `new NodeInsertionMeshAlgo<R>::Type`, optionally with surface nodes pre-processed.
+/// Create a node-insertion strategy with optional surface-node preprocessing.
 fn node_insertion<R: RangeSplitter + Default + Send + 'static>(
     pre_process: bool,
 ) -> Handle<dyn MeshAlgo> {
@@ -60,7 +60,7 @@ fn node_insertion<R: RangeSplitter + Default + Send + 'static>(
     delabella_algo(algo)
 }
 
-/// `new DeflectionControlMeshAlgo<R>::Type` with surface nodes pre-processed.
+/// Create a deflection-control strategy with surface-node preprocessing.
 fn deflection_control<R: RangeSplitter + Default + Send + 'static>() -> Handle<dyn MeshAlgo> {
     let mut algo = DelaunayDeflectionControlMeshAlgo::<R, DelabellaDelaunayGenerator>::default();
     algo.set_pre_process_surface_nodes(true);

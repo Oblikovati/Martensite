@@ -14,7 +14,7 @@ use martensite_tkernel::message::Message;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 
-/// `BRepMeshContext(theMeshType)`: model builder, edge discretizer, healer,
+/// Configure a model builder, edge discretizer, healer,
 /// pre-processor, face discretizer over the algorithm factory of the mesh type, and
 /// post-processor.
 ///
@@ -28,12 +28,11 @@ use martensite_tkernel::tcollection::AsciiString;
 pub struct BRepMeshContext {
     context: Context,
 }
-// The parent runtime identity is named through `dyn MeshContext`:
-// the bare leaf `Context` also names IntTools_Context, so the RTTI ledger could not prove it.
+// Name the parent through its public interface so the runtime identity is unambiguous.
 impl_transient!(BRepMeshContext, "BRepMesh_Context", dyn MeshContext, context, interfaces: [dyn MeshShape, dyn MeshContext]);
 
 impl BRepMeshContext {
-    /// `BRepMeshContext(theMeshType)`, reading `CSF_MeshAlgo` from the process
+    /// Read `CSF_MeshAlgo` from the process
     /// environment for the default type; `BRepMeshContext::new(MeshAlgoType::Default)?`.
     pub fn new(mesh_type: MeshAlgoType) -> Result<Self, Failure> {
         Self::with_environment(mesh_type, &|name: &str| std::env::var(name).ok())

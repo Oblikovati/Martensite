@@ -11,7 +11,7 @@ use martensite_tkmath::gp::Vector3;
 /// `IMeshData::MapOfReal`: the unordered set of parameters.
 type MapOfReal = Map<f64>;
 
-/// The body of `NURBSRangeSplitter::GenerateSurfaceNodes` once the parameters
+/// Generate surface nodes once the parameters
 /// are initialized: the filtered U x V grid less the parameters the analytical filters
 /// remove (minus those another iso line forbids removing).
 pub(super) fn generate_nurbs_nodes(

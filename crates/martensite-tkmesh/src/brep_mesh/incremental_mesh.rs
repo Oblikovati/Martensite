@@ -46,7 +46,7 @@ impl Default for BRepMeshIncrementalMesh {
 }
 
 impl BRepMeshIncrementalMesh {
-    /// `BRepMeshIncrementalMesh()`: not modified, status IMeshData_NoError;
+    /// Create an unmodified mesher with `Status::NoError`;
     /// `BRepMeshIncrementalMesh::new()`.
     pub fn new() -> Self {
         Self::default()
@@ -62,8 +62,7 @@ impl BRepMeshIncrementalMesh {
         }
     }
 
-    /// `BRepMeshIncrementalMesh(theShape, theLinDeflection, isRelative,
-    /// theAngDeflection, isInParallel)`: meshes at once; Standard_NumericError for a
+    /// Mesh the shape immediately; report a numeric error for a
     /// deflection below Precision::Confusion() or an angle below Precision::Angular();
     /// `BRepMeshIncrementalMesh::with_shape(&shape, 0.1, false, 0.5, false)?`.
     pub fn with_shape(
@@ -83,9 +82,7 @@ impl BRepMeshIncrementalMesh {
         Self::with_parameters(shape, &parameters, &ProgressRange::default())
     }
 
-    /// `BRepMeshIncrementalMesh(theShape, theParameters, theRange)`: meshes at once.
-    /// The native constructor leaves myModified and myStatus uninitialized; Rust starts
-    /// them as the default constructor does;
+    /// Mesh immediately after initializing modification state and status to their defaults;
     /// `BRepMeshIncrementalMesh::with_parameters(&shape, &parameters, &range)?`.
     pub fn with_parameters(
         shape: &Shape,

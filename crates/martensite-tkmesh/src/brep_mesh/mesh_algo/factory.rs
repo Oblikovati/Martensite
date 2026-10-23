@@ -42,17 +42,17 @@ impl BRepMeshMeshAlgoFactory {
     }
 }
 
-/// `new DeflectionControlMeshAlgo<R>::Type`.
+/// Create the deflection-control strategy for the selected range splitter.
 fn deflection_control<R: RangeSplitter + Default + Send + 'static>() -> Handle<dyn MeshAlgo> {
     algo(DelaunayDeflectionControlMeshAlgo::<R, DelaunayGenerator>::default())
 }
 
-/// `new NodeInsertionMeshAlgo<R>::Type` (the Delaunay node insertion).
+/// Create a Delaunay node-insertion strategy for the selected range splitter.
 fn node_insertion<R: RangeSplitter + Default + Send + 'static>() -> Handle<dyn MeshAlgo> {
     algo(DelaunayNodeInsertionMeshAlgo::<R, DelaunayGenerator>::default())
 }
 
-/// `new BaseMeshAlgo::Type`.
+/// Create the base Delaunay face strategy.
 fn base_algo() -> Handle<dyn MeshAlgo> {
     Handle::new(BRepMeshDelaunayBaseMeshAlgo::new()).cast()
 }

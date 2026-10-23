@@ -129,11 +129,11 @@ impl Default for BRepMeshDelaunayBaseMeshAlgo {
 }
 
 impl BRepMeshDelaunayBaseMeshAlgo {
-    /// `BRepMeshDelaunayBaseMeshAlgo()`; `BRepMeshDelaunayBaseMeshAlgo::new()`.
+    /// Create the plain Delaunay face meshing strategy; `BRepMeshDelaunayBaseMeshAlgo::new()`.
     pub fn new() -> Self {
         Self::default()
     }
-    /// A template instance over this class (`new NodeInsertionMeshAlgo<...>::Type`);
+    /// Wrap a concrete face meshing strategy with this handle's runtime identity;
     /// `BRepMeshDelaunayBaseMeshAlgo::from_core(algo)`.
     pub fn from_core(core: impl FaceMeshingCore + 'static) -> Self {
         Self {

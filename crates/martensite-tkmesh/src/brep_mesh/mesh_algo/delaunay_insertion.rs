@@ -17,7 +17,7 @@ pub trait DelaunayInsertionHooks: NodeInsertionHooks {
     fn is_pre_process_surface_nodes(&self) -> bool;
 }
 
-/// `DelaunayNodeInsertionMeshAlgo::initDataStructure`: the node-insertion
+/// `delaunay_insertion_init_data_structure`: the node-insertion
 /// structure, then (when pre-processing) the surface nodes registered before meshing.
 pub fn delaunay_insertion_init_data_structure<A: DelaunayInsertionHooks + ?Sized>(
     algo: &mut A,
@@ -47,7 +47,7 @@ pub fn delaunay_insertion_cells_count<A: DelaunayInsertionHooks + ?Sized>(
     )
 }
 
-/// `DelaunayNodeInsertionMeshAlgo::postProcessMesh`: the base post-process
+/// `delaunay_insertion_post_process`: the base post-process
 /// (with a default range, as natively), then the surface nodes inserted into the mesh
 /// unless they were registered beforehand.
 pub fn delaunay_insertion_post_process<A: DelaunayInsertionHooks + ?Sized, G: MeshGenerator>(

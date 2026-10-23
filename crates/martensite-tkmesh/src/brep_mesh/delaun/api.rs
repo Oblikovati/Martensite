@@ -22,8 +22,7 @@ impl BRepMeshDelaun {
         }
     }
 
-    /// `BRepMeshDelaun(theVertices)`: the triangulation of the vertices in a new
-    /// structure (null when there are two vertices or fewer, as natively);
+    /// Triangulate vertices in a new structure, which is null for two vertices or fewer;
     /// `BRepMeshDelaun::with_vertices(&vertices)?`.
     pub fn with_vertices(vertices: &[BRepMeshVertex]) -> Result<Self, Failure> {
         let count = vertices.len() as i32;
@@ -38,8 +37,7 @@ impl BRepMeshDelaun {
         Ok(result)
     }
 
-    /// `BRepMeshDelaun(theOldMesh, theVertices)`: the vertices added to an existing
-    /// structure and triangulated; `BRepMeshDelaun::with_mesh_vertices(&mesh, &vertices)?`.
+    /// Add vertices to an existing structure and triangulate them; `BRepMeshDelaun::with_mesh_vertices(&mesh, &vertices)?`.
     pub fn with_mesh_vertices(
         mesh: &Handle<BRepMeshDataStructureOfDelaun>,
         vertices: &[BRepMeshVertex],
@@ -51,8 +49,7 @@ impl BRepMeshDelaun {
         Ok(result)
     }
 
-    /// `BRepMeshDelaun(theOldMesh, theVertexIndices[, theCellsCountU, theCellsCountV])`:
-    /// the triangulation of nodes already in the structure; the indices are sorted in
+    /// Triangulate nodes already in the structure; the indices are sorted in
     /// place; `(-1, -1)` cells select the default grid;
     /// `BRepMeshDelaun::with_indices(&mesh, &mut indices, (-1, -1))?`.
     pub fn with_indices(

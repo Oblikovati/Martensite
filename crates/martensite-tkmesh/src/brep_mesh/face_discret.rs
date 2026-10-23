@@ -8,9 +8,9 @@ use martensite_tkernel::message::{ProgressRange, ProgressScope};
 use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 
-/// `BRepMeshFaceDiscret(theAlgoFactory)`: each face that is neither failed nor
+/// Each face that is neither failed nor
 /// reused is meshed by the algorithm the factory gives for its surface type; a
-/// failure marks the face (IMeshData_Failure) and the other faces go on.
+/// failure marks the face status and processing continues with the other faces.
 ///
 /// ```
 /// use martensite_tkernel::standard::Handle;
@@ -25,7 +25,7 @@ pub struct BRepMeshFaceDiscret {
 impl_transient!(BRepMeshFaceDiscret, "BRepMesh_FaceDiscret", dyn ModelAlgo, transient, interfaces: [dyn ModelAlgo]);
 
 impl BRepMeshFaceDiscret {
-    /// `BRepMeshFaceDiscret(theAlgoFactory)`; `BRepMeshFaceDiscret::new(&factory)`.
+    /// Use the supplied factory to select each face algorithm; `BRepMeshFaceDiscret::new(&factory)`.
     pub fn new(algo_factory: &Handle<dyn MeshAlgoFactory>) -> Self {
         Self {
             transient: StandardTransient::default(),

@@ -245,7 +245,7 @@ fn grab_internal_edge_params(state: &mut NURBSRangeSplitter) -> Result<bool, Fai
     Ok(true)
 }
 
-/// `DefaultRangeSplitter::AdjustRange` on any splitter of the family.
+/// Adjust physical lengths and tolerances for any splitter in the family.
 fn default_adjust_range<T: RangeSplitter + ?Sized>(splitter: &mut T) -> Result<(), Failure> {
     let Some((length_u, length_v)) = splitter.range_state_mut().adjust_lengths()? else {
         return Ok(());
@@ -298,7 +298,7 @@ nurbs_family_deref!(
     UndefinedRangeSplitter
 );
 
-/// `ExtrusionRangeSplitter::getUndefinedIntervalNb`: the CN interval count of
+/// Count CN intervals of
 /// the extruded curve, or its pole count less one for a single-interval Bezier or
 /// B-spline curve.
 pub(super) fn extrusion_interval_nb(surface: &BRepAdaptorSurface) -> Result<i32, Failure> {

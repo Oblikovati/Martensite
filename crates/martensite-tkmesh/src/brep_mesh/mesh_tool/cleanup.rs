@@ -82,8 +82,8 @@ impl BRepMeshMeshTool {
         Ok(())
     }
 
-    /// `EraseFreeLinks()`: every link without element and not deleted is made free
-    /// (in place, as the native const_cast does) and removed; `tool.erase_free_links()?`.
+    /// Remove links without attached elements that are not already deleted.
+    /// Their constraint state is made free in place; `tool.erase_free_links()?`.
     pub fn erase_free_links(&self) -> Result<(), Failure> {
         let mut index = 1;
         while index <= self.structure.nb_links() {

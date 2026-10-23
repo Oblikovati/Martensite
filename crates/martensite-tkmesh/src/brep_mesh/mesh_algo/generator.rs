@@ -9,12 +9,12 @@ use std::marker::PhantomData;
 /// triangulation is generated (`generateMesh`) and what the base `postProcessMesh`
 /// does.
 pub trait MeshGenerator {
-    /// `BaseAlgo::generateMesh` on the full algorithm.
+    /// `MeshGenerator::generate_mesh` on the full algorithm.
     fn generate_mesh<A: ConstrainedBaseMeshAlgoHooks + ?Sized>(
         algo: &mut A,
         range: &ProgressRange<'_>,
     ) -> Result<(), Failure>;
-    /// `BaseAlgo::postProcessMesh`: nothing for the constrained base.
+    /// `MeshGenerator::post_process_mesh`: nothing for the constrained base.
     fn post_process_mesh<A: ConstrainedBaseMeshAlgoHooks + ?Sized>(
         _algo: &mut A,
         _mesher: &mut BRepMeshDelaun,
@@ -29,7 +29,7 @@ pub trait MeshGenerator {
 pub struct DelaunayGenerator;
 
 impl MeshGenerator for DelaunayGenerator {
-    /// `BRepMeshDelaunayBaseMeshAlgo::generateMesh`.
+    /// Generate triangulation from the registered boundary constraints.
     fn generate_mesh<A: ConstrainedBaseMeshAlgoHooks + ?Sized>(
         algo: &mut A,
         range: &ProgressRange<'_>,
@@ -47,7 +47,7 @@ impl MeshGenerator for DelaunayGenerator {
     }
 }
 
-/// `CustomBaseMeshAlgo::buildBaseTriangulation` (pure virtual): a custom
+/// `CustomBaseTriangulation::build_base_triangulation`: a custom
 /// triangulation of the registered nodes into the structure.
 pub trait CustomBaseTriangulation {
     /// Builds the base triangulation; `T::build_base_triangulation(&mut algo)?`.
@@ -60,7 +60,7 @@ pub trait CustomBaseTriangulation {
 pub struct CustomGenerator<T: CustomBaseTriangulation>(PhantomData<T>);
 
 impl<T: CustomBaseTriangulation> MeshGenerator for CustomGenerator<T> {
-    /// `CustomBaseMeshAlgo::generateMesh`: the custom triangulation, the
+    /// `MeshGenerator::generate_mesh`: the custom triangulation, the
     /// constraints, the removal of the auxiliary nodes it added and of free links.
     fn generate_mesh<A: ConstrainedBaseMeshAlgoHooks + ?Sized>(
         algo: &mut A,

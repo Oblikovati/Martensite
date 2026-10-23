@@ -121,8 +121,7 @@ pub trait ConstrainedBaseMeshAlgoHooks: BaseMeshAlgoHooks {
     }
 }
 
-/// `BaseMeshAlgo::Perform`: any failure inside is caught (the native
-/// `catch (Standard_Failure)`), and no link to the face is kept afterwards;
+/// Run the meshing stages, recording failures in face status without retaining a face link;
 /// `base_perform(&mut algo, &face, &parameters, &range)`.
 pub fn base_perform<A: BaseMeshAlgoHooks + ?Sized>(
     algo: &mut A,
@@ -131,8 +130,8 @@ pub fn base_perform<A: BaseMeshAlgoHooks + ?Sized>(
     range: &ProgressRange<'_>,
 ) {
     algo.base_data_mut().start(face, parameters);
-    // The native try block swallows every Standard_Failure: the face keeps whatever
-    // status the steps set and no triangulation is committed.
+    // A failed stage leaves its face status available to the caller; no
+    // triangulation is published from that failed stage.
     let _caught: Result<(), Failure> = perform_steps(algo, range);
     algo.base_data_mut().finish();
 }
@@ -148,7 +147,7 @@ fn perform_steps<A: BaseMeshAlgoHooks + ?Sized>(
     commit_surface_triangulation(algo)
 }
 
-/// `BaseMeshAlgo::registerNode`: frontier and fixed nodes are pre-bound to
+/// `base_register_node`: frontier and fixed nodes are pre-bound to
 /// their own index so pcurve indices stay valid in the compact triangulation.
 pub fn base_register_node<A: BaseMeshAlgoHooks + ?Sized>(
     algo: &mut A,
@@ -169,7 +168,7 @@ pub fn base_register_node<A: BaseMeshAlgoHooks + ?Sized>(
     Ok(node_index)
 }
 
-/// `BaseMeshAlgo::initDataStructure`: the frontier nodes and links of every
+/// `base_init_data_structure`: the frontier nodes and links of every
 /// wire that does not self-intersect.
 pub fn base_init_data_structure<A: BaseMeshAlgoHooks + ?Sized>(
     algo: &mut A,

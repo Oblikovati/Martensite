@@ -49,7 +49,7 @@ pub trait NodeInsertionHooks: ConstrainedBaseMeshAlgoHooks {
     fn insertion_mut(&mut self) -> &mut NodeInsertionData<Self::Splitter>;
 }
 
-/// `NodeInsertionMeshAlgo::Perform`: resets the splitter (a failure there
+/// `node_insertion_perform`: resets the splitter (a failure there
 /// leaves the algorithm, as the native exception does), makes the classifier, then
 /// the base Perform.
 pub fn node_insertion_perform<A: NodeInsertionHooks + ?Sized>(
@@ -70,7 +70,7 @@ pub fn node_insertion_perform<A: NodeInsertionHooks + ?Sized>(
     Ok(())
 }
 
-/// `NodeInsertionMeshAlgo::initDataStructure`: the wire points (which also
+/// `node_insertion_init_data_structure`: the wire points (which also
 /// bound the splitter range), the vertex tool grid, the classifier wires, the internal
 /// vertices, then the base data structure. Failure status and false for an invalid
 /// range.
@@ -192,7 +192,7 @@ fn insert_internal_vertex<A: NodeInsertionHooks + ?Sized>(
     Ok(())
 }
 
-/// `NodeInsertionMeshAlgo::addNodeToStructure`: the point scaled to the
+/// `node_insertion_add_node_to_structure`: the point scaled to the
 /// face basis, then the base version.
 pub fn node_insertion_add_node_to_structure<A: NodeInsertionHooks + ?Sized>(
     algo: &mut A,
@@ -210,7 +210,7 @@ pub fn node_insertion_add_node_to_structure<A: NodeInsertionHooks + ?Sized>(
     algo.base_data().get_structure().add_node(&vertex, force)
 }
 
-/// `NodeInsertionMeshAlgo::getNodePoint2d`: the node scaled back to the
+/// `node_insertion_point2d`: the node scaled back to the
 /// surface parameters.
 pub fn node_insertion_point2d<A: NodeInsertionHooks + ?Sized>(
     algo: &A,

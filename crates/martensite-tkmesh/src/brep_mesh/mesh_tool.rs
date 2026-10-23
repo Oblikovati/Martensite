@@ -23,7 +23,7 @@ pub(crate) fn new_loop_edges() -> MapOfIntegerInteger {
     DataMap::with_allocator(DefaultHashPolicy, 1, BaseAllocator::incremental(0))
 }
 
-/// `BRepMeshMeshTool::NodeClassifier`: whether a node lies strictly on the upper side
+/// `NodeClassifier`: whether a node lies strictly on the upper side
 /// of a constraint link (orientation normalized so that the link points to +X).
 pub struct NodeClassifier {
     structure: Handle<BRepMeshDataStructureOfDelaun>,
@@ -96,7 +96,7 @@ impl_transient!(
 );
 
 impl BRepMeshMeshTool {
-    /// `BRepMeshMeshTool(theStructure)`; `BRepMeshMeshTool::new(&mesh)`.
+    /// Build editing helpers over shared connectivity; `BRepMeshMeshTool::new(&mesh)`.
     pub fn new(structure: &Handle<BRepMeshDataStructureOfDelaun>) -> Self {
         Self {
             transient: StandardTransient::default(),
