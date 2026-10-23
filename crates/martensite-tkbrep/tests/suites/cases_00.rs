@@ -45,3 +45,5 @@ pub mod regularity_dump_callbacks;
 pub mod seam_dump_live_state;
 #[path = "../ulp_assertion_contract.rs"]
 pub mod ulp_assertion_contract;
+#[path = "../repeated_location_identity.rs"]
+pub mod repeated_location_identity;
