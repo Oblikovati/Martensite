@@ -8,7 +8,7 @@ use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
 use martensite_tkmath::gp::Vector3;
 
-/// `IMeshData::MapOfReal`: the unordered set of parameters.
+/// Unordered set of sampling parameters.
 type MapOfReal = Map<f64>;
 
 /// Generate surface nodes once the parameters

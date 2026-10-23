@@ -96,9 +96,8 @@ impl ModelAlgo for BRepMeshFaceDiscret {
         let faces_nb = model.faces_nb();
         let scope = ProgressScope::with_literal(range, "Face Discret", f64::from(faces_nb), false);
         let ranges: Vec<ProgressRange<'_>> = (0..faces_nb).map(|_| scope.next(1.0)).collect();
-        // OSD_Parallel::For over the faces when InParallel: each face algorithm reads
-        // and writes only its own face, so the sequential order gives the same meshes;
-        // the Rust progress scopes are not shareable between threads.
+        // Each algorithm operates on its own face, but progress ranges are thread-confined.
+        // Execution here remains sequential even when parallel meshing is requested.
         for (index, face_range) in ranges.iter().enumerate() {
             if !scope.more() {
                 break;

@@ -78,8 +78,7 @@ impl BRepMeshDelaun {
     pub fn remove_vertex(&mut self, vertex: &BRepMeshVertex) -> Result<(), Failure> {
         let selector = BRepMeshSelectorOfDataStructureOfDelaun::new(&self.mesh);
         selector.neighbours_of_vertex(vertex)?;
-        // Native `IMeshData::MapOfIntegerInteger aLoopEdges;`: one bucket, which fixes
-        // the first loop edge the walk starts from.
+        // A single bucket fixes which boundary edge starts the walk.
         let mut boundary = DataMap::with_hasher(DefaultHashPolicy, 1);
         for triangle in selector.elements().iter() {
             self.delete_triangle(triangle, &mut boundary)?;

@@ -2,7 +2,7 @@
 use super::*;
 use martensite_tkernel::ncollection::IndexedMap;
 
-/// `IMeshData::IMapOfReal`: the indexed, insertion-ordered set of parameters.
+/// Indexed, insertion-ordered set of sampling parameters.
 pub type IMapOfReal = IndexedMap<f64>;
 
 /// `UVParamRangeSplitter`: the default splitter plus the U and V parameters of

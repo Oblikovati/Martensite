@@ -14,11 +14,10 @@ use martensite_tkmath::gp::{Direction2, Vector2, Xy};
 #[path = "mesh_tool/cleanup.rs"]
 mod cleanup;
 
-/// `IMeshData::MapOfIntegerInteger`: link index to its orientation in the erased
-/// triangle (an NCollection_DataMap on an incremental allocator).
+/// Map link indices to their orientations in an erased triangle.
 pub type MapOfIntegerInteger = DataMap<i32, bool>;
 
-/// A new `MapOfIntegerInteger(1, new NCollection_IncAllocator)`.
+/// Create a single-bucket link map backed by an incremental allocator.
 pub(crate) fn new_loop_edges() -> MapOfIntegerInteger {
     DataMap::with_allocator(DefaultHashPolicy, 1, BaseAllocator::incremental(0))
 }
