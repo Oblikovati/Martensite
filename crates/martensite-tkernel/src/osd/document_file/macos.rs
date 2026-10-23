@@ -51,10 +51,9 @@ pub(super) fn preserve_access(destination: &Path, staged: &Path) -> io::Result<(
     let snapshot = match AccessSnapshot::read(destination) {
         Ok(snapshot) => snapshot,
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            // Preserve an explicit writer restriction rather than silently replacing it
-            // with the final parent's ordinary creation policy.
-            new_access::snapshot_for_new_destination(staged)?.verify(staged)?;
-            new_access::snapshot_for_new_destination(destination)?
+            // The shared helper rejects custom writer policy before inheriting the
+            // destination parent's ordinary access policy.
+            new_access::snapshot_for_new_destination(destination, staged)?
         }
         Err(error) => return Err(error),
     };
