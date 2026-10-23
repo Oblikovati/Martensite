@@ -99,6 +99,7 @@ impl BRepClassFaceClassifier {
         let mut explorer = BRepClassFaceExplorer::new(face)?;
         explorer.set_max_tolerance(gap_check_tol);
         explorer.set_use_bnd_box(use_bnd_box);
+        explorer.reuse_planar_operation_bounds();
         // The base Perform overwrites `rejected` before anything can fail.
         self.rejected_by_projection = false;
         self.base.perform(&mut explorer, point, tolerance)

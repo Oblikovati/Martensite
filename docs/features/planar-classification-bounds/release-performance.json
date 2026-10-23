@@ -1,0 +1,115 @@
+{
+  "issue": 242,
+  "toolchain": "1.99.0",
+  "platform": "x86_64-unknown-linux-gnu",
+  "profile": "release",
+  "affinity": "normal scheduler affinity; no taskset",
+  "threshold_percent": [
+    4,
+    3,
+    15,
+    15
+  ],
+  "runs": [
+    {
+      "run": 1,
+      "exit": 0,
+      "improvement_percent": [
+        21.2766,
+        46.5116,
+        55.3571,
+        64.8148
+      ]
+    },
+    {
+      "run": 2,
+      "exit": 0,
+      "improvement_percent": [
+        43.75,
+        46.6667,
+        55.1724,
+        62.963
+      ]
+    },
+    {
+      "run": 3,
+      "exit": 0,
+      "improvement_percent": [
+        25.0,
+        45.4545,
+        56.6667,
+        62.2642
+      ]
+    },
+    {
+      "run": 4,
+      "exit": 0,
+      "improvement_percent": [
+        44.0,
+        44.4444,
+        55.0,
+        63.6364
+      ]
+    },
+    {
+      "run": 5,
+      "exit": 0,
+      "improvement_percent": [
+        43.75,
+        46.6667,
+        55.0,
+        62.963
+      ]
+    },
+    {
+      "run": 6,
+      "exit": 0,
+      "improvement_percent": [
+        41.6667,
+        48.8889,
+        55.1724,
+        64.1509
+      ]
+    },
+    {
+      "run": 7,
+      "exit": 0,
+      "improvement_percent": [
+        26.0,
+        46.6667,
+        57.377,
+        62.2642
+      ]
+    },
+    {
+      "run": 8,
+      "exit": 0,
+      "improvement_percent": [
+        42.5532,
+        46.6667,
+        55.9322,
+        62.963
+      ]
+    },
+    {
+      "run": 9,
+      "exit": 0,
+      "improvement_percent": [
+        43.75,
+        46.6667,
+        55.1724,
+        62.963
+      ]
+    },
+    {
+      "run": 10,
+      "exit": 0,
+      "improvement_percent": [
+        45.8333,
+        47.8261,
+        54.2373,
+        63.6364
+      ]
+    }
+  ]
+}

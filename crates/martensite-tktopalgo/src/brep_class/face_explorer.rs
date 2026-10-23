@@ -21,6 +21,9 @@ use martensite_tkmath::geom_abs::CurveType;
 use martensite_tkmath::gp::{Direction2, Line2, Point2, Vector2};
 use std::sync::Arc;
 
+#[path = "face_explorer_bounds.rs"]
+mod cached_bounds;
+
 /// `Probing_Start`: the first fraction of an edge range where a segment is probed.
 pub(super) const PROBING_START: f64 = 0.123;
 

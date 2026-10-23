@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserve planar wire geometry during face construction and reuse finite curve bounds within classification operations without storing projection caches on input edges (#242).
+
 ## [0.3.6] - 2026-10-23
 
 ### Fixed
