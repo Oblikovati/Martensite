@@ -11,11 +11,7 @@ struct InheritedAccessTemplate {
     _file: fs::File,
 }
 
-pub(super) fn snapshot_for_new_destination(
-    destination: &Path,
-    staged: &Path,
-) -> io::Result<AccessSnapshot> {
-    verify_default_staged_policy(staged)?;
+pub(super) fn snapshot_for_new_destination(destination: &Path) -> io::Result<AccessSnapshot> {
     let parent = destination
         .parent()
         .filter(|path| !path.as_os_str().is_empty())
@@ -24,7 +20,7 @@ pub(super) fn snapshot_for_new_destination(
     AccessSnapshot::read(&template.path)
 }
 
-fn verify_default_staged_policy(staged: &Path) -> io::Result<()> {
+pub(super) fn verify_default_staged_policy(staged: &Path) -> io::Result<()> {
     let parent = staged
         .parent()
         .filter(|path| !path.as_os_str().is_empty())

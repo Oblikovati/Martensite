@@ -18,7 +18,7 @@ directory. On Linux, replacement preserves and verifies the owner, group, mode,
 POSIX access ACL, and SELinux/Smack file labels. New files receive the final
 parent's inherited access policy only when their staged policy matches a default
 file created in the same private staging directory. Custom writer policies are
-refused before publication; a restrictive policy is never widened to a default. Staged output must be a regular file; symbolic
+refused for both existing and absent destinations before publication; a restrictive policy is never widened to a default. Staged output must be a regular file; symbolic
 links and directories are refused. These checks use the TKERNEL operating-system
 interface; the document framework owns writing, syncing, and publication. Unknown system/security access
 attributes and set-user/group-ID files are refused before publication. Content
