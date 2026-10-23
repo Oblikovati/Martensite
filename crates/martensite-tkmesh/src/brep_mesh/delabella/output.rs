@@ -25,8 +25,7 @@ SOFTWARE.
 
 */
 
-// Rust translation of the end of CDelaBella::Triangulate() of delabella.cpp (the
-// Delaunay/hull face lists and the hull silhouette) and of the deprecated DelaBella().
+// Retain face-list and silhouette order when producing triangulation output.
 
 //! The output lists of a full triangulation, and the deprecated one-call interface.
 use super::{DelaBella, broken_hull};

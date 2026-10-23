@@ -1,20 +1,19 @@
-// Rust translation of BRepMesh_DiscretRoot.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+// Factory products share one interface for meshing a configured shape.
 
-//! `BRepMesh_DiscretRoot`: the interface of the meshing algorithms the factories make.
+//! Common interface for factory-created meshing algorithms.
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::standard::{Failure, SharedState, StandardTransient, Transient};
 
-/// The protected data of `BRepMesh_DiscretRoot`: the shape and the done flag.
+/// The protected data of `BRepMeshDiscretRoot`: the shape and the done flag.
 #[derive(Default)]
 pub struct DiscretRootBase {
     shape: SharedState<Shape>,
     is_done: SharedState<bool>,
 }
 
-/// `BRepMesh_DiscretRoot`: a triangulation algorithm over a shape.
+/// `BRepMeshDiscretRoot`: a triangulation algorithm over a shape.
 pub trait BRepMeshDiscretRoot: Transient {
     /// The shape and done flag; `algo.discret_root_base()`.
     fn discret_root_base(&self) -> &DiscretRootBase;

@@ -1,4 +1,4 @@
-//! Exact Rust port of the selected BRepMesh incremental-mesh legacy declaration.
+//! Incremental mesh completion and error-state contracts.
 use martensite_tkbrep::topods::{Builder, Compound, Shape, Wire};
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkmesh::{
@@ -45,8 +45,7 @@ fn invalid_linear_deflection_returns_native_numeric_error() {
 
 #[test]
 fn empty_wire_meshes_as_native_done_without_status() {
-    // Native BRepMesh_IncrementalMesh on an empty wire: done, status 0 (measured with
-    // the pinned the retained behavior build).
+    // An empty wire completes successfully without recording a failure status.
     let mut wire = Wire::default();
     Builder.make_wire(&mut wire);
     let parameters = MeshParameters::default();

@@ -73,7 +73,7 @@ pub struct ParametersListArrayAdaptor {
     transient: StandardTransient,
     parameters: Handle<dyn ParametersList>,
 }
-// The native template declares no RTTI of its own (3d097a0).
+// Parameter lists share their parent runtime identity rather than introducing another type.
 impl RuntimeTyped for ParametersListArrayAdaptor {
     const TYPE_NAME: &'static str = StandardTransient::TYPE_NAME;
     fn static_type() -> &'static RuntimeType {

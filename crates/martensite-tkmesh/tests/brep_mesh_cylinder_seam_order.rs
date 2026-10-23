@@ -1,4 +1,4 @@
-//! Port-only probe: the seam node copy of a meshed cylinder keeps the pinned native order.
+//! Cylinder seam-node copies retain the recorded triangulation order.
 use martensite_tkbrep::{brep::BRepTool, topexp::Explorer};
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkg3d::top_abs::ShapeEnum;

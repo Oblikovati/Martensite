@@ -1,5 +1,4 @@
-// Rust translation of BRepMesh_BaseMeshAlgo::collectTriangles and collectNodes at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Collect live mesh connectivity and spatial nodes for face publication.
 use super::base::{BaseMeshAlgoData, BaseMeshAlgoHooks, used_nodes, used_nodes_mut};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::poly::{Triangle, Triangulation};

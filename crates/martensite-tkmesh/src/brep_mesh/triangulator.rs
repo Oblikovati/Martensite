@@ -1,7 +1,6 @@
-// Rust translation of BRepMesh_Triangulator.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+// Planar polygons reuse their spatial nodes when producing triangle connectivity.
 
-//! `BRepMesh_Triangulator`: triangles of planar polygons given by 3d nodes.
+//! Triangulate planar polygons represented by spatial nodes.
 use super::{
     BRepMeshDataStructureOfDelaun, BRepMeshDelaun, BRepMeshEdge, BRepMeshVertex, DegreeOfFreedom,
 };
@@ -16,7 +15,7 @@ use martensite_tkmath::gp::{Direction3, Plane3, Point3, Xyz};
 use martensite_tkmath::poly::{Triangle, Triangulation};
 use std::sync::Arc;
 
-/// `BRepMesh_Triangulator(theXYZs, theWires, theNorm)`: the wires are 0-based indices
+/// Wires use zero-based indices
 /// into the nodes; the output triangles use 1-based node indices.
 ///
 /// ```
@@ -41,8 +40,7 @@ pub struct BRepMeshTriangulator<'a> {
 }
 
 impl<'a> BRepMeshTriangulator<'a> {
-    /// `BRepMesh_Triangulator(theXYZs, theWires, theNorm)`: the projection plane
-    /// through the origin; `BRepMeshTriangulator::new(&nodes, &wires, normal)?`.
+    /// Construct a triangulator with its projection plane through the origin; `BRepMeshTriangulator::new(&nodes, &wires, normal)?`.
     pub fn new(
         xyzs: &'a [Xyz],
         wires: &'a [Vec<i32>],

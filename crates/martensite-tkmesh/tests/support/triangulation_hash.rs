@@ -30,7 +30,7 @@ fn parse_native_hash_row(index: usize, row: &str) -> (u64, u64) {
 }
 
 fn native_cylinder_snapshot() -> &'static str {
-    // Run 38123916241 independently captures native the retained behavior node and triangle order.
+    // Platform-specific reviewed snapshots pin node and triangle ordering.
     if cfg!(all(target_os = "macos", target_arch = "aarch64")) {
         return include_str!("../fixtures/tkmesh_cylinder_nodes.macos.expected");
     }

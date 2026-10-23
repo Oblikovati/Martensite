@@ -1,5 +1,5 @@
 //! Native circle bounds, cell registration, and circumcircle arithmetic.
-//! Ported from the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871 BRepMesh_CircleTool.hxx/.cxx.
+//! Circle bounds limit which registered candidates need geometric inspection.
 use crate::brep_mesh_data::MeshAllocator;
 use martensite_tkernel::{
     ncollection::{Array1, BaseAllocator, CellFilter, List},

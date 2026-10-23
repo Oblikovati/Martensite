@@ -25,11 +25,10 @@ SOFTWARE.
 
 */
 
-// Rust translation of the arithmetic types of delabella.cpp (Signed14..Signed62,
-// s14sqr, Norm, Vect, Vert::operator-, Face::dot/cross, Vert::u28cmp).
+// Explicit signed arithmetic retains the precision of vector and orientation operations.
 
-//! The configured arithmetic: xy coordinates and `Vect::xy` are `double`; z, `Vect::z`,
-//! every `Norm` component and the dot products are `long double` (`LongDouble`).
+//! Coordinates and vector xy components use `f64`. Lifted z coordinates, vector z,
+//! every `Norm` component and dot products use `LongDouble`.
 use super::{DelaBella, DelaBellaVertex};
 use martensite_tkmath::math_poly::LongDouble;
 use std::cmp::Ordering;

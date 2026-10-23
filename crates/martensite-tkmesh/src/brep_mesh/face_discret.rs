@@ -1,8 +1,6 @@
-// Rust translation of BRepMesh_FaceDiscret.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+// Each face obtains its algorithm through the configured factory.
 
-//! `BRepMesh_FaceDiscret`: the face stage of the mesher, one algorithm per face from
-//! the algorithm factory.
+//! Run one factory-selected triangulation strategy per face.
 use crate::imesh_data::{FaceHandle, MeshModel, Status};
 use crate::imesh_tools::{MeshAlgoFactory, MeshParameters, ModelAlgo};
 use martensite_tkernel::impl_transient;
@@ -10,9 +8,9 @@ use martensite_tkernel::message::{ProgressRange, ProgressScope};
 use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 
-/// `BRepMesh_FaceDiscret(theAlgoFactory)`: each face that is neither failed nor
+/// Each face that is neither failed nor
 /// reused is meshed by the algorithm the factory gives for its surface type; a
-/// failure marks the face (IMeshData_Failure) and the other faces go on.
+/// failure marks the face status and processing continues with the other faces.
 ///
 /// ```
 /// use martensite_tkernel::standard::Handle;
@@ -27,7 +25,7 @@ pub struct BRepMeshFaceDiscret {
 impl_transient!(BRepMeshFaceDiscret, "BRepMesh_FaceDiscret", dyn ModelAlgo, transient, interfaces: [dyn ModelAlgo]);
 
 impl BRepMeshFaceDiscret {
-    /// `BRepMesh_FaceDiscret(theAlgoFactory)`; `BRepMeshFaceDiscret::new(&factory)`.
+    /// Use the supplied factory to select each face algorithm; `BRepMeshFaceDiscret::new(&factory)`.
     pub fn new(algo_factory: &Handle<dyn MeshAlgoFactory>) -> Self {
         Self {
             transient: StandardTransient::default(),
@@ -98,9 +96,8 @@ impl ModelAlgo for BRepMeshFaceDiscret {
         let faces_nb = model.faces_nb();
         let scope = ProgressScope::with_literal(range, "Face Discret", f64::from(faces_nb), false);
         let ranges: Vec<ProgressRange<'_>> = (0..faces_nb).map(|_| scope.next(1.0)).collect();
-        // OSD_Parallel::For over the faces when InParallel: each face algorithm reads
-        // and writes only its own face, so the sequential order gives the same meshes;
-        // the Rust progress scopes are not shareable between threads.
+        // Each algorithm operates on its own face, but progress ranges are thread-confined.
+        // Execution here remains sequential even when parallel meshing is requested.
         for (index, face_range) in ranges.iter().enumerate() {
             if !scope.more() {
                 break;

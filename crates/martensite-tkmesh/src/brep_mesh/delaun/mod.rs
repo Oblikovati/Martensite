@@ -1,4 +1,4 @@
-//! BRepMesh_Delaun from the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871: the existing-mesh core
+//! Delaunay refinement of existing mesh connectivity: the core is defined
 //! here, vertex insertion, constraints and frontier adjustment in the submodules.
 use super::{
     BRepMeshCircleTool, BRepMeshDataStructureOfDelaun, BRepMeshEdge, BRepMeshTriangle,
@@ -66,8 +66,7 @@ impl BRepMeshDelaun {
     pub fn circles(&self) -> &BRepMeshCircleTool {
         &self.circles
     }
-    /// The circle tool, mutable: the deflection control selects circles through a
-    /// `const_cast` of `Circles()` natively; `triangulator.circles_mut()`.
+    /// Borrow the circle registry used by deflection control; `triangulator.circles_mut()`.
     pub fn circles_mut(&mut self) -> &mut BRepMeshCircleTool {
         &mut self.circles
     }

@@ -1,5 +1,4 @@
-// Rust translation of BRepMesh_DelaunayDeflectionControlMeshAlgo.hxx (the algorithm
-// and optimizeMesh) at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Refine face triangulations against their requested deflection limits.
 use super::base::{BaseMeshAlgoData, ConstrainedBaseMeshAlgoHooks};
 use super::deflection_split::DeflectionPass;
 use super::delaunay_insertion::{
@@ -14,7 +13,7 @@ use martensite_tkernel::ncollection::{Map, Shared};
 use martensite_tkernel::standard::{Failure, Handle};
 use std::marker::PhantomData;
 
-/// `BRepMesh_DelaunayDeflectionControlMeshAlgo<RangeSplitter, BaseAlgo>`: Delaunay
+/// `DelaunayDeflectionControlMeshAlgo<RangeSplitter, BaseAlgo>`: Delaunay
 /// node insertion followed by up to 11 passes inserting the triangle centers and link
 /// middles that deviate from the surface by more than the face deflection;
 /// `DelaunayDeflectionControlMeshAlgo::<NURBSRangeSplitter, DelaunayGenerator>::default()`.

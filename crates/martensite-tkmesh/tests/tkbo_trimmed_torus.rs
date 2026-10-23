@@ -1,6 +1,5 @@
-//! TKMesh regression that builds its fixture with the TKBO Boolean fuse: translation of
-//! BRepMesh_IncrementalMeshTest.BooleanTrimmedTorus_CrossingSeamProducesDenseMesh from
-//! src/ModelingAlgorithms/TKMesh/regressions/BRepMesh_IncrementalMesh_Test.cxx (3d097a0).
+//! Mesh a Boolean-trimmed torus across its seam with dense boundary sampling.
+//! The fixture requires the Boolean construction dependency tracked in #233.
 #![allow(non_snake_case)]
 
 use martensite_tkbo::brep_algo_api::BRepAlgoAPIFuse;

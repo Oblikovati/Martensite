@@ -25,8 +25,7 @@ SOFTWARE.
 
 */
 
-// Rust translation of CDelaBella::Triangulate() of delabella.cpp: "CREATE CONE HULL
-// WITH TOP AT cloud[i] AND BASE MADE OF CONTOUR LIST", and Face::Alloc/Free.
+// Join a top vertex to the coplanar contour while retaining the selected winding.
 
 //! The cone hull over the coplanar contour, built in one of 2 windings depending on
 //! the side of the contour plane the top vertex lies on.

@@ -1,4 +1,4 @@
-//! Deflection estimates following the retained behavior 3d097a03, including strict consistency bounds.
+//! Deflection estimates with strict geometric consistency bounds.
 use super::{ShapeTool, shape_tool::native_max};
 use crate::{
     imesh_data::{EdgeHandle, FaceHandle, WireHandle},

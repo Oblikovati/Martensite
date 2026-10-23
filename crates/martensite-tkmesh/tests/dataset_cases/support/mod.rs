@@ -1,7 +1,5 @@
-//! What the scenario harness gives the cases, on the Rust API: the log and its verdict
-//! (shared with the TKGeomAlgo cases by path), the group CPU budget, and the scenario and QA
-//! commands the scripts call.
-#![allow(dead_code)] // Each case uses the subset of commands its script calls.
+//! Fixture logs, verdict rules, group CPU budgets and geometric quality checks.
+#![allow(dead_code)] // Each fixture uses only its required command subset.
 
 pub mod draw;
 #[path = "geomalgo/log.rs"]

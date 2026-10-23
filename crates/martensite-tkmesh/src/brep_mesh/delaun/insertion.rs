@@ -15,7 +15,7 @@ impl BRepMeshDelaun {
         self.create_triangles(vertex, polygon)
     }
 
-    /// Build the retained behavior's enclosing triangle for a finite box; `delaun.build_super_mesh([0.,0.,2.,2.])?`.
+    /// Build an enclosing triangle for a finite box; `delaun.build_super_mesh([0.,0.,2.,2.])?`.
     #[doc(hidden)]
     pub fn build_super_mesh(&mut self, bounds: [f64; 4]) -> Result<([i32; 3], [i32; 3]), Failure> {
         let points = super_vertices(bounds);

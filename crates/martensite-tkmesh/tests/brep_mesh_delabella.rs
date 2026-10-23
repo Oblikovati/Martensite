@@ -1,6 +1,4 @@
-//! BRepMesh_DelabellaMeshAlgoFactory and the Delabella context: algorithm choice per
-//! surface type and mesh totals equal to the pinned native build (tkmesh_probe
-//! `mesh_delabella_shape`).
+//! Point-cloud algorithm selection by surface type and reviewed mesh-size baselines.
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::geom_abs::SurfaceType;

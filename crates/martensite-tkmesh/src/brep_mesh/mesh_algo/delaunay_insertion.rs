@@ -1,5 +1,4 @@
-// Rust translation of BRepMesh_DelaunayNodeInsertionMeshAlgo.hxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Delaunay node insertion with constrained face boundaries.
 use super::base::{BaseMeshAlgoData, ConstrainedBaseMeshAlgoHooks};
 use super::generator::MeshGenerator;
 use super::node_insertion::{
@@ -18,7 +17,7 @@ pub trait DelaunayInsertionHooks: NodeInsertionHooks {
     fn is_pre_process_surface_nodes(&self) -> bool;
 }
 
-/// `BRepMesh_DelaunayNodeInsertionMeshAlgo::initDataStructure`: the node-insertion
+/// `delaunay_insertion_init_data_structure`: the node-insertion
 /// structure, then (when pre-processing) the surface nodes registered before meshing.
 pub fn delaunay_insertion_init_data_structure<A: DelaunayInsertionHooks + ?Sized>(
     algo: &mut A,
@@ -33,7 +32,7 @@ pub fn delaunay_insertion_init_data_structure<A: DelaunayInsertionHooks + ?Sized
     Ok(true)
 }
 
-/// `getCellsCount`: BRepMesh_GeomTool::CellsCount of the face surface, deflection and
+/// Compute `GeomTool::cells_count` for the face surface, deflection and
 /// splitter.
 pub fn delaunay_insertion_cells_count<A: DelaunayInsertionHooks + ?Sized>(
     algo: &A,
@@ -48,7 +47,7 @@ pub fn delaunay_insertion_cells_count<A: DelaunayInsertionHooks + ?Sized>(
     )
 }
 
-/// `BRepMesh_DelaunayNodeInsertionMeshAlgo::postProcessMesh`: the base post-process
+/// `delaunay_insertion_post_process`: the base post-process
 /// (with a default range, as natively), then the surface nodes inserted into the mesh
 /// unless they were registered beforehand.
 pub fn delaunay_insertion_post_process<A: DelaunayInsertionHooks + ?Sized, G: MeshGenerator>(
@@ -132,7 +131,7 @@ fn register_inside<A: DelaunayInsertionHooks + ?Sized>(
         .map(Some)
 }
 
-/// `BRepMesh_DelaunayNodeInsertionMeshAlgo<RangeSplitter, BaseAlgo>`: node insertion
+/// `DelaunayNodeInsertionMeshAlgo<RangeSplitter, BaseAlgo>`: node insertion
 /// with the surface nodes of the splitter added after (or before) the base mesh;
 /// `DelaunayNodeInsertionMeshAlgo::<SphereRangeSplitter, DelaunayGenerator>::default()`.
 pub struct DelaunayNodeInsertionMeshAlgo<R: RangeSplitter, G: MeshGenerator> {

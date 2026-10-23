@@ -1,12 +1,11 @@
-// Rust translation of BRepMesh_UVParamRangeSplitter.hxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Scale parameter bounds to physical surface lengths before sampling.
 use super::*;
 use martensite_tkernel::ncollection::IndexedMap;
 
-/// `IMeshData::IMapOfReal`: the indexed, insertion-ordered set of parameters.
+/// Indexed, insertion-ordered set of sampling parameters.
 pub type IMapOfReal = IndexedMap<f64>;
 
-/// `BRepMesh_UVParamRangeSplitter`: the default splitter plus the U and V parameters of
+/// `UVParamRangeSplitter`: the default splitter plus the U and V parameters of
 /// the boundary points; `UVParamRangeSplitter::default()`.
 pub struct UVParamRangeSplitter {
     base: DefaultRangeSplitter,
