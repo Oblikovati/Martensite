@@ -81,10 +81,14 @@ fn replacement_retains_deny_acl_owner_group_and_mode() {
     fs::set_permissions(&destination, fs::Permissions::from_mode(0o640)).unwrap();
     set_acl(&destination, "everyone deny execute");
     let expected = AccessSnapshot::read(&destination).unwrap();
-    // Writers may replace their output inode; policy is restored after completion.
+    // Recreated output must retain its ordinary writer policy before destination restoration.
     fs::remove_file(&staged).unwrap();
     fs::write(&staged, b"new").unwrap();
-    fs::set_permissions(&staged, fs::Permissions::from_mode(0o600)).unwrap();
+    let ordinary = fixture.file("ordinary-control");
+    AccessSnapshot::read(&ordinary)
+        .unwrap()
+        .verify(&staged)
+        .unwrap();
     preserve_access(&destination, &staged).unwrap();
     fs::rename(staged, &destination).unwrap();
     expected.verify(&destination).unwrap();
@@ -195,31 +199,19 @@ fn new_document_refuses_custom_writer_acl_without_publishing() {
 }
 
 #[test]
-fn denied_stage_metadata_update_keeps_original_document_unchanged() {
+fn denied_stage_policy_keeps_original_document_unchanged() {
     let fixture = AppleAccessFixture::new();
     let destination = fixture.file("original");
     let staged = fixture.file("replacement");
     let expected = AccessSnapshot::read(&destination).unwrap();
-    assert!(
-        Command::new("/bin/chflags")
-            .arg("uchg")
-            .arg(&staged)
-            .status()
-            .unwrap()
-            .success()
-    );
+    set_stage_immutable(&staged, true);
     let result = preserve_access(&destination, &staged);
-    assert!(
-        Command::new("/bin/chflags")
-            .arg("nouchg")
-            .arg(&staged)
-            .status()
-            .unwrap()
-            .success()
-    );
+    set_stage_immutable(&staged, false);
     let error = result.unwrap_err();
     assert_eq!(error.kind(), io::ErrorKind::PermissionDenied);
-    assert!(error.raw_os_error().is_some());
+    let reason = error.to_string();
+    assert!(reason.contains("unsupported or changed access policy"));
+    assert!(reason.contains(staged.to_str().unwrap()));
     expected.verify(&destination).unwrap();
     assert_eq!(fs::read(destination).unwrap(), b"original");
 }
@@ -300,4 +292,74 @@ fn unknown_private_access_attribute_fails_before_publication() {
     let error = preserve_access(&destination, &staged).unwrap_err();
     assert_eq!(error.kind(), io::ErrorKind::Unsupported);
     assert_eq!(fs::read(destination).unwrap(), b"original");
+}
+
+#[test]
+fn existing_destination_does_not_widen_restrictive_writer_policy() {
+    if isolated_default_policy_case() {
+        return;
+    }
+    let fixture = AppleAccessFixture::new();
+    let destination = fixture.file("original");
+    let staged = fixture.file("replacement");
+    assert_eq!(fs::metadata(&staged).unwrap().mode() & 0o777, 0o644);
+    fs::set_permissions(&destination, fs::Permissions::from_mode(0o644)).unwrap();
+    fs::set_permissions(&staged, fs::Permissions::from_mode(0o600)).unwrap();
+    let original = AccessSnapshot::read(&destination).unwrap();
+    let writer = AccessSnapshot::read(&staged).unwrap();
+    let error = preserve_access(&destination, &staged).unwrap_err();
+    assert_eq!(error.kind(), io::ErrorKind::PermissionDenied);
+    original.verify(&destination).unwrap();
+    writer.verify(&staged).unwrap();
+    assert_eq!(fs::read(destination).unwrap(), b"original");
+    assert_eq!(fs::read(staged).unwrap(), b"replacement");
+}
+
+fn isolated_default_policy_case() -> bool {
+    const CHILD: &str = "MARTENSITE_EXISTING_WRITER_POLICY_CHILD";
+    if std::env::var_os(CHILD).is_some() {
+        return false;
+    }
+    let executable = std::env::current_exe().unwrap();
+    let qualified = concat!(
+        module_path!(),
+        "::existing_destination_does_not_widen_restrictive_writer_policy"
+    );
+    let (_, test) = qualified.split_once("::").unwrap();
+    let mut isolated = Command::new("/bin/sh");
+    let script = r#"umask 022; exec "$1" --exact "$2""#;
+    isolated.args(["-c", script, "document-policy"]);
+    isolated.arg(executable).arg(test).env(CHILD, "1");
+    assert!(isolated.status().unwrap().success());
+    true
+}
+
+#[test]
+fn existing_destination_refuses_custom_writer_acl_without_changes() {
+    let fixture = AppleAccessFixture::new();
+    let destination = fixture.file("original");
+    let staged = fixture.file("replacement");
+    set_acl(&staged, "everyone deny execute");
+    let original = AccessSnapshot::read(&destination).unwrap();
+    let writer = AccessSnapshot::read(&staged).unwrap();
+    let error = preserve_access(&destination, &staged).unwrap_err();
+    assert_eq!(error.kind(), io::ErrorKind::PermissionDenied);
+    original.verify(&destination).unwrap();
+    writer.verify(&staged).unwrap();
+    assert_eq!(fs::read(destination).unwrap(), b"original");
+    assert_eq!(fs::read(staged).unwrap(), b"replacement");
+}
+
+fn set_stage_immutable(staged: &Path, immutable: bool) {
+    let flag = if immutable { "uchg" } else { "nouchg" };
+    let status = Command::new("/bin/chflags")
+        .arg(flag)
+        .arg(staged)
+        .status()
+        .unwrap();
+    assert!(
+        status.success(),
+        "chflags {flag} failed for {}",
+        staged.display()
+    );
 }

@@ -48,12 +48,11 @@ fn restrict_directory(directory: &Path) -> io::Result<()> {
 }
 
 pub(super) fn preserve_access(destination: &Path, staged: &Path) -> io::Result<()> {
+    new_access::verify_default_staged_policy(staged)?;
     let snapshot = match AccessSnapshot::read(destination) {
         Ok(snapshot) => snapshot,
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            // The shared helper rejects custom writer policy before inheriting the
-            // destination parent's ordinary access policy.
-            new_access::snapshot_for_new_destination(destination, staged)?
+            new_access::snapshot_for_new_destination(destination)?
         }
         Err(error) => return Err(error),
     };

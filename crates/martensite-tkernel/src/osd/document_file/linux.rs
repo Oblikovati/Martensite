@@ -24,10 +24,11 @@ pub(super) fn create_private_directory(directory: &Path) -> io::Result<()> {
 }
 
 pub(super) fn preserve_access(destination: &Path, staged: &Path) -> io::Result<()> {
+    new_access::verify_default_staged_policy(staged)?;
     let snapshot = match AccessSnapshot::read(destination) {
         Ok(snapshot) => snapshot,
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            new_access::snapshot_for_new_destination(destination, staged)?
+            new_access::snapshot_for_new_destination(destination)?
         }
         Err(error) => return Err(error),
     };

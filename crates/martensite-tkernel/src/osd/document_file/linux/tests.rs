@@ -117,6 +117,9 @@ fn published_document_retains_named_access_acl_bytes() {
 fn inherited_staging_acl_is_removed_when_original_has_none() {
     let fixture = DocumentAccessFixture::new("inherited-acl");
     let inherited = named_access_acl(fs::metadata(&fixture.destination).unwrap().uid());
+    // This ACL belongs to the private directory's default policy, not a custom writer.
+    let stage_parent = fixture.staged.parent().unwrap();
+    xattr::set(stage_parent, "system.posix_acl_default", &inherited).unwrap();
     xattr::set(&fixture.staged, ACCESS_ATTRIBUTES[0], &inherited).unwrap();
     fixture.publish().unwrap();
     assert_eq!(
@@ -229,8 +232,12 @@ fn destination_alias_is_refused_without_dropping_referent_acl() {
 }
 
 fn install_ordinary_creation_policy(fixture: &DocumentAccessFixture) {
+    install_creation_policy(fixture, 4);
+}
+
+fn install_creation_policy(fixture: &DocumentAccessFixture, public_read: u16) {
     let mut acl = 2_u32.to_le_bytes().to_vec();
-    for (tag, permission) in [(1_u16, 6_u16), (4, 4), (32, 4)] {
+    for (tag, permission) in [(1_u16, 6_u16), (4, public_read), (32, public_read)] {
         acl.extend(tag.to_le_bytes());
         acl.extend(permission.to_le_bytes());
         acl.extend(u32::MAX.to_le_bytes());
@@ -240,6 +247,37 @@ fn install_ordinary_creation_policy(fixture: &DocumentAccessFixture) {
     xattr::set(stage_parent, "system.posix_acl_default", &acl).unwrap();
     let control = stage_parent.join("ordinary-control");
     fs::write(&control, b"").unwrap();
-    assert_eq!(fs::metadata(&control).unwrap().mode() & 0o777, 0o644);
+    let expected = 0o600 | u32::from(public_read) << 3 | u32::from(public_read);
+    assert_eq!(fs::metadata(&control).unwrap().mode() & 0o777, expected);
     fs::remove_file(control).unwrap();
+}
+
+#[test]
+fn existing_destination_does_not_widen_restrictive_writer_policy() {
+    let fixture = DocumentAccessFixture::new("existing-restrictive-writer");
+    install_ordinary_creation_policy(&fixture);
+    fs::set_permissions(&fixture.destination, fs::Permissions::from_mode(0o644)).unwrap();
+    fs::set_permissions(&fixture.staged, fs::Permissions::from_mode(0o600)).unwrap();
+    let original = AccessSnapshot::read(&fixture.destination).unwrap();
+    let writer_policy = AccessSnapshot::read(&fixture.staged).unwrap();
+    let failure = preserve_document_access(&fixture.destination, &fixture.staged).unwrap_err();
+    assert_eq!(failure.kind(), io::ErrorKind::PermissionDenied);
+    original.verify(&fixture.destination).unwrap();
+    writer_policy.verify(&fixture.staged).unwrap();
+    assert_eq!(fs::read(&fixture.destination).unwrap(), b"original bytes");
+    assert_eq!(fs::read(&fixture.staged).unwrap(), b"completed replacement");
+}
+
+#[test]
+fn ordinary_private_default_is_compatible_with_existing_public_mode() {
+    let fixture = DocumentAccessFixture::new("ordinary-private-default");
+    install_creation_policy(&fixture, 0);
+    fs::set_permissions(&fixture.destination, fs::Permissions::from_mode(0o644)).unwrap();
+    fs::set_permissions(&fixture.staged, fs::Permissions::from_mode(0o600)).unwrap();
+    let original = AccessSnapshot::read(&fixture.destination).unwrap();
+    preserve_document_access(&fixture.destination, &fixture.staged).unwrap();
+    original.verify(&fixture.destination).unwrap();
+    original.verify(&fixture.staged).unwrap();
+    assert_eq!(fs::read(&fixture.destination).unwrap(), b"original bytes");
+    assert_eq!(fs::read(&fixture.staged).unwrap(), b"completed replacement");
 }
