@@ -20,10 +20,12 @@ TKERNEL exposes two safe functions in `osd`:
 | `create_private_document_directory(&Path) -> io::Result<()>` | Creates an exclusive directory that protects staged document bytes. Existing paths are refused. | Owner-only staging and inherited-grant removal. |
 | `preserve_document_access(&Path, &Path) -> io::Result<()>` | Copies and verifies access policy on a regular staged file. An existing destination must be a resolved regular file. The function does not publish either file. | Ownership, group, mode, ACL, refused policies, unchanged original bytes and staged-file validation. |
 
-For an absent destination, the staged file must first match an exclusively
-created default-policy reference in its private directory. The replacement then
-receives the final parent's ordinary creation policy. A writer's custom policy
-is refused before publication; a restrictive writer mode cannot become broader.
+For either destination route, the staged file must first match an exclusively
+created default-policy reference in its private directory. Ordinary private
+staging defaults can then receive the existing destination's policy. An absent
+destination receives the final parent's ordinary creation policy. A writer's
+custom policy is refused before publication; a restrictive writer mode cannot
+become broader.
 
 Linux preserves owner, group, mode, POSIX access ACL, SELinux and Smack labels.
 Windows preserves owner, group, ordered DACL and supported access-related SACL
