@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserved document files when model preparation or storage failed, and published completed file writes before recording the final storage path (#245).
+
 ## [0.3.6] - 2026-10-23
 
 ### Fixed
