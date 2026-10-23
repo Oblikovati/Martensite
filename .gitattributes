@@ -201,6 +201,7 @@ crates/martensite-tkservice/src/graphic3d/shader_manager/glsl/** -text -whitespa
 
 # Boundary representation, algorithm, hidden line, primitive and helix fixtures are compared
 # byte for byte or sealed by hash.
+crates/martensite-tkbrep/tests/fixtures/repeated-location-solids.brep -text -whitespace
 crates/martensite-tkgeomalgo/tests/fixtures/** -text -whitespace
 crates/martensite-tkgeomalgo/tests/sketch_line_incidences/*.csv -text -whitespace
 crates/martensite-tkgeomalgo/tests/sketch_spline/*.csv -text -whitespace
