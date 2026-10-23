@@ -32,7 +32,7 @@ pub fn delaunay_insertion_init_data_structure<A: DelaunayInsertionHooks + ?Sized
     Ok(true)
 }
 
-/// `getCellsCount`: GeomTool::CellsCount of the face surface, deflection and
+/// Compute `GeomTool::cells_count` for the face surface, deflection and
 /// splitter.
 pub fn delaunay_insertion_cells_count<A: DelaunayInsertionHooks + ?Sized>(
     algo: &A,

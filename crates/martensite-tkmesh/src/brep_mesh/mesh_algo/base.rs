@@ -121,7 +121,7 @@ pub trait ConstrainedBaseMeshAlgoHooks: BaseMeshAlgoHooks {
     }
 }
 
-/// Run the meshing stages, recording failures in face status without retaining a face link;
+/// Run meshing stages, preserving their face status and releasing the face link even on failure;
 /// `base_perform(&mut algo, &face, &parameters, &range)`.
 pub fn base_perform<A: BaseMeshAlgoHooks + ?Sized>(
     algo: &mut A,

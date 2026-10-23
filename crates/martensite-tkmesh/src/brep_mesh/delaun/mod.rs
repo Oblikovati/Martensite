@@ -66,8 +66,7 @@ impl BRepMeshDelaun {
     pub fn circles(&self) -> &BRepMeshCircleTool {
         &self.circles
     }
-    /// The circle tool, mutable: the deflection control selects circles through a
-    /// Borrow the mutable circle registry; `triangulator.circles_mut()`.
+    /// Borrow the circle registry used by deflection control; `triangulator.circles_mut()`.
     pub fn circles_mut(&mut self) -> &mut BRepMeshCircleTool {
         &mut self.circles
     }
