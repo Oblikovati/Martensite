@@ -1,6 +1,3 @@
-// Rust translation of the static JoinEdges of ShapeFix_Wireframe.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! `JoinEdges(E1, E2, E3, faces)`: two consecutive edges joined into one, their 3D
 //! curves and their p-curves on the faces concatenated by ShapeConstruct::JoinCurves.
 use crate::shape_analysis::ShapeAnalysisEdge;
@@ -43,8 +40,8 @@ fn joined_orientation(edge: &Edge, reversed: bool) -> Orientation {
     }
 }
 
-/// `JoinEdges(E1, E2, E3, faces)`: an exception aborts the join with the `ReplaceFirst`
-/// computed so far and a null edge, as the native try/catch.
+/// an exception aborts the join with the `ReplaceFirst`
+/// computed so far and a null edge, as the try/catch.
 pub(super) fn join_edges(e1: &Edge, e2: &Edge, faces: &[Shape]) -> JoinedEdges {
     let mut replace_first = true;
     let edge = match join_body(e1, e2, faces, &mut replace_first) {
@@ -212,7 +209,7 @@ fn install_pcurves(
     let (mut r1, mut r2) = (e1.clone(), e2.clone());
     r1.reverse();
     r2.reverse();
-    // The native test of the 3D reversal flags that follows this join is always false
+    // The test of the 3D reversal flags that follows this join is always false
     // here (JoinEdges returned earlier otherwise).
     let Some((second, _, _, _)) = join_pcurves(&r1, &r2, face, state)? else {
         return Ok(false);

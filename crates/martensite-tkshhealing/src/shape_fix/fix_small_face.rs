@@ -1,4 +1,4 @@
-//! Spot-face healing from `ShapeFix_FixSmallFace`.
+//! Spot-face healing from `ShapeFixFixSmallFace`.
 mod split;
 mod spot;
 mod strip;
@@ -11,7 +11,7 @@ use martensite_tkbrep::topods::{Face, Shape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::{Failure, Handle, SharedState};
 
-/// The context and spot-face path of `ShapeFix_FixSmallFace`.
+/// The context and spot-face path of `ShapeFixFixSmallFace`.
 ///
 /// ```
 /// use martensite_tkbrep::topods::Shape;
@@ -44,13 +44,13 @@ impl Default for ShapeFixFixSmallFace {
 }
 
 impl ShapeFixFixSmallFace {
-    /// `ShapeFix_FixSmallFace()`: no shape, status OK, precision Precision::Confusion();
+    /// no shape, status OK, precision precision::confusion();
     /// `let fixer = ShapeFixFixSmallFace::empty();`.
     pub fn empty() -> Self {
         Self::default()
     }
 
-    /// `ShapeFix_FixSmallFace(shape)` followed by `Init`; `ShapeFixFixSmallFace::new(shape)`.
+    /// Initialize small-face repair for a shape; `ShapeFixFixSmallFace::new(shape)`.
     pub fn new(shape: Shape) -> Self {
         let fixer = Self::default();
         fixer.init(shape);
@@ -112,7 +112,7 @@ impl ShapeFixFixSmallFace {
         spot::fix_face(self, face)
     }
 
-    /// Native `FixPinFace` is currently a no-op returning true; `assert!(fixer.fix_pin_face(&mut face))`.
+    /// `FixPinFace` is currently a no-op returning true; `assert!(fixer.fix_pin_face(&mut face))`.
     pub fn fix_pin_face(&self, _face: &mut Face) -> bool {
         true
     }

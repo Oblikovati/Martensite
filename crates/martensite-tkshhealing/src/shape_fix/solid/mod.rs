@@ -1,4 +1,4 @@
-//! ShapeFix_Solid from the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! ShapeFixSolid.
 mod config;
 mod from_shell;
 use super::{FixRoot, FixRootData, ShapeFixRoot, ShapeFixShell};

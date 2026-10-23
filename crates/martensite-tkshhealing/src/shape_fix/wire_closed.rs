@@ -1,10 +1,10 @@
-//! Native ordered closure repairs from ShapeFix_Wire.cxx, the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Ordered closure repairs for wire endpoints and their curve representations.
 use super::ShapeFixWire;
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkernel::standard::Failure;
 
 impl ShapeFixWire {
-    /// Repairs the closing connection, singularity, then p-curve gap in native order.
+    /// Repairs the closing connection, singularity, then p-curve gap in order.
     /// Example: `fixer.fix_closed(1e-7)?`.
     /// Inherits the remaining geometric limitations of `fix_lacking_at`.
     pub fn fix_closed(&self, precision: f64) -> Result<bool, Failure> {

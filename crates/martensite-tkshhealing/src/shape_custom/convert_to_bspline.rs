@@ -1,8 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom_ConvertToBSpline.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeCustom_ConvertToBSpline`: extrusion, revolution, offset and (optionally) plane
-//! surfaces converted to B-spline surfaces (docs/shhealing-design.md section 7).
+//! `ShapeCustomConvertToBSpline`: extrusion, revolution, offset and (optionally) plane
+//! surfaces converted to B-spline surfaces.
 use super::direct_modification::copied_pcurve;
 use super::edge_copy::copy_edge_curve;
 use super::modification::{ShapeCustomModification, ShapeCustomModificationFields};
@@ -25,7 +22,7 @@ use martensite_tkg3d::geom::{
 use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkmath::gp::Point3;
 
-/// The conversion switches of `ShapeCustom_ConvertToBSpline` (myExtrMode, myRevolMode,
+/// The conversion switches of `ShapeCustomConvertToBSpline` (myExtrMode, myRevolMode,
 /// myOffsetMode, myPlaneMode).
 #[derive(Clone, Copy)]
 struct ConvertModes {
@@ -35,7 +32,7 @@ struct ConvertModes {
     plane: bool,
 }
 
-/// `ShapeCustom_ConvertToBSpline`: a face on a surface of linear extrusion, of revolution,
+/// `ShapeCustomConvertToBSpline`: a face on a surface of linear extrusion, of revolution,
 /// an offset surface (all on by default) or a plane (off by default), possibly trimmed,
 /// gets a B-spline surface from `ShapeConstruct::ConvertSurfaceToBSpline` (with the offset
 /// kept as an offset of the converted basis when the offset mode is off); edges with a
@@ -78,7 +75,7 @@ impl Default for ShapeCustomConvertToBSpline {
 }
 
 impl ShapeCustomConvertToBSpline {
-    /// `ShapeCustom_ConvertToBSpline()`: extrusion, revolution and offset modes on, plane
+    /// extrusion, revolution and offset modes on, plane
     /// mode off; `ShapeCustomConvertToBSpline::new()`.
     pub fn new() -> Self {
         Self::default()
@@ -94,7 +91,7 @@ impl ShapeCustomConvertToBSpline {
         self.modes.write().revolution = mode;
     }
 
-    /// `SetOffsetMode(offsetMode)`: off, an offset surface keeps its offset and only its
+    /// off, an offset surface keeps its offset and only its
     /// basis is converted; `modification.set_offset_mode(false)`.
     pub fn set_offset_mode(&self, mode: bool) {
         self.modes.write().offset = mode;
@@ -113,7 +110,7 @@ impl ShapeCustomConvertToBSpline {
         surface: &Handle<dyn GeomSurface>,
     ) -> Result<(bool, Handle<dyn GeomSurface>), Failure> {
         if surface.is_null() {
-            // Natively `S->IsKind(...)` dereferences the null surface.
+            // Surface classification requires a live surface handle.
             return Err(Failure::with_type(
                 "Standard_NullObject",
                 "ShapeCustom_ConvertToBSpline::IsToConvert: null surface; expected a Geom_Surface",
@@ -188,7 +185,7 @@ fn approx_settings(continuity: Continuity) -> ShapeConstructApproxSettings {
 impl ShapeCustomConvertToBSpline {
     // The offset of a converted basis (offset mode off), or the converted surface itself,
     // whose continuity is C0 for an offset ("pdn 30.06.99 because of hang-up in
-    // GeomConvert_ApproxSurface").
+    // ApproxSurface").
     fn converted(
         &self,
         surface: &Handle<dyn GeomSurface>,

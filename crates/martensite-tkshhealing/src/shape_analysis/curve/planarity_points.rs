@@ -1,4 +1,4 @@
-//! Ordered polygon normal and projection-span test from ShapeAnalysis_Curve.
+//! Ordered polygon normal and projection-span test from ShapeAnalysisCurve.
 use super::ShapeAnalysisCurve;
 use martensite_tkernel::{ncollection::Array1, precision, standard::Failure};
 use martensite_tkmath::gp::{Point3, Xyz};

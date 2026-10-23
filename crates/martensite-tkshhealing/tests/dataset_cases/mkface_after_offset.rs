@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/mkface/after_offset.
+//! The TKShHealing (no view) tests of after offset.
 use super::*;
 
 dataset_cases!(run_case, NoView, mkface_after_offset, MKFACE_SECONDS;

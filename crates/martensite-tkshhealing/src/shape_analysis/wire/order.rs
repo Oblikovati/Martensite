@@ -1,4 +1,4 @@
-//! Exact CheckOrder control flow, including native both-mode fallback clearing.
+//! Exact CheckOrder control flow, including both-mode fallback clearing.
 use super::*;
 use martensite_tkbrep::topods::{self, Edge};
 use martensite_tkg3d::top_abs::Orientation;
@@ -38,8 +38,8 @@ impl ShapeAnalysisWire {
         let Some(all2d) = self.collect_order_endpoints(order, mode3d, both)? else {
             return Ok(false);
         };
-        // the retained behavior changes mode without repopulating points, so failed mixed UV input
-        // deliberately leaves an empty 3D ordering tool (3d097a0328e71b8).
+        // changes mode without repopulating points, so failed mixed UV input
+        // deliberately leaves an empty 3D ordering tool ().
         if both && !all2d {
             order.set_mode(true, 0., false);
         }

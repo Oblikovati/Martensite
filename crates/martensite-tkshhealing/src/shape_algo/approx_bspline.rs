@@ -1,8 +1,5 @@
-// Rust translation of ShapeAlgo_AlgoContainer::ApproxBSplineCurve (both overloads) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! `ApproxBSplineCurve`: a polyline B-spline cut at its coincident poles, each piece
-//! smoothed by GeomInt_WLApprox through its poles.
+//! smoothed by GeomIntWLApprox through its poles.
 use super::ShapeAlgoAlgoContainer;
 use super::algo_container::null_object;
 use martensite_tkernel::ncollection::{Array1, Sequence};
@@ -28,7 +25,7 @@ struct PolePiece {
 }
 
 /// The knots, multiplicities and weights of one piece (the end multiplicities set to
-/// degree + 1, every weight that of the first pole of the piece, as natively).
+/// degree + 1, every weight that of the first pole of the piece).
 struct PieceData {
     knots: Array1<'static, f64>,
     mults: Array1<'static, i32>,
@@ -38,12 +35,12 @@ struct PieceData {
 impl ShapeAlgoAlgoContainer {
     /// `ApproxBSplineCurve(bspline, seq)` (3D): a curve of degree other than 1 as is;
     /// else the pieces between coincident poles (Precision::Confusion), each of more than
-    /// 2 poles replaced by its GeomInt_WLApprox through the poles (Precision::Approximation,
+    /// 2 poles replaced by its GeomIntWLApprox through the poles (Precision::Approximation,
     /// degrees 4 to 8) when that gives one multi-curve.
     ///
-    /// Native quirk (kept): once a piece is cut, the poles after the last coincident pair
+    /// quirk (kept): once a piece is cut, the poles after the last coincident pair
     /// are dropped; the knots of a piece are read from the pole index, so a knot index past
-    /// the end is Standard_OutOfRange (undefined behaviour natively).
+    /// the end returns a typed out-of-range error.
     /// Example: `let pieces = container.approx_bspline_curve(&polyline)?;`.
     pub fn approx_bspline_curve(
         &self,
@@ -102,7 +99,7 @@ impl ShapeAlgoAlgoContainer {
     }
 }
 
-/// The native loop over the poles: a coincident pair closes the current piece, or skips
+/// The loop over the poles: a coincident pair closes the current piece, or skips
 /// a pole when the piece has only one.
 fn cut_at_coincident_poles(
     nb_poles: i32,
@@ -210,7 +207,7 @@ fn piece_curve_2d(
     )
 }
 
-/// GeomInt_WLApprox through the points of `line` (`SetParameters(tol, tol, 4, 8, 0, 30,
+/// GeomIntWLApprox through the points of `line` (`SetParameters(tol, tol, 4, 8, 0, 30,
 /// true)`); the multi-curve when it is done and single.
 fn approximate(
     line: IntSurfLineOn2S,
@@ -274,7 +271,7 @@ fn smoothed_2d(piece: Handle<Geom2dBSplineCurve>) -> Result<Handle<Geom2dBSpline
     for j in 1..=jpole {
         let pole = curve.pole(j)?;
         let mut point = IntSurfPntOn2S::default();
-        // The native 3D points are default gp_Pnt: the origin.
+        // The 3D points are default gp_Pnt: the origin.
         point.set_value_all(Point3::new(0., 0., 0.), pole.x(), pole.y(), 1., 1.);
         line.add(&point);
     }

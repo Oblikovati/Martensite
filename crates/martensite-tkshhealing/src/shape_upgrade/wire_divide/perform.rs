@@ -58,7 +58,7 @@ fn configure_criterion<T: WireDivider + ?Sized>(
         1 => !face.is_null(),
         _ => true,
     };
-    // Native inactive modes retain the edge criterion's previously configured 3D splitter.
+    // inactive modes retain the edge criterion's previously configured 3D splitter.
     if split3 {
         criterion.set_split_curve_3d_tool(&tool.split_curve_3d_tool());
     }

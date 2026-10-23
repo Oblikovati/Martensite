@@ -1,4 +1,4 @@
-//! Native topology cases for same-domain processing when an adjacent face lacks a p-curve.
+//! topology cases for same-domain processing when an adjacent face lacks a p-curve.
 mod common;
 use common::face_count;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};

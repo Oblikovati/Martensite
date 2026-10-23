@@ -1,4 +1,4 @@
-//! Native removal of eligible wires containing the same edge twice.
+//! removal of eligible wires containing the same edge twice.
 use super::{FixRoot, ShapeFixFace};
 use crate::{shape_extend::ShapeExtendWireData, shape_fix::ShapeFixIntersectionTool};
 use martensite_tkbrep::{

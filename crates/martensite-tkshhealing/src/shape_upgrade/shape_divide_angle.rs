@@ -1,4 +1,4 @@
-//! Angular subdivision policy from the retained behavior 3d097a0328e71b8.
+//! Angular subdivision policy.
 use super::{
     FaceDivider, ShapeDivider, ShapeUpgradeFaceDivide, ShapeUpgradeShapeDivide,
     ShapeUpgradeSplitSurfaceAngle,

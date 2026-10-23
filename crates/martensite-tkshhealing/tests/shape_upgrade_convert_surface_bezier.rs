@@ -1,4 +1,4 @@
-//! Differential regressions for the pinned `ShapeUpgrade_ConvertSurfaceToBezierBasis` reference.
+//! Regression cases for conversion to a Bezier surface basis.
 use martensite_tkernel::{
     ncollection::{Array1, Array2, HSequence},
     standard::Handle,

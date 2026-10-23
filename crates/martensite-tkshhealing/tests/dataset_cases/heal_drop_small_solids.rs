@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/drop_small_solids.
+//! The TKShHealing (no view) tests of drop small solids.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_drop_small_solids, HEAL_SECONDS;

@@ -1,4 +1,4 @@
-//! Native-backed FixSmall and FixConnected behavior for ShapeFix_Wire.
+//! Native-backed FixSmall and FixConnected behavior for ShapeFixWire.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Builder, Edge, Vertex, Wire};
 use martensite_tkmath::gp::Point3;

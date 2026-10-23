@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/surface_to_bezier.
+//! The TKShHealing (no view) tests of surface to bezier.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_surface_to_bezier, HEAL_SECONDS;

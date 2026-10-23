@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/bugs/modalg_2.
+//! The TKShHealing (no view) tests of modalg 2.
 use super::*;
 
 dataset_cases!(run_case, NoView, bugs_modalg_2, BUGS_SECONDS;

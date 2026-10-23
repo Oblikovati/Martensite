@@ -1,6 +1,3 @@
-// Rust translation of ShapeConstruct::JoinPCurves (ShapeConstruct.cxx) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! `ShapeConstruct::JoinPCurves`: puts on an edge the join of the p-curves of a chain.
 use super::ShapeConstruct;
 use crate::shape_analysis::ShapeAnalysisEdge;
@@ -22,11 +19,11 @@ struct JoinedPCurves {
 }
 
 impl ShapeConstruct {
-    /// `JoinPCurves(edges, face, edge)`: joins the p-curves (both seam p-curves on a seam)
+    /// joins the p-curves (both seam p-curves on a seam)
     /// of the chain `edges` on `face` and stores the result on `edge` with its range,
     /// clearing SameRange and SameParameter. A plane needs no p-curve: true at once.
     ///
-    /// Native quirk (kept): the result is `i <= Length`, so it is true when the join
+    /// quirk (kept): the result is `i <= Length`, so it is true when the join
     /// stopped early (mixed seams, a missing p-curve, a failed join) and false when every
     /// edge was joined; the p-curves joined so far are stored either way. A raised
     /// exception returns false without the store. Example:
@@ -70,7 +67,7 @@ fn face_is_plane(face: &Face) -> Result<bool, Failure> {
     Ok(!surface.cast::<GeomPlane>().is_null())
 }
 
-// One iteration of the native loop; false is the native `break`.
+// One iteration of the loop; false is the `break`.
 fn join_next(
     joined: &mut JoinedPCurves,
     edge: &Edge,
@@ -112,7 +109,7 @@ fn join_next(
     )
 }
 
-// Native resets resOrient to FORWARD at the top of every iteration, so the accumulated
+// resets resOrient to FORWARD at the top of every iteration, so the accumulated
 // curve always joins as FORWARD after the first edge (kept as is).
 fn append_pcurves(
     joined: &mut JoinedPCurves,
@@ -126,7 +123,7 @@ fn append_pcurves(
     };
     let (first, last) = request.second_range;
     if joined.seam {
-        // The native seam join starts from the range the first join left (newf, newl).
+        // The seam join starts from the range the first join left (newf, newl).
         let mut seam = join_request(&joined.second, request.first_range, &next_seam, orientation);
         let Some(seam_curve) = ShapeConstructCurve.join_curves_2d(&mut seam)?.curve else {
             return Ok(false);

@@ -1,4 +1,4 @@
-//! Native range-cut helpers for ShapeFix_Wire adjacent crossing repair.
+//! range-cut helpers for ShapeFixWire adjacent crossing repair.
 use super::wire_intersection_fix::CrossingState;
 use crate::shape_analysis::{ShapeAnalysisCurve, ShapeAnalysisEdge};
 use crate::shape_fix::ShapeFixEdge;
@@ -189,7 +189,7 @@ fn update_validated_range(edge: &Edge, face: &Face, range: (f64, f64)) -> Result
     Ok(())
 }
 
-/// the retained behavior edge splitting and trimming utility; `ShapeFixSplitTool::new()`.
+/// edge splitting and trimming utility; `ShapeFixSplitTool::new()`.
 #[derive(Default)]
 pub struct ShapeFixSplitTool;
 impl ShapeFixSplitTool {

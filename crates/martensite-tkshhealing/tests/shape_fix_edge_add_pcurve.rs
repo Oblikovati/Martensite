@@ -1,4 +1,4 @@
-//! Exact FixAddPCurve cases from the pinned ShapeFix_Edge implementation.
+//! Regression cases for adding missing p-curves to edges.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::Edge;
 use martensite_tkernel::ncollection::Array1;

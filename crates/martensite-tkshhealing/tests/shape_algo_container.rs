@@ -1,5 +1,4 @@
-//! Behavior tests of the ShapeAlgo package (the native comparison is the sh_algo_geom and
-//! sh_algo_shape requests of tools/tkshhealing_corpus_shape_algo.py).
+//! Regression tests for the shared healing algorithm container.
 mod healing_support;
 
 use healing_support::{edges_of, polygon, square_face};

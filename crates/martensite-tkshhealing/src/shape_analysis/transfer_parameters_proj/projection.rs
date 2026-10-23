@@ -1,4 +1,4 @@
-//! Native projection competes with the linear estimate, rather than replacing it unconditionally.
+//! projection competes with the linear estimate, rather than replacing it unconditionally.
 use super::*;
 pub(super) fn segment(
     tool: &ShapeAnalysisTransferParametersProj,

@@ -1,4 +1,4 @@
-// ShapeFix_FreeBounds at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Repair open and closed free boundaries within the configured tolerances.
 use crate::shape_analysis::ShapeAnalysisFreeBounds;
 use crate::shape_extend::ShapeExtendExplorer;
 use martensite_tkbrep::brep::BRepBuilder;

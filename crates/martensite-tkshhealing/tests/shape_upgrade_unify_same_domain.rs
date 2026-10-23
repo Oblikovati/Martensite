@@ -1,4 +1,4 @@
-//! Native parity for focused `ShapeUpgrade_UnifySameDomain::Build` paths.
+//! parity for focused `ShapeUpgradeUnifySameDomain::build` paths.
 #[path = "shape_upgrade_unify_same_domain/bsplines.rs"]
 mod bsplines;
 #[path = "shape_upgrade_unify_same_domain/circles.rs"]

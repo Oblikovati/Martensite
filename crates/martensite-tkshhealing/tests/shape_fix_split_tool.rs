@@ -1,4 +1,4 @@
-//! ShapeFix_SplitTool range edits compared with pinned the retained behavior.
+//! Edge splitting and range editing regressions.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topods::{Edge, Face},

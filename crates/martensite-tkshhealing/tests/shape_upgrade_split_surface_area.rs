@@ -1,4 +1,4 @@
-//! Native the retained behavior split-count/parameter fixtures for ShapeUpgrade_SplitSurfaceArea.
+//! split-count/parameter fixtures for ShapeUpgradeSplitSurfaceArea.
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::{GeomCylindricalSurface, GeomPlane, GeomSurface};
 use martensite_tkmath::gp::Axis3;

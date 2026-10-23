@@ -1,4 +1,4 @@
-//! The first part of `IntUnifyFaces` (ShapeUpgrade_UnifySameDomain.cxx): the faces of
+//! The first part of `IntUnifyFaces` : the faces of
 //! the same domain grown from one face across its manifold edges, the faces with kept or
 //! multi-connected edges dropped (or those edges made internal), and the boundary edges
 //! oriented as in the faces.

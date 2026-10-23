@@ -1,4 +1,4 @@
-//! Ordered curve and p-curve maintenance from `ShapeFix_Wire::FixEdgeCurves`.
+//! Ordered curve and p-curve maintenance from `ShapeFixWire::fix_edge_curves`.
 #[path = "wire_edge_curves/singularity.rs"]
 mod singularity;
 use super::ShapeFixWire;
@@ -27,7 +27,7 @@ impl ShapeFixWire {
         ShapeExtend::decode_status(self.state.read().edge_curves_status, status)
     }
 
-    /// Returns the shared `ShapeFix_Edge` tool used by curve repair.
+    /// Returns the shared `ShapeFixEdge` tool used by curve repair.
     /// Example: `let edge_tool = fixer.fix_edge_tool()`.
     pub fn fix_edge_tool(&self) -> Handle<crate::shape_fix::ShapeFixEdge> {
         self.edge_fixer.clone()

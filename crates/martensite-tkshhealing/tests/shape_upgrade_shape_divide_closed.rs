@@ -1,4 +1,4 @@
-//! Whole-shape closed-face division against the pinned native reference.
+//! Whole-shape closed-face division.
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkprim::brep_prim_api::{BRepPrimAPIMakeCylinder, BRepPrimAPIMakeOneAxis};
 use martensite_tkshhealing::{

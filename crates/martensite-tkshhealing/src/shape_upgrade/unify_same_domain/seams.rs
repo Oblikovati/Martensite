@@ -1,5 +1,4 @@
-//! `FindCommonFace`, `FindClosestPoints` and `ReconstructMissedSeam` of
-//! ShapeUpgrade_UnifySameDomain.cxx.
+//! Reconstruct missing seams using common faces and closest boundary points.
 use super::face_bounds::edges_of;
 use super::geometry::null_pcurve;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
@@ -10,7 +9,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::gp::Point2;
 
-/// `FindCommonFace(theEdge1, theEdge2, theVFmap, ...)`: a face (taken forward) at the
+/// a face (taken forward) at the
 /// common vertex containing both edges, with their orientations in it.
 pub(super) fn find_common_face(
     edge1: &Edge,
@@ -56,7 +55,7 @@ fn pcurve_ends(edge: &Edge, face: &Face) -> Result<Option<[Point2; 2]>, Failure>
     Ok(Some([curve.value(found.first)?, curve.value(found.last)?]))
 }
 
-/// `FindClosestPoints(...)`: on the common face, the closest pair of 2D end points of
+/// on the common face, the closest pair of 2D end points of
 /// the two edges (the first minimum in the order 00, 01, 10, 11). The orientation of the
 /// second edge on the face is an unused native output.
 pub(super) fn find_closest_points(

@@ -1,4 +1,4 @@
-//! Differential coverage of ShapeAnalysis_CheckSmallFace::CheckPinEdges.
+//! Differential coverage of ShapeAnalysisCheckSmallFace::check_pin_edges.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Builder, Edge, Vertex, edge};
 use martensite_tkernel::standard::Handle;

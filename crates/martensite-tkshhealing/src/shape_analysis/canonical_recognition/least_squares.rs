@@ -1,7 +1,3 @@
-// Rust translation of GetSurfaceByLS and the static GetSamplePoints, GetLSGap, FillSolverData
-// and SetCanonicParameters of ModelingAlgorithms/TKShHealing/ShapeAnalysis/
-// ShapeAnalysis_CanonicalRecognition.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The least-squares fit of a sphere, cylinder or cone through sample points of a wire:
 //! a particle swarm around the sample surface, then Powell's method.
 use super::surfaces::SurfFit;
@@ -23,7 +19,7 @@ use martensite_tkmath::gp::{Axis3, Direction3, Plane3, Point3, Vector3, Xyz};
 use martensite_tkmath::math::{Matrix, MultipleVarFunction, Powell, Pso, Vector};
 use std::f64::consts::FRAC_PI_2;
 
-/// The edge lengths of the sample points: `GCPnts_AbscissaPoint::Length(C, tol)`.
+/// Measure each sampled edge’s curve length within the requested tolerance.
 fn curve_length(curve: &BRepAdaptorCurve, tol: f64) -> Result<f64, Failure> {
     let adaptor: &dyn Adaptor3dCurve = curve;
     AbscissaPoint::length_with_tolerance(adaptor, tol)
@@ -210,7 +206,7 @@ fn powell_directions(
 }
 
 /// The least-squares functions, whose failures inside the solvers are given back after
-/// them (natively they propagate as exceptions).
+/// them; failures propagate to the caller.
 trait LsFunction: MultipleVarFunction {
     fn take_failure(&mut self) -> Result<(), Failure>;
 }

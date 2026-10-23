@@ -1,4 +1,4 @@
-//! Native working-analyzer ownership and state delegation.
+//! working-analyzer ownership and state delegation.
 mod support;
 use martensite_tkbrep::{
     brep::BRepBuilder,

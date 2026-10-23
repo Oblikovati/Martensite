@@ -1,4 +1,4 @@
-//! Whole-shape subdivision against the pinned native reference.
+//! Whole-shape subdivision.
 use martensite_tkbrep::{
     brep_tools::ReShape,
     topexp::Explorer,

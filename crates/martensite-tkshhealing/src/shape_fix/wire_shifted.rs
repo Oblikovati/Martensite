@@ -1,5 +1,3 @@
-// Rust translation of the common periodic-axis path in ShapeFix_Wire::FixShifted at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! Align adjacent p-curves across a closed surface period and recenter their UV bounds.
 use super::{FixRoot, ShapeFixWire};
 use crate::shape_analysis::{ShapeAnalysisEdge, ShapeAnalysisWire};
@@ -32,7 +30,7 @@ struct ShiftedTraversal {
 }
 
 impl ShapeFixWire {
-    /// `FixShifted()`: align p-curves on a closed periodic surface before degenerated repair.
+    /// align p-curves on a closed periodic surface before degenerated repair.
     /// `fixer.fix_shifted()?`.
     pub fn fix_shifted(&self) -> Result<bool, Failure> {
         self.set_last_fix_status(ShapeExtendStatus::Ok);

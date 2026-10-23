@@ -1,6 +1,3 @@
-// Rust translation of the inherited members of ShapeExtend_CompositeSurface.cxx (from
-// Geom_Geometry and Geom_Surface) and its Value(pnt) at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The `Geom_Surface` members of a composite surface: each evaluation goes to the patch
 //! that holds the global parameters, at the local parameters.
 use super::{ShapeExtendCompositeSurface, SurfaceGrid};
@@ -24,7 +21,7 @@ impl ShapeExtendCompositeSurface {
         Ok((self.live_patch(i, j)?, local))
     }
 
-    /// `Value(pnt)`: the point of the global parameters `pnt`; `surface.value_at(p)?`.
+    /// the point of the global parameters `pnt`; `surface.value_at(p)?`.
     pub fn value_at(&self, pnt: Point2) -> Result<Point3, Failure> {
         let (patch, local) = self.located(pnt.x(), pnt.y())?;
         patch.d0(local.x(), local.y())
@@ -56,7 +53,7 @@ impl ShapeExtendCompositeSurface {
 }
 
 impl GeomGeometry for ShapeExtendCompositeSurface {
-    /// `Transform(T)`: transforms each patch; nothing without a grid.
+    /// transforms each patch; nothing without a grid.
     fn transform(&self, transform: Transform3) -> Result<(), Failure> {
         if self.patches().is_null() {
             return Ok(());
@@ -69,8 +66,8 @@ impl GeomGeometry for ShapeExtendCompositeSurface {
         Ok(())
     }
 
-    /// `Copy()`: a composite surface of copies of the patches, initialized with the natural
-    /// parametrisation (the joint values are not copied, as natively); an empty surface
+    /// a composite surface of copies of the patches, initialized with the natural
+    /// parametrisation (the joint values are not copied); an empty surface
     /// without a grid.
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
         let surface = ShapeExtendCompositeSurface::new();
@@ -87,7 +84,7 @@ impl GeomGeometry for ShapeExtendCompositeSurface {
 }
 
 impl GeomSurface for ShapeExtendCompositeSurface {
-    /// Does nothing, as natively (`UReverse`).
+    /// Does nothing (`UReverse`).
     fn u_reverse(&self) -> Result<(), Failure> {
         Ok(())
     }
@@ -95,7 +92,7 @@ impl GeomSurface for ShapeExtendCompositeSurface {
     fn u_reversed_parameter(&self, u: f64) -> Result<f64, Failure> {
         Ok(u)
     }
-    /// Does nothing, as natively (`VReverse`).
+    /// Does nothing (`VReverse`).
     fn v_reverse(&self) -> Result<(), Failure> {
         Ok(())
     }
@@ -103,13 +100,11 @@ impl GeomSurface for ShapeExtendCompositeSurface {
     fn v_reversed_parameter(&self, v: f64) -> Result<f64, Failure> {
         Ok(v)
     }
-    /// The first and last joint values (`Bounds`). Without a grid or joint values (a null
-    /// dereference natively) the bounds are all zero.
+    /// Return the first and last joint values, or all zeros when bounds are unavailable.
     fn bounds(&self) -> SurfaceBounds {
         self.joint_bounds().unwrap_or((0.0, 0.0, 0.0, 0.0))
     }
-    /// The flag `CheckConnectivity` sets (`IsUClosed`); false before any check (the
-    /// native field is uninitialized then).
+    /// Read the U-closure flag set by connectivity checking; initially false.
     fn is_u_closed(&self) -> Result<bool, Failure> {
         Ok(self.fields.read().u_closed)
     }
@@ -146,7 +141,7 @@ impl GeomSurface for ShapeExtendCompositeSurface {
         let (patch, local) = self.located(u, v)?;
         patch.eval_d0(local.x(), local.y())
     }
-    /// The derivatives of the patch, not scaled to the global parameters, as natively.
+    /// The derivatives of the patch, not scaled to the global parameters.
     fn eval_d1(&self, u: f64, v: f64) -> Result<GeomSurfaceD1, Failure> {
         let (patch, local) = self.located(u, v)?;
         patch.eval_d1(local.x(), local.y())

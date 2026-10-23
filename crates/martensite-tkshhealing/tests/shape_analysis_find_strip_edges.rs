@@ -1,4 +1,4 @@
-//! Differential coverage of ShapeAnalysis_CheckSmallFace::FindStripEdges.
+//! Differential coverage of ShapeAnalysisCheckSmallFace::find_strip_edges.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{self, Builder, Edge, Face, Wire};
 use martensite_tkernel::standard::Handle;

@@ -1,4 +1,4 @@
-//! Edge splitting and trimming primitives used by `ShapeFix_IntersectionTool`.
+//! Edge splitting and trimming primitives used by `ShapeFixIntersectionTool`.
 #[path = "wire_intersection_tool/aggregate.rs"]
 mod aggregate;
 #[path = "wire_intersection_tool/boxes.rs"]
@@ -23,10 +23,10 @@ use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::bnd::BoundingBox2;
 
-/// Native `ShapeFix_IntersectionTool` edge primitives; `tool.cut_edge(&edge, 0.0, 0.4, &face, &mut cut_line)?`.
+/// `ShapeFixIntersectionTool` edge primitives; `tool.cut_edge(&edge, 0.0, 0.4, &face, &mut cut_line)?`.
 pub struct ShapeFixIntersectionTool {
     context: Handle<ShapeBuildReShape>,
-    // the retained behavior retains this configuration for other private aggregation routines.
+    // retains this configuration for other private aggregation routines.
     #[allow(dead_code)]
     precision: f64,
     max_tolerance: f64,
@@ -57,7 +57,7 @@ impl ShapeFixIntersectionTool {
     }
 
     /// Splits an edge and preserves output parameters when native returns `false`.
-    #[allow(clippy::too_many_arguments)] // Matches the retained behavior's seven-argument SplitEdge method.
+    #[allow(clippy::too_many_arguments)] // Matches seven-argument SplitEdge method.
     pub fn split_edge(
         &self,
         edge: &Edge,

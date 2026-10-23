@@ -1,4 +1,4 @@
-//! Rust translation of ShapeFix_EdgeProjAux at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Projection support for repairing edge parameters.
 mod init_2d;
 mod init_3d;
 mod parameter_update;
@@ -79,7 +79,7 @@ impl ShapeFixEdgeProjAux {
 
     /// Initialize projected endpoints from the edge's 3D vertices and face p-curve.
     ///
-    /// This exposes the retained behavior's protected `Init2d` operation for derived repair tools.
+    /// This exposes protected `Init2d` operation for derived repair tools.
     ///
     /// ```
     /// use martensite_tkshhealing::shape_fix::ShapeFixEdgeProjAux;
@@ -92,7 +92,7 @@ impl ShapeFixEdgeProjAux {
 
     /// Initialize the range from a bounded p-curve or nearest endpoint extrema.
     ///
-    /// This exposes the retained behavior's protected `Init3d` operation for derived repair tools.
+    /// This exposes protected `Init3d` operation for derived repair tools.
     ///
     /// ```
     /// use martensite_tkshhealing::shape_fix::ShapeFixEdgeProjAux;
@@ -105,7 +105,7 @@ impl ShapeFixEdgeProjAux {
 
     /// Adjust an endpoint parameter pair to the supplied p-curve's orientation and period.
     ///
-    /// This exposes the retained behavior's protected `UpdateParam2d` operation for derived repair tools.
+    /// This exposes protected `UpdateParam2d` operation for derived repair tools.
     ///
     /// ```
     /// use martensite_tkshhealing::shape_fix::ShapeFixEdgeProjAux;
@@ -146,7 +146,7 @@ impl ShapeFixEdgeProjAux {
         self.state.read().last_param
     }
 
-    /// Report whether `curve` is an ISO; the current the retained behavior implementation always returns false.
+    /// Report whether `curve` is an ISO; the current implementation always returns false.
     ///
     /// ```
     /// use martensite_tkernel::standard::Handle;

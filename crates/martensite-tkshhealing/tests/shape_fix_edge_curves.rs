@@ -1,4 +1,4 @@
-//! Curve removal, reconstruction and orientation repair from ShapeFix_Edge.
+//! Curve removal, reconstruction and orientation repair from ShapeFixEdge.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{Edge, Face};
 use martensite_tkernel::standard::Handle;

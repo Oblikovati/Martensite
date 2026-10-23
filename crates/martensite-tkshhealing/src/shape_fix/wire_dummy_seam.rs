@@ -1,4 +1,4 @@
-//! Native dummy-seam removal used by `FixNotchedEdges` and `FixTails`.
+//! dummy-seam removal used by `FixNotchedEdges` and `FixTails`.
 use super::ShapeFixWire;
 use crate::shape_build::{ShapeBuildEdge, ShapeBuildVertex};
 use crate::shape_extend::ShapeExtendWireData;

@@ -1,4 +1,4 @@
-//! ComposeShell wire segments preserve the retained behavior 3d097a0 handle-sharing and patch intervals.
+//! ComposeShell wire segments preserve handle-sharing and patch intervals.
 use crate::{shape_analysis::ShapeAnalysisEdge, shape_extend::ShapeExtendWireData};
 use martensite_tkbrep::topods::{Edge, Vertex};
 use martensite_tkernel::{
@@ -7,7 +7,7 @@ use martensite_tkernel::{
 };
 use martensite_tkg3d::top_abs::Orientation;
 mod patches;
-/// Patch intervals in native U-min, U-max, V-min, V-max order; `WirePatchIndex::default()`.
+/// Patch intervals in U-min, U-max, V-min, V-max order; `WirePatchIndex::default()`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct WirePatchIndex {
     /// First allowed U patch.
@@ -87,7 +87,7 @@ impl ShapeFixWireSegment {
         }
         Ok(())
     }
-    /// Native `Load(WireData())` aliases its handle member and clears it; `segment.reload()`.
+    /// `Load(WireData())` aliases its handle member and clears it; `segment.reload()`.
     pub fn reload(&mut self) {
         self.clear();
     }
@@ -111,7 +111,7 @@ impl ShapeFixWireSegment {
     pub fn last_vertex(&self) -> Result<Vertex, Failure> {
         Ok(ShapeAnalysisEdge::new().last_vertex(&self.wire.edge(self.wire.nb_edges())?))
     }
-    /// Compare endpoint identity, including native null/null equality; `segment.is_closed()?`.
+    /// Compare endpoint identity, including null/null equality; `segment.is_closed()?`.
     pub fn is_closed(&self) -> Result<bool, Failure> {
         let first = self.first_vertex()?;
         let last = self.last_vertex()?;

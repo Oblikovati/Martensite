@@ -1,5 +1,4 @@
-//! Behavior tests of the ShapeCustom package functions (the native comparison is the
-//! sc_modif op 12/13 requests of tools/tkshhealing_corpus_shapecustom.py).
+//! Geometry customization package regression tests.
 mod healing_support;
 
 use healing_support::{compound, square_face};

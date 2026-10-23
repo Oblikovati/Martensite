@@ -1,4 +1,4 @@
-//! Free boundary chaining and splitting from the retained behavior 3d097a0328e71b8.
+//! Free boundary chaining and splitting.
 use super::{ShapeAnalysisEdge, ShapeAnalysisShell, ShapeAnalysisWire};
 use crate::shape_extend::{ShapeExtendStatus, ShapeExtendWireData};
 use martensite_tkbrep::{

@@ -1,4 +1,4 @@
-//! Outcomes frozen from the pinned native small-Bézier reference.
+//! Regression outcomes for repairing small Bezier curves.
 #[path = "support/small_bezier/mod.rs"]
 mod fixture;
 use martensite_tkbrep::topods::Face;

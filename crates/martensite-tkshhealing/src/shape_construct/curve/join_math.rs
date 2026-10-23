@@ -3,7 +3,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dCurve};
 use martensite_tkg3d::geom::{GeomBSplineCurve, GeomCurve};
 
-/// The B-spline members `SegmentCurve` of ShapeConstruct.cxx uses, for 2D and 3D curves.
+/// B-spline operations needed to segment both planar and spatial curves.
 pub(super) trait SegmentedSpline {
     fn bounds(&self) -> (f64, f64);
     fn periodic(&self) -> bool;
@@ -34,7 +34,7 @@ impl SegmentedSpline for Geom2dBSplineCurve {
     }
 }
 
-/// `SegmentCurve(curve, first, last)`: a curve wider than `[first, last]` (by more than
+/// a curve wider than `[first, last]` (by more than
 /// PConfusion) is segmented to it, a non-periodic one only within its own range;
 /// `segment_curve(&*spline, 0.0, 1.0)?`.
 pub(super) fn segment_curve<C: SegmentedSpline + ?Sized>(
@@ -50,7 +50,7 @@ pub(super) fn segment_curve<C: SegmentedSpline + ?Sized>(
     if curve.periodic() {
         return curve.cut(first, last);
     }
-    // std::max(FirstParameter, first), std::min(LastParameter, last).
+    // Clamp to the overlapping parameter interval, preserving comparison order.
     let low = if start < first { first } else { start };
     let high = if last < end { last } else { end };
     curve.cut(low, high)
@@ -63,7 +63,7 @@ pub(super) fn endpoint_reversals(
     distance_22: f64,
     confusion: f64,
 ) -> (bool, bool) {
-    // std::min(a, b) is `b < a ? b : a`.
+    // Choose the second value only when it compares less than the first.
     let minimum_direct = if distance_21 < distance_11 {
         distance_21
     } else {

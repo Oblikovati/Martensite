@@ -1,5 +1,5 @@
 //! `MergeEdges`, `MergeSeq`, `generateSubSeq`, `IsMergingPossible` and
-//! `GetLineEdgePoints` of ShapeUpgrade_UnifySameDomain.cxx: the edges chained through
+//! `GetLineEdgePoints`: the edges chained through
 //! their vertices, the chains cut where merging is impossible, and each sub-chain
 //! replaced by its merged edge in the context.
 use super::geometry::is_linear;
@@ -28,7 +28,7 @@ struct LineDirection {
     direction: Vector3,
 }
 
-/// `GetLineEdgePoints(theInpEdge, theFirstPoint, theDirectionVec)`: the start point and
+/// the start point and
 /// unit direction of an edge on a Geom_Line (possibly trimmed), in the edge direction.
 fn get_line_edge_points(edge: &Edge, previous: LineDirection) -> Result<LineDirection, Failure> {
     let (curve, mut first, mut last) = BRepTool::curve(edge)?;
@@ -91,7 +91,7 @@ struct MergeLimits<'a> {
     vf_map: &'a IndexedDataMapOfShapeListOfShape,
 }
 
-/// `IsMergingPossible(edge1, edge2, ...)`: two degenerated edges touching in 2D, or two
+/// two degenerated edges touching in 2D, or two
 /// edges of compatible kinds meeting tangentially at a vertex not to avoid (with the
 /// accumulated deviation of a straight chain within the tolerances).
 fn is_merging_possible(
@@ -283,7 +283,7 @@ fn next_in_chain(
 }
 
 impl UnifyState {
-    /// `MergeEdges(SeqEdges, theVFmap, SeqOfSubSeqOfEdges, NonMergVrt)`: the chains of
+    /// the chains of
     /// the edges cut into mergeable sub-chains, each with its merged edge when
     /// `MergeSubSeq` succeeds; always true.
     pub(super) fn merge_edges(
@@ -324,7 +324,7 @@ impl UnifyState {
         Ok(true)
     }
 
-    /// `MergeSeq(SeqEdges, theVFmap, nonMergVert)`: the merged sub-chains replaced in the
+    /// the merged sub-chains replaced in the
     /// context by their merged edges.
     pub(super) fn merge_seq(
         &self,

@@ -1,6 +1,5 @@
-//! `UnifyEdges`, `UpdateMapOfShapes`, `CheckSharedVertices` and `SetFixWireModes` of
-//! ShapeUpgrade_UnifySameDomain.cxx: the chains of edges merged, then the changed faces
-//! and shells fixed in the context.
+//! Merge edge chains, update shape maps and shared vertices, then repair the
+//! changed faces and shells in the replacement context.
 use super::UnifyState;
 use super::face_bounds::edges_of;
 use super::geometry::clear_rts;
@@ -19,7 +18,7 @@ use martensite_tkg3d::geom::GeomPlane;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tktopalgo::brep_lib;
 
-/// `UpdateMapOfShapes(theMapOfShapes, theContext)`: the images of the shapes added.
+/// the images of the shapes added.
 fn update_map_of_shapes(map: &mut MapOfShape, context: &dyn ReShape) -> Result<(), Failure> {
     let shapes: Vec<Shape> = map.iter().cloned().collect();
     for shape in shapes {
@@ -59,7 +58,7 @@ fn check_shared_vertices(
     Ok(shared)
 }
 
-/// `SetFixWireModes(theSff)`: no self-intersection, lacking, notch, topology, loop, gap
+/// no self-intersection, lacking, notch, topology, loop, gap
 /// or small-edge fix.
 fn set_fix_wire_modes(fixer: &ShapeFixFace) -> Result<(), Failure> {
     let tool = fixer.fix_wire_tool();

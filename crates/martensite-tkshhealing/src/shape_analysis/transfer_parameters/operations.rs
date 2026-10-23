@@ -1,4 +1,4 @@
-//! Initialization order and range arithmetic follow the pinned native implementation.
+//! Initialize edge parameter transfer and compute its range mapping.
 use super::*;
 pub(super) fn initialize(
     state: &TransferParameterData,

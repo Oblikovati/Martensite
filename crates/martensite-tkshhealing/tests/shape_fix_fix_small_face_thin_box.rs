@@ -1,6 +1,6 @@
-//! Regression for ShapeFix_FixSmallFace::Perform on a thin box: the strip faces are
+//! Regression for ShapeFixFixSmallFace::perform on a thin box: the strip faces are
 //! replaced by shared edges, and `Shape()` returns the shape after FixShape (native
-//! `myShape = FixShape()`), whose wires ShapeFix_Face has reordered.
+//! `myShape = FixShape()`), whose wires ShapeFixFace has reordered.
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{Shape, ShapeIterator};
 use martensite_tkernel::message::ProgressRange;
@@ -37,7 +37,7 @@ fn thin_box_strips_are_removed_and_faces_fixed() {
         .unwrap()
         .count();
     assert_eq!(faces, 2);
-    // the retained behavior 3d097a0 (sh_fix_shape thin box, precision 1e-3, op 6).
+    // (sh_fix_shape thin box, precision 1e-3, op 6).
     use Orientation::{Forward as F, Reversed as R};
     assert_eq!(
         wire_orientations(&result),

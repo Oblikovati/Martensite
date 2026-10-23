@@ -1,4 +1,4 @@
-//! Native parity for invalid marked-degenerate edge removal.
+//! parity for invalid marked-degenerate edge removal.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{self, Builder, Edge, Face, Vertex};
 use martensite_tkernel::standard::Handle;

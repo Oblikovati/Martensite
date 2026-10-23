@@ -1,4 +1,4 @@
-//! Aggregate `ShapeFix_Wire::FixTails` edge removal and split ordering.
+//! Aggregate `ShapeFixWire::fix_tails` edge removal and split ordering.
 use super::ShapeFixWire;
 use crate::shape_extend::ShapeExtendStatus;
 use crate::shape_fix::FixRoot;

@@ -1,4 +1,4 @@
-//! Native connected-component ordering, largest first with stable ties.
+//! connected-component ordering, largest first with stable ties.
 use martensite_tkbrep::{
     topexp::Explorer,
     topods::{self, Edge, Face, Shape},

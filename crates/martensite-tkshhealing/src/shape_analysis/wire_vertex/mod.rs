@@ -1,4 +1,4 @@
-// ShapeAnalysis_WireVertex at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Classify wire vertex connections before repairing their positions and tolerances.
 mod analyze;
 mod records;
 use crate::shape_extend::ShapeExtendWireData;
@@ -17,7 +17,7 @@ struct VertexRecord {
 }
 
 /// Analyze consecutive edge vertices; `ShapeAnalysisWireVertex::new()`.
-/// Copies share the native record arrays, while precision and done flags are copied.
+/// Copies share the record arrays, while precision and done flags are copied.
 #[derive(Clone)]
 pub struct ShapeAnalysisWireVertex {
     wire: Handle<ShapeExtendWireData>,
@@ -41,7 +41,7 @@ impl ShapeAnalysisWireVertex {
         Self::default()
     }
     /// Initialize from a wire; `tool.init(&wire, 1e-4)?`.
-    /// Native initialization ignores precision; use `set_precision` to change it.
+    /// initialization ignores precision; use `set_precision` to change it.
     pub fn init(&mut self, wire: &Wire, precision: f64) -> Result<(), Failure> {
         let wire = Handle::new(ShapeExtendWireData::from_wire(wire, true, true)?);
         self.init_wire_data(&wire, precision);

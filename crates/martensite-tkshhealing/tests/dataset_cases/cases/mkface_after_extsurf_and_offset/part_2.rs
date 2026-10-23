@@ -1,4 +1,4 @@
-//! Part of the tests/mkface/after_extsurf_and_offset case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871: each
+//! Face construction regression fixtures: each
 //! builds its curve and surface with the GeomliteTest commands, makes the face (the grid
 //! end makes it from `r` where the case does not), sets the expected maximum tolerances,
 //! then runs the mkface group end ([`super::mkface_grid::mkface_end`]).
@@ -14,7 +14,7 @@ use crate::support::{
     vars::Vars,
 };
 
-/// tests/mkface/after_extsurf_and_offset/B6.
+/// after extsurf and offset — B6.
 pub fn b6(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -44,7 +44,7 @@ pub fn b6(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/B7.
+/// after extsurf and offset — B7.
 pub fn b7(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -76,7 +76,7 @@ pub fn b7(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/B8.
+/// after extsurf and offset — B8.
 pub fn b8(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -106,7 +106,7 @@ pub fn b8(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/B9.
+/// after extsurf and offset — B9.
 pub fn b9(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -138,7 +138,7 @@ pub fn b9(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/C1.
+/// after extsurf and offset — C1.
 pub fn c1(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -170,7 +170,7 @@ pub fn c1(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/C2.
+/// after extsurf and offset — C2.
 pub fn c2(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -202,7 +202,7 @@ pub fn c2(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/C3.
+/// after extsurf and offset — C3.
 pub fn c3(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -232,7 +232,7 @@ pub fn c3(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/C4.
+/// after extsurf and offset — C4.
 pub fn c4(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -264,7 +264,7 @@ pub fn c4(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/C5.
+/// after extsurf and offset — C5.
 pub fn c5(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("ellipse", ellipse(&[0.0, 0.0, 0.0, 30.0, 10.0]));
@@ -285,7 +285,7 @@ pub fn c5(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/C6.
+/// after extsurf and offset — C6.
 pub fn c6(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -314,7 +314,7 @@ pub fn c6(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/C7.
+/// after extsurf and offset — C7.
 pub fn c7(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -345,7 +345,7 @@ pub fn c7(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_extsurf_and_offset/C8.
+/// after extsurf and offset — C8.
 pub fn c8(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(

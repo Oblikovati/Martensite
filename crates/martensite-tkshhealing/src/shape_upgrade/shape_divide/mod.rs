@@ -1,4 +1,4 @@
-//! Whole-shape division from the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Whole-shape division.
 mod accessors;
 mod boundaries;
 mod compound;
@@ -13,7 +13,7 @@ use martensite_tkernel::{
     tcollection::AsciiString,
 };
 
-/// Native protected working state; `divider.shape_divide_base().with(|f| f.status)`.
+/// protected working state; `divider.shape_divide_base().with(|f| f.status)`.
 pub struct ShapeDivideFields {
     /// Reshape substitutions shared across recursive calls.
     pub context: Handle<ShapeBuildReShape>,
@@ -31,7 +31,7 @@ pub struct ShapeDivideFields {
     pub max_tolerance: f64,
     /// Whether supimplementation surfaces are segmented.
     pub segment_mode: bool,
-    /// Native ShapeExtend status bits.
+    /// ShapeExtend status bits.
     pub status: i32,
     /// Curve splitting mode for free/shared edges.
     pub edge_mode: i32,
@@ -71,15 +71,15 @@ pub trait ShapeDivider {
         self.shape_divide_base()
             .with_mut(|f| f.msg_registrator = registrator.clone());
     }
-    /// Native face-completion message; `divider.face_msg()`.
+    /// face-completion message; `divider.face_msg()`.
     fn face_msg(&self) -> Msg {
         Msg::from_key(&AsciiString::from("ShapeDivide.FaceDivide.MSG0"))
     }
-    /// Native wire-completion message; `divider.wire_msg()`.
+    /// wire-completion message; `divider.wire_msg()`.
     fn wire_msg(&self) -> Msg {
         Msg::from_key(&AsciiString::from("ShapeDivide.WireDivide.MSG0"))
     }
-    /// Native edge-completion message; `divider.edge_msg()`.
+    /// edge-completion message; `divider.edge_msg()`.
     fn edge_msg(&self) -> Msg {
         Msg::from_key(&AsciiString::from("ShapeDivide.EdgeDivide.MSG0"))
     }

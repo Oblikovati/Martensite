@@ -1,14 +1,10 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend/ShapeExtend_ComplexCurve.hxx/.lxx/.cxx
-// at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeExtend_ComplexCurve`: the abstract curve made of several segments
-//! (docs/shhealing-design.md section 2).
+//! `ShapeExtendComplexCurve`: the abstract curve made of several segments.
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::{GeomCurve, GeomCurveD1, GeomCurveD2, GeomCurveD3};
 use martensite_tkmath::gp::{Point3, Transform3, Vector3};
 
-/// `ShapeExtend_ComplexCurve`: a curve of several segments on the global range `[0, 1]`.
+/// `ShapeExtendComplexCurve`: a curve of several segments on the global range `[0, 1]`.
 ///
 /// The abstract members are the required methods; the protected `myClosed` is stored in
 /// each concrete class and reached through [`ShapeExtendComplexCurve::complex_closed`] and
@@ -17,7 +13,7 @@ use martensite_tkmath::gp::{Point3, Transform3, Vector3};
 /// [`shape_extend_complex_curve_members!`](crate::shape_extend_complex_curve_members) puts
 /// them in the concrete class's `impl GeomCurve` (its `impl GeomGeometry` calls
 /// [`ShapeExtendComplexCurve::complex_transform`] from `transform`), as the native
-/// inheritance does. No the retained behavior class derives from it; ShapeAnalysis_Curve recognizes it.
+/// inheritance does. No class derives from it; ShapeAnalysisCurve recognizes it.
 ///
 /// ```
 /// use martensite_tkshhealing::shape_extend::ShapeExtendComplexCurve;
@@ -50,7 +46,7 @@ pub trait ShapeExtendComplexCurve: GeomCurve {
     /// Writes the protected `myClosed`.
     fn set_complex_closed(&self, closed: bool);
 
-    /// `Transform(T)`: transforms each segment; `curve.complex_transform(t)?`.
+    /// transforms each segment; `curve.complex_transform(t)?`.
     fn complex_transform(&self, transform: Transform3) -> Result<(), Failure> {
         for i in 1..=self.nb_curves() {
             live(&self.curve(i)?, i)?.transform(transform)?;
@@ -58,38 +54,38 @@ pub trait ShapeExtendComplexCurve: GeomCurve {
         Ok(())
     }
 
-    /// `ReversedParameter(U)`: `1 - U`; `curve.complex_reversed_parameter(0.25)`.
+    /// `1 - U`; `curve.complex_reversed_parameter(0.25)`.
     fn complex_reversed_parameter(&self, u: f64) -> f64 {
         1.0 - u
     }
 
-    /// `FirstParameter()`: 0.
+    /// 0.
     fn complex_first_parameter(&self) -> f64 {
         0.0
     }
 
-    /// `LastParameter()`: 1.
+    /// 1.
     fn complex_last_parameter(&self) -> f64 {
         1.0
     }
 
-    /// `IsClosed()`: the flag `CheckConnectivity` sets.
+    /// the flag `CheckConnectivity` sets.
     fn complex_is_closed(&self) -> bool {
         self.complex_closed()
     }
 
-    /// `IsCN(N)`: `N <= 0` (the continuity is C0).
+    /// `N <= 0` (the continuity is C0).
     fn complex_is_cn(&self, n: i32) -> bool {
         n <= 0
     }
 
-    /// `EvalD0(U)`: the point of the segment that holds `u`, at the local parameter.
+    /// the point of the segment that holds `u`, at the local parameter.
     fn complex_eval_d0(&self, u: f64) -> Result<Point3, Failure> {
         let (index, local) = self.locate_parameter(u)?;
         live(&self.curve(index)?, index)?.eval_d0(local)
     }
 
-    /// `EvalD1(U)`: the point and the derivative scaled by the segment's factor.
+    /// the point and the derivative scaled by the segment's factor.
     fn complex_eval_d1(&self, u: f64) -> Result<GeomCurveD1, Failure> {
         let (index, local) = self.locate_parameter(u)?;
         let mut result = live(&self.curve(index)?, index)?.eval_d1(local)?;
@@ -97,7 +93,7 @@ pub trait ShapeExtendComplexCurve: GeomCurve {
         Ok(result)
     }
 
-    /// `EvalD2(U)`: as `EvalD1`, each derivative of order k scaled k times.
+    /// as `EvalD1`, each derivative of order k scaled k times.
     fn complex_eval_d2(&self, u: f64) -> Result<GeomCurveD2, Failure> {
         let (index, local) = self.locate_parameter(u)?;
         let mut result = live(&self.curve(index)?, index)?.eval_d2(local)?;
@@ -106,7 +102,7 @@ pub trait ShapeExtendComplexCurve: GeomCurve {
         Ok(result)
     }
 
-    /// `EvalD3(U)`: as `EvalD2` with the third derivative.
+    /// as `EvalD2` with the third derivative.
     fn complex_eval_d3(&self, u: f64) -> Result<GeomCurveD3, Failure> {
         let (index, local) = self.locate_parameter(u)?;
         let mut result = live(&self.curve(index)?, index)?.eval_d3(local)?;
@@ -116,7 +112,7 @@ pub trait ShapeExtendComplexCurve: GeomCurve {
         Ok(result)
     }
 
-    /// `EvalDN(U, N)`: the derivative of order `n` of the segment, scaled unless `n` is 0.
+    /// the derivative of order `n` of the segment, scaled unless `n` is 0.
     fn complex_eval_dn(&self, u: f64, n: i32) -> Result<Vector3, Failure> {
         let (index, local) = self.locate_parameter(u)?;
         let mut result = live(&self.curve(index)?, index)?.eval_dn(local, n)?;
@@ -126,10 +122,10 @@ pub trait ShapeExtendComplexCurve: GeomCurve {
         Ok(result)
     }
 
-    /// `CheckConnectivity(Preci)`: whether each segment ends where the next one starts
+    /// whether each segment ends where the next one starts
     /// (within `preci`); sets the closed flag from the ends of the whole curve. The flag
-    /// is set inside the loop over the joints, so a curve of one segment keeps it, as
-    /// natively; `curve.check_connectivity(1e-7)?`.
+    /// is set inside the loop over joints, so a single-segment curve retains its flag;
+    /// `curve.check_connectivity(1e-7)?`.
     fn check_connectivity(&self, preci: f64) -> Result<bool, Failure> {
         let nb = self.nb_curves();
         let mut ok = true;
@@ -148,7 +144,7 @@ pub trait ShapeExtendComplexCurve: GeomCurve {
     }
 
     /// `TransformDN(V, ind, N)` (protected): multiplies `v` by the scale factor of segment
-    /// `ind`, `n` times (one product per order, not a power, as natively).
+    /// `ind`, `n` times (one product per order, not a power).
     fn transform_dn(&self, v: &mut Vector3, ind: i32, n: i32) -> Result<(), Failure> {
         let factor = self.get_scale_factor(ind)?;
         for _ in 1..=n {
@@ -163,8 +159,7 @@ impl_transient_interface!(
     dyn GeomCurve
 );
 
-/// The segment of rank `index`, Standard_NullObject when it is null (a null dereference
-/// natively).
+/// The segment of rank `index`, Standard_NullObject when it is null.
 fn live(curve: &Handle<dyn GeomCurve>, index: i32) -> Result<&dyn GeomCurve, Failure> {
     curve.get().ok_or_else(|| {
         Failure::with_message(
@@ -174,7 +169,7 @@ fn live(curve: &Handle<dyn GeomCurve>, index: i32) -> Result<&dyn GeomCurve, Fai
     })
 }
 
-/// The `Geom_Curve` members that `ShapeExtend_ComplexCurve` overrides, for the
+/// The `Geom_Curve` members that `ShapeExtendComplexCurve` overrides, for the
 /// `impl GeomCurve` of a concrete complex curve: `reversed_parameter`, the parameter range,
 /// `is_closed`, `is_periodic`, `continuity`, `is_cn` and the evaluators. The concrete class
 /// writes `reverse` (pure virtual in `Geom_Curve`) itself.

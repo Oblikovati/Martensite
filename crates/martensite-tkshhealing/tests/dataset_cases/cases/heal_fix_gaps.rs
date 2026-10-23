@@ -1,6 +1,6 @@
-//! tests/heal/fix_gaps case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 whose
+//! heal fix gaps regression cases whose
 //! inputs are in the public dataset: each restores `a`, then the grid end runs
-//! `fixwgaps result a 0.001` and `puts [checkshape result]`; tests/heal/end shows
+//! `fixwgaps result a 0.001` and `puts [checkshape result]`; end shows
 //! `result` with `checkview -display result -2d`.
 use crate::support::{
     checkshape::checkshape,
@@ -23,27 +23,27 @@ fn fix_gaps(s: &mut dyn Session, file: &str, image: &str) {
     checkview_display(s, Some("result"), image);
 }
 
-/// tests/heal/fix_gaps/A5.
+/// fix gaps — A5.
 pub fn a5(s: &mut dyn Session) {
     fix_gaps(s, "CTO900_ger60039a.rle", "A5");
 }
 
-/// tests/heal/fix_gaps/A6.
+/// fix gaps — A6.
 pub fn a6(s: &mut dyn Session) {
     fix_gaps(s, "CTO900_ger60041a.rle", "A6");
 }
 
-/// tests/heal/fix_gaps/B1.
+/// fix gaps — B1.
 pub fn b1(s: &mut dyn Session) {
     fix_gaps(s, "RevolutionFG.rle", "B1");
 }
 
-/// tests/heal/fix_gaps/B2.
+/// fix gaps — B2.
 pub fn b2(s: &mut dyn Session) {
     fix_gaps(s, "boxFG.rle", "B2");
 }
 
-/// tests/heal/fix_gaps/B3.
+/// fix gaps — B3.
 pub fn b3(s: &mut dyn Session) {
     fix_gaps(s, "pcpc2_FS_FG.rle", "B3");
 }

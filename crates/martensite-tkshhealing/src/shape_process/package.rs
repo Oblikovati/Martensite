@@ -1,6 +1,3 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeProcess/ShapeProcess.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The package ShapeProcess: the process-wide registry of named operators and the two
 //! ways of running them on a context (a resource sequence or a set of operation flags).
 use super::shape_context::statistics::{message, send};
@@ -11,7 +8,7 @@ use martensite_tkernel::tcollection::AsciiString;
 use std::collections::HashMap;
 use std::sync::{Mutex, MutexGuard};
 
-/// `ShapeProcess::Operation`: the predefined operations, in the native order.
+/// `ShapeProcess::Operation`: the predefined operations, in the order.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, PartialOrd, Ord)]
 #[repr(u8)]
 pub enum ShapeProcessOperation {
@@ -58,7 +55,7 @@ impl ShapeProcessOperation {
     pub const FIRST: Self = Self::DirectFaces;
     /// `Operation::Last`.
     pub const LAST: Self = Self::SplitCommonVertex;
-    /// Every operation in the native order.
+    /// Every operation in the order.
     pub const ALL: [Self; 18] = [
         Self::DirectFaces,
         Self::SameParameter,
@@ -126,7 +123,7 @@ impl ShapeProcessOperationsFlags {
 /// The registered operators by name.
 type OperatorMap = HashMap<Vec<u8>, Handle<dyn ShapeProcessOperator>>;
 
-/// The native static `aMapOfOperators`.
+/// The static `aMapOfOperators`.
 static OPERATORS: Mutex<Option<OperatorMap>> = Mutex::new(None);
 
 fn operators() -> MutexGuard<'static, Option<OperatorMap>> {
@@ -135,7 +132,7 @@ fn operators() -> MutexGuard<'static, Option<OperatorMap>> {
         .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
-/// The native `ScopeLock`: the scope is pushed on creation and popped on drop.
+/// The `ScopeLock`: the scope is pushed on creation and popped on drop.
 struct ScopeLock<'a> {
     context: &'a ShapeProcessContext,
 }
@@ -163,7 +160,7 @@ impl Drop for ScopeLock<'_> {
 pub struct ShapeProcess;
 
 impl ShapeProcess {
-    /// `RegisterOperator(name, op)`: false (and nothing changed) when the name is taken;
+    /// false (and nothing changed) when the name is taken;
     /// `ShapeProcess::register_operator("MyOp", &op)`.
     pub fn register_operator(name: &str, operator: &Handle<dyn ShapeProcessOperator>) -> bool {
         let mut map = operators();
@@ -175,7 +172,7 @@ impl ShapeProcess {
         true
     }
 
-    /// `FindOperator(name, op)`: the registered operator; `None` for an unknown name or a
+    /// the registered operator; `None` for an unknown name or a
     /// null operator; `ShapeProcess::find_operator("FixShape")`.
     pub fn find_operator(name: &str) -> Option<Handle<dyn ShapeProcessOperator>> {
         let map = operators();
@@ -183,7 +180,7 @@ impl ShapeProcess {
         (!operator.is_null()).then_some(operator)
     }
 
-    /// `ToOperationFlag(theName)`: the operation of a name, `(First, false)` for an unknown
+    /// the operation of a name, `(First, false)` for an unknown
     /// or missing name.
     pub fn to_operation_flag(name: Option<&str>) -> (ShapeProcessOperation, bool) {
         let Some(name) = name else {
@@ -197,7 +194,7 @@ impl ShapeProcess {
             })
     }
 
-    /// `Perform(context, seq, theProgress)`: runs the operators listed in the `exec.op`
+    /// runs the operators listed in the `exec.op`
     /// parameter of scope `seq` (separated by blanks, tabs, commas or semicolons), each
     /// under its own scope; true when one of them reported a change. A missing sequence
     /// or operator and an operator exception are reported to the messenger.
@@ -226,8 +223,8 @@ impl ShapeProcess {
         run_sequence(context, ctx, &names, progress)
     }
 
-    /// `Perform(theContext, theOperations, theProgress)`: runs the registered operators of
-    /// the set flags in the native order, each under its own scope; false without a
+    /// runs the registered operators of
+    /// the set flags in the order, each under its own scope; false without a
     /// context or operator. Example:
     /// `ShapeProcess::perform_operations(&context, flags, &ProgressRange::default())?`.
     pub fn perform_operations(

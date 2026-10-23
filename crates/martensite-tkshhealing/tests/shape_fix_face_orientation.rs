@@ -1,4 +1,4 @@
-//! Native-backed wire orientation and MapWires behavior for ShapeFix_Face.
+//! Native-backed wire orientation and MapWires behavior for ShapeFixFace.
 #[path = "support/shape_fix_face.rs"]
 mod support;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};

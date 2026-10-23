@@ -1,4 +1,4 @@
-//! Native tail overlap, edge splitting, orientation and retained output parts.
+//! tail overlap, edge splitting, orientation and retained output parts.
 mod support;
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},

@@ -1,6 +1,6 @@
 use crate::shape_analysis::adjust_by_period;
 
-/// Removes a periodic interval from the still-free intervals using the retained behavior's two alignment passes.
+/// Removes a periodic interval from the still-free intervals using two alignment passes.
 pub(super) fn cut_interval(
     intervals: &mut Vec<(f64, f64)>,
     requested: (f64, f64),
@@ -56,7 +56,7 @@ fn cut_overlap(
     index
 }
 
-/// Selects the midpoint of the longest remaining interval, retaining the retained behavior's first tie.
+/// Selects the midpoint of the longest remaining interval, retaining first tie.
 pub(super) fn find_best_interval(intervals: &[(f64, f64)]) -> f64 {
     let mut center = 0.0;
     let mut longest = -1.0;

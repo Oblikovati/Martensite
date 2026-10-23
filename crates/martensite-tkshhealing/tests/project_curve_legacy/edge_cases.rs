@@ -14,7 +14,7 @@ fn NearPoleOnSphere_K1() {
 #[test]
 fn VeryShortCurve_L1() {
     let curve = segment(Point3::default(), Point3::new(1e-6, 0., 0.));
-    // Native SUCCEED only asserts completion without an exception.
+    // SUCCEED only asserts completion without an exception.
     let _ = whole(&fixture(&plane(0.), 1e-4), &curve);
 }
 #[test]

@@ -1,10 +1,5 @@
-// Rust translation of the static GetNbPars, SetConicParameters, CompareConicParams,
-// SetSurfParams, CompareSurfParams and DeviationSurfParams of
-// ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_CanonicalRecognition.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The parameters of the recognized entities (radii, angles) and their comparisons.
-//! A parameter array is 1-based natively; here `params[0]` is `theParams(1)`.
+//! Parameter arrays use zero-based Rust slices.
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
@@ -14,7 +9,7 @@ use martensite_tkmath::geom_abs::{CurveType, SurfaceType};
 use martensite_tkmath::gp::{Axis2, Axis3, Cone3};
 use std::f64::consts::PI;
 
-/// The static `GetNbPars(GeomAbs_CurveType)`: 1 for a circle, 2 for an ellipse, else 0.
+/// The static `curve parameter count`: 1 for a circle, 2 for an ellipse, else 0.
 pub(super) fn curve_nb_pars(target: CurveType) -> usize {
     match target {
         CurveType::Circle => 1,
@@ -23,7 +18,7 @@ pub(super) fn curve_nb_pars(target: CurveType) -> usize {
     }
 }
 
-/// The static `GetNbPars(GeomAbs_SurfaceType)`: 1 for a cylinder or a sphere, 2 for a
+/// The static `surface parameter count`: 1 for a cylinder or a sphere, 2 for a
 /// cone, else 0.
 pub(super) fn surface_nb_pars(target: SurfaceType) -> usize {
     match target {
@@ -33,7 +28,7 @@ pub(super) fn surface_nb_pars(target: SurfaceType) -> usize {
     }
 }
 
-/// `theParams(i)` with the native bound check.
+/// `theParams(i)` with the bound check.
 fn param(params: &[f64], i: usize) -> Result<f64, Failure> {
     params
         .get(i)
@@ -41,7 +36,7 @@ fn param(params: &[f64], i: usize) -> Result<f64, Failure> {
         .ok_or_else(|| out_of_range(i, params.len()))
 }
 
-/// `theParams(i) = value` with the native bound check.
+/// `theParams(i) = value` with the bound check.
 fn set_param(params: &mut [f64], i: usize, value: f64) -> Result<(), Failure> {
     let len = params.len();
     *params.get_mut(i).ok_or_else(|| out_of_range(i, len))? = value;

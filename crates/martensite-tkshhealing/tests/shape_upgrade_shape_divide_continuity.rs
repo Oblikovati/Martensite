@@ -1,4 +1,4 @@
-//! Whole-shape continuity selection against pinned the retained behavior behavior.
+//! Whole-shape continuity selection against behavior.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topexp::Explorer,

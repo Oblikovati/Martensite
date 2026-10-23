@@ -1,4 +1,4 @@
-//! Pinned native orchestration, containment, status and volume comparisons.
+//! orchestration, containment, status and volume comparisons.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topexp::Explorer,

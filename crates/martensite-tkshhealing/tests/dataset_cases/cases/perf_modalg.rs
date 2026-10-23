@@ -1,4 +1,4 @@
-//! tests/perf/modalg case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! perf modalg regression cases owned by
 //! TKShHealing whose inputs are in the public dataset: the timed command runs between
 //! `dchrono h restart` and `dchrono h stop counter text`, which prints its CPU time.
 use crate::support::{
@@ -16,7 +16,7 @@ use crate::support::{
 };
 use martensite_tkbrep::topods::Shape;
 
-/// tests/perf/modalg/bug27569.
+/// modalg — bug27569.
 /// Projecting the edge curve on the face surface (`OCC24008`) is timed.
 pub fn bug27569(s: &mut dyn Session) {
     for line in ["============", "OCC27569", "============", ""] {
@@ -47,7 +47,7 @@ fn bug29502(s: &mut dyn Session, file: &str, options: &[&str]) -> (Shape, Shape)
     (cf, result)
 }
 
-/// tests/perf/modalg/bug29502_1.
+/// modalg — bug29502 1.
 /// The unified faces keep the length of the input.
 pub fn bug29502_1(s: &mut dyn Session) {
     let (cf, result) = bug29502(s, "bug29502_faces.brep", &["+b"]);
@@ -56,7 +56,7 @@ pub fn bug29502_1(s: &mut dyn Session) {
     checknbshapes_t(&result, "result", &counts, None, "");
 }
 
-/// tests/perf/modalg/bug29502_2.
+/// modalg — bug29502 2.
 /// The unified edges (`-f`: no face unification) keep the length of the input.
 pub fn bug29502_2(s: &mut dyn Session) {
     let (cf, result) = bug29502(s, "bug29502_split_faces.brep", &["-f", "+b"]);
@@ -65,7 +65,7 @@ pub fn bug29502_2(s: &mut dyn Session) {
     checknbshapes_t(&result, "result", &counts, None, "");
 }
 
-/// tests/perf/modalg/bug29502_3.
+/// modalg — bug29502 3.
 /// The unified split faces have the length 2900 and the area 14400.
 pub fn bug29502_3(s: &mut dyn Session) {
     let (_, result) = bug29502(s, "bug29502_split_faces.brep", &["+b"]);

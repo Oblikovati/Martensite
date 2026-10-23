@@ -1,4 +1,4 @@
-//! tests/sewing/tol_100 case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 whose
+//! sewing tol 100 regression cases whose
 //! inputs are in the public dataset: the grid begin sets `tol 100`; each case restores
 //! `a`, runs `sewing result $tol a` and checks the result's maximal tolerance, shell
 //! count, free bounds and faults ([`super::sewing_grid::sewing_grid_case`]). One table

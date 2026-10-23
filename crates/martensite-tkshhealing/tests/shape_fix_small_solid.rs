@@ -1,4 +1,4 @@
-//! Native differential checks for `ShapeFix_FixSmallSolid`.
+//! differential checks for `ShapeFixFixSmallSolid`.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::brep_tools::ReShape;
 use martensite_tkbrep::topexp::Explorer;

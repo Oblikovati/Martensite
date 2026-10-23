@@ -1,4 +1,4 @@
-//! `ShapeFix_IntersectionTool::CutEdge`, kept distinct from the similarly named SplitTool method.
+//! `ShapeFixIntersectionTool::cut_edge`, kept distinct from the similarly named SplitTool method.
 use crate::shape_analysis::ShapeAnalysisEdge;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{Edge, Face};
@@ -23,7 +23,7 @@ pub(super) fn cut_edge(
     cut_edge_by_pcurve(edge, endpoint, cut, face, original_range, cut_line)
 }
 
-// BRep_Tool::Range: the 3D range, or the first pcurve range of an edge without 3D curve.
+// BRepTool::range: the 3D range, or the first pcurve range of an edge without 3D curve.
 fn spatial_range(edge: &Edge) -> Result<(f64, f64), Failure> {
     BRepTool::range(edge)
 }

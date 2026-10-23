@@ -1,4 +1,4 @@
-//! Native forward seam selection, including X-before-Y direction precedence.
+//! forward seam selection, including X-before-Y direction precedence.
 use super::ShapeAnalysisCurve;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{Geom2dBoundedCurve, Geom2dCurve, Geom2dLine};

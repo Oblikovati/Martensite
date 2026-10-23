@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/perf/modalg.
+//! The TKShHealing (no view) tests of modalg.
 use super::*;
 
 dataset_cases!(run_case, NoView, perf_modalg, PERF_SECONDS;

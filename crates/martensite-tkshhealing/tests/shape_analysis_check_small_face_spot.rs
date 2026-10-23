@@ -1,4 +1,4 @@
-//! Regression coverage for native ShapeAnalysis_CheckSmallFace::IsSpotFace behavior.
+//! Regression coverage for native ShapeAnalysisCheckSmallFace::is_spot_face behavior.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, Builder, Edge, Face, Shape, Vertex, Wire};

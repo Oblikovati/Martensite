@@ -1,4 +1,4 @@
-//! tests/bugs/modalg_6 case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! bugs modalg 6 regression cases owned by
 //! TKShHealing (they read tolerances or heal with SWscenario commands). Each body follows its
 //! script line by line; the bugs group end only prints `TEST COMPLETED`.
 use super::bugs_common::{banner, tolerance_max};

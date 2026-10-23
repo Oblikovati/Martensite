@@ -1,14 +1,11 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeFix/ShapeFix_ShapeTolerance.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeFix_ShapeTolerance`: limits or forces the tolerances of vertices, edges and faces.
+//! `ShapeFixShapeTolerance`: limits or forces the tolerances of vertices, edges and faces.
 use martensite_tkbrep::brep::access::{edge_tshape, face_tshape, vertex_tshape};
 use martensite_tkbrep::topexp::{self, Explorer};
 use martensite_tkbrep::topods::{self, Shape};
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// `ShapeFix_ShapeTolerance`: writes tolerances straight into the TShapes of the
+/// `ShapeFixShapeTolerance`: writes tolerances straight into the TShapes of the
 /// sub-shapes (not through `BRep_Builder`, so a tolerance can also decrease).
 ///
 /// `styp` selects the sub-shapes: `Vertex`, `Edge` or `Face` only those, `Wire` the edges
@@ -51,14 +48,14 @@ fn is_simple_kind(kind: ShapeEnum) -> bool {
 }
 
 impl ShapeFixShapeTolerance {
-    /// `ShapeFix_ShapeTolerance()`; `ShapeFixShapeTolerance::new()`.
+    /// `ShapeFixShapeTolerance::new()`.
     pub fn new() -> Self {
         Self
     }
 
-    /// `LimitTolerance(shape, tmin, tmax, styp)`: raises the tolerances below `tmin` to it
+    /// raises the tolerances below `tmin` to it
     /// and, when `tmax >= tmin`, lowers those above `tmax` to it; true when a tolerance
-    /// changed (false for a null shape or a negative `tmin`). With `Wire`, natively only
+    /// changed (false for a null shape or a negative `tmin`). With `Wire`, only
     /// the vertex changes count in the result, not the edge ones;
     /// `tool.limit_tolerance(&shape, 1e-7, 1e-3, ShapeEnum::Shape)?`.
     pub fn limit_tolerance(
@@ -98,7 +95,7 @@ impl ShapeFixShapeTolerance {
         Ok(fait)
     }
 
-    /// `SetTolerance(shape, preci, styp)`: forces the tolerances of the selected
+    /// forces the tolerances of the selected
     /// sub-shapes to `preci` (nothing for a null shape or a non-positive `preci`);
     /// `tool.set_tolerance(&shape, 1e-5, ShapeEnum::Shape)?`.
     pub fn set_tolerance(&self, shape: &Shape, preci: f64, styp: ShapeEnum) -> Result<(), Failure> {

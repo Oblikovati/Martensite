@@ -53,7 +53,7 @@ struct SequenceSplit<'a> {
 }
 impl ShapeFixSplitTool {
     /// Split around a span and record substitutions; `tool.split_edge_sequence(&edge,a,&v1,b,&v2,&face,&mut pieces,&mut index,&context,1e-7,1e-9)?`.
-    #[allow(clippy::too_many_arguments)] // the retained behavior's sequence-producing SplitEdge overload.
+    #[allow(clippy::too_many_arguments)] // sequence-producing SplitEdge overload.
     pub fn split_edge_sequence(
         &self,
         edge: &Edge,

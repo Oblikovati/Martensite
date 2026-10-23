@@ -1,5 +1,3 @@
-// Rust translation of ShapeAnalysis_Wire::CheckDegenerated at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! Detect a missing or incorrectly marked singular edge between consecutive wire edges.
 use super::*;
 use crate::shape_analysis::{ShapeAnalysisEdge, SurfaceSingularity};
@@ -41,7 +39,7 @@ impl ShapeAnalysisWire {
         ShapeExtend::decode_status(self.fields.read().status_degenerated, status)
     }
 
-    /// `CheckDegenerated(num, p2d1, p2d2)`; reports the native status and candidate UV segment.
+    /// `CheckDegenerated(num, p2d1, p2d2)`; reports the status and candidate UV segment.
     /// `let (found, first, last) = analyzer.check_degenerated_at(1)?`.
     pub fn check_degenerated_at(&self, index: i32) -> Result<(bool, Point2, Point2), Failure> {
         self.set_last_status(ShapeExtendStatus::Ok);
@@ -389,7 +387,7 @@ fn pcurve_uv(
     curve.value(if at_end { last } else { first })
 }
 
-// the retained behavior CheckDegenerated's closed-curve veto prevents collapsing loops at singular vertices.
+// CheckDegenerated's closed-curve veto prevents collapsing loops at singular vertices.
 fn midpoint_leaves_singularity(
     edge: &Edge,
     point: martensite_tkmath::gp::Point3,

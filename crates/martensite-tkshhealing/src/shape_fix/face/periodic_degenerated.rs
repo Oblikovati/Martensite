@@ -25,7 +25,7 @@ impl ShapeFixFace {
         if !self.context().is_null() {
             self.context().replace(&face, &result)?;
         }
-        // Native updates Result, retaining Face until the context is applied again.
+        // updates Result, retaining Face until the context is applied again.
         Ok(true)
     }
     fn apply_periodic_context(&self) -> Result<Face, Failure> {

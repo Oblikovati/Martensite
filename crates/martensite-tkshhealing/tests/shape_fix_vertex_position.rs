@@ -1,4 +1,4 @@
-//! Native ShapeFix::FixVertexPosition endpoint observations.
+//! ShapeFix::fix_vertex_position endpoint observations.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topexp::{self, Explorer},

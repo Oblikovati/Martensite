@@ -1,4 +1,4 @@
-//! Native endpoint orientation and state-retention rows for the bounding selector.
+//! endpoint orientation and state-retention rows for the bounding selector.
 use martensite_tkbrep::{brep::BRepTool, topods::Shape};
 use martensite_tkernel::{
     ncollection::{HArray1, UBTree},

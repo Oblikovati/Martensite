@@ -1,4 +1,4 @@
-//! Small-area wire removal from ShapeFix_Face.cxx at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Remove small-area wires while preserving face orientation and repair status.
 use super::ShapeFixFace;
 use crate::shape_analysis::ShapeAnalysisWire;
 use crate::shape_fix::FixRoot;
@@ -12,7 +12,7 @@ use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 impl ShapeFixFace {
     /// Removes negligible-area contours, optionally removing an entirely small face from context.
     /// Example: `fixer.fix_small_area_wire(true)?`.
-    /// Native returns false when every wire is removed, even if context removes the face.
+    /// returns false when every wire is removed, even if context removes the face.
     pub fn fix_small_area_wire(&self, remove_small_face: bool) -> Result<bool, Failure> {
         let original = self.apply_small_area_context()?;
         let mut replacement = topods::face(&original.empty_copied()?)?;
@@ -102,7 +102,7 @@ impl ShapeFixFace {
 }
 
 fn small_area_child_eligible(child: &Shape) -> Result<bool, Failure> {
-    // Preserve the native conjunction: a manifold non-wire is cast and may fail.
+    // Preserve the conjunction: a manifold non-wire is cast and may fail.
     Ok(child.shape_type()? == ShapeEnum::Wire
         || matches!(
             child.orientation(),

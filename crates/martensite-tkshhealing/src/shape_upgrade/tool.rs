@@ -1,14 +1,10 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeUpgrade/ShapeUpgrade_Tool.hxx/.lxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeUpgrade_Tool`: the context and tolerances every ShapeUpgrade tool shares
-//! (docs/shhealing-design.md section 8).
+//! `ShapeUpgradeTool`: the context and tolerances every ShapeUpgrade tool shares.
 use crate::shape_build::ShapeBuildReShape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
 
-/// The fields of a `ShapeUpgrade_Tool`.
+/// The fields of a `ShapeUpgradeTool`.
 #[derive(Clone)]
 struct ToolFields {
     context: Handle<ShapeBuildReShape>,
@@ -17,7 +13,7 @@ struct ToolFields {
     max_tol: f64,
 }
 
-/// `ShapeUpgrade_Tool`: a re-shaping context, a working precision and the tolerance
+/// `ShapeUpgradeTool`: a re-shaping context, a working precision and the tolerance
 /// limits, the root of the ShapeUpgrade tools.
 ///
 /// ```
@@ -45,8 +41,8 @@ impl Default for ShapeUpgradeTool {
 }
 
 impl ShapeUpgradeTool {
-    /// `ShapeUpgrade_Tool()`: no context, precision and minimal tolerance
-    /// `Precision::Confusion()`, maximal tolerance 1 ("Precision::Infinite() ?? pdn");
+    /// no context, precision and minimal tolerance
+    /// `precision::confusion()`, maximum tolerance 1;
     /// `ShapeUpgradeTool::new()`.
     pub fn new() -> Self {
         Self {
@@ -60,8 +56,8 @@ impl ShapeUpgradeTool {
         }
     }
 
-    /// `Set(tool)`: copies the context, the precision and the tolerances of `tool`;
-    /// Standard_NullObject for a null tool (a null dereference natively);
+    /// copies the context, the precision and the tolerances of `tool`;
+    /// Standard_NullObject for a null tool;
     /// `tool.set(&other)?`.
     pub fn set(&self, tool: &Handle<ShapeUpgradeTool>) -> Result<(), Failure> {
         let source = tool.get().ok_or_else(|| {
@@ -86,7 +82,7 @@ impl ShapeUpgradeTool {
         self.fields.read().context.clone()
     }
 
-    /// `SetPrecision(preci)`: the precision, the maximal tolerance raised to it and the
+    /// the precision, the maximal tolerance raised to it and the
     /// minimal one lowered to it; `tool.set_precision(1e-3)`.
     pub fn set_precision(&self, preci: f64) {
         let mut fields = self.fields.write();
@@ -124,7 +120,7 @@ impl ShapeUpgradeTool {
         self.fields.read().max_tol
     }
 
-    /// `LimitTolerance(toler)`: `std::min(MaxTolerance(), toler)` (the maximal tolerance
+    /// `std::min(MaxTolerance(), toler)` (the maximal tolerance
     /// when `toler` is NaN, as `std::min`); `tool.limit_tolerance(5.0)`.
     pub fn limit_tolerance(&self, toler: f64) -> f64 {
         let max_tol = self.fields.read().max_tol;

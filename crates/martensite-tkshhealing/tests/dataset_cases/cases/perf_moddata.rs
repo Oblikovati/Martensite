@@ -1,4 +1,4 @@
-//! tests/perf/moddata case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! perf moddata regression cases owned by
 //! TKShHealing whose inputs are in the public dataset.
 use crate::support::{
     chrono::Dchrono,

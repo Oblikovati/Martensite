@@ -1,4 +1,4 @@
-//! Pinned the retained behavior `ShapeFix_WireVertex` state transitions.
+//! `ShapeFixWireVertex` state transitions.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topods::{Edge, Vertex},

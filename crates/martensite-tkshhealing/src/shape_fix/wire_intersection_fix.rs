@@ -1,4 +1,4 @@
-//! Tolerance repair of one adjacent-edge crossing after `ShapeAnalysis_Wire` detects it.
+//! Tolerance repair of one adjacent-edge crossing after `ShapeAnalysisWire` detects it.
 use super::{
     FixRoot, ShapeFixWire,
     wire_intersection_geometry::{crossing_action, local_deviation},

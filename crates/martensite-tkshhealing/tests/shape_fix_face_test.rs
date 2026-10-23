@@ -1,4 +1,4 @@
-//! Translation of the pinned ShapeFix_Face_Test.cxx regression suite.
+//! Face repair regression suite.
 use martensite_tkbrep::brep_tools::ReShape;
 use martensite_tkbrep::topods::{Builder, Compound, Face, Shape, ShapeIterator, Wire};
 use martensite_tkernel::ncollection::{Array1, HArray1};

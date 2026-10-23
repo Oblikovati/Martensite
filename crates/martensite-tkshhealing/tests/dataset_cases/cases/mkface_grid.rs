@@ -1,4 +1,4 @@
-//! tests/mkface/end at 3d097a0328e71b826377d4814ab05ec3c3d23871, which every mkface case
+//! Shared face construction acceptance checks, which every face case
 //! runs: when `result` is drawn, `puts [checkshape result]`, `puts [tolerance result]`
 //! and the face, edge and vertex maximum tolerances against the `MaxFTol`, `MaxETol` and
 //! `MaxVTol` the case sets (1% relative slack above a nonzero reference, exactly 0 for a

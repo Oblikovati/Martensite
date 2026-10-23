@@ -1,4 +1,4 @@
-//! Root-wire and hole assignment used by `ShapeFix_ComposeShell::MakeFacesOnPatch`.
+//! Root-wire and hole assignment used by `ShapeFixComposeShell::make_faces_on_patch`.
 mod assemble;
 mod roots;
 

@@ -1,5 +1,5 @@
 //! Joint-line event parity and seam generation across all boundary segments.
-// ShapeFix_ComposeShell.cxx 1918–2130 at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+// Events are accumulated across all segments before seam construction.
 mod events;
 mod seams;
 use super::{ShapeFixComposeShell, split_by_line, split_wire};

@@ -1,6 +1,3 @@
-// Rust translation of ShapeCustom_Surface::ConvertToAnalytical (ShapeCustom_Surface.cxx) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! `ConvertToAnalytical`: the plane, cylinder/sphere/cone and torus recognizers and the
 //! 21 x 21 point verification of the recognized surface.
 use super::ShapeCustomSurface;
@@ -14,7 +11,7 @@ use martensite_tkg3d::geom::{
 use martensite_tkmath::elslib;
 use martensite_tkmath::gp::{self, Axis3, Direction3, Plane3, Point3, Vector3};
 
-/// The parameter box of the recognizers, swapped as the native code swaps it, and the
+/// The parameter box of the recognizers, swapped as the code swaps it, and the
 /// direction of the iso curves used by the verification.
 #[derive(Clone, Copy)]
 struct IsoFrame {
@@ -53,7 +50,7 @@ fn midpoint(a: Point3, b: Point3) -> Point3 {
     )
 }
 
-/// One native sample: the iso point at the start, at the middle, their midpoint and its
+/// One sample: the iso point at the start, at the middle, their midpoint and its
 /// distance to the start (the radius when the iso is a closed circle).
 struct IsoSample {
     p1: Point3,
@@ -73,11 +70,11 @@ fn iso_sample(iso: &Handle<dyn GeomCurve>, first: f64, last: f64) -> Result<IsoS
 }
 
 impl ShapeCustomSurface {
-    /// `ConvertToAnalytical(tol, substitute)`: the analytic surface equivalent within `tol`
+    /// the analytic surface equivalent within `tol`
     /// to the B-spline or Bezier surface (a plane for a bilinear patch, a cylinder, cone or
     /// sphere for a surface closed in one direction, a torus for one closed in both),
     /// checked on 21 x 21 iso points; a null handle otherwise. With `substitute` the result
-    /// replaces the surface. Native quirk (kept): after a rejected verification the null
+    /// replaces the surface. quirk (kept): after a rejected verification the null
     /// result still replaces the surface when `substitute` is set.
     /// Example: `let analytic = tool.convert_to_analytical(1e-6, false)?;`.
     pub fn convert_to_analytical(
@@ -297,7 +294,7 @@ fn reversed_unless(
     Ok(surface)
 }
 
-// The cone is always U-reversed natively ("if (!uClosed)" is commented out); with the
+// Always reverse the cone in U; with the
 // larger radius first the cone is built from the second circle, axis reversed.
 fn cone(
     s: &[IsoSample],
@@ -319,7 +316,7 @@ fn cone(
 }
 
 /// The torus of a surface closed in both directions, tried on U isos then (bounds
-/// swapped) on V isos; the frame keeps the swap for the verification, as natively.
+/// swapped) on V isos; the frame keeps the swap for the verification.
 fn toroid(
     surface: &Handle<dyn GeomSurface>,
     frame: IsoFrame,
@@ -367,7 +364,7 @@ fn torus(s: &[IsoSample], swapped: bool) -> Result<Handle<dyn GeomSurface>, Fail
 }
 
 impl ShapeCustomSurface {
-    /// The native verification: 21 x 21 points of the iso curves projected on the
+    /// The verification: 21 x 21 points of the iso curves projected on the
     /// candidate (ElSLib parameters); the largest distance is the gap, and a distance
     /// above `tol` rejects the candidate (a null result).
     fn verified(
@@ -401,7 +398,7 @@ impl ShapeCustomSurface {
 }
 
 /// `ElSLib::Parameters` on the candidate's gp surface; another kind keeps the previous
-/// parameters (the native `default: break`).
+/// parameters (the `default: break`).
 fn parameters_on(
     candidate: &Handle<dyn GeomSurface>,
     point: Point3,

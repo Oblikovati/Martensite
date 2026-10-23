@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/bugs/xde.
+//! The TKShHealing (no view) tests of xde.
 use super::*;
 
 dataset_cases!(run_case, NoView, bugs_xde, BUGS_SECONDS;

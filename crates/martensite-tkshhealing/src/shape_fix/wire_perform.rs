@@ -174,7 +174,7 @@ impl AggregateWireState {
         if fixer.fix_small_all(lock_vertex, fixer.min_tolerance())? == 0 {
             return Ok(());
         }
-        // Native retries the reorder only after FixSmall changed the wire.
+        // retries the reorder only after FixSmall changed the wire.
         self.fixed = true;
         self.retry_reorder(fixer)
     }

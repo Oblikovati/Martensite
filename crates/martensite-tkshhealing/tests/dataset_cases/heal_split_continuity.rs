@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/split_continuity.
+//! The TKShHealing (no view) tests of split continuity.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_split_continuity, HEAL_SECONDS;

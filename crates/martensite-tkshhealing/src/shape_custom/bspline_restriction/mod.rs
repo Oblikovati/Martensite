@@ -1,9 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom_BSplineRestriction.hxx/.lxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeCustom_BSplineRestriction`: approximation of surfaces, 3D curves and p-curves by
-//! B-splines within a maximal degree and number of segments (docs/shhealing-design.md
-//! section 7).
+//! `ShapeCustomBSplineRestriction`: approximation of surfaces, 3D curves and p-curves by
+//! B-splines within a maximal degree and number of segments.
 mod accessors;
 mod curve2d;
 mod curve3d;
@@ -28,7 +24,7 @@ use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkmath::gp::Point3;
 
-/// The private fields of `ShapeCustom_BSplineRestriction`.
+/// The private fields of `ShapeCustomBSplineRestriction`.
 #[derive(Clone)]
 struct RestrictionState {
     continuity_3d: Continuity,
@@ -50,7 +46,7 @@ struct RestrictionState {
     parameters: Handle<ShapeCustomRestrictionParameters>,
 }
 
-/// The settings of the native full constructors, in their order.
+/// The settings of the full constructors, in their order.
 #[derive(Clone, Copy)]
 pub struct ShapeCustomBSplineRestrictionSettings {
     /// anApproxSurfaceFlag.
@@ -78,7 +74,7 @@ pub struct ShapeCustomBSplineRestrictionSettings {
 }
 
 impl Default for ShapeCustomBSplineRestrictionSettings {
-    /// The values of the native default constructor.
+    /// The values of the default constructor.
     fn default() -> Self {
         Self {
             approx_surface: true,
@@ -96,8 +92,8 @@ impl Default for ShapeCustomBSplineRestrictionSettings {
     }
 }
 
-/// `ShapeCustom_BSplineRestriction`: a modification that approximates the surfaces, 3D
-/// curves and p-curves selected by its ShapeCustom_RestrictionParameters (and those whose
+/// `ShapeCustomBSplineRestriction`: a modification that approximates the surfaces, 3D
+/// curves and p-curves selected by its ShapeCustomRestrictionParameters (and those whose
 /// degree, number of segments or rationality exceed the limits) by B-splines.
 ///
 /// ```
@@ -133,7 +129,7 @@ impl ShapeCustomModification for ShapeCustomBSplineRestriction {
 }
 
 impl ShapeCustomBSplineRestriction {
-    /// `ShapeCustom_BSplineRestriction()`: tolerances 0.01 / 1e-6, C1 / C2, degree 9,
+    /// tolerances 0.01 / 1e-6, C1 / C2, degree 9,
     /// 10000 segments, degree priority, no rational conversion and default restriction
     /// parameters; `ShapeCustomBSplineRestriction::new()`.
     pub fn new() -> Self {
@@ -183,8 +179,7 @@ impl ShapeCustomBSplineRestriction {
         self.state.read().clone()
     }
 
-    /// The restriction parameters; native dereferences them unchecked, so a null handle is
-    /// a Standard_NullObject failure.
+    /// Return the restriction parameters, rejecting an absent handle with a typed failure.
     fn parameters(&self) -> Result<Handle<ShapeCustomRestrictionParameters>, Failure> {
         let parameters = self.state.read().parameters.clone();
         if parameters.is_null() {

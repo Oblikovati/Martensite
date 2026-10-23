@@ -1,4 +1,4 @@
-//! Missing p-curve connection checks from pinned the retained behavior ShapeAnalysis_Wire.cxx.
+//! Detect missing p-curve connections between wire edges.
 use super::*;
 use martensite_tkbrep::{
     brep_tools::compare_vertices,

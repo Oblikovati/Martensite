@@ -1,4 +1,4 @@
-//! Supplemental ShapeBuild_ReShape status and type-change behavior tests.
+//! Supplemental ShapeBuildReShape status and type-change behavior tests.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::brep_tools::ReShape;
 use martensite_tkbrep::topods::Wire;

@@ -1,6 +1,5 @@
-//! The geometry commands of the intersection cases: GeometryTest `intersect` (GeomInt_IntSS
-//! for two surfaces, GeomAPI_IntCS for a curve and a surface), `xdistcs`
-//! (GeometryTest_TestProjCommands.cxx), `bounds` and BRepTest `projponf`.
+//! Intersection, distance, bounds and projection helpers for geometric regression cases.
+//! Surface pairs and curve/surface pairs use their respective intersection builders.
 use super::printed::g17;
 use martensite_tkbrep::{
     brep::BRepTool,
@@ -63,7 +62,7 @@ pub fn bounds(c: &Handle<dyn GeomCurve>) -> (f64, f64) {
 }
 
 /// `xdistcs curve surface t1 t2 nbpoints tol`: the distance from `nbpoints` curve points
-/// to the surface (GeomAPI_ProjectPointOnSurf, Grad), `Error in name:` before each one
+/// to the surface (ProjectPointOnSurf, Grad), `Error in name:` before each one
 /// above `tol`; returns the text and the largest distance.
 pub fn xdistcs(
     name: &str,

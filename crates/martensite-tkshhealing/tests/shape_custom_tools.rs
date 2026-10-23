@@ -1,4 +1,4 @@
-//! Behavior tests of ShapeCustom_Curve2d and ShapeCustom_RestrictionParameters.
+//! Behavior tests of ShapeCustomCurve2d and ShapeCustomRestrictionParameters.
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::Handle;
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve};

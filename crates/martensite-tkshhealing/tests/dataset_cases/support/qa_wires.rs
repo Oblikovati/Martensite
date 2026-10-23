@@ -1,7 +1,6 @@
-//! The QABugs commands of the moddata cases (QABugs_14.cxx, QABugs_19.cxx at
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871): `BUC60868` (the free bounds of a shell
-//! chained by BuildBoundWires), `BUC60924` (ShapeAnalysis_Curve::IsPlanar) and
-//! `OCC25202` (a ShapeBuild_ReShape replacement of two faces).
+//! Wire and shell regression helpers.
+//! Free shell bounds are chained into wires; planarity is checked on curves;
+//! two-face replacement is recorded through the shape rebuilding context.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     brep_tools::ReShape,

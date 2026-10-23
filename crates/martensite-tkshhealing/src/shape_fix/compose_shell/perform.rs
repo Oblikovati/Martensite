@@ -38,7 +38,7 @@ fn split_and_collect(
     Ok(())
 }
 
-// Native keeps a single face as is and wraps any other count (zero included) in a shell.
+// keeps a single face as is and wraps any other count (zero included) in a shell.
 fn store_result(composer: &ShapeFixComposeShell, faces: &Sequence<Shape>) -> Result<(), Failure> {
     let mut result = if faces.len() == 1 {
         faces.value(1)?.clone()

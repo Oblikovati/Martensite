@@ -1,4 +1,4 @@
-//! Native statistics, recording flags and copy-sharing behavior.
+//! statistics, recording flags and copy-sharing behavior.
 #[path = "support/shape_contents/mod.rs"]
 mod fixture;
 #[path = "support/shape_contents/observations.rs"]

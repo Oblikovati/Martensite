@@ -1,4 +1,4 @@
-//! Native sampling and state changes from tkshhealing_closed_edge_divide.cxx.
+//! Closed-edge sampling and state transition regressions.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topexp,

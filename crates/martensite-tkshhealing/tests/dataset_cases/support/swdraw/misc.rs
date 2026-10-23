@@ -1,5 +1,5 @@
-//! SWscenario `checkoverlapedges` (ShapeAnalysis_Edge::CheckOverlapping), `removeloc`
-//! (ShapeUpgrade_RemoveLocations) and `scaleshape` (ShapeCustom::ScaleShape).
+//! SWscenario `checkoverlapedges` (ShapeAnalysisEdge::check_overlapping), `removeloc`
+//! (ShapeUpgradeRemoveLocations) and `scaleshape` (ShapeCustom::scale_shape).
 use martensite_tkbrep::{
     brep::BRepTool,
     topods::{self, Shape},
@@ -44,7 +44,7 @@ pub fn checkoverlapedges(
     ))
 }
 
-/// `removeloc res shape`: ShapeUpgrade_RemoveLocations with the default remove level.
+/// `removeloc res shape`: ShapeUpgradeRemoveLocations with the default remove level.
 pub fn removeloc(shape: &Shape) -> Shape {
     let tool = ShapeUpgradeRemoveLocations::new();
     tool.remove(shape)
@@ -52,7 +52,7 @@ pub fn removeloc(shape: &Shape) -> Shape {
     tool.get_result()
 }
 
-/// `scaleshape result shape scale`: ShapeCustom::ScaleShape; `None` (and `NO
+/// `scaleshape result shape scale`: ShapeCustom::scale_shape; `None` (and `NO
 /// MODIFICATIONS`) when the result is the input; a null result is the `NO RESULT` error.
 pub fn scaleshape(shape: &Shape, scale: f64) -> Option<Shape> {
     let result = ShapeCustom::scale_shape(shape, scale)

@@ -1,4 +1,4 @@
-//! Native dispatch, status, repeated calls and shared repair configuration.
+//! dispatch, status, repeated calls and shared repair configuration.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topexp::Explorer,

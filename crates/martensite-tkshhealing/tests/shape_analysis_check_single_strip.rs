@@ -1,4 +1,4 @@
-//! Differential coverage of ShapeAnalysis_CheckSmallFace::CheckSingleStrip.
+//! Single-strip face classification regression cases.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{self, Builder, Edge, Face, Vertex, Wire};
 use martensite_tkernel::standard::Handle;

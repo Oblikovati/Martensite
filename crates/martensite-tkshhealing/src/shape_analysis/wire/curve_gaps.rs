@@ -1,5 +1,4 @@
-//! Native 45-point comparison of edge curves and their surface representations.
-// ShapeAnalysis_Wire.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! 45-point comparison of edge curves and their surface representations.
 use super::*;
 use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
 use martensite_tkg3d::{

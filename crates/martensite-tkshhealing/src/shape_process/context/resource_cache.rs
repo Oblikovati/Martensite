@@ -1,4 +1,4 @@
-//! `ShapeProcess_Context::LoadResourceManager`: the process-wide cache of the last loaded
+//! `ShapeProcessContext::load_resource_manager`: the process-wide cache of the last loaded
 //! resource file, reloaded when its name or the modification time of its files changes.
 use super::{ShapeProcessContext, ShapeProcessResource};
 use martensite_tkernel::resource::{ResourceHost, ResourceManager};
@@ -23,8 +23,7 @@ static CACHE: Mutex<ResourceCache> = Mutex::new(ResourceCache {
     user_mtime: 0,
 });
 
-/// The modification time in seconds of a resource file; 0 for no path. Natively a failed
-/// `stat` leaves the time unread (undefined); Rust reads 0.
+/// Return resource modification time in seconds, or zero if no readable timestamp exists.
 fn modification_time(path: &AsciiString) -> i64 {
     if path.is_empty() {
         return 0;
@@ -62,7 +61,7 @@ impl ResourceCache {
 }
 
 impl ShapeProcessContext {
-    /// `LoadResourceManager(name)`: a copy of the cached manager of the resource file
+    /// a copy of the cached manager of the resource file
     /// `name` (`$CSF_<name>Defaults` and `$CSF_<name>UserDefaults`), reloaded when the
     /// name or a file time changed ("file is load only once and reloaded only if file date
     /// has changed"); `context.load_resource_manager("DEDefaults")?`.

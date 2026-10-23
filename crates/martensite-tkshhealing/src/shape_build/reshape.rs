@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeBuild/ShapeBuild_ReShape.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeBuild_ReShape`: the Shape Healing re-shaper (docs/shhealing-design.md section 3).
+//! `ShapeBuildReShape`: the Shape Healing re-shaper.
 mod apply;
 mod build_mode;
 
@@ -12,8 +9,8 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// `ShapeBuild_ReShape`: records requests to replace or remove shapes, then applies them
-/// to any shape that contains them, rebuilding it (`BRepTools_ReShape` with its own
+/// `ShapeBuildReShape`: records requests to replace or remove shapes, then applies them
+/// to any shape that contains them, rebuilding it (`BRepToolsReShape` with its own
 /// `Apply`, a build-mode `Apply` for solids and shells, and the ShapeExtend status of the
 /// last `Apply`).
 ///
@@ -40,13 +37,13 @@ impl_transient!(
 );
 
 impl ShapeBuildReShape {
-    /// `ShapeBuild_ReShape()`: no request, status -1 (as the base class);
+    /// no request, status -1 (as the base class);
     /// `ShapeBuildReShape::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `Status(ShapeExtend_Status)`: the flags of the last `Apply(shape, until)`: OK when
+    /// the flags of the last `Apply(shape, until)`: OK when
     /// nothing was replaced or removed, DONE1 the shape itself replaced, DONE2 removed,
     /// DONE3 sub-shapes replaced, DONE4 sub-shapes removed, FAIL1 a replacement of an
     /// incompatible type ignored; `reshape.status_flag(ShapeExtendStatus::Done3)`.

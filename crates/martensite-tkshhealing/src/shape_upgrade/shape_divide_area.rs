@@ -1,4 +1,4 @@
-//! Whole-shape area division settings from the retained behavior ShapeUpgrade_ShapeDivideArea.
+//! Whole-shape area division settings from ShapeUpgradeShapeDivideArea.
 use super::{
     ShapeDivider, ShapeUpgradeFaceDivide, ShapeUpgradeFaceDivideArea, ShapeUpgradeShapeDivide,
 };

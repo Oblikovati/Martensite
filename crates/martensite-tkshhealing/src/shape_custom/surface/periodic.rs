@@ -1,6 +1,3 @@
-// Rust translation of ShapeCustom_Surface::ConvertToPeriodic (ShapeCustom_Surface.cxx) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! `ConvertToPeriodic`: a B-spline surface closed in U or V made periodic in that
 //! direction, its clamped end knots first opened by one knot on each side.
 use super::ShapeCustomSurface;
@@ -13,11 +10,11 @@ use martensite_tkg3d::geom::{GeomBSplineSurface, GeomSurface};
 type KnotData = (Vec<f64>, Vec<i32>);
 
 impl ShapeCustomSurface {
-    /// `ConvertToPeriodic(substitute, preci)`: the periodic form of a B-spline surface
-    /// closed (ShapeAnalysis_Surface::IsUClosed/IsVClosed with `preci`) in U or V with more
+    /// the periodic form of a B-spline surface
+    /// closed in U or V within `preci`, with more
     /// than 3 poles in that direction; a null handle when nothing was converted.
     ///
-    /// Native quirk (kept): when the end multiplicities need no rearrangement, SetUPeriodic
+    /// quirk (kept): when the end multiplicities need no rearrangement, SetUPeriodic
     /// (SetVPeriodic) runs on the stored surface itself, which is modified in place.
     /// Example: `let periodic = tool.convert_to_periodic(false, -1.0)?;`.
     pub fn convert_to_periodic(
@@ -101,7 +98,7 @@ impl Direction {
     }
 }
 
-/// One native direction block: false when the direction is already periodic, has at most
+/// One direction block: false when the direction is already periodic, has at most
 /// 3 poles or end multiplicities that cannot be opened.
 fn make_periodic(spline: &mut Handle<GeomBSplineSurface>, u: bool) -> Result<bool, Failure> {
     let d = Direction { u };

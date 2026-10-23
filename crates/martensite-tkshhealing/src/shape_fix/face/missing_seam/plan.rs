@@ -110,7 +110,7 @@ fn periodic_spline_supported(surface: &Handle<dyn GeomSurface>) -> bool {
 }
 
 fn finite_bounds(bounds: SurfaceBounds, face: &Face) -> Result<SurfaceBounds, Failure> {
-    // the retained behavior uses BRepTools here: its empty-pcurve fallback is the surface bounds.
+    // uses BRepTools here: its empty-pcurve fallback is the surface bounds.
     let face_bounds = brep_tools::uv_bounds(face)?;
     let u = finite_direction(bounds.0, bounds.1, face_bounds.0, face_bounds.1);
     let v = finite_direction(bounds.2, bounds.3, face_bounds.2, face_bounds.3);
@@ -134,7 +134,7 @@ fn finite_direction(first: f64, last: f64, face_first: f64, face_last: f64) -> (
     if (end - start).abs().partial_cmp(&precision::p_confusion()) != Some(Ordering::Less) {
         return (start, end);
     }
-    // the retained behavior tests the substituted bound, not the original infinite bound.
+    // tests the substituted bound, not the original infinite bound.
     if precision::is_infinite(start) {
         (start - 1000.0, end)
     } else {

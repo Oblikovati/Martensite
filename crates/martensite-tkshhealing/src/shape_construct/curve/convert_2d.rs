@@ -13,7 +13,7 @@ use martensite_tkgeombase::{approx::Curve2d as ApproxCurve, geom2d_convert};
 use martensite_tkmath::{convert::ParameterisationType, geom_abs::Shape};
 
 impl ShapeConstructCurve {
-    /// `ConvertToBSpline(C2d, first, last, prec)`: [`Self::convert_to_bspline`] for a
+    /// [`Self::convert_to_bspline`] for a
     /// p-curve (`Approx_Curve2d(first, last, prec, prec, C1)`, degree 9, 1000 segments);
     /// `ShapeConstructCurve.convert_to_bspline_2d(&c, 0.0, 1.0, 1e-7)?`.
     pub fn convert_to_bspline_2d(
@@ -49,7 +49,7 @@ fn initial_bspline(
     if curve.cast::<Geom2dBezierCurve>().is_null() && curve.cast::<Geom2dLine>().is_null() {
         return Ok(spline);
     }
-    // The trimmed curve is built outside the native `try`: its failure propagates.
+    // The trimmed curve is built outside the `try`: its failure propagates.
     let trimmed: Handle<dyn Geom2dCurve> =
         Handle::new(Geom2dTrimmedCurve::new(curve, first, last, true, true)?).cast();
     Ok(
@@ -58,7 +58,7 @@ fn initial_bspline(
     )
 }
 
-/// `bspl->Copy()` then `Segment(f, l)` on the copy.
+/// Copy the B-spline before restricting it to the requested parameter range.
 fn segment_copy(
     spline: &mut Handle<Geom2dBSplineCurve>,
     first: f64,
@@ -73,13 +73,13 @@ fn segment_copy(
     let Some((first, last)) = bounds else {
         return Ok(());
     };
-    // the retained behavior 3d097a0 assigns the copy before Segment: fallback must retain it even on failure.
+    // assigns the copy before Segment: fallback must retain it even on failure.
     *spline = spline.copy()?.cast();
     spline.segment(first, last, precision::p_confusion())
 }
 
-/// `Approx_Curve2d(new Geom2dAdaptor_Curve(newc, first, last), first, last, prec, prec,
-/// GeomAbs_C1, 9, 1000)`: its curve when it is done or has a result.
+/// `Approx_Curve2d(new Geom2dAdaptorCurve(newc, first, last), first, last, prec, prec,
+/// C1 continuity, 9, 1000)`: its curve when it is done or has a result.
 fn approximate(
     newc: &Handle<dyn Geom2dCurve>,
     first: f64,

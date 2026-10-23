@@ -1,13 +1,10 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAlgo/ShapeAlgo_ToolContainer at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeAlgo_ToolContainer`: the factory of the tools the algorithm container uses.
+//! `ShapeAlgoToolContainer`: the factory of the tools the algorithm container uses.
 use crate::shape_fix::{ShapeFixEdgeProjAux, ShapeFixShape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::{Handle, StandardTransient};
 
-/// `ShapeAlgo_ToolContainer`: returns new Shape Healing tools. The native members are
-/// virtual, but no the retained behavior class overrides them.
+/// `ShapeAlgoToolContainer`: returns new Shape Healing tools. The members are
+/// virtual, but no class overrides them.
 ///
 /// ```
 /// use martensite_tkshhealing::shape_algo::ShapeAlgoToolContainer;
@@ -27,17 +24,17 @@ impl_transient!(
 );
 
 impl ShapeAlgoToolContainer {
-    /// `ShapeAlgo_ToolContainer()`; `ShapeAlgoToolContainer::new()`.
+    /// Create a tool factory; `ShapeAlgoToolContainer::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `FixShape()`: a new empty `ShapeFix_Shape`; `tools.fix_shape()`.
+    /// a new empty `ShapeFixShape`; `tools.fix_shape()`.
     pub fn fix_shape(&self) -> Handle<ShapeFixShape> {
         Handle::new(ShapeFixShape::empty())
     }
 
-    /// `EdgeProjAux()`: a new empty `ShapeFix_EdgeProjAux`; `tools.edge_proj_aux()`.
+    /// a new empty `ShapeFixEdgeProjAux`; `tools.edge_proj_aux()`.
     pub fn edge_proj_aux(&self) -> Handle<ShapeFixEdgeProjAux> {
         Handle::new(ShapeFixEdgeProjAux::new())
     }

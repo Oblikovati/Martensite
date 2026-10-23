@@ -93,7 +93,7 @@ fn divide_applied_faces(
 ) -> Result<(), Failure> {
     let mut faces = Explorer::new(applied, ShapeEnum::Face, ShapeEnum::Shape)?;
     while faces.more() {
-        // Native catches Standard_Failure around each face and advances to the next.
+        // catches Standard_Failure around each face and advances to the next.
         if divide_face(tool, face_tool, faces.current(), message).is_err() {
             tool.shape_divide_base()
                 .add_status(ShapeExtendStatus::Fail2);

@@ -1,4 +1,4 @@
-//! Native paired seam-pcurve join regression for `ShapeFix_Wireframe::MergeSmallEdges`.
+//! paired seam-pcurve join regression for `ShapeFixWireframe::merge_small_edges`.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     brep_tools::ReShape,

@@ -1,4 +1,4 @@
-//! Pinned protected `ShapeFix_ComposeShell::BreakWires` behavior.
+//! Pinned protected `ShapeFixComposeShell::break_wires` behavior.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{self, Edge, Vertex};
 use martensite_tkernel::ncollection::Sequence;

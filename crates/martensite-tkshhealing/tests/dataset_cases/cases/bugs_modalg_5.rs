@@ -1,4 +1,4 @@
-//! tests/bugs/modalg_5 case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! bugs modalg 5 regression cases owned by
 //! TKShHealing whose inputs are in the public dataset or built by the script.
 use super::bugs_common::{banner, tolerance_max};
 use crate::support::{
@@ -20,7 +20,7 @@ const SEWN_AREA_EXPECTED: f64 = 3.14159;
 
 use std::f64::consts::PI;
 
-/// tests/bugs/modalg_5/bug24203.
+/// modalg 5 — bug24203.
 /// `sameparameter e1` (in place, 1e-7) keeps the edge tolerance at most 0.20.
 pub fn bug24203(s: &mut dyn Session) {
     banner(&["============", "OCC24203", "============", ""]);
@@ -35,7 +35,7 @@ pub fn bug24203(s: &mut dyn Session) {
     }
 }
 
-/// tests/bugs/modalg_5/bug24347.
+/// modalg 5 — bug24347.
 /// The minimal distance between the face (tolerance 4e-6) and the vertex, printed by
 /// `dump d1_val` at precision 15, is exactly 2.72742879238428e-14.
 pub fn bug24347(s: &mut dyn Session) {
@@ -95,7 +95,7 @@ fn counts(shape: &Shape, [v, e, w, f, n]: [usize; 5]) {
     );
 }
 
-/// tests/bugs/modalg_5/bug24817.
+/// modalg 5 — bug24817.
 /// Non-manifold sewing (`+n`) of two and three half discs.
 pub fn bug24817(s: &mut dyn Session) {
     banner(&["========", "CR24817", "========", ""]);

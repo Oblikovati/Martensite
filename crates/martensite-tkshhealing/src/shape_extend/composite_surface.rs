@@ -1,9 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend/ShapeExtend_CompositeSurface.hxx/.cxx
-// (constructors, Init, the patches and joints, the local/global mappings) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeExtend_CompositeSurface`: a surface made of a grid of patches
-//! (docs/shhealing-design.md section 2).
+//! `ShapeExtendCompositeSurface`: a surface made of a grid of patches.
 mod geometry;
 mod joints;
 
@@ -15,10 +10,10 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransie
 use martensite_tkg3d::geom::{GeomGeometry, GeomSurface};
 use martensite_tkmath::gp::{Point2, Transform2, TransformForm, Vector2};
 
-/// `occ::handle<NCollection_HArray2<occ::handle<Geom_Surface>>>`: the grid of patches.
+/// Shared two-dimensional grid of surface patch handles.
 pub type SurfaceGrid = Handle<HArray2<Handle<dyn GeomSurface>>>;
 
-/// `occ::handle<NCollection_HArray1<double>>`: joint values.
+/// Shared array of joint parameter values.
 pub type JointValues = Handle<HArray1<f64>>;
 
 /// The fields of a composite surface.
@@ -30,19 +25,18 @@ struct CompositeFields {
     u_joints: JointValues,
     /// `myVJointValues`.
     v_joints: JointValues,
-    /// `myUClosed` (left uninitialized by the default constructor natively).
+    /// Whether connectivity checking found the U direction closed; initially false.
     u_closed: bool,
     /// `myVClosed`.
     v_closed: bool,
 }
 
-/// `ShapeExtend_CompositeSurface`: a grid of patches (`NbUPatches` rows by `NbVPatches`
+/// `ShapeExtendCompositeSurface`: a grid of patches (`NbUPatches` rows by `NbVPatches`
 /// columns) with a global parametrisation: the joint values `U(1) < ... < U(NbU + 1)` and
 /// `V(1) < ... < V(NbV + 1)` map each patch's parameters linearly onto its cell.
 ///
-/// It is a `Geom_Surface`; it holds its fields behind a lock (docs/geom-design.md section
-/// 3) and never calls a patch while it holds the lock. Members that dereference the null
-/// grid of a default-constructed surface natively return Standard_NullObject errors.
+/// Surface fields are held behind a lock, released before calling a patch.
+/// Operations that require a grid return a typed null-object error when it is absent.
 ///
 /// ```
 /// use martensite_tkshhealing::shape_extend::ShapeExtendCompositeSurface;
@@ -81,13 +75,13 @@ fn null_object(member: &str, what: &str) -> Failure {
 }
 
 impl ShapeExtendCompositeSurface {
-    /// `ShapeExtend_CompositeSurface()`: no patch; `ShapeExtendCompositeSurface::new()`.
+    /// no patch; `ShapeExtendCompositeSurface::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeExtend_CompositeSurface(GridSurf, param)`: [`Self::init`] on a new surface
-    /// (its result is dropped, as natively); `ShapeExtendCompositeSurface::with_grid(&grid, p)?`.
+    /// [`Self::init`] on a new surface
+    /// (its result is dropped); `ShapeExtendCompositeSurface::with_grid(&grid, p)?`.
     pub fn with_grid(
         grid: &SurfaceGrid,
         param: ShapeExtendParametrisation,
@@ -97,7 +91,7 @@ impl ShapeExtendCompositeSurface {
         Ok(surface)
     }
 
-    /// `ShapeExtend_CompositeSurface(GridSurf, UJoints, VJoints)`: [`Self::init_with_joints`]
+    /// [`Self::init_with_joints`]
     /// on a new surface; `ShapeExtendCompositeSurface::with_joints(&grid, &u, &v)?`.
     pub fn with_joints(
         grid: &SurfaceGrid,
@@ -109,8 +103,8 @@ impl ShapeExtendCompositeSurface {
         Ok(surface)
     }
 
-    /// `Init(GridSurf, param)`: takes the grid, computes the joint values for `param` and
-    /// returns `CheckConnectivity(Precision::Confusion())`; false for a null grid;
+    /// takes the grid, computes the joint values for `param` and
+    /// returns `CheckConnectivity(precision::confusion())`; false for a null grid;
     /// `surface.init(&grid, ShapeExtendParametrisation::Natural)?`.
     pub fn init(
         &self,
@@ -125,7 +119,7 @@ impl ShapeExtendCompositeSurface {
         self.check_connectivity(precision::confusion())
     }
 
-    /// `Init(GridSurf, UJoints, VJoints)`: takes the grid and the joint values; when
+    /// takes the grid and the joint values; when
     /// either set is rejected, the natural joint values replace them and the result is
     /// false; false too when the patches are not connected; false for a null grid;
     /// `surface.init_with_joints(&grid, &u, &v)?`.
@@ -147,7 +141,7 @@ impl ShapeExtendCompositeSurface {
         Ok(self.check_connectivity(precision::confusion())? && ok)
     }
 
-    /// `Patches()`: the grid handle (null before `Init`); `surface.patches()`.
+    /// the grid handle (null before `Init`); `surface.patches()`.
     pub fn patches(&self) -> SurfaceGrid {
         self.fields.read().patches.clone()
     }
@@ -161,19 +155,19 @@ impl ShapeExtendCompositeSurface {
         Ok(grid)
     }
 
-    /// `NbUPatches()`: the number of rows of the grid; `surface.nb_u_patches()?`.
+    /// the number of rows of the grid; `surface.nb_u_patches()?`.
     pub fn nb_u_patches(&self) -> Result<i32, Failure> {
         let grid = self.grid("NbUPatches")?;
         Ok(grid.array2().col_length())
     }
 
-    /// `NbVPatches()`: the number of columns of the grid; `surface.nb_v_patches()?`.
+    /// the number of columns of the grid; `surface.nb_v_patches()?`.
     pub fn nb_v_patches(&self) -> Result<i32, Failure> {
         let grid = self.grid("NbVPatches")?;
         Ok(grid.array2().row_length())
     }
 
-    /// `Patch(i, j)`: the patch at row `i`, column `j`; Standard_OutOfRange outside the
+    /// the patch at row `i`, column `j`; Standard_OutOfRange outside the
     /// grid; `surface.patch(1, 1)?`.
     pub fn patch(&self, i: i32, j: i32) -> Result<Handle<dyn GeomSurface>, Failure> {
         let grid = self.grid("Patch")?;
@@ -184,8 +178,7 @@ impl ShapeExtendCompositeSurface {
         Ok(patch.clone())
     }
 
-    /// The patch at `(i, j)`, Standard_NullObject when it is a null surface (a null
-    /// dereference natively).
+    /// Return the patch at `(i, j)`, rejecting an absent surface with a typed failure.
     fn live_patch(&self, i: i32, j: i32) -> Result<Handle<dyn GeomSurface>, Failure> {
         let patch = self.patch(i, j)?;
         if patch.is_null() {
@@ -194,31 +187,31 @@ impl ShapeExtendCompositeSurface {
         Ok(patch)
     }
 
-    /// `Patch(U, V)`: the patch of the global parameters; `surface.patch_at(u, v)?`.
+    /// the patch of the global parameters; `surface.patch_at(u, v)?`.
     pub fn patch_at(&self, u: f64, v: f64) -> Result<Handle<dyn GeomSurface>, Failure> {
         self.patch(self.locate_u_parameter(u)?, self.locate_v_parameter(v)?)
     }
 
-    /// `Patch(pnt)`: the patch of the global point; `surface.patch_at_point(p)?`.
+    /// the patch of the global point; `surface.patch_at_point(p)?`.
     pub fn patch_at_point(&self, pnt: Point2) -> Result<Handle<dyn GeomSurface>, Failure> {
         self.patch_at(pnt.x(), pnt.y())
     }
 
-    /// `LocateUParameter(U)`: the row whose joint interval holds `u` (the first row below
+    /// the row whose joint interval holds `u` (the first row below
     /// the second joint, the last row past the others); `surface.locate_u_parameter(u)?`.
     pub fn locate_u_parameter(&self, u: f64) -> Result<i32, Failure> {
         let nb = self.nb_u_patches()?;
         locate(&self.joints(true, "LocateUParameter")?, nb, u)
     }
 
-    /// `LocateVParameter(V)`: the column of `v`, as [`Self::locate_u_parameter`];
+    /// the column of `v`, as [`Self::locate_u_parameter`];
     /// `surface.locate_v_parameter(v)?`.
     pub fn locate_v_parameter(&self, v: f64) -> Result<i32, Failure> {
         let nb = self.nb_v_patches()?;
         locate(&self.joints(false, "LocateVParameter")?, nb, v)
     }
 
-    /// `LocateUVPoint(pnt, i, j)`: the row and column of a global point;
+    /// the row and column of a global point;
     /// `let (i, j) = surface.locate_uv_point(p)?;`.
     pub fn locate_uv_point(&self, pnt: Point2) -> Result<(i32, i32), Failure> {
         Ok((
@@ -239,7 +232,7 @@ fn locate(joints: &JointValues, nb: i32, value: f64) -> Result<i32, Failure> {
     Ok(nb)
 }
 
-/// `joints->Value(i)`; Standard_OutOfRange outside the array.
+/// Read one joint value, returning a typed error outside the array bounds.
 fn joint(joints: &JointValues, i: i32, member: &str) -> Result<f64, Failure> {
     let array = joints.array1();
     array
@@ -291,21 +284,21 @@ impl ShapeExtendCompositeSurface {
         Ok((u, v))
     }
 
-    /// `ULocalToGlobal(i, j, u)`: the global U of the local `u` of patch `(i, j)`;
+    /// the global U of the local `u` of patch `(i, j)`;
     /// `surface.u_local_to_global(1, 1, 0.5)?`.
     pub fn u_local_to_global(&self, i: i32, j: i32, u: f64) -> Result<f64, Failure> {
         let (cell, _) = self.cells(i, j, "ULocalToGlobal")?;
         Ok(cell.local_to_global(u))
     }
 
-    /// `VLocalToGlobal(i, j, v)`: the global V of the local `v`;
+    /// the global V of the local `v`;
     /// `surface.v_local_to_global(1, 1, 0.5)?`.
     pub fn v_local_to_global(&self, i: i32, j: i32, v: f64) -> Result<f64, Failure> {
         let (_, cell) = self.cells(i, j, "VLocalToGlobal")?;
         Ok(cell.local_to_global(v))
     }
 
-    /// `LocalToGlobal(i, j, uv)`: both; `surface.local_to_global(1, 1, uv)?`.
+    /// both; `surface.local_to_global(1, 1, uv)?`.
     pub fn local_to_global(&self, i: i32, j: i32, uv: Point2) -> Result<Point2, Failure> {
         let (u, v) = self.cells(i, j, "LocalToGlobal")?;
         Ok(Point2::new(
@@ -314,21 +307,21 @@ impl ShapeExtendCompositeSurface {
         ))
     }
 
-    /// `UGlobalToLocal(i, j, U)`: the local u on patch `(i, j)` of the global `u`;
+    /// the local u on patch `(i, j)` of the global `u`;
     /// `surface.u_global_to_local(1, 1, 0.5)?`.
     pub fn u_global_to_local(&self, i: i32, j: i32, u: f64) -> Result<f64, Failure> {
         let (cell, _) = self.cells(i, j, "UGlobalToLocal")?;
         Ok(cell.global_to_local(u))
     }
 
-    /// `VGlobalToLocal(i, j, V)`: the local v of the global `v`;
+    /// the local v of the global `v`;
     /// `surface.v_global_to_local(1, 1, 0.5)?`.
     pub fn v_global_to_local(&self, i: i32, j: i32, v: f64) -> Result<f64, Failure> {
         let (_, cell) = self.cells(i, j, "VGlobalToLocal")?;
         Ok(cell.global_to_local(v))
     }
 
-    /// `GlobalToLocal(i, j, UV)`: both; `surface.global_to_local(1, 1, uv)?`.
+    /// both; `surface.global_to_local(1, 1, uv)?`.
     pub fn global_to_local(&self, i: i32, j: i32, uv: Point2) -> Result<Point2, Failure> {
         let (u, v) = self.cells(i, j, "GlobalToLocal")?;
         Ok(Point2::new(
@@ -337,7 +330,7 @@ impl ShapeExtendCompositeSurface {
         ))
     }
 
-    /// `GlobalToLocalTransformation(i, j, uFact, Trsf)`: the global-to-local mapping of
+    /// the global-to-local mapping of
     /// patch `(i, j)` as a U affinity factor and a 2D transformation (a translation then a
     /// scale by the V factor); true unless both are the identity;
     /// `let (changed, u_fact, trsf) = surface.global_to_local_transformation(1, 1)?;`.
@@ -371,7 +364,7 @@ impl ShapeExtendCompositeSurface {
 
 impl Cell {
     /// `u * scale + (joint - u1 * scale)` with `scale = (b - a) / (u2 - u1)`: the order of
-    /// the native formula, stable for an infinite `u1`.
+    /// the formula, stable for an infinite `u1`.
     fn local_to_global(&self, local: f64) -> f64 {
         let scale = (self.joint_last - self.joint_first) / (self.last - self.first);
         local * scale + (self.joint_first - self.first * scale)

@@ -1,4 +1,4 @@
-//! tests/bugs/xde case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 whose inputs
+//! bugs xde regression cases whose inputs
 //! are in the public dataset or built by the script. Each body follows its script line by
 //! line; the bugs group end only prints `TEST COMPLETED`.
 use super::bugs_common::banner;
@@ -94,7 +94,7 @@ pub fn bug34(s: &mut dyn Session) {
     );
 }
 
-/// OCC1430: ShapeFix_Wireframe processes separate wires (`fixsmall` or `fixwgaps`).
+/// OCC1430: ShapeFixWireframe processes separate wires (`fixsmall` or `fixwgaps`).
 fn bug1430(s: &mut dyn Session, file: &str, gaps: bool, image: &str) {
     banner(&[
         "================",

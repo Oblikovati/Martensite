@@ -1,5 +1,4 @@
-//! Translation of ShapeFix_EdgeConnect_Test.cxx at
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871; original geometry and tolerances.
+//! Edge connection regressions with fixed geometry and tolerances.
 #![allow(non_snake_case)]
 mod healing_support;
 use healing_support::compound;

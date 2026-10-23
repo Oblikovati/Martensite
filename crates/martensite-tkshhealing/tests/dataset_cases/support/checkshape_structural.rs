@@ -1,4 +1,4 @@
-//! BRepTest_CheckCommands.cxx `checkshape shape prefix` (the structural output style):
+//! `checkshape shape prefix` (the structural output style):
 //! ` -- The Shape <name> looks OK`, or the count of each problem and the faulty shapes by
 //! type (the `<prefix>_v`, `_e`, ... compounds are scenario variables the cases never read).
 use super::checkshape::CheckOptions;
@@ -11,7 +11,7 @@ use martensite_tkernel::ncollection::DataMap;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tktopalgo::brep_check::{BRepCheckAnalyzer, BRepCheckStatus, ListOfStatus};
 
-/// `NumberOfStatus`: the count of the `BRepCheck_Status` values without `NoError`.
+/// `NumberOfStatus`: the count of the `BRepCheckStatus` values without `NoError`.
 const NUMBER_OF_STATUS: usize = 36;
 
 /// The logged result of checking a named shape.

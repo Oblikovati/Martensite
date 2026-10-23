@@ -1,4 +1,4 @@
-//! Native small-edge midpoint, degeneracy and accumulated-status behavior.
+//! small-edge midpoint, degeneracy and accumulated-status behavior.
 mod support;
 use martensite_tkbrep::{
     brep::BRepBuilder,

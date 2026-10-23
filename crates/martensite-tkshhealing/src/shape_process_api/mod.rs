@@ -1,6 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeProcessAPI at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! the retained behavior package ShapeProcessAPI: `ShapeProcessAPI_ApplySequence`, the API that applies a
+//! ShapeProcessAPI: `ShapeProcessAPIApplySequence`, the API that applies a
 //! ShapeProcess sequence of a resource file to a shape.
 use crate::shape_process::{
     ShapeProcess, ShapeProcessContext, ShapeProcessOperLibrary, ShapeProcessShapeContext,
@@ -11,7 +9,7 @@ use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// `ShapeProcessAPI_ApplySequence`: a shape context on a resource file and the name of
+/// `ShapeProcessAPIApplySequence`: a shape context on a resource file and the name of
 /// the sequence to run.
 ///
 /// ```
@@ -26,7 +24,7 @@ pub struct ShapeProcessAPIApplySequence {
 }
 
 impl ShapeProcessAPIApplySequence {
-    /// `ShapeProcessAPI_ApplySequence(rscName, seqName)`: a shape context on the resource
+    /// a shape context on the resource
     /// file (detalisation FACE) and the operator library initialized.
     /// Example: `ShapeProcessAPIApplySequence::new("DEXCAF", "read.step")?`.
     pub fn new(resource: &str, sequence: &str) -> Result<Self, Failure> {
@@ -39,7 +37,7 @@ impl ShapeProcessAPIApplySequence {
         })
     }
 
-    /// `Context()`: the shape context (shared).
+    /// the shape context (shared).
     pub fn context(&self) -> Handle<ShapeProcessShapeContext> {
         self.context.clone()
     }
@@ -49,9 +47,9 @@ impl ShapeProcessAPIApplySequence {
         self.context = context.clone();
     }
 
-    /// `PrepareShape(shape, fillmap, until, theProgress)`: the context initialized on the
+    /// the context initialized on the
     /// shape, the sequence run when the resource file defines `<seq>.exec.op`, and the
-    /// result; a null shape is returned as is. `fillmap` and `until` are unused natively.
+    /// result; a null shape is returned as is. The `fillmap` and `until` arguments are unused.
     /// Example: `api.prepare_shape(&shape, false, ShapeEnum::Shape, &range)?`.
     pub fn prepare_shape(
         &mut self,
@@ -74,16 +72,16 @@ impl ShapeProcessAPIApplySequence {
         Ok(ctx.result())
     }
 
-    /// `ClearMap()`: does nothing ("myContext->Map().Clear()" is commented out natively).
+    /// Leave the context map unchanged; `api.clear_map()` is a no-op.
     pub fn clear_map(&mut self) {}
 
-    /// `Map()`: a copy of the map of the context.
+    /// a copy of the map of the context.
     pub fn map(&self) -> Result<ShapeProcessShapeMap, Failure> {
         Ok(self.context.get().ok_or_else(null_context)?.map())
     }
 
-    /// `PrintPreparationResult()`: the same report as
-    /// `ShapeProcess_ShapeContext::PrintStatistics` (the native bodies are identical).
+    /// the same report as
+    /// `ShapeProcessShapeContext::print_statistics` (the bodies are identical).
     pub fn print_preparation_result(&self) -> Result<(), Failure> {
         self.context
             .get()

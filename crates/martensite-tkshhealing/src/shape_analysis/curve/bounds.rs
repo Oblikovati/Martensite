@@ -1,4 +1,4 @@
-//! Native sampled bounds with the ten-step coordinate-extremum refinement.
+//! sampled bounds with the ten-step coordinate-extremum refinement.
 use super::ShapeAnalysisCurve;
 use martensite_tkernel::{
     ncollection::Array1,
@@ -22,7 +22,7 @@ fn sample_parameters(
     let adaptor = Geom2dAdaptorCurve::with_range(curve, bounds.0, bounds.1)?;
     let intervals = adaptor.nb_intervals(Shape::C2)?;
     let samples = if intervals < 2 { count - 1 } else { intervals };
-    // Native negative sample counts produce an unused empty array and no box changes.
+    // negative sample counts produce an unused empty array and no box changes.
     let mut parameters = Array1::with_bounds(1, (samples + 1).max(0))
         .map_err(|e| e.into_failure("ShapeAnalysis_Curve::FillBndBox"))?;
     if samples == intervals {
@@ -75,7 +75,7 @@ fn coordinate_extremum(
             return Ok(Some(point));
         }
         parameter -= first.dot(direction) / determinant;
-        // Native returns the previous iterate's point without reevaluating D2.
+        // returns the previous iterate's point without reevaluating D2.
         if (parameter - previous).abs() < precision::p_confusion() {
             return Ok(Some(point));
         }

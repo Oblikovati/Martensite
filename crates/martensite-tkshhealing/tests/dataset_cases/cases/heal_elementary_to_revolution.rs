@@ -1,9 +1,8 @@
-//! tests/heal/elementary_to_revolution case bodies at
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871: each restores `a` and sets `nb_revol`, then
-//! the grid end points `CSF_dataDefaults` to tests/heal/data, runs `DT_ApplySeq result a
+//! heal elementary to revolution regression cases: each restores `a` and sets `nb_revol`, then
+//! the grid end points `CSF_dataDefaults` to data, runs `DT_ApplySeq result a
 //! data data1` (the ElementaryToRevolution operator), explodes the faces of `a` and
 //! `result`, dumps the surface of each pair and counts the faces whose type changed to
-//! SurfaceOfRevolution, which must be `nb_revol`; tests/heal/end shows `result` with
+//! SurfaceOfRevolution, which must be `nb_revol`; end shows `result` with
 //! `checkview -display result -2d`.
 use crate::support::{
     commands::{dump_surface, explode_type, mksurface},
@@ -72,27 +71,27 @@ fn elementary_to_revolution(s: &mut dyn Session, file: &str, nb_revol: usize, im
     checkview_display(s, Some("result"), image);
 }
 
-/// tests/heal/elementary_to_revolution/A1.
+/// elementary to revolution — A1.
 pub fn a1(s: &mut dyn Session) {
     elementary_to_revolution(s, "DSE3.rle", 4, "A1");
 }
 
-/// tests/heal/elementary_to_revolution/A2.
+/// elementary to revolution — A2.
 pub fn a2(s: &mut dyn Session) {
     elementary_to_revolution(s, "coneETR.rle", 1, "A2");
 }
 
-/// tests/heal/elementary_to_revolution/A3.
+/// elementary to revolution — A3.
 pub fn a3(s: &mut dyn Session) {
     elementary_to_revolution(s, "sphereETR.rle", 1, "A3");
 }
 
-/// tests/heal/elementary_to_revolution/A4.
+/// elementary to revolution — A4.
 pub fn a4(s: &mut dyn Session) {
     elementary_to_revolution(s, "cylinderETR.rle", 1, "A4");
 }
 
-/// tests/heal/elementary_to_revolution/A5.
+/// elementary to revolution — A5.
 pub fn a5(s: &mut dyn Session) {
     elementary_to_revolution(s, "torusETR.rle", 1, "A5");
 }

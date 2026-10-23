@@ -1,4 +1,4 @@
-//! the retained behavior `ShapeUpgrade_ConvertCurve3dToBezier` at the pinned source revision.
+//! Convert spatial curves to Bezier pieces with shared split parameters.
 use super::{ShapeUpgradeSplitCurve3d, SplitCurve, SplitCurveData, SplitCurves3d};
 use martensite_tkernel::{
     impl_transient,

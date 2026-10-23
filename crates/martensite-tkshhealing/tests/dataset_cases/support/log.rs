@@ -9,7 +9,7 @@
 //! fails here too, as the TKBRep cases treat a disappeared defect.
 //!
 //! The cases log with [`puts`] (a script `puts`) and [`result`] (a scenario command result);
-//! TODO and REQUIRED patterns are literal texts here (none of the translated cases uses a
+//! TODO and REQUIRED patterns are literal texts here (none of the regression cases uses a
 //! regexp metacharacter in them).
 use std::cell::RefCell;
 
@@ -30,7 +30,7 @@ pub fn result(text: &str) {
     }
 }
 
-/// `puts "TODO All: pattern"` (the platforms of the translated cases include Linux).
+/// `puts "TODO All: pattern"` (the platforms of the regression cases include Linux).
 pub fn todo(pattern: &str) {
     puts(&format!("TODO OCC12345 ALL: {pattern}"));
 }
@@ -105,7 +105,7 @@ const COMMON: &[BadWord] = &[
     ),
 ];
 
-/// The group rules (tests/<group>/parse.rules) the translated grids read before COMMON.
+/// The group rules (tests/<group>/parse.rules) the regression groups read before COMMON.
 fn group_rules(group: &str) -> &'static [BadWord] {
     const FAULTY: BadWord = bw(Rule::Failed, "Faulty", false, true);
     const RELATIVE: BadWord = bw(Rule::Ok, "Relative error of mass computation", false, false);

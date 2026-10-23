@@ -1,13 +1,10 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeUpgrade at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! the retained behavior package ShapeUpgrade: the tools that split and convert shapes (division by
+//! ShapeUpgrade: the tools that split and convert shapes (division by
 //! continuity, angle or area, UnifySameDomain).
 //!
 //! Package functions [`ShapeUpgrade`]
 //! (C0 B-splines split into C1 pieces), [`ShapeUpgradeTool`] (the context and
 //! tolerances of the tools), [`ShapeUpgradeRemoveLocations`] and the base curve splitter
-//! [`SplitCurve`] with [`ShapeUpgradeSplitCurve`]. docs/shhealing-design.md section 8
-//! fixes how they map. The classes that use ShapeAnalysis or ShapeFix classes wait for
+//! [`SplitCurve`] with [`ShapeUpgradeSplitCurve`]. Both splitters retain the geometry and split parameters needed by division. The classes that use ShapeAnalysis or ShapeFix classes wait for
 //! those packages.
 mod package;
 mod remove_locations;

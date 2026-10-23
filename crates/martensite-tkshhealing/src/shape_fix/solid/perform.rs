@@ -22,7 +22,7 @@ impl ShapeFixSolid {
     pub fn perform(&self) -> Result<bool, Failure> {
         self.perform_with_progress(&ProgressRange::default())
     }
-    /// Repair with the retained behavior cancellation points; `tool.perform_with_progress(&progress)?`.
+    /// Repair with cancellation points; `tool.perform_with_progress(&progress)?`.
     pub fn perform_with_progress(&self, progress: &ProgressRange<'_>) -> Result<bool, Failure> {
         if self.context().is_null() {
             self.set_context(&Handle::new(ShapeBuildReShape::new()));

@@ -1,4 +1,4 @@
-//! Closed-edge subdivision policy from the retained behavior 3d097a0328e71b8.
+//! Closed-edge subdivision policy.
 use super::{
     ShapeDivider, ShapeUpgradeClosedEdgeDivide, ShapeUpgradeFaceDivide, ShapeUpgradeShapeDivide,
     ShapeUpgradeWireDivide,
@@ -6,7 +6,7 @@ use super::{
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::Handle;
 
-/// Split closed edges with the native midpoint criterion; `ShapeUpgradeShapeDivideClosedEdges::new(shape)`.
+/// Split closed edges with the midpoint criterion; `ShapeUpgradeShapeDivideClosedEdges::new(shape)`.
 pub struct ShapeUpgradeShapeDivideClosedEdges {
     parent: ShapeUpgradeShapeDivide,
 }
@@ -30,7 +30,7 @@ impl ShapeUpgradeShapeDivideClosedEdges {
         divider.set_nb_split_points(1);
         divider
     }
-    /// Recreate the criterion; native intentionally ignores the count; `divider.set_nb_split_points(3)`.
+    /// Recreate the criterion; intentionally ignores the count; `divider.set_nb_split_points(3)`.
     pub fn set_nb_split_points(&self, _count: i32) {
         let edge = Handle::new(ShapeUpgradeClosedEdgeDivide::new());
         let wire = Handle::new(ShapeUpgradeWireDivide::new());

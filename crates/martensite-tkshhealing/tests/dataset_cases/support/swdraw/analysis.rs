@@ -1,4 +1,4 @@
-//! SWscenario_ShapeAnalysis.cxx `statshape shape [prefix]` (ShapeAnalysis_ShapeContents), the
+//! `statshape shape [prefix]` (ShapeAnalysisShapeContents), the
 //! form without the third `particul` argument, which only prints the counts.
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::Handle;
@@ -92,8 +92,8 @@ pub fn statshape_count(text: &str, keyword: &str, label: &str) -> usize {
     0
 }
 
-/// SWscenario_ShapeAnalysis.cxx `getanasurf res shape [pln|cyl|con|sph [tol]]` without a
-/// sample surface: ShapeAnalysis_CanonicalRecognition of the shell, face, edge or wire;
+/// `getanasurf res shape [pln|cyl|con|sph [tol]]` without a
+/// sample surface: ShapeAnalysisCanonicalRecognition of the shell, face, edge or wire;
 /// the surface it found (then `Gap = gap`, `%.17g`) or `Cannot get required surface`.
 pub fn getanasurf(
     shape: &Shape,

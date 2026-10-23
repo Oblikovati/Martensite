@@ -1,4 +1,4 @@
-//! Aggregate `ShapeFix_Wire::FixNotchedEdges` splitting and seam removal.
+//! Aggregate `ShapeFixWire::fix_notched_edges` splitting and seam removal.
 use super::ShapeFixWire;
 use crate::shape_analysis::{
     ShapeAnalysisEdge, ShapeAnalysisTransferParametersProj, TransferParameters,

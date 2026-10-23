@@ -1,5 +1,5 @@
-//! tests/mkface/mkplane case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 whose
-//! inputs are public or built: `mkplane result wire` (BRepBuilderAPI_MakeFace on the
+//! mkface mkplane regression cases whose
+//! inputs are public or built: `mkplane result wire` (BRepBuilderAPIMakeFace on the
 //! wire's plane), then the mkface group end ([`super::mkface_grid::mkface_end`]).
 use super::mkface_grid::{MaxTolerances, mkface_end};
 use crate::support::{
@@ -28,7 +28,7 @@ fn mkplane_result(v: &mut Vars, w: &martensite_tkbrep::topods::Shape) {
     }
 }
 
-/// tests/mkface/mkplane/A1 (`TODO #23240 ALL: Faulty shapes in variables faulty_1 to faulty_2`).
+/// mkplane — A1 (`TODO #23240 ALL: Faulty shapes in variables faulty_1 to faulty_2`).
 pub fn a1(s: &mut dyn Session) {
     log::todo("Faulty shapes in variables faulty_1 to faulty_2");
     let mut v = Vars::new(s);
@@ -47,7 +47,7 @@ pub fn a1(s: &mut dyn Session) {
     mkface_end(&mut v, MAX_1E6, "A1");
 }
 
-/// tests/mkface/mkplane/A2: the face of the first wire of a box.
+/// mkplane — A2: the face of the first wire of a box.
 pub fn a2(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     let mut maker = BRepPrimAPIMakeBox::from_sizes(10., 10., 10.).unwrap();

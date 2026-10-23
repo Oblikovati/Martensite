@@ -52,7 +52,7 @@ pub const NBSHAPES_ENTITIES: [&str; 9] = [
     "SHAPE",
 ];
 
-/// DBRep.cxx `nbshapes shape` (without `-t`): `BRepTools_ShapeSet::DumpExtent` of a set
+/// `nbshapes shape` (without `-t`): `BRepTools_ShapeSet::DumpExtent` of a set
 /// holding `shape`; an empty string for a null shape.
 pub fn nbshapes(shape: &Shape) -> String {
     if shape.is_null() {

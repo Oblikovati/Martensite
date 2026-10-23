@@ -1,4 +1,4 @@
-//! Area-based face subdivision from the retained behavior 3d097a0328e71b8.
+//! Area-based face subdivision.
 use super::{
     FaceDivideData, FaceDivider, ShapeUpgradeFaceDivide, ShapeUpgradeSplitSurfaceArea,
     ShapeUpgradeTool,
@@ -108,7 +108,7 @@ impl ShapeUpgradeFaceDivideArea {
         }
         Ok(())
     }
-    /// Perform subdivision; the argument is ignored as in the retained behavior; `divider.perform(0.)?`.
+    /// Perform subdivision; the argument is ignored; `divider.perform(0.)?`.
     pub fn perform(&self, area: f64) -> Result<bool, Failure> {
         FaceDivider::perform(self, area)
     }

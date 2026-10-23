@@ -45,7 +45,7 @@ pub struct ShapeConstructCurveJoin2d {
 }
 
 impl ShapeConstructCurve {
-    /// Join two oriented p-curves; `is_error` enables the retained behavior's invalid-topology crossing guard
+    /// Join two oriented p-curves; `is_error` enables invalid-topology crossing guard
     /// and `joined.curve` is `None` where the native call returns false.
     /// `let joined = tool.join_curves_2d(&mut request)?;`.
     pub fn join_curves_2d(

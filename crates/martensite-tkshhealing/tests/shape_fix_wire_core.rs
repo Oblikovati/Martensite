@@ -1,4 +1,4 @@
-//! Pinned the retained behavior ShapeFix_Wire reorder and gap-pass observations.
+//! ShapeFixWire reorder and gap-pass observations.
 use martensite_tkbrep::{
     topexp::Explorer,
     topods::{self, Builder, ShapeIterator, Wire},

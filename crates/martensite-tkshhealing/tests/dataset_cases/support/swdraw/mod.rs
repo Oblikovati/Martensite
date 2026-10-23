@@ -25,8 +25,8 @@ pub use upgrade::{
     dt_split_by_number, dt_to_bspl,
 };
 
-/// `ShapeFix::SameParameter(res, false)`, which the DT_* commands run on their result
-/// before `DBRep::Set`; `same_parameter_fix(&res)`.
+/// Apply non-forced same-parameter repair before publishing the result;
+/// `same_parameter_fix(&res)`.
 pub fn same_parameter_fix(shape: &Shape) {
     ShapeFix::same_parameter(
         shape,
@@ -68,8 +68,8 @@ pub fn status_lines(status: impl Fn(ShapeExtendStatus) -> bool) -> String {
         .collect()
 }
 
-/// SWscenario_ShapeFix.cxx `fixshape result shape [prec [maxtol]] [switches]
-/// [-maxtaila deg] [-maxtailw w]`, `args` being the words after `shape`: a ShapeFix_Shape
+/// `fixshape result shape [prec [maxtol]] [switches]
+/// [-maxtaila deg] [-maxtailw w]`, `args` being the words after `shape`: a ShapeFixShape
 /// with a message registrator, the `-x`/`+x`/`*x` mode switches (l o h m d s i n), the
 /// tail options, Init, SetPrecision, SetMaxTolerance and Perform; without `+?` it prints
 /// nothing. `fixshape(&a, &["0.001", "0.005"])`.

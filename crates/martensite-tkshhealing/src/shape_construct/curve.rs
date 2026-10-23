@@ -1,9 +1,6 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeConstruct/ShapeConstruct_Curve.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-//
-// sln 29.12.2001 OCC90: FixKnots.
+// Knot repair keeps adjacent knots separated by the configured tolerance.
 
-//! `ShapeConstruct_Curve`: moves the ends of lines and B-splines onto points, converts
+//! `ShapeConstructCurve`: moves the ends of lines and B-splines onto points, converts
 //! curves to B-splines and spaces B-spline knots.
 mod adjust;
 mod convert_2d;
@@ -15,7 +12,7 @@ mod knots;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::Failure;
 
-/// `ShapeConstruct_Curve`: adjusts curves to have their ends at given points (lines and
+/// `ShapeConstructCurve`: adjusts curves to have their ends at given points (lines and
 /// B-splines only) and converts curves to B-splines.
 ///
 /// ```

@@ -1,4 +1,4 @@
-//! The operators of ShapeProcess_OperLibrary that apply a ShapeCustom modification:
+//! The operators of ShapeProcessOperLibrary that apply a ShapeCustom modification:
 //! DirectFaces, BSplineRestriction, ElementaryToRevolution, SweptToElementary and
 //! SurfaceToBSpline.
 use super::{ShapeProcessOperLibrary, operator_messages, shape_context};

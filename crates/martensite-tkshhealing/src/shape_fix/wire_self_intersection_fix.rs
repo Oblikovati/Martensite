@@ -18,7 +18,7 @@ struct SelfIntersectionRepair {
 }
 
 impl ShapeFixWire {
-    /// `FixSelfIntersectingEdge(num)`: remove a detected p-curve loop or raise its
+    /// remove a detected p-curve loop or raise its
     /// endpoint tolerance; mode one inserts a midpoint vertex and splits the edge.
     /// Example: `let fixed = fixer.fix_self_intersecting_edge(1)?;`.
     pub(super) fn fix_self_intersecting_edge(&self, index: i32) -> Result<bool, Failure> {

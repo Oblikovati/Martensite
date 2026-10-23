@@ -1,4 +1,4 @@
-//! Native closure diagnosis composes connection and singular-edge statuses.
+//! closure diagnosis composes connection and singular-edge statuses.
 use super::*;
 
 impl ShapeAnalysisWire {

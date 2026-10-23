@@ -1,4 +1,4 @@
-//! Native edge split criteria and shared parameter ownership at the retained behavior 3d097a0.
+//! edge split criteria and shared parameter ownership.
 use super::{ShapeUpgradeSplitCurve2d, ShapeUpgradeSplitCurve3d, ShapeUpgradeTool};
 use crate::shape_extend::ShapeExtendStatus;
 use martensite_tkbrep::topods::{Edge, Face};
@@ -10,7 +10,7 @@ use martensite_tkernel::{
 mod compute;
 /// Shared split parameters; `Handle::new(HSequence::<f64>::default())`.
 pub type EdgeSplitKnots = Handle<HSequence<f64>>;
-/// Native protected edge-division state for specialized criteria.
+/// protected edge-division state for specialized criteria.
 #[derive(Default)]
 pub struct EdgeDivideFields {
     /// Supimplementation face, retained by Clear.
@@ -42,7 +42,7 @@ impl Default for EdgeDivideData {
     }
 }
 impl EdgeDivideData {
-    /// Read native protected fields; `state.with(|fields|fields.has_curve_3d)`.
+    /// Read protected fields; `state.with(|fields|fields.has_curve_3d)`.
     pub fn with<R>(&self, read: impl FnOnce(&EdgeDivideFields) -> R) -> R {
         read(&self.fields.read())
     }

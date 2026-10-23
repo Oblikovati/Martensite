@@ -1,4 +1,4 @@
-//! tests/bugs/heal case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 whose inputs
+//! bugs heal regression cases whose inputs
 //! are in the public dataset. Each body follows its script line by line; the bugs group
 //! end only prints `TEST COMPLETED` (none of these cases sets `rel_tol`).
 pub(crate) use super::bugs_common::{banner, tolerance_max};

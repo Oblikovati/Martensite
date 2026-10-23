@@ -1,6 +1,6 @@
-//! `GlueEdgesWith3DCurves` of ShapeUpgrade_UnifySameDomain.cxx: the 3D curves of a chain
+//! `GlueEdgesWith3DCurves`: the 3D curves of a chain
 //! converted to C1 B-splines, concatenated (GeomConvert::ConcatC1 then
-//! GeomConvert_CompCurveToBSplineCurve) into the curve of one new edge.
+//! CompCurveToBSplineCurve) into the curve of one new edge.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topexp;
 use martensite_tkbrep::topods::{self, Edge, Shape, Vertex};
@@ -107,7 +107,7 @@ fn concatenated(
     Ok(concat.bspline_curve())
 }
 
-/// `GlueEdgesWith3DCurves(aChain, FirstVertex, LastVertex)`: the new edge on the
+/// the new edge on the
 /// concatenated curve between the two vertices, made same parameter.
 pub(super) fn glue_edges_with_3d_curves(
     chain: &[Shape],

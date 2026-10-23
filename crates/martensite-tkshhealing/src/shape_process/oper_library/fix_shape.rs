@@ -1,4 +1,4 @@
-//! The operator FixShape of ShapeProcess_OperLibrary: a ShapeFix_Shape configured from
+//! The operator FixShape of ShapeProcessOperLibrary: a ShapeFixShape configured from
 //! the context parameters, run once more without the tail fix when FixTailMode is 1.
 use super::modifications::registrator;
 use super::{operator_messages, shape_context};
