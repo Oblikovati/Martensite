@@ -36,7 +36,7 @@ impl_transient!(
 );
 
 impl BRepMeshMeshAlgoFactory {
-    /// `BRepMeshMeshAlgoFactory()`; `BRepMeshMeshAlgoFactory::new()`.
+    /// Create a surface-specific face algorithm factory; `BRepMeshMeshAlgoFactory::new()`.
     pub fn new() -> Self {
         Self::default()
     }

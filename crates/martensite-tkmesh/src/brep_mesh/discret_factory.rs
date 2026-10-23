@@ -110,7 +110,7 @@ pub struct BRepMeshIncrementalMeshFactory {
 impl_transient!(BRepMeshIncrementalMeshFactory, "BRepMesh_IncrementalMeshFactory", dyn BRepMeshDiscretAlgoFactory, transient, interfaces: [dyn BRepMeshDiscretAlgoFactory]);
 
 impl BRepMeshIncrementalMeshFactory {
-    /// `BRepMeshIncrementalMeshFactory()`: a factory registered as preferred;
+    /// Create a factory registered as preferred;
     /// `BRepMeshIncrementalMeshFactory::new()`.
     pub fn new() -> Handle<Self> {
         let factory = Handle::new(Self::unregistered());

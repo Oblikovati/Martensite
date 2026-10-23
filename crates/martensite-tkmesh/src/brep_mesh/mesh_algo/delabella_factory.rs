@@ -41,7 +41,7 @@ impl_transient!(
 );
 
 impl BRepMeshDelabellaMeshAlgoFactory {
-    /// `BRepMeshDelabellaMeshAlgoFactory()`; `BRepMeshDelabellaMeshAlgoFactory::new()`.
+    /// Create a point-cloud face algorithm factory; `BRepMeshDelabellaMeshAlgoFactory::new()`.
     pub fn new() -> Self {
         Self::default()
     }

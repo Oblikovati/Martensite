@@ -44,7 +44,7 @@ impl_transient!(
 );
 
 impl BRepMeshClassifier {
-    /// `BRepMeshClassifier()`: no wire; `BRepMeshClassifier::new()`.
+    /// Create a classifier without registered wires; `BRepMeshClassifier::new()`.
     pub fn new() -> Self {
         Self::default()
     }
