@@ -33,6 +33,8 @@ pub fn create_private_document_directory(directory: &Path) -> io::Result<()> {
 /// matches a default-policy probe in the same private staging directory.
 /// Custom writer policies are refused before publication rather than widened.
 /// The staged output must be a regular file; symbolic links are refused.
+/// An existing destination must also be a regular file. Resolve destination
+/// symbolic links before calling this boundary, as the document writer does.
 ///
 /// ```no_run
 /// use martensite_tkernel::osd::preserve_document_access;
@@ -41,6 +43,7 @@ pub fn create_private_document_directory(directory: &Path) -> io::Result<()> {
 /// # Ok::<(), std::io::Error>(())
 /// ```
 pub fn preserve_document_access(destination: &Path, staged: &Path) -> io::Result<()> {
+    validate_destination_file(destination)?;
     let metadata = std::fs::symlink_metadata(staged)?;
     if !metadata.file_type().is_file() {
         return Err(io::Error::new(
@@ -52,4 +55,19 @@ pub fn preserve_document_access(destination: &Path, staged: &Path) -> io::Result
         ));
     }
     backend::preserve_access(destination, staged)
+}
+
+fn validate_destination_file(destination: &Path) -> io::Result<()> {
+    match std::fs::symlink_metadata(destination) {
+        Ok(metadata) if metadata.file_type().is_file() => Ok(()),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error),
+        Ok(_) => Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!(
+                "document destination {} is not regular; expected a resolved regular file or an absent destination",
+                destination.display(),
+            ),
+        )),
+    }
 }

@@ -209,6 +209,25 @@ fn restrictive_writer_policy_is_not_widened_for_an_absent_destination() {
     assert_eq!(fs::read(&fixture.staged).unwrap(), b"completed replacement");
 }
 
+#[test]
+fn destination_alias_is_refused_without_dropping_referent_acl() {
+    let fixture = DocumentAccessFixture::new("destination-alias");
+    let expected = named_access_acl(fs::metadata(&fixture.destination).unwrap().uid());
+    xattr::set(&fixture.destination, ACCESS_ATTRIBUTES[0], &expected).unwrap();
+    let alias = fixture.directory.join("alias");
+    std::os::unix::fs::symlink(&fixture.destination, &alias).unwrap();
+    let before = AccessSnapshot::read(&fixture.staged).unwrap();
+    let failure = preserve_document_access(&alias, &fixture.staged).unwrap_err();
+    assert_eq!(failure.kind(), io::ErrorKind::InvalidInput);
+    before.verify(&fixture.staged).unwrap();
+    assert_eq!(
+        xattr::get(&fixture.destination, ACCESS_ATTRIBUTES[0]).unwrap(),
+        Some(expected)
+    );
+    assert_eq!(fs::read(&fixture.destination).unwrap(), b"original bytes");
+    assert_eq!(fs::read_link(alias).unwrap(), fixture.destination);
+}
+
 fn install_ordinary_creation_policy(fixture: &DocumentAccessFixture) {
     let mut acl = 2_u32.to_le_bytes().to_vec();
     for (tag, permission) in [(1_u16, 6_u16), (4, 4), (32, 4)] {
