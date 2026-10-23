@@ -127,5 +127,8 @@
     "input_counts": "unchanged",
     "classification_iterations": 100
   },
-  "test_executable_sha256": "4803db61a17b08d9d703df4332ed4dc6db58b3a2c300b07f569731702596b6b6"
+  "test_executable_sha256": "4803db61a17b08d9d703df4332ed4dc6db58b3a2c300b07f569731702596b6b6",
+  "integrated_source_revision": "a586ee3ab85f26671e7b9849c44dfdc15345e5f8",
+  "source_tree": "aa13975eac8c9bfc69e843374600e47b1bb8d019",
+  "integration_identity": "Integrated revision has exactly the tested source tree; original source revision retained for the timing receipt."
 }
