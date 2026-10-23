@@ -18,6 +18,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added shape healing, mesh construction and document-object model crates ([#215], [#216], [#217]).
 
+### Fixed
+
+- Corrected volume properties of trimmed faces with bounded Gauss-Kronrod integration (#221).
+
 ## [0.3.5] - 2026-10-20
 
 ### Added

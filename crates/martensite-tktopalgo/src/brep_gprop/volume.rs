@@ -4,6 +4,7 @@ use super::face::BRepGPropFace;
 use super::mesh_props::{BRepGPropMeshProps, MeshObjType};
 use super::package::{BRepGProp, FaceSources, located_origin};
 use super::vinert::BRepGPropVinert;
+use super::volume_gk::VolumeGKFlags;
 use super::volume_solids::volume_props;
 use crate::brep_check::explore::sub_shapes;
 use martensite_tkbrep::brep::BRepTool;
@@ -13,6 +14,30 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkgeombase::gprop::GProps;
 use martensite_tkmath::gp::Point3;
+
+/// The largest relative quadrature error accepted by the fixed-properties route.
+///
+/// A trimmed boundary can make a single Gauss pass under-resolve an otherwise smooth
+/// surface.  This limit preserves the inexpensive fixed route where it is adequate and
+/// switches to the existing adaptive integrator only when its independent two-order
+/// estimate says it is not.
+const FIXED_DOMAIN_ERROR_LIMIT: f64 = 1.0e-5;
+
+/// Whether a face can only contribute through its triangulation.
+///
+/// The Gauss-Kronrod route accepts geometric surfaces only. The fixed-properties
+/// contract also integrates mesh-only faces when `UseTriangulation` is false, so such
+/// a shape keeps the established face-by-face route.
+fn has_mesh_only_face(shape: &Shape) -> Result<bool, Failure> {
+    for shape in sub_shapes(shape, ShapeEnum::Face)? {
+        let face = topods::face(&shape)?;
+        let sources = FaceSources::of(&face)?;
+        if sources.no_surface && !sources.no_mesh {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
 
 /// The flags of the volume computations (`SkipShared`, `UseTriangulation`).
 #[derive(Clone, Copy, Debug)]
@@ -24,8 +49,8 @@ pub(super) struct VolumeFlags {
 impl BRepGProp {
     /// `VolumeProperties(S, VProps, OnlyClosed, SkipShared, UseTriangulation)`: `props`
     /// becomes a framework at the located origin holding the volume of `shape` (of each
-    /// closed shell with `only_closed`); fixed Gauss orders, meshes when asked or when a
-    /// face has no surface; `BRepGProp::volume_properties(&shape, &mut props, false, false, false)?`.
+    /// closed shell with `only_closed`); error-bounded Gauss-Kronrod integration, meshes
+    /// when asked or when a face has no surface; `BRepGProp::volume_properties(&shape, &mut props, false, false, false)?`.
     pub fn volume_properties(
         shape: &Shape,
         props: &mut GProps,
@@ -33,11 +58,21 @@ impl BRepGProp {
         skip_shared: bool,
         use_triangulation: bool,
     ) -> Result<(), Failure> {
-        let flags = VolumeFlags {
+        if use_triangulation || has_mesh_only_face(shape)? {
+            let flags = VolumeFlags {
+                skip_shared,
+                use_triangulation,
+            };
+            volume_by_shells(shape, props, 1.0, only_closed, flags)?;
+            return Ok(());
+        }
+        let flags = VolumeGKFlags {
+            cg_flag: true,
+            i_flag: true,
             skip_shared,
-            use_triangulation,
+            ..VolumeGKFlags::default()
         };
-        volume_by_shells(shape, props, 1.0, only_closed, flags)?;
+        Self::volume_properties_gk(shape, props, FIXED_DOMAIN_ERROR_LIMIT, only_closed, flags)?;
         Ok(())
     }
 
@@ -156,7 +191,7 @@ pub(super) fn volume_faces(
 }
 
 /// The Vinert integration of one face: adaptive below `eps` 1 (its error), else on the
-/// natural bounds or along the domain (error 0).
+/// natural bounds or with an error-bounded domain pass.
 fn volume_face(
     face: &Face,
     (tool, domain): (&mut BRepGPropFace, &mut BRepGPropDomain),
@@ -174,8 +209,8 @@ fn volume_face(
     }
     if is_natural {
         volume.perform(tool)?;
-    } else {
-        volume.perform_domain(tool, domain)?;
+        return Ok(0.0);
     }
+    volume.perform_domain(tool, domain)?;
     Ok(0.0)
 }
