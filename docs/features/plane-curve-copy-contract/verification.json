@@ -1,0 +1,57 @@
+{
+  "issue": 243,
+  "base_revision": "b0ba55b4917f0fbb848571d8c4df1815ae642f3f",
+  "test_source": "crates/martensite-tkshhealing/tests/shape_custom_convert_to_bspline.rs",
+  "test_source_sha256": "6cda82b4b3db142fa962813c3e481a3f0a5e2145fff560710f0842e2251f0df7",
+  "platform": "x86_64-unknown-linux-gnu",
+  "toolchain": "1.99.0",
+  "production_changes": false,
+  "baseline_reproduction": {
+    "command": "cargo +1.99.0 test -p martensite-tkshhealing --test toolkit shape_custom_convert_to_bspline::plane_mode_converts_the_plane_on_the_face_bounds -- --exact",
+    "result": "failed at original true-copy assertion; 0 passed, 1 failed"
+  },
+  "independent_expectations": {
+    "surface_degree": [
+      1,
+      1
+    ],
+    "surface_bounds": [
+      -0.5,
+      0.5,
+      -0.5,
+      0.5
+    ],
+    "bottom_edge": "(t, 0, 0)",
+    "parameters": [
+      0,
+      0.25,
+      0.5,
+      1
+    ],
+    "distance_limit": 1e-14,
+    "copied_line_mutated_origin": [
+      5,
+      6,
+      7
+    ],
+    "source_line_mutated_origin": [
+      8,
+      9,
+      10
+    ]
+  },
+  "commands": [
+    "CARGO_TARGET_DIR=/tmp/plane-bspline-contract-target cargo +1.99.0 test -p martensite-tkshhealing --test toolkit",
+    "CARGO_TARGET_DIR=/tmp/plane-bspline-contract-target cargo +1.99.0 clippy -p martensite-tkshhealing --test toolkit -- -D warnings"
+  ],
+  "toolkit_result": {
+    "passed": 865,
+    "failed": 0,
+    "ignored": 0,
+    "seconds": 1.98
+  },
+  "scope": "owned unit-square fixtures; stored and generated representations; curve-copy success and false outputs; bidirectional curve mutation isolation",
+  "exclusions": [],
+  "strict_clippy": "passed",
+  "workspace_format_check": "passed"
+}
