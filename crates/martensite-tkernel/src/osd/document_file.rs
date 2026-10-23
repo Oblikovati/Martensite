@@ -29,7 +29,9 @@ pub fn create_private_document_directory(directory: &Path) -> io::Result<()> {
 
 /// Preserve and verify an existing destination's access policy on a staged file.
 /// A failure leaves the destination untouched; the caller owns syncing and publication.
-/// New destinations receive the final parent directory's inherited file policy.
+/// New destinations receive final-parent defaults only when their staged policy
+/// matches a default-policy probe in the same private staging directory.
+/// Custom writer policies are refused before publication rather than widened.
 /// The staged output must be a regular file; symbolic links are refused.
 ///
 /// ```no_run

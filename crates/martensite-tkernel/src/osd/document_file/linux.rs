@@ -27,7 +27,7 @@ pub(super) fn preserve_access(destination: &Path, staged: &Path) -> io::Result<(
     let snapshot = match AccessSnapshot::read(destination) {
         Ok(snapshot) => snapshot,
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            new_access::snapshot_for_new_destination(destination)?
+            new_access::snapshot_for_new_destination(destination, staged)?
         }
         Err(error) => return Err(error),
     };

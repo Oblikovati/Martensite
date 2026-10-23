@@ -11,13 +11,26 @@ struct InheritedAccessTemplate {
     _file: fs::File,
 }
 
-pub(super) fn snapshot_for_new_destination(destination: &Path) -> io::Result<AccessSnapshot> {
+pub(super) fn snapshot_for_new_destination(
+    destination: &Path,
+    staged: &Path,
+) -> io::Result<AccessSnapshot> {
+    verify_default_staged_policy(staged)?;
     let parent = destination
         .parent()
         .filter(|path| !path.as_os_str().is_empty())
         .unwrap_or_else(|| Path::new("."));
     let template = InheritedAccessTemplate::new(parent)?;
     AccessSnapshot::read(&template.path)
+}
+
+fn verify_default_staged_policy(staged: &Path) -> io::Result<()> {
+    let parent = staged
+        .parent()
+        .filter(|path| !path.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    let template = InheritedAccessTemplate::new(parent)?;
+    AccessSnapshot::read(&template.path)?.verify(staged)
 }
 
 impl InheritedAccessTemplate {

@@ -17,7 +17,9 @@ impl DocumentAccessFixture {
         let directory = fixture_directory(name);
         create_private_document_directory(&directory).unwrap();
         let destination = directory.join("document");
-        let staged = directory.join("replacement");
+        let private = directory.join("private");
+        create_private_document_directory(&private).unwrap();
+        let staged = private.join("replacement");
         fs::write(&destination, b"original bytes").unwrap();
         fs::write(&staged, b"completed replacement").unwrap();
         Self {
@@ -168,7 +170,6 @@ fn absent_destination_receives_the_final_parent_default_acl() {
     fs::remove_file(&fixture.destination).unwrap();
     let inherited = named_access_acl(fs::metadata(&fixture.directory).unwrap().uid());
     xattr::set(&fixture.directory, "system.posix_acl_default", &inherited).unwrap();
-    fs::set_permissions(&fixture.staged, fs::Permissions::from_mode(0o600)).unwrap();
     preserve_document_access(&fixture.destination, &fixture.staged).unwrap();
     assert_eq!(
         xattr::get(&fixture.staged, ACCESS_ATTRIBUTES[0]).unwrap(),
@@ -193,4 +194,33 @@ fn staged_directory_and_symbolic_link_are_refused_before_policy_changes() {
     let link_error = preserve_document_access(&fixture.destination, &fixture.staged).unwrap_err();
     assert_eq!(link_error.kind(), io::ErrorKind::InvalidInput);
     assert_eq!(fs::read(&fixture.destination).unwrap(), b"original bytes");
+}
+
+#[test]
+fn restrictive_writer_policy_is_not_widened_for_an_absent_destination() {
+    let fixture = DocumentAccessFixture::new("restrictive-writer");
+    fs::remove_file(&fixture.destination).unwrap();
+    install_ordinary_creation_policy(&fixture);
+    fs::set_permissions(&fixture.staged, fs::Permissions::from_mode(0o600)).unwrap();
+    let failure = preserve_document_access(&fixture.destination, &fixture.staged).unwrap_err();
+    assert_eq!(failure.kind(), io::ErrorKind::PermissionDenied);
+    assert!(!fixture.destination.exists());
+    assert_eq!(fs::metadata(&fixture.staged).unwrap().mode() & 0o777, 0o600);
+    assert_eq!(fs::read(&fixture.staged).unwrap(), b"completed replacement");
+}
+
+fn install_ordinary_creation_policy(fixture: &DocumentAccessFixture) {
+    let mut acl = 2_u32.to_le_bytes().to_vec();
+    for (tag, permission) in [(1_u16, 6_u16), (4, 4), (32, 4)] {
+        acl.extend(tag.to_le_bytes());
+        acl.extend(permission.to_le_bytes());
+        acl.extend(u32::MAX.to_le_bytes());
+    }
+    xattr::set(&fixture.directory, "system.posix_acl_default", &acl).unwrap();
+    let stage_parent = fixture.staged.parent().unwrap();
+    xattr::set(stage_parent, "system.posix_acl_default", &acl).unwrap();
+    let control = stage_parent.join("ordinary-control");
+    fs::write(&control, b"").unwrap();
+    assert_eq!(fs::metadata(&control).unwrap().mode() & 0o777, 0o644);
+    fs::remove_file(control).unwrap();
 }
