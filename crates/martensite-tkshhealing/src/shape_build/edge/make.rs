@@ -1,6 +1,3 @@
-// Rust translation of ShapeBuild_Edge::RemoveCurve3d, BuildCurve3d and the six MakeEdge
-// members of ShapeBuild_Edge.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! Building the 3D curve of an edge and making edges on curves and p-curves.
 use super::{ShapeBuildEdge, is_periodic_3d};
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
@@ -13,7 +10,7 @@ use martensite_tkmath::toploc::Location;
 use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeShape};
 use martensite_tktopalgo::brep_lib::{BUILD_CURVE3D_DEFAULTS, build_curve3d};
 
-/// The curve of a `MakeEdge`, Standard_NullObject when null (a null dereference natively).
+/// The curve of a `MakeEdge`, Standard_NullObject when null (a null dereference in this implementation).
 fn live<'a, T: ?Sized + martensite_tkernel::standard::RuntimeTyped>(
     curve: &'a Handle<T>,
     what: &str,
@@ -37,7 +34,7 @@ impl ShapeBuildEdge {
     /// (#48 S4054: a C0 surface needs a C1 curve); on a SameRange edge the range is set on
     /// every representation (#50 S4054), and on a non-periodic curve a range beyond the
     /// curve is clamped to it (the edge loses SameRange). Any failure gives false, as the
-    /// native `try/catch`; `ShapeBuildEdge.build_curve_3d(&e)`.
+    /// `try/catch`; `ShapeBuildEdge.build_curve_3d(&e)`.
     pub fn build_curve_3d(&self, edge: &Edge) -> bool {
         self.try_build_curve_3d(edge).unwrap_or(false)
     }

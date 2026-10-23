@@ -1,9 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend/ShapeExtend_CompositeSurface.hxx/.cxx
-// (constructors, Init, the patches and joints, the local/global mappings) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeExtend_CompositeSurface`: a surface made of a grid of patches
-//! (docs/shhealing-design.md section 2).
+//! `ShapeExtendCompositeSurface`: a surface made of a grid of patches.
 mod geometry;
 mod joints;
 
@@ -30,19 +25,19 @@ struct CompositeFields {
     u_joints: JointValues,
     /// `myVJointValues`.
     v_joints: JointValues,
-    /// `myUClosed` (left uninitialized by the default constructor natively).
+    /// `myUClosed` (left uninitialized by the default constructor in this implementation).
     u_closed: bool,
     /// `myVClosed`.
     v_closed: bool,
 }
 
-/// `ShapeExtend_CompositeSurface`: a grid of patches (`NbUPatches` rows by `NbVPatches`
+/// `ShapeExtendCompositeSurface`: a grid of patches (`NbUPatches` rows by `NbVPatches`
 /// columns) with a global parametrisation: the joint values `U(1) < ... < U(NbU + 1)` and
 /// `V(1) < ... < V(NbV + 1)` map each patch's parameters linearly onto its cell.
 ///
 /// It is a `Geom_Surface`; it holds its fields behind a lock (docs/geom-design.md section
 /// 3) and never calls a patch while it holds the lock. Members that dereference the null
-/// grid of a default-constructed surface natively return Standard_NullObject errors.
+/// grid of a default-constructed surface in this implementation return Standard_NullObject errors.
 ///
 /// ```
 /// use martensite_tkshhealing::shape_extend::ShapeExtendCompositeSurface;
@@ -81,13 +76,13 @@ fn null_object(member: &str, what: &str) -> Failure {
 }
 
 impl ShapeExtendCompositeSurface {
-    /// `ShapeExtend_CompositeSurface()`: no patch; `ShapeExtendCompositeSurface::new()`.
+    /// `ShapeExtendCompositeSurface()`: no patch; `ShapeExtendCompositeSurface::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeExtend_CompositeSurface(GridSurf, param)`: [`Self::init`] on a new surface
-    /// (its result is dropped, as natively); `ShapeExtendCompositeSurface::with_grid(&grid, p)?`.
+    /// `ShapeExtendCompositeSurface(GridSurf, param)`: [`Self::init`] on a new surface
+    /// (its result is dropped, as in this implementation); `ShapeExtendCompositeSurface::with_grid(&grid, p)?`.
     pub fn with_grid(
         grid: &SurfaceGrid,
         param: ShapeExtendParametrisation,
@@ -97,7 +92,7 @@ impl ShapeExtendCompositeSurface {
         Ok(surface)
     }
 
-    /// `ShapeExtend_CompositeSurface(GridSurf, UJoints, VJoints)`: [`Self::init_with_joints`]
+    /// `ShapeExtendCompositeSurface(GridSurf, UJoints, VJoints)`: [`Self::init_with_joints`]
     /// on a new surface; `ShapeExtendCompositeSurface::with_joints(&grid, &u, &v)?`.
     pub fn with_joints(
         grid: &SurfaceGrid,
@@ -185,7 +180,7 @@ impl ShapeExtendCompositeSurface {
     }
 
     /// The patch at `(i, j)`, Standard_NullObject when it is a null surface (a null
-    /// dereference natively).
+    /// dereference in this implementation).
     fn live_patch(&self, i: i32, j: i32) -> Result<Handle<dyn GeomSurface>, Failure> {
         let patch = self.patch(i, j)?;
         if patch.is_null() {
@@ -371,7 +366,7 @@ impl ShapeExtendCompositeSurface {
 
 impl Cell {
     /// `u * scale + (joint - u1 * scale)` with `scale = (b - a) / (u2 - u1)`: the order of
-    /// the native formula, stable for an infinite `u1`.
+    /// the formula, stable for an infinite `u1`.
     fn local_to_global(&self, local: f64) -> f64 {
         let scale = (self.joint_last - self.joint_first) / (self.last - self.first);
         local * scale + (self.joint_first - self.first * scale)

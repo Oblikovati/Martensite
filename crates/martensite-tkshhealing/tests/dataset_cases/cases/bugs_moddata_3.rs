@@ -1,4 +1,4 @@
-//! tests/bugs/moddata_3 case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! bugs moddata 3 regression cases owned by
 //! TKShHealing whose inputs are in the public dataset or built by the script.
 use super::bugs_common::banner;
 use crate::support::{

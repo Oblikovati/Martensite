@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeProcess/ShapeProcess_Context.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeProcess_Context`: the resource file of a shape-processing sequence, read under a
+//! `ShapeProcessContext`: the resource file of a shape-processing sequence, read under a
 //! stack of scopes, and the messenger and trace level of the operators.
 mod resource_cache;
 mod values;
@@ -13,10 +10,10 @@ use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::Arc;
 
-/// The shared resource manager of a context (the native `occ::handle<Resource_Manager>`).
+/// The shared resource manager of a context (the `occ::handle<Resource_Manager>`).
 pub type ShapeProcessResource = Arc<SharedState<ResourceManager>>;
 
-/// The private fields of `ShapeProcess_Context`.
+/// The private fields of `ShapeProcessContext`.
 struct ContextFields {
     resource: Option<ShapeProcessResource>,
     scope: Option<Vec<AsciiString>>,
@@ -24,7 +21,7 @@ struct ContextFields {
     trace_level: i32,
 }
 
-/// `ShapeProcess_Context`: parameters are looked up in the resource manager under the
+/// `ShapeProcessContext`: parameters are looked up in the resource manager under the
 /// current scope (`scope.param`), with `&name` aliases for real and integer values.
 ///
 /// ```
@@ -46,7 +43,7 @@ impl_transient!(
 );
 
 impl Default for ShapeProcessContext {
-    /// The native default constructor: no resource manager, the default messenger, trace
+    /// The default constructor: no resource manager, the default messenger, trace
     /// level 1.
     fn default() -> Self {
         Self {
@@ -62,12 +59,12 @@ impl Default for ShapeProcessContext {
 }
 
 impl ShapeProcessContext {
-    /// `ShapeProcess_Context()`; `ShapeProcessContext::new()`.
+    /// `ShapeProcessContext()`; `ShapeProcessContext::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeProcess_Context(file, scope)`: `Init(file, scope)`, then the default messenger
+    /// `ShapeProcessContext(file, scope)`: `Init(file, scope)`, then the default messenger
     /// and trace level 1; `ShapeProcessContext::with_file("DE", "read")?`.
     pub fn with_file(file: &str, scope: &str) -> Result<Self, Failure> {
         let context = Self::new();
@@ -94,7 +91,7 @@ impl ShapeProcessContext {
         Ok(true)
     }
 
-    /// `ResourceManager()`: the current manager, `None` for the native null handle.
+    /// `ResourceManager()`: the current manager, `None` for the null handle.
     pub fn resource_manager(&self) -> Option<ShapeProcessResource> {
         self.fields.read().resource.clone()
     }
@@ -123,7 +120,7 @@ impl ShapeProcessContext {
         }
     }
 
-    /// `SetMessenger(messenger)`: `None` (the native null handle) restores the default
+    /// `SetMessenger(messenger)`: `None` (the null handle) restores the default
     /// messenger; `context.set_messenger(Some(messenger))`.
     pub fn set_messenger(&self, messenger: Option<Arc<Messenger>>) {
         self.fields.write().messenger =
@@ -158,7 +155,7 @@ impl ShapeProcessContext {
     }
 }
 
-/// The resource name of an ASCII string (the native `ToCString()`).
+/// The resource name of an ASCII string (the `ToCString()`).
 fn key(name: &AsciiString) -> String {
     String::from_utf8_lossy(name.as_bytes()).into_owned()
 }

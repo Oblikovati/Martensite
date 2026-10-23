@@ -1,6 +1,3 @@
-// Rust translation of ShapeBuild_ReShape::Apply(shape, until) and applyImpl of
-// ShapeBuild_ReShape.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The recursive `Apply` of a ShapeBuild re-shaper.
 use super::ShapeBuildReShape;
 use crate::shape_build::ShapeBuildEdge;

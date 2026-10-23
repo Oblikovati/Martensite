@@ -1,4 +1,4 @@
-//! tests/heal/surface_to_bspline case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871
+//! heal surface to bspline regression cases
 //! whose inputs are in the public dataset: each restores `a`, then the grid end runs
 //! `puts [DT_ToBspl result a]` (default options `ero`; it prints nothing) and
 //! `puts [checkshape result]`; tests/heal/end shows `result` with

@@ -1,9 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeBuild/ShapeBuild_Edge.hxx and the
-// members CopyReplaceVertices, CopyRanges, SetRange3d, CopyPCurves and Copy with the static
-// AdjustByPeriod and IsPeriodic of ShapeBuild_Edge.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeBuild_Edge`: copying edges with other vertices, ranges or p-curves
-//! (docs/shhealing-design.md section 3).
+//! `ShapeBuildEdge`: copying edges with other vertices, ranges or p-curves.
 mod make;
 mod pcurves;
 
@@ -20,7 +15,7 @@ use martensite_tkg3d::geom::{GeomCurve, GeomOffsetCurve, GeomSurface, GeomTrimme
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::toploc::Location;
 
-/// `ShapeBuild_Edge`: low-level operators to build and copy edges, their 3D curves and
+/// `ShapeBuildEdge`: low-level operators to build and copy edges, their 3D curves and
 /// their p-curves.
 ///
 /// ```
@@ -38,9 +33,9 @@ pub(crate) fn representations(
     Ok(edge_tshape(edge, "ShapeBuild_Edge")?.curves())
 }
 
-/// The static `AdjustByPeriod` of ShapeBuild_Edge.cxx ("added, cause invoke ShapeAnalysis
-/// leads to cyclic dependency"): the multiple of `period` that brings `val` nearest to
-/// `to_val`, 0 within half a period.
+/// Keep period adjustment local to avoid a cyclic dependency on shape analysis.
+/// Return the multiple of `period` bringing `val` nearest to `to_val`, or zero
+/// within half a period.
 pub(crate) fn adjust_by_period(val: f64, to_val: f64, period: f64) -> f64 {
     let diff = val - to_val;
     let d = diff.abs();
@@ -69,7 +64,7 @@ pub(crate) fn is_periodic_3d(curve: &Handle<dyn GeomCurve>) -> bool {
     }
 }
 
-/// The `IsPeriodic(Geom2d_Curve)` of ShapeBuild_Edge.cxx, the same for a p-curve.
+/// Apply the same periodicity rules to a p-curve as to a spatial curve.
 pub(crate) fn is_periodic_2d(curve: &Handle<dyn Geom2dCurve>) -> bool {
     let mut current = curve.clone();
     loop {

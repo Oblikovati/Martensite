@@ -1,4 +1,4 @@
-//! The wire building of `IntUnifyFaces` (ShapeUpgrade_UnifySameDomain.cxx): the boundary
+//! The wire building of `IntUnifyFaces` : the boundary
 //! edges chained in 2D on the reference face into new wires, the seams removed between
 //! the merged faces rebuilt where the walk crosses a period, and each wire made a new
 //! face (when it touches the surface bound) or kept as a wire, split at its branchings.

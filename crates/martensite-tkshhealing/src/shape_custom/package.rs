@@ -1,8 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The package functions of ShapeCustom: `ApplyModifier` (with the sharing of assemblies
-//! and the ShapeBuild_ReShape history) and the one-call modifications.
+//! and the ShapeBuildReShape history) and the one-call modifications.
 use super::{
     ShapeCustomBSplineRestriction, ShapeCustomConvertToBSpline, ShapeCustomConvertToRevolution,
     ShapeCustomDirectModification, ShapeCustomRestrictionParameters, ShapeCustomSweptToElementary,
@@ -184,7 +181,7 @@ impl ShapeCustom {
     }
 
     /// `DirectFaces(S)`: the shape without indirect surfaces
-    /// (ShapeCustom_DirectModification); `ShapeCustom::direct_faces(&shape)?`.
+    /// (ShapeCustomDirectModification); `ShapeCustom::direct_faces(&shape)?`.
     pub fn direct_faces(shape: &Shape) -> Result<Shape, Failure> {
         Self::apply_fresh(
             shape,
@@ -193,7 +190,7 @@ impl ShapeCustom {
     }
 
     /// `ScaleShape(S, scale)`: the shape scaled about the origin
-    /// (ShapeCustom_TrsfModification); `ShapeCustom::scale_shape(&shape, 2.0)?`.
+    /// (ShapeCustomTrsfModification); `ShapeCustom::scale_shape(&shape, 2.0)?`.
     pub fn scale_shape(shape: &Shape, scale: f64) -> Result<Shape, Failure> {
         let mut transform = Transform3::default();
         transform.set_scale(Point3::new(0., 0., 0.), scale)?;

@@ -1,8 +1,4 @@
-// Rust translation of the static RebuildShape functions of
-// ModelingAlgorithms/TKShHealing/ShapeUpgrade/ShapeUpgrade_RemoveLocations.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! The faces, edges and vertices of `ShapeUpgrade_RemoveLocations` rebuilt without
+//! The faces, edges and vertices of `ShapeUpgradeRemoveLocations` rebuilt without
 //! location.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{self, Edge, Face, Vertex};

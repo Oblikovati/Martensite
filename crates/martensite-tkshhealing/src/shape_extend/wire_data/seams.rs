@@ -1,6 +1,3 @@
-// Rust translation of ShapeExtend_WireData::ComputeSeams, IsSeam, Reverse(face) and the
-// static SwapSeam of ShapeExtend_WireData.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The seam edges of a wire data: an edge present twice, FORWARD and REVERSED.
 use super::{ShapeExtendWireData, WireDataFields, position};
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};

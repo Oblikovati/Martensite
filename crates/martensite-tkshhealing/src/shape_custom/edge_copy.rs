@@ -1,9 +1,5 @@
-// Rust translation of the NewCurve bodies that ShapeCustom_DirectModification.cxx and
-// ShapeCustom_ConvertToRevolution.cxx share at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The `NewCurve` of the ShapeCustom modifications that change surfaces only: an edge
-//! with a p-curve on a surface that changes is copied (docs/shhealing-design.md
-//! section 7).
+//! with a p-curve on a surface that changes is copied.
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::brep::access::edge_tshape;
 use martensite_tkbrep::brep::update_curves::as_gcurve;

@@ -1,4 +1,4 @@
-// ShapeUpgrade_ShellSewing.hxx/.cxx at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Sew faces into shells while retaining replacement history.
 use crate::shape_analysis::ShapeAnalysisShapeTolerance;
 use crate::shape_build::ShapeBuildReShape;
 use martensite_tkbrep::{
@@ -23,7 +23,7 @@ pub struct ShapeUpgradeShellSewing {
     reshape: ShapeBuildReShape,
 }
 impl ShapeUpgradeShellSewing {
-    /// Creates the persistent native shell set; `ShapeUpgradeShellSewing::new()`.
+    /// Creates the persistent shell set; `ShapeUpgradeShellSewing::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -91,7 +91,7 @@ impl ShapeUpgradeShellSewing {
 
     fn reverse_inside_solids(&self, shape: &Shape, tolerance: f64) -> Result<bool, Failure> {
         let mut reversed = false;
-        // Native classifies the original solids, then applies those identities to the rebuilt result.
+        // classifies the original solids, then applies those identities to the rebuilt result.
         for solid in Explorer::new(shape, ShapeEnum::Solid, ShapeEnum::Shape)? {
             let mut classifier = BRepClass3dSolidClassifier::with_shape(&solid)?;
             classifier.perform_infinite_point(tolerance)?;

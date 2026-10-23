@@ -1,4 +1,4 @@
-//! tests/heal/split_two_numbers case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871
+//! heal split two numbers regression cases
 //! that build their inputs: the hemisphere `psphere a 10 0 90` of tests/heal/split_number,
 //! its first face split by `DT_SplitByNumber result a_1 nu nv` and `checknbshapes result
 //! -t -face k`, then the grid end `puts [checkshape result]` and tests/heal/end.

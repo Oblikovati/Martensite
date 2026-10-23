@@ -1,6 +1,3 @@
-// Rust translation of ShapeFix/ShapeFix_Wire.cxx reorder and gap entry points at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! Ordered-wire state, reorder application and the pinned periodic p-curve repair.
 #[path = "wire_closed.rs"]
 mod wire_closed;
@@ -123,7 +120,7 @@ struct WireFixState {
     removed_segment: bool,
 }
 
-/// The implemented `ShapeFix_Wire` reorder, no-gap and periodic-cone p-curve paths.
+/// The implemented `ShapeFixWire` reorder, no-gap and periodic-cone p-curve paths.
 pub struct ShapeFixWire {
     parent: ShapeFixRoot,
     state: SharedState<WireFixState>,
@@ -190,12 +187,12 @@ impl Default for ShapeFixWire {
 }
 
 impl ShapeFixWire {
-    /// `ShapeFix_Wire()`: an unloaded fixer with closed-wire mode enabled.
+    /// `ShapeFixWire()`: an unloaded fixer with closed-wire mode enabled.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `Init(analyzer)`: share an existing ShapeAnalysis_Wire instance.
+    /// `Init(analyzer)`: share an existing ShapeAnalysisWire instance.
     pub fn init(&self, analyzer: &Handle<ShapeAnalysisWire>) {
         self.clear_statuses();
         self.state.write().analyzer = analyzer.clone();
@@ -401,22 +398,22 @@ impl ShapeFixWire {
         wire_data.remove(index + replacements.len() as i32)
     }
 
-    /// Reads native `ClosedMode`; `assert!(fixer.closed_mode())`.
+    /// Reads `ClosedMode`; `assert!(fixer.closed_mode())`.
     pub fn closed_mode(&self) -> bool {
         self.state.read().closed_mode
     }
 
-    /// Reads native `TopoMode`; `assert!(!fixer.topology_mode())`.
+    /// Reads `TopoMode`; `assert!(!fixer.topology_mode())`.
     pub fn topology_mode(&self) -> bool {
         self.state.read().topology_mode
     }
 
-    /// Reads native geometry modification mode; `assert!(fixer.geometry_mode())`.
+    /// Reads geometry modification mode; `assert!(fixer.geometry_mode())`.
     pub fn geometry_mode(&self) -> bool {
         self.state.read().geometry_mode
     }
 
-    /// Reads native loop-removal mode; `assert_eq!(fixer.remove_loop_mode(), -1)`.
+    /// Reads loop-removal mode; `assert_eq!(fixer.remove_loop_mode(), -1)`.
     pub fn remove_loop_mode(&self) -> i32 {
         self.state.read().remove_loop_mode
     }
@@ -500,7 +497,7 @@ impl ShapeFixWire {
         data.add_edge(&second, index + 1)
     }
 
-    /// Clears native repair status masks while preserving `StatusRemovedSegment`.
+    /// Clears repair status masks while preserving `StatusRemovedSegment`.
     /// Example: `fixer.clear_statuses()`.
     pub fn clear_statuses(&self) {
         let mut state = self.state.write();

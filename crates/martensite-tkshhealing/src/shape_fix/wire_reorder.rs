@@ -1,7 +1,4 @@
-// Rust translation of ShapeFix/ShapeFix_Wire.cxx FixReorder (both overloads) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeFix_Wire::FixReorder`: analyze the edge order and apply a ShapeAnalysis_WireOrder.
+//! `ShapeFixWire::FixReorder`: analyze the edge order and apply a ShapeAnalysisWireOrder.
 use super::ShapeFixWire;
 use crate::shape_analysis::ShapeAnalysisWireOrder;
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus, ShapeExtendWireData};
@@ -52,11 +49,11 @@ impl ShapeFixWire {
             return false;
         };
         let geometry = analysis.surface();
-        // Native dereferences the surface unguarded; a null one cannot be bi-periodic.
+        // dereferences the surface unguarded; a null one cannot be bi-periodic.
         !geometry.is_null() && geometry.is_u_periodic() && geometry.is_v_periodic()
     }
 
-    // Native checks every rank for a hole before it moves any edge.
+    // checks every rank for a hole before it moves any edge.
     fn apply_order(
         &self,
         wire_data: &Handle<ShapeExtendWireData>,

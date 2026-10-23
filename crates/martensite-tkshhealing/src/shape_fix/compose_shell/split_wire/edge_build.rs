@@ -320,7 +320,7 @@ mod side_code_tests {
     use super::{infer_external_code, infer_external_code_by_parameter};
     #[test]
     fn cut_and_unsplit_external_edges_use_opposite_native_side_codes() {
-        // ShapeFix_ComposeShell.cxx at 3d097a0 uses opposite ternaries in these branches.
+        // The two branches intentionally choose opposite parameter bounds.
         assert_eq!(infer_external_code(true, 1), 1);
         assert_eq!(infer_external_code(true, 2), 2);
         assert_eq!(infer_external_code(false, 1), 2);

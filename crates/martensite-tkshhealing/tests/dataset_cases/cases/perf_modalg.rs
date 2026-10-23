@@ -1,4 +1,4 @@
-//! tests/perf/modalg case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! perf modalg regression cases owned by
 //! TKShHealing whose inputs are in the public dataset: the timed command runs between
 //! `dchrono h restart` and `dchrono h stop counter text`, which prints its CPU time.
 use crate::support::{

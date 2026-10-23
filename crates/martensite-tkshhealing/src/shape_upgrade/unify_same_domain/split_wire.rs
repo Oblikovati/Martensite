@@ -1,4 +1,4 @@
-//! `SplitWire` of ShapeUpgrade_UnifySameDomain.cxx: a wire through splitting vertices cut
+//! `SplitWire`: a wire through splitting vertices cut
 //! into the loops starting at each of them, turning right at the branchings.
 use super::geometry::null_pcurve;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};

@@ -1,4 +1,4 @@
-//! tests/heal/surface_to_bezier case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871
+//! heal surface to bezier regression cases
 //! whose inputs are in the public dataset: each restores `a`, then the grid end runs
 //! `puts [DT_ShapeConvert result a 1 1]`, `set d [statshape result]`, `puts $d` and
 //! reports an `Error` when a `bspsur : BSplineSurface` row remains; tests/heal/end shows

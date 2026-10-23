@@ -1,6 +1,4 @@
-// Rust translation foundation for ShapeFix_IntersectionTool::FixSelfIntersectWire.
-
-//! Bounded p-curve intersection primitives used by wire self-intersection repair.
+//! Repair self-intersections within a wire.
 use martensite_tkernel::standard::Handle;
 use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dLine};
 use martensite_tkmath::gp::{Point2, Xy};

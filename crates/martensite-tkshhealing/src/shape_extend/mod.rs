@@ -1,6 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! the retained behavior package ShapeExtend: the tools and data structures the other Shape Healing
+//! ShapeExtend: the tools and data structures the other Shape Healing
 //! packages share.
 //!
 //! - [`ShapeExtendStatus`] codes the flags of the tools' statuses as bits
@@ -14,7 +12,7 @@
 //! - [`BasicMsgRegistrator`] receives the messages of the tools, and
 //!   [`ShapeExtendMsgRegistrator`] keeps them per object and per shape.
 //!
-//! docs/shhealing-design.md section 2 fixes how the transient classes map.
+//! Shared handles retain the supporting geometry and diagnostic state.
 mod complex_curve;
 mod composite_surface;
 mod explorer;

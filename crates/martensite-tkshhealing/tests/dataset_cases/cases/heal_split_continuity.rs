@@ -1,4 +1,4 @@
-//! tests/heal/split_continuity case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871
+//! heal split continuity regression cases
 //! whose inputs are in the public dataset: each restores `a`, then the grid end runs
 //! `puts [DT_ShapeDivide result a 0.01]`, `set d [statshape result]`, `puts $d` and
 //! reports an `Error` when a `c0curv : Curve Only C0` row remains; tests/heal/end shows

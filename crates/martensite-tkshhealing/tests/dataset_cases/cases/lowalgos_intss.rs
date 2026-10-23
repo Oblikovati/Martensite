@@ -1,4 +1,4 @@
-//! tests/lowalgos/intss case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! lowalgos intss regression cases owned by
 //! TKShHealing: the surfaces are intersected, each curve's range checked, its distance
 //! to both surfaces measured by `xdistcs`, every pair of curves checked not to overlap
 //! (`checkoverlapedges`), the number of curves compared, then the 2D screenshot.

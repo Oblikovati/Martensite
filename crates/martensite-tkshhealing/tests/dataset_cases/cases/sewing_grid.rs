@@ -1,4 +1,4 @@
-//! The body every tests/sewing case runs at its grid's tolerance (3d097a0328e71b826377d4814ab05ec3c3d23871):
+//! The body every tests/sewing case runs at its grid's tolerance ():
 //! ```text
 //! restore [locate_data_file file] a
 //! sewing result $tol a

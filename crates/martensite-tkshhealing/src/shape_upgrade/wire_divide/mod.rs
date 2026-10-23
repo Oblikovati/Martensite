@@ -1,4 +1,4 @@
-//! Native wire division at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! wire division.
 use super::{
     EdgeDivider, FixSmallCurves, ShapeUpgradeEdgeDivide, ShapeUpgradeFixSmallCurves,
     ShapeUpgradeSplitCurve2d, ShapeUpgradeSplitCurve3d, ShapeUpgradeTool, SplitCurve,
@@ -33,7 +33,7 @@ mod vertices;
 pub use state::{WireDivideData, WireDivideFields};
 /// Virtual splitting policy and parameter transfer; `tool.perform()?`.
 pub trait WireDivider: Transient {
-    /// Shared native protected fields; `tool.wire_divide_data()`.
+    /// Shared protected fields; `tool.wire_divide_data()`.
     fn wire_divide_data(&self) -> &WireDivideData;
     /// Inherited tolerance and context storage; `tool.wire_divide_base().precision()`.
     fn wire_divide_base(&self) -> &ShapeUpgradeTool;

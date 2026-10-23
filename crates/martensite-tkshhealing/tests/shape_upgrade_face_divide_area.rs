@@ -1,4 +1,4 @@
-//! Native reference cases at the retained behavior 3d097a0328e71b8.
+//! Area-based face subdivision regression cases.
 use martensite_tkbrep::{topexp::Explorer, topods::Shape};
 use martensite_tkernel::{message::ProgressRange, precision, standard::Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -178,14 +178,14 @@ fn patch_observation(shape: &Shape) -> [f64; 5] {
     [u1, u2, v1, v2, properties.mass()]
 }
 
-/// Native `tests/heal/split_two_numbers/A1..A3`: a hemisphere split by exact U/V counts.
+/// `tests/heal/split_two_numbers/A1..A3`: a hemisphere split by exact U/V counts.
 #[test]
 fn split_two_numbers_hemisphere_cases() {
     for (u_splits, v_splits, expected_faces) in [(3, 5, 15), (1, 5, 5), (5, 1, 5)] {
         let face = hemisphere(10.0);
         let divider = ShapeUpgradeFaceDivideArea::new(face);
         divider.set_splitting_by_number(true);
-        // The native command derives the area threshold from the exact grid count.
+        // The command derives the area threshold from the exact grid count.
         divider.set_max_area(-1.0);
         divider.set_numbers_uv_splits(u_splits, v_splits).unwrap();
         assert!(divider.perform(0.0).unwrap());
@@ -215,7 +215,7 @@ fn hemisphere(radius: f64) -> martensite_tkbrep::topods::Face {
     .unwrap()
 }
 
-/// Native `tests/heal/split_number/A1,A2,A7,A8`: requested part counts on spheres.
+/// `tests/heal/split_number/A1,A2,A7,A8`: requested part counts on spheres.
 #[test]
 fn split_number_sphere_cases() {
     for (radius, v_min, v_max, parts, expected_faces) in [

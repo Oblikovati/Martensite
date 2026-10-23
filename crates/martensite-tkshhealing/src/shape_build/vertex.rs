@@ -1,13 +1,10 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeBuild/ShapeBuild_Vertex.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeBuild_Vertex`: the smallest vertex that holds two others.
+//! `ShapeBuildVertex`: the smallest vertex that holds two others.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::Vertex;
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::{Point3, Vector3};
 
-/// `ShapeBuild_Vertex`: low-level tools to construct vertices.
+/// `ShapeBuildVertex`: low-level tools to construct vertices.
 ///
 /// ```
 /// use martensite_tkmath::gp::Point3;
@@ -22,7 +19,7 @@ pub struct ShapeBuildVertex;
 
 impl ShapeBuildVertex {
     /// `CombineVertex(V1, V2, tolFactor)`: [`Self::combine_points`] on the points and
-    /// tolerances of the two vertices; the native default factor is 1.0001;
+    /// tolerances of the two vertices; the default factor is 1.0001;
     /// `ShapeBuildVertex.combine_vertices(&v1, &v2, 1.0001)?`.
     pub fn combine_vertices(
         &self,

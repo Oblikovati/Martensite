@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_Geom.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeAnalysis_Geom`: the nearest plane of a point cloud and a transformation read from a
+//! `ShapeAnalysisGeom`: the nearest plane of a point cloud and a transformation read from a
 //! 3 x 4 matrix.
 use martensite_tkernel::ncollection::{Array1, HArray2};
 use martensite_tkernel::standard::real::real_first;
@@ -11,7 +8,7 @@ use martensite_tkmath::gp::{
     Axis3, Direction3, GeneralTransform3, Plane3, Point3, Transform3, Vector3, Xyz,
 };
 
-/// `ShapeAnalysis_Geom`: analysis of primitive geometric objects (static members only).
+/// `ShapeAnalysisGeom`: analysis of primitive geometric objects (static members only).
 ///
 /// ```
 /// use martensite_tkernel::ncollection::Array1;
@@ -31,8 +28,8 @@ pub struct ShapeAnalysisGeom;
 impl ShapeAnalysisGeom {
     /// `NearestPlane(Pnts, aPln, Dmax)`: the plane through the barycentre normal to the
     /// principal axis of smallest extent, when that extent is at most half of each other
-    /// one, with the largest distance of the points to it; `None` (native false) for a
-    /// cloud that fits no plane. The native `Dmax` is `RealFirst()` when no point is
+    /// one, with the largest distance of the points to it; `None` (false) for a
+    /// cloud that fits no plane. The `Dmax` is `RealFirst()` when no point is
     /// farther, which the loop always overrides for a non-empty cloud;
     /// `ShapeAnalysisGeom::nearest_plane(&points)?`.
     pub fn nearest_plane(points: &Array1<'_, Point3>) -> Result<Option<(Plane3, f64)>, Failure> {
@@ -103,7 +100,7 @@ impl ShapeAnalysisGeom {
     }
 }
 
-/// The axis (0-based) of the smallest extent, with the native tie rules.
+/// The axis (0-based) of the smallest extent, with the tie rules.
 fn smallest_extent_axis(dev: [f64; 3]) -> usize {
     if dev[0] < dev[1] {
         if dev[0] < dev[2] { 0 } else { 2 }
@@ -121,7 +118,7 @@ fn is_flat(dev: [f64; 3], axis: usize) -> bool {
     !(2.0 * dev[axis] > dev[a] || 2.0 * dev[axis] > dev[b])
 }
 
-/// The `gp_GTrsf` of the 3 x 4 coefficients, set cell by cell as natively.
+/// The `gp_GTrsf` of the 3 x 4 coefficients, set cell by cell as in this implementation.
 fn general_transform(matrix: &HArray2<f64>) -> Result<GeneralTransform3, Failure> {
     let cells = matrix.array2();
     let mut gtrsf = GeneralTransform3::default();

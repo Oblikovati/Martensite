@@ -1,5 +1,4 @@
-//! Translation of all declarations in ShapeAnalysis_CanonicalRecognition_Test.cxx at
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871, preserving builders, inputs and assertions.
+//! Canonical geometry recognition with fixed builders, inputs and assertions.
 #![allow(non_snake_case)]
 mod canonical_support;
 use canonical_support::*;

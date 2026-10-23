@@ -1,5 +1,4 @@
-// Translation of ShapeFix_Edge parameter and vertex repair at
-// the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Repair edge parameters, curve representations and vertex tolerances.
 mod add_pcurve;
 mod curves;
 mod parameter;

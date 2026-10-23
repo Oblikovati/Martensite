@@ -1,4 +1,4 @@
-//! `RelocatePCurvesToNewUorigin` of ShapeUpgrade_UnifySameDomain.cxx: the p-curves of the
+//! `RelocatePCurvesToNewUorigin`: the p-curves of the
 //! boundary edges walked contour by contour from the face holding the maximal coordinate,
 //! each shifted by the period so that the contour is continuous in 2D.
 use super::EdgePCurveMap;

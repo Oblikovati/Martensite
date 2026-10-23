@@ -3,7 +3,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dCurve};
 use martensite_tkg3d::geom::{GeomBSplineCurve, GeomCurve};
 
-/// The B-spline members `SegmentCurve` of ShapeConstruct.cxx uses, for 2D and 3D curves.
+/// B-spline operations needed to segment both planar and spatial curves.
 pub(super) trait SegmentedSpline {
     fn bounds(&self) -> (f64, f64);
     fn periodic(&self) -> bool;

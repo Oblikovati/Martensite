@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_Shell.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeAnalysis_Shell`: the orientation of the edges of shells (bad, free and
+//! `ShapeAnalysisShell`: the orientation of the edges of shells (bad, free and
 //! connected edges).
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topexp::Explorer;
@@ -10,7 +7,7 @@ use martensite_tkbrep::toptools::IndexedMapOfShape;
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 
-/// `ShapeAnalysis_Shell`: loads shells and checks that each edge of them is used once
+/// `ShapeAnalysisShell`: loads shells and checks that each edge of them is used once
 /// (free) or twice with opposite orientations (connected); other edges are bad.
 ///
 /// ```
@@ -83,7 +80,7 @@ fn check_edges(
 }
 
 impl ShapeAnalysisShell {
-    /// `ShapeAnalysis_Shell()`; `ShapeAnalysisShell::new()`.
+    /// `ShapeAnalysisShell()`; `ShapeAnalysisShell::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -180,7 +177,7 @@ impl ShapeAnalysisShell {
     }
 
     /// `Loaded(num)`: the loaded shell of rank `num`; Standard_OutOfRange outside
-    /// `1..=NbLoaded()` (natively `FindKey` raises, although the header promises a null
+    /// `1..=NbLoaded()` (in this implementation `FindKey` raises, although the header promises a null
     /// shape); `tool.loaded(1)?`.
     pub fn loaded(&self, num: i32) -> Result<Shape, Failure> {
         find_key(&self.shells, num, "ShapeAnalysis_Shell::Loaded")

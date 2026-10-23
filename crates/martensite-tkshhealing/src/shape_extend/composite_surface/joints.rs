@@ -1,8 +1,3 @@
-// Rust translation of the joint members of ShapeExtend_CompositeSurface.cxx (UJointValues,
-// VJointValues, UJointValue, VJointValue, SetUJointValues, SetVJointValues, SetUFirstValue,
-// SetVFirstValue, ComputeJointValues, CheckConnectivity and the static LimitValue and
-// GetLimitedBounds) at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The joint values of a composite surface and the connectivity of its patches.
 use super::{JointValues, ShapeExtendCompositeSurface, joint};
 use crate::shape_extend::ShapeExtendParametrisation;
@@ -216,7 +211,7 @@ impl ShapeExtendCompositeSurface {
     }
 
     /// For the first joint, sets the closed flag of the direction; for the others,
-    /// whether the gap is within `prec` (compared squared, as natively).
+    /// whether the gap is within `prec` (compared squared, as in this implementation).
     fn record_gap(&self, i: i32, max_dist2: f64, prec: f64, u_direction: bool) -> bool {
         if i != 1 {
             // `else if (maxdist2 > Prec * Prec) ok = false;`: a NaN gap does not fail.

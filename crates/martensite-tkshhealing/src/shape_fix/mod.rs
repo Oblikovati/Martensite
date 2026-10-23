@@ -1,7 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeFix at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! the retained behavior package ShapeFix: the fixing tools that correct the problems that ShapeAnalysis
-//! detects. docs/shhealing-design.md section 4 fixes how its classes map;
+//! ShapeFix: the fixing tools that correct the problems that ShapeAnalysis
+//! detects. The repair tools share context and status conventions;
 //! The module groups repair algorithms by the topology they transform.
 mod compose_shell;
 mod edge;

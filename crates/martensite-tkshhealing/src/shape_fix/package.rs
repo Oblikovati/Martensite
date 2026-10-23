@@ -1,4 +1,4 @@
-//! Package utilities from the retained behavior ShapeFix.cxx at 3d097a0328e71b8.
+//! Shape repair utilities for tolerances, vertices and small edges.
 use martensite_tkbrep::{
     brep::BRepTool,
     topexp::Explorer,
@@ -12,7 +12,7 @@ use martensite_tkmath::bnd::BoundingBox3;
 pub struct ShapeFix;
 impl ShapeFix {
     /// Measure the least three-sample bounding diagonal; `ShapeFix::least_edge_size(&shape)?`.
-    /// Empty shapes return sqrt(RealLast), following native behavior.
+    /// Empty shapes return sqrt(RealLast), following behavior.
     pub fn least_edge_size(shape: &Shape) -> Result<f64, Failure> {
         let mut minimum = f64::MAX;
         let mut edges = Explorer::new(shape, ShapeEnum::Edge, ShapeEnum::Shape)?;

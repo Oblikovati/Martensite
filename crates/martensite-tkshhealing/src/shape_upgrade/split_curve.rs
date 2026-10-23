@@ -1,15 +1,12 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeUpgrade/ShapeUpgrade_SplitCurve.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeUpgrade_SplitCurve`: the split values of a curve range, the base of the curve
-//! splitters (docs/shhealing-design.md section 8).
+//! `ShapeUpgradeSplitCurve`: the split values of a curve range, the base of the curve
+//! splitters.
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkernel::ncollection::{HSequence, Sequence};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
 use martensite_tkernel::{impl_transient, impl_transient_interface};
 
-/// The protected fields of a `ShapeUpgrade_SplitCurve`.
+/// The protected fields of a `ShapeUpgradeSplitCurve`.
 #[derive(Clone, Default)]
 pub struct SplitCurveFields {
     /// `mySplitValues`: the parameters that bound the pieces, first and last included.
@@ -38,7 +35,7 @@ impl SplitCurveData {
     }
 }
 
-/// `ShapeUpgrade_SplitCurve`: splits a parameter range at given values; the virtual
+/// `ShapeUpgradeSplitCurve`: splits a parameter range at given values; the virtual
 /// `Compute` (which finds the split values) and `Build` (which builds the pieces) do
 /// nothing but reset the status here, and the 2D and 3D splitters override them.
 ///
@@ -73,7 +70,7 @@ pub trait SplitCurve: Transient {
     /// `SetSplitValues(SplitValues)`: inserts the given values (increasing) that lie
     /// inside each current interval by more than `Precision::PConfusion()`; nothing for
     /// a null or empty sequence. Standard_NullObject before `Init` (a null dereference
-    /// natively); `splitter.set_split_values(&values)?`.
+    /// in this implementation); `splitter.set_split_values(&values)?`.
     fn set_split_values(&self, split_values: &Handle<HSequence<f64>>) -> Result<(), Failure> {
         let Some(given) = split_values.get() else {
             return Ok(());
@@ -90,7 +87,7 @@ pub trait SplitCurve: Transient {
             )
         })?;
         if std::ptr::eq(own, given) {
-            // The same sequence is both read and edited natively.
+            // The same sequence is both read and edited in this implementation.
             return own.change_sequence(|values| insert_split_values(values, None));
         }
         let given: Vec<f64> = given.sequence(|s| s.iter().copied().collect());
@@ -122,7 +119,7 @@ pub trait SplitCurve: Transient {
         Ok(())
     }
 
-    /// `Perform(Segment)`: `Compute()` then `Build(Segment)` (the native default
+    /// `Perform(Segment)`: `Compute()` then `Build(Segment)` (the default
     /// `Segment` is true); `splitter.perform(true)?`.
     fn perform(&self, segment: bool) -> Result<(), Failure> {
         self.compute()?;
@@ -178,7 +175,7 @@ pub(super) fn insert_split_values(
     Ok(())
 }
 
-/// The base class `ShapeUpgrade_SplitCurve` itself.
+/// The base class `ShapeUpgradeSplitCurve` itself.
 #[derive(Default)]
 pub struct ShapeUpgradeSplitCurve {
     parent: StandardTransient,
@@ -193,7 +190,7 @@ impl_transient!(
 );
 
 impl ShapeUpgradeSplitCurve {
-    /// `ShapeUpgrade_SplitCurve()`: no split values, no curve, status 0;
+    /// `ShapeUpgradeSplitCurve()`: no split values, no curve, status 0;
     /// `ShapeUpgradeSplitCurve::new()`.
     pub fn new() -> Self {
         Self::default()

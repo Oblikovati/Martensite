@@ -1,4 +1,4 @@
-//! tests/mkface/mkplane case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 whose
+//! mkface mkplane regression cases whose
 //! inputs are public or built: `mkplane result wire` (BRepBuilderAPI_MakeFace on the
 //! wire's plane), then the mkface group end ([`super::mkface_grid::mkface_end`]).
 use super::mkface_grid::{MaxTolerances, mkface_end};

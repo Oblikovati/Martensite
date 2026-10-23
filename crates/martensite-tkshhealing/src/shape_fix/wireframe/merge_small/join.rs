@@ -1,6 +1,3 @@
-// Rust translation of the join branch of ShapeFix_Wireframe::MergeSmallEdges
-// (ShapeFix_Wireframe.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871).
-
 //! The join of the chosen pair: the seam-crossing protection on the other faces, the
 //! joined edge, its vertex copies and non-manifold vertices, and the map updates.
 use super::super::join_edges::join_edges;

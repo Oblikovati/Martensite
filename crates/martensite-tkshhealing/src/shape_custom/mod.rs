@@ -1,6 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! the retained behavior package ShapeCustom: the modifications that convert the geometry of shapes (to
+//! ShapeCustom: the modifications that convert the geometry of shapes (to
 //! B-splines, to revolutions, restrictions), applied with `BRepTools_Modifier`.
 //!
 //! [`ShapeCustomCurve2d`] (linear p-curves
@@ -8,7 +6,7 @@
 //! [`ShapeCustomModification`] and the modifications [`ShapeCustomTrsfModification`],
 //! [`ShapeCustomDirectModification`], [`ShapeCustomConvertToRevolution`] and
 //! [`ShapeCustomConvertToBSpline`].
-//! docs/shhealing-design.md section 7 fixes how they map.
+//! Each modification supplies the curve or surface changes required by the modifier.
 mod bspline_restriction;
 mod convert_to_bspline;
 mod convert_to_revolution;

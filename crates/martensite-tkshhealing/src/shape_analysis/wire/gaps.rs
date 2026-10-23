@@ -1,6 +1,3 @@
-// Rust translation of CheckGaps3d/CheckGaps2d and their pair checks from
-// ShapeAnalysis/ShapeAnalysis_Wire.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! Boundary-gap measurements for the current ordered edge sequence.
 use super::*;
 use crate::shape_extend::ShapeExtendStatus;
@@ -192,7 +189,7 @@ impl ShapeAnalysisWire {
     }
 
     fn record_gap(&self, distance: f64, tolerance: f64) {
-        // Preserve the retained behavior's positive comparison: unordered NaN precision does not flag a gap.
+        // Preserve positive comparison: unordered NaN precision does not flag a gap.
         if distance > tolerance {
             self.set_last_status(ShapeExtendStatus::Done1);
         }

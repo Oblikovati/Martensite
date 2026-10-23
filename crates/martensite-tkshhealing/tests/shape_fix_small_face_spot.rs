@@ -1,4 +1,4 @@
-//! Native-backed no-change behavior of the `ShapeFix_FixSmallFace` spot phase.
+//! Native-backed no-change behavior of the `ShapeFixFixSmallFace` spot phase.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, Builder, Compound, Edge, Face, Shape, Vertex, Wire};
@@ -26,8 +26,8 @@ fn regular_box_is_preserved_by_the_spot_phase() {
     let result = fixer.fix_spot_face().unwrap();
     assert!(result.is_same(&input));
     assert!(fixer.shape().is_same(&input));
-    // Native FixShape replaces each face by ShapeFix_Face::Face(), a new face even when
-    // nothing is fixed (checked against the retained behavior 3d097a0: FixShape().IsSame(box) is false).
+    // FixShape replaces each face by ShapeFixFace::Face(), a new face even when
+    // nothing is fixed (checked against: FixShape().IsSame(box) is false).
     assert!(!fixer.fix_shape().unwrap().is_same(&input));
     let mut first_face = first_face(&input);
     let before = first_face.clone().into_shape();

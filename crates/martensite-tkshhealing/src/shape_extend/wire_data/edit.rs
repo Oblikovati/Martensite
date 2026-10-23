@@ -1,7 +1,3 @@
-// Rust translation of the editing members of ShapeExtend_WireData.cxx (SetLast,
-// SetDegeneratedLast, Add, AddOriented, Remove, Set, Reverse) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! Adding, removing, replacing and reversing the edges of a wire data.
 use super::{ShapeExtendWireData, WireDataFields, position};
 use martensite_tkbrep::brep::BRepTool;
@@ -63,7 +59,7 @@ impl ShapeExtendWireData {
     /// `Add(edge, atnum)`: appends the edge (inserts it before rank `atnum` when not 0);
     /// in the manifold mode an INTERNAL or EXTERNAL edge goes to the non-manifold edges
     /// instead. The orientation is tested before the null check, so a null edge (EXTERNAL
-    /// natively) joins the non-manifold edges in the manifold mode; `data.add_edge(&e, 0)?`.
+    /// in this implementation) joins the non-manifold edges in the manifold mode; `data.add_edge(&e, 0)?`.
     pub fn add_edge(&self, edge: &Edge, atnum: i32) -> Result<(), Failure> {
         let mut fields = self.fields.write();
         if !is_manifold(edge) && fields.manifold_mode {
@@ -117,8 +113,8 @@ impl ShapeExtendWireData {
     /// edges go to the non-manifold edges in the manifold mode; without it, the native
     /// loop inserts `other->Edge(i)` for i up to the number of non-manifold edges (the
     /// ordinary edges, not the non-manifold ones), which is kept. Both loops read the
-    /// counts of `other` again at each step, as natively, so adding a list to itself does
-    /// not end (natively neither); `data.add_wire_data(&other, 0)?`.
+    /// counts of `other` again at each step, as in this implementation, so adding a list to itself does
+    /// not end (in this implementation neither); `data.add_wire_data(&other, 0)?`.
     pub fn add_wire_data(&self, other: &ShapeExtendWireData, atnum: i32) -> Result<(), Failure> {
         let mut non_manifold = Vec::new();
         let mut n = atnum;
@@ -167,7 +163,7 @@ impl ShapeExtendWireData {
     }
 
     /// `Add(shape, atnum)`: `Add` of the edge or of the wire; any other shape is ignored;
-    /// Standard_NullObject for a null shape (a null dereference natively);
+    /// Standard_NullObject for a null shape (a null dereference in this implementation);
     /// `data.add_shape(&s, 0)?`.
     pub fn add_shape(&self, shape: &Shape, atnum: i32) -> Result<(), Failure> {
         match shape.shape_type()? {
@@ -179,7 +175,7 @@ impl ShapeExtendWireData {
 
     /// `AddOriented(edge, mode)`: mode 0 appends, 1 appends reversed, 2 prepends, 3
     /// prepends reversed; nothing for a null edge or a negative mode (a mode above 3
-    /// inserts at `mode / 2`, as natively); `data.add_oriented_edge(&e, 1)?`.
+    /// inserts at `mode / 2`, as in this implementation); `data.add_oriented_edge(&e, 1)?`.
     pub fn add_oriented_edge(&self, edge: &Edge, mode: i32) -> Result<(), Failure> {
         if edge.is_null() || mode < 0 {
             return Ok(());
@@ -205,7 +201,7 @@ impl ShapeExtendWireData {
     }
 
     /// `AddOriented(shape, mode)`: of the edge or of the wire; Standard_NullObject for a
-    /// null shape (a null dereference natively); `data.add_oriented_shape(&s, 0)?`.
+    /// null shape (a null dereference in this implementation); `data.add_oriented_shape(&s, 0)?`.
     pub fn add_oriented_shape(&self, shape: &Shape, mode: i32) -> Result<(), Failure> {
         match shape.shape_type()? {
             ShapeEnum::Edge => self.add_oriented_edge(&topods::edge(shape)?, mode),

@@ -1,4 +1,4 @@
-//! tests/heal/drop_small_solids case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871:
+//! heal drop small solids regression cases:
 //! each sets `cmd` (a sequence of the dataset's `res` resource file) and `ref`; the grid
 //! end points `CSF_resDefaults` to the directory of `res`, runs `DT_ApplySeq result a res
 //! $cmd` on test.brep, then compares `result` with the reference shape `$ref.brep`: the

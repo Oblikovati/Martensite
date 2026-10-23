@@ -1,6 +1,3 @@
-// Rust translation of ShapeBuild_ReShape::Apply(shape, until, buildmode) of
-// ShapeBuild_ReShape.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871 (abv 28.04.99 S4137).
-
 //! The build-mode `Apply`: compounds, solids and shells rebuilt from their replaced items.
 use super::ShapeBuildReShape;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};

@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom_Surface.hxx/.lxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeCustom_Surface`: recognition of analytic (plane, cylinder, cone, sphere, torus)
+//! `ShapeCustomSurface`: recognition of analytic (plane, cylinder, cone, sphere, torus)
 //! B-spline and Bezier surfaces, and conversion of closed B-spline surfaces to periodic.
 mod analytical;
 mod periodic;
@@ -9,7 +6,7 @@ mod periodic;
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::GeomSurface;
 
-/// `ShapeCustom_Surface`: a tool on one surface (`mySurf`) that remembers the deviation
+/// `ShapeCustomSurface`: a tool on one surface (`mySurf`) that remembers the deviation
 /// (`myGap`) found by the last `ConvertToAnalytical`.
 ///
 /// ```
@@ -25,12 +22,12 @@ pub struct ShapeCustomSurface {
 }
 
 impl ShapeCustomSurface {
-    /// `ShapeCustom_Surface()`: no surface, gap 0; `ShapeCustomSurface::new()`.
+    /// `ShapeCustomSurface()`: no surface, gap 0; `ShapeCustomSurface::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeCustom_Surface(S)`: the tool on `surface`;
+    /// `ShapeCustomSurface(S)`: the tool on `surface`;
     /// `ShapeCustomSurface::with_surface(&surface)`.
     pub fn with_surface(surface: &Handle<dyn GeomSurface>) -> Self {
         let mut tool = Self::new();

@@ -1,4 +1,4 @@
-//! `ShapeUpgrade_RemoveInternalWires` at the retained behavior 3d097a0328e71b8.
+//! `ShapeUpgradeRemoveInternalWires`.
 mod perform;
 
 use super::ShapeUpgradeTool;
@@ -68,7 +68,7 @@ impl Default for ShapeUpgradeRemoveInternalWires {
 }
 
 impl ShapeUpgradeRemoveInternalWires {
-    /// Creates the native context and default settings; `ShapeUpgradeRemoveInternalWires::new()`.
+    /// Creates the context and default settings; `ShapeUpgradeRemoveInternalWires::new()`.
     pub fn new() -> Self {
         let parent = ShapeUpgradeTool::new();
         let context = Handle::new(ShapeBuildReShape::new());
@@ -86,7 +86,7 @@ impl ShapeUpgradeRemoveInternalWires {
         Ok(remover)
     }
 
-    /// Initializes input topology, preserving the native reshape context; `remover.init(&shape)?`.
+    /// Initializes input topology, preserving the reshape context; `remover.init(&shape)?`.
     pub fn init(&self, shape: &Shape) -> Result<(), Failure> {
         self.fields.write().shape = shape.clone();
         let context_handle = self.parent.context();
@@ -128,20 +128,20 @@ impl ShapeUpgradeRemoveInternalWires {
     pub fn get_result(&self) -> Shape {
         self.fields.read().result.clone()
     }
-    /// Returns the shared sequence of removed faces in native discovery order; `remover.removed_faces()`.
+    /// Returns the shared sequence of removed faces in discovery order; `remover.removed_faces()`.
     pub fn removed_faces(&self) -> Handle<HSequence<Shape>> {
         self.fields.read().removed_faces.clone()
     }
-    /// Returns the shared sequence of removed wires in native discovery order; `remover.removed_wires()`.
+    /// Returns the shared sequence of removed wires in discovery order; `remover.removed_wires()`.
     pub fn removed_wires(&self) -> Handle<HSequence<Shape>> {
         self.fields.read().removed_wires.clone()
     }
-    /// Read native protected `myStatus` for specialized removal algorithms.
+    /// Read protected `myStatus` for specialized removal algorithms.
     /// Example: `let bits = remover.status_bits();`.
     pub fn status_bits(&self) -> i32 {
         self.fields.read().status
     }
-    /// Write native protected `myStatus` without changing removal outputs.
+    /// Write protected `myStatus` without changing removal outputs.
     /// Example: `remover.set_status_bits(0x101);`.
     pub fn set_status_bits(&self, bits: i32) {
         self.fields.write().status = bits;

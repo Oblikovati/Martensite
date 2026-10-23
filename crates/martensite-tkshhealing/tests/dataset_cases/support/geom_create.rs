@@ -1,7 +1,6 @@
-//! The geometry creation commands of the tests/mkface scripts, on the Rust API
-//! (GeomliteTest_CurveCommands.cxx `anacurve`/`polecurve`, GeomliteTest_SurfaceCommands.cxx
-//! `anasurface`/`polesurface`/`sweepsurface`/`offseting`/`trimming` at
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871). Each takes the numbers of its script line.
+//! Geometry builders for the face construction corpus.
+//! Analytic and control-point curves and surfaces, sweeps, offsets and trims
+//! are constructed from each case’s numeric parameters.
 use martensite_tkernel::ncollection::Array2;
 use martensite_tkernel::standard::{Handle, RuntimeTyped};
 use martensite_tkg2d::geom2d::arrays;

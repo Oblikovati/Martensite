@@ -1,5 +1,4 @@
-//! Original declarations and inputs from ShapeConstruct_ProjectCurveOnSurface_Test.cxx
-//! at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Curve-on-surface projection regression fixtures and assertions.
 #![allow(non_snake_case)]
 use martensite_tkernel::{
     ncollection::{Array1, Array2},

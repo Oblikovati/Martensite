@@ -1,5 +1,4 @@
-//! `FindCommonFace`, `FindClosestPoints` and `ReconstructMissedSeam` of
-//! ShapeUpgrade_UnifySameDomain.cxx.
+//! Reconstruct missing seams using common faces and closest boundary points.
 use super::face_bounds::edges_of;
 use super::geometry::null_pcurve;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};

@@ -1,5 +1,4 @@
-//! Vertex incidence checks, including native output accumulation and early-exit precision.
-// ShapeAnalysis_Wire.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Vertex incidence checks, including output accumulation and early-exit precision.
 use super::*;
 use martensite_tkbrep::{
     topexp,
@@ -47,7 +46,7 @@ impl ShapeAnalysisWire {
         self.set_precision(precision::infinite());
         for index in 1..=self.nb_edges() {
             if !self.append_loop_edge(index, maps)? {
-                // Native FAIL2 exits before restoring precision; callers can observe it.
+                // FAIL2 exits before restoring precision; callers can observe it.
                 self.set_last_status(ShapeExtendStatus::Fail2);
                 return Ok(false);
             }

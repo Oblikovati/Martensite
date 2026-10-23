@@ -1,6 +1,3 @@
-// Rust translation of ShapeFix/ShapeFix_SplitCommonVertex.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! Split exactly equal vertices shared by distinct face wires.
 use crate::shape_analysis::ShapeAnalysisEdge;
 use crate::shape_build::{ShapeBuildEdge, ShapeBuildReShape};
@@ -17,7 +14,7 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::gp::Point3;
 
-/// `ShapeFix_SplitCommonVertex`: separates orientation-equal shared vertices in face wires.
+/// `ShapeFixSplitCommonVertex`: separates orientation-equal shared vertices in face wires.
 ///
 /// ```
 /// use martensite_tkbrep::brep::BRepBuilder;
@@ -39,7 +36,7 @@ pub struct ShapeFixSplitCommonVertex {
 impl_transient!(ShapeFixSplitCommonVertex, "ShapeFix_SplitCommonVertex", ShapeFixRoot, parent, interfaces: [dyn FixRoot]);
 
 impl ShapeFixSplitCommonVertex {
-    /// `ShapeFix_SplitCommonVertex()`: initializes the root precision and an empty shape;
+    /// `ShapeFixSplitCommonVertex()`: initializes the root precision and an empty shape;
     /// `ShapeFixSplitCommonVertex::new()`.
     pub fn new() -> Self {
         let fixer = Self::default();

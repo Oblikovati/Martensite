@@ -1,4 +1,4 @@
-//! Face subdivision orchestration from the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Face subdivision orchestration.
 use super::{ShapeUpgradeSplitSurface, ShapeUpgradeTool, ShapeUpgradeWireDivide};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkbrep::topods::{Face, Shape};
@@ -9,7 +9,7 @@ use martensite_tkernel::{
 mod curves;
 mod surface;
 
-/// Native protected face subdivision state; `FaceDivideData::default()`.
+/// protected face subdivision state; `FaceDivideData::default()`.
 pub struct FaceDivideData {
     fields: SharedState<FaceDivideFields>,
 }
@@ -21,7 +21,7 @@ pub struct FaceDivideFields {
     pub result: Shape,
     /// Whether split surfaces are segmented.
     pub segment: bool,
-    /// Native ShapeExtend status bits.
+    /// ShapeExtend status bits.
     pub status: i32,
     surface_tool: Handle<ShapeUpgradeSplitSurface>,
     wire_tool: Handle<ShapeUpgradeWireDivide>,
@@ -160,7 +160,7 @@ impl ShapeUpgradeFaceDivide {
     pub fn result(&self) -> Shape {
         self.state.with(|fields| fields.result.clone())
     }
-    /// Query native subdivision flags; `divider.status_flag(ShapeExtendStatus::Done)`.
+    /// Query subdivision flags; `divider.status_flag(ShapeExtendStatus::Done)`.
     pub fn status_flag(&self, status: ShapeExtendStatus) -> bool {
         self.state
             .with(|fields| ShapeExtend::decode_status(fields.status, status))

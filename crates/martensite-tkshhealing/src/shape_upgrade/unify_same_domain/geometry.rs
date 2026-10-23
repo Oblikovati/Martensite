@@ -1,4 +1,4 @@
-//! The geometric helpers of ShapeUpgrade_UnifySameDomain.cxx: `IsOnSingularity`,
+//! The geometric helpers: `IsOnSingularity`,
 //! `IsUiso`, `IsLinear`, `TrueValueOfOffset`, `UpdateBoundaries`, `TryMakeLine`,
 //! `getCylinder`, `ClearRts`, `GetNormalToSurface` and `getCurveParams`.
 use martensite_tkbrep::brep::BRepTool;

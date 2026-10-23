@@ -1,11 +1,7 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_Edge.hxx and the
-// queries of ShapeAnalysis_Edge.cxx (the checks are in the submodules) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-//
-// :p1 abv 22.02.99: protection against edges with no vertices (infinite); :s1 abv 22.04.99:
-// protection against a null 3d curve; abv 06.05.99 S4137: GetEndTangent2d.
+// Infinite edges can lack vertices, and a spatial curve can be absent.
+// Endpoint and tangent queries must handle both conditions.
 
-//! `ShapeAnalysis_Edge`: the geometry of an edge (3D curve, p-curves, vertices) and the
+//! `ShapeAnalysisEdge`: the geometry of an edge (3D curve, p-curves, vertices) and the
 //! consistency checks between them.
 mod checks;
 mod outputs;
@@ -25,12 +21,12 @@ use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::gp::{Point2, Vector2};
 use martensite_tkmath::toploc::Location;
 
-/// `ShapeAnalysis_Edge`: queries the representations of an edge (3D curve, p-curve on a
+/// `ShapeAnalysisEdge`: queries the representations of an edge (3D curve, p-curve on a
 /// face or on a surface with a location) and its bounding vertices, and checks their
 /// consistency. The checks write a ShapeExtend status, read with [`Self::status_flag`].
 ///
 /// The members that return a curve and its range give the curve (null when the edge has
-/// none; the native `bool` result is `!curve.is_null()`) and the range, swapped for a
+/// none; the `bool` result is `!curve.is_null()`) and the range, swapped for a
 /// REVERSED edge when `orient` is set.
 ///
 /// ```
@@ -62,7 +58,7 @@ fn oriented_range(edge: &Edge, first: f64, last: f64, orient: bool) -> (f64, f64
 }
 
 impl ShapeAnalysisEdge {
-    /// `ShapeAnalysis_Edge()`: the status OK; `ShapeAnalysisEdge::new()`.
+    /// `ShapeAnalysisEdge()`: the status OK; `ShapeAnalysisEdge::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -153,7 +149,7 @@ impl ShapeAnalysisEdge {
     }
 
     /// `BoundUV(edge, surface, location, first, last)`: the ends of the oriented p-curve;
-    /// `None` (native false) without p-curve; `sae.bound_uv_on_surface(&e, &s, &l)?`.
+    /// `None` (false) without p-curve; `sae.bound_uv_on_surface(&e, &s, &l)?`.
     pub fn bound_uv_on_surface(
         &self,
         edge: &Edge,
@@ -223,7 +219,7 @@ impl ShapeAnalysisEdge {
     /// `Precision::Confusion()` the tangent is the chord to the point at that fraction of
     /// the range; otherwise the first non-null derivative up to the third, else the chord
     /// to the other end, reversed for a REVERSED edge. False without p-curve (tangent
-    /// null, point untouched natively, the origin here) or when every tangent is null;
+    /// null, point untouched in this implementation, the origin here) or when every tangent is null;
     /// `sae.get_end_tangent_2d_on_surface(&e, &s, &l, true, 0.0)?`.
     pub fn get_end_tangent_2d_on_surface(
         &self,

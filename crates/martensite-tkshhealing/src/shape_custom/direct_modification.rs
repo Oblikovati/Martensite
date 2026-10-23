@@ -1,8 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom_DirectModification.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeCustom_DirectModification`: indirect elementary surfaces and cones of negative
-//! semi-angle made direct (docs/shhealing-design.md section 7).
+//! `ShapeCustomDirectModification`: indirect elementary surfaces and cones of negative
+//! semi-angle made direct.
 use super::edge_copy::copy_edge_curve;
 use super::modification::{ShapeCustomModification, ShapeCustomModificationFields};
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
@@ -85,7 +82,7 @@ fn indirection(
     Ok(kind)
 }
 
-/// `ShapeCustom_DirectModification`: a face on an indirect elementary surface gets the
+/// `ShapeCustomDirectModification`: a face on an indirect elementary surface gets the
 /// U-reversed surface and is reversed with its wires; a face on a cone of negative
 /// semi-angle gets the cone reversed in U and V (and, indirect, only in V), so that the
 /// normals keep their direction. Edges with a p-curve on such a surface are copied with
@@ -112,7 +109,7 @@ impl_transient!(
 );
 
 impl ShapeCustomDirectModification {
-    /// `ShapeCustom_DirectModification()`; `ShapeCustomDirectModification::new()`.
+    /// `ShapeCustomDirectModification()`; `ShapeCustomDirectModification::new()`.
     pub fn new() -> Self {
         Self::default()
     }

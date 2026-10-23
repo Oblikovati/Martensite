@@ -1,7 +1,3 @@
-// Rust translation of the static GetSurface (face, shell, edge and wire) and GetCurve of
-// ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_CanonicalRecognition.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The analytic surfaces and curves under faces, shells, edges and wires.
 use super::params::{compare_surf_params, deviation_surf_params, set_surf_params, surface_nb_pars};
 use martensite_tkbrep::brep::BRepTool;
@@ -241,7 +237,7 @@ pub(super) fn edge_curve(
     conv.set_conv_type(conv_type);
     conv.set_target(target);
     let mut ana: Handle<dyn GeomCurve> = Handle::default();
-    // The native `nf` and `nl` are uninitialized; they only receive the new range.
+    // The `nf` and `nl` are uninitialized; they only receive the new range.
     let mut new_range = (0.0, 0.0);
     conv.convert_to_analytical(tol, &mut ana, (curve3d.first, curve3d.last), &mut new_range)?;
     let Some(ana_curve) = ana.get() else {

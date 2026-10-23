@@ -1,7 +1,3 @@
-// Rust translation of GetSurfaceByLS and the static GetSamplePoints, GetLSGap, FillSolverData
-// and SetCanonicParameters of ModelingAlgorithms/TKShHealing/ShapeAnalysis/
-// ShapeAnalysis_CanonicalRecognition.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The least-squares fit of a sphere, cylinder or cone through sample points of a wire:
 //! a particle swarm around the sample surface, then Powell's method.
 use super::surfaces::SurfFit;
@@ -210,7 +206,7 @@ fn powell_directions(
 }
 
 /// The least-squares functions, whose failures inside the solvers are given back after
-/// them (natively they propagate as exceptions).
+/// them (in this implementation they propagate as exceptions).
 trait LsFunction: MultipleVarFunction {
     fn take_failure(&mut self) -> Result<(), Failure>;
 }

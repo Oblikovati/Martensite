@@ -1,7 +1,4 @@
-// Rust translation of ShapeFix::RemoveSmallEdges (ShapeFix.cxx) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeFix::RemoveSmallEdges`: a ShapeFix_Shape run restricted to FixSmall.
+//! `ShapeFix::RemoveSmallEdges`: a ShapeFixShape run restricted to FixSmall.
 use super::ShapeFix;
 use crate::shape_build::ShapeBuildReShape;
 use crate::shape_fix::{FixRoot, ShapeFixShape};
@@ -9,16 +6,16 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Failure, Handle};
 
 /// The result of `ShapeFix::RemoveSmallEdges`: the healed shape and the reshape context
-/// that records the removed edges (the native `context` out argument).
+/// that records the removed edges (the `context` out argument).
 pub struct ShapeFixRemovedSmallEdges {
-    /// The shape returned by native `RemoveSmallEdges`.
+    /// The shape returned by `RemoveSmallEdges`.
     pub shape: Shape,
-    /// The ShapeFix_Shape context written to the native `context` argument.
+    /// The ShapeFixShape context written to the `context` argument.
     pub context: Handle<ShapeBuildReShape>,
 }
 
 impl ShapeFix {
-    /// Removes the edges smaller than `tolerance` with a ShapeFix_Shape whose wire tool
+    /// Removes the edges smaller than `tolerance` with a ShapeFixShape whose wire tool
     /// only runs FixSmall (topology mode on; connected, edge-curve, degenerated,
     /// self-intersection and lacking fixes off; missing-seam, orientation and small-area
     /// face fixes off). Example: `let fixed = ShapeFix::remove_small_edges(&shape, 0.1)?;`.

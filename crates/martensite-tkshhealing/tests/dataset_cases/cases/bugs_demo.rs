@@ -1,4 +1,4 @@
-//! tests/bugs/demo case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! bugs demo regression cases owned by
 //! TKShHealing whose inputs are in the public dataset.
 use super::bugs_common::banner;
 use crate::support::{

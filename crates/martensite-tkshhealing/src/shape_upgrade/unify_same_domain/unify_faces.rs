@@ -1,4 +1,4 @@
-//! `UnifyFaces` and `IntUnifyFaces` of ShapeUpgrade_UnifySameDomain.cxx: the faces of
+//! `UnifyFaces` and `IntUnifyFaces`: the faces of
 //! each shell, then the faces out of shells, merged group by group.
 use super::face_groups::{FaceGroup, GlobalMaps};
 use super::face_wires::build_new_boundary;

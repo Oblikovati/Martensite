@@ -1,4 +1,4 @@
-//! `TransformPCurves` and `AddPCurves` of ShapeUpgrade_UnifySameDomain.cxx: the p-curves
+//! `TransformPCurves` and `AddPCurves`: the p-curves
 //! of the edges of the faces to merge, expressed on the surface of the reference face.
 use super::geometry::null_pcurve;
 use super::same_domain::same_surf;

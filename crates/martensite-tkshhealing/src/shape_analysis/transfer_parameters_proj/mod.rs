@@ -1,4 +1,4 @@
-//! Projection-based parameter transfer, preserving the retained behavior 3d097a0 selection and mutation order.
+//! Projection-based parameter transfer, preserving selection and mutation order.
 use super::{
     ShapeAnalysisCurve, ShapeAnalysisEdge, ShapeAnalysisTransferParameters, TransferParameterData,
     TransferParameters,
@@ -130,11 +130,11 @@ impl ShapeAnalysisTransferParametersProj {
         tool.init(edge, face)?;
         Ok(tool)
     }
-    /// Inspect the native force flag; `tool.force_projection()`.
+    /// Inspect the force flag; `tool.force_projection()`.
     pub fn force_projection(&self) -> bool {
         self.state.read().force
     }
-    /// Change the native force flag without rebuilding adaptors; `tool.set_force_projection(true)`.
+    /// Change the force flag without rebuilding adaptors; `tool.set_force_projection(true)`.
     pub fn set_force_projection(&self, force: bool) {
         self.state.write().force = force;
     }

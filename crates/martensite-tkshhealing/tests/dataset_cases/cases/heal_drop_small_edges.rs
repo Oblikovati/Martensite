@@ -1,4 +1,4 @@
-//! tests/heal/drop_small_edges case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871
+//! heal drop small edges regression cases
 //! whose inputs are in the public dataset: each restores `a`, then the grid end runs
 //! `puts [fixsmall result a 1]` and, when `result` is drawn, `puts [checkshape result]`;
 //! tests/heal/end shows `result` with `checkview -display result -2d`, or prints

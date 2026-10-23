@@ -1,9 +1,4 @@
-// Rust translation of the two CheckSameParameter members of
-// ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_Edge.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-//
-// :s4 abv 26.04.99: sim6049.igs 21677: a copy of the curve is necessary to get a true
-// SameParameter check.
+// Check a copy of the curve so parameter repair cannot invalidate the comparison.
 
 //! The deviation between the 3D curve and the p-curves of an edge.
 use super::ShapeAnalysisEdge;
@@ -71,7 +66,7 @@ impl ShapeAnalysisEdge {
     /// projection on a planar face without p-curve) at `nb_control` points, as
     /// `BRepCheck` measures it: DONE1 when above the edge tolerance, DONE2 without the
     /// SameParameter flag, FAIL1 without 3D curve, FAIL2 when a validation failed; true
-    /// for DONE. A degenerated edge gives false with the deviation untouched natively (0
+    /// for DONE. A degenerated edge gives false with the deviation untouched in this implementation (0
     /// here); `sae.check_same_parameter_on_face(&edge, &face, 23)?`.
     pub fn check_same_parameter_on_face(
         &mut self,
@@ -227,7 +222,7 @@ fn located_surface(
 }
 
 impl ShapeAnalysisEdge {
-    /// Preserves the caller's deviation for a degenerate edge, as the retained behavior does;
+    /// Preserves the caller's deviation for a degenerate edge, as does;
     /// `analyzer.check_same_parameter_into(&edge, 23, &mut deviation)?`.
     pub fn check_same_parameter_into(
         &mut self,
@@ -238,7 +233,7 @@ impl ShapeAnalysisEdge {
         self.check_same_parameter_on_face_into(edge, &Face::default(), nb_control, deviation)
     }
 
-    /// Updates the supplied deviation only on the native update paths;
+    /// Updates the supplied deviation only on the update paths;
     /// `analyzer.check_same_parameter_on_face_into(&edge, &face, 23, &mut deviation)?`.
     pub fn check_same_parameter_on_face_into(
         &mut self,

@@ -1,4 +1,4 @@
-//! BRepTest_GPropCommands.cxx `lprops|sprops|vprops shape [-skip]` without an epsilon, with
+//! `lprops|sprops|vprops shape [-skip]` without an epsilon, with
 //! the matrix of inertia it prints (iostream default floats, `%g` 6 digits, `setw(15)`),
 //! and the `parseprops` reading of tests/heal/drop_small_solids/end.
 use super::log;

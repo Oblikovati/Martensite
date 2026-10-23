@@ -1,8 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_CanonicalRecognition.hxx
-// and the members of ShapeAnalysis_CanonicalRecognition.cxx (the static helpers are in the
-// submodules) at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeAnalysis_CanonicalRecognition`: recognizes planes, cylinders, cones, spheres,
+//! `ShapeAnalysisCanonicalRecognition`: recognizes planes, cylinders, cones, spheres,
 //! lines, circles and ellipses under the geometry of shells, faces, wires and edges.
 mod conic;
 mod least_squares;
@@ -21,11 +17,11 @@ use martensite_tkmath::gp::{Axis3, Cone3, Cylinder3, Plane3, Sphere3};
 use martensite_tktopalgo::brep_lib::BRepLibFindSurface;
 use params::set_surf_params;
 
-/// `ShapeAnalysis_CanonicalRecognition`: finds whether the geometry under a shape can be
+/// `ShapeAnalysisCanonicalRecognition`: finds whether the geometry under a shape can be
 /// replaced by an elementary surface or a conic within a tolerance.
 ///
 /// The status is -1 before a shape is set, 0 when an operation may run, 1 after a
-/// failure (then `ClearStatus` resets it). The native in/out arguments (the sample
+/// failure (then `ClearStatus` resets it). The in/out arguments (the sample
 /// surface or curve, which also seeds the least-squares fit of wires and edges) are
 /// `&mut` values.
 ///
@@ -55,13 +51,13 @@ impl Default for ShapeAnalysisCanonicalRecognition {
 }
 
 impl ShapeAnalysisCanonicalRecognition {
-    /// `ShapeAnalysis_CanonicalRecognition()`: no shape, status -1, gap -1;
+    /// `ShapeAnalysisCanonicalRecognition()`: no shape, status -1, gap -1;
     /// `ShapeAnalysisCanonicalRecognition::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeAnalysis_CanonicalRecognition(theShape)`: [`Self::set_shape`] on a new tool;
+    /// `ShapeAnalysisCanonicalRecognition(theShape)`: [`Self::set_shape`] on a new tool;
     /// `ShapeAnalysisCanonicalRecognition::with_shape(&face)?`.
     pub fn with_shape(shape: &Shape) -> Result<Self, Failure> {
         let mut tool = Self::default();
@@ -71,7 +67,7 @@ impl ShapeAnalysisCanonicalRecognition {
 
     /// `SetShape(theShape)`: takes a shell, face, wire or edge (status 0); any other type
     /// sets the status 1 and keeps the previous shape. A null shape is
-    /// Standard_NullObject (natively its type is read through a null pointer);
+    /// Standard_NullObject (in this implementation its type is read through a null pointer);
     /// `recognizer.set_shape(&edge)?`.
     pub fn set_shape(&mut self, shape: &Shape) -> Result<(), Failure> {
         self.init(shape)
@@ -140,7 +136,7 @@ impl ShapeAnalysisCanonicalRecognition {
         Ok(true)
     }
 
-    /// Select the native topology branch without altering its status on a null face surface.
+    /// Select the topology branch without altering its status on a null face surface.
     fn elementary_geometry(
         &mut self,
         target: SurfaceType,
@@ -205,7 +201,7 @@ impl ShapeAnalysisCanonicalRecognition {
         self.find_plane(tol, pln)
     }
 
-    /// The planar wire/edge fallback also recovers a prior error status, as the retained behavior does.
+    /// The planar wire/edge fallback also recovers a prior error status, as does.
     fn find_plane(&mut self, tol: f64, pln: &mut Plane3) -> Result<bool, Failure> {
         let finder = BRepLibFindSurface::new(&self.shape, tol, true, false)?;
         if !finder.found() {

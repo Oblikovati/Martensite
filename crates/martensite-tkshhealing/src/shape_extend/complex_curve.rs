@@ -1,14 +1,10 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend/ShapeExtend_ComplexCurve.hxx/.lxx/.cxx
-// at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeExtend_ComplexCurve`: the abstract curve made of several segments
-//! (docs/shhealing-design.md section 2).
+//! `ShapeExtendComplexCurve`: the abstract curve made of several segments.
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::{GeomCurve, GeomCurveD1, GeomCurveD2, GeomCurveD3};
 use martensite_tkmath::gp::{Point3, Transform3, Vector3};
 
-/// `ShapeExtend_ComplexCurve`: a curve of several segments on the global range `[0, 1]`.
+/// `ShapeExtendComplexCurve`: a curve of several segments on the global range `[0, 1]`.
 ///
 /// The abstract members are the required methods; the protected `myClosed` is stored in
 /// each concrete class and reached through [`ShapeExtendComplexCurve::complex_closed`] and
@@ -17,7 +13,7 @@ use martensite_tkmath::gp::{Point3, Transform3, Vector3};
 /// [`shape_extend_complex_curve_members!`](crate::shape_extend_complex_curve_members) puts
 /// them in the concrete class's `impl GeomCurve` (its `impl GeomGeometry` calls
 /// [`ShapeExtendComplexCurve::complex_transform`] from `transform`), as the native
-/// inheritance does. No the retained behavior class derives from it; ShapeAnalysis_Curve recognizes it.
+/// inheritance does. No class derives from it; ShapeAnalysisCurve recognizes it.
 ///
 /// ```
 /// use martensite_tkshhealing::shape_extend::ShapeExtendComplexCurve;
@@ -129,7 +125,7 @@ pub trait ShapeExtendComplexCurve: GeomCurve {
     /// `CheckConnectivity(Preci)`: whether each segment ends where the next one starts
     /// (within `preci`); sets the closed flag from the ends of the whole curve. The flag
     /// is set inside the loop over the joints, so a curve of one segment keeps it, as
-    /// natively; `curve.check_connectivity(1e-7)?`.
+    /// in this implementation; `curve.check_connectivity(1e-7)?`.
     fn check_connectivity(&self, preci: f64) -> Result<bool, Failure> {
         let nb = self.nb_curves();
         let mut ok = true;
@@ -148,7 +144,7 @@ pub trait ShapeExtendComplexCurve: GeomCurve {
     }
 
     /// `TransformDN(V, ind, N)` (protected): multiplies `v` by the scale factor of segment
-    /// `ind`, `n` times (one product per order, not a power, as natively).
+    /// `ind`, `n` times (one product per order, not a power, as in this implementation).
     fn transform_dn(&self, v: &mut Vector3, ind: i32, n: i32) -> Result<(), Failure> {
         let factor = self.get_scale_factor(ind)?;
         for _ in 1..=n {
@@ -164,7 +160,7 @@ impl_transient_interface!(
 );
 
 /// The segment of rank `index`, Standard_NullObject when it is null (a null dereference
-/// natively).
+/// in this implementation).
 fn live(curve: &Handle<dyn GeomCurve>, index: i32) -> Result<&dyn GeomCurve, Failure> {
     curve.get().ok_or_else(|| {
         Failure::with_message(
@@ -174,7 +170,7 @@ fn live(curve: &Handle<dyn GeomCurve>, index: i32) -> Result<&dyn GeomCurve, Fai
     })
 }
 
-/// The `Geom_Curve` members that `ShapeExtend_ComplexCurve` overrides, for the
+/// The `Geom_Curve` members that `ShapeExtendComplexCurve` overrides, for the
 /// `impl GeomCurve` of a concrete complex curve: `reversed_parameter`, the parameter range,
 /// `is_closed`, `is_periodic`, `continuity`, `is_cn` and the evaluators. The concrete class
 /// writes `reverse` (pure virtual in `Geom_Curve`) itself.

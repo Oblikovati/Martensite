@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_ShapeTolerance.hxx/.cxx
-// at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeAnalysis_ShapeTolerance`: minimal, maximal and average tolerances of the
+//! `ShapeAnalysisShapeTolerance`: minimal, maximal and average tolerances of the
 //! sub-shapes of a shape, and the sub-shapes whose tolerance lies in an interval.
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topexp::Explorer;
@@ -11,9 +8,9 @@ use martensite_tkernel::ncollection::HSequence;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// `ShapeAnalysis_ShapeTolerance`: tolerances of faces, edges and vertices.
+/// `ShapeAnalysisShapeTolerance`: tolerances of faces, edges and vertices.
 ///
-/// `type` selects the sub-shapes as natively: `Shape` all faces, edges and vertices,
+/// `type` selects the sub-shapes as in this implementation: `Shape` all faces, edges and vertices,
 /// `Vertex`, `Edge` or `Face` only those, `Shell` (for `InTolerance`) the shells and faces
 /// that hold a face, edge or vertex in the interval.
 ///
@@ -87,7 +84,7 @@ fn each_tolerance(
     Ok(())
 }
 
-/// The kinds of sub-shapes one `type` selects, in the native order (faces, edges,
+/// The kinds of sub-shapes one `type` selects, in the order (faces, edges,
 /// vertices).
 fn selected_kinds(kind: ShapeEnum) -> impl Iterator<Item = ShapeEnum> {
     [ShapeEnum::Face, ShapeEnum::Edge, ShapeEnum::Vertex]
@@ -96,7 +93,7 @@ fn selected_kinds(kind: ShapeEnum) -> impl Iterator<Item = ShapeEnum> {
 }
 
 impl ShapeAnalysisShapeTolerance {
-    /// `ShapeAnalysis_ShapeTolerance()`; `ShapeAnalysisShapeTolerance::new()`.
+    /// `ShapeAnalysisShapeTolerance()`; `ShapeAnalysisShapeTolerance::new()`.
     pub fn new() -> Self {
         Self::default()
     }

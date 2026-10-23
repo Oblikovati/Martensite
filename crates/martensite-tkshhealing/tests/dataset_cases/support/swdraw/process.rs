@@ -1,8 +1,5 @@
-//! SWscenario_ShapeProcessAPI.cxx `DT_ApplySeq result shape rscfilename [prefix]`
-//! (ShapeProcessAPI_ApplySequence), and the `set env(CSF_<name>Defaults) dir` lines the
-//! heal grids run before it, with the grids' resource files (tests/heal/data/MDTV and
-//! tests/heal/data/data at 3d097a0328e71b826377d4814ab05ec3c3d23871, copied unchanged
-//! into tests/draw_dataset_cases/data/heal and pinned by SHA-256 here).
+//! Apply named healing resource sequences with an optional parameter prefix.
+//! The fixtures provide resource directories and hash-pinned resource contents.
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{
     message::ProgressRange,

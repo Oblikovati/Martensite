@@ -1,9 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend/ShapeExtend_WireData.hxx/.cxx
-// (constructors, Init, Clear, the queries and Wire/WireAPIMake) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeExtend_WireData`: a wire as an ordered list of edges, with its non-manifold edges
-//! and its seams (docs/shhealing-design.md section 2).
+//! `ShapeExtendWireData`: a wire as an ordered list of edges, with its non-manifold edges
+//! and its seams.
 mod edit;
 mod seams;
 
@@ -17,14 +13,14 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransie
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeShape, BRepBuilderAPIMakeWire};
 
-/// The fields of a `ShapeExtend_WireData`.
+/// The fields of a `ShapeExtendWireData`.
 struct WireDataFields {
     /// `myEdges`: the manifold edges in wire order (and, without the manifold mode, the
     /// non-manifold ones after them).
     edges: Sequence<Shape>,
     /// `myNonmanifoldEdges`: shared with the handle `NonmanifoldEdges` returns.
     nonmanifold: Handle<HSequence<Shape>>,
-    /// `mySeams`: the other seam pairs (null natively until `ComputeSeams`).
+    /// `mySeams`: the other seam pairs (null in this implementation until `ComputeSeams`).
     seams: Option<Sequence<i32>>,
     /// `mySeamsCache`: the indices of `seams`, for `IsSeam`.
     seams_cache: PackedMap<i32>,
@@ -39,7 +35,7 @@ struct WireDataFields {
 
 impl WireDataFields {
     /// The state `Clear` leaves: no edge, no seam known, the manifold mode. The seam
-    /// cache keeps its content, as natively (it is refilled before it is read again).
+    /// cache keeps its content, as in this implementation (it is refilled before it is read again).
     fn clear(&mut self) {
         self.edges = Sequence::default();
         self.nonmanifold = Handle::new(HSequence::default());
@@ -50,7 +46,7 @@ impl WireDataFields {
     }
 }
 
-/// `ShapeExtend_WireData`: the edges of a wire as an ordered list, the non-manifold
+/// `ShapeExtendWireData`: the edges of a wire as an ordered list, the non-manifold
 /// (INTERNAL and EXTERNAL) edges beside it in the manifold mode, and the seam edges (an
 /// edge present twice, FORWARD and REVERSED).
 ///
@@ -76,7 +72,7 @@ impl_transient!(
 );
 
 impl Default for ShapeExtendWireData {
-    /// `ShapeExtend_WireData()`: an empty list (`Clear`).
+    /// `ShapeExtendWireData()`: an empty list (`Clear`).
     fn default() -> Self {
         let mut fields = WireDataFields {
             edges: Sequence::default(),
@@ -96,7 +92,7 @@ impl Default for ShapeExtendWireData {
 }
 
 /// The 1-based position `num` of a sequence; Standard_OutOfRange for a number below 1
-/// (natively the sequence raises it).
+/// (in this implementation the sequence raises it).
 pub(crate) fn position(num: i32, member: &str) -> Result<usize, Failure> {
     usize::try_from(num)
         .ok()
@@ -110,12 +106,12 @@ pub(crate) fn position(num: i32, member: &str) -> Result<usize, Failure> {
 }
 
 impl ShapeExtendWireData {
-    /// `ShapeExtend_WireData()`; `ShapeExtendWireData::new()`.
+    /// `ShapeExtendWireData()`; `ShapeExtendWireData::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeExtend_WireData(wire, chained, theManifoldMode)`: [`Self::init_wire`] on a
+    /// `ShapeExtendWireData(wire, chained, theManifoldMode)`: [`Self::init_wire`] on a
     /// new list; `ShapeExtendWireData::from_wire(&wire, true, true)?`.
     pub fn from_wire(wire: &Wire, chained: bool, manifold_mode: bool) -> Result<Self, Failure> {
         let data = Self::new();
@@ -196,7 +192,7 @@ impl ShapeExtendWireData {
         self.fields.read().manifold_mode
     }
 
-    /// `ManifoldMode() = mode` (the member returns a reference natively);
+    /// `ManifoldMode() = mode` (the member returns a reference in this implementation);
     /// `data.set_manifold_mode(false)`.
     pub fn set_manifold_mode(&self, mode: bool) {
         self.fields.write().manifold_mode = mode;

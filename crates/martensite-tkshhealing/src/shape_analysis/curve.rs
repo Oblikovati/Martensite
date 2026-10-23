@@ -1,5 +1,4 @@
-// ShapeAnalysis_Curve.hxx/.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-//! Curve analysis with native extrema, endpoint and sampling decisions.
+//! Curve analysis with extrema, endpoint and sampling decisions.
 mod periodic;
 mod projection_act;
 mod projection_elementary;

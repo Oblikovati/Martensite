@@ -1,4 +1,4 @@
-//! ShapeAnalysis_ShapeContents at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! ShapeAnalysisShapeContents.
 use martensite_tkbrep::{
     brep::BRepTool,
     topexp::Explorer,
@@ -19,7 +19,7 @@ mod topology;
 use state::{ContentCounts, ContentRecordings};
 /// Counts topology occurrences and selected geometry properties, optionally retaining matching shapes.
 /// Example: `let mut contents = ShapeAnalysisShapeContents::new(); contents.perform(&shape)?;`.
-/// Native counters are uninitialized until Clear/Perform; Rust initializes this undefined domain to zero.
+/// counters are uninitialized until Clear/Perform; Rust initializes this undefined domain to zero.
 #[derive(Clone, Default)]
 pub struct ShapeAnalysisShapeContents {
     counts: ContentCounts,
@@ -41,7 +41,7 @@ impl ShapeAnalysisShapeContents {
     pub fn clear_flags(&mut self) {
         self.recordings.clear_flags();
     }
-    /// Reset statistics, then traverse native topology occurrences and geometry.
+    /// Reset statistics, then traverse topology occurrences and geometry.
     /// Example: `contents.perform(&shape)?; assert_eq!(contents.nb_solids(), 1);`.
     pub fn perform(&mut self, shape: &Shape) -> Result<(), Failure> {
         self.clear();

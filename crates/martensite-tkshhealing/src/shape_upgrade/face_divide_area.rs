@@ -1,4 +1,4 @@
-//! Area-based face subdivision from the retained behavior 3d097a0328e71b8.
+//! Area-based face subdivision.
 use super::{
     FaceDivideData, FaceDivider, ShapeUpgradeFaceDivide, ShapeUpgradeSplitSurfaceArea,
     ShapeUpgradeTool,

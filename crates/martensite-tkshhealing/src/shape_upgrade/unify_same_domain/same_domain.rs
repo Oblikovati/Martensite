@@ -1,4 +1,4 @@
-//! `SameSurf` and `IsSameDomain` of ShapeUpgrade_UnifySameDomain.cxx: whether two faces
+//! `SameSurf` and `IsSameDomain`: whether two faces
 //! lie on the same surface.
 use super::DataMapOfFacePlane;
 use super::geometry::{clear_rts, get_cylinder, null_surface};

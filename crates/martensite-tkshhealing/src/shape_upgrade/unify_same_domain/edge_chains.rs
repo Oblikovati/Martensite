@@ -1,5 +1,5 @@
 //! `MergeEdges`, `MergeSeq`, `generateSubSeq`, `IsMergingPossible` and
-//! `GetLineEdgePoints` of ShapeUpgrade_UnifySameDomain.cxx: the edges chained through
+//! `GetLineEdgePoints`: the edges chained through
 //! their vertices, the chains cut where merging is impossible, and each sub-chain
 //! replaced by its merged edge in the context.
 use super::geometry::is_linear;

@@ -1,14 +1,10 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeUpgrade/ShapeUpgrade_Tool.hxx/.lxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeUpgrade_Tool`: the context and tolerances every ShapeUpgrade tool shares
-//! (docs/shhealing-design.md section 8).
+//! `ShapeUpgradeTool`: the context and tolerances every ShapeUpgrade tool shares.
 use crate::shape_build::ShapeBuildReShape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
 
-/// The fields of a `ShapeUpgrade_Tool`.
+/// The fields of a `ShapeUpgradeTool`.
 #[derive(Clone)]
 struct ToolFields {
     context: Handle<ShapeBuildReShape>,
@@ -17,7 +13,7 @@ struct ToolFields {
     max_tol: f64,
 }
 
-/// `ShapeUpgrade_Tool`: a re-shaping context, a working precision and the tolerance
+/// `ShapeUpgradeTool`: a re-shaping context, a working precision and the tolerance
 /// limits, the root of the ShapeUpgrade tools.
 ///
 /// ```
@@ -45,7 +41,7 @@ impl Default for ShapeUpgradeTool {
 }
 
 impl ShapeUpgradeTool {
-    /// `ShapeUpgrade_Tool()`: no context, precision and minimal tolerance
+    /// `ShapeUpgradeTool()`: no context, precision and minimal tolerance
     /// `Precision::Confusion()`, maximal tolerance 1 ("Precision::Infinite() ?? pdn");
     /// `ShapeUpgradeTool::new()`.
     pub fn new() -> Self {
@@ -61,7 +57,7 @@ impl ShapeUpgradeTool {
     }
 
     /// `Set(tool)`: copies the context, the precision and the tolerances of `tool`;
-    /// Standard_NullObject for a null tool (a null dereference natively);
+    /// Standard_NullObject for a null tool (a null dereference in this implementation);
     /// `tool.set(&other)?`.
     pub fn set(&self, tool: &Handle<ShapeUpgradeTool>) -> Result<(), Failure> {
         let source = tool.get().ok_or_else(|| {

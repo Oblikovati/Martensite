@@ -1,7 +1,6 @@
-//! tests/heal/split_number case bodies at
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871 that build their inputs: a sphere band or a
+//! heal split number regression cases that build their inputs: a sphere band or a
 //! planar triangle, exploded into faces, then `DT_SplitByNumber result face n [n2]`
-//! (ShapeUpgrade_ShapeDivideArea splitting by number) and `checknbshapes result -t -face
+//! (ShapeUpgradeShapeDivideArea splitting by number) and `checknbshapes result -t -face
 //! k`; the grid ends run `puts [checkshape result]` and tests/heal/end shows `result`
 //! with `checkview -display result -2d`.
 use crate::support::{

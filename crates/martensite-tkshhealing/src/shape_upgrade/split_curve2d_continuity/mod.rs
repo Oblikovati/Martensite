@@ -1,4 +1,4 @@
-//! the retained behavior ShapeUpgrade_SplitCurve2dContinuity at 3d097a0328e71b8.
+//! ShapeUpgradeSplitCurve2dContinuity.
 use super::{
     ShapeUpgradeSplitCurve2d, SplitCurve, SplitCurveData, SplitCurves2d,
     curve_continuity::ContinuitySettings,
@@ -38,13 +38,13 @@ impl_transient!(ShapeUpgradeSplitCurve2dContinuity, "ShapeUpgrade_SplitCurve2dCo
     ShapeUpgradeSplitCurve2d, parent, interfaces: [dyn SplitCurve]);
 
 impl ShapeUpgradeSplitCurve2dContinuity {
-    /// Native defaults are C1 and `Precision::PConfusion()`;
+    /// defaults are C1 and `Precision::PConfusion()`;
     /// `ShapeUpgradeSplitCurve2dContinuity::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Set the requested continuity; unsupported geometric criteria use native order one;
+    /// Set the requested continuity; unsupported geometric criteria use order one;
     /// `splitter.set_criterion(Shape::C2)`.
     pub fn set_criterion(&self, criterion: Shape) {
         self.settings.write().set_criterion(criterion);

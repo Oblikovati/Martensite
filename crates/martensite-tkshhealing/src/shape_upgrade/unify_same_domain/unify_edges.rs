@@ -1,6 +1,5 @@
-//! `UnifyEdges`, `UpdateMapOfShapes`, `CheckSharedVertices` and `SetFixWireModes` of
-//! ShapeUpgrade_UnifySameDomain.cxx: the chains of edges merged, then the changed faces
-//! and shells fixed in the context.
+//! Merge edge chains, update shape maps and shared vertices, then repair the
+//! changed faces and shells in the replacement context.
 use super::UnifyState;
 use super::face_bounds::edges_of;
 use super::geometry::clear_rts;

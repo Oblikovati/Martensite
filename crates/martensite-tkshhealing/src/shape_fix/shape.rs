@@ -1,7 +1,4 @@
-// Rust translation of ShapeFix/ShapeFix_Shape.cxx dispatch at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! Native shape dispatch and shared repair tools; face repair remains a partial dependency.
+//! shape dispatch and shared repair tools; face repair remains a partial dependency.
 mod configuration;
 use configuration::ShapeFixModes;
 mod perform;
@@ -43,7 +40,7 @@ impl ShapeFixShape {
         Self::default()
     }
 
-    /// `ShapeFix_Shape(shape)`: initialize the input and result to `shape`;
+    /// `ShapeFixShape(shape)`: initialize the input and result to `shape`;
     /// `ShapeFixShape::new(Shape::default())`.
     pub fn new(shape: Shape) -> Self {
         let fixer = Self::default();

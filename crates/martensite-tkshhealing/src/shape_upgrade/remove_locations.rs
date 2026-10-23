@@ -1,9 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeUpgrade/ShapeUpgrade_RemoveLocations.hxx/.lxx
-// and the members Remove and MakeNewShape of ShapeUpgrade_RemoveLocations.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeUpgrade_RemoveLocations`: moves the locations of sub-shapes into their geometry
-//! (docs/shhealing-design.md section 8).
+//! `ShapeUpgradeRemoveLocations`: moves the locations of sub-shapes into their geometry.
 mod rebuild;
 
 use martensite_tkbrep::brep::BRepBuilder;
@@ -20,14 +15,14 @@ use rebuild::{rebuild_edge, rebuild_face, rebuild_vertex};
 /// original sub-shape (without location) and its new shape.
 pub type ShapeReplacements = DataMap<Shape, Shape, ShapeMapHasher>;
 
-/// The fields of a `ShapeUpgrade_RemoveLocations`.
+/// The fields of a `ShapeUpgradeRemoveLocations`.
 struct RemoveLocationsFields {
     level_removing: ShapeEnum,
     shape: Shape,
     map_new_shapes: ShapeReplacements,
 }
 
-/// `ShapeUpgrade_RemoveLocations`: rebuilds a shape so that the sub-shapes of the types
+/// `ShapeUpgradeRemoveLocations`: rebuilds a shape so that the sub-shapes of the types
 /// from the removal level down carry no location: the transformation moves into their
 /// surfaces, curves and points.
 ///
@@ -57,7 +52,7 @@ impl Default for ShapeUpgradeRemoveLocations {
 }
 
 impl ShapeUpgradeRemoveLocations {
-    /// `ShapeUpgrade_RemoveLocations()`: the removal level TopAbs_SHAPE (every level
+    /// `ShapeUpgradeRemoveLocations()`: the removal level TopAbs_SHAPE (every level
     /// except compounds); `ShapeUpgradeRemoveLocations::new()`.
     pub fn new() -> Self {
         Self {
@@ -72,7 +67,7 @@ impl ShapeUpgradeRemoveLocations {
 
     /// `Remove(theShape)`: rebuilds the shape; true when a sub-shape was rebuilt (the
     /// result is then [`Self::get_result`]). The map of new shapes is kept from earlier
-    /// calls, as natively. Standard_NullObject for a null shape;
+    /// calls, as in this implementation. Standard_NullObject for a null shape;
     /// `remover.remove(&shape)?`.
     pub fn remove(&self, shape: &Shape) -> Result<bool, Failure> {
         let shape_type = shape.shape_type()?;
@@ -126,7 +121,7 @@ impl ShapeUpgradeRemoveLocations {
     }
 
     /// `GetModifiedShapesMap()`: lends the map of the original sub-shapes and their new
-    /// shapes (natively a reference to the field); `remover.get_modified_shapes_map(|m| m.len())`.
+    /// shapes (in this implementation a reference to the field); `remover.get_modified_shapes_map(|m| m.len())`.
     pub fn get_modified_shapes_map<R>(&self, read: impl FnOnce(&ShapeReplacements) -> R) -> R {
         read(&self.fields.read().map_new_shapes)
     }
@@ -138,7 +133,7 @@ struct Remover {
     map: ShapeReplacements,
 }
 
-/// The shape and its new shape when the map binds it (natively `aNewShape` after the
+/// The shape and its new shape when the map binds it (in this implementation `aNewShape` after the
 /// `isBound` block).
 struct BoundShape {
     bound: bool,

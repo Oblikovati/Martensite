@@ -1,4 +1,4 @@
-//! the retained behavior ShapeUpgrade_SplitCurve3dContinuity at 3d097a0328e71b8.
+//! ShapeUpgradeSplitCurve3dContinuity.
 use super::{
     ShapeUpgradeSplitCurve3d, SplitCurve, SplitCurveData, SplitCurves3d,
     curve_continuity::ContinuitySettings,
@@ -29,7 +29,7 @@ impl_transient!(ShapeUpgradeSplitCurve3dContinuity, "ShapeUpgrade_SplitCurve3dCo
     ShapeUpgradeSplitCurve3d, parent, interfaces: [dyn SplitCurve]);
 
 impl ShapeUpgradeSplitCurve3dContinuity {
-    /// Use native C1 and Confusion defaults; `ShapeUpgradeSplitCurve3dContinuity::new()`.
+    /// Use C1 and Confusion defaults; `ShapeUpgradeSplitCurve3dContinuity::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -46,7 +46,7 @@ impl ShapeUpgradeSplitCurve3dContinuity {
     pub fn init_curve(&self, curve: &Handle<dyn GeomCurve>) -> Result<(), Failure> {
         self.parent.init_curve(curve)
     }
-    /// Copy a curve over the native clamped range; `splitter.init_curve_range(&curve, 0., 1.)?`.
+    /// Copy a curve over the clamped range; `splitter.init_curve_range(&curve, 0., 1.)?`.
     pub fn init_curve_range(
         &self,
         curve: &Handle<dyn GeomCurve>,

@@ -1,8 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeUpgrade/ShapeUpgrade.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeUpgrade`: the package functions that split a C0 B-spline at its C0 knots
-//! (docs/shhealing-design.md section 8).
+//! `ShapeUpgrade`: the package functions that split a C0 B-spline at its C0 knots.
 use martensite_tkernel::ncollection::{Array1, HSequence};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dBoundedCurve, Geom2dCurve};
@@ -27,7 +23,7 @@ pub type BoundedCurve2dSequence = Handle<HSequence<Handle<dyn Geom2dBoundedCurve
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ShapeUpgrade;
 
-/// `array(i)` of a native array read by index, Standard_OutOfRange outside it.
+/// `array(i)` of a array read by index, Standard_OutOfRange outside it.
 fn at<T: Copy>(values: &Array1<'_, T>, index: i32) -> Result<T, Failure> {
     values.value(index).copied().map_err(|_| {
         Failure::with_type(
@@ -141,7 +137,7 @@ impl ShapeUpgrade {
     /// `C0BSplineToSequenceOfC1BSplineCurve(BS, seqBS)` for a 3D B-spline: the pieces
     /// between the knots of multiplicity at least the degree (the curve is made
     /// non-periodic first, in place, "to have equation NbPoles = NbKnots with
-    /// Multiplicities - degree - 1"); `None` (native false, the output left unchanged) for
+    /// Multiplicities - degree - 1"); `None` (false, the output left unchanged) for
     /// a null or C1 curve;
     /// `ShapeUpgrade::c0_bspline_to_sequence_of_c1_bspline_curve(&bspline)?`.
     pub fn c0_bspline_to_sequence_of_c1_bspline_curve(

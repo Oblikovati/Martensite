@@ -1,6 +1,5 @@
-//! The geometry commands of the intersection cases: GeometryTest `intersect` (GeomInt_IntSS
-//! for two surfaces, GeomAPI_IntCS for a curve and a surface), `xdistcs`
-//! (GeometryTest_TestProjCommands.cxx), `bounds` and BRepTest `projponf`.
+//! Intersection, distance, bounds and projection helpers for geometric regression cases.
+//! Surface pairs and curve/surface pairs use their respective intersection builders.
 use super::printed::g17;
 use martensite_tkbrep::{
     brep::BRepTool,

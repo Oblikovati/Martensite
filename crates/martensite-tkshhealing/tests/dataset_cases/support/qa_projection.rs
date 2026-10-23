@@ -1,6 +1,4 @@
-//! The QABugs commands of the projection and wireframe cases (QABugs_19.cxx and
-//! QABugs_20.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871): `OCC24008`, `OCC24370`,
-//! `OCC26930` and `OCC7570`, each returning the text it prints.
+//! Projection and wireframe regression helpers returning their diagnostic text.
 use super::printed::g17;
 use martensite_tkbrep::{
     brep::BRepBuilder,
@@ -14,7 +12,7 @@ use martensite_tkshhealing::shape_fix::{FixRoot, ShapeFixEdgeProjAux, ShapeFixWi
 
 type Projected = Result<Handle<dyn Geom2dCurve>, martensite_tkernel::standard::Failure>;
 
-/// ShapeConstruct_ProjectCurveOnSurface on `surface` at Precision::Confusion(), projecting
+/// ShapeConstructProjectCurveOnSurface on `surface` at Precision::Confusion(), projecting
 /// `curve` over `range`: the pcurve (null when not created), or the failure it raised.
 fn project(
     curve: &Handle<dyn GeomCurve>,
@@ -59,7 +57,7 @@ pub fn occ26930(
 }
 
 /// `OCC24370 edge pcurve surface precision`: the pcurve put on a face of the surface
-/// over its own range, then ShapeFix_EdgeProjAux; prints `isFirstDone isLastDone first
+/// over its own range, then ShapeFixEdgeProjAux; prints `isFirstDone isLastDone first
 /// last` (`%.17g` reals, 0 when not done).
 pub fn occ24370(
     edge: &Shape,
@@ -103,7 +101,7 @@ pub fn occ24370(
     )
 }
 
-/// `OCC7570 shape`: ShapeFix_Wireframe dropping small edges at precision 1e+6 and limit
+/// `OCC7570 shape`: ShapeFixWireframe dropping small edges at precision 1e+6 and limit
 /// angle 0.01; it prints nothing.
 pub fn occ7570(shape: &Shape) {
     let tool = ShapeFixWireframe::from_shape(shape);

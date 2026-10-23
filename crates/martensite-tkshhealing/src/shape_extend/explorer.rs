@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend/ShapeExtend_Explorer.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeExtend_Explorer`: conversions between compounds, sequences and lists of shapes,
+//! `ShapeExtendExplorer`: conversions between compounds, sequences and lists of shapes,
 //! and the sorting of a shape by type.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topexp::Explorer;
@@ -34,7 +31,7 @@ pub struct ShapeDispatch {
     pub compounds: ShapeHSequence,
 }
 
-/// `ShapeExtend_Explorer`: tools to explore shapes and to convert their collections.
+/// `ShapeExtendExplorer`: tools to explore shapes and to convert their collections.
 ///
 /// ```
 /// use martensite_tkbrep::topods::Shape;
@@ -63,13 +60,13 @@ fn items(sequence: &ShapeHSequence, member: &str) -> Result<Vec<Shape>, Failure>
 }
 
 impl ShapeExtendExplorer {
-    /// `ShapeExtend_Explorer()`; `ShapeExtendExplorer::new()`.
+    /// `ShapeExtendExplorer()`; `ShapeExtendExplorer::new()`.
     pub fn new() -> Self {
         Self
     }
 
     /// `CompoundFromSeq(seqval)`: a new compound of the shapes of the sequence;
-    /// Standard_NullObject for a null handle (a null dereference natively);
+    /// Standard_NullObject for a null handle (a null dereference in this implementation);
     /// `explorer.compound_from_seq(&shapes)?`.
     pub fn compound_from_seq(&self, seqval: &ShapeHSequence) -> Result<Shape, Failure> {
         let builder = BRepBuilder::default();
@@ -238,7 +235,7 @@ impl ShapeExtendExplorer {
             if sorted.is_null() {
                 continue;
             }
-            // `sh = sh0` before the flattening loop, as natively.
+            // `sh = sh0` before the flattening loop, as in this implementation.
             last = sorted.clone();
             let parts = if flatten && sorted.shape_type()? == ShapeEnum::Compound {
                 children(&sorted)?
@@ -343,7 +340,7 @@ impl ShapeExtendExplorer {
 }
 
 impl ShapeDispatch {
-    /// The eight sequences, in the native argument order.
+    /// The eight sequences, in the argument order.
     fn sequences_mut(&mut self) -> [&mut ShapeHSequence; 8] {
         [
             &mut self.vertices,

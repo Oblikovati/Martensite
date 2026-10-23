@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_WireOrder.hxx and the
-// members of ShapeAnalysis_WireOrder.cxx other than Perform at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeAnalysis_WireOrder`: the order of a list of edges given by their end points.
+//! `ShapeAnalysisWireOrder`: the order of a list of edges given by their end points.
 mod perform;
 
 use martensite_tkernel::precision;
@@ -29,7 +26,7 @@ impl ModeType {
     }
 }
 
-/// `ShapeAnalysis_WireOrder`: proposes an order (and reversals) for edges given as
+/// `ShapeAnalysisWireOrder`: proposes an order (and reversals) for edges given as
 /// couples of points (start, end) in 3D, in 2D, or both, so that each edge starts where
 /// the previous one ends; then reports gaps, chains and couples of that order.
 ///
@@ -47,11 +44,11 @@ impl ModeType {
 /// ```
 #[derive(Clone, Debug)]
 pub struct ShapeAnalysisWireOrder {
-    /// `myOrd`: the new order (null natively until `Perform`).
+    /// `myOrd`: the new order (null in this implementation until `Perform`).
     ord: Option<Vec<i32>>,
     /// `myChains`: the first edge of each chain.
     chains: Option<Vec<i32>>,
-    /// `myCouples`: never filled (`SetCouples` is not implemented natively).
+    /// `myCouples`: never filled (`SetCouples` is not implemented in this implementation).
     couples: Option<Vec<i32>>,
     /// `myXYZ`: the 3D points (the 2D points with Z = 0 in the 2D mode), two per edge.
     xyz: Vec<Xyz>,
@@ -59,7 +56,7 @@ pub struct ShapeAnalysisWireOrder {
     xy: Vec<Xy>,
     /// `myTol`: kept and returned, not used by the algorithm.
     tol: f64,
-    /// `myGap`: never computed natively (always 0).
+    /// `myGap`: never computed in this implementation (always 0).
     gap: f64,
     /// `myStat`.
     stat: i32,
@@ -70,7 +67,7 @@ pub struct ShapeAnalysisWireOrder {
 }
 
 impl Default for ShapeAnalysisWireOrder {
-    /// `ShapeAnalysis_WireOrder()`: the 3D mode with the tolerance `Precision::Confusion()`.
+    /// `ShapeAnalysisWireOrder()`: the 3D mode with the tolerance `Precision::Confusion()`.
     fn default() -> Self {
         Self::with_mode(true, precision::confusion(), false)
     }
@@ -102,12 +99,12 @@ fn point_indices(idx: i32) -> (i32, i32) {
 }
 
 impl ShapeAnalysisWireOrder {
-    /// `ShapeAnalysis_WireOrder()`; `ShapeAnalysisWireOrder::new()`.
+    /// `ShapeAnalysisWireOrder()`; `ShapeAnalysisWireOrder::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeAnalysis_WireOrder(theMode3D, theTolerance, theModeBoth)`: the miscible mode
+    /// `ShapeAnalysisWireOrder(theMode3D, theTolerance, theModeBoth)`: the miscible mode
     /// when `mode_both`, else 3D or 2D; the tolerance is kept but not used;
     /// `ShapeAnalysisWireOrder::with_mode(true, 1e-7, false)`.
     pub fn with_mode(mode_3d: bool, tolerance: f64, mode_both: bool) -> Self {
@@ -194,7 +191,7 @@ impl ShapeAnalysisWireOrder {
         self.keep_loops
     }
 
-    /// `KeepLoopsMode() = mode` (the native member returns a reference);
+    /// `KeepLoopsMode() = mode` (the member returns a reference);
     /// `order.set_keep_loops_mode(true)`.
     pub fn set_keep_loops_mode(&mut self, mode: bool) {
         self.keep_loops = mode;
@@ -299,7 +296,7 @@ impl ShapeAnalysisWireOrder {
 
     /// `Chain(num, n1, n2)`: the first and last ordered ranks of chain `num`, (0, 0)
     /// without chains or for `num` 0 or beyond them; Standard_OutOfRange for a negative
-    /// `num` (the native array raises); `order.chain(1)?`.
+    /// `num` (the array raises); `order.chain(1)?`.
     pub fn chain(&self, num: i32) -> Result<(i32, i32), Failure> {
         let Some(chains) = &self.chains else {
             return Ok((0, 0));
@@ -317,7 +314,7 @@ impl ShapeAnalysisWireOrder {
         Ok((n1, n2))
     }
 
-    /// `SetCouples(gap)`: not implemented natively (a debug message only), so there is
+    /// `SetCouples(gap)`: not implemented in this implementation (a debug message only), so there is
     /// never a couple; `order.set_couples(1e-3)`.
     pub fn set_couples(&mut self, _gap: f64) {}
 

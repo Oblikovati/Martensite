@@ -1,6 +1,6 @@
-//! tests/heal/wire_tails_composed case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871:
+//! heal wire tails composed regression cases:
 //! each builds planar faces from polygons of vertices (`polyvertex`, `mkplane`; A19 sews
-//! four of them), runs `fixshape r s -maxtaila 10 -maxtailw w` (ShapeFix_Wire::FixTails)
+//! four of them), runs `fixshape r s -maxtaila 10 -maxtailw w` (ShapeFixWire::FixTails)
 //! and checks the counts and the length of `r`. tests/heal/end then shows `r` in the 3D
 //! viewer (`checkview -display r -3d -vdispmode 0`), which these crate tests do not
 //! reproduce.

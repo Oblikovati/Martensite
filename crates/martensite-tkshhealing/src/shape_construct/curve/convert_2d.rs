@@ -49,7 +49,7 @@ fn initial_bspline(
     if curve.cast::<Geom2dBezierCurve>().is_null() && curve.cast::<Geom2dLine>().is_null() {
         return Ok(spline);
     }
-    // The trimmed curve is built outside the native `try`: its failure propagates.
+    // The trimmed curve is built outside the `try`: its failure propagates.
     let trimmed: Handle<dyn Geom2dCurve> =
         Handle::new(Geom2dTrimmedCurve::new(curve, first, last, true, true)?).cast();
     Ok(
@@ -73,7 +73,7 @@ fn segment_copy(
     let Some((first, last)) = bounds else {
         return Ok(());
     };
-    // the retained behavior 3d097a0 assigns the copy before Segment: fallback must retain it even on failure.
+    // assigns the copy before Segment: fallback must retain it even on failure.
     *spline = spline.copy()?.cast();
     spline.segment(first, last, precision::p_confusion())
 }

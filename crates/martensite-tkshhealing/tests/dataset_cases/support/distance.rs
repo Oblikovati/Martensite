@@ -1,5 +1,5 @@
-//! BRepTest_ExtremaCommands.cxx `distmini name s1 s2 [deflection]` and
-//! BOPTest_LowCommands.cxx `bclassify`/`b2dclassify`.
+//! `distmini name s1 s2 [deflection]` and
+//! `bclassify`/`b2dclassify`.
 use super::printed::g17;
 use super::session::Session;
 use martensite_tkbrep::topods::{self, Shape};
@@ -79,7 +79,7 @@ pub fn distmini(
     })
 }
 
-/// BOPTest_LowCommands.cxx `PrintState`.
+/// `PrintState`.
 pub fn state_text(state: State) -> &'static str {
     match state {
         State::In => "The point is IN shape\n",

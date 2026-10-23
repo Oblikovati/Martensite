@@ -1,7 +1,3 @@
-// Rust translation of CheckCurve3dWithPCurve, CheckPoints, CheckVerticesWithCurve3d,
-// CheckVerticesWithPCurve and CheckPCurveRange of ModelingAlgorithms/TKShHealing/ShapeAnalysis/
-// ShapeAnalysis_Edge.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The checks of the ends of an edge against its curves.
 use super::ShapeAnalysisEdge;
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
@@ -90,8 +86,8 @@ impl ShapeAnalysisEdge {
         true
     }
 
-    /// Adds the raw enumerator `ShapeExtend_DONE1` or `DONE2` (natively
-    /// `myStatus |= ShapeExtend_DONE1`, not encoded; the bits happen to be the encoded
+    /// Adds the raw enumerator `ShapeExtendDONE1` or `DONE2` (in this implementation
+    /// `myStatus |= ShapeExtendDONE1`, not encoded; the bits happen to be the encoded
     /// ones) when the vertex is farther than its precision from the point.
     fn check_end(
         &mut self,
@@ -232,7 +228,7 @@ impl ShapeAnalysisEdge {
 
     fn checked_vertices(&self, edge: &Edge) -> Result<[Vertex; 2], Failure> {
         let vertices = [self.first_vertex(edge), self.last_vertex(edge)];
-        // The native reads both points before looking at the curve.
+        // The reads both points before looking at the curve.
         BRepTool::pnt(&vertices[0])?;
         BRepTool::pnt(&vertices[1])?;
         Ok(vertices)

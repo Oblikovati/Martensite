@@ -1,8 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeFix/ShapeFix_Root.hxx/.lxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeFix_Root`: the context, precision, tolerance limits and message registrator
-//! shared by the fixing tools (docs/shhealing-design.md section 4).
+//! `ShapeFixRoot`: the context, precision, tolerance limits and message registrator
+//! shared by the fixing tools.
 use crate::shape_build::ShapeBuildReShape;
 use crate::shape_extend::{BasicMsgRegistrator, ShapeExtendBasicMsgRegistrator};
 use martensite_tkbrep::topods::Shape;
@@ -11,7 +8,7 @@ use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Handle, SharedState, StandardTransient, Transient};
 use martensite_tkernel::{impl_transient, impl_transient_interface};
 
-/// The fields of a `ShapeFix_Root` (the private ones and the protected `myShape`).
+/// The fields of a `ShapeFixRoot` (the private ones and the protected `myShape`).
 #[derive(Clone)]
 pub struct FixRootFields {
     /// `myShape` (protected): the shape the messages without a shape go to.
@@ -28,13 +25,13 @@ pub struct FixRootFields {
     pub max_tol: f64,
 }
 
-/// The `ShapeFix_Root` part of a fixing tool, in one shared state.
+/// The `ShapeFixRoot` part of a fixing tool, in one shared state.
 pub struct FixRootData {
     fields: SharedState<FixRootFields>,
 }
 
 impl Default for FixRootData {
-    /// The fields of `ShapeFix_Root()`: no context, a basic message registrator, and the
+    /// The fields of `ShapeFixRoot()`: no context, a basic message registrator, and the
     /// precision and both tolerance limits at `Precision::Confusion()`.
     fn default() -> Self {
         let registrator = Handle::new(ShapeExtendBasicMsgRegistrator::new());
@@ -64,10 +61,10 @@ impl FixRootData {
     }
 }
 
-/// `ShapeFix_Root`: the virtual interface of the fixing tools. The native virtual
+/// `ShapeFixRoot`: the virtual interface of the fixing tools. The virtual
 /// setters (`Set`, `SetContext`, `SetMsgRegistrator`, `SetPrecision`, `SetMinTolerance`,
 /// `SetMaxTolerance`) are provided methods that a derived tool may override; the other
-/// members are the native non-virtual ones.
+/// members are the non-virtual ones.
 ///
 /// ```
 /// use martensite_tkshhealing::shape_fix::{FixRoot, ShapeFixRoot};
@@ -77,7 +74,7 @@ impl FixRootData {
 /// assert_eq!(root.limit_tolerance(1.0), 1e-3);
 /// ```
 pub trait FixRoot: Transient {
-    /// The `ShapeFix_Root` fields of the tool.
+    /// The `ShapeFixRoot` fields of the tool.
     fn fix_root_data(&self) -> &FixRootData;
 
     /// `Set(Root)` (virtual): copies the context, registrator, precision, limits and shape
@@ -205,7 +202,7 @@ pub fn need_fix(flag: i32, def: bool) -> bool {
     if flag < 0 { def } else { flag > 0 }
 }
 
-/// The base class `ShapeFix_Root` itself (no fixing member of its own).
+/// The base class `ShapeFixRoot` itself (no fixing member of its own).
 #[derive(Default)]
 pub struct ShapeFixRoot {
     parent: StandardTransient,
@@ -220,7 +217,7 @@ impl_transient!(
 );
 
 impl ShapeFixRoot {
-    /// `ShapeFix_Root()`: no context, a basic registrator, `Precision::Confusion()` for
+    /// `ShapeFixRoot()`: no context, a basic registrator, `Precision::Confusion()` for
     /// the precision and both limits; `ShapeFixRoot::new()`.
     pub fn new() -> Self {
         Self::default()

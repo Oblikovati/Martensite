@@ -1,4 +1,4 @@
-//! Part of the tests/mkface/after_extsurf_and_offset case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871: each
+//! Face construction regression fixtures: each
 //! builds its curve and surface with the GeomliteTest commands, makes the face (the grid
 //! end makes it from `r` where the case does not), sets the expected maximum tolerances,
 //! then runs the mkface group end ([`super::mkface_grid::mkface_end`]).

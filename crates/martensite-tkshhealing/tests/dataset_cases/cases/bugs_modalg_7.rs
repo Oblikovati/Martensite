@@ -1,4 +1,4 @@
-//! tests/bugs/modalg_7 case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! bugs modalg 7 regression cases owned by
 //! TKShHealing. Each body follows its script line by line; the bugs group end only prints
 //! `TEST COMPLETED`.
 use super::bugs_common::banner;
@@ -122,7 +122,7 @@ pub fn bug30396_2(s: &mut dyn Session) {
 
 /// tests/bugs/modalg_7/bug31430.
 /// 0031430: offset surfaces on C1 surfaces with full multiplicity must not throw; the
-/// missing seam of face 4 is added (ShapeAnalysis_Surface closure), giving 4 faces.
+/// missing seam of face 4 is added (ShapeAnalysisSurface closure), giving 4 faces.
 pub fn bug31430(s: &mut dyn Session) {
     banner(&[
         "========",

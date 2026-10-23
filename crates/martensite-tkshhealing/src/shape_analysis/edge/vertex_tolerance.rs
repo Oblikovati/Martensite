@@ -1,8 +1,4 @@
-// Rust translation of the static CheckVertexTolerance and the two CheckVertexTolerance members of
-// ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_Edge.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-//
-// :o8 abv 19.02.99: CTS18541.stp #18559: coefficient 1.0001 added in CheckVertexTol.
+// The 1.0001 coefficient keeps the vertex tolerance above the measured deviation.
 
 //! The tolerances the vertices of an edge need to hold the ends of its curves.
 use super::ShapeAnalysisEdge;

@@ -1,4 +1,4 @@
-//! tests/heal/split_angle case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 whose
+//! heal split angle regression cases whose
 //! inputs are in the public dataset: each restores `a`, then the grid end runs
 //! `puts [DT_SplitAngle result a]` and `puts [checkshape result]`; tests/heal/end shows
 //! `result` with `checkview -display result -2d`.

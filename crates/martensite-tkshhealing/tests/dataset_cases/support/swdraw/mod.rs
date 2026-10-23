@@ -68,7 +68,7 @@ pub fn status_lines(status: impl Fn(ShapeExtendStatus) -> bool) -> String {
         .collect()
 }
 
-/// SWscenario_ShapeFix.cxx `fixshape result shape [prec [maxtol]] [switches]
+/// `fixshape result shape [prec [maxtol]] [switches]
 /// [-maxtaila deg] [-maxtailw w]`, `args` being the words after `shape`: a ShapeFix_Shape
 /// with a message registrator, the `-x`/`+x`/`*x` mode switches (l o h m d s i n), the
 /// tail options, Init, SetPrecision, SetMaxTolerance and Perform; without `+?` it prints

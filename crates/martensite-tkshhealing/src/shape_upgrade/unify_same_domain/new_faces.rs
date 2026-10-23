@@ -1,5 +1,5 @@
 //! "Insert new faces instead of old ones" of `IntUnifyFaces` and `InsertWiresIntoFaces`
-//! (ShapeUpgrade_UnifySameDomain.cxx): the merged faces recorded in the context.
+//! with merged faces recorded in the replacement context.
 use super::UnifyState;
 use super::face_bounds::edges_of;
 use super::face_groups::FaceGroup;

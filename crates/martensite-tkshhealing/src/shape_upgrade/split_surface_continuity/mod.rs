@@ -1,4 +1,4 @@
-//! the retained behavior ShapeUpgrade_SplitSurfaceContinuity at 3d097a0328e71b8.
+//! ShapeUpgradeSplitSurfaceContinuity.
 use super::{ShapeUpgradeSplitSurface, SplitSurface, SplitSurfaceData, SurfaceSplitValues};
 use crate::shape_extend::ShapeExtendStatus;
 use martensite_tkernel::{
@@ -24,7 +24,7 @@ impl Default for ContinuitySettings {
         Self {
             criterion: Shape::C1,
             tolerance: precision::confusion(),
-            // The native constructor initializes myCont to zero and does not call SetCriterion.
+            // The constructor initializes myCont to zero and does not call SetCriterion.
             order: 0,
         }
     }
@@ -47,7 +47,7 @@ impl Default for ShapeUpgradeSplitSurfaceContinuity {
 impl_transient!(ShapeUpgradeSplitSurfaceContinuity,"ShapeUpgrade_SplitSurfaceContinuity",ShapeUpgradeSplitSurface,parent,interfaces:[dyn SplitSurface]);
 
 impl ShapeUpgradeSplitSurfaceContinuity {
-    /// Create the native C1 splitter with `Precision::Confusion()` tolerance;
+    /// Create the C1 splitter with `Precision::Confusion()` tolerance;
     /// `ShapeUpgradeSplitSurfaceContinuity::new()`.
     pub fn new() -> Self {
         Self::default()
@@ -58,7 +58,7 @@ impl ShapeUpgradeSplitSurfaceContinuity {
         settings.criterion = criterion;
         settings.order = surface_continuity_order(criterion);
     }
-    /// Set the native knot-removal tolerance without clamping; `splitter.set_tolerance(1e-7)`.
+    /// Set the knot-removal tolerance without clamping; `splitter.set_tolerance(1e-7)`.
     pub fn set_tolerance(&self, tolerance: f64) {
         self.settings.write().tolerance = tolerance;
     }
@@ -74,7 +74,7 @@ impl ShapeUpgradeSplitSurfaceContinuity {
     pub fn v_split_values(&self) -> SurfaceSplitValues {
         self.parent.v_split_values()
     }
-    /// Decode a native ShapeExtend flag; `splitter.status_flag(ShapeExtendStatus::Done3)`.
+    /// Decode a ShapeExtend flag; `splitter.status_flag(ShapeExtendStatus::Done3)`.
     pub fn status_flag(&self, status: ShapeExtendStatus) -> bool {
         self.parent.status_flag(status)
     }

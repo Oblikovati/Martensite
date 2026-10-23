@@ -1,4 +1,4 @@
-//! SWscenario_ShapeUpgrade.cxx `DT_ShapeDivide`, `DT_ShapeConvert`, `DT_SplitAngle`,
+//! `DT_ShapeDivide`, `DT_ShapeConvert`, `DT_SplitAngle`,
 //! `DT_ClosedSplit`, `DT_ToBspl` and `DT_SplitByNumber`: the tool on the input shape,
 //! its `Status: ...` lines, then `ShapeFix::SameParameter(res, false)` on the result.
 use super::{same_parameter_fix, status_lines};

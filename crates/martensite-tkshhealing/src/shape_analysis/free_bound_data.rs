@@ -1,15 +1,11 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_FreeBoundData.hxx/.lxx/.cxx
-// at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeAnalysis_FreeBoundData`: a free bound and its properties (docs/shhealing-design.md
-//! section 4).
+//! `ShapeAnalysisFreeBoundData`: a free bound and its properties.
 use martensite_tkbrep::topods::{self, Shape, Wire};
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{DataMap, HSequence};
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
 
-/// The fields of a `ShapeAnalysis_FreeBoundData`.
+/// The fields of a `ShapeAnalysisFreeBoundData`.
 struct FreeBoundFields {
     bound: Wire,
     area: f64,
@@ -22,9 +18,9 @@ struct FreeBoundFields {
     notch_widths: DataMap<Shape, f64, ShapeMapHasher>,
 }
 
-/// `ShapeAnalysis_FreeBoundData`: a free bound (a wire) with its area, perimeter, ratio
+/// `ShapeAnalysisFreeBoundData`: a free bound (a wire) with its area, perimeter, ratio
 /// of average length to average width, average width, and its notches with their
-/// maximal widths. It only stores what `ShapeAnalysis_FreeBoundsProperties` computes;
+/// maximal widths. It only stores what `ShapeAnalysisFreeBoundsProperties` computes;
 /// the properties are -1 until set.
 ///
 /// ```
@@ -47,7 +43,7 @@ impl_transient!(
 );
 
 impl Default for ShapeAnalysisFreeBoundData {
-    /// `ShapeAnalysis_FreeBoundData()`: a null bound and cleared properties.
+    /// `ShapeAnalysisFreeBoundData()`: a null bound and cleared properties.
     fn default() -> Self {
         let fields = FreeBoundFields {
             bound: Wire::default(),
@@ -73,12 +69,12 @@ fn no_notch(member: &str, index: i32, count: i32) -> Failure {
 }
 
 impl ShapeAnalysisFreeBoundData {
-    /// `ShapeAnalysis_FreeBoundData()`; `ShapeAnalysisFreeBoundData::new()`.
+    /// `ShapeAnalysisFreeBoundData()`; `ShapeAnalysisFreeBoundData::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeAnalysis_FreeBoundData(freebound)`; `ShapeAnalysisFreeBoundData::with_bound(&wire)`.
+    /// `ShapeAnalysisFreeBoundData(freebound)`; `ShapeAnalysisFreeBoundData::with_bound(&wire)`.
     pub fn with_bound(free_bound: &Wire) -> Self {
         let data = Self::default();
         data.set_free_bound(free_bound);

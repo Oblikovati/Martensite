@@ -1,8 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom_ConvertToBSpline.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeCustom_ConvertToBSpline`: extrusion, revolution, offset and (optionally) plane
-//! surfaces converted to B-spline surfaces (docs/shhealing-design.md section 7).
+//! `ShapeCustomConvertToBSpline`: extrusion, revolution, offset and (optionally) plane
+//! surfaces converted to B-spline surfaces.
 use super::direct_modification::copied_pcurve;
 use super::edge_copy::copy_edge_curve;
 use super::modification::{ShapeCustomModification, ShapeCustomModificationFields};
@@ -25,7 +22,7 @@ use martensite_tkg3d::geom::{
 use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkmath::gp::Point3;
 
-/// The conversion switches of `ShapeCustom_ConvertToBSpline` (myExtrMode, myRevolMode,
+/// The conversion switches of `ShapeCustomConvertToBSpline` (myExtrMode, myRevolMode,
 /// myOffsetMode, myPlaneMode).
 #[derive(Clone, Copy)]
 struct ConvertModes {
@@ -35,7 +32,7 @@ struct ConvertModes {
     plane: bool,
 }
 
-/// `ShapeCustom_ConvertToBSpline`: a face on a surface of linear extrusion, of revolution,
+/// `ShapeCustomConvertToBSpline`: a face on a surface of linear extrusion, of revolution,
 /// an offset surface (all on by default) or a plane (off by default), possibly trimmed,
 /// gets a B-spline surface from `ShapeConstruct::ConvertSurfaceToBSpline` (with the offset
 /// kept as an offset of the converted basis when the offset mode is off); edges with a
@@ -78,7 +75,7 @@ impl Default for ShapeCustomConvertToBSpline {
 }
 
 impl ShapeCustomConvertToBSpline {
-    /// `ShapeCustom_ConvertToBSpline()`: extrusion, revolution and offset modes on, plane
+    /// `ShapeCustomConvertToBSpline()`: extrusion, revolution and offset modes on, plane
     /// mode off; `ShapeCustomConvertToBSpline::new()`.
     pub fn new() -> Self {
         Self::default()

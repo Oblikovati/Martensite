@@ -1,4 +1,4 @@
-//! Tail overlap detection and splitting from the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Tail overlap detection and splitting.
 use super::*;
 use crate::shape_analysis::{CurveProjection, ShapeAnalysisCurve};
 use martensite_tkbrep::topods::Edge;

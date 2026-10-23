@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeProcess/ShapeProcess_OperLibrary.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeProcess_OperLibrary`: the predefined operators of ShapeProcess (registered by
+//! `ShapeProcessOperLibrary`: the predefined operators of ShapeProcess (registered by
 //! `Init`) and the modifier application they share.
 mod fix;
 mod fix_shape;
@@ -22,7 +19,7 @@ use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::toploc::Location;
 use std::sync::Once;
 
-/// The package-like class `ShapeProcess_OperLibrary`.
+/// The package-like class `ShapeProcessOperLibrary`.
 ///
 /// ```
 /// use martensite_tkshhealing::shape_process::{ShapeProcess, ShapeProcessOperLibrary};
@@ -31,10 +28,10 @@ use std::sync::Once;
 /// ```
 pub struct ShapeProcessOperLibrary;
 
-/// The native static `done` of `Init`.
+/// The static `done` of `Init`.
 static INIT: Once = Once::new();
 
-/// The predefined operators, in the native registration order.
+/// The predefined operators, in the registration order.
 const OPERATORS: [(&str, ShapeProcessOperFunc); 18] = [
     ("DirectFaces", modifications::direct_faces),
     ("SameParameter", fix::same_parameter),
@@ -74,7 +71,7 @@ impl ShapeProcessOperLibrary {
 
     /// `ApplyModifier(S, context, M, map, msg, theMutableInput)`: the shape modified by
     /// `M`; a compound is processed child by child (without location, shared children
-    /// once through `map`, and without messages, as natively), any other shape with a
+    /// once through `map`, and without messages, as in this implementation), any other shape with a
     /// BRepTools_Modifier whose modifications are recorded in the context.
     /// Example: `ShapeProcessOperLibrary::apply_modifier(&s, &ctx, &m, &mut map, &msg, true)?`.
     pub fn apply_modifier(
@@ -148,7 +145,7 @@ impl ShapeProcessOperLibrary {
     }
 }
 
-/// The `occ::down_cast<ShapeProcess_ShapeContext>(context)` that starts every operator.
+/// The `occ::down_cast<ShapeProcessShapeContext>(context)` that starts every operator.
 fn shape_context(context: &Handle<ShapeProcessContext>) -> Handle<ShapeProcessShapeContext> {
     context.cast::<ShapeProcessShapeContext>()
 }

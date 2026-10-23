@@ -1,4 +1,4 @@
-//! Native one-piece reuse, knot snapping and Segment fallback semantics.
+//! one-piece reuse, knot snapping and Segment fallback semantics.
 use super::*;
 impl<G: CurveGeometry + 'static> CurveSplitKernel<G> {
     pub(super) fn fill_single(
@@ -54,7 +54,7 @@ impl<G: CurveGeometry + 'static> CurveSplitKernel<G> {
         for index in 1..=self.split_curve_data().with(|f| f.nb_curves) {
             let first = values.sequence(|s| s.value(index as usize).copied())?;
             let last = values.sequence(|s| s.value(index as usize + 1).copied())?;
-            // the retained behavior3d097a0 leaves multipart entries null when Segment is false, despite the header comment.
+            // leaves multipart entries null when Segment is false, despite the header comment.
             let result = if segment {
                 self.segment_piece(curve, first, last)?
             } else {

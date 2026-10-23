@@ -1,16 +1,9 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/SHMessage at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! the retained behavior package SHMessage: the message texts of Shape Healing.
+//! Embedded English healing messages.
 //!
-//! The package holds no code: each `.pxx` file defines one C string literal compiled from
-//! the resource files `resources/SHMessage/SHAPE.us` and `SHAPE.fr`. The literals are
-//! data, carried over byte for byte by `tools/generate_shmessage_data.py` (with their
-//! provenance in `implementation/shmessage-data.json`) and embedded here. Only the `us` literal is
-//! compiled natively (the package's FILES.cmake lists `SHMessage_SHAPE_us.pxx` alone), and
-//! `ShapeExtend::init` loads it into the message catalog, as `ShapeExtend::Init` does.
-
+//! The message catalog preserves its resource bytes, without a terminating NUL.
+//! `ShapeExtend::init` loads these messages into the catalog.
 /// `SHMessage_SHAPE_us`: the English message texts, the bytes of the literal without its
-/// terminating NUL (`sizeof(SHMessage_SHAPE_us) - 1` natively).
+/// terminating NUL (`sizeof(SHMessage_SHAPE_us) - 1` in this implementation).
 ///
 /// ```
 /// use martensite_tkshhealing::sh_message::SHAPE_US;
@@ -20,7 +13,7 @@
 pub const SHAPE_US: &[u8] = include_bytes!("SHAPE.us");
 
 /// `SHMessage_SHAPE_fr`: the French message texts. The file ships with the package but is
-/// not compiled natively; no Shape Healing member reads it.
+/// not compiled in this implementation; no Shape Healing member reads it.
 ///
 /// ```
 /// use martensite_tkshhealing::sh_message::SHAPE_FR;

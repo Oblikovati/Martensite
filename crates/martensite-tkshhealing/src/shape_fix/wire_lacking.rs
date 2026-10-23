@@ -1,6 +1,4 @@
-// Rust translation of the single-edge and bulk ShapeFix_Wire::FixLacking overloads.
-
-//! Repair missing p-curve connections by tolerance growth or a replacement edge.
+//! Repair missing p-curve connections for one edge or a complete wire.
 #[path = "wire_lacking_context.rs"]
 mod context;
 #[path = "wire_lacking_types.rs"]

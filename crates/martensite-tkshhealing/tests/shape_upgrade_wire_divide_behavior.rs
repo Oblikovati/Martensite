@@ -1,4 +1,4 @@
-//! Wire division preserves native topology, context sharing and parameter ranges.
+//! Wire division preserves topology, context sharing and parameter ranges.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     brep_tools::ReShape,
@@ -215,7 +215,7 @@ fn null_context_reports_typed_divergence_without_mutating_loaded_wire() {
     tool.load_edge(&edge).unwrap();
     tool.set_face(&face);
     let wire = tool.wire();
-    // Pinned the retained behavior dereferences myContext here; this is an explicit divergence, not parity.
+    // Missing context must return a typed failure instead of dereferencing an absent handle.
     let failure = tool.perform().unwrap_err();
     assert_eq!(failure.exception_type(), "Standard_NullObject");
     assert!(tool.wire().is_same(&wire));
@@ -239,7 +239,7 @@ fn pcurve_only_internal_vertex_preserves_crash_divergence_and_partial_status() {
         .unwrap();
     let tool = divider(&edge, &face);
     let wire = tool.wire();
-    // Native CopyNMVertex dereferences the absent spatial curve at the retained behavior 3d097a0.
+    // CopyNMVertex dereferences the absent spatial curve.
     assert_eq!(
         tool.perform().unwrap_err().exception_type(),
         "Standard_NullObject"

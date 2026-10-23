@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeFix/ShapeFix_FaceConnect.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeFix_FaceConnect`: the free edges of pairs of faces declared connected are sewn,
+//! `ShapeFixFaceConnect`: the free edges of pairs of faces declared connected are sewn,
 //! and the shell is rebuilt with the sewn edges (the wires reordered and fixed, the
 //! vertices merged).
 mod rebuild;
@@ -19,7 +16,7 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 /// `NCollection_DataMap<TopoDS_Shape, NCollection_List<TopoDS_Shape>, TopTools_ShapeMapHasher>`.
 pub(super) type ShapeListMap = DataMap<Shape, List<Shape>, ShapeMapHasher>;
 
-/// `ShapeFix_FaceConnect`: the faces declared connected (`myConnected`), the original
+/// `ShapeFixFaceConnect`: the faces declared connected (`myConnected`), the original
 /// free edges of each face (`myOriFreeEdges`) and, for each original free edge, its
 /// resulting free (`myResFreeEdges`) and shared (`myResSharEdges`) edges.
 ///
@@ -44,7 +41,7 @@ fn contains_same(list: &List<Shape>, shape: &Shape) -> bool {
 }
 
 impl ShapeFixFaceConnect {
-    /// `ShapeFix_FaceConnect()`: no connection; `ShapeFixFaceConnect::new()`.
+    /// `ShapeFixFaceConnect()`: no connection; `ShapeFixFaceConnect::new()`.
     pub fn new() -> Self {
         Self::default()
     }

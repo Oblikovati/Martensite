@@ -1,4 +1,4 @@
-//! tests/heal/fix_face_size case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 whose
+//! heal fix face size regression cases whose
 //! inputs are in the public dataset: the grid begin points `CSF_MDTVDefaults` to
 //! tests/heal/data and prints it; each case restores `a`, then the grid end runs
 //! `puts [DT_ApplySeq result a MDTV ToV4]` (the ToV4 sequence of the MDTV resource file)

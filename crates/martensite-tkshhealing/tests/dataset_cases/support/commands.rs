@@ -28,7 +28,7 @@ use martensite_tkgeombase::{
 };
 use std::io::{Read, Seek, SeekFrom};
 
-/// DBRep.cxx `explode name`: the direct sub-shapes, in iteration order.
+/// `explode name`: the direct sub-shapes, in iteration order.
 pub fn explode(shape: &Shape) -> Vec<Shape> {
     let mut parts = Vec::new();
     let mut iterator = ShapeIterator::new(shape, true, true);
@@ -39,7 +39,7 @@ pub fn explode(shape: &Shape) -> Vec<Shape> {
     parts
 }
 
-/// DBRep.cxx `explode name type`: the sub-shapes of `kind` in exploration order, each
+/// `explode name type`: the sub-shapes of `kind` in exploration order, each
 /// once (the map is seeded with the shape itself).
 pub fn explode_type(shape: &Shape, kind: ShapeEnum) -> Vec<Shape> {
     let mut seen = MapOfShape::default();
@@ -55,7 +55,7 @@ pub fn explode_type(shape: &Shape, kind: ShapeEnum) -> Vec<Shape> {
     parts
 }
 
-/// BRepTest_CurveCommands.cxx `mkcurve c edge`: the edge's 3D curve trimmed to its
+/// `mkcurve c edge`: the edge's 3D curve trimmed to its
 /// range, transformed by the composed location.
 pub fn mkcurve(edge: &Shape) -> Handle<dyn GeomCurve> {
     let edge = topods::edge(edge).expect("mkcurve: an edge");
@@ -70,7 +70,7 @@ pub fn mkcurve(edge: &Shape) -> Handle<dyn GeomCurve> {
     copy.unwrap().cast()
 }
 
-/// BRepTest_SurfaceCommands.cxx `mksurface s face`: the face's surface transformed by
+/// `mksurface s face`: the face's surface transformed by
 /// the composed location.
 pub fn mksurface(face: &Shape) -> Handle<dyn GeomSurface> {
     let face = topods::face(face).expect("mksurface: a face");
@@ -82,7 +82,7 @@ pub fn mksurface(face: &Shape) -> Handle<dyn GeomSurface> {
     copy.unwrap().cast()
 }
 
-/// GeometryTest_CurveCommands.cxx `project result c3d surf [-t tol]`:
+/// `project result c3d surf [-t tol]`:
 /// `GeomProjLib::Curve2d` over the curve range and the surface bounds; `None` is the
 /// command's "Projection Failed".
 pub fn project(
@@ -96,7 +96,7 @@ pub fn project(
     (!projected.is_null()).then_some(projected)
 }
 
-/// Draw_VariableCommands.cxx `dump name`: the banner, then `print` at precision 15.
+/// `dump name`: the banner, then `print` at precision 15.
 fn dump_text(name: &str, print: impl FnOnce(&mut IoStream)) -> String {
     let mut stream = IoStream::from_bytes(Vec::new());
     stream.set_precision(15);
@@ -129,7 +129,7 @@ pub fn dump_surface(name: &str, surface: &Handle<dyn GeomSurface>) -> String {
     })
 }
 
-/// GeomliteTest_SurfaceCommands.cxx `trim result c` (three words): the basis curve of a
+/// `trim result c` (three words): the basis curve of a
 /// trimmed curve, the curve itself otherwise; the variable shares the handle.
 pub fn trim_to_basis(curve: &Handle<dyn GeomCurve>) -> Handle<dyn GeomCurve> {
     let trimmed = curve.cast::<GeomTrimmedCurve>();
@@ -139,7 +139,7 @@ pub fn trim_to_basis(curve: &Handle<dyn GeomCurve>) -> Handle<dyn GeomCurve> {
     }
 }
 
-/// GeomliteTest_CurveCommands.cxx `segment name f l`: `Segment(f, l, PConfusion)` of a
+/// `segment name f l`: `Segment(f, l, PConfusion)` of a
 /// B-spline curve (a Bezier curve segments without tolerance); any other curve makes the
 /// command fail, which the cases surface as an evaluation error.
 pub fn segment(curve: &Handle<dyn GeomCurve>, first: f64, last: f64) -> Result<(), String> {
@@ -156,7 +156,7 @@ pub fn segment(curve: &Handle<dyn GeomCurve>, first: f64, last: f64) -> Result<(
     Err("segment: not a Bezier or B-spline curve".into())
 }
 
-/// GeomliteTest_SurfaceCommands.cxx `offset name surface distance`:
+/// `offset name surface distance`:
 /// `new Geom_OffsetSurface(GS, dist)` (C0 basis checked).
 pub fn offset_surface(
     surface: &Handle<dyn GeomSurface>,
@@ -167,7 +167,7 @@ pub fn offset_surface(
     Ok(Handle::new(offset).cast())
 }
 
-/// BRepTest_SurfaceCommands.cxx `pcurve face`: the p-curve of every explored edge of the
+/// `pcurve face`: the p-curve of every explored edge of the
 /// FORWARD face (`face_1`, `face_2`, ...), trimmed to the edge range unless the
 /// non-periodic curve is already shorter than it; an edge without p-curve prints
 /// `Error`.
@@ -225,7 +225,7 @@ pub fn explode_all(shape: &Shape, kind: ShapeEnum) -> Vec<Shape> {
     parts
 }
 
-/// GeometryTest_CurveCommands.cxx `crvtpoints r c defl angle minpoints`: the number of
+/// `crvtpoints r c defl angle minpoints`: the number of
 /// points of GCPnts_TangentialDeflection on the GeomAdaptor_Curve.
 pub fn crvtpoints_count(
     curve: &Handle<dyn GeomCurve>,
@@ -242,7 +242,7 @@ pub fn crvtpoints_count(
         .nb_points()
 }
 
-/// DBRep.cxx `tclean [-force] name`: `BRepTools::Clean` of a compound holding the shape.
+/// `tclean [-force] name`: `BRepTools::Clean` of a compound holding the shape.
 pub fn tclean(shape: &Shape, force: bool) {
     let builder = BRepBuilder::default();
     let mut compound = Compound::default();
@@ -251,13 +251,13 @@ pub fn tclean(shape: &Shape, force: bool) {
     brep_tools::clean(&compound, force).unwrap();
 }
 
-/// GeomliteTest_CurveCommands.cxx `length c tol` for a 2D curve.
+/// `length c tol` for a 2D curve.
 pub fn length2d(curve: &Handle<dyn Geom2dCurve>, tolerance: f64) -> f64 {
     let adaptor = Geom2dAdaptorCurve::with_curve(curve).unwrap();
     AbscissaPoint::length_with_tolerance(&adaptor, tolerance).unwrap()
 }
 
-/// GeomliteTest_CurveCommands.cxx `length c tol` for a 3D curve.
+/// `length c tol` for a 3D curve.
 pub fn length3d(curve: &Handle<dyn GeomCurve>, tolerance: f64) -> f64 {
     let adaptor = GeomAdaptorCurve::with_curve(curve).unwrap();
     AbscissaPoint::length_with_tolerance(&adaptor, tolerance).unwrap()

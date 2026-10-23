@@ -19,7 +19,7 @@ use martensite_tkshhealing::shape_custom::{
     ShapeCustom, ShapeCustomRestrictionParameters, ShapeCustomRestrictionRequest,
 };
 
-/// SWscenario_ShapeCustom.cxx `bsplres result shape tol3d tol2d maxdeg maxseg C1 C2 0 1`:
+/// `bsplres result shape tol3d tol2d maxdeg maxseg C1 C2 0 1`:
 /// ShapeCustom::BSplineRestriction, then ShapeFix::SameParameter of a modified result.
 fn bsplres_c1_c2(shape: &martensite_tkbrep::topods::Shape) -> martensite_tkbrep::topods::Shape {
     let request = ShapeCustomRestrictionRequest {

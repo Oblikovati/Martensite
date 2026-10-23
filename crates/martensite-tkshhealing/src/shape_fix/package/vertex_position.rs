@@ -1,4 +1,4 @@
-//! ShapeFix.cxx vertex positioning at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Position vertices consistently with their incident edge geometry.
 mod grouping;
 mod repair;
 use super::ShapeFix;
@@ -81,7 +81,7 @@ fn reposition(
     if BRepTool::vertex_tolerance(vertex)? <= tolerance {
         return Ok(false);
     }
-    // UpdateVertex only raises tolerance: preserve the native no-op attempt to lower it.
+    // UpdateVertex only raises tolerance: preserve the no-op attempt to lower it.
     BRepBuilder::default().update_vertex_tolerance(vertex, tolerance)?;
     if edges.len() == 1 {
         return Ok(false);

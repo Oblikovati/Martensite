@@ -1,4 +1,4 @@
-//! Native range and conversion branches of ShapeFix_Wire_1.cxx::FixGap3d.
+//! Spatial wire gap repair through range adjustment or curve conversion.
 mod convert;
 mod ranges;
 mod replace;

@@ -1,7 +1,3 @@
-// Rust translation of ShapeBuild_Edge::RemovePCurve, ReplacePCurve, ReassignPCurve,
-// TransformPCurve and the static CountPCurves of ShapeBuild_Edge.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! Removing, replacing, reassigning and transforming the p-curves of an edge.
 use super::{ShapeBuildEdge, copied_pcurve, representations};
 use martensite_tkbrep::brep::update_curves::as_gcurve;

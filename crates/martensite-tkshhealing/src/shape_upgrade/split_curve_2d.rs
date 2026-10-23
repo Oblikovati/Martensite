@@ -1,4 +1,4 @@
-//! ShapeUpgrade_SplitCurve2d at the retained behavior 3d097a0328e71b8: copied geometry and native split state.
+//! ShapeUpgradeSplitCurve2d: copied geometry and split state.
 use super::split_curve_geometry::{CurveFamily2d, CurveSplitKernel};
 use super::{ShapeUpgradeSplitCurve, SplitCurve, SplitCurveData};
 use martensite_tkernel::{
@@ -10,7 +10,7 @@ use martensite_tkg2d::geom2d::Geom2dCurve;
 /// Shared resulting curve array; multipart `build(false)` entries may be null.
 pub type SplitCurves2d = Handle<HArray1<Handle<dyn Geom2dCurve>>>;
 /// Splits a private curve copy; `ShapeUpgradeSplitCurve2d::new()`.
-/// Native offset construction from null pieces crashes; Rust records a typed failure divergence.
+/// offset construction from null pieces crashes; Rust records a typed failure divergence.
 #[derive(Default)]
 pub struct ShapeUpgradeSplitCurve2d {
     parent: CurveSplitKernel<CurveFamily2d>,

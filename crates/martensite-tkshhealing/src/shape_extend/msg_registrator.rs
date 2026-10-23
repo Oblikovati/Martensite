@@ -1,8 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend/ShapeExtend_BasicMsgRegistrator.hxx/.cxx
-// and ShapeExtend_MsgRegistrator.hxx/.lxx/.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeExtend_BasicMsgRegistrator` and `ShapeExtend_MsgRegistrator`: the objects that the
-//! Shape Healing tools send their messages to (docs/shhealing-design.md section 2).
+//! `ShapeExtendBasicMsgRegistrator` and `ShapeExtendMsgRegistrator`: the objects that the
+//! Shape Healing tools send their messages to.
 use martensite_tkbrep::topods::Shape;
 use martensite_tkbrep::toptools::ShapeMapHasher;
 use martensite_tkernel::message::{Gravity, Msg};
@@ -41,8 +38,8 @@ pub type TransientMessageMap = DataMap<TransientKey, List<Msg>, TransientKeyHash
 /// `NCollection_DataMap<TopoDS_Shape, NCollection_List<Message_Msg>, TopTools_ShapeMapHasher>`.
 pub type ShapeMessageMap = DataMap<Shape, List<Msg>, ShapeMapHasher>;
 
-/// `ShapeExtend_BasicMsgRegistrator`: the three virtual `Send` members, whose native bodies
-/// are empty; a registrator that keeps the messages (ShapeExtend_MsgRegistrator, the
+/// `ShapeExtendBasicMsgRegistrator`: the three virtual `Send` members, whose bodies
+/// are empty; a registrator that keeps the messages (ShapeExtendMsgRegistrator, the
 /// Data Exchange processors) overrides them.
 ///
 /// ```
@@ -77,7 +74,7 @@ impl_transient_interface!(
     StandardTransient
 );
 
-/// The base class `ShapeExtend_BasicMsgRegistrator` itself: every message is dropped.
+/// The base class `ShapeExtendBasicMsgRegistrator` itself: every message is dropped.
 #[derive(Default)]
 pub struct ShapeExtendBasicMsgRegistrator {
     parent: StandardTransient,
@@ -91,7 +88,7 @@ impl_transient!(
 );
 
 impl ShapeExtendBasicMsgRegistrator {
-    /// `ShapeExtend_BasicMsgRegistrator()`; `ShapeExtendBasicMsgRegistrator::new()`.
+    /// `ShapeExtendBasicMsgRegistrator()`; `ShapeExtendBasicMsgRegistrator::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -99,14 +96,14 @@ impl ShapeExtendBasicMsgRegistrator {
 
 impl BasicMsgRegistrator for ShapeExtendBasicMsgRegistrator {}
 
-/// The two message maps of a `ShapeExtend_MsgRegistrator`.
+/// The two message maps of a `ShapeExtendMsgRegistrator`.
 #[derive(Default)]
 struct MessageMaps {
     transients: TransientMessageMap,
     shapes: ShapeMessageMap,
 }
 
-/// `ShapeExtend_MsgRegistrator`: keeps every message sent for a non-null object or shape,
+/// `ShapeExtendMsgRegistrator`: keeps every message sent for a non-null object or shape,
 /// in the order sent, in one list per object and one per shape.
 ///
 /// ```
@@ -138,12 +135,12 @@ impl Default for ShapeExtendMsgRegistrator {
 }
 
 impl ShapeExtendMsgRegistrator {
-    /// `ShapeExtend_MsgRegistrator()`: empty maps; `ShapeExtendMsgRegistrator::new()`.
+    /// `ShapeExtendMsgRegistrator()`: empty maps; `ShapeExtendMsgRegistrator::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `MapTransient()`: lends the map of objects and their messages (natively a
+    /// `MapTransient()`: lends the map of objects and their messages (in this implementation a
     /// reference to the field); `registrator.map_transient(|map| map.len())`.
     pub fn map_transient<R>(&self, read: impl FnOnce(&TransientMessageMap) -> R) -> R {
         read(&self.maps.read().transients)
@@ -158,7 +155,7 @@ impl ShapeExtendMsgRegistrator {
 
 impl BasicMsgRegistrator for ShapeExtendMsgRegistrator {
     /// Appends the message to the list of the object (a new list for a new object); a
-    /// null object is ignored. The gravity is not kept, as natively.
+    /// null object is ignored. The gravity is not kept, as in this implementation.
     fn send_transient(&self, object: &Handle<StandardTransient>, message: &Msg, _gravity: Gravity) {
         if object.is_null() {
             return;

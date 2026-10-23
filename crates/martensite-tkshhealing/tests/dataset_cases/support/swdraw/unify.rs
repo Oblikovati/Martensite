@@ -1,4 +1,4 @@
-//! SWscenario_ShapeUpgrade.cxx `unifysamedom result shape [s1 s2 ...] [-f] [-e] [-nosafe]
+//! `unifysamedom result shape [s1 s2 ...] [-f] [-e] [-nosafe]
 //! [+b] [+i] [-t val] [-a val]` (ShapeUpgrade_UnifySameDomain).
 use super::atof;
 use martensite_tkbrep::{topods::Shape, toptools::MapOfShape};

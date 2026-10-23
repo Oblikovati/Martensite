@@ -1,5 +1,5 @@
 //! `GetFaceFromSeq`, `RemoveEdgeFromMap`, `ComputeMinEdgeSize`, `FindCoordBounds` and
-//! `AddOrdinaryEdges` of ShapeUpgrade_UnifySameDomain.cxx: the edge bookkeeping of the
+//! `AddOrdinaryEdges`: the edge bookkeeping of the
 //! faces to merge and the extent of the merged area along a periodic direction.
 use super::geometry::update_boundaries;
 use martensite_tkbrep::brep::BRepTool;

@@ -1,4 +1,4 @@
-//! BRepTest_CheckCommands.cxx `checkshape shape prefix` (the structural output style):
+//! `checkshape shape prefix` (the structural output style):
 //! ` -- The Shape <name> looks OK`, or the count of each problem and the faulty shapes by
 //! type (the `<prefix>_v`, `_e`, ... compounds are scenario variables the cases never read).
 use super::checkshape::CheckOptions;

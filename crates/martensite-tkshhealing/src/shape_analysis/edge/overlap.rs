@@ -1,7 +1,3 @@
-// Rust translation of the static IsOverlapPartEdges and CheckOverlapping of
-// ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_Edge.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The overlap of two edges: points of the shorter one along its length, each within
 //! the tolerance of the other edge.
 use super::ShapeAnalysisEdge;

@@ -1,5 +1,3 @@
-// Rust translation of ShapeFix_Wire::FixDegenerated at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! Insert or replace wire edges that lie on a supimplementation-surface singularity.
 use super::ShapeFixWire;
 use crate::shape_analysis::{ShapeAnalysisEdge, ShapeAnalysisWire};

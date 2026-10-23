@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeFix/ShapeFix_WireVertex.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeFix_WireVertex`: apply the decisions from `ShapeAnalysis_WireVertex` to a wire.
+//! `ShapeFixWireVertex`: apply the decisions from `ShapeAnalysisWireVertex` to a wire.
 use crate::shape_analysis::{ShapeAnalysisEdge, ShapeAnalysisWireVertex};
 use crate::shape_extend::ShapeExtendWireData;
 use martensite_tkbrep::brep::BRepBuilder;
@@ -24,7 +21,7 @@ pub struct ShapeFixWireVertex {
 }
 
 impl ShapeFixWireVertex {
-    /// Construct an uninitialized fixer (`ShapeFix_WireVertex()`);
+    /// Construct an uninitialized fixer (`ShapeFixWireVertex()`);
     /// `ShapeFixWireVertex::new()`.
     pub fn new() -> Self {
         Self::default()
@@ -49,7 +46,7 @@ impl ShapeFixWireVertex {
         self.analyzer.analyze()
     }
 
-    /// Reuse an existing analysis by native handle-sharing semantics;
+    /// Reuse an existing analysis by handle-sharing semantics;
     /// `fixer.init_from_analyzer(&analysis)`.
     pub fn init_from_analyzer(&mut self, analyzer: &ShapeAnalysisWireVertex) {
         self.analyzer = analyzer.clone();
@@ -70,7 +67,7 @@ impl ShapeFixWireVertex {
         self.analyzer.wire_data().wire()
     }
 
-    /// Join only SameCoords and Close junctions, preserving native parameter quirks;
+    /// Join only SameCoords and Close junctions, preserving parameter quirks;
     /// `let changed = fixer.fix_same()?`.
     pub fn fix_same(&mut self) -> Result<i32, Failure> {
         if !self.analyzer.is_done() {
@@ -198,7 +195,7 @@ impl ShapeFixWireVertex {
     }
 }
 
-/// Recorded topological and parameter inputs for the two native Fix passes.
+/// Recorded topological and parameter inputs for the two Fix passes.
 struct FixSnapshot {
     edges: Vec<Edge>,
     previous_vertices: Vec<Vertex>,

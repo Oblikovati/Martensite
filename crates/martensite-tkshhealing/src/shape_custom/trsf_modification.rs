@@ -1,8 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom_TrsfModification.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeCustom_TrsfModification`: the BRepTools transformation with the stored
-//! tolerances scaled (docs/shhealing-design.md section 7).
+//! `ShapeCustomTrsfModification`: the BRepTools transformation with the stored
+//! tolerances scaled.
 use martensite_tkbrep::brep::access::{edge_tshape, face_tshape, vertex_tshape};
 use martensite_tkbrep::brep_tools::{
     BRepToolsModification, NewCurve, NewSurface, TrsfModification,
@@ -15,7 +12,7 @@ use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkmath::gp::{Point3, Transform3};
 use martensite_tkmath::poly::{Polygon3D, PolygonOnTriangulation, Triangulation};
 
-/// `ShapeCustom_TrsfModification`: `BRepTools_TrsfModification` whose output tolerance
+/// `ShapeCustomTrsfModification`: `BRepTools_TrsfModification` whose output tolerance
 /// is the tolerance stored in the TShape (not raised to `Precision::Confusion()` as
 /// `BRep_Tool::Tolerance` does) times `|ScaleFactor|`, after the inherited member ran.
 ///
@@ -37,7 +34,7 @@ impl_transient!(
 );
 
 impl ShapeCustomTrsfModification {
-    /// `ShapeCustom_TrsfModification(T)`; `ShapeCustomTrsfModification::new(trsf)`.
+    /// `ShapeCustomTrsfModification(T)`; `ShapeCustomTrsfModification::new(trsf)`.
     pub fn new(trsf: Transform3) -> Self {
         Self {
             parent: TrsfModification::new(trsf),
@@ -125,7 +122,7 @@ impl BRepToolsModification for ShapeCustomTrsfModification {
     }
 
     /// The inherited result, with the TVertex tolerance times `|ScaleFactor|`; a null
-    /// vertex (an infinite edge), which the native member dereferences after the
+    /// vertex (an infinite edge), which the member dereferences after the
     /// inherited call, is Standard_NullObject.
     fn new_parameter(
         &self,

@@ -1,5 +1,4 @@
-//! tests/heal/elementary_to_revolution case bodies at
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871: each restores `a` and sets `nb_revol`, then
+//! heal elementary to revolution regression cases: each restores `a` and sets `nb_revol`, then
 //! the grid end points `CSF_dataDefaults` to tests/heal/data, runs `DT_ApplySeq result a
 //! data data1` (the ElementaryToRevolution operator), explodes the faces of `a` and
 //! `result`, dumps the surface of each pair and counts the faces whose type changed to

@@ -1,5 +1,4 @@
-// Rust translation of ShapeAnalysis_CanonicalRecognition conic recognition at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Recognize conics on edges and require consistent parameters across a wire.
 use super::params::{compare_conic_params, set_conic_parameters};
 use super::{ShapeAnalysisCanonicalRecognition, surfaces};
 use martensite_tkbrep::topods::{self, Edge, ShapeIterator};
@@ -93,7 +92,7 @@ impl ShapeAnalysisCanonicalRecognition {
             if conic.is_null() {
                 return Ok(false);
             }
-            // The native result of SetConicParameters is overwritten by the comparison.
+            // The result of SetConicParameters is overwritten by the comparison.
             set_conic_parameters(target, &conic, &mut other_pos, &mut other_params)?;
             if !compare_conic_params(target, tol, pos, params, &other_pos, &other_params)? {
                 return Ok(false);

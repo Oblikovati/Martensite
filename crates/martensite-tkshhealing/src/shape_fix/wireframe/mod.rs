@@ -1,4 +1,4 @@
-//! ShapeFix_Wireframe state and topology analysis from the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! ShapeFixWireframe state and topology analysis.
 mod gaps;
 mod join_edges;
 mod merge_small;
@@ -86,7 +86,7 @@ impl ShapeFixWireframe {
     pub fn set_mode_drop_small_edges(&self, enabled: bool) {
         self.state.write().drop_small = enabled;
     }
-    /// Set the native unconstrained angle value; `tool.set_limit_angle(0.1)`.
+    /// Set the unconstrained angle value; `tool.set_limit_angle(0.1)`.
     pub fn set_limit_angle(&self, angle: f64) {
         self.state.write().limit_angle = angle;
     }

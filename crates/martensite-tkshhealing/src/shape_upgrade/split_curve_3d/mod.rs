@@ -1,4 +1,4 @@
-//! ShapeUpgrade_SplitCurve3d at the retained behavior 3d097a0328e71b8: copied geometry and native split state.
+//! ShapeUpgradeSplitCurve3d: copied geometry and split state.
 use super::split_curve_geometry::{CurveFamily3d, CurveSplitKernel};
 use super::{ShapeUpgradeSplitCurve, SplitCurve, SplitCurveData};
 use martensite_tkernel::{
@@ -10,7 +10,7 @@ use martensite_tkg3d::geom::GeomCurve;
 /// Shared resulting curve array; multipart `build(false)` entries may be null.
 pub type SplitCurves3d = Handle<HArray1<Handle<dyn GeomCurve>>>;
 /// Splits a private curve copy; `ShapeUpgradeSplitCurve3d::new()`.
-/// Native offset construction from null pieces crashes; Rust records a typed failure divergence.
+/// offset construction from null pieces crashes; Rust records a typed failure divergence.
 #[derive(Default)]
 pub struct ShapeUpgradeSplitCurve3d {
     parent: CurveSplitKernel<CurveFamily3d>,

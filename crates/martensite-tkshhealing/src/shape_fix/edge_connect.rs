@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeFix/ShapeFix_EdgeConnect.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeFix_EdgeConnect`: shares the coincident end vertices of connected edges.
+//! `ShapeFixEdgeConnect`: shares the coincident end vertices of connected edges.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::brep::access::edge_tshape;
 use martensite_tkbrep::brep::update_curves::as_gcurve;
@@ -14,7 +11,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::gp::{Point3, Xyz};
 
-/// `ShapeFix_EdgeConnect`: records connections between the last vertex of an edge and
+/// `ShapeFixEdgeConnect`: records connections between the last vertex of an edge and
 /// the first vertex of the next one, then replaces each group of connected vertices by
 /// one shared vertex at the centre of the bounding box of the curve ends, with a
 /// tolerance that holds them all.
@@ -151,7 +148,7 @@ fn replace_vertex(
 }
 
 impl ShapeFixEdgeConnect {
-    /// `ShapeFix_EdgeConnect()`; `ShapeFixEdgeConnect::new()`.
+    /// `ShapeFixEdgeConnect()`; `ShapeFixEdgeConnect::new()`.
     pub fn new() -> Self {
         Self::default()
     }

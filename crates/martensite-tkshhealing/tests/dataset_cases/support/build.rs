@@ -59,7 +59,7 @@ pub fn psphere(radius: f64, latitudes: Option<(f64, f64)>, angle: Option<f64>) -
     maker.shape().unwrap().clone()
 }
 
-/// The type labels of DBRep.cxx `DumpExtent`, from COMPOUND down to VERTEX.
+/// The type labels of `DumpExtent`, from COMPOUND down to VERTEX.
 const EXTENT_TYPES: [(ShapeEnum, &str); 8] = [
     (ShapeEnum::Compound, " COMPOUND  : "),
     (ShapeEnum::CompSolid, " COMPSOLID : "),
@@ -71,7 +71,7 @@ const EXTENT_TYPES: [(ShapeEnum, &str); 8] = [
     (ShapeEnum::Vertex, " VERTEX    : "),
 ];
 
-/// DBRep.cxx `nbshapes name -t`: per type the `TopExp::MapShapes` extent (sub-shapes
+/// `nbshapes name -t`: per type the `TopExp::MapShapes` extent (sub-shapes
 /// counted once per location), from VERTEX up to COMPOUND, then their sum as SHAPE.
 pub fn nbshapes_t(shape: &Shape, name: &str) -> String {
     let mut text = format!("Number of shapes in {name}\n");
@@ -127,7 +127,7 @@ pub fn checknbshapes_t(
     }
 }
 
-/// DBRep.cxx `brestore file name`: BRepTools::Read of the whole located file.
+/// `brestore file name`: BRepTools::Read of the whole located file.
 pub fn brestore(file: &str) -> Shape {
     let mut shape = Shape::default();
     let mut stream =

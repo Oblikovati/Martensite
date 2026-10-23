@@ -1,4 +1,4 @@
-//! tests/bugs/modalg_2 case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! bugs modalg 2 regression cases owned by
 //! TKShHealing whose inputs are in the public dataset. Each body follows its script line
 //! by line; the bugs group end only prints `TEST COMPLETED`.
 use super::bugs_common::{banner, nbshapes_of};
@@ -117,7 +117,7 @@ pub fn bug548(s: &mut dyn Session) {
     checkview_display(s, Some("result"), "bug548");
 }
 
-/// `[checkshape f -short]`: the command's result (BRepTest_CheckCommands.cxx), which the
+/// `[checkshape f -short]`: the command's result from the topology check, which the
 /// script keeps in a variable.
 fn checkshape_short(f: &Shape) -> String {
     let analyzer = BRepCheckAnalyzer::new(f, true, false, false)

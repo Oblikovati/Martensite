@@ -1,5 +1,4 @@
-//! Translation of ShapeAnalysis_Edge_Test.cxx at
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871, with the original builders.
+//! Edge analysis regression cases with geometric fixture builders.
 #![allow(non_snake_case)]
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkbrep::topods::{self, Edge};

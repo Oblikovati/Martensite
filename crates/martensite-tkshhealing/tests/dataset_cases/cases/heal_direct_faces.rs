@@ -1,4 +1,4 @@
-//! tests/heal/direct_faces case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 whose
+//! heal direct faces regression cases whose
 //! inputs are in the public dataset: each restores `a`, then the grid end runs
 //! `puts [directfaces result a]`, `set s [statshape result particul]`, `puts $s` and
 //! reports an `Error` when an `indsur : Indirect Surface` row remains; tests/heal/end

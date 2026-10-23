@@ -1,4 +1,4 @@
-//! Geometric projection and native vertex/range mutation over real curves.
+//! Geometric projection and vertex/range mutation over real curves.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool, access::vertex_tshape},
     topods::{self, Edge, Face, Vertex},
@@ -221,7 +221,7 @@ fn copying_vertex_to_changed_range_projects_its_spatial_parameter() {
         .unwrap()
         .parameter();
     assert_eq!(stored, 3.5);
-    // the retained behavior 3d097a0 BRep_Tool::Parameter treats an interval shorter than vertex tolerance as closed.
+    // BRep_Tool::Parameter treats an interval shorter than vertex tolerance as closed.
     assert_eq!(BRepTool::parameter(&copy, &target).unwrap(), 6.);
     assert_eq!(BRepTool::range(&edge).unwrap(), (2., 5.));
 }

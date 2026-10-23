@@ -1,6 +1,3 @@
-// Rust translation of the drop branches of ShapeFix_Wireframe::MergeSmallEdges
-// (ShapeFix_Wireframe.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871).
-
 //! A small edge that cannot be joined: in drop mode it is removed when its neighbours
 //! stay connected; otherwise only a closed edge alone on its face is removed (with the
 //! `gka` protection against removing circles).
@@ -82,7 +79,7 @@ impl MergeRun<'_, '_> {
     }
 
     /// A small neighbour renamed by the reconnection is renamed in the small-edge map and
-    /// in the small-edge lists of its faces (moved to the end, as the native in-loop
+    /// in the small-edge lists of its faces (moved to the end, as the in-loop
     /// Remove and Append).
     fn rename_small(&mut self, old: &Edge, new: &Edge, faces: &List<Shape>) -> Result<(), Failure> {
         if !self.maps.small.contains(old) {
@@ -94,7 +91,7 @@ impl MergeRun<'_, '_> {
             let edges = self.maps.face_small.change_find(face)?;
             let matches = edges.iter().filter(|edge| edge.is_same(old)).count();
             if matches > 0 && new.is_same(old) {
-                // The native loop removes and appends the same edge forever.
+                // The loop removes and appends the same edge forever.
                 return Err(Failure::with_type(
                     "Standard_ProgramError",
                     &format!(

@@ -1,4 +1,4 @@
-//! BRepTest_CheckCommands.cxx `checkshape [-top] shape [-parallel] [-exact]` with its
+//! `checkshape [-top] shape [-parallel] [-exact]` with its
 //! contextual dump (the form without a result prefix), on BRepCheck_Analyzer.
 //!
 //! A valid shape prints `This shape seems to be valid`; an invalid one prints each faulty

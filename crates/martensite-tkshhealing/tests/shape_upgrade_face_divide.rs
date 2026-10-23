@@ -1,4 +1,4 @@
-//! FaceDivide's pinned no-context safety regressions from ShapeUpgrade_FaceDivide_Test.cxx.
+//! Face division safety regressions for absent context.
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use martensite_tkbrep::{topexp::Explorer, topods};

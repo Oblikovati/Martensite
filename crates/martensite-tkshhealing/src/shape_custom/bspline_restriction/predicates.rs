@@ -1,4 +1,4 @@
-//! The static predicates of ShapeCustom_BSplineRestriction.cxx: which curves and surfaces
+//! The static predicates: which curves and surfaces
 //! need a conversion, and the continuity/integer mappings of the approximation loops.
 use crate::shape_custom::ShapeCustomRestrictionParameters;
 use martensite_tkernel::standard::Handle;

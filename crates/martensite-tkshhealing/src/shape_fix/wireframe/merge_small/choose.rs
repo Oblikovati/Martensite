@@ -1,6 +1,3 @@
-// Rust translation of the pair choice of ShapeFix_Wireframe::MergeSmallEdges
-// (ShapeFix_Wireframe.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871).
-
 //! The choice of the pair of edges to join around a small middle edge: the tangent
 //! angles at both ends, the faces shared with each neighbour and the angle limit.
 use super::{MergeRun, WireScope};

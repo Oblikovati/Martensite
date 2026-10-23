@@ -1,7 +1,4 @@
-// Rust translation of ShapeFix_ComposeShell::SplitByGrid, DispatchWires and MakeFacesOnPatch
-// (the public entry points) at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! The face-building entry points of `ShapeFix_ComposeShell` used by `Perform`.
+//! The face-building entry points of `ShapeFixComposeShell` used by `Perform`.
 use super::dispatch_wires::dispatch_wires;
 use super::{ShapeFixComposeShell, ShapeFixWireSegment};
 use crate::shape_fix::FixRoot;

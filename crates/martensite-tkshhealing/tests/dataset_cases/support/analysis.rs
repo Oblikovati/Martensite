@@ -33,7 +33,7 @@ pub struct GprojectErrors {
     pub e3d: f64,
 }
 
-/// GeometryTest_CurveCommands.cxx `gproject r c s tol3d -3d 1 -c continuity`:
+/// `gproject r c s tol3d -3d 1 -c continuity`:
 /// ProjLib_CompProjectedCurve(tol3d, S, C, -1) with the continuity and 3D results.
 pub fn gproject_errors(
     curve: &Handle<dyn GeomCurve>,
@@ -61,7 +61,7 @@ pub fn gproject_errors(
     }
 }
 
-/// BRepTest_BasicCommands.cxx `gbounding curve2d`: BndLib_Add2dCurve::Add over the curve
+/// `gbounding curve2d`: BndLib_Add2dCurve::Add over the curve
 /// range at Precision::Confusion, as `xmin ymin xmax ymax`.
 pub fn gbounding2d(curve: &Handle<dyn Geom2dCurve>) -> [f64; 4] {
     let c = curve.get().unwrap();
@@ -71,7 +71,7 @@ pub fn gbounding2d(curve: &Handle<dyn Geom2dCurve>) -> [f64; 4] {
     bounds.get().unwrap()
 }
 
-/// MeshTest.cxx `trinfo shape`: the counts it prints, as text.
+/// `trinfo shape`: the counts it prints, as text.
 pub fn trinfo(shape: &Shape) -> String {
     let (mut faces, mut triangles, mut nodes, mut deflection) = (0, 0, 0, 0.0_f64);
     for face in explode_all(shape, ShapeEnum::Face) {
@@ -107,7 +107,7 @@ fn polygons_on_triangulation(shape: &Shape) -> usize {
     count
 }
 
-/// BRepTest_CurveCommands.cxx `mk2dcurve c edge index`: the `index`-th p-curve of the
+/// `mk2dcurve c edge index`: the `index`-th p-curve of the
 /// edge, trimmed to its range.
 pub fn mk2dcurve_by_index(edge: &Shape, index: i32) -> Handle<dyn Geom2dCurve> {
     let edge = topods::edge(edge).unwrap();
@@ -117,7 +117,7 @@ pub fn mk2dcurve_by_index(edge: &Shape, index: i32) -> Handle<dyn Geom2dCurve> {
     Handle::new(trimmed.unwrap()).cast()
 }
 
-/// GeomliteTest_CurveCommands.cxx `splitc12d c 0`: Geom2dConvert::CurveToBSplineCurve
+/// `splitc12d c 0`: Geom2dConvert::CurveToBSplineCurve
 /// then C0BSplineToC1BSplineCurve with the default tolerance 1e-5.
 pub fn splitc12d(curve: &Handle<dyn Geom2dCurve>) -> Result<(), String> {
     let c = curve.get().unwrap();
@@ -133,7 +133,7 @@ pub fn splitc12d(curve: &Handle<dyn Geom2dCurve>) -> Result<(), String> {
         .map_err(|failure| format!("{failure:?}"))
 }
 
-/// GeomliteTest_SurfaceCommands.cxx `tocanon r c [tol]` on a curve: whether
+/// `tocanon r c [tol]` on a curve: whether
 /// GeomConvert_CurveToAnaCurve (Simplest) converts it; false prints `Conversion failed`.
 pub fn tocanon_curve(curve: &Handle<dyn GeomCurve>, tolerance: f64) -> bool {
     let mut conversion = CurveToAnaCurve::with_curve(curve);

@@ -1,6 +1,3 @@
-// Rust translation of ShapeConstruct/ShapeConstruct.cxx (ConvertCurveToBSpline,
-// ConvertSurfaceToBSpline) at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The package functions of `ShapeConstruct`: B-spline conversion of curves and surfaces
 //! and the p-curve join of `JoinPCurves` (in `join_pcurves.rs`).
 mod join_pcurves;
@@ -45,7 +42,7 @@ impl ShapeConstruct {
         if !c3d.cast::<dyn GeomConic>().is_null() {
             max_deg = max_deg.min(6);
         }
-        // Protection against parabolas: the trimmed curve is built outside the native try.
+        // Protection against parabolas: the trimmed curve is built outside the try.
         let trimmed: Handle<dyn GeomCurve> =
             Handle::new(GeomTrimmedCurve::new(c3d, first, last, true, true)?).cast();
         let approx = geom_convert::ApproxCurve::from_curve(
@@ -57,7 +54,7 @@ impl ShapeConstruct {
         );
         match approx {
             Ok(approx) if approx.has_result() => Ok(approx.curve()),
-            // The native catch retries the same exact conversion, so its failure propagates.
+            // The catch retries the same exact conversion, so its failure propagates.
             _ => geom_convert::curve_to_bspline_curve(c3d, ParameterisationType::QuasiAngular),
         }
     }
@@ -65,7 +62,7 @@ impl ShapeConstruct {
     /// `ConvertCurveToBSpline(C2D, ...)`: a conic is trimmed to `[first, last]` and
     /// approximated (the exact conversion of the trimmed conic when the approximation has
     /// no result); another non-B-spline curve is converted exactly; a B-spline is returned
-    /// as is. Native catches nothing here, so every failure propagates.
+    /// as is. catches nothing here, so every failure propagates.
     /// Example: `ShapeConstruct::convert_curve2d_to_bspline(&c, 0.0, 1.0, 1e-6, Continuity::C1, 9, 9)?`.
     pub fn convert_curve2d_to_bspline(
         c2d: &Handle<dyn Geom2dCurve>,

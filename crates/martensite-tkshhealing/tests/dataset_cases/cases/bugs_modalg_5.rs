@@ -1,4 +1,4 @@
-//! tests/bugs/modalg_5 case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! bugs modalg 5 regression cases owned by
 //! TKShHealing whose inputs are in the public dataset or built by the script.
 use super::bugs_common::{banner, tolerance_max};
 use crate::support::{

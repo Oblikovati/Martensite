@@ -1,4 +1,4 @@
-// ShapeConstruct_ProjectCurveOnSurface at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Project spatial curves onto surfaces while retaining their parameterization.
 mod analytic;
 mod degenerate_adjustment;
 mod extremity;
@@ -99,11 +99,11 @@ impl ShapeConstructProjectCurveOnSurface {
     pub fn set_precision(&self, precision: f64) {
         self.fields.write().precision = precision;
     }
-    /// Returns the modifiable native mode's value; `let mode=projector.adjust_over_degen_mode();`.
+    /// Returns the modifiable mode's value; `let mode=projector.adjust_over_degen_mode();`.
     pub fn adjust_over_degen_mode(&self) -> i32 {
         self.fields.read().adjust_over_degen
     }
-    /// Mutates the native adjustment mode; `projector.set_adjust_over_degen_mode(0)`.
+    /// Mutates the adjustment mode; `projector.set_adjust_over_degen_mode(0)`.
     pub fn set_adjust_over_degen_mode(&self, mode: i32) {
         self.fields.write().adjust_over_degen = mode;
     }

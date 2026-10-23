@@ -16,7 +16,7 @@ impl ShapeConstructCurve {
     /// one, else its B-spline form for a Bezier curve or a line, trimmed to
     /// `[first, last]`), segmented to `[first, last]` on a copy when its range is wider;
     /// conics, other curves and failed conversions are approximated
-    /// (`Approx_Curve3d(prec, C1)`, natively with at most 9 segments of degree 1000). A null
+    /// (`Approx_Curve3d(prec, C1)`, in this implementation with at most 9 segments of degree 1000). A null
     /// handle when everything fails; `ShapeConstructCurve.convert_to_bspline(&c, 0.0, 1.0, 1e-7)?`.
     pub fn convert_to_bspline(
         &self,
@@ -51,7 +51,7 @@ fn initial_bspline(
     if curve.cast::<GeomBezierCurve>().is_null() && curve.cast::<GeomLine>().is_null() {
         return Ok(spline);
     }
-    // The trimmed curve is built outside the native `try`: its failure propagates.
+    // The trimmed curve is built outside the `try`: its failure propagates.
     let trimmed: Handle<dyn GeomCurve> =
         Handle::new(GeomTrimmedCurve::new(curve, first, last, true, true)?).cast();
     Ok(
@@ -75,7 +75,7 @@ fn segment_copy(
     let Some((first, last)) = bounds else {
         return Ok(());
     };
-    // the retained behavior 3d097a0 assigns the copy before Segment: fallback must retain it even on failure.
+    // assigns the copy before Segment: fallback must retain it even on failure.
     *spline = spline.copy()?.cast();
     spline.segment(first, last, precision::p_confusion())
 }
