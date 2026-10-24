@@ -9,6 +9,7 @@ follows [Semantic Versioning](https://semver.org/).
 ### Added
 
 - Added explicit surface integration and representation policies with owned properties and estimate-or-unknown evidence (#277).
+- Added a verified production-library source SDK bundle with locked dependencies and explicit individual-archive requirement checks (#279).
 
 ### Fixed
 

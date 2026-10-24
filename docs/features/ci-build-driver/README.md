@@ -172,7 +172,8 @@ regression exercises this policy with `core.autocrlf=true` ([#197]).
      archive.
    - On the primary target only: changed and new `.crate` source packages,
      named with each package's own version. Unchanged packages are not
-     republished; use their existing release assets. Cargo verifies all workspace
+     republished; their existing assets retain their original requirements.
+     Cargo verifies all workspace
      source packages together so unchanged dependencies remain available in the
      local overlay registry. Cargo builds each package from its
      packaged sources to verify it. A kernel crate that depends on another
@@ -184,9 +185,18 @@ regression exercises this policy with `core.autocrlf=true` ([#197]).
      Test dependencies also declare versions. Keep them acyclic: a reciprocal
      development dependency can pass local tests but cannot be ordered for the
      temporary package registry (#241).
-   - `martensite-<version>-packages.json` on the primary target records every
+   - The primary target also ships a [production-library SDK bundle](../source-workspace-bundle/README.md)
+     with the committed source workspace and vendored locked dependencies.
+     It verifies the extracted libraries and an external consumer with private
+     Cargo caches and offline dependency resolution. Dataset contents remain
+     separately provisioned for the supported-platform test matrix.
+   - Schema-2 `martensite-<version>-packages.json` on the primary target records every
      package version, which source packages this release ships, the previous
-     release baseline, and the selected test suites.
+     release baseline, and the selected test suites. It names the verified SDK
+     bundle as the source-consumption route and separately records dependency
+     requirement checks from exact checksum-verified individual archives.
+     Incompatible individual archives are reported explicitly; regenerating a
+     local manifest never substitutes for inspecting the published bytes.
    - A `<file>.sha256` file in `sha256sum` format next to each asset.
 5. Collect expanded unsafe diagnostics for the selected target and compare its
    compiler baseline. Collection cleans only its dedicated build cache and

@@ -7,16 +7,18 @@ use crate::context::BUILD_TOOL_PACKAGE;
 use crate::error::{BuildResult, io_error};
 use crate::release::ReleaseRequest;
 use crate::release_scope::ReleaseScope;
+use crate::release_sources::SourceArtifacts;
 use crate::workspace::CargoWorkspace;
 
 /// Records shipped versions and test scope beside a checksum of the manifest.
-/// Example: `let assets = write_package_manifest(&request, &workspace, &scope)?;`.
+/// Example: `let assets = write_package_manifest(&request, &workspace, &scope, &source)?;`.
 pub(crate) fn write_package_manifest(
     request: &ReleaseRequest,
     workspace: &CargoWorkspace,
     scope: &ReleaseScope,
+    source: &SourceArtifacts,
 ) -> BuildResult<[PathBuf; 2]> {
-    let manifest = package_manifest(request, workspace, scope);
+    let manifest = package_manifest(request, workspace, scope, source);
     let path = request
         .dist_dir
         .join(format!("martensite-{}-packages.json", request.version));
@@ -29,6 +31,7 @@ fn package_manifest(
     request: &ReleaseRequest,
     workspace: &CargoWorkspace,
     scope: &ReleaseScope,
+    source: &SourceArtifacts,
 ) -> serde_json::Value {
     let packages: Vec<_> = workspace
         .packages
@@ -39,7 +42,9 @@ fn package_manifest(
             "shipped": scope.packages.contains(&package.name)})
         })
         .collect();
-    serde_json::json!({"release": request.version.to_string(),
+    serde_json::json!({"schema": 2, "source_consumption": "source_workspace",
+        "source_workspace": source.sdk, "individual_archives": source.graph,
+        "release": request.version.to_string(),
         "baseline": scope.baseline, "packages": packages, "tested_packages": scope.tests})
 }
 
@@ -64,7 +69,8 @@ mod tests {
             source_packages: true,
             dist_dir: dir.path().into(),
         };
-        let paths = write_package_manifest(&request, &workspace, &scope).unwrap();
+        let source = crate::release::tests::fixture_source(&request);
+        let paths = write_package_manifest(&request, &workspace, &scope, &source).unwrap();
         let result: serde_json::Value =
             serde_json::from_str(&fs::read_to_string(&paths[0]).unwrap()).unwrap();
         assert_eq!(result["packages"][0]["shipped"], false);
