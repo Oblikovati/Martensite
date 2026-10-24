@@ -145,8 +145,8 @@ regression exercises this policy with `core.autocrlf=true` ([#197]).
      Own-version and local dependency requirement edits are bookkeeping, so they
      cannot justify a version bump by themselves (#256).
    - `CHANGELOG.md` has a `## [X.Y.Z]` section with at least one heading.
-   - The bump from the previous final release (the highest earlier `v*` tag
-     that is not a pre-release) is at least what the headings require:
+   - The bump from the previous final release (the highest earlier final GitHub release
+     with a valid version tag) is at least what the headings require:
      `Fixed`/`Security` need a patch, `Added`/`Changed`/`Deprecated` need a
      minor, and `Removed` or a `BREAKING` marker needs a major. Before 1.0.0
      every level moves down one, as cargo's compatibility rules expect: an
@@ -170,9 +170,13 @@ regression exercises this policy with `core.autocrlf=true` ([#197]).
      reproducible: entries are sorted, and owners, timestamps and modes are
      fixed. A target without executables or native libraries gets no
      archive.
-   - On the primary target only: changed and new `.crate` source packages,
-     named with each package's own version. Unchanged packages are not
-     republished; use their existing release assets. Cargo verifies all workspace
+   - On the primary target only: changed-source and never-published `.crate`
+     identities, named with each package's own version (#283). Complete paginated
+     GitHub release and asset history establishes publication; a Git tag alone
+     does not. Already-published identities reuse their verified immutable bytes.
+     The schema-2 catalog records each publication reason, archive digest and
+     historical origins separately from affected tests. Incomplete history,
+     missing assets or inconsistent receipts stop the release. Cargo verifies all workspace
      source packages together so unchanged dependencies remain available in the
      local overlay registry. Cargo builds each package from its
      packaged sources to verify it. A kernel crate that depends on another

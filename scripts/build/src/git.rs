@@ -66,12 +66,6 @@ impl<'a> GitRepo<'a> {
         Ok(clean)
     }
 
-    /// Every tag that starts with `v`, the release tag convention.
-    pub fn release_tags(&self) -> BuildResult<Vec<String>> {
-        let stdout = self.capture(&["tag", "--list", "v*"])?;
-        Ok(stdout.lines().map(str::to_owned).collect())
-    }
-
     /// Reads a tracked UTF-8 file at an immutable revision.
     ///
     /// ```ignore
@@ -282,12 +276,5 @@ mod tests {
         let runner =
             RecordingRunner::default().with_stdout("git merge-base origin/main HEAD", "f00\n");
         assert_eq!(repo(&runner).merge_base("origin/main").unwrap(), "f00");
-    }
-
-    #[test]
-    fn release_tags_are_listed_one_per_line() {
-        let runner =
-            RecordingRunner::default().with_stdout("git tag --list v*", "v0.1.0\nv0.2.0\n");
-        assert_eq!(repo(&runner).release_tags().unwrap(), ["v0.1.0", "v0.2.0"]);
     }
 }

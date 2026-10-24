@@ -74,7 +74,7 @@ fn removed_package_cannot_reuse_an_older_published_version() {
     let root = tempfile::tempdir().unwrap();
     let runner = reintroduction_runner(root.path());
     let tags = vec!["v1.0.0".into(), "v1.1.0".into()];
-    let published = published_manifests(
+    let published = release_source_manifests(
         &context_at(&runner, root.path()),
         &tags,
         &Version::new(1, 2, 0),

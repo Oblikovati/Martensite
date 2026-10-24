@@ -8,22 +8,46 @@ use crate::error::{BuildError, BuildResult};
 use crate::plan::CiPlan;
 use crate::workspace::CargoWorkspace;
 
+struct PlannedPackages {
+    names: BTreeSet<String>,
+    history_sha256: Option<String>,
+}
+
 fn selected_packages(context: &BuildContext<'_>, plan: &CiPlan) -> BuildResult<BTreeSet<String>> {
+    Ok(planned_packages(context, plan)?.names)
+}
+
+fn planned_packages(context: &BuildContext<'_>, plan: &CiPlan) -> BuildResult<PlannedPackages> {
     let workspace = CargoWorkspace::load(context.runner, context.root())?;
     let base = match plan {
         CiPlan::PullRequest { base } => base,
         CiPlan::Release { version, .. } => {
-            return Ok(
-                crate::release_scope::ReleaseScope::load(context, &workspace, version)?
-                    .tests
-                    .into_iter()
-                    .collect(),
-            );
+            let scope = crate::release_scope::ReleaseScope::load(context, &workspace, version)?;
+            return Ok(PlannedPackages {
+                names: scope.tests.into_iter().collect(),
+                history_sha256: scope.history_sha256,
+            });
         }
     };
+    planned_pull_request(context, &workspace, base)
+}
+
+fn planned_pull_request(
+    context: &BuildContext<'_>,
+    workspace: &CargoWorkspace,
+    base: &str,
+) -> BuildResult<PlannedPackages> {
     let merge_base = context.git.merge_base(base)?;
     let changed = context.git.changed_files(&merge_base)?;
-    crate::release_impact::pull_request_packages(context, &workspace, &merge_base, &changed)
+    Ok(PlannedPackages {
+        names: crate::release_impact::pull_request_packages(
+            context,
+            workspace,
+            &merge_base,
+            &changed,
+        )?,
+        history_sha256: None,
+    })
 }
 
 /// Emits each affected package exactly once, including empty selections for documentation-only changes.
@@ -35,15 +59,20 @@ pub fn matrix_outputs(
     context: &BuildContext<'_>,
     plan: &CiPlan,
 ) -> BuildResult<Vec<(&'static str, String)>> {
-    let packages = selected_packages(context, plan)?;
+    let selection = planned_packages(context, plan)?;
+    let packages = selection.names;
     let matrix = match plan {
         CiPlan::PullRequest { .. } => serde_json::json!({"package": packages}),
         CiPlan::Release { .. } => crate::release_ci::release_test_matrix(&packages),
     };
-    Ok(vec![
+    let mut outputs = vec![
         ("has-tests", (!packages.is_empty()).to_string()),
         ("test-matrix", matrix.to_string()),
-    ])
+    ];
+    if let Some(history) = selection.history_sha256 {
+        outputs.push(("release-history", history));
+    }
+    Ok(outputs)
 }
 
 /// Revalidates membership before running unit, integration and documentation tests.
@@ -246,7 +275,10 @@ mod tests {
             version: semver::Version::new(0, 3, 6),
             publish: false,
         };
-        (runner, plan)
+        (
+            crate::published_history::fixtures::seed_releases(runner, ""),
+            plan,
+        )
     }
 
     #[test]
