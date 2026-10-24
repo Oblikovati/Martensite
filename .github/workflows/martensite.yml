@@ -47,16 +47,20 @@ jobs:
       version: ${{ steps.plan.outputs.version }}
       publish: ${{ steps.plan.outputs.publish }}
       matrix: ${{ steps.plan.outputs.matrix }}
+      test-matrix: ${{ steps.plan.outputs.test-matrix }}
+      has-tests: ${{ steps.plan.outputs.has-tests }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
       - name: Install the toolchain pinned by rust-toolchain.toml
         run: rustup toolchain install
       - id: plan
         run: cargo xtask ci plan
 
-  verify:
+  checks:
     needs: plan
-    name: ${{ needs.plan.outputs.mode }} (${{ matrix.target }})
+    name: checks (${{ matrix.target }})
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
@@ -91,7 +95,10 @@ jobs:
       - name: Install FreeType for the visualization tests (macOS)
         if: runner.os == 'macOS'
         run: brew list freetype >/dev/null 2>&1 || brew install freetype
-      - run: cargo xtask ci run --target ${{ matrix.target }}
+      - if: needs.plan.outputs.mode == 'pr'
+        run: cargo xtask ci run --target ${{ matrix.target }} --checks-only
+      - if: needs.plan.outputs.mode == 'release'
+        run: cargo xtask ci run --target ${{ matrix.target }}
       - name: Retain compiler unsafe inventory evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -111,8 +118,43 @@ jobs:
           # ships the source crates, so publish still sees every asset.
           if-no-files-found: ignore
 
+  tests:
+    needs: plan
+    if: needs.plan.outputs.mode == 'pr' && needs.plan.outputs.has-tests == 'true'
+    name: test (${{ matrix.package }})
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.plan.outputs.test-matrix) }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          submodules: true
+      - name: Install the toolchain pinned by rust-toolchain.toml
+        run: rustup toolchain install
+      - run: cargo xtask ci test --package "$TEST_PACKAGE" --target x86_64-unknown-linux-gnu
+        env:
+          TEST_PACKAGE: ${{ matrix.package }}
+
+  verify:
+    needs: [plan, checks, tests]
+    if: always() && needs.plan.outputs.mode != 'release'
+    name: pr (x86_64-unknown-linux-gnu)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the toolchain pinned by rust-toolchain.toml
+        run: rustup toolchain install
+      - run: cargo xtask ci gate --checks "$CHECKS_RESULT" --tests "$TESTS_RESULT" $HAS_TESTS_FLAG
+        env:
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          TESTS_RESULT: ${{ needs.tests.result }}
+          HAS_TESTS_FLAG: ${{ needs.plan.outputs.has-tests == 'true' && '--has-tests' || '' }}
+
   publish:
-    needs: [plan, verify]
+    needs: [plan, checks]
     if: needs.plan.outputs.publish == 'true'
     runs-on: ubuntu-24.04
     permissions:
