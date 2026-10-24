@@ -416,6 +416,19 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
   `cargo clean` is the lighter-touch equivalent.
 - **No version bumps or release tags without explicit user approval.**
   Do not bump crate/package versions automatically.
+- **Package versions follow package source changes.** Keep an unchanged-source
+  package at its existing version. A repository release or a changed dependency
+  does not justify a mechanical version bump of every crate. Treat packaging
+  constraints that require such bumps as release blockers; fix the release
+  tooling instead of bypassing this rule (#256).
+- **Test only changed or affected packages.** Run a package's suite when its own
+  source, tests, build inputs or dependencies can change its behavior. Include
+  transitive dependents; skip unchanged, unaffected packages and base dependencies
+  that merely need compiling. Classify the actual impact of manifest, lockfile
+  and build-configuration edits before selecting suites. Dependency impact can
+  require tests without requiring a version bump. Release validation still runs
+  the required platform matrix, using changes since the previous release to
+  determine package scope.
 - **Non-negotiable quality bar.** No malicious or obfuscated code, no
   regressions (add tests when unsure), no stale docs, no security or quality
   degradation. Any one blocks a merge regardless of approval; when in doubt,
@@ -427,6 +440,8 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
   resolve. Once the maintainer approves a batch, push each green task to its
   branch as it finishes. Version bumps and tags always need explicit
   approval.
+- **Review baseline:** always use `main` for code review and pin its merge-base
+  with the reviewed branch. Do not ask the user to choose the routine baseline.
 - **Semantic versioning:** patch = fixes; minor = additive (new CLI
   subcommands, MCP tools, config keys, a new agent harness or LLM
   provider); major = breaking (on-disk format without migration, removed
