@@ -132,11 +132,13 @@ impl<'a> CargoTasks<'a> {
 
     /// Runs unit, integration and doc tests; keeps going past the first failure.
     pub fn test(&self, selection: &PackageSelection, target: &BuildTarget) -> BuildResult<()> {
-        self.runner.run(
-            &self
-                .selected("test", selection, target)
-                .arg("--no-fail-fast"),
-        )
+        let mut spec = self
+            .selected("test", selection, target)
+            .arg("--no-fail-fast");
+        if tests_case_runner(selection) {
+            spec = spec.args(["--features", "martensite-process-policy/case-runner"]);
+        }
+        self.runner.run(&spec)
     }
 
     /// Release build that returns the shippable artifacts cargo reported.
@@ -250,9 +252,50 @@ fn parse_host_triple(version_output: &str) -> BuildResult<String> {
         })
 }
 
+// Per-package jobs must retain the case-runner tests previously enabled by
+// dataset toolkit dependencies in a combined Cargo invocation (#250).
+fn tests_case_runner(selection: &PackageSelection) -> bool {
+    match selection {
+        PackageSelection::Workspace => true,
+        PackageSelection::WorkspaceExcept(names) => {
+            !names.iter().any(|name| name == "martensite-process-policy")
+        }
+        PackageSelection::Packages(names) => {
+            names.iter().any(|name| name == "martensite-process-policy")
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn isolated_process_policy_keeps_case_runner_coverage() {
+        use crate::fake_runner::RecordingRunner;
+        let runner = RecordingRunner::default();
+        let cargo = CargoTasks::new(&runner, Path::new("/repo"));
+        let policy = vec!["martensite-process-policy".to_owned()];
+        cargo
+            .test(
+                &PackageSelection::Packages(policy.clone()),
+                &BuildTarget::Host,
+            )
+            .unwrap();
+        assert_eq!(
+            runner.commands(),
+            [
+                "cargo test --locked --package martensite-process-policy --no-fail-fast --features martensite-process-policy/case-runner"
+            ]
+        );
+        assert!(tests_case_runner(&PackageSelection::Workspace));
+        assert!(!tests_case_runner(&PackageSelection::WorkspaceExcept(
+            policy
+        )));
+        assert!(!tests_case_runner(&PackageSelection::Packages(vec![
+            "martensite-tkmath".into()
+        ])));
+    }
     use crate::fake_runner::RecordingRunner;
 
     #[test]
@@ -264,9 +307,9 @@ mod tests {
     }
 
     #[test]
-    fn gate_commands_build_default_features_only() {
+    fn gate_commands_exclude_host_math_and_optional_integration_features() {
         // `host-libm` (platform C library results) and `libm-attribution` must never reach
-        // a PR or release gate, so no gate command selects features.
+        // a PR or release gate. Only case-runner coverage is selected explicitly (#250).
         let runner = RecordingRunner::default();
         let tasks = CargoTasks::new(&runner, Path::new("/r"));
         let target = BuildTarget::Host;
@@ -279,6 +322,7 @@ mod tests {
         let commands = runner.commands();
         assert_eq!(commands.len(), 4);
         for command in commands {
+            let command = command.replace(" --features martensite-process-policy/case-runner", "");
             assert!(
                 !command.contains("--features") && !command.contains("--all-features"),
                 "{command}"

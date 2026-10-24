@@ -60,6 +60,25 @@ pub enum CiCommand {
         /// The matrix target triple.
         #[arg(long)]
         target: String,
+        /// Delegate PR tests to the package matrix; rejected for releases.
+        #[arg(long)]
+        checks_only: bool,
+    },
+    /// Run the tests of one affected PR package.
+    Test {
+        #[arg(long)]
+        package: String,
+        #[arg(long)]
+        target: String,
+    },
+    /// Require every PR job to succeed.
+    Gate {
+        #[arg(long)]
+        checks: String,
+        #[arg(long)]
+        tests: String,
+        #[arg(long)]
+        has_tests: bool,
     },
     /// Publish the packaged assets of a tag-push release.
     Publish {
@@ -75,9 +94,6 @@ pub enum CiCommand {
 /// execute(BuildCommand::Pr { base: "origin/main".into() })?;
 /// ```
 pub fn execute(command: BuildCommand) -> BuildResult<()> {
-    if let BuildCommand::Ci(CiCommand::Plan) = command {
-        return emit_plan();
-    }
     let cwd =
         std::env::current_dir().map_err(|cause| crate::error::io_error(Path::new("."), cause))?;
     let runner = ProcessRunner;
@@ -94,18 +110,48 @@ fn dispatch(context: &BuildContext<'_>, command: BuildCommand) -> BuildResult<()
     match command {
         BuildCommand::Pr { base } => validate_pull_request(context, &base, &BuildTarget::Host),
         BuildCommand::Release { version, target } => rehearse_release(context, &version, target),
-        BuildCommand::Ci(CiCommand::Run { target }) => run_planned(context, &target),
-        BuildCommand::Ci(CiCommand::Publish { dist }) => publish_planned(context, &dist),
-        BuildCommand::Ci(CiCommand::Plan) => emit_plan(),
+        BuildCommand::Ci(command) => dispatch_ci(context, command),
     }
+}
+
+fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()> {
+    match command {
+        CiCommand::Run {
+            target,
+            checks_only,
+        } => run_planned(context, &target, checks_only),
+        CiCommand::Test { package, target } => test_planned_package(context, &package, target),
+        CiCommand::Gate {
+            checks,
+            tests,
+            has_tests,
+        } => crate::ci_tests::require_success(&checks, &tests, has_tests),
+        CiCommand::Publish { dist } => publish_planned(context, &dist),
+        CiCommand::Plan => emit_plan(context),
+    }
+}
+
+fn test_planned_package(
+    context: &BuildContext<'_>,
+    package: &str,
+    target: String,
+) -> BuildResult<()> {
+    crate::ci_tests::test_package(
+        context,
+        &current_plan()?,
+        package,
+        &BuildTarget::Triple(target),
+    )
 }
 
 fn current_plan() -> BuildResult<CiPlan> {
     plan_for(&CiTrigger::from_lookup(|key| std::env::var(key).ok()))
 }
 
-fn emit_plan() -> BuildResult<()> {
-    let outputs = plan_outputs(&current_plan()?);
+fn emit_plan(context: &BuildContext<'_>) -> BuildResult<()> {
+    let plan = current_plan()?;
+    let mut outputs = plan_outputs(&plan);
+    outputs.extend(crate::ci_tests::matrix_outputs(context, &plan)?);
     let github_output = std::env::var_os("GITHUB_OUTPUT").map(PathBuf::from);
     write_outputs(&outputs, github_output.as_deref())
 }
@@ -145,11 +191,17 @@ fn release_for(
         })
 }
 
-fn run_planned(context: &BuildContext<'_>, triple: &str) -> BuildResult<()> {
+fn run_planned(context: &BuildContext<'_>, triple: &str, checks_only: bool) -> BuildResult<()> {
     match current_plan()? {
-        CiPlan::PullRequest { base } => {
-            validate_pull_request(context, &base, &BuildTarget::Triple(triple.to_owned()))
-        }
+        CiPlan::PullRequest { base } => crate::pr::validate_pr_checks(
+            context,
+            &base,
+            &BuildTarget::Triple(triple.to_owned()),
+            !checks_only,
+        ),
+        CiPlan::Release { .. } if checks_only => Err(BuildError::Usage(
+            "--checks-only is PR-only; releases require all tests".into(),
+        )),
         CiPlan::Release { version, .. } => release_for(context, version, triple),
     }
 }

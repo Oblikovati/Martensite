@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Split affected toolkit tests into parallel PR jobs while retaining dependency-aware selection and a required aggregate result (#250).
+
 ## [0.3.6] - 2026-10-23
 
 ### Fixed

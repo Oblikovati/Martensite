@@ -109,7 +109,9 @@ fn release_gates() -> [String; 5] {
     [
         "cargo fmt --all --check".to_owned(),
         format!("cargo clippy --locked --workspace --target {TRIPLE} --all-targets -- -D warnings"),
-        format!("cargo test --locked --workspace --target {TRIPLE} --no-fail-fast"),
+        format!(
+            "cargo test --locked --workspace --target {TRIPLE} --no-fail-fast --features martensite-process-policy/case-runner"
+        ),
         release_build_command(),
         "cargo package --locked --package martensite-kernel --package martensite-math".to_owned(),
     ]

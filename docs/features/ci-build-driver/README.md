@@ -23,12 +23,35 @@ This gives two properties:
 | --- | --- | --- |
 | `cargo xtask pr [--base origin/main]` | contributor, CI | PR validation of the current branch |
 | `cargo xtask release --version X.Y.Z [--target T]` | contributor | Release rehearsal for one target; never publishes |
-| `cargo xtask ci plan` | CI | Reads the trigger and writes `mode`, `version`, `publish` and `matrix` to `GITHUB_OUTPUT` |
+| `cargo xtask ci plan` | CI | Writes `mode`, `version`, `publish`, target `matrix`, `test-matrix` and `has-tests` to `GITHUB_OUTPUT` |
 | `cargo xtask ci run --target T` | CI | Runs the planned pipeline for one matrix target |
+| `cargo xtask ci run --target T --checks-only` | CI | Runs shared PR checks, delegating tests to the matrix; rejects release mode |
+| `cargo xtask ci test --package P --target T` | CI | Revalidates affected-package membership and runs all tests for that package |
+| `cargo xtask ci gate --checks success --tests success --has-tests` | CI | Requires successful shared checks and package tests |
 | `cargo xtask ci publish --dist DIR` | CI | Checks every asset against its checksum and creates the GitHub release |
 
 `ci run` reads the trigger again instead of getting the mode from the plan job.
 The trigger is the same in both jobs, so the plan is the same.
+
+For PRs, the planner emits one job per affected package. Up to four test jobs
+run concurrently, alongside shared lint, compiler inventory and build checks.
+Each test job runs unit, integration and documentation tests with
+`--no-fail-fast`; a failed job does not cancel the others. The existing
+`pr (x86_64-unknown-linux-gnu)` check aggregates their results. Documentation-only
+changes produce no package jobs; only that empty selection permits skipped tests.
+Local `cargo xtask pr` still runs all stages sequentially. Release pipelines keep
+their full suite per target.
+
+When process-policy is selected, the shared test command explicitly enables
+`martensite-process-policy/case-runner`. This preserves the unit tests that a
+combined toolkit invocation enabled through dependency feature unification.
+Host-math and optional external integration features remain disabled.
+
+Each package job compiles its own dependencies. The four-job limit bounds
+concurrency, not total runner minutes. Compare job compilation time, elapsed
+workflow time and summed runner time before claiming a cost improvement.
+The [timing investigation](parallel-tests.md) records the baseline and remaining
+slow cases (#250).
 
 ## Triggers
 

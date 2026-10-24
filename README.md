@@ -84,6 +84,11 @@ CI has one workflow, `.github/workflows/martensite.yml`, and all its checks are
 `cargo xtask` commands. [CONTRIBUTING](CONTRIBUTING.md) explains the gates and
 the release process.
 
+PR tests run in one job per affected crate, with up to four test jobs at once.
+The required PR result waits for every test job and the shared checks. Local
+`cargo xtask pr` runs the same checks and tests in sequence. Release validation
+still runs the full suite on each supported target (#250).
+
 PR validation checks toolkit Rust source tokens against
 `docs/features/safe-toolkits/unsafe-source-baseline.json` when source, build
 tooling or inventory inputs change. Unsafe removals must update that inventory;

@@ -21,6 +21,20 @@ pub fn validate_pull_request(
     base: &str,
     target: &BuildTarget,
 ) -> BuildResult<()> {
+    validate_pr_checks(context, base, target, true)
+}
+
+/// Runs the shared PR checks; CI delegates tests to package jobs.
+///
+/// ```ignore
+/// validate_pr_checks(&context, "origin/main", &BuildTarget::Host, false)?;
+/// ```
+pub fn validate_pr_checks(
+    context: &BuildContext<'_>,
+    base: &str,
+    target: &BuildTarget,
+    run_tests: bool,
+) -> BuildResult<()> {
     let merge_base = context.git.merge_base(base)?;
     let changed = context.git.changed_files(&merge_base)?;
     let summary = format!(
@@ -39,13 +53,14 @@ pub fn validate_pull_request(
                 crate::compiler_inventory::capture_inventory(context.runner, context.root(), target)
             })?;
     }
-    check_affected_packages(context, &changed, target)
+    check_affected_packages(context, &changed, target, run_tests)
 }
 
 fn check_affected_packages(
     context: &BuildContext<'_>,
     changed: &[ChangedFile],
     target: &BuildTarget,
+    run_tests: bool,
 ) -> BuildResult<()> {
     let affected = context
         .reporter
@@ -60,7 +75,12 @@ fn check_affected_packages(
     context
         .reporter
         .note(&format!("Affected packages: {}", names.join(", ")));
-    check_packages(context, &PackageSelection::Packages(names), target)
+    check_packages(
+        context,
+        &PackageSelection::Packages(names),
+        target,
+        run_tests,
+    )
 }
 
 /// Runs both file linters before failing, so one run shows every problem.
@@ -91,6 +111,7 @@ fn check_packages(
     context: &BuildContext<'_>,
     selection: &PackageSelection,
     target: &BuildTarget,
+    run_tests: bool,
 ) -> BuildResult<()> {
     let cargo = CargoTasks::new(context.runner, context.root());
     let reporter = &context.reporter;
@@ -100,7 +121,10 @@ fn check_packages(
     reporter.step("Build affected packages", || {
         cargo.build_all_targets(selection, target)
     })?;
-    reporter.step("Test affected packages", || cargo.test(selection, target))
+    if run_tests {
+        reporter.step("Test affected packages", || cargo.test(selection, target))?;
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -166,6 +190,26 @@ mod tests {
                 .all(|c| !c.starts_with("cargo clippy") && !c.starts_with("cargo test"))
         );
         assert!(commands.contains(&"git diff --check base1".to_owned()));
+    }
+
+    #[test]
+    fn delegated_tests_preserve_clippy_and_build() {
+        let runner = RecordingRunner::default();
+        check_packages(
+            &context_at(&runner, Path::new("/repo")),
+            &PackageSelection::Packages(vec!["martensite-math".into()]),
+            &BuildTarget::Host,
+            false,
+        )
+        .unwrap();
+        assert_eq!(
+            runner.commands(),
+            [
+                "git rev-parse --show-toplevel",
+                "cargo clippy --locked --package martensite-math --all-targets -- -D warnings",
+                "cargo build --locked --package martensite-math --all-targets",
+            ]
+        );
     }
 
     #[test]
