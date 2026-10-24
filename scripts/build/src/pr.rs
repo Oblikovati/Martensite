@@ -271,9 +271,8 @@ mod tests {
 mod lint_setting_tests {
     use super::*;
     use crate::{context::tests::context_at, fake_runner::RecordingRunner};
-    #[test]
-    fn lint_setting_change_checks_workspace_without_running_behavioral_suites() {
-        let runner = RecordingRunner::default()
+    fn lint_configuration_runner() -> RecordingRunner {
+        RecordingRunner::default()
             .with_stdout("git rev-parse --show-toplevel", "/repo")
             .with_stdout("git merge-base origin/main HEAD", "base")
             .with_stdout(
@@ -283,7 +282,12 @@ mod lint_setting_tests {
             .with_stdout(
                 "cargo metadata --format-version 1 --no-deps --locked",
                 &crate::workspace::tests::sample_metadata(),
-            );
+            )
+    }
+
+    #[test]
+    fn lint_setting_change_checks_workspace_without_running_behavioral_suites() {
+        let runner = lint_configuration_runner();
         validate_pull_request(
             &context_at(&runner, std::path::Path::new("/repo")),
             "origin/main",
