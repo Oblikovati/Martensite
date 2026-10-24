@@ -6,15 +6,12 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
-
-- Preserved unchanged package versions and selected release tests by source and dependency impact instead of requiring workspace-wide version bumps (#256).
-- Refused Windows document replacements with destination named streams before changing metadata or publishing bytes, preserving the original file and its stream contents (#248).
-
 ## [0.3.6] - 2026-10-24
 
 ### Fixed
 
+- Preserved unchanged package versions and selected release tests by source and dependency impact instead of requiring workspace-wide version bumps (#256).
+- Refused Windows document replacements with destination named streams before changing metadata or publishing bytes, preserving the original file and its stream contents (#248).
 - Reduced exact-certification test costs by optimizing the existing big-integer dependency in development and test builds (#252).
 - Split affected toolkit tests into parallel PR jobs while retaining dependency-aware selection and a required aggregate result (#250).
 
