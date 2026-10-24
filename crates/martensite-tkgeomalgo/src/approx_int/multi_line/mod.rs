@@ -213,7 +213,11 @@ impl<L: ApproxIntLine> ApproxIntMultiLine<L> {
     /// `Value(Index, TabPnt)`: the shifted 3d point, written at index 1;
     /// `line.value_3d(i, &mut tab)?`.
     pub fn value_3d(&self, index: i32, tab: &mut Array1<'_, Point3>) -> Result<(), Failure> {
-        let p: Point3 = self.line("Value")?.point(index)?.value();
+        let point = self.line("Value")?.point(index)?;
+        self.put_3d(point.value(), tab)
+    }
+
+    fn put_3d(&self, p: Point3, tab: &mut Array1<'_, Point3>) -> Result<(), Failure> {
         let o = self.offsets;
         arrays::put(
             tab,
@@ -225,8 +229,12 @@ impl<L: ApproxIntLine> ApproxIntMultiLine<L> {
     /// `Value(Index, TabPnt2d)`: the shifted parameters on the approximated surfaces
     /// (on one of them when `NbP2d` is 1); `line.value_2d(i, &mut tab2d)?`.
     pub fn value_2d(&self, index: i32, tab: &mut Array1<'_, Point2>) -> Result<(), Failure> {
-        let pon2s: IntSurfPntOn2S = self.line("Value")?.point(index)?;
-        let (u1, v1, u2, v2) = pon2s.parameters();
+        let point = self.line("Value")?.point(index)?;
+        self.put_2d(point, tab)
+    }
+
+    fn put_2d(&self, point: IntSurfPntOn2S, tab: &mut Array1<'_, Point2>) -> Result<(), Failure> {
+        let (u1, v1, u2, v2) = point.parameters();
         let o = self.offsets;
         let on1 = Point2::new(u1 + o.u1o, v1 + o.v1o);
         let on2 = Point2::new(u2 + o.u2o, v2 + o.v2o);
@@ -247,8 +255,10 @@ impl<L: ApproxIntLine> ApproxIntMultiLine<L> {
         tab: &mut Array1<'_, Point3>,
         tab2d: &mut Array1<'_, Point2>,
     ) -> Result<(), Failure> {
-        self.value_3d(index, tab)?;
-        self.value_2d(index, tab2d)
+        // A combined read must not clone the walking point twice during fitting (#220).
+        let point = self.line("Value")?.point(index)?;
+        self.put_3d(point.value(), tab)?;
+        self.put_2d(point, tab2d)
     }
 
     /// The parameters of the point `index` and the SvSurfaces, or None without them.

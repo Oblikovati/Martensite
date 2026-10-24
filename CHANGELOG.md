@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Reused one walking-point snapshot for combined spatial and parametric coordinate reads during fitting (#220).
+
 ## [0.3.6] - 2026-10-24
 
 ### Fixed
