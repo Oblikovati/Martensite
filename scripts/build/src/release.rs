@@ -11,6 +11,8 @@ use crate::cargo::{BuildTarget, CargoTasks, PackageSelection, ShippedArtifact};
 use crate::changelog::release_notes;
 use crate::context::{BUILD_TOOL_PACKAGE, BuildContext};
 use crate::error::{BuildError, BuildResult, io_error};
+use crate::publication_plan::PublicationPlan;
+use crate::published_history::ReleaseIndex;
 use crate::release_scope::ReleaseScope;
 use crate::version::{check_bump, previous_release};
 use crate::workspace::{CargoWorkspace, WorkspacePackage};
@@ -61,18 +63,19 @@ pub(crate) fn run_release_checks(
     run_tests: bool,
 ) -> BuildResult<Vec<PathBuf>> {
     let workspace = CargoWorkspace::load(context.runner, context.root())?;
+    let history = ReleaseIndex::load(context)?;
     let reporter = &context.reporter;
     reporter.step("Validate release version", || {
-        validate_version(context, &workspace, &request.version)
+        validate_version(context, &workspace, &request.version, &history)
     })?;
-    let scope = ReleaseScope::load(context, &workspace, &request.version)?;
+    let scope = ReleaseScope::from_history(context, &workspace, &request.version, &history)?;
     let cargo = CargoTasks::new(context.runner, context.root());
     let target = BuildTarget::Triple(request.triple.clone());
     verify_workspace(context, &cargo, &target, &scope.tests, run_tests)?;
     let shipped = PackageSelection::WorkspaceExcept(vec![BUILD_TOOL_PACKAGE.to_owned()]);
     let artifacts = reporter.step("Build release", || cargo.release_build(&shipped, &target))?;
     reporter.step("Package release", || {
-        package_release(context, request, &workspace, &scope, &artifacts)
+        package_release(context, request, &workspace, &scope, &history, &artifacts)
     })
 }
 
@@ -109,6 +112,7 @@ fn validate_version(
     context: &BuildContext<'_>,
     workspace: &CargoWorkspace,
     version: &Version,
+    history: &ReleaseIndex,
 ) -> BuildResult<()> {
     if releasable(workspace).is_empty() {
         return Err(BuildError::ReleaseRule(
@@ -119,7 +123,7 @@ fn validate_version(
     let changelog =
         fs::read_to_string(&changelog_path).map_err(|cause| io_error(&changelog_path, cause))?;
     let notes = release_notes(&changelog, &version.to_string())?;
-    let previous = previous_release(&context.git.release_tags()?, version);
+    let previous = previous_release(&history.final_tags(), version);
     check_bump(previous.as_ref(), version, &notes)?;
     let baseline = previous.map_or("no earlier release".to_owned(), |previous| {
         format!("previous release {previous}")
@@ -135,19 +139,14 @@ fn package_release(
     request: &ReleaseRequest,
     workspace: &CargoWorkspace,
     scope: &ReleaseScope,
+    history: &ReleaseIndex,
     artifacts: &[ShippedArtifact],
 ) -> BuildResult<Vec<PathBuf>> {
     recreate_dir(&request.dist_dir)?;
     let mut assets = package_binaries(context, request, artifacts)?;
     if request.source_packages {
-        assets.extend(package_sources(
-            context,
-            request,
-            workspace,
-            &scope.packages,
-        )?);
-        assets.extend(crate::release_manifest::write_package_manifest(
-            request, workspace, scope,
+        assets.extend(package_source_assets(
+            context, request, workspace, scope, history,
         )?);
     }
     for asset in &assets {
@@ -155,6 +154,22 @@ fn package_release(
             .reporter
             .note(&format!("Packaged {}", asset.display()));
     }
+    Ok(assets)
+}
+
+fn package_source_assets(
+    context: &BuildContext<'_>,
+    request: &ReleaseRequest,
+    workspace: &CargoWorkspace,
+    scope: &ReleaseScope,
+    history: &ReleaseIndex,
+) -> BuildResult<Vec<PathBuf>> {
+    let mut plan = PublicationPlan::load(context, workspace, scope, history)?;
+    let mut assets = package_sources(context, request, workspace, &plan.shipped_names())?;
+    plan.seal_outputs(&request.dist_dir)?;
+    assets.extend(crate::release_manifest::write_package_manifest(
+        request, workspace, scope, &plan,
+    )?);
     Ok(assets)
 }
 

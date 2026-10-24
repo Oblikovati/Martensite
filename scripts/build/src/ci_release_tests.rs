@@ -39,7 +39,7 @@ fn release_runner(root: &Path, changed: &str) -> RecordingRunner {
             "git ls-tree -r --name-only -z v0.3.0",
             "crates/martensite-kernel/Cargo.toml\0crates/martensite-math/Cargo.toml\0",
         );
-    previous_manifests(runner)
+    crate::published_history::fixtures::seed_releases(previous_manifests(runner), "v0.3.0")
 }
 
 fn previous_manifests(mut runner: RecordingRunner) -> RecordingRunner {

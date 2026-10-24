@@ -61,7 +61,8 @@ impl ReleaseFixture {
         let entries: Vec<BundleEntry> = files
             .iter()
             .map(|file| {
-                fs::write(sources.join(file), file).unwrap();
+                let contents = packaged_fixture_contents(file, name, version);
+                fs::write(sources.join(file), contents).unwrap();
                 BundleEntry {
                     source: sources.join(file),
                     archive_path: (*file).to_owned(),
@@ -83,7 +84,8 @@ impl ReleaseFixture {
         let root = self.root().display().to_string();
         let binary = serde_json::json!({"reason": "compiler-artifact", "target": {"kind": ["bin"]},
             "filenames": [self.root().join("martensite-cli")], "executable": self.root().join("martensite-cli")});
-        baseline_runner()
+        published_fixture(tags)
+            .seed(baseline_runner())
             .with_stdout("git rev-parse --show-toplevel", &root)
             .with_stdout(METADATA, &metadata_at(&root, version))
             .with_stdout("git tag --list v*", tags)
@@ -360,4 +362,42 @@ fn archive_uses_package_version_independently_of_repository_version() {
     let assets = run_release(&context_at(&runner, fixture.root()), &fixture.request(true)).unwrap();
     assert!(asset_names(&assets).contains(&"martensite-kernel-0.2.8.crate".into()));
     assert!(!asset_names(&assets).contains(&"martensite-kernel-0.3.0.crate".into()));
+}
+
+fn published_fixture(tags: &str) -> crate::published_history::fixtures::PublicationApiFixture {
+    let mut fixture = crate::published_history::fixtures::PublicationApiFixture::default();
+    for tag in tags
+        .lines()
+        .filter(|tag| crate::version::parse_release_tag(tag).is_ok())
+    {
+        let release = fixture.release(tag);
+        if tag != "v0.2.7" {
+            continue;
+        }
+        fixture_archives(&mut fixture, release);
+    }
+    fixture
+}
+
+fn packaged_fixture_contents(file: &str, name: &str, version: &str) -> String {
+    if file == "Cargo.toml" {
+        return format!("[package]\nname='{name}'\nversion='{version}'");
+    }
+    file.to_owned()
+}
+
+fn fixture_archives(
+    fixture: &mut crate::published_history::fixtures::PublicationApiFixture,
+    release: u64,
+) {
+    for name in ["martensite-kernel", "martensite-math"] {
+        fixture.archive(release, name, "0.2.7", "");
+    }
+    fixture.catalog(
+        release,
+        serde_json::json!([
+            {"name":"martensite-kernel","version":"0.2.7","shipped":true},
+            {"name":"martensite-math","version":"0.2.7","shipped":true}
+        ]),
+    );
 }
