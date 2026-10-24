@@ -9,16 +9,20 @@ use std::sync::mpsc::{SyncSender, sync_channel};
 
 mod signal_mask;
 
-static DIAGNOSTIC_CHANNEL: OnceLock<Result<UnixStream, io::Error>> = OnceLock::new();
+static DIAGNOSTIC_CHANNEL: OnceLock<UnixStream> = OnceLock::new();
 
 pub(super) fn prepare() -> io::Result<()> {
-    match DIAGNOSTIC_CHANNEL.get_or_init(start_relay) {
-        Ok(channel) => {
-            REQUEST_FD.store(channel.as_raw_fd(), Ordering::Release);
-            Ok(())
+    let channel = match DIAGNOSTIC_CHANNEL.get() {
+        Some(channel) => channel,
+        None => {
+            // The setter serializes startup; only successful ownership is cached.
+            // A host resource shortage must remain retryable after it clears (#278).
+            let candidate = start_relay()?;
+            DIAGNOSTIC_CHANNEL.get_or_init(|| candidate)
         }
-        Err(cause) => Err(copy_setup_error(cause)),
-    }
+    };
+    REQUEST_FD.store(channel.as_raw_fd(), Ordering::Release);
+    Ok(())
 }
 
 fn start_relay() -> io::Result<UnixStream> {
@@ -59,28 +63,4 @@ fn write_diagnostic(stdout: &std::io::Stdout, mut remaining: &[u8]) -> io::Resul
         }
     }
     Ok(())
-}
-
-fn copy_setup_error(cause: &io::Error) -> io::Error {
-    match cause.raw_os_error() {
-        Some(errno) => io::Error::from_raw_os_error(errno),
-        None => io::Error::new(cause.kind(), cause.to_string()),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn setup_cause_retains_os_error_identity() {
-        let cause = std::io::Error::from_raw_os_error(libc::EACCES);
-        assert_eq!(
-            super::copy_setup_error(&cause).raw_os_error(),
-            Some(libc::EACCES)
-        );
-        let cause = std::io::Error::other("relay setup refused");
-        assert_eq!(
-            super::copy_setup_error(&cause).to_string(),
-            "relay setup refused"
-        );
-    }
 }

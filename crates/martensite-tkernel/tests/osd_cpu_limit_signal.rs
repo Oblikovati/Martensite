@@ -114,3 +114,6 @@ fn forced_child_shutdown_is_reaped() {
 
 #[path = "osd_cpu_limit_signal/backpressure.rs"]
 mod backpressure;
+
+#[path = "osd_cpu_limit_signal/recovery.rs"]
+mod recovery;
