@@ -10,6 +10,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Reduced exact-certification test costs by optimizing the existing big-integer dependency in development and test builds (#252).
 - Split affected toolkit tests into parallel PR jobs while retaining dependency-aware selection and a required aggregate result (#250).
 
 - Staged document writes so preparation failures and incomplete driver output leave existing files intact; verified access policies before publication and retained requested paths and symbolic links (#245).
