@@ -12,12 +12,12 @@ const CHANGELOG: &str =
 
 /// A repository with the bundled documents, one built binary and the
 /// `.crate` files `cargo package` would have written.
-struct ReleaseFixture {
+pub(crate) struct ReleaseFixture {
     dir: tempfile::TempDir,
 }
 
 impl ReleaseFixture {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let fixture = Self {
             dir: tempfile::tempdir().unwrap(),
         };
@@ -75,11 +75,11 @@ impl ReleaseFixture {
         write_tar_gz(&crate_file, &format!("{name}-{version}"), &entries).unwrap();
     }
 
-    fn root(&self) -> &Path {
+    pub(crate) fn root(&self) -> &Path {
         self.dir.path()
     }
 
-    fn runner(&self, tags: &str, version: &str) -> RecordingRunner {
+    pub(crate) fn runner(&self, tags: &str, version: &str) -> RecordingRunner {
         let root = self.root().display().to_string();
         let binary = serde_json::json!({"reason": "compiler-artifact", "target": {"kind": ["bin"]},
             "filenames": [self.root().join("martensite-cli")], "executable": self.root().join("martensite-cli")});
@@ -193,6 +193,26 @@ fn primary_target_runs_every_gate_in_order() {
         .into_iter()
         .filter(|command| command.starts_with("cargo "));
     assert_eq!(commands.skip(1).collect::<Vec<_>>(), release_gates());
+}
+
+#[test]
+fn delegated_release_tests_preserve_validation_build_and_packaging() {
+    let fixture = ReleaseFixture::new();
+    let runner = fixture.runner("v0.2.7\n", "0.3.0");
+    let context = context_at(&runner, fixture.root());
+    let assets = run_release_checks(&context, &fixture.request(true), false).unwrap();
+    let commands: Vec<_> = runner
+        .commands()
+        .into_iter()
+        .filter(|c| c.starts_with("cargo "))
+        .skip(1)
+        .collect();
+    let expected: Vec<_> = release_gates()
+        .into_iter()
+        .filter(|c| !c.starts_with("cargo test "))
+        .collect();
+    assert_eq!(commands, expected);
+    assert_eq!(asset_names(&assets), PRIMARY_ASSETS);
 }
 
 #[test]

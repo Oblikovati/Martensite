@@ -13,7 +13,7 @@ use crate::plan::{CiPlan, CiTrigger, plan_for, plan_outputs, write_outputs};
 use crate::pr::validate_pull_request;
 use crate::process::ProcessRunner;
 use crate::publish::publish_release;
-use crate::release::{ReleaseRequest, default_dist_dir, run_release};
+use crate::release::{ReleaseRequest, default_dist_dir, run_release, run_release_checks};
 use crate::report::{LogFlavor, StepReporter};
 use crate::targets::is_primary;
 use crate::version::parse_version_argument;
@@ -60,18 +60,20 @@ pub enum CiCommand {
         /// The matrix target triple.
         #[arg(long)]
         target: String,
-        /// Delegate PR tests to the package matrix; rejected for releases.
+        /// Delegate tests to the required package or release-shard matrix.
         #[arg(long)]
         checks_only: bool,
     },
-    /// Run the tests of one affected PR package.
+    /// Run one affected package or release test shard.
     Test {
-        #[arg(long)]
-        package: String,
+        #[arg(long, required_unless_present = "shard", conflicts_with = "shard")]
+        package: Option<String>,
+        #[arg(long, required_unless_present = "package", conflicts_with = "package")]
+        shard: Option<usize>,
         #[arg(long)]
         target: String,
     },
-    /// Require every PR job to succeed.
+    /// Require every validation and test job to succeed.
     Gate {
         #[arg(long)]
         checks: String,
@@ -120,7 +122,11 @@ fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()
             target,
             checks_only,
         } => run_planned(context, &target, checks_only),
-        CiCommand::Test { package, target } => test_planned_package(context, &package, target),
+        CiCommand::Test {
+            package,
+            shard,
+            target,
+        } => test_planned_selection(context, package.as_deref(), shard, target),
         CiCommand::Gate {
             checks,
             tests,
@@ -131,17 +137,21 @@ fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()
     }
 }
 
-fn test_planned_package(
+fn test_planned_selection(
     context: &BuildContext<'_>,
-    package: &str,
+    package: Option<&str>,
+    shard: Option<usize>,
     target: String,
 ) -> BuildResult<()> {
-    crate::ci_tests::test_package(
-        context,
-        &current_plan()?,
-        package,
-        &BuildTarget::Triple(target),
-    )
+    let plan = current_plan()?;
+    let target = BuildTarget::Triple(target);
+    match (package, shard) {
+        (Some(package), None) => crate::ci_tests::test_package(context, &plan, package, &target),
+        (None, Some(shard)) => crate::ci_tests::test_shard(context, &plan, shard, &target),
+        _ => Err(BuildError::Usage(format!(
+            "package {package:?}, shard {shard:?}; expected exactly one of --package or --shard"
+        ))),
+    }
 }
 
 fn current_plan() -> BuildResult<CiPlan> {
@@ -165,13 +175,14 @@ fn rehearse_release(
         Some(triple) => triple,
         None => CargoTasks::new(context.runner, context.root()).host_triple()?,
     };
-    release_for(context, parse_version_argument(version)?, &triple)
+    release_for(context, parse_version_argument(version)?, &triple, true)
 }
 
 fn release_for(
     context: &BuildContext<'_>,
     version: semver::Version,
     triple: &str,
+    run_tests: bool,
 ) -> BuildResult<()> {
     let request = ReleaseRequest {
         dist_dir: default_dist_dir(context.root(), &version),
@@ -179,7 +190,15 @@ fn release_for(
         triple: triple.to_owned(),
         source_packages: is_primary(triple),
     };
-    run_release(context, &request)?;
+    if run_tests {
+        run_release(context, &request)?;
+    } else {
+        run_release_checks(context, &request, false)?;
+    }
+    capture_release_inventory(context, triple)
+}
+
+fn capture_release_inventory(context: &BuildContext<'_>, triple: &str) -> BuildResult<()> {
     context
         .reporter
         .step("Check expanded unsafe inventory", || {
@@ -192,17 +211,23 @@ fn release_for(
 }
 
 fn run_planned(context: &BuildContext<'_>, triple: &str, checks_only: bool) -> BuildResult<()> {
-    match current_plan()? {
+    dispatch_plan(context, current_plan()?, triple, checks_only)
+}
+
+fn dispatch_plan(
+    context: &BuildContext<'_>,
+    plan: CiPlan,
+    triple: &str,
+    checks_only: bool,
+) -> BuildResult<()> {
+    match plan {
         CiPlan::PullRequest { base } => crate::pr::validate_pr_checks(
             context,
             &base,
             &BuildTarget::Triple(triple.to_owned()),
             !checks_only,
         ),
-        CiPlan::Release { .. } if checks_only => Err(BuildError::Usage(
-            "--checks-only is PR-only; releases require all tests".into(),
-        )),
-        CiPlan::Release { version, .. } => release_for(context, version, triple),
+        CiPlan::Release { version, .. } => release_for(context, version, triple, !checks_only),
     }
 }
 
@@ -237,5 +262,57 @@ mod tests {
     #[test]
     fn ci_run_requires_a_target() {
         assert!(Cli::try_parse_from(["cargo xtask", "ci", "run"]).is_err());
+    }
+
+    #[test]
+    fn ci_test_requires_exactly_one_selector() {
+        let prefix = [
+            "cargo xtask",
+            "ci",
+            "test",
+            "--target",
+            "x86_64-unknown-linux-gnu",
+        ];
+        for selector in [vec!["--package", "martensite-tkmath"], vec!["--shard", "0"]] {
+            assert!(Cli::try_parse_from(prefix.into_iter().chain(selector)).is_ok());
+        }
+        assert!(Cli::try_parse_from(prefix).is_err());
+        let both = ["--package", "martensite-tkmath", "--shard", "0"];
+        assert!(Cli::try_parse_from(prefix.into_iter().chain(both)).is_err());
+    }
+
+    #[test]
+    fn release_dispatch_delegates_only_tests_and_keeps_inventory_required() {
+        for checks_only in [false, true] {
+            assert_release_dispatch(checks_only);
+        }
+    }
+
+    fn assert_release_dispatch(checks_only: bool) {
+        let fixture = crate::release::tests::ReleaseFixture::new();
+        let runner = fixture.runner("v0.2.7\n", "0.3.0");
+        let context = crate::context::tests::context_at(&runner, fixture.root());
+        let plan = CiPlan::Release {
+            version: semver::Version::new(0, 3, 0),
+            publish: false,
+        };
+        let result = dispatch_plan(&context, plan, "x86_64-unknown-linux-gnu", checks_only);
+        // The fake returns no compiler stream: reaching this error proves the gate still runs.
+        let error = result.unwrap_err().to_string();
+        assert!(error.contains("missing build-finished"));
+        assert_release_commands(&runner.commands(), checks_only);
+    }
+
+    fn assert_release_commands(commands: &[String], checks_only: bool) {
+        assert_eq!(
+            commands.iter().any(|c| c.starts_with("cargo test ")),
+            !checks_only
+        );
+        assert!(commands.iter().any(|c| c.starts_with("cargo package ")));
+        assert!(
+            commands
+                .iter()
+                .any(|c| c.contains("target/unsafe-inventory/build"))
+        );
     }
 }

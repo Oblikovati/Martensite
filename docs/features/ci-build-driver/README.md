@@ -25,8 +25,9 @@ This gives two properties:
 | `cargo xtask release --version X.Y.Z [--target T]` | contributor | Release rehearsal for one target; never publishes |
 | `cargo xtask ci plan` | CI | Writes `mode`, `version`, `publish`, target `matrix`, `test-matrix` and `has-tests` to `GITHUB_OUTPUT` |
 | `cargo xtask ci run --target T` | CI | Runs the planned pipeline for one matrix target |
-| `cargo xtask ci run --target T --checks-only` | CI | Runs shared PR checks, delegating tests to the matrix; rejects release mode |
+| `cargo xtask ci run --target T --checks-only` | CI | Runs shared checks and release packaging, delegating tests to the matrix |
 | `cargo xtask ci test --package P --target T` | CI | Revalidates affected-package membership and runs all tests for that package |
+| `cargo xtask ci test --shard N --target T` | CI | Recomputes a release shard and runs all selected package suites on that target |
 | `cargo xtask ci gate --checks success --tests success --has-tests` | CI | Requires successful shared checks and package tests |
 | `cargo xtask ci publish --dist DIR` | CI | Checks every asset against its checksum and creates the GitHub release |
 
@@ -41,7 +42,14 @@ Each test job runs unit, integration and documentation tests with
 changes produce no package jobs; only that empty selection permits skipped tests.
 Local `cargo xtask pr` still runs all stages sequentially. Release pipelines
 compute package scope since the previous release and run the selected suites
-on each supported target.
+on each supported target. CI partitions that selection into at most four shards
+per platform, with up to sixteen release test jobs running concurrently. Each
+package appears once per platform. TKGeomBase, TKPrim, TKGeomAlgo and TKTopAlgo
+start separate shards when selected; the remaining packages are distributed in
+sorted order. The limit bounds repeated dependency compilation across runners.
+The shared checks and packaging run alongside tests. A required `release` result
+checks both matrices before publication. Local `cargo xtask release` and `ci run`
+without `--checks-only` retain the complete sequential pipeline.
 
 When process-policy is selected, the shared test command explicitly enables
 `martensite-process-policy/case-runner`. This preserves the unit tests that a
@@ -185,14 +193,15 @@ regression exercises this policy with `core.autocrlf=true` ([#197]).
    retains workspace and dependency diagnostics separately. CI uploads the
    report and raw compiler streams, including fresh evidence from failed checks.
 
-The publish job downloads the files from all targets, checks every asset
+The publish job requires the aggregate release result to pass. Failed, cancelled
+or unexpectedly skipped tests block it. It downloads the files from all targets, checks every asset
 against its `.sha256`, and runs `gh release create v<version> --verify-tag`.
 The release notes are the version's `CHANGELOG.md` section. Pre-release
 versions are marked as pre-releases.
 
 ## Known limits
 
-- The workflow installs only the Rust toolchain. The kernel crates also need
+- The shared target setup installs Rust and the FreeType test dependency on macOS and Windows. The kernel crates also need
   Tcl/Tk, FreeType, fontconfig and Vulkan. When the first kernel crate lands,
   the workflow's setup step must run the matching installer
   (`install-linux.sh --no-cargo-tools` and so on) on each runner.

@@ -1,5 +1,5 @@
-//! The release pipeline for one target: semver gate, full lint, full test
-//! suite, release build and packaging. It never publishes; `publish` does.
+//! Release gates and artifacts for one target. Selected tests run locally or
+//! in the required CI matrix. This pipeline never publishes; `publish` does.
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -50,6 +50,16 @@ pub fn run_release(
     context: &BuildContext<'_>,
     request: &ReleaseRequest,
 ) -> BuildResult<Vec<PathBuf>> {
+    run_release_checks(context, request, true)
+}
+
+/// CI may delegate tests to its required matrix while retaining every other gate.
+/// Example: `run_release_checks(context, request, false)` prepares CI artifacts.
+pub(crate) fn run_release_checks(
+    context: &BuildContext<'_>,
+    request: &ReleaseRequest,
+    run_tests: bool,
+) -> BuildResult<Vec<PathBuf>> {
     let workspace = CargoWorkspace::load(context.runner, context.root())?;
     let reporter = &context.reporter;
     reporter.step("Validate release version", || {
@@ -58,7 +68,7 @@ pub fn run_release(
     let scope = ReleaseScope::load(context, &workspace, &request.version)?;
     let cargo = CargoTasks::new(context.runner, context.root());
     let target = BuildTarget::Triple(request.triple.clone());
-    verify_workspace(context, &cargo, &target, &scope.tests)?;
+    verify_workspace(context, &cargo, &target, &scope.tests, run_tests)?;
     let shipped = PackageSelection::WorkspaceExcept(vec![BUILD_TOOL_PACKAGE.to_owned()]);
     let artifacts = reporter.step("Build release", || cargo.release_build(&shipped, &target))?;
     reporter.step("Package release", || {
@@ -72,13 +82,14 @@ fn verify_workspace(
     cargo: &CargoTasks<'_>,
     target: &BuildTarget,
     tests: &[String],
+    run_tests: bool,
 ) -> BuildResult<()> {
     let reporter = &context.reporter;
     reporter.step("Check formatting", || cargo.format_check_all())?;
     reporter.step("Clippy workspace", || {
         cargo.clippy(&PackageSelection::Workspace, target)
     })?;
-    if tests.is_empty() {
+    if !run_tests || tests.is_empty() {
         return Ok(());
     }
     reporter.step("Test changed and affected packages", || {
@@ -253,4 +264,4 @@ fn require_source_license(crate_file: &Path, package_dir: &str) -> BuildResult<(
 
 #[cfg(test)]
 #[path = "release_tests.rs"]
-mod tests;
+pub(crate) mod tests;

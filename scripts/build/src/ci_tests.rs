@@ -1,4 +1,4 @@
-//! Dependency-aware PR test jobs and their required aggregate gate (#250).
+//! Dependency-aware CI test jobs and their required aggregate gate (#250).
 
 use std::collections::BTreeSet;
 
@@ -9,18 +9,24 @@ use crate::plan::CiPlan;
 use crate::workspace::CargoWorkspace;
 
 fn selected_packages(context: &BuildContext<'_>, plan: &CiPlan) -> BuildResult<BTreeSet<String>> {
-    let CiPlan::PullRequest { base } = plan else {
-        return Err(BuildError::Usage(format!(
-            "package test plan {plan:?}; expected PullRequest"
-        )));
+    let workspace = CargoWorkspace::load(context.runner, context.root())?;
+    let base = match plan {
+        CiPlan::PullRequest { base } => base,
+        CiPlan::Release { version, .. } => {
+            return Ok(
+                crate::release_scope::ReleaseScope::load(context, &workspace, version)?
+                    .tests
+                    .into_iter()
+                    .collect(),
+            );
+        }
     };
     let merge_base = context.git.merge_base(base)?;
     let changed = context.git.changed_files(&merge_base)?;
-    let workspace = CargoWorkspace::load(context.runner, context.root())?;
     crate::release_impact::pull_request_packages(context, &workspace, &merge_base, &changed)
 }
 
-/// Emits each affected package exactly once, including an empty docs-only matrix.
+/// Emits each affected package exactly once, including empty selections for documentation-only changes.
 ///
 /// ```ignore
 /// let outputs = matrix_outputs(&context, &plan)?;
@@ -29,16 +35,14 @@ pub fn matrix_outputs(
     context: &BuildContext<'_>,
     plan: &CiPlan,
 ) -> BuildResult<Vec<(&'static str, String)>> {
-    let packages = match plan {
-        CiPlan::PullRequest { .. } => selected_packages(context, plan)?,
-        CiPlan::Release { .. } => BTreeSet::new(),
+    let packages = selected_packages(context, plan)?;
+    let matrix = match plan {
+        CiPlan::PullRequest { .. } => serde_json::json!({"package": packages}),
+        CiPlan::Release { .. } => crate::release_ci::release_test_matrix(&packages),
     };
     Ok(vec![
         ("has-tests", (!packages.is_empty()).to_string()),
-        (
-            "test-matrix",
-            serde_json::json!({"package": packages}).to_string(),
-        ),
+        ("test-matrix", matrix.to_string()),
     ])
 }
 
@@ -55,13 +59,58 @@ pub fn test_package(
 ) -> BuildResult<()> {
     if !selected_packages(context, plan)?.contains(package) {
         return Err(BuildError::Usage(format!(
-            "test package {package:?}; expected a member of the affected PR package set"
+            "test package {package:?}; expected a member of the affected package set"
         )));
     }
     CargoTasks::new(context.runner, context.root()).test(
         &PackageSelection::Packages(vec![package.to_owned()]),
         target,
     )
+}
+
+/// Recomputes a release shard before running its unit, integration and doc tests.
+///
+/// ```ignore
+/// test_shard(&context, &plan, 0, &target)?;
+/// ```
+pub fn test_shard(
+    context: &BuildContext<'_>,
+    plan: &CiPlan,
+    shard: usize,
+    target: &BuildTarget,
+) -> BuildResult<()> {
+    let packages = selected_shard(context, plan, shard, target)?;
+    context.reporter.note(&format!(
+        "Release test shard {shard}: {}",
+        packages.join(", ")
+    ));
+    CargoTasks::new(context.runner, context.root())
+        .test(&PackageSelection::Packages(packages), target)
+}
+
+fn selected_shard(
+    context: &BuildContext<'_>,
+    plan: &CiPlan,
+    shard: usize,
+    target: &BuildTarget,
+) -> BuildResult<Vec<String>> {
+    if !matches!(plan, CiPlan::Release { .. }) || !release_target(target) {
+        return Err(BuildError::Usage(format!(
+            "test shard {shard}, plan {plan:?}, target {target:?}; expected a release on a supported target"
+        )));
+    }
+    let shards = crate::release_ci::release_shards(&selected_packages(context, plan)?);
+    shards.get(shard).cloned().ok_or_else(|| {
+        BuildError::Usage(format!(
+            "test shard {shard}; expected an index below {}",
+            shards.len()
+        ))
+    })
+}
+
+fn release_target(target: &BuildTarget) -> bool {
+    matches!(target, BuildTarget::Triple(triple)
+        if crate::targets::RELEASE_TARGETS.iter().any(|target| target.triple == triple))
 }
 
 /// Fails closed on failed, cancelled or unexpectedly skipped matrix jobs.
@@ -75,7 +124,7 @@ pub fn require_success(checks: &str, tests: &str, has_tests: bool) -> BuildResul
         return Ok(());
     }
     Err(BuildError::Usage(format!(
-        "PR jobs: checks={checks:?}, tests={tests:?}; expected checks=success, tests={expected_tests}"
+        "CI jobs: checks={checks:?}, tests={tests:?}; expected checks=success, tests={expected_tests}"
     )))
 }
 
@@ -156,17 +205,83 @@ mod tests {
         }
     }
 
-    #[test]
-    fn release_has_no_pr_matrix_and_cannot_run_package_jobs() {
-        let runner = RecordingRunner::default();
-        let context = context_at(&runner, Path::new("/repo"));
+    fn initial_release_fixture() -> (RecordingRunner, CiPlan) {
+        let runner = RecordingRunner::default().with_stdout(
+            "cargo metadata --format-version 1 --no-deps --locked",
+            &sample_metadata(),
+        );
         let plan = CiPlan::Release {
             version: semver::Version::new(0, 3, 6),
             publish: false,
         };
-        assert_eq!(matrix_outputs(&context, &plan).unwrap()[0].1, "false");
-        assert!(test_package(&context, &plan, "martensite-kernel", &BuildTarget::Host).is_err());
-        assert_eq!(runner.commands(), ["git rev-parse --show-toplevel"]);
+        (runner, plan)
+    }
+
+    #[test]
+    fn release_matrix_covers_each_package_on_every_native_target() {
+        let (runner, plan) = initial_release_fixture();
+        let context = context_at(&runner, Path::new("/repo"));
+        let outputs = matrix_outputs(&context, &plan).unwrap();
+        assert_eq!(outputs[0].1, "true");
+        let matrix: serde_json::Value = serde_json::from_str(&outputs[1].1).unwrap();
+        let rows = matrix["include"].as_array().unwrap();
+        assert_eq!(rows.len(), 8);
+        for target in crate::targets::RELEASE_TARGETS {
+            for shard in 0..2 {
+                assert!(rows.contains(&serde_json::json!({
+                    "target": target.triple, "runner": target.runner, "shard": shard
+                })));
+            }
+        }
+    }
+
+    #[test]
+    fn release_shards_execute_on_each_native_target() {
+        let (runner, plan) = initial_release_fixture();
+        let context = context_at(&runner, Path::new("/repo"));
+        for target in crate::targets::RELEASE_TARGETS {
+            for shard in 0..2 {
+                let target = BuildTarget::Triple(target.triple.into());
+                test_shard(&context, &plan, shard, &target).unwrap();
+            }
+        }
+        let commands = runner.commands();
+        let tests = commands.iter().filter(|c| c.starts_with("cargo test "));
+        assert_eq!(tests.count(), 8);
+    }
+
+    #[test]
+    fn release_shards_reject_out_of_range_indices_and_unsupported_targets() {
+        let (runner, plan) = initial_release_fixture();
+        let context = context_at(&runner, Path::new("/repo"));
+        let target = BuildTarget::Triple(crate::targets::PRIMARY_TARGET.triple.into());
+        assert!(test_shard(&context, &plan, 2, &target).is_err());
+        for target in [
+            BuildTarget::Host,
+            BuildTarget::Triple("unlisted-target".into()),
+        ] {
+            assert!(test_shard(&context, &plan, 0, &target).is_err());
+        }
+        assert!(
+            !runner
+                .commands()
+                .iter()
+                .any(|c| c.starts_with("cargo test "))
+        );
+    }
+
+    #[test]
+    fn release_shards_reject_pull_request_plans() {
+        let (runner, plan) = fixture("crates/martensite-kernel/src/lib.rs");
+        let context = context_at(&runner, Path::new("/repo"));
+        let target = BuildTarget::Triple(crate::targets::PRIMARY_TARGET.triple.into());
+        assert!(test_shard(&context, &plan, 0, &target).is_err());
+        assert!(
+            !runner
+                .commands()
+                .iter()
+                .any(|c| c.starts_with("cargo test "))
+        );
     }
 }
 
@@ -229,3 +344,7 @@ mod bookkeeping_tests {
         assert_eq!(matrix_outputs(&context, &plan).unwrap()[0].1, "false");
     }
 }
+
+#[cfg(test)]
+#[path = "ci_release_tests.rs"]
+mod release_selection_tests;
