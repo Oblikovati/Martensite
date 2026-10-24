@@ -20,7 +20,7 @@ impl RecordingProcessSetup {
     }
 
     fn activate(&self) {
-        self.events.borrow_mut().push("handler/clock/watchdog");
+        self.events.borrow_mut().push("clock/watchdog");
     }
 }
 
@@ -41,10 +41,7 @@ fn installation_refusal_reports_before_activation_and_retains_cause() {
         || control.activate(),
     );
     let error = result.unwrap().unwrap_err();
-    assert_eq!(
-        &*control.events.borrow(),
-        &["diagnostic", "handler/clock/watchdog"]
-    );
+    assert_eq!(&*control.events.borrow(), &["diagnostic", "clock/watchdog"]);
     assert!(error.to_string().contains("Some(200) seconds"));
     assert!(error.to_string().contains("returned -1, expected 0"));
     assert!(
@@ -57,7 +54,7 @@ fn installation_refusal_reports_before_activation_and_retains_cause() {
 }
 
 #[test]
-fn diagnostic_refusal_prevents_handler_clock_and_watchdog_activation() {
+fn diagnostic_refusal_prevents_clock_and_watchdog_activation() {
     let control = RecordingProcessSetup {
         refuse_diagnostic: true,
         ..Default::default()

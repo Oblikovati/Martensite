@@ -19,3 +19,6 @@ pub use sleep::{
     NativeSleeper, SleepRequest, Sleeper, milli_sec_sleep_duration, sec_sleep_duration,
 };
 pub use timer::Timer;
+
+#[cfg(unix)]
+pub(super) use signal_native::install_process_cpu_exit;

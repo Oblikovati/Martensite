@@ -13,6 +13,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Restored CPU-limit diagnostics and exit code 2 for isolated Unix processes, including limits applied after CPU was consumed (#278).
+
 - Reused one walking-point snapshot for combined spatial and parametric coordinate reads during fitting (#220).
 
 ## [0.3.6] - 2026-10-24
