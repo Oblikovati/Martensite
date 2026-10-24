@@ -72,33 +72,8 @@ jobs:
           fetch-depth: 0
           # Dataset-backed tests read their inputs from external/martensite-test-data.
           submodules: true
-      - name: Install the toolchain pinned by rust-toolchain.toml
-        run: rustup toolchain install
-      # The visualization tests load FreeType at run time. Windows runners have none, so
-      # build the version install-windows.ps1 pins, with the same options.
-      - name: Build FreeType for the visualization tests (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $source = Join-Path $env:RUNNER_TEMP 'freetype-src'
-          $build = Join-Path $env:RUNNER_TEMP 'freetype-build'
-          $prefix = Join-Path $env:RUNNER_TEMP 'freetype'
-          git clone --quiet https://github.com/freetype/freetype.git $source
-          git -C $source checkout --quiet 0a0221a1347e2f1e07c395263540026e9a0aa7c7
-          cmake -S $source -B $build -A x64 -DBUILD_SHARED_LIBS=ON -DFT_DISABLE_ZLIB=ON -DFT_DISABLE_BZIP2=ON -DFT_DISABLE_PNG=ON -DFT_DISABLE_HARFBUZZ=ON -DFT_DISABLE_BROTLI=ON "-DCMAKE_INSTALL_PREFIX=$prefix"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          cmake --build $build --config Release --parallel
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          cmake --install $build --config Release
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Add-Content $env:GITHUB_PATH (Join-Path $prefix 'bin')
-      - name: Install FreeType for the visualization tests (macOS)
-        if: runner.os == 'macOS'
-        run: brew list freetype >/dev/null 2>&1 || brew install freetype
-      - if: needs.plan.outputs.mode == 'pr'
-        run: cargo xtask ci run --target ${{ matrix.target }} --checks-only
-      - if: needs.plan.outputs.mode == 'release'
-        run: cargo xtask ci run --target ${{ matrix.target }}
+      - uses: ./.github/actions/setup-target
+      - run: cargo xtask ci run --target ${{ matrix.target }} --checks-only
       - name: Retain compiler unsafe inventory evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -138,10 +113,31 @@ jobs:
         env:
           TEST_PACKAGE: ${{ matrix.package }}
 
+  release-tests:
+    needs: plan
+    if: needs.plan.outputs.mode == 'release' && needs.plan.outputs.has-tests == 'true'
+    name: release tests (${{ matrix.target }}, shard ${{ matrix.shard }})
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix: ${{ fromJSON(needs.plan.outputs.test-matrix) }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          submodules: true
+      - uses: ./.github/actions/setup-target
+      - run: cargo xtask ci test --shard "$TEST_SHARD" --target "$TEST_TARGET"
+        shell: bash
+        env:
+          TEST_SHARD: ${{ matrix.shard }}
+          TEST_TARGET: ${{ matrix.target }}
+
   verify:
-    needs: [plan, checks, tests]
-    if: always() && needs.plan.outputs.mode != 'release'
-    name: pr (x86_64-unknown-linux-gnu)
+    needs: [plan, checks, tests, release-tests]
+    if: always()
+    name: ${{ needs.plan.outputs.mode == 'release' && 'release' || 'pr (x86_64-unknown-linux-gnu)' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -150,11 +146,11 @@ jobs:
       - run: cargo xtask ci gate --checks "$CHECKS_RESULT" --tests "$TESTS_RESULT" $HAS_TESTS_FLAG
         env:
           CHECKS_RESULT: ${{ needs.checks.result }}
-          TESTS_RESULT: ${{ needs.tests.result }}
+          TESTS_RESULT: ${{ needs.plan.outputs.mode == 'release' && needs.release-tests.result || needs.tests.result }}
           HAS_TESTS_FLAG: ${{ needs.plan.outputs.has-tests == 'true' && '--has-tests' || '' }}
 
   publish:
-    needs: [plan, checks]
+    needs: [plan, checks, verify]
     if: needs.plan.outputs.publish == 'true'
     runs-on: ubuntu-24.04
     permissions:

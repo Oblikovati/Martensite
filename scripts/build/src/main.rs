@@ -20,6 +20,7 @@ mod pr;
 mod process;
 mod publish;
 mod release;
+mod release_ci;
 mod release_impact;
 mod release_manifest;
 mod release_scope;
