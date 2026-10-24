@@ -6,15 +6,15 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-10-24
+
 ### Fixed
+
+- Optimized TKMath development and test builds to reduce repeated assembly-integration cost while retaining debug checks and existing test budgets (#271).
 
 - Preserved hash-pinned healing-resource bytes on Windows and made the release workflow contract test accept Windows line endings (#269).
 
 - Split release tests into bounded parallel shards on every supported platform and required their aggregate result before publication (#250).
-
-## [0.3.6] - 2026-10-24
-
-### Fixed
 
 - Preserved unchanged package versions and selected release tests by source and dependency impact instead of requiring workspace-wide version bumps (#256).
 - Refused Windows document replacements with destination named streams before changing metadata or publishing bytes, preserving the original file and its stream contents (#248).

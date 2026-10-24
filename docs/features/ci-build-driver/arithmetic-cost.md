@@ -8,8 +8,9 @@ are local comparisons, not forecasts for hosted CI or other platforms.
 ## Big-integer arithmetic
 
 The candidate sets `profile.dev.package.num-bigint.opt-level = 3`. The test
-profile inherits it. The dependency remains at 0.4.6; kernel compilation,
-assertions, tolerances and release profiles are unchanged.
+profile inherits it. The dependency remains at 0.4.6. This change left kernel
+compilation, assertions, tolerances and release profiles unchanged; the later
+[TKMath optimization](assembly-test-cost.md) is measured separately.
 
 | Workload | Baseline test seconds | Candidate test seconds | Results in each build |
 | --- | ---: | ---: | --- |

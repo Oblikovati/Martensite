@@ -10,7 +10,7 @@ use crate::error::{BuildError, BuildResult, io_error};
 use crate::git::ChangedFile;
 use crate::package_manifest::{PackageManifest, parse_table};
 use crate::version::{parse_release_tag, previous_release};
-use crate::workspace::CargoWorkspace;
+use crate::workspace::{CargoWorkspace, WorkspacePackage};
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct ReleaseScope {
@@ -20,6 +20,8 @@ pub(crate) struct ReleaseScope {
 }
 
 impl ReleaseScope {
+    /// Selects changed packages and affected tests against the previous final release.
+    /// Example: `let scope = ReleaseScope::load(context, &workspace, &version)?;`.
     pub fn load(
         context: &BuildContext<'_>,
         workspace: &CargoWorkspace,
@@ -27,23 +29,37 @@ impl ReleaseScope {
     ) -> BuildResult<Self> {
         let tags = context.git.release_tags()?;
         let baseline = previous_release(&tags, version).map(|v| format!("v{v}"));
-        let Some(reference) = baseline.as_deref() else {
+        let Some(reference) = baseline else {
             return Ok(initial_scope(workspace));
         };
-        let previous = published_manifests(context, &tags, version)?;
-        let changed = context.git.changed_files(reference)?;
-        let packages = selected_packages(context, workspace, &previous, &changed)?;
-        let tests = crate::release_impact::release_tests(
-            context, workspace, reference, &changed, &packages,
-        )?;
-        Ok(Self {
-            baseline,
-            tests,
-            packages,
-        })
+        scope_since_release(
+            context,
+            workspace,
+            &published_manifests(context, &tags, version)?,
+            reference,
+        )
     }
 }
 
+fn scope_since_release(
+    context: &BuildContext<'_>,
+    workspace: &CargoWorkspace,
+    previous: &BTreeMap<String, PackageManifest>,
+    reference: String,
+) -> BuildResult<ReleaseScope> {
+    let changed = context.git.changed_files(&reference)?;
+    let packages = selected_packages(context, workspace, previous, &changed)?;
+    let tests =
+        crate::release_impact::release_tests(context, workspace, &reference, &changed, &packages)?;
+    Ok(ReleaseScope {
+        baseline: Some(reference),
+        tests,
+        packages,
+    })
+}
+
+/// Selects edited manifests whose normalized source fields changed.
+/// Example: `let names = changed_manifest_packages(context, &workspace, base, &changed)?;`.
 pub(crate) fn changed_manifest_packages(
     context: &BuildContext<'_>,
     workspace: &CargoWorkspace,
@@ -59,10 +75,7 @@ pub(crate) fn changed_manifest_packages(
     let mut names = Vec::new();
     for package in manifests {
         let manifest = current_manifest(context, &package.dir, &inherited)?;
-        if previous
-            .get(&manifest.name)
-            .is_none_or(|old| manifest.source != old.source)
-        {
+        if manifest_changed(&manifest, previous.get(&manifest.name)) {
             names.push(package.name.clone());
         }
     }
@@ -92,20 +105,33 @@ fn selected_packages(
 ) -> BuildResult<Vec<String>> {
     let inherited = workspace_fields(&read_manifest(context, "Cargo.toml")?)?;
     let mut packages = Vec::new();
-    for package in workspace
-        .packages
-        .iter()
-        .filter(|p| p.name != BUILD_TOOL_PACKAGE)
-    {
-        let manifest = current_manifest(context, &package.dir, &inherited)?;
-        let old = previous.get(&manifest.name);
-        let source_changed = package_changed(&manifest, old, &package.dir, changed);
-        check_package_version(&manifest, old, source_changed)?;
-        if source_changed {
+    for package in &workspace.packages {
+        if changed_release_package(context, package, &inherited, previous, changed)? {
             packages.push(package.name.clone());
         }
     }
     Ok(packages)
+}
+
+fn changed_release_package(
+    context: &BuildContext<'_>,
+    package: &WorkspacePackage,
+    inherited: &Table,
+    previous: &BTreeMap<String, PackageManifest>,
+    changed: &[ChangedFile],
+) -> BuildResult<bool> {
+    if package.name == BUILD_TOOL_PACKAGE {
+        return Ok(false);
+    }
+    let manifest = current_manifest(context, &package.dir, inherited)?;
+    let old = previous.get(&manifest.name);
+    let source_changed = package_changed(&manifest, old, &package.dir, changed);
+    check_package_version(&manifest, old, source_changed)?;
+    Ok(source_changed)
+}
+
+fn manifest_changed(current: &PackageManifest, previous: Option<&PackageManifest>) -> bool {
+    previous.is_none_or(|old| current.source != old.source)
 }
 
 fn current_manifest(
@@ -211,10 +237,7 @@ fn package_changed(
     directory: &str,
     changed: &[ChangedFile],
 ) -> bool {
-    let Some(previous) = previous else {
-        return true;
-    };
-    current.source != previous.source
+    manifest_changed(current, previous)
         || changed.iter().any(|file| {
             file.path.starts_with(&format!("{directory}/"))
                 && file.path != format!("{directory}/Cargo.toml")

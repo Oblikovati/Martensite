@@ -9,6 +9,8 @@ use crate::release::ReleaseRequest;
 use crate::release_scope::ReleaseScope;
 use crate::workspace::CargoWorkspace;
 
+/// Records shipped versions and test scope beside a checksum of the manifest.
+/// Example: `let assets = write_package_manifest(&request, &workspace, &scope)?;`.
 pub(crate) fn write_package_manifest(
     request: &ReleaseRequest,
     workspace: &CargoWorkspace,

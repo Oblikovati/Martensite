@@ -2,8 +2,10 @@
 
 The isolated case runner hashes its executable before launch, in the child, and
 after exit. Those checks remain unchanged. Development builds now optimize the
-`sha2` package; the test profile inherits that setting. Kernel code, debug
-assertions, process limits, fixtures, and test selection remain unchanged.
+`sha2` package; the test profile inherits that setting. This fingerprint change
+left kernel compilation, debug assertions, process limits, fixtures and test
+selection unchanged. The later [TKMath optimization](assembly-test-cost.md) is
+measured separately.
 
 ## Measurements
 

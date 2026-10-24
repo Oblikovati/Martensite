@@ -13,6 +13,8 @@ pub(crate) struct PackageManifest {
 }
 
 impl PackageManifest {
+    /// Separates a package's version from source-affecting manifest fields.
+    /// Example: `PackageManifest::parse(text, &workspace_package_fields)?`.
     pub fn parse(text: &str, workspace: &Table) -> BuildResult<Option<Self>> {
         let mut source = parse_table(text)?;
         let Some(package) = source.get_mut("package").and_then(Value::as_table_mut) else {
@@ -31,6 +33,8 @@ impl PackageManifest {
     }
 }
 
+/// Parses manifest fields while retaining the input in parse diagnostics.
+/// Example: `let fields = parse_table("[workspace]\nmembers=[]")?;`.
 pub(crate) fn parse_table(text: &str) -> BuildResult<Table> {
     text.parse().map_err(|error| {
         BuildError::ReleaseRule(format!(
