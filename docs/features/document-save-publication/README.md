@@ -34,6 +34,12 @@ ordered ACL and quarantine attributes. Unsupported access policy is refused.
 Content-bound capabilities and signatures are not transplanted to replacement
 bytes. The platform implementations verify their results before publication.
 
+Windows destinations with named streams, including `Zone.Identifier`, are refused
+before access metadata changes or publication (#248). Refusal retains the
+original bytes and stream contents, and leaves the staged policy untouched.
+Stream-enumeration errors also refuse publication and retain their native error
+codes. Ordinary files containing only the unnamed byte stream remain supported.
+
 The CDF writer converts operating-system failures into named `Failure` classes
 for missing output, missing destination, permission refusal, invalid destination
 or other publication failure. Diagnostics retain the save phase, requested path,
