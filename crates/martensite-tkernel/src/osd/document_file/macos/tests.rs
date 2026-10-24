@@ -352,7 +352,7 @@ fn existing_destination_refuses_custom_writer_acl_without_changes() {
 
 fn set_stage_immutable(staged: &Path, immutable: bool) {
     let flag = if immutable { "uchg" } else { "nouchg" };
-    let status = Command::new("/bin/chflags")
+    let status = Command::new("/usr/bin/chflags")
         .arg(flag)
         .arg(staged)
         .status()
