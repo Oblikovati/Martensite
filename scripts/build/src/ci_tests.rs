@@ -196,6 +196,38 @@ mod tests {
     }
 
     #[test]
+    fn planned_package_remains_valid_after_remote_base_advances() {
+        let sha = "a".repeat(40);
+        let trigger = crate::plan::CiTrigger {
+            event: "pull_request".into(),
+            base_sha: sha.clone(),
+            ..crate::plan::CiTrigger::default()
+        };
+        let plan = crate::plan::plan_for(&trigger).unwrap();
+        for moving_base in ["base1", "merged-head"] {
+            let (runner, _) = fixture("crates/martensite-kernel/src/lib.rs");
+            let runner = runner
+                .with_stdout("git merge-base origin/main HEAD", moving_base)
+                .with_stdout(&format!("git merge-base {sha} HEAD"), "base1");
+            assert_pinned_package_selection(&runner, &plan);
+        }
+    }
+
+    fn assert_pinned_package_selection(runner: &RecordingRunner, plan: &CiPlan) {
+        let context = context_at(runner, Path::new("/repo"));
+        let outputs = matrix_outputs(&context, plan).unwrap();
+        assert_eq!(outputs[1].1, r#"{"package":["martensite-kernel"]}"#);
+        test_package(&context, plan, "martensite-kernel", &BuildTarget::Host).unwrap();
+        assert!(test_package(&context, plan, "martensite-math", &BuildTarget::Host).is_err());
+        assert!(
+            !runner
+                .commands()
+                .iter()
+                .any(|command| command.contains("origin/main"))
+        );
+    }
+
+    #[test]
     fn aggregate_rejects_missing_failed_and_cancelled_jobs() {
         assert!(require_success("success", "success", true).is_ok());
         assert!(require_success("success", "skipped", false).is_ok());

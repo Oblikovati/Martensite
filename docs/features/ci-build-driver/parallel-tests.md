@@ -142,3 +142,12 @@ The workflow contract test now checks LF and CRLF text. The healing resources
 expected SHA-256 values are unchanged. The build-driver checkout regression
 uses a temporary Git repository with `core.autocrlf=true` to verify both files.
 Converting `data` to CRLF reproduced the exact unexpected digest from Windows.
+
+## Stable pull-request comparison
+
+Every PR job reads `MARTENSITE_CI_BASE_SHA` from the event's
+`pull_request.base.sha`. Planning, checks and package jobs use that immutable
+commit, even if `main` advances while jobs are queued (#273). Missing or malformed
+PR base SHAs fail before selection; the driver never falls back to a moving
+branch. Local `cargo xtask pr --base` and manual PR dispatch retain their explicit
+or default comparison refs. Release selection remains relative to release tags.

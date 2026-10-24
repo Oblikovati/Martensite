@@ -19,8 +19,8 @@ pub struct CiTrigger {
     pub event: String,
     /// `GITHUB_REF`, e.g. `refs/tags/v1.4.0`.
     pub git_ref: String,
-    /// `GITHUB_BASE_REF`: the branch a pull request merges into.
-    pub base_ref: String,
+    /// `MARTENSITE_CI_BASE_SHA`: immutable pull-request event base.
+    pub base_sha: String,
     /// `MARTENSITE_CI_MODE`: the `mode` input of a manual dispatch.
     pub dispatch_mode: String,
     /// `MARTENSITE_CI_VERSION`: the `version` input of a manual dispatch.
@@ -38,7 +38,7 @@ impl CiTrigger {
         Self {
             event: read("GITHUB_EVENT_NAME"),
             git_ref: read("GITHUB_REF"),
-            base_ref: read("GITHUB_BASE_REF"),
+            base_sha: read("MARTENSITE_CI_BASE_SHA"),
             dispatch_mode: read("MARTENSITE_CI_MODE"),
             dispatch_version: read("MARTENSITE_CI_VERSION"),
         }
@@ -50,7 +50,7 @@ impl CiTrigger {
 pub enum CiPlan {
     /// Validate changes against `base` on the primary target.
     PullRequest {
-        /// The remote-tracking ref to diff against, e.g. `origin/main`.
+        /// The immutable PR base commit, or the local/manual comparison ref.
         base: String,
     },
     /// Build, test and package `version` on every release target.
@@ -65,7 +65,7 @@ pub enum CiPlan {
 /// Chooses the pipeline for a trigger.
 pub fn plan_for(trigger: &CiTrigger) -> BuildResult<CiPlan> {
     match trigger.event.as_str() {
-        "pull_request" => pull_request_plan(&trigger.base_ref),
+        "pull_request" => pull_request_plan(&trigger.base_sha),
         "push" => tag_push_plan(&trigger.git_ref),
         "workflow_dispatch" => dispatch_plan(&trigger.dispatch_mode, &trigger.dispatch_version),
         other => Err(BuildError::Usage(format!(
@@ -74,14 +74,14 @@ pub fn plan_for(trigger: &CiTrigger) -> BuildResult<CiPlan> {
     }
 }
 
-fn pull_request_plan(base_ref: &str) -> BuildResult<CiPlan> {
-    if base_ref.is_empty() {
-        return Err(BuildError::Usage(
-            "pull_request event without GITHUB_BASE_REF; expected a branch".into(),
-        ));
+fn pull_request_plan(base_sha: &str) -> BuildResult<CiPlan> {
+    if base_sha.len() != 40 || !base_sha.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+        return Err(BuildError::Usage(format!(
+            "pull_request base {base_sha:?}; expected MARTENSITE_CI_BASE_SHA as a full 40-digit commit SHA"
+        )));
     }
     Ok(CiPlan::PullRequest {
-        base: format!("origin/{base_ref}"),
+        base: base_sha.to_owned(),
     })
 }
 
@@ -164,22 +164,24 @@ pub fn write_outputs(outputs: &[(&str, String)], github_output: Option<&Path>) -
 mod tests {
     use super::*;
 
-    fn trigger(event: &str, git_ref: &str, base_ref: &str) -> CiTrigger {
+    const EVENT_BASE: &str = "82b13dff919c19e79a581251cc41accd2fd00337";
+
+    fn trigger(event: &str, git_ref: &str, base_sha: &str) -> CiTrigger {
         CiTrigger {
             event: event.into(),
             git_ref: git_ref.into(),
-            base_ref: base_ref.into(),
+            base_sha: base_sha.into(),
             ..CiTrigger::default()
         }
     }
 
     #[test]
     fn pull_request_diffs_against_its_base_on_one_target() {
-        let plan = plan_for(&trigger("pull_request", "refs/pull/7/merge", "main")).unwrap();
+        let plan = plan_for(&trigger("pull_request", "refs/pull/7/merge", EVENT_BASE)).unwrap();
         assert_eq!(
             plan,
             CiPlan::PullRequest {
-                base: "origin/main".into()
+                base: EVENT_BASE.into()
             }
         );
         let outputs = plan_outputs(&plan);
@@ -242,9 +244,45 @@ mod tests {
     }
 
     #[test]
+    fn pull_request_uses_immutable_event_base_instead_of_moving_branch() {
+        let sha = "82b13dff919c19e79a581251cc41accd2fd00337";
+        let trigger = CiTrigger::from_lookup(|key| match key {
+            "GITHUB_EVENT_NAME" => Some("pull_request".into()),
+            "GITHUB_BASE_REF" => Some("main".into()),
+            "MARTENSITE_CI_BASE_SHA" => Some(sha.into()),
+            _ => None,
+        });
+        assert_eq!(
+            plan_for(&trigger).unwrap(),
+            CiPlan::PullRequest { base: sha.into() }
+        );
+    }
+
+    #[test]
+    fn pull_request_rejects_missing_or_non_commit_baselines() {
+        for invalid in ["", "main", "origin/main", "82b13df", &"z".repeat(40)] {
+            let mut trigger = trigger("pull_request", "refs/pull/7/merge", EVENT_BASE);
+            trigger.base_sha = invalid.into();
+            let error = plan_for(&trigger).unwrap_err().to_string();
+            assert!(error.contains("MARTENSITE_CI_BASE_SHA"));
+            assert!(error.contains(invalid));
+        }
+    }
+
+    #[test]
+    fn workflow_supplies_event_base_to_every_pull_request_job() {
+        let workflow = include_str!("../../../.github/workflows/martensite.yml");
+        let global_env = workflow.split("\njobs:").next().unwrap();
+        assert!(
+            global_env
+                .contains("MARTENSITE_CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}")
+        );
+    }
+
+    #[test]
     fn trigger_is_read_from_the_lookup() {
-        let lookup = |key: &str| (key == "GITHUB_BASE_REF").then(|| "main".to_owned());
-        assert_eq!(CiTrigger::from_lookup(lookup).base_ref, "main");
+        let lookup = |key: &str| (key == "MARTENSITE_CI_BASE_SHA").then(|| "a".repeat(40));
+        assert_eq!(CiTrigger::from_lookup(lookup).base_sha, "a".repeat(40));
     }
 
     #[test]
