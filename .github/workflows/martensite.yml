@@ -51,6 +51,7 @@ jobs:
       matrix: ${{ steps.plan.outputs.matrix }}
       test-matrix: ${{ steps.plan.outputs.test-matrix }}
       has-tests: ${{ steps.plan.outputs.has-tests }}
+      release-history: ${{ steps.plan.outputs.release-history }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -59,9 +60,13 @@ jobs:
         run: rustup toolchain install
       - id: plan
         run: cargo xtask ci plan
+        env:
+          GH_TOKEN: ${{ (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'release')) && github.token || '' }}
 
   checks:
     needs: plan
+    env:
+      MARTENSITE_RELEASE_HISTORY_SHA256: ${{ needs.plan.outputs.release-history }}
     name: checks (${{ matrix.target }})
     strategy:
       fail-fast: false
@@ -120,6 +125,8 @@ jobs:
 
   release-tests:
     needs: plan
+    env:
+      MARTENSITE_RELEASE_HISTORY_SHA256: ${{ needs.plan.outputs.release-history }}
     if: needs.plan.outputs.mode == 'release' && needs.plan.outputs.has-tests == 'true'
     name: release tests (${{ matrix.target }}, shard ${{ matrix.shard }})
     strategy:
@@ -138,6 +145,7 @@ jobs:
         env:
           TEST_SHARD: ${{ matrix.shard }}
           TEST_TARGET: ${{ matrix.target }}
+          GH_TOKEN: ${{ github.token }}
 
   verify:
     needs: [plan, checks, tests, release-tests]

@@ -144,3 +144,74 @@ impl ArchiveResolverFixture {
             .environment("CARGO_NET_OFFLINE", Some("true"))
     }
 }
+
+#[test]
+fn never_published_unchanged_identity_uses_the_verified_generated_archive() {
+    let fixture = fixture::HistoricalAssetFixture::populated();
+    fixture.regenerate_sibling();
+    let plan = fixture.plan(false).unwrap();
+    assert_eq!(
+        plan.packages["martensite-tkbrep"].reason,
+        crate::publication_plan::PublicationReason::FirstPublication
+    );
+    let graph = fixture.inspect_plan(&plan).unwrap();
+    assert_eq!(graph.compatibility, "requirements-compatible");
+    assert_eq!(graph.archives["martensite-tkbrep"].release, "v0.4.0");
+    let generated = fixture
+        .directory
+        .path()
+        .join("dist/martensite-tkbrep-0.3.6.crate");
+    assert_eq!(
+        graph.archives["martensite-tkbrep"].sha256,
+        archive::sha256_hex(&generated).unwrap()
+    );
+}
+
+#[test]
+fn publication_plan_retains_downloaded_bytes_through_graph_inspection() {
+    let fixture = fixture::HistoricalAssetFixture::populated();
+    let plan = fixture.plan(true).unwrap();
+    let path = plan
+        .archive_path("martensite-tkbrep", &fixture.request().dist_dir)
+        .unwrap();
+    assert!(path.is_file());
+    fixture.inspect_plan(&plan).unwrap();
+    assert!(path.is_file());
+    drop(plan);
+    assert!(!path.exists());
+}
+
+#[test]
+fn changing_historical_bytes_and_their_checksum_cannot_replace_the_sealed_identity() {
+    let fixture = fixture::HistoricalAssetFixture::populated();
+    let plan = fixture.plan(true).unwrap();
+    let path = plan
+        .archive_path("martensite-tkbrep", &fixture.request().dist_dir)
+        .unwrap();
+    let changed =
+        crate::published_history::fixtures::archive_bytes("martensite-tkbrep", "0.3.6", "");
+    std::fs::write(&path, changed).unwrap();
+    archive::write_checksum(&path).unwrap();
+    let error = fixture.inspect_plan(&plan).unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("sealed publication archive digest"),
+        "{error}"
+    );
+}
+
+#[test]
+fn archive_graph_requires_generated_publications_to_be_sealed() {
+    let fixture = fixture::HistoricalAssetFixture::populated();
+    let mut plan = fixture.plan(true).unwrap();
+    plan.packages
+        .get_mut("martensite-tkernel")
+        .unwrap()
+        .archive_sha256 = None;
+    let error = fixture.inspect_plan(&plan).unwrap_err();
+    assert!(
+        error.to_string().contains("verified archive digest"),
+        "{error}"
+    );
+}

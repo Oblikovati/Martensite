@@ -1,0 +1,356 @@
+{
+  "candidate": "2563dc8b5a44798465c7a2583c3aa5e3e9bd4535",
+  "history": {
+    "archives": [
+      {
+        "archive": "martensite-process-policy-0.3.6.crate",
+        "asset_id": 672740593,
+        "manifest_sha256": "16c6623553d4a27e37aa2b28a5a8dfbf7347f2cc1c7cd7bdf003a66ebe91c9da",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "5a27083555805130144c5da1f7f2b682d4dce9022ffd48d534bc88cded23405c"
+      },
+      {
+        "archive": "martensite-test-support-0.3.6.crate",
+        "asset_id": 672740588,
+        "manifest_sha256": "2ce47a320aaa659f913933626ffbbb8da2f6d0113e5ce93886d996e7eee745b0",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "b4a4cbc396693a9c8403f2f9171d1b18df4fca034bb867b47040cf36f18b1bc6"
+      },
+      {
+        "archive": "martensite-tkbrep-0.3.6.crate",
+        "asset_id": 672740614,
+        "manifest_sha256": "ba787e8fd4417da5edd6cc6ef82fc9c01798463864754c6452aaea0fc0630a67",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "9520ea9c392c573dd002deb15925dda1e78d382416c198bfdbb82d544cf01200"
+      },
+      {
+        "archive": "martensite-tkcdf-0.3.6.crate",
+        "asset_id": 672740619,
+        "manifest_sha256": "31e80556e63bd604414ff62fdf3bcd108cd82d2b78fd3ae593ffdf417a510fef",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "73a2048de5c440fb4e5bc8eb04f46c2f6e7535d1cdecab44170e0ce579cd5ace"
+      },
+      {
+        "archive": "martensite-tkernel-0.3.6.crate",
+        "asset_id": 672740643,
+        "manifest_sha256": "a612687d82a85dfce7af7f9c16e073dfea73aa66920e5f1b2b64685ff1d89862",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "7da33fa84ab13e3de99d562e3aad756929a72ac14a29dbb95080379f120db78d"
+      },
+      {
+        "archive": "martensite-tkgeomalgo-0.3.6.crate",
+        "asset_id": 672740647,
+        "manifest_sha256": "f564835e0efe2be98fccc6f4d76a5aed49f72db49ed93c835096e644ca163703",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "c5cb4319447b95291fbad82884157e4f3de576b25f3160569411f634b1c2ec75"
+      },
+      {
+        "archive": "martensite-tkhlr-0.3.6.crate",
+        "asset_id": 672740660,
+        "manifest_sha256": "ef33dd957b26ee7a0eb50ab87888a69320cb6eadace68f0e0f4b2556c75bd88e",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "e07bf28e51899ad01bfe16ad384d4a08c42c1c4b2ad8f3679ba4e4c675dc073e"
+      },
+      {
+        "archive": "martensite-tkmesh-0.3.6.crate",
+        "asset_id": 672740677,
+        "manifest_sha256": "523203344392762dc6caaa720c61778b4b1512b5c03ed69369a577afab3902cb",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "70952c8a1a3bd3d4e327a25c1036b034e352ac374041a0db02ca86fbd3d6ac37"
+      },
+      {
+        "archive": "martensite-tkprim-0.3.6.crate",
+        "asset_id": 672740684,
+        "manifest_sha256": "f232b5be6ca655c0193e8344c0784286efcf65f43a876d5c526b9b52921b4e42",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "87de2897319229c325a0ceb57067efc4f742f609c558d321728ef3afa06630a0"
+      },
+      {
+        "archive": "martensite-tkshhealing-0.3.6.crate",
+        "asset_id": 672740716,
+        "manifest_sha256": "f8b29f58e102d19506afb38188747c8293130a7921e28c5b1697a4649f2d63b9",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "90a0c47974fd38858fc00c8e27d5b04f30af2900e3082ad627d3cda77e8bbe85"
+      },
+      {
+        "archive": "martensite-tktobj-0.3.6.crate",
+        "asset_id": 672740722,
+        "manifest_sha256": "fd3fa31b01e384c0da62792b47b49956553035565494690d3110f8c0a8acf2d2",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "9bb67e75a572a507da8fcd7f039fa2a68e2e708b23830f81c3c1d9f7e8043914"
+      },
+      {
+        "archive": "martensite-tktopalgo-0.3.6.crate",
+        "asset_id": 672740743,
+        "manifest_sha256": "f3153c030fd5d5dbdcd8f66bd5a3161a1073ad2b3f0dda38b536645bd6f438c0",
+        "release_id": 422844727,
+        "release_tag": "v0.3.6",
+        "sha256": "c3881de3ffad2e8ea259f0a055fcff80102ee04feaf9e1abf554dc806445f854"
+      }
+    ],
+    "assets_sha256": "754b6038b15bb3e1f9cee1fdd6d9b61a94a7164a15753e65a46b4346791f119b",
+    "index_sha256": "e7bdbd6088351152b3969742fa0b2c829c1ea569f971626c18431e5e44a35b6a"
+  },
+  "mode": "read-only publication plan; generated outputs and SDK not executed",
+  "packages": {
+    "martensite-cmath": {
+      "archive_sha256": null,
+      "name": "martensite-cmath",
+      "origins": [],
+      "reason": "first_publication",
+      "version": "0.3.5"
+    },
+    "martensite-process-policy": {
+      "archive_sha256": null,
+      "name": "martensite-process-policy",
+      "origins": [],
+      "reason": "changed_source",
+      "version": "0.3.7"
+    },
+    "martensite-test-support": {
+      "archive_sha256": "b4a4cbc396693a9c8403f2f9171d1b18df4fca034bb867b47040cf36f18b1bc6",
+      "name": "martensite-test-support",
+      "origins": [
+        {
+          "archive": "martensite-test-support-0.3.6.crate",
+          "asset_id": 672740588,
+          "manifest_sha256": "2ce47a320aaa659f913933626ffbbb8da2f6d0113e5ce93886d996e7eee745b0",
+          "release_id": 422844727,
+          "release_tag": "v0.3.6",
+          "sha256": "b4a4cbc396693a9c8403f2f9171d1b18df4fca034bb867b47040cf36f18b1bc6"
+        }
+      ],
+      "reason": "historical_reuse",
+      "version": "0.3.6"
+    },
+    "martensite-tkbrep": {
+      "archive_sha256": "9520ea9c392c573dd002deb15925dda1e78d382416c198bfdbb82d544cf01200",
+      "name": "martensite-tkbrep",
+      "origins": [
+        {
+          "archive": "martensite-tkbrep-0.3.6.crate",
+          "asset_id": 672740614,
+          "manifest_sha256": "ba787e8fd4417da5edd6cc6ef82fc9c01798463864754c6452aaea0fc0630a67",
+          "release_id": 422844727,
+          "release_tag": "v0.3.6",
+          "sha256": "9520ea9c392c573dd002deb15925dda1e78d382416c198bfdbb82d544cf01200"
+        }
+      ],
+      "reason": "historical_reuse",
+      "version": "0.3.6"
+    },
+    "martensite-tkcdf": {
+      "archive_sha256": "73a2048de5c440fb4e5bc8eb04f46c2f6e7535d1cdecab44170e0ce579cd5ace",
+      "name": "martensite-tkcdf",
+      "origins": [
+        {
+          "archive": "martensite-tkcdf-0.3.6.crate",
+          "asset_id": 672740619,
+          "manifest_sha256": "31e80556e63bd604414ff62fdf3bcd108cd82d2b78fd3ae593ffdf417a510fef",
+          "release_id": 422844727,
+          "release_tag": "v0.3.6",
+          "sha256": "73a2048de5c440fb4e5bc8eb04f46c2f6e7535d1cdecab44170e0ce579cd5ace"
+        }
+      ],
+      "reason": "historical_reuse",
+      "version": "0.3.6"
+    },
+    "martensite-tkernel": {
+      "archive_sha256": null,
+      "name": "martensite-tkernel",
+      "origins": [],
+      "reason": "changed_source",
+      "version": "0.4.0"
+    },
+    "martensite-tkexpress": {
+      "archive_sha256": null,
+      "name": "martensite-tkexpress",
+      "origins": [],
+      "reason": "first_publication",
+      "version": "0.3.5"
+    },
+    "martensite-tkg2d": {
+      "archive_sha256": null,
+      "name": "martensite-tkg2d",
+      "origins": [],
+      "reason": "first_publication",
+      "version": "0.3.5"
+    },
+    "martensite-tkg3d": {
+      "archive_sha256": null,
+      "name": "martensite-tkg3d",
+      "origins": [],
+      "reason": "first_publication",
+      "version": "0.3.5"
+    },
+    "martensite-tkgeomalgo": {
+      "archive_sha256": null,
+      "name": "martensite-tkgeomalgo",
+      "origins": [],
+      "reason": "changed_source",
+      "version": "0.3.7"
+    },
+    "martensite-tkgeombase": {
+      "archive_sha256": null,
+      "name": "martensite-tkgeombase",
+      "origins": [],
+      "reason": "first_publication",
+      "version": "0.3.5"
+    },
+    "martensite-tkhelix": {
+      "archive_sha256": null,
+      "name": "martensite-tkhelix",
+      "origins": [],
+      "reason": "first_publication",
+      "version": "0.3.5"
+    },
+    "martensite-tkhlr": {
+      "archive_sha256": "e07bf28e51899ad01bfe16ad384d4a08c42c1c4b2ad8f3679ba4e4c675dc073e",
+      "name": "martensite-tkhlr",
+      "origins": [
+        {
+          "archive": "martensite-tkhlr-0.3.6.crate",
+          "asset_id": 672740660,
+          "manifest_sha256": "ef33dd957b26ee7a0eb50ab87888a69320cb6eadace68f0e0f4b2556c75bd88e",
+          "release_id": 422844727,
+          "release_tag": "v0.3.6",
+          "sha256": "e07bf28e51899ad01bfe16ad384d4a08c42c1c4b2ad8f3679ba4e4c675dc073e"
+        }
+      ],
+      "reason": "historical_reuse",
+      "version": "0.3.6"
+    },
+    "martensite-tklcaf": {
+      "archive_sha256": null,
+      "name": "martensite-tklcaf",
+      "origins": [],
+      "reason": "first_publication",
+      "version": "0.3.5"
+    },
+    "martensite-tkmath": {
+      "archive_sha256": null,
+      "name": "martensite-tkmath",
+      "origins": [],
+      "reason": "first_publication",
+      "version": "0.3.5"
+    },
+    "martensite-tkmesh": {
+      "archive_sha256": "70952c8a1a3bd3d4e327a25c1036b034e352ac374041a0db02ca86fbd3d6ac37",
+      "name": "martensite-tkmesh",
+      "origins": [
+        {
+          "archive": "martensite-tkmesh-0.3.6.crate",
+          "asset_id": 672740677,
+          "manifest_sha256": "523203344392762dc6caaa720c61778b4b1512b5c03ed69369a577afab3902cb",
+          "release_id": 422844727,
+          "release_tag": "v0.3.6",
+          "sha256": "70952c8a1a3bd3d4e327a25c1036b034e352ac374041a0db02ca86fbd3d6ac37"
+        }
+      ],
+      "reason": "historical_reuse",
+      "version": "0.3.6"
+    },
+    "martensite-tkprim": {
+      "archive_sha256": "87de2897319229c325a0ceb57067efc4f742f609c558d321728ef3afa06630a0",
+      "name": "martensite-tkprim",
+      "origins": [
+        {
+          "archive": "martensite-tkprim-0.3.6.crate",
+          "asset_id": 672740684,
+          "manifest_sha256": "f232b5be6ca655c0193e8344c0784286efcf65f43a876d5c526b9b52921b4e42",
+          "release_id": 422844727,
+          "release_tag": "v0.3.6",
+          "sha256": "87de2897319229c325a0ceb57067efc4f742f609c558d321728ef3afa06630a0"
+        }
+      ],
+      "reason": "historical_reuse",
+      "version": "0.3.6"
+    },
+    "martensite-tkservice": {
+      "archive_sha256": null,
+      "name": "martensite-tkservice",
+      "origins": [],
+      "reason": "first_publication",
+      "version": "0.3.5"
+    },
+    "martensite-tkshhealing": {
+      "archive_sha256": "90a0c47974fd38858fc00c8e27d5b04f30af2900e3082ad627d3cda77e8bbe85",
+      "name": "martensite-tkshhealing",
+      "origins": [
+        {
+          "archive": "martensite-tkshhealing-0.3.6.crate",
+          "asset_id": 672740716,
+          "manifest_sha256": "f8b29f58e102d19506afb38188747c8293130a7921e28c5b1697a4649f2d63b9",
+          "release_id": 422844727,
+          "release_tag": "v0.3.6",
+          "sha256": "90a0c47974fd38858fc00c8e27d5b04f30af2900e3082ad627d3cda77e8bbe85"
+        }
+      ],
+      "reason": "historical_reuse",
+      "version": "0.3.6"
+    },
+    "martensite-tktobj": {
+      "archive_sha256": "9bb67e75a572a507da8fcd7f039fa2a68e2e708b23830f81c3c1d9f7e8043914",
+      "name": "martensite-tktobj",
+      "origins": [
+        {
+          "archive": "martensite-tktobj-0.3.6.crate",
+          "asset_id": 672740722,
+          "manifest_sha256": "fd3fa31b01e384c0da62792b47b49956553035565494690d3110f8c0a8acf2d2",
+          "release_id": 422844727,
+          "release_tag": "v0.3.6",
+          "sha256": "9bb67e75a572a507da8fcd7f039fa2a68e2e708b23830f81c3c1d9f7e8043914"
+        }
+      ],
+      "reason": "historical_reuse",
+      "version": "0.3.6"
+    },
+    "martensite-tktopalgo": {
+      "archive_sha256": null,
+      "name": "martensite-tktopalgo",
+      "origins": [],
+      "reason": "changed_source",
+      "version": "0.4.0"
+    }
+  },
+  "source_changed": [
+    "martensite-process-policy",
+    "martensite-tkernel",
+    "martensite-tkgeomalgo",
+    "martensite-tktopalgo"
+  ],
+  "tests": [
+    "martensite-build",
+    "martensite-process-policy",
+    "martensite-test-support",
+    "martensite-tkbrep",
+    "martensite-tkcdf",
+    "martensite-tkernel",
+    "martensite-tkexpress",
+    "martensite-tkg2d",
+    "martensite-tkg3d",
+    "martensite-tkgeomalgo",
+    "martensite-tkgeombase",
+    "martensite-tkhelix",
+    "martensite-tkhlr",
+    "martensite-tklcaf",
+    "martensite-tkmath",
+    "martensite-tkmesh",
+    "martensite-tkprim",
+    "martensite-tkservice",
+    "martensite-tkshhealing",
+    "martensite-tktobj",
+    "martensite-tktopalgo"
+  ]
+}

@@ -1,20 +1,17 @@
 //! Exact package archives retain their original dependency contracts across releases (#279).
-mod fetch;
 mod manifest;
 
 use crate::{
     archive,
-    context::{BUILD_TOOL_PACKAGE, BuildContext},
-    error::{BuildResult, io_error},
+    context::BUILD_TOOL_PACKAGE,
+    error::{BuildError, BuildResult},
+    publication_plan::{PublicationPlan, PublicationReason},
+    published_history::archive_manifest,
     release::ReleaseRequest,
-    release_scope::ReleaseScope,
     workspace::CargoWorkspace,
 };
 use serde::Serialize;
-use std::{
-    collections::BTreeMap,
-    path::{Path, PathBuf},
-};
+use std::collections::BTreeMap;
 
 #[derive(Debug, Serialize)]
 /// Requirement evidence from exact archives; it makes no archive-build claim.
@@ -41,20 +38,16 @@ pub(super) struct Mismatch {
     selected_version: String,
 }
 
-/// Reports actual archive compatibility; e.g. `let graph = inspect(context, request, workspace, scope)?;`.
+/// Reports actual archive compatibility; e.g. `let graph = inspect(request, workspace, plan)?;`.
 pub(crate) fn inspect(
-    context: &BuildContext<'_>,
     request: &ReleaseRequest,
     workspace: &CargoWorkspace,
-    scope: &ReleaseScope,
+    plan: &PublicationPlan,
 ) -> BuildResult<ArchiveGraph> {
-    let temporary =
-        tempfile::tempdir().map_err(|cause| io_error(Path::new("archive compatibility"), cause))?;
+    plan.require_sealed()?;
     let input = Inspection {
-        context,
         request,
-        scope,
-        directory: temporary.path(),
+        plan,
         selected: selected_versions(workspace),
     };
     let mut graph = empty_graph();
@@ -93,37 +86,71 @@ fn selected_versions(workspace: &CargoWorkspace) -> BTreeMap<String, semver::Ver
         .collect()
 }
 
-struct Inspection<'a, 'r> {
-    context: &'a BuildContext<'r>,
+struct Inspection<'a> {
     request: &'a ReleaseRequest,
-    scope: &'a ReleaseScope,
-    directory: &'a Path,
+    plan: &'a PublicationPlan,
     selected: BTreeMap<String, semver::Version>,
 }
 
-impl Inspection<'_, '_> {
+impl Inspection<'_> {
     fn package(
         &self,
         package: &crate::workspace::WorkspacePackage,
     ) -> BuildResult<(ArchiveIdentity, Vec<Mismatch>)> {
-        let name = format!("{}-{}.crate", package.name, package.version);
-        let (path, release) = archive_path(
-            self.context,
-            self.request,
-            self.scope,
-            &name,
-            &package.name,
-            self.directory,
-        )?;
-        let text = manifest::read(&path, &package.name, &package.version)?;
+        let path = self
+            .plan
+            .archive_path(&package.name, &self.request.dist_dir)?;
+        archive::verify_checksum(&path)?;
+        let text = archive_manifest(&path, &package.name, &package.version)?;
+        let sha256 = archive::sha256_hex(&path)?;
+        let release = selected_origin(self.plan, &package.name, &sha256, self.request)?;
         let mismatches = manifest::mismatches(&package.name, &text, &self.selected)?;
         let identity = ArchiveIdentity {
             version: package.version.to_string(),
             release,
-            sha256: archive::sha256_hex(&path)?,
+            sha256,
         };
         Ok((identity, mismatches))
     }
+}
+
+fn selected_origin(
+    plan: &PublicationPlan,
+    name: &str,
+    digest: &str,
+    request: &ReleaseRequest,
+) -> BuildResult<String> {
+    let selected = plan
+        .packages
+        .get(name)
+        .ok_or_else(|| invalid_plan(name, "a selected package"))?;
+    if selected.archive_sha256.as_deref() != Some(digest) {
+        return Err(invalid_plan(
+            digest,
+            "the sealed publication archive digest",
+        ));
+    }
+    publication_release(selected, request)
+}
+
+fn publication_release(
+    selected: &crate::publication_plan::PackagePublication,
+    request: &ReleaseRequest,
+) -> BuildResult<String> {
+    if selected.reason != PublicationReason::HistoricalReuse {
+        return Ok(format!("v{}", request.version));
+    }
+    selected
+        .origins
+        .first()
+        .map(|origin| origin.release_tag.clone())
+        .ok_or_else(|| invalid_plan(&selected.name, "verified historical release provenance"))
+}
+
+fn invalid_plan(value: &str, expected: &str) -> BuildError {
+    BuildError::ReleaseRule(format!(
+        "archive publication {value:?}; expected {expected}"
+    ))
 }
 
 fn empty_graph() -> ArchiveGraph {
@@ -133,22 +160,6 @@ fn empty_graph() -> ArchiveGraph {
         archives: BTreeMap::new(),
         incompatible_requirements: Vec::new(),
     }
-}
-
-fn archive_path(
-    context: &BuildContext<'_>,
-    request: &ReleaseRequest,
-    scope: &ReleaseScope,
-    archive: &str,
-    package: &str,
-    directory: &Path,
-) -> BuildResult<(PathBuf, String)> {
-    if scope.packages.iter().any(|name| name == package) {
-        let path = request.dist_dir.join(archive);
-        crate::archive::verify_checksum(&path)?;
-        return Ok((path, format!("v{}", request.version)));
-    }
-    fetch::published(context, &request.version, archive, directory)
 }
 
 #[cfg(test)]

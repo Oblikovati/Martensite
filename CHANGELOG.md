@@ -15,6 +15,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Published unchanged package versions once when complete release history contains no earlier archive, while preserving verified existing assets and recording publication provenance (#283).
+
 - Restored CPU-limit diagnostics and exit code 2 for isolated Unix processes, including limits applied after CPU was consumed (#278).
 
 - Reused one walking-point snapshot for combined spatial and parametric coordinate reads during fitting (#220).

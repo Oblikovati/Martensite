@@ -1,51 +1,12 @@
 //! Inspect normalized dependency requirements from the actual archive bytes.
 use super::Mismatch;
 use crate::{
-    error::{BuildError, BuildResult, io_error},
+    error::{BuildError, BuildResult},
     package_manifest::parse_table,
 };
 use semver::{Version, VersionReq};
-use std::{collections::BTreeMap, fs, io::Read, path::Path};
+use std::collections::BTreeMap;
 use toml::{Table, Value};
-
-pub(super) fn read(path: &Path, name: &str, version: &Version) -> BuildResult<String> {
-    let file = fs::File::open(path).map_err(|cause| io_error(path, cause))?;
-    let mut tar = tar::Archive::new(flate2::read::GzDecoder::new(file));
-    let expected = format!("{name}-{version}/Cargo.toml");
-    let mut manifest = None;
-    for item in tar.entries().map_err(|cause| io_error(path, cause))? {
-        let mut item = item.map_err(|cause| io_error(path, cause))?;
-        if item.path().map_err(|cause| io_error(path, cause))?.as_ref() != Path::new(&expected) {
-            continue;
-        }
-        if manifest.is_some() || !item.header().entry_type().is_file() {
-            return Err(invalid(&expected, "one regular manifest"));
-        }
-        let mut text = String::new();
-        item.read_to_string(&mut text)
-            .map_err(|cause| io_error(path, cause))?;
-        manifest = Some(text);
-    }
-    let text = manifest.ok_or_else(|| invalid(&expected, "a normalized manifest"))?;
-    identity(&parse_table(&text)?, name, version)?;
-    Ok(text)
-}
-
-fn identity(table: &Table, name: &str, version: &Version) -> BuildResult<()> {
-    let package = table.get("package");
-    if package.and_then(|v| v.get("name")).and_then(Value::as_str) != Some(name)
-        || package
-            .and_then(|v| v.get("version"))
-            .and_then(Value::as_str)
-            != Some(version.to_string().as_str())
-    {
-        return Err(invalid(
-            &format!("{name}-{version}"),
-            "matching archive package identity",
-        ));
-    }
-    Ok(())
-}
 
 pub(super) fn mismatches(
     package: &str,

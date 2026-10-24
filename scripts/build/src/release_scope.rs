@@ -9,6 +9,7 @@ use crate::context::{BUILD_TOOL_PACKAGE, BuildContext};
 use crate::error::{BuildError, BuildResult, io_error};
 use crate::git::ChangedFile;
 use crate::package_manifest::{PackageManifest, parse_table};
+use crate::published_history::ReleaseIndex;
 use crate::version::{parse_release_tag, previous_release};
 use crate::workspace::{CargoWorkspace, WorkspacePackage};
 
@@ -17,6 +18,7 @@ pub(crate) struct ReleaseScope {
     pub baseline: Option<String>,
     pub tests: Vec<String>,
     pub packages: Vec<String>,
+    pub history_sha256: Option<String>,
 }
 
 impl ReleaseScope {
@@ -27,17 +29,35 @@ impl ReleaseScope {
         workspace: &CargoWorkspace,
         version: &Version,
     ) -> BuildResult<Self> {
-        let tags = context.git.release_tags()?;
+        let history = ReleaseIndex::load(context)?;
+        Self::from_history(context, workspace, version, &history)
+    }
+
+    /// Reuses the planner's verified release index; e.g. `ReleaseScope::from_history(context, workspace, version, history)?;`.
+    pub fn from_history(
+        context: &BuildContext<'_>,
+        workspace: &CargoWorkspace,
+        version: &Version,
+        history: &ReleaseIndex,
+    ) -> BuildResult<Self> {
+        history.require_pin(
+            std::env::var("MARTENSITE_RELEASE_HISTORY_SHA256")
+                .ok()
+                .as_deref(),
+        )?;
+        let tags = history.final_tags();
         let baseline = previous_release(&tags, version).map(|v| format!("v{v}"));
-        let Some(reference) = baseline else {
-            return Ok(initial_scope(workspace));
+        let mut scope = match baseline {
+            None => initial_scope(workspace),
+            Some(reference) => scope_since_release(
+                context,
+                workspace,
+                &release_source_manifests(context, &tags, version)?,
+                reference,
+            )?,
         };
-        scope_since_release(
-            context,
-            workspace,
-            &published_manifests(context, &tags, version)?,
-            reference,
-        )
+        scope.history_sha256 = Some(history.fingerprint()?);
+        Ok(scope)
     }
 }
 
@@ -53,6 +73,7 @@ fn scope_since_release(
         crate::release_impact::release_tests(context, workspace, &reference, &changed, &packages)?;
     Ok(ReleaseScope {
         baseline: Some(reference),
+        history_sha256: None,
         tests,
         packages,
     })
@@ -70,7 +91,7 @@ pub(crate) fn changed_manifest_packages(
     if manifests.is_empty() {
         return Ok(Vec::new());
     }
-    let previous = released_manifests(context, reference)?;
+    let previous = manifests_at(context, reference)?;
     let inherited = workspace_fields(&read_manifest(context, "Cargo.toml")?)?;
     let mut names = Vec::new();
     for package in manifests {
@@ -147,6 +168,7 @@ fn current_manifest(
 fn initial_scope(workspace: &CargoWorkspace) -> ReleaseScope {
     ReleaseScope {
         baseline: None,
+        history_sha256: None,
         tests: workspace.names(),
         packages: workspace
             .packages
@@ -172,14 +194,14 @@ fn workspace_fields(text: &str) -> BuildResult<Table> {
         .unwrap_or_default())
 }
 
-fn published_manifests(
+fn release_source_manifests(
     context: &BuildContext<'_>,
     tags: &[String],
     version: &Version,
 ) -> BuildResult<BTreeMap<String, PackageManifest>> {
     let mut published: BTreeMap<String, PackageManifest> = BTreeMap::new();
     for tag in tags.iter().filter(|tag| prior_final(tag, version)) {
-        for (name, manifest) in released_manifests(context, tag)? {
+        for (name, manifest) in manifests_at(context, tag)? {
             if published
                 .get(&name)
                 .is_none_or(|previous| manifest.version.cmp_precedence(&previous.version).is_gt())
@@ -195,7 +217,7 @@ fn prior_final(tag: &str, version: &Version) -> bool {
     parse_release_tag(tag).is_ok_and(|previous| previous.pre.is_empty() && previous < *version)
 }
 
-fn released_manifests(
+fn manifests_at(
     context: &BuildContext<'_>,
     reference: &str,
 ) -> BuildResult<BTreeMap<String, PackageManifest>> {
