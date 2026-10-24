@@ -133,3 +133,12 @@ cargo test --locked -p martensite-tkprim --test gprop_primitives volume_properti
 Measure the already-built test executable separately from Cargo compilation.
 Compare wall time, user/system CPU and peak memory; use stack sampling to locate
 the numerical cost before changing the production implementation.
+
+## Windows checkout regressions
+
+The first merged release rehearsal exposed two line-ending failures (#269).
+The workflow contract test now checks LF and CRLF text. The healing resources
+`MDTV` and `data` retain their recorded bytes through Git attributes; their
+expected SHA-256 values are unchanged. The build-driver checkout regression
+uses a temporary Git repository with `core.autocrlf=true` to verify both files.
+Converting `data` to CRLF reproduced the exact unexpected digest from Windows.

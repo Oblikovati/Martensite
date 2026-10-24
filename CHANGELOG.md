@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Preserved hash-pinned healing-resource bytes on Windows and made the release workflow contract test accept Windows line endings (#269).
+
 - Split release tests into bounded parallel shards on every supported platform and required their aggregate result before publication (#250).
 
 ## [0.3.6] - 2026-10-24

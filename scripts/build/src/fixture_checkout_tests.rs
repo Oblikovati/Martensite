@@ -1,4 +1,4 @@
-//! #197: Windows checkout must preserve snapshot bytes before tests embed them.
+//! #197, #269: Windows checkout must preserve snapshot and healing-resource bytes.
 use super::TemporaryGitFixture;
 use sha2::{Digest, Sha256};
 
@@ -44,10 +44,24 @@ const SNAPSHOTS: &[FrozenSnapshot] = &[
         ),
         sha256: "7a47186880fd2dda736b079fcaabd654c26193b76ccb36a0ec8e94f902b5534e",
     },
+    FrozenSnapshot {
+        path: "crates/martensite-tkshhealing/tests/dataset_cases/data/heal/MDTV",
+        bytes: include_bytes!(
+            "../../../crates/martensite-tkshhealing/tests/dataset_cases/data/heal/MDTV"
+        ),
+        sha256: "e92aaecfec8fc0a118e4ad6bc6ce14a0e8bb1b73d8a0c46c083b7bcf268b1e8f",
+    },
+    FrozenSnapshot {
+        path: "crates/martensite-tkshhealing/tests/dataset_cases/data/heal/data",
+        bytes: include_bytes!(
+            "../../../crates/martensite-tkshhealing/tests/dataset_cases/data/heal/data"
+        ),
+        sha256: "e465a659f75312a8ddd490d9e8ad4076c057dbccc7c5e327fa542153ae7d05e4",
+    },
 ];
 
 #[test]
-fn real_autocrlf_checkout_preserves_frozen_geometry_snapshots() {
+fn real_autocrlf_checkout_preserves_frozen_fixture_bytes() {
     let fixture = snapshot_repository();
     fixture.run(&["config", "core.autocrlf", "true"]);
     for snapshot in SNAPSHOTS {
