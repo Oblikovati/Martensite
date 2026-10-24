@@ -9,6 +9,8 @@ use crate::workspace::CargoWorkspace;
 use std::collections::BTreeSet;
 use toml::{Table, Value};
 
+/// Selects tests affected by a PR while ignoring version-only bookkeeping.
+/// Example: `let tests = pull_request_packages(context, &workspace, base, &changed)?;`.
 pub(crate) fn pull_request_packages(
     context: &BuildContext<'_>,
     workspace: &CargoWorkspace,
@@ -24,6 +26,8 @@ pub(crate) fn pull_request_packages(
     )
 }
 
+/// Includes source and dependency impact without selecting unaffected base suites.
+/// Example: `let tests = release_tests(context, &workspace, base, &changed, &packages)?;`.
 pub(crate) fn release_tests(
     context: &BuildContext<'_>,
     workspace: &CargoWorkspace,
@@ -244,16 +248,14 @@ fn profile_impact(before: &Table, after: &Table) -> Option<BTreeSet<String>> {
     if old != new {
         return None;
     }
-    let names = old_profiles
-        .keys()
-        .chain(new_profiles.keys())
-        .collect::<BTreeSet<_>>();
+    changed_profile_packages(&old_profiles, &new_profiles)
+}
+
+fn changed_profile_packages(old: &Table, new: &Table) -> Option<BTreeSet<String>> {
+    let names = old.keys().chain(new.keys()).collect::<BTreeSet<_>>();
     let mut packages = BTreeSet::new();
     for name in names {
-        packages.extend(profile_packages(
-            old_profiles.get(name),
-            new_profiles.get(name),
-        )?);
+        packages.extend(profile_packages(old.get(name), new.get(name))?);
     }
     Some(packages)
 }
