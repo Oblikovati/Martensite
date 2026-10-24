@@ -160,7 +160,12 @@ mod cpu_budget;
 #[cfg(unix)]
 pub(in crate::osd) fn install_process_cpu_exit() -> Result<(), std::io::Error> {
     let callback = cpu_budget::cpu_budget_exit as *const () as usize;
-    let wanted = action(callback, 0);
+    let mut wanted = action(callback, 0);
+    // SAFETY: sa_mask is initialized and writable; SIGPIPE is a valid signal.
+    // Blocking only this action keeps a closed stdout pipe from preempting _exit (#278).
+    if unsafe { libc::sigaddset(&mut wanted.sa_mask, libc::SIGPIPE) } != 0 {
+        return Err(std::io::Error::last_os_error());
+    }
     if install(libc::SIGXCPU, &wanted, SignalMode::Set) == 0 {
         return Ok(());
     }

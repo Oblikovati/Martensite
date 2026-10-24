@@ -17,9 +17,12 @@ pub fn reported_process_cpu_limit() -> i64 {
 /// Apply a process-wide CPU cap, retaining its diagnostic value on failure.
 ///
 /// Unix installs the exit action before lowering the cap (#278). Other platforms
-/// retain the requested value for a caller-owned elapsed watchdog. Concurrent
-/// setters serialize; the signal action never reads the lock. This is process
-/// resource configuration, not an operation-local deadline or a restoration guard.
+/// retain the requested value for a caller-owned elapsed watchdog.
+/// Signed `Some` requests keep the existing cast to the host's unsigned limit;
+/// the OS may reject a host-unrepresentable value with a typed I/O error. `None`
+/// requests no cap. The reported request is unchanged by that cast or a refusal.
+/// Concurrent setters serialize; the signal action never reads the lock. Callers
+/// own restoration and any operation-local deadlines.
 /// ```no_run
 /// martensite_tkernel::osd::set_process_cpu_limit(Some(200))?;
 /// # Ok::<(), std::io::Error>(())

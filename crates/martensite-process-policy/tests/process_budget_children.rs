@@ -22,7 +22,8 @@ fn await_child(child: &mut Child, mode: &str) {
     let deadline = Instant::now() + Duration::from_secs(12);
     while child.try_wait().unwrap().is_none() {
         if Instant::now() >= deadline {
-            child.kill().unwrap();
+            let _already_exited = child.kill();
+            child.wait().unwrap();
             panic!("child {mode}: expected termination within 12-second safety guard");
         }
         std::thread::sleep(Duration::from_millis(10));
@@ -202,4 +203,69 @@ fn assert_refused_cause(error: &martensite_process_policy::ProcessLimitError) {
             .is_some()
     );
     assert!(error.to_string().contains("Some(200) seconds"));
+}
+
+#[cfg(unix)]
+#[test]
+fn signed_requests_preserve_the_existing_unsigned_os_domain() {
+    let name = "signed_requests_preserve_the_existing_unsigned_os_domain";
+    if let Ok(mode) = std::env::var(CHILD_MODE) {
+        signed_resource_observations(&mode);
+        return;
+    }
+    let expected = resource_lines(budget_child(name, "signed-os"));
+    let observed = resource_lines(budget_child(name, "signed-policy"));
+    assert_eq!(observed, expected);
+}
+
+#[cfg(unix)]
+fn signed_resource_observations(mode: &str) {
+    for request in [Some(-1), Some(-2), Some(i64::MIN), None] {
+        let status = if mode == "signed-os" {
+            raw_signed_status(request)
+        } else {
+            policy_signed_status(request)
+        };
+        let effective = rustix::process::getrlimit(rustix::process::Resource::Cpu);
+        println!(
+            "\nresource={request:?};errno={status:?};effective={:?}",
+            effective.current
+        );
+    }
+}
+
+#[cfg(unix)]
+fn raw_signed_status(request: Option<i64>) -> Option<i32> {
+    use rustix::process::{Resource, Rlimit, setrlimit};
+    let requested = Rlimit {
+        current: request.map(|v| v as u64),
+        maximum: None,
+    };
+    setrlimit(Resource::Cpu, requested)
+        .err()
+        .map(|error| error.raw_os_error())
+}
+
+#[cfg(unix)]
+fn policy_signed_status(request: Option<i64>) -> Option<i32> {
+    let result = set_process_limit(request);
+    assert_eq!(reported_process_limit(), request.unwrap_or(-1));
+    result.err().map(|error| error.raw_status())
+}
+
+#[cfg(unix)]
+fn resource_lines(output: Output) -> Vec<String> {
+    assert!(output.status.success(), "{output:?}");
+    let rows = String::from_utf8(output.stdout)
+        .unwrap()
+        .lines()
+        .filter(|line| line.starts_with("resource="))
+        .map(str::to_owned)
+        .collect::<Vec<_>>();
+    assert_eq!(
+        rows.len(),
+        4,
+        "expected one independent OS observation per request"
+    );
+    rows
 }
