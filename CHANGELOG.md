@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Split release tests into bounded parallel shards on every supported platform and required their aggregate result before publication (#250).
+
 ## [0.3.6] - 2026-10-24
 
 ### Fixed

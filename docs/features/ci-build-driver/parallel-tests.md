@@ -21,9 +21,33 @@ The PR matrix uses the existing changed-package and transitive-dependent
 selection. Base dependencies compile where needed but their tests run only
 when selected. Every selected package gets one job, with four jobs allowed
 concurrently. Shared checks run once. The aggregate PR check rejects failed,
-cancelled and unexpectedly skipped jobs. Release validation remains unchanged.
+cancelled and unexpectedly skipped jobs.
 
-Jobs currently compile independently. This can increase runner minutes even
+Release rehearsals and tag runs use the previous final release as their scope
+baseline. Each of the four native platforms receives up to four test shards.
+The planner puts TKGeomBase, TKPrim, TKGeomAlgo and TKTopAlgo in separate shards
+when selected, then distributes other selected packages in sorted order. This
+is a scheduling heuristic based on the long suites observed during #250;
+it does not change tests or predict equal shard durations. Every selected
+package runs once per platform, including doctests. Empty scopes produce no
+test jobs. Shards recompute selection before running and reject invalid indexes
+or unsupported targets.
+
+The release check jobs run lint, release builds, packaging verification and
+compiler inventory alongside the test matrix. Both matrices must succeed for
+the aggregate release result to pass and for publication to run. Local release
+commands retain the full sequential pipeline. The native setup action is shared
+by release checks and tests so Windows and macOS shards receive FreeType.
+
+The motivating [tag run](https://github.com/Oblikovati/Martensite/actions/runs/40091884019)
+at `b7b3e962` had run for about 56 minutes at inspection, with all four targets
+inside the sequential release command. Setup took under two minutes. Its test
+matrix was skipped because the original split applied only to PRs. Running job
+logs were unavailable through the API, so this observation does not establish
+how much of that elapsed time was compilation, testing or packaging.
+
+Jobs compile independently; release sharding caps this at four test compilations
+per platform, plus the shared checks. This can increase runner minutes even
 when elapsed time falls. Record the first broad hosted run's wall time and sum
 of job durations before choosing a cache or artifact-transfer strategy. A
 toolkit matrix alone also leaves the longest individual toolkit as a lower
