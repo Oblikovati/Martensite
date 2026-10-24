@@ -147,3 +147,8 @@ path = "tests/mmgr_opt_initialize.rs"
 [[test]]
 name = "standard_services_api_behavior"
 path = "tests/standard_services_api_behavior.rs"
+
+# Process signal controls execute only in explicitly selected children (#278).
+[[test]]
+name = "osd_cpu_limit_signal"
+path = "tests/osd_cpu_limit_signal.rs"

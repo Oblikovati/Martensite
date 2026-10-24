@@ -37,6 +37,9 @@ pub use file_system::*;
 mod process;
 pub use process::*;
 
+mod process_cpu_limit;
+pub use process_cpu_limit::{reported_process_cpu_limit, set_process_cpu_limit};
+
 // Timing, signals and the OSD package statics.
 mod perf_meter;
 pub use perf_meter::*;
