@@ -50,15 +50,7 @@ pub(crate) fn changed_manifest_packages(
     reference: &str,
     changed: &[ChangedFile],
 ) -> BuildResult<Vec<String>> {
-    let manifests: Vec<_> = workspace
-        .packages
-        .iter()
-        .filter(|package| {
-            changed
-                .iter()
-                .any(|file| file.path == format!("{}/Cargo.toml", package.dir))
-        })
-        .collect();
+    let manifests = changed_manifest_members(workspace, changed);
     if manifests.is_empty() {
         return Ok(Vec::new());
     }
@@ -75,6 +67,21 @@ pub(crate) fn changed_manifest_packages(
         }
     }
     Ok(names)
+}
+
+fn changed_manifest_members<'a>(
+    workspace: &'a CargoWorkspace,
+    changed: &[ChangedFile],
+) -> Vec<&'a crate::workspace::WorkspacePackage> {
+    workspace
+        .packages
+        .iter()
+        .filter(|package| {
+            changed
+                .iter()
+                .any(|file| file.path == format!("{}/Cargo.toml", package.dir))
+        })
+        .collect()
 }
 
 fn selected_packages(

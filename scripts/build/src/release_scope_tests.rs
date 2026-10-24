@@ -70,23 +70,9 @@ fn changed_file(path: &str) -> ChangedFile {
 
 #[test]
 fn removed_package_cannot_reuse_an_older_published_version() {
-    use crate::{context::tests::context_at, fake_runner::RecordingRunner};
+    use crate::context::tests::context_at;
     let root = tempfile::tempdir().unwrap();
-    let runner = RecordingRunner::default()
-        .with_stdout(
-            "git rev-parse --show-toplevel",
-            &root.path().display().to_string(),
-        )
-        .with_stdout("git show v1.0.0:Cargo.toml", "[workspace]")
-        .with_stdout("git show v1.1.0:Cargo.toml", "[workspace]")
-        .with_stdout(
-            "git ls-tree -r --name-only -z v1.0.0",
-            "crates/a/Cargo.toml\0",
-        )
-        .with_stdout(
-            "git show v1.0.0:crates/a/Cargo.toml",
-            "[package]\nname='a'\nversion='1.0.0'",
-        );
+    let runner = reintroduction_runner(root.path());
     let tags = vec!["v1.0.0".into(), "v1.1.0".into()];
     let published = published_manifests(
         &context_at(&runner, root.path()),
@@ -97,4 +83,20 @@ fn removed_package_cannot_reuse_an_older_published_version() {
     let previous = published.get("a").unwrap();
     assert!(check_package_version(&manifest("1.0.0"), Some(previous), true).is_err());
     assert!(check_package_version(&manifest("1.0.1"), Some(previous), true).is_ok());
+}
+
+fn reintroduction_runner(root: &std::path::Path) -> crate::fake_runner::RecordingRunner {
+    use crate::fake_runner::RecordingRunner;
+    RecordingRunner::default()
+        .with_stdout("git rev-parse --show-toplevel", &root.display().to_string())
+        .with_stdout("git show v1.0.0:Cargo.toml", "[workspace]")
+        .with_stdout("git show v1.1.0:Cargo.toml", "[workspace]")
+        .with_stdout(
+            "git ls-tree -r --name-only -z v1.0.0",
+            "crates/a/Cargo.toml\0",
+        )
+        .with_stdout(
+            "git show v1.0.0:crates/a/Cargo.toml",
+            "[package]\nname='a'\nversion='1.0.0'",
+        )
 }

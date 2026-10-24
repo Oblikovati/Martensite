@@ -39,8 +39,9 @@ Each test job runs unit, integration and documentation tests with
 `--no-fail-fast`; a failed job does not cancel the others. The existing
 `pr (x86_64-unknown-linux-gnu)` check aggregates their results. Documentation-only
 changes produce no package jobs; only that empty selection permits skipped tests.
-Local `cargo xtask pr` still runs all stages sequentially. Release pipelines keep
-their full suite per target.
+Local `cargo xtask pr` still runs all stages sequentially. Release pipelines
+compute package scope since the previous release and run the selected suites
+on each supported target.
 
 When process-policy is selected, the shared test command explicitly enables
 `martensite-process-policy/case-runner`. This preserves the unit tests that a
@@ -104,10 +105,13 @@ gate; the ARM baseline must not be substituted.
    This runs even when no package is affected, including baseline-only changes.
 4. Find the affected packages: the package that owns each changed file (the
    longest package directory that contains it), plus every workspace package
-   that depends on an affected package. A change to `Cargo.toml`,
-   `Cargo.lock`, `rust-toolchain.toml`, `rustfmt.toml`, `clippy.toml` or
-   `.cargo/` affects the whole workspace. A change that touches no package
-   stops here after any required inventory check.
+   that depends on an affected package. Manifest version bookkeeping does not
+   select unchanged packages. Lockfile changes follow exact package identities
+   and changed workspace dependency edges; package-specific optimization changes
+   follow their dependency consumers. Global build configuration, toolchain or
+   `.cargo/` changes affect the whole workspace. Formatting and lint settings do
+   not select behavioral suites. A change that affects no package stops here
+   after any required inventory check.
 5. Run clippy with `-D warnings`, a build of all targets, and the tests for
    the affected packages.
 

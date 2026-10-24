@@ -135,11 +135,20 @@ fn lock_impact(before: &Table, after: &Table) -> BTreeSet<String> {
 fn snapshot_changes(graph: &[&Table], other: &[&Table]) -> BTreeSet<String> {
     let changed = graph
         .iter()
-        .filter(|package| package.contains_key("source"))
-        .filter(|package| !other.contains(package))
+        .filter(|package| changed_lock_record(package, other))
         .filter_map(|package| lock_identity(package))
         .collect();
     expand_consumers(graph, changed)
+}
+
+fn changed_lock_record(package: &Table, other: &[&Table]) -> bool {
+    if package.contains_key("source") {
+        return !other.contains(&package);
+    }
+    let previous = other
+        .iter()
+        .find(|old| !old.contains_key("source") && old.get("name") == package.get("name"));
+    previous.is_none_or(|previous| previous.get("dependencies") != package.get("dependencies"))
 }
 
 fn lock_identity(package: &Table) -> Option<LockIdentity<'_>> {
@@ -375,5 +384,20 @@ mod identity_tests {
             "ext 2.0.0 (registry+https://other.invalid/index)",
             identity
         ));
+    }
+}
+
+#[cfg(test)]
+mod rewired_lock_tests {
+    use super::*;
+    fn graph(dependency: &str) -> Table {
+        parse_table(&format!("[[package]]\nname='ext'\nversion='1.0.0'\nsource='registry'\n[[package]]\nname='ext'\nversion='1.0.1'\nsource='registry'\n[[package]]\nname='a'\nversion='1.0.0'\ndependencies=['ext {dependency}']\n[[package]]\nname='b'\nversion='1.0.0'\ndependencies=['ext 1.0.0']\n[[package]]\nname='c'\nversion='1.0.0'\ndependencies=['ext 1.0.1']")).unwrap()
+    }
+    #[test]
+    fn existing_external_versions_can_rewire_one_workspace_consumer() {
+        assert_eq!(
+            lock_impact(&graph("1.0.0"), &graph("1.0.1")),
+            BTreeSet::from(["a".into()])
+        );
     }
 }
