@@ -6,13 +6,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-10-24
+
 ### Fixed
 
 - Split affected toolkit tests into parallel PR jobs while retaining dependency-aware selection and a required aggregate result (#250).
-
-## [0.3.6] - 2026-10-23
-
-### Fixed
 
 - Staged document writes so preparation failures and incomplete driver output leave existing files intact; verified access policies before publication and retained requested paths and symbolic links (#245).
 - Refused custom restrictive writer policies before replacing existing documents, while retaining ordinary staging defaults and destination access policies (#245).
