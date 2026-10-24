@@ -1,0 +1,27 @@
+#![allow(dead_code)]
+mod fixtures;
+mod support;
+use martensite_tkbrep::topods::Shape;
+use martensite_tkgeombase::gprop::GProps;
+use martensite_tktopalgo::brep_gprop::BRepGProp;
+fn emit(name: &str, shape: &Shape) {
+    for eps in [1.0, 1e-5, 1e-9] {
+        let mut props = GProps::new();
+        let error = BRepGProp::surface_properties_eps(shape, &mut props, eps, false).unwrap();
+        println!("{name} eps={} properties={:?} error={}", eps.to_bits(), support::property_bits(&props), error.to_bits());
+    }
+    for mesh in [false, true] {
+        let mut props = GProps::new();
+        BRepGProp::surface_properties(shape, &mut props, false, mesh).unwrap();
+        println!("{name} default mesh={mesh} properties={:?}", support::property_bits(&props));
+    }
+}
+fn main() {
+    emit("ellipse", &fixtures::elliptic_prism_faces());
+    emit("cylinder", &fixtures::cylinder_face());
+    emit("meshed-cylinder", &fixtures::meshed_cylinder().0);
+    emit("mesh-only", &fixtures::triangle_face().0);
+    emit("narrow", &fixtures::narrow_parameter_square());
+    let (mesh, _) = fixtures::meshed_cylinder();
+    emit("mixed", &fixtures::compound(&[fixtures::elliptic_prism_faces(), mesh.into(), fixtures::triangle_face().0.into()]));
+}
