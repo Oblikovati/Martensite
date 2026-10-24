@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added a verified production-library source SDK bundle with locked dependencies and explicit individual-archive requirement checks (#279).
+
 ### Fixed
 
 - Reused one walking-point snapshot for combined spatial and parametric coordinate reads during fitting (#220).

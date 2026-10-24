@@ -17,6 +17,13 @@ pub struct CommandSpec {
 }
 
 impl CommandSpec {
+    /// Lets named process fakes inspect arguments without reparsing shell text.
+    /// Example: `assert_eq!(spec.argument_values()[0], "release");`.
+    #[cfg(test)]
+    pub(crate) fn argument_values(&self) -> &[String] {
+        &self.args
+    }
+
     /// Starts a command description run from `cwd`.
     ///
     /// ```ignore
