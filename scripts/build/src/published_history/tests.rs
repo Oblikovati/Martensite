@@ -184,6 +184,8 @@ fn orphan_catalog_checksums_do_not_erase_publication_receipts() {
 #[test]
 fn publication_evidence_has_structural_thread_bounds() {
     fn send_sync<T: Send + Sync>() {}
+    send_sync::<fixtures::PublicationApiFixture>();
+    send_sync::<super::catalogs::Row>();
     send_sync::<PublishedRelease>();
     send_sync::<ReleaseIndex>();
     send_sync::<ArchiveOrigin>();
