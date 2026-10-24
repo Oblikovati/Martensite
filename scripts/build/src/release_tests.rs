@@ -18,28 +18,35 @@ struct ReleaseFixture {
 
 impl ReleaseFixture {
     fn new() -> Self {
-        let dir = tempfile::tempdir().unwrap();
-        let root = dir.path();
+        let fixture = Self {
+            dir: tempfile::tempdir().unwrap(),
+        };
+        fixture.write_documents();
+        for name in ["martensite-kernel", "martensite-math"] {
+            fixture.write_package_version(name, "0.3.0");
+            fixture.write_crate(name, &["Cargo.toml", SOURCE_LICENSE]);
+        }
+        fixture
+    }
+
+    fn write_documents(&self) {
+        let root = self.root();
         fs::write(root.join("CHANGELOG.md"), CHANGELOG).unwrap();
         fs::write(root.join("LICENSE-APACHE"), "Apache-2.0").unwrap();
         fs::write(root.join("README.md"), "Martensite").unwrap();
         fs::write(root.join("martensite-cli"), "binary").unwrap();
         fs::create_dir_all(root.join("target/package")).unwrap();
         fs::write(root.join("Cargo.toml"), "[workspace]\nmembers=[]").unwrap();
-        for name in ["martensite-kernel", "martensite-math"] {
-            let directory = root.join("crates").join(name);
-            fs::create_dir_all(&directory).unwrap();
-            fs::write(
-                directory.join("Cargo.toml"),
-                format!("[package]\nname='{name}'\nversion='0.3.0'"),
-            )
-            .unwrap();
-        }
-        let fixture = Self { dir };
-        for name in ["martensite-kernel", "martensite-math"] {
-            fixture.write_crate(name, &["Cargo.toml", SOURCE_LICENSE]);
-        }
-        fixture
+    }
+
+    fn write_package_version(&self, name: &str, version: &str) {
+        let directory = self.root().join("crates").join(name);
+        fs::create_dir_all(&directory).unwrap();
+        fs::write(
+            directory.join("Cargo.toml"),
+            format!("[package]\nname='{name}'\nversion='{version}'"),
+        )
+        .unwrap();
     }
 
     /// Writes the `.crate` that `cargo package` would leave for `name`,
@@ -76,28 +83,23 @@ impl ReleaseFixture {
         let root = self.root().display().to_string();
         let binary = serde_json::json!({"reason": "compiler-artifact", "target": {"kind": ["bin"]},
             "filenames": [self.root().join("martensite-cli")], "executable": self.root().join("martensite-cli")});
-        RecordingRunner::default()
+        baseline_runner()
             .with_stdout("git rev-parse --show-toplevel", &root)
             .with_stdout(METADATA, &metadata_at(&root, version))
             .with_stdout("git tag --list v*", tags)
-            .with_stdout("git show v0.2.7:Cargo.toml", "[workspace]\nmembers=[]")
-            .with_stdout(
-                "git ls-tree -r --name-only -z v0.2.7",
-                "crates/martensite-kernel/Cargo.toml\0crates/martensite-math/Cargo.toml\0",
-            )
-            .with_stdout(
-                "git show v0.2.7:crates/martensite-kernel/Cargo.toml",
-                "[package]\nname='martensite-kernel'\nversion='0.2.7'",
-            )
-            .with_stdout(
-                "git show v0.2.7:crates/martensite-math/Cargo.toml",
-                "[package]\nname='martensite-math'\nversion='0.2.7'",
-            )
-            .with_stdout(
-                "git diff --name-status --no-renames -z v0.2.7",
-                "M\0crates/martensite-kernel/src/lib.rs\0M\0crates/martensite-math/src/lib.rs\0",
-            )
             .with_stdout(&release_build_command(), &binary.to_string())
+    }
+
+    fn mixed_runner(&self, kernel: &str, math: &str) -> RecordingRunner {
+        self.write_package_version("martensite-kernel", kernel);
+        self.write_package_version("martensite-math", math);
+        let mut metadata: serde_json::Value =
+            serde_json::from_str(&metadata_at(&self.root().display().to_string(), "0.3.0"))
+                .unwrap();
+        metadata["packages"][0]["version"] = kernel.into();
+        metadata["packages"][1]["version"] = math.into();
+        self.runner("v0.2.7\n", "0.3.0")
+            .with_stdout(METADATA, &metadata.to_string())
     }
 
     fn request(&self, source_packages: bool) -> ReleaseRequest {
@@ -110,6 +112,28 @@ impl ReleaseFixture {
             dist_dir,
         }
     }
+}
+
+fn baseline_runner() -> RecordingRunner {
+    let runner = RecordingRunner::default()
+        .with_stdout("git show v0.2.7:Cargo.toml", "[workspace]\nmembers=[]")
+        .with_stdout(
+            "git ls-tree -r --name-only -z v0.2.7",
+            "crates/martensite-kernel/Cargo.toml\0crates/martensite-math/Cargo.toml\0",
+        )
+        .with_stdout(
+            "git diff --name-status --no-renames -z v0.2.7",
+            "M\0crates/martensite-kernel/src/lib.rs\0M\0crates/martensite-math/src/lib.rs\0",
+        );
+    let runner = previous_package(runner, "martensite-kernel");
+    previous_package(runner, "martensite-math")
+}
+
+fn previous_package(runner: RecordingRunner, name: &str) -> RecordingRunner {
+    runner.with_stdout(
+        &format!("git show v0.2.7:crates/{name}/Cargo.toml"),
+        &format!("[package]\nname='{name}'\nversion='0.2.7'"),
+    )
 }
 
 fn release_build_command() -> String {
@@ -285,22 +309,10 @@ fn source_package_without_the_gpl_license_is_refused() {
 #[test]
 fn mixed_release_retains_dependency_version_and_ships_only_changed_source() {
     let fixture = ReleaseFixture::new();
-    let math_path = fixture.root().join("crates/martensite-math/Cargo.toml");
-    fs::write(
-        math_path,
-        "[package]\nname='martensite-math'\nversion='0.2.7'",
-    )
-    .unwrap();
-    let mut metadata: serde_json::Value =
-        serde_json::from_str(&metadata_at(&fixture.root().display().to_string(), "0.3.0")).unwrap();
-    metadata["packages"][1]["version"] = "0.2.7".into();
-    let runner = fixture
-        .runner("v0.2.7\n", "0.3.0")
-        .with_stdout(METADATA, &metadata.to_string())
-        .with_stdout(
-            "git diff --name-status --no-renames -z v0.2.7",
-            "M\0crates/martensite-kernel/src/lib.rs\0",
-        );
+    let runner = fixture.mixed_runner("0.3.0", "0.2.7").with_stdout(
+        "git diff --name-status --no-renames -z v0.2.7",
+        "M\0crates/martensite-kernel/src/lib.rs\0",
+    );
     let assets = run_release(&context_at(&runner, fixture.root()), &fixture.request(true)).unwrap();
     assert!(
         !asset_names(&assets)
@@ -319,20 +331,12 @@ fn mixed_release_retains_dependency_version_and_ships_only_changed_source() {
 #[test]
 fn archive_uses_package_version_independently_of_repository_version() {
     let fixture = ReleaseFixture::new();
-    let root = fixture.root().display().to_string();
-    let path = fixture.root().join("crates/martensite-kernel/Cargo.toml");
-    fs::write(path, "[package]\nname='martensite-kernel'\nversion='0.2.8'").unwrap();
+    let runner = fixture.mixed_runner("0.2.8", "0.3.0");
     fixture.write_versioned_crate(
         "martensite-kernel",
         "0.2.8",
         &["Cargo.toml", SOURCE_LICENSE],
     );
-    let mut metadata: serde_json::Value =
-        serde_json::from_str(&metadata_at(&root, "0.3.0")).unwrap();
-    metadata["packages"][0]["version"] = "0.2.8".into();
-    let runner = fixture
-        .runner("v0.2.7\n", "0.3.0")
-        .with_stdout(METADATA, &metadata.to_string());
     let assets = run_release(&context_at(&runner, fixture.root()), &fixture.request(true)).unwrap();
     assert!(asset_names(&assets).contains(&"martensite-kernel-0.2.8.crate".into()));
     assert!(!asset_names(&assets).contains(&"martensite-kernel-0.3.0.crate".into()));

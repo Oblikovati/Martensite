@@ -9,7 +9,7 @@ use crate::context::{BUILD_TOOL_PACKAGE, BuildContext};
 use crate::error::{BuildError, BuildResult, io_error};
 use crate::git::ChangedFile;
 use crate::package_manifest::{PackageManifest, parse_table};
-use crate::version::previous_release;
+use crate::version::{parse_release_tag, previous_release};
 use crate::workspace::CargoWorkspace;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -25,12 +25,12 @@ impl ReleaseScope {
         workspace: &CargoWorkspace,
         version: &Version,
     ) -> BuildResult<Self> {
-        let baseline =
-            previous_release(&context.git.release_tags()?, version).map(|v| format!("v{v}"));
+        let tags = context.git.release_tags()?;
+        let baseline = previous_release(&tags, version).map(|v| format!("v{v}"));
         let Some(reference) = baseline.as_deref() else {
             return Ok(initial_scope(workspace));
         };
-        let previous = released_manifests(context, reference)?;
+        let previous = published_manifests(context, &tags, version)?;
         let changed = context.git.changed_files(reference)?;
         let packages = selected_packages(context, workspace, &previous, &changed)?;
         let tests = crate::release_impact::release_tests(
@@ -106,6 +106,29 @@ fn workspace_fields(text: &str) -> BuildResult<Table> {
         .unwrap_or_default())
 }
 
+fn published_manifests(
+    context: &BuildContext<'_>,
+    tags: &[String],
+    version: &Version,
+) -> BuildResult<BTreeMap<String, PackageManifest>> {
+    let mut published: BTreeMap<String, PackageManifest> = BTreeMap::new();
+    for tag in tags.iter().filter(|tag| prior_final(tag, version)) {
+        for (name, manifest) in released_manifests(context, tag)? {
+            if published
+                .get(&name)
+                .is_none_or(|previous| manifest.version.cmp_precedence(&previous.version).is_gt())
+            {
+                published.insert(name, manifest);
+            }
+        }
+    }
+    Ok(published)
+}
+
+fn prior_final(tag: &str, version: &Version) -> bool {
+    parse_release_tag(tag).is_ok_and(|previous| previous.pre.is_empty() && previous < *version)
+}
+
 fn released_manifests(
     context: &BuildContext<'_>,
     reference: &str,
@@ -167,7 +190,7 @@ fn check_package_version(
         return Ok(());
     };
     let allowed = if changed {
-        current.version > previous.version
+        current.version.cmp_precedence(&previous.version).is_gt()
     } else {
         current.version == previous.version
     };

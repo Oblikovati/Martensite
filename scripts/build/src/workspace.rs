@@ -19,8 +19,6 @@ pub struct WorkspacePackage {
     pub dir: String,
     /// Names of dependencies that are path dependencies (workspace siblings).
     pub path_dependencies: Vec<String>,
-    /// All direct dependency names, including registry dependencies.
-    pub dependencies: Vec<String>,
 }
 
 /// All members of the workspace rooted at the repository root.
@@ -95,11 +93,6 @@ impl CargoWorkspace {
 
 fn member(root: &Path, package: MetadataPackage) -> BuildResult<WorkspacePackage> {
     let dir = package_dir(root, &package.manifest_path)?;
-    let dependencies = package
-        .dependencies
-        .iter()
-        .map(|dependency| dependency.name.clone())
-        .collect();
     let path_dependencies = package
         .dependencies
         .into_iter()
@@ -111,7 +104,6 @@ fn member(root: &Path, package: MetadataPackage) -> BuildResult<WorkspacePackage
         version: package.version,
         dir,
         path_dependencies,
-        dependencies,
     })
 }
 
