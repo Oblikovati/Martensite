@@ -33,11 +33,50 @@ speedup on a different runner or revision.
 ## Remaining investigation
 
 The first local sphere run on `c04ee035` passed in 141.04 seconds of test
-execution (42.05 seconds of compilation excluded). The standalone repeat and
-the polar-projection and certified-offset reproductions each consumed about
-one CPU core while running. These observations establish substantial work
-inside the test processes; they do not identify a particular numerical inner
-loop. No profiler is installed in this checkout's environment.
+execution (42.05 seconds of compilation excluded). A standalone repeat passed
+in 150.79 seconds wall time, 150.77 seconds user CPU, 0.00 seconds system CPU,
+and 14692 KiB peak RSS. The certified-offset reference test passed in 334.75
+seconds, with compilation excluded. These were debug builds on a shared Linux
+host, with concurrent investigations, so they are not CI speedup estimates.
+
+Five debugger samples per workload, taken roughly four seconds apart near
+startup, located these paths:
+
+| Workload | Sampled work |
+| --- | --- |
+| Sphere volume | Four samples included `metallic` trigonometry or polynomial arithmetic beneath surface evaluation and Gauss-Kronrod volume integration |
+| Polar projection | All five included `GenExtPS`: spline evaluation, grid edge/face distances, `ParamGrid` copying or candidate minima search |
+| Certified offsets | All five included `num-bigint` division, multiplication or shifts in exact arithmetic |
+
+These short samples identify candidates, not percentages of total runtime.
+The polar-family timing probe was stopped after 340 CPU seconds once samples
+were collected; that is a lower bound, not a passing result or full duration.
+The separate debugger runs were stopped after sampling. The temporary debugger
+and sampling script were kept outside the repository and removed afterwards.
+
+Follow-up #252 covers arithmetic dependency build profiles and their correctness
+gates. Follow-up #253 covers repeated extrema-grid work. Issue #226 also tracks
+the long TKPrim toolkit phase. None of these findings authorizes weaker oracles,
+looser tolerances or persistent caches on mutable geometry.
+
+Temporary Cargo command-line overrides tested one dependency at a time, without
+changing the repository's profiles:
+
+| Existing test | Baseline seconds | Dependency at opt-level 3 | Trial seconds |
+| --- | ---: | --- | ---: |
+| `volume_properties_sphere` | 150.80 | `metallic` | 121.38 |
+| `certified_offset_contacts_match_every_reference_point` | 334.75 | `num-bigint` | 43.77 |
+
+Both trials passed their existing assertions. The baseline sphere row uses
+libtest's reported duration; `/usr/bin/time` reported 150.79 seconds. Compilation
+is excluded from these rows: the trials required 42.74 and 54.17 seconds
+respectively, with the latter including a build-directory lock wait. Kernel
+code retained its debug profile. No dependency version or implementation
+changed. These single-run results on a shared host support investigating
+`num-bigint` first; they do not establish full-corpus or cross-platform
+equivalence. The overrides were supplied with
+`--config 'profile.dev.package.num-bigint.opt-level=3'` or
+`--config 'profile.dev.package.metallic.opt-level=3'` and were not persisted.
 
 TKGeomBase's warnings name twelve corpus-family tests, including
 `pl_polar_complete_family` (164 cases), `pl_projected_complete_family`
