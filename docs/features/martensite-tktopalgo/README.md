@@ -48,3 +48,6 @@ The `dataset_timing` target holds the classifier timing case
 `bugs_modalg_6::bug27884`, which needs the boxed 2D classifier to be 4, 3, 15 and 15
 percent faster than the unboxed one. It is ignored until #207 removes the edge-to-plane
 projection cost that dominates the measurement; run it with `--ignored`.
+
+The [surface-property policy](../surface-property-policy/README.md) exposes
+independent integration and representation choices, with estimate-or-unknown evidence.

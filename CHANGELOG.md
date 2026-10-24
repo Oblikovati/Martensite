@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added explicit surface integration and representation policies with owned properties and estimate-or-unknown evidence (#277).
+
 ### Fixed
 
 - Reused one walking-point snapshot for combined spatial and parametric coordinate reads during fitting (#220).
