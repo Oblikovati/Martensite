@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkernel"
-version = "0.3.6"
+version = "0.4.0"
 description = "Martensite kernel foundation: errors, memory, collections, strings, OS services, messages, units and resources."
 edition.workspace = true
 rust-version.workspace = true

@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-24
+
 ### Added
 
 - Added explicit surface integration and representation policies with owned properties and estimate-or-unknown evidence (#277).
