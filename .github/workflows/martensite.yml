@@ -38,6 +38,8 @@ env:
   # Dispatch inputs reach the driver as data, never interpolated into a script.
   MARTENSITE_CI_MODE: ${{ inputs.mode }}
   MARTENSITE_CI_VERSION: ${{ inputs.version }}
+  # Every PR job compares the same event revision even if main advances (#273).
+  MARTENSITE_CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
 
 jobs:
   plan:

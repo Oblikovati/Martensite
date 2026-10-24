@@ -10,6 +10,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Pinned pull-request CI selection to the event base commit so later jobs retained the planned packages when the base branch advanced (#273).
+
 - Optimized TKMath development and test builds to reduce repeated assembly-integration cost while retaining debug checks and existing test budgets (#271).
 
 - Preserved hash-pinned healing-resource bytes on Windows and made the release workflow contract test accept Windows line endings (#269).
