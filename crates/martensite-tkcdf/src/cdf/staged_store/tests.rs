@@ -79,3 +79,24 @@ fn cyclic_final_symlink_is_refused_with_its_destination() {
             .contains(&destination.file.to_string_lossy().to_string())
     );
 }
+
+#[cfg(windows)]
+#[test]
+fn named_stream_refusal_preserves_original_and_cleans_staging() {
+    let destination = TemporaryDestination::new();
+    fs::write(&destination.file, b"owned original").unwrap();
+    let mut stream = destination.file.as_os_str().to_os_string();
+    stream.push(":Zone.Identifier");
+    let stream = PathBuf::from(stream);
+    fs::write(&stream, b"[ZoneTransfer]\r\nZoneId=3\r\n").unwrap();
+    let stage = StagedStore::new(&destination.file).unwrap();
+    fs::write(&stage.file, b"completed replacement").unwrap();
+    let directory = stage.directory.clone();
+    let failure = storage_failure(&destination.name(), stage.commit().unwrap_err(), "publish");
+    assert_eq!(failure.exception_type(), "DocumentStore_PermissionDenied");
+    assert!(failure.message().contains("Zone.Identifier"));
+    drop(stage);
+    assert!(!directory.exists());
+    assert_eq!(fs::read(&destination.file).unwrap(), b"owned original");
+    assert_eq!(fs::read(stream).unwrap(), b"[ZoneTransfer]\r\nZoneId=3\r\n");
+}
