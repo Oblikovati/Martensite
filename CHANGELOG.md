@@ -6,11 +6,14 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Refused Windows document replacements with destination named streams before changing metadata or publishing bytes, preserving the original file and its stream contents (#248).
+
 ## [0.3.6] - 2026-10-24
 
 ### Fixed
 
-- Refused Windows document replacements with destination named streams before changing metadata or publishing bytes, preserving the original file and its stream contents (#248).
 
 - Staged document writes so preparation failures and incomplete driver output leave existing files intact; verified access policies before publication and retained requested paths and symbolic links (#245).
 - Refused custom restrictive writer policies before replacing existing documents, while retaining ordinary staging defaults and destination access policies (#245).
