@@ -1,0 +1,89 @@
+{
+  "issue": 278,
+  "executed_source_revision": "136625f115e5b41c016245beac3c12d66e2b0b4e",
+  "platform": "x86_64-unknown-linux-gnu",
+  "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "source_fingerprints": {
+    "crates/martensite-tkernel/src/osd/process_cpu_limit.rs": "801a76f2fe9a0e78f962987d11eee701dc2d89f49dd699722e05088de849e1c2",
+    "crates/martensite-tkernel/src/osd/timing/signal_native.rs": "2aec19a1d63cfe03fccaaa82d32d8e83a851feac14b5d00b1354d8039e890892",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget.rs": "269712931aebd1fdf4f3103af30f6c0d45c9b448c9cb41818c24e599b06a75f1",
+    "crates/martensite-tkernel/tests/osd_cpu_limit_signal.rs": "5a059c4fe17d5573343ce317df0fccb905cd350a8088cf6546c4aa62c8a8148d",
+    "crates/martensite-process-policy/tests/process_budget_children.rs": "baf963a00af16973503b29dfc62b5937c79b7aa6e4c069d298b678fd7127f618"
+  },
+  "compiler_inventory_change": [
+    {
+      "before": {
+        "emitted_primary_spans": 12,
+        "location": {
+          "diagnostic": "usage of an `unsafe` block",
+          "expansion_depth": 0,
+          "package": "workspace:martensite-tkernel@0.3.6",
+          "source": "crates/martensite-tkernel/src/osd/timing/signal_native.rs",
+          "target": "martensite_tkernel",
+          "target_kinds": [
+            "lib"
+          ]
+        }
+      },
+      "after": {
+        "emitted_primary_spans": 14,
+        "location": {
+          "diagnostic": "usage of an `unsafe` block",
+          "expansion_depth": 0,
+          "package": "workspace:martensite-tkernel@0.3.6",
+          "source": "crates/martensite-tkernel/src/osd/timing/signal_native.rs",
+          "target": "martensite_tkernel",
+          "target_kinds": [
+            "lib"
+          ]
+        }
+      }
+    },
+    {
+      "before": null,
+      "after": {
+        "emitted_primary_spans": 2,
+        "location": {
+          "diagnostic": "usage of an `unsafe` block",
+          "expansion_depth": 0,
+          "package": "workspace:martensite-tkernel@0.3.6",
+          "source": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget.rs",
+          "target": "martensite_tkernel",
+          "target_kinds": [
+            "lib"
+          ]
+        }
+      }
+    },
+    {
+      "before": null,
+      "after": {
+        "emitted_primary_spans": 1,
+        "location": {
+          "diagnostic": "usage of an `unsafe` block",
+          "expansion_depth": 0,
+          "package": "workspace:martensite-tkernel@0.3.6",
+          "source": "crates/martensite-tkernel/tests/osd_cpu_limit_signal.rs",
+          "target": "osd_cpu_limit_signal",
+          "target_kinds": [
+            "test"
+          ]
+        }
+      }
+    }
+  ],
+  "other_platform_compiler_baselines": "Unchanged; native hosted collection is required before release acceptance.",
+  "observed_controls": {
+    "CPU_without_action_before_fix": "signal24, exit code absent, missing diagnostic",
+    "closed_pipe_before_scoped_mask": "signal13, exit code absent",
+    "process_policy_child_controls_after_fix": 8,
+    "closed_pipe_and_reaping_controls_after_fix": 2,
+    "message_integer_domain_control_after_fix": 1,
+    "unchanged_elapsed_interval_seconds": 5,
+    "unchanged_CPU_budget_seconds": 1,
+    "unchanged_parent_safety_guard_seconds": 12,
+    "signed_requests": "independent direct-OS and policy children compare all four requests"
+  },
+  "prior_full_gate_stop": "Only the newly added approved system boundary compiler groups differed; the lexical boundary gate passed.",
+  "compiler_report_sha256": "360ddf6eb6b1585026a1162138534488878e29fdf789209a098bff329cbfb8b0"
+}
