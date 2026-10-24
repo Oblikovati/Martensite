@@ -146,6 +146,7 @@
   "crates/martensite-tkernel/src/ncollection/vector/storage.rs": {"unsafe_keywords":2,"unsafe_code_mentions":2,"kinds":{"block":2}},
   "crates/martensite-tkernel/src/osd/document_file/macos/acl.rs": {"unsafe_keywords":8,"unsafe_code_mentions":1,"kinds":{"block":7,"extern":1}},
   "crates/martensite-tkernel/src/osd/document_file/windows.rs": {"unsafe_keywords":13,"unsafe_code_mentions":1,"kinds":{"block":13}},
+  "crates/martensite-tkernel/src/osd/document_file/windows_streams.rs": {"unsafe_keywords":3,"unsafe_code_mentions":1,"kinds":{"block":3}},
   "crates/martensite-tkernel/src/osd/file/native_unix.rs": {"unsafe_keywords":12,"unsafe_code_mentions":1,"kinds":{"block":12}},
   "crates/martensite-tkernel/src/osd/file/native_unix/lock_record.rs": {"unsafe_keywords":1,"unsafe_code_mentions":0,"kinds":{"block":1}},
   "crates/martensite-tkernel/src/osd/file/native_unix/directory_cursor.rs": {"unsafe_keywords":5,"unsafe_code_mentions":0,"kinds":{"block":4,"implementation":1}},
