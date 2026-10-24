@@ -24,6 +24,7 @@ mod mesh_props;
 mod mesh_triangle;
 mod package;
 mod sinert;
+mod surface_policy;
 mod tfunction;
 mod ufunction;
 mod vinert;
@@ -49,3 +50,8 @@ pub use ufunction::BRepGPropUFunction;
 pub use vinert::BRepGPropVinert;
 pub use vinert_gk::{BRepGPropVinertGK, VinertGKOptions};
 pub use volume_gk::VolumeGKFlags;
+
+pub use surface_policy::{
+    SurfaceErrorEvidence, SurfaceIntegration, SurfacePropertyOptions, SurfacePropertyResult,
+    SurfaceRepresentation,
+};

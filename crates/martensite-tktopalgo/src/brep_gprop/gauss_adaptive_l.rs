@@ -95,6 +95,7 @@ impl AdaptiveRun<'_, '_> {
     ) -> Result<(), Failure> {
         let (l1, l2) = boundary.range;
         if (l2 - l1).abs() <= EPS_PARAM {
+            self.state.refinement_exhausted |= l2 != l1;
             return Ok(());
         }
         let end = self.l.fill(l1, l2, &boundary.knots, Some(&mut self.err_ul));
@@ -106,6 +107,8 @@ impl AdaptiveRun<'_, '_> {
             j += 1;
             let range = self.l.next_range(j, end);
             if self.l.is_exhausted(j, max) {
+                self.state.refinement_exhausted |=
+                    k_end != 1 || self.l.first[j - 1] != self.l.second[j - 1];
                 if k_end != 1 {
                     j -= 1;
                     self.state.eps_l = error_l;
@@ -193,6 +196,7 @@ impl AdaptiveRun<'_, '_> {
         self.err_ul[index] = 0.0;
         let u1 = self.input.bounds.0;
         if (self.state.u2 - u1).abs() < EPS_PARAM {
+            self.state.refinement_exhausted |= self.state.u2 != u1;
             return Ok(());
         }
         let count = self.u_integral(surface, pass)?;

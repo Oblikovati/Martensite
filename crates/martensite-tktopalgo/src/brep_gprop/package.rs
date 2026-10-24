@@ -6,6 +6,7 @@ use super::face::BRepGPropFace;
 use super::mesh_cinert::BRepGPropMeshCinert;
 use super::mesh_props::{BRepGPropMeshProps, MeshObjType};
 use super::sinert::BRepGPropSinert;
+use super::surface_policy::SurfaceObservations;
 use crate::brep_check::explore::sub_shapes;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::brep_adaptor::BRepAdaptorCurve;
@@ -145,7 +146,13 @@ impl BRepGProp {
         use_triangulation: bool,
     ) -> Result<(), Failure> {
         *props = GProps::with_location(located_origin(shape));
-        surface_props(shape, props, 1e-5, (skip_shared, use_triangulation))?;
+        surface_props(
+            shape,
+            props,
+            1e-5,
+            (skip_shared, use_triangulation),
+            &mut SurfaceObservations::default(),
+        )?;
         Ok(())
     }
 
@@ -159,18 +166,25 @@ impl BRepGProp {
         skip_shared: bool,
     ) -> Result<f64, Failure> {
         *props = GProps::with_location(located_origin(shape));
-        surface_props(shape, props, eps, (skip_shared, false))
+        surface_props(
+            shape,
+            props,
+            eps,
+            (skip_shared, false),
+            &mut SurfaceObservations::default(),
+        )
     }
 }
 
 /// `surfaceProperties`: the faces of `shape` about its rough barycentre, one Sinert
 /// and one mesh framework reused for every face (so a face whose integration returns
 /// early adds the previous face's values, as natively); the largest error.
-fn surface_props(
+pub(super) fn surface_props(
     shape: &Shape,
     props: &mut GProps,
     eps: f64,
     (skip_shared, use_triangulation): (bool, bool),
+    observations: &mut SurfaceObservations,
 ) -> Result<f64, Failure> {
     let centre = rough_bary_center(shape)?;
     let mut surface = BRepGPropSinert::new();
@@ -187,14 +201,17 @@ fn surface_props(
         }
         let sources = FaceSources::of(&face)?;
         if sources.no_mesh && sources.no_surface {
+            observations.missing_source();
             continue;
         }
         if sources.use_mesh(use_triangulation) {
             mesh.perform_located(&sources.mesh, &sources.location, face.orientation())?;
             props.add(&mesh, 1.0)?;
+            observations.mesh();
             continue;
         }
-        let error = surface_face(&face, (&mut tool, &mut domain), &mut surface, eps)?;
+        let (error, exhausted) = surface_face(&face, (&mut tool, &mut domain), &mut surface, eps)?;
+        observations.geometry(error, surface.mass(), exhausted);
         if error_max < error {
             error_max = error;
         }
@@ -210,20 +227,19 @@ fn surface_face(
     (tool, domain): (&mut BRepGPropFace, &mut BRepGPropDomain),
     surface: &mut BRepGPropSinert,
     eps: f64,
-) -> Result<f64, Failure> {
+) -> Result<(f64, bool), Failure> {
     tool.load_face(face)?;
     let is_natural = face.nb_children() == 0;
     if !is_natural {
         domain.init_face(face)?;
     }
     if eps < 1.0 {
-        surface.perform_domain_eps(tool, domain, eps)?;
-        return Ok(surface.get_epsilon());
+        return surface.perform_domain_eps_observed(tool, domain, eps);
     }
     if is_natural {
         surface.perform(tool)?;
     } else {
         surface.perform_domain(tool, domain)?;
     }
-    Ok(0.0)
+    Ok((0.0, false))
 }

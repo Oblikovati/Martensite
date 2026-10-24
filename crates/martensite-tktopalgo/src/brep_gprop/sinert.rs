@@ -156,13 +156,28 @@ impl BRepGPropSinert {
         domain: &mut BRepGPropDomain,
         eps: f64,
     ) -> Result<f64, Failure> {
+        self.perform_domain_eps_observed(surface, domain, eps)
+            .map(|(error, _)| error)
+    }
+
+    pub(super) fn perform_domain_eps_observed(
+        &mut self,
+        surface: &mut BRepGPropFace,
+        domain: &mut BRepGPropDomain,
+        eps: f64,
+    ) -> Result<(f64, bool), Failure> {
         let mut out = gauss_props(&self.base);
         let mut gauss = BRepGPropGauss::new(GaussType::Sinert);
-        let error =
-            gauss.compute_adaptive_surface(surface, domain, self.base.loc, eps, &mut out)?;
+        let (error, exhausted) = gauss.compute_adaptive_surface_observed(
+            surface,
+            domain,
+            self.base.loc,
+            eps,
+            &mut out,
+        )?;
         store_gauss_props(&mut self.base, &out);
         self.epsilon = error;
-        Ok(error)
+        Ok((error, exhausted))
     }
 
     /// `GetEpsilon()`: the error of the last adaptive Perform, 1 after a fixed one;
