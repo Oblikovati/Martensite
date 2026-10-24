@@ -5,6 +5,7 @@ mod affected;
 mod archive;
 mod cargo;
 mod changelog;
+mod ci_tests;
 mod cli;
 mod compiler_inventory;
 mod context;
