@@ -2,7 +2,6 @@
 
 use std::collections::BTreeSet;
 
-use crate::affected::affected_packages;
 use crate::cargo::{BuildTarget, CargoTasks, PackageSelection};
 use crate::context::BuildContext;
 use crate::error::{BuildError, BuildResult};
@@ -18,7 +17,7 @@ fn selected_packages(context: &BuildContext<'_>, plan: &CiPlan) -> BuildResult<B
     let merge_base = context.git.merge_base(base)?;
     let changed = context.git.changed_files(&merge_base)?;
     let workspace = CargoWorkspace::load(context.runner, context.root())?;
-    Ok(affected_packages(&workspace, &changed))
+    crate::release_impact::pull_request_packages(context, &workspace, &merge_base, &changed)
 }
 
 /// Emits each affected package exactly once, including an empty docs-only matrix.
@@ -168,5 +167,65 @@ mod tests {
         assert_eq!(matrix_outputs(&context, &plan).unwrap()[0].1, "false");
         assert!(test_package(&context, &plan, "martensite-kernel", &BuildTarget::Host).is_err());
         assert_eq!(runner.commands(), ["git rev-parse --show-toplevel"]);
+    }
+}
+
+#[cfg(test)]
+mod bookkeeping_tests {
+    use super::*;
+    use crate::{context::tests::context_at, fake_runner::RecordingRunner};
+
+    struct ManifestBookkeepingFixture {
+        root: tempfile::TempDir,
+        runner: RecordingRunner,
+    }
+
+    impl ManifestBookkeepingFixture {
+        fn new() -> Self {
+            let root = tempfile::tempdir().unwrap();
+            let directory = root.path().join("crates/martensite-math");
+            std::fs::create_dir_all(&directory).unwrap();
+            std::fs::write(root.path().join("Cargo.toml"), "[workspace]").unwrap();
+            std::fs::write(
+                directory.join("Cargo.toml"),
+                "[package]\nname='martensite-math'\nversion='0.3.1'",
+            )
+            .unwrap();
+            let runner = bookkeeping_runner(root.path());
+            Self { root, runner }
+        }
+    }
+
+    fn bookkeeping_runner(root: &std::path::Path) -> RecordingRunner {
+        RecordingRunner::default()
+            .with_stdout("git rev-parse --show-toplevel", &root.display().to_string())
+            .with_stdout("git merge-base origin/main HEAD", "base")
+            .with_stdout(
+                "git diff --name-status --no-renames -z base",
+                "M\0crates/martensite-math/Cargo.toml\0",
+            )
+            .with_stdout(
+                "cargo metadata --format-version 1 --no-deps --locked",
+                &crate::workspace::tests::metadata_at(&root.display().to_string(), "0.3.1"),
+            )
+            .with_stdout("git show base:Cargo.toml", "[workspace]")
+            .with_stdout(
+                "git ls-tree -r --name-only -z base",
+                "crates/martensite-math/Cargo.toml\0",
+            )
+            .with_stdout(
+                "git show base:crates/martensite-math/Cargo.toml",
+                "[package]\nname='martensite-math'\nversion='0.3.0'",
+            )
+    }
+
+    #[test]
+    fn version_only_manifest_does_not_add_a_base_dependency_to_pr_tests() {
+        let fixture = ManifestBookkeepingFixture::new();
+        let context = context_at(&fixture.runner, fixture.root.path());
+        let plan = CiPlan::PullRequest {
+            base: "origin/main".into(),
+        };
+        assert_eq!(matrix_outputs(&context, &plan).unwrap()[0].1, "false");
     }
 }

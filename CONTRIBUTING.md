@@ -123,7 +123,8 @@ edit them.
 
 Releases need explicit maintainer approval for the version number and the tag.
 
-1. Set the new version on every kernel crate, and rename `## [Unreleased]` in
+1. Bump only kernel packages whose own source changed. Keep unchanged package
+   versions, including dependencies of changed packages. Rename `## [Unreleased]` in
    `CHANGELOG.md` to `## [X.Y.Z] - YYYY-MM-DD` with a new empty
    `## [Unreleased]` above it.
 2. Rehearse the release locally for your host target:
@@ -132,7 +133,8 @@ Releases need explicit maintainer approval for the version number and the tag.
    cargo xtask release --version X.Y.Z
    ```
 
-   This checks the semver rules, runs fmt, clippy and the full test suite,
+   This checks package-version and semver rules, runs fmt, clippy and the
+   changed and affected package suites since the previous release,
    builds in release mode, and writes the packages to `target/dist/vX.Y.Z/`.
    It never publishes.
 3. Run the full matrix on the release-candidate commit: start the `Martensite`

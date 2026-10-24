@@ -6,7 +6,6 @@ use semver::Version;
 
 use crate::changelog::ReleaseNotes;
 use crate::error::{BuildError, BuildResult};
-use crate::workspace::WorkspacePackage;
 
 /// How far a version moved, or must move, from the previous release.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -57,34 +56,6 @@ pub fn previous_release(tags: &[String], version: &Version) -> Option<Version> {
         .filter_map(|tag| parse_release_tag(tag).ok())
         .filter(|tagged| tagged.pre.is_empty() && tagged < version)
         .max()
-}
-
-/// Every releasable package must carry exactly the release version.
-pub fn check_package_versions(
-    packages: &[&WorkspacePackage],
-    version: &Version,
-) -> BuildResult<()> {
-    if packages.is_empty() {
-        return Err(BuildError::ReleaseRule(
-            "the workspace has no releasable package".into(),
-        ));
-    }
-    let mismatched = mismatched_packages(packages, version);
-    if mismatched.is_empty() {
-        return Ok(());
-    }
-    Err(BuildError::ReleaseRule(format!(
-        "package versions {mismatched:?} differ from the release; expected every package at {version}"
-    )))
-}
-
-fn mismatched_packages(packages: &[&WorkspacePackage], version: &Version) -> Vec<String> {
-    let mismatched = packages
-        .iter()
-        .filter(|package| &package.version != version);
-    mismatched
-        .map(|package| format!("{} {}", package.name, package.version))
-        .collect()
 }
 
 /// Refuses a bump smaller than the changelog's headings require.
@@ -186,15 +157,6 @@ mod tests {
         Version::parse(text).unwrap()
     }
 
-    fn package(name: &str, version: &str) -> WorkspacePackage {
-        WorkspacePackage {
-            name: name.into(),
-            version: v(version),
-            dir: name.into(),
-            path_dependencies: vec![],
-        }
-    }
-
     #[test]
     fn release_tag_shape_is_enforced() {
         assert_eq!(parse_release_tag("v1.2.3-rc.1").unwrap(), v("1.2.3-rc.1"));
@@ -260,14 +222,5 @@ mod tests {
     fn unknown_heading_is_named() {
         let error = required_bump(&notes(&["Misc"], false)).unwrap_err();
         assert!(error.to_string().contains("\"Misc\""));
-    }
-
-    #[test]
-    fn package_versions_must_all_match() {
-        let (a, b) = (package("a", "1.0.0"), package("b", "0.9.0"));
-        assert!(check_package_versions(&[&a], &v("1.0.0")).is_ok());
-        let error = check_package_versions(&[&a, &b], &v("1.0.0")).unwrap_err();
-        assert!(error.to_string().contains("b 0.9.0"));
-        assert!(check_package_versions(&[], &v("1.0.0")).is_err());
     }
 }

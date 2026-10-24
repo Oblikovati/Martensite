@@ -72,6 +72,25 @@ impl<'a> GitRepo<'a> {
         Ok(stdout.lines().map(str::to_owned).collect())
     }
 
+    /// Reads a tracked UTF-8 file at an immutable revision.
+    ///
+    /// ```ignore
+    /// let manifest = git.file_at("v0.3.5", "Cargo.toml")?;
+    /// ```
+    pub fn file_at(&self, revision: &str, path: &str) -> BuildResult<String> {
+        self.capture(&["show", &format!("{revision}:{path}")])
+    }
+
+    /// Lists tracked paths at a revision, retaining whitespace in file names.
+    ///
+    /// ```ignore
+    /// let paths = git.paths_at("v0.3.5")?;
+    /// ```
+    pub fn paths_at(&self, revision: &str) -> BuildResult<Vec<String>> {
+        let output = self.capture(&["ls-tree", "-r", "--name-only", "-z", revision])?;
+        Ok(output.split_terminator('\0').map(str::to_owned).collect())
+    }
+
     fn capture(&self, args: &[&str]) -> BuildResult<String> {
         self.runner.capture(&self.command(args))
     }

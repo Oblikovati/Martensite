@@ -39,8 +39,9 @@ Each test job runs unit, integration and documentation tests with
 `--no-fail-fast`; a failed job does not cancel the others. The existing
 `pr (x86_64-unknown-linux-gnu)` check aggregates their results. Documentation-only
 changes produce no package jobs; only that empty selection permits skipped tests.
-Local `cargo xtask pr` still runs all stages sequentially. Release pipelines keep
-their full suite per target.
+Local `cargo xtask pr` still runs all stages sequentially. Release pipelines
+compute package scope since the previous release and run the selected suites
+on each supported target.
 
 When process-policy is selected, the shared test command explicitly enables
 `martensite-process-policy/case-runner`. This preserves the unit tests that a
@@ -104,10 +105,13 @@ gate; the ARM baseline must not be substituted.
    This runs even when no package is affected, including baseline-only changes.
 4. Find the affected packages: the package that owns each changed file (the
    longest package directory that contains it), plus every workspace package
-   that depends on an affected package. A change to `Cargo.toml`,
-   `Cargo.lock`, `rust-toolchain.toml`, `rustfmt.toml`, `clippy.toml` or
-   `.cargo/` affects the whole workspace. A change that touches no package
-   stops here after any required inventory check.
+   that depends on an affected package. Manifest version bookkeeping does not
+   select unchanged packages. Lockfile changes follow exact package identities
+   and changed workspace dependency edges; package-specific optimization changes
+   follow their dependency consumers. Global build configuration, toolchain or
+   `.cargo/` changes affect the whole workspace. Formatting and lint settings do
+   not select behavioral suites. A change that affects no package stops here
+   after any required inventory check.
 5. Run clippy with `-D warnings`, a build of all targets, and the tests for
    the affected packages.
 
@@ -128,8 +132,10 @@ regression exercises this policy with `core.autocrlf=true` ([#197]).
 
 1. Semver gate:
    - The tag is `vMAJOR.MINOR.PATCH[-PRERELEASE]`, without build metadata.
-   - Every releasable package (all members except `martensite-build`) has
-     exactly the release version.
+   - Each package is compared with the previous final release. Changed package
+     source needs a newer version; unchanged source must keep its version.
+     Own-version and local dependency requirement edits are bookkeeping, so they
+     cannot justify a version bump by themselves (#256).
    - `CHANGELOG.md` has a `## [X.Y.Z]` section with at least one heading.
    - The bump from the previous final release (the highest earlier `v*` tag
      that is not a pre-release) is at least what the headings require:
@@ -140,8 +146,13 @@ regression exercises this policy with `core.autocrlf=true` ([#197]).
      only a patch bump, and a breaking change (`Removed` or a `BREAKING`
      marker) needs a minor bump. The first release has no baseline, so only
      the section is checked.
-2. `cargo fmt --all --check`, then clippy and the full test suite (with doc
-   tests) for the whole workspace on the target.
+2. `cargo fmt --all --check` and workspace clippy, then the changed and affected
+   package suites, including doctests, since the previous release. Tests include
+   transitive dependents, without selecting base dependencies merely because
+   they need compiling. Lockfile changes select consumers of changed external
+   dependencies; package-specific optimization changes select their consumers;
+   global build settings select all packages. The four supported targets remain
+   mandatory. The first release tests the whole workspace.
 3. Release build of the releasable packages. The driver reads cargo's JSON
    messages to find executables and native libraries (`cdylib`, `staticlib`,
    `dylib`).
@@ -151,8 +162,11 @@ regression exercises this policy with `core.autocrlf=true` ([#197]).
      reproducible: entries are sorted, and owners, timestamps and modes are
      fixed. A target without executables or native libraries gets no
      archive.
-   - On the primary target only: one `.crate` source package per releasable
-     package from `cargo package`. Cargo builds each package from its
+   - On the primary target only: changed and new `.crate` source packages,
+     named with each package's own version. Unchanged packages are not
+     republished; use their existing release assets. Cargo verifies all workspace
+     source packages together so unchanged dependencies remain available in the
+     local overlay registry. Cargo builds each package from its
      packaged sources to verify it. A kernel crate that depends on another
      unreleased kernel crate resolves it through cargo's local overlay
      registry, which cargo uses only for publishable packages, so kernel
@@ -162,6 +176,9 @@ regression exercises this policy with `core.autocrlf=true` ([#197]).
      Test dependencies also declare versions. Keep them acyclic: a reciprocal
      development dependency can pass local tests but cannot be ordered for the
      temporary package registry (#241).
+   - `martensite-<version>-packages.json` on the primary target records every
+     package version, which source packages this release ships, the previous
+     release baseline, and the selected test suites.
    - A `<file>.sha256` file in `sha256sum` format next to each asset.
 5. Collect expanded unsafe diagnostics for the selected target and compare its
    compiler baseline. Collection cleans only its dedicated build cache and

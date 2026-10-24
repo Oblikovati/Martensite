@@ -15,7 +15,7 @@ workspace = true
 case-runner = ["dep:sha2"]
 
 [dependencies]
-martensite-cmath = { path = "../martensite-cmath", version = "0.3.6" }
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
 martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.6" }
 sha2 = { version = "=0.11.1", optional = true }
 
