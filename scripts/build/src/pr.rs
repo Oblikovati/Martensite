@@ -55,6 +55,11 @@ pub fn validate_pr_checks(
     check_affected_packages(context, &merge_base, &changed, target, run_tests)
 }
 
+struct PackageChecks {
+    build: BTreeSet<String>,
+    test: BTreeSet<String>,
+}
+
 fn check_affected_packages(
     context: &BuildContext<'_>,
     reference: &str,
@@ -62,25 +67,40 @@ fn check_affected_packages(
     target: &BuildTarget,
     run_tests: bool,
 ) -> BuildResult<()> {
-    let affected = context.reporter.step("Find affected packages", || {
+    let checks = context.reporter.step("Find affected packages", || {
         affected(context, reference, changed)
     })?;
-    if affected.is_empty() {
+    if changed.iter().any(|file| file.path == "rustfmt.toml") {
+        CargoTasks::new(context.runner, context.root()).format_check_all()?;
+    }
+    if checks.build.is_empty() {
         context
             .reporter
             .note("No Rust package is affected; build and tests are skipped.");
         return Ok(());
     }
-    let names: Vec<String> = affected.into_iter().collect();
+    run_package_checks(context, checks, target, run_tests)
+}
+
+fn run_package_checks(
+    context: &BuildContext<'_>,
+    checks: PackageChecks,
+    target: &BuildTarget,
+    run_tests: bool,
+) -> BuildResult<()> {
+    let build = PackageSelection::Packages(checks.build.into_iter().collect());
+    check_packages(context, &build, target, false)?;
+    if !run_tests || checks.test.is_empty() {
+        return Ok(());
+    }
+    let names: Vec<_> = checks.test.into_iter().collect();
     context
         .reporter
-        .note(&format!("Affected packages: {}", names.join(", ")));
-    check_packages(
-        context,
-        &PackageSelection::Packages(names),
-        target,
-        run_tests,
-    )
+        .note(&format!("Test packages: {}", names.join(", ")));
+    context.reporter.step("Test affected packages", || {
+        CargoTasks::new(context.runner, context.root())
+            .test(&PackageSelection::Packages(names), target)
+    })
 }
 
 /// Runs both file linters before failing, so one run shows every problem.
@@ -106,9 +126,19 @@ fn affected(
     context: &BuildContext<'_>,
     reference: &str,
     changed: &[ChangedFile],
-) -> BuildResult<BTreeSet<String>> {
+) -> BuildResult<PackageChecks> {
     let workspace = CargoWorkspace::load(context.runner, context.root())?;
-    crate::release_impact::pull_request_packages(context, &workspace, reference, changed)
+    let test =
+        crate::release_impact::pull_request_packages(context, &workspace, reference, changed)?;
+    let build = if changed
+        .iter()
+        .any(|file| matches!(file.path.as_str(), "clippy.toml" | "rustfmt.toml"))
+    {
+        workspace.names().into_iter().collect()
+    } else {
+        test.clone()
+    };
+    Ok(PackageChecks { build, test })
 }
 
 fn check_packages(
@@ -233,6 +263,41 @@ mod tests {
                 .commands()
                 .iter()
                 .any(|c| c.starts_with("cargo build"))
+        );
+    }
+}
+
+#[cfg(test)]
+mod lint_setting_tests {
+    use super::*;
+    use crate::{context::tests::context_at, fake_runner::RecordingRunner};
+    #[test]
+    fn lint_setting_change_checks_workspace_without_running_behavioral_suites() {
+        let runner = RecordingRunner::default()
+            .with_stdout("git rev-parse --show-toplevel", "/repo")
+            .with_stdout("git merge-base origin/main HEAD", "base")
+            .with_stdout(
+                "git diff --name-status --no-renames -z base",
+                "M\0clippy.toml\0",
+            )
+            .with_stdout(
+                "cargo metadata --format-version 1 --no-deps --locked",
+                &crate::workspace::tests::sample_metadata(),
+            );
+        validate_pull_request(
+            &context_at(&runner, std::path::Path::new("/repo")),
+            "origin/main",
+            &BuildTarget::Host,
+        )
+        .unwrap();
+        assert!(runner.commands().iter().any(|line| line.starts_with(
+            "cargo clippy --locked --package martensite-kernel --package martensite-math"
+        )));
+        assert!(
+            !runner
+                .commands()
+                .iter()
+                .any(|line| line.starts_with("cargo test"))
         );
     }
 }
