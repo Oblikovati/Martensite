@@ -83,6 +83,14 @@ mod tests {
     #[test]
     fn workflow_requires_release_tests_before_publication() {
         let workflow = include_str!("../../../.github/workflows/martensite.yml");
+        let lf = workflow.replace("\r\n", "\n");
+        for text in [&lf, &lf.replace('\n', "\r\n")] {
+            assert_release_workflow_contract(text);
+        }
+    }
+
+    fn assert_release_workflow_contract(workflow: &str) {
+        let workflow = workflow.replace("\r\n", "\n");
         let verify = workflow
             .split("\n  verify:\n")
             .nth(1)
