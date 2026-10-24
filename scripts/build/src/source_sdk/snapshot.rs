@@ -74,10 +74,10 @@ fn stage_record(
 ) -> BuildResult<()> {
     let (mode, object, name) = parse_record(record)?;
     files::relative(Path::new(&name))?;
-    reserved_path(&name)?;
     if mode == "160000" {
         return gitlink(&name, &object, snapshot);
     }
+    reserved_path(&name)?;
     if mode != "100644" && mode != "100755" {
         return Err(BuildError::ReleaseRule(format!(
             "SDK input {name:?} mode {mode}; expected regular committed file"
@@ -136,9 +136,13 @@ fn gitlink(name: &str, object: &str, snapshot: &mut Snapshot) -> BuildResult<()>
 }
 
 fn reserved_path(name: &str) -> BuildResult<()> {
-    if name == "martensite-source-workspace.json" || name.starts_with("vendor/") {
+    if name == "martensite-source-workspace.json"
+        || name.starts_with("vendor/")
+        || name == "external/martensite-test-data"
+        || name.starts_with("external/martensite-test-data/")
+    {
         return Err(BuildError::ReleaseRule(format!(
-            "SDK committed path {name:?}; expected generated manifest/vendor paths to be unused"
+            "SDK committed path {name:?}; expected unused generated paths and only an unexpanded dataset gitlink"
         )));
     }
     Ok(())

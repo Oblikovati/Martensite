@@ -11,7 +11,7 @@ use crate::release_sources::SourceArtifacts;
 use crate::workspace::CargoWorkspace;
 
 /// Records shipped versions and test scope beside a checksum of the manifest.
-/// Example: `let assets = write_package_manifest(&request, &workspace, &scope)?;`.
+/// Example: `let assets = write_package_manifest(&request, &workspace, &scope, &source)?;`.
 pub(crate) fn write_package_manifest(
     request: &ReleaseRequest,
     workspace: &CargoWorkspace,

@@ -30,7 +30,11 @@ that lockfile offline.
 
 The primary release target extracts the archive it just built, verifies every
 payload hash and executable mode, and gives Cargo a fresh empty home and build
-directory. It builds all production libraries with all features, then compiles
+directory. These commands receive only an explicit installed-toolchain/native-SDK
+environment, with private home/config directories and no inherited credentials,
+compiler wrappers or Cargo flags. Ancestor Cargo configuration above the extracted
+workspace and consumer is rejected. Verification uses two build jobs, disables
+incremental compilation and debug symbols, and preserves debug assertions. It builds all production libraries with all features, then compiles
 and runs an external consumer that passes foundation error, geometry-property
 and topology types across crate boundaries and checks an empty measurement.
 The committed lockfile must remain unchanged. The archive gets its acceptance
@@ -66,8 +70,8 @@ The source manifest lists package versions, locked dependency identities, the
 unexpanded dataset revision and all payload hashes. It also records committed
 input hashes, including the original configuration before the vendor-source
 addition. Archive paths are sorted; owners, timestamps and file modes are fixed.
-Staging rejects uncommitted changes, symbolic links, unsupported gitlinks and
-path escapes. Local caches, ignored worktrees and Git administration files are
+Staging rejects uncommitted changes, symbolic links, unsupported gitlinks,
+ordinary files replacing the excluded dataset gitlink, and path escapes. Local caches, ignored worktrees and Git administration files are
 excluded.
 
 Vendoring may download locked dependencies during preparation. The acceptance

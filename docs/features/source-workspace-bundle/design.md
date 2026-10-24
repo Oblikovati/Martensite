@@ -77,9 +77,12 @@ No new library dependency is expected: Cargo supplies vendoring; `tar`, `flate2`
 
 The gate operates solely on the extracted archive. It has no Git checkout and
 uses an empty private `CARGO_HOME`, a fresh target directory and
-`CARGO_NET_OFFLINE=true`. Remove inherited Cargo source overrides, Rust flags,
-wrapper variables and test-data overrides that could redirect it to developer
-files. Keep the installed compiler and declared platform native-library discovery
+`CARGO_NET_OFFLINE=true`. Clear the inherited environment and supply an explicit allowlist for installed
+toolchain and native-SDK discovery. Give HOME, USERPROFILE and configuration/cache
+directories private paths; retain only the explicit installed Rustup home. Credentials,
+Cargo overrides, compiler wrappers and arbitrary flags are excluded. Canonicalize
+the working directory and reject both Cargo configuration variants on its physical
+ancestors before any acceptance command. Keep the installed compiler and declared platform native-library discovery
 available. Validate the installed compiler against the bundle's toolchain file;
 the gate must not trigger a toolchain download.
 

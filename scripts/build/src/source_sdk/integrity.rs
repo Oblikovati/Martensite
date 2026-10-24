@@ -148,5 +148,10 @@ fn restore_mode<R: Read>(entry: &tar::Entry<'_, R>, path: &Path) -> BuildResult<
         .header()
         .mode()
         .map_err(|cause| io_error(path, cause))?;
+    if !matches!(mode, 0o644 | 0o755) {
+        return Err(BuildError::ReleaseRule(format!(
+            "SDK member mode {mode:o} at {path:?}; expected 644 or 755"
+        )));
+    }
     files::set_mode(path, mode & 0o111 != 0)
 }

@@ -264,3 +264,78 @@ fn committed_symlinks_fail_before_any_target_is_read() {
     assert!(error.to_string().contains("mode 120000"));
     assert!(!destination.join("outside").exists());
 }
+
+#[test]
+fn ordinary_dataset_files_cannot_enter_the_sdk() {
+    let fixture = SdkFixture::new();
+    fixture.write(
+        "external/martensite-test-data/canary.txt",
+        "excluded dataset bytes",
+    );
+    fixture.commit();
+    let destination = fixture.directory.path().join("snapshot");
+    let error = snapshot::stage(&fixture.context(), &destination).unwrap_err();
+    assert!(error.to_string().contains("unexpanded dataset gitlink"));
+    assert!(
+        !destination
+            .join("external/martensite-test-data/canary.txt")
+            .exists()
+    );
+}
+
+#[test]
+fn inherited_credentials_and_wrappers_do_not_reach_extracted_build_scripts() {
+    if let Some(root) = std::env::var_os("SDK_ENV_TEST_ROOT") {
+        let temporary = tempfile::tempdir().unwrap();
+        consumer::verify(&ProcessRunner, Path::new(&root), temporary.path()).unwrap();
+        return;
+    }
+    let fixture = SdkFixture::new();
+    fixture.write("crates/martensite-tkernel/build.rs", ENVIRONMENT_PROBE);
+    fixture.commit();
+    let stage = fixture.directory.path().join("canary-stage");
+    snapshot::stage(&fixture.context(), &stage).unwrap();
+    vendor::prepare(&ProcessRunner, &stage).unwrap();
+    ProcessRunner
+        .run(&environment_probe_command(&stage))
+        .unwrap();
+}
+
+fn environment_probe_command(stage: &Path) -> CommandSpec {
+    let executable = std::env::current_exe().unwrap();
+    let mut command = CommandSpec::new(executable.to_str().unwrap(), stage)
+        .args(["--exact", "source_sdk::tests::inherited_credentials_and_wrappers_do_not_reach_extracted_build_scripts", "--nocapture"])
+        .environment_os("SDK_ENV_TEST_ROOT", Some(stage.as_os_str()));
+    for name in ENVIRONMENT_CANARIES {
+        command = command.environment(name, Some("inert-sdk-canary"));
+    }
+    command
+}
+
+const ENVIRONMENT_CANARIES: &[&str] = &[
+    "GH_TOKEN",
+    "GITHUB_TOKEN",
+    "SSH_AUTH_SOCK",
+    "AWS_ACCESS_KEY_ID",
+    "GOOGLE_APPLICATION_CREDENTIALS",
+    "AZURE_CLIENT_SECRET",
+    "RUSTFLAGS",
+    "RUSTC_WRAPPER",
+    "CARGO_BUILD_RUSTC_WRAPPER",
+    "RUSTDOCFLAGS",
+    "CARGO_ENCODED_RUSTDOCFLAGS",
+    "CARGO_PROFILE_DEV_OPT_LEVEL",
+];
+
+const ENVIRONMENT_PROBE: &str = r#"fn main() {
+    for name in ["GH_TOKEN", "GITHUB_TOKEN", "SSH_AUTH_SOCK", "AWS_ACCESS_KEY_ID",
+        "GOOGLE_APPLICATION_CREDENTIALS", "AZURE_CLIENT_SECRET", "RUSTFLAGS",
+        "RUSTC_WRAPPER", "CARGO_BUILD_RUSTC_WRAPPER", "RUSTDOCFLAGS",
+        "CARGO_ENCODED_RUSTDOCFLAGS", "CARGO_PROFILE_DEV_OPT_LEVEL", "SDK_ENV_TEST_ROOT"] {
+        assert!(std::env::var_os(name).is_none(), "inherited forbidden environment: {name}");
+    }
+    let home = std::env::var_os("HOME").expect("private HOME");
+    assert_eq!(std::path::Path::new(&home).file_name().unwrap(), "cargo-home");
+    assert_eq!(std::env::var_os("USERPROFILE"), Some(home));
+}
+"#;

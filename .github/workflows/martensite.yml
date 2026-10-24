@@ -76,6 +76,9 @@ jobs:
           submodules: true
       - uses: ./.github/actions/setup-target
       - run: cargo xtask ci run --target ${{ matrix.target }} --checks-only
+        env:
+          # Read the immutable historical archive assets during release checks (#279).
+          GH_TOKEN: ${{ needs.plan.outputs.mode == 'release' && github.token || '' }}
       - name: Retain compiler unsafe inventory evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

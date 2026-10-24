@@ -4,7 +4,7 @@ use crate::{
     archive,
     error::{BuildError, BuildResult, io_error},
     package_manifest::parse_table,
-    process::{CommandRunner, CommandSpec},
+    process::CommandRunner,
 };
 use std::{fs, path::Path};
 
@@ -26,10 +26,16 @@ fn shared_types_measure_empty_shape() -> Result<(), Failure> {
 "#;
 
 pub(super) fn verify(runner: &dyn CommandRunner, root: &Path, temporary: &Path) -> BuildResult<()> {
+    commands::reject_ancestor_configuration(root)?;
     let home = prepare_home(temporary)?;
     let target = temporary.join("consumer-target");
     let channel = toolchain(root)?;
-    runner.run(&CommandSpec::new("rustup", root).args(["run", &channel, "rustc", "--version"]))?;
+    runner.run(&commands::clean_process("rustup", root, &home).args([
+        "run",
+        &channel,
+        "rustc",
+        "--version",
+    ]))?;
     let lock = archive::sha256_hex(&root.join("Cargo.lock"))?;
     libraries(runner, root, &home, &target, &channel)?;
     external(runner, root, temporary, &home, &target, &channel)?;
@@ -112,6 +118,7 @@ fn external(
         Path::new(".cargo/config.toml"),
         config.as_bytes(),
     )?;
+    commands::reject_ancestor_configuration(&consumer)?;
     let cargo = || {
         commands::isolated(&consumer, home, target).environment("RUSTUP_TOOLCHAIN", Some(channel))
     };
@@ -140,24 +147,65 @@ fn absolute_vendor(root: &Path) -> BuildResult<String> {
 }
 
 fn validate_metadata(root: &Path, bytes: &[u8]) -> BuildResult<()> {
-    let value: serde_json::Value = serde_json::from_slice(bytes).map_err(|cause| {
+    let root = fs::canonicalize(root).map_err(|cause| io_error(root, cause))?;
+    for package in package_array(bytes)? {
+        validate_package(&root, &package)?;
+    }
+    Ok(())
+}
+
+fn package_array(bytes: &[u8]) -> BuildResult<Vec<serde_json::Value>> {
+    let mut value: serde_json::Value = serde_json::from_slice(bytes).map_err(|cause| {
         BuildError::ReleaseRule(format!("SDK metadata: {cause}; expected Cargo JSON"))
     })?;
-    let packages = value["packages"].as_array().ok_or_else(|| {
-        BuildError::ReleaseRule("SDK metadata packages missing; expected array".into())
-    })?;
+    let packages = value
+        .get_mut("packages")
+        .and_then(|v| v.as_array_mut())
+        .map(std::mem::take)
+        .ok_or_else(|| {
+            BuildError::ReleaseRule("SDK metadata packages missing; expected array".into())
+        })?;
     if packages.is_empty() {
         return Err(BuildError::ReleaseRule(
             "SDK metadata packages empty; expected production workspace".into(),
         ));
     }
-    for package in packages {
-        let path = package["manifest_path"].as_str().unwrap_or_default();
-        if !Path::new(path).starts_with(root) {
-            return Err(BuildError::ReleaseRule(format!(
-                "SDK dependency manifest {path:?}; expected inside {root:?}"
-            )));
-        }
+    Ok(packages)
+}
+
+fn validate_package(root: &Path, package: &serde_json::Value) -> BuildResult<()> {
+    let path = package["manifest_path"].as_str().ok_or_else(|| {
+        BuildError::ReleaseRule(format!(
+            "SDK manifest_path {:?}; expected a path string",
+            package["manifest_path"]
+        ))
+    })?;
+    let resolved = fs::canonicalize(path).map_err(|cause| io_error(Path::new(path), cause))?;
+    if !resolved.starts_with(root) {
+        return Err(BuildError::ReleaseRule(format!(
+            "SDK dependency manifest {path:?}; expected inside {root:?}"
+        )));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dependency_metadata_outside_the_extracted_tree_is_rejected() {
+        let directory = tempfile::tempdir().unwrap();
+        let root = directory.path().join("sdk");
+        fs::create_dir(&root).unwrap();
+        let outside = directory.path().join("Cargo.toml");
+        fs::write(&outside, "[package]").unwrap();
+        let metadata = serde_json::json!({"packages":[{"manifest_path":outside}]}).to_string();
+        assert!(
+            validate_metadata(&root, metadata.as_bytes())
+                .unwrap_err()
+                .to_string()
+                .contains("expected inside")
+        );
+    }
 }
