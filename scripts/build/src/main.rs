@@ -14,11 +14,15 @@ mod error;
 mod fake_runner;
 mod git;
 mod lint;
+mod package_manifest;
 mod plan;
 mod pr;
 mod process;
 mod publish;
 mod release;
+mod release_impact;
+mod release_manifest;
+mod release_scope;
 mod report;
 mod targets;
 #[cfg(test)]

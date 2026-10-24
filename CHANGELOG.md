@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Preserved unchanged package versions and selected release tests by source and dependency impact instead of requiring workspace-wide version bumps (#256).
+
 ## [0.3.6] - 2026-10-24
 
 ### Fixed

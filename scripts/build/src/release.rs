@@ -11,7 +11,8 @@ use crate::cargo::{BuildTarget, CargoTasks, PackageSelection, ShippedArtifact};
 use crate::changelog::release_notes;
 use crate::context::{BUILD_TOOL_PACKAGE, BuildContext};
 use crate::error::{BuildError, BuildResult, io_error};
-use crate::version::{check_bump, check_package_versions, previous_release};
+use crate::release_scope::ReleaseScope;
+use crate::version::{check_bump, previous_release};
 use crate::workspace::{CargoWorkspace, WorkspacePackage};
 
 /// Repository documents shipped inside every binary archive. Official binaries
@@ -54,29 +55,34 @@ pub fn run_release(
     reporter.step("Validate release version", || {
         validate_version(context, &workspace, &request.version)
     })?;
+    let scope = ReleaseScope::load(context, &workspace, &request.version)?;
     let cargo = CargoTasks::new(context.runner, context.root());
     let target = BuildTarget::Triple(request.triple.clone());
-    verify_workspace(context, &cargo, &target)?;
+    verify_workspace(context, &cargo, &target, &scope.tests)?;
     let shipped = PackageSelection::WorkspaceExcept(vec![BUILD_TOOL_PACKAGE.to_owned()]);
     let artifacts = reporter.step("Build release", || cargo.release_build(&shipped, &target))?;
     reporter.step("Package release", || {
-        package_release(context, request, &workspace, &artifacts)
+        package_release(context, request, &workspace, &scope, &artifacts)
     })
 }
 
-/// Full-workspace gates: a release never relies on PR-scoped checks.
+/// Release test scope is computed from the previous release, never the PR base.
 fn verify_workspace(
     context: &BuildContext<'_>,
     cargo: &CargoTasks<'_>,
     target: &BuildTarget,
+    tests: &[String],
 ) -> BuildResult<()> {
     let reporter = &context.reporter;
     reporter.step("Check formatting", || cargo.format_check_all())?;
     reporter.step("Clippy workspace", || {
         cargo.clippy(&PackageSelection::Workspace, target)
     })?;
-    reporter.step("Test workspace", || {
-        cargo.test(&PackageSelection::Workspace, target)
+    if tests.is_empty() {
+        return Ok(());
+    }
+    reporter.step("Test changed and affected packages", || {
+        cargo.test(&PackageSelection::Packages(tests.to_vec()), target)
     })
 }
 
@@ -93,7 +99,11 @@ fn validate_version(
     workspace: &CargoWorkspace,
     version: &Version,
 ) -> BuildResult<()> {
-    check_package_versions(&releasable(workspace), version)?;
+    if releasable(workspace).is_empty() {
+        return Err(BuildError::ReleaseRule(
+            "the workspace has no releasable package".into(),
+        ));
+    }
     let changelog_path = context.root().join("CHANGELOG.md");
     let changelog =
         fs::read_to_string(&changelog_path).map_err(|cause| io_error(&changelog_path, cause))?;
@@ -113,12 +123,21 @@ fn package_release(
     context: &BuildContext<'_>,
     request: &ReleaseRequest,
     workspace: &CargoWorkspace,
+    scope: &ReleaseScope,
     artifacts: &[ShippedArtifact],
 ) -> BuildResult<Vec<PathBuf>> {
     recreate_dir(&request.dist_dir)?;
     let mut assets = package_binaries(context, request, artifacts)?;
     if request.source_packages {
-        assets.extend(package_sources(context, request, workspace)?);
+        assets.extend(package_sources(
+            context,
+            request,
+            workspace,
+            &scope.packages,
+        )?);
+        assets.extend(crate::release_manifest::write_package_manifest(
+            request, workspace, scope,
+        )?);
     }
     for asset in &assets {
         context
@@ -183,7 +202,11 @@ fn package_sources(
     context: &BuildContext<'_>,
     request: &ReleaseRequest,
     workspace: &CargoWorkspace,
+    changed: &[String],
 ) -> BuildResult<Vec<PathBuf>> {
+    if changed.is_empty() {
+        return Ok(Vec::new());
+    }
     let names: Vec<String> = releasable(workspace)
         .iter()
         .map(|package| package.name.clone())
@@ -191,17 +214,25 @@ fn package_sources(
     CargoTasks::new(context.runner, context.root())
         .package_sources(&PackageSelection::Packages(names.clone()))?;
     let mut assets = Vec::new();
-    for name in names {
-        assets.extend(ship_crate(context.root(), request, &name)?);
+    for package in releasable(workspace)
+        .into_iter()
+        .filter(|p| changed.contains(&p.name))
+    {
+        assets.extend(ship_crate(context.root(), request, package)?);
     }
     Ok(assets)
 }
 
 /// Copies `target/package/<name>-<version>.crate` into the dist directory.
-fn ship_crate(root: &Path, request: &ReleaseRequest, name: &str) -> BuildResult<[PathBuf; 2]> {
-    let crate_file = format!("{name}-{}.crate", request.version);
+fn ship_crate(
+    root: &Path,
+    request: &ReleaseRequest,
+    package: &WorkspacePackage,
+) -> BuildResult<[PathBuf; 2]> {
+    let package_dir = format!("{}-{}", package.name, package.version);
+    let crate_file = format!("{package_dir}.crate");
     let packaged = root.join("target").join("package").join(&crate_file);
-    require_source_license(&packaged, &format!("{name}-{}", request.version))?;
+    require_source_license(&packaged, &package_dir)?;
     let shipped = request.dist_dir.join(&crate_file);
     fs::copy(&packaged, &shipped).map_err(|cause| io_error(&packaged, cause))?;
     let checksum = write_checksum(&shipped)?;

@@ -25,7 +25,7 @@ undocumented_unsafe_blocks = "warn"
 [dependencies]
 allocator-api2 = "=0.4.0"
 bytemuck = { version = "=1.25.2", default-features = false }
-martensite-cmath = { path = "../martensite-cmath", version = "0.3.6" }
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
 smallvec = { version = "1.16.3", default-features = false, features = ["const_generics"] }
 
 [target.'cfg(unix)'.dependencies]
