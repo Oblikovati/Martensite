@@ -3,7 +3,6 @@
 
 use std::collections::BTreeSet;
 
-use crate::affected::affected_packages;
 use crate::cargo::{BuildTarget, CargoTasks, PackageSelection};
 use crate::context::BuildContext;
 use crate::error::BuildResult;
@@ -53,18 +52,19 @@ pub fn validate_pr_checks(
                 crate::compiler_inventory::capture_inventory(context.runner, context.root(), target)
             })?;
     }
-    check_affected_packages(context, &changed, target, run_tests)
+    check_affected_packages(context, &merge_base, &changed, target, run_tests)
 }
 
 fn check_affected_packages(
     context: &BuildContext<'_>,
+    reference: &str,
     changed: &[ChangedFile],
     target: &BuildTarget,
     run_tests: bool,
 ) -> BuildResult<()> {
-    let affected = context
-        .reporter
-        .step("Find affected packages", || affected(context, changed))?;
+    let affected = context.reporter.step("Find affected packages", || {
+        affected(context, reference, changed)
+    })?;
     if affected.is_empty() {
         context
             .reporter
@@ -102,9 +102,13 @@ fn lint_changed_files(
     whitespace.and(format)
 }
 
-fn affected(context: &BuildContext<'_>, changed: &[ChangedFile]) -> BuildResult<BTreeSet<String>> {
+fn affected(
+    context: &BuildContext<'_>,
+    reference: &str,
+    changed: &[ChangedFile],
+) -> BuildResult<BTreeSet<String>> {
     let workspace = CargoWorkspace::load(context.runner, context.root())?;
-    Ok(affected_packages(&workspace, changed))
+    crate::release_impact::pull_request_packages(context, &workspace, reference, changed)
 }
 
 fn check_packages(

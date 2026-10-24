@@ -9,6 +9,21 @@ use crate::workspace::CargoWorkspace;
 use std::collections::BTreeSet;
 use toml::{Table, Value};
 
+pub(crate) fn pull_request_packages(
+    context: &BuildContext<'_>,
+    workspace: &CargoWorkspace,
+    reference: &str,
+    changed: &[ChangedFile],
+) -> BuildResult<BTreeSet<String>> {
+    let source =
+        crate::release_scope::changed_manifest_packages(context, workspace, reference, changed)?;
+    Ok(
+        release_tests(context, workspace, reference, changed, &source)?
+            .into_iter()
+            .collect(),
+    )
+}
+
 pub(crate) fn release_tests(
     context: &BuildContext<'_>,
     workspace: &CargoWorkspace,
@@ -83,10 +98,7 @@ fn package_input(workspace: &CargoWorkspace, path: &str, source_packages: &[Stri
         .packages
         .iter()
         .find(|package| path == format!("{}/Cargo.toml", package.dir));
-    owner.is_none_or(|package| {
-        package.name == crate::context::BUILD_TOOL_PACKAGE
-            || source_packages.contains(&package.name)
-    })
+    owner.is_none_or(|package| source_packages.contains(&package.name))
 }
 
 fn shared_tables(

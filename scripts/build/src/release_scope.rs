@@ -44,6 +44,39 @@ impl ReleaseScope {
     }
 }
 
+pub(crate) fn changed_manifest_packages(
+    context: &BuildContext<'_>,
+    workspace: &CargoWorkspace,
+    reference: &str,
+    changed: &[ChangedFile],
+) -> BuildResult<Vec<String>> {
+    let manifests: Vec<_> = workspace
+        .packages
+        .iter()
+        .filter(|package| {
+            changed
+                .iter()
+                .any(|file| file.path == format!("{}/Cargo.toml", package.dir))
+        })
+        .collect();
+    if manifests.is_empty() {
+        return Ok(Vec::new());
+    }
+    let previous = released_manifests(context, reference)?;
+    let inherited = workspace_fields(&read_manifest(context, "Cargo.toml")?)?;
+    let mut names = Vec::new();
+    for package in manifests {
+        let manifest = current_manifest(context, &package.dir, &inherited)?;
+        if previous
+            .get(&manifest.name)
+            .is_none_or(|old| manifest.source != old.source)
+        {
+            names.push(package.name.clone());
+        }
+    }
+    Ok(names)
+}
+
 fn selected_packages(
     context: &BuildContext<'_>,
     workspace: &CargoWorkspace,
