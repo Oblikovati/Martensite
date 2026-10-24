@@ -3,7 +3,7 @@
 #![allow(unsafe_code)]
 use martensite_tkernel::osd::set_process_cpu_limit;
 use std::io::{BufRead, BufReader, Read, Write};
-use std::process::{Child, ChildStdout, Command, Stdio};
+use std::process::{Child, Command, Stdio};
 use std::sync::mpsc::{Sender, channel};
 use std::time::{Duration, Instant};
 
@@ -76,7 +76,7 @@ fn close_stdout_after_ready(child: &mut Child, deadline: Instant) {
     reader.join().unwrap();
 }
 
-fn observe_readiness(stdout: ChildStdout, send: Sender<()>) {
+fn observe_readiness(stdout: impl Read, send: Sender<()>) {
     let mut reader = BufReader::new(stdout);
     let mut line = String::new();
     while reader.read_line(&mut line).unwrap() != 0 {
@@ -111,3 +111,6 @@ fn forced_child_shutdown_is_reaped() {
     terminate_and_reap(&mut child);
     assert!(child.try_wait().unwrap().is_some());
 }
+
+#[path = "osd_cpu_limit_signal/backpressure.rs"]
+mod backpressure;

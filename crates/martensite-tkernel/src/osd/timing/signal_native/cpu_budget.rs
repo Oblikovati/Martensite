@@ -1,14 +1,36 @@
 //! The CPU-budget exit action cannot allocate, lock or run destructors (#278).
 #![allow(unsafe_code)]
 
+mod clock;
+mod relay;
+use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
+
+static REQUEST_FD: AtomicI32 = AtomicI32::new(-1);
+static REQUEST_QUEUED: AtomicBool = AtomicBool::new(false);
+static OUTPUT_COMPLETE: AtomicBool = AtomicBool::new(false);
+
+pub(super) fn prepare_diagnostic_relay() -> std::io::Result<()> {
+    relay::prepare()
+}
+
 pub(super) extern "C" fn cpu_budget_exit(_signal: i32) {
-    let limit = crate::osd::reported_process_cpu_limit();
-    let (message, length) = cpu_budget_message(limit);
-    // SAFETY: the initialized stack slice is live for this bounded write. write and
-    // _exit are async-signal-safe; neither uses Rust I/O, allocation or destructors.
-    unsafe {
-        libc::write(1, message.as_ptr().cast(), length);
-        libc::_exit(2);
+    if !REQUEST_QUEUED.swap(true, Ordering::AcqRel) {
+        enqueue_diagnostic();
+    }
+    clock::wait_for_diagnostic();
+    // SAFETY: _exit is async-signal-safe and terminates without Rust destructors.
+    unsafe { libc::_exit(2) }
+}
+
+fn enqueue_diagnostic() {
+    let descriptor = REQUEST_FD.load(Ordering::Acquire);
+    let request = crate::osd::reported_process_cpu_limit().to_ne_bytes();
+    // SAFETY: initialization retains this nonblocking descriptor for process life;
+    // the fixed stack request is live, and write is async-signal-safe (#278).
+    let written = unsafe { libc::write(descriptor, request.as_ptr().cast(), request.len()) };
+    if written != request.len() as isize {
+        // An unavailable channel must never turn expiry into a wait for output.
+        OUTPUT_COMPLETE.store(true, Ordering::Release);
     }
 }
 

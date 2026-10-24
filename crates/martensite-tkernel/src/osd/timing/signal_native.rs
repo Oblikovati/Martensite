@@ -159,6 +159,7 @@ mod cpu_budget;
 
 #[cfg(unix)]
 pub(in crate::osd) fn install_process_cpu_exit() -> Result<(), std::io::Error> {
+    cpu_budget::prepare_diagnostic_relay()?;
     let callback = cpu_budget::cpu_budget_exit as *const () as usize;
     let mut wanted = action(callback, 0);
     // SAFETY: sa_mask is initialized and writable; SIGPIPE is a valid signal.
