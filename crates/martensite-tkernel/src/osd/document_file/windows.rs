@@ -30,6 +30,9 @@ use windows_sys::Win32::System::Threading::{
     GetCurrentProcess, GetCurrentThread, OpenProcessToken, OpenThreadToken,
 };
 
+#[path = "windows_streams.rs"]
+mod streams;
+
 const ACCESS_SECTIONS: [u32; 8] = [
     OWNER_SECURITY_INFORMATION,
     GROUP_SECURITY_INFORMATION,
@@ -357,6 +360,7 @@ fn preserve_readonly(source: &Path, staged: &Path) -> io::Result<()> {
 }
 
 fn prepare_access(source: &Path, staged: &Path) -> io::Result<()> {
+    streams::reject_named_streams(source)?;
     reject_encryption(source)?;
     reject_encryption(staged)?;
     require_default_writer_policy(staged)?;

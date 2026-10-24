@@ -105,3 +105,11 @@ x64. ARM64 release support is limited to macOS (#198). Run the manual `release`
 dispatch on the exact candidate commit and require all four native targets to
 pass before tagging. Target configuration is not evidence of a successful run;
 retain the commands, diagnostics and results from that candidate.
+
+### Windows staged document writes
+
+The access-policy boundary refuses replacement of an existing destination with
+named streams, including `Zone.Identifier`, before changing file metadata. The
+permission error leaves the original bytes and streams intact. Saves to ordinary
+files remain supported. Stream-enumeration errors also refuse publication rather
+than assuming metadata is absent (#248).

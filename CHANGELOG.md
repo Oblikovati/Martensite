@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Refused Windows document replacements with destination named streams before changing metadata or publishing bytes, preserving the original file and its stream contents (#248).
+
 ## [0.3.6] - 2026-10-24
 
 ### Fixed

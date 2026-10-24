@@ -1,4 +1,5 @@
 //! Native Windows tests: cross-compilation does not establish their runtime results.
+use super::super::preserve_document_access;
 use super::*;
 use std::os::windows::ffi::OsStringExt;
 use std::os::windows::fs::OpenOptionsExt;
@@ -189,4 +190,38 @@ fn readonly_writer_output_is_refused_without_changing_original() {
     assert_eq!(snapshot(&destination), before);
     assert_eq!(fs::read(&destination).unwrap(), b"old document");
     fs::set_permissions(stage, original_permissions).unwrap();
+}
+
+fn named_stream(path: &Path, name: &str) -> PathBuf {
+    let mut stream = path.as_os_str().to_os_string();
+    stream.push(format!(":{name}"));
+    PathBuf::from(stream)
+}
+
+#[test]
+fn named_destination_streams_refuse_publication_without_metadata_changes() {
+    for name in ["Zone.Identifier", "user.metadata"] {
+        let root = TestDirectory::new();
+        let destination = root.0.join("original");
+        fs::write(&destination, b"old document").unwrap();
+        let stream = named_stream(&destination, name);
+        fs::write(&stream, b"owned named-stream bytes").unwrap();
+        let stage = root.stage();
+        let before = (snapshot(&destination), snapshot(&stage));
+        let error = preserve_document_access(&destination, &stage).unwrap_err();
+        assert_eq!(error.kind(), io::ErrorKind::PermissionDenied);
+        assert!(error.to_string().contains(name));
+        assert_eq!(fs::read(&destination).unwrap(), b"old document");
+        assert_eq!(fs::read(stream).unwrap(), b"owned named-stream bytes");
+        assert_eq!(fs::read(&stage).unwrap(), b"new document");
+        assert_eq!((snapshot(&destination), snapshot(&stage)), before);
+    }
+}
+
+#[test]
+fn stream_inspection_retains_native_missing_destination_error() {
+    let root = TestDirectory::new();
+    let error = streams::reject_named_streams(&root.0.join("missing")).unwrap_err();
+    assert_eq!(error.kind(), io::ErrorKind::NotFound);
+    assert!(error.raw_os_error().is_some());
 }
