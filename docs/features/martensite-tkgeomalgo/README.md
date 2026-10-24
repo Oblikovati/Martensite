@@ -53,3 +53,6 @@ or `$MARTENSITE_TEST_DATA_DIR`. A case passes when the verdict of its log is `OK
 `BAD (known problem)`. Each case runs alone in a fresh child process under the
 elapsed-time budget of its group; a script can restart that budget for a long step.
 One case, `lowalgos_intss::bug565`, is ignored: its script outlasts its 60 s budget.
+
+The [combined walking-point read measurements](walking-snapshot-cost.md) record
+the snapshot-count regression and local fitting-read costs for #220.

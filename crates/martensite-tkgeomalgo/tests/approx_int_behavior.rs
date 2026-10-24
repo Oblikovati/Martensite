@@ -1,5 +1,8 @@
 //! Behavior of the ApproxInt templates and their GeomInt instances
 //! beyond the retained numeric corpus, which pins them bit for bit.
+#[path = "approx_int_snapshot.rs"]
+mod snapshot_contract;
+
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::adaptor3d::Adaptor3dTopolTool;
