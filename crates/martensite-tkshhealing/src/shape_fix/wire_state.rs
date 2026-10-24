@@ -1,4 +1,4 @@
-//! Working analyzer delegation for ShapeFix_Wire.
+//! Working analyzer delegation for ShapeFixWire.
 use super::ShapeFixWire;
 use crate::shape_analysis::{ShapeAnalysisSurface, ShapeAnalysisWire};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
@@ -86,7 +86,7 @@ impl ShapeFixWire {
     }
 
     /// Stores the native 3D gap mode; `fixer.set_fix_gaps_3d_mode(0)`.
-    /// The pinned native implementation stores this flag without reading it in repair dispatch.
+    /// This flag is stored for callers but is not read by repair dispatch.
     pub fn set_fix_gaps_3d_mode(&self, mode: i32) {
         self.state.write().fix_gaps_3d_mode = mode;
     }
@@ -97,7 +97,7 @@ impl ShapeFixWire {
     }
 
     /// Stores the native 2D gap mode; `fixer.set_fix_gaps_2d_mode(0)`.
-    /// The pinned native implementation stores this flag without reading it in repair dispatch.
+    /// This flag is stored for callers but is not read by repair dispatch.
     pub fn set_fix_gaps_2d_mode(&self, mode: i32) {
         self.state.write().fix_gaps_2d_mode = mode;
     }

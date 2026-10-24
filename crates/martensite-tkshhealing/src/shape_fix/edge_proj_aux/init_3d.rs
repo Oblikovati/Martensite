@@ -1,4 +1,4 @@
-// the retained behavior exposes Init3d only to subclasses; public Compute uses Init2d.
+// Spatial initialization is reserved for specialized implementations; public computation uses planar initialization.
 use super::EdgeProjAuxState;
 use super::projection;
 use martensite_tkbrep::brep::BRepTool;

@@ -8,7 +8,7 @@ pub(super) fn sort_and_merge(events: &mut Vec<LineEvent>) {
 }
 
 fn sort_events(events: &mut [LineEvent]) {
-    // Native stable bubble ordering preserves equal/NaN parameter event order.
+    // stable bubble ordering preserves equal/NaN parameter event order.
     for end in (1..events.len()).rev() {
         for index in 0..end {
             if events[index].parameter > events[index + 1].parameter {

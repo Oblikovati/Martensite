@@ -1,8 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom_ConvertToRevolution.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeCustom_ConvertToRevolution`: spheres, tori, cylinders and cones as surfaces of
-//! revolution (docs/shhealing-design.md section 7).
+//! `ShapeCustomConvertToRevolution`: spheres, tori, cylinders and cones as surfaces of
+//! revolution.
 use super::direct_modification::copied_pcurve;
 use super::edge_copy::copy_edge_curve;
 use super::modification::{ShapeCustomModification, ShapeCustomModificationFields};
@@ -24,7 +21,7 @@ use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkmath::gp::{Axis1, Axis2, Axis3, Direction3, Point3, Vector2};
 use std::f64::consts::PI;
 
-/// `ShapeCustom_ConvertToRevolution`: a face on a sphere, a torus, a cylinder or a cone
+/// `ShapeCustomConvertToRevolution`: a face on a sphere, a torus, a cylinder or a cone
 /// (possibly trimmed or offset) gets the equivalent `Geom_SurfaceOfRevolution` of a
 /// meridian about the surface axis, with the trimming or offset restored; edges with a
 /// p-curve on such a surface are copied (the p-curves of a sphere moved by 2*PI in V).
@@ -50,7 +47,7 @@ impl_transient!(
 );
 
 impl ShapeCustomConvertToRevolution {
-    /// `ShapeCustom_ConvertToRevolution()`; `ShapeCustomConvertToRevolution::new()`.
+    /// `ShapeCustomConvertToRevolution::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -64,13 +61,13 @@ impl ShapeCustomModification for ShapeCustomConvertToRevolution {
 
 /// The static `IsToConvert(S, ES)`: the elementary surface (`S` itself, or the basis of
 /// a rectangular trimmed or offset surface) when it is a sphere, a torus, a cylinder or
-/// a cone; the elementary surface found is returned in both cases, as the native output
+/// a cone; the elementary surface found is returned in both cases, as the output
 /// argument.
 fn is_to_convert(
     surface: &Handle<dyn GeomSurface>,
 ) -> Result<(bool, Handle<dyn GeomElementarySurface>), Failure> {
     if surface.is_null() {
-        // Natively `S->IsKind(...)` dereferences the null surface.
+        // Surface classification requires a live surface handle.
         return Err(Failure::with_type(
             "Standard_NullObject",
             "ShapeCustom_ConvertToRevolution: null surface",
@@ -135,7 +132,7 @@ fn basis_curve(
 }
 
 /// The surface of revolution with the trimming or the offset of the original surface
-/// restored (the native `ES == S` test compares the handles).
+/// restored (the `ES == S` test compares the handles).
 fn restored_surface(
     surface: &Handle<dyn GeomSurface>,
     elementary: &Handle<dyn GeomElementarySurface>,

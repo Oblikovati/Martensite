@@ -4,7 +4,7 @@ use super::face::BRepGPropFace;
 use super::mesh_props::{BRepGPropMeshProps, MeshObjType};
 use super::package::{BRepGProp, FaceSources, located_origin};
 use super::vinert::BRepGPropVinert;
-use super::volume_gk::VolumeGKFlags;
+use super::volume_gk::{VolumeGKFlags, complete_volume_gk};
 use super::volume_solids::volume_props;
 use crate::brep_check::explore::sub_shapes;
 use martensite_tkbrep::brep::BRepTool;
@@ -15,13 +15,11 @@ use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkgeombase::gprop::GProps;
 use martensite_tkmath::gp::Point3;
 
-/// The largest relative quadrature error accepted by the fixed-properties route.
+/// The relative quadrature error requested for geometric volume properties.
 ///
-/// A trimmed boundary can make a single Gauss pass under-resolve an otherwise smooth
-/// surface.  This limit preserves the inexpensive fixed route where it is adequate and
-/// switches to the existing adaptive integrator only when its independent two-order
-/// estimate says it is not.
-const FIXED_DOMAIN_ERROR_LIMIT: f64 = 1.0e-5;
+/// Trimmed boundaries need adaptive integration even on smooth surfaces; every
+/// geometric face therefore uses the same bounded integration route.
+const GEOMETRIC_VOLUME_ERROR_LIMIT: f64 = 1.0e-5;
 
 /// Whether a face can only contribute through its triangulation.
 ///
@@ -50,7 +48,8 @@ impl BRepGProp {
     /// `VolumeProperties(S, VProps, OnlyClosed, SkipShared, UseTriangulation)`: `props`
     /// becomes a framework at the located origin holding the volume of `shape` (of each
     /// closed shell with `only_closed`); error-bounded Gauss-Kronrod integration, meshes
-    /// when asked or when a face has no surface; `BRepGProp::volume_properties(&shape, &mut props, false, false, false)?`.
+    /// when asked or when a face has no surface; incomplete geometric integration
+    /// returns a typed failure and preserves `props`; `BRepGProp::volume_properties(&shape, &mut props, false, false, false)?`.
     pub fn volume_properties(
         shape: &Shape,
         props: &mut GProps,
@@ -72,7 +71,13 @@ impl BRepGProp {
             skip_shared,
             ..VolumeGKFlags::default()
         };
-        Self::volume_properties_gk(shape, props, FIXED_DOMAIN_ERROR_LIMIT, only_closed, flags)?;
+        complete_volume_gk(
+            shape,
+            props,
+            GEOMETRIC_VOLUME_ERROR_LIMIT,
+            only_closed,
+            flags,
+        )?;
         Ok(())
     }
 

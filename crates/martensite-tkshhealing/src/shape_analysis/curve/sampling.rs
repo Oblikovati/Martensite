@@ -1,4 +1,4 @@
-//! Native sampling distribution shared with face classification (TUBE.stp, 2002-06-05).
+//! sampling distribution shared with face classification (TUBE.stp, 2002-06-05).
 use super::ShapeAnalysisCurve;
 use martensite_tkernel::{
     ncollection::Sequence,

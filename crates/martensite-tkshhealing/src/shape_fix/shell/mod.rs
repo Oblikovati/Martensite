@@ -1,4 +1,4 @@
-//! ShapeFix_Shell from the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! ShapeFixShell.
 mod config;
 mod groups;
 mod orientation;
@@ -80,7 +80,7 @@ impl ShapeFixShell {
     pub fn error_faces(&self) -> Compound {
         self.state.read().errors.clone()
     }
-    /// Query retained native status bits; `tool.status_flag(ShapeExtendStatus::Done2)`.
+    /// Query retained status bits; `tool.status_flag(ShapeExtendStatus::Done2)`.
     pub fn status_flag(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(self.state.read().status, status)
     }

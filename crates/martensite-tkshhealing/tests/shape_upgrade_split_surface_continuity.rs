@@ -1,4 +1,4 @@
-//! Native parity cases for the 2D parameter scans and wrapper recursion.
+//! parity cases for the 2D parameter scans and wrapper recursion.
 use martensite_tkernel::ncollection::{Array1, Array2};
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::{

@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeProcess/ShapeProcess_ShapeContext.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeProcess_ShapeContext`: the shape of a ShapeProcess sequence, its current result,
+//! `ShapeProcessShapeContext`: the shape of a ShapeProcess sequence, its current result,
 //! the map of the modified subshapes and the messages attached to them.
 mod record;
 pub(super) mod statistics;
@@ -20,7 +17,7 @@ use martensite_tkmath::geom_abs::Shape as Continuity;
 /// The map of a shape context: original (located) shapes to their current images.
 pub type ShapeProcessShapeMap = DataMap<Shape, Shape, ShapeMapHasher>;
 
-/// The private fields of `ShapeProcess_ShapeContext`.
+/// The private fields of `ShapeProcessShapeContext`.
 struct ShapeContextFields {
     shape: Shape,
     result: Shape,
@@ -30,7 +27,7 @@ struct ShapeContextFields {
     non_manifold: bool,
 }
 
-/// `ShapeProcess_ShapeContext`: a ShapeProcess_Context (reached through `Deref`) with the
+/// `ShapeProcessShapeContext`: a ShapeProcessContext (reached through `Deref`) with the
 /// processed shape; each operator records its modifications down to the detalisation
 /// level (FACE by default).
 ///
@@ -60,7 +57,7 @@ impl std::ops::Deref for ShapeProcessShapeContext {
 }
 
 impl ShapeProcessShapeContext {
-    /// `ShapeProcess_ShapeContext(file, seq)`: the context of the resource file and scope,
+    /// the context of the resource file and scope,
     /// detalisation FACE, manifold mode; `ShapeProcessShapeContext::new("DE", "read")?`.
     pub fn new(file: &str, scope: &str) -> Result<Self, Failure> {
         Ok(Self {
@@ -76,7 +73,7 @@ impl ShapeProcessShapeContext {
         })
     }
 
-    /// `ShapeProcess_ShapeContext(S, file, seq)`: as `new`, then `Init(S)`.
+    /// as `new`, then `Init(S)`.
     /// Example: `ShapeProcessShapeContext::with_shape(&shape, "DE", "read")?`.
     pub fn with_shape(shape: &Shape, file: &str, scope: &str) -> Result<Self, Failure> {
         let context = Self::new(file, scope)?;
@@ -84,7 +81,7 @@ impl ShapeProcessShapeContext {
         Ok(context)
     }
 
-    /// `Init(S)`: clears the map, starts a new message registrator and makes `shape` the
+    /// clears the map, starts a new message registrator and makes `shape` the
     /// shape and the result; `context.init(&shape)`.
     pub fn init(&self, shape: &Shape) {
         let mut fields = self.fields.write();
@@ -94,22 +91,22 @@ impl ShapeProcessShapeContext {
         fields.result = shape.clone();
     }
 
-    /// `Shape()`: the processed shape.
+    /// the processed shape.
     pub fn shape(&self) -> Shape {
         self.fields.read().shape.clone()
     }
 
-    /// `Result()`: the current result.
+    /// the current result.
     pub fn result(&self) -> Shape {
         self.fields.read().result.clone()
     }
 
-    /// `Map()`: a copy of the map of the modified shapes.
+    /// a copy of the map of the modified shapes.
     pub fn map(&self) -> ShapeProcessShapeMap {
         self.fields.read().map.clone()
     }
 
-    /// `Messages()`: the message registrator (shared).
+    /// the message registrator (shared).
     pub fn messages(&self) -> Handle<ShapeExtendMsgRegistrator> {
         self.fields.read().messages.clone()
     }
@@ -119,7 +116,7 @@ impl ShapeProcessShapeContext {
         self.fields.write().messages = messages.clone();
     }
 
-    /// `SetDetalisation(level)`: the deepest shape type the records descend to.
+    /// the deepest shape type the records descend to.
     pub fn set_detalisation(&self, level: ShapeEnum) {
         self.fields.write().until = level;
     }
@@ -129,7 +126,7 @@ impl ShapeProcessShapeContext {
         self.fields.read().until
     }
 
-    /// `SetResult(S)`: the new result, also bound to the shape in the map.
+    /// the new result, also bound to the shape in the map.
     pub fn set_result(&self, result: &Shape) {
         let mut fields = self.fields.write();
         fields.result = result.clone();
@@ -147,8 +144,8 @@ impl ShapeProcessShapeContext {
         self.fields.read().non_manifold
     }
 
-    /// `AddMessage(S, msg, gravity)`: the message sent to the registrator, if any (the
-    /// native default gravity is Message_Warning); `context.add_message(&s, &msg, Gravity::Warning)`.
+    /// the message sent to the registrator, if any (the
+    /// default gravity is Message_Warning); `context.add_message(&s, &msg, Gravity::Warning)`.
     pub fn add_message(&self, shape: &Shape, message: &Msg, gravity: Gravity) {
         use crate::shape_extend::BasicMsgRegistrator;
         if let Some(registrator) = self.messages().get() {
@@ -156,7 +153,7 @@ impl ShapeProcessShapeContext {
         }
     }
 
-    /// `GetContinuity(param, val)`: the parameter (trimmed, upper case) read as C0, G1, C1,
+    /// the parameter (trimmed, upper case) read as C0, G1, C1,
     /// G2, C2, C3 or CN; `context.get_continuity("Continuity3d")`.
     pub fn get_continuity(&self, param: &str) -> Option<Continuity> {
         let mut text = self.get_string(param)?;

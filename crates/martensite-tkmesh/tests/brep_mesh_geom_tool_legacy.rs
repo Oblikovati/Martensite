@@ -1,4 +1,4 @@
-//! 1:1 original BRepMesh_GeomTool_Test declaration at the retained behavior 3d097a03.
+//! Public mesh geometry helpers retain their geometric and output-state contracts.
 #![allow(non_snake_case)]
 use martensite_tkbrep::brep_adaptor::{BRepAdaptorCurve, BRepAdaptorSurface};
 use martensite_tkernel::{precision, standard::Handle};
@@ -8,7 +8,7 @@ use martensite_tkmesh::brep_mesh::{GeomTool, IntersectionFlag};
 use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeFace};
 #[test]
 fn BRepMesh_GeomTool_Test__OCC25547_StaticMethodsExportAndFunctionality() {
-    // OCC25547: static class methods must remain exported and functional.
+    // Public static geometry helpers must remain callable and geometrically consistent.
     discretize_original_arc();
     original_surface_normal();
     original_intersections();

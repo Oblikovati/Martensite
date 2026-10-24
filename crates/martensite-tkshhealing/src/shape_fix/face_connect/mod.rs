@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeFix/ShapeFix_FaceConnect.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeFix_FaceConnect`: the free edges of pairs of faces declared connected are sewn,
+//! `ShapeFixFaceConnect`: the free edges of pairs of faces declared connected are sewn,
 //! and the shell is rebuilt with the sewn edges (the wires reordered and fixed, the
 //! vertices merged).
 mod rebuild;
@@ -16,10 +13,10 @@ use martensite_tkernel::ncollection::{DataMap, FlatDataMap, List};
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// `NCollection_DataMap<TopoDS_Shape, NCollection_List<TopoDS_Shape>, TopTools_ShapeMapHasher>`.
+/// Shape identity map containing each shape’s related shapes.
 pub(super) type ShapeListMap = DataMap<Shape, List<Shape>, ShapeMapHasher>;
 
-/// `ShapeFix_FaceConnect`: the faces declared connected (`myConnected`), the original
+/// `ShapeFixFaceConnect`: the faces declared connected (`myConnected`), the original
 /// free edges of each face (`myOriFreeEdges`) and, for each original free edge, its
 /// resulting free (`myResFreeEdges`) and shared (`myResSharEdges`) edges.
 ///
@@ -44,12 +41,12 @@ fn contains_same(list: &List<Shape>, shape: &Shape) -> bool {
 }
 
 impl ShapeFixFaceConnect {
-    /// `ShapeFix_FaceConnect()`: no connection; `ShapeFixFaceConnect::new()`.
+    /// no connection; `ShapeFixFaceConnect::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `Add(theFirstFace, theSecondFace)`: the two faces declared connected (each in the
+    /// the two faces declared connected (each in the
     /// list of the other, a face once with itself); false for a null face.
     /// Example: `connector.add(&face1, &face2)`.
     pub fn add(&mut self, first: &Face, second: &Face) -> bool {
@@ -72,7 +69,7 @@ impl ShapeFixFaceConnect {
         true
     }
 
-    /// `Build(theShell, theSewingTolerance, theFixingTolerance)`: the free edges of the
+    /// the free edges of the
     /// connected faces sewn pair by pair, then the shell rebuilt with the sewn edges;
     /// the shell itself when no connected face has free edges.
     /// Example: `let result = connector.build(&shell, 1e-6, 1e-7)?;`.
@@ -87,7 +84,7 @@ impl ShapeFixFaceConnect {
         self.rebuild_shell(shell, sewing_tolerance, fixing_tolerance)
     }
 
-    /// `Clear()`: no connection and no edge map; `connector.clear()`.
+    /// no connection and no edge map; `connector.clear()`.
     pub fn clear(&mut self) {
         self.connected.clear(false);
         self.ori_free_edges.clear(false);

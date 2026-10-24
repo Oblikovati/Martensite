@@ -1,4 +1,4 @@
-//! Native parity for `ShapeUpgrade_RemoveInternalWires` on a real planar face with a hole.
+//! parity for `ShapeUpgradeRemoveInternalWires` on a real planar face with a hole.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topexp::Explorer,

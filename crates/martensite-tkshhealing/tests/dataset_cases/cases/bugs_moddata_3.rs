@@ -1,4 +1,4 @@
-//! tests/bugs/moddata_3 case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! bugs moddata 3 regression cases owned by
 //! TKShHealing whose inputs are in the public dataset or built by the script.
 use super::bugs_common::banner;
 use crate::support::{
@@ -35,7 +35,7 @@ fn check_closed(info: &str, closed_expected: bool) {
     }
 }
 
-/// tests/bugs/moddata_3/bug25202_1.
+/// moddata 3 — bug25202 1.
 /// Replacing two faces of a box by open planar faces clears the Closed flag (`OCC25202`).
 pub fn bug25202_1(s: &mut dyn Session) {
     banner(&["========", "CR25202", "========", ""]);
@@ -69,7 +69,7 @@ pub fn bug25202_1(s: &mut dyn Session) {
     checkview_display(s, Some("result"), "bug25202_1");
 }
 
-/// tests/bugs/moddata_3/bug25202_2.
+/// moddata 3 — bug25202 2.
 /// Removing the locations of a rotated shell keeps its Closed flag.
 pub fn bug25202_2(s: &mut dyn Session) {
     banner(&["========", "CR25202", "========", ""]);
@@ -84,8 +84,8 @@ pub fn bug25202_2(s: &mut dyn Session) {
     checkview_display(s, Some("result"), "bug25202_2");
 }
 
-/// tests/bugs/moddata_3/bug32557.
-/// BRepBuilderAPI_NurbsConvert keeps the 2d p-curves without gaps (three faces).
+/// moddata 3 — bug32557.
+/// BRepBuilderAPINurbsConvert keeps the 2d p-curves without gaps (three faces).
 pub fn bug32557(s: &mut dyn Session) {
     let rule = "===========================================================";
     banner(&[
@@ -105,7 +105,7 @@ pub fn bug32557(s: &mut dyn Session) {
     }
 }
 
-/// tests/bugs/moddata_3/bug24065.
+/// moddata 3 — bug24065.
 /// The second intersection point of the edge curve and the face surface projects on the
 /// face at 1.86835288e-8 (within 1e-7), and the face tolerance stays at most 1e-7.
 pub fn bug24065(s: &mut dyn Session) {

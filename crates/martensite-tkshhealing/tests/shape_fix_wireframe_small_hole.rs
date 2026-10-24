@@ -1,4 +1,4 @@
-//! Regression for ShapeFix_Wireframe::MergeSmallEdges on a hole of four small edges: the
+//! Regression for ShapeFixWireframe::merge_small_edges on a hole of four small edges: the
 //! native loop keeps joining the edges of a two-edge wire (the previous and the next edge
 //! are the same one) until the hole is a single edge.
 use martensite_tkbrep::brep::BRepBuilder;

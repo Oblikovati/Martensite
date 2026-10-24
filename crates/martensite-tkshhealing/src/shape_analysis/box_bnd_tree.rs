@@ -1,4 +1,4 @@
-//! Stateful wire endpoint selector from ShapeAnalysis_BoxBndTree at 3d097a0328e71b8.
+//! Stateful wire endpoint selection by identity and distance.
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkbrep::topods::{Shape, Vertex};
 use martensite_tkernel::{
@@ -73,7 +73,7 @@ impl ShapeAnalysisBoxBndTreeSelector {
     pub fn cont_wire(&self, index: i32) -> bool {
         self.visited.contains(&index)
     }
-    /// Reset the inherited stop flag (native SetStop); `selector.set_stop()`.
+    /// Reset the inherited stop flag (SetStop); `selector.set_stop()`.
     pub fn set_stop(&mut self) {
         self.stopped = false;
     }

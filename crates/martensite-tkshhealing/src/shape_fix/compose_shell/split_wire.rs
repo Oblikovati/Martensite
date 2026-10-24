@@ -1,4 +1,4 @@
-// Rust translation of ShapeFix_ComposeShell::SplitWire at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Split wires into patch-local edges while preserving their traversal order.
 use super::{ComposeShellFields, ShapeFixComposeShell, grid};
 use crate::shape_analysis::ShapeAnalysisSurface;
 mod context;
@@ -111,7 +111,7 @@ impl<'a> SplitWireState<'a> {
             self.values,
         )?;
         if count <= 0 {
-            // Native SplitWire retries this dismissed edge and the pinned probe crashes.
+            // Do not retry a dismissed edge: its required curve representation is absent.
             return Err(not_implemented(
                 "SplitWire cannot process a removed source edge",
             ));

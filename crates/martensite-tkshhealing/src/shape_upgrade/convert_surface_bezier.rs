@@ -1,4 +1,4 @@
-//! Rust translation of `ShapeUpgrade_ConvertSurfaceToBezierBasis` at the retained behavior 3d097a0.
+//! Convert surface patches to a Bezier basis while preserving their parameter bounds.
 mod build;
 mod compute;
 mod swept;
@@ -48,7 +48,7 @@ impl Default for ShapeUpgradeConvertSurfaceToBezierBasis {
     }
 }
 impl ShapeUpgradeConvertSurfaceToBezierBasis {
-    /// Creates a converter with all native conversion modes enabled.
+    /// Creates a converter with all conversion modes enabled.
     pub fn new() -> Self {
         Self::default()
     }
@@ -84,7 +84,7 @@ impl ShapeUpgradeConvertSurfaceToBezierBasis {
     pub fn bspline_mode(&self) -> bool {
         self.modes.read().bspline
     }
-    /// Returns the intermediate native segment grid after Compute; null before Compute.
+    /// Returns the intermediate segment grid after Compute; null before Compute.
     pub fn segments(&self) -> Handle<ShapeExtendCompositeSurface> {
         self.segments.read().clone()
     }

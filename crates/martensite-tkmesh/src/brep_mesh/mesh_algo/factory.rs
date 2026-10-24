@@ -1,5 +1,4 @@
-// Rust translation of BRepMesh_MeshAlgoFactory.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Choose a face meshing strategy from the requested algorithm and surface kind.
 use super::algo_object::{BRepMeshDelaunayBaseMeshAlgo, FaceMeshingCore};
 use super::deflection_control::DelaunayDeflectionControlMeshAlgo;
 use super::delaunay_insertion::DelaunayNodeInsertionMeshAlgo;
@@ -14,7 +13,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
 use martensite_tkmath::geom_abs::SurfaceType;
 
-/// `BRepMesh_MeshAlgoFactory`: the Watson algorithm suited to each surface type.
+/// `BRepMeshMeshAlgoFactory`: the Watson algorithm suited to each surface type.
 ///
 /// ```
 /// use martensite_tkmath::geom_abs::SurfaceType;
@@ -37,23 +36,23 @@ impl_transient!(
 );
 
 impl BRepMeshMeshAlgoFactory {
-    /// `BRepMesh_MeshAlgoFactory()`; `BRepMeshMeshAlgoFactory::new()`.
+    /// Create a surface-specific face algorithm factory; `BRepMeshMeshAlgoFactory::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 }
 
-/// `new DeflectionControlMeshAlgo<R>::Type`.
+/// Create the deflection-control strategy for the selected range splitter.
 fn deflection_control<R: RangeSplitter + Default + Send + 'static>() -> Handle<dyn MeshAlgo> {
     algo(DelaunayDeflectionControlMeshAlgo::<R, DelaunayGenerator>::default())
 }
 
-/// `new NodeInsertionMeshAlgo<R>::Type` (the Delaunay node insertion).
+/// Create a Delaunay node-insertion strategy for the selected range splitter.
 fn node_insertion<R: RangeSplitter + Default + Send + 'static>() -> Handle<dyn MeshAlgo> {
     algo(DelaunayNodeInsertionMeshAlgo::<R, DelaunayGenerator>::default())
 }
 
-/// `new BaseMeshAlgo::Type`.
+/// Create the base Delaunay face strategy.
 fn base_algo() -> Handle<dyn MeshAlgo> {
     Handle::new(BRepMeshDelaunayBaseMeshAlgo::new()).cast()
 }

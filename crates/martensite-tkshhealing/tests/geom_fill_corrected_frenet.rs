@@ -1,5 +1,4 @@
-//! All declarations of GeomFill_CorrectedFrenet_Test.cxx at
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871, including the original wire reproducer.
+//! Corrected Frenet frame regression cases, including a wire reproducer.
 #![allow(non_snake_case)]
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::Handle;

@@ -1,4 +1,4 @@
-//! Native surface-analysis state, singularities and projection regressions.
+//! surface-analysis state, singularities and projection regressions.
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::{GeomPlane, GeomSurface};
 use martensite_tkmath::gp::{Axis3, Point2, Point3};

@@ -1,8 +1,6 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAlgo at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! the retained behavior package ShapeAlgo: the container of the Shape Healing algorithms that data
-//! exchange uses (`ShapeAlgo_AlgoContainer`), its tool factory
-//! (`ShapeAlgo_ToolContainer`) and the process-wide current container.
+//! ShapeAlgo: the container of the Shape Healing algorithms that data
+//! exchange uses (`ShapeAlgoAlgoContainer`), its tool factory
+//! (`ShapeAlgoToolContainer`) and the process-wide current container.
 mod algo_container;
 mod approx_bspline;
 mod homo_wires;
@@ -16,9 +14,9 @@ use martensite_tkernel::standard::{Failure, Handle};
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-/// The native static `theContainer`.
+/// The static `theContainer`.
 static CONTAINER: Mutex<Option<Handle<ShapeAlgoAlgoContainer>>> = Mutex::new(None);
-/// The native function-local `init` flag of `Init`.
+/// The function-local `init` flag of `Init`.
 static INITIALIZED: AtomicBool = AtomicBool::new(false);
 
 /// The package `ShapeAlgo` (static functions only).
@@ -31,8 +29,8 @@ static INITIALIZED: AtomicBool = AtomicBool::new(false);
 pub struct ShapeAlgo;
 
 impl ShapeAlgo {
-    /// `Init()`: once per process, a new algorithm container becomes current and
-    /// ShapeExtend::Init loads the messages; `ShapeAlgo::init()?`.
+    /// once per process, a new algorithm container becomes current and
+    /// ShapeExtend::init loads the messages; `ShapeAlgo::init()?`.
     pub fn init() -> Result<(), Failure> {
         if INITIALIZED.swap(true, Ordering::SeqCst) {
             return Ok(());
@@ -41,13 +39,13 @@ impl ShapeAlgo {
         ShapeExtend::init()
     }
 
-    /// `SetAlgoContainer(aContainer)`: the current container (a null handle is kept);
+    /// the current container (a null handle is kept);
     /// `ShapeAlgo::set_algo_container(&container)`.
     pub fn set_algo_container(container: &Handle<ShapeAlgoAlgoContainer>) {
         *lock() = Some(container.clone());
     }
 
-    /// `AlgoContainer()`: the current container, null before `Init` or `SetAlgoContainer`;
+    /// the current container, null before `Init` or `SetAlgoContainer`;
     /// `ShapeAlgo::algo_container()`.
     pub fn algo_container() -> Handle<ShapeAlgoAlgoContainer> {
         lock().clone().unwrap_or_default()

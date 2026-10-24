@@ -1,4 +1,4 @@
-//! Behavior tests of ShapeExtend_CompositeSurface and ShapeExtend_ComplexCurve.
+//! Behavior tests of ShapeExtendCompositeSurface and ShapeExtendComplexCurve.
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, HArray2};
 use martensite_tkernel::standard::dump::DumpStream;

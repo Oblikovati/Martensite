@@ -1,4 +1,4 @@
-//! The static predicates of ShapeCustom_BSplineRestriction.cxx: which curves and surfaces
+//! The static predicates: which curves and surfaces
 //! need a conversion, and the continuity/integer mappings of the approximation loops.
 use crate::shape_custom::ShapeCustomRestrictionParameters;
 use martensite_tkernel::standard::Handle;
@@ -21,7 +21,7 @@ pub(super) struct Limits {
     pub rational: bool,
 }
 
-/// `IntegerToGeomAbsShape(i)`: 0 C0, 1 C1, 2 C2, 3 C3, any other CN.
+/// 0 C0, 1 C1, 2 C2, 3 C3, any other CN.
 pub(super) fn integer_to_continuity(i: i32) -> Continuity {
     match i {
         0 => Continuity::C0,
@@ -32,7 +32,7 @@ pub(super) fn integer_to_continuity(i: i32) -> Continuity {
     }
 }
 
-/// `ContToInteger(Cont)`: C0/G1 0, C1/G2 1, C2 2, C3 3, CN 4.
+/// C0/G1 0, C1/G2 1, C2 2, C3 3, CN 4.
 pub(super) fn continuity_to_integer(continuity: Continuity) -> i32 {
     match continuity {
         Continuity::C0 | Continuity::G1 => 0,
@@ -65,7 +65,7 @@ pub(super) fn is_convert_curve_3d(
         return p.convert_offset_curv3d() || is_convert_curve_3d(&offset.basis_curve(), limits, p);
     }
     if let Some(spline) = curve.cast::<GeomBSplineCurve>().get() {
-        // Native `(NbKnots() - 1) >= NbSeg`: at least NbSeg spans.
+        // `(NbKnots() - 1) >= NbSeg`: at least NbSeg spans.
         if spline.degree() > limits.degree || spline.nb_knots() > limits.segments {
             return true;
         }

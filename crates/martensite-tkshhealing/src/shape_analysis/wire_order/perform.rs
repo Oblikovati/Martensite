@@ -1,10 +1,6 @@
-// Rust translation of ShapeAnalysis_WireOrder::Perform (ModelingAlgorithms/TKShHealing/ShapeAnalysis/
-// ShapeAnalysis_WireOrder.cxx) at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-//
-// pdn 11.03.99 S4135: the reordering does not depend on the tolerance; pdn 09.05.99 S4174:
-// the order of the edges of a complete torus is kept.
+// Reordering is independent of tolerance and retains the edge order of a complete torus.
 
-//! `ShapeAnalysis_WireOrder::Perform`: chains the edges into loops by the nearest ends,
+//! `ShapeAnalysisWireOrder::perform`: chains the edges into loops by the nearest ends,
 //! then merges the loops.
 use super::{ModeType, ShapeAnalysisWireOrder};
 use martensite_tkernel::precision;
@@ -12,7 +8,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::real::{real_last, real_small};
 use martensite_tkmath::gp::{Point2, Point3};
 
-/// The ends of every edge, 1-based as natively (index 0 unused).
+/// The ends of every edge, 1-based (index 0 unused).
 struct EdgeEnds {
     begins_3d: Vec<Point3>,
     ends_3d: Vec<Point3>,
@@ -446,7 +442,7 @@ fn is_shift(main: &[i32]) -> bool {
 }
 
 impl ShapeAnalysisWireOrder {
-    /// `Perform(closed)`: computes the order (`closed` is not used natively). With no
+    /// Compute the order; the `closed` argument is unused. With no
     /// edge, nothing is done and the status is 0. Each step joins the remaining edge
     /// whose end is nearest to an end of the current sequence (in the miscible mode, an
     /// edge joined in both 3D and 2D first), or starts a new loop when closing is better;

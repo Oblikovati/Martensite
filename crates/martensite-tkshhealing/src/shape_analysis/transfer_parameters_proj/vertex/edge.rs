@@ -1,4 +1,4 @@
-//! Native edge copy keeps an existing spatial parameter when both edge ranges match.
+//! edge copy keeps an existing spatial parameter when both edge ranges match.
 use super::*;
 struct SourceVertexCurve {
     curve: Handle<dyn GeomCurve>,

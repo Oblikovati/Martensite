@@ -1,5 +1,4 @@
-// Rust translation of ShapeAnalysis_CanonicalRecognition conic recognition at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Recognize conics on edges and require consistent parameters across a wire.
 use super::params::{compare_conic_params, set_conic_parameters};
 use super::{ShapeAnalysisCanonicalRecognition, surfaces};
 use martensite_tkbrep::topods::{self, Edge, ShapeIterator};
@@ -93,7 +92,7 @@ impl ShapeAnalysisCanonicalRecognition {
             if conic.is_null() {
                 return Ok(false);
             }
-            // The native result of SetConicParameters is overwritten by the comparison.
+            // The result of SetConicParameters is overwritten by the comparison.
             set_conic_parameters(target, &conic, &mut other_pos, &mut other_params)?;
             if !compare_conic_params(target, tol, pos, params, &other_pos, &other_params)? {
                 return Ok(false);
@@ -103,7 +102,7 @@ impl ShapeAnalysisCanonicalRecognition {
         Ok(true)
     }
 
-    /// `IsLine(theTol, theLin)`: the line of the edge or of every edge of the wire within
+    /// the line of the edge or of every edge of the wire within
     /// `tol`; `recognizer.is_line(1e-7, &mut line)?`.
     pub fn is_line(&mut self, tol: f64, lin: &mut Line3) -> Result<bool, Failure> {
         let mut pos = Axis2::default();
@@ -115,7 +114,7 @@ impl ShapeAnalysisCanonicalRecognition {
         Ok(found)
     }
 
-    /// `IsCircle(theTol, theCirc)`: the circle of the edge or of every edge of the wire
+    /// the circle of the edge or of every edge of the wire
     /// within `tol`; `recognizer.is_circle(1e-7, &mut circle)?`.
     pub fn is_circle(&mut self, tol: f64, circ: &mut Circle3) -> Result<bool, Failure> {
         let mut pos = Axis2::default();
@@ -128,7 +127,7 @@ impl ShapeAnalysisCanonicalRecognition {
         Ok(found)
     }
 
-    /// `IsEllipse(theTol, theElips)`: the ellipse of the edge or of every edge of the wire
+    /// the ellipse of the edge or of every edge of the wire
     /// within `tol`; `recognizer.is_ellipse(1e-7, &mut ellipse)?`.
     pub fn is_ellipse(&mut self, tol: f64, elips: &mut Ellipse3) -> Result<bool, Failure> {
         let mut pos = Axis2::default();

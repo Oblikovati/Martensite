@@ -1,5 +1,4 @@
-//! Behavior tests of ShapeCustom_BSplineRestriction (the native comparison is the sc_modif
-//! kind 5 requests of tools/tkshhealing_corpus_shapecustom.py).
+//! B-spline restriction regression tests for degree and segment limits.
 mod healing_support;
 
 use healing_support::square_face;

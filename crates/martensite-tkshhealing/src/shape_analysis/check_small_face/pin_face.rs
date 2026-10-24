@@ -8,7 +8,7 @@ use martensite_tkernel::ncollection::DataMap;
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// Native map from a first pin edge to its matching second edge.
+/// map from a first pin edge to its matching second edge.
 pub type PinFaceEdgeMap = DataMap<Shape, Shape, ShapeMapHasher>;
 
 impl ShapeAnalysisCheckSmallFace {
@@ -21,7 +21,7 @@ impl ShapeAnalysisCheckSmallFace {
         tolerance: f64,
     ) -> Result<bool, Failure> {
         require_wire(face)?;
-        // Native reorders a local ShapeExtend_WireData copy, then never reads that copy.
+        // reorders a local ShapeExtendWireData copy, then never reads that copy.
         scan_face_edges(self, face, edge_pairs, tolerance)
     }
 }
@@ -279,7 +279,7 @@ fn initial_scale(length: f64, local_tolerance: f64, tolerance: f64) -> f64 {
 }
 
 fn bind_pin_pair(map: &mut PinFaceEdgeMap, first: &Edge, second: &Edge) -> Result<(), Failure> {
-    // NCollection_DataMap::Bind rebinds a bound key; CheckPinFace ignores its result.
+    // Rebinding replaces the existing entry; the insertion result is intentionally ignored.
     let _ = map.bind(first.clone().into_shape(), second.clone().into_shape());
     Ok(())
 }

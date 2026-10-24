@@ -1,4 +1,4 @@
-//! scenario `restore` and `binrestore` on the Rust API (Draw_VariableCommands.cxx `restore`,
+//! scenario `restore` and `binrestore` on the Rust API (`restore`,
 //! the DrawTrSurf and DBRep_DrawableShape `Restore` factories, DBRep `binrestore`).
 //!
 //! The TKBRep dataset harness's `restore`, with the DrawTrSurf_Point factory and the point

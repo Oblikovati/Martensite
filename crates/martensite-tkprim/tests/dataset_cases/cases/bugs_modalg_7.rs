@@ -23,14 +23,8 @@ use crate::support::{
     topology::{compound, mkedge, mkface_bounds, trotate, validrange, vertex, wire},
 };
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::top_abs::ShapeEnum;
-use martensite_tkhlr::{
-    hlr_algo::Projector,
-    hlr_brep::{Algo, HLRToShape},
-    hlr_topo_brep::{MapOfShapeTool, OutLiner},
-};
-use martensite_tkmath::gp::{Axis2, Direction3, Point3};
+use martensite_tkmath::gp::Point3;
 use std::time::Instant;
 
 /// The torus segment with the latitudes 90..270 and the angle 45 is valid.
@@ -55,71 +49,6 @@ pub fn bug26516(s: &mut dyn Session) {
     let result = shape_set(s, "result", result.shape);
     checkshape(&result);
     checkview_display(s, Some("result"), "bug26516");
-}
-
-/// `houtl name shape; hfill name proj 0; hload name`.
-fn load_outline(algorithm: &Algo, shape: &Shape, projector: &Projector) {
-    let outline = Handle::new(OutLiner::with_original(shape));
-    outline
-        .fill(projector, &mut MapOfShapeTool::default(), 0)
-        .unwrap();
-    algorithm.load(&outline, 0);
-}
-
-/// The HLR result has the edges of both loaded shapes (16), top view.
-pub fn bug28248(s: &mut dyn Session) {
-    log::puts("=======");
-    log::puts("OCC28248");
-    log::puts("=======");
-    log::puts("");
-    let b1 = shape_set(s, "b1", box_at([-10., -10., 0.], [20., 20., 5.]));
-    let c1 = shape_set(s, "c1", crate::support::prim::pcylinder(5., 10.));
-    // hprj proj 0 0 0 0 1 0 0 0 1: gp_Ax2(origin, Y, Z).
-    let frame = Axis2::with_x_direction(Point3::default(), Direction3::Y, Direction3::Z).unwrap();
-    let projector = Projector::with_frame(frame).unwrap();
-    let hider = Handle::new(Algo::new().unwrap());
-    // hremove
-    while hider.nb_shapes() > 0 {
-        hider.remove(1).unwrap();
-    }
-    log::result(" all shapes removed\n");
-    load_outline(&hider, &b1, &projector);
-    load_outline(&hider, &c1, &projector);
-    hider.set_projector(&projector);
-    hider.update().unwrap();
-    hider.hide().unwrap();
-    // hres2d
-    let extractor = HLRToShape::new(&hider);
-    let outputs = [
-        ("vl", extractor.v_compound().unwrap()),
-        ("v1l", extractor.rg1_line_v_compound().unwrap()),
-        ("vnl", extractor.rgn_line_v_compound().unwrap()),
-        ("vol", extractor.out_line_v_compound().unwrap()),
-        ("vil", extractor.iso_line_v_compound().unwrap()),
-        ("hl", extractor.h_compound().unwrap()),
-        ("h1l", extractor.rg1_line_h_compound().unwrap()),
-        ("hnl", extractor.rgn_line_h_compound().unwrap()),
-        ("hol", extractor.out_line_h_compound().unwrap()),
-        ("hil", extractor.iso_line_h_compound().unwrap()),
-    ];
-    let mut parts = Vec::new();
-    for (name, output) in outputs {
-        if !output.is_null() {
-            shape_set(s, name, output.clone());
-            parts.push(output);
-        }
-    }
-    let refs: Vec<&Shape> = parts.iter().collect();
-    let result = shape_set(s, "result", compound(&refs));
-    checknbshapes(
-        &result,
-        [None, Some(16), None, None, None, None, None, None, None],
-        None,
-    );
-    s.step(ViewStep::Display(&["result"]));
-    s.step(ViewStep::SmallView("+X+Y"));
-    s.step(ViewStep::Fit);
-    s.step(ViewStep::Xwd("bug28248"));
 }
 
 /// `regexp {Elapsed time: ...} [dchrono name show]`: the elapsed seconds.

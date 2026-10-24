@@ -1,9 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend/ShapeExtend_WireData.hxx/.cxx
-// (constructors, Init, Clear, the queries and Wire/WireAPIMake) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeExtend_WireData`: a wire as an ordered list of edges, with its non-manifold edges
-//! and its seams (docs/shhealing-design.md section 2).
+//! `ShapeExtendWireData`: a wire as an ordered list of edges, with its non-manifold edges
+//! and its seams.
 mod edit;
 mod seams;
 
@@ -17,14 +13,14 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransie
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeShape, BRepBuilderAPIMakeWire};
 
-/// The fields of a `ShapeExtend_WireData`.
+/// The fields of a `ShapeExtendWireData`.
 struct WireDataFields {
     /// `myEdges`: the manifold edges in wire order (and, without the manifold mode, the
     /// non-manifold ones after them).
     edges: Sequence<Shape>,
     /// `myNonmanifoldEdges`: shared with the handle `NonmanifoldEdges` returns.
     nonmanifold: Handle<HSequence<Shape>>,
-    /// `mySeams`: the other seam pairs (null natively until `ComputeSeams`).
+    /// Other seam pairs, absent until seam computation.
     seams: Option<Sequence<i32>>,
     /// `mySeamsCache`: the indices of `seams`, for `IsSeam`.
     seams_cache: PackedMap<i32>,
@@ -39,7 +35,7 @@ struct WireDataFields {
 
 impl WireDataFields {
     /// The state `Clear` leaves: no edge, no seam known, the manifold mode. The seam
-    /// cache keeps its content, as natively (it is refilled before it is read again).
+    /// cache keeps its content (it is refilled before it is read again).
     fn clear(&mut self) {
         self.edges = Sequence::default();
         self.nonmanifold = Handle::new(HSequence::default());
@@ -50,7 +46,7 @@ impl WireDataFields {
     }
 }
 
-/// `ShapeExtend_WireData`: the edges of a wire as an ordered list, the non-manifold
+/// `ShapeExtendWireData`: the edges of a wire as an ordered list, the non-manifold
 /// (INTERNAL and EXTERNAL) edges beside it in the manifold mode, and the seam edges (an
 /// edge present twice, FORWARD and REVERSED).
 ///
@@ -76,7 +72,7 @@ impl_transient!(
 );
 
 impl Default for ShapeExtendWireData {
-    /// `ShapeExtend_WireData()`: an empty list (`Clear`).
+    /// an empty list (`Clear`).
     fn default() -> Self {
         let mut fields = WireDataFields {
             edges: Sequence::default(),
@@ -95,8 +91,7 @@ impl Default for ShapeExtendWireData {
     }
 }
 
-/// The 1-based position `num` of a sequence; Standard_OutOfRange for a number below 1
-/// (natively the sequence raises it).
+/// Validate a one-based sequence position; return a typed out-of-range error below one.
 pub(crate) fn position(num: i32, member: &str) -> Result<usize, Failure> {
     usize::try_from(num)
         .ok()
@@ -110,12 +105,12 @@ pub(crate) fn position(num: i32, member: &str) -> Result<usize, Failure> {
 }
 
 impl ShapeExtendWireData {
-    /// `ShapeExtend_WireData()`; `ShapeExtendWireData::new()`.
+    /// `ShapeExtendWireData::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeExtend_WireData(wire, chained, theManifoldMode)`: [`Self::init_wire`] on a
+    /// [`Self::init_wire`] on a
     /// new list; `ShapeExtendWireData::from_wire(&wire, true, true)?`.
     pub fn from_wire(wire: &Wire, chained: bool, manifold_mode: bool) -> Result<Self, Failure> {
         let data = Self::new();
@@ -123,7 +118,7 @@ impl ShapeExtendWireData {
         Ok(data)
     }
 
-    /// `Init(other)`: this list becomes a copy of `other`: its edges, its non-manifold
+    /// this list becomes a copy of `other`: its edges, its non-manifold
     /// edges (added through `Add`) and its manifold mode. The list is cleared first, so
     /// `other` being this list gives an empty list; `data.init(&other)?`.
     pub fn init(&self, other: &ShapeExtendWireData) -> Result<(), Failure> {
@@ -144,23 +139,23 @@ impl ShapeExtendWireData {
         (edges, nonmanifold, fields.manifold_mode)
     }
 
-    /// `Clear()`: no edge, no seam known, the manifold mode on; `data.clear()`.
+    /// no edge, no seam known, the manifold mode on; `data.clear()`.
     pub fn clear(&self) {
         self.fields.write().clear();
     }
 
-    /// `NbEdges()`: the number of edges; `data.nb_edges()`.
+    /// the number of edges; `data.nb_edges()`.
     pub fn nb_edges(&self) -> i32 {
         self.fields.read().edges.length()
     }
 
-    /// `NbNonManifoldEdges()`: the number of non-manifold edges kept apart;
+    /// the number of non-manifold edges kept apart;
     /// `data.nb_non_manifold_edges()`.
     pub fn nb_non_manifold_edges(&self) -> i32 {
         self.fields.read().nonmanifold.sequence(|s| s.length())
     }
 
-    /// `Edge(num)`: the edge of rank `num`, reversed for a negative `num`;
+    /// the edge of rank `num`, reversed for a negative `num`;
     /// Standard_OutOfRange outside the list; `data.edge(1)?`.
     pub fn edge(&self, num: i32) -> Result<Edge, Failure> {
         if num < 0 {
@@ -173,7 +168,7 @@ impl ShapeExtendWireData {
         topods::edge(fields.edges.value(index)?)
     }
 
-    /// `NonmanifoldEdge(num)`: the non-manifold edge of rank `num`, a null edge for a
+    /// the non-manifold edge of rank `num`, a null edge for a
     /// negative `num`; Standard_OutOfRange for 0 or past the end;
     /// `data.nonmanifold_edge(1)?`.
     pub fn nonmanifold_edge(&self, num: i32) -> Result<Edge, Failure> {
@@ -185,7 +180,7 @@ impl ShapeExtendWireData {
         nonmanifold.sequence(|s| topods::edge(s.value(index)?))
     }
 
-    /// `NonmanifoldEdges()`: the handle of the non-manifold edges, shared with the list
+    /// the handle of the non-manifold edges, shared with the list
     /// until the next `Clear`; `data.nonmanifold_edges()`.
     pub fn nonmanifold_edges(&self) -> Handle<HSequence<Shape>> {
         self.fields.read().nonmanifold.clone()
@@ -196,13 +191,13 @@ impl ShapeExtendWireData {
         self.fields.read().manifold_mode
     }
 
-    /// `ManifoldMode() = mode` (the member returns a reference natively);
+    /// Set whether non-manifold edges are kept separately;
     /// `data.set_manifold_mode(false)`.
     pub fn set_manifold_mode(&self, mode: bool) {
         self.fields.write().manifold_mode = mode;
     }
 
-    /// `Index(edge)`: the rank of the first edge that is the same as `edge` with the same
+    /// the rank of the first edge that is the same as `edge` with the same
     /// orientation, or with any orientation when that rank is not a seam; 0 when none;
     /// `data.index(&edge)?`.
     pub fn index(&self, edge: &Edge) -> Result<i32, Failure> {
@@ -217,7 +212,7 @@ impl ShapeExtendWireData {
         Ok(0)
     }
 
-    /// `Wire()`: a new wire of the edges in order, closed when it is manifold and its end
+    /// a new wire of the edges in order, closed when it is manifold and its end
     /// vertices are the same, then the non-manifold edges in the manifold mode;
     /// `data.wire()?`.
     pub fn wire(&self) -> Result<Wire, Failure> {
@@ -245,7 +240,7 @@ impl ShapeExtendWireData {
         Ok(wire)
     }
 
-    /// `WireAPIMake()`: the wire `BRepBuilderAPI_MakeWire` builds from the edges (then
+    /// the wire `BRepBuilderAPIMakeWire` builds from the edges (then
     /// the non-manifold edges in the manifold mode); a null wire when it fails;
     /// `data.wire_api_make()?`.
     pub fn wire_api_make(&self) -> Result<Wire, Failure> {
@@ -265,7 +260,7 @@ impl ShapeExtendWireData {
     }
 }
 
-/// `TopExp::Vertices(W, vf, vl)`, then `W.Closed(true)` when both are the same vertex.
+/// Mark the wire closed when its endpoint vertices have the same identity.
 fn close_if_ends_meet(wire: &Wire) -> Result<(), Failure> {
     let (first, last) = topexp::wire_vertices(wire);
     if !first.is_null() && !last.is_null() && first.is_same(&last) {
@@ -291,11 +286,11 @@ fn oriented_vertices(edge: &Edge) -> Result<(Vertex, Vertex), Failure> {
 }
 
 impl ShapeExtendWireData {
-    /// `Init(wire, chained, theManifoldMode)`: the edges of `wire` in its order (reversed
+    /// the edges of `wire` in its order (reversed
     /// order for a REVERSED wire), its INTERNAL and EXTERNAL edges apart (after the others
     /// without the manifold mode). Returns false when two consecutive edges are not
     /// connected (only checked in the manifold mode); then, unless `chained`, the list is
-    /// rebuilt in the order of `BRepTools_WireExplorer`; `data.init_wire(&w, true, true)?`.
+    /// rebuilt in the order of `WireExplorer`; `data.init_wire(&w, true, true)?`.
     pub fn init_wire(
         &self,
         wire: &Wire,
@@ -357,7 +352,7 @@ impl ShapeExtendWireData {
 }
 
 impl WireDataFields {
-    /// `myEdges->Prepend(E)` for a REVERSED wire, `Append(E)` otherwise.
+    /// Prepend edges from a reversed wire; append them otherwise.
     fn push_edge(&mut self, edge: Shape, prepend: bool) {
         if prepend {
             self.edges.prepend(edge);

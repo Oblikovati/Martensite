@@ -1,5 +1,5 @@
-//! BRepTest_ExtremaCommands.cxx `distmini name s1 s2 [deflection]` and
-//! BOPTest_LowCommands.cxx `bclassify`/`b2dclassify`.
+//! `distmini name s1 s2 [deflection]` and
+//! `bclassify`/`b2dclassify`.
 use super::printed::g17;
 use super::session::Session;
 use martensite_tkbrep::topods::{self, Shape};
@@ -22,7 +22,7 @@ pub struct Distmini {
     pub text: String,
 }
 
-/// `distmini name s1 s2 [deflection]`: `BRepExtrema_DistShapeShape` with the deflection
+/// `distmini name s1 s2 [deflection]`: `BRepExtremaDistShapeShape` with the deflection
 /// (Precision::Confusion by default); each solution is a vertex at the first point when
 /// the distance is at most 1e-9, else the edge between the two points. `None` is the
 /// command's `problem: no distance is found`. The variables are set in `session`.
@@ -79,7 +79,7 @@ pub fn distmini(
     })
 }
 
-/// BOPTest_LowCommands.cxx `PrintState`.
+/// `PrintState`.
 pub fn state_text(state: State) -> &'static str {
     match state {
         State::In => "The point is IN shape\n",
@@ -89,7 +89,7 @@ pub fn state_text(state: State) -> &'static str {
     }
 }
 
-/// `bclassify solid point [tol = 1e-7]`: `BRepClass3d_SolidClassifier(S).Perform(P, tol)`.
+/// `bclassify solid point [tol = 1e-7]`: `BRepClass3dSolidClassifier(S).Perform(P, tol)`.
 pub fn bclassify(solid: &Shape, point: Point3, tolerance: f64) -> State {
     let mut classifier = BRepClass3dSolidClassifier::with_shape(solid).unwrap();
     classifier.perform(&point, tolerance).unwrap();
@@ -103,8 +103,8 @@ pub fn bclassify_default(solid: &Shape, point: Point3) -> State {
     bclassify(solid, point, 1.0e-7)
 }
 
-/// `b2dclassify face point2d`: `BRepClass_FaceClassifier::Perform(F, P, tol =
-/// BRep_Tool::Tolerance(F), UseBox = false, GapCheckTol = 0.1)`.
+/// Classify a parameter-space point using the face tolerance, no box acceleration,
+/// and a gap-check tolerance of 0.1.
 pub fn b2dclassify(face: &Shape, point: Point2) -> State {
     let face = topods::face(face).expect("b2dclassify: a face");
     let tolerance = martensite_tkbrep::brep::BRepTool::face_tolerance(&face).unwrap();

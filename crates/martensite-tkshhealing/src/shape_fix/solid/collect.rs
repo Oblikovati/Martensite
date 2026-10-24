@@ -1,4 +1,4 @@
-//! Native shell containment graph, including the three-on-vertices fallback.
+//! shell containment graph, including the three-on-vertices fallback.
 use super::from_shell::{build_solid, infinite_state};
 use martensite_tkbrep::{
     brep::BRepTool,
@@ -29,7 +29,7 @@ pub(super) fn collect_shells(
         if !is_closed_nonempty(shell)? {
             continue;
         }
-        // the retained behavior catches failures for each root shell, retaining earlier mutations.
+        // catches failures for each root shell, retaining earlier mutations.
         let _ = classify_containment(index, shells, status, &mut lists, &mut holes);
     }
     remove_nested_holes(&lists, &mut holes)?;
@@ -131,7 +131,7 @@ fn classify_vertices(
             on_count += 1;
         }
     }
-    // The native middle-point alternative is disabled at the pinned revision.
+    // Use the configured endpoint; the middle-point alternative is disabled.
     Ok(if on_count == 3 && state == State::On {
         State::Out
     } else {
@@ -160,7 +160,7 @@ pub(super) fn shell_infinity(
     hole: bool,
 ) -> Result<State, Failure> {
     if let Ok(value) = status.find(shell) {
-        // Native hole handling interprets cached zero as OUT; root handling does not.
+        // hole handling interprets cached zero as OUT; root handling does not.
         return Ok(if hole && *value != 1 {
             State::Out
         } else {

@@ -1,5 +1,5 @@
 //! The TKTopAlgo-level scenario topology commands the cases call, on the Rust API. Each
-//! function names the command and the the retained behavior source it follows.
+//! function names the operation and its argument conventions.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     brep_tools::{self, BRepToolsReShape, ReShape, WireExplorer},
@@ -26,7 +26,7 @@ use martensite_tktopalgo::{
 };
 use std::io::{Read, Seek, SeekFrom};
 
-/// DBRep.cxx `setflags name locked`: `Locked(true)` on the shape and on every explored
+/// `setflags name locked`: `Locked(true)` on the shape and on every explored
 /// vertex, edge and face (the flags live on the shared TShapes).
 pub fn setflags_locked(shape: &Shape) {
     shape.tshape().get().unwrap().set_locked(true);
@@ -39,8 +39,8 @@ pub fn setflags_locked(shape: &Shape) {
     }
 }
 
-/// BRepTest_BasicCommands.cxx `sameparameter shape [tol]` (`fsameparameter` when
-/// `forced`): `BRepLib::SameParameter(S, tol, force)` in place; `tol` 1e-7 when absent.
+/// `sameparameter shape [tol]` (`fsameparameter` when
+/// `forced`): repair parameter consistency in place; use tolerance 1e-7 when absent.
 pub fn sameparameter_in_place(shape: &Shape, tolerance: f64, forced: bool) {
     brep_lib::same_parameter_shape(shape, tolerance, forced).unwrap();
 }
@@ -48,16 +48,16 @@ pub fn sameparameter_in_place(shape: &Shape, tolerance: f64, forced: bool) {
 /// The default `sameparameter` tolerance.
 pub const SAMEPARAMETER_TOLERANCE: f64 = 1.0e-7;
 
-/// BRepTest_BasicCommands.cxx `sameparameter result shape tol`: `BRepLib::SameParameter`
-/// with a `BRepTools_ReShape`, the result being the re-shaped input.
+/// `sameparameter result shape tol`: `BRepLib::SameParameter`
+/// with a `BRepToolsReShape`, the result being the re-shaped input.
 pub fn sameparameter_reshaped(shape: &Shape, tolerance: f64, forced: bool) -> Shape {
     let reshaper = BRepToolsReShape::new();
     brep_lib::same_parameter_shape_with_reshape(shape, &reshaper, tolerance, forced).unwrap();
     reshaper.apply(shape, ShapeEnum::Shape).unwrap()
 }
 
-/// BRepTest_BasicCommands.cxx `updatetolerance result shape param`: with a fourth word
-/// that names no shape, `BRepLib::UpdateTolerances(S, ReShape, true)` (face tolerances
+/// `updatetolerance result shape param`: with a fourth word
+/// that names no shape, update tolerances with a replacement context (face tolerances
 /// verified), the result being the re-shaped input.
 pub fn updatetolerance_reshaped(shape: &Shape) -> Shape {
     let reshaper = BRepToolsReShape::new();
@@ -65,7 +65,7 @@ pub fn updatetolerance_reshaped(shape: &Shape) -> Shape {
     reshaper.apply(shape, ShapeEnum::Shape).unwrap()
 }
 
-/// BRepTest_CurveCommands.cxx `vertex name x y z`: `BRepBuilderAPI_MakeVertex`.
+/// `vertex name x y z`: `BRepBuilderAPIMakeVertex`.
 pub fn vertex(point: Point3) -> Shape {
     BRepBuilderAPIMakeVertex::new(point)
         .unwrap()
@@ -74,12 +74,12 @@ pub fn vertex(point: Point3) -> Shape {
         .into_shape()
 }
 
-/// BRepTest_CurveCommands.cxx `mkpoint p vertex`: the vertex's point.
+/// `mkpoint p vertex`: the vertex's point.
 pub fn mkpoint(vertex: &Shape) -> Point3 {
     BRepTool::pnt(&topods::vertex(vertex).expect("mkpoint: a vertex")).unwrap()
 }
 
-/// BRepTest_CurveCommands.cxx `mkedge name curve`: `BRepBuilderAPI_MakeEdge(C)`.
+/// `mkedge name curve`: `BRepBuilderAPIMakeEdge(C)`.
 pub fn mkedge(curve: &Handle<dyn GeomCurve>) -> Shape {
     BRepBuilderAPIMakeEdge::from_curve(curve)
         .unwrap()
@@ -88,7 +88,7 @@ pub fn mkedge(curve: &Handle<dyn GeomCurve>) -> Shape {
         .into_shape()
 }
 
-/// DBRep.cxx `compound s1 s2 ... name`: a compound of the shapes, in order.
+/// `compound s1 s2 ... name`: a compound of the shapes, in order.
 pub fn compound(shapes: &[&Shape]) -> Shape {
     let builder = BRepBuilder::default();
     let mut compound = Compound::default();
@@ -100,7 +100,7 @@ pub fn compound(shapes: &[&Shape]) -> Shape {
     shape
 }
 
-/// BRepTest_CurveCommands.cxx `wire name e1/w1 e2/w2 ...`: `BRepBuilderAPI_MakeWire`
+/// `wire name e1/w1 e2/w2 ...`: `BRepBuilderAPIMakeWire`
 /// adding each edge or wire; `None` with the error when it is not done.
 pub fn wire(parts: &[&Shape]) -> Result<Shape, String> {
     let mut maker = BRepBuilderAPIMakeWire::new();
@@ -117,7 +117,7 @@ pub fn wire(parts: &[&Shape]) -> Result<Shape, String> {
     }
 }
 
-/// BRepTest_SurfaceCommands.cxx `mkplane name wire`: `BRepBuilderAPI_MakeFace(W,
+/// `mkplane name wire`: `BRepBuilderAPIMakeFace(W,
 /// OnlyPlane = false)`; `Err` with the command's `Error. mkplane ...` line otherwise.
 pub fn mkplane(wire: &Shape) -> Result<Shape, String> {
     let wire = topods::wire(wire).map_err(|_| "mkplane: not a wire".to_string())?;
@@ -130,14 +130,14 @@ pub fn mkplane(wire: &Shape) -> Result<Shape, String> {
     }
 }
 
-/// BRepTest_SurfaceCommands.cxx `mkface name surface`: `BRepBuilderAPI_MakeFace(S,
-/// Precision::Confusion())`.
+/// `mkface name surface`: `BRepBuilderAPIMakeFace(S,
+/// precision::confusion())`.
 pub fn mkface(surface: &Handle<dyn GeomSurface>) -> Shape {
     let mut maker = BRepBuilderAPIMakeFace::from_surface(surface, precision::confusion()).unwrap();
     maker.shape().unwrap().clone()
 }
 
-/// BRepTest_SurfaceCommands.cxx `mkface name surface umin umax vmin vmax`.
+/// `mkface name surface umin umax vmin vmax`.
 pub fn mkface_bounds(surface: &Handle<dyn GeomSurface>, bounds: [f64; 4]) -> Shape {
     let [u_min, u_max, v_min, v_max] = bounds;
     let bounds = (u_min, u_max, v_min, v_max);
@@ -147,16 +147,16 @@ pub fn mkface_bounds(surface: &Handle<dyn GeomSurface>, bounds: [f64; 4]) -> Sha
     maker.shape().unwrap().clone()
 }
 
-/// BRepTest_BasicCommands.cxx `tcopy shape copy`: `BRepBuilderAPI_Copy(S, copyGeom =
+/// `tcopy shape copy`: `BRepBuilderAPICopy(S, copyGeom =
 /// true, copyMesh = false)`.
 pub fn tcopy(shape: &Shape) -> Shape {
     let mut copy = BRepBuilderAPICopy::with_shape(shape, true, false).unwrap();
     copy.shape().unwrap().clone()
 }
 
-/// BRepTest_BasicCommands.cxx `transform` (`ttranslate`, `trotate`, `tmirror`, `tscale`)
+/// `transform` (`ttranslate`, `trotate`, `tmirror`, `tscale`)
 /// of one shape without `-copy`: `S.Moved(L)` for an identity, else
-/// `BRepBuilderAPI_Transform(T)` with `-copymesh` as given.
+/// `BRepBuilderAPITransform(T)` with `-copymesh` as given.
 pub fn transform(shape: &Shape, trsf: Transform3, copy_mesh: bool) -> Shape {
     if trsf.form() == martensite_tkmath::gp::TransformForm::Identity {
         return shape
@@ -212,7 +212,7 @@ pub fn ttranslate(shape: &Shape, vector: [f64; 3], copy_mesh: bool) -> Shape {
     transform(shape, trsf, copy_mesh)
 }
 
-/// BRepTest_BasicCommands.cxx `deform new name cx cy cz`: `BRepBuilderAPI_GTransform`
+/// `deform new name cx cy cz`: `BRepBuilderAPIGTransform`
 /// with the diagonal vectorial part.
 pub fn deform(shape: &Shape, coefficients: [f64; 3]) -> Shape {
     let mut gtrsf = GeneralTransform3::from(Transform3::default());
@@ -223,15 +223,15 @@ pub fn deform(shape: &Shape, coefficients: [f64; 3]) -> Shape {
     maker.shape().unwrap().clone()
 }
 
-/// BRepTest_BasicCommands.cxx `nurbsconvert result shape`: `BRepBuilderAPI_NurbsConvert`.
+/// `nurbsconvert result shape`: `BRepBuilderAPINurbsConvert`.
 pub fn nurbsconvert(shape: &Shape) -> Shape {
     let mut maker = BRepBuilderAPINurbsConvert::new();
     maker.perform(shape, false).unwrap();
     maker.shape().unwrap().clone()
 }
 
-/// BRepTest_BasicCommands.cxx `wexplo wire [face]`: the `WEDGE_i` edges of
-/// `BRepTools_WireExplorer`, in order.
+/// `wexplo wire [face]`: the `WEDGE_i` edges of
+/// `WireExplorer`, in order.
 pub fn wexplo(wire: &Shape, face: Option<&Shape>) -> Vec<Shape> {
     let wire = topods::wire(wire).expect("wexplo: a wire");
     let mut explorer = match face {
@@ -247,7 +247,7 @@ pub fn wexplo(wire: &Shape, face: Option<&Shape>) -> Vec<Shape> {
     edges
 }
 
-/// BRepTest_BasicCommands.cxx `maxtolerance shape`: the minimum and maximum tolerance
+/// `maxtolerance shape`: the minimum and maximum tolerance
 /// of the explored faces, edges and vertices (`None` for a type with none).
 pub fn maxtolerance(shape: &Shape) -> [Option<(f64, f64)>; 3] {
     let range = |kind: ShapeEnum, tolerance: &dyn Fn(&Shape) -> f64| {
@@ -273,7 +273,7 @@ pub fn maxtolerance(shape: &Shape) -> [Option<(f64, f64)>; 3] {
     ]
 }
 
-/// BRepTest_CheckCommands.cxx `validrange edge`: `BRepLib::FindValidRange` printed as
+/// `validrange edge`: `BRepLib::FindValidRange` printed as
 /// `u1 u2` (`%.17g` each), or `edge has no valid range`.
 pub fn validrange(edge: &Shape) -> Option<(f64, f64)> {
     let range = brep_lib::find_valid_range_of_edge(&topods::edge(edge).unwrap()).unwrap();
@@ -282,7 +282,7 @@ pub fn validrange(edge: &Shape) -> Option<(f64, f64)> {
         .then(|| (range.first.unwrap(), range.last.unwrap()))
 }
 
-/// BRepTest_CheckCommands.cxx `checksection shape`: the number of vertices met an odd
+/// `checksection shape`: the number of vertices met an odd
 /// number of times (` nb alone Vertices : N`).
 pub fn checksection(shape: &Shape) -> usize {
     let mut vertices = MapOfShape::default();
@@ -299,7 +299,7 @@ pub fn checksection(shape: &Shape) -> usize {
     alone
 }
 
-/// Draw_VariableCommands.cxx `whatis name` of a shape: `name is a shape TYPE ...`
+/// `whatis name` of a shape: `name is a shape TYPE ...`
 /// (`DBRep_DrawableShape::Whatis`); the type word the cases read.
 pub fn shape_type_word(shape: &Shape) -> &'static str {
     match shape.shape_type().unwrap() {
@@ -315,7 +315,7 @@ pub fn shape_type_word(shape: &Shape) -> &'static str {
     }
 }
 
-/// Draw_VariableCommands.cxx `dump name` of a shape: the banner, then
+/// `dump name` of a shape: the banner, then
 /// `DBRep_DrawableShape::Dump` (`BRepTools::Dump`) at precision 15.
 pub fn dump_shape(name: &str, shape: &Shape) -> String {
     let mut stream = IoStream::from_bytes(Vec::new());
@@ -337,7 +337,7 @@ pub fn scientific(value: f64, precision: usize) -> String {
     format!("{mantissa}e{sign}{:02}", exponent.abs())
 }
 
-/// BRepTest_BasicCommands.cxx `maxtolerance name`: the printed report (the counts of
+/// `maxtolerance name`: the printed report (the counts of
 /// distinct faces, edges and vertices, then `Min`/`Max` of each kind in `%.5e`), logged.
 pub fn maxtolerance_text(name: &str, shape: &Shape) -> String {
     let count = |kind: ShapeEnum| {

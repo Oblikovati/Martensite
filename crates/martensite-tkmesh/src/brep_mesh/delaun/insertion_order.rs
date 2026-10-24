@@ -10,7 +10,7 @@ struct ProjectedIndex {
 }
 
 impl BRepMeshDelaun {
-    /// Sort vertex IDs by the retained behavior's `(x + y)` heap order; `delaun.sort_vertex_indices(&mut [1,2])?`.
+    /// Sort vertex IDs by `(x + y)` heap order; `delaun.sort_vertex_indices(&mut [1,2])?`.
     #[doc(hidden)]
     pub fn sort_vertex_indices(&self, indices: &mut [i32]) -> Result<(), Failure> {
         let mut projected = indices

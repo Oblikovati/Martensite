@@ -1,4 +1,4 @@
-//! the retained behavior's type-dependent 3D distribution, including sampling wrapper bases.
+//! type-dependent 3D distribution, including sampling wrapper bases.
 use super::ShapeAnalysisCurve;
 use martensite_tkernel::{
     ncollection::Sequence,
@@ -16,7 +16,7 @@ use martensite_tkmath::gp::Point3;
 
 fn sample_multiplier(range: (f64, f64), delta: f64) -> i32 {
     let factor = ((range.1 - range.0) / delta).ceil();
-    // Match the pinned x86-64 GCC conversion, including integer-indefinite output.
+    // Preserve x86-64 conversion semantics, including integer-indefinite output.
     if !(-2147483648.0..2147483648.0).contains(&factor) {
         return i32::MIN;
     }

@@ -1,4 +1,4 @@
-//! Translation of the pinned ShapeFix_FaceConnect_Test.cxx regression suite.
+//! Face connection regression suite.
 use martensite_tkbrep::{
     topexp,
     topods::{self, Builder, Face, Shell},

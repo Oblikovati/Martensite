@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/sewing/tol_100.
+//! The TKShHealing (no view) tests of tol 100.
 use super::*;
 
 dataset_cases!(run_case, NoView, sewing_tol_100, SEWING_SECONDS;

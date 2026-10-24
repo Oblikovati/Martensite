@@ -1,4 +1,4 @@
-//! Native-backed cases for `ShapeAnalysis_CheckSmallFace::CheckTwisted`.
+//! Native-backed cases for `ShapeAnalysisCheckSmallFace::check_twisted`.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::Face;
 use martensite_tkernel::ncollection::Array2;

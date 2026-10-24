@@ -1,8 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom_Curve2d.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeCustom_Curve2d`: linear B-spline and Bezier p-curves as lines, and knot removal
-//! (docs/shhealing-design.md section 7).
+//! `ShapeCustomCurve2d`: linear B-spline and Bezier p-curves as lines, and knot removal.
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -23,7 +19,7 @@ pub struct Line2dConversion {
     pub deviation: f64,
 }
 
-/// `ShapeCustom_Curve2d`: the static tools that turn linear p-curves into lines and
+/// `ShapeCustomCurve2d`: the static tools that turn linear p-curves into lines and
 /// remove the needless knots of a 2D B-spline.
 ///
 /// ```
@@ -38,7 +34,7 @@ pub struct Line2dConversion {
 pub struct ShapeCustomCurve2d;
 
 /// `thePoles(i)`: the pole at index `i`, Standard_OutOfRange outside the array bounds
-/// (the native loops read the indices 1..Length whatever the lower bound is).
+/// (the loops read the indices 1..Length whatever the lower bound is).
 fn pole(poles: &Array1<'_, Point2>, index: i32) -> Result<Point2, Failure> {
     poles.value(index).copied().map_err(|_| {
         Failure::with_type(
@@ -81,11 +77,11 @@ fn get_line(p1: Point2, p2: Point2, c1: f64) -> Result<(Line2, f64, f64), Failur
 }
 
 impl ShapeCustomCurve2d {
-    /// `IsLinear(thePoles, theTolerance, theDeviation)`: the deviation (the largest
+    /// the deviation (the largest
     /// distance of a pole from the line through the two farthest poles) when every pole
-    /// lies within `tolerance` of that line; `None` (native false, the deviation left
+    /// lies within `tolerance` of that line; `None` (false, the deviation left
     /// unchanged) otherwise, and for fewer than two poles or poles closer than
-    /// `Precision::PConfusion()`; `ShapeCustomCurve2d::is_linear(&poles, 1e-7)?`.
+    /// `precision::p_confusion()`; `ShapeCustomCurve2d::is_linear(&poles, 1e-7)?`.
     pub fn is_linear(poles: &Array1<'_, Point2>, tolerance: f64) -> Result<Option<f64>, Failure> {
         if poles.length() < 2 {
             return Ok(None);
@@ -111,11 +107,11 @@ impl ShapeCustomCurve2d {
         Ok(Some(a_max.sqrt()))
     }
 
-    /// `ConvertToLine2d(theCurve, c1, c2, theTolerance, cf, cl, theDeviation)`: a line
+    /// a line
     /// through the points at `c1` and `c2` when the curve is a B-spline or a Bezier curve
     /// whose poles are linear within `tolerance`, located so that `c1` is the parameter of
     /// its own point, with the parameters of both points and the deviation; `None` (the
-    /// native null line, the outputs left unchanged) for points closer than the
+    /// null line, the outputs left unchanged) for points closer than the
     /// tolerance, another curve kind or non-linear poles. Standard_NullObject for a null
     /// curve; `ShapeCustomCurve2d::convert_to_line2d(&curve, 0.0, 1.0, 1e-7)?`.
     pub fn convert_to_line2d(
@@ -150,11 +146,11 @@ impl ShapeCustomCurve2d {
         }))
     }
 
-    /// `SimplifyBSpline2d(theBSpline2d, theTolerance)`: walks the inner knots from the
+    /// walks the inner knots from the
     /// last one down and removes one multiplicity of each knot where the curve is
     /// `C(degree - mult)` and the two local derivatives of that order are parallel
-    /// (a failed `RemoveKnot` is ignored, as the native `try/catch`); true when a knot
-    /// was removed. A null derivative raises, as natively;
+    /// (a failed `RemoveKnot` is ignored, as the `try/catch`); true when a knot
+    /// was removed. A null derivative raises;
     /// `ShapeCustomCurve2d::simplify_bspline2d(&bspline, 1e-7)?`.
     pub fn simplify_bspline2d(
         bspline: &Geom2dBSplineCurve,
@@ -190,7 +186,7 @@ fn linear_candidate_poles(curve: &Handle<dyn Geom2dCurve>) -> Option<Array1<'sta
 
 /// One step of the `SimplifyBSpline2d` loop at `knot_index`: `RemoveKnot(index, mult -
 /// 1, tolerance)` when the derivatives of order `degree - mult` (above 1) on both sides
-/// of the knot are parallel within `Precision::Angular()`.
+/// of the knot are parallel within `precision::angular()`.
 fn remove_parallel_knot(
     bspline: &Geom2dBSplineCurve,
     knot_index: i32,
@@ -205,7 +201,7 @@ fn remove_parallel_knot(
     let before = bspline.local_dn(u, knot_index - 1, knot_index, deg_mult)?;
     let after = bspline.local_dn(u, knot_index, knot_index + 1, deg_mult)?;
     if before.is_parallel(after, precision::angular())? {
-        // The native `catch (Standard_Failure const&) {}` drops the failure.
+        // The `catch (Standard_Failure const&) {}` drops the failure.
         let _ = bspline.remove_knot(knot_index, mult - 1, tolerance);
     }
     Ok(())

@@ -2,8 +2,8 @@
 
 This crate is first published with the product-oriented `object_model` module and
 its document, model, object, partition, iterator, attribute and type-registry
-interfaces. The implementation had not appeared on the default branch or in a
-released package before this naming review.
+interfaces. The implementation had not appeared in a released package before this naming
+review.
 
 Consequently no released public identifier needs a compatibility alias and no
 consumer migration is required for the first release. Future renames follow

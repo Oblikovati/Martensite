@@ -1,4 +1,4 @@
-//! The periodic part of `IntUnifyFaces` (ShapeUpgrade_UnifySameDomain.cxx): the seams of
+//! The periodic part of `IntUnifyFaces` : the seams of
 //! the faces, the B-spline surface made periodic across a smooth edge with two p-curves
 //! (with `ConcatBSplines`), and the reference surface moved to a new origin of a periodic
 //! direction so that the merged face needs no seam.

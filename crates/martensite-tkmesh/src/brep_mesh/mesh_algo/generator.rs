@@ -1,6 +1,4 @@
-// Rust translation of the mesh generation of BRepMesh_DelaunayBaseMeshAlgo.cxx,
-// BRepMesh_CustomBaseMeshAlgo.hxx and BRepMesh_CustomDelaunayBaseMeshAlgo.hxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Build constrained connectivity before collecting a face triangulation.
 use super::base::{BaseMeshAlgoData, BaseMeshAlgoHooks, ConstrainedBaseMeshAlgoHooks};
 use crate::brep_mesh::{BRepMeshDelaun, BRepMeshMeshTool};
 use martensite_tkernel::message::ProgressRange;
@@ -11,12 +9,12 @@ use std::marker::PhantomData;
 /// triangulation is generated (`generateMesh`) and what the base `postProcessMesh`
 /// does.
 pub trait MeshGenerator {
-    /// `BaseAlgo::generateMesh` on the full algorithm.
+    /// `MeshGenerator::generate_mesh` on the full algorithm.
     fn generate_mesh<A: ConstrainedBaseMeshAlgoHooks + ?Sized>(
         algo: &mut A,
         range: &ProgressRange<'_>,
     ) -> Result<(), Failure>;
-    /// `BaseAlgo::postProcessMesh`: nothing for the constrained base.
+    /// `MeshGenerator::post_process_mesh`: nothing for the constrained base.
     fn post_process_mesh<A: ConstrainedBaseMeshAlgoHooks + ?Sized>(
         _algo: &mut A,
         _mesher: &mut BRepMeshDelaun,
@@ -26,12 +24,12 @@ pub trait MeshGenerator {
     }
 }
 
-/// `BRepMesh_DelaunayBaseMeshAlgo` as a generator: the Watson triangulation of every
+/// `BRepMeshDelaunayBaseMeshAlgo` as a generator: the Watson triangulation of every
 /// registered node in index order.
 pub struct DelaunayGenerator;
 
 impl MeshGenerator for DelaunayGenerator {
-    /// `BRepMesh_DelaunayBaseMeshAlgo::generateMesh`.
+    /// Generate triangulation from the registered boundary constraints.
     fn generate_mesh<A: ConstrainedBaseMeshAlgoHooks + ?Sized>(
         algo: &mut A,
         range: &ProgressRange<'_>,
@@ -49,7 +47,7 @@ impl MeshGenerator for DelaunayGenerator {
     }
 }
 
-/// `BRepMesh_CustomBaseMeshAlgo::buildBaseTriangulation` (pure virtual): a custom
+/// `CustomBaseTriangulation::build_base_triangulation`: a custom
 /// triangulation of the registered nodes into the structure.
 pub trait CustomBaseTriangulation {
     /// Builds the base triangulation; `T::build_base_triangulation(&mut algo)?`.
@@ -58,11 +56,11 @@ pub trait CustomBaseTriangulation {
     ) -> Result<(), Failure>;
 }
 
-/// `BRepMesh_CustomBaseMeshAlgo` as a generator over a custom base triangulation.
+/// `CustomBaseMeshAlgo` as a generator over a custom base triangulation.
 pub struct CustomGenerator<T: CustomBaseTriangulation>(PhantomData<T>);
 
 impl<T: CustomBaseTriangulation> MeshGenerator for CustomGenerator<T> {
-    /// `BRepMesh_CustomBaseMeshAlgo::generateMesh`: the custom triangulation, the
+    /// `MeshGenerator::generate_mesh`: the custom triangulation, the
     /// constraints, the removal of the auxiliary nodes it added and of free links.
     fn generate_mesh<A: ConstrainedBaseMeshAlgoHooks + ?Sized>(
         algo: &mut A,
@@ -93,8 +91,7 @@ impl<T: CustomBaseTriangulation> MeshGenerator for CustomGenerator<T> {
     }
 }
 
-/// `BRepMesh_CustomDelaunayBaseMeshAlgo<BaseAlgo>`: the base algorithm whose
-/// postProcessMesh first fills the circle tool of the mesher.
+/// Fill the mesher's circle tool before the configured postprocessing stage.
 pub struct CustomDelaunayGenerator<G: MeshGenerator>(PhantomData<G>);
 
 impl<G: MeshGenerator> MeshGenerator for CustomDelaunayGenerator<G> {
@@ -104,7 +101,7 @@ impl<G: MeshGenerator> MeshGenerator for CustomDelaunayGenerator<G> {
     ) -> Result<(), Failure> {
         G::generate_mesh(algo, range)
     }
-    /// `BRepMesh_CustomDelaunayBaseMeshAlgo::postProcessMesh`.
+    /// Initialize circle bounds before delegating mesh postprocessing.
     fn post_process_mesh<A: ConstrainedBaseMeshAlgoHooks + ?Sized>(
         algo: &mut A,
         mesher: &mut BRepMeshDelaun,
@@ -117,7 +114,7 @@ impl<G: MeshGenerator> MeshGenerator for CustomDelaunayGenerator<G> {
     }
 }
 
-/// `BRepMesh_DelaunayBaseMeshAlgo`: the plain Watson algorithm (planes and cylinders
+/// `BRepMeshDelaunayBaseMeshAlgo`: the plain Watson algorithm (planes and cylinders
 /// without internal vertices); `DelaunayBaseMeshAlgoCore::default()`.
 #[derive(Default)]
 pub struct DelaunayBaseMeshAlgoCore {

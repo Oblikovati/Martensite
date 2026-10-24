@@ -1,6 +1,3 @@
-// Rust translation of ShapeConstruct::ConvertSurfaceToBSpline (ShapeConstruct.cxx) at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! `ShapeConstruct::ConvertSurfaceToBSpline`: exact conversion of elementary and extrusion
 //! surfaces, approximation (with a decreasing continuity on failure) of the others.
 use super::ShapeConstruct;
@@ -15,7 +12,7 @@ use martensite_tkgeombase::geom_convert;
 use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkmath::gp::{Point3, Transform3};
 
-/// The native `GeomAbs_Shape` values, indexed by their integer value.
+/// The continuity values, indexed by their integer value.
 const CONTINUITIES: [Continuity; 7] = [
     Continuity::C0,
     Continuity::G1,
@@ -201,8 +198,8 @@ fn revolution_with_converted_offset(
     Ok(Handle::new(surface).cast())
 }
 
-// Native retries with the next lower continuity after an exception; an exception at C0
-// makes the native loop spin forever (cnt stays 0), which Rust reports as a Failure.
+// retries with the next lower continuity after an exception; an exception at C0
+// makes the loop spin forever (cnt stays 0), which Rust reports as a Failure.
 fn approximate_surface(
     surface: &Handle<dyn GeomSurface>,
     settings: ShapeConstructApproxSettings,

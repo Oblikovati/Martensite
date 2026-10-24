@@ -69,7 +69,7 @@ impl BRepMeshCircleInspector {
     pub fn get_shot_circles(&mut self) -> &mut List<i32> {
         &mut self.hits
     }
-    /// Retain the retained behavior's squared-tolerance comparison (bug27119); `inspector.inspect(1)?`.
+    /// Compare circle membership with squared tolerance; `inspector.inspect(1)?`.
     pub fn inspect(&mut self, index: i32) -> Result<CellAction, Failure> {
         let circle = *self.circle(index)?;
         if circle.radius() < 0. {
@@ -77,7 +77,7 @@ impl BRepMeshCircleInspector {
         }
         let dx = self.point.x() - circle.location().x();
         let dy = self.point.y() - circle.location().y();
-        // the retained behavior deliberately retains this test: linear radius expansion hangs perf mesh bug27119.
+        // Keep the squared comparison: linear radius expansion can make mesh refinement stall.
         if (dx * dx + dy * dy) - (circle.radius() * circle.radius()) <= self.squared_tolerance {
             self.hits.append(index);
         }

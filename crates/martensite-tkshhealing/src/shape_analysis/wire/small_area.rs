@@ -1,5 +1,4 @@
-//! Sampled area screening followed by the retained behavior's exact mass-property check.
-// ShapeAnalysis_Wire.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Sampled area screening followed by exact mass-property check.
 use super::*;
 use martensite_tkbrep::topods;
 use martensite_tkg3d::geom::GeomCurve;

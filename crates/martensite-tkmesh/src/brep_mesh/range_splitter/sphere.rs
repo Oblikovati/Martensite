@@ -1,10 +1,9 @@
-// Rust translation of BRepMesh_SphereRangeSplitter.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Adjust spherical sampling near periodic boundaries and poles.
 use super::*;
 use martensite_tkgeombase::gcpnts::TangentialDeflection;
 use martensite_tkmath::bvh::BvhScalar;
 
-/// `BRepMesh_SphereRangeSplitter`: a staggered grid of interior nodes on a sphere;
+/// `SphereRangeSplitter`: a staggered grid of interior nodes on a sphere;
 /// `SphereRangeSplitter::default()`.
 #[derive(Default)]
 pub struct SphereRangeSplitter {
@@ -26,7 +25,7 @@ impl std::ops::DerefMut for SphereRangeSplitter {
 /// exclusive end of the range less Precision::PConfusion().
 fn compute_step(range: (f64, f64), default_step: f64) -> (f64, f64) {
     let diff = range.1 - range.0;
-    // Native `(int)(aDiff / theDefaultStep) + 1`: the truncating C++ conversion.
+    // Truncation before increment keeps interval counts consistent with the open upper bound.
     let count = (diff / default_step).truncate_to_int().wrapping_add(1);
     (diff / f64::from(count), range.1 - precision::p_confusion())
 }

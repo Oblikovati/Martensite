@@ -1,4 +1,4 @@
-//! Part of the tests/mkface/after_trim case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871: each
+//! Face construction regression fixtures: each
 //! builds its curve and surface with the GeomliteTest commands, makes the face (the grid
 //! end makes it from `r` where the case does not), sets the expected maximum tolerances,
 //! then runs the mkface group end ([`super::mkface_grid::mkface_end`]).
@@ -14,7 +14,7 @@ use crate::support::{
     vars::Vars,
 };
 
-/// tests/mkface/after_trim/B8.
+/// after trim — B8.
 pub fn b8(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_np_nr"));
@@ -33,7 +33,7 @@ pub fn b8(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/B9.
+/// after trim — B9.
 pub fn b9(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_np_nr"));
@@ -54,7 +54,7 @@ pub fn b9(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/C1.
+/// after trim — C1.
 pub fn c1(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_p_nr"));
@@ -73,7 +73,7 @@ pub fn c1(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/C2.
+/// after trim — C2.
 pub fn c2(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_p_nr"));
@@ -94,7 +94,7 @@ pub fn c2(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/C3.
+/// after trim — C3.
 pub fn c3(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_p_r"));
@@ -113,7 +113,7 @@ pub fn c3(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_trim/C4.
+/// after trim — C4.
 pub fn c4(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("a", restore("bs_s_p_r"));

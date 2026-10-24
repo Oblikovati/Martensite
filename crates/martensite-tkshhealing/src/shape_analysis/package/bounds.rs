@@ -1,4 +1,4 @@
-//! Native endpoint and p-curve bounds from ShapeAnalysis.cxx at 3d097a0328e71b8.
+//! Endpoint and p-curve bounds for shape analysis.
 use super::{ShapeAnalysis, ShapeAnalysisCurve};
 use crate::shape_analysis::ShapeAnalysisEdge;
 use martensite_tkbrep::{

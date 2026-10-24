@@ -81,7 +81,7 @@ fn join_following_paths(
         wire = merge_paths(&wire, &open[other])?;
         open.remove(other);
         changed = true;
-        // the retained behavior exposes completed joins even when a later reorder fails.
+        // exposes completed joins even when a later reorder fails.
         *tool.status.write() |= ShapeExtend::encode_status(ShapeExtendStatus::Done7);
     }
     Ok((wire, changed))

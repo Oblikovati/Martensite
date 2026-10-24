@@ -1,6 +1,6 @@
 //! Tool handles and protected state retain their native sharing and replacement semantics.
 use super::*;
-/// Native protected state; `tool.wire_divide_data().with(|fields|fields.edge_mode)`.
+/// protected state; `tool.wire_divide_data().with(|fields|fields.edge_mode)`.
 pub struct WireDivideFields {
     /// Supimplementation face retained by Load.
     pub face: Face,

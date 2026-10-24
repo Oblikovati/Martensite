@@ -1,4 +1,4 @@
-//! Direct Rust mirrors for the standalone angle and winding declarations.
+//! Angle and winding contracts for planar triangulation.
 #![allow(non_snake_case)]
 use martensite_tkmath::gp::{Vector2, Xy};
 fn winding_angle(points: &[Xy; 5]) -> f64 {

@@ -1,8 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom_DirectModification.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeCustom_DirectModification`: indirect elementary surfaces and cones of negative
-//! semi-angle made direct (docs/shhealing-design.md section 7).
+//! `ShapeCustomDirectModification`: indirect elementary surfaces and cones of negative
+//! semi-angle made direct.
 use super::edge_copy::copy_edge_curve;
 use super::modification::{ShapeCustomModification, ShapeCustomModificationFields};
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
@@ -45,7 +42,7 @@ fn untrimmed_surface(surface: &Handle<dyn GeomSurface>) -> Handle<dyn GeomSurfac
     current
 }
 
-/// `IsIndirectSurface(S, L)`: the kind of the untrimmed elementary surface (indirect
+/// the kind of the untrimmed elementary surface (indirect
 /// when `(IsNegative != (det < 0)) == Direct()`, which the location never changes, plus
 /// 2 for a cone of negative semi-angle); when it is not `None`, `surface` becomes the
 /// untrimmed surface.
@@ -54,7 +51,7 @@ fn indirection(
     location: &Location,
 ) -> Result<Indirection, Failure> {
     if surface.is_null() {
-        // Natively `TS->IsKind(...)` dereferences the null surface of the face.
+        // Reject a face without a surface before classifying its geometry.
         return Err(Failure::with_type(
             "Standard_NullObject",
             "ShapeCustom_DirectModification: the face has no surface",
@@ -85,7 +82,7 @@ fn indirection(
     Ok(kind)
 }
 
-/// `ShapeCustom_DirectModification`: a face on an indirect elementary surface gets the
+/// `ShapeCustomDirectModification`: a face on an indirect elementary surface gets the
 /// U-reversed surface and is reversed with its wires; a face on a cone of negative
 /// semi-angle gets the cone reversed in U and V (and, indirect, only in V), so that the
 /// normals keep their direction. Edges with a p-curve on such a surface are copied with
@@ -112,7 +109,7 @@ impl_transient!(
 );
 
 impl ShapeCustomDirectModification {
-    /// `ShapeCustom_DirectModification()`; `ShapeCustomDirectModification::new()`.
+    /// `ShapeCustomDirectModification::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -279,7 +276,7 @@ impl BRepToolsModification for ShapeCustomDirectModification {
     }
 }
 
-/// `occ::down_cast<Geom2d_Curve>(C->Copy())`, a null curve staying null.
+/// Copy the planar curve, retaining an absent handle when the input is absent.
 pub(super) fn copied_pcurve(
     curve: &Handle<dyn Geom2dCurve>,
 ) -> Result<Handle<dyn Geom2dCurve>, Failure> {
@@ -291,7 +288,7 @@ pub(super) fn copied_pcurve(
 
 /// For a really closed edge, when the reversed new edge has no p-curve on the new face,
 /// the original p-curve and the mirrored one are set as the seam of the new edge, with
-/// the original range ("anyway, tmp will be removed later by BRepTools_Modifier").
+/// the original range ("anyway, tmp will be removed later by Modifier").
 fn keep_seam_trimming(
     edge: &Edge,
     face: &Face,

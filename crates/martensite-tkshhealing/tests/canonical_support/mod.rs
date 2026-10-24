@@ -1,4 +1,4 @@
-//! Original canonical-recognition fixture builders from the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Original canonical-recognition fixture builders.
 pub use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{message::ProgressRange, ncollection::Array1};
 pub use martensite_tkernel::{precision, standard::Handle};

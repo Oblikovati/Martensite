@@ -6,7 +6,18 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-10-23
+
 ### Fixed
+
+- Staged document writes so preparation failures and incomplete driver output leave existing files intact; verified access policies before publication and retained requested paths and symbolic links (#245).
+- Refused custom restrictive writer policies before replacing existing documents, while retaining ordinary staging defaults and destination access policies (#245).
+
+- Rejected incomplete geometric volume integration and preserved caller properties on failure while retaining completed empty selections (#246).
+
+- Preserved planar wire geometry during face construction and reused finite curve bounds within classification operations without storing projection caches on input edges (#242).
+
+- Removed the reciprocal hidden-line/primitive test dependency while preserving the two-solid projection check, so dependency policy and source packaging agree (#241).
 
 - Preserved distinct boundary incidences at restriction-line endpoints during interval construction (#238).
 
@@ -16,13 +27,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Preserved natural-bound face construction for closed non-periodic surfaces (#225)
 
+- Corrected volume properties of trimmed faces with bounded Gauss-Kronrod integration (#221).
+
 ### Added
 
-- Added shape healing, mesh construction and document-object model crates ([#215], [#216], [#217]).
-
-### Fixed
-
-- Corrected volume properties of trimmed faces with bounded Gauss-Kronrod integration (#221).
+- Added shape healing, mesh construction and document-object model crates (#215, #216, #217).
 
 ## [0.3.5] - 2026-10-20
 

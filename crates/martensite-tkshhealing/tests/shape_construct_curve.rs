@@ -1,4 +1,4 @@
-//! ShapeConstruct_Curve parity cases; the retained behavior 3d097a0 keeps copies after segmentation failure.
+//! Curve construction regressions: copies survive segmentation failure.
 use martensite_tkernel::ncollection::{Array1, HArray1};
 use martensite_tkernel::standard::{Handle, real::epsilon};
 use martensite_tkg2d::geom2d::{Geom2dCircle, Geom2dCurve, Geom2dLine};

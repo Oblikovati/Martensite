@@ -65,6 +65,8 @@ pub mod brep_gprop_behavior;
 pub mod brep_gprop_cut_cylinder_fixture;
 #[path = "../brep_gprop_units.rs"]
 pub mod brep_gprop_units;
+#[path = "../brep_gprop_volume_completion.rs"]
+pub mod brep_gprop_volume_completion;
 #[path = "../brep_int_curve_surface_behavior.rs"]
 pub mod brep_int_curve_surface_behavior;
 #[path = "../brep_lib_command_extension.rs"]

@@ -1,4 +1,4 @@
-//! Native 23-point planar pcurve deviation pass (ShapeFix.cxx, ProSTEP TR8).
+//! Planar p-curve deviation measured at 23 sample points.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topexp::Explorer,

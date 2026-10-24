@@ -25,19 +25,16 @@ SOFTWARE.
 
 */
 
-// Rust translation of delabella.pxx and delabella.cpp (the copy the retained behavior bundles in
-// src/ModelingAlgorithms/TKMesh/BRepMesh at 3d097a0328e71b826377d4814ab05ec3c3d23871).
+// Lifted convex-hull predicates retain extended precision for orientation decisions.
 
 //! DELABELLA: the Delaunay triangulation of a 2D point cloud as the lower convex hull of
-//! the points lifted onto the paraboloid `z = x² + y²` (the library behind
-//! `BRepMesh_DelabellaBaseMeshAlgo`).
+//! the points lifted onto the paraboloid `z = x² + y²`, used by the face meshers.
 //!
-//! The native pointers become indices: a triangle's `v` holds indices into the
+//! A triangle's `v` holds indices into the
 //! (sorted) vertex array read through [`DelaBella::vertex`], its `f` and `next` indices
-//! into the triangle array read through [`DelaBella::triangle`]. The z coordinates and
-//! every cross/dot product are `long double` natively; they are computed in
-//! [`LongDouble`] (the x87 80-bit format of the pinned GCC x86-64 profile) so every
-//! sign decision, and so the triangulation, is bit-identical.
+//! into the triangle array read through [`DelaBella::triangle`]. Lifted coordinates
+//! and cross/dot products use [`LongDouble`], an x87 80-bit representation, to retain
+//! the precision of orientation signs and deterministic triangulation decisions.
 mod arith;
 mod cone;
 mod insert;

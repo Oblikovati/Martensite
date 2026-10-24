@@ -1,4 +1,4 @@
-//! the retained behavior's single-edge `RemoveLoop` curve reconstruction for planar support surfaces.
+//! single-edge `RemoveLoop` curve reconstruction for planar support surfaces.
 use super::{FixRoot, ShapeFixWire};
 use crate::shape_analysis::ShapeAnalysisEdge;
 use crate::shape_analysis::{ShapeAnalysisTransferParametersProj, TransferParameters};

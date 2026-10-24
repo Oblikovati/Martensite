@@ -1,4 +1,4 @@
-//! Native ShapeFix_Wire_1.cxx pcurve conversion and gap mutations.
+//! Parametric curve conversion and wire gap repair.
 mod convert;
 mod range_clip;
 mod range_search;

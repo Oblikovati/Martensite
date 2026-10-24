@@ -1,4 +1,4 @@
-//! Native area screening, exact property fallback and distinct argument-wire behavior.
+//! area screening, exact property fallback and distinct argument-wire behavior.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topods::{Edge, Face, Wire},

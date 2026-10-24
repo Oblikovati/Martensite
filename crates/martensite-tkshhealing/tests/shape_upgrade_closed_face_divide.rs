@@ -1,4 +1,4 @@
-//! Native differential coverage for `ShapeUpgrade_ClosedFaceDivide`.
+//! differential coverage for `ShapeUpgradeClosedFaceDivide`.
 use martensite_tkbrep::{
     brep::BRepTool,
     topexp::Explorer,

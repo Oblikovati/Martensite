@@ -1,6 +1,3 @@
-// Rust translation of the context and periodic-cone path in ShapeFix_Face.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! Context preservation and apex-edge repair for periodic loops on conical faces.
 mod coincident_wires;
 mod configuration;
@@ -30,7 +27,7 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 
-/// The context and periodic conical-loop path of `ShapeFix_Face`.
+/// The context and periodic conical-loop path of `ShapeFixFace`.
 ///
 /// ```
 /// use martensite_tkbrep::topods::Shape;
@@ -71,7 +68,7 @@ pub type ShapeFixFaceWireMap =
     DataMap<Shape, List<Shape>, martensite_tkbrep::toptools::ShapeMapHasher>;
 
 impl ShapeFixFace {
-    /// `ShapeFix_Face(face)`: initialize the root shape and working face;
+    /// initialize the root shape and working face;
     /// `ShapeFixFace::new(face.into_shape())`.
     pub fn new(face: Shape) -> Self {
         let fixer = Self::default();
@@ -79,14 +76,14 @@ impl ShapeFixFace {
         fixer
     }
 
-    /// `Init(face)`: replace the root shape and working face with `face`.
+    /// replace the root shape and working face with `face`.
     pub fn init(&self, face: Shape) {
         self.parent
             .fix_root_data()
             .with_mut(|fields| fields.shape = face.clone());
         *self.face_state.write() = face.clone();
         *self.status.write() = 0;
-        // Native keeps the previous analysis surface when the new face has no surface.
+        // keeps the previous analysis surface when the new face has no surface.
         let surface = initialize_face_surface(&face);
         if !surface.is_null() {
             *self.analysis_surface.write() = surface;
@@ -94,7 +91,7 @@ impl ShapeFixFace {
         *self.forward.write() = face.orientation() != Orientation::Reversed;
     }
 
-    /// Sets the wire-orientation mode; negative selects the retained behavior's default-on behavior.
+    /// Sets the wire-orientation mode; negative selects default-on behavior.
     /// Example: `fixer.set_fix_orientation_mode(0)`.
     pub fn set_fix_orientation_mode(&self, mode: i32) {
         self.modes.write().orientation = mode;
@@ -105,7 +102,7 @@ impl ShapeFixFace {
         self.modes.read().orientation
     }
 
-    /// Sets natural-bound mode; negative selects the retained behavior's conditional default.
+    /// Sets natural-bound mode; negative selects conditional default.
     /// Example: `fixer.set_fix_add_natural_bound_mode(1)`.
     pub fn set_fix_add_natural_bound_mode(&self, mode: i32) {
         self.modes.write().add_natural_bound = mode;
@@ -172,7 +169,7 @@ impl ShapeFixFace {
         orientation::fix_orientation_empty_map(self)
     }
 
-    /// Applies the retained behavior's empty-face and doubly periodic natural-bound paths;
+    /// Applies empty-face and doubly periodic natural-bound paths;
     /// `let changed = fixer.fix_add_natural_bound()?`.
     pub fn fix_add_natural_bound(&self) -> Result<bool, Failure> {
         natural_bound::fix_add_natural_bound(self)
@@ -200,17 +197,17 @@ impl ShapeFixFace {
         self.perform_wire_enabled(progress)
     }
 
-    /// `Result()`: return the last performed shape, including non-face context results.
+    /// return the last performed shape, including non-face context results.
     pub fn result(&self) -> Shape {
         self.result.read().clone()
     }
 
-    /// `Face()`: return the last result as a face when it has face topology.
+    /// return the last result as a face when it has face topology.
     pub fn face(&self) -> Result<Face, Failure> {
         topods::face(&self.face_state.read())
     }
 
-    /// `Status(status)`: decode a flag from the last `Perform()`.
+    /// decode a flag from the last `Perform()`.
     pub fn status(&self, status: ShapeExtendStatus) -> bool {
         ShapeExtend::decode_status(*self.status.read(), status)
     }
@@ -227,7 +224,7 @@ fn initialize_face_surface(face_shape: &Shape) -> Handle<ShapeAnalysisSurface> {
     let Ok(face) = topods::face(face_shape) else {
         return Handle::default();
     };
-    // BRep_Tool::Surface(face): the surface with the face location applied.
+    // Use the surface with the face location applied.
     let Ok(surface) = BRepTool::surface(&face) else {
         return Handle::default();
     };
@@ -267,7 +264,7 @@ fn initialize_surface_state(
     Ok(())
 }
 
-/// Applies a non-null reshape context using the full-shape limit of ShapeFix_Face.
+/// Applies a non-null reshape context using the full-shape limit of ShapeFixFace.
 fn apply_context(input: &Shape, context: &Handle<ShapeBuildReShape>) -> Result<Shape, Failure> {
     let Some(context) = context.get() else {
         return Ok(input.clone());

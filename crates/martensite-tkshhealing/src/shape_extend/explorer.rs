@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend/ShapeExtend_Explorer.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeExtend_Explorer`: conversions between compounds, sequences and lists of shapes,
+//! `ShapeExtendExplorer`: conversions between compounds, sequences and lists of shapes,
 //! and the sorting of a shape by type.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topexp::Explorer;
@@ -10,7 +7,7 @@ use martensite_tkernel::ncollection::{HSequence, List};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// `occ::handle<NCollection_HSequence<TopoDS_Shape>>`.
+/// Shared sequence of shapes used by exploration operations.
 pub type ShapeHSequence = Handle<HSequence<Shape>>;
 
 /// The eight sequences `DispatchList` fills, one per shape type.
@@ -34,7 +31,7 @@ pub struct ShapeDispatch {
     pub compounds: ShapeHSequence,
 }
 
-/// `ShapeExtend_Explorer`: tools to explore shapes and to convert their collections.
+/// `ShapeExtendExplorer`: tools to explore shapes and to convert their collections.
 ///
 /// ```
 /// use martensite_tkbrep::topods::Shape;
@@ -63,13 +60,13 @@ fn items(sequence: &ShapeHSequence, member: &str) -> Result<Vec<Shape>, Failure>
 }
 
 impl ShapeExtendExplorer {
-    /// `ShapeExtend_Explorer()`; `ShapeExtendExplorer::new()`.
+    /// `ShapeExtendExplorer::new()`.
     pub fn new() -> Self {
         Self
     }
 
-    /// `CompoundFromSeq(seqval)`: a new compound of the shapes of the sequence;
-    /// Standard_NullObject for a null handle (a null dereference natively);
+    /// a new compound of the shapes of the sequence;
+    /// Standard_NullObject for a null handle;
     /// `explorer.compound_from_seq(&shapes)?`.
     pub fn compound_from_seq(&self, seqval: &ShapeHSequence) -> Result<Shape, Failure> {
         let builder = BRepBuilder::default();
@@ -81,7 +78,7 @@ impl ShapeExtendExplorer {
         Ok(compound.into_shape())
     }
 
-    /// `SeqFromCompound(comp, expcomp)`: the sub-shapes of a compound (those of its
+    /// the sub-shapes of a compound (those of its
     /// sub-compounds too with `expcomp`); a non-compound gives itself, a null shape an
     /// empty sequence; `explorer.seq_from_compound(&c, true)?`.
     pub fn seq_from_compound(
@@ -101,7 +98,7 @@ impl ShapeExtendExplorer {
         Ok(list)
     }
 
-    /// `ListFromSeq(seqval, lisval, clear)`: appends the shapes of the sequence to the
+    /// appends the shapes of the sequence to the
     /// list (cleared first with `clear`); a null handle adds nothing;
     /// `explorer.list_from_seq(&seq, &mut list, true)`.
     pub fn list_from_seq(&self, seqval: &ShapeHSequence, lisval: &mut List<Shape>, clear: bool) {
@@ -113,7 +110,7 @@ impl ShapeExtendExplorer {
         }
     }
 
-    /// `SeqFromList(lisval)`: a new sequence of the shapes of the list;
+    /// a new sequence of the shapes of the list;
     /// `explorer.seq_from_list(&list)`.
     pub fn seq_from_list(&self, lisval: &List<Shape>) -> ShapeHSequence {
         let sequence = new_sequence();
@@ -123,7 +120,7 @@ impl ShapeExtendExplorer {
         sequence
     }
 
-    /// `ShapeType(shape, compound)`: the type of the shape, TopAbs_SHAPE for a null one.
+    /// the type of the shape, TopAbs_SHAPE for a null one.
     /// With `compound`, a compound gives the common type of its content (a WIRE for edges
     /// and wires, a SHELL for faces and shells, COMPOUND for other mixes, SHAPE when
     /// empty); `explorer.shape_type(&s, true)?`.
@@ -185,7 +182,7 @@ fn fill_list(list: &ShapeHSequence, comp: &Shape, expcomp: bool) -> Result<(), F
 }
 
 impl ShapeExtendExplorer {
-    /// `SortedCompound(shape, type, explore, compound)`: the part of `shape` of type
+    /// the part of `shape` of type
     /// `type`: the shape itself when of that type (an EDGE in a new wire, a FACE in a new
     /// shell for a WIRE or SHELL request); a compound or composite solid is sorted item by
     /// item (sub-compounds flattened unless `compound`); with `explore` the sub-shapes of
@@ -238,7 +235,7 @@ impl ShapeExtendExplorer {
             if sorted.is_null() {
                 continue;
             }
-            // `sh = sh0` before the flattening loop, as natively.
+            // `sh = sh0` before the flattening loop.
             last = sorted.clone();
             let parts = if flatten && sorted.shape_type()? == ShapeEnum::Compound {
                 children(&sorted)?
@@ -313,7 +310,7 @@ fn single_or_compound(nb: i32, last: Shape, compound: Compound) -> Shape {
 }
 
 impl ShapeExtendExplorer {
-    /// `DispatchList(list, vertices, ..., compounds)`: appends each non-null shape of the
+    /// appends each non-null shape of the
     /// list to the sequence of its type; a null output handle gets a new sequence first
     /// (all eight, before the first shape), and a null list does nothing;
     /// `explorer.dispatch_list(&list, &mut dispatch)`.
@@ -343,7 +340,7 @@ impl ShapeExtendExplorer {
 }
 
 impl ShapeDispatch {
-    /// The eight sequences, in the native argument order.
+    /// The eight sequences, in the argument order.
     fn sequences_mut(&mut self) -> [&mut ShapeHSequence; 8] {
         [
             &mut self.vertices,

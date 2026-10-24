@@ -1,5 +1,5 @@
 //! Behavior tests of the ShapeCustom modifications (TrsfModification, DirectModification,
-//! ConvertToRevolution and the message registrator of ShapeCustom_Modification).
+//! ConvertToRevolution and the message registrator of ShapeCustomModification).
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::brep_tools::{BRepToolsModification, Modifier, NewCurve, NewSurface};
 use martensite_tkbrep::topods::{Edge, Face, Vertex};

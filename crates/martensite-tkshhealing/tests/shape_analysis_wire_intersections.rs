@@ -1,4 +1,4 @@
-//! Native pair intersections, overlap segments, spatial errors and output preservation.
+//! pair intersections, overlap segments, spatial errors and output preservation.
 mod support;
 use martensite_tkbrep::{
     brep::BRepBuilder,

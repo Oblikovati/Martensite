@@ -1,5 +1,5 @@
-//! Translations of the pinned ShapeUpgrade_UnifySameDomain_Test.cxx declarations that run in
-//! Rust; the Boolean-built declarations wait for TKBO (pending_dependency ledger rows).
+//! Same-domain unification regressions that run in
+//! this crate without external processes.
 mod common;
 #[path = "support/unify_internal_paths.rs"]
 mod unify_internal_paths;

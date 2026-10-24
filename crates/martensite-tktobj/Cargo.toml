@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tktobj"
-version = "0.3.5"
+version = "0.3.6"
 description = "Martensite object model for documents, partitions, references and attributes."
 edition.workspace = true
 rust-version.workspace = true
@@ -13,14 +13,14 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
-martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.5" }
-martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
-martensite-tkcdf = { path = "../martensite-tkcdf", version = "0.3.5" }
-martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.3.5" }
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.6" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.6" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkcdf = { path = "../martensite-tkcdf", version = "0.3.6" }
+martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.3.6" }
 
 [dev-dependencies]
-martensite-process-policy = { path = "../martensite-process-policy", version = "0.3.5", features = ["case-runner"] }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.3.6", features = ["case-runner"] }
 
 [[test]]
 name = "toolkit"

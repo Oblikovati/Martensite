@@ -1,4 +1,4 @@
-//! `SameSurf` and `IsSameDomain` of ShapeUpgrade_UnifySameDomain.cxx: whether two faces
+//! `SameSurf` and `IsSameDomain`: whether two faces
 //! lie on the same surface.
 use super::DataMapOfFacePlane;
 use super::geometry::{clear_rts, get_cylinder, null_surface};
@@ -75,8 +75,8 @@ fn same_sample_points(
     Ok(true)
 }
 
-/// `IsSameDomain(aFace, aCheckedFace, theLinTol, theAngTol, theFacePlaneMap)`: the same
-/// located surface; or two planar surfaces (GeomLib_IsPlanarSurface) on parallel planes
+/// the same
+/// located surface; or two planar surfaces (IsPlanarSurface) on parallel planes
 /// closer than `lin_tol`, both bound to one plane in the map; or two elementary surfaces
 /// whose IntPatch_ImpImpIntersection finds tangent faces; or two cylinders (cylindrical
 /// or swept surfaces) with the same radius and axis.

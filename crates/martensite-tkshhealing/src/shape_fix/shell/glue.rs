@@ -1,4 +1,4 @@
-//! Native closed-candidate gluing and its sticky subsequent merge flags.
+//! closed-candidate gluing and its sticky subsequent merge flags.
 mod candidates;
 use super::{multiple_faces::free_edges, non_manifold::append_faces};
 use martensite_tkbrep::{topods::Shell, toptools::MapOfShape};

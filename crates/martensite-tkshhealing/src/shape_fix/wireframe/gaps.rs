@@ -1,4 +1,4 @@
-//! Native gap-repair orchestration, including recursive compound status ordering.
+//! gap-repair orchestration, including recursive compound status ordering.
 use super::{FixRoot, ShapeFixWireframe};
 use crate::{
     shape_build::ShapeBuildReShape,

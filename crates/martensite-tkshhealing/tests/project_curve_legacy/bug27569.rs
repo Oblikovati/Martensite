@@ -17,7 +17,7 @@ fn Bug27569_ManyKnotsBSpline_M1() {
 }
 #[test]
 fn Bug27569_HighMultiplicityBSpline_M2() {
-    // Native construction succeeds at the pinned source: its guarded skip and plane fallback are not taken.
+    // Construction succeeds without the guarded skip or plane fallback.
     let curve = bug27569_degenerate_curve();
     assert!(!curve.is_null());
     let surface = bug27569_surface();

@@ -1,4 +1,4 @@
-//! Native connection statuses and distance fallback at the retained behavior 3d097a0328e71b8.
+//! connection statuses and distance fallback.
 use super::*;
 use martensite_tkbrep::topods::{Edge, Vertex};
 use martensite_tkmath::gp;

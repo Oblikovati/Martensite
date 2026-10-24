@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/split_closed_faces.
+//! The TKShHealing (no view) tests of split closed faces.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_split_closed_faces, HEAL_SECONDS;

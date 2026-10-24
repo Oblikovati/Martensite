@@ -1,4 +1,4 @@
-// Rust translation of ShapeFix_ComposeShell::SplitByLine at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Split shell boundary wires along an isoparametric line.
 use super::split_wire::{self, SplitWireInput};
 use super::{ShapeFixComposeShell, geometry};
 use crate::shape_analysis::{ShapeAnalysisEdge, ShapeAnalysisSurface};

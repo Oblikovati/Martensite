@@ -6,19 +6,19 @@ use martensite_process_policy::{
     reported_process_limit,
 };
 
-/// `tests/bugs/begin`: `cpulimit 1000`.
+/// `begin`: `cpulimit 1000`.
 pub const BUGS_SECONDS: i64 = 1000;
-/// `tests/cr/begin`: `cpulimit 300`.
+/// `begin`: `cpulimit 300`.
 pub const CR_SECONDS: i64 = 300;
-/// `tests/heal/begin`: `cpulimit 1000`.
+/// `begin`: `cpulimit 1000`.
 pub const HEAL_SECONDS: i64 = 1000;
-/// `tests/lowalgos/begin`: `cpulimit 60`.
+/// `begin`: `cpulimit 60`.
 pub const LOWALGOS_SECONDS: i64 = 60;
-/// `tests/mkface/begin`: `cpulimit 600`.
+/// `begin`: `cpulimit 600`.
 pub const MKFACE_SECONDS: i64 = 600;
-/// `tests/perf/begin`: `cpulimit 500`.
+/// `begin`: `cpulimit 500`.
 pub const PERF_SECONDS: i64 = 500;
-/// `tests/sewing/begin`: `cpulimit 300`.
+/// `begin`: `cpulimit 300`.
 pub const SEWING_SECONDS: i64 = 300;
 
 /// The test group of a grid module name: `group_of("bugs_modalg_2") == "bugs"`.
@@ -27,7 +27,7 @@ pub fn group_of(grid: &str) -> &str {
 }
 
 /// The group whose rules the shared log ([`super::log::finish`]) applies to `group`:
-/// tests/mkface/parse.rules is heal's (`FAILED /\bFaulty\b/`), and tests/sewing and
+/// parse.rules is heal's (`FAILED /\bFaulty\b/`), and tests/sewing and
 /// tests/cr have no parse.rules, so only the common ones apply, which is what geometry's
 /// single rule leaves (its `OK /Relative error of mass computation/` changes no verdict:
 /// the common rules only IGNORE that message); `parse_rules_of("mkface") == "heal"`.

@@ -1,4 +1,4 @@
-//! `NewCurve` and `ConvertCurve` of ShapeCustom_BSplineRestriction: the exact conversions
+//! `NewCurve` and `ConvertCurve` of ShapeCustomBSplineRestriction: the exact conversions
 //! of lines, conics and Beziers and the dispatch on trimmed and offset curves.
 use super::ShapeCustomBSplineRestriction;
 use super::predicates::{is_convert_curve_2d, is_convert_surface};
@@ -39,7 +39,7 @@ pub(super) fn any_curve_on_surface(
     Ok(false)
 }
 
-/// `occ::down_cast<Geom_Curve>(C->Copy())`.
+/// Copy the spatial curve and retain its curve interface.
 pub(super) fn copied(curve: &Handle<dyn GeomCurve>) -> Result<Handle<dyn GeomCurve>, Failure> {
     Ok(curve.copy()?.cast())
 }
@@ -96,7 +96,7 @@ impl ShapeCustomBSplineRestriction {
         Ok(converted)
     }
 
-    /// `ConvertCurve(aCurve, C, IsConvert, First, Last, TolCur, IsOf)`: whether `C`
+    /// whether `C`
     /// received the conversion of `curve` on `[first, last]` (a copy when `is_convert` and
     /// nothing else applies); `tol_cur` becomes the reached error.
     /// Example: `restriction.convert_curve(&c, &mut out, false, (0., 1.), &mut tol, true)?`.

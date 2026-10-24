@@ -173,6 +173,8 @@ pub mod disjoint_face_area;
 pub mod ellipsoid_pole_intersections;
 #[path = "../embedded_bounds.rs"]
 pub mod embedded_bounds;
+#[path = "../common/floating.rs"]
+mod floating;
 #[path = "../geomapi_project_point_on_prism.rs"]
 pub mod geomapi_project_point_on_prism;
 #[path = "../graph_pcurve_placement.rs"]

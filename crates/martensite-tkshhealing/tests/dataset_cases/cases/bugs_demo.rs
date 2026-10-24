@@ -1,4 +1,4 @@
-//! tests/bugs/demo case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! bugs demo regression cases owned by
 //! TKShHealing whose inputs are in the public dataset.
 use super::bugs_common::banner;
 use crate::support::{
@@ -10,7 +10,7 @@ use crate::support::{
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// tests/bugs/demo/bug25020.
+/// demo — bug25020.
 /// `catch {checkoverlapedges b_1 b_2} info` reports the degenerated edge.
 pub fn bug25020(s: &mut dyn Session) {
     banner(&["============", "CR25020", "============", ""]);

@@ -43,7 +43,7 @@ impl BRepGProp {
         only_closed: bool,
         flags: VolumeGKFlags,
     ) -> Result<f64, Failure> {
-        gk_by_shells(shape, props, (eps, only_closed, flags), None)
+        gk_by_shells(shape, props, (eps, only_closed, flags), None, false)
     }
 
     /// `VolumePropertiesGK(S, VProps, thePln, Eps, OnlyClosed, IsUseSpan, CGFlag, IFlag,
@@ -57,8 +57,22 @@ impl BRepGProp {
         only_closed: bool,
         flags: VolumeGKFlags,
     ) -> Result<f64, Failure> {
-        gk_by_shells(shape, props, (eps, only_closed, flags), Some(plane))
+        gk_by_shells(shape, props, (eps, only_closed, flags), Some(plane), false)
     }
+}
+
+/// Publish geometric properties only when every selected face completed (#246).
+pub(super) fn complete_volume_gk(
+    shape: &Shape,
+    props: &mut GProps,
+    eps: f64,
+    only_closed: bool,
+    flags: VolumeGKFlags,
+) -> Result<(), Failure> {
+    let mut completed = GProps::new();
+    gk_by_shells(shape, &mut completed, (eps, only_closed, flags), None, true)?;
+    *props = completed;
+    Ok(())
 }
 
 /// Both VolumePropertiesGK: the shape or its closed shells, then the error divided by
@@ -68,6 +82,7 @@ fn gk_by_shells(
     props: &mut GProps,
     (eps, only_closed, flags): (f64, bool, VolumeGKFlags),
     plane: Option<Plane3>,
+    reject_incomplete: bool,
 ) -> Result<f64, Failure> {
     *props = GProps::with_location(located_origin(shape));
     let error = if only_closed {
@@ -77,7 +92,7 @@ fn gk_by_shells(
         }
         let mut error = 0.;
         for shell in &shells {
-            let local = volume_gk(shell, props, plane, eps, flags)?;
+            let local = volume_gk(shell, props, plane, eps, flags, reject_incomplete)?;
             if local < 0. {
                 return Ok(local);
             }
@@ -85,7 +100,7 @@ fn gk_by_shells(
         }
         error
     } else {
-        volume_gk(shape, props, plane, eps, flags)?
+        volume_gk(shape, props, plane, eps, flags, reject_incomplete)?
     };
     let volume = props.mass();
     Ok(if volume > epsilon(1.) {
@@ -122,6 +137,7 @@ fn volume_gk(
     plane: Option<Plane3>,
     tolerance: f64,
     flags: VolumeGKFlags,
+    reject_incomplete: bool,
 ) -> Result<f64, Failure> {
     let mut volume = BRepGPropVinertGK::new();
     volume.set_location(rough_bary_center(shape)?);
@@ -136,7 +152,7 @@ fn volume_gk(
     };
     let mut seen = OrientedFaces::default();
     let mut error = 0.;
-    for shape in sub_shapes(shape, ShapeEnum::Face)? {
+    for (face_index, shape) in sub_shapes(shape, ShapeEnum::Face)?.into_iter().enumerate() {
         let face = topods::face(&shape)?;
         if flags.skip_shared && seen.seen(&face) {
             continue;
@@ -145,6 +161,14 @@ fn volume_gk(
             continue;
         }
         let local = gk_face(&face, (&mut tool, &mut domain), &mut volume, plane, options)?;
+        if local < 0. && reject_incomplete {
+            return Err(Failure::with_message(
+                "BRepGProp_IncompleteIntegration",
+                &format!(
+                    "volume_properties: face index {face_index} integration status {local}; expected a nonnegative completed integration error"
+                ),
+            ).with_exception_parent("Standard_Failure"));
+        }
         if local < 0. {
             return Ok(local);
         }

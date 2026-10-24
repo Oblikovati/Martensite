@@ -1,4 +1,4 @@
-//! Native constructor and public mutable-option parity for ShapeFix_ComposeShell.
+//! constructor and public mutable-option parity for ShapeFixComposeShell.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     brep_tools::ReShape,

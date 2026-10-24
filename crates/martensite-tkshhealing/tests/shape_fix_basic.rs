@@ -1,4 +1,4 @@
-//! Behavior tests of ShapeFix_Root, ShapeFix_ShapeTolerance and ShapeFix_EdgeConnect.
+//! Behavior tests of ShapeFixRoot, ShapeFixShapeTolerance and ShapeFixEdgeConnect.
 mod healing_support;
 
 use healing_support::{edges_of, square_face};

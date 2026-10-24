@@ -1,4 +1,4 @@
-//! Behavior tests of ShapeExtend::Init, the SHMessage resource and the message registrators.
+//! Behavior tests of ShapeExtend::init, the SHMessage resource and the message registrators.
 mod support;
 use martensite_tkernel::message::{Gravity, Msg, MsgFile, MsgFileSource};
 use martensite_tkernel::standard::{Handle, StandardTransient};

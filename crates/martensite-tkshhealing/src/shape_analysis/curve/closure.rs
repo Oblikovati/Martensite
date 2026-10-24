@@ -1,4 +1,4 @@
-//! Geometric closure and unwrapped periodicity (the retained behavior OCC966).
+//! Geometric closure and unwrapped periodicity (OCC966).
 use super::ShapeAnalysisCurve;
 use martensite_tkernel::{
     precision,

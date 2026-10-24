@@ -1,8 +1,7 @@
-//! tests/heal/split_number case bodies at
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871 that build their inputs: a sphere band or a
+//! heal split number regression cases that build their inputs: a sphere band or a
 //! planar triangle, exploded into faces, then `DT_SplitByNumber result face n [n2]`
-//! (ShapeUpgrade_ShapeDivideArea splitting by number) and `checknbshapes result -t -face
-//! k`; the grid ends run `puts [checkshape result]` and tests/heal/end shows `result`
+//! (ShapeUpgradeShapeDivideArea splitting by number) and `checknbshapes result -t -face
+//! k`; the grid ends run `puts [checkshape result]` and end shows `result`
 //! with `checkview -display result -2d`.
 use crate::support::{
     build::{checknbshapes_t, polyline, psphere},
@@ -88,42 +87,42 @@ fn triangle(s: &mut dyn Session, parts: i32, faces: usize, image: &str) {
     split_and_check(s, &a, parts, None, faces, image);
 }
 
-/// tests/heal/split_number/A1.
+/// split number — A1.
 pub fn a1(s: &mut dyn Session) {
     hemisphere(s, 10, None, 10, "A1");
 }
 
-/// tests/heal/split_number/A2.
+/// split number — A2.
 pub fn a2(s: &mut dyn Session) {
     hemisphere(s, 100, None, 102, "A2");
 }
 
-/// tests/heal/split_number/A5.
+/// split number — A5.
 pub fn a5(s: &mut dyn Session) {
     quarter_band(s, 10, 8, "A5");
 }
 
-/// tests/heal/split_number/A6.
+/// split number — A6.
 pub fn a6(s: &mut dyn Session) {
     quarter_band(s, 100, 96, "A6");
 }
 
-/// tests/heal/split_number/A7.
+/// split number — A7.
 pub fn a7(s: &mut dyn Session) {
     sphere(s, 10, 10, "A7");
 }
 
-/// tests/heal/split_number/A8.
+/// split number — A8.
 pub fn a8(s: &mut dyn Session) {
     sphere(s, 100, 136, "A8");
 }
 
-/// tests/heal/split_number/C1.
+/// split number — C1.
 pub fn c1(s: &mut dyn Session) {
     triangle(s, 10, 14, "C1");
 }
 
-/// tests/heal/split_number/C2.
+/// split number — C2.
 pub fn c2(s: &mut dyn Session) {
     triangle(s, 100, 118, "C2");
 }

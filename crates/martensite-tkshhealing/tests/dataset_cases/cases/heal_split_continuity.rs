@@ -1,7 +1,7 @@
-//! tests/heal/split_continuity case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871
+//! heal split continuity regression cases
 //! whose inputs are in the public dataset: each restores `a`, then the grid end runs
 //! `puts [DT_ShapeDivide result a 0.01]`, `set d [statshape result]`, `puts $d` and
-//! reports an `Error` when a `c0curv : Curve Only C0` row remains; tests/heal/end shows
+//! reports an `Error` when a `c0curv : Curve Only C0` row remains; end shows
 //! `result` with `checkview -display result -2d`.
 use crate::support::{
     log,
@@ -28,32 +28,32 @@ fn split_continuity(s: &mut dyn Session, file: &str, image: &str) {
     checkview_display(s, Some("result"), image);
 }
 
-/// tests/heal/split_continuity/A1.
+/// split continuity — A1.
 pub fn a1(s: &mut dyn Session) {
     split_continuity(s, "CCH_conge1.rle", "A1");
 }
 
-/// tests/heal/split_continuity/A6.
+/// split continuity — A6.
 pub fn a6(s: &mut dyn Session) {
     split_continuity(s, "CFI_6_i12fhh.rle", "A6");
 }
 
-/// tests/heal/split_continuity/A7.
+/// split continuity — A7.
 pub fn a7(s: &mut dyn Session) {
     split_continuity(s, "CFI_6_i56fhi.rle", "A7");
 }
 
-/// tests/heal/split_continuity/A9.
+/// split continuity — A9.
 pub fn a9(s: &mut dyn Session) {
     split_continuity(s, "CFI_m12__fiv.rle", "A9");
 }
 
-/// tests/heal/split_continuity/B3.
+/// split continuity — B3.
 pub fn b3(s: &mut dyn Session) {
     split_continuity(s, "CFI_pro6309c.rle", "B3");
 }
 
-/// tests/heal/split_continuity/B4.
+/// split continuity — B4.
 pub fn b4(s: &mut dyn Session) {
     split_continuity(s, "CFI_pro6309d.rle", "B4");
 }

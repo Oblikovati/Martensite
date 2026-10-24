@@ -1,4 +1,4 @@
-//! Native missing-connection statuses, tolerances, orientation and metric state.
+//! missing-connection statuses, tolerances, orientation and metric state.
 mod support;
 use martensite_tkbrep::{
     brep::BRepBuilder,

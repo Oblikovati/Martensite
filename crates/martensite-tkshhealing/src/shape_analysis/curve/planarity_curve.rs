@@ -1,4 +1,4 @@
-//! Native primitive normals, wrapper recursion and complex-curve control polygons.
+//! primitive normals, wrapper recursion and complex-curve control polygons.
 use super::{ShapeAnalysisCurve, planarity_points::line_normal, sampling_3d::wrapper_basis};
 use crate::shape_extend::ShapeExtendComplexCurve;
 use martensite_tkernel::{

@@ -1,6 +1,4 @@
-//! Behavior tests of ShapeProcess_Context, ShapeProcess_ShapeContext, ShapeProcess and
-//! ShapeProcessAPI_ApplySequence (the native comparison is the sp_* requests of
-//! tools/tkshhealing_corpus_shape_process.py).
+//! Processing context, shape context and resource-sequence regression tests.
 mod healing_support;
 
 use healing_support::square_face;

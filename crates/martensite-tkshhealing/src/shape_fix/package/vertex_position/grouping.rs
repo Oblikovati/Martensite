@@ -106,7 +106,7 @@ fn classify_edges(
         if visited.contains(&edge) {
             continue;
         }
-        // Native list retains its first item while moving loop edges to its tail.
+        // list retains its first item while moving loop edges to its tail.
         if anchor.is_loop_with(&edge) && pending.len() + 2 > loops {
             pending.push_back(edge);
             loops += 1;

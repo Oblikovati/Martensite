@@ -143,7 +143,7 @@ fn append_manifold_wire(
     if fixer.status_reorder(crate::shape_extend::ShapeExtendStatus::Done3) {
         orient = -1;
     }
-    // the retained behavior compares the original wire, including its nonmanifold edges, with this manifold part.
+    // compares the original wire, including its nonmanifold edges, with this manifold part.
     reverse_for_outer_bound(orient, face, source_wire, wire_data)?;
     append_wire_data(segments, wire_data, Orientation::Reversed)
 }

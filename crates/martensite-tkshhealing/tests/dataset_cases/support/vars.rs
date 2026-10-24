@@ -47,17 +47,17 @@ impl<'a> Vars<'a> {
             .unwrap_or_else(|| panic!("{name} is not a variable"))
     }
 
-    /// `DrawTrSurf::GetCurve(name)`.
+    /// Retrieve the curve stored under the requested name.
     pub fn curve(&self, name: &str) -> Handle<dyn GeomCurve> {
         self.get(name).curve()
     }
 
-    /// `DrawTrSurf::GetSurface(name)`.
+    /// Retrieve the surface stored under the requested name.
     pub fn surface(&self, name: &str) -> Handle<dyn GeomSurface> {
         self.get(name).surface()
     }
 
-    /// `DBRep::Get(name)`.
+    /// Retrieve the shape stored under the requested name.
     pub fn shape(&self, name: &str) -> Shape {
         self.get(name).shape()
     }

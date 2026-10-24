@@ -1,4 +1,4 @@
-//! Native aggregate stages when FixWireMode is explicitly disabled.
+//! aggregate stages when FixWireMode is explicitly disabled.
 use super::{ShapeExtend, ShapeExtendStatus, ShapeFixFace, ShapeFixFaceWireMap};
 use crate::shape_fix::{FixRoot, root::need_fix};
 use martensite_tkbrep::{
@@ -67,7 +67,7 @@ impl ShapeFixFace {
             self.record_face_stage(ShapeExtendStatus::Done2);
         }
         brep_tools::update_face(&self.face()?)?;
-        // Native invokes this unconditionally; the repair checks its own mode.
+        // invokes this unconditionally; the repair checks its own mode.
         if self.fix_add_natural_bound()? {
             self.record_face_stage(ShapeExtendStatus::Done5);
             return Ok(());

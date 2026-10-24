@@ -1,4 +1,4 @@
-//! Native Compute branches for 3D curves, including trimmed recursion.
+//! Compute branches for 3D curves, including trimmed recursion.
 use super::{super::SplitCurve, ShapeUpgradeConvertCurve3dToBezier};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkernel::{

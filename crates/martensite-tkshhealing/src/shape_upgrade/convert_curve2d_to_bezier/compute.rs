@@ -1,4 +1,4 @@
-//! Native Compute branches for planar curves, including trimmed recursion.
+//! Compute branches for planar curves, including trimmed recursion.
 use super::{super::SplitCurve, ShapeUpgradeConvertCurve2dToBezier};
 use crate::{
     shape_custom::ShapeCustomCurve2d,

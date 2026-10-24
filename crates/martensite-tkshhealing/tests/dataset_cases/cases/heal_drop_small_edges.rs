@@ -1,7 +1,7 @@
-//! tests/heal/drop_small_edges case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871
+//! heal drop small edges regression cases
 //! whose inputs are in the public dataset: each restores `a`, then the grid end runs
 //! `puts [fixsmall result a 1]` and, when `result` is drawn, `puts [checkshape result]`;
-//! tests/heal/end shows `result` with `checkview -display result -2d`, or prints
+//! end shows `result` with `checkview -display result -2d`, or prints
 //! `Error : the resulting shape is not done.` when fixsmall set nothing.
 use crate::support::{
     checkshape::checkshape,
@@ -25,13 +25,13 @@ fn drop_small_edges(s: &mut dyn Session, file: &str, image: &str) {
     }
 }
 
-/// tests/heal/drop_small_edges/A4.
+/// drop small edges — A4.
 pub fn a4(s: &mut dyn Session) {
     log::todo("Error : the resulting shape is not done.");
     drop_small_edges(s, "DSE3.rle", "A4");
 }
 
-/// tests/heal/drop_small_edges/A5.
+/// drop small edges — A5.
 pub fn a5(s: &mut dyn Session) {
     drop_small_edges(s, "ForDSE.rle", "A5");
 }

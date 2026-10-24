@@ -1,12 +1,8 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom_RestrictionParameters.hxx/.lxx/.cxx
-// at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeCustom_RestrictionParameters`: the flags of the B-spline restriction
-//! (docs/shhealing-design.md section 7).
+//! `ShapeCustomRestrictionParameters`: the flags of the B-spline restriction.
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::{SharedState, StandardTransient};
 
-/// The native fields, under their native names.
+/// The fields, under their names.
 #[derive(Clone, Copy, Debug)]
 struct RestrictionFields {
     g_max_degree: i32,
@@ -27,8 +23,8 @@ struct RestrictionFields {
     conv_offset_curv2d: bool,
 }
 
-/// `ShapeCustom_RestrictionParameters`: which geometries the B-spline restriction
-/// converts, with the global degree and segment limits. Each native accessor returns a
+/// `ShapeCustomRestrictionParameters`: which geometries the B-spline restriction
+/// converts, with the global degree and segment limits. Each accessor returns a
 /// reference to its field; here it is a getter and a `set_` setter.
 ///
 /// Quirk preserved: `ConvertToroidalSurf()` returns the cylindrical field and
@@ -74,7 +70,7 @@ macro_rules! restriction_flag {
 }
 
 impl ShapeCustomRestrictionParameters {
-    /// `ShapeCustom_RestrictionParameters()`: degree 15, 10000 segments; planes, Bezier
+    /// degree 15, 10000 segments; planes, Bezier
     /// surfaces and the cones, spheres, cylinders and tori are kept, every other flag
     /// is set; `ShapeCustomRestrictionParameters::new()`.
     pub fn new() -> Self {
@@ -102,11 +98,11 @@ impl ShapeCustomRestrictionParameters {
     }
 
     restriction_flag!(
-        /// `GMaxDegree()`: the maximal degree; `parameters.g_max_degree()`.
+        /// the maximal degree; `parameters.g_max_degree()`.
         g_max_degree, set_g_max_degree, g_max_degree, i32
     );
     restriction_flag!(
-        /// `GMaxSeg()`: the maximal number of segments; `parameters.g_max_seg()`.
+        /// the maximal number of segments; `parameters.g_max_seg()`.
         g_max_seg, set_g_max_seg, g_max_seg, i32
     );
     restriction_flag!(
@@ -130,7 +126,7 @@ impl ShapeCustomRestrictionParameters {
         convert_offset_surf, set_convert_offset_surf, conv_offset_surf, bool
     );
     restriction_flag!(
-        /// `ConvertCylindricalSurf()`: natively a reference to `myConvToroidalSurf`;
+        /// Read or write the toroidal-conversion flag through this cylindrical accessor;
         /// `parameters.convert_cylindrical_surf()`.
         convert_cylindrical_surf, set_convert_cylindrical_surf, conv_toroidal_surf, bool
     );
@@ -139,7 +135,7 @@ impl ShapeCustomRestrictionParameters {
         convert_conical_surf, set_convert_conical_surf, conv_conical_surf, bool
     );
     restriction_flag!(
-        /// `ConvertToroidalSurf()`: natively a reference to `myConvCylindricalSurf`;
+        /// Read or write the cylindrical-conversion flag through this toroidal accessor;
         /// `parameters.convert_toroidal_surf()`.
         convert_toroidal_surf, set_convert_toroidal_surf, conv_cylindrical_surf, bool
     );

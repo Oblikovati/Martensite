@@ -1,4 +1,4 @@
-//! Original ShapeUpgrade_ShellSewing_Test.cxx declarations at the retained behavior3d097a0.
+//! Shell sewing regression cases.
 #![allow(non_snake_case)]
 mod healing_support;
 use healing_support::{compound, shell};

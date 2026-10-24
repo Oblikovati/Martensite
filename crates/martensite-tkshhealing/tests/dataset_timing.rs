@@ -1,7 +1,6 @@
-//! The TKShHealing-owned scenario case that sets its own CPU limit (bugs/modalg_6/bug26627:
-//! `cpulimit 10` before `fixshape result a 1e-6`, the Shape Healing hang of OCC 6.8.0).
-//! It runs in its own target so that no other test of the binary competes for the CPU
-//! while the limit applies; the body is the one in dataset_cases/cases.
+//! Healing regression with a dedicated ten-second CPU budget.
+//! Run it in its own target so other tests do not consume the process budget.
+//! The case body is shared with the dataset regression modules.
 #![allow(clippy::excessive_precision)] // Expected values keep the case scripts' decimals verbatim.
 
 #[allow(dead_code, unused_imports)] // Only the timed body runs here.

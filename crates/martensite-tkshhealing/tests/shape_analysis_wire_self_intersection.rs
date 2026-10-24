@@ -1,4 +1,4 @@
-//! Native self-intersection sequence clearing, endpoint filtering and geometry.
+//! self-intersection sequence clearing, endpoint filtering and geometry.
 mod support;
 use martensite_tkbrep::{
     brep::BRepBuilder,

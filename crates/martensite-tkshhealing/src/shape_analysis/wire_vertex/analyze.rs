@@ -46,7 +46,7 @@ impl ShapeAnalysisWireVertex {
         self.project_junction(index, &curves)
     }
     fn project_junction(&mut self, index: i32, curves: &JunctionCurves) -> Result<(), Failure> {
-        // Both projections run before deciding, as in pinned the retained behavior.
+        // Run both projections before deciding which parameter to retain.
         let first = curves.project_previous(self.precision)?;
         let second = curves.project_following(self.precision)?;
         if first.0 <= self.precision {

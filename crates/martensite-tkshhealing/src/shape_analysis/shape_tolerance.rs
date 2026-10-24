@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_ShapeTolerance.hxx/.cxx
-// at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeAnalysis_ShapeTolerance`: minimal, maximal and average tolerances of the
+//! `ShapeAnalysisShapeTolerance`: minimal, maximal and average tolerances of the
 //! sub-shapes of a shape, and the sub-shapes whose tolerance lies in an interval.
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topexp::Explorer;
@@ -11,9 +8,9 @@ use martensite_tkernel::ncollection::HSequence;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// `ShapeAnalysis_ShapeTolerance`: tolerances of faces, edges and vertices.
+/// `ShapeAnalysisShapeTolerance`: tolerances of faces, edges and vertices.
 ///
-/// `type` selects the sub-shapes as natively: `Shape` all faces, edges and vertices,
+/// `type` selects the sub-shapes: `Shape` all faces, edges and vertices,
 /// `Vertex`, `Edge` or `Face` only those, `Shell` (for `InTolerance`) the shells and faces
 /// that hold a face, edge or vertex in the interval.
 ///
@@ -26,8 +23,7 @@ use martensite_tkg3d::top_abs::ShapeEnum;
 /// ```
 #[derive(Clone, Copy, Debug, Default)]
 pub struct ShapeAnalysisShapeTolerance {
-    /// `myTols`: minimum, sum and maximum. Natively uninitialized until
-    /// `InitTolerance` or the first `AddTolerance` (see the progress doc); zeros here.
+    /// Running minimum, sum and maximum; all zero before accumulation.
     tols: [f64; 3],
     /// `myNbTol`: the count of tolerances added.
     nb_tol: i32,
@@ -87,7 +83,7 @@ fn each_tolerance(
     Ok(())
 }
 
-/// The kinds of sub-shapes one `type` selects, in the native order (faces, edges,
+/// The kinds of sub-shapes one `type` selects, in the order (faces, edges,
 /// vertices).
 fn selected_kinds(kind: ShapeEnum) -> impl Iterator<Item = ShapeEnum> {
     [ShapeEnum::Face, ShapeEnum::Edge, ShapeEnum::Vertex]
@@ -96,12 +92,12 @@ fn selected_kinds(kind: ShapeEnum) -> impl Iterator<Item = ShapeEnum> {
 }
 
 impl ShapeAnalysisShapeTolerance {
-    /// `ShapeAnalysis_ShapeTolerance()`; `ShapeAnalysisShapeTolerance::new()`.
+    /// `ShapeAnalysisShapeTolerance::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `Tolerance(shape, mode, type)`: `InitTolerance`, `AddTolerance` and
+    /// `InitTolerance`, `AddTolerance` and
     /// `GlobalTolerance(mode)` (the average for 0, the maximum above, the minimum
     /// below); `tool.tolerance(&shape, 1, ShapeEnum::Shape)?`.
     pub fn tolerance(&mut self, shape: &Shape, mode: i32, kind: ShapeEnum) -> Result<f64, Failure> {
@@ -110,7 +106,7 @@ impl ShapeAnalysisShapeTolerance {
         Ok(self.global_tolerance(mode))
     }
 
-    /// `OverTolerance(shape, value, type)`: `InTolerance(value, 0)` (no upper bound) for a
+    /// `InTolerance(value, 0)` (no upper bound) for a
     /// non-negative `value`, else `InTolerance(0, value)`;
     /// `tool.over_tolerance(&shape, 1e-3, ShapeEnum::Shape)?`.
     pub fn over_tolerance(
@@ -125,7 +121,7 @@ impl ShapeAnalysisShapeTolerance {
         self.in_tolerance(shape, 0.0, value, kind)
     }
 
-    /// `InTolerance(shape, valmin, valmax, type)`: the faces, then edges, then vertices
+    /// the faces, then edges, then vertices
     /// with a tolerance at least `valmin` and at most `valmax` (no upper bound when
     /// `valmax < valmin`). Natively a vertex passes with a tolerance at least `valmax`,
     /// not at most. With `Shell`, each shell holding a face in the interval (recursively
@@ -209,7 +205,7 @@ impl ShapeAnalysisShapeTolerance {
         Ok(false)
     }
 
-    /// `InitTolerance()`: starts a new cumulation (the sum and the count are reset, the
+    /// starts a new cumulation (the sum and the count are reset, the
     /// minimum and maximum are replaced by the next `AddTolerance`);
     /// `tool.init_tolerance()`.
     pub fn init_tolerance(&mut self) {
@@ -217,7 +213,7 @@ impl ShapeAnalysisShapeTolerance {
         self.tols[1] = 0.0;
     }
 
-    /// `AddTolerance(shape, type)`: adds the tolerances of the selected sub-shapes to the
+    /// adds the tolerances of the selected sub-shapes to the
     /// cumulation (nothing when there is none); `tool.add_tolerance(&shape, ShapeEnum::Shape)?`.
     pub fn add_tolerance(&mut self, shape: &Shape, kind: ShapeEnum) -> Result<(), Failure> {
         let mut cumul = Cumul::default();
@@ -238,7 +234,7 @@ impl ShapeAnalysisShapeTolerance {
         Ok(())
     }
 
-    /// `GlobalTolerance(mode)`: 0 before any tolerance, else the minimum (`mode < 0`), the
+    /// 0 before any tolerance, else the minimum (`mode < 0`), the
     /// maximum (`mode > 0`) or the average (`mode == 0`, the minimum when it equals the
     /// maximum); `tool.global_tolerance(0)`.
     pub fn global_tolerance(&self, mode: i32) -> f64 {

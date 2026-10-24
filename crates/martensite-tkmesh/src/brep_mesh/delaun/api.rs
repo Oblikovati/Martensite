@@ -1,5 +1,4 @@
-// Rust translation of the BRepMesh_Delaun constructors, Init and RemoveVertex of
-// BRepMesh_Delaun.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Initialize mesh connectivity and remove vertices without discarding the active allocator.
 use super::{BRepMeshCircleTool, BRepMeshDataStructureOfDelaun, BRepMeshDelaun, BRepMeshVertex};
 use crate::brep_mesh::BRepMeshSelectorOfDataStructureOfDelaun;
 use martensite_tkernel::ncollection::{
@@ -23,8 +22,7 @@ impl BRepMeshDelaun {
         }
     }
 
-    /// `BRepMesh_Delaun(theVertices)`: the triangulation of the vertices in a new
-    /// structure (null when there are two vertices or fewer, as natively);
+    /// Triangulate vertices in a new structure, which is null for two vertices or fewer;
     /// `BRepMeshDelaun::with_vertices(&vertices)?`.
     pub fn with_vertices(vertices: &[BRepMeshVertex]) -> Result<Self, Failure> {
         let count = vertices.len() as i32;
@@ -39,8 +37,7 @@ impl BRepMeshDelaun {
         Ok(result)
     }
 
-    /// `BRepMesh_Delaun(theOldMesh, theVertices)`: the vertices added to an existing
-    /// structure and triangulated; `BRepMeshDelaun::with_mesh_vertices(&mesh, &vertices)?`.
+    /// Add vertices to an existing structure and triangulate them; `BRepMeshDelaun::with_mesh_vertices(&mesh, &vertices)?`.
     pub fn with_mesh_vertices(
         mesh: &Handle<BRepMeshDataStructureOfDelaun>,
         vertices: &[BRepMeshVertex],
@@ -52,8 +49,7 @@ impl BRepMeshDelaun {
         Ok(result)
     }
 
-    /// `BRepMesh_Delaun(theOldMesh, theVertexIndices[, theCellsCountU, theCellsCountV])`:
-    /// the triangulation of nodes already in the structure; the indices are sorted in
+    /// Triangulate nodes already in the structure; the indices are sorted in
     /// place; `(-1, -1)` cells select the default grid;
     /// `BRepMeshDelaun::with_indices(&mesh, &mut indices, (-1, -1))?`.
     pub fn with_indices(
@@ -82,8 +78,7 @@ impl BRepMeshDelaun {
     pub fn remove_vertex(&mut self, vertex: &BRepMeshVertex) -> Result<(), Failure> {
         let selector = BRepMeshSelectorOfDataStructureOfDelaun::new(&self.mesh);
         selector.neighbours_of_vertex(vertex)?;
-        // Native `IMeshData::MapOfIntegerInteger aLoopEdges;`: one bucket, which fixes
-        // the first loop edge the walk starts from.
+        // A single bucket fixes which boundary edge starts the walk.
         let mut boundary = DataMap::with_hasher(DefaultHashPolicy, 1);
         for triangle in selector.elements().iter() {
             self.delete_triangle(triangle, &mut boundary)?;

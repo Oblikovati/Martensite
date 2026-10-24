@@ -1,4 +1,4 @@
-//! Original OCC24923 declaration, same seeded inputs, retries and one-percent bound.
+//! Seeded circle-bound sampling, retries and the one-percent error limit.
 #![allow(non_snake_case)]
 use martensite_tkmath::gp::Xy;
 use martensite_tkmesh::brep_mesh::BRepMeshCircleTool;

@@ -1,4 +1,4 @@
-//! Native status and tolerance fixture, including the status reset during vertex repair.
+//! status and tolerance fixture, including the status reset during vertex repair.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::brep_tools::ReShape;
 use martensite_tkbrep::topods::Edge;

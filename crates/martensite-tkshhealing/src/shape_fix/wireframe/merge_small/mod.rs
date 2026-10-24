@@ -1,6 +1,3 @@
-// Rust translation of ShapeFix_Wireframe::MergeSmallEdges of ShapeFix_Wireframe.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! `MergeSmallEdges`: each small edge of the wires of the faces with small edges, then of
 //! the free wires, is joined with a neighbour (or dropped in drop mode); the vertices of
 //! the joined edges are replaced by copies, the context is applied and SameParameter run.

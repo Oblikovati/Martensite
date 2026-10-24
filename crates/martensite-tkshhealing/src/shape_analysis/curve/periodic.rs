@@ -1,4 +1,4 @@
-//! Period shifts use ShapeAnalysis's floor, unlike ShapeBuild_Edge's integer cast.
+//! Period shifts use ShapeAnalysis's floor, unlike ShapeBuildEdge's integer cast.
 
 /// Shift to the closest equivalent parameter; `adjust_by_period(7.0, 0.0, 6.0) == -6.0`.
 pub fn adjust_by_period(value: f64, target: f64, period: f64) -> f64 {

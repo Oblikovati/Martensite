@@ -1,5 +1,4 @@
-//! Seam orientation selection with native output-reference update order.
-// ShapeAnalysis_Wire.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Seam orientation selection with output-reference update order.
 use super::*;
 use crate::shape_analysis::ShapeAnalysisCurve;
 use martensite_tkg2d::geom2d::Geom2dCurve;

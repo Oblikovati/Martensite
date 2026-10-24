@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAlgo/ShapeAlgo_AlgoContainer.hxx/.lxx/.cxx
-// at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeAlgo_AlgoContainer`: the Shape Healing algorithms that data exchange calls
+//! `ShapeAlgoAlgoContainer`: the Shape Healing algorithms that data exchange calls
 //! through one object; most members delegate to a package function.
 use super::ShapeAlgoToolContainer;
 use crate::shape_analysis::{ShapeAnalysis, ShapeAnalysisWire};
@@ -21,8 +18,8 @@ use martensite_tkg2d::geom2d::Geom2dBSplineCurve;
 use martensite_tkg3d::geom::{GeomBSplineCurve, GeomBSplineSurface, GeomCurve, GeomSurface};
 use martensite_tkmath::geom_abs::Shape as Continuity;
 
-/// `ShapeAlgo_AlgoContainer`: the algorithms of Shape Healing used by data exchange, with
-/// the tool container (`myTC`). The native members are virtual, but no the retained behavior class
+/// `ShapeAlgoAlgoContainer`: the algorithms of Shape Healing used by data exchange, with
+/// the tool container (`myTC`). The members are virtual, but no class
 /// overrides them.
 ///
 /// ```
@@ -50,7 +47,7 @@ impl Default for ShapeAlgoAlgoContainer {
 /// The outputs of `ConnectNextWire`: its result, `distmin`, `revsewd` and `revnextsewd`.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ShapeAlgoWireConnection {
-    /// The native return value: the wires were connected.
+    /// The return value: the wires were connected.
     pub connected: bool,
     /// `distmin`: the gap between the joined ends.
     pub distance: f64,
@@ -61,7 +58,7 @@ pub struct ShapeAlgoWireConnection {
 }
 
 impl ShapeAlgoAlgoContainer {
-    /// `ShapeAlgo_AlgoContainer()`: with a new tool container;
+    /// with a new tool container;
     /// `ShapeAlgoAlgoContainer::new()`.
     pub fn new() -> Self {
         Self {
@@ -80,11 +77,10 @@ impl ShapeAlgoAlgoContainer {
         self.tools.read().clone()
     }
 
-    /// `ConnectNextWire(saw, nextsewd, maxtol, distmin, revsewd, revnextsewd)`: adds
+    /// adds
     /// `next` to the wire of `saw` at the closest ends (CheckShapeConnect), reversing the
     /// loaded wire or `next` when needed. An empty `next` is connected; an empty loaded
-    /// wire gets `next` as is. A null handle is the native null dereference
-    /// (Standard_NullObject).
+    /// wire gets `next` as is. A null handle returns a typed null-object failure.
     /// Example: `container.connect_next_wire(&saw, &next, 1e-3)?.connected`.
     pub fn connect_next_wire(
         &self,
@@ -118,8 +114,8 @@ impl ShapeAlgoAlgoContainer {
         Ok(result)
     }
 
-    /// `C0BSplineToSequenceOfC1BSplineCurve(BS, seqBS)` (3D):
-    /// ShapeUpgrade::C0BSplineToSequenceOfC1BSplineCurve; `None` is the native false.
+    /// Split a spatial B-spline into C1 pieces through the shared upgrade utility;
+    /// return `None` when no split sequence is produced.
     /// Example: `container.c0_bspline_to_sequence_of_c1_bspline_curve(&bspline)?`.
     pub fn c0_bspline_to_sequence_of_c1_bspline_curve(
         &self,
@@ -137,7 +133,7 @@ impl ShapeAlgoAlgoContainer {
         ShapeUpgrade::c0_bspline2d_to_sequence_of_c1_bspline_curve(bspline)
     }
 
-    /// `C0ShapeToC1Shape(shape, tol)`: the result of ShapeUpgrade_ShapeDivideContinuity
+    /// the result of ShapeUpgradeShapeDivideContinuity
     /// with the tolerance and the C1 boundary and surface criteria.
     /// Example: `container.c0_shape_to_c1_shape(&shape, 1e-3)?`.
     pub fn c0_shape_to_c1_shape(&self, shape: &Shape, tol: f64) -> Result<Shape, Failure> {
@@ -149,7 +145,7 @@ impl ShapeAlgoAlgoContainer {
         Ok(divider.result())
     }
 
-    /// `ConvertSurfaceToBSpline(surf, UF, UL, VF, VL)`: ShapeConstruct with
+    /// ShapeConstruct with
     /// Precision::Confusion, C1, 100 segments and the maximal B-spline degree.
     /// Example: `container.convert_surface_to_bspline(&surface, bounds)?`.
     pub fn convert_surface_to_bspline(
@@ -166,12 +162,12 @@ impl ShapeAlgoAlgoContainer {
         ShapeConstruct::convert_surface_to_bspline(surface, bounds, settings)
     }
 
-    /// `OuterWire(face)`: ShapeAnalysis::OuterWire; `container.outer_wire(&face)?`.
+    /// ShapeAnalysis::outer_wire; `container.outer_wire(&face)?`.
     pub fn outer_wire(&self, face: &Face) -> Result<Wire, Failure> {
         ShapeAnalysis::outer_wire(face)
     }
 
-    /// `ConvertToPeriodic(surf)`: ShapeCustom_Surface(surf).ConvertToPeriodic(false)
+    /// ShapeCustomSurface(surf).ConvertToPeriodic(false)
     /// (default precision); `container.convert_to_periodic(&surface)?`.
     pub fn convert_to_periodic(
         &self,
@@ -180,7 +176,7 @@ impl ShapeAlgoAlgoContainer {
         ShapeCustomSurface::with_surface(surface).convert_to_periodic(false, -1.)
     }
 
-    /// `GetFaceUVBounds(F, Umin, Umax, Vmin, Vmax)`: ShapeAnalysis::GetFaceUVBounds;
+    /// ShapeAnalysis::get_face_uv_bounds;
     /// `let (umin, umax, vmin, vmax) = container.get_face_uv_bounds(&face)?;`.
     pub fn get_face_uv_bounds(&self, face: &Face) -> Result<(f64, f64, f64, f64), Failure> {
         ShapeAnalysis::get_face_uv_bounds(face)

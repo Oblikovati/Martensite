@@ -1,10 +1,8 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend/ShapeExtend_Status.hxx and ShapeExtend_Parametrisation.hxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeExtend_Status` and `ShapeExtend_Parametrisation`: the status flags of the Shape
+//! `ShapeExtendStatus` and `ShapeExtendParametrisation`: the status flags of the Shape
 //! Healing tools and the global parametrisation of a composite surface.
 
-/// `ShapeExtend_Status`: one flag of the status a Shape Healing tool records, in the
-/// native order, so that `status as i32` is the native enumerator value.
+/// `ShapeExtendStatus`: one flag of the status a Shape Healing tool records, in the
+/// order, so that `status as i32` is the enumerator value.
 ///
 /// A tool keeps its status as a bit field (`ShapeExtend::encode_status` gives the bits
 /// of one flag); `Done` and `Fail` stand for any of the eight `DONEi` or `FAILi` flags,
@@ -17,48 +15,48 @@
 /// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ShapeExtendStatus {
-    /// `ShapeExtend_OK`: nothing done, everything OK.
+    /// `ShapeExtendOK`: nothing done, everything OK.
     Ok,
-    /// `ShapeExtend_DONE1`: something was done, case 1.
+    /// `ShapeExtendDONE1`: something was done, case 1.
     Done1,
-    /// `ShapeExtend_DONE2`: something was done, case 2.
+    /// `ShapeExtendDONE2`: something was done, case 2.
     Done2,
-    /// `ShapeExtend_DONE3`: something was done, case 3.
+    /// `ShapeExtendDONE3`: something was done, case 3.
     Done3,
-    /// `ShapeExtend_DONE4`: something was done, case 4.
+    /// `ShapeExtendDONE4`: something was done, case 4.
     Done4,
-    /// `ShapeExtend_DONE5`: something was done, case 5.
+    /// `ShapeExtendDONE5`: something was done, case 5.
     Done5,
-    /// `ShapeExtend_DONE6`: something was done, case 6.
+    /// `ShapeExtendDONE6`: something was done, case 6.
     Done6,
-    /// `ShapeExtend_DONE7`: something was done, case 7.
+    /// `ShapeExtendDONE7`: something was done, case 7.
     Done7,
-    /// `ShapeExtend_DONE8`: something was done, case 8.
+    /// `ShapeExtendDONE8`: something was done, case 8.
     Done8,
-    /// `ShapeExtend_DONE`: something was done (any of the `DONEi`).
+    /// `ShapeExtendDONE`: something was done (any of the `DONEi`).
     Done,
-    /// `ShapeExtend_FAIL1`: the method failed, case 1.
+    /// `ShapeExtendFAIL1`: the method failed, case 1.
     Fail1,
-    /// `ShapeExtend_FAIL2`: the method failed, case 2.
+    /// `ShapeExtendFAIL2`: the method failed, case 2.
     Fail2,
-    /// `ShapeExtend_FAIL3`: the method failed, case 3.
+    /// `ShapeExtendFAIL3`: the method failed, case 3.
     Fail3,
-    /// `ShapeExtend_FAIL4`: the method failed, case 4.
+    /// `ShapeExtendFAIL4`: the method failed, case 4.
     Fail4,
-    /// `ShapeExtend_FAIL5`: the method failed, case 5.
+    /// `ShapeExtendFAIL5`: the method failed, case 5.
     Fail5,
-    /// `ShapeExtend_FAIL6`: the method failed, case 6.
+    /// `ShapeExtendFAIL6`: the method failed, case 6.
     Fail6,
-    /// `ShapeExtend_FAIL7`: the method failed, case 7.
+    /// `ShapeExtendFAIL7`: the method failed, case 7.
     Fail7,
-    /// `ShapeExtend_FAIL8`: the method failed, case 8.
+    /// `ShapeExtendFAIL8`: the method failed, case 8.
     Fail8,
-    /// `ShapeExtend_FAIL`: the method failed (any of the `FAILi`).
+    /// `ShapeExtendFAIL`: the method failed (any of the `FAILi`).
     Fail,
 }
 
 impl ShapeExtendStatus {
-    /// Every enumerator, in native order.
+    /// Every enumerator, in order.
     pub const ALL: [Self; 19] = [
         Self::Ok,
         Self::Done1,
@@ -81,7 +79,7 @@ impl ShapeExtendStatus {
         Self::Fail,
     ];
 
-    /// The enumerator of native value `index`, `None` outside `[0, 18]`;
+    /// The enumerator of value `index`, `None` outside `[0, 18]`;
     /// `ShapeExtendStatus::from_index(0) == Some(ShapeExtendStatus::Ok)`.
     pub fn from_index(index: i32) -> Option<Self> {
         usize::try_from(index)
@@ -90,8 +88,8 @@ impl ShapeExtendStatus {
     }
 }
 
-/// `ShapeExtend_Parametrisation`: how a composite surface builds its global
-/// parametrisation from its patches, in the native order.
+/// `ShapeExtendParametrisation`: how a composite surface builds its global
+/// parametrisation from its patches, in the order.
 ///
 /// ```
 /// use martensite_tkshhealing::shape_extend::ShapeExtendParametrisation;
@@ -99,11 +97,11 @@ impl ShapeExtendStatus {
 /// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum ShapeExtendParametrisation {
-    /// `ShapeExtend_Natural`: each patch of the first row and column adds its range,
+    /// `ShapeExtendNatural`: each patch of the first row and column adds its range,
     /// `U(i+1) = U(i) + URange(i, 1)`.
     Natural,
-    /// `ShapeExtend_Uniform`: each patch gives the range 1, `U(i) = i - 1`.
+    /// `ShapeExtendUniform`: each patch gives the range 1, `U(i) = i - 1`.
     Uniform,
-    /// `ShapeExtend_Unitary`: a uniform parametrisation of the global range `[0, 1]`.
+    /// `ShapeExtendUnitary`: a uniform parametrisation of the global range `[0, 1]`.
     Unitary,
 }

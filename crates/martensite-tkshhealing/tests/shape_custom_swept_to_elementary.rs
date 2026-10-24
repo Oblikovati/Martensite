@@ -1,5 +1,4 @@
-//! Behavior tests of ShapeCustom_SweptToElementary (the native comparison is the sc_modif
-//! kind 4 requests of tools/tkshhealing_corpus_shapecustom.py).
+//! Regression tests for converting swept surfaces to elementary surfaces.
 mod healing_support;
 
 use healing_support::{edges_of, square_face};

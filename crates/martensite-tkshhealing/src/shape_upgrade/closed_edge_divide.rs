@@ -1,4 +1,4 @@
-//! ShapeUpgrade_ClosedEdgeDivide at the retained behavior 3d097a0328e71b8.
+//! ShapeUpgradeClosedEdgeDivide.
 use super::{EdgeDivideData, EdgeDivider, ShapeUpgradeEdgeDivide, SplitCurve};
 use crate::shape_analysis::{PCurveRange, ShapeAnalysisEdge};
 use martensite_tkbrep::{brep::BRepTool, topods::Edge};
@@ -137,7 +137,7 @@ fn farthest_sample(
     let step = (last - first) / 22.;
     let (mut maximum_parameter, mut maximum_distance) = (first, 0.);
     let mut parameter = first + step;
-    // The native loop uses repeated addition and samples its final endpoint too.
+    // The loop uses repeated addition and samples its final endpoint too.
     for _ in 1..23 {
         let distance = vertex.square_distance(&evaluate(parameter)?);
         if distance > maximum_distance {

@@ -1,4 +1,4 @@
-//! Native surface splitting at the retained behavior 3d097a0328e71b8.
+//! surface splitting.
 use crate::shape_extend::{
     ShapeExtend, ShapeExtendCompositeSurface, ShapeExtendParametrisation, ShapeExtendStatus,
     SurfaceGrid,
@@ -18,7 +18,7 @@ mod initialize;
 mod knots;
 mod pieces;
 mod swept;
-/// Shared native real sequence; `Handle::new(HSequence::<f64>::default())`.
+/// Shared real sequence; `Handle::new(HSequence::<f64>::default())`.
 pub type SurfaceSplitValues = Handle<HSequence<f64>>;
 /// Protected state available to specialized split criteria.
 #[derive(Default)]
@@ -27,9 +27,9 @@ pub struct SplitSurfaceFields {
     pub u_values: SurfaceSplitValues,
     /// V splitting parameters, including bounds.
     pub v_values: SurfaceSplitValues,
-    /// Native resulting row count.
+    /// resulting row count.
     pub rows: i32,
-    /// Native resulting column count.
+    /// resulting column count.
     pub columns: i32,
     /// Supimplementation surface (retained, not copied by Init).
     pub surface: Handle<dyn GeomSurface>,
@@ -76,7 +76,7 @@ impl SplitSurfaceData {
 }
 /// Virtual splitting criterion and common state; `splitter.perform(true)?`.
 pub trait SplitSurface: Transient {
-    /// Protected native state; `splitter.split_surface_data()`.
+    /// Protected state; `splitter.split_surface_data()`.
     fn split_surface_data(&self) -> &SplitSurfaceData;
     /// Initialize to natural surface bounds; `splitter.init_surface(&surface)?`.
     fn init_surface(&self, surface: &Handle<dyn GeomSurface>) -> Result<(), Failure> {
@@ -100,7 +100,7 @@ pub trait SplitSurface: Transient {
     fn set_v_split_values(&self, values: &SurfaceSplitValues) -> Result<(), Failure> {
         self.split_surface_data().merge_values(false, values)
     }
-    /// Build geometric patches with native wrapper and segmentation behavior; `splitter.build(true)?`.
+    /// Build geometric patches with wrapper and segmentation behavior; `splitter.build(true)?`.
     fn build(&self, segment: bool) -> Result<(), Failure> {
         self.split_surface_data().build_surface(segment)
     }
@@ -124,7 +124,7 @@ pub trait SplitSurface: Transient {
     fn v_split_values(&self) -> SurfaceSplitValues {
         self.split_surface_data().values(false)
     }
-    /// Decode native status bits; `splitter.status_flag(ShapeExtendStatus::Done)`.
+    /// Decode status bits; `splitter.status_flag(ShapeExtendStatus::Done)`.
     fn status_flag(&self, status: ShapeExtendStatus) -> bool {
         self.split_surface_data()
             .with(|fields| ShapeExtend::decode_status(fields.status, status))
@@ -152,7 +152,7 @@ impl SplitSurface for ShapeUpgradeSplitSurface {
     }
 }
 impl ShapeUpgradeSplitSurface {
-    /// Create an uninitialized surface splitter; `ShapeUpgradeSplitSurface::new()`.
+    /// Create an surface splitter without an input surface; `ShapeUpgradeSplitSurface::new()`.
     pub fn new() -> Self {
         Self::default()
     }

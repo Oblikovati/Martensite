@@ -1,4 +1,4 @@
-//! Native sampled curve-gap distances, retained failure metrics and aggregate status.
+//! sampled curve-gap distances, retained failure metrics and aggregate status.
 mod support;
 use martensite_tkbrep::{
     brep::BRepBuilder,

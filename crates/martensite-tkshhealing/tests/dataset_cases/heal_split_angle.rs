@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/split_angle.
+//! The TKShHealing (no view) tests of split angle.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_split_angle, HEAL_SECONDS;

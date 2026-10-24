@@ -1,8 +1,6 @@
-// Rust translation of BRepMesh_MeshTool.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+// Connectivity edits keep frontier constraints intact while triangles are legalized.
 
-//! `BRepMesh_MeshTool`: edits of a BRepMesh_DataStructureOfDelaun (triangle insertion
-//! with legalization, cleanup of frontier and free links).
+//! Edit triangle connectivity with legalization and frontier/free-link cleanup.
 use super::{
     BRepMeshCircleTool, BRepMeshDataStructureOfDelaun, BRepMeshEdge,
     BRepMeshSelectorOfDataStructureOfDelaun, BRepMeshTriangle, DegreeOfFreedom,
@@ -16,16 +14,15 @@ use martensite_tkmath::gp::{Direction2, Vector2, Xy};
 #[path = "mesh_tool/cleanup.rs"]
 mod cleanup;
 
-/// `IMeshData::MapOfIntegerInteger`: link index to its orientation in the erased
-/// triangle (an NCollection_DataMap on an incremental allocator).
+/// Map link indices to their orientations in an erased triangle.
 pub type MapOfIntegerInteger = DataMap<i32, bool>;
 
-/// A new `MapOfIntegerInteger(1, new NCollection_IncAllocator)`.
+/// Create a single-bucket link map backed by an incremental allocator.
 pub(crate) fn new_loop_edges() -> MapOfIntegerInteger {
     DataMap::with_allocator(DefaultHashPolicy, 1, BaseAllocator::incremental(0))
 }
 
-/// `BRepMesh_MeshTool::NodeClassifier`: whether a node lies strictly on the upper side
+/// `NodeClassifier`: whether a node lies strictly on the upper side
 /// of a constraint link (orientation normalized so that the link points to +X).
 pub struct NodeClassifier {
     structure: Handle<BRepMeshDataStructureOfDelaun>,
@@ -69,7 +66,7 @@ impl NodeClassifier {
     }
 }
 
-/// `BRepMesh_MeshTool` over a shared mesh structure.
+/// `BRepMeshMeshTool` over a shared mesh structure.
 ///
 /// ```
 /// use martensite_tkernel::ncollection::IncrementalAllocatorObject;
@@ -98,7 +95,7 @@ impl_transient!(
 );
 
 impl BRepMeshMeshTool {
-    /// `BRepMesh_MeshTool(theStructure)`; `BRepMeshMeshTool::new(&mesh)`.
+    /// Build editing helpers over shared connectivity; `BRepMeshMeshTool::new(&mesh)`.
     pub fn new(structure: &Handle<BRepMeshDataStructureOfDelaun>) -> Self {
         Self {
             transient: StandardTransient::default(),

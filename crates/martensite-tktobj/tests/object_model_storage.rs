@@ -144,8 +144,7 @@ fn saving_without_a_storage_driver_reports_the_driver_failure() {
     assert!(recorded.model.load(&ExtendedString::default()).unwrap());
     let file = directory.join("model.object_model");
     assert!(!recorded.model.save_as(&extended(&file)).unwrap());
-    // The write-access check creates the file.
-    assert_eq!(std::fs::metadata(&file).unwrap().len(), 0);
+    assert!(!file.exists());
     let expected = format!(
         "Error saving document {} : driver failure. Check presence of resource files.",
         file.display()
@@ -165,6 +164,19 @@ fn saving_without_a_storage_driver_reports_the_driver_failure() {
             .messages()
             .contains(&(expected.to_owned(), Gravity::Alarm))
     );
+    assert!(recorded.model.close().unwrap());
+}
+
+#[test]
+fn failed_save_preserves_existing_destination() {
+    let _serial = serial();
+    let directory = scratch("save_preserves_destination");
+    let recorded = recorded_model();
+    assert!(recorded.model.load(&ExtendedString::default()).unwrap());
+    let file = directory.join("model.object_model");
+    std::fs::write(&file, b"existing document sentinel").unwrap();
+    assert!(!recorded.model.save_as(&extended(&file)).unwrap());
+    assert_eq!(std::fs::read(&file).unwrap(), b"existing document sentinel");
     assert!(recorded.model.close().unwrap());
 }
 
@@ -313,3 +325,6 @@ fn the_application_is_one_instance_named_object_model() {
     );
     application.close_tdoc_std_document(&document).unwrap();
 }
+
+#[path = "object_model_save_transactions.rs"]
+mod save_transactions;

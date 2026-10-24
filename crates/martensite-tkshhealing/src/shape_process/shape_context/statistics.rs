@@ -1,4 +1,4 @@
-//! `ShapeProcess_ShapeContext::PrintStatistics`: the shell and face counts of the map,
+//! `ShapeProcessShapeContext::print_statistics`: the shell and face counts of the map,
 //! sent to the messenger with the PrResult messages.
 use super::ShapeProcessShapeContext;
 use martensite_tkernel::message::{Gravity, Messenger, Msg};
@@ -17,7 +17,7 @@ struct MapCounts {
     fn_: i32,
 }
 
-/// `Messenger::Send(Message_Msg, gravity)`: the text with the pending arguments filled
+/// Format a message with its pending arguments and severity
 /// with UNKNOWN (`Message_Msg::Get`).
 pub(in crate::shape_process) fn send(
     messenger: &Messenger,
@@ -33,7 +33,7 @@ pub(in crate::shape_process) fn message(key: &str) -> Msg {
 }
 
 impl ShapeProcessShapeContext {
-    /// `PrintStatistics()`: the mapping counts and the preparation ratios of shells and
+    /// the mapping counts and the preparation ratios of shells and
     /// faces sent as information messages; `context.print_statistics()?`.
     pub fn print_statistics(&self) -> Result<(), Failure> {
         let counts = self.map_counts()?;
@@ -47,7 +47,7 @@ impl ShapeProcessShapeContext {
         let mut no_result = message("PrResult.Print.MSG150");
         no_result.arg_integer(counts.sn)?;
         send(&messenger, &mut no_result, Gravity::Info)?;
-        // Native resets both messages to their original text to reuse them for faces.
+        // resets both messages to their original text to reuse them for faces.
         let (first, second) = (
             shell_result.original().clone(),
             no_result.original().clone(),

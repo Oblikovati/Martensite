@@ -1,5 +1,4 @@
-// Rust translation of ShapeAnalysis_Surface at the retained behavior
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Surface analysis and projection with cached bounds and singularities.
 mod boxes;
 mod closure;
 mod degenerate;
@@ -34,7 +33,7 @@ struct SurfaceAnalysisFields {
     bound_isos: Option<[Handle<dyn GeomCurve>; 4]>,
 }
 
-/// Surface analysis with native identity-sensitive initialization and cached boundary isos.
+/// Surface analysis with identity-sensitive initialization and cached boundary isos.
 ///
 /// ```
 /// use martensite_tkshhealing::shape_analysis::ShapeAnalysisSurface;
@@ -79,7 +78,7 @@ impl ShapeAnalysisSurface {
             return Ok(());
         }
         let mut replacement = SurfaceAnalysisFields::new(surface)?;
-        // Native Init invalidates computation, but retains accumulated box contents.
+        // Init invalidates computation, but retains accumulated box contents.
         replacement.boxes = self.fields.read().boxes.clone();
         replacement.extension = self.fields.read().extension;
         *self.fields.write() = replacement;
@@ -87,7 +86,7 @@ impl ShapeAnalysisSurface {
         Ok(())
     }
 
-    /// Copies native cached singularities and adaptor without recomputation; `analysis.init_from(&other)?`.
+    /// Copies cached singularities and adaptor without recomputation; `analysis.init_from(&other)?`.
     pub fn init_from(&self, other: &ShapeAnalysisSurface) -> Result<(), Failure> {
         self.init(&other.surface())?;
         let copied = other.fields.snapshot();
@@ -102,7 +101,7 @@ impl ShapeAnalysisSurface {
         self.fields.read().surface.clone()
     }
 
-    /// Returns the native eagerly created adaptor; `let adaptor = analysis.adaptor3d();`.
+    /// Returns the eagerly created adaptor; `let adaptor = analysis.adaptor3d();`.
     pub fn adaptor3d(&self) -> Handle<GeomAdaptorSurface> {
         self.fields.read().adaptor.clone()
     }
@@ -132,7 +131,7 @@ impl ShapeAnalysisSurface {
         self.fields.read().bounds
     }
 
-    /// Changes buffered bounds without invalidating native caches; `analysis.set_domain((0.,1.,0.,1.));`.
+    /// Changes buffered bounds without invalidating caches; `analysis.set_domain((0.,1.,0.,1.));`.
     pub fn set_domain(&self, bounds: SurfaceBounds) {
         self.fields.write().bounds = bounds;
     }

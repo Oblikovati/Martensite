@@ -1,4 +1,4 @@
-//! Native base class is an extension point: Approx returns false and preserves outputs.
+//! base class is an extension point: Approx returns false and preserves outputs.
 use super::{ShapeUpgradeSplitCurve2d, ShapeUpgradeSplitCurve3d, ShapeUpgradeTool};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkbrep::topods::{Edge, Face};
@@ -11,7 +11,7 @@ use martensite_tkg3d::geom::GeomCurve;
 /// Protected native fields for specialized approximation tools.
 #[derive(Default)]
 pub struct FixSmallCurvesFields {
-    /// Status bitset, initially ShapeExtend_OK.
+    /// Status bitset, initially clear (success).
     pub status: i32,
     /// Spatial curve splitter, initially null.
     pub curve_3d_tool: Handle<ShapeUpgradeSplitCurve3d>,
@@ -39,7 +39,7 @@ impl FixSmallCurvesData {
 }
 /// Virtual approximation extension point; `tool.approx(&mut c3,&mut c2,&mut reversed,&mut first,&mut last)?`.
 pub trait FixSmallCurves: Transient {
-    /// Native protected state; `tool.fix_small_curves_data()`.
+    /// protected state; `tool.fix_small_curves_data()`.
     fn fix_small_curves_data(&self) -> &FixSmallCurvesData;
     /// Preserve all arguments and return false in the native base implementation.
     /// Example: `tool.approx(&mut c3,&mut c2,&mut reversed,&mut first,&mut last)?`.
@@ -69,7 +69,7 @@ impl_transient_interface!(
     "ShapeUpgrade_FixSmallCurves",
     ShapeUpgradeTool
 );
-/// Native base small-curve criterion; `ShapeUpgradeFixSmallCurves::new()`.
+/// base small-curve criterion; `ShapeUpgradeFixSmallCurves::new()`.
 #[derive(Default)]
 pub struct ShapeUpgradeFixSmallCurves {
     parent: ShapeUpgradeTool,

@@ -1,4 +1,4 @@
-//! Native `ShapeFix_Wire::FixSelfIntersection` mode and pass ordering.
+//! `ShapeFixWire::fix_self_intersection` mode and pass ordering.
 use super::ShapeFixWire;
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use crate::shape_fix::FixRoot;

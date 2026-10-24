@@ -1,4 +1,4 @@
-//! Native box accumulation and coordinate-extremum refinement.
+//! box accumulation and coordinate-extremum refinement.
 use martensite_tkernel::standard::Handle;
 use martensite_tkg2d::geom2d::{Geom2dCircle, Geom2dCurve};
 use martensite_tkmath::{

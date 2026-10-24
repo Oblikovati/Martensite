@@ -1,4 +1,4 @@
-//! ShapeUpgrade_SplitSurfaceArea at the retained behavior 3d097a0328e71b8.
+//! ShapeUpgradeSplitSurfaceArea.
 use super::{ShapeUpgradeSplitSurface, SplitSurface, SplitSurfaceData};
 use martensite_tkernel::{
     impl_transient,
@@ -41,7 +41,7 @@ impl Default for ShapeUpgradeSplitSurfaceArea {
 }
 
 impl ShapeUpgradeSplitSurfaceArea {
-    /// Create an area criterion with the retained behavior's default one-part configuration.
+    /// Create an area criterion with default one-part configuration.
     pub fn new() -> Self {
         Self::default()
     }

@@ -1,4 +1,4 @@
-//! Policy wrappers compared with pinned the retained behavior state and topology.
+//! Policy wrappers compared with state and topology.
 use martensite_tkbrep::{topexp::Explorer, topods::Shape};
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::{

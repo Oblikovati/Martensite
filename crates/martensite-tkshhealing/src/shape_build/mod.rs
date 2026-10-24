@@ -1,12 +1,10 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeBuild at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! the retained behavior package ShapeBuild: the low-level builders of Shape Healing.
+//! ShapeBuild: the low-level builders of Shape Healing.
 //!
 //! [`ShapeBuildVertex`] combines two vertices into one that holds both,
 //! [`ShapeBuildEdge`] copies edges with other vertices, ranges or p-curves, moves and
 //! transforms p-curves and makes edges on curves, and [`ShapeBuildReShape`] is the
 //! re-shaper that records replacements and removals of shapes and rebuilds any shape that
-//! contains them. docs/shhealing-design.md section 3 fixes how they map.
+//! contains them. Replacements are applied recursively through that context.
 mod edge;
 mod reshape;
 mod vertex;

@@ -152,7 +152,7 @@ fn projects_inside_shorter(
         &curves.1.curve
     };
     let adaptor = GeomAdaptorCurve::with_curve(chosen)?;
-    // ShapeAnalysis_Curve::Project with its default AdjustToEnds = true.
+    // ShapeAnalysisCurve::project with its default AdjustToEnds = true.
     let (distance, _, parameter) =
         ShapeAnalysisCurve.project_adaptor(&adaptor, point, tolerance, true)?;
     Ok(distance <= tolerance
@@ -170,7 +170,7 @@ fn derivative_angle_gate(
         (Ok(first), Ok(second)) => (first, second),
         _ => return Ok(false),
     };
-    // the retained behavior's antiparallel branch repeats a weaker check after the tighter one.
+    // antiparallel branch repeats a weaker check after the tighter one.
     let opposite_second = std::f64::consts::PI - angles.1 <= 0.001;
     Ok(angles.0 <= 0.001 && angles.1 <= 0.01 || opposite_second)
 }

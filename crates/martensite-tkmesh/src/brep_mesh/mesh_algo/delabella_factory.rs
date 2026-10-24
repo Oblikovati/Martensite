@@ -1,5 +1,4 @@
-// Rust translation of BRepMesh_DelabellaMeshAlgoFactory.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Factory selection for point-cloud triangulation with deflection control.
 use super::algo_object::{BRepMeshDelaunayBaseMeshAlgo, FaceMeshingCore};
 use super::deflection_control::DelaunayDeflectionControlMeshAlgo;
 use super::delabella_base::{BRepMeshDelabellaBaseMeshAlgo, DelabellaTriangulation};
@@ -14,11 +13,10 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
 use martensite_tkmath::geom_abs::SurfaceType;
 
-/// `BRepMesh_CustomDelaunayBaseMeshAlgo<BRepMesh_DelabellaBaseMeshAlgo>`: the base of
-/// the Delabella node-insertion and deflection-control algorithms.
+/// Generator composition used by point-cloud node-insertion and deflection-control algorithms.
 type DelabellaDelaunayGenerator = CustomDelaunayGenerator<CustomGenerator<DelabellaTriangulation>>;
 
-/// `BRepMesh_DelabellaMeshAlgoFactory`: Delabella-based algorithms of a complexity
+/// `BRepMeshDelabellaMeshAlgoFactory`: Delabella-based algorithms of a complexity
 /// suited to each surface type.
 ///
 /// ```
@@ -43,7 +41,7 @@ impl_transient!(
 );
 
 impl BRepMeshDelabellaMeshAlgoFactory {
-    /// `BRepMesh_DelabellaMeshAlgoFactory()`; `BRepMeshDelabellaMeshAlgoFactory::new()`.
+    /// Create a point-cloud face algorithm factory; `BRepMeshDelabellaMeshAlgoFactory::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -53,7 +51,7 @@ fn delabella_algo(core: impl FaceMeshingCore + 'static) -> Handle<dyn MeshAlgo> 
     Handle::new(BRepMeshDelabellaBaseMeshAlgo::from_core(core)).cast()
 }
 
-/// `new NodeInsertionMeshAlgo<R>::Type`, optionally with surface nodes pre-processed.
+/// Create a node-insertion strategy with optional surface-node preprocessing.
 fn node_insertion<R: RangeSplitter + Default + Send + 'static>(
     pre_process: bool,
 ) -> Handle<dyn MeshAlgo> {
@@ -62,7 +60,7 @@ fn node_insertion<R: RangeSplitter + Default + Send + 'static>(
     delabella_algo(algo)
 }
 
-/// `new DeflectionControlMeshAlgo<R>::Type` with surface nodes pre-processed.
+/// Create a deflection-control strategy with surface-node preprocessing.
 fn deflection_control<R: RangeSplitter + Default + Send + 'static>() -> Handle<dyn MeshAlgo> {
     let mut algo = DelaunayDeflectionControlMeshAlgo::<R, DelabellaDelaunayGenerator>::default();
     algo.set_pre_process_surface_nodes(true);
@@ -89,7 +87,7 @@ fn plane_choice(parameters: &MeshParameters) -> Handle<dyn MeshAlgo> {
 }
 
 impl MeshAlgoFactory for BRepMeshDelabellaMeshAlgoFactory {
-    /// `GetAlgo(theSurfaceType, theParameters)`. Unlike `BRepMesh_MeshAlgoFactory`,
+    /// `GetAlgo(theSurfaceType, theParameters)`. Unlike `BRepMeshMeshAlgoFactory`,
     /// `EnableControlSurfaceDeflectionAllSurfaces` is ignored and extrusion, Bezier,
     /// B-spline and other surfaces share the NURBS splitter, as natively.
     fn get_algo(

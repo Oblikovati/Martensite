@@ -1,7 +1,5 @@
 //! Supplemental quality-assurance operations used by the shape-healing cases.
-//! 3d097a0328e71b826377d4814ab05ec3c3d23871), on the Rust API. Each returns what it sets
-//! and the text it prints; a `Standard_Failure` the command catches becomes its
-//! `... Exception` text, as natively.
+//! Each returns its result and diagnostic text; caught failures become exception text.
 use martensite_tkbrep::{brep_tools::ReShape, topods::Shape};
 use martensite_tkernel::{message::ProgressRange, precision, standard::Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
@@ -18,9 +16,9 @@ pub struct QaOutput {
     pub text: String,
 }
 
-/// QABugs_11.cxx `OCC22 result shape compound considerLocation`: the sub-shapes of
-/// `compound` split by ShapeUpgrade_ShapeDivideAngle(PI/2) (precision Confusion, max
-/// tolerance 0.1) into a ShapeBuild_ReShape context, which then rebuilds `shape`.
+/// `OCC22 result shape compound considerLocation`: the sub-shapes of
+/// `compound` split by ShapeUpgradeShapeDivideAngle(PI/2) (precision Confusion, max
+/// tolerance 0.1) into a ShapeBuildReShape context, which then rebuilds `shape`.
 pub fn occ22(shape: &Shape, compound: &Shape, consider_location: bool) -> QaOutput {
     let attempt = || -> Result<QaOutput, martensite_tkernel::standard::Failure> {
         let upgrade = ShapeUpgradeShapeDivideAngle::new(std::f64::consts::PI / 2.);
@@ -53,9 +51,9 @@ pub fn occ22(shape: &Shape, compound: &Shape, consider_location: bool) -> QaOutp
     })
 }
 
-/// QABugs_11.cxx `OCC24 result shape compound resource sequence`: the ShapeProcess
+/// `OCC24 result shape compound resource sequence`: the ShapeProcess
 /// sequence run on a shape context of `compound` (detalisation EDGE), its map replayed
-/// into a ShapeBuild_ReShape that rebuilds `shape`.
+/// into a ShapeBuildReShape that rebuilds `shape`.
 pub fn occ24(shape: &Shape, compound: &Shape, resource: &str, sequence: &str) -> QaOutput {
     let attempt = || -> Result<Shape, martensite_tkernel::standard::Failure> {
         ShapeProcessOperLibrary::init()?;

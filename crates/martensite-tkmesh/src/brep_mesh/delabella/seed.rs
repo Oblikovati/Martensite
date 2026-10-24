@@ -25,10 +25,9 @@ SOFTWARE.
 
 */
 
-// Rust translation of CDelaBella::Triangulate() of delabella.cpp: sorting, duplicate
-// removal, the degenerate outputs and the coplanar 2D contour that seeds the hull.
+// Sort points, remove duplicates and handle degenerate inputs before seeding the hull.
 
-//! The first stage of `CDelaBella::Triangulate()` up to the cone hull.
+//! Seed triangulation with a coplanar contour before constructing its cone hull.
 use super::arith::{Norm, overlap, u28cmp, vert_diff};
 use super::{DelaBella, DelaBellaTriangle, broken_hull};
 use martensite_tkernel::standard::Failure;

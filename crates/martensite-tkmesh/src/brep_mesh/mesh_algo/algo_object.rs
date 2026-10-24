@@ -1,6 +1,4 @@
-// Rust translation of the RTTI classes of the BRepMesh face algorithms
-// (BRepMesh_BaseMeshAlgo, BRepMesh_ConstrainedBaseMeshAlgo, BRepMesh_CustomBaseMeshAlgo,
-// BRepMesh_DelaunayBaseMeshAlgo) at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Runtime face algorithm objects expose the configured strategy through one handle.
 use super::base::{BaseMeshAlgoHooks, base_perform};
 use super::deflection_control::DelaunayDeflectionControlMeshAlgo;
 use super::delaunay_insertion::DelaunayNodeInsertionMeshAlgo;
@@ -14,11 +12,11 @@ use martensite_tkernel::standard::{Failure, StandardTransient};
 use martensite_tkernel::{impl_transient, impl_transient_interface};
 use std::sync::{Mutex, PoisonError};
 
-/// `BRepMesh_BaseMeshAlgo` in the runtime type system (abstract).
+/// `BaseMeshAlgo` in the runtime type system (abstract).
 pub trait BaseMeshAlgo: MeshAlgo {}
 impl_transient_interface!(dyn BaseMeshAlgo, "BRepMesh_BaseMeshAlgo", dyn MeshAlgo);
 
-/// `BRepMesh_ConstrainedBaseMeshAlgo` in the runtime type system (abstract).
+/// `ConstrainedBaseMeshAlgo` in the runtime type system (abstract).
 pub trait ConstrainedBaseMeshAlgo: BaseMeshAlgo {}
 impl_transient_interface!(
     dyn ConstrainedBaseMeshAlgo,
@@ -26,7 +24,7 @@ impl_transient_interface!(
     dyn BaseMeshAlgo
 );
 
-/// `BRepMesh_CustomBaseMeshAlgo` in the runtime type system (abstract; its only
+/// `CustomBaseMeshAlgo` in the runtime type system (abstract; its only
 /// native concrete descendant is `BRepMeshDelabellaBaseMeshAlgo`).
 pub trait CustomBaseMeshAlgo: ConstrainedBaseMeshAlgo {}
 impl_transient_interface!(
@@ -82,8 +80,7 @@ node_insertion_core!(
     DelaunayDeflectionControlMeshAlgo
 );
 
-/// The algorithm object behind a face-algorithm handle, locked because `Perform` takes
-/// the C++ object mutably through a shared handle; `LockedFaceCore::new(core)`.
+/// Shared face algorithm state guarded while meshing mutates it; `LockedFaceCore::new(core)`.
 pub(super) struct LockedFaceCore(Mutex<Box<dyn FaceMeshingCore>>);
 
 impl LockedFaceCore {
@@ -104,9 +101,8 @@ impl LockedFaceCore {
     }
 }
 
-/// `BRepMesh_DelaunayBaseMeshAlgo` as a handle: the plain algorithm, or one of the
-/// node-insertion template instances over it (whose dynamic type is this class, as
-/// the C++ templates declare no RTTI of their own).
+/// A handle for a Delaunay face algorithm or one of its node-insertion strategies.
+/// The strategies share the runtime identity of this handle.
 ///
 /// ```
 /// use martensite_tkmesh::brep_mesh::BRepMeshDelaunayBaseMeshAlgo;
@@ -133,11 +129,11 @@ impl Default for BRepMeshDelaunayBaseMeshAlgo {
 }
 
 impl BRepMeshDelaunayBaseMeshAlgo {
-    /// `BRepMesh_DelaunayBaseMeshAlgo()`; `BRepMeshDelaunayBaseMeshAlgo::new()`.
+    /// Create the plain Delaunay face meshing strategy; `BRepMeshDelaunayBaseMeshAlgo::new()`.
     pub fn new() -> Self {
         Self::default()
     }
-    /// A template instance over this class (`new NodeInsertionMeshAlgo<...>::Type`);
+    /// Wrap a concrete face meshing strategy with this handle's runtime identity;
     /// `BRepMeshDelaunayBaseMeshAlgo::from_core(algo)`.
     pub fn from_core(core: impl FaceMeshingCore + 'static) -> Self {
         Self {

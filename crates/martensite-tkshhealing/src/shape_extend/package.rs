@@ -1,5 +1,3 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeExtend/ShapeExtend.hxx/.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! `ShapeExtend`: the package functions (the message loader and the status bit codes).
 use super::status::ShapeExtendStatus;
 use crate::sh_message::SHAPE_US;
@@ -11,7 +9,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 /// The message whose presence tells that the Shape Healing messages are loaded.
 const PROBE_KEY: &str = "ShapeFix.FixSmallSolid.MSG0";
 
-/// The `static bool init` of `ShapeExtend::Init`: set before the first load, so a later
+/// The `static bool init` of `ShapeExtend::init`: set before the first load, so a later
 /// call does nothing even when the first one failed.
 static INITIALIZED: AtomicBool = AtomicBool::new(false);
 
@@ -29,7 +27,7 @@ pub struct ShapeExtend;
 impl ShapeExtend {
     /// `Init`: loads the Shape Healing messages into the process-wide catalog once
     /// ([`MsgFile::global`]); Standard_ProgramError when they are still missing. Only the
-    /// first call works, as the native function-local flag;
+    /// first call works, as the function-local flag;
     /// `ShapeExtend::init()?`.
     pub fn init() -> Result<(), Failure> {
         if INITIALIZED.swap(true, Ordering::SeqCst) {
@@ -71,7 +69,7 @@ impl ShapeExtend {
             ShapeExtendStatus::Done => 0x00ff,
             ShapeExtendStatus::Fail => 0xff00,
             // DONE1..DONE8 are the enumerators 1..8 and FAIL1..FAIL8 the enumerators
-            // 10..17: one bit each, in order, as the native switch spells them.
+            // 10..17: one bit each, in order, as the switch spells them.
             done if (done as i32) < (ShapeExtendStatus::Done as i32) => 1 << (done as i32 - 1),
             fail => 1 << (fail as i32 - 2),
         }

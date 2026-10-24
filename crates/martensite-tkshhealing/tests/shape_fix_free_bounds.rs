@@ -1,4 +1,4 @@
-//! Native free-boundary repair cases, including the frozen-edge failure.
+//! free-boundary repair cases, including the frozen-edge failure.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topexp::{self, Explorer},

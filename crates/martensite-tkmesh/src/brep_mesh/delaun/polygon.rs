@@ -1,4 +1,4 @@
-//! Private polygon primitives used by the still-unported constraint orchestration.
+//! Private polygon primitives for constrained triangulation.
 use super::{BRepMeshDelaun, BRepMeshEdge};
 use crate::brep_mesh::{GeomTool, IntersectionFlag};
 use martensite_tkernel::{

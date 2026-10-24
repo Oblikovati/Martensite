@@ -1,6 +1,6 @@
 //! The construction and count commands of the scripts that build their inputs: BRepTest
-//! `polyline` and `polyvertex` (BRepBuilderAPI_MakePolygon), `psphere`
-//! (BRepPrimAPI_MakeSphere), and DBRep `nbshapes shape -t` with the `checknbshapes -t`
+//! `polyline` and `polyvertex` (BRepBuilderAPIMakePolygon), `psphere`
+//! (BRepPrimAPIMakeSphere), and DBRep `nbshapes shape -t` with the `checknbshapes -t`
 //! shape-count consistency check.
 use super::log;
 use super::logged_checks::nbshapes_count;
@@ -59,7 +59,7 @@ pub fn psphere(radius: f64, latitudes: Option<(f64, f64)>, angle: Option<f64>) -
     maker.shape().unwrap().clone()
 }
 
-/// The type labels of DBRep.cxx `DumpExtent`, from COMPOUND down to VERTEX.
+/// The type labels of `DumpExtent`, from COMPOUND down to VERTEX.
 const EXTENT_TYPES: [(ShapeEnum, &str); 8] = [
     (ShapeEnum::Compound, " COMPOUND  : "),
     (ShapeEnum::CompSolid, " COMPSOLID : "),
@@ -71,7 +71,7 @@ const EXTENT_TYPES: [(ShapeEnum, &str); 8] = [
     (ShapeEnum::Vertex, " VERTEX    : "),
 ];
 
-/// DBRep.cxx `nbshapes name -t`: per type the `TopExp::MapShapes` extent (sub-shapes
+/// `nbshapes name -t`: per type the `TopExp::MapShapes` extent (sub-shapes
 /// counted once per location), from VERTEX up to COMPOUND, then their sum as SHAPE.
 pub fn nbshapes_t(shape: &Shape, name: &str) -> String {
     let mut text = format!("Number of shapes in {name}\n");
@@ -127,7 +127,7 @@ pub fn checknbshapes_t(
     }
 }
 
-/// DBRep.cxx `brestore file name`: BRepTools::Read of the whole located file.
+/// `brestore file name`: BRepTools::Read of the whole located file.
 pub fn brestore(file: &str) -> Shape {
     let mut shape = Shape::default();
     let mut stream =
@@ -183,7 +183,7 @@ pub fn maxtolerance_printed(name: &str, shape: &Shape) -> [f64; 3] {
     })
 }
 
-/// BRepTest `edge name v1 v2`: BRepBuilderAPI_MakeEdge between the vertices.
+/// BRepTest `edge name v1 v2`: BRepBuilderAPIMakeEdge between the vertices.
 pub fn edge(v1: &Shape, v2: &Shape) -> Shape {
     use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
     let v1 = topods::vertex(v1).expect("edge: a vertex");

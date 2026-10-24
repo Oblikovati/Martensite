@@ -1,6 +1,4 @@
-//! The shapes of the BRepExtrema shape proximity behaviour tests: arcs, circles and
-//! Bezier edges, plane, cylinder and sphere patches, a polygon face and a split sphere,
-//! built with BRepBuilderAPI as the upstream suite builds them.
+//! Shape proximity fixtures use complete boundary-representation constructions.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Compound, Edge, Face, Shape};
 use martensite_tkernel::ncollection::Array1;

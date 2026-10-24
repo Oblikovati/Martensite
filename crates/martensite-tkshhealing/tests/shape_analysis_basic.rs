@@ -1,5 +1,5 @@
-//! Behavior tests of ShapeAnalysis_Geom, ShapeAnalysis_ShapeTolerance, ShapeAnalysis_Shell,
-//! ShapeAnalysis_WireOrder and ShapeAnalysis_FreeBoundData.
+//! Behavior tests of ShapeAnalysisGeom, ShapeAnalysisShapeTolerance, ShapeAnalysisShell,
+//! ShapeAnalysisWireOrder and ShapeAnalysisFreeBoundData.
 mod healing_support;
 
 use healing_support::{compound, edges_of, polygon, shell, square_face};

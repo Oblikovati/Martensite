@@ -1,4 +1,4 @@
-//! Direct Rust mirrors of the pinned discret-algorithm factory regressions.
+//! Named discretization factory registration and selection contracts.
 #![allow(non_snake_case)]
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::message::ProgressRange;

@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tklcaf"
-version = "0.3.5"
+version = "0.3.6"
 description = "Martensite application data framework: labels, attributes, standard attributes, functions, documents and transactions."
 edition.workspace = true
 rust-version.workspace = true
@@ -13,8 +13,8 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.5" }
-martensite-tkcdf = { path = "../martensite-tkcdf", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.6" }
+martensite-tkcdf = { path = "../martensite-tkcdf", version = "0.3.6" }
 
 # Test modules share one executable per toolkit to avoid repeated linkage.
 [[test]]

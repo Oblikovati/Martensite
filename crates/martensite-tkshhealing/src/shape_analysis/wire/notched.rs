@@ -1,5 +1,4 @@
-//! Native adjacent notch classification in the p-curve parameter plane.
-// ShapeAnalysis_Wire.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! adjacent notch classification in the p-curve parameter plane.
 use super::*;
 use crate::shape_analysis::{CurveProjection, ShapeAnalysisCurve};
 use martensite_tkbrep::{brep_tools, topods::Edge};

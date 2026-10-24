@@ -163,8 +163,10 @@ fn store_one(
         return Ok(PcdmStoreStatus::UnrecognizedFormat);
     }
     let name = driver.build_file_name(document)?;
-    writer.write_file(document, &name, range)?;
-    let status = writer.get_store_status();
+    let status = super::staged_store::write_document(writer, document, &name, range)?;
+    if status != PcdmStoreStatus::Ok {
+        return Ok(status);
+    }
     *meta_data = driver.create_meta_data(document, &name)?;
     target.set_meta_data(meta_data)?;
     create_references(document, driver, meta_data)?;

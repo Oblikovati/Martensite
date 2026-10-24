@@ -1,4 +1,4 @@
-//! ShapeUpgrade_FixSmallBezierCurves at the retained behavior 3d097a0328e71b8.
+//! ShapeUpgradeFixSmallBezierCurves.
 use super::{
     FixSmallCurves, FixSmallCurvesData, ShapeUpgradeFixSmallCurves, ShapeUpgradeSplitCurve2d,
     SplitCurve,
@@ -40,7 +40,7 @@ impl std::ops::Deref for ShapeUpgradeFixSmallBezierCurves {
     }
 }
 impl ShapeUpgradeFixSmallBezierCurves {
-    /// Create native null splitting tools and OK status; `ShapeUpgradeFixSmallBezierCurves::new()`.
+    /// Create null splitting tools and OK status; `ShapeUpgradeFixSmallBezierCurves::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -99,7 +99,7 @@ fn assign_single_segment<T: Clone + Send + Sync + 'static>(
     Ok(true)
 }
 fn clamp_reversed(first: &mut f64, last: &mut f64, bounds: (f64, f64)) {
-    // the retained behavior 3d097a0 reuses the forward bounds and reverses only the First comparison.
+    // reuses the forward bounds and reverses only the First comparison.
     if *first > bounds.0 {
         *first = bounds.0;
     }

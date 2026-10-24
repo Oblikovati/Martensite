@@ -3,7 +3,7 @@ use martensite_tkgeombase::bnd_lib::Add2dCurve;
 use martensite_tkmath::bnd::BoundingBox2;
 
 impl ShapeAnalysisWire {
-    /// Run the retained behavior's eight wire checks in their native order; `analyzer.perform()?`.
+    /// Run eight wire checks in their native order; `analyzer.perform()?`.
     pub fn perform(&self) -> Result<bool, Failure> {
         let mut found = self.check_order(true, true)?;
         found |= self.check_small(0.)?;
@@ -80,7 +80,7 @@ impl ShapeAnalysisWire {
                     continue;
                 }
                 self.check_intersecting_edges(first, second)?;
-                // Native checks FAIL1 here, even though the pair overload reports missing pcurves as FAIL3.
+                // checks FAIL1 here, even though the pair overload reports missing pcurves as FAIL3.
                 fail |= self.last_check_status(ShapeExtendStatus::Fail1);
                 done |= self.last_check_status(ShapeExtendStatus::Done1);
             }

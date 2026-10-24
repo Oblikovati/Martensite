@@ -1,0 +1,90 @@
+{
+  "issue": 245,
+  "captured_revision": "d0689dca79590ea02d707dbc2a9faf0e8bae77e4",
+  "reviewed_followup_revision": "c5c4d7d6e06c1c3e787b8c038c4b7dbea489e246",
+  "capture_scope": "Exact existing compiler inventory collector; workspace all-targets, default features; dedicated compiler cache cleaned before each target.",
+  "command": "cargo check --locked --workspace --all-targets --target TARGET --message-format=json --target-dir target/unsafe-inventory/build",
+  "environment": {
+    "RUSTFLAGS": "--force-warn unsafe_code",
+    "CARGO_ENCODED_RUSTFLAGS": "unset"
+  },
+  "static_additions": {
+    "document_file/windows.rs": {
+      "unsafe_blocks": 13
+    },
+    "document_file/macos/acl.rs": {
+      "unsafe_blocks": 7,
+      "unsafe_extern_blocks": 1
+    }
+  },
+  "compiler_changes": {
+    "x86_64-unknown-linux-gnu": {},
+    "x86_64-pc-windows-msvc": {
+      "unsafe_block_primary_spans": 26
+    },
+    "x86_64-apple-darwin": {
+      "unsafe_block_primary_spans": 14,
+      "unsafe_extern_primary_spans": 2
+    },
+    "aarch64-apple-darwin": {
+      "unsafe_block_primary_spans": 14,
+      "unsafe_extern_primary_spans": 2
+    }
+  },
+  "runs": [
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "compiler_exit_code": 0,
+      "original_baseline_exit_code": 0,
+      "summary_groups": 445,
+      "workspace_diagnostics": 2803,
+      "proposal_matches_report": true,
+      "raw_sha256": {
+        "latest.json": "a7dba5fc32c725ffd08a941cb4c5059dca661e0f31ac82c5b9da6413aae88107",
+        "compiler.stdout.jsonl": "cb6fac18a81843e77d3944cf64409e4e09e2fe52a264f694e582eb04e4ddb585",
+        "compiler.stderr.txt": "e05de9c9881df2d284bb6607a81fa659b144932447e208281430a941885bd452"
+      }
+    },
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "compiler_exit_code": 0,
+      "original_baseline_exit_code": 1,
+      "summary_groups": 427,
+      "workspace_diagnostics": 2675,
+      "proposal_matches_report": true,
+      "raw_sha256": {
+        "latest.json": "4d96aab7144f2e25b9c2b20575abb4bc71904c0b82f3a1bc898ab74977c73fd0",
+        "compiler.stdout.jsonl": "b5b85babc225b4f724915b25988ff9d790a926fd9e85b4ef8e139afc3769edab",
+        "compiler.stderr.txt": "0a339a3552b60e6697c47ea8e4b4b2fa66cb57183930cc2753c51f8eb05673f7"
+      }
+    },
+    {
+      "target": "x86_64-apple-darwin",
+      "compiler_exit_code": 0,
+      "original_baseline_exit_code": 1,
+      "summary_groups": 439,
+      "workspace_diagnostics": 2728,
+      "proposal_matches_report": true,
+      "raw_sha256": {
+        "latest.json": "8080cd1e7418eb3223c0dea0316b509a51d008bb6c0e2ae22dc78781e10ae324",
+        "compiler.stdout.jsonl": "828b3d185a2d79db97a9ef409d2d2b03378821139f41ca4cd043c815fe3fcf50",
+        "compiler.stderr.txt": "e40a541cbfa8d3f43e7aa1809f4c35088dd4bc700df614d7253470cf3d7d45e0"
+      }
+    },
+    {
+      "target": "aarch64-apple-darwin",
+      "compiler_exit_code": 0,
+      "original_baseline_exit_code": 1,
+      "summary_groups": 439,
+      "workspace_diagnostics": 2726,
+      "proposal_matches_report": true,
+      "raw_sha256": {
+        "latest.json": "cda7b289f92684a7822851fa3784b7aac30e307fd7bf1d444f80974a0c17d3a1",
+        "compiler.stdout.jsonl": "97828bff8507f4d79bec47237433d4d409d35691f0ae86897d76067cbd84045f",
+        "compiler.stderr.txt": "99bb681841780821710862b7cef5f6b85a072feb4fb9d4234f9b3766d5672663"
+      }
+    }
+  ],
+  "interpretation": "Repeated library and test compilation emits each new boundary construct twice. All other summary groups and static entries are unchanged. No unsafe implementation or thread-safety assertion was added. Cross-compilation does not execute native tests; the exact supported-platform release matrix remains required.",
+  "review": "Independent specification and standards/security review covered the platform boundaries; baseline changes admit only those reviewed additions."
+}

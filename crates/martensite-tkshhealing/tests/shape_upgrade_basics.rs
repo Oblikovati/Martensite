@@ -1,5 +1,5 @@
-//! Behavior tests of the ShapeUpgrade package functions, ShapeUpgrade_Tool,
-//! ShapeUpgrade_SplitCurve and ShapeUpgrade_RemoveLocations.
+//! Behavior tests of the ShapeUpgrade package functions, ShapeUpgradeTool,
+//! ShapeUpgradeSplitCurve and ShapeUpgradeRemoveLocations.
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{Face, Shape};
 use martensite_tkernel::ncollection::{Array1, HSequence};

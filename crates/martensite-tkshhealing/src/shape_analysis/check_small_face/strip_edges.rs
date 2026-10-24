@@ -113,7 +113,7 @@ fn sample_one_direction(
     let mut parameter = source.range.0;
     for _ in 0..=10 {
         let point = source.geometry.value(parameter)?;
-        // ShapeAnalysis_Curve::Project with its default AdjustToEnds = true.
+        // ShapeAnalysisCurve::project with its default AdjustToEnds = true.
         let (distance, _, target_parameter) =
             ShapeAnalysisCurve.project_adaptor(&adaptor, point, tolerance, true)?;
         if target_parameter < target.range.0 || target_parameter > target.range.1 {

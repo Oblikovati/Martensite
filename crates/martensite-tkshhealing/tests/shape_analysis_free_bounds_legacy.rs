@@ -1,4 +1,4 @@
-//! All original ShapeAnalysis_FreeBounds_Test.cxx declarations at the retained behavior3d097a0.
+//! Free-boundary analysis regression cases.
 #![allow(non_snake_case)]
 mod healing_support;
 use martensite_tkbrep::{

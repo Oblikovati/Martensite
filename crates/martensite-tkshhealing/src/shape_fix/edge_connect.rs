@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeFix/ShapeFix_EdgeConnect.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeFix_EdgeConnect`: shares the coincident end vertices of connected edges.
+//! `ShapeFixEdgeConnect`: shares the coincident end vertices of connected edges.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::brep::access::edge_tshape;
 use martensite_tkbrep::brep::update_curves::as_gcurve;
@@ -14,7 +11,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::gp::{Point3, Xyz};
 
-/// `ShapeFix_EdgeConnect`: records connections between the last vertex of an edge and
+/// `ShapeFixEdgeConnect`: records connections between the last vertex of an edge and
 /// the first vertex of the next one, then replaces each group of connected vertices by
 /// one shared vertex at the centre of the bounding box of the curve ends, with a
 /// tolerance that holds them all.
@@ -82,7 +79,7 @@ fn append_curve_end_positions(
 
 /// The static `positionAndTolerance`: the centre of the bounding box of the positions
 /// (the only position when there is one, the origin when there is none), and the
-/// largest distance to them times 1.0001, at least `Precision::Confusion()`.
+/// largest distance to them times 1.0001, at least `precision::confusion()`.
 fn position_and_tolerance(positions: &[Xyz]) -> (Xyz, f64) {
     let mut position = Xyz::new(0.0, 0.0, 0.0);
     let (mut lower, mut upper) = (position, position);
@@ -151,12 +148,12 @@ fn replace_vertex(
 }
 
 impl ShapeFixEdgeConnect {
-    /// `ShapeFix_EdgeConnect()`; `ShapeFixEdgeConnect::new()`.
+    /// `ShapeFixEdgeConnect::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `Add(theFirstEdge, theSecondEdge)`: connects the oriented last vertex of the first
+    /// connects the oriented last vertex of the first
     /// edge with the oriented first vertex of the second one, merging their groups;
     /// `tool.add_edges(&e1, &e2)`.
     pub fn add_edges(&mut self, first_edge: &Edge, second_edge: &Edge) {
@@ -212,7 +209,7 @@ impl ShapeFixEdgeConnect {
         self.lists.unbind(second);
     }
 
-    /// `Add(theShape)`: connects the consecutive edges of every wire of the shape (and the
+    /// connects the consecutive edges of every wire of the shape (and the
     /// last edge with the first one when the wire has its Closed flag);
     /// `tool.add_shape(&shape)?`.
     pub fn add_shape(&mut self, shape: &Shape) -> Result<(), Failure> {
@@ -235,7 +232,7 @@ impl ShapeFixEdgeConnect {
         Ok(())
     }
 
-    /// `Build()`: for each group, moves the shared vertex to the centre of the connected
+    /// for each group, moves the shared vertex to the centre of the connected
     /// curve ends with a tolerance that holds them, puts it on every edge of the group,
     /// then clears the registration; `tool.build()?`.
     pub fn build(&mut self) -> Result<(), Failure> {
@@ -264,7 +261,7 @@ impl ShapeFixEdgeConnect {
         Ok(())
     }
 
-    /// `Clear()`: forgets the connections without changing the edges; `tool.clear()`.
+    /// forgets the connections without changing the edges; `tool.clear()`.
     pub fn clear(&mut self) {
         self.vertices.clear(true);
         self.lists.clear(true);

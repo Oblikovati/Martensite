@@ -1,5 +1,4 @@
-//! Ordered native edge consistency checks and their seven aggregate status pairs.
-// ShapeAnalysis_Wire.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Ordered edge consistency checks and their seven aggregate status pairs.
 use super::*;
 use martensite_tkbrep::topods::Edge;
 

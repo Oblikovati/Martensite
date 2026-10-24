@@ -1,4 +1,4 @@
-//! Native normal selection and supplied-normal tolerance rules.
+//! normal selection and supplied-normal tolerance rules.
 use martensite_tkernel::{ncollection::Array1, standard::Handle};
 use martensite_tkg3d::geom::{GeomCircle, GeomCurve, GeomTrimmedCurve};
 use martensite_tkmath::gp::{Axis2, Point3, Xyz};

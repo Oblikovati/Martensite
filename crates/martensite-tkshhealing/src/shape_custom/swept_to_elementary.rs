@@ -1,9 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeCustom/ShapeCustom_SweptToElementary.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeCustom_SweptToElementary`: surfaces of revolution and of linear extrusion that
-//! are cylinders, cones, spheres or tori become those elementary surfaces
-//! (docs/shhealing-design.md section 7).
+//! `ShapeCustomSweptToElementary`: surfaces of revolution and of linear extrusion that
+//! are cylinders, cones, spheres or tori become those elementary surfaces.
 use super::direct_modification::copied_pcurve;
 use super::edge_copy::copy_edge_curve;
 use super::modification::{ShapeCustomModification, ShapeCustomModificationFields};
@@ -29,7 +25,7 @@ use martensite_tkg3d::geom_adaptor::{
 use martensite_tkmath::geom_abs::{Shape as Continuity, SurfaceType};
 use martensite_tkmath::gp::{Point3, Vector2, Vector3};
 
-/// `ShapeCustom_SweptToElementary`: a face on a bare surface of revolution (or of linear
+/// `ShapeCustomSweptToElementary`: a face on a bare surface of revolution (or of linear
 /// extrusion) whose adaptor recognizes a cylinder, a cone, a sphere or a torus (a cylinder)
 /// gets that elementary surface; edges with a p-curve on a swept surface are copied, and
 /// the p-curves are shifted onto the parametrization of a new torus or sphere.
@@ -55,7 +51,7 @@ impl_transient!(
 );
 
 impl ShapeCustomSweptToElementary {
-    /// `ShapeCustom_SweptToElementary()`; `ShapeCustomSweptToElementary::new()`.
+    /// `ShapeCustomSweptToElementary::new()`.
     pub fn new() -> Self {
         Self::default()
     }
@@ -74,7 +70,7 @@ fn is_to_convert(
     surface: &Handle<dyn GeomSurface>,
 ) -> Result<(bool, Handle<dyn GeomSweptSurface>), Failure> {
     if surface.is_null() {
-        // Natively `S->IsKind(...)` dereferences the null surface.
+        // Surface classification requires a live surface handle.
         return Err(Failure::with_type(
             "Standard_NullObject",
             "ShapeCustom_SweptToElementary: null surface; expected a Geom_Surface",
@@ -91,9 +87,8 @@ fn basis_adaptor(curve: &Handle<dyn GeomCurve>) -> Result<Handle<dyn Adaptor3dCu
     Ok(Handle::new(adaptor).cast())
 }
 
-/// The elementary surface of a surface of revolution, if its adaptor recognizes one (the
-/// plane case is disabled natively: "skl 18.12.2003 - plane not used, problems in
-/// PRO14665.igs").
+/// Return an elementary surface recognized by the revolution adaptor.
+/// Planes are deliberately excluded from this conversion.
 fn revolution_elementary(
     revolution: &GeomSurfaceOfRevolution,
 ) -> Result<Option<Handle<dyn GeomSurface>>, Failure> {
@@ -143,7 +138,7 @@ fn elementary_of(
     if let Some(extrusion) = swept.cast::<GeomSurfaceOfLinearExtrusion>().get() {
         return extrusion_elementary(extrusion);
     }
-    // Native keeps S unchanged and still reports success for another swept surface.
+    // keeps S unchanged and still reports success for another swept surface.
     Ok(Some(swept.clone().cast()))
 }
 
@@ -188,7 +183,7 @@ fn shifted_onto_new_surface(
     if !to_torus && sphere.is_null() {
         return Ok(());
     }
-    // Natively `SS->IsKind(...)` dereferences a null swept surface here.
+    // Swept-surface classification requires a live surface handle.
     if swept.is_null() {
         return Err(null_swept());
     }

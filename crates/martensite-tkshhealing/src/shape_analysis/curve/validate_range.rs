@@ -1,4 +1,4 @@
-//! Native range repair, including in-place reversal (OCC966, PRO7747, PRO7656).
+//! range repair, including in-place reversal (OCC966, PRO7747, PRO7656).
 use super::ShapeAnalysisCurve;
 use martensite_tkernel::{
     precision,

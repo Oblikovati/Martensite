@@ -1,6 +1,6 @@
-//! The test groups of the TKMesh cases, the `cpulimit` their `begin` scripts set (applied
-//! in a dedicated child process before the body, martensite-process-policy) and the
-//! harness run of one script: body, group `end`, `_check_log` verdict.
+//! Fixture groups define CPU budgets and completion markers.
+//! Budgeted cases run in a dedicated child with the limit applied before the body.
+//! The runner evaluates the body, group teardown and recorded log verdict.
 use super::draw::{Draw, Tcl};
 use super::log::{BUGS_RULES, ROOT_RULES, Rule, RuleStatus, Verdict, verdict};
 use martensite_process_policy::{

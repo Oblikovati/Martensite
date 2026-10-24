@@ -1,4 +1,4 @@
-//! `rebuildShell` of ShapeFix_FaceConnect: each original free edge replaced by the wire
+//! `rebuildShell` of ShapeFixFaceConnect: each original free edge replaced by the wire
 //! of its resulting edges, the wires of the faces reordered and fixed, and the vertices of
 //! the replaced edges merged.
 use super::vertices::{VertexReplacements, merge_vertices};

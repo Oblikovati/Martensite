@@ -21,7 +21,7 @@ impl BRepMeshDataStructureOfDelaun {
         state.attach_element(index, element)?;
         Ok(index)
     }
-    /// Preserve the retained behavior's zero-based replacement offset; `mesh.substitute_element(1,&triangle)?`.
+    /// Replace a triangle at its zero-based backing offset; `mesh.substitute_element(1,&triangle)?`.
     pub fn substitute_element(
         &self,
         index: i32,
@@ -102,7 +102,7 @@ impl DelaunConnectivity {
         index: i32,
         element: BRepMeshTriangle,
     ) -> Result<(), Failure> {
-        // the retained behavior 3d097a0328e71 indexes myElements(theIndex), unlike GetElement(index-1).
+        // Replacement addresses the backing slot directly; public element lookup subtracts one.
         *self
             .elements
             .change_value(index)

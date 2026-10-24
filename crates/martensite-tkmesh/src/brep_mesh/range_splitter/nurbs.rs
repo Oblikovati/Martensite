@@ -1,6 +1,4 @@
-// Rust translation of BRepMesh_NURBSRangeSplitter.hxx/.cxx (AdjustRange, initParameters,
-// the interval helpers, grabParamsOfEdges) and of the BoundaryParams, Extrusion and
-// Undefined splitters at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Initialize boundary-derived surface parameters and interval sampling.
 use super::nurbs_filter::generate_nurbs_nodes;
 use super::uv_param::IMapOfReal;
 use super::*;
@@ -9,7 +7,7 @@ use martensite_tkgeombase::geom_lib::norm_estim;
 use martensite_tkmath::geom_abs::{CurveType, Shape, SurfaceType};
 use martensite_tkmath::gp::Direction3;
 
-/// `BRepMesh_NURBSRangeSplitter`: interior nodes on a grid of filtered continuity
+/// `NURBSRangeSplitter`: interior nodes on a grid of filtered continuity
 /// interval and boundary parameters; `NURBSRangeSplitter::default()`.
 pub struct NURBSRangeSplitter {
     base: UVParamRangeSplitter,
@@ -99,7 +97,7 @@ pub fn nurbs_generate_surface_nodes<T: NurbsRangeSplitterHooks + ?Sized>(
     generate_nurbs_nodes(splitter.nurbs_state(), parameters)
 }
 
-/// `initParameters` of BRepMesh_NURBSRangeSplitter.
+/// `initParameters` of NURBSRangeSplitter.
 fn nurbs_init_parameters<T: NurbsRangeSplitterHooks + ?Sized>(
     splitter: &mut T,
 ) -> Result<bool, Failure> {
@@ -247,7 +245,7 @@ fn grab_internal_edge_params(state: &mut NURBSRangeSplitter) -> Result<bool, Fai
     Ok(true)
 }
 
-/// `BRepMesh_DefaultRangeSplitter::AdjustRange` on any splitter of the family.
+/// Adjust physical lengths and tolerances for any splitter in the family.
 fn default_adjust_range<T: RangeSplitter + ?Sized>(splitter: &mut T) -> Result<(), Failure> {
     let Some((length_u, length_v)) = splitter.range_state_mut().adjust_lengths()? else {
         return Ok(());
@@ -257,7 +255,7 @@ fn default_adjust_range<T: RangeSplitter + ?Sized>(splitter: &mut T) -> Result<(
     Ok(())
 }
 
-/// `BRepMesh_BoundaryParamsRangeSplitter`: the NURBS splitter over the boundary
+/// `BoundaryParamsRangeSplitter`: the NURBS splitter over the boundary
 /// parameters only (`initParameters` returns true at once);
 /// `BoundaryParamsRangeSplitter::default()`.
 #[derive(Default)]
@@ -265,14 +263,14 @@ pub struct BoundaryParamsRangeSplitter {
     base: NURBSRangeSplitter,
 }
 
-/// `BRepMesh_ExtrusionRangeSplitter`: the NURBS splitter whose undefined interval
+/// `ExtrusionRangeSplitter`: the NURBS splitter whose undefined interval
 /// count follows the extruded curve; `ExtrusionRangeSplitter::default()`.
 #[derive(Default)]
 pub struct ExtrusionRangeSplitter {
     base: NURBSRangeSplitter,
 }
 
-/// `BRepMesh_UndefinedRangeSplitter`: the NURBS splitter with a single undefined
+/// `UndefinedRangeSplitter`: the NURBS splitter with a single undefined
 /// interval; `UndefinedRangeSplitter::default()`.
 #[derive(Default)]
 pub struct UndefinedRangeSplitter {
@@ -300,7 +298,7 @@ nurbs_family_deref!(
     UndefinedRangeSplitter
 );
 
-/// `BRepMesh_ExtrusionRangeSplitter::getUndefinedIntervalNb`: the CN interval count of
+/// Count CN intervals of
 /// the extruded curve, or its pole count less one for a single-interval Bezier or
 /// B-spline curve.
 pub(super) fn extrusion_interval_nb(surface: &BRepAdaptorSurface) -> Result<i32, Failure> {

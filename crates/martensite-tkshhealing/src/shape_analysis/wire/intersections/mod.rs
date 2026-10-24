@@ -1,5 +1,4 @@
-//! Native wire intersection output and geometry evaluation conventions.
-// ShapeAnalysis_Wire.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! wire intersection output and geometry evaluation conventions.
 mod adjacent;
 mod aggregate;
 mod pair;
@@ -45,7 +44,7 @@ impl ShapeAnalysisWire {
         curve: &Geom2dAdaptorCurve,
         parameter: f64,
     ) -> Result<Point3, Failure> {
-        // Native h0 (1999-05-29): prefer the located 3D curve only for SameParameter edges.
+        // h0 (1999-05-29): prefer the located 3D curve only for SameParameter edges.
         if BRepTool::same_parameter(edge)? {
             let found = BRepTool::curve_with_location(edge)?;
             if !found.curve.is_null() {

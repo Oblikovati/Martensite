@@ -1,4 +1,4 @@
-//! Linear edge parameter transfer at the retained behavior 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Linear edge parameter transfer.
 use super::ShapeAnalysisEdge;
 use crate::shape_build::ShapeBuildEdge;
 use martensite_tkbrep::topods::{Edge, Face};
@@ -26,7 +26,7 @@ pub struct TransferParameterFields {
     last_2d: f64,
     face: Face,
 }
-/// Shared transfer state preserves native subclass identity; `TransferParameterData::default()`.
+/// Shared transfer state preserves subclass identity; `TransferParameterData::default()`.
 pub struct TransferParameterData {
     fields: SharedState<TransferParameterFields>,
 }
@@ -71,7 +71,7 @@ pub trait TransferParameters: Transient {
     ) -> Result<Handle<HSequence<f64>>, Failure> {
         operations::transfer_sequence(self, parameters, to_2d)
     }
-    /// Transform one parameter, preserving native arithmetic order; `tool.perform_parameter(0.5,true)?`.
+    /// Transform one parameter, preserving arithmetic order; `tool.perform_parameter(0.5,true)?`.
     fn perform_parameter(&self, parameter: f64, to_2d: bool) -> Result<f64, Failure> {
         Ok(self.transfer_parameter_data().with(|fields| {
             if to_2d {

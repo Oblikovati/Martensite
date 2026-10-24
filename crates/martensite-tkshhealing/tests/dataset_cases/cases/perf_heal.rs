@@ -1,4 +1,4 @@
-//! tests/perf/heal case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! perf heal regression cases owned by
 //! TKShHealing whose inputs are in the public dataset: the timed command runs between
 //! `dchrono name restart` and `dchrono name stop counter text`, which prints its CPU time
 //! (the perf group end only prints `TEST COMPLETED`).

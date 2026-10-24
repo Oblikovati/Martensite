@@ -216,7 +216,7 @@ impl AdjacentIntersections {
         let first = adapted_domain(&adapted[0], curves.ranges[0])?;
         let second = adapted_domain(&adapted[1], curves.ranges[1])?;
         let mut intersections = GInter::new();
-        // CSR CTS17806: the retained behavior intersects edges in ascending wire order at closure.
+        // CSR CTS17806: intersects edges in ascending wire order at closure.
         if reversed {
             intersections.perform(
                 &adapted[1],

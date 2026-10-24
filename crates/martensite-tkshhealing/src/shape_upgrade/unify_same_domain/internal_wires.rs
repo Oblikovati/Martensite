@@ -1,4 +1,4 @@
-//! "Build wires from internal edges" of `IntUnifyFaces` (ShapeUpgrade_UnifySameDomain.cxx):
+//! "Build wires from internal edges" of `IntUnifyFaces` :
 //! the internal edges chained in both directions from the first one left.
 use super::face_bounds::remove_edge_from_map;
 use martensite_tkbrep::brep::BRepBuilder;

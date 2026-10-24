@@ -1,4 +1,4 @@
-//! The range branch of ShapeFix_Wire_1.cxx::FixGap2d (`convert == false`), line by line:
+//! The range branch of FixGap2d (`convert == false`), line by line:
 //! the pcurves keep their geometry and only their ranges move to a common point that an
 //! intersection, the extrema or the projections find; a point outside the surface bounds
 //! is first clipped by the bounding lines.

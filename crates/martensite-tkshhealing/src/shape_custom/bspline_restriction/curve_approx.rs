@@ -280,8 +280,7 @@ fn start_continuity(required: Continuity, actual: Continuity) -> i32 {
     }
 }
 
-/// Natively a null approximation is dereferenced inside the `try`; with OCC signal
-/// handling that is a caught exception, which Rust models as this failure.
+/// Return a typed failure when approximation does not produce a curve.
 fn null_approximation() -> Failure {
     Failure::with_type(
         "Standard_NullObject",

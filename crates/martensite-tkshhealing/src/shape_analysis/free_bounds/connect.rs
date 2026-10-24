@@ -1,4 +1,4 @@
-//! Native maximal wire chaining and endpoint replacement.
+//! maximal wire chaining and endpoint replacement.
 use super::selector::{BoundsSelector, endpoint_box};
 use super::*;
 use crate::shape_build::{ShapeBuildEdge, ShapeBuildVertex};

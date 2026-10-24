@@ -1,4 +1,4 @@
-//! Native package operations supimplementation topology and contour analysis.
+//! package operations supimplementation topology and contour analysis.
 mod bounds;
 mod contour;
 use super::ShapeAnalysisCurve;
@@ -14,7 +14,7 @@ use martensite_tkernel::{
 };
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::gp::Point2;
-/// Native `ShapeAnalysis` package operations; `ShapeAnalysis::outer_wire(&face)?`.
+/// `ShapeAnalysis` package operations; `ShapeAnalysis::outer_wire(&face)?`.
 /// Period adjustment helpers are exported from the enclosing package.
 pub struct ShapeAnalysis;
 impl ShapeAnalysis {

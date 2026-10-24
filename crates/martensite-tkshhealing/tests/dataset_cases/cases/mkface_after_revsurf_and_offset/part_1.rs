@@ -1,4 +1,4 @@
-//! Part of the tests/mkface/after_revsurf_and_offset case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871: each
+//! Face construction regression fixtures: each
 //! builds its curve and surface with the GeomliteTest commands, makes the face (the grid
 //! end makes it from `r` where the case does not), sets the expected maximum tolerances,
 //! then runs the mkface group end ([`super::mkface_grid::mkface_end`]).
@@ -14,7 +14,7 @@ use crate::support::{
     vars::Vars,
 };
 
-/// tests/mkface/after_revsurf_and_offset/A1.
+/// after revsurf and offset — A1.
 pub fn a1(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("line", line([0.0, 0.0, 0.0, 0.0, 0.0, 1.0]));
@@ -35,7 +35,7 @@ pub fn a1(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/A2.
+/// after revsurf and offset — A2.
 pub fn a2(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("line", line([0.0, 0.0, 0.0, 0.0, 0.0, 1.0]));
@@ -58,7 +58,7 @@ pub fn a2(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/A3.
+/// after revsurf and offset — A3.
 pub fn a3(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("circle", circle(&[0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 10.0]));
@@ -82,7 +82,7 @@ pub fn a3(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/A4.
+/// after revsurf and offset — A4.
 pub fn a4(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("circle", circle(&[0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 10.0]));
@@ -108,7 +108,7 @@ pub fn a4(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/A5.
+/// after revsurf and offset — A5.
 pub fn a5(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("ellipse", ellipse(&[0.0, 0.0, 0.0, 30.0, 10.0]));
@@ -132,7 +132,7 @@ pub fn a5(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/A6.
+/// after revsurf and offset — A6.
 pub fn a6(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("ellipse", ellipse(&[0.0, 0.0, 0.0, 30.0, 10.0]));
@@ -158,7 +158,7 @@ pub fn a6(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/A7.
+/// after revsurf and offset — A7.
 pub fn a7(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("hyperbola", hyperbola(&[0.0, 0.0, 0.0, 30.0, 10.0]));
@@ -182,7 +182,7 @@ pub fn a7(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/A8.
+/// after revsurf and offset — A8.
 pub fn a8(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("hyperbola", hyperbola(&[0.0, 0.0, 0.0, 30.0, 10.0]));
@@ -208,7 +208,7 @@ pub fn a8(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/A9.
+/// after revsurf and offset — A9.
 pub fn a9(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("parabola", parabola(&[0.0, 0.0, 0.0, 30.0]));
@@ -232,7 +232,7 @@ pub fn a9(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/B1.
+/// after revsurf and offset — B1.
 pub fn b1(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set("parabola", parabola(&[0.0, 0.0, 0.0, 30.0]));
@@ -258,7 +258,7 @@ pub fn b1(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/B2.
+/// after revsurf and offset — B2.
 pub fn b2(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -285,7 +285,7 @@ pub fn b2(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/B3.
+/// after revsurf and offset — B3.
 pub fn b3(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -314,7 +314,7 @@ pub fn b3(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/B4.
+/// after revsurf and offset — B4.
 pub fn b4(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(
@@ -343,7 +343,7 @@ pub fn b4(s: &mut dyn Session) {
     );
 }
 
-/// tests/mkface/after_revsurf_and_offset/B5.
+/// after revsurf and offset — B5.
 pub fn b5(s: &mut dyn Session) {
     let mut v = Vars::new(s);
     v.set(

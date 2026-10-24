@@ -1,7 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeProcess at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! the retained behavior package ShapeProcess: the operators and contexts that run sequences of Shape
-//! Healing operations (docs/tkshhealing-progress.md).
+//! ShapeProcess: the operators and contexts that run sequences of Shape
+//! Healing operations.
 mod context;
 mod oper_library;
 mod operator;

@@ -1,4 +1,4 @@
-//! Branch regressions compared with the pinned the retained behavior CheckDegenerated implementation.
+//! Branch regressions compared with the CheckDegenerated implementation.
 mod support;
 use martensite_tkbrep::{brep::BRepBuilder, topods::Face};
 use martensite_tkernel::standard::Handle;

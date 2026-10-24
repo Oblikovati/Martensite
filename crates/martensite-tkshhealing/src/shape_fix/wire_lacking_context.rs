@@ -1,4 +1,4 @@
-//! Context and neighbor updates for the retained behavior's long-edge `FixLacking` branch.
+//! Context and neighbor updates for long-edge `FixLacking` branch.
 use super::super::{FixRoot, ShapeFixWire};
 use super::types::LackingPair;
 use crate::shape_build::ShapeBuildEdge;

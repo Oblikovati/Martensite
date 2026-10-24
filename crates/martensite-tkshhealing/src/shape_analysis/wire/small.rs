@@ -1,5 +1,4 @@
-//! Small-edge classification, preserving the retained behavior's combined DONE and FAIL states.
-// ShapeAnalysis_Wire.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Small-edge classification, preserving combined DONE and FAIL states.
 use super::*;
 use martensite_tkbrep::topods::Edge;
 use martensite_tkmath::gp::Point3;
@@ -42,7 +41,7 @@ impl ShapeAnalysisWire {
         if !face.is_null() && ShapeAnalysisEdge::new().has_pcurve_on_face(edge, &face)? {
             return Ok(true);
         }
-        // the retained behavior ma-test5.igs (1999-01-22): degenerate edges without pcurves are removable.
+        // ma-test5.igs (1999-01-22): degenerate edges without pcurves are removable.
         self.set_last_status(ShapeExtendStatus::Fail1);
         Ok(false)
     }
@@ -75,7 +74,7 @@ impl ShapeAnalysisWire {
         tolerance: f64,
     ) -> Result<bool, Failure> {
         let midpoint = self.small_edge_midpoint(edge, first)?;
-        // Preserve native comparisons for non-finite coordinates and tolerances.
+        // Preserve comparisons for non-finite coordinates and tolerances.
         Ok(!(midpoint.distance(&first) > tolerance || midpoint.distance(&last) > tolerance))
     }
 

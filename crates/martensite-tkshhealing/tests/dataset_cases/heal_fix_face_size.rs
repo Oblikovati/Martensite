@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/fix_face_size.
+//! The TKShHealing (no view) tests of fix face size.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_fix_face_size, HEAL_SECONDS;

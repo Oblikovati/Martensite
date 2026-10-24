@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/split_number.
+//! The TKShHealing (no view) tests of split number.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_split_number, HEAL_SECONDS;

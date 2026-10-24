@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/mkface/mkplane.
+//! The TKShHealing (no view) tests of mkplane.
 use super::*;
 
 dataset_cases!(run_case, NoView, mkface_mkplane, MKFACE_SECONDS;

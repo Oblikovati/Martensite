@@ -1,4 +1,4 @@
-//! `ShapeUpgrade_UnifySameDomain::FillHistory`: the history of the context filtered to
+//! `ShapeUpgradeUnifySameDomain::fill_history`: the history of the context filtered to
 //! the vertices, edges, faces and solids of the input and the result.
 use super::UnifyState;
 use martensite_tkbrep::brep_tools::{History, ReShape};
@@ -25,7 +25,7 @@ fn history_shapes(shape: &Shape) -> Result<IndexedMapOfShape, Failure> {
 }
 
 impl UnifyState {
-    /// `FillHistory()`: nothing when the history is null; else every input shape absent
+    /// nothing when the history is null; else every input shape absent
     /// from the result is recorded as modified into its images present in the result, or
     /// removed when it has none.
     pub(super) fn fill_history(&self) -> Result<(), Failure> {

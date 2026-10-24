@@ -348,7 +348,7 @@ fn install_bounded_curve_representations(edge: &Edge, face: &Face) {
 }
 
 fn tiny_trimmed_line_edge(face: &Face) -> Edge {
-    // Native probe inserts the 3D representation first: BRep_Tool::Range uses list order.
+    // probe inserts the 3D representation first: BRepTool::range uses list order.
     let mut edge = Edge::default();
     let curve = Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).cast();
     BRepBuilder::default()

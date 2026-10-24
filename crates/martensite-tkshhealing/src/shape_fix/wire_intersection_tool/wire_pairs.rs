@@ -1,4 +1,4 @@
-//! `ShapeFix_IntersectionTool::FixIntersectingWires`, line by line: every pair of direct
+//! `ShapeFixIntersectionTool::fix_intersecting_wires`, line by line: every pair of direct
 //! face wires, every pair of their edges with point then segment repairs, and the face
 //! rebuilt from the repaired wires.
 use super::ShapeFixIntersectionTool;
@@ -118,7 +118,7 @@ fn face_vertex_tolerance(face: &Face) -> Result<f64, Failure> {
     Ok(maximum)
 }
 
-/// `std::max(a, b)`, that is `a < b ? b : a`; `native_max(1.0, 2.0) == 2.0`.
+/// Choose `b` when `a < b`, otherwise `a`; `native_max(1.0, 2.0) == 2.0`.
 pub(super) fn native_max(first: f64, second: f64) -> f64 {
     if first < second { second } else { first }
 }
@@ -203,7 +203,7 @@ fn scan_wire_pair(
     Ok(true)
 }
 
-// `SeqWir.SetValue(n, sewd->Wire()); Context()->Replace(wire, sewd->Wire());`: each
+// Update both the wire sequence and its replacement context: each
 // `Wire()` call builds another wire, so the sequence entry and the replacement differ.
 fn update_wire_slot(
     tool: &ShapeFixIntersectionTool,

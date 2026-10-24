@@ -1,4 +1,4 @@
-//! The tests/bugs/heal cases built on QABugs commands and on several fixshape runs.
+//! The heal cases built on QABugs commands and on several fixshape runs.
 use super::banner;
 use crate::support::{
     build::whatis,
@@ -26,7 +26,7 @@ fn statshape_faces(text: &str) -> usize {
     line.split('\t').next().unwrap().parse().unwrap()
 }
 
-/// OCC22: ShapeBuild_ReShape processes locations (5 faces after the split).
+/// OCC22: ShapeBuildReShape processes locations (5 faces after the split).
 pub fn bug22(s: &mut dyn Session) {
     banner(&["=======", "OCC22", "=======", ""]);
     let shape = restore_as(s, "OCC21.brep", "shape").shape();
@@ -105,7 +105,7 @@ pub fn bug24008_2(s: &mut dyn Session) {
     bug24008(s, "bug24008_curv_rbp.draw", "bug24008_surf_rbls.draw");
 }
 
-/// OCC24370: ShapeFix_EdgeProjAux finds the end parameters 0 and 1.
+/// OCC24370: ShapeFixEdgeProjAux finds the end parameters 0 and 1.
 pub fn bug24370(s: &mut dyn Session) {
     banner(&["============", "OCC24370", "============", ""]);
     let edge = restore_as(s, "bug24370_edge.brep", "edge").shape();

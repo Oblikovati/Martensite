@@ -1,4 +1,4 @@
-//! Native notch selection, projection ties, and failure output lifetime.
+//! notch selection, projection ties, and failure output lifetime.
 mod support;
 use martensite_tkbrep::{
     brep::BRepBuilder,

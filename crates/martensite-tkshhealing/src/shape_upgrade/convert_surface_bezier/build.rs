@@ -271,7 +271,7 @@ fn segment_bezier(
     {
         return Ok(Handle::new(copy).cast());
     }
-    // the retained behavior keeps direct parameter bounds; the older 2*u-1 workaround stays disabled.
+    // keeps direct parameter bounds; the older 2*u-1 workaround stays disabled.
     copy.segment(u1, u2, v1, v2)?;
     Ok(Handle::new(copy).cast())
 }

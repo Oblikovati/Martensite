@@ -1,4 +1,4 @@
-//! Native advancing knot scan snaps split values without re-sorting them.
+//! advancing knot scan snaps split values without re-sorting them.
 use super::*;
 impl SplitSurfaceData {
     pub(super) fn snap_knots(&self, surface: &Handle<dyn GeomSurface>) -> Result<(), Failure> {

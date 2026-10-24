@@ -1,4 +1,4 @@
-//! Native package same-parameter traversal, flags, warning and cancellation rows.
+//! package same-parameter traversal, flags, warning and cancellation rows.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topexp::Explorer,

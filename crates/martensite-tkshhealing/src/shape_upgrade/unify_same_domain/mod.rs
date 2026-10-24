@@ -1,8 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeUpgrade/ShapeUpgrade_UnifySameDomain.hxx/.cxx
-// at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeUpgrade_UnifySameDomain`: unifies the faces lying on the same surface and the
-//! edges lying on the same curve, rebuilding the shape through a ShapeBuild_ReShape
+//! `ShapeUpgradeUnifySameDomain`: unifies the faces lying on the same surface and the
+//! edges lying on the same curve, rebuilding the shape through a ShapeBuildReShape
 //! context and recording the history of the modifications.
 mod edge_chains;
 mod face_bounds;
@@ -36,15 +33,13 @@ use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::GeomPlane;
 use martensite_tkg3d::top_abs::ShapeEnum;
 
-/// `ShapeUpgrade_UnifySameDomain::DataMapOfFacePlane`: the plane shared by the faces
-/// found coplanar.
+/// Map each coplanar face to its shared plane.
 pub type DataMapOfFacePlane = DataMap<Shape, Handle<GeomPlane>, ShapeMapHasher>;
 
-/// `ShapeUpgrade_UnifySameDomain::DataMapOfShapeMapOfShape`: the shells of each face.
+/// Map each face to its containing shells.
 pub type DataMapOfShapeMapOfShape = DataMap<Shape, MapOfShape, ShapeMapHasher>;
 
-/// `NCollection_DefaultHasher<TopoDS_Shape>`: the shape hash and `operator==` (`IsEqual`,
-/// the orientation included), the hasher of the maps declared without one.
+/// Hash shapes and compare full shape equality, including orientation.
 #[derive(Clone, Copy, Debug, Default)]
 pub(super) struct ShapeDefaultHasher;
 
@@ -57,12 +52,10 @@ impl HashPolicy<Shape> for ShapeDefaultHasher {
     }
 }
 
-/// `NCollection_DataMap<TopoDS_Shape, occ::handle<Geom2d_Curve>>`: the new p-curve of each
-/// edge.
+/// Map each edge to its replacement p-curve.
 pub(super) type EdgePCurveMap = DataMap<Shape, Handle<dyn Geom2dCurve>, ShapeDefaultHasher>;
 
-/// `ShapeUpgrade_UnifySameDomain::SubSequenceOfEdges`: a chain of edges and the edge
-/// that replaces it (null when the chain cannot be merged).
+/// An edge chain and its replacement edge, null when the chain cannot be merged.
 #[derive(Clone, Debug, Default)]
 pub struct ShapeUpgradeSubSequenceOfEdges {
     /// `SeqsEdges`.
@@ -71,7 +64,7 @@ pub struct ShapeUpgradeSubSequenceOfEdges {
     pub union_edges: Edge,
 }
 
-/// The members of the native class.
+/// The members of the class.
 pub(super) struct UnifyState {
     init_shape: Shape,
     lin_tol: f64,
@@ -90,8 +83,8 @@ pub(super) struct UnifyState {
     history: Handle<History>,
 }
 
-/// `ShapeUpgrade_UnifySameDomain`: merges the faces of a shape lying on the same surface
-/// (planes compared with GeomLib_IsPlanarSurface, elementary surfaces with
+/// `ShapeUpgradeUnifySameDomain`: merges the faces of a shape lying on the same surface
+/// (planes compared with IsPlanarSurface, elementary surfaces with
 /// IntPatch_ImpImpIntersection, cylinders also as swept surfaces) and the edges lying on
 /// the same line or circle (or any B-spline chain with `ConcatBSplines`).
 ///
@@ -151,7 +144,7 @@ impl UnifyState {
         })
     }
 
-    /// `myContext->Apply(shape)`.
+    /// Apply the recorded replacement context to a shape.
     fn apply(&self, shape: &Shape) -> Result<Shape, Failure> {
         self.context()?.apply(shape, ShapeEnum::Shape)
     }
@@ -175,14 +168,14 @@ impl UnifyState {
 }
 
 impl ShapeUpgradeUnifySameDomain {
-    /// `ShapeUpgrade_UnifySameDomain()`: no shape, both unifications on, B-spline
+    /// no shape, both unifications on, B-spline
     /// concatenation off, Precision::Confusion and Precision::Angular tolerances;
     /// `ShapeUpgradeUnifySameDomain::empty()`.
     pub fn empty() -> Self {
         Self::new(&Shape::default(), true, true, false)
     }
 
-    /// `ShapeUpgrade_UnifySameDomain(aShape, UnifyEdges, UnifyFaces, ConcatBSplines)`;
+    /// Initialize a unifier with the shape and the requested merge options;
     /// `ShapeUpgradeUnifySameDomain::new(&shape, true, true, false)`.
     pub fn new(shape: &Shape, unify_edges: bool, unify_faces: bool, concat_bsplines: bool) -> Self {
         Self {
@@ -196,7 +189,7 @@ impl ShapeUpgradeUnifySameDomain {
         }
     }
 
-    /// `Initialize(aShape, UnifyEdges, UnifyFaces, ConcatBSplines)`: a new shape and
+    /// a new shape and
     /// flags; the context, the kept shapes, the internal maps and the history are cleared;
     /// `unifier.initialize(&shape, true, true, false)`.
     pub fn initialize(
@@ -226,7 +219,7 @@ impl ShapeUpgradeUnifySameDomain {
         self.state.write().allow_internal = value;
     }
 
-    /// `KeepShape(theShape)`: an edge or a vertex kept from the unification (other
+    /// an edge or a vertex kept from the unification (other
     /// types are ignored); `unifier.keep_shape(&edge)`.
     pub fn keep_shape(&self, shape: &Shape) -> Result<(), Failure> {
         if matches!(shape.shape_type()?, ShapeEnum::Edge | ShapeEnum::Vertex) {
@@ -235,7 +228,7 @@ impl ShapeUpgradeUnifySameDomain {
         Ok(())
     }
 
-    /// `KeepShapes(theShapes)`: [`Self::keep_shape`] for each shape;
+    /// [`Self::keep_shape`] for each shape;
     /// `unifier.keep_shapes(&shapes)`.
     pub fn keep_shapes(&self, shapes: &MapOfShape) -> Result<(), Failure> {
         for shape in shapes.iter() {
@@ -244,7 +237,7 @@ impl ShapeUpgradeUnifySameDomain {
         Ok(())
     }
 
-    /// `SetSafeInputMode(theValue)`: when true (the default), the input shapes are not
+    /// when true (the default), the input shapes are not
     /// modified (merged vertices are copied); `unifier.set_safe_input_mode(false)`.
     pub fn set_safe_input_mode(&self, value: bool) {
         self.state.write().safe_input_mode = value;
@@ -255,24 +248,24 @@ impl ShapeUpgradeUnifySameDomain {
         self.state.write().lin_tol = value;
     }
 
-    /// `SetAngularTolerance(theValue)`: at least Precision::Angular;
+    /// at least Precision::Angular;
     /// `unifier.set_angular_tolerance(1e-3)`.
     pub fn set_angular_tolerance(&self, value: f64) {
         self.state.write().ang_tol = value.max(precision::angular());
     }
 
-    /// `Build()`: the face unification, then the edge unification (as enabled), then the
+    /// the face unification, then the edge unification (as enabled), then the
     /// history; `unifier.build()?`.
     pub fn build(&self) -> Result<(), Failure> {
         self.state.write().build()
     }
 
-    /// `Shape()`: the result; `unifier.shape()`.
+    /// the result; `unifier.shape()`.
     pub fn shape(&self) -> Shape {
         self.state.read().shape.clone()
     }
 
-    /// `History()`: the history of the modifications; `unifier.history()`.
+    /// the history of the modifications; `unifier.history()`.
     pub fn history(&self) -> Handle<History> {
         self.state.read().history.clone()
     }

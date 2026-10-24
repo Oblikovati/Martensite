@@ -31,8 +31,7 @@ pub trait RangeSplitter {
         self.range_state().is_valid()
     }
     /// Generate surface-specific interior nodes; `splitter.generate_surface_nodes(&parameters)?`.
-    /// Native `const`, but the NURBS family fills its parameter maps here (through a
-    /// `const_cast` natively), so the Rust receiver is mutable.
+    /// The NURBS family fills its parameter maps here, so the receiver is mutable.
     fn generate_surface_nodes(
         &mut self,
         parameters: &MeshParameters,
@@ -176,11 +175,11 @@ nurbs_range_splitter!(NURBSRangeSplitter, default_add_point);
 nurbs_range_splitter!(BoundaryParamsRangeSplitter, params_add_point);
 nurbs_range_splitter!(ExtrusionRangeSplitter, default_add_point);
 nurbs_range_splitter!(UndefinedRangeSplitter, default_add_point);
-/// `BRepMesh_DefaultRangeSplitter::AddPoint` on a NURBS-family splitter.
+/// Extend the range of a NURBS-family splitter with one point.
 fn default_add_point<T: RangeSplitter>(splitter: &mut T, point: Point2) {
     splitter.range_state_mut().add_point(point);
 }
-/// `BRepMesh_BoundaryParamsRangeSplitter::AddPoint`: the range and both parameters.
+/// Record a boundary point in the range and in both parameter sets.
 fn params_add_point(splitter: &mut BoundaryParamsRangeSplitter, point: Point2) {
     splitter.add_point_params(point);
 }

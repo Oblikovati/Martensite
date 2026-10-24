@@ -1,4 +1,4 @@
-//! Native aggregate intersection and complete analyzer call-order statuses.
+//! aggregate intersection and complete analyzer call-order statuses.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topods::{Face, Wire},

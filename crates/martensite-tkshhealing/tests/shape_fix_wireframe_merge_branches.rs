@@ -1,4 +1,4 @@
-//! Native repeated-edge, face-map and singleton drop regressions for `MergeSmallEdges`.
+//! repeated-edge, face-map and singleton drop regressions for `MergeSmallEdges`.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     brep_tools::ReShape,

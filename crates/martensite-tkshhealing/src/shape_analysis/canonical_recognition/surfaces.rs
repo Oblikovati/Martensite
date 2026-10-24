@@ -1,7 +1,3 @@
-// Rust translation of the static GetSurface (face, shell, edge and wire) and GetCurve of
-// ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_CanonicalRecognition.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! The analytic surfaces and curves under faces, shells, edges and wires.
 use super::params::{compare_surf_params, deviation_surf_params, set_surf_params, surface_nb_pars};
 use martensite_tkbrep::brep::BRepTool;
@@ -24,7 +20,7 @@ pub(super) struct SurfFit<'a> {
     pub status: &'a mut i32,
 }
 
-/// `GetSurface(theFace, ...)`: the analytic surface of the face (moved by its location)
+/// the analytic surface of the face (moved by its location)
 /// and its gap; status 1 for a face without surface.
 pub(super) fn face_surface(
     face: &Face,
@@ -54,7 +50,7 @@ pub(super) fn face_surface(
     Ok(ana)
 }
 
-/// `GetSurface(theShell, ...)`: the analytic surface of the first face when every face
+/// the analytic surface of the first face when every face
 /// has one. Natively each later face is compared with the parameters of the first
 /// surface itself (`SetSurfParams(theTarget, anElemSurf, ...)`), so the comparison always
 /// holds.
@@ -126,7 +122,7 @@ fn edge_surfaces(
     Ok(found)
 }
 
-/// `GetSurface(theEdge, ...)`: among the analytic surfaces of the edge's curves on
+/// among the analytic surfaces of the edge's curves on
 /// surfaces, the one closest to the given frame and parameters (the only one when there is
 /// one); its frame and parameters and gap are written; status 1 when there is none.
 pub(super) fn edge_surface(
@@ -163,7 +159,7 @@ pub(super) fn edge_surface(
     Ok(surfs[i].0.clone())
 }
 
-/// `GetSurface(theWire, ...)`: the surface of the first edge (seeded by the given frame
+/// the surface of the first edge (seeded by the given frame
 /// and parameters) when every other edge (seeded by the first result) gives a surface of
 /// the same parameters; the frame, parameters and gap of the first edge are written.
 pub(super) fn wire_surface(
@@ -221,7 +217,7 @@ pub(super) fn wire_surface(
     Ok(elem1)
 }
 
-/// `GetCurve(theEdge, ...)`: the analytic curve of the edge's 3D curve on its range
+/// the analytic curve of the edge's 3D curve on its range
 /// (moved by its location) and its gap; status 1 for an edge without 3D curve.
 pub(super) fn edge_curve(
     edge: &Edge,
@@ -241,7 +237,7 @@ pub(super) fn edge_curve(
     conv.set_conv_type(conv_type);
     conv.set_target(target);
     let mut ana: Handle<dyn GeomCurve> = Handle::default();
-    // The native `nf` and `nl` are uninitialized; they only receive the new range.
+    // The output range is overwritten by conversion before it is consumed.
     let mut new_range = (0.0, 0.0);
     conv.convert_to_analytical(tol, &mut ana, (curve3d.first, curve3d.last), &mut new_range)?;
     let Some(ana_curve) = ana.get() else {

@@ -1,4 +1,4 @@
-//! Native differential tests for ShapeUpgrade_ShapeConvertToBezier.
+//! differential tests for ShapeUpgradeShapeConvertToBezier.
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
     topexp::Explorer,

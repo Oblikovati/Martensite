@@ -1,4 +1,4 @@
-//! The tests/bugs/heal cases on surfaces, p-curves and their 2D views.
+//! The heal cases on surfaces, p-curves and their 2D views.
 use super::banner;
 use crate::support::{
     checkshape::CheckOptions,
@@ -19,8 +19,8 @@ use martensite_tkshhealing::shape_custom::{
     ShapeCustom, ShapeCustomRestrictionParameters, ShapeCustomRestrictionRequest,
 };
 
-/// SWscenario_ShapeCustom.cxx `bsplres result shape tol3d tol2d maxdeg maxseg C1 C2 0 1`:
-/// ShapeCustom::BSplineRestriction, then ShapeFix::SameParameter of a modified result.
+/// `bsplres result shape tol3d tol2d maxdeg maxseg C1 C2 0 1`:
+/// ShapeCustom::BSplineRestriction, then ShapeFix::same_parameter of a modified result.
 fn bsplres_c1_c2(shape: &martensite_tkbrep::topods::Shape) -> martensite_tkbrep::topods::Shape {
     let request = ShapeCustomRestrictionRequest {
         tol_3d: 1e-4,
@@ -58,7 +58,7 @@ fn getsurfcontinuity(name: &str, continuity: Continuity) -> String {
     format!("{name} has {word} continuity.\n")
 }
 
-/// tests/bugs/heal/bug23944.
+/// heal — bug23944.
 /// The B-spline restriction of the face keeps its surface C0 (the restriction
 /// parameters are read, not typo-swapped).
 pub fn bug23944(s: &mut dyn Session) {
@@ -75,7 +75,7 @@ pub fn bug23944(s: &mut dyn Session) {
     }
 }
 
-/// tests/bugs/heal/bug25967 (`TODO OCC25967 ALL: Error :  is WRONG because number of EDGE
+/// heal — bug25967 (`TODO OCC25967 ALL: Error :  is WRONG because number of EDGE
 /// entities in shape`): the healed face's p-curves shown in a 2D view.
 pub fn bug25967(s: &mut dyn Session) {
     log::todo("Error :  is WRONG because number of EDGE entities in shape");
@@ -93,7 +93,7 @@ pub fn bug25967(s: &mut dyn Session) {
     s.step(ViewStep::Xwd("bug25967"));
 }
 
-/// tests/bugs/heal/bug28523 (`TODO OCC28523 ALL: Error: Bad area of face`).
+/// heal — bug28523 (`TODO OCC28523 ALL: Error: Bad area of face`).
 pub fn bug28523(s: &mut dyn Session) {
     log::todo("Error: Bad area of face");
     banner(&["========", "OCC28523", "========", ""]);
@@ -106,7 +106,7 @@ pub fn bug28523(s: &mut dyn Session) {
     }
 }
 
-/// tests/bugs/heal/bug28768: the healed edges shown before and after, two screenshots.
+/// heal — bug28768: the healed edges shown before and after, two screenshots.
 pub fn bug28768(s: &mut dyn Session) {
     banner(&["========", "OCC28768", "========", ""]);
     let f12g = set(s, "f12g", binrestore("bug28768_f12g.brep"));

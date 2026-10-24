@@ -1,5 +1,5 @@
-//! Native seam p-curve exchange and range preservation.
-// ShapeFix_Wire.cxx at 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! seam p-curve exchange and range preservation.
+// Preserve seam orientation while updating its p-curve representations.
 use super::ShapeFixWire;
 use crate::shape_extend::ShapeExtendStatus;
 use martensite_tkbrep::brep::BRepBuilder;

@@ -1,4 +1,4 @@
-//! This supplemental bow-tie input stays unchanged in native ShapeFix_Face::Perform;
+//! This supplemental bow-tie input stays unchanged in native ShapeFixFace::perform;
 //! the separate `shape_fix_face_loop_wire` suite covers direct loop reconstruction.
 use martensite_tkbrep::topexp::Explorer;
 use martensite_tkg3d::top_abs::ShapeEnum;

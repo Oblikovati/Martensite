@@ -1,4 +1,4 @@
-//! tests/bugs/modalg_1 case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! bugs modalg 1 regression cases owned by
 //! TKShHealing whose inputs are in the public dataset.
 use super::bugs_common::{banner, tolerance_max};
 use crate::support::{
@@ -12,7 +12,7 @@ use crate::support::{
     topology::{checksection, sameparameter_in_place},
 };
 
-/// tests/bugs/modalg_1/buc60523.
+/// modalg 1 — buc60523.
 /// Sewing at 1e-7 keeps two free edges.
 pub fn buc60523(s: &mut dyn Session) {
     banner(&[
@@ -35,7 +35,7 @@ pub fn buc60523(s: &mut dyn Session) {
     checkview_display(s, Some("result"), "buc60523");
 }
 
-/// tests/bugs/modalg_1/buc60882.
+/// modalg 1 — buc60882.
 /// `fsameparameter result 1e-5` must not increase the tolerance.
 pub fn buc60882(s: &mut dyn Session) {
     banner(&["============", "BUC60882", "============", ""]);

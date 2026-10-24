@@ -1,5 +1,4 @@
-// Rust translation of BRepMesh_DelabellaBaseMeshAlgo.hxx/.cxx at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
+//! Point-cloud triangulation adapted to the shared face meshing stages.
 use super::algo_object::{
     BaseMeshAlgo, ConstrainedBaseMeshAlgo, CustomBaseMeshAlgo, FaceMeshingCore, LockedFaceCore,
 };
@@ -20,7 +19,7 @@ use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::bnd::CompactBox2;
 use martensite_tkmath::gp::Xy;
 
-/// `BRepMesh_DelabellaBaseMeshAlgo::buildBaseTriangulation`: the Delaunay triangulation
+/// Delaunay triangulation
 /// of the registered nodes (normalized into the unit square around the origin, with
 /// the 4 corners of their enlarged bounding box added as auxiliary nodes) by DelaBella.
 pub struct DelabellaTriangulation;
@@ -143,8 +142,8 @@ fn add_triangle(structure: &BRepMeshDataStructureOfDelaun, nodes: [i32; 3]) -> R
     Ok(())
 }
 
-/// `logDelabella2Occ`: a DelaBella message to the the retained behavior messenger, `[ERR]` as a fail,
-/// `[WRN]`/`[NFO]` as a trace, anything else as a warning.
+/// Forward triangulator messages: `[ERR]` as a failure, `[WRN]`/`[NFO]` as a trace,
+/// and other prefixes as a warning.
 fn log_delabella_to_occ(text: &str) {
     let gravity = match text.as_bytes().get(1) {
         Some(b'E') => Gravity::Fail,
@@ -154,7 +153,7 @@ fn log_delabella_to_occ(text: &str) {
     Message::send_text(&AsciiString::new(text), gravity);
 }
 
-/// The plain `BRepMesh_DelabellaBaseMeshAlgo` (planes without internal vertices);
+/// The plain `BRepMeshDelabellaBaseMeshAlgo` (planes without internal vertices);
 /// `DelabellaBaseMeshAlgoCore::default()`.
 #[derive(Default)]
 pub struct DelabellaBaseMeshAlgoCore {
@@ -187,9 +186,8 @@ impl FaceMeshingCore for DelabellaBaseMeshAlgoCore {
     }
 }
 
-/// `BRepMesh_DelabellaBaseMeshAlgo` as a handle: the plain algorithm, or one of the
-/// node-insertion template instances over `BRepMesh_CustomDelaunayBaseMeshAlgo` of it
-/// (whose dynamic type is this class, as the C++ templates declare no RTTI).
+/// A handle for point-cloud face triangulation and its node-insertion strategies.
+/// The strategies share the runtime identity of this handle.
 ///
 /// ```
 /// use martensite_tkmesh::brep_mesh::mesh_algo::BRepMeshDelabellaBaseMeshAlgo;
@@ -216,11 +214,11 @@ impl Default for BRepMeshDelabellaBaseMeshAlgo {
 }
 
 impl BRepMeshDelabellaBaseMeshAlgo {
-    /// `BRepMesh_DelabellaBaseMeshAlgo()`; `BRepMeshDelabellaBaseMeshAlgo::new()`.
+    /// Create the plain point-cloud meshing strategy; `BRepMeshDelabellaBaseMeshAlgo::new()`.
     pub fn new() -> Self {
         Self::default()
     }
-    /// A template instance over this class (`new NodeInsertionMeshAlgo<...>::Type`);
+    /// Wrap a concrete face meshing strategy with this handle's runtime identity;
     /// `BRepMeshDelabellaBaseMeshAlgo::from_core(algo)`.
     pub fn from_core(core: impl FaceMeshingCore + 'static) -> Self {
         Self {

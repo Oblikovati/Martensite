@@ -241,6 +241,12 @@ fn store_transient_fields<M: DocumentModel + ?Sized>(
 ) -> Result<(), Failure> {
     let transaction_mode = document.modification_mode();
     document.set_modification_mode(false)?;
+    let result = prepare_objects(model);
+    let restored = document.set_modification_mode(transaction_mode);
+    result.and(restored)
+}
+
+fn prepare_objects<M: DocumentModel + ?Sized>(model: &M) -> Result<(), Failure> {
     let objects = model.get_objects()?;
     let objects =
         martensite_tkcdf::live(&objects, "martensite_object_model_DocumentModel::SaveAs")?;
@@ -250,11 +256,10 @@ fn store_transient_fields<M: DocumentModel + ?Sized>(
         }
         objects.next()?;
     }
-    document.set_modification_mode(transaction_mode)
+    Ok(())
 }
 
-/// The body of `martensite_object_model_DocumentModel::SaveAs(theFile)`: the file is created to check the write
-/// access, then the application saves the document.
+/// Saves without altering the destination before preparation and storage succeed (#245).
 pub(crate) fn save_as_file<M: DocumentModel + ?Sized>(
     model: &M,
     file: &ExtendedString,
@@ -264,7 +269,7 @@ pub(crate) fn save_as_file<M: DocumentModel + ?Sized>(
     let Some(live) = document.get() else {
         return Ok(false);
     };
-    if std::fs::File::create(file.to_utf8()).is_err() {
+    if !destination_writable(file) {
         let text = message_with("ObjectModel_M_NoWriteAccess", file)?;
         model.messenger().send_extended(&text, Gravity::Alarm);
         return Ok(false);
@@ -278,6 +283,19 @@ pub(crate) fn save_as_file<M: DocumentModel + ?Sized>(
     .save_document(&document, file)?;
     ModelAssistant::clear_type_map();
     Ok(status)
+}
+
+fn destination_writable(file: &ExtendedString) -> bool {
+    let path = std::path::PathBuf::from(file.to_utf8());
+    match std::fs::OpenOptions::new().write(true).open(&path) {
+        Ok(_) => true,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => path
+            .parent()
+            .filter(|parent| !parent.as_os_str().is_empty())
+            .unwrap_or_else(|| std::path::Path::new("."))
+            .is_dir(),
+        Err(_) => false,
+    }
 }
 
 /// The body of `martensite_object_model_DocumentModel::SaveAs(theOStream)`.

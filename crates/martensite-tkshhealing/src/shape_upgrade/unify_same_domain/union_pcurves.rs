@@ -1,4 +1,4 @@
-//! `UnionPCurves` of ShapeUpgrade_UnifySameDomain.cxx: the p-curves of a merged edge on
+//! `UnionPCurves`: the p-curves of a merged edge on
 //! the non-planar faces of the first edge of its chain, from the p-curves of the chain
 //! (joined when they lie on one 2D line or circle, else concatenated as C1 B-splines),
 //! reparametrized to the range of the new 3D curve.

@@ -1,4 +1,4 @@
-//! Native two-face seam p-curve rejection path for MergeSmallEdges.
+//! two-face seam p-curve rejection path for MergeSmallEdges.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     brep_tools::ReShape,

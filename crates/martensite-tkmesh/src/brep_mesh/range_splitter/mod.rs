@@ -1,4 +1,4 @@
-//! Native parametric ranges and physical-length scaling (the retained behavior 3d097a03).
+//! Parametric sampling ranges with physical-length scaling.
 use crate::imesh_data::MEMORY_BLOCK_SIZE_HUGE;
 use crate::{imesh_data::FaceHandle, imesh_tools::MeshParameters};
 use martensite_tkbrep::{brep::BRepTool, brep_adaptor::BRepAdaptorSurface};
@@ -75,7 +75,7 @@ pub struct DefaultRangeSplitter {
     pub delta: (f64, f64),
     /// Parametric tolerances overridden by derived splitter hooks.
     pub tolerance: (f64, f64),
-    /// Validity retained across Reset, as in the retained behavior 3d097a03.
+    /// Report validity retained across a reset; `splitter.is_valid()`.
     pub valid: bool,
 }
 impl Default for DefaultRangeSplitter {

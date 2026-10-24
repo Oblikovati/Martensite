@@ -1,8 +1,5 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAnalysis at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! the retained behavior package ShapeAnalysis: the analysis tools that detect problems of shapes (wires,
-//! edges, surfaces, free bounds, contents). docs/shhealing-design.md section 4 fixes how
-//! its classes and their relationships.
+//! ShapeAnalysis: the analysis tools that detect problems of shapes (wires,
+//! edges, surfaces, free bounds, contents). The modules separate geometric queries from repair state.
 mod check_small_face;
 mod edge;
 mod free_bound_data;

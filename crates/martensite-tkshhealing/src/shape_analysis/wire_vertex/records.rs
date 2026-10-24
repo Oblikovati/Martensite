@@ -25,7 +25,7 @@ impl ShapeAnalysisWireVertex {
     }
     /// Record projection onto the preceding edge; `tool.set_start(1, point, 2.0)?`.
     pub fn set_start(&mut self, num: i32, position: Xyz, previous: f64) -> Result<(), Failure> {
-        // Pinned the retained behavior writes myUFol here, despite the parameter and method names.
+        // Pinned This setter writes the following-vertex parameter, despite its name.
         self.update_record(num, |record| {
             record.status = 4;
             record.position = position;
@@ -102,7 +102,7 @@ fn criterion_matches(criterion: i32, status: i32) -> bool {
     match criterion {
         -1 => status < 0,
         0 => status == 0,
-        // Native predicate excludes status 0 despite the header's >= 0 wording.
+        // predicate excludes status 0 despite the header's >= 0 wording.
         1 => status > 0,
         2 => (0..=2).contains(&status),
         3 => status == 1 || status == 2,

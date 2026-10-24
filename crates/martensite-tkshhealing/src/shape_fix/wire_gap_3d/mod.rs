@@ -1,4 +1,4 @@
-//! Native range and conversion branches of ShapeFix_Wire_1.cxx::FixGap3d.
+//! Spatial wire gap repair through range adjustment or curve conversion.
 mod convert;
 mod ranges;
 mod replace;
@@ -73,7 +73,7 @@ impl ShapeFixWire {
             self.set_last_fix_status(ShapeExtendStatus::Fail1);
             return Ok(false);
         };
-        // Native exits a closed range-only junction before inspecting endpoint vertices.
+        // exits a closed range-only junction before inspecting endpoint vertices.
         if !convert && first.point.distance(&second.point) <= self.precision() {
             return Ok(false);
         }

@@ -1,4 +1,4 @@
-//! tests/lowalgos/intss case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! lowalgos intss regression cases owned by
 //! TKShHealing: the surfaces are intersected, each curve's range checked, its distance
 //! to both surfaces measured by `xdistcs`, every pair of curves checked not to overlap
 //! (`checkoverlapedges`), the number of curves compared, then the 2D screenshot.
@@ -88,7 +88,7 @@ fn intss(
     curves.len()
 }
 
-/// tests/lowalgos/intss/bug27937_2.
+/// intss — bug27937 2.
 /// The extruded ellipse and the cylinder intersect in 4 curves (`cpulimit 100`).
 pub fn bug27937_2(s: &mut dyn Session) {
     for line in ["================", "OCC27937", "================", ""] {
@@ -112,7 +112,7 @@ pub fn bug27937_2(s: &mut dyn Session) {
     }
 }
 
-/// tests/lowalgos/intss/bug333.
+/// intss — bug333.
 /// The two restored surfaces intersect in 14 curves without superimposed ones.
 pub fn bug333(s: &mut dyn Session) {
     for line in [

@@ -1,4 +1,4 @@
-//! ShapeAnalysis_Curve.cxx's deliberately ordered 25/40/20/25/40 probes.
+//! Curve projection uses deliberately ordered 25/40/20/25/40 probes.
 use super::projection_state::{CurveProjection, ProjectionSearch};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::Failure;

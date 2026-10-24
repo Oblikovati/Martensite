@@ -1,4 +1,4 @@
-//! Preserve the retained behavior's wire-map face splitting, including the last-face working state.
+//! Preserve wire-map face splitting, including the last-face working state.
 use super::{ShapeFixFace, ShapeFixFaceWireMap};
 use crate::{
     shape_analysis::ShapeAnalysisEdge, shape_extend::ShapeExtendWireData, shape_fix::FixRoot,
@@ -85,7 +85,7 @@ impl ShapeFixFace {
         if let Some(context) = self.context().get() {
             ReShape::replace(context, original, &compound)?;
         }
-        // Native leaves myFace referring to the last explored result face.
+        // leaves myFace referring to the last explored result face.
         for shape in Explorer::new(&compound, ShapeEnum::Face, ShapeEnum::Shape)? {
             let face = topods::face(&shape)?;
             *self.face_state.write() = face.clone().into_shape();

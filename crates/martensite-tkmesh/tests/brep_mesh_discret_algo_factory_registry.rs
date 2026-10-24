@@ -1,5 +1,4 @@
-//! Port-only checks of the discret-algorithm factory registry name rules and of the
-//! incremental-mesh factory constructor, beyond the upstream regression mirrors.
+//! Named mesh algorithm factories and the incremental-mesh factory constructor.
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::ProgressRange;

@@ -1,4 +1,4 @@
-//! Shell face ordering and state compared with pinned the retained behavior.
+//! Shell face ordering and repair-state regressions.
 use martensite_tkbrep::{
     brep::BRepBuilder,
     topexp::Explorer,

@@ -1,4 +1,4 @@
-//! Native range transfer updates each curve representation before the final SameRange flag.
+//! range transfer updates each curve representation before the final SameRange flag.
 use super::*;
 use crate::shape_build::ShapeBuildEdge;
 use martensite_tkbrep::brep::{BRepGCurve, access::edge_tshape, update_curves::as_gcurve};

@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/mkface/after_trim.
+//! The TKShHealing (no view) tests of after trim.
 use super::*;
 
 dataset_cases!(run_case, NoView, mkface_after_trim, MKFACE_SECONDS;

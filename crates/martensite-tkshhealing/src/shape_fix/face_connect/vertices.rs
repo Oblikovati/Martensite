@@ -1,4 +1,4 @@
-//! The vertex merge of `rebuildShell` (ShapeFix_FaceConnect): the groups of vertices
+//! The vertex merge of `rebuildShell` (ShapeFixFaceConnect): the groups of vertices
 //! replacing each other, each group's kept vertex moved to the middle of their bounding
 //! box with a tolerance covering all of them, and the others replaced by it.
 use super::ShapeListMap;

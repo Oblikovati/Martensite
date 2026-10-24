@@ -41,6 +41,8 @@ pub mod curve_update_rebinding;
 pub mod face_dump_callbacks;
 #[path = "../regularity_dump_callbacks.rs"]
 pub mod regularity_dump_callbacks;
+#[path = "../repeated_location_identity.rs"]
+pub mod repeated_location_identity;
 #[path = "../seam_dump_live_state.rs"]
 pub mod seam_dump_live_state;
 #[path = "../ulp_assertion_contract.rs"]

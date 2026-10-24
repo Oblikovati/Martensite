@@ -1,4 +1,4 @@
-//! `MergeSubSeq` of ShapeUpgrade_UnifySameDomain.cxx: a chain of edges replaced by one
+//! `MergeSubSeq`: a chain of edges replaced by one
 //! edge: a degenerated edge, a line segment, a circular arc or (with `ConcatBSplines`)
 //! the concatenation of B-spline and Bezier curves.
 use super::geometry::is_linear;
@@ -39,7 +39,7 @@ struct ChainKinds {
 }
 
 impl UnifyState {
-    /// `MergeSubSeq(theChain, theVFmap, OutEdge)`: the merged edge, None when the chain
+    /// the merged edge, None when the chain
     /// cannot be merged.
     pub(super) fn merge_sub_seq(
         &self,

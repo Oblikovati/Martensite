@@ -303,11 +303,41 @@ fn BRepTools_Test__DemoBinPersist_1_BinaryStreamRoundTrip() {
             }
         }
         assert!((copy.mass() - original.mass()).abs() <= 1.0e-7);
-        let rounding_bound = 4.0 * f64::EPSILON * expected.abs();
-        assert!(
-            (original.mass() - expected).abs() <= rounding_bound,
-            "computed mass {} differs from the closed-form value {expected} by more than {rounding_bound}",
-            original.mass()
-        );
+        // #247: a relative epsilon bound permits more than four representable steps.
+        crate::floating::expect_double_eq(original.mass(), expected);
+    }
+}
+
+#[cfg(test)]
+mod persistence_mass_rounding_tests {
+    use crate::floating::expect_double_eq;
+
+    #[test]
+    fn closed_form_masses_accept_four_steps_in_both_directions() {
+        for expected in [4800.0_f64, 220000.0, 6000000.0] {
+            for bits in [expected.to_bits() - 4, expected.to_bits() + 4] {
+                expect_double_eq(f64::from_bits(bits), expected);
+            }
+        }
+    }
+
+    #[test]
+    fn closed_form_masses_reject_five_steps_in_both_directions() {
+        for expected in [4800.0_f64, 220000.0, 6000000.0] {
+            for bits in [expected.to_bits() - 5, expected.to_bits() + 5] {
+                let comparison = || expect_double_eq(f64::from_bits(bits), expected);
+                assert!(std::panic::catch_unwind(comparison).is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn closed_form_masses_reject_nonfinite_results() {
+        for expected in [4800.0_f64, 220000.0, 6000000.0] {
+            for actual in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+                let comparison = || expect_double_eq(actual, expected);
+                assert!(std::panic::catch_unwind(comparison).is_err());
+            }
+        }
     }
 }

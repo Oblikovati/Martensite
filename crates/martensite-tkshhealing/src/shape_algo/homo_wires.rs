@@ -1,6 +1,3 @@
-// Rust translation of ShapeAlgo_AlgoContainer::HomoWires at
-// 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
 //! `HomoWires`: two wires cut into the same number of edges, the cuts placed in
 //! proportion to the parameter ranges of their 3D curves.
 use super::ShapeAlgoAlgoContainer;
@@ -15,7 +12,7 @@ use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::toploc::Location;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
 
-/// The native iterator over a wire (`Cook`, `Perry`) with the 3D curve of its current
+/// The iterator over a wire (`Cook`, `Perry`) with the 3D curve of its current
 /// edge (`crv`, `loc`, `first`, `last`) and its `IsToReverse` flag.
 struct EdgeCursor {
     edges: Vec<Edge>,
@@ -42,8 +39,8 @@ impl EdgeCursor {
         Ok(cursor)
     }
 
-    /// `edge = TopoDS::Edge(It.Value())` and `BRep_Tool::Curve(edge, loc, first, last)`;
-    /// Standard_NoSuchObject past the end (the native Value() of a finished iterator).
+    /// Read each edge curve together with its location and parameter range;
+    /// Standard_NoSuchObject past the end (the Value() of a finished iterator).
     fn load(&mut self) -> Result<(), Failure> {
         let edge = self
             .edges
@@ -105,12 +102,12 @@ struct HomoStep {
 }
 
 impl ShapeAlgoAlgoContainer {
-    /// `HomoWires(wireIn1, wireIn2, wireOut1, wireOut2, byParam)`: both wires reordered
-    /// (ShapeFix_Wire::FixReorder), then cut so that edge k of one spans the same share of
-    /// the total 3D parameter range as edge k of the other; `None` is the native false
-    /// (after nEdges1 + nEdges2 - 1 edges). `byParam` is unused natively.
+    /// both wires reordered
+    /// (ShapeFixWire::fix_reorder), then cut so that edge k of one spans the same share of
+    /// the total 3D parameter range as edge k of the other; `None` is the false
+    /// (after nEdges1 + nEdges2 - 1 edges). The parameter-selection flag is unused.
     ///
-    /// Native quirks (kept): one edge in each wire returns the reordered wires; a wire of
+    /// quirks (kept): one edge in each wire returns the reordered wires; a wire of
     /// nearly null total range becomes its first edge repeated once per edge of the other.
     /// Example: `let pair = container.homo_wires(&w1, &w2, false)?;`.
     pub fn homo_wires(
@@ -165,7 +162,7 @@ fn split_in_proportion(
     Ok(None)
 }
 
-/// One pass of the native loop: the longer edge (in proportion) is cut to the length of
+/// One pass of the loop: the longer edge (in proportion) is cut to the length of
 /// the other, or both are kept whole when they match within `epsilon`.
 fn homo_step(
     cook: &mut EdgeCursor,
@@ -200,7 +197,7 @@ fn homo_step(
     })
 }
 
-/// `sfw->Load(wire); sfw->FixReorder(); sfw->Wire()`.
+/// Load the wire, repair edge ordering and return the rebuilt wire.
 fn reordered(fix: &ShapeFixWire, wire: &Wire) -> Result<Wire, Failure> {
     fix.load(wire)?;
     fix.fix_reorder(false)?;
@@ -213,7 +210,7 @@ fn wire_edges(wire: &Wire) -> Result<Vec<Edge>, Failure> {
         .collect()
 }
 
-/// The sum of the 3D parameter ranges (`last - first` of BRep_Tool::Curve).
+/// The sum of the 3D parameter ranges (`last - first` of BRepTool::curve).
 fn total_range(edges: &[Edge]) -> Result<f64, Failure> {
     let mut length = 0.;
     for edge in edges {
@@ -223,7 +220,7 @@ fn total_range(edges: &[Edge]) -> Result<f64, Failure> {
     Ok(length)
 }
 
-/// The first edge added `count` times (the native loop that never advances `Cook`).
+/// The first edge added `count` times (the loop that never advances `Cook`).
 fn repeated_first(edges: &[Edge], count: usize) -> Result<Wire, Failure> {
     let made = ShapeExtendWireData::new();
     for _ in 0..count {

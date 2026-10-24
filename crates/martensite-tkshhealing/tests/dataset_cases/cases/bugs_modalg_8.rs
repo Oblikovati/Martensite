@@ -1,4 +1,4 @@
-//! tests/bugs/modalg_8 case bodies at 3d097a0328e71b826377d4814ab05ec3c3d23871 owned by
+//! bugs modalg 8 regression cases owned by
 //! TKShHealing whose inputs are in the public dataset.
 use crate::support::{
     commands::dump_surface,

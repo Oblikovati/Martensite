@@ -1,4 +1,4 @@
-//! Native `ShapeFix_Wire::FixTails` stage behavior and retained status.
+//! `ShapeFixWire::fix_tails` stage behavior and retained status.
 mod support;
 use martensite_tkmath::gp::Point3;
 use martensite_tkshhealing::{shape_extend::ShapeExtendStatus, shape_fix::ShapeFixWire};

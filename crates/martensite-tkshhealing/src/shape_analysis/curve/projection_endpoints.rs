@@ -1,4 +1,4 @@
-//! Endpoint precedence, retaining the retained behavior's evaluation and tie ordering.
+//! Endpoint precedence, retaining evaluation and tie ordering.
 use super::CurveProjection;
 use martensite_tkernel::{precision, standard::Failure};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
@@ -19,7 +19,7 @@ impl EndpointCandidates {
     pub fn new(curve: &dyn Adaptor3dCurve) -> Result<Self, Failure> {
         let first = curve.first_parameter()?;
         let last = curve.last_parameter()?;
-        // Native evaluates both endpoints before testing either distance.
+        // evaluates both endpoints before testing either distance.
         let low = CurveProjection {
             point: curve.value(first)?,
             parameter: first,

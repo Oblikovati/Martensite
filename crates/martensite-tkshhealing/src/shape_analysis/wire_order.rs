@@ -1,7 +1,4 @@
-// Rust translation of ModelingAlgorithms/TKShHealing/ShapeAnalysis/ShapeAnalysis_WireOrder.hxx and the
-// members of ShapeAnalysis_WireOrder.cxx other than Perform at 3d097a0328e71b826377d4814ab05ec3c3d23871.
-
-//! `ShapeAnalysis_WireOrder`: the order of a list of edges given by their end points.
+//! `ShapeAnalysisWireOrder`: the order of a list of edges given by their end points.
 mod perform;
 
 use martensite_tkernel::precision;
@@ -29,7 +26,7 @@ impl ModeType {
     }
 }
 
-/// `ShapeAnalysis_WireOrder`: proposes an order (and reversals) for edges given as
+/// `ShapeAnalysisWireOrder`: proposes an order (and reversals) for edges given as
 /// couples of points (start, end) in 3D, in 2D, or both, so that each edge starts where
 /// the previous one ends; then reports gaps, chains and couples of that order.
 ///
@@ -47,11 +44,11 @@ impl ModeType {
 /// ```
 #[derive(Clone, Debug)]
 pub struct ShapeAnalysisWireOrder {
-    /// `myOrd`: the new order (null natively until `Perform`).
+    /// The computed order, absent until ordering has run.
     ord: Option<Vec<i32>>,
     /// `myChains`: the first edge of each chain.
     chains: Option<Vec<i32>>,
-    /// `myCouples`: never filled (`SetCouples` is not implemented natively).
+    /// Optional edge couples; currently never populated.
     couples: Option<Vec<i32>>,
     /// `myXYZ`: the 3D points (the 2D points with Z = 0 in the 2D mode), two per edge.
     xyz: Vec<Xyz>,
@@ -59,7 +56,7 @@ pub struct ShapeAnalysisWireOrder {
     xy: Vec<Xy>,
     /// `myTol`: kept and returned, not used by the algorithm.
     tol: f64,
-    /// `myGap`: never computed natively (always 0).
+    /// Gap value, currently always zero.
     gap: f64,
     /// `myStat`.
     stat: i32,
@@ -70,7 +67,7 @@ pub struct ShapeAnalysisWireOrder {
 }
 
 impl Default for ShapeAnalysisWireOrder {
-    /// `ShapeAnalysis_WireOrder()`: the 3D mode with the tolerance `Precision::Confusion()`.
+    /// the 3D mode with the tolerance `precision::confusion()`.
     fn default() -> Self {
         Self::with_mode(true, precision::confusion(), false)
     }
@@ -102,12 +99,12 @@ fn point_indices(idx: i32) -> (i32, i32) {
 }
 
 impl ShapeAnalysisWireOrder {
-    /// `ShapeAnalysis_WireOrder()`; `ShapeAnalysisWireOrder::new()`.
+    /// `ShapeAnalysisWireOrder::new()`.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// `ShapeAnalysis_WireOrder(theMode3D, theTolerance, theModeBoth)`: the miscible mode
+    /// the miscible mode
     /// when `mode_both`, else 3D or 2D; the tolerance is kept but not used;
     /// `ShapeAnalysisWireOrder::with_mode(true, 1e-7, false)`.
     pub fn with_mode(mode_3d: bool, tolerance: f64, mode_both: bool) -> Self {
@@ -125,7 +122,7 @@ impl ShapeAnalysisWireOrder {
         }
     }
 
-    /// `SetMode(theMode3D, theTolerance, theModeBoth)`: clears the points when the mode
+    /// clears the points when the mode
     /// changes, forgets the order, and keeps the tolerance (1e-8 when it is not positive);
     /// `order.set_mode(false, 1e-7, false)`.
     pub fn set_mode(&mut self, mode_3d: bool, tolerance: f64, mode_both: bool) {
@@ -145,7 +142,7 @@ impl ShapeAnalysisWireOrder {
         self.tol
     }
 
-    /// `Clear()`: forgets the points (not the mode, the tolerance nor the last order);
+    /// forgets the points (not the mode, the tolerance nor the last order);
     /// `order.clear()`.
     pub fn clear(&mut self) {
         self.xyz = Vec::new();
@@ -154,7 +151,7 @@ impl ShapeAnalysisWireOrder {
         self.gap = 0.0;
     }
 
-    /// `Add(theStart3d, theEnd3d)`: adds an edge in the 3D mode only;
+    /// adds an edge in the 3D mode only;
     /// `order.add_3d(start, end)`.
     pub fn add_3d(&mut self, start: Xyz, end: Xyz) {
         if self.mode == ModeType::Mode3D {
@@ -163,7 +160,7 @@ impl ShapeAnalysisWireOrder {
         }
     }
 
-    /// `Add(theStart2d, theEnd2d)`: adds an edge in the 2D mode only (as 3D points with
+    /// adds an edge in the 2D mode only (as 3D points with
     /// Z = 0); `order.add_2d(start, end)`.
     pub fn add_2d(&mut self, start: Xy, end: Xy) {
         if self.mode == ModeType::Mode2D {
@@ -172,7 +169,7 @@ impl ShapeAnalysisWireOrder {
         }
     }
 
-    /// `Add(theStart3d, theEnd3d, theStart2d, theEnd2d)`: adds an edge in the miscible
+    /// adds an edge in the miscible
     /// mode only; `order.add_both(s3, e3, s2, e2)`.
     pub fn add_both(&mut self, start_3d: Xyz, end_3d: Xyz, start_2d: Xy, end_2d: Xy) {
         if self.mode == ModeType::ModeBoth {
@@ -183,7 +180,7 @@ impl ShapeAnalysisWireOrder {
         }
     }
 
-    /// `NbEdges()`: the count of added couples; `order.nb_edges()`.
+    /// the count of added couples; `order.nb_edges()`.
     pub fn nb_edges(&self) -> i32 {
         (self.xyz.len() / 2) as i32
     }
@@ -194,25 +191,25 @@ impl ShapeAnalysisWireOrder {
         self.keep_loops
     }
 
-    /// `KeepLoopsMode() = mode` (the native member returns a reference);
+    /// `KeepLoopsMode() = mode` (the member returns a reference);
     /// `order.set_keep_loops_mode(true)`.
     pub fn set_keep_loops_mode(&mut self, mode: bool) {
         self.keep_loops = mode;
     }
 
-    /// `IsDone()`: an order was computed (it stays after `Clear`, and a `Perform` on no
+    /// an order was computed (it stays after `Clear`, and a `Perform` on no
     /// edge keeps the previous one); `order.is_done()`.
     pub fn is_done(&self) -> bool {
         self.ord.is_some()
     }
 
-    /// `Status()`: 0 in order, 1 reordered, -1 some edges reversed, 3 only shifted;
+    /// 0 in order, 1 reordered, -1 some edges reversed, 3 only shifted;
     /// `order.status()`.
     pub fn status(&self) -> i32 {
         self.stat
     }
 
-    /// `Ordered(theIdx)`: the original edge at the new rank `idx` (negative when
+    /// the original edge at the new rank `idx` (negative when
     /// reversed); `idx` itself without an order or beyond it; Standard_OutOfRange for a
     /// rank below 1 once an order exists; `order.ordered(1)?`.
     pub fn ordered(&self, idx: i32) -> Result<i32, Failure> {
@@ -226,7 +223,7 @@ impl ShapeAnalysisWireOrder {
         Ok(if old == 0 { idx } else { old })
     }
 
-    /// `XYZ(theIdx, theStart3D, theEnd3D)`: the 3D points of edge `idx` (swapped when
+    /// the 3D points of edge `idx` (swapped when
     /// negative); Standard_OutOfRange for an edge that was not added;
     /// `order.xyz(-2)?`.
     pub fn xyz(&self, idx: i32) -> Result<(Xyz, Xyz), Failure> {
@@ -235,7 +232,7 @@ impl ShapeAnalysisWireOrder {
         Ok((item(&self.xyz, s, member)?, item(&self.xyz, e, member)?))
     }
 
-    /// `XY(theIdx, theStart2D, theEnd2D)`: the 2D points of edge `idx` (the X and Y of the
+    /// the 2D points of edge `idx` (the X and Y of the
     /// 3D points outside the miscible mode); `order.xy(1)?`.
     pub fn xy(&self, idx: i32) -> Result<(Xy, Xy), Failure> {
         let (s, e) = point_indices(idx);
@@ -250,7 +247,7 @@ impl ShapeAnalysisWireOrder {
         ))
     }
 
-    /// `Gap(num)`: `myGap` (never computed, 0) for `num == 0`, else the sum of the
+    /// `myGap` (never computed, 0) for `num == 0`, else the sum of the
     /// coordinate distances between the end of the ordered edge before `num` and the start
     /// of `num`; `order.gap(2)?`.
     pub fn gap(&self, num: i32) -> Result<f64, Failure> {
@@ -265,7 +262,7 @@ impl ShapeAnalysisWireOrder {
         Ok(dist_abs(end, start))
     }
 
-    /// `SetChains(gap)`: splits the order into chains where the start of an edge is not
+    /// splits the order into chains where the start of an edge is not
     /// within `gap` (per coordinate) of the end of the previous one; `order.set_chains(1e-3)?`.
     pub fn set_chains(&mut self, gap: f64) -> Result<(), Failure> {
         let nb = self.nb_edges();
@@ -297,9 +294,9 @@ impl ShapeAnalysisWireOrder {
         self.chains.as_ref().map_or(0, |c| c.len() as i32)
     }
 
-    /// `Chain(num, n1, n2)`: the first and last ordered ranks of chain `num`, (0, 0)
+    /// the first and last ordered ranks of chain `num`, (0, 0)
     /// without chains or for `num` 0 or beyond them; Standard_OutOfRange for a negative
-    /// `num` (the native array raises); `order.chain(1)?`.
+    /// `num` (the array raises); `order.chain(1)?`.
     pub fn chain(&self, num: i32) -> Result<(i32, i32), Failure> {
         let Some(chains) = &self.chains else {
             return Ok((0, 0));
@@ -317,16 +314,15 @@ impl ShapeAnalysisWireOrder {
         Ok((n1, n2))
     }
 
-    /// `SetCouples(gap)`: not implemented natively (a debug message only), so there is
-    /// never a couple; `order.set_couples(1e-3)`.
+    /// Leave edge couples unchanged; `order.set_couples(1e-3)` is a no-op.
     pub fn set_couples(&mut self, _gap: f64) {}
 
-    /// `NbCouples()`: always 0 (see [`Self::set_couples`]); `order.nb_couples()`.
+    /// always 0 (see [`Self::set_couples`]); `order.nb_couples()`.
     pub fn nb_couples(&self) -> i32 {
         self.couples.as_ref().map_or(0, |c| c.len() as i32)
     }
 
-    /// `Couple(num, n1, n2)`: the two edges of couple `num`, (0, 0) when there is none;
+    /// the two edges of couple `num`, (0, 0) when there is none;
     /// `order.couple(1)`.
     pub fn couple(&self, num: i32) -> (i32, i32) {
         let Some(couples) = &self.couples else {

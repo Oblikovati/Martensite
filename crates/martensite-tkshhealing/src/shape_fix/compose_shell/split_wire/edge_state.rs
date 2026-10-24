@@ -47,7 +47,7 @@ impl EdgeSplitState {
             analysis.pcurve_on_face(edge, &fields.face, true)?;
         if pcurve.is_null() {
             super::edge_projection::mark_fail2(composer);
-            // The pinned native code dereferences this missing curve after setting Fail2.
+            // A missing curve leaves Fail2 set and must not be dereferenced.
             return Err(super::null_pcurve());
         }
         let first_vertex = analysis.first_vertex(edge);

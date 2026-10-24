@@ -1,4 +1,4 @@
-//! Native-backed cases for `ShapeAnalysis_CheckSmallFace::CheckPinFace`.
+//! Native-backed cases for `ShapeAnalysisCheckSmallFace::check_pin_face`.
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{self, Builder, Edge, Face, Vertex, Wire};
 use martensite_tkernel::standard::Handle;

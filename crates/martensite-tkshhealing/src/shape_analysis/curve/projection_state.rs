@@ -1,4 +1,4 @@
-//! Native projection output and candidate state, including outputs retained on failure.
+//! projection output and candidate state, including outputs retained on failure.
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::Failure;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;

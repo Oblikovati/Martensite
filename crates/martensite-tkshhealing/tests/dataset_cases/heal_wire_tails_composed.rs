@@ -1,4 +1,4 @@
-//! The TKShHealing (no view) tests of tests/heal/wire_tails_composed.
+//! The TKShHealing (no view) tests of wire tails composed.
 use super::*;
 
 dataset_cases!(run_case, NoView, heal_wire_tails_composed, HEAL_SECONDS;

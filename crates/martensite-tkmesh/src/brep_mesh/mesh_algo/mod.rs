@@ -1,13 +1,9 @@
-//! The BRepMesh face triangulation algorithms (the retained behavior 3d097a03): the
-//! `BRepMesh_BaseMeshAlgo` hierarchy with its node-insertion and deflection-control
-//! templates, `BRepMesh_MeshAlgoFactory`, and the Delabella algorithm with its factory.
+//! Face triangulation strategies share generators and overridable meshing stages.
 //!
-//! The C++ virtual protected members become the hook traits
-//! [`BaseMeshAlgoHooks`]/[`ConstrainedBaseMeshAlgoHooks`]/[`NodeInsertionHooks`] whose
-//! default bodies are the native ones; the `BaseAlgo` template argument is a
-//! [`MeshGenerator`]. Every instance is reached through the
-//! [`BRepMeshDelaunayBaseMeshAlgo`] or [`BRepMeshDelabellaBaseMeshAlgo`] handle, the
-//! dynamic type the templates inherit.
+//! [`BaseMeshAlgoHooks`], [`ConstrainedBaseMeshAlgoHooks`] and [`NodeInsertionHooks`]
+//! define those stages, while [`MeshGenerator`] coordinates their execution.
+//! [`BRepMeshDelaunayBaseMeshAlgo`] and [`BRepMeshDelabellaBaseMeshAlgo`] expose
+//! the selected runtime strategy through a handle.
 mod algo_object;
 mod base;
 mod collect;

@@ -1,4 +1,4 @@
-//! Native segment-tree face intersection checks (the retained behavior 3d097a03).
+//! Segment-tree checks for intersections in face boundary samples.
 use crate::imesh_data::FaceHandle;
 use martensite_tkernel::{
     impl_transient,

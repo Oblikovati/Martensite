@@ -1,5 +1,5 @@
 //! "Insert new faces instead of old ones" of `IntUnifyFaces` and `InsertWiresIntoFaces`
-//! (ShapeUpgrade_UnifySameDomain.cxx): the merged faces recorded in the context.
+//! with merged faces recorded in the replacement context.
 use super::UnifyState;
 use super::face_bounds::edges_of;
 use super::face_groups::FaceGroup;
@@ -16,7 +16,7 @@ use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg3d::top_abs::{Orientation, State};
 use martensite_tktopalgo::brep_top_adaptor::BRepTopAdaptorFClass2d;
 
-/// `InsertWiresIntoFaces(theWires, theFaces, theRefFace)`: each wire added to the first
+/// each wire added to the first
 /// face containing the middle of the p-curve of its first edge (a wire classified in no
 /// face is left out, the native debug assertion).
 fn insert_wires_into_faces(
@@ -80,7 +80,7 @@ impl UnifyState {
         self.record_merge(&group.faces, &result)
     }
 
-    /// `myContext->Merge(faces, newFace)` and the Face-NewFace map.
+    /// Record the merged face and each original face’s replacement.
     fn record_merge(&mut self, faces: &[Shape], new_face: &Shape) -> Result<(), Failure> {
         self.context()?.merge(faces, new_face)?;
         for face in faces {

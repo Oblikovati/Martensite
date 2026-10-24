@@ -1,4 +1,4 @@
-//! Native `CollectWires` segment extraction, greedy closure and short-loop merge.
+//! `CollectWires` segment extraction, greedy closure and short-loop merge.
 mod chain;
 mod patch;
 mod short_segments;

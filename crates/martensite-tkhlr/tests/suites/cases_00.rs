@@ -75,6 +75,8 @@ pub mod hlrbrep_data_test;
 pub mod hlrbrep_internalalgo_test;
 #[path = "../intrv_behavior.rs"]
 pub mod intrv_behavior;
+#[path = "../loaded_solids_projection.rs"]
+pub mod loaded_solids_projection;
 #[path = "../polyhedron_parameter_boundaries.rs"]
 pub mod polyhedron_parameter_boundaries;
 #[path = "../record_correspondence.rs"]

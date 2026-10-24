@@ -8,6 +8,7 @@ mod application_stream;
 mod directory;
 mod fwos_driver;
 mod meta_data_driver;
+mod staged_store;
 mod store;
 mod store_list;
 pub use application::{
