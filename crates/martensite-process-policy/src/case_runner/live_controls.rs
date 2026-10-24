@@ -1,11 +1,14 @@
+#[cfg(unix)]
 use super::{
-    CaseFailure, CaseRunner, CaseSpec, FactorProfile,
+    CaseFailure,
     artifacts::FilesystemReceipts,
     launch::{ChildLauncher, ChildObservation, ChildRequest},
     runner::RunEnvironment,
-    spec::CHILD_ENV,
 };
-use std::{error::Error, io, process::Stdio};
+use super::{CaseRunner, CaseSpec, FactorProfile, spec::CHILD_ENV};
+use std::error::Error;
+#[cfg(unix)]
+use std::{io, process::Stdio};
 
 fn runner_root() -> std::path::PathBuf {
     std::env::temp_dir().join("martensite-original-case-runner-live-controls")
