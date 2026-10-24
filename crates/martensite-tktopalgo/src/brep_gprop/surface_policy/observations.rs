@@ -178,6 +178,8 @@ mod tests {
 
     #[test]
     fn a_completed_zero_mass_face_is_nonempty_with_unknown_error() {
+        fn send_sync<T: Send + Sync>() {}
+        send_sync::<SurfaceObservations>();
         let mut observations = SurfaceObservations::default();
         observations.geometry(0.0, 0.0, false);
         let result = observations
