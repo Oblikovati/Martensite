@@ -5,12 +5,16 @@ members = ["crates/*", "scripts/build"]
 resolver = "3"
 
 # Every isolated dataset case verifies its executable three times (#228).
-# Keep kernel code and assertions in debug mode, but avoid unoptimized SHA rounds.
+# Keep debug assertions enabled while avoiding unoptimized SHA rounds.
 [profile.dev.package.sha2]
 opt-level = 3
 
 # Exact certification spends most of its debug time in integer arithmetic (#252).
 [profile.dev.package.num-bigint]
+opt-level = 3
+
+# Optimizing math operations reduces repeated assembly integration cost (#271).
+[profile.dev.package.martensite-tkmath]
 opt-level = 3
 
 [workspace.package]

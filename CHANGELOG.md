@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Optimized TKMath development and test builds to reduce repeated assembly-integration cost while retaining debug checks and existing test budgets (#271).
+
 - Preserved hash-pinned healing-resource bytes on Windows and made the release workflow contract test accept Windows line endings (#269).
 
 - Split release tests into bounded parallel shards on every supported platform and required their aggregate result before publication (#250).

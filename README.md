@@ -77,12 +77,16 @@ cargo xtask pr
 ```
 
 Development and test builds optimize SHA-256 to keep isolated dataset tests from
-spending most of their time fingerprinting their executables (#228). Kernel code
-keeps its normal debug profile; executable identity checks remain enabled.
+spending most of their time fingerprinting their executables (#228). Executable
+identity checks remain enabled.
 The existing `num-bigint` dependency is also optimized for development and test
 builds to reduce exact-certification costs (#252). Its version and arithmetic
 contracts are unchanged; the [measurements](docs/features/ci-build-driver/arithmetic-cost.md)
 include comparisons of complete certification reports.
+TKMath is optimized in development and test builds to keep repeated assembly
+integration within its existing time budget (#271). Debug assertions and overflow
+checks remain enabled; release profiles are unchanged. The [assembly measurements](docs/features/ci-build-driver/assembly-test-cost.md)
+include an exact comparison of numerical output.
 
 CI has one workflow, `.github/workflows/martensite.yml`, and all its checks are
 `cargo xtask` commands. [CONTRIBUTING](CONTRIBUTING.md) explains the gates and
