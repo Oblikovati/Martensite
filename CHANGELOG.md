@@ -8,6 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Reduced exact-certification test costs by optimizing the existing big-integer dependency in development and test builds (#252).
 - Split affected toolkit tests into parallel PR jobs while retaining dependency-aware selection and a required aggregate result (#250).
 
 ## [0.3.6] - 2026-10-23

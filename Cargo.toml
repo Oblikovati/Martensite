@@ -9,6 +9,10 @@ resolver = "3"
 [profile.dev.package.sha2]
 opt-level = 3
 
+# Exact certification spends most of its debug time in integer arithmetic (#252).
+[profile.dev.package.num-bigint]
+opt-level = 3
+
 [workspace.package]
 edition = "2024"
 rust-version = "1.98.1"
