@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Reduced B-spline span-evaluation allocations by borrowing existing control arrays during planar and spatial cache rebuilds (#309).
+
 - Selected the retained gradient background when changing its colors or fill method, while preserving explicit background-kind overrides (#305).
 
 - Preserved CPU-budget exit code 2 on macOS 12+ with closed or full stdout while leaving application signal actions and descriptor flags intact. Older macOS returns typed `Unsupported` before changing the cap; other kernel features retain their operating-system support (#289).
