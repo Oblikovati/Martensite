@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Reduced walking-line point-read overhead by keeping fixed curve ownership outside mutable metadata (#294).
+
 - Serialized native source SDK paths as portable archive members on Windows while retaining member validation (#290).
 
 ## [0.4.0] - 2026-10-25
