@@ -71,3 +71,6 @@ fn record(
 mod security_tests;
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod files_tests;

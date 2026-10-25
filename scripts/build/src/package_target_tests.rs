@@ -10,6 +10,15 @@ use crate::{
 };
 use std::path::{Path, PathBuf};
 
+fn package_fixture_base(base: &Path) -> PathBuf {
+    // Cargo reports Unix physical paths; own that identity before deriving expectations (#292).
+    #[cfg(unix)]
+    return base.canonicalize().unwrap();
+    // Preserve the existing native spelling on platforms without the demonstrated Unix alias.
+    #[cfg(not(unix))]
+    base.to_path_buf()
+}
+
 struct PackageTargetFixture {
     directory: tempfile::TempDir,
     external: tempfile::TempDir,
@@ -17,9 +26,15 @@ struct PackageTargetFixture {
 
 impl PackageTargetFixture {
     fn new(config: Option<&str>) -> Self {
+        // Use the same constructor for the system temporary base and explicit alias controls.
+        Self::new_in(config, &std::env::temp_dir())
+    }
+
+    fn new_in(config: Option<&str>, base: &Path) -> Self {
+        let base = package_fixture_base(base);
         let fixture = Self {
-            directory: tempfile::tempdir().unwrap(),
-            external: tempfile::tempdir().unwrap(),
+            directory: tempfile::tempdir_in(&base).unwrap(),
+            external: tempfile::tempdir_in(&base).unwrap(),
         };
         let root = fixture.directory.path();
         std::fs::create_dir(root.join("src")).unwrap();
@@ -155,4 +170,24 @@ fn packaged_archive_uses_cargo_environment_absolute_target_directory() {
     let fixture = PackageTargetFixture::new(None);
     let expected = fixture.external.path().join("absolute-output");
     fixture.verify(expected.to_str(), &expected);
+}
+
+#[cfg(unix)]
+#[test]
+fn packaged_archive_uses_physical_root_with_symlink_temporary_base() {
+    let owner = tempfile::tempdir().unwrap();
+    let physical = owner.path().join("physical");
+    std::fs::create_dir(&physical).unwrap();
+    let alias = owner.path().join("alias");
+    std::os::unix::fs::symlink(&physical, &alias).unwrap();
+    assert_ne!(alias, alias.canonicalize().unwrap());
+    let fixture = PackageTargetFixture::new_in(Some("aliased-output"), &alias);
+    let expected = fixture.directory.path().join("aliased-output");
+    fixture.verify(None, &expected);
+    assert!(expected.starts_with(physical.canonicalize().unwrap()));
+    assert!(
+        expected
+            .join("package/martensite-target-proof-0.1.0.crate")
+            .is_file()
+    );
 }
