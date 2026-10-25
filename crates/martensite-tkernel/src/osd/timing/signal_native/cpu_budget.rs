@@ -2,6 +2,8 @@
 #![allow(unsafe_code)]
 
 mod clock;
+#[cfg(target_os = "macos")]
+mod darwin;
 mod relay;
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 
@@ -14,17 +16,30 @@ pub(super) fn prepare_diagnostic_relay() -> std::io::Result<()> {
 }
 
 pub(super) extern "C" fn cpu_budget_exit(_signal: i32) {
-    if !REQUEST_QUEUED.swap(true, Ordering::AcqRel) {
-        enqueue_diagnostic();
-    }
-    clock::wait_for_diagnostic();
+    #[cfg(target_os = "macos")]
+    darwin::wait_for_expiry_output();
+    #[cfg(not(target_os = "macos"))]
+    wait_for_direct_output();
     // SAFETY: _exit is async-signal-safe and terminates without Rust destructors.
     unsafe { libc::_exit(2) }
 }
 
+#[cfg(not(target_os = "macos"))]
+fn wait_for_direct_output() {
+    if !REQUEST_QUEUED.swap(true, Ordering::AcqRel) {
+        enqueue_diagnostic();
+    }
+    clock::wait_for_diagnostic();
+}
+
+#[cfg(not(target_os = "macos"))]
 fn enqueue_diagnostic() {
-    let descriptor = REQUEST_FD.load(Ordering::Acquire);
     let request = crate::osd::reported_process_cpu_limit().to_ne_bytes();
+    enqueue_snapshot(&request);
+}
+
+fn enqueue_snapshot(request: &[u8]) {
+    let descriptor = REQUEST_FD.load(Ordering::Acquire);
     // SAFETY: initialization retains this nonblocking descriptor for process life;
     // the fixed stack request is live, and write is async-signal-safe (#278).
     let written = unsafe { libc::write(descriptor, request.as_ptr().cast(), request.len()) };

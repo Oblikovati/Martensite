@@ -15,10 +15,11 @@ fn full_stdout_keeps_cpu_budget_exit_code() {
     }
     let deadline = Instant::now() + Duration::from_secs(12);
     let (_reader, writer) = pipe().unwrap();
-    let flags = fcntl_getfl(&writer).unwrap();
     let mut child = spawn_full_pipe_child(writer.try_clone().unwrap());
     wait_for_full_pipe(&mut child, deadline);
-    assert_eq!(fcntl_getfl(&writer).unwrap(), flags);
+    // Darwin records FWASWRITTEN during intentional setup writes (#289).
+    // Compare the same prepared descriptor state across expiry, without masking flags.
+    let flags = fcntl_getfl(&writer).unwrap();
     child.stdin.take().unwrap().write_all(b"1").unwrap();
     wait_before_deadline(&mut child, deadline);
     assert_eq!(fcntl_getfl(&writer).unwrap(), flags);
@@ -27,7 +28,9 @@ fn full_stdout_keeps_cpu_budget_exit_code() {
 }
 
 fn run_full_pipe_child() {
+    let before_install = fcntl_getfl(std::io::stdout()).unwrap();
     set_process_cpu_limit(Some(200)).unwrap();
+    assert_eq!(fcntl_getfl(std::io::stdout()).unwrap(), before_install);
     let original_flags = fill_stdout_to_capacity();
     eprintln!("budget-ready");
     std::io::stderr().flush().unwrap();
