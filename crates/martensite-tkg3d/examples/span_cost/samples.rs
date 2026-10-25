@@ -1,5 +1,6 @@
 //! Complete derivative bitstreams retain exact independent line checks without timing assertions.
 use martensite_tkg3d::{adaptor3d::Adaptor3dCurve, geom_adaptor::GeomAdaptorCurve};
+use martensite_tkmath::gp::Xyz;
 use std::{
     error::Error,
     io::{self, Write},
@@ -19,12 +20,23 @@ pub(super) fn cached_values(
     adaptor: &GeomAdaptorCurve,
     parameter: f64,
 ) -> Result<[f64; 30], Box<dyn Error>> {
-    let p0 = adaptor.d0(parameter)?;
+    let first_point = adaptor.d0(parameter)?.xyz();
+    let mut triples = [first_point; 10];
+    triples[1..].copy_from_slice(&derivative_triples(adaptor, parameter)?);
+    let coordinates = triples.map(|xyz| [xyz.x(), xyz.y(), xyz.z()]);
+    Ok(std::array::from_fn(|index| {
+        coordinates[index / 3][index % 3]
+    }))
+}
+
+fn derivative_triples(
+    adaptor: &GeomAdaptorCurve,
+    parameter: f64,
+) -> Result<[Xyz; 9], Box<dyn Error>> {
     let (p1, v1) = adaptor.d1(parameter)?;
     let (p2, v21, v22) = adaptor.d2(parameter)?;
     let (p3, v31, v32, v33) = adaptor.d3(parameter)?;
-    let triples = [
-        p0.xyz(),
+    Ok([
         p1.xyz(),
         *v1.xyz(),
         p2.xyz(),
@@ -34,11 +46,7 @@ pub(super) fn cached_values(
         *v31.xyz(),
         *v32.xyz(),
         *v33.xyz(),
-    ];
-    let coordinates = triples.map(|xyz| [xyz.x(), xyz.y(), xyz.z()]);
-    Ok(std::array::from_fn(|index| {
-        coordinates[index / 3][index % 3]
-    }))
+    ])
 }
 
 /// Refuse any incorrect derivative and retain every raw bit; `checked_record(output, u, values)`.
