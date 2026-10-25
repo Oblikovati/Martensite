@@ -1,6 +1,6 @@
 //! A fresh process keeps descriptor and reaping fixtures out of the unit-test host (#289).
 use std::fs::File;
-use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+use std::os::fd::{AsRawFd, OwnedFd};
 use std::process::{Child, Command, Stdio};
 use std::time::{Duration, Instant};
 
@@ -41,7 +41,7 @@ fn wait_for_fixture(child: &mut Child) {
 fn run_inventory_fixture() -> ! {
     super::preflight().unwrap();
     make_high_descriptor_available();
-    let (reader, writer) = inventory_pipe();
+    let (reader, writer) = nix::unistd::pipe().unwrap();
     let high = high_writer(&writer);
     drop(writer);
     let late = std::thread::spawn(|| File::open("/dev/null").unwrap())
@@ -55,28 +55,14 @@ fn run_inventory_fixture() -> ! {
     std::process::exit(EXECUTED_STATUS);
 }
 
-fn inventory_pipe() -> (OwnedFd, OwnedFd) {
-    let mut descriptors = [-1; 2];
-    // SAFETY: this fresh fixture supplies two writable entries and owns both results.
-    assert_eq!(unsafe { libc::pipe(descriptors.as_mut_ptr()) }, 0);
-    // SAFETY: pipe returned two distinct new descriptors; ownership is taken once.
-    unsafe {
-        (
-            OwnedFd::from_raw_fd(descriptors[0]),
-            OwnedFd::from_raw_fd(descriptors[1]),
-        )
-    }
-}
-
 fn high_writer(writer: &OwnedFd) -> OwnedFd {
-    // SAFETY: F_DUPFD creates a new owned descriptor, leaving the original handle intact.
-    let duplicated = unsafe { libc::fcntl(writer.as_raw_fd(), libc::F_DUPFD, 512) };
+    let duplicated = rustix::io::fcntl_dupfd_cloexec(writer, 512).unwrap();
     assert!(
-        duplicated >= 512,
-        "received fd {duplicated}; expected at least 512"
+        duplicated.as_raw_fd() >= 512,
+        "received fd {}; expected at least 512",
+        duplicated.as_raw_fd()
     );
-    // SAFETY: the successful duplication produced a fresh handle owned only here.
-    unsafe { OwnedFd::from_raw_fd(duplicated) }
+    duplicated
 }
 
 fn make_high_descriptor_available() {
