@@ -56,3 +56,6 @@ One case, `lowalgos_intss::bug565`, is ignored: its script outlasts its 60 s bud
 
 The [combined walking-point read measurements](walking-snapshot-cost.md) record
 the snapshot-count regression and local fitting-read costs for #220.
+
+The [walking-curve storage measurements](walking-curve-storage.md) cover fixed
+handle ownership, concurrent point access and the remaining #294 timing gap.
