@@ -26,6 +26,28 @@ pub(super) fn relative(path: &Path) -> BuildResult<()> {
     Ok(())
 }
 
+/// Serialize native components before applying the archive policy (#290); `native_archive_path(Path::new("vendor").join("item.rs").as_path())`.
+pub(super) fn native_archive_path(path: &Path) -> BuildResult<String> {
+    let components = path
+        .components()
+        .map(native_component)
+        .collect::<BuildResult<Vec<_>>>()?;
+    let portable = components.join("/");
+    relative(Path::new(&portable))?;
+    Ok(portable)
+}
+
+fn native_component(component: Component<'_>) -> BuildResult<&str> {
+    if let Component::Normal(name) = component
+        && let Some(name) = name.to_str()
+    {
+        return Ok(name);
+    }
+    Err(BuildError::ReleaseRule(format!(
+        "SDK component {component:?}; expected a Unicode normal path component"
+    )))
+}
+
 pub(super) fn write(root: &Path, name: &Path, bytes: &[u8]) -> BuildResult<()> {
     relative(name)?;
     let path = root.join(name);
@@ -70,10 +92,10 @@ fn entry(root: &Path, path: &Path) -> BuildResult<BundleEntry> {
             "SDK input {path:?}: {cause}; expected under {root:?}"
         ))
     })?;
-    self::relative(relative)?;
+    let archive_path = native_archive_path(relative)?;
     Ok(BundleEntry {
         source: path.into(),
-        archive_path: relative.to_string_lossy().replace('\\', "/"),
+        archive_path,
         executable: executable(path)?,
     })
 }
