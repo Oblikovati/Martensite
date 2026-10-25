@@ -136,6 +136,13 @@ const TOPOLOGY: &str = "pub mod brep_gprop {pub struct BRepGProp; impl BRepGProp
 
 #[test]
 fn coherent_mixed_versions_build_and_consume_offline_with_identical_archive_bytes() {
+    fn send_sync<T: Send + Sync>() {}
+    send_sync::<SdkRecord>();
+    send_sync::<snapshot::Snapshot>();
+    send_sync::<metadata::InputMetadata>();
+    send_sync::<integrity::Manifest>();
+    send_sync::<crate::release_sources::SourceArtifacts>();
+    send_sync::<crate::release_sources::VerifiedSourceRelease>();
     let fixture = SdkFixture::new();
     let first = fixture.request("first");
     let second = fixture.request("second");

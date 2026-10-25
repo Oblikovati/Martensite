@@ -36,6 +36,12 @@ fn exact_published_manifest_rejects_minor_incompatible_foundation_identity() {
 
 #[test]
 fn aliased_optional_and_target_dependencies_preserve_their_contracts() {
+    fn send_sync<T: Send + Sync>() {}
+    send_sync::<ArchiveGraph>();
+    send_sync::<ArchiveIdentity>();
+    send_sync::<Mismatch>();
+    send_sync::<fixture::HistoricalAssetFixture>();
+    send_sync::<ArchiveResolverFixture>();
     let text = "[target.'cfg(windows)'.dev-dependencies.alias]\npackage='martensite-tkernel'\nversion='0.3'\noptional=true";
     let mismatches = manifest::mismatches("example", text, &selected("0.4.0")).unwrap();
     assert_eq!(mismatches.len(), 1);
