@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Used Cargo's resolved target directory when collecting release source archives, including configured and external output directories (#285).
+
 - Published unchanged package versions once when complete release history contains no earlier archive, while preserving verified existing assets and recording publication provenance (#283).
 
 - Restored CPU-limit diagnostics and exit code 2 for isolated Unix processes, including limits applied after CPU was consumed (#278).
