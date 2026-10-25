@@ -39,10 +39,12 @@ fn held_edit(
 }
 
 fn point_read(line: &IntPatchWLine) -> IntSurfPntOn2S {
+    // A point reader must wait for edits coordinated by the metadata writer.
     line.point(1).unwrap()
 }
 
 fn public_curve_read(line: &IntPatchWLine) -> IntSurfPntOn2S {
+    // Obtaining the public owner participates in the same ordering gate.
     line.curve().value(1).unwrap()
 }
 
