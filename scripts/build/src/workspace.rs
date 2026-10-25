@@ -26,11 +26,14 @@ pub struct WorkspacePackage {
 pub struct CargoWorkspace {
     /// Members sorted by name.
     pub packages: Vec<WorkspacePackage>,
+    /// Cargo-resolved absolute output root, including environment and configuration (#285).
+    pub target_directory: PathBuf,
 }
 
 #[derive(Deserialize)]
 struct MetadataDocument {
     workspace_root: PathBuf,
+    target_directory: PathBuf,
     packages: Vec<MetadataPackage>,
 }
 
@@ -72,6 +75,7 @@ impl CargoWorkspace {
                 origin: "cargo metadata".into(),
                 detail: format!("{error}; expected format-version 1 JSON"),
             })?;
+        let target_directory = checked_target_directory(document.target_directory)?;
         let root = document.workspace_root;
         let mut packages: Vec<_> = document
             .packages
@@ -79,7 +83,10 @@ impl CargoWorkspace {
             .map(|package| member(&root, package))
             .collect::<BuildResult<_>>()?;
         packages.sort_by(|left, right| left.name.cmp(&right.name));
-        Ok(Self { packages })
+        Ok(Self {
+            packages,
+            target_directory,
+        })
     }
 
     /// All package names, sorted.
@@ -89,6 +96,16 @@ impl CargoWorkspace {
             .map(|package| package.name.clone())
             .collect()
     }
+}
+
+fn checked_target_directory(directory: PathBuf) -> BuildResult<PathBuf> {
+    if directory.is_absolute() {
+        return Ok(directory);
+    }
+    Err(BuildError::UnexpectedOutput {
+        origin: "cargo metadata".into(),
+        detail: format!("target_directory {directory:?}; expected an absolute Cargo output path"),
+    })
 }
 
 fn member(root: &Path, package: MetadataPackage) -> BuildResult<WorkspacePackage> {
@@ -141,6 +158,7 @@ pub(crate) mod tests {
     pub(crate) fn metadata_at(root: &str, version: &str) -> String {
         serde_json::json!({
             "workspace_root": root,
+            "target_directory": std::path::absolute(Path::new(root).join("target")).unwrap(),
             "workspace_members": ["path+file:///repo#martensite-kernel", "path+file:///repo#martensite-math"],
             "packages": [
                 {"id":"path+file:///repo#martensite-kernel", "name": "martensite-kernel", "version": version,
@@ -158,6 +176,8 @@ pub(crate) mod tests {
 
     #[test]
     fn parse_keeps_relative_dirs_and_path_dependencies_only() {
+        fn send_sync<T: Send + Sync>() {}
+        send_sync::<CargoWorkspace>();
         let workspace = CargoWorkspace::parse(&sample_metadata()).unwrap();
         let kernel = &workspace.packages[0];
         assert_eq!(kernel.dir, "crates/martensite-kernel");
@@ -182,5 +202,21 @@ pub(crate) mod tests {
     fn names_are_sorted() {
         let workspace = CargoWorkspace::parse(&sample_metadata()).unwrap();
         assert_eq!(workspace.names(), ["martensite-kernel", "martensite-math"]);
+    }
+    #[test]
+    fn metadata_target_directory_is_required_and_absolute() {
+        let mut document: serde_json::Value = serde_json::from_str(&sample_metadata()).unwrap();
+        document["target_directory"] = "relative-output".into();
+        let failure = CargoWorkspace::parse(&document.to_string())
+            .unwrap_err()
+            .to_string();
+        assert!(
+            failure.contains("relative-output") && failure.contains("absolute Cargo output path")
+        );
+        document.as_object_mut().unwrap().remove("target_directory");
+        let failure = CargoWorkspace::parse(&document.to_string())
+            .unwrap_err()
+            .to_string();
+        assert!(failure.contains("target_directory"));
     }
 }

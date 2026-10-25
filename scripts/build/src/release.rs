@@ -286,7 +286,7 @@ fn package_sources(
         .into_iter()
         .filter(|p| changed.contains(&p.name))
     {
-        assets.extend(ship_crate(context.root(), request, package)?);
+        assets.extend(ship_crate(&workspace.target_directory, request, package)?);
     }
     Ok(assets)
 }
@@ -303,15 +303,15 @@ fn verify_package_overlay(
         .package_sources(&PackageSelection::Packages(names))
 }
 
-/// Copies `target/package/<name>-<version>.crate` into the dist directory.
+/// Copies the verified archive from Cargo's resolved target directory (#285).
 fn ship_crate(
-    root: &Path,
+    target_directory: &Path,
     request: &ReleaseRequest,
     package: &WorkspacePackage,
 ) -> BuildResult<[PathBuf; 2]> {
     let package_dir = format!("{}-{}", package.name, package.version);
     let crate_file = format!("{package_dir}.crate");
-    let packaged = root.join("target").join("package").join(&crate_file);
+    let packaged = target_directory.join("package").join(&crate_file);
     require_source_license(&packaged, &package_dir)?;
     let shipped = request.dist_dir.join(&crate_file);
     fs::copy(&packaged, &shipped).map_err(|cause| io_error(&packaged, cause))?;
@@ -334,3 +334,7 @@ fn require_source_license(crate_file: &Path, package_dir: &str) -> BuildResult<(
 #[cfg(test)]
 #[path = "release_tests.rs"]
 pub(crate) mod tests;
+
+#[cfg(test)]
+#[path = "package_target_tests.rs"]
+mod package_target_tests;

@@ -92,6 +92,7 @@ impl HistoricalAssetFixture {
 
     pub fn workspace(&self) -> CargoWorkspace {
         CargoWorkspace {
+            target_directory: self.directory.path().join("target"),
             packages: [
                 ("martensite-tkernel", "0.4.0"),
                 ("martensite-tkbrep", "0.3.6"),
