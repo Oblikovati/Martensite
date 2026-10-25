@@ -6,7 +6,7 @@
 pub struct ReleaseTarget {
     /// The rustc target triple.
     pub triple: &'static str,
-    /// The runner label; pinned images keep releases reproducible.
+    /// The standard hosted-runner label used for native builds and tests.
     pub runner: &'static str,
 }
 
@@ -16,13 +16,14 @@ pub const RELEASE_TARGETS: [ReleaseTarget; 4] = [
         triple: "x86_64-unknown-linux-gnu",
         runner: "ubuntu-24.04",
     },
+    // The generic latest label is ARM64; Intel needs its current standard image (#298).
     ReleaseTarget {
         triple: "x86_64-apple-darwin",
-        runner: "macos-15-intel",
+        runner: "macos-26-intel",
     },
     ReleaseTarget {
         triple: "aarch64-apple-darwin",
-        runner: "macos-15",
+        runner: "macos-latest",
     },
     ReleaseTarget {
         triple: "x86_64-pc-windows-msvc",
@@ -57,8 +58,8 @@ mod tests {
             actual,
             [
                 ("x86_64-unknown-linux-gnu", "ubuntu-24.04"),
-                ("x86_64-apple-darwin", "macos-15-intel"),
-                ("aarch64-apple-darwin", "macos-15"),
+                ("x86_64-apple-darwin", "macos-26-intel"),
+                ("aarch64-apple-darwin", "macos-latest"),
                 ("x86_64-pc-windows-msvc", "windows-2025"),
             ]
         );
