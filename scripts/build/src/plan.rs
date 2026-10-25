@@ -195,8 +195,8 @@ mod tests {
             matrix,
             serde_json::json!({"include": [
                 {"target": "x86_64-unknown-linux-gnu", "runner": "ubuntu-24.04"},
-                {"target": "x86_64-apple-darwin", "runner": "macos-15-intel"},
-                {"target": "aarch64-apple-darwin", "runner": "macos-15"},
+                {"target": "x86_64-apple-darwin", "runner": "macos-26-intel"},
+                {"target": "aarch64-apple-darwin", "runner": "macos-latest"},
                 {"target": "x86_64-pc-windows-msvc", "runner": "windows-2025"}
             ]})
         );
