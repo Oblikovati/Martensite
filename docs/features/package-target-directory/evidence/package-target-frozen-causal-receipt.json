@@ -1,0 +1,27 @@
+{
+  "frozen_commit": "4ba2f65ed46e4805b3fda5613a4cbbffb03a8463",
+  "command": [
+    "/home/vmiguel/.cargo/bin/cargo",
+    "+1.99.0",
+    "test",
+    "-p",
+    "martensite-build",
+    "packaged_archive_uses_cargo",
+    "--",
+    "--test-threads=1"
+  ],
+  "frozen_release_sha256": "dbb9b4c64be42651cdf56620501a7b1a9f5bb575913f4703fc2e2c0e2182d7f7",
+  "mutated_release_sha256": "46dfefc139eba3782351e4959b8648536bb600dcd1676a41bc3aa544fd741386",
+  "unchanged_controls_sha256": "fb8829bf3aca89faaaad3399bc45d758269f8af86266974ef5d144bdf4f714ca",
+  "environment_overrides": {
+    "LC_ALL": "C",
+    "CARGO_TARGET_DIR": "/tmp/martensite-package-target-dir-target",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_INCREMENTAL": "0"
+  },
+  "red_exit_code": 101,
+  "restored_release_sha256": "dbb9b4c64be42651cdf56620501a7b1a9f5bb575913f4703fc2e2c0e2182d7f7",
+  "green_exit_code": 0
+}
