@@ -163,7 +163,8 @@ pub(in crate::osd) fn install_process_cpu_exit() -> Result<(), std::io::Error> {
     let callback = cpu_budget::cpu_budget_exit as *const () as usize;
     let mut wanted = action(callback, 0);
     // SAFETY: sa_mask is initialized and writable; SIGPIPE is a valid signal.
-    // Blocking only this action keeps a closed stdout pipe from preempting _exit (#278).
+    // The action only writes its private request; platform output isolation belongs
+    // to the relay, including Darwin's process-directed pipe signals (#278, #289).
     if unsafe { libc::sigaddset(&mut wanted.sa_mask, libc::SIGPIPE) } != 0 {
         return Err(std::io::Error::last_os_error());
     }

@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Preserved CPU-budget exit code 2 on macOS 12+ with closed or full stdout while leaving application signal actions and descriptor flags intact. Older macOS returns typed `Unsupported` before changing the cap; other kernel features retain their operating-system support (#289).
+
 - Updated native macOS validation to `macos-latest` for ARM64 and `macos-26-intel` for Intel while preserving all four release targets (#298).
 
 - Reduced walking-line point-read overhead by keeping fixed curve ownership outside mutable metadata (#294).
