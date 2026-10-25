@@ -1,0 +1,14 @@
+{
+  "archive_sha256": "b4cf2138e423e9a6368a884ab38e76ec3d951b3fda76e7f4f8e8580ab1f1c7d9",
+  "manifest_sha256": "60ad3c72e53edcfbf4cbfaf625d02bba57289cf3a84307fc20b7e53ac65633f4",
+  "verified_payload_count": 16676,
+  "exact_paths_hashes_modes": true,
+  "duplicates": 0,
+  "unsafe_member_types": 0,
+  "scope": "production-libraries; datasets separately provisioned; installed toolchain and native libraries required",
+  "snapshot_revision": "a137876b62543601525287322c60fa988ee738c3",
+  "committed_file_count": 11642,
+  "gitlinks": {
+    "external/martensite-test-data": "c58ee236484bce7b385392454f976d001f8443c4"
+  }
+}

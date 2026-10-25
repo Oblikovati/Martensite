@@ -1,0 +1,14 @@
+{
+  "producer_revision": "bbe57e2bb7f0d44ac9eaa54cf7d4112521a517eb",
+  "origin": "Summary derived from the retained original rehearsal log by the integration owner.",
+  "log_sha256": "d485bfadf35cbb06ed2533208aef9cfc4ec5f506087470da81e9ec2908145bb2",
+  "successful_summary_count": 137,
+  "reported_pass_count": 41485,
+  "preexisting_ignored_count": 78,
+  "whole_rehearsal_exit_code": 1,
+  "affected_package_test_stage": "passed; subsequent optimized build and package verification ran before the archive lookup failed (#285)",
+  "nested_expected_failure": "The SDK measurement-refusal canary intentionally runs a failing consumer and its parent test passes.",
+  "coverage_limit": "Reported counts sum test-result summaries; they are not unique test identities. Reuse applies only to unchanged relevant production behavior; the final matrix on exact main remains required.",
+  "owner_summary_sha256": "715dd3fd8ef90aef6d51ad5dbad2f9fc9a055003aed1cdfb56c65661c63c81c1",
+  "raw_log_retention": "The original raw log is bound by its digest; this compact evidence keeps its aggregate stage summary."
+}
