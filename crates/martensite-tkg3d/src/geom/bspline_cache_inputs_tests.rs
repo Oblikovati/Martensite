@@ -1,7 +1,10 @@
 //! Cache coefficients own their values after a scoped input borrow (#309).
 use super::GeomBSplineCurve;
+use crate::{adaptor3d::Adaptor3dCurve, geom_adaptor::GeomAdaptorCurve};
 use martensite_tkernel::ncollection::Array1;
+use martensite_tkernel::standard::Handle;
 use martensite_tkmath::{bsplclib::Cache, gp::Point3};
+use std::sync::Arc;
 const POLES: [Point3; 2] = [Point3::new(0., 0., 0.), Point3::new(2., 0., 0.)];
 
 fn segment(weighted: bool) -> GeomBSplineCurve {
@@ -82,4 +85,30 @@ fn unwinding_an_internal_builder_releases_the_read_guard() {
     assert!(curve.state.try_write().is_some());
     curve.set_pole(1, Point3::new(4., 0., 0.)).unwrap();
     assert_eq!(owned_cache(&curve).d0::<Point3>(0.25).unwrap().x(), 3.5);
+}
+
+fn sample_shared_adaptor(adaptor: Arc<GeomAdaptorCurve>) {
+    for _ in 0..1000 {
+        for parameter in [0.125, 0.375, 0.625, 0.875] {
+            assert_eq!(
+                adaptor.d0(parameter).unwrap(),
+                Point3::new(2. * parameter, 0., 0.)
+            );
+        }
+    }
+}
+
+#[test]
+fn shared_adaptor_readers_are_transferable_and_match_closed_form_values() {
+    let curve = Handle::new(segment(false));
+    let adaptor = Arc::new(GeomAdaptorCurve::with_curve(&curve.cast()).unwrap());
+    let workers: Vec<_> = (0..4)
+        .map(|_| {
+            let shared = adaptor.clone();
+            std::thread::spawn(move || sample_shared_adaptor(shared))
+        })
+        .collect();
+    for worker in workers {
+        worker.join().unwrap();
+    }
 }
