@@ -224,3 +224,7 @@ versions are marked as pre-releases.
 - The workspace member list is `["scripts/build"]` until the first kernel
   crate lands. Then add `"crates/*"` (cargo rejects a glob that matches no
   directory).
+
+Source SDK packaging serializes native filesystem components as slash-separated
+archive members. Extraction validates the original member spelling before native
+path reconstruction; backslashes, drive names and traversal remain rejected (#290).

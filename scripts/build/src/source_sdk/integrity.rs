@@ -106,24 +106,27 @@ fn extract_file<R: Read>(
     seen: &mut std::collections::BTreeSet<String>,
     top: &str,
 ) -> BuildResult<()> {
-    let path = entry
-        .path()
-        .map_err(|cause| io_error(root, cause))?
-        .into_owned();
-    files::relative(&path)?;
-    require_top(&path, top)?;
-    let relative = path.components().skip(1).collect::<std::path::PathBuf>();
-    files::relative(&relative)?;
-    if !entry.header().entry_type().is_file()
-        || !seen.insert(relative.to_string_lossy().into_owned())
-    {
+    let relative = relative_member_name(&entry, root, top)?;
+    if !entry.header().entry_type().is_file() || !seen.insert(relative.clone()) {
         return Err(BuildError::ReleaseRule(format!(
-            "SDK member {path:?}; expected unique regular file"
+            "SDK member {relative:?}; expected unique regular file"
         )));
     }
-    let bytes = entry_bytes(&mut entry, &path)?;
-    files::write(root, &relative, &bytes)?;
+    let bytes = entry_bytes(&mut entry, Path::new(&relative))?;
+    files::write(root, Path::new(&relative), &bytes)?;
     restore_mode(&entry, &root.join(relative))
+}
+
+// Raw archive spelling is checked before native reconstruction can hide separators (#290).
+fn relative_member_name<R: Read>(
+    entry: &tar::Entry<'_, R>,
+    root: &Path,
+    top: &str,
+) -> BuildResult<String> {
+    let path = entry.path().map_err(|cause| io_error(root, cause))?;
+    files::relative(&path)?;
+    require_top(&path, top)?;
+    files::native_archive_path(&path.components().skip(1).collect::<std::path::PathBuf>())
 }
 
 fn entry_bytes<R: Read>(entry: &mut tar::Entry<'_, R>, path: &Path) -> BuildResult<Vec<u8>> {
