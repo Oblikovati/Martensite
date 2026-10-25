@@ -159,3 +159,7 @@ pub mod tangent_circle_cases;
 pub mod toptrans_behavior;
 #[path = "../toptrans_surface_transition.rs"]
 pub mod toptrans_surface_transition;
+#[path = "../walking_curve_ordering.rs"]
+mod walking_curve_ordering;
+#[path = "../walking_curve_storage.rs"]
+pub mod walking_curve_storage;
