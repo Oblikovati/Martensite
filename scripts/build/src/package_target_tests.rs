@@ -10,6 +10,15 @@ use crate::{
 };
 use std::path::{Path, PathBuf};
 
+fn package_fixture_base(base: &Path) -> PathBuf {
+    // Cargo reports Unix physical paths; own that identity before deriving expectations (#292).
+    #[cfg(unix)]
+    return base.canonicalize().unwrap();
+    // Preserve the existing native spelling on platforms without the demonstrated Unix alias.
+    #[cfg(not(unix))]
+    base.to_path_buf()
+}
+
 struct PackageTargetFixture {
     directory: tempfile::TempDir,
     external: tempfile::TempDir,
@@ -22,8 +31,7 @@ impl PackageTargetFixture {
     }
 
     fn new_in(config: Option<&str>, base: &Path) -> Self {
-        // Cargo metadata reports physical paths; own that identity before deriving expectations (#292).
-        let base = base.canonicalize().unwrap();
+        let base = package_fixture_base(base);
         let fixture = Self {
             directory: tempfile::tempdir_in(&base).unwrap(),
             external: tempfile::tempdir_in(&base).unwrap(),
