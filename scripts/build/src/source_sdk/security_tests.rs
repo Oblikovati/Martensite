@@ -57,6 +57,23 @@ impl SealedArchiveFixture {
         path
     }
 
+    fn raw_member(&self, member: &[u8]) -> PathBuf {
+        let path = self.directory.path().join("raw-member.tar.gz");
+        let encoder = flate2::write::GzEncoder::new(
+            fs::File::create(&path).unwrap(),
+            flate2::Compression::fast(),
+        );
+        let mut builder = tar::Builder::new(encoder);
+        let mut header = tar::Header::new_gnu();
+        header.set_size(0);
+        header.set_mode(0o644);
+        header.as_mut_bytes()[..member.len()].copy_from_slice(member);
+        header.set_cksum();
+        builder.append(&header, io::empty()).unwrap();
+        builder.into_inner().unwrap().finish().unwrap();
+        path
+    }
+
     fn altered_modes(&self) -> PathBuf {
         let input = self.archive("martensite-0.4.0-source-workspace", false);
         let output = self.directory.path().join("altered-modes.tar.gz");
@@ -218,4 +235,35 @@ fn the_sealed_archive_control_passes_before_any_payload_or_header_mutation() {
         fs::read(output.join("vendor/dependency/payload.rs")).unwrap(),
         b"sealed vendor"
     );
+}
+
+#[test]
+fn portable_member_roundtrip_keeps_all_sealed_payload_bytes_and_names() {
+    let fixture = SealedArchiveFixture::new();
+    let before = files::entries(&fixture.stage).unwrap();
+    let archive = fixture.archive("martensite-0.4.0-source-workspace", false);
+    let output = fixture.directory.path().join("portable-roundtrip");
+    integrity::extract_verified(&archive, &output, &fixture.manifest).unwrap();
+    let after = files::entries(&output).unwrap();
+    assert_eq!(before.len(), after.len());
+    for (before, after) in before.iter().zip(after.iter()) {
+        assert_eq!(before.archive_path, after.archive_path);
+        assert_eq!(before.executable, after.executable);
+        assert_eq!(
+            fs::read(&before.source).unwrap(),
+            fs::read(&after.source).unwrap()
+        );
+    }
+}
+
+#[test]
+fn raw_member_backslashes_and_drive_names_fail_before_native_reconstruction() {
+    for member in [
+        br"martensite-0.4.0-source-workspace/vendor\payload.rs".as_slice(),
+        br"martensite-0.4.0-source-workspace/..\escape",
+        b"martensite-0.4.0-source-workspace/vendor/C:payload",
+    ] {
+        let fixture = SealedArchiveFixture::new();
+        fixture.rejected(&fixture.raw_member(member), "portable path components");
+    }
 }
