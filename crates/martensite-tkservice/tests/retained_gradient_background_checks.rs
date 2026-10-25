@@ -1,4 +1,6 @@
 //! A gradient setter must select its presentation kind through retained forwarding.
+#[path = "retained_gradient_forwarding_fixture.rs"]
+mod forwarding;
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkservice::{
     aspect::{AspectGradientBackground, AspectGradientFillMethod},
@@ -71,4 +73,25 @@ fn recolored_gradient(mut gradient: AspectGradientBackground) -> AspectGradientB
         AspectGradientFillMethod::Vertical,
     );
     gradient
+}
+
+#[test]
+fn forwarded_gradient_dispatch_preserves_kind_override_and_snapshots() {
+    use martensite_tkservice::graphic3d::Graphic3dGraphicDriverMembers;
+    let scene = super::scene();
+    let forwarded = forwarding::ForwardedGradientView::new(&scene.manager, &scene.driver.layers());
+    let _: &(dyn Send + Sync) = &forwarded;
+    let view: &dyn martensite_tkservice::graphic3d::Graphic3dCView = &forwarded;
+    assert_forwarded_gradient_state(view);
+}
+fn assert_forwarded_gradient_state(view: &dyn martensite_tkservice::graphic3d::Graphic3dCView) {
+    let gradient = gradient_input(AspectGradientFillMethod::Horizontal);
+    view.set_gradient_background(&gradient);
+    assert_selected_gradient(view, gradient);
+    let snapshot = recolored_gradient(view.gradient_background());
+    view.set_background_type(Graphic3dTypeOfBackground::None);
+    assert_eq!(view.background_type(), Graphic3dTypeOfBackground::None);
+    assert_eq!(view.gradient_background(), gradient);
+    view.set_gradient_background(&snapshot);
+    assert_selected_gradient(view, snapshot);
 }

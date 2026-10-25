@@ -16,7 +16,9 @@ Arguments and returned gradient values are snapshots, so editing either copy
 does not mutate a previously stored gradient. No new rendering backend or
 public API is introduced.
 
-Owned tests use the real null graphic driver and shared retained-view protocol.
+Owned tests use the real null graphic driver plus a distinct named view that
+expands the exported shared-forwarding macro and is called through the dynamic
+view interface.
 They cover horizontal and vertical updates, disabled fill, explicit overrides,
 solid-color isolation and argument/readback snapshot independence. The correction
 ships as a bug fix; selecting a rendering pass does not establish support for
