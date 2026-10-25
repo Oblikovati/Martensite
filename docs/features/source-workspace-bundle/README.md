@@ -48,14 +48,19 @@ The SDK check does not claim that all tests run offline.
 
 ## Individual crate archives
 
-Changed packages still ship their independently versioned `.crate` files.
-Unchanged historical archives keep their original bytes and requirements.
+The publication plan selects changed-source identities and unchanged identities
+that have never been published, each at its existing package version (#283).
+Already-published identities keep their exact archive bytes and requirements.
+The archive graph reads those selections from the same sealed plan used by
+packaging. The plan owns downloaded history until SDK verification and catalog
+writing finish; graph inspection performs no further release lookup.
 For example, a published requirement `martensite-tkernel = "0.3.6"` excludes
 version 0.4.0. An updated path requirement in the current workspace does not
 alter that historical archive.
 
-The schema-2 `martensite-<release>-packages.json` catalog names the source
-workspace as the supported source-consumption route. Its `source_workspace`
+The schema-2 `martensite-<release>-packages.json` catalog records publication
+history, each selection reason, verified archive hashes and historical origins.
+It names the source workspace as the supported source-consumption route. Its `source_workspace`
 record contains the archive hash, revision, manifest hash and consumer scope.
 The `individual_archives` record identifies the exact archive hashes and releases
 whose normalized manifests were inspected. Its status is either

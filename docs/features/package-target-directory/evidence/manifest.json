@@ -1,0 +1,26 @@
+{
+  "package-target-frozen-causal-green.log.gz": {
+    "bytes": 1099,
+    "sha256": "65e8605b607c6b167b267db89266b871e2a185a32b55aa15d89c5a2de082bb5b"
+  },
+  "package-target-frozen-causal-receipt.json": {
+    "bytes": 941,
+    "sha256": "3c06feb6219988c3c1a4037817c9313c752f6e6c10eba4016d1294f6b0b85459"
+  },
+  "package-target-frozen-causal-red.log.gz": {
+    "bytes": 1432,
+    "sha256": "9a14647fbe5ddd15743206fc2c9f047ddf69f2682b3b66d884e4374df04dee2b"
+  },
+  "package-target-pr.log.gz": {
+    "bytes": 6626,
+    "sha256": "9d744ac28f90c76215382e5a6838073ee5902fa15210ab0cb2e78beab14cb82b"
+  },
+  "package-target-reversal.patch": {
+    "bytes": 489,
+    "sha256": "884b0af9076f39c7d3fc30d038c9968bb68157c2f6b0211717eb1ca1bd491752"
+  },
+  "receipt.json": {
+    "bytes": 2642,
+    "sha256": "02454cbe353682bb4da03e502b9463acdc2678224f866e3ccf863dde9756c961"
+  }
+}

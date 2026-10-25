@@ -30,7 +30,7 @@ impl std::fmt::Display for ProcessLimitError {
     fn fmt(&self, text: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             text,
-            "process limit {:?} seconds: setrlimit returned {}, expected 0: {}",
+            "process limit {:?} seconds: OS setup returned {}, expected 0: {}",
             self.seconds, self.raw_status, self.cause
         )
     }
@@ -63,7 +63,7 @@ pub fn set_process_limit(seconds: Option<i64>) -> Result<(), ProcessLimitError> 
     }
 }
 
-/// The command emits an installation diagnostic before installing the handler.
+/// The command emits an installation diagnostic before starting the elapsed watchdog.
 /// A failed output aborts exactly where the original command's Append did.
 ///
 /// The outer result is diagnostic-output success; the inner result is OS setup.
@@ -81,7 +81,6 @@ pub fn apply_process_limit<E>(
     seconds: Option<i64>,
     report: impl FnOnce(Option<&ProcessLimitError>) -> Result<(), E>,
 ) -> Result<Result<(), ProcessLimitError>, E> {
-    os_limits::set_reported_cpu_limit(seconds.unwrap_or(-1));
     let result = install_cpu_cap(seconds);
     finish_process_policy(result, report, start_process_watchdog)
 }
@@ -103,20 +102,12 @@ fn start_process_watchdog() {
     }
 }
 
-#[cfg(unix)]
 fn install_cpu_cap(seconds: Option<i64>) -> Result<(), ProcessLimitError> {
-    os_limits::set_cpu_rlimit(seconds.map(|value| value as u64)).map_err(|cause| {
-        ProcessLimitError {
-            seconds,
-            raw_status: cause.raw_os_error().unwrap_or(-1),
-            cause,
-        }
+    os_limits::set_cpu_rlimit(seconds).map_err(|cause| ProcessLimitError {
+        seconds,
+        raw_status: cause.raw_os_error().unwrap_or(-1),
+        cause,
     })
-}
-
-#[cfg(not(unix))]
-fn install_cpu_cap(_seconds: Option<i64>) -> Result<(), ProcessLimitError> {
-    Ok(())
 }
 
 /// Restarts the elapsed-time clock the watchdog reads.

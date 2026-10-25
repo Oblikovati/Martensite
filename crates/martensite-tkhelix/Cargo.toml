@@ -14,14 +14,14 @@ workspace = true
 
 [dependencies]
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.0" }
 martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
 martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.5" }
 martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.5" }
 martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.5" }
 martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.5" }
-martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.5" }
-martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.3.5" }
+martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.7" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.0" }
 
 # Test modules share one executable per toolkit to avoid repeated linkage.
 [[test]]

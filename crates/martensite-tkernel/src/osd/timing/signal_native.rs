@@ -129,9 +129,9 @@ pub(super) fn set_signal_handlers(mode: SignalMode) {
         SignalMode::AsIs => {}
         SignalMode::Unset => {
             let default: libc::sigaction = action(libc::SIG_DFL, libc::SA_RESTART);
-            MANAGED_SIGNALS
-                .iter()
-                .for_each(|&signal| install(signal, &default, mode));
+            MANAGED_SIGNALS.iter().for_each(|&signal| {
+                install(signal, &default, mode);
+            });
         }
         SignalMode::Set | SignalMode::SetUnhandled => {
             let handler: libc::sighandler_t = interrupt_handler as *const () as usize;
@@ -142,15 +142,35 @@ pub(super) fn set_signal_handlers(mode: SignalMode) {
 }
 
 #[cfg(unix)]
-fn install(signal: i32, wanted: &libc::sigaction, mode: SignalMode) {
+fn install(signal: i32, wanted: &libc::sigaction, mode: SignalMode) -> i32 {
     let mut old: libc::sigaction = action(libc::SIG_DFL, 0);
-    // SAFETY: both structures are valid for the call; the handler only stores an atomic.
+    // SAFETY: both records are initialized and valid; the callback uses the matching ABI.
     let status: i32 = unsafe { libc::sigaction(signal, wanted, &mut old) };
     if mode == SignalMode::SetUnhandled && status == 0 && old.sa_sigaction != libc::SIG_DFL {
         let mut replaced: libc::sigaction = action(libc::SIG_DFL, 0);
         // SAFETY: `old` came from the kernel for this signal and is valid to reinstall.
         unsafe { libc::sigaction(signal, &old, &mut replaced) };
     }
+    status
+}
+
+#[cfg(unix)]
+mod cpu_budget;
+
+#[cfg(unix)]
+pub(in crate::osd) fn install_process_cpu_exit() -> Result<(), std::io::Error> {
+    cpu_budget::prepare_diagnostic_relay()?;
+    let callback = cpu_budget::cpu_budget_exit as *const () as usize;
+    let mut wanted = action(callback, 0);
+    // SAFETY: sa_mask is initialized and writable; SIGPIPE is a valid signal.
+    // Blocking only this action keeps a closed stdout pipe from preempting _exit (#278).
+    if unsafe { libc::sigaddset(&mut wanted.sa_mask, libc::SIGPIPE) } != 0 {
+        return Err(std::io::Error::last_os_error());
+    }
+    if install(libc::SIGXCPU, &wanted, SignalMode::Set) == 0 {
+        return Ok(());
+    }
+    Err(std::io::Error::last_os_error())
 }
 
 // Windows: the MSVC floating-point control word.

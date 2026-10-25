@@ -1,0 +1,114 @@
+{
+  "issue": 278,
+  "frozen_code_revision": "39f24f3995161b5de0a7355d33968972f8cbfed0",
+  "base_revision": "1ecc9648023bf644bef44342e8aa5716cff45fee",
+  "platform": "x86_64-unknown-linux-gnu",
+  "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "command": "cargo xtask pr --base 1ecc9648023bf644bef44342e8aa5716cff45fee",
+  "exit_code": 0,
+  "completed_test_hosts": 130,
+  "passed": 41246,
+  "ignored_existing": 78,
+  "failed": 0,
+  "new_controls": {
+    "process_policy_children": 8,
+    "OS_children": 4,
+    "ignored": 0,
+    "pure_formatter_clock": 2
+  },
+  "source_fingerprints": {
+    "crates/martensite-process-policy/src/cpu_limits.rs": "1aee9ae371bff0e19ef107f0824ba7daea700efc8667ebffa7002a8784166d24",
+    "crates/martensite-process-policy/src/process_limit.rs": "3a6013eb76d7e2bda941098f4d3023daad2cbdecfea909991ff974f7882ff042",
+    "crates/martensite-process-policy/src/process_limit_tests.rs": "0706ae13a03b4cc520b850a7b87bcfc4cdd4ce922828f684c6537ca63be14f3f",
+    "crates/martensite-process-policy/tests/process_budget_children.rs": "baf963a00af16973503b29dfc62b5937c79b7aa6e4c069d298b678fd7127f618",
+    "crates/martensite-tkernel/Cargo.toml": "a51a852d2e0cb583601f9a6d439867a6d5adbc2347e6b1164175fbd86b7fd400",
+    "crates/martensite-tkernel/src/osd/mod.rs": "c81510d762bb503eec50a9a455cf846a51f270e9eed6b9b88f85f6afb6e43f8a",
+    "crates/martensite-tkernel/src/osd/process_cpu_limit.rs": "801a76f2fe9a0e78f962987d11eee701dc2d89f49dd699722e05088de849e1c2",
+    "crates/martensite-tkernel/src/osd/timing.rs": "609e37853af439ba17861c535d85f896ded7abf89780594fa5ff6d2b6aa76558",
+    "crates/martensite-tkernel/src/osd/timing/signal_native.rs": "c97384791bb9c83fc0dfab846a62ee049d1c98ad0e50b6195454d66a2fad5c56",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget.rs": "4bafdf2b6735c3f50617490054e1748d5059ee2532866a6e1bbdddceb9559c7b",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/clock.rs": "dd24c260b45f06724cc7f0c51a492c6ba557575dfaa44f462c2bcaa2ffcbc0c1",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/relay.rs": "bffa250a1b7b5144a86bc643cc2bf99c59ab9f28f8e131caad9621774c821b35",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/relay/signal_mask.rs": "664d30d41bb9d3673fdeddf55f401a62237040472616ae520b075e9c236d2d24",
+    "crates/martensite-tkernel/tests/osd_cpu_limit_signal.rs": "5bde5a8047eb55993a8af70adb443ac0aaaa0ca321f6f3faabe057481ddad129",
+    "crates/martensite-tkernel/tests/osd_cpu_limit_signal/backpressure.rs": "6f89f9ceedb491399b313fe434764cf16b683f63adf4fa5c3ac612dbc664e6ca",
+    "crates/martensite-tkernel/tests/osd_cpu_limit_signal/recovery.rs": "deb4c17bcf99819cfd7f0cdd2df28a2ea7a615e35d4e728a12337c9701e6d8e1"
+  },
+  "artifacts": {
+    "martensite-process-exit-recovery-full-pr.log": {
+      "sha256": "24da2e61bb377d4f12707bbe867481f35e9253af48c7e7cc7c61f77e64758f1a",
+      "bytes": 3214461
+    },
+    "latest.json": {
+      "sha256": "5feb93c972315a2c824399d9e920261f3f9bb4d286298631447e318f16c0a3a5",
+      "bytes": 4833836
+    },
+    "compiler.stdout.jsonl": {
+      "sha256": "2c4427fbbd2bcd63f01b63cf409a98a1d4df21b650df31b31acf67f00e9c61df",
+      "bytes": 11824273
+    },
+    "compiler.stderr.txt": {
+      "sha256": "c23ffd7788147f6ed4f43d93910a0817a42b715f8eff2b63ab40de6905106e89",
+      "bytes": 15335
+    },
+    "process-limit-relay-independent-focused.json": {
+      "sha256": "ebdcf7c30bdfb09b03e71576fb4943d70c4b161a8f3efc4583ad42f44f906445",
+      "bytes": 1501
+    },
+    "process-limit-recovery-independent-audit.json": {
+      "sha256": "b1a97c8b0e8a9f24a599f3025842f79c62cb5ebe26d0c1d13899d946aeb90bbf",
+      "bytes": 533
+    },
+    "martensite-process-exit-relay-recovery-red.log": {
+      "sha256": "f543b747ec9ebc1d451aa5df4909a9600d02598f1c1042302beb757729e9917d",
+      "bytes": 11210
+    },
+    "martensite-process-exit-relay-recovery-green.log": {
+      "sha256": "1a72ee326062738adefb0de628f084ef2e9036a865f174720686ebbe05c46cef",
+      "bytes": 11125
+    },
+    "martensite-process-exit-relay-pure-final.log": {
+      "sha256": "4aecd986059b6dd37b876d08b9b4e35afece88af277261e5ef4766232bf29664",
+      "bytes": 10158
+    },
+    "martensite-process-exit-relay-recovery-clippy.log": {
+      "sha256": "402c653eb4f9c13b5123ffb80c5753ddfb5ef11d0fd038f22656270ef475e438",
+      "bytes": 9874
+    }
+  },
+  "recovery_behavior": "Typed EMFILE preserves request200 and unchanged effective CPU limit; after releasing descriptors request201 succeeds with effective201, then reset reports-1. The obsolete copied-error helper and pure test were replaced by this real host failure/recovery control.",
+  "independent_reviews": {
+    "relay_and_existing_children": {
+      "revision": "8af0c72dabf11d5f16cbbe92a5af67dc05692a46",
+      "findings": 0
+    },
+    "retry_closure_and_causal_child": {
+      "revision": "39f24f3995161b5de0a7355d33968972f8cbfed0",
+      "findings": 0
+    }
+  },
+  "compiler_inventory": "Final clean source exactly matches the observed Linux449-group baseline; no platform totals were extrapolated. Native hosted observations are required before supported-platform release acceptance.",
+  "supersedes": [
+    "linux-safety-evidence.json",
+    "linux-relay-evidence.json"
+  ],
+  "superseded_full_gates": [
+    {
+      "revision": "7d8d2ac221d2916d2b54b984613fe12e337046a8",
+      "outcome": "terminated_superseded_not_accepted",
+      "reason": "Independent full-live-stdout reproduction proved blocking write; resumed focused fix before repeating full acceptance.",
+      "log_sha256": "e8597ef36ef86af1a33a06ab1c30301ab4eccca49c92f222799813c879fab6e1",
+      "log_bytes": 1207684,
+      "process_group_terminated": 741758,
+      "new_code_revision": "8af0c72dabf11d5f16cbbe92a5af67dc05692a46"
+    },
+    {
+      "revision": "e73e8842e79c07b946f3a429ad2cea0f2bbf5f05",
+      "outcome": "terminated_superseded_not_accepted",
+      "reason": "Cold-path relay initialization cached transient resource failures; retry recovery requires correction before acceptance.",
+      "log_sha256": "05a910a8ebc6dfb088845f6e33b98f0c0ef3cfc6502897ec69ab3246cefbc259",
+      "log_bytes": 22715,
+      "process_group_terminated": 851005
+    }
+  ]
+}

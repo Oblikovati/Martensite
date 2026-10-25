@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkernel"
-version = "0.3.6"
+version = "0.4.0"
 description = "Martensite kernel foundation: errors, memory, collections, strings, OS services, messages, units and resources."
 edition.workspace = true
 rust-version.workspace = true
@@ -147,3 +147,8 @@ path = "tests/mmgr_opt_initialize.rs"
 [[test]]
 name = "standard_services_api_behavior"
 path = "tests/standard_services_api_behavior.rs"
+
+# Process signal controls execute only in explicitly selected children (#278).
+[[test]]
+name = "osd_cpu_limit_signal"
+path = "tests/osd_cpu_limit_signal.rs"

@@ -18,13 +18,6 @@ pub struct CommandSpec {
 }
 
 impl CommandSpec {
-    /// Lets named process fakes inspect arguments without reparsing shell text.
-    /// Example: `assert_eq!(spec.argument_values()[0], "release");`.
-    #[cfg(test)]
-    pub(crate) fn argument_values(&self) -> &[String] {
-        &self.args
-    }
-
     /// Starts a command description run from `cwd`.
     ///
     /// ```ignore
@@ -67,9 +60,24 @@ impl CommandSpec {
     fn to_command(&self) -> Command {
         let mut command = Command::new(&self.program);
         command.args(&self.args).current_dir(&self.cwd);
+        self.configure_environment(&mut command);
+        command
+    }
+
+    fn configure_environment(&self, command: &mut Command) {
         if self.clear_environment {
             command.env_clear();
         }
+        self.apply_environment_overrides(command);
+        if self.is_cargo() {
+            command
+                .env_remove("GH_TOKEN")
+                .env_remove("GITHUB_TOKEN")
+                .env_remove("MARTENSITE_RELEASE_HISTORY_SHA256");
+        }
+    }
+
+    fn apply_environment_overrides(&self, command: &mut Command) {
         for (name, value) in &self.environment {
             match value {
                 Some(value) => {
@@ -80,7 +88,6 @@ impl CommandSpec {
                 }
             }
         }
-        command
     }
 
     /// Starts a child with only explicitly provided environment variables.
@@ -96,6 +103,13 @@ impl CommandSpec {
         self.environment
             .push((name.into(), value.map(std::ffi::OsString::from)));
         self
+    }
+
+    fn is_cargo(&self) -> bool {
+        Path::new(&self.program)
+            .file_stem()
+            .and_then(|name| name.to_str())
+            .is_some_and(|name| name.eq_ignore_ascii_case("cargo"))
     }
 
     /// Overrides a child variable without mutating the parent process environment.
@@ -277,5 +291,40 @@ mod tests {
         assert_ne!(output.code, 0);
         assert!(output.stdout.is_empty());
         assert!(String::from_utf8_lossy(&output.stderr).contains("missing.txt"));
+    }
+
+    #[test]
+    fn cargo_children_drop_github_auth_and_driver_plan_context() {
+        let directory = tempfile::tempdir().unwrap();
+        std::fs::create_dir(directory.path().join("src")).unwrap();
+        std::fs::write(
+            directory.path().join("Cargo.toml"),
+            "[package]\nname='auth-canary'\nversion='0.0.0'\nedition='2024'",
+        )
+        .unwrap();
+        std::fs::write(directory.path().join("src/lib.rs"), "pub fn probe() {}").unwrap();
+        std::fs::write(directory.path().join("build.rs"), AUTH_CANARY).unwrap();
+        let command = CommandSpec::new("cargo", directory.path())
+            .args(["check", "--offline"])
+            .environment("CARGO_TARGET_DIR", directory.path().join("target").to_str())
+            .environment("GH_TOKEN", Some("inert-canary"))
+            .environment("GITHUB_TOKEN", Some("inert-canary"))
+            .environment("MARTENSITE_RELEASE_HISTORY_SHA256", Some("inert-canary"));
+        ProcessRunner.run(&command).unwrap();
+    }
+
+    const AUTH_CANARY: &str = "fn main() { for name in [\"GH_TOKEN\",\"GITHUB_TOKEN\",\"MARTENSITE_RELEASE_HISTORY_SHA256\"] { assert!(std::env::var_os(name).is_none(), \"forbidden Cargo child context: {name}\"); } }";
+
+    #[test]
+    fn trusted_github_commands_retain_explicit_authentication() {
+        let spec =
+            CommandSpec::new("gh", Path::new(".")).environment("GH_TOKEN", Some("inert-canary"));
+        let command = spec.to_command();
+        let token = command
+            .get_envs()
+            .find(|(name, _)| *name == "GH_TOKEN")
+            .unwrap()
+            .1;
+        assert_eq!(token, Some(std::ffi::OsStr::new("inert-canary")));
     }
 }

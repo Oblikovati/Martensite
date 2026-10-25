@@ -14,13 +14,13 @@ workspace = true
 
 [dependencies]
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.3.6" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.0" }
 martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
 martensite-tkcdf = { path = "../martensite-tkcdf", version = "0.3.6" }
 martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.3.5" }
 
 [dev-dependencies]
-martensite-process-policy = { path = "../martensite-process-policy", version = "0.3.6", features = ["case-runner"] }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.3.7", features = ["case-runner"] }
 
 [[test]]
 name = "toolkit"

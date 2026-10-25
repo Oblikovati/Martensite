@@ -6,12 +6,20 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-25
+
 ### Added
 
 - Added explicit surface integration and representation policies with owned properties and estimate-or-unknown evidence (#277).
 - Added a verified production-library source SDK bundle with locked dependencies and explicit individual-archive requirement checks (#279).
 
 ### Fixed
+
+- Used Cargo's resolved target directory when collecting release source archives, including configured and external output directories (#285).
+
+- Published unchanged package versions once when complete release history contains no earlier archive, while preserving verified existing assets and recording publication provenance (#283).
+
+- Restored CPU-limit diagnostics and exit code 2 for isolated Unix processes, including limits applied after CPU was consumed (#278).
 
 - Reused one walking-point snapshot for combined spatial and parametric coordinate reads during fitting (#220).
 
