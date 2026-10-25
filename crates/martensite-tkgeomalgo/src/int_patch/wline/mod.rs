@@ -33,9 +33,8 @@ pub enum IntPatchWLType {
     PrmPrm,
 }
 
-/// The fields of `IntPatch_WLine`.
+/// Mutable walking-line metadata.
 pub(super) struct WLineState {
-    pub(super) curv: Handle<IntSurfLineOn2S>,
     pub(super) vertices: VertexList,
     /// `u1period`, `v1period`, `u2period`, `v2period`.
     pub(super) periods: [f64; 4],
@@ -59,6 +58,8 @@ pub(super) struct WLineState {
 pub struct IntPatchWLine {
     transient: StandardTransient,
     base: IntPatchLineBase,
+    // Fixed ownership permits borrowed routing; metadata leases still order multi-step edits (#294).
+    curv: Handle<IntSurfLineOn2S>,
     state: SharedState<WLineState>,
 }
 impl_transient!(IntPatchWLine, "IntPatch_WLine", dyn IntPatchPointLine, transient,
@@ -73,7 +74,6 @@ impl IntPatchWLine {
         transitions: IntPatchLineTransitions,
     ) -> Self {
         let state = WLineState {
-            curv: line.clone(),
             vertices: VertexList::default(),
             periods: [0.0; 4],
             arc_on_s1: None,
@@ -84,6 +84,7 @@ impl IntPatchWLine {
         Self {
             transient: StandardTransient::default(),
             base: IntPatchLineBase::new(tang, transitions, IntPatchIType::Walking),
+            curv: line.clone(),
             state: SharedState::new(state),
         }
     }
@@ -118,15 +119,15 @@ impl IntPatchWLine {
 
     /// The points, or the Standard_NullObject of a line built on a null handle (the
     /// native dereference is undefined behaviour).
-    fn points(&self, member: &str) -> Result<Handle<IntSurfLineOn2S>, Failure> {
-        let curv: Handle<IntSurfLineOn2S> = self.state.read().curv.clone();
-        if curv.is_null() {
+    fn points(&self, member: &str) -> Result<&Handle<IntSurfLineOn2S>, Failure> {
+        drop(self.state.read());
+        if self.curv.is_null() {
             return Err(null_object(
                 &format!("{CLASS}::{member}"),
                 "IntSurf_LineOn2S",
             ));
         }
-        Ok(curv)
+        Ok(&self.curv)
     }
 
     /// `SetPoint(Index, Pnt)`: the point of range `index` of the line becomes the
@@ -287,9 +288,9 @@ impl IntPatchWLine {
     /// duplicated vertices of the restrictions and adds the first and last vertices.
     /// `line.compute_vertex_parameters(1e-7)?`.
     pub fn compute_vertex_parameters(&self, rtol: f64) -> Result<(), Failure> {
-        let curv: Handle<IntSurfLineOn2S> = self.points("ComputeVertexParameters")?;
+        let curv = self.points("ComputeVertexParameters")?;
         let mut state = self.state.write();
-        compute::compute_vertex_parameters(&mut state, &curv, rtol)
+        compute::compute_vertex_parameters(&mut state, curv, rtol)
     }
 
     /// `Dump(theMode)`: 0 the points and vertices, 1 the 3d points, 2 the points on the
@@ -339,7 +340,8 @@ impl IntPatchPointLine for IntPatchWLine {
         self.state.write().vertices.remove_vertex(index, CLASS)
     }
     fn curve(&self) -> Handle<IntSurfLineOn2S> {
-        self.state.read().curv.clone()
+        let _metadata_lease = self.state.read();
+        self.curv.clone()
     }
     fn is_out_surf1_box(&self, p1: Point2) -> Result<bool, Failure> {
         Ok(self.points("IsOutSurf1Box")?.is_out_surf1_box(p1))
