@@ -1,0 +1,17 @@
+{
+  "prior_revision": "bbe57e2bb7f0d44ac9eaa54cf7d4112521a517eb",
+  "acceptance_revision": "a137876b62543601525287322c60fa988ee738c3",
+  "changed_production_runtime_files": 0,
+  "changed_package_test_assertion_files": [
+    "crates/martensite-tktopalgo/src/brep_gprop/surface_policy/observations.rs"
+  ],
+  "only_added_crate_lines": [
+    "fn send_sync<T: Send + Sync>() {}",
+    "send_sync::<SurfaceObservations>();"
+  ],
+  "root_manifest_lock_toolchain_configuration_unchanged": true,
+  "new_driver_checks": "217 tests passed, 0 failed, 0 ignored; strict all-target Clippy passed",
+  "targeted_observation_test": "1 passed, 0 failed, 11 filtered out",
+  "earlier_test_stage_reused": true,
+  "matrix_status": "Pending on final exact main revision: Linux x86_64, macOS x86_64, macOS arm64 and Windows x64."
+}
