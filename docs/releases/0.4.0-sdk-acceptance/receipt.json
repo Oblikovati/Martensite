@@ -1,0 +1,114 @@
+{
+  "schema": 1,
+  "producer_revision": "a137876b62543601525287322c60fa988ee738c3",
+  "release_draft": "0.4.0",
+  "scope": "Local Linux SDK packaging/consumer acceptance and bounded kernel-test reuse; final exact-main supported-platform matrix and publication remain pending.",
+  "retry_exit_code": 0,
+  "argv": [
+    "cargo",
+    "xtask",
+    "ci",
+    "run",
+    "--target",
+    "x86_64-unknown-linux-gnu",
+    "--checks-only"
+  ],
+  "environment_provenance": "Explicit owner-recorded overrides only; inherited environment was not captured in full. See invocation.json.",
+  "target": "x86_64-unknown-linux-gnu",
+  "artifact_files_verified": 30,
+  "payload_and_companion_pairs": 15,
+  "new_crate_archives": 13,
+  "changed_source_archives": [
+    "martensite-process-policy",
+    "martensite-tkernel",
+    "martensite-tkgeomalgo",
+    "martensite-tktopalgo"
+  ],
+  "first_publication_archives": [
+    "martensite-cmath",
+    "martensite-tkexpress",
+    "martensite-tkg2d",
+    "martensite-tkg3d",
+    "martensite-tkgeombase",
+    "martensite-tkhelix",
+    "martensite-tklcaf",
+    "martensite-tkmath",
+    "martensite-tkservice"
+  ],
+  "historical_reuses": [
+    "martensite-test-support",
+    "martensite-tkbrep",
+    "martensite-tkcdf",
+    "martensite-tkhlr",
+    "martensite-tkmesh",
+    "martensite-tkprim",
+    "martensite-tkshhealing",
+    "martensite-tktobj"
+  ],
+  "all_companion_digests_match": true,
+  "all_new_archive_hashes_match_catalog": true,
+  "all_reuse_hashes_and_origins_match_catalog_history": true,
+  "history_index_sha256": "e7bdbd6088351152b3969742fa0b2c829c1ea569f971626c18431e5e44a35b6a",
+  "history_assets_sha256": "754b6038b15bb3e1f9cee1fdd6d9b61a94a7164a15753e65a46b4346791f119b",
+  "source_workspace": {
+    "archive": "martensite-0.4.0-source-workspace.tar.gz",
+    "manifest_sha256": "60ad3c72e53edcfbf4cbfaf625d02bba57289cf3a84307fc20b7e53ac65633f4",
+    "revision": "a137876b62543601525287322c60fa988ee738c3",
+    "sha256": "b4cf2138e423e9a6368a884ab38e76ec3d951b3fda76e7f4f8e8580ab1f1c7d9",
+    "verification": "offline-production-libraries-all-features-and-external-consumer"
+  },
+  "sdk_payload_verification": {
+    "archive_sha256": "b4cf2138e423e9a6368a884ab38e76ec3d951b3fda76e7f4f8e8580ab1f1c7d9",
+    "manifest_sha256": "60ad3c72e53edcfbf4cbfaf625d02bba57289cf3a84307fc20b7e53ac65633f4",
+    "verified_payload_count": 16676,
+    "exact_paths_hashes_modes": true,
+    "duplicates": 0,
+    "unsafe_member_types": 0,
+    "scope": "production-libraries; datasets separately provisioned; installed toolchain and native libraries required",
+    "snapshot_revision": "a137876b62543601525287322c60fa988ee738c3",
+    "committed_file_count": 11642,
+    "gitlinks": {
+      "external/martensite-test-data": "c58ee236484bce7b385392454f976d001f8443c4"
+    }
+  },
+  "individual_archive_compatibility": "incompatible",
+  "individual_archive_incompatible_requirements": 12,
+  "individual_archive_validation": "Checked normalized manifest requirements, not an individual-archive consumer build. Complete source SDK is the coherent consumption graph.",
+  "driver_test_result": {
+    "passed": 217,
+    "failed": 0,
+    "ignored": 0
+  },
+  "driver_strict_clippy": "passed",
+  "expanded_unsafe_inventory": "passed in successful retry after source packaging",
+  "logs": {
+    "packaging-retry.log.gz": {
+      "uncompressed_sha256": "12a7a2ef5589e70978f1adb211759ff50a6a7ef8c8cfe0aeff11605e04c2d1bb",
+      "uncompressed_bytes": 75125,
+      "compressed_sha256": "9ba16837deb2061d0a4df9a741d6e18701de3fe8bd0563c6510fc7f380c15e27"
+    },
+    "driver-tests.log.gz": {
+      "uncompressed_sha256": "60295e14f1d1c34a48182a95b4ce5324f8575eae9520064fa9a36ee822e53e38",
+      "uncompressed_bytes": 39302,
+      "compressed_sha256": "fa278e7b2be215b09ce01ee8e6c6e60f8d72a43c5e010a4ec3ec1e96caa5624a"
+    },
+    "driver-clippy.log.gz": {
+      "uncompressed_sha256": "ef2ae15c582a55fb1a6bf95f1ee9bdaa712e85fdb075514ec109c4b2d785553b",
+      "uncompressed_bytes": 9963,
+      "compressed_sha256": "7e5a26b687085a73b1f07ab94aa205cca96b2f67c50227b865d5ae3486b6b1cc"
+    },
+    "thread-observation-test.log.gz": {
+      "uncompressed_sha256": "4f7ec958c3dee367dfd095955cdd01decbc00d39833926a11027a9ffa62dfc4f",
+      "uncompressed_bytes": 12198,
+      "compressed_sha256": "64cd83a8076078358fcab0b054989a05a52374ea03bde1d5e631575f7121c3ee"
+    }
+  },
+  "kernel_test_reuse": "See kernel-test-reuse.json and kernel-reuse-scope.json; aggregate prior stage counts are not unique coverage.",
+  "excluded_from_git": [
+    "SDK archive",
+    "individual crate archives"
+  ],
+  "publication_status": "not published by this proof",
+  "final_platform_matrix": "pending",
+  "review_actions": "Read and hashed retained files only; no builds, source/runtime/config/version/lock changes."
+}

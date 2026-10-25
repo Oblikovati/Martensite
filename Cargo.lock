@@ -390,7 +390,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-process-policy"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -432,7 +432,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkernel"
-version = "0.3.6"
+version = "0.4.0"
 dependencies = [
  "allocator-api2",
  "bytemuck",
@@ -477,7 +477,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkgeomalgo"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -631,7 +631,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tktopalgo"
-version = "0.3.6"
+version = "0.4.0"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",

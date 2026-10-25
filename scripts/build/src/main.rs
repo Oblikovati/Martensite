@@ -3,6 +3,7 @@
 
 mod affected;
 mod archive;
+mod archive_graph;
 mod cargo;
 mod changelog;
 mod ci_tests;
@@ -27,7 +28,9 @@ mod release_ci;
 mod release_impact;
 mod release_manifest;
 mod release_scope;
+mod release_sources;
 mod report;
+mod source_sdk;
 mod targets;
 #[cfg(test)]
 mod unsafe_inventory;

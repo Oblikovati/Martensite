@@ -92,6 +92,9 @@ CI has one workflow, `.github/workflows/martensite.yml`, and all its checks are
 `cargo xtask` commands. [CONTRIBUTING](CONTRIBUTING.md) explains the gates and
 the release process.
 
+Releases provide a [production-library source SDK](docs/features/source-workspace-bundle/README.md)
+with a coherent workspace and vendored locked dependencies for offline Cargo builds.
+
 PR tests run in one job per affected crate, with up to four test jobs at once.
 The required PR result waits for every test job and the shared checks. Local
 `cargo xtask pr` runs the same checks and tests in sequence. Release validation

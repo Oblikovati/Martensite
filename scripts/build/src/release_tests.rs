@@ -152,13 +152,15 @@ fn asset_names(assets: &[PathBuf]) -> Vec<String> {
         .collect()
 }
 
-const PRIMARY_ASSETS: [&str; 8] = [
+const PRIMARY_ASSETS: [&str; 10] = [
     "martensite-0.3.0-x86_64-unknown-linux-gnu.tar.gz",
     "martensite-0.3.0-x86_64-unknown-linux-gnu.tar.gz.sha256",
     "martensite-kernel-0.3.0.crate",
     "martensite-kernel-0.3.0.crate.sha256",
     "martensite-math-0.3.0.crate",
     "martensite-math-0.3.0.crate.sha256",
+    "martensite-0.3.0-source-workspace.tar.gz",
+    "martensite-0.3.0-source-workspace.tar.gz.sha256",
     "martensite-0.3.0-packages.json",
     "martensite-0.3.0-packages.json.sha256",
 ];
@@ -362,6 +364,56 @@ fn archive_uses_package_version_independently_of_repository_version() {
     let assets = run_release(&context_at(&runner, fixture.root()), &fixture.request(true)).unwrap();
     assert!(asset_names(&assets).contains(&"martensite-kernel-0.2.8.crate".into()));
     assert!(!asset_names(&assets).contains(&"martensite-kernel-0.3.0.crate".into()));
+}
+
+pub(crate) struct FixtureSourceRelease;
+
+impl SourceRelease for FixtureSourceRelease {
+    fn prepare(
+        &self,
+        _context: &BuildContext<'_>,
+        request: &ReleaseRequest,
+        workspace: &CargoWorkspace,
+        plan: &crate::publication_plan::PublicationPlan,
+    ) -> BuildResult<crate::release_sources::SourceArtifacts> {
+        let mut source = fixture_source(request);
+        source.graph = crate::archive_graph::inspect(request, workspace, plan)?;
+        Ok(source)
+    }
+}
+
+pub(crate) fn fixture_source(request: &ReleaseRequest) -> crate::release_sources::SourceArtifacts {
+    let name = format!("martensite-{}-source-workspace.tar.gz", request.version);
+    let path = request.dist_dir.join(&name);
+    fs::write(&path, b"named source fixture").unwrap();
+    write_checksum(&path).unwrap();
+    crate::release_sources::SourceArtifacts {
+        sdk: crate::source_sdk::SdkRecord {
+            archive: name,
+            sha256: crate::archive::sha256_hex(&path).unwrap(),
+            revision: "a".repeat(40),
+            manifest_sha256: "b".repeat(64),
+            verification: "named-fixture".into(),
+        },
+        graph: crate::archive_graph::ArchiveGraph {
+            compatibility: "requirements-compatible".into(),
+            validation: "named-fixture".into(),
+            archives: Default::default(),
+            incompatible_requirements: Vec::new(),
+        },
+    }
+}
+
+fn run_release(context: &BuildContext<'_>, request: &ReleaseRequest) -> BuildResult<Vec<PathBuf>> {
+    super::run_release_using(context, request, true, &FixtureSourceRelease)
+}
+
+fn run_release_checks(
+    context: &BuildContext<'_>,
+    request: &ReleaseRequest,
+    run_tests: bool,
+) -> BuildResult<Vec<PathBuf>> {
+    super::run_release_using(context, request, run_tests, &FixtureSourceRelease)
 }
 
 fn published_fixture(tags: &str) -> crate::published_history::fixtures::PublicationApiFixture {

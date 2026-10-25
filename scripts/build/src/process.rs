@@ -13,7 +13,8 @@ pub struct CommandSpec {
     program: String,
     args: Vec<String>,
     cwd: PathBuf,
-    environment: Vec<(String, Option<String>)>,
+    environment: Vec<(String, Option<std::ffi::OsString>)>,
+    clear_environment: bool,
 }
 
 impl CommandSpec {
@@ -28,6 +29,7 @@ impl CommandSpec {
             args: Vec::new(),
             cwd: cwd.to_path_buf(),
             environment: Vec::new(),
+            clear_environment: false,
         }
     }
 
@@ -58,6 +60,24 @@ impl CommandSpec {
     fn to_command(&self) -> Command {
         let mut command = Command::new(&self.program);
         command.args(&self.args).current_dir(&self.cwd);
+        self.configure_environment(&mut command);
+        command
+    }
+
+    fn configure_environment(&self, command: &mut Command) {
+        if self.clear_environment {
+            command.env_clear();
+        }
+        self.apply_environment_overrides(command);
+        if self.is_cargo() {
+            command
+                .env_remove("GH_TOKEN")
+                .env_remove("GITHUB_TOKEN")
+                .env_remove("MARTENSITE_RELEASE_HISTORY_SHA256");
+        }
+    }
+
+    fn apply_environment_overrides(&self, command: &mut Command) {
         for (name, value) in &self.environment {
             match value {
                 Some(value) => {
@@ -68,13 +88,21 @@ impl CommandSpec {
                 }
             }
         }
-        if self.is_cargo() {
-            command
-                .env_remove("GH_TOKEN")
-                .env_remove("GITHUB_TOKEN")
-                .env_remove("MARTENSITE_RELEASE_HISTORY_SHA256");
-        }
-        command
+    }
+
+    /// Starts a child with only explicitly provided environment variables.
+    /// Example: `CommandSpec::new("cargo", root).clear_environment()`.
+    pub fn clear_environment(mut self) -> Self {
+        self.clear_environment = true;
+        self
+    }
+
+    /// Preserves native path bytes in a child environment override.
+    /// Example: `spec.environment_os("CARGO_HOME", Some(home.as_os_str()))`.
+    pub fn environment_os(mut self, name: &str, value: Option<&std::ffi::OsStr>) -> Self {
+        self.environment
+            .push((name.into(), value.map(std::ffi::OsString::from)));
+        self
     }
 
     fn is_cargo(&self) -> bool {
@@ -88,7 +116,7 @@ impl CommandSpec {
     /// Example: `spec.environment("RUSTFLAGS", Some("--force-warn unsafe_code"))`.
     pub fn environment(mut self, name: &str, value: Option<&str>) -> Self {
         self.environment
-            .push((name.into(), value.map(str::to_owned)));
+            .push((name.into(), value.map(std::ffi::OsString::from)));
         self
     }
 }

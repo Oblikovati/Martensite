@@ -25,6 +25,8 @@ impl AdaptiveRun<'_, '_> {
             j += 1;
             let range = self.u.next_range(j, end);
             if self.u.is_exhausted(j, max) {
+                self.state.refinement_exhausted |=
+                    k_end != 1 || self.u.first[j - 1] != self.u.second[j - 1];
                 if k_end != 1 {
                     j -= 1;
                     self.state.eps_u = self.state.error_u;

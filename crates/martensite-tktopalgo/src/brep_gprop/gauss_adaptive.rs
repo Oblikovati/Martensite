@@ -189,9 +189,48 @@ pub(super) struct AdaptiveInput<'a> {
     pub(super) u_knots: Vec<f64>,
 }
 
+impl<'a> AdaptiveInput<'a> {
+    fn new(
+        surface: &BRepGPropFace,
+        context: (Point3, &'a [f64], bool),
+        controls: (f64, bool),
+        bounds: (f64, f64, f64, f64),
+    ) -> Result<Self, Failure> {
+        let natural = surface.get_face().nb_children() == 0;
+        let u_rules = GaussRules::new(surface.s_int_order(controls.0)?)?;
+        let u_knots = knots_of(surface.su_int_subs()?, |k| surface.u_knots(k))?;
+        Ok(Self::from_parts(
+            context,
+            controls,
+            bounds,
+            (natural, u_rules, u_knots),
+        ))
+    }
+
+    fn from_parts(
+        (location, coeff, by_point): (Point3, &'a [f64], bool),
+        (epsilon, is_error_calculation): (f64, bool),
+        bounds: (f64, f64, f64, f64),
+        (natural, u_rules, u_knots): (bool, GaussRules, Vec<f64>),
+    ) -> Self {
+        Self {
+            location,
+            coeff,
+            by_point,
+            epsilon,
+            error_passes: if is_error_calculation { 2 } else { 1 },
+            bounds,
+            natural,
+            u_rules,
+            u_knots,
+        }
+    }
+}
+
 /// The variables the native Compute keeps across the boundary curves and loops.
 #[derive(Default)]
 pub(super) struct AdaptiveState {
+    pub(super) refinement_exhausted: bool,
     pub(super) eps: f64,
     pub(super) eps_l: f64,
     pub(super) eps_u: f64,
@@ -222,31 +261,28 @@ impl BRepGPropGauss {
         by_point: bool,
         out: &mut GaussProps,
     ) -> Result<f64, Failure> {
-        let is_error_calculation = 0.0 > eps || eps < 0.001;
+        self.compute_adaptive_observed(surface, domain, location, eps, (coeff, by_point), out)
+            .map(|(error, _)| error)
+    }
+
+    // Keep the arithmetic shared; the extra value records only exhausted work (#277).
+    pub(super) fn compute_adaptive_observed(
+        &mut self,
+        surface: &mut BRepGPropFace,
+        domain: &mut BRepGPropDomain,
+        location: Point3,
+        eps: f64,
+        (coeff, by_point): (&[f64], bool),
+        out: &mut GaussProps,
+    ) -> Result<(f64, bool), Failure> {
+        let estimate = 0.0 > eps || eps < 0.001;
         let is_verify = 0.0 < eps && eps < 0.001;
         let epsilon = eps.abs();
         let bounds = surface.bounds()?;
         self.check_bounds(bounds);
-        let natural = surface.get_face().nb_children() == 0;
-        let u_rules = GaussRules::new(surface.s_int_order(epsilon)?)?;
-        let u_knots = knots_of(surface.su_int_subs()?, |k| surface.u_knots(k))?;
-        let input = AdaptiveInput {
-            location,
-            coeff,
-            by_point,
-            epsilon,
-            error_passes: if is_error_calculation { 2 } else { 1 },
-            bounds,
-            natural,
-            u_rules,
-            u_knots,
-        };
-        let mut run = AdaptiveRun::new(self, input, is_verify);
-        let Some(total) = run.boundaries(surface, domain)? else {
-            return Ok(precision::infinite());
-        };
-        self.convert(&total, (coeff, by_point), out);
-        Ok(run.reached_error(out.mass))
+        let context = (location, coeff, by_point);
+        let input = AdaptiveInput::new(surface, context, (epsilon, estimate), bounds)?;
+        AdaptiveRun::new(self, input, is_verify).evaluate(surface, domain, out)
     }
 
     /// `Compute(theSurface, theDomain, theLocation, theEps, Mass, G, I)`: the adaptive
@@ -262,6 +298,17 @@ impl BRepGPropGauss {
     ) -> Result<f64, Failure> {
         self.assert_type(GaussType::Sinert)?;
         self.compute_adaptive(surface, domain, location, eps, &[], true, out)
+    }
+    pub(super) fn compute_adaptive_surface_observed(
+        &mut self,
+        surface: &mut BRepGPropFace,
+        domain: &mut BRepGPropDomain,
+        location: Point3,
+        eps: f64,
+        out: &mut GaussProps,
+    ) -> Result<(f64, bool), Failure> {
+        self.assert_type(GaussType::Sinert)?;
+        self.compute_adaptive_observed(surface, domain, location, eps, (&[], true), out)
     }
 }
 
@@ -299,6 +346,23 @@ impl<'g, 'a> AdaptiveRun<'g, 'a> {
             u: Intervals::new(),
             err_ul: vec![0.0; sm()],
         }
+    }
+
+    fn evaluate(
+        &mut self,
+        surface: &mut BRepGPropFace,
+        domain: &mut BRepGPropDomain,
+        out: &mut GaussProps,
+    ) -> Result<(f64, bool), Failure> {
+        let Some(total) = self.boundaries(surface, domain)? else {
+            return Ok((precision::infinite(), self.state.refinement_exhausted));
+        };
+        self.gauss
+            .convert(&total, (self.input.coeff, self.input.by_point), out);
+        Ok((
+            self.reached_error(out.mass),
+            self.state.refinement_exhausted,
+        ))
     }
 
     /// `ErrorLMax / |Mass|` (0 for a null mass) with the error estimate, `|eps|` else.

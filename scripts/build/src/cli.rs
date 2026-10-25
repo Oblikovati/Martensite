@@ -184,18 +184,38 @@ fn release_for(
     triple: &str,
     run_tests: bool,
 ) -> BuildResult<()> {
-    let request = ReleaseRequest {
-        dist_dir: default_dist_dir(context.root(), &version),
-        version,
-        triple: triple.to_owned(),
-        source_packages: is_primary(triple),
-    };
+    let request = release_request(context, version, triple);
     if run_tests {
         run_release(context, &request)?;
     } else {
         run_release_checks(context, &request, false)?;
     }
     capture_release_inventory(context, triple)
+}
+
+fn release_for_using(
+    context: &BuildContext<'_>,
+    version: semver::Version,
+    triple: &str,
+    run_tests: bool,
+    sources: &dyn crate::release_sources::SourceRelease,
+) -> BuildResult<()> {
+    let request = release_request(context, version, triple);
+    crate::release::run_release_using(context, &request, run_tests, sources)?;
+    capture_release_inventory(context, triple)
+}
+
+fn release_request(
+    context: &BuildContext<'_>,
+    version: semver::Version,
+    triple: &str,
+) -> ReleaseRequest {
+    ReleaseRequest {
+        dist_dir: default_dist_dir(context.root(), &version),
+        version,
+        triple: triple.into(),
+        source_packages: is_primary(triple),
+    }
 }
 
 fn capture_release_inventory(context: &BuildContext<'_>, triple: &str) -> BuildResult<()> {
@@ -220,6 +240,22 @@ fn dispatch_plan(
     triple: &str,
     checks_only: bool,
 ) -> BuildResult<()> {
+    dispatch_plan_using(
+        context,
+        plan,
+        triple,
+        checks_only,
+        &crate::release_sources::VerifiedSourceRelease,
+    )
+}
+
+fn dispatch_plan_using(
+    context: &BuildContext<'_>,
+    plan: CiPlan,
+    triple: &str,
+    checks_only: bool,
+    sources: &dyn crate::release_sources::SourceRelease,
+) -> BuildResult<()> {
     match plan {
         CiPlan::PullRequest { base } => crate::pr::validate_pr_checks(
             context,
@@ -227,7 +263,9 @@ fn dispatch_plan(
             &BuildTarget::Triple(triple.to_owned()),
             !checks_only,
         ),
-        CiPlan::Release { version, .. } => release_for(context, version, triple, !checks_only),
+        CiPlan::Release { version, .. } => {
+            release_for_using(context, version, triple, !checks_only, sources)
+        }
     }
 }
 
@@ -296,7 +334,13 @@ mod tests {
             version: semver::Version::new(0, 3, 0),
             publish: false,
         };
-        let result = dispatch_plan(&context, plan, "x86_64-unknown-linux-gnu", checks_only);
+        let result = dispatch_plan_using(
+            &context,
+            plan,
+            "x86_64-unknown-linux-gnu",
+            checks_only,
+            &crate::release::tests::FixtureSourceRelease,
+        );
         // The fake returns no compiler stream: reaching this error proves the gate still runs.
         let error = result.unwrap_err().to_string();
         assert!(error.contains("missing build-finished"));
