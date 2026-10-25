@@ -8,6 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Updated native macOS validation to `macos-latest` for ARM64 and `macos-26-intel` for Intel while preserving all four release targets (#298).
 - Serialized native source SDK paths as portable archive members on Windows while retaining member validation (#290).
 
 ## [0.4.0] - 2026-10-25
