@@ -1,12 +1,14 @@
 # Walking-curve storage
 
 Walking lines keep their constructor-supplied curve handle outside the lock for
-mutable vertex metadata (#294). Point reads borrow this fixed handle. The curve
-itself remains shared and mutable: its point access still takes its own locks,
-and edits through any owner remain visible to the others.
+mutable vertex metadata (#294). Point reads retain their brief metadata read
+lease, which waits for a metadata writer already in progress, then borrow the
+fixed handle. Curve contents remain shared and mutable under their existing
+locks; edits through any owner remain visible to the others.
 
-Public `curve()` calls still clone the same handle. Null and out-of-range errors
-retain their types and messages. Interrupted vertex edits retain the existing
+Public `curve()` calls still clone the same handle while holding the metadata
+read lease. Null and out-of-range errors retain their types and messages.
+Interrupted vertex edits retain the existing
 poison-recovery behavior. Field order preserves destruction of the curve owner
 before the vertex metadata.
 
@@ -17,6 +19,9 @@ counts, live point edits, null and index failures, recovery after an interrupted
 vertex edit, and concurrent readers with a writer. Compile-time checks require
 both the walking line and its handle to be `Send + Sync`. The concurrent test
 checks whole point snapshots and compares the final state with serial writes.
+Two `walking_curve_ordering` tests hold a metadata writer across an intermediate
+curve edit and verify that point and public-owner reads wait for its completion.
+They pass on the baseline and reject removal of the read barrier.
 
 Five contract tests passed in each of two processes before and after the change;
 their recorded observations matched byte for byte. Complete section-result
@@ -28,7 +33,7 @@ reads produced these milliseconds:
 | Storage | Batches | Median |
 | --- | --- | --- |
 | Curve inside metadata lock | 16.445, 16.289, 16.165, 16.830, 16.352 | 16.352 |
-| Fixed curve handle | 6.957, 6.828, 6.931, 6.758, 7.505 | 6.931 |
+| Borrowed fixed handle | 6.585, 7.044, 6.687, 7.133, 6.841 | 6.841 |
 
 The manual probe has no timing assertion. Run it with:
 
@@ -38,14 +43,14 @@ cargo test --release -p martensite-tkgeomalgo --test toolkit repeated_walking_po
 
 The complete optimized workload in #294 still exceeds its 100 ms limit.
 Its slower operation took 161.347 and 163.524 ms before this change, then
-136.818 and 141.466 ms afterward. These are two processes on a shared host;
+148.315 and 148.224 ms afterward. These are two processes on a shared host;
 they establish a local improvement without closing the performance issue.
 Whole-process peak resident memory was 220,708/221,604 KiB before and
-221,464/221,256 KiB afterward, measured with `/usr/bin/time -v`.
+221,180/221,248 KiB afterward, measured with `/usr/bin/time -v`.
 
 ## ThreadSanitizer
 
-The five contract tests also passed with ThreadSanitizer and no reported race.
+The seven contract tests also passed with ThreadSanitizer and no reported race.
 The instrumented binary used nightly Rust 1.101.0 (2026-10-06),
 `-Zsanitizer=thread`, and `-Zbuild-std=std,panic_unwind` on
 `x86_64-unknown-linux-gnu`. The manual timing probe remained ignored.
