@@ -8,6 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Preserved CPU-budget exit code 2 on macOS with closed or full stdout while leaving application signal actions and descriptor flags intact (#289).
 - Serialized native source SDK paths as portable archive members on Windows while retaining member validation (#290).
 
 ## [0.4.0] - 2026-10-25
