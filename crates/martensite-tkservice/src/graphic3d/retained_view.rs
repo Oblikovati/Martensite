@@ -9,8 +9,9 @@ use crate::graphic3d::{
     Graphic3dCStructure, Graphic3dCStructureMembers as _, Graphic3dCView, Graphic3dCViewBase,
     Graphic3dDataStructureManager, Graphic3dDiagnosticInfo, Graphic3dDisplayPriority,
     Graphic3dFrameStatsDict, Graphic3dLayer, Graphic3dLightSet, Graphic3dStructureManager,
-    Graphic3dTextureEnv, Graphic3dTextureMap, Graphic3dZLayerId, Graphic3dZLayerSettings,
-    graphic3d_cview_diagnostic_information, graphic3d_cview_register, graphic3d_cview_resized,
+    Graphic3dTextureEnv, Graphic3dTextureMap, Graphic3dTypeOfBackground, Graphic3dZLayerId,
+    Graphic3dZLayerSettings, graphic3d_cview_diagnostic_information, graphic3d_cview_register,
+    graphic3d_cview_resized,
 };
 use crate::image::ImagePixMap;
 use martensite_tkernel::standard::exceptions::program_error;
@@ -289,6 +290,8 @@ impl Graphic3dCView for Graphic3dRetainedView {
     }
     fn set_gradient_background(&self, background: &AspectGradientBackground) {
         self.state.write().gradient = *background;
+        // The fill method and active background selection are separate state (#305).
+        self.base.fields.write().background_type = Graphic3dTypeOfBackground::Gradient;
     }
     fn set_background_image(
         &self,

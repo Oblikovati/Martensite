@@ -137,3 +137,6 @@ fn network_groups_and_removal() {
     assert!(child.is_deleted() && child.identification() == -1);
     assert_eq!(scene.driver.new_identification().expect("reuse"), id);
 }
+
+#[path = "retained_gradient_background_checks.rs"]
+mod retained_gradient_background_checks;
