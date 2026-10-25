@@ -40,6 +40,8 @@ The complete optimized workload in #294 still exceeds its 100 ms limit.
 Its slower operation took 161.347 and 163.524 ms before this change, then
 136.818 and 141.466 ms afterward. These are two processes on a shared host;
 they establish a local improvement without closing the performance issue.
+Whole-process peak resident memory was 220,708/221,604 KiB before and
+221,464/221,256 KiB afterward, measured with `/usr/bin/time -v`.
 
 ## ThreadSanitizer
 
