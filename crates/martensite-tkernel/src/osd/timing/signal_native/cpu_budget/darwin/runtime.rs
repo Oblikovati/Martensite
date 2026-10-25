@@ -41,7 +41,7 @@ impl PreparedWriter {
         let attempt = child::ChildAttempt {
             message,
             acknowledgement: self.acknowledgement.as_raw_fd(),
-            parent: parent_identity(),
+            parent: rustix::process::getpid().as_raw_pid(),
             deadline,
             entries: &mut entries,
         };
@@ -62,10 +62,6 @@ impl PreparedWriter {
         }
         Ok(())
     }
-}
-
-fn parent_identity() -> i32 {
-    rustix::process::getpid().as_raw_pid()
 }
 
 fn read_outcome(response: &mut impl Read) -> io::Result<()> {
