@@ -58,7 +58,7 @@ pub(super) struct WLineState {
 pub struct IntPatchWLine {
     transient: StandardTransient,
     base: IntPatchLineBase,
-    // Curve ownership is fixed; routing reads need no metadata lock or temporary owner (#294).
+    // Fixed ownership permits borrowed routing; metadata leases still order multi-step edits (#294).
     curv: Handle<IntSurfLineOn2S>,
     state: SharedState<WLineState>,
 }
@@ -120,6 +120,7 @@ impl IntPatchWLine {
     /// The points, or the Standard_NullObject of a line built on a null handle (the
     /// native dereference is undefined behaviour).
     fn points(&self, member: &str) -> Result<&Handle<IntSurfLineOn2S>, Failure> {
+        drop(self.state.read());
         if self.curv.is_null() {
             return Err(null_object(
                 &format!("{CLASS}::{member}"),
@@ -339,6 +340,7 @@ impl IntPatchPointLine for IntPatchWLine {
         self.state.write().vertices.remove_vertex(index, CLASS)
     }
     fn curve(&self) -> Handle<IntSurfLineOn2S> {
+        let _metadata_lease = self.state.read();
         self.curv.clone()
     }
     fn is_out_surf1_box(&self, p1: Point2) -> Result<bool, Failure> {
