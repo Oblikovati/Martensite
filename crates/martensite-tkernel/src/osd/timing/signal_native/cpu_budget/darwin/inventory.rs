@@ -62,9 +62,9 @@ fn entry_count(bytes: i32, capacity: usize) -> Result<usize, i32> {
 
 fn close_one(descriptor: i32) -> Result<(), i32> {
     loop {
-        // SAFETY: this is the single-threaded private child. No descriptor can be
+        // This is the single-threaded private child. No descriptor can be
         // reopened between retries; the parent's descriptor table is independent.
-        if unsafe { libc::close(descriptor) } == 0 {
+        if nix::unistd::close(descriptor).is_ok() {
             return Ok(());
         }
         let failure = errno();
@@ -79,8 +79,8 @@ fn close_one(descriptor: i32) -> Result<(), i32> {
 
 /// Reads this native thread's errno without allocation; `inventory::errno()`.
 pub(super) fn errno() -> i32 {
-    // SAFETY: Darwin's __error returns the current thread's valid errno cell.
-    unsafe { *libc::__error() }
+    // Preserve raw values that a typed errno conversion could normalize.
+    nix::errno::Errno::last_raw()
 }
 
 #[cfg(test)]
