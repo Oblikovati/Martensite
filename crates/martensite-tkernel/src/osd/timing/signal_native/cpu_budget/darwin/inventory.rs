@@ -42,9 +42,10 @@ fn close_record(entry: &libc::proc_fdinfo, acknowledgement: i32) -> Result<(), i
 }
 
 fn query(entries: *mut libc::c_void, bytes: i32) -> i32 {
+    let process = rustix::process::getpid().as_raw_pid();
     // SAFETY: callers supply either a null sizing request or a live bounded native array.
     // proc_pidinfo reads this process only; its direct wrapper was bound before expiry.
-    unsafe { libc::proc_pidinfo(libc::getpid(), libc::PROC_PIDLISTFDS, 0, entries, bytes) }
+    unsafe { libc::proc_pidinfo(process, libc::PROC_PIDLISTFDS, 0, entries, bytes) }
 }
 
 fn entry_count(bytes: i32, capacity: usize) -> Result<usize, i32> {

@@ -65,8 +65,7 @@ impl PreparedWriter {
 }
 
 fn parent_identity() -> i32 {
-    // SAFETY: getpid has no arguments and only reads this process identity.
-    unsafe { libc::getpid() }
+    rustix::process::getpid().as_raw_pid()
 }
 
 fn read_outcome(response: &mut impl Read) -> io::Result<()> {
@@ -117,8 +116,7 @@ fn prepare_native_calls() -> io::Result<()> {
     super::super::clock::monotonic_nanoseconds().ok_or_else(io::Error::last_os_error)?;
     bind_timer_without_change();
     query_alarm_action()?;
-    // SAFETY: getppid only reads this thread's process identity; binding precedes expiry.
-    unsafe { libc::getppid() };
+    let _ = rustix::process::getppid();
     Ok(())
 }
 

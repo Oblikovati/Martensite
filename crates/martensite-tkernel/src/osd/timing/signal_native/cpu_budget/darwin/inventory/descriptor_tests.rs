@@ -112,11 +112,12 @@ fn reset_fixture_reaping() {
 }
 
 fn wait_owned_snapshot_child(child: i32) {
-    let mut status = 0;
-    // SAFETY: default reaping reserves this unreaped owned PID; no unrelated reaper runs.
-    assert_eq!(unsafe { libc::waitpid(child, &mut status, 0) }, child);
-    assert!(libc::WIFEXITED(status));
-    assert_eq!(libc::WEXITSTATUS(status), 0);
+    use rustix::process::{Pid, WaitOptions, waitpid};
+    let owned = Pid::from_raw(child).unwrap();
+    // Default reaping reserves this unreaped owned PID; no unrelated reaper runs.
+    let (waited, status) = waitpid(Some(owned), WaitOptions::empty()).unwrap().unwrap();
+    assert_eq!(waited, owned);
+    assert_eq!(status.exit_status(), Some(0));
 }
 
 fn close_snapshot_child(

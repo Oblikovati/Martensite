@@ -29,8 +29,7 @@ impl ChildAttempt<'_> {
 fn prepare_deadline(parent: i32, deadline: u64) -> Result<(), i32> {
     install_private_alarm()?;
     let now = super::super::clock::monotonic_nanoseconds().ok_or(libc::EIO)?;
-    // SAFETY: getppid only reads the identity of this child's current parent.
-    if unsafe { libc::getppid() } != parent || now >= deadline {
+    if rustix::process::getppid().map(|pid| pid.as_raw_pid()) != Some(parent) || now >= deadline {
         return Err(libc::ETIMEDOUT);
     }
     arm_private_timer(remaining_grace(deadline, now)?)
