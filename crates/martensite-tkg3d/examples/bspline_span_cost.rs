@@ -1,4 +1,7 @@
 //! A generated straight spline separates construction from cross-span evaluation costs (#309).
+#[cfg(test)]
+#[path = "span_cost/contracts/mod.rs"]
+mod contracts;
 #[path = "span_cost/fixture.rs"]
 mod fixture;
 #[path = "span_cost/samples.rs"]
