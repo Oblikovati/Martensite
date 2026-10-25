@@ -227,3 +227,7 @@ fn weights_equal(own: &BSplineState, theirs: &BSplineState) -> Result<bool, Fail
 #[cfg(test)]
 #[path = "bspline_curve_pole_view_tests.rs"]
 mod pole_view_tests;
+
+#[cfg(test)]
+#[path = "bspline_cache_inputs_tests.rs"]
+mod cache_inputs_tests;
