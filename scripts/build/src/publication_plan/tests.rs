@@ -50,6 +50,7 @@ fn verify_reuse(
 
 fn unchanged_workspace() -> CargoWorkspace {
     CargoWorkspace {
+        target_directory: std::env::temp_dir().join("publication-fixture-target"),
         packages: vec![package("martensite-math", "0.3.5")],
     }
 }
