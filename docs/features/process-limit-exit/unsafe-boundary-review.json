@@ -48,7 +48,7 @@
     "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin.rs": "cdc861ab41ac93f2886a54eb4e48017a0953d3a0906424fed2514036e1f8b8b7",
     "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/child.rs": "d0e649f2c9fb5d2b4efbc4726e8249bac9bcced3d94428a624e081579d03fe19",
     "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory.rs": "996e97fa22ba5081b03b792c287a87a32a0451b96d653a3333f656c1a8f9a6a2",
-    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory/descriptor_tests.rs": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory/descriptor_tests.rs": "64d848fc23b7a78dd63114e47e42d8735efd7d7305982222fc0640d749e0ce55",
     "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/runtime.rs": "a227f95a8adb216c2a57bc9faf1b2cffe9364fb956c8482c3620effa6bf3daff",
     "crates/martensite-tkernel/src/osd/timing/signal_native.rs": "8fdda6e09eb730c67ba16d18c1677839951aa95da53dd68f4784574bb69d8cc1",
     "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget.rs": "0e0b14d2d83bf89377a64c45d5a3d590d8fa24517e6d6743325a0e45aeb97b5d",
@@ -118,7 +118,7 @@
       "line": 100,
       "function": "fork_descriptor_child",
       "operation": "fork",
-      "source_sha256": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
+      "source_sha256": "64d848fc23b7a78dd63114e47e42d8735efd7d7305982222fc0640d749e0ce55",
       "justification": "Fresh dedicated test process; child executes native/stack-only inventory path then _exit; test parent reserves and reaps its owned child under default policy."
     },
     {
@@ -126,23 +126,23 @@
       "line": 110,
       "function": "reset_fixture_reaping",
       "operation": "signal",
-      "source_sha256": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
+      "source_sha256": "64d848fc23b7a78dd63114e47e42d8735efd7d7305982222fc0640d749e0ce55",
       "justification": "Fresh isolated fixture owns SIGCHLD, not the application/test host. No enabled safe equivalent avoids signal-disposition responsibility."
     },
     {
       "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory/descriptor_tests.rs",
       "line": 129,
       "function": "close_snapshot_child",
-      "operation": "signal/sigprocmask/_exit",
-      "source_sha256": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
-      "justification": "Single fixture child with initialized empty signal mask; setup failures exit immediately; safe alarm wrapper is outside the block."
+      "operation": "signal/sigprocmask/alarm/_exit",
+      "source_sha256": "64d848fc23b7a78dd63114e47e42d8735efd7d7305982222fc0640d749e0ce55",
+      "justification": "Single fixture child with initialized empty signal mask and private 12-second alarm; setup failures exit immediately. The safe alarm wrapper requires the disabled signal dependency feature, so this call remains in the existing audited block."
     },
     {
       "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory/descriptor_tests.rs",
       "line": 141,
       "function": "close_snapshot_child",
       "operation": "_exit",
-      "source_sha256": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
+      "source_sha256": "64d848fc23b7a78dd63114e47e42d8735efd7d7305982222fc0640d749e0ce55",
       "justification": "Bypasses copied Rust destructors after inherited descriptors are closed."
     },
     {
@@ -150,7 +150,7 @@
       "line": 146,
       "function": "descriptor_state",
       "operation": "fcntl F_GETFD",
-      "source_sha256": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
+      "source_sha256": "64d848fc23b7a78dd63114e47e42d8735efd7d7305982222fc0640d749e0ce55",
       "justification": "Intentionally probes both valid and closed raw descriptor numbers without mutation; BorrowedFd validity cannot be asserted for expected EBADF."
     },
     {
@@ -204,5 +204,6 @@
   ],
   "compiler_platform_baselines_modified": false,
   "actual_rust_native_platform_tests_pending": true,
-  "oldest_macos_support_decision": "Unresolved; pre-Darwin21 Unsupported remains a draft outcome and blocks integration/release without policy or evidence."
+  "oldest_macos_support_decision": "Unresolved; pre-Darwin21 Unsupported remains a draft outcome and blocks integration/release without policy or evidence.",
+  "compile_correction": "The cross-target compiler rejected the Nix alarm wrapper because its signal feature is disabled. The same private fixture alarm uses libc inside the existing block; no new unsafe keyword, dependency feature, deadline, or production behavior changes."
 }

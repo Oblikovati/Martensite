@@ -133,8 +133,8 @@ fn close_snapshot_child(
         {
             libc::_exit(75);
         }
+        libc::alarm(12);
     }
-    let _ = nix::unistd::alarm::set(12);
     let closed = super::close_inherited(libc::STDERR_FILENO, entries).is_ok();
     let verified = descriptor_state(high) == Ok(false) && descriptor_state(late) == Ok(false);
     // SAFETY: no copied Rust destructor or unit-test runtime may run after descriptor closure.
