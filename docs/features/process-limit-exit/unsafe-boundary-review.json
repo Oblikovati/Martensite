@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "issue": 289,
+  "reviewed_product_commit": "ecca5a5eb96736fde389330e8e1b719eb7ef5661",
+  "scope": "Exact reviewed lexical additions for the isolated macOS CPU diagnostic boundary; no existing group changes or removals.",
+  "baseline_sha256_before": "3629f6adf71305ea28794b420a57d85428a53db6a14afb511dc6505699b4ee52",
+  "baseline_sha256_after": "f510d0be3e6430ddcf5e95dbf82ce4dd00bb7df68ce383525bcba27c7396e6d7",
+  "new_lexical_entries": {
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin.rs": {
+      "unsafe_keywords": 1,
+      "unsafe_code_mentions": 1,
+      "kinds": {
+        "block": 1
+      }
+    },
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/child.rs": {
+      "unsafe_keywords": 4,
+      "unsafe_code_mentions": 1,
+      "kinds": {
+        "block": 4
+      }
+    },
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory.rs": {
+      "unsafe_keywords": 2,
+      "unsafe_code_mentions": 1,
+      "kinds": {
+        "block": 2
+      }
+    },
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory/descriptor_tests.rs": {
+      "unsafe_keywords": 5,
+      "unsafe_code_mentions": 0,
+      "kinds": {
+        "block": 5
+      }
+    },
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/runtime.rs": {
+      "unsafe_keywords": 6,
+      "unsafe_code_mentions": 1,
+      "kinds": {
+        "block": 5,
+        "extern": 1
+      }
+    }
+  },
+  "new_unsafe_keywords": 18,
+  "source_sha256": {
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin.rs": "cdc861ab41ac93f2886a54eb4e48017a0953d3a0906424fed2514036e1f8b8b7",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/child.rs": "d0e649f2c9fb5d2b4efbc4726e8249bac9bcced3d94428a624e081579d03fe19",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory.rs": "996e97fa22ba5081b03b792c287a87a32a0451b96d653a3333f656c1a8f9a6a2",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory/descriptor_tests.rs": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/runtime.rs": "a227f95a8adb216c2a57bc9faf1b2cffe9364fb956c8482c3620effa6bf3daff",
+    "crates/martensite-tkernel/src/osd/timing/signal_native.rs": "8fdda6e09eb730c67ba16d18c1677839951aa95da53dd68f4784574bb69d8cc1",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget.rs": "0e0b14d2d83bf89377a64c45d5a3d590d8fa24517e6d6743325a0e45aeb97b5d",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/clock.rs": "210c7ccc765b45c049d3bf5d685aa0ad8d6d69061d55d8ae270ae4252d68e4e2",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/relay.rs": "c8918e6ed304b78566685c117ac4e5916619bffefbe5d4fae594fdd4b44e7ef5",
+    "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/relay/signal_mask.rs": "664d30d41bb9d3673fdeddf55f401a62237040472616ae520b075e9c236d2d24"
+  },
+  "reviewed_sites": [
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin.rs",
+      "line": 26,
+      "function": "suppress_private_sigpipe",
+      "operation": "setsockopt",
+      "source_sha256": "cdc861ab41ac93f2886a54eb4e48017a0953d3a0906424fed2514036e1f8b8b7",
+      "justification": "Newly owned private Unix socket; live initialized integer and exact socklen; application open-file descriptions untouched. Enabled safe socket-option modules would require a new dependency feature, so the local typed boundary is justified."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/child.rs",
+      "line": 55,
+      "function": "install_private_alarm",
+      "operation": "sigaction/sigset/sigprocmask",
+      "source_sha256": "d0e649f2c9fb5d2b4efbc4726e8249bac9bcced3d94428a624e081579d03fe19",
+      "justification": "Single isolated child; valid initialized action/mask; ordinary signals blocked except its private alarm. Only this child changes dispositions/masks."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/child.rs",
+      "line": 81,
+      "function": "arm_private_timer",
+      "operation": "setitimer",
+      "source_sha256": "d0e649f2c9fb5d2b4efbc4726e8249bac9bcced3d94428a624e081579d03fe19",
+      "justification": "Initialized one-shot timer, rounded positive remaining interval <=100ms; same absolute source deadline, no application timer change."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/child.rs",
+      "line": 98,
+      "function": "write_all",
+      "operation": "write",
+      "source_sha256": "d0e649f2c9fb5d2b4efbc4726e8249bac9bcced3d94428a624e081579d03fe19",
+      "justification": "Live stack slice and bounded length; checked positive counts/EINTR; raw stdout may intentionally be invalid, so a valid-BorrowedFd safe API cannot be substituted blindly."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/child.rs",
+      "line": 112,
+      "function": "exit_child",
+      "operation": "_exit",
+      "source_sha256": "d0e649f2c9fb5d2b4efbc4726e8249bac9bcced3d94428a624e081579d03fe19",
+      "justification": "Async-signal-safe terminal exit; no copied application destructors or unit-test runtime execute."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory.rs",
+      "line": 28,
+      "function": "close_inherited",
+      "operation": "assume_init_ref",
+      "source_sha256": "996e97fa22ba5081b03b792c287a87a32a0451b96d653a3333f656c1a8f9a6a2",
+      "justification": "Native returned byte count must be positive, divisible by exact record stride and within the live MaybeUninit array; only returned initialized records are observed."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory.rs",
+      "line": 48,
+      "function": "query",
+      "operation": "proc_pidinfo",
+      "source_sha256": "996e97fa22ba5081b03b792c287a87a32a0451b96d653a3333f656c1a8f9a6a2",
+      "justification": "Self process only, null sizing request or live 32768-byte bounded native buffer; exact proc_fdinfo ABI; partial/malformed/overflow refuses output. No enabled safe wrapper exposes this API."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory/descriptor_tests.rs",
+      "line": 100,
+      "function": "fork_descriptor_child",
+      "operation": "fork",
+      "source_sha256": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
+      "justification": "Fresh dedicated test process; child executes native/stack-only inventory path then _exit; test parent reserves and reaps its owned child under default policy."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory/descriptor_tests.rs",
+      "line": 110,
+      "function": "reset_fixture_reaping",
+      "operation": "signal",
+      "source_sha256": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
+      "justification": "Fresh isolated fixture owns SIGCHLD, not the application/test host. No enabled safe equivalent avoids signal-disposition responsibility."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory/descriptor_tests.rs",
+      "line": 129,
+      "function": "close_snapshot_child",
+      "operation": "signal/sigprocmask/_exit",
+      "source_sha256": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
+      "justification": "Single fixture child with initialized empty signal mask; setup failures exit immediately; safe alarm wrapper is outside the block."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory/descriptor_tests.rs",
+      "line": 141,
+      "function": "close_snapshot_child",
+      "operation": "_exit",
+      "source_sha256": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
+      "justification": "Bypasses copied Rust destructors after inherited descriptors are closed."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/inventory/descriptor_tests.rs",
+      "line": 146,
+      "function": "descriptor_state",
+      "operation": "fcntl F_GETFD",
+      "source_sha256": "6ffc7c7c5375bbf7e52137c86713e840a46751bc249465d3a5165dfa41dd725f",
+      "justification": "Intentionally probes both valid and closed raw descriptor numbers without mutation; BorrowedFd validity cannot be asserted for expected EBADF."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/runtime.rs",
+      "line": 10,
+      "function": "PublicFork",
+      "operation": "unsafe extern C fn type",
+      "source_sha256": "a227f95a8adb216c2a57bc9faf1b2cffe9364fb956c8482c3620effa6bf3daff",
+      "justification": "Records the exact native pid_t-returning ABI and caller obligation; no operation by itself."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/runtime.rs",
+      "line": 56,
+      "function": "spawn_output",
+      "operation": "function-pointer invocation",
+      "source_sha256": "a227f95a8adb216c2a57bc9faf1b2cffe9364fb956c8482c3620effa6bf3daff",
+      "justification": "Validated Darwin21+ public vfork symbol; zero-return branch only runs bounded native child path; no application atfork callbacks, parent never signals or waits on a numeric PID."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/runtime.rs",
+      "line": 98,
+      "function": "resolve_public_fork",
+      "operation": "dlsym",
+      "source_sha256": "a227f95a8adb216c2a57bc9faf1b2cffe9364fb956c8482c3620effa6bf3daff",
+      "justification": "Static NUL-terminated public symbol name, regular initialization before resource cap; null address returns typed Unsupported."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/runtime.rs",
+      "line": 107,
+      "function": "resolve_public_fork",
+      "operation": "transmute",
+      "source_sha256": "a227f95a8adb216c2a57bc9faf1b2cffe9364fb956c8482c3620effa6bf3daff",
+      "justification": "Darwin documented vfork has exact declared C ABI; only nonnull function address is converted."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/runtime.rs",
+      "line": 122,
+      "function": "query_alarm_action",
+      "operation": "sigaction query",
+      "source_sha256": "a227f95a8adb216c2a57bc9faf1b2cffe9364fb956c8482c3620effa6bf3daff",
+      "justification": "Initialized output action, null replacement pointer; reads current disposition without modifying application policy."
+    },
+    {
+      "path": "crates/martensite-tkernel/src/osd/timing/signal_native/cpu_budget/darwin/runtime.rs",
+      "line": 140,
+      "function": "bind_timer_without_change",
+      "operation": "setitimer invalid selector",
+      "source_sha256": "a227f95a8adb216c2a57bc9faf1b2cffe9364fb956c8482c3620effa6bf3daff",
+      "justification": "Fully initialized arguments and deliberately invalid selector bind wrapper without changing an application timer."
+    }
+  ],
+  "compiler_platform_baselines_modified": false,
+  "actual_rust_native_platform_tests_pending": true,
+  "oldest_macos_support_decision": "Unresolved; pre-Darwin21 Unsupported remains a draft outcome and blocks integration/release without policy or evidence."
+}
