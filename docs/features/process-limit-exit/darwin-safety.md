@@ -16,6 +16,6 @@ Diagnostic output remains best effort. If the CPU signal interrupts a thread hol
 
 Verification separates those claims. Controlled recipients retain exact message, real refusal and callback-bypass assertions while concurrent fixture workers block only SIGXCPU. Separate stress cases leave application workers unmasked and verify termination, unchanged caller policies and explicit incomplete output evidence. That recipient configuration belongs only to tests. Cleanup checks hold a stdout pipe full until the last writer closes, observing HUP before any drain. The original four product regressions retain their assertions and 12-second safety guard.
 
-## Oldest supported macOS remains unresolved
+## CPU-budget support on macOS
 
-The draft checks for Darwin 21 or newer before preparing the process primitive. Older or malformed releases return a typed `Unsupported` initialization error before changing the resource cap. A missing public symbol also returns `Unsupported`. Deployment targets and package versions are unchanged. Integration and release of that older-OS outcome require a supported-version decision or independent evidence for another safe implementation.
+CPU budgets require macOS 12 or newer (Darwin 21 onward), as approved for #289. Older or malformed releases return a typed `Unsupported` initialization error before changing the resource cap. A missing public symbol also returns `Unsupported`. This requirement applies to CPU budgets; other kernel features retain their existing operating-system support. Deployment targets and package versions are unchanged.

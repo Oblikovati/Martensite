@@ -203,7 +203,19 @@
     }
   ],
   "compiler_platform_baselines_modified": false,
-  "actual_rust_native_platform_tests_pending": true,
-  "oldest_macos_support_decision": "Unresolved; pre-Darwin21 Unsupported remains a draft outcome and blocks integration/release without policy or evidence.",
-  "compile_correction": "The cross-target compiler rejected the Nix alarm wrapper because its signal feature is disabled. The same private fixture alarm uses libc inside the existing block; no new unsafe keyword, dependency feature, deadline, or production behavior changes."
+  "oldest_macos_support_decision": "Approved: CPU budgets require macOS 12+ (Darwin 21+); older or malformed releases return typed Unsupported before changing the cap. Other kernel features retain their existing operating-system support.",
+  "compile_correction": "The cross-target compiler rejected the Nix alarm wrapper because its signal feature is disabled. The same private fixture alarm uses libc inside the existing block; no new unsafe keyword, dependency feature, deadline, or production behavior changes.",
+  "actual_rust_native_platform_tests_pending_at_review": true,
+  "native_rust_verification": {
+    "product_commit": "3425741478dededeab63feb00bb51ffd7511f68c",
+    "tested_macos": "15.7.9",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "darwin_controls_passed_per_architecture": 5,
+    "original_cpu_regressions_passed_per_architecture": 4,
+    "timing_source_hashes_verified_per_architecture": 33,
+    "scope": "Focused native Rust tests; the exact final full release matrix remains a separate gate."
+  }
 }
