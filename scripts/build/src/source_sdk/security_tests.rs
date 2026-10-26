@@ -1,4 +1,5 @@
 use super::*;
+use crate::error::BuildError;
 use std::{fs, io, path::Path};
 
 struct SealedArchiveFixture {
@@ -43,6 +44,16 @@ impl SealedArchiveFixture {
         assert!(!self.directory.path().join("escape").exists());
     }
 
+    // Host parsing may reject traversal before portable spelling, but must not extract (#313).
+    fn rejected_raw_member(&self, member: &[u8]) {
+        let output = self.directory.path().join("extracted");
+        let archive = self.raw_member(member);
+        let error = integrity::extract_verified(&archive, &output, &self.manifest).unwrap_err();
+        assert_raw_path_rule(error, member);
+        assert!(!output.exists());
+        assert!(!self.directory.path().join("escape").exists());
+    }
+
     fn crafted(&self, symlink: bool) -> PathBuf {
         let path = self.directory.path().join("crafted.tar.gz");
         let file = fs::File::create(&path).unwrap();
@@ -80,6 +91,22 @@ impl SealedArchiveFixture {
         copy_with_mode(&input, &output, 0o4644);
         output
     }
+}
+
+fn assert_raw_path_rule(error: BuildError, member: &[u8]) {
+    let BuildError::ReleaseRule(rule) = error else {
+        panic!("expected archive path rejection, got {error}");
+    };
+    let member = Path::new(std::str::from_utf8(member).unwrap());
+    assert!(
+        rule.starts_with(&format!("SDK path {member:?}; expected ")),
+        "{rule}"
+    );
+    assert!(
+        rule.ends_with("portable path components")
+            || rule.ends_with("a nonempty relative regular-file path"),
+        "{rule}"
+    );
 }
 
 fn copy_with_mode(input: &Path, output: &Path, mode: u32) {
@@ -264,6 +291,6 @@ fn raw_member_backslashes_and_drive_names_fail_before_native_reconstruction() {
         b"martensite-0.4.0-source-workspace/vendor/C:payload",
     ] {
         let fixture = SealedArchiveFixture::new();
-        fixture.rejected(&fixture.raw_member(member), "portable path components");
+        fixture.rejected_raw_member(member);
     }
 }
