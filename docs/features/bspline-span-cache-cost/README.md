@@ -90,3 +90,16 @@ returned all eight tests to green with their test files unchanged.
 This packet compares the recorded main-branch baseline with the fix. It does not
 claim a benchmark against the previous release, a sanitizer pass or completion of
 the affected-package PR gate. Those checks have separate outcomes.
+
+The [released-comparison supplement](evidence/released-comparison-receipt.json)
+runs the identical fixture against released v0.3.6 with matching registry
+dependency versions and the same release profile. All sixteen released
+closed/cached process outputs match the final complete bitstreams. Its allocation
+deltas equal the pre-fix table at all four sizes. At 32,768 spans, the released
+evaluation took 0.68025/0.63795 seconds, with whole-process peak RSS 9,656/9,524 KiB.
+The profiler and output qualifications above apply to these observations too.
+
+That supplement also retains the final rich-test executable and Cargo's
+compiler-artifact record. Two direct executions reproduce the same 40 records.
+The earlier rich baseline has its Cargo command, source revision and raw records;
+its executable was not retained. The cost baseline executable is retained.
