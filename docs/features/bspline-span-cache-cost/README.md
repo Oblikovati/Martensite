@@ -72,3 +72,21 @@ allocation measurement and a source-derived copy account, not an instrumented
 `memcpy` count. Lock acquisition counts are likewise not instrumented: the code
 replaces repeated input getter leases with one scoped read lease, and the tests
 check its lifetime and exclusion behavior.
+
+## Retained verification
+
+The [receipt](evidence/receipt.json) binds the baseline, runtime change and final
+focused-test revisions to a [175-payload archive](evidence/current-base-allocation-proof.tar.gz).
+After extracting it into an empty directory, `sha256sum -c MANIFEST.sha256`
+checks every retained payload. It includes complete binary output, allocation
+profiles, RSS records, the before executable, final executable and source files.
+
+Two final processes reproduced all 40 rational, periodic and boundary records
+bit for bit against the pre-change producer. Eight private controls passed,
+including four threads reading one shared adaptor. Deliberately restoring only a
+pole-array copy failed both array-address controls; restoring the recorded source
+returned all eight tests to green with their test files unchanged.
+
+This packet compares the recorded main-branch baseline with the fix. It does not
+claim a benchmark against the previous release, a sanitizer pass or completion of
+the affected-package PR gate. Those checks have separate outcomes.
