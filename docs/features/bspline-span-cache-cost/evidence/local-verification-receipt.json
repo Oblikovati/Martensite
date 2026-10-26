@@ -1,0 +1,69 @@
+{
+  "issue": 309,
+  "kernel_gate_revision": "0f072c63395b9dc70ebc00291a5709c98652a5ec",
+  "ci_driver_revision": "b5898a563458c86bfaa5aa4c83dcbcf014c0b2c6",
+  "kernel_sources_and_global_build_inputs_unchanged": true,
+  "full_gate": {
+    "argv": [
+      "cargo",
+      "+1.99.0",
+      "xtask",
+      "pr",
+      "--base",
+      "4462ad6cd1b530721e1b47070dc4818df5211469"
+    ],
+    "status": 0,
+    "affected_packages": 12,
+    "environment": {
+      "CARGO_TARGET_DIR": "/tmp/martensite-spline-span-target",
+      "CARGO_BUILD_JOBS": "2",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "MARTENSITE_TEST_DATA_DIR": "/home/vmiguel/git/oblikovati-workspace/Martensite/external/martensite-test-data"
+    },
+    "dataset_revision": "c58ee236484bce7b385392454f976d001f8443c4",
+    "initial_attempt": "Failed only because the sparse lane omitted the pinned dataset directory; 1114 missing-directory panics plus1112 derived child-status wrappers; raw log retained."
+  },
+  "driver_tests": {
+    "passed": 232,
+    "failed": 0,
+    "strict_clippy": "passed",
+    "initial_attempt": "One workflow-guard assertion expected the prior exact needs list. Updated it to require every old dependency plus the sanitizer job; retained229pass1fail log."
+  },
+  "local_sanitizer": "Build succeeded; instrumented test --list and std-only startup fault before main. Same std-only source without instrumentation succeeds. No local sanitizer pass or kernel-race diagnosis. System preload observed; causal role not isolated. Actual new driver fails before controls after failed smoke.",
+  "hosted_sanitizer": "Required unsuppressed Linux workflow check; not executed in this local packet.",
+  "archive": "local-gate-and-sanitizer-startup.tar.gz",
+  "archive_sha256": "b45a062181f7aaabf8ec9e84c3a1c280e2c2f0c97da0c6927b9173ab3f87d9ef",
+  "payloads": 56,
+  "ci_source_bindings": {
+    ".github/workflows/martensite.yml": "67653420bb2b3d2882de11b7f73a8018c587d55b98510f6ddcab1550fe79d162",
+    "scripts/build/src/cli.rs": "0a2e399f074feba1b1ec78e029f5b50e75bc7c68aaa20e2058a19bf020035c54",
+    "scripts/build/src/fake_runner.rs": "bf1659e04d55bec15fba4614e76343fcd515ef531e2f7ffc93846e58ffb2e2b7",
+    "scripts/build/src/main.rs": "3a297210179e39cbd7bb626852463d902a86c37436478b1e856ebae20fd24eb6",
+    "scripts/build/src/release_ci.rs": "73fb8e2817a52944744be52fa9a8a193809736df4424bbfab4a4217b5fbf06b9",
+    "scripts/build/src/thread_sanitizer.rs": "50c21da4f4e0f714c8ab4aca5eef236cccb520afab2754c8881183cc0b66e344",
+    "scripts/build/src/thread_sanitizer_tests.rs": "c20aef22f02924c40cae87ff2df8486235e8a3f943e79586fea2f5efe8033b9f",
+    "scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.lock": "003c4b9b517e68f663097039a6698c229d4fc7dec2525127c91218947c182d71",
+    "scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml": "af8590618d9edb6ba4f8a8b54a8dcc18f2bde9e3e5d33babe365d7092be0ed9b",
+    "scripts/build/tests/fixtures/thread_sanitizer_startup/src/main.rs": "a97c4a77069ce4613adca03c7b6d818321ba52de0e88714f5a88537243b71b2c"
+  },
+  "retained_instrumented_binaries": {
+    "planar-controls": {
+      "path": "/tmp/martensite-bspline-tsan-target/x86_64-unknown-linux-gnu/debug/build/martensite-tkg2d/35810c8395b58199/out/martensite_tkg2d-35810c8395b58199",
+      "sha256": "5ff35350accf3b39b4b8cd023b311c81d3866a55ace55ba1cd90aa686149e262"
+    },
+    "spatial-controls": {
+      "path": "/tmp/martensite-bspline-tsan-target/x86_64-unknown-linux-gnu/debug/build/martensite-tkg3d/d92db2e6cca60751/out/martensite_tkg3d-d92db2e6cca60751",
+      "sha256": "ba97512a1dc9878fa978685ebdda5eef2fcd89ce1b1b52d06d23782419dd7d68"
+    },
+    "sanitizer-host-startup": {
+      "path": "/tmp/martensite-bspline-tsan-target/x86_64-unknown-linux-gnu/debug/sanitizer-host-startup",
+      "sha256": "95e345034186f12cf4c0faa1cb3442d9cd571b9b82c70acf0851bcd3a66e0ea4"
+    },
+    "sanitizer-startup-control": {
+      "path": "/tmp/martensite-bspline-tsan-target/x86_64-unknown-linux-gnu/debug/sanitizer-startup-control",
+      "sha256": "204940512c1e93d8c0b1ea3317a87abc5116482a496e2b4d312c3b4c54358af0"
+    }
+  }
+}

@@ -32,6 +32,7 @@ mod release_sources;
 mod report;
 mod source_sdk;
 mod targets;
+mod thread_sanitizer;
 #[cfg(test)]
 mod unsafe_inventory;
 mod version;

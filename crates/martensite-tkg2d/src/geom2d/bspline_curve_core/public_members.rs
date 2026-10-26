@@ -10,6 +10,25 @@
 macro_rules! bspline_curve_accessors {
     ($point:ty, $vector:ty) => {
         $crate::spline_pole_members!($point);
+        /// Keep span-cache construction on one stored read view (#309).
+        /// Internal builders use `curve.with_cache_build_inputs(|metadata, flat, poles, weights| build(metadata, flat, poles, weights))`.
+        pub(crate) fn with_cache_build_inputs<R>(
+            &self,
+            build: impl FnOnce(
+                (i32, bool),
+                &Array1<'_, f64>,
+                &Array1<'_, $point>,
+                Option<&Array1<'_, f64>>,
+            ) -> R,
+        ) -> R {
+            let state = self.state.read();
+            build(
+                (state.deg, state.periodic),
+                &state.flat_knots,
+                &state.poles,
+                state.weights_view(),
+            )
+        }
         /// Point located between knots `from_k1` and `to_k2` (`LocalValue`);
         /// `curve.local_value(0.5, 1, 2)?`.
         pub fn local_value(&self, u: f64, from_k1: i32, to_k2: i32) -> Result<$point, Failure> {

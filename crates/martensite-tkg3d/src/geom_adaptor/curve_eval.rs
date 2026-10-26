@@ -94,25 +94,26 @@ pub(super) fn boundary_span(
 // RebuildCache for a B-spline: create the cache once, then fill it on the span of `u`.
 fn rebuild_bspline_cache(data: &mut BSplineData, u: f64) -> Result<(), Failure> {
     let curve: &GeomBSplineCurve = &data.curve;
-    let (flat, poles, weights) = (curve.knot_sequence(), curve.poles(), curve.weights());
-    if data.cache.is_none() {
-        data.cache = Some(new_bspline_cache(curve, &flat, &poles, weights.as_ref())?);
-    }
-    data.cache
-        .as_ref()
-        .expect("cache created above")
-        .with_mut(|cache| cache.build_cache(u, &flat, &poles, weights.as_ref()))
-        .expect("non-null spline cache")
+    curve.with_cache_build_inputs(|metadata, flat, poles, weights| {
+        if data.cache.is_none() {
+            data.cache = Some(new_bspline_cache(metadata, flat, poles, weights)?);
+        }
+        data.cache
+            .as_ref()
+            .expect("cache created above")
+            .with_mut(|cache| cache.build_cache(u, flat, poles, weights))
+            .expect("non-null spline cache")
+    })
 }
 
 fn new_bspline_cache(
-    curve: &GeomBSplineCurve,
+    (degree, periodic): (i32, bool),
     flat: &Array1<'_, f64>,
     poles: &Array1<'_, Point3>,
     weights: Option<&Array1<'_, f64>>,
 ) -> Result<SharedBSplineCache, Failure> {
-    let periodic = curve.is_periodic();
-    Cache::new(curve.degree(), periodic, flat, poles, weights).map(SharedBSplineCache::new)
+    let cache = Cache::new(degree, periodic, flat, poles, weights)?;
+    Ok(SharedBSplineCache::new(cache))
 }
 
 // RebuildCache for a Bezier curve, which runs only while no cache exists: its single

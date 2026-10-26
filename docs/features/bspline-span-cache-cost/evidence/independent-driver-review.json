@@ -1,0 +1,44 @@
+{
+  "commit": "b5898a563458c86bfaa5aa4c83dcbcf014c0b2c6",
+  "reviewed_parent": "0f072c63395b9dc70ebc00291a5709c98652a5ec",
+  "scope": "Exact driver/workflow/CLI/RecordingRunner patch only; earlier private cache kernel change outside this review.",
+  "spec_findings": [],
+  "standards_findings": [],
+  "security_findings": [],
+  "verified": [
+    "Pinned nightly2026-09-25 rustc identity precedes real startup smoke; startup run failure propagates before cache test command.",
+    "Fixed current filter selects3planar+5spatial nonignored lib controls, including actual4thread repeated3Dcache reader test.",
+    "Cargo invocation uses locked dependencies, explicit Linux target, rebuilt std, exact TSan/frame-pointer flags and separate target.",
+    "Inherited encoded Rustflags/wrappers/TSAN_OPTIONS/loader overrides removed for instrumented child; common Cargo seam also removes GH/GITHUB tokens.",
+    "RecordingRunner::run now honors nonzero scripted exit status, matching ProcessRunner; tests cover smoke refusal and real-control failure propagation.",
+    "Aggregate always-run job requires sanitizer result=success; failure/cancelled/skipped rejected through existing gate before other results.",
+    "Existing pinned checkout action reused, contents:read unchanged, no new secrets, credentials, permissions, pull_request_target, suppressions or continue-on-error.",
+    "Existing CIrun target/checks-only CLI behavior preserved; newownedCiRunArgs Send+Sync demonstrated by Arc transfer.",
+    "No crates/rootCargo/lock/toolchain changes versus prior12-package gate revision.",
+    "New/changed functions satisfy4-20-line bounds and changedfiles under500; public intent+usage docs present."
+  ],
+  "evidence": {
+    "focused_driver_tests": {
+      "path": "/tmp/martensite-bspline-sanitizer-driver-tests-final2.log",
+      "observed": "232passed0failed"
+    },
+    "driver_strict": {
+      "path": "/tmp/martensite-bspline-sanitizer-driver-clippy.log",
+      "observed": "finisheddevsuccess"
+    },
+    "actual_local_refusal": {
+      "receipt": "/tmp/martensite-bspline-tsan/driver-receipt.json",
+      "exit": 1,
+      "cause": "startup-smokeSIGSEGV11",
+      "cache_controls_executed": false,
+      "rustc": "1.100.0-nightly f7575a9da2026-09-24"
+    },
+    "prior_full_affected_gate": "/tmp/martensite-bspline-span-cache-pr-with-data.log at0f072c63395b; productioncrates/deps unchanged by reviewedpatch"
+  },
+  "remaining": [
+    "No actual TSan cache pass established locally: process fails before smoke main/geometry controls.",
+    "Hosted pinnednightly job and required aggregate must be green at final immutable PR revision before sanitizer closure/merge.",
+    "Full local/hosted gate ownership remains SDK/Root; reviewer performed no builds, sanitizer runs, checkout edits or pushes."
+  ],
+  "execution": "Read-only frozen source/environment/workflow/log analysis and static exact8test selection."
+}

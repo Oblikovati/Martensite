@@ -87,14 +87,14 @@ pub(super) fn boundary_span(
 // RebuildCache for a B-spline: create the cache once, then fill it on the span of `u`.
 fn rebuild_bspline_cache(data: &mut BSplineData, u: f64) -> Result<(), Failure> {
     let curve: &Geom2dBSplineCurve = &data.curve;
-    let (flat, poles, weights) = (curve.knot_sequence(), curve.poles(), curve.weights());
-    let source = CacheSource {
-        flat: &flat,
-        poles: &poles,
-        weights: weights.as_ref(),
-    };
-    let (degree, periodic) = (|| curve.degree(), || curve.is_periodic());
-    span_cache::rebuild_cache(&mut data.cache, &source, degree, periodic, u)
+    curve.with_cache_build_inputs(|(degree, periodic), flat, poles, weights| {
+        let source = CacheSource {
+            flat,
+            poles,
+            weights,
+        };
+        span_cache::rebuild_cache(&mut data.cache, &source, || degree, || periodic, u)
+    })
 }
 
 // RebuildCache for a Bezier curve, which runs only while no cache exists: its single

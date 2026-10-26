@@ -66,7 +66,13 @@ impl RecordingRunner {
 
 impl CommandRunner for RecordingRunner {
     fn run(&self, spec: &CommandSpec) -> BuildResult<()> {
-        self.record(spec);
+        let line = self.record(spec);
+        if let Some(code) = self.exit_codes.get(&line).filter(|code| **code != 0) {
+            return Err(BuildError::CommandFailed {
+                command: line,
+                status: code.to_string(),
+            });
+        }
         Ok(())
     }
 

@@ -128,3 +128,7 @@ impl Geom2dBSplineCurve {
         self.state.write().remove_pole(index)
     }
 }
+
+#[cfg(test)]
+#[path = "bspline_cache_inputs_tests.rs"]
+mod cache_inputs_tests;

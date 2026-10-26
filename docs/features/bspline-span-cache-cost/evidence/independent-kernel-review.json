@@ -1,0 +1,157 @@
+{
+  "issue": 309,
+  "head": "bc0f9ce8",
+  "runtime": "33a51c816147a0899993d8e3f6019895492ecf13",
+  "base": "4462ad6cd1b530721e1b47070dc4818df5211469",
+  "spec_findings": [],
+  "standards_findings": [],
+  "correctness_findings": [],
+  "verdict": "Scoped static/runtime-evidence review zero findings; not final merge/release acceptance",
+  "reviewed": {
+    "manifest": {
+      "payloads": 175,
+      "all_hashes_match": true,
+      "exact_membership": true,
+      "archive_sha256": "2ac10e96ce372a235e203c2fb5f1ad5b1a0a4e3fbd8077e48c552b801cab1d12"
+    },
+    "compiled_source_bindings": 14,
+    "rich_records": {
+      "records_per_process": 40,
+      "before_processes": 2,
+      "after_processes": 2,
+      "all_values_and_bits_equal": true
+    },
+    "cost_bits": {
+      "sizes": [
+        512,
+        2048,
+        8192,
+        32768
+      ],
+      "all_8_complete_streams_per_size_equal": true
+    },
+    "private_controls": {
+      "planar": 3,
+      "spatial": 5,
+      "causal_mutant": {
+        "failed": 2,
+        "passed": 6
+      },
+      "exact_restoration": {
+        "passed": 8,
+        "failed": 0
+      }
+    },
+    "ownership": "Private FnOnce callback keeps one SharedState RwLock read guard; both actual callers use concrete Point2/Point3 arrays, captured scalar metadata and unchanged coefficient builders without geometry re-entry/application callbacks. No references are retained by owned CacheState/CacheParams. Errors and unwinding release guard. Existing poison recovery, source mutation/cache validity/clone semantics remain unchanged.",
+    "lock_order": "Actual rebuild order is adaptor state -> source read -> local coefficient-cache lock; coefficient builders do not call source geometry and no reverse source acquisition found.",
+    "allocation_rows_independently_rederived": [
+      {
+        "spans": 512,
+        "processes": [
+          {
+            "baseline": {
+              "extra_allocated_bytes": 9045096,
+              "extra_allocation_calls": 2049
+            },
+            "after": {
+              "extra_allocated_bytes": 631912,
+              "extra_allocation_calls": 1025
+            }
+          },
+          {
+            "baseline": {
+              "extra_allocated_bytes": 9045096,
+              "extra_allocation_calls": 2049
+            },
+            "after": {
+              "extra_allocated_bytes": 631912,
+              "extra_allocation_calls": 1025
+            }
+          }
+        ]
+      },
+      {
+        "spans": 2048,
+        "processes": [
+          {
+            "baseline": {
+              "extra_allocated_bytes": 136840296,
+              "extra_allocation_calls": 8193
+            },
+            "after": {
+              "extra_allocated_bytes": 2524264,
+              "extra_allocation_calls": 4097
+            }
+          },
+          {
+            "baseline": {
+              "extra_allocated_bytes": 136840296,
+              "extra_allocation_calls": 8193
+            },
+            "after": {
+              "extra_allocated_bytes": 2524264,
+              "extra_allocation_calls": 4097
+            }
+          }
+        ]
+      },
+      {
+        "spans": 8192,
+        "processes": [
+          {
+            "baseline": {
+              "extra_allocated_bytes": 2157970536,
+              "extra_allocation_calls": 32769
+            },
+            "after": {
+              "extra_allocated_bytes": 10093672,
+              "extra_allocation_calls": 16385
+            }
+          },
+          {
+            "baseline": {
+              "extra_allocated_bytes": 2157970536,
+              "extra_allocation_calls": 32769
+            },
+            "after": {
+              "extra_allocated_bytes": 10093672,
+              "extra_allocation_calls": 16385
+            }
+          }
+        ]
+      },
+      {
+        "spans": 32768,
+        "processes": [
+          {
+            "baseline": {
+              "extra_allocated_bytes": 34401682536,
+              "extra_allocation_calls": 131073
+            },
+            "after": {
+              "extra_allocated_bytes": 40371304,
+              "extra_allocation_calls": 65537
+            }
+          },
+          {
+            "baseline": {
+              "extra_allocated_bytes": 34401682536,
+              "extra_allocation_calls": 131073
+            },
+            "after": {
+              "extra_allocated_bytes": 40371304,
+              "extra_allocation_calls": 65537
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "limitations": [
+    "Read-only review; no builds, benchmarks, captured executable or contributor scripts executed.",
+    "Runtime receipts/raw outputs corroborate execution, not an independently re-run gate. Rich Cargo receipt has no retained compiler-artifact JSON/ELF; cost executable hashes are independently verified from gzip.",
+    "No new thread-safety guarantee: existing four-reader stress passed; TSan remains pending.",
+    "Full 12-package dependent PR gate and previous-release accepted-workload benchmark remain pending; current-main baseline only.",
+    "Allocation totals include profiling/process/output overhead and use closed-control subtraction; memcpy and lock acquisition counts not instrumented. No categorical arbitrary inherited-environment/profile absence claim."
+  ]
+}

@@ -50,20 +50,26 @@ pub enum BuildCommand {
     Ci(CiCommand),
 }
 
+/// Owned arguments for one planned CI target; `cargo xtask ci run --target x86_64-unknown-linux-gnu`.
+#[derive(clap::Args)]
+pub struct CiRunArgs {
+    /// The matrix target triple.
+    #[arg(long)]
+    target: String,
+    /// Delegate tests to the required package or release-shard matrix.
+    #[arg(long)]
+    checks_only: bool,
+}
+
 /// Commands that read the GitHub Actions trigger from the environment.
 #[derive(Subcommand)]
 pub enum CiCommand {
+    /// Check geometry cache ownership with the pinned Linux thread sanitizer.
+    ThreadSanitizer,
     /// Write the pipeline mode and target matrix to `GITHUB_OUTPUT`.
     Plan,
     /// Run the planned pipeline for one matrix target.
-    Run {
-        /// The matrix target triple.
-        #[arg(long)]
-        target: String,
-        /// Delegate tests to the required package or release-shard matrix.
-        #[arg(long)]
-        checks_only: bool,
-    },
+    Run(CiRunArgs),
     /// Run one affected package or release test shard.
     Test {
         #[arg(long, required_unless_present = "shard", conflicts_with = "shard")]
@@ -117,23 +123,22 @@ fn dispatch(context: &BuildContext<'_>, command: BuildCommand) -> BuildResult<()
 }
 
 fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()> {
+    use CiCommand::{Gate, Plan, Publish, Run, Test, ThreadSanitizer};
     match command {
-        CiCommand::Run {
-            target,
-            checks_only,
-        } => run_planned(context, &target, checks_only),
-        CiCommand::Test {
+        ThreadSanitizer => crate::thread_sanitizer::run(context),
+        Run(args) => run_planned(context, &args.target, args.checks_only),
+        Test {
             package,
             shard,
             target,
         } => test_planned_selection(context, package.as_deref(), shard, target),
-        CiCommand::Gate {
+        Gate {
             checks,
             tests,
             has_tests,
         } => crate::ci_tests::require_success(&checks, &tests, has_tests),
-        CiCommand::Publish { dist } => publish_planned(context, &dist),
-        CiCommand::Plan => emit_plan(context),
+        Publish { dist } => publish_planned(context, &dist),
+        Plan => emit_plan(context),
     }
 }
 
@@ -300,6 +305,42 @@ mod tests {
     #[test]
     fn ci_run_requires_a_target() {
         assert!(Cli::try_parse_from(["cargo xtask", "ci", "run"]).is_err());
+    }
+
+    #[test]
+    fn thread_sanitizer_selects_the_fixed_verification_pipeline() {
+        let cli = Cli::try_parse_from(["cargo xtask", "ci", "thread-sanitizer"]).unwrap();
+        assert!(matches!(
+            cli.command,
+            BuildCommand::Ci(CiCommand::ThreadSanitizer)
+        ));
+    }
+
+    #[test]
+    fn ci_run_arguments_are_owned_send_sync() {
+        let args = CiRunArgs {
+            target: "x86_64-unknown-linux-gnu".into(),
+            checks_only: true,
+        };
+        let args = std::sync::Arc::new(args);
+        let shared = args.clone();
+        let worker = std::thread::spawn(move || (shared.target.clone(), shared.checks_only));
+        assert_eq!(worker.join().unwrap(), (args.target.clone(), true));
+    }
+
+    #[test]
+    fn ci_run_preserves_existing_target_and_checks_only_flags() {
+        let cli = Cli::try_parse_from([
+            "cargo xtask",
+            "ci",
+            "run",
+            "--target",
+            "x86_64-unknown-linux-gnu",
+            "--checks-only",
+        ])
+        .unwrap();
+        assert!(matches!(cli.command, BuildCommand::Ci(CiCommand::Run(args))
+            if args.target == "x86_64-unknown-linux-gnu" && args.checks_only));
     }
 
     #[test]
