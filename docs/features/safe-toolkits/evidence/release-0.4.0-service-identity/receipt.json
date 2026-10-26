@@ -1,0 +1,24 @@
+{
+  "metadata_revision": "b68700edd83cf178fd198406890b038e15a694ba",
+  "linux_target": "x86_64-unknown-linux-gnu",
+  "compiler": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "ordered_groups": 449,
+  "service_identity_groups": 27,
+  "raw_workspace_events": 2814,
+  "unchanged_full_ordered_summary_after_only_service_version_identity": true,
+  "label_changes_by_target_expectation": {
+    "x86_64-unknown-linux-gnu": 27,
+    "x86_64-pc-windows-msvc": 22,
+    "x86_64-apple-darwin": 22,
+    "aarch64-apple-darwin": 22
+  },
+  "measured_targets": [
+    "x86_64-unknown-linux-gnu"
+  ],
+  "other_native_targets": "Expected identity changes only; actual independent comparison remains required in the exact-candidate release matrix. No count changes or native-platform success inferred.",
+  "archive_sha256": "50e6abe59eb6edcf125f548ce94eeed72c4ac6cbbd3d892186786146f0992e81",
+  "payloads": 11,
+  "members_including_manifest": 12,
+  "first_pr_attempt": "Expected compiler baseline mismatch before affected package suites; command exited1 and resource guard did not stop it. It is not a successful PR gate.",
+  "future_pr_and_release_matrix": "Must pass before merge/tag; no weakened baseline comparison or suppressed diagnostics."
+}

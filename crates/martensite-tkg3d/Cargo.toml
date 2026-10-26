@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkg3d"
-version = "0.3.5"
+version = "0.3.6"
 description = "Martensite spatial geometry: curves, surfaces, adaptors and evaluation."
 edition.workspace = true
 rust-version.workspace = true
@@ -16,7 +16,7 @@ workspace = true
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
 martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.0" }
 martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
-martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.5" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.6" }
 
 [dev-dependencies]
 flate2 = { version = "=1.1.10", default-features = false, features = ["rust_backend"] }

@@ -98,7 +98,7 @@ mod tests {
             .split("\n  publish:\n")
             .next()
             .unwrap();
-        assert!(verify.contains("needs: [plan, checks, tests, release-tests]"));
+        assert!(verify.contains("needs: [plan, checks, tests, release-tests, thread-sanitizer]"));
         assert!(verify.contains("if: always()"));
         assert!(verify.contains("needs.release-tests.result"));
         assert!(verify.contains("cargo xtask ci gate"));

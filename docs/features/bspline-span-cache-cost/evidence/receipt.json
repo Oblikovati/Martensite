@@ -1,0 +1,29 @@
+{
+  "issue": 309,
+  "baseline_runtime": "4462ad6cd1b530721e1b47070dc4818df5211469",
+  "baseline_producer": "16cfad834f1a2220a21d46fe55134c2e27832756",
+  "rich_before": "f9a468b56ea9b53dc7d02289e5276738e2904f0b",
+  "runtime_fix": "33a51c816147a0899993d8e3f6019895492ecf13",
+  "final_focused_checks": "2c04ee3825beac053c791a116a7fdceb31a3f8de",
+  "archive": "current-base-allocation-proof.tar.gz",
+  "archive_sha256": "2ac10e96ce372a235e203c2fb5f1ad5b1a0a4e3fbd8077e48c552b801cab1d12",
+  "payloads": 175,
+  "current_rust_bindings": {
+    "crates/martensite-tkg2d/src/geom2d/bspline_cache_inputs_tests.rs": "fba28c693ffddc81ad8542aee3028f2706c78ee961a9ccc4c52de387a653c9b9",
+    "crates/martensite-tkg2d/src/geom2d/bspline_curve.rs": "30afa68a83932e40ba554da81a2c43bdb6b428750b8e8132d7fcccae2ffa677c",
+    "crates/martensite-tkg2d/src/geom2d/bspline_curve_core/public_members.rs": "d0ec4fb709b9a7e2486bdc48a93e7a1e04553528ea0e28b1aa13211bc0b40b82",
+    "crates/martensite-tkg2d/src/geom2d_adaptor/curve_eval.rs": "49ebfd8743ee228590d7d384daf81caf76b059df72cdb048df15d31716de29e6",
+    "crates/martensite-tkg3d/examples/bspline_span_cost.rs": "eac22f2bca939ad336c835b194e96d94371d5f9f9f4561a2885bc57e0c6c57cb",
+    "crates/martensite-tkg3d/examples/span_cost/contracts/curves.rs": "457555034b0bf38063dc2e3b81abe8e7a0ae35bc85674f90540a9e2cecfabb98",
+    "crates/martensite-tkg3d/examples/span_cost/contracts/expected.rs": "dc8bcfbbb76a705ce9c79b696ba53491cde138c29c09f5c1d6fd9cd86e29eea7",
+    "crates/martensite-tkg3d/examples/span_cost/contracts/mod.rs": "815e89ad167775b24d3864e15cf64675d992eb66c7c4f3a4aabb6a5f3d3f2cc6",
+    "crates/martensite-tkg3d/examples/span_cost/contracts/planar.rs": "b47e5d01bd4c95fb330d917642a60a3c47a3a6407fe6c0debbb71caa7cc0071f",
+    "crates/martensite-tkg3d/examples/span_cost/fixture.rs": "40be0d78064af76e760d47ca9f196e79bacc57b59ecfe4889d4ef7e37219d0e9",
+    "crates/martensite-tkg3d/examples/span_cost/samples.rs": "7541c0993417acdf2530e7d4dedc756ec6b5169b820af6319b504feef4f4a8fd",
+    "crates/martensite-tkg3d/src/geom/bspline_cache_inputs_tests.rs": "2a2359fa2ed519a09013c51de24afade17ae409354384c35d6d721583cdc6ffa",
+    "crates/martensite-tkg3d/src/geom/bspline_curve.rs": "65166e6909fdc331b46d96bdf5f23106a2bd8429fdd72c830a470dfb87214aaa",
+    "crates/martensite-tkg3d/src/geom_adaptor/curve_eval.rs": "016cc5c33b3847a0bf4bf50995b02cabfeeb1e44ab50d7857d2e3544eacdcdc3"
+  },
+  "scope": "Current-main baseline versus private borrowed-array fix; no previous-release benchmark, sanitizer or full affected-package gate is claimed by this packet.",
+  "raw_rows_sha256": "de4ef2f74dd84facb34e55e291e8c2164aca4af6b5346e3b6f8a2ebce2dda3b8"
+}

@@ -1,0 +1,13 @@
+{
+  "issue": 309,
+  "released_revision": "98d408444db53e6f4410adf578590e53d9062aff",
+  "current_focused_revision": "bc0f9ce8f348650789e1395c69936180cc4484c9",
+  "archive": "released-comparison-and-direct-replay.tar.gz",
+  "archive_sha256": "6aae7e390954924b04679f8da7d47288db9143a980b6c4d6d31c98d690bba632",
+  "payloads": 78,
+  "same_fixture": "Exact checked-in bspline_span_cost.rs and its fixture/samples modules; ordinary release profile, Rust1.99.0, matching registry dependency versions.",
+  "comparison": "Sixteen released processes match all current closed/cached bitstreams; allocation deltas identical to current-main pre-fix values.",
+  "direct_rich": "Two final actual executable processes, retained ELF and Cargo compiler-artifact JSON; 40 rows each match earlier baseline Cargo records. Earlier rich baseline executable was not retained.",
+  "parser_correction": "Initial derived allocation-call totals were zero because ANSI escapes were not stripped. Raw captures stayed unchanged; corrected parser strips ANSI and requires three malloc/realloc/calloc rows.",
+  "scope": "No sanitizer or affected-package gate is claimed by this supplement."
+}

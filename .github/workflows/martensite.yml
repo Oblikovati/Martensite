@@ -147,8 +147,20 @@ jobs:
           TEST_TARGET: ${{ matrix.target }}
           GH_TOKEN: ${{ github.token }}
 
+  thread-sanitizer:
+    needs: plan
+    name: thread sanitizer (x86_64-unknown-linux-gnu)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the ordinary driver toolchain
+        run: rustup toolchain install
+      - name: Install the pinned sanitizer toolchain and standard-library sources
+        run: rustup toolchain install nightly-2026-09-25 --profile minimal --component rust-src
+      - run: cargo xtask ci thread-sanitizer
+
   verify:
-    needs: [plan, checks, tests, release-tests]
+    needs: [plan, checks, tests, release-tests, thread-sanitizer]
     if: always()
     name: ${{ needs.plan.outputs.mode == 'release' && 'release' || 'pr (x86_64-unknown-linux-gnu)' }}
     runs-on: ubuntu-24.04
@@ -156,6 +168,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install the toolchain pinned by rust-toolchain.toml
         run: rustup toolchain install
+      - name: Require the unsuppressed Linux thread-sanitizer check
+        run: cargo xtask ci gate --checks "$SANITIZER_RESULT" --tests skipped
+        env:
+          SANITIZER_RESULT: ${{ needs.thread-sanitizer.result }}
       - run: cargo xtask ci gate --checks "$CHECKS_RESULT" --tests "$TESTS_RESULT" $HAS_TESTS_FLAG
         env:
           CHECKS_RESULT: ${{ needs.checks.result }}
