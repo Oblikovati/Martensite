@@ -103,3 +103,28 @@ That supplement also retains the final rich-test executable and Cargo's
 compiler-artifact record. Two direct executions reproduce the same 40 records.
 The earlier rich baseline has its Cargo command, source revision and raw records;
 its executable was not retained. The cost baseline executable is retained.
+
+## Required verification
+
+The [local verification receipt](evidence/local-verification-receipt.json) retains
+the completed twelve-package PR gate, compiler inventory and 232 passing
+build-driver tests with strict Clippy. The kernel gate used the pinned dataset
+through `MARTENSITE_TEST_DATA_DIR`; an earlier sparse-checkout run lacked that
+directory and failed setup. Both logs remain in the packet.
+
+The installed sanitizer toolchain built both geometry test binaries, but they
+faulted before libtest could list tests. A program with no kernel dependencies
+also faulted before its first main-entry marker when instrumented, while its
+uninstrumented counterpart ran successfully. The observed system preload was not
+altered, and its causal role was not isolated. This local run supplies no
+sanitizer pass or kernel-race diagnosis.
+
+The required Linux workflow job runs a startup smoke before all eight actual
+planar/spatial ownership controls. Smoke or control failure stops the command and
+fails the existing aggregate gate. The hosted result is evaluated separately from
+the retained local startup limitation. Contributors can run the same check:
+
+```sh
+rustup toolchain install nightly-2026-09-25 --profile minimal --component rust-src
+cargo xtask ci thread-sanitizer
+```
