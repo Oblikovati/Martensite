@@ -6,6 +6,13 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-26
+
+### Added
+
+- Added explicit surface integration and representation policies with owned properties and estimate-or-unknown evidence (#277).
+- Added a verified production-library source SDK bundle with locked dependencies and explicit individual-archive requirement checks (#279).
+
 ### Fixed
 
 - Reduced B-spline span-evaluation allocations by borrowing existing control arrays during planar and spatial cache rebuilds (#309).
@@ -19,15 +26,6 @@ follows [Semantic Versioning](https://semver.org/).
 - Reduced walking-line point-read overhead by keeping fixed curve ownership outside mutable metadata (#294).
 
 - Serialized native source SDK paths as portable archive members on Windows while retaining member validation (#290).
-
-## [0.4.0] - 2026-10-25
-
-### Added
-
-- Added explicit surface integration and representation policies with owned properties and estimate-or-unknown evidence (#277).
-- Added a verified production-library source SDK bundle with locked dependencies and explicit individual-archive requirement checks (#279).
-
-### Fixed
 
 - Used Cargo's resolved target directory when collecting release source archives, including configured and external output directories (#285).
 

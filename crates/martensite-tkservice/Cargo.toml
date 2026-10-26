@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkservice"
-version = "0.3.5"
+version = "0.3.6"
 description = "Martensite visualization services: windows and events, images, fonts, graphic aspects, cameras, lights, textures, shaders and media."
 edition.workspace = true
 rust-version.workspace = true
