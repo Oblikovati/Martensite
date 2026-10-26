@@ -13,12 +13,14 @@ fn startup_precedes_both_real_geometry_control_sets() {
     let runner = runner();
     run(&context_at(&runner, Path::new("/repo"))).unwrap();
     let commands = runner.commands();
+    let manifest =
+        Path::new("/repo").join("scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml");
     assert_eq!(
         &commands[1..],
         &[
-            "rustc +nightly-2026-09-25 -Vv",
-            "cargo +nightly-2026-09-25 run --locked -Zbuild-std --target x86_64-unknown-linux-gnu --manifest-path /repo/scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml",
-            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkg2d --package martensite-tkg3d --lib cache_inputs_tests -- --test-threads=1 --show-output",
+            "rustc +nightly-2026-09-25 -Vv".to_owned(),
+            format!("cargo +nightly-2026-09-25 run --locked -Zbuild-std --target x86_64-unknown-linux-gnu --manifest-path {}", manifest.display()),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkg2d --package martensite-tkg3d --lib cache_inputs_tests -- --test-threads=1 --show-output".to_owned(),
         ]
     );
 }
@@ -78,7 +80,8 @@ fn child_environment_keeps_instrumentation_and_refuses_inherited_suppressions() 
 
 #[test]
 fn workflow_runs_the_pinned_sanitizer_and_requires_its_actual_job_result() {
-    let workflow = include_str!("../../../.github/workflows/martensite.yml");
+    // A Windows checkout may use CRLF; only line-ending spelling is irrelevant (#313).
+    let workflow = include_str!("../../../.github/workflows/martensite.yml").replace("\r\n", "\n");
     assert!(workflow.contains("  thread-sanitizer:\n    needs: plan\n"));
     assert!(workflow.contains(
         "rustup toolchain install nightly-2026-09-25 --profile minimal --component rust-src"
