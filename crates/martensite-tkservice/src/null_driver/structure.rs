@@ -50,7 +50,7 @@ impl NullCStructure {
             let mut fields = self.base.fields.write();
             raise_native_failure(fields.groups.detach_cursor(&mut cursor))
         };
-        // #324: callbacks and final payload release must not retain the outer field guard.
+        // #325: callbacks and final payload release must not retain the outer field guard.
         drop(retired);
     }
 }

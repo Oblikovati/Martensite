@@ -16,6 +16,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Kept the selected group node across virtual clear callbacks that remove earlier groups, and released retired nodes outside the structure guard (#325).
 - Provided an owner-aware borrowed runtime descriptor query for projected handles without increasing reference counts (#317).
 - Retained stream devices after write or positioning panics and rejected incomplete scratch input after interrupted reads (#318).
 

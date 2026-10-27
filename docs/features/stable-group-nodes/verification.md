@@ -6,7 +6,9 @@ The first checkpoint adds owned tests for the current public contract: ordered s
 
 The storage conversion is a separate commit. `Graphic3dCStructureFields::groups` changes from a vector to a sequence. Existing `groups()` snapshot methods keep their return types and ownership behavior. Check custom-driver construction, clone behavior, removal and clear ordering. Values retired by virtual callbacks must be released outside the enclosing fields guard.
 
-Then add the stable-node callback cases: `[A, B, B, C]`, removal of earlier A during the first B callback, removal of the next node and append during traversal. Compare exact visit order and owner counts in two independent processes. Actual cursor node IDs must distinguish the two B entries. Retain typed invalidation errors for a removed current node; a missing node must not look like successful exhaustion.
+The selected-node correction is tracked by #325. Its regression clears B while B removes earlier A; the operation must remove B and retain C. The test-source checkpoint precedes the correction so its actual RED can be retained before the corrected run. Neither run has executed yet.
+
+The stable-node callback cases cover: `[A, B, B, C]`, removal of earlier A during the first B callback, removal of the next node and append during traversal. Compare exact visit order and owner counts in two independent processes. Actual cursor node IDs must distinguish the two B entries. Retain typed invalidation errors for a removed current node; a missing node must not look like successful exhaustion.
 
 Reuse the existing driver-model, shadow, bounds, dump, group and retirement suites. A focused package run is the first execution gate; `cargo xtask pr` remains the required merge gate for all changed and affected packages, together with the compiler API gate. Release-platform checks are separate. No build, test, performance or thread-safety result has been recorded at this source checkpoint.
 
