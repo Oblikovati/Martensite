@@ -42,3 +42,14 @@ instrumented current-package test or sanitizer qualification is claimed; that
 check requires a usable runner. The complete affected-package PR gate remains
 required before pushing. Renderer adoption and the view-options holder
 are separate work under Feature #323; this interface alone does not complete them.
+
+## Required CI checks
+
+`cargo xtask ci thread-sanitizer` uses the pinned nightly toolchain and rebuilt
+standard library. Its existing required Linux job first executes the startup
+control, then the geometry ownership controls, then all eight reference-aware
+capture controls through the actual toolkit test executable. A startup or geometry
+failure prevents capture execution; a capture failure fails the same required job.
+No workflow permissions, runtime suppressions or host security settings change.
+The new driver routing still needs execution and does not turn the local startup
+failure into a sanitizer pass.
