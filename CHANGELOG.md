@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added owned live buffer-kind arguments with explicit unsupported-backend errors for reference-aware capture (#323).
+
 - Added shared-buffer stream construction and scoped input borrowing that rejoins state, read counts, and unread lookahead with owned cleanup failures (#319).
 
 ### Fixed
