@@ -67,6 +67,7 @@ impl Graphic3dCStructure for NullCStructure {
     }
     fn on_visibility_changed(&self) {}
     /// Retire the entry groups outside the guard, then reset text/highlight flags (#324).
+    /// Example: `cstructure.clear()` keeps groups created by retirement callbacks.
     fn clear(&self) {
         let mut retired = self.take_entry_groups();
         retired.finish();
