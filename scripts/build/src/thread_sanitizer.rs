@@ -1,4 +1,4 @@
-//! Required Linux checks for cache ownership and reference-aware capture (#309, #323).
+//! Required Linux checks for cache ownership and reference-aware capture and group ownership (#309, #323, #324).
 use crate::context::BuildContext;
 use crate::error::BuildResult;
 use crate::process::CommandSpec;
@@ -27,24 +27,43 @@ fn run_ownership_controls(context: &BuildContext<'_>) -> BuildResult<()> {
         .step("ThreadSanitizer cache ownership controls", || {
             context.runner.run(&controls(context.root()))
         })?;
+    run_service_controls(context)
+}
+
+fn run_service_controls(context: &BuildContext<'_>) -> BuildResult<()> {
     context
         .reporter
         .step("ThreadSanitizer live capture controls", || {
             context.runner.run(&capture_controls(context.root()))
+        })?;
+    context
+        .reporter
+        .step("ThreadSanitizer stable group controls", || {
+            context.runner.run(&group_controls(context.root()))
         })
 }
+
 fn capture_controls(root: &Path) -> CommandSpec {
-    sanitized_cargo(root, "test").args([
-        "--no-fail-fast",
-        "--package",
-        "martensite-tkservice",
-        "--test",
-        "toolkit",
-        "capture_buffer_reference_checks",
-        "--",
-        "--test-threads=1",
-        "--show-output",
-    ])
+    // Live capture remains an independent failure boundary before group ownership (#324).
+    service_controls(root, &["capture_buffer_reference_checks"])
+}
+
+fn group_controls(root: &Path) -> CommandSpec {
+    // Both registered module prefixes select the same fourteen normal controls (#324).
+    service_controls(root, &["graphic3d_group", "graphic3d_stable_group_nodes"])
+}
+
+fn service_controls(root: &Path, filters: &[&str]) -> CommandSpec {
+    sanitized_cargo(root, "test")
+        .args([
+            "--no-fail-fast",
+            "--package",
+            "martensite-tkservice",
+            "--test",
+            "toolkit",
+        ])
+        .args(filters.iter().copied())
+        .args(["--", "--test-threads=1", "--show-output"])
 }
 
 fn startup(root: &Path) -> CommandSpec {

@@ -9,7 +9,7 @@ fn runner() -> RecordingRunner {
 }
 
 #[test]
-fn startup_precedes_geometry_and_reference_capture_controls() {
+fn startup_precedes_geometry_capture_and_group_controls() {
     let runner = runner();
     run(&context_at(&runner, Path::new("/repo"))).unwrap();
     let commands = runner.commands();
@@ -22,6 +22,7 @@ fn startup_precedes_geometry_and_reference_capture_controls() {
             format!("cargo +nightly-2026-09-25 run --locked -Zbuild-std --target x86_64-unknown-linux-gnu --manifest-path {}", manifest.display()),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkg2d --package martensite-tkg3d --lib cache_inputs_tests -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkservice --test toolkit capture_buffer_reference_checks -- --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkservice --test toolkit graphic3d_group graphic3d_stable_group_nodes -- --test-threads=1 --show-output".to_owned(),
         ]
     );
 }
@@ -121,6 +122,34 @@ fn reference_capture_uses_the_same_instrumentation_as_startup() {
         "--test",
         "toolkit",
         "capture_buffer_reference_checks",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ]);
+    assert_eq!(command, expected);
+}
+
+#[test]
+fn group_failure_refuses_the_required_sanitizer_check() {
+    let command = group_controls(Path::new("/repo")).display();
+    let runner = runner().with_exit_code(&command, 66);
+    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    assert!(error.to_string().contains("66"));
+    assert_eq!(runner.commands().len(), 6);
+}
+
+#[test]
+fn groups_use_the_same_instrumentation_with_both_actual_module_filters() {
+    let root = Path::new("/repo");
+    let command = group_controls(root);
+    let expected = sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkservice",
+        "--test",
+        "toolkit",
+        "graphic3d_group",
+        "graphic3d_stable_group_nodes",
         "--",
         "--test-threads=1",
         "--show-output",
