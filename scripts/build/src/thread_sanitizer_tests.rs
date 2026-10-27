@@ -21,8 +21,8 @@ fn startup_precedes_geometry_capture_and_group_controls() {
             "rustc +nightly-2026-09-25 -Vv".to_owned(),
             format!("cargo +nightly-2026-09-25 run --locked -Zbuild-std --target x86_64-unknown-linux-gnu --manifest-path {}", manifest.display()),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkg2d --package martensite-tkg3d --lib cache_inputs_tests -- --test-threads=1 --show-output".to_owned(),
-            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkservice --test toolkit capture_buffer_reference_checks -- --test-threads=1 --show-output".to_owned(),
-            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkservice --test toolkit graphic3d_group graphic3d_stable_group_nodes -- --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkservice --test toolkit -- capture_buffer_reference_checks --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkservice --test toolkit -- graphic3d_group graphic3d_stable_group_nodes --test-threads=1 --show-output".to_owned(),
         ]
     );
 }
@@ -121,8 +121,8 @@ fn reference_capture_uses_the_same_instrumentation_as_startup() {
         "martensite-tkservice",
         "--test",
         "toolkit",
-        "capture_buffer_reference_checks",
         "--",
+        "capture_buffer_reference_checks",
         "--test-threads=1",
         "--show-output",
     ]);
@@ -148,9 +148,9 @@ fn groups_use_the_same_instrumentation_with_both_actual_module_filters() {
         "martensite-tkservice",
         "--test",
         "toolkit",
+        "--",
         "graphic3d_group",
         "graphic3d_stable_group_nodes",
-        "--",
         "--test-threads=1",
         "--show-output",
     ]);

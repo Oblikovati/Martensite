@@ -62,8 +62,9 @@ fn service_controls(root: &Path, filters: &[&str]) -> CommandSpec {
             "--test",
             "toolkit",
         ])
+        .arg("--")
         .args(filters.iter().copied())
-        .args(["--", "--test-threads=1", "--show-output"])
+        .args(["--test-threads=1", "--show-output"])
 }
 
 fn startup(root: &Path) -> CommandSpec {
