@@ -56,7 +56,12 @@ fn faulting_stream(site: FaultSite) -> IoStream {
 }
 
 fn assert_device_fault(payload: &(dyn std::any::Any + Send), site: FaultSite) {
-    let actual = payload.downcast_ref::<DevicePanicked>().unwrap();
+    let actual = payload.downcast_ref::<DevicePanicked>().unwrap_or_else(|| {
+        panic!(
+            "panic payload {:?}, expected DevicePanicked",
+            payload.type_id()
+        )
+    });
     assert_eq!(actual.0, site);
 }
 
