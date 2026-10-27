@@ -25,6 +25,8 @@ pub mod handle_observer;
 pub mod handle_operations;
 #[path = "../handle_supplemental.rs"]
 pub mod handle_supplemental;
+#[path = "../handle_descriptor_references.rs"]
+pub mod handle_descriptor_references;
 #[path = "../harray1_borrowed_initialization.rs"]
 pub mod harray1_borrowed_initialization;
 #[path = "../harray1_trivial_copy.rs"]
