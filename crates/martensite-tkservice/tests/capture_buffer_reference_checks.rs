@@ -3,6 +3,8 @@
 mod contention;
 #[path = "capture_buffer_reference_fixture.rs"]
 mod fixture;
+#[path = "capture_buffer_formatter_checks.rs"]
+mod formatter;
 use fixture::ReferenceCaptureView;
 use martensite_tkservice::{graphic3d::*, image::ImagePixMap};
 
