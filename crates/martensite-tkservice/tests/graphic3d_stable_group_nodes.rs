@@ -98,3 +98,10 @@ fn group_storage_and_detached_cursor_keep_the_declared_thread_bounds() {
     let cursor = std::marker::PhantomData::<SequenceNativeCursor>;
     let _: (&(dyn Send + Sync), &(dyn Send + Sync)) = (&fields, &cursor);
 }
+
+#[test]
+fn empty_group_storage_has_an_exhausted_cursor_without_failure() {
+    let presentation = group_contract_presentation();
+    let cursor = start_group_cursor(&presentation);
+    assert!(!cursor.observer().more());
+}
