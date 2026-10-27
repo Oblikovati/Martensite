@@ -4,6 +4,7 @@ use martensite_tkernel::{
     tcollection::AsciiString,
 };
 use martensite_tkservice::{aspect::*, graphic3d::*, image::ImagePixMap};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Test adapter whose real retained owner supplies every delegated view operation.
 pub(super) struct ReferenceCaptureView {
@@ -12,6 +13,9 @@ pub(super) struct ReferenceCaptureView {
     pub(super) kind: CaptureBufferKindRef,
     pub(super) reads: SharedState<Vec<Graphic3dBufferType>>,
     pub(super) panic_after_write: bool,
+    pub(super) reenter_once: bool,
+    pub(super) events: SharedState<Vec<(&'static str, bool)>>,
+    nested_active: AtomicBool,
 }
 martensite_tkernel::impl_transient!(ReferenceCaptureView, "ReferenceCaptureView", StandardTransient, transient, interfaces:[dyn Graphic3dCView]);
 impl ReferenceCaptureView {
@@ -26,7 +30,42 @@ impl ReferenceCaptureView {
             kind: CaptureBufferKindRef::new(Graphic3dBufferType::Rgb),
             reads: SharedState::new(Vec::new()),
             panic_after_write: false,
+            reenter_once: false,
+            events: SharedState::new(Vec::new()),
+            nested_active: AtomicBool::new(false),
         }
+    }
+    fn nested_capture(
+        &self,
+        image: &ImagePixMap,
+        kind: &CaptureBufferKindRef,
+    ) -> Result<(), CaptureBufferKindError> {
+        if !self.reenter_once || self.nested_active.swap(true, Ordering::SeqCst) {
+            return Ok(());
+        }
+        let view: &dyn Graphic3dCView = self;
+        let result = view.buffer_dump_referenced(image, kind);
+        self.nested_active.store(false, Ordering::SeqCst);
+        result.map(|_| ())
+    }
+    fn observe_capture(
+        &self,
+        image: &ImagePixMap,
+        kind: &CaptureBufferKindRef,
+    ) -> Result<bool, CaptureBufferKindError> {
+        let nested = self.nested_active.load(Ordering::SeqCst);
+        self.events.write().push(("enter", nested));
+        let before = kind.read();
+        self.kind.set(Graphic3dBufferType::Red);
+        assert!(
+            !self.panic_after_write,
+            "NamedCaptureWritePanic after field write"
+        );
+        self.nested_capture(image, kind)?;
+        let after = kind.read();
+        self.reads.write().extend([before, after]);
+        self.events.write().push(("exit", nested));
+        Ok(false)
     }
 }
 impl Graphic3dCView for ReferenceCaptureView {
@@ -77,15 +116,7 @@ impl Graphic3dCView for ReferenceCaptureView {
             self.kind.same_slot(kind),
             "actual slot differs; expected caller-owned kind field"
         );
-        let before = kind.read();
-        self.kind.set(Graphic3dBufferType::Red);
-        assert!(
-            !self.panic_after_write,
-            "NamedCaptureWritePanic after field write"
-        );
-        let after = kind.read();
-        self.reads.write().extend([before, after]);
-        Ok(false)
+        self.observe_capture(_image, kind)
     }
     fn fbo_create(&self, width: i32, height: i32) -> Handle<StandardTransient> {
         let retained: &dyn Graphic3dCView = &self.retained;

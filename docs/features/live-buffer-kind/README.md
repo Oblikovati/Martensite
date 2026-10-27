@@ -30,7 +30,8 @@ a whole sequence of callback reads atomic. Callers must order competing writes
 when they require repeatable capture choices.
 
 The focused tests exercise virtual dispatch, same-field rereads after writes,
-independent copied values, retained ownership, unwind recovery and legacy refusal.
+independent copied values, retained ownership, a nested virtual call on the same
+field, separate unwind recovery and legacy refusal.
 Compilation, repeated process results and concurrency qualification must be
 recorded before claiming them. Renderer adoption and the view-options holder
 are separate work under Feature #323; this interface alone does not complete them.

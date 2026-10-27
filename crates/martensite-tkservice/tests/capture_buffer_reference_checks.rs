@@ -44,7 +44,7 @@ fn legacy_view_refuses_live_capture_without_changing_immutable_capture() {
     );
 }
 #[test]
-fn callback_unwind_releases_slot_and_allows_reentry() {
+fn callback_unwind_releases_slot_and_allows_retry() {
     let mut source = reference_view();
     source.panic_after_write = true;
     let field = source.kind.clone();
@@ -98,4 +98,40 @@ fn synchronized_threads_share_only_the_selected_slot() {
         .unwrap();
     assert_eq!(field.read(), Graphic3dBufferType::Red);
     assert_eq!(copied.read(), Graphic3dBufferType::Rgb);
+}
+
+#[test]
+fn nested_virtual_capture_rereads_the_same_slot_before_outer_return() {
+    let mut source = reference_view();
+    source.reenter_once = true;
+    let view: &dyn Graphic3dCView = &source;
+    source.redraw();
+    assert_eq!(
+        view.buffer_dump_referenced(&ImagePixMap::default(), &source.kind),
+        Ok(false)
+    );
+    assert_nested_entry_order(&source);
+    assert_nested_read_order(&source);
+}
+fn assert_nested_entry_order(source: &ReferenceCaptureView) {
+    assert_eq!(
+        *source.events.read(),
+        [
+            ("enter", false),
+            ("enter", true),
+            ("exit", true),
+            ("exit", false)
+        ]
+    );
+}
+fn assert_nested_read_order(source: &ReferenceCaptureView) {
+    assert_eq!(
+        *source.reads.read(),
+        [
+            Graphic3dBufferType::Red,
+            Graphic3dBufferType::Red,
+            Graphic3dBufferType::Rgba,
+            Graphic3dBufferType::Red
+        ]
+    );
 }
