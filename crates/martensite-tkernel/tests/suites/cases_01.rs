@@ -17,6 +17,8 @@ pub mod h_array1_of_real_supplemental;
 pub mod h_string_method_contracts;
 #[path = "../handle_advanced.rs"]
 pub mod handle_advanced;
+#[path = "../handle_descriptor_references.rs"]
+pub mod handle_descriptor_references;
 #[path = "../handle_interfaces.rs"]
 pub mod handle_interfaces;
 #[path = "../handle_observer.rs"]
@@ -25,8 +27,6 @@ pub mod handle_observer;
 pub mod handle_operations;
 #[path = "../handle_supplemental.rs"]
 pub mod handle_supplemental;
-#[path = "../handle_descriptor_references.rs"]
-pub mod handle_descriptor_references;
 #[path = "../harray1_borrowed_initialization.rs"]
 pub mod harray1_borrowed_initialization;
 #[path = "../harray1_trivial_copy.rs"]
