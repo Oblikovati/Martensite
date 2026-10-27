@@ -41,6 +41,11 @@ pub use schema::{
     Schema, SchemaContext, TypeMigration,
 };
 pub use status::SectionStatus;
+pub use stream::borrowed_failure::{
+    BorrowedInputUnwind, StreamBridgeObservation, StreamBridgeStage, StreamPanicPayload,
+    StreamRejoinCause, StreamRejoinFailure,
+};
+pub use stream::borrowed_input::with_borrowed_input_stream;
 pub use stream::{IoStream, StreamDevice, format_general, state};
 pub use type_data::TypeData;
 

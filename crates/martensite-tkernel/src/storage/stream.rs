@@ -6,10 +6,14 @@
 //! type reproduces those rules (sentries, unformatted and formatted I/O) over an injected
 //! byte device, so drivers never touch the process file system directly.
 use std::io::{Read, Seek, SeekFrom, Write};
+pub(crate) mod borrowed_failure;
+pub(crate) mod borrowed_input;
+mod borrowed_session;
 mod formatted;
 pub(crate) mod input_engine;
 mod number_text;
 mod pending_read;
+mod pending_sync;
 mod shared_device;
 pub use number_text::format_general;
 
@@ -51,6 +55,7 @@ pub struct IoStream {
     width: i64,
     pending: Vec<u8>,
     cursor: usize,
+    borrowed_session: Option<std::sync::Arc<borrowed_session::BorrowedSession>>,
 }
 
 impl Default for IoStream {
@@ -65,6 +70,7 @@ impl Default for IoStream {
             width: 0,
             pending: Vec::new(),
             cursor: 0,
+            borrowed_session: None,
         }
     }
 }
@@ -86,6 +92,7 @@ impl IoStream {
     /// Example: `stream.open(Box::new(std::io::Cursor::new(Vec::new())), true, true)`.
     pub fn open(&mut self, device: Box<dyn StreamDevice>, readable: bool, writable: bool) {
         self.device = Some(device);
+        self.borrowed_session = None;
         self.readable = readable;
         self.writable = writable;
         self.pending.clear();
@@ -102,6 +109,7 @@ impl IoStream {
     /// `basic_fstream::close`: releases the device; closing a closed stream sets `failbit`.
     /// Example: `stream.close()`.
     pub fn close(&mut self) {
+        self.borrowed_session = None;
         match self.device.take() {
             Some(mut device) => {
                 Self::sync_device(&mut self.pending, &mut self.cursor, &mut *device);
@@ -211,21 +219,24 @@ impl IoStream {
         let Some(device) = self.device.as_mut() else {
             return false;
         };
-        let mut pending =
-            pending_read::PendingRead::new(&mut self.pending, &mut self.cursor, &mut self.state);
+        let mut pending = pending_read::PendingRead::new(
+            &mut self.pending,
+            &mut self.cursor,
+            &mut self.state,
+            self.borrowed_session.as_deref(),
+        );
         let count = device.read(pending.receive(READ_CHUNK)).unwrap_or(0);
         pending.complete(count)
     }
 
     /// Returns unread look-ahead to the device so writes and positions see the logical offset.
     /// Borrowing fields separately retains the device slot during unwinds (#318).
-    fn sync_device(pending: &mut Vec<u8>, cursor: &mut usize, device: &mut dyn StreamDevice) {
-        let unread = (pending.len() - *cursor) as i64;
-        if unread > 0 {
-            let _ = device.seek(SeekFrom::Current(-unread));
-        }
-        pending.clear();
-        *cursor = 0;
+    fn sync_device(
+        pending_input_bytes: &mut Vec<u8>,
+        pending_input_cursor: &mut usize,
+        device: &mut dyn StreamDevice,
+    ) {
+        pending_sync::synchronize_legacy(pending_input_bytes, pending_input_cursor, device);
     }
 
     /// `sputn`: writes all bytes or reports how many were accepted.
@@ -236,7 +247,15 @@ impl IoStream {
         let Some(device) = self.device.as_mut() else {
             return 0;
         };
-        Self::sync_device(&mut self.pending, &mut self.cursor, &mut **device);
+        if !pending_sync::synchronize_operation(
+            &mut self.pending,
+            &mut self.cursor,
+            &mut **device,
+            self.borrowed_session.as_deref(),
+            &mut self.state,
+        ) {
+            return 0;
+        }
         device.write_all(bytes).map_or(0, |()| bytes.len())
     }
 
@@ -245,7 +264,15 @@ impl IoStream {
         let Some(device) = self.device.as_mut() else {
             return -1;
         };
-        Self::sync_device(&mut self.pending, &mut self.cursor, &mut **device);
+        if !pending_sync::synchronize_operation(
+            &mut self.pending,
+            &mut self.cursor,
+            &mut **device,
+            self.borrowed_session.as_deref(),
+            &mut self.state,
+        ) {
+            return -1;
+        }
         device.stream_position().map_or(-1, |p| p as i64)
     }
 }
@@ -387,7 +414,15 @@ impl IoStream {
         let Some(device) = self.device.as_mut() else {
             return false;
         };
-        Self::sync_device(&mut self.pending, &mut self.cursor, &mut **device);
+        if !pending_sync::synchronize_operation(
+            &mut self.pending,
+            &mut self.cursor,
+            &mut **device,
+            self.borrowed_session.as_deref(),
+            &mut self.state,
+        ) {
+            return false;
+        }
         u64::try_from(position).is_ok_and(|offset| device.seek(SeekFrom::Start(offset)).is_ok())
     }
 
