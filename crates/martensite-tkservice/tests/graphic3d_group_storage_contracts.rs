@@ -8,7 +8,11 @@ pub(super) fn group_contract_presentation() -> Handle<Graphic3dStructure> {
     let manager = Handle::new(Graphic3dStructureManager::new(&driver).unwrap());
     Graphic3dStructure::new(&manager, &Handle::default()).unwrap()
 }
-fn append_existing_group(presentation: &Graphic3dStructure, group: &Handle<dyn Graphic3dGroup>) {
+/// Retain another actual entry without copying its payload; `append_existing_group(prs, group)`.
+pub(super) fn append_existing_group(
+    presentation: &Graphic3dStructure,
+    group: &Handle<dyn Graphic3dGroup>,
+) {
     // Two collection entries may own the same payload; neither is a copied group object.
     presentation
         .cstructure()

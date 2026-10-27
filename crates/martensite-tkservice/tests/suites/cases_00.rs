@@ -49,6 +49,8 @@ pub mod graphic3d_media_texture_test;
 pub mod graphic3d_plane_sequence_test;
 #[path = "../graphic3d_shader_manager_test.rs"]
 pub mod graphic3d_shader_manager_test;
+#[path = "../graphic3d_stable_group_nodes.rs"]
+pub mod graphic3d_stable_group_nodes;
 #[path = "../graphic3d_text_test.rs"]
 pub mod graphic3d_text_test;
 #[path = "../graphic3d_texture_test.rs"]
