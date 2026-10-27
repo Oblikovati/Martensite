@@ -30,6 +30,7 @@ pub struct StreamBridgeObservation {
 pub struct StreamPanicPayload(Box<dyn Any + Send>);
 
 impl StreamPanicPayload {
+    /// Retain a panic without changing its payload; `StreamPanicPayload::new(payload)`.
     pub(super) fn new(payload: Box<dyn Any + Send>) -> Self {
         let retained: Self = Self(payload);
         retained
