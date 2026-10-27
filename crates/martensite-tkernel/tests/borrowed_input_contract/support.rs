@@ -52,7 +52,9 @@ impl ObservedMemoryInput {
         let Some(target) = seek_target(offset, direction) else {
             return -1;
         };
-        self.bytes.seek(target).map_or(-1, |position| position as i64)
+        self.bytes
+            .seek(target)
+            .map_or(-1, |position| position as i64)
     }
 }
 fn seek_target(offset: i64, direction: SeekDir) -> Option<SeekFrom> {

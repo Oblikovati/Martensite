@@ -200,8 +200,12 @@ fn cleanup_failure_retains_an_actual_returned_error() {
         stream.read(&mut [0; 2]);
         faults.refuse_rewind.store(true, Ordering::SeqCst);
         Err::<(), _>(std::rc::Rc::new(String::from("decoder refused")))
-    }).unwrap_err();
-    assert_eq!(failure.outcome.unwrap().unwrap_err().as_str(), "decoder refused");
+    })
+    .unwrap_err();
+    assert_eq!(
+        failure.outcome.unwrap().unwrap_err().as_str(),
+        "decoder refused"
+    );
     assert!(matches!(failure.cause, StreamRejoinCause::Seek { .. }));
     assert!(caller.bad());
 }
@@ -215,7 +219,8 @@ fn caught_read_panic_cannot_be_erased_by_clear_and_a_successful_retry() {
         stream.clear(0);
         stream.read(&mut [0; 1]);
         stream.gcount()
-    }).unwrap_err();
+    })
+    .unwrap_err();
     assert!(matches!(failure.cause, StreamRejoinCause::ReadInterrupted));
     assert_eq!(failure.outcome, Some(1));
     assert_eq!(failure.observation.gcount, Some(1));
@@ -233,7 +238,8 @@ fn a_refused_tell_rewind_cannot_discard_unread_bytes() {
         let position = stream.tellg();
         stream.clear(0);
         position
-    }).unwrap_err();
+    })
+    .unwrap_err();
     assert_eq!(failure.outcome, Some(-1));
     assert_eq!(failure.unread_bytes(), Some(b"cdef".as_slice()));
     assert!(matches!(failure.cause, StreamRejoinCause::Seek { .. }));
@@ -248,7 +254,8 @@ fn a_refused_seek_rewind_retains_a_decoders_unread_bytes() {
         faults.refuse_rewind.store(true, Ordering::SeqCst);
         stream.seekg(0);
         stream.fail()
-    }).unwrap_err();
+    })
+    .unwrap_err();
     assert_eq!(failure.outcome, Some(true));
     assert_eq!(failure.unread_bytes(), Some(b"cdef".as_slice()));
     assert!(matches!(failure.cause, StreamRejoinCause::Seek { .. }));
@@ -264,12 +271,15 @@ fn a_caught_positioning_panic_remains_a_sticky_session_failure() {
         let panic = catch_unwind(AssertUnwindSafe(|| stream.tellg()));
         assert!(panic.unwrap_err().is::<support::RewindPanicked>());
         stream.clear(0);
-    }).unwrap_err();
-    assert!(matches!(failure.cause, StreamRejoinCause::SeekInterrupted { .. }));
+    })
+    .unwrap_err();
+    assert!(matches!(
+        failure.cause,
+        StreamRejoinCause::SeekInterrupted { .. }
+    ));
     assert_eq!(failure.unread_bytes(), Some(b"cdef".as_slice()));
     assert!(caller.bad());
 }
-
 
 fn assert_read_panic(stream: &mut IoStream) {
     let panic = catch_unwind(AssertUnwindSafe(|| {
@@ -278,11 +288,14 @@ fn assert_read_panic(stream: &mut IoStream) {
     assert!(panic.unwrap_err().is::<support::ReadPanicked>());
 }
 
-
 #[test]
 fn bridge_observation_and_stage_have_shared_thread_bounds() {
     use martensite_tkernel::storage::{StreamBridgeObservation, StreamBridgeStage};
-    let observation = StreamBridgeObservation { state: 0, gcount: Some(2), position_coherent: true };
+    let observation = StreamBridgeObservation {
+        state: 0,
+        gcount: Some(2),
+        position_coherent: true,
+    };
     let shared = Arc::new((StreamBridgeStage::Rejoin, observation));
     let transferred = Arc::clone(&shared);
     let received = std::thread::spawn(move || *transferred).join().unwrap();
