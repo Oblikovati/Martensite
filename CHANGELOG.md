@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Provided an owner-aware borrowed runtime descriptor query for projected handles without increasing reference counts (#317).
+
 ## [0.4.0] - 2026-10-26
 
 ### Added

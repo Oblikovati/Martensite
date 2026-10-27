@@ -119,6 +119,15 @@ impl<T: ?Sized + RuntimeTyped> Handle<T> {
             .as_ref()
             .map(|owner| owner.get().dynamic_type_handle())
     }
+    /// Borrow the original object's canonical descriptor without changing its reference count.
+    ///
+    /// Null handles return `None`; `handle.dynamic_type_handle_ref().map(|kind| kind.name())`.
+    /// This owner dispatch remains valid after projecting to a base or interface (#317).
+    pub fn dynamic_type_handle_ref(&self) -> Option<&'static Handle<RuntimeType>> {
+        self.owner
+            .as_ref()
+            .map(|owner| owner.get().dynamic_type_ref())
+    }
     /// Read concrete Rust type identity independently of descriptor inheritance; `handle.rust_type_id()`.
     pub fn rust_type_id(&self) -> Option<TypeId> {
         self.owner.as_ref().map(|owner| owner.get().type_id())
