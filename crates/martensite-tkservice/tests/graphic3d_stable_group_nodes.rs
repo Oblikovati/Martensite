@@ -83,10 +83,13 @@ fn advancing_a_removed_current_node_returns_a_typed_failure() {
     let presentation = group_contract_presentation();
     let group = presentation.new_group().unwrap();
     let mut cursor = start_group_cursor(&presentation);
+    let former_node = cursor.observer().current_node();
     group.remove();
     let structure = presentation.cstructure();
     let fields = structure.cstructure_base().fields.read();
     let error = cursor.next(&fields.groups).unwrap_err();
+    assert_eq!(error.exception_type(), "Standard_NoSuchObject");
+    assert_eq!(cursor.observer().current_node(), former_node);
     assert!(
         error.to_string().contains("Next"),
         "failure={error}; expected invalid current-node advancement context"
