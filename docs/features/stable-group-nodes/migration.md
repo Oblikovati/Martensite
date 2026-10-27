@@ -10,6 +10,6 @@ Use a detached `SequenceNativeCursor` when virtual callbacks can change the live
 
 Removal and clearing must preserve their callback and destructor order. The sequence's phased retirement APIs can detach a selected node under the field guard and release it afterward. A removed current node produces a typed invalidation error when advancement is attempted; it must not be treated as successful end-of-iteration.
 
-The first structural checkpoint changes storage and index spelling while keeping the existing null driver's first-match removal algorithm. Its five owned snapshot/owner tests have the same assertions as the preceding vector checkpoint. The separate #325 callback checkpoint captures the selected node before virtual clear and detaches that same node afterward, releasing retirement outside the field guard. These checkpoints are source-only until their execution gates pass.
+The first structural checkpoint changes storage and index spelling while keeping the existing null driver's first-match removal algorithm. Its five owned snapshot/owner tests have the same assertions as the preceding vector checkpoint. The separate #325 callback checkpoint captures the selected node before virtual clear and detaches that same node afterward, releasing retirement outside the field guard. The five storage-contract tests pass before and after the structural conversion. The selected-node regression fails before its correction and passes afterward.
 
 This is a breaking package API change. Versions and release tags remain unchanged until explicitly approved.
