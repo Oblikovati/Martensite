@@ -33,6 +33,8 @@ pub mod graphic3d_driver_support_test;
 pub mod graphic3d_flipper_test;
 #[path = "../graphic3d_frame_stats_test.rs"]
 pub mod graphic3d_frame_stats_test;
+#[path = "../graphic3d_group_callback_nodes.rs"]
+pub mod graphic3d_group_callback_nodes;
 #[path = "../graphic3d_group_storage_contracts.rs"]
 pub mod graphic3d_group_storage_contracts;
 #[path = "../graphic3d_light_set_live_test.rs"]

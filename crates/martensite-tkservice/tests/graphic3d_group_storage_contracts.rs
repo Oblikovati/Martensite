@@ -2,7 +2,8 @@
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::{graphic3d::*, null_driver::NullGraphicDriver};
 
-fn group_contract_presentation() -> Handle<Graphic3dStructure> {
+/// Build an isolated actual group owner; `group_contract_presentation()`.
+pub(super) fn group_contract_presentation() -> Handle<Graphic3dStructure> {
     let driver = NullGraphicDriver::new_handle();
     let manager = Handle::new(Graphic3dStructureManager::new(&driver).unwrap());
     Graphic3dStructure::new(&manager, &Handle::default()).unwrap()
