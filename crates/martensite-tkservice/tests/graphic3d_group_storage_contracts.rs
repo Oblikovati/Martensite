@@ -15,7 +15,7 @@ fn append_existing_group(presentation: &Graphic3dStructure, group: &Handle<dyn G
         .fields
         .write()
         .groups
-        .push(group.clone());
+        .append(group.clone());
 }
 #[test]
 fn group_snapshots_preserve_duplicate_order_and_each_intrusive_owner() {
@@ -72,7 +72,7 @@ fn copying_fields_retains_payloads_without_sharing_collection_edits() {
     let structure = presentation.cstructure();
     let mut copied = structure.cstructure_base().fields.snapshot();
     assert_eq!(group.ref_count(), 3);
-    copied.groups.clear();
+    copied.groups.clear(None);
     assert_eq!(group.ref_count(), 2);
     assert_eq!(presentation.groups(), vec![group.clone()]);
 }

@@ -5,7 +5,9 @@ use crate::graphic3d::{
     Graphic3dCStructureBase, Graphic3dGroup, Graphic3dGroupBase,
     Graphic3dPresentationAttributesSource, Graphic3dStructureManager, Graphic3dStructureSource,
 };
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{
+    Failure, Handle, SharedState, StandardTransient, WeakHandle, raise_native_failure,
+};
 use martensite_tkmath::gp::Axis2;
 
 /// A driver structure of the null driver; `NullCStructure::new(&manager)?`.
@@ -30,6 +32,11 @@ impl NullCStructure {
         *structure.this.write() = structure.downgrade();
         Ok(structure)
     }
+    fn remove_group_offset(&self, index: usize) {
+        let mut fields = self.base.fields.write();
+        // #324 keeps the existing first-match offset while changing only storage/index spelling.
+        raise_native_failure(fields.groups.remove(index + 1));
+    }
 }
 
 impl Graphic3dCStructure for NullCStructure {
@@ -40,7 +47,7 @@ impl Graphic3dCStructure for NullCStructure {
     /// Drops the groups and the 2D text and highlight flags, as `OpenGl_Structure::Clear`.
     fn clear(&self) {
         let mut fields = self.base.fields.write();
-        fields.groups.clear();
+        fields.groups.clear(None);
         fields.is_2d_text = false;
         fields.is_for_highlight = false;
     }
@@ -72,7 +79,7 @@ impl Graphic3dCStructure for NullCStructure {
         structure: &Handle<dyn Graphic3dStructureSource>,
     ) -> Result<Handle<dyn Graphic3dGroup>, Failure> {
         let group: Handle<dyn Graphic3dGroup> = Handle::new(NullGroup::new(structure)).cast();
-        self.base.fields.write().groups.push(group.clone());
+        self.base.fields.write().groups.append(group.clone());
         Ok(group)
     }
     /// Clears the group (without manager update) and removes it from the sequence.
@@ -87,7 +94,7 @@ impl Graphic3dCStructure for NullCStructure {
             .position(|g| g == group);
         if let Some(index) = index {
             value.clear(false);
-            self.base.fields.write().groups.remove(index);
+            self.remove_group_offset(index);
         }
     }
 }
