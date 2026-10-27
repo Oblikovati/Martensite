@@ -27,6 +27,8 @@ mod camera_matrices;
 mod camera_orientation;
 mod camera_projection;
 mod camera_values;
+mod capture_buffer_error;
+mod capture_buffer_kind;
 mod clip_plane;
 mod clip_plane_capping;
 mod clip_plane_chain;
@@ -160,6 +162,8 @@ pub use camera::{
 pub use camera_fit::*;
 pub use camera_projection::Graphic3dCameraScalar;
 pub use camera_values::{Graphic3dCameraTile, Graphic3dWorldViewProjState};
+pub use capture_buffer_error::{CaptureBufferKindCause, CaptureBufferKindError};
+pub use capture_buffer_kind::CaptureBufferKindRef;
 pub use clip_plane::{Graphic3dClipPlane, Graphic3dClipPlaneEquation, Graphic3dClipState};
 pub use clip_plane_handle_field::Graphic3dClipPlaneHandleField;
 pub use clip_plane_sequence::{Graphic3dClipSequenceParent, Graphic3dSequenceOfHClipPlane};

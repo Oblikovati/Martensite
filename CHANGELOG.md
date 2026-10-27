@@ -8,9 +8,13 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added owned live buffer-kind arguments with explicit unsupported-backend errors for reference-aware capture (#323).
+
 - Added shared-buffer stream construction and scoped input borrowing that rejoins state, read counts, and unread lookahead with owned cleanup failures (#319).
 
 ### Fixed
+
+- Released buffer-kind read guards before invoking reentrant formatting callbacks (#327).
 
 - Provided an owner-aware borrowed runtime descriptor query for projected handles without increasing reference counts (#317).
 - Retained stream devices after write or positioning panics and rejected incomplete scratch input after interrupted reads (#318).
