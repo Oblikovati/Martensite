@@ -1,13 +1,14 @@
 //! Owned buffer-kind storage for callbacks that reread the caller's field (#323).
 use super::Graphic3dBufferType;
 use martensite_tkernel::standard::SharedState;
+use std::fmt;
 use std::sync::Arc;
 
 /// Shares one buffer-kind field across callbacks; `CaptureBufferKindRef::new(Graphic3dBufferType::Rgb)`.
 ///
 /// Clones retain the same slot after the original owner is dropped. Each access
 /// releases its guard before returning, so callers may reenter a capture callback.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct CaptureBufferKindRef {
     slot: Arc<SharedState<Graphic3dBufferType>>,
 }
@@ -32,5 +33,16 @@ impl CaptureBufferKindRef {
     pub fn same_slot(&self, other: &Self) -> bool {
         // Equal enum values alone do not identify the caller's field.
         Arc::ptr_eq(&self.slot, &other.slot)
+    }
+}
+
+impl fmt::Debug for CaptureBufferKindRef {
+    fn fmt(&self, output: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Formatting can call a writer that updates this same field (#327).
+        let current = self.read();
+        output
+            .debug_struct("CaptureBufferKindRef")
+            .field("kind", &current)
+            .finish()
     }
 }

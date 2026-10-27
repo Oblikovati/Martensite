@@ -47,9 +47,23 @@ are separate work under Feature #323; this interface alone does not complete the
 
 `cargo xtask ci thread-sanitizer` uses the pinned nightly toolchain and rebuilt
 standard library. Its existing required Linux job first executes the startup
-control, then the geometry ownership controls, then all eight reference-aware
+control, then the geometry ownership controls, then all reference-aware
 capture controls through the actual toolkit test executable. A startup or geometry
 failure prevents capture execution; a capture failure fails the same required job.
 No workflow permissions, runtime suppressions or host security settings change.
 The new driver routing still needs execution and does not turn the local startup
 failure into a sanitizer pass.
+
+## Formatting callbacks
+
+Debug formatting copies the current enum and releases the field lease before it
+calls the formatter. A formatter may therefore update the same slot while the
+printed value remains the snapshot taken at entry. The named formatter regression
+checks an initial `Rgb` rendering and a final live `Red` field (#327).
+
+The pre-fix counterexample runs only that exact test in a bounded, short-lived
+process: its worker stalls under the inherited debug read guard, and the test
+fails on a two-second receive timeout. Process exit retires the stalled worker.
+The corrected full-package run must complete the worker normally. The earlier
+full PR result at `e63fd3e` qualifies the pre-fix source; the corrected candidate
+requires its own focused checks and full PR gate.

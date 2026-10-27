@@ -14,6 +14,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Released buffer-kind read guards before invoking reentrant formatting callbacks (#327).
+
 - Provided an owner-aware borrowed runtime descriptor query for projected handles without increasing reference counts (#317).
 - Retained stream devices after write or positioning panics and rejected incomplete scratch input after interrupted reads (#318).
 

@@ -28,9 +28,10 @@ fn render_reentrant_debug() -> (String, Graphic3dBufferType) {
 fn debug_writer_rebinds_same_slot_without_a_held_read_guard() {
     let (sender, receiver) = mpsc::channel();
     // A regression fails with a bounded timeout rather than wedging the test runner.
-    std::thread::spawn(move || sender.send(render_reentrant_debug()).unwrap());
+    let worker = std::thread::spawn(move || sender.send(render_reentrant_debug()).unwrap());
     let completed = receiver.recv_timeout(Duration::from_secs(2));
     let (text, final_kind) = completed.expect("formatter actual=no completion within 2s; expected reentrant field write and Debug completion");
+    worker.join().unwrap();
     assert_eq!(text, "CaptureBufferKindRef { kind: Rgb }");
     assert_eq!(final_kind, Graphic3dBufferType::Red);
 }
