@@ -9,7 +9,7 @@ fn runner() -> RecordingRunner {
 }
 
 #[test]
-fn startup_precedes_both_real_geometry_control_sets() {
+fn startup_precedes_geometry_and_reference_capture_controls() {
     let runner = runner();
     run(&context_at(&runner, Path::new("/repo"))).unwrap();
     let commands = runner.commands();
@@ -21,12 +21,13 @@ fn startup_precedes_both_real_geometry_control_sets() {
             "rustc +nightly-2026-09-25 -Vv".to_owned(),
             format!("cargo +nightly-2026-09-25 run --locked -Zbuild-std --target x86_64-unknown-linux-gnu --manifest-path {}", manifest.display()),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkg2d --package martensite-tkg3d --lib cache_inputs_tests -- --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkservice --test toolkit capture_buffer_reference_checks -- --test-threads=1 --show-output".to_owned(),
         ]
     );
 }
 
 #[test]
-fn startup_failure_prevents_any_geometry_control_execution() {
+fn startup_failure_prevents_geometry_and_reference_capture_execution() {
     let command = startup(Path::new("/repo")).display();
     let runner = runner().with_exit_code(&command, 101);
     let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
@@ -35,7 +36,8 @@ fn startup_failure_prevents_any_geometry_control_execution() {
         !runner
             .commands()
             .iter()
-            .any(|item| item.contains("cache_inputs_tests"))
+            .any(|item| item.contains("cache_inputs_tests")
+                || item.contains("capture_buffer_reference_checks"))
     );
 }
 
@@ -46,6 +48,12 @@ fn actual_control_failure_is_not_accepted_as_sanitizer_success() {
     let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
     assert!(error.to_string().contains("66"));
     assert_eq!(runner.commands().len(), 4);
+    assert!(
+        !runner
+            .commands()
+            .iter()
+            .any(|item| item.contains("capture_buffer_reference_checks"))
+    );
 }
 
 fn expected_instrumentation(root: &Path) -> CommandSpec {
@@ -92,4 +100,30 @@ fn workflow_runs_the_pinned_sanitizer_and_requires_its_actual_job_result() {
         workflow.contains("cargo xtask ci gate --checks \"$SANITIZER_RESULT\" --tests skipped")
     );
     assert!(workflow.contains("SANITIZER_RESULT: ${{ needs.thread-sanitizer.result }}"));
+}
+
+#[test]
+fn reference_capture_failure_refuses_the_required_sanitizer_check() {
+    let command = capture_controls(Path::new("/repo")).display();
+    let runner = runner().with_exit_code(&command, 66);
+    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    assert!(error.to_string().contains("66"));
+    assert_eq!(runner.commands().len(), 5);
+}
+#[test]
+fn reference_capture_uses_the_same_instrumentation_as_startup() {
+    let root = Path::new("/repo");
+    let command = capture_controls(root);
+    let expected = sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkservice",
+        "--test",
+        "toolkit",
+        "capture_buffer_reference_checks",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ]);
+    assert_eq!(command, expected);
 }

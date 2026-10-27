@@ -140,3 +140,6 @@ fn network_groups_and_removal() {
 
 #[path = "retained_gradient_background_checks.rs"]
 mod retained_gradient_background_checks;
+
+#[path = "capture_buffer_reference_checks.rs"]
+mod capture_buffer_reference_checks;
