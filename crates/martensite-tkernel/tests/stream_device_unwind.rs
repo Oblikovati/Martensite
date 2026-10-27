@@ -16,11 +16,13 @@ struct DevicePanicked(FaultSite);
 struct FaultingDevice {
     bytes: Cursor<Vec<u8>>,
     site: FaultSite,
+    read_pending: bool,
 }
 
 impl Read for FaultingDevice {
     fn read(&mut self, bytes: &mut [u8]) -> io::Result<usize> {
-        if matches!(self.site, FaultSite::Read) {
+        if matches!(self.site, FaultSite::Read) && self.read_pending {
+            self.read_pending = false;
             let count = bytes.len().min(2);
             self.bytes.read_exact(&mut bytes[..count])?;
             panic_any(DevicePanicked(self.site));
@@ -51,7 +53,11 @@ impl Seek for FaultingDevice {
 
 fn faulting_stream(site: FaultSite) -> IoStream {
     let bytes = Cursor::new(b"abcdef".to_vec());
-    let device = FaultingDevice { bytes, site };
+    let device = FaultingDevice {
+        bytes,
+        site,
+        read_pending: true,
+    };
     IoStream::with_device(Box::new(device), true, true)
 }
 
@@ -74,15 +80,7 @@ fn read_panic_retains_device_and_refuses_invalid_pending_storage() {
     .unwrap_err();
     assert_device_fault(&*payload, FaultSite::Read);
     assert!(stream.is_open());
-    assert!(
-        stream.bad(),
-        "panicked read must not publish resized pending bytes as valid input"
-    );
-    assert_eq!(stream.gcount(), 0);
-    let mut next = [9];
-    stream.read(&mut next);
-    assert_eq!(next, [9]);
-    assert_eq!(stream.rdstate(), state::BAD | state::FAIL);
+    assert_interrupted_input(&mut stream);
 }
 
 #[test]
@@ -145,4 +143,20 @@ fn output_position_panic_retains_the_owned_device_slot() {
         stream.tellp();
     };
     assert_positioning_fault(operation);
+}
+
+fn assert_interrupted_input(stream: &mut IoStream) {
+    assert!(
+        stream.bad(),
+        "panicked read must not publish resized pending bytes as valid input"
+    );
+    assert_eq!(stream.gcount(), 0);
+    let mut next = [9];
+    stream.read(&mut next);
+    assert_eq!(next, [9]);
+    assert_eq!(stream.rdstate(), state::BAD | state::FAIL);
+    stream.clear(0);
+    stream.read(&mut next);
+    assert_eq!(next, [b'c']);
+    assert_eq!(stream.gcount(), 1);
 }
