@@ -5,6 +5,7 @@ use crate::graphic3d::{
     Graphic3dCStructureBase, Graphic3dGroup, Graphic3dGroupBase,
     Graphic3dPresentationAttributesSource, Graphic3dStructureManager, Graphic3dStructureSource,
 };
+use martensite_tkernel::ncollection::SequenceCursor;
 use martensite_tkernel::standard::{
     Failure, Handle, SharedState, StandardTransient, WeakHandle, raise_native_failure,
 };
@@ -32,10 +33,25 @@ impl NullCStructure {
         *structure.this.write() = structure.downgrade();
         Ok(structure)
     }
-    fn remove_group_offset(&self, index: usize) {
-        let mut fields = self.base.fields.write();
-        // #324 keeps the existing first-match offset while changing only storage/index spelling.
-        raise_native_failure(fields.groups.remove(index + 1));
+    fn cursor_for_group(&self, group: &Handle<dyn Graphic3dGroup>) -> Option<SequenceCursor> {
+        let fields = self.base.fields.read();
+        let groups = &fields.groups;
+        let mut cursor = groups.cursor();
+        while cursor.more() {
+            if cursor.value(groups).is_some_and(|stored| stored == group) {
+                return Some(cursor);
+            }
+            cursor.next(groups);
+        }
+        None
+    }
+    fn retire_group_node(&self, mut cursor: SequenceCursor) {
+        let retired = {
+            let mut fields = self.base.fields.write();
+            raise_native_failure(fields.groups.detach_cursor(&mut cursor))
+        };
+        // #324: callbacks and final payload release must not retain the outer field guard.
+        drop(retired);
     }
 }
 
@@ -85,17 +101,11 @@ impl Graphic3dCStructure for NullCStructure {
     /// Clears the group (without manager update) and removes it from the sequence.
     fn remove_group(&self, group: &Handle<dyn Graphic3dGroup>) {
         let Some(value) = group.get() else { return };
-        let index = self
-            .base
-            .fields
-            .read()
-            .groups
-            .iter()
-            .position(|g| g == group);
-        if let Some(index) = index {
-            value.clear(false);
-            self.remove_group_offset(index);
-        }
+        let Some(cursor) = self.cursor_for_group(group) else {
+            return;
+        };
+        value.clear(false);
+        self.retire_group_node(cursor);
     }
 }
 
