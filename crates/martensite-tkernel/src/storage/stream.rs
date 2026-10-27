@@ -102,7 +102,7 @@ impl IoStream {
     pub fn close(&mut self) {
         match self.device.take() {
             Some(mut device) => {
-                self.sync_device(&mut *device);
+                Self::sync_device(&mut self.pending, &mut self.cursor, &mut *device);
                 if device.flush().is_err() {
                     self.set_state(state::FAIL);
                 }
@@ -181,7 +181,7 @@ impl IoStream {
     /// Takes the device back, flushing pending reads; `let device = stream.into_device()`.
     pub fn into_device(mut self) -> Option<Box<dyn StreamDevice>> {
         let mut device = self.device.take()?;
-        self.sync_device(&mut *device);
+        Self::sync_device(&mut self.pending, &mut self.cursor, &mut *device);
         Some(device)
     }
 }
@@ -216,14 +216,14 @@ impl IoStream {
         count > 0
     }
 
-    /// Returns unread look-ahead to the device so writes and positions see the logical offset.
-    fn sync_device(&mut self, device: &mut dyn StreamDevice) {
-        let unread = (self.pending.len() - self.cursor) as i64;
+    /// Return lookahead without borrowing the device slot, so unwind can retain its owner (#318).
+    fn sync_device(pending: &mut Vec<u8>, cursor: &mut usize, device: &mut dyn StreamDevice) {
+        let unread = (pending.len() - *cursor) as i64;
         if unread > 0 {
             let _ = device.seek(SeekFrom::Current(-unread));
         }
-        self.pending.clear();
-        self.cursor = 0;
+        pending.clear();
+        *cursor = 0;
     }
 
     /// `sputn`: writes all bytes or reports how many were accepted.
@@ -234,7 +234,7 @@ impl IoStream {
         let Some(mut device) = self.device.take() else {
             return 0;
         };
-        self.sync_device(&mut *device);
+        Self::sync_device(&mut self.pending, &mut self.cursor, &mut *device);
         let written = device.write_all(bytes).map_or(0, |()| bytes.len());
         self.device = Some(device);
         written
@@ -245,7 +245,7 @@ impl IoStream {
         let Some(mut device) = self.device.take() else {
             return -1;
         };
-        self.sync_device(&mut *device);
+        Self::sync_device(&mut self.pending, &mut self.cursor, &mut *device);
         let position = device.stream_position().map_or(-1, |p| p as i64);
         self.device = Some(device);
         position
@@ -389,7 +389,7 @@ impl IoStream {
         let Some(mut device) = self.device.take() else {
             return false;
         };
-        self.sync_device(&mut *device);
+        Self::sync_device(&mut self.pending, &mut self.cursor, &mut *device);
         let moved = u64::try_from(position)
             .is_ok_and(|offset| device.seek(SeekFrom::Start(offset)).is_ok());
         self.device = Some(device);
