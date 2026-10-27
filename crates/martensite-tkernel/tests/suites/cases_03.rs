@@ -62,3 +62,6 @@ pub mod weak_handle_identity;
 
 #[path = "../stream_device_unwind.rs"]
 pub mod stream_device_unwind;
+
+#[path = "../borrowed_input_contract.rs"]
+pub mod borrowed_input_contract;

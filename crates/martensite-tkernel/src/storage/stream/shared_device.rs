@@ -1,23 +1,20 @@
-//! The file variants of `BinTools::Write` and `BinTools::Read` open their stream with
-//! `OSD_FileSystem::DefaultFileSystem()`, whose streams are the TKernel OSD stream
-//! model, while the binary format reads and writes the storage iostream model. The
-//! native `std::iostream` sits on the `std::streambuf` of the opened stream; here the
-//! storage stream sits on the same buffer through this device.
-use martensite_tkernel::osd::{IosOpenMode, SeekDir, SharedStreamBuf, StreamBuf};
+//! Byte-device access to the same caller-owned shared buffer.
+use crate::osd::{IosOpenMode, SeekDir, SharedStreamBuf, StreamBuf};
 use std::io::{self, Read, Seek, SeekFrom, Write};
 
 /// The `std::streambuf` of an opened OSD stream, as the byte device of a storage
 /// stream: reads are `sgetn`, writes `sputn`, positions `pubseekoff` on the side
 /// (`in` or `out`) the stream was opened for, and `flush` is `pubsync`.
-pub(crate) struct StreamBufDevice {
+pub(super) struct StreamBufDevice {
     buffer: SharedStreamBuf,
     side: IosOpenMode,
 }
 
 impl StreamBufDevice {
-    /// A device over `buffer`, positioned on `side`.
-    pub(crate) fn new(buffer: SharedStreamBuf, side: IosOpenMode) -> Self {
-        Self { buffer, side }
+    /// Retain one shared buffer and seek side; `StreamBufDevice::new(buffer, side)`.
+    pub(super) fn new(buffer: SharedStreamBuf, side: IosOpenMode) -> Self {
+        let device: Self = Self { buffer, side };
+        device
     }
 
     fn with_buffer<R>(&self, action: impl FnOnce(&mut dyn StreamBuf) -> R) -> R {
@@ -31,7 +28,8 @@ impl StreamBufDevice {
 
 impl Read for StreamBufDevice {
     fn read(&mut self, out: &mut [u8]) -> io::Result<usize> {
-        Ok(self.with_buffer(|buffer| buffer.sgetn(out)))
+        let received = self.with_buffer(|buffer| buffer.sgetn(out));
+        Ok(received)
     }
 }
 
@@ -65,5 +63,19 @@ impl Seek for StreamBufDevice {
         let position = self.with_buffer(|buffer| buffer.pubseekoff(offset, direction, side));
         u64::try_from(position)
             .map_err(|_| io::Error::other(format!("streambuf refused the position {target:?}")))
+    }
+}
+
+impl super::IoStream {
+    /// Wrap a shared buffer without changing its owning stream's flags; `IoStream::with_shared_buffer(buffer, IosOpenMode::IN, true, false)`.
+    /// Reading/writing permissions belong to this stream; side selects its seek position.
+    pub fn with_shared_buffer(
+        buffer: SharedStreamBuf,
+        side: IosOpenMode,
+        readable: bool,
+        writable: bool,
+    ) -> Self {
+        let device = StreamBufDevice::new(buffer, side);
+        Self::with_device(Box::new(device), readable, writable)
     }
 }

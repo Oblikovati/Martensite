@@ -46,6 +46,16 @@ impl StreamIo {
             gcount: 0,
         }
     }
+    /// Transfer one coherent observation inside the crate; `io.storage_snapshot()`.
+    pub(crate) fn storage_snapshot(&self) -> (SharedStreamBuf, u8, usize) {
+        let buffer = Arc::clone(&self.buffer);
+        (buffer, self.state.bits(), self.gcount)
+    }
+    /// Commit a borrowed operation's actual observation; `io.commit_storage_observation(bits, count)`.
+    pub(crate) fn commit_storage_observation(&mut self, bits: u8, count: usize) {
+        self.state = StreamState(bits);
+        self.gcount = count;
+    }
     /// `setstate(failbit)`, used by the file streams' `open` and `close`.
     pub(crate) fn set_fail(&mut self) {
         self.setstate(StreamState::FAIL);

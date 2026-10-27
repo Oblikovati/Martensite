@@ -3,7 +3,6 @@
 use super::format_version;
 use super::shape_set::BinShapeSet;
 use super::shape_set_base::BinShapeSetBase;
-use super::stream_buffer_device::StreamBufDevice;
 use crate::topods::Shape;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::osd::{FileSystem, IosOpenMode, default_file_system};
@@ -128,8 +127,7 @@ pub fn write_file_on(
         }
         opened.rdbuf()
     };
-    let device = StreamBufDevice::new(buffer, IosOpenMode::OUT);
-    let mut stream = IoStream::with_device(Box::new(device), false, true);
+    let mut stream = IoStream::with_shared_buffer(buffer, IosOpenMode::OUT, false, true);
     stream.set_precision(15);
     write(shape, &mut stream, options, progress)?;
     Ok(flushed_good(stream))
@@ -177,8 +175,7 @@ pub fn read_file_on(
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
         .rdbuf();
-    let device = StreamBufDevice::new(buffer, IosOpenMode::IN);
-    let mut stream = IoStream::with_device(Box::new(device), true, false);
+    let mut stream = IoStream::with_shared_buffer(buffer, IosOpenMode::IN, true, false);
     read_with_console(shape, &mut stream, progress, console)?;
     Ok(stream.good())
 }
