@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added shared-buffer stream construction and scoped input borrowing that rejoins state, read counts, and unread lookahead with owned cleanup failures (#319).
+
 ### Fixed
 
 - Provided an owner-aware borrowed runtime descriptor query for projected handles without increasing reference counts (#317).

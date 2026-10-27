@@ -215,3 +215,9 @@ pub mod topods_tshape;
 pub mod toptools_behavior;
 #[path = "../vertex_prism_history.rs"]
 pub mod vertex_prism_history;
+
+#[path = "../stream_file_compatibility.rs"]
+pub mod stream_file_compatibility;
+
+#[path = "../borrowed_shape_input.rs"]
+pub mod borrowed_shape_input;
