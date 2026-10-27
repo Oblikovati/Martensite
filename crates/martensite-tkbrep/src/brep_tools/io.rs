@@ -1,7 +1,6 @@
 //! `BRepTools::Dump`, `Write` and `Read`: one shape in the BRep ASCII format, on a
 //! stream or in a file.
 use super::BRepToolsShapeSet;
-use crate::bintools::stream_buffer_device::StreamBufDevice;
 use crate::brep::BRepBuilder;
 use crate::topods::Shape;
 use crate::toptools::{ShapeSet, format_version};
@@ -169,8 +168,7 @@ pub fn write_file_on(
         opened.rdbuf()
     };
     let mut set = prepared_set(shape, options)?;
-    let device = StreamBufDevice::new(buffer, IosOpenMode::OUT);
-    let mut stream = IoStream::with_device(Box::new(device), false, true);
+    let mut stream = IoStream::with_shared_buffer(buffer, IosOpenMode::OUT, false, true);
     stream.insert_bytes(b"DBRep_DrawableShape\n");
     set.write(&mut stream, progress)?;
     let is_good = stream.good();
@@ -228,8 +226,7 @@ pub fn read_file_on(
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
         .rdbuf();
-    let device = StreamBufDevice::new(buffer, IosOpenMode::IN);
-    let mut stream = IoStream::with_device(Box::new(device), true, false);
+    let mut stream = IoStream::with_shared_buffer(buffer, IosOpenMode::IN, true, false);
     let mut set = BRepToolsShapeSet::with_console(*builder, true, false, console);
     set.read(&mut stream, progress)?;
     if set.nb_shapes() == 0 {

@@ -48,7 +48,6 @@ mod shape_set_write_shape;
 mod shape_writer;
 mod shape_writer_geometry;
 mod shape_writer_shape;
-pub(crate) mod stream_buffer_device;
 mod surface_read;
 mod surface_set;
 mod surface_write;

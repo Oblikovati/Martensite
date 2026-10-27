@@ -10,6 +10,7 @@ mod formatted;
 pub(crate) mod input_engine;
 mod number_text;
 mod pending_read;
+mod shared_device;
 pub use number_text::format_general;
 
 /// Byte device behind a stream: a file, an in-memory buffer or a named test fake.
