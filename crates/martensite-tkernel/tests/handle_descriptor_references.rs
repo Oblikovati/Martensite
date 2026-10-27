@@ -46,24 +46,23 @@ fn descriptor_projection() -> Handle<DescriptorProjectionDerived> {
     Handle::new(object)
 }
 
+fn assert_descriptor_slot<T: ?Sized + RuntimeTyped>(
+    owner: &Handle<T>,
+    expected: &'static Handle<RuntimeType>,
+) {
+    let observed = owner.dynamic_type_handle_ref().unwrap();
+    assert!(std::ptr::eq(observed, expected));
+}
+
 #[test]
 fn concrete_and_interface_handles_borrow_the_most_derived_canonical_slot() {
     let derived = descriptor_projection();
     let base = derived.cast::<DescriptorProjectionBase>();
     let interface = derived.cast::<dyn DescriptorProjectionView>();
     let expected = DescriptorProjectionDerived::static_type_ref();
-    assert!(std::ptr::eq(
-        derived.dynamic_type_handle_ref().unwrap(),
-        expected
-    ));
-    assert!(std::ptr::eq(
-        base.dynamic_type_handle_ref().unwrap(),
-        expected
-    ));
-    assert!(std::ptr::eq(
-        interface.dynamic_type_handle_ref().unwrap(),
-        expected
-    ));
+    assert_descriptor_slot(&derived, expected);
+    assert_descriptor_slot(&base, expected);
+    assert_descriptor_slot(&interface, expected);
     assert_eq!(interface.marker(), 17);
     assert_eq!(base.object_address(), derived.object_address());
 }
@@ -74,19 +73,12 @@ fn explicit_and_implicit_subobject_queries_keep_their_existing_return_shape() {
     let base = derived.cast::<DescriptorProjectionBase>();
     let implicit: &'static Handle<RuntimeType> = base.dynamic_type_ref();
     let explicit = <DescriptorProjectionBase as Transient>::dynamic_type_ref(base.get().unwrap());
-    assert!(std::ptr::eq(
-        implicit,
-        DescriptorProjectionBase::static_type_ref()
-    ));
+    let base_slot = DescriptorProjectionBase::static_type_ref();
+    let owned_slot = base.dynamic_type_handle_ref().unwrap();
+    assert!(std::ptr::eq(implicit, base_slot));
     assert!(std::ptr::eq(implicit, explicit));
-    assert!(!std::ptr::eq(
-        implicit,
-        base.dynamic_type_handle_ref().unwrap()
-    ));
-    assert_eq!(
-        base.dynamic_type().unwrap().name(),
-        "DescriptorProjectionDerived"
-    );
+    assert!(!std::ptr::eq(implicit, owned_slot));
+    assert_eq!(base.dynamic_type().unwrap().name(), owned_slot.name());
 }
 
 #[test]
