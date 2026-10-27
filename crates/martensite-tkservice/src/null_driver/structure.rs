@@ -1,11 +1,12 @@
 //! The structure and the group of the null driver: they keep the groups, the aspects and the
 //! highlight state as `OpenGl_Structure` and `OpenGl_Group` do, without graphic resources.
+use super::entry_group_retirement::EntryGroupRetirement;
 use crate::graphic3d::{
     Graphic3dAspectsReplaceMap, Graphic3dAspectsSource, Graphic3dCStructure,
     Graphic3dCStructureBase, Graphic3dGroup, Graphic3dGroupBase,
     Graphic3dPresentationAttributesSource, Graphic3dStructureManager, Graphic3dStructureSource,
 };
-use martensite_tkernel::ncollection::SequenceCursor;
+use martensite_tkernel::ncollection::{Sequence, SequenceCursor};
 use martensite_tkernel::standard::{
     Failure, Handle, SharedState, StandardTransient, WeakHandle, raise_native_failure,
 };
@@ -32,6 +33,11 @@ impl NullCStructure {
         });
         *structure.this.write() = structure.downgrade();
         Ok(structure)
+    }
+    fn take_entry_groups(&self) -> EntryGroupRetirement {
+        let mut fields = self.base.fields.write();
+        let empty = Sequence::with_allocator(fields.groups.allocator().clone());
+        EntryGroupRetirement::new(std::mem::replace(&mut fields.groups, empty))
     }
     fn cursor_for_group(&self, group: &Handle<dyn Graphic3dGroup>) -> Option<SequenceCursor> {
         let fields = self.base.fields.read();
@@ -60,10 +66,11 @@ impl Graphic3dCStructure for NullCStructure {
         &self.base
     }
     fn on_visibility_changed(&self) {}
-    /// Drops the groups and the 2D text and highlight flags, as `OpenGl_Structure::Clear`.
+    /// Retire the entry groups outside the guard, then reset text/highlight flags (#324).
     fn clear(&self) {
+        let mut retired = self.take_entry_groups();
+        retired.finish();
         let mut fields = self.base.fields.write();
-        fields.groups.clear(None);
         fields.is_2d_text = false;
         fields.is_for_highlight = false;
     }

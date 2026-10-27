@@ -1,5 +1,6 @@
 //! The null graphic driver: a named test double of the Graphic3d driver interfaces that keeps the scene data (structures, groups,
 //! layers) and draws nothing. The tests of the driver-facing data model run on it.
+mod entry_group_retirement;
 mod shadow;
 mod structure;
 mod view;

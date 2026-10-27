@@ -14,4 +14,6 @@ Reuse the existing driver-model, shadow, bounds, dump, group and retirement suit
 
 Measure time, peak memory, allocations and locks on the same accepted workloads before and after the change. Ordinary cursor traversal must avoid a collection scan or snapshot per callback. A release decision also needs the applicable concurrency and sanitizer gates. Keep unexecuted gates open.
 
+The clear policy and its destructor/panic tests are specified separately in [clear-retirement.md](clear-retirement.md). These add a behavior decision beyond the storage conversion and selected-node correction.
+
 Changing the public writable field type breaks callers that use vector construction, zero-based indexing or vector-specific mutation. The feature needs migration examples and changelog notes before integration. Package versions and release tags remain unchanged pending explicit approval.

@@ -12,6 +12,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Retired only the groups present when clear begins, allowed destructor reentry without the structure guard, and preserved callback-created groups and old flags when retirement panics (#324).
 - Changed the public driver-structure group field to a stable sequence, requiring custom drivers to migrate vector-specific mutation and indexing calls (#324).
 
 ### Fixed
