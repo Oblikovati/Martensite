@@ -9,6 +9,7 @@ use std::io::{Read, Seek, SeekFrom, Write};
 mod formatted;
 pub(crate) mod input_engine;
 mod number_text;
+mod pending_read;
 pub use number_text::format_general;
 
 /// Byte device behind a stream: a file, an in-memory buffer or a named test fake.
@@ -102,7 +103,7 @@ impl IoStream {
     pub fn close(&mut self) {
         match self.device.take() {
             Some(mut device) => {
-                self.sync_device(&mut *device);
+                Self::sync_device(&mut self.pending, &mut self.cursor, &mut *device);
                 if device.flush().is_err() {
                     self.set_state(state::FAIL);
                 }
@@ -181,7 +182,7 @@ impl IoStream {
     /// Takes the device back, flushing pending reads; `let device = stream.into_device()`.
     pub fn into_device(mut self) -> Option<Box<dyn StreamDevice>> {
         let mut device = self.device.take()?;
-        self.sync_device(&mut *device);
+        Self::sync_device(&mut self.pending, &mut self.cursor, &mut *device);
         Some(device)
     }
 }
@@ -209,21 +210,21 @@ impl IoStream {
         let Some(device) = self.device.as_mut() else {
             return false;
         };
-        self.pending.resize(READ_CHUNK, 0);
-        let count = device.read(&mut self.pending).unwrap_or(0);
-        self.pending.truncate(count);
-        self.cursor = 0;
-        count > 0
+        let mut pending =
+            pending_read::PendingRead::new(&mut self.pending, &mut self.cursor, &mut self.state);
+        let count = device.read(pending.receive(READ_CHUNK)).unwrap_or(0);
+        pending.complete(count)
     }
 
     /// Returns unread look-ahead to the device so writes and positions see the logical offset.
-    fn sync_device(&mut self, device: &mut dyn StreamDevice) {
-        let unread = (self.pending.len() - self.cursor) as i64;
+    /// Borrowing fields separately retains the device slot during unwinds (#318).
+    fn sync_device(pending: &mut Vec<u8>, cursor: &mut usize, device: &mut dyn StreamDevice) {
+        let unread = (pending.len() - *cursor) as i64;
         if unread > 0 {
             let _ = device.seek(SeekFrom::Current(-unread));
         }
-        self.pending.clear();
-        self.cursor = 0;
+        pending.clear();
+        *cursor = 0;
     }
 
     /// `sputn`: writes all bytes or reports how many were accepted.
@@ -231,24 +232,20 @@ impl IoStream {
         if !self.writable {
             return 0;
         }
-        let Some(mut device) = self.device.take() else {
+        let Some(device) = self.device.as_mut() else {
             return 0;
         };
-        self.sync_device(&mut *device);
-        let written = device.write_all(bytes).map_or(0, |()| bytes.len());
-        self.device = Some(device);
-        written
+        Self::sync_device(&mut self.pending, &mut self.cursor, &mut **device);
+        device.write_all(bytes).map_or(0, |()| bytes.len())
     }
 
     /// `pubseekoff(0, cur)`: the logical position, `-1` for a closed buffer.
     fn logical_position(&mut self) -> i64 {
-        let Some(mut device) = self.device.take() else {
+        let Some(device) = self.device.as_mut() else {
             return -1;
         };
-        self.sync_device(&mut *device);
-        let position = device.stream_position().map_or(-1, |p| p as i64);
-        self.device = Some(device);
-        position
+        Self::sync_device(&mut self.pending, &mut self.cursor, &mut **device);
+        device.stream_position().map_or(-1, |p| p as i64)
     }
 }
 
@@ -386,14 +383,11 @@ impl IoStream {
 
     /// `pubseekpos(pos, in/out)`: true when the device accepted the absolute position.
     fn seek_device(&mut self, position: i64) -> bool {
-        let Some(mut device) = self.device.take() else {
+        let Some(device) = self.device.as_mut() else {
             return false;
         };
-        self.sync_device(&mut *device);
-        let moved = u64::try_from(position)
-            .is_ok_and(|offset| device.seek(SeekFrom::Start(offset)).is_ok());
-        self.device = Some(device);
-        moved
+        Self::sync_device(&mut self.pending, &mut self.cursor, &mut **device);
+        u64::try_from(position).is_ok_and(|offset| device.seek(SeekFrom::Start(offset)).is_ok())
     }
 
     /// Move the output position without clearing EOF or input-count state (#136).

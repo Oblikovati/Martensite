@@ -59,3 +59,6 @@ pub mod vector_storage_contracts;
 pub mod weak_handle_behavior;
 #[path = "../weak_handle_identity.rs"]
 pub mod weak_handle_identity;
+
+#[path = "../stream_device_unwind.rs"]
+pub mod stream_device_unwind;
