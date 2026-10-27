@@ -1,4 +1,6 @@
 //! Owned field identity and actual virtual capture dispatch, independent of rendering.
+#[path = "capture_buffer_contention_checks.rs"]
+mod contention;
 #[path = "capture_buffer_reference_fixture.rs"]
 mod fixture;
 use fixture::ReferenceCaptureView;
