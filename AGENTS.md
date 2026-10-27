@@ -445,7 +445,9 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
 - **Semantic versioning:** patch = fixes; minor = additive (new CLI
   subcommands, MCP tools, config keys, a new agent harness or LLM
   provider); major = breaking (on-disk format without migration, removed
-  subcommands, breaking MCP schema changes, big rewrites).
+  subcommands, breaking MCP schema changes, big rewrites). Before 1.0.0 each
+  level moves down one, as in CONTRIBUTING.md: additive changes ship in a patch
+  release and breaking changes in a minor release (`0.Y.0`).
 - **Release cadence and ordering.** Batch tickets by semver impact and
   ship fixes as a patch release promptly — never let a bug fix wait on
   unreleased feature work. The `[Unreleased]` section signals the bump:
