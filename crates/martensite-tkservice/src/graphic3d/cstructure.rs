@@ -8,6 +8,7 @@ use super::{
     Graphic3dTransformPersMembers as _, Graphic3dTransformPersSource, Graphic3dViewAffinity,
     Graphic3dZLayerId,
 };
+use martensite_tkernel::ncollection::Sequence;
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::exceptions::program_error;
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
@@ -20,8 +21,9 @@ use std::io;
 pub struct Graphic3dCStructureFields {
     /// `myGraphicDriver`.
     pub graphic_driver: Handle<dyn Graphic3dGraphicDriver>,
-    /// `myGroups`.
-    pub groups: Vec<Handle<dyn Graphic3dGroup>>,
+    /// Each #324 entry keeps its own stable node, even when payload handles repeat.
+    /// Example: `fields.groups.append(group)` preserves one additional entry.
+    pub groups: Sequence<Handle<dyn Graphic3dGroup>>,
     /// `myBndBox`.
     pub bnd_box: Graphic3dBndBox3d,
     /// `myTrsf`.
@@ -103,7 +105,7 @@ fn default_fields(
 ) -> Graphic3dCStructureFields {
     Graphic3dCStructureFields {
         graphic_driver,
-        groups: Vec::new(),
+        groups: Sequence::default(),
         bnd_box: Graphic3dBndBox3d::default(),
         trsf: Handle::default(),
         trsf_pers: Handle::default(),
@@ -191,7 +193,13 @@ pub trait Graphic3dCStructureMembers: Graphic3dCStructure {
     }
     /// `Groups` (a copy of the sequence); `cstructure.groups().len()`.
     fn groups(&self) -> Vec<Handle<dyn Graphic3dGroup>> {
-        self.cstructure_base().fields.read().groups.clone()
+        self.cstructure_base()
+            .fields
+            .read()
+            .groups
+            .iter()
+            .cloned()
+            .collect()
     }
     /// `Transformation`; `cstructure.transformation().is_null()`.
     fn transformation(&self) -> Handle<Datum3> {

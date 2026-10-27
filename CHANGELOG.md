@@ -12,8 +12,14 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added shared-buffer stream construction and scoped input borrowing that rejoins state, read counts, and unread lookahead with owned cleanup failures (#319).
 
+### Changed
+
+- Retired only the groups present when clear begins, allowed destructor reentry without the structure guard, and preserved callback-created groups and old flags when retirement panics (#324).
+- Changed the public driver-structure group field to a stable sequence, requiring custom drivers to migrate vector-specific mutation and indexing calls (#324).
+
 ### Fixed
 
+- Kept the selected group node across virtual clear callbacks that remove earlier groups, and released retired nodes outside the structure guard (#325).
 - Released buffer-kind read guards before invoking reentrant formatting callbacks (#327).
 
 - Provided an owner-aware borrowed runtime descriptor query for projected handles without increasing reference counts (#317).
