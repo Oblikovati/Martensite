@@ -35,8 +35,10 @@ field, separate unwind recovery and legacy refusal.
 The contention control runs two writers and readers through 512 write/read rounds per
 worker before original-owner retirement and 4,096 afterwards. Barriers separate
 retirement and the final Depth handoff; intermediate reads must observe an active
-writer value, and an independent copied slot must remain unchanged. This test
-has not yet been executed. The seven earlier controls passed twice, and the
-existing driver-model tests and selected strict checks passed. Sanitizer
-qualification remains pending. Renderer adoption and the view-options holder
+writer value, and an independent copied slot must remain unchanged. All eight focused controls passed in two processes, and the earlier existing
+driver-model tests and selected strict checks passed. The retained sanitizer
+startup control failed before entering its main function on this host. No
+instrumented current-package test or sanitizer qualification is claimed; that
+check requires a usable runner. The complete affected-package PR gate remains
+required before pushing. Renderer adoption and the view-options holder
 are separate work under Feature #323; this interface alone does not complete them.
