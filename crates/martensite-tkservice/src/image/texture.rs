@@ -115,7 +115,7 @@ pub trait ImageTextureSource: Transient {
         }
         ImageDdsParser::load(supported, &base.image_path, 0, 0)
     }
-    /// The decoded image (always null without an image library); `texture.read_image(&f)`.
+    /// The decoded image (null when the file does not load); `texture.read_image(&f)`.
     fn read_image(&self, _supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
         let base = self.texture_base();
         if base.buffer.is_some() {
@@ -168,7 +168,7 @@ pub trait ImageTextureSource: Transient {
         field_real(stream, "myOffset", base.offset as f64)?;
         field_real(stream, "myLength", base.length as f64)
     }
-    /// Loads an image file (fails without an image library); `texture.load_image_file(&p)`.
+    /// Loads a PNG, JPEG, BMP or GIF image file; `texture.load_image_file(&p)`.
     fn load_image_file(&self, path: &AsciiString) -> Handle<ImagePixMap> {
         let image = ImageAlienPixMap::default();
         if !image.load(path) {

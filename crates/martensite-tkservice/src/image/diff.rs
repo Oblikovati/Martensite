@@ -197,7 +197,7 @@ impl ImageDiff {
         }
         Ok(true)
     }
-    /// `Init(paths)`: loads both files; without an image library this always reports
+    /// `Init(paths)`: loads both files; when either fails to load it reports
     /// "Error: Failed to load image(s) file(s)". Example: `diff.init_files(&a, &b, false)?`.
     pub fn init_files(
         &self,

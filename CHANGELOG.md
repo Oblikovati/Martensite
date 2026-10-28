@@ -8,12 +8,15 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added PNG, JPEG, BMP and GIF loading to `ImageAlienPixMap`, storing rows bottom-up with four-byte padding and gray, blue-green-red or blue-green-red-alpha pixels; this adds the `image` crate as a dependency (#330).
+
 - Added owned live buffer-kind arguments with explicit unsupported-backend errors for reference-aware capture (#323).
 
 - Added shared-buffer stream construction and scoped input borrowing that rejoins state, read counts, and unread lookahead with owned cleanup failures (#319).
 
 ### Changed
 
+- Changed `ImageAlienPixMap` saving to write the format its extension names (PNG, JPEG, BMP, GIF or PPM) into a file, stream or buffer; other extensions and empty images now return false instead of writing PPM (#330).
 - Retired only the groups present when clear begins, allowed destructor reentry without the structure guard, and preserved callback-created groups and old flags when retirement panics (#324).
 - Changed the public driver-structure group field to a stable sequence, requiring custom drivers to migrate vector-specific mutation and indexing calls (#324).
 
