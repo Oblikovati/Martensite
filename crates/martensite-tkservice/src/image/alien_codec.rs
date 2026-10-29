@@ -1,10 +1,12 @@
 //! The image file formats `ImageAlienPixMap` reads and writes: PNG, JPEG, BMP and GIF,
-//! through the `image` crate. This module is the only user of that crate.
+//! through the `image` crate, and SGI files, which are only read (see `alien_sgi`). This
+//! module is the only user of that crate.
 //!
 //! A format is recognised from the leading bytes of the file, else from the extension of the
 //! name. Pixel conversion between decoded images and pixmap rows lives in `alien_pixels`.
 use super::alien_palette::indexed_kind;
 use super::alien_pixels::{DecodedRows, decoded_rows, encodable_image};
+use super::alien_sgi::{decode_sgi, has_sgi_signature, is_sgi_extension};
 use super::{ImageFormat, ImagePixMap};
 use image::ImageFormat as FileFormat;
 use std::io::Cursor;
@@ -63,10 +65,7 @@ impl CodecFormat {
     /// The format named by the text after the last dot, or by the whole text when it has
     /// no dot, so that a bare extension works too: `CodecFormat::from_name(b"PNG")`.
     pub(super) fn from_name(name: &[u8]) -> Option<Self> {
-        let extension = match name.iter().rposition(|&b| b == b'.') {
-            Some(dot) => &name[dot + 1..],
-            None => name,
-        };
+        let extension = name_extension(name);
         EXTENSIONS
             .iter()
             .find(|(known, _)| known.eq_ignore_ascii_case(extension))
@@ -82,9 +81,30 @@ impl CodecFormat {
     }
 }
 
+/// The text after the last dot of `name`, or all of it without a dot; `name_extension(b"a.png")`.
+fn name_extension(name: &[u8]) -> &[u8] {
+    match name.iter().rposition(|&b| b == b'.') {
+        Some(dot) => &name[dot + 1..],
+        None => name,
+    }
+}
+
+/// Whether to read the file as SGI: by its signature, else, when no other signature matches,
+/// by the extension of `name`. Example: `reads_as_sgi(Some(&[1, 0xda]), b"a.png")`.
+fn reads_as_sgi(bytes: Option<&[u8]>, name: &[u8]) -> bool {
+    match bytes {
+        Some(bytes) if has_sgi_signature(bytes) => true,
+        Some(bytes) if CodecFormat::from_signature(bytes).is_some() => false,
+        _ => is_sgi_extension(name_extension(name)),
+    }
+}
+
 /// Decodes `bytes` (absent when the file could not be read) as the format of its signature,
 /// else of `name`. Example: `decode(Some(&png_bytes), b"a.png")?.format`.
 pub(super) fn decode(bytes: Option<&[u8]>, name: &[u8]) -> Result<DecodedRows, DecodeFailure> {
+    if reads_as_sgi(bytes, name) {
+        return decode_sgi(bytes.ok_or(DecodeFailure::MissingOrInvalid)?);
+    }
     let signature = bytes.and_then(CodecFormat::from_signature);
     let format = signature
         .or_else(|| CodecFormat::from_name(name))

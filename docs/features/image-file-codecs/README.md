@@ -1,9 +1,10 @@
 # Image file codecs
 
 `ImageAlienPixMap` reads and writes PNG, JPEG, BMP and GIF files through the
-[`image`](https://crates.io/crates/image) crate (issue #330). Only
-`src/image/alien_codec.rs` uses the crate; `alien_pixels.rs` converts pixels and
-`alien_palette.rs` reads the palette of indexed files.
+[`image`](https://crates.io/crates/image) crate (issue #330), and reads SGI files
+with its own decoder (issue #332). Only `src/image/alien_codec.rs` uses the
+crate; `alien_pixels.rs` converts pixels, `alien_palette.rs` reads the palette
+of indexed files and `alien_sgi.rs` decodes SGI files.
 
 ## Dependency
 
@@ -30,6 +31,11 @@ each row padded to a multiple of four bytes:
 | Indexed, palette a gray ramp | `Gray`, the index |
 | Indexed, any other palette | `Bgr`, palette transparency dropped |
 
+| SGI gray | `Gray` |
+| SGI gray and alpha | `Bgra` (gray repeated in each colour channel); `Bgr32` when opaque |
+| SGI RGB | `Bgr` |
+| SGI RGBA | `Bgra`; `Bgr32` when every pixel is opaque |
+
 A gray-ramp palette is black then white at one bit per pixel; at other depths,
 every listed entry `i` is `(i, i, i)`. GIF files load their first frame on the
 logical screen.
@@ -40,7 +46,26 @@ Failures leave the pixmap empty and send a fail message:
 "Error: image '<name>' has unsupported pixel format" (with "image stream" for
 `load_stream`).
 
-PNG, BMP and GIF decoding is exact. JPEG decoding uses `zune-jpeg`; its inverse
+## SGI files
+
+An SGI file starts with the magic number 474 (bytes `01 da`); without a known
+signature, the extensions ".rgb", ".rgba", ".bw" and ".sgi" select it. The
+512-byte big-endian header is followed by one plane per channel, each plane's
+rows bottom row first. Storage 0 keeps rows verbatim; storage 1 lists each row's
+start offset after the header (all rows of plane 0, then plane 1, and so on) and
+encodes each row in runs: a count byte with the high bit set is followed by that
+many literal bytes, otherwise by one byte repeated that many times, and a zero
+count ends the row. The row-length table is not needed and is not read.
+
+The dimension field limits the image: dimension 1 has one row, dimension 2 one
+channel, whatever the stored height and depth say. One-byte channels with one to
+four channels load. Two-byte channels, colour-map files (colour map other than
+0) and more than four channels fail with the unsupported pixel format message;
+a truncated header, a storage, channel size or dimension outside the format,
+rows beyond the end of the file and runs that end early or overflow the row fail
+with the missing or invalid message. SGI files are only read.
+
+PNG, BMP, GIF and SGI decoding is exact. JPEG decoding uses `zune-jpeg`; its inverse
 DCT and chroma upsampling differ from other decoders by a few levels per channel
 (up to 13 on a 2048x2048 photograph, most pixels within 2).
 
@@ -60,5 +85,5 @@ at most 256 colours. Half-float and two-channel float formats have no file form.
 
 ## Not covered
 
-Gamma adjustment, other file formats (TGA, TIFF, SGI, HDR, EXR, DDS through
-this path) and multi-frame GIF playback beyond the first frame.
+Gamma adjustment, SGI writing, SGI files with two-byte channels or a colour map,
+other file formats (TGA, TIFF, HDR, EXR, DDS through this path) and multi-frame GIF playback beyond the first frame.
