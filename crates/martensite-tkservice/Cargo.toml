@@ -34,6 +34,9 @@ host-font-corpus = []
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
 martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.0" }
 martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
+# PNG, JPEG, BMP and GIF files. 0.25.6 is the last release whose required dependencies all
+# carry licences that deny.toml allows (later releases add a BSD-3-Clause colour manager).
+image = { version = "=0.25.6", default-features = false, features = ["png", "jpeg", "bmp", "gif"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 x11-dl = "=2.21.0"
