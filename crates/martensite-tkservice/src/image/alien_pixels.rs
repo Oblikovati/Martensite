@@ -75,7 +75,7 @@ fn direct_pixels(image: &DynamicImage) -> Option<(ImageFormat, Vec<u8>)> {
 }
 
 /// RGB(A) bytes with red and blue exchanged in each `channels`-byte pixel.
-fn reversed_colour(bytes: &[u8], channels: usize) -> Vec<u8> {
+pub(super) fn reversed_colour(bytes: &[u8], channels: usize) -> Vec<u8> {
     let mut out = bytes.to_vec();
     out.chunks_exact_mut(channels)
         .for_each(|pixel| pixel.swap(0, 2));
@@ -83,7 +83,7 @@ fn reversed_colour(bytes: &[u8], channels: usize) -> Vec<u8> {
 }
 
 /// `Bgra`, or `Bgr32` when no pixel is transparent, so opaque files stay opaque.
-fn four_channel(rgba: &[u8]) -> (ImageFormat, Vec<u8>) {
+pub(super) fn four_channel(rgba: &[u8]) -> (ImageFormat, Vec<u8>) {
     let opaque = rgba
         .as_chunks::<4>()
         .0

@@ -1,3 +1,4 @@
+use super::super::alien_sgi::tests::SgiFileBuilder;
 use super::*;
 use image::{DynamicImage, RgbImage};
 
@@ -123,4 +124,38 @@ fn half_float_pixmaps_have_no_file_form() {
         encode(&half, CodecFormat::Png),
         Err(EncodeFailure::UnsupportedPixels(ImageFormat::RgfHalf))
     );
+}
+
+#[test]
+fn sgi_files_are_read_by_signature_else_by_name() {
+    let sgi = SgiFileBuilder::new(vec![vec![vec![7, 8]]]).bytes();
+    let decoded = decode(Some(&sgi), b"misnamed.png").unwrap();
+    assert_eq!(
+        (decoded.format, decoded.pixels),
+        (ImageFormat::Gray, vec![7, 8])
+    );
+    let png = two_pixel_file(FileFormat::Png);
+    assert_eq!(
+        decode(Some(&png), b"a.rgb").unwrap().format,
+        ImageFormat::Bgr
+    );
+    for name in [
+        &b"absent.rgb"[..],
+        b"absent.RGBA",
+        b"absent.bw",
+        b"absent.sgi",
+    ] {
+        assert_eq!(decode(None, name), Err(DecodeFailure::MissingOrInvalid));
+    }
+    assert_eq!(
+        decode(Some(b"not an image"), b"a.rgb"),
+        Err(DecodeFailure::MissingOrInvalid)
+    );
+}
+
+#[test]
+fn sgi_names_have_no_writer() {
+    let gray = pixmap(ImageFormat::Gray, 1, &[0]);
+    assert_eq!(CodecFormat::from_name(b"a.rgb"), None);
+    assert!(encode(&gray, CodecFormat::Png).is_ok());
 }

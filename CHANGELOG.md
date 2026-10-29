@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added SGI (".rgb", ".rgba", ".bw", ".sgi") loading to `ImageAlienPixMap` with a decoder in the crate: verbatim and run-length encoded files with one to four one-byte channels; no new dependency (#332).
+
 - Added PNG, JPEG, BMP and GIF loading to `ImageAlienPixMap`, storing rows bottom-up with four-byte padding and gray, blue-green-red or blue-green-red-alpha pixels; this adds the `image` crate as a dependency (#330).
 
 - Added owned live buffer-kind arguments with explicit unsupported-backend errors for reference-aware capture (#323).

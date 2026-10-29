@@ -1,4 +1,5 @@
-//! `Image_AlienPixMap`: an image read from and written to PNG, JPEG, BMP and GIF files.
+//! `Image_AlienPixMap`: an image read from and written to PNG, JPEG, BMP and GIF files, and
+//! read from SGI files.
 //!
 //! Loading recognises the format from the file's leading bytes, else from the extension of
 //! its name, and stores the pixels bottom-up with rows padded to four bytes (see
@@ -87,7 +88,7 @@ impl ImageAlienPixMap {
     pub fn is_top_down_default() -> bool {
         false
     }
-    /// `Load(theFileName)`: decodes a PNG, JPEG, BMP or GIF file; on failure the image is
+    /// `Load(theFileName)`: decodes a PNG, JPEG, BMP, GIF or SGI file; on failure the image is
     /// empty and a message names the file. Example: `pixmap.load(&AsciiString::from("a.png"))`.
     pub fn load(&self, file_name: &AsciiString) -> bool {
         self.load_bytes(None, file_name)

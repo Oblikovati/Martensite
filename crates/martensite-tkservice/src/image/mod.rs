@@ -3,6 +3,7 @@ mod alien_codec;
 mod alien_palette;
 mod alien_pix_map;
 mod alien_pixels;
+mod alien_sgi;
 mod colors;
 mod compressed_pix_map;
 mod dds_parser;

@@ -1,3 +1,4 @@
+use super::super::alien_sgi::tests::SgiFileBuilder;
 use super::*;
 
 #[test]
@@ -117,6 +118,29 @@ fn small_buffers_unknown_names_and_empty_images_do_not_save() {
     assert!(
         !ImageAlienPixMap::default()
             .save(&AsciiString::from("a.png"))
+            .unwrap()
+    );
+}
+
+#[test]
+fn sgi_files_load_bottom_up_and_do_not_save() {
+    let sgi = SgiFileBuilder::new(vec![vec![vec![1, 2, 3], vec![4, 5, 6]]]).bytes();
+    let loaded = ImageAlienPixMap::default();
+    assert!(loaded.load_bytes(Some(&sgi), &AsciiString::from("a.rgb")));
+    assert_eq!(
+        (
+            loaded.format(),
+            loaded.width(),
+            loaded.height(),
+            loaded.is_top_down()
+        ),
+        (ImageFormat::Gray, 3, 2, false)
+    );
+    // The file's first row is the bottom row, which bottom-up storage keeps first.
+    assert_eq!(loaded.data().data.data(), &[1, 2, 3, 0, 4, 5, 6, 0]);
+    assert!(
+        !loaded
+            .save_bytes(Some(&mut [0u8; 256]), &AsciiString::from("a.rgb"))
             .unwrap()
     );
 }
