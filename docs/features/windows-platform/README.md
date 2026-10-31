@@ -173,6 +173,11 @@ passed on Windows with the portable image implementation.
 
 ## Final Windows validation
 
+The hosted Windows execute-access regression test was removed at the maintainer's
+request after it failed on both v0.5.0 candidate runs. Removing the test does not
+resolve the access-check discrepancy. Issue #344 tracks the unresolved result;
+the execute-denial contract is excluded from release validation.
+
 Validation used Windows x64 and rustup's pinned MSVC toolchain,
 `rustc 1.99.0 (b940084d7 2026-09-28)`, on `release/0.5` at
 `0c4f89ef050d4508c8ed4f6ae563496057ea6074` plus these working-tree changes.
