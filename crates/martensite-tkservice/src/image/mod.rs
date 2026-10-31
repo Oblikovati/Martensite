@@ -3,6 +3,8 @@ mod alien_codec;
 mod alien_palette;
 mod alien_pix_map;
 mod alien_pixels;
+#[cfg(test)]
+mod alien_png_compression_tests;
 mod alien_sgi;
 mod colors;
 mod compressed_pix_map;
