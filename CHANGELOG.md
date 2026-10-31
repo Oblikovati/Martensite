@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed avoidable PNG buffer-save refusals by using default compression with adaptive filtering across file, stream and buffer output (#347).
+
 ## [0.5.0] - 2026-10-31
 
 ### Added

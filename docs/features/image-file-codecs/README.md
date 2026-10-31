@@ -83,6 +83,13 @@ float colour clamps to [0, 1]. JPEG and GIF take three channels. JPEG uses
 quality 75; GIF quantizes to 256 colours with NeuQuant, exact when the image has
 at most 256 colours. Half-float and two-channel float formats have no file form.
 
+PNG uses explicit `Default` compression with `Adaptive` row filtering (#347).
+The previous `Fast` compression produced large files for repetitive RGB images.
+File, stream and buffer saves share this policy. Pixel samples stay lossless,
+but compressed bytes and lengths change. Encoded lengths depend on the pixels
+and dependency versions. To replay the previous policy, build Martensite commit
+`0c4f89ef050d4508c8ed4f6ae563496057ea6074` with its locked dependencies.
+
 ## Not covered
 
 Gamma adjustment, SGI writing, SGI files with two-byte channels or a colour map,
