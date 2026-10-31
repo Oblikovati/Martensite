@@ -2,7 +2,9 @@
 
 This review accompanies the source-inventory baseline update for #334, #170,
 #336 and #337. It covers the Windows implementation in the current checkout,
-not the unfinished unsafe-storage migration. No crate version is changed.
+not the unfinished unsafe-storage migration. The release's package-version
+reconciliation changes diagnostic package labels while retaining source
+locations and unsafe counts; each platform baseline records that mapping.
 Display leases keep behavior version 1; geometry replay versions are unchanged.
 
 ## Source delta

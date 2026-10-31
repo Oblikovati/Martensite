@@ -465,7 +465,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkbrep"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -485,7 +485,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkernel"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "allocator-api2",
  "bytemuck",
@@ -627,7 +627,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkprim"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -643,7 +643,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkservice"
-version = "0.3.6"
+version = "0.4.0"
 dependencies = [
  "image",
  "libc",

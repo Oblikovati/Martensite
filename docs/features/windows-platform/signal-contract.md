@@ -3,7 +3,8 @@
 Tracked by #334 and the API-conflict inventory in #88. The maintainer approved
 option 1 in this chat on 2026-10-31: keep faults fatal, report capabilities and
 verify console cancellation and trap controls in isolated child processes.
-No crate version bump was approved.
+That implementation decision did not authorize a version bump. The subsequent
+0.5.0 release request authorized the release's changed-package version updates.
 
 ## Current interface and behavior
 

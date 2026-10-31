@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkservice"
-version = "0.3.6"
+version = "0.4.0"
 description = "Martensite visualization services: windows and events, images, fonts, graphic aspects, cameras, lights, textures, shaders and media."
 edition.workspace = true
 rust-version.workspace = true
@@ -32,7 +32,7 @@ host-font-corpus = []
 
 [dependencies]
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.0" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.1" }
 martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
 # PNG, JPEG, BMP and GIF files. 0.25.6 is the last release whose required dependencies all
 # carry licences that deny.toml allows (later releases add a BSD-3-Clause colour manager).

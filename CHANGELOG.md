@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-31
+
 ### Added
 
 - Added explicit OSD signal capabilities, reporting Windows console cancellation and floating-point trap controls while keeping native hardware faults fatal (#334).
@@ -44,7 +46,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Changed `ImageAlienPixMap` saving to write the format its extension names (PNG, JPEG, BMP, GIF or PPM) into a file, stream or buffer; other extensions and empty images now return false instead of writing PPM (#330).
 - Retired only the groups present when clear begins, allowed destructor reentry without the structure guard, and preserved callback-created groups and old flags when retirement panics (#324).
-- Changed the public driver-structure group field to a stable sequence, requiring custom drivers to migrate vector-specific mutation and indexing calls (#324).
+- BREAKING: Changed the public driver-structure group field to a stable sequence, requiring custom drivers to migrate vector-specific mutation and indexing calls (#324).
 
 ### Fixed
 
