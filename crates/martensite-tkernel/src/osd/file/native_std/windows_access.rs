@@ -33,7 +33,9 @@ mod tests {
     fn native_access_checks_honor_the_acl_instead_of_readonly_attributes() {
         let root = tempfile::tempdir().unwrap();
         let path = root.path().join("access");
-        let rights = Protection::with_values(Right::Rwxd, Right::Rwd, Right::None, Right::None);
+        // SYSTEM may also be the effective token on a hosted runner (#344).
+        // Every granted principal must omit execute for the denial to be meaningful.
+        let rights = Protection::with_values(Right::Rwd, Right::Rwd, Right::None, Right::None);
         drop(document_file::exclusive_protected_file(&path, &rights).unwrap());
         assert!(
             check(
