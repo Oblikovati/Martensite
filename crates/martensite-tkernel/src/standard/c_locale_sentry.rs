@@ -3,13 +3,17 @@
 //! Rust's number formatting and parsing never consult a process locale, but the kernel also
 //! exposes this sentry to code that calls locale-sensitive C routines. POSIX targets
 //! switch only the calling thread to `C` and restore its previous thread locale on drop.
+//! Windows enables a per-thread CRT locale and restores its prior name and mode.
 //! Android keeps a no-op. Other targets retain the descriptive scope API;
 //! their platform-specific locale switching is not implemented.
 
 #[cfg(all(unix, not(target_os = "android")))]
 #[path = "c_locale_sentry/locale_posix.rs"]
 mod locale_scope;
-#[cfg(any(not(unix), target_os = "android"))]
+#[cfg(windows)]
+#[path = "c_locale_sentry/locale_windows.rs"]
+mod locale_scope;
+#[cfg(any(not(any(unix, windows)), target_os = "android"))]
 #[path = "c_locale_sentry/locale_fallback.rs"]
 mod locale_scope;
 

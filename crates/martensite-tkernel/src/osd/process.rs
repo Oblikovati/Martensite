@@ -91,7 +91,8 @@ impl<S: ProcessSource> Process<S> {
             0,
         )
     }
-    /// The login name, or empty when unknown; `process.user_name()`.
+    /// The login name (effective token account on Windows), or empty when unknown;
+    /// `process.user_name()`.
     pub fn user_name(&mut self) -> AsciiString {
         match self.source.user_name() {
             Ok(name) => AsciiString::from_raw(&name),
@@ -102,7 +103,8 @@ impl<S: ProcessSource> Process<S> {
             }
         }
     }
-    /// Unix compares the user id with 0; `process.is_super_user()`.
+    /// Unix compares the user id with 0; Windows checks effective Administrators membership.
+    /// Example: `process.is_super_user()`.
     ///
     /// Hosts without an implemented query record `ERROR_CALL_NOT_IMPLEMENTED` (120) and answer false.
     pub fn is_super_user(&mut self) -> bool {

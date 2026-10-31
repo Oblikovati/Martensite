@@ -14,6 +14,13 @@ mod backend;
 #[path = "document_file/unix.rs"]
 mod unix;
 
+#[cfg(windows)]
+pub(crate) use backend::{
+    create_protected_directory, exclusive_protected_file, open_protected_file,
+};
+#[cfg(windows)]
+pub(crate) use backend::{read_protection, write_protection};
+
 /// Create an exclusive staging directory whose access policy protects document bytes.
 /// The directory must not exist; Unix platforms grant access only to its owner.
 ///

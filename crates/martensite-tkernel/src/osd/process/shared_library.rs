@@ -2,8 +2,8 @@
 //!
 //! The Unix build is a thin layer over `dlopen`/`dlsym`/`dlclose`/`dlerror`, reached
 //! through narrow platform modules below. Windows uses a `GetModuleHandleW` cache,
-//! `LoadLibraryExW`, and system-error formatter; its runtime behavior is cross-compile and
-//! fake-tested here but not executed on Windows. Byte methods preserve Unix loader names
+//! `LoadLibraryExW`, and system-error formatter, with native Windows lifecycle tests.
+//! Byte methods preserve Unix loader names
 //! and errors that are not valid UTF-8; string methods are convenience views.
 use crate::{
     osd::LoadMode,
@@ -25,6 +25,8 @@ pub struct SharedLibrary {
     handle: *mut c_void,
     // Set by dl_close: a dangling handle must never reach dlsym.
     closed: bool,
+    #[cfg(windows)]
+    owns_handle: bool,
 }
 impl Default for SharedLibrary {
     fn default() -> Self {
@@ -40,6 +42,8 @@ impl SharedLibrary {
             name: None,
             handle: std::ptr::null_mut(),
             closed: false,
+            #[cfg(windows)]
+            owns_handle: false,
         }
     }
     /// A library named `name`; `None` stands for a null name;
@@ -67,6 +71,7 @@ impl SharedLibrary {
             {
                 self.handle = ffi::cached_handle(self.name.as_deref().unwrap_or_default());
                 self.closed = false;
+                self.owns_handle = false;
             }
         }
     }
@@ -84,15 +89,15 @@ impl SharedLibrary {
     /// tells whether a handle was obtained; `library.dl_open(LoadMode::RtldLazy)`.
     pub fn dl_open(&mut self, mode: LoadMode) -> bool {
         #[cfg(windows)]
-        let was_closed: bool = self.closed;
-        self.handle = ffi::open(self.name.as_deref(), mode, self.handle);
-        #[cfg(not(windows))]
-        {
-            self.closed = false;
+        if self.closed || !self.owns_handle {
+            // A cached GetModuleHandle result owns no loader reference (#170).
+            self.handle = std::ptr::null_mut();
         }
+        self.handle = ffi::open(self.name.as_deref(), mode, self.handle);
+        self.closed = false;
         #[cfg(windows)]
         {
-            self.closed = was_closed;
+            self.owns_handle = !self.handle.is_null();
         }
         !self.handle.is_null()
     }
@@ -120,7 +125,16 @@ impl SharedLibrary {
         if self.closed || self.handle.is_null() {
             return;
         }
+        #[cfg(not(windows))]
         ffi::close(self.handle);
+        #[cfg(windows)]
+        {
+            if self.owns_handle {
+                ffi::close(self.handle);
+            }
+            self.owns_handle = false;
+            self.handle = std::ptr::null_mut();
+        }
         self.closed = true;
     }
     /// Returns loader diagnostics as lossy UTF-8; use `dl_error_bytes()` for raw bytes.
@@ -146,6 +160,10 @@ impl SharedLibrary {
         }
     }
 }
+
+#[cfg(all(test, windows))]
+#[path = "shared_library/windows_runtime_tests.rs"]
+mod windows_runtime_tests;
 
 #[cfg(unix)]
 #[allow(unsafe_code)]

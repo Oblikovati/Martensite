@@ -90,7 +90,11 @@ impl<'a> GitRepo<'a> {
     }
 
     fn diff_clean(&self, args: &[&str], no_index: bool) -> BuildResult<bool> {
-        let spec = self.command(args);
+        // The whitespace check must not interpret checkout-conversion warnings as
+        // diagnostics. This override is command-local; whitespace errors still fail (#338).
+        let spec = CommandSpec::new("git", &self.root)
+            .args(["-c", "core.safecrlf=false"])
+            .args(args.iter().copied());
         let output = self.runner.capture_output(&spec)?;
         let clean = diff_whitespace_result(&spec, &output, no_index)?;
         if !clean {
@@ -214,7 +218,7 @@ mod tests {
     #[test]
     fn untracked_whitespace_problem_is_read_from_bit_two() {
         let file = untracked_file("new.txt");
-        let command = "git diff --no-index --check -- /dev/null new.txt";
+        let command = "git -c core.safecrlf=false diff --no-index --check -- /dev/null new.txt";
         let differs_only = RecordingRunner::default().with_exit_code(command, 1);
         assert!(
             repo(&differs_only)
@@ -227,13 +231,14 @@ mod tests {
 
     #[test]
     fn tracked_whitespace_problem_fails_the_check() {
-        let runner = RecordingRunner::default().with_exit_code("git diff --check abc", 2);
+        let runner = RecordingRunner::default()
+            .with_exit_code("git -c core.safecrlf=false diff --check abc", 2);
         assert!(!repo(&runner).whitespace_clean("abc", &[]).unwrap());
     }
 
     #[test]
     fn fatal_no_index_exit_one_preserves_the_command_and_diagnostic() {
-        let command = "git diff --no-index --check -- /dev/null missing.txt";
+        let command = "git -c core.safecrlf=false diff --no-index --check -- /dev/null missing.txt";
         let runner = RecordingRunner::default()
             .with_exit_code(command, 1)
             .with_stderr(command, "error: Could not access 'missing.txt'");
@@ -247,7 +252,7 @@ mod tests {
 
     #[test]
     fn unexpected_exit_status_is_never_accepted_as_clean() {
-        let command = "git diff --no-index --check -- /dev/null new.txt";
+        let command = "git -c core.safecrlf=false diff --no-index --check -- /dev/null new.txt";
         for code in [4, 128, 255] {
             let runner = RecordingRunner::default().with_exit_code(command, code);
             assert!(
@@ -260,7 +265,7 @@ mod tests {
 
     #[test]
     fn unexpected_output_is_never_accepted_as_clean() {
-        let command = "git diff --no-index --check -- /dev/null new.txt";
+        let command = "git -c core.safecrlf=false diff --no-index --check -- /dev/null new.txt";
         let runner = RecordingRunner::default()
             .with_exit_code(command, 1)
             .with_stdout(command, "unexpected");

@@ -165,7 +165,7 @@ impl Graphic3dTextureRoot for Graphic3dTexture3D {
         &self.base
     }
     /// The base image for a pixmap or single file, else the slices stacked into one 3D image
-    /// (never without an image library: the first slice fails to load and is reported).
+    /// (null, with a report, when a slice fails to load).
     fn get_image(&self, supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
         let paths = self.slice_paths();
         if paths.is_empty() || self.base.fields.read().pix_map.is_some() {

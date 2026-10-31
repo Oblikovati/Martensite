@@ -2,6 +2,30 @@
 use super::*;
 use crate::process::ProcessRunner;
 
+struct IsolatedGitRunner;
+fn isolated(spec: &CommandSpec) -> CommandSpec {
+    spec.clone()
+        .environment("GIT_CONFIG_NOSYSTEM", Some("1"))
+        .environment(
+            "GIT_CONFIG_GLOBAL",
+            Some(if cfg!(windows) { "NUL" } else { "/dev/null" }),
+        )
+}
+impl CommandRunner for IsolatedGitRunner {
+    fn run(&self, spec: &CommandSpec) -> BuildResult<()> {
+        ProcessRunner.run(&isolated(spec))
+    }
+    fn capture(&self, spec: &CommandSpec) -> BuildResult<String> {
+        ProcessRunner.capture(&isolated(spec))
+    }
+    fn exit_code(&self, spec: &CommandSpec) -> BuildResult<i32> {
+        ProcessRunner.exit_code(&isolated(spec))
+    }
+    fn capture_output(&self, spec: &CommandSpec) -> BuildResult<CommandOutput> {
+        ProcessRunner.capture_output(&isolated(spec))
+    }
+}
+
 struct TemporaryGitFixture {
     directory: tempfile::TempDir,
 }
@@ -42,11 +66,11 @@ impl TemporaryGitFixture {
 
     fn run(&self, args: &[&str]) {
         let command = CommandSpec::new("git", self.directory.path()).args(args.iter().copied());
-        ProcessRunner.run(&command).unwrap();
+        IsolatedGitRunner.run(&command).unwrap();
     }
 
     fn git(&self) -> GitRepo<'_> {
-        GitRepo::discover(&ProcessRunner, self.directory.path()).unwrap()
+        GitRepo::discover(&IsolatedGitRunner, self.directory.path()).unwrap()
     }
 
     fn write(&self, path: &str, content: &str) {
@@ -65,18 +89,31 @@ fn real_clean_untracked_file_passes_and_whitespace_fails() {
 }
 
 #[test]
-fn real_windows_line_conversion_settings_are_reset_by_fixture_configuration() {
+fn real_windows_line_conversion_warnings_do_not_fail_the_whitespace_check() {
     let fixture = TemporaryGitFixture::new();
     fixture.run(&["config", "core.autocrlf", "true"]);
     fixture.run(&["config", "core.safecrlf", "warn"]);
     fixture.write("new.txt", "clean\n");
     let files = [untracked_file("new.txt")];
-    let warning = fixture.git().whitespace_clean("HEAD", &files).unwrap_err();
-    assert!(warning.to_string().contains("CRLF"), "{warning}");
-    fixture.configure();
     assert!(fixture.git().whitespace_clean("HEAD", &files).unwrap());
     fixture.write("new.txt", "trailing space \n");
     assert!(!fixture.git().whitespace_clean("HEAD", &files).unwrap());
+}
+
+#[test]
+fn tracked_windows_line_conversion_preserves_config_and_whitespace_checks() {
+    let fixture = TemporaryGitFixture::new();
+    fixture.run(&["config", "core.autocrlf", "true"]);
+    fixture.run(&["config", "core.safecrlf", "warn"]);
+    fixture.write("tracked.txt", "first\r\n");
+    fixture.run(&["add", "tracked.txt"]);
+    fixture.run(&["commit", "--no-gpg-sign", "--quiet", "-m", "tracked"]);
+    fixture.write("tracked.txt", "changed\n");
+    assert!(fixture.git().whitespace_clean("HEAD", &[]).unwrap());
+    let query = CommandSpec::new("git", fixture.directory.path()).args(["config", "core.safecrlf"]);
+    assert_eq!(IsolatedGitRunner.capture(&query).unwrap().trim(), "warn");
+    fixture.write("tracked.txt", "changed \n");
+    assert!(!fixture.git().whitespace_clean("HEAD", &[]).unwrap());
 }
 
 #[test]

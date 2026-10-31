@@ -1,5 +1,5 @@
 //! Package statics on the host and the global signal state.
-use super::{NativeSignalHost, NativeSleeper, SignalState, Sleeper, real_text};
+use super::{NativeSignalHost, NativeSleeper, SignalCapabilities, SignalState, Sleeper, real_text};
 use crate::{osd::SignalMode, standard::Failure};
 
 /// Operating-system dependent statics; `Osd::real_to_c_string(1.5) == "1.5"`.
@@ -7,6 +7,15 @@ use crate::{osd::SignalMode, standard::Failure};
 /// The `_with` variants of the host-dependent members take injected hosts for tests.
 pub struct Osd;
 impl Osd {
+    /// Reports available mechanisms, without installing handlers or enabling traps.
+    /// Example: `assert!(!Osd::signal_capabilities().recoverable_native_faults)`.
+    pub const fn signal_capabilities() -> SignalCapabilities {
+        SignalCapabilities {
+            console_interruptions: cfg!(any(windows, unix)),
+            floating_point_trap_control: super::signal_capabilities::FLOATING_POINT_TRAP_CONTROL,
+            recoverable_native_faults: false,
+        }
+    }
     /// Sets the signal mode on the host (see [`SignalState::set_signal`]
     /// for what is implemented); `Osd::set_signal(SignalMode::Set, false)`.
     pub fn set_signal(mode: SignalMode, floating: bool) {

@@ -1,8 +1,7 @@
 //! Windows active-code-page conversion through the project-owned Win32 boundary.
 #![allow(unsafe_code)] // Win32 calls stay inside this injectable system-adapter module.
 
-// TODO(platform): runtime-verify CP_ACP conversion on a Windows host; fake code pages and
-// a Windows GNU compile cover it today.
+// Native Windows tests complement injected code-page contracts (#334).
 use crate::ncollection::{UtfUnit, WideChar};
 
 trait WindowsLocaleCalls {
@@ -184,5 +183,37 @@ mod tests {
 
     fn wide_from_u16(unit: u16) -> WideChar {
         WideChar::from_bits(u32::from(unit))
+    }
+}
+
+#[cfg(all(test, windows))]
+mod windows_runtime_tests {
+    use super::*;
+
+    #[test]
+    fn native_active_codepage_preserves_ascii_and_extra_terminator() {
+        let wide = decode(b"CAD\0ignored");
+        assert_eq!(wide, [67, 65, 68, 0, 0]);
+        let mut output = [0xff; 8];
+        assert_eq!(encode(&wide, &mut output), 4);
+        assert_eq!(&output[..4], b"CAD\0");
+        assert_eq!(output[4], 0xff);
+        assert_eq!(encode(&wide, &mut [0; 2]), 0);
+    }
+
+    #[test]
+    fn native_active_codepage_roundtrips_its_known_non_ascii_fixture() {
+        // SAFETY: GetACP takes no arguments and only reads the system code-page id.
+        let page = unsafe { windows_sys::Win32::Globalization::GetACP() };
+        let (bytes, expected): (&[u8], &[u16]) = match page {
+            1252 => (b"\xe9", &[0xe9, 0, 0]),
+            65001 => (b"\xc3\xa9", &[0xe9, 0, 0]),
+            _ => (b"CAD", &[67, 65, 68, 0, 0]),
+        };
+        let wide = decode(bytes);
+        assert_eq!(&wide, expected);
+        let mut output = [0; 16];
+        assert_eq!(encode(&wide, &mut output), bytes.len() + 1);
+        assert_eq!(&output[..bytes.len()], bytes);
     }
 }

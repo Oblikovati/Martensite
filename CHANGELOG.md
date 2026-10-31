@@ -6,7 +6,64 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-31
+
+### Added
+
+- Added explicit OSD signal capabilities, reporting Windows console cancellation and floating-point trap controls while keeping native hardware faults fatal (#334).
+
+- Added opt-in Windows multi-axis raw HID input with owned reports, acquisition errors and bounded-queue overflow diagnostics (#334).
+
+- Activated the C locale per thread on Windows and restored the previous CRT locale name and mode when the sentry left scope (#334).
+- Released Windows directory-iterator cursors on explicit destruction and allowed later reinitialization (#334).
+
+- Routed Windows display connections through the process module binding and retained them with window leases until native teardown (#334).
+
+- Checked requested Windows file read, write and execute access against the native ACL using the effective token instead of inferring access from read-only attributes (#334).
+
+- Created Windows temporary files and directories with random names, exclusive creation and private ACLs, retrying name collisions through `tempfile` (#334).
+
+- Added native Windows file-node ACL queries and updates for system, owner, group and world rights without reducing them to a Unix mode (#334).
+- Applied requested Windows ACLs atomically during file and directory creation, retaining existing-file policies when reopening (#334).
+
+- Added live HWND wrapping, mapping, title updates, rectangle-change detection and repaint requests to `WntWindow` on Windows (#334).
+- Added owned Win32 windows with a registered native class, dedicated message dispatch and destruction on the owner thread even when the wrapper moves between threads (#334).
+
+- Added native Windows login-name and effective administrator-token queries to `Process` (#334).
+- Added Windows computer-name, IPv4 and available pagefile-backed memory queries to `Host`, capping available bytes at the existing signed return type's maximum (#334).
+- Added Windows process-memory counters from Psapi, virtual address-space queries and a locked process-heap walk, retaining unknown values when queries fail (#334).
+- Added native Windows major, minor and build reporting to `Host::system_version`, preserving native query failures (#334).
+
+- Added SGI (".rgb", ".rgba", ".bw", ".sgi") loading to `ImageAlienPixMap` with a decoder in the crate: verbatim and run-length encoded files with one to four one-byte channels; no new dependency (#332).
+
+- Added PNG, JPEG, BMP and GIF loading to `ImageAlienPixMap`, storing rows bottom-up with four-byte padding and gray, blue-green-red or blue-green-red-alpha pixels; this adds the `image` crate as a dependency (#330).
+
+- Added owned live buffer-kind arguments with explicit unsupported-backend errors for reference-aware capture (#323).
+
+- Added shared-buffer stream construction and scoped input borrowing that rejoins state, read counts, and unread lookahead with owned cleanup failures (#319).
+
+### Changed
+
+- Changed `ImageAlienPixMap` saving to write the format its extension names (PNG, JPEG, BMP, GIF or PPM) into a file, stream or buffer; other extensions and empty images now return false instead of writing PPM (#330).
+- Retired only the groups present when clear begins, allowed destructor reentry without the structure guard, and preserved callback-created groups and old flags when retirement panics (#324).
+- BREAKING: Changed the public driver-structure group field to a stable sequence, requiring custom drivers to migrate vector-specific mutation and indexing calls (#324).
+
 ### Fixed
+
+- Rebuilt the Windows PR build driver in a separate target directory so the running executable no longer blocked all-target build validation (#339).
+
+- Kept harmless Git checkout-conversion warnings from failing the Windows PR whitespace gate while preserving actual whitespace failures and user configuration (#338).
+
+- Matched MSVC C-locale wide-character formatting for byte-sized units above ASCII while preserving Unix's 7-bit restriction (#337).
+
+- Kept borrowed Windows library-cache handles separate from owned loader references so closing a cache entry no longer unloads another owner's module (#170).
+- Reopened Windows shared libraries with a new live loader reference and re-enabled symbol lookup after close (#336).
+
+- Released the Windows file descriptor registry before blocking I/O so contended locks no longer prevent another descriptor from unlocking (#335).
+- Converted Windows file timestamps through the native local timezone instead of treating UTC as local time (#334).
+
+- Kept the selected group node across virtual clear callbacks that remove earlier groups, and released retired nodes outside the structure guard (#325).
+- Released buffer-kind read guards before invoking reentrant formatting callbacks (#327).
 
 - Provided an owner-aware borrowed runtime descriptor query for projected handles without increasing reference counts (#317).
 - Retained stream devices after write or positioning panics and rejected incomplete scratch input after interrupted reads (#318).

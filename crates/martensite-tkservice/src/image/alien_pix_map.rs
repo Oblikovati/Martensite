@@ -1,8 +1,11 @@
-//! `Image_AlienPixMap`: an image read from and written to files through an image library.
+//! `Image_AlienPixMap`: an image read from and written to PNG, JPEG, BMP and GIF files, and
+//! read from SGI files.
 //!
-//! This crate builds without an image library (no FreeImage, no WinCodec on Linux):
-//! loading fails with "Error: no image library available", saving writes binary PPM
-//! (P6) whatever the extension, and gamma correction is unavailable.
+//! Loading recognises the format from the file's leading bytes, else from the extension of
+//! its name, and stores the pixels bottom-up with rows padded to four bytes (see
+//! `alien_pixels` for the pixel formats). Saving picks the format from the extension; ".ppm"
+//! writes binary PPM (P6). Gamma correction is not available.
+use super::alien_codec::{self, CodecFormat, DecodeFailure};
 use super::{ImageFormat, ImagePixMap};
 use martensite_tkernel::message::Message;
 use martensite_tkernel::standard::Failure;
@@ -10,13 +13,13 @@ use martensite_tkernel::tcollection::AsciiString;
 use std::io::Write;
 use std::ops::Deref;
 
-/// `IWICPalette`: the opaque Windows Imaging Component palette of the WinCodec branch, only
-/// ever held by address. The WinCodec backend is not implemented.
-// TODO(platform): Windows — the WinCodec image codec (IWICImagingFactory and its palette).
+/// Legacy opaque `IWICPalette` marker retained for source compatibility.
+/// Active image codecs and palette conversion use the portable image implementation;
+/// this marker does not own a COM palette or participate in image loading.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ImageIwicPalette {}
 
-/// An image backed by the (absent) image library; `ImageAlienPixMap::default().is_top_down()`.
+/// An image read from or written to an image file; `ImageAlienPixMap::default().is_top_down()`.
 pub struct ImageAlienPixMap {
     base: ImagePixMap,
 }
@@ -37,9 +40,40 @@ impl Deref for ImageAlienPixMap {
 martensite_tkernel::impl_transient!(ImageAlienPixMap, "Image_AlienPixMap", ImagePixMap, base,
     interfaces:[dyn super::ImagePixMapSource]);
 
-/// "Error: no image library available" to the default messenger.
-fn no_library() {
-    Message::send_fail_text(&AsciiString::from("Error: no image library available"));
+/// A failure message to the default messenger.
+fn send_fail(text: &str) {
+    Message::send_fail_text(&AsciiString::from(text));
+}
+
+/// The load failure message; `source` is "image" for files and "image stream" for streams.
+fn load_failure_text(failure: DecodeFailure, source: &str, name: &AsciiString) -> String {
+    let name = String::from_utf8_lossy(name.as_bytes());
+    match (failure, source) {
+        (DecodeFailure::UnsupportedFile, _) => {
+            format!("Error: {source} '{name}' has unsupported file format")
+        }
+        (DecodeFailure::MissingOrInvalid, "image") => {
+            format!("Error: image file '{name}' is missing or invalid")
+        }
+        (DecodeFailure::MissingOrInvalid, _) => {
+            format!("Error: {source} '{name}' is missing or invalid")
+        }
+        (DecodeFailure::UnsupportedPixels, _) => {
+            format!("Error: {source} '{name}' has unsupported pixel format")
+        }
+    }
+}
+
+/// Rows padded to a multiple of four bytes, the stride of a device-independent bitmap.
+fn padded_row_bytes(row_bytes: usize) -> usize {
+    row_bytes.div_ceil(4) * 4
+}
+
+/// Whether the name ends in ".ppm", ignoring case.
+fn is_ppm_name(bytes: &[u8]) -> bool {
+    bytes.len() >= 4
+        && bytes[bytes.len() - 4] == b'.'
+        && bytes[bytes.len() - 3..].eq_ignore_ascii_case(b"ppm")
 }
 
 /// `static_cast<uint8_t>(channel * 255.0)` on x86-64.
@@ -48,42 +82,102 @@ fn ppm_byte(channel: f64) -> u8 {
 }
 
 impl ImageAlienPixMap {
-    /// False: the default row order of the configuration without image library.
+    /// False: loaded images are stored bottom-up.
     ///
     /// Example: `ImageAlienPixMap::is_top_down_default() == false`.
     pub fn is_top_down_default() -> bool {
         false
     }
-    /// `Load(theFileName)`: always fails without an image library; `pixmap.load(&path)`.
-    pub fn load(&self, _file_name: &AsciiString) -> bool {
-        self.load_bytes(None, _file_name)
+    /// `Load(theFileName)`: decodes a PNG, JPEG, BMP, GIF or SGI file; on failure the image is
+    /// empty and a message names the file. Example: `pixmap.load(&AsciiString::from("a.png"))`.
+    pub fn load(&self, file_name: &AsciiString) -> bool {
+        self.load_bytes(None, file_name)
     }
-    /// `Load(std::istream&, theFileName)`: clears and fails; `pixmap.load_stream(&mut s, &name)`.
-    pub fn load_stream(&self, _stream: &mut dyn std::io::Read, _file_name: &AsciiString) -> bool {
+    /// `Load(std::istream&, theFileName)`: decodes the rest of the stream; the name only
+    /// helps when the stream has no recognised signature.
+    ///
+    /// Example: `pixmap.load_stream(&mut std::io::Cursor::new(bytes), &name)`.
+    pub fn load_stream(&self, stream: &mut dyn std::io::Read, file_name: &AsciiString) -> bool {
         self.base.clear();
-        no_library();
-        false
+        let mut bytes = Vec::new();
+        let read = stream
+            .read_to_end(&mut bytes)
+            .ok()
+            .map(|_| bytes.as_slice());
+        self.store_decoded(
+            alien_codec::decode(read, file_name.as_bytes()),
+            "image stream",
+            file_name,
+        )
     }
-    /// `Load(theData, theLength, theFileName)`: clears and fails; `pixmap.load_bytes(None, &name)`.
-    pub fn load_bytes(&self, _data: Option<&[u8]>, _file_name: &AsciiString) -> bool {
+    /// `Load(theData, theLength, theFileName)`: decodes `data`, or the named file when
+    /// `data` is `None`. Example: `pixmap.load_bytes(Some(&png_bytes), &name)`.
+    pub fn load_bytes(&self, data: Option<&[u8]>, file_name: &AsciiString) -> bool {
         self.base.clear();
-        no_library();
-        false
+        let file = match data {
+            Some(_) => None,
+            None => std::fs::read(String::from_utf8_lossy(file_name.as_bytes()).as_ref()).ok(),
+        };
+        let bytes = data.or(file.as_deref());
+        self.store_decoded(
+            alien_codec::decode(bytes, file_name.as_bytes()),
+            "image",
+            file_name,
+        )
     }
-    /// `Save(theFileName)`: writes binary PPM; `pixmap.save(&AsciiString::from("a.ppm"))?`.
+    /// Copies decoded rows into bottom-up, four-byte-aligned storage, or reports the failure.
+    fn store_decoded(
+        &self,
+        decoded: Result<super::alien_pixels::DecodedRows, DecodeFailure>,
+        source: &str,
+        file_name: &AsciiString,
+    ) -> bool {
+        let rows = match decoded {
+            Ok(rows) => rows,
+            Err(failure) => {
+                send_fail(&load_failure_text(failure, source, file_name));
+                return false;
+            }
+        };
+        let packed = rows.width * ImagePixMap::size_pixel_bytes_of(rows.format);
+        if !self.base.init_trash(
+            rows.format,
+            rows.width,
+            rows.height,
+            padded_row_bytes(packed),
+        ) {
+            return false;
+        }
+        self.base.set_top_down(false);
+        let mut state = self.base.change_data();
+        for (row, pixels) in rows.pixels.chunks_exact(packed).enumerate() {
+            if let Some(target) = state.data.change_row(row) {
+                target[..packed].copy_from_slice(pixels);
+            }
+        }
+        true
+    }
+    /// `Save(theFileName)`: writes the format named by the extension (PNG, JPEG, BMP, GIF or
+    /// PPM); false for an empty image or another extension.
+    ///
+    /// Example: `pixmap.save(&AsciiString::from("a.png"))?`.
     pub fn save(&self, file_name: &AsciiString) -> Result<bool, Failure> {
         self.save_bytes(None, file_name)
     }
-    /// `Save(std::ostream&, theExtension)`: fails without an image library.
+    /// `Save(std::ostream&, theExtension)`: writes the format named by `extension` ("png",
+    /// ".png" or a file name) to the stream.
     ///
     /// Example: `pixmap.save_stream(&mut out, &AsciiString::from("png"))`.
-    pub fn save_stream(&self, _stream: &mut dyn Write, _extension: &AsciiString) -> bool {
-        no_library();
-        false
+    pub fn save_stream(&self, stream: &mut dyn Write, extension: &AsciiString) -> bool {
+        match self.encoded(extension.as_bytes()) {
+            Ok(Some(bytes)) => stream.write_all(&bytes).is_ok(),
+            _ => false,
+        }
     }
-    /// `Save(theBuffer, theLength, theFileName)`: a buffer target fails; a file is written
-    /// as PPM (a trace message tells when the name does not end in ".ppm"). Float pixels
-    /// outside [0, 1] raise `Standard_OutOfRange`, as the colour constructor does natively.
+    /// `Save(theBuffer, theLength, theFileName)`: encodes as named by the extension, into
+    /// `buffer` when given (failing with a message when it is too small), else into the file.
+    /// Float pixels outside [0, 1] raise `Standard_OutOfRange` when written as PPM, as the
+    /// colour constructor does.
     ///
     /// Example: `pixmap.save_bytes(None, &name)?`.
     pub fn save_bytes(
@@ -91,28 +185,36 @@ impl ImageAlienPixMap {
         buffer: Option<&mut [u8]>,
         file_name: &AsciiString,
     ) -> Result<bool, Failure> {
-        if buffer.is_some() {
-            no_library();
+        let Some(bytes) = self.encoded(file_name.as_bytes())? else {
+            return Ok(false);
+        };
+        let Some(buffer) = buffer else {
+            let path = String::from_utf8_lossy(file_name.as_bytes()).into_owned();
+            return Ok(std::fs::write(path, bytes).is_ok());
+        };
+        if bytes.len() > buffer.len() {
+            send_fail("Error: memory buffer too small for storing image");
             return Ok(false);
         }
-        let bytes = file_name.as_bytes();
-        let is_ppm = bytes.len() >= 4
-            && bytes[bytes.len() - 4] == b'.'
-            && bytes[bytes.len() - 3..].eq_ignore_ascii_case(b"ppm");
-        if !is_ppm {
-            let text = "Image_PixMap, no image library available! Image saved in PPM format";
-            Message::send_text(
-                &AsciiString::from(text),
-                martensite_tkernel::message::Gravity::Trace,
-            );
+        buffer[..bytes.len()].copy_from_slice(&bytes);
+        Ok(true)
+    }
+    /// The file bytes in the format `name` selects; `None` for an empty image, an unknown
+    /// extension or pixels without an 8-bit form in that format.
+    fn encoded(&self, name: &[u8]) -> Result<Option<Vec<u8>>, Failure> {
+        if self.is_empty() {
+            return Ok(None);
         }
-        self.save_ppm(file_name)
+        if is_ppm_name(name) || name.eq_ignore_ascii_case(b"ppm") {
+            return self.ppm_bytes().map(Some);
+        }
+        let Some(format) = CodecFormat::from_name(name) else {
+            return Ok(None);
+        };
+        Ok(alien_codec::encode(&self.base, format).ok())
     }
     /// `savePPM`: the "P6" header, then the RGB bytes of every pixel, top row first.
-    fn save_ppm(&self, file_name: &AsciiString) -> Result<bool, Failure> {
-        if self.is_empty() {
-            return Ok(false);
-        }
+    fn ppm_bytes(&self) -> Result<Vec<u8>, Failure> {
         let mut contents = format!(
             "P6\n{} {}\n255\n",
             self.width() as i32,
@@ -125,10 +227,9 @@ impl ImageAlienPixMap {
                 contents.extend([rgb.red(), rgb.green(), rgb.blue()].map(ppm_byte));
             }
         }
-        let path = String::from_utf8_lossy(file_name.as_bytes()).into_owned();
-        Ok(std::fs::write(path, contents).is_ok())
+        Ok(contents)
     }
-    /// `InitTrash`: as `Image_PixMap::InitTrash` without an image library.
+    /// `InitTrash`: as `Image_PixMap::InitTrash`.
     ///
     /// Example: `pixmap.init_trash(ImageFormat::Rgb, 4, 4, 0)`.
     pub fn init_trash(
@@ -198,45 +299,13 @@ impl ImageAlienPixMap {
     pub fn clear(&self) {
         self.base.clear();
     }
-    /// `AdjustGamma`: false without an image library; `pixmap.adjust_gamma(2.2)`.
+    /// `AdjustGamma`: gamma correction is not available, so always false;
+    /// `pixmap.adjust_gamma(2.2)`.
     pub fn adjust_gamma(&self, _gamma: f64) -> bool {
         false
     }
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn loading_fails_and_saving_writes_ppm() {
-        let pixmap = ImageAlienPixMap::default();
-        assert!(!pixmap.is_top_down());
-        assert!(!pixmap.load(&AsciiString::from("missing.png")));
-        assert!(!pixmap.init_wrapper(ImageFormat::Gray, Some(vec![0]), 1, 1, 0));
-        assert!(pixmap.init_trash(ImageFormat::Rgb, 2, 1, 0));
-        pixmap
-            .change_data()
-            .data
-            .change_data()
-            .copy_from_slice(&[255, 0, 0, 0, 128, 255]);
-        let path = std::env::temp_dir().join(format!("tkservice-alien-{}.ppm", std::process::id()));
-        let name = AsciiString::from(path.to_string_lossy().as_ref());
-        assert!(pixmap.save(&name).unwrap());
-        let written = std::fs::read(&path).unwrap();
-        std::fs::remove_file(&path).unwrap();
-        assert_eq!(&written[..11], b"P6\n2 1\n255\n");
-        assert_eq!(written.len(), 11 + 6);
-        assert!(!pixmap.save_bytes(Some(&mut [0u8; 4]), &name).unwrap());
-        assert!(!pixmap.adjust_gamma(2.2));
-    }
-
-    #[test]
-    fn copies_need_the_same_format() {
-        let source = ImagePixMap::default();
-        source.init_zero(ImageFormat::Gray, 3, 2, 4, 7);
-        let pixmap = ImageAlienPixMap::default();
-        assert!(pixmap.init_copy(&source));
-        assert_eq!(pixmap.data().data.data(), &[7; 8]);
-    }
-}
+#[path = "alien_pix_map_tests.rs"]
+mod tests;

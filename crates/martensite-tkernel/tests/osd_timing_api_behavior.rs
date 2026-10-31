@@ -11,6 +11,10 @@ use std::{
     time::Duration,
 };
 
+#[cfg(windows)]
+#[path = "osd_timing_api_behavior/windows_signals.rs"]
+mod windows_signals;
+
 /// A CPU clock the test advances by hand; process and thread times differ on purpose.
 #[derive(Default)]
 struct FakeCpuTimes {
@@ -270,9 +274,12 @@ fn global_statics_round_trip_on_the_native_host() {
     assert!(Osd::control_break().is_ok());
 }
 
-#[cfg(all(target_os = "linux", target_env = "gnu", target_arch = "x86_64"))]
+#[cfg(any(
+    windows,
+    all(target_os = "linux", target_env = "gnu", target_arch = "x86_64")
+))]
 #[test]
-fn linux_floating_traps_toggle_for_the_calling_thread() {
+fn native_floating_traps_toggle_for_the_calling_thread() {
     std::thread::spawn(|| {
         Osd::set_floating_signal(true);
         let catching: bool = Osd::to_catch_floating_signals();

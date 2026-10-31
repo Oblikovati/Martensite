@@ -94,6 +94,36 @@ pub enum RecordLock {
 
 /// The POSIX calls of the OSD file classes; paths are the bytes of a C string.
 pub trait PosixFileCalls: Send + Sync {
+    /// Opens with typed creation rights; existing backends retain their mode behavior.
+    /// Example: `calls.open_with_protection(b"file", flags, &rights)`.
+    fn open_with_protection(
+        &self,
+        path: &[u8],
+        flags: OpenFlags,
+        rights: &crate::osd::Protection,
+    ) -> CallResult<i32> {
+        self.open(path, flags, rights.internal())
+    }
+    /// Creates a directory with typed rights; `calls.mkdir_with_protection(b"dir", &rights)`.
+    fn mkdir_with_protection(
+        &self,
+        path: &[u8],
+        rights: &crate::osd::Protection,
+    ) -> CallResult<()> {
+        self.mkdir(path, rights.internal())
+    }
+    /// Native four-principal protections when supported; `calls.native_protection(b"file")`.
+    fn native_protection(&self, _path: &[u8]) -> Option<CallResult<crate::osd::Protection>> {
+        None
+    }
+    /// Applies native four-principal protections; `calls.set_native_protection(b"file", &rights)`.
+    fn set_native_protection(
+        &self,
+        _path: &[u8],
+        _rights: &crate::osd::Protection,
+    ) -> Option<CallResult<()>> {
+        None
+    }
     /// `access(path, mode)`.
     fn access(&self, path: &[u8], mode: AccessMode) -> CallResult<()>;
     /// `stat(path)` (follows links).

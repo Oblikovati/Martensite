@@ -117,6 +117,20 @@ impl FileNode {
     /// to group; a failing `stat` records errno and
     /// yields no rights; `node.protection()`.
     pub fn protection(&mut self) -> Protection {
+        if let Some(result) = self.calls.native_protection(&self.system_name()) {
+            return match result {
+                Ok(rights) => rights,
+                Err(errno) => {
+                    self.record(errno, IAM, "Protection");
+                    return Protection::with_values(
+                        SingleProtection::None,
+                        SingleProtection::None,
+                        SingleProtection::None,
+                        SingleProtection::None,
+                    );
+                }
+            };
+        }
         let permissions: u32 = match self.calls.stat(&self.system_name()) {
             Ok(status) => status.permissions,
             Err(errno) => {
@@ -129,6 +143,15 @@ impl FileNode {
     }
     /// `chmod` with `Protection::Internal`; `node.set_protection(&rights)`.
     pub fn set_protection(&mut self, protection: &Protection) {
+        if let Some(result) = self
+            .calls
+            .set_native_protection(&self.system_name(), protection)
+        {
+            if let Err(errno) = result {
+                self.record(errno, IAM, "SetProtection");
+            }
+            return;
+        }
         if let Err(errno) = self.calls.chmod(&self.system_name(), protection.internal()) {
             self.record(errno, IAM, "SetProtection");
         }

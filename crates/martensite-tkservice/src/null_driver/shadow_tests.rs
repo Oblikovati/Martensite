@@ -46,7 +46,7 @@ fn shadow_root_row(phase: i32, root: &Handle<dyn Graphic3dCStructure>) -> String
         root.ref_count(),
         fields.groups.len(),
         i32::from(fields.bnd_box.is_valid()),
-        i32::from(fields.groups[0].bounding_box().is_valid())
+        i32::from(fields.groups.at(0).unwrap().bounding_box().is_valid())
     )
 }
 fn shadow_pair_row(
@@ -73,7 +73,12 @@ fn shadow_copies_infinite_and_placement_without_clearing_parent_group_nodes() {
     assert_eq!(root.cstructure_base().fields.read().groups.len(), 1);
     assert!(root.bounding_box().is_valid());
     assert!(
-        root.cstructure_base().fields.read().groups[0]
+        root.cstructure_base()
+            .fields
+            .read()
+            .groups
+            .at(0)
+            .unwrap()
             .bounding_box()
             .is_valid()
     );

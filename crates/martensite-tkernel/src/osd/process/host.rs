@@ -1,13 +1,10 @@
 //! Name, system, address and vendor of the machine.
 //!
 //! The Unix build asks `uname`, `gethostname` and `gethostbyname` on every call. The
-//! Windows build fills a process-wide cache from Win32/Winsock calls that have no
-//! standard-library counterpart; there only `system_id` and `machine_type` are implemented.
+//! Windows build reads the computer name and memory through WinSafe and resolves
+//! addresses through the standard library.
 use crate::osd::{OemType, OsdError, OsdErrorAccess, SysType, WhoAmI};
 use crate::tcollection::AsciiString;
-
-/// The Windows `ERROR_CALL_NOT_IMPLEMENTED` code recorded for an unported host query.
-const ERROR_CALL_NOT_IMPLEMENTED: i32 = 120;
 
 mod native;
 pub use native::NativeHost;
@@ -25,11 +22,20 @@ pub struct SystemNames {
 pub trait HostSource {
     /// The `uname` names; `source.system_names()`.
     fn system_names(&self) -> SystemNames;
+    /// System names with native query failure reporting; `source.system_names_checked()`.
+    fn system_names_checked(&self) -> Result<SystemNames, i32> {
+        Ok(self.system_names())
+    }
     /// The host name (`gethostname` into a 64-byte buffer), or the OS error number;
     /// `source.host_name()`.
     fn host_name(&self) -> Result<Vec<u8>, i32>;
     /// The first IPv4 address `gethostbyname` gives for `name`; `source.resolve_ipv4(b"host")`.
     fn resolve_ipv4(&self, name: &[u8]) -> Option<[u8; 4]>;
+    /// Available pagefile-backed memory in bytes; Unix does not measure it.
+    /// Example: `source.available_memory_bytes()`.
+    fn available_memory_bytes(&self) -> Result<u64, i32> {
+        Ok(0)
+    }
 }
 
 /// The machine; `Host::new().host_name()`.
@@ -56,13 +62,16 @@ impl<S: HostSource> Host<S> {
             error: OsdError::new(),
         }
     }
-    /// "sysname release" on Unix; `host.system_version()`.
+    /// System name and release; `host.system_version()`.
     pub fn system_version(&mut self) -> AsciiString {
-        if cfg!(windows) {
-            // TODO(platform): Windows fills a process cache from GetVersionExW.
-            return self.unsupported("SystemVersion");
-        }
-        let names: SystemNames = self.source.system_names();
+        let names = match self.source.system_names_checked() {
+            Ok(names) => names,
+            Err(code) => {
+                self.error
+                    .set_value(code, WhoAmI::Host as i32, "SystemVersion");
+                return AsciiString::default();
+            }
+        };
         let mut text: Vec<u8> = names.sysname;
         text.push(b' ');
         text.extend_from_slice(&names.release);
@@ -80,10 +89,6 @@ impl<S: HostSource> Host<S> {
     ///
     /// A failed call returns the empty name.
     pub fn host_name(&mut self) -> AsciiString {
-        if cfg!(windows) {
-            // TODO(platform): Windows fills a process cache from GetComputerNameA.
-            return self.unsupported("Host Name");
-        }
         match self.source.host_name() {
             Ok(name) => AsciiString::from_raw(&name),
             Err(errno) => {
@@ -93,23 +98,23 @@ impl<S: HostSource> Host<S> {
             }
         }
     }
-    /// Always 0 on Unix (not measured); `host.available_memory()`.
+    /// Available pagefile-backed bytes, capped at `i32::MAX`; 0 on Unix (not measured).
+    /// Example: `host.available_memory()`.
     pub fn available_memory(&mut self) -> i32 {
-        if cfg!(windows) {
-            // TODO(platform): Windows reads dwAvailPageFile from GlobalMemoryStatus.
-            self.unsupported("AvailableMemory");
+        match self.source.available_memory_bytes() {
+            Ok(bytes) => bytes.min(i32::MAX as u64) as i32,
+            Err(code) => {
+                self.error
+                    .set_value(code, WhoAmI::Host as i32, "AvailableMemory");
+                0
+            }
         }
-        0
     }
     /// The dotted IPv4 address of the host name, falling back
     /// to "localhost"; `host.internet_address()`.
     ///
     /// A name that resolves nowhere returns the empty text.
     pub fn internet_address(&mut self) -> AsciiString {
-        if cfg!(windows) {
-            // TODO(platform): Windows resolves the host name through Winsock gethostbyname.
-            return self.unsupported("InternetAddress");
-        }
         let host: AsciiString = self.host_name();
         let address = self
             .source
@@ -118,13 +123,6 @@ impl<S: HostSource> Host<S> {
         address.map_or_else(AsciiString::default, |[a, b, c, d]| {
             AsciiString::from(format!("{a}.{b}.{c}.{d}").as_str())
         })
-    }
-    /// Records `ERROR_CALL_NOT_IMPLEMENTED` (120) for a member whose host API is not
-    /// implemented on this platform, and answers the empty text; `host.unsupported("Host Name")`.
-    fn unsupported(&mut self, member: &str) -> AsciiString {
-        self.error
-            .set_value(ERROR_CALL_NOT_IMPLEMENTED, WhoAmI::Host as i32, member);
-        AsciiString::default()
     }
     /// The `OemType` of the `uname` system name (Pc on
     /// Windows); `host.machine_type()`.

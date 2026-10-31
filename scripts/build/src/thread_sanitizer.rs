@@ -1,4 +1,4 @@
-//! The bounded Linux cache-ownership sanitizer check required by #309.
+//! Required Linux checks for cache ownership and reference-aware capture and group ownership (#309, #323, #324).
 use crate::context::BuildContext;
 use crate::error::BuildResult;
 use crate::process::CommandSpec;
@@ -8,7 +8,7 @@ const NIGHTLY: &str = "+nightly-2026-09-25";
 const TARGET: &str = "x86_64-unknown-linux-gnu";
 const SMOKE: &str = "scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml";
 
-/// Refuse an unusable sanitizer runtime before checking actual cache ownership.
+/// Refuse an unusable runtime before checking cache and live capture ownership.
 /// Example: `run(&context)?` executes the same pipeline as `cargo xtask ci thread-sanitizer`.
 pub fn run(context: &BuildContext<'_>) -> BuildResult<()> {
     let root = context.root();
@@ -18,11 +18,53 @@ pub fn run(context: &BuildContext<'_>) -> BuildResult<()> {
     context.reporter.step("ThreadSanitizer startup smoke", || {
         context.runner.run(&startup(root))
     })?;
+    run_ownership_controls(context)
+}
+
+fn run_ownership_controls(context: &BuildContext<'_>) -> BuildResult<()> {
     context
         .reporter
         .step("ThreadSanitizer cache ownership controls", || {
-            context.runner.run(&controls(root))
+            context.runner.run(&controls(context.root()))
+        })?;
+    run_service_controls(context)
+}
+
+fn run_service_controls(context: &BuildContext<'_>) -> BuildResult<()> {
+    context
+        .reporter
+        .step("ThreadSanitizer live capture controls", || {
+            context.runner.run(&capture_controls(context.root()))
+        })?;
+    context
+        .reporter
+        .step("ThreadSanitizer stable group controls", || {
+            context.runner.run(&group_controls(context.root()))
         })
+}
+
+fn capture_controls(root: &Path) -> CommandSpec {
+    // Live capture remains an independent failure boundary before group ownership (#324).
+    service_controls(root, &["capture_buffer_reference_checks"])
+}
+
+fn group_controls(root: &Path) -> CommandSpec {
+    // Both registered module prefixes select the same fourteen normal controls (#324).
+    service_controls(root, &["graphic3d_group", "graphic3d_stable_group_nodes"])
+}
+
+fn service_controls(root: &Path, filters: &[&str]) -> CommandSpec {
+    sanitized_cargo(root, "test")
+        .args([
+            "--no-fail-fast",
+            "--package",
+            "martensite-tkservice",
+            "--test",
+            "toolkit",
+        ])
+        .arg("--")
+        .args(filters.iter().copied())
+        .args(["--test-threads=1", "--show-output"])
 }
 
 fn startup(root: &Path) -> CommandSpec {

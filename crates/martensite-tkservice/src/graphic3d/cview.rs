@@ -1,8 +1,8 @@
 //! `Graphic3d_CView` and `Graphic3d_DataStructureManager`: the abstract view. The view is the [`Graphic3dCView`] trait over the
 //! embedded [`Graphic3dCViewBase`]; its non-virtual members are split by topic in
 //! `cview_members`, `cview_structures`, `cview_computed`, `cview_xr` and `cview_subviews`.
-use super::Graphic3dDataStructureManager;
 use super::cview_virtuals as defaults;
+use super::{CaptureBufferKindError, CaptureBufferKindRef, Graphic3dDataStructureManager};
 use super::{
     GRAPHIC3D_ZLAYER_ID_BOT_OSD, Graphic3dBufferType, Graphic3dCStructure, Graphic3dCamera,
     Graphic3dClipPlaneSequenceSource, Graphic3dDiagnosticInfo, Graphic3dDisplayPriority,
@@ -280,6 +280,14 @@ pub trait Graphic3dCView: Graphic3dDataStructureManager {
     fn is_defined(&self) -> bool;
     /// `BufferDump`.
     fn buffer_dump(&self, image: &ImagePixMap, buffer_type: &Graphic3dBufferType) -> bool;
+    /// Captures a live field or refuses explicitly; `view.buffer_dump_referenced(&image, &kind)?`.
+    fn buffer_dump_referenced(
+        &self,
+        _image: &ImagePixMap,
+        kind: &CaptureBufferKindRef,
+    ) -> Result<bool, CaptureBufferKindError> {
+        Err(CaptureBufferKindError::unsupported(kind.read()))
+    }
     /// `ShadowMapDump`.
     fn shadow_map_dump(&self, image: &ImagePixMap, light_name: &AsciiString) -> bool;
     /// `InvalidateBVHData`.

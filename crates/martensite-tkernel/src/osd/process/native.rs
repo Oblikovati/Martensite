@@ -84,9 +84,12 @@ fn executable_path() -> Vec<u8> {
 fn is_super_user() -> Result<bool, i32> {
     Ok(rustix::process::getuid().is_root())
 }
-// TODO(platform): Windows tests membership of the Administrators SID through the token
-// APIs; until implemented, ERROR_CALL_NOT_IMPLEMENTED (120) is reported.
-#[cfg(not(unix))]
+#[cfg(windows)]
+mod windows_identity;
+#[cfg(windows)]
+use windows_identity::{is_super_user, user_name};
+
+#[cfg(not(any(unix, windows)))]
 fn is_super_user() -> Result<bool, i32> {
     Err(120)
 }
@@ -163,8 +166,7 @@ fn apple_account_initialization_preserves_class_and_expiry() {
     assert_eq!((entry.pw_change, entry.pw_expire), (0, 0));
     assert!(entry.pw_class.is_null());
 }
-// TODO(platform): Windows reads the login name with GetUserNameW.
-#[cfg(not(unix))]
+#[cfg(not(any(unix, windows)))]
 fn user_name() -> Result<Vec<u8>, i32> {
     // Until implemented, ERROR_CALL_NOT_IMPLEMENTED is recorded instead.
     Err(120)

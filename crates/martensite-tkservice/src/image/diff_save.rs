@@ -60,8 +60,8 @@ impl ImageDiff {
         }
         Ok(true)
     }
-    /// `SaveDiffImage(path)`: the difference image saved through Image_AlienPixMap (PPM
-    /// without an image library); false without images or path.
+    /// `SaveDiffImage(path)`: the difference image saved through Image_AlienPixMap in the
+    /// format of the path's extension; false without images or path.
     ///
     /// Example: `diff.save_diff_image_file(&AsciiString::from("diff.ppm"))?`.
     pub fn save_diff_image_file(&self, path: &AsciiString) -> Result<bool, Failure> {

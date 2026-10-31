@@ -106,7 +106,7 @@ impl Graphic3dCubeMapPacked {
     pub fn tile_number_x(&self) -> u32 {
         *self.tile_number_x.read()
     }
-    /// `tryLoadImage`: the decoded file (never without an image library) when its shape fits.
+    /// `tryLoadImage`: the decoded file when it loads and its shape fits.
     fn try_load_image(&self, supported: &Handle<ImageSupportedFormats>, file_path: &AsciiString) {
         let image = Handle::new(ImageAlienPixMap::default());
         if !image.load(file_path) {

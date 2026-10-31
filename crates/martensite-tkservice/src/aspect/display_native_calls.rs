@@ -2,7 +2,7 @@
 use martensite_tkernel::tcollection::AsciiString;
 
 pub(super) trait NativeDisplayCalls: Send + Sync {
-    // Opening and interning run only in the Linux initialization.
+    // Win32 opens a borrowed module binding; only Xlib interns display atoms.
     #[cfg_attr(not(target_os = "linux"), allow(dead_code))]
     fn open(&self, name: &AsciiString) -> usize;
     fn close(&self, display: usize);
@@ -35,11 +35,25 @@ impl NativeDisplayCalls for XlibDisplayCalls {
 }
 /// Without Xlib no display is ever opened (initialization raises first), so these calls have
 /// nothing to release.
-// TODO(platform): Windows and macOS — route to an implemented window-system connection.
-#[cfg(not(target_os = "linux"))]
+// TODO(platform): macOS — route to an implemented window-system connection.
+#[cfg(not(any(target_os = "linux", windows)))]
 impl NativeDisplayCalls for XlibDisplayCalls {
     fn open(&self, _name: &AsciiString) -> usize {
         0
+    }
+    fn close(&self, _display: usize) {}
+    fn free_visual(&self, _visual: usize) {}
+    fn delete_atom(&self, _display: usize) -> Option<u64> {
+        None
+    }
+}
+
+// Win32 surfaces use the process HINSTANCE and an HWND, not an X server socket.
+// GetModuleHandle borrows the executable module for the process lifetime.
+#[cfg(windows)]
+impl NativeDisplayCalls for XlibDisplayCalls {
+    fn open(&self, _name: &AsciiString) -> usize {
+        winsafe::HINSTANCE::GetModuleHandle(None).map_or(0, |instance| instance.ptr() as usize)
     }
     fn close(&self, _display: usize) {}
     fn free_visual(&self, _visual: usize) {}

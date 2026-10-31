@@ -203,10 +203,17 @@ macro_rules! iterator_members {
                 iterator.initialize(place, mask);
                 iterator
             }
-            /// A no-op kept for Windows compatibility (the directory stays open);
-            /// `iterator.destroy()`.
-            // TODO(platform): the Windows build closes its FindFirstFile handle here.
-            pub fn destroy(&mut self) {}
+            /// Releases this iterator's directory cursor on Windows; a no-op on Unix.
+            /// Example: `iterator.destroy()`.
+            pub fn destroy(&mut self) {
+                #[cfg(windows)]
+                {
+                    self.walk.open = None;
+                    self.walk.entry = None;
+                    self.walk.flag = false;
+                    self.walk.init = false;
+                }
+            }
             /// Restarts on `place` (its system name, "." when empty) with a
             /// new mask; the directory is opened by the next `more`; `iterator.initialize(&dir, "*")`.
             pub fn initialize(&mut self, place: &CadPath, mask: impl AsRef<[u8]>) {

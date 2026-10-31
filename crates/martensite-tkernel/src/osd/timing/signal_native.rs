@@ -217,11 +217,9 @@ unsafe extern "system" fn console_break_handler(code: u32) -> windows_sys::core:
     std::process::exit(254);
 }
 
-// TODO(platform): the Windows unhandled-exception filter, signal() translators and the
-// _set_se_translator of the thread-local signal setup turn SEH faults into exceptions; Rust
-// cannot unwind out of them, so only the console break handler is installed.
-/// Windows: only the console Ctrl-C/Ctrl-Break handler is implemented; the unhandled-exception
-/// filter, the `signal()` translators and the SE translator would need unwinding through foreign frames.
+// The approved Windows policy keeps hardware faults fatal (#334, #88). A setup-only
+// API cannot safely translate arbitrary SEH faults across Rust ownership frames.
+/// Windows: installs console cancellation only; native hardware faults remain fatal.
 #[cfg(windows)]
 pub(super) fn set_signal_handlers(mode: SignalMode) {
     use windows_sys::Win32::System::Console::SetConsoleCtrlHandler;

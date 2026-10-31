@@ -1,11 +1,9 @@
 //! Memory counters of the running process.
 //!
 //! Linux reads `mallinfo2` and `/proc/<pid>/status`; macOS reads `task_info` and the
-//! default malloc zone. The Windows counters (Psapi, `_heapwalk`) are not implemented: there
-//! `update` leaves every counter unknown. A counter nobody filled stays `usize::MAX`
+//! default malloc zone. Windows queries Psapi and its address space and process heap.
+//! A counter nobody filled stays `usize::MAX`
 //! (`size_t(-1)`), e.g. both swap counters on Linux.
-// TODO(platform): implement the Windows counters (GlobalMemoryStatusEx, GetProcessMemoryInfo,
-// _heapwalk); until then `update` reports every counter unknown there.
 use crate::tcollection::AsciiString;
 
 mod native;
@@ -60,6 +58,11 @@ pub trait MemInfoSource {
     /// macOS: (virtual size, resident size, malloc bytes in use), `None` when `task_info`
     /// fails; `source.task_counters()`.
     fn task_counters(&self) -> Option<(usize, usize, usize)>;
+    /// Windows counters in `MemCounter::ALL` order, unknown entries as `usize::MAX`.
+    /// Example: `source.windows_counters()`.
+    fn windows_counters(&self) -> Option<[usize; 7]> {
+        None
+    }
 }
 
 const UNKNOWN: usize = usize::MAX;
@@ -118,6 +121,8 @@ impl<S: MemInfoSource> MemInfo<S> {
             self.update_linux();
         } else if cfg!(target_vendor = "apple") {
             self.update_apple();
+        } else if cfg!(windows) {
+            self.update_windows();
         }
     }
     /// One line per known active counter, in MiB; `info.to_text()`.
@@ -187,6 +192,18 @@ impl<S: MemInfoSource> MemInfo<S> {
             ));
         }
         text.push('\n');
+    }
+    fn update_windows(&mut self) {
+        if !self.active.iter().any(|&active| active) {
+            return;
+        }
+        if let Some(counters) = self.source.windows_counters() {
+            for (index, value) in counters.into_iter().enumerate() {
+                if self.active[index] {
+                    self.counters[index] = value;
+                }
+            }
+        }
     }
     fn update_linux(&mut self) {
         use MemCounter::*;
