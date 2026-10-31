@@ -2,9 +2,15 @@
 //!
 //! The Space Mouse decoder, the orientation enumeration and the class-definition exception
 //! are platform-neutral and implemented. `WNT_Window` exists on every platform as an interface
-//! whose Win32 backend is not implemented yet (its constructors raise `Standard_NotImplemented`).
+//! that creates owned native windows or wraps application-owned HWNDs on Windows.
 mod hid_space_mouse;
+#[cfg(windows)]
+mod native;
+#[cfg(windows)]
+mod owned;
+mod raw_input;
 mod window;
+pub use raw_input::{WntRawHidReport, WntRawInputBatch};
 
 use martensite_tkernel::standard::Failure;
 
@@ -61,6 +67,7 @@ mod tests {
         assert_eq!(stacked.stack_string(), "trace");
     }
 
+    #[cfg(not(windows))]
     #[test]
     fn win32_window_constructors_raise_the_unsupported_platform_error() {
         use crate::platform::is_platform_unsupported;

@@ -223,7 +223,7 @@ mod tests {
                 .iter()
                 .all(|c| !c.starts_with("cargo clippy") && !c.starts_with("cargo test"))
         );
-        assert!(commands.contains(&"git diff --check base1".to_owned()));
+        assert!(commands.contains(&"git -c core.safecrlf=false diff --check base1".to_owned()));
     }
 
     #[test]
@@ -249,7 +249,7 @@ mod tests {
     #[test]
     fn whitespace_failure_still_runs_rustfmt_then_fails() {
         let runner = runner_with_changes("M\0crates/martensite-math/src/lib.rs\0")
-            .with_exit_code("git diff --check base1", 2);
+            .with_exit_code("git -c core.safecrlf=false diff --check base1", 2);
         let context = context_at(&runner, Path::new("/repo"));
         assert!(validate_pull_request(&context, "origin/main", &BuildTarget::Host).is_err());
         assert!(

@@ -1,6 +1,5 @@
 //! Source-ordered Windows loader calls, separately injectable for Linux tests.
-// TODO(platform): runtime-verify the loader on a Windows host; it is fake-tested and
-// cross-compiled only.
+// Native lifecycle verification is in windows_runtime_tests.rs (#170, #336).
 use crate::{
     osd::{CadPath, PathSyntax},
     tcollection::{AsciiString, ExtendedString},

@@ -22,9 +22,18 @@ clip planes, textures and shader programs) and the graphic driver interfaces.
 use martensite_tkservice::platform::is_platform_unsupported;
 use martensite_tkservice::wnt::WntWindow;
 
-// The Windows backend is not implemented yet, so the constructor raises a typed error.
+#[cfg(not(windows))]
+{
 let failure = WntWindow::new("Viewer", 0, 0, 640, 480).err().expect("unsupported");
 assert!(is_platform_unsupported(&failure));
+}
+#[cfg(windows)]
+{
+let window = WntWindow::new("Viewer", 0, 0, 640, 480)?;
+// Dropping the wrapper destroys its HWND on its message-pumping owner thread.
+drop(window);
+}
+# Ok::<(), martensite_tkernel::standard::Failure>(())
 ```
 
 ## Ownership and thread safety
@@ -41,11 +50,14 @@ failure; the legacy `init` adapter keeps only its message.
 Linux is complete. Every other platform interface exists on every platform with a
 defined signature. Where its backend is missing it raises `Standard_NotImplemented`
 naming the interface and the backend (`platform::is_platform_unsupported` recognizes
-it), and its source carries a `TODO(platform)` comment. Future work:
+it). Platform coverage and remaining work:
 
-- Windows: register the window class, create or wrap the HWND and implement the
-  window queries (`wnt::WntWindow`); route the display connection; the WinCodec image
-  codec for `image::ImageAlienPixMap`.
+- Windows: `wnt::WntWindow` creates owned windows with owner-thread message dispatch
+  or borrows existing HWNDs. Display connections retain the process HINSTANCE
+  through window leases. Multi-axis raw HID input is opt-in and reports acquisition
+  errors and queue overflow alongside owned HID reports.
+  `ImageAlienPixMap` has portable PNG, JPEG, BMP, GIF and SGI
+  decoders; a separate WinCodec backend remains unevaluated.
 - macOS: drive NSWindow, NSView and NSAutoreleasePool for `cocoa::CocoaWindow` and
   `cocoa::CocoaLocalPool`; optionally Xlib through XQuartz for `xw`.
 - Targets without `dlopen` or `LoadLibrary` (such as WebAssembly): link FreeType and
@@ -75,7 +87,8 @@ Pinned dependencies:
 | --- | --- | --- |
 | `x11-dl` | `=2.21.0` | Linux |
 | `libc` | `=0.2.190` | Unix |
-| `windows-sys` | `=0.61.2` (`Win32_Foundation`, `Win32_System_LibraryLoader`, `Win32_System_Registry`, `Win32_System_SystemInformation`) | Windows |
+| `winsafe` | `=0.0.29` (`kernel`, `user`) | Windows |
+| `windows-sys` | `=0.61.2` (`Win32_Foundation`, `Win32_System_LibraryLoader`, `Win32_System_Registry`, `Win32_System_SystemInformation`, `Win32_UI_Input`) | Windows |
 
 The FFI calls into these libraries and the raw pixel storage need unsafe code; the
 crate's exception is recorded in AGENTS.md ("Unsafe code exception").
@@ -113,5 +126,7 @@ the `host-font-corpus` feature on a machine with the reference fonts. CI builds 
 on Windows and installs it with Homebrew on macOS; FreeType is also looked up in the
 Homebrew prefixes there.
 
-The preparation ran on Linux x86-64. The Windows and macOS targets were checked with
-Clippy only; the release candidate still needs the full supported platform matrix.
+The initial preparation ran on Linux x86-64, with Clippy checks for Windows and
+macOS. Windows native runtime checks and remaining gates are recorded in the
+[Windows platform review](../windows-platform/README.md). The release candidate
+still needs the full supported platform matrix.

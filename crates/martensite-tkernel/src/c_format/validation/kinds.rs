@@ -147,7 +147,7 @@ fn count(spec: &Spec) -> Result<ArgumentKind, &'static str> {
 }
 
 /// glibc `%m`: `strerror(errno)` laid out like `%s`.
-// TODO(platform): MSVC printf has no %m; on Windows it is rejected as unsupported.
+// %m is a GNU extension; MSVC has no matching directive, so Windows rejects it.
 fn errno_text(spec: &Spec) -> Result<ArgumentKind, &'static str> {
     if cfg!(windows) {
         return Err("a conversion this platform's C library defines (%m is glibc-only)");

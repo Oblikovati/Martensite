@@ -1,21 +1,25 @@
 //! The POSIX calls of the OSD file classes emulated over `std::fs` on hosts without libc
-//! (Windows). Win32 semantics for files and nodes (Win32 handles, ACL
-//! protections, `LockFileEx`) are not implemented: this backend runs the POSIX algorithm
-//! with the closest std primitive for each call, and errno values are the raw OS codes.
-// TODO(platform): implement Win32 semantics for file nodes, files and directories (handles,
-// ACL protections, LockFileEx, local-time moments) behind PosixFileCalls; this backend runs
-// the POSIX algorithm over std::fs and is not runtime-verified on a Windows host.
+//! (Windows). `std::fs` owns native handles and implements whole-file locks. Windows
+//! moments use the native local timezone; errno values are the raw OS codes.
+// Native ACLs, creation policies and effective-access checks share the owned
+// security-descriptor boundary rather than inferring rights from mode bits (#334).
 use super::calls::{
     AccessMode, CallResult, Errno, NodeStatus, NodeType, OpenFlags, PosixFileCalls, RecordLock,
     SeekOrigin,
 };
 use crate::osd::LocalTime;
 use crate::osd::OpenMode;
+#[cfg(test)]
+mod tests;
+#[cfg(windows)]
+mod windows_access;
+#[cfg(windows)]
+mod windows_temp;
 use std::{
     collections::BTreeMap,
     fs,
     io::{Read, Seek, SeekFrom, Write},
-    sync::Mutex,
+    sync::{Arc, Mutex},
 };
 
 /// The std-emulated calls; `NativePosixCalls.stat(b"C:/")`.
@@ -23,7 +27,7 @@ use std::{
 pub struct NativePosixCalls;
 
 /// Open descriptors: the emulated descriptor numbers start at 3, as on POSIX.
-static DESCRIPTORS: Mutex<BTreeMap<i32, fs::File>> = Mutex::new(BTreeMap::new());
+static DESCRIPTORS: Mutex<BTreeMap<i32, Arc<fs::File>>> = Mutex::new(BTreeMap::new());
 
 fn errno(error: std::io::Error) -> Errno {
     Errno(error.raw_os_error().unwrap_or(-1))
@@ -63,11 +67,16 @@ fn status_of(metadata: &fs::Metadata) -> NodeStatus {
 
 fn with_descriptor<T>(
     fd: i32,
-    action: impl FnOnce(&mut fs::File) -> std::io::Result<T>,
+    action: impl FnOnce(&mut &fs::File) -> std::io::Result<T>,
 ) -> CallResult<T> {
-    let mut table = DESCRIPTORS.lock().expect("descriptor table");
-    let file: &mut fs::File = table.get_mut(&fd).ok_or(Errno(9))?;
-    action(file).map_err(errno)
+    // Keep the handle alive, but release the registry before blocking I/O (#335).
+    let file = DESCRIPTORS
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .get(&fd)
+        .cloned()
+        .ok_or(Errno(9))?;
+    action(&mut file.as_ref()).map_err(errno)
 }
 
 fn register(file: fs::File) -> i32 {
@@ -75,17 +84,70 @@ fn register(file: fs::File) -> i32 {
     let fd: i32 = (3..)
         .find(|number| !table.contains_key(number))
         .expect("free descriptor");
-    table.insert(fd, file);
+    table.insert(fd, Arc::new(file));
     fd
 }
 
 impl PosixFileCalls for NativePosixCalls {
-    fn access(&self, path: &[u8], mode: AccessMode) -> CallResult<()> {
-        let metadata: fs::Metadata = fs::metadata(text(path)).map_err(errno)?;
-        if mode.write && metadata.permissions().readonly() {
-            return Err(Errno(13));
+    #[cfg(windows)]
+    fn open_with_protection(
+        &self,
+        path: &[u8],
+        flags: OpenFlags,
+        rights: &crate::osd::Protection,
+    ) -> CallResult<i32> {
+        if !flags.create {
+            return self.open(path, flags, rights.internal());
         }
-        Ok(())
+        crate::osd::document_file::open_protected_file(
+            std::path::Path::new(&text(path)),
+            flags,
+            rights,
+        )
+        .map(register)
+        .map_err(errno)
+    }
+    #[cfg(windows)]
+    fn mkdir_with_protection(
+        &self,
+        path: &[u8],
+        rights: &crate::osd::Protection,
+    ) -> CallResult<()> {
+        crate::osd::document_file::create_protected_directory(
+            std::path::Path::new(&text(path)),
+            rights,
+        )
+        .map_err(errno)
+    }
+    #[cfg(windows)]
+    fn native_protection(&self, path: &[u8]) -> Option<CallResult<crate::osd::Protection>> {
+        Some(
+            crate::osd::document_file::read_protection(std::path::Path::new(&text(path)))
+                .map_err(errno),
+        )
+    }
+    #[cfg(windows)]
+    fn set_native_protection(
+        &self,
+        path: &[u8],
+        rights: &crate::osd::Protection,
+    ) -> Option<CallResult<()>> {
+        Some(
+            crate::osd::document_file::write_protection(std::path::Path::new(&text(path)), rights)
+                .map_err(errno),
+        )
+    }
+    fn access(&self, path: &[u8], mode: AccessMode) -> CallResult<()> {
+        #[cfg(windows)]
+        return windows_access::check(std::path::Path::new(&text(path)), mode).map_err(errno);
+        #[cfg(not(windows))]
+        {
+            let metadata: fs::Metadata = fs::metadata(text(path)).map_err(errno)?;
+            if mode.write && metadata.permissions().readonly() {
+                return Err(Errno(13));
+            }
+            Ok(())
+        }
     }
     fn stat(&self, path: &[u8]) -> CallResult<NodeStatus> {
         fs::metadata(text(path))
@@ -154,19 +216,33 @@ impl PosixFileCalls for NativePosixCalls {
         0
     }
     fn mkstemp(&self, template: &[u8]) -> CallResult<(i32, Vec<u8>)> {
-        let name: Vec<u8> = unique_name(template);
-        let file: fs::File = fs::OpenOptions::new()
-            .read(true)
-            .write(true)
-            .create_new(true)
-            .open(text(&name))
-            .map_err(errno)?;
-        Ok((register(file), name))
+        #[cfg(windows)]
+        {
+            let (file, path) =
+                windows_temp::file(template, &std::env::temp_dir()).map_err(errno)?;
+            Ok((register(file), path))
+        }
+        #[cfg(not(windows))]
+        {
+            let name: Vec<u8> = unique_name(template);
+            let file: fs::File = fs::OpenOptions::new()
+                .read(true)
+                .write(true)
+                .create_new(true)
+                .open(text(&name))
+                .map_err(errno)?;
+            Ok((register(file), name))
+        }
     }
     fn mkdtemp(&self, template: &[u8]) -> CallResult<Vec<u8>> {
-        let name: Vec<u8> = unique_name(template);
-        fs::create_dir(text(&name)).map_err(errno)?;
-        Ok(name)
+        #[cfg(windows)]
+        return windows_temp::directory(template, &std::env::temp_dir()).map_err(errno);
+        #[cfg(not(windows))]
+        {
+            let name: Vec<u8> = unique_name(template);
+            fs::create_dir(text(&name)).map_err(errno)?;
+            Ok(name)
+        }
     }
     fn read_directory(&self, path: &[u8]) -> CallResult<Vec<Vec<u8>>> {
         // std skips "." and ".."; readdir reports them first.
@@ -178,23 +254,59 @@ impl PosixFileCalls for NativePosixCalls {
         Ok(names)
     }
     fn local_time(&self, seconds: i64) -> Option<LocalTime> {
-        // std has no time-zone database: the broken-down time is UTC.
-        let days: i64 = seconds.div_euclid(86_400);
-        let of_day: i64 = seconds.rem_euclid(86_400);
-        let (year, month, day) = civil_from_days(days);
-        Some(LocalTime {
-            month,
-            day,
-            year,
-            hour: (of_day / 3600) as i32,
-            minute: (of_day / 60 % 60) as i32,
-            second: (of_day % 60) as i32,
-            millisecond: 0,
-        })
+        #[cfg(windows)]
+        return windows_local_time(seconds);
+        #[cfg(not(windows))]
+        utc_time(seconds)
     }
 }
 
+#[cfg(windows)]
+fn windows_local_time(seconds: i64) -> Option<LocalTime> {
+    windows_local_time_in(seconds, None)
+}
+
+#[cfg(windows)]
+fn windows_local_time_in(
+    seconds: i64,
+    zone: Option<&winsafe::TIME_ZONE_INFORMATION>,
+) -> Option<LocalTime> {
+    let ticks = seconds
+        .checked_add(11_644_473_600)?
+        .checked_mul(10_000_000)?;
+    let filetime = winsafe::FILETIME::from(u64::try_from(ticks).ok()?);
+    let utc = winsafe::FileTimeToSystemTime(&filetime).ok()?;
+    let local = winsafe::SystemTimeToTzSpecificLocalTime(zone, &utc).ok()?;
+    Some(LocalTime {
+        year: i32::from(local.wYear),
+        month: i32::from(local.wMonth),
+        day: i32::from(local.wDay),
+        hour: i32::from(local.wHour),
+        minute: i32::from(local.wMinute),
+        second: i32::from(local.wSecond),
+        millisecond: 0,
+    })
+}
+
+#[cfg(not(windows))]
+fn utc_time(seconds: i64) -> Option<LocalTime> {
+    // std has no time-zone database: the broken-down time is UTC.
+    let days: i64 = seconds.div_euclid(86_400);
+    let of_day: i64 = seconds.rem_euclid(86_400);
+    let (year, month, day) = civil_from_days(days);
+    Some(LocalTime {
+        month,
+        day,
+        year,
+        hour: (of_day / 3600) as i32,
+        minute: (of_day / 60 % 60) as i32,
+        second: (of_day % 60) as i32,
+        millisecond: 0,
+    })
+}
+
 /// The template with its trailing `XXXXXX` replaced by the process id and a counter.
+#[cfg(not(windows))]
 fn unique_name(template: &[u8]) -> Vec<u8> {
     static COUNTER: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
     let stem: &[u8] = template.strip_suffix(b"XXXXXX").unwrap_or(template);
@@ -209,6 +321,7 @@ fn unique_name(template: &[u8]) -> Vec<u8> {
 }
 
 /// Howard Hinnant's days-to-civil conversion.
+#[cfg(not(windows))]
 fn civil_from_days(days: i64) -> (i32, i32, i32) {
     let shifted: i64 = days + 719_468;
     let era: i64 = shifted.div_euclid(146_097);

@@ -155,10 +155,12 @@ impl HostSource for NativeHost {
     }
 }
 
-// TODO(platform): the Windows host queries (GetVersionExW, GetComputerNameA,
-// GlobalMemoryStatus, Winsock) are not implemented; Host records ERROR_CALL_NOT_IMPLEMENTED
-// before reaching this source there.
-#[cfg(not(unix))]
+#[cfg(windows)]
+mod windows;
+#[cfg(windows)]
+mod windows_version;
+
+#[cfg(not(any(unix, windows)))]
 impl HostSource for NativeHost {
     fn system_names(&self) -> SystemNames {
         SystemNames::default()

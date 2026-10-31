@@ -13,9 +13,9 @@ use martensite_tkernel::tcollection::AsciiString;
 use std::io::Write;
 use std::ops::Deref;
 
-/// `IWICPalette`: the opaque Windows Imaging Component palette of the WinCodec branch, only
-/// ever held by address. The WinCodec backend is not implemented.
-// TODO(platform): Windows — the WinCodec image codec (IWICImagingFactory and its palette).
+/// Legacy opaque `IWICPalette` marker retained for source compatibility.
+/// Active image codecs and palette conversion use the portable image implementation;
+/// this marker does not own a COM palette or participate in image loading.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ImageIwicPalette {}
 

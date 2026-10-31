@@ -30,8 +30,16 @@ use windows_sys::Win32::System::Threading::{
     GetCurrentProcess, GetCurrentThread, OpenProcessToken, OpenThreadToken,
 };
 
+#[path = "windows_protection.rs"]
+mod protection;
 #[path = "windows_streams.rs"]
 mod streams;
+pub(crate) use protection::{read_protection, write_protection};
+#[path = "windows_creation.rs"]
+mod creation;
+pub(crate) use creation::{
+    create_protected_directory, exclusive_protected_file, open_protected_file,
+};
 
 const ACCESS_SECTIONS: [u32; 8] = [
     OWNER_SECURITY_INFORMATION,
@@ -189,11 +197,15 @@ fn effective_token() -> io::Result<OwnedHandle> {
 }
 
 fn effective_user_sid() -> io::Result<String> {
+    effective_token_sid(TokenUser)
+}
+
+fn effective_token_sid(class: TOKEN_INFORMATION_CLASS) -> io::Result<String> {
     let token = effective_token()?;
     let mut needed = 0;
     // SAFETY: Null output with zero capacity queries the required buffer size.
     unsafe {
-        GetTokenInformation(token.as_raw_handle(), TokenUser, null_mut(), 0, &mut needed);
+        GetTokenInformation(token.as_raw_handle(), class, null_mut(), 0, &mut needed);
     }
     if needed == 0 {
         return Err(io::Error::last_os_error());
@@ -204,18 +216,24 @@ fn effective_user_sid() -> io::Result<String> {
     win32_success(unsafe {
         GetTokenInformation(
             token.as_raw_handle(),
-            TokenUser,
+            class,
             buffer.as_mut_ptr().cast(),
             needed,
             &mut needed,
         )
     })?;
     let mut pointer = null_mut();
-    // SAFETY: Successful TokenUser query initializes TOKEN_USER and its SID points
+    // SAFETY: Successful query initializes the requested token structure and its SID points
     // into the still-live aligned buffer. Conversion returns a LocalFree allocation.
     win32_success(unsafe {
         ConvertSidToStringSidW(
-            (*buffer.as_ptr().cast::<TOKEN_USER>()).User.Sid,
+            match class {
+                value if value == TokenPrimaryGroup => {
+                    (*buffer.as_ptr().cast::<TOKEN_PRIMARY_GROUP>()).PrimaryGroup
+                }
+                value if value == TokenOwner => (*buffer.as_ptr().cast::<TOKEN_OWNER>()).Owner,
+                _ => (*buffer.as_ptr().cast::<TOKEN_USER>()).User.Sid,
+            },
             &mut pointer,
         )
     })?;

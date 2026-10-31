@@ -45,7 +45,8 @@ x11-dl = "=2.21.0"
 libc = "=0.2.190"
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Registry", "Win32_System_SystemInformation"] }
+winsafe = { version = "=0.0.29", default-features = false, features = ["kernel", "user"] }
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_System_Registry", "Win32_System_SystemInformation", "Win32_UI_Input"] }
 
 # Test modules share one executable per toolkit to avoid repeated linkage.
 [[test]]

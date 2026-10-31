@@ -123,11 +123,39 @@ impl<'a> CargoTasks<'a> {
         selection: &PackageSelection,
         target: &BuildTarget,
     ) -> BuildResult<()> {
+        if cfg!(windows) && matches!(target, BuildTarget::Host) && includes_build_driver(selection)
+        {
+            return self.build_driver_separately(selection, target);
+        }
         self.runner.run(
             &self
                 .selected("build", selection, target)
                 .arg("--all-targets"),
         )
+    }
+
+    fn build_driver_separately(
+        &self,
+        selection: &PackageSelection,
+        target: &BuildTarget,
+    ) -> BuildResult<()> {
+        let ordinary = without_build_driver(selection);
+        if !matches!(&ordinary, PackageSelection::Packages(names) if names.is_empty()) {
+            self.runner.run(
+                &self
+                    .selected("build", &ordinary, target)
+                    .arg("--all-targets"),
+            )?;
+        }
+        // Windows locks the running xtask image. Rebuild it, including every
+        // target kind, away from that image without changing the caller's target dir (#339).
+        let driver = PackageSelection::Packages(vec!["martensite-build".into()]);
+        self.runner
+            .run(&self.selected("build", &driver, target).args([
+                "--all-targets",
+                "--target-dir",
+                "target/build-driver-validation",
+            ]))
     }
 
     /// Runs unit, integration and doc tests; keeps going past the first failure.
@@ -252,6 +280,36 @@ fn parse_host_triple(version_output: &str) -> BuildResult<String> {
         })
 }
 
+fn includes_build_driver(selection: &PackageSelection) -> bool {
+    match selection {
+        PackageSelection::Workspace => true,
+        PackageSelection::WorkspaceExcept(names) => {
+            !names.iter().any(|name| name == "martensite-build")
+        }
+        PackageSelection::Packages(names) => names.iter().any(|name| name == "martensite-build"),
+    }
+}
+
+fn without_build_driver(selection: &PackageSelection) -> PackageSelection {
+    match selection {
+        PackageSelection::Workspace => {
+            PackageSelection::WorkspaceExcept(vec!["martensite-build".into()])
+        }
+        PackageSelection::WorkspaceExcept(names) => {
+            let mut names = names.clone();
+            names.push("martensite-build".into());
+            PackageSelection::WorkspaceExcept(names)
+        }
+        PackageSelection::Packages(names) => PackageSelection::Packages(
+            names
+                .iter()
+                .filter(|name| *name != "martensite-build")
+                .cloned()
+                .collect(),
+        ),
+    }
+}
+
 // Per-package jobs must retain the case-runner tests previously enabled by
 // dataset toolkit dependencies in a combined Cargo invocation (#250).
 fn tests_case_runner(selection: &PackageSelection) -> bool {
@@ -265,6 +323,9 @@ fn tests_case_runner(selection: &PackageSelection) -> bool {
         }
     }
 }
+
+#[cfg(test)]
+mod windows_build_tests;
 
 #[cfg(test)]
 mod tests {
@@ -320,7 +381,7 @@ mod tests {
         tasks.test(&PackageSelection::Workspace, &target).unwrap();
         tasks.package_sources(&PackageSelection::Workspace).unwrap();
         let commands = runner.commands();
-        assert_eq!(commands.len(), 4);
+        assert_eq!(commands.len(), 4 + usize::from(cfg!(windows)));
         for command in commands {
             let command = command.replace(" --features martensite-process-policy/case-runner", "");
             assert!(

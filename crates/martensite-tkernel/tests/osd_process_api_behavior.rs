@@ -290,6 +290,16 @@ fn unsupported_super_user_query_records_the_error_and_answers_false() {
     assert!(process.failed());
 }
 
+#[cfg(windows)]
+#[test]
+fn native_windows_identity_queries_do_not_report_unsupported() {
+    let mut process = Process::new();
+    assert!(!process.user_name().as_bytes().is_empty());
+    assert!(!process.failed());
+    let _ = process.is_super_user();
+    assert!(!process.failed());
+}
+
 #[cfg(unix)]
 #[test]
 fn native_super_user_query_matches_getuid_without_error() {

@@ -62,16 +62,16 @@ impl Directory {
     /// the path's trek lookup.
     pub fn build(&mut self, protection: &Protection) -> Result<(), Failure> {
         let name: Vec<u8> = self.node.system_name();
-        let mode: u32 = protection.internal();
         self.node.calls.umask(0);
-        let mut status: Result<(), Errno> = self.node.calls.mkdir(&name, mode);
+        let mut status: Result<(), Errno> =
+            self.node.calls.mkdir_with_protection(&name, protection);
         if status == Err(Errno(enoent())) {
             let parent: Directory = self.build_parent(protection)?;
             if parent.failed() {
                 self.node.error = parent.node.error.clone();
                 return Ok(());
             }
-            status = self.node.calls.mkdir(&name, mode);
+            status = self.node.calls.mkdir_with_protection(&name, protection);
         }
         if let Err(errno) = status.filter_existing() {
             let shown: &[u8] = &name[..name.len().min(2000)];

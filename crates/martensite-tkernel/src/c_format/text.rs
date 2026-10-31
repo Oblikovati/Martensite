@@ -1,9 +1,7 @@
 //! Character and string conversions (`%c %s %lc %ls %C %S`), `%m` and `%n`.
 //!
-//! The wrappers run in the C locale, whose multibyte form holds only the 7-bit units:
-//! glibc `wcrtomb` fails a wider unit with `EILSEQ` and the whole call returns -1.
-// TODO(platform): MSVC's C-locale `wctomb` maps units 0x80..0xFF to single bytes and its
-// printf has no `%m`; only the glibc behaviour is implemented and verified.
+//! In the C locale glibc accepts only 7-bit wide units; MSVC accepts 8-bit units.
+//! An unencodable wide string fails; MSVC omits an unencodable single character (#337).
 use super::{CArg, Length, Spec, Unencodable, errno_text::os_error_text, pad};
 
 /// Renders one `c s C S` directive (narrow unless the `l` modifier or `C`/`S` asks wide).
@@ -61,7 +59,11 @@ fn wide_character(
         Some(CArg::WideChar(unit)) => *unit,
         _ => 0,
     };
-    let byte = c_locale_byte(unit, offset)?;
+    let byte = match c_locale_byte(unit, offset) {
+        Ok(byte) => byte,
+        Err(_) if cfg!(windows) => return Ok(Vec::new()),
+        Err(error) => return Err(error),
+    };
     Ok(pad(spec, Vec::new(), vec![byte], false))
 }
 
@@ -90,14 +92,41 @@ fn wide_text(
     Ok(pad(spec, Vec::new(), bytes, false))
 }
 
-/// The C-locale multibyte form of one wide unit: itself when it is 7-bit.
+/// The native C-locale single-byte range differs between MSVC and Unix (#337).
 fn c_locale_byte(unit: u32, offset: usize) -> Result<u8, Unencodable> {
     u8::try_from(unit)
         .ok()
-        .filter(u8::is_ascii)
+        .filter(|byte| cfg!(windows) || byte.is_ascii())
         .ok_or(Unencodable { offset, unit })
 }
 
+#[cfg(all(test, windows))]
+#[allow(unsafe_code)]
+mod windows_tests {
+    #[test]
+    fn wide_units_match_the_native_msvc_c_locale() {
+        let _locale = crate::standard::c_locale_sentry::CLocaleSentry::new();
+        for format in [c"%lc", c"%3lc", c"%-3lc"] {
+            for unit in [0u32, 0x41, 0x7f, 0x80, 0xe9, 0xff, 0x100, 0xd800] {
+                let mut buffer = [0i8; 16];
+                // SAFETY: buffer and terminated format match the promoted %lc argument.
+                let length = unsafe {
+                    libc::snprintf(buffer.as_mut_ptr(), buffer.len(), format.as_ptr(), unit)
+                };
+                assert!(length >= 0);
+                let expected: Vec<u8> = buffer[..length as usize]
+                    .iter()
+                    .map(|byte| *byte as u8)
+                    .collect();
+                assert_eq!(
+                    crate::c_format::c_sprintf(format.to_bytes(), &[super::CArg::WideChar(unit)]),
+                    expected,
+                    "unit {unit:#x}, format {format:?}"
+                );
+            }
+        }
+    }
+}
 /// `%m`: `strerror(errno)`, padded and cut like a `%s` of that text.
 pub(super) fn errno_message(spec: &Spec, errno: i32) -> Vec<u8> {
     shown(spec, os_error_text(errno).as_bytes())

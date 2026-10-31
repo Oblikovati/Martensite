@@ -3,8 +3,9 @@
 //!
 //! The types follow the POSIX semantics (the verified Linux profile, also
 //! macOS). Every system call goes through [`PosixFileCalls`]: `NativePosixCalls` makes
-//! the libc calls on Unix hosts; on Windows it emulates them over `std::fs`, because the
-//! Win32 semantics (handles, ACL protections, `LockFileEx`) are not implemented.
+//! the libc calls on Unix hosts; Windows uses native handles and whole-file locking
+//! through `std::fs`, native local-time conversion and typed file-node ACLs.
+//! Creation-time ACLs remain unfinished.
 mod calls;
 mod directory;
 mod directory_stream;

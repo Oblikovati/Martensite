@@ -3,6 +3,9 @@
 #![allow(unsafe_code)]
 use super::MemInfoSource;
 
+#[cfg(windows)]
+mod windows;
+
 /// The running process's memory figures; `NativeMemInfo.heap_usage()`.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct NativeMemInfo;
@@ -20,6 +23,10 @@ impl MemInfoSource for NativeMemInfo {
     }
     fn task_counters(&self) -> Option<(usize, usize, usize)> {
         task_counters()
+    }
+    #[cfg(windows)]
+    fn windows_counters(&self) -> Option<[usize; 7]> {
+        windows::counters()
     }
 }
 

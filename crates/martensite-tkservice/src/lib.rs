@@ -7,8 +7,9 @@
 //! - [`graphic3d`]: the 3D presentation data model and the graphic driver interfaces.
 //! - [`media`]: the media player context (built without FFmpeg).
 //! - `xw`: the Xlib window (Linux).
-//! - [`cocoa`] and [`wnt`]: the macOS and Windows windows, interfaces whose native backends
-//!   are not implemented yet; [`platform`] names their typed error.
+//! - [`wnt`]: native Windows windows with owned message dispatch or borrowed HWNDs.
+//! - [`cocoa`]: the macOS window interface, whose native backend is unfinished;
+//!   [`platform`] names its typed error.
 //!
 //! See `docs/features/martensite-tkservice/README.md` for the platform interfaces and
 //! run-time libraries.

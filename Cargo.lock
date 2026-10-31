@@ -495,6 +495,7 @@ dependencies = [
  "nix",
  "rustix",
  "smallvec",
+ "tempfile",
  "windows-sys",
  "winsafe",
  "xattr",
@@ -650,6 +651,7 @@ dependencies = [
  "martensite-tkernel",
  "martensite-tkmath",
  "windows-sys",
+ "winsafe",
  "x11-dl",
 ]
 

@@ -146,7 +146,11 @@ impl File {
     ) {
         self.mode = mode;
         let name: Vec<u8> = self.node.system_name();
-        match self.node.calls.open(&name, flags, protection.internal()) {
+        match self
+            .node
+            .calls
+            .open_with_protection(&name, flags, protection)
+        {
             Ok(fd) => {
                 self.channel = fd;
                 self.stream = Some(StdioStream::attach(fd, reads));

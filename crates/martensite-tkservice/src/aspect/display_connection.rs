@@ -3,7 +3,8 @@
 //!
 //! On Linux the native library is built with `HAVE_XLIB`: the connection opens the display
 //! named by `DISPLAY` (or the given name) through the Xlib wrapper and interns the
-//! `WM_DELETE_WINDOW` atom. On the other platforms the window-system backend is not implemented:
+//! `WM_DELETE_WINDOW` atom. Windows retains the process HINSTANCE used by Win32 surfaces.
+//! On other platforms the window-system backend is not implemented:
 //! initializing a connection raises `Standard_NotImplemented` (see [`crate::platform`]).
 #[cfg(target_os = "linux")]
 use super::exceptions::display_connection_definition_error;
@@ -40,7 +41,8 @@ struct ConnectionState {
     leases: AspectDisplayLeaseCounts,
 }
 
-/// A window-system connection; `AspectDisplayConnection::new()?` opens `$DISPLAY`.
+/// A window-system connection; `AspectDisplayConnection::new()?` opens `$DISPLAY`
+/// on Linux or borrows the process module on Windows.
 pub struct AspectDisplayConnection {
     transient: StandardTransient,
     state: SharedState<ConnectionState>,
@@ -73,7 +75,10 @@ impl AspectDisplayConnection {
     ///
     /// Example: `let display = AspectDisplayConnection::new()?;`.
     pub fn new() -> Result<Self, Failure> {
+        #[cfg(not(windows))]
         let name = std::env::var("DISPLAY").unwrap_or_default();
+        #[cfg(windows)]
+        let name = String::new();
         Self::with_display_name(&AsciiString::from(name.as_str()))
     }
     /// `Aspect_DisplayConnection(theDisplayName)`: opens the named display.
@@ -91,7 +96,7 @@ impl AspectDisplayConnection {
         connection.init(display)?;
         Ok(connection)
     }
-    /// `GetDisplayAspect`: the display address, 0 for none; `connection.get_display_aspect()`.
+    /// The X display address or Win32 HINSTANCE, 0 for none; `connection.get_display_aspect()`.
     pub fn get_display_aspect(&self) -> usize {
         self.state.read().display
     }
@@ -218,7 +223,7 @@ mod platform {
 
 /// The platforms without an implemented window-system backend: initializing raises
 /// `Standard_NotImplemented` and leaves the connection without a display.
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(any(target_os = "linux", windows)))]
 mod platform {
     use super::{ConnectionState, NativeDisplayCalls};
     use martensite_tkernel::standard::Failure;
@@ -228,7 +233,7 @@ mod platform {
         display: usize,
         _native: &dyn NativeDisplayCalls,
     ) -> Result<(), Failure> {
-        // TODO(platform): Windows and macOS — the native build without Xlib only stores the
+        // TODO(platform): macOS — the native build without Xlib only stores the
         // given display; port the window-system connection the drivers of those platforms use.
         let _ = (state, display);
         Err(crate::platform::unsupported(
@@ -237,6 +242,37 @@ mod platform {
         ))
     }
 }
+
+#[cfg(windows)]
+mod platform {
+    use super::*;
+    pub(super) fn init(
+        state: &mut ConnectionState,
+        display: usize,
+        native: &dyn NativeDisplayCalls,
+    ) -> Result<(), Failure> {
+        let instance = if display == 0 {
+            native.open(&state.display_name)
+        } else {
+            display
+        };
+        if instance == 0 {
+            return Err(
+                super::super::exceptions::display_connection_definition_error(
+                    "Win32 process module handle is null; expected a live HINSTANCE",
+                ),
+            );
+        }
+        state.display = instance;
+        state.is_own_display = false;
+        state.atoms.clear();
+        Ok(())
+    }
+}
+
+#[cfg(all(test, windows))]
+#[path = "display_windows_tests.rs"]
+mod windows_tests;
 
 #[cfg(all(test, target_os = "linux"))]
 mod tests {
