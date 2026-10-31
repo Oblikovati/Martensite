@@ -9,6 +9,7 @@ use super::alien_pixels::{DecodedRows, decoded_rows, encodable_image};
 use super::alien_sgi::{decode_sgi, has_sgi_signature, is_sgi_extension};
 use super::{ImageFormat, ImagePixMap};
 use image::ImageFormat as FileFormat;
+use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 use std::io::Cursor;
 
 /// A file format `ImageAlienPixMap` reads and writes; `CodecFormat::from_name(b"a.png")`.
@@ -125,12 +126,19 @@ pub(super) fn encode(pixmap: &ImagePixMap, format: CodecFormat) -> Result<Vec<u8
         CodecFormat::Jpeg => image::codecs::jpeg::JpegEncoder::new_with_quality(&mut out, 75)
             .encode_image(&image)
             .is_ok(),
+        CodecFormat::Png => write_compressed_png(&image, &mut out),
         _ => image.write_to(&mut out, format.file_format()).is_ok(),
     };
     if !written {
         return Err(EncodeFailure::Encoder);
     }
     Ok(out.into_inner())
+}
+
+// #347: Fast compression can produce oversized files for repetitive pixel patterns.
+fn write_compressed_png(image: &image::DynamicImage, out: &mut Cursor<Vec<u8>>) -> bool {
+    let encoder = PngEncoder::new_with_quality(out, CompressionType::Default, FilterType::Adaptive);
+    image.write_with_encoder(encoder).is_ok()
 }
 
 #[cfg(test)]
