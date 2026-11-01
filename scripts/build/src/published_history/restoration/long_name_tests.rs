@@ -133,7 +133,7 @@ fn metadata_requires_canonical_package_root_and_exact_terminal_nul() {
 fn metadata_must_be_recognized_and_followed_once_by_a_regular_member() {
     let header = long(b"martensite-example-0.1.0/long-member\0");
     assert!(!evaluate(
-        &[header.clone()],
+        std::slice::from_ref(&header),
         "martensite-example-0.1.0/Cargo.toml"
     ));
     assert!(!evaluate(
