@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed skipped tag publication after successful release checks when the PR-only test job was intentionally skipped (#350).
+
 ## [0.6.0] - 2026-11-01
 
 ### Added

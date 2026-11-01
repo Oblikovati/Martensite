@@ -180,7 +180,15 @@ jobs:
 
   publish:
     needs: [plan, checks, verify]
-    if: needs.plan.outputs.publish == 'true'
+    # An intentionally skipped PR-only ancestor must not suppress verified tag publication (#350).
+    if: >-
+      !cancelled()
+      && github.event_name == 'push'
+      && github.ref == format('refs/tags/v{0}', needs.plan.outputs.version)
+      && needs.plan.result == 'success'
+      && needs.plan.outputs.publish == 'true'
+      && needs.checks.result == 'success'
+      && needs.verify.result == 'success'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
