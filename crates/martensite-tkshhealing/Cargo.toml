@@ -25,7 +25,7 @@ martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.0" }
 
 [dev-dependencies]
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.6" }
-martensite-process-policy = { path = "../martensite-process-policy", version = "0.3.7", features = ["case-runner"] }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
 sha2 = "=0.11.1"
 
 [[test]]

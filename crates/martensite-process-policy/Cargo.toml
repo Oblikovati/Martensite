@@ -1,6 +1,6 @@
 [package]
 name = "martensite-process-policy"
-version = "0.3.7"
+version = "0.4.0"
 description = "Process-wide CPU limits and watchdog controls for isolated regression cases."
 edition.workspace = true
 rust-version.workspace = true
