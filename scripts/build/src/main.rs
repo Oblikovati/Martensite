@@ -36,6 +36,8 @@ mod thread_sanitizer;
 #[cfg(test)]
 mod unsafe_inventory;
 mod version;
+#[cfg(test)]
+mod workflow_publish_tests;
 mod workspace;
 
 use std::process::ExitCode;
