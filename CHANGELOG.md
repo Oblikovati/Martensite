@@ -6,10 +6,6 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
-
-- Restored verification of exact historical package bytes through separately recorded current publication anchors when original assets are retired (#358).
-
 ## [0.6.0] - 2026-11-01
 
 ### Added
@@ -18,6 +14,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Restored verification of exact historical package bytes through separately recorded current publication anchors when original assets are retired (#358).
 - Fixed stale layer bounds after moving displayed structures so bounds and fit queries use current membership (#353).
 
 - Fixed avoidable PNG buffer-save refusals by using default compression with adaptive filtering across file, stream and buffer output (#347).
