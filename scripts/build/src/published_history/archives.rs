@@ -21,6 +21,21 @@ pub(crate) struct ArchiveOrigin {
     pub archive: String,
     pub sha256: String,
     pub manifest_sha256: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub restoration: Option<super::restoration::RestorationAnchor>,
+}
+
+impl ArchiveOrigin {
+    /// Matches retained history without claiming its retired asset is live.
+    ///
+    /// `verified.matches_claim(&historical)` also retains the recovery anchor.
+    pub fn matches_claim(&self, historical: &Self) -> bool {
+        let mut verified = self.clone();
+        if historical.restoration.is_none() {
+            verified.restoration = None;
+        }
+        verified == *historical
+    }
 }
 
 #[derive(Debug)]

@@ -195,7 +195,7 @@ fn validate_receipt(
         let present = archives
             .values()
             .flat_map(|archive| &archive.origins)
-            .any(|origin| origin == known);
+            .any(|origin| origin.matches_claim(known));
         if !present {
             return Err(invalid(
                 &known.archive,
