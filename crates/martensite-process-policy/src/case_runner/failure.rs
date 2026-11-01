@@ -87,7 +87,7 @@ impl Error for CaseFailure {
 /// Example: `eprintln!("{error}");` reports the case and its raw child log paths.
 pub struct CaseRunError {
     pub(crate) identity: String,
-    pub(crate) seconds: i64,
+    pub(crate) process_policy: super::spec::RequestedProcessPolicy,
     pub(crate) failure: Box<CaseFailure>,
     pub(crate) artifacts: Option<PathBuf>,
     pub(crate) recording_failures: Vec<io::Error>,
@@ -98,7 +98,7 @@ impl CaseRunError {
     pub(crate) fn new(spec: super::CaseSpec<'_>, failure: CaseFailure) -> Self {
         Self {
             identity: spec.identity.into(),
-            seconds: spec.seconds,
+            process_policy: spec.process_policy,
             failure: Box::new(failure),
             artifacts: None,
             recording_failures: Vec::new(),
@@ -111,8 +111,11 @@ impl fmt::Display for CaseRunError {
     fn fmt(&self, out: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             out,
-            "case {:?}, budget {} seconds: {}; raw stdout/stderr and receipt directory {:?}",
-            self.identity, self.seconds, self.failure, self.artifacts
+            "case {:?}, budget {}: {}; raw stdout/stderr and receipt directory {:?}",
+            self.identity,
+            self.process_policy.description(),
+            self.failure,
+            self.artifacts
         )?;
         for failure in &self.recording_failures {
             write!(out, "; secondary recorder failure: {failure}")?;

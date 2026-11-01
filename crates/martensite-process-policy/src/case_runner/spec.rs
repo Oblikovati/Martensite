@@ -13,7 +13,33 @@ pub enum FactorProfile {
     RequireUnset,
 }
 
-/// The exact libtest identity and already evaluated positive budget.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum RequestedProcessPolicy {
+    Seconds(i64),
+    Inherit,
+}
+
+impl RequestedProcessPolicy {
+    pub(crate) fn description(self) -> String {
+        match self {
+            Self::Seconds(seconds) => format!("{seconds} seconds"),
+            Self::Inherit => "inherited process policy (no runner installation)".into(),
+        }
+    }
+    fn validate(self) -> Result<(), CaseFailure> {
+        if let Self::Seconds(seconds) = self
+            && seconds <= 0
+        {
+            return Err(CaseFailure::InvalidSpec {
+                observed: seconds.to_string(),
+                expected: "positive already evaluated CPU/elapsed seconds",
+            });
+        }
+        Ok(())
+    }
+}
+
+/// The exact libtest identity and explicitly requested process policy.
 ///
 /// Example: `CaseSpec::new("curve_cases::bounded", 600, FactorProfile::RequireUnset)`.
 /// ```
@@ -23,7 +49,7 @@ pub enum FactorProfile {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct CaseSpec<'a> {
     pub(crate) identity: &'a str,
-    pub(crate) seconds: i64,
+    pub(crate) process_policy: RequestedProcessPolicy,
     pub(crate) factor: FactorProfile,
 }
 
@@ -34,7 +60,18 @@ impl<'a> CaseSpec<'a> {
     pub fn new(identity: &'a str, seconds: i64, factor: FactorProfile) -> Self {
         Self {
             identity,
-            seconds,
+            process_policy: RequestedProcessPolicy::Seconds(seconds),
+            factor,
+        }
+    }
+
+    /// Preserve the dedicated child's inherited policy without starting a watchdog (#351).
+    ///
+    /// Example: `CaseSpec::inherit_process_policy("cases::inherited", FactorProfile::RequireUnset)`.
+    pub fn inherit_process_policy(identity: &'a str, factor: FactorProfile) -> Self {
+        Self {
+            identity,
+            process_policy: RequestedProcessPolicy::Inherit,
             factor,
         }
     }
@@ -46,13 +83,7 @@ impl<'a> CaseSpec<'a> {
                 expected: "nonempty exact identity without whitespace/control characters or option prefix",
             });
         }
-        if self.seconds <= 0 {
-            return Err(CaseFailure::InvalidSpec {
-                observed: self.seconds.to_string(),
-                expected: "positive already evaluated CPU/elapsed seconds",
-            });
-        }
-        Ok(())
+        self.process_policy.validate()
     }
 }
 

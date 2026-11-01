@@ -307,7 +307,7 @@ fn parent_failure(
 ) -> CaseRunError {
     CaseRunError {
         identity: request.spec.identity.into(),
-        seconds: request.spec.seconds,
+        process_policy: request.spec.process_policy,
         failure: Box::new(failure),
         artifacts: Some(request.context.directory.clone()),
         recording_failures: secondary,

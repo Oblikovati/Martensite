@@ -44,3 +44,9 @@ mod prepared_controls;
 mod prepared_live_controls;
 #[cfg(test)]
 mod prepared_parent_controls;
+
+#[cfg(test)]
+mod inherited_controls;
+
+#[cfg(test)]
+mod inherited_live_controls;
