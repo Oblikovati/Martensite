@@ -381,6 +381,9 @@ impl Graphic3dCView for Graphic3dRetainedView {
         if let Some(layer) = self.layer_of(layer_id).get() {
             layer.add(cstructure, priority, false);
         }
+        // Fitting must see current membership in both layers after a move (#353).
+        self.invalidate_z_layer_bounding_box(old_layer);
+        self.invalidate_z_layer_bounding_box(layer_id);
     }
     /// Moves the structure to a priority in its layer.
     fn change_cstructure_priority(
