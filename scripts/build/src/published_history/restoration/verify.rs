@@ -190,6 +190,7 @@ fn recovered_archive(
     let path = folder.join(&origin.archive);
     std::fs::write(&path, bytes).map_err(|cause| io_error(&path, cause))?;
     require_payload(&path, &origin, &name, &version)?;
+    archive::write_checksum(&path)?;
     origin.restoration = Some(anchor.clone());
     Ok(PublishedArchive {
         name,

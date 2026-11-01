@@ -88,3 +88,53 @@ fn unshipped_fixture() -> PublicationApiFixture {
     );
     fixture
 }
+
+#[test]
+fn restored_package_completes_publication_graph_with_exact_bytes_and_anchor() {
+    let directory = tempfile::tempdir().unwrap();
+    let plan = restored_plan();
+    let request = restored_request(directory.path());
+    let graph = crate::archive_graph::inspect(&request, &unchanged_workspace(), &plan).unwrap();
+    let expected = plan.packages["martensite-math"].archive_sha256.as_deref();
+    assert_eq!(
+        Some(graph.archives["martensite-math"].sha256.as_str()),
+        expected
+    );
+    let origin = &plan.history_receipt().archives[0];
+    assert_eq!(origin.restoration.as_ref().unwrap().release_tag, "v0.5.0");
+}
+
+#[test]
+fn restored_package_graph_refuses_corrupted_local_companion() {
+    let directory = tempfile::tempdir().unwrap();
+    let plan = restored_plan();
+    let request = restored_request(directory.path());
+    let path = plan
+        .archive_path("martensite-math", directory.path())
+        .unwrap();
+    std::fs::write(
+        path.with_extension("crate.sha256"),
+        "corrupted local companion",
+    )
+    .unwrap();
+    assert!(crate::archive_graph::inspect(&request, &unchanged_workspace(), &plan).is_err());
+}
+
+fn restored_plan() -> PublicationPlan {
+    let history = crate::published_history::fixtures::restored_history();
+    let package = package("martensite-math", "0.3.5");
+    let selected = select(&package, false, &history).unwrap();
+    PublicationPlan {
+        packages: [(package.name, selected)].into(),
+        history,
+    }
+}
+
+fn restored_request(directory: &Path) -> crate::release::ReleaseRequest {
+    crate::release::ReleaseRequest {
+        version: semver::Version::new(0, 6, 0),
+        triple: "x86_64-unknown-linux-gnu".into(),
+        source_packages: true,
+        dist_dir: directory.into(),
+    }
+}

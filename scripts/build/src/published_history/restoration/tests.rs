@@ -175,3 +175,8 @@ fn old_origin_wire_omits_restoration_and_anchor_claims_are_exact() {
     wrong.restoration.as_mut().unwrap().asset_id += 1;
     assert!(!history.receipt.archives[0].matches_claim(&wrong));
 }
+
+pub(crate) fn verified_restored_history() -> AssetHistory {
+    // Staging regressions share the actual named API fake rather than inventing another loader.
+    RestorationApiFake::new().evaluate(None).unwrap()
+}
