@@ -80,10 +80,13 @@ fn outcome_fields(output: Option<&ChildObservation>, failure: Option<&CaseFailur
 }
 
 fn identity_fields(spec: CaseSpec<'_>) -> Vec<String> {
+    let super::spec::RequestedProcessPolicy::Seconds(seconds) = spec.process_policy else {
+        return inherited_identity_fields(spec);
+    };
     vec![
         "\"schema_version\":1".into(),
         format!("\"case\":{}", json_string(spec.identity)),
-        format!("\"budget_seconds\":{}", spec.seconds),
+        format!("\"budget_seconds\":{seconds}"),
         format!(
             "\"declared_harness_profile\":{}",
             json_string(HARNESS_PROFILE)
@@ -146,4 +149,20 @@ pub(crate) fn json_string(text: &str) -> String {
     }
     quoted.push('"');
     quoted
+}
+
+fn inherited_identity_fields(spec: CaseSpec<'_>) -> Vec<String> {
+    vec![
+        "\"schema_version\":2".into(),
+        format!("\"case\":{}", json_string(spec.identity)),
+        "\"budget_seconds\":null".into(),
+        "\"process_policy\":\"inherit\"".into(),
+        "\"runner_policy_installed\":false".into(),
+        format!(
+            "\"declared_harness_profile\":{}",
+            json_string(HARNESS_PROFILE)
+        ),
+        "\"required_factor\":\"unset\"".into(),
+        "\"child_environment_removed\":[\"RUST_TEST_NOCAPTURE\"]".into(),
+    ]
 }

@@ -1,3 +1,4 @@
+use super::spec::RequestedProcessPolicy;
 use super::{CaseFailure, CaseSpec, context::CaseContext};
 use std::error::Error;
 
@@ -43,9 +44,19 @@ pub(super) fn execute_prepared_with<T>(
     context.claim_entry()?;
     let prepared = prepare().map_err(CaseFailure::Preparation)?;
     context.record_prepared()?;
-    installer
-        .install(spec.seconds)
-        .map_err(CaseFailure::Policy)?;
+    install_requested_policy(spec, installer)?;
     body(prepared).map_err(CaseFailure::Body)?;
     context.complete()
+}
+
+fn install_requested_policy(
+    spec: CaseSpec<'_>,
+    installer: &dyn PolicyInstaller,
+) -> Result<(), CaseFailure> {
+    match spec.process_policy {
+        RequestedProcessPolicy::Seconds(seconds) => {
+            installer.install(seconds).map_err(CaseFailure::Policy)
+        }
+        RequestedProcessPolicy::Inherit => Ok(()),
+    }
 }

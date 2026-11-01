@@ -178,8 +178,9 @@ fn request_bytes(
     let factor = match spec.factor {
         super::FactorProfile::RequireUnset => "unset",
     };
-    format!("MARTENSITE_EXACT_CASE_V1\nidentity={}\nseconds={}\nprofile={HARNESS_PROFILE}\nfactor={factor}\nexecutable={executable}\ninvocation={}\n{}",
-        hex(spec.identity.as_bytes()), spec.seconds, hex(directory.as_os_str().as_encoded_bytes()), lifecycle.request_suffix()).into_bytes()
+    let policy = requested_policy_prefix(spec);
+    format!("{policy}\nprofile={HARNESS_PROFILE}\nfactor={factor}\nexecutable={executable}\ninvocation={}\n{}",
+        hex(directory.as_os_str().as_encoded_bytes()), lifecycle.request_suffix()).into_bytes()
 }
 
 pub(crate) fn fingerprint(path: &Path) -> Result<String, super::CaseFailure> {
@@ -189,4 +190,17 @@ pub(crate) fn fingerprint(path: &Path) -> Result<String, super::CaseFailure> {
 
 pub(crate) fn hex(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn requested_policy_prefix(spec: CaseSpec<'_>) -> String {
+    match spec.process_policy {
+        super::spec::RequestedProcessPolicy::Seconds(seconds) => format!(
+            "MARTENSITE_EXACT_CASE_V1\nidentity={}\nseconds={seconds}",
+            hex(spec.identity.as_bytes())
+        ),
+        super::spec::RequestedProcessPolicy::Inherit => format!(
+            "MARTENSITE_EXACT_CASE_V2\nidentity={}\nprocess_policy=inherit",
+            hex(spec.identity.as_bytes())
+        ),
+    }
 }
