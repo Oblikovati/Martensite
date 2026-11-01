@@ -45,33 +45,18 @@ pub(super) fn inner_archive(path: &Path, expected_manifest: &str) -> BuildResult
     let file = std::fs::File::open(path).map_err(|cause| io_error(path, cause))?;
     let limit = ExpandedLimit::new(flate2::read::GzDecoder::new(file), 1024 * 1024 * 1024);
     let mut tar = tar::Archive::new(limit);
+    let mut sequence = super::long_name::InnerSequence::new(expected_manifest);
     for (count, entry) in tar
         .entries()
         .map_err(|cause| io_error(path, cause))?
         .raw(true)
         .enumerate()
     {
-        let entry = entry.map_err(|cause| io_error(path, cause))?;
-        require_inner(&entry, path, expected_manifest, count)?;
+        let mut entry = entry.map_err(|cause| io_error(path, cause))?;
+        sequence.inspect(&mut entry, path, count)?;
     }
+    sequence.finish()?;
     finish(tar.into_inner(), path)
-}
-
-fn require_inner<R: Read>(
-    entry: &tar::Entry<'_, R>,
-    path: &Path,
-    expected: &str,
-    count: usize,
-) -> BuildResult<()> {
-    let name = entry.path().map_err(|cause| io_error(path, cause))?;
-    let large_manifest = name == Path::new(expected) && entry.size() > 1024 * 1024;
-    if count >= 65536 || !entry.header().entry_type().is_file() || large_manifest {
-        return Err(super::super::invalid(
-            &name.display().to_string(),
-            "at most 65536 regular inner members and normalized manifest at most 1 MiB",
-        ));
-    }
-    Ok(())
 }
 
 #[cfg(test)]

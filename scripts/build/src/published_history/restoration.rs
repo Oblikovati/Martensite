@@ -1,6 +1,9 @@
 //! Retired publication origins retain exact bytes under a distinct live anchor (#358).
 mod bounded;
 mod bundle;
+mod long_name;
+#[cfg(test)]
+mod long_name_tests;
 #[cfg(test)]
 mod tests;
 mod verify;
