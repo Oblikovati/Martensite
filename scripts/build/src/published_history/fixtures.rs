@@ -165,3 +165,8 @@ pub(crate) fn package(name: &str, version: &str) -> crate::workspace::WorkspaceP
         path_dependencies: Vec::new(),
     }
 }
+
+pub(crate) fn restored_history() -> super::AssetHistory {
+    // Keep package staging coupled to the restoration loader used by the inventory tests.
+    super::restoration::tests::verified_restored_history()
+}

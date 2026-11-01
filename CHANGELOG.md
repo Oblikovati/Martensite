@@ -14,6 +14,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Fixed release staging of restored packages by deriving local checksum companions after their retained payload and manifest identities are verified (#362).
 - Fixed rejection of bounded GNU long-name metadata in verified historical package archives while retaining strict resource and manifest checks (#360).
 - Restored verification of exact historical package bytes through separately recorded current publication anchors when original assets are retired (#358).
 - Fixed stale layer bounds after moving displayed structures so bounds and fit queries use current membership (#353).

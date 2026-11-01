@@ -5,7 +5,7 @@ mod long_name;
 #[cfg(test)]
 mod long_name_tests;
 #[cfg(test)]
-mod tests;
+pub(super) mod tests;
 mod verify;
 
 use super::{PublishedArchive, PublishedRelease, archives::ArchiveOrigin, inventory::Asset};
