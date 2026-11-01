@@ -143,3 +143,6 @@ mod retained_gradient_background_checks;
 
 #[path = "capture_buffer_reference_checks.rs"]
 mod capture_buffer_reference_checks;
+
+#[path = "retained_layer_move_bounds_checks.rs"]
+mod retained_layer_move_bounds_checks;
