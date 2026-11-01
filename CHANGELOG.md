@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added an isolated-case mode that preserves inherited process policies, with bound version2 records and no runner-installed CPU or elapsed budget (#351).
+
 ### Fixed
 
 - Fixed avoidable PNG buffer-save refusals by using default compression with adaptive filtering across file, stream and buffer output (#347).
