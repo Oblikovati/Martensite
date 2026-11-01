@@ -28,7 +28,7 @@ allocator-api2 = "0.4"
 [dev-dependencies]
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.6" }
 martensite-test-support = { path = "../martensite-test-support", version = "0.3.6" }
-martensite-process-policy = { path = "../martensite-process-policy", version = "0.3.7", features = ["case-runner"] }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
 
 [[test]]
 name = "toolkit"

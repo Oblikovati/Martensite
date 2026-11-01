@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-01
+
 ### Added
 
 - Added an isolated-case mode that preserves inherited process policies, with bound version2 records and no runner-installed CPU or elapsed budget (#351).
