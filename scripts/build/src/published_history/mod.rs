@@ -3,6 +3,7 @@ mod api;
 mod archives;
 mod catalogs;
 mod inventory;
+mod restoration;
 
 use crate::{
     context::BuildContext,

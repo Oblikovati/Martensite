@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Restored verification of exact historical package bytes through separately recorded current publication anchors when original assets are retired (#358).
+
 ## [0.6.0] - 2026-11-01
 
 ### Added

@@ -76,15 +76,21 @@ fn verified_archives(
 ) -> BuildResult<BTreeMap<(String, Version), PublishedArchive>> {
     let mut archives = BTreeMap::new();
     for release in &index.releases {
-        collect_archives(
-            context,
-            release,
-            &listings[&release.id],
-            directory,
-            &mut archives,
-        )?;
+        let assets = &listings[&release.id];
+        collect_release(context, release, assets, directory, &mut archives)?;
     }
     Ok(archives)
+}
+
+fn collect_release(
+    context: &BuildContext<'_>,
+    release: &PublishedRelease,
+    assets: &[Asset],
+    directory: &Path,
+    archives: &mut BTreeMap<(String, Version), PublishedArchive>,
+) -> BuildResult<()> {
+    collect_archives(context, release, assets, directory, archives)?;
+    super::restoration::collect(context, release, assets, directory, archives)
 }
 
 fn receipt(
@@ -185,6 +191,7 @@ fn read_archive(
         archive: asset.name.clone(),
         sha256: archive::sha256_hex(&path)?,
         manifest_sha256: archives::manifest_hash(&manifest),
+        restoration: None,
     };
     Ok(PublishedArchive {
         name,
@@ -194,7 +201,7 @@ fn read_archive(
     })
 }
 
-fn admit(
+pub(super) fn admit(
     archives: &mut BTreeMap<(String, Version), PublishedArchive>,
     archive: PublishedArchive,
 ) -> BuildResult<()> {

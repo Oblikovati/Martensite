@@ -30,7 +30,12 @@ fn validate_archive(
     let archive = archives.get(&(row.name.clone(), row.version.clone()));
     validate_digest(row, archive)?;
     for origin in row.origins.as_deref().unwrap_or_default() {
-        if !archive.is_some_and(|archive| archive.origins.contains(origin)) {
+        if !archive.is_some_and(|archive| {
+            archive
+                .origins
+                .iter()
+                .any(|verified| verified.matches_claim(origin))
+        }) {
             return Err(invalid(
                 &row.name,
                 "row provenance matching verified publication origins",
