@@ -2,6 +2,8 @@
 //! Exact signs of supplied binary64 coordinates, separate from metric tolerance.
 //! This extension does not change the metric decisions.
 
+/// Exact injectivity certificates for supported bilinear patches.
+pub mod bilinear_patch;
 mod compare;
 /// Certified polynomial roots for extension topology.
 pub mod roots;
