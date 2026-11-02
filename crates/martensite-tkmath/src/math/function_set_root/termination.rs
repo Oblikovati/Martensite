@@ -44,22 +44,17 @@ impl FunctionSetRoot {
         self.observation
     }
     pub(super) fn record_finish(&mut self, accepted: bool) {
-        if accepted && self.run.objective > 1e-32 && self.run.gradient_norm <= 1e-64 {
-            self.observation.termination = RootSearchTermination::Stationary;
+        if self.observation.termination != RootSearchTermination::Running {
             return;
         }
-        if matches!(
-            self.observation.termination,
-            RootSearchTermination::Stationary | RootSearchTermination::Stagnation
-        ) || (!accepted && self.observation.termination != RootSearchTermination::Running)
-        {
-            return;
-        }
-        self.observation.termination = if accepted {
-            RootSearchTermination::Accepted
-        } else {
-            RootSearchTermination::LocalDecline
-        };
+        self.observation.termination =
+            if accepted && self.run.objective > 1e-32 && self.run.gradient_norm <= 1e-64 {
+                RootSearchTermination::Stationary
+            } else if accepted {
+                RootSearchTermination::Accepted
+            } else {
+                RootSearchTermination::LocalDecline
+            };
     }
 }
 
