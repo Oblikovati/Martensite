@@ -16,7 +16,8 @@ impl SurfaceSelfSearchReceipt {
         }
         self.termination = if result.is_err() {
             SelfSearchTermination::Failed
-        } else if self.calls_with_unobserved_inner_work != 0
+        } else if !self.numerical.all_accepted()
+            || self.calls_with_unobserved_inner_work != 0
             || !self.discovery_finished
             || !self.work_accounted()
             || self.limits != SelfSearchLimitCounts::default()

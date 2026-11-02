@@ -166,6 +166,9 @@ impl IntPatchPrmPrmIntersection {
         } else {
             self.self_search.refinements.finished += 1;
         }
+        self.self_search
+            .numerical
+            .accumulate(walker.numerical_search_counts());
         self.self_search.observe_walking(walker.search_observation);
     }
     pub(super) fn observed_self_march(
@@ -176,6 +179,9 @@ impl IntPatchPrmPrmIntersection {
     ) -> Result<(), Failure> {
         self.self_search.walks.entered();
         let result = walk.pw.perform_with_progress(start, progress);
+        self.self_search
+            .numerical
+            .accumulate(walk.pw.numerical_search_counts());
         self.self_search.observe_walking(walk.pw.search_observation);
         self.self_search
             .walks

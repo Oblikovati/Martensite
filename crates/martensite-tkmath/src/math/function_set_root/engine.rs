@@ -7,6 +7,7 @@ impl FunctionSetRoot {
     ) {
         for iteration in 1..=self.limit {
             self.iteration = iteration;
+            self.observation.iterations_entered = iteration;
             if !self.initial_step(function) {
                 return;
             }
@@ -19,6 +20,7 @@ impl FunctionSetRoot {
                 return;
             }
         }
+        self.observation.termination = super::RootSearchTermination::IterationLimit;
         self.iteration = self.limit.saturating_add(1).max(1);
         self.finish(function, false, false);
     }
@@ -36,6 +38,7 @@ impl FunctionSetRoot {
             &mut self.direction,
         );
         if self.run.slope.abs() <= 1e-32 {
+            self.observation.termination = super::RootSearchTermination::Stationary;
             self.finish(function, true, true);
             return false;
         }

@@ -68,6 +68,7 @@ impl IntWalkPWalking {
         par_dep: &Array1<'_, f64>,
     ) -> Result<Option<IntSurfPntOn2S>, Failure> {
         self.search_observation = Default::default();
+        self.my_intersection_on2s.search_counts = Default::default();
         self.sens_cheminement = 1;
         self.close = false;
         let mut param: Array1<'static, f64> = one_based(4)?;
@@ -75,8 +76,6 @@ impl IntWalkPWalking {
         (param[1], param[2], param[3], param[4]) = (values[0], values[1], values[2], values[3]);
         let mut rsnld =
             FunctionSetRoot::without_tolerance(self.my_intersection_on2s.function(), 100)?;
-        // The nested solver exposes final flags, not every attempted termination.
-        self.search_observation.inner_termination_unobserved = true;
         self.my_intersection_on2s.perform(&param, &mut rsnld)?;
         if !self.my_intersection_on2s.is_done() || self.my_intersection_on2s.is_empty()? {
             return Ok(None);
@@ -120,6 +119,7 @@ impl IntWalkPWalking {
         progress: &martensite_tkernel::message::ProgressRange<'_>,
     ) -> Result<(), Failure> {
         self.search_observation = Default::default();
+        self.my_intersection_on2s.search_counts = Default::default();
         self.done = false;
         self.require_search_active(progress)?;
         self.perform_bounded_observed(par_dep, min, max, progress)
@@ -220,8 +220,6 @@ impl IntWalkPWalking {
         (self.pas_sav, self.pasuv) = (self.pas_init, self.pas_init);
         let mut rsnld =
             FunctionSetRoot::without_tolerance(self.my_intersection_on2s.function(), 100)?;
-        // The nested solver exposes final flags, not every attempted termination.
-        self.search_observation.inner_termination_unobserved = true;
         let choix_iso: IntImpConstIsoparametric =
             self.my_intersection_on2s.perform(&param, &mut rsnld)?;
         let inter = &self.my_intersection_on2s;
@@ -238,6 +236,7 @@ impl IntWalkPWalking {
             [u1, v1, u2, v2],
             self.my_tol_tang,
             self.pasuv,
+            &mut self.search_observation.inner_termination_unobserved,
         )? {
             return Ok(None);
         }

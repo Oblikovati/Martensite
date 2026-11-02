@@ -59,6 +59,7 @@ impl FunctionSetRoot {
             && self.run.objective >= 0.95 * self.history[self.iteration as usize - 5]
         {
             if self.run.change {
+                self.observation.termination = super::RootSearchTermination::Stagnation;
                 self.finish(function, true, false);
                 return false;
             }

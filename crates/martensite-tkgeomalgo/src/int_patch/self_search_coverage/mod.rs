@@ -87,6 +87,8 @@ pub struct SurfaceSelfSearchReceipt {
     pub limits: SelfSearchLimitCounts,
     /// Marching iterations actually entered.
     pub marching_steps: u64,
+    /// Actual isoparametric numerical solves and their local exits.
+    pub numerical: crate::int_imp::NumericalSearchCounts,
     /// Calls whose nested numerical termination was not available.
     pub calls_with_unobserved_inner_work: u64,
 }

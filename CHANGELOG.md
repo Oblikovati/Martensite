@@ -8,7 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added owned surface self-search work receipts and cancellable search entry points, preserving unknown inner termination and sampled discovery scope (#213).
+- Added owned surface self-search work receipts, local numerical termination observations and cancellable search entry points, preserving unknown inner termination and sampled discovery scope (#213).
 
 ### Fixed
 

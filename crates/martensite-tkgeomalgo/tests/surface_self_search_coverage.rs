@@ -116,8 +116,10 @@ fn known_crossing_is_independent_of_search_receipt() {
         "the interior crossing has a contact line"
     );
     assert!(receipt.starts.visited > 0);
-    assert!(receipt.calls_with_unobserved_inner_work > 0);
-    assert_eq!(receipt.termination, SelfSearchTermination::Incomplete);
+    assert!(receipt.numerical.scheduled > 0);
+    assert_eq!(receipt.numerical.scheduled, receipt.numerical.accepted);
+    assert_eq!(receipt.calls_with_unobserved_inner_work, 0);
+    assert_eq!(receipt.termination, SelfSearchTermination::Finished);
 }
 #[test]
 fn cancellation_after_discovery_retains_scheduled_work() {
@@ -177,22 +179,17 @@ fn frontend_retains_nested_receipt_after_cancellation() {
     assert_eq!(receipt.termination, SelfSearchTermination::Cancelled);
 }
 #[test]
-fn frontend_preserves_sampled_inner_uncertainty_and_contacts() {
+fn frontend_preserves_observed_sampled_work_and_contacts() {
     let surface = crossing_patch();
     let mut search = IntPatchIntersection::new();
     search
         .perform_self(&surface, &domain(&surface), 1e-7, 1e-7)
         .unwrap();
     assert!(search.nb_lines().unwrap() > 0);
-    assert!(
-        search
-            .self_search_receipt()
-            .calls_with_unobserved_inner_work
-            > 0
-    );
+    assert!(search.self_search_receipt().numerical.scheduled > 0);
     assert_eq!(
         search.self_search_receipt().termination,
-        SelfSearchTermination::Incomplete
+        SelfSearchTermination::Finished
     );
 }
 #[test]

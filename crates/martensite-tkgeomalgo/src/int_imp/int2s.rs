@@ -27,6 +27,7 @@ pub struct IntImpInt2S<T: ThePSurfaceTool> {
     my_zer_par_func: IntImpZerParFunc<T>,
     tol: f64,
     ranges: [(f64, f64, f64); 4],
+    pub(crate) search_counts: super::search_counts::NumericalSearchCounts,
 }
 
 impl<T: ThePSurfaceTool> IntImpInt2S<T> {
@@ -45,6 +46,7 @@ impl<T: ThePSurfaceTool> IntImpInt2S<T> {
             my_zer_par_func,
             tol: tol_tangency * tol_tangency,
             ranges: patch_ranges::<T>(s1, s2)?,
+            search_counts: Default::default(),
         })
     }
     /// Computes the point near `param` (`u1 v1 u2 v2`, 1-based) with a solver of 15
@@ -80,10 +82,16 @@ impl<T: ThePSurfaceTool> IntImpInt2S<T> {
             [&mut born_inf, &mut born_sup, &mut tolerance],
         );
         rsnld.set_tolerance(&tolerance)?;
+        self.search_counts.scheduled += 1;
         let solved = rsnld.perform_bounded(func, &uvap, &born_inf, &born_sup, false);
+        self.search_counts
+            .returned(&solved, rsnld.search_observation());
         func.take_failure()?;
         solved?;
         let mut best_choix = choix_iso;
+        if rsnld.is_done() && func.root().abs() > self.tol {
+            self.search_counts.residual_declined += 1;
+        }
         self.empty = true;
         if rsnld.is_done() && func.root().abs() <= self.tol {
             rsnld.copy_root(&mut uvap)?;
@@ -123,6 +131,7 @@ impl<T: ThePSurfaceTool> IntImpInt2S<T> {
         self.empty = true;
         let mut choix_iso = [IntImpConstIsoparametric::default(); 4];
         if compute_tangence(&dpuv, &epsuv, &mut uvd, &mut choix_iso) {
+            self.search_counts.tangency_declined += 1;
             return Ok(best_choix);
         }
         for iso in choix_iso {

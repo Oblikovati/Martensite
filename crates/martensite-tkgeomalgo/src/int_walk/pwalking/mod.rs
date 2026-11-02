@@ -182,3 +182,9 @@ impl IntWalkPWalking {
         )
     }
 }
+
+impl IntWalkPWalking {
+    pub(crate) fn numerical_search_counts(&self) -> crate::int_imp::NumericalSearchCounts {
+        self.my_intersection_on2s.search_counts
+    }
+}

@@ -12,6 +12,8 @@ mod line;
 mod minimize;
 mod results;
 mod stopping;
+mod termination;
+pub use termination::{RootSearchInnerWork, RootSearchObservation, RootSearchTermination};
 /// General equation-system solver; `FunctionSetRoot::new(&function,&tolerances,100)?`.
 pub struct FunctionSetRoot {
     sol: Vector<'static>,
@@ -37,6 +39,7 @@ pub struct FunctionSetRoot {
     limit: i32,
     divergent: bool,
     run: Run,
+    observation: RootSearchObservation,
 }
 #[derive(Default)]
 struct Run {
@@ -102,6 +105,10 @@ impl FunctionSetRoot {
             constraints: vec![false; n as usize],
             history: vec![0.0; limit as usize + 1],
             done: false,
+            observation: RootSearchObservation {
+                iteration_limit: limit,
+                ..RootSearchObservation::default()
+            },
             iteration: 0,
             state: 0,
             limit,
@@ -156,6 +163,11 @@ impl FunctionSetRoot {
         stop_on_divergent: bool,
         criterion: &mut impl FnMut(&Self, &mut F) -> bool,
     ) -> Result<(), Failure> {
+        self.observation = RootSearchObservation {
+            termination: RootSearchTermination::InvalidInput,
+            iteration_limit: self.limit,
+            ..RootSearchObservation::default()
+        };
         let n: i32 = function.variables();
         if function.equations() <= 0
             || start.length() != n
@@ -165,6 +177,7 @@ impl FunctionSetRoot {
             return Err(Failure::with_type("Standard_DimensionError", "", ""));
         }
         self.prepare(start, lower, upper, stop_on_divergent)?;
+        self.observation.termination = RootSearchTermination::Running;
         if self.check_divergence() {
             return Ok(());
         }
@@ -189,6 +202,7 @@ impl FunctionSetRoot {
             return Ok(());
         }
         self.iterate(function, criterion);
+        self.record_finish(self.done);
         Ok(())
     }
     fn prepare(
@@ -284,6 +298,7 @@ impl FunctionSetRoot {
             return;
         }
         self.done = done;
+        self.record_finish(done);
         if refresh {
             function.value(&self.sol, &mut self.residual);
         }
