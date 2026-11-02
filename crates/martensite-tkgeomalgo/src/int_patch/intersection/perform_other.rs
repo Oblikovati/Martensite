@@ -5,6 +5,7 @@ use super::perform::{IntPatchIntersectionOptions, Pair};
 use crate::geom2d_int::GInter;
 use crate::int_patch::{IntPatchPrmPrmIntersection, IntPatchPrmPrmTolerances};
 use crate::int_start::TheTopolTool;
+use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
@@ -41,6 +42,18 @@ fn is_simple_extrusion(s1: &Adaptor3dSurfaceHandle) -> Result<bool, Failure> {
         && (intersector.is_empty()? || (ac.is_closed()? && intersector.nb_points()? == 1)))
 }
 
+fn simple_self_surface(s1: &Adaptor3dSurfaceHandle) -> Result<bool, Failure> {
+    Ok(match s1.get_type()? {
+        SurfaceType::Plane
+        | SurfaceType::Cylinder
+        | SurfaceType::Sphere
+        | SurfaceType::Cone
+        | SurfaceType::Torus => true,
+        SurfaceType::SurfaceOfExtrusion => is_simple_extrusion(s1)?,
+        _ => false,
+    })
+}
+
 impl IntPatchIntersection {
     /// `IntPatch_Intersection(S1, D1, TolArc, TolTang)`: the self-intersection of `s1`.
     ///
@@ -74,6 +87,46 @@ impl IntPatchIntersection {
         tol_arc: f64,
         tol_tang: f64,
     ) -> Result<(), Failure> {
+        self.perform_self_with_progress(s1, d1, tol_arc, tol_tang, &ProgressRange::default())
+    }
+
+    /// Observe cancellable self-search work; `inter.perform_self_with_progress(&s,&domain,a,t,&range)?`.
+    pub fn perform_self_with_progress(
+        &mut self,
+        s1: &Adaptor3dSurfaceHandle,
+        d1: &(dyn TheTopolTool + 'static),
+        tol_arc: f64,
+        tol_tang: f64,
+        progress: &ProgressRange<'_>,
+    ) -> Result<(), Failure> {
+        self.self_search.begin();
+        let result = self.perform_self_observed(s1, d1, tol_arc, tol_tang, progress);
+        self.self_search.finish(&result);
+        if self.self_search.termination == crate::int_patch::SelfSearchTermination::Cancelled {
+            self.done = false;
+        }
+        result
+    }
+
+    fn perform_self_observed(
+        &mut self,
+        s1: &Adaptor3dSurfaceHandle,
+        d1: &(dyn TheTopolTool + 'static),
+        tol_arc: f64,
+        tol_tang: f64,
+        progress: &ProgressRange<'_>,
+    ) -> Result<(), Failure> {
+        self.self_search.check_cancelled(progress)?;
+        self.prepare_self_state(tol_arc, tol_tang);
+        let simple = simple_self_surface(s1)?;
+        if simple {
+            self.self_search.analytic();
+            return Ok(());
+        }
+        self.perform_parametric_self(s1, d1, progress)
+    }
+
+    fn prepare_self_state(&mut self, tol_arc: f64, tol_tang: f64) {
         self.my_tol_arc = tol_arc;
         self.my_tol_tang = tol_tang;
         if self.my_fleche == 0.0 {
@@ -86,27 +139,32 @@ impl IntPatchIntersection {
         self.spnt.clear();
         self.slin.clear();
         (self.empt, self.tgte, self.oppo) = (true, false, false);
-        let typ: SurfaceType = s1.get_type()?;
-        let simple: bool = match typ {
-            SurfaceType::Plane
-            | SurfaceType::Cylinder
-            | SurfaceType::Sphere
-            | SurfaceType::Cone
-            | SurfaceType::Torus => true,
-            SurfaceType::SurfaceOfExtrusion => is_simple_extrusion(s1)?,
-            _ => false,
-        };
-        if simple {
-            return Ok(());
-        }
+    }
+
+    fn perform_parametric_self(
+        &mut self,
+        s1: &Adaptor3dSurfaceHandle,
+        d1: &(dyn TheTopolTool + 'static),
+        progress: &ProgressRange<'_>,
+    ) -> Result<(), Failure> {
         let mut interpp = IntPatchPrmPrmIntersection::new();
         let tolerances = IntPatchPrmPrmTolerances {
-            tol_tangency: tol_tang,
-            epsilon: tol_arc,
+            tol_tangency: self.my_tol_tang,
+            epsilon: self.my_tol_arc,
             deflection: self.my_fleche,
             increment: self.my_uv_max_step,
         };
-        interpp.perform_self(s1, d1, tolerances)?;
+        let result = interpp.perform_self_with_progress(s1, d1, tolerances, progress);
+        self.retain_self_receipt(&interpp);
+        result?;
+        self.retain_self_lines(&interpp)
+    }
+    fn retain_self_receipt(&mut self, interpp: &IntPatchPrmPrmIntersection) {
+        let invocation = self.self_search.invocation;
+        self.self_search = interpp.self_search_receipt().clone();
+        self.self_search.invocation = invocation;
+    }
+    fn retain_self_lines(&mut self, interpp: &IntPatchPrmPrmIntersection) -> Result<(), Failure> {
         if interpp.is_done() {
             self.done = true;
             self.tgte = false;

@@ -108,6 +108,7 @@ impl IntWalkPWalking {
         let ([um1, vm1], [uu1, vv1]) = surface_bounds(caro1)?;
         let ([um2, vm2], [uu2, vv2]) = surface_bounds(caro2)?;
         Ok(Self {
+            search_observation: Default::default(),
             done: true,
             line: Handle::default(),
             close: false,
