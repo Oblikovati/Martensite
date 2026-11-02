@@ -10,28 +10,37 @@ pub use types::{
     BilinearSplineInconclusive, BilinearSplineLayout,
 };
 
+enum SplineAdmission {
+    Supported(BilinearPatchInput, BilinearSplineLayout),
+    Inconclusive(BilinearSplineInconclusive),
+}
 impl GeomBSplineSurface {
     /// Certify an owned support snapshot; `surface.bilinear_self_exclusion()?`.
     /// A later mutation of the surface is not covered by the returned certificate.
     pub fn bilinear_self_exclusion(&self) -> Result<BilinearSplineExclusion, BilinearSplineError> {
+        Ok(match self.bilinear_support_snapshot()? {
+            SplineAdmission::Supported(input, layout) => conclusion(input, layout),
+            SplineAdmission::Inconclusive(reason) => BilinearSplineExclusion::Inconclusive(reason),
+        })
+    }
+    fn bilinear_support_snapshot(&self) -> Result<SplineAdmission, BilinearSplineError> {
         let state = self.state.read();
         let layout = support::layout(&state);
         if layout.evaluation_override {
-            return Ok(BilinearSplineExclusion::Inconclusive(
+            return Ok(SplineAdmission::Inconclusive(
                 BilinearSplineInconclusive::EvaluationOverride(layout),
             ));
         }
         support::validate_stored_values(&state)?;
         if !support::supported(&layout) {
-            return Ok(BilinearSplineExclusion::Inconclusive(
+            return Ok(SplineAdmission::Inconclusive(
                 BilinearSplineInconclusive::UnsupportedLayout(layout),
             ));
         }
-        let input = copied_patch(&state)?;
-        drop(state);
-        Ok(conclusion(input, layout))
+        Ok(SplineAdmission::Supported(copied_patch(&state)?, layout))
     }
 }
+
 fn conclusion(input: BilinearPatchInput, layout: BilinearSplineLayout) -> BilinearSplineExclusion {
     match certify_bilinear_patch(input) {
         BilinearExclusion::Certified(polynomial) => {
