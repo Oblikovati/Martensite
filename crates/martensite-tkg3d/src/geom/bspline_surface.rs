@@ -10,7 +10,8 @@ mod segment;
 mod self_exclusion;
 mod state;
 pub use self_exclusion::{
-    BilinearSplineError, BilinearSplineExclusion, BilinearSplineInconclusive, BilinearSplineLayout,
+    BilinearSplineCertificate, BilinearSplineError, BilinearSplineExclusion,
+    BilinearSplineInconclusive, BilinearSplineLayout,
 };
 mod traits;
 use super::bounded_surface::GeomBoundedSurface;

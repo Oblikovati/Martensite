@@ -2,7 +2,6 @@ use super::*;
 use crate::geom::{GeomSurface, KnotVector};
 use martensite_tkernel::ncollection::{Array1, Array2};
 use martensite_tkmath::gp::Point3;
-use martensite_tkmath::predicates::bilinear_patch::BilinearCertificate;
 fn array<T: Copy + Default>(values: &[T]) -> Array1<'static, T> {
     let mut result = Array1::with_bounds(1, values.len() as i32).unwrap();
     result.as_mut_slice().copy_from_slice(values);
@@ -50,7 +49,7 @@ fn weighted_surface(
     GeomBSplineSurface::with_weights(poles, &weights, u, v, (1, 1), (false, false)).unwrap()
 }
 
-fn certificate(surface: &GeomBSplineSurface) -> BilinearCertificate {
+fn certificate(surface: &GeomBSplineSurface) -> BilinearSplineCertificate {
     match surface.bilinear_self_exclusion().unwrap() {
         BilinearSplineExclusion::Certified(proof) => proof,
         other => panic!("expected clamped bilinear support certificate, got {other:?}"),
@@ -137,6 +136,7 @@ fn invalid_stored_coordinates_are_errors_not_inconclusive_results() {
 #[test]
 fn all_adapter_conclusions_are_send_and_sync() {
     fn owned_traits<T: Send + Sync>() {}
+    owned_traits::<BilinearSplineCertificate>();
     owned_traits::<BilinearSplineExclusion>();
     owned_traits::<BilinearSplineInconclusive>();
     owned_traits::<BilinearSplineLayout>();
@@ -183,4 +183,37 @@ fn stored_input_errors_retain_offending_values_and_expectations() {
     let message = error.to_string();
     assert!(message.contains("weight index 2 = -1"));
     assert!(message.contains("positive finite"));
+}
+#[test]
+fn folded_public_evaluator_override_refuses_a_supported_stored_net() {
+    use crate::geom_eval::RepSurfaceDescFull;
+    use martensite_tkernel::standard::Handle;
+    let surface = surface(None);
+    let old = certificate(&surface);
+    let folded = folded_override();
+    surface
+        .set_eval_representation(Handle::new(RepSurfaceDescFull::new(folded)).cast())
+        .unwrap();
+    let first = surface.value(2.5, -2.).unwrap();
+    assert_eq!(first.distance(&surface.value(3.5, 0.).unwrap()), 0.);
+    assert!(!old.layout().evaluation_override);
+    assert_eq!(old.input().corners()[2], [3., 3., 2.]);
+    assert_override_refused(&surface);
+}
+fn assert_override_refused(surface: &GeomBSplineSurface) {
+    assert!(matches!(
+        surface.bilinear_self_exclusion().unwrap(),
+        BilinearSplineExclusion::Inconclusive(BilinearSplineInconclusive::EvaluationOverride(
+            BilinearSplineLayout {
+                evaluation_override: true,
+                ..
+            }
+        ))
+    ));
+}
+fn folded_override() -> martensite_tkernel::standard::Handle<dyn GeomSurface> {
+    use martensite_tkernel::standard::Handle;
+    let folded = surface(None);
+    folded.set_pole(2, 2, Point3::new(-2., -2., 0.)).unwrap();
+    Handle::new(folded).cast()
 }

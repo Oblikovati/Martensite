@@ -94,8 +94,9 @@ pub use bezier_surface::GeomBezierSurface;
 
 mod bspline_surface;
 pub use bspline_surface::{
-    BilinearSplineError, BilinearSplineExclusion, BilinearSplineInconclusive, BilinearSplineLayout,
-    GeomBSplineSurface, KnotVector, LocalKnots, ModifiedPoles,
+    BilinearSplineCertificate, BilinearSplineError, BilinearSplineExclusion,
+    BilinearSplineInconclusive, BilinearSplineLayout, GeomBSplineSurface, KnotVector, LocalKnots,
+    ModifiedPoles,
 };
 
 mod osculating_surface;

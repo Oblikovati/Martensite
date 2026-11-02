@@ -6,7 +6,8 @@ use martensite_tkmath::predicates::bilinear_patch::{
     BilinearExclusion, BilinearPatchInput, certify_bilinear_patch,
 };
 pub use types::{
-    BilinearSplineError, BilinearSplineExclusion, BilinearSplineInconclusive, BilinearSplineLayout,
+    BilinearSplineCertificate, BilinearSplineError, BilinearSplineExclusion,
+    BilinearSplineInconclusive, BilinearSplineLayout,
 };
 
 impl GeomBSplineSurface {
@@ -14,8 +15,13 @@ impl GeomBSplineSurface {
     /// A later mutation of the surface is not covered by the returned certificate.
     pub fn bilinear_self_exclusion(&self) -> Result<BilinearSplineExclusion, BilinearSplineError> {
         let state = self.state.read();
-        support::validate_stored_values(&state)?;
         let layout = support::layout(&state);
+        if layout.evaluation_override {
+            return Ok(BilinearSplineExclusion::Inconclusive(
+                BilinearSplineInconclusive::EvaluationOverride(layout),
+            ));
+        }
+        support::validate_stored_values(&state)?;
         if !support::supported(&layout) {
             return Ok(BilinearSplineExclusion::Inconclusive(
                 BilinearSplineInconclusive::UnsupportedLayout(layout),
@@ -23,12 +29,14 @@ impl GeomBSplineSurface {
         }
         let input = copied_patch(&state)?;
         drop(state);
-        Ok(conclusion(input))
+        Ok(conclusion(input, layout))
     }
 }
-fn conclusion(input: BilinearPatchInput) -> BilinearSplineExclusion {
+fn conclusion(input: BilinearPatchInput, layout: BilinearSplineLayout) -> BilinearSplineExclusion {
     match certify_bilinear_patch(input) {
-        BilinearExclusion::Certified(proof) => BilinearSplineExclusion::Certified(proof),
+        BilinearExclusion::Certified(polynomial) => {
+            BilinearSplineExclusion::Certified(BilinearSplineCertificate { polynomial, layout })
+        }
         BilinearExclusion::Inconclusive { input, reason } => {
             BilinearSplineExclusion::Inconclusive(BilinearSplineInconclusive::Patch {
                 input,

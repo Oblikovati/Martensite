@@ -13,6 +13,8 @@ pub struct BilinearSplineLayout {
     pub poles: [usize; 2],
     /// Numbers of stored weights in U and V.
     pub weights: [usize; 2],
+    /// Whether an external evaluation representation replaces the stored net.
+    pub evaluation_override: bool,
     /// Periodicity flags in U and V.
     pub periodic: [bool; 2],
     /// Distinct knot counts in U and V.
@@ -25,6 +27,8 @@ pub struct BilinearSplineLayout {
 pub enum BilinearSplineInconclusive {
     /// Only a nonperiodic degree-1, 2x2, clamped single span is supported.
     UnsupportedLayout(BilinearSplineLayout),
+    /// The stored net does not determine the externally supplied evaluator.
+    EvaluationOverride(BilinearSplineLayout),
     /// An owned bilinear input did not establish an injective projection.
     Patch {
         /// The coherently copied numeric support.
@@ -37,9 +41,29 @@ pub enum BilinearSplineInconclusive {
 #[derive(Clone, Debug, PartialEq)]
 pub enum BilinearSplineExclusion {
     /// The owned continuous support is globally injective on its rectangle.
-    Certified(BilinearCertificate),
+    Certified(BilinearSplineCertificate),
     /// No exclusion certificate was established.
     Inconclusive(BilinearSplineInconclusive),
+}
+/// An owned polynomial proof and the representation admission that produced it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct BilinearSplineCertificate {
+    pub(super) polynomial: BilinearCertificate,
+    pub(super) layout: BilinearSplineLayout,
+}
+impl BilinearSplineCertificate {
+    /// Read the exact numeric support; `proof.input().corners()`.
+    pub fn input(&self) -> &BilinearPatchInput {
+        self.polynomial.input()
+    }
+    /// Read admission metadata, including override absence; `proof.layout()`.
+    pub fn layout(&self) -> &BilinearSplineLayout {
+        &self.layout
+    }
+    /// Read the owned mathematical certificate; `proof.polynomial()`.
+    pub fn polynomial(&self) -> &BilinearCertificate {
+        &self.polynomial
+    }
 }
 /// Invalid numeric input or inconsistent storage, separate from inconclusiveness.
 #[derive(Debug)]

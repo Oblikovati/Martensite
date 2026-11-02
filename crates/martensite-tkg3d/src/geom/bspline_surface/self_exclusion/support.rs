@@ -6,6 +6,7 @@ pub(super) fn layout(state: &SurfaceState) -> BilinearSplineLayout {
         degrees: [state.u.deg, state.v.deg],
         poles: [state.poles.nb_rows(), state.poles.nb_columns()],
         weights: [state.weights.nb_rows(), state.weights.nb_columns()],
+        evaluation_override: !state.eval_rep.is_null(),
         periodic: [state.u.periodic, state.v.periodic],
         knots: [state.u.knots.len(), state.v.knots.len()],
         multiplicities: [
@@ -15,7 +16,8 @@ pub(super) fn layout(state: &SurfaceState) -> BilinearSplineLayout {
     }
 }
 pub(super) fn supported(layout: &BilinearSplineLayout) -> bool {
-    layout.degrees == [1, 1]
+    !layout.evaluation_override
+        && layout.degrees == [1, 1]
         && layout.poles == [2, 2]
         && layout.weights == [2, 2]
         && layout.periodic == [false, false]
