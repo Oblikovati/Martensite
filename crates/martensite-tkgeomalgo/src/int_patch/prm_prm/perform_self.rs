@@ -1,6 +1,7 @@
 //! The self-intersection of a surface from the self-interference of its polyhedron:
 //! the walkings start away from the diagonal (the points whose parameters on both
 //! sides differ) and their ends on the diagonal are trimmed.
+mod execution;
 use super::IntPatchPrmPrmIntersection;
 use super::helpers::section_point_to_parameters;
 use super::perform_poly::IntPatchPrmPrmTolerances;
@@ -9,6 +10,7 @@ use super::walk_steps::{
     EndsCheck, WalkInputs, add_end_vertices, duplicated_line, keep_rejected, put_vertices,
     transitions,
 };
+use crate::int_patch::SelfSearchTermination;
 use crate::int_patch::{
     IntPatchInterferencePolyhedron, IntPatchPoint, IntPatchPointLine, IntPatchPolyhedron,
     IntPatchWLType, IntPatchWLine,
@@ -17,9 +19,11 @@ use crate::int_start::TheTopolTool;
 use crate::int_surf::{IntSurfLineOn2S, IntSurfPntOn2S, IntSurfTypeTrans};
 use crate::int_walk::IntWalkPWalking;
 use crate::intf::{SectionLine, SectionPoint};
+use martensite_tkernel::message::ProgressRange;
+use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::adaptor3d::h_surface_tool::Adaptor3dSurfaceHandle;
-use martensite_tkmath::gp::Point2;
+use martensite_tkmath::gp::{Point2, Point3};
 
 /// The walking of the self-intersection; `uv` keeps the parameters of the last section
 /// point read, as the native locals do.
@@ -130,90 +134,16 @@ fn trimmed_range(line: &IntSurfLineOn2S) -> Result<(i32, i32), Failure> {
 }
 
 impl IntPatchPrmPrmIntersection {
-    /// `Perform(Caro1, Domain1, TolTangency, Epsilon, Deflection, Increment)`: the
-    /// self-intersection of the surface, on its polyhedron of `NbSamplesU x NbSamplesV`
-    /// cells of the domain.
-    ///
-    /// ```ignore
-    /// inter.perform_self(&s1, &*d1, tolerances)?;
-    /// ```
-    pub fn perform_self(
-        &mut self,
-        surf1: &Adaptor3dSurfaceHandle,
-        d1: &(dyn TheTopolTool + 'static),
-        tolerances: IntPatchPrmPrmTolerances,
-    ) -> Result<(), Failure> {
-        let poly1 =
-            IntPatchPolyhedron::with_subdivisions(surf1, d1.nb_samples_u()?, d1.nb_samples_v()?)?;
-        self.perform_self_polyhedron((surf1, &poly1, d1), tolerances)
-    }
-
-    /// `Perform(Caro1, Polyhedron1, Domain1, TolTangency, Epsilon, Deflection,
-    /// Increment)`: the self-intersection of the surface from the self-interference of
-    /// its polyhedron.
-    ///
-    /// ```ignore
-    /// inter.perform_self_polyhedron((&s1, &p1, &*d1), tolerances)?;
-    /// ```
-    pub fn perform_self_polyhedron(
-        &mut self,
-        (surf1, poly1, d1): (
-            &Adaptor3dSurfaceHandle,
-            &IntPatchPolyhedron,
-            &(dyn TheTopolTool + 'static),
-        ),
-        tolerances: IntPatchPrmPrmTolerances,
-    ) -> Result<(), Failure> {
-        let interference = IntPatchInterferencePolyhedron::of_self(poly1)?;
-        self.empt = true;
-        self.done = true;
-        self.slin.clear();
-        let t = tolerances;
-        let pw = IntWalkPWalking::new(
-            surf1,
-            surf1,
-            t.tol_tangency,
-            t.epsilon,
-            t.deflection,
-            t.increment,
-        )?;
-        let inputs = WalkInputs {
-            surf1,
-            d1,
-            surf2: surf1,
-            d2: None,
-            tol_tangency: t.tol_tangency,
-            epsilon: t.epsilon,
-            deflection: t.deflection,
-            increment: t.increment,
-        };
-        let mut walk = SelfWalk {
-            inputs,
-            poly: poly1,
-            pw,
-            uv: [0.0; 4],
-        };
-        for ls in 1..=interference.nb_section_lines() {
-            self.walk_self_section(&mut walk, interference.line_value(ls)?)?;
-        }
-        for z in 1..=interference.nb_tangent_zones() {
-            let zone = interference.zone_value(z)?;
-            for pz in 1..=zone.number_of_points() {
-                let uv: [f64; 4] = walk.parameters(zone.get_point(pz)?)?;
-                self.walk_self_start(&mut walk, uv)?;
-            }
-        }
-        Ok(())
-    }
-
     /// The marching from the start points of one section line: the point farthest from
     /// the diagonal, then the first (or middle) one, then the last one.
     fn walk_self_section(
         &mut self,
         walk: &mut SelfWalk<'_>,
         line: &SectionLine,
+        progress: &ProgressRange<'_>,
     ) -> Result<(), Failure> {
         let nbp: i32 = line.number_of_points();
+        self.self_search.starts.scheduled += if nbp > 5 { 3 } else { 1 };
         let mut nbps2: i32 = if nbp > 3 { nbp / 2 } else { 1 };
         let (mut n, mut first, mut second) = (0, 0, 0);
         loop {
@@ -235,7 +165,7 @@ impl IntPatchPrmPrmIntersection {
                 };
             }
             let uv: [f64; 4] = walk.parameters(line.get_point(nbps2)?)?;
-            self.walk_self_start(walk, uv)?;
+            self.observed_self_start(walk, uv, progress)?;
             if !(nbp > 5 && n < 3) {
                 return Ok(());
             }
@@ -244,33 +174,67 @@ impl IntPatchPrmPrmIntersection {
 
     /// The walking from the start parameters `uv`, when its first point is off the
     /// diagonal.
-    fn walk_self_start(&mut self, walk: &mut SelfWalk<'_>, uv: [f64; 4]) -> Result<(), Failure> {
-        let start = start_params(uv)?;
-        let Some(start_pon2s) = walk.pw.perform_first_point(&start)? else {
-            return Ok(());
+    fn walk_self_start(
+        &mut self,
+        walk: &mut SelfWalk<'_>,
+        uv: [f64; 4],
+        progress: &ProgressRange<'_>,
+    ) -> Result<(), Failure> {
+        let (start, point) = self.refine_self_seed(walk, uv)?;
+        let Some(point) = point else {
+            return self.prune_self_start();
         };
-        let (pu1, pv1, pu2, pv2) = start_pon2s.parameters();
-        if !((pu1 - pu2).abs() > 1e-7 || (pv1 - pv2).abs() > 1e-7) {
-            return Ok(());
+        if !self.eligible_self_seed(walk, &point)? {
+            return self.prune_self_start();
         }
-        let nb_lig_calculee: i32 = self.slin.len() as i32;
-        if !is_new_self_start(&walk.inputs, &start_pon2s, &self.slin)? {
-            return Ok(());
+        let previous_lines = self.slin.len() as i32;
+        self.observed_self_march(walk, &start, progress)?;
+        self.finish_self_march(walk, previous_lines)
+    }
+    fn refine_self_seed(
+        &mut self,
+        walk: &mut SelfWalk<'_>,
+        uv: [f64; 4],
+    ) -> Result<(Array1<'static, f64>, Option<IntSurfPntOn2S>), Failure> {
+        let start = start_params(uv)?;
+        self.self_search.refinements.entered();
+        let seed = walk.pw.perform_first_point(&start);
+        self.record_refinement(&seed, &walk.pw);
+        Ok((start, seed?))
+    }
+    fn eligible_self_seed(
+        &self,
+        walk: &SelfWalk<'_>,
+        point: &IntSurfPntOn2S,
+    ) -> Result<bool, Failure> {
+        let (u1, v1, u2, v2) = point.parameters();
+        if !((u1 - u2).abs() > 1e-7 || (v1 - v2).abs() > 1e-7) {
+            return Ok(false);
         }
-        walk.pw.perform(&start)?;
-        if !walk.pw.is_done() || walk.pw.nb_points()? <= 2 {
-            return Ok(());
+        is_new_self_start(&walk.inputs, point, &self.slin)
+    }
+    fn prune_self_start(&mut self) -> Result<(), Failure> {
+        self.self_search.starts.pruned += 1;
+        Ok(())
+    }
+    fn finish_self_march(
+        &mut self,
+        walk: &SelfWalk<'_>,
+        previous_lines: i32,
+    ) -> Result<(), Failure> {
+        let pw = &walk.pw;
+        if !pw.is_done() || pw.nb_points()? <= 2 {
+            return self.prune_self_start();
         }
-        let pw: &IntWalkPWalking = &walk.pw;
-        let ends = (pw.value(1)?.value(), pw.value(pw.nb_points()?)?.value());
+        let ends = self_march_endpoints(pw)?;
         let duplicated = duplicated_line(
             &walk.inputs,
             pw,
             &self.slin,
-            (nb_lig_calculee, false, EndsCheck::Either),
+            (previous_lines, false, EndsCheck::Either),
         )?;
         if keep_rejected(pw, duplicated, &mut self.slin)? {
-            return Ok(());
+            return self.prune_self_start();
         }
         self.accept_self_walking(&walk.inputs, pw, ends)
     }
@@ -288,6 +252,7 @@ impl IntPatchPrmPrmIntersection {
             transitions(inputs, pw, false)?;
         let (imin, imax) = trimmed_range(pw.line()?)?;
         if imin >= imax {
+            self.self_search.starts.pruned += 1;
             return Ok(());
         }
         let pw_line: Handle<IntSurfLineOn2S> = Handle::new(IntSurfLineOn2S::new(None));
@@ -301,6 +266,7 @@ impl IntPatchPrmPrmIntersection {
         close_self_line(&wline, inputs.tol_tangency, tol_tang)?;
         // The method PutVertexOnLine can reduce the number of points in <wline>.
         if !put_vertices(inputs, &wline, tol_tang)? {
+            self.self_search.starts.pruned += 1;
             return Ok(());
         }
         add_end_vertices(pw, &wline, ends, tol_tang)?;
@@ -349,4 +315,8 @@ fn close_self_line(wline: &IntPatchWLine, tol_tangency: f64, tol_tang: f64) -> R
     vtx.set_parameters(u2t, v2t, u1t, v1t);
     vtx.set_parameter(f64::from(nb));
     wline.set_point(nb, &vtx)
+}
+
+fn self_march_endpoints(pw: &IntWalkPWalking) -> Result<(Point3, Point3), Failure> {
+    Ok((pw.value(1)?.value(), pw.value(pw.nb_points()?)?.value()))
 }

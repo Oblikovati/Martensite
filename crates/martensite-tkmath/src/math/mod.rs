@@ -53,7 +53,9 @@ pub use function_set::{FunctionSet, FunctionSetWithDerivatives};
 mod newton_function_set_root;
 pub use newton_function_set_root::NewtonFunctionSetRoot;
 mod function_set_root;
-pub use function_set_root::FunctionSetRoot;
+pub use function_set_root::{
+    FunctionSetRoot, RootSearchInnerWork, RootSearchObservation, RootSearchTermination,
+};
 mod function_root;
 pub use function_root::FunctionRoot;
 mod multiple_var_function;

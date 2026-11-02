@@ -41,3 +41,7 @@ path = "tests/dataset_cases/main.rs"
 [[test]]
 name = "intpatch-accessor-contract"
 path = "tests/intpatch_accessor_contract.rs"
+
+[[test]]
+name = "surface_self_search_coverage"
+path = "tests/surface_self_search_coverage.rs"

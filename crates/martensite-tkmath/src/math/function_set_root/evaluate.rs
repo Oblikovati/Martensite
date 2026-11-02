@@ -2,10 +2,12 @@ use super::{FunctionSetRoot, FunctionSetWithDerivatives};
 impl FunctionSetRoot {
     pub(super) fn evaluate(&mut self, function: &mut impl FunctionSetWithDerivatives) -> bool {
         if !function.values(&self.sol, &mut self.residual, &mut self.jacobian) {
+            self.observation.termination = super::RootSearchTermination::EvaluationDeclined;
             return false;
         }
         for index in 1..=self.residual.length() {
             if self.residual[index] <= -1e100 || self.residual[index] >= 1e100 {
+                self.observation.termination = super::RootSearchTermination::EvaluationDeclined;
                 return false;
             }
         }
@@ -15,6 +17,7 @@ impl FunctionSetRoot {
             .unwrap();
         for index in 1..=self.gradient.length() {
             if self.gradient[index].abs() >= 1e100 {
+                self.observation.termination = super::RootSearchTermination::EvaluationDeclined;
                 return false;
             }
         }

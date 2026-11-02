@@ -13,6 +13,7 @@ impl IntWalkPWalking {
         st.prev_status = st.status;
         st.level_of_iter_without_append += 1;
         if st.level_of_iter_without_append > 20 {
+            self.search_observation.no_append_limit += 1;
             st.arrive = true;
             if st.deja_reparti {
                 return Ok(Flow::Stop);

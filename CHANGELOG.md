@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added owned surface self-search work receipts, local numerical termination observations and cancellable search entry points, preserving unknown inner termination and sampled discovery scope (#213).
+
 ### Fixed
 
 - Fixed skipped tag publication after successful release checks when the PR-only test job was intentionally skipped (#350).

@@ -40,6 +40,7 @@ mod prm_prm;
 mod rline;
 mod rline_compute;
 mod rst_int;
+mod self_search_coverage;
 mod special_points;
 mod t3bits;
 mod vertices;
@@ -77,6 +78,10 @@ pub use polyline::IntPatchPolyLine;
 pub use prm_prm::{IntPatchPrmPrmIntersection, IntPatchPrmPrmTolerances};
 pub use rline::IntPatchRLine;
 pub use rst_int::IntPatchRstInt;
+pub use self_search_coverage::{
+    SelfSearchDiscovery, SelfSearchLimitCounts, SelfSearchTermination, SelfSearchWorkCounts,
+    SurfaceSelfSearchReceipt,
+};
 pub use special_points::IntPatchSpecialPoints;
 pub use t3bits::IntPatchPrmPrmIntersectionT3Bits;
 pub use wline::{IntPatchWLType, IntPatchWLine};

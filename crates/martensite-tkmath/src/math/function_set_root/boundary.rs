@@ -18,6 +18,9 @@ impl FunctionSetRoot {
                 return false;
             }
             self.run.stop = self.run.slope >= 0.0 || self.run.descent >= 10;
+            if self.run.descent >= 10 {
+                self.observation.inner.boundary_descent_limits += 1;
+            }
         }
         let repair: bool = (self.run.objective / self.run.previous_minimum > 0.005
             && self.run.objective >= self.run.old_objective)

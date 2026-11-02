@@ -158,3 +158,5 @@ include!("math_function_set_root/suites_2.rs");
 include!("math_function_set_root/suites_3.rs");
 include!("math_function_set_root/suites_4.rs");
 include!("math_function_set_root/suites_5.rs");
+#[path = "math_function_set_root/observations.rs"]
+mod observations;
