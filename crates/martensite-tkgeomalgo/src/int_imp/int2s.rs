@@ -89,7 +89,8 @@ impl<T: ThePSurfaceTool> IntImpInt2S<T> {
         func.take_failure()?;
         solved?;
         let mut best_choix = choix_iso;
-        if rsnld.is_done() && func.root().abs() > self.tol {
+        let within_distance = func.root().abs() <= self.tol;
+        if rsnld.is_done() && !within_distance {
             self.search_counts.residual_declined += 1;
         }
         self.empty = true;

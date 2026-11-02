@@ -299,8 +299,8 @@ impl FunctionSetRoot {
         }
         self.done = done;
         self.record_finish(done);
-        if refresh {
-            function.value(&self.sol, &mut self.residual);
+        if refresh && !function.value(&self.sol, &mut self.residual) {
+            self.observation.termination = RootSearchTermination::EvaluationDeclined;
         }
         self.state = function.state_number();
     }

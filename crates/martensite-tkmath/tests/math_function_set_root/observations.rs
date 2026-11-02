@@ -138,3 +138,42 @@ fn stationary_nonroot_keeps_legacy_result_and_explicit_decline() {
     assert_eq!(solver.search_observation().iterations_entered, 0);
     assert_eq!(solver.function_set_errors().unwrap().length(), 2);
 }
+struct DecliningRefresh;
+impl FunctionSet for DecliningRefresh {
+    fn variables(&self) -> i32 {
+        2
+    }
+    fn equations(&self) -> i32 {
+        2
+    }
+    fn value(&mut self, _: &Vector<'_>, _: &mut Vector<'_>) -> bool {
+        false
+    }
+}
+impl FunctionSetWithDerivatives for DecliningRefresh {
+    fn derivatives(&mut self, input: &Vector<'_>, output: &mut Matrix<'_>) -> bool {
+        LinearSystem2D.derivatives(input, output)
+    }
+    fn values(
+        &mut self,
+        input: &Vector<'_>,
+        output: &mut Vector<'_>,
+        jacobian: &mut Matrix<'_>,
+    ) -> bool {
+        LinearSystem2D.values(input, output, jacobian)
+    }
+}
+#[test]
+fn refresh_callback_decline_is_retained_without_changing_result() {
+    let mut solver = linear_solver(100);
+    let start = Vector::filled(1, 2, 0.).unwrap();
+    solver
+        .perform(&mut DecliningRefresh, &start, false)
+        .unwrap();
+    assert!(solver.is_done());
+    assert_eq!(
+        solver.search_observation().termination,
+        Exit::EvaluationDeclined
+    );
+    assert!(solver.search_observation().iterations_entered > 0);
+}
