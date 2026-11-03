@@ -67,15 +67,21 @@ fn same_transform(first: Transform3, second: Transform3) -> CheckResult<bool> {
         return Ok(false);
     }
     for row in 1..=3 {
-        for column in 1..=4 {
-            if first.value(row, column).map_err(native)?.to_bits()
-                != second.value(row, column).map_err(native)?.to_bits()
+        for column in 1..=3 {
+            if first.matrix().value(row, column).map_err(native)?.to_bits()
+                != second
+                    .matrix()
+                    .value(row, column)
+                    .map_err(native)?
+                    .to_bits()
             {
                 return Ok(false);
             }
         }
     }
-    Ok(true)
+    let a = first.translation_part();
+    let b = second.translation_part();
+    Ok([a.x(), a.y(), a.z()].map(f64::to_bits) == [b.x(), b.y(), b.z()].map(f64::to_bits))
 }
 pub(super) fn embedding(location: &Location) -> CheckResult<MetricEmbedding<3>> {
     let transform = location.transformation();
@@ -195,4 +201,37 @@ fn require_affine_limits(transform: Transform3) -> CheckResult<()> {
         ));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use martensite_tkmath::gp::{Axis1, Point3};
+    fn power(exponent: i32) -> f64 {
+        f64::from_bits(((exponent + 1023) as u64) << 52)
+    }
+    fn tiny_rotation(exponent: i32) -> Transform3 {
+        let rotation = Transform3::rotation(Axis1::default(), power(exponent)).unwrap();
+        rotation.multiplied(Transform3::scale(Point3::default(), power(-1021)).unwrap())
+    }
+    #[test]
+    fn raw_cache_matrix_distinguishes_scaled_value_underflow_collisions() {
+        let first = tiny_rotation(-600);
+        let second = tiny_rotation(-599);
+        assert_eq!(first.form(), second.form());
+        for row in 1..=3 {
+            for column in 1..=4 {
+                assert_eq!(
+                    first.value(row, column).unwrap().to_bits(),
+                    second.value(row, column).unwrap().to_bits()
+                );
+            }
+        }
+        let point = Point3::new(0., power(1020), 0.);
+        assert_ne!(
+            first.apply(point).x().to_bits(),
+            second.apply(point).x().to_bits()
+        );
+        assert!(!same_transform(first, second).unwrap());
+    }
 }
