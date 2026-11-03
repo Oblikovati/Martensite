@@ -49,6 +49,11 @@ fn finite_spline(input: &StoredSplineInput) -> Result<(), Incomplete> {
 }
 
 pub(super) fn validate_planar_spline(input: &StoredPlanarSplineInput) -> Result<(), Incomplete> {
+    if input.evaluation_override() {
+        return Err(unsupported_planar(
+            "active planar spline evaluation override",
+        ));
+    }
     for pole in input.poles() {
         for value in pole {
             finite(*value, "planar spline pole")?;
@@ -64,6 +69,15 @@ pub(super) fn validate_planar_spline(input: &StoredPlanarSplineInput) -> Result<
         finite(*value, "planar spline weight or knot")?;
     }
     Ok(())
+}
+
+fn unsupported_planar(actual: &str) -> Incomplete {
+    // The descriptor can reference an independently mutable evaluator graph.
+    Incomplete::Unsupported {
+        owner: 0,
+        actual: actual.into(),
+        expected: "stored planar B-spline without an external evaluator override",
+    }
 }
 
 pub(super) fn plane_input(

@@ -195,4 +195,45 @@ mod tests {
         assert_eq!(captured.poles()[0], [1., 2.]);
         assert_eq!(curve.pole(1).unwrap(), Point2::new(9., 8.));
     }
+
+    #[test]
+    fn stored_override_flag_tracks_actual_descriptor_binding() {
+        use crate::geom2d::{Geom2dCurve, Geom2dLine};
+        use crate::geom2d_eval::RepCurveDescFull;
+        use martensite_tkmath::gp::Axis2d;
+
+        let curve = curve();
+        let replacement: martensite_tkernel::standard::Handle<dyn Geom2dCurve> =
+            martensite_tkernel::standard::Handle::new(Geom2dLine::new(Axis2d::default())).cast();
+        let descriptor = RepCurveDescFull::new(replacement);
+        curve
+            .set_eval_representation(martensite_tkernel::standard::Handle::new(descriptor).cast())
+            .unwrap();
+        assert!(
+            curve
+                .try_input_lease()
+                .unwrap()
+                .stored_input()
+                .evaluation_override()
+        );
+    }
+
+    #[test]
+    fn periodic_curve_retains_source_periodicity_and_domain() {
+        let pole_values = [
+            Point2::new(0., 0.),
+            Point2::new(1., 2.),
+            Point2::new(3., 0.),
+        ];
+        let poles = Array1::from_shared(&pole_values, 1);
+        let knots = Array1::from_shared(&[0., 1., 2., 3.], 1);
+        let multiplicities = Array1::from_shared(&[1, 1, 1, 1], 1);
+        let curve = Geom2dBSplineCurve::new(&poles, &knots, &multiplicities, 2, true).unwrap();
+        let input = curve.try_input_lease().unwrap().stored_input();
+        assert!(input.periodic());
+        assert_eq!(input.degree(), 2);
+        assert_eq!(input.knots(), &[0., 1., 2., 3.]);
+        assert_eq!(input.multiplicities(), &[1, 1, 1, 1]);
+        assert!(input.domain()[0] < input.domain()[1]);
+    }
 }

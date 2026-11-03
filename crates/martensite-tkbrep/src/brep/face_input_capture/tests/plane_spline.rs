@@ -3,7 +3,7 @@ use super::*;
 use crate::brep::{BRepCurveOnSurface, BRepCurveRepresentation, BRepTEdge, BRepTFace};
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dCurve, Geom2dLine};
 use martensite_tkg3d::geom::{GeomPlane, GeomSurface};
-use martensite_tkmath::gp::{Axis2d, Axis3, Point2, Point3};
+use martensite_tkmath::gp::{Axis2d, Axis3, Direction3, Plane3, Point2, Point3};
 
 fn plane_face() -> (Face, Handle<BRepTFace>, Handle<GeomPlane>) {
     let plane = Handle::new(GeomPlane::new(Axis3::default()));
@@ -26,6 +26,16 @@ fn planar_spline() -> Handle<Geom2dBSplineCurve> {
     Handle::new(
         Geom2dBSplineCurve::with_weights(&poles, &weights, &knots, &mults, 2, false).unwrap(),
     )
+}
+
+fn overridden_planar_spline() -> Handle<Geom2dBSplineCurve> {
+    let spline = planar_spline();
+    let replacement = Handle::new(Geom2dLine::new(Axis2d::default())).cast();
+    let descriptor = martensite_tkg2d::geom2d_eval::RepCurveDescFull::new(replacement);
+    spline
+        .set_eval_representation(Handle::new(descriptor).cast())
+        .unwrap();
+    spline
 }
 
 fn append_curve(
@@ -156,10 +166,41 @@ fn captured_plane_and_spline_are_detached_and_thread_safe() {
         _ => None,
     });
     spline.set_pole(1, Point2::new(9., 8.)).unwrap();
+    plane.set_pln(Plane3::new(Point3::new(4., 5., 6.), Direction3::Z).unwrap());
     assert_eq!(captured_pole, Some([0., 0.]));
     assert_eq!(spline.pole(1).unwrap(), Point2::new(9., 8.));
     assert!(snapshot
         .cells()
         .iter()
         .any(|(_, cell)| matches!(cell, CapturedFaceCell::Plane(axis) if axis.location() == Point3::default())));
+}
+
+#[test]
+fn active_planar_evaluation_override_is_explicitly_incomplete() {
+    let (face, _, plane) = plane_face();
+    let spline = overridden_planar_spline();
+    let edge = Handle::new(BRepTEdge::new());
+    append_curve(&edge, spline.cast(), &plane);
+    super::representations::append_owner(&face, edge.cast());
+    assert!(matches!(
+        capture_closed_extrusion_face(&face, FaceCaptureLimits::bounded(), || false),
+        Err(FaceCaptureIncomplete::Unsupported {
+            actual,
+            expected: "stored planar B-spline without an external evaluator override",
+            ..
+        }) if actual == "active planar spline evaluation override"
+    ));
+}
+
+#[test]
+fn nonfinite_plane_origin_is_reported_without_geometry_evaluation() {
+    let (face, _, plane) = plane_face();
+    plane.set_pln(Plane3::new(Point3::new(f64::NAN, 0., 0.), Direction3::Z).unwrap());
+    assert!(matches!(
+        capture_closed_extrusion_face(&face, FaceCaptureLimits::bounded(), || false),
+        Err(FaceCaptureIncomplete::NonFinite {
+            field: "plane frame",
+            ..
+        })
+    ));
 }

@@ -19,7 +19,8 @@ pub fn capture_face_input(
     result
 }
 
-/// Compatibility entry point for callers that capture extrusion-backed faces.
+/// Compatibility entry point for extrusion-backed callers;
+/// `capture_closed_extrusion_face(&face, limits, || false)`.
 pub fn capture_closed_extrusion_face(
     face: &Face,
     limits: FaceCaptureLimits,
