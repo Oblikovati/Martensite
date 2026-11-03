@@ -8,7 +8,7 @@ pub struct FaceCaptureLimits {
     pub owners: usize,
     /// Maximum distinct mutable cells.
     pub cells: usize,
-    /// Maximum total copied scalar/array and location-chain entries.
+    /// Maximum copied records, collection elements and location-chain entries.
     pub entries: usize,
 }
 impl FaceCaptureLimits {
@@ -27,28 +27,45 @@ impl FaceCaptureLimits {
 pub enum FaceCaptureIncomplete {
     /// The actual mutable cell could not be leased.
     Read {
+        /// Invocation-local owner label; it is not a process address.
         owner: usize,
+        /// Required mutable cell category.
         cell: &'static str,
+        /// Nonblocking lease refusal.
         cause: SharedReadFailure,
     },
     /// A discovered reference changed before the simultaneous read view.
-    Changed { owner: usize },
+    Changed {
+        /// Invocation-local owner label; it is not a process address.
+        owner: usize,
+    },
     /// The actual representation is outside the finite admitted set.
     Unsupported {
+        /// Invocation-local owner label; it is not a process address.
         owner: usize,
+        /// Observed value that caused this refusal.
         actual: String,
+        /// Required representation or value shape.
         expected: &'static str,
     },
     /// The declared finite capture bound was exhausted.
     Limit {
+        /// Observed value that caused this refusal.
         actual: usize,
+        /// Declared finite upper bound.
         maximum: usize,
+        /// Kind of exhausted capture work.
         dimension: &'static str,
     },
     /// Cancellation was requested outside every live lease.
     Cancelled,
     /// An admitted numeric field was nonfinite.
-    NonFinite { owner: usize, field: &'static str },
+    NonFinite {
+        /// Invocation-local owner label; it is not a process address.
+        owner: usize,
+        /// Nonfinite stored numeric field.
+        field: &'static str,
+    },
 }
 
 /// One captured immutable datum chain; `location.steps()` preserves its exact powers.
@@ -77,36 +94,59 @@ pub struct CapturedOccurrence {
 pub enum CapturedFaceCell {
     /// Topology children retain occurrence order and shared entity identities.
     Topology {
+        /// Stored topology type and flag word.
         state: u16,
+        /// Child occurrences in their actual stored order.
         children: Vec<CapturedOccurrence>,
     },
     /// Located face support and its validation fields; meshes are outside this input contract.
     Face {
+        /// Invocation-local label of the actual surface owner.
         surface: usize,
+        /// Owned actual location chain.
         location: CapturedLocation,
+        /// Stored modelling tolerance.
         tolerance: f64,
+        /// Stored natural-restriction flag.
         natural_restriction: bool,
     },
     /// Edge validation flags and all actual geometric representations in stored order.
     Edge {
+        /// Stored modelling tolerance.
         tolerance: f64,
+        /// Stored edge validation flags.
         flags: i32,
+        /// Actual representation-owner labels in stored order.
         representations: Vec<usize>,
     },
     /// Vertex geometry; nonempty auxiliary point representations are unsupported.
-    Vertex { point: [f64; 3], tolerance: f64 },
+    Vertex {
+        /// Stored Cartesian point.
+        point: [f64; 3],
+        /// Stored modelling tolerance.
+        tolerance: f64,
+    },
     /// The actual spatial geometry binding.
-    Spatial { curve: usize },
+    Spatial {
+        /// Invocation-local label of the actual curve owner.
+        curve: usize,
+    },
     /// First pcurve binding and cached endpoint values.
     Parametric {
+        /// Invocation-local label of the actual curve owner.
         curve: usize,
+        /// Invocation-local label of the actual surface owner.
         surface: usize,
+        /// Stored parameter-space endpoint values.
         endpoints: [[f64; 2]; 2],
     },
     /// Second seam pcurve and actual continuity metadata.
     Seam {
+        /// Invocation-local label of the actual curve owner.
         curve: usize,
+        /// Stored continuity across the seam.
         continuity: martensite_tkmath::geom_abs::Shape,
+        /// Stored parameter-space endpoint values.
         endpoints: [[f64; 2]; 2],
     },
     /// Stored representation range, copied without evaluation.
@@ -120,7 +160,12 @@ pub enum CapturedFaceCell {
     /// Stored spline fields, without numerical certification.
     Spline(martensite_tkg3d::geom::StoredSplineInput),
     /// Actual extrusion-to-basis binding and direction.
-    Extrusion { basis: usize, direction: [f64; 3] },
+    Extrusion {
+        /// Invocation-local label of the actual basis owner.
+        basis: usize,
+        /// Stored extrusion direction components.
+        direction: [f64; 3],
+    },
 }
 /// A simultaneous owned input view; `snapshot.cells()` requires no live geometry or locks.
 #[derive(Clone, Debug)]

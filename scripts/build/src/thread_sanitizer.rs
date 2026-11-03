@@ -27,7 +27,12 @@ fn run_ownership_controls(context: &BuildContext<'_>) -> BuildResult<()> {
         .step("ThreadSanitizer cache ownership controls", || {
             context.runner.run(&controls(context.root()))
         })?;
-    run_service_controls(context)
+    run_service_controls(context)?;
+    context
+        .reporter
+        .step("ThreadSanitizer coherent face inputs", || {
+            context.runner.run(&face_input_controls(context.root()))
+        })
 }
 
 fn run_service_controls(context: &BuildContext<'_>) -> BuildResult<()> {
@@ -41,6 +46,20 @@ fn run_service_controls(context: &BuildContext<'_>) -> BuildResult<()> {
         .step("ThreadSanitizer stable group controls", || {
             context.runner.run(&group_controls(context.root()))
         })
+}
+
+fn face_input_controls(root: &Path) -> CommandSpec {
+    // Coherent input publication has its own real writer and alias controls (#213).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkbrep",
+        "--lib",
+        "brep::face_input_capture",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ])
 }
 
 fn capture_controls(root: &Path) -> CommandSpec {

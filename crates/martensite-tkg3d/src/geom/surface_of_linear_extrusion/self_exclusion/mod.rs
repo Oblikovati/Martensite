@@ -15,7 +15,9 @@ pub use types::{
 /// Match `ClosedSplineExtrusionInput::Captured(input, layout)` before exact execution.
 #[derive(Clone, Debug)]
 pub enum ClosedSplineExtrusionInput {
+    /// Owned numeric fields and the admitted stored evaluator layout.
     Captured(ClosedQuadraticExtrusionInput, ClosedSplineExtrusionLayout),
+    /// Stored representation for which no admitted support input was captured.
     Inconclusive(ClosedSplineExtrusionInconclusive),
 }
 pub(in crate::geom) type BasisAdmission = ClosedSplineExtrusionInput;
