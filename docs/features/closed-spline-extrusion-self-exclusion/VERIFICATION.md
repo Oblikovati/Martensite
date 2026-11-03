@@ -11,7 +11,7 @@ Each claim has one minimum evidence path. Existing canonical checks remain manda
 | Seam exclusions are exact | Distinguish exact closing endpoints from a one-bit-open endpoint; endpoint-to-interior contacts stay present. No parameter-box or coordinate-distance shortcut. |
 | Source binding survives mutation | Mutate poles, weights, knots, direction and evaluation override after capture; old report remains identical, new capture differs or refuses. |
 | No projected-map substitution | Nonuniform binary64 knots produce non-binary64 rational span coefficients; compare retained exact coefficients and reject a rounded-pole counterfeit. |
-| Limits mean limits | Global split allowance consumed across at least two obligations; cancellation before/during extraction and numerical work; failed and unstarted work remain visible. |
+| Limits mean limits | Global exact proof-step allowance consumed across at least two obligations; cancellation before/during extraction and numerical work; failed and unstarted work remain visible. |
 | Predicate scope is honest | Nonconstant weights, unsupported degree/periodicity/trimmed intervals and overrides yield explicit incomplete results; invalid/nonfinite inputs yield typed errors. |
 | Deterministic publication | Compare owned reports byte for byte across two processes and repeated invocations; use a total span/obligation order. Compile-time Send/Sync assertions. |
 | Existing behavior is preserved | Before any shared-solver extraction, run its owned Bézier and sketch-incidence fixtures, then run them unchanged after the structural commit. |

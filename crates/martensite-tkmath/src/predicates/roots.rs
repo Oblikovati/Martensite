@@ -177,3 +177,6 @@ fn checked_interval(
         DyadicBound::from_f64(max_width).map_err(|_| RootIsolationError::Width(max_width))?;
     Ok(([convert(interval[0])?, convert(interval[1])?], width))
 }
+
+/// Exact closed quadratic spline extrusion support self-exclusion.
+pub mod closed_extrusion;

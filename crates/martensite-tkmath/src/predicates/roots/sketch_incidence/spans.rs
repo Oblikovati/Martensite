@@ -222,3 +222,5 @@ fn ramp(start: &ExactRatio, end: &ExactRatio, falling: bool) -> RationalPolynomi
     }
     RationalPolynomial::linear(start.multiply(&slope).negated(), slope)
 }
+
+pub(in crate::predicates::roots) mod closed_bridge;

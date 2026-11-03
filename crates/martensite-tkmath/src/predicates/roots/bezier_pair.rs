@@ -117,3 +117,5 @@ mod carrier_spans;
 mod public_carrier;
 pub use carrier::BezierPairCarrierKind;
 pub use public_carrier::{BezierPairCarrierParameter, BezierPairCommonCarrier};
+
+pub(super) mod hull_separation;

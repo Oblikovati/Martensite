@@ -36,21 +36,23 @@ Allowed parameter identifications are only:
 
 An outward parameter box containing an endpoint does not establish endpoint equality. Endpoint exclusions need exact equality in the original ideal, using the existing rational parameter/root-sign machinery. Contact order, overlap, repeated spans, backtracking, exceptional fibres and constant pieces must not disappear through adjacency exclusions.
 
-## Existing solver seam
+## Implemented exact pair route
 
-Reuse the exact equations, projection, algebraic root, membership, common-carrier and work-accounting code under `predicates::roots::bezier_pair`. Its public input currently owns binary64 Bernstein controls. Converting exact spline spans into rounded Bernstein controls would certify a different map and is prohibited.
+The span bridge reuses the existing exact Cox–de Boor and Bernstein conversion. It first obtains the original coordinate polynomials, then forms `Q` with exact rational linear combinations. No converted or projected pole is rounded.
 
-Introduce a crate-private source-bound exact-span path to the existing homogeneous equation pipeline. It must retain the original spline capture plus exact derivation, not accept caller-supplied resultants or arbitrary equations as proof. Existing public Bézier policies, reports, coefficient normalization and world-bound behavior stay unchanged. If a structural extraction is necessary, land it as a separate behavior-preserving commit with existing owned regression fixtures unchanged.
+For one quadratic span, `C(t)-C(s)=(t-s)(A(t+s)+B)`. Nonzero `det(A,B)` excludes every off-diagonal equality. In the collinear case a coordinate derivative with one sign over the entire interval proves strict monotonicity. Collapsed and backtracking projected spans prevent certification.
 
-The new operation publishes an absence certificate only after every obligation finishes and all remaining contacts are exactly one of the allowed parameter identifications. Unresolved common-carrier cases and exceptional fibres remain incomplete. Known projected contacts can stop certification with `NotExcluded`; a complete contact enumeration is claimed only if all obligations actually finish.
+For distinct spans, exact Bernstein hulls contain their complete images. A strict separating linear functional proves disjointness. At an allowed common endpoint `P`, two independent weak separating normals suffice: any point in both hulls must lie on both lines through `P`, whose sole intersection is `P`. Both hulls must contain that actual endpoint control. Individual-span injectivity then proves that the endpoint has only the declared preimage in each span.
+
+These are sufficient predicates, not a general contact solver. A pair not resolved by them remains incomplete, including overlapping hulls whose actual curves might be disjoint. The existing Bézier equation, root, membership and common-carrier behavior is unchanged. A future algebraic route must consume exact spline-span coefficients, preserve source binding and account for all of its numerical work; rounded Bernstein captures are not an acceptable bridge.
 
 ## Whole-operation work policy
 
-One invocation owns the work policy. Requested span and pair caps, polynomial degree, coefficient-height limits and subdivision limits are explicit. Admission reports effective limits without silently increasing them.
+One invocation owns its requested span, obligation, exact coefficient-height and proof-step caps. A proof step is a started source-span preparation or exact separating-direction attempt, including stages that later fail. The report separately counts entered and finished obligations. The allowance is never reset per pair.
 
-The subdivision allowance is global across all obligations and all root/sign/refinement stages. Existing pair receipts expose requested and completed split events, including partial failures. Either share their operation-local budget or pass the exact remaining allowance and charge the actual returned completion count before the next obligation. Never reset the original allowance for each pair. Zero remaining work may still permit a genuine zero-split exclusion; it cannot permit an unobserved search.
+No root isolation or subdivision runs in this version. Its reported root-subdivision count is exactly zero; it does not claim that unobserved algebraic searches completed. Cancellation is checked during preparation, domain verification, every obligation and every separating-direction attempt. Unstarted obligations stay unstarted, and required unproved work prevents publication.
 
-Poll cancellation during capture, span extraction, pair scheduling and existing numerical calls. Preserve failed/cancelled/exhausted work and the actual completed obligations. Unstarted work remains unstarted. No successful certificate may contain unaccounted required work.
+Every retained polynomial and Bernstein coefficient is checked against the requested exact numerator/denominator height bound before pair traversal. Limits are explicit and never widened. Typed refusals retain the actual stage and partial work.
 
 ## Owned outcomes
 
@@ -75,7 +77,7 @@ The result certifies the recorded represented support, not a mutable entity hand
 
 The support certificate can exclude self-contacts for any proven subset of its domain. A face consumer must separately prove that every used pcurve parameter stays in that domain and that its actual oriented edge uses and closing seam implement only the declared endpoint identification. Face location must be included in the operation binding; an invertible rigid location preserves injectivity, but that fact is not entity identity.
 
-The current support-only observations do not provide trim-loop or seam-topology proof. Do not consume the new certificate as a valid face until these obligations are accounted for. Do not bypass them based on analytic ancestry, a font label, control-point proximity or successful sampled intersection.
+A support-only numeric snapshot does not provide trim-loop or seam-topology proof. Do not consume the new certificate as a valid face until these obligations are accounted for. Do not bypass them based on analytic ancestry, a font label, control-point proximity or successful sampled intersection.
 
 ## Deliberate limits
 

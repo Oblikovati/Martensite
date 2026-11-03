@@ -6,4 +6,4 @@ The first supported input is a finite, nonperiodic, clamped degree-2 B-spline wi
 
 The input snapshot owns every pole, weight, knot, multiplicity, domain endpoint and direction component. A spline or extrusion evaluation override is unsupported until its actual represented map can be bound independently. Reading a certificate takes no geometry lock. Later source mutation is not covered.
 
-`DESIGN.md` states the exact proof, exclusions, solver reuse and work accounting. `VERIFICATION.md` assigns each claim to the smallest relevant check. No production certificate is implemented by this design commit.
+`DESIGN.md` states the exact proof, exclusions, solver reuse and work accounting. `VERIFICATION.md` assigns each claim to the smallest relevant check. The version-one implementation is a sufficient exact hull/monotonicity certificate. Unseparated pairs remain explicitly incomplete; it performs no numerical root search.
