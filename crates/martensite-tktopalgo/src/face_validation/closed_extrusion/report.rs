@@ -70,11 +70,7 @@ impl ClosedFaceReport {
         })
     }
     fn required_boundary_verified(&self) -> bool {
-        match self.policy.version {
-            1 => true,
-            2 => self.boundary.as_ref().is_some_and(|proof| proof.complete()),
-            _ => false,
-        }
+        required_boundary(self.policy.version, self.boundary.as_ref())
     }
 }
 /// Complete represented-face proof bound to its immutable input, not a later live handle.
@@ -94,5 +90,39 @@ impl ClosedFaceCertificate<'_> {
     /// Read the certificate's ordered obligation coverage; `certificate.coverage()`.
     pub fn coverage(&self) -> ClosedFaceCoverage {
         self.report.coverage
+    }
+}
+
+fn required_boundary(version: u32, boundary: Option<&ClosedFaceBoundaryReport>) -> bool {
+    match version {
+        1 => true,
+        2 | 3 => boundary.is_some_and(|proof| proof.complete()),
+        _ => false,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::boundary_report::ClosedFaceBoundaryReport;
+    use super::*;
+
+    #[test]
+    fn placed_publication_refuses_missing_or_unfinished_boundary() {
+        assert!(!required_boundary(3, None));
+        let mut boundary = unfinished_boundary();
+        assert!(!required_boundary(3, Some(&boundary)));
+        boundary.relations_verified = true;
+        boundary.transverse_coordinate = Some(2);
+        assert!(!required_boundary(3, Some(&boundary)));
+    }
+    fn unfinished_boundary() -> ClosedFaceBoundaryReport {
+        ClosedFaceBoundaryReport {
+            edge_owner: 17,
+            occurrence: 1,
+            reference_parameter: -1.,
+            transverse_coordinate: None,
+            relations_verified: false,
+            proof: None,
+        }
     }
 }
