@@ -86,3 +86,40 @@ fn reversed_face_preserves_explicit_piecewise_proof() {
     let report = check(&shape, ClosedFacePolicy::piecewise_boundary());
     assert!(report.certificate().is_some(), "{:?}", report.completion());
 }
+
+#[test]
+fn broken_cap_join_is_incomplete_without_changing_raw_tolerance() {
+    let shape = fixture::strip(1e-7, 1. / 1_073_741_824.);
+    let report = check(&shape, ClosedFacePolicy::piecewise_boundary());
+    assert!(report.coverage().geometry);
+    assert!(report.certificate().is_none());
+    assert!(matches!(
+        report.completion(),
+        ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::BoundaryRelation { .. })
+    ));
+}
+
+#[test]
+fn explicit_piecewise_cancellation_retains_owned_input_without_certificate() {
+    use martensite_tkbrep::brep::face_input_capture::{
+        FaceCaptureLimits, capture_closed_extrusion_face,
+    };
+    let shape = fixture::strip(1e-7, 0.);
+    let input =
+        capture_closed_extrusion_face(&shape.face, FaceCaptureLimits::bounded(), || false).unwrap();
+    let report =
+        certify_closed_extrusion_face(input, ClosedFacePolicy::piecewise_boundary(), || true);
+    assert!(matches!(
+        report.completion(),
+        ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Cancelled)
+    ));
+    assert!(report.certificate().is_none());
+}
+
+#[test]
+fn piecewise_published_witnesses_are_send_and_sync() {
+    fn require_owned<T: Send + Sync>() {}
+    require_owned::<ClosedFaceBoundaryReport>();
+    require_owned::<ClosedFaceReport>();
+    require_owned::<ClosedFaceCertificate>();
+}

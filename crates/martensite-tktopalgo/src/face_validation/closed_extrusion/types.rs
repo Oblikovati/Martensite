@@ -69,12 +69,16 @@ pub enum ClosedFacePlaneRefusal {
     ZeroDirection,
     /// A source coefficient did not lie in the ideal basal plane.
     IdealVariation {
+        /// Original coefficient position in the retained basis.
         coefficient: usize,
+        /// Exact relation result for this coefficient.
         actual: CurveIdentityDecision,
     },
     /// An actual carrier coefficient did not lie at the declared reference height.
     CarrierLevel {
+        /// Original coefficient position in the retained basis.
         coefficient: usize,
+        /// Exact relation result for this coefficient.
         actual: CurveIdentityDecision,
     },
 }
@@ -122,8 +126,11 @@ pub enum ClosedFaceIncomplete {
     Metric(ResidualError),
     /// A required exact actual-boundary relation did not hold.
     BoundaryRelation {
+        /// Invocation-local boundary owner in the retained snapshot.
         owner: usize,
+        /// Required relation that could not be established.
         relation: &'static str,
+        /// Exact comparison result, never a metric approximation.
         actual: CurveIdentityDecision,
     },
     /// No tested coordinate functional certified a common transverse plane.

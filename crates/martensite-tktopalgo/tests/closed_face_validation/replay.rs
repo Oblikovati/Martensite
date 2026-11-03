@@ -6,7 +6,9 @@ fn complete_report() -> String {
     let fixture = fixture::strip(1e-7, 0.);
     let report = check(&fixture, ClosedFacePolicy::bounded());
     assert!(report.certificate().is_some(), "{:?}", report.completion());
-    format!("{report:?}")
+    let piecewise = check(&fixture, ClosedFacePolicy::piecewise_boundary());
+    assert!(piecewise.certificate().is_some());
+    format!("{report:?} | {piecewise:?}")
 }
 #[test]
 fn independent_threads_publish_identical_complete_owned_reports() {
