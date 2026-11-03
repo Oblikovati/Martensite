@@ -76,4 +76,31 @@ mod tests {
         assert!(validate([f64::INFINITY, 0., 1.]).is_err());
         assert!(validate([0.; 3]).is_err());
     }
+    #[test]
+    fn rounded_inverse_candidate_cannot_replace_exact_world_proof() {
+        let identity = embedding([[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]], 1.);
+        let scaled = embedding(identity.linear, 3.);
+        let local = candidate([0., 0., 1.], identity, scaled).unwrap();
+        assert_eq!(local[2] * 3., 1.);
+        let mut cancel = || false;
+        let mut budget = Budget {
+            policy: ClosedFacePolicy::placed_piecewise_boundary(),
+            work: ClosedFaceWork::default(),
+            cancel: &mut cancel,
+        };
+        let query = ClosedFaceQueryContext::new(17, ClosedFaceRelation::CarrierDirection);
+        let result = chains::require(
+            query,
+            chains::vector([0., 0., 1.], identity),
+            chains::vector(local, scaled),
+            &mut budget,
+        );
+        assert!(matches!(
+            result,
+            Err(ClosedFaceCompletion::Incomplete(
+                ClosedFaceIncomplete::BoundaryRelation { owner: 17, .. }
+            ))
+        ));
+        assert_eq!(budget.work.queries, 1);
+    }
 }
