@@ -1,5 +1,6 @@
 //! `GeomBSplineCurve`: rational or non-rational, periodic or not, B-spline curves.
 mod access;
+mod closed_extrusion_capture;
 mod periodic;
 mod traits;
 use super::bounded_curve::GeomBoundedCurve;
