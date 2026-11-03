@@ -95,12 +95,15 @@ mod tests {
             chains::vector(local, scaled),
             &mut budget,
         );
+        assert_source_direction_refusal(result);
+        assert_eq!(budget.work.queries, 1);
+    }
+    fn assert_source_direction_refusal(result: CheckResult<()>) {
         assert!(matches!(
             result,
             Err(ClosedFaceCompletion::Incomplete(
                 ClosedFaceIncomplete::BoundaryRelation { owner: 17, .. }
             ))
         ));
-        assert_eq!(budget.work.queries, 1);
     }
 }
