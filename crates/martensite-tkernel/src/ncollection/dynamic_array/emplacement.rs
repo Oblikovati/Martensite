@@ -193,3 +193,7 @@ fn forget_vec_values<T>(values: &mut Vec<T>) {
         std::mem::forget(value);
     }
 }
+
+#[cfg(test)]
+#[path = "emplacement_tests.rs"]
+mod tests;
