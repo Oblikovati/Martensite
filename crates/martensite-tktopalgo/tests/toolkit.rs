@@ -3,3 +3,5 @@
 include!("suites/cases_00.rs");
 #[path = "surface_property_policy/mod.rs"]
 mod surface_property_policy;
+#[path = "closed_face_validation/mod.rs"]
+mod closed_face_validation;

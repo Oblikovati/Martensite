@@ -1,0 +1,13 @@
+//! Exact sufficient checks on complete closed-quadratic extrusion strips.
+mod boundary;
+mod budget;
+mod decode;
+mod incidence;
+mod metrics;
+mod operation;
+mod placements;
+mod report;
+mod types;
+pub use operation::certify_closed_extrusion_face;
+pub use report::{ClosedFaceCertificate, ClosedFaceReport};
+pub use types::*;

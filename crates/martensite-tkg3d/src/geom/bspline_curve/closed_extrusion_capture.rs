@@ -23,6 +23,7 @@ pub(super) fn capture_leased_basis(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::geom::ClosedSplineExtrusionError as Error;
     use crate::geom::{GeomSurfaceOfLinearExtrusion, GeomSweptSurface};
     use martensite_tkernel::{ncollection::Array1, standard::Handle};
     use martensite_tkmath::{
