@@ -27,14 +27,25 @@ impl<'a> EdgeMetrics<'a> {
         budget: &mut Budget<'_, F>,
         errors: &mut Vec<ClosedFaceErrorBound>,
     ) -> CheckResult<()> {
-        let limit = minimum(
-            &[self.strip.tolerance, self.edge.tolerance],
-            self.edge.owner,
-        )?;
+        let limit = self.raw_limit()?;
         match self.boundary.sides[self.index] {
             Side::UFirst | Side::ULast => self.seam(limit, budget, errors)?,
             Side::VFirst | Side::VLast => self.cap(budget, errors)?,
         }
+        self.endpoints(budget, errors)
+    }
+
+    fn raw_limit(&self) -> CheckResult<f64> {
+        minimum(
+            &[self.strip.tolerance, self.edge.tolerance],
+            self.edge.owner,
+        )
+    }
+    fn endpoints<F: FnMut() -> bool>(
+        &self,
+        budget: &mut Budget<'_, F>,
+        errors: &mut Vec<ClosedFaceErrorBound>,
+    ) -> CheckResult<()> {
         endpoints::certify(
             self.strip,
             self.edge,
@@ -43,6 +54,14 @@ impl<'a> EdgeMetrics<'a> {
             budget,
             errors,
         )
+    }
+    fn cap_level(&self) -> f64 {
+        let side = if self.boundary.sides[self.index] == Side::VFirst {
+            2
+        } else {
+            3
+        };
+        self.boundary.bounds[side]
     }
     fn seam<F: FnMut() -> bool>(
         &self,
@@ -61,15 +80,8 @@ impl<'a> EdgeMetrics<'a> {
         errors: &mut Vec<ClosedFaceErrorBound>,
     ) -> CheckResult<()> {
         let curve = self.cap_input()?;
-        let limit = minimum(
-            &[self.strip.tolerance, self.edge.tolerance],
-            self.edge.owner,
-        )?;
-        let level = self.boundary.bounds[if self.boundary.sides[self.index] == Side::VFirst {
-            2
-        } else {
-            3
-        }];
+        let limit = self.raw_limit()?;
+        let level = self.cap_level();
         let claim = BoundClaim::new(self.index, None, "cap coefficient", limit, true);
         for (actual, source) in curve.poles().iter().zip(self.strip.basis.poles()) {
             let query = coefficient_query(self.strip, self.edge, *actual, *source, level, limit);
@@ -97,26 +109,30 @@ fn seam_query(
     side: Side,
     limit: f64,
 ) -> CheckResult<TransportedResidualQuery<'static>> {
-    let SpaceCurve::Line(axis) = &edge.curve else {
-        return Err(unsupported(
-            edge.owner,
-            "seam curve",
-            "spline",
-            "stored line",
-        ));
-    };
+    let curve = seam_curve(edge)?;
     let pole = support_pole(strip, edge, side)?;
     let uv = edge.pcurve.location();
     let ud = edge.pcurve.direction();
     Ok(residual(
         strip,
         edge,
-        line(*axis),
+        curve,
         pole,
         [uv.y(), ud.y()],
         edge.range,
         limit,
     ))
+}
+fn seam_curve(edge: &EdgeUse) -> CheckResult<MetricCurve<'static, 3>> {
+    match &edge.curve {
+        SpaceCurve::Line(axis) => Ok(line(*axis)),
+        SpaceCurve::Spline(_) => Err(unsupported(
+            edge.owner,
+            "seam curve",
+            "spline",
+            "stored line",
+        )),
+    }
 }
 fn support_pole(strip: &Strip, edge: &EdgeUse, side: Side) -> CheckResult<[f64; 3]> {
     let pole = if side == Side::UFirst {
@@ -167,21 +183,7 @@ fn matching_basis(
     last: &martensite_tkg3d::geom::StoredSplineInput,
     owner: usize,
 ) -> CheckResult<()> {
-    if first.periodic() != last.periodic()
-        || first.rational() != last.rational()
-        || first.degree() != last.degree()
-        || first.knots() != last.knots()
-        || first.multiplicities() != last.multiplicities()
-        || first.weights() != last.weights()
-        || first
-            .flat_knots()
-            .iter()
-            .map(|x| x.to_bits())
-            .ne(last.flat_knots().iter().map(|x| x.to_bits()))
-        || first.domain() != last.domain()
-        || first.poles().len() != last.poles().len()
-        || last.evaluation_override()
-    {
+    if !same_basis(first, last) {
         return Err(unsupported(
             owner,
             "cap basis",
@@ -190,4 +192,24 @@ fn matching_basis(
         ));
     }
     Ok(())
+}
+
+fn same_basis(first: &StoredSplineInput, last: &StoredSplineInput) -> bool {
+    first.periodic() == last.periodic()
+        && first.rational() == last.rational()
+        && first.degree() == last.degree()
+        && first.knots() == last.knots()
+        && first.multiplicities() == last.multiplicities()
+        && first.weights() == last.weights()
+        && same_flat_knots(first, last)
+        && first.domain() == last.domain()
+        && first.poles().len() == last.poles().len()
+        && !last.evaluation_override()
+}
+fn same_flat_knots(first: &StoredSplineInput, last: &StoredSplineInput) -> bool {
+    first
+        .flat_knots()
+        .iter()
+        .map(|x| x.to_bits())
+        .eq(last.flat_knots().iter().map(|x| x.to_bits()))
 }

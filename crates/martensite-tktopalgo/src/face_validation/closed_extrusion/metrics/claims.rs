@@ -69,25 +69,16 @@ impl BoundClaim {
         }
     }
     fn exceeded(&self, witness: impl std::fmt::Debug) -> CheckResult<()> {
-        let Self {
-            index,
-            role,
-            limit,
-            coefficient,
-            ..
-        } = self;
-        if !coefficient {
+        let (index, role, limit) = (self.index, self.role, self.limit);
+        if !self.coefficient {
             return Err(invalid(
-                *index,
+                index,
                 "spatial consistency",
                 format!("role={role}, limit={limit}, witness={witness:?}"),
             ));
         }
         Err(ClosedFaceCompletion::Incomplete(
-            ClosedFaceIncomplete::CoefficientBound {
-                edge: *index,
-                limit: *limit,
-            },
+            ClosedFaceIncomplete::CoefficientBound { edge: index, limit },
         ))
     }
 }

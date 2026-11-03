@@ -83,14 +83,7 @@ pub(super) fn embedding(location: &Location) -> CheckResult<MetricEmbedding<3>> 
     let linear = matrix_coefficients(transform)?;
     let t = transform.translation_part();
     let scale = transform.scale_factor();
-    if !scale.is_finite() || scale == 0. || [t.x(), t.y(), t.z()].iter().any(|v| !v.is_finite()) {
-        return Err(unsupported(
-            0,
-            "placement",
-            format!("{transform:?}"),
-            "finite invertible affine map",
-        ));
-    }
+    require_affine_limits(transform)?;
     require_nonsingular(linear)?;
     Ok(MetricEmbedding {
         linear,
@@ -185,6 +178,20 @@ fn require_cache(result: &Location, input: &CapturedLocation) -> CheckResult<()>
             "location cache",
             "replay mismatch",
             "bit-identical captured evaluator map",
+        ));
+    }
+    Ok(())
+}
+
+fn require_affine_limits(transform: Transform3) -> CheckResult<()> {
+    let scale = transform.scale_factor();
+    let t = transform.translation_part();
+    if !scale.is_finite() || scale == 0. || [t.x(), t.y(), t.z()].iter().any(|v| !v.is_finite()) {
+        return Err(unsupported(
+            0,
+            "placement",
+            format!("{transform:?}"),
+            "finite invertible affine map",
         ));
     }
     Ok(())

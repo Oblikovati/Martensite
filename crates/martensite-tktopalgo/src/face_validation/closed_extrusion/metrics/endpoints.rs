@@ -104,23 +104,11 @@ fn spline_endpoint(
     edge: &EdgeUse,
     side: usize,
 ) -> CheckResult<(MetricCurve<'static, 3>, f64)> {
-    if input.domain() != edge.range {
-        return Err(unsupported(
-            edge.owner,
-            "endpoint parameter",
-            format!("{:?}", edge.range),
-            "complete spline domain",
-        ));
-    }
-    let point = if side == 0 {
-        input.poles().first()
-    } else {
-        input.poles().last()
-    }
-    .ok_or_else(|| invalid(edge.owner, "spline endpoint", "absent"))?;
+    require_complete_range(input, edge)?;
+    let point = spline_pole(input, edge.owner, side)?;
     Ok((
         MetricCurve::Line {
-            origin: *point,
+            origin: point,
             direction: [0.; 3],
         },
         0.,
@@ -151,4 +139,33 @@ fn support_corner_pole(strip: &Strip, corner: usize) -> CheckResult<[f64; 3]> {
     };
     pole.copied()
         .ok_or_else(|| invalid(0, "support endpoint", "absent"))
+}
+
+fn require_complete_range(
+    input: &martensite_tkg3d::geom::StoredSplineInput,
+    edge: &EdgeUse,
+) -> CheckResult<()> {
+    if input.domain() != edge.range {
+        return Err(unsupported(
+            edge.owner,
+            "endpoint parameter",
+            format!("{:?}", edge.range),
+            "complete spline domain",
+        ));
+    }
+    Ok(())
+}
+
+fn spline_pole(
+    input: &martensite_tkg3d::geom::StoredSplineInput,
+    owner: usize,
+    side: usize,
+) -> CheckResult<[f64; 3]> {
+    let point = if side == 0 {
+        input.poles().first()
+    } else {
+        input.poles().last()
+    }
+    .ok_or_else(|| invalid(owner, "spline endpoint", "absent"))?;
+    Ok(*point)
 }

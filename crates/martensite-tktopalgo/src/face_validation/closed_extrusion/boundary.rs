@@ -61,15 +61,9 @@ fn corner<F: FnMut() -> bool>(
             matches.push(index);
         }
     }
-    if matches.len() != 1 {
-        return Err(invalid(
-            edge.owner,
-            "one exact trim corner",
-            format!("matched={matches:?}"),
-        ));
-    }
-    Ok(matches[0])
+    unique_corner(edge.owner, &matches)
 }
+
 fn endpoint_matches<F: FnMut() -> bool>(
     edge: &EdgeUse,
     parameter: f64,
@@ -244,4 +238,15 @@ fn require_unique_edges(strip: &Strip, seam: [usize; 2]) -> CheckResult<()> {
         }
     }
     Ok(())
+}
+
+fn unique_corner(owner: usize, matches: &[usize]) -> CheckResult<usize> {
+    if matches.len() != 1 {
+        return Err(invalid(
+            owner,
+            "one exact trim corner",
+            format!("matched={matches:?}"),
+        ));
+    }
+    Ok(matches[0])
 }
