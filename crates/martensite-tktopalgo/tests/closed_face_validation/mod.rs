@@ -76,3 +76,16 @@ fn nonzero_cap_residuals_respect_existing_raw_limits() {
     ));
     assert!(refused.certificate().is_none());
 }
+
+#[test]
+fn mutated_observable_uv_cache_cannot_receive_a_certificate() {
+    let fixture = fixture::strip(1e-7, 0.);
+    fixture::set_cache(&fixture.edges[1], [[1., 2.], [4., 2.]], None);
+    let report = check(&fixture, ClosedFacePolicy::bounded());
+    assert!(
+        matches!(report.completion(), ClosedFaceCompletion::Invalid(_)),
+        "{:?}",
+        report.completion()
+    );
+    assert!(report.certificate().is_none());
+}

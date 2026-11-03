@@ -1,6 +1,6 @@
 //! Independent polynomial rounded-square strips, assembled from actual geometry/topology builders.
 use martensite_tkbrep::{
-    brep::BRepBuilder,
+    brep::{BRepBuilder, BRepCurveOnClosedSurface, BRepCurveOnSurface, BRepTEdge},
     topods::{Edge, Face, Vertex, Wire},
 };
 use martensite_tkernel::{ncollection::Array1, standard::Handle};
@@ -66,6 +66,7 @@ fn cap(face: &Face, level: f64, vertex: &Vertex, tolerance: f64, delta: f64) -> 
     builder
         .add(&mut result, &vertex.oriented(Orientation::Reversed))
         .unwrap();
+    set_cache(&result, [[0., level], [4., level]], None);
     result
 }
 fn seam(face: &Face, vertices: &[Vertex; 2], tolerance: f64) -> Edge {
@@ -90,6 +91,7 @@ fn seam(face: &Face, vertices: &[Vertex; 2], tolerance: f64) -> Edge {
     builder
         .add(&mut result, &vertices[1].oriented(Orientation::Reversed))
         .unwrap();
+    set_cache(&result, [[0., -1.], [0., 2.]], Some([[4., -1.], [4., 2.]]));
     result
 }
 pub(super) fn strip(tolerance: f64, top_delta: f64) -> StripFixture {
@@ -122,5 +124,31 @@ pub(super) fn strip(tolerance: f64, top_delta: f64) -> StripFixture {
         face,
         edges,
         vertices,
+    }
+}
+
+pub(super) fn set_cache(edge: &Edge, first: [[f64; 2]; 2], second: Option<[[f64; 2]; 2]>) {
+    let owner = edge.tshape().cast::<BRepTEdge>();
+    for representation in owner.get().unwrap().curves() {
+        let ordinary = representation.cast::<BRepCurveOnSurface>();
+        if let Some(curve) = ordinary.get() {
+            curve.set_uv_points(
+                Point2::new(first[0][0], first[0][1]),
+                Point2::new(first[1][0], first[1][1]),
+            );
+        }
+        if let Some(points) = second {
+            let seam = representation.cast::<BRepCurveOnClosedSurface>();
+            if let Some(curve) = seam.get() {
+                curve.set_uv_points(
+                    Point2::new(first[0][0], first[0][1]),
+                    Point2::new(first[1][0], first[1][1]),
+                );
+                curve.set_uv_points2(
+                    Point2::new(points[0][0], points[0][1]),
+                    Point2::new(points[1][0], points[1][1]),
+                );
+            }
+        }
     }
 }
