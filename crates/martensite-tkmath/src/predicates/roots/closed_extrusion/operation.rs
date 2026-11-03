@@ -291,3 +291,26 @@ fn limit(kind: &'static str, requested: u64, actual: u64) -> Result<(), Cause> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::predicates::roots::certificate_arithmetic::ExactRatio;
+    #[test]
+    fn retained_witness_height_limit_refuses_and_preserves_the_witness() {
+        let witness = HullSeparation::Disjoint {
+            normal: [ExactRatio::from_finite(1024.), ExactRatio::from_finite(0.)],
+        };
+        let before = witness.clone();
+        assert_eq!(
+            witness_limits(&witness, 8),
+            Err(Cause::Limit {
+                kind: "retained witness coefficient bits",
+                requested: 8,
+                actual: 11
+            })
+        );
+        assert_eq!(witness, before);
+        assert!(witness_limits(&witness, 16).is_ok());
+    }
+}
