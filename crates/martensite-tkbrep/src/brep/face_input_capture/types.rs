@@ -48,7 +48,7 @@ pub enum FaceCaptureIncomplete {
         /// Invocation-local source owner.
         owner: usize,
         /// Actual stored-input failure, without a substituted domain.
-        cause: martensite_tkernel::standard::Failure,
+        cause: Box<martensite_tkernel::standard::Failure>,
     },
     /// A discovered reference changed before the simultaneous read view.
     Changed {

@@ -66,7 +66,7 @@ fn validate_rational_branch(weights: &[f64], first: f64, owner: usize) -> Result
         weights.iter().any(|value| (*value - first).abs() > epsilon),
         owner,
         "unambiguous local rational evaluator branch",
-        &weights,
+        weights,
     )
 }
 

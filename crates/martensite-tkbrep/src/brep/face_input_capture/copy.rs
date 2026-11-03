@@ -221,7 +221,10 @@ impl CopyContext {
         }
         let input = lease
             .stored_input()
-            .map_err(|cause| FaceCaptureIncomplete::Geometry { owner: 0, cause })?;
+            .map_err(|cause| FaceCaptureIncomplete::Geometry {
+                owner: 0,
+                cause: Box::new(cause),
+            })?;
         super::numeric::validate_surface(&input)?;
         Ok(CapturedFaceCell::SplineSurface(input))
     }

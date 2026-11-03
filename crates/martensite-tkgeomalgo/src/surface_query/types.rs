@@ -57,7 +57,7 @@ pub enum FaceQueryIncomplete {
         /// Actual invocation-local geometry owner.
         owner: usize,
         /// Underlying arithmetic/storage failure.
-        cause: Failure,
+        cause: Box<Failure>,
     },
     /// The exact theorem remained incomplete.
     Proof {

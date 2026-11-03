@@ -81,8 +81,12 @@ fn validate_flat(axis: &Axis, owner: usize) -> Result<(), Cause> {
     validate_partition(axis, owner)?;
     let knots = Array1::from_shared(axis.knots(), 1);
     let mults = Array1::from_shared(axis.multiplicities(), 1);
-    let prepared = knot_data(axis.degree(), axis.periodic(), &knots, &mults)
-        .map_err(|cause| Cause::Geometry { owner, cause })?;
+    let prepared = knot_data(axis.degree(), axis.periodic(), &knots, &mults).map_err(|cause| {
+        Cause::Geometry {
+            owner,
+            cause: Box::new(cause),
+        }
+    })?;
     require(
         same_bits(prepared.flat_knots.as_slice(), axis.flat_knots()),
         owner,
