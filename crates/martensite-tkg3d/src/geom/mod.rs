@@ -67,7 +67,7 @@ mod parametric;
 mod plane;
 pub(crate) mod quadric;
 pub mod revolution_utils;
-pub use plane::GeomPlane;
+pub use plane::{GeomPlane, PlaneInputLease};
 mod cylindrical_surface;
 pub use cylindrical_surface::GeomCylindricalSurface;
 mod conical_surface;

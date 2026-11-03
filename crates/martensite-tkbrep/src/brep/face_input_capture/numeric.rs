@@ -1,5 +1,6 @@
 //! Stored representation admission never substitutes sampled geometry.
 use super::{copy::finite, types::FaceCaptureIncomplete as Incomplete};
+use martensite_tkg2d::geom2d::StoredPlanarSplineInput;
 use martensite_tkg3d::geom::StoredSplineInput;
 
 pub(super) fn validate_spline(input: &StoredSplineInput) -> Result<(), Incomplete> {
@@ -45,6 +46,50 @@ fn finite_spline(input: &StoredSplineInput) -> Result<(), Incomplete> {
         finite(*value, "spline weight or knot")?;
     }
     Ok(())
+}
+
+pub(super) fn validate_planar_spline(input: &StoredPlanarSplineInput) -> Result<(), Incomplete> {
+    for pole in input.poles() {
+        for value in pole {
+            finite(*value, "planar spline pole")?;
+        }
+    }
+    for value in input
+        .weights()
+        .iter()
+        .chain(input.knots())
+        .chain(input.flat_knots())
+        .chain(input.domain().iter())
+    {
+        finite(*value, "planar spline weight or knot")?;
+    }
+    Ok(())
+}
+
+pub(super) fn plane_input(
+    axis: martensite_tkmath::gp::Axis3,
+) -> Result<super::types::CapturedFaceCell, Incomplete> {
+    let origin = axis.location();
+    let x = axis.x_direction();
+    let y = axis.y_direction();
+    let normal = axis.direction();
+    for value in [
+        origin.x(),
+        origin.y(),
+        origin.z(),
+        x.x(),
+        x.y(),
+        x.z(),
+        y.x(),
+        y.y(),
+        y.z(),
+        normal.x(),
+        normal.y(),
+        normal.z(),
+    ] {
+        finite(value, "plane frame")?;
+    }
+    Ok(super::types::CapturedFaceCell::Plane(axis))
 }
 fn unsupported(actual: &str) -> Incomplete {
     Incomplete::Unsupported {

@@ -182,7 +182,9 @@ impl CopyContext {
         match lease {
             Lease::Line(l) => super::numeric::line_input(l.axis()),
             Lease::PlanarLine(l) => super::numeric::planar_line_input(l.axis()),
+            Lease::PlanarSpline(s) => self.planar_spline(s),
             Lease::Spline(s) => self.spline(s),
+            Lease::Plane(p) => super::numeric::plane_input(p.position()),
             Lease::Extrusion(s) => Ok(CapturedFaceCell::Extrusion {
                 basis: self.reference(&s.basis())?,
                 direction: finite3(s.direction(), "extrusion direction")?,
@@ -200,6 +202,18 @@ impl CopyContext {
         let input = lease.stored_input();
         super::numeric::validate_spline(&input)?;
         Ok(CapturedFaceCell::Spline(input))
+    }
+
+    fn planar_spline(
+        &mut self,
+        lease: &martensite_tkg2d::geom2d::PlanarSplineInputLease<'_>,
+    ) -> Result<CapturedFaceCell, FaceCaptureIncomplete> {
+        for count in lease.stored_sizes() {
+            self.charge(count)?;
+        }
+        let input = lease.stored_input();
+        super::numeric::validate_planar_spline(&input)?;
+        Ok(CapturedFaceCell::PlanarSpline(input))
     }
 }
 fn changed_location() -> FaceCaptureIncomplete {

@@ -2,9 +2,9 @@
 use super::{cells::Lease, copy::CopyContext, inventory::Inventory, types::*};
 use crate::topods::Face;
 
-/// Copy one finite admitted face input; `capture_closed_extrusion_face(&face, FaceCaptureLimits::bounded(), ||false)`.
+/// Copy finite admitted face input without validating geometry; `capture_face_input(&face, FaceCaptureLimits::bounded(), ||false)`.
 /// A successful capture supplies immutable input only; it does not validate face geometry.
-pub fn capture_closed_extrusion_face(
+pub fn capture_face_input(
     face: &Face,
     limits: FaceCaptureLimits,
     mut cancelled: impl FnMut() -> bool,
@@ -17,6 +17,15 @@ pub fn capture_closed_extrusion_face(
         return Err(FaceCaptureIncomplete::Cancelled);
     }
     result
+}
+
+/// Compatibility entry point for callers that capture extrusion-backed faces.
+pub fn capture_closed_extrusion_face(
+    face: &Face,
+    limits: FaceCaptureLimits,
+    cancelled: impl FnMut() -> bool,
+) -> Result<FaceInputSnapshot, FaceCaptureIncomplete> {
+    capture_face_input(face, limits, cancelled)
 }
 fn captured(
     face: &Face,
