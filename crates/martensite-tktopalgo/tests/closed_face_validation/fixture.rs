@@ -1,6 +1,9 @@
 //! Independent polynomial rounded-square strips, assembled from actual geometry/topology builders.
 use martensite_tkbrep::{
-    brep::{BRepBuilder, BRepCurveOnClosedSurface, BRepCurveOnSurface, BRepTEdge},
+    brep::{
+        BRepBuilder, BRepCurveOnClosedSurface, BRepCurveOnSurface, BRepCurveRepresentation,
+        BRepTEdge,
+    },
     topods::{Edge, Face, Vertex, Wire},
 };
 use martensite_tkernel::{ncollection::Array1, standard::Handle};
@@ -60,20 +63,8 @@ fn cap(
     builder
         .make_edge_with_curve(&mut result, &spline(level, delta, xy).cast(), tolerance)
         .unwrap();
-    let pcurve = Handle::new(Geom2dLine::from_point(
-        Point2::new(0., level),
-        Direction2::X,
-    ));
-    builder
-        .update_edge_pcurve_on_face(&result, &pcurve.cast(), face, tolerance)
-        .unwrap();
-    builder.range(&result, 0., 4., false).unwrap();
-    builder
-        .add(&mut result, &vertex.oriented(Orientation::Forward))
-        .unwrap();
-    builder
-        .add(&mut result, &vertex.oriented(Orientation::Reversed))
-        .unwrap();
+    cap_map(&builder, &result, face, level, tolerance);
+    connect_endpoints(&builder, &mut result, [vertex, vertex]);
     set_cache(&result, [[0., level], [4., level]], None);
     result
 }
@@ -93,12 +84,7 @@ fn seam(face: &Face, vertices: &[Vertex; 2], tolerance: f64) -> Edge {
         .update_edge_pcurves_on_face(&result, (&a.cast(), &b.cast()), face, tolerance)
         .unwrap();
     builder.range(&result, 0., 3., false).unwrap();
-    builder
-        .add(&mut result, &vertices[0].oriented(Orientation::Forward))
-        .unwrap();
-    builder
-        .add(&mut result, &vertices[1].oriented(Orientation::Reversed))
-        .unwrap();
+    connect_endpoints(&builder, &mut result, [&vertices[0], &vertices[1]]);
     set_cache(&result, [[0., -1.], [0., 2.]], Some([[4., -1.], [4., 2.]]));
     result
 }
@@ -115,29 +101,14 @@ pub(super) fn strip_with_top_net(
     cap_xy: [[f64; 2]; 9],
 ) -> StripFixture {
     let builder = BRepBuilder::default();
-    let mut face = Face::default();
-    let support = Handle::new(
-        GeomSurfaceOfLinearExtrusion::new(&spline(0., 0., xy).cast(), Direction3::Z).unwrap(),
-    );
-    builder
-        .make_face_on_surface(&mut face, &support.cast(), tolerance)
-        .unwrap();
+    let mut face = support_face(&builder, tolerance, xy);
     let vertices = [vertex(-1., tolerance), vertex(2., tolerance)];
     let edges = [
         seam(&face, &vertices, tolerance),
         cap(&face, 2., &vertices[1], tolerance, top_delta, cap_xy),
         cap(&face, -1., &vertices[0], tolerance, 0., xy),
     ];
-    let mut wire = Wire::default();
-    builder.make_wire(&mut wire);
-    for edge in [
-        edges[0].oriented(Orientation::Forward),
-        edges[1].oriented(Orientation::Forward),
-        edges[0].oriented(Orientation::Reversed),
-        edges[2].oriented(Orientation::Reversed),
-    ] {
-        builder.add(&mut wire, &edge).unwrap();
-    }
+    let wire = strip_wire(&builder, &edges);
     builder.add(&mut face, &wire).unwrap();
     StripFixture {
         face,
@@ -149,25 +120,81 @@ pub(super) fn strip_with_top_net(
 pub(super) fn set_cache(edge: &Edge, first: [[f64; 2]; 2], second: Option<[[f64; 2]; 2]>) {
     let owner = edge.tshape().cast::<BRepTEdge>();
     for representation in owner.get().unwrap().curves() {
-        let ordinary = representation.cast::<BRepCurveOnSurface>();
-        if let Some(curve) = ordinary.get() {
-            curve.set_uv_points(
-                Point2::new(first[0][0], first[0][1]),
-                Point2::new(first[1][0], first[1][1]),
-            );
-        }
+        set_first_cache(&representation, first);
         if let Some(points) = second {
-            let seam = representation.cast::<BRepCurveOnClosedSurface>();
-            if let Some(curve) = seam.get() {
-                curve.set_uv_points(
-                    Point2::new(first[0][0], first[0][1]),
-                    Point2::new(first[1][0], first[1][1]),
-                );
-                curve.set_uv_points2(
-                    Point2::new(points[0][0], points[0][1]),
-                    Point2::new(points[1][0], points[1][1]),
-                );
-            }
+            set_seam_cache(&representation, first, points);
         }
+    }
+}
+
+fn cap_map(builder: &BRepBuilder, result: &Edge, face: &Face, level: f64, tolerance: f64) {
+    let pcurve = Handle::new(Geom2dLine::from_point(
+        Point2::new(0., level),
+        Direction2::X,
+    ));
+    builder
+        .update_edge_pcurve_on_face(result, &pcurve.cast(), face, tolerance)
+        .unwrap();
+    builder.range(result, 0., 4., false).unwrap();
+}
+
+fn connect_endpoints(builder: &BRepBuilder, edge: &mut Edge, vertices: [&Vertex; 2]) {
+    builder
+        .add(edge, &vertices[0].oriented(Orientation::Forward))
+        .unwrap();
+    builder
+        .add(edge, &vertices[1].oriented(Orientation::Reversed))
+        .unwrap();
+}
+
+fn support_face(builder: &BRepBuilder, tolerance: f64, xy: [[f64; 2]; 9]) -> Face {
+    let mut face = Face::default();
+    let support = Handle::new(
+        GeomSurfaceOfLinearExtrusion::new(&spline(0., 0., xy).cast(), Direction3::Z).unwrap(),
+    );
+    builder
+        .make_face_on_surface(&mut face, &support.cast(), tolerance)
+        .unwrap();
+    face
+}
+
+fn strip_wire(builder: &BRepBuilder, edges: &[Edge; 3]) -> Wire {
+    let mut wire = Wire::default();
+    builder.make_wire(&mut wire);
+    for edge in [
+        edges[0].oriented(Orientation::Forward),
+        edges[1].oriented(Orientation::Forward),
+        edges[0].oriented(Orientation::Reversed),
+        edges[2].oriented(Orientation::Reversed),
+    ] {
+        builder.add(&mut wire, &edge).unwrap();
+    }
+    wire
+}
+
+fn set_first_cache(representation: &Handle<dyn BRepCurveRepresentation>, points: [[f64; 2]; 2]) {
+    let ordinary = representation.cast::<BRepCurveOnSurface>();
+    if let Some(curve) = ordinary.get() {
+        curve.set_uv_points(
+            Point2::new(points[0][0], points[0][1]),
+            Point2::new(points[1][0], points[1][1]),
+        );
+    }
+}
+fn set_seam_cache(
+    representation: &Handle<dyn BRepCurveRepresentation>,
+    first: [[f64; 2]; 2],
+    second: [[f64; 2]; 2],
+) {
+    let seam = representation.cast::<BRepCurveOnClosedSurface>();
+    if let Some(curve) = seam.get() {
+        curve.set_uv_points(
+            Point2::new(first[0][0], first[0][1]),
+            Point2::new(first[1][0], first[1][1]),
+        );
+        curve.set_uv_points2(
+            Point2::new(second[0][0], second[0][1]),
+            Point2::new(second[1][0], second[1][1]),
+        );
     }
 }
