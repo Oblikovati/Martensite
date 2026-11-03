@@ -1,6 +1,6 @@
 //! A failed sufficient coefficient bound remains incomplete, not a curve witness.
 use super::*;
-struct BoundClaim {
+pub(super) struct BoundClaim {
     index: usize,
     vertex: Option<usize>,
     role: &'static str,
@@ -26,7 +26,22 @@ pub(super) fn append(
     .record(decision, errors)
 }
 impl BoundClaim {
-    fn record(
+    pub(super) fn new(
+        index: usize,
+        vertex: Option<usize>,
+        role: &'static str,
+        limit: f64,
+        coefficient: bool,
+    ) -> Self {
+        Self {
+            index,
+            vertex,
+            role,
+            limit,
+            coefficient,
+        }
+    }
+    pub(super) fn record(
         &self,
         decision: ResidualDecision,
         errors: &mut Vec<ClosedFaceErrorBound>,
