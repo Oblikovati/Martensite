@@ -48,11 +48,7 @@ fn ideal_constant<F: FnMut() -> bool>(
     let projection = [chains::projection(axis)];
     let reference = reference_pole(carrier)?;
     for (coefficient, pole) in carrier.strip.basis.poles().iter().enumerate() {
-        let mut first = chains::point(*pole, carrier.strip.placement);
-        let mut second = chains::point(reference, carrier.strip.placement);
-        first.placements = &projection;
-        second.placements = &projection;
-        let actual = chains::compare(first, second, budget)?;
+        let actual = ideal_coefficient(carrier, *pole, reference, &projection, budget)?;
         if actual != CurveIdentityDecision::Identical {
             return Ok(Some(ClosedFacePlaneRefusal::IdealVariation {
                 coefficient,
@@ -71,16 +67,8 @@ fn carrier_level<F: FnMut() -> bool>(
     let placements = [carrier.strip.placement, projection[0]];
     let reference = reference_pole(carrier)?;
     for (coefficient, pole) in carrier.curve.poles().iter().enumerate() {
-        let mut first = chains::point(*pole, carrier.edge.placement);
-        first.placements = &projection;
-        let second = chains::sweep(
-            reference,
-            carrier.strip.direction,
-            [carrier.reference, 0.],
-            0.,
-            &placements,
-        );
-        let actual = chains::compare(first, second, budget)?;
+        let actual =
+            carrier_coefficient(carrier, *pole, reference, &projection, &placements, budget)?;
         if actual != CurveIdentityDecision::Identical {
             return Ok(Some(ClosedFacePlaneRefusal::CarrierLevel {
                 coefficient,
@@ -90,6 +78,46 @@ fn carrier_level<F: FnMut() -> bool>(
     }
     Ok(None)
 }
+fn ideal_coefficient<F: FnMut() -> bool>(
+    carrier: &Carrier<'_>,
+    pole: [f64; 3],
+    reference: [f64; 3],
+    projection: &[MetricEmbedding<3>],
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<CurveIdentityDecision> {
+    let mut first = chains::point(pole, carrier.strip.placement);
+    let mut second = chains::point(reference, carrier.strip.placement);
+    first.placements = projection;
+    second.placements = projection;
+    chains::compare(first, second, budget)
+}
+fn carrier_coefficient<F: FnMut() -> bool>(
+    carrier: &Carrier<'_>,
+    pole: [f64; 3],
+    reference: [f64; 3],
+    projection: &[MetricEmbedding<3>],
+    placements: &[MetricEmbedding<3>],
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<CurveIdentityDecision> {
+    let mut first = chains::point(pole, carrier.edge.placement);
+    first.placements = projection;
+    let second = height_reference(carrier, reference, placements);
+    chains::compare(first, second, budget)
+}
+fn height_reference<'a>(
+    carrier: &Carrier<'_>,
+    reference: [f64; 3],
+    placements: &'a [MetricEmbedding<3>],
+) -> MetricCurveChain<'a, 2> {
+    chains::sweep(
+        reference,
+        carrier.strip.direction,
+        [carrier.reference, 0.],
+        0.,
+        placements,
+    )
+}
+
 fn reference_pole(carrier: &Carrier<'_>) -> CheckResult<[f64; 3]> {
     carrier
         .strip

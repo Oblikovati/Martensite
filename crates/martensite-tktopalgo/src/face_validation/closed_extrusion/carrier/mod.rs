@@ -40,20 +40,9 @@ pub(super) fn certify<F: FnMut() -> bool>(
     completion
 }
 fn reference<'a>(strip: &'a Strip, boundary: &'a Boundary) -> CheckResult<Carrier<'a>> {
-    let index = boundary
-        .sides
-        .iter()
-        .position(|side| *side == Side::VFirst)
-        .ok_or_else(|| invalid(0, "actual reference cap", "missing VFirst side"))?;
+    let index = reference_index(boundary)?;
     let edge = &strip.edges[index];
-    let SpaceCurve::Spline(curve) = &edge.curve else {
-        return Err(unsupported(
-            edge.owner,
-            "actual carrier",
-            "line",
-            "full matching spline cap",
-        ));
-    };
+    let curve = reference_curve(edge)?;
     Ok(Carrier {
         strip,
         boundary,
@@ -63,22 +52,43 @@ fn reference<'a>(strip: &'a Strip, boundary: &'a Boundary) -> CheckResult<Carrie
         reference: boundary.bounds[2],
     })
 }
+fn reference_index(boundary: &Boundary) -> CheckResult<usize> {
+    boundary
+        .sides
+        .iter()
+        .position(|side| *side == Side::VFirst)
+        .ok_or_else(|| invalid(0, "actual reference cap", "missing VFirst side"))
+}
+fn reference_curve(edge: &EdgeUse) -> CheckResult<&StoredSplineInput> {
+    let SpaceCurve::Spline(curve) = &edge.curve else {
+        return Err(unsupported(
+            edge.owner,
+            "actual carrier",
+            "line",
+            "full matching spline cap",
+        ));
+    };
+    Ok(curve)
+}
+
 fn admit(carrier: &Carrier<'_>) -> CheckResult<ClosedQuadraticExtrusionInput> {
     let interval = [carrier.boundary.bounds[2], carrier.boundary.bounds[3]];
     let input = carrier
         .curve
         .clone()
         .into_closed_extrusion_input(carrier.strip.direction, interval)
-        .map_err(|error| {
-            unsupported(
-                carrier.edge.owner,
-                "actual carrier input",
-                format!("{error:?}"),
-                "closed clamped quadratic with positive constant weights",
-            )
-        })?;
+        .map_err(|error| admission_error(carrier, &error))?;
     super::operation::require_captured(input)
 }
+fn admission_error(carrier: &Carrier<'_>, error: &impl std::fmt::Debug) -> ClosedFaceCompletion {
+    unsupported(
+        carrier.edge.owner,
+        "actual carrier input",
+        format!("{error:?}"),
+        "closed clamped quadratic with positive constant weights",
+    )
+}
+
 fn initial(carrier: &Carrier<'_>) -> ClosedFaceBoundaryReport {
     ClosedFaceBoundaryReport {
         edge_owner: carrier.edge.owner,
