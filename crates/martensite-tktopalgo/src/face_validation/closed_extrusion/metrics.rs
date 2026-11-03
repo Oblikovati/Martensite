@@ -4,7 +4,6 @@ use super::{
     boundary::{Boundary, Side},
     budget::*,
     decode::*,
-    placements::identity,
     types::*,
 };
 use martensite_tkmath::predicates::roots::{RootIsolationOptions, metric_bounds::*};

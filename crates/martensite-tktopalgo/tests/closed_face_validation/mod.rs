@@ -55,7 +55,7 @@ fn cancellation_and_exhausted_allowances_never_publish_a_certificate() {
 }
 #[test]
 fn nonzero_cap_residuals_respect_existing_raw_limits() {
-    let delta = 2f64.powi(-30);
+    let delta = 1. / 1_073_741_824.;
     let fixture = fixture::strip(delta, delta);
     let report = check(&fixture, ClosedFacePolicy::bounded());
     assert!(

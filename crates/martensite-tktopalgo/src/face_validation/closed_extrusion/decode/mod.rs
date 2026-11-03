@@ -137,7 +137,7 @@ fn face<'a>(
     }
     Ok((*surface, location, *tolerance))
 }
-fn support(cells: &Cells<'_>, owner: usize) -> CheckResult<(&StoredSplineInput, [f64; 3])> {
+fn support<'a>(cells: &Cells<'a>, owner: usize) -> CheckResult<(&'a StoredSplineInput, [f64; 3])> {
     let Cell::Extrusion { basis, direction } = cells.one(
         owner,
         |c| matches!(c, Cell::Extrusion { .. }),
