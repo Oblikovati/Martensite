@@ -22,17 +22,7 @@ pub(super) fn certify<F: FnMut() -> bool>(
     let [v0, v1] = vertical_interval(strip)?;
     let bounds = [u0, u1, v0, v1];
     let targets = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]];
-    let mut sides = [Side::UFirst; 4];
-    let mut corners = [[0; 2]; 4];
-    for (index, edge) in strip.edges.iter().enumerate() {
-        let pair = [
-            corner(edge, edge.range[0], &targets, budget)?,
-            corner(edge, edge.range[1], &targets, budget)?,
-        ];
-        validate_cache(edge, pair.map(|corner| targets[corner]))?;
-        corners[index] = pair;
-        sides[index] = side(pair, edge.owner)?;
-    }
+    let (sides, corners) = classify_edges(strip, &targets, budget)?;
     cycle(strip, &corners)?;
     seam(strip, &sides)?;
     Ok(Boundary {
@@ -87,28 +77,8 @@ fn endpoint_matches<F: FnMut() -> bool>(
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<bool> {
     budget.query()?;
-    let p = edge.pcurve.location();
-    let d = edge.pcurve.direction();
-    let first = MetricCurveChain {
-        curve: MetricCurve::Line {
-            origin: [parameter, 0.],
-            direction: [0.; 2],
-        },
-        embedding: MetricEmbedding {
-            linear: [[d.x(), 0.], [d.y(), 0.], [0., 0.]],
-            origin: [p.x(), p.y(), 0.],
-            scale: 1.,
-        },
-        placements: &[],
-    };
-    let second = MetricCurveChain {
-        curve: MetricCurve::Line {
-            origin: [target[0], target[1], 0.],
-            direction: [0.; 3],
-        },
-        embedding: identity(),
-        placements: &[],
-    };
+    let first = endpoint_chain(edge, parameter);
+    let second = corner_chain(target);
     compare_curve_chains(first, second, &mut *budget.cancel)
         .map(|d| d == CurveIdentityDecision::Identical)
         .map_err(|e| {
@@ -130,18 +100,7 @@ fn cycle(strip: &Strip, corners: &[[usize; 2]; 4]) -> CheckResult<()> {
     let mut incoming = [0; 4];
     let mut outgoing = [0; 4];
     for (edge, pair) in strip.edges.iter().zip(corners) {
-        let mut pair = *pair;
-        match edge.orientation {
-            Orientation::Forward => {}
-            Orientation::Reversed => pair.swap(0, 1),
-            other => {
-                return Err(invalid(
-                    edge.owner,
-                    "edge orientation",
-                    format!("{other:?}"),
-                ));
-            }
-        }
+        let pair = directed_pair(edge, *pair)?;
         outgoing[pair[0]] += 1;
         incoming[pair[1]] += 1;
     }
@@ -155,11 +114,7 @@ fn cycle(strip: &Strip, corners: &[[usize; 2]; 4]) -> CheckResult<()> {
     Ok(())
 }
 fn seam(strip: &Strip, sides: &[Side; 4]) -> CheckResult<()> {
-    for side in [Side::UFirst, Side::ULast, Side::VFirst, Side::VLast] {
-        if sides.iter().filter(|s| **s == side).count() != 1 {
-            return Err(invalid(0, "one occurrence per side", format!("{sides:?}")));
-        }
-    }
+    require_sides(sides)?;
     let a = sides
         .iter()
         .position(|s| *s == Side::UFirst)
@@ -169,6 +124,93 @@ fn seam(strip: &Strip, sides: &[Side; 4]) -> CheckResult<()> {
         .position(|s| *s == Side::ULast)
         .ok_or_else(|| invalid(0, "last seam", "missing"))?;
     let (first, last) = (&strip.edges[a], &strip.edges[b]);
+    require_seam_pair(first, last)?;
+    require_unique_edges(strip, [a, b])
+}
+
+fn validate_cache(edge: &EdgeUse, expected: [[f64; 2]; 2]) -> CheckResult<()> {
+    if edge.cached_endpoints != expected {
+        return Err(invalid(
+            edge.owner,
+            "stored UV endpoint cache",
+            format!("actual={:?}, expected={expected:?}", edge.cached_endpoints),
+        ));
+    }
+    Ok(())
+}
+
+fn classify_edges<F: FnMut() -> bool>(
+    strip: &Strip,
+    targets: &[[f64; 2]; 4],
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<([Side; 4], [[usize; 2]; 4])> {
+    let mut sides = [Side::UFirst; 4];
+    let mut corners = [[0; 2]; 4];
+    for (index, edge) in strip.edges.iter().enumerate() {
+        let pair = [
+            corner(edge, edge.range[0], targets, budget)?,
+            corner(edge, edge.range[1], targets, budget)?,
+        ];
+        validate_cache(edge, pair.map(|corner| targets[corner]))?;
+        corners[index] = pair;
+        sides[index] = side(pair, edge.owner)?;
+    }
+    Ok((sides, corners))
+}
+
+fn endpoint_chain(edge: &EdgeUse, parameter: f64) -> MetricCurveChain<'static, 2> {
+    let p = edge.pcurve.location();
+    let d = edge.pcurve.direction();
+    MetricCurveChain {
+        curve: MetricCurve::Line {
+            origin: [parameter, 0.],
+            direction: [0.; 2],
+        },
+        embedding: MetricEmbedding {
+            linear: [[d.x(), 0.], [d.y(), 0.], [0., 0.]],
+            origin: [p.x(), p.y(), 0.],
+            scale: 1.,
+        },
+        placements: &[],
+    }
+}
+
+fn corner_chain(target: [f64; 2]) -> MetricCurveChain<'static, 3> {
+    MetricCurveChain {
+        curve: MetricCurve::Line {
+            origin: [target[0], target[1], 0.],
+            direction: [0.; 3],
+        },
+        embedding: identity(),
+        placements: &[],
+    }
+}
+
+fn directed_pair(edge: &EdgeUse, mut pair: [usize; 2]) -> CheckResult<[usize; 2]> {
+    match edge.orientation {
+        Orientation::Forward => {}
+        Orientation::Reversed => pair.swap(0, 1),
+        other => {
+            return Err(invalid(
+                edge.owner,
+                "edge orientation",
+                format!("{other:?}"),
+            ));
+        }
+    }
+    Ok(pair)
+}
+
+fn require_sides(sides: &[Side; 4]) -> CheckResult<()> {
+    for side in [Side::UFirst, Side::ULast, Side::VFirst, Side::VLast] {
+        if sides.iter().filter(|s| **s == side).count() != 1 {
+            return Err(invalid(0, "one occurrence per side", format!("{sides:?}")));
+        }
+    }
+    Ok(())
+}
+
+fn require_seam_pair(first: &EdgeUse, last: &EdgeUse) -> CheckResult<()> {
     if first.owner != last.owner
         || first.location != last.location
         || !first.seam
@@ -182,6 +224,11 @@ fn seam(strip: &Strip, sides: &[Side; 4]) -> CheckResult<()> {
             "identity, branch or orientation mismatch",
         ));
     }
+    Ok(())
+}
+
+fn require_unique_edges(strip: &Strip, seam: [usize; 2]) -> CheckResult<()> {
+    let [a, b] = seam;
     for left in 0..4 {
         for right in left + 1..4 {
             if (left, right) != (a.min(b), a.max(b))
@@ -195,17 +242,6 @@ fn seam(strip: &Strip, sides: &[Side; 4]) -> CheckResult<()> {
                 ));
             }
         }
-    }
-    Ok(())
-}
-
-fn validate_cache(edge: &EdgeUse, expected: [[f64; 2]; 2]) -> CheckResult<()> {
-    if edge.cached_endpoints != expected {
-        return Err(invalid(
-            edge.owner,
-            "stored UV endpoint cache",
-            format!("actual={:?}, expected={expected:?}", edge.cached_endpoints),
-        ));
     }
     Ok(())
 }
