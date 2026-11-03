@@ -14,6 +14,31 @@ use martensite_tkmath::{
     predicates::roots::metric_bounds::MetricEmbedding,
     toploc::Location,
 };
+type FaceFields<'a> = (
+    usize,
+    &'a martensite_tkbrep::brep::face_input_capture::CapturedLocation,
+    f64,
+    bool,
+);
+struct WireEdgeContext<'a> {
+    wire: &'a CapturedOccurrence,
+    location: &'a Location,
+    surface: usize,
+    surface_location: &'a Location,
+}
+struct StripDecodeInput<'a, 'cells, 'budget, F: FnMut() -> bool> {
+    cells: &'a Cells<'cells>,
+    root: &'a CapturedOccurrence,
+    wire: &'a CapturedOccurrence,
+    budget: &'a mut Budget<'budget, F>,
+}
+struct PositionedStripInput<'a, 'cells, 'budget, F: FnMut() -> bool> {
+    cells: &'a Cells<'cells>,
+    root_location: Location,
+    wire: &'a CapturedOccurrence,
+    replay: &'a mut PlacementReplay,
+    budget: &'a mut Budget<'budget, F>,
+}
 pub(super) struct Strip {
     pub basis: StoredSplineInput,
     pub direction: [f64; 3],
@@ -54,28 +79,49 @@ pub(super) fn decode<F: FnMut() -> bool>(
     budget.poll()?;
     let cells = Cells { input };
     let (root, wire) = root_wire(&cells)?;
-    decode_strip(&cells, root, wire, budget)
+    decode_strip(StripDecodeInput {
+        cells: &cells,
+        root,
+        wire,
+        budget,
+    })
 }
-fn decode_strip<F: FnMut() -> bool>(
-    cells: &Cells<'_>,
-    root: &CapturedOccurrence,
-    wire: &CapturedOccurrence,
-    budget: &mut Budget<'_, F>,
-) -> CheckResult<Strip> {
+fn decode_strip<F: FnMut() -> bool>(input: StripDecodeInput<'_, '_, '_, F>) -> CheckResult<Strip> {
+    let StripDecodeInput {
+        cells,
+        root,
+        wire,
+        budget,
+    } = input;
     let mut replay = PlacementReplay::new();
     let root_location = replay.location(&root.location, budget)?;
-    let (surface, surface_location, basis, direction, tolerance) =
-        support_frame(cells, &root_location, &mut replay, budget)?;
-    let edges = positioned_edges(
+    decode_positioned_strip(PositionedStripInput {
         cells,
-        &root_location,
+        root_location,
         wire,
+        replay: &mut replay,
+        budget,
+    })
+}
+fn decode_positioned_strip<F: FnMut() -> bool>(
+    input: PositionedStripInput<'_, '_, '_, F>,
+) -> CheckResult<Strip> {
+    let (surface, surface_location, basis, direction, tolerance) = support_frame(
+        input.cells,
+        &input.root_location,
+        input.replay,
+        input.budget,
+    )?;
+    let edges = positioned_edges(
+        input.cells,
+        &input.root_location,
+        input.wire,
         surface,
         &surface_location,
-        &mut replay,
-        budget,
+        input.replay,
+        input.budget,
     )?;
-    Ok(strip(basis, direction, surface_location, tolerance, edges)?)
+    strip(basis, direction, surface_location, tolerance, edges)
 }
 fn strip(
     basis: &StoredSplineInput,
@@ -146,17 +192,16 @@ fn positioned_edges<F: FnMut() -> bool>(
     replay: &mut PlacementReplay,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<Vec<EdgeUse>> {
-    let wire_location = wire_location(root_location, wire, replay, budget)?;
-    wire_edges(
-        cells,
+    let location = wire_location(root_location, wire, replay, budget)?;
+    let context = WireEdgeContext {
         wire,
-        &wire_location,
+        location: &location,
         surface,
         surface_location,
-        replay,
-        budget,
-    )
+    };
+    wire_edges(cells, &context, replay, budget)
 }
+
 fn wire_location<F: FnMut() -> bool>(
     root_location: &Location,
     wire: &CapturedOccurrence,
@@ -169,30 +214,17 @@ fn wire_location<F: FnMut() -> bool>(
 }
 fn wire_edges<F: FnMut() -> bool>(
     cells: &Cells<'_>,
-    wire: &CapturedOccurrence,
-    wire_location: &Location,
-    surface: usize,
-    surface_location: &Location,
+    context: &WireEdgeContext<'_>,
     replay: &mut PlacementReplay,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<Vec<EdgeUse>> {
-    let children = boundary_edges(cells, wire.owner)?;
+    let children = boundary_edges(cells, context.wire.owner)?;
     children
         .iter()
-        .map(|child| {
-            decode_edge(
-                cells,
-                wire,
-                child,
-                wire_location,
-                surface,
-                surface_location,
-                replay,
-                budget,
-            )
-        })
+        .map(|child| decode_edge(cells, context, child, replay, budget))
         .collect()
 }
+
 fn boundary_edges<'a>(cells: &Cells<'a>, owner: usize) -> CheckResult<&'a [CapturedOccurrence]> {
     let children = cells.children(owner, ShapeEnum::Wire)?;
     if children.len() != 4 {
@@ -206,24 +238,21 @@ fn boundary_edges<'a>(cells: &Cells<'a>, owner: usize) -> CheckResult<&'a [Captu
 }
 fn decode_edge<F: FnMut() -> bool>(
     cells: &Cells<'_>,
-    wire: &CapturedOccurrence,
+    context: &WireEdgeContext<'_>,
     child: &CapturedOccurrence,
-    wire_location: &Location,
-    surface: usize,
-    surface_location: &Location,
     replay: &mut PlacementReplay,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<EdgeUse> {
-    edges::decode(
+    edges::decode(edges::EdgeDecodeInput {
         cells,
-        child,
-        wire.orientation,
-        wire_location,
-        surface,
-        surface_location,
+        occurrence: child,
+        wire_orientation: context.wire.orientation,
+        wire_location: context.location,
+        surface: context.surface,
+        surface_location: context.surface_location,
         replay,
         budget,
-    )
+    })
 }
 
 fn face<'a>(
@@ -234,6 +263,18 @@ fn face<'a>(
     f64,
 )> {
     let owner = cells.input.root().owner;
+    let (surface, location, tolerance, natural_restriction) = face_fields(cells, owner)?;
+    if natural_restriction {
+        return Err(unsupported(
+            owner,
+            "natural restriction",
+            "enabled",
+            "explicit finite trim wire",
+        ));
+    }
+    Ok((surface, location, tolerance))
+}
+fn face_fields<'a>(cells: &Cells<'a>, owner: usize) -> CheckResult<FaceFields<'a>> {
     let Cell::Face {
         surface,
         location,
@@ -243,16 +284,9 @@ fn face<'a>(
     else {
         return Err(invalid(owner, "face slot", "wrong type"));
     };
-    if *natural_restriction {
-        return Err(unsupported(
-            owner,
-            "natural restriction",
-            "enabled",
-            "explicit finite trim wire",
-        ));
-    }
-    Ok((*surface, location, *tolerance))
+    Ok((*surface, location, *tolerance, *natural_restriction))
 }
+
 fn support<'a>(cells: &Cells<'a>, owner: usize) -> CheckResult<(&'a StoredSplineInput, [f64; 3])> {
     let Cell::Extrusion { basis, direction } = cells.one(
         owner,

@@ -3,10 +3,20 @@ use super::*;
 use martensite_tkbrep::brep::face_input_capture::CapturedOccurrence;
 use martensite_tkg3d::top_abs;
 
+pub(super) struct EdgeDecodeInput<'ctx, 'input, 'budget, F: FnMut() -> bool> {
+    pub(super) cells: &'ctx Cells<'input>,
+    pub(super) occurrence: &'ctx CapturedOccurrence,
+    pub(super) wire_orientation: Orientation,
+    pub(super) wire_location: &'ctx Location,
+    pub(super) surface: usize,
+    pub(super) surface_location: &'ctx Location,
+    pub(super) replay: &'ctx mut PlacementReplay,
+    pub(super) budget: &'ctx mut Budget<'budget, F>,
+}
 struct DecodeContext<'ctx, 'input, 'budget, F: FnMut() -> bool> {
     cells: &'ctx Cells<'input>,
     surface: usize,
-    edge_location: &'ctx Location,
+    edge_location: Location,
     surface_location: &'ctx Location,
     replay: &'ctx mut PlacementReplay,
     budget: &'ctx mut Budget<'budget, F>,
@@ -23,43 +33,86 @@ struct SpatialUse {
     placement: MetricEmbedding<3>,
     vertices: Vec<VertexUse>,
 }
+struct EdgeUseBuild {
+    owner: usize,
+    location: Location,
+    orientation: Orientation,
+    tolerance: f64,
+    pcurve: PcurveUse,
+    geometry: SpatialUse,
+}
 
 pub(super) fn decode<F: FnMut() -> bool>(
-    cells: &Cells<'_>,
-    occurrence: &CapturedOccurrence,
-    wire_location: &Location,
-    surface: usize,
-    surface_location: &Location,
-    replay: &mut PlacementReplay,
-    budget: &mut Budget<'_, F>,
+    input: EdgeDecodeInput<'_, '_, '_, F>,
 ) -> CheckResult<EdgeUse> {
-    let owner = occurrence.owner;
-    let location = occurrence_location(occurrence, wire_location, replay, budget)?;
-    let orientation = top_abs::compose(wire_orientation, occurrence.orientation);
-    let mut context = DecodeContext {
-        cells,
-        surface,
-        edge_location: &location,
-        surface_location,
-        replay,
-        budget,
-    };
-    let (representations, tolerance) = edge_fields(cells, owner)?;
-    let (spatial, parametric) = representations_pair(&mut context, representations)?;
-    let pcurve = pcurve(&mut context, parametric, orientation)?;
-    let geometry = spatial_use(&mut context, owner, spatial, parametric)?;
-    Ok(edge_use(
+    let owner = input.occurrence.owner;
+    let location = edge_location(&mut input)?;
+    let orientation = top_abs::compose(input.wire_orientation, input.occurrence.orientation);
+    let mut context = decode_context(input, location);
+    let (tolerance, pcurve, geometry) = edge_parts(&mut context, owner, orientation)?;
+    Ok(finish_edge(
+        context,
         owner,
-        location,
         orientation,
         tolerance,
         pcurve,
         geometry,
     ))
 }
+fn edge_location<F: FnMut() -> bool>(
+    input: &mut EdgeDecodeInput<'_, '_, '_, F>,
+) -> CheckResult<Location> {
+    occurrence_location(
+        input.occurrence,
+        input.wire_location,
+        input.replay,
+        input.budget,
+    )
+}
+fn finish_edge<F: FnMut() -> bool>(
+    context: DecodeContext<'_, '_, '_, F>,
+    owner: usize,
+    orientation: Orientation,
+    tolerance: f64,
+    pcurve: PcurveUse,
+    geometry: SpatialUse,
+) -> EdgeUse {
+    edge_use(EdgeUseBuild {
+        owner,
+        location: context.edge_location,
+        orientation,
+        tolerance,
+        pcurve,
+        geometry,
+    })
+}
+fn decode_context<'ctx, 'input, 'budget, F: FnMut() -> bool>(
+    input: EdgeDecodeInput<'ctx, 'input, 'budget, F>,
+    edge_location: Location,
+) -> DecodeContext<'ctx, 'input, 'budget, F> {
+    DecodeContext {
+        cells: input.cells,
+        surface: input.surface,
+        edge_location,
+        surface_location: input.surface_location,
+        replay: input.replay,
+        budget: input.budget,
+    }
+}
+
+fn edge_parts<F: FnMut() -> bool>(
+    context: &mut DecodeContext<'_, '_, '_, F>,
+    owner: usize,
+    orientation: Orientation,
+) -> CheckResult<(f64, PcurveUse, SpatialUse)> {
+    let (representations, tolerance) = edge_fields(context.cells, owner)?;
+    let (spatial, parametric) = representations_pair(context, representations)?;
+    let pcurve = pcurve(context, parametric, orientation)?;
+    let geometry = spatial_use(context, owner, spatial, parametric)?;
+    Ok((tolerance, pcurve, geometry))
+}
 fn occurrence_location<F: FnMut() -> bool>(
     occurrence: &CapturedOccurrence,
-    wire_orientation: Orientation,
     wire_location: &Location,
     replay: &mut PlacementReplay,
     budget: &mut Budget<'_, F>,
@@ -69,27 +122,20 @@ fn occurrence_location<F: FnMut() -> bool>(
         .map_err(native)?;
     Ok(location)
 }
-fn edge_use(
-    owner: usize,
-    location: Location,
-    orientation: Orientation,
-    tolerance: f64,
-    pcurve: PcurveUse,
-    geometry: SpatialUse,
-) -> EdgeUse {
+fn edge_use(parts: EdgeUseBuild) -> EdgeUse {
     EdgeUse {
-        owner,
-        location,
-        orientation,
-        pcurve: pcurve.axis,
-        cached_endpoints: pcurve.cached_endpoints,
-        range: geometry.range,
-        curve: geometry.curve,
-        placement: geometry.placement,
-        tolerance,
-        branch: pcurve.branch,
-        seam: pcurve.seam,
-        vertices: geometry.vertices,
+        owner: parts.owner,
+        location: parts.location,
+        orientation: parts.orientation,
+        pcurve: parts.pcurve.axis,
+        cached_endpoints: parts.pcurve.cached_endpoints,
+        range: parts.geometry.range,
+        curve: parts.geometry.curve,
+        placement: parts.geometry.placement,
+        tolerance: parts.tolerance,
+        branch: parts.pcurve.branch,
+        seam: parts.pcurve.seam,
+        vertices: parts.geometry.vertices,
     }
 }
 
@@ -162,14 +208,7 @@ fn record_parametric<F: FnMut() -> bool>(
     if actual_surface != context.surface {
         return Ok(());
     }
-    let placed = context
-        .edge_location
-        .multiplied(
-            &context
-                .replay
-                .location(context.cells.location(owner)?, context.budget)?,
-        )
-        .map_err(native)?;
+    let placed = face_representation_location(context, owner)?;
     if placed == *context.surface_location && parametric.replace(owner).is_some() {
         return Err(unsupported(
             owner,
@@ -180,6 +219,20 @@ fn record_parametric<F: FnMut() -> bool>(
     }
     Ok(())
 }
+fn face_representation_location<F: FnMut() -> bool>(
+    context: &mut DecodeContext<'_, '_, '_, F>,
+    owner: usize,
+) -> CheckResult<Location> {
+    context
+        .edge_location
+        .multiplied(
+            &context
+                .replay
+                .location(context.cells.location(owner)?, context.budget)?,
+        )
+        .map_err(native)
+}
+
 fn representation_pair(
     owners: &[usize],
     spatial: Option<usize>,
@@ -254,14 +307,7 @@ fn validate_pcurve_location<F: FnMut() -> bool>(
     owner: usize,
     actual_surface: usize,
 ) -> CheckResult<()> {
-    let located = context
-        .edge_location
-        .multiplied(
-            &context
-                .replay
-                .location(context.cells.location(owner)?, context.budget)?,
-        )
-        .map_err(native)?;
+    let located = face_representation_location(context, owner)?;
     if actual_surface != context.surface || located != *context.surface_location {
         return Err(unsupported(
             owner,
@@ -272,6 +318,7 @@ fn validate_pcurve_location<F: FnMut() -> bool>(
     }
     Ok(())
 }
+
 fn seam_fields(cells: &Cells<'_>, owner: usize) -> Option<(usize, [[f64; 2]; 2])> {
     cells.input.cells().iter().find_map(|(id, cell)| {
         if *id == owner {
@@ -328,14 +375,7 @@ fn spatial_use<F: FnMut() -> bool>(
 ) -> CheckResult<SpatialUse> {
     let range = checked_range(context.cells, owner, spatial, parametric)?;
     let curve = space(context.cells, spatial)?;
-    let placed = context
-        .edge_location
-        .multiplied(
-            &context
-                .replay
-                .location(context.cells.location(spatial)?, context.budget)?,
-        )
-        .map_err(native)?;
+    let placed = spatial_location(context, spatial)?;
     let vertices = vertices(context, owner)?;
     Ok(SpatialUse {
         range,
@@ -344,6 +384,20 @@ fn spatial_use<F: FnMut() -> bool>(
         vertices,
     })
 }
+fn spatial_location<F: FnMut() -> bool>(
+    context: &mut DecodeContext<'_, '_, '_, F>,
+    spatial: usize,
+) -> CheckResult<Location> {
+    context
+        .edge_location
+        .multiplied(
+            &context
+                .replay
+                .location(context.cells.location(spatial)?, context.budget)?,
+        )
+        .map_err(native)
+}
+
 fn checked_range(
     cells: &Cells<'_>,
     owner: usize,
@@ -355,17 +409,26 @@ fn checked_range(
         || range.iter().any(|value| !value.is_finite())
         || range[0] >= range[1]
     {
-        return Err(invalid(
-            owner,
-            "same finite increasing range",
-            format!(
-                "spatial={range:?}, parametric={:?}",
-                cells.range(parametric)?
-            ),
-        ));
+        return Err(invalid_range(cells, owner, range, parametric)?);
     }
     Ok(range)
 }
+fn invalid_range(
+    cells: &Cells<'_>,
+    owner: usize,
+    range: [f64; 2],
+    parametric: usize,
+) -> CheckResult<ClosedFaceCompletion> {
+    Ok(invalid(
+        owner,
+        "same finite increasing range",
+        format!(
+            "spatial={range:?}, parametric={:?}",
+            cells.range(parametric)?
+        ),
+    ))
+}
+
 fn vertices<F: FnMut() -> bool>(
     context: &mut DecodeContext<'_, '_, '_, F>,
     owner: usize,
