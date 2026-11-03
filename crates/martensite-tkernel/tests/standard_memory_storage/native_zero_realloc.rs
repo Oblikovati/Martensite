@@ -11,7 +11,12 @@ pub(super) fn existing_zero_reallocation_returns_null() -> bool {
             !original.is_null(),
             "malloc(8) returned null; expected probe storage"
         );
-        libc::realloc(original, 0)
+        // #369: LLVM may replace realloc(p, 0) with a constant result. Query the
+        // actual runtime provider through an opaque typed pointer instead.
+        let resize = std::hint::black_box(
+            libc::realloc as unsafe extern "C" fn(*mut libc::c_void, usize) -> *mut libc::c_void,
+        );
+        resize(original, 0)
     };
     let refused = moved.is_null();
     if !refused {

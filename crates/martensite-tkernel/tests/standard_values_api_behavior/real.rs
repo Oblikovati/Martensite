@@ -133,3 +133,31 @@ fn elementary_wrappers_call_the_c_library() {
     assert_eq!((real::ceiling(-0.5), real::floor(-0.5)), (-0.0, -1.0));
     assert_eq!((real::integer_part(2.7), real::round(0.5)), (2.0, 1.0));
 }
+
+#[test]
+fn next_after_quiet_nan_sign_payload_and_operand_priority() {
+    let words = [
+        0x7ff8_0000_0000_0001,
+        0xfff8_0000_0000_0123,
+        0x7fff_ffff_ffff_ffff,
+    ];
+    for first in words {
+        let x = std::hint::black_box(f64::from_bits(first));
+        assert_eq!(real::next_after(x, 1.).to_bits(), first);
+        assert_eq!(real::next_after(-1., x).to_bits(), first);
+        for second in words {
+            let y = std::hint::black_box(f64::from_bits(second));
+            assert_eq!(real::next_after(x, y).to_bits(), second);
+        }
+    }
+}
+
+#[test]
+fn next_after_signaling_nan_keeps_classification_without_payload_promise() {
+    let signaling = std::hint::black_box(f64::from_bits(0x7ff0_0000_0000_0123));
+    let quiet = std::hint::black_box(f64::from_bits(0xfff8_0000_0000_0456));
+    assert!(real::next_after(signaling, 1.).is_nan());
+    assert!(real::next_after(1., signaling).is_nan());
+    assert!(real::next_after(signaling, quiet).is_nan());
+    assert!(real::next_after(quiet, signaling).is_nan());
+}
