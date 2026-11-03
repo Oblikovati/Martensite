@@ -5,9 +5,9 @@ pub(super) fn certify<F: FnMut() -> bool>(
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<usize> {
     let mut failures = std::array::from_fn(|_| ClosedFacePlaneRefusal::ZeroDirection);
-    for axis in 0..3 {
+    for (axis, failure) in failures.iter_mut().enumerate() {
         if let Some(cause) = candidate(carrier, axis, budget)? {
-            failures[axis] = cause;
+            *failure = cause;
         } else {
             return Ok(axis);
         }

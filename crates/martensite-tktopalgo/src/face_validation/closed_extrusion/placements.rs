@@ -158,9 +158,9 @@ fn form_error(transform: Transform3) -> ClosedFaceCompletion {
 fn matrix_coefficients(transform: Transform3) -> CheckResult<[[f64; 3]; 3]> {
     let matrix = transform.matrix();
     let mut linear = [[0.; 3]; 3];
-    for row in 0..3 {
-        for column in 0..3 {
-            linear[row][column] = matrix
+    for (row, coefficients) in linear.iter_mut().enumerate() {
+        for (column, coefficient) in coefficients.iter_mut().enumerate() {
+            *coefficient = matrix
                 .value(row as i32 + 1, column as i32 + 1)
                 .map_err(native)?;
         }
