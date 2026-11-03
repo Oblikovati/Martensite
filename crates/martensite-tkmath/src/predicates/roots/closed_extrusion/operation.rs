@@ -62,7 +62,7 @@ fn self_obligations(
         let witness = self_span::certify_span(span, index).map_err(Completion::NotExcluded)?;
         witnesses.push(ExclusionWitness::SelfSpan {
             span: index,
-            witness: Box::new(witness),
+            witness,
         });
         budget.finish_obligation();
     }
