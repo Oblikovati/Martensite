@@ -1,4 +1,5 @@
 //! Expanded stored-input capture is explicit and retains every support reference.
+mod refusal_replay;
 use super::*;
 use martensite_tkernel::ncollection::Array2;
 use martensite_tkg3d::geom::{GeomBSplineSurface, GeomPlane};

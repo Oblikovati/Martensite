@@ -1,5 +1,5 @@
 //! Typed retained owners keep every discovered cell alive until all leases drop.
-use super::types::FaceCaptureIncomplete as Incomplete;
+use super::types::{FaceCaptureBehavior as Behavior, FaceCaptureIncomplete as Incomplete};
 use crate::{brep::*, topods::TShape};
 use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient};
 use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dCurve, Geom2dLine};
@@ -67,7 +67,10 @@ pub(super) fn spatial_owner(handle: &Handle<dyn GeomCurve>) -> Result<Owner, Inc
     Err(unsupported(handle, "stored line or clamped spline curve"))
 }
 
-pub(super) fn surface_owner(handle: &Handle<dyn GeomSurface>) -> Result<Owner, Incomplete> {
+pub(super) fn surface_owner(
+    handle: &Handle<dyn GeomSurface>,
+    behavior: Behavior,
+) -> Result<Owner, Incomplete> {
     let plane = handle.cast::<GeomPlane>();
     if exact(&plane) {
         return Ok(Owner::Plane(plane));
@@ -75,6 +78,15 @@ pub(super) fn surface_owner(handle: &Handle<dyn GeomSurface>) -> Result<Owner, I
     let surface = handle.cast::<GeomSurfaceOfLinearExtrusion>();
     if exact(&surface) {
         return Ok(Owner::Extrusion(surface));
+    }
+    tensor_owner(handle, behavior)
+}
+fn tensor_owner(handle: &Handle<dyn GeomSurface>, behavior: Behavior) -> Result<Owner, Incomplete> {
+    if behavior == Behavior::StoredRepresentationsV1 {
+        return Err(unsupported(
+            handle,
+            "stored plane or linear extrusion surface",
+        ));
     }
     let spline = handle.cast::<GeomBSplineSurface>();
     if exact(&spline) {
@@ -100,6 +112,7 @@ pub(super) fn planar_owner(handle: &Handle<dyn Geom2dCurve>) -> Result<Owner, In
 
 pub(super) fn representation_owner(
     handle: &Handle<dyn BRepCurveRepresentation>,
+    behavior: Behavior,
 ) -> Result<Owner, Incomplete> {
     let seam = handle.cast::<BRepCurveOnClosedSurface>();
     if exact(&seam) {
@@ -113,9 +126,15 @@ pub(super) fn representation_owner(
     if exact(&curve) {
         return Ok(Owner::Spatial(curve));
     }
-    regularity_owner(handle)
+    regularity_owner(handle, behavior)
 }
-fn regularity_owner(handle: &Handle<dyn BRepCurveRepresentation>) -> Result<Owner, Incomplete> {
+fn regularity_owner(
+    handle: &Handle<dyn BRepCurveRepresentation>,
+    behavior: Behavior,
+) -> Result<Owner, Incomplete> {
+    if behavior == Behavior::StoredRepresentationsV1 {
+        return Err(unsupported(handle, "spatial curve or one/two line pcurves"));
+    }
     let regularity = handle.cast::<BRepCurveOn2Surfaces>();
     if exact(&regularity) {
         return Ok(Owner::Regularity(regularity));
