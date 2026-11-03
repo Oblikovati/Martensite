@@ -12,6 +12,7 @@ pub struct ClosedFaceReport {
     pub(super) work: ClosedFaceWork,
     pub(super) errors: Vec<ClosedFaceErrorBound>,
     pub(super) support: Option<ClosedExtrusionReport>,
+    pub(super) boundary: Option<super::boundary_report::ClosedFaceBoundaryReport>,
 }
 impl ClosedFaceReport {
     /// Read the owned input, without live geometry; `report.input()`.
@@ -42,6 +43,10 @@ impl ClosedFaceReport {
     pub fn support(&self) -> Option<&ClosedExtrusionReport> {
         self.support.as_ref()
     }
+    /// Read the separately bound actual-boundary proof, including incomplete work; `report.boundary()`.
+    pub fn boundary(&self) -> Option<&super::boundary_report::ClosedFaceBoundaryReport> {
+        self.boundary.as_ref()
+    }
     /// Read the non-destructive validation history; `report.history()`.
     pub fn history(&self) -> ClosedFaceHistory {
         ClosedFaceHistory::NoGeometryChanges
@@ -55,17 +60,33 @@ impl ClosedFaceReport {
             || !c.self_exclusion
             || !c.tolerances
             || self.support.as_ref()?.certificate().is_none()
+            || !self.required_boundary_verified()
         {
             return None;
         }
-        Some(ClosedFaceCertificate { report: self })
+        Some(ClosedFaceCertificate {
+            report: self,
+            mode: self.policy.check_mode()?,
+        })
+    }
+    fn required_boundary_verified(&self) -> bool {
+        match self.policy.version {
+            1 => true,
+            2 => self.boundary.as_ref().is_some_and(|proof| proof.complete()),
+            _ => false,
+        }
     }
 }
 /// Complete represented-face proof bound to its immutable input, not a later live handle.
 pub struct ClosedFaceCertificate<'a> {
     report: &'a ClosedFaceReport,
+    mode: ClosedFaceCheckMode,
 }
 impl ClosedFaceCertificate<'_> {
+    /// Read the exact represented-geometry contract proved; `certificate.check_mode()`.
+    pub fn check_mode(&self) -> ClosedFaceCheckMode {
+        self.mode
+    }
     /// Read the actual certified input; `certificate.input()`.
     pub fn input(&self) -> &FaceInputSnapshot {
         &self.report.input

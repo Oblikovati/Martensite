@@ -96,6 +96,7 @@ fn initial_report(input: FaceInputSnapshot, policy: ClosedFacePolicy) -> ClosedF
         work: ClosedFaceWork::default(),
         errors: Vec::new(),
         support: None,
+        boundary: None,
     }
 }
 

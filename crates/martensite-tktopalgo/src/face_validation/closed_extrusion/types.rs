@@ -4,13 +4,13 @@ use martensite_tkmath::predicates::roots::{
     closed_extrusion::{
         ClosedExtrusionCause, ClosedExtrusionPolicy, ClosedExtrusionProjectionContact,
     },
-    metric_bounds::ResidualError,
+    metric_bounds::{CurveIdentityDecision, ResidualError},
 };
 
 /// Finite version-one settings; `ClosedFacePolicy::bounded()` selects explicit caps.
 #[derive(Clone, Copy, Debug)]
 pub struct ClosedFacePolicy {
-    /// Accepted operation version, currently one.
+    /// Explicit boundary check version: one is coincident, two is piecewise.
     pub version: u32,
     /// Whole-support span and exact proof limits.
     pub support: ClosedExtrusionPolicy,
@@ -35,6 +35,48 @@ impl ClosedFacePolicy {
             max_location_power: 1024,
         }
     }
+}
+/// Exact obligations selected for the represented face; inspect `policy.check_mode()`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ClosedFaceCheckMode {
+    /// Actual spatial boundary is exactly coincident with the ideal trimmed support.
+    CoincidentBoundary,
+    /// Ideal surface and actual boundary are separately injective with exact transverse joins.
+    /// Their same-edge boundary representations need only satisfy stored metric limits.
+    PiecewiseRepresentations,
+}
+impl ClosedFacePolicy {
+    /// Select finite piecewise boundary proofs explicitly; `ClosedFacePolicy::piecewise_boundary()`.
+    pub fn piecewise_boundary() -> Self {
+        Self {
+            version: 2,
+            ..Self::bounded()
+        }
+    }
+    /// Read the selected represented-geometry contract; `policy.check_mode()`.
+    pub fn check_mode(&self) -> Option<ClosedFaceCheckMode> {
+        match self.version {
+            1 => Some(ClosedFaceCheckMode::CoincidentBoundary),
+            2 => Some(ClosedFaceCheckMode::PiecewiseRepresentations),
+            _ => None,
+        }
+    }
+}
+/// An exact coordinate-functional candidate failed a necessary carrier condition.
+#[derive(Clone, Debug)]
+pub enum ClosedFacePlaneRefusal {
+    /// The extrusion has zero height in this coordinate functional.
+    ZeroDirection,
+    /// A source coefficient did not lie in the ideal basal plane.
+    IdealVariation {
+        coefficient: usize,
+        actual: CurveIdentityDecision,
+    },
+    /// An actual carrier coefficient did not lie at the declared reference height.
+    CarrierLevel {
+        coefficient: usize,
+        actual: CurveIdentityDecision,
+    },
 }
 /// A source field outside this finite operation's represented domain.
 #[derive(Clone, Debug, PartialEq)]
@@ -78,6 +120,18 @@ pub enum ClosedFaceIncomplete {
     Projection(ClosedExtrusionProjectionContact),
     /// The exact metric operation did not complete.
     Metric(ResidualError),
+    /// A required exact actual-boundary relation did not hold.
+    BoundaryRelation {
+        owner: usize,
+        relation: &'static str,
+        actual: CurveIdentityDecision,
+    },
+    /// No tested coordinate functional certified a common transverse plane.
+    BoundaryPlane([ClosedFacePlaneRefusal; 3]),
+    /// The actual carrier's independent support proof remained incomplete.
+    BoundarySupport(ClosedExtrusionCause),
+    /// An actual carrier projection could not be excluded.
+    BoundaryProjection(ClosedExtrusionProjectionContact),
     /// Metric conformance alone does not transfer support injectivity to an altered boundary.
     BoundaryIdentity(ClosedFaceErrorBound),
     /// A coefficient upper was insufficient; this does not prove curve exceedance.
