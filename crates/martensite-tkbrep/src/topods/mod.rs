@@ -19,6 +19,7 @@ mod shape_read_source;
 mod shape_reference_scope;
 mod shape_topology_storage;
 mod tshape;
+pub(crate) use tshape::TShapeFields;
 mod tshapes;
 mod typed;
 

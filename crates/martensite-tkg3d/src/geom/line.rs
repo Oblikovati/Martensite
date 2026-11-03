@@ -1,7 +1,9 @@
 //! `GeomLine`: an infinite line parameterized by arc length from its origin.
+mod input_lease;
 use super::curve::{GeomCurve, GeomCurveD1, GeomCurveD2, GeomCurveD3, dump_curve};
 use super::errors;
 use super::geometry::GeomGeometry;
+pub use input_lease::LineInputLease;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;

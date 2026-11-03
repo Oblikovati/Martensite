@@ -16,11 +16,11 @@ use std::io;
 /// The locked fields of `BRep_CurveOnSurface`: the protected `myUV1`, `myUV2` and the
 /// private curve and surface.
 #[derive(Clone)]
-struct CurveOnSurfaceFields {
-    uv1: Point2,
-    uv2: Point2,
-    pcurve: Handle<dyn Geom2dCurve>,
-    surface: Handle<dyn GeomSurface>,
+pub(crate) struct CurveOnSurfaceFields {
+    pub(crate) uv1: Point2,
+    pub(crate) uv2: Point2,
+    pub(crate) pcurve: Handle<dyn Geom2dCurve>,
+    pub(crate) surface: Handle<dyn GeomSurface>,
 }
 
 /// `BRep_CurveOnSurface`: a 2D curve on a located surface, with the UV points of its
@@ -40,8 +40,8 @@ struct CurveOnSurfaceFields {
 /// ```
 pub struct BRepCurveOnSurface {
     transient: StandardTransient,
-    gcurve: GCurveBase,
-    fields: SharedState<CurveOnSurfaceFields>,
+    pub(crate) gcurve: GCurveBase,
+    pub(crate) fields: SharedState<CurveOnSurfaceFields>,
 }
 impl_transient!(BRepCurveOnSurface, "BRep_CurveOnSurface", dyn BRepGCurve, transient,
     interfaces: [dyn BRepCurveRepresentation, dyn BRepGCurve]);

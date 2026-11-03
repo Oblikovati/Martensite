@@ -23,6 +23,7 @@ fn startup_precedes_geometry_capture_and_group_controls() {
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkg2d --package martensite-tkg3d --lib cache_inputs_tests -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkservice --test toolkit -- capture_buffer_reference_checks --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkservice --test toolkit -- graphic3d_group graphic3d_stable_group_nodes --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkbrep --lib brep::face_input_capture -- --test-threads=1 --show-output".to_owned(),
         ]
     );
 }
@@ -155,4 +156,28 @@ fn groups_use_the_same_instrumentation_with_both_actual_module_filters() {
         "--show-output",
     ]);
     assert_eq!(command, expected);
+}
+
+#[test]
+fn coherent_face_capture_failure_refuses_the_required_sanitizer_check() {
+    let command = face_input_controls(Path::new("/repo")).display();
+    let runner = runner().with_exit_code(&command, 66);
+    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    assert!(error.to_string().contains("66"));
+    assert_eq!(runner.commands().len(), 7);
+}
+#[test]
+fn coherent_face_capture_uses_the_same_pinned_instrumentation() {
+    let root = Path::new("/repo");
+    let expected = sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkbrep",
+        "--lib",
+        "brep::face_input_capture",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ]);
+    assert_eq!(face_input_controls(root), expected);
 }

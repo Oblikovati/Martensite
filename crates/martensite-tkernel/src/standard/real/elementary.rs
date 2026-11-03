@@ -169,17 +169,16 @@ pub fn sqrt(value: f64) -> f64 {
 
 /// The neighbour of `value` toward `direction`, as C `nextafter`.
 ///
-/// Equal arguments return `direction` (so `next_after(0.0, -0.0)` is `-0.0`), and a NaN
-/// argument returns the sum of both, which propagates the NaN as the C library does.
+/// Equal arguments return `direction` (so `next_after(0.0, -0.0)` is `-0.0`). Quiet NaNs
+/// retain their sign and payload, preferring `direction` when both arguments are NaN.
+/// Signaling NaNs retain the arithmetic path; their payload and exception flags are unspecified.
 ///
 /// ```
 /// assert_eq!(martensite_tkernel::standard::real::next_after(1.0, 2.0), 1.0 + f64::EPSILON);
 /// ```
 pub fn next_after(value: f64, direction: f64) -> f64 {
     if value.is_nan() || direction.is_nan() {
-        // glibc returns `x + y`, compiled with `y` as the SSE destination operand: when both
-        // are NaN the payload of `direction` wins (nextafter(NaN(0x123), -NaN) = -NaN).
-        return direction + value;
+        return next_after_nan(value, direction);
     }
     if value == direction {
         return direction;
@@ -189,6 +188,22 @@ pub fn next_after(value: f64, direction: f64) -> f64 {
     } else {
         value.next_down()
     }
+}
+
+// #370: floating addition may commute operands even without fast-math, so it cannot
+// encode the existing quiet-NaN payload priority. Signaling arithmetic stays unchanged.
+fn next_after_nan(value: f64, direction: f64) -> f64 {
+    if signaling_nan(value) || signaling_nan(direction) {
+        return direction + value;
+    }
+    if direction.is_nan() {
+        return direction;
+    }
+    value
+}
+
+fn signaling_nan(value: f64) -> bool {
+    value.is_nan() && value.to_bits() & 0x0008_0000_0000_0000 == 0
 }
 
 /// `std::copysign`, the magnitude of the first with the sign of the second.

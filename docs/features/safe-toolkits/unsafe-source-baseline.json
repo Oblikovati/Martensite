@@ -305,7 +305,7 @@
   "crates/martensite-tkernel/tests/standard_c_string_format_full.rs": {"unsafe_keywords":1,"unsafe_code_mentions":1,"kinds":{"block":1}},
   "crates/martensite-tkernel/tests/standard_character_locale.rs": {"unsafe_keywords":3,"unsafe_code_mentions":1,"kinds":{"block":3}},
   "crates/martensite-tkernel/tests/standard_mapped_region_behavior.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":2}},
-  "crates/martensite-tkernel/tests/standard_memory_storage/native_zero_realloc.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":2}},
+  "crates/martensite-tkernel/tests/standard_memory_storage/native_zero_realloc.rs": {"unsafe_keywords":3,"unsafe_code_mentions":1,"kinds":{"block":2,"extern":1}},
   "crates/martensite-tkernel/tests/support/linear_unpublished_tail.rs": {"unsafe_keywords":2,"unsafe_code_mentions":1,"kinds":{"block":1,"function":1}},
   "crates/martensite-tkernel/tests/support/ubtree_failed_pair_repair.rs": {"unsafe_keywords":4,"unsafe_code_mentions":1,"kinds":{"block":3,"function":1}},
   "crates/martensite-tkernel/tests/typed_allocator_method_contracts.rs": {"unsafe_keywords":9,"unsafe_code_mentions":1,"kinds":{"block":9}},

@@ -17,11 +17,11 @@ use std::io;
 
 /// The private fields of `BRep_CurveOnClosedSurface`.
 #[derive(Clone)]
-struct ClosedSurfaceFields {
-    pcurve2: Handle<dyn Geom2dCurve>,
-    continuity: Continuity,
-    uv21: Point2,
-    uv22: Point2,
+pub(crate) struct ClosedSurfaceFields {
+    pub(crate) pcurve2: Handle<dyn Geom2dCurve>,
+    pub(crate) continuity: Continuity,
+    pub(crate) uv21: Point2,
+    pub(crate) uv22: Point2,
 }
 
 /// `BRep_CurveOnClosedSurface`: a curve on a closed surface with its second p-curve
@@ -42,8 +42,8 @@ struct ClosedSurfaceFields {
 /// assert!(seam.is_curve_on_closed_surface() && seam.is_regularity());
 /// ```
 pub struct BRepCurveOnClosedSurface {
-    parent: BRepCurveOnSurface,
-    fields: SharedState<ClosedSurfaceFields>,
+    pub(crate) parent: BRepCurveOnSurface,
+    pub(crate) fields: SharedState<ClosedSurfaceFields>,
 }
 impl_transient!(BRepCurveOnClosedSurface, "BRep_CurveOnClosedSurface", BRepCurveOnSurface, parent,
     interfaces: [dyn BRepCurveRepresentation, dyn BRepGCurve]);

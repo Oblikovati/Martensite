@@ -48,7 +48,7 @@ mod transformation;
 pub use transformation::GeomTransformation;
 
 mod line;
-pub use line::GeomLine;
+pub use line::{GeomLine, LineInputLease};
 mod circle;
 pub use circle::GeomCircle;
 mod ellipse;
@@ -77,11 +77,11 @@ pub use spherical_surface::GeomSphericalSurface;
 mod toroidal_surface;
 pub use toroidal_surface::GeomToroidalSurface;
 mod surface_of_linear_extrusion;
-pub use surface_of_linear_extrusion::GeomSurfaceOfLinearExtrusion;
 pub use surface_of_linear_extrusion::self_exclusion::{
     ClosedSplineExtrusionError, ClosedSplineExtrusionExclusion, ClosedSplineExtrusionInconclusive,
-    ClosedSplineExtrusionLayout, ClosedSplineExtrusionSnapshot,
+    ClosedSplineExtrusionInput, ClosedSplineExtrusionLayout, ClosedSplineExtrusionSnapshot,
 };
+pub use surface_of_linear_extrusion::{ExtrusionInputLease, GeomSurfaceOfLinearExtrusion};
 mod surface_of_revolution;
 pub use surface_of_revolution::GeomSurfaceOfRevolution;
 
@@ -89,7 +89,7 @@ mod bezier_curve;
 pub use bezier_curve::GeomBezierCurve;
 mod bspline_curve;
 mod spline_kind;
-pub use bspline_curve::GeomBSplineCurve;
+pub use bspline_curve::{GeomBSplineCurve, SplineInputLease, StoredSplineInput};
 mod offset_curve;
 pub use offset_curve::GeomOffsetCurve;
 mod bezier_surface;

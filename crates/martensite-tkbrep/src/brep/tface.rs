@@ -14,13 +14,13 @@ use std::io;
 
 /// The private fields of `BRep_TFace`.
 #[derive(Clone)]
-struct TFaceFields {
+pub(crate) struct TFaceFields {
     triangulations: Vec<Handle<Triangulation>>,
     active: Handle<Triangulation>,
-    surface: Handle<dyn GeomSurface>,
-    location: Location,
-    tolerance: f64,
-    natural_restriction: bool,
+    pub(crate) surface: Handle<dyn GeomSurface>,
+    pub(crate) location: Location,
+    pub(crate) tolerance: f64,
+    pub(crate) natural_restriction: bool,
 }
 
 /// `BRep_TFace`: a face with its located surface, its tolerance (`RealEpsilon()` when
@@ -34,7 +34,7 @@ struct TFaceFields {
 /// ```
 pub struct BRepTFace {
     parent: topods::TFace,
-    fields: SharedState<TFaceFields>,
+    pub(crate) fields: SharedState<TFaceFields>,
 }
 impl_transient!(BRepTFace, "BRep_TFace", topods::TFace, parent, interfaces: [dyn TShape]);
 

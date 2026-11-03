@@ -14,6 +14,7 @@ mod curve_on_surface;
 mod curve_representation;
 mod dump;
 pub mod errors;
+pub mod face_input_capture;
 mod gcurve;
 mod point_on_curve;
 mod point_representation;

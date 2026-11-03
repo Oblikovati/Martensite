@@ -1,7 +1,9 @@
 //! `Geom2dLine`: an infinite line parameterized by arc length from its origin.
+mod input_lease;
 use super::curve::{Geom2dCurve, Geom2dCurveD1, Geom2dCurveD2, Geom2dCurveD3, dump_curve};
 use super::errors;
 use super::geometry::{Geom2dGeometry, dump_base, dump_class_name, dump_field};
+pub use input_lease::PlanarLineInputLease;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::DumpStream;
