@@ -3,6 +3,7 @@ mod cells;
 mod edges;
 use super::{budget::*, placements::*};
 use cells::Cells;
+use martensite_tkbrep::brep::face_input_capture::CapturedOccurrence;
 use martensite_tkbrep::brep::face_input_capture::{CapturedFaceCell as Cell, FaceInputSnapshot};
 use martensite_tkg3d::{
     geom::StoredSplineInput,
@@ -52,7 +53,54 @@ pub(super) fn decode<F: FnMut() -> bool>(
 ) -> CheckResult<Strip> {
     budget.poll()?;
     let cells = Cells { input };
-    let root = input.root();
+    let (root, wire) = root_wire(&cells)?;
+    decode_strip(&cells, root, wire, budget)
+}
+fn decode_strip<F: FnMut() -> bool>(
+    cells: &Cells<'_>,
+    root: &CapturedOccurrence,
+    wire: &CapturedOccurrence,
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<Strip> {
+    let mut replay = PlacementReplay::new();
+    let root_location = replay.location(&root.location, budget)?;
+    let (surface, surface_location, basis, direction, tolerance) =
+        support_frame(cells, &root_location, &mut replay, budget)?;
+    let edges = positioned_edges(
+        cells,
+        &root_location,
+        wire,
+        surface,
+        &surface_location,
+        &mut replay,
+        budget,
+    )?;
+    Ok(strip(basis, direction, surface_location, tolerance, edges)?)
+}
+fn strip(
+    basis: &StoredSplineInput,
+    direction: [f64; 3],
+    surface_location: Location,
+    tolerance: f64,
+    edges: Vec<EdgeUse>,
+) -> CheckResult<Strip> {
+    Ok(Strip {
+        basis: basis.clone(),
+        direction,
+        placement: embedding(&surface_location)?,
+        tolerance,
+        edges,
+    })
+}
+fn root_wire<'a>(
+    cells: &Cells<'a>,
+) -> CheckResult<(&'a CapturedOccurrence, &'a CapturedOccurrence)> {
+    let root = face_root(cells)?;
+    let wire = boundary_wire(cells, root.owner)?;
+    Ok((root, wire))
+}
+fn face_root<'a>(cells: &Cells<'a>) -> CheckResult<&'a CapturedOccurrence> {
+    let root = cells.input.root();
     if !matches!(
         root.orientation,
         Orientation::Forward | Orientation::Reversed
@@ -63,54 +111,121 @@ pub(super) fn decode<F: FnMut() -> bool>(
             format!("{:?}", root.orientation),
         ));
     }
-    let wires = cells.children(root.owner, ShapeEnum::Face)?;
+    Ok(root)
+}
+fn boundary_wire<'a>(cells: &Cells<'a>, owner: usize) -> CheckResult<&'a CapturedOccurrence> {
+    let wires = cells.children(owner, ShapeEnum::Face)?;
     if wires.len() != 1 {
         return Err(invalid(
-            root.owner,
+            owner,
             "one boundary wire",
             format!("wires={}", wires.len()),
         ));
     }
-    let mut replay = PlacementReplay::new();
-    let root_location = replay.location(&root.location, budget)?;
-    let (surface, face_location, tolerance) = face(&cells)?;
+    Ok(&wires[0])
+}
+fn support_frame<'a, F: FnMut() -> bool>(
+    cells: &Cells<'a>,
+    root_location: &Location,
+    replay: &mut PlacementReplay,
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<(usize, Location, &'a StoredSplineInput, [f64; 3], f64)> {
+    let (surface, face_location, tolerance) = face(cells)?;
     let surface_location = root_location
         .multiplied(&replay.location(face_location, budget)?)
         .map_err(native)?;
-    let (basis, direction) = support(&cells, surface)?;
-    let wire = &wires[0];
-    let wire_location = root_location
+    let (basis, direction) = support(cells, surface)?;
+    Ok((surface, surface_location, basis, direction, tolerance))
+}
+fn positioned_edges<F: FnMut() -> bool>(
+    cells: &Cells<'_>,
+    root_location: &Location,
+    wire: &CapturedOccurrence,
+    surface: usize,
+    surface_location: &Location,
+    replay: &mut PlacementReplay,
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<Vec<EdgeUse>> {
+    let wire_location = wire_location(root_location, wire, replay, budget)?;
+    wire_edges(
+        cells,
+        wire,
+        &wire_location,
+        surface,
+        surface_location,
+        replay,
+        budget,
+    )
+}
+fn wire_location<F: FnMut() -> bool>(
+    root_location: &Location,
+    wire: &CapturedOccurrence,
+    replay: &mut PlacementReplay,
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<Location> {
+    root_location
         .multiplied(&replay.location(&wire.location, budget)?)
-        .map_err(native)?;
-    let children = cells.children(wire.owner, ShapeEnum::Wire)?;
+        .map_err(native)
+}
+fn wire_edges<F: FnMut() -> bool>(
+    cells: &Cells<'_>,
+    wire: &CapturedOccurrence,
+    wire_location: &Location,
+    surface: usize,
+    surface_location: &Location,
+    replay: &mut PlacementReplay,
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<Vec<EdgeUse>> {
+    let children = boundary_edges(cells, wire.owner)?;
+    children
+        .iter()
+        .map(|child| {
+            decode_edge(
+                cells,
+                wire,
+                child,
+                wire_location,
+                surface,
+                surface_location,
+                replay,
+                budget,
+            )
+        })
+        .collect()
+}
+fn boundary_edges<'a>(cells: &Cells<'a>, owner: usize) -> CheckResult<&'a [CapturedOccurrence]> {
+    let children = cells.children(owner, ShapeEnum::Wire)?;
     if children.len() != 4 {
         return Err(invalid(
-            wire.owner,
+            owner,
             "four boundary occurrences",
             format!("edges={}", children.len()),
         ));
     }
-    let mut edges = Vec::new();
-    for child in children {
-        edges.push(edges::decode(
-            &cells,
-            child,
-            wire.orientation,
-            &wire_location,
-            surface,
-            &surface_location,
-            &mut replay,
-            budget,
-        )?);
-    }
-    Ok(Strip {
-        basis: basis.clone(),
-        direction,
-        placement: embedding(&surface_location)?,
-        tolerance,
-        edges,
-    })
+    Ok(children)
 }
+fn decode_edge<F: FnMut() -> bool>(
+    cells: &Cells<'_>,
+    wire: &CapturedOccurrence,
+    child: &CapturedOccurrence,
+    wire_location: &Location,
+    surface: usize,
+    surface_location: &Location,
+    replay: &mut PlacementReplay,
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<EdgeUse> {
+    edges::decode(
+        cells,
+        child,
+        wire.orientation,
+        wire_location,
+        surface,
+        surface_location,
+        replay,
+        budget,
+    )
+}
+
 fn face<'a>(
     cells: &Cells<'a>,
 ) -> CheckResult<(

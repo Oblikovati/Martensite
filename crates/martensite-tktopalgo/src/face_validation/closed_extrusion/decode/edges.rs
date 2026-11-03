@@ -3,10 +3,30 @@ use super::*;
 use martensite_tkbrep::brep::face_input_capture::CapturedOccurrence;
 use martensite_tkg3d::top_abs;
 
+struct DecodeContext<'ctx, 'input, 'budget, F: FnMut() -> bool> {
+    cells: &'ctx Cells<'input>,
+    surface: usize,
+    edge_location: &'ctx Location,
+    surface_location: &'ctx Location,
+    replay: &'ctx mut PlacementReplay,
+    budget: &'ctx mut Budget<'budget, F>,
+}
+struct PcurveUse {
+    axis: Axis2d,
+    branch: u8,
+    seam: bool,
+    cached_endpoints: [[f64; 2]; 2],
+}
+struct SpatialUse {
+    range: [f64; 2],
+    curve: SpaceCurve,
+    placement: MetricEmbedding<3>,
+    vertices: Vec<VertexUse>,
+}
+
 pub(super) fn decode<F: FnMut() -> bool>(
     cells: &Cells<'_>,
     occurrence: &CapturedOccurrence,
-    wire_orientation: Orientation,
     wire_location: &Location,
     surface: usize,
     surface_location: &Location,
@@ -14,64 +34,65 @@ pub(super) fn decode<F: FnMut() -> bool>(
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<EdgeUse> {
     let owner = occurrence.owner;
-    let location = wire_location
-        .multiplied(&replay.location(&occurrence.location, budget)?)
-        .map_err(native)?;
+    let location = occurrence_location(occurrence, wire_location, replay, budget)?;
     let orientation = top_abs::compose(wire_orientation, occurrence.orientation);
+    let mut context = DecodeContext {
+        cells,
+        surface,
+        edge_location: &location,
+        surface_location,
+        replay,
+        budget,
+    };
     let (representations, tolerance) = edge_fields(cells, owner)?;
-    let (spatial, parametric) = representations_pair(
-        cells,
-        representations,
-        surface,
-        &location,
-        surface_location,
-        replay,
-        budget,
-    )?;
-    let (pcurve, branch, seam, cached_endpoints) = pcurve(
-        cells,
-        parametric,
-        orientation,
-        surface,
-        &location,
-        surface_location,
-        replay,
-        budget,
-    )?;
-    let range = cells.range(spatial)?;
-    if range != cells.range(parametric)?
-        || range.iter().any(|v| !v.is_finite())
-        || range[0] >= range[1]
-    {
-        return Err(invalid(
-            owner,
-            "same finite increasing range",
-            format!(
-                "spatial={range:?}, parametric={:?}",
-                cells.range(parametric)?
-            ),
-        ));
-    }
-    let curve = space(cells, spatial)?;
-    let placed = location
-        .multiplied(&replay.location(cells.location(spatial)?, budget)?)
-        .map_err(native)?;
-    let vertices = vertices(cells, owner, &location, replay, budget)?;
-    Ok(EdgeUse {
+    let (spatial, parametric) = representations_pair(&mut context, representations)?;
+    let pcurve = pcurve(&mut context, parametric, orientation)?;
+    let geometry = spatial_use(&mut context, owner, spatial, parametric)?;
+    Ok(edge_use(
         owner,
         location,
         orientation,
-        pcurve,
-        cached_endpoints,
-        range,
-        curve,
-        placement: embedding(&placed)?,
         tolerance,
-        branch,
-        seam,
-        vertices,
-    })
+        pcurve,
+        geometry,
+    ))
 }
+fn occurrence_location<F: FnMut() -> bool>(
+    occurrence: &CapturedOccurrence,
+    wire_orientation: Orientation,
+    wire_location: &Location,
+    replay: &mut PlacementReplay,
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<Location> {
+    let location = wire_location
+        .multiplied(&replay.location(&occurrence.location, budget)?)
+        .map_err(native)?;
+    Ok(location)
+}
+fn edge_use(
+    owner: usize,
+    location: Location,
+    orientation: Orientation,
+    tolerance: f64,
+    pcurve: PcurveUse,
+    geometry: SpatialUse,
+) -> EdgeUse {
+    EdgeUse {
+        owner,
+        location,
+        orientation,
+        pcurve: pcurve.axis,
+        cached_endpoints: pcurve.cached_endpoints,
+        range: geometry.range,
+        curve: geometry.curve,
+        placement: geometry.placement,
+        tolerance,
+        branch: pcurve.branch,
+        seam: pcurve.seam,
+        vertices: geometry.vertices,
+    }
+}
+
 fn edge_fields<'a>(cells: &Cells<'a>, owner: usize) -> CheckResult<(&'a [usize], f64)> {
     let Cell::Edge {
         tolerance,
@@ -92,52 +113,78 @@ fn edge_fields<'a>(cells: &Cells<'a>, owner: usize) -> CheckResult<(&'a [usize],
     Ok((representations, *tolerance))
 }
 fn representations_pair<F: FnMut() -> bool>(
-    cells: &Cells<'_>,
+    context: &mut DecodeContext<'_, '_, '_, F>,
     owners: &[usize],
-    surface: usize,
-    edge_location: &Location,
-    surface_location: &Location,
-    replay: &mut PlacementReplay,
-    budget: &mut Budget<'_, F>,
 ) -> CheckResult<(usize, usize)> {
     let mut spatial = None;
     let mut parametric = None;
     for owner in owners {
-        let cell = cells.one(
-            *owner,
-            |c| matches!(c, Cell::Spatial { .. } | Cell::Parametric { .. }),
-            "spatial or stored surface representation",
-        )?;
-        match cell {
-            Cell::Spatial { .. } => {
-                if spatial.replace(*owner).is_some() {
-                    return Err(unsupported(
-                        *owner,
-                        "spatial curve",
-                        "multiple",
-                        "one spatial representation",
-                    ));
-                }
-            }
-            Cell::Parametric {
-                surface: actual, ..
-            } if *actual == surface => {
-                let placed = edge_location
-                    .multiplied(&replay.location(cells.location(*owner)?, budget)?)
-                    .map_err(native)?;
-                if placed == *surface_location && parametric.replace(*owner).is_some() {
-                    return Err(unsupported(
-                        *owner,
-                        "current-face map",
-                        "multiple",
-                        "one located current-face representation",
-                    ));
-                }
-            }
-            Cell::Parametric { .. } => {}
-            _ => return Err(invalid(*owner, "representation slot", "wrong type")),
-        }
+        representation_slot(context, *owner, &mut spatial, &mut parametric)?;
     }
+    representation_pair(owners, spatial, parametric)
+}
+fn representation_slot<F: FnMut() -> bool>(
+    context: &mut DecodeContext<'_, '_, '_, F>,
+    owner: usize,
+    spatial: &mut Option<usize>,
+    parametric: &mut Option<usize>,
+) -> CheckResult<()> {
+    let cell = context.cells.one(
+        owner,
+        |c| matches!(c, Cell::Spatial { .. } | Cell::Parametric { .. }),
+        "spatial or stored surface representation",
+    )?;
+    match cell {
+        Cell::Spatial { .. } => record_spatial(owner, spatial),
+        Cell::Parametric {
+            surface: actual, ..
+        } => record_parametric(context, owner, *actual, parametric),
+        _ => Err(invalid(owner, "representation slot", "wrong type")),
+    }
+}
+fn record_spatial(owner: usize, spatial: &mut Option<usize>) -> CheckResult<()> {
+    if spatial.replace(owner).is_some() {
+        return Err(unsupported(
+            owner,
+            "spatial curve",
+            "multiple",
+            "one spatial representation",
+        ));
+    }
+    Ok(())
+}
+fn record_parametric<F: FnMut() -> bool>(
+    context: &mut DecodeContext<'_, '_, '_, F>,
+    owner: usize,
+    actual_surface: usize,
+    parametric: &mut Option<usize>,
+) -> CheckResult<()> {
+    if actual_surface != context.surface {
+        return Ok(());
+    }
+    let placed = context
+        .edge_location
+        .multiplied(
+            &context
+                .replay
+                .location(context.cells.location(owner)?, context.budget)?,
+        )
+        .map_err(native)?;
+    if placed == *context.surface_location && parametric.replace(owner).is_some() {
+        return Err(unsupported(
+            owner,
+            "current-face map",
+            "multiple",
+            "one located current-face representation",
+        ));
+    }
+    Ok(())
+}
+fn representation_pair(
+    owners: &[usize],
+    spatial: Option<usize>,
+    parametric: Option<usize>,
+) -> CheckResult<(usize, usize)> {
     match (spatial, parametric) {
         (Some(a), Some(b)) if a != b => Ok((a, b)),
         _ => Err(unsupported(
@@ -170,18 +217,27 @@ fn space(cells: &Cells<'_>, owner: usize) -> CheckResult<SpaceCurve> {
     }
 }
 fn pcurve<F: FnMut() -> bool>(
-    cells: &Cells<'_>,
+    context: &mut DecodeContext<'_, '_, '_, F>,
     owner: usize,
     orientation: Orientation,
-    surface: usize,
-    edge_location: &Location,
-    surface_location: &Location,
-    replay: &mut PlacementReplay,
-    budget: &mut Budget<'_, F>,
-) -> CheckResult<(Axis2d, u8, bool, [[f64; 2]; 2])> {
+) -> CheckResult<PcurveUse> {
+    let (curve, actual, endpoints) = pcurve_fields(context.cells, owner)?;
+    validate_pcurve_location(context, owner, actual)?;
+    let seam = seam_fields(context.cells, owner);
+    let (selected, branch) = select_pcurve(orientation, curve, seam);
+    let axis = pcurve_line(context.cells, selected)?;
+    let cached_endpoints = selected_endpoints(branch, endpoints, seam);
+    Ok(PcurveUse {
+        axis,
+        branch,
+        seam: seam.is_some(),
+        cached_endpoints,
+    })
+}
+fn pcurve_fields(cells: &Cells<'_>, owner: usize) -> CheckResult<(usize, usize, [[f64; 2]; 2])> {
     let Cell::Parametric {
         curve,
-        surface: actual,
+        surface,
         endpoints,
     } = cells.one(
         owner,
@@ -191,20 +247,35 @@ fn pcurve<F: FnMut() -> bool>(
     else {
         return Err(invalid(owner, "pcurve binding", "wrong type"));
     };
-    let located = edge_location
-        .multiplied(&replay.location(cells.location(owner)?, budget)?)
+    Ok((*curve, *surface, *endpoints))
+}
+fn validate_pcurve_location<F: FnMut() -> bool>(
+    context: &mut DecodeContext<'_, '_, '_, F>,
+    owner: usize,
+    actual_surface: usize,
+) -> CheckResult<()> {
+    let located = context
+        .edge_location
+        .multiplied(
+            &context
+                .replay
+                .location(context.cells.location(owner)?, context.budget)?,
+        )
         .map_err(native)?;
-    if *actual != surface || located != *surface_location {
+    if actual_surface != context.surface || located != *context.surface_location {
         return Err(unsupported(
             owner,
             "pcurve support binding",
-            format!("support={actual}"),
+            format!("support={actual_surface}"),
             "same actual located face support",
         ));
     }
-    let seam = cells.input.cells().iter().find_map(|(id, c)| {
+    Ok(())
+}
+fn seam_fields(cells: &Cells<'_>, owner: usize) -> Option<(usize, [[f64; 2]; 2])> {
+    cells.input.cells().iter().find_map(|(id, cell)| {
         if *id == owner {
-            match c {
+            match cell {
                 Cell::Seam {
                     curve, endpoints, ..
                 } => Some((*curve, *endpoints)),
@@ -213,12 +284,20 @@ fn pcurve<F: FnMut() -> bool>(
         } else {
             None
         }
-    });
-    let (selected, branch) = if orientation == Orientation::Reversed && seam.is_some() {
-        (seam.map(|v| v.0).unwrap_or(*curve), 2)
+    })
+}
+fn select_pcurve(
+    orientation: Orientation,
+    curve: usize,
+    seam: Option<(usize, [[f64; 2]; 2])>,
+) -> (usize, u8) {
+    if orientation == Orientation::Reversed && seam.is_some() {
+        (seam.map(|value| value.0).unwrap_or(curve), 2)
     } else {
-        (*curve, 1)
-    };
+        (curve, 1)
+    }
+}
+fn pcurve_line(cells: &Cells<'_>, selected: usize) -> CheckResult<Axis2d> {
     let Cell::PlanarLine(axis) = cells.one(
         selected,
         |c| matches!(c, Cell::PlanarLine(_)),
@@ -227,21 +306,71 @@ fn pcurve<F: FnMut() -> bool>(
     else {
         return Err(invalid(selected, "pcurve geometry", "wrong type"));
     };
-    let cached = if branch == 2 {
-        seam.map(|v| v.1).unwrap_or(*endpoints)
-    } else {
-        *endpoints
-    };
-    Ok((*axis, branch, seam.is_some(), cached))
+    Ok(*axis)
 }
-fn vertices<F: FnMut() -> bool>(
+fn selected_endpoints(
+    branch: u8,
+    endpoints: [[f64; 2]; 2],
+    seam: Option<(usize, [[f64; 2]; 2])>,
+) -> [[f64; 2]; 2] {
+    if branch == 2 {
+        seam.map(|value| value.1).unwrap_or(endpoints)
+    } else {
+        endpoints
+    }
+}
+
+fn spatial_use<F: FnMut() -> bool>(
+    context: &mut DecodeContext<'_, '_, '_, F>,
+    owner: usize,
+    spatial: usize,
+    parametric: usize,
+) -> CheckResult<SpatialUse> {
+    let range = checked_range(context.cells, owner, spatial, parametric)?;
+    let curve = space(context.cells, spatial)?;
+    let placed = context
+        .edge_location
+        .multiplied(
+            &context
+                .replay
+                .location(context.cells.location(spatial)?, context.budget)?,
+        )
+        .map_err(native)?;
+    let vertices = vertices(context, owner)?;
+    Ok(SpatialUse {
+        range,
+        curve,
+        placement: embedding(&placed)?,
+        vertices,
+    })
+}
+fn checked_range(
     cells: &Cells<'_>,
     owner: usize,
-    edge_location: &Location,
-    replay: &mut PlacementReplay,
-    budget: &mut Budget<'_, F>,
+    spatial: usize,
+    parametric: usize,
+) -> CheckResult<[f64; 2]> {
+    let range = cells.range(spatial)?;
+    if range != cells.range(parametric)?
+        || range.iter().any(|value| !value.is_finite())
+        || range[0] >= range[1]
+    {
+        return Err(invalid(
+            owner,
+            "same finite increasing range",
+            format!(
+                "spatial={range:?}, parametric={:?}",
+                cells.range(parametric)?
+            ),
+        ));
+    }
+    Ok(range)
+}
+fn vertices<F: FnMut() -> bool>(
+    context: &mut DecodeContext<'_, '_, '_, F>,
+    owner: usize,
 ) -> CheckResult<Vec<VertexUse>> {
-    let children = cells.children(owner, ShapeEnum::Edge)?;
+    let children = context.cells.children(owner, ShapeEnum::Edge)?;
     if children.len() != 2 {
         return Err(invalid(
             owner,
@@ -251,47 +380,47 @@ fn vertices<F: FnMut() -> bool>(
     }
     children
         .iter()
-        .map(|child| vertex(cells, child, edge_location, replay, budget))
+        .map(|child| vertex(context, child))
         .collect()
 }
 fn vertex<F: FnMut() -> bool>(
-    cells: &Cells<'_>,
+    context: &mut DecodeContext<'_, '_, '_, F>,
     child: &CapturedOccurrence,
-    edge_location: &Location,
-    replay: &mut PlacementReplay,
-    budget: &mut Budget<'_, F>,
 ) -> CheckResult<VertexUse> {
-    if !cells.children(child.owner, ShapeEnum::Vertex)?.is_empty() {
-        return Err(invalid(child.owner, "vertex children", "nonempty"));
-    }
-    let Cell::Vertex { point, tolerance } = cells.one(
-        child.owner,
-        |c| matches!(c, Cell::Vertex { .. }),
-        "vertex fields",
-    )?
-    else {
-        return Err(invalid(child.owner, "vertex fields", "wrong type"));
-    };
-    let side = match child.orientation {
-        Orientation::Forward => 0,
-        Orientation::Reversed => 1,
-        other => {
-            return Err(invalid(
-                child.owner,
-                "intrinsic endpoint orientation",
-                format!("{other:?}"),
-            ));
-        }
-    };
-    let location = edge_location
-        .multiplied(&replay.location(&child.location, budget)?)
+    let (point, tolerance) = vertex_fields(context.cells, child.owner)?;
+    let side = endpoint_side(child)?;
+    let location = context
+        .edge_location
+        .multiplied(&context.replay.location(&child.location, context.budget)?)
         .map_err(native)?;
     Ok(VertexUse {
         owner: child.owner,
         placement: embedding(&location)?,
         location,
-        point: *point,
-        tolerance: *tolerance,
+        point,
+        tolerance,
         side,
     })
+}
+fn vertex_fields(cells: &Cells<'_>, owner: usize) -> CheckResult<([f64; 3], f64)> {
+    if !cells.children(owner, ShapeEnum::Vertex)?.is_empty() {
+        return Err(invalid(owner, "vertex children", "nonempty"));
+    }
+    let Cell::Vertex { point, tolerance } =
+        cells.one(owner, |c| matches!(c, Cell::Vertex { .. }), "vertex fields")?
+    else {
+        return Err(invalid(owner, "vertex fields", "wrong type"));
+    };
+    Ok((*point, *tolerance))
+}
+fn endpoint_side(child: &CapturedOccurrence) -> CheckResult<usize> {
+    match child.orientation {
+        Orientation::Forward => Ok(0),
+        Orientation::Reversed => Ok(1),
+        other => Err(invalid(
+            child.owner,
+            "intrinsic endpoint orientation",
+            format!("{other:?}"),
+        )),
+    }
 }
