@@ -2,7 +2,11 @@
 //! surfaces. U runs along the rows of the pole grid and V along its columns.
 mod access;
 mod eval;
+mod input_lease;
 mod iso;
+pub use input_lease::SplineSurfaceInputLease;
+mod stored_input;
+pub use stored_input::{StoredSplineSurfaceAxis, StoredSplineSurfaceInput};
 mod knots;
 mod periodic;
 mod poles;

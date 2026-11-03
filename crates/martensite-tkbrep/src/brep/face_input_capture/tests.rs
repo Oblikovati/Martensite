@@ -3,6 +3,7 @@ mod locations;
 mod plane_spline;
 mod replay;
 mod representations;
+mod surface_queries;
 use super::*;
 use crate::{
     brep::*,
@@ -108,7 +109,9 @@ fn actual_poisoned_face_cell_is_not_recovered_for_capture() {
 fn reference_change_after_discovery_refuses_the_simultaneous_view() {
     let (face, source) = face_fixture();
     let limits = FaceCaptureLimits::bounded();
-    let inventory = inventory::Inventory::gather(&face, limits).unwrap();
+    let inventory =
+        inventory::Inventory::gather(&face, limits, FaceCaptureBehavior::StoredRepresentationsV1)
+            .unwrap();
     source.set_surface(&support().cast());
     let cells = inventory.cells(limits).unwrap();
     let leases = cells

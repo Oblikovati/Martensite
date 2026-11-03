@@ -146,3 +146,45 @@ pub(super) fn planar_line_input(
     }
     Ok(super::types::CapturedFaceCell::PlanarLine(axis))
 }
+
+/// V2 copies finite stored inputs; no degree, periodicity or geometric admission is implied.
+pub(super) fn validate_stored_spline(input: &StoredSplineInput) -> Result<(), Incomplete> {
+    if input.evaluation_override() {
+        return Err(unsupported("active spatial spline evaluation override"));
+    }
+    finite_spline(input)
+}
+
+pub(super) fn validate_surface(
+    input: &martensite_tkg3d::geom::StoredSplineSurfaceInput,
+) -> Result<(), Incomplete> {
+    if input.evaluation_override() {
+        return Err(unsupported("active tensor spline evaluation override"));
+    }
+    surface_grid(input)?;
+    for axis in input.axes() {
+        for value in axis
+            .knots()
+            .iter()
+            .chain(axis.flat_knots())
+            .chain(axis.domain().iter())
+        {
+            finite(*value, "surface knot or domain")?;
+        }
+    }
+    Ok(())
+}
+
+fn surface_grid(
+    input: &martensite_tkg3d::geom::StoredSplineSurfaceInput,
+) -> Result<(), Incomplete> {
+    for pole in input.poles() {
+        for value in pole {
+            finite(*value, "surface pole")?;
+        }
+    }
+    for value in input.weights() {
+        finite(*value, "surface weight")?;
+    }
+    Ok(())
+}

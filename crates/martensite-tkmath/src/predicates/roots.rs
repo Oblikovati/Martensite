@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact supplied-polynomial classification; no metric solver is replaced.
 mod bernstein;
+/// Exact bounded embeddings of supplied rational tensor query charts.
+pub mod surface_query;
 /// Exact parameter contacts between a planar Bézier curve and an infinite line.
 pub mod bezier_line;
 /// Source-bound exact Bézier pair and canonical self-contact certificates.

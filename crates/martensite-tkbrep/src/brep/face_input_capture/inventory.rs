@@ -2,7 +2,7 @@
 use super::{
     cells::{Cell, Lease, owner_cells},
     owners::{self, Owner},
-    types::{FaceCaptureIncomplete as Incomplete, FaceCaptureLimits},
+    types::{FaceCaptureBehavior, FaceCaptureIncomplete as Incomplete, FaceCaptureLimits},
 };
 use crate::topods::Face;
 use std::collections::BTreeMap;
@@ -10,12 +10,18 @@ use std::collections::BTreeMap;
 pub(super) struct Inventory {
     pub owners: Vec<Owner>,
     links: Vec<Vec<usize>>,
+    pub behavior: FaceCaptureBehavior,
 }
 impl Inventory {
-    pub(super) fn gather(face: &Face, limits: FaceCaptureLimits) -> Result<Self, Incomplete> {
+    pub(super) fn gather(
+        face: &Face,
+        limits: FaceCaptureLimits,
+        behavior: FaceCaptureBehavior,
+    ) -> Result<Self, Incomplete> {
         let mut result = Self {
             owners: vec![Owner::Topology(face.tshape().clone())],
             links: Vec::new(),
+            behavior,
         };
         let mut index = 0;
         while index < result.owners.len() {
@@ -24,7 +30,24 @@ impl Inventory {
         }
         Ok(result)
     }
+    fn check_owner(&self, index: usize) -> Result<(), Incomplete> {
+        if self.behavior == FaceCaptureBehavior::StoredSurfaceQueriesV2 {
+            return Ok(());
+        }
+        match &self.owners[index] {
+            Owner::SplineSurface(h) => Err(owners::unsupported(
+                h,
+                "stored plane or linear extrusion surface",
+            )
+            .at_owner(index)),
+            Owner::Regularity(h) => {
+                Err(owners::unsupported(h, "spatial curve or one/two line pcurves").at_owner(index))
+            }
+            _ => Ok(()),
+        }
+    }
     fn discover(&mut self, index: usize, limits: FaceCaptureLimits) -> Result<(), Incomplete> {
+        self.check_owner(index)?;
         let refs =
             owner_references(&self.owners[index], limits).map_err(|error| error.at_owner(index))?;
         self.links.push(refs.iter().map(Owner::key).collect());
@@ -168,6 +191,7 @@ fn append_geometry_references(
             result.push(owners::surface_owner(&fields.surface)?);
         }
         Lease::Seam(fields) => result.push(owners::planar_owner(&fields.pcurve2)?),
+        Lease::Regularity(fields) => regularity_references(fields, result)?,
         Lease::Spatial(curve) => result.push(owners::spatial_owner(curve)?),
         Lease::Extrusion(surface) => extrusion_reference(surface, result)?,
         Lease::Vertex(fields) if !fields.points.is_empty() => {
@@ -194,4 +218,13 @@ fn unsupported(actual: &str) -> Incomplete {
         actual: actual.into(),
         expected: "stored evaluator and empty vertex point representations",
     }
+}
+
+fn regularity_references(
+    fields: &crate::brep::curve_on_2_surfaces::TwoSurfacesFields,
+    result: &mut Vec<Owner>,
+) -> Result<(), Incomplete> {
+    result.push(owners::surface_owner(&fields.surface)?);
+    result.push(owners::surface_owner(&fields.surface2)?);
+    Ok(())
 }

@@ -100,7 +100,7 @@ mod bspline_surface;
 pub use bspline_surface::{
     BilinearSplineCertificate, BilinearSplineError, BilinearSplineExclusion,
     BilinearSplineInconclusive, BilinearSplineLayout, GeomBSplineSurface, KnotVector, LocalKnots,
-    ModifiedPoles,
+    ModifiedPoles, SplineSurfaceInputLease, StoredSplineSurfaceAxis, StoredSplineSurfaceInput,
 };
 
 mod osculating_surface;

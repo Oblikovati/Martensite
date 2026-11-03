@@ -1,6 +1,15 @@
 //! Capture reports describe owned input and explicit incomplete work.
 use martensite_tkernel::standard::SharedReadFailure;
 
+/// Explicit input-capture admission, independent of geometric certification (#213).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FaceCaptureBehavior {
+    /// Preserve the original plane/extrusion and clamped quadratic input domain.
+    StoredRepresentationsV1,
+    /// Include stored tensor surfaces, general spatial splines and regularity bindings.
+    StoredSurfaceQueriesV2,
+}
+
 /// Bounds finite discovery before any numerical validation; `FaceCaptureLimits::bounded()`.
 #[derive(Clone, Copy, Debug)]
 pub struct FaceCaptureLimits {
@@ -33,6 +42,13 @@ pub enum FaceCaptureIncomplete {
         cell: &'static str,
         /// Nonblocking lease refusal.
         cause: SharedReadFailure,
+    },
+    /// Copying the actual stored geometry failed under its held lease.
+    Geometry {
+        /// Invocation-local source owner.
+        owner: usize,
+        /// Actual stored-input failure, without a substituted domain.
+        cause: martensite_tkernel::standard::Failure,
     },
     /// A discovered reference changed before the simultaneous read view.
     Changed {
@@ -169,6 +185,17 @@ pub enum CapturedFaceCell {
     PlanarSpline(martensite_tkg2d::geom2d::StoredPlanarSplineInput),
     /// Stored plane frame, copied from the live plane state.
     Plane(martensite_tkmath::gp::Axis3),
+    /// Owned raw tensor-spline coefficients; no numerical certification is implied.
+    SplineSurface(martensite_tkg3d::geom::StoredSplineSurfaceInput),
+    /// Regularity binds two actual located supports without discarding either reference.
+    Regularity {
+        /// Invocation-local labels of both actual supports.
+        surfaces: [usize; 2],
+        /// Actual second support location; the first is the representation location cell.
+        location2: CapturedLocation,
+        /// Stored continuity metadata.
+        continuity: martensite_tkmath::geom_abs::Shape,
+    },
     /// Actual extrusion-to-basis binding and direction.
     Extrusion {
         /// Invocation-local label of the actual basis owner.
@@ -198,6 +225,7 @@ impl FaceCaptureIncomplete {
     pub(super) fn at_owner(self, owner: usize) -> Self {
         match self {
             Self::Read { cell, cause, .. } => Self::Read { owner, cell, cause },
+            Self::Geometry { cause, .. } => Self::Geometry { owner, cause },
             Self::Changed { .. } => Self::Changed { owner },
             Self::Unsupported {
                 actual, expected, ..
