@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Preserved quiet-NaN signs, payloads and direction priority in `next_after` across optimization levels (#370).
+
 - Fixed skipped tag publication after successful release checks when the PR-only test job was intentionally skipped (#350).
 
 ## [0.6.0] - 2026-11-01
