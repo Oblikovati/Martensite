@@ -101,7 +101,7 @@ fn initial_report(input: FaceInputSnapshot, policy: ClosedFacePolicy) -> ClosedF
 }
 
 fn validate_policy(policy: ClosedFacePolicy) -> CheckResult<()> {
-    if !matches!(policy.version, 1 | 2 | 3) {
+    if !matches!(policy.version, 1..=3) {
         return Err(unsupported(
             0,
             "policy version",
