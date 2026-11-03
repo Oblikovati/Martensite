@@ -59,36 +59,43 @@ pub(super) fn spline2(actual: &StoredPlanarSplineInput, expected: SplineInput<2>
     compare(actual.fields(), expected)
 }
 fn compare<const D: usize>(actual: Fields<'_, D>, expected: SplineInput<D>) {
-    assert_eq!(
-        actual
-            .poles
-            .iter()
-            .map(|p| p.map(f64::to_bits))
-            .collect::<Vec<_>>(),
-        expected.poles
-    );
+    compare_poles(actual.poles, expected.poles);
     assert_eq!(bits(actual.weights), expected.weights);
     assert_eq!(bits(actual.knots), expected.knots);
     assert_eq!(actual.multiplicities, expected.multiplicities);
     assert_eq!(bits(actual.flat), expected.flat_knots);
     assert_eq!(actual.domain.map(f64::to_bits), expected.domain);
+    assert_eq!(actual_layout(&actual), expected_layout(expected));
+}
+fn compare_poles<const D: usize>(actual: &[[f64; D]], expected: &[[u64; D]]) {
     assert_eq!(
-        (
-            actual.degree,
-            actual.periodic,
-            actual.rational,
-            actual.evaluation_override,
-            actual.lower
-        ),
-        (
-            expected.degree,
-            expected.periodic,
-            expected.rational,
-            expected.evaluation_override,
-            expected.lower_bounds
-        )
+        actual
+            .iter()
+            .map(|p| p.map(f64::to_bits))
+            .collect::<Vec<_>>(),
+        expected
     );
 }
+type SplineLayout = (i32, bool, bool, bool, [i32; 5]);
+fn actual_layout<const D: usize>(actual: &Fields<'_, D>) -> SplineLayout {
+    (
+        actual.degree,
+        actual.periodic,
+        actual.rational,
+        actual.evaluation_override,
+        actual.lower,
+    )
+}
+fn expected_layout<const D: usize>(expected: SplineInput<D>) -> SplineLayout {
+    (
+        expected.degree,
+        expected.periodic,
+        expected.rational,
+        expected.evaluation_override,
+        expected.lower_bounds,
+    )
+}
+
 fn bits(input: &[f64]) -> Vec<u64> {
     input.iter().copied().map(f64::to_bits).collect()
 }
