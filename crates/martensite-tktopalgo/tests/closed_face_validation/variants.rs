@@ -126,3 +126,40 @@ fn support_and_location_limits_remain_incomplete() {
         ClosedFaceCompletion::Incomplete(_)
     ));
 }
+
+#[test]
+fn query_allowance_is_global_and_keeps_actual_unfinished_work() {
+    let fixture = fixture::strip(1e-7, 0.);
+    let full = check(&fixture, ClosedFacePolicy::bounded());
+    let count = full.work().queries;
+    let exact = ClosedFacePolicy {
+        max_queries: count,
+        ..ClosedFacePolicy::bounded()
+    };
+    assert!(check(&fixture, exact).certificate().is_some());
+    let short = ClosedFacePolicy {
+        max_queries: count - 1,
+        ..exact
+    };
+    let refused = check(&fixture, short);
+    assert!(matches!(
+        refused.completion(),
+        ClosedFaceCompletion::Incomplete(_)
+    ));
+    assert_eq!(refused.work().queries, count);
+    assert!(refused.certificate().is_none());
+}
+#[test]
+fn a_spent_support_proof_budget_never_becomes_a_face_pass() {
+    let fixture = fixture::strip(1e-7, 0.);
+    let mut policy = ClosedFacePolicy::bounded();
+    policy.support.max_proof_steps = 0;
+    let report = check(&fixture, policy);
+    assert!(report.coverage().geometry);
+    assert!(!report.coverage().self_exclusion);
+    assert!(matches!(
+        report.completion(),
+        ClosedFaceCompletion::Incomplete(_)
+    ));
+    assert!(report.certificate().is_none());
+}
