@@ -89,7 +89,7 @@ mod bezier_curve;
 pub use bezier_curve::GeomBezierCurve;
 mod bspline_curve;
 mod spline_kind;
-pub use bspline_curve::{GeomBSplineCurve, SplineInputLease};
+pub use bspline_curve::{GeomBSplineCurve, SplineInputLease, StoredSplineInput};
 mod offset_curve;
 pub use offset_curve::GeomOffsetCurve;
 mod bezier_surface;

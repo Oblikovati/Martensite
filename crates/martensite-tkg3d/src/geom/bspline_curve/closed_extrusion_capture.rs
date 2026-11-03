@@ -95,7 +95,7 @@ fn copied_input(
     direction: [f64; 3],
     interval: [f64; 2],
 ) -> Result<ClosedQuadraticExtrusionInput, Error> {
-    let poles = state.poles.iter().map(|p| [p.x(), p.y(), p.z()]).collect();
+    let poles = super::stored_input::copied_poles(state);
     let weights = state.weights.as_slice().to_vec();
     let knots = state.knots.as_slice().to_vec();
     let mults = state
