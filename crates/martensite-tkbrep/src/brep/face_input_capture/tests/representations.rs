@@ -103,3 +103,39 @@ fn planar_count(snapshot: &FaceInputSnapshot) -> usize {
         .filter(|(_, cell)| matches!(cell, CapturedFaceCell::PlanarLine(_)))
         .count()
 }
+
+fn attached_seam(face: &Face, fields: &BRepTFace) -> Handle<BRepCurveOnClosedSurface> {
+    let surface = fields.surface().cast::<GeomSurfaceOfLinearExtrusion>();
+    let edge = seam_edge(&surface);
+    let seam = edge.curves()[1].cast::<BRepCurveOnClosedSurface>();
+    append_owner(face, edge.cast());
+    seam
+}
+#[test]
+fn embedded_range_writer_is_part_of_the_required_read_closure() {
+    let (face, fields) = face_fixture();
+    let seam = attached_seam(&face, &fields);
+    let writer = seam.parent.gcurve.range.write();
+    assert_busy(capture_closed_extrusion_face(
+        &face,
+        FaceCaptureLimits::bounded(),
+        || false,
+    ));
+    drop(writer);
+    assert!(fields.fields.try_write().is_some());
+    assert!(capture_closed_extrusion_face(&face, FaceCaptureLimits::bounded(), || false).is_ok());
+}
+#[test]
+fn embedded_location_writer_is_part_of_the_required_read_closure() {
+    let (face, fields) = face_fixture();
+    let seam = attached_seam(&face, &fields);
+    let writer = seam.parent.gcurve.representation.location.write();
+    assert_busy(capture_closed_extrusion_face(
+        &face,
+        FaceCaptureLimits::bounded(),
+        || false,
+    ));
+    drop(writer);
+    assert!(fields.fields.try_write().is_some());
+    assert!(capture_closed_extrusion_face(&face, FaceCaptureLimits::bounded(), || false).is_ok());
+}
