@@ -15,18 +15,19 @@ pub(super) struct StripFixture {
     pub edges: [Edge; 3],
     pub vertices: [Vertex; 2],
 }
-fn spline(level: f64, delta: f64) -> Handle<GeomBSplineCurve> {
-    let xy = [
-        [1., 0.],
-        [1., 1.],
-        [0., 1.],
-        [-1., 1.],
-        [-1., 0.],
-        [-1., -1.],
-        [0., -1.],
-        [1., -1.],
-        [1., 0.],
-    ];
+pub(super) const ROUND_NET: [[f64; 2]; 9] = [
+    [1., 0.],
+    [1., 1.],
+    [0., 1.],
+    [-1., 1.],
+    [-1., 0.],
+    [-1., -1.],
+    [0., -1.],
+    [1., -1.],
+    [1., 0.],
+];
+
+fn spline(level: f64, delta: f64, xy: [[f64; 2]; 9]) -> Handle<GeomBSplineCurve> {
     let coordinates = xy.map(|p| Point3::new(p[0] + delta, p[1], level));
     Handle::new(
         GeomBSplineCurve::new(
@@ -46,11 +47,18 @@ fn vertex(level: f64, tolerance: f64) -> Vertex {
         .unwrap();
     result
 }
-fn cap(face: &Face, level: f64, vertex: &Vertex, tolerance: f64, delta: f64) -> Edge {
+fn cap(
+    face: &Face,
+    level: f64,
+    vertex: &Vertex,
+    tolerance: f64,
+    delta: f64,
+    xy: [[f64; 2]; 9],
+) -> Edge {
     let builder = BRepBuilder::default();
     let mut result = Edge::default();
     builder
-        .make_edge_with_curve(&mut result, &spline(level, delta).cast(), tolerance)
+        .make_edge_with_curve(&mut result, &spline(level, delta, xy).cast(), tolerance)
         .unwrap();
     let pcurve = Handle::new(Geom2dLine::from_point(
         Point2::new(0., level),
@@ -95,10 +103,13 @@ fn seam(face: &Face, vertices: &[Vertex; 2], tolerance: f64) -> Edge {
     result
 }
 pub(super) fn strip(tolerance: f64, top_delta: f64) -> StripFixture {
+    strip_from_net(tolerance, top_delta, ROUND_NET)
+}
+pub(super) fn strip_from_net(tolerance: f64, top_delta: f64, xy: [[f64; 2]; 9]) -> StripFixture {
     let builder = BRepBuilder::default();
     let mut face = Face::default();
     let support = Handle::new(
-        GeomSurfaceOfLinearExtrusion::new(&spline(0., 0.).cast(), Direction3::Z).unwrap(),
+        GeomSurfaceOfLinearExtrusion::new(&spline(0., 0., xy).cast(), Direction3::Z).unwrap(),
     );
     builder
         .make_face_on_surface(&mut face, &support.cast(), tolerance)
@@ -106,8 +117,8 @@ pub(super) fn strip(tolerance: f64, top_delta: f64) -> StripFixture {
     let vertices = [vertex(-1., tolerance), vertex(2., tolerance)];
     let edges = [
         seam(&face, &vertices, tolerance),
-        cap(&face, 2., &vertices[1], tolerance, top_delta),
-        cap(&face, -1., &vertices[0], tolerance, 0.),
+        cap(&face, 2., &vertices[1], tolerance, top_delta, xy),
+        cap(&face, -1., &vertices[0], tolerance, 0., xy),
     ];
     let mut wire = Wire::default();
     builder.make_wire(&mut wire);
