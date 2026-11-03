@@ -66,6 +66,14 @@ fn same_transform(first: Transform3, second: Transform3) -> CheckResult<bool> {
     {
         return Ok(false);
     }
+    if !same_raw_matrix(first, second)? {
+        return Ok(false);
+    }
+    let a = first.translation_part();
+    let b = second.translation_part();
+    Ok([a.x(), a.y(), a.z()].map(f64::to_bits) == [b.x(), b.y(), b.z()].map(f64::to_bits))
+}
+fn same_raw_matrix(first: Transform3, second: Transform3) -> CheckResult<bool> {
     for row in 1..=3 {
         for column in 1..=3 {
             if first.matrix().value(row, column).map_err(native)?.to_bits()
@@ -79,9 +87,7 @@ fn same_transform(first: Transform3, second: Transform3) -> CheckResult<bool> {
             }
         }
     }
-    let a = first.translation_part();
-    let b = second.translation_part();
-    Ok([a.x(), a.y(), a.z()].map(f64::to_bits) == [b.x(), b.y(), b.z()].map(f64::to_bits))
+    Ok(true)
 }
 pub(super) fn embedding(location: &Location) -> CheckResult<MetricEmbedding<3>> {
     let transform = location.transformation();
