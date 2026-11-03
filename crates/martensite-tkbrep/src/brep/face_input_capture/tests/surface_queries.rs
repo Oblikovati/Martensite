@@ -216,6 +216,9 @@ fn absent_spatial_storage_is_explicit_and_keeps_its_owner_range_and_location() {
         .iter()
         .find_map(|(id, cell)| matches!(cell, CapturedFaceCell::AbsentSpatial).then_some(*id))
         .unwrap();
+    assert_absent_metadata(&snapshot, owner);
+}
+fn assert_absent_metadata(snapshot: &FaceInputSnapshot, owner: usize) {
     assert!(
         snapshot
             .cells()
@@ -230,6 +233,7 @@ fn absent_spatial_storage_is_explicit_and_keeps_its_owner_range_and_location() {
     );
     assert!(snapshot.cells().iter().any(|(_,cell)| matches!(cell,CapturedFaceCell::Edge {representations,..} if representations == &[owner])));
 }
+
 fn absent_spatial(face: &Face) -> Handle<BRepCurve3D> {
     let record = Handle::new(BRepCurve3D::new(&Handle::default(), &Location::default()));
     let edge = Handle::new(BRepTEdge::new());
