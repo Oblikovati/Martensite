@@ -95,10 +95,10 @@ mod tests {
             chains::vector(local, scaled),
             &mut budget,
         );
-        assert_source_direction_refusal(result);
-        assert_eq!(budget.work.queries, 1);
+        assert_source_direction_refusal(result, budget.work.queries);
     }
-    fn assert_source_direction_refusal(result: CheckResult<()>) {
+    fn assert_source_direction_refusal(result: CheckResult<()>, queries: u64) {
+        assert_eq!(queries, 1);
         assert!(matches!(
             result,
             Err(ClosedFaceCompletion::Incomplete(
