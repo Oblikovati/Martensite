@@ -47,20 +47,60 @@ fn cached_x_bits(location: &CapturedLocation) -> u64 {
         .unwrap()
         .to_bits()
 }
-#[test]
-fn rounded_multidatum_power_cache_is_bit_exact_and_survives_replacement() {
-    let (face, fields) = face_fixture();
-    let source = rounded_power_chain();
-    fields.set_location(&source);
-    let snapshot = captured(&face);
-    let location = face_location(&snapshot);
+fn matrix_bits(transform: Transform3) -> [u64; 12] {
+    std::array::from_fn(|index| {
+        transform
+            .value((index / 4 + 1) as i32, (index % 4 + 1) as i32)
+            .unwrap()
+            .to_bits()
+    })
+}
+fn mapped_face(source: &Location) -> (Face, Handle<BRepTFace>) {
+    let (mut face, fields) = face_fixture();
+    face.set_location(source, false).unwrap();
+    fields.set_location(source);
+    let surface = fields.surface().cast::<GeomSurfaceOfLinearExtrusion>();
+    let edge = representations::seam_edge(&surface);
+    let seam = edge.curves()[1].cast::<BRepCurveOnClosedSurface>();
+    seam.curve_representation_base().set_location(source);
+    representations::append_owner(&face, edge.cast());
+    (face, fields)
+}
+fn assert_map_bits(location: &CapturedLocation, source: &Location) {
+    assert_eq!(
+        matrix_bits(location.effective_transform()),
+        matrix_bits(source.transformation())
+    );
+}
+fn assert_mapped_roles(snapshot: &FaceInputSnapshot, source: &Location) {
+    assert_map_bits(&snapshot.root().location, source);
+    assert_map_bits(face_location(snapshot), source);
+    let representation = snapshot
+        .cells()
+        .iter()
+        .find_map(|(_, cell)| match cell {
+            CapturedFaceCell::Location(location) if !location.steps().is_empty() => Some(location),
+            _ => None,
+        })
+        .unwrap();
+    assert_map_bits(representation, source);
+}
+fn assert_rounded_chain(location: &CapturedLocation) {
     assert_eq!(location.steps().len(), 3);
     assert!(location.steps().iter().any(|(_, power, _)| *power == 3));
     // The exact translation sum is 3; the stored binary64 chain rounds to 4.
     assert_eq!(cached_x_bits(location), 4f64.to_bits());
-    assert_eq!(location.effective_transform(), source.transformation());
+}
+#[test]
+fn rounded_multidatum_power_cache_is_bit_exact_and_survives_replacement() {
+    let source = rounded_power_chain();
+    let (face, fields) = mapped_face(&source);
+    let snapshot = captured(&face);
+    let location = face_location(&snapshot);
+    assert_rounded_chain(location);
+    assert_mapped_roles(&snapshot, &source);
     fields.set_location(&translation(99.));
-    assert_eq!(cached_x_bits(location), 4f64.to_bits());
+    assert_map_bits(location, &source);
     assert_eq!(
         cached_x_bits(face_location(&captured(&face))),
         99f64.to_bits()
