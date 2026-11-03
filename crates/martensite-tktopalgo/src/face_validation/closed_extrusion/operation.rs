@@ -38,6 +38,7 @@ fn run<F: FnMut() -> bool>(
     metrics::certify(&strip, &boundary, budget, &mut report.errors)?;
     report.coverage.geometry = true;
     support(report, support_input, budget)?;
+    boundary_identity(&report.errors, budget)?;
     report.coverage.self_exclusion = true;
     budget.poll()?;
     report.coverage.tolerances = true;
@@ -133,4 +134,22 @@ fn support_completion(completion: &ClosedExtrusionCompletion) -> CheckResult<()>
             ClosedFaceIncomplete::Projection(*contact),
         )),
     }
+}
+
+fn boundary_identity<F: FnMut() -> bool>(
+    errors: &[ClosedFaceErrorBound],
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<()> {
+    for bound in errors {
+        budget.query()?;
+        if !matches!(
+            bound.squared_upper.compare_f64(0.),
+            Ok(std::cmp::Ordering::Equal)
+        ) {
+            return Err(ClosedFaceCompletion::Incomplete(
+                ClosedFaceIncomplete::BoundaryIdentity(bound.clone()),
+            ));
+        }
+    }
+    Ok(())
 }

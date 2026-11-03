@@ -159,3 +159,30 @@ fn a_spent_support_proof_budget_never_becomes_a_face_pass() {
     ));
     assert!(report.certificate().is_none());
 }
+
+#[test]
+fn collapsed_and_folded_spatial_caps_cannot_inherit_ideal_support_injectivity() {
+    let collapsed = [[1., 0.]; 9];
+    let folded = [
+        [1., 0.],
+        [1., 1.],
+        [-1., 1.],
+        [-1., 0.],
+        [1., -1.],
+        [1., 0.],
+        [-1., -1.],
+        [0., 0.],
+        [1., 0.],
+    ];
+    for cap in [collapsed, folded] {
+        let fixture = fixture::strip_with_top_net(100., 0., fixture::ROUND_NET, cap);
+        let report = check(&fixture, ClosedFacePolicy::bounded());
+        assert!(report.coverage().geometry, "{:?}", report.completion());
+        assert!(report.support().unwrap().certificate().is_some());
+        assert!(matches!(
+            report.completion(),
+            ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::BoundaryIdentity(_))
+        ));
+        assert!(report.certificate().is_none());
+    }
+}

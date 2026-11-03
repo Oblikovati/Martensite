@@ -78,6 +78,8 @@ pub enum ClosedFaceIncomplete {
     Projection(ClosedExtrusionProjectionContact),
     /// The exact metric operation did not complete.
     Metric(ResidualError),
+    /// Metric conformance alone does not transfer support injectivity to an altered boundary.
+    BoundaryIdentity(ClosedFaceErrorBound),
     /// A coefficient upper was insufficient; this does not prove curve exceedance.
     CoefficientBound {
         /// Source edge occurrence.

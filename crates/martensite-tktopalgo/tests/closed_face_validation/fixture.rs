@@ -106,6 +106,14 @@ pub(super) fn strip(tolerance: f64, top_delta: f64) -> StripFixture {
     strip_from_net(tolerance, top_delta, ROUND_NET)
 }
 pub(super) fn strip_from_net(tolerance: f64, top_delta: f64, xy: [[f64; 2]; 9]) -> StripFixture {
+    strip_with_top_net(tolerance, top_delta, xy, xy)
+}
+pub(super) fn strip_with_top_net(
+    tolerance: f64,
+    top_delta: f64,
+    xy: [[f64; 2]; 9],
+    cap_xy: [[f64; 2]; 9],
+) -> StripFixture {
     let builder = BRepBuilder::default();
     let mut face = Face::default();
     let support = Handle::new(
@@ -117,7 +125,7 @@ pub(super) fn strip_from_net(tolerance: f64, top_delta: f64, xy: [[f64; 2]; 9]) 
     let vertices = [vertex(-1., tolerance), vertex(2., tolerance)];
     let edges = [
         seam(&face, &vertices, tolerance),
-        cap(&face, 2., &vertices[1], tolerance, top_delta, xy),
+        cap(&face, 2., &vertices[1], tolerance, top_delta, cap_xy),
         cap(&face, -1., &vertices[0], tolerance, 0., xy),
     ];
     let mut wire = Wire::default();

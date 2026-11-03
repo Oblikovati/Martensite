@@ -64,11 +64,12 @@ fn nonzero_cap_residuals_respect_existing_raw_limits() {
     let delta = 1. / 1_073_741_824.;
     let fixture = fixture::strip(delta, delta);
     let report = check(&fixture, ClosedFacePolicy::bounded());
-    assert!(
-        matches!(report.completion(), ClosedFaceCompletion::Certified),
-        "{:?}",
-        report.completion()
-    );
+    assert!(report.coverage().geometry);
+    assert!(matches!(
+        report.completion(),
+        ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::BoundaryIdentity(_))
+    ));
+    assert!(report.certificate().is_none());
     assert_positive_error(&report);
     let too_far = fixture::strip(delta, 4. * delta);
     let refused = check(&too_far, ClosedFacePolicy::bounded());
