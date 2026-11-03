@@ -21,28 +21,37 @@ fn primitive(key: usize, input: OwnerInput, owners: &mut FixtureOwners) {
         OwnerInput::Spline3(input) => {
             owners.curves3.insert(key, splines::curve3(input).cast());
         }
-        OwnerInput::Spline2(input) => {
-            owners.curves2.insert(key, splines::curve2(input).cast());
-        }
         OwnerInput::Line3 { origin, direction } => {
             owners.curves3.insert(key, line3(origin, direction).cast());
+        }
+        _ => primitive2(key, input, owners),
+    }
+}
+fn primitive2(key: usize, input: OwnerInput, owners: &mut FixtureOwners) {
+    match input {
+        OwnerInput::Spline2(input) => {
+            owners.curves2.insert(key, splines::curve2(input).cast());
         }
         OwnerInput::Line2 { origin, direction } => {
             owners.curves2.insert(key, line2(origin, direction).cast());
         }
-        OwnerInput::Plane {
-            origin,
-            x,
-            y,
-            normal,
-        } => {
-            owners
-                .surfaces
-                .insert(key, plane(origin, x, y, normal).cast());
-        }
-        _ => {}
+        _ => plane_owner(key, input, owners),
     }
 }
+fn plane_owner(key: usize, input: OwnerInput, owners: &mut FixtureOwners) {
+    if let OwnerInput::Plane {
+        origin,
+        x,
+        y,
+        normal,
+    } = input
+    {
+        owners
+            .surfaces
+            .insert(key, plane(origin, x, y, normal).cast());
+    }
+}
+
 fn extrusion(key: usize, basis: usize, direction: [u64; 3], owners: &mut FixtureOwners) {
     let surface = Handle::new(
         GeomSurfaceOfLinearExtrusion::new(&owners.curve3(basis), direction3(direction)).unwrap(),

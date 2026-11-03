@@ -180,6 +180,9 @@ impl FieldWords {
         self.scalars(&range);
         self.references(&curves);
         self.0.extend([surface as u64, signed(continuity)]);
+        self.seam_endpoints(endpoints);
+    }
+    fn seam_endpoints(&mut self, endpoints: [[[u64; 2]; 2]; 2]) {
         self.0.push(endpoints.len() as u64);
         for branch in endpoints {
             self.rows(&branch);

@@ -18,29 +18,37 @@ pub(super) fn construct(input: &GraphInput, owners: &mut FixtureOwners) {
 }
 fn create_owners(input: &GraphInput, owners: &mut FixtureOwners) {
     for (key, field) in input.owners.iter().copied().enumerate() {
-        let shape = match field {
-            OwnerInput::Face {
-                surface,
-                location,
-                tolerance,
-                natural,
-                ..
-            } => Some(face(owners, surface, location, tolerance, natural)),
-            OwnerInput::Wire { .. } => Some(shape(Handle::new(TWire::new()).cast())),
-            OwnerInput::Edge {
-                tolerance,
-                flags,
-                representations,
-                ..
-            } => Some(edge(owners, tolerance, flags, representations)),
-            OwnerInput::Vertex {
-                point, tolerance, ..
-            } => Some(vertex(point, tolerance)),
-            _ => None,
-        };
+        let shape = owner_shape(field, owners);
         if let Some(shape) = shape {
             owners.shapes.insert(key, shape);
         }
+    }
+}
+fn owner_shape(field: OwnerInput, owners: &FixtureOwners) -> Option<Shape> {
+    match field {
+        OwnerInput::Face {
+            surface,
+            location,
+            tolerance,
+            natural,
+            ..
+        } => Some(face(owners, surface, location, tolerance, natural)),
+        _ => nonface_owner(field, owners),
+    }
+}
+fn nonface_owner(field: OwnerInput, owners: &FixtureOwners) -> Option<Shape> {
+    match field {
+        OwnerInput::Wire { .. } => Some(shape(Handle::new(TWire::new()).cast())),
+        OwnerInput::Edge {
+            tolerance,
+            flags,
+            representations,
+            ..
+        } => Some(edge(owners, tolerance, flags, representations)),
+        OwnerInput::Vertex {
+            point, tolerance, ..
+        } => Some(vertex(point, tolerance)),
+        _ => None,
     }
 }
 fn shape(owner: Handle<dyn martensite_tkbrep::topods::TShape>) -> Shape {
@@ -90,7 +98,7 @@ fn vertex(point: [u64; 3], tolerance: u64) -> Shape {
 fn append_children(key: usize, children: &[OccurrenceInput], owners: &FixtureOwners) {
     let mut parent = owners.shape(key);
     for child in children {
-        Builder::default()
+        Builder
             .add(&mut parent, &owners.occurrence(*child))
             .unwrap();
     }

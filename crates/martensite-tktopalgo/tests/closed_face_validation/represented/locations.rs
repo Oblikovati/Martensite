@@ -36,15 +36,18 @@ pub(super) fn assert_transform(actual: Transform3, expected: TransformInput) {
         [offset.x(), offset.y(), offset.z()].map(f64::to_bits),
         expected.translation
     );
-    for row in 0..3 {
-        for column in 0..3 {
+    assert_matrix(actual, expected.matrix);
+}
+fn assert_matrix(actual: Transform3, expected: [[u64; 3]; 3]) {
+    for (row, coefficients) in expected.iter().enumerate() {
+        for (column, coefficient) in coefficients.iter().enumerate() {
             assert_eq!(
                 actual
                     .matrix()
                     .value(row as i32 + 1, column as i32 + 1)
                     .unwrap()
                     .to_bits(),
-                expected.matrix[row][column]
+                *coefficient
             );
         }
     }

@@ -7,7 +7,7 @@ use martensite_tkmath::predicates::roots::{
     metric_bounds::{CurveIdentityDecision, ResidualError},
 };
 
-/// Finite version-one settings; `ClosedFacePolicy::bounded()` selects explicit caps.
+/// Finite proof settings; `ClosedFacePolicy::bounded()` selects the coincident contract.
 #[derive(Clone, Copy, Debug)]
 pub struct ClosedFacePolicy {
     /// Explicit boundary check version: one is coincident, two is piecewise.

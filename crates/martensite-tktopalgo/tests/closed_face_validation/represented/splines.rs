@@ -6,14 +6,7 @@ use martensite_tkg3d::geom::GeomBSplineCurve;
 use martensite_tkmath::gp::{Point2, Point3};
 pub(super) fn curve3(input: SplineInput<3>) -> Handle<GeomBSplineCurve> {
     assert!(!input.evaluation_override);
-    let points: Vec<_> = input
-        .poles
-        .iter()
-        .map(|p| {
-            let v = scalars(*p);
-            Point3::new(v[0], v[1], v[2])
-        })
-        .collect();
+    let points: Vec<_> = input.poles.iter().copied().map(point3).collect();
     let weights = floats(input.weights);
     let knots = floats(input.knots);
     let curve = GeomBSplineCurve::with_weights_checked(
@@ -30,14 +23,7 @@ pub(super) fn curve3(input: SplineInput<3>) -> Handle<GeomBSplineCurve> {
 }
 pub(super) fn curve2(input: SplineInput<2>) -> Handle<Geom2dBSplineCurve> {
     assert!(!input.evaluation_override);
-    let points: Vec<_> = input
-        .poles
-        .iter()
-        .map(|p| {
-            let v = scalars(*p);
-            Point2::new(v[0], v[1])
-        })
-        .collect();
+    let points: Vec<_> = input.poles.iter().copied().map(point2).collect();
     let weights = floats(input.weights);
     let knots = floats(input.knots);
     let curve = Geom2dBSplineCurve::with_weights(
@@ -53,4 +39,13 @@ pub(super) fn curve2(input: SplineInput<2>) -> Handle<Geom2dBSplineCurve> {
 }
 fn floats(input: &[u64]) -> Vec<f64> {
     input.iter().copied().map(f64::from_bits).collect()
+}
+
+fn point3(bits: [u64; 3]) -> Point3 {
+    let v = scalars(bits);
+    Point3::new(v[0], v[1], v[2])
+}
+fn point2(bits: [u64; 2]) -> Point2 {
+    let v = scalars(bits);
+    Point2::new(v[0], v[1])
 }

@@ -48,6 +48,12 @@ fn check_input(index: usize, input: &types::GraphInput) -> bool {
     );
     let report =
         certify_closed_extrusion_face(owned, ClosedFacePolicy::piecewise_boundary(), || false);
+    print_report(index, &report)
+}
+fn print_report(
+    index: usize,
+    report: &martensite_tktopalgo::face_validation::ClosedFaceReport,
+) -> bool {
     let certified = report.certificate().is_some();
     println!(
         "{{\"input\":{index},\"bound\":true,\"certified\":{certified},\"completion\":{:?},\"obligations\":{},\"finished\":{},\"queries\":{}}}",
