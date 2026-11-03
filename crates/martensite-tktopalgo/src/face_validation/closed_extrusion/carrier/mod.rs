@@ -1,5 +1,6 @@
 //! Independently injective boundary carriers supplement the canonical face surface.
 mod chains;
+mod direction;
 mod planes;
 mod relations;
 use super::{
@@ -27,7 +28,8 @@ pub(super) fn certify<F: FnMut() -> bool>(
     report: &mut ClosedFaceReport,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<()> {
-    let carrier = reference(strip, boundary)?;
+    let mut carrier = reference(strip, boundary)?;
+    carrier.direction = direction::select(&carrier, budget.policy.version)?;
     report.boundary = Some(initial(&carrier));
     let input = admit(&carrier)?;
     relations::certify(&carrier, budget)?;

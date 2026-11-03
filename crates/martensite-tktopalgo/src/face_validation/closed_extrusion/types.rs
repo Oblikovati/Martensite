@@ -10,7 +10,7 @@ use martensite_tkmath::predicates::roots::{
 /// Finite proof settings; `ClosedFacePolicy::bounded()` selects the coincident contract.
 #[derive(Clone, Copy, Debug)]
 pub struct ClosedFacePolicy {
-    /// Explicit boundary check version: one is coincident, two is piecewise.
+    /// Explicit boundary check version: one is coincident, two is piecewise, three admits relative carrier frames.
     pub version: u32,
     /// Whole-support span and exact proof limits.
     pub support: ClosedExtrusionPolicy,
@@ -53,11 +53,19 @@ impl ClosedFacePolicy {
             ..Self::bounded()
         }
     }
+    /// Derive carrier-frame candidates, then certify their exact world relation (#213).
+    /// Example: `ClosedFacePolicy::placed_piecewise_boundary()` retains finite limits.
+    pub fn placed_piecewise_boundary() -> Self {
+        Self {
+            version: 3,
+            ..Self::piecewise_boundary()
+        }
+    }
     /// Read the selected represented-geometry contract; `policy.check_mode()`.
     pub fn check_mode(&self) -> Option<ClosedFaceCheckMode> {
         match self.version {
             1 => Some(ClosedFaceCheckMode::CoincidentBoundary),
-            2 => Some(ClosedFaceCheckMode::PiecewiseRepresentations),
+            2 | 3 => Some(ClosedFaceCheckMode::PiecewiseRepresentations),
             _ => None,
         }
     }
@@ -104,9 +112,34 @@ pub struct ClosedFaceViolation {
     /// Actual contradictory values, not a sampled estimate.
     pub actual: String,
 }
+/// Numerical candidate failures never establish an exact geometric contradiction.
+#[derive(Clone, Debug, PartialEq)]
+pub enum ClosedFaceDirectionCandidateFailure {
+    /// The existing matrix inverse refused its finite numerical domain.
+    InverseUnavailable {
+        /// Original inverse failure, retained for diagnosis.
+        cause: String,
+    },
+    /// Candidate arithmetic produced a nonfinite component.
+    NonFinite {
+        /// Rejected component position.
+        coordinate: usize,
+        /// Exact rejected floating-point representation.
+        bits: u64,
+    },
+    /// A zero candidate cannot represent the admitted extrusion direction.
+    ZeroVector,
+}
 /// An unfinished required proof, distinct from a proven geometric defect.
 #[derive(Debug)]
 pub enum ClosedFaceIncomplete {
+    /// A numerical inverse candidate could not be represented; no exact relation was accepted.
+    CarrierDirectionCandidate {
+        /// Actual source owner and required relation.
+        query: ClosedFaceQueryContext,
+        /// Original inverse failure or rejected candidate shape.
+        cause: ClosedFaceDirectionCandidateFailure,
+    },
     /// Cancellation was observed on owned input.
     Cancelled,
     /// A finite caller allowance was exhausted.

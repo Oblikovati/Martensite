@@ -2,6 +2,7 @@
 mod diagnostics;
 mod fixture;
 mod piecewise;
+mod placed;
 mod replay;
 mod represented;
 mod variants;

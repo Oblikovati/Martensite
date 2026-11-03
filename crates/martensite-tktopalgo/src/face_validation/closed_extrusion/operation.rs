@@ -101,12 +101,12 @@ fn initial_report(input: FaceInputSnapshot, policy: ClosedFacePolicy) -> ClosedF
 }
 
 fn validate_policy(policy: ClosedFacePolicy) -> CheckResult<()> {
-    if !matches!(policy.version, 1 | 2) {
+    if !matches!(policy.version, 1 | 2 | 3) {
         return Err(unsupported(
             0,
             "policy version",
             format!("{}", policy.version),
-            "version 1 or 2",
+            "version 1, 2 or 3",
         ));
     }
     if policy.max_bisections > u16::MAX as u64 {
