@@ -17,10 +17,10 @@ const DEGENERATED_MASK: i32 = 4;
 
 /// The private fields of `BRep_TEdge`.
 #[derive(Clone)]
-struct TEdgeFields {
-    tolerance: f64,
-    flags: i32,
-    curves: Vec<Handle<dyn BRepCurveRepresentation>>,
+pub(crate) struct TEdgeFields {
+    pub(crate) tolerance: f64,
+    pub(crate) flags: i32,
+    pub(crate) curves: Vec<Handle<dyn BRepCurveRepresentation>>,
 }
 
 impl TEdgeFields {
@@ -44,7 +44,7 @@ impl TEdgeFields {
 /// ```
 pub struct BRepTEdge {
     parent: topods::TEdge,
-    fields: SharedState<TEdgeFields>,
+    pub(crate) fields: SharedState<TEdgeFields>,
 }
 impl_transient!(BRepTEdge, "BRep_TEdge", topods::TEdge, parent, interfaces: [dyn TShape]);
 

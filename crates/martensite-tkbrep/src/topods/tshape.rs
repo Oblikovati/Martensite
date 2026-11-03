@@ -10,9 +10,9 @@ use super::bit_layout::*;
 
 /// The locked fields of a TShape: the private `myShapes` list and `myState` word.
 #[derive(Clone, Default)]
-struct TShapeFields {
-    shapes: Vec<Shape>,
-    state: u16,
+pub(crate) struct TShapeFields {
+    pub(crate) shapes: Vec<Shape>,
+    pub(crate) state: u16,
 }
 
 /// The data of the abstract `TopoDS_TShape` that every concrete TShape embeds; the
@@ -26,7 +26,7 @@ struct TShapeFields {
 /// ```
 #[derive(Default)]
 pub struct TShapeBase {
-    fields: SharedState<TShapeFields>,
+    pub(crate) fields: SharedState<TShapeFields>,
 }
 
 impl TShapeBase {

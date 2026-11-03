@@ -8,7 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added nonblocking geometry input leases with explicit busy and poisoned-state outcomes for coherent validation capture (#213).
+- Added finite coherent face-input capture and nonblocking geometry leases, with owned topology, representation and geometry fields and explicit incomplete outcomes (#213).
 
 - Added an owned exact sufficient self-exclusion operation for closed quadratic spline extrusion supports, with complete span obligations and explicit incomplete outcomes (#213).
 
