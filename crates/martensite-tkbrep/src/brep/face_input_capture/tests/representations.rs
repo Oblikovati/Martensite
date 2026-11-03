@@ -4,7 +4,7 @@ use martensite_tkg2d::geom2d::Geom2dLine;
 use martensite_tkg3d::geom::GeomLine;
 use martensite_tkmath::gp::{Axis1, Axis2d};
 
-fn append_owner(face: &Face, owner: Handle<dyn TShape>) {
+pub(super) fn append_owner(face: &Face, owner: Handle<dyn TShape>) {
     let occurrence = Shape::from_parts(owner, Location::default(), Orientation::Forward);
     face.tshape()
         .get()
@@ -12,7 +12,7 @@ fn append_owner(face: &Face, owner: Handle<dyn TShape>) {
         .tshape_base()
         .append_child(occurrence);
 }
-fn seam_edge(surface: &Handle<GeomSurfaceOfLinearExtrusion>) -> Handle<BRepTEdge> {
+pub(super) fn seam_edge(surface: &Handle<GeomSurfaceOfLinearExtrusion>) -> Handle<BRepTEdge> {
     let first = Handle::new(Geom2dLine::new(Axis2d::default()));
     let second = Handle::new(Geom2dLine::new(Axis2d::default()));
     let seam = BRepCurveOnClosedSurface::new(
