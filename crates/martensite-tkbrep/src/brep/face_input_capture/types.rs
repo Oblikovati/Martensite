@@ -165,6 +165,10 @@ pub enum CapturedFaceCell {
     PlanarLine(martensite_tkmath::gp::Axis2d),
     /// Stored spline fields, without numerical certification.
     Spline(martensite_tkg3d::geom::StoredSplineInput),
+    /// Stored planar spline fields and one-based array layouts, without evaluation.
+    PlanarSpline(martensite_tkg2d::geom2d::StoredPlanarSplineInput),
+    /// Stored plane frame, copied from the live plane state.
+    Plane(martensite_tkmath::gp::Axis3),
     /// Actual extrusion-to-basis binding and direction.
     Extrusion {
         /// Invocation-local label of the actual basis owner.

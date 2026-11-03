@@ -53,7 +53,7 @@ mod bezier_curve;
 pub use bezier_curve::Geom2dBezierCurve;
 mod bspline_curve;
 mod spline_kind;
-pub use bspline_curve::Geom2dBSplineCurve;
+pub use bspline_curve::{Geom2dBSplineCurve, PlanarSplineInputLease, StoredPlanarSplineInput};
 mod offset_curve;
 pub mod offset_curve_utils;
 pub use offset_curve::Geom2dOffsetCurve;

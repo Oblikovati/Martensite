@@ -2,8 +2,10 @@
 use super::{owners::Owner, types::FaceCaptureIncomplete as Incomplete};
 use crate::{brep::*, topods::TShape};
 use martensite_tkernel::standard::{Handle, RuntimeTyped, SharedState};
-use martensite_tkg2d::geom2d::PlanarLineInputLease;
-use martensite_tkg3d::geom::{ExtrusionInputLease, GeomCurve, LineInputLease, SplineInputLease};
+use martensite_tkg2d::geom2d::{PlanarLineInputLease, PlanarSplineInputLease};
+use martensite_tkg3d::geom::{
+    ExtrusionInputLease, GeomCurve, LineInputLease, PlaneInputLease, SplineInputLease,
+};
 use martensite_tkmath::toploc::Location;
 use std::sync::RwLockReadGuard;
 
@@ -31,7 +33,9 @@ pub(super) enum Lease<'a> {
     Location(RwLockReadGuard<'a, Location>),
     Line(LineInputLease<'a>),
     PlanarLine(PlanarLineInputLease<'a>),
+    PlanarSpline(PlanarSplineInputLease<'a>),
     Spline(SplineInputLease<'a>),
+    Plane(PlaneInputLease<'a>),
     Extrusion(ExtrusionInputLease<'a>),
 }
 impl Cell<'_> {
@@ -76,7 +80,9 @@ fn geometry_lease(owner: &Owner) -> Result<Lease<'_>, Incomplete> {
     let result = match owner {
         Owner::Line(h) => live(h)?.try_input_lease().map(Lease::Line),
         Owner::PlanarLine(h) => live(h)?.try_input_lease().map(Lease::PlanarLine),
+        Owner::PlanarSpline(h) => live(h)?.try_input_lease().map(Lease::PlanarSpline),
         Owner::Spline(h) => live(h)?.try_input_lease().map(Lease::Spline),
+        Owner::Plane(h) => live(h)?.try_input_lease().map(Lease::Plane),
         Owner::Extrusion(h) => live(h)?.try_input_lease().map(Lease::Extrusion),
         _ => return Err(Incomplete::Changed { owner: 0 }),
     };
@@ -190,8 +196,10 @@ pub(super) fn lease_order(lease: &Lease<'_>) -> u8 {
         Lease::Location(_) => 8,
         Lease::Line(_) => 9,
         Lease::PlanarLine(_) => 10,
-        Lease::Spline(_) => 11,
-        Lease::Extrusion(_) => 12,
+        Lease::PlanarSpline(_) => 11,
+        Lease::Spline(_) => 12,
+        Lease::Plane(_) => 13,
+        Lease::Extrusion(_) => 14,
     }
 }
 
