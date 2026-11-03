@@ -32,6 +32,9 @@ pub(super) const ROUND_NET: [[f64; 2]; 9] = [
 
 fn spline(level: f64, delta: f64, xy: [[f64; 2]; 9]) -> Handle<GeomBSplineCurve> {
     let coordinates = xy.map(|p| Point3::new(p[0] + delta, p[1], level));
+    spline_coordinates(coordinates)
+}
+fn spline_coordinates(coordinates: [Point3; 9]) -> Handle<GeomBSplineCurve> {
     Handle::new(
         GeomBSplineCurve::new(
             &Array1::from_shared(&coordinates, 1),
@@ -227,4 +230,10 @@ pub(super) fn strip_with_carrier(tolerance: f64, actual: [[f64; 2]; 9]) -> Strip
         edges,
         vertices,
     }
+}
+
+pub(super) fn replace_cap_points(edge: &Edge, coordinates: [Point3; 9], tolerance: f64) {
+    BRepBuilder::default()
+        .update_edge_curve(edge, &spline_coordinates(coordinates).cast(), tolerance)
+        .unwrap();
 }

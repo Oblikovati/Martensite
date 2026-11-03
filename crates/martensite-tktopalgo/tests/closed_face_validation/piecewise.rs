@@ -14,15 +14,8 @@ fn nonconstant_cap_displacement_has_two_independent_proofs() {
     assert!(report.certificate().is_some(), "{:?}", report.completion());
     assert_eq!(report.work().support_obligations, 20);
     assert_eq!(report.work().support_finished, 20);
-    assert!(
-        report
-            .boundary()
-            .unwrap()
-            .proof()
-            .unwrap()
-            .certificate()
-            .is_some()
-    );
+    let actual_proof = report.boundary().unwrap().proof().unwrap();
+    assert!(actual_proof.certificate().is_some());
     assert!(
         check(&shape, ClosedFacePolicy::bounded())
             .certificate()
@@ -122,4 +115,26 @@ fn piecewise_published_witnesses_are_send_and_sync() {
     require_owned::<ClosedFaceBoundaryReport>();
     require_owned::<ClosedFaceReport>();
     require_owned::<ClosedFaceCertificate>();
+}
+
+#[test]
+fn tilted_or_wrong_level_actual_caps_cannot_use_a_planar_carrier() {
+    for tilted in [false, true] {
+        let shape = fixture::strip(1e-7, 0.);
+        for (edge, level) in [(&shape.edges[1], 2.), (&shape.edges[2], -1.)] {
+            let points = shifted_cap(level, tilted);
+            fixture::replace_cap_points(edge, points, 1e-7);
+        }
+        let report = check(&shape, ClosedFacePolicy::piecewise_boundary());
+        assert!(report.coverage().geometry, "{:?}", report.completion());
+        assert!(report.certificate().is_none(), "{:?}", report.completion());
+    }
+}
+fn shifted_cap(level: f64, tilted: bool) -> [Point3; 9] {
+    let delta = 1. / 1_073_741_824.;
+    std::array::from_fn(|index| {
+        let xy = fixture::ROUND_NET[index];
+        let offset = if tilted && index != 1 { 0. } else { delta };
+        Point3::new(xy[0], xy[1], level + offset)
+    })
 }
