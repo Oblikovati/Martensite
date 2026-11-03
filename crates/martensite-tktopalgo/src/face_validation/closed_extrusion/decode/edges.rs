@@ -28,7 +28,7 @@ pub(super) fn decode<F: FnMut() -> bool>(
         replay,
         budget,
     )?;
-    let (pcurve, branch, seam) = pcurve(
+    let (pcurve, branch, seam, cached_endpoints) = pcurve(
         cells,
         parametric,
         orientation,
@@ -62,6 +62,7 @@ pub(super) fn decode<F: FnMut() -> bool>(
         location,
         orientation,
         pcurve,
+        cached_endpoints,
         range,
         curve,
         placement: embedding(&placed)?,
@@ -177,11 +178,11 @@ fn pcurve<F: FnMut() -> bool>(
     surface_location: &Location,
     replay: &mut PlacementReplay,
     budget: &mut Budget<'_, F>,
-) -> CheckResult<(Axis2d, u8, bool)> {
+) -> CheckResult<(Axis2d, u8, bool, [[f64; 2]; 2])> {
     let Cell::Parametric {
         curve,
         surface: actual,
-        ..
+        endpoints,
     } = cells.one(
         owner,
         |c| matches!(c, Cell::Parametric { .. }),
@@ -204,7 +205,9 @@ fn pcurve<F: FnMut() -> bool>(
     let seam = cells.input.cells().iter().find_map(|(id, c)| {
         if *id == owner {
             match c {
-                Cell::Seam { curve, .. } => Some(*curve),
+                Cell::Seam {
+                    curve, endpoints, ..
+                } => Some((*curve, *endpoints)),
                 _ => None,
             }
         } else {
@@ -212,7 +215,7 @@ fn pcurve<F: FnMut() -> bool>(
         }
     });
     let (selected, branch) = if orientation == Orientation::Reversed && seam.is_some() {
-        (seam.unwrap_or(*curve), 2)
+        (seam.map(|v| v.0).unwrap_or(*curve), 2)
     } else {
         (*curve, 1)
     };
@@ -224,7 +227,12 @@ fn pcurve<F: FnMut() -> bool>(
     else {
         return Err(invalid(selected, "pcurve geometry", "wrong type"));
     };
-    Ok((*axis, branch, seam.is_some()))
+    let cached = if branch == 2 {
+        seam.map(|v| v.1).unwrap_or(*endpoints)
+    } else {
+        *endpoints
+    };
+    Ok((*axis, branch, seam.is_some(), cached))
 }
 fn vertices<F: FnMut() -> bool>(
     cells: &Cells<'_>,

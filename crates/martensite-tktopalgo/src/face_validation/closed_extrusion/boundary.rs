@@ -29,6 +29,7 @@ pub(super) fn certify<F: FnMut() -> bool>(
             corner(edge, edge.range[0], &targets, budget)?,
             corner(edge, edge.range[1], &targets, budget)?,
         ];
+        validate_cache(edge, pair.map(|corner| targets[corner]))?;
         corners[index] = pair;
         sides[index] = side(pair, edge.owner)?;
     }
@@ -194,6 +195,17 @@ fn seam(strip: &Strip, sides: &[Side; 4]) -> CheckResult<()> {
                 ));
             }
         }
+    }
+    Ok(())
+}
+
+fn validate_cache(edge: &EdgeUse, expected: [[f64; 2]; 2]) -> CheckResult<()> {
+    if edge.cached_endpoints != expected {
+        return Err(invalid(
+            edge.owner,
+            "stored UV endpoint cache",
+            format!("actual={:?}, expected={expected:?}", edge.cached_endpoints),
+        ));
     }
     Ok(())
 }

@@ -37,6 +37,7 @@ pub(super) struct EdgeUse {
     pub location: Location,
     pub orientation: Orientation,
     pub pcurve: Axis2d,
+    pub cached_endpoints: [[f64; 2]; 2],
     pub range: [f64; 2],
     pub curve: SpaceCurve,
     pub placement: MetricEmbedding<3>,
