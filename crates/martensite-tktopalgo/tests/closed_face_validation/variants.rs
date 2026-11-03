@@ -132,15 +132,11 @@ fn query_allowance_is_global_and_keeps_actual_unfinished_work() {
     let fixture = fixture::strip(1e-7, 0.);
     let full = check(&fixture, ClosedFacePolicy::bounded());
     let count = full.work().queries;
-    let exact = ClosedFacePolicy {
-        max_queries: count,
-        ..ClosedFacePolicy::bounded()
-    };
+    let mut exact = ClosedFacePolicy::bounded();
+    exact.max_queries = count;
     assert!(check(&fixture, exact).certificate().is_some());
-    let short = ClosedFacePolicy {
-        max_queries: count - 1,
-        ..exact
-    };
+    let mut short = exact;
+    short.max_queries = count - 1;
     let refused = check(&fixture, short);
     assert!(matches!(
         refused.completion(),

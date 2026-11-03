@@ -44,6 +44,10 @@ fn cancellation_and_exhausted_allowances_never_publish_a_certificate() {
         ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Cancelled)
     ));
     assert!(report.certificate().is_none());
+}
+#[test]
+fn exhausted_query_allowance_never_publishes_a_certificate() {
+    let fixture = fixture::strip(1e-7, 0.);
     let policy = ClosedFacePolicy {
         max_queries: 0,
         ..ClosedFacePolicy::bounded()
@@ -65,11 +69,7 @@ fn nonzero_cap_residuals_respect_existing_raw_limits() {
         "{:?}",
         report.completion()
     );
-    assert!(
-        report.error_bounds().iter().any(
-            |bound| bound.squared_upper.compare_f64(0.).unwrap() == std::cmp::Ordering::Greater
-        )
-    );
+    assert_positive_error(&report);
     let too_far = fixture::strip(delta, 4. * delta);
     let refused = check(&too_far, ClosedFacePolicy::bounded());
     assert!(!matches!(
@@ -90,4 +90,12 @@ fn mutated_observable_uv_cache_cannot_receive_a_certificate() {
         report.completion()
     );
     assert!(report.certificate().is_none());
+}
+
+fn assert_positive_error(report: &ClosedFaceReport) {
+    assert!(
+        report.error_bounds().iter().any(
+            |bound| bound.squared_upper.compare_f64(0.).unwrap() == std::cmp::Ordering::Greater
+        )
+    );
 }

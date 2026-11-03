@@ -45,14 +45,7 @@ impl StoredSplineInput {
         direction: [f64; 3],
         interval: [f64; 2],
     ) -> Result<ClosedQuadraticExtrusionInput, Error> {
-        let mults = self
-            .multiplicities
-            .iter()
-            .enumerate()
-            .map(|(index, n)| {
-                u32::try_from(*n).map_err(|_| Error::Multiplicity { index, value: *n })
-            })
-            .collect::<Result<Vec<_>, _>>()?;
+        let mults = checked_multiplicities(&self.multiplicities)?;
         ClosedQuadraticExtrusionInput::capture(
             self.poles,
             self.weights,
@@ -93,12 +86,7 @@ fn admitted(input: StoredSplineInput, layout: Layout) -> Result<Admission, Error
     Ok(Admission::Captured(numeric, layout))
 }
 fn flat_sequence(input: &ClosedQuadraticExtrusionInput, actual: &[f64]) -> Result<(), Error> {
-    let expected: Vec<f64> = input
-        .knots()
-        .iter()
-        .zip(input.multiplicities())
-        .flat_map(|(k, n)| std::iter::repeat_n(*k, *n as usize))
-        .collect();
+    let expected = expanded_knots(input);
     if expected
         .iter()
         .map(|v| v.to_bits())
@@ -110,4 +98,21 @@ fn flat_sequence(input: &ClosedQuadraticExtrusionInput, actual: &[f64]) -> Resul
         actual: actual.to_vec(),
         expected,
     })
+}
+
+fn checked_multiplicities(values: &[i32]) -> Result<Vec<u32>, Error> {
+    values
+        .iter()
+        .enumerate()
+        .map(|(index, n)| u32::try_from(*n).map_err(|_| Error::Multiplicity { index, value: *n }))
+        .collect::<Result<Vec<_>, _>>()
+}
+
+fn expanded_knots(input: &ClosedQuadraticExtrusionInput) -> Vec<f64> {
+    input
+        .knots()
+        .iter()
+        .zip(input.multiplicities())
+        .flat_map(|(k, n)| std::iter::repeat_n(*k, *n as usize))
+        .collect()
 }
