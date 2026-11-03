@@ -1,4 +1,5 @@
 //! Existing exact residual decisions cover entire represented intervals.
+mod claims;
 mod endpoints;
 use super::{
     boundary::{Boundary, Side},
@@ -6,6 +7,7 @@ use super::{
     decode::*,
     types::*,
 };
+use claims::append;
 use martensite_tkmath::predicates::roots::{RootIsolationOptions, metric_bounds::*};
 pub(super) fn certify<F: FnMut() -> bool>(
     strip: &Strip,
@@ -205,38 +207,6 @@ fn residual<'a>(
             options: RootIsolationOptions::new(1.),
         },
         maps: [MetricParameterMap::Identity; 2],
-    }
-}
-pub(super) fn append(
-    index: usize,
-    vertex: Option<usize>,
-    role: &'static str,
-    limit: f64,
-    decision: ResidualDecision,
-    coefficient: bool,
-    errors: &mut Vec<ClosedFaceErrorBound>,
-) -> CheckResult<()> {
-    match decision {
-        ResidualDecision::Within {
-            proven_squared_upper,
-        } => {
-            errors.push(ClosedFaceErrorBound {
-                edge: index,
-                vertex,
-                role,
-                spatial_limit: limit,
-                squared_upper: proven_squared_upper,
-            });
-            Ok(())
-        }
-        ResidualDecision::Exceeds { witness } if !coefficient => Err(invalid(
-            index,
-            "spatial consistency",
-            format!("role={role}, limit={limit}, witness={witness:?}"),
-        )),
-        ResidualDecision::Exceeds { .. } => Err(ClosedFaceCompletion::Incomplete(
-            ClosedFaceIncomplete::CoefficientBound { edge: index, limit },
-        )),
     }
 }
 pub(super) fn vertex_query<'a>(
