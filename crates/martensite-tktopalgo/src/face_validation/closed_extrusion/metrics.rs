@@ -1,6 +1,7 @@
 //! Existing exact residual decisions cover entire represented intervals.
 mod claims;
 mod endpoints;
+mod queries;
 use super::{
     boundary::{Boundary, Side},
     budget::*,
@@ -9,6 +10,7 @@ use super::{
 };
 use claims::append;
 use martensite_tkmath::predicates::roots::{RootIsolationOptions, metric_bounds::*};
+use queries::{residual, vertex_query};
 pub(super) fn certify<F: FnMut() -> bool>(
     strip: &Strip,
     boundary: &Boundary,
@@ -178,65 +180,4 @@ fn matching_basis(
         ));
     }
     Ok(())
-}
-fn residual<'a>(
-    strip: &Strip,
-    edge: &EdgeUse,
-    curve: MetricCurve<'a, 3>,
-    origin: [f64; 3],
-    map: [f64; 2],
-    interval: [f64; 2],
-    limit: f64,
-) -> TransportedResidualQuery<'a> {
-    TransportedResidualQuery {
-        residual: PlanarResidualQuery {
-            curve,
-            curve_embedding: edge.placement,
-            pcurve: MetricCurve::Line {
-                origin: [map[0], 0.],
-                direction: [map[1], 0.],
-            },
-            plane_embedding: MetricEmbedding {
-                linear: std::array::from_fn(|i| [strip.direction[i], 0.]),
-                origin,
-                scale: 1.,
-            },
-            plane_placement: strip.placement,
-            interval,
-            spatial_limit: limit,
-            options: RootIsolationOptions::new(1.),
-        },
-        maps: [MetricParameterMap::Identity; 2],
-    }
-}
-pub(super) fn vertex_query<'a>(
-    vertex: &VertexUse,
-    curve: MetricCurve<'a, 3>,
-    placement: MetricEmbedding<3>,
-    parameter: f64,
-    limit: f64,
-) -> TransportedResidualQuery<'a> {
-    TransportedResidualQuery {
-        residual: PlanarResidualQuery {
-            curve,
-            curve_embedding: placement,
-            pcurve: MetricCurve::Line {
-                origin: [0.; 2],
-                direction: [0.; 2],
-            },
-            plane_embedding: MetricEmbedding {
-                linear: [[0.; 2]; 3],
-                origin: vertex.point,
-                scale: 1.,
-            },
-            plane_placement: vertex.placement,
-            interval: [0., 1.],
-            spatial_limit: limit,
-            options: RootIsolationOptions::new(1.),
-        },
-        maps: [
-            MetricParameterMap::Endpoints([parameter; 2]),
-            MetricParameterMap::Identity,
-        ],
-    }
 }
