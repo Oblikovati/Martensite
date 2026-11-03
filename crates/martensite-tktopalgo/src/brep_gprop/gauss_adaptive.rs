@@ -275,7 +275,7 @@ impl BRepGPropGauss {
         (coeff, by_point): (&[f64], bool),
         out: &mut GaussProps,
     ) -> Result<(f64, bool), Failure> {
-        let estimate = 0.0 > eps || eps < 0.001;
+        let estimate = error_estimate_requested(eps);
         let is_verify = 0.0 < eps && eps < 0.001;
         let epsilon = eps.abs();
         let bounds = surface.bounds()?;
@@ -375,5 +375,41 @@ impl<'g, 'a> AdaptiveRun<'g, 'a> {
         } else {
             0.0
         }
+    }
+}
+
+// #372: every negative epsilon already satisfies this threshold; the separate
+// negative test was redundant, including for infinities, signed zero and NaN.
+fn error_estimate_requested(epsilon: f64) -> bool {
+    epsilon < 0.001
+}
+
+#[cfg(test)]
+mod estimate_policy_tests {
+    use super::error_estimate_requested;
+
+    #[test]
+    fn estimation_policy_covers_signs_threshold_and_unordered_inputs() {
+        for (epsilon, expected) in estimation_cases() {
+            assert_eq!(
+                error_estimate_requested(epsilon),
+                expected,
+                "epsilon={epsilon:?}"
+            );
+        }
+    }
+    fn estimation_cases() -> [(f64, bool); 9] {
+        let below = f64::from_bits(0.001f64.to_bits() - 1);
+        [
+            (f64::NEG_INFINITY, true),
+            (-1., true),
+            (-0., true),
+            (0., true),
+            (below, true),
+            (0.001, false),
+            (1., false),
+            (f64::INFINITY, false),
+            (f64::NAN, false),
+        ]
     }
 }
