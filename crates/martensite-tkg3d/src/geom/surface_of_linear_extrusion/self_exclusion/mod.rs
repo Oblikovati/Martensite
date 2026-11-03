@@ -27,7 +27,11 @@ impl GeomSurfaceOfLinearExtrusion {
         Ok(match snapshot {
             BasisAdmission::Captured(input, layout) => {
                 ClosedSplineExtrusionExclusion::Captured(ClosedSplineExtrusionSnapshot {
-                    numeric: certify_closed_quadratic_extrusion(input, policy, &mut cancelled),
+                    numeric: Box::new(certify_closed_quadratic_extrusion(
+                        input,
+                        policy,
+                        &mut cancelled,
+                    )),
                     layout,
                 })
             }

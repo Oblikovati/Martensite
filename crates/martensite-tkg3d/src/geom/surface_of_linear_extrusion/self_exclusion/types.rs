@@ -63,7 +63,7 @@ pub enum ClosedSplineExtrusionInconclusive {
 #[derive(Clone, Debug)]
 /// An owned numeric report and the coherent geometry admission that produced it.
 pub struct ClosedSplineExtrusionSnapshot {
-    pub(in crate::geom) numeric: ClosedExtrusionReport,
+    pub(in crate::geom) numeric: Box<ClosedExtrusionReport>,
     pub(in crate::geom) layout: ClosedSplineExtrusionLayout,
 }
 impl ClosedSplineExtrusionSnapshot {
