@@ -2,6 +2,7 @@
 mod boundary;
 mod boundary_report;
 mod budget;
+mod carrier;
 mod decode;
 mod incidence;
 mod metrics;

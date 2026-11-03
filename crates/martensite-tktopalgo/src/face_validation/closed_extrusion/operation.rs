@@ -38,7 +38,7 @@ fn run<F: FnMut() -> bool>(
     metrics::certify(&strip, &boundary, budget, &mut report.errors)?;
     report.coverage.geometry = true;
     support(report, support_input, budget)?;
-    boundary_identity(&report.errors, budget)?;
+    check_boundary(&strip, &boundary, report, budget)?;
     report.coverage.self_exclusion = true;
     budget.poll()?;
     report.coverage.tolerances = true;
@@ -62,7 +62,7 @@ fn admit_support(
         })?;
     require_captured(input)
 }
-fn require_captured(
+pub(super) fn require_captured(
     input: ClosedSplineExtrusionInput,
 ) -> CheckResult<ClosedQuadraticExtrusionInput> {
     match input {
@@ -101,12 +101,12 @@ fn initial_report(input: FaceInputSnapshot, policy: ClosedFacePolicy) -> ClosedF
 }
 
 fn validate_policy(policy: ClosedFacePolicy) -> CheckResult<()> {
-    if policy.version != 1 {
+    if !matches!(policy.version, 1 | 2) {
         return Err(unsupported(
             0,
             "policy version",
             format!("{}", policy.version),
-            "version 1",
+            "version 1 or 2",
         ));
     }
     if policy.max_bisections > u16::MAX as u64 {
@@ -148,4 +148,16 @@ fn boundary_identity<F: FnMut() -> bool>(
         }
     }
     Ok(())
+}
+
+fn check_boundary<F: FnMut() -> bool>(
+    strip: &decode::Strip,
+    boundary: &boundary::Boundary,
+    report: &mut ClosedFaceReport,
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<()> {
+    if budget.policy.version == 1 {
+        return boundary_identity(&report.errors, budget);
+    }
+    super::carrier::certify(strip, boundary, report, budget)
 }
