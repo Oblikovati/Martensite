@@ -222,11 +222,33 @@ fn prove_pair(
     if witness == HullSeparation::Unresolved {
         return Err(Cause::UnseparatedPair { first, second });
     }
+    witness_limits(&witness, budget.policy.max_coefficient_bits)?;
     Ok(ExclusionWitness::Pair {
         first,
         second,
         witness,
     })
+}
+
+fn witness_limits(witness: &HullSeparation, requested: u64) -> Result<(), Cause> {
+    match witness {
+        HullSeparation::Disjoint { normal } => ratio_limits(normal.iter(), requested),
+        HullSeparation::EndpointOnly { point, normals } => {
+            ratio_limits(point.iter().chain(normals.iter().flatten()), requested)
+        }
+        HullSeparation::Unresolved => Ok(()),
+    }
+}
+
+fn ratio_limits<'a>(
+    values: impl Iterator<Item = &'a super::super::certificate_arithmetic::ExactRatio>,
+    requested: u64,
+) -> Result<(), Cause> {
+    for value in values {
+        let actual = value.numerator().bits().max(value.denominator().bits());
+        limit("retained witness coefficient bits", requested, actual)?;
+    }
+    Ok(())
 }
 
 fn pair_hulls(
