@@ -121,6 +121,8 @@ pub struct ClosedFaceWork {
     pub bisections: u64,
     /// Datum replay steps actually entered.
     pub location_steps: usize,
+    /// Spans declared by all admitted support proof inputs.
+    pub support_spans: usize,
     /// Required full-support span products.
     pub support_obligations: usize,
     /// Support products actually certified.

@@ -81,12 +81,7 @@ fn support<F: FnMut() -> bool>(
     input: ClosedQuadraticExtrusionInput,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<()> {
-    let proof =
-        certify_closed_quadratic_extrusion(input, budget.policy.support, &mut *budget.cancel);
-    let work = proof.work();
-    budget.work.support_obligations = work.scheduled_obligations;
-    budget.work.support_finished = work.finished_obligations;
-    budget.work.support_steps = work.started_proof_steps;
+    let proof = super::support_proof::prove(input, budget);
     let result = support_completion(proof.completion());
     report.support = Some(proof);
     result

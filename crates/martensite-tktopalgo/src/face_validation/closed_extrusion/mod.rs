@@ -7,6 +7,7 @@ mod metrics;
 mod operation;
 mod placements;
 mod report;
+mod support_proof;
 mod types;
 pub use operation::certify_closed_extrusion_face;
 pub use report::{ClosedFaceCertificate, ClosedFaceReport};
