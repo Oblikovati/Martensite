@@ -32,6 +32,13 @@ fn run_ownership_controls(context: &BuildContext<'_>) -> BuildResult<()> {
         .reporter
         .step("ThreadSanitizer coherent face inputs", || {
             context.runner.run(&face_input_controls(context.root()))
+        })?;
+    context
+        .reporter
+        .step("ThreadSanitizer owned face certificates", || {
+            context
+                .runner
+                .run(&face_certificate_controls(context.root()))
         })
 }
 
@@ -57,6 +64,21 @@ fn face_input_controls(root: &Path) -> CommandSpec {
         "--lib",
         "brep::face_input_capture",
         "--",
+        "--test-threads=1",
+        "--show-output",
+    ])
+}
+
+fn face_certificate_controls(root: &Path) -> CommandSpec {
+    // Owned face validation publishes results shared by independent readers (#213).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tktopalgo",
+        "--test",
+        "toolkit",
+        "--",
+        "closed_face_validation",
         "--test-threads=1",
         "--show-output",
     ])

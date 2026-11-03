@@ -2,9 +2,9 @@
 use super::types::FaceCaptureIncomplete as Incomplete;
 use crate::{brep::*, topods::TShape};
 use martensite_tkernel::standard::{Handle, RuntimeTyped, Transient};
-use martensite_tkg2d::geom2d::{Geom2dCurve, Geom2dLine};
+use martensite_tkg2d::geom2d::{Geom2dBSplineCurve, Geom2dCurve, Geom2dLine};
 use martensite_tkg3d::geom::{
-    GeomBSplineCurve, GeomCurve, GeomLine, GeomSurface, GeomSurfaceOfLinearExtrusion,
+    GeomBSplineCurve, GeomCurve, GeomLine, GeomPlane, GeomSurface, GeomSurfaceOfLinearExtrusion,
 };
 
 #[derive(Clone)]
@@ -15,7 +15,9 @@ pub(super) enum Owner {
     Seam(Handle<BRepCurveOnClosedSurface>),
     Line(Handle<GeomLine>),
     PlanarLine(Handle<Geom2dLine>),
+    PlanarSpline(Handle<Geom2dBSplineCurve>),
     Spline(Handle<GeomBSplineCurve>),
+    Plane(Handle<GeomPlane>),
     Extrusion(Handle<GeomSurfaceOfLinearExtrusion>),
 }
 impl Owner {
@@ -27,7 +29,9 @@ impl Owner {
             Self::Seam(h) => h.object_address() as usize,
             Self::Line(h) => h.object_address() as usize,
             Self::PlanarLine(h) => h.object_address() as usize,
+            Self::PlanarSpline(h) => h.object_address() as usize,
             Self::Spline(h) => h.object_address() as usize,
+            Self::Plane(h) => h.object_address() as usize,
             Self::Extrusion(h) => h.object_address() as usize,
         }
     }
@@ -59,11 +63,18 @@ pub(super) fn spatial_owner(handle: &Handle<dyn GeomCurve>) -> Result<Owner, Inc
 }
 
 pub(super) fn surface_owner(handle: &Handle<dyn GeomSurface>) -> Result<Owner, Incomplete> {
+    let plane = handle.cast::<GeomPlane>();
+    if exact(&plane) {
+        return Ok(Owner::Plane(plane));
+    }
     let surface = handle.cast::<GeomSurfaceOfLinearExtrusion>();
     if exact(&surface) {
         return Ok(Owner::Extrusion(surface));
     }
-    Err(unsupported(handle, "stored linear extrusion surface"))
+    Err(unsupported(
+        handle,
+        "stored plane or linear extrusion surface",
+    ))
 }
 
 pub(super) fn planar_owner(handle: &Handle<dyn Geom2dCurve>) -> Result<Owner, Incomplete> {
@@ -71,7 +82,11 @@ pub(super) fn planar_owner(handle: &Handle<dyn Geom2dCurve>) -> Result<Owner, In
     if exact(&line) {
         return Ok(Owner::PlanarLine(line));
     }
-    Err(unsupported(handle, "stored planar line"))
+    let spline = handle.cast::<Geom2dBSplineCurve>();
+    if exact(&spline) {
+        return Ok(Owner::PlanarSpline(spline));
+    }
+    Err(unsupported(handle, "stored planar line or B-spline"))
 }
 
 pub(super) fn representation_owner(

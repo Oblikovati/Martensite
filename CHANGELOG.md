@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added an owned finite closed-extrusion face certificate joining exact support injectivity, trim and seam incidences, and unchanged spatial error budgets (#213).
+
 - Added finite coherent face-input capture and nonblocking geometry leases, with owned topology, representation and geometry fields and explicit incomplete outcomes (#213).
 
 - Added an owned exact sufficient self-exclusion operation for closed quadratic spline extrusion supports, with complete span obligations and explicit incomplete outcomes (#213).
@@ -17,6 +19,8 @@ follows [Semantic Versioning](https://semver.org/).
 - Added owned surface self-search work receipts, local numerical termination observations and cancellable search entry points, preserving unknown inner termination and sampled discovery scope (#213).
 
 ### Fixed
+
+- Retained source-owner and typed relation context for face-query failures and corrected owner labels in spatial-consistency diagnostics (#378).
 
 - Preserved quiet-NaN signs, payloads and direction priority in `next_after` across optimization levels (#370).
 

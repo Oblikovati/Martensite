@@ -1,5 +1,6 @@
 //! `Geom2dBSplineCurve`: rational or non-rational, periodic or not, B-spline curves.
 mod access;
+mod input_lease;
 mod poles;
 mod traits;
 use super::arrays::at;
@@ -11,6 +12,7 @@ use super::geometry::Geom2dGeometry;
 use super::spline_data::check_curve_data;
 use super::spline_kind::BSplineState;
 use crate::geom2d_eval::{RepCurveDesc, rep_utils};
+pub use input_lease::{PlanarSplineInputLease, StoredPlanarSplineInput};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::{Failure, SharedState, StandardTransient};

@@ -1,5 +1,6 @@
 //! Real cells and independently constructed geometry exercise capture, not face acceptance.
 mod locations;
+mod plane_spline;
 mod replay;
 mod representations;
 use super::*;

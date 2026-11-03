@@ -128,3 +128,54 @@ fn raw_capture_keeps_nonuniform_weights_and_source_bits() {
     assert!(input.rational());
     assert_eq!(input.knots()[0].to_bits(), (-0.0f64).to_bits());
 }
+
+fn closed_quadratic_curve() -> GeomBSplineCurve {
+    let coordinates = [
+        Point3::default(),
+        Point3::new(1., 2., 3.),
+        Point3::default(),
+    ];
+    GeomBSplineCurve::new(
+        &Array1::from_shared(&coordinates, 1),
+        &Array1::from_shared(&[0., 1.], 1),
+        &Array1::from_shared(&[3, 3], 1),
+        2,
+        false,
+    )
+    .unwrap()
+}
+#[test]
+fn owned_admission_keeps_the_exact_source_values_after_mutation() {
+    let curve = closed_quadratic_curve();
+    let input = curve.try_input_lease().unwrap().stored_input();
+    curve
+        .state
+        .write()
+        .poles
+        .set_value(2, Point3::new(7., 8., 9.))
+        .unwrap();
+    let ClosedSplineExtrusionInput::Captured(numeric, layout) = input
+        .into_closed_extrusion_input([0., 0., 1.], [-2., 5.])
+        .unwrap()
+    else {
+        panic!("expected admitted owned quadratic")
+    };
+    assert_eq!(numeric.poles(), &[[0., 0., 0.], [1., 2., 3.], [0., 0., 0.]]);
+    assert_eq!(numeric.knots(), &[0., 1.]);
+    assert_eq!(numeric.multiplicities(), &[3, 3]);
+    assert_eq!(layout.flat_knots, vec![0., 0., 0., 1., 1., 1.]);
+    assert_eq!(numeric.extrusion_interval(), [-2., 5.]);
+}
+#[test]
+fn owned_and_retained_admission_match_every_input_and_layout_bit() {
+    let curve = closed_quadratic_curve();
+    let lease = curve.try_input_lease().unwrap();
+    let owned = lease
+        .stored_input()
+        .into_closed_extrusion_input([0., 0., 1.], [-2., 5.])
+        .unwrap();
+    let retained = lease
+        .closed_extrusion_input([0., 0., 1.], [-2., 5.])
+        .unwrap();
+    assert_eq!(format!("{owned:?}"), format!("{retained:?}"));
+}
