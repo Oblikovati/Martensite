@@ -1,5 +1,6 @@
 //! Complete independent represented-face certificates, never captured-pass promotion.
 mod fixture;
+mod piecewise;
 mod replay;
 mod represented;
 mod variants;

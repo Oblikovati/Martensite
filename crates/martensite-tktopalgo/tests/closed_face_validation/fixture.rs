@@ -209,3 +209,22 @@ fn strip_edges(
         cap(face, -1., &vertices[0], tolerance, 0., xy),
     ]
 }
+
+/// Build independently prescribed actual caps without replacing the ideal support.
+pub(super) fn strip_with_carrier(tolerance: f64, actual: [[f64; 2]; 9]) -> StripFixture {
+    let builder = BRepBuilder::default();
+    let mut face = support_face(&builder, tolerance, ROUND_NET);
+    let vertices = [vertex(-1., tolerance), vertex(2., tolerance)];
+    let edges = [
+        seam(&face, &vertices, tolerance),
+        cap(&face, 2., &vertices[1], tolerance, 0., actual),
+        cap(&face, -1., &vertices[0], tolerance, 0., actual),
+    ];
+    let wire = strip_wire(&builder, &edges);
+    builder.add(&mut face, &wire).unwrap();
+    StripFixture {
+        face,
+        edges,
+        vertices,
+    }
+}

@@ -14,10 +14,10 @@ mod splines;
 mod topology;
 mod types;
 use martensite_tkbrep::{
-    brep::face_input_capture::{capture_closed_extrusion_face, FaceCaptureLimits},
+    brep::face_input_capture::{FaceCaptureLimits, capture_closed_extrusion_face},
     topods::face,
 };
-use martensite_tktopalgo::face_validation::{certify_closed_extrusion_face, ClosedFacePolicy};
+use martensite_tktopalgo::face_validation::{ClosedFacePolicy, certify_closed_extrusion_face};
 fn input_face(input: &types::GraphInput) -> martensite_tkbrep::topods::Face {
     let mut owners = registry::FixtureOwners::new(input);
     geometry::construct(input, &mut owners);
