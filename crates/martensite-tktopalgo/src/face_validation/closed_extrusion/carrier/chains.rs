@@ -136,8 +136,12 @@ mod tests {
             polls > 1
         };
         let mut budget = query_budget(&mut cancelled);
+        assert_metric_cancellation(compare(context(), zero(), zero(), &mut budget));
+        assert_eq!(budget.work.queries, 1);
+    }
+    fn assert_metric_cancellation(outcome: CheckResult<CurveIdentityDecision>) {
         let Err(ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Metric { query, cause })) =
-            compare(context(), zero(), zero(), &mut budget)
+            outcome
         else {
             panic!("expected metric cancellation")
         };
@@ -148,6 +152,5 @@ mod tests {
                 martensite_tkmath::predicates::roots::RootIsolationError::Cancelled
             )
         ));
-        assert_eq!(budget.work.queries, 1);
     }
 }
