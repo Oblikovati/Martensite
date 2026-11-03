@@ -153,6 +153,9 @@ pub enum CapturedFaceCell {
         /// Invocation-local label of the actual curve owner.
         curve: usize,
     },
+    /// Explicitly absent stored spatial geometry; range and location cells remain present.
+    /// This is an input observation, not a valid-edge or empty-geometry certificate.
+    AbsentSpatial,
     /// First pcurve binding and cached endpoint values.
     Parametric {
         /// Invocation-local label of the actual curve owner.

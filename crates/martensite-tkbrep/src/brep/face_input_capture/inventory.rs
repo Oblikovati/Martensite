@@ -181,7 +181,7 @@ fn append_geometry_references(
         Lease::PCurve(fields) => pcurve_references(fields, result, behavior)?,
         Lease::Seam(fields) => result.push(owners::planar_owner(&fields.pcurve2)?),
         Lease::Regularity(fields) => regularity_references(fields, result, behavior)?,
-        Lease::Spatial(curve) => result.push(owners::spatial_owner(curve)?),
+        Lease::Spatial(curve) => spatial_reference(curve, result, behavior)?,
         Lease::Extrusion(surface) => extrusion_reference(surface, result)?,
         Lease::Vertex(fields) if !fields.points.is_empty() => {
             return Err(unsupported("nonempty vertex point representations"));
@@ -226,5 +226,17 @@ fn pcurve_references(
 ) -> Result<(), Incomplete> {
     result.push(owners::planar_owner(&fields.pcurve)?);
     result.push(owners::surface_owner(&fields.surface, behavior)?);
+    Ok(())
+}
+
+fn spatial_reference(
+    curve: &martensite_tkernel::standard::Handle<dyn martensite_tkg3d::geom::GeomCurve>,
+    result: &mut Vec<Owner>,
+    behavior: FaceCaptureBehavior,
+) -> Result<(), Incomplete> {
+    if behavior == FaceCaptureBehavior::StoredSurfaceQueriesV2 && curve.is_null() {
+        return Ok(());
+    }
+    result.push(owners::spatial_owner(curve)?);
     Ok(())
 }

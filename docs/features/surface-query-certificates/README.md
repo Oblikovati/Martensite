@@ -16,7 +16,10 @@ lease is held. Later source mutation cannot change the report.
 
 The new `StoredSurfaceQueriesV2` input-capture selector includes stored tensor
 surfaces, finite spatial splines and regularity records with both referenced
-supports. Existing capture entry points retain `StoredRepresentationsV1`.
+supports. A null spatial curve remains an explicit `AbsentSpatial` cell on its
+representation owner, alongside its actual range and location. It is not an
+edge-validity or empty-result certificate. Existing capture entry points retain
+`StoredRepresentationsV1`, including its refusal of null spatial curves.
 Neither capture selector validates geometry. An unknown representation or
 external evaluator refuses capture instead of disappearing from the input.
 

@@ -141,9 +141,7 @@ impl CopyContext {
         lease: &Lease<'_>,
     ) -> Result<CapturedFaceCell, FaceCaptureIncomplete> {
         match lease {
-            Lease::Spatial(c) => Ok(CapturedFaceCell::Spatial {
-                curve: self.reference(&**c)?,
-            }),
+            Lease::Spatial(c) => self.spatial_binding(c),
             Lease::PCurve(f) => self.pcurve_fields(f),
             Lease::Seam(f) => self.seam_fields(f),
             Lease::Regularity(f) => self.regularity_fields(f),
@@ -154,6 +152,17 @@ impl CopyContext {
             Lease::Location(l) => Ok(CapturedFaceCell::Location(self.location(l)?)),
             _ => self.geometry(lease),
         }
+    }
+    fn spatial_binding(
+        &self,
+        curve: &Handle<dyn martensite_tkg3d::geom::GeomCurve>,
+    ) -> Result<CapturedFaceCell, FaceCaptureIncomplete> {
+        if self.behavior == FaceCaptureBehavior::StoredSurfaceQueriesV2 && curve.is_null() {
+            return Ok(CapturedFaceCell::AbsentSpatial);
+        }
+        Ok(CapturedFaceCell::Spatial {
+            curve: self.reference(curve)?,
+        })
     }
     fn pcurve_fields(
         &self,

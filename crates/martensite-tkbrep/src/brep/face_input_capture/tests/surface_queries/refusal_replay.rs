@@ -65,3 +65,11 @@ fn first_regular_record_refuses_before_later_unknown_representation() {
     assert!(matches!(&error,FaceCaptureIncomplete::Unsupported {actual,..} if actual != "null"));
     assert_refusal(error, 1, "spatial curve or one/two line pcurves");
 }
+#[test]
+fn null_spatial_curve_keeps_the_earlier_geometry_refusal() {
+    let (face, _) = face_fixture();
+    let _record = absent_spatial(&face);
+    let error = old(&face, 4096);
+    assert!(matches!(&error,FaceCaptureIncomplete::Unsupported {actual,..} if actual == "null"));
+    assert_refusal(error, 3, "stored line or clamped spline curve");
+}

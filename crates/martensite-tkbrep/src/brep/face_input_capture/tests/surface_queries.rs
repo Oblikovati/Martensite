@@ -205,3 +205,35 @@ fn linear_spline() -> Handle<GeomBSplineCurve> {
     let mults = Array1::from_shared(&[2, 2], 1);
     Handle::new(GeomBSplineCurve::new(&poles, &knots, &mults, 1, false).unwrap())
 }
+#[test]
+fn absent_spatial_storage_is_explicit_and_keeps_its_owner_range_and_location() {
+    let (face, _) = face_fixture();
+    let record = absent_spatial(&face);
+    record.gcurve.store_range(-3., 7.);
+    let snapshot = query(&face).unwrap();
+    let owner = snapshot
+        .cells()
+        .iter()
+        .find_map(|(id, cell)| matches!(cell, CapturedFaceCell::AbsentSpatial).then_some(*id))
+        .unwrap();
+    assert!(
+        snapshot
+            .cells()
+            .iter()
+            .any(|(id, cell)| *id == owner && matches!(cell, CapturedFaceCell::Range([-3., 7.])))
+    );
+    assert!(
+        snapshot
+            .cells()
+            .iter()
+            .any(|(id, cell)| *id == owner && matches!(cell, CapturedFaceCell::Location(_)))
+    );
+    assert!(snapshot.cells().iter().any(|(_,cell)| matches!(cell,CapturedFaceCell::Edge {representations,..} if representations == &[owner])));
+}
+fn absent_spatial(face: &Face) -> Handle<BRepCurve3D> {
+    let record = Handle::new(BRepCurve3D::new(&Handle::default(), &Location::default()));
+    let edge = Handle::new(BRepTEdge::new());
+    edge.change_curves(|curves| curves.push(record.cast()));
+    representations::append_owner(face, edge.cast());
+    record
+}
