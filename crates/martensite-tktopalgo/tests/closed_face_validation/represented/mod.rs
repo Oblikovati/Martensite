@@ -14,10 +14,10 @@ mod splines;
 mod topology;
 mod types;
 use martensite_tkbrep::{
-    brep::face_input_capture::{FaceCaptureLimits, capture_closed_extrusion_face},
+    brep::face_input_capture::{capture_closed_extrusion_face, FaceCaptureLimits},
     topods::face,
 };
-use martensite_tktopalgo::face_validation::{ClosedFacePolicy, certify_closed_extrusion_face};
+use martensite_tktopalgo::face_validation::{certify_closed_extrusion_face, ClosedFacePolicy};
 fn input_face(input: &types::GraphInput) -> martensite_tkbrep::topods::Face {
     let mut owners = registry::FixtureOwners::new(input);
     geometry::construct(input, &mut owners);
@@ -46,7 +46,8 @@ fn check_input(index: usize, input: &types::GraphInput) -> bool {
         "{{\"input\":{index},\"field_words\":{:?}}}",
         field_words::field_words(input)
     );
-    let report = certify_closed_extrusion_face(owned, ClosedFacePolicy::bounded(), || false);
+    let report =
+        certify_closed_extrusion_face(owned, ClosedFacePolicy::piecewise_boundary(), || false);
     let certified = report.certificate().is_some();
     println!(
         "{{\"input\":{index},\"bound\":true,\"certified\":{certified},\"completion\":{:?},\"obligations\":{},\"finished\":{},\"queries\":{}}}",
