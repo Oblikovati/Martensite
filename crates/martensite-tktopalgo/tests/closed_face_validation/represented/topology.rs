@@ -9,11 +9,7 @@ use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::{gp::Point3, toploc::Location};
 pub(super) fn construct(input: &GraphInput, owners: &mut FixtureOwners) {
     create_owners(input, owners);
-    for (key, field) in input.owners.iter().copied().enumerate() {
-        if let Some((_, children)) = fields(field) {
-            append_children(key, children, owners);
-        }
-    }
+    append_all_children(input, owners);
     for (key, field) in input.owners.iter().copied().enumerate() {
         if let Some((state, _)) = fields(field) {
             restore_state(key, state, owners);
@@ -119,6 +115,26 @@ pub(super) fn fields(input: OwnerInput) -> Option<(u16, &'static [OccurrenceInpu
         | OwnerInput::Vertex {
             state, children, ..
         } => Some((state, children)),
+        _ => None,
+    }
+}
+
+fn append_all_children(input: &GraphInput, owners: &FixtureOwners) {
+    // Attaching an owner freezes it; its own children must already be installed.
+    for level in 0..4 {
+        for (key, field) in input.owners.iter().copied().enumerate() {
+            if assembly_level(field) == Some(level) {
+                append_children(key, fields(field).unwrap().1, owners);
+            }
+        }
+    }
+}
+fn assembly_level(input: OwnerInput) -> Option<usize> {
+    match input {
+        OwnerInput::Vertex { .. } => Some(0),
+        OwnerInput::Edge { .. } => Some(1),
+        OwnerInput::Wire { .. } => Some(2),
+        OwnerInput::Face { .. } => Some(3),
         _ => None,
     }
 }
