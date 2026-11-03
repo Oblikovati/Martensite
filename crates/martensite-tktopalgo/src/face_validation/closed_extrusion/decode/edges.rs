@@ -1,4 +1,5 @@
 //! Branch selection uses explicit stored representation and oriented occurrence identity.
+use super::super::types::ClosedFaceCompletion;
 use super::*;
 use martensite_tkbrep::brep::face_input_capture::CapturedOccurrence;
 use martensite_tkg3d::top_abs;
@@ -43,7 +44,7 @@ struct EdgeUseBuild {
 }
 
 pub(super) fn decode<F: FnMut() -> bool>(
-    input: EdgeDecodeInput<'_, '_, '_, F>,
+    mut input: EdgeDecodeInput<'_, '_, '_, F>,
 ) -> CheckResult<EdgeUse> {
     let owner = input.occurrence.owner;
     let location = edge_location(&mut input)?;
