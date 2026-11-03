@@ -1,5 +1,5 @@
 //! Only the completed ordered pipeline can publish an owned certificate.
-use super::types::*;
+use super::{boundary_report::ClosedFaceBoundaryReport, types::*};
 use martensite_tkbrep::brep::face_input_capture::FaceInputSnapshot;
 use martensite_tkmath::predicates::roots::closed_extrusion::ClosedExtrusionReport;
 /// Immutable face-input validation outcome; `report.certificate()` requires all obligations.
@@ -103,7 +103,6 @@ fn required_boundary(version: u32, boundary: Option<&ClosedFaceBoundaryReport>) 
 
 #[cfg(test)]
 mod tests {
-    use super::super::boundary_report::ClosedFaceBoundaryReport;
     use super::*;
 
     #[test]
