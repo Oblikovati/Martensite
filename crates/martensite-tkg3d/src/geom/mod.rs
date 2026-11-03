@@ -93,7 +93,11 @@ pub mod offset_surface_utils;
 pub use bezier_surface::GeomBezierSurface;
 
 mod bspline_surface;
-pub use bspline_surface::{GeomBSplineSurface, KnotVector, LocalKnots, ModifiedPoles};
+pub use bspline_surface::{
+    BilinearSplineCertificate, BilinearSplineError, BilinearSplineExclusion,
+    BilinearSplineInconclusive, BilinearSplineLayout, GeomBSplineSurface, KnotVector, LocalKnots,
+    ModifiedPoles,
+};
 
 mod osculating_surface;
 pub use osculating_surface::GeomOsculatingSurface;
