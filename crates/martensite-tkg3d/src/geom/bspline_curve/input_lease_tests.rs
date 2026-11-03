@@ -1,5 +1,6 @@
 //! Lease controls use actual mutable cells rather than alternate lock fixtures.
 use super::super::*;
+use crate::geom::ClosedSplineExtrusionInput;
 use martensite_tkernel::standard::SharedReadFailure;
 
 fn open_curve() -> GeomBSplineCurve {
