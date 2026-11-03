@@ -153,7 +153,9 @@ fn matching_basis(
     last: &martensite_tkg3d::geom::StoredSplineInput,
     owner: usize,
 ) -> CheckResult<()> {
-    if first.degree() != last.degree()
+    if first.periodic() != last.periodic()
+        || first.rational() != last.rational()
+        || first.degree() != last.degree()
         || first.knots() != last.knots()
         || first.multiplicities() != last.multiplicities()
         || first.weights() != last.weights()
