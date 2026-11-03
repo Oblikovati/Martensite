@@ -100,10 +100,9 @@ fn add_pole(
     let slot = index[0] * (patch.degree[1] + 1) + index[1];
     let weight = budget.retain(Ratio::from_finite(patch.weights[slot]))?;
     let mut coefficient = [integer(0), integer(0), integer(0), weight.clone()];
-    for axis in 0..3 {
+    for (axis, value) in coefficient.iter_mut().enumerate().take(3) {
         budget.step()?;
-        coefficient[axis] =
-            budget.retain(Ratio::from_finite(patch.poles[slot][axis]).multiply(&weight))?;
+        *value = budget.retain(Ratio::from_finite(patch.poles[slot][axis]).multiply(&weight))?;
     }
     for (axis, value) in coefficient.iter().enumerate() {
         add_basis(&mut result[axis], value, patch.degree, index, budget)?;
