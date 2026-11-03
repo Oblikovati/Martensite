@@ -87,16 +87,8 @@ fn same_transform(first: Transform3, second: Transform3) -> CheckResult<bool> {
 pub(super) fn embedding(location: &Location) -> CheckResult<MetricEmbedding<3>> {
     let transform = location.transformation();
     validate_form(transform)?;
-    let matrix = transform.matrix();
+    let linear = matrix_coefficients(transform)?;
     let t = transform.translation_part();
-    let mut linear = [[0.; 3]; 3];
-    for row in 0..3 {
-        for column in 0..3 {
-            linear[row][column] = matrix
-                .value(row as i32 + 1, column as i32 + 1)
-                .map_err(native)?;
-        }
-    }
     let scale = transform.scale_factor();
     if !scale.is_finite() || scale == 0. || [t.x(), t.y(), t.z()].iter().any(|v| !v.is_finite()) {
         return Err(unsupported(
@@ -106,17 +98,7 @@ pub(super) fn embedding(location: &Location) -> CheckResult<MetricEmbedding<3>> 
             "finite invertible affine map",
         ));
     }
-    let sign = compare_scalar_triple_product_3d(linear[0], linear[1], linear[2]).map_err(|e| {
-        unsupported(
-            0,
-            "determinant",
-            format!("{e:?}"),
-            "finite nonzero determinant",
-        )
-    })?;
-    if sign == Ordering::Equal {
-        return Err(unsupported(0, "determinant", "zero", "nonzero determinant"));
-    }
+    require_nonsingular(linear)?;
     Ok(MetricEmbedding {
         linear,
         origin: [t.x(), t.y(), t.z()],
@@ -173,4 +155,32 @@ fn form_error(transform: Transform3) -> ClosedFaceCompletion {
         format!("{transform:?}"),
         "shortcut form consistent with stored affine coefficients",
     )
+}
+
+fn matrix_coefficients(transform: Transform3) -> CheckResult<[[f64; 3]; 3]> {
+    let matrix = transform.matrix();
+    let mut linear = [[0.; 3]; 3];
+    for row in 0..3 {
+        for column in 0..3 {
+            linear[row][column] = matrix
+                .value(row as i32 + 1, column as i32 + 1)
+                .map_err(native)?;
+        }
+    }
+    Ok(linear)
+}
+
+fn require_nonsingular(linear: [[f64; 3]; 3]) -> CheckResult<()> {
+    let sign = compare_scalar_triple_product_3d(linear[0], linear[1], linear[2]).map_err(|e| {
+        unsupported(
+            0,
+            "determinant",
+            format!("{e:?}"),
+            "finite nonzero determinant",
+        )
+    })?;
+    if sign == Ordering::Equal {
+        return Err(unsupported(0, "determinant", "zero", "nonzero determinant"));
+    }
+    Ok(())
 }
