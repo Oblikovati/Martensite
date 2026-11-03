@@ -1,5 +1,6 @@
 //! `GeomSurfaceOfLinearExtrusion`: a basis curve swept along a direction,
 //! `P(u, v) = C(u) + v * Dir`.
+pub(in crate::geom) mod self_exclusion;
 use super::curve::GeomCurve;
 use super::errors;
 use super::extrusion_utils;

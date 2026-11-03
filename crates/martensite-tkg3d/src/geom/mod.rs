@@ -78,6 +78,10 @@ mod toroidal_surface;
 pub use toroidal_surface::GeomToroidalSurface;
 mod surface_of_linear_extrusion;
 pub use surface_of_linear_extrusion::GeomSurfaceOfLinearExtrusion;
+pub use surface_of_linear_extrusion::self_exclusion::{
+    ClosedSplineExtrusionError, ClosedSplineExtrusionExclusion, ClosedSplineExtrusionInconclusive,
+    ClosedSplineExtrusionLayout, ClosedSplineExtrusionSnapshot,
+};
 mod surface_of_revolution;
 pub use surface_of_revolution::GeomSurfaceOfRevolution;
 
