@@ -103,11 +103,7 @@ pub(super) fn strip_with_top_net(
     let builder = BRepBuilder::default();
     let mut face = support_face(&builder, tolerance, xy);
     let vertices = [vertex(-1., tolerance), vertex(2., tolerance)];
-    let edges = [
-        seam(&face, &vertices, tolerance),
-        cap(&face, 2., &vertices[1], tolerance, top_delta, cap_xy),
-        cap(&face, -1., &vertices[0], tolerance, 0., xy),
-    ];
+    let edges = strip_edges(&face, &vertices, tolerance, top_delta, xy, cap_xy);
     let wire = strip_wire(&builder, &edges);
     builder.add(&mut face, &wire).unwrap();
     StripFixture {
@@ -197,4 +193,19 @@ fn set_seam_cache(
             Point2::new(second[1][0], second[1][1]),
         );
     }
+}
+
+fn strip_edges(
+    face: &Face,
+    vertices: &[Vertex; 2],
+    tolerance: f64,
+    top_delta: f64,
+    xy: [[f64; 2]; 9],
+    cap_xy: [[f64; 2]; 9],
+) -> [Edge; 3] {
+    [
+        seam(face, vertices, tolerance),
+        cap(face, 2., &vertices[1], tolerance, top_delta, cap_xy),
+        cap(face, -1., &vertices[0], tolerance, 0., xy),
+    ]
 }
