@@ -93,14 +93,24 @@ impl<'a> SparseCallbackTrace<'a> {
         }
         panic!("item {item:p}; expected a slot owned by callback observer");
     }
-    pub fn create(&self, item: *mut c_void, source: *mut c_void) {
+    /// Record and initialize a callback destination; `unsafe { trace.create(item, source) }`.
+    ///
+    /// # Safety
+    /// `item` must be a writable aligned i32 slot owned by this trace's live base.
+    /// `source` must point to an initialized aligned i32 for the duration of the call.
+    pub unsafe fn create(&self, item: *mut c_void, source: *mut c_void) {
         self.record('C', item);
         // SAFETY: the fixture's bases live for the whole test on this thread; each block
         // address is a live block of its base, each item pointer is a slot of such a block, and
         // each callback matches the i32 or recorded payload stored there.
         unsafe { create_integer(item, source) };
     }
-    pub fn copy(&self, item: *mut c_void, source: *mut c_void) {
+    /// Record and copy a callback payload; `unsafe { trace.copy(item, source) }`.
+    ///
+    /// # Safety
+    /// `item` must be a writable initialized i32 slot owned by this trace's live base.
+    /// `source` must point to an initialized aligned i32; source and destination may alias.
+    pub unsafe fn copy(&self, item: *mut c_void, source: *mut c_void) {
         self.record(if item == source { 'S' } else { 'A' }, item);
         // SAFETY: the fixture's bases live for the whole test on this thread; each block
         // address is a live block of its base, each item pointer is a slot of such a block, and
