@@ -4,7 +4,8 @@ use crate::geom::ClosedSplineExtrusionInput;
 use martensite_tkernel::standard::SharedReadFailure;
 
 fn open_curve() -> GeomBSplineCurve {
-    let poles = Array1::from_shared(&[Point3::new(-0.0, 2., 3.), Point3::new(4., 5., 6.)], 1);
+    let coordinates = [Point3::new(-0.0, 2., 3.), Point3::new(4., 5., 6.)];
+    let poles = Array1::from_shared(&coordinates, 1);
     let knots = Array1::from_shared(&[0., 1.], 1);
     let mults = Array1::from_shared(&[2, 2], 1);
     GeomBSplineCurve::new(&poles, &knots, &mults, 1, false).unwrap()
