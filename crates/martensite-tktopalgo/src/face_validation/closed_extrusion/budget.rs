@@ -21,6 +21,18 @@ impl<F: FnMut() -> bool> Budget<'_, F> {
         self.work.queries = self.work.queries.saturating_add(1);
         limit("queries", self.policy.max_queries, self.work.queries)
     }
+    pub fn query_for(&mut self, query: ClosedFaceQueryContext) -> CheckResult<()> {
+        self.query().map_err(|cause| query.attach_limit(cause))
+    }
+    pub fn compare<const A: usize, const B: usize>(
+        &mut self,
+        query: ClosedFaceQueryContext,
+        first: MetricCurveChain<'_, A>,
+        second: MetricCurveChain<'_, B>,
+    ) -> CheckResult<CurveIdentityDecision> {
+        self.query_for(query)?;
+        compare_curve_chains(first, second, &mut *self.cancel).map_err(|cause| query.metric(cause))
+    }
     pub fn location_step(&mut self, power: i32) -> CheckResult<()> {
         self.poll()?;
         self.work.location_steps = self.work.location_steps.saturating_add(1);
@@ -38,8 +50,9 @@ impl<F: FnMut() -> bool> Budget<'_, F> {
     pub fn residual(
         &mut self,
         mut query: TransportedResidualQuery<'_>,
+        context: ClosedFaceQueryContext,
     ) -> CheckResult<ResidualDecision> {
-        self.query()?;
+        self.query_for(context)?;
         let remaining = self
             .policy
             .max_bisections
@@ -50,9 +63,7 @@ impl<F: FnMut() -> bool> Budget<'_, F> {
         };
         let report = certify_transported_residual(query, &mut *self.cancel);
         self.work.bisections = self.work.bisections.saturating_add(report.bisections);
-        report
-            .decision
-            .map_err(|cause| ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Metric(cause)))
+        report.decision.map_err(|cause| context.metric(cause))
     }
 }
 pub(super) fn limit(kind: &'static str, requested: u64, actual: u64) -> CheckResult<()> {
@@ -62,6 +73,7 @@ pub(super) fn limit(kind: &'static str, requested: u64, actual: u64) -> CheckRes
                 kind,
                 requested,
                 actual,
+                query: None,
             },
         ));
     }

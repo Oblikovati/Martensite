@@ -71,8 +71,10 @@ impl<'a> EdgeMetrics<'a> {
     ) -> CheckResult<()> {
         let side = self.boundary.sides[self.index];
         let query = seam_query(self.strip, self.edge, side, limit)?;
-        let claim = BoundClaim::new(self.index, None, "seam", limit, false);
-        claim.record(budget.residual(query)?, errors)
+        let context =
+            ClosedFaceQueryContext::new(self.edge.owner, ClosedFaceRelation::SeamConformance);
+        let claim = BoundClaim::new(self.index, None, context, limit, false);
+        claim.record(budget.residual(query, context)?, errors)
     }
     fn cap<F: FnMut() -> bool>(
         &self,
@@ -82,10 +84,14 @@ impl<'a> EdgeMetrics<'a> {
         let curve = self.cap_input()?;
         let limit = self.raw_limit()?;
         let level = self.cap_level();
-        let claim = BoundClaim::new(self.index, None, "cap coefficient", limit, true);
+        let context = ClosedFaceQueryContext::new(
+            self.edge.owner,
+            ClosedFaceRelation::CapCoefficientConformance,
+        );
+        let claim = BoundClaim::new(self.index, None, context, limit, true);
         for (actual, source) in curve.poles().iter().zip(self.strip.basis.poles()) {
             let query = coefficient_query(self.strip, self.edge, *actual, *source, level, limit);
-            claim.record(budget.residual(query)?, errors)?;
+            claim.record(budget.residual(query, context)?, errors)?;
         }
         Ok(())
     }

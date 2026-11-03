@@ -1,4 +1,5 @@
 //! Complete independent represented-face certificates, never captured-pass promotion.
+mod diagnostics;
 mod fixture;
 mod piecewise;
 mod replay;

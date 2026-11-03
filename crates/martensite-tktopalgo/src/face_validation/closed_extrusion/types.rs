@@ -117,13 +117,20 @@ pub enum ClosedFaceIncomplete {
         requested: u64,
         /// Actually requested or spent work.
         actual: u64,
+        /// Specific query when the limit interrupted a known relation.
+        query: Option<ClosedFaceQueryContext>,
     },
     /// The support proof could not exclude every required product.
     Support(ClosedExtrusionCause),
     /// Projected noninjectivity alone is not a finite-interval 3D intersection witness.
     Projection(ClosedExtrusionProjectionContact),
-    /// The exact metric operation did not complete.
-    Metric(ResidualError),
+    /// The exact metric operation did not complete for this source relation (#378).
+    Metric {
+        /// Actual source owner and requested relation.
+        query: ClosedFaceQueryContext,
+        /// Original numerical failure, retained without translation.
+        cause: ResidualError,
+    },
     /// A required exact actual-boundary relation did not hold.
     BoundaryRelation {
         /// Invocation-local boundary owner in the retained snapshot.
@@ -210,4 +217,94 @@ pub struct ClosedFaceErrorBound {
 pub enum ClosedFaceHistory {
     /// No input geometry or topology was changed.
     NoGeometryChanges,
+}
+
+/// A finite relation within the owned face operation; `ClosedFaceRelation::SeamConformance`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ClosedFaceRelation {
+    /// Trim endpoint and parameter-space corner identity.
+    TrimEndpoint,
+    /// Located vertex identity in the rectangle quotient.
+    VertexIncidence,
+    /// Exact identity of an already bounded spatial relation.
+    BoundaryIdentity,
+    /// Complete spatial seam conformance to the ideal support.
+    SeamConformance,
+    /// One cap coefficient's spatial conformance to the ideal support.
+    CapCoefficientConformance,
+    /// Vertex conformance to its spatial curve endpoint.
+    VertexCurveConformance,
+    /// Vertex conformance to its support corner.
+    VertexSupportConformance,
+    /// Equality of actual and ideal world extrusion directions.
+    CarrierDirection,
+    /// Actual cap coefficients on the independent carrier.
+    CarrierCap,
+    /// Actual seam on the independent carrier.
+    CarrierSeam,
+    /// Actual seam on the canonical support.
+    CanonicalSeam,
+    /// Vertex on its independent carrier corner.
+    CarrierVertex,
+    /// A nonzero transverse coordinate of the extrusion direction.
+    TransverseDirection,
+    /// Constant canonical basal height.
+    CanonicalHeight,
+    /// Actual carrier basal height at the declared reference parameter.
+    CarrierHeight,
+}
+impl ClosedFaceRelation {
+    /// Read the relation's diagnostic label; `ClosedFaceRelation::SeamConformance.label()`.
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::TrimEndpoint => "trim endpoint corner",
+            Self::VertexIncidence => "located endpoint quotient",
+            Self::BoundaryIdentity => "coincident boundary identity",
+            Self::SeamConformance => "seam",
+            Self::CapCoefficientConformance => "cap coefficient",
+            Self::VertexCurveConformance => "vertex/curve",
+            Self::VertexSupportConformance => "vertex/support",
+            Self::CarrierDirection => "same actual world extrusion direction",
+            Self::CarrierCap => "actual cap coefficient on carrier",
+            Self::CarrierSeam => "actual seam on boundary carrier",
+            Self::CanonicalSeam => "actual seam on canonical support",
+            Self::CarrierVertex => "actual vertex on carrier corner",
+            Self::TransverseDirection => "transverse coordinate",
+            Self::CanonicalHeight => "ideal basal height",
+            Self::CarrierHeight => "actual carrier height",
+        }
+    }
+}
+/// A failed query's actual source identity, never a boundary-list index (#378).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ClosedFaceQueryContext {
+    /// Invocation-local owner label in `report.input()`.
+    pub owner: usize,
+    /// Exact relation whose query was entered or refused.
+    pub relation: ClosedFaceRelation,
+}
+impl ClosedFaceQueryContext {
+    /// Bind a query to a source owner; `ClosedFaceQueryContext::new(owner, relation)`.
+    pub const fn new(owner: usize, relation: ClosedFaceRelation) -> Self {
+        Self { owner, relation }
+    }
+    pub(super) fn metric(self, cause: ResidualError) -> ClosedFaceCompletion {
+        ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Metric { query: self, cause })
+    }
+    pub(super) fn attach_limit(self, completion: ClosedFaceCompletion) -> ClosedFaceCompletion {
+        match completion {
+            ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Limit {
+                kind,
+                requested,
+                actual,
+                ..
+            }) => ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Limit {
+                kind,
+                requested,
+                actual,
+                query: Some(self),
+            }),
+            other => other,
+        }
+    }
 }

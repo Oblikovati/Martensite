@@ -1,5 +1,5 @@
 //! Located owner equality, not coordinates, must realize the two endpoint classes.
-use super::{boundary::Boundary, budget::*, decode::*};
+use super::{boundary::Boundary, budget::*, decode::*, types::*};
 type Endpoint<'a> = (&'a VertexUse, usize);
 pub(super) fn certify<F: FnMut() -> bool>(
     strip: &Strip,
@@ -9,7 +9,10 @@ pub(super) fn certify<F: FnMut() -> bool>(
     let endpoints = collect_endpoints(strip, boundary)?;
     for left in 0..endpoints.len() {
         for right in left + 1..endpoints.len() {
-            budget.query()?;
+            budget.query_for(ClosedFaceQueryContext::new(
+                endpoints[left].0.owner,
+                ClosedFaceRelation::VertexIncidence,
+            ))?;
             compare_endpoints(endpoints[left], endpoints[right], [left, right])?;
         }
     }

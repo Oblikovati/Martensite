@@ -59,7 +59,8 @@ impl EndpointCheck<'_> {
             map_parameter,
             limit,
         );
-        self.record("vertex/curve", limit, budget.residual(query)?, errors)
+        let context = self.context(ClosedFaceRelation::VertexCurveConformance);
+        self.record(context, limit, budget.residual(query, context)?, errors)
     }
     fn support<F: FnMut() -> bool>(
         &self,
@@ -69,11 +70,15 @@ impl EndpointCheck<'_> {
     ) -> CheckResult<()> {
         let corner = self.boundary.corners[self.indices[0]][self.vertex.side];
         let query = support_endpoint(self.strip, self.vertex, corner, self.boundary, limit)?;
-        self.record("vertex/support", limit, budget.residual(query)?, errors)
+        let context = self.context(ClosedFaceRelation::VertexSupportConformance);
+        self.record(context, limit, budget.residual(query, context)?, errors)
+    }
+    fn context(&self, relation: ClosedFaceRelation) -> ClosedFaceQueryContext {
+        ClosedFaceQueryContext::new(self.vertex.owner, relation)
     }
     fn record(
         &self,
-        role: &'static str,
+        context: ClosedFaceQueryContext,
         limit: f64,
         decision: ResidualDecision,
         errors: &mut Vec<ClosedFaceErrorBound>,
@@ -81,7 +86,7 @@ impl EndpointCheck<'_> {
         append(
             self.indices[0],
             Some(self.indices[1]),
-            role,
+            context,
             limit,
             decision,
             false,

@@ -1,5 +1,5 @@
 //! Exact rectangle endpoints bind the full finite support domain.
-use super::{budget::*, decode::*, placements::identity};
+use super::{budget::*, decode::*, placements::identity, types::*};
 use martensite_tkg3d::top_abs::Orientation;
 use martensite_tkmath::predicates::roots::metric_bounds::*;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -70,16 +70,12 @@ fn endpoint_matches<F: FnMut() -> bool>(
     target: [f64; 2],
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<bool> {
-    budget.query()?;
+    let context = ClosedFaceQueryContext::new(edge.owner, ClosedFaceRelation::TrimEndpoint);
     let first = endpoint_chain(edge, parameter);
     let second = corner_chain(target);
-    compare_curve_chains(first, second, &mut *budget.cancel)
+    budget
+        .compare(context, first, second)
         .map(|d| d == CurveIdentityDecision::Identical)
-        .map_err(|e| {
-            super::types::ClosedFaceCompletion::Incomplete(
-                super::types::ClosedFaceIncomplete::Metric(e),
-            )
-        })
 }
 fn side(pair: [usize; 2], owner: usize) -> CheckResult<Side> {
     match (pair[0].min(pair[1]), pair[0].max(pair[1])) {

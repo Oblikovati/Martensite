@@ -70,30 +70,84 @@ pub(super) fn projection(axis: usize) -> MetricEmbedding<3> {
     result
 }
 pub(super) fn compare<const A: usize, const B: usize, F: FnMut() -> bool>(
+    context: ClosedFaceQueryContext,
     first: MetricCurveChain<'_, A>,
     second: MetricCurveChain<'_, B>,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<CurveIdentityDecision> {
-    budget.query()?;
-    compare_curve_chains(first, second, &mut *budget.cancel)
-        .map_err(|cause| ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Metric(cause)))
+    budget.compare(context, first, second)
 }
 pub(super) fn require<const A: usize, const B: usize, F: FnMut() -> bool>(
-    owner: usize,
-    relation: &'static str,
+    context: ClosedFaceQueryContext,
     first: MetricCurveChain<'_, A>,
     second: MetricCurveChain<'_, B>,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<()> {
-    let actual = compare(first, second, budget)?;
+    let actual = compare(context, first, second, budget)?;
     if actual != CurveIdentityDecision::Identical {
         return Err(ClosedFaceCompletion::Incomplete(
             ClosedFaceIncomplete::BoundaryRelation {
-                owner,
-                relation,
+                owner: context.owner,
+                relation: context.relation.label(),
                 actual,
             },
         ));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn context() -> ClosedFaceQueryContext {
+        ClosedFaceQueryContext::new(97, ClosedFaceRelation::CarrierCap)
+    }
+    fn zero() -> MetricCurveChain<'static, 3> {
+        point([0.; 3], identity())
+    }
+    fn query_budget<F: FnMut() -> bool>(cancel: &mut F) -> Budget<'_, F> {
+        Budget {
+            policy: ClosedFacePolicy::bounded(),
+            work: ClosedFaceWork::default(),
+            cancel,
+        }
+    }
+    #[test]
+    fn exact_relation_query_limit_keeps_its_source_context() {
+        let mut cancelled = || false;
+        let mut budget = query_budget(&mut cancelled);
+        budget.policy.max_queries = 0;
+        let Err(ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Limit {
+            query,
+            actual,
+            ..
+        })) = compare(context(), zero(), zero(), &mut budget)
+        else {
+            panic!("expected query limit")
+        };
+        assert_eq!(query, Some(context()));
+        assert_eq!(actual, 1);
+    }
+    #[test]
+    fn numerical_cancellation_keeps_the_entered_exact_relation() {
+        let mut polls = 0;
+        let mut cancelled = || {
+            polls += 1;
+            polls > 1
+        };
+        let mut budget = query_budget(&mut cancelled);
+        let Err(ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Metric { query, cause })) =
+            compare(context(), zero(), zero(), &mut budget)
+        else {
+            panic!("expected metric cancellation")
+        };
+        assert_eq!(query, context());
+        assert!(matches!(
+            cause,
+            ResidualError::Roots(
+                martensite_tkmath::predicates::roots::RootIsolationError::Cancelled
+            )
+        ));
+        assert_eq!(budget.work.queries, 1);
+    }
 }

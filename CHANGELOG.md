@@ -20,6 +20,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Retained source-owner and typed relation context for face-query failures and corrected owner labels in spatial-consistency diagnostics (#378).
+
 - Preserved quiet-NaN signs, payloads and direction priority in `next_after` across optimization levels (#370).
 
 - Fixed skipped tag publication after successful release checks when the PR-only test job was intentionally skipped (#350).

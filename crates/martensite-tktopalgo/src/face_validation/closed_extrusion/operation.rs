@@ -134,10 +134,11 @@ fn support_completion(completion: &ClosedExtrusionCompletion) -> CheckResult<()>
 
 fn boundary_identity<F: FnMut() -> bool>(
     errors: &[ClosedFaceErrorBound],
+    strip: &decode::Strip,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<()> {
     for bound in errors {
-        budget.query()?;
+        budget.query_for(boundary_context(bound, strip))?;
         if !matches!(
             bound.squared_upper.compare_f64(0.),
             Ok(std::cmp::Ordering::Equal)
@@ -150,6 +151,12 @@ fn boundary_identity<F: FnMut() -> bool>(
     Ok(())
 }
 
+fn boundary_context(bound: &ClosedFaceErrorBound, strip: &decode::Strip) -> ClosedFaceQueryContext {
+    let edge = &strip.edges[bound.edge];
+    let owner = bound.vertex.map_or(edge.owner, |i| edge.vertices[i].owner);
+    ClosedFaceQueryContext::new(owner, ClosedFaceRelation::BoundaryIdentity)
+}
+
 fn check_boundary<F: FnMut() -> bool>(
     strip: &decode::Strip,
     boundary: &boundary::Boundary,
@@ -157,7 +164,7 @@ fn check_boundary<F: FnMut() -> bool>(
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<()> {
     if budget.policy.version == 1 {
-        return boundary_identity(&report.errors, budget);
+        return boundary_identity(&report.errors, strip, budget);
     }
     super::carrier::certify(strip, boundary, report, budget)
 }

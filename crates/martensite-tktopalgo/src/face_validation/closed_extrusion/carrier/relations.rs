@@ -21,8 +21,7 @@ fn direction<F: FnMut() -> bool>(
     let first = chains::vector(carrier.strip.direction, carrier.strip.placement);
     let second = chains::vector(carrier.strip.direction, carrier.edge.placement);
     chains::require(
-        carrier.edge.owner,
-        "same actual world extrusion direction",
+        ClosedFaceQueryContext::new(carrier.edge.owner, ClosedFaceRelation::CarrierDirection),
         first,
         second,
         budget,
@@ -66,8 +65,7 @@ fn cap_coefficient<F: FnMut() -> bool>(
     let first = chains::point(actual, edge.placement);
     let second = carrier_target(carrier, pole, [level, 0.], &poses);
     chains::require(
-        edge.owner,
-        "actual cap coefficient on carrier",
+        ClosedFaceQueryContext::new(edge.owner, ClosedFaceRelation::CarrierCap),
         first,
         second,
         budget,
@@ -121,8 +119,7 @@ fn carrier_seam<F: FnMut() -> bool>(
     let point = pole(carrier.curve, first)?;
     let second = carrier_target(carrier, point, [p.y(), d.y()], &poses);
     chains::require(
-        edge.owner,
-        "actual seam on boundary carrier",
+        ClosedFaceQueryContext::new(edge.owner, ClosedFaceRelation::CarrierSeam),
         chains::line(axis, edge.placement),
         second,
         budget,
@@ -138,8 +135,7 @@ fn ideal_seam<F: FnMut() -> bool>(
     let poses = [carrier.strip.placement];
     let second = ideal_seam_target(carrier, edge, first, &poses)?;
     chains::require(
-        edge.owner,
-        "actual seam on canonical support",
+        ClosedFaceQueryContext::new(edge.owner, ClosedFaceRelation::CanonicalSeam),
         chains::line(axis, edge.placement),
         second,
         budget,
@@ -183,8 +179,7 @@ fn vertex_relation<F: FnMut() -> bool>(
 ) -> CheckResult<()> {
     let second = vertex_target(carrier, corner, poses)?;
     chains::require(
-        vertex.owner,
-        "actual vertex on carrier corner",
+        ClosedFaceQueryContext::new(vertex.owner, ClosedFaceRelation::CarrierVertex),
         chains::point(vertex.point, vertex.placement),
         second,
         budget,

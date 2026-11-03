@@ -3,14 +3,14 @@ use super::*;
 pub(super) struct BoundClaim {
     index: usize,
     vertex: Option<usize>,
-    role: &'static str,
+    context: ClosedFaceQueryContext,
     limit: f64,
     coefficient: bool,
 }
 pub(super) fn append(
     index: usize,
     vertex: Option<usize>,
-    role: &'static str,
+    context: ClosedFaceQueryContext,
     limit: f64,
     decision: ResidualDecision,
     coefficient: bool,
@@ -19,7 +19,7 @@ pub(super) fn append(
     BoundClaim {
         index,
         vertex,
-        role,
+        context,
         limit,
         coefficient,
     }
@@ -29,14 +29,14 @@ impl BoundClaim {
     pub(super) fn new(
         index: usize,
         vertex: Option<usize>,
-        role: &'static str,
+        context: ClosedFaceQueryContext,
         limit: f64,
         coefficient: bool,
     ) -> Self {
         Self {
             index,
             vertex,
-            role,
+            context,
             limit,
             coefficient,
         }
@@ -63,16 +63,16 @@ impl BoundClaim {
         ClosedFaceErrorBound {
             edge: self.index,
             vertex: self.vertex,
-            role: self.role,
+            role: self.context.relation.label(),
             spatial_limit: self.limit,
             squared_upper,
         }
     }
     fn exceeded(&self, witness: impl std::fmt::Debug) -> CheckResult<()> {
-        let (index, role, limit) = (self.index, self.role, self.limit);
+        let (index, role, limit) = (self.index, self.context.relation.label(), self.limit);
         if !self.coefficient {
             return Err(invalid(
-                index,
+                self.context.owner,
                 "spatial consistency",
                 format!("role={role}, limit={limit}, witness={witness:?}"),
             ));

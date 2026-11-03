@@ -38,7 +38,12 @@ fn transverse<F: FnMut() -> bool>(
     let mut first = chains::vector(carrier.strip.direction, carrier.strip.placement);
     first.placements = &projection;
     let second = chains::point([0.; 3], super::super::placements::identity());
-    Ok(chains::compare(first, second, budget)? != CurveIdentityDecision::Identical)
+    Ok(chains::compare(
+        ClosedFaceQueryContext::new(carrier.edge.owner, ClosedFaceRelation::TransverseDirection),
+        first,
+        second,
+        budget,
+    )? != CurveIdentityDecision::Identical)
 }
 fn ideal_constant<F: FnMut() -> bool>(
     carrier: &Carrier<'_>,
@@ -89,7 +94,12 @@ fn ideal_coefficient<F: FnMut() -> bool>(
     let mut second = chains::point(reference, carrier.strip.placement);
     first.placements = projection;
     second.placements = projection;
-    chains::compare(first, second, budget)
+    chains::compare(
+        ClosedFaceQueryContext::new(carrier.edge.owner, ClosedFaceRelation::CanonicalHeight),
+        first,
+        second,
+        budget,
+    )
 }
 fn carrier_coefficient<F: FnMut() -> bool>(
     carrier: &Carrier<'_>,
@@ -102,7 +112,12 @@ fn carrier_coefficient<F: FnMut() -> bool>(
     let mut first = chains::point(pole, carrier.edge.placement);
     first.placements = projection;
     let second = height_reference(carrier, reference, placements);
-    chains::compare(first, second, budget)
+    chains::compare(
+        ClosedFaceQueryContext::new(carrier.edge.owner, ClosedFaceRelation::CarrierHeight),
+        first,
+        second,
+        budget,
+    )
 }
 fn height_reference<'a>(
     carrier: &Carrier<'_>,
