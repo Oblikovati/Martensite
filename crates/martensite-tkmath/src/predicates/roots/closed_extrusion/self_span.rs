@@ -39,7 +39,6 @@ fn monotone(powers: &[ExactRatio; 3], range: [f64; 2]) -> bool {
             .add(&powers[1])
             .sign()
     });
-    signs.iter().all(|s| *s != Ordering::Less) && signs.iter().any(|s| *s == Ordering::Greater)
-        || signs.iter().all(|s| *s != Ordering::Greater)
-            && signs.iter().any(|s| *s == Ordering::Less)
+    signs.iter().all(|s| *s != Ordering::Less) && signs.contains(&Ordering::Greater)
+        || signs.iter().all(|s| *s != Ordering::Greater) && signs.contains(&Ordering::Less)
 }

@@ -55,7 +55,7 @@ fn oblique_projection_and_tiny_exact_coordinates_do_not_round_signs() {
     let mut tiny = diamond();
     for point in &mut tiny.poles {
         for value in point {
-            *value *= 2f64.powi(-1000);
+            *value *= martensite_cmath::powi(2., -1000);
         }
     }
     assert!(run(tiny).certificate().is_some());

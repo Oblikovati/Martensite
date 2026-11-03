@@ -11,7 +11,7 @@ pub(in crate::predicates::roots) enum HullSeparation {
     },
     EndpointOnly {
         point: ExactPoint,
-        normals: [ExactPoint; 2],
+        normals: Box<[ExactPoint; 2]>,
     },
     Unresolved,
 }
@@ -72,7 +72,7 @@ fn independent_witness(
         .find(|other| cross(normal, other).sign() != Ordering::Equal)?;
     Some(HullSeparation::EndpointOnly {
         point: point.clone(),
-        normals: [other.clone(), normal.clone()],
+        normals: Box::new([other.clone(), normal.clone()]),
     })
 }
 

@@ -13,7 +13,7 @@ pub(super) enum ExclusionWitness {
     Pair {
         first: usize,
         second: usize,
-        witness: HullSeparation,
+        witness: Box<HullSeparation>,
     },
 }
 #[derive(Clone, Debug)]
