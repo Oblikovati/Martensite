@@ -127,7 +127,7 @@ fn support_pole(strip: &Strip, edge: &EdgeUse, side: Side) -> CheckResult<[f64; 
     pole.copied()
         .ok_or_else(|| invalid(edge.owner, "support endpoint", "absent"))
 }
-fn line(axis: martensite_tkmath::gp::Axis1) -> MetricCurve<'static, 3> {
+pub(super) fn line(axis: martensite_tkmath::gp::Axis1) -> MetricCurve<'static, 3> {
     let p = axis.location();
     let d = axis.direction();
     MetricCurve::Line {
