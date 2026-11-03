@@ -26,14 +26,7 @@ impl GeomSurfaceOfLinearExtrusion {
         let snapshot = self.closed_basis_capture(interval)?;
         Ok(match snapshot {
             BasisAdmission::Captured(input, layout) => {
-                ClosedSplineExtrusionExclusion::Captured(ClosedSplineExtrusionSnapshot {
-                    numeric: Box::new(certify_closed_quadratic_extrusion(
-                        input,
-                        policy,
-                        &mut cancelled,
-                    )),
-                    layout,
-                })
+                captured_outcome(input, layout, policy, &mut cancelled)
             }
             BasisAdmission::Inconclusive(reason) => {
                 ClosedSplineExtrusionExclusion::Inconclusive(reason)
@@ -47,6 +40,18 @@ impl GeomSurfaceOfLinearExtrusion {
         let state = self.state.read();
         capture_stored_basis(&state, interval)
     }
+}
+
+fn captured_outcome(
+    input: ClosedQuadraticExtrusionInput,
+    layout: ClosedSplineExtrusionLayout,
+    policy: ClosedExtrusionPolicy,
+    cancelled: &mut impl FnMut() -> bool,
+) -> ClosedSplineExtrusionExclusion {
+    ClosedSplineExtrusionExclusion::Captured(ClosedSplineExtrusionSnapshot {
+        numeric: Box::new(certify_closed_quadratic_extrusion(input, policy, cancelled)),
+        layout,
+    })
 }
 
 fn capture_stored_basis(
