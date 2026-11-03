@@ -59,14 +59,14 @@ impl Inventory {
         leases: &[(usize, Lease<'_>)],
         limits: FaceCaptureLimits,
     ) -> Result<(), Incomplete> {
-        for (index, owner) in self.owners.iter().enumerate() {
+        for index in 0..self.owners.len() {
             let actual = references_for_owner(index, leases, limits)?;
             if actual
                 .iter()
                 .map(Owner::key)
                 .ne(self.links[index].iter().copied())
             {
-                return Err(Incomplete::Changed { owner: owner.key() });
+                return Err(Incomplete::Changed { owner: index });
             }
         }
         Ok(())

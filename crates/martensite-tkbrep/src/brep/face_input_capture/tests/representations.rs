@@ -44,14 +44,7 @@ fn real_seam_retains_two_distinct_pcurve_bindings_and_actual_range() {
     );
     let (first, second) = seam_bindings(&snapshot);
     assert_ne!(first, second);
-    assert_eq!(
-        snapshot
-            .cells()
-            .iter()
-            .filter(|(_, cell)| matches!(cell, CapturedFaceCell::PlanarLine(_)))
-            .count(),
-        2
-    );
+    assert_eq!(planar_count(&snapshot), 2);
 }
 #[test]
 fn nonempty_vertex_parameter_representations_refuse_instead_of_disappearing() {
@@ -101,4 +94,12 @@ fn seam_bindings(snapshot: &FaceInputSnapshot) -> (usize, usize) {
         })
         .unwrap();
     (first, second)
+}
+
+fn planar_count(snapshot: &FaceInputSnapshot) -> usize {
+    snapshot
+        .cells()
+        .iter()
+        .filter(|(_, cell)| matches!(cell, CapturedFaceCell::PlanarLine(_)))
+        .count()
 }
