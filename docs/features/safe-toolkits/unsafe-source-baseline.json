@@ -294,7 +294,7 @@
   "crates/martensite-tkernel/tests/shared_collection_method_contracts.rs": {"unsafe_keywords":6,"unsafe_code_mentions":1,"kinds":{"block":6}},
   "crates/martensite-tkernel/tests/sparse_array_base_contracts.rs": {"unsafe_keywords":23,"unsafe_code_mentions":1,"kinds":{"block":23}},
   "crates/martensite-tkernel/tests/sparse_array_base_contracts/exchange.rs": {"unsafe_keywords":42,"unsafe_code_mentions":0,"kinds":{"block":37,"function":5}},
-  "crates/martensite-tkernel/tests/sparse_array_base_contracts/fixture.rs": {"unsafe_keywords":38,"unsafe_code_mentions":1,"kinds":{"block":30,"function":8}},
+  "crates/martensite-tkernel/tests/sparse_array_base_contracts/fixture.rs": {"unsafe_keywords":40,"unsafe_code_mentions":1,"kinds":{"block":30,"function":10}},
   "crates/martensite-tkernel/tests/sparse_array_base_contracts/raw_cursor.rs": {"unsafe_keywords":15,"unsafe_code_mentions":0,"kinds":{"block":15}},
   "crates/martensite-tkernel/tests/sparse_array_base_contracts/resources.rs": {"unsafe_keywords":10,"unsafe_code_mentions":0,"kinds":{"block":10}},
   "crates/martensite-tkernel/tests/sparse_basic_iterator_contracts.rs": {"unsafe_keywords":24,"unsafe_code_mentions":1,"kinds":{"block":24}},
