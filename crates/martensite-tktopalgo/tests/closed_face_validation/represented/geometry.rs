@@ -3,7 +3,9 @@ use super::{registry::FixtureOwners, splines, types::*};
 use martensite_tkernel::standard::Handle;
 use martensite_tkg2d::geom2d::Geom2dLine;
 use martensite_tkg3d::geom::{GeomLine, GeomPlane, GeomSurfaceOfLinearExtrusion, GeomSweptSurface};
-use martensite_tkmath::gp::{Axis1, Axis2d, Axis3, Direction2, Direction3, Point2, Point3};
+use martensite_tkmath::gp::{
+    Axis1, Axis2d, Axis3, Direction2, Direction3, Point2, Point3, StandardDirection3,
+};
 pub(super) fn construct(input: &GraphInput, owners: &mut FixtureOwners) {
     for (key, field) in input.owners.iter().copied().enumerate() {
         primitive(key, field, owners);
@@ -71,16 +73,24 @@ fn direction3(input: [u64; 3]) -> Direction3 {
 }
 fn plane(origin: [u64; 3], x: [u64; 3], y: [u64; 3], normal: [u64; 3]) -> Handle<GeomPlane> {
     let p = scalars(origin);
-    let axis = Axis3::new(
-        Point3::new(p[0], p[1], p[2]),
-        direction3(normal),
-        direction3(x),
-    )
-    .unwrap();
+    // The standard-frame constructor preserves the explicitly recorded zero signs.
+    let axis =
+        Axis3::with_standard_frame(Point3::new(p[0], p[1], p[2]), standard(normal), standard(x));
     let actual_y = axis.y_direction();
     assert_eq!(
         [actual_y.x(), actual_y.y(), actual_y.z()].map(f64::to_bits),
         y
     );
     Handle::new(GeomPlane::new(axis))
+}
+
+fn standard(input: [u64; 3]) -> StandardDirection3 {
+    use StandardDirection3::*;
+    [X, Y, Z, NegX, NegY, NegZ]
+        .into_iter()
+        .find(|axis| {
+            let d = Direction3::from_standard(*axis);
+            [d.x(), d.y(), d.z()].map(f64::to_bits) == input
+        })
+        .unwrap_or_else(|| panic!("direction {input:?}: expected an exactly stored standard axis"))
 }
