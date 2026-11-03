@@ -10,10 +10,16 @@ pub use types::{
     ClosedSplineExtrusionLayout, ClosedSplineExtrusionSnapshot,
 };
 
-pub(in crate::geom) enum BasisAdmission {
+/// Owned spline admission copied under a retained basis lease; it contains no live geometry.
+///
+/// Match `ClosedSplineExtrusionInput::Captured(input, layout)` before exact execution.
+#[derive(Clone, Debug)]
+pub enum ClosedSplineExtrusionInput {
     Captured(ClosedQuadraticExtrusionInput, ClosedSplineExtrusionLayout),
     Inconclusive(ClosedSplineExtrusionInconclusive),
 }
+pub(in crate::geom) type BasisAdmission = ClosedSplineExtrusionInput;
+
 impl GeomSurfaceOfLinearExtrusion {
     /// Analyze an owned support snapshot; `surface.closed_quadratic_self_exclusion([-1.,1.], policy, ||false)?`.
     /// The result does not validate face trims, locations or a later-mutated surface handle.

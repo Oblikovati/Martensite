@@ -35,7 +35,7 @@ pub(crate) use runtime_type::c_prefix;
 pub use runtime_type::{
     InterfaceCaster, InterfaceEntry, RuntimeType, RuntimeTyped, project_concrete, project_interface,
 };
-pub use shared_state::SharedState;
+pub use shared_state::{SharedReadFailure, SharedState};
 pub use transient::{StandardTransient, Transient, TransientStorage};
 pub mod assert;
 pub mod error_handler;

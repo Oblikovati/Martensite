@@ -15,19 +15,27 @@ impl GeomBSplineCurve {
         interval: [f64; 2],
     ) -> Result<BasisAdmission, Error> {
         let state = self.state.read();
-        let layout = layout(&state, direction, interval);
-        if layout.basis_override {
-            return Ok(BasisAdmission::Inconclusive(
-                Inconclusive::BasisEvaluationOverride(layout),
-            ));
-        }
-        if !supported(&layout) {
-            return Ok(BasisAdmission::Inconclusive(
-                Inconclusive::UnsupportedLayout(layout),
-            ));
-        }
-        admitted_snapshot(&state, layout)
+        capture_leased_basis(&state, direction, interval)
     }
+}
+
+pub(super) fn capture_leased_basis(
+    state: &BSplineState,
+    direction: [f64; 3],
+    interval: [f64; 2],
+) -> Result<BasisAdmission, Error> {
+    let layout = layout(state, direction, interval);
+    if layout.basis_override {
+        return Ok(BasisAdmission::Inconclusive(
+            Inconclusive::BasisEvaluationOverride(layout),
+        ));
+    }
+    if !supported(&layout) {
+        return Ok(BasisAdmission::Inconclusive(
+            Inconclusive::UnsupportedLayout(layout),
+        ));
+    }
+    admitted_snapshot(state, layout)
 }
 
 fn admitted_snapshot(state: &BSplineState, layout: Layout) -> Result<BasisAdmission, Error> {

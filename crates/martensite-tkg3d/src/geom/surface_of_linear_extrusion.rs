@@ -1,5 +1,6 @@
 //! `GeomSurfaceOfLinearExtrusion`: a basis curve swept along a direction,
 //! `P(u, v) = C(u) + v * Dir`.
+mod input_lease;
 pub(in crate::geom) mod self_exclusion;
 use super::curve::GeomCurve;
 use super::errors;
@@ -12,6 +13,7 @@ use super::surface::{
 };
 use super::swept_surface::{GeomSweptSurface, dump_swept_surface};
 use crate::geom_eval::{RepSurfaceDesc, rep_utils};
+pub use input_lease::ExtrusionInputLease;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
