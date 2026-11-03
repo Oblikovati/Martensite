@@ -61,10 +61,10 @@ fn cap(face: &Face, level: f64, vertex: &Vertex, tolerance: f64, delta: f64) -> 
         .unwrap();
     builder.range(&result, 0., 4., false).unwrap();
     builder
-        .add(&result, &vertex.oriented(Orientation::Forward))
+        .add(&mut result, &vertex.oriented(Orientation::Forward))
         .unwrap();
     builder
-        .add(&result, &vertex.oriented(Orientation::Reversed))
+        .add(&mut result, &vertex.oriented(Orientation::Reversed))
         .unwrap();
     result
 }
@@ -85,10 +85,10 @@ fn seam(face: &Face, vertices: &[Vertex; 2], tolerance: f64) -> Edge {
         .unwrap();
     builder.range(&result, 0., 3., false).unwrap();
     builder
-        .add(&result, &vertices[0].oriented(Orientation::Forward))
+        .add(&mut result, &vertices[0].oriented(Orientation::Forward))
         .unwrap();
     builder
-        .add(&result, &vertices[1].oriented(Orientation::Reversed))
+        .add(&mut result, &vertices[1].oriented(Orientation::Reversed))
         .unwrap();
     result
 }
@@ -115,9 +115,9 @@ pub(super) fn strip(tolerance: f64, top_delta: f64) -> StripFixture {
         edges[0].oriented(Orientation::Reversed),
         edges[2].oriented(Orientation::Reversed),
     ] {
-        builder.add(&wire, &edge).unwrap();
+        builder.add(&mut wire, &edge).unwrap();
     }
-    builder.add(&face, &wire).unwrap();
+    builder.add(&mut face, &wire).unwrap();
     StripFixture {
         face,
         edges,
