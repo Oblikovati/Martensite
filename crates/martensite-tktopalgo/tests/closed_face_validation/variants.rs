@@ -44,7 +44,7 @@ fn later_live_vertex_mutation_does_not_change_the_captured_certificate() {
             .unwrap();
     let before = format!("{input:?}");
     BRepBuilder::default()
-        .update_vertex(&fixture.vertices[0], Point3::new(9., 9., 9.), 1e-7)
+        .update_vertex_point(&fixture.vertices[0], Point3::new(9., 9., 9.), 1e-7)
         .unwrap();
     let report = certify_closed_extrusion_face(input, ClosedFacePolicy::bounded(), || false);
     assert!(report.certificate().is_some(), "{:?}", report.completion());
