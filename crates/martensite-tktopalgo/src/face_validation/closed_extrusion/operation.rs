@@ -11,15 +11,7 @@ pub fn certify_closed_extrusion_face(
     policy: ClosedFacePolicy,
     mut cancelled: impl FnMut() -> bool,
 ) -> ClosedFaceReport {
-    let mut report = ClosedFaceReport {
-        input,
-        policy,
-        completion: ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Cancelled),
-        coverage: ClosedFaceCoverage::default(),
-        work: ClosedFaceWork::default(),
-        errors: Vec::new(),
-        support: None,
-    };
+    let mut report = initial_report(input, policy);
     let mut budget = Budget {
         policy,
         work: ClosedFaceWork::default(),
@@ -37,22 +29,7 @@ fn run<F: FnMut() -> bool>(
     report: &mut ClosedFaceReport,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<()> {
-    if budget.policy.version != 1 {
-        return Err(unsupported(
-            0,
-            "policy version",
-            format!("{}", budget.policy.version),
-            "version 1",
-        ));
-    }
-    if budget.policy.max_bisections > u16::MAX as u64 {
-        return Err(unsupported(
-            0,
-            "metric bisection policy",
-            format!("{}", budget.policy.max_bisections),
-            "at most 65535 subdivisions",
-        ));
-    }
+    validate_policy(budget.policy)?;
     let strip = decode::decode(&report.input, budget)?;
     let boundary = boundary::certify(&strip, budget)?;
     incidence::certify(&strip, &boundary, budget)?;
@@ -114,4 +91,36 @@ fn support<F: FnMut() -> bool>(
     };
     report.support = Some(proof);
     result
+}
+
+fn initial_report(input: FaceInputSnapshot, policy: ClosedFacePolicy) -> ClosedFaceReport {
+    ClosedFaceReport {
+        input,
+        policy,
+        completion: ClosedFaceCompletion::Incomplete(ClosedFaceIncomplete::Cancelled),
+        coverage: ClosedFaceCoverage::default(),
+        work: ClosedFaceWork::default(),
+        errors: Vec::new(),
+        support: None,
+    }
+}
+
+fn validate_policy(policy: ClosedFacePolicy) -> CheckResult<()> {
+    if policy.version != 1 {
+        return Err(unsupported(
+            0,
+            "policy version",
+            format!("{}", policy.version),
+            "version 1",
+        ));
+    }
+    if policy.max_bisections > u16::MAX as u64 {
+        return Err(unsupported(
+            0,
+            "metric bisection policy",
+            format!("{}", policy.max_bisections),
+            "at most 65535 subdivisions",
+        ));
+    }
+    Ok(())
 }
