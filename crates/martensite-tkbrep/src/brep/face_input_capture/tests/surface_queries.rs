@@ -198,7 +198,8 @@ fn finite_linear_spatial_spline_is_explicitly_new_input_capture_only() {
     );
 }
 fn linear_spline() -> Handle<GeomBSplineCurve> {
-    let poles = Array1::from_shared(&[Point3::default(), Point3::new(1., 0., 0.)], 1);
+    let points = [Point3::default(), Point3::new(1., 0., 0.)];
+    let poles = Array1::from_shared(&points, 1);
     let knots = Array1::from_shared(&[0., 1.], 1);
     let mults = Array1::from_shared(&[2, 2], 1);
     Handle::new(GeomBSplineCurve::new(&poles, &knots, &mults, 1, false).unwrap())
