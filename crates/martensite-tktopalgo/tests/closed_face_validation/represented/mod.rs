@@ -4,6 +4,7 @@ mod binding_geometry;
 mod binding_representations;
 mod binding_topology;
 mod data;
+mod field_words;
 mod geometry;
 mod locations;
 mod registry;
@@ -41,6 +42,10 @@ fn check_input(index: usize, input: &types::GraphInput) -> bool {
     let owned =
         capture_closed_extrusion_face(&source, FaceCaptureLimits::bounded(), || false).unwrap();
     binding::assert_graph(input, &owned);
+    println!(
+        "{{\"input\":{index},\"field_words\":{:?}}}",
+        field_words::field_words(input)
+    );
     let report = certify_closed_extrusion_face(owned, ClosedFacePolicy::bounded(), || false);
     let certified = report.certificate().is_some();
     println!(
