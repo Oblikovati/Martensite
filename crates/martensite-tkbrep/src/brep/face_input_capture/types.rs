@@ -72,8 +72,14 @@ pub enum FaceCaptureIncomplete {
 #[derive(Clone, Debug)]
 pub struct CapturedLocation {
     pub(super) steps: Vec<(usize, i32, martensite_tkmath::gp::Transform3)>,
+    pub(super) effective: martensite_tkmath::gp::Transform3,
 }
 impl CapturedLocation {
+    /// Read the actual cached evaluator map, without reconstructing its product; `location.effective_transform()`.
+    pub fn effective_transform(&self) -> martensite_tkmath::gp::Transform3 {
+        self.effective
+    }
+
     /// Read owned datum identities, powers and transforms; `location.steps()`.
     pub fn steps(&self) -> &[(usize, i32, martensite_tkmath::gp::Transform3)] {
         &self.steps

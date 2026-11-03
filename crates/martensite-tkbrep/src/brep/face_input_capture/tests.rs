@@ -1,4 +1,5 @@
 //! Real cells and independently constructed geometry exercise capture, not face acceptance.
+mod locations;
 mod replay;
 mod representations;
 use super::*;

@@ -76,7 +76,7 @@ impl CopyContext {
             steps.push((identity, power, *datum.transformation()));
             cursor = cursor.next_location();
         }
-        Ok(CapturedLocation { steps })
+        completed_location(steps, location)
     }
     pub(super) fn cell(
         &mut self,
@@ -226,4 +226,14 @@ fn finite3(values: [f64; 3], field: &'static str) -> Result<[f64; 3], FaceCaptur
         finite(value, field)?;
     }
     Ok(values)
+}
+
+fn completed_location(
+    steps: Vec<(usize, i32, martensite_tkmath::gp::Transform3)>,
+    location: &Location,
+) -> Result<CapturedLocation, FaceCaptureIncomplete> {
+    // The immutable cached map is the evaluator input; exact recomposition can differ (#213).
+    let effective = location.transformation();
+    super::numeric::validate_transform(&effective)?;
+    Ok(CapturedLocation { steps, effective })
 }
