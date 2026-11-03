@@ -59,16 +59,22 @@ fn admit_support(
                 "coherent exact closed quadratic input",
             )
         })?;
-    let ClosedSplineExtrusionInput::Captured(input, _) = input else {
-        return Err(unsupported(
+    require_captured(input)
+}
+fn require_captured(
+    input: ClosedSplineExtrusionInput,
+) -> CheckResult<ClosedQuadraticExtrusionInput> {
+    match input {
+        ClosedSplineExtrusionInput::Captured(input, _) => Ok(input),
+        other => Err(unsupported(
             0,
             "support layout",
-            format!("{input:?}"),
+            format!("{other:?}"),
             "closed clamped quadratic without override",
-        ));
-    };
-    Ok(input)
+        )),
+    }
 }
+
 fn support<F: FnMut() -> bool>(
     report: &mut ClosedFaceReport,
     input: ClosedQuadraticExtrusionInput,
@@ -80,15 +86,7 @@ fn support<F: FnMut() -> bool>(
     budget.work.support_obligations = work.scheduled_obligations;
     budget.work.support_finished = work.finished_obligations;
     budget.work.support_steps = work.started_proof_steps;
-    let result = match proof.completion() {
-        ClosedExtrusionCompletion::Certified => Ok(()),
-        ClosedExtrusionCompletion::Incomplete(cause) => Err(ClosedFaceCompletion::Incomplete(
-            ClosedFaceIncomplete::Support(cause.clone()),
-        )),
-        ClosedExtrusionCompletion::NotExcluded(contact) => Err(ClosedFaceCompletion::Incomplete(
-            ClosedFaceIncomplete::Projection(*contact),
-        )),
-    };
+    let result = support_completion(proof.completion());
     report.support = Some(proof);
     result
 }
@@ -123,4 +121,16 @@ fn validate_policy(policy: ClosedFacePolicy) -> CheckResult<()> {
         ));
     }
     Ok(())
+}
+
+fn support_completion(completion: &ClosedExtrusionCompletion) -> CheckResult<()> {
+    match completion {
+        ClosedExtrusionCompletion::Certified => Ok(()),
+        ClosedExtrusionCompletion::Incomplete(cause) => Err(ClosedFaceCompletion::Incomplete(
+            ClosedFaceIncomplete::Support(cause.clone()),
+        )),
+        ClosedExtrusionCompletion::NotExcluded(contact) => Err(ClosedFaceCompletion::Incomplete(
+            ClosedFaceIncomplete::Projection(*contact),
+        )),
+    }
 }

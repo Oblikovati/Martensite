@@ -32,14 +32,7 @@ impl PlacementReplay {
                 .map_err(native)?;
             result = result.multiplied(&item).map_err(native)?;
         }
-        if !same_transform(result.transformation(), input.effective_transform())? {
-            return Err(unsupported(
-                0,
-                "location cache",
-                "replay mismatch",
-                "bit-identical captured evaluator map",
-            ));
-        }
+        require_cache(&result, input)?;
         Ok(result)
     }
     fn datum(&mut self, id: usize, transform: Transform3) -> CheckResult<Handle<Datum3>> {
@@ -181,6 +174,18 @@ fn require_nonsingular(linear: [[f64; 3]; 3]) -> CheckResult<()> {
     })?;
     if sign == Ordering::Equal {
         return Err(unsupported(0, "determinant", "zero", "nonzero determinant"));
+    }
+    Ok(())
+}
+
+fn require_cache(result: &Location, input: &CapturedLocation) -> CheckResult<()> {
+    if !same_transform(result.transformation(), input.effective_transform())? {
+        return Err(unsupported(
+            0,
+            "location cache",
+            "replay mismatch",
+            "bit-identical captured evaluator map",
+        ));
     }
     Ok(())
 }
