@@ -212,7 +212,7 @@ mod tests {
     }
     fn tiny_rotation(exponent: i32) -> Transform3 {
         let rotation = Transform3::rotation(Axis1::default(), power(exponent)).unwrap();
-        rotation.multiplied(Transform3::scale(Point3::default(), power(-1021)).unwrap())
+        rotation.multiplied(Transform3::scaling(Point3::default(), power(-1021)).unwrap())
     }
     #[test]
     fn raw_cache_matrix_distinguishes_scaled_value_underflow_collisions() {
