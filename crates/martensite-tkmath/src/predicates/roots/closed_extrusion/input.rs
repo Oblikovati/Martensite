@@ -61,11 +61,14 @@ impl ClosedQuadraticExtrusionInput {
     pub fn curve_interval(&self) -> [f64; 2] {
         [self.knots[0], self.knots[self.knots.len() - 1]]
     }
-    pub(super) fn flat_knots(&self) -> Vec<f64> {
-        self.knots
-            .iter()
-            .zip(&self.multiplicities)
-            .flat_map(|(k, n)| std::iter::repeat_n(*k, *n as usize))
-            .collect()
+    pub(super) fn proof_view(&self) -> super::input_view::QuadraticSplineProofView<'_> {
+        super::input_view::QuadraticSplineProofView {
+            poles: &self.poles,
+            weights: &self.weights,
+            knots: &self.knots,
+            multiplicities: &self.multiplicities,
+            direction: self.direction,
+            interval: self.interval,
+        }
     }
 }

@@ -12,6 +12,7 @@ use super::types::{
 use super::{
     budget::ProofBudget,
     input::ClosedQuadraticExtrusionInput as Input,
+    input_view::QuadraticSplineProofView as View,
     report::{ClosedExtrusionReport, ExclusionWitness},
     self_span,
 };
@@ -21,14 +22,33 @@ pub(super) fn execute(
     policy: ClosedExtrusionPolicy,
     cancelled: &mut dyn FnMut() -> bool,
 ) -> ClosedExtrusionReport {
-    let mut budget = ProofBudget::new(policy, cancelled);
-    let mut spans = Vec::new();
-    let mut witnesses = Vec::new();
-    let completion = run(&input, &mut budget, &mut spans, &mut witnesses)
-        .map_or_else(|completion| completion, |()| Completion::Certified);
+    let proof = traverse(&input.proof_view(), policy, cancelled);
     ClosedExtrusionReport {
         input,
         policy,
+        completion: proof.completion,
+        work: proof.work,
+        spans: proof.spans,
+        witnesses: proof.witnesses,
+    }
+}
+struct TraversalEvidence {
+    completion: Completion,
+    work: super::types::ClosedExtrusionWork,
+    spans: Vec<ProjectedQuadraticSpan>,
+    witnesses: Vec<ExclusionWitness>,
+}
+fn traverse(
+    input: &View<'_>,
+    policy: ClosedExtrusionPolicy,
+    cancelled: &mut dyn FnMut() -> bool,
+) -> TraversalEvidence {
+    let mut budget = ProofBudget::new(policy, cancelled);
+    let mut spans = Vec::new();
+    let mut witnesses = Vec::new();
+    let completion = run(input, &mut budget, &mut spans, &mut witnesses)
+        .map_or_else(|completion| completion, |()| Completion::Certified);
+    TraversalEvidence {
         completion,
         work: budget.work,
         spans,
@@ -37,7 +57,7 @@ pub(super) fn execute(
 }
 
 fn run(
-    input: &Input,
+    input: &View<'_>,
     budget: &mut ProofBudget<'_>,
     spans: &mut Vec<ProjectedQuadraticSpan>,
     witnesses: &mut Vec<ExclusionWitness>,
@@ -69,7 +89,7 @@ fn self_obligations(
     Ok(())
 }
 
-fn admission(input: &Input, budget: &mut ProofBudget<'_>) -> Result<(), Cause> {
+fn admission(input: &View<'_>, budget: &mut ProofBudget<'_>) -> Result<(), Cause> {
     budget.checkpoint()?;
     if budget.policy.version != 1 {
         return Err(Cause::PolicyVersion(budget.policy.version));
@@ -99,7 +119,7 @@ fn declare_obligations(n: usize, budget: &mut ProofBudget<'_>) -> Result<(), Cau
 }
 
 fn prepare_spans(
-    input: &Input,
+    input: &View<'_>,
     budget: &mut ProofBudget<'_>,
 ) -> Result<Vec<ProjectedQuadraticSpan>, Cause> {
     let spans = build_projected(input, budget)?;
@@ -115,7 +135,7 @@ fn prepare_spans(
 }
 
 fn build_projected(
-    input: &Input,
+    input: &View<'_>,
     budget: &mut ProofBudget<'_>,
 ) -> Result<Vec<ProjectedQuadraticSpan>, Cause> {
     let mut stop = None;
@@ -143,7 +163,7 @@ fn record_stop(budget: &mut ProofBudget<'_>, stop: &mut Option<Cause>) -> bool {
 }
 
 fn domain_coverage(
-    input: &Input,
+    input: &View<'_>,
     spans: &[ProjectedQuadraticSpan],
     budget: &mut ProofBudget<'_>,
 ) -> Result<(), Cause> {

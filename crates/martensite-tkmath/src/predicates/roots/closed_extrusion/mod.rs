@@ -2,6 +2,7 @@
 //! The certificate is on a declared endpoint seam quotient, not on trims or mutable handles.
 mod budget;
 mod input;
+mod input_view;
 mod operation;
 mod report;
 mod self_span;

@@ -1,9 +1,20 @@
 //! Storage admission uses exact input ordering and no modelling tolerance.
 use super::{
-    input::ClosedQuadraticExtrusionInput as Input, types::ClosedExtrusionInputError as Error,
+    input::ClosedQuadraticExtrusionInput as Input, input_view::QuadraticSplineProofView as View,
+    types::ClosedExtrusionInputError as Error,
 };
 
 pub(super) fn input(input: &Input) -> Result<(), Error> {
+    source(&input.proof_view())?;
+    let first = input.poles[0];
+    let last = input.poles[input.poles.len() - 1];
+    if first != last {
+        return Err(Error::OpenEndpoints { first, last });
+    }
+    Ok(())
+}
+
+pub(super) fn source(input: &View<'_>) -> Result<(), Error> {
     storage(input)?;
     numeric(input)?;
     for (index, pair) in input.knots.windows(2).enumerate() {
@@ -13,15 +24,10 @@ pub(super) fn input(input: &Input) -> Result<(), Error> {
     if input.direction.iter().all(|value| *value == 0.) {
         return Err(Error::ZeroDirection(input.direction));
     }
-    let first = input.poles[0];
-    let last = input.poles[input.poles.len() - 1];
-    if first != last {
-        return Err(Error::OpenEndpoints { first, last });
-    }
     Ok(())
 }
 
-fn storage(input: &Input) -> Result<(), Error> {
+fn storage(input: &View<'_>) -> Result<(), Error> {
     let m = &input.multiplicities;
     let shape = input.poles.len() >= 3
         && input.weights.len() == input.poles.len()
@@ -50,7 +56,7 @@ fn clamped(m: &[u32]) -> bool {
             .all(|n| (1..=2).contains(n))
 }
 
-fn numeric(input: &Input) -> Result<(), Error> {
+fn numeric(input: &View<'_>) -> Result<(), Error> {
     for (index, value) in input.poles.iter().flatten().enumerate() {
         finite("poles", index, *value)?;
     }
@@ -60,7 +66,7 @@ fn numeric(input: &Input) -> Result<(), Error> {
     for (index, value) in input.direction.iter().enumerate() {
         finite("direction", index, *value)?;
     }
-    weights(&input.weights)
+    weights(input.weights)
 }
 
 fn weights(weights: &[f64]) -> Result<(), Error> {
