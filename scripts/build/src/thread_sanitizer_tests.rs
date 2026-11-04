@@ -26,6 +26,7 @@ fn startup_precedes_geometry_capture_and_group_controls() {
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkbrep --lib brep::face_input_capture -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tktopalgo --test toolkit -- closed_face_validation --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::open_extrusion -- --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::sketch_incidence::vertex_neighborhood -- --test-threads=1 --show-output".to_owned(),
         ]
     );
 }
@@ -42,7 +43,8 @@ fn startup_failure_prevents_geometry_and_reference_capture_execution() {
             .iter()
             .any(|item| item.contains("cache_inputs_tests")
                 || item.contains("capture_buffer_reference_checks")
-                || item.contains("open_extrusion"))
+                || item.contains("open_extrusion")
+                || item.contains("vertex_neighborhood"))
     );
 }
 
@@ -232,4 +234,28 @@ fn open_support_group_uses_the_same_pinned_instrumentation() {
         "--show-output",
     ]);
     assert_eq!(open_extrusion_controls(root), expected);
+}
+
+#[test]
+fn vertex_incidence_failure_refuses_the_required_sanitizer_check() {
+    let command = vertex_neighborhood_controls(Path::new("/repo")).display();
+    let runner = runner().with_exit_code(&command, 66);
+    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    assert!(error.to_string().contains("66"));
+    assert_eq!(runner.commands().len(), 10);
+}
+#[test]
+fn vertex_incidence_group_keeps_the_pinned_sanitizer_settings() {
+    let root = Path::new("/repo");
+    let expected = sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkmath",
+        "--lib",
+        "predicates::roots::sketch_incidence::vertex_neighborhood",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ]);
+    assert_eq!(vertex_neighborhood_controls(root), expected);
 }
