@@ -134,3 +134,12 @@ fn print_owned_tolerance_resolved_report_for_process_comparison() {
     assert!(report.certificate().is_some(), "{:?}", report.completion());
     println!("RESOLVED_FACE_REPORT={report:?}");
 }
+
+#[test]
+fn largest_declared_incidence_budget_is_not_narrowed_by_a_cast() {
+    let mut policy = ToleranceResolvedFacePolicy::v4();
+    policy.max_incidence_work = u32::MAX;
+    let report = certify_tolerance_resolved_extrusion_face(capture(&shifted()), policy, || false);
+    assert_eq!(report.policy().max_incidence_work, u32::MAX);
+    assert!(report.certificate().is_some(), "{:?}", report.completion());
+}

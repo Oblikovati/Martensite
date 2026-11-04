@@ -13,7 +13,7 @@ pub struct ToleranceResolvedFacePolicy {
     /// Existing finite face settings; the required relative-frame behavior is three.
     pub face: ClosedFacePolicy,
     /// One whole-operation incidence/component work allowance.
-    pub max_incidence_work: u64,
+    pub max_incidence_work: u32,
 }
 impl ToleranceResolvedFacePolicy {
     /// Select finite behavior four; example: `ToleranceResolvedFacePolicy::v4()`.
