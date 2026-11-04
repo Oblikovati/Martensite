@@ -2,7 +2,7 @@
 use super::{
     cells::{Cell, Lease, owner_cells},
     owners::{self, Owner},
-    types::{FaceCaptureIncomplete as Incomplete, FaceCaptureLimits},
+    types::{FaceCaptureBehavior, FaceCaptureIncomplete as Incomplete, FaceCaptureLimits},
 };
 use crate::topods::Face;
 use std::collections::BTreeMap;
@@ -10,12 +10,18 @@ use std::collections::BTreeMap;
 pub(super) struct Inventory {
     pub owners: Vec<Owner>,
     links: Vec<Vec<usize>>,
+    pub behavior: FaceCaptureBehavior,
 }
 impl Inventory {
-    pub(super) fn gather(face: &Face, limits: FaceCaptureLimits) -> Result<Self, Incomplete> {
+    pub(super) fn gather(
+        face: &Face,
+        limits: FaceCaptureLimits,
+        behavior: FaceCaptureBehavior,
+    ) -> Result<Self, Incomplete> {
         let mut result = Self {
             owners: vec![Owner::Topology(face.tshape().clone())],
             links: Vec::new(),
+            behavior,
         };
         let mut index = 0;
         while index < result.owners.len() {
@@ -25,8 +31,8 @@ impl Inventory {
         Ok(result)
     }
     fn discover(&mut self, index: usize, limits: FaceCaptureLimits) -> Result<(), Incomplete> {
-        let refs =
-            owner_references(&self.owners[index], limits).map_err(|error| error.at_owner(index))?;
+        let refs = owner_references(&self.owners[index], limits, self.behavior)
+            .map_err(|error| error.at_owner(index))?;
         self.links.push(refs.iter().map(Owner::key).collect());
         for reference in refs {
             if self
@@ -60,7 +66,7 @@ impl Inventory {
         limits: FaceCaptureLimits,
     ) -> Result<(), Incomplete> {
         for index in 0..self.owners.len() {
-            let actual = references_for_owner(index, leases, limits)?;
+            let actual = references_for_owner(index, leases, limits, self.behavior)?;
             if actual
                 .iter()
                 .map(Owner::key)
@@ -88,7 +94,11 @@ pub(super) fn check_limit(
     Ok(())
 }
 
-fn owner_references(owner: &Owner, limits: FaceCaptureLimits) -> Result<Vec<Owner>, Incomplete> {
+fn owner_references(
+    owner: &Owner,
+    limits: FaceCaptureLimits,
+    behavior: FaceCaptureBehavior,
+) -> Result<Vec<Owner>, Incomplete> {
     let mut cells = owner_cells(owner)?;
     cells.sort_by_key(Cell::key);
     let mut leases = cells
@@ -98,7 +108,7 @@ fn owner_references(owner: &Owner, limits: FaceCaptureLimits) -> Result<Vec<Owne
     leases.sort_by_key(super::cells::lease_order);
     let mut result = Vec::new();
     for lease in &leases {
-        append_references(lease, &mut result, limits)?;
+        append_references(lease, &mut result, limits, behavior)?;
     }
     Ok(result)
 }
@@ -106,6 +116,7 @@ fn references_for_owner(
     index: usize,
     leases: &[(usize, Lease<'_>)],
     limits: FaceCaptureLimits,
+    behavior: FaceCaptureBehavior,
 ) -> Result<Vec<Owner>, Incomplete> {
     let mut selected: Vec<_> = leases
         .iter()
@@ -115,7 +126,8 @@ fn references_for_owner(
     selected.sort_by_key(|lease| super::cells::lease_order(lease));
     let mut result = Vec::new();
     for lease in selected {
-        append_references(lease, &mut result, limits).map_err(|error| error.at_owner(index))?;
+        append_references(lease, &mut result, limits, behavior)
+            .map_err(|error| error.at_owner(index))?;
     }
     Ok(result)
 }
@@ -124,12 +136,13 @@ fn append_references(
     lease: &Lease<'_>,
     result: &mut Vec<Owner>,
     limits: FaceCaptureLimits,
+    behavior: FaceCaptureBehavior,
 ) -> Result<(), Incomplete> {
     match lease {
         Lease::Topology(fields) => topology_references(&fields.shapes, result, limits)?,
-        Lease::Face(fields) => result.push(owners::surface_owner(&fields.surface)?),
-        Lease::Edge(fields) => edge_references(&fields.curves, result, limits)?,
-        _ => append_geometry_references(lease, result)?,
+        Lease::Face(fields) => result.push(owners::surface_owner(&fields.surface, behavior)?),
+        Lease::Edge(fields) => edge_references(&fields.curves, result, limits, behavior)?,
+        _ => append_geometry_references(lease, result, behavior)?,
     }
     check_limit(result.len(), limits.owners, "references")
 }
@@ -150,10 +163,11 @@ fn edge_references(
     curves: &[martensite_tkernel::standard::Handle<dyn crate::brep::BRepCurveRepresentation>],
     result: &mut Vec<Owner>,
     limits: FaceCaptureLimits,
+    behavior: FaceCaptureBehavior,
 ) -> Result<(), Incomplete> {
     check_limit(curves.len(), limits.owners, "representations")?;
     for curve in curves {
-        result.push(owners::representation_owner(curve)?);
+        result.push(owners::representation_owner(curve, behavior)?);
     }
     Ok(())
 }
@@ -161,14 +175,13 @@ fn edge_references(
 fn append_geometry_references(
     lease: &Lease<'_>,
     result: &mut Vec<Owner>,
+    behavior: FaceCaptureBehavior,
 ) -> Result<(), Incomplete> {
     match lease {
-        Lease::PCurve(fields) => {
-            result.push(owners::planar_owner(&fields.pcurve)?);
-            result.push(owners::surface_owner(&fields.surface)?);
-        }
+        Lease::PCurve(fields) => pcurve_references(fields, result, behavior)?,
         Lease::Seam(fields) => result.push(owners::planar_owner(&fields.pcurve2)?),
-        Lease::Spatial(curve) => result.push(owners::spatial_owner(curve)?),
+        Lease::Regularity(fields) => regularity_references(fields, result, behavior)?,
+        Lease::Spatial(curve) => spatial_reference(curve, result, behavior)?,
         Lease::Extrusion(surface) => extrusion_reference(surface, result)?,
         Lease::Vertex(fields) if !fields.points.is_empty() => {
             return Err(unsupported("nonempty vertex point representations"));
@@ -194,4 +207,36 @@ fn unsupported(actual: &str) -> Incomplete {
         actual: actual.into(),
         expected: "stored evaluator and empty vertex point representations",
     }
+}
+
+fn regularity_references(
+    fields: &crate::brep::curve_on_2_surfaces::TwoSurfacesFields,
+    result: &mut Vec<Owner>,
+    behavior: FaceCaptureBehavior,
+) -> Result<(), Incomplete> {
+    result.push(owners::surface_owner(&fields.surface, behavior)?);
+    result.push(owners::surface_owner(&fields.surface2, behavior)?);
+    Ok(())
+}
+
+fn pcurve_references(
+    fields: &crate::brep::curve_on_surface::CurveOnSurfaceFields,
+    result: &mut Vec<Owner>,
+    behavior: FaceCaptureBehavior,
+) -> Result<(), Incomplete> {
+    result.push(owners::planar_owner(&fields.pcurve)?);
+    result.push(owners::surface_owner(&fields.surface, behavior)?);
+    Ok(())
+}
+
+fn spatial_reference(
+    curve: &martensite_tkernel::standard::Handle<dyn martensite_tkg3d::geom::GeomCurve>,
+    result: &mut Vec<Owner>,
+    behavior: FaceCaptureBehavior,
+) -> Result<(), Incomplete> {
+    if behavior == FaceCaptureBehavior::StoredSurfaceQueriesV2 && curve.is_null() {
+        return Ok(());
+    }
+    result.push(owners::spatial_owner(curve)?);
+    Ok(())
 }

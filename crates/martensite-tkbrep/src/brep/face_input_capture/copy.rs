@@ -14,6 +14,7 @@ pub(super) struct CopyContext {
     datums: BTreeMap<usize, usize>,
     used: usize,
     maximum: usize,
+    behavior: FaceCaptureBehavior,
 }
 impl CopyContext {
     pub(super) fn new(inventory: &Inventory, maximum: usize) -> Self {
@@ -27,6 +28,7 @@ impl CopyContext {
             datums: BTreeMap::new(),
             used: 0,
             maximum,
+            behavior: inventory.behavior,
         }
     }
     fn charge(&mut self, count: usize) -> Result<(), FaceCaptureIncomplete> {
@@ -139,11 +141,10 @@ impl CopyContext {
         lease: &Lease<'_>,
     ) -> Result<CapturedFaceCell, FaceCaptureIncomplete> {
         match lease {
-            Lease::Spatial(c) => Ok(CapturedFaceCell::Spatial {
-                curve: self.reference(&**c)?,
-            }),
+            Lease::Spatial(c) => self.spatial_binding(c),
             Lease::PCurve(f) => self.pcurve_fields(f),
             Lease::Seam(f) => self.seam_fields(f),
+            Lease::Regularity(f) => self.regularity_fields(f),
             Lease::Range(r) => Ok(CapturedFaceCell::Range(finite2(
                 [r.0, r.1],
                 "representation range",
@@ -151,6 +152,17 @@ impl CopyContext {
             Lease::Location(l) => Ok(CapturedFaceCell::Location(self.location(l)?)),
             _ => self.geometry(lease),
         }
+    }
+    fn spatial_binding(
+        &self,
+        curve: &Handle<dyn martensite_tkg3d::geom::GeomCurve>,
+    ) -> Result<CapturedFaceCell, FaceCaptureIncomplete> {
+        if self.behavior == FaceCaptureBehavior::StoredSurfaceQueriesV2 && curve.is_null() {
+            return Ok(CapturedFaceCell::AbsentSpatial);
+        }
+        Ok(CapturedFaceCell::Spatial {
+            curve: self.reference(curve)?,
+        })
     }
     fn pcurve_fields(
         &self,
@@ -184,6 +196,7 @@ impl CopyContext {
             Lease::PlanarLine(l) => super::numeric::planar_line_input(l.axis()),
             Lease::PlanarSpline(s) => self.planar_spline(s),
             Lease::Spline(s) => self.spline(s),
+            Lease::SplineSurface(s) => self.spline_surface(s),
             Lease::Plane(p) => super::numeric::plane_input(p.position()),
             Lease::Extrusion(s) => Ok(CapturedFaceCell::Extrusion {
                 basis: self.reference(&s.basis())?,
@@ -200,8 +213,42 @@ impl CopyContext {
             self.charge(count)?;
         }
         let input = lease.stored_input();
-        super::numeric::validate_spline(&input)?;
+        if self.behavior == FaceCaptureBehavior::StoredRepresentationsV1 {
+            super::numeric::validate_spline(&input)?;
+        } else {
+            super::numeric::validate_stored_spline(&input)?;
+        }
         Ok(CapturedFaceCell::Spline(input))
+    }
+
+    fn spline_surface(
+        &mut self,
+        lease: &martensite_tkg3d::geom::SplineSurfaceInputLease<'_>,
+    ) -> Result<CapturedFaceCell, FaceCaptureIncomplete> {
+        for count in lease.stored_sizes() {
+            self.charge(count)?;
+        }
+        let input = lease
+            .stored_input()
+            .map_err(|cause| FaceCaptureIncomplete::Geometry {
+                owner: 0,
+                cause: Box::new(cause),
+            })?;
+        super::numeric::validate_surface(&input)?;
+        Ok(CapturedFaceCell::SplineSurface(input))
+    }
+    fn regularity_fields(
+        &mut self,
+        fields: &crate::brep::curve_on_2_surfaces::TwoSurfacesFields,
+    ) -> Result<CapturedFaceCell, FaceCaptureIncomplete> {
+        Ok(CapturedFaceCell::Regularity {
+            surfaces: [
+                self.reference(&fields.surface)?,
+                self.reference(&fields.surface2)?,
+            ],
+            location2: self.location(&fields.location2)?,
+            continuity: fields.continuity,
+        })
     }
 
     fn planar_spline(

@@ -7,12 +7,27 @@ use crate::topods::Face;
 pub fn capture_face_input(
     face: &Face,
     limits: FaceCaptureLimits,
+    cancelled: impl FnMut() -> bool,
+) -> Result<FaceInputSnapshot, FaceCaptureIncomplete> {
+    capture_face_input_with_behavior(
+        face,
+        limits,
+        FaceCaptureBehavior::StoredRepresentationsV1,
+        cancelled,
+    )
+}
+
+/// Select a stored-input domain explicitly; `capture_face_input_with_behavior(&face, limits, FaceCaptureBehavior::StoredSurfaceQueriesV2, || false)`.
+pub fn capture_face_input_with_behavior(
+    face: &Face,
+    limits: FaceCaptureLimits,
+    behavior: FaceCaptureBehavior,
     mut cancelled: impl FnMut() -> bool,
 ) -> Result<FaceInputSnapshot, FaceCaptureIncomplete> {
     if cancelled() {
         return Err(FaceCaptureIncomplete::Cancelled);
     }
-    let result = captured(face, limits);
+    let result = captured(face, limits, behavior);
     if cancelled() {
         return Err(FaceCaptureIncomplete::Cancelled);
     }
@@ -31,8 +46,9 @@ pub fn capture_closed_extrusion_face(
 fn captured(
     face: &Face,
     limits: FaceCaptureLimits,
+    behavior: FaceCaptureBehavior,
 ) -> Result<FaceInputSnapshot, FaceCaptureIncomplete> {
-    let inventory = Inventory::gather(face, limits)?;
+    let inventory = Inventory::gather(face, limits, behavior)?;
     let cells = inventory.cells(limits)?;
     let leases = cells
         .iter()

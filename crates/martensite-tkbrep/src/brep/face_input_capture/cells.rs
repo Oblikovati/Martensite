@@ -5,6 +5,7 @@ use martensite_tkernel::standard::{Handle, RuntimeTyped, SharedState};
 use martensite_tkg2d::geom2d::{PlanarLineInputLease, PlanarSplineInputLease};
 use martensite_tkg3d::geom::{
     ExtrusionInputLease, GeomCurve, LineInputLease, PlaneInputLease, SplineInputLease,
+    SplineSurfaceInputLease,
 };
 use martensite_tkmath::toploc::Location;
 use std::sync::RwLockReadGuard;
@@ -19,6 +20,7 @@ pub(super) enum Cell<'a> {
     Spatial(&'a SharedState<Handle<dyn GeomCurve>>),
     Range(&'a SharedState<(f64, f64)>),
     Location(&'a SharedState<Location>),
+    Regularity(&'a SharedState<crate::brep::curve_on_2_surfaces::TwoSurfacesFields>),
     Geometry(&'a Owner),
 }
 pub(super) enum Lease<'a> {
@@ -37,6 +39,8 @@ pub(super) enum Lease<'a> {
     Spline(SplineInputLease<'a>),
     Plane(PlaneInputLease<'a>),
     Extrusion(ExtrusionInputLease<'a>),
+    SplineSurface(SplineSurfaceInputLease<'a>),
+    Regularity(RwLockReadGuard<'a, crate::brep::curve_on_2_surfaces::TwoSurfacesFields>),
 }
 impl Cell<'_> {
     pub(super) fn key(&self) -> usize {
@@ -50,6 +54,7 @@ impl Cell<'_> {
             Self::Spatial(cell) => std::ptr::from_ref(*cell) as usize,
             Self::Range(cell) => std::ptr::from_ref(*cell) as usize,
             Self::Location(cell) => std::ptr::from_ref(*cell) as usize,
+            Self::Regularity(cell) => std::ptr::from_ref(*cell) as usize,
             Self::Geometry(owner) => owner.key(),
         }
     }
@@ -66,6 +71,7 @@ impl<'a> Cell<'a> {
             Self::Spatial(cell) => cell.try_read().map(Lease::Spatial),
             Self::Range(cell) => cell.try_read().map(Lease::Range),
             Self::Location(cell) => cell.try_read().map(Lease::Location),
+            Self::Regularity(cell) => cell.try_read().map(Lease::Regularity),
             Self::Geometry(cell) => {
                 return geometry_lease(cell).map_err(|error| error.at_owner(owner));
             }
@@ -84,6 +90,7 @@ fn geometry_lease(owner: &Owner) -> Result<Lease<'_>, Incomplete> {
         Owner::Spline(h) => live(h)?.try_input_lease().map(Lease::Spline),
         Owner::Plane(h) => live(h)?.try_input_lease().map(Lease::Plane),
         Owner::Extrusion(h) => live(h)?.try_input_lease().map(Lease::Extrusion),
+        Owner::SplineSurface(h) => live(h)?.try_input_lease().map(Lease::SplineSurface),
         _ => return Err(Incomplete::Changed { owner: 0 }),
     };
     result.map_err(|cause| Incomplete::Read {
@@ -99,6 +106,10 @@ pub(super) fn owner_cells(owner: &Owner) -> Result<Vec<Cell<'_>>, Incomplete> {
         Owner::Spatial(h) => spatial_cells(live(h)?),
         Owner::Parametric(h) => Ok(parametric_cells(live(h)?)),
         Owner::Seam(h) => seam_cells(live(h)?),
+        Owner::Regularity(h) => Ok(vec![
+            Cell::Regularity(&live(h)?.fields),
+            Cell::Location(&live(h)?.representation.location),
+        ]),
         _ => Ok(vec![Cell::Geometry(owner)]),
     }
 }
@@ -194,12 +205,21 @@ pub(super) fn lease_order(lease: &Lease<'_>) -> u8 {
         Lease::Spatial(_) => 6,
         Lease::Range(_) => 7,
         Lease::Location(_) => 8,
+        _ => geometry_order(lease),
+    }
+}
+
+fn geometry_order(lease: &Lease<'_>) -> u8 {
+    match lease {
         Lease::Line(_) => 9,
         Lease::PlanarLine(_) => 10,
         Lease::PlanarSpline(_) => 11,
         Lease::Spline(_) => 12,
         Lease::Plane(_) => 13,
         Lease::Extrusion(_) => 14,
+        Lease::SplineSurface(_) => 15,
+        Lease::Regularity(_) => 16,
+        _ => unreachable!("topology and representation leases classified first"),
     }
 }
 

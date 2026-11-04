@@ -15,11 +15,11 @@ use std::io;
 
 /// The private fields of `BRep_CurveOn2Surfaces`.
 #[derive(Clone)]
-struct TwoSurfacesFields {
-    surface: Handle<dyn GeomSurface>,
-    surface2: Handle<dyn GeomSurface>,
-    location2: Location,
-    continuity: Continuity,
+pub(crate) struct TwoSurfacesFields {
+    pub(crate) surface: Handle<dyn GeomSurface>,
+    pub(crate) surface2: Handle<dyn GeomSurface>,
+    pub(crate) location2: Location,
+    pub(crate) continuity: Continuity,
 }
 
 /// `BRep_CurveOn2Surfaces`: the regularity of an edge between two located surfaces.
@@ -35,8 +35,8 @@ struct TwoSurfacesFields {
 /// ```
 pub struct BRepCurveOn2Surfaces {
     transient: StandardTransient,
-    representation: CurveRepresentationBase,
-    fields: SharedState<TwoSurfacesFields>,
+    pub(crate) representation: CurveRepresentationBase,
+    pub(crate) fields: SharedState<TwoSurfacesFields>,
 }
 impl_transient!(BRepCurveOn2Surfaces, "BRep_CurveOn2Surfaces", dyn BRepCurveRepresentation,
     transient, interfaces: [dyn BRepCurveRepresentation]);

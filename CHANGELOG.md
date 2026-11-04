@@ -8,7 +8,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added explicitly selected relative-frame carrier direction candidates with exact world-vector verification for finite extrusion face checks ([#213]).
+- Added bounded owned rational surface query embedding certificates, coherent tensor-surface input leases and an explicit expanded input-capture policy (#213).
+
+- Added explicitly selected relative-frame carrier direction candidates with exact world-vector verification for finite extrusion face checks (#213).
 
 - Added an owned finite closed-extrusion face certificate joining exact support injectivity, trim and seam incidences, and unchanged spatial error budgets (#213).
 
