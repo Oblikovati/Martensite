@@ -12,7 +12,7 @@ use super::types::{
 use super::{
     budget::ProofBudget,
     input::ClosedQuadraticExtrusionInput as Input,
-    input_view::QuadraticSplineProofView as View,
+    input_view::{ExtrusionEndpointDomain as Domain, QuadraticSplineProofView as View},
     report::{ClosedExtrusionReport, ExclusionWitness},
     self_span,
 };
@@ -32,13 +32,14 @@ pub(super) fn execute(
         witnesses: proof.witnesses,
     }
 }
-struct TraversalEvidence {
+#[derive(Clone, Debug)]
+pub(in crate::predicates::roots) struct TraversalEvidence {
     completion: Completion,
     work: super::types::ClosedExtrusionWork,
     spans: Vec<ProjectedQuadraticSpan>,
     witnesses: Vec<ExclusionWitness>,
 }
-fn traverse(
+pub(in crate::predicates::roots) fn traverse(
     input: &View<'_>,
     policy: ClosedExtrusionPolicy,
     cancelled: &mut dyn FnMut() -> bool,
@@ -56,6 +57,23 @@ fn traverse(
     }
 }
 
+impl TraversalEvidence {
+    pub(in crate::predicates::roots) fn completion(&self) -> &Completion {
+        &self.completion
+    }
+    pub(in crate::predicates::roots) fn work(&self) -> super::types::ClosedExtrusionWork {
+        self.work
+    }
+    pub(in crate::predicates::roots) fn complete(&self) -> bool {
+        super::report::complete_coverage(
+            &self.completion,
+            self.work,
+            self.spans.len(),
+            self.witnesses.len(),
+        )
+    }
+}
+
 fn run(
     input: &View<'_>,
     budget: &mut ProofBudget<'_>,
@@ -66,7 +84,7 @@ fn run(
     budget.work.stage = ClosedExtrusionStage::Spans;
     *spans = prepare_spans(input, budget).map_err(Completion::Incomplete)?;
     self_obligations(spans, budget, witnesses)?;
-    all_pairs(spans, budget, witnesses).map_err(Completion::Incomplete)?;
+    all_pairs(spans, budget, witnesses, input.domain).map_err(Completion::Incomplete)?;
     budget.work.stage = ClosedExtrusionStage::Publication;
     budget.checkpoint().map_err(Completion::Incomplete)
 }
@@ -170,8 +188,8 @@ fn domain_coverage(
     for (index, span) in spans.iter().enumerate() {
         budget.checkpoint()?;
         let expected = [input.knots[index], input.knots[index + 1]];
-        let next = &spans[(index + 1) % spans.len()];
-        if span.range != expected || span.controls[2] != next.controls[0] {
+        let next = following_span(input.domain, spans, index);
+        if span.range != expected || next.is_some_and(|next| span.controls[2] != next.controls[0]) {
             return Err(Cause::SpanInvariant {
                 kind: "full domain and exact shared endpoints",
                 actual: index,
@@ -179,6 +197,17 @@ fn domain_coverage(
         }
     }
     Ok(())
+}
+
+fn following_span(
+    domain: Domain,
+    spans: &[ProjectedQuadraticSpan],
+    index: usize,
+) -> Option<&ProjectedQuadraticSpan> {
+    if domain == Domain::ClosedQuotient || index + 1 < spans.len() {
+        return Some(&spans[(index + 1) % spans.len()]);
+    }
+    None
 }
 
 fn bridge_cause(cause: SpanBridgeFailure) -> Cause {
@@ -219,11 +248,12 @@ fn all_pairs(
     spans: &[ProjectedQuadraticSpan],
     budget: &mut ProofBudget<'_>,
     witnesses: &mut Vec<ExclusionWitness>,
+    domain: Domain,
 ) -> Result<(), Cause> {
     budget.work.stage = ClosedExtrusionStage::SpanPair;
     for second in 0..spans.len() {
         for first in 0..second {
-            witnesses.push(prove_pair(spans, first, second, budget)?);
+            witnesses.push(prove_pair(spans, first, second, budget, domain)?);
             budget.finish_obligation();
         }
     }
@@ -235,9 +265,10 @@ fn prove_pair(
     first: usize,
     second: usize,
     budget: &mut ProofBudget<'_>,
+    domain: Domain,
 ) -> Result<ExclusionWitness, Cause> {
     budget.start_obligation()?;
-    let endpoint = allowed_endpoint(spans, first, second);
+    let endpoint = allowed_endpoint(spans, first, second, domain);
     let witness = pair_hulls(spans, first, second, endpoint.as_ref(), budget)?;
     if witness == HullSeparation::Unresolved {
         return Err(Cause::UnseparatedPair { first, second });
@@ -290,10 +321,11 @@ fn allowed_endpoint(
     spans: &[ProjectedQuadraticSpan],
     first: usize,
     second: usize,
+    domain: Domain,
 ) -> Option<[super::super::certificate_arithmetic::ExactRatio; 2]> {
     let (left, right) = if first + 1 == second {
         (&spans[first].controls[2], &spans[second].controls[0])
-    } else if first == 0 && second + 1 == spans.len() {
+    } else if domain == Domain::ClosedQuotient && first == 0 && second + 1 == spans.len() {
         (&spans[first].controls[0], &spans[second].controls[2])
     } else {
         return None;

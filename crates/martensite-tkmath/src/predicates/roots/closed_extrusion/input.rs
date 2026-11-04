@@ -69,6 +69,7 @@ impl ClosedQuadraticExtrusionInput {
             multiplicities: &self.multiplicities,
             direction: self.direction,
             interval: self.interval,
+            domain: super::input_view::ExtrusionEndpointDomain::ClosedQuotient,
         }
     }
 }

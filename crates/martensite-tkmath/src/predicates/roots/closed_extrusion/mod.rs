@@ -2,12 +2,12 @@
 //! The certificate is on a declared endpoint seam quotient, not on trims or mutable handles.
 mod budget;
 mod input;
-mod input_view;
-mod operation;
+pub(super) mod input_view;
+pub(super) mod operation;
 mod report;
 mod self_span;
 mod types;
-mod validation;
+pub(super) mod validation;
 pub use input::ClosedQuadraticExtrusionInput;
 pub use report::{ClosedExtrusionCertificate, ClosedExtrusionReport};
 pub use types::{

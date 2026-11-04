@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added owned open quadratic-extrusion support proofs with explicit endpoint domains and finite incomplete outcomes (#213).
+
 - Added bounded owned rational surface query embedding certificates, coherent tensor-surface input leases and an explicit expanded input-capture policy (#213).
 
 - Added explicitly selected relative-frame carrier direction candidates with exact world-vector verification for finite extrusion face checks (#213).

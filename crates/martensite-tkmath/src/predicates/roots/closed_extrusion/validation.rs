@@ -14,7 +14,7 @@ pub(super) fn input(input: &Input) -> Result<(), Error> {
     Ok(())
 }
 
-pub(super) fn source(input: &View<'_>) -> Result<(), Error> {
+pub(in crate::predicates::roots) fn source(input: &View<'_>) -> Result<(), Error> {
     storage(input)?;
     numeric(input)?;
     for (index, pair) in input.knots.windows(2).enumerate() {

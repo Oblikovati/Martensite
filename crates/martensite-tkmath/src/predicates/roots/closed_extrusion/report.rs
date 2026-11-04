@@ -45,16 +45,29 @@ impl ClosedExtrusionReport {
     }
     /// Borrow an actual completed absence proof; `report.certificate().is_some()`.
     pub fn certificate(&self) -> Option<ClosedExtrusionCertificate<'_>> {
-        if self.completion != ClosedExtrusionCompletion::Certified
-            || self.spans.len() != self.work.spans
-            || self.witnesses.len() != self.work.scheduled_obligations
-            || self.work.finished_obligations != self.work.scheduled_obligations
-        {
+        if !complete_coverage(
+            &self.completion,
+            self.work,
+            self.spans.len(),
+            self.witnesses.len(),
+        ) {
             return None;
         }
         Some(ClosedExtrusionCertificate { report: self })
     }
 }
+pub(in crate::predicates::roots) fn complete_coverage(
+    completion: &ClosedExtrusionCompletion,
+    work: ClosedExtrusionWork,
+    spans: usize,
+    witnesses: usize,
+) -> bool {
+    *completion == ClosedExtrusionCompletion::Certified
+        && spans == work.spans
+        && witnesses == work.scheduled_obligations
+        && work.finished_obligations == work.scheduled_obligations
+}
+
 #[derive(Clone, Copy)]
 /// A proved support on the endpoint-seam quotient; trims and mutable entities remain separate.
 pub struct ClosedExtrusionCertificate<'a> {
