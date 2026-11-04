@@ -30,12 +30,16 @@ impl VertexPlacement {
 pub enum VertexNeighborhoodCurve {
     /// Stored affine line, without rounded endpoint construction.
     Line {
+        /// Stored line origin.
         origin: [f64; 3],
+        /// Stored line parameter direction.
         direction: [f64; 3],
     },
     /// Nonrational continuous degree-two spline; coefficients are derived exactly.
     Quadratic {
+        /// Original unrounded control points.
         poles: Vec<[f64; 3]>,
+        /// Original expanded knot sequence.
         flat_knots: Vec<f64>,
     },
 }
@@ -43,8 +47,11 @@ pub enum VertexNeighborhoodCurve {
 /// Example: `VertexNeighborhoodEnds::Both` describes one closed curve seam vertex.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum VertexNeighborhoodEnds {
+    /// Only the first declared parameter end belongs to this vertex.
     First,
+    /// Only the last declared parameter end belongs to this vertex.
     Last,
+    /// Both declared ends belong to the same given vertex.
     Both,
 }
 /// Immutable-by-publication operation input; no geometry handle is retained.
@@ -72,7 +79,9 @@ pub struct GivenVertexNeighborhoodInput {
 /// Example: `VertexNeighborhoodPolicy::v1(100_000)` sets an explicit work cap.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct VertexNeighborhoodPolicy {
+    /// Behavior version; this operation accepts one.
     pub version: u32,
+    /// Total source coefficient, span and isolation subdivision units.
     pub max_work: u32,
 }
 impl VertexNeighborhoodPolicy {
@@ -103,11 +112,19 @@ pub enum VertexNeighborhoodFailure {
     /// Unsupported behavior policy.
     Version(u32),
     /// Invalid finite input, retaining the original field and value.
-    Input { field: &'static str, value: f64 },
+    Input {
+        /// Rejected input role.
+        field: &'static str,
+        /// Original offending value.
+        value: f64,
+    },
     /// Invalid spline structure or knot domain.
     Spline(SketchIncidenceCause),
     /// One span lies entirely on the sphere boundary.
-    BoundaryOverlap { span: usize },
+    BoundaryOverlap {
+        /// Original source span index.
+        span: usize,
+    },
     /// Input did not produce precisely the declared proper endpoint components.
     Components {
         /// Complete boundary roots, including contacts preventing a proper component.
@@ -118,12 +135,15 @@ pub enum VertexNeighborhoodFailure {
     /// Caller cancellation.
     Cancelled,
     /// Shared finite work exhausted.
-    WorkLimit { limit: u32 },
+    WorkLimit {
+        /// Unchanged requested work limit.
+        limit: u32,
+    },
     /// Original exact isolation failure.
     Roots(RootIsolationError),
 }
 /// Complete owned evidence; this certifies endpoint neighborhoods, not a valid face.
-/// Example: `report.crossings()` retains all sphere boundary contacts.
+/// Example: `report.certificate()` distinguishes completed evidence from a refusal.
 #[derive(Clone, Debug, PartialEq)]
 pub struct GivenVertexNeighborhoodReport {
     pub(super) input: GivenVertexNeighborhoodInput,

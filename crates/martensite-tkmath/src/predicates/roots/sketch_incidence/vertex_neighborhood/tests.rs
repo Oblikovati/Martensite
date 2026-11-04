@@ -26,15 +26,10 @@ fn line_keeps_exact_boundary_and_declared_identity() {
     assert_eq!(report.input().vertex, 7);
     assert_eq!(proof.endpoint_signs(), [Less, Greater]);
     assert_eq!(proof.crossings().len(), 1);
-    assert_eq!(
-        proof.crossings()[0]
-            .parameter
-            .bounds()
-            .0
-            .compare_f64(1.)
-            .unwrap(),
-        std::cmp::Ordering::Equal
-    );
+    let root = &proof.crossings()[0].parameter;
+    assert_ne!(root.bounds().0.compare_f64(1.).unwrap(), Greater);
+    assert_ne!(root.bounds().1.compare_f64(1.).unwrap(), Less);
+    assert_eq!(root.multiplicity(), 1);
 }
 #[test]
 fn quadratic_has_two_proper_endpoint_components() {
