@@ -3,7 +3,9 @@ mod cells;
 mod copy;
 mod numeric;
 mod operation;
-pub use operation::{capture_closed_extrusion_face, capture_face_input};
+pub use operation::{
+    capture_closed_extrusion_face, capture_face_input, capture_face_input_with_behavior,
+};
 mod inventory;
 mod owners;
 mod types;
