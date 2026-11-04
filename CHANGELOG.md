@@ -8,7 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added owned proper given-vertex neighborhood certificates with exact sphere-boundary witnesses and explicit finite work limits (#213).
+- Added owned proper given-vertex neighborhood and analytic curve/line incidence certificates with exact algebraic witnesses and combined finite work limits (#213).
 
 - Added owned open quadratic-extrusion support proofs with explicit endpoint domains and finite incomplete outcomes (#213).
 

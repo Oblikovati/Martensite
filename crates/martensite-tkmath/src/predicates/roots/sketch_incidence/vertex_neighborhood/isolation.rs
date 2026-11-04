@@ -115,7 +115,7 @@ fn bound(value: f64) -> Result<DyadicBound, Failure> {
     })
 }
 
-fn solve(
+pub(super) fn solve(
     polynomial: &crate::predicates::roots::polynomial::IntegerPolynomial,
     bounds: &[DyadicBound; 2],
     work: &mut Work<'_>,

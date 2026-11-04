@@ -3,6 +3,14 @@
 //! This operation preserves declared identity and trims. It does not infer adjacency
 //! from proximity, repair geometry, or certify a face or an exact embedded wire.
 mod capture;
+mod contact_equations;
+mod contact_signs;
+#[cfg(test)]
+mod contact_tests;
+mod contact_types;
+mod contacts;
+pub use contact_types::*;
+pub use contacts::certify_given_vertex_contacts;
 mod isolation;
 #[cfg(test)]
 mod tests;

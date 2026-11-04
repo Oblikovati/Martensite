@@ -20,6 +20,14 @@ containment, extra components, tangencies, missing work and cancellation do not
 produce a certificate. Root brackets remain algebraic evidence, including roots
 closer to a trim endpoint than one floating-point parameter spacing.
 
+The paired contact operation retains both owned neighborhood reports. It derives
+two exact projected curve/line equations, isolates their common roots, checks the
+actual finite line parameter bounds and determines each contact's sphere sign at
+the algebraic root. Collinear spans remain incomplete. Every admitted contact
+must be strictly inside the given proper components. Completed absence of actual
+contacts is recorded separately from exact coincidence. The combined work budget
+includes both prior neighborhood operations; classification cannot reset it.
+
 The face wrapper must additionally retain complete actual contact witnesses and
 prove each contact belongs to the declared proper component. It must check
 disjoint neighborhoods of distinct located vertices, ideal and carrier
