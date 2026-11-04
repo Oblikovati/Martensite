@@ -85,7 +85,7 @@ fn numeric_failures_remain_invalid_instead_of_unsupported() {
         Err(StoredOpenExtrusionFailure::Numeric(_))
     ));
     let mut input = source();
-    input.weights[1] = 2.;
+    input.weights[1] = 0.;
     assert!(matches!(
         admit(input),
         Err(StoredOpenExtrusionFailure::Numeric(_))
@@ -114,4 +114,23 @@ fn admitted_numeric_input_executes_the_open_support_operation() {
     );
     assert!(report.certificate().is_some());
     assert_eq!(report.input().poles(), admitted.source().poles());
+}
+
+#[test]
+fn positive_varying_weights_are_not_claimed_certified() {
+    use martensite_tkmath::predicates::roots::open_extrusion::*;
+    let mut input = source();
+    input.rational = true;
+    input.weights[1] = 2.;
+    let admitted = admit(input).unwrap();
+    let report = certify_open_quadratic_extrusion(
+        admitted.numeric().clone(),
+        OpenExtrusionPolicy::bounded(),
+        || false,
+    );
+    assert!(matches!(
+        report.completion(),
+        OpenExtrusionCompletion::Incomplete(_)
+    ));
+    assert!(report.certificate().is_none());
 }
