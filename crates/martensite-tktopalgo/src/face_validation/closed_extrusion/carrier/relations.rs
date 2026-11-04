@@ -14,7 +14,7 @@ pub(super) fn certify<F: FnMut() -> bool>(
     }
     Ok(())
 }
-fn direction<F: FnMut() -> bool>(
+pub(super) fn direction<F: FnMut() -> bool>(
     carrier: &Carrier<'_>,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<()> {

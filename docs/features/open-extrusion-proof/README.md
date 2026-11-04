@@ -65,3 +65,7 @@ required check. Existing cache, capture, group and owned-face checks remain in
 the pipeline.
 
 The geometry adapter `StoredSplineInput::into_open_extrusion_input` retains the stored source alongside the numeric input. It refuses delegated evaluators and unsupported layouts, and checks the actual flat knots and evaluator domain before admission. Differing endpoints do not bypass these checks. Admission alone does not run the proof or validate a face.
+
+`capture_placed_open_support_inputs` binds inputs from an owned face snapshot using the existing exact rectangular trim and incidence checks. It selects the declared VFirst cap, computes a relative-frame direction candidate, and requires the exact original world-vector relation before returning inputs. The report retains the full original snapshot, finite work, carrier occurrence, and unmodified VFirst reference. A carrier map written with that reference differs from the numeric extrusion map only by a constant translation; stored poles are not shifted.
+
+This input binding does not run the two support proofs, validate geometric residuals, establish seam/cap/vertex relations, or certify a face. Those obligations remain separate. Versions one and two of the face policy do not implicitly select this explicit version-three placement binding.

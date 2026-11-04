@@ -1,6 +1,7 @@
 //! Complete independent represented-face certificates, never captured-pass promotion.
 mod diagnostics;
 mod fixture;
+mod open_inputs;
 mod piecewise;
 mod placed;
 mod replay;

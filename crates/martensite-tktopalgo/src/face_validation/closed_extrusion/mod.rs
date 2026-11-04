@@ -6,7 +6,12 @@ mod carrier;
 mod decode;
 mod incidence;
 mod metrics;
+mod open_support_inputs;
 mod operation;
+pub use open_support_inputs::{
+    OpenSupportInputFailure, OpenSupportInputReport, OpenSupportInputRole, PlacedOpenSupportInputs,
+    capture_placed_open_support_inputs,
+};
 mod placements;
 mod report;
 mod support_proof;

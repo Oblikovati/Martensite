@@ -12,7 +12,7 @@ fn displaced_net() -> [[f64; 2]; 9] {
     points[1][0] += 1. / 1_073_741_824.;
     points
 }
-fn reflected_carrier() -> fixture::StripFixture {
+pub(super) fn reflected_carrier() -> fixture::StripFixture {
     let points = displaced_net();
     let shape = fixture::strip_with_carrier(1e-7, points);
     let rotation = Transform3::mirror_axis(Axis1::new(Point3::default(), Direction3::X));
@@ -26,7 +26,7 @@ fn reflected_carrier() -> fixture::StripFixture {
     }
     shape
 }
-fn place_spatial_curve(edge: &martensite_tkbrep::topods::Edge, transform: Transform3) {
+pub(super) fn place_spatial_curve(edge: &martensite_tkbrep::topods::Edge, transform: Transform3) {
     let owner = edge.tshape().cast::<BRepTEdge>();
     for representation in owner.get().unwrap().curves() {
         if representation.is_curve3d() {
