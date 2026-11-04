@@ -143,3 +143,19 @@ fn largest_declared_incidence_budget_is_not_narrowed_by_a_cast() {
     assert_eq!(report.policy().max_incidence_work, u32::MAX);
     assert!(report.certificate().is_some(), "{:?}", report.completion());
 }
+
+#[test]
+fn open_support_cannot_substitute_missing_exact_seam_or_vertex_relations() {
+    let mut net = fixture::ROUND_NET;
+    net[8][0] += 1. / 1_099_511_627_776.;
+    let shape = fixture::strip_from_net(1e-7, 0., net);
+    let report = run(capture(&shape));
+    assert!(report.certificate().is_none());
+    assert!(matches!(
+        report.completion(),
+        ToleranceResolvedFaceCompletion::Face(ClosedFaceCompletion::Incomplete(
+            ClosedFaceIncomplete::BoundaryRelation { .. }
+        ))
+    ));
+    assert!(!report.coverage().represented_noninterference);
+}

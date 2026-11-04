@@ -2,7 +2,7 @@
 use super::super::{budget::*, support_proof};
 use super::types::*;
 use martensite_tkg3d::geom::StoredSplineInput;
-use martensite_tkmath::predicates::roots::{closed_extrusion::*, open_extrusion::*};
+use martensite_tkmath::predicates::roots::open_extrusion::*;
 pub(in crate::face_validation::closed_extrusion) fn prove<F: FnMut() -> bool>(
     source: &StoredSplineInput,
     direction: [f64; 3],

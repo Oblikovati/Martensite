@@ -82,7 +82,12 @@ pub enum ToleranceResolvedFaceCompletion {
     /// The distinct declared vertex neighborhoods are not strictly separated.
     Disjoint(Box<DisjointVertexNeighborhoodReport>),
     /// Actual ideal or carrier support proof remains unfinished.
-    Support { owner: usize, role: &'static str },
+    Support {
+        /// Actual source owner in the retained snapshot.
+        owner: usize,
+        /// Ideal support or actual carrier; its full proof report is retained.
+        role: &'static str,
+    },
     /// The one incidence work allowance was exhausted.
     Work {
         /// Unchanged requested allowance.
