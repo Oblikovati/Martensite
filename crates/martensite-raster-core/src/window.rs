@@ -28,7 +28,7 @@ pub trait RasterWindow {
     /// the palette index for the following drawing.
     fn set_color(&mut self, color: i32);
     /// the raster operation (3 = copy, 6 = xor).
-    fn set_mode(&mut self, mode: i32);
+    fn set_raster_op(&mut self, mode: i32);
     /// Draw text at pixel coordinates; `window.draw_string(2, 3, "x")`.
     fn draw_string(&mut self, x: i32, y: i32, text: &str);
     /// Draw signed pixel segments; `window.draw_segments(&segments)`.

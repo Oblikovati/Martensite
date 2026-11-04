@@ -37,7 +37,7 @@ pub trait DisplaySurface {
     /// `RasterWindow::SetColor`.
     fn set_color(&mut self, color: PaletteKind);
     /// `RasterWindow::SetMode` (3 = copy, 6 = xor).
-    fn set_mode(&mut self, mode: i32);
+    fn set_raster_op(&mut self, mode: i32);
     /// `RasterWindow::DrawSegments`.
     fn draw_segments(&mut self, segments: &[PixelSegment]);
     /// `RasterWindow::DrawString`.

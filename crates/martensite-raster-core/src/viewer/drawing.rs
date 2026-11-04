@@ -29,7 +29,7 @@ fn display_on<'a>(
     state.current_color = PaletteKind::Rouge;
     let mut display = RasterDisplay::new(view, state);
     display.set_color(PaletteColor::new(PaletteKind::Blanc));
-    display.set_mode(MODE_COPY);
+    display.set_raster_op(MODE_COPY);
     display
 }
 

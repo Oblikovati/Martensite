@@ -58,7 +58,7 @@ impl DisplaySurface for RecordingSurface {
     fn set_color(&mut self, color: PaletteKind) {
         self.calls.push(format!("color {}", color.index()));
     }
-    fn set_mode(&mut self, mode: i32) {
+    fn set_raster_op(&mut self, mode: i32) {
         self.calls.push(format!("mode {mode}"));
     }
     fn draw_segments(&mut self, segments: &[PixelSegment]) {
@@ -101,7 +101,7 @@ fn a_color_change_flushes_then_switches() {
     display.draw(Point2::new(0.0, 0.0), Point2::new(1.0, 1.0));
     display.set_color(PaletteColor::new(PaletteKind::Rouge));
     display.set_color(PaletteColor::new(PaletteKind::Rouge));
-    display.set_mode(6);
+    display.set_raster_op(6);
     assert_eq!(
         surface.calls,
         vec!["segments 1", "color 1", "segments 0", "mode 6"]

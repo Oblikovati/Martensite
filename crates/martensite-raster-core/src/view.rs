@@ -227,8 +227,8 @@ impl DisplaySurface for RasterView {
         self.window.set_color(color.index() as i32);
     }
 
-    fn set_mode(&mut self, mode: i32) {
-        self.window.set_mode(mode);
+    fn set_raster_op(&mut self, mode: i32) {
+        self.window.set_raster_op(mode);
     }
 
     fn draw_segments(&mut self, segments: &[PixelSegment]) {

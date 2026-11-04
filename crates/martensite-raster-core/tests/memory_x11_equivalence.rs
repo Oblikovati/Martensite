@@ -70,7 +70,7 @@ fn draw_scene(
     for _ in 0..400 {
         match random.below(20) {
             0 => window.set_color(random.below(16) - 1),
-            1 => window.set_mode(if options.xor && random.below(2) == 0 {
+            1 => window.set_raster_op(if options.xor && random.below(2) == 0 {
                 6
             } else {
                 3

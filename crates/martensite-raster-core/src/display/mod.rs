@@ -89,13 +89,13 @@ impl<'a> RasterDisplay<'a> {
     }
 
     /// `SetMode`: the drawing mode of the window (3 = copy, 6 = xor).
-    pub fn set_mode(&mut self, mode: i32) {
+    pub fn set_raster_op(&mut self, mode: i32) {
         let Some(target) = self.target.as_mut() else {
             return;
         };
         if target.state.mode == DrawingMode::Draw {
             target.state.flush_segments(target.surface);
-            target.surface.set_mode(mode);
+            target.surface.set_raster_op(mode);
         }
     }
 

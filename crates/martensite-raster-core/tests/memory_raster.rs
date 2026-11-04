@@ -62,13 +62,13 @@ fn xor_mode_and_clearing_follow_the_raster_operation() {
         .unwrap();
     window.set_color(1);
     window.draw_segments(&[PixelSegment::new(0, 0, 0, 7)]);
-    window.set_mode(6);
+    window.set_raster_op(6);
     window.set_color(3);
     window.draw_segments(&[PixelSegment::new(0, 0, 0, 0)]);
     assert_eq!(window.pixel(0, 0), Some(0xff_00ff));
     window.clear();
     assert_eq!(window.pixel(0, 3), Some(0xff_0000));
-    window.set_mode(3);
+    window.set_raster_op(3);
     window.clear();
     assert_eq!(window.rgb_bytes(), vec![0; 8 * 8 * 3]);
 }
@@ -113,7 +113,7 @@ fn a_rejected_resize_fails_the_next_capture_until_a_valid_one() {
     assert_eq!((window.width(), window.height()), (8, 8));
     assert_eq!(captured_bytes(&window, "rejected"), None);
     window.set_color(2);
-    window.set_mode(6);
+    window.set_raster_op(6);
     window.draw_segments(&[PixelSegment::new(0, 0, 3, 0)]);
     window.set_dimension(4, 3);
     assert_eq!(window.rgb_bytes(), vec![0; 4 * 3 * 3]);

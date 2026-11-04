@@ -32,7 +32,7 @@ prepare_layer() {
     local library="$extracted/usr/lib/x86_64-linux-gnu/libVkLayer_khronos_validation.so"
     if [[ ! -f $manifest || ! -f $library ]]; then
         mkdir -p "$directory"
-        [[ -f $archive ]] || curl --fail --location --silent --show-error --output "$archive" "$URL"
+        [[ -f $archive ]] || curl --proto "=https" --proto-redir "=https" --fail --location --silent --show-error --output "$archive" "$URL"
         require_digest "$archive" "$ARCHIVE_SHA256"
         dpkg-deb -x "$archive" "$extracted"
     fi

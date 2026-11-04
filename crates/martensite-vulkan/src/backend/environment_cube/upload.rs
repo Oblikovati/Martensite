@@ -9,6 +9,7 @@ use super::EnvironmentImage;
 use crate::environment_frame::CubeMapPixels;
 use crate::{RenderError, error::rejected};
 use ash::vk;
+use std::mem::ManuallyDrop;
 use std::sync::Arc;
 
 /// Fill `image` from `pixels` and leave every level shader-readable.
@@ -51,8 +52,7 @@ pub(in super::super) fn finish_owned<T>(
     let outcome = submission.finish();
     if submission.retirement_incomplete() {
         // The device may still read or write these resources: never free them.
-        std::mem::forget(owned);
-        std::mem::forget(submission);
+        let _never_freed = (ManuallyDrop::new(owned), ManuallyDrop::new(submission));
         return Err(outcome.err().unwrap_or_else(|| {
             rejected("incomplete retirement", "a retired environment submission")
         }));

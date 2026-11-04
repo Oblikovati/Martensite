@@ -119,7 +119,7 @@ impl RasterWindow for MemoryWindow {
             self.canvas.set_foreground(*pixel);
         }
     }
-    fn set_mode(&mut self, mode: i32) {
+    fn set_raster_op(&mut self, mode: i32) {
         self.canvas.set_operation(mode);
     }
     fn draw_string(&mut self, x: i32, y: i32, text: &str) {

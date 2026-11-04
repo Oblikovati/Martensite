@@ -59,7 +59,7 @@ impl RasterWindow for VirtualWindow {
             self.canvas.set_pixel(*pixel);
         }
     }
-    fn set_mode(&mut self, mode: i32) {
+    fn set_raster_op(&mut self, mode: i32) {
         self.canvas.set_mode(mode);
     }
     fn draw_string(&mut self, x: i32, y: i32, text: &str) {
