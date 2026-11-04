@@ -14,6 +14,7 @@ impl FunctionSetRoot {
             }
             self.run.slope = self.gradient.dot_unchecked(&self.direction);
             if self.run.slope.abs() <= 1e-32 {
+                self.observation.termination = super::RootSearchTermination::Stationary;
                 if self.run.objective > self.run.old_objective {
                     self.sol.initialized(&self.saved).unwrap();
                 }
@@ -21,6 +22,7 @@ impl FunctionSetRoot {
                 return false;
             }
             if self.run.descent >= 100 {
+                self.observation.inner.standard_descent_limits += 1;
                 self.run.stop = true;
             }
         }

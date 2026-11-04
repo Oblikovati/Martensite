@@ -52,7 +52,7 @@ mod route;
 mod sector;
 mod select;
 mod source_frame;
-mod spans;
+pub(super) mod spans;
 mod spline_admission;
 mod spline_corner;
 mod spline_pair;

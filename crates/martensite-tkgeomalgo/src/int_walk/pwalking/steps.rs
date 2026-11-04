@@ -199,7 +199,7 @@ impl IntWalkPWalking {
         if st.pf.square_distance(&pl) < SQ_DIST_MAX {
             st.inc_key += 1;
             return Some(if st.inc_key == 5000 {
-                Flow::Abort
+                Flow::RepeatedStartLimit
             } else {
                 Flow::Next
             });
@@ -214,6 +214,7 @@ impl IntWalkPWalking {
         self.add_a_point(&point)?;
         st.reject_index += 1;
         if st.reject_index >= REJECT_INDEX_MAX {
+            self.search_observation.point_count_limit += 1;
             st.arrive = true;
             return Ok(true);
         }

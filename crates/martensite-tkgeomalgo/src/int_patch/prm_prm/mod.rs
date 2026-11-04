@@ -41,6 +41,7 @@ const BASEM1: i32 = 127;
 /// assert_eq!(inter.grille_integer(1, 2, 3), 1 | (2 << 7) | (3 << 14));
 /// ```
 pub struct IntPatchPrmPrmIntersection {
+    self_search: super::SurfaceSelfSearchReceipt,
     done: bool,
     empt: bool,
     slin: Vec<Handle<dyn IntPatchLine>>,
@@ -66,10 +67,16 @@ impl IntPatchPrmPrmIntersection {
     /// The empty constructor: not done, empty. `IntPatchPrmPrmIntersection::new()`.
     pub fn new() -> Self {
         Self {
+            self_search: super::SurfaceSelfSearchReceipt::default(),
             done: false,
             empt: true,
             slin: Vec::new(),
         }
+    }
+
+    /// Read the last self-search's owned work; `inter.self_search_receipt()`.
+    pub fn self_search_receipt(&self) -> &super::SurfaceSelfSearchReceipt {
+        &self.self_search
     }
 
     /// `IsDone()`: whether the computation was successful. `inter.is_done()`.

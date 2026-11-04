@@ -1,0 +1,14 @@
+# sw: llvmpipe (LIBGL_ALWAYS_SOFTWARE=1)
+case=overlap prepass=off fnv=0d72779d97d2ba83 000000=2346 0000ff=1050 00ff00=400 ff0000=300
+case=overlap prepass=on fnv=0d72779d97d2ba83 000000=2346 0000ff=1050 00ff00=400 ff0000=300
+case=layers prepass=off fnv=e9782948fced34cb 000000=996 0000ff=900 00ff00=400 ffff00=1800
+case=layers prepass=on fnv=e9782948fced34cb 000000=996 0000ff=900 00ff00=400 ffff00=1800
+case=capping prepass=off fnv=c9b5cb7748297b5f 000000=3196 00ff00=900
+case=capping prepass=on fnv=4b404aa0a9cf4383 000000=4096
+# host: AMD radeonsi
+case=overlap prepass=off fnv=0d72779d97d2ba83 000000=2346 0000ff=1050 00ff00=400 ff0000=300
+case=overlap prepass=on fnv=0d72779d97d2ba83 000000=2346 0000ff=1050 00ff00=400 ff0000=300
+case=layers prepass=off fnv=e9782948fced34cb 000000=996 0000ff=900 00ff00=400 ffff00=1800
+case=layers prepass=on fnv=e9782948fced34cb 000000=996 0000ff=900 00ff00=400 ffff00=1800
+case=capping prepass=off fnv=c9b5cb7748297b5f 000000=3196 00ff00=900
+case=capping prepass=on fnv=4b404aa0a9cf4383 000000=4096

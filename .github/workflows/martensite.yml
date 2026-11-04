@@ -35,6 +35,12 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: '0'
+  # Panic locations survive without debug info, and hundreds of linked test
+  # binaries with it do not fit a runner disk.
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_PROFILE_TEST_DEBUG: '0'
+  CARGO_PROFILE_DEV_STRIP: debuginfo
+  CARGO_PROFILE_TEST_STRIP: debuginfo
   # Dispatch inputs reach the driver as data, never interpolated into a script.
   MARTENSITE_CI_MODE: ${{ inputs.mode }}
   MARTENSITE_CI_VERSION: ${{ inputs.version }}
@@ -79,6 +85,8 @@ jobs:
           fetch-depth: 0
           # Dataset-backed tests read their inputs from external/martensite-test-data.
           submodules: true
+      - if: runner.os == 'Linux'
+        uses: ./.github/actions/free-runner-disk
       - uses: ./.github/actions/setup-target
       - run: cargo xtask ci run --target ${{ matrix.target }} --checks-only
         env:
@@ -119,6 +127,8 @@ jobs:
           submodules: true
       - name: Install the toolchain pinned by rust-toolchain.toml
         run: rustup toolchain install
+      - if: matrix.package == 'martensite-vulkan'
+        uses: ./.github/actions/setup-renderer-tests
       - run: cargo xtask ci test --package "$TEST_PACKAGE" --target x86_64-unknown-linux-gnu
         env:
           TEST_PACKAGE: ${{ matrix.package }}
@@ -140,6 +150,8 @@ jobs:
           fetch-depth: 0
           submodules: true
       - uses: ./.github/actions/setup-target
+      - if: runner.os == 'Linux'
+        uses: ./.github/actions/setup-renderer-tests
       - run: cargo xtask ci test --shard "$TEST_SHARD" --target "$TEST_TARGET"
         shell: bash
         env:

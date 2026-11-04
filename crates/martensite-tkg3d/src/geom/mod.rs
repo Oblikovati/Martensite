@@ -48,7 +48,7 @@ mod transformation;
 pub use transformation::GeomTransformation;
 
 mod line;
-pub use line::GeomLine;
+pub use line::{GeomLine, LineInputLease};
 mod circle;
 pub use circle::GeomCircle;
 mod ellipse;
@@ -67,7 +67,7 @@ mod parametric;
 mod plane;
 pub(crate) mod quadric;
 pub mod revolution_utils;
-pub use plane::GeomPlane;
+pub use plane::{GeomPlane, PlaneInputLease};
 mod cylindrical_surface;
 pub use cylindrical_surface::GeomCylindricalSurface;
 mod conical_surface;
@@ -77,7 +77,11 @@ pub use spherical_surface::GeomSphericalSurface;
 mod toroidal_surface;
 pub use toroidal_surface::GeomToroidalSurface;
 mod surface_of_linear_extrusion;
-pub use surface_of_linear_extrusion::GeomSurfaceOfLinearExtrusion;
+pub use surface_of_linear_extrusion::self_exclusion::{
+    ClosedSplineExtrusionError, ClosedSplineExtrusionExclusion, ClosedSplineExtrusionInconclusive,
+    ClosedSplineExtrusionInput, ClosedSplineExtrusionLayout, ClosedSplineExtrusionSnapshot,
+};
+pub use surface_of_linear_extrusion::{ExtrusionInputLease, GeomSurfaceOfLinearExtrusion};
 mod surface_of_revolution;
 pub use surface_of_revolution::GeomSurfaceOfRevolution;
 
@@ -85,7 +89,7 @@ mod bezier_curve;
 pub use bezier_curve::GeomBezierCurve;
 mod bspline_curve;
 mod spline_kind;
-pub use bspline_curve::GeomBSplineCurve;
+pub use bspline_curve::{GeomBSplineCurve, SplineInputLease, StoredSplineInput};
 mod offset_curve;
 pub use offset_curve::GeomOffsetCurve;
 mod bezier_surface;
@@ -93,7 +97,11 @@ pub mod offset_surface_utils;
 pub use bezier_surface::GeomBezierSurface;
 
 mod bspline_surface;
-pub use bspline_surface::{GeomBSplineSurface, KnotVector, LocalKnots, ModifiedPoles};
+pub use bspline_surface::{
+    BilinearSplineCertificate, BilinearSplineError, BilinearSplineExclusion,
+    BilinearSplineInconclusive, BilinearSplineLayout, GeomBSplineSurface, KnotVector, LocalKnots,
+    ModifiedPoles, SplineSurfaceInputLease, StoredSplineSurfaceAxis, StoredSplineSurfaceInput,
+};
 
 mod osculating_surface;
 pub use osculating_surface::GeomOsculatingSurface;

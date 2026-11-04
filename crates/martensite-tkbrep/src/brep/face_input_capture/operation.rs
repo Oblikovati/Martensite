@@ -1,0 +1,87 @@
+//! No user code or numerical certificate executes during simultaneous read leases.
+use super::{cells::Lease, copy::CopyContext, inventory::Inventory, types::*};
+use crate::topods::Face;
+
+/// Copy finite admitted face input without validating geometry; `capture_face_input(&face, FaceCaptureLimits::bounded(), ||false)`.
+/// A successful capture supplies immutable input only; it does not validate face geometry.
+pub fn capture_face_input(
+    face: &Face,
+    limits: FaceCaptureLimits,
+    cancelled: impl FnMut() -> bool,
+) -> Result<FaceInputSnapshot, FaceCaptureIncomplete> {
+    capture_face_input_with_behavior(
+        face,
+        limits,
+        FaceCaptureBehavior::StoredRepresentationsV1,
+        cancelled,
+    )
+}
+
+/// Select a stored-input domain explicitly; `capture_face_input_with_behavior(&face, limits, FaceCaptureBehavior::StoredSurfaceQueriesV2, || false)`.
+pub fn capture_face_input_with_behavior(
+    face: &Face,
+    limits: FaceCaptureLimits,
+    behavior: FaceCaptureBehavior,
+    mut cancelled: impl FnMut() -> bool,
+) -> Result<FaceInputSnapshot, FaceCaptureIncomplete> {
+    if cancelled() {
+        return Err(FaceCaptureIncomplete::Cancelled);
+    }
+    let result = captured(face, limits, behavior);
+    if cancelled() {
+        return Err(FaceCaptureIncomplete::Cancelled);
+    }
+    result
+}
+
+/// Compatibility entry point for extrusion-backed callers;
+/// `capture_closed_extrusion_face(&face, limits, || false)`.
+pub fn capture_closed_extrusion_face(
+    face: &Face,
+    limits: FaceCaptureLimits,
+    cancelled: impl FnMut() -> bool,
+) -> Result<FaceInputSnapshot, FaceCaptureIncomplete> {
+    capture_face_input(face, limits, cancelled)
+}
+fn captured(
+    face: &Face,
+    limits: FaceCaptureLimits,
+    behavior: FaceCaptureBehavior,
+) -> Result<FaceInputSnapshot, FaceCaptureIncomplete> {
+    let inventory = Inventory::gather(face, limits, behavior)?;
+    let cells = inventory.cells(limits)?;
+    let leases = cells
+        .iter()
+        .map(|(owner, cell)| cell.acquire(*owner).map(|lease| (*owner, lease)))
+        .collect::<Result<Vec<_>, _>>()?;
+    inventory.revalidate(&leases, limits)?;
+    copy_snapshot(face, &inventory, &leases, limits)
+}
+fn copy_snapshot(
+    face: &Face,
+    inventory: &Inventory,
+    leases: &[(usize, Lease<'_>)],
+    limits: FaceCaptureLimits,
+) -> Result<FaceInputSnapshot, FaceCaptureIncomplete> {
+    let mut copier = CopyContext::new(inventory, limits.entries);
+    let root = copier.occurrence(face).map_err(|error| error.at_owner(0))?;
+    let mut ordered: Vec<_> = leases.iter().collect();
+    ordered.sort_by_key(|(owner, lease)| (*owner, super::cells::lease_order(lease)));
+    let cells = copied_cells(&mut copier, ordered)?;
+    Ok(FaceInputSnapshot { root, cells })
+}
+
+fn copied_cells(
+    copier: &mut CopyContext,
+    ordered: Vec<&(usize, Lease<'_>)>,
+) -> Result<Vec<(usize, CapturedFaceCell)>, FaceCaptureIncomplete> {
+    ordered
+        .into_iter()
+        .map(|(owner, lease)| {
+            copier
+                .cell(lease)
+                .map(|cell| (*owner, cell))
+                .map_err(|error| error.at_owner(*owner))
+        })
+        .collect()
+}

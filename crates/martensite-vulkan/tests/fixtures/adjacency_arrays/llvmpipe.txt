@@ -1,0 +1,6 @@
+lines-adjacency fnv=3a13dd43d016d735
+line-strip-adjacency fnv=027939ec42b34abc
+triangles-adjacency fnv=132e4059440c353a
+triangle-strip-adjacency fnv=6a33121e0bb58e89
+lines-adjacency-after-wide-segments fnv=8e83b2e8b2f5ed4b
+line-strip-adjacency-after-wide-segments fnv=cc2dba3e731e3460

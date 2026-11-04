@@ -10,6 +10,7 @@ mod pwalking;
 
 pub use iwalking::{IWalkingTypes, IntWalkIWalking, TheIWFunction, TheIWLine};
 pub use pwalking::IntWalkPWalking;
+pub(crate) use pwalking::WalkingSearchObservation;
 
 use crate::int_imp::{HSurfaceTool, IntImpInt2S, IntImpZerParFunc};
 

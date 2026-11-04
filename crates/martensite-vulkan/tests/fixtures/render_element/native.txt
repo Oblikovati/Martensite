@@ -1,0 +1,17 @@
+# the recorded render_element capture; identical on llvmpipe (LIBGL_ALWAYS_SOFTWARE=1) and AMD radeonsi
+== plain
+call line filter=1 highlight=0 culling=0 zbuffer=1 depth_write=1 skipped=0 interior=1.000,0.000,0.000,1.000
+call fill filter=1 highlight=0 culling=0 zbuffer=1 depth_write=1 skipped=0 interior=1.000,0.000,0.000,1.000
+== closed
+call closed filter=1 highlight=0 culling=1 zbuffer=1 depth_write=1 skipped=0 interior=1.000,0.000,0.000,1.000
+== clipped
+call clipped filter=1 highlight=0 culling=0 zbuffer=1 depth_write=1 skipped=0 interior=1.000,0.000,0.000,1.000
+== highlight
+call highlighted filter=1 highlight=1 culling=0 zbuffer=1 depth_write=1 skipped=0 interior=0.000,1.000,0.000,1.000
+== transparent
+call transparent_line filter=1 highlight=0 culling=0 zbuffer=1 depth_write=1 skipped=1 interior=0.000,0.000,1.000,1.000
+call transparent_fill filter=2 highlight=0 culling=0 zbuffer=1 depth_write=0 skipped=1 interior=0.000,0.000,1.000,1.000
+== builtin
+call after_builtin filter=1 highlight=0 culling=0 zbuffer=1 depth_write=1 skipped=1 interior=1.000,1.000,0.000,1.000
+== depth_write
+call no_depth_write filter=1 highlight=0 culling=0 zbuffer=1 depth_write=0 skipped=0 interior=1.000,0.000,0.000,1.000

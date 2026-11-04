@@ -6,7 +6,31 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-04
+
+### Added
+
+- Added `martensite-tkv3d` (selection, presentation, interactive objects and the 3D viewer) and `martensite-vulkan` (the Vulkan 1.3 renderer behind the graphic driver interfaces), with `martensite-raster-core`, `martensite-geometry-raster` and `martensite-topology-test-support` as development helpers for their regression tests; this adds the `ash` and `num-rational` dependencies (#365).
+
+- Added a checksum-pinned Vulkan validation layer and Mesa lavapipe driver to the Linux installer and CI for the renderer tests (#365).
+
+- Added bounded owned rational surface query embedding certificates, coherent tensor-surface input leases and an explicit expanded input-capture policy (#213).
+
+- Added explicitly selected relative-frame carrier direction candidates with exact world-vector verification for finite extrusion face checks (#213).
+
+- Added an owned finite closed-extrusion face certificate joining exact support injectivity, trim and seam incidences, and unchanged spatial error budgets (#213).
+
+- Added finite coherent face-input capture and nonblocking geometry leases, with owned topology, representation and geometry fields and explicit incomplete outcomes (#213).
+
+- Added an owned exact sufficient self-exclusion operation for closed quadratic spline extrusion supports, with complete span obligations and explicit incomplete outcomes (#213).
+
+- Added exact coordinate-projection self-exclusion certificates for owned bilinear patches and supported single-span spline snapshots (#213).
+
+- Added owned surface self-search work receipts, local numerical termination observations and cancellable search entry points, preserving unknown inner termination and sampled discovery scope (#213).
+
 ### Fixed
+
+- Retained source-owner and typed relation context for face-query failures and corrected owner labels in spatial-consistency diagnostics (#378).
 
 - Preserved quiet-NaN signs, payloads and direction priority in `next_after` across optimization levels (#370).
 

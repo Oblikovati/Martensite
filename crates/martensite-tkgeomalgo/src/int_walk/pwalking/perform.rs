@@ -47,7 +47,7 @@ pub(super) enum Flow {
     /// The native `break` out of the loop.
     Stop,
     /// The native `return` from Perform: the line stays not done.
-    Abort,
+    RepeatedStartLimit,
 }
 
 /// Reads `ParDep(1..4)` (Standard_OutOfRange when the array does not hold them).
@@ -67,6 +67,8 @@ impl IntWalkPWalking {
         &mut self,
         par_dep: &Array1<'_, f64>,
     ) -> Result<Option<IntSurfPntOn2S>, Failure> {
+        self.search_observation = Default::default();
+        self.my_intersection_on2s.search_counts = Default::default();
         self.sens_cheminement = 1;
         self.close = false;
         let mut param: Array1<'static, f64> = one_based(4)?;
@@ -86,6 +88,13 @@ impl IntWalkPWalking {
         let (lower, upper) = (self.lower, self.upper);
         self.perform_bounded(par_dep, lower, upper)
     }
+    pub(crate) fn perform_with_progress(
+        &mut self,
+        start: &Array1<'_, f64>,
+        progress: &martensite_tkernel::message::ProgressRange<'_>,
+    ) -> Result<(), Failure> {
+        self.perform_bounded_with_progress(start, self.lower, self.upper, progress)
+    }
     /// `Perform(ParDep, u1min, v1min, u2min, v2min, u1max, v1max, u2max, v2max)`: the
     /// steps are estimated from the parameter box `[min, max]` (u1 v1 u2 v2).
     /// `walk.perform_bounded(&start, [0.0; 4], [1.0; 4])?`.
@@ -95,20 +104,61 @@ impl IntWalkPWalking {
         min: [f64; 4],
         max: [f64; 4],
     ) -> Result<(), Failure> {
+        self.perform_bounded_with_progress(
+            par_dep,
+            min,
+            max,
+            &martensite_tkernel::message::ProgressRange::default(),
+        )
+    }
+    pub(crate) fn perform_bounded_with_progress(
+        &mut self,
+        par_dep: &Array1<'_, f64>,
+        min: [f64; 4],
+        max: [f64; 4],
+        progress: &martensite_tkernel::message::ProgressRange<'_>,
+    ) -> Result<(), Failure> {
+        self.search_observation = Default::default();
+        self.my_intersection_on2s.search_counts = Default::default();
         self.done = false;
-        let (caro1, caro2) = self.surfaces();
-        let first: [f64; 4] = [
-            tool::first_u_parameter(&caro1)?,
-            tool::first_v_parameter(&caro1)?,
-            tool::first_u_parameter(&caro2)?,
-            tool::first_v_parameter(&caro2)?,
+        self.require_search_active(progress)?;
+        self.perform_bounded_observed(par_dep, min, max, progress)
+    }
+    fn perform_bounded_observed(
+        &mut self,
+        par_dep: &Array1<'_, f64>,
+        min: [f64; 4],
+        max: [f64; 4],
+        progress: &martensite_tkernel::message::ProgressRange<'_>,
+    ) -> Result<(), Failure> {
+        let natural = self.natural_walking_bounds()?;
+        self.prepare_marching_steps(min, max)?;
+        self.line = Handle::new(IntSurfLineOn2S::new(None));
+        let Some(mut state) = self.first_point(par_dep, natural)? else {
+            return Ok(());
+        };
+        if self.march_to_termination(&mut state, progress)? {
+            self.done = true;
+        }
+        Ok(())
+    }
+    fn natural_walking_bounds(&mut self) -> Result<([f64; 4], [f64; 4]), Failure> {
+        let (first, second) = self.surfaces();
+        let lower = [
+            tool::first_u_parameter(&first)?,
+            tool::first_v_parameter(&first)?,
+            tool::first_u_parameter(&second)?,
+            tool::first_v_parameter(&second)?,
         ];
-        let last: [f64; 4] = [
-            tool::last_u_parameter(&caro1)?,
-            tool::last_v_parameter(&caro1)?,
-            tool::last_u_parameter(&caro2)?,
-            tool::last_v_parameter(&caro2)?,
+        let upper = [
+            tool::last_u_parameter(&first)?,
+            tool::last_v_parameter(&first)?,
+            tool::last_u_parameter(&second)?,
+            tool::last_v_parameter(&second)?,
         ];
+        Ok((lower, upper))
+    }
+    fn prepare_marching_steps(&mut self, min: [f64; 4], max: [f64; 4]) -> Result<(), Failure> {
         self.compute_pas_init([0, 1, 2, 3].map(|i| max[i] - min[i]))?;
         for i in 0..4 {
             if self.pasuv[i] > 10. {
@@ -116,19 +166,45 @@ impl IntWalkPWalking {
             }
             (self.pas_init[i], self.pas_sav[i]) = (self.pasuv[i], self.pasuv[i]);
         }
-        self.line = Handle::new(IntSurfLineOn2S::new(None));
-        let Some(mut st) = self.first_point(par_dep, (first, last))? else {
+        Ok(())
+    }
+    fn require_search_active(
+        &mut self,
+        progress: &martensite_tkernel::message::ProgressRange<'_>,
+    ) -> Result<(), Failure> {
+        if !progress.user_break() {
             return Ok(());
-        };
-        while !st.arrive {
-            match self.march_step(&mut st)? {
-                Flow::Next => {}
-                Flow::Stop => break,
-                Flow::Abort => return Ok(()),
+        }
+        self.search_observation.cancelled = true;
+        Err(Failure::with_message(
+            "SurfaceSelfSearchCancelled",
+            "surface marching progress.user_break=true; expected an uncancelled range",
+        ))
+    }
+    fn march_to_termination(
+        &mut self,
+        state: &mut MarchState,
+        progress: &martensite_tkernel::message::ProgressRange<'_>,
+    ) -> Result<bool, Failure> {
+        while !state.arrive {
+            self.require_search_active(progress)?;
+            self.search_observation.steps += 1;
+            let flow = self.march_step(state)?;
+            if let Some(completed) = self.observe_march_flow(flow) {
+                return Ok(completed);
             }
         }
-        self.done = true;
-        Ok(())
+        Ok(true)
+    }
+    fn observe_march_flow(&mut self, flow: Flow) -> Option<bool> {
+        match flow {
+            Flow::Next => None,
+            Flow::Stop => Some(true),
+            Flow::RepeatedStartLimit => {
+                self.search_observation.repeated_start_limit += 1;
+                Some(false)
+            }
+        }
     }
     /// The first solution point: the marching state, or None (the native returns)
     /// when there is no point, a tangent one, or tangent surfaces around it.
@@ -160,6 +236,7 @@ impl IntWalkPWalking {
             [u1, v1, u2, v2],
             self.my_tol_tang,
             self.pasuv,
+            &mut self.search_observation.inner_termination_unobserved,
         )? {
             return Ok(None);
         }
@@ -207,3 +284,7 @@ impl IntWalkPWalking {
         Ok(())
     }
 }
+
+#[cfg(test)]
+#[path = "self_search_controls.rs"]
+mod self_search_controls;

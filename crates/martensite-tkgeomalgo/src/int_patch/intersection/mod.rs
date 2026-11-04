@@ -30,6 +30,7 @@ use martensite_tkg3d::adaptor3d::h_surface_tool::Adaptor3dSurfaceHandle;
 /// ```
 #[derive(Default)]
 pub struct IntPatchIntersection {
+    self_search: super::SurfaceSelfSearchReceipt,
     done: bool,
     empt: bool,
     tgte: bool,
@@ -62,6 +63,11 @@ fn clamp_tolerance(tol: f64) -> f64 {
 }
 
 impl IntPatchIntersection {
+    /// Read the last self-search's owned work; `inter.self_search_receipt()`.
+    pub fn self_search_receipt(&self) -> &super::SurfaceSelfSearchReceipt {
+        &self.self_search
+    }
+
     /// The empty constructor: not done, empty, every tolerance 0.
     /// `IntPatchIntersection::new()`.
     pub fn new() -> Self {

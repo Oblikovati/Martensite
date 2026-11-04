@@ -43,3 +43,6 @@ pub mod toptrans;
 pub mod sketch_spline;
 
 mod sequence_failures;
+
+/// Coherent owned sufficient embeddings on declared rational surface query domains.
+pub mod surface_query;

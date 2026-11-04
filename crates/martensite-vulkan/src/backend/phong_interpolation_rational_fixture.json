@@ -1,0 +1,85 @@
+{
+  "operation_id": "matrix.rational_linear_system.solve",
+  "runtime_ms": 2,
+  "output": {
+    "matrix": {
+      "domain": "QQ",
+      "row_count": 3,
+      "column_count": 3,
+      "entries": [
+        [
+          {
+            "num": "-1",
+            "den": "1"
+          },
+          {
+            "num": "6",
+            "den": "1"
+          },
+          {
+            "num": "-4",
+            "den": "1"
+          }
+        ],
+        [
+          {
+            "num": "-1",
+            "den": "1"
+          },
+          {
+            "num": "-2",
+            "den": "1"
+          },
+          {
+            "num": "12",
+            "den": "1"
+          }
+        ],
+        [
+          {
+            "num": "1",
+            "den": "1"
+          },
+          {
+            "num": "1",
+            "den": "1"
+          },
+          {
+            "num": "1",
+            "den": "1"
+          }
+        ]
+      ]
+    },
+    "rhs": [
+      {
+        "num": "0",
+        "den": "1"
+      },
+      {
+        "num": "0",
+        "den": "1"
+      },
+      {
+        "num": "1",
+        "den": "1"
+      }
+    ],
+    "outcome": "UNIQUE",
+    "solution": [
+      {
+        "num": "8",
+        "den": "11"
+      },
+      {
+        "num": "2",
+        "den": "11"
+      },
+      {
+        "num": "1",
+        "den": "11"
+      }
+    ],
+    "convention": "LINEAR_SYSTEM_CLASSIFICATION_OVER_QQ"
+  }
+}

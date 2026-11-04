@@ -1,0 +1,2 @@
+hollow-opaque fnv=53b48733bb81940b
+hollow-transparent fnv=80f9502bc5ec5b3c

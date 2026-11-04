@@ -40,6 +40,7 @@ pub(super) fn is_tangent_ext_check(
     [u10, v10, u20, v20]: [f64; 4],
     toler: f64,
     arr_step: [f64; 4],
+    inner_unobserved: &mut bool,
 ) -> Result<bool, Failure> {
     let d1 = tool::d1(surf1, u10, v10)?;
     let d2 = tool::d1(surf2, u20, v20)?;
@@ -51,6 +52,7 @@ pub(super) fn is_tangent_ext_check(
     if dp * dp < 0.9998 * sq1 * sq2 {
         return Ok(false); // cos(N1, N2) < 0.9999
     }
+    *inner_unobserved = true;
     let sq_toler: f64 = 4.0 * toler * toler;
     let neighbours =
         |u: f64, v: f64, su: f64, sv: f64| [(u + su, v), (u - su, v), (u, v + sv), (u, v - sv)];

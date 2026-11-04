@@ -11,10 +11,10 @@ use std::io;
 
 /// The private fields of `BRep_TVertex`.
 #[derive(Clone)]
-struct TVertexFields {
-    point: Point3,
-    tolerance: f64,
-    points: Vec<Handle<dyn BRepPointRepresentation>>,
+pub(crate) struct TVertexFields {
+    pub(crate) point: Point3,
+    pub(crate) tolerance: f64,
+    pub(crate) points: Vec<Handle<dyn BRepPointRepresentation>>,
 }
 
 /// `BRep_TVertex`: a vertex with its 3D point, its tolerance (`RealEpsilon()` when
@@ -29,7 +29,7 @@ struct TVertexFields {
 /// ```
 pub struct BRepTVertex {
     parent: topods::TVertex,
-    fields: SharedState<TVertexFields>,
+    pub(crate) fields: SharedState<TVertexFields>,
 }
 impl_transient!(BRepTVertex, "BRep_TVertex", topods::TVertex, parent, interfaces: [dyn TShape]);
 

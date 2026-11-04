@@ -1,0 +1,15 @@
+SelectMgrAndFilter>SelectMgrCompositionFilter>SelectMgrFilter>Standard_Transient
+kind 1 1
+ownership 1 1 0
+duplicates 2 1 1 1 1 0
+SelectMgrOrFilter>SelectMgrCompositionFilter>SelectMgrFilter>Standard_Transient
+kind 1 1
+ownership 1 1 0
+duplicates 2 1 1 1 1 0
+SelectMgrAndOrFilter>SelectMgrCompositionFilter>SelectMgrFilter>Standard_Transient
+kind 1 1
+ownership 1 1 0
+duplicates 2 1 1 1 1 0
+evaluation 0 1
+evaluation 1 1
+evaluation 1 1

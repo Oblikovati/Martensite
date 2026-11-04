@@ -1,0 +1,4 @@
+or_to_and_stop accepted 0 mode 0 calls 1 refs 2
+and_to_or_stop accepted 1 mode 1 calls 1 refs 2
+or_to_and_continue accepted 0 mode 0 calls 1 2 refs 2 2
+and_to_or_continue accepted 1 mode 1 calls 1 2 refs 2 2

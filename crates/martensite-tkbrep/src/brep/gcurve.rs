@@ -21,8 +21,8 @@ use std::io;
 /// ```
 #[derive(Default)]
 pub struct GCurveBase {
-    representation: CurveRepresentationBase,
-    range: SharedState<(f64, f64)>,
+    pub(crate) representation: CurveRepresentationBase,
+    pub(crate) range: SharedState<(f64, f64)>,
 }
 
 impl GCurveBase {

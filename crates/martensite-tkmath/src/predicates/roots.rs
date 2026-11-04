@@ -18,6 +18,8 @@ mod polynomial_solve;
 pub mod signs;
 /// Certified sketch line incidences for trim and extension.
 pub mod sketch_incidence;
+/// Exact bounded embeddings of supplied rational tensor query charts.
+pub mod surface_query;
 pub use dyadic::DyadicBound;
 pub use error::RootIsolationError;
 
@@ -177,3 +179,6 @@ fn checked_interval(
         DyadicBound::from_f64(max_width).map_err(|_| RootIsolationError::Width(max_width))?;
     Ok(([convert(interval[0])?, convert(interval[1])?], width))
 }
+
+/// Exact closed quadratic spline extrusion support self-exclusion.
+pub mod closed_extrusion;

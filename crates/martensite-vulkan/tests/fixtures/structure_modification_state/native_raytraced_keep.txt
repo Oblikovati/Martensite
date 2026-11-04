@@ -1,0 +1,6 @@
+displayed 1 1
+frame1 1 1
+cleared 1 1
+frame2 0 1
+frame3 0 0
+frame4 0 0

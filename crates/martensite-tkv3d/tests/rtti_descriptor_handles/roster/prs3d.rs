@@ -1,0 +1,49 @@
+//! Explicit declaration owners; these entries create no class instances.
+use super::super::DescriptorQuery;
+
+pub(super) const QUERIES: &[DescriptorQuery] = &[
+    DescriptorQuery::of::<martensite_tkv3d::prs3d::Prs3dArrowAspect>(
+        "Prs3dArrowAspect",
+        "Prs3dBasicAspect",
+    ),
+    DescriptorQuery::of::<martensite_tkv3d::prs3d::Prs3dDatumAspect>(
+        "Prs3dDatumAspect",
+        "Prs3dBasicAspect",
+    ),
+    DescriptorQuery::of::<martensite_tkv3d::prs3d::Prs3dDimensionAspect>(
+        "Prs3dDimensionAspect",
+        "Prs3dBasicAspect",
+    ),
+    DescriptorQuery::of::<martensite_tkv3d::prs3d::Prs3dDrawer>(
+        "Prs3dDrawer",
+        "Graphic3d_PresentationAttributes",
+    ),
+    DescriptorQuery::of::<martensite_tkv3d::prs3d::Prs3dIsoAspect>(
+        "Prs3dIsoAspect",
+        "Prs3dLineAspect",
+    ),
+    DescriptorQuery::of::<martensite_tkv3d::prs3d::Prs3dLineAspect>(
+        "Prs3dLineAspect",
+        "Prs3dBasicAspect",
+    ),
+    DescriptorQuery::of::<martensite_tkv3d::prs3d::Prs3dPlaneAspect>(
+        "Prs3dPlaneAspect",
+        "Prs3dBasicAspect",
+    ),
+    DescriptorQuery::of::<martensite_tkv3d::prs3d::Prs3dPointAspect>(
+        "Prs3dPointAspect",
+        "Prs3dBasicAspect",
+    ),
+    DescriptorQuery::of::<martensite_tkv3d::prs3d::Prs3dPresentationShadow>(
+        "Prs3dPresentationShadow",
+        "Graphic3d_Structure",
+    ),
+    DescriptorQuery::of::<martensite_tkv3d::prs3d::Prs3dShadingAspect>(
+        "Prs3dShadingAspect",
+        "Prs3dBasicAspect",
+    ),
+    DescriptorQuery::of::<martensite_tkv3d::prs3d::Prs3dTextAspect>(
+        "Prs3dTextAspect",
+        "Prs3dBasicAspect",
+    ),
+];

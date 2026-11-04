@@ -24,8 +24,8 @@ use std::io;
 /// ```
 pub struct BRepCurve3D {
     transient: StandardTransient,
-    gcurve: GCurveBase,
-    curve: SharedState<Handle<dyn GeomCurve>>,
+    pub(crate) gcurve: GCurveBase,
+    pub(crate) curve: SharedState<Handle<dyn GeomCurve>>,
 }
 impl_transient!(BRepCurve3D, "BRep_Curve3D", dyn BRepGCurve, transient,
     interfaces: [dyn BRepCurveRepresentation, dyn BRepGCurve]);

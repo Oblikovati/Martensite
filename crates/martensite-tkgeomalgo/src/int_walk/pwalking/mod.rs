@@ -1,6 +1,8 @@
 //! `IntWalk_PWalking`: the intersection line of two parametric surfaces, marched from
 //! a start point in both directions until the natural bounds, a tangent point or the
 //! closure of the line.
+mod search_observation;
+pub(crate) use search_observation::WalkingSearchObservation;
 mod arret;
 mod boundary;
 mod construct;
@@ -25,6 +27,7 @@ use martensite_tkmath::gp::{Direction2, Direction3};
 /// `let mut walk = IntWalkPWalking::new(&s1, &s2, 1e-6, 1e-8, 0.01, 0.1)?;
 /// walk.perform(&start)?; let n = walk.nb_points()?;`
 pub struct IntWalkPWalking {
+    pub(crate) search_observation: WalkingSearchObservation,
     done: bool,
     line: Handle<IntSurfLineOn2S>,
     close: bool,
@@ -177,5 +180,11 @@ impl IntWalkPWalking {
             function.auxillar_surface1().clone(),
             function.auxillar_surface2().clone(),
         )
+    }
+}
+
+impl IntWalkPWalking {
+    pub(crate) fn numerical_search_counts(&self) -> crate::int_imp::NumericalSearchCounts {
+        self.my_intersection_on2s.search_counts
     }
 }

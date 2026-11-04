@@ -65,7 +65,11 @@ impl FunctionSetRoot {
                 || self.sol[index] < self.lower[index]
                 || self.sol[index] > self.upper[index];
         }
-        self.run.stop_on_divergent && self.divergent
+        let stopped = self.run.stop_on_divergent && self.divergent;
+        if stopped {
+            self.observation.termination = super::RootSearchTermination::Divergence;
+        }
+        stopped
     }
 }
 fn native_min(current: &mut f64, candidate: f64) {

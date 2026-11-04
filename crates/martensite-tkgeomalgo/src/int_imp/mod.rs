@@ -10,6 +10,8 @@
 pub(crate) mod captured;
 mod compute_tangence;
 mod int2s;
+pub(crate) mod search_counts;
+pub use search_counts::NumericalSearchCounts;
 mod int_cs;
 mod tools;
 mod zer_cs_par_func;

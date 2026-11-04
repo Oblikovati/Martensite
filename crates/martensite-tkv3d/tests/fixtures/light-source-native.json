@@ -1,0 +1,12 @@
+{
+  "project": "Martensite",
+  "reference_revision": "",
+  "execution": "local Linux reference build; not a workflow prerequisite",
+  "snapshots": 46,
+  "deterministic_runs": 2,
+  "sha256": {
+    "the recorded light_source capture": "01db9cd0042f02275eb37e4897188d6e93579a395ac0d139356dabd8a02890bb",
+    "crates/martensite-tkv3d/tests/fixtures/light-source-native.txt": "268122eadaa63b7e1c38b285097ced2b0d5df063925a6da02d9d21159db90d08",
+    "crates/martensite-tkv3d/tests/fixtures/light-source-properties-native.txt": "c7e24f2a534ea5052eb1dac3f6c3c1aa2cccee8b5b405d20dcc3d58634eed570"
+  }
+}

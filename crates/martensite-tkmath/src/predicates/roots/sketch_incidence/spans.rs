@@ -89,7 +89,11 @@ impl HomogeneousPoint {
     }
 }
 /// Bernstein coefficients on `[a, b]` at a common degree (elevated as needed).
-fn bernstein(polynomial: &RationalPolynomial, [a, b]: [f64; 2], degree: usize) -> Vec<ExactRatio> {
+pub(super) fn bernstein(
+    polynomial: &RationalPolynomial,
+    [a, b]: [f64; 2],
+    degree: usize,
+) -> Vec<ExactRatio> {
     let local = shift(polynomial, &ratio(a), &ratio(b).subtract(&ratio(a)));
     let binomial = |n: usize, k: usize| -> ExactRatio {
         let value = (0..k).fold(1u128, |total, index| {
@@ -218,3 +222,5 @@ fn ramp(start: &ExactRatio, end: &ExactRatio, falling: bool) -> RationalPolynomi
     }
     RationalPolynomial::linear(start.multiply(&slope).negated(), slope)
 }
+
+pub(in crate::predicates::roots) mod closed_bridge;

@@ -1,0 +1,12 @@
+fbo created colors=1
+texture created_color valid=1 size=64,48,1 target=3553 format=6408 sized=35907 samples=1 max_mip=0 mipmaps=0 alpha=0 top_down=1 point_sprite=0 revision=0 bytes=3072 pixel=1
+texture created_depth valid=1 size=64,48,1 target=3553 format=34041 sized=35056 samples=1 max_mip=0 mipmaps=0 alpha=0 top_down=1 point_sprite=0 revision=0 bytes=12288 pixel=4
+fbo smaller colors=1
+texture smaller_color valid=1 size=64,48,1 target=3553 format=6408 sized=35907 samples=1 max_mip=0 mipmaps=0 alpha=0 top_down=1 point_sprite=0 revision=0 bytes=3072 pixel=1
+texture smaller_depth valid=1 size=64,48,1 target=3553 format=34041 sized=35056 samples=1 max_mip=0 mipmaps=0 alpha=0 top_down=1 point_sprite=0 revision=0 bytes=12288 pixel=4
+fbo zero colors=1
+texture zero_color valid=1 size=2,2,1 target=3553 format=6408 sized=35907 samples=1 max_mip=0 mipmaps=0 alpha=0 top_down=1 point_sprite=0 revision=0 bytes=4 pixel=1
+texture zero_depth valid=1 size=2,2,1 target=3553 format=34041 sized=35056 samples=1 max_mip=0 mipmaps=0 alpha=0 top_down=1 point_sprite=0 revision=0 bytes=16 pixel=4
+fbo one colors=1
+texture one_color valid=1 size=1,1,1 target=3553 format=6408 sized=35907 samples=1 max_mip=0 mipmaps=0 alpha=0 top_down=1 point_sprite=0 revision=0 bytes=1 pixel=1
+texture one_depth valid=1 size=1,1,1 target=3553 format=34041 sized=35056 samples=1 max_mip=0 mipmaps=0 alpha=0 top_down=1 point_sprite=0 revision=0 bytes=4 pixel=4

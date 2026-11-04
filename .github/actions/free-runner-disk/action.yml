@@ -1,0 +1,18 @@
+name: Free runner disk
+description: Removes unused runner tools and places target/ on the largest disk, for Linux jobs that build the renderer test binaries.
+runs:
+  using: composite
+  steps:
+    - name: Make room for the renderer test binaries
+      shell: bash
+      run: |
+        sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+        # A bind mount keeps the target/ paths that later steps read.
+        root_free=$(df --output=avail / | tail -1)
+        scratch_free=$(df --output=avail /mnt 2>/dev/null | tail -1)
+        if [[ -n $scratch_free ]] && ((scratch_free > root_free)); then
+          sudo install -d -o "$USER" /mnt/martensite-target
+          mkdir -p target
+          sudo mount --bind /mnt/martensite-target target
+        fi
+        df -h .

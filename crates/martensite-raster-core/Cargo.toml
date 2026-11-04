@@ -1,0 +1,22 @@
+[package]
+name = "martensite-raster-core"
+version = "0.7.0"
+description = "Thread-confined raster windows and shared pixel primitives for Martensite regression tests."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+x11-integration-tests = ["martensite-tkservice/x11-integration-tests"]
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }

@@ -23,6 +23,9 @@ use martensite_tkmath::gp::{
 };
 use std::io;
 
+mod input_lease;
+pub use input_lease::PlaneInputLease;
+
 #[derive(Clone, Copy)]
 struct PlaneState {
     pos: Axis3,

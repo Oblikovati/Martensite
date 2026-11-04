@@ -1,0 +1,241 @@
+//! Layer ordering and depth policy stay explicit in immutable frame submissions.
+use crate::PrimitiveDraw;
+use std::ops::Range;
+/// One ordered pass; `RenderLayer::new(draws, true, true, false)`.
+#[derive(Clone, Debug)]
+pub struct RenderLayer {
+    pub(crate) draws: Vec<PrimitiveDraw>,
+    pub(crate) depth_test: bool,
+    pub(crate) depth_write: bool,
+    pub(crate) clear_depth: bool,
+    pub(crate) polygon_offset: crate::RenderPolygonOffset,
+    pub(crate) stencil_boundaries: Vec<crate::stencil_program::StencilBoundary>,
+    /// Native Graphic3dZLayerSettings::ToRenderInDepthPrepass (default true).
+    pub(crate) in_depth_prepass: bool,
+    pub(crate) depth_pass: crate::depth_prepass::RenderDepthPass,
+    /// The Z layer's local origin (`Graphic3dZLayerSettings::SetOrigin`): its lights and
+    /// clipping planes are taken relative to it while the layer renders.
+    pub(crate) local_origin: Option<crate::layer_origin::LayerOrigin>,
+    /// A ray-traced Z layer's raster pass: the ray-tracing pass follows the last such layer.
+    pub(crate) raytraced: bool,
+}
+impl RenderLayer {
+    /// Retain a layer's draws and depth policy; `RenderLayer::new(draws, true, true, false)`.
+    pub fn new(
+        mut draws: Vec<PrimitiveDraw>,
+        depth_test: bool,
+        depth_write: bool,
+        clear_depth: bool,
+    ) -> Self {
+        crate::capping_order::order_layer_draws(&mut draws);
+        let stencil_boundaries = crate::stencil_program::implicit_cap_restores(&draws);
+        Self {
+            draws,
+            depth_test,
+            depth_write,
+            clear_depth,
+            polygon_offset: crate::RenderPolygonOffset::default(),
+            stencil_boundaries,
+            in_depth_prepass: true,
+            depth_pass: Default::default(),
+            local_origin: None,
+            raytraced: false,
+        }
+    }
+}
+impl RenderLayer {
+    pub(crate) fn from_stencil_program(
+        mut program: crate::stencil_program::StencilProgram,
+        depth_test: bool,
+        depth_write: bool,
+        clear_depth: bool,
+    ) -> Self {
+        crate::capping_order::classify_capping_batches(&mut program.draws);
+        Self {
+            draws: program.draws,
+            depth_test,
+            depth_write,
+            clear_depth,
+            polygon_offset: Default::default(),
+            stencil_boundaries: program.boundaries,
+            in_depth_prepass: true,
+            depth_pass: Default::default(),
+            local_origin: None,
+            raytraced: false,
+        }
+    }
+    /// The layer's ordered draws, as submitted to the frame; `layer.draws().len()`.
+    pub fn draws(&self) -> &[PrimitiveDraw] {
+        &self.draws
+    }
+    /// Retain the layer's default polygon offset; `layer.with_polygon_offset(RenderPolygonOffset::new(1, 1., 1.)?)`.
+    pub fn with_polygon_offset(mut self, offset: crate::RenderPolygonOffset) -> Self {
+        self.polygon_offset = offset;
+        self
+    }
+    /// Render around the layer's local origin; `layer.with_local_origin(LayerOrigin::of(&settings))`.
+    pub(crate) fn with_local_origin(
+        mut self,
+        origin: Option<crate::layer_origin::LayerOrigin>,
+    ) -> Self {
+        self.local_origin = origin;
+        self
+    }
+    /// Retain native ToRenderInDepthPrepass; `layer.with_depth_prepass_membership(false)`.
+    pub(crate) fn with_depth_prepass_membership(mut self, member: bool) -> Self {
+        self.in_depth_prepass = member;
+        self
+    }
+}
+/// Range of frame draws sharing one depth policy; `frame.layers()[0].draw_range()`.
+#[derive(Clone, Debug)]
+pub struct RenderLayerSpan {
+    pub(crate) draw_range: Range<usize>,
+    pub(crate) depth_test: bool,
+    pub(crate) depth_write: bool,
+    pub(crate) clear_depth: bool,
+    pub(crate) polygon_offset: crate::RenderPolygonOffset,
+    pub(crate) stencil_boundaries: Vec<crate::stencil_program::StencilBoundary>,
+}
+impl RenderLayerSpan {
+    /// Index into `frame.draws()`; `frame.layers()[0].draw_range()`.
+    pub fn draw_range(&self) -> Range<usize> {
+        self.draw_range.clone()
+    }
+    /// Read the retained layer default; `frame.layers()[0].polygon_offset()`.
+    pub fn polygon_offset(&self) -> crate::RenderPolygonOffset {
+        self.polygon_offset
+    }
+    /// Read `(test, write, clear)` flags; `frame.layers()[0].depth_policy()`.
+    pub fn depth_policy(&self) -> (bool, bool, bool) {
+        (self.depth_test, self.depth_write, self.clear_depth)
+    }
+}
+/// Flatten layers into draw spans; a `boundary` layer index ends the main pass, whose
+/// deferred transparency is flushed there (each GlLayerList::Render call flushes its
+/// own). Returns the span index at the boundary, or the span count without one.
+pub(crate) fn flatten_layers_at(
+    layers: Vec<RenderLayer>,
+    boundary: Option<usize>,
+) -> (Vec<PrimitiveDraw>, Vec<RenderLayerSpan>, usize) {
+    let mut draws = Vec::new();
+    let mut spans = Vec::new();
+    let mut deferred = Vec::new();
+    let mut marker = None;
+    for (index, layer) in layers.into_iter().enumerate() {
+        if boundary == Some(index) {
+            flush_blended_layers(&mut deferred, &mut draws, &mut spans);
+            marker = Some(spans.len());
+        }
+        if layer.clear_depth {
+            flush_blended_layers(&mut deferred, &mut draws, &mut spans);
+        }
+        let (opaque, blended) = split_blended_layer(layer);
+        append_layer_span(opaque, &mut draws, &mut spans);
+        deferred.extend(blended);
+    }
+    flush_blended_layers(&mut deferred, &mut draws, &mut spans);
+    let marker = marker.unwrap_or(spans.len());
+    (draws, spans, marker)
+}
+pub(crate) fn split_blended_layer(mut layer: RenderLayer) -> (RenderLayer, Option<RenderLayer>) {
+    let deferred: Vec<_> = layer
+        .draws
+        .iter()
+        .map(PrimitiveDraw::is_surface_blended)
+        .collect();
+    let (blended, opaque): (Vec<_>, Vec<_>) = std::mem::take(&mut layer.draws)
+        .into_iter()
+        .partition(PrimitiveDraw::is_surface_blended);
+    let transparent =
+        (!blended.is_empty()).then(|| layer.stencil_partition_branch(blended, &deferred, true));
+    (
+        layer.stencil_partition_branch(opaque, &deferred, false),
+        transparent,
+    )
+}
+impl RenderLayer {
+    fn stencil_partition_branch(
+        &self,
+        draws: Vec<PrimitiveDraw>,
+        deferred: &[bool],
+        transparent: bool,
+    ) -> Self {
+        Self {
+            draws,
+            depth_test: self.depth_test,
+            depth_write: self.depth_write && !transparent,
+            clear_depth: self.clear_depth && !transparent,
+            polygon_offset: self.polygon_offset,
+            stencil_boundaries: crate::stencil_program::filtered_boundaries(
+                &self.stencil_boundaries,
+                deferred,
+                transparent,
+            ),
+            in_depth_prepass: self.in_depth_prepass,
+            local_origin: self.local_origin,
+            raytraced: self.raytraced,
+            // Deferred blended content keeps the ordinary depth test (native renderTransparent).
+            depth_pass: if transparent {
+                Default::default()
+            } else {
+                self.depth_pass
+            },
+        }
+    }
+}
+fn flush_blended_layers(
+    pending: &mut Vec<RenderLayer>,
+    draws: &mut Vec<PrimitiveDraw>,
+    spans: &mut Vec<RenderLayerSpan>,
+) {
+    // GlLayerList::Render at flushes transparent layers before the next depth clear.
+    for layer in pending.drain(..) {
+        append_layer_span(layer, draws, spans);
+    }
+}
+fn append_layer_span(
+    layer: RenderLayer,
+    draws: &mut Vec<PrimitiveDraw>,
+    spans: &mut Vec<RenderLayerSpan>,
+) {
+    let start = draws.len();
+    let pass = layer.depth_pass;
+    draws.extend(layer.draws.into_iter().map(|mut draw| {
+        // A dimension label rectangle stays colourless in every layer pass.
+        if !draw.stencil_rect {
+            draw.depth_pass = pass;
+        }
+        draw
+    }));
+    spans.push(RenderLayerSpan {
+        draw_range: start..draws.len(),
+        depth_test: layer.depth_test,
+        depth_write: layer.depth_write,
+        clear_depth: layer.clear_depth,
+        polygon_offset: layer.polygon_offset,
+        stencil_boundaries: layer.stencil_boundaries,
+    });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::RenderVertex;
+
+    #[test]
+    fn layer_exposes_its_submitted_draws() {
+        let vertex = |x: f32, y: f32| RenderVertex::new([x, y, 0.], [1.; 4]);
+        let identity = [
+            1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
+        ];
+        let draw = PrimitiveDraw::new(
+            vec![vertex(0., 0.), vertex(1., 0.), vertex(0., 1.)],
+            vec![0, 1, 2],
+            identity,
+        )
+        .expect("a valid triangle draw");
+        let layer = RenderLayer::new(vec![draw.clone()], true, true, false);
+        assert_eq!(layer.draws(), &[draw]);
+    }
+}

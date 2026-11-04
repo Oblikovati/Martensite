@@ -1,0 +1,105 @@
+# the recorded view_diagnostics capture; llvmpipe (LIBGL_ALWAYS_SOFTWARE=1) then AMD radeonsi
+# driver sw
+== device
+GLvendor: Mesa
+GLdevice: llvmpipe (LLVM 20.1.2, 256 bits)
+GLversion: 4.6 (Compatibility Profile) Mesa 26.1.6-1pop0~1787580452~24.04~a5619ea
+GLSLversion: 4.60
+== frame_buffer
+Viewport: 64x64
+Window buffer: RGB8 ALPHA0 DEPTH24 STENCIL8
+ResolutionRatio: 1
+FBO buffer: GL_SRGB8_ALPHA8 GL_DEPTH24_STENCIL8
+== limits
+Max texture size: 16384
+Max FBO dump size: 16384x16384
+Max combined texture units: 160
+Max MSAA samples: 8
+== memory
+GPU free memory: 0 MiB
+Free auxiliary memory: 93835 MiB
+GPU memory: 112311 MiB
+== native_platform
+GLXDirectRendering: Yes
+GLXVendor: SGI
+GLXVersion: 1.4
+GLXClientVendor: Mesa Project and SGI
+GLXClientVersion: 1.4
+== extensions
+GLextensions: <314 entries>
+== complete
+GLXDirectRendering: Yes
+GLXVendor: SGI
+GLXVersion: 1.4
+GLXExtensions: <25 entries>
+GLXClientVendor: Mesa Project and SGI
+GLXClientVersion: 1.4
+GLXClientExtensions: <36 entries>
+GLvendor: Mesa
+GLdevice: llvmpipe (LLVM 20.1.2, 256 bits)
+GLversion: 4.6 (Compatibility Profile) Mesa 26.1.6-1pop0~1787580452~24.04~a5619ea
+GLSLversion: 4.60
+Max texture size: 16384
+Max FBO dump size: 16384x16384
+Max combined texture units: 160
+Max MSAA samples: 8
+Viewport: 64x64
+Window buffer: RGB8 ALPHA0 DEPTH24 STENCIL8
+GPU free memory: 31 MiB
+Free auxiliary memory: 93836 MiB
+GPU memory: 112311 MiB
+GLextensions: <314 entries>
+ResolutionRatio: 1
+FBO buffer: GL_SRGB8_ALPHA8 GL_DEPTH24_STENCIL8
+# driver host
+== device
+GLvendor: AMD
+GLdevice: AMD Radeon 8060S Graphics (radeonsi, strix_halo, ACO, DRM 3.64, 7.2.6-76070206-generic)
+GLversion: 4.6 (Compatibility Profile) Mesa 26.1.6-1pop0~1787580452~24.04~a5619ea
+GLSLversion: 4.60
+== frame_buffer
+Viewport: 64x64
+Window buffer: RGB8 ALPHA0 DEPTH24 STENCIL8
+ResolutionRatio: 1
+FBO buffer: GL_SRGB8_ALPHA8 GL_DEPTH24_STENCIL8
+== limits
+Max texture size: 16384
+Max FBO dump size: 16384x16384
+Max combined texture units: 160
+Max MSAA samples: 8
+== memory
+GPU free memory: 13830 MiB
+Free auxiliary memory: 55943 MiB
+GPU memory: 16384 MiB
+== native_platform
+GLXDirectRendering: Yes
+GLXVendor: SGI
+GLXVersion: 1.4
+GLXClientVendor: Mesa Project and SGI
+GLXClientVersion: 1.4
+== extensions
+GLextensions: <321 entries>
+== complete
+GLXDirectRendering: Yes
+GLXVendor: SGI
+GLXVersion: 1.4
+GLXExtensions: <31 entries>
+GLXClientVendor: Mesa Project and SGI
+GLXClientVersion: 1.4
+GLXClientExtensions: <36 entries>
+GLvendor: AMD
+GLdevice: AMD Radeon 8060S Graphics (radeonsi, strix_halo, ACO, DRM 3.64, 7.2.6-76070206-generic)
+GLversion: 4.6 (Compatibility Profile) Mesa 26.1.6-1pop0~1787580452~24.04~a5619ea
+GLSLversion: 4.60
+Max texture size: 16384
+Max FBO dump size: 16384x16384
+Max combined texture units: 160
+Max MSAA samples: 8
+Viewport: 64x64
+Window buffer: RGB8 ALPHA0 DEPTH24 STENCIL8
+GPU free memory: 13828 MiB
+Free auxiliary memory: 55943 MiB
+GPU memory: 16384 MiB
+GLextensions: <321 entries>
+ResolutionRatio: 1
+FBO buffer: GL_SRGB8_ALPHA8 GL_DEPTH24_STENCIL8

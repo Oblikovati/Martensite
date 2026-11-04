@@ -38,7 +38,7 @@ mod transformation;
 pub use transformation::Geom2dTransformation;
 
 mod line;
-pub use line::Geom2dLine;
+pub use line::{Geom2dLine, PlanarLineInputLease};
 mod circle;
 pub use circle::Geom2dCircle;
 mod ellipse;
@@ -53,7 +53,7 @@ mod bezier_curve;
 pub use bezier_curve::Geom2dBezierCurve;
 mod bspline_curve;
 mod spline_kind;
-pub use bspline_curve::Geom2dBSplineCurve;
+pub use bspline_curve::{Geom2dBSplineCurve, PlanarSplineInputLease, StoredPlanarSplineInput};
 mod offset_curve;
 pub mod offset_curve_utils;
 pub use offset_curve::Geom2dOffsetCurve;

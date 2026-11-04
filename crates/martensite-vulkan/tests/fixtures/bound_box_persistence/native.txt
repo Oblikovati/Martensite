@@ -1,0 +1,3 @@
+zoom fnv=8232f11cc198138a green=62
+corner fnv=1e28f8f6e6a1104a green=62
+camera fnv=07db320f86dd3c83 green=0

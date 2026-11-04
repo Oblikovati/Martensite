@@ -1,5 +1,7 @@
 use super::{FunctionSetRoot, FunctionSetWithDerivatives, Vector, line::Line};
 use crate::math::{BrentMinimum, Function};
+mod observation;
+use observation::observe_minimum;
 impl FunctionSetRoot {
     pub(super) fn minimize_three(
         &mut self,
@@ -28,9 +30,10 @@ impl FunctionSetRoot {
             &self.delta,
             &mut self.line_point,
             &mut self.line_residual,
+            &mut self.observation.inner,
         );
         let mut solver: BrentMinimum = BrentMinimum::with_options(tolerance, 100, tolerance);
-        solver.perform(&mut line, -1.0, 0.0, last);
+        observe_minimum(&mut solver, &mut line, [-1.0, 0.0, last]);
         if !solver.is_done()
             || solver
                 .minimum()
@@ -38,6 +41,7 @@ impl FunctionSetRoot {
                 .partial_cmp(&self.run.old_objective)
                 != Some(std::cmp::Ordering::Less)
         {
+            line.work.result_declined += 1;
             return false;
         }
         self.delta.multiply(solver.location().unwrap());
@@ -65,6 +69,7 @@ impl FunctionSetRoot {
             &self.delta,
             &mut self.line_point,
             &mut self.line_residual,
+            &mut self.observation.inner,
         );
         let mut estimate: f64 = 0.0;
         line.value(parameter, &mut estimate);
@@ -82,6 +87,8 @@ impl FunctionSetRoot {
         }
         if good {
             self.delta.multiply(parameter);
+        } else {
+            line.work.result_declined += 1;
         }
         good
     }
@@ -121,8 +128,8 @@ fn interpolate(value: f64, next: f64, first_derivative: f64, last_derivative: f6
     }
     parameter / (2.0 * a)
 }
-fn improve(
-    line: &mut impl Function,
+fn improve<F: FunctionSetWithDerivatives>(
+    line: &mut Line<'_, F>,
     tolerance: f64,
     parameter: &mut f64,
     best: &mut f64,
@@ -132,15 +139,28 @@ fn improve(
     let first: f64 = if *parameter < 0.0 { *parameter } else { 0.0 };
     let middle: f64 = if *parameter < 0.0 { 0.0 } else { *parameter };
     let mut solver: BrentMinimum = BrentMinimum::with_options(tolerance, 100, tolerance);
-    solver.perform(line, first, middle, 1.0);
+    observe_minimum(&mut solver, line, [first, middle, 1.0]);
     if !accept(&solver, parameter, best, good) {
+        line.work.result_declined += 1;
         return;
     }
     if gradient_norm > 1.0 / (1e-7 * 1e-7) && *parameter > first && *parameter < 1.0 {
-        solver.perform(line, first, (first + *parameter) / 2.0, *parameter);
-        accept(&solver, parameter, best, good);
-        solver.perform(line, *parameter, (1.0 + *parameter) / 2.0, 1.0);
-        accept(&solver, parameter, best, good);
+        observe_minimum(
+            &mut solver,
+            line,
+            [first, (first + *parameter) / 2.0, *parameter],
+        );
+        if !accept(&solver, parameter, best, good) {
+            line.work.result_declined += 1;
+        }
+        observe_minimum(
+            &mut solver,
+            line,
+            [*parameter, (1.0 + *parameter) / 2.0, 1.0],
+        );
+        if !accept(&solver, parameter, best, good) {
+            line.work.result_declined += 1;
+        }
     }
 }
 fn accept(solver: &BrentMinimum, parameter: &mut f64, best: &mut f64, good: &mut bool) -> bool {

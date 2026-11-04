@@ -1,0 +1,35 @@
+# the recorded element_stats capture; identical on llvmpipe (LIBGL_ALWAYS_SOFTWARE=1) and AMD radeonsi
+== all
+mem counted geom_before=36
+draw counted detailed=1 elems_before=1 tris_before=1
+counter structs_not_culled=1
+counter groups_not_culled=1
+counter elems_not_culled=2
+counter elems_fill_not_culled=1
+counter triangles_not_culled=8
+counter bytes_geom=172
+== group_arrays
+draw counted detailed=0 elems_before=1 tris_before=0
+counter structs_not_culled=1
+counter groups_not_culled=1
+counter elems_not_culled=2
+counter elems_fill_not_culled=1
+counter triangles_not_culled=0
+counter bytes_geom=0
+== memory
+mem counted geom_before=36
+draw counted detailed=0 elems_before=1 tris_before=0
+counter structs_not_culled=1
+counter groups_not_culled=1
+counter elems_not_culled=2
+counter elems_fill_not_culled=1
+counter triangles_not_culled=0
+counter bytes_geom=172
+== hidden
+mem counted geom_before=36
+counter structs_not_culled=0
+counter groups_not_culled=0
+counter elems_not_culled=0
+counter elems_fill_not_culled=0
+counter triangles_not_culled=0
+counter bytes_geom=172

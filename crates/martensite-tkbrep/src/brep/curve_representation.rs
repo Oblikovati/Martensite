@@ -22,7 +22,7 @@ use std::io;
 /// ```
 #[derive(Default)]
 pub struct CurveRepresentationBase {
-    location: SharedState<Location>,
+    pub(crate) location: SharedState<Location>,
 }
 
 impl CurveRepresentationBase {

@@ -1,0 +1,100 @@
+state default on=0 capping=0 any=0 chains=0 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
+state init on=0 capping=0 any=0 chains=0 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
+state reset on=4 capping=1 any=1 chains=1 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
+iter reset i=1 g=1 d=0 plane=g1
+iter reset i=2 g=1 d=0 plane=g2
+iter reset i=3 g=1 d=1 plane=g3
+state local on=7 capping=1 any=1 chains=1 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
+iter local i=1 g=1 d=0 plane=g1
+iter local i=2 g=1 d=0 plane=g2
+iter local i=3 g=1 d=1 plane=g3
+iter local i=4 g=0 d=0 plane=l1
+iter local i=5 g=0 d=0 plane=l2
+set 2 off=1
+set 2 off=0
+state g2-off on=4 capping=1 any=1 chains=1 disabled=1 filter=0 dae=0 eae=0 sub=0 chain=none
+iter g2-off i=1 g=1 d=0 plane=g1
+iter g2-off i=2 g=1 d=1 plane=g2
+iter g2-off i=3 g=1 d=1 plane=g3
+iter g2-off i=4 g=0 d=0 plane=l1
+iter g2-off i=5 g=0 d=0 plane=l2
+set 3 off=1
+state g3-off on=3 capping=1 any=1 chains=1 disabled=1 filter=0 dae=0 eae=0 sub=0 chain=none
+iter g3-off i=1 g=1 d=0 plane=g1
+iter g3-off i=2 g=1 d=1 plane=g2
+iter g3-off i=3 g=1 d=1 plane=g3
+iter g3-off i=4 g=0 d=0 plane=l1
+iter g3-off i=5 g=0 d=0 plane=l2
+state restored on=7 capping=1 any=1 chains=1 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
+iter restored i=1 g=1 d=0 plane=g1
+iter restored i=2 g=1 d=0 plane=g2
+iter restored i=3 g=1 d=1 plane=g3
+iter restored i=4 g=0 d=0 plane=l1
+iter restored i=5 g=0 d=0 plane=l2
+state no-global on=2 capping=1 any=1 chains=1 disabled=1 filter=0 dae=0 eae=0 sub=0 chain=none
+iter no-global i=1 g=1 d=1 plane=g1
+iter no-global i=2 g=1 d=1 plane=g2
+iter no-global i=3 g=1 d=1 plane=g3
+iter no-global i=4 g=0 d=0 plane=l1
+iter no-global i=5 g=0 d=0 plane=l2
+set 5 on=0
+set 5 off=1
+state l2-off on=0 capping=1 any=0 chains=0 disabled=1 filter=0 dae=0 eae=0 sub=0 chain=none
+iter l2-off i=1 g=1 d=1 plane=g1
+iter l2-off i=2 g=1 d=1 plane=g2
+iter l2-off i=3 g=1 d=1 plane=g3
+iter l2-off i=4 g=0 d=0 plane=l1
+iter l2-off i=5 g=0 d=1 plane=l2
+state restored2 on=7 capping=1 any=1 chains=1 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
+iter restored2 i=1 g=1 d=0 plane=g1
+iter restored2 i=2 g=1 d=0 plane=g2
+iter restored2 i=3 g=1 d=1 plane=g3
+iter restored2 i=4 g=0 d=0 plane=l1
+iter restored2 i=5 g=0 d=0 plane=l2
+state dae on=1 capping=1 any=1 chains=0 disabled=0 filter=1 dae=1 eae=0 sub=2 chain=g2
+iter dae i=1 g=1 d=0 plane=g1
+iter dae i=2 g=1 d=0 plane=g2
+iter dae i=3 g=1 d=1 plane=g3
+iter dae i=4 g=0 d=0 plane=l1
+iter dae i=5 g=0 d=0 plane=l2
+state eae on=6 capping=1 any=1 chains=1 disabled=0 filter=1 dae=0 eae=1 sub=-1 chain=g2
+iter eae i=1 g=1 d=0 plane=g1
+iter eae i=2 g=1 d=0 plane=g2
+iter eae i=3 g=1 d=1 plane=g3
+iter eae i=4 g=0 d=0 plane=l1
+iter eae i=5 g=0 d=0 plane=l2
+state eae-single on=6 capping=1 any=1 chains=1 disabled=0 filter=1 dae=0 eae=1 sub=-1 chain=l1
+iter eae-single i=1 g=1 d=0 plane=g1
+iter eae-single i=2 g=1 d=0 plane=g2
+iter eae-single i=3 g=1 d=1 plane=g3
+iter eae-single i=4 g=0 d=0 plane=l1
+iter eae-single i=5 g=0 d=0 plane=l2
+state filter-reset on=7 capping=1 any=1 chains=1 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
+iter filter-reset i=1 g=1 d=0 plane=g1
+iter filter-reset i=2 g=1 d=0 plane=g2
+iter filter-reset i=3 g=1 d=1 plane=g3
+iter filter-reset i=4 g=0 d=0 plane=l1
+iter filter-reset i=5 g=0 d=0 plane=l2
+state local-single on=5 capping=1 any=1 chains=1 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
+iter local-single i=1 g=1 d=0 plane=g1
+iter local-single i=2 g=1 d=0 plane=g2
+iter local-single i=3 g=1 d=1 plane=g3
+iter local-single i=4 g=0 d=0 plane=l1
+state eae-local-single on=4 capping=1 any=1 chains=1 disabled=0 filter=1 dae=0 eae=1 sub=-1 chain=l1
+iter eae-local-single i=1 g=1 d=0 plane=g1
+iter eae-local-single i=2 g=1 d=0 plane=g2
+iter eae-local-single i=3 g=1 d=1 plane=g3
+iter eae-local-single i=4 g=0 d=0 plane=l1
+state local-null on=3 capping=1 any=1 chains=1 disabled=0 filter=1 dae=0 eae=1 sub=-1 chain=l1
+iter local-null i=1 g=1 d=0 plane=g1
+iter local-null i=2 g=1 d=0 plane=g2
+iter local-null i=3 g=1 d=1 plane=g3
+state g1-switched-off on=4 capping=1 any=1 chains=1 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
+iter g1-switched-off i=1 g=1 d=1 plane=g1
+iter g1-switched-off i=2 g=1 d=0 plane=g2
+iter g1-switched-off i=3 g=1 d=1 plane=g3
+state reset-local-as-global on=3 capping=1 any=1 chains=1 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
+iter reset-local-as-global i=1 g=1 d=0 plane=l1
+iter reset-local-as-global i=2 g=1 d=0 plane=l2
+state reset-null on=0 capping=0 any=0 chains=0 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
+state init2 on=0 capping=0 any=0 chains=0 disabled=0 filter=0 dae=0 eae=0 sub=0 chain=none
