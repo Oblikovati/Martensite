@@ -43,6 +43,9 @@ fn unsupported_evaluator_and_layout_refuse() {
         admit(periodic),
         Err(StoredOpenExtrusionFailure::UnsupportedLayout(_))
     ));
+}
+#[test]
+fn unsupported_stored_array_origin_refuses() {
     let mut lower = source();
     lower.lower_bounds[4] = 0;
     assert!(matches!(
@@ -60,15 +63,18 @@ fn open_endpoints_do_not_bypass_flat_knot_or_domain_checks() {
             ClosedSplineExtrusionError::FlatSequence { .. }
         ))
     ));
+}
+#[test]
+fn inconsistent_stored_domain_refuses() {
     let mut domain = source();
     domain.domain[1] = 2.;
-    assert!(matches!(
-        admit(domain),
-        Err(StoredOpenExtrusionFailure::Domain {
+    assert_eq!(
+        admit(domain).unwrap_err(),
+        StoredOpenExtrusionFailure::Domain {
             actual: [0., 2.],
             expected: [0., 1.]
-        })
-    ));
+        }
+    );
 }
 #[test]
 fn numeric_failures_remain_invalid_instead_of_unsupported() {
