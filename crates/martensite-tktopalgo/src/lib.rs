@@ -20,7 +20,7 @@ pub mod brep_int_curve_surface;
 pub mod brep_lib;
 pub mod brep_mat2d;
 pub mod brep_top_adaptor;
-/// Owned finite face validation with exact sufficient geometry certificates.
+/// Owned finite face validation with explicit geometry and incidence contracts.
 pub mod face_validation;
 pub mod int_curves_face;
 pub mod mat;

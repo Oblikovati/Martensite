@@ -47,3 +47,28 @@ whole-curve and extra-component counterexamples, shared-knot deduplication,
 tangencies, invalid inputs, exhausted budgets and cancellation. Published inputs
 and witnesses are owned and immutable. Process and thread comparisons must agree,
 and the canonical sanitizer group must cover the new operation before merge.
+
+## Face behavior four
+
+`certify_tolerance_resolved_extrusion_face` takes a coherent owned face snapshot and
+`ToleranceResolvedFacePolicy::v4()`. The policy preserves the existing finite
+relative-frame settings and adds one shared incidence work allowance. Its distinct
+report and certificate cannot be consumed as an earlier exact face certificate.
+Versions one, two and three keep their original API, results and refusal rules.
+
+The wrapper reuses the original ordered topology and full-domain metric gates.
+Before support and incidence proofs, it checks the exact world direction, actual
+cap and vertex carrier relations, the common nonzero height functional, and full
+actual seam/carrier residuals under the minimum applicable raw spatial limits.
+It then retains independent ideal and actual carrier injectivity reports. The
+component/contact operation runs for all four declared cap/seam pairs; distinct
+located endpoint classes require strictly disjoint balls. The report retains the
+original source, unchanged error bounds, proof work, contacts and no-change history.
+A valid enclosing body and successful model operation still require their own
+ordered publication checks.
+
+This first wrapper retains exact canonical seam and carrier-vertex relations.
+An open support report does not discharge a missing such relation. Unsupported
+or nonzero relations remain incomplete until the same general component/contact
+operation proves the necessary declared seam or vertex neighborhood contract.
+No input is snapped, closed or replaced to make this check succeed.

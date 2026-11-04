@@ -14,6 +14,26 @@ pub(super) fn certify<F: FnMut() -> bool>(
     }
     Ok(())
 }
+pub(super) fn certify_resolved<F: FnMut() -> bool>(
+    carrier: &Carrier<'_>,
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<()> {
+    direction(carrier, budget)?;
+    for (index, edge) in carrier.strip.edges.iter().enumerate() {
+        match carrier.boundary.sides[index] {
+            Side::UFirst | Side::ULast => ideal_seam(
+                carrier,
+                edge,
+                carrier.boundary.sides[index] == Side::UFirst,
+                budget,
+            )?,
+            Side::VFirst | Side::VLast => cap(carrier, edge, index, budget)?,
+        }
+        vertices(carrier, edge, index, budget)?;
+    }
+    Ok(())
+}
+
 pub(super) fn direction<F: FnMut() -> bool>(
     carrier: &Carrier<'_>,
     budget: &mut Budget<'_, F>,

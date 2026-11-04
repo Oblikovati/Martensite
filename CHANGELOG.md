@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added separately selectable tolerance-resolved extrusion-face incidence validation with owned full-domain contact and neighborhood evidence, preserving exact face-policy replay (#213).
+
 - Added owned proper given-vertex neighborhood and analytic curve/line incidence certificates with exact algebraic witnesses and combined finite work limits (#213).
 
 - Added owned open quadratic-extrusion support proofs with explicit endpoint domains and finite incomplete outcomes (#213).

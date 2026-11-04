@@ -20,3 +20,6 @@ pub use boundary_report::ClosedFaceBoundaryReport;
 pub use operation::certify_closed_extrusion_face;
 pub use report::{ClosedFaceCertificate, ClosedFaceReport};
 pub use types::*;
+
+mod resolved;
+pub use resolved::*;
