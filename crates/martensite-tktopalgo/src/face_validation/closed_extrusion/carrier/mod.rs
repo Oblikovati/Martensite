@@ -1,5 +1,6 @@
 //! Independently injective boundary carriers supplement the canonical face surface.
 mod chains;
+mod direction;
 mod planes;
 mod relations;
 use super::{
@@ -19,6 +20,7 @@ pub(super) struct Carrier<'a> {
     curve: &'a StoredSplineInput,
     index: usize,
     reference: f64,
+    direction: [f64; 3],
 }
 pub(super) fn certify<F: FnMut() -> bool>(
     strip: &Strip,
@@ -26,7 +28,8 @@ pub(super) fn certify<F: FnMut() -> bool>(
     report: &mut ClosedFaceReport,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<()> {
-    let carrier = reference(strip, boundary)?;
+    let mut carrier = reference(strip, boundary)?;
+    carrier.direction = direction::select(&carrier, budget.policy.version)?;
     report.boundary = Some(initial(&carrier));
     let input = admit(&carrier)?;
     relations::certify(&carrier, budget)?;
@@ -50,6 +53,7 @@ fn reference<'a>(strip: &'a Strip, boundary: &'a Boundary) -> CheckResult<Carrie
         curve,
         index,
         reference: boundary.bounds[2],
+        direction: strip.direction,
     })
 }
 fn reference_index(boundary: &Boundary) -> CheckResult<usize> {
@@ -76,7 +80,7 @@ fn admit(carrier: &Carrier<'_>) -> CheckResult<ClosedQuadraticExtrusionInput> {
     let input = carrier
         .curve
         .clone()
-        .into_closed_extrusion_input(carrier.strip.direction, interval)
+        .into_closed_extrusion_input(carrier.direction, interval)
         .map_err(|error| admission_error(carrier, &error))?;
     super::operation::require_captured(input)
 }

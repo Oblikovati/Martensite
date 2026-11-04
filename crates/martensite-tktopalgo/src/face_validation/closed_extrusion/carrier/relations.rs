@@ -19,7 +19,7 @@ fn direction<F: FnMut() -> bool>(
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<()> {
     let first = chains::vector(carrier.strip.direction, carrier.strip.placement);
-    let second = chains::vector(carrier.strip.direction, carrier.edge.placement);
+    let second = chains::vector(carrier.direction, carrier.edge.placement);
     chains::require(
         ClosedFaceQueryContext::new(carrier.edge.owner, ClosedFaceRelation::CarrierDirection),
         first,
@@ -77,13 +77,7 @@ fn carrier_target<'a>(
     map: [f64; 2],
     poses: &'a [MetricEmbedding<3>],
 ) -> MetricCurveChain<'a, 2> {
-    chains::sweep(
-        point,
-        carrier.strip.direction,
-        map,
-        carrier.reference,
-        poses,
-    )
+    chains::sweep(point, carrier.direction, map, carrier.reference, poses)
 }
 fn seam<F: FnMut() -> bool>(
     carrier: &Carrier<'_>,
