@@ -25,4 +25,6 @@ For example, a schema-1 entry preserves the original origin descriptor:
 }
 ```
 
+A restoration anchor can be retired too. A later bundle under a live release may then replace it: the publication identity, digest and normalized manifest must still match the retained receipt exactly, and an anchor whose release is still published must match exactly as well. A bundle's entries list each `historical_origin` without its old `restoration` record.
+
 The example identifiers and digests are placeholders, not publication evidence. All entries must match the pinned catalog and verified payload bytes before reuse.

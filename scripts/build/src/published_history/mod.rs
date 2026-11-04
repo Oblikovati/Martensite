@@ -41,6 +41,11 @@ impl ReleaseIndex {
         })
     }
 
+    /// Tells whether a release is still published; e.g. `index.has_release(anchor.release_id)`.
+    pub fn has_release(&self, id: u64) -> bool {
+        self.releases.iter().any(|release| release.id == id)
+    }
+
     /// Supplies only actual published tags to source/version policy; e.g. `index.final_tags()`.
     pub fn final_tags(&self) -> Vec<String> {
         self.releases

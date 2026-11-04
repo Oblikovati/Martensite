@@ -1,6 +1,6 @@
 //! Reused schema-2 rows remain authoritative even when no payload ships again.
 use super::{
-    super::{archives::PublishedArchive, invalid, inventory::HistoryReceipt},
+    super::{ReleaseIndex, archives::PublishedArchive, invalid, inventory::HistoryReceipt},
     Row,
 };
 use crate::{error::BuildResult, publication_record::PublicationReason};
@@ -12,11 +12,12 @@ pub(super) fn validate(
     schema: u32,
     receipt: Option<&HistoryReceipt>,
     archives: &BTreeMap<(String, Version), PublishedArchive>,
+    index: &ReleaseIndex,
 ) -> BuildResult<()> {
     if schema == 2 {
         required(row)?;
     }
-    validate_archive(row, archives)?;
+    validate_archive(row, archives, index)?;
     if let Some(reason) = row.publication_reason {
         validate_reason(row, reason, receipt)?;
     }
@@ -26,6 +27,7 @@ pub(super) fn validate(
 fn validate_archive(
     row: &Row,
     archives: &BTreeMap<(String, Version), PublishedArchive>,
+    index: &ReleaseIndex,
 ) -> BuildResult<()> {
     let archive = archives.get(&(row.name.clone(), row.version.clone()));
     validate_digest(row, archive)?;
@@ -34,7 +36,7 @@ fn validate_archive(
             archive
                 .origins
                 .iter()
-                .any(|verified| verified.matches_claim(origin))
+                .any(|verified| verified.matches_claim(origin, index))
         }) {
             return Err(invalid(
                 &row.name,
