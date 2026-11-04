@@ -24,6 +24,7 @@ because Arch does not support partial upgrades.
 | Tcl/Tk 8.6 | packages | `tcl-tk@8` | built from pinned source with MSVC |
 | FreeType, fontconfig | packages | formulae | FreeType built from pinned source |
 | Vulkan | loader, Mesa lavapipe, validation layers, vulkan-tools, glslang, SPIRV-Tools | loader, MoltenVK, validation layers, vulkan-tools, glslang, SPIRV-Tools | Vulkan SDK |
+| Vulkan validation layer for the renderer tests | checksum-pinned package on Ubuntu 24.04 x86_64 (`scripts/install/vulkan-validation.sh`); other distributions provide layer 1.4.313 or newer themselves | not needed | not needed |
 | Headless display | Xvfb, xauth | not needed | not needed |
 | Rust | distribution `rustup`, else rustup.rs | Homebrew `rustup`, or an existing rustup.rs install | winget `Rustlang.Rustup`, or an existing install |
 | Cargo tools | `cargo install --locked` | formulae | `cargo install --locked` |

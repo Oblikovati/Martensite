@@ -48,6 +48,14 @@ pub enum BuildTarget {
 }
 
 impl BuildTarget {
+    /// The explicit triple, or `None` for the host.
+    pub fn triple(&self) -> Option<&str> {
+        match self {
+            Self::Host => None,
+            Self::Triple(triple) => Some(triple),
+        }
+    }
+
     fn cargo_args(&self) -> Vec<String> {
         match self {
             Self::Host => Vec::new(),

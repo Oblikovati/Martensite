@@ -46,6 +46,20 @@ detect_package_manager() {
     fail "no supported package manager found; expected one of apt-get, dnf, pacman, zypper"
 }
 
+# --- Vulkan validation ------------------------------------------------------
+
+# The renderer tests need the pinned layer; its package targets Ubuntu 24.04 on x86_64.
+validation_layer_environment() {
+    local manager=$1
+    if [[ $manager == apt-get && "$(uname -m)" == x86_64 ]] &&
+        grep -q '^VERSION_ID="24.04"' /etc/os-release 2>/dev/null; then
+        "$REPO_ROOT/scripts/install/vulkan-validation.sh" "$MARTENSITE_DATA/vulkan-validation"
+        return
+    fi
+    log "Skipping the pinned Vulkan validation layer: martensite-vulkan tests need layer 1.4.313 or newer" >&2
+    return 0
+}
+
 # --- Package lists ----------------------------------------------------------
 
 apt_packages() {
@@ -193,7 +207,7 @@ main() {
     sync_system_packages "$manager"
     ensure_tcl_module_names
     # shellcheck disable=SC2016 # expanded when the env file is sourced
-    write_env_file 'export PATH="$HOME/.cargo/bin:$PATH"'
+    write_env_file 'export PATH="$HOME/.cargo/bin:$PATH"' "$(validation_layer_environment "$manager")"
     ensure_rustup
     install_pinned_toolchain
     if $cargo_tools; then sync_cargo_tools; fi

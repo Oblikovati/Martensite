@@ -128,8 +128,12 @@ fn verify_workspace(
     if !run_tests || tests.is_empty() {
         return Ok(());
     }
+    let tests = crate::targets::runnable_test_packages(tests.to_vec(), target.triple());
+    if tests.is_empty() {
+        return Ok(());
+    }
     reporter.step("Test changed and affected packages", || {
-        cargo.test(&PackageSelection::Packages(tests.to_vec()), target)
+        cargo.test(&PackageSelection::Packages(tests), target)
     })
 }
 

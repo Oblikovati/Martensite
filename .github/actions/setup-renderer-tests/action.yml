@@ -1,0 +1,19 @@
+name: Renderer test setup
+description: Installs Mesa lavapipe and the pinned Vulkan validation layer for the renderer tests.
+runs:
+  using: composite
+  steps:
+    - name: Install lavapipe and the pinned validation layer
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mesa-vulkan-drivers libvulkan1 fonts-dejavu-core
+        scripts/install/vulkan-validation.sh "$RUNNER_TEMP/vulkan-validation" --github-env "$GITHUB_ENV"
+        # The recorded software images are fixed to a 128-bit SSE2 rasterizer.
+        {
+          echo "VK_DRIVER_FILES=$(ls /usr/share/vulkan/icd.d/lvp_icd*.json)"
+          echo "GALLIUM_OVERRIDE_CPU_CAPS=sse2"
+          echo "LP_NATIVE_VECTOR_WIDTH=128"
+          echo "LIBGL_ALWAYS_SOFTWARE=1"
+          echo "MARTENSITE_VULKAN_DEVICE=0"
+        } >>"$GITHUB_ENV"
