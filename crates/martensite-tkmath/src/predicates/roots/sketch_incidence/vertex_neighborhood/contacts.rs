@@ -93,7 +93,10 @@ fn same_vertex(
             return Err(Failure::Binding { field });
         }
     }
-    if !matches!(b.curve, VertexNeighborhoodCurve::Line { .. }) {
+    require_line(b)
+}
+fn require_line(input: &GivenVertexNeighborhoodInput) -> Result<(), Failure> {
+    if !matches!(input.curve, VertexNeighborhoodCurve::Line { .. }) {
         return Err(Failure::TargetNotLine);
     }
     Ok(())

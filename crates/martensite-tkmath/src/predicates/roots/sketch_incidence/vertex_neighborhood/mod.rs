@@ -9,8 +9,10 @@ mod contact_signs;
 mod contact_tests;
 mod contact_types;
 mod contacts;
+mod disjoint;
 pub use contact_types::*;
 pub use contacts::certify_given_vertex_contacts;
+pub use disjoint::*;
 mod isolation;
 #[cfg(test)]
 mod tests;
