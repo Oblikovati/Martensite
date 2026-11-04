@@ -10,7 +10,7 @@ pub enum OpenSupportInputRole {
     BoundaryCarrier,
 }
 /// Why no input binding was published; this never asserts a valid face.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug)]
 pub enum OpenSupportInputFailure {
     /// Existing finite decoder, rectangle, incidence or exact placement refusal.
     Face(ClosedFaceCompletion),
@@ -52,7 +52,7 @@ impl PlacedOpenSupportInputs {
     }
 }
 /// Immutable capture result, including its entire original input and actual finite work.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct OpenSupportInputReport {
     input: FaceInputSnapshot,
     limits: ClosedFacePolicy,
