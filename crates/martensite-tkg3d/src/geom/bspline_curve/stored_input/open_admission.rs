@@ -18,21 +18,7 @@ impl StoredOpenExtrusionInput {
         &self.source
     }
     /// Read the admitted numeric input without geometry lookup; `input.numeric().clone()`.
-    pub fn admitted_layout(
-        source: &StoredSplineInput,
-        direction: [f64; 3],
-        interval: [f64; 2],
-    ) -> Result<ClosedSplineExtrusionLayout, StoredOpenExtrusionFailure> {
-        let layout = source.layout(direction, interval);
-        if layout.basis_override {
-            return Err(StoredOpenExtrusionFailure::EvaluationOverride);
-        }
-        if !admission::supported(&layout) {
-            return Err(StoredOpenExtrusionFailure::UnsupportedLayout);
-        }
-        Ok(layout)
-    }
-    fn numeric(&self) -> &OpenQuadraticExtrusionInput {
+    pub fn numeric(&self) -> &OpenQuadraticExtrusionInput {
         &self.numeric
     }
     /// Read unchanged requested direction/domain and evaluator layout; `input.layout()`.
@@ -85,6 +71,21 @@ impl StoredSplineInput {
         })
     }
 }
+fn admitted_layout(
+    source: &StoredSplineInput,
+    direction: [f64; 3],
+    interval: [f64; 2],
+) -> Result<ClosedSplineExtrusionLayout, StoredOpenExtrusionFailure> {
+    let layout = source.layout(direction, interval);
+    if layout.basis_override {
+        return Err(StoredOpenExtrusionFailure::EvaluationOverride);
+    }
+    if !admission::supported(&layout) {
+        return Err(StoredOpenExtrusionFailure::UnsupportedLayout);
+    }
+    Ok(layout)
+}
+
 fn numeric(
     source: &StoredSplineInput,
     direction: [f64; 3],
