@@ -6,7 +6,9 @@ use martensite_tkg3d::geom::{StoredOpenExtrusionFailure, StoredOpenExtrusionInpu
 /// Which actual representation failed admission; `OpenSupportInputRole::BoundaryCarrier`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OpenSupportInputRole {
+    /// The actual stored basis of the selected face surface.
     SurfaceBasis,
+    /// The actual spline carried by the declared VFirst cap occurrence.
     BoundaryCarrier,
 }
 /// Why no input binding was published; this never asserts a valid face.
