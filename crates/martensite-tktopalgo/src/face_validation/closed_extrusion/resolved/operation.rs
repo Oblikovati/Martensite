@@ -23,7 +23,7 @@ pub fn certify_tolerance_resolved_extrusion_face(
         .unwrap_or(ToleranceResolvedFaceCompletion::Certified);
     report
 }
-fn initial(
+pub(super) fn initial(
     input: FaceInputSnapshot,
     policy: ToleranceResolvedFacePolicy,
 ) -> ToleranceResolvedFaceReport {
@@ -47,19 +47,26 @@ fn run<F: FnMut() -> bool>(
     budget: &mut Budget<'_, F>,
 ) -> ResolvedResult<()> {
     policy(report.policy)?;
-    let mut source = exact::initial_report(report.input.clone(), report.policy.face);
-    let (strip, boundary) =
-        exact::prepare(&mut source, budget).map_err(ToleranceResolvedFaceCompletion::Face)?;
-    report.coverage.topology = true;
-    metrics::certify(&strip, &boundary, budget, &mut report.errors)
-        .map_err(ToleranceResolvedFaceCompletion::Face)?;
+    let (strip, boundary) = prepare(report, budget)?;
     let carrier = carrier::resolved::geometry(&strip, &boundary, report, budget)?;
     report.coverage.geometry = true;
     ideal(&strip, &boundary, report, budget)?;
     carrier::resolved::certify(&carrier, report, budget)?;
     finish(report, budget)
 }
-fn finish<F: FnMut() -> bool>(
+pub(super) fn prepare<F: FnMut() -> bool>(
+    report: &mut ToleranceResolvedFaceReport,
+    budget: &mut Budget<'_, F>,
+) -> ResolvedResult<(decode::Strip, boundary::Boundary)> {
+    let mut source = exact::initial_report(report.input.clone(), report.policy.face);
+    let (strip, boundary) =
+        exact::prepare(&mut source, budget).map_err(ToleranceResolvedFaceCompletion::Face)?;
+    report.coverage.topology = true;
+    metrics::certify(&strip, &boundary, budget, &mut report.errors)
+        .map_err(ToleranceResolvedFaceCompletion::Face)?;
+    Ok((strip, boundary))
+}
+pub(super) fn finish<F: FnMut() -> bool>(
     report: &mut ToleranceResolvedFaceReport,
     budget: &mut Budget<'_, F>,
 ) -> ResolvedResult<()> {
@@ -88,7 +95,7 @@ fn policy(policy: ToleranceResolvedFacePolicy) -> ResolvedResult<()> {
         "behavior four with relative-frame settings three",
     )))
 }
-fn ideal<F: FnMut() -> bool>(
+pub(super) fn ideal<F: FnMut() -> bool>(
     strip: &decode::Strip,
     boundary: &boundary::Boundary,
     report: &mut ToleranceResolvedFaceReport,
