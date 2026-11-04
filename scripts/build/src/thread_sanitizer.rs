@@ -28,6 +28,10 @@ fn run_ownership_controls(context: &BuildContext<'_>) -> BuildResult<()> {
             context.runner.run(&controls(context.root()))
         })?;
     run_service_controls(context)?;
+    run_face_controls(context)
+}
+
+fn run_face_controls(context: &BuildContext<'_>) -> BuildResult<()> {
     context
         .reporter
         .step("ThreadSanitizer coherent face inputs", || {
