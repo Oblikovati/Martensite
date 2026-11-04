@@ -28,13 +28,29 @@ pub(crate) struct ArchiveOrigin {
 impl ArchiveOrigin {
     /// Matches retained history without claiming its retired asset is live.
     ///
-    /// `verified.matches_claim(&historical)` also retains the recovery anchor.
-    pub fn matches_claim(&self, historical: &Self) -> bool {
-        let mut verified = self.clone();
-        if historical.restoration.is_none() {
-            verified.restoration = None;
+    /// `verified.matches_claim(&historical, &index)` also retains a live recovery anchor. An
+    /// anchor whose release was retired cannot be checked, so a later recovery may replace it;
+    /// the publication identity and bytes must still match exactly.
+    pub fn matches_claim(&self, historical: &Self, index: &super::ReleaseIndex) -> bool {
+        let live = historical
+            .restoration
+            .as_ref()
+            .is_some_and(|anchor| index.has_release(anchor.release_id));
+        if live {
+            self == historical
+        } else {
+            self.same_publication(historical)
         }
-        verified == *historical
+    }
+
+    /// Compares everything except where the bytes are recovered from;
+    /// e.g. `verified.same_publication(&retained)`.
+    pub fn same_publication(&self, other: &Self) -> bool {
+        let mut left = self.clone();
+        let mut right = other.clone();
+        left.restoration = None;
+        right.restoration = None;
+        left == right
     }
 }
 

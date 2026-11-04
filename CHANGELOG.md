@@ -36,6 +36,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Fixed skipped tag publication after successful release checks when the PR-only test job was intentionally skipped (#350).
 
+- Allowed a later restoration bundle to replace a retired recovery anchor, keeping exact publication identity and bytes (#358).
+
 ## [0.6.0] - 2026-11-01
 
 ### Added

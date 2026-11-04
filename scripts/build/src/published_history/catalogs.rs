@@ -55,7 +55,7 @@ pub(super) fn validate(
         let bytes = fs::read(&path).map_err(|cause| io_error(&path, cause))?;
         let catalog: Catalog = serde_json::from_slice(&bytes)
             .map_err(|cause| invalid(&cause.to_string(), "a complete published package catalog"))?;
-        validate_catalog(release, &catalog, assets, archives)?;
+        validate_catalog(index, release, &catalog, assets, archives)?;
     }
     Ok(())
 }
@@ -79,6 +79,7 @@ fn catalog_asset<'a>(assets: &'a [Asset], expected: &str) -> BuildResult<Option<
 }
 
 fn validate_catalog(
+    index: &ReleaseIndex,
     release: &PublishedRelease,
     catalog: &Catalog,
     assets: &[Asset],
@@ -96,11 +97,12 @@ fn validate_catalog(
             catalog.schema,
             catalog.publication_history.as_ref(),
             archives,
+            index,
         )?;
     }
     validate_asset_rows(catalog, assets)?;
     if let Some(receipt) = &catalog.publication_history {
-        validate_receipt(receipt, archives)?;
+        validate_receipt(receipt, archives, index)?;
     }
     Ok(())
 }
@@ -190,12 +192,13 @@ fn validate_shipped_digest(
 fn validate_receipt(
     receipt: &HistoryReceipt,
     archives: &BTreeMap<(String, Version), PublishedArchive>,
+    index: &ReleaseIndex,
 ) -> BuildResult<()> {
     for known in &receipt.archives {
         let present = archives
             .values()
             .flat_map(|archive| &archive.origins)
-            .any(|origin| origin.matches_claim(known));
+            .any(|origin| origin.matches_claim(known, index));
         if !present {
             return Err(invalid(
                 &known.archive,
