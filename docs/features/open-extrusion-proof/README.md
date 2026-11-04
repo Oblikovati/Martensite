@@ -58,3 +58,8 @@ collapsed and backtracking spans, invalid and nonconstant weights, cancellation,
 all finite work limits, and owned-input isolation. Complete retained reports are
 compared across independent processes and threads. Earlier closed proof reports
 and the existing closed fixture corpus remain replay gates.
+
+The required sanitizer runner selects the same open-support module with its
+pinned instrumented toolchain. Startup refusal and failed controls stop the
+required check. Existing cache, capture, group and owned-face checks remain in
+the pipeline.
