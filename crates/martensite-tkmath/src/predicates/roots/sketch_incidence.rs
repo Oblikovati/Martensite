@@ -68,6 +68,8 @@ mod target_form;
 #[cfg(test)]
 mod tests;
 mod validate;
+/// Exact proper components around a given incident vertex.
+pub mod vertex_neighborhood;
 
 pub use failure::{
     SketchIncidenceCause, SketchIncidenceCompletion, SketchIncidenceFailure, SketchIncidenceStage,

@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added owned proper given-vertex neighborhood certificates with exact sphere-boundary witnesses and explicit finite work limits (#213).
+
 - Added owned open quadratic-extrusion support proofs with explicit endpoint domains and finite incomplete outcomes (#213).
 
 - Added bounded owned rational surface query embedding certificates, coherent tensor-surface input leases and an explicit expanded input-capture policy (#213).
