@@ -1,6 +1,8 @@
 //! Owned stored spline fields, without evaluator admission or support construction.
 use super::BSplineState;
 mod admission;
+mod open_admission;
+pub use open_admission::{StoredOpenExtrusionFailure, StoredOpenExtrusionInput};
 
 /// Immutable stored spline input; obtain it with `curve.try_input_lease()?.stored_input()`.
 #[derive(Clone, Debug, PartialEq)]

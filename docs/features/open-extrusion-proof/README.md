@@ -63,3 +63,5 @@ The required sanitizer runner selects the same open-support module with its
 pinned instrumented toolchain. Startup refusal and failed controls stop the
 required check. Existing cache, capture, group and owned-face checks remain in
 the pipeline.
+
+The geometry adapter `StoredSplineInput::into_open_extrusion_input` retains the stored source alongside the numeric input. It refuses delegated evaluators and unsupported layouts, and checks the actual flat knots and evaluator domain before admission. Differing endpoints do not bypass these checks. Admission alone does not run the proof or validate a face.
