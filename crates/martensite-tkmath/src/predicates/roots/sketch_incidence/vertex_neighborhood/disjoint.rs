@@ -101,7 +101,7 @@ fn budgeted_disjoint(
 fn disjoint(
     first: &GivenVertexNeighborhoodReport,
     second: &GivenVertexNeighborhoodReport,
-    cancelled: &mut impl FnMut() -> bool,
+    cancelled: &mut dyn FnMut() -> bool,
 ) -> Result<(), DisjointVertexNeighborhoodFailure> {
     complete_operands(first, second)?;
     if cancelled() {
