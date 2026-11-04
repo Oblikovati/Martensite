@@ -27,7 +27,7 @@ impl StoredSplineInput {
         }
         admitted(self, layout)
     }
-    fn layout(&self, direction: [f64; 3], interval: [f64; 2]) -> Layout {
+    pub(super) fn layout(&self, direction: [f64; 3], interval: [f64; 2]) -> Layout {
         Layout {
             degree: self.degree,
             periodic: self.periodic,
@@ -57,7 +57,7 @@ impl StoredSplineInput {
         .map_err(Error::Input)
     }
 }
-fn supported(layout: &Layout) -> bool {
+pub(super) fn supported(layout: &Layout) -> bool {
     let m = &layout.multiplicities;
     layout.degree == 2
         && !layout.periodic
@@ -86,7 +86,14 @@ fn admitted(input: StoredSplineInput, layout: Layout) -> Result<Admission, Error
     Ok(Admission::Captured(numeric, layout))
 }
 fn flat_sequence(input: &ClosedQuadraticExtrusionInput, actual: &[f64]) -> Result<(), Error> {
-    let expected = expanded_knots(input);
+    validate_flat_sequence(input.knots(), input.multiplicities(), actual)
+}
+pub(super) fn validate_flat_sequence(
+    knots: &[f64],
+    counts: &[u32],
+    actual: &[f64],
+) -> Result<(), Error> {
+    let expected = expanded_knots(knots, counts);
     if expected
         .iter()
         .map(|v| v.to_bits())
@@ -100,7 +107,7 @@ fn flat_sequence(input: &ClosedQuadraticExtrusionInput, actual: &[f64]) -> Resul
     })
 }
 
-fn checked_multiplicities(values: &[i32]) -> Result<Vec<u32>, Error> {
+pub(super) fn checked_multiplicities(values: &[i32]) -> Result<Vec<u32>, Error> {
     values
         .iter()
         .enumerate()
@@ -108,11 +115,10 @@ fn checked_multiplicities(values: &[i32]) -> Result<Vec<u32>, Error> {
         .collect::<Result<Vec<_>, _>>()
 }
 
-fn expanded_knots(input: &ClosedQuadraticExtrusionInput) -> Vec<f64> {
-    input
-        .knots()
+fn expanded_knots(knots: &[f64], counts: &[u32]) -> Vec<f64> {
+    knots
         .iter()
-        .zip(input.multiplicities())
+        .zip(counts)
         .flat_map(|(k, n)| std::iter::repeat_n(*k, *n as usize))
         .collect()
 }
