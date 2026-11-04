@@ -58,6 +58,22 @@ solely to change attribution because doing so invalidates commit hashes and
 breaks existing clones and forks. Maintainers use [`.mailmap`](.mailmap) to
 canonicalize accidental aliases without changing published commits.
 
+## Optional build cache
+
+[Kache](https://github.com/kunobi-ninja/kache) reuses compiler outputs across worktrees.
+To use it on Linux x86_64, install the pinned version and opt in per shell:
+
+```bash
+scripts/install/kache.sh
+export RUSTC_WRAPPER=kache
+```
+
+Avoid `kache init`: it sets the wrapper for every Cargo project on the machine and enables the
+daemon's cleanup of target directories, which the script above turns off. The compiler inventory
+always bypasses the wrapper, because a cache hit replays only part of the diagnostics it counts.
+Unset the variable when you read compiler warnings, for the same reason. In CI only pull request
+test jobs use the cache.
+
 ## Required gates before push/merge
 
 CI runs one workflow, `.github/workflows/martensite.yml`. It only installs the

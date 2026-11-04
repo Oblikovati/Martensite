@@ -111,6 +111,10 @@ fn inventory_command(root: &Path, triple: &str) -> CommandSpec {
         ])
         .environment("RUSTFLAGS", Some("--force-warn unsafe_code"))
         .environment("CARGO_ENCODED_RUSTFLAGS", None)
+        // A build cache replays a fraction of the diagnostics this report counts. Empty values
+        // also override a wrapper set in a Cargo configuration file.
+        .environment("RUSTC_WRAPPER", Some(""))
+        .environment("RUSTC_WORKSPACE_WRAPPER", Some(""))
 }
 
 fn output_error(detail: String) -> BuildError {
@@ -145,6 +149,28 @@ fn write_report(
 mod tests {
     use super::*;
     use crate::fake_runner::RecordingRunner;
+
+    #[test]
+    fn collector_bypasses_compiler_wrappers_because_caches_drop_diagnostics() {
+        let spec = inventory_command(Path::new("/repo"), "test-target");
+        let expected = CommandSpec::new("cargo", Path::new("/repo"))
+            .args([
+                "check",
+                "--locked",
+                "--workspace",
+                "--all-targets",
+                "--target",
+                "test-target",
+                "--message-format=json",
+                "--target-dir",
+                "target/unsafe-inventory/build",
+            ])
+            .environment("RUSTFLAGS", Some("--force-warn unsafe_code"))
+            .environment("CARGO_ENCODED_RUSTFLAGS", None)
+            .environment("RUSTC_WRAPPER", Some(""))
+            .environment("RUSTC_WORKSPACE_WRAPPER", Some(""));
+        assert_eq!(spec, expected);
+    }
 
     #[test]
     fn collector_uses_locked_workspace_scope_and_writes_target_report() {
