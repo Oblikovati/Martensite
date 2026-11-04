@@ -99,7 +99,7 @@ fn cancellation_and_unknown_behavior_preserve_owned_inputs() {
 }
 
 #[test]
-fn invalid_storage_and_nonfinite_or_empty_domains_refuse_admission() {
+fn empty_storage_and_nonfinite_weights_refuse_admission() {
     let empty = OpenQuadraticExtrusionInput::capture(
         vec![],
         vec![],
@@ -110,6 +110,9 @@ fn invalid_storage_and_nonfinite_or_empty_domains_refuse_admission() {
     );
     assert!(empty.is_err());
     assert!(fixtures::weighted(vec![f64::NAN; 3]).is_err());
+}
+#[test]
+fn nonfinite_directions_and_empty_intervals_refuse_admission() {
     for (direction, interval) in [
         ([0.; 3], [-1., 1.]),
         ([0., 0., f64::INFINITY], [-1., 1.]),
