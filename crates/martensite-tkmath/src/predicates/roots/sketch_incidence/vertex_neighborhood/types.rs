@@ -97,7 +97,7 @@ impl VertexNeighborhoodPolicy {
 /// Example: `witness.parameter.bounds()` reads the certified parameter bracket.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VertexNeighborhoodCrossing {
-    /// Original span index, preserving the source parameter domain.
+    /// Expanded-knot interval index of the original source; a line uses zero.
     pub span: usize,
     /// Exactly isolated root with its multiplicity.
     pub parameter: RootBracket,
@@ -122,7 +122,7 @@ pub enum VertexNeighborhoodFailure {
     Spline(SketchIncidenceCause),
     /// One span lies entirely on the sphere boundary.
     BoundaryOverlap {
-        /// Original source span index.
+        /// Expanded-knot interval index of the original source; a line uses zero.
         span: usize,
     },
     /// Input did not produce precisely the declared proper endpoint components.

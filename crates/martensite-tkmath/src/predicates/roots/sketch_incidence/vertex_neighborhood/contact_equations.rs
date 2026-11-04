@@ -72,7 +72,7 @@ fn common(
     work: &mut Work<'_>,
 ) -> Result<Option<IntegerPolynomial>, Failure> {
     match (first, second) {
-        (None, None) => Err(Failure::Overlap { span }),
+        (None, None) => Err(Failure::CollinearUnclassified { span }),
         (Some(p), None) | (None, Some(p)) => Ok((p.degree() > 0).then_some(p)),
         (Some(a), Some(b)) => SturmChain::from_pair(a, b, &mut work.cancelled)
             .map(|chain| chain.repeated_factor())

@@ -74,7 +74,7 @@ fn all_pieces(
         update_endpoints(&mut endpoints, &equation, piece.range, index);
         isolation::append(
             &mut crossings,
-            isolation::isolate(&equation, piece.range, index, work)?,
+            isolation::isolate(&equation, piece.range, piece.source_span, work)?,
         );
     }
     Ok((crossings, endpoints))

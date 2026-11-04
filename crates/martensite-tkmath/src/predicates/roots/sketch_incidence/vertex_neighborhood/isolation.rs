@@ -105,7 +105,7 @@ pub(super) fn append(target: &mut Vec<Crossing>, mut roots: Vec<Crossing>) {
 fn same_knot(previous: &Crossing, next: &Crossing) -> bool {
     let (a, b) = previous.parameter.bounds();
     let (c, d) = next.parameter.bounds();
-    a == b && b == c && c == d && previous.span + 1 == next.span
+    a == b && b == c && c == d
 }
 
 fn bound(value: f64) -> Result<DyadicBound, Failure> {

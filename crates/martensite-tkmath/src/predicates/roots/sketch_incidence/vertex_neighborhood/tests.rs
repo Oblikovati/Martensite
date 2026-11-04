@@ -155,3 +155,23 @@ fn publication_types_are_send_sync_and_threads_are_deterministic() {
     let actual = std::thread::spawn(|| run(line())).join().unwrap();
     assert_eq!(expected, actual);
 }
+
+#[test]
+fn later_trim_keeps_the_original_expanded_knot_span_address() {
+    let mut input = line();
+    input.curve = VertexNeighborhoodCurve::Quadratic {
+        poles: vec![
+            [0.; 3],
+            [1., 0., 0.],
+            [2., 0., 0.],
+            [3., 0., 0.],
+            [4., 0., 0.],
+        ],
+        flat_knots: vec![0., 0., 0., 1., 1., 2., 2., 2.],
+    };
+    input.interval = [1., 2.];
+    input.point = [2., 0., 0.];
+    input.radius = 0.25;
+    let report = run(input);
+    assert_eq!(report.certificate().unwrap().crossings()[0].span, 4);
+}

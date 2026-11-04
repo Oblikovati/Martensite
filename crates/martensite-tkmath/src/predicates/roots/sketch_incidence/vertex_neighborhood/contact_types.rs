@@ -7,7 +7,7 @@ use std::cmp::Ordering;
 /// Example: `contact.parameter.bounds()` reads a complete isolated contact witness.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GivenVertexContact {
-    /// Original source span index.
+    /// Expanded-knot interval index of the original source; a line uses zero.
     pub span: usize,
     /// Root of the exact common projected coordinate equations.
     pub parameter: RootBracket,
@@ -35,8 +35,8 @@ pub enum GivenVertexContactFailure {
     TargetNotLine,
     /// Target placement collapsed its line direction.
     ZeroDirection,
-    /// An entire source span is collinear with the target; no finite contact list exists.
-    Overlap {
+    /// A source span is collinear with the target; finite overlap or separation is unclassified.
+    CollinearUnclassified {
         /// Actual source span index.
         span: usize,
     },

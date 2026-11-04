@@ -120,7 +120,7 @@ fn collinear_overlap_does_not_become_a_finite_contact_list() {
     );
     assert_eq!(
         result.failure(),
-        Some(&GivenVertexContactFailure::Overlap { span: 0 })
+        Some(&GivenVertexContactFailure::CollinearUnclassified { span: 0 })
     );
 }
 #[test]
@@ -180,4 +180,15 @@ fn owned_contact_reports_are_send_sync_and_thread_deterministic() {
     let first = run();
     let second = std::thread::spawn(run).join().unwrap();
     assert_eq!(first, second);
+}
+
+#[test]
+fn disjoint_finite_collinear_trims_remain_unclassified_not_asserted_overlapping() {
+    let a = line([-0.1, 0., 0.], [-1., 0., 0.], 0.2);
+    let b = line([0.1, 0., 0.], [1., 0., 0.], 0.2);
+    let report = contacts(a, b);
+    assert_eq!(
+        report.failure(),
+        Some(&GivenVertexContactFailure::CollinearUnclassified { span: 0 })
+    );
 }

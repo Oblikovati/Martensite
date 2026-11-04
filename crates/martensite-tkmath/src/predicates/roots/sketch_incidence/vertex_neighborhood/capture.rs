@@ -7,6 +7,7 @@ use super::{VertexNeighborhoodFailure as Failure, VertexPlacement};
 use crate::predicates::roots::certificate_arithmetic::ExactRatio;
 
 pub(super) struct CurvePiece {
+    pub source_span: usize,
     pub range: [f64; 2],
     pub coordinates: [Polynomial; 3],
 }
@@ -34,6 +35,7 @@ pub(super) fn center(input: &Input) -> [ExactRatio; 3] {
 }
 fn line(origin: [f64; 3], direction: [f64; 3], range: [f64; 2]) -> CurvePiece {
     CurvePiece {
+        source_span: 0,
         range,
         coordinates: std::array::from_fn(|i| {
             Polynomial::linear(ratio(origin[i]), ratio(direction[i]))
@@ -83,6 +85,7 @@ fn piece(
     let xy = spans::span_piece(&sources[0], knots, index, range);
     let z = spans::span_piece(&sources[1], knots, index, range);
     CurvePiece {
+        source_span: index,
         range,
         coordinates: [xy.point.x, xy.point.y, z.point.x],
     }

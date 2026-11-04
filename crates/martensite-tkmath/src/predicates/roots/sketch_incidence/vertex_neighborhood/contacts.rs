@@ -53,11 +53,11 @@ fn classify_pieces(
     let line = LineFrame::new(&target_pieces[0])?;
     let center = capture::center(source);
     let mut contacts = Vec::new();
-    for (index, piece) in pieces.iter().enumerate() {
+    for piece in &pieces {
         let ball = isolation::threshold(piece, &center, source.radius);
         append(
             &mut contacts,
-            span_contacts(piece, &line, ball, index, work)?,
+            span_contacts(piece, &line, ball, piece.source_span, work)?,
         );
     }
     Ok(contacts)
@@ -140,7 +140,7 @@ fn append(contacts: &mut Vec<Contact>, mut next: Vec<Contact>) {
     if let (Some(previous), Some(first)) = (contacts.last(), next.first()) {
         let (a, b) = previous.parameter.bounds();
         let (c, d) = first.parameter.bounds();
-        if a == b && b == c && c == d && previous.span + 1 == first.span {
+        if a == b && b == c && c == d {
             next.remove(0);
         }
     }
