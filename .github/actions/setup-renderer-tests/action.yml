@@ -3,6 +3,7 @@ description: Installs Mesa lavapipe and the pinned Vulkan validation layer for t
 runs:
   using: composite
   steps:
+    - uses: ./.github/actions/free-runner-disk
     - name: Install lavapipe and the pinned validation layer
       shell: bash
       run: |
