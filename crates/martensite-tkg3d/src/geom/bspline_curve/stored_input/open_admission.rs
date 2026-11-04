@@ -30,9 +30,9 @@ impl StoredOpenExtrusionInput {
 #[derive(Clone, Debug, PartialEq)]
 pub enum StoredOpenExtrusionFailure {
     /// An external evaluator prevents proof from stored coefficients.
-    EvaluationOverride,
+    EvaluationOverride(ClosedSplineExtrusionLayout),
     /// Degree, periodicity or array indexing is unsupported.
-    UnsupportedLayout,
+    UnsupportedLayout(ClosedSplineExtrusionLayout),
     /// Shared stored multiplicity or flat-knot validation failed.
     Storage(ClosedSplineExtrusionError),
     /// Actual numeric values fail the open operation's input contract.
@@ -78,10 +78,10 @@ fn admitted_layout(
 ) -> Result<ClosedSplineExtrusionLayout, StoredOpenExtrusionFailure> {
     let layout = source.layout(direction, interval);
     if layout.basis_override {
-        return Err(StoredOpenExtrusionFailure::EvaluationOverride);
+        return Err(StoredOpenExtrusionFailure::EvaluationOverride(layout));
     }
     if !admission::supported(&layout) {
-        return Err(StoredOpenExtrusionFailure::UnsupportedLayout);
+        return Err(StoredOpenExtrusionFailure::UnsupportedLayout(layout));
     }
     Ok(layout)
 }

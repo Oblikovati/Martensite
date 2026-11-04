@@ -33,22 +33,22 @@ fn open_admission_preserves_input_and_does_not_identify_endpoints() {
 fn unsupported_evaluator_and_layout_refuse() {
     let mut override_input = source();
     override_input.evaluation_override = true;
-    assert_eq!(
-        admit(override_input).unwrap_err(),
-        StoredOpenExtrusionFailure::EvaluationOverride
-    );
+    assert!(matches!(
+        admit(override_input),
+        Err(StoredOpenExtrusionFailure::EvaluationOverride(_))
+    ));
     let mut periodic = source();
     periodic.periodic = true;
-    assert_eq!(
-        admit(periodic).unwrap_err(),
-        StoredOpenExtrusionFailure::UnsupportedLayout
-    );
+    assert!(matches!(
+        admit(periodic),
+        Err(StoredOpenExtrusionFailure::UnsupportedLayout(_))
+    ));
     let mut lower = source();
     lower.lower_bounds[4] = 0;
-    assert_eq!(
-        admit(lower).unwrap_err(),
-        StoredOpenExtrusionFailure::UnsupportedLayout
-    );
+    assert!(matches!(
+        admit(lower),
+        Err(StoredOpenExtrusionFailure::UnsupportedLayout(_))
+    ));
 }
 #[test]
 fn open_endpoints_do_not_bypass_flat_knot_or_domain_checks() {
