@@ -97,3 +97,42 @@ fn cancellation_and_unknown_behavior_preserve_owned_inputs() {
     );
     assert!(report.certificate().is_none());
 }
+
+#[test]
+fn invalid_storage_and_nonfinite_or_empty_domains_refuse_admission() {
+    let empty = OpenQuadraticExtrusionInput::capture(
+        vec![],
+        vec![],
+        vec![],
+        vec![],
+        [0., 0., 1.],
+        [-1., 1.],
+    );
+    assert!(empty.is_err());
+    assert!(fixtures::weighted(vec![f64::NAN; 3]).is_err());
+    for (direction, interval) in [
+        ([0.; 3], [-1., 1.]),
+        ([0., 0., f64::INFINITY], [-1., 1.]),
+        ([0., 0., 1.], [1., 1.]),
+        ([0., 0., 1.], [0., f64::INFINITY]),
+    ] {
+        let result = invalid_domain(direction, interval);
+        assert!(
+            result.is_err(),
+            "direction={direction:?}, interval={interval:?}"
+        );
+    }
+}
+fn invalid_domain(
+    direction: [f64; 3],
+    interval: [f64; 2],
+) -> Result<OpenQuadraticExtrusionInput, OpenExtrusionInputError> {
+    OpenQuadraticExtrusionInput::capture(
+        vec![[0., 0., 0.], [1., 1., 0.], [2., 0., 0.]],
+        vec![1.; 3],
+        vec![0., 1.],
+        vec![3, 3],
+        direction,
+        interval,
+    )
+}
