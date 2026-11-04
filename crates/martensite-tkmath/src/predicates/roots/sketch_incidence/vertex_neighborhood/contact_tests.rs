@@ -192,3 +192,15 @@ fn disjoint_finite_collinear_trims_remain_unclassified_not_asserted_overlapping(
         Some(&GivenVertexContactFailure::CollinearUnclassified { span: 0 })
     );
 }
+
+#[test]
+fn print_owned_incidence_report_for_process_comparison() {
+    let source = spline(
+        [[0.; 3], [0.; 3], [0., 1., 0.]],
+        0.2,
+        VertexNeighborhoodEnds::First,
+    );
+    let report = contacts(source, line([0., 0.125, 0.], [0., 0., 1.], 0.2));
+    assert_eq!(report.contacts().unwrap().len(), 1);
+    println!("VERTEX_INCIDENCE_REPORT={report:?}");
+}

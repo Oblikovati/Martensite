@@ -175,3 +175,34 @@ fn later_trim_keeps_the_original_expanded_knot_span_address() {
     let report = run(input);
     assert_eq!(report.certificate().unwrap().crossings()[0].span, 4);
 }
+
+#[test]
+fn later_span_cannot_reset_the_one_complete_operation_budget() {
+    let mut input = line();
+    let xy = [
+        [1., 0.],
+        [1., 1.],
+        [0., 1.],
+        [-1., 1.],
+        [-1., 0.],
+        [-1., -1.],
+        [0., -1.],
+        [1., -1.],
+        [1., 0.],
+    ];
+    input.curve = VertexNeighborhoodCurve::Quadratic {
+        poles: xy.map(|[x, y]| [x, y, 0.]).to_vec(),
+        flat_knots: vec![0., 0., 0., 1., 1., 2., 2., 3., 3., 4., 4., 4.],
+    };
+    input.point = [1., 0., 0.];
+    input.interval = [0., 4.];
+    input.radius = 0.25;
+    input.ends = VertexNeighborhoodEnds::Both;
+    let complete = run(input.clone());
+    assert!(complete.certificate().is_some());
+    let limit = complete.work() - 1;
+    let refused =
+        certify_given_vertex_neighborhood(input, VertexNeighborhoodPolicy::v1(limit), || false);
+    assert!(refused.certificate().is_none());
+    assert!(refused.work() <= limit);
+}
