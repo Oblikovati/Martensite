@@ -15,4 +15,4 @@ runs:
           mkdir -p target
           sudo mount --bind /mnt/martensite-target target
         fi
-        df -h / target
+        df -h .
