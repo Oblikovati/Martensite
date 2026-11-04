@@ -152,6 +152,6 @@ PR base SHAs fail before selection; the driver never falls back to a moving
 branch. Local `cargo xtask pr --base` and manual PR dispatch retain their explicit
 or default comparison refs. Release selection remains relative to release tags.
 
-The `martensite-vulkan` suite needs Mesa lavapipe and the pinned validation layer, which
+The `martensite-vulkan` suite needs the pinned Mesa lavapipe and validation layer, which
 `.github/actions/setup-renderer-tests` and `install-linux.sh` provide on Linux only. Its
 tests run on the Linux target. The other platforms still build and lint the package.
