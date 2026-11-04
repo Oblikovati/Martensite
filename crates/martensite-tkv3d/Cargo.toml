@@ -1,0 +1,109 @@
+[package]
+autotests = false
+name = "martensite-tkv3d"
+version = "0.7.0"
+description = "Martensite interactive visualization: selection, presentation, interactive objects and the 3D viewer."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+# The workspace forbids unsafe code. This crate keeps one lifetime-erased destructor borrow and a borrowed C
+# string view of externally maintained light names, so
+# it denies unsafe code and lets each module that needs it opt in with
+# `#[allow(unsafe_code)]` and a SAFETY comment on every unsafe block and impl (AGENTS.md,
+# "Unsafe code exception"); clippy checks those comments. The other lints match the workspace.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = "warn"
+undocumented_unsafe_blocks = "warn"
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.1" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.6" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.6" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.5" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.7" }
+martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.7" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.0" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.6" }
+# Hidden line presentations run the hidden line removal algorithm.
+martensite-tkhlr = { path = "../martensite-tkhlr", version = "0.3.6" }
+
+[dev-dependencies]
+martensite-test-support = { path = "../martensite-test-support", version = "0.3.6" }
+# Real closed volume fixtures reuse the primitive topology implementation.
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.7" }
+
+# Test modules share one executable per toolkit to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+# Abort checks reexecute exact test names.
+[[test]]
+name = "ais_context_fatal"
+path = "tests/ais_context_fatal.rs"
+
+[[test]]
+name = "composition_filter_ancestry_native"
+path = "tests/composition_filter_ancestry_native.rs"
+
+[[test]]
+name = "composition_filter_compiler_calls"
+path = "tests/composition_filter_compiler_calls.rs"
+
+[[test]]
+name = "composition_stored_filters_live"
+path = "tests/composition_stored_filters_live.rs"
+
+[[example]]
+name = "stored_filters_cost"
+path = "examples/stored_filters_cost.rs"
+
+[[test]]
+name = "migration_runtime_ancestry"
+path = "tests/migration_runtime_ancestry.rs"
+
+[[test]]
+name = "migration_exception_contracts"
+path = "tests/migration_exception_contracts.rs"
+
+[[test]]
+name = "selectmgr_reference_contracts"
+path = "tests/selectmgr_reference_contracts.rs"
+
+[[test]]
+name = "rtti_descriptor_handle_contracts"
+path = "tests/rtti_descriptor_handle_contracts.rs"
+
+[[test]]
+name = "rtti_dynamic_descriptor_dispatch"
+path = "tests/rtti_dynamic_descriptor_dispatch.rs"
+
+[[test]]
+name = "textured_shape_group_cursor"
+path = "tests/textured_shape_group_cursor.rs"
+
+[[test]]
+name = "textured_shape_presentation_cursor"
+path = "tests/textured_shape_presentation_cursor.rs"
+
+[[test]]
+name = "texture_retirement_override"
+path = "tests/texture_retirement_override.rs"
+
+[[test]]
+name = "sphere_factory_contract"
+path = "tests/sphere_factory_contract.rs"
+
+[[test]]
+name = "composition_filter_public_bindings"
+path = "tests/composition_filter_public_bindings.rs"

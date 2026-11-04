@@ -1,0 +1,148 @@
+//! Combined image/sampler descriptors own view and sampler until submitted frames finish.
+use super::{
+    runtime::{VulkanRuntime, vk_error},
+    sampled_surface_image::SampledSurfaceImage,
+};
+use crate::{RenderError, surface_texture::SurfaceSamplerPolicy};
+use ash::vk;
+use std::sync::Arc;
+pub(super) struct SurfaceImageLayout {
+    runtime: Arc<VulkanRuntime>,
+    pub handle: vk::DescriptorSetLayout,
+}
+impl SurfaceImageLayout {
+    pub fn new(runtime: &Arc<VulkanRuntime>) -> Result<Self, RenderError> {
+        let bindings = [vk::DescriptorSetLayoutBinding::default()
+            .binding(0)
+            .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
+            .descriptor_count(1)
+            .stage_flags(vk::ShaderStageFlags::VERTEX | vk::ShaderStageFlags::FRAGMENT)];
+        // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
+        let handle = unsafe {
+            runtime.device().create_descriptor_set_layout(
+                &vk::DescriptorSetLayoutCreateInfo::default().bindings(&bindings),
+                None,
+            )
+        }
+        .map_err(|e| vk_error("create surface image layout", e))?;
+        Ok(Self {
+            runtime: runtime.clone(),
+            handle,
+        })
+    }
+}
+impl Drop for SurfaceImageLayout {
+    fn drop(&mut self) {
+        // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.
+        unsafe {
+            self.runtime
+                .device()
+                .destroy_descriptor_set_layout(self.handle, None);
+        }
+    }
+}
+pub(super) struct SurfaceImageBinding {
+    image: Arc<SampledSurfaceImage>,
+    view: vk::ImageView,
+    sampler: vk::Sampler,
+    pool: vk::DescriptorPool,
+    pub set: vk::DescriptorSet,
+}
+impl SurfaceImageBinding {
+    pub fn new(
+        image: &Arc<SampledSurfaceImage>,
+        layout: &SurfaceImageLayout,
+        policy: &SurfaceSamplerPolicy,
+    ) -> Result<Arc<Self>, RenderError> {
+        let (first, count) = super::surface_sampler::surface_view_levels(image.levels, policy)?;
+        let mut binding = Self {
+            image: image.clone(),
+            view: vk::ImageView::null(),
+            sampler: vk::Sampler::null(),
+            pool: vk::DescriptorPool::null(),
+            set: vk::DescriptorSet::null(),
+        };
+        binding.view = image.view(first, count)?;
+        binding.sampler = super::surface_sampler::create_surface_sampler(image, policy, count)?;
+        binding.pool = create_image_pool(&image.runtime)?;
+        binding.allocate(layout)?;
+        Ok(Arc::new(binding))
+    }
+    fn allocate(&mut self, layout: &SurfaceImageLayout) -> Result<(), RenderError> {
+        let runtime = &self.image.runtime;
+        let layouts = [layout.handle];
+        let info = vk::DescriptorSetAllocateInfo::default()
+            .descriptor_pool(self.pool)
+            .set_layouts(&layouts);
+        // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
+        self.set = unsafe { runtime.device().allocate_descriptor_sets(&info) }
+            .map_err(|e| vk_error("allocate surface image set", e))?[0];
+        write_surface_descriptor(runtime, self.set, self.view, self.sampler);
+        Ok(())
+    }
+}
+impl SurfaceImageBinding {
+    /// Whether the view is a 3D view of a `Graphic3dTypeOfTexture_3D` image; `binding.is_volume`.
+    pub fn is_volume(&self) -> bool {
+        self.image.volume
+    }
+    /// The view and sampler written into another descriptor set; `binding.image_info()`.
+    pub fn image_info(&self) -> vk::DescriptorImageInfo {
+        vk::DescriptorImageInfo::default()
+            .sampler(self.sampler)
+            .image_view(self.view)
+            .image_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)
+    }
+}
+impl Drop for SurfaceImageBinding {
+    fn drop(&mut self) {
+        // SAFETY: the handle belongs to this device and its owner releases it only after the GPU work that used it has completed.
+        unsafe {
+            let device = self.image.runtime.device();
+            if self.pool != vk::DescriptorPool::null() {
+                device.destroy_descriptor_pool(self.pool, None);
+            }
+            if self.sampler != vk::Sampler::null() {
+                device.destroy_sampler(self.sampler, None);
+            }
+            if self.view != vk::ImageView::null() {
+                device.destroy_image_view(self.view, None);
+            }
+        }
+    }
+}
+fn create_image_pool(runtime: &VulkanRuntime) -> Result<vk::DescriptorPool, RenderError> {
+    let sizes = [vk::DescriptorPoolSize {
+        ty: vk::DescriptorType::COMBINED_IMAGE_SAMPLER,
+        descriptor_count: 1,
+    }];
+    let info = vk::DescriptorPoolCreateInfo::default()
+        .max_sets(1)
+        .pool_sizes(&sizes);
+    // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
+    unsafe { runtime.device().create_descriptor_pool(&info, None) }
+        .map_err(|e| vk_error("create surface image pool", e))
+}
+
+fn write_surface_descriptor(
+    runtime: &VulkanRuntime,
+    set: vk::DescriptorSet,
+    view: vk::ImageView,
+    sampler: vk::Sampler,
+) {
+    let images = [vk::DescriptorImageInfo::default()
+        .sampler(sampler)
+        .image_view(view)
+        .image_layout(vk::ImageLayout::SHADER_READ_ONLY_OPTIMAL)];
+    let writes = [vk::WriteDescriptorSet::default()
+        .dst_set(set)
+        .dst_binding(0)
+        .descriptor_type(vk::DescriptorType::COMBINED_IMAGE_SAMPLER)
+        .image_info(&images)];
+    // SAFETY: the create information borrows live values of this scope and the device stays valid for the runtime's lifetime.
+    unsafe {
+        runtime.device().update_descriptor_sets(&writes, &[]);
+    }
+    #[cfg(feature = "command-state-diagnostics")]
+    super::sampled_surface_image::replay_diagnostic::descriptor(set, 0, &images[0]);
+}

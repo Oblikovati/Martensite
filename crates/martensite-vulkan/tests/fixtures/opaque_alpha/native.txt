@@ -1,0 +1,10 @@
+# sw: llvmpipe (LIBGL_ALWAYS_SOFTWARE=1)
+opaqueAlpha=1 7f7f7fff=3520 ff0000ff=576
+opaqueAlpha=0 7f7f7f00=3520 ff0000ff=576
+blendedOpaqueAlpha=1 5c5cccff=192 7f7f7fff=3328 bb00bbff=64 ff0000ff=512
+blendedOpaqueAlpha=0 5c5ccc40=192 7f7f7f00=3328 bb00bbbf=64 ff0000ff=512
+# host: AMD radeonsi
+opaqueAlpha=1 808080ff=3520 ff0000ff=576
+opaqueAlpha=0 80808000=3520 ff0000ff=576
+blendedOpaqueAlpha=1 5c5ccdff=192 808080ff=3328 bc00bcff=64 ff0000ff=512
+blendedOpaqueAlpha=0 5c5ccd40=192 80808000=3328 bc00bcbf=64 ff0000ff=512

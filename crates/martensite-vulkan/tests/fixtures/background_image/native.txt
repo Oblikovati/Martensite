@@ -1,0 +1,13 @@
+initial 0
+image-centered 1
+image-tiled 2
+image-stretch 3
+image-none 0
+image-stretch-tiles 3
+image-centered-tiles 1
+gradient-centered 1
+gradient-stretch 3
+gradient-none 0
+corner-centered 1
+image-cleared 1
+gradient-after-clear 1

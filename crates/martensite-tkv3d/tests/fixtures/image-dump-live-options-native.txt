@@ -1,0 +1,9 @@
+case unchanged
+consumed 0 3 115 117 110
+result 0 format 9 buffer 5 after 4 115 116 97 114
+case rebind-name
+consumed 0 7 114 101 98 111 117 110 100
+result 0 format 9 buffer 5 after 7 114 101 98 111 117 110 100
+case switch-buffer
+buffer 1 8x8
+result 1 format 9 buffer 1 after 3 115 117 110

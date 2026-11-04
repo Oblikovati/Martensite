@@ -1,0 +1,10 @@
+# sw: llvmpipe (LIBGL_ALWAYS_SOFTWARE=1)
+msaa=0 coverage=off fnv=6122524a69c6aec3 000000=2496 ffffff=1600
+msaa=0 coverage=on fnv=6122524a69c6aec3 000000=2496 ffffff=1600
+msaa=4 coverage=off fnv=76a7a93653ab4b43 000000=2336 898989=160 ffffff=1600
+msaa=4 coverage=on fnv=f510ea7089f0a68b 000000=2416 898989=80 bbbbbb=1600
+# host: AMD radeonsi
+msaa=0 coverage=off fnv=6122524a69c6aec3 000000=2496 ffffff=1600
+msaa=0 coverage=on fnv=6122524a69c6aec3 000000=2496 ffffff=1600
+msaa=4 coverage=off fnv=76a7a93653ab4b43 000000=2336 898989=160 ffffff=1600
+msaa=4 coverage=on fnv=4b398a5fdb7f366b 000000=2416 898989=80 bcbcbc=1600

@@ -1,0 +1,16 @@
+fbo created size=64,48 vp=64,48 init=64,48 valid=1 samples=0 colors=1 color=1 depth=1 bytes=15360 color_rb=0 depth_rb=0
+dims created 64 48 64 48
+fbo smaller size=64,48 vp=32,16 init=64,48 valid=1 samples=0 colors=1 color=1 depth=1 bytes=15360 color_rb=0 depth_rb=0
+dims smaller 32 16 64 48
+fbo larger size=64,48 vp=128,100 init=64,48 valid=1 samples=0 colors=1 color=1 depth=1 bytes=15360 color_rb=0 depth_rb=0
+dims larger 128 100 64 48
+fbo non_positive size=64,48 vp=0,-1 init=64,48 valid=1 samples=0 colors=1 color=1 depth=1 bytes=15360 color_rb=0 depth_rb=0
+dims non_positive 0 -1 64 48
+released null=1
+dims released -7 -7 -7 -7
+fbo zero size=2,2 vp=0,0 init=0,0 valid=1 samples=0 colors=1 color=1 depth=1 bytes=20 color_rb=0 depth_rb=0
+fbo negative size=2,8 vp=-4,8 init=-4,8 valid=1 samples=0 colors=1 color=1 depth=1 bytes=80 color_rb=0 depth_rb=0
+fbo huge null
+fbo one size=1,1 vp=1,1 init=1,1 valid=1 samples=0 colors=1 color=1 depth=1 bytes=5 color_rb=0 depth_rb=0
+dims foreign -7 -7 -7 -7
+foreign_released null=0

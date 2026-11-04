@@ -1,0 +1,21 @@
+{
+ "programs": [
+  {
+   "name": "phong-shading",
+   "header": "",
+   "stages": [
+    {"stage": "vertex", "file": "phong_shading.vert.glsl"},
+    {"stage": "fragment", "file": "phong_shading.frag.glsl"}
+   ]
+  },
+  {
+   "name": "phong-shading-weighted-oit",
+   "header": "",
+   "stages": [
+    {"stage": "vertex", "file": "phong_shading.vert.glsl"},
+    {"stage": "fragment", "file": "phong_shading.frag.glsl"}
+   ],
+   "options": {"nb_frag_outputs": 2, "oit_output": 1}
+  }
+ ]
+}

@@ -1,0 +1,13 @@
+# the recorded line_width_scale capture; llvmpipe (LIBGL_ALWAYS_SOFTWARE=1) then AMD radeonsi
+width=1 resolution=72 ratio=1 lit_rows=1
+width=1 resolution=144 ratio=2 lit_rows=2
+width=1 resolution=180 ratio=2.5 lit_rows=3
+width=3 resolution=72 ratio=1 lit_rows=3
+width=3 resolution=144 ratio=2 lit_rows=6
+width=3 resolution=180 ratio=2.5 lit_rows=9
+width=1 resolution=72 ratio=1 lit_rows=1
+width=1 resolution=144 ratio=2 lit_rows=2
+width=1 resolution=180 ratio=2.5 lit_rows=3
+width=3 resolution=72 ratio=1 lit_rows=3
+width=3 resolution=144 ratio=2 lit_rows=6
+width=3 resolution=180 ratio=2.5 lit_rows=9

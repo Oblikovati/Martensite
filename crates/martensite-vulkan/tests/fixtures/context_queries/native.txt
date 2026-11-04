@@ -1,0 +1,288 @@
+phong default workspace_size 64 48
+phong default view_local_origin 0 0 0
+phong default manager_local_origin 0 0 0
+phong default shading_model 3
+phong default choose -1 0 1 0 0
+phong default choose -1 1 3 3 3
+phong default choose 0 0 0 0 0
+phong default choose 0 1 0 0 0
+phong default choose 1 0 1 0 0
+phong default choose 1 1 1 0 0
+phong default choose 2 0 1 0 0
+phong default choose 2 1 2 2 2
+phong default choose 3 0 1 0 0
+phong default choose 3 1 3 3 3
+phong default choose 4 0 1 0 0
+phong default choose 4 1 3 3 3
+phong default choose 5 0 1 0 0
+phong default choose 5 1 1 0 0
+phong default camera_eye 288.67513459481285 -288.67513459481285 288.67513459481285
+phong default camera_center 0 0 0
+phong default camera_up -0.40824829046386302 0.40824829046386302 0.81649658092772603
+phong default camera_same_as_view 1
+phong default vec4_from_quantity_color 0.25 0.5 0.75 0.5
+phong default vec4_linear_from_quantity_color 0.25 0.5 0.75 0.5
+phong default vec4_srgb_from_quantity_color 0.537098706 0.735356927 0.880824983 0.5
+phong default srgb 1 1 1 0
+phong default window_buffer_bits 8 8 8 8 24 8
+phong default has_pbr 1
+phong default transparent 0 0 0 1 1 0
+phong default transparent 0 1 1 0.75 0.75 1
+phong default transparent 1 0 1 0.5 0.5 1
+phong default transparent 1 1 1 0.75 0.75 1
+phong default transparent 2 0 1 1 1 1
+phong default transparent 2 1 1 0.75 0.75 1
+phong default transparent 3 0 0 0.5 0.5 0
+phong default transparent 3 1 0 0.75 0.75 0
+phong origin workspace_size 64 48
+phong origin view_local_origin 1000 -2000 3000
+phong origin manager_local_origin 1000 -2000 3000
+phong origin shading_model 3
+phong origin choose -1 0 1 0 0
+phong origin choose -1 1 3 3 3
+phong origin choose 0 0 0 0 0
+phong origin choose 0 1 0 0 0
+phong origin choose 1 0 1 0 0
+phong origin choose 1 1 1 0 0
+phong origin choose 2 0 1 0 0
+phong origin choose 2 1 2 2 2
+phong origin choose 3 0 1 0 0
+phong origin choose 3 1 3 3 3
+phong origin choose 4 0 1 0 0
+phong origin choose 4 1 3 3 3
+phong origin choose 5 0 1 0 0
+phong origin choose 5 1 1 0 0
+phong origin camera_eye 288.67513459481285 -288.67513459481285 288.67513459481285
+phong origin camera_center 0 0 0
+phong origin camera_up -0.40824829046386302 0.40824829046386302 0.81649658092772603
+phong origin camera_same_as_view 1
+phong origin vec4_from_quantity_color 0.25 0.5 0.75 0.5
+phong origin vec4_linear_from_quantity_color 0.25 0.5 0.75 0.5
+phong origin vec4_srgb_from_quantity_color 0.537098706 0.735356927 0.880824983 0.5
+phong origin srgb 1 1 1 0
+phong origin window_buffer_bits 8 8 8 8 24 8
+phong origin has_pbr 1
+phong origin transparent 0 0 0 1 1 0
+phong origin transparent 0 1 1 0.75 0.75 1
+phong origin transparent 1 0 1 0.5 0.5 1
+phong origin transparent 1 1 1 0.75 0.75 1
+phong origin transparent 2 0 1 1 1 1
+phong origin transparent 2 1 1 0.75 0.75 1
+phong origin transparent 3 0 0 0.5 0.5 0
+phong origin transparent 3 1 0 0.75 0.75 0
+gouraud default workspace_size 64 48
+gouraud default view_local_origin 0 0 0
+gouraud default manager_local_origin 0 0 0
+gouraud default shading_model 2
+gouraud default choose -1 0 1 0 0
+gouraud default choose -1 1 2 2 2
+gouraud default choose 0 0 0 0 0
+gouraud default choose 0 1 0 0 0
+gouraud default choose 1 0 1 0 0
+gouraud default choose 1 1 1 0 0
+gouraud default choose 2 0 1 0 0
+gouraud default choose 2 1 2 2 2
+gouraud default choose 3 0 1 0 0
+gouraud default choose 3 1 3 3 3
+gouraud default choose 4 0 1 0 0
+gouraud default choose 4 1 3 3 3
+gouraud default choose 5 0 1 0 0
+gouraud default choose 5 1 1 0 0
+gouraud default camera_eye 288.67513459481285 -288.67513459481285 288.67513459481285
+gouraud default camera_center 0 0 0
+gouraud default camera_up -0.40824829046386302 0.40824829046386302 0.81649658092772603
+gouraud default camera_same_as_view 1
+gouraud default vec4_from_quantity_color 0.25 0.5 0.75 0.5
+gouraud default vec4_linear_from_quantity_color 0.25 0.5 0.75 0.5
+gouraud default vec4_srgb_from_quantity_color 0.537098706 0.735356927 0.880824983 0.5
+gouraud default srgb 1 1 1 0
+gouraud default window_buffer_bits 8 8 8 8 24 8
+gouraud default has_pbr 1
+gouraud default transparent 0 0 0 1 1 0
+gouraud default transparent 0 1 1 0.75 0.75 1
+gouraud default transparent 1 0 1 0.5 0.5 1
+gouraud default transparent 1 1 1 0.75 0.75 1
+gouraud default transparent 2 0 1 1 1 1
+gouraud default transparent 2 1 1 0.75 0.75 1
+gouraud default transparent 3 0 0 0.5 0.5 0
+gouraud default transparent 3 1 0 0.75 0.75 0
+gouraud origin workspace_size 64 48
+gouraud origin view_local_origin 1000 -2000 3000
+gouraud origin manager_local_origin 1000 -2000 3000
+gouraud origin shading_model 2
+gouraud origin choose -1 0 1 0 0
+gouraud origin choose -1 1 2 2 2
+gouraud origin choose 0 0 0 0 0
+gouraud origin choose 0 1 0 0 0
+gouraud origin choose 1 0 1 0 0
+gouraud origin choose 1 1 1 0 0
+gouraud origin choose 2 0 1 0 0
+gouraud origin choose 2 1 2 2 2
+gouraud origin choose 3 0 1 0 0
+gouraud origin choose 3 1 3 3 3
+gouraud origin choose 4 0 1 0 0
+gouraud origin choose 4 1 3 3 3
+gouraud origin choose 5 0 1 0 0
+gouraud origin choose 5 1 1 0 0
+gouraud origin camera_eye 288.67513459481285 -288.67513459481285 288.67513459481285
+gouraud origin camera_center 0 0 0
+gouraud origin camera_up -0.40824829046386302 0.40824829046386302 0.81649658092772603
+gouraud origin camera_same_as_view 1
+gouraud origin vec4_from_quantity_color 0.25 0.5 0.75 0.5
+gouraud origin vec4_linear_from_quantity_color 0.25 0.5 0.75 0.5
+gouraud origin vec4_srgb_from_quantity_color 0.537098706 0.735356927 0.880824983 0.5
+gouraud origin srgb 1 1 1 0
+gouraud origin window_buffer_bits 8 8 8 8 24 8
+gouraud origin has_pbr 1
+gouraud origin transparent 0 0 0 1 1 0
+gouraud origin transparent 0 1 1 0.75 0.75 1
+gouraud origin transparent 1 0 1 0.5 0.5 1
+gouraud origin transparent 1 1 1 0.75 0.75 1
+gouraud origin transparent 2 0 1 1 1 1
+gouraud origin transparent 2 1 1 0.75 0.75 1
+gouraud origin transparent 3 0 0 0.5 0.5 0
+gouraud origin transparent 3 1 0 0.75 0.75 0
+pbr default workspace_size 64 48
+pbr default view_local_origin 0 0 0
+pbr default manager_local_origin 0 0 0
+pbr default shading_model 4
+pbr default choose -1 0 5 0 0
+pbr default choose -1 1 4 4 4
+pbr default choose 0 0 0 0 0
+pbr default choose 0 1 0 0 0
+pbr default choose 1 0 1 0 0
+pbr default choose 1 1 1 0 0
+pbr default choose 2 0 1 0 0
+pbr default choose 2 1 2 2 2
+pbr default choose 3 0 1 0 0
+pbr default choose 3 1 3 3 3
+pbr default choose 4 0 5 0 0
+pbr default choose 4 1 4 4 4
+pbr default choose 5 0 5 0 0
+pbr default choose 5 1 5 0 0
+pbr default camera_eye 288.67513459481285 -288.67513459481285 288.67513459481285
+pbr default camera_center 0 0 0
+pbr default camera_up -0.40824829046386302 0.40824829046386302 0.81649658092772603
+pbr default camera_same_as_view 1
+pbr default vec4_from_quantity_color 0.25 0.5 0.75 0.5
+pbr default vec4_linear_from_quantity_color 0.25 0.5 0.75 0.5
+pbr default vec4_srgb_from_quantity_color 0.537098706 0.735356927 0.880824983 0.5
+pbr default srgb 1 1 1 0
+pbr default window_buffer_bits 8 8 8 8 24 8
+pbr default has_pbr 1
+pbr default transparent 0 0 0 1 1 0
+pbr default transparent 0 1 1 0.75 0.75 1
+pbr default transparent 1 0 1 0.5 0.5 1
+pbr default transparent 1 1 1 0.75 0.75 1
+pbr default transparent 2 0 1 1 1 1
+pbr default transparent 2 1 1 0.75 0.75 1
+pbr default transparent 3 0 0 0.5 0.5 0
+pbr default transparent 3 1 0 0.75 0.75 0
+pbr origin workspace_size 64 48
+pbr origin view_local_origin 1000 -2000 3000
+pbr origin manager_local_origin 1000 -2000 3000
+pbr origin shading_model 4
+pbr origin choose -1 0 5 0 0
+pbr origin choose -1 1 4 4 4
+pbr origin choose 0 0 0 0 0
+pbr origin choose 0 1 0 0 0
+pbr origin choose 1 0 1 0 0
+pbr origin choose 1 1 1 0 0
+pbr origin choose 2 0 1 0 0
+pbr origin choose 2 1 2 2 2
+pbr origin choose 3 0 1 0 0
+pbr origin choose 3 1 3 3 3
+pbr origin choose 4 0 5 0 0
+pbr origin choose 4 1 4 4 4
+pbr origin choose 5 0 5 0 0
+pbr origin choose 5 1 5 0 0
+pbr origin camera_eye 288.67513459481285 -288.67513459481285 288.67513459481285
+pbr origin camera_center 0 0 0
+pbr origin camera_up -0.40824829046386302 0.40824829046386302 0.81649658092772603
+pbr origin camera_same_as_view 1
+pbr origin vec4_from_quantity_color 0.25 0.5 0.75 0.5
+pbr origin vec4_linear_from_quantity_color 0.25 0.5 0.75 0.5
+pbr origin vec4_srgb_from_quantity_color 0.537098706 0.735356927 0.880824983 0.5
+pbr origin srgb 1 1 1 0
+pbr origin window_buffer_bits 8 8 8 8 24 8
+pbr origin has_pbr 1
+pbr origin transparent 0 0 0 1 1 0
+pbr origin transparent 0 1 1 0.75 0.75 1
+pbr origin transparent 1 0 1 0.5 0.5 1
+pbr origin transparent 1 1 1 0.75 0.75 1
+pbr origin transparent 2 0 1 1 1 1
+pbr origin transparent 2 1 1 0.75 0.75 1
+pbr origin transparent 3 0 0 0.5 0.5 0
+pbr origin transparent 3 1 0 0.75 0.75 0
+pbr_again default workspace_size 64 48
+pbr_again default view_local_origin 0 0 0
+pbr_again default manager_local_origin 0 0 0
+pbr_again default shading_model 4
+pbr_again default choose -1 0 5 0 0
+pbr_again default choose -1 1 4 4 4
+pbr_again default choose 0 0 0 0 0
+pbr_again default choose 0 1 0 0 0
+pbr_again default choose 1 0 1 0 0
+pbr_again default choose 1 1 1 0 0
+pbr_again default choose 2 0 1 0 0
+pbr_again default choose 2 1 2 2 2
+pbr_again default choose 3 0 1 0 0
+pbr_again default choose 3 1 3 3 3
+pbr_again default choose 4 0 5 0 0
+pbr_again default choose 4 1 4 4 4
+pbr_again default choose 5 0 5 0 0
+pbr_again default choose 5 1 5 0 0
+pbr_again default camera_eye 288.67513459481285 -288.67513459481285 288.67513459481285
+pbr_again default camera_center 0 0 0
+pbr_again default camera_up -0.40824829046386302 0.40824829046386302 0.81649658092772603
+pbr_again default camera_same_as_view 1
+pbr_again default vec4_from_quantity_color 0.25 0.5 0.75 0.5
+pbr_again default vec4_linear_from_quantity_color 0.25 0.5 0.75 0.5
+pbr_again default vec4_srgb_from_quantity_color 0.537098706 0.735356927 0.880824983 0.5
+pbr_again default srgb 1 1 1 0
+pbr_again default window_buffer_bits 8 8 8 8 24 8
+pbr_again default has_pbr 1
+pbr_again default transparent 0 0 0 1 1 0
+pbr_again default transparent 0 1 1 0.75 0.75 1
+pbr_again default transparent 1 0 1 0.5 0.5 1
+pbr_again default transparent 1 1 1 0.75 0.75 1
+pbr_again default transparent 2 0 1 1 1 1
+pbr_again default transparent 2 1 1 0.75 0.75 1
+pbr_again default transparent 3 0 0 0.5 0.5 0
+pbr_again default transparent 3 1 0 0.75 0.75 0
+pbr_again origin workspace_size 64 48
+pbr_again origin view_local_origin 1000 -2000 3000
+pbr_again origin manager_local_origin 1000 -2000 3000
+pbr_again origin shading_model 4
+pbr_again origin choose -1 0 5 0 0
+pbr_again origin choose -1 1 4 4 4
+pbr_again origin choose 0 0 0 0 0
+pbr_again origin choose 0 1 0 0 0
+pbr_again origin choose 1 0 1 0 0
+pbr_again origin choose 1 1 1 0 0
+pbr_again origin choose 2 0 1 0 0
+pbr_again origin choose 2 1 2 2 2
+pbr_again origin choose 3 0 1 0 0
+pbr_again origin choose 3 1 3 3 3
+pbr_again origin choose 4 0 5 0 0
+pbr_again origin choose 4 1 4 4 4
+pbr_again origin choose 5 0 5 0 0
+pbr_again origin choose 5 1 5 0 0
+pbr_again origin camera_eye 288.67513459481285 -288.67513459481285 288.67513459481285
+pbr_again origin camera_center 0 0 0
+pbr_again origin camera_up -0.40824829046386302 0.40824829046386302 0.81649658092772603
+pbr_again origin camera_same_as_view 1
+pbr_again origin vec4_from_quantity_color 0.25 0.5 0.75 0.5
+pbr_again origin vec4_linear_from_quantity_color 0.25 0.5 0.75 0.5
+pbr_again origin vec4_srgb_from_quantity_color 0.537098706 0.735356927 0.880824983 0.5
+pbr_again origin srgb 1 1 1 0
+pbr_again origin window_buffer_bits 8 8 8 8 24 8
+pbr_again origin has_pbr 1
+pbr_again origin transparent 0 0 0 1 1 0
+pbr_again origin transparent 0 1 1 0.75 0.75 1
+pbr_again origin transparent 1 0 1 0.5 0.5 1
+pbr_again origin transparent 1 1 1 0.75 0.75 1
+pbr_again origin transparent 2 0 1 1 1 1
+pbr_again origin transparent 2 1 1 0.75 0.75 1
+pbr_again origin transparent 3 0 0 0.5 0.5 0
+pbr_again origin transparent 3 1 0 0.75 0.75 0

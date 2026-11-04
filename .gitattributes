@@ -214,3 +214,11 @@ crates/martensite-tkhelix/tests/fixtures/** -text -whitespace
 crates/martensite-tkshhealing/src/sh_message/SHAPE.* -text -whitespace
 # Both healing resources are hash-pinned; Windows must preserve their bytes (#269).
 crates/martensite-tkshhealing/tests/dataset_cases/data/heal/** -text -whitespace
+
+# Viewer and renderer fixtures are compared byte for byte or sealed by hash; shader
+# binaries and their sources are embedded byte for byte.
+crates/martensite-tkv3d/tests/fixtures/** -text -whitespace
+crates/martensite-vulkan/tests/fixtures/** -text -whitespace
+crates/martensite-vulkan/tests/report_rules/fixtures/** -text -whitespace
+crates/martensite-vulkan/tests/viewer_fixtures/fixtures/** -text -whitespace
+crates/martensite-vulkan/shaders/** -text -whitespace

@@ -1,0 +1,238 @@
+//! Native serial WF presentation sequencing consumes genuine ordered face isolines.
+use super::wf_shape_edges::{append_wf_edge_polylines, classified_wf_edges};
+use super::{
+    StdPrsIsolineDestination, StdPrsIsolinePolylines, StdPrsIsolines, StdPrsShapeTool,
+    StdPrsToolTriangulatedShape, StdPrsWfShape,
+};
+use crate::prs3d::{Prs3d, Prs3dDrawer, Prs3dLineAspect};
+use martensite_tkbrep::{
+    topexp::Explorer,
+    topods::{self, Face, Shape, TopoDSShapeReadSource},
+};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference};
+use martensite_tkg3d::top_abs::ShapeEnum;
+use martensite_tkservice::graphic3d::*;
+const WF_ISO_U: usize = 0;
+const WF_ISO_V: usize = 1;
+const WF_UNFREE: usize = 2;
+const WF_FREE: usize = 3;
+const WF_COMMON: usize = 4;
+type WfPresentationPolylines = [StdPrsIsolinePolylines; 5];
+
+impl StdPrsWfShape {
+    /// Build the native default serial presentation from real topology; `Self::add(&prs,&shape,&drawer)?`.
+    pub fn add(
+        prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
+        shape: &Shape,
+        drawer: &Handle<Prs3dDrawer>,
+    ) -> Result<(), Failure> {
+        Self::add_reference(prs, shape, drawer)
+    }
+    /// Preserve a live source across graphics callbacks; `Self::add_reference(&prs,&map.node_ref(1)?,&drawer)?`.
+    pub fn add_reference<S: TopoDSShapeReadSource>(
+        prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
+        source: &S,
+        drawer: &Handle<Prs3dDrawer>,
+    ) -> Result<(), Failure> {
+        if source.read_current_shape(|shape| Ok(shape.is_null()))? {
+            return Ok(());
+        }
+        if drawer.is_auto_triangulation() {
+            source.read_current_shape(|shape| {
+                StdPrsToolTriangulatedShape::tessellate(shape, drawer)
+            })?;
+        }
+        add_wf_reference_free_edges(prs, source, drawer)?;
+        add_wf_reference_polylines(prs, source, drawer)?;
+        add_wf_reference_vertices(prs, source, drawer)
+    }
+}
+fn add_wf_reference_free_edges<S: TopoDSShapeReadSource>(
+    prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
+    source: &S,
+    drawer: &Handle<Prs3dDrawer>,
+) -> Result<(), Failure> {
+    let edges = source
+        .read_current_shape(|shape| StdPrsWfShape::add_edges_on_triangulation(shape, true))?;
+    if edges.is_null() {
+        return Ok(());
+    }
+    let group = prs.observe().new_group()?;
+    let line = drawer.free_boundary_aspect().downgrade().observe();
+    let reference = line.aspect_ref();
+    let aspect = martensite_tkernel::standard::ProjectedHandleReference::new(&reference);
+    group.set_primitives_aspect(&aspect);
+    group.add_primitive_array(&edges, true);
+    Ok(())
+}
+fn add_wf_reference_polylines<S: TopoDSShapeReadSource>(
+    prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
+    source: &S,
+    drawer: &Handle<Prs3dDrawer>,
+) -> Result<(), Failure> {
+    let deflection = source
+        .read_current_shape(|shape| StdPrsToolTriangulatedShape::get_deflection(shape, drawer))?;
+    let mut polylines = std::array::from_fn(|_| StdPrsIsolinePolylines::default());
+    source.read_current_shape(|shape| {
+        append_wf_face_isolines(shape, drawer, deflection, &mut polylines)
+    })?;
+    emit_wf_iso_groups(prs, drawer, &mut polylines)?;
+    // Driver callbacks may replace the native Value, so edge classification rereads the source.
+    source.read_current_shape(|shape| {
+        append_wf_boundary_groups(shape, drawer, deflection, &mut polylines)
+    })?;
+    emit_wf_boundary_groups(prs, drawer, &mut polylines)
+}
+fn add_wf_reference_vertices<S: TopoDSShapeReadSource>(
+    prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
+    source: &S,
+    drawer: &Handle<Prs3dDrawer>,
+) -> Result<(), Failure> {
+    // Native AddVertexes is after boundary-group callbacks, not after the initial shape snapshot.
+    let vertices = source.read_current_shape(|shape| {
+        StdPrsWfShape::add_vertexes(shape, drawer.vertex_draw_mode())
+    })?;
+    if vertices.is_null() {
+        return Ok(());
+    }
+    let group = prs.observe().new_group()?;
+    let point = drawer.point_aspect().downgrade().observe();
+    let reference = point.aspect_ref();
+    let aspect = martensite_tkernel::standard::ProjectedHandleReference::new(&reference);
+    group.set_primitives_aspect(&aspect);
+    group.add_primitive_array(&vertices.cast(), true);
+    Ok(())
+}
+
+fn wf_iso_routes(drawer: &Prs3dDrawer) -> (usize, usize) {
+    let u = drawer.u_iso_aspect().aspect();
+    let v = drawer.v_iso_aspect().aspect();
+    let wire = drawer.wire_aspect().aspect();
+    // Native establishes V->U before independently rerouting U/V into the common wire list.
+    let mut v_route = if v.is_equal(&*u) { WF_ISO_U } else { WF_ISO_V };
+    let u_route = if u.is_equal(&*wire) {
+        WF_COMMON
+    } else {
+        WF_ISO_U
+    };
+    if v.is_equal(&*wire) {
+        v_route = WF_COMMON;
+    }
+    (u_route, v_route)
+}
+fn append_wf_face_isolines(
+    shape: &Shape,
+    drawer: &Handle<Prs3dDrawer>,
+    deflection: f64,
+    polylines: &mut WfPresentationPolylines,
+) -> Result<(), Failure> {
+    let routes = wf_iso_routes(drawer);
+    for entry in Explorer::new(shape, ShapeEnum::Face, ShapeEnum::Shape)? {
+        let face = topods::face(&entry)?;
+        if drawer.iso_on_plane() || !StdPrsShapeTool::is_planar_face(&face)? {
+            append_routed_wf_isolines(&face, drawer, deflection, routes, polylines)?;
+        }
+    }
+    Ok(())
+}
+fn append_routed_wf_isolines(
+    face: &Face,
+    drawer: &Handle<Prs3dDrawer>,
+    deflection: f64,
+    routes: (usize, usize),
+    polylines: &mut WfPresentationPolylines,
+) -> Result<(), Failure> {
+    let destination = wf_isoline_destination(polylines, routes);
+    StdPrsIsolines::add_native_polylines(face, drawer, deflection, destination)
+}
+fn wf_isoline_destination(
+    polylines: &mut WfPresentationPolylines,
+    routes: (usize, usize),
+) -> StdPrsIsolineDestination<'_> {
+    if routes.0 == routes.1 {
+        return StdPrsIsolineDestination::Shared(&mut polylines[routes.0]);
+    }
+    let [u, v] = polylines
+        .get_disjoint_mut([routes.0, routes.1])
+        .expect("WF isoline routes are distinct indices within five native lists");
+    StdPrsIsolineDestination::Distinct { u, v }
+}
+
+fn emit_wf_iso_groups(
+    prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
+    drawer: &Prs3dDrawer,
+    polylines: &mut WfPresentationPolylines,
+) -> Result<(), Failure> {
+    Prs3d::add_primitives_group(
+        &prs.observe(),
+        &drawer.u_iso_aspect().cast(),
+        &mut polylines[WF_ISO_U],
+    )?;
+    Prs3d::add_primitives_group(
+        &prs.observe(),
+        &drawer.v_iso_aspect().cast(),
+        &mut polylines[WF_ISO_V],
+    )
+}
+fn wf_boundary_route(
+    enabled: bool,
+    aspect: &Prs3dLineAspect,
+    drawer: &Prs3dDrawer,
+    own: usize,
+) -> Option<usize> {
+    if !enabled {
+        return None;
+    }
+    let common = aspect.aspect().is_equal(&*drawer.wire_aspect().aspect());
+    Some(if common { WF_COMMON } else { own })
+}
+fn append_wf_boundary_groups(
+    shape: &Shape,
+    drawer: &Handle<Prs3dDrawer>,
+    deflection: f64,
+    polylines: &mut WfPresentationPolylines,
+) -> Result<(), Failure> {
+    let routes = wf_boundary_routes(drawer);
+    for (edges, route) in classified_wf_edges(shape)?.into_iter().zip(routes) {
+        if let Some(route) = route {
+            append_wf_edge_polylines(&edges, drawer, deflection, &mut polylines[route])?;
+        }
+    }
+    Ok(())
+}
+fn emit_wf_boundary_groups(
+    prs: &dyn HandleReference<dyn Graphic3dStructureSource>,
+    drawer: &Prs3dDrawer,
+    polylines: &mut WfPresentationPolylines,
+) -> Result<(), Failure> {
+    let unfree = drawer.un_free_boundary_aspect();
+    Prs3d::add_primitives_group(&prs.observe(), &unfree, &mut polylines[WF_UNFREE])?;
+    Prs3d::add_primitives_group(
+        &prs.observe(),
+        &drawer.free_boundary_aspect(),
+        &mut polylines[WF_FREE],
+    )?;
+    Prs3d::add_primitives_group(
+        &prs.observe(),
+        &drawer.wire_aspect(),
+        &mut polylines[WF_COMMON],
+    )
+}
+
+fn wf_boundary_routes(drawer: &Prs3dDrawer) -> [Option<usize>; 3] {
+    [
+        drawer.wire_draw().then_some(WF_COMMON),
+        wf_boundary_route(
+            drawer.free_boundary_draw(),
+            &drawer.free_boundary_aspect(),
+            drawer,
+            WF_FREE,
+        ),
+        wf_boundary_route(
+            drawer.un_free_boundary_draw(),
+            &drawer.un_free_boundary_aspect(),
+            drawer,
+            WF_UNFREE,
+        ),
+    ]
+}

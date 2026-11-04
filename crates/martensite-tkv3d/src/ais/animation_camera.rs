@@ -1,0 +1,85 @@
+//! Martensite camera animation follows AisAnimationCamera.
+use super::{AisAnimationBase, AisAnimationProgress, AisAnimationSource};
+use crate::v3d::V3dViewSource;
+use martensite_tkernel::{
+    standard::{Failure, Handle, StandardTransient},
+    tcollection::AsciiString,
+};
+use martensite_tkservice::graphic3d::Graphic3dCamera;
+
+/// Native protected camera handles; `animation.camera_animation_base().fields.read().view`.
+pub struct AisAnimationCameraFields {
+    /// Target view, which may be detached.
+    pub view: Handle<dyn V3dViewSource>,
+    /// Starting camera, retained by identity.
+    pub camera_start: Handle<Graphic3dCamera>,
+    /// Ending camera, retained by identity.
+    pub camera_end: Handle<Graphic3dCamera>,
+}
+/// Interpolate the live view camera without scheduling immediate redraws; `AisAnimationCamera::new("orbit", &view)`.
+pub struct AisAnimationCamera {
+    transient: StandardTransient,
+    base: super::AisAnimationCameraBase,
+}
+martensite_tkernel::impl_transient!(AisAnimationCamera,"AisAnimationCamera",dyn AisAnimationSource,transient,
+    interfaces:[dyn super::AisAnimationCameraSource,dyn AisAnimationSource]);
+impl AisAnimationCamera {
+    /// Construct a stopped animation with unspecified endpoints; `AisAnimationCamera::new("orbit", &view)`.
+    pub fn new(name: impl Into<AsciiString>, view: &Handle<dyn V3dViewSource>) -> Self {
+        let base = super::AisAnimationCameraBase::new(name, view);
+        Self {
+            transient: StandardTransient::default(),
+            base,
+        }
+    }
+
+    /// Explicit copied target; native View equivalence uses AisAnimationCameraMembers::target_view_ref.
+    /// Target view including null; `animation.target_view`.
+    pub fn target_view(&self) -> Handle<dyn V3dViewSource> {
+        // A copied convenience acquires ownership explicitly; native equivalence uses the live alias.
+        super::AisAnimationCameraMembers::target_view(self)
+    }
+    /// Retarget or detach the animation; `animation.set_view(&view)`.
+    pub fn set_view(&self, view: &Handle<dyn V3dViewSource>) {
+        // Concrete and derived handles mutate the same retained base field.
+        super::AisAnimationCameraMembers::set_view(self, view);
+    }
+    /// Explicit copied start; native CameraStart equivalence uses AisAnimationCameraMembers::camera_start_ref.
+    /// Retained start camera including null; `animation.camera_start`.
+    pub fn camera_start(&self) -> Handle<Graphic3dCamera> {
+        // A copied convenience acquires ownership explicitly; native equivalence uses the live alias.
+        super::AisAnimationCameraMembers::camera_start(self)
+    }
+    /// Retain the start endpoint by identity; `animation.set_camera_start(&camera)`.
+    pub fn set_camera_start(&self, camera: &Handle<Graphic3dCamera>) {
+        // Concrete and derived handles mutate the same retained base field.
+        super::AisAnimationCameraMembers::set_camera_start(self, camera);
+    }
+    /// Explicit copied end; native CameraEnd equivalence uses AisAnimationCameraMembers::camera_end_ref.
+    /// Retained end camera including null; `animation.camera_end`.
+    pub fn camera_end(&self) -> Handle<Graphic3dCamera> {
+        // A copied convenience acquires ownership explicitly; native equivalence uses the live alias.
+        super::AisAnimationCameraMembers::camera_end(self)
+    }
+    /// Retain the end endpoint by identity; `animation.set_camera_end(&camera)`.
+    pub fn set_camera_end(&self, camera: &Handle<Graphic3dCamera>) {
+        // Concrete and derived handles mutate the same retained base field.
+        super::AisAnimationCameraMembers::set_camera_end(self, camera);
+    }
+}
+impl AisAnimationSource for AisAnimationCamera {
+    fn animation_base(&self) -> &AisAnimationBase {
+        // Inherited playback sees the actual shared camera timeline.
+        &self.base.animation
+    }
+    fn update_own(&self, progress: &AisAnimationProgress) -> Result<(), Failure> {
+        // Concrete and derived atoms execute the same source-pinned interpolation body.
+        super::animation_camera_source::ais_animation_camera_update(self, progress)
+    }
+}
+impl super::AisAnimationCameraSource for AisAnimationCamera {
+    fn camera_animation_base(&self) -> &super::AisAnimationCameraBase {
+        // A subclass borrows the same owned animation and camera fields.
+        &self.base
+    }
+}

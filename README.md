@@ -29,6 +29,8 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkgeomalgo` | Curve and surface intersections, hatching, tangent constraints, filling, plates, laws and sketch splines. |
 | `martensite-tktopalgo` | Classification, shape construction and sewing, checks, extrema, bounding boxes and global properties. |
 | `martensite-tkhlr` | Hidden line removal, contour lines of surfaces and the visible and hidden lines as shapes. |
+| `martensite-tkv3d` | Selection, presentation, interactive objects and the 3D viewer. |
+| `martensite-vulkan` | The Vulkan 1.3 renderer behind the graphic driver interfaces. |
 | `martensite-tkprim` | Primitive solids (boxes, wedges, cylinders, cones, spheres, tori, revolutions, half-spaces) and sweeps. |
 | `martensite-tkhelix` | Helix curves, their B-spline approximation and composite helix wires. |
 | `martensite-tkshhealing` | Shape analysis, repair, geometry conversion and subdivision. |
@@ -52,6 +54,9 @@ The [shape healing](docs/features/martensite-tkshhealing/README.md),
 [mesh construction](docs/features/martensite-tkmesh/README.md) and
 [document object model](docs/features/martensite-tktobj/README.md) guides describe
 the added toolkits and their verification limits.
+The [interactive visualization](docs/features/martensite-tkv3d/README.md) and
+[Vulkan renderer](docs/features/martensite-vulkan/README.md) guides describe the viewer and
+how to run its tests on a software driver.
 
 ## Getting started
 

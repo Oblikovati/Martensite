@@ -1,0 +1,11 @@
+# Textured callback regression source
+
+These six ordinary tests call the unchanged production `ais_textured_shape_update_attributes`. Their fixture is the complete recorded 101-line output, sealed in a 91-payload packet. SHA256 is 56ce3e1ce4b7195e71cc04e935a8dfaf9bb43cd7ac1a90110e9c73db1c41b850. Each test compares every event for its exact named input, in actual order. The initial compiler/configuration record is retained in the asset but is not interpreted as a Rust ABI claim.
+
+The named virtual groups delegate actual aspect retention and all remaining required methods to existing NullGroup. The fixture inserts these groups into the real NullCStructure group storage using its existing construction pattern. It does not implement traversal or substitute the operation. Labels A/B/C/D are explicit construction inputs, never inferred from output ordering or coordinates. External A/B/C handles remain alive until final observations. D has only the presentation's intrusive owner. The fixture's observer references and Arc trace add no intrusive owners. The same existing TexturedStateFixture supplies the real parent; old append, appearance and retirement fixtures are unchanged.
+
+Callback records measure actual group counters, argument/source counters and target identities. The slot flag compares the received HandleReference's actual `reference_address()` with a HandleFieldRef selecting the real protected aspect storage. This asserts the released logical handle-slot contract, without assuming any object layout. It is not hardcoded true. Actual B-before/after and C observations separately prove live target replacement; an observer snapshot of the old target cannot satisfy them.
+
+For both rebind inputs, the precreated alternate and retained shading object have identical owner lifetimes. B first retains the old current aspect, then either replaces the actual protected aspect field or calls SetAspect on the retained shading parent. The latter must preserve the independently copied current aspect. Temporary getter handles end before count observations. No read lock on aspect/group storage survives a callback; no victim is the active B group.
+
+These ordinary tests run in process and start no other program. They do not by themselves establish API completion, concurrency qualification or runtime equivalence.

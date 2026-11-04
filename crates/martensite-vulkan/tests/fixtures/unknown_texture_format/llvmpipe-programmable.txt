@@ -1,0 +1,8 @@
+rgb-control fnv=391c14e461f45a43 lit=14400 centre=169,40,169
+Renderer | Type: Error | ID: 0 | Severity: High | Message:
+  Error: No suitable texture format for UNKNOWN image format [Graphic3dTextureRoot_2]
+unknown-format fnv=29ff4220c3bd3c83 lit=14400 centre=0,0,0
+rgb-after-unknown fnv=391c14e461f45a43 lit=14400 centre=169,40,169
+Error: no image library available
+missing-file fnv=29ff4220c3bd3c83 lit=14400 centre=0,0,0
+rgb-after-missing fnv=391c14e461f45a43 lit=14400 centre=169,40,169
