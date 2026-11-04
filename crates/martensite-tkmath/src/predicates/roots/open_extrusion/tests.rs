@@ -3,6 +3,7 @@ use super::*;
 mod fixtures;
 mod refusal;
 mod replay;
+mod represented_profiles;
 fn run(input: OpenQuadraticExtrusionInput) -> OpenExtrusionReport {
     certify_open_quadratic_extrusion(input, OpenExtrusionPolicy::bounded(), || false)
 }
@@ -85,4 +86,30 @@ fn published_types_are_send_and_sync() {
     both::<OpenExtrusionStage>();
     both::<OpenExtrusionReport>();
     both::<OpenExtrusionCertificate<'static>>();
+}
+
+#[test]
+fn finite_planar_profiles_keep_their_real_endpoint_gaps() {
+    for input in [
+        represented_profiles::offset_profile(),
+        represented_profiles::origin_profile(),
+    ] {
+        let original = input.poles().to_vec();
+        assert_ne!(
+            original.first().unwrap()[0].to_bits(),
+            original.last().unwrap()[0].to_bits()
+        );
+        let report = run(input);
+        assert!(report.certificate().is_some(), "{:?}", report.completion());
+        assert_eq!(report.work().scheduled_obligations, 136);
+        assert_eq!(report.work().finished_obligations, 136);
+        assert_eq!(
+            coordinate_bits(report.input().poles()),
+            coordinate_bits(&original)
+        );
+    }
+}
+
+fn coordinate_bits(points: &[[f64; 3]]) -> Vec<[u64; 3]> {
+    points.iter().map(|point| point.map(f64::to_bits)).collect()
 }
