@@ -16,7 +16,7 @@ x11-integration-tests = ["martensite-tkservice/x11-integration-tests"]
 
 [dependencies]
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.1" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
 martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
-martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
-martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.6" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }

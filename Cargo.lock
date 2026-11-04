@@ -512,7 +512,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkbrep"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -532,7 +532,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkernel"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "allocator-api2",
  "bytemuck",
@@ -558,7 +558,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkg2d"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -567,7 +567,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkg3d"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "flate2",
  "martensite-cmath",
@@ -578,7 +578,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkgeomalgo"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -643,7 +643,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkmath"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -734,7 +734,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tktopalgo"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",

@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-04
+
 ### Added
 
 - Added `martensite-tkv3d` (selection, presentation, interactive objects and the 3D viewer) and `martensite-vulkan` (the Vulkan 1.3 renderer behind the graphic driver interfaces), with `martensite-raster-core`, `martensite-geometry-raster` and `martensite-topology-test-support` as development helpers for their regression tests; this adds the `ash` and `num-rational` dependencies (#365).

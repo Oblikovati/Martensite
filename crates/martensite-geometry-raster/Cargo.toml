@@ -17,12 +17,12 @@ x11-integration-tests = ["martensite-raster-core/x11-integration-tests"]
 [dependencies]
 martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.1" }
-martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.5" }
-martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.6" }
-martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.6" }
-martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.7" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.7" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.8" }
 martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.5" }
-martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.7" }
+martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.8" }
 martensite-tkhlr = { path = "../martensite-tkhlr", version = "0.3.6" }
 martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.6" }
