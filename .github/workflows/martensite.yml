@@ -127,6 +127,14 @@ jobs:
           submodules: true
       - name: Install the toolchain pinned by rust-toolchain.toml
         run: rustup toolchain install
+      # PR test jobs only. The compiler inventory counts diagnostics, which a cache hit
+      # does not fully replay, and release and sanitizer jobs build from scratch.
+      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
+        with:
+          version: v2.0.0
+          max-size: 2GiB
+          cache-key-prefix: kache-${{ matrix.package }}
+          pr-comment: false
       - if: matrix.package == 'martensite-vulkan'
         uses: ./.github/actions/setup-renderer-tests
       - run: cargo xtask ci test --package "$TEST_PACKAGE" --target x86_64-unknown-linux-gnu
