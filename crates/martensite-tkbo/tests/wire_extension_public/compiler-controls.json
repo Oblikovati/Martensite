@@ -1,0 +1,19 @@
+{
+  "schema": "martensite-wire-extension-compiler-controls-v1",
+  "scope": "Compile each against the successfully built normal library and require exit1 plus the declared diagnostic; never compile as cfg(test).",
+  "cases": [
+    {"source": "private_cancel.rs", "error": "E0603"},
+    {"source": "private_binding.rs", "error": "E0616"},
+    {"source": "forged_context.rs", "error": "E0599"},
+    {"source": "receiver_alias.rs", "error": "E0499"},
+    {"source": "context_alias.rs", "error": "E0502"},
+    {"source": "escaped_borrows.rs", "error": "E0515"},
+    {"source": "private_fixed_helper.rs", "error": "E0624"},
+    {"source": "private_binder.rs", "error": "E0624"},
+    {"source": "non_send_hook.rs", "error": "E0277"},
+    {"source": "wrong_check_signature.rs", "error": "E0053"},
+    {"source": "override_nonvirtual_helper.rs", "error": "E0407"},
+    {"source": "range_not_sync.rs", "error": "E0277"},
+    {"source": "opaque_debug.rs", "error": "E0277"}
+  ]
+}

@@ -156,7 +156,7 @@ regression exercises this policy with `core.autocrlf=true` ([#197]).
      only a patch bump, and a breaking change (`Removed` or a `BREAKING`
      marker) needs a minor bump. The first release has no baseline, so only
      the section is checked.
-2. `cargo fmt --all --check` and workspace clippy, then the changed and affected
+2. `cargo fmt --package <name> --check` for each package and workspace clippy, then the changed and affected
    package suites, including doctests, since the previous release. Tests include
    transitive dependents, without selecting base dependencies merely because
    they need compiling. Lockfile changes select consumers of changed external

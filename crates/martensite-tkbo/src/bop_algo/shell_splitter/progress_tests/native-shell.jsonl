@@ -1,0 +1,7 @@
+{"kind":"regular_shell","cancel_scope":"","cancelled":false,"has_errors":false,"user_break":false,"results":2,"events":["0 ","1 Building shells"]}
+{"kind":"regular_shell","cancel_scope":"before","cancelled":true,"has_errors":true,"user_break":true,"results":0,"events":["0 ","1 Building shells"]}
+{"kind":"irregular_shell","cancel_scope":"","cancelled":false,"has_errors":false,"user_break":false,"results":2,"events":["0 ","1 Building shells"]}
+{"kind":"irregular_shell","cancel_scope":"before","cancelled":true,"has_errors":true,"user_break":true,"results":0,"events":["0 ","1 Building shells"]}
+{"kind":"irregular_shell","cancel_scope":"query_2","cancelled":true,"has_errors":true,"user_break":true,"results":0,"events":["0 ","1 Building shells"]}
+{"kind":"irregular_shell","cancel_scope":"query_3","cancelled":true,"has_errors":false,"user_break":false,"results":0,"events":["0 ","1 Building shells"]}
+{"kind":"irregular_shell","cancel_scope":"query_4","cancelled":false,"has_errors":false,"user_break":false,"results":2,"events":["0 ","1 Building shells"]}

@@ -1,0 +1,189 @@
+[package]
+autotests = false
+name = "martensite-tkbo"
+version = "0.8.0"
+description = "Martensite Boolean operations: general fuse, builders, intersection tools, splitting and defeaturing."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+x11-integration-tests = ["martensite-raster-core/x11-integration-tests"]
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.7" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.8" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
+martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.8" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.6" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.1" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.7" }
+martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.7" }
+
+[dev-dependencies]
+martensite-geometry-raster = { path = "../martensite-geometry-raster", version = "0.7.0" }
+martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
+martensite-topology-test-support = { path = "../martensite-topology-test-support", version = "0.7.0" }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
+static_assertions = "=1.1.0"
+
+# Test modules share one executable per toolkit to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+# The boolean case scripts: one child process, one memory raster and one graded stream per case.
+[[test]]
+name = "perf_modalg_bug26542"
+path = "tests/perf_modalg_bug26542.rs"
+
+[[test]]
+name = "modalg_2_bug2986"
+path = "tests/modalg_2_bug2986.rs"
+
+[[test]]
+name = "same_domain_state_contracts"
+path = "tests/same_domain_state_contracts.rs"
+
+[[test]]
+name = "preparation_state_contracts"
+path = "tests/preparation_state_contracts.rs"
+
+[[test]]
+name = "constructor_allocator_contracts"
+path = "tests/constructor_allocator_contracts.rs"
+
+[[test]]
+name = "derived_constructor_allocator_contracts"
+path = "tests/derived_constructor_allocator_contracts.rs"
+
+[[test]]
+name = "contained_allocator_contracts"
+path = "tests/contained_allocator_contracts.rs"
+
+[[test]]
+name = "argument_move_contracts"
+path = "tests/argument_move_contracts.rs"
+
+[[test]]
+name = "ds_allocator_contracts"
+path = "tests/ds_allocator_contracts.rs"
+
+[[test]]
+name = "ds_storage_contracts"
+path = "tests/ds_storage_contracts.rs"
+
+[[test]]
+name = "iterator_allocator_contracts"
+path = "tests/iterator_allocator_contracts.rs"
+
+[[test]]
+name = "bopsection_c6_legacy"
+path = "tests/bopsection_c6_legacy.rs"
+
+[[test]]
+name = "modalg_4_bug693_1"
+path = "tests/modalg_4_bug693_1.rs"
+
+[[test]]
+name = "modalg_8_bug32721"
+path = "tests/modalg_8_bug32721.rs"
+
+[[test]]
+name = "moddata_2_bug2784"
+path = "tests/moddata_2_bug2784.rs"
+
+[[test]]
+name = "modalg_8_bug3294x"
+path = "tests/modalg_8_bug3294x.rs"
+
+[[test]]
+name = "modalg_1_buc60533"
+path = "tests/modalg_1_buc60533.rs"
+
+[[test]]
+name = "modalg_1_bug13116"
+path = "tests/modalg_1_bug13116.rs"
+
+[[test]]
+name = "removefeatures_mass_text"
+path = "tests/removefeatures_mass_text.rs"
+
+[[test]]
+name = "topology_face_capture"
+path = "tests/topology_face_capture.rs"
+required-features = ["x11-integration-tests"]
+
+[[test]]
+name = "topology_prepared_capture"
+path = "tests/topology_prepared_capture.rs"
+required-features = ["x11-integration-tests"]
+
+[[test]]
+name = "topology_boolean_capture"
+path = "tests/topology_boolean_capture.rs"
+required-features = ["x11-integration-tests"]
+
+[[test]]
+name = "case_checksection_controls"
+path = "tests/case_checksection_controls.rs"
+
+[[test]]
+name = "perf_bop_report_controls"
+path = "tests/perf_bop_report_controls.rs"
+
+[[test]]
+name = "boolean_shape_counts_contract"
+path = "tests/boolean_shape_counts_contract.rs"
+
+[[test]]
+name = "solid_shell_progress_public"
+path = "tests/solid_shell_progress_public.rs"
+
+[[test]]
+name = "intersection_progress_public"
+path = "tests/intersection_progress_public.rs"
+
+[[test]]
+name = "defeaturing_progress_public"
+path = "tests/defeaturing_progress_public.rs"
+
+[[test]]
+name = "constant_progress_public"
+path = "tests/constant_progress_public.rs"
+
+[[test]]
+name = "wire_extension_public"
+path = "tests/wire_extension_public/main.rs"
+
+[[test]]
+name = "face_progress_public"
+path = "tests/face_progress_public.rs"
+
+[[test]]
+name = "pave_raw_progress_public"
+path = "tests/pave_raw_progress_public.rs"
+
+[[test]]
+name = "builder_raw_progress_public"
+path = "tests/builder_raw_progress_public.rs"
+
+[[test]]
+name = "api_ranged_entries_public"
+path = "tests/api_ranged_entries_public.rs"
+
+[[test]]
+name = "classify_faces_progress_public"
+path = "tests/classify_faces_progress_public.rs"
+
+[[test]]
+name = "modeling_fixture_box_cut"
+path = "tests/modeling_fixture_box_cut.rs"

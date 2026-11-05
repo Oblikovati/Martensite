@@ -109,9 +109,18 @@ impl<'a> CargoTasks<'a> {
         Self { runner, root }
     }
 
-    /// `cargo fmt --all --check` over the whole workspace.
-    pub fn format_check_all(&self) -> BuildResult<()> {
-        self.runner.run(&self.cargo(&["fmt", "--all", "--check"]))
+    /// `cargo fmt --check` over these packages, one at a time: `cargo fmt --all` hands every
+    /// target of the workspace to one rustfmt command, past the Windows command line limit.
+    /// Reports every unformatted package, not only the first.
+    pub fn format_check_packages(&self, names: &[String]) -> BuildResult<()> {
+        let outcomes: Vec<_> = names
+            .iter()
+            .map(|name| {
+                self.runner
+                    .run(&self.cargo(&["fmt", "--package", name, "--check"]))
+            })
+            .collect();
+        outcomes.into_iter().collect()
     }
 
     /// Clippy over all targets with every warning promoted to an error.

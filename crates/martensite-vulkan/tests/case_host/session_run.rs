@@ -203,8 +203,13 @@ impl SessionRun {
 
     /// Report completion, then retire the views; every dump must have been written.
     /// Example: `run.finish()?`.
-    pub(crate) fn finish(mut self) -> Result<(), Box<dyn Error>> {
+    pub(crate) fn finish(self) -> Result<(), Box<dyn Error>> {
         println!("TEST COMPLETED");
+        self.retire()
+    }
+
+    /// Retire the views of a run whose host reports completion itself; `run.retire()?`.
+    pub(crate) fn retire(mut self) -> Result<(), Box<dyn Error>> {
         let source = match self
             .stage
             .take()
@@ -409,10 +414,15 @@ impl SessionRun {
 impl SessionRun {
     /// Report completion of a regression that dumps no image, then retire the views and
     /// report the validation layer's stored errors; `run.finish_without_image()?`.
-    pub(crate) fn finish_without_image(mut self) -> Result<(), Box<dyn Error>> {
+    pub(crate) fn finish_without_image(self) -> Result<(), Box<dyn Error>> {
+        println!("TEST COMPLETED");
+        self.retire_without_image()
+    }
+
+    /// `retire` for a run that dumped no image; `run.retire_without_image()?`.
+    pub(crate) fn retire_without_image(mut self) -> Result<(), Box<dyn Error>> {
         use crate::case_view::SourceViewOutput as _;
         use std::io::Write as _;
-        println!("TEST COMPLETED");
         let stage = self
             .stage
             .take()

@@ -17,6 +17,11 @@ opt-level = 3
 [profile.dev.package.martensite-tkmath]
 opt-level = 3
 
+# Boolean operations spend most of their debug time in their own loops. CI builds the script cases
+# with `CARGO_PROFILE_DEV_OPT_LEVEL=1` as well, because a few CPU budgets assume optimization.
+[profile.dev.package.martensite-tkbo]
+opt-level = 1
+
 [workspace.package]
 edition = "2024"
 rust-version = "1.98.1"

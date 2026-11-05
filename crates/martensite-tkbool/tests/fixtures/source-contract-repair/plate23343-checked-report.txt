@@ -1,0 +1,7 @@
+TODO OCC23343 ALL: An exception was caught
+TODO OCC23343 ALL: Faulty OCC23343
+An exception was caught Standard_NullObject: GeomPlate: the plate surface is null; expected a constructed object
+Faulty OCC23343: there is crash (ACCESS VIOLATION) in GeomPlate_BuildPlateSurface
+SOURCE23343_VIEW_SAVED
+TEST COMPLETED
+{"runtime_outcome":"KnownProblemReproduced","source_policy_status":"BAD (known problem)","case_assertions_all_passed":false,"native_failure":"OSD_SIGSEGV","rust_failure":"Standard_NullObject"}
