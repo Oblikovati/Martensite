@@ -166,9 +166,10 @@ const PRIMARY_ASSETS: [&str; 10] = [
 ];
 
 /// The cargo gates after `cargo metadata`, in the order a release runs them.
-fn release_gates() -> [String; 5] {
+fn release_gates() -> [String; 6] {
     [
-        "cargo fmt --all --check".to_owned(),
+        "cargo fmt --package martensite-kernel --check".to_owned(),
+        "cargo fmt --package martensite-math --check".to_owned(),
         format!("cargo clippy --locked --workspace --target {TRIPLE} --all-targets -- -D warnings"),
         format!(
             "cargo test --locked --package martensite-kernel --package martensite-math --target {TRIPLE} --no-fail-fast"

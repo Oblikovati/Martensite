@@ -77,7 +77,7 @@ pub(crate) fn run_release_using(
     let workspace = CargoWorkspace::load(context.runner, context.root())?;
     let history = ReleaseIndex::load(context)?;
     let scope = validated_scope(context, &workspace, request, &history)?;
-    let artifacts = checked_release_artifacts(context, request, &scope, run_tests)?;
+    let artifacts = checked_release_artifacts(context, request, &workspace, &scope, run_tests)?;
     context.reporter.step("Package release", || {
         package_release(
             context, request, &workspace, &scope, &history, &artifacts, sources,
@@ -100,12 +100,13 @@ fn validated_scope(
 fn checked_release_artifacts(
     context: &BuildContext<'_>,
     request: &ReleaseRequest,
+    workspace: &CargoWorkspace,
     scope: &ReleaseScope,
     run_tests: bool,
 ) -> BuildResult<Vec<ShippedArtifact>> {
     let cargo = CargoTasks::new(context.runner, context.root());
     let target = BuildTarget::Triple(request.triple.clone());
-    verify_workspace(context, &cargo, &target, &scope.tests, run_tests)?;
+    verify_workspace(context, &cargo, workspace, &target, &scope.tests, run_tests)?;
     let shipped = PackageSelection::WorkspaceExcept(vec![BUILD_TOOL_PACKAGE.to_owned()]);
     context
         .reporter
@@ -116,12 +117,15 @@ fn checked_release_artifacts(
 fn verify_workspace(
     context: &BuildContext<'_>,
     cargo: &CargoTasks<'_>,
+    workspace: &CargoWorkspace,
     target: &BuildTarget,
     tests: &[String],
     run_tests: bool,
 ) -> BuildResult<()> {
     let reporter = &context.reporter;
-    reporter.step("Check formatting", || cargo.format_check_all())?;
+    reporter.step("Check formatting", || {
+        cargo.format_check_packages(&workspace.names())
+    })?;
     reporter.step("Clippy workspace", || {
         cargo.clippy(&PackageSelection::Workspace, target)
     })?;

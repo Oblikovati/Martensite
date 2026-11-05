@@ -71,7 +71,9 @@ fn check_affected_packages(
         affected(context, reference, changed)
     })?;
     if changed.iter().any(|file| file.path == "rustfmt.toml") {
-        CargoTasks::new(context.runner, context.root()).format_check_all()?;
+        let workspace = CargoWorkspace::load(context.runner, context.root())?;
+        CargoTasks::new(context.runner, context.root())
+            .format_check_packages(&workspace.names())?;
     }
     if checks.build.is_empty() {
         context
