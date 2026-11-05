@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-05
+
 ### Added
 
 - Added `martensite-tkbo` (Boolean operations: general fuse, builders, intersection tools, splitting and defeaturing), `martensite-tkbool` (topological operations, sweeps, evolved shapes and projections), `martensite-tkfillet` (fillets and chamfers) and `martensite-tkcaf` (topological naming, the extended document attributes and the standard application), with `martensite-boolean-cases` for the check contract and regression cases of the Boolean scripts (#393).
