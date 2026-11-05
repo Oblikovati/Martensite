@@ -38,6 +38,7 @@ pub struct BRepGPropTFunction {
     // Set by SetNbKronrodPoints and read by nothing (its use is commented out natively).
     #[allow(dead_code)]
     nb_pnt_outer: i32,
+    absolute_floor: f64,
     failure: Option<Failure>,
 }
 
@@ -67,6 +68,7 @@ impl BRepGPropTFunction {
             value_type: ValueType::Unknown,
             is_by_point,
             nb_pnt_outer: 3,
+            absolute_floor: 0.,
             failure: None,
         }
     }
@@ -97,6 +99,12 @@ impl BRepGPropTFunction {
     /// `SetTolerance(aTol)`: the tolerance of the inner integrals; `f.set_tolerance(1e-4)`.
     pub fn set_tolerance(&mut self, tolerance: f64) {
         self.tolerance = tolerance;
+    }
+
+    /// The absolute error at which an inner integral stops refining; 0 (none) by default;
+    /// `f.set_absolute_floor(1e-9)`.
+    pub fn set_absolute_floor(&mut self, floor: f64) {
+        self.absolute_floor = floor;
     }
 
     /// `ErrorReached()`: the largest relative error since `init`; `f.error_reached()`.
@@ -167,6 +175,7 @@ impl BRepGPropTFunction {
     /// and 1000 iterations at most; `None` when one is not done.
     fn u_integrals(&mut self, knots: &[f64], start: i32) -> Result<Option<(f64, f64)>, Failure> {
         let mut integral = KronrodSingleIntegration::default();
+        integral.set_absolute_floor(self.absolute_floor);
         let (mut value, mut local_err) = (0., 0.);
         for span in knots.windows(2) {
             if span[1] - span[0] < TOL_U {

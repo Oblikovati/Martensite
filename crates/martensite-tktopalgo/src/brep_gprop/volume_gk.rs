@@ -4,6 +4,7 @@ use super::face::BRepGPropFace;
 use super::package::{BRepGProp, located_origin, rough_bary_center};
 use super::vinert_gk::{BRepGPropVinertGK, VinertGKOptions};
 use super::volume::{OrientedFaces, is_oriented};
+use crate::brep_bnd_lib::BRepBndLib;
 use crate::brep_check::BRepCheckShell;
 use crate::brep_check::BRepCheckStatus;
 use crate::brep_check::explore::sub_shapes;
@@ -14,6 +15,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::real::epsilon;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkgeombase::gprop::GProps;
+use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tkmath::gp::Plane3;
 
 /// The options of `VolumePropertiesGK` besides the tolerance and the closed flag.
@@ -127,6 +129,17 @@ fn closed_shells(shape: &Shape, skip_shared: bool) -> Result<Vec<Shape>, Failure
     Ok(closed)
 }
 
+/// The diagonal of the bounds of `shape`, 0 when it has none: the length that scales the
+/// values of the error-bounded default route. A value that cancels by symmetry about the
+/// location integrates to round-off, whose relative error never reaches a tolerance.
+fn model_length(shape: &Shape) -> f64 {
+    let mut bounds = BoundingBox3::default();
+    if BRepBndLib::add(shape, &mut bounds, false).is_err() || bounds.is_void() || bounds.is_open() {
+        return 0.;
+    }
+    bounds.square_extent().sqrt()
+}
+
 /// `volumePropertiesGK`: the FORWARD and REVERSED faces with a surface, one VinertGK
 /// framework located at the rough barycentre reused for every face (its centre and
 /// inertia keep their previous values when not requested); the sum of the errors, or
@@ -141,6 +154,10 @@ fn volume_gk(
 ) -> Result<f64, Failure> {
     let mut volume = BRepGPropVinertGK::new();
     volume.set_location(rough_bary_center(shape)?);
+    // The explicit `volume_properties_gk` keeps the purely relative stop.
+    if reject_incomplete {
+        volume.round_off_length = model_length(shape);
+    }
     let (mut tool, mut domain) = (
         BRepGPropFace::new(flags.is_use_span),
         BRepGPropDomain::new(),

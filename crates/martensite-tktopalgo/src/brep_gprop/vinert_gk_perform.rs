@@ -3,6 +3,7 @@ use super::domain::BRepGPropDomain;
 use super::face::BRepGPropFace;
 use super::tfunction::BRepGPropTFunction;
 use super::vinert_gk::{BRepGPropVinertGK, VinertGKOptions};
+use martensite_cmath::powi;
 use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::real::epsilon;
 use martensite_tkgeombase::gprop::ValueType;
@@ -12,6 +13,10 @@ use martensite_tkmath::math::KronrodSingleIntegration;
 
 /// The minimal T range of an outer integral (`aTTol`).
 const T_TOL: f64 = 1.0e-9;
+
+/// The share of a value's scale below which its integral is round-off: about 50 machine
+/// epsilons, the limit QUADPACK puts on a Gauss-Kronrod error estimate.
+const ROUND_OFF_SHARE: f64 = 1.0e-14;
 
 /// The ten values of the integration, in the native order (`k = 1..10`).
 const VALUE_TYPES: [ValueType; 10] = [
@@ -42,6 +47,7 @@ struct GkRun<'a> {
     by_point: bool,
     coeffs: &'a [f64],
     options: VinertGKOptions,
+    round_off_length: f64,
 }
 
 impl BRepGPropVinertGK {
@@ -146,6 +152,7 @@ impl BRepGPropVinertGK {
             by_point,
             coeffs,
             options,
+            round_off_length: self.round_off_length,
         };
         if run.count_curves()? == 0 {
             self.error_reached = -1.;
@@ -300,11 +307,12 @@ impl GkRun<'_> {
                 continue;
             }
             t_func.set_value_type(*value_type);
+            let floor = ROUND_OFF_SHARE * powi(self.round_off_length, value_dimension(k));
             let Some((value, tol)) = spans_integral(
                 &mut t_func,
                 &mut integral,
                 &knots,
-                (nb_pnts, crv_tol, self.options.tolerance),
+                (nb_pnts, crv_tol, self.options.tolerance, floor),
             )?
             else {
                 return Ok(false);
@@ -316,16 +324,26 @@ impl GkRun<'_> {
     }
 }
 
+/// The power of length in the `k`th value: a volume, a first moment, a second moment.
+fn value_dimension(k: usize) -> i32 {
+    match k {
+        0 => 3,
+        1..=3 => 4,
+        _ => 5,
+    }
+}
+
 /// The integral of one value over the T spans longer than 1e-9 and its reached error;
 /// `None` when a span integral is not done.
 fn spans_integral(
     t_func: &mut BRepGPropTFunction,
     integral: &mut KronrodSingleIntegration,
     knots: &[f64],
-    (nb_pnts, crv_tol, tolerance): (i32, f64, f64),
+    (nb_pnts, crv_tol, tolerance, floor): (i32, f64, f64, f64),
 ) -> Result<Option<(f64, f64)>, Failure> {
     let tol_span = 0.9 * tolerance;
     let (mut value, mut tol_reached) = (0., 0.);
+    integral.set_absolute_floor(floor);
     for span in knots.windows(2) {
         let (t1, t2) = (span[0], span[1]);
         if t2 - t1 < T_TOL {
@@ -334,6 +352,7 @@ fn spans_integral(
         t_func.set_nb_kronrod_points(nb_pnts);
         t_func.init();
         t_func.set_tolerance(crv_tol / (t2 - t1));
+        t_func.set_absolute_floor(floor / (t2 - t1));
         integral.perform_with_tolerance(t_func, t1, t2, nb_pnts, tol_span, 1000);
         if let Some(failure) = t_func.take_failure() {
             return Err(failure);

@@ -16,17 +16,17 @@ workspace = true
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
 martensite-tkfillet = { path = "../martensite-tkfillet", version = "0.8.0" }
 martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
-martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.7" }
 martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
 martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.8" }
 martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.6" }
 martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.9" }
-martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.1" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.2" }
 martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.7" }
 martensite-tkbool = { path = "../martensite-tkbool", version = "0.8.0" }
 martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.8" }
 martensite-tkbo = { path = "../martensite-tkbo", version = "0.8.0" }
-martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.8" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.9" }
 
 [dev-dependencies]
 martensite-tkfeat = { path = "../martensite-tkfeat", version = "0.10.0" }

@@ -8,7 +8,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added `martensite-tkfeat` (local operations and form features: prisms, revolutions, pipes, holes, ribs, slots, glued shapes and splits) and `martensite-tkoffset` (offset modeling: offset shapes and thick solids, simple offsets, drafts, pipe shells, lofts and tangent blends).
+- Added `martensite-tkfeat` (local operations and form features: prisms, revolutions, pipes, holes, ribs, slots, glued shapes and splits) and `martensite-tkoffset` (offset modeling: offset shapes and thick solids, simple offsets, drafts, pipe shells, lofts and tangent blends) (#397).
+
+### Fixed
+
+- Volume properties of symmetric curved solids no longer take minutes. On the default route, refinement now also stops once the absolute error is at most `1e-14 × L^k`, so an integral that cancels by symmetry no longer chases a relative error it cannot reach. The volume stays the same to its printed digits, and `volume_properties_gk` keeps the relative stop (#397).
 
 ## [0.9.0] - 2026-11-05
 

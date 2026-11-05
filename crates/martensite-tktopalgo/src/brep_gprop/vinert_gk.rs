@@ -47,6 +47,7 @@ pub struct BRepGPropVinertGK {
     pub(super) base: GProps,
     pub(super) error_reached: f64,
     pub(super) absolut_error: f64,
+    pub(super) round_off_length: f64,
 }
 
 impl Deref for BRepGPropVinertGK {
