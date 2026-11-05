@@ -14,7 +14,9 @@ The builders take their shapes by handle and build a new shape. A builder is use
 
 ## Verification
 
-Run `cargo test -p martensite-tkfeat` with light optimization, `CARGO_PROFILE_DEV_OPT_LEVEL=1`, because
-the CPU budgets of the script cases assume it. `tests/dataset_cases` holds the form feature script
-cases, each alone in a child process and graded on its whole output; the few that end on a shaded view
-need the [renderer test setup](../martensite-vulkan/README.md).
+Run `cargo test -p martensite-tkfeat` with `CARGO_PROFILE_DEV_OPT_LEVEL=1`, because the CPU budgets of the
+script cases assume light optimization.
+
+`tests/dataset_cases` holds the form feature script cases. Each runs alone in a child process and is graded
+on its whole output. Five of them end on a shaded view, so they run on Linux only and need the
+[renderer test setup](../martensite-vulkan/README.md).

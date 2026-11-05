@@ -1,7 +1,7 @@
 # Offset modeling
 
-`martensite-tkoffset` builds shapes at a distance from others: offset shells and thick solids, pipes
-along a spine, lofts through sections, drafted faces and tangent blends.
+`martensite-tkoffset` builds new shapes from existing ones: offset shells and thick solids, pipes along a
+spine, lofts through sections, drafted faces and tangent blends.
 
 | Module | Capabilities |
 | --- | --- |
@@ -16,17 +16,21 @@ The builders take their shapes by handle and build a new shape. A builder is use
 
 ## Verification
 
-Run `cargo test -p martensite-tkoffset` with light optimization, `CARGO_PROFILE_DEV_OPT_LEVEL=1`, because
-the CPU budgets of the script cases assume it. `tests/dataset_cases` holds the offset, loft, sweep, draft
-and regression script cases on a memory raster, each alone in a child process and graded on its whole
-output. `tests/viewer_cases` holds the scripts that end on a shaded view; they need the
-[renderer test setup](../martensite-vulkan/README.md) and an empty validation report.
+Run `cargo test -p martensite-tkoffset` with `CARGO_PROFILE_DEV_OPT_LEVEL=1`, because the CPU budgets of the
+script cases assume light optimization.
 
-The text of the bottle and snowflake samples is loaded by path from the FreeFont files in the test data,
-so these cases do not depend on the fonts installed on a machine. The cap faces of a split are oriented
-by the offset faces, so `offset/compshape/A3` gives its valid result on every run and its clean verdict
-is held strictly.
+`tests/dataset_cases` holds the offset, loft, sweep, draft and regression script cases. Each runs alone in a
+child process, draws on a memory raster and is graded on its whole output. `tests/viewer_cases` holds the
+scripts that end on a shaded view. They run on Linux only, need the
+[renderer test setup](../martensite-vulkan/README.md) and must leave the validation report empty.
+
+The bottle and snowflake samples load their text by path from the FreeFont files in the test data, so
+they do not depend on the fonts installed on a machine.
+
+When a split cap face closes an offset shell, the offset faces decide the shell's orientation. The
+same input therefore gives the valid solid on every run, and `offset/compshape/A3` holds a strict clean
+verdict.
 
 `hlr/poly_hlr/Plate` is a known problem whose length moved from 404.004 to 404.492 with correctly
-rounded math: the case still gives its old line with the platform C library. Its check and tolerance
-are unchanged.
+rounded math, with its check and tolerance unchanged. [The attribution](corpus-attribution/README.md)
+records the proof.
