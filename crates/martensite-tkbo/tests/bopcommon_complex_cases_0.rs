@@ -1,0 +1,212 @@
+//! Native fixture-backed cases.
+use super::*;
+case!(
+    BOPCommonComplex__F6,
+    "tests/boolean/bopcommon_complex/F6",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a57"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    0.0,
+);
+case!(
+    BOPCommonComplex__F7,
+    "tests/boolean/bopcommon_complex/F7",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b58"),
+    4912.9,
+);
+case!(
+    BOPCommonComplex__F8,
+    "tests/boolean/bopcommon_complex/F8",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b60"),
+    11250.0,
+);
+case!(
+    BOPCommonComplex__F9,
+    "tests/boolean/bopcommon_complex/F9",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b62"),
+    8410.54,
+);
+case!(
+    BOPCommonComplex__G1,
+    "tests/boolean/bopcommon_complex/G1",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b64"),
+    10245.2,
+);
+case!(
+    BOPCommonComplex__G2,
+    "tests/boolean/bopcommon_complex/G2",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b66"),
+    11123.7,
+);
+case!(
+    BOPCommonComplex__G3,
+    "tests/boolean/bopcommon_complex/G3",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a90"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b90"),
+    14142.1,
+);
+case!(
+    BOPCommonComplex__G4,
+    "tests/boolean/bopcommon_complex/G4",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b102"),
+    15000.0,
+);
+case!(
+    BOPCommonComplex__G5,
+    "tests/boolean/bopcommon_complex/G5",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b104"),
+    11926.3,
+);
+case!(
+    BOPCommonComplex__G6,
+    "tests/boolean/bopcommon_complex/G6",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a106"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a157"),
+    4826.73,
+);
+case!(
+    BOPCommonComplex__G7,
+    "tests/boolean/bopcommon_complex/G7",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b110"),
+    5827.66,
+);
+case!(
+    BOPCommonComplex__G8,
+    "tests/boolean/bopcommon_complex/G8",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b112"),
+    15000.0,
+);
+case!(
+    BOPCommonComplex__G9,
+    "tests/boolean/bopcommon_complex/G9",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b114"),
+    11830.1,
+);
+case!(
+    BOPCommonComplex__H1,
+    "tests/boolean/bopcommon_complex/H1",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a116"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b116"),
+    7853.98,
+);
+case!(
+    BOPCommonComplex__H2,
+    "tests/boolean/bopcommon_complex/H2",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a116"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b118"),
+    7853.98,
+);
+case!(
+    BOPCommonComplex__H3,
+    "tests/boolean/bopcommon_complex/H3",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a116"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b124"),
+    0.0,
+);
+case!(
+    BOPCommonComplex__H4,
+    "tests/boolean/bopcommon_complex/H4",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a116"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b126"),
+    10000.0,
+);
+case!(
+    BOPCommonComplex__H5,
+    "tests/boolean/bopcommon_complex/H5",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a138"),
+    15079.6,
+);
+case!(
+    BOPCommonComplex__H6,
+    "tests/boolean/bopcommon_complex/H6",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b130"),
+    6126.11,
+);
+case!(
+    BOPCommonComplex__H7,
+    "tests/boolean/bopcommon_complex/H7",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b132"),
+    17146.1,
+);
+case!(
+    BOPCommonComplex__H8,
+    "tests/boolean/bopcommon_complex/H8",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b136"),
+    2884.96,
+);
+case!(
+    BOPCommonComplex__H9,
+    "tests/boolean/bopcommon_complex/H9",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a138"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b130"),
+    0.0,
+);
+case!(
+    BOPCommonComplex__I1,
+    "tests/boolean/bopcommon_complex/I1",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a138"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b140"),
+    0.0,
+);
+case!(
+    BOPCommonComplex__I2,
+    "tests/boolean/bopcommon_complex/I2",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b142"),
+    13686.7,
+);
+case!(
+    BOPCommonComplex__I3,
+    "tests/boolean/bopcommon_complex/I3",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a152"),
+    7853.98,
+);
+case!(
+    BOPCommonComplex__I4,
+    "tests/boolean/bopcommon_complex/I4",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a158"),
+    7363.11,
+);
+case!(
+    BOPCommonComplex__I5,
+    "tests/boolean/bopcommon_complex/I5",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a148"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b148"),
+    11781.0,
+);
+case!(
+    BOPCommonComplex__I6,
+    "tests/boolean/bopcommon_complex/I6",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a102"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a160"),
+    9817.48,
+);
+case!(
+    BOPCommonComplex__I7,
+    "tests/boolean/bopcommon_complex/I7",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a152"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/b118"),
+    5890.37,
+);
+case!(
+    BOPCommonComplex__I8,
+    "tests/boolean/bopcommon_complex/I8",
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a152"),
+    include_bytes!("../../../external/martensite-test-data/dataset-7.9.0/brep/a157"),
+    5340.71,
+);

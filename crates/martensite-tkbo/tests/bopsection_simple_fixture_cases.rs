@@ -1,0 +1,130 @@
+//! Native Rust translations of stored-shape BOP section regressions.
+#![allow(non_snake_case)]
+
+use super::section_case;
+
+macro_rules! case {
+    ($name:ident, $source:literal, $first:literal, $second:literal, $length:expr) => {
+        #[test]
+        fn $name() {
+            section_case(
+                $source,
+                include_bytes!(concat!(
+                    "../../../external/martensite-test-data/dataset-7.9.0/brep/",
+                    $first
+                )),
+                include_bytes!(concat!(
+                    "../../../external/martensite-test-data/dataset-7.9.0/brep/",
+                    $second
+                )),
+                $length,
+            );
+        }
+    };
+}
+
+case!(
+    BOPSection__E2,
+    "tests/boolean/bopsection/E2",
+    "sh2",
+    "sh2a",
+    134.0
+);
+case!(
+    BOPSection__E3,
+    "tests/boolean/bopsection/E3",
+    "sh2",
+    "sh3",
+    40.0
+);
+case!(
+    BOPSection__E4,
+    "tests/boolean/bopsection/E4",
+    "sh2",
+    "sh4",
+    30.0
+);
+case!(
+    BOPSection__E5,
+    "tests/boolean/bopsection/E5",
+    "sh2",
+    "sh7",
+    40.0
+);
+case!(
+    BOPSection__E6,
+    "tests/boolean/bopsection/E6",
+    "sh2",
+    "sh8",
+    46.5685
+);
+case!(
+    BOPSection__E7,
+    "tests/boolean/bopsection/E7",
+    "sh2",
+    "sh9",
+    160.0
+);
+case!(
+    BOPSection__E8,
+    "tests/boolean/bopsection/E8",
+    "sh10",
+    "shx",
+    212.548
+);
+case!(
+    BOPSection__E9,
+    "tests/boolean/bopsection/E9",
+    "sh2",
+    "sh5",
+    25.0
+);
+case!(
+    BOPSection__F1,
+    "tests/boolean/bopsection/F1",
+    "g1",
+    "g2",
+    189.813
+);
+case!(
+    BOPSection__F2,
+    "tests/boolean/bopsection/F2",
+    "sg1",
+    "sg2",
+    189.813
+);
+case!(
+    BOPSection__F3,
+    "tests/boolean/bopsection/F3",
+    "sf4",
+    "sf5",
+    200.543
+);
+case!(
+    BOPSection__F4,
+    "tests/boolean/bopsection/F4",
+    "sf5",
+    "sf3",
+    160.543
+);
+case!(
+    BOPSection__F5,
+    "tests/boolean/bopsection/F5",
+    "sf5",
+    "sf55",
+    1376.64
+);
+case!(
+    BOPSection__C3,
+    "tests/boolean/bopsection/C3",
+    "CTO909_bad_cut_part.brep",
+    "CTO909_bad_cut_outil.brep",
+    20.7531
+);
+case!(
+    BOPSection__D3,
+    "tests/boolean/bopsection/D3",
+    "m2_o",
+    "m2_t",
+    67.466
+);

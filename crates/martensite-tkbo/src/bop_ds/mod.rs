@@ -1,0 +1,36 @@
+//! BOPDS records used by Boolean intersection bookkeeping,.
+mod common_block;
+mod couple_of_pave_blocks;
+mod curve;
+mod data_structure;
+mod face_info;
+mod index_range;
+mod interference;
+mod iterator;
+mod pair;
+mod pave;
+mod pave_block;
+mod point;
+mod shape_info;
+mod sub_iterator;
+pub mod tools;
+pub use common_block::{
+    CommonBlock, CommonBlockHandle, CommonBlockHandleIdentity, common_block_handle,
+    pave_block_handle,
+};
+pub use couple_of_pave_blocks::CoupleOfPaveBlocks;
+pub use curve::BopdsCurve;
+pub use data_structure::{DataStructure, SubShapesOnIn};
+pub use face_info::{FaceInfo, PaveBlockHandleIdentity, PaveBlockIndexMap, VertexIndexSet};
+pub use index_range::IndexRange;
+pub use interference::{
+    InterfEE, InterfEF, InterfEZ, InterfFF, InterfFZ, InterfVE, InterfVF, InterfVV, InterfVZ,
+    InterfZZ, Interference,
+};
+pub use iterator::{BOPDSIterator, BOPDSIteratorSI, BorrowedIterator};
+pub use pair::Pair;
+pub use pave::Pave;
+pub use pave_block::{PaveBlock, PaveBlockHandle};
+pub use point::Point;
+pub use shape_info::ShapeInfo;
+pub use sub_iterator::BOPDSSubIterator;
