@@ -121,7 +121,7 @@ impl GeomSurfaceOfRevolution {
     /// StandardNotImplemented, as natively (`ReferencePlane`); `surface.reference_plane()`.
     pub fn reference_plane(&self) -> Result<Axis2, Failure> {
         Err(errors::not_implemented(
-            "Geom_SurfaceOfRevolution::ReferencePlane: not implemented in OCCT; expected no call",
+            "Geom_SurfaceOfRevolution::ReferencePlane: not implemented in Martensite; expected no call",
         ))
     }
     fn parts(&self) -> (Handle<dyn GeomCurve>, Axis1) {
