@@ -8,6 +8,8 @@
 //! LP_NATIVE_VECTOR_WIDTH=128). Each Vulkan driver replays its own native driver byte for byte.
 #[path = "../examples/support/device_options.rs"]
 mod device_options;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[allow(dead_code)]
 #[path = "support/rgb_fingerprint.rs"]
 mod rgb_fingerprint;
@@ -110,5 +112,5 @@ fn dimension_label_cuts_stencil_tested_lines_like_native() {
         failures.extend(scene.mismatch(label));
         structure.erase();
     }
-    assert!(failures.is_empty(), "{failures:#?}");
+    reference_cpu::require_exact(failures.is_empty(), || format!("{failures:#?}"));
 }

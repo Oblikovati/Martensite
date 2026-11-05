@@ -18,6 +18,8 @@ mod pathtrace_scene;
 #[allow(dead_code)] // The stereo dumps use ToPixMap instead of the scene's buffer dump.
 #[path = "support/raytrace_scene.rs"]
 mod raytrace_scene;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 use grading::{DumpReport, validation_options};
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::graphic3d::*;
@@ -146,8 +148,7 @@ fn graded_stereo() -> (String, Vec<DumpReport>) {
 fn stereo_path_tracing_matches_the_native_dumps() {
     let (device, report) = graded_stereo();
     let failing = grading::unrecorded_pixels(&report, &device, &[]);
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps: {failing:?}")
+    });
 }

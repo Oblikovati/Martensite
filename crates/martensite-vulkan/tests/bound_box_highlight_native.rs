@@ -8,6 +8,8 @@
 // The per-pixel recorded-failure helpers are unused here.
 #[allow(dead_code)]
 mod grading;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 use grading::{DumpReport, validation_options};
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::Handle;
@@ -206,8 +208,7 @@ fn bound_box_highlight_matches_the_native_dumps() {
         })
         .map(|(name, _, pixels)| (*name, pixels.len(), pixels.first().cloned()))
         .collect();
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or approved residues: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or approved residues: {failing:?}")
+    });
 }

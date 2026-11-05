@@ -21,6 +21,8 @@ mod grading;
 // The shaded `display` helper is unused: the textured box needs its own display mode.
 #[allow(dead_code)]
 mod raytrace_scene;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 use grading::{DumpReport, validation_options};
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::Handle;
@@ -231,8 +233,7 @@ fn ray_traced_textures_and_environments_match_the_native_dumps() {
     let counts: Vec<_> = report.iter().map(|(name, n, _)| (*name, *n)).collect();
     println!("{{\"raytrace_textures_device\":{device:?},\"differing\":{counts:?}}}");
     let failing = grading::unrecorded_pixels(&report, &device, &[]);
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps: {failing:?}")
+    });
 }

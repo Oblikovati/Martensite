@@ -9,6 +9,8 @@ mod grading;
 #[allow(dead_code)] // The variants keep the default lights.
 #[path = "support/pbr_sphere_scene.rs"]
 mod pbr_sphere_scene;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[path = "support/shift_control.rs"]
 mod shift_control;
 #[path = "case_host/snap_pixels.rs"]
@@ -98,8 +100,7 @@ fn pbr_facet_variants_match_the_native_dumps() {
     let (device, report) =
         variant_grading::graded_variants(&VARIANT_DUMPS, shifted_pbr_facet_dumps);
     let failing = grading::unrecorded_pixels(&report, &device, &[]);
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or approved residues: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or approved residues: {failing:?}")
+    });
 }

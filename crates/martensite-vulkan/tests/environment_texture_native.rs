@@ -10,6 +10,8 @@
 // The per-pixel recorded-failure helpers are unused: this replay records counts per dump.
 #[allow(dead_code)]
 mod grading;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[path = "support/environment_texture_scene.rs"]
 mod scene;
 #[path = "support/sphere_map_rim.rs"]
@@ -176,10 +178,9 @@ fn graded_environment_texture() -> (String, Vec<DumpReport>) {
 fn environment_texture_matches_the_native_dumps() {
     let (device, report) = graded_environment_texture();
     let failing = unrecorded_dumps(&report, &device);
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or approved residues: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or approved residues: {failing:?}")
+    });
 }
 
 /// A 2x2 case of the rim grader: background at (0, 0), rim pixel (1, 1) five levels off.

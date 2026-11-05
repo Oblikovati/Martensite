@@ -11,6 +11,8 @@
 #[path = "support/native_dump_grading.rs"]
 #[allow(dead_code)]
 mod grading;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 use martensite_tkernel::quantity::{Color, ColorSpace, NamedColor};
 use martensite_tkernel::standard::Handle;
 use martensite_tkmath::gp::{Direction3, Point3};
@@ -221,10 +223,9 @@ fn programmable_unknown_format_textures_sample_opaque_black_as_natively() {
         false => AMD_PROGRAMMABLE,
     };
     let differing = differing(&driver, native);
-    assert!(
-        differing.is_empty(),
-        "differing (dump, pixels): {differing:?}"
-    );
+    reference_cpu::require_exact(differing.is_empty(), || {
+        format!("differing (dump, pixels): {differing:?}")
+    });
 }
 
 #[test]

@@ -8,6 +8,8 @@
 //! programs ignore the maps they do not declare.
 #[path = "support/native_dump_grading.rs"]
 mod grading;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[path = "support/shift_control.rs"]
 mod shift_control;
 #[path = "case_host/snap_pixels.rs"]
@@ -253,10 +255,9 @@ fn graded_texture_maps() -> (String, Vec<DumpReport>) {
 fn texture_map_sets_match_the_native_dumps() {
     let (device, report) = graded_texture_maps();
     let failing = grading::unrecorded_pixels(&report, &device, &RECORDED_FAILURES);
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or approved residues: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or approved residues: {failing:?}")
+    });
 }
 
 #[test]

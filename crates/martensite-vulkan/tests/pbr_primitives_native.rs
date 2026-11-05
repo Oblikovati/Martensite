@@ -12,6 +12,8 @@
 //! same fallback here.
 #[path = "support/native_dump_grading.rs"]
 mod grading;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 use grading::{DumpReport, validation_options};
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::Handle;
@@ -212,8 +214,7 @@ fn graded_primitives() -> (String, Vec<DumpReport>) {
 fn pbr_markers_stipple_lines_and_vertex_colors_match_the_native_dumps() {
     let (device, report) = graded_primitives();
     let failing = grading::unrecorded_pixels(&report, &device, &[]);
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or approved residues: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or approved residues: {failing:?}")
+    });
 }

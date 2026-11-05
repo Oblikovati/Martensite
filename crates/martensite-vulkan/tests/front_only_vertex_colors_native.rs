@@ -13,6 +13,8 @@
 // The per-pixel recorded-failure helpers are unused here.
 #[allow(dead_code)]
 mod grading;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[allow(dead_code)] // Only the primitive-array object is displayed here.
 #[path = "support/triangle_array_object.rs"]
 mod triangle_array_object;
@@ -283,8 +285,7 @@ fn front_only_vertex_colors_match_the_native_dumps() {
         .filter(|(_, _, pixels)| !pixels.is_empty())
         .map(|(name, _, pixels)| (*name, pixels.len(), pixels.first().cloned()))
         .collect();
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or approved residues: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or approved residues: {failing:?}")
+    });
 }

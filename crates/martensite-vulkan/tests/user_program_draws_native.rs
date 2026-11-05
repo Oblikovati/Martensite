@@ -19,6 +19,8 @@ mod primitive_shapes;
 #[allow(dead_code)] // Only SIZE serves these cases.
 #[path = "support/raytrace_scene.rs"]
 mod raytrace_scene;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[path = "support/shift_control.rs"]
 mod shift_control;
 #[path = "case_host/snap_pixels.rs"]
@@ -95,10 +97,9 @@ fn assert_native(native: &NativeDumps, run: ScriptRun) {
         });
     }
     let failing = grading::unrecorded_pixels(&report, &device, &RECORDED_FAILURES);
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or approved residues: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or approved residues: {failing:?}")
+    });
 }
 
 /// The vertex and fragment program of texture_multi1.

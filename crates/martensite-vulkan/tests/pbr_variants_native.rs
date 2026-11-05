@@ -10,6 +10,8 @@ mod mesh_edge_grid_model;
 #[allow(dead_code)] // The variants keep the default lights.
 #[path = "support/pbr_sphere_scene.rs"]
 mod pbr_sphere_scene;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[path = "support/shift_control.rs"]
 mod shift_control;
 #[path = "case_host/snap_pixels.rs"]
@@ -123,10 +125,9 @@ fn graded_pbr_variants() -> (String, Vec<DumpReport>) {
 fn pbr_variants_match_the_native_dumps() {
     let (device, report) = graded_pbr_variants();
     let failing = grading::unrecorded_pixels(&report, &device, &RECORDED_FAILURES);
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or approved residues: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or approved residues: {failing:?}")
+    });
 }
 
 /// One edged dump's submitted triangles (window pixels, rows top down) and RADV edge-free capture.

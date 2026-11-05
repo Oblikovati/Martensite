@@ -11,6 +11,8 @@
 #[path = "support/native_dump_grading.rs"]
 #[allow(dead_code)]
 mod grading;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[path = "support/sphere_map_rim.rs"]
 mod sphere_map_rim;
 #[path = "support/uv_seam.rs"]
@@ -395,10 +397,9 @@ fn assert_graded(
         })
         .collect();
     let left = grading::unrecorded_pixels(&report, profile, &RECORDED);
-    assert!(
-        left.is_empty(),
-        "profile={profile}; unrecorded pixels {left:?}"
-    );
+    reference_cpu::require_exact(left.is_empty(), || {
+        format!("profile={profile}; unrecorded pixels {left:?}")
+    });
 }
 
 #[test]
