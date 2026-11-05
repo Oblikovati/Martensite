@@ -1,0 +1,14 @@
+Format of volume-topology-recorded.txt
+
+The first 24 rows hold the prism and pyramid connectivity and the rejected inputs. Each contains kind,
+base-point count and null flag, then, for a topology, lower and upper face bounds and each face's length
+followed by its indices. Integer rows need no tolerance.
+
+The last two rows record a factory call: call identity, cloned-handle identity, a mutation seen through the
+first handle, an untouched separate allocation and a retained alias. Topologies here do not have those
+ownership semantics: the factories return private owned vectors with immutable face slices, value equality
+and independent deep clones, and counts below three return a typed `TooFewBasePoints` error. Those two rows
+stay as a record only.
+
+Tests read the file with `include_str!`. Independent connectivity, edge-orientation, Euler and node-set
+checks supplement it. This is visualization connectivity, not accepted solid geometry.
