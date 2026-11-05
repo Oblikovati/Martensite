@@ -25,7 +25,10 @@ fn hemisphere_face() -> Shape {
     let quarter_turn = 90_f64.to_radians();
     let mut maker = BRepPrimAPIMakeSphere::with_latitudes(RADIUS, 0., quarter_turn).unwrap();
     let solid = maker.shape().unwrap().clone();
-    parts_of(&solid, ShapeEnum::Face).find_key(1).unwrap().clone()
+    parts_of(&solid, ShapeEnum::Face)
+        .find_key(1)
+        .unwrap()
+        .clone()
 }
 
 fn divided(numbers: (i32, Option<i32>)) -> Shape {
@@ -53,7 +56,11 @@ fn assert_counts(numbers: (i32, Option<i32>), expected: [usize; 3]) {
     let counts = [ShapeEnum::Vertex, ShapeEnum::Edge, ShapeEnum::Face]
         .map(|kind| parts_of(&result, kind).extent());
     assert_eq!(counts, expected, "vertices, edges, faces of {numbers:?}");
-    assert_eq!(vertices_at_pole(&result), 1, "vertices at the pole of {numbers:?}");
+    assert_eq!(
+        vertices_at_pole(&result),
+        1,
+        "vertices at the pole of {numbers:?}"
+    );
 }
 
 #[test]
