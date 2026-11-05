@@ -1,0 +1,52 @@
+//! The `bopfuse_simple` cases.
+use crate::support::{
+    hooks,
+    process::{NativeImprovement, dataset_cases, native_improvement_case},
+};
+
+dataset_cases!(hooks::BOOLEAN, bopfuse_simple, hooks::no_grid_end;
+    A1, A2, A3, A4, A5, A6, A7, A8, A9, B1, B2, B3,
+    B4, B5, B6, B7, B8, B9, C1, C2, C3, C4, C5, C6,
+    C7, C8, C9, D1, D2, D3, D4, D5, D6, D7, D8, D9,
+    E1, E2, E3, E4, E5, E6, E7, E8, E9, F1, F2, F3,
+    F4, F5, F6, F7, F8, F9, G1, G2, G3, G4, G5, G6,
+    G7, G8, G9, H1, H2, H3, H4, H5, H6, H7, H8, H9,
+    I1, I2, I3, I4, I5, I6, I7, I8, I9, J1, J2, J3,
+    J4, J5, J6, J7, J8, J9, K1, K2, K3, K4, K5, K6,
+    K7, K8, K9, L1, L2, L3, L4, L5, L6, L7, L8, L9,
+    M1, M2, M3, M4, M5, M6, M7, M8, M9, N1, N2, N3,
+    N4, N5, N6, N7, N8, N9, O1, O2, O3, O4, O5, O6,
+    O7, O8, O9, P1, P2, P3, P4, P5, P6, P7, P8, P9,
+    Q1, Q2, Q3, Q4, Q5, Q6, Q7, Q8, Q9, R1, R2, R3,
+    R4, R5, R6, R7, R8, R9, S1, S2, S3, S4, S5, S6,
+    S7, S8, S9, T1, T2, T3, T4, T5, T6, T7, T8, T9,
+    U1, U2, U3, U4, U5, U6, U7, U8, U9, V1, V2, V3,
+    V4, V5, V6, V7, V8, V9, W1, W2, W3, W4, W5, W6,
+    W7, W8, W9, X1, X2, X3, X4, X5, X6, X7, X8, X9,
+    Y1, Y2, Y3, Y4, Y5, Y6, Y7, Y8, Y9, Z1, Z2, Z3,
+    Z4, Z5, Z6, Z7, Z8, Z9, ZA1, ZA2, ZA3, ZA4, ZA5, ZA6,
+    ZA7, ZA8, ZA9, ZB1, ZB2, ZB3, ZB4, ZB5, ZB6, ZB7, ZB8, ZB9,
+    ZC1, ZC2, ZC3, ZC4, ZC5, ZC6, ZC7, ZC8, ZC9, ZD1, ZD2, ZD3,
+    ZD4, ZD5, ZD6, ZD7, ZD8, ZD9, ZE1, ZE2, ZE3, ZE4, ZE5, ZE6,
+    ZE7, ZE8, ZE9, ZF1, ZF2, ZF3, ZF4, ZF5, ZF6, ZF7, ZF8, ZF9,
+    ZG1, ZG2, ZG3, ZG4, ZG5, ZG6, ZG7, ZG8, ZG9, ZH1, ZH2, ZH3,
+    ZH4, ZH5, ZH6, ZH7, ZH8, ZH9, ZI1, ZI2, ZI3, ZI4, ZI5, ZI6,
+    ZI7, ZI8, ZI9, ZJ1, ZJ2, ZJ3, ZJ4, ZJ5, ZJ6, ZJ7, ZJ8, ZJ9,
+    ZK1, ZK2, ZK3, ZK4, ZK5, ZK6, ZK7, ZK8, ZK9, ZL1, ZL2, ZL3,
+    ZL4, ZL5, ZL6, ZL7, ZL8, ZL9, ZM1, ZM2, ZM3, ZM4, ZM5, ZM6,
+    ZM7, ZM8, ZM9, ZN1, ZN2, ZN3, ZN4, ZN5, ZN6, ZN7, ZN8, ZN9,
+    ZO1, ZO2, ZO3, ZO4, ZO5, ZO6, ZO7, ZO8, ZO9, ZP1, ZP2, ZP3,
+    ZP4, ZP5);
+
+// The reference run does not show this script's declared problem either.
+const ZP6_REFERENCE: NativeImprovement = NativeImprovement {
+    todo: "Error : The area of result shape is 138625, expected 197700",
+    reference_log: "the recorded reference run of bopfuse_simple/ZP6",
+};
+native_improvement_case!(
+    hooks::BOOLEAN,
+    bopfuse_simple,
+    hooks::no_grid_end,
+    ZP6,
+    ZP6_REFERENCE
+);
