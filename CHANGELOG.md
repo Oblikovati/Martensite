@@ -6,9 +6,15 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-05
+
 ### Added
 
 - Added `martensite-tkfeat` (local operations and form features: prisms, revolutions, pipes, holes, ribs, slots, glued shapes and splits) and `martensite-tkoffset` (offset modeling: offset shapes and thick solids, simple offsets, drafts, pipe shells, lofts and tangent blends) (#397).
+
+### Changed
+
+- Offset shells are now oriented by their offset faces when a split cap face closes the shell, so the same input gives the valid solid on every run (#397).
 
 ### Fixed
 
