@@ -40,6 +40,10 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkbool` | Topological operations, sweeps, evolved shapes and projections. |
 | `martensite-tkfillet` | Fillets and chamfers. |
 | `martensite-tkcaf` | Topological naming, the extended document attributes and the standard application. |
+| `martensite-tkde` | The data exchange framework: configuration nodes, providers and the format registry. |
+| `martensite-tkxsbase` | The data exchange foundation: interface models, transfer processes, selections and work sessions. |
+| `martensite-tkvcaf` | The presentation attributes of a document and their drivers. |
+| `martensite-tkxcaf` | The extended exchange document: shapes, colors, layers, materials, dimensions and tolerances, notes, views and their presentation. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [math guide](docs/features/martensite-tkmath/README.md), and
@@ -67,6 +71,11 @@ The [Boolean operation](docs/features/martensite-tkbo/README.md),
 [topological naming](docs/features/martensite-tkcaf/README.md) guides describe the modelling
 toolkits, and [Boolean regression cases](docs/features/martensite-boolean-cases/README.md) describes
 how their script cases run.
+The [data exchange framework](docs/features/martensite-tkde/README.md),
+[data exchange foundation](docs/features/martensite-tkxsbase/README.md),
+[document presentation](docs/features/martensite-tkvcaf/README.md) and
+[extended exchange document](docs/features/martensite-tkxcaf/README.md) guides describe the exchange
+toolkits and their verification limits.
 
 ## Getting started
 
