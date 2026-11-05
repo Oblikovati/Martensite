@@ -36,6 +36,10 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkshhealing` | Shape analysis, repair, geometry conversion and subdivision. |
 | `martensite-tkmesh` | Mesh elements, discretization, triangulation and incremental meshing. |
 | `martensite-tktobj` | Document objects, partitions, references, attributes and model iteration. |
+| `martensite-tkbo` | Boolean operations: general fuse, builders, intersection tools, splitting and defeaturing. |
+| `martensite-tkbool` | Topological operations, sweeps, evolved shapes and projections. |
+| `martensite-tkfillet` | Fillets and chamfers. |
+| `martensite-tkcaf` | Topological naming, the extended document attributes and the standard application. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [math guide](docs/features/martensite-tkmath/README.md), and
@@ -57,6 +61,12 @@ the added toolkits and their verification limits.
 The [interactive visualization](docs/features/martensite-tkv3d/README.md) and
 [Vulkan renderer](docs/features/martensite-vulkan/README.md) guides describe the viewer and
 how to run its tests on a software driver.
+The [Boolean operation](docs/features/martensite-tkbo/README.md),
+[topological operation](docs/features/martensite-tkbool/README.md),
+[fillet](docs/features/martensite-tkfillet/README.md) and
+[topological naming](docs/features/martensite-tkcaf/README.md) guides describe the modelling
+toolkits, and [Boolean regression cases](docs/features/martensite-boolean-cases/README.md) describes
+how their script cases run.
 
 ## Getting started
 

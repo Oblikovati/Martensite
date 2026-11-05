@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added `martensite-tkbo` (Boolean operations: general fuse, builders, intersection tools, splitting and defeaturing), `martensite-tkbool` (topological operations, sweeps, evolved shapes and projections), `martensite-tkfillet` (fillets and chamfers) and `martensite-tkcaf` (topological naming, the extended document attributes and the standard application), with `martensite-boolean-cases` for the check contract and regression cases of the Boolean scripts (#393).
+
 ### Fixed
 
 - Dividing a face across a degenerate edge, such as the one closing a sphere at its pole, keeps that edge's vertex instead of leaving a coincident new one for each cut. A cut near an end vertex now ends on it even when the two are apart on the surface.
