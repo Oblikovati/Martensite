@@ -1,0 +1,16 @@
+#[path = "../document_box_lifetime.rs"]
+pub mod document_box_lifetime;
+#[path = "../document_regressions.rs"]
+pub mod document_regressions;
+#[path = "../floating_assertion_contract.rs"]
+pub mod floating_assertion_contract;
+#[path = "../xcaf_assembly.rs"]
+pub mod xcaf_assembly;
+#[path = "../xcaf_gdt_views.rs"]
+pub mod xcaf_gdt_views;
+#[path = "../xcaf_tools.rs"]
+pub mod xcaf_tools;
+#[path = "../xcafdoc_gdt.rs"]
+pub mod xcafdoc_gdt;
+#[path = "../xcafdoc_notes_tool.rs"]
+pub mod xcafdoc_notes_tool;
