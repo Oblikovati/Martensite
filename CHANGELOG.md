@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Curve-curve extrema no longer overflow when balancing search intervals between a curve of nearly no length and a much longer one. Builds with overflow checks panicked there.
+
 ## [0.7.0] - 2026-11-04
 
 ### Added
