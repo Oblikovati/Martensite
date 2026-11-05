@@ -1,4 +1,6 @@
 // Aggregated regression modules; preserve the individual case files.
+#[path = "../shape_divide_area_pole.rs"]
+pub mod shape_divide_area_pole;
 #[path = "../shape_upgrade_closed_edge_divide.rs"]
 pub mod shape_upgrade_closed_edge_divide;
 #[path = "../shape_upgrade_closed_face_divide.rs"]

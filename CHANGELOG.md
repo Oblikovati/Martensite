@@ -8,6 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Dividing a face across a degenerate edge, such as the one closing a sphere at its pole, keeps that edge's vertex instead of leaving a coincident new one for each cut. A cut near an end vertex now ends on it even when the two are apart on the surface.
 - Curve-curve extrema no longer overflow when balancing search intervals between a curve of nearly no length and a much longer one. Builds with overflow checks panicked there.
 
 ## [0.7.0] - 2026-11-04
