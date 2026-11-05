@@ -251,3 +251,7 @@ crates/martensite-tkxcaf/tests/fixtures/empty_compound_views/*.ppm.gz -text -dif
 crates/martensite-tkxcaf/tests/demo_samples/link_assembly.rs -whitespace
 crates/martensite-tkxcaf/tests/demo_samples/logo.rs -whitespace
 crates/martensite-tkxcaf/tests/document_regressions/saved_view_definition.rs -whitespace
+
+# Recorded values of the offset and feature tests keep their bytes on every platform.
+crates/martensite-tkoffset/tests/fixtures/** -text -whitespace
+crates/martensite-tkfeat/tests/dataset_cases/support/restored_kinds.txt -text -whitespace

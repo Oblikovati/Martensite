@@ -44,6 +44,8 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkxsbase` | The data exchange foundation: interface models, transfer processes, selections and work sessions. |
 | `martensite-tkvcaf` | The presentation attributes of a document and their drivers. |
 | `martensite-tkxcaf` | The extended exchange document: shapes, colors, layers, materials, dimensions and tolerances, notes, views and their presentation. |
+| `martensite-tkfeat` | Local operations and form features: prisms, revolutions, pipes, holes, ribs, slots, glued shapes and splits. |
+| `martensite-tkoffset` | Offset modeling: offset shapes and thick solids, simple offsets, drafts, pipe shells, lofts and tangent blends. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [math guide](docs/features/martensite-tkmath/README.md), and
@@ -62,6 +64,9 @@ The [shape healing](docs/features/martensite-tkshhealing/README.md),
 [mesh construction](docs/features/martensite-tkmesh/README.md) and
 [document object model](docs/features/martensite-tktobj/README.md) guides describe
 the added toolkits and their verification limits.
+The [form feature](docs/features/martensite-tkfeat/README.md) and
+[offset modeling](docs/features/martensite-tkoffset/README.md) guides describe the last modelling
+toolkits.
 The [interactive visualization](docs/features/martensite-tkv3d/README.md) and
 [Vulkan renderer](docs/features/martensite-vulkan/README.md) guides describe the viewer and
 how to run its tests on a software driver.
