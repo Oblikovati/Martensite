@@ -46,6 +46,9 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkxcaf` | The extended exchange document: shapes, colors, layers, materials, dimensions and tolerances, notes, views and their presentation. |
 | `martensite-tkfeat` | Local operations and form features: prisms, revolutions, pipes, holes, ribs, slots, glued shapes and splits. |
 | `martensite-tkoffset` | Offset modeling: offset shapes and thick solids, simple offsets, drafts, pipe shells, lofts and tangent blends. |
+| `martensite-tkdestl` | STL reading and writing: text and binary files, shape transfers and the format provider. |
+| `martensite-tkmeshvs` | Mesh visualization: mesh data sources, the drawer, presentation builders and selection on elements and nodes. |
+| `martensite-tkxmesh` | A meshing factory: a named alternative entry to the incremental mesher. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [math guide](docs/features/martensite-tkmath/README.md), and
@@ -67,6 +70,10 @@ the added toolkits and their verification limits.
 The [form feature](docs/features/martensite-tkfeat/README.md) and
 [offset modeling](docs/features/martensite-tkoffset/README.md) guides describe the last modelling
 toolkits.
+The [STL exchange](docs/features/martensite-tkdestl/README.md),
+[mesh visualization](docs/features/martensite-tkmeshvs/README.md) and
+[meshing factory](docs/features/martensite-tkxmesh/README.md) guides describe STL files and meshes on
+their own.
 The [interactive visualization](docs/features/martensite-tkv3d/README.md) and
 [Vulkan renderer](docs/features/martensite-vulkan/README.md) guides describe the viewer and
 how to run its tests on a software driver.

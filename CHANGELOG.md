@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added `martensite-tkdestl` (STL reading and writing: text and binary files, shape transfers and the format provider), `martensite-tkmeshvs` (mesh visualization: mesh data sources, the drawer, presentation builders and selection on elements and nodes) and `martensite-tkxmesh` (a named meshing factory, an alternative entry to the incremental mesher).
+
 ## [0.10.0] - 2026-11-05
 
 ### Added

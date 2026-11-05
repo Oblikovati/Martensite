@@ -631,6 +631,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkdestl"
+version = "0.11.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-tkbrep",
+ "martensite-tkde",
+ "martensite-tkernel",
+ "martensite-tkg3d",
+ "martensite-tklcaf",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+ "martensite-tkmeshvs",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-tkxcaf",
+ "martensite-vulkan",
+]
+
+[[package]]
 name = "martensite-tkernel"
 version = "0.4.2"
 dependencies = [
@@ -825,6 +849,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkmeshvs"
+version = "0.11.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-process-policy",
+ "martensite-test-support",
+ "martensite-tkernel",
+ "martensite-tkmath",
+ "martensite-tkservice",
+ "martensite-tkv3d",
+ "martensite-vulkan",
+]
+
+[[package]]
 name = "martensite-tkoffset"
 version = "0.10.0"
 dependencies = [
@@ -997,6 +1035,17 @@ dependencies = [
  "martensite-tkvcaf",
  "martensite-tkxsbase",
  "martensite-vulkan",
+]
+
+[[package]]
+name = "martensite-tkxmesh"
+version = "0.11.0"
+dependencies = [
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkmesh",
+ "martensite-tkprim",
+ "martensite-tktopalgo",
 ]
 
 [[package]]
