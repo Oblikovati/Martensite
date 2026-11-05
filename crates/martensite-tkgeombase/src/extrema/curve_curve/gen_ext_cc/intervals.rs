@@ -69,6 +69,12 @@ fn bounds<T: ExtremaCurveTool>(
     Ok((1..=count + 1).map(|i| array[i]).collect())
 }
 
+// The interval count a length ratio asks for. A ratio beyond the integer range, from a curve
+// of nearly no length, saturates; the caller keeps at most 100 intervals, so it rejects that count.
+fn balanced_interval_count(ratio: f64) -> i32 {
+    real_to_int(ratio).saturating_add(1)
+}
+
 // The curve whose intervals are more than 20 times longer (in length per interval)
 // than the other's, with its balanced interval count, when that count is kept.
 fn balanced_split<T: ExtremaCurveTool>(
@@ -94,7 +100,7 @@ fn balanced_split<T: ExtremaCurveTool>(
         return Ok(None);
     };
     let ratio: f64 = lengths[indmax] * f64::from(nb_inter[indmin]) / lengths[indmin] / (MULT / 4.);
-    let mut nb_int_opt: i32 = real_to_int(ratio) + 1;
+    let mut nb_int_opt: i32 = balanced_interval_count(ratio);
     if nb_int_opt > 100 || nb_int_opt < nb_inter[indmax] {
         return Ok(None);
     }
@@ -152,4 +158,21 @@ fn longest_interval(bounds: &[f64]) -> usize {
         }
     }
     max_ind
+}
+
+#[cfg(test)]
+mod tests {
+    use super::balanced_interval_count;
+
+    #[test]
+    fn balanced_count_rounds_a_ratio_down_and_adds_one() {
+        assert_eq!(balanced_interval_count(0.), 1);
+        assert_eq!(balanced_interval_count(7.9), 8);
+    }
+
+    #[test]
+    fn ratio_beyond_the_integer_range_saturates_instead_of_overflowing() {
+        assert_eq!(balanced_interval_count(1e300), i32::MAX);
+        assert_eq!(balanced_interval_count(f64::INFINITY), i32::MAX);
+    }
 }
