@@ -1,0 +1,59 @@
+[package]
+autotests = false
+name = "martensite-tkxsbase"
+version = "0.9.0"
+description = "Martensite data exchange foundation: interface models, transfer processes, selections and work sessions."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.7" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.6" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.8" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.1" }
+martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.7" }
+
+[dev-dependencies]
+martensite-tkde = { path = "../martensite-tkde", version = "0.9.0" }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
+
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+# Mutates the process-wide exception stack-capture setting.
+[[test]]
+name = "exception_constructor_stacks"
+path = "tests/exception_constructor_stacks.rs"
+
+# The original parameter diagnostic uses process-wide static values and message printers.
+[[test]]
+name = "param_enum_print"
+path = "tests/param_enum_print.rs"
+
+# Direct compiler evidence for concrete aliases omitted by the declaration index.
+[[test]]
+name = "interface_node_compiler_calls"
+path = "tests/interface_node_compiler_calls.rs"
+
+[[test]]
+name = "interface_node_base_types"
+path = "tests/interface_node_base_types.rs"
+
+# Independent owned-payload controls for implicit language-managed destruction.
+[[test]]
+name = "implicit_owned_lifetimes"
+path = "tests/implicit_owned_lifetimes.rs"
+
+[[test]]
+name = "bug33318_brep_text"
+path = "tests/bug33318_brep_text.rs"

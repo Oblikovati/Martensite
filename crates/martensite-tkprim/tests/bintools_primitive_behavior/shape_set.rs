@@ -98,7 +98,7 @@ fn a_stream_without_a_version_line_reads_nothing_and_says_so() {
 #[test]
 fn a_version_line_ending_with_a_carriage_return_is_recognised() {
     let bytes = write_set(&make_vertex(Point3::new(1.0, 2.0, 3.0)), options(3));
-    let end = bytes.windows(4).position(|w| w == b"(c)\n").unwrap() + 3;
+    let end = bytes.windows(3).position(|w| w == b"V3\n").unwrap() + 2;
     let mut crlf = bytes[..end].to_vec();
     crlf.push(b'\r');
     crlf.extend_from_slice(&bytes[end..]);

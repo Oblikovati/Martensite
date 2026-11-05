@@ -6,6 +6,16 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-05
+
+### Added
+
+- Added `martensite-tkde` (the data exchange framework: configuration nodes, providers and the format registry), `martensite-tkxsbase` (the data exchange foundation: interface models, transfer processes, selections and work sessions), `martensite-tkvcaf` (the presentation attributes of a document and their drivers) and `martensite-tkxcaf` (the extended exchange document: shapes, colors, layers, materials, dimensions and tolerances, notes, views and their presentation) (#395).
+
+### Changed
+
+- Shape files now carry a Martensite version line (`Martensite Topology V3` in text, `Martensite Binary Topology V4` in binary). The older lines are still read (#395).
+
 ## [0.8.0] - 2026-11-05
 
 ### Added

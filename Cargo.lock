@@ -439,7 +439,7 @@ checksum = "b0d28e293f2b8c9d2b2d1c0193bd3c1cbdc0d2cf396888dc01162f7cf9d6c3f3"
 
 [[package]]
 name = "martensite-boolean-cases"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "martensite-cmath",
  "martensite-geometry-raster",
@@ -578,7 +578,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkbrep"
-version = "0.3.8"
+version = "0.3.9"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -617,6 +617,17 @@ name = "martensite-tkcdf"
 version = "0.3.6"
 dependencies = [
  "martensite-tkernel",
+]
+
+[[package]]
+name = "martensite-tkde"
+version = "0.9.0"
+dependencies = [
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg3d",
+ "martensite-tklcaf",
+ "tempfile",
 ]
 
 [[package]]
@@ -682,7 +693,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkg3d"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "flate2",
  "martensite-cmath",
@@ -789,7 +800,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkprim"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -879,6 +890,71 @@ dependencies = [
  "martensite-tkmesh",
  "martensite-tkprim",
  "martensite-tkservice",
+ "martensite-tktopalgo",
+]
+
+[[package]]
+name = "martensite-tkvcaf"
+version = "0.9.0"
+dependencies = [
+ "martensite-boolean-cases",
+ "martensite-process-policy",
+ "martensite-tkbrep",
+ "martensite-tkcaf",
+ "martensite-tkcdf",
+ "martensite-tkernel",
+ "martensite-tkg3d",
+ "martensite-tkgeombase",
+ "martensite-tklcaf",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-vulkan",
+]
+
+[[package]]
+name = "martensite-tkxcaf"
+version = "0.9.0"
+dependencies = [
+ "flate2",
+ "martensite-process-policy",
+ "martensite-test-support",
+ "martensite-tkbo",
+ "martensite-tkbool",
+ "martensite-tkbrep",
+ "martensite-tkcaf",
+ "martensite-tkcdf",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tklcaf",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-tkvcaf",
+ "martensite-tkxsbase",
+ "martensite-vulkan",
+]
+
+[[package]]
+name = "martensite-tkxsbase"
+version = "0.9.0"
+dependencies = [
+ "martensite-process-policy",
+ "martensite-tkbrep",
+ "martensite-tkde",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tkshhealing",
  "martensite-tktopalgo",
 ]
 

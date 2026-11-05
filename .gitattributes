@@ -240,3 +240,14 @@ crates/martensite-tkfillet/tests/**/*.brep -text -whitespace
 crates/martensite-tkfillet/tests/**/*.txt -text -whitespace
 crates/martensite-boolean-cases/src/support/*.txt -text -whitespace
 crates/martensite-boolean-cases/tests/dataset_cases/data/** -text -whitespace
+
+# Data exchange configuration fixtures, message texts and saved view images keep their bytes on every
+# platform: they are compared byte for byte or sealed by hash.
+crates/martensite-tkde/tests/data/** -text -whitespace
+crates/martensite-tkxsbase/src/xs_message/XSTEP.* -text -whitespace
+crates/martensite-tkxsbase/tests/support/fixtures/** -text -whitespace
+crates/martensite-tkxcaf/tests/fixtures/empty_compound_views/*.ppm.gz -text -diff -merge
+# These tests compare with dumps whose lines end in significant spaces.
+crates/martensite-tkxcaf/tests/demo_samples/link_assembly.rs -whitespace
+crates/martensite-tkxcaf/tests/demo_samples/logo.rs -whitespace
+crates/martensite-tkxcaf/tests/document_regressions/saved_view_definition.rs -whitespace

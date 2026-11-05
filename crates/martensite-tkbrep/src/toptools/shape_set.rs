@@ -12,12 +12,24 @@ use martensite_tkgeombase::geom_tools::{ConsoleOutput, StdoutConsole};
 use martensite_tkmath::toploc::Location;
 use std::sync::Arc;
 
-/// `THE_ASCII_VERSIONS`: the copyright line of each format version (index 0 unused).
+/// `THE_ASCII_VERSIONS`: the version line written for each format version (index 0 unused).
 pub const THE_ASCII_VERSIONS: [&str; format_version::UPPER as usize + 1] = [
     "",
-    "CASCADE Topology V1, (c) Matra-Datavision",
-    "CASCADE Topology V2, (c) Matra-Datavision",
-    "CASCADE Topology V3, (c) Open Cascade",
+    "Martensite Topology V1",
+    "Martensite Topology V2",
+    "Martensite Topology V3",
+];
+
+/// The version lines of older text shape files, which are only read, with their format versions.
+pub(super) const LEGACY_INPUT_VERSIONS: [(&str, i32); 2] = [
+    (
+        "CASCADE Topology V1, (c) Matra-Datavision",
+        format_version::VERSION_1,
+    ),
+    (
+        "CASCADE Topology V3, (c) Open Cascade",
+        format_version::VERSION_3,
+    ),
 ];
 
 /// The private data of `TopTools_ShapeSet`: the TShapes (at the identity location), the

@@ -1,6 +1,6 @@
 //! The base body of the virtual `Read` of `TopTools_ShapeSet`.
 use super::format_version;
-use super::shape_set::{ShapeSet, THE_ASCII_VERSIONS};
+use super::shape_set::{LEGACY_INPUT_VERSIONS, ShapeSet, THE_ASCII_VERSIONS};
 use super::shape_set_io::{WORD_BUFFER, read_shape_among};
 use super::shape_set_text::shape_enum_of;
 use crate::topods::Shape;
@@ -124,7 +124,13 @@ fn find_version<S: ShapeSet + ?Sized>(set: &mut S, stream: &mut IoStream) -> boo
             line.pop();
         }
         let known = (format_version::LOWER..=format_version::UPPER)
-            .find(|version| line == THE_ASCII_VERSIONS[*version as usize].as_bytes());
+            .find(|version| line == THE_ASCII_VERSIONS[*version as usize].as_bytes())
+            .or_else(|| {
+                LEGACY_INPUT_VERSIONS
+                    .iter()
+                    .find(|(text, _)| line == text.as_bytes())
+                    .map(|(_, version)| *version)
+            });
         if let Some(version) = known {
             set.set_format_nb(version);
             return !stream.fail();
