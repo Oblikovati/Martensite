@@ -65,7 +65,7 @@ validation_layer_environment() {
 apt_packages() {
     echo build-essential git curl ca-certificates pkg-config \
         tcl8.6-dev tk8.6-dev libfreetype-dev libfontconfig-dev libx11-dev \
-        libvulkan-dev mesa-vulkan-drivers libdisplay-info1 libsensors5 libdrm-intel1 fonts-noto-cjk vulkan-validationlayers vulkan-tools \
+        libvulkan-dev mesa-vulkan-drivers libdisplay-info1 libsensors5 libdrm-intel1 fonts-dejavu fonts-dejavu-extra fonts-droid-fallback fonts-freefont-ttf fonts-liberation fonts-noto-cjk fonts-noto-core vulkan-validationlayers vulkan-tools \
         glslang-tools spirv-tools xvfb xauth fonts-dejavu-core gh
     # Debian 13 packages rustup; Debian 12 and Ubuntu 24.04 do not and use rustup.rs.
     # `apt-cache show` succeeds for a name without a candidate, so read the policy.

@@ -19,6 +19,8 @@ mod primitive_shapes;
 #[allow(dead_code)] // Only SIZE serves this case.
 #[path = "support/raytrace_scene.rs"]
 mod raytrace_scene;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[path = "support/shift_control.rs"]
 mod shift_control;
 #[path = "case_host/snap_pixels.rs"]
@@ -168,8 +170,7 @@ fn peeling_objects(session: &UserProgramSession) -> (PeelingObject, PeelingObjec
 fn a_gl_frag_color_program_draws_its_colour_into_every_oit_target() {
     let (device, report) = graded_dumps(&NATIVE, peeling_dumps);
     let failing = grading::unrecorded_pixels(&report, &device, &[]);
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or approved residues: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or approved residues: {failing:?}")
+    });
 }

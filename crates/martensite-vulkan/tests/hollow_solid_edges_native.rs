@@ -13,6 +13,8 @@
 #[path = "support/native_dump_grading.rs"]
 #[allow(dead_code)]
 mod grading;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::Handle;
 use martensite_tkmath::gp::{Direction3, Point3};
@@ -176,10 +178,9 @@ fn programmable_hollow_interiors_draw_interior_coloured_mesh_edges_as_natively()
     };
     let pipelines = (Default::default(), Default::default());
     let failing = unexplained(&driver, pipelines, native);
-    assert!(
-        failing.is_empty(),
-        "unexplained (dump, pixels): {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("unexplained (dump, pixels): {failing:?}")
+    });
 }
 
 #[test]

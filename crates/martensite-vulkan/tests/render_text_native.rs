@@ -9,6 +9,8 @@
 //! device's own native driver (llvmpipe for lavapipe, radeonsi for RADV).
 #[path = "../examples/support/device_options.rs"]
 mod device_options;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[allow(dead_code)]
 #[path = "support/rgb_fingerprint.rs"]
 mod rgb_fingerprint;
@@ -254,5 +256,5 @@ fn text_element_follows_the_native_contract_and_frames() {
     failures.extend(scene.mismatch("element-2d"));
     lines.push(state_line("two_d_rendered", &element));
     assert_eq!(lines, native_lines("state "));
-    assert!(failures.is_empty(), "{failures:#?}");
+    reference_cpu::require_exact(failures.is_empty(), || format!("{failures:#?}"));
 }

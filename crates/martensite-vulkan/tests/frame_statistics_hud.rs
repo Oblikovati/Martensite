@@ -4,6 +4,8 @@
 //! on llvmpipe and on AMD radeonsi; each dump repeats byte-identically. The overlay shows the
 //! structure, group and triangle counters of an empty 320x240 view at the native top-left
 //! corner and text height, over the default black background.
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 use martensite_tkernel::quantity::{Color, ColorSpace};
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::aspect::{AspectNeutralWindow, AspectWindowMembers as _};
@@ -83,8 +85,7 @@ fn shown_counters_overlay_matches_the_native_dump() {
         .filter(|(a, b)| a != b)
         .count();
     println!("{{\"stats_hud_device\":{device:?},\"differing_pixels\":{differing}}}");
-    assert_eq!(
-        differing, 0,
-        "device={device}; expected the native overlay byte for byte"
-    );
+    reference_cpu::require_exact(differing == 0, || {
+        format!("device={device}; expected the native overlay byte for byte")
+    });
 }

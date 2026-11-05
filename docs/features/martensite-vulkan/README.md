@@ -34,7 +34,8 @@ report no error, warning or performance warning:
 
 ```bash
 source ~/.local/share/martensite/env.sh
-export VK_DRIVER_FILES="$MARTENSITE_LAVAPIPE_ICD" \
+export FONTCONFIG_FILE="$PWD/scripts/install/renderer-fontconfig.conf" \
+    VK_DRIVER_FILES="$MARTENSITE_LAVAPIPE_ICD" \
     GALLIUM_OVERRIDE_CPU_CAPS=sse2 LP_NATIVE_VECTOR_WIDTH=128 LIBGL_ALWAYS_SOFTWARE=1 \
     MARTENSITE_VULKAN_DEVICE=0
 cargo nextest run -p martensite-vulkan
@@ -44,7 +45,18 @@ cargo nextest run -p martensite-vulkan
 runs it on Ubuntu 24.04. CI uses `.github/actions/setup-renderer-tests`. The recorded software
 images are exact only on the pinned Mesa 26.1.6 lavapipe with LLVM 20.1.2 and the SSE2, 128-bit
 rasterizer settings above. Other Mesa versions differ by a few levels at some pixels, and report
-4 instead of 8 maximum samples, so these tests fail there. One case also needs the Noto CJK fonts.
+4 instead of 8 maximum samples, so these tests fail there.
+
+Text in the recorded images comes from the system fonts that `install-linux.sh` installs.
+`renderer-fontconfig.conf` limits the tests to system fonts, because a font in a user's own folder
+can change which one an alias resolves to: a local Helvetica replaces FreeSans for "Arial", and the
+text tests then fail.
+
+Lavapipe's output also differs between CPU vendors at some pixels, for the same driver build and
+settings, and the recorded images come from AMD CPUs. `tests/support/reference_cpu.rs` keeps the
+affected image checks exact on AMD. On other vendors a mismatch prints a notice instead of failing,
+and the rest of each test still applies. A CI job can land on either vendor, so only runs on AMD
+exercise those checks.
 
 The `*_regressions` test targets run regression cases in isolated worker processes under their
 group's time budget and grade the case report. Cases that need boolean, fillet, offset or

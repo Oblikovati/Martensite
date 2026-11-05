@@ -17,6 +17,8 @@ mod elliptical_reference;
 // The per-pixel recorded-failure helpers are unused: no failure is recorded.
 #[allow(dead_code)]
 mod grading;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 use martensite_tkernel::quantity::{Color, ColorSpace, NamedColor};
 use martensite_tkernel::standard::Handle;
 use martensite_tkservice::aspect::{
@@ -196,8 +198,7 @@ fn tiled_gradients_match_the_native_dumps() {
     );
     let control = grading::rounding_control(&driver, gradient_dumps);
     let failing = unexplained_dumps(&dumps, &native, control.as_deref());
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or the approved residue: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or the approved residue: {failing:?}")
+    });
 }

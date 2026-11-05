@@ -16,6 +16,8 @@ mod grading;
 #[allow(dead_code)] // Only the view, fit and dump helpers serve this case.
 #[path = "support/raytrace_scene.rs"]
 mod raytrace_scene;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[path = "support/shift_control.rs"]
 mod shift_control;
 #[path = "case_host/snap_pixels.rs"]
@@ -182,10 +184,9 @@ fn texture_3d_slices_and_volume_match_the_native_dumps() {
         });
     }
     let failing = grading::unrecorded_pixels(&report, &device, &RECORDED_FAILURES);
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or approved residues: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or approved residues: {failing:?}")
+    });
 }
 
 /// GlContext::SetTextureMatrix flips V for a top-down image (occTexTrsf2d scale.y < 0), and

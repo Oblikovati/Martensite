@@ -13,6 +13,8 @@
 // The per-pixel recorded-failure helpers are unused: no failure is recorded.
 #[allow(dead_code)]
 mod grading;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[path = "support/background_image_scene.rs"]
 mod scene;
 use martensite_tkernel::standard::Handle;
@@ -93,10 +95,9 @@ fn background_images_match_the_native_dumps() {
     assert_eq!(styles, NATIVE_STYLES.lines().collect::<Vec<_>>());
     let control = grading::rounding_control(&driver, capture_dumps);
     let failing = unexplained_dumps(&dumps, &native, control.as_deref());
-    assert!(
-        failing.is_empty(),
-        "device={device}; expected byte-exact dumps or the approved residue: {failing:?}"
-    );
+    reference_cpu::require_exact(failing.is_empty(), || {
+        format!("device={device}; expected byte-exact dumps or the approved residue: {failing:?}")
+    });
 }
 
 /// The attribute-rounding grader on one pixel: native, Rust and control blue levels.

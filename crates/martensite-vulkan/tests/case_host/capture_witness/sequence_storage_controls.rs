@@ -1,4 +1,5 @@
 use super::*;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::{
     fs,
     time::{SystemTime, UNIX_EPOCH},
@@ -7,12 +8,17 @@ use std::{
 struct TemporaryWitnessRoot(PathBuf);
 impl TemporaryWitnessRoot {
     fn new() -> Self {
+        // Parallel tests can read the same clock value, so the counter keeps the paths distinct.
+        static NEXT: AtomicU64 = AtomicU64::new(0);
+        let sequence = NEXT.fetch_add(1, Ordering::Relaxed);
         let nonce = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let path =
-            std::env::temp_dir().join(format!("martensite-witness-{}-{nonce}", std::process::id()));
+        let path = std::env::temp_dir().join(format!(
+            "martensite-witness-{}-{nonce}-{sequence}",
+            std::process::id()
+        ));
         fs::create_dir(&path).unwrap();
         Self(path)
     }

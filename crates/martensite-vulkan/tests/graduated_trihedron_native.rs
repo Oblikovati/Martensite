@@ -13,6 +13,8 @@
 mod depth_near_tie_grade;
 #[path = "../examples/support/device_options.rs"]
 mod device_options;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[path = "support/renderdoc_capture.rs"]
 mod renderdoc_capture;
 #[allow(dead_code)]
@@ -313,7 +315,7 @@ fn trihedron_case_failures() -> Vec<String> {
 #[test]
 fn graduated_trihedron_draws_grid_axes_and_labels_like_native() {
     let failures = trihedron_case_failures();
-    assert!(failures.is_empty(), "{failures:#?}");
+    reference_cpu::require_exact(failures.is_empty(), || format!("{failures:#?}"));
 }
 
 /// `ChangeGraduatedTrihedron`: parameters without the bounds callback keep the `SetMinMax`
@@ -341,7 +343,7 @@ fn trihedron_element_values_bounds_and_release_follow_native() {
     failures.extend(graded_mismatch(&scene, "released", None));
     scene.v3d().graduated_trihedron_erase();
     assert!(!view.is_graduated_trihedron_shown());
-    assert!(failures.is_empty(), "{failures:#?}");
+    reference_cpu::require_exact(failures.is_empty(), || format!("{failures:#?}"));
 }
 
 #[test]

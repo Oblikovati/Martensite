@@ -8,6 +8,8 @@ mod device_options;
 mod native_assets;
 #[path = "../examples/support/native_golden.rs"]
 mod native_golden;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
 #[allow(dead_code)]
 #[path = "support/viewer_scene.rs"]
 mod scene;
@@ -53,11 +55,12 @@ fn textured_full_native_matrix_preserves_all_unresolved_diagnostics() {
             failures.push(failure);
         }
     }
-    assert!(
-        failures.is_empty(),
-        "received {} native mismatches: {failures:?}; expected exact RGBA and depth within 1e-6",
-        failures.len()
-    );
+    reference_cpu::require_exact(failures.is_empty(), || {
+        format!(
+            "received {} native mismatches: {failures:?}; expected exact RGBA and depth within 1e-6",
+            failures.len()
+        )
+    });
     for checked in std::iter::once(&driver).chain(control.as_ref()) {
         let errors = checked.validation_errors().unwrap();
         assert!(errors.is_empty(), "{errors:?}");
