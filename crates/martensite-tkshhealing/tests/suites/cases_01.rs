@@ -27,6 +27,8 @@ pub mod shape_upgrade_shape_convert_to_bezier;
 pub mod shape_upgrade_shape_divide;
 #[path = "../shape_upgrade_shape_divide_area.rs"]
 pub mod shape_upgrade_shape_divide_area;
+#[path = "../shape_divide_area_pole.rs"]
+pub mod shape_divide_area_pole;
 #[path = "../shape_upgrade_shape_divide_closed.rs"]
 pub mod shape_upgrade_shape_divide_closed;
 #[path = "../shape_upgrade_shape_divide_continuity.rs"]
