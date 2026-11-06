@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+
+- Validated Vulkan startup now refuses a Khronos validation layer older than 1.4.313 before creating the instance, and `RenderValidationAdmissionFailure::UnverifiedLayer` reports both versions. Older layers could start and then report false errors or crash; Ubuntu 24.04's packaged 1.3.275 is one of them. Install 1.4.313 or newer, which `scripts/install/vulkan-validation.sh` does on Ubuntu 24.04 x86_64, or start with validation off (#388).
+
 ### Fixed
 
 - Validated Vulkan startup now names a missing validation layer or required instance extension before creating the instance. The check includes extensions from the selected layer and keeps validation enabled (#388).

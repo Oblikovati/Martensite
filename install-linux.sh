@@ -48,7 +48,7 @@ detect_package_manager() {
 
 # --- Vulkan validation ------------------------------------------------------
 
-# The renderer tests need the pinned layer; its package targets Ubuntu 24.04 on x86_64.
+# Validated Vulkan startup needs layer 1.4.313 or newer; the pinned package targets Ubuntu 24.04 on x86_64.
 validation_layer_environment() {
     local manager=$1
     if [[ $manager == apt-get && "$(uname -m)" == x86_64 ]] &&
@@ -56,7 +56,7 @@ validation_layer_environment() {
         "$REPO_ROOT/scripts/install/vulkan-validation.sh" "$MARTENSITE_DATA/vulkan-validation"
         return
     fi
-    log "Skipping the pinned Vulkan validation layer: martensite-vulkan tests need layer 1.4.313 or newer" >&2
+    log "Skipping the pinned Vulkan validation layer: validated Vulkan startup needs layer 1.4.313 or newer" >&2
     return 0
 }
 
