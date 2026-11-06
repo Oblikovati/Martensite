@@ -10,7 +10,13 @@ use martensite_tkernel::ncollection::{DataMap, Map, Vec3};
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::aspect::AspectInteriorStyle;
-use martensite_tkservice::graphic3d::*;
+use martensite_tkservice::graphic3d::Graphic3dAspectsMembers;
+use martensite_tkservice::graphic3d::Graphic3dAspectsRenderMembers;
+use martensite_tkservice::graphic3d::Graphic3dGroupMembers;
+use martensite_tkservice::graphic3d::{
+    Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles, Graphic3dAspectFillArea3d,
+    Graphic3dAspectsSource, Graphic3dMaterialAspect, Graphic3dNameOfMaterial,
+};
 
 /// The two plastic materials of the color pairs: black specular and emissive colors, and a
 /// "nondirectional" full ambient color without diffusion when not reflected (so the front

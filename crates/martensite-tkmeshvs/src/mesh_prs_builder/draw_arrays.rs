@@ -6,7 +6,16 @@ use crate::MeshVSDrawerAttribute as Key;
 use crate::prs_builder::MeshVSPrsBuilderMembers;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::aspect::AspectTypeOfLine;
-use martensite_tkservice::graphic3d::*;
+use martensite_tkservice::graphic3d::Graphic3dAspectsEdgeMembers;
+use martensite_tkservice::graphic3d::Graphic3dAspectsLineMembers;
+use martensite_tkservice::graphic3d::Graphic3dAspectsMembers;
+use martensite_tkservice::graphic3d::Graphic3dAspectsRenderMembers;
+use martensite_tkservice::graphic3d::Graphic3dGroupMembers;
+use martensite_tkservice::graphic3d::Graphic3dStructureMembers;
+use martensite_tkservice::graphic3d::{
+    Graphic3dArrayOfPrimitives, Graphic3dAspectFillArea3d, Graphic3dAspectLine3d,
+    Graphic3dAspectsSource, Graphic3dStructureSource,
+};
 
 /// The arrays and flags of `DrawArrays`.
 pub struct DrawArraysInput {

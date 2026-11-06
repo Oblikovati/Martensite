@@ -6,11 +6,21 @@ use super::primitives::node_xyz;
 use crate::MeshVSDrawerAttribute as Key;
 use crate::MeshVSTool;
 use crate::data_source::{MeshVSPackedMap, MeshVSTopologyHandle};
-use crate::flags::*;
+use crate::flags::{
+    MESHVS_DMF_HILIGHT_PRS, MESHVS_ET_FACE, MESHVS_ET_LINK, MESHVS_ET_NODE, MESHVS_ET_NONE,
+    MESHVS_ET_VOLUME,
+};
 use crate::prs_builder::{MeshVSPrsBuilderMembers, coords_of};
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::{Failure, Handle};
-use martensite_tkservice::graphic3d::*;
+use martensite_tkservice::graphic3d::Graphic3dAspectsMembers;
+use martensite_tkservice::graphic3d::Graphic3dGroupMembers;
+use martensite_tkservice::graphic3d::Graphic3dStructureMembers;
+use martensite_tkservice::graphic3d::{
+    Graphic3dArrayOfPoints, Graphic3dArrayOfPolygons, Graphic3dArrayOfSegments,
+    Graphic3dAspectsSource, Graphic3dMaterialAspect, Graphic3dStructureSource,
+    Graphic3dTypeOfShadingModel,
+};
 
 fn aspect<T: Graphic3dAspectsSource + martensite_tkernel::standard::RuntimeTyped>(
     value: &Handle<T>,

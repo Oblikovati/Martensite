@@ -7,7 +7,7 @@ use super::volume::{MeshVSNodalColorScale, scaled, texel};
 use crate::MeshVSDrawerAttribute as Key;
 use crate::data_source::{MeshVSDataSource, MeshVSPackedMap, MeshVSTopologyHandle};
 use crate::drawer::MeshVSDrawerSource;
-use crate::flags::*;
+use crate::flags::{MESHVS_ET_FACE, MESHVS_ET_NONE, MESHVS_ET_VOLUME};
 use crate::mesh_prs_builder::draw_arrays_copy_fill as copy_fill;
 use crate::mesh_prs_builder::{MeshVSMeshPrsBuilder, fan_index, node_xyz};
 use crate::prs_builder::{MeshVSPrsBuilderMembers, coords_of, parent_hidden_elems, remaining_ids};
@@ -16,7 +16,16 @@ use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Direction3, Point3, resolution};
 use martensite_tkservice::aspect::{AspectInteriorStyle, AspectTypeOfLine};
-use martensite_tkservice::graphic3d::*;
+use martensite_tkservice::graphic3d::Graphic3dAspectsEdgeMembers;
+use martensite_tkservice::graphic3d::Graphic3dAspectsMembers;
+use martensite_tkservice::graphic3d::Graphic3dAspectsRenderMembers;
+use martensite_tkservice::graphic3d::Graphic3dGroupMembers;
+use martensite_tkservice::graphic3d::Graphic3dStructureMembers;
+use martensite_tkservice::graphic3d::{
+    Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles, Graphic3dAspectFillArea3d,
+    Graphic3dAspectLine3d, Graphic3dAspectsSource, Graphic3dMaterialAspect,
+    Graphic3dNameOfMaterial, Graphic3dStructureSource, Graphic3dTypeOfShadingModel,
+};
 use martensite_tkv3d::prs_mgr::PrsMgrPresentableObjectMembers;
 use martensite_tkv3d::prs3d::Prs3dShadingAspect;
 

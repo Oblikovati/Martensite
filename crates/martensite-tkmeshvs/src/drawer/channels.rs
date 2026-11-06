@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::{MeshVSDrawer, storage::*};
+use super::{
+    MeshVSDrawer,
+    storage::{get_channel, remove_channel, set_channel},
+};
 use martensite_tkernel::{quantity::Color, tcollection::AsciiString};
 use martensite_tkservice::graphic3d::Graphic3dMaterialAspect;
 impl MeshVSDrawer {

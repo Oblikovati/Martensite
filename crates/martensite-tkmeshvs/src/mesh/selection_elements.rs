@@ -9,7 +9,9 @@ use super::selection::SelectionScope;
 use super::{MeshVSMeshMembers, MeshVSMeshSource, MeshVSOwnerMap};
 use crate::MeshVSEntityType;
 use crate::data_source::{MeshVSPackedMap, MeshVSTopologyHandle};
-use crate::flags::*;
+use crate::flags::{
+    MESHVS_ET_0D, MESHVS_ET_FACE, MESHVS_ET_LINK, MESHVS_ET_NODE, MESHVS_ET_NONE, MESHVS_ET_VOLUME,
+};
 use crate::mesh_entity_owner::MeshVSMeshEntityOwner;
 use crate::sensitive_polyhedron::MeshVSSensitivePolyhedron;
 use crate::sensitive_quad::MeshVSSensitiveQuad;

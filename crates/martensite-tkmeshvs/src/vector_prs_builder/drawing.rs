@@ -3,7 +3,9 @@
 use super::MeshVSVectorPrsBuilder;
 use crate::MeshVSDrawerAttribute as Key;
 use crate::data_source::MeshVSPackedMap;
-use crate::flags::*;
+use crate::flags::{
+    MESHVS_ET_FACE, MESHVS_ET_LINK, MESHVS_ET_NODE, MESHVS_ET_NONE, MESHVS_ET_VOLUME,
+};
 use crate::mesh_prs_builder::node_xyz;
 use crate::prs_builder::{
     MeshVSPrsBuilder, MeshVSPrsBuilderMembers, coords_of, parent_hidden_elems, remaining_ids,
@@ -14,7 +16,12 @@ use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Axis3, Direction3, Point3, Transform3, Vector3, Xyz};
 use martensite_tkservice::aspect::AspectTypeOfLine;
-use martensite_tkservice::graphic3d::*;
+use martensite_tkservice::graphic3d::Graphic3dGroupMembers;
+use martensite_tkservice::graphic3d::Graphic3dStructureMembers;
+use martensite_tkservice::graphic3d::{
+    Graphic3dArrayOfPrimitives, Graphic3dArrayOfSegments, Graphic3dAspectLine3d,
+    Graphic3dAspectsSource, Graphic3dStructureSource,
+};
 
 /// `calculateArrow`: the eight points of an arrow head of height `length * arrow_part` below
 /// the origin, returned with that height. Example: `calculate_arrow(&mut points, 10.0, 0.1)`.
