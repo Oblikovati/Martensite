@@ -1,0 +1,141 @@
+OK 1
+NAME 0:1:1 'Shapes'
+NAME 0:1:1:1 'NIST PMI CTC 05 ASME1'
+NAME 0:1:2 'Colors'
+NAME 0:1:2:1 'PALEGOLDENROD (#F3FEB1FF)'
+NAME 0:1:2:2 'LIGHTSTEELBLUE1 (#D2D2FFFF)'
+NAME 0:1:2:3 'WHITE (#FFFFFFFF)'
+NAME 0:1:3 'Layers'
+NAME 0:1:4 'D&GTs'
+NAME 0:1:4:1 'DGT:Dimension'
+NAME 0:1:4:1:15 'Circularity.1'
+NAME 0:1:4:2 'DGT:Dimension'
+NAME 0:1:4:2:15 'Simple Datum.1'
+NAME 0:1:4:3 'DGT:Dimension'
+NAME 0:1:4:3:15 'Simple Datum.2'
+NAME 0:1:4:4 'DGT:Dimension'
+NAME 0:1:4:4:15 'Total runout.1'
+NAME 0:1:4:5 'DGT:Dimension'
+NAME 0:1:4:5:15 'Total runout.2'
+NAME 0:1:4:6 'DGT:Dimension'
+NAME 0:1:4:6:15 'Linear Size.2'
+NAME 0:1:4:7 'DGT:Dimension'
+NAME 0:1:4:7:15 'Perpendicularity.2'
+NAME 0:1:4:8 'DGT:Dimension'
+NAME 0:1:4:8:15 'Circular runout.1'
+NAME 0:1:4:9 'DGT:Dimension'
+NAME 0:1:4:9:15 'Straightness.1'
+NAME 0:1:4:10 'DGT:Dimension'
+NAME 0:1:4:10:15 'Linear Size.3'
+NAME 0:1:4:11 'DGT:Dimension'
+NAME 0:1:4:11:15 'Circular runout.3'
+NAME 0:1:4:12 'DGT:Dimension'
+NAME 0:1:4:12:15 'Circular runout.4'
+NAME 0:1:4:13 'DGT:Dimension'
+NAME 0:1:4:13:15 'Concentricity.1'
+NAME 0:1:4:14 'DGT:Dimension'
+NAME 0:1:4:14:15 'Datum Target.3'
+NAME 0:1:4:15 'DGT:Dimension'
+NAME 0:1:4:15:15 'Datum Target.5'
+NAME 0:1:4:16 'DGT:Dimension'
+NAME 0:1:4:16:15 'Basic dimension.3'
+NAME 0:1:4:17 'DGT:Dimension'
+NAME 0:1:4:17:15 'Basic dimension.5'
+NAME 0:1:4:18 'DGT:Common_label'
+NAME 0:1:4:18:15 'Basic dimension.6'
+NAME 0:1:4:19 'DGT:Common_label'
+NAME 0:1:4:19:15 'Basic dimension.7'
+NAME 0:1:4:20 'DGT:Dimension'
+NAME 0:1:4:20:15 'Perpendicularity.3'
+NAME 0:1:5 'Materials'
+NAME 0:1:7 'Views'
+NAME 0:1:7:1 'View'
+NAME 0:1:7:2 'View'
+NAME 0:1:8 'Clipping Planes'
+NAME 0:1:9 'Notes'
+SHAPE 0:1:1:1 <0 e1027 v2054 (25479.7558646 3064.89529747 225545.790102)> c- c- c- l[]
+SHAPE 0:1:1:1:1 <3 e4 v8 (2108.20000001 7.1054273576e-15 238.760000001)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:1:2 <2 e1022 v2044 (23371.5558646 2912.49529747 224811.730102)> c- c0:1:2:2 c- l[]
+SHAPE 0:1:1:1:3 <5 e1 v2 (0 152.400000001 495.300000002)> c- c- c0:1:2:3 l[]
+SHAPE 0:1:1:1:4 <4 e4 v8 (0 0 3048.00000001)> c- c- c- l[]
+SHAPE 0:1:1:1:5 <4 e4 v8 (2.84217094304e-14 -1.12798659302e-13 444.5)> c- c- c- l[]
+SHAPE 0:1:1:1:6 <4 e26 v52 (0 -6.96331881045e-13 0)> c- c- c- l[]
+SHAPE 0:1:1:1:7 <4 e37 v74 (4699.00000002 2633.43772695 17263.8568532)> c- c- c- l[]
+SHAPE 0:1:1:1:8 <4 e8 v16 (-3619.50000001 0 731.520000003)> c- c- c- l[]
+SHAPE 0:1:1:1:9 <4 e10 v20 (2.84217094304e-14 -304.637959399 2540.00000002)> c- c- c- l[]
+SHAPE 0:1:1:1:10 <4 e4 v8 (0 473.481810247 1651.00000001)> c- c- c- l[]
+SHAPE 0:1:1:1:11 <4 e4 v8 (-1.13686837722e-13 742.705729078 101.6)> c- c- c- l[]
+SHAPE 0:1:1:1:12 <4 e4 v8 (1.13686837722e-13 -742.705729078 101.6)> c- c- c- l[]
+SHAPE 0:1:1:1:13 <4 e10 v20 (-3.67000001233e-06 -710.123036168 1293.89769907)> c- c- c- l[]
+SHAPE 0:1:1:1:14 <4 e16 v32 (8432.80000003 8.52651282912e-14 1129.02894343)> c- c- c- l[]
+SHAPE 0:1:1:1:15 <4 e16 v32 (-8432.80000003 -2.84217094304e-14 1129.02894343)> c- c- c- l[]
+SHAPE 0:1:1:1:16 <6 e1 v2 (527.050000002 0 27.9400000002)> c- c- c- l[]
+SHAPE 0:1:1:1:17 <6 e1 v2 (527.050000002 -50.8000000002 59.6900000003)> c- c- c- l[]
+SHAPE 0:1:1:1:18 <4 e8 v16 (3619.50000001 0 731.520000003)> c- c- c- l[]
+COLOR 0:1:2:1 (0.896269381046 0.991102099419 0.439657181501) 1
+COLOR 0:1:2:2 (0.644479691982 0.644479691982 1) 1
+COLOR 0:1:2:3 (1 1 1) 1
+DIM 0:1:4:1 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:1 plane=(0 0 482.600006104)(0 0 1)(1 0 -0) pt=- pt2=- text=- conn=0,0 pres=<0 e39 v78 (9395.50011 -5605.112658 31244.2034912)>'Circularity.1' desc=0
+DIMR 0:1:4:1 [0:1:1:1:4 ] []
+DIM 0:1:4:2 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:2 plane=(263.524993896 0 0)(1 -0 0)(0 0 -1) pt=- pt2=- text=- conn=0,0 pres=<0 e8 v16 (113.040634155 1034.82746 7168.7656)>'Simple Datum.1' desc=0
+DIMR 0:1:4:2 [0:1:1:1:4 ] []
+DIM 0:1:4:3 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:3 plane=(-263.524993896 0 0)(-1 0 0)(0 0 1) pt=- pt2=- text=- conn=0,0 pres=<0 e10 v20 (0 2975.37302 -8472.73569)>'Simple Datum.2' desc=0
+DIMR 0:1:4:3 [0:1:1:1:5 ] []
+DIM 0:1:4:4 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:4 plane=(-263.524993896 0 0)(-1 0 0)(0 0 1) pt=- pt2=- text=- conn=0,0 pres=<0 e22 v44 (1641.20449829 1967.94327 -15261.7237)>'Total runout.1' desc=0
+DIMR 0:1:4:4 [0:1:1:1:5 ] []
+DIM 0:1:4:5 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:5 plane=(-263.524993896 0 0)(-1 0 0)(0 0 1) pt=- pt2=- text=- conn=0,0 pres=<0 e22 v44 (7756.64489745 4822.73104 -8994.84638)>'Total runout.2' desc=0
+DIMR 0:1:4:5 [0:1:1:1:6 ] []
+DIM 0:1:4:6 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:6 plane=(0 0 482.600006104)(0 0 1)(1 0 -0) pt=- pt2=- text=- conn=0,0 pres=<0 e31 v62 (-6426.4282 11995.76106 15855.8803406)>'Linear Size.2' desc=0
+DIMR 0:1:4:6 [0:1:1:1:7 ] []
+DIM 0:1:4:7 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:7 plane=(0 69.8499984741 0)(-0 1 0)(1 0 0) pt=- pt2=- text=- conn=0,0 pres=<0 e12 v24 (-8667.34416 -264.895706177 2671.37077)>'Perpendicularity.2' desc=0
+DIMR 0:1:4:7 [0:1:1:1:8 ] []
+DIM 0:1:4:8 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:8 plane=(263.524993896 0 0)(1 -0 0)(0 0 -1) pt=- pt2=- text=- conn=0,0 pres=<0 e14 v28 (3042.05307006 -4647.69965 7690.07284)>'Circular runout.1' desc=0
+DIMR 0:1:4:8 [0:1:1:1:9 ] []
+DIM 0:1:4:9 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:9 plane=(263.524993896 0 0)(1 -0 0)(0 0 -1) pt=- pt2=- text=- conn=0,0 pres=<0 e9 v18 (-11.4299998283 2236.26784 7130.40859)>'Straightness.1' desc=0
+DIMR 0:1:4:9 [0:1:1:1:10 ] []
+DIM 0:1:4:10 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:10 plane=(-263.524993896 0 0)(-1 0 0)(0 0 1) pt=- pt2=- text=- conn=0,0 pres=<0 e44 v88 (0 1022.403224 -42999.29596)>'Linear Size.3' desc=0
+DIMR 0:1:4:10 [0:1:1:1:5 ] []
+DIM 0:1:4:11 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:11 plane=(0 0 482.600006104)(0 0 1)(1 0 -0) pt=- pt2=- text=- conn=0,0 pres=<0 e14 v28 (-4214.89988 9417.99852 140.211740494)>'Circular runout.3' desc=0
+DIMR 0:1:4:11 [0:1:1:1:11 ] []
+DIM 0:1:4:12 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:12 plane=(0 0 482.600006104)(0 0 1)(1 0 -0) pt=- pt2=- text=- conn=0,0 pres=<0 e14 v28 (8709.12822 -5096.8248 450.504356383)>'Circular runout.4' desc=0
+DIMR 0:1:4:12 [0:1:1:1:12 ] []
+DIM 0:1:4:13 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:13 plane=(0 0 482.600006104)(0 0 1)(1 0 -0) pt=- pt2=- text=- conn=0,0 pres=<0 e118 v236 (64446.35866 71399.80582 17983.1992798)>'Concentricity.1' desc=0
+DIMR 0:1:4:13 [0:1:1:1:13 ] []
+DIM 0:1:4:14 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:14 plane=(263.524993896 0 0)(1 -0 0)(0 0 -1) pt=- pt2=- text=- conn=0,0 pres=<0 e70 v140 (36893.4991454 10919.95215 -5039.16228)>'Datum Target.3' desc=0
+DIMR 0:1:4:14 [0:1:1:1:14 ] []
+DIM 0:1:4:15 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:15 plane=(263.524993896 0 0)(1 -0 0)(0 0 -1) pt=- pt2=- text=- conn=0,0 pres=<0 e70 v140 (-36893.4991454 9701.72208 12457.36914)>'Datum Target.5' desc=0
+DIMR 0:1:4:15 [0:1:1:1:15 ] []
+DIM 0:1:4:16 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:16 plane=(263.524993896 0 0)(1 -0 0)(0 0 -1) pt=- pt2=- text=- conn=0,0 pres=<0 e14 v28 (7378.69982909 -1532.62702 157.464208)>'Basic dimension.3' desc=0
+DIMR 0:1:4:16 [0:1:1:1:16 ] []
+DIM 0:1:4:17 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:17 plane=(263.524993896 0 0)(1 -0 0)(0 0 -1) pt=- pt2=- text=- conn=0,0 pres=<0 e12 v24 (6324.5998535 8.33616 -1411.8239)>'Basic dimension.5' desc=0
+DIMR 0:1:4:17 [0:1:1:1:17 ] []
+DIM 0:1:4:18 name='DGT:Common_label' type=30 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:18 plane=(-263.524993896 0 0)(-1 0 0)(0 0 1) pt=- pt2=- text=- conn=0,0 pres=<0 e14 v28 (-7378.69982909 -1824.01656 1775.06067)>'Basic dimension.6' desc=0
+DIMR 0:1:4:18 [] []
+DIM 0:1:4:19 name='DGT:Common_label' type=30 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:19 plane=(-263.524993896 0 0)(-1 0 0)(0 0 1) pt=- pt2=- text=- conn=0,0 pres=<0 e13 v26 (-6851.6498413 9.03588 3243.66504)>'Basic dimension.7' desc=0
+DIMR 0:1:4:19 [] []
+DIM 0:1:4:20 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:20 plane=(0 69.8499984741 0)(-0 1 0)(1 0 0) pt=- pt2=- text=- conn=0,0 pres=<0 e12 v24 (10902.58356 -222.66242981 7863.83491)>'Perpendicularity.3' desc=0
+DIMR 0:1:4:20 [0:1:1:1:18 ] []
+VIEW 0:1:7:1 name='MBD_A' type=1 pp=(772.641235352 544.989013672 887.962341309) dir=(0.606042806424 0.444284352678 0.659790520353) up=(-0.305794086167 0.895863017284 -0.322365368996) zoom=0 h=1000 v=1000 clip='' front=0,- back=0,- sides=0 gdtp=0
+VIEWR 0:1:7:1 [] [0:1:4:1 0:1:4:1 0:1:4:2 0:1:4:2 0:1:4:6 0:1:4:6 0:1:4:7 0:1:4:8 0:1:4:9 0:1:4:11 0:1:4:12 0:1:4:13 0:1:4:13 0:1:4:14 0:1:4:14 0:1:4:16 0:1:4:16 0:1:4:17 0:1:4:17 0:1:4:20 ] []
+VIEW 0:1:7:2 name='MBD_B' type=1 pp=(-934.706359863 648.635131836 -1100.64160156) dir=(-0.581586820347 0.395860093895 -0.710669794251) up=(0.23941503449 0.918213530371 0.315538197218) zoom=0 h=1000 v=1000 clip='' front=0,- back=0,- sides=0 gdtp=0
+VIEWR 0:1:7:2 [] [0:1:4:2 0:1:4:2 0:1:4:3 0:1:4:3 0:1:4:4 0:1:4:4 0:1:4:5 0:1:4:10 0:1:4:10 0:1:4:15 ] []

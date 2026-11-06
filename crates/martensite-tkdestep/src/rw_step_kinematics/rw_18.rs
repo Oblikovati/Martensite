@@ -1,0 +1,316 @@
+#![allow(
+    unused_variables,
+    unused_assignments,
+    clippy::assign_op_pattern,
+    reason = "the readers keep values they then ignore"
+)]
+use crate::step_rw::*;
+
+step_rw_class!(
+    RwStepKinematicsRwSphericalPair,
+    "RwStepKinematicsRwSphericalPair"
+);
+impl RwStepKinematicsRwSphericalPair {
+    /// `read_step`.
+    pub fn read_step(
+        &self,
+        the_data: &Handle<StepDataStepReaderData>,
+        the_num: i32,
+        the_arch: &Handle<InterfaceCheck>,
+        the_ent: &Handle<StepKinematicsSphericalPair>,
+    ) -> Result<(), Failure> {
+        if !the_data.check_nb_params(the_num, 12, the_arch, "spherical_pair")? {
+            return Ok(());
+        }
+        rw_block_b_0004!(
+            a_item_defined_transformation_description,
+            a_item_defined_transformation_name,
+            a_item_defined_transformation_transform_item1,
+            a_item_defined_transformation_transform_item2,
+            a_kinematic_pair_joint,
+            a_low_order_kinematic_pair_rx,
+            a_low_order_kinematic_pair_ry,
+            a_low_order_kinematic_pair_rz,
+            a_low_order_kinematic_pair_tx,
+            a_low_order_kinematic_pair_ty,
+            a_low_order_kinematic_pair_tz,
+            a_representation_item_name,
+            has_item_defined_transformation_description,
+            the_arch,
+            the_data,
+            the_ent,
+            the_num
+        );
+        Ok(())
+    }
+    /// `WriteStep`.
+    pub fn write_step(
+        &self,
+        the_sw: &mut StepDataStepWriter,
+        the_ent: &Handle<StepKinematicsSphericalPair>,
+    ) -> Result<(), Failure> {
+        rw_block_b_0029!(the_ent, the_sw);
+        Ok(())
+    }
+    /// `share`.
+    pub fn share(
+        &self,
+        the_ent: &Handle<StepKinematicsSphericalPair>,
+        iter: &mut InterfaceEntityIterator,
+    ) -> Result<(), Failure> {
+        rw_block_b_0176!(iter, the_ent);
+        Ok(())
+    }
+}
+
+step_rw_class!(
+    RwStepKinematicsRwSphericalPairValue,
+    "RwStepKinematicsRwSphericalPairValue"
+);
+impl RwStepKinematicsRwSphericalPairValue {
+    /// `read_step`.
+    pub fn read_step(
+        &self,
+        the_data: &Handle<StepDataStepReaderData>,
+        the_num: i32,
+        the_arch: &Handle<InterfaceCheck>,
+        the_ent: &Handle<StepKinematicsSphericalPairValue>,
+    ) -> Result<(), Failure> {
+        if !the_data.check_nb_params(the_num, 3, the_arch, "spherical_pair_value")? {
+            return Ok(());
+        }
+        rw_block_b_0139!(
+            a_pair_value_applies_to_pair,
+            a_representation_item_name,
+            the_arch,
+            the_data,
+            the_num
+        );
+        let mut a_input_orientation: StepKinematicsSpatialRotation = Default::default();
+        if the_data.sub_list_number(the_num, 3, true)? != 0 {
+            let mut a_items: Handle<HArray1<f64>> = Default::default();
+            let mut nsub: i32 = 0;
+            if the_data.read_sub_list(the_num, 3, "items", the_arch, &mut nsub, false, 0, 0)? {
+                let nb: i32 = the_data.nb_params(nsub)?;
+                a_items = step_new_array1::<f64>(1, nb)?;
+                let num2: i32 = nsub;
+                for i0 in 1..=nb {
+                    let mut an_it0: f64 = Default::default();
+                    the_data.read_real(num2, i0, "real", the_arch, &mut an_it0)?;
+                    step_array1_set(&a_items, i0, an_it0, "ReadStep")?;
+                }
+            }
+            a_input_orientation.set_value(&a_items.cast())?;
+        } else {
+            the_data.read_entity_select(
+                the_num,
+                3,
+                "input_orientation",
+                the_arch,
+                &mut a_input_orientation,
+            )?;
+        }
+        the_ent.init(
+            &a_representation_item_name,
+            &a_pair_value_applies_to_pair,
+            &a_input_orientation,
+        );
+        Ok(())
+    }
+    /// `WriteStep`.
+    pub fn write_step(
+        &self,
+        the_sw: &mut StepDataStepWriter,
+        the_ent: &Handle<StepKinematicsSphericalPairValue>,
+    ) -> Result<(), Failure> {
+        the_sw.send_entity(&the_ent.name())?;
+        the_sw.send_entity(&the_ent.applies_to_pair())?;
+        rw_block_b_0218!(i, the_ent, the_sw);
+        Ok(())
+    }
+    /// `share`.
+    pub fn share(
+        &self,
+        the_ent: &Handle<StepKinematicsSphericalPairValue>,
+        iter: &mut InterfaceEntityIterator,
+    ) -> Result<(), Failure> {
+        iter.add_item(&the_ent.parent.applies_to_pair().cast());
+        if !the_ent
+            .input_orientation()
+            .rotation_about_direction()
+            .is_null()
+        {
+            iter.add_item(&the_ent.input_orientation().value());
+        }
+        Ok(())
+    }
+}
+
+step_rw_class!(
+    RwStepKinematicsRwSphericalPairWithPin,
+    "RwStepKinematicsRwSphericalPairWithPin"
+);
+impl RwStepKinematicsRwSphericalPairWithPin {
+    /// `read_step`.
+    pub fn read_step(
+        &self,
+        the_data: &Handle<StepDataStepReaderData>,
+        the_num: i32,
+        the_arch: &Handle<InterfaceCheck>,
+        the_ent: &Handle<StepKinematicsSphericalPairWithPin>,
+    ) -> Result<(), Failure> {
+        if !the_data.check_nb_params(the_num, 12, the_arch, "spherical_pair_with_pin")? {
+            return Ok(());
+        }
+        rw_block_b_0004!(
+            a_item_defined_transformation_description,
+            a_item_defined_transformation_name,
+            a_item_defined_transformation_transform_item1,
+            a_item_defined_transformation_transform_item2,
+            a_kinematic_pair_joint,
+            a_low_order_kinematic_pair_rx,
+            a_low_order_kinematic_pair_ry,
+            a_low_order_kinematic_pair_rz,
+            a_low_order_kinematic_pair_tx,
+            a_low_order_kinematic_pair_ty,
+            a_low_order_kinematic_pair_tz,
+            a_representation_item_name,
+            has_item_defined_transformation_description,
+            the_arch,
+            the_data,
+            the_ent,
+            the_num
+        );
+        Ok(())
+    }
+    /// `WriteStep`.
+    pub fn write_step(
+        &self,
+        the_sw: &mut StepDataStepWriter,
+        the_ent: &Handle<StepKinematicsSphericalPairWithPin>,
+    ) -> Result<(), Failure> {
+        rw_block_b_0029!(the_ent, the_sw);
+        Ok(())
+    }
+    /// `share`.
+    pub fn share(
+        &self,
+        the_ent: &Handle<StepKinematicsSphericalPairWithPin>,
+        iter: &mut InterfaceEntityIterator,
+    ) -> Result<(), Failure> {
+        rw_block_b_0176!(iter, the_ent);
+        Ok(())
+    }
+}
+
+step_rw_class!(
+    RwStepKinematicsRwSphericalPairWithPinAndRange,
+    "RwStepKinematicsRwSphericalPairWithPinAndRange"
+);
+impl RwStepKinematicsRwSphericalPairWithPinAndRange {
+    /// `read_step`.
+    pub fn read_step(
+        &self,
+        the_data: &Handle<StepDataStepReaderData>,
+        the_num: i32,
+        the_arch: &Handle<InterfaceCheck>,
+        the_ent: &Handle<StepKinematicsSphericalPairWithPinAndRange>,
+    ) -> Result<(), Failure> {
+        if !the_data.check_nb_params(the_num, 16, the_arch, "spherical_pair_with_pin_and_range")? {
+            return Ok(());
+        }
+        rw_block_b_0002!(
+            a_item_defined_transformation_description,
+            a_item_defined_transformation_name,
+            a_item_defined_transformation_transform_item1,
+            a_item_defined_transformation_transform_item2,
+            a_kinematic_pair_joint,
+            a_low_order_kinematic_pair_rx,
+            a_low_order_kinematic_pair_ry,
+            a_low_order_kinematic_pair_rz,
+            a_low_order_kinematic_pair_tx,
+            a_low_order_kinematic_pair_ty,
+            a_low_order_kinematic_pair_tz,
+            a_lower_limit_yaw,
+            a_representation_item_name,
+            a_upper_limit_yaw,
+            has_item_defined_transformation_description,
+            has_lower_limit_yaw,
+            has_upper_limit_yaw,
+            the_arch,
+            the_data,
+            the_num
+        );
+        let mut a_lower_limit_roll: f64 = Default::default();
+        let mut has_lower_limit_roll: bool = true;
+        if the_data.is_param_defined(the_num, 15)? {
+            the_data.read_real(
+                the_num,
+                15,
+                "lower_limit_roll",
+                the_arch,
+                &mut a_lower_limit_roll,
+            )?;
+        } else {
+            has_lower_limit_roll = false;
+            a_lower_limit_roll = 0.0;
+        }
+        let mut a_upper_limit_roll: f64 = Default::default();
+        let mut has_upper_limit_roll: bool = true;
+        if the_data.is_param_defined(the_num, 16)? {
+            the_data.read_real(
+                the_num,
+                16,
+                "upper_limit_roll",
+                the_arch,
+                &mut a_upper_limit_roll,
+            )?;
+        } else {
+            has_upper_limit_roll = false;
+            a_upper_limit_roll = 0.0;
+        }
+        the_ent.init(
+            &a_representation_item_name,
+            &a_item_defined_transformation_name,
+            has_item_defined_transformation_description,
+            &a_item_defined_transformation_description,
+            &a_item_defined_transformation_transform_item1,
+            &a_item_defined_transformation_transform_item2,
+            &a_kinematic_pair_joint,
+            a_low_order_kinematic_pair_tx,
+            a_low_order_kinematic_pair_ty,
+            a_low_order_kinematic_pair_tz,
+            a_low_order_kinematic_pair_rx,
+            a_low_order_kinematic_pair_ry,
+            a_low_order_kinematic_pair_rz,
+            has_lower_limit_yaw,
+            a_lower_limit_yaw,
+            has_upper_limit_yaw,
+            a_upper_limit_yaw,
+            has_lower_limit_roll,
+            a_lower_limit_roll,
+            has_upper_limit_roll,
+            a_upper_limit_roll,
+        );
+        Ok(())
+    }
+    /// `WriteStep`.
+    pub fn write_step(
+        &self,
+        the_sw: &mut StepDataStepWriter,
+        the_ent: &Handle<StepKinematicsSphericalPairWithPinAndRange>,
+    ) -> Result<(), Failure> {
+        rw_block_b_0020!(the_ent, the_sw);
+        rw_block_b_0209!(the_ent, the_sw);
+        Ok(())
+    }
+    /// `share`.
+    pub fn share(
+        &self,
+        the_ent: &Handle<StepKinematicsSphericalPairWithPinAndRange>,
+        iter: &mut InterfaceEntityIterator,
+    ) -> Result<(), Failure> {
+        rw_block_b_0175!(iter, the_ent);
+        Ok(())
+    }
+}

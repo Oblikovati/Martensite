@@ -1,0 +1,53 @@
+//! STEP exchange: the data structures, the file parser and the configuration values.
+pub mod api_header_section;
+pub mod de_step;
+pub mod geom_to_step;
+pub mod header_section;
+#[cfg(test)]
+mod rw_ap214_tests;
+#[cfg(test)]
+mod rw_corrected_defects_tests;
+pub mod rw_header_section;
+pub(crate) mod rw_shared_bodies;
+pub(crate) mod rw_shared_bodies_visual;
+pub mod rw_step_ap203;
+pub mod rw_step_ap214;
+pub mod rw_step_ap242;
+pub mod rw_step_basic;
+pub mod rw_step_dim_tol;
+pub mod rw_step_element;
+pub mod rw_step_fea;
+pub mod rw_step_geom;
+pub mod rw_step_kinematics;
+pub mod rw_step_repr;
+pub mod rw_step_shape;
+pub mod rw_step_visual;
+#[cfg(test)]
+mod rw_tests;
+pub mod step_ap203;
+pub mod step_ap214;
+pub mod step_ap242;
+pub mod step_basic;
+pub mod step_construct;
+pub mod step_control;
+pub mod step_data;
+pub mod step_dim_tol;
+pub mod step_edit;
+pub mod step_element;
+pub(crate) mod step_entity;
+pub mod step_fea;
+pub mod step_file;
+pub mod step_geom;
+pub mod step_kinematics;
+pub(crate) mod step_members;
+pub mod step_repr;
+pub(crate) mod step_rw;
+pub mod step_select;
+pub mod step_selections;
+pub mod step_shape;
+pub mod step_tidy;
+pub mod step_to_geom;
+pub mod step_to_topo_ds;
+pub mod step_visual;
+pub mod stepcaf_control;
+pub mod topo_ds_to_step;

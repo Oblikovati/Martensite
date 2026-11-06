@@ -1,0 +1,70 @@
+OK 1
+NAME 0:1:1 'Shapes'
+NAME 0:1:1:1 'l-bracket'
+NAME 0:1:1:1:1:1 'xr1-tc-lbr.stp'
+NAME 0:1:1:2 'nut'
+NAME 0:1:1:2:1:1 'xr1-tc-nut.stp'
+NAME 0:1:1:3 'bolt'
+NAME 0:1:1:3:1:1 'xr1-tc-blt.stp'
+NAME 0:1:1:4 'plate'
+NAME 0:1:1:4:1:1 'xr1-tc-plt.stp'
+NAME 0:1:1:5 'rod'
+NAME 0:1:1:5:1:1 'xr1-tc-rod.stp'
+NAME 0:1:1:6 'XR1'
+NAME 0:1:1:6:1 'l-bracket-assembly_1'
+NAME 0:1:1:6:2 'plate_1'
+NAME 0:1:1:6:3 'l-bracket-assembly_2'
+NAME 0:1:1:6:4 'rod-assembly_1'
+NAME 0:1:1:7 'l-bracket assembly'
+NAME 0:1:1:7:1 'l-bracket_1'
+NAME 0:1:1:7:2 'nut-bolt-assembly_1'
+NAME 0:1:1:7:3 'nut-bolt-assembly_2'
+NAME 0:1:1:7:4 'nut-bolt-assembly_3'
+NAME 0:1:1:8 'nut-bolt assembly'
+NAME 0:1:1:8:1 'nut_1'
+NAME 0:1:1:8:2 'bolt_1'
+NAME 0:1:1:9 'Rod assembly'
+NAME 0:1:1:9:1 'rod_1'
+NAME 0:1:1:9:2 'nut_7'
+NAME 0:1:1:9:3 'nut_8'
+NAME 0:1:2 'Colors'
+NAME 0:1:2:1 'GREEN (#00FF00FF)'
+NAME 0:1:2:2 'RED (#FF0000FF)'
+NAME 0:1:2:3 'BLUE (#0000FFFF)'
+NAME 0:1:2:4 'YELLOW3 (#C7C700FF)'
+NAME 0:1:2:5 'DARKORANGE (#FF9100FF)'
+NAME 0:1:3 'Layers'
+NAME 0:1:3:1 '000'
+NAME 0:1:4 'D&GTs'
+NAME 0:1:5 'Materials'
+NAME 0:1:7 'Views'
+NAME 0:1:8 'Clipping Planes'
+NAME 0:1:9 'Notes'
+SHAPE 0:1:1:1 <2 e84 v168 (4080 3000 8400)> c- c0:1:2:1 c- l[0:1:3:1 ]
+SHAPE 0:1:1:2 <2 e36 v72 (720 540 108)> c- c0:1:2:2 c- l[0:1:3:1 ]
+SHAPE 0:1:1:3 <2 e24 v48 (0 0 516)> c- c0:1:2:3 c- l[0:1:3:1 ]
+SHAPE 0:1:1:4 <2 e96 v192 (17280 14400 1920)> c- c0:1:2:4 c- l[0:1:3:1 ]
+SHAPE 0:1:1:5 <2 e12 v24 (0 0 2400)> c- c0:1:2:5 c- l[0:1:3:1 ]
+SHAPE 0:1:1:6 <0 e708 v1416 (127440 106200 30479.9999998)> c- c- c- l[]
+SHAPE 0:1:1:6:1 <0 e264 v528 (75719.9999997 39599.9999999 9239.99999994)> c- c- c- l[]
+SHAPE 0:1:1:6:2 <2 e96 v192 (17280 14400 1920)> c- c- c- l[]
+SHAPE 0:1:1:6:3 <0 e264 v528 (19320 39599.9999999 9239.99999994)> c- c- c- l[]
+SHAPE 0:1:1:6:4 <0 e84 v168 (15120 12600 10079.9999999)> c- c- c- l[]
+SHAPE 0:1:1:7 <0 e264 v528 (16680 -26400.0000001 -1320.00000006)> c- c- c- l[]
+SHAPE 0:1:1:7:1 <2 e84 v168 (4080 -8400.00000002 2999.99999996)> c- c- c- l[]
+SHAPE 0:1:1:7:2 <0 e60 v120 (5099.99999999 -4441.15426801 -1440.00000001)> c- c- c- l[]
+SHAPE 0:1:1:7:3 <0 e60 v120 (5099.99999999 -7558.84573201 -1440.00000001)> c- c- c- l[]
+SHAPE 0:1:1:7:4 <0 e60 v120 (2399.99999999 -6000.00000001 -1440.00000001)> c- c- c- l[]
+SHAPE 0:1:1:8 <0 e60 v120 (-900.000000006 -1200.00000001 -1440.00000001)> c- c- c- l[]
+SHAPE 0:1:1:8:1 <2 e36 v72 (-540.000000006 -720.000000008 -1548.00000001)> c- c- c- l[]
+SHAPE 0:1:1:8:2 <2 e24 v48 (-360 -480.000000005 108)> c- c- c- l[]
+SHAPE 0:1:1:9 <0 e84 v168 (0 0 16800)> c- c- c- l[]
+SHAPE 0:1:1:9:1 <2 e12 v24 (0 0 2400)> c- c- c- l[]
+SHAPE 0:1:1:9:2 <2 e36 v72 (0 0 972)> c- c- c- l[]
+SHAPE 0:1:1:9:3 <2 e36 v72 (0 0 13428)> c- c- c- l[]
+COLOR 0:1:2:1 (0 1 0) 1
+COLOR 0:1:2:2 (1 0 0) 1
+COLOR 0:1:2:3 (0 0 1) 1
+COLOR 0:1:2:4 (0.571124851704 0.571124851704 0) 1
+COLOR 0:1:2:5 (1 0.283148735762 0) 1
+LAYER 0:1:3:1 '000' 1

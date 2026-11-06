@@ -1,0 +1,609 @@
+OK 1
+NAME 0:1:1 'Shapes'
+NAME 0:1:1:1 'NIST PMI FTC 08 ASME1'
+NAME 0:1:1:1:1 '=>[0:1:1:2]'
+NAME 0:1:1:1:2 '=>[0:1:1:3]'
+NAME 0:1:1:2 'SOLID'
+NAME 0:1:1:3 'SHELL'
+NAME 0:1:2 'Colors'
+NAME 0:1:2:1 'BURLYWOOD2 (#EED092FF)'
+NAME 0:1:3 'Layers'
+NAME 0:1:4 'D&GTs'
+NAME 0:1:4:1 'DGT:Dimension'
+NAME 0:1:4:1:15 'Flatness.1'
+NAME 0:1:4:2 'DGT:Dimension'
+NAME 0:1:4:2:15 'Flatness.2'
+NAME 0:1:4:3 'DGT:Dimension'
+NAME 0:1:4:3:15 'Simple Datum.1'
+NAME 0:1:4:4 'DGT:Dimension'
+NAME 0:1:4:4:15 'Position Surfacic Profile.15'
+NAME 0:1:4:5 'DGT:Dimension'
+NAME 0:1:4:5:15 'Parallelism.6'
+NAME 0:1:4:6 'DGT:Dimension'
+NAME 0:1:4:6:15 'Linear Size.1'
+NAME 0:1:4:7 'DGT:Dimension'
+NAME 0:1:4:7:15 'Linear Size.2'
+NAME 0:1:4:8 'DGT:Dimension'
+NAME 0:1:4:8:15 'Perpendicularity.1'
+NAME 0:1:4:9 'DGT:Dimension'
+NAME 0:1:4:9:15 'Simple Datum.2'
+NAME 0:1:4:10 'DGT:Dimension'
+NAME 0:1:4:10:15 'Position.1'
+NAME 0:1:4:11 'DGT:Dimension'
+NAME 0:1:4:11:15 'Simple Datum.3'
+NAME 0:1:4:12 'DGT:Dimension'
+NAME 0:1:4:12:15 'Linear Size.3'
+NAME 0:1:4:13 'DGT:Dimension'
+NAME 0:1:4:13:15 'Position.2'
+NAME 0:1:4:14 'DGT:Dimension'
+NAME 0:1:4:14:15 'Simple Datum.13'
+NAME 0:1:4:15 'DGT:Dimension'
+NAME 0:1:4:15:15 'Position Surfacic Profile.2'
+NAME 0:1:4:16 'DGT:Dimension'
+NAME 0:1:4:16:15 'Flatness.3'
+NAME 0:1:4:17 'DGT:Dimension'
+NAME 0:1:4:17:15 'Position Surfacic Profile.12'
+NAME 0:1:4:18 'DGT:Dimension'
+NAME 0:1:4:18:15 'Parallelism.2'
+NAME 0:1:4:19 'DGT:Dimension'
+NAME 0:1:4:19:15 'Parallelism.3'
+NAME 0:1:4:20 'DGT:Dimension'
+NAME 0:1:4:20:15 'Position Surfacic Profile.16'
+NAME 0:1:4:21 'DGT:Common_label'
+NAME 0:1:4:21:15 'Text.13'
+NAME 0:1:4:22 'DGT:Common_label'
+NAME 0:1:4:22:15 'Text.14'
+NAME 0:1:4:23 'DGT:Dimension'
+NAME 0:1:4:23:15 'Simple Datum.12'
+NAME 0:1:4:24 'DGT:Dimension'
+NAME 0:1:4:24:15 'Simple Datum.13'
+NAME 0:1:4:25 'DGT:Dimension'
+NAME 0:1:4:25:15 'Linear Size.4'
+NAME 0:1:4:26 'DGT:Dimension'
+NAME 0:1:4:26:15 'Position.3'
+NAME 0:1:4:27 'DGT:Dimension'
+NAME 0:1:4:27:15 'Position Surfacic Profile.7'
+NAME 0:1:4:28 'DGT:Dimension'
+NAME 0:1:4:28:15 'Position Surfacic Profile.14'
+NAME 0:1:4:29 'DGT:Dimension'
+NAME 0:1:4:29:15 'Parallelism.4'
+NAME 0:1:4:30 'DGT:Dimension'
+NAME 0:1:4:30:15 'Parallelism.5'
+NAME 0:1:4:31 'DGT:Dimension'
+NAME 0:1:4:31:15 'Simple Datum.12'
+NAME 0:1:4:32 'DGT:Dimension'
+NAME 0:1:4:32:15 'Position Surfacic Profile.8'
+NAME 0:1:4:33 'DGT:Dimension'
+NAME 0:1:4:33:15 'Linear Size.7'
+NAME 0:1:4:34 'DGT:Dimension'
+NAME 0:1:4:34:15 'Position.4'
+NAME 0:1:4:35 'DGT:Dimension'
+NAME 0:1:4:35:15 'Position Surfacic Profile.9'
+NAME 0:1:4:36 'DGT:Dimension'
+NAME 0:1:4:36:15 'Linear Size.14'
+NAME 0:1:4:37 'DGT:Dimension'
+NAME 0:1:4:37:15 'Linear Size.9'
+NAME 0:1:4:38 'DGT:Dimension'
+NAME 0:1:4:38:15 'Simple Datum.8'
+NAME 0:1:4:39 'DGT:Dimension'
+NAME 0:1:4:39:15 'Linear Size.10'
+NAME 0:1:4:40 'DGT:Dimension'
+NAME 0:1:4:40:15 'Position.6'
+NAME 0:1:4:41 'DGT:Dimension'
+NAME 0:1:4:41:15 'Position.7'
+NAME 0:1:4:42 'DGT:Dimension'
+NAME 0:1:4:42:15 'Position.8'
+NAME 0:1:4:43 'DGT:Dimension'
+NAME 0:1:4:43:15 'Linear Size.11'
+NAME 0:1:4:44 'DGT:Dimension'
+NAME 0:1:4:44:15 'Position.9'
+NAME 0:1:4:45 'DGT:Dimension'
+NAME 0:1:4:45:15 'Position.10'
+NAME 0:1:4:46 'DGT:Dimension'
+NAME 0:1:4:46:15 'Simple Datum.9'
+NAME 0:1:4:47 'DGT:Dimension'
+NAME 0:1:4:47:15 'Linear Size.12'
+NAME 0:1:4:48 'DGT:Dimension'
+NAME 0:1:4:48:15 'Position.11'
+NAME 0:1:4:49 'DGT:Dimension'
+NAME 0:1:4:49:15 'Position.12'
+NAME 0:1:4:50 'DGT:Dimension'
+NAME 0:1:4:50:15 'Simple Datum.10'
+NAME 0:1:4:51 'DGT:Dimension'
+NAME 0:1:4:51:15 'Position.13'
+NAME 0:1:4:52 'DGT:Dimension'
+NAME 0:1:4:52:15 'Simple Datum.11'
+NAME 0:1:4:53 'DGT:Dimension'
+NAME 0:1:4:53:15 'Position Surfacic Profile.10'
+NAME 0:1:4:54 'DGT:Dimension'
+NAME 0:1:4:54:15 'Position Surfacic Profile.11'
+NAME 0:1:4:55 'DGT:Dimension'
+NAME 0:1:4:55:15 'Text.9'
+NAME 0:1:4:56 'DGT:Dimension'
+NAME 0:1:4:56:15 'Text.10'
+NAME 0:1:4:57 'DGT:Dimension'
+NAME 0:1:4:57:15 'Text.11'
+NAME 0:1:4:58 'DGT:Dimension'
+NAME 0:1:4:58:15 'Text.12'
+NAME 0:1:4:59 'DGT:Common_label'
+NAME 0:1:4:59:15 'Text.8'
+NAME 0:1:4:60 'DGT:Common_label'
+NAME 0:1:4:60:15 'Datum Reference Frame.1'
+NAME 0:1:5 'Materials'
+NAME 0:1:7 'Views'
+NAME 0:1:7:1 'View'
+NAME 0:1:7:2 'View'
+NAME 0:1:7:3 'View'
+NAME 0:1:7:4 'View'
+NAME 0:1:8 'Clipping Planes'
+NAME 0:1:9 'Notes'
+DATA 0:1:1:1 'DescriptionRef' S'NIST PMI test model downloaded from http://go.usa.gov/mGVm'
+DATA 0:1:1:1 'PartNumber' S'NIST PMI FTC 08 ASME1'
+DATA 0:1:1:1 'Revision' S'C'
+SHAPE 0:1:1:1 <0 e0 v0 (0 0 0)> c- c- c- l[]
+SHAPE 0:1:1:1:1 <2 e0 v0 (0 0 0)> c- c- c- l[]
+SHAPE 0:1:1:1:2 <3 e0 v0 (0 0 0)> c- c- c- l[]
+SHAPE 0:1:1:2 <2 e0 v0 (0 0 0)> c- c- c- l[]
+SHAPE 0:1:1:2:1 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:2 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:3 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:4 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:5 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:6 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:7 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:8 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:9 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:10 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:11 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:12 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:13 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:14 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:15 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:16 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:17 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:18 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:19 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:20 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:21 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:22 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:23 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:24 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:25 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:26 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:27 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:28 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:29 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:30 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:31 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:32 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:33 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:34 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:35 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:36 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:37 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:38 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:39 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:40 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:41 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:42 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:43 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:44 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:45 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:46 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:47 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:48 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:49 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:50 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:51 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:52 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:53 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:54 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:55 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:56 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:57 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:58 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:59 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:60 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:61 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:62 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:63 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:64 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:65 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:66 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:67 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:68 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:69 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:70 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:71 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:72 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:73 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:74 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:75 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:76 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:77 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:78 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:79 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:80 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:81 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:82 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:83 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:84 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:85 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:86 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:87 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:88 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:89 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:90 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:91 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:92 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:93 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:94 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:95 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:96 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:97 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:98 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:99 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:100 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:101 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:102 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:103 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:104 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:105 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:106 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:107 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:108 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:109 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:110 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:111 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:112 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:113 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:114 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:115 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:116 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:117 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:118 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:119 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:120 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:121 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:122 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:123 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:124 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:125 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:126 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:127 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:128 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:129 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:130 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:131 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:132 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:133 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:134 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:135 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:136 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:137 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:138 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:139 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:140 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:141 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:142 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:143 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:144 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:145 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:146 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:147 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:148 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:149 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:150 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:151 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:152 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:153 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:154 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:155 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:156 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:157 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:158 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:159 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:160 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:161 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:162 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:163 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:164 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:165 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:166 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:167 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:168 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:169 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:170 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:171 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:172 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:173 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:174 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:175 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:176 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:177 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:178 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:179 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:180 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:181 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:182 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:183 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:184 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:185 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:186 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:187 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:188 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:189 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:190 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:191 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:192 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:193 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:194 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:195 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:196 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:197 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:198 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:199 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:200 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:201 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:202 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:203 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:204 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:205 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:206 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:207 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:208 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:209 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:210 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:211 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:212 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:213 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:214 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:215 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:216 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:217 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:218 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:219 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:220 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:221 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:222 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:223 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:224 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:225 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:226 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:227 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:228 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:229 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:230 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:231 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:232 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:233 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:234 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:235 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:236 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:237 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:238 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:239 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:240 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:241 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:242 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:243 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:244 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:245 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:246 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:247 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:248 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:249 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:250 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:251 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:252 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:253 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:254 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:255 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:256 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:257 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:258 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:259 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:260 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:261 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:262 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:263 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:264 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:265 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:266 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:267 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:268 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:269 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:270 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:271 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:2:272 <4 e0 v0 (0 0 0)> c- c0:1:2:1 c- l[]
+SHAPE 0:1:1:3 <3 e0 v0 (0 0 0)> c- c- c- l[]
+SHAPE 0:1:1:3:1 <4 e0 v0 (0 0 0)> c- c- c- l[]
+COLOR 0:1:2:1 (0.854923427105 0.630780994892 0.287386953831) 1
+DIM 0:1:4:1 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:1 plane=(146.018250001 0 0)(1 0 0)(0 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e250 v500 (-9990.776 -80900.970063 -9514.803654)>'Flatness.1' desc=0
+DIMR 0:1:4:1 [0:1:1:2:179 ] []
+DIM 0:1:4:2 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:2 plane=(146.018250001 0 0)(1 0 0)(0 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e189 v378 (-7553.026656 -63269.302642 -3297.043798)>'Flatness.2' desc=0
+DIMR 0:1:4:2 [0:1:1:2:179 ] []
+DIM 0:1:4:3 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:3 plane=(146.018250001 0 0)(1 0 0)(0 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e19 v38 (-759.298976 -6193.19571 597.178984)>'Simple Datum.1' desc=0
+DIMR 0:1:4:3 [0:1:1:2:179 ] []
+DIM 0:1:4:4 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:4 plane=(146.018250001 0 0)(1 0 0)(0 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e233 v466 (18456.490132 -88201.90783 -203.743908)>'Position Surfacic Profile.15' desc=0
+DIMR 0:1:4:4 [0:1:1:2:2 ] []
+DIM 0:1:4:5 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:5 plane=(146.018250001 0 0)(1 0 0)(0 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e256 v512 (20278.375424 -79494.655124 -2416.005771)>'Parallelism.6' desc=0
+DIMR 0:1:4:5 [0:1:1:2:2 ] []
+DIM 0:1:4:6 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:6 plane=(0 0 0)(0 -0 -1)(6.12323399574e-17 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e470 v940 (117591.295335 189167.074702 532.96872)>'Linear Size.1' desc=0
+DIMR 0:1:4:6 [0:1:1:2:246 ] []
+DIM 0:1:4:7 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:7 plane=(0 0 0)(0 -0 -1)(6.12323399574e-17 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e470 v940 (-105051.363858 164778.197522 769.65226)>'Linear Size.2' desc=0
+DIMR 0:1:4:7 [0:1:1:2:248 ] []
+DIM 0:1:4:8 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:8 plane=(0 0 0)(0 -0 -1)(6.12323399574e-17 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e367 v734 (104260.232608 164209.890568 416.169192)>'Perpendicularity.1' desc=0
+DIMR 0:1:4:8 [0:1:1:2:246 ] []
+DIM 0:1:4:9 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:9 plane=(0 0 0)(0 -0 -1)(6.12323399574e-17 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e49 v98 (16664.389467 22766.766816 55.564824)>'Simple Datum.2' desc=0
+DIMR 0:1:4:9 [0:1:1:2:246 ] []
+DIM 0:1:4:10 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:10 plane=(0 0 0)(0 -0 -1)(6.12323399574e-17 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e452 v904 (-66234.867402 201884.181574 740.176216)>'Position.1' desc=0
+DIMR 0:1:4:10 [0:1:1:2:248 ] []
+DIM 0:1:4:11 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:11 plane=(0 0 0)(0 -0 -1)(6.12323399574e-17 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e42 v84 (-3522.43961 20123.455378 68.777436)>'Simple Datum.3' desc=0
+DIMR 0:1:4:11 [0:1:1:2:248 ] []
+DIM 0:1:4:12 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:12 plane=(0 0 0)(0 -0 -1)(6.12323399574e-17 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e523 v1046 (-174813.660068 -204758.005983 1798.252866)>'Linear Size.3' desc=0
+DIMR 0:1:4:12 [0:1:1:2:250 ] []
+DIM 0:1:4:13 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:13 plane=(0 0 0)(0 -0 -1)(6.12323399574e-17 -1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e513 v1026 (-150306.462482 -215146.547012 1763.869446)>'Position.2' desc=0
+DIMR 0:1:4:13 [0:1:1:2:250 ] []
+DIM 0:1:4:14 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:14 plane=(146.018250001 0 0)(1 0 0)(-0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e30 v60 (4797.28044 9452.48672 2808.220965)>'Simple Datum.13' desc=0
+DIMR 0:1:4:14 [0:1:1:2:4 ] []
+DIM 0:1:4:15 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:15 plane=(146.018250001 0 0)(1 0 0)(-0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e276 v552 (-50828.851656 -107085.953596 25613.104321)>'Position Surfacic Profile.2' desc=0
+DIMR 0:1:4:15 [0:1:1:2:161 ] []
+DIM 0:1:4:16 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:16 plane=(146.018250001 0 0)(1 0 0)(-0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e305 v610 (-4755.61856 -118006.795085 29442.725641)>'Flatness.3' desc=0
+DIMR 0:1:4:16 [0:1:1:3:1 ] []
+DIM 0:1:4:17 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:17 plane=(146.018250001 0 0)(1 0 0)(-0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e349 v698 (-87001.264908 72590.360444 68372.279332)>'Position Surfacic Profile.12' desc=0
+DIMR 0:1:4:17 [0:1:1:2:237 ] []
+DIM 0:1:4:18 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:18 plane=(146.018250001 0 0)(1 0 0)(-0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e213 v426 (34060.691124 59971.264559 33534.038341)>'Parallelism.2' desc=0
+DIMR 0:1:4:18 [0:1:1:2:4 ] []
+DIM 0:1:4:19 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:19 plane=(146.018250001 0 0)(1 0 0)(-0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e304 v608 (-75783.336768 51802.166465 62747.880167)>'Parallelism.3' desc=0
+DIMR 0:1:4:19 [0:1:1:2:237 ] []
+DIM 0:1:4:20 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:20 plane=(146.018250001 0 0)(1 0 0)(-0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e233 v466 (37258.878084 80892.274888 33558.530714)>'Position Surfacic Profile.16' desc=0
+DIMR 0:1:4:20 [0:1:1:2:4 ] []
+DIM 0:1:4:21 name='DGT:Common_label' type=30 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:21 plane=(146.018250001 0 0)(1 0 0)(-0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e51 v102 (5181.600408 -20212.356725 5862.870712)>'Text.13' desc=0
+DIMR 0:1:4:21 [] []
+DIM 0:1:4:22 name='DGT:Common_label' type=30 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:22 plane=(146.018250001 0 0)(1 0 0)(-0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e20 v40 (-2032.00012 -7427.571723 2120.47598)>'Text.14' desc=0
+DIMR 0:1:4:22 [] []
+DIM 0:1:4:23 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:23 plane=(0 0 48.2600000002)(0 -0 1)(0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e20 v40 (-1561.785992 -1241.295267 1930.39992)>'Simple Datum.12' desc=0
+DIMR 0:1:4:23 [0:1:1:2:120 ] []
+DIM 0:1:4:24 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:24 plane=(0 0 48.2600000002)(0 -0 1)(0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e18 v36 (-1407.418912 1284.050418 1737.359928)>'Simple Datum.13' desc=0
+DIMR 0:1:4:24 [0:1:1:2:116 ] []
+DIM 0:1:4:25 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:25 plane=(0 0 48.2600000002)(0 -0 1)(0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e416 v832 (-36647.548632 158893.091301 38224.056)>'Linear Size.4' desc=0
+DIMR 0:1:4:25 [0:1:1:2:102 ] []
+DIM 0:1:4:26 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:26 plane=(0 0 48.2600000002)(0 -0 1)(0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e784 v1568 (-26403.26144 321236.268128 72037.644)>'Position.3' desc=0
+DIMR 0:1:4:26 [0:1:1:2:102 ] []
+DIM 0:1:4:27 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:27 plane=(0 0 48.2600000002)(0 -0 1)(0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e192 v384 (-39695.542748 69719.538071 17763.8496)>'Position Surfacic Profile.7' desc=0
+DIMR 0:1:4:27 [0:1:1:2:14 ] []
+DIM 0:1:4:28 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:28 plane=(0 -102.45725 0)(0 -1 0)(1 0 0) pt=- pt2=- text=- conn=0,0 pres=<0 e193 v386 (-80737.73339 -35975.281446 11002.113402)>'Position Surfacic Profile.14' desc=0
+DIMR 0:1:4:28 [0:1:1:2:256 ] []
+DIM 0:1:4:29 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:29 plane=(0 -102.45725 0)(0 -1 0)(1 0 0) pt=- pt2=- text=- conn=0,0 pres=<0 e254 v508 (-112784.959398 -47345.707188 28465.840237)>'Parallelism.4' desc=0
+DIMR 0:1:4:29 [0:1:1:2:256 ] []
+DIM 0:1:4:30 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:30 plane=(0 -102.45725 0)(0 -1 0)(1 0 0) pt=- pt2=- text=- conn=0,0 pres=<0 e268 v536 (-115758.428686 -49955.313096 22797.656026)>'Parallelism.5' desc=0
+DIMR 0:1:4:30 [0:1:1:2:256 ] []
+DIM 0:1:4:31 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:31 plane=(0 0 48.2600000002)(0 -0 1)(0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e48 v96 (18528.199187 -21715.843936 4537.908288)>'Simple Datum.12' desc=0
+DIMR 0:1:4:31 [0:1:1:2:90 ] []
+DIM 0:1:4:32 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:32 plane=(0 0 48.2600000002)(0 -0 1)(0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e458 v916 (67864.83534 173544.297865 43780.58182)>'Position Surfacic Profile.8' desc=0
+DIMR 0:1:4:32 [0:1:1:2:1 ] []
+DIM 0:1:4:33 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:33 plane=(0 0 48.2600000002)(0 -0 1)(0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e527 v1054 (157690.329732 -222312.097422 49822.451412)>'Linear Size.7' desc=0
+DIMR 0:1:4:33 [0:1:1:2:90 ] []
+DIM 0:1:4:34 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:34 plane=(0 0 48.2600000002)(0 -0 1)(0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e362 v724 (121061.743944 -155945.346298 34223.391672)>'Position.4' desc=0
+DIMR 0:1:4:34 [0:1:1:2:90 ] []
+DIM 0:1:4:35 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:35 plane=(0 0 48.2600000002)(0 -0 1)(0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e329 v658 (34945.485824 -146006.194701 31260.668012)>'Position Surfacic Profile.9' desc=0
+DIMR 0:1:4:35 [0:1:1:2:62 ] []
+DIM 0:1:4:36 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:36 plane=(0 0 48.2600000002)(0 -0 1)(0 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e207 v414 (92457.09868 -49148.192611 19106.591832)>'Linear Size.14' desc=0
+DIMR 0:1:4:36 [0:1:1:2:65 ] []
+DIM 0:1:4:37 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:37 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e378 v756 (85851.972883 -138687.25176 35472.37806)>'Linear Size.9' desc=0
+DIMR 0:1:4:37 [0:1:1:2:100 ] []
+DIM 0:1:4:38 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:38 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e20 v40 (6216.104893 -8649.363952 1876.8454)>'Simple Datum.8' desc=0
+DIMR 0:1:4:38 [0:1:1:2:100 ] []
+DIM 0:1:4:39 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:39 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e353 v706 (77185.203338 155878.18932 33455.75856)>'Linear Size.10' desc=0
+DIMR 0:1:4:39 [0:1:1:2:94 ] []
+DIM 0:1:4:40 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:40 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e348 v696 (90772.86603 164352.01494 32981.88096)>'Position.6' desc=0
+DIMR 0:1:4:40 [0:1:1:2:94 ] []
+DIM 0:1:4:41 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:41 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e348 v696 (81844.531644 -129109.924674 32657.10996)>'Position.7' desc=0
+DIMR 0:1:4:41 [0:1:1:2:100 ] []
+DIM 0:1:4:42 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:42 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e451 v902 (118851.034746 -165773.173478 42322.86377)>'Position.8' desc=0
+DIMR 0:1:4:42 [0:1:1:2:100 ] []
+DIM 0:1:4:43 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:43 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e353 v706 (152291.520271 -60909.494855 33719.4072)>'Linear Size.11' desc=0
+DIMR 0:1:4:43 [0:1:1:2:96 ] []
+DIM 0:1:4:44 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:44 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e348 v696 (165246.632942 -79954.871504 33241.7952)>'Position.9' desc=0
+DIMR 0:1:4:44 [0:1:1:2:96 ] []
+DIM 0:1:4:45 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:45 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e451 v902 (226938.24668 -102069.354912 43080.6024)>'Position.10' desc=0
+DIMR 0:1:4:45 [0:1:1:2:96 ] []
+DIM 0:1:4:46 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:46 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e34 v68 (18905.351325 -9706.376492 3247.7616)>'Simple Datum.9' desc=0
+DIMR 0:1:4:46 [0:1:1:2:96 ] []
+DIM 0:1:4:47 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:47 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e378 v756 (164057.309201 87056.73603 36014.553288)>'Linear Size.12' desc=0
+DIMR 0:1:4:47 [0:1:1:2:98 ] []
+DIM 0:1:4:48 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:48 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e348 v696 (165493.23834 90789.216782 33156.255408)>'Position.11' desc=0
+DIMR 0:1:4:48 [0:1:1:2:98 ] []
+DIM 0:1:4:49 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:49 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e451 v902 (227257.83346 119211.061196 42969.744796)>'Position.12' desc=0
+DIMR 0:1:4:49 [0:1:1:2:98 ] []
+DIM 0:1:4:50 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:50 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e20 v40 (11092.748357 3799.92756 1905.53192)>'Simple Datum.10' desc=0
+DIMR 0:1:4:50 [0:1:1:2:98 ] []
+DIM 0:1:4:51 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:51 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e451 v902 (130421.94435 214546.752892 42743.75952)>'Position.13' desc=0
+DIMR 0:1:4:51 [0:1:1:2:94 ] []
+DIM 0:1:4:52 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:52 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e14 v28 (4728.206634 5860.104732 1326.85728)>'Simple Datum.11' desc=0
+DIMR 0:1:4:52 [0:1:1:2:94 ] []
+DIM 0:1:4:53 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:53 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e368 v736 (21305.656828 177722.223879 34669.832736)>'Position Surfacic Profile.10' desc=0
+DIMR 0:1:4:53 [0:1:1:2:72 ] []
+DIM 0:1:4:54 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:54 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e388 v776 (32913.48064 -141370.347407 37093.373464)>'Position Surfacic Profile.11' desc=0
+DIMR 0:1:4:54 [0:1:1:2:84 ] []
+DIM 0:1:4:55 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:55 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e227 v454 (72612.11221 119345.086482 21514.04304)>'Text.9' desc=0
+DIMR 0:1:4:55 [0:1:1:2:94 ] []
+DIM 0:1:4:56 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:56 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e227 v454 (121364.272158 71031.391268 21627.787292)>'Text.10' desc=0
+DIMR 0:1:4:56 [0:1:1:2:98 ] []
+DIM 0:1:4:57 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:57 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e196 v392 (104882.182502 -35831.061444 18722.3904)>'Text.11' desc=0
+DIMR 0:1:4:57 [0:1:1:2:96 ] []
+DIM 0:1:4:58 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:58 plane=(0 0 48.2600000002)(0 0 1)(-6.12323399574e-17 1 0) pt=- pt2=- text=- conn=0,0 pres=<0 e196 v392 (58278.81988 -63464.150518 18393.08492)>'Text.12' desc=0
+DIMR 0:1:4:58 [0:1:1:2:100 ] []
+DIM 0:1:4:59 name='DGT:Common_label' type=30 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:59 plane=(-15.8326666667 -15.8326666667 15.8326666667)(0.57735026919 0.57735026919 -0.57735026919)(0.707106781187 -0.707106781187 1.11022302463e-16) pt=- pt2=- text=- conn=0,0 pres=<0 e14934 v29868 (-7948117.01143 6060097.10001 -469349.647482)>'Text.8' desc=0
+DIMR 0:1:4:59 [] []
+DIM 0:1:4:60 name='DGT:Common_label' type=30 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:60 plane=(-15.8326666667 -15.8326666667 15.8326666667)(0.57735026919 0.57735026919 -0.57735026919)(0.707106781187 -0.707106781187 1.11022302463e-16) pt=- pt2=- text=- conn=0,0 pres=<0 e210 v420 (-116114.105692 92471.237294 -3693.708368)>'Datum Reference Frame.1' desc=0
+DIMR 0:1:4:60 [] []
+VIEW 0:1:7:1 name='MBD_A' type=1 pp=(0 0 0) dir=(-0.57735026919 -0.57735026919 0.57735026919) up=(-0.408248290464 -0.408248290464 -0.816496580928) zoom=907.690490723 h=1000 v=1000 clip='' front=0,- back=0,- sides=0 gdtp=0
+VIEWR 0:1:7:1 [0:1:1:2 ] [] []
+VIEW 0:1:7:2 name='MBD_B' type=1 pp=(0 0 0) dir=(-0.57735026919 0.57735026919 -0.57735026919) up=(-0.408248290464 0.408248290464 0.816496580928) zoom=790.081726074 h=1000 v=1000 clip='' front=0,- back=0,- sides=0 gdtp=0
+VIEWR 0:1:7:2 [0:1:1:2 ] [] []
+VIEW 0:1:7:3 name='MBD_C' type=1 pp=(0 0 0) dir=(-0.57735026919 0.57735026919 -0.57735026919) up=(-0.408248290464 0.408248290464 0.816496580928) zoom=777.516906738 h=1000 v=1000 clip='' front=0,- back=0,- sides=0 gdtp=0
+VIEWR 0:1:7:3 [0:1:1:2 ] [] []
+VIEW 0:1:7:4 name='MBD_D' type=1 pp=(0 0 0) dir=(-0.57735026919 -0.57735026919 -0.57735026919) up=(-0.408248290464 -0.408248290464 0.816496580928) zoom=837.940551758 h=1000 v=1000 clip='' front=0,- back=0,- sides=0 gdtp=0
+VIEWR 0:1:7:4 [0:1:1:2 ] [] []

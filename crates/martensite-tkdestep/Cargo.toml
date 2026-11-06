@@ -1,0 +1,135 @@
+[package]
+autotests = false
+name = "martensite-tkdestep"
+version = "0.12.0"
+description = "Martensite STEP exchange: the parser and writer, the entity schemas, shape and document transfers, and the format provider."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.7" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.6" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.9" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.2" }
+martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.8" }
+martensite-tkde = { path = "../martensite-tkde", version = "0.9.0" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.8" }
+martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.3.5" }
+martensite-tkcaf = { path = "../martensite-tkcaf", version = "0.8.0" }
+martensite-tkcdf = { path = "../martensite-tkcdf", version = "0.3.6" }
+martensite-tkvcaf = { path = "../martensite-tkvcaf", version = "0.9.0" }
+martensite-tkxcaf = { path = "../martensite-tkxcaf", version = "0.9.0" }
+martensite-tkxsbase = { path = "../martensite-tkxsbase", version = "0.9.0" }
+
+[dev-dependencies]
+martensite-tkbo = { path = "../martensite-tkbo", version = "0.8.0" }
+martensite-tkfillet = { path = "../martensite-tkfillet", version = "0.8.0" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.6" }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
+martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
+martensite-geometry-raster = { path = "../martensite-geometry-raster", version = "0.7.0" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.9" }
+martensite-tkdestl = { path = "../martensite-tkdestl", version = "0.11.0" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
+martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.7.0" }
+martensite-vulkan = { path = "../martensite-vulkan", version = "0.7.1" }
+
+# The exchange scripts of the toolkit, one test per script, each graded on its whole stream.
+[[test]]
+name = "dataset_cases"
+path = "tests/dataset_cases/main.rs"
+
+# The exchange scripts that end on a shaded view, on the real renderer, each graded on its whole stream.
+[[test]]
+name = "viewer_cases"
+path = "tests/viewer_cases/main.rs"
+
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+[[test]]
+name = "step_core"
+path = "tests/step_core/main.rs"
+
+# Process-wide format defaults must remain isolated from ordinary configuration tests.
+[[test]]
+name = "static_initialization"
+path = "tests/static_initialization.rs"
+
+[[test]]
+name = "step_to_topo_ds"
+path = "tests/step_to_topo_ds.rs"
+
+[[test]]
+name = "step_tidy_cases"
+path = "tests/step_tidy_cases.rs"
+
+[[test]]
+name = "step_tidy_reducers"
+path = "tests/step_tidy_reducers/main.rs"
+
+[[test]]
+name = "step_round_trip"
+path = "tests/step_round_trip.rs"
+
+[[test]]
+name = "step_tessellated_face_files"
+path = "tests/step_tessellated_face_files.rs"
+
+[[test]]
+name = "step_transient_replacements"
+path = "tests/step_transient_replacements.rs"
+
+[[test]]
+name = "step_construct_rendering_properties"
+path = "tests/step_construct_rendering_properties.rs"
+
+[[test]]
+name = "step_to_topo_ds_face"
+path = "tests/step_to_topo_ds_face.rs"
+
+[[test]]
+name = "step_xde_reader"
+path = "tests/step_xde_reader.rs"
+
+[[test]]
+name = "step_xde_values"
+path = "tests/step_xde_values.rs"
+
+[[test]]
+name = "step_host_identity"
+path = "tests/step_host_identity.rs"
+
+[[test]]
+name = "stepcaf_control_controller"
+path = "tests/stepcaf_control_controller.rs"
+
+[[test]]
+name = "de_step_provider"
+path = "tests/de_step_provider.rs"
+
+[[test]]
+name = "gdt_step_storage"
+path = "tests/gdt_step_storage.rs"
+
+[[test]]
+name = "wrapper_configuration_cases"
+path = "tests/wrapper_configuration_cases.rs"
+
+[[test]]
+name = "topo_ds_to_step"
+path = "tests/topo_ds_to_step.rs"
+
+[[test]]
+name = "step_selections"
+path = "tests/step_selections.rs"
