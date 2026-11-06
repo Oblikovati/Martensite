@@ -25,7 +25,8 @@ a `MARTENSITE_CASE_*` environment variable; the library never reads these variab
 ## Validation admission
 
 Validated startup checks required extensions in the global and selected-layer
-catalogs before instance creation. See [validation instance admission](../validation-instance-admission/README.md)
+catalogs, and refuses a validation layer older than 1.4.313, before instance
+creation. See [validation instance admission](../validation-instance-admission/README.md)
 for typed failure names and the remaining ARM64 runtime requirement.
 
 ## Unsafe code

@@ -5,7 +5,7 @@ dependencies:
 
 | Script | Platform | Package manager |
 | --- | --- | --- |
-| `install-linux.sh` | Debian, Ubuntu, Fedora, Arch, openSUSE | apt, dnf, pacman, zypper |
+| `install-linux.sh` | Ubuntu, Fedora, Arch, openSUSE | apt (Ubuntu only), dnf, pacman, zypper |
 | `install-macos.sh` | macOS | Homebrew (installed when missing) |
 | `install-windows.ps1` | Windows x64 and ARM64 | winget |
 
@@ -24,9 +24,9 @@ because Arch does not support partial upgrades.
 | Tcl/Tk 8.6 | packages | `tcl-tk@8` | built from pinned source with MSVC |
 | FreeType, fontconfig | packages | formulae | FreeType built from pinned source |
 | Vulkan | loader, Mesa lavapipe, validation layers, vulkan-tools, glslang, SPIRV-Tools | loader, MoltenVK, validation layers, vulkan-tools, glslang, SPIRV-Tools | Vulkan SDK |
-| Vulkan validation layer for the renderer tests | checksum-pinned package on Ubuntu 24.04 x86_64 (`scripts/install/vulkan-validation.sh`); other distributions provide layer 1.4.313 or newer themselves | not needed | not needed |
+| Vulkan validation layer 1.4.313 or newer | checksum-pinned package on Ubuntu 24.04 x86_64 (`scripts/install/vulkan-validation.sh`); apt's `vulkan-validationlayers` on Ubuntu 25.10 and later; the distribution's package on Fedora, Arch and openSUSE | Homebrew's `vulkan-validationlayers` | Vulkan SDK |
 | Headless display | Xvfb, xauth | not needed | not needed |
-| Rust | distribution `rustup`, else rustup.rs | Homebrew `rustup`, or an existing rustup.rs install | winget `Rustlang.Rustup`, or an existing install |
+| Rust | rustup.rs on Ubuntu; the distribution's `rustup` elsewhere, else rustup.rs | Homebrew `rustup`, or an existing rustup.rs install | winget `Rustlang.Rustup`, or an existing install |
 | Cargo tools | `cargo install --locked` | formulae | `cargo install --locked` |
 
 The cargo tools are cargo-deny, cargo-audit, cargo-nextest and
@@ -95,17 +95,36 @@ commands.
 
 At the end, each installer checks that the required commands and pkg-config
 modules are present. It also runs `vulkaninfo --summary` and stops with an
-error when it finds no Vulkan device.
+error when it finds no Vulkan device. On Ubuntu, the Linux installer also asks
+the Vulkan loader for the validation layer's version, and stops with both
+versions when it is older than 1.4.313.
 
-The Linux installer was tested in containers of Ubuntu 24.04, Debian 12,
-Fedora, Arch and openSUSE Tumbleweed. Each test ran the installer twice: the
-first run installs, the second run updates. The macOS installer was checked
+The Linux installer was tested in containers of Ubuntu 24.04 and Ubuntu 26.04,
+with `--no-cargo-tools`. Each test ran the installer twice: the first run
+installs, the second run updates. They ended with layers 1.4.313 and 1.4.341. A
+Debian 13 container was refused on both runs without changing any package. The
+routes for other Ubuntu releases and for derivatives ran only as far as the route
+choice, with a replaced `/etc/os-release` and `uname`, so Ubuntu 25.10 has no full
+install test. The Fedora, Arch and openSUSE routes were not run against this
+version. The macOS installer was checked
 with shellcheck only. The Windows installer was checked with the PowerShell
 parser, PSScriptAnalyzer, and runs of its pure functions under PowerShell on
 Linux. Neither was run on its target OS yet.
 
 ## Known limits
 
+- On apt, only Ubuntu is supported, along with systems that declare `ubuntu` in
+  `ID_LIKE`. Other apt-based systems stop before any package changes, and so do
+  Ubuntu releases before 25.10 other than 24.04, and 24.04 on anything but x86_64.
+  Use Ubuntu 26.04 on those machines.
+- A derivative needs `UBUNTU_CODENAME` set to noble, questing or resolute, because
+  it numbers its own releases.
+- Ubuntu 25.10 and later use the system's Mesa and get no pinned lavapipe, so
+  `MARTENSITE_LAVAPIPE_ICD` is not set there. The recorded images are exact only on
+  the pinned build, so image tests can differ on those releases.
+- The installer does not check the layer version on Fedora, Arch or openSUSE.
+  openSUSE Leap packages an older layer than validated startup accepts: 1.4.309 on
+  16.0 and 1.3.275 on 15.6.
 - RHEL-family distributions need EPEL for some packages; the installer does
   not configure extra repositories.
 - Alpine (apk) and other package managers are not supported.

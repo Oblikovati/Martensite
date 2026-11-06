@@ -4,6 +4,7 @@ use super::{
     runtime::vk_error,
     surface_platform::PlatformSurfaceFactory,
     validation_admission::{InstanceExtensionSource, admit_validation},
+    validation_layer::{ValidationLayerVersion, loader_validation_layer},
 };
 use crate::RenderError;
 use ash::{Entry, Instance, vk};
@@ -41,6 +42,9 @@ impl InstanceExtensionSource for Entry {
         // SAFETY: this Entry keeps the loader alive; ash owns query outputs and
         // the optional NUL-terminated layer name remains live throughout the call.
         unsafe { self.enumerate_instance_extension_properties(layer) }
+    }
+    fn active_layer(&self) -> Result<Option<ValidationLayerVersion>, vk::Result> {
+        loader_validation_layer(self)
     }
 }
 
