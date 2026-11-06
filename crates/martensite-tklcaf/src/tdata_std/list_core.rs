@@ -53,7 +53,7 @@ pub(crate) fn set_attr<A: ListAttribute>(
     }
     let created = Handle::new(A::make());
     live(&created, A::TYPE_NAME)?.set_id(guid)?;
-    label.add_attribute(&created.cast(), false)?;
+    label.add_attribute(&created.cast(), true)?;
     Ok(created)
 }
 

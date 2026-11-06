@@ -78,7 +78,7 @@ impl TDataStdIntPackedMap {
         let attribute = live(&created, "TDataStd_IntPackedMap::Set")?;
         attribute.clear()?;
         attribute.set_delta(is_delta);
-        label.add_attribute(&created.cast(), false)?;
+        label.add_attribute(&created.cast(), true)?;
         Ok(created)
     }
     /// `ChangeMap(theMap)` with a handle: false for a null or the same map, or equal
@@ -319,7 +319,7 @@ impl TdfAttributeDelta for TDataStdDeltaOnModificationOfIntPackedMap {
             .label()
             .find_attribute_as(&INT_PACKED_MAP_ID, &mut current)?
         {
-            return self.label().add_attribute(&backup.cast(), false);
+            return self.label().add_attribute(&backup.cast(), true);
         }
         let current = live(
             &current,

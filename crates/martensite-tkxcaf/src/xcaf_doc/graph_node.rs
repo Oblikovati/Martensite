@@ -72,7 +72,7 @@ impl XCAFDocGraphNode {
         }
         let node = Handle::new(Self::new());
         live(&node, "XCAFDocGraphNode::Set")?.set_graph_id(id)?;
-        label.add_attribute(&node.clone().cast(), false)?;
+        label.add_attribute(&node.clone().cast(), true)?;
         Ok(node)
     }
     /// `SetGraphID(explicitID)`: backed up.

@@ -19,7 +19,7 @@ where
         return Ok(found);
     }
     let created = Handle::new(make());
-    label.add_attribute(&created.clone().cast(), false)?;
+    label.add_attribute(&created.clone().cast(), true)?;
     Ok(created)
 }
 

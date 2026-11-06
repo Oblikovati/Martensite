@@ -147,6 +147,19 @@ fn read(records: &[(&str, &[i32])]) -> (FakeReaderTool, Handle<dyn InterfaceInte
 }
 
 #[test]
+fn reading_into_a_null_model_is_a_failure() {
+    register_reader();
+    let tool = FakeReaderTool::default();
+    tool.set_data(&fake_file(&[("a", &[])]), &fake_protocol());
+    tool.set_entities().unwrap();
+    let failure = tool.load_model(&Handle::default()).unwrap_err();
+    assert!(
+        failure.message().contains("null model"),
+        "unexpected failure: {failure:?}"
+    );
+}
+
+#[test]
 fn reader_data_parameters() {
     let data = fake_file(&[("a", &[]), ("b", &[1, 1])]);
     assert_eq!((data.nb_records(), data.nb_entities()), (2, 2));

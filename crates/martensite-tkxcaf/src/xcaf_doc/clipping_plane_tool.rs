@@ -1,6 +1,5 @@
 //! `XCAFDocClippingPlaneTool`: the clipping planes of the views of an XDE document (one
 //! `TDataXtdPlane` per child of the tool's label, with a name and a capping flag).
-use super::XCAFDoc;
 use super::generic_empty_tool::generic_empty_attribute;
 use super::support::{child_labels_with, find};
 use martensite_tkcaf::tdata_xtd::{TDataXtdGeometry, TDataXtdPlane};
@@ -149,10 +148,11 @@ fn same_axes(first: &Plane3, second: &Plane3) -> bool {
 
 /// Removal, update and capping.
 impl XCAFDocClippingPlaneTool {
-    /// `RemoveClippingPlane(theLabel)`: forgets every attribute of a clipping plane no view
-    /// refers to.
+    /// Forgets every attribute of a clipping plane; false for a label that is not one. A view
+    /// that refers to the plane loses the reference with the plane's graph node;
+    /// `tool.remove_clipping_plane(&plane)?`.
     pub fn remove_clipping_plane(&self, label: &TdfLabel) -> Result<bool, Failure> {
-        if !self.is_clipping_plane(label)? || label.is_attribute(&XCAFDoc::view_ref_plane_guid())? {
+        if !self.is_clipping_plane(label)? {
             return Ok(false);
         }
         label.forget_all_attributes(true)?;

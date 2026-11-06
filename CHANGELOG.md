@@ -6,6 +6,19 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added `V3dView::default_view_axis`, which returns the default view point and axis that `set_axis` keeps, with every digit.
+
+### Changed
+
+- `XCAFDocClippingPlaneTool::remove_clipping_plane` now removes a clipping plane a view refers to, and the view loses the reference. It used to refuse the removal.
+
+### Fixed
+
+- Attributes are now added after the ones already on a label, so a label lists them in the order they were created. This covers the array, list, map, tree, expression, variable and function attributes, the document attributes, metadata copies and the viewer attribute.
+- Reading a file into a null model now reports a failure instead of panicking.
+
 ## [0.11.0] - 2026-11-06
 
 ### Added

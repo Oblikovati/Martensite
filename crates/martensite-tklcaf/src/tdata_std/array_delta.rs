@@ -103,7 +103,7 @@ fn apply<A: ArrayAttribute>(
     };
     let mut current: Handle<A> = Handle::default();
     if !label.find_attribute_as(&backup_attribute.id(), &mut current)? {
-        return label.add_attribute(&backup.cast(), false);
+        return label.add_attribute(&backup.cast(), true);
     }
     let current = live(&current, A::TYPE_NAME)?;
     current.backup()?;

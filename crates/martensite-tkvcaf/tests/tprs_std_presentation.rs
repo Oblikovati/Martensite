@@ -5,7 +5,7 @@ mod support;
 use martensite_tkcaf::tdata_xtd::{TDataXtdPoint, TDataXtdPresentation};
 use martensite_tkernel::quantity::NamedColor;
 use martensite_tkernel::standard::Handle;
-use martensite_tklcaf::tdf::TdfLabel;
+use martensite_tklcaf::tdf::{TdfAttributeIterator, TdfLabel};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::graphic3d::Graphic3dNameOfMaterial;
 use martensite_tkv3d::ais::{AisInteractiveContext, AisInteractiveObjectMembers, AisPoint};
@@ -181,4 +181,18 @@ fn set_from_master_uses_the_master_id_as_driver() {
     );
     presentation.update().unwrap();
     assert!(!presentation.get_ais().cast::<AisPoint>().is_null());
+}
+
+#[test]
+fn a_new_viewer_follows_the_attributes_of_the_root() {
+    let document = support::new_document();
+    let root = support::main_child(&document, 1).root().unwrap();
+    let viewer = TPrsStdAISViewer::new_with_viewer(&root, &support::null_viewer()).unwrap();
+    let mut last = Handle::default();
+    let mut iterator = TdfAttributeIterator::new(&root, true).unwrap();
+    while iterator.more() {
+        last = iterator.value();
+        iterator.next();
+    }
+    assert_eq!(last.object_address(), viewer.object_address());
 }
