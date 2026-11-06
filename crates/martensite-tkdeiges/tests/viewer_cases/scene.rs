@@ -98,7 +98,7 @@ impl ViewScene {
         self.display_object(name, AisShape::new(shape).cast(), mode);
     }
 
-    /// `ViewerTest::display(name, object)`: a name shown again replaces its object.
+    /// Shows an object under a name; a name shown again replaces its object.
     /// Example: `scene.display_object("D:0:1:1:1", object, Some(1))`.
     pub fn display_object(
         &mut self,
