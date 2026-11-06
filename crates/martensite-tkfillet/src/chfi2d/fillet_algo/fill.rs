@@ -181,7 +181,7 @@ fn is_radius_intersected(
     }
     let c = live(curve)?;
     for _ in (1..=inter.nb_segments()).rev() {
-        // anInter.Segment(a, aCurve); //not implemented (bug in OCC): the curve ends
+        // A segment of the intersection gives no curve here, so the curve ends are tested.
         for u in [c.first_parameter(), c.last_parameter()] {
             let point = c.value(u)?;
             let proj = ProjectPointOnCurve::with_range(point, curve, min, max)?;

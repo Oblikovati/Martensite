@@ -84,7 +84,7 @@ fn classify_contact(
         if !point_on_segment {
             return Some(IntersectionFlag::NoIntersection);
         }
-        // Native selects the corresponding endpoint of the opposite segment (OCC preserved).
+        // Selects the corresponding endpoint of the opposite segment.
         let index = hash.iter().position(|value| *value == 1).unwrap_or(3);
         *point = Point2::new(points[index].x(), points[index].y());
         return Some(IntersectionFlag::PointOnSegment);

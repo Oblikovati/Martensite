@@ -282,7 +282,7 @@ pub fn occ25446(s: &mut dyn Session, result: &str, first: &str, second: &str) ->
 }
 
 /// `restore` of a script input kept under the test data's `github-issues` folder.
-/// Example: `restore_issue_input(s, "OCCT-544/solid.brep.txt", "body")`.
+/// Example: `restore_issue_input(s, "issue-folder/solid.brep.txt", "body")`.
 pub fn restore_issue_input(s: &mut dyn Session, file: &str, name: &str) {
     let root = std::env::var_os("MARTENSITE_TEST_DATA_DIR").map_or_else(
         || {

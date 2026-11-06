@@ -5,7 +5,7 @@ Martensite is a Geometry Kernel providing services for the 3D surface and solid 
 It is written in Rust and validated by regression suites on public datasets. Providing a stable and production tested set of toolkits on which
 Martensite can build on top and innovate.
 
-Martensite has no commitment to keep API parity with OpenCASCADE.
+Martensite has no commitment to keep API parity with any other geometry kernel.
 
 The improvememt roadmap for this project can be found on [Milestones](https://github.com/Oblikovati/Martensite/milestones)
 
@@ -48,6 +48,7 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkdestl` | STL reading and writing: text and binary files, shape transfers and the format provider. |
 | `martensite-tkmeshvs` | Mesh visualization: mesh data sources, the drawer, presentation builders and selection on elements and nodes. |
 | `martensite-tkxmesh` | A meshing factory: a named alternative entry to the incremental mesher. |
+| `martensite-tkdestep` | STEP reading and writing: the parser and writer, the entity schemas, shape and document transfers and the format provider. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [math guide](docs/features/martensite-tkmath/README.md), and
@@ -73,6 +74,8 @@ The [STL exchange](docs/features/martensite-tkdestl/README.md),
 [mesh visualization](docs/features/martensite-tkmeshvs/README.md) and
 [meshing factory](docs/features/martensite-tkxmesh/README.md) guides describe STL files and meshes on
 their own.
+The [STEP exchange](docs/features/martensite-tkdestep/README.md) guide describes STEP files, shapes and
+documents.
 The [interactive visualization](docs/features/martensite-tkv3d/README.md) and
 [Vulkan renderer](docs/features/martensite-vulkan/README.md) guides describe the viewer and
 how to run its tests on a software driver.

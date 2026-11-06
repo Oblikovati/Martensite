@@ -54,7 +54,7 @@ impl ConversionMatrix {
             if computed == before {
                 return Err(Failure::new(&format!(
                     "Units dictionary section of {count} units: conversion graph not connected; \
-                     expected every unit to reach SI (OCCT loops forever)"
+                     expected every unit to reach SI"
                 )));
             }
         }
