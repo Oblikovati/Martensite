@@ -10,17 +10,17 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added `martensite-tkdestep` (STEP reading and writing: the parser and writer, the entity schemas, shape and document transfers and the format provider). Each value reads as the file has it and writes back the same: shading methods, the actuated directions of kinematic pairs, the surface and volume element purpose names, and `EXTERNALLY_DEFINED_CLASS` and the other records whose fields are filled on read. Triangulated faces whose normals are not a square array write like any other.
-- Added `V3dView::default_view_axis`, which returns the default view point and axis that `set_axis` keeps, with every digit.
+- Added `martensite-tkdestep` (STEP reading and writing: the parser and writer, the entity schemas, shape and document transfers and the format provider). Each value reads as the file has it and writes back the same: shading methods, the actuated directions of kinematic pairs, the surface and volume element purpose names, and `EXTERNALLY_DEFINED_CLASS` and the other records whose fields are filled on read. Triangulated faces whose normals are not a square array write like any other (#403).
+- Added `V3dView::default_view_axis`, which returns the default view point and axis that `set_axis` keeps, with every digit (#403).
 
 ### Changed
 
-- `XCAFDocClippingPlaneTool::remove_clipping_plane` now removes a clipping plane a view refers to, and the view loses the reference. It used to refuse the removal.
+- `XCAFDocClippingPlaneTool::remove_clipping_plane` now removes a clipping plane a view refers to, and the view loses the reference. It used to refuse the removal (#403).
 
 ### Fixed
 
-- Attributes are now added after the ones already on a label, so a label lists them in the order they were created. This covers the array, list, map, tree, expression, variable and function attributes, the document attributes, metadata copies and the viewer attribute.
-- Reading a file into a null model now reports a failure instead of panicking.
+- Attributes are now added after the ones already on a label, so a label lists them in the order they were created. This covers the array, list, map, tree, expression, variable and function attributes, the document attributes, metadata copies and the viewer attribute (#403).
+- Reading a file into a null model now reports a failure instead of panicking (#403).
 
 ## [0.11.0] - 2026-11-06
 
