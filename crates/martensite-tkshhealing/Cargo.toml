@@ -33,6 +33,10 @@ name = "toolkit"
 path = "tests/toolkit.rs"
 
 [[test]]
+name = "shape_fix_wire_order_on_torus"
+path = "tests/shape_fix_wire_order_on_torus.rs"
+
+[[test]]
 name = "shape_extend_messages"
 path = "tests/shape_extend_messages.rs"
 

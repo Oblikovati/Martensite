@@ -8,6 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Healing a wire no longer loses the surface of a face on a surface periodic in both directions. All the ends of such a wire can lie at one point in space, a few digits of a file apart, so the gaps in space chose the opposite edge. A torus read from a file as faces, written and read again, came back with an area of about 0. `ShapeFixWire::perform` now also reads the p-curve gaps when every edge has a p-curve, the gaps in space would reorder the wire and the two orders chain the edges differently; other wires keep the order they had. `ShapeAnalysisWireOrder`, reading both gaps, now continues the chain at a joint closed in space and on the surface, even from a part of the chain that is itself closed in space.
 - Reading a STEP file no longer moves the end poles of a B-spline edge curve when a vertex lies inside the curve's range. The vertex tolerance now covers the same evaluation that checks it, so the edge is accepted at once. In `as1_motor.step` the moved poles took the trimmed edge up to 68 units away from its vertices, which gave those vertices a tolerance of 68 and meshed the two faces beside the edge far too coarsely.
 
 ## [0.12.0] - 2026-11-06
