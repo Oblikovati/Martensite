@@ -545,7 +545,7 @@ fn create_instance(entry: &Entry, validation: bool) -> Result<(Instance, bool), 
         .application_name(c"Martensite")
         .api_version(vk::API_VERSION_1_3);
     let mut info = vk::InstanceCreateInfo::default().application_info(&app);
-    let layers = [c"VK_LAYER_KHRONOS_validation".as_ptr()];
+    let layers = [super::validation_settings::VALIDATION_LAYER.as_ptr()];
     let surfaces = super::surface_platform::host_factory();
     let plan = super::portability_runtime::instance_extensions(entry, validation, surfaces)?;
     let extensions = plan.names;

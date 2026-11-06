@@ -238,6 +238,7 @@ mod replay_raster_commands;
 mod replay_resource_diagnostic;
 mod submission;
 mod transform_constants;
+mod validation_admission;
 mod validation_settings;
 #[cfg(feature = "vertex-output-diagnostics")]
 mod vertex_output;

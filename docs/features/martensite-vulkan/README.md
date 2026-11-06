@@ -22,6 +22,12 @@ coverage, window depth and light dot behaviours, and the text and Phong interpol
 policies. Earlier versions stay selectable for replay. Tests pick one per worker process with
 a `MARTENSITE_CASE_*` environment variable; the library never reads these variables.
 
+## Validation admission
+
+Validated startup checks required extensions in the global and selected-layer
+catalogs before instance creation. See [validation instance admission](../validation-instance-admission/README.md)
+for typed failure names and the remaining ARM64 runtime requirement.
+
 ## Unsafe code
 
 The crate calls the Vulkan API through `ash`, so `backend` opts in to `unsafe` code under the
