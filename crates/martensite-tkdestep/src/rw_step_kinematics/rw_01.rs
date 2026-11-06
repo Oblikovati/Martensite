@@ -32,186 +32,18 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
         }
         let an_actuated_kinematic_pair: Handle<StepKinematicsActuatedKinematicPair> =
             Handle::new(StepKinematicsActuatedKinematicPair::new());
-        let mut a_tx: StepKinematicsActuatedDirection =
-            StepKinematicsActuatedDirection::AdNotActuated;
-        let mut has_tx: bool = true;
-        if the_data.is_param_defined(the_num, 1)? {
-            if the_data.param_type(the_num, 1)? == InterfaceParamType::ParamEnum {
-                let text: Vec<u8> = the_data.param_c_value(the_num, 1)?;
-                if text == b".BIDIRECTIONAL." {
-                    a_tx = StepKinematicsActuatedDirection::AdBidirectional;
-                } else {
-                    if text == b".POSITIVE_ONLY." {
-                        a_tx = StepKinematicsActuatedDirection::AdPositiveOnly;
-                    } else {
-                        if text == b".NEGATIVE_ONLY." {
-                            a_tx = StepKinematicsActuatedDirection::AdNegativeOnly;
-                        } else {
-                            if text == b".NOT_ACTUATED." {
-                                a_tx = StepKinematicsActuatedDirection::AdNotActuated;
-                            } else {
-                                the_arch
-                                    .add_fail_text("Parameter #1 (t_x) has not allowed value", "");
-                            }
-                        }
-                    }
-                }
-            } else {
-                the_arch.add_fail_text("Parameter #1 (t_x) is not enumeration", "");
-            }
-        } else {
-            has_tx = false;
-        }
-        let mut a_ty: StepKinematicsActuatedDirection =
-            StepKinematicsActuatedDirection::AdNotActuated;
-        let mut has_ty: bool = true;
-        if the_data.is_param_defined(the_num, 2)? {
-            if the_data.param_type(the_num, 2)? == InterfaceParamType::ParamEnum {
-                let text: Vec<u8> = the_data.param_c_value(the_num, 2)?;
-                if text == b".BIDIRECTIONAL." {
-                    a_ty = StepKinematicsActuatedDirection::AdBidirectional;
-                } else {
-                    if text == b".POSITIVE_ONLY." {
-                        a_ty = StepKinematicsActuatedDirection::AdPositiveOnly;
-                    } else {
-                        if text == b".NEGATIVE_ONLY." {
-                            a_ty = StepKinematicsActuatedDirection::AdNegativeOnly;
-                        } else {
-                            if text == b".NOT_ACTUATED." {
-                                a_ty = StepKinematicsActuatedDirection::AdNotActuated;
-                            } else {
-                                the_arch
-                                    .add_fail_text("Parameter #2 (t_y) has not allowed value", "");
-                            }
-                        }
-                    }
-                }
-            } else {
-                the_arch.add_fail_text("Parameter #2 (t_y) is not enumeration", "");
-            }
-        } else {
-            has_ty = false;
-        }
-        let mut a_tz: StepKinematicsActuatedDirection =
-            StepKinematicsActuatedDirection::AdNotActuated;
-        let mut has_tz: bool = true;
-        if the_data.is_param_defined(the_num, 3)? {
-            if the_data.param_type(the_num, 3)? == InterfaceParamType::ParamEnum {
-                let text: Vec<u8> = the_data.param_c_value(the_num, 3)?;
-                if text == b".BIDIRECTIONAL." {
-                    a_tz = StepKinematicsActuatedDirection::AdBidirectional;
-                } else {
-                    if text == b".POSITIVE_ONLY." {
-                        a_tz = StepKinematicsActuatedDirection::AdPositiveOnly;
-                    } else {
-                        if text == b".NEGATIVE_ONLY." {
-                            a_tz = StepKinematicsActuatedDirection::AdNegativeOnly;
-                        } else {
-                            if text == b".NOT_ACTUATED." {
-                                a_tz = StepKinematicsActuatedDirection::AdNotActuated;
-                            } else {
-                                the_arch
-                                    .add_fail_text("Parameter #3 (t_z) has not allowed value", "");
-                            }
-                        }
-                    }
-                }
-            } else {
-                the_arch.add_fail_text("Parameter #3 (t_z) is not enumeration", "");
-            }
-        } else {
-            has_tz = false;
-        }
-        let mut a_rx: StepKinematicsActuatedDirection =
-            StepKinematicsActuatedDirection::AdNotActuated;
-        let mut has_rx: bool = true;
-        if the_data.is_param_defined(the_num, 4)? {
-            if the_data.param_type(the_num, 4)? == InterfaceParamType::ParamEnum {
-                let text: Vec<u8> = the_data.param_c_value(the_num, 4)?;
-                if text == b".BIDIRECTIONAL." {
-                    a_rx = StepKinematicsActuatedDirection::AdBidirectional;
-                } else {
-                    if text == b".POSITIVE_ONLY." {
-                        a_rx = StepKinematicsActuatedDirection::AdPositiveOnly;
-                    } else {
-                        if text == b".NEGATIVE_ONLY." {
-                            a_rx = StepKinematicsActuatedDirection::AdNegativeOnly;
-                        } else {
-                            if text == b".NOT_ACTUATED." {
-                                a_rx = StepKinematicsActuatedDirection::AdNotActuated;
-                            } else {
-                                the_arch
-                                    .add_fail_text("Parameter #14 (r_x) has not allowed value", "");
-                            }
-                        }
-                    }
-                }
-            } else {
-                the_arch.add_fail_text("Parameter #14 (r_x) is not enumeration", "");
-            }
-        } else {
-            has_rx = false;
-        }
-        let mut a_ry: StepKinematicsActuatedDirection =
-            StepKinematicsActuatedDirection::AdNotActuated;
-        let mut has_ry: bool = true;
-        if the_data.is_param_defined(the_num, 5)? {
-            if the_data.param_type(the_num, 5)? == InterfaceParamType::ParamEnum {
-                let text: Vec<u8> = the_data.param_c_value(the_num, 5)?;
-                if text == b".BIDIRECTIONAL." {
-                    a_ry = StepKinematicsActuatedDirection::AdBidirectional;
-                } else {
-                    if text == b".POSITIVE_ONLY." {
-                        a_ry = StepKinematicsActuatedDirection::AdPositiveOnly;
-                    } else {
-                        if text == b".NEGATIVE_ONLY." {
-                            a_ry = StepKinematicsActuatedDirection::AdNegativeOnly;
-                        } else {
-                            if text == b".NOT_ACTUATED." {
-                                a_ry = StepKinematicsActuatedDirection::AdNotActuated;
-                            } else {
-                                the_arch
-                                    .add_fail_text("Parameter #5 (r_y) has not allowed value", "");
-                            }
-                        }
-                    }
-                }
-            } else {
-                the_arch.add_fail_text("Parameter #5 (r_y) is not enumeration", "");
-            }
-        } else {
-            has_ry = false;
-        }
-        let mut a_rz: StepKinematicsActuatedDirection =
-            StepKinematicsActuatedDirection::AdNotActuated;
-        let mut has_rz: bool = true;
-        if the_data.is_param_defined(the_num, 6)? {
-            if the_data.param_type(the_num, 6)? == InterfaceParamType::ParamEnum {
-                let text: Vec<u8> = the_data.param_c_value(the_num, 6)?;
-                if text == b".BIDIRECTIONAL." {
-                    a_rz = StepKinematicsActuatedDirection::AdBidirectional;
-                } else {
-                    if text == b".POSITIVE_ONLY." {
-                        a_rz = StepKinematicsActuatedDirection::AdPositiveOnly;
-                    } else {
-                        if text == b".NEGATIVE_ONLY." {
-                            a_rz = StepKinematicsActuatedDirection::AdNegativeOnly;
-                        } else {
-                            if text == b".NOT_ACTUATED." {
-                                a_rz = StepKinematicsActuatedDirection::AdNotActuated;
-                            } else {
-                                the_arch
-                                    .add_fail_text("Parameter #6 (r_z) has not allowed value", "");
-                            }
-                        }
-                    }
-                }
-            } else {
-                the_arch.add_fail_text("Parameter #6 (r_z) is not enumeration", "");
-            }
-        } else {
-            has_rz = false;
-        }
+        let (a_tx, has_tx) =
+            step_read_actuated_direction(the_data, the_num, 1, 1, "t_x", the_arch)?;
+        let (a_ty, has_ty) =
+            step_read_actuated_direction(the_data, the_num, 2, 2, "t_y", the_arch)?;
+        let (a_tz, has_tz) =
+            step_read_actuated_direction(the_data, the_num, 3, 3, "t_z", the_arch)?;
+        let (a_rx, has_rx) =
+            step_read_actuated_direction(the_data, the_num, 4, 14, "r_x", the_arch)?;
+        let (a_ry, has_ry) =
+            step_read_actuated_direction(the_data, the_num, 5, 5, "r_y", the_arch)?;
+        let (a_rz, has_rz) =
+            step_read_actuated_direction(the_data, the_num, 6, 6, "r_z", the_arch)?;
         let mut a_representation_item_name: Handle<HAsciiString> = Default::default();
         the_data.named_for_complex_short(
             "GEOMETRIC_REPRESENTATION_ITEM",
@@ -373,34 +205,22 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                     if the_data.check_nb_params(the_num, 2, the_arch, "REVOLUTE_PAIR_WITH_RANGE")? {
                         a_kinematic_pair =
                             Handle::new(StepKinematicsRevolutePairWithRange::new()).cast();
-                        let mut a_lower_limit_actual_rotation: f64 = Default::default();
-                        let mut has_lower_limit_actual_rotation: bool = true;
-                        if the_data.is_param_defined(the_num, 1)? {
-                            the_data.read_real(
+                        let (a_lower_limit_actual_rotation, has_lower_limit_actual_rotation) =
+                            step_read_optional_real(
+                                the_data,
                                 the_num,
                                 1,
                                 "lower_limit_actual_rotation",
                                 the_arch,
-                                &mut a_lower_limit_actual_rotation,
                             )?;
-                        } else {
-                            has_lower_limit_actual_rotation = false;
-                            a_lower_limit_actual_rotation = 0.0;
-                        }
-                        let mut a_upper_limit_actual_rotation: f64 = Default::default();
-                        let mut has_upper_limit_actual_rotation: bool = true;
-                        if the_data.is_param_defined(the_num, 2)? {
-                            the_data.read_real(
+                        let (a_upper_limit_actual_rotation, has_upper_limit_actual_rotation) =
+                            step_read_optional_real(
+                                the_data,
                                 the_num,
                                 2,
                                 "upper_limit_actual_rotation",
                                 the_arch,
-                                &mut a_upper_limit_actual_rotation,
                             )?;
-                        } else {
-                            has_upper_limit_actual_rotation = false;
-                            a_upper_limit_actual_rotation = 0.0;
-                        }
                         let a_local_pair: Handle<StepKinematicsRevolutePairWithRange> =
                             a_kinematic_pair.cast::<StepKinematicsRevolutePairWithRange>();
                         step_live(&a_local_pair, "ReadStep")?.init(
@@ -460,62 +280,42 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                         )? {
                             a_kinematic_pair =
                                 Handle::new(StepKinematicsCylindricalPairWithRange::new()).cast();
-                            let mut a_lower_limit_actual_translation: f64 = Default::default();
-                            let mut has_lower_limit_actual_translation: bool = true;
-                            if the_data.is_param_defined(the_num, 1)? {
-                                the_data.read_real(
-                                    the_num,
-                                    1,
-                                    "lower_limit_actual_translation",
-                                    the_arch,
-                                    &mut a_lower_limit_actual_translation,
-                                )?;
-                            } else {
-                                has_lower_limit_actual_translation = false;
-                                a_lower_limit_actual_translation = 0.0;
-                            }
-                            let mut a_upper_limit_actual_translation: f64 = Default::default();
-                            let mut has_upper_limit_actual_translation: bool = true;
-                            if the_data.is_param_defined(the_num, 2)? {
-                                the_data.read_real(
-                                    the_num,
-                                    2,
-                                    "upper_limit_actual_translation",
-                                    the_arch,
-                                    &mut a_upper_limit_actual_translation,
-                                )?;
-                            } else {
-                                has_upper_limit_actual_translation = false;
-                                a_upper_limit_actual_translation = 0.0;
-                            }
-                            let mut a_lower_limit_actual_rotation: f64 = Default::default();
-                            let mut has_lower_limit_actual_rotation: bool = true;
-                            if the_data.is_param_defined(the_num, 3)? {
-                                the_data.read_real(
+                            let (
+                                a_lower_limit_actual_translation,
+                                has_lower_limit_actual_translation,
+                            ) = step_read_optional_real(
+                                the_data,
+                                the_num,
+                                1,
+                                "lower_limit_actual_translation",
+                                the_arch,
+                            )?;
+                            let (
+                                a_upper_limit_actual_translation,
+                                has_upper_limit_actual_translation,
+                            ) = step_read_optional_real(
+                                the_data,
+                                the_num,
+                                2,
+                                "upper_limit_actual_translation",
+                                the_arch,
+                            )?;
+                            let (a_lower_limit_actual_rotation, has_lower_limit_actual_rotation) =
+                                step_read_optional_real(
+                                    the_data,
                                     the_num,
                                     3,
                                     "lower_limit_actual_rotation",
                                     the_arch,
-                                    &mut a_lower_limit_actual_rotation,
                                 )?;
-                            } else {
-                                has_lower_limit_actual_rotation = false;
-                                a_lower_limit_actual_rotation = 0.0;
-                            }
-                            let mut a_upper_limit_actual_rotation: f64 = Default::default();
-                            let mut has_upper_limit_actual_rotation: bool = true;
-                            if the_data.is_param_defined(the_num, 4)? {
-                                the_data.read_real(
+                            let (a_upper_limit_actual_rotation, has_upper_limit_actual_rotation) =
+                                step_read_optional_real(
+                                    the_data,
                                     the_num,
                                     4,
                                     "upper_limit_actual_rotation",
                                     the_arch,
-                                    &mut a_upper_limit_actual_rotation,
                                 )?;
-                            } else {
-                                has_upper_limit_actual_rotation = false;
-                                a_upper_limit_actual_rotation = 0.0;
-                            }
                             let a_local_pair: Handle<StepKinematicsCylindricalPairWithRange> =
                                 a_kinematic_pair.cast::<StepKinematicsCylindricalPairWithRange>();
                             step_live(&a_local_pair, "ReadStep")?.init(
@@ -580,90 +380,54 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                             )? {
                                 a_kinematic_pair =
                                     Handle::new(StepKinematicsSphericalPairWithRange::new()).cast();
-                                let mut a_lower_limit_yaw: f64 = Default::default();
-                                let mut has_lower_limit_yaw: bool = true;
-                                if the_data.is_param_defined(the_num, 1)? {
-                                    the_data.read_real(
+                                let (a_lower_limit_yaw, has_lower_limit_yaw) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         1,
                                         "lower_limit_yaw",
                                         the_arch,
-                                        &mut a_lower_limit_yaw,
                                     )?;
-                                } else {
-                                    has_lower_limit_yaw = false;
-                                    a_lower_limit_yaw = 0.0;
-                                }
-                                let mut a_upper_limit_yaw: f64 = Default::default();
-                                let mut has_upper_limit_yaw: bool = true;
-                                if the_data.is_param_defined(the_num, 2)? {
-                                    the_data.read_real(
+                                let (a_upper_limit_yaw, has_upper_limit_yaw) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         2,
                                         "upper_limit_yaw",
                                         the_arch,
-                                        &mut a_upper_limit_yaw,
                                     )?;
-                                } else {
-                                    has_upper_limit_yaw = false;
-                                    a_upper_limit_yaw = 0.0;
-                                }
-                                let mut a_lower_limit_pitch: f64 = Default::default();
-                                let mut has_lower_limit_pitch: bool = true;
-                                if the_data.is_param_defined(the_num, 3)? {
-                                    the_data.read_real(
+                                let (a_lower_limit_pitch, has_lower_limit_pitch) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         3,
                                         "lower_limit_pitch",
                                         the_arch,
-                                        &mut a_lower_limit_pitch,
                                     )?;
-                                } else {
-                                    has_lower_limit_pitch = false;
-                                    a_lower_limit_pitch = 0.0;
-                                }
-                                let mut a_upper_limit_pitch: f64 = Default::default();
-                                let mut has_upper_limit_pitch: bool = true;
-                                if the_data.is_param_defined(the_num, 4)? {
-                                    the_data.read_real(
+                                let (a_upper_limit_pitch, has_upper_limit_pitch) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         4,
                                         "upper_limit_pitch",
                                         the_arch,
-                                        &mut a_upper_limit_pitch,
                                     )?;
-                                } else {
-                                    has_upper_limit_pitch = false;
-                                    a_upper_limit_pitch = 0.0;
-                                }
-                                let mut a_lower_limit_roll: f64 = Default::default();
-                                let mut has_lower_limit_roll: bool = true;
-                                if the_data.is_param_defined(the_num, 5)? {
-                                    the_data.read_real(
+                                let (a_lower_limit_roll, has_lower_limit_roll) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         5,
                                         "lower_limit_roll",
                                         the_arch,
-                                        &mut a_lower_limit_roll,
                                     )?;
-                                } else {
-                                    has_lower_limit_roll = false;
-                                    a_lower_limit_roll = 0.0;
-                                }
-                                let mut a_upper_limit_roll: f64 = Default::default();
-                                let mut has_upper_limit_roll: bool = true;
-                                if the_data.is_param_defined(the_num, 6)? {
-                                    the_data.read_real(
+                                let (a_upper_limit_roll, has_upper_limit_roll) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         6,
                                         "upper_limit_roll",
                                         the_arch,
-                                        &mut a_upper_limit_roll,
                                     )?;
-                                } else {
-                                    has_upper_limit_roll = false;
-                                    a_upper_limit_roll = 0.0;
-                                }
                                 let a_local_pair: Handle<StepKinematicsSphericalPairWithRange> =
                                     a_kinematic_pair.cast::<StepKinematicsSphericalPairWithRange>();
                                 step_live(&a_local_pair, "ReadStep")?.init(
@@ -734,62 +498,38 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                         StepKinematicsSphericalPairWithPinAndRange::new(),
                                     )
                                     .cast();
-                                    let mut a_lower_limit_yaw: f64 = Default::default();
-                                    let mut has_lower_limit_yaw: bool = true;
-                                    if the_data.is_param_defined(the_num, 1)? {
-                                        the_data.read_real(
+                                    let (a_lower_limit_yaw, has_lower_limit_yaw) =
+                                        step_read_optional_real(
+                                            the_data,
                                             the_num,
                                             1,
                                             "lower_limit_yaw",
                                             the_arch,
-                                            &mut a_lower_limit_yaw,
                                         )?;
-                                    } else {
-                                        has_lower_limit_yaw = false;
-                                        a_lower_limit_yaw = 0.0;
-                                    }
-                                    let mut a_upper_limit_yaw: f64 = Default::default();
-                                    let mut has_upper_limit_yaw: bool = true;
-                                    if the_data.is_param_defined(the_num, 2)? {
-                                        the_data.read_real(
+                                    let (a_upper_limit_yaw, has_upper_limit_yaw) =
+                                        step_read_optional_real(
+                                            the_data,
                                             the_num,
                                             2,
                                             "upper_limit_yaw",
                                             the_arch,
-                                            &mut a_upper_limit_yaw,
                                         )?;
-                                    } else {
-                                        has_upper_limit_yaw = false;
-                                        a_upper_limit_yaw = 0.0;
-                                    }
-                                    let mut a_lower_limit_roll: f64 = Default::default();
-                                    let mut has_lower_limit_roll: bool = true;
-                                    if the_data.is_param_defined(the_num, 3)? {
-                                        the_data.read_real(
+                                    let (a_lower_limit_roll, has_lower_limit_roll) =
+                                        step_read_optional_real(
+                                            the_data,
                                             the_num,
                                             3,
                                             "lower_limit_roll",
                                             the_arch,
-                                            &mut a_lower_limit_roll,
                                         )?;
-                                    } else {
-                                        has_lower_limit_roll = false;
-                                        a_lower_limit_roll = 0.0;
-                                    }
-                                    let mut a_upper_limit_roll: f64 = Default::default();
-                                    let mut has_upper_limit_roll: bool = true;
-                                    if the_data.is_param_defined(the_num, 4)? {
-                                        the_data.read_real(
+                                    let (a_upper_limit_roll, has_upper_limit_roll) =
+                                        step_read_optional_real(
+                                            the_data,
                                             the_num,
                                             4,
                                             "upper_limit_roll",
                                             the_arch,
-                                            &mut a_upper_limit_roll,
                                         )?;
-                                    } else {
-                                        has_upper_limit_roll = false;
-                                        a_upper_limit_roll = 0.0;
-                                    }
                                     let a_local_pair: Handle<
                                         StepKinematicsSphericalPairWithPinAndRange,
                                     > = a_kinematic_pair
@@ -944,20 +684,14 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                 if a_pairtype == b"UNIVERSAL_PAIR" {
                                     a_kinematic_pair =
                                         Handle::new(StepKinematicsUniversalPair::new()).cast();
-                                    let mut a_input_skew_angle: f64 = Default::default();
-                                    let mut has_input_skew_angle: bool = true;
-                                    if the_data.is_param_defined(the_num, 1)? {
-                                        the_data.read_real(
+                                    let (a_input_skew_angle, has_input_skew_angle) =
+                                        step_read_optional_real(
+                                            the_data,
                                             the_num,
                                             1,
                                             "input_skew_angle",
                                             the_arch,
-                                            &mut a_input_skew_angle,
                                         )?;
-                                    } else {
-                                        has_input_skew_angle = false;
-                                        a_input_skew_angle = 0.0;
-                                    }
                                     if the_data.named_for_complex_short(
                                         "UNIVERSAL_PAIR_WITH_RANGE",
                                         "UPWR",
@@ -1318,34 +1052,22 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                         if the_data.check_nb_params(the_num, 2, the_arch, "GEAR_PAIR_WITH_RANGE")? {
                             a_kinematic_pair =
                                 Handle::new(StepKinematicsGearPairWithRange::new()).cast();
-                            let mut a_lower_limit_actual_rotation1: f64 = Default::default();
-                            let mut has_lower_limit_actual_rotation1: bool = true;
-                            if the_data.is_param_defined(the_num, 1)? {
-                                the_data.read_real(
+                            let (a_lower_limit_actual_rotation1, has_lower_limit_actual_rotation1) =
+                                step_read_optional_real(
+                                    the_data,
                                     the_num,
                                     1,
                                     "lower_limit_actual_rotation1",
                                     the_arch,
-                                    &mut a_lower_limit_actual_rotation1,
                                 )?;
-                            } else {
-                                has_lower_limit_actual_rotation1 = false;
-                                a_lower_limit_actual_rotation1 = 0.0;
-                            }
-                            let mut a_upper_limit_actual_rotation1: f64 = Default::default();
-                            let mut has_upper_limit_actual_rotation1: bool = true;
-                            if the_data.is_param_defined(the_num, 2)? {
-                                the_data.read_real(
+                            let (a_upper_limit_actual_rotation1, has_upper_limit_actual_rotation1) =
+                                step_read_optional_real(
+                                    the_data,
                                     the_num,
                                     2,
                                     "upper_limit_actual_rotation1",
                                     the_arch,
-                                    &mut a_upper_limit_actual_rotation1,
                                 )?;
-                            } else {
-                                has_upper_limit_actual_rotation1 = false;
-                                a_upper_limit_actual_rotation1 = 0.0;
-                            }
                             let a_local_pair: Handle<StepKinematicsGearPairWithRange> =
                                 a_kinematic_pair.cast::<StepKinematicsGearPairWithRange>();
                             step_live(&a_local_pair, "ReadStep")?.init(
@@ -1412,34 +1134,26 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                 a_kinematic_pair =
                                     Handle::new(StepKinematicsRackAndPinionPairWithRange::new())
                                         .cast();
-                                let mut a_lower_limit_rack_displacement: f64 = Default::default();
-                                let mut has_lower_limit_rack_displacement: bool = true;
-                                if the_data.is_param_defined(the_num, 1)? {
-                                    the_data.read_real(
-                                        the_num,
-                                        1,
-                                        "lower_limit_rack_displacement",
-                                        the_arch,
-                                        &mut a_lower_limit_rack_displacement,
-                                    )?;
-                                } else {
-                                    has_lower_limit_rack_displacement = false;
-                                    a_lower_limit_rack_displacement = 0.0;
-                                }
-                                let mut a_upper_limit_rack_displacement: f64 = Default::default();
-                                let mut has_upper_limit_rack_displacement: bool = true;
-                                if the_data.is_param_defined(the_num, 2)? {
-                                    the_data.read_real(
-                                        the_num,
-                                        2,
-                                        "upper_limit_rack_displacement",
-                                        the_arch,
-                                        &mut a_upper_limit_rack_displacement,
-                                    )?;
-                                } else {
-                                    has_upper_limit_rack_displacement = false;
-                                    a_upper_limit_rack_displacement = 0.0;
-                                }
+                                let (
+                                    a_lower_limit_rack_displacement,
+                                    has_lower_limit_rack_displacement,
+                                ) = step_read_optional_real(
+                                    the_data,
+                                    the_num,
+                                    1,
+                                    "lower_limit_rack_displacement",
+                                    the_arch,
+                                )?;
+                                let (
+                                    a_upper_limit_rack_displacement,
+                                    has_upper_limit_rack_displacement,
+                                ) = step_read_optional_real(
+                                    the_data,
+                                    the_num,
+                                    2,
+                                    "upper_limit_rack_displacement",
+                                    the_arch,
+                                )?;
                                 let a_local_pair: Handle<StepKinematicsRackAndPinionPairWithRange> =
                                     a_kinematic_pair
                                         .cast::<StepKinematicsRackAndPinionPairWithRange>();
@@ -1499,34 +1213,26 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                 )? {
                                     a_kinematic_pair =
                                         Handle::new(StepKinematicsScrewPairWithRange::new()).cast();
-                                    let mut a_lower_limit_actual_rotation: f64 = Default::default();
-                                    let mut has_lower_limit_actual_rotation: bool = true;
-                                    if the_data.is_param_defined(the_num, 1)? {
-                                        the_data.read_real(
-                                            the_num,
-                                            1,
-                                            "lower_limit_actual_rotation",
-                                            the_arch,
-                                            &mut a_lower_limit_actual_rotation,
-                                        )?;
-                                    } else {
-                                        has_lower_limit_actual_rotation = false;
-                                        a_lower_limit_actual_rotation = 0.0;
-                                    }
-                                    let mut a_upper_limit_actual_rotation: f64 = Default::default();
-                                    let mut has_upper_limit_actual_rotation: bool = true;
-                                    if the_data.is_param_defined(the_num, 2)? {
-                                        the_data.read_real(
-                                            the_num,
-                                            2,
-                                            "upper_limit_actual_rotation",
-                                            the_arch,
-                                            &mut a_upper_limit_actual_rotation,
-                                        )?;
-                                    } else {
-                                        has_upper_limit_actual_rotation = false;
-                                        a_upper_limit_actual_rotation = 0.0;
-                                    }
+                                    let (
+                                        a_lower_limit_actual_rotation,
+                                        has_lower_limit_actual_rotation,
+                                    ) = step_read_optional_real(
+                                        the_data,
+                                        the_num,
+                                        1,
+                                        "lower_limit_actual_rotation",
+                                        the_arch,
+                                    )?;
+                                    let (
+                                        a_upper_limit_actual_rotation,
+                                        has_upper_limit_actual_rotation,
+                                    ) = step_read_optional_real(
+                                        the_data,
+                                        the_num,
+                                        2,
+                                        "upper_limit_actual_rotation",
+                                        the_arch,
+                                    )?;
                                     let a_local_pair: Handle<StepKinematicsScrewPairWithRange> =
                                         a_kinematic_pair.cast::<StepKinematicsScrewPairWithRange>();
                                     step_live(&a_local_pair, "ReadStep")?.init(
@@ -1611,90 +1317,52 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                 StepGeomTrimmedCurve::static_type(),
                                 &mut a_range_on_pair_curve,
                             )?;
-                            let mut a_lower_limit_yaw: f64 = Default::default();
-                            let mut has_lower_limit_yaw: bool = true;
-                            if the_data.is_param_defined(the_num, 2)? {
-                                the_data.read_real(
-                                    the_num,
-                                    2,
-                                    "lower_limit_yaw",
-                                    the_arch,
-                                    &mut a_lower_limit_yaw,
-                                )?;
-                            } else {
-                                has_lower_limit_yaw = false;
-                                a_lower_limit_yaw = 0.0;
-                            }
-                            let mut a_upper_limit_yaw: f64 = Default::default();
-                            let mut has_upper_limit_yaw: bool = true;
-                            if the_data.is_param_defined(the_num, 3)? {
-                                the_data.read_real(
-                                    the_num,
-                                    3,
-                                    "upper_limit_yaw",
-                                    the_arch,
-                                    &mut a_upper_limit_yaw,
-                                )?;
-                            } else {
-                                has_upper_limit_yaw = false;
-                                a_upper_limit_yaw = 0.0;
-                            }
-                            let mut a_lower_limit_pitch: f64 = Default::default();
-                            let mut has_lower_limit_pitch: bool = true;
-                            if the_data.is_param_defined(the_num, 4)? {
-                                the_data.read_real(
+                            let (a_lower_limit_yaw, has_lower_limit_yaw) = step_read_optional_real(
+                                the_data,
+                                the_num,
+                                2,
+                                "lower_limit_yaw",
+                                the_arch,
+                            )?;
+                            let (a_upper_limit_yaw, has_upper_limit_yaw) = step_read_optional_real(
+                                the_data,
+                                the_num,
+                                3,
+                                "upper_limit_yaw",
+                                the_arch,
+                            )?;
+                            let (a_lower_limit_pitch, has_lower_limit_pitch) =
+                                step_read_optional_real(
+                                    the_data,
                                     the_num,
                                     4,
                                     "lower_limit_pitch",
                                     the_arch,
-                                    &mut a_lower_limit_pitch,
                                 )?;
-                            } else {
-                                has_lower_limit_pitch = false;
-                                a_lower_limit_pitch = 0.0;
-                            }
-                            let mut a_upper_limit_pitch: f64 = Default::default();
-                            let mut has_upper_limit_pitch: bool = true;
-                            if the_data.is_param_defined(the_num, 5)? {
-                                the_data.read_real(
+                            let (a_upper_limit_pitch, has_upper_limit_pitch) =
+                                step_read_optional_real(
+                                    the_data,
                                     the_num,
                                     5,
                                     "upper_limit_pitch",
                                     the_arch,
-                                    &mut a_upper_limit_pitch,
                                 )?;
-                            } else {
-                                has_upper_limit_pitch = false;
-                                a_upper_limit_pitch = 0.0;
-                            }
-                            let mut a_lower_limit_roll: f64 = Default::default();
-                            let mut has_lower_limit_roll: bool = true;
-                            if the_data.is_param_defined(the_num, 6)? {
-                                the_data.read_real(
+                            let (a_lower_limit_roll, has_lower_limit_roll) =
+                                step_read_optional_real(
+                                    the_data,
                                     the_num,
                                     6,
                                     "lower_limit_roll",
                                     the_arch,
-                                    &mut a_lower_limit_roll,
                                 )?;
-                            } else {
-                                has_lower_limit_roll = false;
-                                a_lower_limit_roll = 0.0;
-                            }
-                            let mut a_upper_limit_roll: f64 = Default::default();
-                            let mut has_upper_limit_roll: bool = true;
-                            if the_data.is_param_defined(the_num, 7)? {
-                                the_data.read_real(
+                            let (a_upper_limit_roll, has_upper_limit_roll) =
+                                step_read_optional_real(
+                                    the_data,
                                     the_num,
                                     7,
                                     "upper_limit_roll",
                                     the_arch,
-                                    &mut a_upper_limit_roll,
                                 )?;
-                            } else {
-                                has_upper_limit_roll = false;
-                                a_upper_limit_roll = 0.0;
-                            }
                             let a_local_pair: Handle<
                                 StepKinematicsPointOnPlanarCurvePairWithRange,
                             > = a_kinematic_pair
@@ -1780,90 +1448,54 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                     StepGeomRectangularTrimmedSurface::static_type(),
                                     &mut a_range_on_pair_surface,
                                 )?;
-                                let mut a_lower_limit_yaw: f64 = Default::default();
-                                let mut has_lower_limit_yaw: bool = true;
-                                if the_data.is_param_defined(the_num, 2)? {
-                                    the_data.read_real(
+                                let (a_lower_limit_yaw, has_lower_limit_yaw) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         2,
                                         "lower_limit_yaw",
                                         the_arch,
-                                        &mut a_lower_limit_yaw,
                                     )?;
-                                } else {
-                                    has_lower_limit_yaw = false;
-                                    a_lower_limit_yaw = 0.0;
-                                }
-                                let mut a_upper_limit_yaw: f64 = Default::default();
-                                let mut has_upper_limit_yaw: bool = true;
-                                if the_data.is_param_defined(the_num, 3)? {
-                                    the_data.read_real(
+                                let (a_upper_limit_yaw, has_upper_limit_yaw) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         3,
                                         "upper_limit_yaw",
                                         the_arch,
-                                        &mut a_upper_limit_yaw,
                                     )?;
-                                } else {
-                                    has_upper_limit_yaw = false;
-                                    a_upper_limit_yaw = 0.0;
-                                }
-                                let mut a_lower_limit_pitch: f64 = Default::default();
-                                let mut has_lower_limit_pitch: bool = true;
-                                if the_data.is_param_defined(the_num, 4)? {
-                                    the_data.read_real(
+                                let (a_lower_limit_pitch, has_lower_limit_pitch) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         4,
                                         "lower_limit_pitch",
                                         the_arch,
-                                        &mut a_lower_limit_pitch,
                                     )?;
-                                } else {
-                                    has_lower_limit_pitch = false;
-                                    a_lower_limit_pitch = 0.0;
-                                }
-                                let mut a_upper_limit_pitch: f64 = Default::default();
-                                let mut has_upper_limit_pitch: bool = true;
-                                if the_data.is_param_defined(the_num, 5)? {
-                                    the_data.read_real(
+                                let (a_upper_limit_pitch, has_upper_limit_pitch) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         5,
                                         "upper_limit_pitch",
                                         the_arch,
-                                        &mut a_upper_limit_pitch,
                                     )?;
-                                } else {
-                                    has_upper_limit_pitch = false;
-                                    a_upper_limit_pitch = 0.0;
-                                }
-                                let mut a_lower_limit_roll: f64 = Default::default();
-                                let mut has_lower_limit_roll: bool = true;
-                                if the_data.is_param_defined(the_num, 6)? {
-                                    the_data.read_real(
+                                let (a_lower_limit_roll, has_lower_limit_roll) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         6,
                                         "lower_limit_roll",
                                         the_arch,
-                                        &mut a_lower_limit_roll,
                                     )?;
-                                } else {
-                                    has_lower_limit_roll = false;
-                                    a_lower_limit_roll = 0.0;
-                                }
-                                let mut a_upper_limit_roll: f64 = Default::default();
-                                let mut has_upper_limit_roll: bool = true;
-                                if the_data.is_param_defined(the_num, 7)? {
-                                    the_data.read_real(
+                                let (a_upper_limit_roll, has_upper_limit_roll) =
+                                    step_read_optional_real(
+                                        the_data,
                                         the_num,
                                         7,
                                         "upper_limit_roll",
                                         the_arch,
-                                        &mut a_upper_limit_roll,
                                     )?;
-                                } else {
-                                    has_upper_limit_roll = false;
-                                    a_upper_limit_roll = 0.0;
-                                }
                                 let a_local_pair: Handle<
                                     StepKinematicsPointOnSurfacePairWithRange,
                                 > = a_kinematic_pair

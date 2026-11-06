@@ -45,174 +45,102 @@ impl RwStepKinematicsRwLowOrderKinematicPairWithRange {
             the_data,
             the_num
         );
-        let mut a_lower_limit_actual_rotation_x: f64 = Default::default();
-        let mut has_lower_limit_actual_rotation_x: bool = true;
-        if the_data.is_param_defined(the_num, 13)? {
-            the_data.read_real(
+        let (a_lower_limit_actual_rotation_x, has_lower_limit_actual_rotation_x) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 13,
                 "lower_limit_actual_rotation_x",
                 the_arch,
-                &mut a_lower_limit_actual_rotation_x,
             )?;
-        } else {
-            has_lower_limit_actual_rotation_x = false;
-            a_lower_limit_actual_rotation_x = 0.0;
-        }
-        let mut a_upper_limit_actual_rotation_x: f64 = Default::default();
-        let mut has_upper_limit_actual_rotation_x: bool = true;
-        if the_data.is_param_defined(the_num, 14)? {
-            the_data.read_real(
+        let (a_upper_limit_actual_rotation_x, has_upper_limit_actual_rotation_x) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 14,
                 "upper_limit_actual_rotation_x",
                 the_arch,
-                &mut a_upper_limit_actual_rotation_x,
             )?;
-        } else {
-            has_upper_limit_actual_rotation_x = false;
-            a_upper_limit_actual_rotation_x = 0.0;
-        }
-        let mut a_lower_limit_actual_rotation_y: f64 = Default::default();
-        let mut has_lower_limit_actual_rotation_y: bool = true;
-        if the_data.is_param_defined(the_num, 15)? {
-            the_data.read_real(
+        let (a_lower_limit_actual_rotation_y, has_lower_limit_actual_rotation_y) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 15,
                 "lower_limit_actual_rotation_y",
                 the_arch,
-                &mut a_lower_limit_actual_rotation_y,
             )?;
-        } else {
-            has_lower_limit_actual_rotation_y = false;
-            a_lower_limit_actual_rotation_y = 0.0;
-        }
-        let mut a_upper_limit_actual_rotation_y: f64 = Default::default();
-        let mut has_upper_limit_actual_rotation_y: bool = true;
-        if the_data.is_param_defined(the_num, 16)? {
-            the_data.read_real(
+        let (a_upper_limit_actual_rotation_y, has_upper_limit_actual_rotation_y) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 16,
                 "upper_limit_actual_rotation_y",
                 the_arch,
-                &mut a_upper_limit_actual_rotation_y,
             )?;
-        } else {
-            has_upper_limit_actual_rotation_y = false;
-            a_upper_limit_actual_rotation_y = 0.0;
-        }
-        let mut a_lower_limit_actual_rotation_z: f64 = Default::default();
-        let mut has_lower_limit_actual_rotation_z: bool = true;
-        if the_data.is_param_defined(the_num, 17)? {
-            the_data.read_real(
+        let (a_lower_limit_actual_rotation_z, has_lower_limit_actual_rotation_z) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 17,
                 "lower_limit_actual_rotation_z",
                 the_arch,
-                &mut a_lower_limit_actual_rotation_z,
             )?;
-        } else {
-            has_lower_limit_actual_rotation_z = false;
-            a_lower_limit_actual_rotation_z = 0.0;
-        }
-        let mut a_upper_limit_actual_rotation_z: f64 = Default::default();
-        let mut has_upper_limit_actual_rotation_z: bool = true;
-        if the_data.is_param_defined(the_num, 18)? {
-            the_data.read_real(
+        let (a_upper_limit_actual_rotation_z, has_upper_limit_actual_rotation_z) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 18,
                 "upper_limit_actual_rotation_z",
                 the_arch,
-                &mut a_upper_limit_actual_rotation_z,
             )?;
-        } else {
-            has_upper_limit_actual_rotation_z = false;
-            a_upper_limit_actual_rotation_z = 0.0;
-        }
-        let mut a_lower_limit_actual_translation_x: f64 = Default::default();
-        let mut has_lower_limit_actual_translation_x: bool = true;
-        if the_data.is_param_defined(the_num, 19)? {
-            the_data.read_real(
+        let (a_lower_limit_actual_translation_x, has_lower_limit_actual_translation_x) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 19,
                 "lower_limit_actual_translation_x",
                 the_arch,
-                &mut a_lower_limit_actual_translation_x,
             )?;
-        } else {
-            has_lower_limit_actual_translation_x = false;
-            a_lower_limit_actual_translation_x = 0.0;
-        }
-        let mut a_upper_limit_actual_translation_x: f64 = Default::default();
-        let mut has_upper_limit_actual_translation_x: bool = true;
-        if the_data.is_param_defined(the_num, 20)? {
-            the_data.read_real(
+        let (a_upper_limit_actual_translation_x, has_upper_limit_actual_translation_x) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 20,
                 "upper_limit_actual_translation_x",
                 the_arch,
-                &mut a_upper_limit_actual_translation_x,
             )?;
-        } else {
-            has_upper_limit_actual_translation_x = false;
-            a_upper_limit_actual_translation_x = 0.0;
-        }
-        let mut a_lower_limit_actual_translation_y: f64 = Default::default();
-        let mut has_lower_limit_actual_translation_y: bool = true;
-        if the_data.is_param_defined(the_num, 21)? {
-            the_data.read_real(
+        let (a_lower_limit_actual_translation_y, has_lower_limit_actual_translation_y) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 21,
                 "lower_limit_actual_translation_y",
                 the_arch,
-                &mut a_lower_limit_actual_translation_y,
             )?;
-        } else {
-            has_lower_limit_actual_translation_y = false;
-            a_lower_limit_actual_translation_y = 0.0;
-        }
-        let mut a_upper_limit_actual_translation_y: f64 = Default::default();
-        let mut has_upper_limit_actual_translation_y: bool = true;
-        if the_data.is_param_defined(the_num, 22)? {
-            the_data.read_real(
+        let (a_upper_limit_actual_translation_y, has_upper_limit_actual_translation_y) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 22,
                 "upper_limit_actual_translation_y",
                 the_arch,
-                &mut a_upper_limit_actual_translation_y,
             )?;
-        } else {
-            has_upper_limit_actual_translation_y = false;
-            a_upper_limit_actual_translation_y = 0.0;
-        }
-        let mut a_lower_limit_actual_translation_z: f64 = Default::default();
-        let mut has_lower_limit_actual_translation_z: bool = true;
-        if the_data.is_param_defined(the_num, 23)? {
-            the_data.read_real(
+        let (a_lower_limit_actual_translation_z, has_lower_limit_actual_translation_z) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 23,
                 "lower_limit_actual_translation_z",
                 the_arch,
-                &mut a_lower_limit_actual_translation_z,
             )?;
-        } else {
-            has_lower_limit_actual_translation_z = false;
-            a_lower_limit_actual_translation_z = 0.0;
-        }
-        let mut a_upper_limit_actual_translation_z: f64 = Default::default();
-        let mut has_upper_limit_actual_translation_z: bool = true;
-        if the_data.is_param_defined(the_num, 24)? {
-            the_data.read_real(
+        let (a_upper_limit_actual_translation_z, has_upper_limit_actual_translation_z) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 24,
                 "upper_limit_actual_translation_z",
                 the_arch,
-                &mut a_upper_limit_actual_translation_z,
             )?;
-        } else {
-            has_upper_limit_actual_translation_z = false;
-            a_upper_limit_actual_translation_z = 0.0;
-        }
         the_ent.init(
             &a_representation_item_name,
             &a_item_defined_transformation_name,
@@ -261,47 +189,47 @@ impl RwStepKinematicsRwLowOrderKinematicPairWithRange {
         the_ent: &Handle<StepKinematicsLowOrderKinematicPairWithRange>,
     ) -> Result<(), Failure> {
         rw_block_b_0029!(the_ent, the_sw);
-        if the_ent.has_lower_limit_actual_rotation_x() {
-            the_sw.send_real(the_ent.lower_limit_actual_rotation_x())?;
-        } else {
-            the_sw.send_undef()?;
-        }
-        if the_ent.has_upper_limit_actual_rotation_x() {
-            the_sw.send_real(the_ent.upper_limit_actual_rotation_x())?;
-        } else {
-            the_sw.send_undef()?;
-        }
-        if the_ent.has_lower_limit_actual_rotation_y() {
-            the_sw.send_real(the_ent.lower_limit_actual_rotation_y())?;
-        } else {
-            the_sw.send_undef()?;
-        }
-        if the_ent.has_upper_limit_actual_rotation_y() {
-            the_sw.send_real(the_ent.upper_limit_actual_rotation_y())?;
-        } else {
-            the_sw.send_undef()?;
-        }
-        if the_ent.has_lower_limit_actual_rotation_z() {
-            the_sw.send_real(the_ent.lower_limit_actual_rotation_z())?;
-        } else {
-            the_sw.send_undef()?;
-        }
-        if the_ent.has_upper_limit_actual_rotation_z() {
-            the_sw.send_real(the_ent.upper_limit_actual_rotation_z())?;
-        } else {
-            the_sw.send_undef()?;
-        }
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_lower_limit_actual_rotation_x(),
+            the_ent.lower_limit_actual_rotation_x(),
+        )?;
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_upper_limit_actual_rotation_x(),
+            the_ent.upper_limit_actual_rotation_x(),
+        )?;
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_lower_limit_actual_rotation_y(),
+            the_ent.lower_limit_actual_rotation_y(),
+        )?;
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_upper_limit_actual_rotation_y(),
+            the_ent.upper_limit_actual_rotation_y(),
+        )?;
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_lower_limit_actual_rotation_z(),
+            the_ent.lower_limit_actual_rotation_z(),
+        )?;
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_upper_limit_actual_rotation_z(),
+            the_ent.upper_limit_actual_rotation_z(),
+        )?;
         rw_block_b_0126!(the_ent, the_sw);
-        if the_ent.has_lower_limit_actual_translation_z() {
-            the_sw.send_real(the_ent.lower_limit_actual_translation_z())?;
-        } else {
-            the_sw.send_undef()?;
-        }
-        if the_ent.has_upper_limit_actual_translation_z() {
-            the_sw.send_real(the_ent.upper_limit_actual_translation_z())?;
-        } else {
-            the_sw.send_undef()?;
-        }
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_lower_limit_actual_translation_z(),
+            the_ent.lower_limit_actual_translation_z(),
+        )?;
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_upper_limit_actual_translation_z(),
+            the_ent.upper_limit_actual_translation_z(),
+        )?;
         Ok(())
     }
     /// `share`.

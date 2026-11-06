@@ -255,34 +255,22 @@ impl RwStepKinematicsRwRackAndPinionPairWithRange {
             the_arch,
             &mut a_rack_and_pinion_pair_pinion_radius,
         )?;
-        let mut a_lower_limit_rack_displacement: f64 = Default::default();
-        let mut has_lower_limit_rack_displacement: bool = true;
-        if the_data.is_param_defined(the_num, 8)? {
-            the_data.read_real(
+        let (a_lower_limit_rack_displacement, has_lower_limit_rack_displacement) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 8,
                 "lower_limit_rack_displacement",
                 the_arch,
-                &mut a_lower_limit_rack_displacement,
             )?;
-        } else {
-            has_lower_limit_rack_displacement = false;
-            a_lower_limit_rack_displacement = 0.0;
-        }
-        let mut a_upper_limit_rack_displacement: f64 = Default::default();
-        let mut has_upper_limit_rack_displacement: bool = true;
-        if the_data.is_param_defined(the_num, 9)? {
-            the_data.read_real(
+        let (a_upper_limit_rack_displacement, has_upper_limit_rack_displacement) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 9,
                 "upper_limit_rack_displacement",
                 the_arch,
-                &mut a_upper_limit_rack_displacement,
             )?;
-        } else {
-            has_upper_limit_rack_displacement = false;
-            a_upper_limit_rack_displacement = 0.0;
-        }
         the_ent.init(
             &a_representation_item_name,
             &a_item_defined_transformation_name,
@@ -306,16 +294,16 @@ impl RwStepKinematicsRwRackAndPinionPairWithRange {
         the_ent: &Handle<StepKinematicsRackAndPinionPairWithRange>,
     ) -> Result<(), Failure> {
         rw_block_b_0071!(the_ent, the_sw);
-        if the_ent.has_lower_limit_rack_displacement() {
-            the_sw.send_real(the_ent.lower_limit_rack_displacement())?;
-        } else {
-            the_sw.send_undef()?;
-        }
-        if the_ent.has_upper_limit_rack_displacement() {
-            the_sw.send_real(the_ent.upper_limit_rack_displacement())?;
-        } else {
-            the_sw.send_undef()?;
-        }
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_lower_limit_rack_displacement(),
+            the_ent.lower_limit_rack_displacement(),
+        )?;
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_upper_limit_rack_displacement(),
+            the_ent.upper_limit_rack_displacement(),
+        )?;
         Ok(())
     }
     /// `share`.

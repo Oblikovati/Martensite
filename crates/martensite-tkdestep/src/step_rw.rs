@@ -45,6 +45,70 @@ pub(crate) use martensite_tkxsbase::interface::{
     InterfaceShareTool,
 };
 
+/// An optional real of a record: its value and whether it is there, 0 when it is not.
+pub(crate) fn step_read_optional_real(
+    data: &StepDataStepReaderData,
+    num: i32,
+    param: i32,
+    field: &str,
+    ach: &Handle<InterfaceCheck>,
+) -> Result<(f64, bool), Failure> {
+    if !data.is_param_defined(num, param)? {
+        return Ok((0.0, false));
+    }
+    let mut value = 0.0;
+    data.read_real(num, param, field, ach, &mut value)?;
+    Ok((value, true))
+}
+
+/// Writes an optional real: its value when it is there, the undefined parameter when it is not.
+pub(crate) fn step_send_optional_real(
+    sw: &mut StepDataStepWriter,
+    has: bool,
+    value: f64,
+) -> Result<(), Failure> {
+    if has {
+        sw.send_real(value)
+    } else {
+        sw.send_undef()
+    }
+}
+
+/// An optional actuated direction of a record: its value and whether it is there. A text that is no
+/// value of the enumeration adds a failure message and leaves the default. `reported` and `field`
+/// name the parameter in the messages.
+pub(crate) fn step_read_actuated_direction(
+    data: &StepDataStepReaderData,
+    num: i32,
+    param: i32,
+    reported: i32,
+    field: &str,
+    ach: &Handle<InterfaceCheck>,
+) -> Result<(StepKinematicsActuatedDirection, bool), Failure> {
+    let mut direction = StepKinematicsActuatedDirection::AdNotActuated;
+    if !data.is_param_defined(num, param)? {
+        return Ok((direction, false));
+    }
+    if data.param_type(num, param)? != InterfaceParamType::ParamEnum {
+        ach.add_fail_text(
+            &format!("Parameter #{reported} ({field}) is not enumeration"),
+            "",
+        );
+        return Ok((direction, true));
+    }
+    match data.param_c_value(num, param)?.as_slice() {
+        b".BIDIRECTIONAL." => direction = StepKinematicsActuatedDirection::AdBidirectional,
+        b".POSITIVE_ONLY." => direction = StepKinematicsActuatedDirection::AdPositiveOnly,
+        b".NEGATIVE_ONLY." => direction = StepKinematicsActuatedDirection::AdNegativeOnly,
+        b".NOT_ACTUATED." => {}
+        _ => ach.add_fail_text(
+            &format!("Parameter #{reported} ({field}) has not allowed value"),
+            "",
+        ),
+    }
+    Ok((direction, true))
+}
+
 /// Declares a stateless RW class.
 macro_rules! step_rw_class {
     ($class:ident, $recorded:literal) => {

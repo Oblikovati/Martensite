@@ -217,34 +217,22 @@ impl RwStepKinematicsRwGearPairWithRange {
             the_arch,
             &mut a_gear_pair_gear_ratio,
         )?;
-        let mut a_lower_limit_actual_rotation1: f64 = Default::default();
-        let mut has_lower_limit_actual_rotation1: bool = true;
-        if the_data.is_param_defined(the_num, 12)? {
-            the_data.read_real(
+        let (a_lower_limit_actual_rotation1, has_lower_limit_actual_rotation1) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 12,
                 "lower_limit_actual_rotation1",
                 the_arch,
-                &mut a_lower_limit_actual_rotation1,
             )?;
-        } else {
-            has_lower_limit_actual_rotation1 = false;
-            a_lower_limit_actual_rotation1 = 0.0;
-        }
-        let mut a_upper_limit_actual_rotation1: f64 = Default::default();
-        let mut has_upper_limit_actual_rotation1: bool = true;
-        if the_data.is_param_defined(the_num, 13)? {
-            the_data.read_real(
+        let (a_upper_limit_actual_rotation1, has_upper_limit_actual_rotation1) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 13,
                 "upper_limit_actual_rotation1",
                 the_arch,
-                &mut a_upper_limit_actual_rotation1,
             )?;
-        } else {
-            has_upper_limit_actual_rotation1 = false;
-            a_upper_limit_actual_rotation1 = 0.0;
-        }
         the_ent.init(
             &a_representation_item_name,
             &a_item_defined_transformation_name,
@@ -272,16 +260,16 @@ impl RwStepKinematicsRwGearPairWithRange {
         the_ent: &Handle<StepKinematicsGearPairWithRange>,
     ) -> Result<(), Failure> {
         rw_block_b_0032!(the_ent, the_sw);
-        if the_ent.has_lower_limit_actual_rotation1() {
-            the_sw.send_real(the_ent.lower_limit_actual_rotation1())?;
-        } else {
-            the_sw.send_undef()?;
-        }
-        if the_ent.has_upper_limit_actual_rotation1() {
-            the_sw.send_real(the_ent.upper_limit_actual_rotation1())?;
-        } else {
-            the_sw.send_undef()?;
-        }
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_lower_limit_actual_rotation1(),
+            the_ent.lower_limit_actual_rotation1(),
+        )?;
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_upper_limit_actual_rotation1(),
+            the_ent.upper_limit_actual_rotation1(),
+        )?;
         Ok(())
     }
     /// `share`.

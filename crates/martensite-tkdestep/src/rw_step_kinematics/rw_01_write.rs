@@ -209,26 +209,20 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                         the_ent
                             .get_order_kinematic_pair()
                             .cast::<StepKinematicsRevolutePairWithRange>();
-                    if step_live(&a_revolute_pair_with_range, "WriteStep")?
-                        .has_lower_limit_actual_rotation()
-                    {
-                        the_sw.send_real(
-                            step_live(&a_revolute_pair_with_range, "WriteStep")?
-                                .lower_limit_actual_rotation(),
-                        )?;
-                    } else {
-                        the_sw.send_undef()?;
-                    }
-                    if step_live(&a_revolute_pair_with_range, "WriteStep")?
-                        .has_upper_limit_actual_rotation()
-                    {
-                        the_sw.send_real(
-                            step_live(&a_revolute_pair_with_range, "WriteStep")?
-                                .upper_limit_actual_rotation(),
-                        )?;
-                    } else {
-                        the_sw.send_undef()?;
-                    }
+                    step_send_optional_real(
+                        the_sw,
+                        step_live(&a_revolute_pair_with_range, "WriteStep")?
+                            .has_lower_limit_actual_rotation(),
+                        step_live(&a_revolute_pair_with_range, "WriteStep")?
+                            .lower_limit_actual_rotation(),
+                    )?;
+                    step_send_optional_real(
+                        the_sw,
+                        step_live(&a_revolute_pair_with_range, "WriteStep")?
+                            .has_upper_limit_actual_rotation(),
+                        step_live(&a_revolute_pair_with_range, "WriteStep")?
+                            .upper_limit_actual_rotation(),
+                    )?;
                 }
             } else {
                 if the_ent
@@ -246,46 +240,34 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                         > = the_ent
                             .get_order_kinematic_pair()
                             .cast::<StepKinematicsCylindricalPairWithRange>();
-                        if step_live(&a_cylindrical_pair_with_range, "WriteStep")?
-                            .has_lower_limit_actual_translation()
-                        {
-                            the_sw.send_real(
-                                step_live(&a_cylindrical_pair_with_range, "WriteStep")?
-                                    .lower_limit_actual_translation(),
-                            )?;
-                        } else {
-                            the_sw.send_undef()?;
-                        }
-                        if step_live(&a_cylindrical_pair_with_range, "WriteStep")?
-                            .has_upper_limit_actual_translation()
-                        {
-                            the_sw.send_real(
-                                step_live(&a_cylindrical_pair_with_range, "WriteStep")?
-                                    .upper_limit_actual_translation(),
-                            )?;
-                        } else {
-                            the_sw.send_undef()?;
-                        }
-                        if step_live(&a_cylindrical_pair_with_range, "WriteStep")?
-                            .has_lower_limit_actual_rotation()
-                        {
-                            the_sw.send_real(
-                                step_live(&a_cylindrical_pair_with_range, "WriteStep")?
-                                    .lower_limit_actual_rotation(),
-                            )?;
-                        } else {
-                            the_sw.send_undef()?;
-                        }
-                        if step_live(&a_cylindrical_pair_with_range, "WriteStep")?
-                            .has_upper_limit_actual_rotation()
-                        {
-                            the_sw.send_real(
-                                step_live(&a_cylindrical_pair_with_range, "WriteStep")?
-                                    .upper_limit_actual_rotation(),
-                            )?;
-                        } else {
-                            the_sw.send_undef()?;
-                        }
+                        step_send_optional_real(
+                            the_sw,
+                            step_live(&a_cylindrical_pair_with_range, "WriteStep")?
+                                .has_lower_limit_actual_translation(),
+                            step_live(&a_cylindrical_pair_with_range, "WriteStep")?
+                                .lower_limit_actual_translation(),
+                        )?;
+                        step_send_optional_real(
+                            the_sw,
+                            step_live(&a_cylindrical_pair_with_range, "WriteStep")?
+                                .has_upper_limit_actual_translation(),
+                            step_live(&a_cylindrical_pair_with_range, "WriteStep")?
+                                .upper_limit_actual_translation(),
+                        )?;
+                        step_send_optional_real(
+                            the_sw,
+                            step_live(&a_cylindrical_pair_with_range, "WriteStep")?
+                                .has_lower_limit_actual_rotation(),
+                            step_live(&a_cylindrical_pair_with_range, "WriteStep")?
+                                .lower_limit_actual_rotation(),
+                        )?;
+                        step_send_optional_real(
+                            the_sw,
+                            step_live(&a_cylindrical_pair_with_range, "WriteStep")?
+                                .has_upper_limit_actual_rotation(),
+                            step_live(&a_cylindrical_pair_with_range, "WriteStep")?
+                                .upper_limit_actual_rotation(),
+                        )?;
                     }
                 } else {
                     if the_ent
@@ -303,66 +285,48 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                             > = the_ent
                                 .get_order_kinematic_pair()
                                 .cast::<StepKinematicsSphericalPairWithRange>();
-                            if step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                .has_lower_limit_yaw()
-                            {
-                                the_sw.send_real(
-                                    step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                        .lower_limit_yaw(),
-                                )?;
-                            } else {
-                                the_sw.send_undef()?;
-                            }
-                            if step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                .has_upper_limit_yaw()
-                            {
-                                the_sw.send_real(
-                                    step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                        .upper_limit_yaw(),
-                                )?;
-                            } else {
-                                the_sw.send_undef()?;
-                            }
-                            if step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                .has_lower_limit_pitch()
-                            {
-                                the_sw.send_real(
-                                    step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                        .lower_limit_pitch(),
-                                )?;
-                            } else {
-                                the_sw.send_undef()?;
-                            }
-                            if step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                .has_upper_limit_pitch()
-                            {
-                                the_sw.send_real(
-                                    step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                        .upper_limit_pitch(),
-                                )?;
-                            } else {
-                                the_sw.send_undef()?;
-                            }
-                            if step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                .has_lower_limit_roll()
-                            {
-                                the_sw.send_real(
-                                    step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                        .lower_limit_roll(),
-                                )?;
-                            } else {
-                                the_sw.send_undef()?;
-                            }
-                            if step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                .has_upper_limit_roll()
-                            {
-                                the_sw.send_real(
-                                    step_live(&a_spherical_pair_with_range, "WriteStep")?
-                                        .upper_limit_roll(),
-                                )?;
-                            } else {
-                                the_sw.send_undef()?;
-                            }
+                            step_send_optional_real(
+                                the_sw,
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .has_lower_limit_yaw(),
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .lower_limit_yaw(),
+                            )?;
+                            step_send_optional_real(
+                                the_sw,
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .has_upper_limit_yaw(),
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .upper_limit_yaw(),
+                            )?;
+                            step_send_optional_real(
+                                the_sw,
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .has_lower_limit_pitch(),
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .lower_limit_pitch(),
+                            )?;
+                            step_send_optional_real(
+                                the_sw,
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .has_upper_limit_pitch(),
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .upper_limit_pitch(),
+                            )?;
+                            step_send_optional_real(
+                                the_sw,
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .has_lower_limit_roll(),
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .lower_limit_roll(),
+                            )?;
+                            step_send_optional_real(
+                                the_sw,
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .has_upper_limit_roll(),
+                                step_live(&a_spherical_pair_with_range, "WriteStep")?
+                                    .upper_limit_roll(),
+                            )?;
                         }
                     } else {
                         if the_ent
@@ -449,26 +413,20 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                     > = the_ent
                                         .get_order_kinematic_pair()
                                         .cast::<StepKinematicsPrismaticPairWithRange>();
-                                    if step_live(&a_prismatic_pair_with_range, "WriteStep")?
-                                        .has_lower_limit_actual_translation()
-                                    {
-                                        the_sw.send_real(
-                                            step_live(&a_prismatic_pair_with_range, "WriteStep")?
-                                                .lower_limit_actual_translation(),
-                                        )?;
-                                    } else {
-                                        the_sw.send_undef()?;
-                                    }
-                                    if step_live(&a_prismatic_pair_with_range, "WriteStep")?
-                                        .has_upper_limit_actual_translation()
-                                    {
-                                        the_sw.send_real(
-                                            step_live(&a_prismatic_pair_with_range, "WriteStep")?
-                                                .upper_limit_actual_translation(),
-                                        )?;
-                                    } else {
-                                        the_sw.send_undef()?;
-                                    }
+                                    step_send_optional_real(
+                                        the_sw,
+                                        step_live(&a_prismatic_pair_with_range, "WriteStep")?
+                                            .has_lower_limit_actual_translation(),
+                                        step_live(&a_prismatic_pair_with_range, "WriteStep")?
+                                            .lower_limit_actual_translation(),
+                                    )?;
+                                    step_send_optional_real(
+                                        the_sw,
+                                        step_live(&a_prismatic_pair_with_range, "WriteStep")?
+                                            .has_upper_limit_actual_translation(),
+                                        step_live(&a_prismatic_pair_with_range, "WriteStep")?
+                                            .upper_limit_actual_translation(),
+                                    )?;
                                 }
                             } else {
                                 if the_ent
@@ -480,39 +438,20 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                         the_ent
                                             .get_order_kinematic_pair()
                                             .cast::<StepKinematicsUniversalPair>();
-                                    if step_live(&an_universal_pair, "WriteStep")?
-                                        .has_input_skew_angle()
-                                    {
-                                        the_sw.send_real(
-                                            step_live(&an_universal_pair, "WriteStep")?
-                                                .input_skew_angle(),
-                                        )?;
-                                    } else {
-                                        the_sw.send_undef()?;
-                                    }
+                                    step_send_optional_real(
+                                        the_sw,
+                                        step_live(&an_universal_pair, "WriteStep")?
+                                            .has_input_skew_angle(),
+                                        step_live(&an_universal_pair, "WriteStep")?
+                                            .input_skew_angle(),
+                                    )?;
                                     step_start_entity(the_sw, "PRISMATIC_PAIR_WITH_RANGE")?;
                                     if the_ent.get_order_kinematic_pair().is_kind(StepKinematicsPrismaticPairWithRange::static_type()) {
 let an_universal_pair_with_range: Handle<StepKinematicsUniversalPairWithRange> = the_ent.get_order_kinematic_pair().cast::<StepKinematicsUniversalPairWithRange>();
-if step_live(&an_universal_pair_with_range, "WriteStep")?.has_lower_limit_first_rotation() {
-the_sw.send_real(step_live(&an_universal_pair_with_range, "WriteStep")?.lower_limit_first_rotation())?;
-} else {
-the_sw.send_undef()?;
-}
-if step_live(&an_universal_pair_with_range, "WriteStep")?.has_upper_limit_first_rotation() {
-the_sw.send_real(step_live(&an_universal_pair_with_range, "WriteStep")?.upper_limit_first_rotation())?;
-} else {
-the_sw.send_undef()?;
-}
-if step_live(&an_universal_pair_with_range, "WriteStep")?.has_lower_limit_second_rotation() {
-the_sw.send_real(step_live(&an_universal_pair_with_range, "WriteStep")?.lower_limit_second_rotation())?;
-} else {
-the_sw.send_undef()?;
-}
-if step_live(&an_universal_pair_with_range, "WriteStep")?.has_upper_limit_second_rotation() {
-the_sw.send_real(step_live(&an_universal_pair_with_range, "WriteStep")?.upper_limit_second_rotation())?;
-} else {
-the_sw.send_undef()?;
-}
+step_send_optional_real(the_sw, step_live(&an_universal_pair_with_range, "WriteStep")?.has_lower_limit_first_rotation(), step_live(&an_universal_pair_with_range, "WriteStep")?.lower_limit_first_rotation())?;
+step_send_optional_real(the_sw, step_live(&an_universal_pair_with_range, "WriteStep")?.has_upper_limit_first_rotation(), step_live(&an_universal_pair_with_range, "WriteStep")?.upper_limit_first_rotation())?;
+step_send_optional_real(the_sw, step_live(&an_universal_pair_with_range, "WriteStep")?.has_lower_limit_second_rotation(), step_live(&an_universal_pair_with_range, "WriteStep")?.lower_limit_second_rotation())?;
+step_send_optional_real(the_sw, step_live(&an_universal_pair_with_range, "WriteStep")?.has_upper_limit_second_rotation(), step_live(&an_universal_pair_with_range, "WriteStep")?.upper_limit_second_rotation())?;
 }
                                 }
                             }
@@ -547,26 +486,20 @@ the_sw.send_undef()?;
                             the_ent
                                 .get_order_kinematic_pair()
                                 .cast::<StepKinematicsGearPairWithRange>();
-                        if step_live(&a_gear_pair_with_range, "WriteStep")?
-                            .has_lower_limit_actual_rotation1()
-                        {
-                            the_sw.send_real(
-                                step_live(&a_gear_pair_with_range, "WriteStep")?
-                                    .lower_limit_actual_rotation1(),
-                            )?;
-                        } else {
-                            the_sw.send_undef()?;
-                        }
-                        if step_live(&a_gear_pair_with_range, "WriteStep")?
-                            .has_upper_limit_actual_rotation1()
-                        {
-                            the_sw.send_real(
-                                step_live(&a_gear_pair_with_range, "WriteStep")?
-                                    .upper_limit_actual_rotation1(),
-                            )?;
-                        } else {
-                            the_sw.send_undef()?;
-                        }
+                        step_send_optional_real(
+                            the_sw,
+                            step_live(&a_gear_pair_with_range, "WriteStep")?
+                                .has_lower_limit_actual_rotation1(),
+                            step_live(&a_gear_pair_with_range, "WriteStep")?
+                                .lower_limit_actual_rotation1(),
+                        )?;
+                        step_send_optional_real(
+                            the_sw,
+                            step_live(&a_gear_pair_with_range, "WriteStep")?
+                                .has_upper_limit_actual_rotation1(),
+                            step_live(&a_gear_pair_with_range, "WriteStep")?
+                                .upper_limit_actual_rotation1(),
+                        )?;
                     }
                 } else {
                     if the_ent
@@ -591,26 +524,20 @@ the_sw.send_undef()?;
                             > = the_ent
                                 .get_order_kinematic_pair()
                                 .cast::<StepKinematicsRackAndPinionPairWithRange>();
-                            if step_live(&a_rack_and_pinion_pair_with_range, "WriteStep")?
-                                .has_lower_limit_rack_displacement()
-                            {
-                                the_sw.send_real(
-                                    step_live(&a_rack_and_pinion_pair_with_range, "WriteStep")?
-                                        .lower_limit_rack_displacement(),
-                                )?;
-                            } else {
-                                the_sw.send_undef()?;
-                            }
-                            if step_live(&a_rack_and_pinion_pair_with_range, "WriteStep")?
-                                .has_upper_limit_rack_displacement()
-                            {
-                                the_sw.send_real(
-                                    step_live(&a_rack_and_pinion_pair_with_range, "WriteStep")?
-                                        .upper_limit_rack_displacement(),
-                                )?;
-                            } else {
-                                the_sw.send_undef()?;
-                            }
+                            step_send_optional_real(
+                                the_sw,
+                                step_live(&a_rack_and_pinion_pair_with_range, "WriteStep")?
+                                    .has_lower_limit_rack_displacement(),
+                                step_live(&a_rack_and_pinion_pair_with_range, "WriteStep")?
+                                    .lower_limit_rack_displacement(),
+                            )?;
+                            step_send_optional_real(
+                                the_sw,
+                                step_live(&a_rack_and_pinion_pair_with_range, "WriteStep")?
+                                    .has_upper_limit_rack_displacement(),
+                                step_live(&a_rack_and_pinion_pair_with_range, "WriteStep")?
+                                    .upper_limit_rack_displacement(),
+                            )?;
                         }
                     } else {
                         if the_ent
@@ -632,26 +559,20 @@ the_sw.send_undef()?;
                                 > = the_ent
                                     .get_order_kinematic_pair()
                                     .cast::<StepKinematicsScrewPairWithRange>();
-                                if step_live(&a_screw_pair_with_range, "WriteStep")?
-                                    .has_lower_limit_actual_rotation()
-                                {
-                                    the_sw.send_real(
-                                        step_live(&a_screw_pair_with_range, "WriteStep")?
-                                            .lower_limit_actual_rotation(),
-                                    )?;
-                                } else {
-                                    the_sw.send_undef()?;
-                                }
-                                if step_live(&a_screw_pair_with_range, "WriteStep")?
-                                    .has_upper_limit_actual_rotation()
-                                {
-                                    the_sw.send_real(
-                                        step_live(&a_screw_pair_with_range, "WriteStep")?
-                                            .upper_limit_actual_rotation(),
-                                    )?;
-                                } else {
-                                    the_sw.send_undef()?;
-                                }
+                                step_send_optional_real(
+                                    the_sw,
+                                    step_live(&a_screw_pair_with_range, "WriteStep")?
+                                        .has_lower_limit_actual_rotation(),
+                                    step_live(&a_screw_pair_with_range, "WriteStep")?
+                                        .lower_limit_actual_rotation(),
+                                )?;
+                                step_send_optional_real(
+                                    the_sw,
+                                    step_live(&a_screw_pair_with_range, "WriteStep")?
+                                        .has_upper_limit_actual_rotation(),
+                                    step_live(&a_screw_pair_with_range, "WriteStep")?
+                                        .upper_limit_actual_rotation(),
+                                )?;
                             }
                         }
                     }
@@ -947,26 +868,20 @@ the_sw.send_undef()?;
                                             &step_live(&a_surface_pair_with_range, "WriteStep")?
                                                 .range_on_surface2(),
                                         )?;
-                                        if step_live(&a_surface_pair_with_range, "WriteStep")?
-                                            .has_lower_limit_actual_rotation()
-                                        {
-                                            the_sw.send_real(
-                                                step_live(&a_surface_pair_with_range, "WriteStep")?
-                                                    .lower_limit_actual_rotation(),
-                                            )?;
-                                        } else {
-                                            the_sw.send_undef()?;
-                                        }
-                                        if step_live(&a_surface_pair_with_range, "WriteStep")?
-                                            .has_upper_limit_actual_rotation()
-                                        {
-                                            the_sw.send_real(
-                                                step_live(&a_surface_pair_with_range, "WriteStep")?
-                                                    .upper_limit_actual_rotation(),
-                                            )?;
-                                        } else {
-                                            the_sw.send_undef()?;
-                                        }
+                                        step_send_optional_real(
+                                            the_sw,
+                                            step_live(&a_surface_pair_with_range, "WriteStep")?
+                                                .has_lower_limit_actual_rotation(),
+                                            step_live(&a_surface_pair_with_range, "WriteStep")?
+                                                .lower_limit_actual_rotation(),
+                                        )?;
+                                        step_send_optional_real(
+                                            the_sw,
+                                            step_live(&a_surface_pair_with_range, "WriteStep")?
+                                                .has_upper_limit_actual_rotation(),
+                                            step_live(&a_surface_pair_with_range, "WriteStep")?
+                                                .upper_limit_actual_rotation(),
+                                        )?;
                                     }
                                 }
                             }

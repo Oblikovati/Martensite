@@ -12,12 +12,6 @@ use super::table_read_03;
 use super::table_share_01;
 use super::table_share_02;
 use super::table_share_03;
-use super::table_step_type_01;
-use super::table_step_type_02;
-use super::table_step_type_03;
-use super::table_typenums_01;
-use super::table_typenums_02;
-use super::table_typenums_03;
 use super::table_typeshor_01;
 use super::table_typeshor_02;
 use super::table_write_01;
@@ -60,20 +54,6 @@ pub(super) const TABLE_CATEGORY_PARTS: &[&[CategoryRow]] = &[
     table_category_01::TABLE_CATEGORY_01,
     table_category_02::TABLE_CATEGORY_02,
     table_category_03::TABLE_CATEGORY_03,
-];
-
-/// All parts of the table.
-pub(super) const TABLE_STEP_TYPE_PARTS: &[&[(i32, &str)]] = &[
-    table_step_type_01::TABLE_STEP_TYPE_01,
-    table_step_type_02::TABLE_STEP_TYPE_02,
-    table_step_type_03::TABLE_STEP_TYPE_03,
-];
-
-/// All parts of the table.
-pub(super) const TABLE_TYPENUMS_PARTS: &[&[(&str, i32)]] = &[
-    table_typenums_01::TABLE_TYPENUMS_01,
-    table_typenums_02::TABLE_TYPENUMS_02,
-    table_typenums_03::TABLE_TYPENUMS_03,
 ];
 
 /// All parts of the table.

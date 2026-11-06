@@ -53,90 +53,18 @@ impl RwStepKinematicsRwPointOnSurfacePairWithRange {
             StepGeomRectangularTrimmedSurface::static_type(),
             &mut a_range_on_pair_surface,
         )?;
-        let mut a_lower_limit_yaw: f64 = Default::default();
-        let mut has_lower_limit_yaw: bool = true;
-        if the_data.is_param_defined(the_num, 9)? {
-            the_data.read_real(
-                the_num,
-                9,
-                "lower_limit_yaw",
-                the_arch,
-                &mut a_lower_limit_yaw,
-            )?;
-        } else {
-            has_lower_limit_yaw = false;
-            a_lower_limit_yaw = 0.0;
-        }
-        let mut a_upper_limit_yaw: f64 = Default::default();
-        let mut has_upper_limit_yaw: bool = true;
-        if the_data.is_param_defined(the_num, 10)? {
-            the_data.read_real(
-                the_num,
-                10,
-                "upper_limit_yaw",
-                the_arch,
-                &mut a_upper_limit_yaw,
-            )?;
-        } else {
-            has_upper_limit_yaw = false;
-            a_upper_limit_yaw = 0.0;
-        }
-        let mut a_lower_limit_pitch: f64 = Default::default();
-        let mut has_lower_limit_pitch: bool = true;
-        if the_data.is_param_defined(the_num, 11)? {
-            the_data.read_real(
-                the_num,
-                11,
-                "lower_limit_pitch",
-                the_arch,
-                &mut a_lower_limit_pitch,
-            )?;
-        } else {
-            has_lower_limit_pitch = false;
-            a_lower_limit_pitch = 0.0;
-        }
-        let mut a_upper_limit_pitch: f64 = Default::default();
-        let mut has_upper_limit_pitch: bool = true;
-        if the_data.is_param_defined(the_num, 12)? {
-            the_data.read_real(
-                the_num,
-                12,
-                "upper_limit_pitch",
-                the_arch,
-                &mut a_upper_limit_pitch,
-            )?;
-        } else {
-            has_upper_limit_pitch = false;
-            a_upper_limit_pitch = 0.0;
-        }
-        let mut a_lower_limit_roll: f64 = Default::default();
-        let mut has_lower_limit_roll: bool = true;
-        if the_data.is_param_defined(the_num, 13)? {
-            the_data.read_real(
-                the_num,
-                13,
-                "lower_limit_roll",
-                the_arch,
-                &mut a_lower_limit_roll,
-            )?;
-        } else {
-            has_lower_limit_roll = false;
-            a_lower_limit_roll = 0.0;
-        }
-        let mut a_upper_limit_roll: f64 = Default::default();
-        let mut has_upper_limit_roll: bool = true;
-        if the_data.is_param_defined(the_num, 14)? {
-            the_data.read_real(
-                the_num,
-                14,
-                "upper_limit_roll",
-                the_arch,
-                &mut a_upper_limit_roll,
-            )?;
-        } else {
-            has_upper_limit_roll = false;
-            a_upper_limit_roll = 0.0;
-        }
+        let (a_lower_limit_yaw, has_lower_limit_yaw) =
+            step_read_optional_real(the_data, the_num, 9, "lower_limit_yaw", the_arch)?;
+        let (a_upper_limit_yaw, has_upper_limit_yaw) =
+            step_read_optional_real(the_data, the_num, 10, "upper_limit_yaw", the_arch)?;
+        let (a_lower_limit_pitch, has_lower_limit_pitch) =
+            step_read_optional_real(the_data, the_num, 11, "lower_limit_pitch", the_arch)?;
+        let (a_upper_limit_pitch, has_upper_limit_pitch) =
+            step_read_optional_real(the_data, the_num, 12, "upper_limit_pitch", the_arch)?;
+        let (a_lower_limit_roll, has_lower_limit_roll) =
+            step_read_optional_real(the_data, the_num, 13, "lower_limit_roll", the_arch)?;
+        let (a_upper_limit_roll, has_upper_limit_roll) =
+            step_read_optional_real(the_data, the_num, 14, "upper_limit_roll", the_arch)?;
         the_ent.init(
             &a_representation_item_name,
             &a_item_defined_transformation_name,

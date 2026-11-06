@@ -36,10 +36,27 @@ static CHECKS: LazyLock<HashMap<i32, CheckFn>> = LazyLock::new(|| table_of(TABLE
 static NEW_ENTITIES: LazyLock<HashMap<i32, NewFn>> = LazyLock::new(|| table_of(TABLE_NEW_PARTS));
 static CATEGORIES: LazyLock<HashMap<i32, StepCategory>> =
     LazyLock::new(|| table_of(TABLE_CATEGORY_PARTS));
+/// Each case number with its type name, one per line.
+const STEP_TYPE_ROWS: &str = include_str!("step_types.txt");
+/// The type that has a case to write but is not recognized by its name when reading.
+const WRITE_ONLY_TYPE: &str = "TESSELLATED_ITEM";
+
+/// The rows of the type table.
+fn step_type_rows() -> impl Iterator<Item = (i32, &'static str)> {
+    STEP_TYPE_ROWS.lines().filter_map(|line| {
+        let (case, name) = line.split_once(' ')?;
+        Some((case.parse().ok()?, name))
+    })
+}
+
 static STEP_TYPES: LazyLock<HashMap<i32, &'static str>> =
-    LazyLock::new(|| table_of(TABLE_STEP_TYPE_PARTS));
-static TYPE_NUMBERS: LazyLock<HashMap<&'static str, i32>> =
-    LazyLock::new(|| table_of(TABLE_TYPENUMS_PARTS));
+    LazyLock::new(|| step_type_rows().collect());
+static TYPE_NUMBERS: LazyLock<HashMap<&'static str, i32>> = LazyLock::new(|| {
+    step_type_rows()
+        .filter(|(_, name)| *name != WRITE_ONLY_TYPE)
+        .map(|(case, name)| (name, case))
+        .collect()
+});
 static SHORT_NUMBERS: LazyLock<HashMap<&'static str, i32>> =
     LazyLock::new(|| table_of(TABLE_TYPESHOR_PARTS));
 
@@ -116,12 +133,7 @@ impl RwStepAP214ReadWriteModule {
                 .get(rank - 1)
                 .is_some_and(|name| *name == self.step_type(case).as_bytes())
         };
-        let eq_text = |rank: usize, text: &str| {
-            sorted
-                .get(rank - 1)
-                .is_some_and(|name| *name == text.as_bytes())
-        };
-        complex_case(sorted.len(), &eq, &eq_text)
+        complex_case(sorted.len(), &eq)
     }
 }
 

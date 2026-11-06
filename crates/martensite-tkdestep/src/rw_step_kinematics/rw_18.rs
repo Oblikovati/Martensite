@@ -241,34 +241,10 @@ impl RwStepKinematicsRwSphericalPairWithPinAndRange {
             the_data,
             the_num
         );
-        let mut a_lower_limit_roll: f64 = Default::default();
-        let mut has_lower_limit_roll: bool = true;
-        if the_data.is_param_defined(the_num, 15)? {
-            the_data.read_real(
-                the_num,
-                15,
-                "lower_limit_roll",
-                the_arch,
-                &mut a_lower_limit_roll,
-            )?;
-        } else {
-            has_lower_limit_roll = false;
-            a_lower_limit_roll = 0.0;
-        }
-        let mut a_upper_limit_roll: f64 = Default::default();
-        let mut has_upper_limit_roll: bool = true;
-        if the_data.is_param_defined(the_num, 16)? {
-            the_data.read_real(
-                the_num,
-                16,
-                "upper_limit_roll",
-                the_arch,
-                &mut a_upper_limit_roll,
-            )?;
-        } else {
-            has_upper_limit_roll = false;
-            a_upper_limit_roll = 0.0;
-        }
+        let (a_lower_limit_roll, has_lower_limit_roll) =
+            step_read_optional_real(the_data, the_num, 15, "lower_limit_roll", the_arch)?;
+        let (a_upper_limit_roll, has_upper_limit_roll) =
+            step_read_optional_real(the_data, the_num, 16, "upper_limit_roll", the_arch)?;
         the_ent.init(
             &a_representation_item_name,
             &a_item_defined_transformation_name,

@@ -117,62 +117,38 @@ impl RwStepKinematicsRwPlanarPairWithRange {
             the_data,
             the_num
         );
-        let mut a_lower_limit_actual_translation_x: f64 = Default::default();
-        let mut has_lower_limit_actual_translation_x: bool = true;
-        if the_data.is_param_defined(the_num, 15)? {
-            the_data.read_real(
+        let (a_lower_limit_actual_translation_x, has_lower_limit_actual_translation_x) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 15,
                 "lower_limit_actual_translation_x",
                 the_arch,
-                &mut a_lower_limit_actual_translation_x,
             )?;
-        } else {
-            has_lower_limit_actual_translation_x = false;
-            a_lower_limit_actual_translation_x = 0.0;
-        }
-        let mut a_upper_limit_actual_translation_x: f64 = Default::default();
-        let mut has_upper_limit_actual_translation_x: bool = true;
-        if the_data.is_param_defined(the_num, 16)? {
-            the_data.read_real(
+        let (a_upper_limit_actual_translation_x, has_upper_limit_actual_translation_x) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 16,
                 "upper_limit_actual_translation_x",
                 the_arch,
-                &mut a_upper_limit_actual_translation_x,
             )?;
-        } else {
-            has_upper_limit_actual_translation_x = false;
-            a_upper_limit_actual_translation_x = 0.0;
-        }
-        let mut a_lower_limit_actual_translation_y: f64 = Default::default();
-        let mut has_lower_limit_actual_translation_y: bool = true;
-        if the_data.is_param_defined(the_num, 17)? {
-            the_data.read_real(
+        let (a_lower_limit_actual_translation_y, has_lower_limit_actual_translation_y) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 17,
                 "lower_limit_actual_translation_y",
                 the_arch,
-                &mut a_lower_limit_actual_translation_y,
             )?;
-        } else {
-            has_lower_limit_actual_translation_y = false;
-            a_lower_limit_actual_translation_y = 0.0;
-        }
-        let mut a_upper_limit_actual_translation_y: f64 = Default::default();
-        let mut has_upper_limit_actual_translation_y: bool = true;
-        if the_data.is_param_defined(the_num, 18)? {
-            the_data.read_real(
+        let (a_upper_limit_actual_translation_y, has_upper_limit_actual_translation_y) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 18,
                 "upper_limit_actual_translation_y",
                 the_arch,
-                &mut a_upper_limit_actual_translation_y,
             )?;
-        } else {
-            has_upper_limit_actual_translation_y = false;
-            a_upper_limit_actual_translation_y = 0.0;
-        }
         the_ent.init(
             &a_representation_item_name,
             &a_item_defined_transformation_name,

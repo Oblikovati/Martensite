@@ -40,20 +40,8 @@ impl RwStepKinematicsRwUniversalPair {
             the_data,
             the_num
         );
-        let mut a_input_skew_angle: f64 = Default::default();
-        let mut has_input_skew_angle: bool = true;
-        if the_data.is_param_defined(the_num, 13)? {
-            the_data.read_real(
-                the_num,
-                13,
-                "input_skew_angle",
-                the_arch,
-                &mut a_input_skew_angle,
-            )?;
-        } else {
-            has_input_skew_angle = false;
-            a_input_skew_angle = 0.0;
-        }
+        let (a_input_skew_angle, has_input_skew_angle) =
+            step_read_optional_real(the_data, the_num, 13, "input_skew_angle", the_arch)?;
         the_ent.init(
             &a_representation_item_name,
             &a_item_defined_transformation_name,
@@ -199,62 +187,38 @@ impl RwStepKinematicsRwUniversalPairWithRange {
             the_data,
             the_num
         );
-        let mut a_lower_limit_first_rotation: f64 = Default::default();
-        let mut has_lower_limit_first_rotation: bool = true;
-        if the_data.is_param_defined(the_num, 14)? {
-            the_data.read_real(
+        let (a_lower_limit_first_rotation, has_lower_limit_first_rotation) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 14,
                 "lower_limit_first_rotation",
                 the_arch,
-                &mut a_lower_limit_first_rotation,
             )?;
-        } else {
-            has_lower_limit_first_rotation = false;
-            a_lower_limit_first_rotation = 0.0;
-        }
-        let mut a_upper_limit_first_rotation: f64 = Default::default();
-        let mut has_upper_limit_first_rotation: bool = true;
-        if the_data.is_param_defined(the_num, 15)? {
-            the_data.read_real(
+        let (a_upper_limit_first_rotation, has_upper_limit_first_rotation) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 15,
                 "upper_limit_first_rotation",
                 the_arch,
-                &mut a_upper_limit_first_rotation,
             )?;
-        } else {
-            has_upper_limit_first_rotation = false;
-            a_upper_limit_first_rotation = 0.0;
-        }
-        let mut a_lower_limit_second_rotation: f64 = Default::default();
-        let mut has_lower_limit_second_rotation: bool = true;
-        if the_data.is_param_defined(the_num, 16)? {
-            the_data.read_real(
+        let (a_lower_limit_second_rotation, has_lower_limit_second_rotation) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 16,
                 "lower_limit_second_rotation",
                 the_arch,
-                &mut a_lower_limit_second_rotation,
             )?;
-        } else {
-            has_lower_limit_second_rotation = false;
-            a_lower_limit_second_rotation = 0.0;
-        }
-        let mut a_upper_limit_second_rotation: f64 = Default::default();
-        let mut has_upper_limit_second_rotation: bool = true;
-        if the_data.is_param_defined(the_num, 17)? {
-            the_data.read_real(
+        let (a_upper_limit_second_rotation, has_upper_limit_second_rotation) =
+            step_read_optional_real(
+                the_data,
                 the_num,
                 17,
                 "upper_limit_second_rotation",
                 the_arch,
-                &mut a_upper_limit_second_rotation,
             )?;
-        } else {
-            has_upper_limit_second_rotation = false;
-            a_upper_limit_second_rotation = 0.0;
-        }
         the_ent.init(
             &a_representation_item_name,
             &a_item_defined_transformation_name,
@@ -289,26 +253,26 @@ impl RwStepKinematicsRwUniversalPairWithRange {
         the_ent: &Handle<StepKinematicsUniversalPairWithRange>,
     ) -> Result<(), Failure> {
         rw_block_b_0023!(the_ent, the_sw);
-        if the_ent.has_lower_limit_first_rotation() {
-            the_sw.send_real(the_ent.lower_limit_first_rotation())?;
-        } else {
-            the_sw.send_undef()?;
-        }
-        if the_ent.has_upper_limit_first_rotation() {
-            the_sw.send_real(the_ent.upper_limit_first_rotation())?;
-        } else {
-            the_sw.send_undef()?;
-        }
-        if the_ent.has_lower_limit_second_rotation() {
-            the_sw.send_real(the_ent.lower_limit_second_rotation())?;
-        } else {
-            the_sw.send_undef()?;
-        }
-        if the_ent.has_upper_limit_second_rotation() {
-            the_sw.send_real(the_ent.upper_limit_second_rotation())?;
-        } else {
-            the_sw.send_undef()?;
-        }
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_lower_limit_first_rotation(),
+            the_ent.lower_limit_first_rotation(),
+        )?;
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_upper_limit_first_rotation(),
+            the_ent.upper_limit_first_rotation(),
+        )?;
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_lower_limit_second_rotation(),
+            the_ent.lower_limit_second_rotation(),
+        )?;
+        step_send_optional_real(
+            the_sw,
+            the_ent.has_upper_limit_second_rotation(),
+            the_ent.upper_limit_second_rotation(),
+        )?;
         Ok(())
     }
     /// `share`.

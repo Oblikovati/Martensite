@@ -264,3 +264,4 @@ crates/martensite-tkdestl/src/de_stl/configuration.template -text -whitespace
 # Recorded values and configuration bytes of the STEP tests keep their bytes on every platform.
 crates/martensite-tkdestep/tests/fixtures/** -text -whitespace
 crates/martensite-tkdestep/src/de_step/configuration.template -text -whitespace
+crates/martensite-tkdestep/src/rw_step_ap214/step_types.txt -text -whitespace
