@@ -5,7 +5,8 @@ use std::ffi::CStr;
 
 /// The layer-provided settings extension; enabled only with the validation layer.
 pub(super) const LAYER_SETTINGS_EXTENSION: &CStr = c"VK_EXT_layer_settings";
-const VALIDATION_LAYER: &CStr = c"VK_LAYER_KHRONOS_validation";
+/// One selected layer owns both the extension query and synchronization setting.
+pub(super) const VALIDATION_LAYER: &CStr = c"VK_LAYER_KHRONOS_validation";
 /// One VkBool32 `true`, referenced by the setting for the instance lifetime.
 static ENABLED: vk::Bool32 = vk::TRUE;
 

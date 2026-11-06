@@ -3,10 +3,11 @@ use super::{
     portability_admission::{self, DevicePortability},
     runtime::vk_error,
     surface_platform::PlatformSurfaceFactory,
+    validation_admission::{InstanceExtensionSource, admit_validation},
 };
 use crate::RenderError;
 use ash::{Entry, Instance, vk};
-use std::ffi::c_char;
+use std::ffi::{CStr, c_char};
 
 /// Instance names, flags and window admission decided from one enumeration.
 pub(super) struct InstanceExtensionPlan {
@@ -21,9 +22,10 @@ pub(super) fn instance_extensions(
     validation: bool,
     surfaces: &dyn PlatformSurfaceFactory,
 ) -> Result<InstanceExtensionPlan, RenderError> {
-    // SAFETY: the instance, physical device and device handles stay valid while the runtime holds them, and the call only reads through out-parameters it owns.
-    let advertised = unsafe { entry.enumerate_instance_extension_properties(None) }
+    let advertised = entry
+        .extensions(None)
         .map_err(|error| vk_error("enumerate instance extensions", error))?;
+    admit_validation(entry, &advertised, validation)?;
     let windows = super::window_support::instance_extensions(&advertised, surfaces);
     let window_support = !windows.is_empty();
     let (names, flags) = compose_instance_extensions(windows, &advertised, validation);
@@ -32,6 +34,14 @@ pub(super) fn instance_extensions(
         flags,
         window_support,
     })
+}
+
+impl InstanceExtensionSource for Entry {
+    fn extensions(&self, layer: Option<&CStr>) -> Result<Vec<vk::ExtensionProperties>, vk::Result> {
+        // SAFETY: this Entry keeps the loader alive; ash owns query outputs and
+        // the optional NUL-terminated layer name remains live throughout the call.
+        unsafe { self.enumerate_instance_extension_properties(layer) }
+    }
 }
 
 fn compose_instance_extensions(
