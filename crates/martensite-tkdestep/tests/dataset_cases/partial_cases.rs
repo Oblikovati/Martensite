@@ -65,9 +65,12 @@ fn bug23561(session: &mut XsSession) {
     println!("bug23561");
     a_box(session, "b", [10.0, 10.0, 10.0]);
     let folder = session.path_of(Place::Image(""));
-    let folder = folder.trim_end_matches('/');
-    let last = folder.rsplit('/').next().expect("a folder").to_owned();
-    let mut path = folder.to_owned();
+    let last = std::path::Path::new(&folder)
+        .file_name()
+        .expect("a folder")
+        .to_string_lossy()
+        .into_owned();
+    let mut path = folder.trim_end_matches(['/', '\\']).to_owned();
     while path.len() < 200 {
         path = format!("{path}/../{last}");
     }
