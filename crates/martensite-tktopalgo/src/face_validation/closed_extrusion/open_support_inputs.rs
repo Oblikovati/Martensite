@@ -23,7 +23,7 @@ pub enum OpenSupportInputFailure {
         /// Invocation-local topology owner associated with the representation.
         owner: usize,
         /// Original storage/evaluator admission failure.
-        cause: StoredOpenExtrusionFailure,
+        cause: Box<StoredOpenExtrusionFailure>,
     },
 }
 /// Bound inputs for two separate open support operations; no face certificate is provided.
@@ -160,7 +160,7 @@ fn admit_support(
         .map_err(|cause| OpenSupportInputFailure::Spline {
             role: OpenSupportInputRole::SurfaceBasis,
             owner,
-            cause,
+            cause: Box::new(cause),
         })
 }
 fn version(actual: u32) -> OpenSupportInputFailure {

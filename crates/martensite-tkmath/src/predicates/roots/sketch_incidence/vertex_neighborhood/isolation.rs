@@ -93,12 +93,12 @@ pub(super) fn order(sign: Sign) -> Ordering {
     }
 }
 pub(super) fn append(target: &mut Vec<Crossing>, mut roots: Vec<Crossing>) {
-    if let (Some(previous), Some(next)) = (target.last_mut(), roots.first()) {
-        if same_knot(previous, next) {
-            previous.sides[1] = next.sides[1];
-            previous.simple &= next.simple;
-            roots.remove(0);
-        }
+    if let (Some(previous), Some(next)) = (target.last_mut(), roots.first())
+        && same_knot(previous, next)
+    {
+        previous.sides[1] = next.sides[1];
+        previous.simple &= next.simple;
+        roots.remove(0);
     }
     target.extend(roots);
 }

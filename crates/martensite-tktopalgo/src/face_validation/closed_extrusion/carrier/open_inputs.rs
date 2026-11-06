@@ -28,6 +28,6 @@ fn admitted(carrier: &Carrier<'_>) -> Result<StoredOpenExtrusionInput, OpenSuppo
         .map_err(|cause| OpenSupportInputFailure::Spline {
             role: OpenSupportInputRole::BoundaryCarrier,
             owner: carrier.edge.owner,
-            cause,
+            cause: Box::new(cause),
         })
 }

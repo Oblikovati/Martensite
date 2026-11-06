@@ -158,7 +158,7 @@ fn build_projected(
 ) -> Result<Vec<ProjectedQuadraticSpan>, Cause> {
     let mut stop = None;
     let result = projected_spans(
-        &input.poles,
+        input.poles,
         &input.flat_knots(),
         input.direction,
         input.curve_interval(),
