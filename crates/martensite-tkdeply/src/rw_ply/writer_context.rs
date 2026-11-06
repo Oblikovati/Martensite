@@ -5,6 +5,7 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkernel::storage::format_general;
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::Point3;
+use martensite_tkrwmesh::rw_mesh::split_text_lines;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
@@ -29,37 +30,9 @@ fn path_text(path: &AsciiString) -> String {
     String::from_utf8_lossy(path.as_bytes()).into_owned()
 }
 
-/// Splits text into right-trimmed lines; an empty line between two breaks is no line. Repeated
-/// lines and a last line of one character are kept: they are the text the caller asked to write.
-fn split_lines(text: &AsciiString) -> Vec<AsciiString> {
-    let mut lines = Vec::new();
-    let bytes = text.as_bytes();
-    let (mut from, mut index) = (0, 0);
-    while index < bytes.len() {
-        if matches!(bytes[index], b'\r' | b'\n') {
-            add_line(&mut lines, &bytes[from..index]);
-            if bytes[index] == b'\r' && bytes.get(index + 1) == Some(&b'\n') {
-                index += 1;
-            }
-            from = index + 1;
-        }
-        index += 1;
-    }
-    add_line(&mut lines, &bytes[from..]);
-    lines
-}
-
-fn add_line(lines: &mut Vec<AsciiString>, line: &[u8]) {
-    if !line.is_empty() {
-        let mut line = AsciiString::from_raw(line);
-        line.right_adjust();
-        lines.push(line);
-    }
-}
-
 /// One entry of the file information as comment lines: the first line of the value follows the key.
 fn information_text(key: &AsciiString, value: &AsciiString) -> Vec<u8> {
-    let (key_lines, value_lines) = (split_lines(key), split_lines(value));
+    let (key_lines, value_lines) = (split_text_lines(key), split_text_lines(value));
     let mut text = Vec::new();
     append_comments(&mut text, &key_lines);
     text.extend_from_slice(if key_lines.is_empty() {

@@ -1,14 +1,42 @@
 //! The dates of the global section, as the file writes them and as they read.
 use super::IgesDataGlobalSection;
-use martensite_tkernel::{osd::Process, standard::Handle, tcollection::HAsciiString};
+use martensite_tkernel::{standard::Handle, tcollection::HAsciiString};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-/// The system date as year, month, day, hour, minute, second.
-pub(super) fn system_date() -> (i32, i32, i32, i32, i32, i32) {
-    let mut process = Process::new();
-    process.system_date().map_or((0, 0, 0, 0, 0, 0), |date| {
-        let (month, day, year, hour, minute, second, _, _) = date.values();
-        (year, month, day, hour, minute, second)
-    })
+/// The system clock in UTC as year, month, day, hour, minute, second, so that a file does not say
+/// where it was written. A clock before 1970 gives zeros, the form of an unknown date.
+pub(crate) fn system_date() -> (i32, i32, i32, i32, i32, i32) {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or((0, 0, 0, 0, 0, 0), |since| utc_fields(since.as_secs()))
+}
+
+/// Year, month, day, hour, minute, second of a count of seconds since 1970-01-01, by the civil
+/// calendar's 400-year cycle counted from a March 1st, so that a leap day ends its cycle year.
+/// Example: `utc_fields(0)` is `(1970, 1, 1, 0, 0, 0)`.
+fn utc_fields(unix_seconds: u64) -> (i32, i32, i32, i32, i32, i32) {
+    const DAYS_IN_ERA: u64 = 146_097;
+    /// From 0000-03-01 to 1970-01-01.
+    const EPOCH_IN_DAYS: u64 = 719_468;
+    let days = unix_seconds / 86_400 + EPOCH_IN_DAYS;
+    let (era, of_era) = (days / DAYS_IN_ERA, days % DAYS_IN_ERA);
+    let year_of_era = (of_era - of_era / 1460 + of_era / 36_524 - of_era / 146_096) / 365;
+    let of_year = of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let from_march = (5 * of_year + 2) / 153;
+    let month = if from_march < 10 {
+        from_march + 3
+    } else {
+        from_march - 9
+    };
+    let of_day = unix_seconds % 86_400;
+    (
+        (year_of_era + era * 400 + u64::from(month <= 2)) as i32,
+        month as i32,
+        (of_year - (153 * from_march + 2) / 5 + 1) as i32,
+        (of_day / 3600) as i32,
+        (of_day % 3600 / 60) as i32,
+        (of_day % 60) as i32,
+    )
 }
 
 impl IgesDataGlobalSection {
@@ -105,4 +133,17 @@ fn iges_date(
         text[0] = b'0';
     }
     text
+}
+
+#[cfg(test)]
+mod tests {
+    use super::utc_fields;
+
+    #[test]
+    fn seconds_since_1970_are_a_civil_date_in_utc() {
+        assert_eq!(utc_fields(0), (1970, 1, 1, 0, 0, 0));
+        assert_eq!(utc_fields(951_827_696), (2000, 2, 29, 12, 34, 56));
+        assert_eq!(utc_fields(1_798_761_599), (2026, 12, 31, 23, 59, 59));
+        assert_eq!(utc_fields(4_107_542_400), (2100, 3, 1, 0, 0, 0));
+    }
 }

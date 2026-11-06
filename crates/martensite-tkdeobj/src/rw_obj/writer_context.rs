@@ -2,6 +2,7 @@
 use martensite_tkernel::message::Message;
 use martensite_tkernel::ncollection::{IndexedDataMap, Vec2, Vec3, Vec4};
 use martensite_tkernel::tcollection::AsciiString;
+use martensite_tkrwmesh::rw_mesh::split_text_lines;
 use std::fs::File;
 use std::io::{self, BufWriter, Write};
 
@@ -31,35 +32,6 @@ pub struct RwObjObjWriterContext {
     elem_uv_first: i32,
     has_normals: bool,
     has_tex_coords: bool,
-}
-
-/// Splits text into right-trimmed lines, each kept however often it repeats.
-fn split_lines(text: &AsciiString) -> Vec<AsciiString> {
-    let mut lines = Vec::new();
-    let bytes = text.as_bytes();
-    let mut from = 0;
-    let mut index = 0;
-    while index < bytes.len() {
-        let byte = bytes[index];
-        if byte == b'\r' || byte == b'\n' {
-            add_line(&mut lines, &bytes[from..index]);
-            if byte == b'\r' && bytes.get(index + 1) == Some(&b'\n') {
-                index += 1;
-            }
-            from = index + 1;
-        }
-        index += 1;
-    }
-    add_line(&mut lines, &bytes[from..]);
-    lines
-}
-
-fn add_line(lines: &mut Vec<AsciiString>, line: &[u8]) {
-    if !line.is_empty() {
-        let mut line = AsciiString::from_raw(line);
-        line.right_adjust();
-        lines.push(line);
-    }
 }
 
 /// A name on one line: a line break in a statement would make the rest of it a new statement.
@@ -169,7 +141,7 @@ impl RwObjObjWriterContext {
         is_ok
     }
     fn write_information(&mut self, key: &AsciiString, value: &AsciiString) -> bool {
-        let (key_lines, value_lines) = (split_lines(key), split_lines(value));
+        let (key_lines, value_lines) = (split_text_lines(key), split_text_lines(value));
         let mut text = Vec::new();
         for (index, line) in key_lines.iter().enumerate() {
             text.extend_from_slice(if index > 0 { b"\n# " } else { b"# " });

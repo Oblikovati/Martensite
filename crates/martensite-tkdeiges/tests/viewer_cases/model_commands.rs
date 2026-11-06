@@ -43,7 +43,7 @@ impl ViewerHost {
         projection.add(&self.shape(edge)).unwrap();
         projection.set_params(
             TOLERANCE,
-            TOLERANCE.powf(2.0 / 3.0),
+            martensite_cmath::pow(TOLERANCE, 2.0 / 3.0),
             Continuity::C1,
             MAX_DEGREE,
             MAX_SEGMENTS,

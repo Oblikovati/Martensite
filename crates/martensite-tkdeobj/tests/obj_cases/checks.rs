@@ -209,7 +209,7 @@ fn real17(value: f64) -> String {
     if value == 0.0 {
         return "0".to_owned();
     }
-    let exponent = value.abs().log10().floor() as i32;
+    let exponent = martensite_cmath::log10(value.abs()).floor() as i32;
     let fixed = format!("{value:.*}", (16 - exponent).max(0) as usize);
     if fixed.contains('.') {
         fixed.trim_end_matches('0').trim_end_matches('.').to_owned()

@@ -228,6 +228,18 @@ impl IgesToBRepCurveAndSurface {
             process.send_fail(&start.cast(), message);
         }
     }
+    /// Records a failure of an entity's transfer on its check and gives the empty result that
+    /// stands for it; `tool.no_result(&entity, &failure)`.
+    pub(super) fn no_result<S, R>(&self, start: &Handle<S>, failure: &Failure) -> R
+    where
+        S: ?Sized + RuntimeTyped,
+        R: Default,
+    {
+        if let Some(process) = self.tp.get() {
+            process.add_fail_text(&start.cast(), &failure.to_string(), "");
+        }
+        R::default()
+    }
     /// Records a warning on an entity; `tool.send_warning(&entity, &message)`.
     pub fn send_warning<T: ?Sized + RuntimeTyped>(&self, start: &Handle<T>, message: &Msg) {
         if let Some(process) = self.tp.get() {

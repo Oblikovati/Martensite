@@ -6,7 +6,6 @@ use super::{
     IgesDataSpecificModule,
 };
 use martensite_tkernel::{
-    osd::Process,
     standard::{Failure, Handle},
     tcollection::HAsciiString,
 };
@@ -20,6 +19,8 @@ use std::sync::{Mutex, OnceLock, PoisonError};
 const PROCESSOR_VERSION: &str = concat!("Martensite IGES processor ", env!("CARGO_PKG_VERSION"));
 /// The system that writes the files.
 const SYSTEM_VERSION: &str = concat!("Martensite ", env!("CARGO_PKG_VERSION"));
+/// The author of a written file until a caller names one. A file does not say who ran the process.
+const DEFAULT_AUTHOR: &str = "Martensite";
 
 /// The parameters of the shape fixing process of a file that is read.
 const FROM_IGES_FIX_SHAPE: &[(&str, &str)] = &[
@@ -102,11 +103,7 @@ fn init_session_parameters() -> Result<(), Failure> {
     init_static("read.iges.bspline.continuity", b'&', "imin 0")?;
     init_static("read.iges.bspline.continuity", b'&', "imax 2")?;
     init_text("write.iges.header.receiver", "")?;
-    let mut process = Process::new();
-    init_text(
-        "write.iges.header.author",
-        &String::from_utf8_lossy(process.user_name().as_bytes()),
-    )?;
+    init_text("write.iges.header.author", DEFAULT_AUTHOR)?;
     init_text("write.iges.header.company", "")?;
     init_static("write.iges.unit", b'e', "")?;
     init_static("write.iges.unit", b'&', "enum 1")?;

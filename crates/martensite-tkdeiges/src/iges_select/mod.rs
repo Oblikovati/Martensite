@@ -3,6 +3,7 @@
 mod counter_of_level_number;
 mod edit_dir_part;
 mod edit_header;
+mod edit_header_fields;
 mod explores;
 mod explores_more;
 mod extracts;
@@ -14,6 +15,8 @@ mod rebuild;
 mod remove_curves;
 #[cfg(test)]
 mod select_tests;
+#[cfg(test)]
+mod select_tests_editors;
 mod sign_color;
 mod signatures;
 mod spline_to_bspline;

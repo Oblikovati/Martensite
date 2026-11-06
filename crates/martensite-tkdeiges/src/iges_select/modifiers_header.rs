@@ -1,12 +1,12 @@
 //! The modifiers of the header of a model, and those that apply the edits of the model.
 use super::IgesSelectModelModifier;
 use super::modifier_bases::{add_fail, add_warning, iges_model_modifier, modifier_base};
+use crate::iges_data::global_section_dates::system_date;
 use crate::iges_data::{
     IgesDataBasicEditor, IgesDataGlobalSection, IgesDataIgesEntity, IgesDataIgesModel,
     IgesDataProtocolOps, iges_atoi, iges_live,
 };
 use martensite_tkernel::{
-    osd::Process,
     standard::{Failure, Handle, SharedState, StandardTransient},
     tcollection::{AsciiString, HAsciiString},
 };
@@ -44,15 +44,9 @@ macro_rules! plain_modifier {
 
 /// The current date as the file says it, with the year on two digits before 2000.
 fn date_now() -> Handle<HAsciiString> {
-    let mut process = Process::new();
-    process.system_date().map_or_else(
-        |_| IgesDataGlobalSection::new_date_string(0, 0, 0, 0, 0, 0, -1),
-        |date| {
-            let (month, day, year, hour, minute, second, _, _) = date.values();
-            let mode = if year < 2000 { 0 } else { -1 };
-            IgesDataGlobalSection::new_date_string(year, month, day, hour, minute, second, mode)
-        },
-    )
+    let (year, month, day, hour, minute, second) = system_date();
+    let mode = if year < 2000 { 0 } else { -1 };
+    IgesDataGlobalSection::new_date_string(year, month, day, hour, minute, second, mode)
 }
 
 /// A check of the header of the model after a change.

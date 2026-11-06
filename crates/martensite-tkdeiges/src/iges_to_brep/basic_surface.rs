@@ -95,8 +95,10 @@ impl IgesToBRepBasicSurface {
             self.fail_key(start, "IGES_1005");
             return Ok(Handle::default());
         }
-        // A B-spline surface raises on weights that are not positive.
-        let result = self.dispatch_basic_surface(start).unwrap_or_default();
+        // A B-spline surface fails on weights that are not positive; the failure is on the check.
+        let result = self
+            .dispatch_basic_surface(start)
+            .unwrap_or_else(|failure| self.no_result(start, &failure));
         if let Some(live) = result.get() {
             live.scale(Point3::new(0.0, 0.0, 0.0), self.get_unit_factor())?;
         }

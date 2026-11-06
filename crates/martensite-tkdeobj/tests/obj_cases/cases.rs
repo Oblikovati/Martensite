@@ -372,7 +372,7 @@ pub mod v3d_materials {
         if value == 0.0 {
             return "0".to_owned();
         }
-        let exponent = value.abs().log10().floor() as i32;
+        let exponent = martensite_cmath::log10(value.abs()).floor() as i32;
         if !(-5..6).contains(&exponent) {
             return format!("{value:e}");
         }

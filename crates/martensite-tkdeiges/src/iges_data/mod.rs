@@ -5,6 +5,8 @@ mod basic_editor;
 mod core_tests;
 #[cfg(test)]
 mod core_tests_model;
+#[cfg(test)]
+mod core_tests_tools;
 mod def_switch;
 mod default_modules;
 mod dir_checker;
@@ -19,7 +21,7 @@ mod enums;
 mod file_recognizer;
 mod free_format_entity;
 mod global_section;
-mod global_section_dates;
+pub(crate) mod global_section_dates;
 mod global_section_fields;
 mod iges_type;
 mod kinds;

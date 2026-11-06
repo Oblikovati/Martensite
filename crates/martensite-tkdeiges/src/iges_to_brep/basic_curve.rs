@@ -83,8 +83,10 @@ impl IgesToBRepBasicCurve {
             self.null_entity(start);
             return Ok(Handle::default());
         }
-        // A curve that refuses its weights or knots is no result.
-        let result = self.dispatch_basic_curve(start).unwrap_or_default();
+        // A curve that refuses its weights or knots is no result, and its failure is on the check.
+        let result = self
+            .dispatch_basic_curve(start)
+            .unwrap_or_else(|failure| self.no_result(start, &failure));
         if let Some(live) = result.get() {
             live.scale(Point3::new(0.0, 0.0, 0.0), self.get_unit_factor())?;
         }
@@ -130,8 +132,9 @@ impl IgesToBRepBasicCurve {
             self.null_entity(start);
             return Handle::default();
         }
-        // A multiplicity over degree + 1 raises.
-        self.dispatch_2d_basic_curve(start).unwrap_or_default()
+        // A multiplicity over degree + 1 fails; the failure is on the check.
+        self.dispatch_2d_basic_curve(start)
+            .unwrap_or_else(|failure| self.no_result(start, &failure))
     }
     fn dispatch_2d_basic_curve(
         &mut self,

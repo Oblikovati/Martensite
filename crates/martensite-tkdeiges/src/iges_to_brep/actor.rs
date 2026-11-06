@@ -160,10 +160,15 @@ impl IgesToBRepActor {
         let mut settings = self.prepared_settings(model, process)?;
         let nb_mapped = iges_live(process, WHERE)?.nb_mapped();
         let step = scope.next(1.0);
-        // An exception of the transfer is no shape.
+        // A failure of one entity is no shape for it, on its check; the other entities still transfer.
         let shape = settings
             .transfer_geometry(entity, &step)
-            .unwrap_or_default();
+            .unwrap_or_else(|failure| {
+                if let Some(live) = process.get() {
+                    live.add_fail_text(&entity.cast(), &failure.to_string(), "");
+                }
+                Shape::default()
+            });
         let mut parameters = self.shape_processing().shape_fix_parameters();
         XSAlgoShapeProcessor::set_parameter_real(
             "FixShape.Tolerance3d",

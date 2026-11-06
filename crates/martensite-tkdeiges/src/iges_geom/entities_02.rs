@@ -132,7 +132,8 @@ impl IgesGeomCircularArc {
         let y1: f64 = the_start.y();
         let x2: f64 = the_center.x();
         let y2: f64 = the_center.y();
-        f64::sqrt((x2 - x1).powi(2) + (y2 - y1).powi(2))
+        let (dx, dy) = (x2 - x1, y2 - y1);
+        f64::sqrt(dx * dx + dy * dy)
     }
     /// returns the angle subtended by the arc at the center in radians
     pub fn angle(&self) -> Result<f64, Failure> {
