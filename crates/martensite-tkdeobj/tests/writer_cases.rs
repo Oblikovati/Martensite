@@ -130,8 +130,11 @@ fn a_one_letter_comment_is_kept_and_a_polygon_past_the_element_buffer_reads() {
     let count = 1500;
     for index in 0..count {
         let angle = f64::from(index) * std::f64::consts::TAU / f64::from(count);
-        big += &format!("v {} {} 0\n", martensite_cmath::cos(angle),
-            martensite_cmath::sin(angle));
+        big += &format!(
+            "v {} {} 0\n",
+            martensite_cmath::cos(angle),
+            martensite_cmath::sin(angle)
+        );
     }
     big += "f";
     for index in 1..=count {
