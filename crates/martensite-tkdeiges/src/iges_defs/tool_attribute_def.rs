@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataParamReader, iges_array1_set, iges_live,
     iges_new_array1,
@@ -74,19 +75,17 @@ impl IgesDefsToolAttributeDef {
         }
         if !attr_types.is_null() {
             for i in 1..=nbval {
-                let mut attr_type: i32 = Default::default();
                 let mut attr_value_data_type: i32 = Default::default();
                 let mut avc: i32 = Default::default();
                 let mut attr_value_pointer: Handle<HArray1<Handle<IgesGraphTextDisplayTemplate>>> =
                     Default::default();
-                if pr.read_integer_text(&pr.current(), "Attribute Type", &mut attr_type)? {
-                    iges_array1_set(
-                        &attr_types,
-                        i,
-                        attr_type,
-                        "IgesDefsToolAttributeDef::read_own_params",
-                    )?;
-                }
+                iges_read_integer_item(
+                    pr,
+                    "Attribute Type",
+                    &attr_types,
+                    i,
+                    "IgesDefsToolAttributeDef::read_own_params",
+                )?;
                 st = pr.read_integer_text(
                     &pr.current(),
                     "Attribute Data Type",

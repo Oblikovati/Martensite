@@ -19,6 +19,7 @@ use crate::iges_data::{
     IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
     iges_dump_string, iges_dump_strings, iges_live, iges_new_array1,
 };
+use crate::iges_data::{iges_read_integer_item, iges_read_text_item};
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
@@ -73,50 +74,34 @@ impl IgesAppliToolLevelToPWBLayerMap {
             && (!temp_exchange_file_level_ident.is_null())
         {
             for i in 1..=num {
-                let mut temp_efln: i32 = Default::default();
-                if pr.read_integer_text(
-                    &pr.current(),
+                iges_read_integer_item(
+                    pr,
                     "Exchange File Level Number",
-                    &mut temp_efln,
-                )? {
-                    iges_array1_set(
-                        &temp_exchange_file_level_number,
-                        i,
-                        temp_efln,
-                        "IgesAppliToolLevelToPWBLayerMap::read_own_params",
-                    )?;
-                }
-                let mut temp_nl: Handle<HAsciiString> = Default::default();
-                if pr.read_text(&pr.current(), "Native Level Identification", &mut temp_nl)? {
-                    iges_array1_set(
-                        &temp_native_level,
-                        i,
-                        temp_nl.clone(),
-                        "IgesAppliToolLevelToPWBLayerMap::read_own_params",
-                    )?;
-                }
-                let mut temp_pln: i32 = Default::default();
-                if pr.read_integer_text(&pr.current(), "Physical Layer Number", &mut temp_pln)? {
-                    iges_array1_set(
-                        &temp_physical_layer_number,
-                        i,
-                        temp_pln,
-                        "IgesAppliToolLevelToPWBLayerMap::read_own_params",
-                    )?;
-                }
-                let mut temp_efli: Handle<HAsciiString> = Default::default();
-                if pr.read_text(
-                    &pr.current(),
+                    &temp_exchange_file_level_number,
+                    i,
+                    "IgesAppliToolLevelToPWBLayerMap::read_own_params",
+                )?;
+                iges_read_text_item(
+                    pr,
+                    "Native Level Identification",
+                    &temp_native_level,
+                    i,
+                    "IgesAppliToolLevelToPWBLayerMap::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "Physical Layer Number",
+                    &temp_physical_layer_number,
+                    i,
+                    "IgesAppliToolLevelToPWBLayerMap::read_own_params",
+                )?;
+                iges_read_text_item(
+                    pr,
                     "Exchange File Level Identification",
-                    &mut temp_efli,
-                )? {
-                    iges_array1_set(
-                        &temp_exchange_file_level_ident,
-                        i,
-                        temp_efli.clone(),
-                        "IgesAppliToolLevelToPWBLayerMap::read_own_params",
-                    )?;
-                }
+                    &temp_exchange_file_level_ident,
+                    i,
+                    "IgesAppliToolLevelToPWBLayerMap::read_own_params",
+                )?;
             }
         }
         self.dir_checker(ent).check_type_and_form(pr.c_check(), ent);

@@ -14,6 +14,7 @@
 )]
 use crate::iges_basic::IgesBasicHArray1OfHArray1OfInteger;
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
     IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
@@ -58,32 +59,23 @@ impl IgesDefsToolAssociativityDef {
         }
         if !requirements.is_null() {
             for i in 1..=nbval {
-                let mut requirement: i32 = Default::default();
-                let mut order: i32 = Default::default();
                 let mut num_item: i32 = Default::default();
                 let mut item: Handle<HArray1<i32>> = Default::default();
-                if pr.read_integer_text(
-                    &pr.current(),
+                iges_read_integer_item(
+                    pr,
                     "Back Pointer Requirement",
-                    &mut requirement,
-                )? {
-                    iges_array1_set(
-                        &requirements,
-                        i,
-                        requirement,
-                        "IgesDefsToolAssociativityDef::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "Ordered/Unordered Class", &mut order)? {
-                    iges_array1_set(
-                        &orders,
-                        i,
-                        order,
-                        "IgesDefsToolAssociativityDef::read_own_params",
-                    )?;
-                }
+                    &requirements,
+                    i,
+                    "IgesDefsToolAssociativityDef::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "Ordered/Unordered Class",
+                    &orders,
+                    i,
+                    "IgesDefsToolAssociativityDef::read_own_params",
+                )?;
                 if pr.read_integer_text(&pr.current(), "No. of items per entry", &mut num_item)? {
-                    let mut temp: i32 = Default::default();
                     iges_array1_set(
                         &num_items,
                         i,
@@ -92,14 +84,13 @@ impl IgesDefsToolAssociativityDef {
                     )?;
                     item = iges_new_array1::<i32>(1, num_item)?;
                     for j in 1..=num_item {
-                        if pr.read_integer_text(&pr.current(), "Item", &mut temp)? {
-                            iges_array1_set(
-                                &item,
-                                j,
-                                temp,
-                                "IgesDefsToolAssociativityDef::read_own_params",
-                            )?;
-                        }
+                        iges_read_integer_item(
+                            pr,
+                            "Item",
+                            &item,
+                            j,
+                            "IgesDefsToolAssociativityDef::read_own_params",
+                        )?;
                     }
                     iges_live(&items, "IgesDefsToolAssociativityDef::read_own_params")?
                         .set_value(i, &item)?;

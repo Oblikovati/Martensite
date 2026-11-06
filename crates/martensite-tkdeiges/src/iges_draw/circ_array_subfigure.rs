@@ -137,24 +137,24 @@ impl IgesDrawCircArraySubfigure {
     pub fn position_num(&self, index: i32) -> Result<bool, Failure> {
         if self.state.read().the_positions.is_null() {
             return Ok(self.state.read().the_do_dont_flag);
-        } else {
-            let mut i: i32 = Default::default();
-            let mut up: i32 = iges_array1_upper(
-                &self.state.read().the_positions,
-                "IgesDrawCircArraySubfigure::position_num",
-            )?;
-            for i in 1..=up {
-                if (iges_array1_item(
-                    &self.state.read().the_positions,
-                    i,
-                    "IgesDrawCircArraySubfigure::position_num",
-                )?) == index
-                {
-                    return Ok(self.state.read().the_do_dont_flag);
-                }
-            }
-            return Ok(!(self.state.read().the_do_dont_flag));
         }
+
+        let mut i: i32 = Default::default();
+        let mut up: i32 = iges_array1_upper(
+            &self.state.read().the_positions,
+            "IgesDrawCircArraySubfigure::position_num",
+        )?;
+        for i in 1..=up {
+            if (iges_array1_item(
+                &self.state.read().the_positions,
+                i,
+                "IgesDrawCircArraySubfigure::position_num",
+            )?) == index
+            {
+                return Ok(self.state.read().the_do_dont_flag);
+            }
+        }
+        return Ok(!(self.state.read().the_do_dont_flag));
     }
     /// returns the Index'th value position
     /// raises exception if Index at most 0 or Index &gt; ListCount().

@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataIgesReaderData, IgesDataIgesWriter,
     IgesDataParamReader, iges_array1_set, iges_new_array1,
@@ -95,33 +96,27 @@ impl IgesDimenToolDimensionDisplayData {
             temp_start_ind = iges_new_array1::<i32>(1, tempnbval)?;
             temp_end_ind = iges_new_array1::<i32>(1, tempnbval)?;
             for i in 1..=tempnbval {
-                let mut anote: i32 = Default::default();
-                let mut astart: i32 = Default::default();
-                let mut anend: i32 = Default::default();
-                if pr.read_integer_text(&pr.current(), "Supplementary Notes", &mut anote)? {
-                    iges_array1_set(
-                        &temp_supple_notes,
-                        i,
-                        anote,
-                        "IgesDimenToolDimensionDisplayData::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "Start Index", &mut astart)? {
-                    iges_array1_set(
-                        &temp_start_ind,
-                        i,
-                        astart,
-                        "IgesDimenToolDimensionDisplayData::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "End Index", &mut anend)? {
-                    iges_array1_set(
-                        &temp_end_ind,
-                        i,
-                        anend,
-                        "IgesDimenToolDimensionDisplayData::read_own_params",
-                    )?;
-                }
+                iges_read_integer_item(
+                    pr,
+                    "Supplementary Notes",
+                    &temp_supple_notes,
+                    i,
+                    "IgesDimenToolDimensionDisplayData::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "Start Index",
+                    &temp_start_ind,
+                    i,
+                    "IgesDimenToolDimensionDisplayData::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "End Index",
+                    &temp_end_ind,
+                    i,
+                    "IgesDimenToolDimensionDisplayData::read_own_params",
+                )?;
             }
         }
         self.dir_checker(ent).check_type_and_form(pr.c_check(), ent);

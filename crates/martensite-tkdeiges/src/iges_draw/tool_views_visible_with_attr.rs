@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataIgesEntity, IgesDataIgesReaderData,
     IgesDataIgesWriter, IgesDataLineFontEntity, IgesDataParamReader, IgesDataViewKindEntity,
@@ -90,7 +91,6 @@ impl IgesDrawToolViewsVisibleWithAttr {
                 let mut temp_entity1: Handle<dyn IgesDataLineFontEntity> = Default::default();
                 let mut temp_color_value: i32 = Default::default();
                 let mut temp_color_def: Handle<IgesGraphColor> = Default::default();
-                let mut temp_line_weight_value: i32 = Default::default();
                 if pr.read_entity_typed(
                     ir,
                     &pr.current(),
@@ -167,18 +167,13 @@ impl IgesDrawToolViewsVisibleWithAttr {
                         "IgesDrawToolViewsVisibleWithAttr::read_own_params",
                     )?;
                 }
-                if pr.read_integer_text(
-                    &pr.current(),
+                iges_read_integer_item(
+                    pr,
                     "Line Weight Value",
-                    &mut temp_line_weight_value,
-                )? {
-                    iges_array1_set(
-                        &temp_line_weights,
-                        i,
-                        temp_line_weight_value,
-                        "IgesDrawToolViewsVisibleWithAttr::read_own_params",
-                    )?;
-                }
+                    &temp_line_weights,
+                    i,
+                    "IgesDrawToolViewsVisibleWithAttr::read_own_params",
+                )?;
             }
         }
         if temp_nb_entity > 0 {

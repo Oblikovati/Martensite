@@ -462,21 +462,22 @@ impl IgesGeomToolSplineCurve {
             || all_z_polynomials.is_null()
         {
             return Ok(());
-        } else {
-            self.dir_checker(ent).check_type_and_form(pr.check(), ent);
-            ent_live.init(
-                a_type,
-                a_degree,
-                nb_dimensions,
-                &all_break_points,
-                &all_x_polynomials,
-                &all_y_polynomials,
-                &all_z_polynomials,
-                &all_xvalues,
-                &all_yvalues,
-                &all_zvalues,
-            )?;
         }
+
+        self.dir_checker(ent).check_type_and_form(pr.check(), ent);
+        ent_live.init(
+            a_type,
+            a_degree,
+            nb_dimensions,
+            &all_break_points,
+            &all_x_polynomials,
+            &all_y_polynomials,
+            &all_z_polynomials,
+            &all_xvalues,
+            &all_yvalues,
+            &all_zvalues,
+        )?;
+
         Ok(())
     }
 }

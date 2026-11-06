@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_text_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
     IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
@@ -67,15 +68,13 @@ impl IgesDefsToolMacroDef {
         }
         if !lang_statements.is_null() {
             for i in 1..=nbval {
-                let mut lang_stat: Handle<HAsciiString> = Default::default();
-                if pr.read_text(&pr.current(), "Language Statement", &mut lang_stat)? {
-                    iges_array1_set(
-                        &lang_statements,
-                        i,
-                        lang_stat.clone(),
-                        "IgesDefsToolMacroDef::read_own_params",
-                    )?;
-                }
+                iges_read_text_item(
+                    pr,
+                    "Language Statement",
+                    &lang_statements,
+                    i,
+                    "IgesDefsToolMacroDef::read_own_params",
+                )?;
             }
         }
         pr.read_text(&pr.current(), "END MACRO", &mut end_macro)?;

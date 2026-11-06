@@ -14,6 +14,7 @@
 )]
 use crate::iges_appli::{IgesAppliNodalResults, IgesAppliNode};
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
     IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
@@ -69,16 +70,14 @@ impl IgesAppliToolNodalResults {
             temp_nodes = iges_new_array1::<Handle<IgesAppliNode>>(1, nbnodes)?;
             temp_node_identifiers = iges_new_array1::<i32>(1, nbnodes)?;
             for i in 1..=nbnodes {
-                let mut aitem: i32 = Default::default();
                 let mut a_node: Handle<IgesAppliNode> = Default::default();
-                if pr.read_integer_text(&pr.current(), "Node no. identifier", &mut aitem)? {
-                    iges_array1_set(
-                        &temp_node_identifiers,
-                        i,
-                        aitem,
-                        "IgesAppliToolNodalResults::read_own_params",
-                    )?;
-                }
+                iges_read_integer_item(
+                    pr,
+                    "Node no. identifier",
+                    &temp_node_identifiers,
+                    i,
+                    "IgesAppliToolNodalResults::read_own_params",
+                )?;
                 if pr.read_entity_typed(
                     ir,
                     &pr.current(),
@@ -182,190 +181,7 @@ impl IgesAppliToolNodalResults {
     ) -> Result<(), Failure> {
         let mut form_num: i32 = ent.form_number();
         let mut nv: i32 = ent.nb_data()?;
-        let mut ok: bool = true;
-        match form_num {
-            0 => {
-                if nv < 0 {
-                    ok = false;
-                }
-            }
-            1 => {
-                if nv != 1 {
-                    ok = false;
-                }
-            }
-            2 => {
-                if nv != 1 {
-                    ok = false;
-                }
-            }
-            3 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            4 => {
-                if nv != 6 {
-                    ok = false;
-                }
-            }
-            5 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            6 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            7 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            8 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            9 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            10 => {
-                if nv != 1 {
-                    ok = false;
-                }
-            }
-            11 => {
-                if nv != 1 {
-                    ok = false;
-                }
-            }
-            12 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            13 => {
-                if nv != 1 {
-                    ok = false;
-                }
-            }
-            14 => {
-                if nv != 1 {
-                    ok = false;
-                }
-            }
-            15 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            16 => {
-                if nv != 1 {
-                    ok = false;
-                }
-            }
-            17 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            18 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            19 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            20 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            21 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            22 => {
-                if nv != 3 {
-                    ok = false;
-                }
-            }
-            23 => {
-                if nv != 6 {
-                    ok = false;
-                }
-            }
-            24 => {
-                if nv != 6 {
-                    ok = false;
-                }
-            }
-            25 => {
-                if nv != 6 {
-                    ok = false;
-                }
-            }
-            26 => {
-                if nv != 6 {
-                    ok = false;
-                }
-            }
-            27 => {
-                if nv != 6 {
-                    ok = false;
-                }
-            }
-            28 => {
-                if nv != 6 {
-                    ok = false;
-                }
-            }
-            29 => {
-                if nv != 9 {
-                    ok = false;
-                }
-            }
-            30 => {
-                if nv != 9 {
-                    ok = false;
-                }
-            }
-            31 => {
-                if nv != 9 {
-                    ok = false;
-                }
-            }
-            32 => {
-                if nv != 9 {
-                    ok = false;
-                }
-            }
-            33 => {
-                if nv != 9 {
-                    ok = false;
-                }
-            }
-            34 => {
-                if nv != 9 {
-                    ok = false;
-                }
-            }
-            _ => {
-                ach.add_fail_text("Incorrect Form Number", "");
-            }
-        }
-        if !ok {
-            ach.add_fail_text("Incorrect count of real values in array V for FEM node", "");
-        }
+        super::result_value_counts::check_result_value_count(form_num, nv, ach);
         Ok(())
     }
     /// Copies Specific Parameters

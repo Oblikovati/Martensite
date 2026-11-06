@@ -15,6 +15,7 @@
 use crate::iges_appli::IgesAppliPipingFlow;
 use crate::iges_basic::entity_shape::iges_array1_length;
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_text_item;
 use crate::iges_data::{
     IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataParamReader, iges_array1_set,
     iges_new_array1,
@@ -199,15 +200,13 @@ impl IgesAppliToolPipingFlow {
                 )?;
                 i = 1;
                 while i <= num {
-                    let mut temp_string: Handle<HAsciiString> = Default::default();
-                    if pr.read_text(&pr.current(), "Flow Name", &mut temp_string)? {
-                        iges_array1_set(
-                            &temp_flow_names,
-                            i,
-                            temp_string.clone(),
-                            "IgesAppliToolPipingFlow::read_own_params",
-                        )?;
-                    }
+                    iges_read_text_item(
+                        pr,
+                        "Flow Name",
+                        &temp_flow_names,
+                        i,
+                        "IgesAppliToolPipingFlow::read_own_params",
+                    )?;
                     i += 1;
                 }
             }

@@ -65,29 +65,29 @@ impl IgesDimenPointDimension {
     pub fn geom_case(&self) -> Result<i32, Failure> {
         if self.state.read().the_geom.is_null() {
             return Ok(0);
-        } else {
-            if (iges_live(
-                &self.state.read().the_geom,
-                "IgesDimenPointDimension::geom_case",
-            )?
-            .type_number())
-                == 100
-            {
-                return Ok(1);
-            } else {
-                if (iges_live(
-                    &self.state.read().the_geom,
-                    "IgesDimenPointDimension::geom_case",
-                )?
-                .type_number())
-                    == 102
-                {
-                    return Ok(2);
-                } else {
-                    return Ok(3);
-                }
-            }
         }
+
+        if (iges_live(
+            &self.state.read().the_geom,
+            "IgesDimenPointDimension::geom_case",
+        )?
+        .type_number())
+            == 100
+        {
+            return Ok(1);
+        }
+
+        if (iges_live(
+            &self.state.read().the_geom,
+            "IgesDimenPointDimension::geom_case",
+        )?
+        .type_number())
+            == 102
+        {
+            return Ok(2);
+        }
+
+        return Ok(3);
     }
     /// returns Null handle if GeomCase(me) .ne. 1
     pub fn circular_arc(&self) -> Handle<IgesGeomCircularArc> {

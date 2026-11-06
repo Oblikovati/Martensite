@@ -18,6 +18,7 @@ use crate::iges_data::{
     IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
     iges_dump_string, iges_dump_strings, iges_live, iges_new_array1, iges_real_text,
 };
+use crate::iges_data::{iges_read_real_item, iges_read_text_item};
 use crate::iges_defs::IgesDefsUnitsData;
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -56,33 +57,27 @@ impl IgesDefsToolUnitsData {
         }
         if !unit_types.is_null() {
             for i in 1..=nbval {
-                let mut unit_type: Handle<HAsciiString> = Default::default();
-                let mut unit_value: Handle<HAsciiString> = Default::default();
-                let mut unit_scale: f64 = Default::default();
-                if pr.read_text(&pr.current(), "Type of Unit", &mut unit_type)? {
-                    iges_array1_set(
-                        &unit_types,
-                        i,
-                        unit_type.clone(),
-                        "IgesDefsToolUnitsData::read_own_params",
-                    )?;
-                }
-                if pr.read_text(&pr.current(), "Value of Unit", &mut unit_value)? {
-                    iges_array1_set(
-                        &unit_values,
-                        i,
-                        unit_value.clone(),
-                        "IgesDefsToolUnitsData::read_own_params",
-                    )?;
-                }
-                if pr.read_real_text(&pr.current(), "Scale of Unit", &mut unit_scale)? {
-                    iges_array1_set(
-                        &unit_scales,
-                        i,
-                        unit_scale,
-                        "IgesDefsToolUnitsData::read_own_params",
-                    )?;
-                }
+                iges_read_text_item(
+                    pr,
+                    "Type of Unit",
+                    &unit_types,
+                    i,
+                    "IgesDefsToolUnitsData::read_own_params",
+                )?;
+                iges_read_text_item(
+                    pr,
+                    "Value of Unit",
+                    &unit_values,
+                    i,
+                    "IgesDefsToolUnitsData::read_own_params",
+                )?;
+                iges_read_real_item(
+                    pr,
+                    "Scale of Unit",
+                    &unit_scales,
+                    i,
+                    "IgesDefsToolUnitsData::read_own_params",
+                )?;
             }
         }
         self.dir_checker(ent).check_type_and_form(pr.c_check(), ent);

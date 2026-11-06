@@ -160,11 +160,12 @@ impl IgesDefsToolAttributeDef {
                 );
                 ach.add_fail_text(&mess, "");
                 continue;
-            } else {
-                if fn_ == 0 {
-                    continue;
-                }
             }
+
+            if fn_ == 0 {
+                continue;
+            }
+
             mess.clear();
             match aty {
                 1 => {

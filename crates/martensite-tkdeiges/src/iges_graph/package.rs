@@ -33,10 +33,10 @@ fn case_iges(typenum: i32, formnum: i32) -> i32 {
         304 => {
             if formnum == 1 {
                 return 9;
-            } else {
-                if formnum == 2 {
-                    return 7;
-                }
+            }
+
+            if formnum == 2 {
+                return 7;
             }
         }
         310 => {

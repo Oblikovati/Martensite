@@ -41,14 +41,14 @@ fn case_iges(typenum: i32, formnum: i32) -> i32 {
         106 => {
             if (formnum == 20) || (formnum == 21) {
                 return 3;
-            } else {
-                if (formnum > 30) && (formnum < 40) {
-                    return 21;
-                } else {
-                    if formnum == 40 {
-                        return 23;
-                    }
-                }
+            }
+
+            if (formnum > 30) && (formnum < 40) {
+                return 21;
+            }
+
+            if formnum == 40 {
+                return 23;
             }
         }
         202 => {

@@ -14,6 +14,7 @@
 )]
 use crate::iges_basic::IgesBasicHArray1OfHArray1OfInteger;
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
     IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
@@ -61,13 +62,7 @@ impl IgesGraphToolTextFontDef {
             scale,
             superseded_entity
         );
-        let mut temp_code: i32 = Default::default();
-        let mut temp_next_x: i32 = Default::default();
-        let mut temp_next_y: i32 = Default::default();
         let mut temp_motion: i32 = Default::default();
-        let mut temp_flag: i32 = Default::default();
-        let mut temp_move_x: i32 = Default::default();
-        let mut temp_move_y: i32 = Default::default();
         pr.read_integer_text(&pr.current(), "Font Code", &mut font_code)?;
         pr.read_text(&pr.current(), "Font Name", &mut font_name)?;
         if pr.is_param_entity(pr.current_number())? {
@@ -103,30 +98,27 @@ impl IgesGraphToolTextFontDef {
             move_pen_x = Handle::new(IgesBasicHArray1OfHArray1OfInteger::with_bounds(1, nbval)?);
             move_pen_y = Handle::new(IgesBasicHArray1OfHArray1OfInteger::with_bounds(1, nbval)?);
             for i in 1..=nbval {
-                if pr.read_integer_text(&pr.current(), "array aSCIICodes", &mut temp_code)? {
-                    iges_array1_set(
-                        &a_scii_codes,
-                        i,
-                        temp_code,
-                        "IgesGraphToolTextFontDef::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "array nextChar X", &mut temp_next_x)? {
-                    iges_array1_set(
-                        &next_char_x,
-                        i,
-                        temp_next_x,
-                        "IgesGraphToolTextFontDef::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "array nextChar Y", &mut temp_next_y)? {
-                    iges_array1_set(
-                        &next_char_y,
-                        i,
-                        temp_next_y,
-                        "IgesGraphToolTextFontDef::read_own_params",
-                    )?;
-                }
+                iges_read_integer_item(
+                    pr,
+                    "array aSCIICodes",
+                    &a_scii_codes,
+                    i,
+                    "IgesGraphToolTextFontDef::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "array nextChar X",
+                    &next_char_x,
+                    i,
+                    "IgesGraphToolTextFontDef::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "array nextChar Y",
+                    &next_char_y,
+                    i,
+                    "IgesGraphToolTextFontDef::read_own_params",
+                )?;
                 if pr.read_integer_text(&pr.current(), "array penMotions", &mut temp_motion)? {
                     iges_array1_set(
                         &pen_motions,
@@ -143,18 +135,13 @@ impl IgesGraphToolTextFontDef {
                         yarray = iges_new_array1::<i32>(1, temp_motion)?;
                         for j in 1..=temp_motion {
                             if pr.defined_else_skip()? {
-                                if pr.read_integer_text(
-                                    &pr.current(),
+                                iges_read_integer_item(
+                                    pr,
                                     "array penFlags",
-                                    &mut temp_flag,
-                                )? {
-                                    iges_array1_set(
-                                        &intarray,
-                                        j,
-                                        temp_flag,
-                                        "IgesGraphToolTextFontDef::read_own_params",
-                                    )?;
-                                }
+                                    &intarray,
+                                    j,
+                                    "IgesGraphToolTextFontDef::read_own_params",
+                                )?;
                             } else {
                                 iges_array1_set(
                                     &intarray,
@@ -163,30 +150,20 @@ impl IgesGraphToolTextFontDef {
                                     "IgesGraphToolTextFontDef::read_own_params",
                                 )?;
                             }
-                            if pr.read_integer_text(
-                                &pr.current(),
+                            iges_read_integer_item(
+                                pr,
                                 "array movePenTo X",
-                                &mut temp_move_x,
-                            )? {
-                                iges_array1_set(
-                                    &xarray,
-                                    j,
-                                    temp_move_x,
-                                    "IgesGraphToolTextFontDef::read_own_params",
-                                )?;
-                            }
-                            if pr.read_integer_text(
-                                &pr.current(),
+                                &xarray,
+                                j,
+                                "IgesGraphToolTextFontDef::read_own_params",
+                            )?;
+                            iges_read_integer_item(
+                                pr,
                                 "array movePenTo Y",
-                                &mut temp_move_y,
-                            )? {
-                                iges_array1_set(
-                                    &yarray,
-                                    j,
-                                    temp_move_y,
-                                    "IgesGraphToolTextFontDef::read_own_params",
-                                )?;
-                            }
+                                &yarray,
+                                j,
+                                "IgesGraphToolTextFontDef::read_own_params",
+                            )?;
                         }
                         iges_live(&pen_flags, "IgesGraphToolTextFontDef::read_own_params")?
                             .set_value(i, &intarray)?;

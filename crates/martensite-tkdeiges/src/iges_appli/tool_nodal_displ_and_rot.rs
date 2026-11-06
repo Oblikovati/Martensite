@@ -15,6 +15,7 @@
 use crate::iges_appli::{IgesAppliNodalDisplAndRot, IgesAppliNode};
 use crate::iges_basic::IgesBasicHArray1OfHArray1OfXyz;
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
     IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
@@ -84,15 +85,13 @@ impl IgesAppliToolNodalDisplAndRot {
             temp_rot_param = Handle::new(IgesBasicHArray1OfHArray1OfXyz::with_bounds(1, nbnodes)?);
             for j in 1..=nbnodes {
                 let mut a_node: Handle<IgesAppliNode> = Handle::new(IgesAppliNode::new());
-                let mut nodeno: i32 = Default::default();
-                if pr.read_integer_text(&pr.current(), "Node number", &mut nodeno)? {
-                    iges_array1_set(
-                        &temp_node_identifiers,
-                        j,
-                        nodeno,
-                        "IgesAppliToolNodalDisplAndRot::read_own_params",
-                    )?;
-                }
+                iges_read_integer_item(
+                    pr,
+                    "Node number",
+                    &temp_node_identifiers,
+                    j,
+                    "IgesAppliToolNodalDisplAndRot::read_own_params",
+                )?;
                 if pr.read_entity_typed(
                     ir,
                     &pr.current(),

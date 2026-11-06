@@ -14,6 +14,7 @@
 )]
 use crate::iges_appli::IgesAppliFlow;
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_text_item;
 use crate::iges_data::{
     IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
     iges_array1_set, iges_new_array1,
@@ -175,15 +176,13 @@ impl IgesAppliToolFlow {
             }
         }
         for i in 1..=nn {
-            let mut temp_string: Handle<HAsciiString> = Default::default();
-            if pr.read_text(&pr.current(), "Flow Name", &mut temp_string)? {
-                iges_array1_set(
-                    &temp_flow_names,
-                    i,
-                    temp_string.clone(),
-                    "IgesAppliToolFlow::read_own_params",
-                )?;
-            }
+            iges_read_text_item(
+                pr,
+                "Flow Name",
+                &temp_flow_names,
+                i,
+                "IgesAppliToolFlow::read_own_params",
+            )?;
         }
         for i in 1..=nt {
             let mut temp_entity: Handle<IgesGraphTextDisplayTemplate> = Default::default();

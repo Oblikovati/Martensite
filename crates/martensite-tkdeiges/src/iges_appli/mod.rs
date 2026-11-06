@@ -20,6 +20,7 @@ mod pwb_artwork_stackup;
 mod pwb_drilled_hole;
 mod reference_designator;
 mod region_restriction;
+mod result_value_counts;
 mod tool_drilled_hole;
 mod tool_element_results;
 mod tool_element_results_2;

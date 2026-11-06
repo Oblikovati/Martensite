@@ -18,6 +18,7 @@ use crate::iges_data::{
     IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataLineFontEntity, IgesDataParamReader,
     IgesDataViewKindEntity, iges_array1_set, iges_new_array1, iges_real_text,
 };
+use crate::iges_data::{iges_read_integer_item, iges_read_real_item};
 use crate::iges_draw::IgesDrawSegmentedViewsVisible;
 use crate::iges_graph::IgesGraphColor;
 use martensite_tkernel::ncollection::HArray1;
@@ -68,13 +69,10 @@ impl IgesDrawToolSegmentedViewsVisible {
                 iges_new_array1::<Handle<dyn IgesDataLineFontEntity>>(1, nbval)?;
             line_weights = iges_new_array1::<i32>(1, nbval)?;
             let mut temp_view: Handle<dyn IgesDataViewKindEntity> = Default::default();
-            let mut temp_break: f64 = Default::default();
-            let mut temp_display: i32 = Default::default();
             let mut temp_color_value: i32 = Default::default();
             let mut temp_color_def: Handle<IgesGraphColor> = Default::default();
             let mut temp_line_font_value: i32 = Default::default();
             let mut temp_line_font_def: Handle<dyn IgesDataLineFontEntity> = Default::default();
-            let mut temp_line: i32 = Default::default();
             for i in 1..=nbval {
                 if pr.read_entity_typed(
                     ir,
@@ -91,26 +89,20 @@ impl IgesDrawToolSegmentedViewsVisible {
                         "IgesDrawToolSegmentedViewsVisible::read_own_params",
                     )?;
                 }
-                if pr.read_real_text(
-                    &pr.current(),
+                iges_read_real_item(
+                    pr,
                     "array breakpointParameters",
-                    &mut temp_break,
-                )? {
-                    iges_array1_set(
-                        &breakpoint_parameters,
-                        i,
-                        temp_break,
-                        "IgesDrawToolSegmentedViewsVisible::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "array displayFlags", &mut temp_display)? {
-                    iges_array1_set(
-                        &display_flags,
-                        i,
-                        temp_display,
-                        "IgesDrawToolSegmentedViewsVisible::read_own_params",
-                    )?;
-                }
+                    &breakpoint_parameters,
+                    i,
+                    "IgesDrawToolSegmentedViewsVisible::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "array displayFlags",
+                    &display_flags,
+                    i,
+                    "IgesDrawToolSegmentedViewsVisible::read_own_params",
+                )?;
                 let mut curnum: i32 = pr.current_number();
                 pr.read_integer_text(&pr.current(), "array colorValues", &mut temp_color_value)?;
                 if temp_color_value < 0 {
@@ -172,14 +164,13 @@ impl IgesDrawToolSegmentedViewsVisible {
                         "IgesDrawToolSegmentedViewsVisible::read_own_params",
                     )?;
                 }
-                if pr.read_integer_text(&pr.current(), "array lineWeights", &mut temp_line)? {
-                    iges_array1_set(
-                        &line_weights,
-                        i,
-                        temp_line,
-                        "IgesDrawToolSegmentedViewsVisible::read_own_params",
-                    )?;
-                }
+                iges_read_integer_item(
+                    pr,
+                    "array lineWeights",
+                    &line_weights,
+                    i,
+                    "IgesDrawToolSegmentedViewsVisible::read_own_params",
+                )?;
             }
         } else {
             pr.add_fail("No. of View/segment blocks : Not Positive", "");

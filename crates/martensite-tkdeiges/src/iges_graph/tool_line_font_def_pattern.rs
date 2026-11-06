@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_real_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
     IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
@@ -61,15 +62,13 @@ impl IgesGraphToolLineFontDefPattern {
         if !temp_segment_lengths.is_null() {
             let mut i: i32 = Default::default();
             for i in 1..=temp_nb_seg {
-                let mut temp_real: f64 = Default::default();
-                if pr.read_real_text(&pr.current(), "Length of Segment", &mut temp_real)? {
-                    iges_array1_set(
-                        &temp_segment_lengths,
-                        i,
-                        temp_real,
-                        "IgesGraphToolLineFontDefPattern::read_own_params",
-                    )?;
-                }
+                iges_read_real_item(
+                    pr,
+                    "Length of Segment",
+                    &temp_segment_lengths,
+                    i,
+                    "IgesGraphToolLineFontDefPattern::read_own_params",
+                )?;
             }
         }
         pr.read_text(

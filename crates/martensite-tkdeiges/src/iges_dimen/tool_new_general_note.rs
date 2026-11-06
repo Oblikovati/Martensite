@@ -17,6 +17,7 @@ use crate::iges_data::{
     IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
     iges_array1_set, iges_new_array1,
 };
+use crate::iges_data::{iges_read_integer_item, iges_read_real_item, iges_read_text_item};
 use crate::iges_dimen::IgesDimenNewGeneralNote;
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -115,121 +116,86 @@ impl IgesDimenToolNewGeneralNote {
         }
         if !char_displays.is_null() {
             for i in 1..=nbval {
-                let mut char_display: i32 = Default::default();
-                let mut char_width: f64 = Default::default();
-                let mut char_height: f64 = Default::default();
-                let mut inter_char_space: f64 = Default::default();
-                let mut interline_space: f64 = Default::default();
-                let mut font_style: i32 = Default::default();
-                let mut char_angle: f64 = Default::default();
-                let mut control_code_string: Handle<HAsciiString> = Default::default();
-                let mut nb_char: i32 = Default::default();
-                let mut box_width: f64 = Default::default();
-                let mut box_height: f64 = Default::default();
                 let mut char_set_code: i32 = Default::default();
                 let mut char_set_entity: Handle<IgesDataIgesEntity> = Default::default();
-                let mut slant_angle: f64 = Default::default();
-                let mut rotation_angle: f64 = Default::default();
-                let mut mirror_flag: i32 = Default::default();
-                let mut rotate_flag: i32 = Default::default();
                 let mut start_point: Xyz = Default::default();
-                let mut text: Handle<HAsciiString> = Default::default();
-                if pr.read_integer_text(&pr.current(), "Character Display", &mut char_display)? {
-                    iges_array1_set(
-                        &char_displays,
-                        i,
-                        char_display,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_real_text(&pr.current(), "Character Width", &mut char_width)? {
-                    iges_array1_set(
-                        &char_widths,
-                        i,
-                        char_width,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_real_text(&pr.current(), "Character Height", &mut char_height)? {
-                    iges_array1_set(
-                        &char_heights,
-                        i,
-                        char_height,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_real_text(
-                    &pr.current(),
+                iges_read_integer_item(
+                    pr,
+                    "Character Display",
+                    &char_displays,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_real_item(
+                    pr,
+                    "Character Width",
+                    &char_widths,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_real_item(
+                    pr,
+                    "Character Height",
+                    &char_heights,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_real_item(
+                    pr,
                     "Inter-character space",
-                    &mut inter_char_space,
-                )? {
-                    iges_array1_set(
-                        &inter_char_spaces,
-                        i,
-                        inter_char_space,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_real_text(&pr.current(), "Interline space", &mut interline_space)? {
-                    iges_array1_set(
-                        &interline_spaces,
-                        i,
-                        interline_space,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "Font Style", &mut font_style)? {
-                    iges_array1_set(
-                        &font_styles,
-                        i,
-                        font_style,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_real_text(&pr.current(), "Character Angle", &mut char_angle)? {
-                    iges_array1_set(
-                        &char_angles,
-                        i,
-                        char_angle,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_text(
-                    &pr.current(),
+                    &inter_char_spaces,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_real_item(
+                    pr,
+                    "Interline space",
+                    &interline_spaces,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "Font Style",
+                    &font_styles,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_real_item(
+                    pr,
+                    "Character Angle",
+                    &char_angles,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_text_item(
+                    pr,
                     "Control Code String",
-                    &mut control_code_string,
-                )? {
-                    iges_array1_set(
-                        &control_code_strings,
-                        i,
-                        control_code_string.clone(),
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "Number of Characters", &mut nb_char)? {
-                    iges_array1_set(
-                        &nb_chars,
-                        i,
-                        nb_char,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_real_text(&pr.current(), "Box Width", &mut box_width)? {
-                    iges_array1_set(
-                        &box_widths,
-                        i,
-                        box_width,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_real_text(&pr.current(), "Box Height", &mut box_height)? {
-                    iges_array1_set(
-                        &box_heights,
-                        i,
-                        box_height,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
+                    &control_code_strings,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "Number of Characters",
+                    &nb_chars,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_real_item(
+                    pr,
+                    "Box Width",
+                    &box_widths,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_real_item(
+                    pr,
+                    "Box Height",
+                    &box_heights,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
                 let mut curnum: i32 = pr.current_number();
                 if pr.defined_else_skip()? {
                     pr.read_integer_text(
@@ -271,14 +237,13 @@ impl IgesDimenToolNewGeneralNote {
                     )?;
                 }
                 if pr.defined_else_skip()? {
-                    if pr.read_real_text(&pr.current(), "Slant Angle", &mut slant_angle)? {
-                        iges_array1_set(
-                            &slant_angles,
-                            i,
-                            slant_angle,
-                            "IgesDimenToolNewGeneralNote::read_own_params",
-                        )?;
-                    }
+                    iges_read_real_item(
+                        pr,
+                        "Slant Angle",
+                        &slant_angles,
+                        i,
+                        "IgesDimenToolNewGeneralNote::read_own_params",
+                    )?;
                 } else {
                     iges_array1_set(
                         &slant_angles,
@@ -287,30 +252,27 @@ impl IgesDimenToolNewGeneralNote {
                         "IgesDimenToolNewGeneralNote::read_own_params",
                     )?;
                 }
-                if pr.read_real_text(&pr.current(), "Rotation Angle", &mut rotation_angle)? {
-                    iges_array1_set(
-                        &rotation_angles,
-                        i,
-                        rotation_angle,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "Mirror Flag", &mut mirror_flag)? {
-                    iges_array1_set(
-                        &mirror_flags,
-                        i,
-                        mirror_flag,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "Rotate Flag", &mut rotate_flag)? {
-                    iges_array1_set(
-                        &rotate_flags,
-                        i,
-                        rotate_flag,
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
+                iges_read_real_item(
+                    pr,
+                    "Rotation Angle",
+                    &rotation_angles,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "Mirror Flag",
+                    &mirror_flags,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "Rotate Flag",
+                    &rotate_flags,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
                 if pr.read_xyz(&pr.current_list(1, 3), "Start Point", &mut start_point)? {
                     iges_array1_set(
                         &start_points,
@@ -319,14 +281,13 @@ impl IgesDimenToolNewGeneralNote {
                         "IgesDimenToolNewGeneralNote::read_own_params",
                     )?;
                 }
-                if pr.read_text(&pr.current(), "Text String", &mut text)? {
-                    iges_array1_set(
-                        &texts,
-                        i,
-                        text.clone(),
-                        "IgesDimenToolNewGeneralNote::read_own_params",
-                    )?;
-                }
+                iges_read_text_item(
+                    pr,
+                    "Text String",
+                    &texts,
+                    i,
+                    "IgesDimenToolNewGeneralNote::read_own_params",
+                )?;
             }
         }
         self.dir_checker(ent).check_type_and_form(pr.c_check(), ent);

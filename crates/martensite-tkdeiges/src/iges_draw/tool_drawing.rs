@@ -161,15 +161,16 @@ impl IgesDrawToolDrawing {
             let mut val: Handle<dyn IgesDataViewKindEntity> = ent.view_item(i)?;
             if val.is_null() {
                 continue;
-            } else {
-                if (iges_live(&val, "IgesDrawToolDrawing::own_correct")?
-                    .iges_entity()
-                    .type_number())
-                    == 0
-                {
-                    continue;
-                }
             }
+
+            if (iges_live(&val, "IgesDrawToolDrawing::own_correct")?
+                .iges_entity()
+                .type_number())
+                == 0
+            {
+                continue;
+            }
+
             nbtrue += 1;
             iges_array1_set(
                 &views,

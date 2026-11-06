@@ -17,6 +17,7 @@ use crate::iges_data::{
     IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
     iges_new_array1,
 };
+use crate::iges_data::{iges_read_integer_item, iges_read_real_item, iges_read_text_item};
 use crate::iges_dimen::IgesDimenGeneralNote;
 use crate::iges_graph::IgesGraphTextFontDef;
 use martensite_tkernel::ncollection::HArray1;
@@ -74,41 +75,30 @@ impl IgesDimenToolGeneralNote {
         }
         if !nb_chars.is_null() {
             for i in 1..=nbval {
-                let mut nb_char: i32 = Default::default();
-                let mut box_width: f64 = Default::default();
-                let mut box_height: f64 = Default::default();
                 let mut font_code: i32 = Default::default();
                 let mut font_entity: Handle<IgesGraphTextFontDef> = Default::default();
-                let mut slant_angle: f64 = Default::default();
-                let mut rotation_angle: f64 = Default::default();
-                let mut mirror_flag: i32 = Default::default();
-                let mut rotate_flag: i32 = Default::default();
                 let mut start_point: Xyz = Default::default();
-                let mut text: Handle<HAsciiString> = Default::default();
-                if pr.read_integer_text(&pr.current(), "Number of Characters", &mut nb_char)? {
-                    iges_array1_set(
-                        &nb_chars,
-                        i,
-                        nb_char,
-                        "IgesDimenToolGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_real_text(&pr.current(), "Box Width", &mut box_width)? {
-                    iges_array1_set(
-                        &box_widths,
-                        i,
-                        box_width,
-                        "IgesDimenToolGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_real_text(&pr.current(), "Box Height", &mut box_height)? {
-                    iges_array1_set(
-                        &box_heights,
-                        i,
-                        box_height,
-                        "IgesDimenToolGeneralNote::read_own_params",
-                    )?;
-                }
+                iges_read_integer_item(
+                    pr,
+                    "Number of Characters",
+                    &nb_chars,
+                    i,
+                    "IgesDimenToolGeneralNote::read_own_params",
+                )?;
+                iges_read_real_item(
+                    pr,
+                    "Box Width",
+                    &box_widths,
+                    i,
+                    "IgesDimenToolGeneralNote::read_own_params",
+                )?;
+                iges_read_real_item(
+                    pr,
+                    "Box Height",
+                    &box_heights,
+                    i,
+                    "IgesDimenToolGeneralNote::read_own_params",
+                )?;
                 let mut curnum: i32 = pr.current_number();
                 if pr.defined_else_skip()? {
                     pr.read_integer_text(&pr.current(), "Font Code", &mut font_code)?;
@@ -146,14 +136,13 @@ impl IgesDimenToolGeneralNote {
                     )?;
                 }
                 if pr.defined_else_skip()? {
-                    if pr.read_real_text(&pr.current(), "Slant Angle", &mut slant_angle)? {
-                        iges_array1_set(
-                            &slant_angles,
-                            i,
-                            slant_angle,
-                            "IgesDimenToolGeneralNote::read_own_params",
-                        )?;
-                    }
+                    iges_read_real_item(
+                        pr,
+                        "Slant Angle",
+                        &slant_angles,
+                        i,
+                        "IgesDimenToolGeneralNote::read_own_params",
+                    )?;
                 } else {
                     iges_array1_set(
                         &slant_angles,
@@ -162,30 +151,27 @@ impl IgesDimenToolGeneralNote {
                         "IgesDimenToolGeneralNote::read_own_params",
                     )?;
                 }
-                if pr.read_real_text(&pr.current(), "Rotation Angle", &mut rotation_angle)? {
-                    iges_array1_set(
-                        &rotation_angles,
-                        i,
-                        rotation_angle,
-                        "IgesDimenToolGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "Mirror Flag", &mut mirror_flag)? {
-                    iges_array1_set(
-                        &mirror_flags,
-                        i,
-                        mirror_flag,
-                        "IgesDimenToolGeneralNote::read_own_params",
-                    )?;
-                }
-                if pr.read_integer_text(&pr.current(), "Rotate Flag", &mut rotate_flag)? {
-                    iges_array1_set(
-                        &rotate_flags,
-                        i,
-                        rotate_flag,
-                        "IgesDimenToolGeneralNote::read_own_params",
-                    )?;
-                }
+                iges_read_real_item(
+                    pr,
+                    "Rotation Angle",
+                    &rotation_angles,
+                    i,
+                    "IgesDimenToolGeneralNote::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "Mirror Flag",
+                    &mirror_flags,
+                    i,
+                    "IgesDimenToolGeneralNote::read_own_params",
+                )?;
+                iges_read_integer_item(
+                    pr,
+                    "Rotate Flag",
+                    &rotate_flags,
+                    i,
+                    "IgesDimenToolGeneralNote::read_own_params",
+                )?;
                 if pr.read_xyz(&pr.current_list(1, 3), "Start Point", &mut start_point)? {
                     iges_array1_set(
                         &start_points,
@@ -194,14 +180,13 @@ impl IgesDimenToolGeneralNote {
                         "IgesDimenToolGeneralNote::read_own_params",
                     )?;
                 }
-                if pr.read_text(&pr.current(), "Text String", &mut text)? {
-                    iges_array1_set(
-                        &texts,
-                        i,
-                        text.clone(),
-                        "IgesDimenToolGeneralNote::read_own_params",
-                    )?;
-                }
+                iges_read_text_item(
+                    pr,
+                    "Text String",
+                    &texts,
+                    i,
+                    "IgesDimenToolGeneralNote::read_own_params",
+                )?;
             }
         }
         if !((((((((((nb_chars.is_null() || box_widths.is_null()) || box_heights.is_null())

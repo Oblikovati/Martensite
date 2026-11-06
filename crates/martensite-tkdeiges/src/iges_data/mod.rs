@@ -34,6 +34,7 @@ mod package;
 mod param_cursor;
 mod param_reader;
 mod param_reader_entity;
+mod param_reader_items;
 mod param_reader_lists;
 mod param_reader_read;
 mod protocol;
@@ -92,6 +93,9 @@ pub use modules::{
 pub use package::{iges_data_init, iges_data_protocol};
 pub use param_cursor::IgesDataParamCursor;
 pub use param_reader::{IgesDataParamReader, IgesDataReadMessage, iges_atoi, iges_msg};
+pub(crate) use param_reader_items::{
+    iges_read_integer_item, iges_read_real_item, iges_read_text_item,
+};
 pub use protocol::{
     IgesDataFileProtocol, IgesDataProtocol, IgesDataProtocolOps, iges_protocol_is_suitable_model,
     iges_protocol_is_unknown_entity, iges_protocol_new_model, iges_protocol_unknown_entity,

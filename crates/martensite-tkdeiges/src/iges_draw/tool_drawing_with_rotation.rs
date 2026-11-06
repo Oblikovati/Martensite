@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_real_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
     IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
@@ -60,7 +61,6 @@ impl IgesDrawToolDrawingWithRotation {
             orientation_angles = iges_new_array1::<f64>(1, nbval)?;
             let mut temp_view: Handle<dyn IgesDataViewKindEntity> = Default::default();
             let mut temp_xy: Xy = Default::default();
-            let mut temp_orient: f64 = Default::default();
             for i in 1..=nbval {
                 if pr.read_entity_typed(
                     ir,
@@ -86,14 +86,13 @@ impl IgesDrawToolDrawingWithRotation {
                     )?;
                 }
                 if pr.defined_else_skip()? {
-                    if pr.read_real_text(&pr.current(), "array viewOrigins", &mut temp_orient)? {
-                        iges_array1_set(
-                            &orientation_angles,
-                            i,
-                            temp_orient,
-                            "IgesDrawToolDrawingWithRotation::read_own_params",
-                        )?;
-                    }
+                    iges_read_real_item(
+                        pr,
+                        "array viewOrigins",
+                        &orientation_angles,
+                        i,
+                        "IgesDrawToolDrawingWithRotation::read_own_params",
+                    )?;
                 } else {
                     iges_array1_set(
                         &orientation_angles,
@@ -187,15 +186,16 @@ impl IgesDrawToolDrawingWithRotation {
             let mut val: Handle<dyn IgesDataViewKindEntity> = ent.view_item(i)?;
             if val.is_null() {
                 continue;
-            } else {
-                if (iges_live(&val, "IgesDrawToolDrawingWithRotation::own_correct")?
-                    .iges_entity()
-                    .type_number())
-                    == 0
-                {
-                    continue;
-                }
             }
+
+            if (iges_live(&val, "IgesDrawToolDrawingWithRotation::own_correct")?
+                .iges_entity()
+                .type_number())
+                == 0
+            {
+                continue;
+            }
+
             nbtrue += 1;
             iges_array1_set(
                 &views,

@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
     IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
@@ -64,7 +65,6 @@ impl IgesDrawToolLabelDisplay {
             let mut temp_view: Handle<dyn IgesDataViewKindEntity> = Default::default();
             let mut temp_xyz: Xyz = Default::default();
             let mut temp_leader_arrow: Handle<IgesDimenLeaderArrow> = Default::default();
-            let mut temp_label: i32 = Default::default();
             let mut temp_displayed_entity: Handle<IgesDataIgesEntity> = Default::default();
             for i in 1..=nbval {
                 if pr.read_entity_typed(
@@ -105,14 +105,13 @@ impl IgesDrawToolLabelDisplay {
                         "IgesDrawToolLabelDisplay::read_own_params",
                     )?;
                 }
-                if pr.read_integer_text(&pr.current(), "array labelLevels", &mut temp_label)? {
-                    iges_array1_set(
-                        &label_levels,
-                        i,
-                        temp_label,
-                        "IgesDrawToolLabelDisplay::read_own_params",
-                    )?;
-                }
+                iges_read_integer_item(
+                    pr,
+                    "array labelLevels",
+                    &label_levels,
+                    i,
+                    "IgesDrawToolLabelDisplay::read_own_params",
+                )?;
                 if pr.read_entity(
                     ir,
                     &pr.current(),

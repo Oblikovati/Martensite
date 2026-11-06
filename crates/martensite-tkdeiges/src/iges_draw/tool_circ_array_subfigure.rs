@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
     IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
@@ -84,19 +85,13 @@ impl IgesDrawToolCircArraySubfigure {
         if !temp_num_pos.is_null() {
             let mut i: i32 = Default::default();
             for i in 1..=temp_list_count {
-                let mut temp_position: i32 = Default::default();
-                if pr.read_integer_text(
-                    &pr.current(),
+                iges_read_integer_item(
+                    pr,
                     "Number Of Position To Process",
-                    &mut temp_position,
-                )? {
-                    iges_array1_set(
-                        &temp_num_pos,
-                        i,
-                        temp_position,
-                        "IgesDrawToolCircArraySubfigure::read_own_params",
-                    )?;
-                }
+                    &temp_num_pos,
+                    i,
+                    "IgesDrawToolCircArraySubfigure::read_own_params",
+                )?;
             }
         }
         self.dir_checker(ent).check_type_and_form(pr.c_check(), ent);
