@@ -40,6 +40,7 @@ pub(super) fn crossing_action(
         param1: parameters.0,
         param2: parameters.1,
         tolerance,
+        distance_tolerance: tolerance,
         improved: false,
     }))
 }

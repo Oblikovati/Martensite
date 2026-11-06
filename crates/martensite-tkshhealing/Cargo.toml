@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkshhealing"
-version = "0.3.7"
+version = "0.3.8"
 description = "Martensite shape healing: analysis, repair, conversion and subdivision of boundary shapes."
 edition.workspace = true
 rust-version.workspace = true
