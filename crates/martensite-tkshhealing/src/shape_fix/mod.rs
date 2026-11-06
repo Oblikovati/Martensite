@@ -50,3 +50,6 @@ pub use solid::ShapeFixSolid;
 
 mod wireframe;
 pub use wireframe::{ShapeFixWireframe, ShapeFixWireframeShapeLists};
+
+#[cfg(test)]
+mod fix_regression_tests;

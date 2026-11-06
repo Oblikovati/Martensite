@@ -49,10 +49,13 @@ impl ShapeFixWire {
             return Ok(false);
         }
         let start = if self.closed_mode() { 1 } else { 2 };
-        for index in start..=analyzer.nb_edges() {
+        // Repairs insert edges: the count is read again for each one.
+        let mut index = start;
+        while index <= analyzer.nb_edges() {
             self.fix_lacking_at(index, force)?;
             let last_status = self.state.read().last_fix_status;
             self.state.write().lacking_status |= last_status;
+            index += 1;
         }
         Ok(self.status_lacking(ShapeExtendStatus::Done))
     }
@@ -136,11 +139,15 @@ impl ShapeFixWire {
         if needed < self.precision() {
             return self.increase_lacking_tolerance(&pair.first_vertex, &pair.last_vertex, needed);
         }
+        // Enough 3D space for a long edge comes before any tolerance increase.
+        if let Some(changed) = self.try_long_edge(pair, analyzer)? {
+            return Ok(changed);
+        }
         let tolerance = pair.vertex_tolerance()?;
         if self.can_raise_lacking_tolerance(pair, analyzer, needed, tolerance)? {
             return self.try_bend_or_raise(pair, candidates, needed);
         }
-        self.finish_lacking_edge_choice(pair, analyzer, candidates, needed, tolerance)
+        self.maybe_insert_midpoint_edge(pair, analyzer, candidates, needed, tolerance)
     }
 
     fn try_bend_or_raise(
@@ -244,23 +251,6 @@ impl ShapeFixWire {
         }
         self.set_last_fix_status(ShapeExtendStatus::Fail2);
         Ok(false)
-    }
-
-    fn finish_lacking_edge_choice(
-        &self,
-        pair: &LackingPair,
-        analyzer: &ShapeAnalysisWire,
-        candidates: Option<&(
-            wire_lacking_bending::BentPCurve,
-            wire_lacking_bending::BentPCurve,
-        )>,
-        needed: f64,
-        tolerance: f64,
-    ) -> Result<bool, Failure> {
-        if let Some(changed) = self.try_long_edge(pair, analyzer)? {
-            return Ok(changed);
-        }
-        self.maybe_insert_midpoint_edge(pair, analyzer, candidates, needed, tolerance)
     }
 
     fn try_long_edge(

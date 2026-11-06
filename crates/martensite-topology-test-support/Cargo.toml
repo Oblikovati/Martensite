@@ -1,0 +1,22 @@
+[package]
+name = "martensite-topology-test-support"
+version = "0.7.0"
+description = "Shared construction and measurement fixtures for Martensite topology tests."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.7" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.8" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.1" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.7" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.5" }

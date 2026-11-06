@@ -18,6 +18,7 @@ pub struct KronrodSingleIntegration {
     absolute: f64,
     order: i32,
     iterations: i32,
+    absolute_floor: f64,
 }
 impl Quadrature {
     fn new(order: i32) -> Option<Self> {
@@ -86,6 +87,12 @@ impl KronrodSingleIntegration {
         self.absolute = self.error;
         self.iterations += 1;
     }
+    /// Also stops refining once the absolute error is at most `floor`, for an integral that
+    /// cancels to round-off and so has no reachable relative error; 0 by default, which
+    /// changes nothing; `integral.set_absolute_floor(1e-9)`.
+    pub fn set_absolute_floor(&mut self, floor: f64) {
+        self.absolute_floor = floor;
+    }
     /// Refines the largest-error interval, preserving early returns; `integral.perform_with_tolerance(&mut f,0.0,1.0,15,1e-8,100)`.
     pub fn perform_with_tolerance(
         &mut self,
@@ -115,7 +122,10 @@ impl KronrodSingleIntegration {
             self.error /= self.value.abs();
         }
         self.iterations += 1;
-        if self.error <= tolerance || self.iterations >= limit {
+        if self.error <= tolerance
+            || self.absolute <= self.absolute_floor
+            || self.iterations >= limit
+        {
             return;
         }
         self.refine(f, &q, [lower, upper], tolerance, limit);

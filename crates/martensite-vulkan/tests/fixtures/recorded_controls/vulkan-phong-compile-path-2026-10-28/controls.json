@@ -1,0 +1,4402 @@
+{
+ "decision": "Phong compile-path residue, user decision 2026-10-28 (the design notes)",
+ "source_revision": "b8e5762fdc954ed441ac23a5f5633119517cf370",
+ "mesa": "26.1.6-1pop0~1787580452~24.04~a5619ea26.1.6-1pop0~1787580452~24.04~a5619ea",
+ "profile": {
+  "GALLIUM_OVERRIDE_CPU_CAPS": "sse2",
+  "LP_NATIVE_VECTOR_WIDTH": "128"
+ },
+ "native_archives": [
+  "tkv3d-lane2-modalg-display-2026-10-28b",
+  "v3d-draw-groups-model-cp8",
+  "v3d-draw-groups-scene-cp8",
+  "vk-draw-groups/mesh2/native/software (checkpoint 9)",
+  "vk-draw-groups/shapes2/native/software (checkpoint 9)",
+  "vk-tkv3d-draw-groups/{light-source,manipulator,trihedron}/native/software (lane 2, d71c26bdf)",
+  "vk-draw-groups/{new1,new3,mesh2,model1}/native/software (gpu-quality sixth run, 9fa2742c8)"
+ ],
+ "recorded_tests": [
+  "buc60707",
+  "bug109",
+  "bug20373",
+  "bug21757_1",
+  "bug21757_2",
+  "bug21757",
+  "bug22798_1",
+  "bug22798_2",
+  "bug22818_1",
+  "bug22818_2",
+  "bug22900",
+  "bug22910_2",
+  "bug23170",
+  "bug23253",
+  "bug23282_1",
+  "bug23282_2",
+  "bug23738",
+  "bug23795",
+  "bug24220",
+  "bug24890",
+  "bug25042",
+  "bug25044_21",
+  "bug25044_30",
+  "bug25071",
+  "bug25264",
+  "bug25588_20",
+  "bug25594",
+  "bug25611_1",
+  "bug25611_2",
+  "bug258_1",
+  "bug25982",
+  "bug264_0",
+  "bug264_2",
+  "bug264_3",
+  "bug264_4",
+  "bug264_7",
+  "bug26716",
+  "bug26965",
+  "bug27845",
+  "bug28379",
+  "bug292",
+  "bug29807_b2",
+  "bug29807_b4a",
+  "bug29807_b4b",
+  "bug31258",
+  "bug31449_2",
+  "bug32073",
+  "bug6412",
+  "bug810_1",
+  "bug_polyline_inclusion",
+  "manipulator",
+  "rotate2"
+ ],
+ "rows": [
+  {
+   "image": "buc60707.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 10379,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     154,
+     151
+    ],
+    [
+     133,
+     209
+    ]
+   ],
+   "test": "buc60707",
+   "native_sha256": "0fd786145bb63af04ed6d25ee36c9f7a783d80efac19e7724333f4a2b06205fc",
+   "vulkan_sha256": "be0769b8245488790b21c9f474c34a75fa6deb79419250b6b76d0f59b621b1e9",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0
+  },
+  {
+   "image": "bug109.png",
+   "frame": "f0007",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 3,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 56681,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     280,
+     196
+    ],
+    [
+     145,
+     198
+    ],
+    [
+     285,
+     312
+    ]
+   ],
+   "test": "bug109",
+   "native_sha256": "2d97156652329e19d912fe546db6f44ddf0b1a7d6d52ec264d8bc76e5543e00c",
+   "vulkan_sha256": "f20416b604757d9cb315267bb0f6a63b212e23c56578ac92599ddbc4605bf58f",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0
+  },
+  {
+   "image": "bug20373.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 5,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 48036,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     313,
+     147
+    ],
+    [
+     202,
+     188
+    ],
+    [
+     181,
+     193
+    ],
+    [
+     204,
+     238
+    ],
+    [
+     123,
+     280
+    ]
+   ],
+   "test": "bug20373",
+   "native_sha256": "eab678fed136765e519ef4c2a1faa792a66daca6be58e645bb568823373b73a1",
+   "vulkan_sha256": "425bfc125ca88b81dd85d6f9687d46e9ea4572580a2c52564f2b569ecc9a1ecb",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 6
+  },
+  {
+   "image": "bug21757_1.png",
+   "frame": "f0010",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 50831,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     202,
+     303
+    ]
+   ],
+   "test": "bug21757_1",
+   "native_sha256": "ee369720b756d925e4478900a2fcad6fe27e6e09126fdb841b5819e7ba2871a1",
+   "vulkan_sha256": "e2d1e39e7dc831fbf9d330310215fba951c5f4045faf593c911c6d6ec2b2f48b",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2
+  },
+  {
+   "image": "bug21757_2.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 50899,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     225,
+     261
+    ]
+   ],
+   "test": "bug21757_2",
+   "native_sha256": "071e8be1bdf90a5a1c0f697ebe68b9e65276febb17da9f006431f51d9e334b9a",
+   "vulkan_sha256": "eda143e89a2582b561420cc13fb4dfec3bd025a843323968d94c3eb466a1c0fe",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1
+  },
+  {
+   "image": "bug21757.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 50831,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     202,
+     303
+    ]
+   ],
+   "test": "bug21757",
+   "native_sha256": "ee369720b756d925e4478900a2fcad6fe27e6e09126fdb841b5819e7ba2871a1",
+   "vulkan_sha256": "e2d1e39e7dc831fbf9d330310215fba951c5f4045faf593c911c6d6ec2b2f48b",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2
+  },
+  {
+   "image": "bug22304.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 9773,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 1,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     203,
+     303
+    ]
+   ],
+   "test": "bug22304",
+   "native_sha256": "5e86be35fb86ceb30d5e290127fe30fee1aa868e5d61d86bf7b5fe8147230593",
+   "vulkan_sha256": "5312e86e782251e757235548424be7aecb8a829d8f4a62f03338c022c273e722",
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0
+  },
+  {
+   "image": "bug22798_1.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 9,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 48121,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     300,
+     127
+    ],
+    [
+     203,
+     180
+    ],
+    [
+     214,
+     186
+    ],
+    [
+     109,
+     196
+    ],
+    [
+     223,
+     201
+    ],
+    [
+     182,
+     207
+    ],
+    [
+     226,
+     208
+    ],
+    [
+     119,
+     232
+    ]
+   ],
+   "test": "bug22798_1",
+   "native_sha256": "566e721f39c131c3a3a192279ec81f1f5c5287f24b440f9142ef76927c6d19ee",
+   "vulkan_sha256": "db5a8e01c9cafd371681611a904caf5d96f9047377dbb3dabc2f16e27fab6dd5",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2
+  },
+  {
+   "image": "bug22798_2.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 3,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 41092,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     175,
+     188
+    ],
+    [
+     250,
+     195
+    ],
+    [
+     247,
+     212
+    ]
+   ],
+   "test": "bug22798_2",
+   "native_sha256": "0235115b44a7df006f0e013a9960fc47462db09277d4028ac4ce5b45e79bfc9a",
+   "vulkan_sha256": "7f67e6040d99dea55e2742808263d1908acaab782cdeff5371f6e2fef67a3cab",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2
+  },
+  {
+   "image": "bug22818_1.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 15,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 42580,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     152,
+     73
+    ],
+    [
+     194,
+     121
+    ],
+    [
+     152,
+     157
+    ],
+    [
+     160,
+     206
+    ],
+    [
+     163,
+     217
+    ],
+    [
+     183,
+     221
+    ],
+    [
+     157,
+     229
+    ],
+    [
+     156,
+     243
+    ]
+   ],
+   "test": "bug22818_1",
+   "native_sha256": "af1c23ff007755c2ae5b21d9832f2066daa5b3eb2982596f96ad86ee904aec55",
+   "vulkan_sha256": "d0adea678810cde52bb76825ca60cb529ecd35a99bb1c938376194a236321d1d",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 12
+  },
+  {
+   "image": "bug22818_2.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 14,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 32209,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     154,
+     99
+    ],
+    [
+     148,
+     100
+    ],
+    [
+     222,
+     101
+    ],
+    [
+     265,
+     127
+    ],
+    [
+     129,
+     141
+    ],
+    [
+     149,
+     156
+    ],
+    [
+     160,
+     173
+    ],
+    [
+     156,
+     175
+    ]
+   ],
+   "test": "bug22818_2",
+   "native_sha256": "e7372c67f04ff800f664bb6389f22620dc5dbb740922c17f723343f8f0d8a07c",
+   "vulkan_sha256": "5d8f058674248a2cf5d6661a9087360ac4377a7b3c32502f6774da942a1443fa",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 8
+  },
+  {
+   "image": "bug23170.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 7,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 48152,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     305,
+     147
+    ],
+    [
+     196,
+     173
+    ],
+    [
+     190,
+     191
+    ],
+    [
+     188,
+     206
+    ],
+    [
+     235,
+     218
+    ],
+    [
+     218,
+     222
+    ],
+    [
+     171,
+     301
+    ]
+   ],
+   "test": "bug23170",
+   "native_sha256": "695ddd4796c38dd6dd5a5065b2403ae5d5e116707acb071e5bbda898693c1757",
+   "vulkan_sha256": "fd7bc6e9af4f275e4ef0c21fe17d0385a36fbf770da422833051fcc2bc8121ff",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 4
+  },
+  {
+   "image": "bug23282_1.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 45589,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     96,
+     144
+    ]
+   ],
+   "test": "bug23282_1",
+   "native_sha256": "4e682fabbfd93e5e2828d9c82c9ae7cc23543a646e37d253d14889c1cd1bb3c7",
+   "vulkan_sha256": "d33e16cd732bcc6c9ad10df499fb0f015c8ded2ec1f7c3e44f822d6fe67ea5d2",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0
+  },
+  {
+   "image": "bug23282_2.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 29748,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     114,
+     111
+    ],
+    [
+     135,
+     145
+    ]
+   ],
+   "test": "bug23282_2",
+   "native_sha256": "f2b21bbab03f54632e41a56275d5774209985c56f355a059f6805de2a9630ccd",
+   "vulkan_sha256": "e8d512a6407ab90be7ca4a43dc762e8ac676092d964d819ddcf3e3a51f7fb6c5",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1
+  },
+  {
+   "image": "bug23378_1.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 7,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 48872,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 3,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     16,
+     142
+    ],
+    [
+     116,
+     159
+    ],
+    [
+     26,
+     162
+    ],
+    [
+     206,
+     238
+    ],
+    [
+     286,
+     269
+    ],
+    [
+     231,
+     284
+    ],
+    [
+     301,
+     328
+    ]
+   ],
+   "test": "bug23378_1",
+   "native_sha256": "7ea5daee890df87c4b6e4bb534736f277320ede955257815a19cc715164e451e",
+   "vulkan_sha256": "cf5555b7e7ded0a4e2f041343edb61098adb52a6b00ce496b85cebe1fee28bae",
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1
+  },
+  {
+   "image": "bug24220.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 3,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 70787,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     220,
+     90
+    ],
+    [
+     115,
+     306
+    ],
+    [
+     114,
+     316
+    ]
+   ],
+   "test": "bug24220",
+   "native_sha256": "5676d68f650ee4bdfef379f614658ffee8b873b83246065262135a61717fa52d",
+   "vulkan_sha256": "7bbfe663f4fa557e2e0325358fb5bbc3b9220c2890787818d7d191a183f9cffe",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0
+  },
+  {
+   "image": "bug24654.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 4,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 49379,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 5,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     156,
+     149
+    ],
+    [
+     199,
+     233
+    ],
+    [
+     178,
+     245
+    ],
+    [
+     301,
+     249
+    ]
+   ],
+   "test": "bug24654",
+   "native_sha256": "1fdbe4d4daefa88b9b2a8eecf55521ab42c1a3dc2469730be44d45b568973b39",
+   "vulkan_sha256": "95ee1d00e5da858f365f9243c2e1072db0bf923c0720421ff7281595e2d4ed7d",
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 3
+  },
+  {
+   "image": "bug24890.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 53274,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     270,
+     201
+    ]
+   ],
+   "test": "bug24890",
+   "native_sha256": "845a490f8ae617cad9ff05dc113bdf15b2ea9267a479ac1f4f8906b104adc677",
+   "vulkan_sha256": "731ea414dfa27da7aa945168e0ee54af5f23f3f37c4df7ce58abcebb0e9a2d02",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1
+  },
+  {
+   "image": "bug258_1.png",
+   "frame": "f0007",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 77994,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     179,
+     51
+    ],
+    [
+     87,
+     220
+    ]
+   ],
+   "test": "bug258_1",
+   "native_sha256": "f85127cf294db905bbfe61c6f495b2a09576cffb564e1e2565afa42d55501d18",
+   "vulkan_sha256": "6b40c002ca1bbe98e686a0f35df20850017877b033deb08660d00fee90cad81b",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0
+  },
+  {
+   "image": "bug25982.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 4,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 43894,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     181,
+     165
+    ],
+    [
+     162,
+     252
+    ],
+    [
+     137,
+     274
+    ],
+    [
+     195,
+     279
+    ]
+   ],
+   "test": "bug25982",
+   "native_sha256": "41ffc0b3470a95e0154949765702e4f0d5b80672de364f04e2bf2e26c10a9865",
+   "vulkan_sha256": "ddd4f1ee05ae93aa078b13e7fc843ccf4da94937596d6b1a1e0db551d1dd1e28",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2
+  },
+  {
+   "image": "bug264_0.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 11,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 33989,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     136,
+     211
+    ],
+    [
+     165,
+     226
+    ],
+    [
+     142,
+     229
+    ],
+    [
+     155,
+     233
+    ],
+    [
+     126,
+     234
+    ],
+    [
+     79,
+     260
+    ],
+    [
+     180,
+     269
+    ],
+    [
+     165,
+     296
+    ]
+   ],
+   "test": "bug264_0",
+   "native_sha256": "bbed430281f48f5574aef26ea7e991fd2c8671b667b2ee159a72668cf82ed739",
+   "vulkan_sha256": "4b46d8899b2fd616fea65502baf34ff3bf316d7a5342ed4b9195fb7784e9d292",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 7
+  },
+  {
+   "image": "bug264_1.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 66534,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 1,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     16,
+     166
+    ]
+   ],
+   "test": "bug264_1",
+   "native_sha256": "b327c76b5905af250bfd4a035765dedf09304efeb5fa862979474abb5728a79d",
+   "vulkan_sha256": "8fe07466549c2110cf088cf6a0232f09c1c20acea118541544c0d172b94ed129",
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1
+  },
+  {
+   "image": "bug264_2.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 57570,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     189,
+     164
+    ],
+    [
+     382,
+     170
+    ]
+   ],
+   "test": "bug264_2",
+   "native_sha256": "a6ab6e237c9d8e12f1d9d33b19392fd3d857763f5151f33c3f5971257bac281e",
+   "vulkan_sha256": "f5dc2197fcdbb7c9b7cdd55e2fb2e921cefd416b2dae860c700f406bd86676b3",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1
+  },
+  {
+   "image": "bug264_3.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 11885,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     144,
+     156
+    ]
+   ],
+   "test": "bug264_3",
+   "native_sha256": "f6c0eaa3ecf7bf7b645fb698192ae35a10f63ad43aeb08abe491c652b4087209",
+   "vulkan_sha256": "656ad0510d730bc1f00da220507dc7d558a7714145e6f579e25d97c6c0cf1ce7",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1
+  },
+  {
+   "image": "bug264_4.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 20180,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     144,
+     185
+    ]
+   ],
+   "test": "bug264_4",
+   "native_sha256": "7a43d67d2c1f7312f3037cf395c0616b9e9d20ac97a43994027ec8f3b60160d6",
+   "vulkan_sha256": "4ae28cf806c737a7e63d6c389643815176bf11ac10df6887a118b169a48bb466",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1
+  },
+  {
+   "image": "bug264_5.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 9868,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 1,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     81,
+     261
+    ]
+   ],
+   "test": "bug264_5",
+   "native_sha256": "e43644e594a545ee4fd0634a883f4aaf0cf4b1490d05dc8c9e3cbbdfe865d02e",
+   "vulkan_sha256": "b3f6a7fbe65ef039cc6fb0dcb3e1a5986652d3ea7c63654ef1ba8047023dca84",
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0
+  },
+  {
+   "image": "bug264_7.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 8468,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     236,
+     138
+    ]
+   ],
+   "test": "bug264_7",
+   "native_sha256": "9b47347670a4fca8b4004ba64db3db05583f46ce04282ed9ee215799585c641d",
+   "vulkan_sha256": "65b1ea1e39d06b3f4caf152eac9ab1d35b0a71433b2f7c1467a11912e4b8ba12",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0
+  },
+  {
+   "image": "bug26716.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 11,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 48205,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     179,
+     83
+    ],
+    [
+     189,
+     95
+    ],
+    [
+     220,
+     175
+    ],
+    [
+     197,
+     193
+    ],
+    [
+     179,
+     196
+    ],
+    [
+     198,
+     205
+    ],
+    [
+     176,
+     210
+    ],
+    [
+     181,
+     214
+    ]
+   ],
+   "test": "bug26716",
+   "native_sha256": "a94beb027685298d361d746e013f49129e2f268e40e73633845a0ca49cc97c56",
+   "vulkan_sha256": "26b1c918cd95cd69c58198d32fc1c7ab567ae680124183382ab752928b5df3f5",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 5
+  },
+  {
+   "image": "bug287.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 5,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 31896,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 2,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     106,
+     114
+    ],
+    [
+     199,
+     201
+    ],
+    [
+     209,
+     223
+    ],
+    [
+     92,
+     274
+    ],
+    [
+     148,
+     304
+    ]
+   ],
+   "test": "bug287",
+   "native_sha256": "18a3aee10ea903b57451cd8bfe667e21f17e353b72029d8de8430b8e9424e12c",
+   "vulkan_sha256": "5b7684fbb446eb92b24d764456eb9ec67fde7edfedcffe83a357dccd53dd3938",
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2
+  },
+  {
+   "image": "bug288_2.png",
+   "frame": "f0007",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 5,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 39488,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 2,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1,
+   "residue_sample": [
+    [
+     269,
+     121
+    ],
+    [
+     271,
+     176
+    ],
+    [
+     271,
+     178
+    ],
+    [
+     185,
+     232
+    ],
+    [
+     275,
+     308
+    ]
+   ],
+   "test": "bug288_2",
+   "native_sha256": "bb0035406b5807db6047caf919e2873cde8eb02a84d2d32bf8706f087ede8391",
+   "vulkan_sha256": "28628467e0babd009c63550e253d8b6c99c30fa231d812be9ac3db7a76eda1b5",
+   "control_reproduces_vulkan": false,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": false
+  },
+  {
+   "image": "bug288_8.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 5,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 39488,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 2,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1,
+   "residue_sample": [
+    [
+     269,
+     121
+    ],
+    [
+     271,
+     176
+    ],
+    [
+     271,
+     178
+    ],
+    [
+     185,
+     232
+    ],
+    [
+     275,
+     308
+    ]
+   ],
+   "test": "bug288_8",
+   "native_sha256": "bb0035406b5807db6047caf919e2873cde8eb02a84d2d32bf8706f087ede8391",
+   "vulkan_sha256": "28628467e0babd009c63550e253d8b6c99c30fa231d812be9ac3db7a76eda1b5",
+   "control_reproduces_vulkan": false,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": false
+  },
+  {
+   "image": "bug292.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 11,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 33989,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     136,
+     211
+    ],
+    [
+     165,
+     226
+    ],
+    [
+     142,
+     229
+    ],
+    [
+     155,
+     233
+    ],
+    [
+     126,
+     234
+    ],
+    [
+     79,
+     260
+    ],
+    [
+     180,
+     269
+    ],
+    [
+     165,
+     296
+    ]
+   ],
+   "test": "bug292",
+   "native_sha256": "bbed430281f48f5574aef26ea7e991fd2c8671b667b2ee159a72668cf82ed739",
+   "vulkan_sha256": "4b46d8899b2fd616fea65502baf34ff3bf316d7a5342ed4b9195fb7784e9d292",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 7
+  },
+  {
+   "image": "bug29807_b2.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 85081,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     142,
+     71
+    ],
+    [
+     98,
+     97
+    ]
+   ],
+   "test": "bug29807_b2",
+   "native_sha256": "f99505fa6536549bf0b0406e02878eb257aa4670d1b263d0984fd78336b6ab25",
+   "vulkan_sha256": "4c2eede68221613c5e114a4a666f78a1a08be5b6ae28e5c170d8bb2c70f519d4",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0
+  },
+  {
+   "image": "bug29807_b4a.png",
+   "frame": "f0008",
+   "lit_draws": 2,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 85086,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     132,
+     236
+    ]
+   ],
+   "test": "bug29807_b4a",
+   "native_sha256": "73b6677eacbe83ab7a66b0e1431239928e5456cb6decef6e309687ed01ba9a8b",
+   "vulkan_sha256": "9313cf790fda40a5b1fae1bf106f34a026983bc32bdb5c366c0a122aef9c3c34",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1
+  },
+  {
+   "image": "bug29807_b4b.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 85086,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     132,
+     236
+    ]
+   ],
+   "test": "bug29807_b4b",
+   "native_sha256": "bf528617e8dc3727fc0ff649235061e28bd92f2e3d814744c01d8fe72042fcdd",
+   "vulkan_sha256": "fc3bd460e86e476c160f85d839db02af0e60573b3943ce5ce076659e442707ce",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1
+  },
+  {
+   "image": "bug31258.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 35177,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     168,
+     310
+    ],
+    [
+     240,
+     333
+    ]
+   ],
+   "test": "bug31258",
+   "native_sha256": "f334acfc2a1263d51e10e9ffbf43473b57c82d18637f8d98a965ac8d2605b6fa",
+   "vulkan_sha256": "9ac4392ac03cd4c4b6d7b6cd6362f727f718c2a0280d6d02a2e9311d8d43946f",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0
+  },
+  {
+   "image": "bug4894.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 4,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 57926,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 2,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2,
+   "residue_sample": [
+    [
+     317,
+     134
+    ],
+    [
+     216,
+     185
+    ],
+    [
+     188,
+     286
+    ],
+    [
+     144,
+     319
+    ]
+   ],
+   "test": "bug4894",
+   "native_sha256": "56419a8a914cd8c951b88e97723f6925b520b958ec74ee8fe4e1fcee8eea1f9c",
+   "vulkan_sha256": "c32d9b1fe3f2db6791ee563a7887352e24fe48548e744196aa7c713ace37a62a",
+   "control_reproduces_vulkan": false,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": false
+  },
+  {
+   "image": "bug6412.png",
+   "frame": "f0007",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 25724,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     191,
+     147
+    ]
+   ],
+   "test": "bug6412",
+   "native_sha256": "0a997654e5966b96c130a94f2ab5843f95faa384bcc4971d7f10d7f0529ac3a6",
+   "vulkan_sha256": "c96e05218e71eb73e31b3bbfb53ddd40284845ebac7df5de4813408210a32c7b",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1
+  },
+  {
+   "image": "bug810_1.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 24598,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "residue_sample": [
+    [
+     256,
+     241
+    ],
+    [
+     172,
+     252
+    ]
+   ],
+   "test": "bug810_1",
+   "native_sha256": "e2a9ebaa0f3ea79b8e7c6d79f55e490d0ad5beea7ea9afc0fdc6428f7ffa7bf5",
+   "vulkan_sha256": "94790637a30d437e90aa253dc155bd4477c3d4fffa7cf8e4e9c4c10ebb2a39f4",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0
+  },
+  {
+   "image": "bug22910_2.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 4576,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0,
+   "residue_sample": [
+    [
+     179,
+     186
+    ]
+   ],
+   "test": "bug22910_2",
+   "native_sha256": "8a32d28c93437c7be122d464e2b2b407214d1138b26c7ed209b730c0881d17fc",
+   "vulkan_sha256": "682476c7a6a445a5289941e80d57de0dc74c9e665fb626de894604e3d8c75a35",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug23738.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 8,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 51020,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1,
+   "residue_sample": [
+    [
+     245,
+     77
+    ],
+    [
+     189,
+     131
+    ],
+    [
+     238,
+     196
+    ],
+    [
+     242,
+     201
+    ],
+    [
+     368,
+     221
+    ],
+    [
+     168,
+     245
+    ],
+    [
+     251,
+     247
+    ],
+    [
+     273,
+     283
+    ]
+   ],
+   "test": "bug23738",
+   "native_sha256": "8d0b687a8687cb77ef790967367d33aa11175a3d8d63ff7cc456af2dcbf797f0",
+   "vulkan_sha256": "3ed1ae05b40af329f5c2ef24c40e122d3adf6c2f3383e4750a519722bd4fac0a",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug23795.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 14,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 18307,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 5,
+   "residue_sample": [
+    [
+     210,
+     144
+    ],
+    [
+     198,
+     190
+    ],
+    [
+     210,
+     285
+    ],
+    [
+     210,
+     286
+    ],
+    [
+     210,
+     287
+    ],
+    [
+     210,
+     288
+    ],
+    [
+     210,
+     289
+    ],
+    [
+     210,
+     290
+    ]
+   ],
+   "test": "bug23795",
+   "native_sha256": "ddc1fa929c965c9638164c46c0ee9d3abcb35116bc07fd319aa4ce1141af9f5b",
+   "vulkan_sha256": "f7f59ac757805cc0355a3471b75c7d27e1e115e556f0eacac5652c9b404eedcf",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug25042.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 24,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 65702,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 14,
+   "residue_sample": [
+    [
+     228,
+     122
+    ],
+    [
+     368,
+     163
+    ],
+    [
+     384,
+     171
+    ],
+    [
+     398,
+     179
+    ],
+    [
+     391,
+     191
+    ],
+    [
+     402,
+     201
+    ],
+    [
+     247,
+     207
+    ],
+    [
+     258,
+     209
+    ]
+   ],
+   "test": "bug25042",
+   "native_sha256": "6a42e27dfe767c59786d2e0ce84a2f124a6ed18f561c69ce236a16e20c242112",
+   "vulkan_sha256": "4ae153508d64ed1561f2dde913483deea7ea906d0d79912cdf4d9ce099de0ae3",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug25264.png",
+   "frame": "f0015",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 3,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 50902,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2,
+   "residue_sample": [
+    [
+     198,
+     268
+    ],
+    [
+     195,
+     283
+    ],
+    [
+     128,
+     288
+    ]
+   ],
+   "test": "bug25264",
+   "native_sha256": "04a379938a5ea63c95bac67f6850934f1b25335733164cdb76bb304139593c68",
+   "vulkan_sha256": "e8aaad5c5710ee7b7073102f4479c7ee4b433fd2d25da8916d9e806dac032986",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug25264_1.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 6,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 50902,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 3,
+   "residue_sample": [
+    [
+     267,
+     214
+    ],
+    [
+     267,
+     220
+    ],
+    [
+     198,
+     268
+    ],
+    [
+     195,
+     283
+    ],
+    [
+     205,
+     284
+    ],
+    [
+     128,
+     288
+    ]
+   ],
+   "test": "bug25264",
+   "native_sha256": "c7a438404ce7e0f3e188db27103fd20a0178f91672f8dff4182c0fa400995f40",
+   "vulkan_sha256": "95b59ae3067c70882aa1df979993799840f2dc3ffd7f6b904ce5f17321ca10cc",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug25264_2.png",
+   "frame": "f0014",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 3,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 50902,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2,
+   "residue_sample": [
+    [
+     198,
+     268
+    ],
+    [
+     195,
+     283
+    ],
+    [
+     128,
+     288
+    ]
+   ],
+   "test": "bug25264",
+   "native_sha256": "04a379938a5ea63c95bac67f6850934f1b25335733164cdb76bb304139593c68",
+   "vulkan_sha256": "e8aaad5c5710ee7b7073102f4479c7ee4b433fd2d25da8916d9e806dac032986",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug25594.png",
+   "frame": "f0010",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 11,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 60832,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 9,
+   "residue_sample": [
+    [
+     331,
+     100
+    ],
+    [
+     386,
+     122
+    ],
+    [
+     298,
+     133
+    ],
+    [
+     276,
+     152
+    ],
+    [
+     288,
+     167
+    ],
+    [
+     199,
+     210
+    ],
+    [
+     140,
+     227
+    ],
+    [
+     101,
+     244
+    ]
+   ],
+   "test": "bug25594",
+   "native_sha256": "ba100a3989760f32f76631e733f480c6d097aaab30b4270a8d22a3c82e9fe0ff",
+   "vulkan_sha256": "2a1aa45a26fbead216e9344521cafdd8d69d105fe7fffeedcbe66c71175a96b2",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug26928-01.png",
+   "frame": "f0015",
+   "lit_draws": 1,
+   "other_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 24888,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 1366,
+   "glsl_bottomup_differs_from_native_on_control_lit": 1364,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 1364,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1364,
+   "residue_sample": [
+    [
+     319,
+     258
+    ],
+    [
+     228,
+     266
+    ]
+   ],
+   "test": "bug26928",
+   "native_sha256": "ce0c48bda1c1122a89c7753fd7a51d893e5bafa9e51033f5c64d6d8602ce7d19",
+   "vulkan_sha256": "6e1a79ab1b37770caa90a194fecd55c35b9a99ebd040f672919b7c649fc46d35",
+   "control_reproduces_vulkan": false,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": false
+  },
+  {
+   "image": "bug26928-03.png",
+   "frame": "f0013",
+   "lit_draws": 1,
+   "other_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 0,
+   "residue_max_channel_delta": 0,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 24896,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 1327,
+   "glsl_bottomup_differs_from_native_on_control_lit": 1326,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 1326,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1326,
+   "residue_sample": [],
+   "test": "bug26928",
+   "native_sha256": "f37bcb1e850236a761aae4d5d2a5b79749039fd0fb6f369b461df3c23d59aeea",
+   "vulkan_sha256": "f37bcb1e850236a761aae4d5d2a5b79749039fd0fb6f369b461df3c23d59aeea",
+   "control_reproduces_vulkan": false,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": false
+  },
+  {
+   "image": "bug26928-05.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 255,
+   "residue_mask_identical": false,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": false,
+   "control_lit_pixels": 24907,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 1354,
+   "glsl_bottomup_differs_from_native_on_control_lit": 1354,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 1353,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1354,
+   "residue_sample": [
+    [
+     398,
+     238
+    ],
+    [
+     398,
+     239
+    ]
+   ],
+   "test": "bug26928",
+   "native_sha256": "a1ffac81c4ff949ad26c03494bdbc0dd6fbac556dd554373cb23dd14e637448b",
+   "vulkan_sha256": "75609abd369e34493463f6da13da900382e7d828dd92af98cb770d273e1edbe7",
+   "control_reproduces_vulkan": false,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": false
+  },
+  {
+   "image": "bug26928-0715.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 24925,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 1333,
+   "glsl_bottomup_differs_from_native_on_control_lit": 1331,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 1331,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1331,
+   "residue_sample": [
+    [
+     200,
+     253
+    ]
+   ],
+   "test": "bug26928",
+   "native_sha256": "add341f16b2f0e93f376d35e2fc67a0a34cd75c4fdc73c9af12252be9eeb11bd",
+   "vulkan_sha256": "1f08ef12a8317693ea4e5fe021f4a6f850c8f00fe033f7455bf5aded123b1204",
+   "control_reproduces_vulkan": false,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": false
+  },
+  {
+   "image": "bug26928-vdisplay.png",
+   "frame": "f0007",
+   "lit_draws": 1,
+   "other_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 24852,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 1369,
+   "glsl_bottomup_differs_from_native_on_control_lit": 1367,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 1367,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1367,
+   "residue_sample": [
+    [
+     160,
+     279
+    ]
+   ],
+   "test": "bug26928",
+   "native_sha256": "aff5a867417b4ab9a1791727d02e8a1dcc7e20a27071e316b58b4e22f533e24b",
+   "vulkan_sha256": "16950165a1ccf07a4f9d8dc995b14d9461f0943d39f27efec475f2b1e86f415c",
+   "control_reproduces_vulkan": false,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": false
+  },
+  {
+   "image": "bug26965.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 4,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 14857,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1,
+   "residue_sample": [
+    [
+     222,
+     99
+    ],
+    [
+     241,
+     193
+    ],
+    [
+     240,
+     258
+    ],
+    [
+     241,
+     266
+    ]
+   ],
+   "test": "bug26965",
+   "native_sha256": "b3104a6ffec728a40ea368aaf66a4a51e621a343b74a643998c1d9ffcf42c9b7",
+   "vulkan_sha256": "b6d81be05598c12f3e08d9df953872480184d46936803f5a41d4b3453006a32d",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug27845.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 66414,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0,
+   "residue_sample": [
+    [
+     199,
+     83
+    ]
+   ],
+   "test": "bug27845",
+   "native_sha256": "b7360d4eb47bdd624a8fc4d2d2a7d0b25c38eac5ceb01274989b90ab0d996635",
+   "vulkan_sha256": "5d34f50e52814c4e5fb12b4299f9b70862618932f5f75257d4d4a30d9ddcc2a7",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug28379-back.png",
+   "frame": "f0023",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 4,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 16337,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2,
+   "residue_sample": [
+    [
+     207,
+     26
+    ],
+    [
+     203,
+     116
+    ],
+    [
+     199,
+     203
+    ],
+    [
+     203,
+     383
+    ]
+   ],
+   "test": "bug28379",
+   "native_sha256": "638371963600985ff6b410565e18f866e94c0ee32f4c87ea1d21ee569f98f10a",
+   "vulkan_sha256": "c787b40496971f1e1e38de67fc66e4db4596512931d8047444a46476ac1a7629",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug28379-front.png",
+   "frame": "f0019",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 5,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 16337,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 3,
+   "residue_sample": [
+    [
+     199,
+     166
+    ],
+    [
+     208,
+     168
+    ],
+    [
+     204,
+     321
+    ],
+    [
+     209,
+     337
+    ],
+    [
+     204,
+     390
+    ]
+   ],
+   "test": "bug28379",
+   "native_sha256": "4ac219ec020b99b6a8d89812dbdd78a79ece3c9fde43e863d329048d8dcba44b",
+   "vulkan_sha256": "3b13c1d722eb9b2669e0e1c0ff5e75778e0984f54b460f35c7efec608abfe22a",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug28379-left.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 10,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 16367,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 3,
+   "residue_sample": [
+    [
+     199,
+     15
+    ],
+    [
+     175,
+     32
+    ],
+    [
+     233,
+     32
+    ],
+    [
+     234,
+     93
+    ],
+    [
+     208,
+     102
+    ],
+    [
+     222,
+     156
+    ],
+    [
+     203,
+     308
+    ],
+    [
+     203,
+     322
+    ]
+   ],
+   "test": "bug28379",
+   "native_sha256": "81650efd17bd032f643a231a2f577fb15890d70acba2cd6a9598dfcf92e12ac6",
+   "vulkan_sha256": "f96dd3a869574890bdd8fe75f48f1510b5f7fdcba51b852aa50e05a7ff993a91",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug28379-right.png",
+   "frame": "f0015",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 4,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 16367,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2,
+   "residue_sample": [
+    [
+     165,
+     8
+    ],
+    [
+     243,
+     8
+    ],
+    [
+     199,
+     154
+    ],
+    [
+     200,
+     165
+    ]
+   ],
+   "test": "bug28379",
+   "native_sha256": "db7c95de40f1f50fa90652b4796e923266e90ba885aa34b691de67bf4bb629c2",
+   "vulkan_sha256": "1871f1c715a61e4ab053ebcc39cd37d64632b9556a01567d094de57e3046bbb7",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug31449_2.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 4,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 15063,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 5,
+   "residue_sample": [
+    [
+     199,
+     116
+    ],
+    [
+     215,
+     120
+    ],
+    [
+     192,
+     134
+    ],
+    [
+     248,
+     138
+    ]
+   ],
+   "test": "bug31449_2",
+   "native_sha256": "abd7d39510d86be25bd7ef5cc4872962cf38ce081d663db4913517a98d7d848a",
+   "vulkan_sha256": "2d5195ba797c8590af6cc2756db26e07126a86b0be25b3a8b62a99f7aa8897d3",
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug31631.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 27827,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 2,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0,
+   "residue_sample": [
+    [
+     196,
+     94
+    ],
+    [
+     220,
+     110
+    ]
+   ],
+   "test": "bug31631",
+   "native_sha256": "38185da13c972bc6f2ce7d4f8e5b7b392b233900fd871f3fbee3d638625ff770",
+   "vulkan_sha256": "49e4def4f364de59802db1b7f5d65ba8e86367cdc611e40c2c179c81c9bed86d",
+   "control_reproduces_vulkan": false,
+   "recorded": false
+  },
+  {
+   "image": "bug25611_1.png",
+   "frame": "f0012",
+   "lit_draws": 5,
+   "other_draws": 78,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 7,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 48530,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 5,
+   "residue_sample": [
+    [
+     209,
+     131
+    ],
+    [
+     215,
+     149
+    ],
+    [
+     186,
+     199
+    ],
+    [
+     178,
+     207
+    ],
+    [
+     242,
+     218
+    ],
+    [
+     304,
+     252
+    ],
+    [
+     294,
+     288
+    ]
+   ],
+   "test": "bug25611_1",
+   "native_sha256": "5c341daf6a124d912b8c4fe0145cc725aaf555647cc006f06b26c65d5e8f34a8",
+   "vulkan_sha256": "eb3e13218cf79b9995426a52171cba744fbdc34961a97277f4deb9ecbc3c2b70",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "bug25611_2_1.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 75,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 7,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 48120,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 5,
+   "residue_sample": [
+    [
+     209,
+     131
+    ],
+    [
+     215,
+     149
+    ],
+    [
+     186,
+     199
+    ],
+    [
+     178,
+     207
+    ],
+    [
+     242,
+     218
+    ],
+    [
+     304,
+     252
+    ],
+    [
+     294,
+     288
+    ]
+   ],
+   "test": "bug25611_2",
+   "native_sha256": "c3b8c1b2c325d260d0c8553e13d759722aa85b0fbd0f9b55f9203813b62e1ce5",
+   "vulkan_sha256": "5055e58469a79d8708fe5dfb98170ea77a5e36bff5169eb84d54096f32d7dba3",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "bug25611_2_2.png",
+   "frame": "f0014",
+   "lit_draws": 1,
+   "other_draws": 62,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 7,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 48120,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 5,
+   "residue_sample": [
+    [
+     209,
+     131
+    ],
+    [
+     215,
+     149
+    ],
+    [
+     186,
+     199
+    ],
+    [
+     178,
+     207
+    ],
+    [
+     242,
+     218
+    ],
+    [
+     304,
+     252
+    ],
+    [
+     294,
+     288
+    ]
+   ],
+   "test": "bug25611_2",
+   "native_sha256": "a3292bd5c41a077d6d2caf5641e0bd5be63cd56f842a77f88796502dae958cb5",
+   "vulkan_sha256": "e64a581224afbe9131201b8164947abb33257aa2af821ebe9bce9a7e1db030a4",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "bug25611_2_3.png",
+   "frame": "f0017",
+   "lit_draws": 1,
+   "other_draws": 95,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 7,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 48120,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 5,
+   "residue_sample": [
+    [
+     209,
+     131
+    ],
+    [
+     215,
+     149
+    ],
+    [
+     186,
+     199
+    ],
+    [
+     178,
+     207
+    ],
+    [
+     242,
+     218
+    ],
+    [
+     304,
+     252
+    ],
+    [
+     294,
+     288
+    ]
+   ],
+   "test": "bug25611_2",
+   "native_sha256": "34e3f56c6d4d67ec70975a958065651dbf571913a0e5e2be4a365527eda75b51",
+   "vulkan_sha256": "e03fdf4d86e70e337071dad04a7341b6c04470a5a32c48668cfd382363263eb1",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "bug25611_2_4.png",
+   "frame": "f0020",
+   "lit_draws": 1,
+   "other_draws": 75,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 7,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 48120,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 5,
+   "residue_sample": [
+    [
+     209,
+     131
+    ],
+    [
+     215,
+     149
+    ],
+    [
+     186,
+     199
+    ],
+    [
+     178,
+     207
+    ],
+    [
+     242,
+     218
+    ],
+    [
+     304,
+     252
+    ],
+    [
+     294,
+     288
+    ]
+   ],
+   "test": "bug25611_2",
+   "native_sha256": "2a47757fae853bb824442abdbdf0ebf9002eaf334b9f643a38f9303b0d35931e",
+   "vulkan_sha256": "4fc27d64166d6019706eb8cf9ee3fedde805592a4c59678d1803fa4be58382de",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "bug30669.png",
+   "frame": "f0019",
+   "lit_draws": 12,
+   "other_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": false,
+   "control_lit_pixels": 24881,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 1496,
+   "glsl_bottomup_differs_from_native_on_control_lit": 1496,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 1496,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1496,
+   "residue_sample": [
+    [
+     284,
+     220
+    ]
+   ],
+   "test": "bug30669",
+   "native_sha256": "26989600d28a072622bb5ab9f9ec829374ee0c2fcb4bdd870359d969c6728495",
+   "vulkan_sha256": "9da1345a8ea082a56647d04eec36419601a1a724801df484b6b7bbce707d49a2",
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "attribute_rounding": false,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "disable_parts_2.png",
+   "frame": "f0015",
+   "lit_draws": 14,
+   "other_draws": 3,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": false,
+   "control_lit_pixels": 77337,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 4226,
+   "glsl_bottomup_differs_from_native_on_control_lit": 4226,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 4226,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 4226,
+   "residue_sample": [
+    [
+     226,
+     190
+    ],
+    [
+     226,
+     218
+    ]
+   ],
+   "test": "disable_parts",
+   "native_sha256": "84d99224b126422d6d5fb4983c79bfde77c79c09fda2c23e95d57c931937f9cb",
+   "vulkan_sha256": "12d11c8b5479283b984089257c9bc860dd525ada4120138ff1dc14fb0cada339",
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "attribute_rounding": false,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "drag_in_2d_view_1.png",
+   "frame": "f0010",
+   "lit_draws": 10,
+   "other_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 7259,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 3,
+   "glsl_bottomup_differs_from_native_on_control_lit": 1,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 1,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1,
+   "residue_sample": [
+    [
+     226,
+     190
+    ],
+    [
+     226,
+     218
+    ]
+   ],
+   "test": "drag_in_2d_view",
+   "native_sha256": "45c94593d0f6053981f6df86dbf5381bbdb1592db5d817d8f3f1415304e9f964",
+   "vulkan_sha256": "9ffd20ddd40ec11daa2b184ee766919772d4966ca89f936fe0be147cce5afe6e",
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "attribute_rounding": true,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "headlight_pos.png",
+   "frame": "f0016",
+   "lit_draws": 1,
+   "other_draws": 3,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 106575,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 463,
+   "glsl_bottomup_differs_from_native_on_control_lit": 463,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 463,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 463,
+   "residue_sample": [
+    [
+     185,
+     154
+    ]
+   ],
+   "test": "headlight",
+   "native_sha256": "d9e5fbe8cb8bccc86cb220afec55c6070338e53fde7a91c5f3222b34723f797a",
+   "vulkan_sha256": "0df1ee96ee989a67582b848e667dd35ab675d00f16b3fea8de68a21ccf36b873",
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "attribute_rounding": true,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "manipulator_trans.png",
+   "frame": "f0032",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 106575,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0,
+   "residue_sample": [
+    [
+     190,
+     206
+    ]
+   ],
+   "test": "manipulator",
+   "native_sha256": "e4bf7fc7c0d9822f42be385855acb720aa969075c1067d2d10f20e23644f7a6d",
+   "vulkan_sha256": "d231c00a3a3c69cc3a7f390e0c595e2381b8bfe6313953a9b8de2f51efe2dbef",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "rotate2_1.png",
+   "frame": "f0045",
+   "lit_draws": 10,
+   "other_draws": 2,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 4741,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0,
+   "residue_sample": [
+    [
+     142,
+     200
+    ]
+   ],
+   "test": "rotate2",
+   "native_sha256": "f130ddac5f65ea6799a5b0760b6bb55f6cee0729337a68ac3fe8677af24f4e46",
+   "vulkan_sha256": "2e7802f0739cbea4d2921df612fe5c9d1520c543634bd3a99cfcf63bf57a1183",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "rotate2_2.png",
+   "frame": "f0146",
+   "lit_draws": 10,
+   "other_draws": 2,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 4711,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0,
+   "residue_sample": [
+    [
+     181,
+     140
+    ],
+    [
+     140,
+     227
+    ]
+   ],
+   "test": "rotate2",
+   "native_sha256": "44b9ae65a75fc5baf82fea9bb51736b22e4ef7f814a12fae6a63a062cac5524c",
+   "vulkan_sha256": "8cadec3c027b28b45b9659b41104dc1f2a8fae94e64118ef7a670a47194aa236",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "shape_location.png",
+   "frame": "f0012",
+   "lit_draws": 11,
+   "other_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": false,
+   "control_lit_pixels": 21042,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 1261,
+   "glsl_bottomup_differs_from_native_on_control_lit": 1256,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 1261,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1256,
+   "residue_sample": [
+    [
+     320,
+     365
+    ]
+   ],
+   "test": "shape_location",
+   "native_sha256": "97ce77cdbd9e72b3559fb62907e850fc0d2eab29271124b273b75ca2123260bc",
+   "vulkan_sha256": "7a018c74672a708aaa7d968eae96ef7733f2febef10bdaedd86c33a9c0e55214",
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "attribute_rounding": false,
+   "source_revision": "d71c26bdf"
+  },
+  {
+   "image": "bug26719_1_1.png",
+   "frame": "f0014",
+   "lit_draws": 2,
+   "other_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 3,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 54629,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 166,
+   "glsl_bottomup_differs_from_native_on_control_lit": 163,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 163,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 164,
+   "residue_sample": [
+    [
+     135,
+     83
+    ],
+    [
+     304,
+     208
+    ],
+    [
+     253,
+     266
+    ]
+   ],
+   "test": "bug26719_1",
+   "native_sha256": "2062f870425fa7bcadbc050b7481889f871edcf1e9e2a538996b94133e79abc2",
+   "vulkan_sha256": "d01c59abcb3b8ab4c021c5652aa52fa8086034abd5a4d902c3a9b34b60f2ff7d",
+   "control_reproduces_vulkan": false,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": false
+  },
+  {
+   "image": "bug26719_1_2.png",
+   "frame": "f0022",
+   "lit_draws": 2,
+   "other_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 27,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 81109,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 138,
+   "glsl_bottomup_differs_from_native_on_control_lit": 123,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 123,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 143,
+   "residue_sample": [
+    [
+     336,
+     145
+    ],
+    [
+     302,
+     185
+    ],
+    [
+     231,
+     193
+    ],
+    [
+     189,
+     198
+    ],
+    [
+     285,
+     221
+    ],
+    [
+     256,
+     224
+    ],
+    [
+     182,
+     225
+    ],
+    [
+     240,
+     229
+    ]
+   ],
+   "test": "bug26719_1",
+   "native_sha256": "1db6ebf1bc856a992c0d14a81b6ecd11f7d4861e78ed285e7faccbfce443551a",
+   "vulkan_sha256": "53908b6cba8066cd27e677b2643759dd8256f7a4200b6921cbb11677a9cb1b13",
+   "control_reproduces_vulkan": false,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": false
+  },
+  {
+   "image": "bug26719_1_3.png",
+   "frame": "f0027",
+   "lit_draws": 2,
+   "other_draws": 2,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 26,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": false,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 81109,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 1218,
+   "glsl_bottomup_differs_from_native_on_control_lit": 1203,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 1203,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1222,
+   "residue_sample": [
+    [
+     336,
+     145
+    ],
+    [
+     302,
+     185
+    ],
+    [
+     231,
+     193
+    ],
+    [
+     189,
+     198
+    ],
+    [
+     285,
+     221
+    ],
+    [
+     256,
+     224
+    ],
+    [
+     240,
+     229
+    ],
+    [
+     304,
+     231
+    ]
+   ],
+   "test": "bug26719_1",
+   "native_sha256": "45dcbc4127051b348960a9e8627fbfc74fbf59954d98788b71c4a2e2d1e05f70",
+   "vulkan_sha256": "23b6c3b30b12d073338be54824a38e2cd8a5e2e4f1b28611d2abdb8df8bfca8d",
+   "control_reproduces_vulkan": false,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": false
+  },
+  {
+   "image": "bug_polyline_inclusion.png",
+   "frame": "f0012",
+   "lit_draws": 2,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 17,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 40891,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 2,
+   "residue_sample": [
+    [
+     240,
+     76
+    ],
+    [
+     199,
+     127
+    ],
+    [
+     204,
+     129
+    ],
+    [
+     227,
+     136
+    ],
+    [
+     178,
+     145
+    ],
+    [
+     397,
+     187
+    ],
+    [
+     462,
+     209
+    ],
+    [
+     357,
+     215
+    ]
+   ],
+   "test": "bug_polyline_inclusion",
+   "native_sha256": "ef4f6ee7498211ddc50725eaf4cd1da5cfc313e914b5856f7171fa35258b6e99",
+   "vulkan_sha256": "70592a794e7cae65310721ada858db9445626bd284712479ac8053db97b43e30",
+   "control_reproduces_vulkan": true,
+   "source_revision": "9fa2742c8 + draw-dump.diagnostic.patch",
+   "recorded": true
+  },
+  {
+   "image": "bug22900.png",
+   "frame": "f0012",
+   "lit_draws": 1,
+   "other_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 6468,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0,
+   "residue_sample": [
+    [
+     204,
+     110
+    ]
+   ],
+   "test": "bug22900",
+   "native_sha256": "e6531baa19d27cb41e950e2badd23c1a28146a8af8782430e9d007e49e9a4720",
+   "vulkan_sha256": "ccefea9b12423a0aa6cf3aff28d2df69c9551c7a92b3d7640a912e10f93df0a6",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "fb9b0b647"
+  },
+  {
+   "image": "bug23253.png",
+   "frame": "f0037",
+   "lit_draws": 2,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 33,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 36792,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 12,
+   "residue_sample": [
+    [
+     196,
+     82
+    ],
+    [
+     221,
+     101
+    ],
+    [
+     173,
+     104
+    ],
+    [
+     281,
+     110
+    ],
+    [
+     207,
+     112
+    ],
+    [
+     252,
+     118
+    ],
+    [
+     300,
+     146
+    ],
+    [
+     102,
+     158
+    ]
+   ],
+   "test": "bug23253",
+   "native_sha256": "6bd686f24cfd4ffed0e049997861c16cb14dadb9d9b4e71ff7c4b57b9a820805",
+   "vulkan_sha256": "af6308f4eda3025e784dc4ee51d13e32435cff124c892b13e82fec0a7150cc1b",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "fb9b0b647"
+  },
+  {
+   "image": "bug32073.png",
+   "frame": "f0010",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 41046,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0,
+   "residue_sample": [
+    [
+     190,
+     249
+    ]
+   ],
+   "test": "bug32073",
+   "native_sha256": "858038b64938f8442d52439f69f00b2b6271cf4a63b2e4cdf238e7fcb06c16ca",
+   "vulkan_sha256": "71a22ecb906cb0e4e76ad6019de6e61f2aeb313bc47e7db5d554bb8357874d17",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "fb9b0b647"
+  },
+  {
+   "image": "bug32073_flipped.png",
+   "frame": "f0013",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 41046,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 0,
+   "residue_sample": [
+    [
+     190,
+     249
+    ]
+   ],
+   "test": "bug32073",
+   "native_sha256": "858038b64938f8442d52439f69f00b2b6271cf4a63b2e4cdf238e7fcb06c16ca",
+   "vulkan_sha256": "71a22ecb906cb0e4e76ad6019de6e61f2aeb313bc47e7db5d554bb8357874d17",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "fb9b0b647"
+  },
+  {
+   "image": "bug25044_30.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 9020,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1,
+   "residue_sample": [
+    [
+     208,
+     306
+    ]
+   ],
+   "test": "bug25044_30",
+   "native_sha256": "6d0db27fc1ce494d4c52af2ac0dae77a897d1c6a3a0ec77cece572fac5ed0b85",
+   "vulkan_sha256": "3c0b13427c4caf6c5b3367c63cd737cb03b88e81b83b9582ff94bfaeb6edb10f",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "fb9b0b647"
+  },
+  {
+   "image": "bug25588_20.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 9020,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1,
+   "residue_sample": [
+    [
+     208,
+     306
+    ]
+   ],
+   "test": "bug25588_20",
+   "native_sha256": "6d0db27fc1ce494d4c52af2ac0dae77a897d1c6a3a0ec77cece572fac5ed0b85",
+   "vulkan_sha256": "3c0b13427c4caf6c5b3367c63cd737cb03b88e81b83b9582ff94bfaeb6edb10f",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "fb9b0b647"
+  },
+  {
+   "image": "bug25044_21.png",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 2328,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1,
+   "residue_sample": [
+    [
+     150,
+     197
+    ],
+    [
+     212,
+     199
+    ]
+   ],
+   "test": "bug25044_21",
+   "native_sha256": "f5f18f61b803ba6b91db999e90b7bac37d4f9e79ec5e39d56cbb21379a6c8a93",
+   "vulkan_sha256": "5b2899a5d07d6f13477cd84bb3fc5c1615ebd5b0a64fab8850d878f9a33c268e",
+   "control_reproduces_vulkan": true,
+   "recorded": true,
+   "attribute_rounding": false,
+   "source_revision": "fb9b0b647"
+  },
+  {
+   "image": "buc60587.png",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 4,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 9,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "residue_lit": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "nonlit_pixels": 783,
+   "spirv_topleft_differs_from_vulkan_outside_nonlit": 1,
+   "lit_only_vulkan_sha256": "244d39cd1c51037ea65158345d23d3946e48d72dab90a9cf2e4bbb2c336bac26",
+   "control_lit_pixels": 38668,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 495,
+   "glsl_bottomup_differs_from_native_on_control_lit": 495,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 495,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 498,
+   "residue_sample": [
+    [
+     228,
+     106
+    ],
+    [
+     76,
+     135
+    ],
+    [
+     185,
+     185
+    ],
+    [
+     182,
+     193
+    ],
+    [
+     181,
+     194
+    ],
+    [
+     165,
+     196
+    ],
+    [
+     188,
+     205
+    ],
+    [
+     151,
+     206
+    ]
+   ],
+   "test": "buc60587",
+   "native_sha256": "b7035cd0230ca2e5408fc74fbd2628bcfb8c55c439032795cdc59db2e5ae8d24",
+   "vulkan_sha256": "f80cd5bf12f25e840bd6e12ba5b41938d0ddaa8dc8b249631f4b639437d9f417",
+   "source_revision": "bd3c35ba0",
+   "attribute_rounding": false,
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "note": "both GL controls leave uncovered a silhouette pixel that the Vulkan image, its lit-only capture and native cover, outside the non-lit draws' pixels"
+  },
+  {
+   "image": "bug30824.png",
+   "frame": "f0015",
+   "lit_draws": 3,
+   "other_draws": 2,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 2,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "residue_lit": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "nonlit_pixels": 268,
+   "spirv_topleft_differs_from_vulkan_outside_nonlit": 2,
+   "lit_only_vulkan_sha256": "189edc8c12254385bc573c492c909efddd2fd3d7f795e894211a3846e73e9f01",
+   "control_lit_pixels": 11529,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 256,
+   "glsl_bottomup_differs_from_native_on_control_lit": 256,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 256,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 257,
+   "residue_sample": [
+    [
+     107,
+     85
+    ],
+    [
+     89,
+     145
+    ]
+   ],
+   "test": "bug30824",
+   "native_sha256": "3750742d11987ddd0dd016bf23e89d039ca86888c3ff9ceb4876b046057fc65c",
+   "vulkan_sha256": "65fa0ec823049b3a75a15a29f0eb14a9221cba28d0287fbb2521d7da4bb523fe",
+   "source_revision": "bd3c35ba0",
+   "attribute_rounding": false,
+   "control_reproduces_vulkan": false,
+   "recorded": false,
+   "note": "both GL controls leave uncovered a silhouette pixel that the Vulkan image, its lit-only capture and native cover, outside the non-lit draws' pixels"
+  },
+  {
+   "image": "bug25071_wf_no_triang.png",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 3,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "residue_lit": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "nonlit_pixels": 831,
+   "spirv_topleft_differs_from_vulkan_outside_nonlit": 0,
+   "lit_only_vulkan_sha256": "d4b7588fca4c841c59968ae2006f680bd68db8842451edadd6a9b387c7932932",
+   "control_lit_pixels": 40492,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 614,
+   "glsl_bottomup_differs_from_native_on_control_lit": 614,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 614,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 614,
+   "residue_sample": [
+    [
+     304,
+     151
+    ]
+   ],
+   "test": "bug25071",
+   "native_sha256": "572f2ba5f08ee879f3bd6c88af234eaae41fecaa00db67ea1d2354762913f60f",
+   "vulkan_sha256": "7a97e853c35a6a2dc56b52f18628a77dc990400894aaeca3600b2913e02b2740",
+   "source_revision": "bd3c35ba0",
+   "attribute_rounding": false,
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  },
+  {
+   "image": "bug25071_wf_with_triang.png",
+   "frame": "f0020",
+   "lit_draws": 1,
+   "other_draws": 3,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "residue_lit": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "nonlit_pixels": 831,
+   "spirv_topleft_differs_from_vulkan_outside_nonlit": 0,
+   "lit_only_vulkan_sha256": "d4b7588fca4c841c59968ae2006f680bd68db8842451edadd6a9b387c7932932",
+   "control_lit_pixels": 40492,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 614,
+   "glsl_bottomup_differs_from_native_on_control_lit": 614,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 614,
+   "spirv_bottomup_last_equals_native_at_residue": true,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 614,
+   "residue_sample": [
+    [
+     304,
+     151
+    ]
+   ],
+   "test": "bug25071",
+   "native_sha256": "572f2ba5f08ee879f3bd6c88af234eaae41fecaa00db67ea1d2354762913f60f",
+   "vulkan_sha256": "7a97e853c35a6a2dc56b52f18628a77dc990400894aaeca3600b2913e02b2740",
+   "source_revision": "bd3c35ba0",
+   "attribute_rounding": false,
+   "control_reproduces_vulkan": true,
+   "recorded": true
+  }
+ ],
+ "clear_colour": [
+  0,
+  0,
+  0
+ ],
+ "attribute_rounding_tests": [
+  "bug22196",
+  "bug22304",
+  "bug24307_1",
+  "bug24867",
+  "bug264_5",
+  "bug26928",
+  "bug27655",
+  "bug2883_1",
+  "bug31631",
+  "bug5988",
+  "drag_in_2d_view",
+  "headlight"
+ ],
+  "frame_or_compile_tests": ["bug25300_2", "bug26719_1", "bug288_2", "bug288_8", "bug29787", "bug4894"],
+  "frame_or_compile_rows": [
+    {"test": "bug288_2", "image": "bug288_2.png", "native_sha256": "bb0035406b5807db6047caf919e2873cde8eb02a84d2d32bf8706f087ede8391", "vulkan_sha256": "28628467e0babd009c63550e253d8b6c99c30fa231d812be9ac3db7a76eda1b5", "frame": [[269, 121], [271, 176], [271, 178], [275, 308]], "compile": [[185, 232]], "mixed": []},
+    {"test": "bug288_8", "image": "bug288_8.png", "native_sha256": "bb0035406b5807db6047caf919e2873cde8eb02a84d2d32bf8706f087ede8391", "vulkan_sha256": "28628467e0babd009c63550e253d8b6c99c30fa231d812be9ac3db7a76eda1b5", "frame": [[269, 121], [271, 176], [271, 178], [275, 308]], "compile": [[185, 232]], "mixed": []},
+    {"test": "bug4894", "image": "bug4894.png", "native_sha256": "56419a8a914cd8c951b88e97723f6925b520b958ec74ee8fe4e1fcee8eea1f9c", "vulkan_sha256": "c32d9b1fe3f2db6791ee563a7887352e24fe48548e744196aa7c713ace37a62a", "frame": [[317, 134], [188, 286], [144, 319]], "compile": [[216, 185]], "mixed": []},
+    {"test": "bug26719_1", "image": "bug26719_1_1.png", "native_sha256": "2062f870425fa7bcadbc050b7481889f871edcf1e9e2a538996b94133e79abc2", "vulkan_sha256": "d01c59abcb3b8ab4c021c5652aa52fa8086034abd5a4d902c3a9b34b60f2ff7d", "frame": [[135, 83], [253, 266]], "compile": [[304, 208]], "mixed": []},
+    {"test": "bug26719_1", "image": "bug26719_1_2.png", "native_sha256": "1db6ebf1bc856a992c0d14a81b6ecd11f7d4861e78ed285e7faccbfce443551a", "vulkan_sha256": "53908b6cba8066cd27e677b2643759dd8256f7a4200b6921cbb11677a9cb1b13", "frame": [[336, 145], [231, 193], [189, 198], [240, 229], [241, 244], [286, 270], [244, 281], [221, 285], [191, 308], [263, 327]], "compile": [[302, 185], [285, 221], [256, 224], [182, 225], [304, 231], [209, 250], [248, 262], [301, 269], [233, 282], [226, 289], [229, 301], [185, 302], [222, 308], [192, 336], [259, 336], [271, 340], [295, 358]], "mixed": []},
+    {"test": "bug26719_1", "image": "bug26719_1_3.png", "native_sha256": "45dcbc4127051b348960a9e8627fbfc74fbf59954d98788b71c4a2e2d1e05f70", "vulkan_sha256": "23b6c3b30b12d073338be54824a38e2cd8a5e2e4f1b28611d2abdb8df8bfca8d", "frame": [[336, 145], [231, 193], [189, 198], [240, 229], [241, 244], [286, 270], [244, 281], [221, 285], [191, 308], [263, 327]], "compile": [[302, 185], [285, 221], [256, 224], [304, 231], [209, 250], [248, 262], [301, 269], [233, 282], [226, 289], [229, 301], [185, 302], [222, 308], [192, 336], [259, 336], [271, 340], [295, 358]], "mixed": []},
+    {"test": "bug29787", "image": "bug29787.png", "native_sha256": "200b78eabf82b1894c6782cc42ef2e67e7cd02c0a75dc9b1a83252062605921e", "vulkan_sha256": "88c2bc1ef14693ac5358ee40a0c0ef95a8bd9cd81e76370150ce4faf7279666d", "frame": [[223, 162], [168, 174], [212, 195], [213, 214], [213, 227], [361, 242], [203, 249], [358, 271], [337, 286]], "compile": [[207, 208]], "mixed": [], "source_revision": "dba7ac733"},
+    {"test": "bug25300_2", "image": "bug25300_2_iso.png", "native_sha256": "98355bce6e8876c156c0d80fe51bc6c378d4006c763e70074efabdfa51c14e8d", "vulkan_sha256": "5b5b86f0deb226c843ac2aa6e63de387d365b8e0650a44360a277a8c8c6bdfad", "frame": [], "compile": [[357, 185], [363, 306], [282, 331], [243, 393]], "mixed": [], "source_revision": "dba7ac733"},
+    {"test": "bug25300_2", "image": "bug25300_2_iso_on_triang.png", "native_sha256": "57367680fde82ed4fd28afb16656dff74d7226e1ba2a816abedfa77c0b4ab408", "vulkan_sha256": "4ceea91d019197f5b4e117e1ecc633cc93ff0c098851560edea359c2bafa774b", "frame": [], "compile": [[357, 185], [363, 306], [282, 331], [243, 393]], "mixed": [], "source_revision": "dba7ac733"}
+  ],
+ "user_program_rows": [
+  {
+   "image": "bug21753.ppm",
+   "frame": "f0004",
+   "lit_draws": 2,
+   "other_draws": 0,
+   "user_program_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 3,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 18965,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 3,
+   "residue_sample": [
+    [
+     40,
+     67
+    ],
+    [
+     82,
+     97
+    ],
+    [
+     162,
+     135
+    ]
+   ],
+   "native": "crates/martensite-vulkan/tests/fixtures/user_programs/llvmpipe/bug21753.ppm",
+   "test": "user_program_draws_native::bug21753_programs_one_of_two_cones",
+   "vulkan_sha256": "b0164b4d5290dd238ff9a11f2c2207c8accffb4d52dd08d189cc04cfa484556b",
+   "native_sha256": "300a5b39bd934f54e00516658e16c0e9351ffb37cbea71fc309a7f8b5f1a2370"
+  },
+  {
+   "image": "fuse-ph1.ppm",
+   "frame": "f0020",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "user_program_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 30421,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1,
+   "residue_sample": [
+    [
+     144,
+     123
+    ]
+   ],
+   "native": "crates/martensite-vulkan/tests/fixtures/user_programs/llvmpipe/fuse-ph1.ppm",
+   "test": "user_program_draws_native::phong_fuse_programs_the_fused_solid",
+   "vulkan_sha256": "04c891eaf8cf80a5da0ea62a93b75b22387741e27fa68f854d9a5b3d1b3493d0",
+   "native_sha256": "887db15f0f01cae076107d8529ac1080b0ecee347c39f59a7592f3ca120d35ff"
+  },
+  {
+   "image": "fuse-ph2.ppm",
+   "frame": "f0020",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "user_program_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 1,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 30421,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 1,
+   "residue_sample": [
+    [
+     144,
+     123
+    ]
+   ],
+   "native": "crates/martensite-vulkan/tests/fixtures/user_programs/llvmpipe/fuse-ph2.ppm",
+   "test": "user_program_draws_native::phong_fuse_programs_the_fused_solid",
+   "vulkan_sha256": "04c891eaf8cf80a5da0ea62a93b75b22387741e27fa68f854d9a5b3d1b3493d0",
+   "native_sha256": "887db15f0f01cae076107d8529ac1080b0ecee347c39f59a7592f3ca120d35ff"
+  },
+  {
+   "image": "up-multi.ppm",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "user_program_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 26,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "control_lit_pixels": 25675,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 9,
+   "residue_sample": [
+    [
+     144,
+     21
+    ],
+    [
+     177,
+     24
+    ],
+    [
+     115,
+     31
+    ],
+    [
+     201,
+     35
+    ],
+    [
+     179,
+     39
+    ],
+    [
+     178,
+     41
+    ],
+    [
+     196,
+     42
+    ],
+    [
+     151,
+     50
+    ]
+   ],
+   "native": "crates/martensite-vulkan/tests/fixtures/user_programs/llvmpipe/up-multi.ppm",
+   "test": "user_program_draws_native::texture_multi1_samples_each_texture_unit_by_name",
+   "vulkan_sha256": "7a3b63414be6143e9b7f11028b84e6e4a08173d2def3dc3157ab10f8c228fd8d",
+   "native_sha256": "f82a4d6851227f8bc1d23015ab707c7a7b3a60fd3db2818ee0e654312f0ddcdb"
+  },
+  {
+   "image": "3d-s0.ppm",
+   "frame": "f0007",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "user_program_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 15,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "residue_lit": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "nonlit_pixels": 0,
+   "spirv_topleft_differs_from_vulkan_outside_nonlit": 0,
+   "lit_only_vulkan_sha256": "831baa33aabb4912c99f95447055dec535cb6b06ee0108688c8f9c270d8f20d0",
+   "control_lit_pixels": 40886,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 8,
+   "residue_sample": [
+    [
+     103,
+     44
+    ],
+    [
+     89,
+     48
+    ],
+    [
+     156,
+     74
+    ],
+    [
+     36,
+     100
+    ],
+    [
+     35,
+     103
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     61,
+     116
+    ],
+    [
+     175,
+     128
+    ]
+   ],
+   "native": "crates/martensite-vulkan/tests/fixtures/user_programs/llvmpipe/3d-s0.ppm",
+   "test": "user_program_texture_3d_native::texture_3d_slices_and_volume_match_the_native_dumps",
+   "source_revision": "41e63f40e",
+   "vulkan_sha256": "831baa33aabb4912c99f95447055dec535cb6b06ee0108688c8f9c270d8f20d0",
+   "native_sha256": "d93bd63f41890894e46b443528b142c4b320e3314162d1ee45a40d537481612f",
+   "proven_pixels": [
+    [
+     89,
+     48
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     175,
+     128
+    ],
+    [
+     188,
+     176
+    ],
+    [
+     155,
+     202
+    ]
+   ]
+  },
+  {
+   "image": "3d-s1.ppm",
+   "frame": "f0008",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "user_program_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 14,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "residue_lit": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "nonlit_pixels": 0,
+   "spirv_topleft_differs_from_vulkan_outside_nonlit": 0,
+   "lit_only_vulkan_sha256": "b5099fa0ef31f7318195e46c7fadee6ea8e41e04c70848586a63b8b580065fa7",
+   "control_lit_pixels": 40886,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 8,
+   "residue_sample": [
+    [
+     84,
+     36
+    ],
+    [
+     89,
+     48
+    ],
+    [
+     191,
+     92
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     74,
+     119
+    ],
+    [
+     195,
+     121
+    ],
+    [
+     96,
+     138
+    ],
+    [
+     211,
+     161
+    ]
+   ],
+   "native": "crates/martensite-vulkan/tests/fixtures/user_programs/llvmpipe/3d-s1.ppm",
+   "test": "user_program_texture_3d_native::texture_3d_slices_and_volume_match_the_native_dumps",
+   "source_revision": "41e63f40e",
+   "vulkan_sha256": "b5099fa0ef31f7318195e46c7fadee6ea8e41e04c70848586a63b8b580065fa7",
+   "native_sha256": "fba00092ff6f3f5af6163bba1cd05187b90989cc7c80cf7b1366eefebc45ec8e",
+   "proven_pixels": [
+    [
+     84,
+     36
+    ],
+    [
+     89,
+     48
+    ],
+    [
+     191,
+     92
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     205,
+     194
+    ],
+    [
+     155,
+     202
+    ]
+   ]
+  },
+  {
+   "image": "3d-s2.ppm",
+   "frame": "f0009",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "user_program_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 15,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "residue_lit": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "nonlit_pixels": 0,
+   "spirv_topleft_differs_from_vulkan_outside_nonlit": 0,
+   "lit_only_vulkan_sha256": "f43a4ef28a174ce5abf93ebb1e7b6c5bbaf453a8570c1bfae899a595eeabc302",
+   "control_lit_pixels": 40886,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 8,
+   "residue_sample": [
+    [
+     103,
+     44
+    ],
+    [
+     89,
+     48
+    ],
+    [
+     156,
+     74
+    ],
+    [
+     36,
+     100
+    ],
+    [
+     35,
+     103
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     61,
+     116
+    ],
+    [
+     175,
+     128
+    ]
+   ],
+   "native": "crates/martensite-vulkan/tests/fixtures/user_programs/llvmpipe/3d-s2.ppm",
+   "test": "user_program_texture_3d_native::texture_3d_slices_and_volume_match_the_native_dumps",
+   "source_revision": "41e63f40e",
+   "vulkan_sha256": "f43a4ef28a174ce5abf93ebb1e7b6c5bbaf453a8570c1bfae899a595eeabc302",
+   "native_sha256": "6006aaeb5af464aec57189972de48c61813dae2922843d234ad7b9b32f5c9cbd",
+   "proven_pixels": [
+    [
+     89,
+     48
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     175,
+     128
+    ],
+    [
+     188,
+     176
+    ],
+    [
+     155,
+     202
+    ]
+   ]
+  },
+  {
+   "image": "3d-s3.ppm",
+   "frame": "f0010",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "user_program_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 14,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "residue_lit": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "nonlit_pixels": 0,
+   "spirv_topleft_differs_from_vulkan_outside_nonlit": 0,
+   "lit_only_vulkan_sha256": "f9dd6f5b5a56234fb1486bfd4c013bd9f47f9d9f0b3930c67353810312db88fb",
+   "control_lit_pixels": 40886,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 8,
+   "residue_sample": [
+    [
+     84,
+     36
+    ],
+    [
+     89,
+     48
+    ],
+    [
+     191,
+     92
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     74,
+     119
+    ],
+    [
+     195,
+     121
+    ],
+    [
+     96,
+     138
+    ],
+    [
+     211,
+     161
+    ]
+   ],
+   "native": "crates/martensite-vulkan/tests/fixtures/user_programs/llvmpipe/3d-s3.ppm",
+   "test": "user_program_texture_3d_native::texture_3d_slices_and_volume_match_the_native_dumps",
+   "source_revision": "41e63f40e",
+   "vulkan_sha256": "f9dd6f5b5a56234fb1486bfd4c013bd9f47f9d9f0b3930c67353810312db88fb",
+   "native_sha256": "4881ea70f52e8fa7931b9e83589de65ba1b3fab57ebd8203cdda6fb85aec286f",
+   "proven_pixels": [
+    [
+     84,
+     36
+    ],
+    [
+     89,
+     48
+    ],
+    [
+     191,
+     92
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     205,
+     194
+    ],
+    [
+     155,
+     202
+    ]
+   ]
+  },
+  {
+   "image": "3d-s4.ppm",
+   "frame": "f0011",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "user_program_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 15,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "residue_lit": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "nonlit_pixels": 0,
+   "spirv_topleft_differs_from_vulkan_outside_nonlit": 0,
+   "lit_only_vulkan_sha256": "bb0b808b3a3a17bdc3f70e7f07e36da2d164929e4368ad591fd0e83c104a62c2",
+   "control_lit_pixels": 40886,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 8,
+   "residue_sample": [
+    [
+     103,
+     44
+    ],
+    [
+     89,
+     48
+    ],
+    [
+     156,
+     74
+    ],
+    [
+     36,
+     100
+    ],
+    [
+     35,
+     103
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     61,
+     116
+    ],
+    [
+     175,
+     128
+    ]
+   ],
+   "native": "crates/martensite-vulkan/tests/fixtures/user_programs/llvmpipe/3d-s4.ppm",
+   "test": "user_program_texture_3d_native::texture_3d_slices_and_volume_match_the_native_dumps",
+   "source_revision": "41e63f40e",
+   "vulkan_sha256": "bb0b808b3a3a17bdc3f70e7f07e36da2d164929e4368ad591fd0e83c104a62c2",
+   "native_sha256": "aecaa25da557226c5d7119bb0806901751554ee3fda16eec0fd0f90d372c1d35",
+   "proven_pixels": [
+    [
+     89,
+     48
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     175,
+     128
+    ],
+    [
+     188,
+     176
+    ],
+    [
+     155,
+     202
+    ]
+   ]
+  },
+  {
+   "image": "3d-s5.ppm",
+   "frame": "f0012",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "user_program_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 14,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "residue_lit": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "nonlit_pixels": 0,
+   "spirv_topleft_differs_from_vulkan_outside_nonlit": 0,
+   "lit_only_vulkan_sha256": "b8fca3982d8f53253c46ff5a5aa23c89fe0b0d699345c6f156761b33f9b6d4c0",
+   "control_lit_pixels": 40886,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 8,
+   "residue_sample": [
+    [
+     84,
+     36
+    ],
+    [
+     89,
+     48
+    ],
+    [
+     191,
+     92
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     74,
+     119
+    ],
+    [
+     195,
+     121
+    ],
+    [
+     96,
+     138
+    ],
+    [
+     211,
+     161
+    ]
+   ],
+   "native": "crates/martensite-vulkan/tests/fixtures/user_programs/llvmpipe/3d-s5.ppm",
+   "test": "user_program_texture_3d_native::texture_3d_slices_and_volume_match_the_native_dumps",
+   "source_revision": "41e63f40e",
+   "vulkan_sha256": "b8fca3982d8f53253c46ff5a5aa23c89fe0b0d699345c6f156761b33f9b6d4c0",
+   "native_sha256": "eaeaab336b14f4988fcf6d4d217372db6c4456433ed6481580231aab862b27e6",
+   "proven_pixels": [
+    [
+     84,
+     36
+    ],
+    [
+     89,
+     48
+    ],
+    [
+     191,
+     92
+    ],
+    [
+     230,
+     111
+    ],
+    [
+     205,
+     194
+    ],
+    [
+     155,
+     202
+    ]
+   ]
+  },
+  {
+   "image": "3d-def.ppm",
+   "frame": "f0013",
+   "lit_draws": 1,
+   "other_draws": 0,
+   "user_program_draws": 1,
+   "source_compiles_to_dumped_spirv": true,
+   "residue_pixels": 13,
+   "residue_max_channel_delta": 1,
+   "residue_mask_identical": true,
+   "residue_lit": true,
+   "spirv_topleft_equals_vulkan_at_residue": true,
+   "glsl_bottomup_equals_native_at_residue": true,
+   "nonlit_pixels": 0,
+   "spirv_topleft_differs_from_vulkan_outside_nonlit": 0,
+   "lit_only_vulkan_sha256": "bc456bcc772bf7650197eaaf9e602c909bd6c41604e7c13134b5ae5578a4ed38",
+   "control_lit_pixels": 40886,
+   "spirv_topleft_differs_from_vulkan_on_control_lit": 0,
+   "glsl_bottomup_differs_from_native_on_control_lit": 0,
+   "spirv_topleft_first_provoking_differs_from_vulkan_on_control_lit": 0,
+   "spirv_bottomup_last_equals_native_at_residue": false,
+   "spirv_bottomup_last_differs_from_native_on_control_lit": 11,
+   "residue_sample": [
+    [
+     84,
+     36
+    ],
+    [
+     89,
+     48
+    ],
+    [
+     41,
+     83
+    ],
+    [
+     220,
+     86
+    ],
+    [
+     191,
+     92
+    ],
+    [
+     229,
+     98
+    ],
+    [
+     218,
+     108
+    ],
+    [
+     211,
+     130
+    ]
+   ],
+   "native": "crates/martensite-vulkan/tests/fixtures/user_programs/llvmpipe/3d-def.ppm",
+   "test": "user_program_texture_3d_native::texture_3d_slices_and_volume_match_the_native_dumps",
+   "source_revision": "41e63f40e",
+   "vulkan_sha256": "bc456bcc772bf7650197eaaf9e602c909bd6c41604e7c13134b5ae5578a4ed38",
+   "native_sha256": "45d2224293b824db657e246c27b5320c5010c49fa4fd6b902575bf1d110b3db4",
+   "proven_pixels": [
+    [
+     84,
+     36
+    ],
+    [
+     89,
+     48
+    ],
+    [
+     220,
+     86
+    ],
+    [
+     191,
+     92
+    ],
+    [
+     218,
+     108
+    ],
+    [
+     211,
+     130
+    ],
+    [
+     184,
+     146
+    ]
+   ]
+  }
+ ],
+ "user_program_source_revision": "898768344",
+ "user_program_decision": "User-program compile-path residue, user decision 2026-10-28 (the design notes)"
+}

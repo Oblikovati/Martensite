@@ -1,0 +1,75 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//! Owned arrangement prerequisite of region construction, not a completed region or solid operation.
+mod arrangement;
+mod copy_inputs;
+mod occurrences;
+mod outcome;
+mod relations;
+
+pub(crate) use arrangement::arrange_owned_sources;
+pub(crate) use outcome::{
+    ArrangementCause, ArrangementCompletion, ArrangementPhase, ArrangementRelation,
+    ArrangementSource, OriginalMemberIdentity, OwnedArrangement, RegionSourceId,
+};
+#[cfg(test)]
+pub(crate) mod tests;
+
+#[cfg(test)]
+mod isolation_tests;
+
+#[cfg(test)]
+mod native_batch_tests;
+
+#[cfg(test)]
+mod native_prism_tests;
+
+#[cfg(test)]
+mod empty_history_tests;
+
+#[cfg(test)]
+mod occurrence_tests;
+
+pub(crate) use occurrences::equal_occurrences;
+
+pub(crate) use copy_inputs::{
+    CopiedSourceContexts, admit_sources, copy_sources, original_identity,
+};
+
+mod partition_observation;
+mod partition_types;
+pub(crate) use partition_observation::{observe_owned_partition, observe_partition_space};
+pub(crate) use partition_types::*;
+#[cfg(test)]
+mod partition_tests;
+
+mod partition_capture;
+
+mod partition_blocks;
+mod partition_diagnostics;
+
+mod partition_vertices;
+
+mod partition_occurrence;
+#[cfg(test)]
+mod partition_policy_tests;
+mod partition_source_vertices;
+
+#[cfg(test)]
+pub(crate) use isolation_tests::add_polygon as arrangement_polygon_fixture;
+
+mod directed_contexts;
+pub(crate) use directed_contexts::{
+    RegionContextFailure, RegionDirectedContext, strict_region_contexts,
+};
+#[cfg(test)]
+mod directed_context_tests;
+
+mod observed_contexts;
+pub(crate) use observed_contexts::*;
+#[cfg(test)]
+mod observed_context_tests;
+
+mod partition_member_queries;
+pub(crate) use partition_member_queries::{PartitionMemberQueries, PartitionMemberQuery};
+#[cfg(test)]
+mod partition_member_query_tests;

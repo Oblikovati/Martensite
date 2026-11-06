@@ -1,0 +1,10 @@
+#[path = "../attribute_copy_constructor.rs"]
+pub mod attribute_copy_constructor;
+#[path = "../binder_drop_lifetime.rs"]
+pub mod binder_drop_lifetime;
+#[path = "../exception_parents.rs"]
+pub mod exception_parents;
+#[path = "../runtime_ancestry.rs"]
+pub mod runtime_ancestry;
+#[path = "../timer_sentry_lifetime.rs"]
+pub mod timer_sentry_lifetime;

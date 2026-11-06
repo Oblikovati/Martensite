@@ -1,0 +1,100 @@
+{"flag":-2147483648,"stereo":0,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":-2147483648,"stereo":0,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":-2147483648,"stereo":0,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":-2147483648,"stereo":0,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":1,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-2147483648,"stereo":0,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-2147483648,"stereo":1,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":-2147483648,"stereo":1,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":-2147483648,"stereo":1,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":-2147483648,"stereo":1,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":3,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-2147483648,"stereo":1,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-2147483648,"stereo":2,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":-2147483648,"stereo":2,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":-2147483648,"stereo":2,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":-2147483648,"stereo":2,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":4,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-2147483648,"stereo":2,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-2147483648,"stereo":3,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":-2147483648,"stereo":3,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":-2147483648,"stereo":3,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":-2147483648,"stereo":3,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-2147483648,"stereo":3,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-1,"stereo":0,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":-1,"stereo":0,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":-1,"stereo":0,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":-1,"stereo":0,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":1,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-1,"stereo":0,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-1,"stereo":1,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":-1,"stereo":1,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":-1,"stereo":1,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":-1,"stereo":1,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":3,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-1,"stereo":1,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-1,"stereo":2,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":-1,"stereo":2,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":-1,"stereo":2,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":-1,"stereo":2,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":4,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-1,"stereo":2,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-1,"stereo":3,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":-1,"stereo":3,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":-1,"stereo":3,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":-1,"stereo":3,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":-1,"stereo":3,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":0,"stereo":0,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":0,"stereo":0,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":0,"stereo":0,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":0,"stereo":0,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":false,"projection":1,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":0,"stereo":0,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":0,"stereo":1,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":0,"stereo":1,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":0,"stereo":1,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":0,"stereo":1,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":false,"projection":3,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":0,"stereo":1,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":0,"stereo":2,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":0,"stereo":2,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":0,"stereo":2,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":0,"stereo":2,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":false,"projection":4,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":0,"stereo":2,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":0,"stereo":3,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":0,"stereo":3,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":0,"stereo":3,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":0,"stereo":3,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":0,"stereo":3,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":1,"stereo":0,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":1,"stereo":0,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":1,"stereo":0,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":1,"stereo":0,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":1,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":1,"stereo":0,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":1,"stereo":1,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":1,"stereo":1,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":1,"stereo":1,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":1,"stereo":1,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":3,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":1,"stereo":1,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":1,"stereo":2,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":1,"stereo":2,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":1,"stereo":2,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":1,"stereo":2,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":4,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":1,"stereo":2,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":1,"stereo":3,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":1,"stereo":3,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":1,"stereo":3,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":1,"stereo":3,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":1,"stereo":3,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":2147483647,"stereo":0,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":2147483647,"stereo":0,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":2147483647,"stereo":0,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":2147483647,"stereo":0,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":1,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":2147483647,"stereo":0,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":2147483647,"stereo":1,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":2147483647,"stereo":1,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":2147483647,"stereo":1,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":2147483647,"stereo":1,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":3,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":2147483647,"stereo":1,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":2147483647,"stereo":2,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":2147483647,"stereo":2,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":2147483647,"stereo":2,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":2147483647,"stereo":2,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":4,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":2147483647,"stereo":2,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":2147483647,"stereo":3,"name":0,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 3 115 117 110"}
+{"flag":2147483647,"stereo":3,"name":1,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 0"}
+{"flag":2147483647,"stereo":3,"name":2,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":"consumed 0 2 255 128"}
+{"flag":2147483647,"stereo":3,"name":3,"outcome":"Standard_NullObject","state":{"layer":42,"single":true,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}
+{"flag":2147483647,"stereo":3,"name":4,"outcome":"false","state":{"layer":-5,"single":false,"projection":2,"width":8,"height":8,"fbo_same":true},"consumed":null}

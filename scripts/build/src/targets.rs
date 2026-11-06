@@ -44,9 +44,48 @@ pub fn is_primary(triple: &str) -> bool {
     triple == PRIMARY_TARGET.triple
 }
 
+/// Suites that need Mesa lavapipe and the pinned Vulkan validation layer, which CI and the
+/// installer provision only on Linux; other platforms still build and lint these packages.
+const LINUX_TEST_PACKAGES: [&str; 1] = ["martensite-vulkan"];
+
+/// Removes the suites a platform cannot run; `triple` is `None` for the host.
+///
+/// ```ignore
+/// let packages = runnable_test_packages(packages, Some("x86_64-pc-windows-msvc"));
+/// ```
+pub fn runnable_test_packages(packages: Vec<String>, triple: Option<&str>) -> Vec<String> {
+    let linux = triple.map_or(cfg!(target_os = "linux"), |triple| triple.contains("linux"));
+    packages
+        .into_iter()
+        .filter(|name| linux || !LINUX_TEST_PACKAGES.contains(&name.as_str()))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn renderer_suite_runs_only_on_linux() {
+        let packages = || {
+            vec![
+                "martensite-vulkan".to_owned(),
+                "martensite-tkv3d".to_owned(),
+            ]
+        };
+        assert_eq!(
+            runnable_test_packages(packages(), Some("x86_64-unknown-linux-gnu")),
+            packages()
+        );
+        assert_eq!(
+            runnable_test_packages(packages(), Some("x86_64-pc-windows-msvc")),
+            ["martensite-tkv3d"]
+        );
+        assert_eq!(
+            runnable_test_packages(packages(), Some("aarch64-apple-darwin")),
+            ["martensite-tkv3d"]
+        );
+    }
 
     #[test]
     fn release_platforms_bind_exact_native_runners() {

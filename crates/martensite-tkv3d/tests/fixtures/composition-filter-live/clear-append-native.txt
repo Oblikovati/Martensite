@@ -1,0 +1,4 @@
+drop 2 afteradd 3
+initial 2 final 0 extra_refs 1
+drop 1 afteradd 2
+initial 1 final 0 extra_refs 2

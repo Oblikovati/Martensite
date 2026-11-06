@@ -14,6 +14,63 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added owned open quadratic-extrusion support proofs with explicit endpoint domains and finite incomplete outcomes (#213).
 
+### Fixed
+
+- Validated Vulkan startup now names a missing validation layer or required instance extension before creating the instance. The check includes extensions from the selected layer and keeps validation enabled (#388).
+
+## [0.11.0] - 2026-11-06
+
+### Added
+
+- Added `martensite-tkdestl` (STL reading and writing: text and binary files, shape transfers and the format provider), `martensite-tkmeshvs` (mesh visualization: mesh data sources, the drawer, presentation builders and selection on elements and nodes) and `martensite-tkxmesh` (a named meshing factory, an alternative entry to the incremental mesher).
+
+### Fixed
+
+- Shape healing now aligns seams correctly and no longer loses faces or produces invalid shells on real STEP files (#399).
+
+## [0.10.0] - 2026-11-05
+
+### Added
+
+- Added `martensite-tkfeat` (local operations and form features: prisms, revolutions, pipes, holes, ribs, slots, glued shapes and splits) and `martensite-tkoffset` (offset modeling: offset shapes and thick solids, simple offsets, drafts, pipe shells, lofts and tangent blends) (#397).
+
+### Changed
+
+- Offset shells are now oriented by their offset faces when a split cap face closes the shell, so the same input gives the valid solid on every run (#397).
+
+### Fixed
+
+- Volume properties of symmetric curved solids no longer take minutes. On the default route, refinement now also stops once the absolute error is at most `1e-14 × L^k`, so an integral that cancels by symmetry no longer chases a relative error it cannot reach. The volume stays the same to its printed digits, and `volume_properties_gk` keeps the relative stop (#397).
+
+## [0.9.0] - 2026-11-05
+
+### Added
+
+- Added `martensite-tkde` (the data exchange framework: configuration nodes, providers and the format registry), `martensite-tkxsbase` (the data exchange foundation: interface models, transfer processes, selections and work sessions), `martensite-tkvcaf` (the presentation attributes of a document and their drivers) and `martensite-tkxcaf` (the extended exchange document: shapes, colors, layers, materials, dimensions and tolerances, notes, views and their presentation) (#395).
+
+### Changed
+
+- Shape files now carry a Martensite version line (`Martensite Topology V3` in text, `Martensite Binary Topology V4` in binary). The older lines are still read (#395).
+
+## [0.8.0] - 2026-11-05
+
+### Added
+
+- Added `martensite-tkbo` (Boolean operations: general fuse, builders, intersection tools, splitting and defeaturing), `martensite-tkbool` (topological operations, sweeps, evolved shapes and projections), `martensite-tkfillet` (fillets and chamfers) and `martensite-tkcaf` (topological naming, the extended document attributes and the standard application), with `martensite-boolean-cases` for the check contract and regression cases of the Boolean scripts (#393).
+
+### Fixed
+
+- Dividing a face across a degenerate edge, such as the one closing a sphere at its pole, keeps that edge's vertex instead of leaving a coincident new one for each cut. A cut near an end vertex now ends on it even when the two are apart on the surface.
+- Curve-curve extrema no longer overflow when balancing search intervals between a curve of nearly no length and a much longer one. Builds with overflow checks panicked there.
+
+## [0.7.0] - 2026-11-04
+
+### Added
+
+- Added `martensite-tkv3d` (selection, presentation, interactive objects and the 3D viewer) and `martensite-vulkan` (the Vulkan 1.3 renderer behind the graphic driver interfaces), with `martensite-raster-core`, `martensite-geometry-raster` and `martensite-topology-test-support` as development helpers for their regression tests; this adds the `ash` and `num-rational` dependencies (#365).
+
+- Added a checksum-pinned Vulkan validation layer and Mesa lavapipe driver to the Linux installer and CI for the renderer tests (#365).
+
 - Added bounded owned rational surface query embedding certificates, coherent tensor-surface input leases and an explicit expanded input-capture policy (#213).
 
 - Added explicitly selected relative-frame carrier direction candidates with exact world-vector verification for finite extrusion face checks (#213).
@@ -35,6 +92,8 @@ follows [Semantic Versioning](https://semver.org/).
 - Preserved quiet-NaN signs, payloads and direction priority in `next_after` across optimization levels (#370).
 
 - Fixed skipped tag publication after successful release checks when the PR-only test job was intentionally skipped (#350).
+
+- Allowed a later restoration bundle to replace a retired recovery anchor, keeping exact publication identity and bytes (#358).
 
 ## [0.6.0] - 2026-11-01
 

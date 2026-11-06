@@ -1,0 +1,263 @@
+//! Rust-only GPU replay retains exact native color and the unchanged 1e-6 depth gate.
+#[allow(dead_code)] // Only the D2 colour reference grades the reviewed textured AMD case.
+#[path = "support/cross_driver_bound.rs"]
+mod cross_driver_bound;
+#[path = "../examples/support/device_options.rs"]
+mod device_options;
+#[path = "support/ais_textured_shape_native_assets.rs"]
+mod native_assets;
+#[path = "../examples/support/native_golden.rs"]
+mod native_golden;
+#[path = "support/reference_cpu.rs"]
+mod reference_cpu;
+#[allow(dead_code)]
+#[path = "support/viewer_scene.rs"]
+mod scene;
+#[path = "support/ais_textured_shape_scene.rs"]
+mod textured_scene;
+#[allow(dead_code)]
+#[path = "support/view_setup.rs"]
+mod view_setup;
+use martensite_tkernel::standard::Handle;
+use martensite_tkservice::graphic3d::*;
+use martensite_vulkan::{
+    FrameCapture, Graphic3dRenderDriver, RenderCoordinateConvention, RenderPipelinePolicies,
+    RenderRasterPolicy,
+};
+
+#[test]
+fn textured_native_mapping_assets_replay_on_either_actual_device() {
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    for row in native_assets::TEXTURED_NATIVE_BUFFERS {
+        if !["map-off", "shaded", "map-5", "map-7"].contains(&row.mode) {
+            continue;
+        }
+        let capture = capture_textured_fixture(&driver, row.mode).unwrap();
+        let (rgba, depth) = native_textured_profile(&driver, row);
+        native_golden::assert_capture(&capture, rgba, depth, row.mode);
+    }
+    assert!(
+        driver.validation_errors().unwrap().is_empty(),
+        "{:?}",
+        driver.validation_errors().unwrap()
+    );
+}
+
+#[test]
+fn textured_full_native_matrix_preserves_all_unresolved_diagnostics() {
+    let driver = Graphic3dRenderDriver::new(device_options::validation_options()).unwrap();
+    let control = rounding_control_driver(&driver);
+    let mut failures = Vec::new();
+    for row in native_assets::TEXTURED_NATIVE_BUFFERS {
+        let result = assess_textured_native_case(&driver, control.as_ref(), row);
+        if let Err(failure) = result {
+            eprintln!("{failure}");
+            failures.push(failure);
+        }
+    }
+    reference_cpu::require_exact(failures.is_empty(), || {
+        format!(
+            "received {} native mismatches: {failures:?}; expected exact RGBA and depth within 1e-6",
+            failures.len()
+        )
+    });
+    for checked in std::iter::once(&driver).chain(control.as_ref()) {
+        let errors = checked.validation_errors().unwrap();
+        assert!(errors.is_empty(), "{errors:?}");
+    }
+}
+
+/// Reviewed D2 cross-driver case (radeonsi OpenGL vs RADV Vulkan on the same AMD GPU): the
+/// triangle mesh-edge lines differ by at most one level per channel with an unchanged
+/// foreground mask, alpha and the 1e-6 depth gate (measured 2026-10-28: 52 bytes, delta 1).
+const TEXTURED_AMD_CROSS_DRIVER_CASES: &[&str] = &["triangles"];
+
+/// Whether `mode` is graded by the D2 shading reference on this device; `textured_cross_driver_case(&d, m)`.
+fn textured_cross_driver_case(driver: &Graphic3dRenderDriver, mode: &str) -> bool {
+    driver.device_name().contains("AMD") && TEXTURED_AMD_CROSS_DRIVER_CASES.contains(&mode)
+}
+
+/// The GL-equivalent bottom-up frame for the lavapipe attribute-rounding control (2026-10-28
+/// decision); hardware profiles keep strict grading; `rounding_control_driver(&driver)`.
+fn rounding_control_driver(
+    driver: &Graphic3dRenderDriver,
+) -> Option<Handle<Graphic3dRenderDriver>> {
+    if !driver.device_name().contains("llvmpipe") {
+        return None;
+    }
+    let policies = RenderPipelinePolicies {
+        raster: RenderRasterPolicy::LastProvokingVertexV2,
+        ..Default::default()
+    };
+    let legacy = RenderCoordinateConvention::LegacyBottomUpV1;
+    let options = device_options::validation_options();
+    Some(Graphic3dRenderDriver::with_coordinate_configuration(options, policies, legacy).unwrap())
+}
+
+fn native_textured_profile<'a>(
+    driver: &Graphic3dRenderDriver,
+    row: &'a native_assets::TexturedNativeBuffers,
+) -> (&'a [u8], &'a [u8]) {
+    if driver.device_name().contains("llvmpipe") {
+        return row.software;
+    }
+    assert!(
+        driver.device_name().contains("AMD"),
+        "received device={}; expected proved AMD or llvmpipe profile",
+        driver.device_name()
+    );
+    row.host
+}
+
+fn capture_textured_fixture(
+    driver: &Handle<Graphic3dRenderDriver>,
+    mode: &str,
+) -> Result<FrameCapture, Box<dyn std::error::Error>> {
+    let fixture = textured_scene::AisTexturedShapeScene::with_mode(driver, mode)?;
+    set_textured_native_capture_layer(&fixture);
+    let render = fixture.scene.render_view();
+    let result = (|| -> Result<FrameCapture, Box<dyn std::error::Error>> {
+        render.try_redraw()?;
+        fixture.mutate(mode)?;
+        render.try_redraw()?;
+        Ok(render.capture()?)
+    })();
+    fixture.scene.view.remove();
+    result
+}
+fn set_textured_native_capture_layer(fixture: &textured_scene::AisTexturedShapeScene) {
+    // Match native ToPixMap's single Default-layer dump; later overlay layers clear final frame depth.
+    let view = fixture.scene.cview();
+    view.set_z_layer_target(GRAPHIC3D_ZLAYER_ID_DEFAULT);
+    view.set_z_layer_redraw_mode(true);
+}
+
+fn assess_textured_native_case(
+    driver: &Handle<Graphic3dRenderDriver>,
+    control: Option<&Handle<Graphic3dRenderDriver>>,
+    row: &native_assets::TexturedNativeBuffers,
+) -> Result<(), String> {
+    let capture = capture_textured_fixture(driver, row.mode)
+        .map_err(|failure| format!("{}: {failure}", row.mode))?;
+    let (rgba, depth) = native_textured_profile(driver, row);
+    let color_difference = textured_native_color_difference(&capture.rgba, rgba);
+    let depth_difference = textured_native_depth_difference(&capture.depth, depth);
+    if color_difference == 0 && depth_difference <= 1e-6 {
+        return Ok(());
+    }
+    if textured_cross_driver_case(driver, row.mode) && depth_difference <= 1e-6 {
+        let violation = cross_driver_bound::shading_violation(&capture, rgba);
+        return violation.map_or(Ok(()), |why| Err(format!("{}: D2 shading {why}", row.mode)));
+    }
+    let control = control
+        .map(|control| capture_textured_fixture(control, row.mode))
+        .transpose()
+        .map_err(|failure| format!("{} control: {failure}", row.mode))?;
+    // Only attribute-rounding residues (2026-10-28) and proven exact ties (2026-10-27) may differ.
+    let grade = textured_residue_grade(&capture, control.as_ref(), rgba, depth).map_err(|why| {
+        format!(
+            "{}: different_color_bytes={color_difference}, max_channel_delta={}, max_depth_delta={depth_difference}, residue={why}; expected exact native RGBA and depth within 1e-6",
+            row.mode,
+            max_channel_delta(&capture.rgba, rgba)
+        )
+    })?;
+    eprintln!(
+        "{}: graded as attribute rounding and proven ties {grade:?}",
+        row.mode
+    );
+    Ok(())
+}
+
+/// Grade a mismatch: rounding residues the control removes, then GL-vs-Vulkan exact ties;
+/// `textured_residue_grade(&capture, control.as_ref(), rgba, depth)`.
+fn textured_residue_grade(
+    capture: &FrameCapture,
+    control: Option<&FrameCapture>,
+    native: &[u8],
+    native_depth: &[u8],
+) -> Result<(usize, crate::exact_tie_reference::TieGrade), String> {
+    use crate::exact_tie_reference::{TieFrame, TieLocus, exact_tie_violation};
+    let depth: Vec<f32> = native_depth
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .map(|bytes| f32::from_le_bytes(*bytes))
+        .collect();
+    let native = TieFrame {
+        rgba: native,
+        depth: &depth,
+    };
+    let rounded = match control {
+        Some(control) => crate::attribute_rounding_reference::explain_attribute_rounding(
+            capture_frame(capture),
+            native,
+            capture_frame(control),
+        )?,
+        None => crate::attribute_rounding_reference::RoundedFrame {
+            rgba: capture.rgba.clone(),
+            depth: capture.depth.clone(),
+            rounded: 0,
+        },
+    };
+    // The face spans world y in [-3, 5] in a 20-unit, 64 px view: its top boundary y = 5 maps to
+    // window row 16.0 exactly, a thin-line tie; the other boundaries (41.6, 25.6, 44.8) are not.
+    let loci = [TieLocus::thin_row(16.)];
+    let size = capture.width as usize;
+    let ties = exact_tie_violation(size, size, rounded.as_tie_frame(), native, &loci)?;
+    Ok((rounded.rounded, ties))
+}
+
+/// The largest per-byte difference, for diagnostics; `max_channel_delta(&capture.rgba, native)`.
+fn max_channel_delta(actual: &[u8], expected: &[u8]) -> u8 {
+    let deltas = actual.iter().zip(expected).map(|(a, b)| a.abs_diff(*b));
+    deltas.max().unwrap_or(0)
+}
+
+/// Borrow a capture for the residue graders; `capture_frame(&capture)`.
+fn capture_frame(capture: &FrameCapture) -> crate::exact_tie_reference::TieFrame<'_> {
+    crate::exact_tie_reference::TieFrame {
+        rgba: &capture.rgba,
+        depth: &capture.depth,
+    }
+}
+
+fn textured_native_color_difference(actual: &[u8], expected: &[u8]) -> usize {
+    assert_eq!(
+        actual.len(),
+        expected.len(),
+        "received different RGBA lengths; expected native buffer shape"
+    );
+    actual.iter().zip(expected).filter(|(a, b)| a != b).count()
+}
+
+fn textured_native_depth_difference(actual: &[f32], expected: &[u8]) -> f32 {
+    assert_eq!(
+        actual.len() * 4,
+        expected.len(),
+        "received mismatched depth buffer shapes; expected equal native and Rust lengths"
+    );
+    actual
+        .iter()
+        .zip(expected.as_chunks::<4>().0)
+        .map(|(value, bytes)| finite_textured_depth_delta(*value, f32::from_le_bytes(*bytes)))
+        .fold(0., f32::max)
+}
+fn finite_textured_depth_delta(actual: f32, expected: f32) -> f32 {
+    let difference = (actual - expected).abs();
+    if !difference.is_finite() {
+        return f32::INFINITY;
+    }
+    difference
+}
+
+#[test]
+fn textured_diagnostic_gates_keep_exact_color_and_reject_nonfinite_depth() {
+    assert_eq!(textured_native_color_difference(&[0, 1], &[0, 2]), 1);
+    assert_eq!(
+        textured_native_depth_difference(&[0.25], &0.25f32.to_le_bytes()),
+        0.
+    );
+    assert!(textured_native_depth_difference(&[f32::NAN], &0.25f32.to_le_bytes()).is_infinite());
+    assert!(finite_textured_depth_delta(0.25, f32::NAN).is_infinite());
+    assert_eq!(finite_textured_depth_delta(0.25, 0.5), 0.25);
+}

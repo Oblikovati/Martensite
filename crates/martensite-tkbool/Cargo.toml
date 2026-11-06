@@ -1,0 +1,184 @@
+[package]
+autotests = false
+name = "martensite-tkbool"
+version = "0.8.0"
+description = "Martensite topological operations: section and face intersection, sweeps, evolved shapes, projections and their data structures."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.7" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.8" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.6" }
+martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.8" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.1" }
+martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.7" }
+martensite-tkbo = { path = "../martensite-tkbo", version = "0.8.0" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.7" }
+
+[dev-dependencies]
+martensite-boolean-cases = { path = "../martensite-boolean-cases", version = "0.8.0" }
+martensite-geometry-raster = { path = "../martensite-geometry-raster", version = "0.7.0" }
+martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
+
+# Test modules share one executable per toolkit to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+# The case scripts of this toolkit, on the contract of the boolean cases.
+[[test]]
+name = "dataset_cases"
+path = "tests/dataset_cases/main.rs"
+
+# Requires the process-wide unbound-image fallback list to start empty.
+[[test]]
+name = "brep_algo_image_fallback"
+path = "tests/brep_algo_image_fallback.rs"
+
+[[test]]
+name = "modalg_6_bug28054_2"
+path = "tests/modalg_6_bug28054_2.rs"
+
+[[test]]
+name = "modalg_5_bug25028"
+path = "tests/modalg_5_bug25028.rs"
+
+[[test]]
+name = "modalg_7_bug29573"
+path = "tests/modalg_7_bug29573.rs"
+
+[[test]]
+name = "edges_intersector_state"
+path = "tests/edges_intersector_state.rs"
+
+[[test]]
+name = "faces_intersector"
+path = "tests/faces_intersector.rs"
+
+[[test]]
+name = "intersection_line_records"
+path = "tests/intersection_line_records.rs"
+
+[[test]]
+name = "intersection_point_iterator"
+path = "tests/intersection_point_iterator.rs"
+
+[[test]]
+name = "face_edge_intersector"
+path = "tests/face_edge_intersector.rs"
+
+[[test]]
+name = "point_geom_classification"
+path = "tests/point_geom_classification.rs"
+
+[[test]]
+name = "ff_transition_geom_tool"
+path = "tests/ff_transition_geom_tool.rs"
+
+[[test]]
+name = "edges_intersector_geometry"
+path = "tests/edges_intersector_geometry.rs"
+
+[[test]]
+name = "ds_record_copy"
+path = "tests/ds_record_copy.rs"
+
+[[test]]
+name = "faces_filler_storage"
+path = "tests/faces_filler_storage.rs"
+
+[[test]]
+name = "faces_filler_line_bounds"
+path = "tests/faces_filler_line_bounds.rs"
+
+[[test]]
+name = "faces_filler_restriction"
+path = "tests/faces_filler_restriction.rs"
+
+[[test]]
+name = "loop_extension"
+path = "tests/loop_extension.rs"
+
+[[test]]
+name = "builder1_extension"
+path = "tests/builder1_extension.rs"
+
+[[test]]
+name = "builder_extension"
+path = "tests/builder_extension.rs"
+
+[[test]]
+name = "faces_filler_classification"
+path = "tests/faces_filler_classification.rs"
+
+[[test]]
+name = "faces_filler_fill_line"
+path = "tests/faces_filler_fill_line.rs"
+
+[[test]]
+name = "faces_filler_load_line"
+path = "tests/faces_filler_load_line.rs"
+
+[[test]]
+name = "faces_filler_position_lines"
+path = "tests/faces_filler_position_lines.rs"
+
+[[test]]
+name = "faces_filler_closing"
+path = "tests/faces_filler_closing.rs"
+
+[[test]]
+name = "faces_filler_section_edges"
+path = "tests/faces_filler_section_edges.rs"
+
+[[test]]
+name = "faces_filler_insertion"
+path = "tests/faces_filler_insertion.rs"
+
+[[test]]
+name = "ff_dumper"
+path = "tests/ff_dumper.rs"
+
+[[test]]
+name = "ff_dumper_transient"
+path = "tests/ff_dumper_transient.rs"
+
+[[test]]
+name = "fuse_face_extension"
+path = "tests/fuse_face_extension.rs"
+
+[[test]]
+name = "shape_set_live_cursors"
+path = "tests/shape_set_live_cursors.rs"
+
+[[test]]
+name = "shape_set_extension_state"
+path = "tests/shape_set_extension_state.rs"
+
+[[test]]
+name = "builder_result_arrays"
+path = "tests/builder_result_arrays.rs"
+
+[[test]]
+name = "area_extension"
+path = "tests/area_extension.rs"
+
+[[test]]
+name = "source_contract_repair_controls"
+path = "tests/source_contract_repair_controls.rs"
+
+[[test]]
+name = "case_source_reports"
+path = "tests/case_source_reports.rs"

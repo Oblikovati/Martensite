@@ -2,8 +2,7 @@
 
 Martensite is a Geometry Kernel providing services for the 3D surface and solid modeling.
 
-It started as a 1:1 porting of OpenCASCADE APIs to Rust with OpenCASCADE test suite as
-validation oracle. Providing a stable and production tested set of toolkits on which
+It is written in Rust and validated by regression suites on public datasets. Providing a stable and production tested set of toolkits on which
 Martensite can build on top and innovate.
 
 Martensite has no commitment to keep API parity with OpenCASCADE.
@@ -29,11 +28,26 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkgeomalgo` | Curve and surface intersections, hatching, tangent constraints, filling, plates, laws and sketch splines. |
 | `martensite-tktopalgo` | Classification, shape construction and sewing, checks, extrema, bounding boxes and global properties. |
 | `martensite-tkhlr` | Hidden line removal, contour lines of surfaces and the visible and hidden lines as shapes. |
+| `martensite-tkv3d` | Selection, presentation, interactive objects and the 3D viewer. |
+| `martensite-vulkan` | The Vulkan 1.3 renderer behind the graphic driver interfaces. |
 | `martensite-tkprim` | Primitive solids (boxes, wedges, cylinders, cones, spheres, tori, revolutions, half-spaces) and sweeps. |
 | `martensite-tkhelix` | Helix curves, their B-spline approximation and composite helix wires. |
 | `martensite-tkshhealing` | Shape analysis, repair, geometry conversion and subdivision. |
 | `martensite-tkmesh` | Mesh elements, discretization, triangulation and incremental meshing. |
 | `martensite-tktobj` | Document objects, partitions, references, attributes and model iteration. |
+| `martensite-tkbo` | Boolean operations: general fuse, builders, intersection tools, splitting and defeaturing. |
+| `martensite-tkbool` | Topological operations, sweeps, evolved shapes and projections. |
+| `martensite-tkfillet` | Fillets and chamfers. |
+| `martensite-tkcaf` | Topological naming, the extended document attributes and the standard application. |
+| `martensite-tkde` | The data exchange framework: configuration nodes, providers and the format registry. |
+| `martensite-tkxsbase` | The data exchange foundation: interface models, transfer processes, selections and work sessions. |
+| `martensite-tkvcaf` | The presentation attributes of a document and their drivers. |
+| `martensite-tkxcaf` | The extended exchange document: shapes, colors, layers, materials, dimensions and tolerances, notes, views and their presentation. |
+| `martensite-tkfeat` | Local operations and form features: prisms, revolutions, pipes, holes, ribs, slots, glued shapes and splits. |
+| `martensite-tkoffset` | Offset modeling: offset shapes and thick solids, simple offsets, drafts, pipe shells, lofts and tangent blends. |
+| `martensite-tkdestl` | STL reading and writing: text and binary files, shape transfers and the format provider. |
+| `martensite-tkmeshvs` | Mesh visualization: mesh data sources, the drawer, presentation builders and selection on elements and nodes. |
+| `martensite-tkxmesh` | A meshing factory: a named alternative entry to the incremental mesher. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [math guide](docs/features/martensite-tkmath/README.md), and
@@ -52,6 +66,27 @@ The [shape healing](docs/features/martensite-tkshhealing/README.md),
 [mesh construction](docs/features/martensite-tkmesh/README.md) and
 [document object model](docs/features/martensite-tktobj/README.md) guides describe
 the added toolkits and their verification limits.
+The [form feature](docs/features/martensite-tkfeat/README.md) and
+[offset modeling](docs/features/martensite-tkoffset/README.md) guides describe the last modelling
+toolkits.
+The [STL exchange](docs/features/martensite-tkdestl/README.md),
+[mesh visualization](docs/features/martensite-tkmeshvs/README.md) and
+[meshing factory](docs/features/martensite-tkxmesh/README.md) guides describe STL files and meshes on
+their own.
+The [interactive visualization](docs/features/martensite-tkv3d/README.md) and
+[Vulkan renderer](docs/features/martensite-vulkan/README.md) guides describe the viewer and
+how to run its tests on a software driver.
+The [Boolean operation](docs/features/martensite-tkbo/README.md),
+[topological operation](docs/features/martensite-tkbool/README.md),
+[fillet](docs/features/martensite-tkfillet/README.md) and
+[topological naming](docs/features/martensite-tkcaf/README.md) guides describe the modelling
+toolkits, and [Boolean regression cases](docs/features/martensite-boolean-cases/README.md) describes
+how their script cases run.
+The [data exchange framework](docs/features/martensite-tkde/README.md),
+[data exchange foundation](docs/features/martensite-tkxsbase/README.md),
+[document presentation](docs/features/martensite-tkvcaf/README.md) and
+[extended exchange document](docs/features/martensite-tkxcaf/README.md) guides describe the exchange
+toolkits and their verification limits.
 
 ## Getting started
 

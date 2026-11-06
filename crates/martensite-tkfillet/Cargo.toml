@@ -1,0 +1,200 @@
+[package]
+autotests = false
+name = "martensite-tkfillet"
+version = "0.8.0"
+description = "Martensite fillets and chamfers: the blend surfaces, their walking functions and the builders."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.7" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.8" }
+martensite-tkbo = { path = "../martensite-tkbo", version = "0.8.0" }
+martensite-tkbool = { path = "../martensite-tkbool", version = "0.8.0" }
+martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.8" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.6" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.1" }
+martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.7" }
+
+[dev-dependencies]
+martensite-boolean-cases = { path = "../martensite-boolean-cases", version = "0.8.0" }
+martensite-geometry-raster = { path = "../martensite-geometry-raster", version = "0.7.0" }
+martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.6" }
+martensite-test-support = { path = "../martensite-test-support", version = "0.3.6" }
+martensite-topology-test-support = { path = "../martensite-topology-test-support", version = "0.7.0" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.7" }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
+
+# The case scripts of this toolkit, on the contract of the boolean cases; failing cases stay
+# listed as ignored.
+[[test]]
+name = "fillet_contour_regressions"
+path = "tests/fillet_contour_regressions.rs"
+
+[[test]]
+name = "dataset_cases"
+path = "tests/dataset_cases/main.rs"
+
+# Test modules share one executable per toolkit to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+[[test]]
+name = "tkbo_blended_fuse"
+path = "tests/tkbo_blended_fuse.rs"
+
+[[test]]
+name = "boolean_history_a7"
+path = "tests/boolean_history_a7.rs"
+
+[[test]]
+name = "modalg_7_bug25879"
+path = "tests/modalg_7_bug25879.rs"
+
+[[test]]
+name = "bfuseblend_a1"
+path = "tests/bfuseblend_a1.rs"
+
+[[test]]
+name = "blend_simple_a2"
+path = "tests/blend_simple_a2.rs"
+
+[[test]]
+name = "blend_simple_b4"
+path = "tests/blend_simple_b4.rs"
+
+[[test]]
+name = "blend_simple_b3"
+path = "tests/blend_simple_b3.rs"
+
+[[test]]
+name = "blend_simple_b2"
+path = "tests/blend_simple_b2.rs"
+
+[[test]]
+name = "buildevol_a1"
+path = "tests/buildevol_a1.rs"
+
+[[test]]
+name = "buildevol_b1"
+path = "tests/buildevol_b1.rs"
+
+[[test]]
+name = "buildevol_b2"
+path = "tests/buildevol_b2.rs"
+
+[[test]]
+name = "buildevol_b3"
+path = "tests/buildevol_b3.rs"
+
+[[test]]
+name = "tolblend_simple_a1"
+path = "tests/tolblend_simple_a1.rs"
+
+[[test]]
+name = "encoderegularity_a2"
+path = "tests/encoderegularity_a2.rs"
+
+[[test]]
+name = "encoderegularity_a1"
+path = "tests/encoderegularity_a1.rs"
+
+[[test]]
+name = "encoderegularity_a3"
+path = "tests/encoderegularity_a3.rs"
+
+[[test]]
+name = "encoderegularity_a6"
+path = "tests/encoderegularity_a6.rs"
+
+[[test]]
+name = "tolblend_simple_a2"
+path = "tests/tolblend_simple_a2.rs"
+
+[[test]]
+name = "modalg_7_bug25478_1"
+path = "tests/modalg_7_bug25478_1.rs"
+
+[[test]]
+name = "modalg_7_bug25478_2"
+path = "tests/modalg_7_bug25478_2.rs"
+
+[[test]]
+name = "tolblend_simple_a3"
+path = "tests/tolblend_simple_a3.rs"
+
+[[test]]
+name = "tolblend_simple_a4"
+path = "tests/tolblend_simple_a4.rs"
+
+[[test]]
+name = "modalg_2_bug22695"
+path = "tests/modalg_2_bug22695.rs"
+
+[[test]]
+name = "blend_simple_b1"
+path = "tests/blend_simple_b1.rs"
+
+[[test]]
+name = "buildevol_a4"
+path = "tests/buildevol_a4.rs"
+
+[[test]]
+name = "encoderegularity_a4"
+path = "tests/encoderegularity_a4.rs"
+
+[[test]]
+name = "buildevol_a5"
+path = "tests/buildevol_a5.rs"
+
+[[test]]
+name = "modalg_2_bug474"
+path = "tests/modalg_2_bug474.rs"
+
+[[test]]
+name = "modalg_1_bug140"
+path = "tests/modalg_1_bug140.rs"
+
+[[test]]
+name = "buildevol_a6"
+path = "tests/buildevol_a6.rs"
+
+[[test]]
+name = "modalg_2_bug487"
+path = "tests/modalg_2_bug487.rs"
+
+[[test]]
+name = "blend_simple_b5"
+path = "tests/blend_simple_b5.rs"
+
+[[test]]
+name = "encoderegularity_a5"
+path = "tests/encoderegularity_a5.rs"
+
+[[test]]
+name = "encoderegularity_a7"
+path = "tests/encoderegularity_a7.rs"
+
+[[test]]
+name = "public_builder_surface"
+path = "tests/public_builder_surface.rs"
+
+[[test]]
+name = "connection_graphs_native"
+path = "tests/connection_graphs_native.rs"
+
+[[test]]
+name = "tangency_graphs_native"
+path = "tests/tangency_graphs_native.rs"

@@ -109,10 +109,14 @@ pub fn test_shard(
     target: &BuildTarget,
 ) -> BuildResult<()> {
     let packages = selected_shard(context, plan, shard, target)?;
+    let packages = crate::targets::runnable_test_packages(packages, target.triple());
     context.reporter.note(&format!(
         "Release test shard {shard}: {}",
         packages.join(", ")
     ));
+    if packages.is_empty() {
+        return Ok(());
+    }
     CargoTasks::new(context.runner, context.root())
         .test(&PackageSelection::Packages(packages), target)
 }

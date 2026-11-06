@@ -181,7 +181,7 @@ recorded in `docs/features/safe-toolkits/closeout.md`; consult it before resumin
 the remaining migrations tracked by #81 and #83–#90. The allocator and raw-storage exceptions below are
 temporary migration allowances, not permanent architecture. The final policy
 permits unsafe only at a demonstrated system API boundary after evaluating
-safe standard-library and established dependency interfaces. Today three crates
+safe standard-library and established dependency interfaces. Today five crates
 replace the workspace lint table:
 
 - `martensite-tkernel`: the allocators and raw-storage collections, and the
@@ -192,6 +192,15 @@ replace the workspace lint table:
   storage views and the clip-plane allocator replays. Approved on the same terms
   as `martensite-tkernel` by the 2026-10-20 coordinator decision under the user's
   delegation.
+- `martensite-vulkan`: the Vulkan API calls through `ash`, the mapped-memory views
+  and the structures with raw `p_next` chains, and in its tests the process allocator
+  statistics and the X11 calls of the native window fixtures. Approved on the same
+  terms as `martensite-tkernel` by the 2026-11-04 coordinator decision under the
+  maintainer's authorization to release this crate.
+- `martensite-tkv3d`: the public borrowed C-string view `V3dLightName::from_ptr` and
+  one lifetime-erased pixel-map retirement borrow used only inside its destructor
+  scope. Approved by the same 2026-11-04 decision. These two are not system API
+  boundaries, so they are temporary allowances like the allocator exceptions above.
 
 Preserve public APIs and observable behavior during removal. An interface that
 cannot be implemented safely is an API conflict: record the exact constraint

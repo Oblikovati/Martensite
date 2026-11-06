@@ -7,8 +7,11 @@ use floating::within_absolute_error as near;
 mod property_assertions;
 use martensite_tkernel::precision;
 use martensite_tkgeombase::gprop::GProps;
-use martensite_tkprim::brep_prim_api::{BRepPrimAPIMakeCylinder, BRepPrimAPIMakeSphere};
-use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
+use martensite_tkmath::gp::{GeneralTransform3, Matrix3};
+use martensite_tkprim::brep_prim_api::{
+    BRepPrimAPIMakeCylinder, BRepPrimAPIMakeOneAxis, BRepPrimAPIMakeSphere,
+};
+use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIGTransform, BRepBuilderAPIMakeShape};
 use martensite_tktopalgo::brep_gprop::BRepGProp;
 use primitive_legacy_support::legacy_box_sizes;
 use property_assertions::expect_properties_near as assert_gprops_near;
@@ -143,4 +146,44 @@ fn adaptive_volume_properties_cylinder() {
         2.0e-4
     ));
     assert_gprops_near(&adaptive, &fixed, 2.0e-4);
+}
+
+/// The ellipsoid's centre and products of inertia cancel by symmetry about the rough barycentre,
+/// so their integrals are round-off, whose relative error no tolerance reaches: the default route
+/// took minutes (698 million integrand values). The expected values were recorded on the relative stop
+/// at a tolerance of 1e-5.
+#[test]
+fn volume_properties_symmetric_ellipsoid_finishes_within_time_limit() {
+    let (sender, receiver) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        let sphere = BRepPrimAPIMakeSphere::new(12.5).unwrap().solid().unwrap();
+        let mut stretch = GeneralTransform3::default();
+        stretch.set_vectorial_part(Matrix3::new([[1., 0., 0.], [0., 1.04, 0.], [0., 0., 1.2]]));
+        let mut maker =
+            BRepBuilderAPIGTransform::with_shape(&sphere.into_shape(), stretch, false).unwrap();
+        let mut props = GProps::new();
+        BRepGProp::volume_properties(maker.shape().unwrap(), &mut props, false, false, false)
+            .unwrap();
+        let (centre, inertia) = (props.centre_of_mass(), props.matrix_of_inertia());
+        let moments = [1, 2, 3].map(|axis| inertia.value(axis, axis).unwrap());
+        let centre = [centre.x(), centre.y(), centre.z()];
+        sender.send((props.mass(), centre, moments)).unwrap();
+    });
+    let (mass, centre, moments) = receiver
+        .recv_timeout(std::time::Duration::from_secs(30))
+        .expect("volume_properties did not finish within 30 s");
+    assert!(near(mass, 10210.1782195978, 1e-9 * mass));
+    assert!(near(
+        (mass - 4. / 3. * PI * 12.5 * 13. * 15.) / mass,
+        0.,
+        1e-5
+    ));
+    assert!(centre.iter().all(|coordinate| coordinate.abs() < 1e-9));
+    let expected = [804562.015945559, 778526.056328542, 664172.095870463];
+    for (moment, recorded) in moments.into_iter().zip(expected) {
+        assert!(
+            near(moment, recorded, 1e-9 * recorded),
+            "{moment} against {recorded}"
+        );
+    }
 }

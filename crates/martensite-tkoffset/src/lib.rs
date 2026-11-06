@@ -1,0 +1,5 @@
+//! martensite-tkoffset: algorithms that construct shape offsets.
+pub mod bi_tgte;
+pub mod brep_offset;
+pub mod brep_offset_api;
+pub mod draft;

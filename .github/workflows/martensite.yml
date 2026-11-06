@@ -35,6 +35,12 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: '0'
+  # Panic locations survive without debug info, and hundreds of linked test
+  # binaries with it do not fit a runner disk.
+  CARGO_PROFILE_DEV_DEBUG: '0'
+  CARGO_PROFILE_TEST_DEBUG: '0'
+  CARGO_PROFILE_DEV_STRIP: debuginfo
+  CARGO_PROFILE_TEST_STRIP: debuginfo
   # Dispatch inputs reach the driver as data, never interpolated into a script.
   MARTENSITE_CI_MODE: ${{ inputs.mode }}
   MARTENSITE_CI_VERSION: ${{ inputs.version }}
@@ -79,6 +85,8 @@ jobs:
           fetch-depth: 0
           # Dataset-backed tests read their inputs from external/martensite-test-data.
           submodules: true
+      - if: runner.os == 'Linux'
+        uses: ./.github/actions/free-runner-disk
       - uses: ./.github/actions/setup-target
       - run: cargo xtask ci run --target ${{ matrix.target }} --checks-only
         env:
@@ -119,6 +127,24 @@ jobs:
           submodules: true
       - name: Install the toolchain pinned by rust-toolchain.toml
         run: rustup toolchain install
+      # PR test jobs only. The compiler inventory counts diagnostics, which a cache hit
+      # does not fully replay, and release and sanitizer jobs build from scratch.
+      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
+        with:
+          version: v2.0.0
+          max-size: 2GiB
+          cache-key-prefix: kache-${{ matrix.package }}
+          pr-comment: false
+      - if: contains(fromJSON('["martensite-vulkan", "martensite-tkvcaf", "martensite-tkxcaf", "martensite-tkfeat", "martensite-tkoffset", "martensite-tkdestl", "martensite-tkmeshvs"]'), matrix.package)
+        uses: ./.github/actions/setup-renderer-tests
+      # The modelling suites link many large test binaries. Their script cases have CPU budgets that
+      # assume light optimization, and the Boolean suite spends most of its time in dependencies.
+      # The form feature and offset suites also end some cases on a shaded view, so they need the
+      # renderer above. The STL and mesh presentation suites draw on the real renderer too.
+      - if: contains(fromJSON('["martensite-tkbo", "martensite-boolean-cases", "martensite-tkbool", "martensite-tkfillet", "martensite-tkcaf"]'), matrix.package)
+        uses: ./.github/actions/free-runner-disk
+      - if: contains(fromJSON('["martensite-tkbo", "martensite-boolean-cases", "martensite-tkbool", "martensite-tkfillet", "martensite-tkfeat", "martensite-tkoffset", "martensite-tkdestl", "martensite-tkmeshvs"]'), matrix.package)
+        run: echo "CARGO_PROFILE_DEV_OPT_LEVEL=1" >> "$GITHUB_ENV"
       - run: cargo xtask ci test --package "$TEST_PACKAGE" --target x86_64-unknown-linux-gnu
         env:
           TEST_PACKAGE: ${{ matrix.package }}
@@ -140,9 +166,13 @@ jobs:
           fetch-depth: 0
           submodules: true
       - uses: ./.github/actions/setup-target
+      - if: runner.os == 'Linux'
+        uses: ./.github/actions/setup-renderer-tests
       - run: cargo xtask ci test --shard "$TEST_SHARD" --target "$TEST_TARGET"
         shell: bash
         env:
+          # Light optimization keeps the script cases inside their CPU budgets on small runners.
+          CARGO_PROFILE_DEV_OPT_LEVEL: '1'
           TEST_SHARD: ${{ matrix.shard }}
           TEST_TARGET: ${{ matrix.target }}
           GH_TOKEN: ${{ github.token }}

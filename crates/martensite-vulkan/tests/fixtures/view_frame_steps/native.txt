@@ -1,0 +1,45 @@
+# the recorded view_frame_steps capture; identical on llvmpipe (LIBGL_ALWAYS_SOFTWARE=1) and AMD radeonsi
+step redraw projection=0
+step render projection=0 immediate=0
+step renderScene projection=0 immediate=0
+step renderStructs projection=0 immediate=0
+step redrawImmediate projection=0 partial=0
+step render projection=0 immediate=1
+step renderScene projection=0 immediate=1
+step renderStructs projection=0 immediate=1
+step redraw projection=0
+step render projection=0 immediate=0
+step renderScene projection=0 immediate=0
+step renderStructs projection=0 immediate=0
+step redrawImmediate projection=0 partial=0
+step render projection=0 immediate=1
+step renderScene projection=0 immediate=1
+step renderStructs projection=0 immediate=1
+== redraw
+step redraw projection=0
+step render projection=0 immediate=0
+step renderScene projection=0 immediate=0
+step renderStructs projection=0 immediate=0
+step redrawImmediate projection=0 partial=0
+step render projection=0 immediate=1
+step renderScene projection=0 immediate=1
+step renderStructs projection=0 immediate=1
+== redraw_immediate
+step redrawImmediate projection=0 partial=1
+step render projection=0 immediate=1
+step renderScene projection=0 immediate=1
+step renderStructs projection=0 immediate=1
+== redraw_with_immediate_layer
+step redraw projection=0
+step render projection=0 immediate=0
+step renderScene projection=0 immediate=0
+step renderStructs projection=0 immediate=0
+step redrawImmediate projection=0 partial=0
+step render projection=0 immediate=1
+step renderScene projection=0 immediate=1
+step renderStructs projection=0 immediate=1
+== redraw_immediate_with_immediate_layer
+step redrawImmediate projection=0 partial=1
+step render projection=0 immediate=1
+step renderScene projection=0 immediate=1
+step renderStructs projection=0 immediate=1

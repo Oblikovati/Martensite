@@ -151,7 +151,10 @@ fn require_origin<'a>(
     names: &mut std::collections::BTreeSet<&'a String>,
 ) -> BuildResult<()> {
     let valid = origin.restoration.is_none()
-        && receipt.archives.contains(origin)
+        && receipt
+            .archives
+            .iter()
+            .any(|retained| retained.same_publication(origin))
         && names.insert(&origin.archive)
         && members.contains_key(&format!("archives/{}", origin.archive));
     if !valid {

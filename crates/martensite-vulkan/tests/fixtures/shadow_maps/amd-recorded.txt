@@ -1,0 +1,7 @@
+# AMD (RADV) pixels of tests/shadow_maps_native.rs that no approved bound explains, as dump x y.
+# Bounds (support/shadow_residue_grade.rs): depth ties within one 24-bit unit; texel-selection
+# ties within the sampler's 2^-8 texel precision; a capture with the map raster shifted by at most
+# 1/512 texel; face-edge raster ties within the 2^-8 snap bound; and the 2026-10-28 rules B (the
+# view raster's vertex grid changes a shadowed tap on the recorded triangle; 22 former pixels),
+# C (a face edge within the 2^-8 px snap bound of the centre; sm-spot-phong 184 190, 0.0004 px)
+# and D (interior one level at the clear colour; sm-spot-pbr 142 195). None remain.

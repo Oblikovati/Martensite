@@ -1,0 +1,436 @@
+//! The `bcut_2d` case bodies, part 3; each statement is one line of its script.
+use super::*;
+
+pub fn I1(s: &mut dyn Session) {
+    restore(s, "case_5_solid.brep", "a");
+    restore(s, "case_4_wire1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(806.219));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(7), NbCount::Edges(5)],
+    );
+}
+
+pub fn I2(s: &mut dyn Session) {
+    restore(s, "case_5_solid.brep", "a");
+    restore(s, "case_4_wire2.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(806.219));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(7), NbCount::Edges(5)],
+    );
+}
+
+pub fn I3(s: &mut dyn Session) {
+    restore(s, "case_5_solid.brep", "a");
+    restore(s, "case_4_wire3.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(272.04));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(3), NbCount::Edges(2)],
+    );
+}
+
+pub fn I4(s: &mut dyn Session) {
+    restore(s, "case_5_solid.brep", "a");
+    restore(s, "case_5_wire4.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(272.04));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(3), NbCount::Edges(2)],
+    );
+}
+
+pub fn I5(s: &mut dyn Session) {
+    restore(s, "case_5_solid.brep", "a");
+    restore(s, "case_5_wire5.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(2800.52));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(2), NbCount::Edges(2)],
+    );
+}
+
+pub fn I6(s: &mut dyn Session) {
+    restore(s, "case_5_shell.brep", "a");
+    restore(s, "case_4_edge1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(344.173));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(4), NbCount::Edges(2)],
+    );
+}
+
+pub fn I7(s: &mut dyn Session) {
+    restore(s, "case_5_shell.brep", "a");
+    restore(s, "case_4_edge3.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(135.758));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(2), NbCount::Edges(1)],
+    );
+}
+
+pub fn I8(s: &mut dyn Session) {
+    restore(s, "case_5_shell.brep", "a");
+    restore(s, "case_4_wire1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(806.219));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(7), NbCount::Edges(5)],
+    );
+}
+
+pub fn I9(s: &mut dyn Session) {
+    restore(s, "case_5_shell.brep", "a");
+    restore(s, "case_4_wire3.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(272.04));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(3), NbCount::Edges(2)],
+    );
+}
+
+pub fn J1(s: &mut dyn Session) {
+    restore(s, "case_5_shell.brep", "a");
+    restore(s, "case_5_wire5.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(2800.52));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(2), NbCount::Edges(2)],
+    );
+}
+
+pub fn J2(s: &mut dyn Session) {
+    restore(s, "case_5_face.brep", "a");
+    restore(s, "case_4_edge1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(344.173));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(4), NbCount::Edges(2)],
+    );
+}
+
+pub fn J3(s: &mut dyn Session) {
+    restore(s, "case_5_face.brep", "a");
+    restore(s, "case_4_edge3.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(135.758));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(2), NbCount::Edges(1)],
+    );
+}
+
+pub fn J4(s: &mut dyn Session) {
+    restore(s, "case_5_face.brep", "a");
+    restore(s, "case_4_wire1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(806.219));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(7), NbCount::Edges(5)],
+    );
+}
+
+pub fn J5(s: &mut dyn Session) {
+    restore(s, "case_5_face.brep", "a");
+    restore(s, "case_4_wire3.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(272.04));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(3), NbCount::Edges(2)],
+    );
+}
+
+pub fn L3(s: &mut dyn Session) {
+    restore(s, "case_7_solid.brep", "a");
+    restore(s, "case_7_edge1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(632.537));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(8), NbCount::Edges(4)],
+    );
+}
+
+pub fn L4(s: &mut dyn Session) {
+    restore(s, "case_7_solid.brep", "a");
+    restore(s, "case_7_edge2.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(632.537));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(8), NbCount::Edges(4)],
+    );
+}
+
+pub fn L5(s: &mut dyn Session) {
+    restore(s, "case_7_solid.brep", "a");
+    restore(s, "case_7_edge3.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(710.965));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(8), NbCount::Edges(4)],
+    );
+}
+
+pub fn L6(s: &mut dyn Session) {
+    restore(s, "case_7_solid.brep", "a");
+    restore(s, "case_7_edge4.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(710.965));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(8), NbCount::Edges(4)],
+    );
+}
+
+pub fn L7(s: &mut dyn Session) {
+    restore(s, "case_7_solid.brep", "a");
+    restore(s, "case_7_wire1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(2498.39));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(10), NbCount::Edges(7)],
+    );
+}
+
+pub fn L8(s: &mut dyn Session) {
+    restore(s, "case_7_solid.brep", "a");
+    restore(s, "case_7_wire2.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(2498.39));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(10), NbCount::Edges(7)],
+    );
+}
+
+pub fn L9(s: &mut dyn Session) {
+    restore(s, "case_7_solid.brep", "a");
+    restore(s, "case_7_wire3.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(2033.56));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(9), NbCount::Edges(6)],
+    );
+}
+
+pub fn M1(s: &mut dyn Session) {
+    restore(s, "case_7_solid.brep", "a");
+    restore(s, "case_7_wire4.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(2033.56));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(9), NbCount::Edges(6)],
+    );
+}
+
+pub fn M2(s: &mut dyn Session) {
+    restore(s, "case_7_shell.brep", "a");
+    restore(s, "case_7_edge1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(632.537));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(8), NbCount::Edges(4)],
+    );
+}
+
+pub fn M3(s: &mut dyn Session) {
+    restore(s, "case_7_shell.brep", "a");
+    restore(s, "case_7_edge3.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(710.965));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(8), NbCount::Edges(4)],
+    );
+}
+
+pub fn M4(s: &mut dyn Session) {
+    restore(s, "case_7_shell.brep", "a");
+    restore(s, "case_7_wire1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(2498.39));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(10), NbCount::Edges(7)],
+    );
+}
+
+pub fn M5(s: &mut dyn Session) {
+    restore(s, "case_7_shell.brep", "a");
+    restore(s, "case_7_wire3.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(2033.56));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(9), NbCount::Edges(6)],
+    );
+}
+
+pub fn M6(s: &mut dyn Session) {
+    restore(s, "case_7_face.brep", "a");
+    restore(s, "case_7_edge1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(632.537));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(8), NbCount::Edges(4)],
+    );
+}
+
+pub fn M7(s: &mut dyn Session) {
+    restore(s, "case_7_face.brep", "a");
+    restore(s, "case_7_edge3.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(710.965));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(8), NbCount::Edges(4)],
+    );
+}
+
+pub fn M8(s: &mut dyn Session) {
+    restore(s, "case_7_face.brep", "a");
+    restore(s, "case_7_wire1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(2498.39));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(10), NbCount::Edges(7)],
+    );
+}
+
+pub fn M9(s: &mut dyn Session) {
+    restore(s, "case_7_face.brep", "a");
+    restore(s, "case_7_wire3.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(2033.56));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(9), NbCount::Edges(6)],
+    );
+}
+
+pub fn N1(s: &mut dyn Session) {
+    restore(s, "case_8_solid_repaired.brep", "a");
+    restore(s, "case_8_wire1.brep", "b");
+    bcut(s, "result", "b", "a");
+    checkprops(s, "result", Prop::Length, Expected::Mass(393.479));
+    checksection(s, "result");
+    checknbshapes(
+        s,
+        "result",
+        Counting::Typed,
+        &[NbCount::Vertices(5), NbCount::Edges(4)],
+    );
+}

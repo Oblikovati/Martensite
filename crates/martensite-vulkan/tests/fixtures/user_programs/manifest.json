@@ -1,0 +1,93 @@
+{
+ "programs": [
+  {
+   "name": "shaderprog-uniforms",
+   "header": "#version 110",
+   "stages": [
+    {
+     "stage": "vertex",
+     "file": "uniforms.vert.glsl"
+    },
+    {
+     "stage": "fragment",
+     "file": "uniforms.frag.glsl"
+    }
+   ]
+  },
+  {
+   "name": "geom-geom1",
+   "header": "",
+   "stages": [
+    {
+     "stage": "vertex",
+     "file": "geom1.vert.glsl"
+    },
+    {
+     "stage": "geometry",
+     "file": "geom1.geom.glsl"
+    },
+    {
+     "stage": "fragment",
+     "file": "geom1.frag.glsl"
+    }
+   ]
+  },
+  {
+   "name": "geom-tess1",
+   "header": "",
+   "stages": [
+    {
+     "stage": "vertex",
+     "file": "tess1.vert.glsl"
+    },
+    {
+     "stage": "tess_control",
+     "file": "tess1.tesc.glsl"
+    },
+    {
+     "stage": "tess_evaluation",
+     "file": "tess1.tese.glsl"
+    },
+    {
+     "stage": "geometry",
+     "file": "tess1.geom.glsl"
+    },
+    {
+     "stage": "fragment",
+     "file": "tess1.frag.glsl"
+    }
+   ]
+  },
+  {
+   "name": "shaderprog-texture_multi1",
+   "header": "",
+   "stages": [
+    {
+     "stage": "vertex",
+     "file": "multi1.vert.glsl"
+    },
+    {
+     "stage": "fragment",
+     "file": "multi1.frag.glsl"
+    }
+   ]
+  },
+  {
+   "name": "textures-texture_3d",
+   "header": "#version 110",
+   "stages": [
+    {
+     "stage": "vertex",
+     "file": "texture3d.vert.glsl"
+    },
+    {
+     "stage": "fragment",
+     "file": "texture3d.frag.glsl"
+    }
+   ],
+   "options": {
+    "default_sampler": false
+   }
+  }
+ ]
+}

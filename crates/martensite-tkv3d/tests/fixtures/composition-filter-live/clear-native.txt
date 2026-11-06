@@ -1,0 +1,4 @@
+before 2
+destructor 1 len 2 empty 0 refs 0
+destructor 2 len 2 empty 0 refs 0
+after 0

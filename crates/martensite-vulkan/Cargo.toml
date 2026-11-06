@@ -1,0 +1,626 @@
+[package]
+autotests = false
+name = "martensite-vulkan"
+version = "0.7.1"
+description = "Martensite Vulkan 1.3 visualization renderer."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+# The workspace forbids unsafe code. This crate calls the Vulkan API through `ash`, and its tests read process
+# allocator statistics and load the capture layer, so
+# it denies unsafe code and lets each module that needs it opt in with
+# `#[allow(unsafe_code)]` and a SAFETY comment on every unsafe block and impl (AGENTS.md,
+# "Unsafe code exception"); clippy checks those comments. The other lints match the workspace.
+[lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+
+[lints.clippy]
+all = "warn"
+undocumented_unsafe_blocks = "warn"
+
+[features]
+# Temporary diagnostic; delete after bug30412 raster ordering is resolved.
+command-state-diagnostics = ["dep:serde_json"]
+# Owned uploaded ray inputs; explicit observation only, never a rendering policy.
+raytrace-input-diagnostics = ["command-state-diagnostics"]
+# Diagnostic-only production-intersection origin intervention, never qualification.
+raytrace-hit-diagnostics = ["raytrace-input-diagnostics", "dep:sha2"]
+# Temporary command omission proof; never selected by default.
+lit-only-command-diagnostics = ["command-state-diagnostics"]
+# Temporary original-draw vertex observation; no default shader or pipeline change.
+vertex-output-diagnostics = ["command-state-diagnostics"]
+# Selects only the owned manual window proof target; production code is unchanged.
+owned-raster-x11-smoke = []
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
+ash = "=0.38.0"
+num-rational = "=0.4.2"
+num-traits = "=0.2.19"
+serde_json = { version = "=1.0.154", optional = true }
+sha2 = { version = "=0.11.1", optional = true }
+
+[dev-dependencies]
+martensite-test-support = { path = "../martensite-test-support", version = "0.3.6" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.7" }
+martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.8" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.5" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.7" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.8" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.1" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.6" }
+martensite-tkhlr = { path = "../martensite-tkhlr", version = "0.3.6" }
+martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.6" }
+martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.7.0" }
+martensite-tkbo = { path = "../martensite-tkbo", version = "0.8.0" }
+martensite-tkbool = { path = "../martensite-tkbool", version = "0.8.0" }
+martensite-tkfillet = { path = "../martensite-tkfillet", version = "0.8.0" }
+martensite-boolean-cases = { path = "../martensite-boolean-cases", version = "0.8.0" }
+martensite-topology-test-support = { path = "../martensite-topology-test-support", version = "0.7.0" }
+martensite-geometry-raster = { path = "../martensite-geometry-raster", version = "0.7.0" }
+martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
+flate2 = { version = "=1.1.10", default-features = false, features = ["rust_backend"] }
+serde_json = "=1.0.154"
+sha2 = "=0.11.1"
+
+[target.'cfg(target_os = "linux")'.dev-dependencies]
+x11-dl = "=2.21.0"
+
+# Test modules share one executable per toolkit to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+[[example]]
+name = "clipping_transport_performance"
+test = true
+
+[[example]]
+name = "ordered_stencil_performance"
+test = true
+
+[[example]]
+name = "native_gui_rapid"
+test = true
+
+[[test]]
+name = "memory_info_public"
+path = "tests/memory_info_public.rs"
+
+[[test]]
+name = "memory_info_gpu"
+path = "tests/memory_info_gpu.rs"
+
+[[test]]
+name = "texture_limit_public"
+path = "tests/texture_limit_public.rs"
+
+# Grouped V3d bugs view regressions driven through the shared viewer session.
+[[test]]
+name = "v3d_bugs_view_regressions"
+path = "tests/v3d_bugs_view_regressions.rs"
+
+# Construction-grid regressions of the V3d grid group.
+# Triangulated quadric regressions of the V3d quadric group.
+[[test]]
+name = "v3d_quadric_regressions"
+path = "tests/v3d_quadric_regressions.rs"
+
+# View cube regressions of the V3d viewcube group.
+[[test]]
+name = "v3d_viewcube_regressions"
+path = "tests/v3d_viewcube_regressions.rs"
+
+# Light source regressions of the V3d light_source group.
+[[test]]
+name = "v3d_light_source_regressions"
+path = "tests/v3d_light_source_regressions.rs"
+
+# Manipulator regressions of the V3d manipulator group.
+[[test]]
+name = "v3d_manipulator_regressions"
+path = "tests/v3d_manipulator_regressions.rs"
+
+# Point cloud regressions of the V3d point_cloud group.
+[[test]]
+name = "v3d_point_cloud_regressions"
+path = "tests/v3d_point_cloud_regressions.rs"
+
+[[test]]
+name = "v3d_trsf_regressions"
+path = "tests/v3d_trsf_regressions.rs"
+
+# Timed instance regressions of the V3d trsf group, built with --release by the harness.
+[[test]]
+name = "v3d_trsf_timing_regressions"
+path = "tests/v3d_trsf_timing_regressions.rs"
+
+# Isolated positive and wrong-selected-original qualification-gate witnesses.
+[[test]]
+name = "trihedron_gate_regressions"
+path = "tests/trihedron_gate_regressions.rs"
+
+# Trihedron regressions of the V3d trihedron group.
+[[test]]
+name = "v3d_trihedron_regressions"
+path = "tests/v3d_trihedron_regressions.rs"
+
+# Viewer animation regressions of the V3d anim group.
+[[test]]
+name = "v3d_anim_regressions"
+path = "tests/v3d_anim_regressions.rs"
+
+# Font regressions of the V3d fonts group.
+[[test]]
+name = "v3d_fonts_regressions"
+path = "tests/v3d_fonts_regressions.rs"
+
+# Memory regressions of the V3d memory group.
+[[test]]
+name = "v3d_memory_regressions"
+path = "tests/v3d_memory_regressions.rs"
+
+# Dimension regressions of the V3d dimensions group.
+[[test]]
+name = "v3d_dimensions_regressions"
+path = "tests/v3d_dimensions_regressions.rs"
+
+# Dimension text and relation regressions of the viewer dimensions group.
+[[test]]
+name = "v3d_dimension_text_regressions"
+path = "tests/v3d_dimension_text_regressions.rs"
+
+[[test]]
+name = "v3d_grid_regressions"
+path = "tests/v3d_grid_regressions.rs"
+
+# Selection regressions: cursor detection, picking and selection modes on a box.
+[[test]]
+name = "vselect_regressions"
+path = "tests/vselect_regressions.rs"
+
+# Meshing regressions of the bugs group: cleaned, meshed and shaded dataset faces.
+[[test]]
+name = "bugs_mesh_regressions"
+path = "tests/bugs_mesh_regressions.rs"
+
+# Colour-scale regressions of the V3d group: ranges, colours, labels, titles and placement.
+[[test]]
+name = "v3d_colorscale_regressions"
+path = "tests/v3d_colorscale_regressions.rs"
+
+# Selection bugs regressions: counts and highlights after picking.
+[[test]]
+name = "vselect_bugs_regressions"
+path = "tests/vselect_bugs_regressions.rs"
+
+# Quadric selection regressions: cylinder, cone and sphere detection, depth and selection.
+[[test]]
+name = "vselect_quadric_regressions"
+path = "tests/vselect_quadric_regressions.rs"
+
+# V3d bugs scenes: lines, points, persistent, zoomed, styled, transparent shapes and tori.
+[[test]]
+name = "v3d_bugs_scene_regressions"
+path = "tests/v3d_bugs_scene_regressions.rs"
+
+[[test]]
+name = "pbr_edge_geometry_diagnostic"
+path = "tests/pbr_edge_geometry_diagnostic.rs"
+
+[[test]]
+name = "vselect_zlayer_regressions"
+path = "tests/vselect_zlayer_regressions.rs"
+
+[[test]]
+name = "vselect_anonymous_cylinder_regressions"
+path = "tests/vselect_anonymous_cylinder_regressions.rs"
+
+[[test]]
+name = "vselect_anonymous_sensitivity_regressions"
+path = "tests/vselect_anonymous_sensitivity_regressions.rs"
+
+[[test]]
+name = "vselect_signed_prism_regressions"
+path = "tests/vselect_signed_prism_regressions.rs"
+
+[[test]]
+name = "line_width_public"
+path = "tests/line_width_public.rs"
+
+[[test]]
+name = "vselect_picked_point_regressions"
+path = "tests/vselect_picked_point_regressions.rs"
+
+[[test]]
+name = "vselect_owner_batch_regressions"
+path = "tests/vselect_owner_batch_regressions.rs"
+
+[[test]]
+name = "vselect_hover_batch_regressions"
+path = "tests/vselect_hover_batch_regressions.rs"
+
+[[test]]
+name = "v3d_trihedron_pair_regressions"
+path = "tests/v3d_trihedron_pair_regressions.rs"
+
+[[test]]
+name = "vselect_query_batch_regressions"
+path = "tests/vselect_query_batch_regressions.rs"
+
+[[test]]
+name = "v3d_procedural_pixel_regressions"
+path = "tests/v3d_procedural_pixel_regressions.rs"
+
+[[test]]
+name = "vselect_frustum_batch_regressions"
+path = "tests/vselect_frustum_batch_regressions.rs"
+
+[[test]]
+name = "v3d_context_contract_regressions"
+path = "tests/v3d_context_contract_regressions.rs"
+
+[[test]]
+name = "tkv3d_datum_filter_batch_regressions"
+path = "tests/tkv3d_datum_filter_batch_regressions.rs"
+
+[[test]]
+name = "v3d_connected_batch_regressions"
+path = "tests/v3d_connected_batch_regressions.rs"
+
+[[test]]
+name = "v3d_dimension_highlight_regressions"
+path = "tests/v3d_dimension_highlight_regressions.rs"
+
+[[test]]
+name = "v3d_dimension_flip_batch_regressions"
+path = "tests/v3d_dimension_flip_batch_regressions.rs"
+
+[[test]]
+name = "v3d_layout24351_batch_regressions"
+path = "tests/v3d_layout24351_batch_regressions.rs"
+
+[[test]]
+name = "v3d_invalid_length_regressions"
+path = "tests/v3d_invalid_length_regressions.rs"
+
+[[test]]
+name = "v3d_dimension_text_value_batch_regressions"
+path = "tests/v3d_dimension_text_value_batch_regressions.rs"
+
+[[test]]
+name = "v3d_relation_batch_regressions"
+path = "tests/v3d_relation_batch_regressions.rs"
+
+[[test]]
+name = "v3d_angle_highlight_regressions"
+path = "tests/v3d_angle_highlight_regressions.rs"
+
+[[test]]
+name = "vselect_priority_quadric_batch_regressions"
+path = "tests/vselect_priority_quadric_batch_regressions.rs"
+
+[[test]]
+name = "v3d_qa_command_regressions"
+path = "tests/v3d_qa_command_regressions.rs"
+
+[[test]]
+name = "v3d_grid_selection_regressions"
+path = "tests/v3d_grid_selection_regressions.rs"
+
+[[test]]
+name = "v3d_mesh_counter_regressions"
+path = "tests/v3d_mesh_counter_regressions.rs"
+
+[[test]]
+name = "vselect_priority_point_regressions"
+path = "tests/vselect_priority_point_regressions.rs"
+
+[[test]]
+name = "v3d_state_curve_regressions"
+path = "tests/v3d_state_curve_regressions.rs"
+
+[[test]]
+name = "v3d_qa_presentation_regressions"
+path = "tests/v3d_qa_presentation_regressions.rs"
+
+[[test]]
+name = "v3d_view_lifecycle_regressions"
+path = "tests/v3d_view_lifecycle_regressions.rs"
+
+[[test]]
+name = "v3d_qa_removal_dimension_regressions"
+path = "tests/v3d_qa_removal_dimension_regressions.rs"
+
+[[test]]
+name = "v3d_object_hlr_regressions"
+path = "tests/v3d_object_hlr_regressions.rs"
+
+[[test]]
+name = "v3d_procedural_presentation_regressions"
+path = "tests/v3d_procedural_presentation_regressions.rs"
+
+[[test]]
+name = "v3d_hlr_vertex_regressions"
+path = "tests/v3d_hlr_vertex_regressions.rs"
+
+[[test]]
+name = "v3d_shape_consumer_regressions"
+path = "tests/v3d_shape_consumer_regressions.rs"
+
+[[test]]
+name = "v3d_manipulator_selection_batch_regressions"
+path = "tests/v3d_manipulator_selection_batch_regressions.rs"
+
+[[test]]
+name = "v3d_dotted_hidden_regressions"
+path = "tests/v3d_dotted_hidden_regressions.rs"
+
+[[test]]
+name = "modalg_tessellated_sphere_regressions"
+path = "tests/modalg_tessellated_sphere_regressions.rs"
+
+[[test]]
+name = "v3d_highlight_properties_regressions"
+path = "tests/v3d_highlight_properties_regressions.rs"
+
+[[test]]
+name = "bugs_demo_presentation_regressions"
+path = "tests/bugs_demo_presentation_regressions.rs"
+
+[[test]]
+name = "v3d_mesh_copy_regressions"
+path = "tests/v3d_mesh_copy_regressions.rs"
+
+[[test]]
+name = "v3d_located_wire_regressions"
+path = "tests/v3d_located_wire_regressions.rs"
+
+[[test]]
+name = "modalg_torus_hlr_regressions"
+path = "tests/modalg_torus_hlr_regressions.rs"
+
+[[test]]
+name = "v3d_point_cloud_sphere_batch_regressions"
+path = "tests/v3d_point_cloud_sphere_batch_regressions.rs"
+
+[[test]]
+name = "vselect_2d_shapes_batch_regressions"
+path = "tests/vselect_2d_shapes_batch_regressions.rs"
+
+[[test]]
+name = "v3d_grid_depth_regressions"
+path = "tests/v3d_grid_depth_regressions.rs"
+
+[[test]]
+name = "v3d_cone_sensitive_regressions"
+path = "tests/v3d_cone_sensitive_regressions.rs"
+
+[[test]]
+name = "v3d_culling_regressions"
+path = "tests/v3d_culling_regressions.rs"
+
+[[test]]
+name = "v3d_mesh_strategy_regressions"
+path = "tests/v3d_mesh_strategy_regressions.rs"
+
+[[test]]
+name = "v3d_grid_conversion_regressions"
+path = "tests/v3d_grid_conversion_regressions.rs"
+
+[[test]]
+name = "v3d_discretization_regressions"
+path = "tests/v3d_discretization_regressions.rs"
+
+[[test]]
+name = "view_layer_clear_cpu"
+path = "tests/view_layer_clear_cpu.rs"
+
+[[test]]
+name = "v3d_lit_highlight_regressions"
+path = "tests/v3d_lit_highlight_regressions.rs"
+
+[[test]]
+name = "v3d_user_draw_regressions"
+path = "tests/v3d_user_draw_regressions.rs"
+
+[[test]]
+name = "v3d_named_lifecycle_batch_regressions"
+path = "tests/v3d_named_lifecycle_batch_regressions.rs"
+
+[[test]]
+name = "v3d_layer_dump_batch_regressions"
+path = "tests/v3d_layer_dump_batch_regressions.rs"
+
+[[test]]
+name = "v3d_wire_detection_regressions"
+path = "tests/v3d_wire_detection_regressions.rs"
+harness = true
+
+[[test]]
+name = "v3d_layered_profiles_regressions"
+path = "tests/v3d_layered_profiles_regressions.rs"
+
+[[test]]
+name = "v3d_dataset_camera_regressions"
+path = "tests/v3d_dataset_camera_regressions.rs"
+
+[[test]]
+name = "vselect_axis_batch_regressions"
+path = "tests/vselect_axis_batch_regressions.rs"
+
+[[test]]
+name = "v3d_manipulator_motion_batch_regressions"
+path = "tests/v3d_manipulator_motion_batch_regressions.rs"
+
+[[test]]
+name = "v3d_light_interaction_batch_regressions"
+path = "tests/v3d_light_interaction_batch_regressions.rs"
+
+[[test]]
+name = "v3d_viewcube_interaction_batch_regressions"
+path = "tests/v3d_viewcube_interaction_batch_regressions.rs"
+
+[[test]]
+name = "v3d_shown_mesh_regressions"
+path = "tests/v3d_shown_mesh_regressions.rs"
+harness = true
+
+[[test]]
+name = "v3d_layer_depth_regressions"
+path = "tests/v3d_layer_depth_regressions.rs"
+
+[[test]]
+name = "v3d_shared_driver_regressions"
+path = "tests/v3d_shared_driver_regressions.rs"
+
+[[test]]
+name = "v3d_far_planes_regressions"
+path = "tests/v3d_far_planes_regressions.rs"
+
+[[test]]
+name = "v3d_planar_hole_regressions"
+path = "tests/v3d_planar_hole_regressions.rs"
+
+[[test]]
+name = "v3d_subview_affinity_regressions"
+path = "tests/v3d_subview_affinity_regressions.rs"
+
+[[test]]
+name = "v3d_animation_motion_batch_regressions"
+path = "tests/v3d_animation_motion_batch_regressions.rs"
+
+[[test]]
+name = "vselect_transformed_quadric_batch_regressions"
+path = "tests/vselect_transformed_quadric_batch_regressions.rs"
+
+[[test]]
+name = "v3d_manipulator_cylinder_batch_regressions"
+path = "tests/v3d_manipulator_cylinder_batch_regressions.rs"
+
+[[test]]
+name = "v3d_manipulator_camera_batch_regressions"
+path = "tests/v3d_manipulator_camera_batch_regressions.rs"
+
+[[test]]
+name = "v3d_primitive_arrays_regressions"
+path = "tests/v3d_primitive_arrays_regressions.rs"
+
+[[test]]
+name = "v3d_camera_dump_regressions"
+path = "tests/v3d_camera_dump_regressions.rs"
+
+[[test]]
+name = "regular_surface_tessellation_cpu"
+path = "tests/regular_surface_tessellation_cpu.rs"
+
+[[test]]
+name = "v3d_minimum_polygon_regressions"
+path = "tests/v3d_minimum_polygon_regressions.rs"
+harness = true
+
+[[test]]
+name = "v3d_phong_cones_regressions"
+path = "tests/v3d_phong_cones_regressions.rs"
+
+[[test]]
+name = "v3d_children_isolines_culling_regressions"
+path = "tests/v3d_children_isolines_culling_regressions.rs"
+
+[[test]]
+name = "v3d_conic_tangents_regressions"
+path = "tests/v3d_conic_tangents_regressions.rs"
+harness = true
+
+[[test]]
+name = "v3d_proximity_regressions"
+path = "tests/v3d_proximity_regressions.rs"
+harness = true
+
+[[test]]
+name = "v3d_regular_prism_regressions"
+path = "tests/v3d_regular_prism_regressions.rs"
+harness = true
+
+[[test]]
+name = "v3d_self_overlap_regressions"
+path = "tests/v3d_self_overlap_regressions.rs"
+harness = true
+
+[[test]]
+name = "v3d_surface_intersections_regressions"
+path = "tests/v3d_surface_intersections_regressions.rs"
+harness = true
+
+[[test]]
+name = "v3d_isoline_catch_regressions"
+path = "tests/v3d_isoline_catch_regressions.rs"
+harness = true
+
+[[test]]
+name = "v3d_tiled_dump_regressions"
+path = "tests/v3d_tiled_dump_regressions.rs"
+
+[[test]]
+name = "vselect_color_connected_batch_regressions"
+path = "tests/vselect_color_connected_batch_regressions.rs"
+
+[[test]]
+name = "vselect_clipping_planes_batch_regressions"
+path = "tests/vselect_clipping_planes_batch_regressions.rs"
+
+[[test]]
+name = "vselect_clipping_pick_batch_regressions"
+path = "tests/vselect_clipping_pick_batch_regressions.rs"
+
+[[test]]
+name = "vselect_infinite_face_batch_regressions"
+path = "tests/vselect_infinite_face_batch_regressions.rs"
+
+[[test]]
+name = "v3d_text_regressions"
+path = "tests/v3d_text_regressions.rs"
+
+[[test]]
+name = "v3d_selection_perf_regressions"
+path = "tests/v3d_selection_perf_regressions.rs"
+
+[[test]]
+name = "v3d_materials_regressions"
+path = "tests/v3d_materials_regressions.rs"
+
+[[test]]
+name = "v3d_aisobject_cpu"
+path = "tests/v3d_aisobject_cpu.rs"
+
+[[test]]
+name = "v3d_image_roundtrip_regressions"
+path = "tests/v3d_image_roundtrip_regressions.rs"
+
+[[test]]
+name = "opengl_drivers_regressions"
+path = "tests/opengl_drivers_regressions.rs"
+
+[[test]]
+name = "fixed_grid_point_contract"
+path = "tests/fixed_grid_point_contract.rs"
+
+# The viewer regressions of modelling results, each in an isolated worker.
+[[test]]
+name = "modeling_view_regressions"
+path = "tests/modeling_view_regressions.rs"
+
+# The fillet script cases that draw in the 3D viewer; apart because they compile the case contract
+# and that host's commands, which name each other at the crate root.
+[[test]]
+name = "fillet_view_cases"
+path = "tests/fillet_view_cases.rs"

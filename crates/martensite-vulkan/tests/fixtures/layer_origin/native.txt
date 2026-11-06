@@ -1,0 +1,6 @@
+# sw: llvmpipe (LIBGL_ALWAYS_SOFTWARE=1)
+origin=0,0,0 fnv=c684bb4d6467d124 000000=3457 00ff00=64 ff0000=575
+origin=16,8,0 fnv=c684bb4d6467d124 000000=3457 00ff00=64 ff0000=575
+# host: AMD radeonsi
+origin=0,0,0 fnv=c684bb4d6467d124 000000=3457 00ff00=64 ff0000=575
+origin=16,8,0 fnv=c684bb4d6467d124 000000=3457 00ff00=64 ff0000=575

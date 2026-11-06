@@ -65,6 +65,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ash"
+version = "0.38.0+1.3.281"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0bb44936d800fea8f016d7f2311c6a4f97aebd5dc86f09906139ec848cf3a46f"
+dependencies = [
+ "libloading",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -407,6 +416,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce5d3ddc6d3fa000eb1536d85e147bfe31aacaba692ed6a876f95cb7c855be78"
 
 [[package]]
+name = "libloading"
+version = "0.8.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55"
+dependencies = [
+ "cfg-if",
+ "windows-link",
+]
+
+[[package]]
 name = "linux-raw-sys"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -417,6 +436,28 @@ name = "mach2"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0d28e293f2b8c9d2b2d1c0193bd3c1cbdc0d2cf396888dc01162f7cf9d6c3f3"
+
+[[package]]
+name = "martensite-boolean-cases"
+version = "0.8.1"
+dependencies = [
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-tkbo",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tkshhealing",
+ "martensite-tktopalgo",
+ "martensite-topology-test-support",
+]
 
 [[package]]
 name = "martensite-build"
@@ -442,6 +483,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-geometry-raster"
+version = "0.7.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-raster-core",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkhlr",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+]
+
+[[package]]
 name = "martensite-process-policy"
 version = "0.4.0"
 dependencies = [
@@ -449,6 +507,17 @@ dependencies = [
  "martensite-tkernel",
  "rustix",
  "sha2 0.11.1",
+]
+
+[[package]]
+name = "martensite-raster-core"
+version = "0.7.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkmath",
+ "martensite-tkservice",
 ]
 
 [[package]]
@@ -464,8 +533,52 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkbo"
+version = "0.8.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tkshhealing",
+ "martensite-tktopalgo",
+ "martensite-topology-test-support",
+ "static_assertions",
+]
+
+[[package]]
+name = "martensite-tkbool"
+version = "0.8.0"
+dependencies = [
+ "martensite-boolean-cases",
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-tkbo",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tkshhealing",
+ "martensite-tktopalgo",
+]
+
+[[package]]
 name = "martensite-tkbrep"
-version = "0.3.7"
+version = "0.3.9"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -477,6 +590,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkcaf"
+version = "0.8.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-tkbo",
+ "martensite-tkbool",
+ "martensite-tkbrep",
+ "martensite-tkcdf",
+ "martensite-tkernel",
+ "martensite-tkfillet",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeombase",
+ "martensite-tklcaf",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tktopalgo",
+]
+
+[[package]]
 name = "martensite-tkcdf"
 version = "0.3.6"
 dependencies = [
@@ -484,8 +620,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkde"
+version = "0.9.0"
+dependencies = [
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg3d",
+ "martensite-tklcaf",
+ "tempfile",
+]
+
+[[package]]
+name = "martensite-tkdestl"
+version = "0.11.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-tkbrep",
+ "martensite-tkde",
+ "martensite-tkernel",
+ "martensite-tkg3d",
+ "martensite-tklcaf",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+ "martensite-tkmeshvs",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-tkxcaf",
+ "martensite-vulkan",
+]
+
+[[package]]
 name = "martensite-tkernel"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "allocator-api2",
  "bytemuck",
@@ -510,8 +681,60 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkfeat"
+version = "0.10.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-tkbo",
+ "martensite-tkbool",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkfillet",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tkshhealing",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-vulkan",
+]
+
+[[package]]
+name = "martensite-tkfillet"
+version = "0.8.0"
+dependencies = [
+ "martensite-boolean-cases",
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-test-support",
+ "martensite-tkbo",
+ "martensite-tkbool",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+ "martensite-tkprim",
+ "martensite-tkshhealing",
+ "martensite-tktopalgo",
+ "martensite-topology-test-support",
+]
+
+[[package]]
 name = "martensite-tkg2d"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -520,7 +743,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkg3d"
-version = "0.3.6"
+version = "0.3.8"
 dependencies = [
  "flate2",
  "martensite-cmath",
@@ -531,7 +754,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkgeomalgo"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -545,7 +768,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkgeombase"
-version = "0.3.5"
+version = "0.3.6"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -596,7 +819,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkmath"
-version = "0.3.5"
+version = "0.3.7"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -626,8 +849,53 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkmeshvs"
+version = "0.11.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-process-policy",
+ "martensite-test-support",
+ "martensite-tkernel",
+ "martensite-tkmath",
+ "martensite-tkservice",
+ "martensite-tkv3d",
+ "martensite-vulkan",
+]
+
+[[package]]
+name = "martensite-tkoffset"
+version = "0.10.0"
+dependencies = [
+ "martensite-boolean-cases",
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-tkbo",
+ "martensite-tkbool",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkfeat",
+ "martensite-tkfillet",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkhlr",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tkshhealing",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-topology-test-support",
+ "martensite-vulkan",
+]
+
+[[package]]
 name = "martensite-tkprim"
-version = "0.3.7"
+version = "0.3.9"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -657,7 +925,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkshhealing"
-version = "0.3.6"
+version = "0.3.8"
 dependencies = [
  "martensite-cmath",
  "martensite-process-policy",
@@ -687,7 +955,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tktopalgo"
-version = "0.4.0"
+version = "0.4.2"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -698,6 +966,153 @@ dependencies = [
  "martensite-tkgeombase",
  "martensite-tkmath",
  "sha2 0.10.9",
+]
+
+[[package]]
+name = "martensite-tkv3d"
+version = "0.7.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-test-support",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkhlr",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tktopalgo",
+]
+
+[[package]]
+name = "martensite-tkvcaf"
+version = "0.9.0"
+dependencies = [
+ "martensite-boolean-cases",
+ "martensite-process-policy",
+ "martensite-tkbrep",
+ "martensite-tkcaf",
+ "martensite-tkcdf",
+ "martensite-tkernel",
+ "martensite-tkg3d",
+ "martensite-tkgeombase",
+ "martensite-tklcaf",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-vulkan",
+]
+
+[[package]]
+name = "martensite-tkxcaf"
+version = "0.9.0"
+dependencies = [
+ "flate2",
+ "martensite-process-policy",
+ "martensite-test-support",
+ "martensite-tkbo",
+ "martensite-tkbool",
+ "martensite-tkbrep",
+ "martensite-tkcaf",
+ "martensite-tkcdf",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tklcaf",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-tkvcaf",
+ "martensite-tkxsbase",
+ "martensite-vulkan",
+]
+
+[[package]]
+name = "martensite-tkxmesh"
+version = "0.11.0"
+dependencies = [
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkmesh",
+ "martensite-tkprim",
+ "martensite-tktopalgo",
+]
+
+[[package]]
+name = "martensite-tkxsbase"
+version = "0.9.0"
+dependencies = [
+ "martensite-process-policy",
+ "martensite-tkbrep",
+ "martensite-tkde",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tkshhealing",
+ "martensite-tktopalgo",
+]
+
+[[package]]
+name = "martensite-topology-test-support"
+version = "0.7.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg3d",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tktopalgo",
+]
+
+[[package]]
+name = "martensite-vulkan"
+version = "0.7.1"
+dependencies = [
+ "ash",
+ "flate2",
+ "martensite-boolean-cases",
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-test-support",
+ "martensite-tkbo",
+ "martensite-tkbool",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkfillet",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkhlr",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tkshhealing",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-topology-test-support",
+ "num-rational",
+ "num-traits",
+ "serde_json",
+ "sha2 0.11.1",
+ "x11-dl",
 ]
 
 [[package]]
@@ -772,6 +1187,17 @@ version = "0.1.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ce2d95d4b3734dc35aa2f45e1aa22cd416814592a4f9d9205e11affd5b8e10b"
 dependencies = [
+ "num-traits",
+]
+
+[[package]]
+name = "num-rational"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f83d14da390562dca69fc84082e73e548e1ad308d24accdedd2720017cb37824"
+dependencies = [
+ "num-bigint",
+ "num-integer",
  "num-traits",
 ]
 
@@ -957,6 +1383,12 @@ name = "smallvec"
 version = "1.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b3dc8af474f516a851ff4bd12db780f948b9250ad37211e4eec0bccea54e01b"
+
+[[package]]
+name = "static_assertions"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "strsim"

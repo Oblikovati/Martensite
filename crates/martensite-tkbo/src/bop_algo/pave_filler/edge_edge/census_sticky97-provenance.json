@@ -1,0 +1,33 @@
+{
+  "native_proof_commit": "69880ec6f05b4070f91acef98c8e31cfeb3d8328",
+  "native_archive_sha256": "7f443d2f2eb65089c1d780dd155741b5a7ad6a88e8309e026fb2860872b086b1",
+  "native_elf_sha256": "5531c099d0f089998928cad4f7b605b0f61a4f27d47d0ecb21e58875428e7976",
+  "native_raw_sha256": "173101fc2b7df2e51a7e9c625dcb9f26fd8eb75b0a94732d522a894f5da9647f",
+  "expected_projection_sha256": "d223d5e6e7306a49f7b200e3839afdef8bfc314a9d0679e06435a5731a2713ba",
+  "rows": 97,
+  "exact_raw_repeats": 2,
+  "projection_fields": [
+    "profile",
+    "parallel",
+    "cancel_target",
+    "request_configured",
+    "break_observed",
+    "query_returns",
+    "state",
+    "iterator_more",
+    "has_errors",
+    "has_warnings",
+    "user_break",
+    "records",
+    "poll_count",
+    "events"
+  ],
+  "formatting": "JSON field ordering and state-array spaces match existing Rust serializer; all scalar values/records/frames/bits unchanged, no numeric transformation.",
+  "uncovered": [
+    "Native polls arrays contain live per-query DS snapshots: preserved full in rawfixture but no Rustequivalence claimed.",
+    "Native causes allnull: actualRustErr is retained as returned_failure type/what/stack bytehex in the printed row, remains a strict mismatch, and does not abort later cases. No exception equivalence evidence.",
+    "No pulse or parallel cancellation."
+  ],
+  "runtime_dependencies": "Owned Rust fixture text only; no Native/script/command-host runtime.",
+  "generator_role": "One-off /tmp/tkbo-ee-sticky97-fixture-projection.py; not a maintained runtime parser or alternative engine."
+}

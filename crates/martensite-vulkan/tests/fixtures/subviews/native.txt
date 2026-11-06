@@ -1,0 +1,7 @@
+root 160x120 0,0
+sub-a 80x120 0,0
+sub-b 76x56 82,2
+sub-c 40x30 110,80
+sub-d 38x24 17,81
+composer 160x120 0,0
+composer-inactive-b 160x120 0,0

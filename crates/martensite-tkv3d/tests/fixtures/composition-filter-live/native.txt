@@ -1,0 +1,16 @@
+alias 0 2 3 1 2 0 1 1
+lifetime 0 1
+append_and 0 calls 1 2 refs 2 2
+appended 2 2 2
+append_or 1 calls 1 2 refs 2 2
+appended 2 2 2
+append_andor 1 calls 1 2 refs 2 2
+appended 2 2 2
+append_actson 1 calls 1 2 refs 2 2
+appended 2 2 2
+short_and 0 calls 1 refs 2
+appended 2 2 2
+short_or 1 calls 1 refs 2
+appended 2 2 2
+remove_later 1 calls 1 refs 2
+removed 1 1

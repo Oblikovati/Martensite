@@ -1,9 +1,10 @@
 //! Publication status must bypass skipped ancestors without bypassing release gates (#350).
 use crate::plan::{CiTrigger, plan_for, plan_outputs};
 
-fn publish_job() -> &'static str {
-    let workflow = include_str!("../../../.github/workflows/martensite.yml");
-    workflow.split("\n  publish:\n").nth(1).unwrap()
+fn publish_job() -> String {
+    // A Windows checkout has CRLF line endings.
+    let workflow = include_str!("../../../.github/workflows/martensite.yml").replace("\r\n", "\n");
+    workflow.split("\n  publish:\n").nth(1).unwrap().to_owned()
 }
 
 #[test]

@@ -1,0 +1,56 @@
+CASE none 0
+OVERRIDE pixmap enter 0 1 1 -1 
+OVERRIDE pixmap leave 0 1 0 2 
+OVERRIDE pixmap enter 0 2 0 1 
+DROP none enter 0
+DROP none leave 0 0 1
+OVERRIDE pixmap leave 0 2 0 2 
+AFTER none 0 0 2 0 1 2 1 
+CASE none 1
+OVERRIDE pixmap enter 0 1 1 -1 
+OVERRIDE pixmap leave 0 1 0 2 
+OVERRIDE file enter 1 1 0 1 
+DROP none enter 0
+DROP none leave 0 0 1
+OVERRIDE file leave 1 1 1 -1 outer.raw
+AFTER none 1 1 1 1 0 1 1 outer.raw
+CASE file 0
+OVERRIDE pixmap enter 0 1 1 -1 
+OVERRIDE pixmap leave 0 1 0 2 
+OVERRIDE pixmap enter 0 2 0 1 
+DROP file enter 0
+OVERRIDE file enter 1 2 0 0 
+OVERRIDE file leave 1 2 1 -1 inner.raw
+DROP file leave -1 1 1
+OVERRIDE pixmap leave 1 2 0 2 inner.raw
+AFTER file 0 1 2 0 1 2 1 inner.raw
+CASE file 1
+OVERRIDE pixmap enter 0 1 1 -1 
+OVERRIDE pixmap leave 0 1 0 2 
+OVERRIDE file enter 1 1 0 1 
+DROP file enter 0
+OVERRIDE file enter 2 1 0 0 
+OVERRIDE file leave 2 1 1 -1 inner.raw
+DROP file leave -1 1 1
+OVERRIDE file leave 2 1 1 -1 outer.raw
+AFTER file 1 2 1 1 0 1 1 outer.raw
+CASE pixmap 0
+OVERRIDE pixmap enter 0 1 1 -1 
+OVERRIDE pixmap leave 0 1 0 2 
+OVERRIDE pixmap enter 0 2 0 1 
+DROP pixmap enter 0
+OVERRIDE pixmap enter 0 3 0 0 
+OVERRIDE pixmap leave 0 3 0 2 
+DROP pixmap leave -1 0 2
+OVERRIDE pixmap leave 0 3 0 2 
+AFTER pixmap 0 0 3 0 1 2 2 
+CASE pixmap 1
+OVERRIDE pixmap enter 0 1 1 -1 
+OVERRIDE pixmap leave 0 1 0 2 
+OVERRIDE file enter 1 1 0 1 
+DROP pixmap enter 0
+OVERRIDE pixmap enter 1 2 0 0 
+OVERRIDE pixmap leave 1 2 0 2 
+DROP pixmap leave -1 0 2
+OVERRIDE file leave 1 2 1 -1 outer.raw
+AFTER pixmap 1 1 2 1 0 1 2 outer.raw

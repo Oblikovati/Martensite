@@ -1,0 +1,40 @@
+uid first=1
+uid after_view=2
+uid after_group=5
+uid empty=6
+state empty init=0 bytes=0 draw=none fill=0 indices=0 attribs=0 bounds=0 elems=1 fill_elems=0 line_elems=1 tris=0 lines=0
+mode type=0 attribs=1 draw=none fill=0
+mode type=0 attribs=0 draw=none fill=0
+mode type=1 attribs=1 draw=points fill=0
+mode type=1 attribs=0 draw=none fill=0
+mode type=2 attribs=1 draw=lines fill=0
+mode type=2 attribs=0 draw=none fill=0
+mode type=3 attribs=1 draw=line_strip fill=0
+mode type=3 attribs=0 draw=none fill=0
+mode type=4 attribs=1 draw=triangles fill=1
+mode type=4 attribs=0 draw=none fill=0
+mode type=5 attribs=1 draw=triangle_strip fill=1
+mode type=5 attribs=0 draw=none fill=0
+mode type=6 attribs=1 draw=triangle_fan fill=1
+mode type=6 attribs=0 draw=none fill=0
+mode type=7 attribs=1 draw=lines_adjacency fill=0
+mode type=7 attribs=0 draw=none fill=0
+mode type=8 attribs=1 draw=line_strip_adjacency fill=0
+mode type=8 attribs=0 draw=none fill=0
+mode type=9 attribs=1 draw=triangles_adjacency fill=1
+mode type=9 attribs=0 draw=none fill=0
+mode type=10 attribs=1 draw=triangle_strip_adjacency fill=1
+mode type=10 attribs=0 draw=none fill=0
+uid after_modes=29
+state dummy_indices init=0 bytes=0 draw=triangles fill=1 indices=0 attribs=1 bounds=0 elems=1 fill_elems=1 line_elems=0 tris=0 lines=0
+uid element=31
+state constructed init=0 bytes=0 draw=triangles fill=1 indices=0 attribs=1 bounds=0 elems=1 fill_elems=1 line_elems=0 tris=0 lines=0
+state rendered init=1 bytes=36 draw=triangles fill=1 indices=0 attribs=1 bounds=0 elems=1 fill_elems=1 line_elems=0 tris=1 lines=0
+state invalidated init=0 bytes=36 draw=triangles fill=1 indices=0 attribs=1 bounds=0 elems=1 fill_elems=1 line_elems=0 tris=1 lines=0
+state rerendered init=1 bytes=36 draw=triangles fill=1 indices=0 attribs=1 bounds=0 elems=1 fill_elems=1 line_elems=0 tris=1 lines=0
+state released init=0 bytes=0 draw=triangles fill=1 indices=0 attribs=1 bounds=0 elems=1 fill_elems=1 line_elems=0 tris=0 lines=0
+state released_rendered init=1 bytes=36 draw=triangles fill=1 indices=0 attribs=1 bounds=0 elems=1 fill_elems=1 line_elems=0 tris=1 lines=0
+state reinitialized init=0 bytes=0 draw=triangles fill=1 indices=1 attribs=1 bounds=0 elems=1 fill_elems=1 line_elems=0 tris=0 lines=0
+state reinitialized_rendered init=1 bytes=60 draw=triangles fill=1 indices=1 attribs=1 bounds=0 elems=1 fill_elems=1 line_elems=0 tris=2 lines=0
+state polyline_rendered init=1 bytes=60 draw=line_strip fill=0 indices=1 attribs=1 bounds=0 elems=1 fill_elems=0 line_elems=1 tris=0 lines=5
+uid last=32

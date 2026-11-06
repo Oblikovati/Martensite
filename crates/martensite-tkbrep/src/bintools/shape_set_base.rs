@@ -8,13 +8,22 @@ use martensite_tkernel::standard::Failure;
 use martensite_tkernel::storage::IoStream;
 use martensite_tkmath::gp::Point3;
 
-/// `THE_ASCII_VERSIONS`: the version line of each format number (index 0 is unused).
+/// `THE_ASCII_VERSIONS`: the version line written for each format number (index 0 is unused).
 pub const THE_ASCII_VERSIONS: [&str; format_version::UPPER as usize + 1] = [
     "",
-    "Open CASCADE Topology V1 (c)",
-    "Open CASCADE Topology V2 (c)",
-    "Open CASCADE Topology V3 (c)",
-    "Open CASCADE Topology V4, (c) Open Cascade",
+    "Martensite Binary Topology V1",
+    "Martensite Binary Topology V2",
+    "Martensite Binary Topology V3",
+    "Martensite Binary Topology V4",
+];
+
+/// The version lines of older binary shape files, which are only read, with their format numbers.
+pub(super) const LEGACY_INPUT_VERSIONS: [(&str, i32); 2] = [
+    ("Open CASCADE Topology V3 (c)", format_version::VERSION_3),
+    (
+        "Open CASCADE Topology V4, (c) Open Cascade",
+        format_version::VERSION_4,
+    ),
 ];
 
 /// `operator<<(Standard_OStream&, const gp_Pnt&)`: X, Y and Z with `PutReal`.

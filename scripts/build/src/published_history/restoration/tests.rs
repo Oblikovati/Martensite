@@ -1,5 +1,5 @@
 //! Named API fake exercises real restored archive bytes through the complete loader.
-use super::super::{AssetHistory, ReleaseIndex, fixtures::PublicationApiFixture};
+use super::super::{AssetHistory, PublishedRelease, ReleaseIndex, fixtures::PublicationApiFixture};
 use super::*;
 use crate::{context::tests::context_at, fake_runner::RecordingRunner};
 use serde_json::{Value, json};
@@ -105,7 +105,7 @@ fn restored_bytes_record_historical_and_live_anchor_separately() {
     let history = fake.evaluate(None).unwrap();
     let verified = &history.receipt.archives[0];
     assert_eq!(verified.release_id, historical.release_id);
-    assert!(verified.matches_claim(&historical));
+    assert!(verified.matches_claim(&historical, &published(&[])));
     assert_ne!(
         verified.restoration.as_ref().unwrap().release_id,
         historical.release_id
@@ -171,9 +171,42 @@ fn old_origin_wire_omits_restoration_and_anchor_claims_are_exact() {
             .is_none()
     );
     let history = fake.evaluate(None).unwrap();
-    let mut wrong = history.receipt.archives[0].clone();
+    let verified = &history.receipt.archives[0];
+    let anchor_release = verified.restoration.as_ref().unwrap().release_id;
+    let mut wrong = verified.clone();
     wrong.restoration.as_mut().unwrap().asset_id += 1;
-    assert!(!history.receipt.archives[0].matches_claim(&wrong));
+    assert!(!verified.matches_claim(&wrong, &published(&[anchor_release])));
+}
+
+#[test]
+fn a_retired_anchor_may_be_replaced_but_never_the_published_identity_or_bytes() {
+    let fake = RestorationApiFake::new();
+    let history = fake.evaluate(None).unwrap();
+    let verified = &history.receipt.archives[0];
+    let mut retired = verified.clone();
+    retired.restoration.as_mut().unwrap().release_id += 1;
+    let later_index = published(&[verified.restoration.as_ref().unwrap().release_id]);
+    assert!(verified.matches_claim(&retired, &later_index));
+    let mut other_bytes = retired.clone();
+    other_bytes.sha256 = "0".repeat(64);
+    assert!(!verified.matches_claim(&other_bytes, &later_index));
+    let mut other_manifest = retired;
+    other_manifest.manifest_sha256 = "0".repeat(64);
+    assert!(!verified.matches_claim(&other_manifest, &later_index));
+    assert!(!verified.same_publication(&other_manifest));
+}
+
+fn published(ids: &[u64]) -> ReleaseIndex {
+    let releases = ids.iter().map(|&id| PublishedRelease {
+        id,
+        tag_name: format!("v0.0.{id}"),
+        draft: false,
+        prerelease: false,
+        published_at: Some("2026-01-01T00:00:00Z".into()),
+    });
+    ReleaseIndex {
+        releases: releases.collect(),
+    }
 }
 
 pub(crate) fn verified_restored_history() -> AssetHistory {

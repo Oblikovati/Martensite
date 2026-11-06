@@ -3,7 +3,7 @@ use super::format_version;
 use super::raw_enums::orientation_from_raw;
 use super::scalars::{get_bool, get_integer, stream_get};
 use super::shape_set::BinShapeSet;
-use super::shape_set_base::{BinShapeSetBase, THE_ASCII_VERSIONS};
+use super::shape_set_base::{BinShapeSetBase, LEGACY_INPUT_VERSIONS, THE_ASCII_VERSIONS};
 use crate::brep_tools::update_face;
 use crate::topods::{Face, Shape};
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
@@ -65,7 +65,13 @@ impl BinShapeSet {
                 line.pop();
             }
             let known = (format_version::LOWER..=format_version::UPPER)
-                .find(|version| line == THE_ASCII_VERSIONS[*version as usize].as_bytes());
+                .find(|version| line == THE_ASCII_VERSIONS[*version as usize].as_bytes())
+                .or_else(|| {
+                    LEGACY_INPUT_VERSIONS
+                        .iter()
+                        .find(|(text, _)| line == text.as_bytes())
+                        .map(|(_, version)| *version)
+                });
             if let Some(version) = known {
                 self.set_format_nb(version);
                 return !stream.fail();

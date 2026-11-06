@@ -1,0 +1,47 @@
+{
+ "distinct_calls": 88553,
+ "gmp": "GMP 6.3.0",
+ "gmpy2": "2.3.2",
+ "mpfr": "MPFR 4.2.2",
+ "python": "3.12.3",
+ "schema": 1,
+ "summary": {
+  "acos": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 2727
+  },
+  "asin": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 10341
+  },
+  "atan": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 37
+  },
+  "atan2": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 2451
+  },
+  "cos": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 13138
+  },
+  "cosh": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 2
+  },
+  "exp": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 119
+  },
+  "hypot": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 5
+  },
+  "log": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 100
+  },
+  "pow": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 44848
+  },
+  "sin": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 14784
+  },
+  "sinh": {
+   "finite:portable_correctly_rounded_platform_not:glibc_equal": 1
+  }
+ },
+ "wide_precision_bits": 256
+}

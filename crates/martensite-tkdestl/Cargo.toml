@@ -1,0 +1,44 @@
+[package]
+autotests = false
+name = "martensite-tkdestl"
+version = "0.11.0"
+description = "Martensite STL reading and writing: triangulated files, shape transfers and the format provider."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.7" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.9" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.8" }
+martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.3.5" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.2" }
+martensite-tkde = { path = "../martensite-tkde", version = "0.9.0" }
+martensite-tkxcaf = { path = "../martensite-tkxcaf", version = "0.9.0" }
+
+[dev-dependencies]
+martensite-geometry-raster = { path = "../martensite-geometry-raster", version = "0.7.0" }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
+martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.6" }
+martensite-tkmeshvs = { path = "../martensite-tkmeshvs", version = "0.11.0" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.9" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
+martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.7.0" }
+martensite-vulkan = { path = "../martensite-vulkan", version = "0.7.1" }
+
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+# A viewer owns process state, so these cases run in child processes of their own executable.
+[[test]]
+name = "stl_cases"
+path = "tests/stl_cases.rs"

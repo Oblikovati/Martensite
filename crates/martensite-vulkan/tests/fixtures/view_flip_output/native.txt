@@ -1,0 +1,42 @@
+== sw
+GL_RENDERER=llvmpipe (LLVM 20.1.2, 128 bits)
+default=0
+after_set_true=1
+after_set_false=0
+pixmap msaa=0 oit=0 draw_to_front=1 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=0 oit=0 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=0 oit=1 draw_to_front=1 equal=0 rows_reversed=1 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=0 oit=1 draw_to_front=0 equal=0 rows_reversed=1 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=4 oit=0 draw_to_front=1 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=4 oit=0 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=4 oit=1 draw_to_front=1 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=4 oit=1 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+window msaa=0 oit=0 draw_to_front=1 equal=0 rows_reversed=1 top_left=0,255 flipped_top_left=0,255
+window msaa=0 oit=0 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+window msaa=0 oit=1 draw_to_front=1 equal=0 rows_reversed=1 top_left=0,255 flipped_top_left=0,255
+window msaa=0 oit=1 draw_to_front=0 equal=0 rows_reversed=1 top_left=0,255 flipped_top_left=0,255
+window msaa=4 oit=0 draw_to_front=1 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+window msaa=4 oit=0 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+window msaa=4 oit=1 draw_to_front=1 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+window msaa=4 oit=1 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+== host
+GL_RENDERER=AMD Radeon 8060S Graphics (radeonsi, strix_halo, ACO, DRM 3.64, 7.2.6-76070206-generic)
+default=0
+after_set_true=1
+after_set_false=0
+pixmap msaa=0 oit=0 draw_to_front=1 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=0 oit=0 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=0 oit=1 draw_to_front=1 equal=0 rows_reversed=1 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=0 oit=1 draw_to_front=0 equal=0 rows_reversed=1 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=4 oit=0 draw_to_front=1 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=4 oit=0 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=4 oit=1 draw_to_front=1 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+pixmap msaa=4 oit=1 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+window msaa=0 oit=0 draw_to_front=1 equal=0 rows_reversed=1 top_left=0,255 flipped_top_left=0,255
+window msaa=0 oit=0 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+window msaa=0 oit=1 draw_to_front=1 equal=0 rows_reversed=1 top_left=0,255 flipped_top_left=0,255
+window msaa=0 oit=1 draw_to_front=0 equal=0 rows_reversed=1 top_left=0,255 flipped_top_left=0,255
+window msaa=4 oit=0 draw_to_front=1 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+window msaa=4 oit=0 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+window msaa=4 oit=1 draw_to_front=1 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255
+window msaa=4 oit=1 draw_to_front=0 equal=1 rows_reversed=0 top_left=0,255 flipped_top_left=0,255

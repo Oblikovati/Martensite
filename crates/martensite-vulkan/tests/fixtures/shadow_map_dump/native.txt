@@ -1,0 +1,7 @@
+light headlight
+before_redraw 0 1 0 0
+caster 1 9 64 64
+unknown_light 0 1 0 0
+resolution_changed 0 1 0 0
+caster_32 1 9 32 32
+shadows_off 0 1 0 0

@@ -1,0 +1,54 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//! General planar regions and extrusion: the public seam a feature evaluator uses
+//! to turn a solved sketch into validated faces and an extruded solid with complete history.
+//!
+//! - [`build_planar_regions`] converts solved lines, circular and elliptic arcs, circles,
+//!   ellipses and clamped B-splines into every bounded face of the curve graph:
+//!   nested, touching or sharing edges, each with its outer loop and holes and
+//!   a complete curve to edge mapping.
+//! - [`extrude`] sweeps one region along a vector into an [`OperationResult`]: the solid,
+//!   its complete source to result history, findings, validation and achieved tolerance.
+//!
+//! Every operation is non-destructive and either succeeds completely or returns a typed
+//! [`OperationDecline`]; no partial result exists.
+mod admission;
+mod admit_curves;
+mod admitted;
+mod bezier;
+mod build_regions;
+mod carriers;
+
+mod decline;
+mod ellipse;
+mod extrude;
+mod loop_geometry;
+mod loops;
+mod operation_result;
+mod plane_math;
+mod profile;
+mod proof;
+mod proof_pieces;
+mod region_area;
+mod regions;
+mod resolution;
+mod solid_validation;
+mod spline;
+mod sweep_history;
+mod sweep_images;
+mod topology;
+mod validation;
+
+pub use crate::body_check::ValidationReport;
+pub use crate::measured::{Evidence, IntegrationMethod, Measured, MeasuredPoint};
+pub use build_regions::build_planar_regions;
+pub use decline::{
+    DeclineCause, DeclineClass, OperationDecline, OperationKind, OperationStage,
+    ValidationStageKind,
+};
+pub use extrude::{ExtrudeOptions, extrude};
+pub use loops::{LoopUse, ProfileLoop};
+pub use operation_result::*;
+pub use profile::*;
+pub use regions::*;
+pub use resolution::*;
+pub use validation::{Finding, RegionValidation, SelfIntersectionEvidence, StageStatus};

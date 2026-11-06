@@ -66,11 +66,20 @@ pub(super) fn choose_cut_vertex(
         return Ok(endpoint);
     }
     Ok(CutVertex {
-        vertex: Vertex::default(),
+        vertex: unsnapped_cut_vertex(state),
         point,
         parameter,
         action: CutAction::Split,
     })
+}
+
+/// A null vertex asks for a new one. A degenerate edge has only the one point, so a cut across it
+/// keeps its vertex even when a limited tolerance no longer reaches the point.
+fn unsnapped_cut_vertex(state: &EdgeSplitState) -> Vertex {
+    if state.degenerated && state.first_vertex.is_same(&state.last_vertex) {
+        return state.first_vertex.clone();
+    }
+    Vertex::default()
 }
 
 impl CutVertex {
@@ -104,7 +113,11 @@ fn endpoint_snap(
     if !near_endpoint(context, &endpoint)? {
         return Ok(None);
     }
-    let action = if is_last {
+    // Near in space but apart on the surface, as along an edge closing at a pole: the edge is still
+    // cut there, and the cut ends on the vertex already in place instead of a coincident new one.
+    let action = if !coincides_on_surface(context, &endpoint)? {
+        CutAction::Split
+    } else if is_last {
         CutAction::Finish
     } else {
         CutAction::Skip
@@ -166,13 +179,18 @@ fn near_endpoint(
     }
     let midpoint_parameter = 0.5 * (context.parameter + endpoint.parameter);
     let midpoint_uv = context.state.pcurve.value(midpoint_parameter)?;
-    if endpoint
+    Ok(endpoint
         .grid_point
         .distance(&context.grid.value_at(midpoint_uv)?)
-        > endpoint.tolerance
-    {
-        return Ok(false);
-    }
+        <= endpoint.tolerance)
+}
+
+fn coincides_on_surface(
+    context: &EndpointSnapContext<'_>,
+    endpoint: &EndpointData<'_>,
+) -> Result<bool, Failure> {
+    let midpoint_parameter = 0.5 * (context.parameter + endpoint.parameter);
+    let midpoint_uv = context.state.pcurve.value(midpoint_parameter)?;
     let (ures, vres) = endpoint_resolutions(
         context.composer,
         context.cut_by_u,

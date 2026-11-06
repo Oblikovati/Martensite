@@ -28,6 +28,7 @@ pub(super) struct EdgeSplitState {
     pub(super) first_vertex_tolerance: f64,
     pub(super) last_vertex_tolerance: f64,
     pub(super) same_parameter: bool,
+    pub(super) degenerated: bool,
     pub(super) non_manifold_vertices: Vec<Shape>,
     pub(super) non_manifold_parameters: Vec<f64>,
     pub(super) periodic: bool,
@@ -91,6 +92,7 @@ impl EdgeSplitState {
             last_vertex_tolerance,
             same_parameter: first_3d_parameter == first_parameter
                 && last_3d_parameter == last_parameter,
+            degenerated: BRepTool::degenerated(edge)?,
             non_manifold_vertices,
             non_manifold_parameters,
             periodic: pcurve.is_periodic(),
