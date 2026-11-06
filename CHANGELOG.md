@@ -8,11 +8,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added separately selectable tolerance-resolved extrusion-face incidence validation with owned full-domain contact and neighborhood evidence, preserving exact face-policy replay (#213).
-
-- Added owned proper given-vertex neighborhood and analytic curve/line incidence certificates with exact algebraic witnesses and combined finite work limits (#213).
-
-- Added owned open quadratic-extrusion support proofs with explicit endpoint domains and finite incomplete outcomes (#213).
+- Added `certify_tolerance_resolved_extrusion_face` with `ToleranceResolvedFacePolicy::v4()`: it certifies a closed extrusion face whose stored boundary carrier stays within the original tolerances of the surface but is not exactly on it, and reports every boundary contact and error bound without changing geometry. Earlier face policies keep their results and refusals, and an enclosing solid still needs its own checks (#213).
+- Added `certify_given_vertex_neighborhood`, `certify_given_vertex_contacts` and `certify_disjoint_vertex_neighborhoods`, which prove from exact coefficients how curves enter a given vertex ball, where a curve meets a line inside it, and that two vertex balls do not overlap (#213).
+- Added `certify_open_quadratic_extrusion`, which proves that the extrusion of an open quadratic spline does not intersect itself without joining its endpoints, with `StoredSplineInput::into_open_extrusion_input` and `capture_placed_open_support_inputs` to build its inputs from stored curves and face snapshots. Face validation does not yet certify faces on open splines (#213).
 
 ### Fixed
 
