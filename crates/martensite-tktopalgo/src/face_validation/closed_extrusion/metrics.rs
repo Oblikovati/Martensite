@@ -33,3 +33,15 @@ pub(super) fn minimum(values: &[f64], owner: usize) -> CheckResult<f64> {
     }
     Ok(values.iter().copied().fold(f64::INFINITY, f64::min))
 }
+
+pub(super) fn record_carrier_bound<F: FnMut() -> bool>(
+    address: [usize; 2],
+    limit: f64,
+    query: TransportedResidualQuery<'_>,
+    budget: &mut Budget<'_, F>,
+    errors: &mut Vec<ClosedFaceErrorBound>,
+) -> CheckResult<()> {
+    let context = ClosedFaceQueryContext::new(address[1], ClosedFaceRelation::CarrierSeam);
+    let claim = claims::BoundClaim::new(address[0], None, context, limit, false);
+    claim.record(budget.residual(query, context)?, errors)
+}

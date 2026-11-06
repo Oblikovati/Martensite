@@ -1,0 +1,112 @@
+//! Finite planar quadratic profiles preserve their original represented endpoint gaps.
+use super::*;
+const OFFSET_PROFILE_POLES: [[u64; 3]; 23] = [
+    [0xc049d0a3d70a3d71, 0xc034ffffe6666666, 0xc051800000000000],
+    [0xc04ace147ae147ae, 0xc034ffffe6666666, 0xc051800000000000],
+    [0xc04ace147ae147ae, 0xc037ffffe6666666, 0xc051800000000000],
+    [0xc049b3d70a3d70a4, 0xc037ffffe6666666, 0xc051800000000000],
+    [0xc049970a3d70a3d7, 0xc037ffffe6666666, 0xc051800000000000],
+    [0xc049970a3d70a3d7, 0xc03dbeb83851eb85, 0xc051800000000000],
+    [0xc049970a3d70a3d7, 0xc041beb8451eb852, 0xc051800000000000],
+    [0xc049b3d70a3d70a4, 0xc041beb8451eb852, 0xc051800000000000],
+    [0xc04ace147ae147ae, 0xc041beb8451eb852, 0xc051800000000000],
+    [0xc04ace147ae147ae, 0xc042ee146e147ae1, 0xc051800000000000],
+    [0xc04a8ccccccccccd, 0xc043147ad47ae148, 0xc051800000000000],
+    [0xc04a47ae147ae148, 0xc0433eb8451eb852, 0xc051800000000000],
+    [0xc047eae147ae147b, 0xc0433eb8451eb852, 0xc051800000000000],
+    [0xc044beb851eb851f, 0xc0433eb8451eb852, 0xc051800000000000],
+    [0xc043eb851eb851ec, 0xc0428a3d63d70a3d, 0xc051800000000000],
+    [0xc043147ae147ae14, 0xc041d5c2828f5c29, 0xc051800000000000],
+    [0xc043147ae147ae14, 0xc03f9eb83851eb84, 0xc051800000000000],
+    [0xc044066666666666, 0xc03e26664ccccccc, 0xc051800000000000],
+    [0xc0426f5c28f5c290, 0xc03c8f5c0f5c28f5, 0xc051800000000000],
+    [0xc0426f5c28f5c290, 0xc037a3d6f0a3d70a, 0xc051800000000000],
+    [0xc0440e147ae147ae, 0xc034ffffe6666666, 0xc051800000000000],
+    [0xc0479a3d70a3d70a, 0xc034ffffe6666666, 0xc051800000000000],
+    [0xc049d0a3d70a3d70, 0xc034ffffe6666666, 0xc051800000000000],
+];
+pub(super) fn offset_profile() -> OpenQuadraticExtrusionInput {
+    let poles = OFFSET_PROFILE_POLES.map(|p| p.map(f64::from_bits)).to_vec();
+    let direction = [
+        f64::from_bits(0x8000000000000000),
+        f64::from_bits(0x8000000000000000),
+        f64::from_bits(0xbff0000000000000),
+    ];
+    OpenQuadraticExtrusionInput::capture(
+        poles,
+        vec![1.; 23],
+        knots(),
+        multiplicities(),
+        direction,
+        [-10., 0.],
+    )
+    .unwrap()
+}
+const ORIGIN_PROFILE_POLES: [[u64; 3]; 23] = [
+    [0x4002f5c28f5c28f6, 0x0000000000000000, 0x0000000000000000],
+    [0x3fd8f5c28f5c28f8, 0x0000000000000000, 0x0000000000000000],
+    [0x3fd8f5c28f5c28f6, 0x4008000000000000, 0x0000000000000000],
+    [0x4004c28f5c28f5c2, 0x4008000000000000, 0x0000000000000000],
+    [0x40068f5c28f5c28f, 0x4008000000000000, 0x0000000000000000],
+    [0x40068f5c28f5c28f, 0x40217d70a3d70a3e, 0x0000000000000000],
+    [0x40068f5c28f5c28f, 0x402cfae147ae147b, 0x0000000000000000],
+    [0x4004c28f5c28f5c2, 0x402cfae147ae147b, 0x0000000000000000],
+    [0x3fd8f5c28f5c28f8, 0x402cfae147ae147b, 0x0000000000000000],
+    [0x3fd8f5c28f5c28f6, 0x4030dc28f5c28f5c, 0x0000000000000000],
+    [0x3feccccccccccccc, 0x403128f5c28f5c29, 0x0000000000000000],
+    [0x3ff70a3d70a3d70a, 0x40317d70a3d70a3d, 0x0000000000000000],
+    [0x4018a8f5c28f5c28, 0x40317d70a3d70a3d, 0x0000000000000000],
+    [0x4029051eb851eb85, 0x40317d70a3d70a3d, 0x0000000000000000],
+    [0x402c51eb851eb852, 0x4030147ae147ae14, 0x0000000000000000],
+    [0x402fae147ae147ae, 0x402d570a3d70a3d7, 0x0000000000000000],
+    [0x402fae147ae147ae, 0x40253d70a3d70a3d, 0x0000000000000000],
+    [0x402be66666666666, 0x40224ccccccccccd, 0x0000000000000000],
+    [0x40312147ae147ae1, 0x401e3d70a3d70a3d, 0x0000000000000000],
+    [0x40312147ae147ae1, 0x40051eb851eb851e, 0x0000000000000000],
+    [0x402bc7ae147ae147, 0x0000000000000000, 0x0000000000000000],
+    [0x401b2e147ae147ae, 0x0000000000000000, 0x0000000000000000],
+    [0x4002f5c28f5c28f8, 0x0000000000000000, 0x0000000000000000],
+];
+pub(super) fn origin_profile() -> OpenQuadraticExtrusionInput {
+    let poles = ORIGIN_PROFILE_POLES.map(|p| p.map(f64::from_bits)).to_vec();
+    let direction = [
+        f64::from_bits(0x0000000000000000),
+        f64::from_bits(0x0000000000000000),
+        f64::from_bits(0x3ff0000000000000),
+    ];
+    OpenQuadraticExtrusionInput::capture(
+        poles,
+        vec![1.; 23],
+        knots(),
+        multiplicities(),
+        direction,
+        [-10., 0.],
+    )
+    .unwrap()
+}
+const PROFILE_KNOTS: [u64; 17] = [
+    0x0000000000000000,
+    0x3ff0000000000000,
+    0x4000000000000000,
+    0x4000e8ba2e8ba2e8,
+    0x40140f83e0f83e04,
+    0x401483e0f83e0f78,
+    0x401883e0f83e0f76,
+    0x401ad5cc7d5cc7c6,
+    0x401d51082d301dbc,
+    0x4023b898b513a36a,
+    0x40271f7b0d5a88bf,
+    0x402a8f8d0f7138cf,
+    0x402da8da96bbc1e1,
+    0x403121680b42fc02,
+    0x4032ee58cdf648d8,
+    0x4034bb4990a995ae,
+    0x4037b7349f909505,
+];
+fn knots() -> Vec<f64> {
+    PROFILE_KNOTS.map(f64::from_bits).to_vec()
+}
+
+fn multiplicities() -> Vec<u32> {
+    vec![3, 1, 1, 2, 2, 1, 1, 2, 1, 1, 2, 1, 2, 1, 1, 1, 3]
+}

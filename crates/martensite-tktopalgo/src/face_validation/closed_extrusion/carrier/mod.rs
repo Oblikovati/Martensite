@@ -1,8 +1,12 @@
 //! Independently injective boundary carriers supplement the canonical face surface.
 mod chains;
 mod direction;
+pub(super) mod open_inputs;
 mod planes;
 mod relations;
+pub(super) mod resolved;
+mod resolved_components;
+mod resolved_metrics;
 use super::{
     boundary::{Boundary, Side},
     boundary_report::ClosedFaceBoundaryReport,

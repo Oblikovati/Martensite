@@ -29,11 +29,7 @@ fn run<F: FnMut() -> bool>(
     report: &mut ClosedFaceReport,
     budget: &mut Budget<'_, F>,
 ) -> CheckResult<()> {
-    validate_policy(budget.policy)?;
-    let strip = decode::decode(&report.input, budget)?;
-    let boundary = boundary::certify(&strip, budget)?;
-    incidence::certify(&strip, &boundary, budget)?;
-    report.coverage.topology = true;
+    let (strip, boundary) = prepare(report, budget)?;
     let support_input = admit_support(&strip, &boundary)?;
     metrics::certify(&strip, &boundary, budget, &mut report.errors)?;
     report.coverage.geometry = true;
@@ -44,6 +40,18 @@ fn run<F: FnMut() -> bool>(
     report.coverage.tolerances = true;
     Ok(())
 }
+pub(super) fn prepare<F: FnMut() -> bool>(
+    report: &mut ClosedFaceReport,
+    budget: &mut Budget<'_, F>,
+) -> CheckResult<(decode::Strip, boundary::Boundary)> {
+    validate_policy(budget.policy)?;
+    let strip = decode::decode(&report.input, budget)?;
+    let boundary = boundary::certify(&strip, budget)?;
+    incidence::certify(&strip, &boundary, budget)?;
+    report.coverage.topology = true;
+    Ok((strip, boundary))
+}
+
 fn admit_support(
     strip: &decode::Strip,
     boundary: &boundary::Boundary,
@@ -87,7 +95,10 @@ fn support<F: FnMut() -> bool>(
     result
 }
 
-fn initial_report(input: FaceInputSnapshot, policy: ClosedFacePolicy) -> ClosedFaceReport {
+pub(super) fn initial_report(
+    input: FaceInputSnapshot,
+    policy: ClosedFacePolicy,
+) -> ClosedFaceReport {
     ClosedFaceReport {
         input,
         policy,

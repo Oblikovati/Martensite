@@ -182,3 +182,4 @@ fn checked_interval(
 
 /// Exact closed quadratic spline extrusion support self-exclusion.
 pub mod closed_extrusion;
+pub mod open_extrusion;

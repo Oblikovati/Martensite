@@ -10,7 +10,7 @@ pub(super) fn prove<F: FnMut() -> bool>(
     record(proof.work(), budget);
     proof
 }
-fn remaining<F: FnMut() -> bool>(budget: &Budget<'_, F>) -> ClosedExtrusionPolicy {
+pub(super) fn remaining<F: FnMut() -> bool>(budget: &Budget<'_, F>) -> ClosedExtrusionPolicy {
     let mut policy = budget.policy.support;
     policy.max_spans = policy.max_spans.saturating_sub(budget.work.support_spans);
     policy.max_obligations = policy
@@ -21,7 +21,7 @@ fn remaining<F: FnMut() -> bool>(budget: &Budget<'_, F>) -> ClosedExtrusionPolic
         .saturating_sub(budget.work.support_steps);
     policy
 }
-fn record<F: FnMut() -> bool>(work: ClosedExtrusionWork, budget: &mut Budget<'_, F>) {
+pub(super) fn record<F: FnMut() -> bool>(work: ClosedExtrusionWork, budget: &mut Budget<'_, F>) {
     budget.work.support_spans = budget.work.support_spans.saturating_add(work.spans);
     budget.work.support_obligations = budget
         .work

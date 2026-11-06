@@ -6,7 +6,12 @@ mod carrier;
 mod decode;
 mod incidence;
 mod metrics;
+mod open_support_inputs;
 mod operation;
+pub use open_support_inputs::{
+    OpenSupportInputFailure, OpenSupportInputReport, OpenSupportInputRole, PlacedOpenSupportInputs,
+    capture_placed_open_support_inputs,
+};
 mod placements;
 mod report;
 mod support_proof;
@@ -15,3 +20,6 @@ pub use boundary_report::ClosedFaceBoundaryReport;
 pub use operation::certify_closed_extrusion_face;
 pub use report::{ClosedFaceCertificate, ClosedFaceReport};
 pub use types::*;
+
+mod resolved;
+pub use resolved::*;

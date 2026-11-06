@@ -12,6 +12,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added `martensite-tkdestep` (STEP reading and writing: the parser and writer, the entity schemas, shape and document transfers and the format provider). Each value reads as the file has it and writes back the same: shading methods, the actuated directions of kinematic pairs, the surface and volume element purpose names, and `EXTERNALLY_DEFINED_CLASS` and the other records whose fields are filled on read. Triangulated faces whose normals are not a square array write like any other (#403).
 - Added `V3dView::default_view_axis`, which returns the default view point and axis that `set_axis` keeps, with every digit (#403).
+- Added `certify_tolerance_resolved_extrusion_face` with `ToleranceResolvedFacePolicy::v4()`: it certifies a closed extrusion face whose stored boundary carrier stays within the original tolerances of the surface but is not exactly on it, and reports every boundary contact and error bound without changing geometry. Earlier face policies keep their results and refusals, and an enclosing solid still needs its own checks (#213).
+- Added `certify_given_vertex_neighborhood`, `certify_given_vertex_contacts` and `certify_disjoint_vertex_neighborhoods`, which prove from exact coefficients how curves enter a given vertex ball, where a curve meets a line inside it, and that two vertex balls do not overlap (#213).
+- Added `certify_open_quadratic_extrusion`, which proves that the extrusion of an open quadratic spline does not intersect itself without joining its endpoints, with `StoredSplineInput::into_open_extrusion_input` and `capture_placed_open_support_inputs` to build its inputs from stored curves and face snapshots. Face validation does not yet certify faces on open splines (#213).
 
 ### Changed
 
