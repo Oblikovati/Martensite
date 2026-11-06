@@ -30,6 +30,7 @@ enum RenderFailureCause {
     LightingSelection(crate::RenderLightingSelectionChanged),
     Device(crate::RenderDeviceFailure),
     Portability(crate::RenderPortabilityFailure),
+    ValidationAdmission(crate::RenderValidationAdmissionFailure),
     SurfacePlatform(crate::RenderSurfacePlatformFailure),
     Window(AspectNativeWindowFailure),
     Display(AspectDisplayLifecycleFailure),
@@ -192,6 +193,7 @@ impl std::error::Error for RenderError {
             Some(RenderFailureCause::PolygonPoint(failure)) => Some(failure),
             Some(RenderFailureCause::Device(failure)) => Some(failure),
             Some(RenderFailureCause::Portability(failure)) => Some(failure),
+            Some(RenderFailureCause::ValidationAdmission(failure)) => Some(failure),
             Some(RenderFailureCause::SurfacePlatform(failure)) => Some(failure),
             Some(RenderFailureCause::Window(failure)) => Some(failure),
             Some(RenderFailureCause::Display(failure)) => Some(failure),
@@ -319,3 +321,6 @@ pub(crate) mod lighting_selection;
 #[cfg(feature = "vertex-output-diagnostics")]
 #[path = "error_vertex_output.rs"]
 mod vertex_output;
+
+#[path = "error_validation_admission.rs"]
+mod validation_admission;
