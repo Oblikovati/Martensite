@@ -2,6 +2,8 @@
 #[path = "common/floating.rs"]
 mod floating;
 mod primitive_legacy_support;
+#[path = "gprop_trimmed_spans.rs"]
+mod trimmed_spans;
 use floating::within_absolute_error as near;
 #[path = "common/property_assertions.rs"]
 mod property_assertions;

@@ -25,6 +25,7 @@ follows [Semantic Versioning](https://semver.org/).
 - Attributes are now added after the ones already on a label, so a label lists them in the order they were created. This covers the array, list, map, tree, expression, variable and function attributes, the document attributes, metadata copies and the viewer attribute (#403).
 - Reading a file into a null model now reports a failure instead of panicking (#403).
 - Validated Vulkan startup now names a missing validation layer or required instance extension before creating the instance. The check includes extensions from the selected layer and keeps validation enabled (#388).
+- A volume no longer loses the sliver of a trimmed face narrower than `1e-9` in surface parameter. `volume_properties` and `volume_properties_gk` integrate every span of positive width, so a slightly skewed prism gets its exact volume, centre and inertia (#386).
 
 ## [0.11.0] - 2026-11-06
 

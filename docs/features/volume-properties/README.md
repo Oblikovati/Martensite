@@ -18,3 +18,15 @@ status before using the accumulated properties.
 
 The geometric route requests relative quadrature error `1e-5`. Triangulation and
 mesh-only face processing use their existing route.
+
+Inner U integration keeps every interval of positive width, including intervals narrower
+than `1e-9` in the surface's parameter space. A fixed parameter-width cutoff can discard a
+real contribution without including it in the reported integration error. A U interval
+with no positive width is omitted; adaptive quadrature evaluates the remaining intervals
+against the requested error budget (#386).
+
+The regression constructs a skewed planar polygon, sweeps it, checks geometric
+validity, and compares its volume with an independent polygon-area calculation.
+Generated inputs vary skew sign, magnitude, scale, and translation. The small failing
+input's relative error was about `6.25e-11` while the integrator reported about
+`6.8e-16`; its explicit integration request was `1e-12`.
