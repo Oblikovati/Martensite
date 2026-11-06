@@ -174,6 +174,42 @@ fn main_label(document: &Handle<TDocStdDocument>) -> TdfLabel {
         .expect("its main label")
 }
 
+/// The texts of the global section that say who wrote a file.
+fn identity_of(content: &[u8]) -> [String; 6] {
+    let model = read_model(content, false);
+    let header = model.get().expect("a model").global_section();
+    [
+        header.send_name(),
+        header.system_id(),
+        header.interface_version(),
+        header.author_name(),
+        header.company_name(),
+        header.receive_name(),
+    ]
+    .map(|value| {
+        value.get().map_or_else(String::new, |text| {
+            String::from_utf8_lossy(text.string().as_bytes()).into_owned()
+        })
+    })
+}
+
+#[test]
+fn a_written_file_names_this_kernel() {
+    let _guard = locked();
+    let content = write_shape(&new_provider(), &new_box());
+    let version = env!("CARGO_PKG_VERSION");
+    let processor = format!("Martensite IGES processor {version}");
+    let expected = [
+        processor.clone(),
+        format!("Martensite {version}"),
+        processor,
+        "Martensite".to_owned(),
+        String::new(),
+        String::new(),
+    ];
+    assert_eq!(identity_of(&content), expected);
+}
+
 #[test]
 fn format_vendor_and_node_are_known() {
     let provider = new_provider();
