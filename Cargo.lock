@@ -657,6 +657,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkfeat"
+version = "0.10.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-tkbo",
+ "martensite-tkbool",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkfillet",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tkshhealing",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-vulkan",
+]
+
+[[package]]
 name = "martensite-tkfillet"
 version = "0.8.0"
 dependencies = [
@@ -769,7 +795,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkmath"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -799,8 +825,39 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkoffset"
+version = "0.10.0"
+dependencies = [
+ "martensite-boolean-cases",
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-tkbo",
+ "martensite-tkbool",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkfeat",
+ "martensite-tkfillet",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tkhlr",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tkshhealing",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-topology-test-support",
+ "martensite-vulkan",
+]
+
+[[package]]
 name = "martensite-tkprim"
-version = "0.3.8"
+version = "0.3.9"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
@@ -860,7 +917,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tktopalgo"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",

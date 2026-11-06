@@ -1,0 +1,105 @@
+[package]
+autotests = false
+name = "martensite-tkoffset"
+version = "0.10.0"
+description = "Martensite offset modeling: offset shapes and thick solids, simple offsets, drafts, pipes, lofts and tangent blends."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkfillet = { path = "../martensite-tkfillet", version = "0.8.0" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.7" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.8" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.6" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.9" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.2" }
+martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.7" }
+martensite-tkbool = { path = "../martensite-tkbool", version = "0.8.0" }
+martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.8" }
+martensite-tkbo = { path = "../martensite-tkbo", version = "0.8.0" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.9" }
+
+[dev-dependencies]
+martensite-tkfeat = { path = "../martensite-tkfeat", version = "0.10.0" }
+martensite-boolean-cases = { path = "../martensite-boolean-cases", version = "0.8.1" }
+martensite-geometry-raster = { path = "../martensite-geometry-raster", version = "0.7.0" }
+martensite-tkhlr = { path = "../martensite-tkhlr", version = "0.3.6" }
+martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.7.0" }
+martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
+martensite-topology-test-support = { path = "../martensite-topology-test-support", version = "0.7.0" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.6" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
+martensite-vulkan = { path = "../martensite-vulkan", version = "0.7.1" }
+
+# Test modules share one executable per toolkit to avoid repeated linkage.
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+[[test]]
+name = "dataset_cases"
+path = "tests/dataset_cases/main.rs"
+
+# The scripts that end on a shaded view need the real renderer and its validation layer.
+[[test]]
+name = "viewer_cases"
+path = "tests/viewer_cases/main.rs"
+
+[[test]]
+name = "tkbo_loft_pave_filler"
+path = "tests/tkbo_loft_pave_filler.rs"
+
+[[test]]
+name = "filling_bug23380"
+path = "tests/filling_bug23380.rs"
+
+[[test]]
+name = "offset_bug26233"
+path = "tests/offset_bug26233.rs"
+
+[[test]]
+name = "modalg_8_bug32964"
+path = "tests/modalg_8_bug32964.rs"
+
+[[test]]
+name = "offset_cap_orientation"
+path = "tests/offset_cap_orientation.rs"
+
+[[test]]
+name = "offset_bug5806"
+path = "tests/offset_bug5806.rs"
+
+[[test]]
+name = "offset_wire_002_a1"
+path = "tests/offset_wire_002_a1.rs"
+
+[[test]]
+name = "modalg_7_bug28684_2"
+path = "tests/modalg_7_bug28684_2.rs"
+
+[[test]]
+name = "offset_shape_type_i_a1"
+path = "tests/offset_shape_type_i_a1.rs"
+
+[[test]]
+name = "offset_faces_type_i_a1"
+path = "tests/offset_faces_type_i_a1.rs"
+
+[[test]]
+name = "offset_wire_001_a1"
+path = "tests/offset_wire_001_a1.rs"
+
+# Geometry feedback only; the whole views are a separate check.
+[[test]]
+name = "filling_gplate22786_geometry"
+path = "tests/filling_gplate22786_geometry.rs"

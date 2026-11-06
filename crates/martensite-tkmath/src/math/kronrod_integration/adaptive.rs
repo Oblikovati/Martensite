@@ -41,7 +41,10 @@ impl KronrodSingleIntegration {
             values: vec![self.value],
             stagnation: 0,
         };
-        while self.error > tolerance && self.iterations < limit {
+        while self.error > tolerance
+            && self.absolute > self.absolute_floor
+            && self.iterations < limit
+        {
             let Some(index) = intervals.largest_error() else {
                 self.done = false;
                 return;
