@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tklcaf"
-version = "0.3.5"
+version = "0.3.6"
 description = "Martensite application data framework: labels, attributes, standard attributes, functions, documents and transactions."
 edition.workspace = true
 rust-version.workspace = true

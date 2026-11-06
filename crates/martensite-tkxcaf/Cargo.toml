@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkxcaf"
-version = "0.9.0"
+version = "0.9.1"
 description = "Martensite extended exchange document: shapes, colors, layers, materials, dimensions and tolerances, notes, views and their presentation."
 edition.workspace = true
 rust-version.workspace = true

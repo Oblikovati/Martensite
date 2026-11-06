@@ -35,11 +35,19 @@ fn label_constructors() -> [(&'static str, LabelConstructor); 11] {
         ("variable", |l| Ok(TDataStdVariable::set(l)?.id())),
         ("named data", |l| Ok(TDataStdNamedData::set(l)?.id())),
         ("tree node", |l| Ok(TDataStdTreeNode::set(l)?.id())),
-        ("packed map", |l| Ok(TDataStdIntPackedMap::set(l, false)?.id())),
+        ("packed map", |l| {
+            Ok(TDataStdIntPackedMap::set(l, false)?.id())
+        }),
         ("list", |l| Ok(TDataStdIntegerList::set(l)?.id())),
-        ("array", |l| Ok(TDataStdIntegerArray::set(l, 1, 2, false)?.id())),
-        ("boolean array", |l| Ok(TDataStdBooleanArray::set(l, 1, 2)?.id())),
-        ("reference array", |l| Ok(TDataStdReferenceArray::set(l, 1, 2)?.id())),
+        ("array", |l| {
+            Ok(TDataStdIntegerArray::set(l, 1, 2, false)?.id())
+        }),
+        ("boolean array", |l| {
+            Ok(TDataStdBooleanArray::set(l, 1, 2)?.id())
+        }),
+        ("reference array", |l| {
+            Ok(TDataStdReferenceArray::set(l, 1, 2)?.id())
+        }),
         ("function", |l| Ok(TFunctionFunction::set(l)?.id())),
     ]
 }

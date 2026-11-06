@@ -260,3 +260,7 @@ crates/martensite-tkfeat/tests/dataset_cases/support/restored_kinds.txt -text -w
 crates/martensite-tkmeshvs/tests/fixtures/** -text -whitespace
 crates/martensite-tkdestl/tests/data/** -text -whitespace
 crates/martensite-tkdestl/src/de_stl/configuration.template -text -whitespace
+
+# Recorded values and configuration bytes of the STEP tests keep their bytes on every platform.
+crates/martensite-tkdestep/tests/fixtures/** -text -whitespace
+crates/martensite-tkdestep/src/de_step/configuration.template -text -whitespace

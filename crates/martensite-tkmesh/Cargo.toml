@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkmesh"
-version = "0.3.6"
+version = "0.3.7"
 description = "Martensite discrete mesh models and boundary-shape meshing algorithms."
 edition.workspace = true
 rust-version.workspace = true

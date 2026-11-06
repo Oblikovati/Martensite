@@ -6,8 +6,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-06
+
 ### Added
 
+- Added `martensite-tkdestep` (STEP reading and writing: the parser and writer, the entity schemas, shape and document transfers and the format provider). Each value reads as the file has it and writes back the same: shading methods, the actuated directions of kinematic pairs, the surface and volume element purpose names, and `EXTERNALLY_DEFINED_CLASS` and the other records whose fields are filled on read. Triangulated faces whose normals are not a square array write like any other.
 - Added `V3dView::default_view_axis`, which returns the default view point and axis that `set_axis` keeps, with every digit.
 
 ### Changed

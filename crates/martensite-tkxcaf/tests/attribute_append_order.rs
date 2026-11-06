@@ -2,9 +2,9 @@
 //! are added after the ones already on their label, and a metadata copy keeps that order.
 mod support;
 
-use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::osd::{File, OpenMode, Protection};
+use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
 use martensite_tklcaf::tdata_std::{TDataStdInteger, TDataStdReal};
 use martensite_tklcaf::tdf::{TdfAttribute, TdfAttributeIterator, TdfLabel};
@@ -105,7 +105,10 @@ fn the_document_tool_follows_the_attributes_of_its_label() {
     let label = document.main().unwrap().find_child(1, true).unwrap();
     let first = TDataStdInteger::set(&label, 7).unwrap().id();
     XCAFDocDocumentTool::set(&label, false).unwrap();
-    assert_eq!(attribute_ids(&label)[..2], [first, XCAFDocDocumentTool::get_id()]);
+    assert_eq!(
+        attribute_ids(&label)[..2],
+        [first, XCAFDocDocumentTool::get_id()]
+    );
 }
 
 #[test]

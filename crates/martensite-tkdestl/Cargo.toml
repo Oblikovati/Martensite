@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkdestl"
-version = "0.11.0"
+version = "0.11.1"
 description = "Martensite STL reading and writing: triangulated files, shape transfers and the format provider."
 edition.workspace = true
 rust-version.workspace = true
