@@ -60,7 +60,7 @@ fn reverse_for_surface_orientation(
     first: &[f64; 4],
     second: &[f64; 4],
 ) {
-    if plan.u_closed && plan.v_closed && !is_degenerated_torus(plan) {
+    if plan.u_closed && plan.v_closed && !plan.degenerated_torus {
         return;
     }
     let coord = if plan.direction.u != 0 { 2 } else { 0 };
@@ -74,13 +74,6 @@ fn reverse_for_surface_orientation(
         plan.first_wire.reverse();
         plan.second_wire.reverse();
     }
-}
-
-fn is_degenerated_torus(plan: &MissingSeamPlan) -> bool {
-    plan.surface
-        .cast::<martensite_tkg3d::geom::GeomToroidalSurface>()
-        .get()
-        .is_some_and(|surface| surface.major_radius() < surface.minor_radius())
 }
 
 fn midpoint(bounds: &[f64; 4], index: usize) -> f64 {
@@ -141,6 +134,7 @@ fn prepared_wire(
 
 fn reverse_outer_hole_if_needed(face: &Face, wire: &Wire) -> Result<Wire, Failure> {
     let mut temporary = empty_face(face)?;
+    temporary.set_orientation(Orientation::Forward);
     Builder.add(&mut temporary, &wire.clone().into_shape())?;
     temporary.set_orientation(face.orientation());
     let mut oriented = wire.clone();
@@ -151,7 +145,7 @@ fn reverse_outer_hole_if_needed(face: &Face, wire: &Wire) -> Result<Wire, Failur
 }
 
 fn align_periodic_wires(plan: &MissingSeamPlan, ordered: &mut OrderedWires) -> Result<(), Failure> {
-    if !plan.u_closed || !plan.v_closed || is_degenerated_torus(plan) {
+    if !plan.u_closed || !plan.v_closed || plan.degenerated_torus {
         return Ok(());
     }
     let (coord, mode, period) = periodic_axis(plan);
@@ -182,7 +176,7 @@ fn periodic_axis(plan: &MissingSeamPlan) -> (usize, i8, f64) {
 fn second_wire_shift(ordered: &OrderedWires, coord: usize, mode: i8, period: f64) -> f64 {
     let bounds_index = bounds_start(coord);
     let target = midpoint(&ordered.first_bounds, bounds_index)
-        + mode as f64 * (period + martensite_tkernel::precision::p_confusion());
+        + 0.5 * mode as f64 * (period + martensite_tkernel::precision::p_confusion());
     adjust_by_period(
         midpoint(&ordered.second_bounds, bounds_index),
         target,
@@ -232,9 +226,9 @@ fn translate_wire_pcurves(
         return Ok(());
     }
     let vector = if coord == 1 {
-        Vector2::new(shift, 0.0)
-    } else {
         Vector2::new(0.0, shift)
+    } else {
+        Vector2::new(shift, 0.0)
     };
     for child in ShapeIterator::new(&wire.clone().into_shape(), true, true) {
         translate_edge_pcurve(face, &topods::edge(&child)?, vector)?;
@@ -266,7 +260,7 @@ fn select_split_parameter(
     } else {
         plan.v_period
     };
-    if plan.u_closed && plan.v_closed && !is_degenerated_torus(plan) {
+    if plan.u_closed && plan.v_closed && !plan.degenerated_torus {
         select_midpoint_split(plan, ordered, coord, period, &mut u_split, &mut v_split);
     }
     let Some((found_u, found_v)) =
@@ -287,7 +281,7 @@ fn select_split_parameter(
 }
 
 fn bounds_start(coord: usize) -> usize {
-    if coord == 1 { 0 } else { 2 }
+    if coord == 1 { 2 } else { 0 }
 }
 
 fn select_midpoint_split(

@@ -36,6 +36,7 @@ struct LoopCurves {
     curve_3d: Option<Handle<dyn GeomCurve>>,
     first: f64,
     last: f64,
+    curve_range: (f64, f64),
 }
 
 type PlaneSupport = Option<(Handle<dyn GeomSurface>, Axis3)>;
@@ -64,7 +65,7 @@ impl ShapeFixWire {
         else {
             return Ok(false);
         };
-        self.finish_loop_repair(edge, face, curves, remove_3d_loop)
+        self.finish_loop_repair(edge, face, curves, precision, remove_3d_loop)
     }
 
     fn finish_loop_repair(
@@ -72,6 +73,7 @@ impl ShapeFixWire {
         edge: &Edge,
         face: &Face,
         curves: LoopCurves,
+        precision: f64,
         remove_3d_loop: bool,
     ) -> Result<bool, Failure> {
         let builder = BRepBuilder::default();
@@ -101,10 +103,24 @@ impl ShapeFixWire {
         else {
             return Ok(false);
         };
-        if fixed.tolerance > self.max_tolerance().max(self.precision()) {
-            return Ok(false);
+        // A planar surface keeps its own order of updates; otherwise a loop cut is kept only when
+        // the new p-curve is within the caller's precision and keeps the edge's parameter range.
+        if curves.curve_3d.is_some() {
+            if fixed.tolerance > self.max_tolerance().max(self.precision()) {
+                return Ok(false);
+            }
+        } else {
+            if fixed.tolerance > precision.max(BRepTool::edge_tolerance(edge)?) {
+                return Ok(false);
+            }
+            let confusion = martensite_tkernel::precision::p_confusion();
+            if (fixed.first - curves.curve_range.0).abs() > confusion
+                || (fixed.last - curves.curve_range.1).abs() > confusion
+            {
+                return Ok(false);
+            }
         }
-        builder.update_edge_pcurve_on_face(edge, &fixed.curve, face, 0.0)?;
+        builder.update_edge_pcurve_on_face(edge, &fixed.curve, face, fixed.tolerance)?;
         builder.range_on_face(edge, face, fixed.first, fixed.last)?;
         let analysis = ShapeAnalysisEdge::new();
         builder.update_vertex_tolerance(&analysis.first_vertex(edge), fixed.tolerance)?;
@@ -222,6 +238,7 @@ fn remove_projected_loop(
         curve_3d: plane.map(|_| spline),
         first,
         last,
+        curve_range: (range.curve_first, range.curve_last),
     }))
 }
 
@@ -261,6 +278,7 @@ fn remove_true_3d_loop(
         curve_3d: replacement_3d,
         first: range.first,
         last: range.last,
+        curve_range: (range.curve_first, range.curve_last),
     }))
 }
 

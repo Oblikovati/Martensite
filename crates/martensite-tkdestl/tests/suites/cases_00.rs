@@ -1,0 +1,19 @@
+// One module per case file.
+#[path = "../ascii_triangulation.rs"]
+pub mod ascii_triangulation;
+#[path = "../binary_triangulation.rs"]
+pub mod binary_triangulation;
+#[path = "../configuration_slices.rs"]
+pub mod configuration_slices;
+#[path = "../provider_cases.rs"]
+pub mod provider_cases;
+#[path = "../rw_stl_reader.rs"]
+pub mod rw_stl_reader;
+#[path = "../shape_write_cases.rs"]
+pub mod shape_write_cases;
+#[path = "../stl_reviewed_configuration.rs"]
+pub mod stl_reviewed_configuration;
+#[path = "../wrapper_configuration_cases.rs"]
+pub mod wrapper_configuration_cases;
+#[path = "../writer_support.rs"]
+pub mod writer_support;

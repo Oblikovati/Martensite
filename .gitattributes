@@ -255,3 +255,8 @@ crates/martensite-tkxcaf/tests/document_regressions/saved_view_definition.rs -wh
 # Recorded values of the offset and feature tests keep their bytes on every platform.
 crates/martensite-tkoffset/tests/fixtures/** -text -whitespace
 crates/martensite-tkfeat/tests/dataset_cases/support/restored_kinds.txt -text -whitespace
+
+# Recorded values and configuration bytes of the STL and mesh presentation tests keep their bytes on every platform.
+crates/martensite-tkmeshvs/tests/fixtures/** -text -whitespace
+crates/martensite-tkdestl/tests/data/** -text -whitespace
+crates/martensite-tkdestl/src/de_stl/configuration.template -text -whitespace

@@ -6,7 +6,9 @@ use martensite_tkbrep::{
     brep_tools::ReShape,
     topods::{self, Face, Shape, ShapeIterator},
 };
-use martensite_tkernel::{ncollection::Sequence, standard::Failure};
+use martensite_tkernel::{
+    message::Msg, ncollection::Sequence, standard::Failure, tcollection::AsciiString,
+};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 
 impl ShapeFixFace {
@@ -31,6 +33,14 @@ impl ShapeFixFace {
         &self,
         reordered_wires: &mut Vec<(Shape, Shape)>,
     ) -> Result<(), Failure> {
+        // The wire tool works on this face, one of those a missing seam may have made.
+        let current = topods::face(&self.face_state.read())?;
+        let analysis = self.analysis_surface.read().clone();
+        if analysis.is_null() {
+            self.wire_tool.set_face(&current)?;
+        } else {
+            self.wire_tool.set_face_with_analysis(&current, &analysis);
+        }
         let source = super::super::apply_context(&self.face_state.read(), &self.context())?;
         let mut rebuilt = empty_forward_face(&source)?;
         let saved = self.disable_second_pass_modes();
@@ -94,7 +104,7 @@ impl ShapeFixFace {
         }
         pass.split_needed |= self.wire_tool.status_removed_segment();
         // "fix for loop of wire".
-        if !self.add_loop_wires_if_enabled(rebuilt, pass)? {
+        if !self.add_loop_wires_if_enabled(&current.clone().into_shape(), rebuilt, pass)? {
             BRepBuilder::default().add(rebuilt, &current.into_shape())?;
         }
         Ok(())
@@ -147,6 +157,7 @@ impl ShapeFixFace {
 
     fn add_loop_wires_if_enabled(
         &self,
+        wire: &Shape,
         rebuilt: &mut Face,
         pass: &mut SecondPassChanges,
     ) -> Result<bool, Failure> {
@@ -156,6 +167,12 @@ impl ShapeFixFace {
         let mut loops = Sequence::<Shape>::default();
         if !self.fix_loop_wire(&mut loops)? {
             return Ok(false);
+        }
+        if loops.length() > 1 {
+            self.send_warning(
+                wire,
+                &Msg::from_key(&AsciiString::from("FixAdvFace.FixLoopWire.MSG0")),
+            );
         }
         pass.fixed = true;
         self.record_wire_face_stage(ShapeExtendStatus::Done7);

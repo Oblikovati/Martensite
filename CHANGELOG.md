@@ -6,6 +6,16 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-06
+
+### Added
+
+- Added `martensite-tkdestl` (STL reading and writing: text and binary files, shape transfers and the format provider), `martensite-tkmeshvs` (mesh visualization: mesh data sources, the drawer, presentation builders and selection on elements and nodes) and `martensite-tkxmesh` (a named meshing factory, an alternative entry to the incremental mesher).
+
+### Fixed
+
+- Shape healing now aligns seams correctly and no longer loses faces or produces invalid shells on real STEP files (#399).
+
 ## [0.10.0] - 2026-11-05
 
 ### Added

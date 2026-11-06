@@ -3,8 +3,10 @@ use super::{FixRoot, ShapeFixWire};
 use crate::shape_analysis::{ShapeAnalysisEdge, ShapeAnalysisWire};
 use crate::shape_extend::{ShapeExtendStatus, ShapeExtendWireData};
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
+use martensite_tkernel::message::Msg;
 use martensite_tkernel::ncollection::Sequence;
 use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkgeomalgo::int_res2d::IntersectionPoint;
 use martensite_tkmath::gp::Point3;
 
@@ -32,12 +34,23 @@ impl ShapeFixWire {
         if !analyzer.last_check_status(ShapeExtendStatus::Done) {
             return Ok(false);
         }
+        let edge = analyzer
+            .wire_data()
+            .edge(SelfIntersectionRepair::edge_index(&analyzer, index)?)?;
         let mut repair = SelfIntersectionRepair::load(&analyzer, index)?;
         if self.remove_loop_mode() == 1 {
-            return self.split_self_intersection(&analyzer, index, &points_2d);
+            self.split_self_intersection(&analyzer, index, &points_2d)?;
+        } else {
+            self.repair_intersections(&analyzer, index, &mut repair, points_2d, points_3d)?;
         }
-        self.repair_intersections(&analyzer, index, &mut repair, points_2d, points_3d)?;
-        Ok(self.last_fix_status(ShapeExtendStatus::Done))
+        let done = self.last_fix_status(ShapeExtendStatus::Done);
+        if done && !self.fix_root_data().with(|fields| fields.shape.is_null()) {
+            self.send_warning(
+                &edge.into_shape(),
+                &Msg::from_key(&AsciiString::from("FixAdvWire.FixIntersection.MSG5")),
+            );
+        }
+        Ok(done)
     }
 
     fn repair_intersections(

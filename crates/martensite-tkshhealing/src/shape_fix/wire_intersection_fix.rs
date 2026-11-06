@@ -11,8 +11,10 @@ use crate::shape_extend::ShapeExtendStatus;
 use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::brep_tools::ReShape;
 use martensite_tkbrep::topods::{self, Edge, Face, Vertex};
+use martensite_tkernel::message::Msg;
 use martensite_tkernel::ncollection::Sequence;
 use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkgeomalgo::int_res2d::IntersectionPoint;
 use martensite_tkmath::gp::Point3;
 
@@ -36,6 +38,8 @@ pub(super) struct CrossingAction {
     pub(super) param1: f64,
     pub(super) param2: f64,
     pub(super) tolerance: f64,
+    /// The tolerance from the distance alone, what a cut uses whatever edge tolerances did.
+    pub(super) distance_tolerance: f64,
     pub(super) improved: bool,
 }
 
@@ -55,7 +59,13 @@ impl ShapeFixWire {
         }
         let mut state = CrossingState::load(&analyzer, index, &self.context())?;
         self.repair_adjacent_tolerances(&mut state, index, &uv, &xyz, &errors)?;
-        Ok(self.last_fix_status(ShapeExtendStatus::Done))
+        let done = self.last_fix_status(ShapeExtendStatus::Done);
+        if done && !self.fix_root_data().with(|fields| fields.shape.is_null()) {
+            self.send_warning_on_shape(&Msg::from_key(&AsciiString::from(
+                "FixAdvWire.FixIntersection.MSG10",
+            )));
+        }
+        Ok(done)
     }
 
     fn repair_adjacent_tolerances(
@@ -225,19 +235,18 @@ impl ShapeFixWire {
         state: &mut CrossingState,
         action: &CrossingAction,
     ) -> Result<(), Failure> {
-        if self.topology_mode() {
-            if action.improved {
-                return Ok(());
-            }
+        if self.topology_mode() && !action.improved {
+            state.commit_ranges(action);
             return self.cut_adjacent_edges(state, action);
         }
         if action.tolerance > self.max_tolerance() {
             self.or_last_fix_status(ShapeExtendStatus::Fail2);
             return Ok(());
         }
+        state.commit_ranges(action);
         if state.tolerance < action.tolerance {
             self.or_last_fix_status(ShapeExtendStatus::Done1);
-            state.tolerance = action.tolerance.max(1.001 * action.radius);
+            state.tolerance = action.tolerance;
         }
         Ok(())
     }
@@ -309,11 +318,9 @@ impl ShapeFixWire {
         state: &mut CrossingState,
         action: &CrossingAction,
     ) -> Result<(), Failure> {
-        if state.tolerance < action.tolerance && action.tolerance <= self.max_tolerance() {
+        if state.tolerance < action.distance_tolerance {
             self.or_last_fix_status(ShapeExtendStatus::Done1);
-            state.tolerance = action.tolerance;
-        } else if action.tolerance > self.max_tolerance() {
-            self.or_last_fix_status(ShapeExtendStatus::Fail2);
+            state.tolerance = action.distance_tolerance;
         }
         Ok(())
     }
@@ -385,11 +392,12 @@ impl CrossingState {
 
     pub(super) fn accept_intersection(&mut self, parameters: (f64, f64)) -> bool {
         let ranges = self.remaining_ranges(parameters.0, parameters.1);
-        if ranges[0] > self.previous_ranges[0] && ranges[1] > self.previous_ranges[1] {
-            return false;
-        }
-        self.previous_ranges = ranges;
-        true
+        !(ranges[0] > self.previous_ranges[0] && ranges[1] > self.previous_ranges[1])
+    }
+
+    /// The ranges a later intersection is compared with: those of the last one acted on.
+    pub(super) fn commit_ranges(&mut self, action: &CrossingAction) {
+        self.previous_ranges = self.remaining_ranges(action.param1, action.param2);
     }
 }
 

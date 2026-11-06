@@ -1,0 +1,34 @@
+[package]
+autotests = false
+name = "martensite-tkmeshvs"
+version = "0.11.0"
+description = "Martensite mesh visualization: mesh data sources, the drawer, presentation builders and selection on elements and nodes."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.7" }
+martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.7.0" }
+
+[dev-dependencies]
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
+martensite-test-support = { path = "../martensite-test-support", version = "0.3.6" }
+martensite-vulkan = { path = "../martensite-vulkan", version = "0.7.1" }
+
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+# The cases of the mesh test model need a real renderer and its validation layer.
+[[test]]
+name = "mesh_view_cases"
+path = "tests/mesh_view_cases.rs"

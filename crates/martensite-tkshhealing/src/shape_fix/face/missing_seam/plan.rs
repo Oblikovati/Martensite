@@ -21,6 +21,8 @@ pub(super) struct MissingSeamPlan {
     pub(super) first_wire: Wire,
     pub(super) second_wire: Wire,
     pub(super) direction: OpenWireDirection,
+    /// A spindle torus with one open wire: with a second wire it is processed as a regular one.
+    pub(super) degenerated_torus: bool,
 }
 
 struct WireBuckets {
@@ -295,6 +297,11 @@ fn assemble_plan(
         return Ok(None);
     };
     let direction = first.direction;
+    let degenerated_torus = pair.second.is_none()
+        && surface
+            .cast::<martensite_tkg3d::geom::GeomToroidalSurface>()
+            .get()
+            .is_some_and(|torus| torus.major_radius() < torus.minor_radius());
     let second = pair.second.map_or_else(Wire::default, |wire| wire.wire);
     Ok(Some(MissingSeamPlan {
         face: face.clone(),
@@ -309,6 +316,7 @@ fn assemble_plan(
         first_wire: first.wire,
         second_wire: second,
         direction,
+        degenerated_torus,
     }))
 }
 
