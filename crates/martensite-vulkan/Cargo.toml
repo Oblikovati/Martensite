@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-vulkan"
-version = "0.7.1"
+version = "0.7.2"
 description = "Martensite Vulkan 1.3 visualization renderer."
 edition.workspace = true
 rust-version.workspace = true
