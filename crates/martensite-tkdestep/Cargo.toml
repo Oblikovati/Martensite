@@ -14,34 +14,34 @@ workspace = true
 
 [dependencies]
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.2" }
-martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.7" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.3" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.8" }
 martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
 martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.6" }
 martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.9" }
-martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.2" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.3" }
 martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.8" }
 martensite-tkde = { path = "../martensite-tkde", version = "0.9.0" }
-martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.8" }
-martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.3.5" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.9" }
+martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.3.6" }
 martensite-tkcaf = { path = "../martensite-tkcaf", version = "0.8.0" }
 martensite-tkcdf = { path = "../martensite-tkcdf", version = "0.3.6" }
-martensite-tkvcaf = { path = "../martensite-tkvcaf", version = "0.9.0" }
-martensite-tkxcaf = { path = "../martensite-tkxcaf", version = "0.9.0" }
-martensite-tkxsbase = { path = "../martensite-tkxsbase", version = "0.9.0" }
+martensite-tkvcaf = { path = "../martensite-tkvcaf", version = "0.9.1" }
+martensite-tkxcaf = { path = "../martensite-tkxcaf", version = "0.9.1" }
+martensite-tkxsbase = { path = "../martensite-tkxsbase", version = "0.9.1" }
 
 [dev-dependencies]
 martensite-tkbo = { path = "../martensite-tkbo", version = "0.8.0" }
-martensite-tkfillet = { path = "../martensite-tkfillet", version = "0.8.0" }
-martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.6" }
+martensite-tkfillet = { path = "../martensite-tkfillet", version = "0.8.1" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.7" }
 martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
 martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
 martensite-geometry-raster = { path = "../martensite-geometry-raster", version = "0.7.0" }
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.9" }
-martensite-tkdestl = { path = "../martensite-tkdestl", version = "0.11.0" }
+martensite-tkdestl = { path = "../martensite-tkdestl", version = "0.11.1" }
 martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
-martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.7.0" }
-martensite-vulkan = { path = "../martensite-vulkan", version = "0.7.1" }
+martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.7.1" }
+martensite-vulkan = { path = "../martensite-vulkan", version = "0.7.2" }
 
 # The exchange scripts of the toolkit, one test per script, each graded on its whole stream.
 [[test]]
