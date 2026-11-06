@@ -94,7 +94,7 @@ Install the development dependencies with the installer for your OS. Each
 installer can run again later to update them.
 
 ```bash
-./install-linux.sh                          # Debian, Ubuntu, Fedora, Arch, openSUSE
+./install-linux.sh                          # Ubuntu, Fedora, Arch, openSUSE
 ./install-macos.sh                          # macOS (Homebrew)
 source ~/.local/share/martensite/env.sh     # Linux and macOS, in each new shell
 ```

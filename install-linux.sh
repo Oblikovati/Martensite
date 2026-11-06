@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 # Installs or updates the Martensite development dependencies on Linux.
 #
-# Supported package managers: apt (Debian, Ubuntu), dnf (Fedora), pacman
-# (Arch) and zypper (openSUSE). The script is safe to run again: missing
-# packages are installed and installed packages are updated.
+# Supported package managers: apt (Ubuntu only), dnf (Fedora), pacman (Arch)
+# and zypper (openSUSE). The script is safe to run again: missing packages
+# are installed and installed packages are updated.
+#
+# Validated Vulkan startup needs validation layer 1.4.313 or newer. On apt the
+# script stops before changing anything unless the system is Ubuntu, or declares
+# ubuntu in ID_LIKE, and has a route to that layer: the checksum-pinned package
+# on 24.04 x86_64, or apt's package on 25.10 and later. It then checks the
+# installed layer at the end.
 #
 # What it sets up:
 #   - C toolchain, git, pkg-config, gh
@@ -24,6 +30,7 @@ readonly INSTALLER_NAME=install-linux.sh
 readonly CARGO_TOOLS=(cargo-deny cargo-audit cargo-nextest cargo-llvm-cov)
 readonly REQUIRED_COMMANDS=(git cc pkg-config gh glslangValidator spirv-val vulkaninfo Xvfb xauth)
 readonly REQUIRED_PKG_CONFIG_MODULES=(tcl8.6 tk8.6 freetype2 fontconfig x11)
+readonly REQUIRED_VALIDATION_LAYER=1.4.313
 # shellcheck source=scripts/install/unix-common.sh
 source "$REPO_ROOT/scripts/install/unix-common.sh"
 
@@ -48,16 +55,71 @@ detect_package_manager() {
 
 # --- Vulkan validation ------------------------------------------------------
 
-# Validated Vulkan startup needs layer 1.4.313 or newer; the pinned package targets Ubuntu 24.04 on x86_64.
-validation_layer_environment() {
-    local manager=$1
-    if [[ $manager == apt-get && "$(uname -m)" == x86_64 ]] &&
-        grep -q '^VERSION_ID="24.04"' /etc/os-release 2>/dev/null; then
-        "$REPO_ROOT/scripts/install/vulkan-validation.sh" "$MARTENSITE_DATA/vulkan-validation"
+# How the apt route gets the layer: pinned or packaged. Empty on other package managers.
+LAYER_ROUTE=
+
+os_release_value() {
+    [[ -r /etc/os-release ]] || fail "cannot read /etc/os-release; expected it on an apt-based system"
+    sed -n "s/^$1=//p" /etc/os-release | tr -d '"'
+    return 0
+}
+
+# Prints the Ubuntu release behind this system: nothing when it is not based on
+# Ubuntu, and "unknown" for a derivative whose base release is not listed here.
+ubuntu_release() {
+    if [[ "$(os_release_value ID)" == ubuntu ]]; then
+        os_release_value VERSION_ID
         return
     fi
-    log "Skipping the pinned Vulkan validation layer: validated Vulkan startup needs layer 1.4.313 or newer" >&2
-    return 0
+    [[ " $(os_release_value ID_LIKE) " == *" ubuntu "* ]] || return 0
+    # A derivative numbers its own releases, so its base comes from the codename.
+    case "$(os_release_value UBUNTU_CODENAME)" in
+        noble) echo 24.04 ;;
+        questing) echo 25.10 ;;
+        resolute) echo 26.04 ;;
+        *) echo unknown ;;
+    esac
+}
+
+# Runs before the first package change, so a refused system stays as it was.
+select_ubuntu_layer_route() {
+    local release machine name
+    release="$(ubuntu_release)"
+    machine="$(uname -m)"
+    name="$(os_release_value PRETTY_NAME)"
+    if [[ -z $release ]]; then
+        fail "$name is not Ubuntu; use Ubuntu with this installer, because a packaged validation layer elsewhere on apt cannot be relied on to meet the required $REQUIRED_VALIDATION_LAYER"
+    elif [[ $release == unknown ]]; then
+        fail "cannot tell which Ubuntu release $name is based on; expected UBUNTU_CODENAME noble, questing or resolute in /etc/os-release"
+    elif [[ $release == 24.04 && $machine == x86_64 ]]; then
+        LAYER_ROUTE=pinned
+    elif [[ $release == 24.04 ]]; then
+        fail "Ubuntu 24.04 on $machine has no route to validation layer $REQUIRED_VALIDATION_LAYER: the pinned package is x86_64 only and apt has 1.3.275; use Ubuntu 26.04"
+    elif dpkg --compare-versions "$release" ge 25.10; then
+        LAYER_ROUTE=packaged
+    else
+        fail "Ubuntu $release has no route to validation layer $REQUIRED_VALIDATION_LAYER; use Ubuntu 24.04 on x86_64, or Ubuntu 25.10 or later"
+    fi
+    log "Ubuntu $release on $machine: $LAYER_ROUTE validation layer"
+}
+
+validation_layer_environment() {
+    case $LAYER_ROUTE in
+        pinned) "$REPO_ROOT/scripts/install/vulkan-validation.sh" "$MARTENSITE_DATA/vulkan-validation" ;;
+        packaged) ;; # The loader finds the system package without any environment.
+        *) log "Skipping the pinned Vulkan validation layer: validated Vulkan startup needs layer $REQUIRED_VALIDATION_LAYER or newer" >&2 ;;
+    esac
+}
+
+# Asks the loader, so this reads the layer that validated startup would enable.
+require_verified_validation_layer() {
+    local summary installed
+    summary="$(vulkaninfo --summary 2>/dev/null || true)"
+    installed="$(sed -n 's/^VK_LAYER_KHRONOS_validation .* \([0-9][0-9.]*\) *version .*/\1/p' <<<"$summary")"
+    [[ -n $installed ]] || fail "the Vulkan loader lists no VK_LAYER_KHRONOS_validation; expected $REQUIRED_VALIDATION_LAYER or newer"
+    dpkg --compare-versions "$installed" ge "$REQUIRED_VALIDATION_LAYER" ||
+        fail "validation layer is $installed; expected $REQUIRED_VALIDATION_LAYER or newer"
+    log "Validation layer $installed"
 }
 
 # --- Package lists ----------------------------------------------------------
@@ -65,12 +127,12 @@ validation_layer_environment() {
 apt_packages() {
     echo build-essential git curl ca-certificates pkg-config \
         tcl8.6-dev tk8.6-dev libfreetype-dev libfontconfig-dev libx11-dev \
-        libvulkan-dev mesa-vulkan-drivers libdisplay-info1 libsensors5 libdrm-intel1 fonts-dejavu fonts-dejavu-extra fonts-droid-fallback fonts-freefont-ttf fonts-liberation fonts-noto-cjk fonts-noto-core vulkan-validationlayers vulkan-tools \
+        libvulkan-dev mesa-vulkan-drivers fonts-dejavu fonts-dejavu-extra fonts-droid-fallback fonts-freefont-ttf fonts-liberation fonts-noto-cjk fonts-noto-core vulkan-validationlayers vulkan-tools \
         glslang-tools spirv-tools xvfb xauth fonts-dejavu-core gh
-    # Debian 13 packages rustup; Debian 12 and Ubuntu 24.04 do not and use rustup.rs.
-    # `apt-cache show` succeeds for a name without a candidate, so read the policy.
-    if apt-cache policy rustup 2>/dev/null | grep -Eq 'Candidate: [0-9]'; then
-        echo rustup
+    # Ubuntu's rustup package is left out on purpose: ensure_rustup installs it from rustup.rs.
+    # The pinned driver is built on Ubuntu 24.04 and links these; later releases rename some.
+    if [[ $LAYER_ROUTE == pinned ]]; then
+        echo libdisplay-info1 libsensors5 libdrm-intel1
     fi
 }
 
@@ -203,15 +265,17 @@ main() {
     esac
     manager="$(detect_package_manager)"
     log "Using $manager"
+    if [[ $manager == apt-get ]]; then select_ubuntu_layer_route; fi
     refresh_package_index "$manager"
     sync_system_packages "$manager"
     ensure_tcl_module_names
     # shellcheck disable=SC2016 # expanded when the env file is sourced
-    write_env_file 'export PATH="$HOME/.cargo/bin:$PATH"' "$(validation_layer_environment "$manager")"
+    write_env_file 'export PATH="$HOME/.cargo/bin:$PATH"' "$(validation_layer_environment)"
     ensure_rustup
     install_pinned_toolchain
     if $cargo_tools; then sync_cargo_tools; fi
     verify_installation
+    if [[ $manager == apt-get ]]; then require_verified_validation_layer; fi
     log "Done. Load the environment in new shells with: source $ENV_FILE"
 }
 
