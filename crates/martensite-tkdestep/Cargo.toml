@@ -107,6 +107,10 @@ name = "step_xde_values"
 path = "tests/step_xde_values.rs"
 
 [[test]]
+name = "step_trimmed_spline_edge"
+path = "tests/step_trimmed_spline_edge.rs"
+
+[[test]]
 name = "step_host_identity"
 path = "tests/step_host_identity.rs"
 

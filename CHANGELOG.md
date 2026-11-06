@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Reading a STEP file no longer moves the end poles of a B-spline edge curve when a vertex lies inside the curve's range. The vertex tolerance now covers the same evaluation that checks it, so the edge is accepted at once. In `as1_motor.step` the moved poles took the trimmed edge up to 68 units away from its vertices, which gave those vertices a tolerance of 68 and meshed the two faces beside the edge far too coarsely.
+
 ## [0.12.0] - 2026-11-06
 
 ### Added
