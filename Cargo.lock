@@ -928,7 +928,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkprim"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "martensite-cmath",
  "martensite-tkbrep",
