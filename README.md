@@ -49,6 +49,10 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkmeshvs` | Mesh visualization: mesh data sources, the drawer, presentation builders and selection on elements and nodes. |
 | `martensite-tkxmesh` | A meshing factory: a named alternative entry to the incremental mesher. |
 | `martensite-tkdestep` | STEP reading and writing: the parser and writer, the entity schemas, shape and document transfers and the format provider. |
+| `martensite-tkdeiges` | IGES reading and writing: the data structures, the file parser and writer, the entity packages, shape and document transfers and the format provider. |
+| `martensite-tkrwmesh` | Tools of the mesh file formats: axis and unit conversion, document fillers, face, edge and vertex iterators and material maps. |
+| `martensite-tkdeobj` | OBJ reading and writing: OBJ and MTL files, document transfers and the format provider. |
+| `martensite-tkdeply` | PLY writing: documents and shapes into PLY files, and the format provider. |
 
 See the [foundation guide](docs/features/martensite-tkernel/README.md) and
 [math guide](docs/features/martensite-tkmath/README.md), and
@@ -76,6 +80,10 @@ The [STL exchange](docs/features/martensite-tkdestl/README.md),
 their own.
 The [STEP exchange](docs/features/martensite-tkdestep/README.md) guide describes STEP files, shapes and
 documents.
+The [IGES exchange](docs/features/martensite-tkdeiges/README.md) guide describes IGES files, shapes and
+documents. The [mesh exchange tools](docs/features/martensite-tkrwmesh/README.md),
+[OBJ exchange](docs/features/martensite-tkdeobj/README.md) and
+[PLY exchange](docs/features/martensite-tkdeply/README.md) guides describe mesh files and documents.
 The [interactive visualization](docs/features/martensite-tkv3d/README.md) and
 [Vulkan renderer](docs/features/martensite-vulkan/README.md) guides describe the viewer and
 how to run its tests on a software driver.

@@ -1,0 +1,64 @@
+//! IGES graphic entities: colors, line fonts, text fonts, sizes.
+#[cfg(test)]
+mod class_tests_01;
+mod color;
+mod definition_level;
+mod drawing_size;
+mod drawing_units;
+mod high_light;
+mod intercharacter_spacing;
+mod line_font_def_pattern;
+mod line_font_def_template;
+mod line_font_predefined;
+mod nominal_size;
+mod pick;
+mod text_display_template;
+mod text_font_def;
+mod tool_color;
+mod tool_definition_level;
+mod tool_drawing_size;
+mod tool_drawing_units;
+mod tool_high_light;
+mod tool_intercharacter_spacing;
+mod tool_line_font_def_pattern;
+mod tool_line_font_def_template;
+mod tool_line_font_predefined;
+mod tool_nominal_size;
+mod tool_pick;
+mod tool_text_display_template;
+mod tool_text_font_def;
+mod tool_uniform_rect_grid;
+mod uniform_rect_grid;
+pub use color::IgesGraphColor;
+pub use definition_level::IgesGraphDefinitionLevel;
+pub use drawing_size::IgesGraphDrawingSize;
+pub use drawing_units::IgesGraphDrawingUnits;
+pub use high_light::IgesGraphHighLight;
+pub use intercharacter_spacing::IgesGraphIntercharacterSpacing;
+pub use line_font_def_pattern::IgesGraphLineFontDefPattern;
+pub use line_font_def_template::IgesGraphLineFontDefTemplate;
+pub use line_font_predefined::IgesGraphLineFontPredefined;
+pub use nominal_size::IgesGraphNominalSize;
+pub use pick::IgesGraphPick;
+pub use text_display_template::IgesGraphTextDisplayTemplate;
+pub use text_font_def::IgesGraphTextFontDef;
+pub use tool_color::IgesGraphToolColor;
+pub use tool_definition_level::IgesGraphToolDefinitionLevel;
+pub use tool_drawing_size::IgesGraphToolDrawingSize;
+pub use tool_drawing_units::IgesGraphToolDrawingUnits;
+pub use tool_high_light::IgesGraphToolHighLight;
+pub use tool_intercharacter_spacing::IgesGraphToolIntercharacterSpacing;
+pub use tool_line_font_def_pattern::IgesGraphToolLineFontDefPattern;
+pub use tool_line_font_def_template::IgesGraphToolLineFontDefTemplate;
+pub use tool_line_font_predefined::IgesGraphToolLineFontPredefined;
+pub use tool_nominal_size::IgesGraphToolNominalSize;
+pub use tool_pick::IgesGraphToolPick;
+pub use tool_text_display_template::IgesGraphToolTextDisplayTemplate;
+pub use tool_text_font_def::IgesGraphToolTextFontDef;
+pub use tool_uniform_rect_grid::IgesGraphToolUniformRectGrid;
+pub use uniform_rect_grid::IgesGraphUniformRectGrid;
+mod package;
+pub use package::{
+    IgesGraph, IgesGraphGeneralModule, IgesGraphProtocol, IgesGraphReadWriteModule,
+    IgesGraphSpecificModule,
+};

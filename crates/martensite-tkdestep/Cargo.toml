@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkdestep"
-version = "0.12.0"
+version = "0.12.1"
 description = "Martensite STEP exchange: the parser and writer, the entity schemas, shape and document transfers, and the format provider."
 edition.workspace = true
 rust-version.workspace = true

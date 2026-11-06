@@ -1,0 +1,59 @@
+!*****************************************************************************
+!Configuration Node  Vendor: Martensite Format: PLY
+!
+!Common parameters:
+!
+!
+!File length units, defined as scale factor for m (meters). Not used for writing: a written file is in the global length unit
+!Default value: 1.0(MM)
+provider.PLY.Martensite.file.length.unit :	 {{FileLengthUnit}}
+!
+!
+!System origin coordinate system to convert from during write
+!Default value: 0(Zup). Available values: 0(Zup), 1(Yup)
+provider.PLY.Martensite.system.cs :	 {{SystemCS}}
+!
+!
+!File origin coordinate system to convert into during write
+!Default value: 1(Yup). Available values: 0(Zup), 1(Yup)
+provider.PLY.Martensite.file.cs :	 {{FileCS}}
+!
+!
+!Write parameters:
+!
+!
+!Flag for write normals
+!Default value: 1(true). Available values: 0(false), 1(true)
+provider.PLY.Martensite.write.normals :	 {{WriteNormals}}
+!
+!
+!Flag for write colors
+!Default value: 1(true). Available values: 0(false), 1(true)
+provider.PLY.Martensite.write.colors :	 {{WriteColors}}
+!
+!
+!Flag for write UV / texture coordinates
+!Default value: 0(false). Available values: 0(false), 1(true)
+provider.PLY.Martensite.write.tex.coords :	 {{WriteTexCoords}}
+!
+!
+!Flag for write part Id as element attribute
+!Default value: 1(true). Available values: 0(false), 1(true)
+provider.PLY.Martensite.write.part.id :	 {{WritePartId}}
+!
+!
+!Flag for write face Id as element attribute. Cannot be combined with HasPartId
+!Default value: 0(false). Available values: 0(false), 1(true)
+provider.PLY.Martensite.write.face.id :	 {{WriteFaceId}}
+!
+!
+!Export special comment
+!Default value: (empty). Available values: <string>
+provider.PLY.Martensite.write.comment :	 {{WriteComment}}
+!
+!
+!Author of exported file name
+!Default value: (empty). Available values: <string>
+provider.PLY.Martensite.write.author :	 {{WriteAuthor}}
+!
+!*****************************************************************************
