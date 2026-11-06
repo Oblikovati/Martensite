@@ -100,7 +100,7 @@ impl TDataStdBooleanArray {
         let attribute = live(&created, "TDataStd_BooleanArray::Set")?;
         attribute.set_id(guid)?;
         attribute.init(lower, upper)?;
-        label.add_attribute(&created.cast(), false)?;
+        label.add_attribute(&created.cast(), true)?;
         Ok(created)
     }
     /// `Init(lower, upper)`: backs up, then `Length() >> 3` + 1 zero bytes;

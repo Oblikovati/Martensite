@@ -1,0 +1,150 @@
+OK 0
+NAME 0:1:1 'Shapes'
+NAME 0:1:1:1 'Block'
+NAME 0:1:2 'Colors'
+NAME 0:1:2:1 'LIGHTSTEELBLUE1 (#D2D2FFFF)'
+NAME 0:1:3 'Layers'
+NAME 0:1:4 'D&GTs'
+NAME 0:1:4:1 'radius'
+NAME 0:1:4:1:15 'Linear Size.1'
+NAME 0:1:4:2 'linear distance'
+NAME 0:1:4:2:15 'Linear Size.2'
+NAME 0:1:4:3 'linear distance'
+NAME 0:1:4:3:15 'Linear Size.6'
+NAME 0:1:4:4 'DGT:Dimension'
+NAME 0:1:4:4:15 'Oriented Linear Dimension.1'
+NAME 0:1:4:5 'DGT:Dimension'
+NAME 0:1:4:5:15 'Dimension.1'
+NAME 0:1:4:6 'DGT:Common_label'
+NAME 0:1:4:6:15 'Dimension.2'
+NAME 0:1:4:7 'DGT:Common_label'
+NAME 0:1:4:7:15 'Dimension.3'
+NAME 0:1:4:8 'DGT:Dimension'
+NAME 0:1:4:8:15 'Linear Size.1'
+NAME 0:1:4:9 'DGT:Dimension'
+NAME 0:1:4:9:15 'Linear Size.2'
+NAME 0:1:4:10 'DGT:Dimension'
+NAME 0:1:4:10:15 'Linear Size.3'
+NAME 0:1:4:11 'DGT:Dimension'
+NAME 0:1:4:11:15 'Linear Size.4'
+NAME 0:1:4:12 'DGT:Dimension'
+NAME 0:1:4:12:15 'Linear Size.5'
+NAME 0:1:4:13 'DGT:Dimension'
+NAME 0:1:4:13:15 'Linear Size.6'
+NAME 0:1:5 'Materials'
+NAME 0:1:5:1 'PART_SOURCE'
+NAME 0:1:7 'Views'
+NAME 0:1:8 'Clipping Planes'
+NAME 0:1:9 'Notes'
+DATA 0:1:1:1 'ARTICLE_NUMBER' S''
+DATA 0:1:1:1 'COPYRIGHT' S''
+DATA 0:1:1:1 'EDGE_CONDITION' S''
+DATA 0:1:1:1 'EDGE_CONDITION_INNER_EDGE' S''
+DATA 0:1:1:1 'EDGE_CONDITION_OUTER_EDGE' S''
+DATA 0:1:1:1 'GENERAL_TOLERANCES' S''
+DATA 0:1:1:1 'GENERAL_TOLERANCES_DRILL_HOLE' S''
+DATA 0:1:1:1 'GENERAL_TOLERANCES_FIT_DRILL_HOLE' S''
+DATA 0:1:1:1 'ID_NUMBER_MATERIAL' S''
+DATA 0:1:1:1 'LANGUAGE' S''
+DATA 0:1:1:1 'MATERIAL' S''
+DATA 0:1:1:1 'MATERIAL_DENSITY' R=7850
+DATA 0:1:1:1 'MODEL_3D_APPROVED_BY' S''
+DATA 0:1:1:1 'MODEL_3D_APPROVED_BY_DEPARTMENT' S''
+DATA 0:1:1:1 'MODEL_3D_CAD_SYSTEM' S''
+DATA 0:1:1:1 'MODEL_3D_CHECKED_BY' S''
+DATA 0:1:1:1 'MODEL_3D_CREATED_BY' S''
+DATA 0:1:1:1 'MODEL_3D_CREATED_BY_DEPARTMENT' S''
+DATA 0:1:1:1 'MODEL_3D_DATE_OF_ISSUE' S''
+DATA 0:1:1:1 'MODEL_3D_ID_NUMBER' S''
+DATA 0:1:1:1 'MODEL_3D_RELEASED_BY' S''
+DATA 0:1:1:1 'MODEL_3D_RELEASED_DATE' S''
+DATA 0:1:1:1 'MODEL_3D_RELEASED_STATUS' S''
+DATA 0:1:1:1 'MODEL_3D_REPLACED_BY' S''
+DATA 0:1:1:1 'MODEL_3D_REPLACES' S''
+DATA 0:1:1:1 'MODEL_3D_REVISION' I1
+DATA 0:1:1:1 'MODEL_3D_REVISION_LEVEL' S''
+DATA 0:1:1:1 'ORDER_NUMBER' S''
+DATA 0:1:1:1 'OWNER' S''
+DATA 0:1:1:1 'PAINT_SURFACE' S''
+DATA 0:1:1:1 'PART_NAME' S''
+DATA 0:1:1:1 'PART_NOTE' S''
+DATA 0:1:1:1 'PART_NUMBER' S''
+DATA 0:1:1:1 'PART_REVISION_LEVEL' S''
+DATA 0:1:1:1 'PART_SOURCE' S''
+DATA 0:1:1:1 'PROJECT' S''
+DATA 0:1:1:1 'REFERENCE' S''
+DATA 0:1:1:1 'REFERENCE_DESIGNATION+' S''
+DATA 0:1:1:1 'REFERENCE_DESIGNATION++' S''
+DATA 0:1:1:1 'REFERENCE_DESIGNATION-' S''
+DATA 0:1:1:1 'REFERENCE_DESIGNATION=' S''
+DATA 0:1:1:1 'REFERENCE_DESIGNATION==' S''
+DATA 0:1:1:1 'SEMI_FINISHED_PRODUCT' S''
+DATA 0:1:1:1 'SETUP_PART' I0
+DATA 0:1:1:1 'SIMPLIFIED_DRAWING_REVISION' S''
+DATA 0:1:1:1 'SPARE_WEARING_PART' S''
+DATA 0:1:1:1 'STOCK_NUMBER' S''
+DATA 0:1:1:1 'SUPPLIER_NAME' S''
+DATA 0:1:1:1 'SUPPLIER_NUMBER' S''
+DATA 0:1:1:1 'SURFACE_PROTECTION' S''
+DATA 0:1:1:1 'SURFACE_ROUGHNESS' S''
+DATA 0:1:1:1 'TECHNICAL_DIRECTIVE' S''
+DATA 0:1:1:1 'TECHNICAL_SPECIFICATION' S''
+DATA 0:1:1:1 'TOLERANCING_PRINCIPLE' S''
+DATA 0:1:1:1 'TREATMENT' S''
+DATA 0:1:1:1 'UNIT_SYSTEM' S''
+DATA 0:1:1:1 'WEIGHT_CALCULATED' R=0.00707515925157
+DATA 0:1:1:1 'WEIGHT_FINAL' R=0
+DATA 0:1:1:1 'WEIGHT_PROTOTYPE' R=0
+DATA 0:1:1:1 'WELD_PREPARATION' S''
+DATA 0:1:1:1 'WELD_TOLERANCES' S''
+DATA 0:1:1:1 'WORK_ORDER_NUMBER' S''
+SHAPE 0:1:1:1 <2 e124 v248 (2073.83325747 -8.37089766435e-15 763.2)> c- c0:1:2:1 c- l[] a=870.205012798 v=901.294172174 m=(19.9437084198 5 6)
+SHAPE 0:1:1:1:1 <4 e4 v8 (155.959179422 0 24)> c- c- c- l[]
+SHAPE 0:1:1:1:2 <4 e4 v8 (79.9795897112 40 24)> c- c- c- l[]
+SHAPE 0:1:1:1:3 <4 e4 v8 (79.9795897112 -40 24)> c- c- c- l[]
+SHAPE 0:1:1:1:4 <4 e8 v16 (158.33275663 0 -8.881784197e-16)> c- c- c- l[]
+SHAPE 0:1:1:1:5 <4 e8 v16 (158.33275663 8.3275982342e-16 96)> c- c- c- l[]
+SHAPE 0:1:1:1:6 <4 e4 v8 (40 -4.18111888916e-15 13.6)> c- c- c- l[]
+SHAPE 0:1:1:1:7 <4 e4 v8 (40 8.3275982342e-16 37.6)> c- c- c- l[]
+SHAPE 0:1:1:1:8 <4 e4 v8 (40 -1.67417953287e-15 27.2)> c- c- c- l[]
+COLOR 0:1:2:1 (0.644479691982 0.644479691982 1) 1
+MAT 0:1:5:1 'PART_SOURCE' '' 0 '' ''
+DIM 0:1:4:1 name='radius' type=17 q=0 aq=0 vals=[25 0.2 0.2 ] u=0 l=0 range=0 pm=1 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:1 plane=(20.2886735 0.93978335 2.97741127014)(0 0 -1)(-1 0 0) pt=- pt2=- text=(20.2886735 0.93978335 2.97741127014) conn=0,0 pres=<0 e4 v8 (163.825459 7.2044561 23.8192901611)>'Linear Size.1' desc=0
+DIMR 0:1:4:1 [0:1:1:1:1 ] []
+DIM 0:1:4:2 name='linear distance' type=2 q=0 aq=0 vals=[10 0.04 ] u=0.04 l=10 range=1 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:2 plane=(25.78365 -0.08144 3.38020372391)(0 0 -1)(-1 0 0) pt=- pt2=- text=(25.78365 -0.08144 3.38020372391) conn=0,0 pres=<0 e7 v14 (403.85862 -0.16288 47.3228521347)>'Linear Size.2' desc=0
+DIMR 0:1:4:2 [0:1:1:1:2 ] [0:1:1:1:3 ]
+DIM 0:1:4:3 name='linear distance' type=2 q=0 aq=0 vals=[6 0.1 0.1 ] u=0 l=0 range=0 pm=1 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:3 plane=(-3 1.95406138897 3)(-0 -1 -0)(-1 0 0) pt=- pt2=- text=(-3 1.95406138897 3) conn=0,0 pres=<0 e7 v14 (-57 27.3568594456 41.9999996)>'Linear Size.6' desc=0
+DIMR 0:1:4:3 [0:1:1:1:4 ] [0:1:1:1:5 ]
+DIM 0:1:4:4 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:4 plane=- pt=- pt2=- text=- conn=0,0 pres=<0 e7 v14 (140 -121.346062 55.3657264709)>'Oriented Linear Dimension.1' desc=0
+DIMR 0:1:4:4 [0:1:1:1:1 ] []
+DIM 0:1:4:5 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:5 plane=- pt=- pt2=- text=- conn=0,0 pres=<0 e23 v46 (-112.45764 -33.8181484689 236.194787979)>'Dimension.1' desc=0
+DIMR 0:1:4:5 [0:1:1:1:3 ] []
+DIM 0:1:4:6 name='DGT:Common_label' type=30 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:6 plane=- pt=- pt2=- text=- conn=0,0 pres=<0 e25 v50 (56.31815 447.346969 -81.0918927195)>'Dimension.2' desc=0
+DIMR 0:1:4:6 [] []
+DIM 0:1:4:7 name='DGT:Common_label' type=30 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:7 plane=- pt=- pt2=- text=- conn=0,0 pres=<0 e23 v46 (103.81815 414.929901 163.412510872)>'Dimension.3' desc=0
+DIMR 0:1:4:7 [] []
+DIM 0:1:4:8 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:8 plane=- pt=- pt2=- text=- conn=0,0 pres=<0 e4 v8 (163.825459 7.2044561 23.8192901611)>'Linear Size.1' desc=0
+DIMR 0:1:4:8 [0:1:1:1:1 ] []
+DIM 0:1:4:9 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:9 plane=- pt=- pt2=- text=- conn=0,0 pres=<0 e7 v14 (403.85862 -0.16288 47.3228521347)>'Linear Size.2' desc=0
+DIMR 0:1:4:9 [0:1:1:1:3 ] []
+DIM 0:1:4:10 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:10 plane=- pt=- pt2=- text=- conn=0,0 pres=<0 e52 v104 (612.1746689 0 -404.929036)>'Linear Size.3' desc=0
+DIMR 0:1:4:10 [0:1:1:1:6 ] []
+DIM 0:1:4:11 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:11 plane=- pt=- pt2=- text=- conn=0,0 pres=<0 e52 v104 (674.5393256 0 883.810842)>'Linear Size.4' desc=0
+DIMR 0:1:4:11 [0:1:1:1:7 ] []
+DIM 0:1:4:12 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:12 plane=- pt=- pt2=- text=- conn=0,0 pres=<0 e7 v14 (325.51852 28.5977039337 23.8000004)>'Linear Size.5' desc=0
+DIMR 0:1:4:12 [0:1:1:1:8 ] []
+DIM 0:1:4:13 name='DGT:Dimension' type=31 q=0 aq=0 vals=[] u=0 l=0 range=0 pm=0 class=0,0,0,0 dec=0,0 mods=[] dir=1(1 0 0) path=<noshape>
+DIMP 0:1:4:13 plane=- pt=- pt2=- text=- conn=0,0 pres=<0 e7 v14 (-57 27.3568594456 41.9999996)>'Linear Size.6' desc=0
+DIMR 0:1:4:13 [0:1:1:1:5 ] []

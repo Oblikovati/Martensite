@@ -30,6 +30,9 @@ fn decode_pages<T: DeserializeOwned>(text: &str, endpoint: &str) -> BuildResult<
     Ok(pages.into_iter().flatten().collect())
 }
 
+/// One release job reads every published asset, so one dropped request must not end a long run.
+const ASSET_ATTEMPTS: u32 = 3;
+
 pub(super) fn asset(context: &BuildContext<'_>, id: u64) -> BuildResult<Vec<u8>> {
     let endpoint = format!("repos/{{owner}}/{{repo}}/releases/assets/{id}");
     let spec = CommandSpec::new("gh", context.root()).args([
@@ -38,14 +41,34 @@ pub(super) fn asset(context: &BuildContext<'_>, id: u64) -> BuildResult<Vec<u8>>
         "--header",
         "Accept: application/octet-stream",
     ]);
-    let output = context.runner.capture_output(&spec)?;
+    let mut output = context.runner.capture_output(&spec)?;
+    for attempt in 1..ASSET_ATTEMPTS {
+        if output.code == 0 {
+            break;
+        }
+        std::thread::sleep(retry_delay(attempt));
+        output = context.runner.capture_output(&spec)?;
+    }
     if output.code != 0 {
         return Err(invalid(
-            &format!("asset {id}, HTTP command exit {}", output.code),
+            &format!(
+                "asset {id}, HTTP command exit {} after {ASSET_ATTEMPTS} attempts: {}",
+                output.code,
+                String::from_utf8_lossy(&output.stderr).trim()
+            ),
             "successful asset retrieval",
         ));
     }
     Ok(output.stdout)
+}
+
+/// The wait before the next attempt. The caller still checks each asset's size and digest.
+fn retry_delay(attempt: u32) -> std::time::Duration {
+    if cfg!(test) {
+        std::time::Duration::ZERO
+    } else {
+        std::time::Duration::from_secs(u64::from(attempt) * 5)
+    }
 }
 
 #[cfg(test)]

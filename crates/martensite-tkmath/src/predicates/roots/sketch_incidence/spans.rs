@@ -153,12 +153,12 @@ pub(super) fn spline_spans(spline: &SketchIncidenceSpline) -> Vec<ParametricSpan
         })
         .collect()
 }
-fn clipped_range(spline: &SketchIncidenceSpline, span: usize) -> Option<[f64; 2]> {
+pub(super) fn clipped_range(spline: &SketchIncidenceSpline, span: usize) -> Option<[f64; 2]> {
     let lower = spline.flat_knots[span].max(spline.bounds[0]);
     let upper = spline.flat_knots[span + 1].min(spline.bounds[1]);
     (lower < upper).then_some([lower, upper])
 }
-fn span_piece(
+pub(super) fn span_piece(
     spline: &SketchIncidenceSpline,
     knots: &[ExactRatio],
     span: usize,

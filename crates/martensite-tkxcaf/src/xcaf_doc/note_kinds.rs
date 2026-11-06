@@ -80,7 +80,7 @@ impl XCAFDocNoteComment {
         note.note.assign(user, stamp);
         *note.comment.write() = comment.clone();
         let note = Handle::new(note);
-        label.add_attribute(&note.clone().cast(), false)?;
+        label.add_attribute(&note.clone().cast(), true)?;
         Ok(note)
     }
     /// `Set(theComment)`: backed up.
@@ -192,7 +192,7 @@ impl XCAFDocNoteBalloon {
         balloon.comment.note.assign(user, stamp);
         *balloon.comment.comment.write() = comment.clone();
         let balloon = Handle::new(balloon);
-        label.add_attribute(&balloon.clone().cast(), false)?;
+        label.add_attribute(&balloon.clone().cast(), true)?;
         Ok(balloon)
     }
     /// The embedded `XCAFDocNoteComment` (the native base class).
@@ -308,7 +308,7 @@ impl XCAFDocNoteBinData {
         if !live(&note, "XCAFDocNoteBinData::Set")?.set_file(title, mime_type, file)? {
             return Ok(Handle::default());
         }
-        label.add_attribute(&note.clone().cast(), false)?;
+        label.add_attribute(&note.clone().cast(), true)?;
         Ok(note)
     }
     /// `Set(theLabel, theUserName, theTimeStamp, theTitle, theMIMEtype, theData)`: a new note
@@ -330,7 +330,7 @@ impl XCAFDocNoteBinData {
             data: data.clone(),
         };
         let note = Handle::new(note);
-        label.add_attribute(&note.clone().cast(), false)?;
+        label.add_attribute(&note.clone().cast(), true)?;
         Ok(note)
     }
 }

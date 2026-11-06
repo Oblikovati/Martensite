@@ -8,7 +8,7 @@ use super::{
 };
 use martensite_tkernel::{
     message::{Gravity, Messenger, Msg},
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle, StandardTransient, exceptions},
     tcollection::AsciiString,
 };
 use std::fmt::Write as _;
@@ -99,7 +99,7 @@ pub trait InterfaceFileReaderToolLoad: InterfaceFileReaderTool {
             .filter(|i| *i >= 1)
             .and_then(|i| reports.get_mut(i));
         let slot = slot.ok_or_else(|| {
-            martensite_tkernel::standard::exceptions::out_of_range(&format!(
+            exceptions::out_of_range(&format!(
                 "InterfaceFileReaderTool: record {num}; expected [1, {records}]"
             ))
         })?;
@@ -212,6 +212,11 @@ pub trait InterfaceFileReaderToolLoad: InterfaceFileReaderTool {
     /// fails gets a report with the unknown entity as content, an OSD failure ends the
     /// loading), records the reports in the model and ends the reading.
     fn load_model(&self, amodel: &Handle<dyn InterfaceInterfaceModel>) -> Result<(), Failure> {
+        if amodel.is_null() {
+            return Err(exceptions::null_object(
+                "InterfaceFileReaderTool: null model; expected a model to load into",
+            ));
+        }
         let messenger = self.messenger();
         self.set_model(amodel);
         self.guarded(self.begin_read(amodel), &messenger)?;

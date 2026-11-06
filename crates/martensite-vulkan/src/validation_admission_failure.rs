@@ -1,7 +1,8 @@
 //! Validation admission failures name the absent capability before instance creation.
+use crate::ValidationLayerVersion;
 use std::fmt;
 
-/// A required validation capability is absent; inspect `error.validation_admission_failure()`.
+/// A required validation capability is absent or too old; inspect `error.validation_admission_failure()`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum RenderValidationAdmissionFailure {
@@ -17,6 +18,15 @@ pub enum RenderValidationAdmissionFailure {
         /// The required Vulkan instance extension name.
         extension: String,
     },
+    /// The loader selected a validation layer older than the verified one.
+    UnverifiedLayer {
+        /// The requested Vulkan layer name.
+        layer: String,
+        /// The version the loader would enable.
+        active: ValidationLayerVersion,
+        /// The oldest version this renderer accepts.
+        required: ValidationLayerVersion,
+    },
 }
 impl fmt::Display for RenderValidationAdmissionFailure {
     fn fmt(&self, output: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -28,6 +38,14 @@ impl fmt::Display for RenderValidationAdmissionFailure {
             Self::MissingExtension { layer, extension } => write!(
                 output,
                 "received unavailable extension {extension} in global and {layer} catalogs; expected it for validated Vulkan instance creation"
+            ),
+            Self::UnverifiedLayer {
+                layer,
+                active,
+                required,
+            } => write!(
+                output,
+                "received {layer} version {active}; expected {required} or newer for validated Vulkan instance creation"
             ),
         }
     }

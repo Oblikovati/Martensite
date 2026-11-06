@@ -50,7 +50,7 @@ impl TFunctionFunction {
             return Ok(found);
         }
         let created = Handle::new(Self::new());
-        label.add_attribute(&created.cast(), false)?;
+        label.add_attribute(&created.cast(), true)?;
         Ok(created)
     }
     /// `Set(L, DriverID)`: as `Set(L)`, then the driver GUID.

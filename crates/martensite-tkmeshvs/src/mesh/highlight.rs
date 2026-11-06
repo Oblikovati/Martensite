@@ -6,12 +6,21 @@ use super::{MeshVSMeshMembers, MeshVSMeshSource};
 use crate::MeshVSDrawerAttribute as Key;
 use crate::data_source::{MeshVSDataSource, MeshVSPackedMap};
 use crate::drawer::MeshVSDrawerSource;
-use crate::flags::*;
+use crate::flags::{
+    MESHVS_DMF_BASE_MODE_MASK, MESHVS_DMF_HILIGHT_PRS, MESHVS_DMF_SELECTION_PRS,
+    MESHVS_DMF_SHADING, MESHVS_DMF_WIRE_FRAME, MESHVS_ET_NODE, MESHVS_ET_NONE,
+};
 use crate::mesh_entity_owner::MeshVSMeshEntityOwner;
 use crate::mesh_owner::MeshVSMeshOwnerSource;
 use crate::prs_builder::{MeshVSPrsBuilder, MeshVSPrsBuilderMembers};
 use martensite_tkernel::standard::{Failure, Handle};
-use martensite_tkservice::graphic3d::*;
+use martensite_tkservice::graphic3d::Graphic3dPresentationAttributesMembers;
+use martensite_tkservice::graphic3d::Graphic3dStructureDisplay;
+use martensite_tkservice::graphic3d::Graphic3dStructureMembers;
+use martensite_tkservice::graphic3d::{
+    GRAPHIC3D_ZLAYER_ID_TOP, GRAPHIC3D_ZLAYER_ID_TOPMOST, Graphic3dDisplayPriority,
+    Graphic3dStructureSource,
+};
 use martensite_tkv3d::ais::AisInteractiveObjectMembers;
 use martensite_tkv3d::prs_mgr::{PrsMgrPresentableObjectMembers, PrsMgrPresentationManager};
 use martensite_tkv3d::prs3d::Prs3dDrawer;

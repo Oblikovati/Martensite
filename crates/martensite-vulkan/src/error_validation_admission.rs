@@ -11,7 +11,7 @@ impl From<RenderValidationAdmissionFailure> for RenderError {
     }
 }
 impl RenderError {
-    /// Inspect a missing layer or extension; `error.validation_admission_failure()`.
+    /// Inspect a missing layer or extension, or a layer that is too old; `error.validation_admission_failure()`.
     pub fn validation_admission_failure(&self) -> Option<&RenderValidationAdmissionFailure> {
         match &self.1 {
             Some(RenderFailureCause::ValidationAdmission(failure)) => Some(failure),
@@ -41,6 +41,11 @@ mod tests {
             RenderValidationAdmissionFailure::MissingExtension {
                 layer: "required-layer".to_owned(),
                 extension: "required-extension".to_owned(),
+            },
+            RenderValidationAdmissionFailure::UnverifiedLayer {
+                layer: "required-layer".to_owned(),
+                active: crate::ValidationLayerVersion::from_spec(0),
+                required: crate::VERIFIED_VALIDATION_LAYER,
             },
         ] {
             assert_cause(cause);

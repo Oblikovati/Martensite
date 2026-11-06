@@ -83,7 +83,7 @@ impl TDataStdVariable {
             return Ok(found);
         }
         let created = Handle::new(Self::new());
-        label.add_attribute(&created.cast(), false)?;
+        label.add_attribute(&created.cast(), true)?;
         Ok(created)
     }
     /// `Name(string)`: sets the `TDataStd_Name` of the label.

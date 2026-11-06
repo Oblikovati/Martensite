@@ -4,7 +4,7 @@ mod closed_extrusion_capture;
 mod input_lease;
 mod stored_input;
 pub use input_lease::SplineInputLease;
-pub use stored_input::StoredSplineInput;
+pub use stored_input::{StoredOpenExtrusionFailure, StoredOpenExtrusionInput, StoredSplineInput};
 mod periodic;
 mod traits;
 use super::bounded_curve::GeomBoundedCurve;

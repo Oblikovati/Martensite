@@ -6,9 +6,28 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-06
+
+### Added
+
+- Added `martensite-tkdestep` (STEP reading and writing: the parser and writer, the entity schemas, shape and document transfers and the format provider). Each value reads as the file has it and writes back the same: shading methods, the actuated directions of kinematic pairs, the surface and volume element purpose names, and `EXTERNALLY_DEFINED_CLASS` and the other records whose fields are filled on read. Triangulated faces whose normals are not a square array write like any other (#403).
+- Added `V3dView::default_view_axis`, which returns the default view point and axis that `set_axis` keeps, with every digit (#403).
+- Added `certify_tolerance_resolved_extrusion_face` with `ToleranceResolvedFacePolicy::v4()`: it certifies a closed extrusion face whose stored boundary carrier stays within the original tolerances of the surface but is not exactly on it, and reports every boundary contact and error bound without changing geometry. Earlier face policies keep their results and refusals, and an enclosing solid still needs its own checks (#213).
+- Added `certify_given_vertex_neighborhood`, `certify_given_vertex_contacts` and `certify_disjoint_vertex_neighborhoods`, which prove from exact coefficients how curves enter a given vertex ball, where a curve meets a line inside it, and that two vertex balls do not overlap (#213).
+- Added `certify_open_quadratic_extrusion`, which proves that the extrusion of an open quadratic spline does not intersect itself without joining its endpoints, with `StoredSplineInput::into_open_extrusion_input` and `capture_placed_open_support_inputs` to build its inputs from stored curves and face snapshots. Face validation does not yet certify faces on open splines (#213).
+
+### Changed
+
+- `XCAFDocClippingPlaneTool::remove_clipping_plane` now removes a clipping plane a view refers to, and the view loses the reference. It used to refuse the removal (#403).
+- Validated Vulkan startup now refuses a Khronos validation layer older than 1.4.313 before creating the instance, and `RenderValidationAdmissionFailure::UnverifiedLayer` reports both versions. Older layers could start and then report false errors or crash; Ubuntu 24.04's packaged 1.3.275 is one of them. Install 1.4.313 or newer, which `scripts/install/vulkan-validation.sh` does on Ubuntu 24.04 x86_64, or start with validation off (#388).
+- `install-linux.sh` now supports apt on Ubuntu only, because other apt-based systems cannot be relied on for validation layer 1.4.313 or newer; they stop before any package changes. Ubuntu 24.04 on x86_64 keeps the pinned layer, Ubuntu 25.10 and later use apt's package, and the installer fails with both versions if the installed layer is too old. Ubuntu 24.04 on other architectures also stops, and should move to 26.04 (#388).
+
 ### Fixed
 
+- Attributes are now added after the ones already on a label, so a label lists them in the order they were created. This covers the array, list, map, tree, expression, variable and function attributes, the document attributes, metadata copies and the viewer attribute (#403).
+- Reading a file into a null model now reports a failure instead of panicking (#403).
 - Validated Vulkan startup now names a missing validation layer or required instance extension before creating the instance. The check includes extensions from the selected layer and keeps validation enabled (#388).
+- A volume no longer loses the sliver of a trimmed face narrower than `1e-9` in surface parameter. `volume_properties` and `volume_properties_gk` integrate every span of positive width, so a slightly skewed prism gets its exact volume, centre and inertia (refs #386).
 
 ## [0.11.0] - 2026-11-06
 

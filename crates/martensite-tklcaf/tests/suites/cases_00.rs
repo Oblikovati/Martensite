@@ -1,4 +1,6 @@
 // Application data framework test suite registrations; preserve case files.
+#[path = "../attribute_append_order.rs"]
+pub mod attribute_append_order;
 #[path = "../framework_edge_behaviour.rs"]
 pub mod framework_edge_behaviour;
 #[path = "../large_transaction_timing.rs"]

@@ -81,7 +81,7 @@ impl XCAFDocVisMaterialTool {
         name: &AsciiString,
     ) -> Result<TdfLabel, Failure> {
         let label = TdfTagSource::new_child_of(&self.label())?;
-        label.add_attribute(&material.clone().cast(), false)?;
+        label.add_attribute(&material.clone().cast(), true)?;
         if !name.is_empty() {
             TDataStdName::set(&label, &ExtendedString::from_ascii(name))?;
         }

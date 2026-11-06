@@ -1,5 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::*;
+use super::{
+    MeshVSTopologyError, MeshVSTopologyOperation, create_prism_topology, create_pyramid_topology,
+    reserve_topology_buffer, topology_sizes,
+};
 use MeshVSTopologyError::IndexOverflow;
 use std::error::Error;
 

@@ -1,0 +1,259 @@
+!*****************************************************************************
+!Configuration Node  Vendor: Martensite Format: STEP
+!
+!Common parameters:
+!
+!
+!Manages the continuity of BSpline curves (IGES entities 106, 112 and 126) after translation to Martensite
+!Default value: 1. Available values: 0, 1, 2
+provider.STEP.Martensite.read.iges.bspline.continuity :	 {{ReadBSplineContinuity}}
+!
+!
+!Reads the precision mode value
+!Default value: "File"(0). Available values: "File"(0), "User"(1)
+provider.STEP.Martensite.read.precision.mode :	 {{ReadPrecisionMode}}
+!
+!
+!This parameter gives the precision for shape construction when the read.precision.mode parameter value is 1
+!Default value: 0.0001. Available values: any real positive (non null) value
+provider.STEP.Martensite.read.precision.val :	 {{ReadPrecisionVal}}
+!
+!
+!Defines the mode of applying the maximum allowed tolerance
+!Default value: "Preferred"(0). Available values: "Preferred"(0), "Forced"(1)
+provider.STEP.Martensite.read.maxprecision.mode :	 {{ReadMaxPrecisionMode}}
+!
+!
+!Defines the maximum allowable tolerance (in internal units, which are specified in xstep.cascade.unit) of the shape
+!Default value: 1. Available values: any real positive (non null) value
+provider.STEP.Martensite.read.maxprecision.val :	 {{ReadMaxPrecisionVal}}
+!
+!
+!Defines the using of BRepLib::SameParameter
+!Default value: "Off"(0). Available values: "Off"(0), "On"(1)
+provider.STEP.Martensite.read.stdsameparameter.mode :	 {{ReadSameParamMode}}
+!
+!
+!Preference for the computation of curves in case of 2D/3D inconsistency in an entity which has both 2D and 3D representations.
+!Default value: "Default"(0). Available values: "Default"(0), "2DUse_Preferred"(2), "2DUse_Forced"(-2), "3DUse_Preferred"(3), "3DUse_Forced"(-3)
+provider.STEP.Martensite.read.surfacecurve.mode :	 {{ReadSurfaceCurveMode}}
+!
+!
+!This parameter is used within the BRepLib::EncodeRegularity() function which is called for a shape read from an IGES or a STEP file at the end of translation process.This function sets the regularity flag of an edge in a shell when this edge is shared by two faces.This flag shows the continuity, which these two faces are connected with at that edge.
+!Default value (in degrees): 0.57295779513. Available values: <double>
+provider.STEP.Martensite.read.encoderegularity.angle :	 {{EncodeRegAngle}}
+!
+!
+!Indicates what angle units should be used when a STEP file is read
+!Default value: "File"(0). Available values: "File"(0), "Rad"(1), "Deg"(2)
+provider.STEP.Martensite.angleunit.mode :	 {{AngleUnit}}
+!
+!
+!Read Parameters:
+!
+!
+!Defines the approach used for selection of top-level STEP entities for translation, and for recognition of assembly structures
+!Default value: 1("ON"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.read.product.mode :	 {{ReadProductMode}}
+!
+!
+!When reading AP 209 STEP files, allows selecting either only 'design' or 'analysis', or both types of products for translation
+!Default value: 1("all"). Available values: 1("all"), 2("design"), 3("analysis")
+provider.STEP.Martensite.read.product.context :	 {{ReadProductContext}}
+!
+!
+!Specifies preferred type of representation of the shape of the product, in case if a STEP file contains more than one representation(i.e.multiple PRODUCT_DEFINITION_SHAPE entities) for a single product
+!Default value: 1("All"). Available values: 1("All"), 2("ABSR"), 3("MSSR"), 4("GBSSR"), 5("FBSR"), 6("EBWSR"), 7("GBWSR")
+provider.STEP.Martensite.read.shape.repr :	 {{ReadShapeRepr}}
+!
+!
+!Defines whether tessellated shapes should be translated!Default value: 1("On"). Available values: 0("OFF"), 2("OnNoBRep")
+provider.STEP.Martensite.read.tessellated :	 {{ReadTessellated}}
+!
+!
+!Specifies which data should be read for the products found in the STEP file
+!Default value: 1("All"). Available values: 1("All"), 2("assembly"),3("structure"), 4("shape")
+provider.STEP.Martensite.read.assembly.level :	 {{ReadAssemblyLevel}}
+!
+!
+!Defines whether shapes associated with the main SHAPE_DEFINITION_REPRESENTATION entityof the product via SHAPE_REPRESENTATIONSHIP_RELATION should be translated
+!Default value: 1("ON"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.read.shape.relationship :	 {{ReadRelationship}}
+!
+!
+!Defines whether shapes associated with the PRODUCT_DEFINITION_SHAPE entity of the product via SHAPE_ASPECT should be translated.
+!Default value: 1("ON"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.read.shape.aspect :	 {{ReadShapeAspect}}
+!
+!
+!Boolean flag regulating translation of "CONSTRUCTIVE_GEOMETRY_REPRESENTATION_RELATIONSHIP" entities that define position of constructive geometry entities contained in "CONSTRUCTIVE_GEOMETRY_REPRESENTATION" with respect to the main representation of the shape (product).
+!Default value: 0("OFF"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.read.constructivegeom.relationship :	 {{ReadConstrRelation}}
+!
+!
+!Indicates whether to read sub-shape names from 'Name' attributes of STEP Representation Items
+!Default value: 0("OFF"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.read.stepcaf.subshapes.name :	 {{ReadSubshapeNames}}
+!
+!
+!STEP file encoding for names translation
+!Default value: 4("UTF8"). Available values: 0("SJIS"), 1("EUC"), 2("NoConversion"), 3("GB"), 4("UTF8"), 5("SystemLocale"), 6("CP1250"), 7("CP1251"), 8("CP1252"), 9("CP1253"), 10("CP1254"), 11("CP1255"), 12("CP1256"), 13("CP1257"), 14("CP1258"), 15("iso8859-1"), 16("iso8859-2"), 17("iso8859-3"), 18("iso8859-4"), 19("iso8859-5"), 20("iso8859-6"), 21("iso8859-7"), 22("iso8859-8"), 23("iso8859-9"), 24("CP850")
+provider.STEP.Martensite.read.codepage :	 {{ReadCodePage}}
+!
+!
+!Non-manifold topology reading
+!Default value: 0("OFF"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.read.nonmanifold :	 {{ReadNonmanifold}}
+!
+!
+!I-Deas-like STEP processing
+!Default value: 0("OFF"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.read.ideas :	 {{ReadIdeas}}
+!
+!
+!Parameter to read all top level solids and shells
+!Default value: 0("OFF"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.read.all.shapes :	 {{ReadAllShapes}}
+!
+!
+!Mode to variate apply or not transformation placed in the root shape representation.
+!Default value: 1("ON"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.read.root.transformation :	 {{ReadRootTransformation}}
+!
+!
+!Setting up the read.colo parameter which is used to indicate read Colors or not
+!Default value: +. Available values: "-", "+"
+provider.STEP.Martensite.read.color :	 {{ReadColor}}
+!
+!
+!Setting up the read.name parameter which is used to indicate read Names or not
+!Default value: +. Available values: "-", "+"
+provider.STEP.Martensite.read.name :	 {{ReadName}}
+!
+!
+!Setting up the read.layer parameter which is used to indicate read Layers or not
+!Default value: +. Available values: "-", "+"
+provider.STEP.Martensite.read.layer :	 {{ReadLayer}}
+!
+!
+!Setting up the read.props parameter which is used to indicate read Validation properties or not
+!Default value: +. Available values: "-", "+"
+provider.STEP.Martensite.read.props :	 {{ReadProps}}
+!
+!
+!Setting up the read.metadata parameter which is used to indicate read Metadata or not
+!Default value: 1("ON"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.read.metadata :	 {{ReadMetadata}}
+!
+!
+!Setting up the read.productmetadata parameter which is used to indicate whether to read Product Metadata or not
+!Default value: 0("OFF"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.read.productmetadata :	 {{ReadProductMetadata}}
+!
+!
+!Write Parameters:
+!
+!
+!Writes the precision value
+!Default value: "Average"(0). Available values: "Least"(-1), "Average"(0), "Greatest"(1), "Session"(2)
+provider.STEP.Martensite.write.precision.mode :	 {{WritePrecisionMode}}
+!
+!
+!A user-defined precision value
+!Default value: 0.0001. Available values: any real positive (non null) value
+provider.STEP.Martensite.write.precision.val :	 {{WritePrecisionVal}}
+!
+!
+!Writing assembly mode
+!Default value: 2("Auto"). Available values: 0("Off"), 1("On"), 2("Auto")
+provider.STEP.Martensite.write.assembly :	 {{WriteAssembly}}
+!
+!
+!Defines the version of schema used for the output STEP file
+!Default value: 4 or AP214IS. Available values: 1 or AP214CD, 2 or AP214DIS, 3 or AP203, 4 or AP214IS, 5 or AP242DIS
+provider.STEP.Martensite.write.schema :	 {{WriteSchema}}
+!
+!
+!Defines whether tessellated shapes should be translated!Default value: 2("OnNoBRep"). Available values: 0("OFF"), 1("On")
+provider.STEP.Martensite.write.tessellated :	 {{WriteTessellated}}
+!
+!
+!Defines the text string that will be used for field 'name' of PRODUCT entities written to the STEP file
+!Default value: Martensite STEP translator (current Martensite version number). Available values: <string>
+provider.STEP.Martensite.write.product.name :	 {{WriteProductName}}
+!
+!
+!This parameter indicates whether parametric curves should be written into the STEP file
+!Default value: 1("ON"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.write.surfacecurve.mode :	 {{WriteSurfaceCurMode}}
+!
+!
+!Defines a unit in which the STEP file should be written.
+!Default value: MM(2). Available values: "INCH"(1), "MM"(2), "??"(3), "FT"(4), "MI"(5), "M"(6), "KM"(7), "MIL"(8), "UM"(9), "CM"(10), "UIN"(11)
+provider.STEP.Martensite.write.unit :	 {{WriteUnit}}
+!
+!
+!This parameter indicates which of free vertices writing mode is switch on
+!Default value: 0("One Compound"). Available values: 0("One Compound"), 1("Signle Vertex")
+provider.STEP.Martensite.write.vertex.mode :	 {{WriteVertexMode}}
+!
+!
+!Indicates whether to write sub-shape names to 'Name' attributes of STEP Representation Items
+!Default value: 0("OFF"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.write.stepcaf.subshapes.name :	 {{WriteSubshapeNames}}
+!
+!
+!Setting up the write.colo parameter which is used to indicate write Colors or not
+!Default value: +. Available values: "-", "+"
+provider.STEP.Martensite.write.color :	 {{WriteColor}}
+!
+!
+!Non-manifold topology writing
+!Default value: 0("OFF"). Available values: 0("OFF"), 1("ON")
+provider.STEP.Martensite.write.nonmanifold :	 {{WriteNonmanifold}}
+!
+!
+!Setting up the write.name parameter which is used to indicate write Names or not
+!Default value: +. Available values: "-", "+"
+provider.STEP.Martensite.write.name :	 {{WriteName}}
+!
+!
+!Setting up the write.layer parameter which is used to indicate write Layers or not
+!Default value: +. Available values: "-", "+"
+provider.STEP.Martensite.write.layer :	 {{WriteLayer}}
+!
+!
+!Setting up the write.props parameter which is used to indicate write Validation properties or not
+!Default value: +. Available values: "-", "+"
+provider.STEP.Martensite.write.props :	 {{WriteProps}}
+!
+!
+!Setting up the write.metadata parameter which is used to indicate write Metadata or not
+!Default value: +. Available values: "-", "+"
+provider.STEP.Martensite.write.metadata :	 {{WriteMetadata}}
+!
+!
+!Setting up the write.material parameter which is used to indicate write Material properties or not
+!Default value: +. Available values: "-", "+"
+provider.STEP.Martensite.write.material :	 {{WriteMaterial}}
+!
+!
+!Setting up the write.vismaterial parameter which is used to indicate write Visual Material properties or not
+!Default value: +. Available values: "-", "+"
+provider.STEP.Martensite.write.vismaterial :	 {{WriteVisMaterial}}
+!
+!
+!Setting up the Model Type which gives you the choice of translation mode for an Martensite shape that is being translated to STEP
+!Default value: 0. Available values: 0, 1, 2, 3, 4
+provider.STEP.Martensite.write.model.type :	 {{WriteModelType}}
+!
+!
+!Setting up a flag that indicates whether or not duplicate entities should be removed from the model before writing.
+!Default value: -. Available values: "-", "+"
+provider.STEP.Martensite.write.cleanduplicates :	 {{CleanDuplicates}}
+!
+!
+!Defines export scaling factor in transformation as Cartesian Operator (On) or skip(Off)!Default value: 1("On"). Available values: 0("OFF"), 1("On")
+provider.STEP.Martensite.write.scaling.trsf :	 {{WriteScalingTrsf}}
+!
+{{Healing}}!*****************************************************************************

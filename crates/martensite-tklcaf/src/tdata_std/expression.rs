@@ -145,7 +145,7 @@ fn find_or_add<T: TdfAttribute + martensite_tkernel::standard::RuntimeTyped>(
         return Ok(found);
     }
     let created = Handle::new(make());
-    label.add_attribute(&created.cast(), false)?;
+    label.add_attribute(&created.cast(), true)?;
     Ok(created)
 }
 

@@ -10,9 +10,6 @@ use martensite_tkgeombase::gprop::ValueType;
 use martensite_tkmath::gp::Point3;
 use martensite_tkmath::math::{Function, KronrodSingleIntegration};
 
-/// The minimal U range of an inner integral (`tolU`).
-const TOL_U: f64 = 1.0e-9;
-
 /// `BRepGProp_TFunction`: at a parameter of the boundary curve, the Gauss-Kronrod
 /// integral of [`BRepGPropUFunction`] from `u_min` to the curve's U, times the curve's
 /// V derivative (and the cone factor by point). An exception is kept and `value`
@@ -147,7 +144,8 @@ impl BRepGPropTFunction {
     fn integral(&mut self, x: f64) -> Result<Option<f64>, Failure> {
         let (p2d, v2d) = self.surface.d12d(x)?;
         let u_max = p2d.x();
-        if u_max - self.u_min < TOL_U {
+        // #386: a narrow trim still has measure; quadrature owns its error budget.
+        if u_max <= self.u_min {
             return Ok(Some(0.));
         }
         let knots = self.surface.get_u_knots(self.u_min, u_max)?;
@@ -171,14 +169,14 @@ impl BRepGPropTFunction {
         Ok(Some(self.account(value * coeff, local_err * abs_coeff)))
     }
 
-    /// The U integrals over the knot spans longer than 1e-9, with `start` Kronrod points
+    /// The U integrals over every knot span of positive width, with `start` Kronrod points
     /// and 1000 iterations at most; `None` when one is not done.
     fn u_integrals(&mut self, knots: &[f64], start: i32) -> Result<Option<(f64, f64)>, Failure> {
         let mut integral = KronrodSingleIntegration::default();
         integral.set_absolute_floor(self.absolute_floor);
         let (mut value, mut local_err) = (0., 0.);
         for span in knots.windows(2) {
-            if span[1] - span[0] < TOL_U {
+            if span[1] <= span[0] {
                 continue;
             }
             integral.perform_with_tolerance(

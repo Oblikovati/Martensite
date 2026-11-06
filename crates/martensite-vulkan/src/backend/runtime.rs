@@ -6,7 +6,7 @@ use std::{ffi::CStr, sync::Arc};
 /// Device creation policy; `VulkanOptions { validation: true, ..Default::default() }`.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct VulkanOptions {
-    /// Require the Khronos validation layer when enabled.
+    /// Require a Khronos validation layer at least as new as `VERIFIED_VALIDATION_LAYER` when enabled.
     pub validation: bool,
     /// Select a physical device by enumeration index, or the first capable device.
     pub device_index: Option<usize>,

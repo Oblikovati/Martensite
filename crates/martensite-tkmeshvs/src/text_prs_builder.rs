@@ -4,7 +4,10 @@
 use crate::MeshVSDrawerAttribute as Key;
 use crate::data_source::{MeshVSDataSource, MeshVSPackedMap};
 use crate::drawer::MeshVSDrawerSource;
-use crate::flags::*;
+use crate::flags::{
+    MESHVS_DMF_TEXT_DATA_PRS, MESHVS_ET_FACE, MESHVS_ET_LINK, MESHVS_ET_NODE, MESHVS_ET_NONE,
+    MESHVS_ET_VOLUME,
+};
 use crate::mesh::MeshVSMeshSource;
 use crate::mesh_prs_builder::node_xyz;
 use crate::prs_builder::{
@@ -19,7 +22,13 @@ use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransie
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::aspect::AspectTypeOfMarker;
-use martensite_tkservice::graphic3d::*;
+use martensite_tkservice::graphic3d::Graphic3dAspectsTextMembers;
+use martensite_tkservice::graphic3d::Graphic3dGroupMembers;
+use martensite_tkservice::graphic3d::Graphic3dStructureMembers;
+use martensite_tkservice::graphic3d::{
+    Graphic3dArrayOfPoints, Graphic3dAspectMarker3d, Graphic3dAspectText3d, Graphic3dAspectsSource,
+    Graphic3dStructureSource, Graphic3dText,
+};
 
 /// The node and element texts of `MeshVSTextPrsBuilder`.
 #[derive(Default)]

@@ -471,4 +471,10 @@ impl V3dView {
         (state.default_view_point, state.default_view_axis) = (Point3::new(x, y, z), axis);
         Ok(())
     }
+    /// The default view point and axis `set_axis` keeps, with every digit, so a view built
+    /// outside this crate can carry them over. Example: `let axis = view.default_view_axis();`.
+    pub fn default_view_axis(&self) -> Axis1 {
+        let state = self.state.read();
+        Axis1::new(state.default_view_point, state.default_view_axis)
+    }
 }

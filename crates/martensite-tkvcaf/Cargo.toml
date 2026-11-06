@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkvcaf"
-version = "0.9.0"
+version = "0.9.1"
 description = "Martensite document presentation attributes and their drivers."
 edition.workspace = true
 rust-version.workspace = true

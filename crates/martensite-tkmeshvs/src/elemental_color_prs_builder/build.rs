@@ -6,7 +6,9 @@ use super::build_pairs::add_pair_groups;
 use crate::MeshVSDrawerAttribute as Key;
 use crate::data_source::{MeshVSDataSource, MeshVSPackedMap, MeshVSTopologyHandle};
 use crate::drawer::MeshVSDrawerSource;
-use crate::flags::*;
+use crate::flags::{
+    MESHVS_ET_FACE, MESHVS_ET_LINK, MESHVS_ET_NONE, MESHVS_ET_VOLUME, MeshVSEntityType,
+};
 use crate::mesh_prs_builder::{MeshVSMeshPrsBuilder, fan_index, node_xyz};
 use crate::nodal_color_prs_builder::{color_materials, line_type};
 use crate::prs_builder::{
@@ -17,7 +19,16 @@ use martensite_tkernel::ncollection::{Array1, DataMap, HArray1, Map};
 use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::aspect::{AspectInteriorStyle, AspectTypeOfLine};
-use martensite_tkservice::graphic3d::*;
+use martensite_tkservice::graphic3d::Graphic3dAspectsEdgeMembers;
+use martensite_tkservice::graphic3d::Graphic3dAspectsMembers;
+use martensite_tkservice::graphic3d::Graphic3dAspectsRenderMembers;
+use martensite_tkservice::graphic3d::Graphic3dGroupMembers;
+use martensite_tkservice::graphic3d::Graphic3dStructureMembers;
+use martensite_tkservice::graphic3d::{
+    Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles, Graphic3dAspectFillArea3d,
+    Graphic3dAspectLine3d, Graphic3dAspectsSource, Graphic3dGroup, Graphic3dStructureSource,
+    Graphic3dTypeOfShadingModel,
+};
 
 /// The drawer values of one `build` call.
 pub(super) struct ElementalLook {

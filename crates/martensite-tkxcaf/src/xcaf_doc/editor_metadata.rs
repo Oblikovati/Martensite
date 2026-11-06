@@ -189,7 +189,7 @@ fn copy_attributes(source: &TdfLabel, destination: &TdfLabel) -> Result<(), Fail
         let mut target: Handle<dyn TdfAttribute> = Handle::default();
         if !destination.find_attribute(&original.id(), &mut target)? {
             target = original.new_empty();
-            destination.add_attribute(&target, false)?;
+            destination.add_attribute(&target, true)?;
         }
         original.paste(&target, &Handle::new(TdfRelocationTable::new(false)))?;
     }

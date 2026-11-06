@@ -425,3 +425,35 @@ fn vis_material_fills_aspects() {
         texture.object_address()
     );
 }
+
+#[test]
+fn removing_a_clipping_plane_a_view_refers_to_clears_the_reference() {
+    let document = document();
+    let main = main_label(&document);
+    let planes = XCAFDocDocumentTool::clipping_plane_tool(&main).unwrap();
+    let views = XCAFDocDocumentTool::view_tool(&main).unwrap();
+    let at_height = |z: f64| {
+        Plane3::new(
+            Point3::new(0.0, 0.0, z),
+            Direction3::new(0.0, 0.0, 1.0).unwrap(),
+        )
+        .unwrap()
+    };
+    let kept = planes
+        .add_clipping_plane(&at_height(0.0), &text("kept"))
+        .unwrap();
+    let removed = planes
+        .add_clipping_plane(&at_height(1.0), &text("removed"))
+        .unwrap();
+    let view = views.add_view().unwrap();
+    views
+        .set_clipping_planes(&[kept.clone(), removed.clone()], &view)
+        .unwrap();
+    assert!(planes.remove_clipping_plane(&removed).unwrap());
+    assert!(!planes.is_clipping_plane(&removed).unwrap());
+    assert_eq!(planes.get_clipping_planes().unwrap(), vec![kept.clone()]);
+    assert_eq!(
+        views.get_ref_clipping_plane_label(&view).unwrap(),
+        Some(vec![kept])
+    );
+}

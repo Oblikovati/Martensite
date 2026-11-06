@@ -1,0 +1,39 @@
+OK 1
+NAME 0:1:1 'Shapes'
+NAME 0:1:1:1 'AaBbCcÄäÖöÜüß*,.-;:_'
+NAME 0:1:1:2 'π'
+NAME 0:1:1:3 'Expression: αβ;̀'
+NAME 0:1:1:4 '🟊'
+NAME 0:1:1:5 'Star, arrow, faces: 🟊🠊😷🤦 end'
+NAME 0:1:1:6 'Ärger'
+NAME 0:1:1:7 'hôtel'
+NAME 0:1:1:8 'Њет'
+NAME 0:1:1:9 'see § 4.1'
+NAME 0:1:1:10 'line one\nline two'
+NAME 0:1:1:11 'Expression: ±3π*π+12'
+NAME 0:1:1:12 'Expression: α*β÷γ'
+NAME 0:1:1:13 'TЕCТ'
+NAME 0:1:1:14 'AÄaBbCcÄ'hôä🟊\n🟊*,.-;:_ÖЕ'
+NAME 0:1:1:15 'αβγ'
+NAME 0:1:2 'Colors'
+NAME 0:1:3 'Layers'
+NAME 0:1:4 'D&GTs'
+NAME 0:1:5 'Materials'
+NAME 0:1:7 'Views'
+NAME 0:1:8 'Clipping Planes'
+NAME 0:1:9 'Notes'
+SHAPE 0:1:1:1 <2 e24 v48 (24 24 24)> c- c- c- l[]
+SHAPE 0:1:1:2 <2 e24 v48 (24 24 48)> c- c- c- l[]
+SHAPE 0:1:1:3 <2 e24 v48 (24 24 24)> c- c- c- l[]
+SHAPE 0:1:1:4 <2 e24 v48 (24 24 48)> c- c- c- l[]
+SHAPE 0:1:1:5 <2 e24 v48 (24 24 24)> c- c- c- l[]
+SHAPE 0:1:1:6 <2 e24 v48 (24 24 48)> c- c- c- l[]
+SHAPE 0:1:1:7 <2 e24 v48 (24 24 24)> c- c- c- l[]
+SHAPE 0:1:1:8 <2 e24 v48 (24 24 48)> c- c- c- l[]
+SHAPE 0:1:1:9 <2 e24 v48 (24 24 24)> c- c- c- l[]
+SHAPE 0:1:1:10 <2 e24 v48 (24 24 48)> c- c- c- l[]
+SHAPE 0:1:1:11 <2 e24 v48 (24 24 24)> c- c- c- l[]
+SHAPE 0:1:1:12 <2 e24 v48 (24 24 48)> c- c- c- l[]
+SHAPE 0:1:1:13 <2 e24 v48 (24 24 24)> c- c- c- l[]
+SHAPE 0:1:1:14 <2 e24 v48 (24 24 48)> c- c- c- l[]
+SHAPE 0:1:1:15 <2 e24 v48 (24 24 24)> c- c- c- l[]

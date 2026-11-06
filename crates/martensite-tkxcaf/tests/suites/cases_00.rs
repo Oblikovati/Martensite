@@ -1,3 +1,5 @@
+#[path = "../attribute_append_order.rs"]
+pub mod attribute_append_order;
 #[path = "../document_box_lifetime.rs"]
 pub mod document_box_lifetime;
 #[path = "../document_regressions.rs"]

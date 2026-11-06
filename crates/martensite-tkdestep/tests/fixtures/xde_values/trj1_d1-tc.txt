@@ -1,0 +1,22 @@
+OK 1
+NAME 0:1:1 'Shapes'
+NAME 0:1:1:1 'D1'
+NAME 0:1:2 'Colors'
+NAME 0:1:3 'Layers'
+NAME 0:1:3:1 '000'
+NAME 0:1:4 'D&GTs'
+NAME 0:1:5 'Materials'
+NAME 0:1:7 'Views'
+NAME 0:1:7:1 'View'
+NAME 0:1:7:2 'View'
+NAME 0:1:7:3 'View'
+NAME 0:1:8 'Clipping Planes'
+NAME 0:1:9 'Notes'
+SHAPE 0:1:1:1 <2 e42 v84 (240 -240 144)> c- c- c- l[0:1:3:1 ]
+LAYER 0:1:3:1 '000' 1
+VIEW 0:1:7:1 name='#283' type=1 pp=(0 0 10000) dir=(0 0 1) up=(-0 1 0) zoom=0 h=73.59058615 v=71.21669627 clip='' front=0,- back=0,- sides=1 gdtp=0
+VIEWR 0:1:7:1 [0:1:1:1 ] [] []
+VIEW 0:1:7:2 name='#295' type=1 pp=(0 0 10000) dir=(0 0 1) up=(-0 1 0) zoom=0 h=29.71758437 v=21.71669627 clip='' front=0,- back=0,- sides=1 gdtp=0
+VIEWR 0:1:7:2 [0:1:1:1 ] [] []
+VIEW 0:1:7:3 name='#307' type=1 pp=(0 0 10000) dir=(-1 0 0) up=(0 0 1) zoom=0 h=77.01953819 v=73.06305506 clip='' front=0,- back=0,- sides=1 gdtp=0
+VIEWR 0:1:7:3 [0:1:1:1 ] [] []

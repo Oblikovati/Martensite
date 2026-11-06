@@ -161,7 +161,7 @@ impl XCAFDocAssemblyItemRef {
             &reference,
             "XCAFDocAssemblyItemRef::Set",
         )?)?;
-        label.add_attribute(&reference.clone().cast(), false)?;
+        label.add_attribute(&reference.clone().cast(), true)?;
         Ok(reference)
     }
     /// `Set(theLabel, theItemId)`.

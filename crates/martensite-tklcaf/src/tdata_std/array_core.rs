@@ -86,7 +86,7 @@ pub(crate) fn set_attr<A: ArrayAttribute>(
         (lower, upper),
         is_delta,
     )?;
-    label.add_attribute(&created.cast(), false)?;
+    label.add_attribute(&created.cast(), true)?;
     Ok(created)
 }
 

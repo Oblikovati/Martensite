@@ -1,0 +1,45 @@
+//! STEPCAFControl: the XDE reader and writer of STEP: names, colours, layers, materials, GD&T,
+//! assemblies and external references, on top of the translators of shapes.
+mod actor_write;
+mod controller;
+mod extern_file;
+mod gdt_property;
+mod gdt_tessellation;
+mod reader;
+mod reader_colors;
+mod reader_datums;
+mod reader_dim_object;
+mod reader_expand;
+mod reader_gdt_common;
+mod reader_gdt_create;
+mod reader_gdts;
+mod reader_materials;
+mod reader_metadata;
+mod reader_names;
+mod reader_pmi;
+mod reader_shuo;
+mod reader_support;
+mod reader_tol_object;
+mod reader_views;
+mod writer;
+mod writer_colors;
+mod writer_datum;
+mod writer_dgts;
+mod writer_dgts_ap242;
+mod writer_dim_values;
+mod writer_extern_refs;
+mod writer_gdt_common;
+mod writer_layers;
+mod writer_materials;
+mod writer_names;
+mod writer_shuo;
+mod writer_support;
+mod writer_tolerance;
+mod writer_transfer;
+
+pub use actor_write::STEPCAFControlActorWrite;
+pub use controller::STEPCAFControlController;
+pub use extern_file::STEPCAFControlExternFile;
+pub use gdt_property::STEPCAFControlGDTProperty;
+pub use reader::{STEPCAFControlReader, STEPCAFControlShapeLabelMap};
+pub use writer::STEPCAFControlWriter;

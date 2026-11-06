@@ -28,6 +28,26 @@ fn run_ownership_controls(context: &BuildContext<'_>) -> BuildResult<()> {
             context.runner.run(&controls(context.root()))
         })?;
     run_service_controls(context)?;
+    run_face_controls(context)?;
+    run_support_controls(context)
+}
+
+fn run_support_controls(context: &BuildContext<'_>) -> BuildResult<()> {
+    context
+        .reporter
+        .step("ThreadSanitizer owned open supports", || {
+            context.runner.run(&open_extrusion_controls(context.root()))
+        })?;
+    context
+        .reporter
+        .step("ThreadSanitizer given vertex incidences", || {
+            context
+                .runner
+                .run(&vertex_neighborhood_controls(context.root()))
+        })
+}
+
+fn run_face_controls(context: &BuildContext<'_>) -> BuildResult<()> {
     context
         .reporter
         .step("ThreadSanitizer coherent face inputs", || {
@@ -53,6 +73,34 @@ fn run_service_controls(context: &BuildContext<'_>) -> BuildResult<()> {
         .step("ThreadSanitizer stable group controls", || {
             context.runner.run(&group_controls(context.root()))
         })
+}
+
+fn open_extrusion_controls(root: &Path) -> CommandSpec {
+    // Pure owned reports are also read from independent worker threads (#213).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkmath",
+        "--lib",
+        "predicates::roots::open_extrusion",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ])
+}
+
+fn vertex_neighborhood_controls(root: &Path) -> CommandSpec {
+    // The owned contact reports retain complete shared-input evidence (#213).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkmath",
+        "--lib",
+        "predicates::roots::sketch_incidence::vertex_neighborhood",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ])
 }
 
 fn face_input_controls(root: &Path) -> CommandSpec {

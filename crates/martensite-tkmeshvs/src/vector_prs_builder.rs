@@ -8,7 +8,7 @@ pub use drawing::calculate_arrow;
 
 use crate::MeshVSDrawerAttribute as Key;
 use crate::data_source::{MeshVSDataSource, MeshVSPackedMap};
-use crate::flags::*;
+use crate::flags::MESHVS_DMF_VECTOR_DATA_PRS;
 use crate::mesh::MeshVSMeshSource;
 use crate::prs_builder::{MeshVSPrsBuilder, MeshVSPrsBuilderBase, MeshVSPrsBuilderMembers};
 use crate::selection_policy::MESHVS_BP_VECTOR;

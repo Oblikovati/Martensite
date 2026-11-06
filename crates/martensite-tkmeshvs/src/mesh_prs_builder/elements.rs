@@ -7,13 +7,23 @@ use crate::MeshVSDrawerAttribute as Key;
 use crate::MeshVSTool;
 use crate::data_source::{MeshVSDataSource, MeshVSPackedMap, MeshVSTopologyHandle};
 use crate::drawer::MeshVSDrawerSource;
-use crate::flags::*;
+use crate::flags::{
+    MESHVS_DMF_BASE_MODE_MASK, MESHVS_DMF_DEFORMED_MASK, MESHVS_DMF_DEFORMED_PRS_WIRE_FRAME,
+    MESHVS_DMF_HILIGHT_PRS, MESHVS_DMF_SELECTION_PRS, MESHVS_DMF_SHADING, MESHVS_DMF_SHRINK,
+    MESHVS_DMF_WIRE_FRAME, MESHVS_ET_FACE, MESHVS_ET_LINK, MESHVS_ET_NONE, MESHVS_ET_VOLUME,
+    MeshVSEntityType,
+};
 use crate::node_pairs::MeshVSTwoNodes;
 use crate::prs_builder::{MeshVSPrsBuilderMembers, coords_of, parent_hidden_elems, remaining_ids};
 use martensite_tkernel::ncollection::{Array1, Map};
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::{Failure, Handle};
-use martensite_tkservice::graphic3d::*;
+use martensite_tkservice::graphic3d::Graphic3dAspectsEdgeMembers;
+use martensite_tkservice::graphic3d::Graphic3dAspectsMembers;
+use martensite_tkservice::graphic3d::{
+    Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles, Graphic3dMaterialAspect,
+    Graphic3dStructureSource, Graphic3dTypeOfShadingModel,
+};
 
 /// The display flags and drawer values of one `build_elements` call.
 pub(super) struct ElementSettings {

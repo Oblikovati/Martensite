@@ -1,10 +1,12 @@
 //! Complete independent represented-face certificates, never captured-pass promotion.
 mod diagnostics;
 mod fixture;
+mod open_inputs;
 mod piecewise;
 mod placed;
 mod replay;
 mod represented;
+mod resolved;
 mod variants;
 use martensite_tkbrep::brep::face_input_capture::{
     FaceCaptureLimits, capture_closed_extrusion_face,

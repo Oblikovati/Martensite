@@ -21,7 +21,7 @@ impl MeshVSDrawerSource for MeshVSDrawer {
     }
 }
 impl RuntimeTyped for dyn MeshVSDrawerSource {
-    const TYPE_NAME: &'static str = "MeshVSDrawer";
+    const TYPE_NAME: &str = "MeshVSDrawer";
     fn static_type() -> &'static RuntimeType {
         MeshVSDrawer::static_type()
     }

@@ -1,5 +1,8 @@
 //! Default C-locale ASCII STL insertion order and scientific precision.
-use super::*;
+use super::{
+    Failure, Handle, ProgressRange, ProgressScope, RwStl, Triangulation, Write, advance_progress,
+    facet_coordinates, write_block,
+};
 use martensite_tkernel::standard::c_string::{FormatArg, sprintf_into};
 impl RwStl {
     /// Writes ASCII facets with twelve fractional scientific digits and no stream flush.

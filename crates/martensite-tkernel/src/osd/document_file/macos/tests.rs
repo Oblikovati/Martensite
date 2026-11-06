@@ -4,8 +4,12 @@ use std::{
     os::unix::fs::symlink,
     path::PathBuf,
     process::Command,
+    sync::atomic::{AtomicU64, Ordering},
     time::{SystemTime, UNIX_EPOCH},
 };
+
+/// Tells fixtures of one process apart when the clock gives two tests the same time.
+static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
 struct AppleAccessFixture(PathBuf);
 
@@ -16,8 +20,9 @@ impl AppleAccessFixture {
             .unwrap()
             .as_nanos();
         let path = std::env::temp_dir().join(format!(
-            "martensite-apple-access-{}-{nonce}",
-            std::process::id()
+            "martensite-apple-access-{}-{nonce}-{}",
+            std::process::id(),
+            NEXT_FIXTURE.fetch_add(1, Ordering::Relaxed)
         ));
         create_private_directory(&path).unwrap();
         Self(path)

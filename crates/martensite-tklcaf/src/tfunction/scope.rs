@@ -60,7 +60,7 @@ impl TFunctionScope {
             return Ok(found);
         }
         let created = Handle::new(Self::new());
-        root.add_attribute(&created.cast(), false)?;
+        root.add_attribute(&created.cast(), true)?;
         Ok(created)
     }
     /// `GetID`.

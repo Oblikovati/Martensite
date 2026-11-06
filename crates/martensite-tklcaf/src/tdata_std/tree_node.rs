@@ -75,7 +75,7 @@ impl TDataStdTreeNode {
         }
         let created = Handle::new(Self::new());
         live(&created, "TDataStd_TreeNode::Set")?.set_tree_id(explicit_id);
-        label.add_attribute(&created.cast(), false)?;
+        label.add_attribute(&created.cast(), true)?;
         Ok(created)
     }
     /// `GetDefaultTreeID`.

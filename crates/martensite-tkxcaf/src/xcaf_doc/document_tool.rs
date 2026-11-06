@@ -48,7 +48,7 @@ impl XCAFDocDocumentTool {
             doc_label = label.clone();
         }
         let tool = Handle::new(Self::new());
-        doc_label.add_attribute(&tool.clone().cast(), false)?;
+        doc_label.add_attribute(&tool.clone().cast(), true)?;
         martensite_tklcaf::live(&tool, "XCAFDocDocumentTool::Set")?.init()?;
         create_tools(label)?;
         Ok(tool)
