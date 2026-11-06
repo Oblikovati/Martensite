@@ -327,7 +327,7 @@ impl GeomToStepMakeRectangularTrimmedSurface {
             return (angle, angle);
         }
         if let Some(cone) = basis.cast::<GeomConicalSurface>().get() {
-            return (angle, cone.semi_angle().cos() / length);
+            return (angle, martensite_cmath::cos(cone.semi_angle()) / length);
         }
         if basis.cast::<GeomPlane>().is_some() {
             return (1.0 / length, 1.0 / length);

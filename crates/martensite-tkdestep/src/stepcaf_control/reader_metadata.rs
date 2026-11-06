@@ -163,9 +163,9 @@ fn derived_unit_scale(
             || named.cast::<StepBasicSiUnitAndLengthUnit>().is_some()
         {
             if value_type == "VOLUME_MEASURE" {
-                scale = factors.length_factor().powf(exponent);
+                scale = martensite_cmath::pow(factors.length_factor(), exponent);
             } else {
-                scale /= factors.length_factor().powf(exponent);
+                scale /= martensite_cmath::pow(factors.length_factor(), exponent);
             }
         } else if named
             .cast::<StepBasicConversionBasedUnitAndMassUnit>()
@@ -181,7 +181,7 @@ fn derived_unit_scale(
                 scale = context.area_factor();
             }
             if context.length_done() {
-                scale *= context.length_factor().powf(exponent);
+                scale *= martensite_cmath::pow(context.length_factor(), exponent);
             }
         }
     }
@@ -228,9 +228,9 @@ fn measure_value(
     }
     if unit.value().cast::<StepBasicDerivedUnit>().is_some() {
         let derived = unit.derived_unit();
-        return Ok(derived.get().map_or(Ok(value), |live| {
+        return derived.get().map_or(Ok(value), |live| {
             Ok::<f64, Failure>(value * derived_unit_scale(live, value_type, factors)?)
-        })?);
+        });
     }
     let named = unit.named_unit();
     if named.is_null() {

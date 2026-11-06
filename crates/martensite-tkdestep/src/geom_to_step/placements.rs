@@ -1,5 +1,5 @@
 //! Points, directions, vectors, axis placements and the transformation operator.
-use super::{empty_step_name, geom_to_step_class, shared_array1};
+use super::{empty_step_name, geom_to_step_class};
 use crate::step_data::StepDataFactors;
 use crate::step_geom::{
     StepGeomAxis1Placement, StepGeomAxis2Placement2d, StepGeomAxis2Placement3d,
@@ -91,18 +91,22 @@ geom_to_step_class!(
 );
 
 impl GeomToStepMakeDirection {
-    fn with_ratios(ratios: &[f64]) -> Self {
-        let direction = StepGeomDirection::new();
-        direction.init(&empty_step_name(), &real_array(ratios));
-        Self::done_with(Handle::new(direction))
-    }
     /// `GeomToStepMakeDirection(gp_Dir)`.
     pub fn from_dir(direction: &Direction3) -> Self {
-        Self::with_ratios(&[direction.x(), direction.y(), direction.z()])
+        let made = StepGeomDirection::new();
+        made.init_3d(
+            &empty_step_name(),
+            direction.x(),
+            direction.y(),
+            direction.z(),
+        );
+        Self::done_with(Handle::new(made))
     }
     /// `GeomToStepMakeDirection(gp_Dir2d)`.
     pub fn from_dir2d(direction: &Direction2) -> Self {
-        Self::with_ratios(&[direction.x(), direction.y()])
+        let made = StepGeomDirection::new();
+        made.init_2d(&empty_step_name(), direction.x(), direction.y());
+        Self::done_with(Handle::new(made))
     }
     /// `GeomToStepMakeDirection(GeomDirection)`.
     pub fn from_geom(direction: &Handle<GeomDirection>) -> Result<Self, Failure> {
@@ -116,11 +120,6 @@ impl GeomToStepMakeDirection {
             &live_geometry(direction, "GeomToStepMakeDirection")?.dir2d()?,
         ))
     }
-}
-
-/// A shared 1-based array of reals with the given values.
-pub(super) fn real_array(values: &[f64]) -> Handle<martensite_tkernel::ncollection::HArray1<f64>> {
-    shared_array1(values.to_vec())
 }
 
 geom_to_step_class!(

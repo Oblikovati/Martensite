@@ -256,12 +256,12 @@ fn kept_poles<K: BSplineCurveKind>(
 }
 
 /// `MakeBSplineCurveCommon`.
-fn make_bspline_curve_common<K: BSplineCurveKind>(
+fn make_bspline_curve_common<K>(
     curve: &Handle<StepGeomBSplineCurve>,
     factors: &StepDataFactors,
 ) -> Result<Handle<K>, Failure>
 where
-    K: martensite_tkernel::standard::RuntimeTyped,
+    K: BSplineCurveKind + martensite_tkernel::standard::RuntimeTyped,
 {
     let read = CurveRead::new(curve)?;
     let source = step_live(&read.with_knots, "StepToGeom::MakeBSplineCurve")?;
@@ -294,10 +294,11 @@ where
     // abv 04.07.00 CAX-IF TRJ4: trj4_k1_top-md-203.stp #716 (face #581):
     // force periodicity on closed curves
     let closed_curve = step_live(curve, "StepToGeom::MakeBSplineCurve")?.closed_curve();
-    if let Some(live) = built.get() {
-        if closed_curve != StepDataLogical::LFalse && K::is_closed_above_degree_one(live)? {
-            K::force_periodic(live)?;
-        }
+    if let Some(live) = built.get()
+        && closed_curve != StepDataLogical::LFalse
+        && K::is_closed_above_degree_one(live)?
+    {
+        K::force_periodic(live)?;
     }
     Ok(built)
 }

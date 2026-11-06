@@ -39,7 +39,7 @@ fn name_of(label: &TdfLabel) -> Option<String> {
 }
 
 /// One label of `XStat`'s structure: its entry, name and attributes, then its children a level down.
-fn structure_of(session: &XsSession, doc: &str, label: &TdfLabel, level: usize, text: &mut String) {
+fn structure_of(label: &TdfLabel, level: usize, text: &mut String) {
     *text += &"  ".repeat(level + 1);
     *text += &entry_of(label);
     *text += &format!(
@@ -86,7 +86,7 @@ fn structure_of(session: &XsSession, doc: &str, label: &TdfLabel, level: usize, 
     if label.has_child() {
         let mut children = TdfChildIterator::new(label, false).expect("children");
         while children.more() {
-            structure_of(session, doc, &children.value().clone(), level + 1, text);
+            structure_of(&children.value().clone(), level + 1, text);
             children.next();
         }
     }
@@ -111,7 +111,7 @@ impl XsSession {
             .get_free_shapes()
             .expect("free shapes")
         {
-            structure_of(self, doc, &label, 0, &mut text);
+            structure_of(&label, 0, &mut text);
         }
         let statistics = crate::reports::statistics_with_text(&self.documents[doc]).1;
         text += &statistics;

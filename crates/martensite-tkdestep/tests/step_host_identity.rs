@@ -35,8 +35,10 @@ fn host_name() -> String {
 fn a_written_ap203_file_names_neither_the_user_nor_the_machine() {
     let shape = a_shape();
     let writer = StepControlWriter::new().expect("writer");
-    let mut parameters = DeStepParameters::default();
-    parameters.write_schema = DeStepWriteModeStepSchema::AP203;
+    let parameters = DeStepParameters {
+        write_schema: DeStepWriteModeStepSchema::AP203,
+        ..Default::default()
+    };
     writer
         .transfer_with(
             &shape,

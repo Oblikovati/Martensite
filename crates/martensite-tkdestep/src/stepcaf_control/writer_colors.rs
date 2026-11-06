@@ -164,8 +164,7 @@ pub(super) fn set_default_instance_color(
         }
         let father_styles = live_father.styles();
         let copied = step_new_array1::<StepVisualPresentationStyleSelect>(1, count)?;
-        let mut setting = 1;
-        for select in 1..=step_array1_len(&father_styles) {
+        for (setting, select) in (1..).zip(1..=step_array1_len(&father_styles)) {
             let old = step_array1_item(&father_styles, select, WHERE)?;
             if old.point_style().is_null()
                 && old.curve_style().is_null()
@@ -175,7 +174,6 @@ pub(super) fn set_default_instance_color(
                 break;
             }
             step_array1_set(&copied, setting, old, WHERE)?;
-            setting += 1;
             is_found = true;
         }
         // init PSA of NAUO

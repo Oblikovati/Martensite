@@ -256,7 +256,7 @@ impl StepControlActorRead {
         let start: Handle<StandardTransient> = git.cast();
         let live_tp = step_live(tp, "StepControlActorRead")?;
         let nb_tp_items = live_tp.nb_mapped();
-        let mut local = factors.clone();
+        let mut local = *factors;
         let old_context = self.state.read().sr_context.clone();
         self.factors_of_free_item(&start, tp, &mut local)?;
         let mut builder = StepToTopoDSBuilder::new();

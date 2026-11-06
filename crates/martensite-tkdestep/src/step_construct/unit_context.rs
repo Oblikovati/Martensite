@@ -376,14 +376,14 @@ impl StepConstructUnitContext {
             || unit.cast::<StepBasicSiUnitAndAreaUnit>().is_some()
         {
             self.area_done = true;
-            self.area_factor = scaled.powi(2);
+            self.area_factor = martensite_cmath::powi(scaled, 2);
         } else if unit
             .cast::<StepBasicConversionBasedUnitAndVolumeUnit>()
             .is_some()
             || unit.cast::<StepBasicSiUnitAndVolumeUnit>().is_some()
         {
             self.volume_done = true;
-            self.volume_factor = scaled.powi(3);
+            self.volume_factor = martensite_cmath::powi(scaled, 3);
         }
     }
     /// `compute_tolerance`: the uncertainty for length; a status, 0 if OK.

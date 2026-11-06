@@ -70,19 +70,19 @@ fn get_shuo_style(label: &TdfLabel, style: &mut XCAFPrsStyle) -> Result<bool, Fa
     Ok(style.is_set_color_curv() || style.is_set_color_surf() || !style.is_visible())
 }
 
+/// A product definition and the NAUO that links it.
+type ProductDefinitionOfNauo = (
+    Handle<StepBasicProductDefinition>,
+    Handle<StepReprNextAssemblyUsageOccurrence>,
+);
+
 /// `getProDefinitionOfNAUO`: the NAUO of a component shape and its relating or related product
 /// definition; `None` when any of them is missing.
 fn product_definition_of_nauo(
     ws: &Handle<XSControlWorkSession>,
     shape: &Shape,
     is_relating: bool,
-) -> Result<
-    Option<(
-        Handle<StepBasicProductDefinition>,
-        Handle<StepReprNextAssemblyUsageOccurrence>,
-    )>,
-    Failure,
-> {
+) -> Result<Option<ProductDefinitionOfNauo>, Failure> {
     if shape.is_null() {
         return Ok(None);
     }

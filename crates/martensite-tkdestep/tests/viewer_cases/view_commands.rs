@@ -28,8 +28,8 @@ impl ViewerHost {
     /// `vinit name` of a view the viewer does not have yet.
     pub fn vinit_named(&mut self, view: &str) {
         println!("vinit {view} ");
-        if self.scene.is_some() {
-            self.scene.as_mut().unwrap().open_further_view();
+        if let Some(scene) = self.scene.as_mut() {
+            scene.open_further_view();
         } else {
             self.open_scene();
         }
@@ -322,8 +322,7 @@ impl ViewerHost {
         let scene = self.live_scene();
         let lights = scene.view().view_base().active_lights();
         let light = lights
-            .iter()
-            .nth(index)
+            .get(index)
             .unwrap_or_else(|| panic!("vlight {index}: no such light"));
         light.get().unwrap().set_intensity(value).unwrap();
         scene.view().redraw();

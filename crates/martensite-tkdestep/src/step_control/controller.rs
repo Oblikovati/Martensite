@@ -167,6 +167,10 @@ fn init_process_wide() -> Result<(), Failure> {
 
 impl StepControlController {
     /// `StepControlController()`: a new controller named `STEP` and `step`, bound to its handle.
+    #[allow(
+        clippy::new_ret_no_self,
+        reason = "a controller lives behind its trait handle"
+    )]
     pub fn new() -> Result<Handle<dyn XSControlController>, Failure> {
         let base = XSControlControllerBase::new("STEP", "step")?;
         init_process_wide()?;
@@ -275,7 +279,7 @@ impl XSControlController for StepControlController {
         if live_model.internal_parameters().write_nonmanifold {
             let remover = martensite_tkshhealing::shape_upgrade::ShapeUpgradeRemoveLocations::new();
             remover.set_remove_level(martensite_tkg3d::top_abs::ShapeEnum::Compound);
-            remover.remove(&mut written)?;
+            remover.remove(&written)?;
             written = remover.get_result();
             modified = remover.get_modified_shapes_map(Clone::clone);
         }

@@ -427,10 +427,10 @@ fn first_label_name(label: &TdfLabel) -> Option<ExtendedString> {
     }
     let mut children = TdfChildIterator::new(label, false).expect("iterator");
     while children.more() {
-        if let Some(found) = first_label_name(&children.value()) {
-            if !found.is_empty() {
-                return Some(found);
-            }
+        if let Some(found) = first_label_name(&children.value())
+            && !found.is_empty()
+        {
+            return Some(found);
         }
         children.next();
     }
@@ -980,8 +980,10 @@ fn xde_bug_13175_single_vertex() {
     tool.set_shape(&label, &maker.shape().expect("shape").clone())
         .expect("shape");
     // `RoundTripWithSTEPCAF`
-    let mut parameters = DeStepParameters::default();
-    parameters.write_schema = DeStepWriteModeStepSchema::AP242_DIS;
+    let parameters = DeStepParameters {
+        write_schema: DeStepWriteModeStepSchema::AP242_DIS,
+        ..Default::default()
+    };
     let mut writer = STEPCAFControlWriter::new().expect("writer");
     assert!(
         writer

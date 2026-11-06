@@ -76,6 +76,10 @@ pub struct StepCase {
 
 /// One script command. Arguments are words the generator has already substituted.
 #[derive(Debug)]
+#[allow(
+    clippy::enum_variant_names,
+    reason = "the variants are the commands of a case"
+)]
 pub enum Step {
     Puts(&'static str),
     Param(&'static str, &'static str),

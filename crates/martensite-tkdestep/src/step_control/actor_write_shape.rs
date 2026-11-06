@@ -3,7 +3,7 @@ use super::StepControlActorWrite;
 use super::actor_write_representation::ShapesToWrite;
 use crate::de_step::StepControlStepModelType;
 use crate::step_construct::StepConstructPart;
-use crate::step_data::{StepDataFactors, StepDataSelectType, StepDataStepModel};
+use crate::step_data::{StepDataFactors, StepDataStepModel};
 use crate::step_entity::step_live;
 use crate::step_geom::StepGeomAxis2Placement3d;
 use crate::step_shape::{

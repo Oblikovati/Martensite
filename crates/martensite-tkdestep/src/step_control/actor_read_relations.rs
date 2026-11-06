@@ -19,7 +19,7 @@ use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::GeomPlane;
 use martensite_tkmath::gp::Axis3;
-use martensite_tkxsbase::transfer::{TransferActorOps, TransferBinder, TransferTransientProcess};
+use martensite_tkxsbase::transfer::{TransferBinder, TransferTransientProcess};
 use martensite_tkxsbase::transfer_brep::{TransferBRep, TransferBRepShapeBinder};
 
 impl StepControlActorRead {
@@ -35,7 +35,7 @@ impl StepControlActorRead {
         };
         let live_tp = step_live(tp, "StepControlActorRead")?;
         let old_context = self.state.read().sr_context.clone();
-        let mut local = factors.clone();
+        let mut local = *factors;
         let mut reset_units = false;
         let builder = BRepBuilder::default();
         let mut compound = Compound::default();
@@ -93,7 +93,7 @@ impl StepControlActorRead {
         };
         let live_tp = step_live(tp, "StepControlActorRead")?;
         let old_context = self.state.read().sr_context.clone();
-        let mut local = factors.clone();
+        let mut local = *factors;
         let mut reset_units = false;
         let builder = BRepBuilder::default();
         let mut compound = Compound::default();

@@ -18,7 +18,7 @@ use martensite_tkxsbase::{
 /// use martensite_tkxsbase::if_select::IFSelectEditor;
 /// let editor = STEPEditEditSDR::new().unwrap();
 /// assert_eq!(editor.get().unwrap().nb_values(), 11);
-/// assert_eq!(editor.get().unwrap().label().as_bytes(), b"STEP: Product Data (SDR)");
+/// assert_eq!(editor.get().unwrap().label().as_bytes(), b"STEP : Product Data (SDR)");
 /// ```
 pub struct STEPEditEditSDR {
     transient: StandardTransient,

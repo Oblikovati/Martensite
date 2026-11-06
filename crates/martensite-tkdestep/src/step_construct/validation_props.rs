@@ -46,13 +46,15 @@ fn text(value: &str) -> Handle<HAsciiString> {
 }
 
 /// `transient_result`: a binder of a result, null for a null one.
-fn transient_result(res: &Handle<StandardTransient>) -> Handle<dyn TransferBinder> {
+fn transient_result(
+    res: &Handle<StandardTransient>,
+) -> Result<Handle<dyn TransferBinder>, Failure> {
     if res.is_null() {
-        return Handle::default();
+        return Ok(Handle::default());
     }
     let binder = TransferSimpleBinderOfTransient::new();
-    binder.set_result(res);
-    Handle::new(binder).cast()
+    binder.set_result(res)?;
+    Ok(Handle::new(binder).cast())
 }
 
 /// The first of `entities` of type `T`, null without one.
@@ -293,7 +295,7 @@ impl StepConstructValidationProps {
         represented.set_value(&propdef.cast())?;
         sdr.init(&represented, &sr.cast());
         // record SHAPE_ASPECT in the map
-        step_live(binder, WHERE)?.add_result(&transient_result(&aspect.cast()));
+        step_live(binder, WHERE)?.add_result(&transient_result(&aspect.cast())?);
         // add SDR and all the data into model
         self.model()?.add_with_refs(&sdr.cast(), 0, false)?;
         Ok(aspect)

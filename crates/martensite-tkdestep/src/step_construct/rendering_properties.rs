@@ -219,7 +219,7 @@ impl StepConstructRenderingProperties {
         // Process rendering properties
         let selects = entity.properties();
         if let Some(live) = selects.get() {
-            for i in 1..=live.array1().length() as i32 {
+            for i in 1..=live.array1().length() {
                 self.read_property(&step_array1_item(&selects, i, WHERE)?)?;
             }
         }

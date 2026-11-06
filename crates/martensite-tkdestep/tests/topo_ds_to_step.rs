@@ -27,9 +27,7 @@ use martensite_tkmesh::brep_mesh::BRepMeshIncrementalMesh;
 use martensite_tkprim::brep_prim_api::{
     BRepPrimAPIMakeBox, BRepPrimAPIMakeCylinder, BRepPrimAPIMakeOneAxis as _,
 };
-use martensite_tktopalgo::brep_builder_api::{
-    BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeShape as _,
-};
+use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
 use martensite_tkxsbase::transfer::TransferFinderProcess;
 
 fn range() -> ProgressRange<'static> {
@@ -85,7 +83,7 @@ fn hollow_box() -> Solid {
         .add(&mut whole, &first_shell(&outer).into())
         .unwrap();
     builder
-        .add(&mut whole, &first_shell(&inner).reversed().into())
+        .add(&mut whole, &first_shell(&inner).reversed())
         .unwrap();
     topods::solid(&whole).unwrap()
 }
@@ -382,7 +380,7 @@ fn a_meshed_face_and_shell_give_their_tessellated_items() {
     let mut tool = TopoDSToStepTool::with_model(&model_of(&process)).unwrap();
     let factors = StepDataFactors::default();
     let shape = box_solid(1.0, 1.0, 1.0).into_shape();
-    BRepMeshIncrementalMesh::with_shape(&shape, 0.5, false, 0.5, false);
+    BRepMeshIncrementalMesh::with_shape(&shape, 0.5, false, 0.5, false).expect("mesh");
     let face = TopoDSToStepMakeTessellatedItem::with_face(
         &first_face(&shape),
         &mut tool,

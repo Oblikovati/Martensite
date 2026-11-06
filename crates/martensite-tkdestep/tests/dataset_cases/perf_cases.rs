@@ -4,7 +4,7 @@
 use crate::reports::g17;
 use crate::script_values::label_of;
 use crate::support::nbshapes::{Counting, NbCount, checknbshapes};
-use crate::support::{script_error::script_error, session::Session};
+use crate::support::script_error::script_error;
 use crate::table::Place;
 use crate::xs_session::XsSession;
 use martensite_tkbrep::{

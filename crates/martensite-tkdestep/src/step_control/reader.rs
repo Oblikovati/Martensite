@@ -12,6 +12,12 @@ use martensite_tkxsbase::xs_algo::DEShapeFixParameters;
 use martensite_tkxsbase::xs_control::{XSControlReader, XSControlReaderOps, XSControlWorkSession};
 use std::io::Read;
 
+/// The library and the protocol of a work session.
+type LibraryAndProtocol = (
+    Handle<dyn martensite_tkxsbase::if_select::IFSelectWorkLibrary>,
+    Handle<dyn InterfaceProtocol>,
+);
+
 /// Reading through this class follows this flow:
 /// ```no_run
 /// use martensite_tkdestep::step_control::StepControlReader;
@@ -85,15 +91,7 @@ impl StepControlReader {
         Ok(model)
     }
     /// The library and the protocol of the session; `None` gives `RetVoid`.
-    fn library_and_protocol(
-        &self,
-    ) -> Result<
-        Option<(
-            Handle<dyn martensite_tkxsbase::if_select::IFSelectWorkLibrary>,
-            Handle<dyn InterfaceProtocol>,
-        )>,
-        Failure,
-    > {
+    fn library_and_protocol(&self) -> Result<Option<LibraryAndProtocol>, Failure> {
         let ws = self.reader.ws();
         let session = step_live(&ws, "StepControlReader")?;
         let (library, protocol) = (session.work_library(), session.protocol());

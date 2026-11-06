@@ -16,7 +16,6 @@ use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::standard::Handle;
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
-use martensite_tkgeombase::gprop::GProps;
 use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tkmath::gp::{Point3, Transform3, Vector3};
 use martensite_tkmath::poly::{MergeNodesTool, Triangulation, mesh_purpose};
@@ -26,7 +25,6 @@ use martensite_tktopalgo::brep_bnd_lib::BRepBndLib;
 use martensite_tktopalgo::brep_builder_api::{
     BRepBuilderAPIMakeShape as _, BRepBuilderAPITransform,
 };
-use martensite_tktopalgo::brep_gprop::BRepGProp;
 use std::collections::BTreeSet;
 use std::io::{Read as _, Seek as _, SeekFrom};
 

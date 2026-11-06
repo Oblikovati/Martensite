@@ -120,14 +120,14 @@ fn datums_of_system(
         return Ok(None);
     };
     let mut datums = Vec::new();
-    for rank in 1..=live.array1().length() as i32 {
+    for rank in 1..=live.array1().length() {
         let select = step_array1_item(&systems, rank, WHERE)?;
         if select.is_null() {
             continue;
         }
         if let Some(system) = select.datum_system().get() {
             let constituents = system.constituents();
-            for index in 1..=step_live(&constituents, WHERE)?.array1().length() as i32 {
+            for index in 1..=step_live(&constituents, WHERE)?.array1().length() {
                 let compartment = step_array1_item(&constituents, index, WHERE)?;
                 datums.push(step_live(&compartment, WHERE)?.base().datum());
             }

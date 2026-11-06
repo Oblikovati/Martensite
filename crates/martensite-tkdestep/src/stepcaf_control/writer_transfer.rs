@@ -101,7 +101,6 @@ impl WriterState {
                 mode,
                 is_multi,
                 &mut sub_labels,
-                &factors,
                 &range,
             )? {
                 return Ok(false);
@@ -133,7 +132,6 @@ impl WriterState {
         mode: StepControlStepModelType,
         is_multi: Option<&str>,
         sub_labels: &mut Vec<TdfLabel>,
-        factors: &StepDataFactors,
         range: &ProgressRange<'_>,
     ) -> Result<bool, Failure> {
         if self.labels.contains_key(label) {
@@ -156,7 +154,7 @@ impl WriterState {
         // translate final solids
         let scope = ProgressScope::unnamed(range, 2.0, false);
         let assembly =
-            self.transfer_extern_files(label, mode, sub_labels, factors, prefix, &scope.next(1.0))?;
+            self.transfer_extern_files(label, mode, sub_labels, prefix, &scope.next(1.0))?;
         if scope.user_break() {
             return Ok(false);
         }
@@ -327,7 +325,6 @@ impl WriterState {
         label: &TdfLabel,
         mode: StepControlStepModelType,
         labels: &mut Vec<TdfLabel>,
-        factors: &StepDataFactors,
         prefix: &str,
         progress: &ProgressRange<'_>,
     ) -> Result<Shape, Failure> {
@@ -363,14 +360,8 @@ impl WriterState {
             if !XCAFDocShapeTool::get_referred_shape(component, &mut referred)? {
                 continue;
             }
-            let mut sub_shape = self.transfer_extern_files(
-                &referred,
-                mode,
-                labels,
-                factors,
-                prefix,
-                &scope.next(1.0),
-            )?;
+            let mut sub_shape =
+                self.transfer_extern_files(&referred, mode, labels, prefix, &scope.next(1.0))?;
             sub_shape.set_location(&XCAFDocShapeTool::get_location(component)?, false)?;
             BRepBuilder::default().add(&mut compound, &sub_shape)?;
         }

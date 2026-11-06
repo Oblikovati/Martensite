@@ -17,7 +17,7 @@ use martensite_tkxsbase::{
 /// use martensite_tkxsbase::if_select::IFSelectEditor;
 /// let editor = STEPEditEditContext::new().unwrap();
 /// assert_eq!(editor.get().unwrap().nb_values(), 5);
-/// assert_eq!(editor.get().unwrap().label().as_bytes(), b"STEP: Product Definition Context");
+/// assert_eq!(editor.get().unwrap().label().as_bytes(), b"STEP : Product Definition Context");
 /// ```
 pub struct STEPEditEditContext {
     transient: StandardTransient,

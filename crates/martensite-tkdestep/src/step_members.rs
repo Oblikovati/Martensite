@@ -29,7 +29,7 @@ impl StepReaderComplexNames for StepDataStepReaderData {
     }
 }
 
-/// One name of a complex record; an empty sequence is the a no such object failure.
+/// One name of a complex record; an empty sequence is a no such object failure.
 fn complex_type_name(
     data: &StepDataStepReaderData,
     num: i32,

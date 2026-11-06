@@ -7,6 +7,9 @@ use crate::step_entity::*;
 use crate::step_rw::*;
 use martensite_tkernel::standard::Transient;
 
+/// The purposes of a descriptor: an array of sequences of members.
+type MemberArrays<M> = Handle<HArray1<Handle<HSequence<Handle<M>>>>>;
+
 /// Reads the purposes of a descriptor: a list of lists of members of class `M`.
 fn read_purposes<M>(
     data: &StepDataStepReaderData,
@@ -15,7 +18,7 @@ fn read_purposes<M>(
     member_message: &str,
     ach: &Handle<InterfaceCheck>,
     where_called: &str,
-) -> Result<Handle<HArray1<Handle<HSequence<Handle<M>>>>>, Failure>
+) -> Result<MemberArrays<M>, Failure>
 where
     M: StepDataSelectMember + RuntimeTyped + Transient + Default,
     Handle<M>: Clone,

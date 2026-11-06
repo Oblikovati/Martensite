@@ -1,6 +1,7 @@
 //! The toolkit's scripts that end on a shaded view: each runs alone in a child process, reads or
 //! writes its STEP file with the library, shows the model on the real Vulkan renderer and is graded
 //! on its whole output, with a clean validation report. The contract is the dataset cases'.
+#![cfg(target_os = "linux")]
 #![allow(dead_code)] // The shared contract holds more commands than these cases call.
 #![allow(clippy::too_many_lines)]
 

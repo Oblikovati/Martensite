@@ -201,10 +201,10 @@ impl StepControlActorRead {
                 continue;
             }
             let nauo: Handle<StepReprNextAssemblyUsageOccurrence> = sharing.cast();
-            if let Some(live) = nauo.get() {
-                if *pd == live.relating_product_definition() {
-                    parts.nauo.push(nauo);
-                }
+            if let Some(live) = nauo.get()
+                && *pd == live.relating_product_definition()
+            {
+                parts.nauo.push(nauo);
             }
         }
         let model = Self::tp_model(tp)?;

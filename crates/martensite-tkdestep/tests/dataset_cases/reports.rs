@@ -123,7 +123,7 @@ fn print_statistics(
     text: &mut String,
 ) -> DocumentStatistics {
     let mut stats = walk.statistics.clone();
-    *text += &format!("\nStatistis of shapes in the document:\n");
+    *text += "\nStatistis of shapes in the document:\n";
     for (level, count) in stats.levels.iter().enumerate() {
         if *count == 0 {
             break;
@@ -142,7 +142,7 @@ fn print_statistics(
         "Number of labels with vis material link = {}\n",
         walk.with_material
     );
-    *text += &format!("\nStatistis of Props in the document:\n");
+    *text += "\nStatistis of Props in the document:\n";
     *text += &format!("Number of Centroid Props = {}\n", stats.centroids);
     *text += &format!("Number of Volume Props = {}\n", stats.volumes);
     *text += &format!("Number of Area Props = {}\n", stats.areas);

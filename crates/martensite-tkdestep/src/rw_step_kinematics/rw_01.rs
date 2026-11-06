@@ -1091,174 +1091,170 @@ impl RwStepKinematicsRwActuatedKinPairAndOrderKinPair {
                                         }
                                     }
                                 } else {
-                                    if a_pairtype == b"PLANAR_PAIR" {
-                                        if the_data.named_for_complex_short(
+                                    if a_pairtype == b"PLANAR_PAIR"
+                                        && the_data.named_for_complex_short(
                                             "PLANAR_PAIR_WITH_RANGE",
                                             "PPWR",
                                             num0,
                                             &mut the_num,
                                             the_arch,
-                                        ) {
-                                            if the_data.check_nb_params(
-                                                the_num,
-                                                6,
-                                                the_arch,
-                                                "UNIVERSAL_PAIR_WITH_RANGE",
-                                            )? {
-                                                a_kinematic_pair = Handle::new(
-                                                    StepKinematicsPlanarPairWithRange::new(),
-                                                )
-                                                .cast();
-                                                let mut a_lower_limit_actual_rotation: f64 =
-                                                    Default::default();
-                                                let mut has_lower_limit_actual_rotation: bool =
-                                                    true;
-                                                if the_data.is_param_defined(the_num, 1)? {
-                                                    the_data.read_real(
-                                                        the_num,
-                                                        1,
-                                                        "lower_limit_actual_rotation",
-                                                        the_arch,
-                                                        &mut a_lower_limit_actual_rotation,
-                                                    )?;
-                                                } else {
-                                                    has_lower_limit_actual_rotation = false;
-                                                    a_lower_limit_actual_rotation = 0.0;
-                                                }
-                                                let mut a_upper_limit_actual_rotation: f64 =
-                                                    Default::default();
-                                                let mut has_upper_limit_actual_rotation: bool =
-                                                    true;
-                                                if the_data.is_param_defined(the_num, 2)? {
-                                                    the_data.read_real(
-                                                        the_num,
-                                                        2,
-                                                        "upper_limit_actual_rotation",
-                                                        the_arch,
-                                                        &mut a_upper_limit_actual_rotation,
-                                                    )?;
-                                                } else {
-                                                    has_upper_limit_actual_rotation = false;
-                                                    a_upper_limit_actual_rotation = 0.0;
-                                                }
-                                                let mut a_lower_limit_actual_translation_x: f64 =
-                                                    Default::default();
-                                                let mut has_lower_limit_actual_translation_x: bool =
-                                                    true;
-                                                if the_data.is_param_defined(the_num, 3)? {
-                                                    the_data.read_real(
-                                                        the_num,
-                                                        3,
-                                                        "lower_limit_actual_translation_x",
-                                                        the_arch,
-                                                        &mut a_lower_limit_actual_translation_x,
-                                                    )?;
-                                                } else {
-                                                    has_lower_limit_actual_translation_x = false;
-                                                    a_lower_limit_actual_translation_x = 0.0;
-                                                }
-                                                let mut a_upper_limit_actual_translation_x: f64 =
-                                                    Default::default();
-                                                let mut has_upper_limit_actual_translation_x: bool =
-                                                    true;
-                                                if the_data.is_param_defined(the_num, 4)? {
-                                                    the_data.read_real(
-                                                        the_num,
-                                                        4,
-                                                        "upper_limit_actual_translation_x",
-                                                        the_arch,
-                                                        &mut a_upper_limit_actual_translation_x,
-                                                    )?;
-                                                } else {
-                                                    has_upper_limit_actual_translation_x = false;
-                                                    a_upper_limit_actual_translation_x = 0.0;
-                                                }
-                                                let mut a_lower_limit_actual_translation_y: f64 =
-                                                    Default::default();
-                                                let mut has_lower_limit_actual_translation_y: bool =
-                                                    true;
-                                                if the_data.is_param_defined(the_num, 5)? {
-                                                    the_data.read_real(
-                                                        the_num,
-                                                        5,
-                                                        "lower_limit_actual_translation_y",
-                                                        the_arch,
-                                                        &mut a_lower_limit_actual_translation_y,
-                                                    )?;
-                                                } else {
-                                                    has_lower_limit_actual_translation_y = false;
-                                                    a_lower_limit_actual_translation_y = 0.0;
-                                                }
-                                                let mut a_upper_limit_actual_translation_y: f64 =
-                                                    Default::default();
-                                                let mut has_upper_limit_actual_translation_y: bool =
-                                                    true;
-                                                if the_data.is_param_defined(the_num, 6)? {
-                                                    the_data.read_real(
-                                                        the_num,
-                                                        6,
-                                                        "upper_limit_actual_translation_y",
-                                                        the_arch,
-                                                        &mut a_upper_limit_actual_translation_y,
-                                                    )?;
-                                                } else {
-                                                    has_upper_limit_actual_translation_y = false;
-                                                    a_upper_limit_actual_translation_y = 0.0;
-                                                }
-                                                let a_local_pair: Handle<
-                                                    StepKinematicsPlanarPairWithRange,
-                                                > = a_kinematic_pair
-                                                    .cast::<StepKinematicsPlanarPairWithRange>();
-                                                step_live(&a_local_pair, "ReadStep")?.init(
-                                                    &a_representation_item_name,
-                                                    &a_item_defined_transformation_name,
-                                                    has_item_defined_transformation_description,
-                                                    &a_item_defined_transformation_description,
-                                                    &a_item_defined_transformation_transform_item1,
-                                                    &a_item_defined_transformation_transform_item2,
-                                                    &a_kinematic_pair_joint,
-                                                    a_low_order_kinematic_pair_tx,
-                                                    a_low_order_kinematic_pair_ty,
-                                                    a_low_order_kinematic_pair_tz,
-                                                    a_low_order_kinematic_pair_rx,
-                                                    a_low_order_kinematic_pair_ry,
-                                                    a_low_order_kinematic_pair_rz,
-                                                    has_lower_limit_actual_rotation,
-                                                    a_lower_limit_actual_rotation,
-                                                    has_upper_limit_actual_rotation,
-                                                    a_upper_limit_actual_rotation,
-                                                    has_lower_limit_actual_translation_x,
-                                                    a_lower_limit_actual_translation_x,
-                                                    has_upper_limit_actual_translation_x,
-                                                    a_upper_limit_actual_translation_x,
-                                                    has_lower_limit_actual_translation_y,
-                                                    a_lower_limit_actual_translation_y,
-                                                    has_upper_limit_actual_translation_y,
-                                                    a_upper_limit_actual_translation_y,
-                                                );
+                                        )
+                                    {
+                                        if the_data.check_nb_params(
+                                            the_num,
+                                            6,
+                                            the_arch,
+                                            "UNIVERSAL_PAIR_WITH_RANGE",
+                                        )? {
+                                            a_kinematic_pair = Handle::new(
+                                                StepKinematicsPlanarPairWithRange::new(),
+                                            )
+                                            .cast();
+                                            let mut a_lower_limit_actual_rotation: f64 =
+                                                Default::default();
+                                            let mut has_lower_limit_actual_rotation: bool = true;
+                                            if the_data.is_param_defined(the_num, 1)? {
+                                                the_data.read_real(
+                                                    the_num,
+                                                    1,
+                                                    "lower_limit_actual_rotation",
+                                                    the_arch,
+                                                    &mut a_lower_limit_actual_rotation,
+                                                )?;
                                             } else {
-                                                a_kinematic_pair =
-                                                    Handle::new(StepKinematicsPlanarPair::new())
-                                                        .cast();
-                                                let a_local_pair: Handle<StepKinematicsPlanarPair> =
-                                                    a_kinematic_pair
-                                                        .cast::<StepKinematicsPlanarPair>();
-                                                step_live(&a_local_pair, "ReadStep")?.init(
-                                                    &a_representation_item_name,
-                                                    &a_item_defined_transformation_name,
-                                                    has_item_defined_transformation_description,
-                                                    &a_item_defined_transformation_description,
-                                                    &a_item_defined_transformation_transform_item1,
-                                                    &a_item_defined_transformation_transform_item2,
-                                                    &a_kinematic_pair_joint,
-                                                    a_low_order_kinematic_pair_tx,
-                                                    a_low_order_kinematic_pair_ty,
-                                                    a_low_order_kinematic_pair_tz,
-                                                    a_low_order_kinematic_pair_rx,
-                                                    a_low_order_kinematic_pair_ry,
-                                                    a_low_order_kinematic_pair_rz,
-                                                );
+                                                has_lower_limit_actual_rotation = false;
+                                                a_lower_limit_actual_rotation = 0.0;
                                             }
+                                            let mut a_upper_limit_actual_rotation: f64 =
+                                                Default::default();
+                                            let mut has_upper_limit_actual_rotation: bool = true;
+                                            if the_data.is_param_defined(the_num, 2)? {
+                                                the_data.read_real(
+                                                    the_num,
+                                                    2,
+                                                    "upper_limit_actual_rotation",
+                                                    the_arch,
+                                                    &mut a_upper_limit_actual_rotation,
+                                                )?;
+                                            } else {
+                                                has_upper_limit_actual_rotation = false;
+                                                a_upper_limit_actual_rotation = 0.0;
+                                            }
+                                            let mut a_lower_limit_actual_translation_x: f64 =
+                                                Default::default();
+                                            let mut has_lower_limit_actual_translation_x: bool =
+                                                true;
+                                            if the_data.is_param_defined(the_num, 3)? {
+                                                the_data.read_real(
+                                                    the_num,
+                                                    3,
+                                                    "lower_limit_actual_translation_x",
+                                                    the_arch,
+                                                    &mut a_lower_limit_actual_translation_x,
+                                                )?;
+                                            } else {
+                                                has_lower_limit_actual_translation_x = false;
+                                                a_lower_limit_actual_translation_x = 0.0;
+                                            }
+                                            let mut a_upper_limit_actual_translation_x: f64 =
+                                                Default::default();
+                                            let mut has_upper_limit_actual_translation_x: bool =
+                                                true;
+                                            if the_data.is_param_defined(the_num, 4)? {
+                                                the_data.read_real(
+                                                    the_num,
+                                                    4,
+                                                    "upper_limit_actual_translation_x",
+                                                    the_arch,
+                                                    &mut a_upper_limit_actual_translation_x,
+                                                )?;
+                                            } else {
+                                                has_upper_limit_actual_translation_x = false;
+                                                a_upper_limit_actual_translation_x = 0.0;
+                                            }
+                                            let mut a_lower_limit_actual_translation_y: f64 =
+                                                Default::default();
+                                            let mut has_lower_limit_actual_translation_y: bool =
+                                                true;
+                                            if the_data.is_param_defined(the_num, 5)? {
+                                                the_data.read_real(
+                                                    the_num,
+                                                    5,
+                                                    "lower_limit_actual_translation_y",
+                                                    the_arch,
+                                                    &mut a_lower_limit_actual_translation_y,
+                                                )?;
+                                            } else {
+                                                has_lower_limit_actual_translation_y = false;
+                                                a_lower_limit_actual_translation_y = 0.0;
+                                            }
+                                            let mut a_upper_limit_actual_translation_y: f64 =
+                                                Default::default();
+                                            let mut has_upper_limit_actual_translation_y: bool =
+                                                true;
+                                            if the_data.is_param_defined(the_num, 6)? {
+                                                the_data.read_real(
+                                                    the_num,
+                                                    6,
+                                                    "upper_limit_actual_translation_y",
+                                                    the_arch,
+                                                    &mut a_upper_limit_actual_translation_y,
+                                                )?;
+                                            } else {
+                                                has_upper_limit_actual_translation_y = false;
+                                                a_upper_limit_actual_translation_y = 0.0;
+                                            }
+                                            let a_local_pair: Handle<
+                                                StepKinematicsPlanarPairWithRange,
+                                            > = a_kinematic_pair
+                                                .cast::<StepKinematicsPlanarPairWithRange>();
+                                            step_live(&a_local_pair, "ReadStep")?.init(
+                                                &a_representation_item_name,
+                                                &a_item_defined_transformation_name,
+                                                has_item_defined_transformation_description,
+                                                &a_item_defined_transformation_description,
+                                                &a_item_defined_transformation_transform_item1,
+                                                &a_item_defined_transformation_transform_item2,
+                                                &a_kinematic_pair_joint,
+                                                a_low_order_kinematic_pair_tx,
+                                                a_low_order_kinematic_pair_ty,
+                                                a_low_order_kinematic_pair_tz,
+                                                a_low_order_kinematic_pair_rx,
+                                                a_low_order_kinematic_pair_ry,
+                                                a_low_order_kinematic_pair_rz,
+                                                has_lower_limit_actual_rotation,
+                                                a_lower_limit_actual_rotation,
+                                                has_upper_limit_actual_rotation,
+                                                a_upper_limit_actual_rotation,
+                                                has_lower_limit_actual_translation_x,
+                                                a_lower_limit_actual_translation_x,
+                                                has_upper_limit_actual_translation_x,
+                                                a_upper_limit_actual_translation_x,
+                                                has_lower_limit_actual_translation_y,
+                                                a_lower_limit_actual_translation_y,
+                                                has_upper_limit_actual_translation_y,
+                                                a_upper_limit_actual_translation_y,
+                                            );
+                                        } else {
+                                            a_kinematic_pair =
+                                                Handle::new(StepKinematicsPlanarPair::new()).cast();
+                                            let a_local_pair: Handle<StepKinematicsPlanarPair> =
+                                                a_kinematic_pair.cast::<StepKinematicsPlanarPair>();
+                                            step_live(&a_local_pair, "ReadStep")?.init(
+                                                &a_representation_item_name,
+                                                &a_item_defined_transformation_name,
+                                                has_item_defined_transformation_description,
+                                                &a_item_defined_transformation_description,
+                                                &a_item_defined_transformation_transform_item1,
+                                                &a_item_defined_transformation_transform_item2,
+                                                &a_kinematic_pair_joint,
+                                                a_low_order_kinematic_pair_tx,
+                                                a_low_order_kinematic_pair_ty,
+                                                a_low_order_kinematic_pair_tz,
+                                                a_low_order_kinematic_pair_rx,
+                                                a_low_order_kinematic_pair_ry,
+                                                a_low_order_kinematic_pair_rz,
+                                            );
                                         }
                                     }
                                 }

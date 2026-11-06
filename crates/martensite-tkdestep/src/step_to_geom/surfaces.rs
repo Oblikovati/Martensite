@@ -153,14 +153,13 @@ impl StepToGeom {
             return Ok(Handle::default());
         };
         let direction = Direction3::from_vector(vector.vec())?;
-        if let Some(line) = curve.cast::<GeomLine>().get() {
-            if line
+        if let Some(line) = curve.cast::<GeomLine>().get()
+            && line
                 .lin()
                 .direction()
                 .is_parallel(direction, precision::angular())
-            {
-                return Ok(Handle::default());
-            }
+        {
+            return Ok(Handle::default());
         }
         Ok(Handle::new(GeomSurfaceOfLinearExtrusion::new(
             &curve, direction,
@@ -250,7 +249,7 @@ impl StepToGeom {
             return (angle, 1.0);
         }
         if let Some(cone) = basis.cast::<GeomConicalSurface>().get() {
-            return (angle, length / cone.semi_angle().cos());
+            return (angle, length / martensite_cmath::cos(cone.semi_angle()));
         }
         if basis.cast::<GeomPlane>().is_some() {
             return (length, length);

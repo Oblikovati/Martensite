@@ -17,7 +17,7 @@ fn must(step: Result<(), crate::documents::CommandFailed>, command: &str) {
 
 /// `expr {min(max(0.001 * $ref_size, 1), 100)}`.
 pub fn size_tolerance(ref_size: i64) -> f64 {
-    (0.001 * ref_size as f64).max(1.0).min(100.0)
+    (0.001 * ref_size as f64).clamp(1.0, 100.0)
 }
 
 /// Runs a row's script. Example: `run(&mut session, &row)`.

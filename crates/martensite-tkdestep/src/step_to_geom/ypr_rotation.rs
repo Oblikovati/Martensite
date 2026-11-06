@@ -125,15 +125,15 @@ fn rotation_about_y(
     dy: f64,
     unit_factor: f64,
 ) -> Result<Handle<HArray1<f64>>, Failure> {
-    let (sin_a, cos_a) = angle.sin_cos();
+    let (sin_a, cos_a) = martensite_cmath::sincos(angle);
     let yaw = if cos_a >= 0. { 0.0 } else { unit_factor * PI };
-    let pitch = unit_factor * sin_a.atan2(cos_a.abs());
+    let pitch = unit_factor * martensite_cmath::atan2(sin_a, cos_a.abs());
     ypr_array(yaw, if dy < 0. { -pitch } else { pitch }, yaw)
 }
 
 /// The yaw from the rotation matrix, in the quadrant the signs of the matrix give.
 fn yaw_from_matrix(matrix: &[[f64; 3]; 3]) -> f64 {
-    let yaw = (-matrix[0][1]).atan2(matrix[0][0]);
+    let yaw = martensite_cmath::atan2(-matrix[0][1], matrix[0][0]);
     if matrix[0][0] >= 0. {
         return yaw;
     }
@@ -146,8 +146,8 @@ fn yaw_from_matrix(matrix: &[[f64; 3]; 3]) -> f64 {
 
 /// `COS(pitch)` from the rotation matrix, by the largest of the trigonometric values at hand.
 fn cos_pitch_from_matrix(matrix: &[[f64; 3]; 3], yaw: f64, roll: f64) -> f64 {
-    let (sin_y, cos_y) = yaw.sin_cos();
-    let (sin_r, cos_r) = roll.sin_cos();
+    let (sin_y, cos_y) = martensite_cmath::sincos(yaw);
+    let (sin_r, cos_r) = martensite_cmath::sincos(roll);
     let (sy, cy, sr, cr) = (sin_y.abs(), cos_y.abs(), sin_r.abs(), cos_r.abs());
     if sy > cy && sy > sr && sy > cr {
         return -matrix[0][1] / sin_y;
@@ -167,7 +167,7 @@ fn rotation_about_general_axis(
     (dx, dy, dz): (f64, f64, f64),
     unit_factor: f64,
 ) -> Result<Handle<HArray1<f64>>, Failure> {
-    let (sin_a, cos_a) = angle.sin_cos();
+    let (sin_a, cos_a) = martensite_cmath::sincos(angle);
     let cm1 = 1. - cos_a;
     let matrix = [
         [
@@ -193,7 +193,7 @@ fn rotation_about_general_axis(
         // Only the sum or difference of roll and yaw angles is relevant and can be evaluated from
         // the matrix. According to IP `rectangular pitch angle' for ypr_rotation, the roll angle is
         // set to zero.
-        let yaw = matrix[1][0].atan2(matrix[1][1]);
+        let yaw = martensite_cmath::atan2(matrix[1][0], matrix[1][1]);
         let yaw = match (matrix[1][1] < 0., yaw <= 0.) {
             (true, true) => yaw + PI,
             (true, false) => yaw - PI,
@@ -205,7 +205,7 @@ fn rotation_about_general_axis(
         let yaw = yaw_from_matrix(&matrix);
         (
             yaw,
-            matrix[0][2].atan2(cos_pitch_from_matrix(&matrix, yaw, roll)),
+            martensite_cmath::atan2(matrix[0][2], cos_pitch_from_matrix(&matrix, yaw, roll)),
         )
     };
     ypr_array(yaw * unit_factor, pitch * unit_factor, roll * unit_factor)
@@ -220,10 +220,10 @@ impl StepToGeom {
     ) -> Result<Handle<HArray1<f64>>, Failure> {
         // If rotation is already a ypr_rotation, return it immediately
         let ypr = rotation.ypr_rotation();
-        if let Some(live) = ypr.get() {
-            if live.array1().length() == 3 {
-                return Ok(ypr);
-            }
+        if let Some(live) = ypr.get()
+            && live.array1().length() == 3
+        {
+            return Ok(ypr);
         }
         let about = rotation.rotation_about_direction();
         let Some(about) = about.get() else {
@@ -301,7 +301,9 @@ mod tests {
             step_array1_set(&ratios, index as i32 + 1, *value, WHERE).unwrap();
         }
         let direction = Handle::new(StepGeomDirection::new());
-        direction.init(&Handle::new(HAsciiString::new("")), &ratios);
+        direction
+            .init(&Handle::new(HAsciiString::new("")), &ratios)
+            .unwrap();
         let about = Handle::new(StepKinematicsRotationAboutDirection::new());
         about.init(&Handle::new(HAsciiString::new("")), &direction, angle);
         let mut rotation = StepKinematicsSpatialRotation::default();
@@ -330,10 +332,17 @@ mod tests {
     fn a_rotation_about_y_is_a_pitch_and_a_negative_axis_reverses_it() {
         assert_eq!(
             angles(&rotation_about([0., 1., 0.], 0.5)),
-            [0., 0.5_f64.sin().atan2(0.5_f64.cos()), 0.]
+            [
+                0.,
+                martensite_cmath::atan2(martensite_cmath::sin(0.5), martensite_cmath::cos(0.5)),
+                0.
+            ]
         );
         let pitch = angles(&rotation_about([0., -1., 0.], 0.5))[1];
-        assert_eq!(pitch, -(0.5_f64.sin().atan2(0.5_f64.cos())));
+        assert_eq!(
+            pitch,
+            -(martensite_cmath::atan2(martensite_cmath::sin(0.5), martensite_cmath::cos(0.5)))
+        );
     }
 
     #[test]

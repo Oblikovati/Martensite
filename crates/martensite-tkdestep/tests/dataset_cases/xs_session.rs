@@ -77,7 +77,7 @@ impl XsSession {
         messenger.printers_mut().clear();
         messenger.add_printer(printer.clone() as PrinterHandle);
         STEPCAFControlController::init()?;
-        XSAlgo::init();
+        XSAlgo::init()?;
         IFSelectFunctions::init()?;
         XSControlFunctions::init()?;
         XSControlFuncShape::init()?;

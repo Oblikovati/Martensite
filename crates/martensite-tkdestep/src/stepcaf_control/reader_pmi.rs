@@ -102,7 +102,7 @@ fn create_mesh(
     let nb_pairs = if nb_normals > 1 {
         set.pnmax()
     } else {
-        step_live(&nodes, WHERE)?.array1().length() as i32
+        step_live(&nodes, WHERE)?.array1().length()
     };
     let mut size = 0;
     let mut triangles = Vec::new();
@@ -226,7 +226,7 @@ fn add_curve_set(
     let Some(live_points) = points.get().filter(|live| live.array1().length() != 0) else {
         return Ok(());
     };
-    let nb_points = live_points.array1().length() as i32;
+    let nb_points = live_points.array1().length();
     let strips = curves.curves();
     let Some(strips) = strips.get() else {
         return Ok(());

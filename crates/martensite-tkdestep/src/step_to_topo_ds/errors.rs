@@ -39,7 +39,7 @@ macro_rules! translator_error {
 /// ```
 /// use martensite_tkdestep::step_to_topo_ds::{StepToTopoDS, StepToTopoDSBuilderError};
 /// use martensite_tkernel::tcollection::AsciiString;
-/// let text = StepToTopoDS::decode_builder_error(StepToTopoDSBuilderError::done);
+/// let text = StepToTopoDS::decode_builder_error(StepToTopoDSBuilderError::Done);
 /// assert_eq!(*text.get().unwrap().string(), AsciiString::new("Builder Done"));
 /// ```
 pub struct StepToTopoDS;

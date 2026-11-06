@@ -35,6 +35,10 @@ fn define_off_on_static(name: &str) -> Result<(), Failure> {
 
 impl STEPCAFControlController {
     /// `STEPCAFControlController()`: the use of the STEP norm with the write actor of this package.
+    #[allow(
+        clippy::new_ret_no_self,
+        reason = "a controller lives behind its trait handle"
+    )]
     pub fn new() -> Result<Handle<dyn XSControlController>, Failure> {
         let inner = StepControlController::new()?;
         inner

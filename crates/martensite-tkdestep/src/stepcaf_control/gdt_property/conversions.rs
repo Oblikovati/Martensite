@@ -125,7 +125,7 @@ impl STEPCAFControlGDTProperty {
         modifiers: &mut Vec<XCAFDimTolObjectsDimensionModif>,
     ) -> Result<(), Failure> {
         let elements = step_live(cri, WHERE)?.item_element();
-        let count = step_live(&elements, WHERE)?.array1().length() as i32;
+        let count = step_live(&elements, WHERE)?.array1().length();
         for index in 1..=count {
             let item = step_array1_item(&elements, index, WHERE)?;
             let Some(description) = item

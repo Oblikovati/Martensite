@@ -3,6 +3,7 @@
 //!
 //! Their expected values are the fixture lines for these nodes, under the Martensite vendor.
 #[path = "support/memory_stream.rs"]
+#[allow(dead_code, reason = "this target only writes to memory")]
 mod memory_stream;
 
 use martensite_tkde::de::{

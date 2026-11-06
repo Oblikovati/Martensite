@@ -380,8 +380,10 @@ fn bug23950_write_document_with_vertex_name() {
     colors
         .set_visibility(&component, false)
         .expect("visibility");
-    let mut parameters = DeStepParameters::default();
-    parameters.write_vertex_mode = DeStepWriteModeVertexMode::SINGLE_VERTEX;
+    let parameters = DeStepParameters {
+        write_vertex_mode: DeStepWriteModeVertexMode::SINGLE_VERTEX,
+        ..Default::default()
+    };
     let mut writer = STEPCAFControlWriter::new().expect("writer");
     assert!(
         writer

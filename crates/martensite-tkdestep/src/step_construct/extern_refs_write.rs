@@ -99,7 +99,7 @@ where
 {
     let live = step_live(items, WHERE)?;
     let length = live.array1().length();
-    for i in 1..=length as i32 {
+    for i in 1..=length {
         let mut item = step_array1_item(items, i, WHERE)?;
         if model.number(&product_definition_of(&item).cast()) == num_prod_def {
             item.set_value(&pdwad.cast())?;
@@ -132,7 +132,7 @@ impl StepConstructExternRefs {
             &empty,
             false,
             &empty,
-        );
+        )?;
         let identification = new_external_identification(filename, &doc_file)?;
         // create DocumentRepresentationType
         let representation_type = Handle::new(StepBasicDocumentRepresentationType::new());
@@ -183,7 +183,7 @@ impl StepConstructExternRefs {
         }
         for sub in graph.sharings(&pd.cast())?.content() {
             if let Some(nauo) = sub.cast::<StepReprNextAssemblyUsageOccurrence>().get() {
-                nauo.set_related_product_definition(&pdwad.cast());
+                nauo.set_related_product_definition(&pdwad.cast())?;
             }
             if let Some(assignment) = sub
                 .cast::<StepAP203CcDesignPersonAndOrganizationAssignment>()
@@ -330,7 +330,7 @@ impl StepConstructExternRefs {
         let old_products = prpc.products();
         let nb_products = old_products
             .get()
-            .map_or(0, |products| products.array1().length() as i32);
+            .map_or(0, |products| products.array1().length());
         let product = Handle::new(StepBasicProduct::new());
         let product_id = Handle::new(HAsciiString::from_integer(20001 + nb_products));
         let product_name = text(&format!("{filename}-Doc"));

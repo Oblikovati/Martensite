@@ -256,7 +256,7 @@ fn write_read_tessellated(
 }
 
 fn mesh(shape: &Shape) {
-    BRepMeshIncrementalMesh::with_shape(shape, 0.1, false, 0.5, false);
+    BRepMeshIncrementalMesh::with_shape(shape, 0.1, false, 0.5, false).expect("mesh");
 }
 
 fn check_tessellated(
@@ -472,7 +472,7 @@ fn surface_area(face: &Face) -> f64 {
 fn step_bug_28024_disabled_orientation_fix() {
     let _alone = alone();
     let vertex = |x, y| {
-        let mut made = BRepBuilderAPIMakeVertex::new(Point3::new(x, y, 0.0)).expect("vertex");
+        let made = BRepBuilderAPIMakeVertex::new(Point3::new(x, y, 0.0)).expect("vertex");
         made.vertex().expect("vertex").clone()
     };
     let (v1, v2, v3) = (vertex(0.0, 0.0), vertex(1.0, 0.0), vertex(0.0, 1.0));
@@ -494,9 +494,8 @@ fn step_bug_28024_disabled_orientation_fix() {
         Direction3::new(0., 0., 1.).expect("z"),
     )
     .expect("plane");
-    let mut maker =
-        BRepBuilderAPIMakeFace::from_plane_wire(plane, &wire.wire().expect("wire"), false)
-            .expect("face");
+    let maker = BRepBuilderAPIMakeFace::from_plane_wire(plane, &wire.wire().expect("wire"), false)
+        .expect("face");
     assert!(maker.is_done());
     let face = maker.face().expect("face").clone();
     assert!((surface_area(&face) - -0.5).abs() <= 1.0e-6);
@@ -538,7 +537,7 @@ fn step_bug_23203_ellipse_revolution_axes() {
     let surface = Handle::new(
         GeomSurfaceOfRevolution::new(&ellipse.cast(), revolution_axis).expect("surface"),
     );
-    let mut maker = BRepBuilderAPIMakeFace::from_surface_bounds(
+    let maker = BRepBuilderAPIMakeFace::from_surface_bounds(
         &surface.cast(),
         (0.0, 3.0, 0.0, 1.0),
         precision::confusion(),
@@ -585,7 +584,7 @@ fn xde_bug_27722_ellipse_revolution_topology() {
     )
     .expect("axes");
     let ellipse = Handle::new(GeomEllipse::new(z_axes, 20.0, 10.0).expect("ellipse"));
-    let mut edge =
+    let edge =
         BRepBuilderAPIMakeEdge::from_curve_params(&ellipse.cast(), 0.0, 0.5 * std::f64::consts::PI)
             .expect("edge");
     let edge = edge.edge().expect("edge").clone().into_shape();

@@ -197,18 +197,17 @@ pub(in crate::stepcaf_control) fn read_annotation(
     }
     // if Annotation plane location inside bounding box set it to text position
     // else set the center of bounding box to text position 0027372
-    let text_point = if bounds.is_void() {
-        plane_axes.location()
-    } else if has_plane && !bounds.is_out_point(plane_axes.location()) {
-        plane_axes.location()
-    } else {
-        let [x_min, y_min, z_min, x_max, y_max, z_max] = bounds.get()?;
-        Point3::new(
-            (x_min + x_max) * 0.5,
-            (y_min + y_max) * 0.5,
-            (z_min + z_max) * 0.5,
-        )
-    };
+    let text_point =
+        if bounds.is_void() || (has_plane && !bounds.is_out_point(plane_axes.location())) {
+            plane_axes.location()
+        } else {
+            let [x_min, y_min, z_min, x_max, y_max, z_max] = bounds.get()?;
+            Point3::new(
+                (x_min + x_max) * 0.5,
+                (y_min + y_max) * 0.5,
+                (z_min + z_max) * 0.5,
+            )
+        };
     // set point to XCAF
     set_object_presentation(object, &text_point, &presentation, &name);
     Ok(())

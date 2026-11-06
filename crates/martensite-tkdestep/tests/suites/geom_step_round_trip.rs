@@ -82,7 +82,9 @@ fn direction_with_null_magnitude_is_refused_on_read() {
         .value()
         .unwrap();
     assert!(StepToGeom::make_direction(&direction).unwrap().is_some());
-    direction.set_direction_ratios(&shared(&[0.0, 0.0, 0.0]));
+    direction
+        .set_direction_ratios(&shared(&[0.0, 0.0, 0.0]))
+        .unwrap();
     assert!(StepToGeom::make_direction(&direction).unwrap().is_null());
 }
 

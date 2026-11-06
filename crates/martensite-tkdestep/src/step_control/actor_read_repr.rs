@@ -45,13 +45,11 @@ impl StepControlActorRead {
         let mut state = self.state.write();
         let mut is_manifold = true;
         if nm_mode
-            && sr
+            && (sr
                 .cast::<StepShapeNonManifoldSurfaceShapeRepresentation>()
                 .is_some()
+                || (state.nm_tool.is_ideas_case() && ideas_mode))
         {
-            is_manifold = false;
-            state.nm_detected = true;
-        } else if nm_mode && state.nm_tool.is_ideas_case() && ideas_mode {
             is_manifold = false;
             state.nm_detected = true;
         }
@@ -120,7 +118,7 @@ impl StepControlActorRead {
         let nb = live.nb_items();
         let nb_tp_items = live_tp.nb_mapped();
         let old_context = self.state.read().sr_context.clone(); // :S4136
-        let mut local = factors.clone();
+        let mut local = *factors;
         self.prepare_units(&sr.cast(), tp, &mut local)?;
         let builder = BRepBuilder::default();
         let mut comp = Compound::default();

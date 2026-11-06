@@ -33,12 +33,12 @@ fn new_document() -> Handle<TDocStdDocument> {
 fn dataset_path(name: &str) -> PathBuf {
     let directory = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../external/martensite-test-data/dataset-7.9.0/step");
-    let path = ["stp", "step", "STEP"]
+
+    ["stp", "step", "STEP"]
         .iter()
         .map(|extension| directory.join(format!("{name}.{extension}")))
         .find(|path| path.exists())
-        .expect("a file of that name");
-    path
+        .expect("a file of that name")
 }
 
 /// Reads a file into a new document.

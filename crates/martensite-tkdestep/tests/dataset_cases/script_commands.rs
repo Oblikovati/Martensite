@@ -17,10 +17,8 @@ use martensite_tkdestep::{
 use martensite_tkernel::{message::ProgressRange, standard::Failure, tcollection::AsciiString};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkxsbase::{
-    if_select::IFSelectReturnStatus,
-    interface::InterfaceModelEntities,
-    xs_algo::XSAlgoShapeProcessor,
-    xs_control::{XSControlReaderOps, XSControlVarsOps},
+    if_select::IFSelectReturnStatus, interface::InterfaceModelEntities,
+    xs_algo::XSAlgoShapeProcessor, xs_control::XSControlReaderOps,
 };
 use std::path::PathBuf;
 

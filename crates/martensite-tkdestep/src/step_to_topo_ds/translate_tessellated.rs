@@ -171,7 +171,7 @@ impl StepToTopoDSTranslateFace {
 /// The faces of tessellated items: added to `shell` when given, `theHasGeom &= ...`.
 #[allow(
     clippy::too_many_arguments,
-    reason = "the two native loops read each of these"
+    reason = "the two loops read each of these"
 )]
 fn translate_items(
     items: &mut dyn FnMut(i32) -> Result<Handle<StepVisualTessellatedStructuredItem>, Failure>,

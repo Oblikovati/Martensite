@@ -86,13 +86,13 @@ impl StepConstructValidationProps {
         member_name: &str,
         unit: &StepBasicUnit,
         item_name: &str,
-    ) -> Handle<StepReprRepresentationItem> {
+    ) -> Result<Handle<StepReprRepresentationItem>, Failure> {
         let val = Handle::new(StepBasicMeasureValueMember::new());
         val.set_real(value);
         val.set_name(member_name);
         let mri = Handle::new(StepReprMeasureRepresentationItem::new());
-        mri.init(&text(item_name), &val, unit);
-        mri.cast()
+        mri.init(&text(item_name), &val, unit)?;
+        Ok(mri.cast())
     }
     /// `add_volume`: true on success.
     pub fn add_volume(&mut self, shape: &Shape, vol: f64) -> Result<bool, Failure> {
@@ -101,7 +101,7 @@ impl StepConstructValidationProps {
             self.vol_unit
                 .set_value(&millimetre_power_unit(3.)?.cast())?;
         }
-        let mri = Self::measure_item(vol, "VOLUME_MEASURE", &self.vol_unit, "volume measure");
+        let mri = Self::measure_item(vol, "VOLUME_MEASURE", &self.vol_unit, "volume measure")?;
         self.add_prop(shape, &mri, "volume", false)
     }
     /// `add_area`: true on success.
@@ -116,7 +116,7 @@ impl StepConstructValidationProps {
             "AREA_MEASURE",
             &self.area_unit,
             "surface area measure",
-        );
+        )?;
         self.add_prop(shape, &mri, "surface area", false)
     }
     /// `add_centroid`: with `instance`, the centroid goes to an instance of a component in assembly.
@@ -229,7 +229,7 @@ impl StepConstructValidationProps {
                 let mut context = StepConstructUnitContext::new();
                 context.compute_unit_factors(&element.unit(), local_factors)?;
                 if context.length_done() {
-                    scale *= context.length_factor().powf(element.exponent());
+                    scale *= martensite_cmath::pow(context.length_factor(), element.exponent());
                 }
             }
             return Ok(scale);

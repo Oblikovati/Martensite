@@ -99,7 +99,7 @@ fn expand_shell(
         let Some(live_bounds) = bounds.get() else {
             continue;
         };
-        for bound_rank in 1..=live_bounds.array1().length() as i32 {
+        for bound_rank in 1..=live_bounds.array1().length() {
             let bound = step_array1_item(&bounds, bound_rank, WHERE)?;
             let wire = step_live(&bound, WHERE)?.bound();
             settle_shape_data(&wire.cast(), root, tool, session)?;
@@ -129,7 +129,7 @@ fn expand_edge_loop(
     session: &SessionGraph,
 ) -> Result<(), Failure> {
     let edges = step_live(edge_loop, WHERE)?.edge_list();
-    let count = step_live(&edges, WHERE)?.array1().length() as i32;
+    let count = step_live(&edges, WHERE)?.array1().length();
     for rank in 1..=count {
         let oriented = step_array1_item(&edges, rank, WHERE)?;
         let Some(oriented) = oriented.get() else {
@@ -157,7 +157,7 @@ fn expand_sbsm(
 ) -> Result<(), Failure> {
     let model = item.cast::<StepShapeShellBasedSurfaceModel>();
     let shells = step_live(&model, WHERE)?.sbsm_boundary();
-    let count = step_live(&shells, WHERE)?.array1().length() as i32;
+    let count = step_live(&shells, WHERE)?.array1().length();
     for rank in 1..=count {
         let shell = step_array1_item(&shells, rank, WHERE)?;
         let open = shell.open_shell();

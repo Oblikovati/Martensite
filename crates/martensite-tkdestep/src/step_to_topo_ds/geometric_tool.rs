@@ -20,11 +20,14 @@ fn associated_pcurve(
     Ok(curve.associated_geometry_value(rank)?.pcurve())
 }
 
+/// Two pcurves of one surface curve.
+type PcurvePair = (Handle<StepGeomPcurve>, Handle<StepGeomPcurve>);
+
 /// The two pcurves of a surface curve when both lie on `surface`.
 fn both_on_surface(
     curve: &StepGeomSurfaceCurve,
     surface: &Handle<StepGeomSurface>,
-) -> Result<Option<(Handle<StepGeomPcurve>, Handle<StepGeomPcurve>)>, Failure> {
+) -> Result<Option<PcurvePair>, Failure> {
     let first = associated_pcurve(curve, 1)?;
     let second = associated_pcurve(curve, 2)?;
     let on_surface = |pcurve: &StepGeomPcurve| pcurve.basis_surface() == *surface;

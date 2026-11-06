@@ -215,7 +215,7 @@ impl XsSession {
         let mut dump = Vec::new();
         sewer.dump(&mut dump).expect("a memory stream");
         print!("{}", String::from_utf8_lossy(&dump));
-        self.raster.bind(result, &sewer.sewed_shape());
+        self.raster.bind(result, sewer.sewed_shape());
     }
 
     /// `fillet result shape radius edge`, with `tolblend`'s defaults; `false` when the command returned 1.

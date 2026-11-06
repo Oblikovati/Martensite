@@ -195,7 +195,7 @@ impl StepControlActorRead {
         let mut dummy = StepToTopoDSNMTool::new();
         translator.init(fs, &mut tool, &mut dummy, factors)?;
         let old_context = self.state.read().sr_context.clone();
-        let mut local = factors.clone();
+        let mut local = *factors;
         self.factors_of_free_item(&fs.cast(), tp, &mut local)?;
         let live_tp = step_live(tp, "StepControlActorRead")?;
         let found: Handle<TransferBRepShapeBinder> = live_tp.find(&fs.cast()).cast();

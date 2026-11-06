@@ -189,7 +189,7 @@ impl StepControlActorRead {
             }
         }
         let old_context = self.state.read().sr_context.clone();
-        let mut local = factors.clone();
+        let mut local = *factors;
         if *orig_context != old_context {
             self.prepare_units(orig_context, tp, &mut local)?;
         }
@@ -219,7 +219,7 @@ impl StepControlActorRead {
             return Ok(false);
         };
         let select = live.transformation_operator();
-        let mut local = factors.clone();
+        let mut local = *factors;
         let operator: Handle<StepGeomCartesianTransformationOperator3d> = select.value().cast();
         let live_srr = step_live(srr, "StepControlActorRead::ComputeSRRWT")?;
         if operator.is_some() {

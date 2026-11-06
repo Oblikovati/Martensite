@@ -7,7 +7,7 @@ use super::actor_write_items::{
 use crate::de_step::StepControlStepModelType;
 use crate::geom_to_step::shared_array1;
 use crate::step_construct::StepConstructUnitContext;
-use crate::step_data::{StepDataFactors, StepDataSelectType, StepDataStepModel};
+use crate::step_data::{StepDataFactors, StepDataStepModel};
 use crate::step_entity::{step_array1_item, step_array1_len, step_live};
 use crate::step_geom::StepGeomAxis2Placement3d;
 use crate::step_repr::{StepReprRepresentationItem, StepReprShapeRepresentationRelationship};

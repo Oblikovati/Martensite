@@ -143,7 +143,7 @@ impl StepConstructAssembly {
             &pded,
             false,
             &Handle::default(),
-        );
+        )?;
         // create PDS for link CDSR->PDS->NAUO
         let mut characterized = StepReprCharacterizedDefinition::default();
         characterized.set_value(&nauo.cast())?;

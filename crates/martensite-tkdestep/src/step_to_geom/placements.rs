@@ -191,9 +191,9 @@ impl StepToGeom {
     ) -> Result<Handle<GeomAxis2Placement>, Failure> {
         let live = step_live(sp, "StepToGeom::MakeAxis2Placement")?;
         let (a, b, c) = (live.a(), live.b(), live.c());
-        let (sin_alpha, cos_alpha) = live.alpha().sin_cos();
-        let (sin_beta, cos_beta) = live.beta().sin_cos();
-        let (sin_gamma, cos_gamma) = live.gamma().sin_cos();
+        let (sin_alpha, cos_alpha) = martensite_cmath::sincos(live.alpha());
+        let (sin_beta, cos_beta) = martensite_cmath::sincos(live.beta());
+        let (sin_gamma, cos_gamma) = martensite_cmath::sincos(live.gamma());
         let origin = Point3::new(
             a * cos_gamma + b * sin_gamma * sin_alpha,
             a * sin_gamma - b * cos_gamma * sin_alpha,
