@@ -473,3 +473,24 @@ macro_rules! curve_and_surface_tool {
     };
 }
 pub(super) use curve_and_surface_tool;
+
+#[cfg(test)]
+mod no_result_tests {
+    use super::IgesToBRepCurveAndSurface;
+    use crate::iges_data::IgesDataIgesEntity;
+    use martensite_tkernel::standard::{Failure, Handle};
+
+    #[test]
+    fn a_failed_transfer_gives_an_empty_result_and_its_reason_on_the_check() {
+        let tool = IgesToBRepCurveAndSurface::new();
+        let entity = Handle::new(IgesDataIgesEntity::default());
+        let failure = Failure::new("the geometry refused it");
+        let result: Handle<IgesDataIgesEntity> = tool.no_result(&entity, &failure);
+        assert!(result.is_null());
+        let process = tool.get_transfer_process();
+        let check = process.get().unwrap().check(&entity.cast());
+        let fails = check.get().unwrap().fails(true);
+        let text = fails[0].get().unwrap().string();
+        assert!(String::from_utf8_lossy(text.as_bytes()).contains("the geometry refused it"));
+    }
+}

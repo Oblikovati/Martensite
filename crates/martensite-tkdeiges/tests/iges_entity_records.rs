@@ -204,6 +204,40 @@ fn conic_arcs_have_their_length() {
     let _ = &hyperbola;
 }
 
+/// Knots that go down give no shape, and the reason is on the check of the entity.
+#[test]
+fn descending_knots_have_their_failure_on_the_check() {
+    let _guard = locked();
+    let text = file_of(&[root(
+        126,
+        0,
+        "126,1,1,1,0,1,0,1.,1.,0.,0.,1.,1.,0.,0.,0.,1.,0.,0.,0.,1.,0.,0.,1.;",
+    )]);
+    let mut reader = IgesControlReader::new().expect("the norm");
+    let mut bytes = text.as_bytes();
+    let status = reader
+        .read_stream("records.igs", &mut bytes)
+        .expect("the reading");
+    assert_eq!(status, IFSelectReturnStatus::RetDone);
+    reader
+        .transfer_roots(&ProgressRange::default())
+        .expect("the other entities still transfer");
+    assert!(reader.xs_reader().one_shape().is_null());
+    let session = reader.xs_reader().ws();
+    let transfer = session.get().expect("a session").transfer_reader();
+    let process = transfer.get().expect("a transfer").transient_process();
+    let checks = process.get().expect("a process").check_list(true);
+    let texts: Vec<String> = checks
+        .items()
+        .iter()
+        .flat_map(|(_, check)| check.get().expect("a check").fails(true))
+        .map(|text| {
+            String::from_utf8_lossy(text.get().expect("a text").string().as_bytes()).into_owned()
+        })
+        .collect();
+    assert_eq!(texts, ["Knots are not in ascending order"]);
+}
+
 /// A record with no point fails to load but stays the entity its directory says.
 #[test]
 fn a_copious_data_record_without_points_keeps_its_type() {

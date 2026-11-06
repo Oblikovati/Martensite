@@ -132,10 +132,11 @@ impl IgesToBRepBasicCurve {
         {
             return Ok(Handle::default());
         }
-        // A curve that cannot be built is no result.
+        // A curve that cannot be built is no result, and the reason is on the check.
         let weights_used = (!polynomial).then_some(&weights[..]);
-        let Ok(curve) = built_curve(&poles, weights_used, &gathered, degree) else {
-            return Ok(Handle::default());
+        let curve = match built_curve(&poles, weights_used, &gathered, degree) {
+            Ok(curve) => curve,
+            Err(failure) => return Ok(self.no_result(start, &failure)),
         };
         Ok(Self::cut_to_entity(curve, live.u_min(), live.u_max()))
     }
