@@ -37,3 +37,57 @@ See [the geometry contract](DESIGN.md) and [the evidence plan](VERIFICATION.md).
 
 A task is complete only after its implementation and evidence are integrated.
 No package version or release is authorized by the feature approval.
+
+## Cylindrical rectangle
+
+`surface_sketch::normal_extrude` accepts a rectangle in developed coordinates.
+For a radius of 10, a width of 7 wraps through 0.7 radians. The interval
+`[-1, 2]` reaches radii 9 and 12 with an outward support normal. A chart origin
+of -0.3 makes this example cross the conventional zero-angle seam.
+
+```rust
+use martensite_tkbo::profile_extrusion::{DisplayTolerance, Resolution, ToleranceCap};
+use martensite_tksketch::surface_sketch::*;
+
+let rectangle = CylinderRectangle {
+    support: CylinderSupport {
+        origin: [0.0; 3],
+        axis: [0.0, 0.0, 1.0],
+        radial: [1.0, 0.0, 0.0],
+        radius: 10.0,
+        chart_origin: -0.3,
+        normal: NormalSense::Outward,
+    },
+    region: SurfaceRegionId(1),
+    s: [0.0, 7.0],
+    z: [0.0, 4.0],
+    corners: [1, 2, 3, 4].map(SurfaceVertexId),
+    boundaries: [1, 2, 3, 4].map(SurfaceCurveId),
+};
+let options = NormalExtrusionOptions {
+    resolution: Resolution::new(
+        1e-6, 1e-7, 1e-9,
+        DisplayTolerance { chordal: 1e-3, angular: 0.1 },
+        ToleranceCap::Refuse(1e-5),
+    ),
+    volume_relative_error: 1e-9,
+};
+let result = normal_extrude(&rectangle, [-1.0, 2.0], options)?;
+let detached = result.export_brep()?;
+// `detached.entities` resolves the result's semantic history keys to native shapes.
+```
+
+The first and last depth roles follow the requested interval even for an inward
+normal. `export_brep` creates fresh native owners each time. The result's metadata
+and encoded body remain immutable when a caller changes an export.
+
+Current admission excludes holes, general curves, cone supports, complete turns
+and axis-crossing depth intervals. Small features also need clearance from the
+native geometry tolerances. The operation reports typed refusals for unresolved
+dimensions or nonfinite arithmetic. Its generic geometry checks are sampled;
+volume uncertainty combines separately reported integration and construction
+rounding estimates. `volume_error_estimates()` exposes both components, and
+`effective_limits()` reports the linear and angular admission clearances.
+Consult the returned validation
+report and measured value when deciding whether that evidence meets an
+application's requirements.

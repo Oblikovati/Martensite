@@ -99,10 +99,16 @@ add an unused cone variant to the first public interface.
 
 ## Construction and module placement
 
-Add `tkbo::surface_sketch` beside `profile_extrusion`. Keep the support definition,
-admission and normal-extrusion result behind a small interface. Reuse existing
-surface evaluators, B-rep builders, topology indexing and `body_check`. Keep
+Place `surface_sketch` in the downstream `martensite-tksketch` toolkit. Keep the
+support definition, admission and normal-extrusion result behind a small
+interface. Reuse existing surface evaluators, B-rep builders, topology indexing
+and the public TKBO validation, measurement and tolerance types. Keep
 operation-specific construction and evidence internal.
+
+Surface-bound sketch operations have their own tests and development cadence.
+The downstream dependency leaves existing TKBO source and consumers unchanged;
+changes to this toolkit do not select the suites of TKBO consumers. The new
+toolkit exposes no upward reexport or dependency from TKBO.
 
 For the first rectangular cylinder region, evaluate the existing rotational
 sweep of its radial/axial cross-section as an analytic construction. Map native
@@ -147,7 +153,16 @@ and area-times-height formula are inapplicable to normal extrusion.
 Any analytic injectivity argument must be tied to the admitted domain and the
 constructed carriers and trims. Parameter-map injectivity alone does not prove
 that a native builder produced the requested body. Keep requested tolerances,
-effective construction settings and achieved errors distinct. Respect explicit
+effective construction settings and achieved errors distinct. The operation
+options include a separate volume-relative integration target; a spatial
+tolerance is not a volume-error setting. Return the effective options and
+achieved integration estimate without silently clamping the target. Report the
+integration and construction-rounding estimates separately and require their
+sum to meet the relative target. The construction estimate comes from the
+input arithmetic and analytic boundary area, independently of the observed
+volume discrepancy; a modelling tolerance is not an integration-error bound.
+Return the effective linear and angular admission clearances, including native
+precision floors. Respect explicit
 report/refuse/no-limit tolerance caps.
 
 A later face-bound operation rejects sketches outside its trimmed support by

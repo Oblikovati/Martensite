@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added rectangular sketches on cylindrical surfaces with signed normal extrusion, seam-crossing regions, semantic history, ordered body validation and detached body exports. Existing planar extrusion interfaces were preserved. (#416)
+
 ### Fixed
 
 - Skipped expanded unsafe inventory rebuilds for unrelated driver and documentation changes, while removing stale reports on skipped PR checks. (#411)

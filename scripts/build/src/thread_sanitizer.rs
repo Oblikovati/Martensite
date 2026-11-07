@@ -57,7 +57,24 @@ fn control_command(root: &Path, control: Control) -> CommandSpec {
         Control::FaceCertificate => face_certificate_controls(root),
         Control::OpenExtrusion => open_extrusion_controls(root),
         Control::VertexNeighborhood => vertex_neighborhood_controls(root),
+        Control::SurfaceSketch => surface_sketch_controls(root),
     }
+}
+
+fn surface_sketch_controls(root: &Path) -> CommandSpec {
+    // Independent operation contexts must preserve published value metadata (#414, #416).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tksketch",
+        "--test",
+        "surface_sketch",
+        "--",
+        "replay::parallel_operations_match_sequential_value_metadata",
+        "--exact",
+        "--test-threads=1",
+        "--show-output",
+    ])
 }
 
 fn open_extrusion_controls(root: &Path) -> CommandSpec {
