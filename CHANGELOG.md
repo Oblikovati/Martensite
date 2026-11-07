@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Corrected the PR formatting failure hint to list checked files and explain direct formatting for sources included by test suites. (#122)
+
 ## [0.13.0] - 2026-11-07
 
 ### Added
