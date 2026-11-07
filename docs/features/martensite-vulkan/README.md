@@ -65,9 +65,9 @@ affected image checks exact on AMD. On other vendors a mismatch prints a notice 
 and the rest of each test still applies. A CI job can land on either vendor, so only runs on AMD
 exercise those checks.
 
-The `*_regressions` test targets run regression cases in isolated worker processes under their
-group's time budget and grade the case report. Cases that need boolean, fillet, offset or
-feature toolkits are not here yet because those toolkits are not in this repository.
+The `*_regressions` test targets run cases in isolated worker processes under their group's
+time budget and grade the case report. `modeling_view_regressions` exercises fitting, display
+aspects and modelling results using the geometry toolkits, including Booleans and fillets.
 
 ## Assets
 

@@ -107,6 +107,12 @@ mod v3d_argument_lists_cases;
 #[path = "modeling_view_hosts/v3d_argument_lists_regressions.rs"]
 mod v3d_argument_lists_regressions;
 #[allow(dead_code, unused_imports)]
+mod v3d_checked_bores;
+#[allow(dead_code, unused_imports)]
+mod v3d_display_cases;
+#[path = "modeling_view_hosts/v3d_display_regressions.rs"]
+mod v3d_display_regressions;
+#[allow(dead_code, unused_imports)]
 mod v3d_fuzzy_tools;
 #[allow(dead_code, unused_imports)]
 #[path = "modeling_view_hosts/v3d_fuzzy_tools_regressions.rs"]
