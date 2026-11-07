@@ -40,6 +40,12 @@ Each test job runs unit, integration and documentation tests with
 `--no-fail-fast`; a failed job does not cancel the others. The existing
 `pr (x86_64-unknown-linux-gnu)` check aggregates their results. Documentation-only
 changes produce no package jobs; only that empty selection permits skipped tests.
+If the formatting check fails, run `rustfmt -- <file>` for each checked path
+listed in its error, replacing `<file>` with the path quoted for your shell.
+The list uses Rust string notation to show spaces, quotes and control characters;
+it is not a shell command. `cargo fmt --all` can miss sources reached through
+`include!`, so it may leave the same failure unchanged (#122).
+
 Local `cargo xtask pr` still runs all stages sequentially. Release pipelines
 compute package scope since the previous release and run the selected suites
 on each supported target. CI partitions that selection into at most four shards

@@ -10,6 +10,10 @@ use crate::process::{CommandRunner, CommandSpec};
 /// Keeps each rustfmt command line well under the Windows 32 KiB limit.
 const RUSTFMT_BATCH: usize = 64;
 
+#[cfg(test)]
+#[path = "lint_process_tests.rs"]
+mod process_tests;
+
 /// Checks all toolkit source tokens when a change can affect the unsafe inventory.
 /// Example: `check_unsafe_inventory(runner, root, changed)?`.
 pub fn check_unsafe_inventory(
@@ -73,8 +77,13 @@ pub fn check_rust_format(
         return Ok(());
     }
     Err(BuildError::LintFailed(format!(
-        "rustfmt reported differences in {} changed Rust file(s) (diff above); run `cargo fmt --all`",
-        sources.len()
+        "rustfmt reported differences in {} checked Rust file(s) (diff above); run `rustfmt -- <file>` for each path below, replacing <file> with the path quoted for your shell. `cargo fmt --all` can miss include! sources. Checked paths (one per line, Rust string notation):\n{}",
+        sources.len(),
+        sources
+            .iter()
+            .map(|path| format!("{path:?}"))
+            .collect::<Vec<_>>()
+            .join("\n")
     )))
 }
 
@@ -164,7 +173,8 @@ mod tests {
         let runner = RecordingRunner::default().with_exit_code("rustfmt --check -- a.rs", 1);
         let error =
             check_rust_format(&runner, Path::new("/r"), &[file("a.rs", false)]).unwrap_err();
-        assert!(error.to_string().contains("cargo fmt --all"));
+        assert!(error.to_string().contains("rustfmt -- <file>"));
+        assert!(error.to_string().contains("\"a.rs\""));
     }
 
     #[test]
