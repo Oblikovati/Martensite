@@ -64,6 +64,20 @@ pub struct CiRunArgs {
 /// Commands that read the GitHub Actions trigger from the environment.
 #[derive(Subcommand)]
 pub enum CiCommand {
+    /// Discover an exact-commit validated rehearsal for a tag.
+    ReusePlan,
+    /// Seal successful rehearsal artifact identities.
+    SealValidation {
+        #[arg(long)]
+        directory: PathBuf,
+    },
+    /// Restore artifacts after revalidating successful rehearsal evidence.
+    ReuseVerify {
+        #[arg(long)]
+        run: u64,
+        #[arg(long)]
+        dist: PathBuf,
+    },
     /// Check geometry cache ownership with the pinned Linux thread sanitizer.
     ThreadSanitizer,
     /// Write the pipeline mode and target matrix to `GITHUB_OUTPUT`.
@@ -123,9 +137,22 @@ fn dispatch(context: &BuildContext<'_>, command: BuildCommand) -> BuildResult<()
 }
 
 fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()> {
-    use CiCommand::{Gate, Plan, Publish, Run, Test, ThreadSanitizer};
+    use CiCommand::{
+        Gate, Plan, Publish, ReusePlan, ReuseVerify, Run, SealValidation, Test, ThreadSanitizer,
+    };
     match command {
-        ThreadSanitizer => crate::thread_sanitizer::run(context),
+        ReusePlan => crate::release_reuse::discover(context),
+        ReuseVerify { run, dist } => crate::release_reuse::restore(context, run, &dist),
+        SealValidation { directory } => crate::release_reuse::seal(context, &directory),
+        ThreadSanitizer => {
+            let plan =
+                crate::thread_sanitizer_selection::execution_plan(|key| std::env::var(key).ok())?;
+            let controls = match plan {
+                Some(plan) => crate::ci_tests::sanitizer_controls(context, &plan)?,
+                None => crate::thread_sanitizer_selection::CONTROLS.to_vec(),
+            };
+            crate::thread_sanitizer::run_selected(context, &controls)
+        }
         Run(args) => run_planned(context, &args.target, args.checks_only),
         Test {
             package,
@@ -164,7 +191,7 @@ fn current_plan() -> BuildResult<CiPlan> {
 }
 
 fn emit_plan(context: &BuildContext<'_>) -> BuildResult<()> {
-    let plan = current_plan()?;
+    let plan = crate::plan::pin_comparison(context, current_plan()?)?;
     let mut outputs = plan_outputs(&plan);
     outputs.extend(crate::ci_tests::matrix_outputs(context, &plan)?);
     let github_output = std::env::var_os("GITHUB_OUTPUT").map(PathBuf::from);

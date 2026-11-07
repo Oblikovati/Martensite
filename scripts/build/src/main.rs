@@ -14,6 +14,7 @@ mod error;
 #[cfg(test)]
 mod fake_runner;
 mod git;
+mod inventory_impact;
 mod lint;
 mod package_manifest;
 mod plan;
@@ -27,12 +28,14 @@ mod release;
 mod release_ci;
 mod release_impact;
 mod release_manifest;
+mod release_reuse;
 mod release_scope;
 mod release_sources;
 mod report;
 mod source_sdk;
 mod targets;
 mod thread_sanitizer;
+mod thread_sanitizer_selection;
 #[cfg(test)]
 mod unsafe_inventory;
 mod version;

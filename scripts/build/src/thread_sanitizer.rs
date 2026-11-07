@@ -8,71 +8,56 @@ const NIGHTLY: &str = "+nightly-2026-09-25";
 const TARGET: &str = "x86_64-unknown-linux-gnu";
 const SMOKE: &str = "scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml";
 
-/// Refuse an unusable runtime before checking cache and live capture ownership.
-/// Example: `run(&context)?` executes the same pipeline as `cargo xtask ci thread-sanitizer`.
-pub fn run(context: &BuildContext<'_>) -> BuildResult<()> {
-    let root = context.root();
+use crate::thread_sanitizer_selection::Control;
+
+/// Refuse an unusable runtime before executing affected ownership controls.
+/// Example: `run_selected(&context, &[Control::Capture])?`.
+pub(crate) fn run_selected(context: &BuildContext<'_>, selected: &[Control]) -> BuildResult<()> {
+    if selected.is_empty() {
+        return Ok(());
+    }
     context
         .runner
-        .run(&CommandSpec::new("rustc", root).args([NIGHTLY, "-Vv"]))?;
+        .run(&CommandSpec::new("rustc", context.root()).args([NIGHTLY, "-Vv"]))?;
     context.reporter.step("ThreadSanitizer startup smoke", || {
-        context.runner.run(&startup(root))
+        context.runner.run(&startup(context.root()))
     })?;
-    run_ownership_controls(context)
+    run_controls(context, selected)
 }
 
-fn run_ownership_controls(context: &BuildContext<'_>) -> BuildResult<()> {
-    context
-        .reporter
-        .step("ThreadSanitizer cache ownership controls", || {
-            context.runner.run(&controls(context.root()))
-        })?;
-    run_service_controls(context)?;
-    run_face_controls(context)?;
-    run_support_controls(context)
+fn run_controls(context: &BuildContext<'_>, selected: &[Control]) -> BuildResult<()> {
+    let both_caches = selected.contains(&Control::Cache2d) && selected.contains(&Control::Cache3d);
+    for control in selected {
+        if both_caches && *control == Control::Cache3d {
+            continue;
+        }
+        let command = selected_command(context.root(), *control, both_caches);
+        context
+            .reporter
+            .step(&format!("ThreadSanitizer {control:?}"), || {
+                context.runner.run(&command)
+            })?;
+    }
+    Ok(())
 }
 
-fn run_support_controls(context: &BuildContext<'_>) -> BuildResult<()> {
-    context
-        .reporter
-        .step("ThreadSanitizer owned open supports", || {
-            context.runner.run(&open_extrusion_controls(context.root()))
-        })?;
-    context
-        .reporter
-        .step("ThreadSanitizer given vertex incidences", || {
-            context
-                .runner
-                .run(&vertex_neighborhood_controls(context.root()))
-        })
+fn selected_command(root: &Path, control: Control, both_caches: bool) -> CommandSpec {
+    if both_caches && control == Control::Cache2d {
+        return cache_controls(root, &[Control::Cache2d.owner(), Control::Cache3d.owner()]);
+    }
+    control_command(root, control)
 }
 
-fn run_face_controls(context: &BuildContext<'_>) -> BuildResult<()> {
-    context
-        .reporter
-        .step("ThreadSanitizer coherent face inputs", || {
-            context.runner.run(&face_input_controls(context.root()))
-        })?;
-    context
-        .reporter
-        .step("ThreadSanitizer owned face certificates", || {
-            context
-                .runner
-                .run(&face_certificate_controls(context.root()))
-        })
-}
-
-fn run_service_controls(context: &BuildContext<'_>) -> BuildResult<()> {
-    context
-        .reporter
-        .step("ThreadSanitizer live capture controls", || {
-            context.runner.run(&capture_controls(context.root()))
-        })?;
-    context
-        .reporter
-        .step("ThreadSanitizer stable group controls", || {
-            context.runner.run(&group_controls(context.root()))
-        })
+fn control_command(root: &Path, control: Control) -> CommandSpec {
+    match control {
+        Control::Cache2d | Control::Cache3d => cache_controls(root, &[control.owner()]),
+        Control::Capture => capture_controls(root),
+        Control::Groups => group_controls(root),
+        Control::FaceInput => face_input_controls(root),
+        Control::FaceCertificate => face_certificate_controls(root),
+        Control::OpenExtrusion => open_extrusion_controls(root),
+        Control::VertexNeighborhood => vertex_neighborhood_controls(root),
+    }
 }
 
 fn open_extrusion_controls(root: &Path) -> CommandSpec {
@@ -164,13 +149,12 @@ fn startup(root: &Path) -> CommandSpec {
         .arg(manifest.to_string_lossy())
 }
 
-fn controls(root: &Path) -> CommandSpec {
-    sanitized_cargo(root, "test").args([
-        "--no-fail-fast",
-        "--package",
-        "martensite-tkg2d",
-        "--package",
-        "martensite-tkg3d",
+fn cache_controls(root: &Path, packages: &[&str]) -> CommandSpec {
+    let mut command = sanitized_cargo(root, "test").arg("--no-fail-fast");
+    for package in packages {
+        command = command.args(["--package", package]);
+    }
+    command.args([
         "--lib",
         "cache_inputs_tests",
         "--",

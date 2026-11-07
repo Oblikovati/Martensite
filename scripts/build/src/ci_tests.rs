@@ -11,6 +11,7 @@ use crate::workspace::CargoWorkspace;
 struct PlannedPackages {
     names: BTreeSet<String>,
     history_sha256: Option<String>,
+    changed: Vec<crate::git::ChangedFile>,
 }
 
 fn selected_packages(context: &BuildContext<'_>, plan: &CiPlan) -> BuildResult<BTreeSet<String>> {
@@ -19,17 +20,27 @@ fn selected_packages(context: &BuildContext<'_>, plan: &CiPlan) -> BuildResult<B
 
 fn planned_packages(context: &BuildContext<'_>, plan: &CiPlan) -> BuildResult<PlannedPackages> {
     let workspace = CargoWorkspace::load(context.runner, context.root())?;
-    let base = match plan {
-        CiPlan::PullRequest { base } => base,
-        CiPlan::Release { version, .. } => {
-            let scope = crate::release_scope::ReleaseScope::load(context, &workspace, version)?;
-            return Ok(PlannedPackages {
-                names: scope.tests.into_iter().collect(),
-                history_sha256: scope.history_sha256,
-            });
-        }
+    match plan {
+        CiPlan::PullRequest { base } => planned_pull_request(context, &workspace, base),
+        CiPlan::Release { version, .. } => planned_release(context, &workspace, version),
+    }
+}
+
+fn planned_release(
+    context: &BuildContext<'_>,
+    workspace: &CargoWorkspace,
+    version: &semver::Version,
+) -> BuildResult<PlannedPackages> {
+    let scope = crate::release_scope::ReleaseScope::load(context, workspace, version)?;
+    let changed = match &scope.baseline {
+        Some(base) => context.git.changed_files(base)?,
+        None => Vec::new(),
     };
-    planned_pull_request(context, &workspace, base)
+    Ok(PlannedPackages {
+        changed,
+        names: scope.tests.into_iter().collect(),
+        history_sha256: scope.history_sha256,
+    })
 }
 
 fn planned_pull_request(
@@ -46,8 +57,22 @@ fn planned_pull_request(
             &merge_base,
             &changed,
         )?,
+        changed,
         history_sha256: None,
     })
+}
+
+/// Revalidates sanitizer ownership using the same pinned scope as package tests.
+/// Example: `let controls = sanitizer_controls(context, plan)?;`.
+pub(crate) fn sanitizer_controls(
+    context: &BuildContext<'_>,
+    plan: &CiPlan,
+) -> BuildResult<Vec<crate::thread_sanitizer_selection::Control>> {
+    let selection = planned_packages(context, plan)?;
+    Ok(crate::thread_sanitizer_selection::select(
+        &selection.names,
+        &selection.changed,
+    ))
 }
 
 /// Emits each affected package exactly once, including empty selections for documentation-only changes.
@@ -60,6 +85,7 @@ pub fn matrix_outputs(
     plan: &CiPlan,
 ) -> BuildResult<Vec<(&'static str, String)>> {
     let selection = planned_packages(context, plan)?;
+    let sanitizer = crate::thread_sanitizer_selection::select(&selection.names, &selection.changed);
     let packages = selection.names;
     let matrix = match plan {
         CiPlan::PullRequest { .. } => serde_json::json!({"package": packages}),
@@ -68,6 +94,7 @@ pub fn matrix_outputs(
     let mut outputs = vec![
         ("has-tests", (!packages.is_empty()).to_string()),
         ("test-matrix", matrix.to_string()),
+        ("has-sanitizer", (!sanitizer.is_empty()).to_string()),
     ];
     if let Some(history) = selection.history_sha256 {
         outputs.push(("release-history", history));
@@ -169,7 +196,7 @@ mod tests {
     use crate::workspace::tests::sample_metadata;
     use std::path::Path;
 
-    fn fixture(path: &str) -> (RecordingRunner, CiPlan) {
+    pub(super) fn fixture(path: &str) -> (RecordingRunner, CiPlan) {
         let runner = RecordingRunner::default()
             .with_stdout("git merge-base origin/main HEAD", "base1")
             .with_stdout(
@@ -416,3 +443,7 @@ mod bookkeeping_tests {
 #[cfg(test)]
 #[path = "ci_release_tests.rs"]
 mod release_selection_tests;
+
+#[cfg(test)]
+#[path = "ci_sanitizer_tests.rs"]
+mod sanitizer_selection_tests;

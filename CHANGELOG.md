@@ -8,6 +8,12 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Skipped expanded unsafe inventory rebuilds for unrelated driver and documentation changes, while removing stale reports on skipped PR checks. (#411)
+
+- Reused verified artifacts from a successful release rehearsal on the exact tag commit, avoiding duplicate build and test jobs while retaining publication checks. (#275)
+
+- Limited ThreadSanitizer controls to affected packages and execution inputs, accepting skipped jobs only when no controls were selected. (#410)
+
 - Corrected the PR formatting failure hint to list checked files and explain direct formatting for sources included by test suites. (#122)
 
 ## [0.13.0] - 2026-11-07

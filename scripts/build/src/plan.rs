@@ -19,7 +19,7 @@ pub struct CiTrigger {
     pub event: String,
     /// `GITHUB_REF`, e.g. `refs/tags/v1.4.0`.
     pub git_ref: String,
-    /// `MARTENSITE_CI_BASE_SHA`: immutable pull-request event base.
+    /// `MARTENSITE_CI_BASE_SHA`: immutable event or planner-resolved comparison commit.
     pub base_sha: String,
     /// `MARTENSITE_CI_MODE`: the `mode` input of a manual dispatch.
     pub dispatch_mode: String,
@@ -67,7 +67,11 @@ pub fn plan_for(trigger: &CiTrigger) -> BuildResult<CiPlan> {
     match trigger.event.as_str() {
         "pull_request" => pull_request_plan(&trigger.base_sha),
         "push" => tag_push_plan(&trigger.git_ref),
-        "workflow_dispatch" => dispatch_plan(&trigger.dispatch_mode, &trigger.dispatch_version),
+        "workflow_dispatch" => dispatch_plan(
+            &trigger.dispatch_mode,
+            &trigger.dispatch_version,
+            &trigger.base_sha,
+        ),
         other => Err(BuildError::Usage(format!(
             "unsupported CI event {other:?}; expected pull_request, push of a v* tag, or workflow_dispatch"
         ))),
@@ -99,8 +103,9 @@ fn tag_push_plan(git_ref: &str) -> BuildResult<CiPlan> {
 
 /// A manual run is a rehearsal: it never publishes, so the full matrix can
 /// run on a release candidate before the tag exists.
-fn dispatch_plan(mode: &str, version: &str) -> BuildResult<CiPlan> {
+fn dispatch_plan(mode: &str, version: &str, base: &str) -> BuildResult<CiPlan> {
     match mode {
+        "pr" if !base.is_empty() => pull_request_plan(base),
         "pr" => Ok(CiPlan::PullRequest {
             base: "origin/main".into(),
         }),
@@ -111,6 +116,18 @@ fn dispatch_plan(mode: &str, version: &str) -> BuildResult<CiPlan> {
         other => Err(BuildError::Usage(format!(
             "dispatch mode {other:?}; expected \"pr\" or \"release\""
         ))),
+    }
+}
+
+/// Resolves a moving manual comparison once before emitting job selections.
+/// Example: `let plan = pin_comparison(context, plan)?;`.
+pub(crate) fn pin_comparison(
+    context: &crate::context::BuildContext<'_>,
+    plan: CiPlan,
+) -> BuildResult<CiPlan> {
+    match plan {
+        CiPlan::PullRequest { base } => pull_request_plan(&context.git.merge_base(&base)?),
+        release => Ok(release),
     }
 }
 
@@ -130,6 +147,13 @@ pub fn plan_outputs(plan: &CiPlan) -> Vec<(&'static str, String)> {
         ("version", version),
         ("publish", publish.to_string()),
         ("matrix", matrix_json(&targets)),
+        (
+            "base-sha",
+            match plan {
+                CiPlan::PullRequest { base } => base.clone(),
+                CiPlan::Release { .. } => String::new(),
+            },
+        ),
     ]
 }
 
@@ -241,6 +265,19 @@ mod tests {
             ..trigger
         };
         assert!(plan_for(&bad).is_err());
+    }
+
+    #[test]
+    fn manual_pr_rejects_non_commit_planner_baselines() {
+        for base in ["main", "origin/main", "abcd", &"z".repeat(40)] {
+            let trigger = CiTrigger {
+                event: "workflow_dispatch".into(),
+                dispatch_mode: "pr".into(),
+                base_sha: base.into(),
+                ..CiTrigger::default()
+            };
+            assert!(plan_for(&trigger).is_err());
+        }
     }
 
     #[test]

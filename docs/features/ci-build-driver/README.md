@@ -236,3 +236,51 @@ versions are marked as pre-releases.
 Source SDK packaging serializes native filesystem components as slash-separated
 archive members. Extraction validates the original member spelling before native
 path reconstruction; backslashes, drive names and traversal remain rejected (#290).
+
+### Affected ThreadSanitizer controls (#410)
+
+The planner selects Linux ThreadSanitizer controls from the same immutable PR
+base or previous-release scope as package tests. Manual PR runs resolve their
+comparison commit once in the planner and pass that SHA to every validation job;
+a later update to `main` cannot change the selection. Each control belongs to its
+owning toolkit; dependency changes select affected consumers. Changes to the
+sanitizer runner, startup fixture, scope calculation or CI workflow select all
+controls. Documentation and unrelated driver changes do not select controls.
+
+An empty selection skips the sanitizer job. The aggregate accepts that skip only
+when the planner succeeded and selected no controls. Every nonempty selection
+runs the pinned nightly startup check before its controls; runtime startup
+failures, race reports, cancelled jobs and unexpected skips fail validation.
+The runner recomputes scope using the planner's release-history pin.
+
+An explicit local `cargo xtask ci thread-sanitizer` invocation runs all controls.
+Hosted CI requires a valid trigger and recomputes its affected selection.
+
+## Reusing a release rehearsal
+
+A tag push looks for a successful manual release rehearsal on the same commit
+and in this repository's `martensite.yml` workflow (#275). The rehearsal's final
+job records its version, commit, run attempt and distribution artifact IDs and
+SHA-256 digests. It also records the baseline tag and commit, publication-history
+fingerprint, changed packages, exact selected test suites and sanitizer control IDs.
+Reuse requires those inputs to match the tag run, even when a changed scope has the same number
+of test shards. Old rehearsals without this receipt take the normal validation
+path. PR validation never qualifies, and a manual run never publishes.
+
+The tag run derives the required check and test jobs from its current release
+plan, then checks their results in the recorded attempt. It requires every
+platform check, selected test shard and release aggregate. The sanitizer job is
+required when the plan selects ownership controls. When the plan selects ARM64
+renderer admission, that job is required too. A partial retry
+whose current attempt lacks a required job does not qualify.
+
+If evidence qualifies, the tag run skips rebuilding and retesting. Its verify
+job checks the evidence again, downloads artifacts by their immutable IDs,
+verifies the GitHub ZIP digests, and checks each payload's checksum companion.
+Only then does the existing publisher receive those files. A changed receipt,
+expired artifact, missing job or mismatched version stops reuse. If discovery
+finds no qualifying run, normal validation runs. If selected evidence changes
+before the verify job restores it, verification fails and publication stops. The verifier
+reads flat ZIP entries through Python's standard library on Ubuntu, with a
+1 GiB compressed and expanded limit per artifact; it never extracts archive paths.
+No release tag or package version is created by this process.

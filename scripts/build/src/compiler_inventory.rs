@@ -54,7 +54,8 @@ fn collect_diagnostics(
     ownership::classify(runner, root, diagnostics)
 }
 
-fn invalidate_previous_evidence(root: &Path) -> BuildResult<()> {
+// Prevent skipped PR captures from publishing another revision's evidence (#411).
+pub(crate) fn invalidate_previous_evidence(root: &Path) -> BuildResult<()> {
     for name in [
         "latest.json",
         "compiler.stdout.jsonl",

@@ -53,3 +53,44 @@ fn only_tag_push_requests_publication_despite_equal_release_versions() {
         assert_eq!(requested, publish);
     }
 }
+
+#[test]
+fn reused_release_skips_execution_only_after_plan_evidence_and_verifies_before_publish() {
+    let workflow = include_str!("../../../.github/workflows/martensite.yml").replace("\r\n", "\n");
+    for required in [
+        "cargo xtask ci reuse-plan",
+        "cargo xtask ci reuse-verify --run",
+        "cargo xtask ci seal-validation",
+        "name: dist-reused",
+        "needs.verify.result == 'success'",
+        "needs.checks.result == 'skipped' && needs.plan.outputs.reuse-run != ''",
+    ] {
+        assert!(workflow.contains(required), "missing {required}");
+    }
+    for key in ["checks", "release-tests", "thread-sanitizer"] {
+        let job = workflow
+            .split(&format!("\n  {key}:\n"))
+            .nth(1)
+            .unwrap()
+            .split("\n\n  ")
+            .next()
+            .unwrap_or_default();
+        assert!(
+            job.contains("reuse-run"),
+            "{key} must be conditional on evidence"
+        );
+    }
+}
+
+#[test]
+fn actions_read_permission_is_limited_to_evidence_consumers() {
+    let workflow = include_str!("../../../.github/workflows/martensite.yml");
+    let global = workflow.split("jobs:").next().unwrap();
+    assert!(!global.contains("actions: read"));
+    assert_eq!(workflow.matches("actions: read").count(), 2);
+    for name in ["plan", "verify"] {
+        let section = workflow.split(&format!("\n  {name}:\n")).nth(1).unwrap();
+        let permission = section.split("    steps:").next().unwrap();
+        assert!(permission.contains("permissions:\n      contents: read\n      actions: read"));
+    }
+}

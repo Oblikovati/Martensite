@@ -34,6 +34,7 @@ pub fn validate_pr_checks(
     target: &BuildTarget,
     run_tests: bool,
 ) -> BuildResult<()> {
+    crate::compiler_inventory::invalidate_previous_evidence(context.root())?;
     let merge_base = context.git.merge_base(base)?;
     let changed = context.git.changed_files(&merge_base)?;
     let summary = format!(
@@ -42,18 +43,36 @@ pub fn validate_pr_checks(
     );
     context.reporter.note(&summary);
     lint_changed_files(context, &merge_base, &changed)?;
-    if changed
-        .iter()
-        .any(|file| crate::lint::unsafe_inventory_input(&file.path))
-    {
-        context
-            .reporter
-            .step("Collect expanded unsafe diagnostics", || {
-                crate::compiler_inventory::capture_inventory(context.runner, context.root(), target)
-            })?;
-    }
+    check_expanded_inventory(context, &changed, target)?;
     check_affected_packages(context, &merge_base, &changed, target, run_tests)
 }
+
+// Kept separate from the source ratchet: compiler capture cleans a dedicated build (#411).
+fn check_expanded_inventory(
+    context: &BuildContext<'_>,
+    changed: &[ChangedFile],
+    target: &BuildTarget,
+) -> BuildResult<()> {
+    if !changed
+        .iter()
+        .any(|file| crate::inventory_impact::expanded_input(&file.path))
+    {
+        crate::compiler_inventory::invalidate_previous_evidence(context.root())?;
+        context
+            .reporter
+            .note("Expanded unsafe inventory skipped: no relevant input changed.");
+        return Ok(());
+    }
+    context
+        .reporter
+        .step("Collect expanded unsafe diagnostics", || {
+            crate::compiler_inventory::capture_inventory(context.runner, context.root(), target)
+        })
+}
+
+#[cfg(test)]
+#[path = "pr_inventory_tests.rs"]
+mod inventory_tests;
 
 struct PackageChecks {
     build: BTreeSet<String>,

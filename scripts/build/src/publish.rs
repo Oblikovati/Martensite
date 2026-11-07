@@ -57,7 +57,7 @@ fn release_command(
 }
 
 /// Every file in `dist_dir`, sorted; each payload must match its `.sha256`.
-fn verified_assets(dist_dir: &Path) -> BuildResult<Vec<PathBuf>> {
+pub(crate) fn verified_assets(dist_dir: &Path) -> BuildResult<Vec<PathBuf>> {
     let assets = sorted_files(dist_dir)?;
     let payloads: Vec<&PathBuf> = assets.iter().filter(|asset| !is_checksum(asset)).collect();
     if payloads.is_empty() {

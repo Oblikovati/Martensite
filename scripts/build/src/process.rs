@@ -2,6 +2,8 @@
 //! rustfmt and gh call goes through [`CommandRunner`] so pipelines can be
 //! tested with a recording fake instead of real tools.
 
+mod bounded;
+
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitStatus, Stdio};
 
@@ -132,6 +134,12 @@ pub trait CommandRunner {
     /// Captures status and both byte streams, including unsuccessful exits.
     /// Example: `runner.capture_output(&spec)?` distinguishes Git diagnostics from clean diffs.
     fn capture_output(&self, spec: &CommandSpec) -> BuildResult<CommandOutput>;
+    /// Captures bounded stdout; `runner.capture_bounded(&spec, 4096)?` refuses excess bytes.
+    fn capture_bounded(&self, spec: &CommandSpec, limit: usize) -> BuildResult<CommandOutput> {
+        let output = self.capture_output(spec)?;
+        bounded::check(spec, output.stdout.len(), limit)?;
+        Ok(output)
+    }
 }
 
 /// A completed command whose nonzero status still needs tool-specific interpretation.
@@ -149,6 +157,10 @@ pub struct CommandOutput {
 pub struct ProcessRunner;
 
 impl CommandRunner for ProcessRunner {
+    fn capture_bounded(&self, spec: &CommandSpec, limit: usize) -> BuildResult<CommandOutput> {
+        bounded::capture(spec, limit)
+    }
+
     fn run(&self, spec: &CommandSpec) -> BuildResult<()> {
         let status = spawn_status(spec)?;
         require_success(spec, status)
