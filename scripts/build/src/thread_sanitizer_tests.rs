@@ -11,7 +11,11 @@ fn runner() -> RecordingRunner {
 #[test]
 fn startup_precedes_geometry_capture_and_group_controls() {
     let runner = runner();
-    run(&context_at(&runner, Path::new("/repo"))).unwrap();
+    run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &crate::thread_sanitizer_selection::CONTROLS,
+    )
+    .unwrap();
     let commands = runner.commands();
     let manifest =
         Path::new("/repo").join("scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml");
@@ -35,7 +39,11 @@ fn startup_precedes_geometry_capture_and_group_controls() {
 fn startup_failure_prevents_geometry_and_reference_capture_execution() {
     let command = startup(Path::new("/repo")).display();
     let runner = runner().with_exit_code(&command, 101);
-    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    let error = run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &crate::thread_sanitizer_selection::CONTROLS,
+    )
+    .unwrap_err();
     assert!(error.to_string().contains("101"));
     assert!(
         !runner
@@ -50,9 +58,17 @@ fn startup_failure_prevents_geometry_and_reference_capture_execution() {
 
 #[test]
 fn actual_control_failure_is_not_accepted_as_sanitizer_success() {
-    let command = controls(Path::new("/repo")).display();
+    let command = cache_controls(
+        Path::new("/repo"),
+        &["martensite-tkg2d", "martensite-tkg3d"],
+    )
+    .display();
     let runner = runner().with_exit_code(&command, 66);
-    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    let error = run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &crate::thread_sanitizer_selection::CONTROLS,
+    )
+    .unwrap_err();
     assert!(error.to_string().contains("66"));
     assert_eq!(runner.commands().len(), 4);
     assert!(
@@ -104,7 +120,7 @@ fn workflow_runs_the_pinned_sanitizer_and_requires_its_actual_job_result() {
     assert!(workflow.contains("run: cargo xtask ci thread-sanitizer"));
     assert!(workflow.contains("needs: [plan, checks, tests, release-tests, thread-sanitizer]"));
     assert!(
-        workflow.contains("cargo xtask ci gate --checks \"$SANITIZER_RESULT\" --tests skipped")
+        workflow.contains("cargo xtask ci gate --checks \"$PLAN_RESULT\" --tests \"$SANITIZER_RESULT\" $HAS_SANITIZER_FLAG")
     );
     assert!(workflow.contains("SANITIZER_RESULT: ${{ needs.thread-sanitizer.result }}"));
 }
@@ -113,7 +129,11 @@ fn workflow_runs_the_pinned_sanitizer_and_requires_its_actual_job_result() {
 fn reference_capture_failure_refuses_the_required_sanitizer_check() {
     let command = capture_controls(Path::new("/repo")).display();
     let runner = runner().with_exit_code(&command, 66);
-    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    let error = run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &crate::thread_sanitizer_selection::CONTROLS,
+    )
+    .unwrap_err();
     assert!(error.to_string().contains("66"));
     assert_eq!(runner.commands().len(), 5);
 }
@@ -139,7 +159,11 @@ fn reference_capture_uses_the_same_instrumentation_as_startup() {
 fn group_failure_refuses_the_required_sanitizer_check() {
     let command = group_controls(Path::new("/repo")).display();
     let runner = runner().with_exit_code(&command, 66);
-    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    let error = run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &crate::thread_sanitizer_selection::CONTROLS,
+    )
+    .unwrap_err();
     assert!(error.to_string().contains("66"));
     assert_eq!(runner.commands().len(), 6);
 }
@@ -167,7 +191,11 @@ fn groups_use_the_same_instrumentation_with_both_actual_module_filters() {
 fn coherent_face_capture_failure_refuses_the_required_sanitizer_check() {
     let command = face_input_controls(Path::new("/repo")).display();
     let runner = runner().with_exit_code(&command, 66);
-    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    let error = run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &crate::thread_sanitizer_selection::CONTROLS,
+    )
+    .unwrap_err();
     assert!(error.to_string().contains("66"));
     assert_eq!(runner.commands().len(), 7);
 }
@@ -191,7 +219,11 @@ fn coherent_face_capture_uses_the_same_pinned_instrumentation() {
 fn owned_face_certificate_failure_refuses_the_required_sanitizer_check() {
     let command = face_certificate_controls(Path::new("/repo")).display();
     let runner = runner().with_exit_code(&command, 66);
-    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    let error = run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &crate::thread_sanitizer_selection::CONTROLS,
+    )
+    .unwrap_err();
     assert!(error.to_string().contains("66"));
     assert_eq!(runner.commands().len(), 8);
 }
@@ -216,7 +248,11 @@ fn owned_face_certificate_group_uses_the_same_pinned_instrumentation() {
 fn open_support_failure_refuses_the_required_sanitizer_check() {
     let command = open_extrusion_controls(Path::new("/repo")).display();
     let runner = runner().with_exit_code(&command, 66);
-    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    let error = run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &crate::thread_sanitizer_selection::CONTROLS,
+    )
+    .unwrap_err();
     assert!(error.to_string().contains("66"));
     assert_eq!(runner.commands().len(), 9);
 }
@@ -240,7 +276,11 @@ fn open_support_group_uses_the_same_pinned_instrumentation() {
 fn vertex_incidence_failure_refuses_the_required_sanitizer_check() {
     let command = vertex_neighborhood_controls(Path::new("/repo")).display();
     let runner = runner().with_exit_code(&command, 66);
-    let error = run(&context_at(&runner, Path::new("/repo"))).unwrap_err();
+    let error = run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &crate::thread_sanitizer_selection::CONTROLS,
+    )
+    .unwrap_err();
     assert!(error.to_string().contains("66"));
     assert_eq!(runner.commands().len(), 10);
 }
@@ -258,4 +298,45 @@ fn vertex_incidence_group_keeps_the_pinned_sanitizer_settings() {
         "--show-output",
     ]);
     assert_eq!(vertex_neighborhood_controls(root), expected);
+}
+
+#[test]
+fn empty_selection_runs_no_sanitizer_commands() {
+    let runner = runner();
+    let context = context_at(&runner, Path::new("/repo"));
+    let before = runner.commands();
+    run_selected(&context, &[]).unwrap();
+    assert_eq!(runner.commands(), before);
+}
+
+#[test]
+fn cache_leaf_selection_excludes_unaffected_base_controls() {
+    let runner = runner();
+    run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &[Control::Cache3d],
+    )
+    .unwrap();
+    let commands = runner.commands();
+    assert_eq!(commands.len(), 4);
+    assert!(commands[3].contains("--package martensite-tkg3d"));
+    assert!(
+        !commands
+            .iter()
+            .any(|command| command.contains("--package martensite-tkg2d"))
+    );
+}
+
+#[test]
+fn every_control_command_targets_its_declared_owner() {
+    for control in crate::thread_sanitizer_selection::CONTROLS {
+        let expected = format!("--package {} ", control.owner());
+        let command = control_command(Path::new("/repo"), control).display();
+        assert!(command.contains(&expected), "{control:?}: {command}");
+        assert_eq!(
+            command.matches("--package ").count(),
+            1,
+            "{control:?}: {command}"
+        );
+    }
 }

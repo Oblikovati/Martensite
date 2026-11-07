@@ -53,3 +53,31 @@ fn only_tag_push_requests_publication_despite_equal_release_versions() {
         assert_eq!(requested, publish);
     }
 }
+
+#[test]
+fn reused_release_skips_execution_only_after_plan_evidence_and_verifies_before_publish() {
+    let workflow = include_str!("../../../.github/workflows/martensite.yml").replace("\r\n", "\n");
+    for required in [
+        "cargo xtask ci reuse-plan",
+        "cargo xtask ci reuse-verify --run",
+        "cargo xtask ci seal-validation",
+        "name: dist-reused",
+        "needs.verify.result == 'success'",
+        "needs.checks.result == 'skipped' && needs.plan.outputs.reuse-run != ''",
+    ] {
+        assert!(workflow.contains(required), "missing {required}");
+    }
+    for key in ["checks", "release-tests", "thread-sanitizer"] {
+        let job = workflow
+            .split(&format!("\n  {key}:\n"))
+            .nth(1)
+            .unwrap()
+            .split("\n\n  ")
+            .next()
+            .unwrap_or_default();
+        assert!(
+            job.contains("reuse-run"),
+            "{key} must be conditional on evidence"
+        );
+    }
+}

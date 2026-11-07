@@ -123,3 +123,28 @@ fn unchanged_release() -> ReleaseScopeFixture {
     .unwrap();
     fixture
 }
+
+#[test]
+fn sanitizer_execution_inputs_use_previous_release_scope() {
+    let mut fixture = unchanged_release();
+    fixture.runner = fixture.runner.with_stdout(
+        "git diff --name-status --no-renames -z v0.3.0",
+        "M\0scripts/build/src/thread_sanitizer.rs\0",
+    );
+    let context = context_at(&fixture.runner, fixture.directory.path());
+    let plan = CiPlan::Release {
+        version: semver::Version::new(0, 3, 1),
+        publish: false,
+    };
+    assert_eq!(
+        sanitizer_controls(&context, &plan).unwrap(),
+        crate::thread_sanitizer_selection::CONTROLS
+    );
+    assert!(
+        !fixture
+            .runner
+            .commands()
+            .iter()
+            .any(|command| command.contains("merge-base"))
+    );
+}

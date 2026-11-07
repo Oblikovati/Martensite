@@ -23,7 +23,7 @@ pub fn check_unsafe_inventory(
 ) -> BuildResult<()> {
     if !changed
         .iter()
-        .any(|file| unsafe_inventory_input(&file.path))
+        .any(|file| crate::inventory_impact::source_input(&file.path))
     {
         return Ok(());
     }
@@ -34,17 +34,6 @@ pub fn check_unsafe_inventory(
         "martensite-build",
         "unsafe_inventory",
     ]))
-}
-
-pub(crate) fn unsafe_inventory_input(path: &str) -> bool {
-    (path.starts_with("crates/") && path.ends_with(".rs"))
-        || path.starts_with("scripts/build/")
-        || path.starts_with("docs/features/safe-toolkits/")
-        || path.ends_with("Cargo.toml")
-        || path == "Cargo.lock"
-        || path == "rust-toolchain.toml"
-        || path.starts_with(".cargo/")
-        || path == ".github/workflows/martensite.yml"
 }
 
 /// Fails when the change set adds trailing whitespace or conflict markers.
@@ -127,7 +116,7 @@ mod tests {
     fn unsafe_inventory_runs_for_source_deletions_and_baseline_changes() {
         for path in [
             "crates/example/src/lib.rs",
-            "docs/features/safe-toolkits/baseline.json",
+            "docs/features/safe-toolkits/unsafe-source-baseline.json",
             "Cargo.lock",
             "rust-toolchain.toml",
             ".cargo/config.toml",
