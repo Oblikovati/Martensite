@@ -67,7 +67,7 @@ exercise those checks.
 
 The `*_regressions` test targets run cases in isolated worker processes under their group's
 time budget and grade the case report. `modeling_view_regressions` exercises fitting, display
-aspects and modelling results using the geometry toolkits, including Booleans and fillets.
+aspects, Boolean results and meshed shapes.
 
 ## Assets
 
