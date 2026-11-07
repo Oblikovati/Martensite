@@ -61,6 +61,7 @@ impl PartialEq for Shape {
 impl Eq for Shape {}
 
 impl HashKey for Shape {
+    const WALKS_IN_ORDER_ADDED: bool = true;
     fn kernel_hash(&self) -> usize {
         self.hash_code()
     }

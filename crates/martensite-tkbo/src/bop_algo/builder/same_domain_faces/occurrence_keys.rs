@@ -15,4 +15,7 @@ impl HashPolicy<ShapeSet> for EdgeOccurrencePolicy {
             FaceGroupingVersion::ExactOccurrencesV2 => first.same_occurrences(second),
         }
     }
+    fn walks_in_order_added(&self) -> bool {
+        true
+    }
 }

@@ -2,6 +2,9 @@
 use crate::standard::Failure;
 /// A key's hash representation; `42_i32.kernel_hash()`.
 pub trait HashKey {
+    /// Whether maps walk these keys in the order they were added instead of by bucket: for keys
+    /// hashed by an address, which differs between runs, whose traversal decides what is built.
+    const WALKS_IN_ORDER_ADDED: bool = false;
     /// Returns the pointer-width hash used by the hashed maps.
     fn kernel_hash(&self) -> usize;
     /// Equality dispatch, independent of Rust operators; `first.kernel_equal(&second)`.
@@ -18,6 +21,12 @@ pub trait HashPolicy<K> {
     fn hash(&self, key: &K) -> usize;
     /// Compares keys consistently with their hash; `policy.equal(&first,&second)`.
     fn equal(&self, first: &K, second: &K) -> bool;
+    /// Whether a map under this policy walks its entries in the order they were added instead of
+    /// by bucket: for keys hashed by an address, which differs between runs, whose traversal
+    /// decides what is built; `policy.walks_in_order_added()`.
+    fn walks_in_order_added(&self) -> bool {
+        false
+    }
 }
 /// Stateless default hashing; `DataMap::<i32,i32>::default()` uses this policy.
 #[derive(Clone, Copy, Debug, Default)]
@@ -28,6 +37,9 @@ impl<K: HashKey + PartialEq> HashPolicy<K> for DefaultHashPolicy {
     }
     fn equal(&self, first: &K, second: &K) -> bool {
         first.kernel_equal(second)
+    }
+    fn walks_in_order_added(&self) -> bool {
+        K::WALKS_IN_ORDER_ADDED
     }
 }
 macro_rules! integer_hash {

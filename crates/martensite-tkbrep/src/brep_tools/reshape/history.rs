@@ -18,6 +18,9 @@ impl HashPolicy<Shape> for ShapeEqualHasher {
     fn equal(&self, first: &Shape, second: &Shape) -> bool {
         first == second
     }
+    fn walks_in_order_added(&self) -> bool {
+        true
+    }
 }
 
 /// The anonymous-namespace `Add(theMap, theShape)`: a wire, shell or compsolid adds its

@@ -32,6 +32,9 @@ impl martensite_tkernel::ncollection::HashPolicy<CommonBlockHandle> for CommonBl
     fn equal(&self, first: &CommonBlockHandle, second: &CommonBlockHandle) -> bool {
         Arc::ptr_eq(first, second)
     }
+    fn walks_in_order_added(&self) -> bool {
+        true
+    }
 }
 
 impl_transient!(CommonBlock, "BOPDSCommonBlock", StandardTransient, parent);

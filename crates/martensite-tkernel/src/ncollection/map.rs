@@ -1,4 +1,5 @@
-//! Hash keys with prime-step bucket growth, head insertion and bucket-order traversal.
+//! Hash keys with prime-step bucket growth, head insertion and bucket-order traversal; a policy can
+//! ask for traversal in the order the keys were added.
 use super::{
     BaseAllocator, BaseMap, DefaultHashPolicy, HashPolicy, chained_slots::ChainedSlots,
     slot_chains::SlotRange,
@@ -22,7 +23,8 @@ impl<K: Debug, H: HashPolicy<K>> Map<K, H> {
     /// Selects the map allocator; `Map::with_allocator(policy,10,arena)`.
     pub fn with_allocator(hasher: H, buckets: usize, resource: BaseAllocator) -> Self {
         Self {
-            storage: ChainedSlots::new(buckets, resource),
+            storage: ChainedSlots::new(buckets, resource)
+                .walking_slots(hasher.walks_in_order_added()),
             hasher,
         }
     }

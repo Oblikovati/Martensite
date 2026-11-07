@@ -25,6 +25,9 @@ impl HashPolicy<Shape> for ShapeMapHasher {
     fn equal(&self, first: &Shape, second: &Shape) -> bool {
         first.is_same(second)
     }
+    fn walks_in_order_added(&self) -> bool {
+        true
+    }
 }
 
 /// `NCollection_IndexedMap<TopoDS_Shape, TopTools_ShapeMapHasher>`.
