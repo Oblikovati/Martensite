@@ -79,8 +79,8 @@ The separate debugger runs were stopped after sampling. The temporary debugger
 and sampling script were kept outside the repository and removed afterwards.
 
 Follow-up #252 covers arithmetic dependency build profiles and their correctness
-gates. Follow-up #253 covers repeated extrema-grid work. Issue #226 also tracks
-the long TKPrim toolkit phase. None of these findings authorizes weaker oracles,
+gates. Follow-up #253 covers repeated extrema-grid work. The archived #226 logs identify the long phase as TKShHealing dataset
+execution; the 1,733-test TKPrim toolkit completed in seconds (see below). None of these findings authorizes weaker oracles,
 looser tolerances or persistent caches on mutable geometry.
 
 Temporary Cargo command-line overrides tested one dependency at a time, without
@@ -155,3 +155,75 @@ or default comparison refs. Release selection remains relative to release tags.
 The `martensite-vulkan` suite needs the pinned Mesa lavapipe and validation layer, which
 `.github/actions/setup-renderer-tests` and `install-linux.sh` provide on Linux only. Its
 tests run on the Linux target. The other platforms still build and lint the package.
+
+## Hosted compilation and runner cost
+
+The successful [four-platform release rehearsal](https://github.com/Oblikovati/Martensite/actions/runs/42235311548)
+on 2026-11-06 at `6fd6791eedb0b40e88c5810b090afa8f71c0d6c0` provides a baseline for the current shard layout. Its 25 job records contain 23 successful jobs and two
+intentionally skipped jobs. From the first job start to the last completion it
+took 120.68 minutes. The sum of recorded job durations was 851.27 minutes. These durations measure runner occupancy. CPU time, queue time and platform
+billing multipliers are outside this measurement.
+
+The longest test jobs were:
+
+| Job | Whole job, minutes | Cargo test compilation | First test to last test/doctest result, minutes |
+| --- | ---: | ---: | ---: |
+| Intel macOS shard 0 | 114.97 | 42m 16s | 70.35 |
+| Intel macOS shard 2 | 99.95 | 32m 56s | 63.37 |
+| Linux x86_64 shard 0 | 94.00 | 26m 10s | 64.68 |
+
+Cargo reports each compilation interval in its `Finished test profile` line.
+The execution interval uses log timestamps and includes test startup, subprocess
+work and doctests; it is not summed per-case CPU time. Other job time includes
+checkout, setup, the build driver and cleanup. GitHub exposes the combined
+compilation and tests as one `cargo xtask ci test` step, so step durations alone
+cannot separate them.
+
+Every one of the 16 native test shards logged a compilation of
+`martensite-tkernel`, as did each platform's check job. This confirms duplicated
+compilation across jobs. Some driver tests also deliberately compile temporary
+SDK fixtures; counting every compilation line as avoidable duplication would
+misclassify those checks.
+
+The earlier single-platform PR-mode preparation run `39981721808` occupied
+125.47 summed job-minutes and 125.52 minutes from first start to last completion,
+including about 117 minutes of test execution. It used a different revision,
+package scope and test profile. The later run includes four native platforms,
+ThreadSanitizer and newly added toolkits. Comparing these totals does not
+establish either a speedup or a cost regression from sharding.
+
+The later critical path has also changed. On Intel macOS shard 0, the Boolean
+script dataset took 2558.89 seconds, STEP's dataset took 698.12 seconds and the
+TKGeomBase toolkit took 332.85 seconds. Intel macOS shard 2 spent 1609.79 seconds
+in TKBO library tests and 1262.89 seconds in the offset dataset. These elapsed
+measurements justify revisiting shard balance and compilation reuse with a
+matched revision and package scope; they do not justify removing cases or
+changing numerical behavior.
+
+This records the parallel scheduling, failure propagation and cost measurements
+requested by #250. Issue #253 still tracks repeated extrema-grid computation.
+The measurements do not show that the current schedule minimizes runner cost.
+
+## Corrected attribution of the 1,733-test phase (#226)
+
+The [first attempt](https://github.com/Oblikovati/Martensite/actions/runs/39790837617/job/119866403018)
+contains the reported outliner result: 259 tests passed in 12.71 seconds. Its
+1,733-test TKPrim toolkit then passed in 6.52 seconds, from 14:10:48 to 14:10:54
+UTC. The job was later cancelled. The old issue comment interpreted a pending
+API step status as evidence that Cargo had not started; the completed log
+contradicts that interpretation.
+
+The [successful retry](https://github.com/Oblikovati/Martensite/actions/runs/39790837617/job/119916479681)
+at the same commit, `1e2bb1e`, passed TKPrim in 9.54 seconds. Its 927-case
+TKShHealing dataset took 8767.44 seconds, from 15:52:26 to 18:18:33 UTC.
+The largest gaps between nonempty log entries were 39.82 seconds in the first
+attempt and 40.77 seconds in the retry. Both logged case completions and
+long-running warnings, including `bug27015`, `bug30396_2` and `bug333`.
+
+Issue #228 independently reproduced repeated hashing of a 315 MiB test
+executable. Commit `f7775a284` optimized that hashing while retaining all three
+fingerprint checks; [its measurements](fingerprint-cost.md) establish that
+particular cost. They do not attribute the entire healing runtime to hashing.
+The current case runner retains CPU and elapsed-time limits and a five-second
+watchdog. The recovered logs establish a live, progressing workload rather
+than a stalled 1,733-test suite, so #226 does not justify another heartbeat.
