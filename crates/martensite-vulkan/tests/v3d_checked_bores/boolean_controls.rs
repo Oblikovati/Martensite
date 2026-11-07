@@ -106,7 +106,10 @@ fn sphere_cube_formula_uses_six_disjoint_caps() {
 fn blind_bore_formula_accounts_for_blind_bottom_disks() {
     let (volume, area) = boolean_measurements::blind_bore_expectation();
     let pi = std::f64::consts::PI;
-    assert!((volume - (200. * 100. * 100. - 5. * pi * 10f64.powi(2) * 50.)).abs() < 1e-9);
+    assert!(
+        (volume - (200. * 100. * 100. - 5. * pi * martensite_cmath::powi(10., 2) * 50.)).abs()
+            < 1e-9
+    );
     assert!(
         (area - (2. * (200. * 100. + 200. * 100. + 100. * 100.) + 5. * 2. * pi * 10. * 50.)).abs()
             < 1e-9
