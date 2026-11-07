@@ -1,0 +1,102 @@
+[package]
+autotests = false
+name = "martensite-tkdeiges"
+version = "0.13.0"
+description = "Martensite IGES exchange: the data structures, the file parser and writer, the entity packages and shape transfers."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.4" }
+martensite-tkde = { path = "../martensite-tkde", version = "0.9.0" }
+martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.9" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.8" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.10" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.6" }
+martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.8" }
+martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.9" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.3" }
+martensite-tkbool = { path = "../martensite-tkbool", version = "0.8.0" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.10" }
+martensite-tkcaf = { path = "../martensite-tkcaf", version = "0.8.0" }
+martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.3.6" }
+martensite-tkxcaf = { path = "../martensite-tkxcaf", version = "0.9.1" }
+martensite-tkxsbase = { path = "../martensite-tkxsbase", version = "0.9.1" }
+
+[dev-dependencies]
+martensite-geometry-raster = { path = "../martensite-geometry-raster", version = "0.7.0" }
+martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
+martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
+martensite-tkdestep = { path = "../martensite-tkdestep", version = "0.12.1" }
+martensite-tkdestl = { path = "../martensite-tkdestl", version = "0.11.1" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.8" }
+martensite-tkoffset = { path = "../martensite-tkoffset", version = "0.10.1" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
+martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.7.1" }
+martensite-tkvcaf = { path = "../martensite-tkvcaf", version = "0.9.1" }
+martensite-vulkan = { path = "../martensite-vulkan", version = "0.7.2" }
+
+# The exchange scripts of the toolkit, one test per script, each graded on its whole stream.
+[[test]]
+name = "dataset_cases"
+path = "tests/dataset_cases/main.rs"
+
+# The scripts that end on a shaded view, on the real renderer, each graded on its whole stream.
+[[test]]
+name = "viewer_cases"
+path = "tests/viewer_cases/main.rs"
+
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"
+
+# Process-wide format defaults must remain isolated from ordinary configuration tests.
+[[test]]
+name = "static_initialization"
+path = "tests/static_initialization.rs"
+
+# Reads public IGES files into shapes and writes them back.
+[[test]]
+name = "iges_round_trip"
+path = "tests/iges_round_trip.rs"
+
+[[test]]
+name = "iges_public_files"
+path = "tests/iges_public_files.rs"
+
+[[test]]
+name = "iges_entity_records"
+path = "tests/iges_entity_records.rs"
+
+[[test]]
+name = "iges_write_settings"
+path = "tests/iges_write_settings.rs"
+
+[[test]]
+name = "de_iges_provider"
+path = "tests/de_iges_provider.rs"
+
+[[test]]
+name = "iges_torus_faces"
+path = "tests/iges_torus_faces.rs"
+
+[[test]]
+name = "iges_two_threads"
+path = "tests/iges_two_threads.rs"
+
+# The exchange scripts of documents with public inputs, graded on their whole stream.
+[[test]]
+name = "restored_cases"
+path = "tests/restored_cases/main.rs"
+
+[[test]]
+name = "wrapper_configuration_cases"
+path = "tests/wrapper_configuration_cases.rs"

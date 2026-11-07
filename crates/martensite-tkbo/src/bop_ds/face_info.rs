@@ -20,6 +20,9 @@ impl HashPolicy<PaveBlockHandle> for PaveBlockHandleIdentity {
     fn equal(&self, first: &PaveBlockHandle, second: &PaveBlockHandle) -> bool {
         Arc::ptr_eq(first, second)
     }
+    fn walks_in_order_added(&self) -> bool {
+        true
+    }
 }
 
 /// An insertion-ordered set of pave-block handles, keyed by shared identity.

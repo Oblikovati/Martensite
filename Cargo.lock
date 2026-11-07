@@ -534,7 +534,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkbo"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "martensite-cmath",
  "martensite-geometry-raster",
@@ -578,7 +578,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkbrep"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "martensite-cmath",
  "martensite-tkernel",
@@ -631,8 +631,86 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkdeiges"
+version = "0.13.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-geometry-raster",
+ "martensite-process-policy",
+ "martensite-raster-core",
+ "martensite-tkbool",
+ "martensite-tkbrep",
+ "martensite-tkcaf",
+ "martensite-tkde",
+ "martensite-tkdestep",
+ "martensite-tkdestl",
+ "martensite-tkernel",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tkgeomalgo",
+ "martensite-tkgeombase",
+ "martensite-tklcaf",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+ "martensite-tkoffset",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tkshhealing",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-tkvcaf",
+ "martensite-tkxcaf",
+ "martensite-tkxsbase",
+ "martensite-vulkan",
+]
+
+[[package]]
+name = "martensite-tkdeobj"
+version = "0.13.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-process-policy",
+ "martensite-tkbo",
+ "martensite-tkbrep",
+ "martensite-tkde",
+ "martensite-tkdestep",
+ "martensite-tkernel",
+ "martensite-tkfillet",
+ "martensite-tkg2d",
+ "martensite-tkg3d",
+ "martensite-tklcaf",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+ "martensite-tkprim",
+ "martensite-tkrwmesh",
+ "martensite-tkservice",
+ "martensite-tktopalgo",
+ "martensite-tkv3d",
+ "martensite-tkxcaf",
+ "martensite-tkxsbase",
+ "martensite-vulkan",
+]
+
+[[package]]
+name = "martensite-tkdeply"
+version = "0.13.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkbrep",
+ "martensite-tkde",
+ "martensite-tkernel",
+ "martensite-tklcaf",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+ "martensite-tkprim",
+ "martensite-tkrwmesh",
+ "martensite-tkservice",
+ "martensite-tkxcaf",
+]
+
+[[package]]
 name = "martensite-tkdestep"
-version = "0.12.0"
+version = "0.12.1"
 dependencies = [
  "martensite-cmath",
  "martensite-geometry-raster",
@@ -689,7 +767,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkernel"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "allocator-api2",
  "bytemuck",
@@ -863,7 +941,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkmesh"
-version = "0.3.7"
+version = "0.3.8"
 dependencies = [
  "allocator-api2",
  "martensite-cmath",
@@ -897,7 +975,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkoffset"
-version = "0.10.0"
+version = "0.10.1"
 dependencies = [
  "martensite-boolean-cases",
  "martensite-cmath",
@@ -943,6 +1021,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tkrwmesh"
+version = "0.13.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg3d",
+ "martensite-tklcaf",
+ "martensite-tkmath",
+ "martensite-tkmesh",
+ "martensite-tkprim",
+ "martensite-tkservice",
+ "martensite-tkxcaf",
+]
+
+[[package]]
 name = "martensite-tkservice"
 version = "0.4.1"
 dependencies = [
@@ -958,7 +1052,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tkshhealing"
-version = "0.3.8"
+version = "0.3.9"
 dependencies = [
  "martensite-cmath",
  "martensite-process-policy",

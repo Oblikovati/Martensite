@@ -1,0 +1,67 @@
+!*****************************************************************************
+!Configuration Node  Vendor: Martensite Format: OBJ
+!
+!Common parameters:
+!
+!
+!File length units to convert from while reading the file, defined as scale factor for m (meters)
+!Default value: 1.0(M)
+provider.OBJ.Martensite.file.length.unit :	 {{FileLengthUnit}}
+!
+!
+!System origin coordinate system to perform conversion into during read
+!Default value: 0(Zup). Available values: 0(Zup), 1(Yup)
+provider.OBJ.Martensite.system.cs :	 {{SystemCS}}
+!
+!
+!File origin coordinate system to perform conversion during read
+!Default value: 1(Yup). Available values: 0(Zup), 1(Yup)
+provider.OBJ.Martensite.file.cs :	 {{FileCS}}
+!
+!
+!Read parameters:
+!
+!
+!Flag for reading vertex data with single or double floating point precision
+!Default value: 0(false). Available values: 0(false), 1(true)
+provider.OBJ.Martensite.read.single.precision :	 {{ReadSinglePrecision}}
+!
+!
+!Flag for create a single triangulation
+!Default value: 0(false). Available values: 0(false), 1(true)
+provider.OBJ.Martensite.read.create.shapes :	 {{ReadCreateShapes}}
+!
+!
+!Root folder for generating root labels names
+!Default value: (empty). Available values: <path>
+provider.OBJ.Martensite.read.root.prefix :	 {{ReadRootPrefix}}
+!
+!
+!Flag for fill document from shape sequence
+!Default value: 1(true). Available values: 0(false), 1(true)
+provider.OBJ.Martensite.read.fill.doc :	 {{ReadFillDoc}}
+!
+!
+!Flag for fill the document with partially retrieved data even if reader has fa-iled with er-ror
+!Default value: 1(true). Available values: 0(false), 1(true)
+provider.OBJ.Martensite.read.fill.incomplete :	 {{ReadFillIncomplete}}
+!
+!
+!Memory usage limit(MiB)
+!Default value: -1(no limit). Available values: -1(no limit), any positive value
+provider.OBJ.Martensite.read.memory.limit.mib :	 {{ReadMemoryLimitMiB}}
+!
+!
+!Write parameters:
+!
+!
+!Export special comment
+!Default value: (empty). Available values: <string>
+provider.OBJ.Martensite.write.comment :	 {{WriteComment}}
+!
+!
+!Author of exported file name
+!Default value: (empty). Available values: <string>
+provider.OBJ.Martensite.write.author :	 {{WriteAuthor}}
+!
+!*****************************************************************************

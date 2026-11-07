@@ -14,7 +14,9 @@ use martensite_tkbrep::brep::{BRepBuilder, BRepTool};
 use martensite_tkbrep::topods::{self, Edge, Vertex};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{GeomCurve, GeomLine};
+use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
 use martensite_tkmath::gp::{Direction3, Point3, Vector3};
 use martensite_tkshhealing::shape_analysis::ShapeAnalysisCurve;
 use martensite_tktopalgo::brep_lib::{BRepLibEdgeError, BRepLibMakeEdge};
@@ -91,9 +93,11 @@ impl StepToTopoDSTranslateEdge {
             process.add_warning_text(&entity, "Update of 3D-Parameters has failed", "");
         }
         //:d5: instead of AdjustCurve above which is incorrect if U1 and U2 are not ends
-        let live = step_live(&curve, "StepToTopoDSTranslateEdge::MakeFromCurve3D")?;
-        let temp1 = live.value(u1)?.distance(&pv1);
-        let temp2 = live.value(u2)?.distance(&pv2);
+        // The edge maker checks the vertices through the adaptor, whose rounding differs from the
+        // curve's own evaluation by more than the margin of the tolerances set below.
+        let adaptor = GeomAdaptorCurve::with_curve(&curve)?;
+        let temp1 = adaptor.value(u1)?.distance(&pv1);
+        let temp2 = adaptor.value(u2)?.distance(&pv2);
         if temp1 > state.preci || temp2 > state.preci {
             let chord = points[0].distance(&points[1]);
             let displaced = (temp1 - temp2).abs() < state.preci

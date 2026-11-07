@@ -36,9 +36,24 @@ struct ChainLink {
 pub(super) struct SlotChains {
     heads: Option<Box<[SlotLink]>>,
     links: Vec<ChainLink>,
+    /// Traversal by slot instead of by bucket.
+    walks_slots: bool,
 }
 
 impl SlotChains {
+    /// Traverses by slot from now on: in the order of insertion, but that a removal moves the
+    /// last slot into the one it frees.
+    pub(super) fn walk_slots(&mut self) {
+        self.walks_slots = true;
+    }
+    /// Whether traversal is by slot.
+    pub(super) fn walks_slots(&self) -> bool {
+        self.walks_slots
+    }
+    /// The number of linked slots.
+    pub(super) fn slot_count(&self) -> usize {
+        self.links.len()
+    }
     /// Whether a table exists.
     pub(super) fn is_allocated(&self) -> bool {
         self.heads.is_some()
@@ -93,8 +108,11 @@ impl SlotChains {
             self.set_link(bucket, moved_from, Some(slot));
         }
     }
-    /// Every linked slot in traversal order: bucket `0..=NbBuckets`, then each chain.
+    /// Every linked slot in traversal order: bucket `0..=NbBuckets`, then each chain, or by slot.
     pub(super) fn order(&self) -> Vec<usize> {
+        if self.walks_slots {
+            return (0..self.links.len()).collect();
+        }
         let mut order = Vec::with_capacity(self.links.len());
         for &head in self.table() {
             let mut link = head;

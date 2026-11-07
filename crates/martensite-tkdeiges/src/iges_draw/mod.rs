@@ -1,0 +1,66 @@
+//! IGES drawing entities: drawings, views, networks of subfigures, connect points.
+mod circ_array_subfigure;
+#[cfg(test)]
+mod class_tests_01;
+mod connect_point;
+mod drawing;
+mod drawing_with_rotation;
+mod label_display;
+mod network_subfigure;
+mod network_subfigure_def;
+mod perspective_view;
+mod planar;
+mod rect_array_subfigure;
+mod segmented_views_visible;
+mod tool_circ_array_subfigure;
+mod tool_connect_point;
+mod tool_drawing;
+mod tool_drawing_with_rotation;
+mod tool_label_display;
+mod tool_network_subfigure;
+mod tool_network_subfigure_def;
+mod tool_perspective_view;
+mod tool_planar;
+mod tool_rect_array_subfigure;
+mod tool_segmented_views_visible;
+mod tool_view;
+mod tool_views_visible;
+mod tool_views_visible_with_attr;
+mod tool_views_visible_with_attr_2;
+mod tool_views_visible_with_attr_3;
+mod view;
+mod views_visible;
+mod views_visible_with_attr;
+pub use circ_array_subfigure::IgesDrawCircArraySubfigure;
+pub use connect_point::IgesDrawConnectPoint;
+pub use drawing::IgesDrawDrawing;
+pub use drawing_with_rotation::IgesDrawDrawingWithRotation;
+pub use label_display::IgesDrawLabelDisplay;
+pub use network_subfigure::IgesDrawNetworkSubfigure;
+pub use network_subfigure_def::IgesDrawNetworkSubfigureDef;
+pub use perspective_view::IgesDrawPerspectiveView;
+pub use planar::IgesDrawPlanar;
+pub use rect_array_subfigure::IgesDrawRectArraySubfigure;
+pub use segmented_views_visible::IgesDrawSegmentedViewsVisible;
+pub use tool_circ_array_subfigure::IgesDrawToolCircArraySubfigure;
+pub use tool_connect_point::IgesDrawToolConnectPoint;
+pub use tool_drawing::IgesDrawToolDrawing;
+pub use tool_drawing_with_rotation::IgesDrawToolDrawingWithRotation;
+pub use tool_label_display::IgesDrawToolLabelDisplay;
+pub use tool_network_subfigure::IgesDrawToolNetworkSubfigure;
+pub use tool_network_subfigure_def::IgesDrawToolNetworkSubfigureDef;
+pub use tool_perspective_view::IgesDrawToolPerspectiveView;
+pub use tool_planar::IgesDrawToolPlanar;
+pub use tool_rect_array_subfigure::IgesDrawToolRectArraySubfigure;
+pub use tool_segmented_views_visible::IgesDrawToolSegmentedViewsVisible;
+pub use tool_view::IgesDrawToolView;
+pub use tool_views_visible::IgesDrawToolViewsVisible;
+pub use tool_views_visible_with_attr::IgesDrawToolViewsVisibleWithAttr;
+pub use view::IgesDrawView;
+pub use views_visible::IgesDrawViewsVisible;
+pub use views_visible_with_attr::IgesDrawViewsVisibleWithAttr;
+mod package;
+pub use package::{
+    IgesDraw, IgesDrawGeneralModule, IgesDrawProtocol, IgesDrawReadWriteModule,
+    IgesDrawSpecificModule,
+};

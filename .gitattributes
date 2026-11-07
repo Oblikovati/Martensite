@@ -265,3 +265,12 @@ crates/martensite-tkdestl/src/de_stl/configuration.template -text -whitespace
 crates/martensite-tkdestep/tests/fixtures/** -text -whitespace
 crates/martensite-tkdestep/src/de_step/configuration.template -text -whitespace
 crates/martensite-tkdestep/src/rw_step_ap214/step_types.txt -text -whitespace
+
+# Recorded values and configuration bytes of the IGES, OBJ and PLY tests keep their bytes on every platform.
+crates/martensite-tkdeiges/tests/fixtures/** -text -whitespace
+crates/martensite-tkdeiges/src/de_iges/configuration.template -text -whitespace
+crates/martensite-tkdeobj/tests/fixtures/** -text -whitespace
+crates/martensite-tkdeobj/tests/data/** -text -whitespace
+crates/martensite-tkdeobj/src/de_obj/configuration.template -text -whitespace
+crates/martensite-tkdeply/tests/fixtures/** -text -whitespace
+crates/martensite-tkdeply/src/de_ply/configuration.template -text -whitespace

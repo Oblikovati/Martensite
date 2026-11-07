@@ -6,6 +6,24 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-07
+
+### Added
+
+- Added `martensite-tkdeiges` (IGES reading and writing: the data structures, the file parser and writer, the entity packages, shape and document transfers, and the format provider). The global section of a written file names Martensite as the sending product, system and preprocessor, its default author is `Martensite`, and its dates are in UTC. The configuration keys are `provider.IGES.Martensite.*`. Reads and transfers on separate threads take one lock of the format, so they run one at a time and give the same shapes as on one thread. (#405).
+- Added `martensite-tkrwmesh` (the tools of the mesh file formats: axis and unit conversion, the filling of exchange documents from mesh readers, face, edge and vertex iterators, and material maps). (#405).
+- Added `martensite-tkdeobj` (OBJ reading and writing: OBJ and MTL files, document transfers, and the format provider). A written OBJ or MTL file starts with `# Exported by Martensite`, and the configuration keys are `provider.OBJ.Martensite.*`. `read.memory.limit.mib` is a limit in mebibytes. Positions, normals and texture coordinates keep 9 significant digits, so a small value is not lost and a 32-bit float reads back exactly. A comment keeps a one-letter last line and repeated lines, and a line break in a group or material name is written as a space. (#405).
+- Added `martensite-tkdeply` (PLY writing of documents and shapes, and the format provider). A written file carries `comment Exported by Martensite`, and the configuration keys are `provider.PLY.Martensite.*`. The provider's `WriteFile` applies the coordinate system and length unit settings, so a default Z-up document written to a Y-up file holds `(x, z, -y)`; `RwPlyCafWriter` with no conversion set writes coordinates as they are. Single-precision values keep 9 significant digits, so a 32-bit float reads back exactly, and double-precision positions keep 17. Closing a file with fewer records than its header states answers false, unless the export was aborted. (#405).
+- Added `PackedMap::same_walk_copy`, a copy that walks exactly as its source does. A clone sizes its table for the blocks left, so it can walk the same values in another order. (#405).
+
+### Fixed
+
+- Meshing no longer changes the order of a face's triangles when triangles were removed from a large domain on the way. `BRepMeshDataStructureOfDelaun::elements_of_domain` copied the domain into a smaller table, whose walk differs from the domain's own. On one face of `as1_motor.step` with 369 triangles, the domain kept 1009 buckets and the copy had 101. The triangles themselves do not change.
+- Healing a wire no longer loses the surface of a face on a surface periodic in both directions. All the ends of such a wire can lie at one point in space, a few digits of a file apart, so the gaps in space chose the opposite edge. A torus read from a file as faces, written and read again, came back with an area of about 0. `ShapeFixWire::perform` now also reads the p-curve gaps when every edge has a p-curve, the gaps in space would reorder the wire and the two orders chain the edges differently; other wires keep the order they had. `ShapeAnalysisWireOrder`, reading both gaps, now continues the chain at a joint closed in space and on the surface, even from a part of the chain that is itself closed in space.
+- Unifying faces now walks its map of replacement p-curves in the order the edges were added, like every other map keyed by shapes. Its own hash policy did not ask for that order, so this one map still followed addresses.
+- The same input now gives the same shapes in every run and in every repeat within a run. `Map` and `DataMap` keyed by shapes walked their entries in the order of their hashed addresses, which change between runs, so the offset of a plain box by arcs came out in a different order each time and the check of one offset moved between valid and faulty. Maps keyed by shapes, shape sets, pave blocks and common blocks now walk their entries in the order they were added; a removal moves the last entry into the freed place. All other maps keep their order. A policy or key type outside the kernel chooses this with `HashPolicy::walks_in_order_added` or `HashKey::WALKS_IN_ORDER_ADDED`.
+- Reading a STEP file no longer moves the end poles of a B-spline edge curve when a vertex lies inside the curve's range. The vertex tolerance now covers the same evaluation that checks it, so the edge is accepted at once. In `as1_motor.step` the moved poles took the trimmed edge up to 68 units away from its vertices, which gave those vertices a tolerance of 68 and meshed the two faces beside the edge far too coarsely.
+
 ## [0.12.0] - 2026-11-06
 
 ### Added

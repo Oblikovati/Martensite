@@ -128,6 +128,7 @@ impl PartialEq for ShapeSet {
 
 /// `std::hash<BOPToolsSet>`: the sum of the normalized occurrence hashes.
 impl martensite_tkernel::ncollection::HashKey for ShapeSet {
+    const WALKS_IN_ORDER_ADDED: bool = true;
     fn kernel_hash(&self) -> usize {
         self.sum
     }

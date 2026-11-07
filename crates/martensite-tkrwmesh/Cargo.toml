@@ -1,0 +1,31 @@
+[package]
+autotests = false
+name = "martensite-tkrwmesh"
+version = "0.13.0"
+description = "Martensite mesh exchange tools: axis and unit conversion, document fillers, face iterators and material maps"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.4" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.8" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.9" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.10" }
+martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.3.6" }
+martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
+martensite-tkxcaf = { path = "../martensite-tkxcaf", version = "0.9.1" }
+
+[dev-dependencies]
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.10" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.8" }
+
+[[test]]
+name = "toolkit"
+path = "tests/toolkit.rs"

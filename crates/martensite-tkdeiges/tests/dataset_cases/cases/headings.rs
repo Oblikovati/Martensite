@@ -1,0 +1,117 @@
+//! What a hand-written script says before its first command, written by a script.
+
+pub fn heading(source: &str) -> &'static [&'static str] {
+    match source {
+        "tests/bugs/demo/bug14673_3" => &[
+            "# ============================================================",
+            "# Provide true support for Unicode symbols",
+            "# ============================================================",
+            "",
+            "# Check that resource file with messages saved in file with UTF-8",
+            "# encoding is correctly loaded and processed",
+            "# Prepare resource file to be used instead of standard XSTEP.us,",
+            "# with Russian translation of one message",
+        ],
+        "tests/bugs/fclasses/bug22125" => &["==========", "Regression case", "==========", ""],
+        "tests/bugs/fclasses/bug25367_igs" => &["==========", "Regression case", "==========", ""],
+        "tests/bugs/iges/bug22820" => &[
+            "================",
+            "Regression case",
+            "================",
+            "",
+        ],
+        "tests/bugs/iges/bug23018" => &["========", "Regression case", "========", ""],
+        "tests/bugs/iges/bug25518" => &[
+            "========",
+            "Colors are not written to IGES 5.3",
+            "========",
+            "",
+        ],
+        "tests/bugs/iges/bug26047" => &[
+            "============",
+            "Data Exchange - Lost colors for IGES export",
+            "============",
+        ],
+        "tests/bugs/iges/bug26138" => &[
+            "========",
+            "Problems with writing periodic BSplines into IGES",
+            "========",
+            "",
+        ],
+        "tests/bugs/iges/bug26174" => &[
+            "============",
+            "Data Exchange, IGES - Loss of color after the second write of file",
+            "============",
+        ],
+        "tests/bugs/iges/bug29435" => &[
+            "============",
+            "Data Exchange, Exporting wires consisting of more than one edge results in loss of color data in IGES",
+            "============",
+        ],
+        "tests/bugs/iges/bug29435_1" => &[
+            "============",
+            "Data Exchange, Exporting wires consisting of more than one edge results in loss of color data in IGES",
+            "============",
+        ],
+        "tests/bugs/iges/bug33327" => &[
+            "============",
+            "Data Exchange, IGES Import - SubfigureDef can't read string",
+            "============",
+        ],
+        "tests/bugs/mesh/bug25837_1" => &["=========", "Regression case", "=========", ""],
+        "tests/bugs/mesh/bug25837_2" => &[
+            "=========",
+            "Bad triangulation when IGES loaded in meters",
+            "=========",
+            "",
+        ],
+        "tests/bugs/modalg_5/bug24012" => &["============", "Regression case", "============", ""],
+        "tests/bugs/xde/bug12905" => &["============", "Regression case", "============", ""],
+        "tests/bugs/xde/bug22470" => &["============", "Regression case", "============", ""],
+        "tests/bugs/xde/bug23771_1" => &["===========", "Regression case", "==========="],
+        "tests/bugs/xde/bug23771_2" => &["===========", "Regression case", "==========="],
+        "tests/bugs/xde/bug27069" => &[
+            "TODO known ALL: Error: IGES parser does not recognize comments in Parameters section",
+            "==========",
+            "Regression case",
+            "==========",
+            "",
+        ],
+        "tests/bugs/xde/bug27447" => &[
+            "========",
+            "Add support for long IGES entity names",
+            "========",
+            "",
+        ],
+        "tests/bugs/xde/bug816_1" => &["=======", "Regression case", "=======", ""],
+        "tests/bugs/xde/bug816_2" => &["=======", "Regression case", "=======", ""],
+        "tests/de_wrapper/iges/A5" => &[
+            "============",
+            "DEWrapper - Implementation of a common toolkit for importing and exporting CAD files",
+            "============",
+            "",
+        ],
+        "tests/de_wrapper/iges/A6" => &[
+            "============",
+            "DEWrapper - Implementation of a common toolkit for importing and exporting CAD files",
+            "============",
+            "",
+        ],
+        "tests/v3d/bugs/buc60661" => &[
+            "==================================",
+            "Regression case",
+            "It is impossible to nominate sheding mode in 3D-viewer for the some shapes in C30 (SUN station),",
+            "which were stored in IGES format previously and then were retrieved again into BREP format.",
+            "==================================",
+            "",
+        ],
+        "tests/vselect/face/G2" => &[
+            "========",
+            "Modeling Algorithms - the tangential deflection hangs on specific curve",
+            "========",
+        ],
+        "tests/vselect/face/G3" => &[],
+        "tests/vselect/face/G4" => &[],
+        other => panic!("{other}: expected a hand-written script"),
+    }
+}

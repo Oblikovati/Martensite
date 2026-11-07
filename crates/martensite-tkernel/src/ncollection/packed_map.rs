@@ -139,6 +139,39 @@ impl<T: PackedInteger> PackedMap<T> {
         self.count = source.count;
         self
     }
+    /// A copy that walks exactly as this map does: the same bucket count and the same chains. A
+    /// [`clone`](Clone::clone) sizes its table for the blocks left now, while this map keeps the
+    /// table of its largest size, so the two can walk the same values in different orders.
+    ///
+    /// ```
+    /// use martensite_tkernel::ncollection::PackedMap;
+    /// let mut map = PackedMap::<i32>::default();
+    /// for value in (0..102 * 32).step_by(32) {
+    ///     map.add(value);
+    /// }
+    /// for value in (32..101 * 32).step_by(32) {
+    ///     map.remove(value);
+    /// }
+    /// let copy = map.same_walk_copy();
+    /// assert_eq!(copy.bucket_count(), map.bucket_count());
+    /// assert!(copy.iter().eq(map.iter()));
+    /// ```
+    pub fn same_walk_copy(&self) -> Self {
+        let mut copy = Self::new(self.bucket_count);
+        if self.is_empty() {
+            return copy;
+        }
+        copy.buckets = copy.buckets.rehashed(self.bucket_count);
+        // Each insertion goes to the head of its chain, so the last in the walk goes first.
+        let nodes: Vec<_> = self.buckets.nodes().collect();
+        for node in nodes.into_iter().rev() {
+            let bucket = node.hash_code(self.bucket_count);
+            copy.buckets.insert_parts(bucket, node.mask(), node.bits());
+        }
+        copy.block_count = self.block_count;
+        copy.count = self.count;
+        copy
+    }
     /// Transfer buckets and reset the source modulus to one; `PackedMap::move_from(&mut source)`.
     pub fn move_from(source: &mut Self) -> Self {
         std::mem::take(source)

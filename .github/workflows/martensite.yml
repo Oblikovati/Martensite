@@ -135,15 +135,15 @@ jobs:
           max-size: 2GiB
           cache-key-prefix: kache-${{ matrix.package }}
           pr-comment: false
-      - if: contains(fromJSON('["martensite-vulkan", "martensite-tkvcaf", "martensite-tkxcaf", "martensite-tkfeat", "martensite-tkoffset", "martensite-tkdestl", "martensite-tkmeshvs", "martensite-tkdestep"]'), matrix.package)
+      - if: contains(fromJSON('["martensite-vulkan", "martensite-tkvcaf", "martensite-tkxcaf", "martensite-tkfeat", "martensite-tkoffset", "martensite-tkdestl", "martensite-tkmeshvs", "martensite-tkdestep", "martensite-tkdeiges", "martensite-tkdeobj"]'), matrix.package)
         uses: ./.github/actions/setup-renderer-tests
       # The modelling suites link many large test binaries. Their script cases have CPU budgets that
       # assume light optimization, and the Boolean suite spends most of its time in dependencies.
       # The form feature and offset suites also end some cases on a shaded view, so they need the
-      # renderer above. The STL, mesh presentation and STEP suites draw on the real renderer too.
+      # renderer above. The STL, mesh presentation, STEP, IGES and OBJ suites draw on the real renderer too.
       - if: contains(fromJSON('["martensite-tkbo", "martensite-boolean-cases", "martensite-tkbool", "martensite-tkfillet", "martensite-tkcaf"]'), matrix.package)
         uses: ./.github/actions/free-runner-disk
-      - if: contains(fromJSON('["martensite-tkbo", "martensite-boolean-cases", "martensite-tkbool", "martensite-tkfillet", "martensite-tkfeat", "martensite-tkoffset", "martensite-tkdestl", "martensite-tkmeshvs", "martensite-tkdestep"]'), matrix.package)
+      - if: contains(fromJSON('["martensite-tkbo", "martensite-boolean-cases", "martensite-tkbool", "martensite-tkfillet", "martensite-tkfeat", "martensite-tkoffset", "martensite-tkdestl", "martensite-tkmeshvs", "martensite-tkdestep", "martensite-tkdeiges", "martensite-tkdeobj"]'), matrix.package)
         run: echo "CARGO_PROFILE_DEV_OPT_LEVEL=1" >> "$GITHUB_ENV"
       - run: cargo xtask ci test --package "$TEST_PACKAGE" --target x86_64-unknown-linux-gnu
         env:

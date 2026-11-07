@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkdestep"
-version = "0.12.0"
+version = "0.12.1"
 description = "Martensite STEP exchange: the parser and writer, the entity schemas, shape and document transfers, and the format provider."
 edition.workspace = true
 rust-version.workspace = true
@@ -105,6 +105,10 @@ path = "tests/step_xde_reader.rs"
 [[test]]
 name = "step_xde_values"
 path = "tests/step_xde_values.rs"
+
+[[test]]
+name = "step_trimmed_spline_edge"
+path = "tests/step_trimmed_spline_edge.rs"
 
 [[test]]
 name = "step_host_identity"

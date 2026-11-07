@@ -228,7 +228,9 @@ fn build_loops(ends: &EdgeEnds, nb: usize) -> Vec<Vec<i32>> {
             break;
         }
         let close_dist = seq_ends.first_3d.square_distance(&seq_ends.last_3d);
-        if best.min_3d <= real_small() || best.min_3d < close_dist {
+        // A joint that closes in 3D and on the surface continues the chain, even from a sequence
+        // that is itself closed in 3D: the gap between the two is noise below the tolerance.
+        if best.connected || best.min_3d <= real_small() || best.min_3d < close_dist {
             join(ends, &mut seq_ends, &mut sequence, &best);
         } else {
             loops.push(std::mem::take(&mut sequence));
