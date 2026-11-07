@@ -9,6 +9,8 @@
 //! or [`Curve2dTool`]. An object that keeps a curve (`TheCurve*` natively) borrows it
 //! for its lifetime. docs/tkgeombase-progress.md gives the full mapping;
 //! `ExtPElC::with_line(point, line, 1e-7, -10.0, 10.0).nb_ext()? == 1`.
+mod conic_classification;
+pub use conic_classification::{PointCurveClassification, StationaryNature};
 mod curve_curve;
 mod curve_reference;
 mod curve_surface;

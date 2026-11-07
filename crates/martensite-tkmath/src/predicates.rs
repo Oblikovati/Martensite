@@ -8,10 +8,12 @@ pub mod bilinear_patch;
 mod circular_arc;
 mod compare;
 mod direction_band;
+mod distance_variation;
 mod homothety;
 mod line_trace;
 mod plane_sign;
 mod reflected_point;
+pub use distance_variation::distance_second_variation_sign;
 /// Certified polynomial roots for extension topology.
 pub mod roots;
 mod segment_contact;

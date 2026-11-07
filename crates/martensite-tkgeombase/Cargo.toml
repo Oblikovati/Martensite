@@ -50,3 +50,7 @@ path = "tests/geometry_text_corpus_replay.rs"
 [[test]]
 name = "bivariate_output_capacity"
 path = "tests/bivariate_output_capacity.rs"
+
+[[test]]
+name = "extrema_conic_classification"
+path = "tests/extrema_conic_classification.rs"

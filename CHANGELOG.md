@@ -452,6 +452,8 @@ changes and migration notes are listed in the [0.14.0 changelog](https://github.
 
 - Corrected adaptive surface integration to refine both parameter directions, retain weighted inner error estimates, and report exhausted work instead of relaxing error budgets. Nonzero parameter intervals no longer lose their physical area to an absolute parameter cutoff. (#407)
 
+- Corrected elementary conic minimum flags with a shared differential certificate in 2D and 3D. Added explicit legacy classification for replay and named errors for roots that cannot be certified. (#406)
+
 ## [0.13.0] - 2026-11-07
 
 ### Added
