@@ -50,6 +50,9 @@ impl HashPolicy<Shape> for ShapeDefaultHasher {
     fn equal(&self, first: &Shape, second: &Shape) -> bool {
         first == second
     }
+    fn walks_in_order_added(&self) -> bool {
+        true
+    }
 }
 
 /// Map each edge to its replacement p-curve.
@@ -301,4 +304,28 @@ fn null_history() -> Failure {
         "ShapeUpgrade_UnifySameDomain: null history; expected a BRepTools_History",
         "",
     )
+}
+
+#[cfg(test)]
+mod shape_default_hasher_tests {
+    use super::*;
+    use martensite_tkbrep::brep::BRepBuilder;
+    use martensite_tkbrep::topods::Vertex;
+
+    #[test]
+    fn a_map_under_the_policy_walks_shapes_in_the_order_added() {
+        let shapes: Vec<Shape> = (0..64)
+            .map(|_| {
+                let mut vertex = Vertex::default();
+                BRepBuilder::default().make_vertex(&mut vertex);
+                vertex.into_shape()
+            })
+            .collect();
+        let mut map = DataMap::<Shape, i32, ShapeDefaultHasher>::default();
+        for (rank, shape) in shapes.iter().enumerate() {
+            map.bind(shape.clone(), rank as i32);
+        }
+        let ranks: Vec<i32> = map.items().map(|(_, rank)| *rank).collect();
+        assert_eq!(ranks, (0..64).collect::<Vec<i32>>());
+    }
 }
