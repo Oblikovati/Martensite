@@ -105,7 +105,6 @@ fn the_second_file_of_a_torus_holds_its_whole_surface() {
 }
 
 #[test]
-#[ignore = "the wire reordering of the released healing crate picks the wrong edge among four that meet at one point in space, so the face comes out with an area of 0"]
 fn a_torus_read_and_written_as_faces_keeps_its_area() {
     let _guard = locked();
     let shape = torus();

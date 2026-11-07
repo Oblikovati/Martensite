@@ -14,15 +14,15 @@ workspace = true
 
 [dependencies]
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.3" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.4" }
 martensite-tkde = { path = "../martensite-tkde", version = "0.9.0" }
 martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
 martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.9" }
 martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.8" }
-martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.9" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.10" }
 martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.6" }
 martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.8" }
-martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.8" }
+martensite-tkshhealing = { path = "../martensite-tkshhealing", version = "0.3.9" }
 martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.3" }
 martensite-tkbool = { path = "../martensite-tkbool", version = "0.8.0" }
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.10" }
@@ -37,8 +37,8 @@ martensite-process-policy = { path = "../martensite-process-policy", version = "
 martensite-raster-core = { path = "../martensite-raster-core", version = "0.7.0" }
 martensite-tkdestep = { path = "../martensite-tkdestep", version = "0.12.1" }
 martensite-tkdestl = { path = "../martensite-tkdestl", version = "0.11.1" }
-martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.7" }
-martensite-tkoffset = { path = "../martensite-tkoffset", version = "0.10.0" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.8" }
+martensite-tkoffset = { path = "../martensite-tkoffset", version = "0.10.1" }
 martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
 martensite-tkv3d = { path = "../martensite-tkv3d", version = "0.7.1" }
 martensite-tkvcaf = { path = "../martensite-tkvcaf", version = "0.9.1" }

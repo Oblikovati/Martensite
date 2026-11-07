@@ -1,7 +1,7 @@
 [package]
 autotests = false
 name = "martensite-tkoffset"
-version = "0.10.0"
+version = "0.10.1"
 description = "Martensite offset modeling: offset shapes and thick solids, simple offsets, drafts, pipes, lofts and tangent blends."
 edition.workspace = true
 rust-version.workspace = true

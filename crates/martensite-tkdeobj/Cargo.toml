@@ -14,11 +14,11 @@ workspace = true
 
 [dependencies]
 martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
-martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.3" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.4" }
 martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.8" }
 martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.9" }
-martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.9" }
-martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.7" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.10" }
+martensite-tkmesh = { path = "../martensite-tkmesh", version = "0.3.8" }
 martensite-tklcaf = { path = "../martensite-tklcaf", version = "0.3.6" }
 martensite-tkservice = { path = "../martensite-tkservice", version = "0.4.1" }
 martensite-tkde = { path = "../martensite-tkde", version = "0.9.0" }
@@ -27,7 +27,7 @@ martensite-tkrwmesh = { path = "../martensite-tkrwmesh", version = "0.13.0" }
 
 [dev-dependencies]
 martensite-process-policy = { path = "../martensite-process-policy", version = "0.4.0", features = ["case-runner"] }
-martensite-tkbo = { path = "../martensite-tkbo", version = "0.8.0" }
+martensite-tkbo = { path = "../martensite-tkbo", version = "0.8.1" }
 martensite-tkdestep = { path = "../martensite-tkdestep", version = "0.12.1" }
 martensite-tkfillet = { path = "../martensite-tkfillet", version = "0.8.1" }
 martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
