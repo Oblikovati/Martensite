@@ -12,7 +12,7 @@ use martensite_tkmath::gp::Point3;
 use martensite_tksketch::surface_sketch::*;
 use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
 
-pub(super) fn entity(body: &DetachedNormalBody, key: HistoryKey) -> &Shape {
+pub(crate) fn entity(body: &DetachedNormalBody, key: HistoryKey) -> &Shape {
     let matches: Vec<_> = body
         .entities
         .iter()
@@ -22,7 +22,7 @@ pub(super) fn entity(body: &DetachedNormalBody, key: HistoryKey) -> &Shape {
     &matches[0].1
 }
 
-pub(super) fn vertex_point(body: &DetachedNormalBody, key: HistoryKey) -> Point3 {
+pub(crate) fn vertex_point(body: &DetachedNormalBody, key: HistoryKey) -> Point3 {
     BRepTool::pnt(&topods::vertex(entity(body, key)).unwrap()).unwrap()
 }
 
@@ -30,7 +30,7 @@ pub(super) fn assert_point(actual: Point3, expected: Point3) {
     assert_point_with_limit(actual, expected, 1e-6);
 }
 
-fn assert_point_with_limit(actual: Point3, expected: Point3, limit: f64) {
+pub(crate) fn assert_point_with_limit(actual: Point3, expected: Point3, limit: f64) {
     let squared = powi(actual.x() - expected.x(), 2)
         + powi(actual.y() - expected.y(), 2)
         + powi(actual.z() - expected.z(), 2);
@@ -61,7 +61,7 @@ pub(super) fn assert_body(
     );
 }
 
-fn assert_census(body: &DetachedNormalBody) {
+pub(crate) fn assert_census(body: &DetachedNormalBody) {
     for (kind, count) in [
         (ShapeEnum::Face, 6),
         (ShapeEnum::Edge, 12),
@@ -215,7 +215,7 @@ fn assert_volume(body: &DetachedNormalBody, region: &CylinderRectangle, depths: 
     expected
 }
 
-fn assert_incidence_and_pcurves(body: &DetachedNormalBody, point_limit: f64) {
+pub(crate) fn assert_incidence_and_pcurves(body: &DetachedNormalBody, point_limit: f64) {
     for (_, edge) in body
         .entities
         .iter()

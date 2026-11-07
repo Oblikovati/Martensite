@@ -4,7 +4,7 @@ use martensite_tkernel::{message::ProgressRange, storage::IoStream};
 use martensite_tksketch::surface_sketch::DetachedNormalBody;
 use std::fmt::Write;
 
-pub(super) fn signature(body: &DetachedNormalBody) -> String {
+pub(crate) fn signature(body: &DetachedNormalBody) -> String {
     let mut set = shape_table(body);
     let mut stream = IoStream::from_bytes(Vec::new());
     set.write(&mut stream, &ProgressRange::default()).unwrap();

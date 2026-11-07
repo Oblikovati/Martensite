@@ -21,16 +21,19 @@ fn invalid(field: &'static str, value: f64, expected: &'static str) -> SurfaceFa
         expected,
     }
 }
-fn finite(field: &'static str, values: &[f64]) -> Checked<()> {
+pub(super) fn finite(field: &'static str, values: &[f64]) -> Checked<()> {
     match values.iter().copied().find(|value| !value.is_finite()) {
         Some(value) => Err(invalid(field, value, "finite coordinates")),
         None => Ok(()),
     }
 }
-fn identities(rectangle: &CylinderRectangle) -> Checked<()> {
+pub(super) fn identities(
+    corners: [SurfaceVertexId; 4],
+    boundaries: [SurfaceCurveId; 4],
+) -> Checked<()> {
     for (kind, ids) in [
-        ("corner", rectangle.corners.map(|id| id.0)),
-        ("boundary", rectangle.boundaries.map(|id| id.0)),
+        ("corner", corners.map(|id| id.0)),
+        ("boundary", boundaries.map(|id| id.0)),
     ] {
         let mut seen = BTreeSet::new();
         for value in ids {
@@ -41,15 +44,14 @@ fn identities(rectangle: &CylinderRectangle) -> Checked<()> {
     }
     Ok(())
 }
-fn frame_inputs(rectangle: &CylinderRectangle) -> Checked<()> {
-    let support = &rectangle.support;
-    finite("origin", &support.origin)?;
-    finite("axis", &support.axis)?;
-    finite("radial", &support.radial)?;
-    let error = (frame::dot(support.axis, support.axis) - 1.)
+pub(super) fn frame_inputs(origin: [f64; 3], axis: [f64; 3], radial: [f64; 3]) -> Checked<()> {
+    finite("origin", &origin)?;
+    finite("axis", &axis)?;
+    finite("radial", &radial)?;
+    let error = (frame::dot(axis, axis) - 1.)
         .abs()
-        .max((frame::dot(support.radial, support.radial) - 1.).abs())
-        .max(frame::dot(support.axis, support.radial).abs());
+        .max((frame::dot(radial, radial) - 1.).abs())
+        .max(frame::dot(axis, radial).abs());
     if error > 64. * f64::EPSILON {
         return Err(invalid(
             "frame",
@@ -64,15 +66,19 @@ fn input_fields(
     depths: [f64; 2],
     options: NormalExtrusionOptions,
 ) -> Checked<()> {
-    identities(rectangle)?;
-    frame_inputs(rectangle)?;
+    identities(rectangle.corners, rectangle.boundaries)?;
+    frame_inputs(
+        rectangle.support.origin,
+        rectangle.support.axis,
+        rectangle.support.radial,
+    )?;
     finite("s", &rectangle.s)?;
     finite("z", &rectangle.z)?;
     finite("depth", &depths)?;
     support_fields(rectangle.support)?;
     option_fields(options)
 }
-fn option_fields(options: NormalExtrusionOptions) -> Checked<()> {
+pub(super) fn option_fields(options: NormalExtrusionOptions) -> Checked<()> {
     options
         .resolution
         .admit()
@@ -85,7 +91,7 @@ fn option_fields(options: NormalExtrusionOptions) -> Checked<()> {
         "64 epsilon through 0.001",
     )
 }
-fn require(
+pub(super) fn require(
     condition: bool,
     field: &'static str,
     value: f64,
@@ -132,7 +138,7 @@ fn derive(
         coordinate_error: 0.,
     }
 }
-fn separated(field: &'static str, value: f64, minimum: f64) -> Checked<()> {
+pub(super) fn separated(field: &'static str, value: f64, minimum: f64) -> Checked<()> {
     require(
         value.is_finite() && value > 2. * minimum,
         field,
@@ -194,20 +200,6 @@ fn resolution_checks(admitted: &mut Admitted, dimensions: [f64; 3]) -> Checked<(
         error,
         "below spatial tolerance and half every dimension",
     )
-}
-
-impl Admitted {
-    pub(super) fn failure(
-        &self,
-        stage: SurfaceStage,
-        cause: SurfaceFailureCause,
-    ) -> SurfaceSketchFailure {
-        SurfaceSketchFailure {
-            region: self.rectangle.region,
-            stage,
-            cause,
-        }
-    }
 }
 
 fn support_fields(support: CylinderSupport) -> Checked<()> {

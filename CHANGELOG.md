@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added conical-sector sketches with signed normal extrusion, seam-crossing regions, validated conical carriers and preserved source history. (#417)
+
 - Added rectangular sketches on cylindrical surfaces with signed normal extrusion, seam-crossing regions, semantic history, ordered body validation and detached body exports. Existing planar extrusion interfaces were preserved. (#416)
 
 ### Fixed

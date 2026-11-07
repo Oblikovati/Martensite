@@ -51,10 +51,12 @@ fn swapped_images(bindings: &history::Bindings, roles: [HistoryRole; 2]) -> hist
 #[test]
 fn swapped_depth_faces_and_vertices_fail_even_with_valid_body_and_volume() {
     let admitted = input();
-    let (section, mut maker, solid) = construction::construct(&admitted).unwrap();
-    let bindings = history::collect(&admitted, &section, &mut maker, &solid).unwrap();
-    assert!(validation::check_body(&solid, &bindings, &admitted).is_ok());
-    assert!(volume::measure(&solid, &admitted).is_ok());
+    let sweep = cylinder_sweep::prepare(&admitted);
+    let (section, mut maker, solid) = construction::construct(&sweep).unwrap();
+    let bindings = history::collect(&sweep, &section, &mut maker, &solid).unwrap();
+    let semantic_check = |images: &history::Bindings| semantic::validate(&admitted, images);
+    assert!(validation::check_body(&solid, &bindings, &sweep, &semantic_check).is_ok());
+    assert!(volume::measure(&solid, &sweep).is_ok());
     for roles in [
         [HistoryRole::FirstDepthFace, HistoryRole::LastDepthFace],
         [HistoryRole::FirstDepthVertex, HistoryRole::LastDepthVertex],

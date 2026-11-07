@@ -1,5 +1,5 @@
 //! Geometry bytes, semantic bindings and metadata are independent of process and scheduling.
-mod geometry_bytes;
+pub(crate) mod geometry_bytes;
 use super::refusals::{options, rectangle};
 use martensite_tksketch::surface_sketch::normal_extrude;
 
@@ -25,6 +25,7 @@ fn parallel_operations_match_sequential_value_metadata() {
             .collect::<Vec<_>>()
     });
     assert!(results.iter().all(|actual| actual == &expected));
+    crate::cone_acceptance::replay::assert_parallel_matches_sequential();
 }
 #[test]
 fn child_signature() {

@@ -181,3 +181,121 @@ recorded in `/tmp/martensite416-tksketch-cmath-files.json`. The dependency-polic
 and vulnerability checks passed again after the C-math adapter correction.
 The remaining merge gate is hosted validation, including ThreadSanitizer;
 the local startup failure is not counted as a passing sanitizer run.
+
+### Cylindrical integration
+
+[PR #422](https://github.com/Oblikovati/Martensite/pull/422) merged the cylinder
+operation into `release/next` at `7e2d83ca17a1c75d28895317d0e7e3ce36b8873a`.
+[Hosted run 42374063707](https://github.com/Oblikovati/Martensite/actions/runs/42374063707)
+passed all required checks, both package suites and all nine focused sanitizer
+controls. The actual surface-sketch parallel replay test passed under TSan in
+26.12 seconds. The merge and tested head have identical tree
+`88506603eeab42d98b847f22ab8a80e9a49fc12f`; no merge-only source change occurred.
+Tasks #415 and #416 are closed. This establishes the first cylindrical
+operation, not the broader feature's cone, curve, full-wrap or attachment tasks.
+
+### Cone contract
+
+The [conical sector contract](CONE.md) passed its first design review. Native
+ordinary and seam-crossing sectors under both normal senses must pass before
+public implementation. Actual cone carriers and their trimmed half-cone,
+positive volume with preserved depth identities, and conditioned coordinate
+error estimates remain required checks. The exact rational determinant
+controls establish the independent numerical examples only; they do not
+certify the constructed B-rep.
+
+The native cone control passed on Linux x86_64: one test covered both normal
+senses at ordinary start angle 0.2 and seam-crossing start angle -0.3. All four
+bodies passed ordered validation, had six faces/twelve edges/eight vertices and
+four conical/two planar carriers, and matched positive expected volumes 53.76
+or 47.04. Test execution took 0.14 seconds after a three-minute fresh build.
+The command `cargo test -p martensite-tksketch --test surface_sketch native_cone`
+exited zero with the same two-job, incremental-disabled, global opt-level 1,
+debug-disabled settings used for the cylinder gate. The log is
+`/tmp/martensite417-native-cone.log`.
+
+Before changing production code, the existing cylinder replay control emitted
+its geometry, semantic-binding and metadata signature with
+`MARTENSITE_SURFACE_REPLAY_CHILD=1` and exact filter `replay::child_signature`.
+It exited zero and is retained locally in
+`/tmp/martensite417-cylinder-before.log` for comparison after structural
+extraction. Native feasibility does not yet establish public cone admission,
+semantic history, ownership or replay; those remain the implementation gate.
+
+The private shared-sweep extraction passed four unit tests and all 19 existing
+integration tests, including the native cone control. All-targets package
+clippy with warnings denied also passed. The cylinder replay signature matched
+all 12,287 baseline bytes exactly, including geometry, bindings and metadata;
+its SHA-256 remained
+`34830528a57f0c8a4725e059a9e7d58868050a88331fae01fdfabafc30f8e3da`.
+Logs are `/tmp/martensite417-structural-tests-final.log`,
+`/tmp/martensite417-structural-clippy.log` and
+`/tmp/martensite417-cylinder-structural.log`. This checkpoint changes private
+construction/publication inputs only; no public cone operation is included.
+
+### Cone integration conditioning
+
+The first public cone run passed six private controls and 31 of 32 public
+tests. The remaining breadth test stayed CPU-bound for several minutes at a
+physical angular span of pi. The owned run was stopped with exit 143; it was
+not a passing gate. Instrumentation placed the delay inside explicit
+Gauss-Kronrod volume integration, after construction, semantic checks, binary
+round-trip and ordered body validation had completed.
+
+On the same half-turn solid, the existing reference-plane integration API
+with axial plane z=-10 completed in the probe's reported 0.00-second test
+time. It measured 241.27431579569566 against the independent expression
+`53.76*pi/0.7`, with estimated relative error 6.06666e-15 at a requested
+1e-9. The log is `/tmp/martensite417-plane-probe.log`.
+
+The numeric-status integration API retains a purely relative stopping rule.
+Its source documents the difficulty of symmetric contributions near zero;
+#246 added a roundoff floor only to the completed default route. The cone
+probe supports reference conditioning as the cause of the observed delay.
+[Bug #424](https://github.com/Oblikovati/Martensite/issues/424) tracks the
+general convergence limitation separately. A cone-specific reference choice
+does not resolve that general bug. Final cone qualification must retain all
+angular-span cases and requested tolerances, check independent closed forms
+and actual face geometry, and preserve the existing cylinder route.
+
+The cone operation now selects one axial reference plane below the complete
+meridional section. Its coordinates participate in admission's rounding
+estimate. The existing cylinder operation retains its original integration
+route. The corrected cone run passed six private and 32 public tests; the
+public suite took 0.46 seconds. The tests retained narrow, half-turn, major and
+near-full sectors, both normal senses, seam and oblique frames, a small-scale
+case and an offset crossing the original apex plane. Rational closed-form
+volumes and face areas remain the expected results; a second native integration
+uses a different plane above the section. Requested tolerances are unchanged.
+
+All-targets clippy passed with warnings denied. The original cylinder signature
+again matched all 12,287 bytes and the SHA-256 recorded above. Final focused
+logs are `/tmp/martensite417-cone-conditioned-tests.log`,
+`/tmp/martensite417-cone-final-clippy.log` and
+`/tmp/martensite417-cylinder-final.log`. The 42-file toolkit review snapshot
+has fingerprint `468f0e093a70453ba63d9b09bc98f2a51ab80c3a5f651ee959371dfa8b6f938a`,
+recorded in `/tmp/martensite417-gate5-files.json`. Temporary diagnostics and the
+plane probe were removed. Full PR and hosted sanitizer gates remain pending.
+
+The implementation passed the first correctness review and parallel structure
+and standards reviews. They found no material blockers. The combined README
+examples also compiled and ran, including the second semi-angle pi/6. Its
+measured cone volume agreed with the independent expression
+`42 + 2.1*sqrt(3)` within 1e-7. This example check supplements the persistent
+3/5–4/5 cone controls; it is not a substitute for the PR gate.
+
+The complete local `cargo xtask pr --base origin/release/next` gate passed
+on Linux x86_64 with Rust 1.99.0 and the settings recorded above. It checked
+source and expanded unsafe inventories, formatting, clippy, builds, six private
+tests and 32 public tests. The selected package suite was only
+`martensite-tksketch`; the nine build-driver unsafe-inventory controls also ran
+as required by the gate. Public tests took 0.47 seconds.
+
+The first attempt failed because the new worktree lacked the dataset embedded
+by an existing TKOffset test at compile time. Initializing the pinned submodule
+`34d65afd72cd3ca8ac1f9d17e5ca408b30e9b4b6` resolved that setup failure; the
+primary checkout's dataset was not changed. The successful run exited zero
+and is recorded in `/tmp/martensite417-pr-gate.log`. Reviewed toolkit source
+remained unchanged while the supplied visual-workflow documentation was added
+in commit `bbe6c11f`. Hosted checks, including ThreadSanitizer, remain required
+before integration.

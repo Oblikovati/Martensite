@@ -28,7 +28,12 @@ pub(super) fn validate(admitted: &Admitted, bindings: &Bindings) -> Checked<()> 
     }
     Ok(())
 }
-fn close(actual: f64, expected: f64, tolerance: f64, context: &'static str) -> Checked<()> {
+pub(super) fn close(
+    actual: f64,
+    expected: f64,
+    tolerance: f64,
+    context: &'static str,
+) -> Checked<()> {
     if !actual.is_finite() || !expected.is_finite() || (actual - expected).abs() > tolerance {
         return Err(incomplete(
             context,
@@ -37,7 +42,7 @@ fn close(actual: f64, expected: f64, tolerance: f64, context: &'static str) -> C
     }
     Ok(())
 }
-fn distance(point: Point3, expected: [f64; 3]) -> f64 {
+pub(super) fn distance(point: Point3, expected: [f64; 3]) -> f64 {
     let delta = [
         point.x() - expected[0],
         point.y() - expected[1],
@@ -118,7 +123,7 @@ fn check_edge(admitted: &Admitted, key: HistoryKey, shape: &topods::Shape) -> Ch
     check_edge_samples(&curve, [first, last, middle], tolerance(admitted))?;
     check_arc_span(&curve, admitted, circular)
 }
-fn check_edge_samples(
+pub(super) fn check_edge_samples(
     curve: &BRepAdaptorCurve,
     expected: [[f64; 3]; 3],
     tolerance: f64,
@@ -141,6 +146,16 @@ fn check_face(
     shape: &topods::Shape,
     bindings: &Bindings,
 ) -> Checked<()> {
+    check_face_carrier(admitted, key, shape)?;
+    super::trim_binding::validate_face(
+        admitted.rectangle.corners,
+        admitted.rectangle.boundaries,
+        key,
+        shape,
+        bindings,
+    )
+}
+fn check_face_carrier(admitted: &Admitted, key: HistoryKey, shape: &topods::Shape) -> Checked<()> {
     let face = topods::face(shape).map_err(|error| native("semantic face", error))?;
     let surface = BRepAdaptorSurface::with_face(&face, true)
         .map_err(|error| native("semantic surface", error))?;
@@ -149,7 +164,7 @@ fn check_face(
     } else {
         check_cylinder(admitted, key, &surface)?;
     }
-    super::trim_binding::validate_face(admitted, key, shape, bindings)
+    Ok(())
 }
 fn check_cylinder(
     admitted: &Admitted,
@@ -194,7 +209,7 @@ fn side_normal(admitted: &Admitted, index: usize) -> [f64; 3] {
     std::array::from_fn(|i| -sin(angle) * support.radial[i] + cos(angle) * tangent[i])
 }
 
-fn curve_span(curve: &BRepAdaptorCurve) -> Checked<f64> {
+pub(super) fn curve_span(curve: &BRepAdaptorCurve) -> Checked<f64> {
     let first = curve
         .first_parameter()
         .map_err(|e| native("curve start", e))?;
@@ -207,7 +222,7 @@ fn curve_point(curve: &BRepAdaptorCurve, parameter: f64) -> Checked<Point3> {
         .value(parameter)
         .map_err(|error| native("curve evaluation", error))
 }
-fn check_curve_kind(curve: &BRepAdaptorCurve, circular: bool) -> Checked<()> {
+pub(super) fn check_curve_kind(curve: &BRepAdaptorCurve, circular: bool) -> Checked<()> {
     let expected = if circular {
         CurveType::Circle
     } else {
@@ -230,7 +245,7 @@ fn check_arc_span(curve: &BRepAdaptorCurve, admitted: &Admitted, circular: bool)
     )
 }
 
-fn require_surface(surface: &BRepAdaptorSurface, expected: SurfaceType) -> Checked<()> {
+pub(super) fn require_surface(surface: &BRepAdaptorSurface, expected: SurfaceType) -> Checked<()> {
     if surface.get_type().map_err(|e| native("surface type", e))? != expected {
         return Err(incomplete("face carrier", format!("expected {expected:?}")));
     }
@@ -275,7 +290,7 @@ fn endpoint_error(a: Point3, b: Point3, expected: [[f64; 3]; 3]) -> f64 {
     let reverse = distance(a, expected[1]).max(distance(b, expected[0]));
     forward.min(reverse)
 }
-fn plane_distance(plane: martensite_tkmath::gp::Plane3, point: [f64; 3]) -> f64 {
+pub(super) fn plane_distance(plane: martensite_tkmath::gp::Plane3, point: [f64; 3]) -> f64 {
     let location = plane.location();
     let delta = [
         point[0] - location.x(),
@@ -285,7 +300,7 @@ fn plane_distance(plane: martensite_tkmath::gp::Plane3, point: [f64; 3]) -> f64 
     frame::dot(delta, *plane.axis().direction().coordinates())
 }
 
-fn unoriented_angle(actual: [f64; 3], expected: [f64; 3]) -> Checked<f64> {
+pub(super) fn unoriented_angle(actual: [f64; 3], expected: [f64; 3]) -> Checked<f64> {
     let actual = unit_direction(actual)?;
     let expected = unit_direction(expected)?;
     let cross = frame::cross(actual, expected);
