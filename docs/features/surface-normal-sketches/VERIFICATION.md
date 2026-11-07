@@ -221,3 +221,14 @@ It exited zero and is retained locally in
 `/tmp/martensite417-cylinder-before.log` for comparison after structural
 extraction. Native feasibility does not yet establish public cone admission,
 semantic history, ownership or replay; those remain the implementation gate.
+
+The private shared-sweep extraction passed four unit tests and all 19 existing
+integration tests, including the native cone control. All-targets package
+clippy with warnings denied also passed. The cylinder replay signature matched
+all 12,287 baseline bytes exactly, including geometry, bindings and metadata;
+its SHA-256 remained
+`34830528a57f0c8a4725e059a9e7d58868050a88331fae01fdfabafc30f8e3da`.
+Logs are `/tmp/martensite417-structural-tests-final.log`,
+`/tmp/martensite417-structural-clippy.log` and
+`/tmp/martensite417-cylinder-structural.log`. This checkpoint changes private
+construction/publication inputs only; no public cone operation is included.

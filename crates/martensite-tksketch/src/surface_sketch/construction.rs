@@ -1,5 +1,5 @@
-//! The admitted cylinder patch is an analytic rotation of one radial/axial section.
-use super::{admission::Admitted, failure::*, frame};
+//! Build one oriented analytic section and retain its native sweep images.
+use super::{failure::*, sweep::Sweep};
 use martensite_tkbrep::topods::{Builder, Edge, Face, Shape, Vertex, Wire};
 use martensite_tkmath::gp::{Axis1, Direction3, Point3};
 use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeRevol;
@@ -12,15 +12,14 @@ pub(super) struct Section {
     pub vertices: Vec<Vertex>,
     pub edges: Vec<Edge>,
     pub face: Face,
-    pub inner_depth: usize,
+    pub first_depth: usize,
 }
 
-pub(super) fn construct(admitted: &Admitted) -> Checked<(Section, BRepPrimAPIMakeRevol, Shape)> {
+pub(super) fn construct(admitted: &Sweep) -> Checked<(Section, BRepPrimAPIMakeRevol, Shape)> {
     let section = radial_section(admitted).map_err(|error| native("radial section", error))?;
-    let support = admitted.rectangle.support;
-    let [x, y, z] = support.axis;
+    let [x, y, z] = admitted.axis;
     let direction = Direction3::new(x, y, z).map_err(|error| native("axis", error))?;
-    let [x, y, z] = support.origin;
+    let [x, y, z] = admitted.origin;
     let axis = Axis1::new(Point3::new(x, y, z), direction);
     let mut maker = BRepPrimAPIMakeRevol::new(&section.face, axis, admitted.angle, false)
         .map_err(|error| native("revolution", error))?;
@@ -31,9 +30,9 @@ pub(super) fn construct(admitted: &Admitted) -> Checked<(Section, BRepPrimAPIMak
     Ok((section, maker, solid))
 }
 
-fn radial_section(admitted: &Admitted) -> Result<Section, martensite_tkernel::standard::Failure> {
-    let inner_depth = usize::from(admitted.radii[1] < admitted.radii[0]);
-    let vertices = section_vertices(admitted, inner_depth)?;
+fn radial_section(admitted: &Sweep) -> Result<Section, martensite_tkernel::standard::Failure> {
+    let first_depth = admitted.first_depth;
+    let vertices = section_vertices(admitted)?;
     let edges = (0..4)
         .map(|i| {
             BRepBuilderAPIMakeEdge::from_vertices(&vertices[i], &vertices[(i + 1) % 4])?.edge()
@@ -44,7 +43,7 @@ fn radial_section(admitted: &Admitted) -> Result<Section, martensite_tkernel::st
         vertices,
         edges,
         face,
-        inner_depth,
+        first_depth,
     })
 }
 fn section_face(edges: &[Edge]) -> Result<Face, martensite_tkernel::standard::Failure> {
@@ -58,17 +57,11 @@ fn section_face(edges: &[Edge]) -> Result<Face, martensite_tkernel::standard::Fa
 }
 
 fn section_vertices(
-    admitted: &Admitted,
-    inner_depth: usize,
+    admitted: &Sweep,
 ) -> Result<Vec<Vertex>, martensite_tkernel::standard::Failure> {
-    let inner = admitted.radii[inner_depth];
-    let outer = admitted.radii[1 - inner_depth];
-    let [low, high] = admitted.rectangle.z;
-    [(inner, low), (outer, low), (outer, high), (inner, high)]
+    admitted
+        .points
         .into_iter()
-        .map(|(radius, z)| {
-            let [x, y, z] = frame::point(&admitted.rectangle.support, admitted.start, radius, z);
-            BRepBuilderAPIMakeVertex::new(Point3::new(x, y, z))?.vertex()
-        })
+        .map(|[x, y, z]| BRepBuilderAPIMakeVertex::new(Point3::new(x, y, z))?.vertex())
         .collect()
 }

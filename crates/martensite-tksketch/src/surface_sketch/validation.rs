@@ -1,7 +1,5 @@
 //! Ordered validation of the decoded, authoritative publication body.
-use super::{
-    admission::Admitted, failure::*, history::Bindings, result::SurfaceDiagnostic, tolerance::*,
-};
+use super::{failure::*, history::Bindings, result::SurfaceDiagnostic, sweep::Sweep, tolerance::*};
 use martensite_tkbo::{
     body_check::{ValidationReport, validate_body},
     profile_extrusion::{AchievedTolerance, ToleranceCap},
@@ -16,10 +14,11 @@ pub(super) struct CheckedBody {
 pub(super) fn check_body(
     solid: &topods::Shape,
     bindings: &Bindings,
-    admitted: &Admitted,
+    admitted: &Sweep,
+    semantic_check: &impl Fn(&Bindings) -> Checked<()>,
 ) -> Checked<CheckedBody> {
     super::history::validate_membership(solid, bindings)?;
-    super::semantic::validate(admitted, bindings)?;
+    semantic_check(bindings)?;
     let report = ordered_report(solid, admitted)?;
     let achieved = tolerances(bindings)?;
     let diagnostics = cap_diagnostics(achieved, admitted.options.resolution.cap)?;
@@ -29,7 +28,7 @@ pub(super) fn check_body(
         diagnostics,
     })
 }
-fn ordered_report(solid: &topods::Shape, admitted: &Admitted) -> Checked<ValidationReport> {
+fn ordered_report(solid: &topods::Shape, admitted: &Sweep) -> Checked<ValidationReport> {
     let mut resolution = admitted.options.resolution;
     if matches!(resolution.cap, ToleranceCap::Report(_)) {
         resolution.cap = ToleranceCap::NoLimit;

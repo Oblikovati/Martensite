@@ -1,17 +1,17 @@
 //! Independent quadrature and explicitly separated rounding estimates.
-use super::{admission::Admitted, failure::*, result::VolumeErrorEstimates};
+use super::{failure::*, result::VolumeErrorEstimates, sweep::Sweep};
 use martensite_tkbo::measured::{IntegrationMethod, Measured};
 use martensite_tkbrep::topods;
 use martensite_tkgeombase::gprop::GProps;
 use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
 pub(super) fn measure(
     solid: &topods::Shape,
-    admitted: &Admitted,
+    admitted: &Sweep,
 ) -> Checked<(Measured, VolumeErrorEstimates)> {
     let (value, status) = integrate(solid, admitted.options.volume_relative_error)?;
     let errors = VolumeErrorEstimates {
         integration: absolute_error(value, status, admitted.options.volume_relative_error)?,
-        construction: surface_area(admitted) * admitted.coordinate_error,
+        construction: admitted.surface_area * admitted.coordinate_error,
     };
     let error = errors.integration + errors.construction;
     accept_measure(value, error, admitted)?;
@@ -31,14 +31,8 @@ fn absolute_error(value: f64, status: f64, requested: f64) -> Checked<f64> {
     require_integration(value, status, absolute / value, requested)?;
     Ok(absolute + 64. * f64::EPSILON * value)
 }
-fn surface_area(admitted: &Admitted) -> f64 {
-    let height = admitted.rectangle.z[1] - admitted.rectangle.z[0];
-    let thickness = admitted.depths[1] - admitted.depths[0];
-    let sum = admitted.radii[0] + admitted.radii[1];
-    admitted.angle * sum * (height + thickness) + 2. * height * thickness
-}
-fn comparison_budget(admitted: &Admitted) -> f64 {
-    surface_area(admitted) * (admitted.coordinate_error + admitted.options.resolution.weld)
+fn comparison_budget(admitted: &Sweep) -> f64 {
+    admitted.surface_area * (admitted.coordinate_error + admitted.options.resolution.weld)
         + 64. * f64::EPSILON * admitted.expected_volume
 }
 
@@ -54,7 +48,7 @@ fn integrate(solid: &topods::Shape, requested: f64) -> Checked<(f64, f64)> {
     .map_err(|error| native("Gauss-Kronrod volume", error))?;
     Ok((props.mass(), status))
 }
-fn accept_measure(value: f64, error: f64, admitted: &Admitted) -> Checked<()> {
+fn accept_measure(value: f64, error: f64, admitted: &Sweep) -> Checked<()> {
     let requested = value * admitted.options.volume_relative_error;
     if !error.is_finite() || error > requested {
         return Err(mismatch(value, admitted.expected_volume, error, requested));

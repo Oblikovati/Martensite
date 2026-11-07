@@ -90,7 +90,7 @@ impl NormalExtrusionResult {
 }
 
 pub(super) fn assemble(
-    admitted: &super::admission::Admitted,
+    admitted: &super::sweep::Sweep,
     bytes: Vec<u8>,
     keys: Vec<HistoryKey>,
     checked: super::validation::CheckedBody,
@@ -100,7 +100,7 @@ pub(super) fn assemble(
     NormalExtrusionResult {
         bytes,
         keys,
-        region: admitted.rectangle.region,
+        region: admitted.region,
         validation: checked.report,
         volume,
         volume_errors,

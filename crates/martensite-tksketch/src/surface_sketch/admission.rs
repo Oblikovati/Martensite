@@ -196,20 +196,6 @@ fn resolution_checks(admitted: &mut Admitted, dimensions: [f64; 3]) -> Checked<(
     )
 }
 
-impl Admitted {
-    pub(super) fn failure(
-        &self,
-        stage: SurfaceStage,
-        cause: SurfaceFailureCause,
-    ) -> SurfaceSketchFailure {
-        SurfaceSketchFailure {
-            region: self.rectangle.region,
-            stage,
-            cause,
-        }
-    }
-}
-
 fn support_fields(support: CylinderSupport) -> Checked<()> {
     finite("support", &[support.radius, support.chart_origin])?;
     require(
