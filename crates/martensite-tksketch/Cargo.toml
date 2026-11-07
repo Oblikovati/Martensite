@@ -1,0 +1,31 @@
+[package]
+autotests = false
+name = "martensite-tksketch"
+version = "0.1.0"
+description = "Martensite surface-bound sketches and physical normal extrusion."
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+martensite-cmath = { path = "../martensite-cmath", version = "0.3.5" }
+martensite-tkbo = { path = "../martensite-tkbo", version = "0.8.1" }
+martensite-tkernel = { path = "../martensite-tkernel", version = "0.4.4" }
+martensite-tkmath = { path = "../martensite-tkmath", version = "0.3.6" }
+martensite-tkg3d = { path = "../martensite-tkg3d", version = "0.3.7" }
+martensite-tkbrep = { path = "../martensite-tkbrep", version = "0.3.10" }
+martensite-tkgeombase = { path = "../martensite-tkgeombase", version = "0.3.6" }
+martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.1" }
+martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.7" }
+
+[dev-dependencies]
+static_assertions = "=1.1.0"
+
+[[test]]
+name = "surface_sketch"
+path = "tests/surface_sketch/main.rs"

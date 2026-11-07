@@ -12,9 +12,10 @@ pub(crate) enum Control {
     FaceCertificate,
     OpenExtrusion,
     VertexNeighborhood,
+    SurfaceSketch,
 }
 
-pub(crate) const CONTROLS: [Control; 8] = [
+pub(crate) const CONTROLS: [Control; 9] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -23,6 +24,7 @@ pub(crate) const CONTROLS: [Control; 8] = [
     Control::FaceCertificate,
     Control::OpenExtrusion,
     Control::VertexNeighborhood,
+    Control::SurfaceSketch,
 ];
 
 impl Control {
@@ -36,6 +38,7 @@ impl Control {
             Self::FaceCertificate => "face-certificate",
             Self::OpenExtrusion => "open-extrusion",
             Self::VertexNeighborhood => "vertex-neighborhood",
+            Self::SurfaceSketch => "surface-sketch",
         }
     }
 
@@ -47,6 +50,7 @@ impl Control {
             Self::FaceInput => "martensite-tkbrep",
             Self::FaceCertificate => "martensite-tktopalgo",
             Self::OpenExtrusion | Self::VertexNeighborhood => "martensite-tkmath",
+            Self::SurfaceSketch => "martensite-tksketch",
         }
     }
 }
@@ -174,10 +178,24 @@ mod tests {
                 "face-input",
                 "face-certificate",
                 "open-extrusion",
-                "vertex-neighborhood"
+                "vertex-neighborhood",
+                "surface-sketch"
             ]
         );
         assert_eq!(ids.iter().collect::<BTreeSet<_>>().len(), CONTROLS.len());
+    }
+
+    #[test]
+    fn surface_sketch_owner_selects_control_without_unrelated_leaf_fanout() {
+        assert_eq!(
+            select(&BTreeSet::from(["martensite-tksketch".into()]), &[]),
+            [Control::SurfaceSketch]
+        );
+        assert!(select(&BTreeSet::from(["martensite-tkdeobj".into()]), &[]).is_empty());
+        assert_eq!(
+            select(&BTreeSet::from(["martensite-tkmath".into()]), &[]),
+            [Control::OpenExtrusion, Control::VertexNeighborhood]
+        );
     }
 
     #[test]

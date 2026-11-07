@@ -31,6 +31,7 @@ fn startup_precedes_geometry_capture_and_group_controls() {
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tktopalgo --test toolkit -- closed_face_validation --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::open_extrusion -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::sketch_incidence::vertex_neighborhood -- --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tksketch --test surface_sketch -- replay::parallel_operations_match_sequential_value_metadata --exact --test-threads=1 --show-output".to_owned(),
         ]
     );
 }
@@ -339,4 +340,32 @@ fn every_control_command_targets_its_declared_owner() {
             "{control:?}: {command}"
         );
     }
+}
+
+#[test]
+fn surface_sketch_control_uses_pinned_instrumentation_and_exact_replay_test() {
+    let root = Path::new("/repo");
+    let expected = sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tksketch",
+        "--test",
+        "surface_sketch",
+        "--",
+        "replay::parallel_operations_match_sequential_value_metadata",
+        "--exact",
+        "--test-threads=1",
+        "--show-output",
+    ]);
+    assert_eq!(control_command(root, Control::SurfaceSketch), expected);
+}
+
+#[test]
+fn surface_sketch_failure_refuses_sanitizer_success() {
+    let command = surface_sketch_controls(Path::new("/repo")).display();
+    let runner = runner().with_exit_code(&command, 66);
+    let context = context_at(&runner, Path::new("/repo"));
+    let error = run_selected(&context, &[Control::SurfaceSketch]).unwrap_err();
+    assert!(error.to_string().contains("66"));
+    assert_eq!(runner.commands().len(), 4);
 }

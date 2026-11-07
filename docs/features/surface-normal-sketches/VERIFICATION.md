@@ -1,0 +1,183 @@
+# Verification plan
+
+This file separates required evidence from executed results. The initial
+baseline is `main` at `4b76a823959260a0bca4506be9a9c45b575aa878`.
+
+## Claims and evidence
+
+| Claim | Minimum evidence | Owner |
+| --- | --- | --- |
+| Cylindrical depth follows the chosen normal | Independent points and carrier checks on both radial caps and side faces, both normal signs and depth intervals spanning zero | Implementation owner |
+| The actual body matches the region | Closed-form sector volume compared with an independently integrated B-rep; per-face geometry, trims, oriented incidence and manifold census (six faces, twelve edges, eight vertices); positive signed volume and reported integration uncertainty | Implementation owner |
+| A seam crossing preserves the feature | The same region across zero angle, translated by one period, and in a shifted frame; compare geometric invariants and source history | Implementation owner |
+| History is complete and identity is stable | Every result face/edge/vertex has a recorded parent; edit coordinates with fixed IDs; reject duplicate IDs | Implementation owner |
+| Bad domains cannot publish success | Nonfinite values, zero/negative radius, axis crossing, tiny dimensions, full/multiple turns, near-closure, coordinate precision loss and arithmetic overflow | Implementation owner |
+| Results own their geometry | Mutate the input after construction and mutate detached exports; earlier result metadata and fresh exports remain unchanged | Implementation owner |
+| Concurrency and replay are deterministic | Compile-time `Send + Sync`; same inputs in separate processes and parallel versus sequential execution yield identical native geometry, trim and semantic-binding bytes as well as metadata | Implementation owner |
+| Existing planar behaviour and cost are preserved | Existing planar fixtures unchanged; compare identical planar workloads against the baseline, recording time and peak memory | Coordinator |
+| Repository checks pass | Focused tests, then `cargo xtask pr` for changed and affected packages; review against the pinned merge-base with main | Coordinator |
+
+The generic body checker supplies sampled geometry and native-search
+self-intersection evidence. Tests must not relabel those checks as exact. A
+closed-form volume computed from the request alone does not validate the built
+solid. Display tessellation is excluded from all geometry acceptance checks.
+
+## Execution record
+
+Geometry contract review passed on its
+second attempt. The review required explicit native closure margins, unchanged
+chart direction under normal reversal, complete semantic history, immutable
+publication, and validation of the decoded representation. These requirements
+remain implementation acceptance checks.
+
+The first implementation check runs an ordinary and a seam-crossing rectangle
+through the existing revolution builder. A successful construction is followed
+by carrier, trim, incidence and history checks; construction alone is not a
+passing feature result.
+
+Record the exact source revision, platform, command, test count, terminal exit,
+measured errors and exclusions here after each meaningful validation step.
+Keep throwaway measurement code out of the final change. Retain findings and
+measurements here when its investigation is complete.
+
+### Native construction feasibility
+
+On Linux x86_64, the registered `surface_sketch` test target passed its first
+native control: one test with two sector placements (ordinary start angle 0.2
+and seam-crossing start angle -0.3), zero failures, 0.04 seconds test execution
+after compilation. Both used radii 9 and 12, axial height 4 and angular span 0.7.
+The independently expected positive volume is 88.2.
+
+Both bodies passed the existing ordered body checker, had six faces, twelve
+edges and eight vertices, and agreed with the volume oracle. The explicit
+Gauss-Kronrod volume call reported a finite nonnegative convergence indicator
+within 1e-9. This is numerical evidence, not a certified enclosure.
+
+The control ran from the #416 worktree based on contract commit `0347012c` with
+an uncommitted test, using `cargo test -p martensite-tkbo --test surface_sketch`,
+two build jobs, incremental compilation disabled, opt-level 1 and debug
+information disabled. Existing per-package optimization overrides remained active.
+The local log is `/tmp/martensite416-native-smoke.log`.
+This establishes builder feasibility only. Public admission, semantic history,
+encoding fidelity and export isolation still require their own passing tests.
+
+### Focused operation and review checks
+
+The first complete public suite passed 16 tests. Review then found that one
+carrier-direction check compared a dot-product residual with an angular
+limit. The implementation now measures the unoriented angle in radians;
+private controls distinguish aligned, antiparallel, within-limit and
+outside-limit directions and reject degenerate/nonfinite directions.
+
+After that correction, all 18 public tests and four private regression tests
+passed on Linux x86_64. The public suite includes half-turn, greater-than-half-
+turn and resolvable near-full-turn sectors, an oblique translated frame and a
+small cylinder with independently expected volume 8.82e-8. It compares actual
+native geometry, trims and explicit semantic references byte for byte in two
+processes and across eight workers performing four operations each. Native
+body exports remain isolated when their surfaces, curves and p-curves change.
+The private controls also reject swapped same-kind semantic bindings and
+check the volume integrator's absolute/relative error-unit transition.
+
+Commands were `cargo test -p martensite-tkbo --test surface_sketch` and
+`cargo test -p martensite-tkbo --lib surface_sketch`, with the same compilation
+settings as the feasibility control. Both exited zero. The local logs are
+`/tmp/martensite416-remediation-public.log` and
+`/tmp/martensite416-remediation-private.log`; test execution took 0.25 and
+0.05 seconds respectively, excluding compilation. The reviewed implementation
+snapshot is recorded locally in `/tmp/martensite416-gate2-remediated-files.json`
+with fingerprint `5e5d9a61a5e758f9229ec883cb149539c40ea509fcd05c510ce7bb62b3e05d63`.
+
+All 326 build-driver tests passed after the new typed sanitizer control was
+registered. The README example compiled and executed successfully. The local
+sanitizer startup control exited 139 before entering `main`; this is a failure,
+not evidence about the new operation. Hosted ThreadSanitizer, the affected
+package gate and final performance qualification remain required.
+
+### Toolkit placement and cost investigation
+
+The operation was first implemented inside TKBO. An eight-pair planar control
+showed median elapsed time of 1.738 seconds before the addition and 1.793 seconds
+after it, with median peak resident memory of 23,076 and 24,142 KiB. These were
+100-operation samples after five warmups, pinned to one CPU on a shared Linux
+host. A subsequent memory comparison differed by only 84 KiB. Inspection also
+rewrote the benchmark executables after the first timings, so later recorded
+binary hashes cannot identify the initial timed artifacts. These measurements
+are diagnostic and do not establish a performance regression or a passing gate.
+
+The independent surface operation now belongs to the downstream
+`martensite-tksketch` crate. TKBO and its existing dependencies remain unchanged.
+This placement gives the feature its own test suite and avoids changing the
+compiled TKBO module for existing consumers. The module move preserved all 23
+reviewed source and test files apart from namespace imports and import order.
+Existing package versions and lockfile entries remain unchanged; the lockfile
+adds the new package only. The mandatory expanded unsafe inventory still checks
+the workspace, even when package tests are selected narrowly.
+
+After relocation, `cargo test -p martensite-tksketch --test surface_sketch`
+passed all 18 public tests in 0.18 seconds, and
+`cargo test -p martensite-tksketch --lib surface_sketch` passed all four private
+controls in 0.02 seconds, excluding compilation. Both exited zero using the
+same explicit opt-level 1, two-job, debug-disabled settings recorded above.
+`cargo deny --all-features check` and `cargo audit` both exited zero; the former
+reported only existing duplicate-version warnings and the latter reported no
+vulnerabilities among 152 dependencies. Logs are under
+`/tmp/martensite416-tksketch-{public,private,deny,audit}.log` on the verification
+host. The final placement review accepted the downstream public API boundary.
+
+The actual `cargo xtask ci plan` comparison against pinned main
+`4b76a823959260a0bca4506be9a9c45b575aa878` selected exactly
+`martensite-build` and `martensite-tksketch` for testing, with sanitizer coverage
+enabled. It exited zero; the local record is
+`/tmp/martensite416-ci-plan.log`. No base-toolkit suite was selected.
+The sanitizer command registry changed, so the existing selection policy also
+requires all nine focused sanitizer controls for this PR. Future changes
+confined to the sketch toolkit select its own control.
+
+The final planar compatibility control rebuilt the same 100-operation circle
+extrusion workload with the original compiler, opt-level 1, debug-disabled
+settings and dependency-feature graph. Its TKBO compiler fingerprint matched
+byte for byte. All 20 reachable local package directories and existing lockfile
+entries were unchanged against both pinned main and `v0.13.0`.
+
+The rebuilt executable had identical allocated ELF sections, addresses and
+contents, including executable code and writable data. Its four load-segment
+layouts also matched. The code-section SHA-256 was
+`a1367b728955bb6ff3e50c51f8a0331878b7cf6404b71c776fdb677eb4fac487`;
+the combined allocated-section SHA-256 was
+`0cb677090e6986cfd612226529b1900cd10881d857b1045e48383c75dc96d818`.
+Only four ELF header bytes concerning nonloaded section tables differed after
+the earlier inspection rewrite. This establishes unchanged runtime code and
+data for the existing planar workload; noisy timing differences are not used
+as a performance acceptance threshold. It does not benchmark the new operation
+against an earlier implementation, because none existed.
+
+The new-crate README example also compiled and ran with exit zero. Artifact
+comparison details were recorded in
+`/tmp/martensite416-planar-artifact-comparison.json`. Throwaway benchmark source
+and executables are removed after recording these findings.
+
+The first complete PR gate passed source and expanded unsafe inventories, then
+stopped at clippy: the new module used Rust floating-point methods where the
+repository requires its shared C-math adapter. Those calls now use
+`martensite-cmath` with the same formulas and argument order. Private type and
+test-layout warnings were also corrected without changing admission limits.
+The dependency was already present transitively; no existing lockfile package
+or version changed.
+
+### Final local gate
+
+The corrected source passed `cargo xtask pr` on Linux x86_64 with Rust 1.99.0,
+two build jobs, incremental compilation disabled, global dev/test opt-level 1
+and debug information disabled. Workspace package overrides remained active.
+The command exited zero after source and expanded unsafe inventory checks,
+formatting, clippy with warnings denied, affected-package builds, all 326
+driver tests, four sketch unit tests and 18 sketch integration tests. No
+unrelated toolkit suite ran. The log is `/tmp/martensite416-pr-gate.log`.
+
+The final new-crate and lockfile snapshot has fingerprint
+`1c42ed28b3ba7711fc951ba6e02407e24a0e03a26e5347861f6e00902a33844d`,
+recorded in `/tmp/martensite416-tksketch-cmath-files.json`. The dependency-policy
+and vulnerability checks passed again after the C-math adapter correction.
+The remaining merge gate is hosted validation, including ThreadSanitizer;
+the local startup failure is not counted as a passing sanitizer run.

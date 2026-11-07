@@ -1069,6 +1069,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "martensite-tksketch"
+version = "0.1.0"
+dependencies = [
+ "martensite-cmath",
+ "martensite-tkbo",
+ "martensite-tkbrep",
+ "martensite-tkernel",
+ "martensite-tkg3d",
+ "martensite-tkgeombase",
+ "martensite-tkmath",
+ "martensite-tkprim",
+ "martensite-tktopalgo",
+ "static_assertions",
+]
+
+[[package]]
 name = "martensite-tktobj"
 version = "0.3.6"
 dependencies = [
