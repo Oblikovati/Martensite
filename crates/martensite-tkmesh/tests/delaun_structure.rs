@@ -1,6 +1,8 @@
 //! Native connectivity, exception persistence and compaction regressions.
-use martensite_tkernel::standard::Transient;
-use martensite_tkmesh::brep_mesh::DegreeOfFreedom as Freedom;
+use martensite_tkernel::standard::{Handle, Transient};
+use martensite_tkmesh::brep_mesh::{
+    BRepMeshDataStructureOfDelaun as Mesh, DegreeOfFreedom as Freedom,
+};
 #[allow(dead_code)]
 #[path = "support/delaun_fixture.rs"]
 mod fixture;
@@ -157,4 +159,34 @@ fn compact_attached_link_writes_following_element_slot() {
     assert_eq!(mesh.get_element(4).unwrap().edges, [2, 4, 1]);
     assert_eq!(mesh.get_element(4).unwrap().movability, Freedom::Free);
     assert!(!mesh.elements_of_domain().contains(4));
+}
+
+/// The domain keeps the table of its largest size after triangles go, and a walk of it gives the
+/// triangles in that table's order: the blocks here wrap around a smaller table in another order.
+#[test]
+fn the_domain_walks_in_the_table_of_its_largest_size() {
+    const TRIANGLES: i32 = 3300;
+    const KEPT: [i32; 3] = [1, 64, 3264];
+    let mesh = Mesh::new(&Handle::new(Default::default()), 1);
+    mesh.vertex_tool().set_cell_size(0.5).unwrap();
+    for rank in 0..TRIANGLES {
+        let corners: Vec<i32> = (0..3)
+            .map(|corner| {
+                mesh.add_node(&vertex(f64::from(3 * rank + corner)), true)
+                    .unwrap()
+            })
+            .collect();
+        let links: Vec<i32> = [(0, 1), (1, 2), (2, 0)]
+            .iter()
+            .map(|&(from, to)| mesh.add_link(&edge(corners[from], corners[to])).unwrap())
+            .collect();
+        mesh.add_element(&triangle([links[0], links[1], links[2]]))
+            .unwrap();
+    }
+    for index in (1..=TRIANGLES).filter(|index| !KEPT.contains(index)) {
+        mesh.remove_element(index).unwrap();
+    }
+    let domain = mesh.elements_of_domain();
+    assert_eq!(domain.bucket_count(), 1009);
+    assert_eq!(domain.iter().collect::<Vec<i32>>(), KEPT);
 }

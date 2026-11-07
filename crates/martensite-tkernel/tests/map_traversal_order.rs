@@ -1,6 +1,6 @@
 //! A policy can make a map walk its entries in the order they were added, for keys hashed by an
 //! address, which differs between runs of a program. Other maps keep their bucket order.
-use martensite_tkernel::ncollection::{DataMap, HashPolicy, Map};
+use martensite_tkernel::ncollection::{DataMap, HashPolicy, Map, PackedMap};
 
 /// A hash that scatters like an address does, for keys that a test can name.
 #[derive(Clone, Copy, Debug, Default)]
@@ -118,4 +118,41 @@ fn keys_by_default_keep_their_bucket_order() {
         [second, first]
     };
     assert_eq!(by_pointer.iter().copied().collect::<Vec<_>>(), expected);
+}
+
+/// A map that shrank from its largest size: blocks 0, 2 and 102, and two that share a bucket.
+fn packed_map_past_its_largest_size() -> PackedMap<i32> {
+    let mut map = PackedMap::default();
+    for block in 0..104 {
+        map.add(block * 32);
+    }
+    let bucket_mate = (102 + 1009) * 32;
+    map.add(bucket_mate);
+    for block in (0..104).filter(|block| ![0, 2, 102].contains(block)) {
+        map.remove(block * 32);
+    }
+    map
+}
+
+#[test]
+fn a_packed_copy_that_keeps_the_walk_differs_from_a_plain_clone() {
+    let map = packed_map_past_its_largest_size();
+    assert_eq!(map.bucket_count(), 1009);
+    let copy = map.same_walk_copy();
+    assert_eq!(copy.bucket_count(), 1009);
+    assert_eq!(copy.extent(), map.extent());
+    let walk: Vec<i32> = map.iter().collect();
+    assert_eq!(copy.iter().collect::<Vec<i32>>(), walk);
+    assert_ne!(map.clone().iter().collect::<Vec<i32>>(), walk);
+}
+
+#[test]
+fn an_empty_packed_copy_keeps_the_bucket_count() {
+    let mut map = packed_map_past_its_largest_size();
+    map.clear();
+    let mut copy = map.same_walk_copy();
+    assert!(copy.is_empty());
+    assert_eq!(copy.bucket_count(), 1009);
+    assert!(copy.add(5));
+    assert!(copy.contains(5));
 }
