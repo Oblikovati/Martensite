@@ -45,7 +45,10 @@ fn fixed_preference_for_missing_meshes_is_selectable_without_changing_defaults()
             .unwrap();
     let reference_enclosure = (41.6317152760022_f64, 41.631715276002204_f64);
     assert!((fixed.properties().mass() - reference_enclosure.0).abs() < 0.002);
-    assert!(adaptive.properties().mass() < reference_enclosure.0);
+    assert!(
+        (adaptive.properties().mass() - reference_enclosure.0).abs()
+            <= reference_enclosure.0 * 1e-5
+    );
     assert_eq!(fixed.error_evidence(), SurfaceErrorEvidence::Unknown);
     assert!(matches!(
         adaptive.error_evidence(),

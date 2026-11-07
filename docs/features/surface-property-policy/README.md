@@ -22,8 +22,10 @@ orders apply to geometric faces; triangle measurements use their existing
 polynomial integration. Neither preference creates or changes a mesh.
 
 `SurfacePropertyOptions::default()` requests adaptive geometry at relative target
-`1e-5`, prefers geometry, and counts every face occurrence. Both earlier
-surface-property methods retain their defaults and numerical outputs. The
+`1e-5`, prefers geometry, and counts every face occurrence. The earlier
+surface-property methods retain their defaults. Adaptive numerical results
+follow [behavior 2](../surface-integration-accuracy/decision.md), which
+corrects the nested-integration defects recorded in #407. The
 shared-face rule still distinguishes locations and ignores orientation.
 
 The returned values own no shape, geometry or mesh handles. They remain valid
@@ -51,9 +53,9 @@ has unknown aggregate error even if its geometric faces had estimates.
 
 Adaptive requests must be finite and satisfy `0 < target < 0.001`; invalid values
 are rejected before reading the shape. They are retained without an interface
-clamp. The engine can relax internal absolute refinement budgets and does not
-publish a final effective global target, so `effective_relative_target()` is
-`None`. The [kernel decision](decision.md) records the existing limits.
+clamp. The engine does not publish a final effective global target, so
+`effective_relative_target()` is `None`. The [kernel decision](decision.md)
+records the existing limits.
 
 These are representation measurements. They do not validate topology, mesh
 quality, geometric consistency or modelling acceptance.
@@ -74,11 +76,11 @@ The [outward-rounded enclosure](ellipse-area-bounds.json) is approximately
 `[41.6317152760022015491360831222934997725869,
 41.6317152760022015491360831222934997754152]`.
 
-The existing fixed and adaptive values are replay controls, separate from that
-reference. The fixed result is approximate. The existing adaptive result and
-its tiny reported estimate disagree with the enclosure; this feature preserves
-that numerical behavior and labels the value as an estimate. It does not repair
-the adaptive accuracy limitation or promote the estimate to a bound.
+The historical fixed and adaptive values are retained replay evidence. The
+fixed result is approximate. The earlier adaptive result and its tiny reported
+estimate disagree with the enclosure. [Bug #407's correction](../surface-integration-accuracy/README.md)
+replaces that inaccurate adaptive behavior; the reported value remains an
+estimate and is not promoted to a certified bound.
 
 Run `cargo test -p martensite-tktopalgo surface_property_policy` for the focused
 integration tests and `cargo test -p martensite-tktopalgo --lib surface_policy`

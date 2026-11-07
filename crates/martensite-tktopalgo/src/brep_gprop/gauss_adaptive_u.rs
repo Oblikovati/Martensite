@@ -2,19 +2,13 @@
 //! point, from the U lower bound to the boundary's U, bisecting the U intervals.
 use super::face::BRepGPropFace;
 use super::gauss::{GaussType, Inertia, add_volume_part};
-use super::gauss_adaptive::{AdaptiveRun, SUBS_POWER, max_element, max_subs, sm};
+use super::gauss_adaptive::{AdaptiveRun, SUBS_POWER, max_subs, sm};
 use martensite_tkernel::standard::Failure;
 
 impl AdaptiveRun<'_, '_> {
-    /// The do-while loop over the U intervals for the Gauss order `pass` of the L
-    /// integral; the number of intervals computed (`JU`). Its error estimate is taken
-    /// once, when the knot intervals are done, so the loop refines only once `EpsU` is
-    /// not 0, as natively.
-    pub(super) fn u_integral(
-        &mut self,
-        surface: &BRepGPropFace,
-        pass: usize,
-    ) -> Result<usize, Failure> {
+    /// Both outer Gauss orders use the same inner convergence rule. Update the total
+    /// U error after each subdivision; a stale estimate cannot govern refinement (#407).
+    pub(super) fn u_integral(&mut self, surface: &BRepGPropFace) -> Result<usize, Failure> {
         let (u1, u2) = (self.input.bounds.0, self.state.u2);
         let end = self.u.fill(u1, u2, &self.input.u_knots, None);
         let max = max_subs(end, SUBS_POWER).min(sm());
@@ -25,28 +19,24 @@ impl AdaptiveRun<'_, '_> {
             j += 1;
             let range = self.u.next_range(j, end);
             if self.u.is_exhausted(j, max) {
-                self.state.refinement_exhausted |=
-                    k_end != 1 || self.u.first[j - 1] != self.u.second[j - 1];
-                if k_end != 1 {
-                    j -= 1;
-                    self.state.eps_u = self.state.error_u;
-                    let span = ((u2 - u1) * self.state.dul).abs();
-                    self.state.eps = 10. * self.state.eps_u * span;
-                    self.state.eps_l = 0.9 * self.state.eps;
-                    break;
+                if j == max || k_end != 1 {
+                    return Err(self.refinement_failure("U", j, max, self.state.error_u));
                 }
                 self.u.error[j - 1] = 0.0;
                 self.u.inertia[j - 1] = Inertia::default();
             } else {
                 for index in range.into_iter().take(k_end) {
-                    self.u_span(surface, pass, index)?;
+                    self.u_span(surface, index)?;
                 }
             }
             if j == end {
                 k_end = 2;
-                self.state.error_u = self.u.error[max_element(&self.u.error)];
             }
-            let refine = self.state.error_u - self.state.eps_u > 0.0 && self.state.eps_u != 0.0;
+            let mass: f64 = self.u.inertia[..j].iter().map(|part| part.mass).sum();
+            // #407: reserve ten percent of the relative target for the inner integral.
+            self.state.eps_u = 0.1 * self.input.epsilon * mass.abs();
+            self.state.error_u = self.u.error[..j].iter().sum();
+            let refine = self.is_verify && self.state.error_u > self.state.eps_u;
             if !(refine || k_end == 1) {
                 break;
             }
@@ -54,19 +44,13 @@ impl AdaptiveRun<'_, '_> {
         Ok(j)
     }
 
-    /// One U interval `index`: the Gauss points of the orders `pass..` (a surface error
-    /// order sums the area only), the moments into `u.inertia[index]` and, on the first
-    /// L order, the error into `u.error[index]`.
-    fn u_span(
-        &mut self,
-        surface: &BRepGPropFace,
-        pass: usize,
-        index: usize,
-    ) -> Result<(), Failure> {
+    /// Evaluate both U orders on one interval. The second order estimates area error;
+    /// the first supplies all moments, independently of the outer order (#407).
+    fn u_span(&mut self, surface: &BRepGPropFace, index: usize) -> Result<(), Failure> {
         let mut local = [Inertia::default(); 2];
         let um = 0.5 * (self.u.second[index] + self.u.first[index]);
         let ur = 0.5 * (self.u.second[index] - self.u.first[index]);
-        let orders = self.input.error_passes - pass;
+        let orders = self.input.error_passes;
         for (order, sums) in local.iter_mut().enumerate().take(orders) {
             let (points, weights) = &self.input.u_rules.rules[order];
             for (point, weight) in points.iter().zip(weights) {
@@ -74,7 +58,7 @@ impl AdaptiveRun<'_, '_> {
                 self.add_u_point(order, (p, normal), *weight, sums);
             }
         }
-        self.store_u_span(pass, index, ur, &local);
+        self.store_u_span(index, ur, &local);
         Ok(())
     }
 
@@ -102,7 +86,7 @@ impl AdaptiveRun<'_, '_> {
     }
 
     /// The moments of a U interval (times its half range) and its error.
-    fn store_u_span(&mut self, pass: usize, index: usize, ur: f64, local: &[Inertia; 2]) {
+    fn store_u_span(&mut self, index: usize, ur: f64, local: &[Inertia; 2]) {
         let g = self.gauss;
         let ui = &mut self.u.inertia[index];
         ui.mass = g.mult(local[0].mass, ur);
@@ -110,9 +94,6 @@ impl AdaptiveRun<'_, '_> {
             ui.ixx = g.mult(local[0].ixx, ur);
             ui.iyy = g.mult(local[0].iyy, ur);
             ui.izz = g.mult(local[0].izz, ur);
-        }
-        if pass > 0 {
-            return;
         }
         let d_mass = (local[1].mass - local[0].mass).abs();
         ui.ix = g.mult(local[0].ix, ur);
@@ -126,6 +107,6 @@ impl AdaptiveRun<'_, '_> {
         ui.ixy = g.mult(local[0].ixy, ur);
         ui.ixz = g.mult(local[0].ixz, ur);
         ui.iyz = g.mult(local[0].iyz, ur);
-        self.u.error[index] = g.mult(d_mass, ur);
+        self.u.error[index] = g.mult(d_mass, ur.abs());
     }
 }

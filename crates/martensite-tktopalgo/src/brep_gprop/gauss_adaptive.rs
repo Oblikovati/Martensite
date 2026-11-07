@@ -13,8 +13,6 @@ use martensite_tkernel::standard::real::real_to_int;
 use martensite_tkmath::gp::Point3;
 use martensite_tkmath::math;
 
-/// The minimal range of an interval (`EPS_PARAM`).
-pub(super) const EPS_PARAM: f64 = 1.0e-12;
 /// The ratio of the orders of the error estimate (`ERROR_ALGEBR_RATIO`).
 const ERROR_ALGEBR_RATIO: f64 = 2.0 / 3.0;
 /// The bisection depth per knot interval (`SUBS_POWER`).
@@ -128,10 +126,10 @@ impl Intervals {
         [worst, j - 1]
     }
 
-    /// `JL == LMaxSubs || |L2(JL - 1) - L1(JL - 1)| < EPS_PARAM`: the interval cannot be
-    /// computed.
+    /// Refuse exhausted storage or a zero-width interval, not a short nonzero range.
+    /// #407: parameter scale does not determine whether its physical area is negligible.
     pub(super) fn is_exhausted(&self, j: usize, max: usize) -> bool {
-        j == max || (self.second[j - 1] - self.first[j - 1]).abs() < EPS_PARAM
+        j == max || self.second[j - 1] == self.first[j - 1]
     }
 }
 
@@ -235,7 +233,7 @@ pub(super) struct AdaptiveState {
     pub(super) eps_l: f64,
     pub(super) eps_u: f64,
     pub(super) error_u: f64,
-    pub(super) error_l_max: f64,
+    pub(super) error_l_total: f64,
     pub(super) dul: f64,
     pub(super) v: f64,
     pub(super) u2: f64,
@@ -348,6 +346,23 @@ impl<'g, 'a> AdaptiveRun<'g, 'a> {
         }
     }
 
+    pub(super) fn refinement_failure(
+        &self,
+        direction: &str,
+        intervals: usize,
+        capacity: usize,
+        error: f64,
+    ) -> Failure {
+        Failure::with_type(
+            "StdFail_NotDone",
+            &format!(
+                "BRepGProp adaptive {direction} refinement stopped at {intervals} intervals (capacity {capacity}), absolute error estimate {error}, requested relative target {}; expected distinct subdivision bounds and remaining refinement capacity",
+                self.input.epsilon
+            ),
+            "",
+        )
+    }
+
     fn evaluate(
         &mut self,
         surface: &mut BRepGPropFace,
@@ -365,13 +380,13 @@ impl<'g, 'a> AdaptiveRun<'g, 'a> {
         ))
     }
 
-    /// `ErrorLMax / |Mass|` (0 for a null mass) with the error estimate, `|eps|` else.
+    /// Sum absolute boundary errors before dividing by mass; cancellation must not erase error (#407).
     fn reached_error(&self, mass: f64) -> f64 {
         if self.input.error_passes != 2 {
             return self.input.epsilon;
         }
         if mass != 0.0 {
-            self.state.error_l_max / mass.abs()
+            self.state.error_l_total / mass.abs()
         } else {
             0.0
         }
@@ -386,7 +401,18 @@ fn error_estimate_requested(epsilon: f64) -> bool {
 
 #[cfg(test)]
 mod estimate_policy_tests {
-    use super::error_estimate_requested;
+    use super::{Intervals, error_estimate_requested};
+
+    #[test]
+    fn interval_completion_uses_exact_parameter_width_instead_of_absolute_cutoff() {
+        let mut intervals = Intervals::new();
+        intervals.first[0] = 0.;
+        intervals.second[0] = 1e-13;
+        assert!(!intervals.is_exhausted(1, 33));
+        intervals.second[0] = 0.;
+        assert!(intervals.is_exhausted(1, 33));
+        assert!(intervals.is_exhausted(33, 33));
+    }
 
     #[test]
     fn estimation_policy_covers_signs_threshold_and_unordered_inputs() {

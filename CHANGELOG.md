@@ -450,6 +450,8 @@ changes and migration notes are listed in the [0.14.0 changelog](https://github.
 
 - Corrected the PR formatting failure hint to list checked files and explain direct formatting for sources included by test suites. (#122)
 
+- Corrected adaptive surface integration to refine both parameter directions, retain weighted inner error estimates, and report exhausted work instead of relaxing error budgets. Nonzero parameter intervals no longer lose their physical area to an absolute parameter cutoff. (#407)
+
 ## [0.13.0] - 2026-11-07
 
 ### Added

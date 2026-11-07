@@ -3,5 +3,7 @@
 include!("suites/cases_00.rs");
 #[path = "closed_face_validation/mod.rs"]
 mod closed_face_validation;
+#[path = "surface_integration_accuracy.rs"]
+mod surface_integration_accuracy;
 #[path = "surface_property_policy/mod.rs"]
 mod surface_property_policy;

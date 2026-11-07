@@ -28,9 +28,11 @@ def pi_bounds() -> tuple[Fraction, Fraction]:
     return 16 * a_low - 4 * b_high, 16 * a_high - 4 * b_low
 
 
-def elliptic_series_bounds(terms: int) -> tuple[Fraction, Fraction]:
-    """E(m)/(pi/2)=1-sum(c_n²*m^n/(2n-1)), m=3/4; next ratios <m."""
-    parameter, coefficient, power = Fraction(3, 4), Fraction(1), Fraction(1)
+def elliptic_series_bounds(
+    terms: int, parameter: Fraction = Fraction(3, 4)
+) -> tuple[Fraction, Fraction]:
+    """Bound E(m)/(pi/2) using positive terms with successive ratios below m."""
+    coefficient, power = Fraction(1), Fraction(1)
     total = Fraction()
     for n in range(1, terms + 1):
         coefficient *= Fraction(2 * n - 1, 2 * n)

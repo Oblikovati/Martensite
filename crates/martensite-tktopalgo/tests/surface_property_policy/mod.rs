@@ -16,7 +16,7 @@ fn established_geometry_and_mesh_measurements_keep_closed_form_controls() {
 }
 
 #[test]
-fn established_ellipse_modes_remain_distinct_from_the_independent_enclosure() {
+fn adaptive_ellipse_area_meets_the_independent_enclosure_target() {
     let shape = fixtures::elliptic_prism_faces();
     let mut fixed = GProps::new();
     BRepGProp::surface_properties_eps(&shape, &mut fixed, 1.0, false).unwrap();
@@ -29,7 +29,7 @@ fn established_ellipse_modes_remain_distinct_from_the_independent_enclosure() {
         error
     );
     assert!((fixed.mass() - 41.6317152760022).abs() < 0.002);
-    assert!((adaptive.mass() - 41.6317152760022).abs() > 0.1);
+    assert!((adaptive.mass() - 41.6317152760022).abs() <= 41.6317152760022 * 1e-5);
 }
 mod options;
 
@@ -51,7 +51,7 @@ mod replay;
 mod support;
 
 #[test]
-fn narrow_parameter_square_records_existing_fixed_and_adaptive_outputs() {
+fn nonzero_narrow_parameter_square_keeps_its_physical_area() {
     let face = fixtures::narrow_parameter_square();
     let mut fixed = GProps::new();
     BRepGProp::surface_properties_eps(&face, &mut fixed, 1.0, false).unwrap();
@@ -64,6 +64,6 @@ fn narrow_parameter_square_records_existing_fixed_and_adaptive_outputs() {
         error.to_bits()
     );
     assert!((fixed.mass() - 1.0).abs() < 1e-12);
-    assert_eq!(adaptive.mass(), 0.0);
+    assert!((adaptive.mass() - 1.0).abs() < 1e-12);
 }
 mod empty;
