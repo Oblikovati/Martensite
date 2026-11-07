@@ -281,33 +281,37 @@ fn lifted_parabola_roots_have_expected_minima() {
 fn generated_ellipses_have_two_minima_under_parameter_reversal() {
     for sense in [true, false] {
         for major in [1. + 1.0e-5, 2., 100.] {
-            let shape = Ellipse2::from_x_axis(axis([0.; 2], [0.6, 0.8]), major, 1., sense).unwrap();
-            let roots = ExtPElC2d::with_ellipse(
-                Point2::default(),
-                shape,
-                precision::confusion(),
-                0.,
-                std::f64::consts::TAU,
-            )
-            .unwrap();
-            assert_eq!(roots.nb_ext().unwrap(), 4);
-            assert_eq!(
-                (1..=4)
-                    .filter(|&index| roots.is_min(index).unwrap())
-                    .count(),
-                2
-            );
-            for index in 1..=4 {
-                let squared = roots.square_distance(index).unwrap();
-                let expected = if roots.is_min(index).unwrap() {
-                    1.
-                } else {
-                    major * major
-                };
-                assert!((squared - expected).abs() < precision::confusion() * major);
-            }
+            assert_centered_ellipse(sense, major);
         }
     }
+}
+
+fn assert_centered_ellipse(sense: bool, major: f64) {
+    let shape = Ellipse2::from_x_axis(axis([0.; 2], [0.6, 0.8]), major, 1., sense).unwrap();
+    let roots = ExtPElC2d::with_ellipse(
+        Point2::default(),
+        shape,
+        precision::confusion(),
+        0.,
+        std::f64::consts::TAU,
+    )
+    .unwrap();
+    assert_eq!(roots.nb_ext().unwrap(), 4);
+    assert_minima_count(&roots, 2);
+    for index in 1..=4 {
+        assert_ellipse_axis_distance(&roots, index, major);
+    }
+}
+
+fn assert_ellipse_axis_distance(roots: &ExtPElC2d, index: i32, major: f64) {
+    let expected = if roots.is_min(index).unwrap() {
+        1.
+    } else {
+        major * major
+    };
+    assert!(
+        (roots.square_distance(index).unwrap() - expected).abs() < precision::confusion() * major
+    );
 }
 
 #[test]
@@ -322,6 +326,14 @@ fn generic_recompute_forwards_local_uncertainty_and_recovers() {
         ExtPC2d::with_curve(Point2::new(3., 0.), &adaptor, precision::confusion()).unwrap();
     assert!(solver.is_done());
     solver.perform(Point2::new(2., 0.)).unwrap();
+    assert_uncertain_generic_foot(&solver);
+    solver.perform(Point2::new(3., 0.)).unwrap();
+    for index in 1..=solver.nb_ext().unwrap() {
+        assert!(solver.is_min(index).is_ok());
+    }
+}
+
+fn assert_uncertain_generic_foot(solver: &martensite_tkgeombase::extrema::ExtPC2d<'_>) {
     assert!(solver.is_done());
     assert_eq!(solver.nb_ext().unwrap(), 1);
     assert!(matches!(
@@ -333,10 +345,6 @@ fn generic_recompute_forwards_local_uncertainty_and_recovers() {
         "Extrema_UncertifiedStationaryRoot"
     );
     assert_eq!(solver.square_distance(1).unwrap(), 4.);
-    solver.perform(Point2::new(3., 0.)).unwrap();
-    for index in 1..=solver.nb_ext().unwrap() {
-        assert!(solver.is_min(index).is_ok());
-    }
 }
 
 #[test]
@@ -350,22 +358,25 @@ fn one_uncertain_root_does_not_discard_other_ellipse_roots() {
         std::f64::consts::TAU,
     )
     .unwrap();
-    let mut unresolved = 0;
-    let mut certified = 0;
-    for index in 1..=roots.nb_ext().unwrap() {
-        match roots.classification(index).unwrap() {
-            StationaryNature::Unresolved(_) => {
-                unresolved += 1;
-                assert!(roots.is_min(index).is_err());
-            }
-            _ => {
-                certified += 1;
-                assert!(roots.is_min(index).is_ok());
-            }
+    let count = roots.nb_ext().unwrap();
+    let unresolved = (1..=count)
+        .filter(|&index| assert_root_classification_visible(&roots, index))
+        .count();
+    assert!(unresolved > 0 && unresolved < count as usize);
+}
+
+fn assert_root_classification_visible(roots: &ExtPElC2d, index: i32) -> bool {
+    assert!(roots.square_distance(index).unwrap().is_finite());
+    match roots.classification(index).unwrap() {
+        StationaryNature::Unresolved(_) => {
+            assert!(roots.is_min(index).is_err());
+            true
         }
-        assert!(roots.square_distance(index).unwrap().is_finite());
+        _ => {
+            assert!(roots.is_min(index).is_ok());
+            false
+        }
     }
-    assert!(unresolved > 0 && certified > 0);
 }
 
 #[test]
