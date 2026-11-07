@@ -3,7 +3,7 @@
 use super::gp_space::{GpPoint, GpVector};
 use crate::native_failure::failure;
 use martensite_tkernel::{precision, standard::Failure};
-use martensite_tkmath::predicates::distance_second_variation_sign;
+use martensite_tkmath::predicates::{DistanceJetCertificate, certify_distance_stationary_jet};
 use std::cmp::Ordering;
 
 /// Versioned minimum classification; select legacy only when replaying old results.
@@ -63,58 +63,29 @@ pub(super) fn certified_minimum<P: GpPoint>(
     parameter: f64,
     (position, tangent, second): (P, P::Vector, P::Vector),
 ) -> Result<bool, Failure> {
-    certify_stationarity(query, parameter, position, tangent)?;
-    certify_second_variation(query, parameter, position, tangent, second)?;
-    let sign = distance_second_variation_sign(
+    let certificate = certify_distance_stationary_jet(
         point_coordinates(query),
         point_coordinates(position),
         vector_coordinates::<P>(tangent),
         vector_coordinates::<P>(second),
+        precision::confusion(),
     )
     .map_err(|error| decline(parameter, &error.to_string()))?;
-    match sign {
-        Ordering::Greater => Ok(true),
-        Ordering::Less => Ok(false),
-        Ordering::Equal => Err(decline(parameter, "zero second variation")),
+    match certificate {
+        DistanceJetCertificate::Resolved(Ordering::Greater) => Ok(true),
+        DistanceJetCertificate::Resolved(Ordering::Less) => Ok(false),
+        unresolved => Err(unresolved_jet_failure(parameter, unresolved)),
     }
 }
 
-fn certify_stationarity<P: GpPoint>(
-    query: P,
-    parameter: f64,
-    position: P,
-    tangent: P::Vector,
-) -> Result<(), Failure> {
-    let speed = tangent.norm();
-    let residual = query.vector_to(&position).dot_with(&tangent).abs();
-    // tol:metric The normal-foot residual is measured as a distance, independent of parameter speed.
-    let bound = precision::confusion() * speed;
-    if !speed.is_finite() || speed == 0. || !residual.is_finite() || residual > bound {
-        return Err(decline(
-            parameter,
-            &format!("stationary residual {residual}, speed {speed}, bound {bound}"),
-        ));
-    }
-    Ok(())
-}
-
-fn certify_second_variation<P: GpPoint>(
-    query: P,
-    parameter: f64,
-    position: P,
-    tangent: P::Vector,
-    second: P::Vector,
-) -> Result<(), Failure> {
-    let variation = tangent.dot_with(&tangent) + query.vector_to(&position).dot_with(&second);
-    // tol:metric A displacement within modeling resolution must not change the root's class.
-    let bound = precision::confusion() * second.norm();
-    if !variation.is_finite() || !bound.is_finite() || variation.abs() <= bound {
-        return Err(decline(
-            parameter,
-            &format!("second variation {variation}, uncertainty bound {bound}"),
-        ));
-    }
-    Ok(())
+fn unresolved_jet_failure(parameter: f64, certificate: DistanceJetCertificate) -> Failure {
+    decline(
+        parameter,
+        &format!(
+            "{certificate:?}, query resolution {}",
+            precision::confusion()
+        ),
+    )
 }
 
 fn point_coordinates<P: GpPoint>(point: P) -> [f64; 3] {

@@ -13,7 +13,7 @@ mod homothety;
 mod line_trace;
 mod plane_sign;
 mod reflected_point;
-pub use distance_variation::distance_second_variation_sign;
+pub use distance_variation::{DistanceJetCertificate, certify_distance_stationary_jet};
 /// Certified polynomial roots for extension topology.
 pub mod roots;
 mod segment_contact;

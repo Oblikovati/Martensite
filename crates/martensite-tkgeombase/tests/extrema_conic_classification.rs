@@ -417,3 +417,38 @@ fn assert_reversed_hyperbola(sense: bool) {
         0
     );
 }
+
+#[test]
+fn large_ellipse_cancellation_keeps_the_root_class_unresolved() {
+    // #406: B=5*2^50+1 gives exact variation 64, but binary64 subtraction gives 2^58.
+    let base = 5. * 2_f64.powi(53);
+    let shape =
+        Ellipse2::from_x_axis(axis([0.; 2], [1., 0.]), base + 16., base + 8., true).unwrap();
+    let roots = ExtPElC2d::with_ellipse(
+        Point2::new(16., 0.),
+        shape,
+        precision::confusion(),
+        0.,
+        std::f64::consts::TAU,
+    )
+    .unwrap();
+    let index = zero_parameter_root(&roots);
+    assert_named_unresolved_root(&roots, index);
+}
+
+fn zero_parameter_root(roots: &ExtPElC2d) -> i32 {
+    (1..=roots.nb_ext().unwrap())
+        .find(|&index| roots.point(index).unwrap().parameter().abs() < precision::p_confusion())
+        .expect("stationary root at zero")
+}
+
+fn assert_named_unresolved_root(roots: &ExtPElC2d, index: i32) {
+    assert!(matches!(
+        roots.classification(index).unwrap(),
+        StationaryNature::Unresolved(_)
+    ));
+    assert_eq!(
+        roots.is_min(index).unwrap_err().exception_type(),
+        "Extrema_UncertifiedStationaryRoot"
+    );
+}
