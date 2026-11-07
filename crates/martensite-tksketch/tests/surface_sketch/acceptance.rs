@@ -1,5 +1,5 @@
 //! Independent native-body and ownership acceptance controls for #416.
-mod geometry;
+pub(crate) mod geometry;
 mod isolation;
 
 use geometry::*;

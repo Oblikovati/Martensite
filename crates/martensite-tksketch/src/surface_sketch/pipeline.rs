@@ -29,14 +29,9 @@ fn publish(
         .map_err(|cause| admitted.failure(SurfaceStage::Encoding, cause))?;
     let checked = validation::check_body(&solid, &bindings, admitted, semantic_check)
         .map_err(|cause| admitted.failure(SurfaceStage::Validation, cause))?;
-    let (volume, volume_errors) = volume::measure(&solid, admitted)
+    let (volume, errors) = volume::measure(&solid, admitted)
         .map_err(|cause| admitted.failure(SurfaceStage::Volume, cause))?;
     Ok(result::assemble(
-        admitted,
-        bytes,
-        keys,
-        checked,
-        volume,
-        volume_errors,
+        admitted, bytes, keys, checked, volume, errors,
     ))
 }

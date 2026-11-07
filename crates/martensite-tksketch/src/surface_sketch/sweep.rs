@@ -16,6 +16,7 @@ pub(super) struct Sweep {
     pub expected_volume: f64,
     pub surface_area: f64,
     pub coordinate_error: f64,
+    pub reference_plane: Option<martensite_tkmath::gp::Plane3>,
 }
 impl Sweep {
     pub(super) fn failure(

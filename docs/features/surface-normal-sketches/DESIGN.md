@@ -94,8 +94,9 @@ The developed sheet is a sector with angular extent `2 pi sin(alpha)` per
 physical revolution. Its seam and winding are explicit. A sketch excludes the
 apex and any region whose offset reaches the axis. The normal extrusion changes
 both radial and axial position. A circle on the developed sheet generally maps
-to a spatial curve that is not a circle. This contract guides #417; it does not
-add an unused cone variant to the first public interface.
+to a spatial curve that is not a circle. The admitted `ConeSector` is an annular region in this developed sheet.
+Its additive entry point and validation contract are specified in
+[CONE.md](CONE.md); general developed curves remain #418.
 
 ## Construction and module placement
 

@@ -7,6 +7,8 @@ static_assertions::assert_impl_all!(SurfaceVertexId: Send, Sync);
 static_assertions::assert_impl_all!(NormalSense: Send, Sync);
 static_assertions::assert_impl_all!(CylinderSupport: Send, Sync);
 static_assertions::assert_impl_all!(CylinderRectangle: Send, Sync);
+static_assertions::assert_impl_all!(ConeSupport: Send, Sync);
+static_assertions::assert_impl_all!(ConeSector: Send, Sync);
 static_assertions::assert_impl_all!(NormalExtrusionOptions: Send, Sync);
 static_assertions::assert_impl_all!(NormalExtrusionLimits: Send, Sync);
 static_assertions::assert_impl_all!(SurfaceStage: Send, Sync);

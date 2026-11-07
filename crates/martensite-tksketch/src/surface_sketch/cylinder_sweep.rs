@@ -17,6 +17,7 @@ pub(super) fn prepare(admitted: &Admitted) -> Sweep {
         expected_volume: admitted.expected_volume,
         surface_area: surface_area(admitted),
         coordinate_error: admitted.coordinate_error,
+        reference_plane: None,
     }
 }
 fn points(admitted: &Admitted, first_depth: usize) -> [[f64; 3]; 4] {

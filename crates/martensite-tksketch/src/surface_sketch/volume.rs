@@ -8,7 +8,7 @@ pub(super) fn measure(
     solid: &topods::Shape,
     admitted: &Sweep,
 ) -> Checked<(Measured, VolumeErrorEstimates)> {
-    let (value, status) = integrate(solid, admitted.options.volume_relative_error)?;
+    let (value, status) = integrate(solid, admitted)?;
     let errors = VolumeErrorEstimates {
         integration: absolute_error(value, status, admitted.options.volume_relative_error)?,
         construction: admitted.surface_area * admitted.coordinate_error,
@@ -36,15 +36,16 @@ fn comparison_budget(admitted: &Sweep) -> f64 {
         + 64. * f64::EPSILON * admitted.expected_volume
 }
 
-fn integrate(solid: &topods::Shape, requested: f64) -> Checked<(f64, f64)> {
+fn integrate(solid: &topods::Shape, admitted: &Sweep) -> Checked<(f64, f64)> {
     let mut props = GProps::new();
-    let status = BRepGProp::volume_properties_gk(
-        solid,
-        &mut props,
-        requested,
-        true,
-        VolumeGKFlags::default(),
-    )
+    let requested = admitted.options.volume_relative_error;
+    let flags = VolumeGKFlags::default();
+    let status = match admitted.reference_plane {
+        Some(plane) => {
+            BRepGProp::volume_properties_gk_plane(solid, &mut props, plane, requested, true, flags)
+        }
+        None => BRepGProp::volume_properties_gk(solid, &mut props, requested, true, flags),
+    }
     .map_err(|error| native("Gauss-Kronrod volume", error))?;
     Ok((props.mass(), status))
 }

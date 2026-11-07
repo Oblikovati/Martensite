@@ -232,3 +232,54 @@ Logs are `/tmp/martensite417-structural-tests-final.log`,
 `/tmp/martensite417-structural-clippy.log` and
 `/tmp/martensite417-cylinder-structural.log`. This checkpoint changes private
 construction/publication inputs only; no public cone operation is included.
+
+### Cone integration conditioning
+
+The first public cone run passed six private controls and 31 of 32 public
+tests. The remaining breadth test stayed CPU-bound for several minutes at a
+physical angular span of pi. The owned run was stopped with exit 143; it was
+not a passing gate. Instrumentation placed the delay inside explicit
+Gauss-Kronrod volume integration, after construction, semantic checks, binary
+round-trip and ordered body validation had completed.
+
+On the same half-turn solid, the existing reference-plane integration API
+with axial plane z=-10 completed in the probe's reported 0.00-second test
+time. It measured 241.27431579569566 against the independent expression
+`53.76*pi/0.7`, with estimated relative error 6.06666e-15 at a requested
+1e-9. The log is `/tmp/martensite417-plane-probe.log`.
+
+The numeric-status integration API retains a purely relative stopping rule.
+Its source documents the difficulty of symmetric contributions near zero;
+#246 added a roundoff floor only to the completed default route. The cone
+probe supports reference conditioning as the cause of the observed delay.
+[Bug #424](https://github.com/Oblikovati/Martensite/issues/424) tracks the
+general convergence limitation separately. A cone-specific reference choice
+does not resolve that general bug. Final cone qualification must retain all
+angular-span cases and requested tolerances, check independent closed forms
+and actual face geometry, and preserve the existing cylinder route.
+
+The cone operation now selects one axial reference plane below the complete
+meridional section. Its coordinates participate in admission's rounding
+estimate. The existing cylinder operation retains its original integration
+route. The corrected cone run passed six private and 32 public tests; the
+public suite took 0.46 seconds. The tests retained narrow, half-turn, major and
+near-full sectors, both normal senses, seam and oblique frames, a small-scale
+case and an offset crossing the original apex plane. Rational closed-form
+volumes and face areas remain the expected results; a second native integration
+uses a different plane above the section. Requested tolerances are unchanged.
+
+All-targets clippy passed with warnings denied. The original cylinder signature
+again matched all 12,287 bytes and the SHA-256 recorded above. Final focused
+logs are `/tmp/martensite417-cone-conditioned-tests.log`,
+`/tmp/martensite417-cone-final-clippy.log` and
+`/tmp/martensite417-cylinder-final.log`. The 42-file toolkit review snapshot
+has fingerprint `468f0e093a70453ba63d9b09bc98f2a51ab80c3a5f651ee959371dfa8b6f938a`,
+recorded in `/tmp/martensite417-gate5-files.json`. Temporary diagnostics and the
+plane probe were removed. Full PR and hosted sanitizer gates remain pending.
+
+The implementation passed the first correctness review and parallel structure
+and standards reviews. They found no material blockers. The combined README
+examples also compiled and ran, including the second semi-angle pi/6. Its
+measured cone volume agreed with the independent expression
+`42 + 2.1*sqrt(3)` within 1e-7. This example check supplements the persistent
+3/5–4/5 cone controls; it is not a substitute for the PR gate.
