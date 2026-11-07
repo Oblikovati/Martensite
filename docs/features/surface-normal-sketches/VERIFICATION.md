@@ -181,3 +181,43 @@ recorded in `/tmp/martensite416-tksketch-cmath-files.json`. The dependency-polic
 and vulnerability checks passed again after the C-math adapter correction.
 The remaining merge gate is hosted validation, including ThreadSanitizer;
 the local startup failure is not counted as a passing sanitizer run.
+
+### Cylindrical integration
+
+[PR #422](https://github.com/Oblikovati/Martensite/pull/422) merged the cylinder
+operation into `release/next` at `7e2d83ca17a1c75d28895317d0e7e3ce36b8873a`.
+[Hosted run 42374063707](https://github.com/Oblikovati/Martensite/actions/runs/42374063707)
+passed all required checks, both package suites and all nine focused sanitizer
+controls. The actual surface-sketch parallel replay test passed under TSan in
+26.12 seconds. The merge and tested head have identical tree
+`88506603eeab42d98b847f22ab8a80e9a49fc12f`; no merge-only source change occurred.
+Tasks #415 and #416 are closed. This establishes the first cylindrical
+operation, not the broader feature's cone, curve, full-wrap or attachment tasks.
+
+### Cone contract
+
+The [conical sector contract](CONE.md) passed its first design review. Native
+ordinary and seam-crossing sectors under both normal senses must pass before
+public implementation. Actual cone carriers and their trimmed half-cone,
+positive volume with preserved depth identities, and conditioned coordinate
+error estimates remain required checks. The exact rational determinant
+controls establish the independent numerical examples only; they do not
+certify the constructed B-rep.
+
+The native cone control passed on Linux x86_64: one test covered both normal
+senses at ordinary start angle 0.2 and seam-crossing start angle -0.3. All four
+bodies passed ordered validation, had six faces/twelve edges/eight vertices and
+four conical/two planar carriers, and matched positive expected volumes 53.76
+or 47.04. Test execution took 0.14 seconds after a three-minute fresh build.
+The command `cargo test -p martensite-tksketch --test surface_sketch native_cone`
+exited zero with the same two-job, incremental-disabled, global opt-level 1,
+debug-disabled settings used for the cylinder gate. The log is
+`/tmp/martensite417-native-cone.log`.
+
+Before changing production code, the existing cylinder replay control emitted
+its geometry, semantic-binding and metadata signature with
+`MARTENSITE_SURFACE_REPLAY_CHILD=1` and exact filter `replay::child_signature`.
+It exited zero and is retained locally in
+`/tmp/martensite417-cylinder-before.log` for comparison after structural
+extraction. Native feasibility does not yet establish public cone admission,
+semantic history, ownership or replay; those remain the implementation gate.

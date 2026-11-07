@@ -22,7 +22,8 @@ measured volume. It does not solve a general sketch constraint system.
 operation must also construct shared topology, account for periodicity, retain
 source identity and validate the completed solid.
 
-See [the geometry contract](DESIGN.md) and [the evidence plan](VERIFICATION.md).
+See [the geometry contract](DESIGN.md), [the cone sector contract](CONE.md) and
+[the evidence plan](VERIFICATION.md).
 
 ## Delivery tasks
 
