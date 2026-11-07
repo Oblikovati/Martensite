@@ -24,6 +24,10 @@ source identity and validate the completed solid.
 See [the geometry contract](DESIGN.md), [the cone sector contract](CONE.md) and
 [the evidence plan](VERIFICATION.md).
 
+See the [supplied cylindrical text workflow](VISUAL-WORKFLOW.md) for the
+end-to-end application acceptance case. The primitive operations below are
+foundations for that workflow.
+
 ## Delivery tasks
 
 | Task | Scope | Depends on |
