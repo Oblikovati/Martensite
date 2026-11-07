@@ -7,14 +7,16 @@ use martensite_tkde::de::{
 };
 use martensite_tkdeobj::de_obj::{DeObjConfigurationNode, DeObjProvider};
 use martensite_tkdeobj::rw_obj::{
-    RwObjCafReader, RwObjCafWriter, RwObjObjMaterialMap, RwObjObjWriterContext,
+    RwObjCafReader, RwObjCafWriter, RwObjObjMaterialMap, RwObjObjWriterContext, RwObjReader as _,
+    RwObjTriangulationReader,
 };
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::ncollection::{IndexedDataMap, Vec3, Vec4};
-use martensite_tkernel::standard::Transient as _;
+use martensite_tkernel::ncollection::{IndexedDataMap, Vec2, Vec3, Vec4};
+use martensite_tkernel::standard::{Handle, Transient as _};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::poly::{Triangulation, mesh_purpose};
+use std::io::Cursor;
 use std::path::PathBuf;
 
 fn file_in_temp(name: &str) -> PathBuf {
@@ -49,8 +51,90 @@ fn the_context_writes_statements_with_shifted_indices_and_this_library_in_the_he
     std::fs::remove_file(&path).unwrap();
     assert_eq!(
         written,
-        "# Exported by Martensite\n#  Vertices: 3\n#     Faces: 1\n# Author: A\n# Comments: one\n# two\nmtllib c.mtl\nusemtl m1\ng line break\nv 1.000000 -0.500000 0.000000\nvn 0.000000 0.000000 1.000000\nvt 0.500000 0.250000\nf 1/1/1 2/2/2 3/3/3\nf 4//4 5//5 6//6 7//7\n"
+        "# Exported by Martensite\n#  Vertices: 3\n#     Faces: 1\n# Author: A\n# Comments: one\n# two\nmtllib c.mtl\nusemtl m1\ng line break\nv 1 -0.5 0\nvn 0 0 1\nvt 0.5 0.25\nf 1/1/1 2/2/2 3/3/3\nf 4//4 5//5 6//6 7//7\n"
     );
+}
+
+/// Writes one triangle with these values through the context and reads it with the crate's reader.
+fn through_the_file(
+    name: &str,
+    nodes: [Vec3<f32>; 3],
+    normal: Vec3<f32>,
+    uv: Vec2<f32>,
+) -> Handle<Triangulation> {
+    let path = file_in_temp(name);
+    let mut writer = RwObjObjWriterContext::new(&text(&path));
+    for node in &nodes {
+        assert!(writer.write_vertex(node));
+    }
+    writer.set_normals(true);
+    assert!(writer.write_normal(&normal));
+    writer.set_tex_coords(true);
+    assert!(writer.write_tex_coord(&uv));
+    let corners = "f 1/1/1 2/1/1 3/1/1\n";
+    assert!(writer.close());
+    let mut written = std::fs::read_to_string(&path).unwrap();
+    std::fs::remove_file(&path).unwrap();
+    written.push_str(corners);
+    let mut reader = RwObjTriangulationReader::new();
+    reader.set_create_shapes(false);
+    let mut stream = Cursor::new(written.into_bytes());
+    let progress = ProgressRange::default();
+    assert!(
+        reader
+            .read_stream(&mut stream, &AsciiString::new("values.obj"), &progress)
+            .unwrap()
+    );
+    reader
+        .get_triangulation()
+        .unwrap()
+        .expect("a triangulation")
+}
+
+#[test]
+fn a_small_value_is_not_written_as_zero() {
+    let path = file_in_temp("small.obj");
+    let mut writer = RwObjObjWriterContext::new(&text(&path));
+    assert!(writer.write_vertex(&Vec3::new(1.0e-7, 0.0, 0.0)));
+    writer.set_normals(true);
+    assert!(writer.write_normal(&Vec3::new(1.0e-7, 0.0, 1.0)));
+    writer.set_tex_coords(true);
+    assert!(writer.write_tex_coord(&Vec2::new(1.0e-7, 0.0)));
+    assert!(writer.close());
+    let written = std::fs::read_to_string(&path).unwrap();
+    std::fs::remove_file(&path).unwrap();
+    assert!(written.contains("v 1.00000001e-07 0 0\n"), "{written}");
+    assert!(written.contains("vn 1.00000001e-07 0 1\n"), "{written}");
+    assert!(written.contains("vt 1.00000001e-07 0\n"), "{written}");
+    assert!(!written.contains("0.000000"), "{written}");
+}
+
+#[test]
+fn positions_normals_and_uvs_read_back_bit_identical() {
+    let nodes = [
+        Vec3::new(1.0e-7_f32, 1234.5678, -8_388_607.5),
+        Vec3::new(16_777_215.0, 1.0 + f32::EPSILON, 0.1),
+        Vec3::new(-0.333_333_34, 3.0e-5, 1.0e10),
+    ];
+    let normal = Vec3::new(1.0e-7_f32, 0.6, 0.8);
+    let uv = Vec2::new(1.0e-7_f32, 0.333_333_34);
+    let mesh = through_the_file("values.obj", nodes, normal, uv);
+    assert_eq!(mesh.nb_nodes(), 3);
+    for (rank, node) in nodes.iter().enumerate() {
+        let index = rank as i32 + 1;
+        let read = mesh.node(index).unwrap();
+        for (found, written) in [(read.x(), node.x), (read.y(), node.y), (read.z(), node.z)] {
+            assert_eq!((found as f32).to_bits(), written.to_bits(), "node {index}");
+        }
+        let read = mesh.normal_vec3(index).unwrap();
+        for (found, written) in [(read.x, normal.x), (read.y, normal.y), (read.z, normal.z)] {
+            assert_eq!(found.to_bits(), written.to_bits(), "normal {index}");
+        }
+        let read = mesh.uv_node(index).unwrap();
+        for (found, written) in [(read.x(), uv.x), (read.y(), uv.y)] {
+            assert_eq!((found as f32).to_bits(), written.to_bits(), "uv {index}");
+        }
+    }
 }
 
 #[test]

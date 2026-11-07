@@ -13,6 +13,7 @@ mod material_map_files;
 mod name_format;
 mod names;
 mod node_attributes;
+mod number_text;
 mod shape_iterator;
 mod text_lines;
 mod triangulation_reader;
@@ -34,6 +35,7 @@ pub use material_map::{
 pub use name_format::RwMeshNameFormat;
 pub use names::RwMesh;
 pub use node_attributes::RwMeshNodeAttributes;
+pub use number_text::{double_precision_text, single_precision_text};
 pub use shape_iterator::{RwMeshShapeIterator, RwMeshShapeIteratorBase};
 pub use text_lines::split_text_lines;
 pub use triangulation_reader::{

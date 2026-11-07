@@ -2,7 +2,7 @@
 use martensite_tkernel::message::Message;
 use martensite_tkernel::ncollection::{IndexedDataMap, Vec2, Vec3, Vec4};
 use martensite_tkernel::tcollection::AsciiString;
-use martensite_tkrwmesh::rw_mesh::split_text_lines;
+use martensite_tkrwmesh::rw_mesh::{single_precision_text, split_text_lines};
 use std::fs::File;
 use std::io::{self, BufWriter, Write};
 
@@ -194,17 +194,17 @@ impl RwObjObjWriterContext {
     }
     /// Writes a vertex; `writer.write_vertex(&Vec3::new(0.0, 0.0, 0.0))`.
     pub fn write_vertex(&mut self, value: &Vec3<f32>) -> bool {
-        let [x, y, z] = [value.x, value.y, value.z].map(|v| c_fixed(f64::from(v)));
+        let [x, y, z] = [value.x, value.y, value.z].map(single_precision_text);
         self.write_line(&format!("v {x} {y} {z}\n"))
     }
     /// Writes a normal; `writer.write_normal(&Vec3::new(0.0, 0.0, 1.0))`.
     pub fn write_normal(&mut self, value: &Vec3<f32>) -> bool {
-        let [x, y, z] = [value.x, value.y, value.z].map(|v| c_fixed(f64::from(v)));
+        let [x, y, z] = [value.x, value.y, value.z].map(single_precision_text);
         self.write_line(&format!("vn {x} {y} {z}\n"))
     }
     /// Writes texture coordinates; `writer.write_tex_coord(&Vec2::new(0.5, 0.5))`.
     pub fn write_tex_coord(&mut self, value: &Vec2<f32>) -> bool {
-        let [u, v] = [value.x, value.y].map(|v| c_fixed(f64::from(v)));
+        let [u, v] = [value.x, value.y].map(single_precision_text);
         self.write_line(&format!("vt {u} {v}\n"))
     }
     /// Writes a group name; `writer.write_group(&name)`.

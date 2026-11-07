@@ -15,6 +15,7 @@ The first line of an OBJ and an MTL file is `# Exported by Martensite`. The conf
 
 ## Reading and writing
 
+- Positions, normals and texture coordinates keep 9 significant digits, in the shortest form of those digits, so a small value is not lost and a 32-bit float reads back exactly. `v 1.00000001e-07 0.5 0` is such a line.
 - `read.memory.limit.mib` is a limit in mebibytes.
 - The provider reads a shape as one face, or as shapes with `read.create.shapes`.
 - A comment keeps a one-letter last line and repeated lines. A line break in a group or material name is

@@ -4,5 +4,6 @@ mod document_reader;
 mod iterators;
 mod material_map;
 mod names;
+mod number_text;
 mod text_lines;
 mod triangulation_source;

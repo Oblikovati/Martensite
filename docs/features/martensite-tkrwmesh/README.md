@@ -11,6 +11,7 @@ documents the same way.
 | `RwMeshMaterialMap` | Unique material names and the texture files of a written document. |
 | `RwMesh`, `RwMeshNameFormat` | Node names of a document. |
 | `split_text_lines` | The lines of a comment for a writer. |
+| `single_precision_text`, `double_precision_text` | Numbers as text with 9 and 17 significant digits, so each reads back bit-identical. |
 
 ## Ownership and thread safety
 

@@ -2,22 +2,16 @@
 use martensite_tkernel::message::Message;
 use martensite_tkernel::ncollection::{IndexedDataMap, Vec2, Vec3, Vec4};
 use martensite_tkernel::standard::Failure;
-use martensite_tkernel::storage::format_general;
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::Point3;
-use martensite_tkrwmesh::rw_mesh::split_text_lines;
+use martensite_tkrwmesh::rw_mesh::{
+    double_precision_text, single_precision_text, split_text_lines,
+};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
 /// The comment naming the writer, the first after the format line.
 const EXPORT_COMMENT: &str = "comment Exported by Martensite\n";
-/// Significant digits that bring any single-precision value back exactly, positions, normals and
-/// texture coordinates alike: with fewer, large coordinates of a model round to a coarser grid
-/// than the `float` the header declares can hold.
-const SINGLE_DIGITS: usize = 9;
-/// Significant digits that bring any double back exactly: with fewer, a position the header declares
-/// as `double` would hold no more than a single-precision one.
-const DOUBLE_DIGITS: usize = 17;
 
 /// Where a context writes when it does not create a file itself.
 pub type RwPlyOutput = Box<dyn Write + Send>;
@@ -222,8 +216,8 @@ impl RwPlyPlyWriterContext {
     }
     fn position_text(&self, point: &Point3) -> String {
         let [x, y, z] = [point.x(), point.y(), point.z()].map(|value| match self.is_double_prec {
-            true => format_general(value, DOUBLE_DIGITS),
-            false => single_text(value as f32),
+            true => double_precision_text(value),
+            false => single_precision_text(value as f32),
         });
         format!("{x} {y} {z}")
     }
@@ -241,11 +235,11 @@ impl RwPlyPlyWriterContext {
         }
         let mut line = self.position_text(point);
         if self.has_normals {
-            let [x, y, z] = [normal.x, normal.y, normal.z].map(single_text);
+            let [x, y, z] = [normal.x, normal.y, normal.z].map(single_precision_text);
             line.push_str(&format!(" {x} {y} {z}"));
         }
         if self.has_tex_coords {
-            let [u, v] = [uv.x, uv.y].map(single_text);
+            let [u, v] = [uv.x, uv.y].map(single_precision_text);
             line.push_str(&format!(" {u} {v}"));
         }
         if self.has_colors {
@@ -335,11 +329,6 @@ impl RwPlyPlyWriterContext {
         }
         true
     }
-}
-
-/// `%.9g` of a single-precision value.
-fn single_text(value: f32) -> String {
-    format_general(f64::from(value), SINGLE_DIGITS)
 }
 
 fn check_count(kind: &str, written: i32, declared: i32) -> Result<(), Failure> {
