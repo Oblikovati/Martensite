@@ -43,7 +43,7 @@ fn negative_subnormal_second_variation_has_an_exact_sign() {
 #[test]
 fn exact_jet_refuses_a_false_rounded_conditioning_certificate() {
     // #406: B=5*2^50+1; b²-a*(a-16)=64 exactly, while rounded subtraction gives 2^58.
-    let base = 5. * 2_f64.powi(53);
+    let base = 5. * martensite_cmath::powi(2., 53);
     let (a, b) = (base + 16., base + 8.);
     let jet = ([16., 0., 0.], [a, 0., 0.], [0., b, 0.], [-a, 0., 0.]);
     assert_eq!(
@@ -54,7 +54,7 @@ fn exact_jet_refuses_a_false_rounded_conditioning_certificate() {
 
 #[test]
 fn exact_jet_detects_a_normal_residual_lost_by_rounded_subtraction() {
-    let coordinate = 2_f64.powi(54);
+    let coordinate = martensite_cmath::powi(2., 54);
     assert_eq!(
         certify(
             [1., 0., 0.],

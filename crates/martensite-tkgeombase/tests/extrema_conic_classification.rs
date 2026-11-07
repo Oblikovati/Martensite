@@ -421,7 +421,7 @@ fn assert_reversed_hyperbola(sense: bool) {
 #[test]
 fn large_ellipse_cancellation_keeps_the_root_class_unresolved() {
     // #406: B=5*2^50+1 gives exact variation 64, but binary64 subtraction gives 2^58.
-    let base = 5. * 2_f64.powi(53);
+    let base = 5. * martensite_cmath::powi(2., 53);
     let shape =
         Ellipse2::from_x_axis(axis([0.; 2], [1., 0.]), base + 16., base + 8., true).unwrap();
     let roots = ExtPElC2d::with_ellipse(
