@@ -20,7 +20,8 @@ impl<K: Debug, V, H: HashPolicy<K>> DataMap<K, V, H> {
     /// Selects the resource for map nodes; `DataMap::with_allocator(policy,1,arena)`.
     pub fn with_allocator(hasher: H, bucket_count: usize, resource: BaseAllocator) -> Self {
         Self {
-            storage: DataMapStorage::new(bucket_count, resource),
+            storage: DataMapStorage::new(bucket_count, resource)
+                .walking_slots(hasher.walks_in_order_added()),
             hasher,
         }
     }

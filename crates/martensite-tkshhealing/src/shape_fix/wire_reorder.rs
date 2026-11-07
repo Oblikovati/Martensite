@@ -1,9 +1,28 @@
 //! `ShapeFixWire::fix_reorder`: analyze the edge order and apply a ShapeAnalysisWireOrder.
 use super::ShapeFixWire;
-use crate::shape_analysis::ShapeAnalysisWireOrder;
+use crate::shape_analysis::{ShapeAnalysisEdge, ShapeAnalysisWireOrder};
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus, ShapeExtendWireData};
-use martensite_tkbrep::topods::Edge;
+use martensite_tkbrep::topods::{self, Edge};
 use martensite_tkernel::standard::{Failure, Handle};
+use martensite_tkg3d::top_abs::Orientation;
+
+/// Whether two orders are one closed chain of edges that starts at different edges.
+fn chain_the_same_edges(
+    first: &ShapeAnalysisWireOrder,
+    second: &ShapeAnalysisWireOrder,
+) -> Result<bool, Failure> {
+    let ranks = |order: &ShapeAnalysisWireOrder| {
+        (1..=order.nb_edges())
+            .map(|rank| order.ordered(rank))
+            .collect::<Result<Vec<i32>, _>>()
+    };
+    let (first, second) = (ranks(first)?, ranks(second)?);
+    let twice = [first.as_slice(), first.as_slice()].concat();
+    Ok(first.len() == second.len()
+        && twice
+            .windows(second.len().max(1))
+            .any(|part| part == second))
+}
 
 impl ShapeFixWire {
     /// checks the order of the loaded edges (in both directions
@@ -41,6 +60,42 @@ impl ShapeFixWire {
             return Ok(false);
         }
         self.apply_order(&wire_data, order)
+    }
+
+    /// Whether reordering must also read the gaps on the surface: on a surface periodic in both
+    /// directions every end of a wire can lie at one point in space, where 3D gaps cannot tell
+    /// the edges apart. It takes a p-curve on every edge, a wire that the 3D gaps would reorder,
+    /// and a chain of edges other than the one they give; a wire that the two orders chain alike
+    /// keeps the order of the 3D gaps.
+    pub(super) fn order_needs_surface_gaps(&self) -> Result<bool, Failure> {
+        let analyzer = self.ensure_analyzer();
+        if analyzer.face().is_null()
+            || !self.bi_periodic_surface()
+            || !self.every_edge_has_pcurve()?
+        {
+            return Ok(false);
+        }
+        let mut in_space = ShapeAnalysisWireOrder::new();
+        analyzer.check_order_with(&mut in_space, self.closed_mode(), true, false)?;
+        if in_space.status() == 0 {
+            return Ok(false);
+        }
+        let mut on_surface = ShapeAnalysisWireOrder::new();
+        analyzer.check_order_with(&mut on_surface, self.closed_mode(), true, true)?;
+        Ok(!chain_the_same_edges(&in_space, &on_surface)?)
+    }
+
+    fn every_edge_has_pcurve(&self) -> Result<bool, Failure> {
+        let face = topods::face(&self.ensure_analyzer().face().oriented(Orientation::Forward))?;
+        let wire_data = self.wire_data()?;
+        let edges = ShapeAnalysisEdge::new();
+        for index in 1..=wire_data.nb_edges() {
+            let (curve, _, _) = edges.pcurve_on_face(&wire_data.edge(index)?, &face, true)?;
+            if curve.is_null() {
+                return Ok(false);
+            }
+        }
+        Ok(true)
     }
 
     fn bi_periodic_surface(&self) -> bool {

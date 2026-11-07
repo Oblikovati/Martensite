@@ -35,6 +35,13 @@ impl<K, V> ChainedSlots<K, V> {
             payload: SlotPayload::default(),
         }
     }
+    /// Traversal by slot instead of by bucket, for a policy that asks for the order added.
+    pub(super) fn walking_slots(mut self, walks: bool) -> Self {
+        if walks {
+            self.chains.walk_slots();
+        }
+        self
+    }
     /// The keys and values of every slot.
     pub(super) fn payload(&self) -> &SlotPayload<K, V> {
         &self.payload

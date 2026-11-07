@@ -8,9 +8,10 @@ impl BRepMeshDataStructureOfDelaun {
     pub fn get_element(&self, index: i32) -> Result<BRepMeshTriangle, Failure> {
         self.connectivity.read().element(index)
     }
-    /// Snapshot domain indices in native hash order; `mesh.elements_of_domain()`.
+    /// Snapshot of the domain indices, which walks as the domain itself does;
+    /// `mesh.elements_of_domain()`.
     pub fn elements_of_domain(&self) -> PackedMap<i32> {
-        self.connectivity.read().element_domain.clone()
+        self.connectivity.read().element_domain.same_walk_copy()
     }
     /// Append before registering adjacent pairs, retaining partial changes on failure; `mesh.add_element(&triangle)?`.
     pub fn add_element(&self, element: &BRepMeshTriangle) -> Result<i32, Failure> {

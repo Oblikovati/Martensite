@@ -64,6 +64,10 @@ name = "filling_bug23380"
 path = "tests/filling_bug23380.rs"
 
 [[test]]
+name = "offset_repeats_itself"
+path = "tests/offset_repeats_itself.rs"
+
+[[test]]
 name = "offset_bug26233"
 path = "tests/offset_bug26233.rs"
 

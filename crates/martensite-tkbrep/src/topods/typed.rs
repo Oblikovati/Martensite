@@ -60,6 +60,7 @@ macro_rules! typed_shape {
         }
         /// `std::hash<TopoDS_X>`: the hash of the underlying shape.
         impl HashKey for $class {
+            const WALKS_IN_ORDER_ADDED: bool = true;
             fn kernel_hash(&self) -> usize {
                 self.0.hash_code()
             }

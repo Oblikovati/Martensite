@@ -160,7 +160,7 @@ impl AggregateWireState {
             reorder_ok: !done,
         };
         if needs_fix(fixer.state.read().fix_reorder_mode, !state.reorder_ok) {
-            state.fixed |= fixer.fix_reorder(false)?;
+            state.fixed |= fixer.fix_reorder(fixer.order_needs_surface_gaps()?)?;
             state.reorder_ok = !fixer.status_reorder(ShapeExtendStatus::Fail);
         }
         Ok(state)
@@ -181,7 +181,7 @@ impl AggregateWireState {
 
     fn retry_reorder(&mut self, fixer: &ShapeFixWire) -> Result<(), Failure> {
         if needs_fix(fixer.state.read().fix_reorder_mode, !self.reorder_ok) {
-            let _ = fixer.fix_reorder(false)?;
+            let _ = fixer.fix_reorder(fixer.order_needs_surface_gaps()?)?;
             self.reorder_ok = !fixer.status_reorder(ShapeExtendStatus::Fail);
         }
         Ok(())

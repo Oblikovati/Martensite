@@ -65,7 +65,7 @@ impl ShapeFixWire {
             self.set_fix_intersecting_edges_mode(saved_mode);
         }
         let changed = changed?;
-        let _ = self.fix_reorder(false)?;
+        let _ = self.fix_reorder(self.order_needs_surface_gaps()?)?;
         Ok(changed)
     }
 
