@@ -164,6 +164,20 @@ fn check_authority_coverage(coverage: &OperationCoverage) {
 }
 
 fn check_unattempted_measurements(coverage: &OperationCoverage) {
+    check_missing_input_authority(coverage);
+    assert_eq!(
+        coverage.stages[&Stage::SurfaceMeasurement].state,
+        StageState::Unattempted
+    );
+    assert_eq!(
+        coverage.stages[&Stage::VolumeMeasurement].state,
+        StageState::Unattempted
+    );
+    assert!(coverage.self_check.is_some());
+    assert!(coverage.surface.is_none() && coverage.volume.is_none());
+}
+
+fn check_missing_input_authority(coverage: &OperationCoverage) {
     assert!(
         coverage.stages[&Stage::InputAuthority]
             .detail
@@ -175,16 +189,6 @@ fn check_unattempted_measurements(coverage: &OperationCoverage) {
         coverage.stages[&Stage::InputAuthority].state,
         StageState::Missing
     );
-    assert_eq!(
-        coverage.stages[&Stage::SurfaceMeasurement].state,
-        StageState::Unattempted
-    );
-    assert_eq!(
-        coverage.stages[&Stage::VolumeMeasurement].state,
-        StageState::Unattempted
-    );
-    assert!(coverage.self_check.is_some());
-    assert!(coverage.surface.is_none() && coverage.volume.is_none());
 }
 
 struct FailingNurbsConstructor;

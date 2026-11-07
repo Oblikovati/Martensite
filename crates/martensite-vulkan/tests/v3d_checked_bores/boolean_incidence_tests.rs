@@ -3,25 +3,21 @@ use crate::v3d_checked_bores::boolean_validation::LocalCheckMode;
 
 #[test]
 fn completed_measurement_and_stored_degenerate_pcurve_are_distinct() {
+    assert_measurement([false, true, false], IncidenceMeasurement::Measured);
+    assert_measurement([true, false, true], IncidenceMeasurement::Degenerated);
+}
+
+fn assert_measurement(state: [bool; 3], expected: IncidenceMeasurement) {
+    let [degenerated, done, stored] = state;
     assert_eq!(
         classify_incidence(
             LocalCheckMode::DegeneratePcurveExclusionV2,
-            false,
-            true,
-            false
+            degenerated,
+            done,
+            stored
         )
         .unwrap(),
-        IncidenceMeasurement::Measured
-    );
-    assert_eq!(
-        classify_incidence(
-            LocalCheckMode::DegeneratePcurveExclusionV2,
-            true,
-            false,
-            true
-        )
-        .unwrap(),
-        IncidenceMeasurement::Degenerated
+        expected
     );
 }
 
@@ -31,30 +27,19 @@ fn legacy_nondegenerate_and_missing_pcurve_states_remain_incomplete() {
         classify_incidence(LocalCheckMode::ExistingOrderedChecksV1, true, false, true).unwrap_err();
     assert_eq!(legacy.exception_type(), "BOP4_IncompleteCoverage");
     assert!(String::from_utf8_lossy(legacy.what()).contains("curve/surface measurement=NotDone"));
+    assert_v2_incomplete([false, false, true]);
+    assert_v2_incomplete([true, false, false]);
+    assert_v2_incomplete([true, true, true]);
+}
+
+fn assert_v2_incomplete(state: [bool; 3]) {
+    let [degenerated, done, stored] = state;
     assert!(
         classify_incidence(
             LocalCheckMode::DegeneratePcurveExclusionV2,
-            false,
-            false,
-            true
-        )
-        .is_err()
-    );
-    assert!(
-        classify_incidence(
-            LocalCheckMode::DegeneratePcurveExclusionV2,
-            true,
-            false,
-            false
-        )
-        .is_err()
-    );
-    assert!(
-        classify_incidence(
-            LocalCheckMode::DegeneratePcurveExclusionV2,
-            true,
-            true,
-            true
+            degenerated,
+            done,
+            stored
         )
         .is_err()
     );

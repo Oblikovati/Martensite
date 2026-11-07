@@ -203,19 +203,12 @@ fn check_validation_options(coverage: &super::boolean_coverage::OperationCoverag
 }
 
 fn check_self_observation(receipt: &super::boolean_coverage::SelfCheckObservation) {
-    use martensite_tkbo::bop_algo::SelfIntersectionFaceStatus;
     assert!(receipt.level > 0 && !receipt.phase.is_empty());
     assert!(receipt.scheduled_faces && receipt.rejected_arguments.is_none());
     assert!(
         !receipt.faces.is_empty() && receipt.pairs.is_empty() && receipt.diagnostics.is_empty()
     );
-    assert!(receipt.faces.iter().any(|face| matches!(
-        face.status(),
-        SelfIntersectionFaceStatus::Terminated {
-            has_contacts: false
-        }
-    )));
-    assert!(receipt.faces.iter().all(|face| face.source_index() >= 0));
+    check_terminated_source_faces(receipt);
     assert!(matches!(
         &receipt.completion,
         ProgressCompletion::Incomplete {
@@ -227,4 +220,15 @@ fn check_self_observation(receipt: &super::boolean_coverage::SelfCheckObservatio
     assert!(!receipt.parallel && receipt.fuzzy.is_finite());
     // The actual active source can be absent after post-treatment, never synthesized.
     let _observed_active_source = receipt.active_source;
+}
+
+fn check_terminated_source_faces(receipt: &super::boolean_coverage::SelfCheckObservation) {
+    use martensite_tkbo::bop_algo::SelfIntersectionFaceStatus;
+    assert!(receipt.faces.iter().any(|face| matches!(
+        face.status(),
+        SelfIntersectionFaceStatus::Terminated {
+            has_contacts: false
+        }
+    )));
+    assert!(receipt.faces.iter().all(|face| face.source_index() >= 0));
 }

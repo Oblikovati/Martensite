@@ -16,6 +16,19 @@ const EDGE_HEADING: [&str; 4] = [
 pub(crate) fn edge_type_and_hollow_interior() -> Result<(), Box<dyn Error>> {
     banner(&EDGE_HEADING);
     let mut run = SessionRun::new()?;
+    display_shaded_box(&mut run)?;
+    restyle(&mut run, solid(None))?;
+    run.dump("bug6897_1_3.png")?;
+    // Preserve the authored sRGB hex colour without alpha.
+    let green = ColorRgba::from_hex("64FF64", true).expect("a six-digit sRGB hex colour");
+    restyle(&mut run, solid(Some(green)))?;
+    run.dump("bug6897_1_1.png")?;
+    restyle(&mut run, hollow())?;
+    run.dump("bug6897_1_2.png")?;
+    run.finish()
+}
+
+fn display_shaded_box(run: &mut SessionRun) -> Result<(), Box<dyn Error>> {
     run.session().set_axonometric()?;
     let shaded = DisplayRequest {
         display_mode: Some(1),
@@ -23,22 +36,16 @@ pub(crate) fn edge_type_and_hollow_interior() -> Result<(), Box<dyn Error>> {
     };
     run.session()
         .display("b", &box_sized([1., 1., 1.])?, &shaded)?;
-    run.session().fit()?;
-    restyle(&mut run, solid(None))?;
-    run.dump("bug6897_1_3.png")?;
-    // Preserve the authored sRGB hex colour without alpha.
-    let green = ColorRgba::from_hex("64FF64", true).expect("a six-digit sRGB hex colour");
-    restyle(&mut run, solid(Some(green)))?;
-    run.dump("bug6897_1_1.png")?;
-    let hollow = SurfaceAspects {
+    Ok(run.session().fit()?)
+}
+
+fn hollow() -> SurfaceAspects {
+    SurfaceAspects {
         // A hollow interior shares the empty-interior rendering policy.
         interior_style: Some(AspectInteriorStyle::Empty),
         draw_edges: Some(true),
         ..SurfaceAspects::default()
-    };
-    restyle(&mut run, hollow)?;
-    run.dump("bug6897_1_2.png")?;
-    run.finish()
+    }
 }
 
 /// Solid interior, with dashed edges in `edges` when given.

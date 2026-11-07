@@ -48,7 +48,21 @@ pub(super) fn measure_with(
 ) -> Result<MeasurementReceipt, BooleanIssue> {
     let surface = observed_surface(request, shape, coverage, source)?;
     let volume = observed_volume(request, shape, coverage, source)?;
-    finite_measurements(request, &surface, volume).inspect_err(|issue| {
+    observed_finite_measurements(request, &surface, volume, coverage)?;
+    Ok(MeasurementReceipt {
+        surface,
+        volume,
+        volume_error: AchievedVolumeError::Unknown,
+    })
+}
+
+fn observed_finite_measurements(
+    request: BooleanRequest,
+    surface: &SurfacePropertyResult,
+    volume: f64,
+    coverage: &mut OperationCoverage,
+) -> Result<(), BooleanIssue> {
+    finite_measurements(request, surface, volume).inspect_err(|issue| {
         coverage.refused(
             CoverageStage::FiniteMeasurements,
             issue.class,
@@ -56,11 +70,7 @@ pub(super) fn measure_with(
         );
     })?;
     coverage.completed(CoverageStage::FiniteMeasurements, 2);
-    Ok(MeasurementReceipt {
-        surface,
-        volume,
-        volume_error: AchievedVolumeError::Unknown,
-    })
+    Ok(())
 }
 
 fn observed_surface(

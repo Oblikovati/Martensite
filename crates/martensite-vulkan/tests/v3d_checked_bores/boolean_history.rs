@@ -75,6 +75,14 @@ pub(super) fn observe(
     let native = operation
         .history()
         .ok_or_else(|| missing_history(request))?;
+    let origins = operand_origins(request, operands)?;
+    materialize(request, native, origins, vec!["BOP"])
+}
+
+fn operand_origins(
+    request: BooleanRequest,
+    operands: &[&Shape],
+) -> Result<Vec<HistoryOrigin>, BooleanIssue> {
     let mut origins = Vec::new();
     for (operand, shape) in operands.iter().enumerate() {
         for parent in parents(shape).map_err(|cause| kernel_issue(request, "History", cause))? {
@@ -86,7 +94,7 @@ pub(super) fn observe(
             });
         }
     }
-    materialize(request, native, origins, vec!["BOP"])
+    Ok(origins)
 }
 
 pub(super) fn compose(
@@ -146,6 +154,14 @@ fn record_nurbs_parent(
     for image in modified {
         history.add_modified(parent, &image)?;
     }
+    record_generated_parent(history, conversion, parent)
+}
+
+fn record_generated_parent(
+    history: &History,
+    conversion: &mut BRepBuilderAPINurbsConvert,
+    parent: &Shape,
+) -> Result<(), Failure> {
     let generated: Vec<Shape> = conversion.generated(parent)?.iter().cloned().collect();
     for image in generated {
         history.add_generated(parent, &image)?;

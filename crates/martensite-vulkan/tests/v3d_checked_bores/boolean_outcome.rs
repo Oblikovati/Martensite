@@ -1,6 +1,7 @@
 //! Raw execution cannot release an invalid or incompletely checked candidate.
+use super::boolean_coverage::{CoverageStage, OperationCoverage};
 use super::{boolean_history, boolean_measurements, boolean_validation, bop_options};
-use martensite_tkbo::bop_algo::BOPAlgoBOP;
+use martensite_tkbo::bop_algo::{BOPAlgoBOP, ProgressCompletion};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{message::ProgressRange, precision};
 
@@ -98,14 +99,9 @@ fn acquire_raw(
     second: &Shape,
     range: &ProgressRange<'_>,
 ) -> Result<RawBody, BooleanIssue> {
-    use super::boolean_coverage::{CoverageStage, OperationCoverage};
     let mut coverage = OperationCoverage::default();
     let (mut operation, diagnostics) =
-        run_operation(request, first, second, range).map_err(|issue| {
-            coverage.refused(CoverageStage::Execution, issue.class, issue.to_string());
-            issue.with_coverage(coverage.clone())
-        })?;
-    coverage.completed(CoverageStage::Execution, 1);
+        execute_observed(request, first, second, range, &mut coverage)?;
     let history = boolean_history::observe(request, &mut operation, &[first, second]);
     let history = observed_stage(history, CoverageStage::History, &mut coverage);
     Ok(RawBody {
@@ -114,6 +110,21 @@ fn acquire_raw(
         diagnostics,
         coverage,
     })
+}
+
+fn execute_observed(
+    request: BooleanRequest,
+    first: &Shape,
+    second: &Shape,
+    range: &ProgressRange<'_>,
+    coverage: &mut OperationCoverage,
+) -> Result<(BOPAlgoBOP, KernelDiagnostics), BooleanIssue> {
+    let result = run_operation(request, first, second, range).map_err(|issue| {
+        coverage.refused(CoverageStage::Execution, issue.class, issue.to_string());
+        issue.with_coverage(coverage.clone())
+    })?;
+    coverage.completed(CoverageStage::Execution, 1);
+    Ok(result)
 }
 
 fn admit_raw(request: BooleanRequest, raw: RawBody) -> Result<CheckedLocalBody, BooleanIssue> {
@@ -157,11 +168,20 @@ fn materialize_admission(
             diagnostics,
             coverage,
         }),
-        Err(issue) => Err(issue
-            .with_history(snapshot)
-            .with_diagnostics(diagnostics)
-            .with_coverage(coverage)),
+        Err(issue) => Err(failed_components(issue, snapshot, diagnostics, coverage)),
     }
+}
+
+fn failed_components(
+    issue: BooleanIssue,
+    snapshot: Option<boolean_history::HistoryObservation>,
+    diagnostics: KernelDiagnostics,
+    coverage: OperationCoverage,
+) -> BooleanIssue {
+    issue
+        .with_history(snapshot)
+        .with_diagnostics(diagnostics)
+        .with_coverage(coverage)
 }
 
 type BodyComponents = (
@@ -220,13 +240,19 @@ fn run_operation(
         })?;
     let diagnostics = actual_diagnostics(&operation);
     print!("{}{}", diagnostics.warnings, diagnostics.errors);
-    if let Err(issue) = execution_status(request, "Execution", completion) {
-        return Err(issue.with_diagnostics(diagnostics));
+    match completed_candidate(request, &operation, completion) {
+        Ok(()) => Ok((operation, diagnostics)),
+        Err(issue) => Err(issue.with_diagnostics(diagnostics)),
     }
-    if let Err(issue) = require_candidate(request, &operation) {
-        return Err(issue.with_diagnostics(diagnostics));
-    }
-    Ok((operation, diagnostics))
+}
+
+fn completed_candidate(
+    request: BooleanRequest,
+    operation: &BOPAlgoBOP,
+    completion: ProgressCompletion,
+) -> Result<(), BooleanIssue> {
+    execution_status(request, "Execution", completion)?;
+    require_candidate(request, operation)
 }
 
 fn require_candidate(request: BooleanRequest, operation: &BOPAlgoBOP) -> Result<(), BooleanIssue> {
@@ -294,6 +320,16 @@ fn compose_successor(
     mut raw: RawBody,
     mut lineage: LineageRetention,
 ) -> (RawBody, LineageRetention) {
+    observe_successor_lineage(&raw, &mut lineage);
+    raw.history = raw.history.and_then(|next| {
+        let extra = next.tool_origins(request);
+        boolean_history::compose(request, previous, next, extra)
+    });
+    record_composition(&mut raw, &mut lineage);
+    (raw, lineage)
+}
+
+fn observe_successor_lineage(raw: &RawBody, lineage: &mut LineageRetention) {
     lineage.successor = raw
         .history
         .as_ref()
@@ -304,12 +340,6 @@ fn compose_successor(
     } else {
         "ObservationFailed"
     };
-    raw.history = raw.history.and_then(|next| {
-        let extra = next.tool_origins(request);
-        boolean_history::compose(request, previous, next, extra)
-    });
-    record_composition(&mut raw, &mut lineage);
-    (raw, lineage)
 }
 
 fn record_composition(raw: &mut RawBody, lineage: &mut LineageRetention) {

@@ -205,7 +205,16 @@ pub(in super::super) fn execution_status(
         ProgressCompletion::Failed { .. } => RefusalClass::Failed,
         ProgressCompletion::Incomplete { .. } => RefusalClass::Incomplete,
     };
-    Err(BooleanIssue {
+    Err(execution_refusal(request, stage, class, status))
+}
+
+fn execution_refusal(
+    request: BooleanRequest,
+    stage: &'static str,
+    class: RefusalClass,
+    status: ProgressCompletion,
+) -> BooleanIssue {
+    BooleanIssue {
         request: Box::new(request),
         stage,
         class,
@@ -214,5 +223,5 @@ pub(in super::super) fn execution_status(
         diagnostics: Box::default(),
         coverage: Box::default(),
         lineage: Box::default(),
-    })
+    }
 }

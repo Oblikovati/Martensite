@@ -77,15 +77,25 @@ fn conversion_raw(
     )
     .map_err(|issue| issue.with_diagnostics(previous.diagnostics.clone()))?;
     lineage.successor_state = "MappingFailed";
-    let mapping = observed_stage(
-        source.mapping(request, &previous.shape, &mut converter),
-        CoverageStage::NurbsMap,
-        coverage,
-    )
-    .map_err(|issue| issue.with_diagnostics(previous.diagnostics.clone()))?;
+    let mapping = observed_mapping(request, &previous, source, &mut converter, coverage)?;
     Ok(compose_conversion(
         request, previous, shape, mapping, coverage, lineage,
     ))
+}
+
+fn observed_mapping(
+    request: BooleanRequest,
+    previous: &CheckedLocalBody,
+    source: &impl NurbsSource,
+    converter: &mut BRepBuilderAPINurbsConvert,
+    coverage: &mut OperationCoverage,
+) -> Result<boolean_history::LocalHistory, BooleanIssue> {
+    observed_stage(
+        source.mapping(request, &previous.shape, converter),
+        CoverageStage::NurbsMap,
+        coverage,
+    )
+    .map_err(|issue| issue.with_diagnostics(previous.diagnostics.clone()))
 }
 
 fn compose_conversion(
@@ -96,19 +106,29 @@ fn compose_conversion(
     coverage: &mut OperationCoverage,
     lineage: &mut LineageRetention,
 ) -> RawBody {
-    lineage.successor = Some(mapping.observation());
-    lineage.successor_state = "Observed";
-    let history = boolean_history::compose(request, previous.history, mapping, Vec::new());
-    lineage.composition = if history.is_ok() {
-        "Completed"
-    } else {
-        "Failed"
-    };
-    let history = observed_stage(history, CoverageStage::History, coverage);
+    let history = compose_mapping(request, previous.history, mapping, coverage, lineage);
     RawBody {
         shape,
         history,
         diagnostics: previous.diagnostics,
         coverage: coverage.clone(),
     }
+}
+
+fn compose_mapping(
+    request: BooleanRequest,
+    previous: boolean_history::LocalHistory,
+    mapping: boolean_history::LocalHistory,
+    coverage: &mut OperationCoverage,
+    lineage: &mut LineageRetention,
+) -> Result<boolean_history::LocalHistory, BooleanIssue> {
+    lineage.successor = Some(mapping.observation());
+    lineage.successor_state = "Observed";
+    let history = boolean_history::compose(request, previous, mapping, Vec::new());
+    lineage.composition = if history.is_ok() {
+        "Completed"
+    } else {
+        "Failed"
+    };
+    observed_stage(history, CoverageStage::History, coverage)
 }

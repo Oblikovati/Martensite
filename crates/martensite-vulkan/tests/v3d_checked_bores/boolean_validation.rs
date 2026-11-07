@@ -70,11 +70,23 @@ pub(super) fn validate_observed_with_mode(
     };
     let topology = observed_analyzer(request, shape, false, coverage)?;
     let geometry = observed_analyzer(request, shape, true, coverage)?;
-    let (self_faces, self_policy_excluded, self_terminated) =
-        observed_self_check(request, shape, coverage)?;
-    let (measured_incidences, degenerated_incidences) =
-        observed_tolerances(request, shape, coverage, mode)?;
-    Ok(ValidationReceipt {
+    let self_check = observed_self_check(request, shape, coverage)?;
+    let tolerances = observed_tolerances(request, shape, coverage, mode)?;
+    Ok(validation_receipt(
+        mode, topology, geometry, self_check, tolerances,
+    ))
+}
+
+fn validation_receipt(
+    mode: LocalCheckMode,
+    topology: usize,
+    geometry: usize,
+    self_check: (usize, usize, usize),
+    tolerances: (usize, usize),
+) -> ValidationReceipt {
+    let (self_faces, self_policy_excluded, self_terminated) = self_check;
+    let (measured_incidences, degenerated_incidences) = tolerances;
+    ValidationReceipt {
         mode,
         topology,
         geometry,
@@ -83,7 +95,7 @@ pub(super) fn validate_observed_with_mode(
         self_terminated,
         measured_incidences,
         degenerated_incidences,
-    })
+    }
 }
 
 fn observed_analyzer(
@@ -92,11 +104,7 @@ fn observed_analyzer(
     geometry: bool,
     coverage: &mut OperationCoverage,
 ) -> Result<usize, BooleanIssue> {
-    let stage = if geometry {
-        CoverageStage::Geometry
-    } else {
-        CoverageStage::Topology
-    };
+    let stage = analyzer_stage(geometry);
     match analyzer_pass_observed(request, shape, geometry, coverage, stage) {
         Ok(count) => {
             coverage.completed(stage, count);
@@ -106,6 +114,14 @@ fn observed_analyzer(
             coverage.refused(stage, issue.class, issue.to_string());
             Err(issue)
         }
+    }
+}
+
+fn analyzer_stage(geometry: bool) -> CoverageStage {
+    if geometry {
+        CoverageStage::Geometry
+    } else {
+        CoverageStage::Topology
     }
 }
 
@@ -119,6 +135,18 @@ fn analyzer_pass_observed(
     let stage = if geometry { "Geometry" } else { "Topology" };
     let analyzer = BRepCheckAnalyzer::new(shape, geometry, false, geometry)
         .map_err(|cause| kernel_issue(request, stage, cause))?;
+    require_valid_analyzer(request, shape, &analyzer, stage)?;
+    check_body_kind(request, shape)?;
+    required_contexts_observed(&analyzer, shape, coverage, observed_stage)
+        .map_err(|cause| kernel_issue(request, stage, cause))
+}
+
+fn require_valid_analyzer(
+    request: BooleanRequest,
+    shape: &Shape,
+    analyzer: &BRepCheckAnalyzer,
+    stage: &'static str,
+) -> Result<(), BooleanIssue> {
     if !analyzer
         .is_valid()
         .map_err(|cause| kernel_issue(request, stage, cause))?
@@ -131,9 +159,7 @@ fn analyzer_pass_observed(
             RefusalClass::Failed,
         ));
     }
-    check_body_kind(request, shape)?;
-    required_contexts_observed(&analyzer, shape, coverage, observed_stage)
-        .map_err(|cause| kernel_issue(request, stage, cause))
+    Ok(())
 }
 
 fn required_contexts_observed(
@@ -173,11 +199,15 @@ fn check_context(
         }
         checker.next_shape_in_context();
     }
-    Err(Failure::with_type(
+    Err(unobserved_context(entity, parent))
+}
+
+fn unobserved_context(entity: &Shape, parent: &Shape) -> Failure {
+    Failure::with_type(
         "BOP4_IncompleteCoverage",
         &format!("entity={entity:?} parent={parent:?}; expected an observed required context"),
         "",
-    ))
+    )
 }
 
 fn check_context_status(
@@ -315,13 +345,7 @@ fn check_face_termination(
     request: BooleanRequest,
     receipt: &martensite_tkbo::bop_algo::SelfIntersectionObservation,
 ) -> Result<(), BooleanIssue> {
-    let unfinished = receipt.faces().iter().any(|face| {
-        matches!(
-            face.status(),
-            SelfIntersectionFaceStatus::NotDone | SelfIntersectionFaceStatus::NotAttempted
-        )
-    });
-    if !unfinished {
+    if !unfinished_self_faces(receipt) {
         return Ok(());
     }
     Err(refused(
@@ -331,6 +355,15 @@ fn check_face_termination(
         "complete required face work",
         RefusalClass::Incomplete,
     ))
+}
+
+fn unfinished_self_faces(receipt: &martensite_tkbo::bop_algo::SelfIntersectionObservation) -> bool {
+    receipt.faces().iter().any(|face| {
+        matches!(
+            face.status(),
+            SelfIntersectionFaceStatus::NotDone | SelfIntersectionFaceStatus::NotAttempted
+        )
+    })
 }
 
 // Analyzer contexts use the first matching identity occurrence, not each oriented alias.
