@@ -1,8 +1,9 @@
 //! Shared PR/release scope selects only affected sanitizer owners (#410).
 use super::tests::fixture;
-use super::*;
+use super::{matrix_outputs, require_success, sanitizer_controls};
 use crate::{
-    context::tests::context_at, fake_runner::RecordingRunner, workspace::tests::sample_metadata,
+    context::tests::context_at, fake_runner::RecordingRunner, plan::CiPlan,
+    workspace::tests::sample_metadata,
 };
 use std::path::Path;
 

@@ -81,3 +81,16 @@ fn reused_release_skips_execution_only_after_plan_evidence_and_verifies_before_p
         );
     }
 }
+
+#[test]
+fn actions_read_permission_is_limited_to_evidence_consumers() {
+    let workflow = include_str!("../../../.github/workflows/martensite.yml");
+    let global = workflow.split("jobs:").next().unwrap();
+    assert!(!global.contains("actions: read"));
+    assert_eq!(workflow.matches("actions: read").count(), 2);
+    for name in ["plan", "verify"] {
+        let section = workflow.split(&format!("\n  {name}:\n")).nth(1).unwrap();
+        let permission = section.split("    steps:").next().unwrap();
+        assert!(permission.contains("permissions:\n      contents: read\n      actions: read"));
+    }
+}

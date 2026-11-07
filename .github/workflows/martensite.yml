@@ -26,7 +26,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 concurrency:
   group: martensite-${{ github.ref }}
@@ -50,6 +49,9 @@ env:
 
 jobs:
   plan:
+    permissions:
+      contents: read
+      actions: read
     runs-on: ubuntu-24.04
     outputs:
       mode: ${{ steps.plan.outputs.mode }}
@@ -212,6 +214,9 @@ jobs:
       - run: cargo xtask ci thread-sanitizer
 
   verify:
+    permissions:
+      contents: read
+      actions: read
     env:
       MARTENSITE_CI_BASE_SHA: ${{ needs.plan.outputs.base-sha }}
       MARTENSITE_RELEASE_HISTORY_SHA256: ${{ needs.plan.outputs.release-history }}

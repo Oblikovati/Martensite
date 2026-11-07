@@ -1,7 +1,8 @@
 //! Linux is the workflow's artifact verification host; no production service is contacted.
-use super::*;
+use super::{Artifact, archive};
 use crate::{
     context::BuildContext,
+    error::{BuildError, BuildResult},
     fake_runner::RecordingRunner,
     git::GitRepo,
     process::{CommandOutput, CommandRunner, CommandSpec, ProcessRunner},
@@ -142,4 +143,18 @@ fn assert_reader_rejected(root: &Path, bytes: Vec<u8>) {
         if command.starts_with("python3 ")),
         "{error}"
     );
+}
+
+#[test]
+fn unicode_word_characters_are_rejected_by_ascii_archive_policy() {
+    let root = tempfile::tempdir().unwrap();
+    for name in ["é.crate", "package_中.crate", "１.crate"] {
+        assert_reader_rejected(root.path(), zip_bytes(root.path(), name, 1));
+    }
+    for name in ["_package-1.crate", "A_z.09"] {
+        assert_eq!(
+            read_fixture_archive(root.path(), name).unwrap()[name],
+            b"payload"
+        );
+    }
 }

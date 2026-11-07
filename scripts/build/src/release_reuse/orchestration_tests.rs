@@ -1,5 +1,8 @@
 //! Named API fixture exercises discovery and restoration without GitHub writes.
-use super::{archive_tests::ArtifactRunner, request::ValidationRequest, *};
+use super::{
+    Artifact, RECEIPT, WORKFLOW, archive_tests::ArtifactRunner, find_rehearsal, receipt,
+    request::ValidationRequest, scope,
+};
 use crate::{
     context::BuildContext,
     fake_runner::RecordingRunner,

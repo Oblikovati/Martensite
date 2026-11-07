@@ -10,7 +10,7 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
     names = [entry.filename for entry in entries]
     if not 0 < len(names) <= 4096 or len(set(names)) != len(names):
         raise ValueError("expected 1..4096 unique artifact entries")
-    if any(len(name) > 255 or not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*", name) for name in names):
+    if any(len(name) > 255 or not re.fullmatch(r"\w[\w.-]*", name, flags=re.ASCII) for name in names):
         raise ValueError("expected flat artifact filenames")
     if any(entry.is_dir() or entry.flag_bits & 1 for entry in entries):
         raise ValueError("expected unencrypted file entries")
