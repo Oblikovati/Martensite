@@ -283,3 +283,19 @@ examples also compiled and ran, including the second semi-angle pi/6. Its
 measured cone volume agreed with the independent expression
 `42 + 2.1*sqrt(3)` within 1e-7. This example check supplements the persistent
 3/5–4/5 cone controls; it is not a substitute for the PR gate.
+
+The complete local `cargo xtask pr --base origin/release/next` gate passed
+on Linux x86_64 with Rust 1.99.0 and the settings recorded above. It checked
+source and expanded unsafe inventories, formatting, clippy, builds, six private
+tests and 32 public tests. The selected package suite was only
+`martensite-tksketch`; the nine build-driver unsafe-inventory controls also ran
+as required by the gate. Public tests took 0.47 seconds.
+
+The first attempt failed because the new worktree lacked the dataset embedded
+by an existing TKOffset test at compile time. Initializing the pinned submodule
+`34d65afd72cd3ca8ac1f9d17e5ca408b30e9b4b6` resolved that setup failure; the
+primary checkout's dataset was not changed. The successful run exited zero
+and is recorded in `/tmp/martensite417-pr-gate.log`. Reviewed toolkit source
+remained unchanged while the supplied visual-workflow documentation was added
+in commit `bbe6c11f`. Hosted checks, including ThreadSanitizer, remain required
+before integration.
