@@ -58,6 +58,7 @@ fn control_command(root: &Path, control: Control) -> CommandSpec {
         Control::OpenExtrusion => open_extrusion_controls(root),
         Control::VertexNeighborhood => vertex_neighborhood_controls(root),
         Control::SurfaceSketch => surface_sketch_controls(root),
+        Control::FontTextCapture => font_text_capture_controls(root),
     }
 }
 
@@ -217,3 +218,17 @@ fn sanitizer_flags(command: CommandSpec) -> CommandSpec {
 #[cfg(test)]
 #[path = "thread_sanitizer_tests.rs"]
 mod tests;
+
+fn font_text_capture_controls(root: &Path) -> CommandSpec {
+    // Private memory-font instances and immutable published snapshots have distinct stress controls (#425).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkv3d",
+        "--lib",
+        "brep_font::text_capture::tests::stress",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ])
+}

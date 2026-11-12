@@ -19,6 +19,7 @@ mod regularizer_classify;
 mod regularizer_intersect;
 mod regularizer_line_intersect;
 mod regularizer_scanline;
+mod text_capture;
 
 pub use builder::{
     BRepFontBuilder, BRepFontBuilderGlyphOptions, BRepFontBuilderTextOptions,
@@ -35,3 +36,5 @@ pub use regularizer::{
     BRepFontRegularizer, BRepFontRegularizerOptions, BRepFontRegularizerResult,
     BRepFontRegularizerStatus,
 };
+
+pub use text_capture::*;

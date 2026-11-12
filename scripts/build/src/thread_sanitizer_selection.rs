@@ -13,9 +13,10 @@ pub(crate) enum Control {
     OpenExtrusion,
     VertexNeighborhood,
     SurfaceSketch,
+    FontTextCapture,
 }
 
-pub(crate) const CONTROLS: [Control; 9] = [
+pub(crate) const CONTROLS: [Control; 10] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -25,6 +26,7 @@ pub(crate) const CONTROLS: [Control; 9] = [
     Control::OpenExtrusion,
     Control::VertexNeighborhood,
     Control::SurfaceSketch,
+    Control::FontTextCapture,
 ];
 
 impl Control {
@@ -39,6 +41,7 @@ impl Control {
             Self::OpenExtrusion => "open-extrusion",
             Self::VertexNeighborhood => "vertex-neighborhood",
             Self::SurfaceSketch => "surface-sketch",
+            Self::FontTextCapture => "font-text-capture",
         }
     }
 
@@ -51,6 +54,7 @@ impl Control {
             Self::FaceCertificate => "martensite-tktopalgo",
             Self::OpenExtrusion | Self::VertexNeighborhood => "martensite-tkmath",
             Self::SurfaceSketch => "martensite-tksketch",
+            Self::FontTextCapture => "martensite-tkv3d",
         }
     }
 }
@@ -179,7 +183,8 @@ mod tests {
                 "face-certificate",
                 "open-extrusion",
                 "vertex-neighborhood",
-                "surface-sketch"
+                "surface-sketch",
+                "font-text-capture"
             ]
         );
         assert_eq!(ids.iter().collect::<BTreeSet<_>>().len(), CONTROLS.len());
@@ -237,4 +242,17 @@ mod tests {
             );
         }
     }
+}
+
+#[cfg(test)]
+#[test]
+fn font_capture_selects_only_its_affected_owner() {
+    assert_eq!(
+        select(&BTreeSet::from(["martensite-tkv3d".into()]), &[]),
+        [Control::FontTextCapture]
+    );
+    assert!(
+        !select(&BTreeSet::from(["martensite-tksketch".into()]), &[])
+            .contains(&Control::FontTextCapture)
+    );
 }

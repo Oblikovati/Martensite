@@ -167,3 +167,35 @@ fn workflow_consumers_receive_the_planners_comparison_commit() {
         );
     }
 }
+
+#[test]
+fn font_capture_ci_selection_includes_affected_dependents_without_base_fanout() {
+    use crate::thread_sanitizer_selection::Control::{Capture, FontTextCapture, Groups};
+    for (path, expected) in [
+        (
+            "crates/martensite-tkv3d/src/brep_font/text_capture/mod.rs",
+            vec![FontTextCapture],
+        ),
+        (
+            "crates/martensite-tkservice/src/font/mod.rs",
+            vec![Capture, Groups, FontTextCapture],
+        ),
+    ] {
+        let (runner, plan) = font_capture_fixture(path);
+        let context = context_at(&runner, Path::new("/repo"));
+        assert_eq!(sanitizer_controls(&context, &plan).unwrap(), expected);
+        let outputs = matrix_outputs(&context, &plan).unwrap();
+        assert!(outputs.contains(&("has-sanitizer", "true".into())));
+    }
+}
+fn font_capture_fixture(path: &str) -> (RecordingRunner, CiPlan) {
+    let (runner, plan) = fixture(path);
+    let metadata = sample_metadata()
+        .replace("martensite-math", "martensite-tkservice")
+        .replace("martensite-kernel", "martensite-tkv3d");
+    let runner = runner.with_stdout(
+        "cargo metadata --format-version 1 --no-deps --locked",
+        &metadata,
+    );
+    (runner, plan)
+}
