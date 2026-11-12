@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Bound Linux renderer test gates to the recorded system-font configuration so user font folders no longer changed rendered test images (#433).
+
 - Skipped expanded unsafe inventory rebuilds for unrelated driver and documentation changes, while removing stale reports on skipped PR checks. (#411)
 
 - Reused verified artifacts from a successful release rehearsal on the exact tag commit, avoiding duplicate build and test jobs while retaining publication checks. (#275)
