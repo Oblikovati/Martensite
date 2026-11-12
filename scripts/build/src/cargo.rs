@@ -19,6 +19,14 @@ pub enum PackageSelection {
 }
 
 impl PackageSelection {
+    fn includes_package(&self, package: &str) -> bool {
+        match self {
+            Self::Workspace => true,
+            Self::WorkspaceExcept(names) => !names.iter().any(|name| name == package),
+            Self::Packages(names) => names.iter().any(|name| name == package),
+        }
+    }
+
     fn cargo_args(&self) -> Vec<String> {
         match self {
             Self::Workspace => vec!["--workspace".into()],
@@ -183,7 +191,9 @@ impl<'a> CargoTasks<'a> {
         if tests_case_runner(selection) {
             spec = spec.args(["--features", "martensite-process-policy/case-runner"]);
         }
-        self.runner.run(&spec)
+        self.runner.run(&renderer_test_environment(
+            spec, self.root, selection, target,
+        ))
     }
 
     /// Release build that returns the shippable artifacts cargo reported.
@@ -228,6 +238,23 @@ impl<'a> CargoTasks<'a> {
     fn cargo(&self, args: &[&str]) -> CommandSpec {
         CommandSpec::new("cargo", self.root).args(args.iter().copied())
     }
+}
+
+// Native image references were recorded with this system-font configuration (#433).
+fn renderer_test_environment(
+    spec: CommandSpec,
+    root: &Path,
+    selection: &PackageSelection,
+    target: &BuildTarget,
+) -> CommandSpec {
+    let linux = target
+        .triple()
+        .map_or(cfg!(target_os = "linux"), |triple| triple.contains("linux"));
+    if !linux || !selection.includes_package("martensite-vulkan") {
+        return spec;
+    }
+    let config = root.join("scripts/install/renderer-fontconfig.conf");
+    spec.environment_os("FONTCONFIG_FILE", Some(config.as_os_str()))
 }
 
 /// Extracts executables and linkable libraries from cargo's JSON messages.
@@ -298,13 +325,7 @@ fn parse_host_triple(version_output: &str) -> BuildResult<String> {
 }
 
 fn includes_build_driver(selection: &PackageSelection) -> bool {
-    match selection {
-        PackageSelection::Workspace => true,
-        PackageSelection::WorkspaceExcept(names) => {
-            !names.iter().any(|name| name == "martensite-build")
-        }
-        PackageSelection::Packages(names) => names.iter().any(|name| name == "martensite-build"),
-    }
+    selection.includes_package("martensite-build")
 }
 
 fn without_build_driver(selection: &PackageSelection) -> PackageSelection {
@@ -330,19 +351,14 @@ fn without_build_driver(selection: &PackageSelection) -> PackageSelection {
 // Per-package jobs must retain the case-runner tests previously enabled by
 // dataset toolkit dependencies in a combined Cargo invocation (#250).
 fn tests_case_runner(selection: &PackageSelection) -> bool {
-    match selection {
-        PackageSelection::Workspace => true,
-        PackageSelection::WorkspaceExcept(names) => {
-            !names.iter().any(|name| name == "martensite-process-policy")
-        }
-        PackageSelection::Packages(names) => {
-            names.iter().any(|name| name == "martensite-process-policy")
-        }
-    }
+    selection.includes_package("martensite-process-policy")
 }
 
 #[cfg(test)]
 mod windows_build_tests;
+
+#[cfg(test)]
+mod renderer_font_tests;
 
 #[cfg(test)]
 mod tests {

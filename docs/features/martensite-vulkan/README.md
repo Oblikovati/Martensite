@@ -59,6 +59,11 @@ Text in the recorded images comes from the system fonts that `install-linux.sh` 
 can change which one an alias resolves to: a local Helvetica replaces FreeSans for "Arial", and the
 text tests then fail.
 
+The `cargo xtask` test gates bind `FONTCONFIG_FILE` to this repository configuration for
+Linux selections containing `martensite-vulkan`. The test child overrides an inherited
+font configuration so local gates use the same fonts as CI. Direct renderer test
+commands use the export above.
+
 Lavapipe's output also differs between CPU vendors at some pixels, for the same driver build and
 settings, and the recorded images come from AMD CPUs. `tests/support/reference_cpu.rs` keeps the
 affected image checks exact on AMD. On other vendors a mismatch prints a notice instead of failing,
