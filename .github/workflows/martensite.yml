@@ -207,6 +207,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          # Owned text stress uses the font pinned by the existing dataset gitlink (#425).
+          submodules: true
       - name: Install the ordinary driver toolchain
         run: rustup toolchain install
       - name: Install the pinned sanitizer toolchain and standard-library sources

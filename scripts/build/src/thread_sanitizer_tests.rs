@@ -17,11 +17,12 @@ fn startup_precedes_geometry_capture_and_group_controls() {
     )
     .unwrap();
     let commands = runner.commands();
+    assert_eq!(&commands[1..], expected_control_commands());
+}
+fn expected_control_commands() -> Vec<String> {
     let manifest =
         Path::new("/repo").join("scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml");
-    assert_eq!(
-        &commands[1..],
-        &[
+    vec![
             "rustc +nightly-2026-09-25 -Vv".to_owned(),
             format!("cargo +nightly-2026-09-25 run --locked -Zbuild-std --target x86_64-unknown-linux-gnu --manifest-path {}", manifest.display()),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkg2d --package martensite-tkg3d --lib cache_inputs_tests -- --test-threads=1 --show-output".to_owned(),
@@ -32,8 +33,8 @@ fn startup_precedes_geometry_capture_and_group_controls() {
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::open_extrusion -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::sketch_incidence::vertex_neighborhood -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tksketch --test surface_sketch -- replay::parallel_operations_match_sequential_value_metadata --exact --test-threads=1 --show-output".to_owned(),
-        ]
-    );
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkv3d --lib brep_font::text_capture::tests::stress -- --test-threads=1 --show-output".to_owned(),
+    ]
 }
 
 #[test]
@@ -368,4 +369,77 @@ fn surface_sketch_failure_refuses_sanitizer_success() {
     let error = run_selected(&context, &[Control::SurfaceSketch]).unwrap_err();
     assert!(error.to_string().contains("66"));
     assert_eq!(runner.commands().len(), 4);
+}
+
+#[test]
+fn font_text_capture_uses_actual_stress_module_with_pinned_instrumentation() {
+    let root = Path::new("/repo");
+    let expected = sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkv3d",
+        "--lib",
+        "brep_font::text_capture::tests::stress",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ]);
+    assert_eq!(control_command(root, Control::FontTextCapture), expected);
+}
+#[test]
+fn font_text_capture_failure_cannot_pass_sanitizer_gate() {
+    let command = font_text_capture_controls(Path::new("/repo")).display();
+    let runner = runner().with_exit_code(&command, 66);
+    let context = context_at(&runner, Path::new("/repo"));
+    let error = run_selected(&context, &[Control::FontTextCapture]).unwrap_err();
+    assert!(error.to_string().contains("66"));
+    assert_eq!(runner.commands().len(), 4);
+}
+#[test]
+fn startup_failure_prevents_font_capture_stress_execution() {
+    let command = startup(Path::new("/repo")).display();
+    let runner = runner().with_exit_code(&command, 101);
+    let context = context_at(&runner, Path::new("/repo"));
+    assert!(run_selected(&context, &[Control::FontTextCapture]).is_err());
+    assert_eq!(runner.commands().len(), 3);
+    assert!(
+        !runner
+            .commands()
+            .iter()
+            .any(|command| command.contains("tests::stress"))
+    );
+}
+
+#[test]
+fn sanitizer_checkout_hydrates_the_pinned_font_submodule_before_controls() {
+    let job = sanitizer_job_source();
+    let checkout = sanitizer_checkout_source(&job);
+    assert!(checkout.starts_with("3d3c42e5aac5ba805825da76410c181273ba90b1"));
+    assert!(checkout.contains("\n          fetch-depth: 0\n"));
+    assert!(
+        checkout
+            .lines()
+            .any(|line| line == "          submodules: true")
+    );
+    assert!(include_str!("../../../.gitmodules").contains("path = external/martensite-test-data"));
+    assert!(job.contains("run: cargo xtask ci thread-sanitizer"));
+}
+fn sanitizer_job_source() -> String {
+    let workflow = include_str!("../../../.github/workflows/martensite.yml").replace("\r\n", "\n");
+    workflow
+        .split("\n  thread-sanitizer:\n")
+        .nth(1)
+        .unwrap()
+        .split("\n  verify:\n")
+        .next()
+        .unwrap()
+        .to_owned()
+}
+fn sanitizer_checkout_source(job: &str) -> &str {
+    job.split("- uses: actions/checkout@")
+        .nth(1)
+        .unwrap()
+        .split("\n      - ")
+        .next()
+        .unwrap()
 }
