@@ -1,4 +1,5 @@
 //! Reading one binary `Geom_Surface` record back.
+use super::SurfaceFrameReadPolicy;
 use super::curve_read::read_curve;
 use super::errors::wrap_failure;
 use super::geometry_in::{read_degree, read_direction3, read_knots, read_point3};
@@ -18,25 +19,36 @@ use martensite_tkmath::gp::{Axis1, Axis3, Point3};
 /// class; an unknown code raises "UNKNOWN SURFACE TYPE", and every failure is wrapped
 /// in "EXCEPTION in BinTools_SurfaceSet::ReadSurface(..)".
 pub(crate) fn read_surface(stream: &mut IoStream) -> Result<Handle<dyn GeomSurface>, Failure> {
+    read_surface_with_frame_policy(stream, SurfaceFrameReadPolicy::LegacyReplay)
+}
+
+pub(crate) fn read_surface_with_frame_policy(
+    stream: &mut IoStream,
+    policy: SurfaceFrameReadPolicy,
+) -> Result<Handle<dyn GeomSurface>, Failure> {
     wrap_failure("EXCEPTION in BinTools_SurfaceSet::ReadSurface(..)", || {
         let stype = stream_get(stream) as u8;
-        read_record(stype, stream)
+        read_record(stype, stream, policy)
     })
 }
 
-fn read_record(stype: u8, stream: &mut IoStream) -> Result<Handle<dyn GeomSurface>, Failure> {
+fn read_record(
+    stype: u8,
+    stream: &mut IoStream,
+    policy: SurfaceFrameReadPolicy,
+) -> Result<Handle<dyn GeomSurface>, Failure> {
     match stype {
-        code::PLANE => Ok(upcast(GeomPlane::new(read_axis3(stream)?))),
-        code::CYLINDER => read_cylinder(stream).map(upcast),
-        code::CONE => read_cone(stream).map(upcast),
-        code::SPHERE => read_sphere(stream).map(upcast),
-        code::TORUS => read_torus(stream).map(upcast),
+        code::PLANE => Ok(upcast(GeomPlane::new(read_axis3(stream, policy)?))),
+        code::CYLINDER => read_cylinder(stream, policy).map(upcast),
+        code::CONE => read_cone(stream, policy).map(upcast),
+        code::SPHERE => read_sphere(stream, policy).map(upcast),
+        code::TORUS => read_torus(stream, policy).map(upcast),
         code::LINEAR_EXTRUSION => read_extrusion(stream).map(upcast),
         code::REVOLUTION => read_revolution(stream).map(upcast),
         code::BEZIER => read_bezier(stream).map(upcast),
         code::BSPLINE => read_bspline(stream).map(upcast),
-        code::RECTANGULAR => read_trimmed(stream).map(upcast),
-        code::OFFSET => read_offset(stream).map(upcast),
+        code::RECTANGULAR => read_trimmed(stream, policy).map(upcast),
+        code::OFFSET => read_offset(stream, policy).map(upcast),
         _ => Err(Failure::new("UNKNOWN SURFACE TYPE")),
     }
 }
@@ -48,7 +60,10 @@ fn upcast<S: Transient + RuntimeTyped>(surface: S) -> Handle<dyn GeomSurface> {
 /// `IS >> gp_Ax3`: the location and the main, X and Y directions; `gp_Ax3(P, A, AX)`,
 /// made indirect when the stored Y direction lies on the other side
 /// (`AY.DotCross(A, AX) < 0`).
-fn read_axis3(stream: &mut IoStream) -> Result<Axis3, Failure> {
+fn read_axis3(stream: &mut IoStream, policy: SurfaceFrameReadPolicy) -> Result<Axis3, Failure> {
+    if policy == SurfaceFrameReadPolicy::PreserveStoredV1 {
+        return read_stored_axis3(stream);
+    }
     let point = read_point3(stream)?;
     let main = read_direction3(stream)?;
     let x = read_direction3(stream)?;
@@ -60,26 +75,49 @@ fn read_axis3(stream: &mut IoStream) -> Result<Axis3, Failure> {
     Ok(frame)
 }
 
-fn read_cylinder(stream: &mut IoStream) -> Result<GeomCylindricalSurface, Failure> {
-    let frame = read_axis3(stream)?;
+fn read_stored_axis3(stream: &mut IoStream) -> Result<Axis3, Failure> {
+    let point = read_point3(stream)?;
+    let mut directions = [[0.0; 3]; 3];
+    for vector in &mut directions {
+        for component in vector {
+            *component = get_real(stream)?;
+        }
+    }
+    Axis3::from_stored_coefficients(point, directions[0], directions[1], directions[2])
+}
+
+fn read_cylinder(
+    stream: &mut IoStream,
+    policy: SurfaceFrameReadPolicy,
+) -> Result<GeomCylindricalSurface, Failure> {
+    let frame = read_axis3(stream, policy)?;
     GeomCylindricalSurface::new(frame, get_real(stream)?)
 }
 
 /// The radius is written before the semi-angle, while the constructor takes the angle
 /// first.
-fn read_cone(stream: &mut IoStream) -> Result<GeomConicalSurface, Failure> {
-    let frame = read_axis3(stream)?;
+fn read_cone(
+    stream: &mut IoStream,
+    policy: SurfaceFrameReadPolicy,
+) -> Result<GeomConicalSurface, Failure> {
+    let frame = read_axis3(stream, policy)?;
     let (radius, angle) = (get_real(stream)?, get_real(stream)?);
     GeomConicalSurface::new(frame, angle, radius)
 }
 
-fn read_sphere(stream: &mut IoStream) -> Result<GeomSphericalSurface, Failure> {
-    let frame = read_axis3(stream)?;
+fn read_sphere(
+    stream: &mut IoStream,
+    policy: SurfaceFrameReadPolicy,
+) -> Result<GeomSphericalSurface, Failure> {
+    let frame = read_axis3(stream, policy)?;
     GeomSphericalSurface::new(frame, get_real(stream)?)
 }
 
-fn read_torus(stream: &mut IoStream) -> Result<GeomToroidalSurface, Failure> {
-    let frame = read_axis3(stream)?;
+fn read_torus(
+    stream: &mut IoStream,
+    policy: SurfaceFrameReadPolicy,
+) -> Result<GeomToroidalSurface, Failure> {
+    let frame = read_axis3(stream, policy)?;
     let (major, minor) = (get_real(stream)?, get_real(stream)?);
     GeomToroidalSurface::new(frame, major, minor)
 }
@@ -158,17 +196,23 @@ fn read_bspline(stream: &mut IoStream) -> Result<GeomBSplineSurface, Failure> {
 }
 
 /// `U1 U2 V1 V2`, then the basis record; both senses default to true.
-fn read_trimmed(stream: &mut IoStream) -> Result<GeomRectangularTrimmedSurface, Failure> {
+fn read_trimmed(
+    stream: &mut IoStream,
+    policy: SurfaceFrameReadPolicy,
+) -> Result<GeomRectangularTrimmedSurface, Failure> {
     let u = (get_real(stream)?, get_real(stream)?);
     let v = (get_real(stream)?, get_real(stream)?);
-    let basis = read_surface(stream)?;
+    let basis = read_surface_with_frame_policy(stream, policy)?;
     GeomRectangularTrimmedSurface::new(&basis, u, v, (true, true))
 }
 
 /// The offset, then the basis record; the basis continuity is checked
 /// (`isNotCheckC0` defaults to false, where the GeomTools reader passes true).
-fn read_offset(stream: &mut IoStream) -> Result<GeomOffsetSurface, Failure> {
+fn read_offset(
+    stream: &mut IoStream,
+    policy: SurfaceFrameReadPolicy,
+) -> Result<GeomOffsetSurface, Failure> {
     let offset = get_real(stream)?;
-    let basis = read_surface(stream)?;
+    let basis = read_surface_with_frame_policy(stream, policy)?;
     GeomOffsetSurface::new(&basis, offset, false)
 }

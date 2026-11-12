@@ -132,3 +132,6 @@ mod directions;
 mod transformations;
 
 mod placement;
+
+mod stored_frame;
+mod stored_frame_interval;

@@ -1,8 +1,8 @@
 //! `BinTools::Write` and `BinTools::Read`: one shape in the grouped binary format, on a
 //! stream or in a file.
-use super::format_version;
 use super::shape_set::BinShapeSet;
 use super::shape_set_base::BinShapeSetBase;
+use super::{SurfaceFrameReadPolicy, format_version};
 use crate::topods::Shape;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::osd::{FileSystem, IosOpenMode, default_file_system};
@@ -87,7 +87,40 @@ pub fn read_with_console(
     progress: &ProgressRange<'_>,
     console: Arc<dyn ConsoleOutput>,
 ) -> Result<(), Failure> {
-    let mut set = BinShapeSet::with_console(console);
+    read_with_console_and_surface_frame_policy(
+        shape,
+        stream,
+        progress,
+        console,
+        SurfaceFrameReadPolicy::LegacyReplay,
+    )
+}
+
+/// Reads grouped geometry with explicit analytic frame semantics; `bintools::read_with_surface_frame_policy(&mut shape, &mut stream, &range, policy)?`.
+pub fn read_with_surface_frame_policy(
+    shape: &mut Shape,
+    stream: &mut IoStream,
+    progress: &ProgressRange<'_>,
+    policy: SurfaceFrameReadPolicy,
+) -> Result<(), Failure> {
+    read_with_console_and_surface_frame_policy(
+        shape,
+        stream,
+        progress,
+        Arc::new(StdoutConsole),
+        policy,
+    )
+}
+
+/// Reads with an injected console and explicit frame semantics; `bintools::read_with_console_and_surface_frame_policy(&mut shape, &mut stream, &range, console, policy)?`.
+pub fn read_with_console_and_surface_frame_policy(
+    shape: &mut Shape,
+    stream: &mut IoStream,
+    progress: &ProgressRange<'_>,
+    console: Arc<dyn ConsoleOutput>,
+    policy: SurfaceFrameReadPolicy,
+) -> Result<(), Failure> {
+    let mut set = BinShapeSet::with_console_and_surface_frame_policy(console, policy);
     set.set_with_triangles(true);
     set.read(stream, progress)?;
     let count = set.nb_shapes();

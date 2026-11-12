@@ -5,3 +5,5 @@
 mod fakes;
 mod sets;
 mod streams;
+
+mod stored_surface_frames;
