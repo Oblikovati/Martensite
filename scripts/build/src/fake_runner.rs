@@ -17,6 +17,7 @@ pub struct RecordingRunner {
     stderr: BTreeMap<String, String>,
     exit_codes: BTreeMap<String, i32>,
     recorded: RefCell<Vec<String>>,
+    recorded_specs: RefCell<Vec<CommandSpec>>,
 }
 
 impl RecordingRunner {
@@ -57,7 +58,13 @@ impl RecordingRunner {
         self.recorded.borrow().clone()
     }
 
+    /// Every command including its child environment; `runner.command_specs()`.
+    pub fn command_specs(&self) -> Vec<CommandSpec> {
+        self.recorded_specs.borrow().clone()
+    }
+
     fn record(&self, spec: &CommandSpec) -> String {
+        self.recorded_specs.borrow_mut().push(spec.clone());
         let line = spec.display();
         self.recorded.borrow_mut().push(line.clone());
         line

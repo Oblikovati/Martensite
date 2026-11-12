@@ -90,7 +90,10 @@ against `origin/main` (`--base` changes this). It checks whitespace and
 `rustfmt` on the changed files, then runs clippy (`-D warnings`), a build and
 the tests for the changed packages and every package that depends on them. A
 change to `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `rustfmt.toml`,
-`clippy.toml` or `.cargo/` checks the whole workspace.
+`clippy.toml` or `.cargo/` checks the whole workspace. Linux test selections containing
+`martensite-vulkan` also bind the test child's `FONTCONFIG_FILE` to
+`scripts/install/renderer-fontconfig.conf`, matching the recorded system fonts in CI.
+This overrides an inherited font configuration for that child process.
 
 Inventory-relevant PR changes also run a separate compiler check against the
 target baseline in `docs/features/safe-toolkits/compiler-baselines/`. Release
