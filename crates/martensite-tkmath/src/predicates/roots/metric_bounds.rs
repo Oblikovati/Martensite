@@ -18,6 +18,10 @@ pub use mapped::{
 };
 pub use parameter::MetricParameterMap;
 mod coefficients;
+mod cylindrical_depths;
+pub use cylindrical_depths::{
+    CertifiedCylindricalDepths, CylindricalDepthFailure, certify_cylindrical_depths,
+};
 mod cylindrical_profile;
 mod cylindrical_storage;
 pub use super::certificate_arithmetic::bounded_failure::BoundedArithmeticFailure;

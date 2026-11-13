@@ -80,12 +80,18 @@ pub enum CylindricalStorageResidual {
 pub struct CertifiedCylindricalStorage {
     bounds: [f64; 5],
     weight_lower: [f64; 2],
+    radii: [f64; 2],
     source_bits: Vec<u64>,
     limits: CylindricalStorageLimits,
     options: CylindricalStorageOptions,
     operations: u32,
 }
 impl CertifiedCylindricalStorage {
+    /// Exact retained radius inputs; `proof.stored_radii()`.
+    pub fn stored_radii(&self) -> [f64; 2] {
+        self.radii
+    }
+
     /// Upward-rounded radial bounds for the ordered depths; `proof.radial_distance_bounds()`.
     pub fn radial_distance_bounds(&self) -> [f64; 2] {
         [self.bounds[0], self.bounds[1]]
@@ -137,6 +143,7 @@ impl CertifiedCylindricalStorage {
     ) -> Self {
         Self {
             bounds,
+            radii: query.radii,
             weight_lower: query.curves.map(weight_minimum),
             source_bits: source_bits(query.curves, query.radii),
             limits: query.limits,
