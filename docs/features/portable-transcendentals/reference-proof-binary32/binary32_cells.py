@@ -30,7 +30,8 @@ def parse_binary32(source: str) -> list[tuple[int, int, int]]:
     """Bind only the owned four-case function; example input is the archived source."""
     function = source.split('fn single_precision_pow_returns_the_correctly_rounded_reference()', 1)[1]
     literals = function.split('let cases:', 1)[1].split('];', 1)[0]
-    triples = re.findall(r'\(\s*(0x[0-9a-f_]+),\s*(0x[0-9a-f_]+),\s*(0x[0-9a-f_]+)\s*,?\s*\)', literals)
+    # Conditional post-comma whitespace avoids quadratic near-miss scans (#441).
+    triples = re.findall(r'\(\s*(0x[0-9a-f_]+),\s*(0x[0-9a-f_]+),\s*(0x[0-9a-f_]+)\s*(?:,\s*)?\)', literals)
     if len(triples) != 4:
         raise ValueError(f'case count={len(triples)}: expected four binary32 power records')
     return [tuple(int(word, 16) for word in triple) for triple in triples]

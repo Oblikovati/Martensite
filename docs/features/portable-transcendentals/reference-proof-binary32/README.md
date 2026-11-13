@@ -24,13 +24,18 @@ The [MPFR directed-rounding contract](https://www.mpfr.org/mpfr-4.2.2/mpfr.html#
 is the mathematical-function enclosure premise; the integer-only verifier checks
 the rounding-cell arithmetic independently of the MPFR execution.
 
-Six tests pass: exact embedding and special rejection, asymmetric/negative cells,
+Six proof tests pass: exact embedding and special rejection, asymmetric/negative cells,
 complete regeneration and both source identities, adjacent-word rejection,
 tampered endpoint/identity rejection, and source cardinality rejection. Two
 separate generator processes produce byte-identical certificates. The
 `borrowed-source.json` record binds the two reused sibling modules and the
 previous library provenance file; those bytes remain unchanged. No additional
 library installation, production dependency or Cargo run is involved.
+
+Three parser tests cover accepted whitespace and optional trailing commas,
+malformed records, and a one-million-space malformed suffix in a child process
+with a five-second budget. The earlier overlapping whitespace pattern exceeded
+that budget. The accepted records and certificates remain unchanged (#441).
 
 From this directory, with the sibling proof's hash-pinned dependency installed:
 
