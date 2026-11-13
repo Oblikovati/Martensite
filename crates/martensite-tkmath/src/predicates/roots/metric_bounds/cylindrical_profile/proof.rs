@@ -133,7 +133,7 @@ fn refined_magnitude(poles: &[Interval], arithmetic: &mut Arithmetic<'_>) -> Che
     for _ in 0..2 {
         let split = cells
             .iter()
-            .map(|cell| source::bisect(cell, arithmetic))
+            .map(|cell| Ok(source::bisect(cell, arithmetic)?))
             .collect::<Checked<Vec<_>>>()?;
         cells = split.into_iter().flatten().collect();
     }

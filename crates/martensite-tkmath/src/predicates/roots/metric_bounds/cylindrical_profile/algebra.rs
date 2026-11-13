@@ -1,21 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::*;
 
-pub(super) fn derivative(
-    poles: &[Interval],
-    arithmetic: &mut Arithmetic<'_>,
-) -> Checked<Vec<Interval>> {
-    if poles.len() == 1 {
-        return Ok(vec![arithmetic.zero()]);
-    }
-    poles
-        .windows(2)
-        .map(|pair| {
-            let delta = arithmetic.subtract(&pair[1], &pair[0])?;
-            Ok(arithmetic.fraction(&delta, (poles.len() - 1) as u64, 1)?)
-        })
-        .collect()
-}
+pub(super) use crate::predicates::roots::certificate_arithmetic::bernstein_curve::derivative;
 
 pub(super) fn elevate(
     poles: &[Interval],
