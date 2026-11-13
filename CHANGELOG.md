@@ -16,7 +16,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Removed quadratic backtracking from the binary32 proof-source parser on malformed whitespace records without changing accepted records or certificates (#441).
+
 - Bound Linux renderer test gates to the recorded system-font configuration so user font folders no longer changed rendered test images (#433).
+
+- Preserved stored analytic surface frame coefficients through an explicit checked BinTools read policy while keeping legacy readers unchanged (#432).
 
 - Skipped expanded unsafe inventory rebuilds for unrelated driver and documentation changes, while removing stale reports on skipped PR checks. (#411)
 

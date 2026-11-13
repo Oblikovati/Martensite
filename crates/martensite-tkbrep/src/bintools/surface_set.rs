@@ -1,4 +1,5 @@
 //! `BinTools_SurfaceSet`: the indexed `Surfaces` table of the binary shape set.
+use super::SurfaceFrameReadPolicy;
 use super::handle_table::HandleTable;
 use super::ostream::BinOStream;
 use super::table_io::{TableLabels, read_table, write_table};
@@ -30,6 +31,7 @@ static LABELS: TableLabels = TableLabels {
 /// assert!(set.surface(1).unwrap() == plane);
 /// ```
 pub struct BinSurfaceSet {
+    frame_policy: SurfaceFrameReadPolicy,
     table: HandleTable<dyn GeomSurface>,
 }
 
@@ -42,7 +44,13 @@ impl Default for BinSurfaceSet {
 impl BinSurfaceSet {
     /// `BinTools_SurfaceSet()`: an empty set; `BinSurfaceSet::new()`.
     pub fn new() -> Self {
+        Self::with_surface_frame_policy(SurfaceFrameReadPolicy::LegacyReplay)
+    }
+
+    /// Creates a table with fixed surface frame interpretation; `BinSurfaceSet::with_surface_frame_policy(policy)`.
+    pub fn with_surface_frame_policy(frame_policy: SurfaceFrameReadPolicy) -> Self {
         Self {
+            frame_policy,
             table: HandleTable::new("BinTools_SurfaceSet"),
         }
     }
@@ -95,9 +103,10 @@ impl BinSurfaceSet {
         stream: &mut IoStream,
         progress: &ProgressRange<'_>,
     ) -> Result<(), Failure> {
+        let policy = self.frame_policy;
         let table = &mut self.table;
         read_table(stream, progress, &LABELS, |stream| {
-            table.add(&Self::read_surface(stream)?);
+            table.add(&Self::read_surface_with_frame_policy(stream, policy)?);
             Ok(())
         })
     }
@@ -113,5 +122,12 @@ impl BinSurfaceSet {
     /// `ReadSurface(IS, S)`; `BinSurfaceSet::read_surface(&mut stream)?`.
     pub fn read_surface(stream: &mut IoStream) -> Result<Handle<dyn GeomSurface>, Failure> {
         surface_read::read_surface(stream)
+    }
+    /// Reads one analytic surface with explicit frame semantics; `BinSurfaceSet::read_surface_with_frame_policy(&mut stream, policy)?`.
+    pub fn read_surface_with_frame_policy(
+        stream: &mut IoStream,
+        policy: SurfaceFrameReadPolicy,
+    ) -> Result<Handle<dyn GeomSurface>, Failure> {
+        surface_read::read_surface_with_frame_policy(stream, policy)
     }
 }

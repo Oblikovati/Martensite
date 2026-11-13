@@ -48,6 +48,7 @@ mod shape_set_write_shape;
 mod shape_writer;
 mod shape_writer_geometry;
 mod shape_writer_shape;
+mod surface_frame_read_policy;
 mod surface_read;
 mod surface_set;
 mod surface_write;
@@ -64,11 +65,13 @@ pub use scalars::{
     put_integer, put_real, put_short_real,
 };
 pub use shape_io::{
-    WriteOptions, read, read_file, read_file_on, read_with_console, write, write_file,
+    WriteOptions, read, read_file, read_file_on, read_with_console,
+    read_with_console_and_surface_frame_policy, read_with_surface_frame_policy, write, write_file,
     write_file_on,
 };
 pub use shape_reader::BinShapeReader;
 pub use shape_set::BinShapeSet;
 pub use shape_set_base::{BinShapeSetBase, ShapeSetBaseData, THE_ASCII_VERSIONS, put_point};
 pub use shape_writer::BinShapeWriter;
+pub use surface_frame_read_policy::SurfaceFrameReadPolicy;
 pub use surface_set::BinSurfaceSet;

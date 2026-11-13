@@ -1,6 +1,7 @@
 //! `BinTools_ShapeReader`: reads the shape-reference format back, following back
 //! references to objects read before (or, when the reader has not met them yet, by
 //! jumping to their position and back).
+use super::SurfaceFrameReadPolicy;
 use super::errors::wrap_failure;
 use super::istream::BinIStream;
 use super::object_type::ObjectType;
@@ -36,6 +37,7 @@ pub(super) type ObjectMap<T> = DataMap<u64, Handle<T>>;
 /// ```
 #[derive(Default)]
 pub struct BinShapeReader {
+    pub(super) frame_policy: SurfaceFrameReadPolicy,
     base: ShapeSetBaseData,
     pub(super) builder: BRepBuilder,
     pub(super) shape_positions: DataMap<u64, Shape>,
@@ -52,6 +54,14 @@ impl BinShapeReader {
     /// `BinTools_ShapeReader()`; `BinShapeReader::new()`.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Creates a reader with fixed analytic frame semantics; `BinShapeReader::with_surface_frame_policy(policy)`.
+    pub fn with_surface_frame_policy(frame_policy: SurfaceFrameReadPolicy) -> Self {
+        Self {
+            frame_policy,
+            ..Self::default()
+        }
     }
 
     /// `ReadShape(theStream)` (private natively): a null shape for `EmptyShape` or

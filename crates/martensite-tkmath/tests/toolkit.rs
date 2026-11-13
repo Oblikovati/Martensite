@@ -4,3 +4,5 @@ mod exact_roots;
 mod sketch_line_incidences;
 include!("suites/cases_00.rs");
 include!("suites/cases_01.rs");
+
+mod stored_surface_frames;
