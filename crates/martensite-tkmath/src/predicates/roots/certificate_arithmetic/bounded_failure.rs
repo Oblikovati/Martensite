@@ -6,17 +6,41 @@ pub(super) type Checked<T> = Result<T, BoundedArithmeticFailure>;
 #[derive(Clone, Debug, PartialEq)]
 pub enum BoundedArithmeticFailure {
     /// A scalar was not a finite binary64 value.
-    NonFiniteScalar { value: f64 },
+    NonFiniteScalar {
+        /// Offending scalar value.
+        value: f64,
+    },
     /// The original operation allowance was exhausted.
-    WorkLimit { completed: u32, limit: u32 },
+    WorkLimit {
+        /// Number of completed arithmetic operations.
+        completed: u32,
+        /// Declared resource limit.
+        limit: u32,
+    },
     /// Cancellation was observed before another arithmetic operation.
     Cancelled,
     /// An intermediate exceeded the fixed integer bound.
-    ArithmeticBits { actual: u64, limit: u64 },
+    ArithmeticBits {
+        /// Observed count or size.
+        actual: u64,
+        /// Declared resource limit.
+        limit: u64,
+    },
     /// Operands did not have compatible Bernstein coefficient counts.
-    CoefficientCount { left: usize, right: usize },
+    CoefficientCount {
+        /// Left operand coefficient count.
+        left: usize,
+        /// Right operand coefficient count.
+        right: usize,
+    },
     /// A positive denominator could not be established at the requested precision.
-    DenominatorUnresolved { lower: DyadicBound },
+    DenominatorUnresolved {
+        /// Certified lower endpoint.
+        lower: DyadicBound,
+    },
     /// An outward endpoint did not fit finite binary64.
-    UnrepresentableBound { bound: DyadicBound },
+    UnrepresentableBound {
+        /// Computed conservative upper bound.
+        bound: DyadicBound,
+    },
 }

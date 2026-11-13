@@ -7,8 +7,10 @@ mod tests;
 use super::*;
 use crate::surface_sketch::HistoryRole;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CertifiedCylindricalStorage, CylindricalStorageError, CylindricalStorageLimits,
-    CylindricalStorageQuery, MetricBezier, certify_cylindrical_storage,
+    CertifiedCylindricalProfile, CertifiedCylindricalStorage, CylindricalProfileError,
+    CylindricalProfileInterval, CylindricalProfileQuery, CylindricalStorageError,
+    CylindricalStorageLimits, CylindricalStorageQuery, MetricBezier, certify_cylindrical_profile,
+    certify_cylindrical_storage,
 };
 use std::collections::BTreeMap;
 
@@ -17,6 +19,7 @@ type Bindings<'a> = BTreeMap<BindingKey, &'a Shape>;
 pub(super) struct StoredProof {
     pub span: CurveSpan,
     pub certificate: CertifiedCylindricalStorage,
+    pub profile: CertifiedCylindricalProfile,
 }
 
 struct OwnedCurve {
@@ -41,6 +44,7 @@ pub(super) struct StorageFailure {
 enum StorageCause {
     Native(Box<Failure>),
     Certificate(Box<CylindricalStorageError>),
+    Profile(Box<CylindricalProfileError>),
     Mismatch {
         field: &'static str,
         actual: Vec<u64>,
@@ -52,6 +56,7 @@ impl std::fmt::Display for StorageFailure {
         match &self.cause {
             StorageCause::Native(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Certificate(cause) => write!(formatter, "{:?}: {cause}", self.key),
+            StorageCause::Profile(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Mismatch {
                 field,
                 actual,
@@ -66,16 +71,18 @@ impl std::fmt::Display for StorageFailure {
 }
 
 pub(super) fn certify(
+    original: &Request,
     request: &Request,
     bindings: &[(BindingKey, Shape)],
 ) -> Result<Vec<StoredProof>, StorageFailure> {
     let indexed = index(bindings)?;
     capture::caps(request, &indexed)?;
+    let authored = authored_index(original)?;
     request
         .loops
         .iter()
         .flatten()
-        .map(|piece| certify_span(request, piece.span, &indexed))
+        .map(|piece| certify_span(request, piece.span, &indexed, &authored))
         .collect()
 }
 
@@ -93,13 +100,23 @@ fn certify_span(
     request: &Request,
     span: CurveSpan,
     bindings: &Bindings<'_>,
+    authored: &BTreeMap<SurfaceCurveId, &[[f64; 2]]>,
 ) -> Result<StoredProof, StorageFailure> {
     let first_key = key(span, HistoryRole::FirstDepthEdge);
     let a = capture::curve(first_key, bindings)?;
     let b = capture::curve(key(span, HistoryRole::LastDepthEdge), bindings)?;
     capture::side(key(span, HistoryRole::SideFace), [&a, &b], bindings)?;
     let certificate = prove_captured(request, first_key, [&a, &b])?;
-    Ok(StoredProof { span, certificate })
+    let source = authored
+        .get(&span.curve)
+        .copied()
+        .ok_or_else(|| mismatch(first_key, "authored curve membership", vec![0], vec![1]))?;
+    let profile = prove_profile(request, span, &a, source)?;
+    Ok(StoredProof {
+        span,
+        certificate,
+        profile,
+    })
 }
 
 fn prove_captured(
@@ -162,4 +179,57 @@ fn storage_share(tolerance: f64) -> f64 {
         return 0.;
     }
     nearest.next_down()
+}
+
+fn authored_index(
+    request: &Request,
+) -> Result<BTreeMap<SurfaceCurveId, &[[f64; 2]]>, StorageFailure> {
+    let mut result = BTreeMap::new();
+    for piece in request.loops.iter().flatten() {
+        if result
+            .insert(piece.span.curve, piece.poles.as_slice())
+            .is_some()
+        {
+            return Err(mismatch(
+                key(piece.span, HistoryRole::FirstDepthEdge),
+                "authored curve membership",
+                vec![2],
+                vec![1],
+            ));
+        }
+    }
+    Ok(result)
+}
+
+fn prove_profile(
+    request: &Request,
+    span: CurveSpan,
+    curve: &OwnedCurve,
+    authored: &[[f64; 2]],
+) -> Result<CertifiedCylindricalProfile, StorageFailure> {
+    let limit = (request.tolerance / 4.).next_down().max(0.);
+    let wrap = |cause| StorageFailure {
+        key: key(span, HistoryRole::FirstDepthEdge),
+        cause: StorageCause::Profile(Box::new(cause)),
+    };
+    let options = Default::default();
+    let interval =
+        CylindricalProfileInterval::new(u64::from(span.index), span.level).map_err(|cause| {
+            wrap(CylindricalProfileError {
+                requested_options: options,
+                requested_spatial_limit: limit,
+                cause,
+            })
+        })?;
+    let query = CylindricalProfileQuery {
+        authored,
+        stored: curve.borrowed(),
+        interval,
+        support_radius: request.radius,
+        stored_radius: request.radius + request.depths[0],
+        angular_origin: 0.,
+        spatial_limit: limit,
+        options,
+    };
+    certify_cylindrical_profile(query, || false).map_err(wrap)
 }

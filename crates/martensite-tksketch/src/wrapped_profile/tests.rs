@@ -16,6 +16,7 @@ fn contour(first: u64, poles: &[&[[f64; 2]]]) -> Vec<AuthoredPiece> {
             start: CornerSource::Authored(SurfaceVertexId(first + i as u64)),
             end: CornerSource::Authored(SurfaceVertexId(first + (i as u64 + 1) % count)),
             poles: poles.to_vec(),
+            chart_center: 0.,
         })
         .collect()
 }
@@ -40,14 +41,14 @@ pub(super) fn request() -> Request {
         radius: 10.,
         depths: [-1., 2.],
         tolerance: 1e-5,
-        fit_level: 2,
+        max_fit_level: 8,
     }
 }
 
 #[test]
 fn rational_loop_with_hole_freezes_measures_and_exports_without_publication() {
     let result = pipeline::wrap_extrude(&request()).unwrap();
-    assert_eq!(result.keys.len(), 195);
+    assert_eq!(result.keys.len(), 117);
     assert_eq!(
         result.report.stage(ValidationStage::Geometry).mode,
         CheckMode::Sampled
@@ -63,20 +64,32 @@ fn rational_loop_with_hole_freezes_measures_and_exports_without_publication() {
 }
 
 fn assert_storage(result: &pipeline::Unqualified) {
-    assert_eq!(result.storage.len(), 32);
+    assert_eq!(result.storage.len(), 19);
     for stored in &result.storage {
-        assert_eq!(stored.span.level, 2);
-        let report = &stored.certificate;
-        assert!(
-            report
-                .radial_distance_bounds()
-                .iter()
-                .all(|bound| *bound < 1e-10)
-        );
-        assert!(report.scaled_ruling_bound() < 1e-10);
-        assert!(report.height_difference_bound() < 1e-10);
-        assert!(report.normal_sweep_error_bound() < 1e-10);
+        let expected = match stored.span.curve.0 {
+            10 => 1,
+            11 => 2,
+            12 => 3,
+            _ => 0,
+        };
+        assert_eq!(stored.span.level, expected);
+        assert_piece_storage(stored);
     }
+}
+
+fn assert_piece_storage(stored: &storage::StoredProof) {
+    let report = &stored.certificate;
+    assert!(
+        report
+            .radial_distance_bounds()
+            .iter()
+            .all(|bound| *bound < 1e-10)
+    );
+    assert!(report.scaled_ruling_bound() < 1e-10);
+    assert!(report.height_difference_bound() < 1e-10);
+    assert!(report.normal_sweep_error_bound() < 1e-10);
+    assert!(stored.profile.developed_position_bound() <= request().tolerance / 4.);
+    assert!(stored.profile.developed_derivative_bound().is_finite());
 }
 
 fn assert_roundtrip(result: &pipeline::Unqualified) {

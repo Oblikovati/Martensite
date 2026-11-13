@@ -29,12 +29,12 @@ fn at<T>(region: SurfaceRegionId, stage: Stage, result: Result<T, Failure>) -> R
 pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
     let region = request.region;
     at(region, Stage::Admission, admit(request))?;
-    let prepared = subdivision::prepare(request);
+    let prepared = planning_stage(request)?;
     let constructed = at(region, Stage::Construction, native::construct(&prepared))?;
     let bytes = at(region, Stage::Freeze, freeze(&constructed))?;
     let keys: Vec<_> = constructed.bindings.iter().map(|(key, _)| *key).collect();
     let (decoded, bindings) = at(region, Stage::Freeze, decode(&bytes, &keys))?;
-    let storage = storage_stage(region, &prepared, &bindings)?;
+    let storage = storage_stage(region, request, &prepared, &bindings)?;
     let report = at(
         region,
         Stage::Validation,
@@ -44,12 +44,21 @@ pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
     Ok(unqualified(bytes, keys, report, measure, storage))
 }
 
+fn planning_stage(request: &Request) -> Result<Request, Refusal> {
+    subdivision::prepare(request).map_err(|cause| Refusal {
+        stage: Stage::Planning,
+        region: request.region,
+        cause: RefusalCause::Planning(Box::new(cause)),
+    })
+}
+
 fn storage_stage(
     region: SurfaceRegionId,
+    original: &Request,
     request: &Request,
     bindings: &[(BindingKey, Shape)],
 ) -> Result<Vec<storage::StoredProof>, Refusal> {
-    storage::certify(request, bindings).map_err(|cause| Refusal {
+    storage::certify(original, request, bindings).map_err(|cause| Refusal {
         stage: Stage::Storage,
         region,
         cause: RefusalCause::Storage(Box::new(cause)),
@@ -149,12 +158,12 @@ fn admit_limits(request: &Request) -> Result<(), Failure> {
         || request.depths[0] >= request.depths[1]
         || request.tolerance <= 0.
         || request.loops.is_empty()
-        || request.fit_level > 8;
+        || request.max_fit_level > 8;
     if invalid {
         return Err(Failure::new(&format!(
             "radius/depths/tolerance={values:?}, loops={}, fit level={}; expected positive radii, ordered depths, positive tolerance, contours and level <= 8",
             request.loops.len(),
-            request.fit_level
+            request.max_fit_level
         )));
     }
     Ok(())

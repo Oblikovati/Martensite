@@ -54,6 +54,15 @@ impl<'a> Arithmetic<'a> {
     pub fn operations(&self) -> u32 {
         self.operations
     }
+    pub fn fractional_bits(&self) -> u16 {
+        self.options.fractional_bits
+    }
+    pub fn quantum(&self) -> Interval {
+        Interval {
+            lower: 1.into(),
+            upper: 1.into(),
+        }
+    }
     pub fn binomial(&self, n: usize, k: usize) -> u64 {
         self.binomials[n][k]
     }
@@ -107,19 +116,58 @@ impl<'a> Arithmetic<'a> {
             &BigInt::from(denominator),
         )
     }
+    pub fn divide(&mut self, a: &Interval, b: &Interval) -> Checked<Interval> {
+        self.charge()?;
+        self.positive_denominator(&b.lower)?;
+        let pairs = [
+            (&a.lower, &b.lower),
+            (&a.lower, &b.upper),
+            (&a.upper, &b.lower),
+            (&a.upper, &b.upper),
+        ];
+        let bounds = pairs.map(|(a, b)| self.rounded(&(a * &self.unit), &(a * &self.unit), b));
+        let [a, b, c, d] = bounds;
+        let bounds = [a?, b?, c?, d?];
+        let lower = bounds
+            .iter()
+            .fold(bounds[0].lower.clone(), |a, b| a.min(b.lower.clone()));
+        let upper = bounds
+            .iter()
+            .fold(bounds[0].upper.clone(), |a, b| a.max(b.upper.clone()));
+        checked(lower, upper)
+    }
+    pub fn integer_scale(&mut self, a: &Interval, factor: &BigInt) -> Checked<Interval> {
+        self.charge()?;
+        let (lower, upper) = if factor.sign() == Sign::Minus {
+            (&a.upper, &a.lower)
+        } else {
+            (&a.lower, &a.upper)
+        };
+        checked(lower * factor, upper * factor)
+    }
+    pub fn integer_quotient(
+        &mut self,
+        numerator: &BigInt,
+        denominator: &BigInt,
+    ) -> Checked<BigInt> {
+        self.charge()?;
+        self.positive_denominator(denominator)?;
+        Ok(numerator / denominator)
+    }
     pub fn upper_quotient(&mut self, numerator: &BigInt, denominator: &BigInt) -> Checked<f64> {
         self.charge()?;
-        if denominator.sign() != Sign::Plus {
-            return Err(Failure::DenominatorUnresolved {
-                lower: DyadicBound::new(
-                    denominator.clone(),
-                    -i32::from(self.options.fractional_bits),
-                ),
-            });
-        }
+        self.positive_denominator(denominator)?;
         let scaled = numerator * &self.unit;
         check_bits(scaled.bits())?;
         self.upper_f64(divide_ceil(&scaled, denominator))
+    }
+    fn positive_denominator(&self, lower: &BigInt) -> Checked<()> {
+        if lower.sign() != Sign::Plus {
+            return Err(Failure::DenominatorUnresolved {
+                lower: DyadicBound::new(lower.clone(), -i32::from(self.options.fractional_bits)),
+            });
+        }
+        Ok(())
     }
     pub fn upper_f64(&self, integer: BigInt) -> Checked<f64> {
         let bound = DyadicBound::new(integer, -i32::from(self.options.fractional_bits));

@@ -17,6 +17,7 @@ struct AuthoredPiece {
     start: CornerSource,
     end: CornerSource,
     poles: Vec<[f64; 2]>,
+    chart_center: f64,
 }
 
 #[derive(Clone)]
@@ -26,7 +27,7 @@ struct Request {
     radius: f64,
     depths: [f64; 2],
     tolerance: f64,
-    fit_level: u8,
+    max_fit_level: u8,
 }
 
 struct NativePiece {
@@ -43,6 +44,7 @@ struct Constructed {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Stage {
     Admission,
+    Planning,
     Construction,
     Freeze,
     Storage,
@@ -61,12 +63,14 @@ struct Refusal {
 enum RefusalCause {
     Native(Box<Failure>),
     Storage(Box<storage::StorageFailure>),
+    Planning(Box<subdivision::PlanningFailure>),
 }
 impl std::fmt::Display for RefusalCause {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Native(cause) => write!(formatter, "{cause}"),
             Self::Storage(cause) => write!(formatter, "{cause}"),
+            Self::Planning(cause) => write!(formatter, "{cause}"),
         }
     }
 }

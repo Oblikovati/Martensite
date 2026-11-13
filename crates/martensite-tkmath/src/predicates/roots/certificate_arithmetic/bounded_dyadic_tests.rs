@@ -71,3 +71,24 @@ fn unrepresentable_bound_retains_the_actual_endpoint_without_clamping() {
         std::cmp::Ordering::Greater
     );
 }
+
+#[test]
+fn signed_interval_division_encloses_all_independent_endpoint_quotients() {
+    let mut cancelled = || false;
+    let mut arithmetic = Arithmetic::new(Default::default(), &mut cancelled);
+    let numerator = Interval {
+        lower: BigInt::from(-3),
+        upper: 5.into(),
+    };
+    let denominator = Interval {
+        lower: 2.into(),
+        upper: 7.into(),
+    };
+    let quotient = arithmetic.divide(&numerator, &denominator).unwrap();
+    for n in [-3., 5.] {
+        for d in [2., 7.] {
+            let exact = ExactRatio::from_finite(n).divide(&ExactRatio::from_finite(d));
+            contains(&quotient, &exact, 128);
+        }
+    }
+}

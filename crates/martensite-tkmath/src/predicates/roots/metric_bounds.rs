@@ -18,7 +18,15 @@ pub use mapped::{
 };
 pub use parameter::MetricParameterMap;
 mod coefficients;
+mod cylindrical_profile;
 mod cylindrical_storage;
+pub use super::certificate_arithmetic::bounded_failure::BoundedArithmeticFailure;
+pub use cylindrical_profile::{
+    CertifiedCylindricalProfile, CylindricalFitPlan, CylindricalFitQuery,
+    CylindricalProfileBehavior, CylindricalProfileError, CylindricalProfileFailure,
+    CylindricalProfileInterval, CylindricalProfileOptions, CylindricalProfileQuery,
+    certify_cylindrical_profile, plan_cylindrical_fit,
+};
 mod inequality;
 mod proof;
 mod types;

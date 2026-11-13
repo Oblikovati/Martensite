@@ -174,7 +174,7 @@ fn piece(
     connectors: [Edge; 2],
     caps: &[Face; 2],
 ) -> Result<NativePiece, Failure> {
-    let coefficients = angular::coefficients(&source.poles, request.radius);
+    let coefficients = angular::coefficients(&source.poles, request.radius, source.chart_center);
     let make = |i| {
         depth_curve(
             &coefficients,

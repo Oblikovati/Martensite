@@ -1,16 +1,82 @@
 //! Canonical dyadic intervals are chosen before native construction, never by retries.
 use super::*;
 
-pub(super) fn prepare(request: &Request) -> Request {
-    let mut prepared = request.clone();
-    for _ in 0..request.fit_level {
-        prepared.loops = prepared
-            .loops
-            .iter()
-            .map(|contour| contour.iter().flat_map(split_piece).collect())
-            .collect();
+use martensite_tkmath::predicates::roots::metric_bounds::{
+    CylindricalFitQuery, CylindricalProfileError, CylindricalProfileInterval, plan_cylindrical_fit,
+};
+
+#[derive(Debug)]
+pub(super) struct PlanningFailure {
+    curve: SurfaceCurveId,
+    cause: CylindricalProfileError,
+}
+impl std::fmt::Display for PlanningFailure {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "authored curve {:?}: {}", self.curve, self.cause)
     }
-    prepared
+}
+
+pub(super) fn prepare(request: &Request) -> Result<Request, PlanningFailure> {
+    let mut prepared = request.clone();
+    prepared.loops = request
+        .loops
+        .iter()
+        .map(|contour| {
+            contour
+                .iter()
+                .map(|piece| prepare_curve(piece, request))
+                .collect::<Result<Vec<_>, _>>()
+                .map(|pieces| pieces.into_iter().flatten().collect())
+        })
+        .collect::<Result<_, _>>()?;
+    Ok(prepared)
+}
+
+fn prepare_curve(
+    piece: &AuthoredPiece,
+    request: &Request,
+) -> Result<Vec<AuthoredPiece>, PlanningFailure> {
+    let query = planning_query(piece, request)?;
+    let plan = plan_cylindrical_fit(query, || false).map_err(|cause| PlanningFailure {
+        curve: piece.span.curve,
+        cause,
+    })?;
+    let mut source = piece.clone();
+    source.chart_center = plan.chart_center();
+    let mut pieces = vec![source];
+    for _ in 0..plan.subdivision_level() {
+        pieces = pieces.iter().flat_map(split_piece).collect();
+    }
+    Ok(pieces)
+}
+
+fn planning_query<'a>(
+    piece: &'a AuthoredPiece,
+    request: &Request,
+) -> Result<CylindricalFitQuery<'a>, PlanningFailure> {
+    Ok(CylindricalFitQuery {
+        authored: &piece.poles,
+        interval: whole_interval(piece.span.curve, request.tolerance)?,
+        support_radius: request.radius,
+        angular_origin: 0.,
+        spatial_limit: (request.tolerance / 4.).next_down().max(0.),
+        max_level: request.max_fit_level,
+        max_operations: 100_000,
+    })
+}
+
+fn whole_interval(
+    curve: SurfaceCurveId,
+    tolerance: f64,
+) -> Result<CylindricalProfileInterval, PlanningFailure> {
+    CylindricalProfileInterval::new(0, 0).map_err(|cause| PlanningFailure {
+        curve,
+        cause: CylindricalProfileError {
+            requested_options: Default::default(),
+            requested_spatial_limit: tolerance / 4.,
+            cause,
+        },
+    })
 }
 
 fn split_piece(piece: &AuthoredPiece) -> [AuthoredPiece; 2] {
@@ -31,6 +97,7 @@ fn split_piece(piece: &AuthoredPiece) -> [AuthoredPiece; 2] {
         start,
         end,
         poles,
+        chart_center: piece.chart_center,
     };
     [
         make(first, piece.start, joint, left),

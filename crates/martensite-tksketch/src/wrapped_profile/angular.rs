@@ -21,22 +21,22 @@ fn product(a: &[f64], b: &[f64]) -> Vec<f64> {
     result
 }
 
-fn half_angle(s: f64, radius: f64) -> f64 {
-    let half = s / (2. * radius);
+fn half_angle(s: f64, radius: f64, center: f64) -> f64 {
+    let half = (s / radius - center) / 2.;
     sin(half) / cos(half)
 }
 
-fn fit(source: &[[f64; 2]], radius: f64) -> [f64; 4] {
+fn fit(source: &[[f64; 2]], radius: f64, center: f64) -> [f64; 4] {
     let n = source.len() - 1;
-    let a = half_angle(source[0][0], radius);
-    let b = half_angle(source[n][0], radius);
+    let a = half_angle(source[0][0], radius, center);
+    let b = half_angle(source[n][0], radius, center);
     let d0 = n as f64 * (source[1][0] - source[0][0]) / radius;
     let d1 = n as f64 * (source[n][0] - source[n - 1][0]) / radius;
     [a, a + d0 * (1. + a * a) / 6., b - d1 * (1. + b * b) / 6., b]
 }
 
-pub(super) fn coefficients(source: &[[f64; 2]], radius: f64) -> Vec<[f64; 4]> {
-    let t = fit(source, radius);
+pub(super) fn coefficients(source: &[[f64; 2]], radius: f64, center: f64) -> Vec<[f64; 4]> {
+    let t = fit(source, radius, center);
     let square = product(&t, &t);
     let weights: Vec<_> = square.iter().map(|q| 1. + q).collect();
     let z: Vec<_> = source.iter().map(|p| p[1]).collect();
@@ -45,7 +45,10 @@ pub(super) fn coefficients(source: &[[f64; 2]], radius: f64) -> Vec<[f64; 4]> {
     let x = product(&square.iter().map(|q| 1. - q).collect::<Vec<_>>(), &elevate);
     let y = product(&product(&t, &[2.; 4]), &elevate);
     let w = product(&weights, &elevate);
-    (0..w.len()).map(|i| [x[i], y[i], zw[i], w[i]]).collect()
+    let (c, s) = (cos(center), sin(center));
+    (0..w.len())
+        .map(|i| [c * x[i] - s * y[i], s * x[i] + c * y[i], zw[i], w[i]])
+        .collect()
 }
 
 pub(super) fn at_radius(coefficients: &[[f64; 4]], radius: f64) -> RationalPoles {
@@ -60,9 +63,8 @@ pub(super) fn at_radius(coefficients: &[[f64; 4]], radius: f64) -> RationalPoles
 }
 
 pub(super) fn endpoint([s, z]: [f64; 2], support: f64, radius: f64) -> [f64; 3] {
-    let t = half_angle(s, support);
-    let w = 1. + t * t;
-    [radius * ((1. - t * t) / w), radius * ((2. * t) / w), z]
+    let angle = s / support;
+    [radius * cos(angle), radius * sin(angle), z]
 }
 
 #[cfg(test)]
@@ -81,7 +83,7 @@ mod tests {
 
     #[test]
     fn rational_identity_and_shared_depth_scaling_match_closed_form() {
-        let coefficients = coefficients(&[[0., 1.], [0.4, 2.], [0.8, 1.]], 10.);
+        let coefficients = coefficients(&[[0., 1.], [0.4, 2.], [0.8, 1.]], 10., 0.);
         let [inner, outer] = [9., 12.].map(|r| at_radius(&coefficients, r));
         assert_eq!(inner.weights, outer.weights);
         for i in 0..=32 {

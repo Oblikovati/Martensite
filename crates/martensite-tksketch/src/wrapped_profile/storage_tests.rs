@@ -6,22 +6,23 @@ use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::GeomBezierSurface;
 use martensite_tkmath::gp::Point3;
 
-fn frozen() -> (Request, Vec<(BindingKey, Shape)>) {
-    let prepared = subdivision::prepare(&request());
+fn frozen() -> (Request, Request, Vec<(BindingKey, Shape)>) {
+    let original = request();
+    let prepared = subdivision::prepare(&original).unwrap();
     let built = construction::construct(&prepared).unwrap();
     let keys: Vec<_> = built.bindings.iter().map(|(key, _)| *key).collect();
     let bytes = crate::surface_sketch::encoding::encode(&built.solid, &built.bindings).unwrap();
     let (_, bindings) = super::super::pipeline::decode(&bytes, &keys).unwrap();
-    (prepared, bindings)
+    (original, prepared, bindings)
 }
 
 #[test]
 fn changed_side_control_net_refuses_the_stale_boundary_binding() {
-    let (request, bindings) = frozen();
-    assert_eq!(certify(&request, &bindings).unwrap().len(), 32);
+    let (original, request, bindings) = frozen();
+    assert_eq!(certify(&original, &request, &bindings).unwrap().len(), 19);
     let key = key(request.loops[0][0].span, HistoryRole::SideFace);
     change_side(key, &bindings);
-    let error = certify(&request, &bindings).err().unwrap();
+    let error = certify(&original, &request, &bindings).err().unwrap();
     assert_eq!(error.key, key);
     assert!(matches!(
         error.cause,
@@ -45,14 +46,14 @@ fn change_side(key: BindingKey, bindings: &[(BindingKey, Shape)]) {
 
 #[test]
 fn duplicate_semantic_bindings_refuse_instead_of_using_order() {
-    let (request, mut bindings) = frozen();
+    let (original, request, mut bindings) = frozen();
     let cap = bindings
         .iter()
         .find(|(key, _)| key.role == HistoryRole::FirstDepthFace)
         .unwrap()
         .clone();
     bindings.push(cap);
-    let error = certify(&request, &bindings).err().unwrap();
+    let error = certify(&original, &request, &bindings).err().unwrap();
     assert!(matches!(
         error.cause,
         StorageCause::Mismatch {
@@ -64,9 +65,9 @@ fn duplicate_semantic_bindings_refuse_instead_of_using_order() {
 
 #[test]
 fn missing_semantic_binding_refuses_instead_of_using_order() {
-    let (request, mut bindings) = frozen();
+    let (original, request, mut bindings) = frozen();
     bindings.retain(|(key, _)| key.role != HistoryRole::FirstDepthFace);
-    let error = certify(&request, &bindings).err().unwrap();
+    let error = certify(&original, &request, &bindings).err().unwrap();
     assert!(matches!(
         error.cause,
         StorageCause::Mismatch {
@@ -86,10 +87,10 @@ fn storage_allocation_rounds_down_including_subnormal_requests() {
 
 #[test]
 fn coherent_native_row_mutation_still_requires_a_new_storage_certificate() {
-    let (request, bindings) = frozen();
+    let (original, request, bindings) = frozen();
     let span = request.loops[0][0].span;
     change_boundary_and_row(span, &bindings);
-    let error = certify(&request, &bindings).err().unwrap();
+    let error = certify(&original, &request, &bindings).err().unwrap();
     assert_eq!(error.key, key(span, HistoryRole::FirstDepthEdge));
     assert!(matches!(error.cause, StorageCause::Certificate(_)));
     assert!(error.to_string().contains("Uncertified"));
@@ -107,4 +108,20 @@ fn change_boundary_and_row(span: CurveSpan, bindings: &[(BindingKey, Shape)]) {
     let point = Point3::new(p.x() + 0.001, p.y(), p.z());
     curve.get().unwrap().set_pole(2, point).unwrap();
     surface.get().unwrap().set_pole(2, 1, point).unwrap();
+}
+
+#[test]
+fn original_authored_profile_cannot_be_replaced_by_rounded_fit_points() {
+    let (mut original, prepared, bindings) = frozen();
+    for pole in original
+        .loops
+        .iter_mut()
+        .flatten()
+        .flat_map(|piece| &mut piece.poles)
+    {
+        pole[1] += 0.01;
+    }
+    let error = certify(&original, &prepared, &bindings).err().unwrap();
+    assert!(matches!(error.cause, StorageCause::Profile(_)));
+    assert!(error.to_string().contains("Uncertified"));
 }

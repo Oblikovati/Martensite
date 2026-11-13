@@ -126,11 +126,19 @@ The full `cargo xtask pr` gate recorded above belongs to the P1 checkpoint. The
 storage changes have the package checks recorded here; the complete PR gate must
 run again before pushing the feature.
 
+## P2 authored-profile checkpoint
+
+The [profile certificate and fit planner](PROFILE-CERTIFICATES.md) compare decoded
+coefficients against the original authored polynomial on each exact interval.
+Position and derivative bounds now accompany the storage proof. A priori
+fourth-derivative sizing chooses the geometric subdivision before construction.
+The private fixture uses 19 pieces and 117 semantic bindings; its native loop,
+hole, boss and pocket controls pass within the unchanged error allowances.
+
 ## Remaining gates
 
-P2 must finish authored angular/height position and derivative bounds, endpoint
-behavior and demotion evidence. It must replace fixture-selected sizing with a
-priori canonical sizing. Requested radius/depth rounding and actual trim domains
+P2 must finish endpoint behavior and demotion evidence. Requested radius/depth
+rounding and actual trim domains
 also need evidence before publication. The implemented storage certificate does
 not satisfy these remaining obligations.
 
