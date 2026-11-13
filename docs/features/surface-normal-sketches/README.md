@@ -129,3 +129,10 @@ axis contact, unresolved apex/angle limits and any result that fails required
 validation. A Cartesian rectangle on the unrolled cone is not yet supported;
 its boundaries generally need the curve-mapping work tracked by #418. See the
 [conical sector contract](CONE.md) for the coordinate map and supported domain.
+
+## General wrapped profiles
+
+General curves and holes are under development under #418. The approved
+[rational representation](../../architecture/decisions/rational-wrapped-profile-representation.md)
+and [implementation record](RATIONAL-IMPLEMENTATION.md) describe the required
+publication evidence. The primitive contracts above remain unchanged.

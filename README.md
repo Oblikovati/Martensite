@@ -31,6 +31,7 @@ The improvememt roadmap for this project can be found on [Milestones](https://gi
 | `martensite-tkv3d` | Selection, presentation, interactive objects and the 3D viewer. |
 | `martensite-vulkan` | The Vulkan 1.3 renderer behind the graphic driver interfaces. |
 | `martensite-tkprim` | Primitive solids (boxes, wedges, cylinders, cones, spheres, tori, revolutions, half-spaces) and sweeps. |
+| `martensite-tksketch` | [Surface-bound sketches](docs/features/surface-normal-sketches/README.md): cylindrical rectangles and conical sectors extruded along their physical normals. General wrapped profiles remain under development. |
 | `martensite-tkhelix` | Helix curves, their B-spline approximation and composite helix wires. |
 | `martensite-tkshhealing` | Shape analysis, repair, geometry conversion and subdivision. |
 | `martensite-tkmesh` | Mesh elements, discretization, triangulation and incremental meshing. |
