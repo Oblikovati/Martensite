@@ -2,6 +2,7 @@
 //! collected into indexed tables, written section by section (locations, 2D curves,
 //! curves, polygons, surfaces, triangulations, then the `TShapes`), and referred to by
 //! index.
+use super::SurfaceFrameReadPolicy;
 use super::curve_set::BinCurveSet;
 use super::curve2d_set::BinCurve2dSet;
 use super::handle_table::{FlaggedHandleTable, HandleTable};
@@ -70,12 +71,25 @@ impl BinShapeSet {
     /// An empty set whose `Read` writes its version message to `console` (the native
     /// `std::cout`); `BinShapeSet::with_console(Arc::new(StdoutConsole))`.
     pub fn with_console(console: Arc<dyn ConsoleOutput>) -> Self {
+        Self::with_console_and_surface_frame_policy(console, SurfaceFrameReadPolicy::LegacyReplay)
+    }
+
+    /// Creates an empty set with fixed frame interpretation; `BinShapeSet::with_surface_frame_policy(policy)`.
+    pub fn with_surface_frame_policy(policy: SurfaceFrameReadPolicy) -> Self {
+        Self::with_console_and_surface_frame_policy(Arc::new(StdoutConsole), policy)
+    }
+
+    /// Injects console output and fixed frame interpretation; `BinShapeSet::with_console_and_surface_frame_policy(console, policy)`.
+    pub fn with_console_and_surface_frame_policy(
+        console: Arc<dyn ConsoleOutput>,
+        policy: SurfaceFrameReadPolicy,
+    ) -> Self {
         Self {
             base: ShapeSetBaseData::default(),
             shapes: IndexedMapOfShape::default(),
             locations: BinLocationSet::new(),
             builder: BRepBuilder::default(),
-            surfaces: BinSurfaceSet::new(),
+            surfaces: BinSurfaceSet::with_surface_frame_policy(policy),
             curves: BinCurveSet::new(),
             curves2d: BinCurve2dSet::new(),
             polygons2d: HandleTable::new("BinTools_ShapeSet"),
