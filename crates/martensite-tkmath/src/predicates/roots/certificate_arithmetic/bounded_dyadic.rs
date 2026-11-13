@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Outward fixed-grid dyadic intervals; polynomial arithmetic never normalizes ratios.
-use super::{CylindricalStorageFailure as Failure, CylindricalStorageOptions, error::Checked};
+use super::bounded_failure::{BoundedArithmeticFailure as Failure, Checked};
 use crate::predicates::roots::{
     DyadicBound,
     certificate_arithmetic::{ExactRatio, rounding::outward_binary64},
@@ -8,8 +8,23 @@ use crate::predicates::roots::{
 use num_bigint::{BigInt, Sign};
 
 const MAX_INTEGER_BITS: u64 = 16_384;
+
+#[derive(Clone, Copy)]
+pub(in crate::predicates::roots) struct ArithmeticPolicy {
+    pub fractional_bits: u16,
+    pub max_operations: u32,
+}
+impl Default for ArithmeticPolicy {
+    fn default() -> Self {
+        Self {
+            fractional_bits: 128,
+            max_operations: 100_000,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(super) struct Interval {
+pub(in crate::predicates::roots) struct Interval {
     pub lower: BigInt,
     pub upper: BigInt,
 }
@@ -19,18 +34,15 @@ impl Interval {
     }
 }
 
-pub(super) struct Arithmetic<'a> {
-    options: CylindricalStorageOptions,
+pub(in crate::predicates::roots) struct Arithmetic<'a> {
+    options: ArithmeticPolicy,
     unit: BigInt,
     operations: u32,
     cancelled: &'a mut (dyn FnMut() -> bool + Send),
     binomials: Box<[[u64; 51]; 51]>,
 }
 impl<'a> Arithmetic<'a> {
-    pub fn new(
-        options: CylindricalStorageOptions,
-        cancelled: &'a mut (dyn FnMut() -> bool + Send),
-    ) -> Self {
+    pub fn new(options: ArithmeticPolicy, cancelled: &'a mut (dyn FnMut() -> bool + Send)) -> Self {
         Self {
             unit: BigInt::from(1) << usize::from(options.fractional_bits),
             options,
@@ -53,13 +65,8 @@ impl<'a> Arithmetic<'a> {
     }
     pub fn scalar(&mut self, value: f64) -> Checked<Interval> {
         self.charge()?;
-        let integer =
-            crate::predicates::exact_coordinate(value, 0, 0).map_err(|_| Failure::Value {
-                depth: None,
-                field: "dyadic scalar",
-                index: 0,
-                value,
-            })?;
+        let integer = crate::predicates::exact_coordinate(value, 0, 0)
+            .map_err(|_| Failure::NonFiniteScalar { value })?;
         let numerator = integer << usize::from(self.options.fractional_bits);
         self.rounded(&numerator, &numerator, &(BigInt::from(1) << 1074))
     }
@@ -186,5 +193,5 @@ fn binomial_table() -> Box<[[u64; 51]; 51]> {
 }
 
 #[cfg(test)]
-#[path = "dyadic_tests.rs"]
+#[path = "bounded_dyadic_tests.rs"]
 mod tests;

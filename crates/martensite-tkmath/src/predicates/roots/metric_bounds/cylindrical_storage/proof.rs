@@ -56,7 +56,7 @@ fn normal_sweep(
     };
     let height = arithmetic.scalar(bounds[3])?;
     let total = arithmetic.add(&xy, &height)?;
-    arithmetic.upper_f64(total.upper)
+    arithmetic.upper_f64(total.upper).map_err(Into::into)
 }
 
 fn radial(
@@ -75,7 +75,9 @@ fn radial(
     let weight_squared = arithmetic.multiply(weight_min, weight_min)?;
     let denominator = arithmetic.multiply(radius, &weight_squared)?;
     // |rho-r| = |X²+Y²-r²W²| / (W²*(rho+r)); rho+r >= r > 0.
-    arithmetic.upper_quotient(&magnitude(&residual), &denominator.lower)
+    arithmetic
+        .upper_quotient(&magnitude(&residual), &denominator.lower)
+        .map_err(Into::into)
 }
 
 fn cross(
@@ -87,11 +89,11 @@ fn cross(
     let last = product(&curves[1][axis], &curves[0][3], arithmetic)?;
     let first = product(&curves[0][axis], &curves[1][3], arithmetic)?;
     let Some(radii) = radii else {
-        return difference(&last, &first, arithmetic);
+        return difference(&last, &first, arithmetic).map_err(Into::into);
     };
     let last = scale(&last, &radii[0], arithmetic)?;
     let first = scale(&first, &radii[1], arithmetic)?;
-    difference(&last, &first, arithmetic)
+    difference(&last, &first, arithmetic).map_err(Into::into)
 }
 
 fn ruled(

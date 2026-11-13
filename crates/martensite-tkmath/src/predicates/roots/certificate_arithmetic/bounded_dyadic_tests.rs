@@ -12,7 +12,7 @@ fn contains(interval: &Interval, value: &ExactRatio, bits: u16) {
 
 #[test]
 fn directed_signed_arithmetic_encloses_independent_exact_ratios() {
-    let options = CylindricalStorageOptions {
+    let options = ArithmeticPolicy {
         fractional_bits: 8,
         ..Default::default()
     };

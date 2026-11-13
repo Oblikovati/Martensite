@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Storage bounds in the support's local cylinder chart; no topology or angular claim (#418).
 mod admission;
-mod dyadic;
 mod error;
-mod polynomial;
 mod proof;
 #[cfg(test)]
 mod tests;
 mod types;
 
 use super::MetricBezier;
-use dyadic::{Arithmetic, Interval};
+use crate::predicates::roots::certificate_arithmetic::{
+    bernstein_bounds as polynomial,
+    bounded_dyadic::{Arithmetic, ArithmeticPolicy, Interval},
+};
 use error::Checked;
 pub use error::{CylindricalStorageError, CylindricalStorageFailure};
 pub use types::*;
@@ -35,7 +36,7 @@ fn execute(
     cancelled: &mut (dyn FnMut() -> bool + Send),
 ) -> Checked<CertifiedCylindricalStorage> {
     admission::admit(&query)?;
-    let mut arithmetic = Arithmetic::new(query.options, cancelled);
+    let mut arithmetic = Arithmetic::new(arithmetic_policy(query.options), cancelled);
     let curves = [
         capture(query.curves[0], &mut arithmetic)?,
         capture(query.curves[1], &mut arithmetic)?,
@@ -64,4 +65,11 @@ fn capture(
         result[3].push(weight);
     }
     Ok(result)
+}
+
+fn arithmetic_policy(options: CylindricalStorageOptions) -> ArithmeticPolicy {
+    ArithmeticPolicy {
+        fractional_bits: options.fractional_bits,
+        max_operations: options.max_operations,
+    }
 }

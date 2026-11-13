@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
-use super::{Arithmetic, Interval, error::Checked};
+use super::{
+    bounded_dyadic::{Arithmetic, Interval},
+    bounded_failure::{BoundedArithmeticFailure, Checked},
+};
 
-pub(super) fn product(
+pub(in crate::predicates::roots) fn product(
     a: &[Interval],
     b: &[Interval],
     arithmetic: &mut Arithmetic<'_>,
@@ -31,7 +34,7 @@ fn accumulate(
     Ok(())
 }
 
-pub(super) fn scale(
+pub(in crate::predicates::roots) fn scale(
     a: &[Interval],
     factor: &Interval,
     arithmetic: &mut Arithmetic<'_>,
@@ -41,7 +44,7 @@ pub(super) fn scale(
         .collect()
 }
 
-pub(super) fn sum(
+pub(in crate::predicates::roots) fn sum(
     a: &[Interval],
     b: &[Interval],
     arithmetic: &mut Arithmetic<'_>,
@@ -50,7 +53,7 @@ pub(super) fn sum(
     a.iter().zip(b).map(|(a, b)| arithmetic.add(a, b)).collect()
 }
 
-pub(super) fn difference(
+pub(in crate::predicates::roots) fn difference(
     a: &[Interval],
     b: &[Interval],
     arithmetic: &mut Arithmetic<'_>,
@@ -64,7 +67,7 @@ pub(super) fn difference(
 
 fn common_degree(a: &[Interval], b: &[Interval]) -> Checked<()> {
     if a.len() != b.len() {
-        return Err(super::CylindricalStorageFailure::CoefficientCount {
+        return Err(BoundedArithmeticFailure::CoefficientCount {
             left: a.len(),
             right: b.len(),
         });
@@ -72,13 +75,13 @@ fn common_degree(a: &[Interval], b: &[Interval]) -> Checked<()> {
     Ok(())
 }
 
-pub(super) fn magnitude(coefficients: &[Interval]) -> num_bigint::BigInt {
+pub(in crate::predicates::roots) fn magnitude(coefficients: &[Interval]) -> num_bigint::BigInt {
     coefficients.iter().fold(0.into(), |bound, coefficient| {
         bound.max(coefficient.magnitude())
     })
 }
 
-pub(super) fn lower(coefficients: &[Interval]) -> num_bigint::BigInt {
+pub(in crate::predicates::roots) fn lower(coefficients: &[Interval]) -> num_bigint::BigInt {
     coefficients
         .iter()
         .fold(coefficients[0].lower.clone(), |bound, coefficient| {

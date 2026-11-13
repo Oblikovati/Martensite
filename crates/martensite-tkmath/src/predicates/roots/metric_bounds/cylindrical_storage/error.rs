@@ -126,3 +126,29 @@ impl std::fmt::Display for CylindricalStorageError {
     }
 }
 impl std::error::Error for CylindricalStorageError {}
+
+impl
+    From<
+        crate::predicates::roots::certificate_arithmetic::bounded_failure::BoundedArithmeticFailure,
+    > for CylindricalStorageFailure
+{
+    fn from(
+        cause: crate::predicates::roots::certificate_arithmetic::bounded_failure::BoundedArithmeticFailure,
+    ) -> Self {
+        use crate::predicates::roots::certificate_arithmetic::bounded_failure::BoundedArithmeticFailure as Arithmetic;
+        match cause {
+            Arithmetic::NonFiniteScalar { value } => Self::Value {
+                depth: None,
+                field: "dyadic scalar",
+                index: 0,
+                value,
+            },
+            Arithmetic::WorkLimit { completed, limit } => Self::WorkLimit { completed, limit },
+            Arithmetic::Cancelled => Self::Cancelled,
+            Arithmetic::ArithmeticBits { actual, limit } => Self::ArithmeticBits { actual, limit },
+            Arithmetic::CoefficientCount { left, right } => Self::CoefficientCount { left, right },
+            Arithmetic::DenominatorUnresolved { lower } => Self::DenominatorUnresolved { lower },
+            Arithmetic::UnrepresentableBound { bound } => Self::UnrepresentableBound { bound },
+        }
+    }
+}

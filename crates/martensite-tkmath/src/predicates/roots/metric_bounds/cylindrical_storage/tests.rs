@@ -230,11 +230,15 @@ fn mismatched_polynomial_counts_cannot_silently_truncate_a_residual() {
     let b = vec![arithmetic.zero(); 2];
     let expected = CylindricalStorageFailure::CoefficientCount { left: 1, right: 2 };
     assert_eq!(
-        polynomial::sum(&a, &b, &mut arithmetic).unwrap_err(),
+        polynomial::sum(&a, &b, &mut arithmetic)
+            .map_err(CylindricalStorageFailure::from)
+            .unwrap_err(),
         expected
     );
     assert_eq!(
-        polynomial::difference(&a, &b, &mut arithmetic).unwrap_err(),
+        polynomial::difference(&a, &b, &mut arithmetic)
+            .map_err(CylindricalStorageFailure::from)
+            .unwrap_err(),
         expected
     );
 }
