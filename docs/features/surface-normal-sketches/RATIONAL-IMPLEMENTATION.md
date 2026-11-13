@@ -97,12 +97,42 @@ no function over 20 code lines and no nesting above two. These are approximate
 brace-based measurements. The rational code contains no unsafe blocks or
 suppression of dead-code warnings.
 
+## P2 storage checkpoint
+
+The [storage certificate](STORAGE-CERTIFICATES.md) now proves bounds from the
+decoded homogeneous coefficients, including positive retained weights, radial
+distance, scaled radial rulings, depth-invariant height and the combined distance
+from the normalized first-curve radial sweep. The private pipeline checks native
+control-net correspondence before applying those bounds. It still returns an
+`Unqualified` result.
+
+The current 32-piece fixture has certified radial, ruling, height and combined
+sweep bounds below `1e-10`, within its downward-rounded epsilon/1000 allowance.
+Its standalone debug run, including these certificates and the native checks,
+took 4.08 seconds with peak RSS 56,256 KiB. This remains within the five-second
+P1 target on the same compiler and platform. P5 scale measurements remain open.
+
+`cargo test -p martensite-tkmath -p martensite-tksketch --quiet` passed 409 TKMath
+library tests, 3,114 TKMath integration tests, 56 TKMath doctests, 15 sketch library
+tests and 32 sketch integration tests. A subsequent focused test confirmed that
+explicit 4096-bit precision resolves a subnormal denominator that the default
+precision refuses. A 410-test library run and the final 26 storage controls also
+passed, including retention of an exact endpoint that cannot fit finite
+binary64. Five native storage-binding controls passed. Clippy for both packages
+and all targets passed with warnings denied. No third-party dependency or package
+version changed.
+
+The full `cargo xtask pr` gate recorded above belongs to the P1 checkpoint. The
+storage changes have the package checks recorded here; the complete PR gate must
+run again before pushing the feature.
+
 ## Remaining gates
 
-P2 must certify angular position/derivatives, stored radial and ruling residuals,
-weight positivity, endpoint behavior and demotion, with bounded dyadic arithmetic
-and closed-form oracles. It must replace fixture-selected sizing with a priori
-canonical sizing and return typed incomplete results on exhausted work.
+P2 must finish authored angular/height position and derivative bounds, endpoint
+behavior and demotion evidence. It must replace fixture-selected sizing with a
+priori canonical sizing. Requested radius/depth rounding and actual trim domains
+also need evidence before publication. The implemented storage certificate does
+not satisfy these remaining obligations.
 
 P3 must establish planar admission, clearance, regularity and the topology-
 preserving homotopy. P4 must bind those proofs to the frozen coefficients,

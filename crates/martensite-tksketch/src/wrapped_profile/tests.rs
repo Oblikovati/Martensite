@@ -33,7 +33,7 @@ const HOLE: &[&[[f64; 2]]] = &[
     &[[1., 0.5], [0.5, 0.5]],
 ];
 
-fn request() -> Request {
+pub(super) fn request() -> Request {
     Request {
         region: SurfaceRegionId(5),
         loops: vec![contour(10, OUTER), contour(20, HOLE)],
@@ -59,6 +59,24 @@ fn rational_loop_with_hole_freezes_measures_and_exports_without_publication() {
     // Green's integral gives authored area 3.775 - 0.25 = 3.525.
     assert!((result.volume_estimate - 11.10375).abs() < 1e-5);
     assert_roundtrip(&result);
+    assert_storage(&result);
+}
+
+fn assert_storage(result: &pipeline::Unqualified) {
+    assert_eq!(result.storage.len(), 32);
+    for stored in &result.storage {
+        assert_eq!(stored.span.level, 2);
+        let report = &stored.certificate;
+        assert!(
+            report
+                .radial_distance_bounds()
+                .iter()
+                .all(|bound| *bound < 1e-10)
+        );
+        assert!(report.scaled_ruling_bound() < 1e-10);
+        assert!(report.height_difference_bound() < 1e-10);
+        assert!(report.normal_sweep_error_bound() < 1e-10);
+    }
 }
 
 fn assert_roundtrip(result: &pipeline::Unqualified) {
@@ -176,6 +194,6 @@ fn admission_refuses_open_joins_duplicate_ids_and_unbounded_charts() {
             (error.region, error.stage),
             (request.region, Stage::Admission)
         );
-        assert!(!error.cause.message().is_empty());
+        assert!(!error.cause.to_string().is_empty());
     }
 }

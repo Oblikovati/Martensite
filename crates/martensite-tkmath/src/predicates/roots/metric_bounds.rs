@@ -18,10 +18,16 @@ pub use mapped::{
 };
 pub use parameter::MetricParameterMap;
 mod coefficients;
+mod cylindrical_storage;
 mod inequality;
 mod proof;
 mod types;
 use super::{DyadicBound, error::poll};
+pub use cylindrical_storage::{
+    CertifiedCylindricalStorage, CylindricalStorageError, CylindricalStorageFailure,
+    CylindricalStorageLimits, CylindricalStorageOptions, CylindricalStorageQuery,
+    CylindricalStorageResidual, certify_cylindrical_storage,
+};
 use num_bigint::BigInt;
 pub use types::*;
 

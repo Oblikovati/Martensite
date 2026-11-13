@@ -15,13 +15,14 @@ pub(super) struct Unqualified {
     pub report: ValidationReport,
     pub volume_estimate: f64,
     pub integration_estimate: f64,
+    pub storage: Vec<storage::StoredProof>,
 }
 
 fn at<T>(region: SurfaceRegionId, stage: Stage, result: Result<T, Failure>) -> Result<T, Refusal> {
     result.map_err(|cause| Refusal {
         stage,
         region,
-        cause: Box::new(cause),
+        cause: RefusalCause::Native(Box::new(cause)),
     })
 }
 
@@ -32,14 +33,27 @@ pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
     let constructed = at(region, Stage::Construction, native::construct(&prepared))?;
     let bytes = at(region, Stage::Freeze, freeze(&constructed))?;
     let keys: Vec<_> = constructed.bindings.iter().map(|(key, _)| *key).collect();
-    let (decoded, _) = at(region, Stage::Freeze, decode(&bytes, &keys))?;
+    let (decoded, bindings) = at(region, Stage::Freeze, decode(&bytes, &keys))?;
+    let storage = storage_stage(region, &prepared, &bindings)?;
     let report = at(
         region,
         Stage::Validation,
         ordered_checks(&decoded, request.tolerance),
     )?;
     let measure = at(region, Stage::Measure, estimate(&decoded))?;
-    Ok(unqualified(bytes, keys, report, measure))
+    Ok(unqualified(bytes, keys, report, measure, storage))
+}
+
+fn storage_stage(
+    region: SurfaceRegionId,
+    request: &Request,
+    bindings: &[(BindingKey, Shape)],
+) -> Result<Vec<storage::StoredProof>, Refusal> {
+    storage::certify(request, bindings).map_err(|cause| Refusal {
+        stage: Stage::Storage,
+        region,
+        cause: RefusalCause::Storage(Box::new(cause)),
+    })
 }
 
 fn unqualified(
@@ -47,6 +61,7 @@ fn unqualified(
     keys: Vec<BindingKey>,
     report: ValidationReport,
     measure: (f64, f64),
+    storage: Vec<storage::StoredProof>,
 ) -> Unqualified {
     Unqualified {
         bytes,
@@ -54,6 +69,7 @@ fn unqualified(
         report,
         volume_estimate: measure.0,
         integration_estimate: measure.1,
+        storage,
     }
 }
 

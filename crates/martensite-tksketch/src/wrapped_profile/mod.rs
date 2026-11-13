@@ -3,6 +3,7 @@ mod angular;
 mod boundaries;
 mod native;
 mod pipeline;
+mod storage;
 mod subdivision;
 mod tests;
 
@@ -44,6 +45,7 @@ enum Stage {
     Admission,
     Construction,
     Freeze,
+    Storage,
     Validation,
     Measure,
 }
@@ -52,7 +54,21 @@ enum Stage {
 struct Refusal {
     stage: Stage,
     region: SurfaceRegionId,
-    cause: Box<Failure>,
+    cause: RefusalCause,
+}
+
+#[derive(Debug)]
+enum RefusalCause {
+    Native(Box<Failure>),
+    Storage(Box<storage::StorageFailure>),
+}
+impl std::fmt::Display for RefusalCause {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Native(cause) => write!(formatter, "{cause}"),
+            Self::Storage(cause) => write!(formatter, "{cause}"),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]

@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added `certify_cylindrical_storage` for conservative error bounds on stored cylindrical curves and their linear depth interpolation, with retained coefficient bits and explicit precision and work limits (#418).
+
 - Added strict owned text capture with exact font-content bindings, caller occurrence IDs, raw glyph outlines and frozen text-builder plans. Added source-bound control-character diagnostics and an affected-package ThreadSanitizer stress control. (#425)
 
 - Added conical-sector sketches with signed normal extrusion, seam-crossing regions, validated conical carriers and preserved source history. (#417)
