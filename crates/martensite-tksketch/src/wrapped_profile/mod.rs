@@ -4,6 +4,7 @@ mod boundaries;
 mod native;
 mod pipeline;
 mod planar;
+mod planar_cones;
 mod storage;
 mod subdivision;
 mod tests;
@@ -50,6 +51,7 @@ enum Stage {
     Construction,
     Freeze,
     Storage,
+    Cones,
     Validation,
     Measure,
 }
@@ -67,6 +69,7 @@ enum RefusalCause {
     Storage(Box<storage::StorageFailure>),
     Planning(Box<subdivision::PlanningFailure>),
     Planar(Box<planar::PlanarFailure>),
+    Cones(Box<planar_cones::ConeFailure>),
 }
 impl std::fmt::Display for RefusalCause {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -75,6 +78,7 @@ impl std::fmt::Display for RefusalCause {
             Self::Storage(cause) => write!(formatter, "{cause}"),
             Self::Planning(cause) => write!(formatter, "{cause}"),
             Self::Planar(cause) => write!(formatter, "{cause}"),
+            Self::Cones(cause) => write!(formatter, "{cause}"),
         }
     }
 }

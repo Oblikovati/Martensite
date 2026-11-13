@@ -63,6 +63,7 @@ fn rational_loop_with_hole_freezes_measures_and_exports_without_publication() {
     assert!((result.volume_estimate - 11.10375).abs() < 1e-5);
     assert_roundtrip(&result);
     assert_storage(&result);
+    assert_cones(&result);
 }
 
 fn assert_storage(result: &pipeline::Unqualified) {
@@ -215,5 +216,24 @@ fn admission_refuses_open_joins_duplicate_ids_and_unbounded_charts() {
             (request.region, Stage::Admission)
         );
         assert!(!error.cause.to_string().is_empty());
+    }
+}
+
+fn assert_cones(result: &pipeline::Unqualified) {
+    use std::cmp::Ordering;
+    assert_eq!(result.cones.pieces.len(), 19);
+    assert_eq!(result.cones.joins.len(), 19);
+    for proof in result.cones.pieces.iter().chain(&result.cones.joins) {
+        assert_eq!(
+            proof.spans.len(),
+            proof.certificate.directional_margin_bounds().len()
+        );
+        assert!(
+            proof
+                .certificate
+                .directional_margin_bounds()
+                .iter()
+                .all(|margin| margin.compare_f64(0.).unwrap() == Ordering::Greater)
+        );
     }
 }

@@ -141,8 +141,9 @@ The private pipeline now reuses the established planar region builder before
 fitting. It matches complete directed authored boundaries to one material face,
 with exact-sign exclusions for stationary endpoints and tangent returns. The
 [planar qualification note](PLANAR-QUALIFICATION.md) records the implementation,
-controls and proposed moving-endpoint homotopy. Quantitative clearance and
-regularity margins remain open.
+controls and moving-endpoint homotopy. Strict derivative-cone margins now pass
+for every prepared piece and adjacent pair, bound to their retained O2 sources.
+Nonadjacent clearance and periodic chart admission remain open.
 
 ## Remaining gates
 

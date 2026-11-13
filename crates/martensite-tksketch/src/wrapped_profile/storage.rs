@@ -191,7 +191,7 @@ fn storage_share(tolerance: f64) -> f64 {
     nearest.next_down()
 }
 
-fn authored_index(
+pub(super) fn authored_index(
     request: &Request,
 ) -> Result<BTreeMap<SurfaceCurveId, &[[f64; 2]]>, StorageFailure> {
     let mut result = BTreeMap::new();

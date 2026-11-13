@@ -1,8 +1,9 @@
 # Planar qualification of wrapped profiles (#418)
 
-Status, 2026-11-14: authored material capture is integrated into the private
-pipeline. Quantitative clearance, derivative margins and deformation topology
-remain open. The operation still returns `Unqualified`.
+Status, 2026-11-14: authored material capture and local derivative-cone
+certificates are integrated into the private pipeline. Nonadjacent clearance,
+periodic chart admission and complete deformation topology remain open. The
+operation still returns `Unqualified`.
 
 ## Implemented material capture
 
@@ -78,12 +79,17 @@ without sufficient margins or exhausted work must refuse.
 
 ## Candidate directions and verification
 
-Reuse the adaptive-axis hull-separation approach in
-`bezier_pair/hull_separation.rs`. Generalize its coefficient-count handling in
-a separate structural change if needed. Cartesian axes are cheap first
-candidates. Edge normals of the derivative hull can establish a strict cone
-when a fixed Cartesian direction fails. Every candidate requires an outward
-projection proof; choosing an axis is not acceptance evidence.
+The cone certificate reuses hull-normal generation from
+`bezier_pair/hull_separation.rs`, generalized to variable control counts in
+structural commit `dd63ce9c`. Shared Bernstein capture, dyadic restriction and
+derivatives were extracted in the same commit. All 437 math library tests,
+strict clippy and the native loop-with-hole control passed after that refactor.
+The native control took 3.29 seconds.
+
+Cartesian axes are tried before generating hull directions. If they fail,
+normalized directions from the derivative control hull supply candidates.
+Every candidate requires an outward projection proof; choosing an axis is not
+acceptance evidence.
 
 For clearance, a projection gap at least `delta * ||n||_1` implies Euclidean
 separation of at least `delta`. Use certified expanded AABBs for broad-phase
@@ -103,6 +109,45 @@ Required controls for the remaining implementation include narrow gaps,
 interior stationary points, tangencies, exhausted refinement, periodic images,
 shared endpoint motion, and rejection of mismatched O2 source intervals.
 
+## Implemented local cone certificate
+
+`certify_cylindrical_cone` admits one piece or two consecutive pieces. Every
+source must match the original polynomial, exact interval, support radius and
+angular origin retained by its O2 certificate. Paired sources must declare the
+same radius/origin chart. The report retains the O2 source bits and the
+physical developed derivative-error bound used in the calculation.
+
+For each original restricted derivative control `d`, the certificate computes
+an outward lower bound on `n dot d - ||n||_infinity * eta`. All source bounds
+must be strictly positive. Each reported margin is an exact dyadic lower bound;
+no binary64 conversion can round a small positive margin to zero. The chosen
+finite direction, requested arithmetic settings, interval-operation count and
+number of attempted directions accompany the report. Exhaustion or an
+unresolved cone refuses without changing geometric subdivisions or span IDs.
+
+One positive cone excludes a self-contact within its piece throughout the
+straight homotopy. A common cone for two pieces excludes a second adjacent
+contact when they share one endpoint in the same developed chart. Native shared
+vertex identity and pole agreement were established earlier. Their original
+authored endpoints also agree, so O2's unique nearby angular lifts select the
+same endpoint branch. These local facts still require the nonadjacent-clearance
+proof before they establish topology for the complete profile.
+
+The private pipeline checks one cone for each prepared span and one for each
+adjacent pair, using maps keyed by authored curve and canonical interval. The
+19-piece fixture passes all 19 regularity cones and 19 adjacent-pair cones.
+Missing proofs, relabelled intervals and changed authored coefficients refuse.
+The cone code neither recaptures mutable native objects nor repeats the O2
+trigonometric calculation.
+
+Closed-form controls cover unit generator margins, subtraction of a `1/8`
+height derivative error, local interval scaling, consecutive generators,
+opposite branches and an interior stationary point. An oblique quadratic
+control has zero margin on both Cartesian axes but a positive margin along
+`(1,1)` after subtracting its retained O2 error. Source/chart mismatch,
+precision/work limits, cancellation and thread-safe report types have controls.
+The complete profile and body remain unqualified.
+
 ## Current evidence
 
 The package run passed 30 sketch library tests and 32 integration tests. Ten
@@ -118,3 +163,18 @@ above two.
 The isolated debug mixed loop-with-hole operation, now including planar
 capture, took 3.43 seconds and peak RSS 51,100 KiB. The five-second walking-
 skeleton limit is unchanged. Scale and oblique-frame measurements remain P5.
+
+## Local cone verification checkpoint
+
+The joint package run passed 3,114 math integration tests, 56 math doctests,
+34 sketch library tests and 32 sketch integration tests. The final math library run passed all 449 tests, including twelve cone
+controls and the two-source cap before candidate generation. Strict all-target
+clippy passed. All 19 piece cones and 19 adjacent-pair cones in the native
+fixture have positive exact dyadic margins. Three native composition controls
+refuse missing O2 evidence, relabelled intervals and changed authored poles.
+
+The isolated debug fixture with local cone certification took 3.45 seconds
+and peak RSS 51,028 KiB. This remains inside the five-second walking-skeleton
+limit. The approximate metrics check found no cone or wrapped-profile source
+file over 500 lines, function over 20 code lines or nesting above two. The full
+PR gate must still run before pushing; these package checks do not replace it.

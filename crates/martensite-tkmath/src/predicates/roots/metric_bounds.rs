@@ -18,6 +18,12 @@ pub use mapped::{
 };
 pub use parameter::MetricParameterMap;
 mod coefficients;
+mod cylindrical_cone;
+pub use cylindrical_cone::{
+    CertifiedCylindricalCone, CylindricalConeBehavior, CylindricalConeError,
+    CylindricalConeFailure, CylindricalConeOptions, CylindricalConeQuery, CylindricalConeSource,
+    certify_cylindrical_cone,
+};
 mod cylindrical_depths;
 pub use cylindrical_depths::{
     CertifiedCylindricalDepths, CylindricalDepthFailure, certify_cylindrical_depths,

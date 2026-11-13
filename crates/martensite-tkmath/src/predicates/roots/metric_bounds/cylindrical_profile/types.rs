@@ -128,6 +128,33 @@ impl CertifiedCylindricalProfile {
     pub fn matches_source(&self, query: CylindricalProfileQuery<'_>) -> bool {
         super::admission::admit(&query).is_ok() && self.source_bits == source_bits(query)
     }
+    pub(in crate::predicates::roots::metric_bounds) fn matches_authored(
+        &self,
+        authored: &[[f64; 2]],
+        interval: CylindricalProfileInterval,
+        radius: f64,
+        origin: f64,
+    ) -> bool {
+        // Cone composition reuses O2 without recapturing mutable native objects.
+        let bits = &self.source_bits;
+        let actual = [bits[0], bits[1], bits[2], bits[4], bits[5]];
+        let expected = [
+            interval.index(),
+            interval.level().into(),
+            radius.to_bits(),
+            origin.to_bits(),
+            authored.len() as u64,
+        ];
+        actual == expected
+            && bits[7..]
+                .iter()
+                .take(authored.len() * 2)
+                .copied()
+                .eq(authored.iter().flatten().map(|v| v.to_bits()))
+    }
+    pub(in crate::predicates::roots::metric_bounds) fn same_source(&self, other: &Self) -> bool {
+        self.source_bits == other.source_bits
+    }
     pub(super) fn assemble(
         query: CylindricalProfileQuery<'_>,
         bounds: [f64; 6],

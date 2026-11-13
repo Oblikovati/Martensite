@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added strict cylindrical profile tangent-cone certificates tied to retained position/derivative proofs, with exact positive margins and explicit work limits (#418).
+
 - Added exact radius/depth rounding bounds composed with cylindrical storage certificates under one requested error allowance (#418).
 
 - Added certified cylindrical profile position and derivative bounds against original authored polynomials, plus a priori dyadic Hermite fit planning with explicit resource limits (#418).

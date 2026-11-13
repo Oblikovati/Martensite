@@ -17,6 +17,7 @@ pub(super) struct Unqualified {
     pub integration_estimate: f64,
     pub storage: Vec<storage::StoredProof>,
     pub planar: planar::PlanarEvidence,
+    pub cones: planar_cones::ConeEvidence,
 }
 
 fn at<T>(region: SurfaceRegionId, stage: Stage, result: Result<T, Failure>) -> Result<T, Refusal> {
@@ -37,13 +38,36 @@ pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
     let keys: Vec<_> = constructed.bindings.iter().map(|(key, _)| *key).collect();
     let (decoded, bindings) = at(region, Stage::Freeze, decode(&bytes, &keys))?;
     let storage = storage_stage(region, request, &prepared, &bindings)?;
+    let cones = cone_stage(request, &prepared, &storage)?;
+    let (report, measure) = checked_measure(request, &decoded)?;
+    Ok(unqualified(
+        bytes, keys, report, measure, storage, planar, cones,
+    ))
+}
+
+fn checked_measure(
+    request: &Request,
+    shape: &Shape,
+) -> Result<(ValidationReport, (f64, f64)), Refusal> {
     let report = at(
-        region,
+        request.region,
         Stage::Validation,
-        ordered_checks(&decoded, request.tolerance),
+        ordered_checks(shape, request.tolerance),
     )?;
-    let measure = at(region, Stage::Measure, estimate(&decoded))?;
-    Ok(unqualified(bytes, keys, report, measure, storage, planar))
+    let measure = at(request.region, Stage::Measure, estimate(shape))?;
+    Ok((report, measure))
+}
+
+fn cone_stage(
+    original: &Request,
+    prepared: &Request,
+    stored: &[storage::StoredProof],
+) -> Result<planar_cones::ConeEvidence, Refusal> {
+    planar_cones::certify(original, prepared, stored).map_err(|cause| Refusal {
+        stage: Stage::Cones,
+        region: original.region,
+        cause: RefusalCause::Cones(Box::new(cause)),
+    })
 }
 
 fn planar_stage(request: &Request) -> Result<planar::PlanarEvidence, Refusal> {
@@ -82,6 +106,7 @@ fn unqualified(
     measure: (f64, f64),
     storage: Vec<storage::StoredProof>,
     planar: planar::PlanarEvidence,
+    cones: planar_cones::ConeEvidence,
 ) -> Unqualified {
     Unqualified {
         bytes,
@@ -91,6 +116,7 @@ fn unqualified(
         integration_estimate: measure.1,
         storage,
         planar,
+        cones,
     }
 }
 
