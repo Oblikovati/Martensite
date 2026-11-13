@@ -3,6 +3,7 @@ mod angular;
 mod boundaries;
 mod native;
 mod pipeline;
+mod planar;
 mod storage;
 mod subdivision;
 mod tests;
@@ -44,6 +45,7 @@ struct Constructed {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Stage {
     Admission,
+    Planar,
     Planning,
     Construction,
     Freeze,
@@ -64,6 +66,7 @@ enum RefusalCause {
     Native(Box<Failure>),
     Storage(Box<storage::StorageFailure>),
     Planning(Box<subdivision::PlanningFailure>),
+    Planar(Box<planar::PlanarFailure>),
 }
 impl std::fmt::Display for RefusalCause {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -71,6 +74,7 @@ impl std::fmt::Display for RefusalCause {
             Self::Native(cause) => write!(formatter, "{cause}"),
             Self::Storage(cause) => write!(formatter, "{cause}"),
             Self::Planning(cause) => write!(formatter, "{cause}"),
+            Self::Planar(cause) => write!(formatter, "{cause}"),
         }
     }
 }

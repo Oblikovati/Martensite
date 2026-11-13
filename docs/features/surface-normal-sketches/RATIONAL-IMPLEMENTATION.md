@@ -135,6 +135,15 @@ fourth-derivative sizing chooses the geometric subdivision before construction.
 The private fixture uses 19 pieces and 117 semantic bindings; its native loop,
 hole, boss and pocket controls pass within the unchanged error allowances.
 
+## P3 authored-material checkpoint
+
+The private pipeline now reuses the established planar region builder before
+fitting. It matches complete directed authored boundaries to one material face,
+with exact-sign exclusions for stationary endpoints and tangent returns. The
+[planar qualification note](PLANAR-QUALIFICATION.md) records the implementation,
+controls and proposed moving-endpoint homotopy. Quantitative clearance and
+regularity margins remain open.
+
 ## Remaining gates
 
 Radius/depth rounding now composes with the existing storage bound under one

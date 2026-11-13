@@ -16,6 +16,7 @@ pub(super) struct Unqualified {
     pub volume_estimate: f64,
     pub integration_estimate: f64,
     pub storage: Vec<storage::StoredProof>,
+    pub planar: planar::PlanarEvidence,
 }
 
 fn at<T>(region: SurfaceRegionId, stage: Stage, result: Result<T, Failure>) -> Result<T, Refusal> {
@@ -29,6 +30,7 @@ fn at<T>(region: SurfaceRegionId, stage: Stage, result: Result<T, Failure>) -> R
 pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
     let region = request.region;
     at(region, Stage::Admission, admit(request))?;
+    let planar = planar_stage(request)?;
     let prepared = planning_stage(request)?;
     let constructed = at(region, Stage::Construction, native::construct(&prepared))?;
     let bytes = at(region, Stage::Freeze, freeze(&constructed))?;
@@ -41,7 +43,15 @@ pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
         ordered_checks(&decoded, request.tolerance),
     )?;
     let measure = at(region, Stage::Measure, estimate(&decoded))?;
-    Ok(unqualified(bytes, keys, report, measure, storage))
+    Ok(unqualified(bytes, keys, report, measure, storage, planar))
+}
+
+fn planar_stage(request: &Request) -> Result<planar::PlanarEvidence, Refusal> {
+    planar::certify(request).map_err(|cause| Refusal {
+        stage: Stage::Planar,
+        region: request.region,
+        cause: RefusalCause::Planar(Box::new(cause)),
+    })
 }
 
 fn planning_stage(request: &Request) -> Result<Request, Refusal> {
@@ -71,6 +81,7 @@ fn unqualified(
     report: ValidationReport,
     measure: (f64, f64),
     storage: Vec<storage::StoredProof>,
+    planar: planar::PlanarEvidence,
 ) -> Unqualified {
     Unqualified {
         bytes,
@@ -79,6 +90,7 @@ fn unqualified(
         volume_estimate: measure.0,
         integration_estimate: measure.1,
         storage,
+        planar,
     }
 }
 
@@ -109,7 +121,7 @@ pub(super) fn decode(
     .map_err(|e| Failure::new(&format!("decode failed: {e:?}")))
 }
 
-fn resolution(tolerance: f64) -> Resolution {
+pub(super) fn resolution(tolerance: f64) -> Resolution {
     Resolution::new(
         tolerance,
         1e-7,

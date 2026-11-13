@@ -2,7 +2,7 @@
 use super::*;
 use martensite_tkbo::body_check::{CheckMode, ValidationStage};
 
-fn contour(first: u64, poles: &[&[[f64; 2]]]) -> Vec<AuthoredPiece> {
+pub(super) fn contour(first: u64, poles: &[&[[f64; 2]]]) -> Vec<AuthoredPiece> {
     let count = poles.len() as u64;
     poles
         .iter()
@@ -49,6 +49,8 @@ pub(super) fn request() -> Request {
 fn rational_loop_with_hole_freezes_measures_and_exports_without_publication() {
     let result = pipeline::wrap_extrude(&request()).unwrap();
     assert_eq!(result.keys.len(), 117);
+    assert!(result.planar.area.encloses(3.525));
+    assert_eq!(result.planar.certificate.components, 2);
     assert_eq!(
         result.report.stage(ValidationStage::Geometry).mode,
         CheckMode::Sampled
