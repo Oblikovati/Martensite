@@ -34,14 +34,37 @@ pub(super) fn curve_integral(
         return Ok(exact_curve(exact));
     }
     let squared = product(&weight, &weight, cancelled)?;
+    quotient_integral(numerator, squared, options, width_share, cancelled)
+}
+
+/// Integrate one half of a positive-denominator rational quotient on the full unit interval.
+pub(super) fn quotient_integral(
+    numerator: Vec<BigInt>,
+    denominator: Vec<BigInt>,
+    options: RationalIntegralOptions,
+    width_share: &ExactRatio,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<CurveIntegral, RationalIntegralFailure> {
+    if denominator.is_empty() {
+        return Err(RationalIntegralFailure::DenominatorSign { start: 0., end: 1. });
+    }
+    let denominator = trimmed(&denominator);
+    if denominator.len() == 1 {
+        if denominator[0].sign() != Sign::Plus {
+            return Err(RationalIntegralFailure::DenominatorSign { start: 0., end: 1. });
+        }
+        let exact = integrate_unit(&numerator, BigInt::from(2) * &denominator[0], cancelled)?;
+        return Ok(exact_curve(exact));
+    }
     let bisection = Bisection {
         numerator,
-        denominator: squared,
+        denominator,
         width_share,
         limit: options.max_subintervals,
     };
     bisection.integrate(cancelled)
 }
+
 fn exact_curve(value: ExactRatio) -> CurveIntegral {
     CurveIntegral {
         bounds: ContributionBounds {

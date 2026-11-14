@@ -25,7 +25,9 @@ pub(super) fn admit_boundary(
     }
     Ok(())
 }
-fn admit_options(options: RationalIntegralOptions) -> Result<(), RationalIntegralFailure> {
+pub(super) fn admit_options(
+    options: RationalIntegralOptions,
+) -> Result<(), RationalIntegralFailure> {
     if options.behavior_version != 1
         || options.max_degree > 16
         || options.max_curves == 0
@@ -99,11 +101,36 @@ impl BoundsSum {
         }
     }
 }
+#[derive(Clone, Debug)]
+pub(super) struct RoundedScalar {
+    pub enclosure: [f64; 2],
+    pub representative: f64,
+    pub absolute_error_bound: f64,
+    pub evidence: RationalIntegralEvidence,
+    pub subintervals: u64,
+}
+
 pub(super) fn rounded_measure(
     sum: BoundsSum,
     options: RationalIntegralOptions,
     operation: PolynomialIntegralOperation,
 ) -> Result<CertifiedRationalMeasure, RationalIntegralFailure> {
+    let scalar = rounded_scalar(sum, options)?;
+    Ok(CertifiedRationalMeasure {
+        enclosure: scalar.enclosure,
+        representative: scalar.representative,
+        absolute_error_bound: scalar.absolute_error_bound,
+        options,
+        operation,
+        evidence: scalar.evidence,
+        subintervals: scalar.subintervals,
+    })
+}
+
+pub(super) fn rounded_scalar(
+    sum: BoundsSum,
+    options: RationalIntegralOptions,
+) -> Result<RoundedScalar, RationalIntegralFailure> {
     let ContributionBounds { lower, upper } = &sum.bounds;
     let middle = lower.add(upper).multiply(&ExactRatio::from_finite(0.5));
     let representative = finite_enclosure(&middle)?[0];
@@ -118,12 +145,10 @@ pub(super) fn rounded_measure(
             achieved: absolute_error_bound,
         });
     }
-    Ok(CertifiedRationalMeasure {
+    Ok(RoundedScalar {
         enclosure: [finite_enclosure(lower)?[0], finite_enclosure(upper)?[1]],
         representative,
         absolute_error_bound,
-        options,
-        operation,
         evidence: evidence(sum.subintervals),
         subintervals: sum.subintervals,
     })
