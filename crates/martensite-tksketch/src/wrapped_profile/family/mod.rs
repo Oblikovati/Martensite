@@ -13,7 +13,7 @@ mod isolation_tests;
 #[cfg(test)]
 mod replay_tests;
 #[cfg(test)]
-mod tests;
+pub(super) mod tests;
 type Checked<T> = Result<T, FamilyFailure>;
 pub(super) struct UnqualifiedFamily {
     pub bytes: Vec<u8>,

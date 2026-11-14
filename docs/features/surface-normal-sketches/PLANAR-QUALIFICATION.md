@@ -5,8 +5,9 @@ nonadjacent developed-plane clearance are integrated into the private pipeline.
 A certified true-period slab now covers every nonzero image for narrow
 selections, and multiple-chart fitting supports long curves and parameter-seam
 crossings. Complete boundary-image relations now cover connected multi-turn
-profiles. Disconnected material classification and publication remain open. The
-operation still returns `Unqualified`.
+profiles. Later checkpoints add [disconnected material](PERIODIC-MATERIAL.md)
+and [frozen families](FROZEN-FAMILIES.md). Publication remains open; the family
+operation still returns `UnqualifiedFamily`.
 
 ## Implemented material capture
 
@@ -27,7 +28,8 @@ must match; an outside loop cannot silently become a hole.
 
 The prototype request supplies directed outer and hole contours. This is an
 internal representation, not a new restriction on the existing public sketch
-APIs. General selection and disconnected material still belong to P4.
+APIs. The later [global selection checkpoint](PLANAR-SELECTION.md) and
+[periodic material check](PERIODIC-MATERIAL.md) cover disconnected selections.
 
 The reused planar builder can certify a valid region with a tangent return.
 That result does not establish the positive join margin needed for the wrapped

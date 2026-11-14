@@ -25,8 +25,8 @@ retained flux, ideal normal measure and their final comparison now receive the
 same callback. Planar capture, native construction, encoding, coverage, native
 trim inspection, ordered native validation and native quadrature cannot yet be
 interrupted throughout their work. Cancellation is observed when their enclosing
-stage returns; no latency bound is claimed. Further propagation remains work
-before publication. No work budget, tolerance or geometric check was relaxed.
+stage returns; no latency bound is claimed. Finer native interruption is not
+part of that cooperative contract. No work budget, tolerance or geometric check was relaxed.
 
 ## Isolation evidence
 
@@ -152,3 +152,18 @@ broader stress qualification, the final publication contract, general conical
 profiles, additional curve classes, glyph scale, oblique frames and replacement
 deletion remain open. The result is still `UnqualifiedFamily`; no public API,
 dependency, package version or release tag changed.
+
+## Native boundary contract
+
+Inspection of `same_parameter_shape`, `validate_body` and
+`volume_properties_gk` found no cancellation parameter in their existing APIs.
+The current operation checks cancellation before and after those stages, latches
+it when observed and refuses handoff. A native call may finish before that
+observation. The approved plan requires cancellation isolation and refusal of
+partial results; it specifies no response deadline. This cooperative contract
+is retained. Adding finer native interruption is a separate enhancement, rather
+than an extra publication requirement inferred by this implementation.
+
+The later [publication-budget gate](PUBLICATION-BUDGET.md) checks the family
+spatial allowances, ordered native passes and aggregate volume allowance.
+Successful budget evidence still does not authorize body publication.

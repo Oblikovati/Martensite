@@ -85,8 +85,10 @@ aggregate exhaustion. Native controls reject changed retained pcurve ranges,
 missing source proofs and reordered semantic span receipts.
 
 The numerical O6 comparison is now available for the current private cylindrical
-pipeline. The result remains `Unqualified`: frozen disconnected families,
-full history, isolation, replay/concurrency and publication checks remain open.
+pipeline. Later checkpoints add [frozen disconnected families](FROZEN-FAMILIES.md),
+[history](AUTHORED-HISTORY.md), [isolation](FAMILY-CANCELLATION.md),
+[replay controls](FAMILY-REPLAY.md) and a [family budget](PUBLICATION-BUDGET.md).
+The result remains unqualified; final publication is still open.
 General cones and authored curve classes, glyph scale, oblique frames and
 replacement deletion gates also remain open. No dependency, public primitive API,
 version or release tag changed.
