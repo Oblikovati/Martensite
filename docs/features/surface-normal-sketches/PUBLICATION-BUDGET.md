@@ -105,3 +105,50 @@ required before a push.
 `BudgetedFamily` is a private pre-publication state. It is not an accepted-body
 API and does not waive sanitizer qualification or any remaining geometric and
 application gates. No package version, dependency or release tag changed.
+
+## Cone provenance at the budget boundary
+
+The budget check binds each regularity certificate and each directed adjacent
+join certificate to its retained O2 sources. It verifies authored polynomial
+bits, source intervals, chart, retained homogeneous coefficients and derivative
+error bounds through the certificate's source matcher. Reports are indexed by
+authored span keys. Report order and a rotated loop start carry no identity.
+Missing, duplicate, relabelled or foreign certificates refuse with the region
+owner and the cone failure. The check reads retained evidence without native
+recapture or geometric recertification.
+
+Five binding controls cover reordered reports and loop starts, foreign span and
+join certificates, duplicate and reversed keys, changed authored coefficients
+and missing reports. A sixth control exercises the budget entry point with an
+unchanged report census and a foreign certificate.
+
+The affected sketch package passed 171 library and 32 integration tests on Linux
+x86_64, taking 39.64 and 2.65 seconds excluding compilation. Its ignored worker
+was explicitly invoked by the process-replay parent. Strict all-target clippy
+passed. After helper extraction, all ten cone tests passed again. Formatting
+and whitespace checks passed. The affected-package PR gate remains required
+before a push.
+
+## Cap-trace accounting still needs publication qualification
+
+The forward family replay reports these certified upper bounds at epsilon
+`1e-5`:
+
+| Region | Profile displacement | Normal-storage discrepancy | Cap-trace residual |
+| --- | ---: | ---: | ---: |
+| 5 | `5.189805592157191e-7` | `7.0667041093387305e-15` | `6.227766385274778e-7` |
+| 100 | `1.0293297251086026e-8` | `4.66301573741315e-15` | `1.235195619910975e-8` |
+
+Both members retain a trace tolerance of `5e-6`. These are bounds from different
+certificates, not measured errors or interchangeable budget shares. The native
+cap pcurves retain the authored polynomial angle, whereas the rational space
+edges use the fitted half-angle representation. Their discrepancy includes
+approximation; it cannot be described as binary64 storage rounding. The ADR's
+epsilon/1000 allocation applies to storage rounding. The larger trace residual
+requires an explicit argument about the native trimmed-cap realization and its
+relationship to the ideal extruded profile before publication. The current
+separate epsilon/2 trace check alone does not supply that argument.
+
+Reproduce the receipt with the existing process-replay worker using
+`MARTENSITE_RATIONAL_FAMILY_REPLAY=forward cargo test -p martensite-tksketch --lib surface_sketch::wrapped_profile::family::replay_tests::family_replay_worker -- --exact --ignored --nocapture`.
+This checkpoint changes no geometry, tolerance allocation or public API.

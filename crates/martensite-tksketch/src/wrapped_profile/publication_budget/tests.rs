@@ -149,3 +149,17 @@ fn upward_sums_enclose_half_ulp_loss_and_subnormal_addition() {
     assert!(volume::add_upper(tiny, tiny, Quantity::Integration).unwrap() >= f64::from_bits(2));
     assert!(volume::add_upper(0.1, 0.2, Quantity::Integration).unwrap() >= 0.30000000000000004);
 }
+
+#[test]
+fn budget_validation_checks_cone_sources_instead_of_only_counts() {
+    let (inputs, mut family) = fixture();
+    let cones = &mut first_member(&mut family).cones;
+    cones.pieces[0].certificate = cones.pieces[1].certificate.clone();
+    assert!(matches!(
+        certify(&inputs, &family, CylindricalMeasureLimit::Report),
+        Err(BudgetFailure::Cones {
+            region: SurfaceRegionId(5),
+            ..
+        })
+    ));
+}

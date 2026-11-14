@@ -32,6 +32,10 @@ pub(in super::super) enum BudgetFailure {
         expected: Vec<CurveSpan>,
     },
     Source(SurfaceRegionId),
+    Cones {
+        region: SurfaceRegionId,
+        cause: Box<planar_cones::ConeFailure>,
+    },
     Coverage {
         region: SurfaceRegionId,
         field: &'static str,
@@ -112,6 +116,14 @@ impl BudgetFailure {
                 f,
                 "budget region={region:?} native stage={stage:?}; expected complete ordered pass with original coverage modes and tolerance cap"
             ),
+            _ => self.cone_message(f),
+        }
+    }
+}
+impl BudgetFailure {
+    fn cone_message(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Cones { region, cause } => write!(f, "budget region={region:?}: {cause}"),
             _ => self.correspondence(f),
         }
     }

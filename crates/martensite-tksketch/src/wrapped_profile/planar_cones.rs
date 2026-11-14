@@ -9,6 +9,10 @@ use std::collections::BTreeMap;
 #[path = "planar_cones_tests.rs"]
 pub(super) mod tests;
 
+#[path = "planar_cones_binding.rs"]
+mod binding;
+pub(super) use binding::bind;
+
 type ProofIndex<'a> = BTreeMap<CurveSpan, &'a storage::StoredProof>;
 type AuthoredIndex<'a> = BTreeMap<SurfaceCurveId, &'a [[f64; 2]]>;
 
@@ -24,6 +28,12 @@ pub(super) struct SpanCone {
 #[derive(Debug)]
 pub(super) enum ConeFailure {
     Authored(Box<storage::StorageFailure>),
+    Binding {
+        spans: Vec<CurveSpan>,
+        field: &'static str,
+        actual: usize,
+        expected: usize,
+    },
     Membership {
         span: CurveSpan,
         count: usize,
@@ -47,6 +57,24 @@ impl std::fmt::Display for ConeFailure {
             ),
             Self::Interval { span, cause } => write!(f, "cone span={span:?}: {cause}"),
             Self::Certificate { spans, cause } => write!(f, "cone spans={spans:?}: {cause}"),
+            _ => self.binding_message(f),
+        }
+    }
+}
+
+impl ConeFailure {
+    fn binding_message(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Binding {
+                spans,
+                field,
+                actual,
+                expected,
+            } => write!(
+                f,
+                "cone spans={spans:?} {field}={actual}; expected {expected}"
+            ),
+            _ => write!(f, "{self:?}"),
         }
     }
 }
@@ -68,11 +96,7 @@ pub(super) fn certify_with_cancel(
         .map_err(|cause| ConeFailure::Authored(Box::new(cause)))?;
     let proofs = proof_index(stored)?;
     let mut evidence = ConeEvidence::default();
-    let sources = ConeSources {
-        radius: original.radius,
-        authored: &authored,
-        proofs: &proofs,
-    };
+    let sources = ConeSources::new(original.radius, &authored, &proofs);
     for contour in &prepared.loops {
         contour_cones(contour, &sources, &mut evidence, &mut cancelled)?;
     }
@@ -101,7 +125,18 @@ struct ConeSources<'a, 'source> {
     authored: &'a AuthoredIndex<'source>,
     proofs: &'a ProofIndex<'source>,
 }
-impl ConeSources<'_, '_> {
+impl<'a, 'source> ConeSources<'a, 'source> {
+    fn new(
+        radius: f64,
+        authored: &'a AuthoredIndex<'source>,
+        proofs: &'a ProofIndex<'source>,
+    ) -> Self {
+        Self {
+            radius,
+            authored,
+            proofs,
+        }
+    }
     fn certify(
         &self,
         spans: &[CurveSpan],

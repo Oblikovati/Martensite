@@ -10,15 +10,26 @@ pub(super) fn certify(
         .members
         .get(&original.region)
         .ok_or(BudgetFailure::Source(original.region))?;
-    let expected = prepared(family, original.region)?
-        .loops
-        .iter()
-        .map(Vec::len)
-        .sum();
+    let prepared = prepared(family, original.region)?;
+    let expected = prepared.loops.iter().map(Vec::len).sum();
     inventory(original.region, retained, expected)?;
+    cone_binding(original, prepared, retained)?;
     native::certify(original.region, &retained.report, limits.spatial)?;
     bounds(retained, original.region, limits)
 }
+fn cone_binding(
+    original: &Request,
+    prepared: &Request,
+    retained: &pipeline::RetainedMember,
+) -> Checked<()> {
+    planar_cones::bind(original, prepared, &retained.storage, &retained.cones).map_err(|cause| {
+        BudgetFailure::Cones {
+            region: original.region,
+            cause: Box::new(cause),
+        }
+    })
+}
+
 fn prepared(family: &family::UnqualifiedFamily, region: SurfaceRegionId) -> Checked<&Request> {
     family
         .selection
