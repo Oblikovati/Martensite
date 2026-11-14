@@ -85,3 +85,54 @@ process and concurrent controls now construct `BudgetedFamily` and compare its
 budget receipt alongside the existing geometry and history signature. They
 passed in the 165-library/32-integration sketch-package run recorded in
 [Publication budget](PUBLICATION-BUDGET.md). Sanitizer validation remains open.
+
+## System loader injection found during startup diagnosis
+
+A fresh direct run of the pinned startup fixture again exited 139 before
+`main_entered`. Inspection with `readelf -d` shows only `libgcc_s.so.1`,
+`libm.so.6` and `libc.so.6` as its declared shared-library dependencies.
+However, `ldd` also loads `/usr/local/lib/AppProtection/libAppProtection.so`.
+The host's `/etc/ld.so.preload` contains that path. Its declared dependencies
+account for the additional X11 and C++ libraries visible in the loader output.
+
+Clearing environment variables does not remove this system preload. The earlier
+empty-environment control therefore did not isolate the sanitizer from injected
+libraries. This identifies a loader-interaction hypothesis; it does not prove
+that AppProtection caused the null-instruction-pointer crash. No host preload
+configuration or protection was changed. Qualification needs a sanitizer run
+on an environment without this injection, with the same startup fixture passing
+before any geometry controls. No family test has passed under ThreadSanitizer.
+
+## Mixed-geometry concurrency stress
+
+The explicit qualification stress test uses three families with identical
+authored IDs and different geometry. Their radii are `10`, `12` and `8`; normal
+depth intervals are `[-1, 2]`, `[-0.5, 1]` and `[-2, 0.5]`; axial translations
+are `0`, `4` and `-4`. Every family contains the mixed contour with a hole and a
+disconnected square. Sequential construction establishes three distinct full
+signatures before four worker threads start together. Each worker constructs
+all three cases, alternating selection order, for twelve concurrent operations.
+After joining the workers, all three sequential signatures must still match.
+The barrier is used only at startup, so a failed operation cannot strand another
+worker at an iteration barrier.
+
+Every operation also checks its authored-volume enclosure against the closed
+form `A * (d1-d0) * (1 + (d0+d1)/(2R))`, using fixture areas `3.525` and `1`.
+Both enclosure endpoints must be within `1e-12` of that independently computed
+binary64 reference. This arithmetic control is an estimated-reference check;
+the retained mathematical certificate supplies the certified enclosure.
+
+Run the campaign explicitly:
+
+```sh
+cargo test -p martensite-tksketch --lib different_geometry_with_shared_authored_ids_replays_under_contention -- --ignored --nocapture
+```
+
+It passed on Linux x86_64 in 42.65 seconds excluding compilation, covering three
+baseline, twelve concurrent and three later sequential constructions. Strict
+all-target clippy, formatting and whitespace checks passed. The approximate scan
+found no new function over 20 lines, file over 500 lines or nesting above two.
+The campaign is ignored by default to keep routine test costs bounded; it must
+be invoked for publication qualification. Its pass establishes deterministic
+replay for these workloads and schedules. ThreadSanitizer validation remains
+open. No production path, dependency, package version or release tag changed.

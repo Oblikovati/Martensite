@@ -3,6 +3,8 @@ use super::tests::requests;
 use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::CylindricalMeasureLimit;
 use std::fmt::Write;
+#[path = "replay_stress.rs"]
+mod stress;
 const WORKER: &str = "surface_sketch::wrapped_profile::family::replay_tests::family_replay_worker";
 const CHILD_ENV: &str = "MARTENSITE_RATIONAL_FAMILY_REPLAY";
 const PREFIX: &str = "RATIONAL_FAMILY_REPLAY=";
