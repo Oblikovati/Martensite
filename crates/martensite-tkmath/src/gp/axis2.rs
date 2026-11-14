@@ -15,6 +15,22 @@ impl Axis2 {
     ) -> Result<Self, Failure> {
         Self::frame_using::<CheckedProducts>(origin, normal, x)
     }
+    /// Retains a checked right-handed stored frame without reconstruction (#455).
+    /// `Axis2::from_stored_coefficients(Point3::default(),[0.,0.,1.],[1.,0.,0.],[0.,1.,0.])?`.
+    pub fn from_stored_coefficients(
+        origin: Point3,
+        normal: [f64; 3],
+        x: [f64; 3],
+        y: [f64; 3],
+    ) -> Result<Self, Failure> {
+        let frame = Axis3::from_stored_coefficients(origin, normal, x, y)?;
+        if !frame.direct()? {
+            return Err(super::construction(&format!(
+                "stored conic frame {frame:?}: expected right-handed frame"
+            )));
+        }
+        Ok(Self { frame })
+    }
     /// Copies the complete frame into Axis3's representation; `frame.axis3()`.
     pub const fn axis3(&self) -> Axis3 {
         self.frame

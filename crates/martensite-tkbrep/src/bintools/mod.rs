@@ -77,3 +77,6 @@ pub use shape_set_base::{BinShapeSetBase, ShapeSetBaseData, THE_ASCII_VERSIONS, 
 pub use shape_writer::BinShapeWriter;
 pub use surface_frame_read_policy::SurfaceFrameReadPolicy;
 pub use surface_set::BinSurfaceSet;
+
+mod curve_frame_read_policy;
+pub use curve_frame_read_policy::CurveFrameReadPolicy;

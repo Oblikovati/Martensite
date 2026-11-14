@@ -123,6 +123,19 @@ impl BinShapeSet {
         set
     }
 
+    /// Creates a grouped reader with all geometry decoding policies explicit (#455).
+    /// `BinShapeSet::with_geometry_read_policies(surface, location, curve)`.
+    pub fn with_geometry_read_policies(
+        surface: SurfaceFrameReadPolicy,
+        location: LocationTransformReadPolicy,
+        curve: super::CurveFrameReadPolicy,
+    ) -> Self {
+        let mut set = Self::with_read_policies(surface, location);
+        set.curves = BinCurveSet::with_curve_frame_policy(curve);
+        set.surfaces = BinSurfaceSet::with_geometry_read_policies(surface, curve);
+        set
+    }
+
     /// `Add(S)`: stores `shape` without its location and, first, its sub-shapes (each
     /// with `AddShape`); returns the index of `shape`, 0 for a null shape. The location
     /// goes to the location set; `set.add(&shape)?`.

@@ -38,6 +38,7 @@ pub(super) type ObjectMap<T> = DataMap<u64, Handle<T>>;
 #[derive(Default)]
 pub struct BinShapeReader {
     pub(super) frame_policy: SurfaceFrameReadPolicy,
+    pub(super) curve_policy: super::CurveFrameReadPolicy,
     location_policy: LocationTransformReadPolicy,
     base: ShapeSetBaseData,
     pub(super) builder: BRepBuilder,
@@ -75,6 +76,19 @@ impl BinShapeReader {
             frame_policy,
             location_policy,
             ..Self::default()
+        }
+    }
+
+    /// Creates a reader with all geometry decoding policies explicit (#455).
+    /// `BinShapeReader::with_geometry_read_policies(surface, location, curve)`.
+    pub fn with_geometry_read_policies(
+        surface: SurfaceFrameReadPolicy,
+        location: LocationTransformReadPolicy,
+        curve: super::CurveFrameReadPolicy,
+    ) -> Self {
+        Self {
+            curve_policy: curve,
+            ..Self::with_read_policies(surface, location)
         }
     }
 

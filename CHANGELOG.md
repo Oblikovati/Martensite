@@ -64,6 +64,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Preserved checked native conic frames and curve directions during explicitly configured binary capture, including recursive and surface-embedded curves, while retaining legacy read behavior (#455).
+
 - Required placed cap traces to remain within their retained edge and face tolerances, including affine-evaluation rounding and typed span/depth refusals (#454).
 
 - Canonicalized wrapped planar proof inputs by authored IDs so reordered selections retained identical actual work receipts, while preserving original admission errors and unchanged limits (#453).

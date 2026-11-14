@@ -1,6 +1,7 @@
 //! Reading one binary `Geom_Surface` record back.
+use super::CurveFrameReadPolicy;
 use super::SurfaceFrameReadPolicy;
-use super::curve_read::read_curve;
+use super::curve_read::read_curve_with_frame_policy;
 use super::errors::wrap_failure;
 use super::geometry_in::{read_degree, read_direction3, read_knots, read_point3};
 use super::scalars::{get_bool, get_integer, get_real, stream_get};
@@ -26,29 +27,38 @@ pub(crate) fn read_surface_with_frame_policy(
     stream: &mut IoStream,
     policy: SurfaceFrameReadPolicy,
 ) -> Result<Handle<dyn GeomSurface>, Failure> {
+    read_surface_with_geometry_policies(stream, policy, CurveFrameReadPolicy::LegacyReplay)
+}
+
+pub(crate) fn read_surface_with_geometry_policies(
+    stream: &mut IoStream,
+    policy: SurfaceFrameReadPolicy,
+    curve_policy: CurveFrameReadPolicy,
+) -> Result<Handle<dyn GeomSurface>, Failure> {
     wrap_failure("EXCEPTION in BinTools_SurfaceSet::ReadSurface(..)", || {
         let stype = stream_get(stream) as u8;
-        read_record(stype, stream, policy)
+        read_record(stype, stream, (policy, curve_policy))
     })
 }
 
 fn read_record(
     stype: u8,
     stream: &mut IoStream,
-    policy: SurfaceFrameReadPolicy,
+    policies: (SurfaceFrameReadPolicy, CurveFrameReadPolicy),
 ) -> Result<Handle<dyn GeomSurface>, Failure> {
+    let (policy, curve_policy) = policies;
     match stype {
         code::PLANE => Ok(upcast(GeomPlane::new(read_axis3(stream, policy)?))),
         code::CYLINDER => read_cylinder(stream, policy).map(upcast),
         code::CONE => read_cone(stream, policy).map(upcast),
         code::SPHERE => read_sphere(stream, policy).map(upcast),
         code::TORUS => read_torus(stream, policy).map(upcast),
-        code::LINEAR_EXTRUSION => read_extrusion(stream).map(upcast),
-        code::REVOLUTION => read_revolution(stream).map(upcast),
+        code::LINEAR_EXTRUSION => read_extrusion(stream, curve_policy).map(upcast),
+        code::REVOLUTION => read_revolution(stream, curve_policy).map(upcast),
         code::BEZIER => read_bezier(stream).map(upcast),
         code::BSPLINE => read_bspline(stream).map(upcast),
-        code::RECTANGULAR => read_trimmed(stream, policy).map(upcast),
-        code::OFFSET => read_offset(stream, policy).map(upcast),
+        code::RECTANGULAR => read_trimmed(stream, policy, curve_policy).map(upcast),
+        code::OFFSET => read_offset(stream, policy, curve_policy).map(upcast),
         _ => Err(Failure::new("UNKNOWN SURFACE TYPE")),
     }
 }
@@ -122,16 +132,22 @@ fn read_torus(
     GeomToroidalSurface::new(frame, major, minor)
 }
 
-fn read_extrusion(stream: &mut IoStream) -> Result<GeomSurfaceOfLinearExtrusion, Failure> {
+fn read_extrusion(
+    stream: &mut IoStream,
+    curve_policy: CurveFrameReadPolicy,
+) -> Result<GeomSurfaceOfLinearExtrusion, Failure> {
     let direction = read_direction3(stream)?;
-    let curve = read_curve(stream)?;
+    let curve = read_curve_with_frame_policy(stream, curve_policy)?;
     GeomSurfaceOfLinearExtrusion::new(&curve, direction)
 }
 
-fn read_revolution(stream: &mut IoStream) -> Result<GeomSurfaceOfRevolution, Failure> {
+fn read_revolution(
+    stream: &mut IoStream,
+    curve_policy: CurveFrameReadPolicy,
+) -> Result<GeomSurfaceOfRevolution, Failure> {
     let point = read_point3(stream)?;
     let direction = read_direction3(stream)?;
-    let curve = read_curve(stream)?;
+    let curve = read_curve_with_frame_policy(stream, curve_policy)?;
     GeomSurfaceOfRevolution::new(&curve, Axis1::new(point, direction))
 }
 
@@ -199,10 +215,11 @@ fn read_bspline(stream: &mut IoStream) -> Result<GeomBSplineSurface, Failure> {
 fn read_trimmed(
     stream: &mut IoStream,
     policy: SurfaceFrameReadPolicy,
+    curve_policy: CurveFrameReadPolicy,
 ) -> Result<GeomRectangularTrimmedSurface, Failure> {
     let u = (get_real(stream)?, get_real(stream)?);
     let v = (get_real(stream)?, get_real(stream)?);
-    let basis = read_surface_with_frame_policy(stream, policy)?;
+    let basis = read_surface_with_geometry_policies(stream, policy, curve_policy)?;
     GeomRectangularTrimmedSurface::new(&basis, u, v, (true, true))
 }
 
@@ -211,8 +228,9 @@ fn read_trimmed(
 fn read_offset(
     stream: &mut IoStream,
     policy: SurfaceFrameReadPolicy,
+    curve_policy: CurveFrameReadPolicy,
 ) -> Result<GeomOffsetSurface, Failure> {
     let offset = get_real(stream)?;
-    let basis = read_surface_with_frame_policy(stream, policy)?;
+    let basis = read_surface_with_geometry_policies(stream, policy, curve_policy)?;
     GeomOffsetSurface::new(&basis, offset, false)
 }
