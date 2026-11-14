@@ -1,12 +1,12 @@
 //! Conditional flux bound from decoded, recaptured and source-bound side/cap representations.
 use super::*;
-struct FluxSpan {
+pub(super) struct FluxSpan {
     curves: [OwnedCurve; 2],
     cap_pcurves: [Vec<[f64; 2]>; 2],
     side_reversed: bool,
 }
 impl FluxSpan {
-    fn borrowed(&self) -> CylindricalFluxSpan<'_> {
+    pub(super) fn borrowed(&self) -> CylindricalFluxSpan<'_> {
         CylindricalFluxSpan {
             boundaries: [&self.curves[0], &self.curves[1]].map(OwnedCurve::borrowed),
             cap_pcurves: [&self.cap_pcurves[0], &self.cap_pcurves[1]],
@@ -30,7 +30,7 @@ pub(in super::super) fn certify_flux(
         .map_err(|cause| scalar_failure(original.region, cause))
 }
 
-fn flux_query<'a>(
+pub(super) fn flux_query<'a>(
     spans: &'a [CylindricalFluxSpan<'a>],
     prepared: &Request,
 ) -> CylindricalFluxQuery<'a> {
@@ -51,7 +51,7 @@ fn scalar_failure(region: SurfaceRegionId, cause: CylindricalFluxError) -> Stora
     }
 }
 
-fn capture_spans(
+pub(super) fn capture_spans(
     prepared: &Request,
     bindings: &Bindings<'_>,
     proofs: &[StoredProof],
@@ -195,7 +195,7 @@ fn trace_query<'a>(
     }
 }
 
-fn region_key(region: SurfaceRegionId) -> BindingKey {
+pub(super) fn region_key(region: SurfaceRegionId) -> BindingKey {
     BindingKey {
         source: Source::Region(region),
         role: HistoryRole::Solid,
