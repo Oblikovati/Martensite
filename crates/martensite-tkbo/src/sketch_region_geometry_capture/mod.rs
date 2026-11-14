@@ -9,3 +9,6 @@ pub(crate) use placement::{captured_placement, captured_plane_frame};
 
 mod tolerances;
 pub(crate) use tolerances::capture_raw_entity_tolerance;
+
+#[cfg(test)]
+mod coefficient_snapshots;

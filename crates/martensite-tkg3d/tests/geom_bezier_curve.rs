@@ -46,3 +46,6 @@ fn copied(curve: &GeomBezierCurve) -> Handle<GeomBezierCurve> {
 
 include!("geom_bezier_curve/suites_0.rs");
 include!("geom_bezier_curve/suites_1.rs");
+
+#[path = "geom_bezier_curve/coefficient_snapshot.rs"]
+mod coefficient_snapshot;

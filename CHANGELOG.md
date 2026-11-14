@@ -54,6 +54,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added checked opt-in rigid location-transform decoding for coefficient-bound geometry while preserving legacy normalization defaults (#451).
 
+- Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
+
 ### Fixed
 
 - Preserved authored entities and typed failure classes in solved-profile normal extrusion errors (#448).
