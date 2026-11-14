@@ -46,6 +46,8 @@ pub(crate) struct ProfileGraphInput {
     pub plane: Plane3,
     /// Spatial limit for census contacts and transported endpoints.
     pub spatial_limit: f64,
+    /// Explicit shared pair work; None retains the existing child-policy default.
+    pub pair_bisections: Option<u16>,
 }
 
 /// Prepare and certify a plane graph; `certify_profile_graph(input)?` returns every
@@ -60,7 +62,7 @@ pub(crate) fn certify_profile_graph(
         loops: Vec::new(),
         regions: Vec::new(),
         declared_plane: input.plane,
-        policy: policy(input.spatial_limit),
+        policy: policy(input.spatial_limit, input.pair_bisections),
     };
     let prepared = prepare_owned_profile(request, &mut NeverStop).map_err(preparation_refusal)?;
     prepared
@@ -111,26 +113,40 @@ fn owned_edge(edge: ProofEdge) -> OwnedProfileEdge {
 }
 
 /// The version-1 child policies with the caller's spatial limit.
-fn policy(limit: f64) -> OwnedProfilePolicy {
+fn policy(limit: f64, pair_bisections: Option<u16>) -> OwnedProfilePolicy {
     let roots = RootIsolationOptions::new(0.001);
-    let (original_plane_limit, construction_limit) = (0., 0.);
-    let area = RationalIntegralOptions::default();
     OwnedProfilePolicy {
-        census: CensusPolicy {
-            roots,
-            max_world_error: limit,
-        },
-        source: SourceConformancePolicy {
-            roots,
-            original_plane_limit,
-            construction_limit,
-        },
+        census: pair_census_policy(limit, roots, pair_bisections),
+        source: exact_source_policy(roots),
         contacts: contact_policy(limit, roots),
-        region: LoopRegionOptions {
-            version: 1,
-            winding: roots,
-            area,
-        },
+        region: graph_region_policy(roots),
+    }
+}
+fn pair_census_policy(
+    limit: f64,
+    mut roots: RootIsolationOptions,
+    requested: Option<u16>,
+) -> CensusPolicy {
+    if let Some(maximum) = requested {
+        roots.max_bisections = maximum;
+    }
+    CensusPolicy {
+        roots,
+        max_world_error: limit,
+    }
+}
+fn exact_source_policy(roots: RootIsolationOptions) -> SourceConformancePolicy {
+    SourceConformancePolicy {
+        roots,
+        original_plane_limit: 0.,
+        construction_limit: 0.,
+    }
+}
+fn graph_region_policy(roots: RootIsolationOptions) -> LoopRegionOptions {
+    LoopRegionOptions {
+        version: 1,
+        winding: roots,
+        area: RationalIntegralOptions::default(),
     }
 }
 
@@ -141,3 +157,7 @@ fn contact_policy(limit: f64, roots: RootIsolationOptions) -> ContactTransportPo
         roots,
     }
 }
+
+#[cfg(test)]
+#[path = "certify_work_tests.rs"]
+mod work_tests;

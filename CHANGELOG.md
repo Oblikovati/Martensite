@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Reported requested, effective and consumed pair-proof work on successful planar region sets without changing existing work defaults (#425).
+
 - Added solved-profile cylindrical normal extrusion with typed spatial and measure reports, authored history, cooperative cancellation and detached native exports (#418).
 
 - Added affected-package ThreadSanitizer execution of the wrapped-family concurrency stress campaign, retaining startup refusal and failing on campaign errors (#418).

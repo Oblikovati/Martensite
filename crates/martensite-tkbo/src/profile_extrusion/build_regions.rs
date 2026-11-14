@@ -87,6 +87,7 @@ impl RegionContext<'_> {
             curve_edges,
             resolution: self.profile.resolution,
             certificate,
+            proof_work: self.certified.work,
         }
     }
 

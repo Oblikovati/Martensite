@@ -50,6 +50,9 @@ pub(crate) fn inspect_plane_graph(
         contacts: joins.len(),
         carrier_pairs,
         pair_domains,
+        work: crate::sketch_region_certification::CensusWorkReceipt::capture(
+            &request.bridge.census,
+        ),
     };
     for (index, face) in faces.bounded.iter().enumerate() {
         let proof = face_proof(request, &binding, &certificate, index, face, &mut cancelled)?;

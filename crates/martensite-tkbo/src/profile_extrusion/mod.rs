@@ -40,6 +40,7 @@ mod validation;
 
 pub use crate::body_check::ValidationReport;
 pub use crate::measured::{Evidence, IntegrationMethod, Measured, MeasuredPoint};
+pub use crate::sketch_region_certification::CensusWorkReceipt as PlanarProofWorkReceipt;
 pub use build_regions::build_planar_regions;
 pub use decline::{
     DeclineCause, DeclineClass, OperationDecline, OperationKind, OperationStage,

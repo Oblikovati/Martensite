@@ -30,6 +30,7 @@ pub(crate) struct CertifiedRegions {
     pub carrier_pairs: usize,
     /// Connected components of the curve graph.
     pub components: usize,
+    pub work: super::PlanarProofWorkReceipt,
 }
 
 /// Certify every face of `profile`; any refusal is a typed decline.
@@ -49,6 +50,7 @@ pub(crate) fn certify_regions(profile: &AdmittedProfile) -> Result<CertifiedRegi
         pair_domains: certificate.pair_domains,
         carrier_pairs: certificate.carrier_pairs,
         components: certificate.components.len(),
+        work: certificate.work,
     })
 }
 

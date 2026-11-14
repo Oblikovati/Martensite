@@ -61,3 +61,22 @@ it with its achieved receipt. Existing callers keep their existing limits.
 This is the next implementation design, not a shipped API or permission to
 widen an existing limit. Oblique frames, general conical profiles, persistent
 body attachment, composed history and P6 deletion remain separate requirements.
+
+## Implementation checkpoint
+
+The private graph request now accepts an optional explicit pair-bisection
+limit. Existing callers supply no override and retain 4096. Four focused tests
+passed: unchanged defaults, isolation from other child policies, the independent
+lens area, and analytical completion with zero subdivisions. The lens needs no
+subdivisions, so it is a zero-work success control rather than an exhaustion
+fixture.
+
+Successful graph certificates now carry the actual census work receipt through
+to `PlanarRegionSet::proof_work()`. This value-only receipt records the requested
+and effective shared limit and the census's consumed work counter. It retains no
+native handles. The focused public profile suite passed all 44 tests, including requested,
+effective and consumed work assertions. Three selected receipt/accounting controls passed, including unique-report
+accounting under alias reuse and owned Send/Sync receipts. Strict library
+clippy passed;
+refusal receipts and the public explicit-request entry point are not yet
+implemented. No default limit or geometric tolerance has been increased.
