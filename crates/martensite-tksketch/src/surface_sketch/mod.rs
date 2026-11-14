@@ -22,8 +22,6 @@ mod trim_binding;
 mod validation;
 mod volume;
 
-// Private until the representation publication obligations pass.
-#[cfg(test)]
 #[path = "../wrapped_profile/mod.rs"]
 mod wrapped_profile;
 
@@ -33,6 +31,16 @@ pub use history::{HistoryKey, HistoryRole, HistorySource};
 pub use request::*;
 pub use result::{
     DetachedNormalBody, NormalExtrusionResult, SurfaceDiagnostic, VolumeErrorEstimates,
+};
+pub use wrapped_profile::{
+    DetachedWrappedBodies, WrappedBudgetReport, WrappedCertifiedBound, WrappedCertifiedRange,
+    WrappedEntitySource, WrappedFailureClass, WrappedHistoryKey, WrappedHistoryRecord,
+    WrappedHistoryRelation, WrappedIncidenceCoverage, WrappedMaterialRelation, WrappedMaterialWork,
+    WrappedMeasureReport, WrappedMemberReport, WrappedNativeVolumeEstimate, WrappedNormalFailure,
+    WrappedNormalOptions, WrappedNormalRequest, WrappedNormalResult, WrappedOperation,
+    WrappedOutsideMaterial, WrappedRegionSelection, WrappedSourcePoint, WrappedSourceSpan,
+    WrappedSpatialReport, WrappedStage, WrappedVolumeBounds, WrappedVolumePolicy,
+    WrappedWindingLocation, normal_extrude_profile, normal_extrude_profile_with_cancel,
 };
 
 /// Extrude one developed rectangle through an ordered physical normal-depth interval.

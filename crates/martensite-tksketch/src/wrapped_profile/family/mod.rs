@@ -3,7 +3,9 @@ use super::*;
 use std::collections::BTreeMap;
 mod budgeted;
 mod control;
-pub(super) use budgeted::{BudgetedFamily, construct_budgeted, construct_budgeted_with_cancel};
+#[cfg(test)]
+pub(super) use budgeted::construct_budgeted;
+pub(super) use budgeted::{BudgetedFamily, construct_budgeted_with_cancel};
 mod error;
 use control::{Checkpoint, Control, FamilyStage};
 mod freeze;
@@ -25,9 +27,11 @@ pub(super) struct UnqualifiedFamily {
     pub coverage: coverage::FamilyCoverage,
     pub history: history::HistoryEvidence,
 }
+#[cfg(test)]
 pub(super) fn construct(requests: &[Request]) -> Checked<UnqualifiedFamily> {
     construct_with_cancel(requests, |_| false)
 }
+#[cfg(test)]
 pub(super) fn construct_with_cancel(
     requests: &[Request],
     mut cancelled: impl FnMut(Checkpoint) -> bool + Send,
@@ -82,6 +86,7 @@ fn checked_members(
     finish(originals, prepared, stored, control)
 }
 
+#[cfg(test)]
 fn store(
     originals: &[Request],
     prepared: &[Request],

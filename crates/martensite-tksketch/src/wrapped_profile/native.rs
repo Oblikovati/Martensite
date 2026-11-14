@@ -46,11 +46,7 @@ fn retained_cap_parameters(
         for (depth, cap) in caps.iter().enumerate() {
             let captured = BRepTool::curve_on_face(&piece.edges[depth], cap)?;
             let curve: Handle<martensite_tkg2d::geom2d::Geom2dBezierCurve> = captured.pcurve.cast();
-            let expected: Vec<_> = source
-                .poles
-                .iter()
-                .map(|[s, z]| [s / request.radius, *z])
-                .collect();
+            let expected: Vec<_> = cap_coordinates::angular_controls(&source.poles, request.radius);
             retained_poles(&curve, &expected)?;
         }
     }

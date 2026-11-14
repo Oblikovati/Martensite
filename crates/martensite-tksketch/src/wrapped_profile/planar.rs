@@ -21,6 +21,7 @@ pub(super) struct MaterialIdentity {
 #[derive(Debug)]
 pub(super) struct PlanarEvidence {
     pub area: Measured,
+    #[cfg(test)]
     pub certificate: RegionCertificate,
     identity: MaterialIdentity,
     source: source::SourceSnapshot,
@@ -99,6 +100,7 @@ fn source_message(
     )
 }
 
+#[cfg(test)]
 pub(super) fn certify(request: &Request) -> Result<PlanarEvidence, PlanarFailure> {
     let captured = capture(std::slice::from_ref(request), request.tolerance)?;
     select(request, &captured)
@@ -195,6 +197,7 @@ pub(super) fn select(
     let selected = unique_region(&expected, captured)?;
     Ok(PlanarEvidence {
         area: selected.area(),
+        #[cfg(test)]
         certificate: captured.certificate(),
         identity: expected,
         source: source::SourceSnapshot::capture(request),

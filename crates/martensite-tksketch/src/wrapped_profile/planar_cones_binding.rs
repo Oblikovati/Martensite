@@ -18,7 +18,7 @@ pub(in super::super) fn bind(
     for contour in &prepared.loops {
         bind_contour(contour, &pieces, &joins, &sources)?;
     }
-    Ok(())
+    cap::bind(prepared, stored, &evidence.caps)
 }
 fn count_sources(expected: usize, actual: usize) -> Result<(), ConeFailure> {
     if expected == 0 {
@@ -29,7 +29,7 @@ fn count_sources(expected: usize, actual: usize) -> Result<(), ConeFailure> {
     }
     Ok(())
 }
-fn index(
+pub(super) fn index(
     reports: &[SpanCone],
     expected: usize,
     arity: usize,

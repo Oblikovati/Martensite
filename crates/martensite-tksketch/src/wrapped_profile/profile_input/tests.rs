@@ -303,6 +303,8 @@ fn control_changes_and_nonfinite_values_do_not_snap_to_vertices() {
     ));
 }
 
+#[path = "point_tests.rs"]
+mod points;
 #[path = "spline_tests.rs"]
 mod splines;
 

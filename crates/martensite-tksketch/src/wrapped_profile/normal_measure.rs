@@ -32,6 +32,7 @@ impl std::fmt::Display for NormalMeasureFailure {
         }
     }
 }
+#[cfg(test)]
 pub(super) fn certify(
     original: &Request,
     prepared: &Request,
@@ -53,6 +54,7 @@ pub(super) fn certify_with_cancel(
     Ok(NormalMeasureEvidence { spans, certificate })
 }
 
+#[cfg(test)]
 pub(super) fn compare(
     original: &Request,
     prepared: &Request,

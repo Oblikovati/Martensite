@@ -141,20 +141,29 @@ from retained curve coefficients, including linear depth interpolation.
 The [storage certificate notes](STORAGE-CERTIFICATES.md) describe its limits.
 Complete wrapped-operation qualification remains open.
 
+The [rational implementation record](RATIONAL-IMPLEMENTATION.md) records the
+current evidence and remaining gates. The [P4 API working tree](PUBLIC-API.md)
+now exposes solved-profile cylindrical extrusion and separate spatial and
+measure reports. Its [cap-realization checks](CAP-REALIZATION.md) bind decoded
+trims, angular lifts, homotopy and physical cap bounds. Independent review and
+integration qualification remain open.
+
 `certify_cylindrical_profile` checks authored position and derivative error, and
 `plan_cylindrical_fit` bounds the required Hermite subdivision before construction.
 See [the profile certificate notes](PROFILE-CERTIFICATES.md). These math helpers
 are foundations for the general operation; this increment adds no sketch entry point.
 
-The private family path now retains [authored history](AUTHORED-HISTORY.md),
+The family path retains [authored history](AUTHORED-HISTORY.md),
 checks [cancellation and isolation](FAMILY-CANCELLATION.md), compares
 [process and concurrent replay](FAMILY-REPLAY.md), and has an explicit
-[family error-budget gate](PUBLICATION-BUDGET.md). The composed private constructor
-returns its frozen family and successful budget receipt together. These
-checkpoints do not expose a new accepted-body API. Sanitizer qualification and the remaining implementation
-and application gates are still open.
+[family error-budget gate](PUBLICATION-BUDGET.md). The composed constructor
+returns its frozen family and successful budget receipt together. Sanitizer
+qualification and the remaining implementation and application gates are open.
 
-The private [directed-profile input adapter](PROFILE-INPUT.md) now reads existing
+The [directed-profile input adapter](PROFILE-INPUT.md) now reads existing
 solved-profile selections and retains original curve-direction and parameter
 correspondence through subdivision. Its mixed-profile control reaches the
-budgeted family constructor. The public result API remains unfinished.
+budgeted family constructor. The result API remains an uncommitted working tree.
+
+The [P5 workload census](P5-WORKLOAD.md) pins the existing font asset and the
+239-piece supplied-text case. Its modelling and performance gates remain open.

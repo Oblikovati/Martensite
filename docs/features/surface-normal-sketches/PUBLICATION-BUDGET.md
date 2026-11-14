@@ -152,3 +152,11 @@ separate epsilon/2 trace check alone does not supply that argument.
 Reproduce the receipt with the existing process-replay worker using
 `MARTENSITE_RATIONAL_FAMILY_REPLAY=forward cargo test -p martensite-tksketch --lib surface_sketch::wrapped_profile::family::replay_tests::family_replay_worker -- --exact --ignored --nocapture`.
 This checkpoint changes no geometry, tolerance allocation or public API.
+
+The [cap-realization analysis](CAP-REALIZATION.md) separates original, decoded
+pcurve and normalized boundaries, and records a winding-based domain argument
+with the source-binding conditions still required before publication.
+
+The subsequent [filled-cap composition](CAP-REALIZATION.md#filled-cap-distance-composition)
+implements the source-bound geometric checks identified above. Its independent
+review and remaining integration qualification are still open.

@@ -1,7 +1,7 @@
 //! Qualify every selected region against one global authored planar arrangement.
 mod admission;
 mod error;
-mod material;
+pub(super) mod material;
 pub(super) use material::{MaterialFailure, MaterialOptions, PeriodicMaterialEvidence};
 #[cfg(test)]
 mod material_tests;
@@ -26,6 +26,7 @@ pub(super) struct QualifiedSelection {
     pub prepared: PreparedSelection,
     pub material: PeriodicMaterialEvidence,
 }
+#[cfg(test)]
 pub(super) fn certify(
     requests: &[Request],
     options: MaterialOptions,
@@ -43,6 +44,7 @@ pub(super) fn certify_with_cancel(
     Ok(QualifiedSelection { prepared, material })
 }
 
+#[cfg(test)]
 pub(super) fn prepare(requests: &[Request]) -> Result<PreparedSelection, SelectionFailure> {
     prepare_with_cancel(requests, || false)
 }

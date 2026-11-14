@@ -95,7 +95,7 @@ pub(super) fn add_upper(accumulated: f64, contribution: f64, quantity: Quantity)
     Ok(upper)
 }
 
-fn valid_bound(value: f64, quantity: Quantity) -> Checked<()> {
+pub(super) fn valid_bound(value: f64, quantity: Quantity) -> Checked<()> {
     if !value.is_finite() || value < 0. {
         return Err(BudgetFailure::Invalid { quantity, value });
     }

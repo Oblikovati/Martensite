@@ -81,8 +81,23 @@ impl ProfileInputFailure {
             }
             Self::UnknownSource(curve) => write!(f, "unselected source={curve:?}"),
             Self::Interval(span) => write!(f, "source span={span:?}"),
+            Self::Point { .. } => self.point_message(f),
             _ => write!(f, "{self:?}"),
         }
+    }
+    fn point_message(&self, f: &mut Formatter<'_>) -> Result {
+        if let Self::Point {
+            curve,
+            numerator,
+            level,
+        } = self
+        {
+            return write!(
+                f,
+                "curve={curve:?}, point numerator={numerator}, level={level}"
+            );
+        }
+        write!(f, "{self:?}")
     }
     fn control_message(&self, f: &mut Formatter<'_>) -> Result {
         if let Self::Endpoint {

@@ -15,7 +15,7 @@ pub(super) fn certify(
     inventory(original.region, retained, expected)?;
     cone_binding(original, prepared, retained)?;
     native::certify(original.region, &retained.report, limits.spatial)?;
-    bounds(retained, original.region, limits)
+    bounds(retained, original, limits)
 }
 fn cone_binding(
     original: &Request,
@@ -133,23 +133,32 @@ fn clearance_failure(proof: &planar_clearance::OriginalClearance, required: f64)
 }
 fn bounds(
     retained: &pipeline::RetainedMember,
-    region: SurfaceRegionId,
+    original: &Request,
     limits: BudgetLimits,
 ) -> Checked<MemberBounds> {
-    let native_modes = retained.report.stages.each_ref().map(|stage| stage.mode);
-    let mut bounds = MemberBounds {
-        profile: 0.,
-        storage: 0.,
-        trace: 0.,
-        trace_tolerance: 0.,
-        native_modes,
-    };
+    let region = original.region;
+    let mut bounds = MemberBounds::new(retained);
     for proof in &retained.storage {
+        if !proof.profile.matches_reference_curve(&proof.cap_profile) {
+            return Err(BudgetFailure::Source(region));
+        }
         bounds.add(proof, region, limits)?;
     }
+    bounds.cap_realization = cap_realization::certify(original, retained, limits.spatial)?;
     Ok(bounds)
 }
 impl MemberBounds {
+    fn new(retained: &pipeline::RetainedMember) -> Self {
+        Self {
+            profile: 0.,
+            storage: 0.,
+            trace: 0.,
+            trace_tolerance: 0.,
+            cap_realization: 0.,
+            native_modes: retained.report.stages.each_ref().map(|stage| stage.mode),
+        }
+    }
+
     fn add(
         &mut self,
         proof: &storage::StoredProof,

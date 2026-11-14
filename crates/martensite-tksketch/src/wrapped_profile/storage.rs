@@ -2,6 +2,8 @@
 #[path = "storage_comparison.rs"]
 mod comparison;
 pub(super) use comparison::compare_flux;
+#[path = "storage_cap_profile.rs"]
+mod cap_profile;
 #[path = "storage_capture.rs"]
 mod capture;
 #[path = "storage_flux.rs"]
@@ -21,16 +23,18 @@ use profile::prove_profile;
 mod cancellation_tests;
 use super::*;
 use crate::surface_sketch::HistoryRole;
-pub(super) use flux::{certify_flux, certify_flux_with_cancel};
+#[cfg(test)]
+pub(super) use flux::certify_flux;
+pub(super) use flux::certify_flux_with_cancel;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CertifiedCylindricalDepths, CertifiedCylindricalFlux, CertifiedCylindricalProfile,
-    CertifiedCylindricalStorage, CertifiedCylindricalTrim, CylindricalDepthFailure,
-    CylindricalFluxError, CylindricalFluxOptions, CylindricalFluxQuery, CylindricalFluxSpan,
-    CylindricalProfileError, CylindricalProfileInterval, CylindricalProfileQuery,
-    CylindricalStorageError, CylindricalStorageLimits, CylindricalStorageQuery,
-    CylindricalTrimError, CylindricalTrimQuery, MetricBezier, certify_cylindrical_boundary_flux,
-    certify_cylindrical_depths, certify_cylindrical_profile, certify_cylindrical_storage,
-    certify_cylindrical_trim,
+    CertifiedCylindricalDepths, CertifiedCylindricalFlux, CertifiedCylindricalLift,
+    CertifiedCylindricalProfile, CertifiedCylindricalStorage, CertifiedCylindricalTrim,
+    CylindricalDepthFailure, CylindricalFluxError, CylindricalFluxOptions, CylindricalFluxQuery,
+    CylindricalFluxSpan, CylindricalLiftError, CylindricalProfileError, CylindricalProfileInterval,
+    CylindricalProfileQuery, CylindricalStorageError, CylindricalStorageLimits,
+    CylindricalStorageQuery, CylindricalTrimError, CylindricalTrimQuery, MetricBezier,
+    certify_cylindrical_boundary_flux, certify_cylindrical_depths, certify_cylindrical_lift,
+    certify_cylindrical_profile, certify_cylindrical_storage, certify_cylindrical_trim,
 };
 use std::collections::BTreeMap;
 
@@ -40,6 +44,8 @@ pub(super) struct StoredProof {
     pub span: CurveSpan,
     pub certificate: CertifiedCylindricalStorage,
     pub profile: CertifiedCylindricalProfile,
+    pub cap_profile: CertifiedCylindricalProfile,
+    pub cap_lift: CertifiedCylindricalLift,
     pub depths: CertifiedCylindricalDepths,
     pub trims: trims::TrimEvidence,
 }
@@ -67,6 +73,7 @@ enum StorageCause {
     Native(Box<Failure>),
     Certificate(Box<CylindricalStorageError>),
     Profile(Box<CylindricalProfileError>),
+    Lift(Box<CylindricalLiftError>),
     CapResidual(Box<CylindricalTrimError>),
     Flux(Box<CylindricalFluxError>),
     Comparison(
@@ -89,14 +96,28 @@ enum StorageCause {
 }
 impl std::fmt::Display for StorageFailure {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(cause) = self.primary_cause() {
+            return write!(formatter, "{:?}: {cause}", self.key);
+        }
+        self.context_message(formatter)
+    }
+}
+impl StorageFailure {
+    fn primary_cause(&self) -> Option<&dyn std::fmt::Display> {
         match &self.cause {
-            StorageCause::Comparison(cause) => write!(formatter, "{:?}: {cause}", self.key),
-            StorageCause::Flux(cause) => write!(formatter, "{:?}: {cause}", self.key),
-            StorageCause::Native(cause) => write!(formatter, "{:?}: {cause}", self.key),
-            StorageCause::Certificate(cause) => write!(formatter, "{:?}: {cause}", self.key),
-            StorageCause::CapResidual(cause) => write!(formatter, "{:?}: {cause}", self.key),
-            StorageCause::Profile(cause) => write!(formatter, "{:?}: {cause}", self.key),
-            StorageCause::Depths(cause) => write!(formatter, "{:?}: {cause}", self.key),
+            StorageCause::Comparison(cause) => Some(cause.as_ref()),
+            StorageCause::Flux(cause) => Some(cause.as_ref()),
+            StorageCause::Native(cause) => Some(cause.as_ref()),
+            StorageCause::Certificate(cause) => Some(cause.as_ref()),
+            StorageCause::CapResidual(cause) => Some(cause.as_ref()),
+            StorageCause::Lift(cause) => Some(cause.as_ref()),
+            StorageCause::Profile(cause) => Some(cause.as_ref()),
+            StorageCause::Depths(cause) => Some(cause.as_ref()),
+            _ => None,
+        }
+    }
+    fn context_message(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.cause {
             StorageCause::Tolerance { actual, maximum } => {
                 tolerance_message(formatter, self.key, *actual, *maximum)
             }
@@ -106,6 +127,7 @@ impl std::fmt::Display for StorageFailure {
                 actual,
                 expected,
             } => mismatch_message(formatter, self.key, field, actual, expected),
+            _ => write!(formatter, "{:?}: {:?}", self.key, self.cause),
         }
     }
 }
@@ -144,6 +166,7 @@ fn tolerance_message(
     )
 }
 
+#[cfg(test)]
 pub(super) fn certify(
     original: &Request,
     request: &Request,
@@ -185,21 +208,67 @@ fn certify_span(
     authored: &BTreeMap<SurfaceCurveId, &[[f64; 2]]>,
     cancelled: &mut CancelPoll<'_>,
 ) -> Result<StoredProof, StorageFailure> {
-    let span = piece.span;
+    let curves = captured_span(piece, bindings)?;
+    let borrowed = [&curves[0], &curves[1]];
+    let reference = reference_proofs(request, piece.span, borrowed, authored, &mut *cancelled)?;
+    let trims = trims::certify(request, piece, borrowed, bindings, cancelled)?;
+    let cap_profile = cap_profile::certify(request, piece, borrowed[0], &mut *cancelled)?;
+    let cap_lift = prove_cap_lift(piece.span, [&reference.profile, &cap_profile], cancelled)?;
+    Ok(reference.finish(piece.span, trims, cap_profile, cap_lift))
+}
+struct StoredReference {
+    certificate: CertifiedCylindricalStorage,
+    depths: CertifiedCylindricalDepths,
+    profile: CertifiedCylindricalProfile,
+}
+fn reference_proofs(
+    request: &Request,
+    span: CurveSpan,
+    curves: [&OwnedCurve; 2],
+    authored: &BTreeMap<SurfaceCurveId, &[[f64; 2]]>,
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<StoredReference, StorageFailure> {
     let first_key = key(span, HistoryRole::FirstDepthEdge);
-    let [a, b] = captured_span(piece, bindings)?;
-    let certificate = prove_captured(request, first_key, [&a, &b], &mut *cancelled)?;
+    let certificate = prove_captured(request, first_key, curves, &mut *cancelled)?;
     let depths = prove_depths(request, first_key, &certificate)?;
     let source = source_for_span(authored, span)?;
-    let profile = prove_profile(request, span, &a, source, &mut *cancelled)?;
-    let trims = trims::certify(request, piece, [&a, &b], bindings, cancelled)?;
-    Ok(StoredProof {
-        span,
+    let profile = prove_profile(request, span, curves[0], source, cancelled)?;
+    Ok(StoredReference {
         certificate,
-        profile,
         depths,
-        trims,
+        profile,
     })
+}
+fn prove_cap_lift(
+    span: CurveSpan,
+    sources: [&CertifiedCylindricalProfile; 2],
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<CertifiedCylindricalLift, StorageFailure> {
+    certify_cylindrical_lift(sources, Default::default(), cancelled).map_err(|cause| {
+        StorageFailure {
+            key: key(span, HistoryRole::FirstDepthEdge),
+            cause: StorageCause::Lift(Box::new(cause)),
+        }
+    })
+}
+impl StoredReference {
+    fn finish(
+        self,
+        span: CurveSpan,
+        trims: trims::TrimEvidence,
+        cap_profile: CertifiedCylindricalProfile,
+        cap_lift: CertifiedCylindricalLift,
+    ) -> StoredProof {
+        StoredProof {
+            span,
+            certificate: self.certificate,
+            profile: self.profile,
+            cap_profile,
+            cap_lift,
+            depths: self.depths,
+            trims,
+        }
+    }
 }
 
 fn source_for_span<'a>(

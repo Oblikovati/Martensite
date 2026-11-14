@@ -87,6 +87,7 @@ impl ClearanceFailure {
     }
 }
 
+#[cfg(test)]
 pub(super) fn certify(
     original: &Request,
     prepared: &Request,
@@ -96,6 +97,7 @@ pub(super) fn certify(
         std::slice::from_ref(prepared),
     )
 }
+#[cfg(test)]
 pub(super) fn certify_many(
     originals: &[Request],
     prepared: &[Request],
@@ -269,6 +271,7 @@ fn excluded_pairs(prepared: &[Request]) -> Vec<[usize; 2]> {
     result.into_iter().collect()
 }
 
+#[cfg(test)]
 pub(super) fn bind(
     evidence: &OriginalClearance,
     original: &Request,

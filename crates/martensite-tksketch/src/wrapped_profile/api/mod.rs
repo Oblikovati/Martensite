@@ -1,0 +1,27 @@
+//! Value-only publication boundary for the rational normal-extrusion operation.
+use super::*;
+mod construct;
+mod error;
+mod failure_projection;
+mod history_projection;
+mod history_types;
+mod input;
+mod material;
+mod reports;
+mod request;
+mod result;
+pub use construct::{normal_extrude_profile, normal_extrude_profile_with_cancel};
+pub use error::{WrappedFailureClass, WrappedNormalFailure, WrappedOperation, WrappedStage};
+pub use history_types::*;
+pub use material::*;
+pub use reports::*;
+pub use request::*;
+pub use result::*;
+type Checked<T> = Result<T, WrappedNormalFailure>;
+#[cfg(test)]
+mod history_tests;
+#[cfg(test)]
+mod operation_tests;
+
+#[cfg(test)]
+mod error_tests;

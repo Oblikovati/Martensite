@@ -19,6 +19,7 @@ type MemberCertificates = (
     MeasureEvidence,
     coverage::CoverageEvidence,
 );
+#[cfg(test)]
 type FrozenParts = (Vec<u8>, Vec<BindingKey>, Shape, Vec<(BindingKey, Shape)>);
 
 pub(super) struct MeasureEvidence {
@@ -41,6 +42,7 @@ pub(super) struct StoredMember {
     coverage: coverage::CoverageEvidence,
     pub storage: Vec<storage::StoredProof>,
 }
+#[cfg(test)]
 pub(super) struct Unqualified {
     pub bytes: Vec<u8>,
     pub keys: Vec<BindingKey>,
@@ -57,6 +59,7 @@ fn at<T>(region: SurfaceRegionId, stage: Stage, result: Result<T, Failure>) -> R
     })
 }
 
+#[cfg(test)]
 pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
     at(request.region, Stage::Admission, admit(request))?;
     let planar = planar_stage(request)?;
@@ -74,6 +77,7 @@ pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
         clearance,
     })
 }
+#[cfg(test)]
 pub(super) fn store_member(
     original: &Request,
     prepared: &Request,
@@ -98,6 +102,7 @@ pub(super) fn store_member_with_cancel(
         storage,
     })
 }
+#[cfg(test)]
 pub(super) fn finish_member(
     original: &Request,
     prepared: &Request,
@@ -134,6 +139,7 @@ fn coverage_stage(
     })
 }
 
+#[cfg(test)]
 fn construct_frozen(request: &Request) -> Result<FrozenParts, Refusal> {
     let constructed = at(
         request.region,
@@ -143,6 +149,7 @@ fn construct_frozen(request: &Request) -> Result<FrozenParts, Refusal> {
     frozen_parts(request.region, &constructed)
 }
 
+#[cfg(test)]
 fn frozen_parts(
     region: SurfaceRegionId,
     constructed: &Constructed,
@@ -153,6 +160,7 @@ fn frozen_parts(
     Ok((bytes, keys, shape, bindings))
 }
 
+#[cfg(test)]
 fn clearance_stage(
     original: &Request,
     prepared: &Request,
@@ -164,6 +172,7 @@ fn clearance_stage(
     })
 }
 
+#[cfg(test)]
 fn bind_clearance(
     evidence: &planar_clearance::OriginalClearance,
     original: &Request,
@@ -277,6 +286,7 @@ fn cone_stage(
     })
 }
 
+#[cfg(test)]
 fn planar_stage(request: &Request) -> Result<planar::PlanarEvidence, Refusal> {
     planar::certify(request).map_err(|cause| Refusal {
         stage: Stage::Planar,
@@ -285,6 +295,7 @@ fn planar_stage(request: &Request) -> Result<planar::PlanarEvidence, Refusal> {
     })
 }
 
+#[cfg(test)]
 fn planning_stage(request: &Request) -> Result<Request, Refusal> {
     subdivision::prepare(request).map_err(|cause| Refusal {
         stage: Stage::Planning,
@@ -331,6 +342,7 @@ fn ordered_checks(shape: &Shape, tolerance: f64) -> Result<ValidationReport, Fai
     })
 }
 
+#[cfg(test)]
 fn freeze(constructed: &Constructed) -> Result<Vec<u8>, Failure> {
     encoding::encode(&constructed.solid, &constructed.bindings)
         .map_err(|e| Failure::new(&format!("freeze failed: {e:?}")))

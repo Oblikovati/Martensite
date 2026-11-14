@@ -8,6 +8,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added solved-profile cylindrical normal extrusion with typed spatial and measure reports, authored history, cooperative cancellation and detached native exports (#418).
+
+- Added affected-package ThreadSanitizer execution of the wrapped-family concurrency stress campaign, retaining startup refusal and failing on campaign errors (#418).
+
 - Added exact periodic material classification for private disconnected cylindrical selections, with guarded translated witnesses, original-source snapshots, complete interval coverage and aggregate winding budgets (#418).
 
 - Added global planar selection and shared boundary-clearance preparation for disconnected wrapped-profile regions, preserving authored identities and rejecting overlapping filled selections (#418).
@@ -47,6 +51,8 @@ follows [Semantic Versioning](https://semver.org/).
 - Added rectangular sketches on cylindrical surfaces with signed normal extrusion, seam-crossing regions, semantic history, ordered body validation and detached body exports. Existing planar extrusion interfaces were preserved. (#416)
 
 ### Fixed
+
+- Preserved authored entities and typed failure classes in solved-profile normal extrusion errors (#448).
 
 - Reported admitted input ranges and retained offending values in cylindrical profile certificate diagnostics (#524).
 

@@ -4,9 +4,12 @@ use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::{
     BoundedArithmeticFailure, CylindricalProfileFailure, CylindricalStorageFailure,
 };
+#[derive(Default)]
 struct ProofPolls {
     storage: usize,
     profile: usize,
+    trims: usize,
+    cap_profile: usize,
     span: usize,
 }
 fn phase_polls(
@@ -18,15 +21,16 @@ fn phase_polls(
     let piece = &prepared.loops[0][0];
     let curves = captured_span(piece, &indexed).unwrap();
     let authored = authored_index(original).unwrap();
-    let storage = count_storage(prepared, piece, [&curves[0], &curves[1]]);
-    let profile = storage + count_profile(prepared, piece, &curves[0], authored[&piece.span.curve]);
-    let span = count_span(prepared, piece, &indexed, &authored);
-    ProofPolls {
-        storage,
-        profile,
-        span,
-    }
+    let mut polls = ProofPolls::default();
+    polls.storage = count_storage(prepared, piece, [&curves[0], &curves[1]]);
+    polls.profile =
+        polls.storage + count_profile(prepared, piece, &curves[0], authored[&piece.span.curve]);
+    polls.trims = polls.profile + count_trims(prepared, piece, [&curves[0], &curves[1]], &indexed);
+    polls.cap_profile = polls.trims + count_cap_profile(prepared, piece, &curves[0]);
+    polls.span = count_span(prepared, piece, &indexed, &authored);
+    polls
 }
+
 fn count_poll(polls: &mut usize) -> bool {
     *polls += 1;
     false
@@ -50,6 +54,26 @@ fn count_profile(
     .unwrap();
     polls
 }
+fn count_trims(
+    request: &Request,
+    piece: &AuthoredPiece,
+    curves: [&OwnedCurve; 2],
+    indexed: &Bindings<'_>,
+) -> usize {
+    let mut polls = 0;
+    trims::certify(request, piece, curves, indexed, &mut || {
+        count_poll(&mut polls)
+    })
+    .unwrap();
+    polls
+}
+
+fn count_cap_profile(request: &Request, piece: &AuthoredPiece, curve: &OwnedCurve) -> usize {
+    let mut polls = 0;
+    cap_profile::certify(request, piece, curve, &mut || count_poll(&mut polls)).unwrap();
+    polls
+}
+
 fn count_span(
     request: &Request,
     piece: &AuthoredPiece,
@@ -146,7 +170,7 @@ fn first_cap_residual_can_cancel_after_profile_completion() {
 fn last_cap_residual_can_cancel_before_a_complete_span_escapes() {
     let (original, prepared, bindings) = frozen();
     let polls = phase_polls(&original, &prepared, &bindings);
-    let error = cancelled_after(&original, &prepared, &bindings, polls.span);
+    let error = cancelled_after(&original, &prepared, &bindings, polls.trims);
     assert_trim_cancelled(error, HistoryRole::LastDepthFace);
 }
 #[test]
@@ -159,4 +183,35 @@ fn cancellation_in_a_later_span_does_not_return_earlier_span_proofs() {
         key(prepared.loops[0][1].span, HistoryRole::FirstDepthEdge)
     );
     assert!(matches!(error.cause, StorageCause::Certificate(_)));
+}
+
+#[test]
+fn cap_profile_can_cancel_after_both_trim_residuals_complete() {
+    let (original, prepared, bindings) = frozen();
+    let polls = phase_polls(&original, &prepared, &bindings);
+    let error = cancelled_after(&original, &prepared, &bindings, polls.cap_profile);
+    let StorageCause::Profile(cause) = error.cause else {
+        panic!("cap profile certificate")
+    };
+    assert!(
+        matches!(cause.cause, CylindricalProfileFailure::Arithmetic(cause)
+        if *cause == BoundedArithmeticFailure::Cancelled)
+    );
+    let expected = ((prepared.tolerance / 2.).next_down() / prepared.radius.max(1.)).next_down();
+    assert_eq!(cause.requested_spatial_limit, expected);
+}
+
+#[test]
+fn lift_alignment_can_cancel_after_cap_profile_completion() {
+    let (original, prepared, bindings) = frozen();
+    let polls = phase_polls(&original, &prepared, &bindings);
+    let error = cancelled_after(&original, &prepared, &bindings, polls.span);
+    let StorageCause::Lift(cause) = error.cause else {
+        panic!("lift alignment certificate")
+    };
+    assert!(
+        matches!(cause.cause, CylindricalProfileFailure::Arithmetic(cause)
+        if *cause == BoundedArithmeticFailure::Cancelled)
+    );
+    assert_eq!(cause.requested_options, Default::default());
 }

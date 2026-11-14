@@ -163,3 +163,57 @@ fn budget_validation_checks_cone_sources_instead_of_only_counts() {
         })
     ));
 }
+
+#[test]
+fn foreign_cap_profile_cannot_borrow_an_authored_profile_publication_receipt() {
+    let (inputs, mut family) = fixture();
+    let member = first_member(&mut family);
+    assert!(member.storage.len() > 1);
+    member.storage[0].cap_profile = member.storage[1].cap_profile.clone();
+    assert!(matches!(
+        certify(&inputs, &family, CylindricalMeasureLimit::Report),
+        Err(BudgetFailure::Cones { cause, .. })
+            if matches!(*cause, planar_cones::ConeFailure::Binding { field: "decoded cap profile source binding", .. })
+    ));
+}
+
+#[test]
+fn missing_cap_join_blocks_publication_even_when_authored_cones_are_complete() {
+    let (inputs, mut family) = fixture();
+    first_member(&mut family).cones.caps.joins.pop();
+    assert!(matches!(
+        certify(&inputs, &family, CylindricalMeasureLimit::Report),
+        Err(BudgetFailure::Cones { .. })
+    ));
+}
+
+#[test]
+fn an_open_decoded_cap_contour_cannot_publish_with_complete_cone_counts() {
+    let (inputs, mut family) = fixture();
+    family.selection.prepared.prepared[0].loops[0][0].poles[0][1] += 0.01;
+    assert!(matches!(
+        certify(&inputs, &family, CylindricalMeasureLimit::Report),
+        Err(BudgetFailure::Cones { cause, .. })
+            if matches!(*cause, planar_cones::ConeFailure::CapJoin { .. })
+    ));
+}
+
+#[test]
+fn cap_homotopy_receipt_uses_strict_clearance_under_the_original_budget() {
+    let (inputs, family) = fixture();
+    let report = certify(&inputs, &family, CylindricalMeasureLimit::Report).unwrap();
+    let proof = &report.cap_homotopy;
+    assert!(proof.envelope >= 0.);
+    assert!(proof.required_clearance > 2. * proof.envelope);
+    assert!(proof.required_clearance < report.limits.clearance);
+}
+#[test]
+fn a_foreign_lift_receipt_cannot_supply_cap_homotopy_evidence() {
+    let (inputs, mut family) = fixture();
+    let member = first_member(&mut family);
+    member.storage[0].cap_lift = member.storage[1].cap_lift.clone();
+    assert!(matches!(
+        certify(&inputs, &family, CylindricalMeasureLimit::Report),
+        Err(BudgetFailure::Source(_))
+    ));
+}

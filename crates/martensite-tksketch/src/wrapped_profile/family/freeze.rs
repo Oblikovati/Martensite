@@ -3,6 +3,7 @@ use super::*;
 use crate::surface_sketch::encoding;
 use martensite_tkbrep::topods::{Builder, Compound};
 pub(super) type Frozen = (Vec<u8>, Vec<BindingKey>, Shape, Vec<(BindingKey, Shape)>);
+#[cfg(test)]
 pub(super) fn construct(requests: &[Request]) -> Checked<Frozen> {
     let mut cancelled = |_| false;
     construct_with_control(requests, &mut Control::new(&mut cancelled))

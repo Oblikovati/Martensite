@@ -11,6 +11,8 @@ pub(super) mod tests;
 
 #[path = "planar_cones_binding.rs"]
 mod binding;
+#[path = "planar_cap_cones.rs"]
+mod cap;
 pub(super) use binding::bind;
 
 type ProofIndex<'a> = BTreeMap<CurveSpan, &'a storage::StoredProof>;
@@ -20,6 +22,7 @@ type AuthoredIndex<'a> = BTreeMap<SurfaceCurveId, &'a [[f64; 2]]>;
 pub(super) struct ConeEvidence {
     pub pieces: Vec<SpanCone>,
     pub joins: Vec<SpanCone>,
+    pub caps: cap::CapConeEvidence,
 }
 pub(super) struct SpanCone {
     pub spans: Vec<CurveSpan>,
@@ -33,6 +36,11 @@ pub(super) enum ConeFailure {
         field: &'static str,
         actual: usize,
         expected: usize,
+    },
+    CapJoin {
+        spans: [CurveSpan; 2],
+        owners: [CornerSource; 2],
+        points: Box<[Option<[f64; 2]>; 2]>,
     },
     Membership {
         span: CurveSpan,
@@ -50,6 +58,14 @@ pub(super) enum ConeFailure {
 impl std::fmt::Display for ConeFailure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::CapJoin {
+                spans,
+                owners,
+                points,
+            } => write!(
+                f,
+                "cap join spans={spans:?}, owners={owners:?}, angle/height endpoints={points:?}; expected one shared authored corner and equal finite endpoints"
+            ),
             Self::Authored(cause) => write!(f, "cone authored source: {cause}"),
             Self::Membership { span, count } => write!(
                 f,
@@ -79,6 +95,7 @@ impl ConeFailure {
     }
 }
 
+#[cfg(test)]
 pub(super) fn certify(
     original: &Request,
     prepared: &Request,
@@ -100,6 +117,7 @@ pub(super) fn certify_with_cancel(
     for contour in &prepared.loops {
         contour_cones(contour, &sources, &mut evidence, &mut cancelled)?;
     }
+    evidence.caps = cap::certify(prepared, stored, &mut cancelled)?;
     Ok(evidence)
 }
 

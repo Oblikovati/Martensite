@@ -7,6 +7,7 @@ pub(in super::super) struct BudgetedFamily {
     pub family: UnqualifiedFamily,
     pub budget: publication_budget::BudgetEvidence,
 }
+#[cfg(test)]
 pub(in super::super) fn construct_budgeted(
     requests: &[Request],
     volume: CylindricalMeasureLimit,

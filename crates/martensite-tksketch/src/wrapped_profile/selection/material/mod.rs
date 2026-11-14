@@ -24,6 +24,7 @@ pub(in super::super) use types::{
 };
 type Checked<T> = Result<T, MaterialFailure>;
 
+#[cfg(test)]
 pub(super) fn certify(
     requests: &[Request],
     prepared: &PreparedSelection,

@@ -2,6 +2,8 @@ use super::*;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(in super::super) enum Quantity {
     Profile,
+    CapHomotopy,
+    CapDomain,
     Storage,
     Trace,
     TraceTolerance,

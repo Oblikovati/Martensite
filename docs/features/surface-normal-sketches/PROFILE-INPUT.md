@@ -38,10 +38,9 @@ not converted. Errors retain offending source IDs or values and the expected
 shape.
 
 General conics, rational and multi-span splines, higher degrees and the remaining
-surface-operation scope are still open. The adapter is compiled only with the
-private rational tests. It does not expose an accepted-body API or qualify the
-remaining publication, sanitizer, glyph-scale, conical-profile and oblique-frame
-work. Existing public primitive operations, package versions and release tags
+surface-operation scope are still open. The adapter is now used by the uncommitted [P4 API checkpoint](PUBLIC-API.md).
+Publication qualification, sanitizer, glyph-scale, conical-profile and
+oblique-frame work remain open. Existing public primitive operations, package versions and release tags
 are unchanged.
 
 ## Verification

@@ -15,6 +15,7 @@ impl FluxSpan {
     }
 }
 
+#[cfg(test)]
 pub(in super::super) fn certify_flux(
     original: &Request,
     prepared: &Request,

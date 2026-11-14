@@ -1,6 +1,9 @@
-//! Rational walking skeleton; no accepted body or new public API is exposed (#418).
+//! Source-bound rational normal extrusion with frozen publication evidence (#418).
 mod angular;
+mod api;
+pub use api::*;
 mod boundaries;
+mod cap_coordinates;
 mod coverage;
 mod family;
 mod history;
@@ -15,6 +18,7 @@ mod publication_budget;
 mod selection;
 mod storage;
 mod subdivision;
+#[cfg(test)]
 mod tests;
 
 use crate::surface_sketch::{SurfaceCurveId, SurfaceRegionId, SurfaceVertexId};
@@ -54,11 +58,17 @@ struct Constructed {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Stage {
+    #[cfg(test)]
     Admission,
+    #[cfg(test)]
     Planar,
+    #[cfg(test)]
     Planning,
+    #[cfg(test)]
     Clearance,
+    #[cfg(test)]
     Construction,
+    #[cfg(test)]
     Freeze,
     Coverage,
     Storage,
@@ -80,9 +90,12 @@ enum RefusalCause {
     NormalMeasure(Box<normal_measure::NormalMeasureFailure>),
     Coverage(Box<coverage::CoverageFailure>),
     Storage(Box<storage::StorageFailure>),
+    #[cfg(test)]
     Planning(Box<subdivision::PlanningFailure>),
+    #[cfg(test)]
     Planar(Box<planar::PlanarFailure>),
     Cones(Box<planar_cones::ConeFailure>),
+    #[cfg(test)]
     Clearance(Box<planar_clearance::ClearanceFailure>),
 }
 impl std::fmt::Display for RefusalCause {
@@ -92,9 +105,12 @@ impl std::fmt::Display for RefusalCause {
             Self::NormalMeasure(cause) => write!(formatter, "{cause}"),
             Self::Native(cause) => write!(formatter, "{cause}"),
             Self::Storage(cause) => write!(formatter, "{cause}"),
+            #[cfg(test)]
             Self::Planning(cause) => write!(formatter, "{cause}"),
+            #[cfg(test)]
             Self::Planar(cause) => write!(formatter, "{cause}"),
             Self::Cones(cause) => write!(formatter, "{cause}"),
+            #[cfg(test)]
             Self::Clearance(cause) => write!(formatter, "{cause}"),
         }
     }

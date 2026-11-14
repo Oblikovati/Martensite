@@ -28,6 +28,12 @@ pub(super) struct SourceParameterInterval {
     pub index: u64,
     pub reversed: bool,
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct SourceParameterPoint {
+    pub curve: SurfaceCurveId,
+    pub level: u8,
+    pub numerator: u64,
+}
 struct ProfileIndex<'a> {
     vertices: BTreeMap<ProfileVertexId, [f64; 2]>,
     curves: BTreeMap<ProfileCurveId, &'a ProfileCurve>,
@@ -126,11 +132,56 @@ fn unique<K: Ord + Copy, V>(
 
 impl CurveDirections {
     pub(super) fn source_interval(&self, span: CurveSpan) -> Checked<SourceParameterInterval> {
-        let reversed = *self
-            .0
-            .get(&span.curve)
-            .ok_or(ProfileInputFailure::UnknownSource(span.curve))?;
-        mapped_interval(span, reversed)
+        mapped_interval(span, self.reversed(span.curve)?)
+    }
+    pub(super) fn source_point(
+        &self,
+        curve: SurfaceCurveId,
+        numerator: u32,
+        level: u8,
+    ) -> Checked<SourceParameterPoint> {
+        mapped_point(curve, numerator, level, self.reversed(curve)?)
+    }
+    fn reversed(&self, curve: SurfaceCurveId) -> Checked<bool> {
+        self.0
+            .get(&curve)
+            .copied()
+            .ok_or(ProfileInputFailure::UnknownSource(curve))
+    }
+}
+
+fn mapped_point(
+    curve: SurfaceCurveId,
+    numerator: u32,
+    level: u8,
+    reversed: bool,
+) -> Checked<SourceParameterPoint> {
+    let whole = point_domain(curve, numerator, level)?;
+    let point = if reversed {
+        whole - u64::from(numerator)
+    } else {
+        u64::from(numerator)
+    };
+    Ok(canonical_point(curve, point, level))
+}
+
+fn point_domain(curve: SurfaceCurveId, numerator: u32, level: u8) -> Checked<u64> {
+    1_u64
+        .checked_shl(u32::from(level))
+        .filter(|whole| numerator > 0 && u64::from(numerator) < *whole)
+        .ok_or(ProfileInputFailure::Point {
+            curve,
+            numerator,
+            level,
+        })
+}
+
+fn canonical_point(curve: SurfaceCurveId, numerator: u64, level: u8) -> SourceParameterPoint {
+    let shift = numerator.trailing_zeros().min(u32::from(level));
+    SourceParameterPoint {
+        curve,
+        level: level - shift as u8,
+        numerator: numerator >> shift,
     }
 }
 

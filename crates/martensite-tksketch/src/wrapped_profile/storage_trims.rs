@@ -75,11 +75,7 @@ fn trim_failure(edge: BindingKey, face: BindingKey, cause: StorageFailure) -> St
 }
 
 pub(super) fn cap_bindings(request: &Request, piece: &AuthoredPiece) -> [TrimBinding; 2] {
-    let poles: Vec<_> = piece
-        .poles
-        .iter()
-        .map(|[s, z]| [s / request.radius, *z])
-        .collect();
+    let poles: Vec<_> = cap_coordinates::angular_controls(&piece.poles, request.radius);
     let roles = [
         (HistoryRole::FirstDepthEdge, HistoryRole::FirstDepthFace),
         (HistoryRole::LastDepthEdge, HistoryRole::LastDepthFace),

@@ -2,6 +2,9 @@
 use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::CylindricalMeasureLimit;
 use std::collections::{BTreeMap, BTreeSet};
+mod arithmetic;
+mod cap_homotopy;
+mod cap_realization;
 mod error;
 mod member;
 mod native;
@@ -19,12 +22,20 @@ pub(super) struct BudgetLimits {
     clearance: f64,
     retained_vs_ideal: CylindricalMeasureLimit,
 }
+pub(super) struct BudgetShares {
+    pub spatial: f64,
+    pub profile: f64,
+    pub storage: f64,
+    pub trace: f64,
+    pub clearance: f64,
+}
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct MemberBounds {
     pub profile: f64,
     pub storage: f64,
     pub trace: f64,
     pub trace_tolerance: f64,
+    pub cap_realization: f64,
     pub native_modes: [martensite_tkbo::body_check::CheckMode; 4],
 }
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -39,7 +50,9 @@ pub(super) struct BudgetEvidence {
     pub limits: BudgetLimits,
     pub members: BTreeMap<SurfaceRegionId, MemberBounds>,
     pub volume: FamilyVolumeBounds,
+    pub cap_homotopy: cap_homotopy::CapHomotopyBounds,
 }
+#[cfg(test)]
 pub(super) fn certify(
     originals: &[Request],
     family: &family::UnqualifiedFamily,
@@ -63,14 +76,25 @@ pub(super) fn certify_with_limits(
     owners(originals, family)?;
     let members = member_budgets(originals, family, limits)?;
     member::clearance(family, limits.clearance)?;
+    let cap_homotopy = cap_homotopy::certify(family)?;
     let volume = FamilyVolumeBounds::certify(family, limits.retained_vs_ideal)?;
     Ok(BudgetEvidence {
         limits,
         members,
         volume,
+        cap_homotopy,
     })
 }
 impl BudgetLimits {
+    pub(super) fn shares(&self) -> BudgetShares {
+        BudgetShares {
+            spatial: self.spatial,
+            profile: self.profile,
+            storage: self.storage,
+            trace: self.trace,
+            clearance: self.clearance,
+        }
+    }
     fn new(spatial: f64, retained_vs_ideal: CylindricalMeasureLimit) -> Checked<Self> {
         admit_spatial(spatial)?;
         volume::admit(retained_vs_ideal)?;

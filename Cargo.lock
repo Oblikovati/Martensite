@@ -1117,6 +1117,7 @@ version = "0.7.1"
 dependencies = [
  "martensite-cmath",
  "martensite-test-support",
+ "martensite-tkbo",
  "martensite-tkbrep",
  "martensite-tkernel",
  "martensite-tkg2d",
@@ -1128,6 +1129,7 @@ dependencies = [
  "martensite-tkmesh",
  "martensite-tkprim",
  "martensite-tkservice",
+ "martensite-tksketch",
  "martensite-tktopalgo",
 ]
 

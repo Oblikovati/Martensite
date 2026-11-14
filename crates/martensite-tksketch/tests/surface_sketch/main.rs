@@ -82,3 +82,5 @@ mod contracts;
 mod native_cone;
 
 mod cone_acceptance;
+
+mod wrapped_profile;

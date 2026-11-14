@@ -17,6 +17,7 @@ impl std::fmt::Display for PlanningFailure {
     }
 }
 
+#[cfg(test)]
 pub(super) fn prepare(request: &Request) -> Result<Request, PlanningFailure> {
     prepare_with_cancel(request, || false)
 }

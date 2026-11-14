@@ -49,6 +49,11 @@ pub(in super::super) enum ProfileInputFailure {
     },
     UnknownSource(SurfaceCurveId),
     Interval(CurveSpan),
+    Point {
+        curve: SurfaceCurveId,
+        numerator: u32,
+        level: u8,
+    },
 }
 impl ProfileInputFailure {
     fn expected(&self) -> &'static str {
@@ -67,7 +72,13 @@ impl ProfileInputFailure {
             Self::Endpoint { .. } => "endpoint control bits equal to the authored vertex bits",
             Self::NonFinite { .. } => "finite developed control coordinates",
             Self::UnknownSource(_) => "a selected authored curve",
-            Self::Interval(_) => "a nonempty canonical dyadic interval with level below 64",
+            Self::Interval(_) | Self::Point { .. } => self.parameter_shape(),
         }
+    }
+    fn parameter_shape(&self) -> &'static str {
+        if matches!(self, Self::Point { .. }) {
+            return "an interior dyadic source point with level below 64";
+        }
+        "a nonempty canonical dyadic interval with level below 64"
     }
 }
