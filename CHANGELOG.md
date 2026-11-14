@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added frozen incidence and curve-representation coverage checks for private rational wrapped profiles, with semantic-owner diagnostics and malformed-body controls (#418).
+
 - Added certified conditional flux integration for retained rational ruled sides and cylindrical cap pcurves, with aggregate work limits and per-span receipts (#418).
 
 - Added full-interval cylindrical cap-trim residual certificates over retained rational space curves and polynomial pcurves, checked against both retained edge and face tolerances (#418).

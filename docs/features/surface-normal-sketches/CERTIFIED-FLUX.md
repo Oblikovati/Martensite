@@ -4,8 +4,9 @@ The private rational pipeline retains a certified signed flux enclosure from its
 decoded ruled patches and cap-pcurve occurrences. The public math entry point is
 `certify_cylindrical_boundary_flux`. Its quantity is the boundary flux of
 `F(x) = x/3`, with parameter multiplicity. Interpreting that quantity as body
-volume still requires complete face/trim coverage, orientation and injectivity
-proofs. The result remains `Unqualified`.
+volume still requires ideal-realization correspondence and injectivity proofs.
+The private pipeline now checks [frozen incidence and representation
+coverage](FROZEN-COVERAGE.md) before accumulating flux. The result remains `Unqualified`.
 
 ## Ruled-side reduction
 
@@ -101,7 +102,7 @@ seam-crossing and two-turn helical controls remain passing.
 ## Remaining measure and publication gates
 
 The conditional flux enclosure is not yet a published volume measure. Required
-work includes complete frozen face/wire/trim occurrence coverage, a certified
+work includes a certified
 comparison with the ideal normal-extrusion realization under the shared error
 budget, disconnected material classification, complete history binding,
 isolation and replay/concurrency verification. Glyph scale, oblique frames and

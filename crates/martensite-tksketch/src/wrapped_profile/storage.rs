@@ -7,7 +7,7 @@ mod flux;
 mod incidence;
 #[cfg(test)]
 #[path = "storage_tests.rs"]
-mod tests;
+pub(super) mod tests;
 #[path = "storage_trims.rs"]
 mod trims;
 use super::*;

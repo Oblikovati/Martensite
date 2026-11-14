@@ -1,6 +1,7 @@
 //! Rational walking skeleton; no accepted body or new public API is exposed (#418).
 mod angular;
 mod boundaries;
+mod coverage;
 mod native;
 mod pipeline;
 mod planar;
@@ -52,6 +53,7 @@ enum Stage {
     Clearance,
     Construction,
     Freeze,
+    Coverage,
     Storage,
     Cones,
     Validation,
@@ -68,6 +70,7 @@ struct Refusal {
 #[derive(Debug)]
 enum RefusalCause {
     Native(Box<Failure>),
+    Coverage(Box<coverage::CoverageFailure>),
     Storage(Box<storage::StorageFailure>),
     Planning(Box<subdivision::PlanningFailure>),
     Planar(Box<planar::PlanarFailure>),
@@ -77,6 +80,7 @@ enum RefusalCause {
 impl std::fmt::Display for RefusalCause {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Coverage(cause) => write!(formatter, "{cause}"),
             Self::Native(cause) => write!(formatter, "{cause}"),
             Self::Storage(cause) => write!(formatter, "{cause}"),
             Self::Planning(cause) => write!(formatter, "{cause}"),

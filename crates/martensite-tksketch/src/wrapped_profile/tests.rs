@@ -49,6 +49,8 @@ pub(super) fn request() -> Request {
 fn rational_loop_with_hole_freezes_measures_and_exports_without_publication() {
     let result = pipeline::wrap_extrude(&request()).unwrap();
     assert_eq!(result.keys.len(), 117);
+    assert_eq!(result.coverage.binding_count, result.keys.len());
+    assert_eq!(result.coverage.euler_characteristic, 0);
     assert!(result.planar.area.encloses(3.525));
     assert_eq!(result.planar.certificate.components, 2);
     assert_eq!(

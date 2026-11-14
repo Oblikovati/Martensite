@@ -17,11 +17,13 @@ type SourceCertificates = (
     planar_cones::ConeEvidence,
     planar_clearance::OriginalClearance,
     CertifiedCylindricalFlux,
+    coverage::CoverageEvidence,
 );
 type FrozenParts = (Vec<u8>, Vec<BindingKey>, Shape, Vec<(BindingKey, Shape)>);
 
 pub(super) struct Unqualified {
     pub bytes: Vec<u8>,
+    pub coverage: coverage::CoverageEvidence,
     pub boundary_flux: CertifiedCylindricalFlux,
     pub keys: Vec<BindingKey>,
     pub report: ValidationReport,
@@ -42,24 +44,45 @@ fn at<T>(region: SurfaceRegionId, stage: Stage, result: Result<T, Failure>) -> R
 }
 
 pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
-    let region = request.region;
-    at(region, Stage::Admission, admit(request))?;
+    at(request.region, Stage::Admission, admit(request))?;
     let planar = planar_stage(request)?;
     let prepared = planning_stage(request)?;
     let clearance = clearance_stage(request, &prepared)?;
-    let constructed = at(region, Stage::Construction, native::construct(&prepared))?;
-    let (bytes, keys, decoded, bindings) = frozen_parts(region, &constructed)?;
-    let storage = storage_stage(region, request, &prepared, &bindings)?;
+    let (bytes, keys, decoded, bindings) = construct_frozen(&prepared)?;
+    let coverage = coverage_stage(&prepared, &decoded, &bindings)?;
+    let storage = storage_stage(request.region, request, &prepared, &bindings)?;
     bind_clearance(&clearance, request, &prepared, &storage)?;
     let cones = cone_stage(request, &prepared, &storage)?;
     let boundary_flux = flux_stage(request, &prepared, &bindings, &storage)?;
     let validation = checked_measure(request, &decoded)?;
+    let certificates = (planar, cones, clearance, boundary_flux, coverage);
     Ok(unqualified(
         (bytes, keys),
         validation,
         storage,
-        (planar, cones, clearance, boundary_flux),
+        certificates,
     ))
+}
+
+fn coverage_stage(
+    request: &Request,
+    root: &Shape,
+    bindings: &[(BindingKey, Shape)],
+) -> Result<coverage::CoverageEvidence, Refusal> {
+    coverage::certify(request, root, bindings).map_err(|cause| Refusal {
+        stage: Stage::Coverage,
+        region: request.region,
+        cause: RefusalCause::Coverage(Box::new(cause)),
+    })
+}
+
+fn construct_frozen(request: &Request) -> Result<FrozenParts, Refusal> {
+    let constructed = at(
+        request.region,
+        Stage::Construction,
+        native::construct(request),
+    )?;
+    frozen_parts(request.region, &constructed)
 }
 
 fn frozen_parts(
@@ -164,9 +187,10 @@ fn unqualified(
     (bytes, keys): (Vec<u8>, Vec<BindingKey>),
     (report, measure): NativeMeasure,
     storage: Vec<storage::StoredProof>,
-    (planar, cones, clearance, boundary_flux): SourceCertificates,
+    (planar, cones, clearance, boundary_flux, coverage): SourceCertificates,
 ) -> Unqualified {
     Unqualified {
+        coverage,
         boundary_flux,
         bytes,
         keys,

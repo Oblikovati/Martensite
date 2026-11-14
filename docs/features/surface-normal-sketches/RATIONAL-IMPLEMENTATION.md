@@ -187,5 +187,7 @@ UV contributions are exact polynomial integrals. The enclosure sums every
 declared contribution before final outward rounding and records global/per-span
 work. The native volume estimate remains separate. See
 [certified flux](CERTIFIED-FLUX.md) for the derivation, source binding and controls.
-Full frozen face/trim coverage and ideal-realization measure correspondence
-remain required before the scalar becomes a published body measure.
+The pipeline now checks [frozen face/wire/edge incidence and retained curve
+representation coverage](FROZEN-COVERAGE.md) before storage and flux accumulation.
+Ideal-realization measure correspondence and the remaining publication gates
+still prevent interpreting the scalar as a published body measure.
