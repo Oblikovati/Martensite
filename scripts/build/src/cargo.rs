@@ -6,6 +6,7 @@ use serde::Deserialize;
 
 use crate::error::{BuildError, BuildResult};
 use crate::process::{CommandRunner, CommandSpec};
+mod script_budget_profiles;
 
 /// Which packages a cargo command acts on.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -183,14 +184,29 @@ impl<'a> CargoTasks<'a> {
             ]))
     }
 
-    /// Runs unit, integration and doc tests; keeps going past the first failure.
+    /// Runs unit, integration and doc tests with CI's package budget profiles.
+    /// A failed profile group does not skip later groups; other packages keep their ambient profile.
+    /// Example: `tasks.test(&selection, &BuildTarget::Host)?;`.
     pub fn test(&self, selection: &PackageSelection, target: &BuildTarget) -> BuildResult<()> {
+        let outcomes: Vec<_> = script_budget_profiles::groups(selection, self.runner, self.root)?
+            .into_iter()
+            .map(|group| self.test_group(&group.selection, target, group.optimization))
+            .collect();
+        outcomes.into_iter().collect()
+    }
+    fn test_group(
+        &self,
+        selection: &PackageSelection,
+        target: &BuildTarget,
+        optimization: script_budget_profiles::Optimization,
+    ) -> BuildResult<()> {
         let mut spec = self
             .selected("test", selection, target)
             .arg("--no-fail-fast");
         if tests_case_runner(selection) {
             spec = spec.args(["--features", "martensite-process-policy/case-runner"]);
         }
+        let spec = optimization.apply(spec);
         self.runner.run(&renderer_test_environment(
             spec, self.root, selection, target,
         ))
@@ -359,6 +375,8 @@ mod windows_build_tests;
 
 #[cfg(test)]
 mod renderer_font_tests;
+#[cfg(test)]
+mod script_budget_profile_tests;
 
 #[cfg(test)]
 mod tests {
@@ -404,8 +422,11 @@ mod tests {
     fn gate_commands_exclude_host_math_and_optional_integration_features() {
         // `host-libm` (platform C library results) and `libm-attribution` must never reach
         // a PR or release gate. Only case-runner coverage is selected explicitly (#250).
-        let runner = RecordingRunner::default();
-        let tasks = CargoTasks::new(&runner, Path::new("/r"));
+        let runner = script_budget_profile_tests::workspace_runner(&[
+            "martensite-process-policy",
+            "martensite-boolean-cases",
+        ]);
+        let tasks = CargoTasks::new(&runner, Path::new("/repo"));
         let target = BuildTarget::Host;
         tasks.clippy(&PackageSelection::Workspace, &target).unwrap();
         tasks
@@ -414,7 +435,7 @@ mod tests {
         tasks.test(&PackageSelection::Workspace, &target).unwrap();
         tasks.package_sources(&PackageSelection::Workspace).unwrap();
         let commands = runner.commands();
-        assert_eq!(commands.len(), 4 + usize::from(cfg!(windows)));
+        assert_eq!(commands.len(), 6 + usize::from(cfg!(windows)));
         for command in commands {
             let command = command.replace(" --features martensite-process-policy/case-runner", "");
             assert!(

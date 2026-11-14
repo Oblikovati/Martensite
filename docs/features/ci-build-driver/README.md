@@ -57,6 +57,15 @@ The shared checks and packaging run alongside tests. A required `release` result
 checks both matrices before publication. Local `cargo xtask release` and `ci run`
 without `--checks-only` retain the complete sequential pipeline.
 
+The driver selects the level-1 dev/test profile for script-budget packages,
+matching package CI. Existing per-package Cargo overrides remain in force. Local mixed selections run those
+packages in a separate Cargo command and keep every other package on its
+existing ambient profile. Each selected package runs once; workspace exclusions
+apply before profile grouping. A failed group does not skip later groups.
+The release matrix retains its existing level-1 setting for the whole shard.
+See [script-budget profiles](script-budget-profiles.md) for the policy and
+Bug #447's measurements.
+
 When process-policy is selected, the shared test command explicitly enables
 `martensite-process-policy/case-runner`. This preserves the unit tests that a
 combined toolkit invocation enabled through dependency feature unification.

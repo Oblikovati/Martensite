@@ -3,25 +3,36 @@ use super::*;
 use crate::fake_runner::RecordingRunner;
 
 fn test_spec(root: &Path, selection: &PackageSelection, target: &BuildTarget) -> CommandSpec {
-    let runner = RecordingRunner::default();
+    let runner =
+        script_budget_profile_tests::workspace_runner(&["martensite-vulkan", "martensite-tkmath"]);
     CargoTasks::new(&runner, root)
         .test(selection, target)
         .unwrap();
-    runner.command_specs().remove(0)
+    runner
+        .command_specs()
+        .into_iter()
+        .find(|spec| spec.display().starts_with("cargo test "))
+        .unwrap()
 }
 fn unbound_test_spec(
     root: &Path,
     selection: &PackageSelection,
     target: &BuildTarget,
 ) -> CommandSpec {
-    let runner = RecordingRunner::default();
+    let runner =
+        script_budget_profile_tests::workspace_runner(&["martensite-vulkan", "martensite-tkmath"]);
+    // This helper checks the first profile group, like test_spec above.
+    let group = script_budget_profiles::groups(selection, &runner, root)
+        .unwrap()
+        .remove(0);
+    let selection = &group.selection;
     let mut spec = CargoTasks::new(&runner, root)
         .selected("test", selection, target)
         .arg("--no-fail-fast");
     if tests_case_runner(selection) {
         spec = spec.args(["--features", "martensite-process-policy/case-runner"]);
     }
-    spec
+    group.optimization.apply(spec)
 }
 fn bound_test_spec(root: &Path, selection: &PackageSelection, target: &BuildTarget) -> CommandSpec {
     let config = root.join("scripts/install/renderer-fontconfig.conf");
