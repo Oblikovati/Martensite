@@ -14,6 +14,7 @@ mod source;
 #[cfg(test)]
 mod tests;
 mod trigonometric;
+mod trim;
 mod types;
 use crate::predicates::roots::certificate_arithmetic::{
     bernstein_bounds as polynomial,
@@ -25,6 +26,9 @@ use error::Checked;
 pub use error::{CylindricalProfileError, CylindricalProfileFailure};
 pub use planning::plan_cylindrical_fit;
 pub use planning_types::{CylindricalFitPlan, CylindricalFitQuery};
+pub use trim::{
+    CertifiedCylindricalTrim, CylindricalTrimError, CylindricalTrimQuery, certify_cylindrical_trim,
+};
 pub use types::*;
 
 /// Certify developed position error and local-parameter derivative discrepancy.

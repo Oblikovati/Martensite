@@ -8,7 +8,11 @@ use martensite_tkg2d::geom2d::Geom2dBezierCurve;
 #[path = "storage_trims_tests.rs"]
 mod tests;
 
+#[path = "storage_cap_residuals.rs"]
+mod cap_residuals;
+
 pub(in super::super) struct TrimEvidence {
+    pub cap_residuals: [CertifiedCylindricalTrim; 2],
     pub cap_pcurves: usize,
     pub side_pcurves: usize,
     pub maximum_tolerance: f64,
@@ -17,19 +21,21 @@ pub(in super::super) struct TrimEvidence {
 pub(super) fn certify(
     request: &Request,
     piece: &AuthoredPiece,
+    curves: [&OwnedCurve; 2],
     bindings: &Bindings<'_>,
 ) -> Result<TrimEvidence, StorageFailure> {
-    let cap_pcurves = cap_bindings(request, piece);
+    let caps = cap_residuals::certify(request, piece, curves, bindings)?;
     let side_pcurves = side_bindings(piece);
-    let mut maximum_tolerance: f64 = 0.;
-    for (edge, face, poles) in cap_pcurves.iter().chain(&side_pcurves) {
+    let mut maximum_tolerance = caps.maximum_tolerance;
+    for (edge, face, poles) in &side_pcurves {
         let tolerance = check_binding(*edge, *face, poles, request.tolerance / 2., bindings)?;
         maximum_tolerance = maximum_tolerance.max(tolerance);
     }
     Ok(TrimEvidence {
-        cap_pcurves: cap_pcurves.len(),
+        cap_pcurves: caps.proofs.len(),
         side_pcurves: side_pcurves.len(),
         maximum_tolerance,
+        cap_residuals: caps.proofs,
     })
 }
 

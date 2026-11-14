@@ -12,10 +12,11 @@ use super::*;
 use crate::surface_sketch::HistoryRole;
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedCylindricalDepths, CertifiedCylindricalProfile, CertifiedCylindricalStorage,
-    CylindricalDepthFailure, CylindricalProfileError, CylindricalProfileInterval,
-    CylindricalProfileQuery, CylindricalStorageError, CylindricalStorageLimits,
-    CylindricalStorageQuery, MetricBezier, certify_cylindrical_depths, certify_cylindrical_profile,
-    certify_cylindrical_storage,
+    CertifiedCylindricalTrim, CylindricalDepthFailure, CylindricalProfileError,
+    CylindricalProfileInterval, CylindricalProfileQuery, CylindricalStorageError,
+    CylindricalStorageLimits, CylindricalStorageQuery, CylindricalTrimError, CylindricalTrimQuery,
+    MetricBezier, certify_cylindrical_depths, certify_cylindrical_profile,
+    certify_cylindrical_storage, certify_cylindrical_trim,
 };
 use std::collections::BTreeMap;
 
@@ -52,6 +53,7 @@ enum StorageCause {
     Native(Box<Failure>),
     Certificate(Box<CylindricalStorageError>),
     Profile(Box<CylindricalProfileError>),
+    CapResidual(Box<CylindricalTrimError>),
     Depths(Box<CylindricalDepthFailure>),
     Trim {
         face: BindingKey,
@@ -72,6 +74,7 @@ impl std::fmt::Display for StorageFailure {
         match &self.cause {
             StorageCause::Native(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Certificate(cause) => write!(formatter, "{:?}: {cause}", self.key),
+            StorageCause::CapResidual(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Profile(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Depths(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Tolerance { actual, maximum } => {
@@ -156,7 +159,6 @@ fn certify_span(
     let span = piece.span;
     let first_key = key(span, HistoryRole::FirstDepthEdge);
     let [a, b] = captured_span(piece, bindings)?;
-    let trims = trims::certify(request, piece, bindings)?;
     let certificate = prove_captured(request, first_key, [&a, &b])?;
     let depths = prove_depths(request, first_key, &certificate)?;
     let source = authored
@@ -164,6 +166,7 @@ fn certify_span(
         .copied()
         .ok_or_else(|| mismatch(first_key, "authored curve membership", vec![0], vec![1]))?;
     let profile = prove_profile(request, span, &a, source)?;
+    let trims = trims::certify(request, piece, [&a, &b], bindings)?;
     Ok(StoredProof {
         span,
         certificate,

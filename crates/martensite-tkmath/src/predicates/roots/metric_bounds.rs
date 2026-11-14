@@ -42,10 +42,11 @@ mod cylindrical_profile;
 mod cylindrical_storage;
 pub use super::certificate_arithmetic::bounded_failure::BoundedArithmeticFailure;
 pub use cylindrical_profile::{
-    CertifiedCylindricalProfile, CylindricalChartPlan, CylindricalFitChart, CylindricalFitPlan,
-    CylindricalFitQuery, CylindricalProfileBehavior, CylindricalProfileError,
-    CylindricalProfileFailure, CylindricalProfileInterval, CylindricalProfileOptions,
-    CylindricalProfileQuery, certify_cylindrical_profile, plan_cylindrical_charts,
+    CertifiedCylindricalProfile, CertifiedCylindricalTrim, CylindricalChartPlan,
+    CylindricalFitChart, CylindricalFitPlan, CylindricalFitQuery, CylindricalProfileBehavior,
+    CylindricalProfileError, CylindricalProfileFailure, CylindricalProfileInterval,
+    CylindricalProfileOptions, CylindricalProfileQuery, CylindricalTrimError, CylindricalTrimQuery,
+    certify_cylindrical_profile, certify_cylindrical_trim, plan_cylindrical_charts,
     plan_cylindrical_fit,
 };
 mod inequality;

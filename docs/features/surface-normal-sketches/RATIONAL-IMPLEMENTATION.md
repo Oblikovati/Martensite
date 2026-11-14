@@ -164,8 +164,9 @@ pole agreement; a tiny-span control also covers native weight demotion. P3
 must prove topology while permitting the consistent endpoint motion covered by
 the profile error bound. Decoded pcurve domains, coefficient/weight bindings and raw/effective
 topology tolerance caps now have direct checks; see
-[retained trims](STORED-TRIMS.md). Full cap spatial residuals and the remaining
-ordered trim-publication checks are still open. The implemented storage certificate does
+[retained trims](STORED-TRIMS.md). Full cap spatial residuals now have outward
+same-parameter certificates against both retained topology tolerances. The
+remaining ordered trim-publication checks are still open. The implemented storage certificate does
 not satisfy these remaining obligations.
 
 P3 must establish planar admission, clearance, regularity and the topology-

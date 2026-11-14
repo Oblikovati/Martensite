@@ -176,3 +176,52 @@ fn invalid_raw_face_tolerance_is_not_hidden_by_the_tool_floor() {
         assert!(error.to_string().contains("retained tolerance="));
     }
 }
+
+#[test]
+fn every_cap_has_a_full_interval_bound_within_both_retained_tolerances() {
+    let (original, request, bindings) = frozen();
+    let proofs = super::super::certify(&original, &request, &bindings).unwrap();
+    for stored in proofs {
+        for cap in stored.trims.cap_residuals {
+            assert!(cap.spatial_residual_bound() <= cap.requested_spatial_limit());
+            assert!(cap.requested_spatial_limit() <= request.tolerance / 2.);
+        }
+    }
+}
+
+#[test]
+fn a_small_retained_tolerance_must_cover_the_actual_cap_residual() {
+    let mut original = super::super::super::tests::request();
+    original.tolerance = 1e-2;
+    let (original, request, bindings) = super::super::tests::frozen_with(original);
+    super::super::certify(&original, &request, &bindings).unwrap();
+    let changed = lower_retained_cap(&request, &bindings);
+    let error = super::super::certify(&original, &request, &bindings)
+        .err()
+        .unwrap();
+    assert_eq!(error.key, changed);
+    assert_numeric_cap_refusal(&error);
+}
+
+fn lower_retained_cap(request: &Request, bindings: &[(BindingKey, Shape)]) -> BindingKey {
+    let indexed = index(bindings).unwrap();
+    let piece = request.loops[0]
+        .iter()
+        .find(|p| p.span.curve.0 == 12)
+        .unwrap();
+    let key = key(piece.span, HistoryRole::FirstDepthEdge);
+    let edge = topods::edge(lookup(key, &indexed).unwrap()).unwrap();
+    martensite_tkbrep::brep::access::edge_tshape(&edge, "trim test")
+        .unwrap()
+        .set_tolerance(1e-7);
+    key
+}
+
+fn assert_numeric_cap_refusal(error: &StorageFailure) {
+    let StorageCause::CapResidual(cause) = trim_cause(error) else {
+        panic!("expected cap residual: {error}");
+    };
+    assert_eq!(cause.requested_spatial_limit, 1e-7);
+    assert!(error.to_string().contains("cylindrical cap trim"));
+    assert!(matches!(cause.cause, martensite_tkmath::predicates::roots::metric_bounds::CylindricalProfileFailure::Uncertified { .. }));
+}
