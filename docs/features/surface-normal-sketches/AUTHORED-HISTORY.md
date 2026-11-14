@@ -54,7 +54,8 @@ controls were rerun after that cleanup. The approximate scan found no new
 history function over 20 lines, file over 500 lines or nesting above two.
 
 This establishes private extrusion history. Copy, Boolean and healing history
-composition, application naming, separate-process replay, concurrent-operation
-checks and publication remain separate gates. No public API, dependency, package
-version or release tag changed. The full affected-package PR gate remains
+composition and application naming remain separate. The later
+[family replay controls](FAMILY-REPLAY.md) cover separate processes and overlapping
+operations; sanitizer validation and publication remain open. No public API,
+dependency, package version or release tag changed. The full affected-package PR gate remains
 required before a push.

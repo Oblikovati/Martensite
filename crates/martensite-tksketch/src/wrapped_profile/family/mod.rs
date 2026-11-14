@@ -5,6 +5,8 @@ mod error;
 mod freeze;
 pub(super) use error::FamilyFailure;
 #[cfg(test)]
+mod replay_tests;
+#[cfg(test)]
 mod tests;
 type Checked<T> = Result<T, FamilyFailure>;
 pub(super) struct UnqualifiedFamily {
@@ -22,8 +24,7 @@ pub(super) fn construct(requests: &[Request]) -> Checked<UnqualifiedFamily> {
     let (bytes, keys, root, bindings) = freeze::construct(prepared)?;
     let (coverage, views) = coverage::certify_family(prepared, &root, &bindings)
         .map_err(|cause| FamilyFailure::Coverage(Box::new(cause)))?;
-    let history = history::certify(requests, &selection, &keys)
-        .map_err(|cause| FamilyFailure::History(Box::new(cause)))?;
+    let history = history_stage(requests, &selection, &keys)?;
     let stored = store(requests, prepared, views)?;
     bind(requests, &selection, &stored)?;
     let members = finish(requests, prepared, stored)?;
@@ -94,4 +95,13 @@ fn membership(region: SurfaceRegionId) -> FamilyFailure {
             "family member={region:?}; expected one original, prepared and decoded member"
         ))),
     }
+}
+
+fn history_stage(
+    originals: &[Request],
+    selection: &selection::QualifiedSelection,
+    keys: &[BindingKey],
+) -> Checked<history::HistoryEvidence> {
+    history::certify(originals, selection, keys)
+        .map_err(|cause| FamilyFailure::History(Box::new(cause)))
 }

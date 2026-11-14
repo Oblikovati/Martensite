@@ -1,7 +1,7 @@
 //! Frozen family checks retain authored identities through one shared table.
 use super::super::tests::{contour, request};
 use super::*;
-fn requests() -> Vec<Request> {
+pub(super) fn requests() -> Vec<Request> {
     let mut second = request();
     second.region = SurfaceRegionId(100);
     second.loops = vec![contour(
