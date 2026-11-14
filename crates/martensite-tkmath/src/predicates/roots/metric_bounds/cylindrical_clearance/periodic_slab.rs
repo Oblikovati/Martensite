@@ -71,17 +71,21 @@ fn periodic(
     };
     let mut arithmetic = Arithmetic::new(policy, cancelled);
     let width = source_width(&source.sources, &mut arithmetic)?;
-    let pi = circular_constants::pi(&mut arithmetic)?;
-    let radius = arithmetic.scalar(source.radius)?;
-    let diameter = arithmetic.fraction(&radius, 2, 1)?;
-    let period = arithmetic.multiply(&pi, &diameter)?;
+    let period = circumference(source.radius, &mut arithmetic)?;
     let gap = arithmetic.subtract(&period, &width)?;
     let required = arithmetic.scalar(source.clearance)?;
     require_gap(&gap, &required, &arithmetic)?;
     Ok(assemble(source, width, period, gap, &arithmetic))
 }
 
-fn source_width(sources: &[Vec<u64>], arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
+pub(super) fn circumference(radius: f64, arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
+    let pi = circular_constants::pi(arithmetic)?;
+    let radius = arithmetic.scalar(radius)?;
+    let diameter = arithmetic.fraction(&radius, 2, 1)?;
+    Ok(arithmetic.multiply(&pi, &diameter)?)
+}
+
+pub(super) fn source_width(sources: &[Vec<u64>], arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
     let mut range: Option<Interval> = None;
     for source in sources {
         let poles = restricted_source(source, arithmetic)?;
