@@ -25,18 +25,28 @@ pub(super) fn certify(
     bindings: &Bindings<'_>,
 ) -> Result<TrimEvidence, StorageFailure> {
     let caps = cap_residuals::certify(request, piece, curves, bindings)?;
+    let (side_pcurves, side_tolerance) = side_trims(request, piece, bindings)?;
+    let maximum_tolerance = caps.maximum_tolerance.max(side_tolerance);
+    Ok(TrimEvidence {
+        cap_pcurves: caps.proofs.len(),
+        side_pcurves,
+        maximum_tolerance,
+        cap_residuals: caps.proofs,
+    })
+}
+
+pub(super) fn side_trims(
+    request: &Request,
+    piece: &AuthoredPiece,
+    bindings: &Bindings<'_>,
+) -> Result<(usize, f64), StorageFailure> {
     let side_pcurves = side_bindings(piece);
-    let mut maximum_tolerance = caps.maximum_tolerance;
+    let mut maximum_tolerance: f64 = 0.;
     for (edge, face, poles) in &side_pcurves {
         let tolerance = check_binding(*edge, *face, poles, request.tolerance / 2., bindings)?;
         maximum_tolerance = maximum_tolerance.max(tolerance);
     }
-    Ok(TrimEvidence {
-        cap_pcurves: caps.proofs.len(),
-        side_pcurves: side_pcurves.len(),
-        maximum_tolerance,
-        cap_residuals: caps.proofs,
-    })
+    Ok((side_pcurves.len(), maximum_tolerance))
 }
 
 type TrimBinding = (BindingKey, BindingKey, Vec<[f64; 2]>);
@@ -49,7 +59,7 @@ fn check_binding(
     bindings: &Bindings<'_>,
 ) -> Result<f64, StorageFailure> {
     pcurve(edge, face, poles, bindings)
-        .and_then(|()| topology_tolerances(edge, face, maximum, bindings))
+        .and_then(|_| topology_tolerances(edge, face, maximum, bindings))
         .map_err(|cause| trim_failure(edge, face, cause))
 }
 
@@ -63,7 +73,7 @@ fn trim_failure(edge: BindingKey, face: BindingKey, cause: StorageFailure) -> St
     }
 }
 
-fn cap_bindings(request: &Request, piece: &AuthoredPiece) -> [TrimBinding; 2] {
+pub(super) fn cap_bindings(request: &Request, piece: &AuthoredPiece) -> [TrimBinding; 2] {
     let poles: Vec<_> = piece
         .poles
         .iter()
@@ -107,12 +117,12 @@ fn side_bindings(piece: &AuthoredPiece) -> [TrimBinding; 4] {
     ]
 }
 
-fn pcurve(
+pub(super) fn pcurve(
     edge_key: BindingKey,
     face_key: BindingKey,
     expected: &[[f64; 2]],
     bindings: &Bindings<'_>,
-) -> Result<(), StorageFailure> {
+) -> Result<Vec<[f64; 2]>, StorageFailure> {
     let edge = native(edge_key, topods::edge(lookup(edge_key, bindings)?))?;
     let face = native(face_key, topods::face(lookup(face_key, bindings)?))?;
     let captured = native(edge_key, BRepTool::curve_on_face(&edge, &face))?;
@@ -146,12 +156,10 @@ fn coefficients(
     key: BindingKey,
     curve: &Geom2dBezierCurve,
     expected: &[[f64; 2]],
-) -> Result<(), StorageFailure> {
+) -> Result<Vec<[f64; 2]>, StorageFailure> {
     let poles = curve.poles();
-    let mut actual: Vec<_> = poles
-        .iter()
-        .flat_map(|p| [p.x().to_bits(), p.y().to_bits()])
-        .collect();
+    let points: Vec<_> = poles.iter().map(|p| [p.x(), p.y()]).collect();
+    let mut actual: Vec<_> = points.iter().flatten().map(|v| v.to_bits()).collect();
     let mut expected_bits: Vec<_> = expected.iter().flatten().map(|v| v.to_bits()).collect();
     for index in 1..=poles.length() {
         actual.push(native(key, curve.weight(index))?.to_bits());
@@ -165,7 +173,7 @@ fn coefficients(
             expected_bits,
         ));
     }
-    Ok(())
+    Ok(points)
 }
 
 fn topology_tolerances(

@@ -171,9 +171,21 @@ not satisfy these remaining obligations.
 
 P3 must establish planar admission, clearance, regularity and the topology-
 preserving homotopy. P4 must bind those proofs to the frozen coefficients,
-certify represented measures and history, and verify isolation, deterministic
+complete represented-measure interpretation and history, and verify isolation, deterministic
 replay in two processes and concurrency. P5 covers glyph scale and oblique
 frames. P6 removes superseded paths after their replacement gate passes.
 
 General cone profiles, arcs and higher-degree or rational authored splines are
 not covered by this fixture. Primitive cylinder/cone tests remain passing.
+
+
+## Conditional represented-flux checkpoint
+
+The decoded spans now feed a certified conditional boundary-flux integrator.
+Ruled sides reduce to exact one-dimensional rational quotients; cylindrical cap
+UV contributions are exact polynomial integrals. The enclosure sums every
+declared contribution before final outward rounding and records global/per-span
+work. The native volume estimate remains separate. See
+[certified flux](CERTIFIED-FLUX.md) for the derivation, source binding and controls.
+Full frozen face/trim coverage and ideal-realization measure correspondence
+remain required before the scalar becomes a published body measure.

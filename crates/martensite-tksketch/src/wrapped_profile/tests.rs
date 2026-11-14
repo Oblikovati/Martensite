@@ -62,9 +62,7 @@ fn rational_loop_with_hole_freezes_measures_and_exports_without_publication() {
     // Green's integral gives authored area 3.775 - 0.25 = 3.525.
     assert!((result.volume_estimate - 11.10375).abs() < 1e-5);
     assert_roundtrip(&result);
-    assert_storage(&result);
-    assert_cones(&result);
-    assert_clearance(&result);
+    assert_certificates(&result);
 }
 
 fn assert_storage(result: &pipeline::Unqualified) {
@@ -244,4 +242,18 @@ fn assert_clearance(result: &pipeline::Unqualified) {
     assert_eq!(result.clearance.certificate.pair_count(), 152);
     assert_eq!(result.clearance.certificate.excluded_pairs().len(), 19);
     assert!(result.clearance.certificate.clearance_lower_bound() >= 4. * request().tolerance);
+}
+
+fn assert_certificates(result: &pipeline::Unqualified) {
+    assert_storage(result);
+    assert_cones(result);
+    assert_clearance(result);
+    assert_boundary_flux(result);
+}
+
+fn assert_boundary_flux(result: &pipeline::Unqualified) {
+    let flux = &result.boundary_flux;
+    assert_eq!(flux.span_count(), result.storage.len());
+    assert!(flux.absolute_error_bound() <= flux.requested_options().absolute_error_limit);
+    assert!((flux.representative() - 11.10375).abs() < request().tolerance);
 }

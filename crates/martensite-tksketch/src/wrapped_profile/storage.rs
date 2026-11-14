@@ -1,6 +1,8 @@
 //! Certify decoded coefficients and require the native side net to retain those curves.
 #[path = "storage_capture.rs"]
 mod capture;
+#[path = "storage_flux.rs"]
+mod flux;
 #[path = "storage_incidence.rs"]
 mod incidence;
 #[cfg(test)]
@@ -10,13 +12,16 @@ mod tests;
 mod trims;
 use super::*;
 use crate::surface_sketch::HistoryRole;
+pub(super) use flux::certify_flux;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CertifiedCylindricalDepths, CertifiedCylindricalProfile, CertifiedCylindricalStorage,
-    CertifiedCylindricalTrim, CylindricalDepthFailure, CylindricalProfileError,
-    CylindricalProfileInterval, CylindricalProfileQuery, CylindricalStorageError,
-    CylindricalStorageLimits, CylindricalStorageQuery, CylindricalTrimError, CylindricalTrimQuery,
-    MetricBezier, certify_cylindrical_depths, certify_cylindrical_profile,
-    certify_cylindrical_storage, certify_cylindrical_trim,
+    CertifiedCylindricalDepths, CertifiedCylindricalFlux, CertifiedCylindricalProfile,
+    CertifiedCylindricalStorage, CertifiedCylindricalTrim, CylindricalDepthFailure,
+    CylindricalFluxError, CylindricalFluxOptions, CylindricalFluxQuery, CylindricalFluxSpan,
+    CylindricalProfileError, CylindricalProfileInterval, CylindricalProfileQuery,
+    CylindricalStorageError, CylindricalStorageLimits, CylindricalStorageQuery,
+    CylindricalTrimError, CylindricalTrimQuery, MetricBezier, certify_cylindrical_boundary_flux,
+    certify_cylindrical_depths, certify_cylindrical_profile, certify_cylindrical_storage,
+    certify_cylindrical_trim,
 };
 use std::collections::BTreeMap;
 
@@ -54,6 +59,7 @@ enum StorageCause {
     Certificate(Box<CylindricalStorageError>),
     Profile(Box<CylindricalProfileError>),
     CapResidual(Box<CylindricalTrimError>),
+    Flux(Box<CylindricalFluxError>),
     Depths(Box<CylindricalDepthFailure>),
     Trim {
         face: BindingKey,
@@ -72,6 +78,7 @@ enum StorageCause {
 impl std::fmt::Display for StorageFailure {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.cause {
+            StorageCause::Flux(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Native(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Certificate(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::CapResidual(cause) => write!(formatter, "{:?}: {cause}", self.key),

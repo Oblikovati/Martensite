@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added certified conditional flux integration for retained rational ruled sides and cylindrical cap pcurves, with aggregate work limits and per-span receipts (#418).
+
 - Added full-interval cylindrical cap-trim residual certificates over retained rational space curves and polynomial pcurves, checked against both retained edge and face tolerances (#418).
 
 - Added decoded pcurve, parameter-domain and raw/effective topology-tolerance checks for rational wrapped profiles, with edge/face-scoped refusals (#418).

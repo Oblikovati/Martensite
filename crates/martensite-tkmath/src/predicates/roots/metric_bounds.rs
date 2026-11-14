@@ -156,8 +156,10 @@ pub use polynomial_integrals::{
 
 mod rational_integrals;
 pub use rational_integrals::{
-    CertifiedRationalMeasure, RATIONAL_TAYLOR_ORDER, RationalIntegralError,
-    RationalIntegralEvidence, RationalIntegralFailure, RationalIntegralOptions,
+    CertifiedCylindricalFlux, CertifiedRationalMeasure, CylindricalFluxError,
+    CylindricalFluxFailure, CylindricalFluxOptions, CylindricalFluxQuery, CylindricalFluxSpan,
+    CylindricalFluxWork, RATIONAL_TAYLOR_ORDER, RationalIntegralError, RationalIntegralEvidence,
+    RationalIntegralFailure, RationalIntegralOptions, certify_cylindrical_boundary_flux,
     certify_rational_boundary_integral, certify_rational_face_area,
     certify_rational_sweep_integral,
 };

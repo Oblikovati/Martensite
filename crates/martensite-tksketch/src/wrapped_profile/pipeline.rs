@@ -9,16 +9,20 @@ use martensite_tkgeombase::gprop::GProps;
 use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
 use std::collections::BTreeSet;
 
+use martensite_tkmath::predicates::roots::metric_bounds::CertifiedCylindricalFlux;
+
 type NativeMeasure = (ValidationReport, (f64, f64));
 type SourceCertificates = (
     planar::PlanarEvidence,
     planar_cones::ConeEvidence,
     planar_clearance::OriginalClearance,
+    CertifiedCylindricalFlux,
 );
 type FrozenParts = (Vec<u8>, Vec<BindingKey>, Shape, Vec<(BindingKey, Shape)>);
 
 pub(super) struct Unqualified {
     pub bytes: Vec<u8>,
+    pub boundary_flux: CertifiedCylindricalFlux,
     pub keys: Vec<BindingKey>,
     pub report: ValidationReport,
     pub volume_estimate: f64,
@@ -48,13 +52,13 @@ pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
     let storage = storage_stage(region, request, &prepared, &bindings)?;
     bind_clearance(&clearance, request, &prepared, &storage)?;
     let cones = cone_stage(request, &prepared, &storage)?;
+    let boundary_flux = flux_stage(request, &prepared, &bindings, &storage)?;
     let validation = checked_measure(request, &decoded)?;
     Ok(unqualified(
-        bytes,
-        keys,
+        (bytes, keys),
         validation,
         storage,
-        (planar, cones, clearance),
+        (planar, cones, clearance, boundary_flux),
     ))
 }
 
@@ -89,6 +93,19 @@ fn bind_clearance(
         stage: Stage::Clearance,
         region: original.region,
         cause: RefusalCause::Clearance(Box::new(cause)),
+    })
+}
+
+fn flux_stage(
+    original: &Request,
+    prepared: &Request,
+    bindings: &[(BindingKey, Shape)],
+    proofs: &[storage::StoredProof],
+) -> Result<CertifiedCylindricalFlux, Refusal> {
+    storage::certify_flux(original, prepared, bindings, proofs).map_err(|cause| Refusal {
+        stage: Stage::Measure,
+        region: original.region,
+        cause: RefusalCause::Storage(Box::new(cause)),
     })
 }
 
@@ -144,13 +161,13 @@ fn storage_stage(
 }
 
 fn unqualified(
-    bytes: Vec<u8>,
-    keys: Vec<BindingKey>,
+    (bytes, keys): (Vec<u8>, Vec<BindingKey>),
     (report, measure): NativeMeasure,
     storage: Vec<storage::StoredProof>,
-    (planar, cones, clearance): SourceCertificates,
+    (planar, cones, clearance, boundary_flux): SourceCertificates,
 ) -> Unqualified {
     Unqualified {
+        boundary_flux,
         bytes,
         keys,
         report,

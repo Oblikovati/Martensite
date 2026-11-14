@@ -225,3 +225,50 @@ fn assert_numeric_cap_refusal(error: &StorageFailure) {
     assert!(error.to_string().contains("cylindrical cap trim"));
     assert!(matches!(cause.cause, martensite_tkmath::predicates::roots::metric_bounds::CylindricalProfileFailure::Uncertified { .. }));
 }
+
+#[test]
+fn recaptured_flux_uses_the_retained_cap_and_side_sources() {
+    let (original, request, bindings) = frozen();
+    let proofs = super::super::certify(&original, &request, &bindings).unwrap();
+    let flux = super::super::certify_flux(&original, &request, &bindings, &proofs).unwrap();
+    assert_eq!(flux.span_count(), 19);
+    assert!(flux.absolute_error_bound() <= flux.requested_options().absolute_error_limit);
+    assert!((flux.representative() - 11.10375).abs() < original.tolerance);
+}
+
+#[test]
+fn flux_recapture_refuses_stale_side_trim_domains() {
+    let (original, request, bindings) = frozen();
+    let proofs = super::super::certify(&original, &request, &bindings).unwrap();
+    let (edge, face) = side_pair(&request, &bindings);
+    BRepBuilder::default()
+        .range_on_face(&edge, &face, 0., 0.5)
+        .unwrap();
+    let error = super::super::certify_flux(&original, &request, &bindings, &proofs)
+        .err()
+        .unwrap();
+    assert!(matches!(
+        trim_cause(&error),
+        StorageCause::Mismatch {
+            field: "retained pcurve range/storage",
+            ..
+        }
+    ));
+}
+
+#[test]
+fn flux_recapture_requires_complete_proof_membership() {
+    let (original, request, bindings) = frozen();
+    let mut proofs = super::super::certify(&original, &request, &bindings).unwrap();
+    proofs.pop();
+    let error = super::super::certify_flux(&original, &request, &bindings, &proofs)
+        .err()
+        .unwrap();
+    assert!(matches!(
+        error.cause,
+        StorageCause::Mismatch {
+            field: "flux proof count",
+            ..
+        }
+    ));
+}
