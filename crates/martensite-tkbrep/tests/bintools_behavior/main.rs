@@ -6,4 +6,6 @@ mod fakes;
 mod sets;
 mod streams;
 
+mod stored_location_shapes;
+mod stored_location_transforms;
 mod stored_surface_frames;

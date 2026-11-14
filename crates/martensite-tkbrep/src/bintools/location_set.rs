@@ -1,4 +1,5 @@
 //! `BinTools_LocationSet`: the indexed `Locations` table of the binary shape set.
+use super::LocationTransformReadPolicy;
 use super::errors::wrap_failure;
 use super::ostream::transform_values;
 use super::scalars::{get_integer, get_real, put_byte, put_integer, put_real, stream_get};
@@ -28,18 +29,19 @@ pub fn put_transform<'s>(stream: &'s mut IoStream, transform: &Transform3) -> &'
     stream
 }
 
-/// The static `operator>>(Standard_IStream&, gp_Trsf&)`: twelve `GetReal`, then
-/// `SetValues`.
-fn get_transform(stream: &mut IoStream) -> Result<Transform3, Failure> {
+/// Reads twelve `GetReal` coefficients with explicit transform semantics (#451).
+/// Legacy replay uses `SetValues`; the opt-in rigid policy checks and retains them.
+fn get_transform(
+    stream: &mut IoStream,
+    policy: LocationTransformReadPolicy,
+) -> Result<Transform3, Failure> {
     let mut rows = [[0.0; 4]; 3];
     for row in &mut rows {
         for value in row.iter_mut() {
             *value = get_real(stream)?;
         }
     }
-    let mut transform = Transform3::default();
-    transform.set_values(rows).map_err(transform_read_failure)?;
-    Ok(transform)
+    policy.decode(rows).map_err(transform_read_failure)
 }
 
 // The released math layer includes determinant values in diagnostics. This codec
@@ -177,33 +179,47 @@ impl BinLocationSet {
     /// short read, a datum index outside the table or a singular matrix raise a
     /// Standard_Failure that wraps the cause; `set.read(&mut stream)?`.
     pub fn read(&mut self, stream: &mut IoStream) -> Result<(), Failure> {
+        self.read_with_policy(stream, LocationTransformReadPolicy::LegacyReplay)
+    }
+
+    /// Reads elementary datums with explicit transform semantics (#451).
+    /// `set.read_with_policy(&mut stream, policy)?`.
+    pub fn read_with_policy(
+        &mut self,
+        stream: &mut IoStream,
+        policy: LocationTransformReadPolicy,
+    ) -> Result<(), Failure> {
         self.map.clear(true);
-        if stream.extract_word(TAG_BUFFER) != b"Locations" || stream.fail() {
-            return Err(Failure::new(
-                "BinTools_LocationSet::Read: Not a location table\n",
-            ));
-        }
-        // Natively `nbLoc` is uninitialised when the extraction cannot start (the tag
-        // ended the stream); this crate reads 0.
-        let mut count = 0;
-        stream.extract_int(&mut count);
-        stream_get(stream);
+        let count = read_location_count(stream)?;
         wrap_failure("EXCEPTION in BinTools_LocationSet::Read(..)", || {
-            for _ in 1..=count {
-                let location = self.read_location(stream)?;
-                if !location.is_identity() {
-                    self.map.add(location);
-                }
-            }
-            Ok(())
+            self.read_entries(stream, count, policy)
         })
     }
 
+    fn read_entries(
+        &mut self,
+        stream: &mut IoStream,
+        count: i32,
+        policy: LocationTransformReadPolicy,
+    ) -> Result<(), Failure> {
+        for _ in 1..=count {
+            let location = self.read_location(stream, policy)?;
+            if !location.is_identity() {
+                self.map.add(location);
+            }
+        }
+        Ok(())
+    }
+
     /// One record: the type byte, then a matrix or a datum list.
-    fn read_location(&self, stream: &mut IoStream) -> Result<Location, Failure> {
+    fn read_location(
+        &self,
+        stream: &mut IoStream,
+        policy: LocationTransformReadPolicy,
+    ) -> Result<Location, Failure> {
         let kind = stream_get(stream) as u8;
         match kind {
-            1 => Ok(Location::new(get_transform(stream)?)),
+            1 => Ok(Location::new(get_transform(stream, policy)?)),
             2 => self.read_chain(stream),
             _ => {
                 let mut message = b"Unexpected location's type = ".to_vec();
@@ -226,4 +242,18 @@ impl BinLocationSet {
         }
         Ok(location)
     }
+}
+
+fn read_location_count(stream: &mut IoStream) -> Result<i32, Failure> {
+    if stream.extract_word(TAG_BUFFER) != b"Locations" || stream.fail() {
+        return Err(Failure::new(
+            "BinTools_LocationSet::Read: Not a location table\n",
+        ));
+    }
+    // Natively `nbLoc` is uninitialised when the extraction cannot start (the tag
+    // ended the stream); this crate reads 0.
+    let mut count = 0;
+    stream.extract_int(&mut count);
+    stream_get(stream);
+    Ok(count)
 }

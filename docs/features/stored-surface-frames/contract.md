@@ -14,6 +14,8 @@ of a reader, including after `clear()`, so cached references share one interpret
 Grouped versions 1–4 and recognized legacy headers keep their existing wire format.
 The caller must record the policy for replay; headers do not select it.
 
+Location transforms have an independent [checked rigid decode policy](../stored-location-transforms/contract.md) (#451).
+
 ## Numerical admission
 
 `Axis3::from_stored_coefficients` treats finite binary64 values as exact real

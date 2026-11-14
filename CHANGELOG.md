@@ -52,6 +52,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added rectangular sketches on cylindrical surfaces with signed normal extrusion, seam-crossing regions, semantic history, ordered body validation and detached body exports. Existing planar extrusion interfaces were preserved. (#416)
 
+- Added checked opt-in rigid location-transform decoding for coefficient-bound geometry while preserving legacy normalization defaults (#451).
+
 ### Fixed
 
 - Preserved authored entities and typed failure classes in solved-profile normal extrusion errors (#448).
