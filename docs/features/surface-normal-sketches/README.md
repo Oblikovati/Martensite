@@ -142,7 +142,7 @@ The [storage certificate notes](STORAGE-CERTIFICATES.md) describe its limits.
 Complete wrapped-operation qualification remains open.
 
 The [rational implementation record](RATIONAL-IMPLEMENTATION.md) records the
-current evidence and remaining gates. The [P4 API working tree](PUBLIC-API.md)
+current evidence and remaining gates. The [P4 API draft](PUBLIC-API.md)
 now exposes solved-profile cylindrical extrusion and separate spatial and
 measure reports. Its [cap-realization checks](CAP-REALIZATION.md) bind decoded
 trims, angular lifts, homotopy and physical cap bounds. Independent review and
@@ -163,7 +163,11 @@ qualification and the remaining implementation and application gates are open.
 The [directed-profile input adapter](PROFILE-INPUT.md) now reads existing
 solved-profile selections and retains original curve-direction and parameter
 correspondence through subdivision. Its mixed-profile control reaches the
-budgeted family constructor. The result API remains an uncommitted working tree.
+budgeted family constructor. The result API is committed locally on `feature/wrapped-normal-api`;
+integration and publication qualification remain open.
+
+The [planar work-policy design](PLANAR-WORK-POLICY.md) records the additive
+request/receipt seam needed after #449; existing defaults remain unchanged.
 
 The [P5 workload census](P5-WORKLOAD.md) pins the existing font asset and the
 239-piece supplied-text case. Its modelling and performance gates remain open.

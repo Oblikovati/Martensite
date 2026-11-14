@@ -1,8 +1,8 @@
 # Wrapped-profile API checkpoint
 
-The P4 working tree exposes `normal_extrude_profile` and its cancellable form
-from `martensite_tksketch::surface_sketch` (#418). This checkpoint remains
-uncommitted and unqualified for integration. The existing cylinder-rectangle
+The P4 draft exposes `normal_extrude_profile` and its cancellable form
+from `martensite_tksketch::surface_sketch` (#418). The code is committed locally;
+integration qualification remains open. The existing cylinder-rectangle
 and conical-sector APIs retain their signatures and behavior.
 
 ## Input and result
