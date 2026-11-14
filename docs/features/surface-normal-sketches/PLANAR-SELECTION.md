@@ -48,7 +48,7 @@ curve planning allowance; it is not described as the global clearance allowance.
 The single-region path calls the same capture and clearance implementations with
 one member. No geometric retry or separate modelling algorithm was introduced.
 
-## Periodic material classification remains required
+## Periodic material classification
 
 Boundary clearance does not classify material for disconnected selections.
 The retained regression uses support radius one, a rectangle `A=[0,2]x[0,2]`
@@ -59,7 +59,7 @@ The complete boundary proof passes one positive periodic image. Nevertheless,
 bounds are also strict. A family constructor must refuse this overlap even though
 no boundary crossing exists.
 
-The next material gate must classify both directions for every ordered member
+The [periodic material gate](PERIODIC-MATERIAL.md) now classifies both directions for every ordered member
 pair and each required positive image. Given original regions `A`, `B` and a
 positive shift `kT`, it must locate an outer-boundary witness of `A` in `B+kT`
 and an outer-boundary witness of `B+kT` in `A`. Testing only the first direction
@@ -87,9 +87,10 @@ zero, supplies a distinct finite endpoint without assuming `seed+1` is
 representable. Wire locations must share one explicit query/subdivision budget
 across all members, loops and images.
 
-This classification is still to be implemented. Preparation evidence is not a
-substitute for it. Frozen collection construction, global retained-source
-binding, history and publication gates also remain open. No version or release
+The material gate now performs these checks with original-source snapshots,
+complete dyadic covers and aggregate probe/winding budgets. Preparation evidence
+alone remains insufficient. Frozen collection construction, global retained-
+source binding, history and publication gates remain open. No version or release
 tag changed.
 
 ## Verification

@@ -26,6 +26,10 @@ pub use cylindrical_clearance::{
     CylindricalClearanceOptions, CylindricalClearanceQuery, CylindricalClearanceScope,
     CylindricalClearanceSource, CylindricalPeriodicTranslation, certify_cylindrical_clearance,
 };
+pub use cylindrical_clearance::{
+    CertifiedCylindricalProbe, CertifiedCylindricalProbes, CylindricalPeriodicProbe,
+    CylindricalProbeError, CylindricalProbeFailure, CylindricalProbeOptions, CylindricalProbeSense,
+};
 mod cylindrical_measure;
 pub use cylindrical_measure::{
     CertifiedCylindricalMeasureComparison, CylindricalMeasureComparisonError,

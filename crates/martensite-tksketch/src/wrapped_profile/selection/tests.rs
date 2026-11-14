@@ -1,7 +1,7 @@
 //! Global arrangement nesting determines selected material, not independent regional area.
 use super::super::tests::{contour, request};
 use super::*;
-fn rectangle(region: u64, first: u64, min: [f64; 2], max: [f64; 2]) -> Request {
+pub(super) fn rectangle(region: u64, first: u64, min: [f64; 2], max: [f64; 2]) -> Request {
     let [x, y] = min;
     let [a, b] = max;
     let mut result = request();

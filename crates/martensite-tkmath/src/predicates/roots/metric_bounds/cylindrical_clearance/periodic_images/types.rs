@@ -72,6 +72,16 @@ pub(super) struct PeriodicWork {
 }
 
 impl CertifiedCylindricalPeriodicClearance {
+    /// Bind the original boundary relation, chart, clearance and exclusions; work policy is separate.
+    /// Example: `assert!(periodic.matches_boundary(&clearance));`.
+    pub fn matches_boundary(&self, other: &CertifiedCylindricalClearance) -> bool {
+        self.source.sources == other.sources
+            && self.source.radius.to_bits() == other.radius.to_bits()
+            && self.source.origin.to_bits() == other.origin.to_bits()
+            && self.source.clearance.to_bits() == other.clearance.to_bits()
+            && self.source.scope == other.scope
+            && self.source.excluded == other.excluded
+    }
     /// Every required positive image, including self-source pairs; `proof.images()`.
     pub fn images(&self) -> &[CertifiedCylindricalImage] {
         &self.images

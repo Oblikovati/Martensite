@@ -104,8 +104,8 @@ seam-crossing and two-turn helical controls remain passing.
 The conditional flux enclosure is not yet a published volume measure. The
 [source-matched comparison](MEASURE-COMPARISON.md) now bounds its discrepancy
 from the ideal normal-extrusion volume. It retains the independent integration,
-profile-displacement and comparison evidence. Disconnected material
-classification, complete history, isolation and replay/concurrency verification
+profile-displacement and comparison evidence. Original periodic material classification now has its [own gate](PERIODIC-MATERIAL.md).
+Frozen disconnected families, complete history, isolation and replay/concurrency verification
 remain publication gates. Glyph scale, oblique frames and replacement deletion
 also remain open. No version or release tag changed.
 

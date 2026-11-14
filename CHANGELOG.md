@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added exact periodic material classification for private disconnected cylindrical selections, with guarded translated witnesses, original-source snapshots, complete interval coverage and aggregate winding budgets (#418).
+
 - Added global planar selection and shared boundary-clearance preparation for disconnected wrapped-profile regions, preserving authored identities and rejecting overlapping filled selections (#418).
 
 - Added source-matched outward comparisons between retained cylindrical boundary flux and ideal normal volume, preserving separate integration, profile-displacement and representative-error evidence (#418).

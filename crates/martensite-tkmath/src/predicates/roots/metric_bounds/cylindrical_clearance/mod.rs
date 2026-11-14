@@ -23,7 +23,9 @@ pub use error::{CylindricalClearanceError, CylindricalClearanceFailure};
 pub use report::{
     CertifiedCylindricalClearance, CertifiedCylindricalImage,
     CertifiedCylindricalPeriodicClearance, CertifiedCylindricalPeriodicSlab,
-    CylindricalPeriodicTranslation,
+    CertifiedCylindricalProbe, CertifiedCylindricalProbes, CylindricalPeriodicProbe,
+    CylindricalPeriodicTranslation, CylindricalProbeError, CylindricalProbeFailure,
+    CylindricalProbeOptions, CylindricalProbeSense,
 };
 pub use types::*;
 type Point = [Interval; 2];

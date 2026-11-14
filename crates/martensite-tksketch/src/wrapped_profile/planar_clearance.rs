@@ -1,5 +1,7 @@
 //! Certify every nonadjacent authored pair before native construction, then bind retained O2 sources.
 use super::*;
+#[path = "planar_intervals.rs"]
+mod intervals;
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedCylindricalClearance, CertifiedCylindricalPeriodicClearance,
     CylindricalClearanceDomain, CylindricalClearanceError, CylindricalClearanceQuery,
@@ -19,6 +21,7 @@ pub(super) struct OriginalClearance {
 pub(super) enum ClearanceFailure {
     Authored(Box<storage::StorageFailure>),
     EmptySelection,
+    OriginalBinding,
     SelectionBinding {
         actual: Vec<SurfaceRegionId>,
         expected: Vec<SurfaceRegionId>,
@@ -64,6 +67,18 @@ impl ClearanceFailure {
                 f,
                 "clearance curve={curve:?}; expected globally unique authored curve IDs"
             ),
+            _ => self.original_message(f),
+        }
+    }
+}
+
+impl ClearanceFailure {
+    fn original_message(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::OriginalBinding => write!(
+                f,
+                "original curves/chart or periodic source changed; expected the complete recorded boundary relation"
+            ),
             _ => write!(f, "{self:?}"),
         }
     }
@@ -86,10 +101,19 @@ pub(super) fn certify_many(
     selection_binding(originals, prepared)?;
     let authored = authored_collection(originals)?;
     let spans = prepared_spans(prepared);
+    if !intervals::complete(&spans, &authored) {
+        return Err(ClearanceFailure::OriginalBinding);
+    }
     let sources = sources(&spans, &authored)?;
     let excluded = excluded_pairs(prepared);
     let query = clearance_query(first, &sources, &excluded);
     let certificate = certify_input(query, &spans)?;
+    complete_boundary(spans, certificate)
+}
+fn complete_boundary(
+    spans: Vec<CurveSpan>,
+    certificate: CertifiedCylindricalClearance,
+) -> Result<OriginalClearance, ClearanceFailure> {
     let periodic = certify_periodic(&certificate, &spans)?;
     Ok(OriginalClearance {
         spans,
@@ -97,6 +121,43 @@ pub(super) fn certify_many(
         periodic,
     })
 }
+
+pub(super) fn bind_originals(
+    evidence: &OriginalClearance,
+    originals: &[Request],
+    prepared: &[Request],
+) -> Result<(), ClearanceFailure> {
+    selection_binding(originals, prepared)?;
+    let first = originals.first().ok_or(ClearanceFailure::EmptySelection)?;
+    let authored = authored_collection(originals)?;
+    let expected = prepared_spans(prepared);
+    if !intervals::complete(&expected, &authored) {
+        return Err(ClearanceFailure::OriginalBinding);
+    }
+    let sources = sources(&expected, &authored)?;
+    if !original_matches(evidence, first, &expected, &sources, prepared) {
+        return Err(ClearanceFailure::OriginalBinding);
+    }
+    Ok(())
+}
+
+fn original_matches(
+    evidence: &OriginalClearance,
+    first: &Request,
+    expected: &[CurveSpan],
+    sources: &[CylindricalClearanceSource<'_>],
+    prepared: &[Request],
+) -> bool {
+    let c = &evidence.certificate;
+    evidence.spans == expected
+        && c.angular_origin().to_bits() == 0f64.to_bits()
+        && c.matches_sources(sources)
+        && c.support_radius().to_bits() == first.radius.to_bits()
+        && c.clearance_lower_bound().to_bits() == (4. * first.tolerance).to_bits()
+        && c.excluded_pairs() == excluded_pairs(prepared)
+        && evidence.periodic.matches_boundary(c)
+}
+
 fn selection_binding(originals: &[Request], prepared: &[Request]) -> Result<(), ClearanceFailure> {
     let expected: Vec<_> = originals.iter().map(|r| r.region).collect();
     let actual: Vec<_> = prepared.iter().map(|r| r.region).collect();

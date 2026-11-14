@@ -85,7 +85,7 @@ aggregate exhaustion. Native controls reject changed retained pcurve ranges,
 missing source proofs and reordered semantic span receipts.
 
 The numerical O6 comparison is now available for the current private cylindrical
-pipeline. The result remains `Unqualified`: disconnected material selection,
+pipeline. The result remains `Unqualified`: frozen disconnected families,
 full history, isolation, replay/concurrency and publication checks remain open.
 General cones and authored curve classes, glyph scale, oblique frames and
 replacement deletion gates also remain open. No dependency, public primitive API,

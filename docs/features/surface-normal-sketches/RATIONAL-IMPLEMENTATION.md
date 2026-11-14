@@ -211,5 +211,7 @@ planar arrangement and one complete prepared boundary relation for all selected
 regions. Separate members and an island inside an unselected hole pass;
 containment in filled material and undeclared contacts refuse. A pinned periodic
 counterexample demonstrates that boundary clearance alone cannot admit a
-collection. Exact periodic material classification is the next required gate;
-collection bodies are not constructed or published yet.
+collection. The [periodic material gate](PERIODIC-MATERIAL.md) now classifies all required
+image relations with guarded exact winding and complete source binding. Frozen
+collection construction and retained-profile binding are next; collection
+bodies are not constructed or published yet.

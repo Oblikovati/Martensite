@@ -1,6 +1,10 @@
 //! Qualify every selected region against one global authored planar arrangement.
 mod admission;
 mod error;
+mod material;
+pub(super) use material::{MaterialFailure, MaterialOptions, PeriodicMaterialEvidence};
+#[cfg(test)]
+mod material_tests;
 #[cfg(test)]
 mod tests;
 use super::*;
@@ -18,6 +22,20 @@ pub(super) struct PreparedSelection {
     pub prepared: Vec<Request>,
     pub boundary_clearance: planar_clearance::OriginalClearance,
 }
+pub(super) struct QualifiedSelection {
+    pub prepared: PreparedSelection,
+    pub material: PeriodicMaterialEvidence,
+}
+pub(super) fn certify(
+    requests: &[Request],
+    options: MaterialOptions,
+) -> Result<QualifiedSelection, SelectionFailure> {
+    let prepared = prepare(requests)?;
+    let material = material::certify(requests, &prepared, options)
+        .map_err(|cause| SelectionFailure::Material(Box::new(cause)))?;
+    Ok(QualifiedSelection { prepared, material })
+}
+
 pub(super) fn prepare(requests: &[Request]) -> Result<PreparedSelection, SelectionFailure> {
     let planar = qualify(requests)?;
     let prepared = requests

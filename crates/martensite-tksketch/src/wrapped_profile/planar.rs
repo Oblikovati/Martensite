@@ -8,6 +8,8 @@ mod tests;
 
 #[path = "planar_joins.rs"]
 mod joins;
+#[path = "planar_sources.rs"]
+mod source;
 
 type LoopIdentity = Vec<(ProfileCurveId, bool)>;
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -21,6 +23,14 @@ pub(super) struct PlanarEvidence {
     pub area: Measured,
     pub certificate: RegionCertificate,
     identity: MaterialIdentity,
+    source: source::SourceSnapshot,
+}
+
+impl PlanarEvidence {
+    pub(super) fn matches_request(&self, request: &Request) -> bool {
+        requested_identity(request).is_ok_and(|id| id == self.identity)
+            && self.source.matches(request)
+    }
 }
 
 #[derive(Debug)]
@@ -187,6 +197,7 @@ pub(super) fn select(
         area: selected.area(),
         certificate: captured.certificate(),
         identity: expected,
+        source: source::SourceSnapshot::capture(request),
     })
 }
 

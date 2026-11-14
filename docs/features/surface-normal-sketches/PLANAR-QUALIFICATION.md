@@ -396,8 +396,9 @@ The same argument applies throughout a Jordan-preserving profile homotopy
 whose displacement stays below the established boundary clearance.
 
 This argument uses the existing single-outer selection. It does not discharge
-cross-component containment for disconnected selections. P4 must classify those
-relations explicitly before it admits disconnected material. The math report
+cross-component containment for disconnected selections. The [periodic material gate](PERIODIC-MATERIAL.md) now classifies those
+relations explicitly for original disconnected selections. Frozen-family
+construction and retained-profile binding remain required. The math report
 therefore promises boundary clearance only; it does not infer material topology.
 
 The native positive control is the developed parallelogram with vertices

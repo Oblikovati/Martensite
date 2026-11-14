@@ -3,6 +3,8 @@
 use super::*;
 use crate::predicates::roots::DyadicBound;
 mod planning;
+mod probes;
+pub use probes::*;
 mod proof;
 mod types;
 pub use types::*;
