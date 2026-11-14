@@ -9,6 +9,10 @@ pub enum FrameTransportField {
     Radial,
     /// Actual stored matrix.
     StoredMatrix,
+    /// Requested world-space origin.
+    Origin,
+    /// Actual stored translation.
+    Translation,
 }
 /// Quantity whose finite outward enclosure was unavailable.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -21,10 +25,28 @@ pub enum FrameTransportQuantity {
     Determinant,
     /// Absolute Gram-residual row sum.
     GramResidual,
+    /// Point-domain placement error or its canonical allocation.
+    SpatialBudget,
+    /// Rounded matrix/translation evaluation on the supplied point domain.
+    Evaluation,
 }
 /// Typed refusal for reference construction or stored-matrix qualification.
 #[derive(Clone, Debug, PartialEq)]
 pub enum FrameTransportError {
+    /// A finite scalar did not satisfy the positive-domain contract.
+    SpatialInput {
+        /// Caller-supplied bound on the norm of ideal and retained points.
+        point_norm: f64,
+        /// Caller-requested strictly positive spatial limit.
+        spatial_limit: f64,
+    },
+    /// Placement alone consumed the available spatial limit.
+    SpatialLimit {
+        /// Requested original limit.
+        requested: f64,
+        /// Certified placement-only upper bound.
+        placement_upper: f64,
+    },
     /// Exact offending coordinate and its row/column location.
     NonFinite {
         /// Rejected input field.
@@ -61,10 +83,22 @@ pub enum FrameTransportError {
 }
 impl std::fmt::Display for FrameTransportError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "frame transport {self:?}; expected finite nonparallel reference vectors, positive determinant and certified positive stretch"
-        )
+        let expected = match self {
+            Self::SpatialInput { .. } => "finite point_norm >= 0 and finite spatial_limit > 0",
+            Self::SpatialLimit { .. } => {
+                "placement_upper < requested and a positive representable canonical allowance"
+            }
+            Self::Unrepresentable(FrameTransportQuantity::Evaluation) => {
+                "finite outward bounds for every affine evaluation intermediate"
+            }
+            Self::Unrepresentable(FrameTransportQuantity::SpatialBudget) => {
+                "finite outward placement and canonical allocation bounds"
+            }
+            _ => {
+                "finite nonparallel reference vectors, positive determinant and certified positive stretch"
+            }
+        };
+        write!(f, "frame transport {self:?}; expected {expected}")
     }
 }
 impl std::error::Error for FrameTransportError {}

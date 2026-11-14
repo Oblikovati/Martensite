@@ -178,3 +178,35 @@ all-target TKMath clippy also passed. Independent numerical review found no
 correctness issue. Standards review identified missing compile-time assertions
 for three public types; those assertions were added and compiled successfully.
 Physical placement and world-space publication remain to be implemented.
+
+## Point-domain budget checkpoint
+
+`CertifiedFrameTransport::spatial_budget` now reserves placement error before
+allocating canonical geometry error. Its owned input records the requested
+origin, actual stored translation, original spatial limit, and a bound on the
+Euclidean norms of both ideal and retained local points. Establishing that
+domain bound remains the operation's responsibility.
+
+Translation error comes from exact squared coefficient differences and an
+outward square root. The placement-only bound adds that error, the stored-frame
+operator error times the point-domain bound, and affine evaluation rounding.
+The remaining original epsilon is divided by upper stretch in exact arithmetic;
+the positive canonical allowance is rounded downward. Missing finite bounds or
+a nonpositive representable allowance produce typed refusals.
+
+The evaluation bound covers three binary64 products, two left-associated sums,
+and translation addition, with unit transform scale. Each intermediate carries
+an absolute magnitude bound and accumulated error. A full upward ulp of the
+outward magnitude endpoint bounds each nontrivial operation's rounding error,
+including gradual underflow. Rounded intermediate magnitudes include this
+error before the next operation. The sum of the three row-error bounds encloses
+Euclidean evaluation error. Multiplication by zero or signed one, and addition
+of an identically zero term, remain exact. Identity and signed-permutation
+placements without translation preserve the original allocation exactly.
+
+Large origins can consume epsilon through evaluation rounding even when stored
+and requested translations agree. The helper refuses those cases without
+widening the limit. It does not cover a separate scale multiplication, another
+evaluation order, native representation admission or frozen-body correspondence.
+The physical operation still needs to bind these conditions to its decoded
+transform and validate the placed body before accepting oblique frames.

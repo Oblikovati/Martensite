@@ -10,6 +10,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added certified stored-frame deviation, positive stretch and determinant bounds against exact normalized reference frames (#425).
 
+- Added certified point-domain placement budgets with translation and affine-evaluation rounding bounds, downward canonical allocations and explicit spatial-limit refusals (#425).
+
 - Added explicit finite pair-proof work requests and work-bearing planar failures with original root-isolation causes and authored curve IDs, and reported requested, effective and consumed work on successful region sets and wrapped normal-extrusion reports without changing existing defaults (#425).
 
 - Added solved-profile cylindrical normal extrusion with typed spatial and measure reports, authored history, cooperative cancellation and detached native exports (#418).

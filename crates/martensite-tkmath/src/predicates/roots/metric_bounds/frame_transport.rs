@@ -3,6 +3,7 @@
 mod arithmetic;
 mod error;
 mod reference;
+mod spatial;
 mod stretch;
 mod types;
 use super::super::certificate_arithmetic::{
@@ -10,6 +11,7 @@ use super::super::certificate_arithmetic::{
     rounding::{outward_binary64, outward_sqrt_bounds},
 };
 pub use error::*;
+pub use spatial::{CertifiedFrameSpatialBudget, FrameSpatialInput};
 pub use types::*;
 type Checked<T> = Result<T, FrameTransportError>;
 
