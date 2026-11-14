@@ -8,4 +8,5 @@ mod graph;
 mod pair_matrix;
 mod regions;
 
+mod pair_matrix;
 mod work;
