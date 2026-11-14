@@ -87,3 +87,72 @@ export and history before extending the glyph controls. Required evidence is:
 Only after these checks pass should admission accept oblique frames. Arbitrary
 chart-origin shifts and conical authored profiles remain separate parts of the
 full capability; this gate does not qualify either one.
+
+## Exact frame and stretch construction
+
+For finite requested axis `a` and radial `r`, form the exact dyadic vectors
+`k = a cross r` and `u = k cross a`. Provided `a` and `k` are nonzero, the ideal
+frame columns are
+
+```
+x = u / sqrt((a dot a) (k dot k))
+y = k / sqrt(k dot k)
+z = a / sqrt(a dot a).
+```
+
+These columns express the normalization/projection contract above. Exact cross
+product identities give mutual orthogonality, unit lengths and positive
+orientation. Each component can be enclosed by exact rational arithmetic and
+outward square-root bounds; no trigonometric normalization is needed.
+Unrepresentable or zero denominator bounds must refuse.
+
+The owned fixture in `references/oblique-frame-oracle.tsv` uses `a=(1,2,3)` and
+`r=(3,-1,2)`. Jacobian's exact rational matrix multiplication returned Gram
+matrix `diag(2058,147,14)` for columns `u,k,a`, and its exact determinant operation
+returned `2058`. Dividing by the positive column norms gives determinant +1.
+This is an independent fixture oracle, not verification of an implementation
+or a proof obtained by testing arbitrary frames.
+
+For the actual stored linear matrix `A`, compute `E = transpose(A) A - I`
+exactly. Let `e` be an outward bound on its maximum absolute row sum. Symmetry
+and `2 abs(v_i v_j) <= v_i^2 + v_j^2` give
+
+```
+abs(transpose(v) E v) <= e ||v||^2.
+```
+
+If `e < 1`, outward square roots of `1-e` and `1+e` provide a positive lower
+stretch bound and an upper stretch bound. Check the exact determinant sign
+separately; a reflected stored transform must not silently satisfy a requested
+right-handed placement.
+
+Enclose `R` componentwise and bound `||A-R||` by its Frobenius norm using exact
+squared endpoint differences. Translation error uses the corresponding exact
+squared differences. For the physical cylinder, the maximum absolute radius at
+the requested depth endpoints bounds the radial coordinate. The authored pole
+hull, enlarged by the declared canonical profile error, bounds height. These
+bounds supply the position term in the placement inequality.
+
+Before constructing canonical geometry, subtract the certified placement-only
+error from the original requested epsilon and divide the positive remainder
+by the upper stretch bound, rounding the canonical allocation downward.
+Refuse a nonpositive remainder; do not retry with a looser request. Preserve the
+identity placement's current allocation exactly. Recheck the final achieved
+world bound against the original epsilon after decoding the frozen result.
+
+For volume, recompute the placed retained-flux enclosure using the certified
+positive determinant. The target ideal volume remains the rigid-frame oracle.
+The discrepancy includes both the canonical retained/ideal difference and the
+`(det(A)-1) * ideal_volume` term; scaling only the old discrepancy would omit
+that term.
+
+## Stored-location dependency
+
+Bug #451 tracks the checked, opt-in rigid-location decoder required by this
+path. The existing readers deliberately call `Transform3::set_values`, and the
+owned probe confirmed repeatable coefficient changes of about one ulp for an
+ordinary oblique frame. Raw binary serialization preserved all twelve values.
+The new path must preserve admitted rigid coefficients while leaving legacy
+normalization as the default. Current canonical wrapped storage still requires
+identity locations, so this is a boundary needed for oblique placement rather
+than evidence that the canonical publication is invalid.
