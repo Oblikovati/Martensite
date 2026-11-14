@@ -8,6 +8,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Updated rustix to 1.1.6 and xattr to 1.7.0 to resolve RUSTSEC-2026-0486 while preserving extended-attribute values and name lists larger than 4 KiB (#445).
+
+- Matched local PR test optimization to CI for script-budget packages while preserving other packages' profiles and test selection (#447).
+
 - Removed quadratic backtracking from the binary32 proof-source parser on malformed whitespace records without changing accepted records or certificates (#441).
 
 - Bound Linux renderer test gates to the recorded system-font configuration so user font folders no longer changed rendered test images (#433).
