@@ -14,10 +14,8 @@ use martensite_tkmath::predicates::roots::metric_bounds::{
 };
 
 type NativeMeasure = (ValidationReport, (f64, f64));
-type SourceCertificates = (
-    planar::PlanarEvidence,
+type MemberCertificates = (
     planar_cones::ConeEvidence,
-    planar_clearance::OriginalClearance,
     MeasureEvidence,
     coverage::CoverageEvidence,
 );
@@ -28,17 +26,26 @@ pub(super) struct MeasureEvidence {
     pub spans: Vec<CurveSpan>,
 }
 
-pub(super) struct Unqualified {
-    pub bytes: Vec<u8>,
+pub(super) struct RetainedMember {
     pub coverage: coverage::CoverageEvidence,
     pub measures: MeasureEvidence,
-    pub keys: Vec<BindingKey>,
     pub report: ValidationReport,
     pub volume_estimate: f64,
     pub integration_estimate: f64,
     pub storage: Vec<storage::StoredProof>,
-    pub planar: planar::PlanarEvidence,
     pub cones: planar_cones::ConeEvidence,
+}
+pub(super) struct StoredMember {
+    shape: Shape,
+    bindings: Vec<(BindingKey, Shape)>,
+    coverage: coverage::CoverageEvidence,
+    pub storage: Vec<storage::StoredProof>,
+}
+pub(super) struct Unqualified {
+    pub bytes: Vec<u8>,
+    pub keys: Vec<BindingKey>,
+    pub member: RetainedMember,
+    pub planar: planar::PlanarEvidence,
     pub clearance: planar_clearance::OriginalClearance,
 }
 
@@ -56,18 +63,44 @@ pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
     let prepared = planning_stage(request)?;
     let clearance = clearance_stage(request, &prepared)?;
     let (bytes, keys, decoded, bindings) = construct_frozen(&prepared)?;
-    let coverage = coverage_stage(&prepared, &decoded, &bindings)?;
-    let storage = storage_stage(request.region, request, &prepared, &bindings)?;
-    bind_clearance(&clearance, request, &prepared, &storage)?;
-    let cones = cone_stage(request, &prepared, &storage)?;
-    let measures = measure_stage(request, &prepared, &bindings, &storage)?;
-    let validation = checked_measure(request, &decoded)?;
-    let certificates = (planar, cones, clearance, measures, coverage);
-    Ok(unqualified(
-        (bytes, keys),
-        validation,
+    let stored = store_member(request, &prepared, decoded, bindings)?;
+    bind_clearance(&clearance, request, &prepared, &stored.storage)?;
+    let member = finish_member(request, &prepared, stored)?;
+    Ok(Unqualified {
+        bytes,
+        keys,
+        member,
+        planar,
+        clearance,
+    })
+}
+pub(super) fn store_member(
+    original: &Request,
+    prepared: &Request,
+    shape: Shape,
+    bindings: Vec<(BindingKey, Shape)>,
+) -> Result<StoredMember, Refusal> {
+    let coverage = coverage_stage(prepared, &shape, &bindings)?;
+    let storage = storage_stage(original.region, original, prepared, &bindings)?;
+    Ok(StoredMember {
+        shape,
+        bindings,
+        coverage,
         storage,
-        certificates,
+    })
+}
+pub(super) fn finish_member(
+    original: &Request,
+    prepared: &Request,
+    stored: StoredMember,
+) -> Result<RetainedMember, Refusal> {
+    let cones = cone_stage(original, prepared, &stored.storage)?;
+    let measures = measure_stage(original, prepared, &stored.bindings, &stored.storage)?;
+    let validation = checked_measure(original, &stored.shape)?;
+    Ok(retained_member(
+        validation,
+        stored.storage,
+        (cones, measures, stored.coverage),
     ))
 }
 
@@ -217,24 +250,19 @@ fn storage_stage(
     })
 }
 
-fn unqualified(
-    (bytes, keys): (Vec<u8>, Vec<BindingKey>),
+fn retained_member(
     (report, measure): NativeMeasure,
     storage: Vec<storage::StoredProof>,
-    (planar, cones, clearance, measures, coverage): SourceCertificates,
-) -> Unqualified {
-    Unqualified {
+    (cones, measures, coverage): MemberCertificates,
+) -> RetainedMember {
+    RetainedMember {
         measures,
         coverage,
-        bytes,
-        keys,
         report,
         volume_estimate: measure.0,
         integration_estimate: measure.1,
         storage,
-        planar,
         cones,
-        clearance,
     }
 }
 

@@ -49,27 +49,31 @@ pub(super) fn request() -> Request {
 fn rational_loop_with_hole_freezes_measures_and_exports_without_publication() {
     let result = pipeline::wrap_extrude(&request()).unwrap();
     assert_eq!(result.keys.len(), 117);
-    assert_eq!(result.coverage.binding_count, result.keys.len());
-    assert_eq!(result.coverage.euler_characteristic, 0);
+    assert_eq!(result.member.coverage.binding_count, result.keys.len());
+    assert_eq!(result.member.coverage.euler_characteristic, 0);
     assert!(result.planar.area.encloses(3.525));
     assert_eq!(result.planar.certificate.components, 2);
     assert_eq!(
-        result.report.stage(ValidationStage::Geometry).mode,
+        result.member.report.stage(ValidationStage::Geometry).mode,
         CheckMode::Sampled
     );
-    assert!(!result.report.is_exact());
-    assert!(result.report.is_valid(), "{:?}", result.report);
-    assert!(result.volume_estimate > 0.);
-    assert!((0. ..=1e-8).contains(&result.integration_estimate));
+    assert!(!result.member.report.is_exact());
+    assert!(
+        result.member.report.is_valid(),
+        "{:?}",
+        result.member.report
+    );
+    assert!(result.member.volume_estimate > 0.);
+    assert!((0. ..=1e-8).contains(&result.member.integration_estimate));
     // Green's integral gives authored area 3.775 - 0.25 = 3.525.
-    assert!((result.volume_estimate - 11.10375).abs() < 1e-5);
+    assert!((result.member.volume_estimate - 11.10375).abs() < 1e-5);
     assert_roundtrip(&result);
     assert_certificates(&result);
 }
 
 fn assert_storage(result: &pipeline::Unqualified) {
-    assert_eq!(result.storage.len(), 19);
-    for stored in &result.storage {
+    assert_eq!(result.member.storage.len(), 19);
+    for stored in &result.member.storage {
         let expected = match stored.span.curve.0 {
             10 => 1,
             11 => 2,
@@ -118,7 +122,11 @@ fn assert_roundtrip(result: &pipeline::Unqualified) {
 fn rational_boss_and_pocket_interoperate_with_an_analytic_carrier() {
     use martensite_tkbo::brep_algo_api::{BRepAlgoAPICut, BRepAlgoAPIFuse};
     let result = pipeline::wrap_extrude(&request()).unwrap();
-    assert!(result.report.is_valid(), "{:?}", result.report);
+    assert!(
+        result.member.report.is_valid(),
+        "{:?}",
+        result.member.report
+    );
     let (tool, _) = pipeline::decode(&result.bytes, &result.keys).unwrap();
     let carrier = carrier();
     let boss = BRepAlgoAPIFuse::from_shapes(&carrier, &tool).unwrap();
@@ -222,9 +230,15 @@ fn admission_refuses_open_joins_duplicate_ids_and_unbounded_charts() {
 
 fn assert_cones(result: &pipeline::Unqualified) {
     use std::cmp::Ordering;
-    assert_eq!(result.cones.pieces.len(), 19);
-    assert_eq!(result.cones.joins.len(), 19);
-    for proof in result.cones.pieces.iter().chain(&result.cones.joins) {
+    assert_eq!(result.member.cones.pieces.len(), 19);
+    assert_eq!(result.member.cones.joins.len(), 19);
+    for proof in result
+        .member
+        .cones
+        .pieces
+        .iter()
+        .chain(&result.member.cones.joins)
+    {
         assert_eq!(
             proof.spans.len(),
             proof.certificate.directional_margin_bounds().len()
@@ -256,15 +270,18 @@ fn assert_certificates(result: &pipeline::Unqualified) {
 }
 
 fn assert_boundary_flux(result: &pipeline::Unqualified) {
-    let flux = result.measures.comparison.flux_certificate();
-    assert_eq!(flux.span_count(), result.storage.len());
+    let flux = result.member.measures.comparison.flux_certificate();
+    assert_eq!(flux.span_count(), result.member.storage.len());
     assert!(flux.absolute_error_bound() <= flux.requested_options().absolute_error_limit);
     assert!((flux.representative() - 11.10375).abs() < request().tolerance);
 }
 
 fn assert_normal_measure(result: &pipeline::Unqualified) {
-    let proof = result.measures.comparison.normal_certificate();
-    assert_eq!(result.measures.spans.len(), result.storage.len());
+    let proof = result.member.measures.comparison.normal_certificate();
+    assert_eq!(
+        result.member.measures.spans.len(),
+        result.member.storage.len()
+    );
     let [lo, hi] = proof.authored_area_enclosure();
     assert!(lo <= 3.525 && 3.525 <= hi);
     let [lo, hi] = proof.authored_volume_enclosure();
@@ -275,7 +292,7 @@ fn assert_normal_measure(result: &pipeline::Unqualified) {
 }
 
 fn assert_measure_comparison(result: &pipeline::Unqualified) {
-    let proof = &result.measures.comparison;
+    let proof = &result.member.measures.comparison;
     assert!(proof.discrepancy_bound() < 1e-4);
     assert!(proof.representative_error_bound() < 1e-4);
     let [lo, hi] = proof.difference_enclosure();
