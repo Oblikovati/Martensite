@@ -9,16 +9,7 @@ pub fn plan_cylindrical_fit(
     query: CylindricalFitQuery<'_>,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<CylindricalFitPlan, CylindricalProfileError> {
-    let options = CylindricalProfileOptions {
-        fractional_bits: 256,
-        max_operations: query.max_operations,
-        ..Default::default()
-    };
-    execute(query, &mut cancelled).map_err(|cause| CylindricalProfileError {
-        requested_options: options,
-        requested_spatial_limit: query.spatial_limit,
-        cause,
-    })
+    execute(query, &mut cancelled).map_err(|cause| failure(query, cause))
 }
 
 fn execute(
@@ -26,20 +17,43 @@ fn execute(
     cancelled: &mut (dyn FnMut() -> bool + Send),
 ) -> Checked<CylindricalFitPlan> {
     admit(query)?;
-    let mut arithmetic = Arithmetic::new(
+    let mut arithmetic = arithmetic(query, cancelled);
+    planned_geometry(query, &mut arithmetic)
+}
+
+pub(super) fn failure(
+    query: CylindricalFitQuery<'_>,
+    cause: CylindricalProfileFailure,
+) -> CylindricalProfileError {
+    CylindricalProfileError {
+        requested_options: CylindricalProfileOptions {
+            fractional_bits: 256,
+            max_operations: query.max_operations,
+            ..Default::default()
+        },
+        requested_spatial_limit: query.spatial_limit,
+        cause,
+    }
+}
+
+pub(super) fn arithmetic<'a>(
+    query: CylindricalFitQuery<'_>,
+    cancelled: &'a mut (dyn FnMut() -> bool + Send),
+) -> Arithmetic<'a> {
+    Arithmetic::new(
         ArithmeticPolicy {
             fractional_bits: 256,
             max_operations: query.max_operations,
         },
         cancelled,
-    );
-    planned_geometry(query, &mut arithmetic)
+    )
 }
 
-fn planned_geometry(
+pub(super) fn planned_geometry(
     query: CylindricalFitQuery<'_>,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Checked<CylindricalFitPlan> {
+    let operations_before = arithmetic.operations();
     let source = source::developed(
         query.authored,
         query.interval,
@@ -53,10 +67,10 @@ fn planned_geometry(
     let radius = arithmetic.scalar(query.support_radius)?;
     let error = arithmetic.multiply(&radius, &derivative)?;
     let error = arithmetic.fraction(&error, 1, 192)?;
-    select(query, center, error, arithmetic)
+    select(query, center, error, operations_before, arithmetic)
 }
 
-fn admit(query: CylindricalFitQuery<'_>) -> Checked<()> {
+pub(super) fn admit(query: CylindricalFitQuery<'_>) -> Checked<()> {
     if u16::from(query.interval.level()) + u16::from(query.max_level) > 63
         || query.max_operations > 1_000_000
     {
@@ -90,6 +104,7 @@ fn select(
     query: CylindricalFitQuery<'_>,
     center: f64,
     error: Interval,
+    operations_before: u32,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Checked<CylindricalFitPlan> {
     let (level, error) = sized_error(query, error, arithmetic)?;
@@ -98,7 +113,7 @@ fn select(
         center,
         arithmetic.upper_f64(error.upper)?,
         query,
-        arithmetic.operations(),
+        arithmetic.operations() - operations_before,
     ))
 }
 
