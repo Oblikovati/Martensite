@@ -156,3 +156,25 @@ The new path must preserve admitted rigid coefficients while leaving legacy
 normalization as the default. Current canonical wrapped storage still requires
 identity locations, so this is a boundary needed for oblique placement rather
 than evidence that the canonical publication is invalid.
+
+## Numerical helper checkpoint
+
+`metric_bounds::certify_frame_transport` now implements the coefficient-only
+part of this gate. Its owned input binds the requested axis/radial vectors and
+the actual stored matrix. The result reports a certified operator-error upper
+bound, positive stretch bounds, an outward determinant interval and the Gram
+residual. It does not admit a native transform or certify translation,
+point-domain extent or a completed placed body.
+
+The reference enclosure evaluates each signed component through
+`sqrt(q*q / squared_norm)` in exact-ratio arithmetic. This avoids rounding a
+normalization denominator to binary64 before division. Tests cover both maximum
+finite and minimum subnormal oblique reference scales.
+
+All 16 focused numerical tests passed, including the independent integer-frame
+fixture, exact dyadic inequalities over 125 generated vectors, invalid and
+inconclusive inputs, owned binding and concurrent/sequential equality. Strict
+all-target TKMath clippy also passed. Independent numerical review found no
+correctness issue. Standards review identified missing compile-time assertions
+for three public types; those assertions were added and compiled successfully.
+Physical placement and world-space publication remain to be implemented.

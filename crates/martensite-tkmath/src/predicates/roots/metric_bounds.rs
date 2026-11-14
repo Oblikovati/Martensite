@@ -203,3 +203,9 @@ pub use enclosure_sum::{
     CertifiedEnclosureSum, EnclosureSumCause, EnclosureSumError, EnclosureSumEvidence,
     EnclosureSumOperation, EnclosureSumOptions, sum_nonnegative_enclosures,
 };
+
+mod frame_transport;
+pub use frame_transport::{
+    CertifiedFrameTransport, FrameTransportError, FrameTransportField, FrameTransportInput,
+    FrameTransportQuantity, certify_frame_transport,
+};
