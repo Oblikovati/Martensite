@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added decoded pcurve, parameter-domain and raw/effective topology-tolerance checks for rational wrapped profiles, with edge/face-scoped refusals (#418).
+
 - Added complete cylindrical boundary-image clearance with certified true-period rounding, an infinite-tail bound and aggregate proof budgets, enabling private connected profiles spanning multiple turns (#418).
 
 - Added deterministic cylindrical multi-chart Hermite planning from original polynomial bounds under one work allowance, enabling private wrapped profiles across the cylinder parameter seam (#418).

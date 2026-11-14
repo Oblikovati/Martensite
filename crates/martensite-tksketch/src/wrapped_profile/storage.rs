@@ -6,6 +6,8 @@ mod incidence;
 #[cfg(test)]
 #[path = "storage_tests.rs"]
 mod tests;
+#[path = "storage_trims.rs"]
+mod trims;
 use super::*;
 use crate::surface_sketch::HistoryRole;
 use martensite_tkmath::predicates::roots::metric_bounds::{
@@ -24,6 +26,7 @@ pub(super) struct StoredProof {
     pub certificate: CertifiedCylindricalStorage,
     pub profile: CertifiedCylindricalProfile,
     pub depths: CertifiedCylindricalDepths,
+    pub trims: trims::TrimEvidence,
 }
 
 struct OwnedCurve {
@@ -50,6 +53,14 @@ enum StorageCause {
     Certificate(Box<CylindricalStorageError>),
     Profile(Box<CylindricalProfileError>),
     Depths(Box<CylindricalDepthFailure>),
+    Trim {
+        face: BindingKey,
+        cause: Box<StorageFailure>,
+    },
+    Tolerance {
+        actual: f64,
+        maximum: f64,
+    },
     Mismatch {
         field: &'static str,
         actual: Vec<u64>,
@@ -63,17 +74,51 @@ impl std::fmt::Display for StorageFailure {
             StorageCause::Certificate(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Profile(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Depths(cause) => write!(formatter, "{:?}: {cause}", self.key),
+            StorageCause::Tolerance { actual, maximum } => {
+                tolerance_message(formatter, self.key, *actual, *maximum)
+            }
+            StorageCause::Trim { face, cause } => trim_message(formatter, self.key, *face, cause),
             StorageCause::Mismatch {
                 field,
                 actual,
                 expected,
-            } => write!(
-                formatter,
-                "{:?} {field}: bits/counts={actual:?}; expected {expected:?}",
-                self.key
-            ),
+            } => mismatch_message(formatter, self.key, field, actual, expected),
         }
     }
+}
+
+fn trim_message(
+    formatter: &mut std::fmt::Formatter<'_>,
+    key: BindingKey,
+    face: BindingKey,
+    cause: &StorageFailure,
+) -> std::fmt::Result {
+    write!(formatter, "{key:?} on face={face:?}: {cause}")
+}
+
+fn mismatch_message(
+    formatter: &mut std::fmt::Formatter<'_>,
+    key: BindingKey,
+    field: &str,
+    actual: &[u64],
+    expected: &[u64],
+) -> std::fmt::Result {
+    write!(
+        formatter,
+        "{key:?} {field}: bits/counts={actual:?}; expected {expected:?}"
+    )
+}
+
+fn tolerance_message(
+    formatter: &mut std::fmt::Formatter<'_>,
+    key: BindingKey,
+    actual: f64,
+    maximum: f64,
+) -> std::fmt::Result {
+    write!(
+        formatter,
+        "{key:?}: retained tolerance={actual}; expected finite nonnegative tolerance <= allocated {maximum}"
+    )
 }
 
 pub(super) fn certify(
@@ -111,6 +156,7 @@ fn certify_span(
     let span = piece.span;
     let first_key = key(span, HistoryRole::FirstDepthEdge);
     let [a, b] = captured_span(piece, bindings)?;
+    let trims = trims::certify(request, piece, bindings)?;
     let certificate = prove_captured(request, first_key, [&a, &b])?;
     let depths = prove_depths(request, first_key, &certificate)?;
     let source = authored
@@ -123,6 +169,7 @@ fn certify_span(
         certificate,
         profile,
         depths,
+        trims,
     })
 }
 

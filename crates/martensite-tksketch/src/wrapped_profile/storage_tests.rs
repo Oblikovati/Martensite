@@ -6,7 +6,7 @@ use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::GeomBezierSurface;
 use martensite_tkmath::gp::Point3;
 
-fn frozen() -> (Request, Request, Vec<(BindingKey, Shape)>) {
+pub(super) fn frozen() -> (Request, Request, Vec<(BindingKey, Shape)>) {
     let original = request();
     let prepared = subdivision::prepare(&original).unwrap();
     let built = construction::construct(&prepared).unwrap();
