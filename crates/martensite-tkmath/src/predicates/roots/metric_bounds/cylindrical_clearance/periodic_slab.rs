@@ -85,7 +85,10 @@ pub(super) fn circumference(radius: f64, arithmetic: &mut Arithmetic<'_>) -> Che
     Ok(arithmetic.multiply(&pi, &diameter)?)
 }
 
-pub(super) fn source_width(sources: &[Vec<u64>], arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
+pub(super) fn source_width(
+    sources: &[Vec<u64>],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Interval> {
     let mut range: Option<Interval> = None;
     for source in sources {
         let poles = restricted_source(source, arithmetic)?;
@@ -99,10 +102,14 @@ pub(super) fn source_width(sources: &[Vec<u64>], arithmetic: &mut Arithmetic<'_>
         maximum: 16_384,
     })?;
     let width = arithmetic.subtract(&range, &range)?.upper;
-    Ok(Interval {
-        lower: width.clone(),
-        upper: width,
-    })
+    Ok(point(width))
+}
+
+pub(super) fn point(integer: num_bigint::BigInt) -> Interval {
+    Interval {
+        lower: integer.clone(),
+        upper: integer,
+    }
 }
 
 fn include_range(range: Option<Interval>, pole: Interval) -> Interval {

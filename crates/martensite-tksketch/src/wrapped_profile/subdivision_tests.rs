@@ -88,3 +88,37 @@ fn assert_periodic_margin(result: &super::super::pipeline::Unqualified) {
     let margin = result.clearance.periodic.separation_lower_bound();
     assert!(margin.compare_f64(0.28).unwrap().is_gt());
 }
+
+#[test]
+fn helical_material_spans_two_turns_with_two_certified_images_and_a_tail() {
+    let input = helical_request();
+    let result = super::super::pipeline::wrap_extrude(&input).unwrap();
+    assert!(result.report.is_valid());
+    assert!((result.volume_estimate - 2.205).abs() < input.tolerance);
+    assert_eq!(result.clearance.periodic.images().len(), 2);
+    assert_eq!(result.clearance.periodic.tail_start(), 3);
+    assert!(
+        result
+            .clearance
+            .periodic
+            .separation_lower_bound()
+            .compare_f64(4. * input.tolerance)
+            .unwrap()
+            .is_ge()
+    );
+}
+
+fn helical_request() -> Request {
+    let mut input = near_full_request(0., 14.);
+    input.tolerance = 1e-2;
+    input.loops = vec![super::super::tests::contour(
+        100,
+        &[
+            &[[0., 0.], [14., 14.]],
+            &[[14., 14.], [14., 14.5]],
+            &[[14., 14.5], [0., 0.5]],
+            &[[0., 0.5], [0., 0.]],
+        ],
+    )];
+    input
+}

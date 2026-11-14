@@ -1,9 +1,9 @@
 //! Certify every nonadjacent authored pair before native construction, then bind retained O2 sources.
 use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CertifiedCylindricalClearance, CertifiedCylindricalPeriodicSlab, CylindricalClearanceDomain,
-    CylindricalClearanceError, CylindricalClearanceQuery, CylindricalClearanceSource,
-    certify_cylindrical_clearance,
+    CertifiedCylindricalClearance, CertifiedCylindricalPeriodicClearance,
+    CylindricalClearanceDomain, CylindricalClearanceError, CylindricalClearanceQuery,
+    CylindricalClearanceSource, certify_cylindrical_clearance,
 };
 use std::collections::BTreeSet;
 #[cfg(test)]
@@ -13,7 +13,7 @@ mod tests;
 pub(super) struct OriginalClearance {
     pub spans: Vec<CurveSpan>,
     pub certificate: CertifiedCylindricalClearance,
-    pub periodic: CertifiedCylindricalPeriodicSlab,
+    pub periodic: CertifiedCylindricalPeriodicClearance,
 }
 #[derive(Debug)]
 pub(super) enum ClearanceFailure {
@@ -64,9 +64,9 @@ pub(super) fn certify(
 fn certify_periodic(
     certificate: &CertifiedCylindricalClearance,
     spans: &[CurveSpan],
-) -> Result<CertifiedCylindricalPeriodicSlab, ClearanceFailure> {
+) -> Result<CertifiedCylindricalPeriodicClearance, ClearanceFailure> {
     certificate
-        .certify_periodic_slab(|| false)
+        .certify_periodic_clearance(16, || false)
         .map_err(|cause| ClearanceFailure::Certificate {
             spans: spans.to_vec(),
             cause: Box::new(cause),

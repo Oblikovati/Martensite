@@ -20,7 +20,11 @@ use crate::predicates::roots::certificate_arithmetic::{
 };
 use error::Checked;
 pub use error::{CylindricalClearanceError, CylindricalClearanceFailure};
-pub use report::{CertifiedCylindricalClearance, CertifiedCylindricalPeriodicSlab};
+pub use report::{
+    CertifiedCylindricalClearance, CertifiedCylindricalImage,
+    CertifiedCylindricalPeriodicClearance, CertifiedCylindricalPeriodicSlab,
+    CylindricalPeriodicTranslation,
+};
 pub use types::*;
 type Point = [Interval; 2];
 
@@ -49,9 +53,7 @@ fn execute(
     if count == 0 {
         return Ok(CertifiedCylindricalClearance::assemble(
             query,
-            0,
-            report::Statistics::default(),
-            0,
+            (0, report::Statistics::default(), 0),
         ));
     }
     let mut context = context::Context::capture(query, excluded, cancelled)?;
@@ -68,8 +70,6 @@ fn completed(
 ) -> CertifiedCylindricalClearance {
     CertifiedCylindricalClearance::assemble(
         query,
-        count,
-        context.statistics,
-        context.arithmetic.operations(),
+        (count, context.statistics, context.arithmetic.operations()),
     )
 }

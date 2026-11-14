@@ -16,6 +16,7 @@ pub(super) struct Statistics {
 #[derive(Clone, Debug)]
 pub struct CertifiedCylindricalClearance {
     sources: Vec<Vec<u64>>,
+    intervals: Vec<super::super::CylindricalProfileInterval>,
     radius: f64,
     origin: f64,
     clearance: f64,
@@ -112,13 +113,12 @@ impl CertifiedCylindricalClearance {
     }
     pub(super) fn assemble(
         query: CylindricalClearanceQuery<'_>,
-        pair_count: usize,
-        statistics: Statistics,
-        operations: u32,
+        (pair_count, statistics, operations): (usize, Statistics, u32),
     ) -> Self {
         let (scope, excluded) = owned_domain(query.domain);
         Self {
             sources: query.sources.iter().map(source_bits).collect(),
+            intervals: source_intervals(query.sources),
             radius: query.support_radius,
             origin: query.angular_origin,
             clearance: query.requested_clearance,
@@ -130,6 +130,12 @@ impl CertifiedCylindricalClearance {
             operations,
         }
     }
+}
+
+fn source_intervals(
+    sources: &[CylindricalClearanceSource<'_>],
+) -> Vec<super::super::CylindricalProfileInterval> {
+    sources.iter().map(|source| source.interval).collect()
 }
 
 fn source_bits(source: &CylindricalClearanceSource<'_>) -> Vec<u64> {
@@ -162,3 +168,7 @@ fn owned_domain(
 #[path = "periodic_slab.rs"]
 mod periodic_slab;
 pub use periodic_slab::CertifiedCylindricalPeriodicSlab;
+
+#[path = "periodic_images/mod.rs"]
+mod periodic_images;
+pub use periodic_images::*;

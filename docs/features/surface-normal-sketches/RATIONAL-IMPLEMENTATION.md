@@ -149,8 +149,12 @@ source/interval/chart records bind back to retained O2 proofs. An outward
 true-circumference slab proof now excludes all nonzero periodic images when the
 whole source width leaves the required clearance. A priori multiple-chart
 fitting now covers long curves and parameter-seam crossings while preserving
-original intervals and split-corner ancestry. Wider periodic classification
-remains open.
+original intervals and split-corner ancestry. The periodic boundary pipeline
+now examines every required positive image under one work allowance, accounts
+for true-period rounding and certifies the infinite tail. The current one-outer
+planar selection excludes translated material containment by Jordan separation
+and equal area. A two-turn helical strip passes; disconnected cross-component
+classification remains open.
 
 ## Remaining gates
 

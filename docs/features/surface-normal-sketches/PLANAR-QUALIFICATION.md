@@ -4,7 +4,8 @@ Status, 2026-11-14: authored material capture, local derivative cones and
 nonadjacent developed-plane clearance are integrated into the private pipeline.
 A certified true-period slab now covers every nonzero image for narrow
 selections, and multiple-chart fitting supports long curves and parameter-seam
-crossings. Wider periodic classification and publication remain open. The
+crossings. Complete boundary-image relations now cover connected multi-turn
+profiles. Disconnected material classification and publication remain open. The
 operation still returns `Unqualified`.
 
 ## Implemented material capture
@@ -278,8 +279,8 @@ This additional proof uses a fresh finite arithmetic allowance from the original
 policy. Exhaustion, cancellation and insufficient precision return incomplete
 evidence. A slab wider than the permitted bound also returns incomplete evidence;
 it does not prove material overlap. The multiple-chart checkpoint below removes the initial angular admission
-restriction. General image relations and periodic containment classification
-are still required for wider selections.
+restriction. The complete periodic checkpoint below handles wider connected selections.
+Disconnected material containment remains open.
 
 Controls distinguish binary64 `TAU` from the true circumference, restrict the
 original source interval, preserve a large chart translation, refuse the
@@ -334,9 +335,9 @@ This refusal remains incomplete evidence, not an overlap classification.
 
 Planner controls cover a long line, an exact source subinterval, original cubic
 chart centers, single-chart preservation, work exhaustion, cancellation and
-unchanged geometry under a larger work allowance. Wider profiles that can remain
-valid despite overlapping enclosing slabs still need the general periodic
-boundary and material proof. Publication remains disabled.
+unchanged geometry under a larger work allowance. The complete periodic checkpoint below covers wider connected profiles even
+when their enclosing slabs overlap. Disconnected material classification and
+publication remain open.
 
 
 Verification passed the two package suites (488 math library tests before the
@@ -348,3 +349,80 @@ Strict all-target clippy passed for both packages. The isolated original debug
 fixture took 3.36 seconds with peak RSS 51,632 KiB; the five-second limit remains
 unchanged. The approximate style scan found no inspected file over 500 lines,
 function over 20 code lines or nesting above two. No version was changed.
+
+
+## Complete periodic boundary relations
+
+The private pipeline now uses `certify_periodic_clearance`. It derives a finite
+set of positive image numbers from the original restricted control hulls and an
+outward true-circumference interval. Let `W` be the enclosing developed S width,
+`T_lower > 0` the circumference lower bound and `δ = 4ε` the requested clearance.
+The planner examines every image `1..=N`, where
+`N = floor((W + δ)_upper / T_lower)`. For every integer `k > N`, the slab gap
+`k T_lower - W` already exceeds `δ`. The recorded first tail image and its lower
+gap certify this infinite remainder. The result also records the requested
+positive-image allowance. A narrow slab has `N = 0` and completes
+without pair queries. The native limit is 16 examined images; the math interface
+admits an explicit maximum up to 1,024 and refuses if required images exceed it.
+
+For each examined image, the planner encloses the true shift `k * 2πR`, selects
+one finite binary64 literal shift and records an outward translation error `σ`.
+The literal relation must establish at least an upward-rounded `δ + σ` clearance.
+The triangle inequality then gives physical clearance `δ` at the true shift.
+Requested physical margin, effective comparison margin and translation error
+are recorded separately. A literal witness below its strengthened threshold
+refuses certification; it does not by itself prove a collision at the true shift.
+
+Every examined relation contains all ordered source pairs, including a source
+against its own translate. This also covers negative images by swapping the
+ordered pair. No endpoint or same-contour exclusion applies across images.
+Sources come from immutable original snapshots and retain their exact authored
+intervals; the complete result binds to the retained O2 inputs and chart.
+Planning and all image relations share one arithmetic, domain and cached-node
+allowance. Each image receipt records the effective remaining allowance.
+Exhaustion or cancellation returns no partial successful proof.
+
+## Connected material and the periodic proof
+
+The current planar selection requires exactly one bounded region with one
+Jordan outer boundary and optional holes. Consider its bounded outer domain
+`D` and a nonzero translation `D + kT`. The periodic boundary proof separates
+their outer boundaries. By Jordan separation, overlapping interiors would
+therefore force strict containment of one domain in the other. Translation
+preserves their equal finite area, while strict containment with positive
+boundary separation leaves an open area gap. Thus containment is impossible,
+and the outer domains, including their selected material, are disjoint.
+The same argument applies throughout a Jordan-preserving profile homotopy
+whose displacement stays below the established boundary clearance.
+
+This argument uses the existing single-outer selection. It does not discharge
+cross-component containment for disconnected selections. P4 must classify those
+relations explicitly before it admits disconnected material. The math report
+therefore promises boundary clearance only; it does not infer material topology.
+
+The native positive control is the developed parallelogram with vertices
+`(0,0)`, `(14,14)`, `(14,14.5)`, `(0,0.5)`. Its S width spans two full cylinder
+turns and its enclosing slabs overlap. Two explicit image relations and the
+certified tail pass. An independent Jacobian exact polygon calculation gives
+area `7`; the retained request/result is in
+[the helical oracle](references/rational-periodic-helical-oracle.json).
+At support radius `1` and depths `[-0.1, 0.2]`, the independent ideal volume is
+`7 * ((6/5)^2 - (9/10)^2) / 2 = 441/200 = 2.205`. The native estimate agrees within
+the requested `1e-2` tolerance. Its isolated debug control took 4.66 seconds.
+The estimate remains separate from the missing certified represented measure.
+
+Controls also cover every required image and the infinite tail, an empty image
+set, exact source subintervals, true/literal shift enclosure, the strengthened
+comparison margin, forbidden image omission, same-source image contacts and
+cancellation. Removing one unit from the total arithmetic, domain or cached-node
+allowance refuses at the second image, demonstrating that the allowance is not
+reset per image. Publication remains disabled.
+
+Verification passed 498 math library tests, 3,114 math integration tests,
+56 math doctests, 43 sketch library tests and 32 sketch integration tests.
+All eight focused periodic-image controls and strict all-target clippy passed.
+The original isolated debug fixture took 3.33 seconds with peak RSS 51,144 KiB,
+within the unchanged five-second limit. These individual timings do not establish
+a performance improvement. The approximate style scan found all inspected files
+under 500 lines, functions at most 20 code lines and nesting at most two.
+No dependency, version or release tag changed.

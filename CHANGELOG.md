@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added complete cylindrical boundary-image clearance with certified true-period rounding, an infinite-tail bound and aggregate proof budgets, enabling private connected profiles spanning multiple turns (#418).
+
 - Added deterministic cylindrical multi-chart Hermite planning from original polynomial bounds under one work allowance, enabling private wrapped profiles across the cylinder parameter seam (#418).
 
 - Added outward true-circumference slab certificates for all nonzero cylindrical periodic images, bound to original profile sources with explicit incomplete results for wider selections (#418).

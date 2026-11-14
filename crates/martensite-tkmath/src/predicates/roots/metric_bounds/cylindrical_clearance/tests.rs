@@ -303,3 +303,6 @@ mod binding;
 
 #[path = "tests/periodic_slab.rs"]
 mod periodic_slab;
+
+#[path = "tests/periodic_images.rs"]
+mod periodic_images;

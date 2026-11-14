@@ -40,6 +40,30 @@ pub enum CylindricalClearanceFailure {
         /// Offending input.
         value: f64,
     },
+    /// The requested image-count policy exceeds the finite admitted maximum.
+    PeriodicImagePolicy {
+        /// Supplied maximum.
+        maximum: u32,
+        /// Hard admitted bound.
+        admitted: u32,
+    },
+    /// Global bounds require more image relations than were allowed.
+    PeriodicImageLimit {
+        /// Required positive image count, before narrowing to a machine integer.
+        required: num_bigint::BigInt,
+        /// Original requested maximum.
+        maximum: u32,
+    },
+    /// A literal-image comparison was incomplete or below its strengthened margin.
+    /// The comparison's witness is not a claim of a true periodic collision.
+    PeriodicImage {
+        /// Positive true image number.
+        turn: u32,
+        /// Actual literal translation used by the comparison.
+        offset: f64,
+        /// Original typed comparison failure and effective limits.
+        cause: Box<CylindricalClearanceError>,
+    },
     /// The source slab could not establish separation from all true periodic images.
     /// This is incomplete evidence, not a witness of overlapping material.
     PeriodicSlabUnresolved {
