@@ -10,6 +10,7 @@ pub(in super::super) enum FamilyStage {
     Storage,
     Binding,
     MemberChecks,
+    Budget,
     Completion,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

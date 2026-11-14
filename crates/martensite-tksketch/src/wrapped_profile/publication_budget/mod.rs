@@ -12,12 +12,12 @@ pub(super) use error::{BudgetFailure, Quantity};
 type Checked<T> = Result<T, BudgetFailure>;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct BudgetLimits {
-    pub spatial: f64,
-    pub profile: f64,
-    pub storage: f64,
-    pub trace: f64,
-    pub clearance: f64,
-    pub retained_vs_ideal: CylindricalMeasureLimit,
+    spatial: f64,
+    profile: f64,
+    storage: f64,
+    trace: f64,
+    clearance: f64,
+    retained_vs_ideal: CylindricalMeasureLimit,
 }
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct MemberBounds {
@@ -45,12 +45,25 @@ pub(super) fn certify(
     family: &family::UnqualifiedFamily,
     retained_vs_ideal: CylindricalMeasureLimit,
 ) -> Checked<BudgetEvidence> {
+    let limits = requested_limits(originals, retained_vs_ideal)?;
+    certify_with_limits(originals, family, limits)
+}
+pub(super) fn requested_limits(
+    originals: &[Request],
+    retained_vs_ideal: CylindricalMeasureLimit,
+) -> Checked<BudgetLimits> {
     let first = originals.first().ok_or(BudgetFailure::Empty)?;
-    let limits = BudgetLimits::new(first.tolerance, retained_vs_ideal)?;
+    BudgetLimits::new(first.tolerance, retained_vs_ideal)
+}
+pub(super) fn certify_with_limits(
+    originals: &[Request],
+    family: &family::UnqualifiedFamily,
+    limits: BudgetLimits,
+) -> Checked<BudgetEvidence> {
     owners(originals, family)?;
     let members = member_budgets(originals, family, limits)?;
     member::clearance(family, limits.clearance)?;
-    let volume = FamilyVolumeBounds::certify(family, retained_vs_ideal)?;
+    let volume = FamilyVolumeBounds::certify(family, limits.retained_vs_ideal)?;
     Ok(BudgetEvidence {
         limits,
         members,

@@ -67,7 +67,41 @@ clippy, formatting and whitespace checks passed. The approximate scan found no
 new function over 20 lines, file over 500 lines or nesting above two. The full
 affected-package PR gate remains required before a push.
 
-The operation still returns `UnqualifiedFamily`. Final publication composition,
+The diagnostic constructor returns `UnqualifiedFamily`; the composed constructor
+below returns the private `BudgetedFamily` state. Final publication qualification,
 sanitizer qualification, broader concurrency stress, general conical profiles,
 additional curve classes, glyph scale, oblique frames and replacement deletion
 remain open. No public API, dependency, package version or release tag changed.
+
+## Composed constructor
+
+`family::construct_budgeted` now declares the budget before geometry work and
+returns the frozen family together with its successful budget receipt. Its
+cancellable form shares one operation control across selection, construction,
+proofs, budget validation and final handoff. There is one completion checkpoint,
+after the budget passes. Failure or cancellation returns no `BudgetedFamily`.
+
+Budget allocation fields are private to the budget module. Other stages receive
+the canonical allocation as a value; they cannot construct or alter individual
+shares. The original unqualified walking-skeleton entry remains available for
+its diagnostic controls. The composed constructor reuses its construction and
+proof stages and encodes the geometry once.
+
+Six additional controls cover the successful combined result, invalid policy
+before construction, an unmet volume allowance, cancellation before and after
+budget validation, cancellation at final handoff, and reordered selections.
+Process and concurrent replay now compare the budget receipt as well as frozen
+bytes, history, native reports and measure evidence. A family storage-cancellation
+control also exercises the composed entry point.
+
+The affected sketch package passed 165 library and 32 integration tests on Linux
+x86_64, taking 35.41 and 2.30 seconds excluding compilation. The ignored worker
+was explicitly invoked by its parent process-replay test. Strict all-target
+clippy passed. The six focused composed-constructor controls were rerun after
+test cleanup. The approximate scan found no new function over 20 lines, file over
+500 lines or nesting above two. The full affected-package PR gate is still
+required before a push.
+
+`BudgetedFamily` is a private pre-publication state. It is not an accepted-body
+API and does not waive sanitizer qualification or any remaining geometric and
+application gates. No package version, dependency or release tag changed.

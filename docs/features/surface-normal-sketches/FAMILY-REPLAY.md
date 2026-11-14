@@ -5,7 +5,9 @@
 The private family controls compare the complete frozen B-rep bytes, sorted
 semantic keys, authored history records, per-member coverage and ordered native
 reports, native volume and integration-estimate bits, and the retained
-flux/ideal-measure comparison certificates (#418). The fixture combines a
+flux/ideal-measure comparison certificates (#418). The later composed path also
+compares the requested budget, per-member spatial maxima and aggregate volume
+bounds. The fixture combines a
 line/quadratic/cubic contour with a hole and a separate unit square.
 
 The replay test constructs a parent baseline and starts two independent copies
@@ -40,13 +42,15 @@ absence of data races.
 
 ## Remaining scope
 
-The family is still unqualified. The later
-[cancellation and isolation controls](FAMILY-CANCELLATION.md) cover stage-boundary
-cancellation, failures and source mutation. In-stage cancellation, aggregate
-operation policy, the final publication contract, glyph scale, oblique frames,
-general conical profiles and replacement deletion remain in the approved work. The earlier detached-export mutation control remains
-separate. No production behavior, public API, package version, dependency or
-release tag changed.
+The family is still pre-publication. Later
+[cancellation and isolation controls](FAMILY-CANCELLATION.md) cover the mathematical
+proof callbacks, cooperative native boundaries, failures and source mutation.
+The composed [budgeted constructor](PUBLICATION-BUDGET.md) binds one declared
+allowance to the completed frozen family. Sanitizer qualification, broader
+stress, the accepted-body contract, glyph scale, oblique frames, general conical
+profiles and replacement deletion remain open. The earlier detached-export
+mutation control remains separate. No production behavior, public API, package
+version, dependency or release tag changed.
 
 ## Verification
 
@@ -63,3 +67,21 @@ Run the replay controls with:
 ```sh
 cargo test -p martensite-tksketch --lib wrapped_profile::family::replay_tests
 ```
+
+## Startup recheck and composed replay
+
+A syscall trace with instruction pointers reproduced the pinned startup crash
+with a null instruction pointer before `main`. Running with an empty environment
+also crashed; no loader override variables were present in the parent process.
+The host reports glibc 2.39. A comparison build with the already installed
+`nightly` toolchain (`rustc 1.101.0-nightly`, commit `8d1a76430`, 2026-10-06,
+LLVM 23.1.3) compiled successfully and reproduced the pre-main SIGSEGV. The root
+cause remains unknown. These observations do not justify changing the repository
+pin or count as executing any rational-family test under ThreadSanitizer.
+
+The comparison build cache was removed after inspection (`cargo clean` reclaimed
+142.0 MiB). No experiment source or new toolchain pin was retained. The normal
+process and concurrent controls now construct `BudgetedFamily` and compare its
+budget receipt alongside the existing geometry and history signature. They
+passed in the 165-library/32-integration sketch-package run recorded in
+[Publication budget](PUBLICATION-BUDGET.md). Sanitizer validation remains open.

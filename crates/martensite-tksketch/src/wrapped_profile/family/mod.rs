@@ -1,7 +1,9 @@
 //! One frozen transport table for all selected material components (#418).
 use super::*;
 use std::collections::BTreeMap;
+mod budgeted;
 mod control;
+pub(super) use budgeted::{BudgetedFamily, construct_budgeted, construct_budgeted_with_cancel};
 mod error;
 use control::{Checkpoint, Control, FamilyStage};
 mod freeze;
@@ -31,12 +33,19 @@ pub(super) fn construct_with_cancel(
     mut cancelled: impl FnMut(Checkpoint) -> bool + Send,
 ) -> Checked<UnqualifiedFamily> {
     let mut control = Control::new(&mut cancelled);
+    let family = construct_controlled(requests, &mut control)?;
+    control.run(FamilyStage::Completion, None, |_| Ok(family))
+}
+fn construct_controlled(
+    requests: &[Request],
+    control: &mut Control<'_>,
+) -> Checked<UnqualifiedFamily> {
     let selection = control.run(FamilyStage::Selection, None, |poll| {
         selection::certify_with_cancel(requests, Default::default(), poll)
             .map_err(|cause| FamilyFailure::Selection(Box::new(cause)))
     })?;
-    let frozen = freeze::construct_with_control(&selection.prepared.prepared, &mut control)?;
-    qualify_frozen(requests, selection, frozen, &mut control)
+    let frozen = freeze::construct_with_control(&selection.prepared.prepared, control)?;
+    qualify_frozen(requests, selection, frozen, control)
 }
 fn qualify_frozen(
     originals: &[Request],
@@ -56,7 +65,7 @@ fn qualify_frozen(
         coverage,
         history,
     };
-    control.run(FamilyStage::Completion, None, |_| Ok(result))
+    Ok(result)
 }
 
 fn checked_members(

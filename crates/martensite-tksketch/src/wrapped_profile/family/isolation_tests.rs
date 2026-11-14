@@ -55,7 +55,7 @@ fn targets() -> Vec<Checkpoint> {
     .map(|(stage, region)| Checkpoint { stage, region })
     .collect()
 }
-fn assert_cancelled(result: Checked<UnqualifiedFamily>, expected: Checkpoint) {
+fn assert_cancelled<T>(result: Checked<T>, expected: Checkpoint) {
     match result {
         Err(FamilyFailure::Cancelled(actual)) => assert_eq!(actual, expected),
         Err(other) => panic!("expected cancellation at {expected:?}, got {other}"),
@@ -189,7 +189,9 @@ fn family_cancellation_reaches_retained_storage_arithmetic() {
         region: Some(SurfaceRegionId(5)),
     };
     let mut polls = 0;
-    let result = construct_with_cancel(&inputs, |point| {
+    let volume =
+        martensite_tkmath::predicates::roots::metric_bounds::CylindricalMeasureLimit::Report;
+    let result = construct_budgeted_with_cancel(&inputs, volume, |point| {
         if point == target {
             polls += 1;
         }

@@ -54,9 +54,10 @@ The result remains unqualified. Later checkpoints bind
 concurrent [replay](FAMILY-REPLAY.md). The detached-export mutation control is
 one isolation case; the cancellation checkpoint records the other tested paths.
 
-In-stage cancellation, aggregate operation policy, sanitizer validation,
-broader concurrency stress checks and the final publication contract remain
-open. General conical profiles, additional authored curve classes, the glyph
+The later [budgeted constructor](PUBLICATION-BUDGET.md) applies one family
+allowance before handoff. Cooperative cancellation remains governed by the
+recorded native-boundary contract. Sanitizer validation, broader concurrency
+stress checks and the final accepted-body contract remain open. General conical profiles, additional authored curve classes, the glyph
 workload, oblique frames and deletion of superseded production paths also remain
 in the approved plan. No package version, public primitive API, dependency or
 release tag changed.

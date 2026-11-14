@@ -1,6 +1,7 @@
 //! Compare retained bytes and authored history across processes and overlapping operations.
 use super::tests::requests;
 use super::*;
+use martensite_tkmath::predicates::roots::metric_bounds::CylindricalMeasureLimit;
 use std::fmt::Write;
 const WORKER: &str = "surface_sketch::wrapped_profile::family::replay_tests::family_replay_worker";
 const CHILD_ENV: &str = "MARTENSITE_RATIONAL_FAMILY_REPLAY";
@@ -10,12 +11,20 @@ fn signature(reverse: bool) -> String {
     if reverse {
         inputs.reverse();
     }
-    let result = construct(&inputs).unwrap_or_else(|e| panic!("{e}"));
-    let mut signature = format!("{:?}|{:?}|", result.keys, result.history);
-    append_members(&mut signature, &result.members);
-    append_bytes(&mut signature, &result.bytes);
+    let result = construct_budgeted(&inputs, CylindricalMeasureLimit::Report)
+        .unwrap_or_else(|e| panic!("{e}"));
+    signature_of(&result)
+}
+fn signature_of(result: &BudgetedFamily) -> String {
+    let mut signature = format!(
+        "{:?}|{:?}|{:?}|",
+        result.family.keys, result.family.history, result.budget
+    );
+    append_members(&mut signature, &result.family.members);
+    append_bytes(&mut signature, &result.family.bytes);
     signature
 }
+
 fn append_bytes(signature: &mut String, bytes: &[u8]) {
     signature.reserve(bytes.len() * 2);
     for byte in bytes {

@@ -149,6 +149,7 @@ are foundations for the general operation; this increment adds no sketch entry p
 The private family path now retains [authored history](AUTHORED-HISTORY.md),
 checks [cancellation and isolation](FAMILY-CANCELLATION.md), compares
 [process and concurrent replay](FAMILY-REPLAY.md), and has an explicit
-[family error-budget gate](PUBLICATION-BUDGET.md). These checkpoints do not expose a
-new accepted-body API. Sanitizer qualification and the remaining implementation
+[family error-budget gate](PUBLICATION-BUDGET.md). The composed private constructor
+returns its frozen family and successful budget receipt together. These
+checkpoints do not expose a new accepted-body API. Sanitizer qualification and the remaining implementation
 and application gates are still open.
