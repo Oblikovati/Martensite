@@ -6,7 +6,7 @@ use martensite_tkbrep::{
     topods::{Builder, Shell, Solid, Vertex},
 };
 use martensite_tkernel::standard::Handle;
-use martensite_tkg3d::geom::GeomCylindricalSurface;
+use martensite_tkg3d::geom::{GeomBezierCurve, GeomCylindricalSurface};
 use martensite_tkmath::gp::{Axis3, Point3};
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeVertex;
 
@@ -100,28 +100,50 @@ fn contour_pieces(
     pieces: &mut Vec<NativePiece>,
     history: &mut Vec<(BindingKey, Shape)>,
 ) -> Result<(), Failure> {
-    let vertices = contour
-        .iter()
-        .map(|p| vertex_pair(p.poles[0], request))
-        .collect::<Result<Vec<_>, _>>()?;
-    let connectors = vertices
-        .iter()
-        .map(connector)
-        .collect::<Result<Vec<_>, _>>()?;
+    let incidences = ContourIncidences::new(contour, request)?;
     let first = pieces.len();
     for (i, source) in contour.iter().enumerate() {
-        let next = (i + 1) % contour.len();
-        let piece = piece(
-            request,
-            source,
-            [&vertices[i], &vertices[next]],
-            [connectors[i].clone(), connectors[next].clone()],
-            caps,
-        )?;
-        record_history(source, &piece, &vertices[i], history);
+        let piece = incidences.piece_at(request, source, i, caps)?;
+        record_history(source, &piece, &incidences.vertices[i], history);
         pieces.push(piece);
     }
     cap_wires(caps, &pieces[first..])
+}
+struct ContourIncidences {
+    vertices: Vec<[Vertex; 2]>,
+    connectors: Vec<Edge>,
+}
+impl ContourIncidences {
+    fn new(contour: &[AuthoredPiece], request: &Request) -> Result<Self, Failure> {
+        let vertices = contour
+            .iter()
+            .map(|p| vertex_pair(p.poles[0], request))
+            .collect::<Result<Vec<_>, _>>()?;
+        let connectors = vertices
+            .iter()
+            .map(connector)
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Self {
+            vertices,
+            connectors,
+        })
+    }
+    fn piece_at(
+        &self,
+        request: &Request,
+        source: &AuthoredPiece,
+        i: usize,
+        caps: &[Face; 2],
+    ) -> Result<NativePiece, Failure> {
+        let next = (i + 1) % self.vertices.len();
+        piece(
+            request,
+            source,
+            [&self.vertices[i], &self.vertices[next]],
+            [self.connectors[i].clone(), self.connectors[next].clone()],
+            caps,
+        )
+    }
 }
 
 fn vertex_pair(point: [f64; 2], request: &Request) -> Result<[Vertex; 2], Failure> {
@@ -170,6 +192,24 @@ fn piece(
     connectors: [Edge; 2],
     caps: &[Face; 2],
 ) -> Result<NativePiece, Failure> {
+    let curves = boundary_curves(request, source, ends)?;
+    let edges = [
+        edge(&curves[0], [&ends[0][0], &ends[1][0]])?,
+        edge(&curves[1], [&ends[0][1], &ends[1][1]])?,
+    ];
+    attach_cap_curves(request, source, &edges, caps)?;
+    let side = side(&curves, &edges, &connectors, request.tolerance / 2.)?;
+    Ok(NativePiece {
+        edges,
+        connectors,
+        side,
+    })
+}
+fn boundary_curves(
+    request: &Request,
+    source: &AuthoredPiece,
+    ends: [&[Vertex; 2]; 2],
+) -> Result<[Handle<GeomBezierCurve>; 2], Failure> {
     let coefficients = angular::coefficients(&source.poles, request.radius, source.chart_center);
     let make = |i| {
         depth_curve(
@@ -178,11 +218,14 @@ fn piece(
             [&ends[0][i], &ends[1][i]],
         )
     };
-    let curves = [make(0)?, make(1)?];
-    let edges = [
-        edge(&curves[0], [&ends[0][0], &ends[1][0]])?,
-        edge(&curves[1], [&ends[0][1], &ends[1][1]])?,
-    ];
+    Ok([make(0)?, make(1)?])
+}
+fn attach_cap_curves(
+    request: &Request,
+    source: &AuthoredPiece,
+    edges: &[Edge; 2],
+    caps: &[Face; 2],
+) -> Result<(), Failure> {
     let pcurve = curve2(
         &source
             .poles
@@ -191,13 +234,7 @@ fn piece(
             .collect::<Vec<_>>(),
     )?;
     attach(&edges[0], &pcurve, &caps[0], request.tolerance / 2.)?;
-    attach(&edges[1], &pcurve, &caps[1], request.tolerance / 2.)?;
-    let side = side(&curves, &edges, &connectors, request.tolerance / 2.)?;
-    Ok(NativePiece {
-        edges,
-        connectors,
-        side,
-    })
+    attach(&edges[1], &pcurve, &caps[1], request.tolerance / 2.)
 }
 
 fn cap_wires(caps: &[Face; 2], pieces: &[NativePiece]) -> Result<(), Failure> {
@@ -239,30 +276,43 @@ fn record_history(
 ) {
     let curve = Source::Span(source.span);
     let vertex = Source::Corner(source.start);
+    let [first_edge, last_edge, side] = span_history(curve, piece);
+    let [normal, first_vertex, last_vertex] = corner_history(vertex, piece, start);
     history.extend([
+        first_edge,
+        last_edge,
+        side,
+        normal,
+        first_vertex,
+        last_vertex,
+    ]);
+}
+fn span_history(source: Source, piece: &NativePiece) -> [(BindingKey, Shape); 3] {
+    let images = [
         (
-            key(curve, HistoryRole::FirstDepthEdge),
+            HistoryRole::FirstDepthEdge,
             piece.edges[0].clone().into_shape(),
         ),
         (
-            key(curve, HistoryRole::LastDepthEdge),
+            HistoryRole::LastDepthEdge,
             piece.edges[1].clone().into_shape(),
         ),
+        (HistoryRole::SideFace, piece.side.clone().into_shape()),
+    ];
+    images.map(|(role, shape)| (key(source, role), shape))
+}
+fn corner_history(
+    source: Source,
+    piece: &NativePiece,
+    start: &[Vertex; 2],
+) -> [(BindingKey, Shape); 3] {
+    let images = [
         (
-            key(curve, HistoryRole::SideFace),
-            piece.side.clone().into_shape(),
-        ),
-        (
-            key(vertex, HistoryRole::NormalEdge),
+            HistoryRole::NormalEdge,
             piece.connectors[0].clone().into_shape(),
         ),
-        (
-            key(vertex, HistoryRole::FirstDepthVertex),
-            start[0].clone().into_shape(),
-        ),
-        (
-            key(vertex, HistoryRole::LastDepthVertex),
-            start[1].clone().into_shape(),
-        ),
-    ]);
+        (HistoryRole::FirstDepthVertex, start[0].clone().into_shape()),
+        (HistoryRole::LastDepthVertex, start[1].clone().into_shape()),
+    ];
+    images.map(|(role, shape)| (key(source, role), shape))
 }
