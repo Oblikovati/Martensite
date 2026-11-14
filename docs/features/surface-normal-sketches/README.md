@@ -173,3 +173,5 @@ The [P5 workload census](P5-WORKLOAD.md) pins the existing font asset and the
 239-piece supplied-text case. Its first full modelling witness passed with an
 explicit finite work request; performance qualification and oblique frames
 remain open.
+
+The [oblique-frame gate](OBLIQUE-FRAMES.md) records the stored-transform, error-budget, validation and replay evidence required before accepting noncanonical frames.
