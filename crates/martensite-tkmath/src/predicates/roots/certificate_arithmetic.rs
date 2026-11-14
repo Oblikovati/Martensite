@@ -15,3 +15,5 @@ pub(super) mod bounded_failure;
 pub(super) mod bernstein_curve;
 
 pub(super) mod planar_hulls;
+
+pub(super) mod circular_constants;
