@@ -172,7 +172,11 @@ places the observed cost before family clearance, native construction and
 body validation, but does not identify its exact inner step. Bug #449 tracks
 minimization, attribution and an evidence-based fix. The second probe was
 stopped after collecting the stage evidence, and all four temporary probe
-lines were removed. The original corrected full run remains active. No
+lines were removed. The original corrected full run was later intentionally stopped after
+27 minutes 45 seconds of CPU time once the main-line minimized reproducer
+localized the cost to the planar census. Its terminal exit was 101 after
+SIGTERM, not a geometric result or refusal. The retained log is incomplete
+acceptance evidence; the unchanged full workload must run again after the fix. No
 acceptance, performance equivalence or approved P5 budget is claimed.
 
 ## Kernel request edit/replay control
@@ -189,3 +193,20 @@ request with the captured lowercase `t` at its pinned placement. The replacement
 enclosed the independent volume oracle `62194689 / 671088640`; prior bytes
 stayed unchanged and original replay still matched. This extended run passed
 in 17.10 seconds. Persistent text-document replacement remains open.
+
+The boss and pocket controls now retain the Boolean operation and explicitly
+request its native history. For every exported wrapped-tool face, edge and
+vertex, they require either retained native identity, reported result images,
+or explicit deletion. Every reported modified/generated image must belong to
+the output. Both controls passed in a focused two-test run (4.90 seconds).
+This establishes native leaf-entity accounting for these cases, not a
+persistent composed-history implementation or coverage of solid/shell/wire
+provenance.
+
+The successful boss/pocket controls now serialize both native Boolean inputs
+with the existing BinTools writer before and after the operation, requesting
+triangles and normals as well as topology and geometry. Both snapshots remain
+byte-identical in both controls. The focused two-test run passed in 10.97
+seconds under concurrent investigation load. This checks successful-operation
+input preservation for the fixtures; post-result source mutation, failure and
+cancellation isolation still need separate evidence.
