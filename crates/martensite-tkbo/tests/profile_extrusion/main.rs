@@ -5,4 +5,5 @@ mod declines;
 mod extrusion;
 mod fixtures;
 mod graph;
+mod pair_matrix;
 mod regions;

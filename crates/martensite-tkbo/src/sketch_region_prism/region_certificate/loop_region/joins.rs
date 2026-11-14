@@ -7,7 +7,7 @@ use super::binding::SegmentBinding;
 use super::types::*;
 use crate::sketch_region::RegionSourceId;
 use crate::sketch_region_certification::{
-    BoundaryCensus, CertificationObligation, domain_certificate,
+    BoundaryCensus, CertificationObligation, DomainCertificates,
 };
 use martensite_tkmath::predicates::roots::bezier_pair::{
     BezierPairSignStage, CertifiedBezierPairContact,
@@ -35,7 +35,8 @@ pub(super) fn certify_contacts(
     mut expected: Expected,
 ) -> LoopRegionCheck<(Vec<JoinProof>, usize, usize)> {
     domain_count(census, binding.sources.len())?;
-    first_unavailable(census, binding)?;
+    let certificates = DomainCertificates::new(census);
+    first_unavailable(census, binding, certificates.as_ref())?;
     current_matrix(census)?;
     let mut joins = Vec::new();
     let mut carriers = 0;
@@ -46,7 +47,10 @@ pub(super) fn certify_contacts(
             stage: STAGE,
             cause: LoopRegionCause::PairUnavailable { sources },
         };
-        let proof = domain_certificate(census, domain).ok_or(unavailable)?;
+        let proof = certificates
+            .as_ref()
+            .and_then(|current| current.certificate(domain))
+            .ok_or(unavailable)?;
         carriers += usize::from(proof.sign_stage() == BezierPairSignStage::SkippedCommonCarrier);
         let wanted = expected.remove(&key(first, second)).unwrap_or_default();
         let wanted = oriented(wanted, first > second);
@@ -80,9 +84,16 @@ fn domain_count(census: &BoundaryCensus, sources: usize) -> LoopRegionCheck<()> 
     Ok(())
 }
 /// Name the first pair domain without a complete certificate, before matrix obligations.
-fn first_unavailable(census: &BoundaryCensus, binding: &SegmentBinding<'_>) -> LoopRegionCheck<()> {
+fn first_unavailable(
+    census: &BoundaryCensus,
+    binding: &SegmentBinding<'_>,
+    certificates: Option<&DomainCertificates<'_>>,
+) -> LoopRegionCheck<()> {
     for domain in &census.domains {
-        if domain_certificate(census, domain).is_none() {
+        if certificates
+            .and_then(|current| current.certificate(domain))
+            .is_none()
+        {
             let [first, second] = domain.occurrences;
             let sources = [source(binding, first)?, source(binding, second)?];
             return refuse(STAGE, LoopRegionCause::PairUnavailable { sources });
