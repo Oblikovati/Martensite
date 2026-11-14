@@ -90,11 +90,30 @@ fn source_message(
 }
 
 pub(super) fn certify(request: &Request) -> Result<PlanarEvidence, PlanarFailure> {
-    joins::admit(request).map_err(|cause| PlanarFailure::Join(Box::new(cause)))?;
-    let profile = profile(request)?;
-    let captured = build_planar_regions(&profile, super::pipeline::resolution(request.tolerance))
-        .map_err(|cause| PlanarFailure::Capture(Box::new(cause)))?;
+    let captured = capture(std::slice::from_ref(request), request.tolerance)?;
     select(request, &captured)
+}
+pub(super) fn capture(
+    requests: &[Request],
+    tolerance: f64,
+) -> Result<PlanarRegionSet, PlanarFailure> {
+    let profile = combined_profile(requests)?;
+    build_planar_regions(&profile, super::pipeline::resolution(tolerance))
+        .map_err(|cause| PlanarFailure::Capture(Box::new(cause)))
+}
+fn combined_profile(requests: &[Request]) -> Result<SketchProfile, PlanarFailure> {
+    let mut combined = SketchProfile {
+        plane: ProfilePlane::world_xy(),
+        vertices: Vec::new(),
+        curves: Vec::new(),
+    };
+    for request in requests {
+        joins::admit(request).map_err(|cause| PlanarFailure::Join(Box::new(cause)))?;
+        let profile = profile(request)?;
+        combined.vertices.extend(profile.vertices);
+        combined.curves.extend(profile.curves);
+    }
+    Ok(combined)
 }
 
 fn profile(request: &Request) -> Result<SketchProfile, PlanarFailure> {
@@ -158,7 +177,10 @@ fn spline(piece: &AuthoredPiece, start: ProfileVertexId, end: ProfileVertexId) -
     }
 }
 
-fn select(request: &Request, captured: &PlanarRegionSet) -> Result<PlanarEvidence, PlanarFailure> {
+pub(super) fn select(
+    request: &Request,
+    captured: &PlanarRegionSet,
+) -> Result<PlanarEvidence, PlanarFailure> {
     let expected = requested_identity(request)?;
     let selected = unique_region(&expected, captured)?;
     Ok(PlanarEvidence {

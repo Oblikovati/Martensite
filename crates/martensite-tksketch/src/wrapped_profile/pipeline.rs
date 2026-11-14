@@ -297,7 +297,7 @@ struct AdmissionIds {
     vertices: BTreeSet<CornerSource>,
 }
 
-fn admit(request: &Request) -> Result<(), Failure> {
+pub(super) fn admit(request: &Request) -> Result<(), Failure> {
     admit_limits(request)?;
     let mut ids = AdmissionIds::default();
     for contour in &request.loops {
