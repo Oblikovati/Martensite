@@ -111,8 +111,8 @@ its independent area of π inside the reported enclosure. Its resolution stayed
 unchanged. Full glyph acceptance and P5 performance-budget qualification
 remain open. Wrapped-request plumbing and kernel replay of these receipts are
 covered by the checkpoint below. The failure
-retains the legacy typed decline; precise root-exhaustion and curve-pair
-projection still need to be carried through without parsing rendered text.
+retains the legacy typed decline. Original pair root-isolation causes and
+authored parent curves are now exposed as typed values, as described below.
 No default or geometric limit was increased.
 
 
@@ -136,3 +136,25 @@ passed. This is kernel request replay; persistent document and body replay
 remain open.
 The full glyph fixture has not yet passed, and these controls do not establish
 its performance budget.
+
+## Typed pair root refusals
+
+`PlanarRegionWorkFailure::pair_root_failure()` now exposes the actual retained
+`RootIsolationError` and both authored parent curve IDs when the unavailable
+pair failed in root isolation. Proof-piece IDs are mapped through the existing
+source table; output order and coordinate proximity supply no identity.
+The accessor returns no diagnostic for admission errors, crossing failures or
+other kinds of pair noncompletion. Reaching a work cap alone does not manufacture
+an exhaustion cause. Other incomplete proof causes retain their existing decline
+projection.
+
+The tilted-ellipse exhaustion control retained `SubdivisionLimit` and the same
+authored curve ID for both proof pieces. Admission and crossing controls retained
+no root failure. The optional diagnostic is boxed only on failure to keep the
+public result error small; successful builds allocate no diagnostic.
+
+The public planar suite passed all 50 tests before the final helper extraction.
+All 28 wrapped API tests and all six focused planar work controls passed
+against that extraction. Strict library clippy passed for both affected crates.
+The tests cover work-receipt replay and exact refusal retention; they do not qualify the full text
+workload or the remaining general surfaces.

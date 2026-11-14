@@ -87,6 +87,7 @@ fn certified_for_work(
             DECLINE.at(Stage::Certification, failure.cause),
             failure.work,
         )
+        .with_root_failure(failure.root_failure)
     })
 }
 

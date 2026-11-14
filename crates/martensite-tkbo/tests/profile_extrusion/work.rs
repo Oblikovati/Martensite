@@ -38,6 +38,7 @@ fn admission_failure_keeps_requested_work_without_claiming_observation() {
     assert_eq!(failure.decline(), &legacy);
     assert_eq!(failure.requested_work(), requested);
     assert!(failure.proof_work().is_none());
+    assert!(failure.pair_root_failure().is_none());
     assert!(failure.source().is_some());
     assert!(failure.to_string().contains("observed=None"));
 }
@@ -49,6 +50,7 @@ fn crossing_failure_retains_actual_work_and_the_existing_typed_cause() {
     let failure = build_planar_regions_with_work(&profile, resolution(), requested).unwrap_err();
     assert_eq!(failure.decline(), &legacy);
     assert_eq!(failure.requested_work(), requested);
+    assert!(failure.pair_root_failure().is_none());
     let work = failure.proof_work().unwrap();
     assert_eq!(work.requested_pair_bisections, 8192);
     assert_eq!(work.effective_pair_bisections, 8192);
@@ -69,6 +71,12 @@ fn insufficient_pair_work_refuses_without_relaxing_the_profile() {
     let observed = failure.proof_work().unwrap();
     assert_eq!(observed.effective_pair_bisections, 1);
     assert_eq!(observed.consumed_pair_bisections, 1);
+    let root = failure.pair_root_failure().unwrap();
+    assert_eq!(root.curves, [ProfileCurveId(3); 2]);
+    assert!(matches!(
+        root.cause,
+        martensite_tkmath::predicates::roots::RootIsolationError::SubdivisionLimit { .. }
+    ));
     let completed = build_planar_regions_with_work(
         &profile,
         resolution(),

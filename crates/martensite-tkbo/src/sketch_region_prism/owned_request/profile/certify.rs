@@ -36,6 +36,10 @@ pub(crate) enum ProfileProofCause {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ProfileProofRefusal {
     pub cause: ProfileProofCause,
+    pub root_failure: Option<(
+        [u64; 2],
+        martensite_tkmath::predicates::roots::RootIsolationError,
+    )>,
     pub work: Option<crate::sketch_region_certification::CensusWorkReceipt>,
 }
 
@@ -66,11 +70,27 @@ pub(crate) fn certify_profile_graph(
     prepared.inspect_plane_graph(|| false).map_err(|failure| {
         let work =
             crate::sketch_region_certification::CensusWorkReceipt::capture(&prepared.bridge.census);
+        let root_failure = refused_pair_root(&prepared.bridge.census, &failure.cause);
         ProfileProofRefusal {
+            root_failure,
             cause: region_cause(failure),
             work: Some(work),
         }
     })
+}
+fn refused_pair_root(
+    census: &crate::sketch_region_certification::BoundaryCensus,
+    cause: &LoopRegionCause,
+) -> Option<(
+    [u64; 2],
+    martensite_tkmath::predicates::roots::RootIsolationError,
+)> {
+    let LoopRegionCause::PairUnavailable { sources } = cause else {
+        return None;
+    };
+    let sources = sources.map(|source| source.0);
+    crate::sketch_region_certification::pair_root_failure(census, sources)
+        .map(|cause| (sources, cause))
 }
 fn owned_graph_request(input: ProfileGraphInput) -> OwnedProfileRequest {
     OwnedProfileRequest {
@@ -91,6 +111,7 @@ fn preparation_refusal(failure: Box<ProfilePreparationFailure>) -> ProfileProofR
     };
     let (class, phase) = (failure.class, failure.phase);
     ProfileProofRefusal {
+        root_failure: None,
         cause: ProfileProofCause::Incomplete(format!(
             "profile preparation {class:?} at {phase:?}: {cause}"
         )),

@@ -8,7 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added explicit finite pair-proof work requests and work-bearing planar failures, and reported requested, effective and consumed work on successful region sets and wrapped normal-extrusion reports without changing existing defaults (#425).
+- Added explicit finite pair-proof work requests and work-bearing planar failures with original root-isolation causes and authored curve IDs, and reported requested, effective and consumed work on successful region sets and wrapped normal-extrusion reports without changing existing defaults (#425).
 
 - Added solved-profile cylindrical normal extrusion with typed spatial and measure reports, authored history, cooperative cancellation and detached native exports (#418).
 

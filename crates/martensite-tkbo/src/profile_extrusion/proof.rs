@@ -35,6 +35,7 @@ pub(crate) struct CertifiedRegions {
 
 pub(crate) struct RegionProofFailure {
     pub cause: DeclineCause,
+    pub root_failure: Option<super::PlanarPairRootFailure>,
     pub work: Option<super::PlanarProofWorkReceipt>,
 }
 /// Certify every face under the unchanged or explicitly requested pair-work policy.
@@ -64,17 +65,28 @@ fn graph_certificate(
 ) -> Result<GraphRegionCertificate, RegionProofFailure> {
     let plane = native_plane(&profile.frame).map_err(|failure| RegionProofFailure {
         cause: incomplete(format!("declared plane: {failure}")),
+        root_failure: None,
         work: None,
     })?;
     let mut input = table.graph_input(plane, profile.resolution.weld);
     input.pair_bisections = pair_bisections;
-    certify_profile_graph(input).map_err(|refusal| {
-        let work = refusal.work;
-        RegionProofFailure {
-            cause: declined(refusal, table),
-            work,
-        }
-    })
+    certify_profile_graph(input).map_err(|refusal| graph_refusal(refusal, table))
+}
+fn graph_refusal(refusal: ProfileProofRefusal, table: &PieceTable) -> RegionProofFailure {
+    let work = refusal.work;
+    let root_failure =
+        refusal
+            .root_failure
+            .as_ref()
+            .map(|(sources, cause)| super::PlanarPairRootFailure {
+                curves: sources.map(|source| table.curve_of(source)),
+                cause: cause.clone(),
+            });
+    RegionProofFailure {
+        root_failure,
+        cause: declined(refusal, table),
+        work,
+    }
 }
 
 fn faces(certificate: &GraphRegionCertificate, table: &PieceTable) -> Vec<CertifiedFace> {

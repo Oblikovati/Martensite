@@ -56,7 +56,9 @@ pub use profile::*;
 pub use regions::*;
 pub use resolution::*;
 pub use validation::{Finding, RegionValidation, SelfIntersectionEvidence, StageStatus};
-pub use work::{PlanarProofWorkLimit, PlanarRegionWorkFailure, PlanarRegionWorkResult};
+pub use work::{
+    PlanarPairRootFailure, PlanarProofWorkLimit, PlanarRegionWorkFailure, PlanarRegionWorkResult,
+};
 
 #[cfg(test)]
 mod area_translation_tests;

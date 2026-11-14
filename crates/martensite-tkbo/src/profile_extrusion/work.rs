@@ -1,6 +1,16 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Explicit computational work is independent of geometric accuracy.
-use super::{OperationDecline, PlanarProofWorkReceipt, PlanarRegionSet};
+use super::{OperationDecline, PlanarProofWorkReceipt, PlanarRegionSet, ProfileCurveId};
+
+/// Original root-isolation refusal and its authored parent curves.
+/// Example: `failure.pair_root_failure().map(|pair| pair.curves)`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct PlanarPairRootFailure {
+    /// Authored parents; multiple proof pieces may belong to the same curve.
+    pub curves: [ProfileCurveId; 2],
+    /// Actual retained numerical cause, never inferred from spent work.
+    pub cause: martensite_tkmath::predicates::roots::RootIsolationError,
+}
 
 /// Finite shared pair-work choice; zero permits only completion without subdivision.
 /// Example: `PlanarProofWorkLimit::PairBisections(8192)`.
@@ -25,6 +35,7 @@ pub struct PlanarRegionWorkFailure {
     decline: OperationDecline,
     requested: PlanarProofWorkLimit,
     observed: Option<PlanarProofWorkReceipt>,
+    root_failure: Option<Box<PlanarPairRootFailure>>,
 }
 impl PlanarRegionWorkFailure {
     /// Existing operation, stage, entities and cause; `failure.decline().class()`.
@@ -40,6 +51,14 @@ impl PlanarRegionWorkFailure {
     pub fn proof_work(&self) -> Option<PlanarProofWorkReceipt> {
         self.observed
     }
+    /// Original pair root refusal when present; `failure.pair_root_failure()`.
+    pub fn pair_root_failure(&self) -> Option<&PlanarPairRootFailure> {
+        self.root_failure.as_deref()
+    }
+    pub(crate) fn with_root_failure(mut self, root_failure: Option<PlanarPairRootFailure>) -> Self {
+        self.root_failure = root_failure.map(Box::new);
+        self
+    }
     pub(crate) fn new(
         requested: PlanarProofWorkLimit,
         decline: OperationDecline,
@@ -49,6 +68,7 @@ impl PlanarRegionWorkFailure {
             decline,
             requested,
             observed,
+            root_failure: None,
         }
     }
     pub(crate) fn into_decline(self) -> OperationDecline {
