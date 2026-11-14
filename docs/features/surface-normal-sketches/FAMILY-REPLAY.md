@@ -40,10 +40,11 @@ absence of data races.
 
 ## Remaining scope
 
-The family is still unqualified. Cancellation, failure/source-mutation
-isolation, aggregate operation policy, the final publication contract, glyph
-scale, oblique frames, general conical profiles and replacement deletion remain
-in the approved work. The earlier detached-export mutation control remains
+The family is still unqualified. The later
+[cancellation and isolation controls](FAMILY-CANCELLATION.md) cover stage-boundary
+cancellation, failures and source mutation. In-stage cancellation, aggregate
+operation policy, the final publication contract, glyph scale, oblique frames,
+general conical profiles and replacement deletion remain in the approved work. The earlier detached-export mutation control remains
 separate. No production behavior, public API, package version, dependency or
 release tag changed.
 

@@ -48,16 +48,17 @@ an unselected hole and disconnected material across one cylindrical turn.
 
 ## Remaining scope
 
-The result remains unqualified. The later [authored-history checkpoint](AUTHORED-HISTORY.md)
-binds complete private extrusion relations to its frozen keys. Cancellation and
-aggregate operation policy, sanitizer validation, broader concurrent-operation
-stress checks, and the final publication contract remain open. The later
-[replay controls](FAMILY-REPLAY.md) compare separate processes and overlapping
-operations. The detached export mutation control establishes that case only; it does not replace the
-required isolation checks after success, failure, cancellation and source
-mutation. General conical profiles, additional authored curve classes, the glyph
-workload, oblique frames and deletion of superseded production paths remain in
-the approved plan. No package version, public primitive API, dependency or
+The result remains unqualified. Later checkpoints bind
+[authored history](AUTHORED-HISTORY.md), check stage-boundary cancellation and
+[input isolation](FAMILY-CANCELLATION.md), and compare separate-process and
+concurrent [replay](FAMILY-REPLAY.md). The detached-export mutation control is
+one isolation case; the cancellation checkpoint records the other tested paths.
+
+In-stage cancellation, aggregate operation policy, sanitizer validation,
+broader concurrency stress checks and the final publication contract remain
+open. General conical profiles, additional authored curve classes, the glyph
+workload, oblique frames and deletion of superseded production paths also remain
+in the approved plan. No package version, public primitive API, dependency or
 release tag changed.
 
 ## Verification

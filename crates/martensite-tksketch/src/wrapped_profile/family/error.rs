@@ -2,6 +2,7 @@ use super::*;
 #[derive(Debug)]
 pub(in super::super) enum FamilyFailure {
     Selection(Box<selection::SelectionFailure>),
+    Cancelled(Checkpoint),
     Native {
         region: Option<SurfaceRegionId>,
         cause: Box<Failure>,
@@ -15,6 +16,10 @@ pub(in super::super) enum FamilyFailure {
 impl std::fmt::Display for FamilyFailure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Cancelled(point) => write!(
+                f,
+                "family cancelled at {point:?}; expected completed operation before handoff"
+            ),
             Self::Selection(cause) => write!(f, "family selection: {cause}"),
             Self::Native { region, cause } => write!(f, "family member={region:?}: {cause}"),
             Self::Encoding(cause) => write!(f, "family encoding: {cause:?}"),

@@ -30,8 +30,20 @@ pub(super) fn certify(
     requests: &[Request],
     options: MaterialOptions,
 ) -> Result<QualifiedSelection, SelectionFailure> {
+    certify_with_cancel(requests, options, || false)
+}
+pub(super) fn certify_with_cancel(
+    requests: &[Request],
+    options: MaterialOptions,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<QualifiedSelection, SelectionFailure> {
+    if cancelled() {
+        return Err(SelectionFailure::Material(Box::new(
+            MaterialFailure::Cancelled,
+        )));
+    }
     let prepared = prepare(requests)?;
-    let material = material::certify(requests, &prepared, options)
+    let material = material::certify_with_cancel(requests, &prepared, options, &mut cancelled)
         .map_err(|cause| SelectionFailure::Material(Box::new(cause)))?;
     Ok(QualifiedSelection { prepared, material })
 }
