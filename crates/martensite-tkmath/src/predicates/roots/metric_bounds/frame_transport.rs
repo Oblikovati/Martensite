@@ -3,6 +3,8 @@
 mod arithmetic;
 mod error;
 mod reference;
+mod rotation;
+pub use rotation::*;
 mod spatial;
 mod stretch;
 mod types;
@@ -21,9 +23,15 @@ type Checked<T> = Result<T, FrameTransportError>;
 pub fn certify_frame_transport(input: FrameTransportInput) -> Checked<CertifiedFrameTransport> {
     admit(input)?;
     let ideal = reference::ideal(input)?;
+    qualify(input, &ideal)
+}
+fn qualify(
+    input: FrameTransportInput,
+    ideal: &reference::EnclosedMatrix,
+) -> Checked<CertifiedFrameTransport> {
     let stored = input.stored.map(arithmetic::vector);
     let (stretch, determinant, gram_residual) = stretch::qualify(&stored)?;
-    let matrix_error = reference::matrix_error(&stored, &ideal)?;
+    let matrix_error = reference::matrix_error(&stored, ideal)?;
     Ok(CertifiedFrameTransport {
         input,
         matrix_error,

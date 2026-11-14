@@ -190,3 +190,7 @@ The [native boss/pocket controls](BODY-BOOLEAN-QUALIFICATION.md) exercise actual
 Fuse/Cut operations, seam-crossing and oblique placements, input preservation,
 Boolean correspondence and process/concurrent replay. The unified body-feature
 operation and its whole-profile trim contract remain open under #420.
+
+The [rotation-aware frame proof](CHART-ROTATION-PROOF.md) certifies explicit seam
+angles using the existing bounded trigonometric engine and shared spatial
+allocation. Connecting it to nonzero-chart modelling remains open.

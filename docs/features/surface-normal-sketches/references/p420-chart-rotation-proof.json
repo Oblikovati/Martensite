@@ -1,0 +1,57 @@
+{
+  "issue": 420,
+  "base_commit": "2271b2ec723caeff4fc505de05bb0521fb010973",
+  "platform": "Linux x86_64",
+  "rustc": "1.99.0 b940084d7eb6a299eb4bfeb8e34901bc051e7ac4",
+  "policy": {
+    "fractional_bits": 128,
+    "operation_limit": 10000
+  },
+  "sources": {
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/cylindrical_profile/mod.rs": "83308a28911dff6a5a92eac99501cca112965f54484482c89b9b03c5a4762318",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/cylindrical_profile/trigonometric.rs": "a283c1d3488da817c769e922136ed63fac0406713a7d9c63c5cfe7f82ebd188c",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/frame_transport/rotation/spatial.rs": "396689c208bf548100d2b94fd8007f2df59b3bbf265e34092ceb405900a835b2",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/frame_transport/rotation/tests.rs": "ecd39d3876e9f9c60699ba695a5832ab132325296097f369e8d372feafd7ff05",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/frame_transport/rotation/types.rs": "f5583229fd6335f68a006f55ecb28389f4bdaa6fe277a12c835e69f8efb53150",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/frame_transport/rotation.rs": "f70b35deb9046864101bfba9b798a2255ef79542d32ae7ad43d74df4698983fa",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/frame_transport/spatial.rs": "0f0c88d524ff963b5f61c6c76352792281a1976688d337d8d967ae1e345ea8f3",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/frame_transport.rs": "efcefc48145751330434e41c2a6662667fa8fa2b4d5af8b0c6796091730badfd",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds.rs": "e58f58709b4ecbb695de5b3bf06909ed900e8154f2dffde5585bb4c94abe502e"
+  },
+  "qualification": {
+    "frame_tests": {
+      "passed": 41,
+      "failed": 0,
+      "ignored": 0,
+      "seconds": 0.07,
+      "log": "target/qualification/p420-rotated-frame-qualified.log",
+      "log_sha256": "0282b260236d207699f6daa900aa2aae022f3aaac7f0606405a28e2f409c0a3b"
+    },
+    "clippy": {
+      "packages": [
+        "martensite-tkmath"
+      ],
+      "targets": "lib",
+      "deny_warnings": true,
+      "exit_code": 0,
+      "log": "target/qualification/p420-rotated-frame-clippy.log",
+      "log_sha256": "cc57d6c76b2ce7618f3c7e02f0df45bc8bae50e8e3e52c9f8c321ec29b357026"
+    },
+    "review": {
+      "standards": "no remaining findings; rotation convention clarified in public documentation",
+      "spec": "no findings"
+    },
+    "source_metrics": {
+      "new_or_changed_functions_over_20_lines": 0,
+      "files_over_500_lines": 0
+    }
+  },
+  "legacy_types": "Unmodified CertifiedFrameTransport and CertifiedFrameSpatialBudget layouts; shared spatial arithmetic retains old fields/Debug, tested zero-angle agreement",
+  "exclusions": [
+    "nonzero-chart modelling remains unsupported by existing constructor",
+    "no physical graph transport qualification for nonzero charts",
+    "no performance parity claim",
+    "no full affected-package PR gate or hosted platform matrix",
+    "no version bump or release"
+  ]
+}

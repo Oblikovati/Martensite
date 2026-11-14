@@ -32,18 +32,19 @@ impl CertifiedFrameTransport {
     /// Evaluation is three products, two left-associated sums, then translation, with unit scale.
     /// Example: `let budget = proof.spatial_budget(input)?; let epsilon = budget.canonical_allowance();`.
     pub fn spatial_budget(&self, input: FrameSpatialInput) -> Checked<CertifiedFrameSpatialBudget> {
-        admit_spatial(input)?;
-        let translation_error = translation_error(input)?;
-        let evaluation_error = evaluation::bound(self.input.stored, input)?;
-        let placement_error = placement_error(self, input, translation_error, evaluation_error)?;
-        let canonical_allowance = allocation(self.stretch_bounds()[1], input, placement_error)?;
+        let allocation = allocate(
+            self.input.stored,
+            self.stretch_bounds()[1],
+            self.matrix_error_bound(),
+            input,
+        )?;
         Ok(CertifiedFrameSpatialBudget {
             frame: self.clone(),
             input,
-            translation_error,
-            evaluation_error,
-            placement_error,
-            canonical_allowance,
+            translation_error: allocation.translation_error,
+            evaluation_error: allocation.evaluation_error,
+            placement_error: allocation.placement_error,
+            canonical_allowance: allocation.canonical_allowance,
         })
     }
 }
@@ -74,14 +75,47 @@ impl CertifiedFrameSpatialBudget {
     }
     /// Outward world error using the complete canonical allowance; `budget.world_error_bound()?`.
     pub fn world_error_bound(&self) -> Checked<f64> {
-        let canonical = ExactRatio::from_finite(self.canonical_allowance);
-        let stretch = ExactRatio::from_finite(self.frame.stretch_bounds()[1]);
-        upper(
-            &canonical
-                .multiply(&stretch)
-                .add(&ExactRatio::from_finite(self.placement_error)),
+        world_error(
+            self.frame.stretch_bounds()[1],
+            self.canonical_allowance,
+            self.placement_error,
         )
     }
+}
+#[derive(Clone, Debug, PartialEq)]
+pub(super) struct SpatialAllocation {
+    pub translation_error: f64,
+    pub evaluation_error: f64,
+    pub placement_error: f64,
+    pub canonical_allowance: f64,
+}
+pub(super) fn allocate(
+    stored: [[f64; 3]; 3],
+    stretch: f64,
+    matrix_error: f64,
+    input: FrameSpatialInput,
+) -> Checked<SpatialAllocation> {
+    admit_spatial(input)?;
+    let translation_error = translation_error(input)?;
+    let evaluation_error = evaluation::bound(stored, input)?;
+    let placement_error =
+        placement_error(matrix_error, input, translation_error, evaluation_error)?;
+    let canonical_allowance = allocation(stretch, input, placement_error)?;
+    Ok(SpatialAllocation {
+        translation_error,
+        evaluation_error,
+        placement_error,
+        canonical_allowance,
+    })
+}
+pub(super) fn world_error(stretch: f64, canonical: f64, placement: f64) -> Checked<f64> {
+    let canonical = ExactRatio::from_finite(canonical);
+    let stretch = ExactRatio::from_finite(stretch);
+    upper(
+        &canonical
+            .multiply(&stretch)
+            .add(&ExactRatio::from_finite(placement)),
+    )
 }
 fn admit_spatial(input: FrameSpatialInput) -> Checked<()> {
     admit_vector(input.origin, FrameTransportField::Origin, 0)?;
@@ -109,12 +143,12 @@ fn translation_error(input: FrameSpatialInput) -> Checked<f64> {
     )?[1])
 }
 fn placement_error(
-    frame: &CertifiedFrameTransport,
+    matrix_error: f64,
     input: FrameSpatialInput,
     translation: f64,
     evaluation: f64,
 ) -> Checked<f64> {
-    let matrix = ExactRatio::from_finite(frame.matrix_error_bound());
+    let matrix = ExactRatio::from_finite(matrix_error);
     let domain = ExactRatio::from_finite(input.point_norm);
     upper(
         &matrix

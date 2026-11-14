@@ -4,7 +4,7 @@ use super::{algebra::*, *};
 use crate::predicates::roots::DyadicBound;
 use num_bigint::BigInt;
 
-pub(super) fn enclose(
+pub(in crate::predicates::roots::metric_bounds) fn enclose(
     phase: &[Interval],
     arithmetic: &mut Arithmetic<'_>,
 ) -> Checked<[Vec<Interval>; 2]> {

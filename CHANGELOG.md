@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added separate rotation-aware frame and spatial-budget certificates with bounded trigonometric evidence for explicit sketch seam angles (#420).
+
 - Added revision-checked conversion of native cylindrical face-hit parameters into developed coordinates with explicit seams, arithmetic bounds and separate trim-search coverage (#420).
 
 - Added owned cylindrical face attachments with revision checks, checked persistence and explicit native-history reattachment that refused missing or ambiguous face images (#420).

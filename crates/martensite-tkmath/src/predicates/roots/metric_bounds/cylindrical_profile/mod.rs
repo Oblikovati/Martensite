@@ -14,7 +14,7 @@ mod proof;
 mod source;
 #[cfg(test)]
 mod tests;
-mod trigonometric;
+pub(in crate::predicates::roots::metric_bounds) mod trigonometric;
 mod trim;
 mod types;
 use crate::predicates::roots::certificate_arithmetic::{

@@ -206,6 +206,8 @@ pub use enclosure_sum::{
 
 mod frame_transport;
 pub use frame_transport::{
-    CertifiedFrameSpatialBudget, CertifiedFrameTransport, FrameSpatialInput, FrameTransportError,
-    FrameTransportField, FrameTransportInput, FrameTransportQuantity, certify_frame_transport,
+    CertifiedFrameSpatialBudget, CertifiedFrameTransport, CertifiedRotatedFrameSpatialBudget,
+    CertifiedRotatedFrameTransport, FrameRotationError, FrameRotationFailure, FrameRotationReport,
+    FrameSpatialInput, FrameTransportError, FrameTransportField, FrameTransportInput,
+    FrameTransportQuantity, certify_frame_transport, certify_frame_transport_at_angle,
 };
