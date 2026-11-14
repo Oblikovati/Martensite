@@ -181,3 +181,7 @@ a hole and disconnected material, retained-tolerance checks, native validation,
 replay, isolation and canonical-path measurements. Full-text requalification,
 broader application operations, authored conical profiles and P6 cleanup remain
 open.
+
+The [revision-bound face attachment](FACE-ATTACHMENT.md) owns a selected cylindrical
+face and support snapshot, follows explicit native history, and refuses ambiguous
+reattachment. Wrapped boss/pocket and hit-mapping integration under #420 remain open.

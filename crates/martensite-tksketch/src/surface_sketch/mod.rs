@@ -1,5 +1,6 @@
 //! Owned cylindrical surface sketches and physical normal extrusion (#416).
 mod admission;
+pub mod attachment;
 mod cone_admission;
 mod cone_faces;
 mod cone_math;

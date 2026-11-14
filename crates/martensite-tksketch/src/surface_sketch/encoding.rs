@@ -1,7 +1,10 @@
 //! One immutable native shape table, followed by explicit semantic shape references.
 use super::failure::*;
 use martensite_tkbrep::{
-    bintools::{BinShapeSet, BinShapeSetBase, LocationTransformReadPolicy, SurfaceFrameReadPolicy},
+    bintools::{
+        BinShapeSet, BinShapeSetBase, CurveFrameReadPolicy, LocationTransformReadPolicy,
+        SurfaceFrameReadPolicy,
+    },
     topods::Shape,
 };
 use martensite_tkernel::{message::ProgressRange, storage::IoStream};
@@ -59,8 +62,25 @@ pub(super) fn decode_with_policies<K: Copy>(
     frame_policy: SurfaceFrameReadPolicy,
     location_policy: LocationTransformReadPolicy,
 ) -> Checked<(Shape, Vec<(K, Shape)>)> {
+    decode_with_geometry_policies(
+        bytes,
+        keys,
+        frame_policy,
+        location_policy,
+        CurveFrameReadPolicy::LegacyReplay,
+    )
+}
+
+pub(super) fn decode_with_geometry_policies<K: Copy>(
+    bytes: &[u8],
+    keys: &[K],
+    frame_policy: SurfaceFrameReadPolicy,
+    location_policy: LocationTransformReadPolicy,
+    curve_policy: CurveFrameReadPolicy,
+) -> Checked<(Shape, Vec<(K, Shape)>)> {
     let mut stream = IoStream::from_bytes(bytes.to_vec());
-    let mut set = BinShapeSet::with_read_policies(frame_policy, location_policy);
+    let mut set =
+        BinShapeSet::with_geometry_read_policies(frame_policy, location_policy, curve_policy);
     set.read(&mut stream, &ProgressRange::default())
         .map_err(|error| native("decode table", error))?;
     let solid = reference(&set, &mut stream)?;

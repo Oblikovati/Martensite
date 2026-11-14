@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added owned cylindrical face attachments with revision checks, checked persistence and explicit native-history reattachment that refused missing or ambiguous face images (#420).
+
 - Added certified stored-frame deviation, positive stretch and determinant bounds against exact normalized reference frames (#425).
 
 - Added certified point-domain placement budgets with translation and affine-evaluation rounding bounds, downward canonical allocations and explicit spatial-limit refusals (#425).
