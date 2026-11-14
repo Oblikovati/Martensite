@@ -153,3 +153,8 @@ checks [cancellation and isolation](FAMILY-CANCELLATION.md), compares
 returns its frozen family and successful budget receipt together. These
 checkpoints do not expose a new accepted-body API. Sanitizer qualification and the remaining implementation
 and application gates are still open.
+
+The private [directed-profile input adapter](PROFILE-INPUT.md) now reads existing
+solved-profile selections and retains original curve-direction and parameter
+correspondence through subdivision. Its mixed-profile control reaches the
+budgeted family constructor. The public result API remains unfinished.

@@ -10,6 +10,7 @@ mod pipeline;
 mod planar;
 mod planar_clearance;
 mod planar_cones;
+mod profile_input;
 mod publication_budget;
 mod selection;
 mod storage;
