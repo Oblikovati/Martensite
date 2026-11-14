@@ -1,0 +1,104 @@
+{
+  "main_revision": "919b8e31ef0cdc974de3f838be091d7a26ab5c7a",
+  "dataset_revision": "34d65afd72cd3ca8ac1f9d17e5ca408b30e9b4b6",
+  "rustc": "1.99.0 (b940084d7 2026-09-28)",
+  "platform": "Linux x86_64",
+  "host_available_parallelism": 32,
+  "compilation": {
+    "jobs": 2,
+    "incremental": false,
+    "dev_debug": 0,
+    "test_debug": 0,
+    "dev_strip": "debuginfo",
+    "test_strip": "debuginfo",
+    "package_overrides": "Existing Cargo.toml overrides retained in both profiles"
+  },
+  "native_source_changes": false,
+  "budget_seconds": 60,
+  "measurements": {
+    "main-exact": {
+      "user_seconds": 21.59,
+      "system_seconds": 0.22,
+      "elapsed_clock": "0:21.86",
+      "maximum_process_rss_kib": 163340.0,
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    "main-parallel": {
+      "user_seconds": 8621.97,
+      "system_seconds": 937.75,
+      "elapsed_clock": "10:08.88",
+      "maximum_process_rss_kib": 4692924.0,
+      "result": "ok",
+      "passed": 3821,
+      "failed": 0,
+      "ignored": 12
+    },
+    "main-constrained": {
+      "user_seconds": 140.31,
+      "system_seconds": 1.87,
+      "elapsed_clock": "2:22.21",
+      "maximum_process_rss_kib": 3790792.0,
+      "result": "ok",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    "main-constrained4": {
+      "user_seconds": 194.93,
+      "system_seconds": 2.27,
+      "elapsed_clock": "3:17.26",
+      "maximum_process_rss_kib": 3793840.0,
+      "result": "FAILED",
+      "passed": 3,
+      "failed": 1,
+      "ignored": 0
+    },
+    "main-two-cpu": {
+      "user_seconds": 198.42,
+      "system_seconds": 2.18,
+      "elapsed_clock": "1:49.23",
+      "maximum_process_rss_kib": 3805884.0,
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    },
+    "optimized-exact": {
+      "user_seconds": 4.63,
+      "system_seconds": 0.1,
+      "elapsed_clock": "0:04.74",
+      "maximum_process_rss_kib": 90588.0,
+      "result": "ok",
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0
+    },
+    "optimized-constrained4": {
+      "user_seconds": 54.09,
+      "system_seconds": 1.59,
+      "elapsed_clock": "0:55.70",
+      "maximum_process_rss_kib": 3792120.0,
+      "result": "ok",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    },
+    "optimized-parallel": {
+      "user_seconds": 2120.25,
+      "system_seconds": 591.03,
+      "elapsed_clock": "5:48.08",
+      "maximum_process_rss_kib": 3771632.0,
+      "result": "ok",
+      "passed": 3829,
+      "failed": 0,
+      "ignored": 4
+    }
+  },
+  "executables_sha256": {
+    "unoptimized": "359c3c13e5f36a28c5cb01e2537ce2b4140671829f9665bd500938d86b47b68b",
+    "optimized": "c045c8023ea535b6fec0697ae22c7c5b0537279307ca9d10bb6b8486a8967639"
+  }
+}
