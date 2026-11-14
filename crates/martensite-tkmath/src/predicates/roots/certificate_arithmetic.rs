@@ -13,3 +13,5 @@ pub(super) mod bounded_dyadic;
 pub(super) mod bounded_failure;
 
 pub(super) mod bernstein_curve;
+
+pub(super) mod planar_hulls;

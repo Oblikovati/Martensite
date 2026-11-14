@@ -19,6 +19,8 @@ pub use mapped::{
 pub use parameter::MetricParameterMap;
 mod coefficients;
 mod cylindrical_cone;
+/// Original cylindrical profile source shared by local and collection certificates.
+pub use cylindrical_cone::CylindricalConeSource as CylindricalProfileSource;
 pub use cylindrical_cone::{
     CertifiedCylindricalCone, CylindricalConeBehavior, CylindricalConeError,
     CylindricalConeFailure, CylindricalConeOptions, CylindricalConeQuery, CylindricalConeSource,

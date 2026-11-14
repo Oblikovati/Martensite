@@ -17,7 +17,7 @@ pub struct CylindricalConeSource<'a> {
     pub certificate: &'a CertifiedCylindricalProfile,
 }
 impl CylindricalConeSource<'_> {
-    pub(super) fn matches(&self) -> bool {
+    pub(in crate::predicates::roots::metric_bounds) fn matches(&self) -> bool {
         self.certificate.matches_authored(
             self.authored,
             self.interval,

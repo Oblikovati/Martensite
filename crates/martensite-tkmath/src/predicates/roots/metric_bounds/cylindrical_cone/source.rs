@@ -16,13 +16,5 @@ pub(super) fn derivatives(
         )?;
         axes.push(curve::derivative(&restricted, arithmetic)?);
     }
-    let count = axes[0].len().max(axes[1].len());
-    // Only an exactly constant coordinate is compressed; its zero derivative can be repeated.
-    Ok((0..count)
-        .map(|i| [coefficient(&axes[0], i), coefficient(&axes[1], i)])
-        .collect())
-}
-
-fn coefficient(axis: &[Interval], index: usize) -> Interval {
-    axis[if axis.len() == 1 { 0 } else { index }].clone()
+    Ok(curve::align_planar(&axes[0], &axes[1]))
 }

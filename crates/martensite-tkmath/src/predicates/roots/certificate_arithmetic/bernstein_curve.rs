@@ -69,5 +69,19 @@ pub(in crate::predicates::roots) fn derivative(
         .collect()
 }
 
+// An exactly constant coordinate may have one coefficient; the other retains the source degree.
+pub(in crate::predicates::roots) fn align_planar(
+    x: &[Interval],
+    y: &[Interval],
+) -> Vec<[Interval; 2]> {
+    (0..x.len().max(y.len()))
+        .map(|i| [coefficient(x, i), coefficient(y, i)])
+        .collect()
+}
+
+fn coefficient(axis: &[Interval], index: usize) -> Interval {
+    axis[if axis.len() == 1 { 0 } else { index }].clone()
+}
+
 #[cfg(test)]
 mod tests;

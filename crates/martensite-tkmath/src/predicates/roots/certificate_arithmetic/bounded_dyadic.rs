@@ -182,10 +182,14 @@ impl<'a> Arithmetic<'a> {
             divide_ceil(upper, denominator),
         )
     }
-    fn charge(&mut self) -> Checked<()> {
+    pub fn check_cancelled(&mut self) -> Checked<()> {
         if (self.cancelled)() {
             return Err(Failure::Cancelled);
         }
+        Ok(())
+    }
+    fn charge(&mut self) -> Checked<()> {
+        self.check_cancelled()?;
         if self.operations == self.options.max_operations {
             return Err(Failure::WorkLimit {
                 completed: self.operations,
