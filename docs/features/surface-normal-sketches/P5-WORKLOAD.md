@@ -269,3 +269,57 @@ checks whether existing bulk APIs can copy Bézier state coherently under one
 read guard. A snapshot-based replacement would also need a kernel ownership and
 behavior decision; a cached validity flag under a borrowed native handle is
 not sufficient. No such replacement has been implemented or approved here.
+
+## Coherent-capture composition and cost
+
+The additive capture followup was incorporated as `84571241`. The composition
+passed all 1,540 selected `sketch_region_` library tests, with no failures or
+ignored tests, including alias mutation, cancellation, publication and reuse.
+The full-text test then passed again with unchanged geometry, selection,
+8192-bisection request, epsilon, fit level and independent volume oracle.
+
+The runtime-only full-text comparison was:
+
+| Measurement | Before capture followup | Composed candidate |
+| --- | ---: | ---: |
+| Elapsed seconds | 378.98 | 324.77 |
+| User CPU seconds | 378.86 | 324.61 |
+| System CPU seconds | 0.08 | 0.09 |
+| Peak RSS, KiB | 194,204 | 193,840 |
+
+The observed CPU reduction is about 14%. Each column is one successful run;
+background validation differed, so this is a pilot comparison, not an isolated
+benchmark campaign or approval of the P5 budget. The candidate also includes
+checked frozen decoding and the coefficient-only frame helper; it does not
+isolate the getter's contribution from the entire composition.
+
+The new binary SHA-256 was
+`761fe244985d4ec022c539172a156e39ae67a659f6ede340ede6676673de88ce`.
+The log `target/qualification/p5-full-text-after-capture-runtime.log` has SHA-256
+`0dbde30138739e82930ac94b829a9c31ecc3902df85fd8951fc1c967a1cf648f`.
+It was built from `2d5238f6`; the subsequent main forward merge changed no
+production source in this workload.
+
+### P4 control and memory limits of the comparison
+
+Six interleaved before/after processes used the identical mixed-profile P4 test
+and fixture blob `afb893a1087a6e6bbd37ad427493b38ea9c24bd8`. The preserved
+pre-#449 binary represented `b6ffaa76`; the candidate represented `2d5238f6`.
+Both used the same compiler/profile settings and one test thread, with no local
+Cargo build active. All six executions passed. Median elapsed time was 3.79 s
+before and 3.78 s after; median user CPU was 3.75 s and 3.77 s respectively.
+Those small differences do not resolve a latency change from three samples.
+
+GNU-time median peak RSS was 52,512 KiB before and 54,196 KiB after. Four
+additional sampled `/proc` runs showed peak anonymous memory of
+21,308–21,312 KiB before and 21,304–21,308 KiB after. The sampled file-backed
+component was 33,600–33,604 KiB before and 33,744–33,860 KiB after. These are
+separate measurement methods, not interchangeable peak figures. They show no
+observed modelling-heap increase in the sampled control, but do not establish
+strict process-RSS parity. Both datasets are retained in
+`references/p4-paired-before-after.tsv` and `references/p4-rss-components.json`.
+
+The unchanged-default pair-work prefix ledger is retained as
+`references/p5-default-pair-budget-ledger.tsv.gz`; its decompressed SHA-256 is
+`93cc76b729792ad54fdec25c09d2f221e6cd4c2d96d8103e500a53e0ed67bf0a`.
+Only measurements were retained; temporary benchmark code was not saved.
