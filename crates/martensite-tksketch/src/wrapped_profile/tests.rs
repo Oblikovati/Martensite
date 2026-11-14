@@ -252,23 +252,33 @@ fn assert_certificates(result: &pipeline::Unqualified) {
     assert_clearance(result);
     assert_boundary_flux(result);
     assert_normal_measure(result);
+    assert_measure_comparison(result);
 }
 
 fn assert_boundary_flux(result: &pipeline::Unqualified) {
-    let flux = &result.measures.flux;
+    let flux = result.measures.comparison.flux_certificate();
     assert_eq!(flux.span_count(), result.storage.len());
     assert!(flux.absolute_error_bound() <= flux.requested_options().absolute_error_limit);
     assert!((flux.representative() - 11.10375).abs() < request().tolerance);
 }
 
 fn assert_normal_measure(result: &pipeline::Unqualified) {
-    let proof = &result.measures.normal.certificate;
-    assert_eq!(result.measures.normal.spans.len(), result.storage.len());
+    let proof = result.measures.comparison.normal_certificate();
+    assert_eq!(result.measures.spans.len(), result.storage.len());
     let [lo, hi] = proof.authored_area_enclosure();
     assert!(lo <= 3.525 && 3.525 <= hi);
     let [lo, hi] = proof.authored_volume_enclosure();
     assert!(lo <= 11.10375 && 11.10375 <= hi);
     assert!(proof.area_discrepancy_bound() < 1e-4);
     assert!(proof.volume_discrepancy_bound() < 1e-4);
+    assert!(proof.operations() > 0);
+}
+
+fn assert_measure_comparison(result: &pipeline::Unqualified) {
+    let proof = &result.measures.comparison;
+    assert!(proof.discrepancy_bound() < 1e-4);
+    assert!(proof.representative_error_bound() < 1e-4);
+    let [lo, hi] = proof.difference_enclosure();
+    assert!(lo <= hi);
     assert!(proof.operations() > 0);
 }

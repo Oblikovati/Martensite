@@ -65,9 +65,10 @@ affected-package PR gate remains required before a push.
 ## Remaining gates
 
 The result remains `Unqualified`. Incidence and representation coverage support
-the conditional flux interpretation, but do not complete ideal-realization
-measure correspondence, geometric injectivity, disconnected material selection,
-history, isolation or replay/concurrency checks. General cones, authored arcs and
+the conditional flux interpretation. The later [measure comparison](MEASURE-COMPARISON.md)
+now supplies its numerical ideal-volume discrepancy. Geometric injectivity,
+disconnected material selection, history, isolation and replay/concurrency checks
+remain open. General cones, authored arcs and
 rational splines, oblique frames and glyph-scale acceptance remain outside this
 checkpoint. Superseded production paths cannot be removed until their replacement
 gates pass.

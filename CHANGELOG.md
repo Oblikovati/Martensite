@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added source-matched outward comparisons between retained cylindrical boundary flux and ideal normal volume, preserving separate integration, profile-displacement and representative-error evidence (#418).
+
 - Added source-bound closed-profile area and ideal cylindrical normal-volume enclosures, with exact requested depth arithmetic and explicit geometric-error reporting or refusal (#418).
 
 - Added frozen incidence and curve-representation coverage checks for private rational wrapped profiles, with semantic-owner diagnostics and malformed-body controls (#418).

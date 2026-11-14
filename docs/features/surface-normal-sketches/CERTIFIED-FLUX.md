@@ -101,14 +101,13 @@ seam-crossing and two-turn helical controls remain passing.
 
 ## Remaining measure and publication gates
 
-The conditional flux enclosure is not yet a published volume measure. Required
-work includes completing the retained-support comparison with the ideal normal
-extrusion realization under the shared error budget. The [normal-measure
-stage](NORMAL-MEASURE.md) now supplies the source-bound area and ideal-volume
-part of that comparison. Remaining gates also include disconnected material classification, complete
-history binding,
-isolation and replay/concurrency verification. Glyph scale, oblique frames and
-replacement deletion gates also remain open. No version or release tag changed.
+The conditional flux enclosure is not yet a published volume measure. The
+[source-matched comparison](MEASURE-COMPARISON.md) now bounds its discrepancy
+from the ideal normal-extrusion volume. It retains the independent integration,
+profile-displacement and comparison evidence. Disconnected material
+classification, complete history, isolation and replay/concurrency verification
+remain publication gates. Glyph scale, oblique frames and replacement deletion
+also remain open. No version or release tag changed.
 
 Verification on Linux x86_64 passed 521 math library tests, 3,114 math integration
 tests, 56 math doctests, 55 sketch library tests and 32 sketch integration tests.

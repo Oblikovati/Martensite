@@ -9,7 +9,9 @@ use martensite_tkgeombase::gprop::GProps;
 use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
 use std::collections::BTreeSet;
 
-use martensite_tkmath::predicates::roots::metric_bounds::CertifiedCylindricalFlux;
+use martensite_tkmath::predicates::roots::metric_bounds::{
+    CertifiedCylindricalFlux, CertifiedCylindricalMeasureComparison,
+};
 
 type NativeMeasure = (ValidationReport, (f64, f64));
 type SourceCertificates = (
@@ -22,8 +24,8 @@ type SourceCertificates = (
 type FrozenParts = (Vec<u8>, Vec<BindingKey>, Shape, Vec<(BindingKey, Shape)>);
 
 pub(super) struct MeasureEvidence {
-    pub flux: CertifiedCylindricalFlux,
-    pub normal: normal_measure::NormalMeasureEvidence,
+    pub comparison: CertifiedCylindricalMeasureComparison,
+    pub spans: Vec<CurveSpan>,
 }
 
 pub(super) struct Unqualified {
@@ -131,12 +133,24 @@ fn measure_stage(
     proofs: &[storage::StoredProof],
 ) -> Result<MeasureEvidence, Refusal> {
     let flux = flux_stage(original, prepared, bindings, proofs)?;
-    let normal = normal_measure::certify(original, prepared, proofs).map_err(|cause| Refusal {
+    let normal = normal_at(
+        original.region,
+        normal_measure::certify(original, prepared, proofs),
+    )?;
+    normal_at(
+        original.region,
+        normal_measure::compare(original, prepared, bindings, proofs, (flux, normal)),
+    )
+}
+fn normal_at<T>(
+    region: SurfaceRegionId,
+    result: Result<T, normal_measure::NormalMeasureFailure>,
+) -> Result<T, Refusal> {
+    result.map_err(|cause| Refusal {
         stage: Stage::Measure,
-        region: original.region,
+        region,
         cause: RefusalCause::NormalMeasure(Box::new(cause)),
-    })?;
-    Ok(MeasureEvidence { flux, normal })
+    })
 }
 
 fn flux_stage(

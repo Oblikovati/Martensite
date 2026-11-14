@@ -92,8 +92,9 @@ the authored span keys. Public report/query/error types have compile-time
 ## Scope still open
 
 This checkpoint supplies the closed-profile area and ideal normal-volume part of
-O6. The complete retained-flux versus ideal-realization discrepancy still needs
-composition with stored radiality, depth rounding and cap representations. The
+O6. The [source-matched comparison](MEASURE-COMPARISON.md) now bounds the
+retained-flux versus ideal-realization discrepancy through their full outward
+enclosures. Separate spatial storage and trim obligations remain required. The
 pipeline remains `Unqualified`. Disconnected material, full history, isolation,
 replay/concurrency, glyph scale, oblique frames and replacement deletion gates
 remain open. No dependency, primitive API, version or release tag changed.

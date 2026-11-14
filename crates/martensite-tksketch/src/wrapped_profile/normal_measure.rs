@@ -1,8 +1,9 @@
 //! Conditional ideal volume follows retained O2 sources, not the native volume estimate.
 use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CertifiedCylindricalNormalMeasure, CylindricalMeasureError, CylindricalMeasureLimit,
-    CylindricalMeasureQuery, certify_cylindrical_normal_measure,
+    CertifiedCylindricalFlux, CertifiedCylindricalNormalMeasure, CylindricalMeasureError,
+    CylindricalMeasureLimit, CylindricalMeasureQuery, CylindricalProfileSource,
+    certify_cylindrical_normal_measure,
 };
 
 pub(super) struct NormalMeasureEvidence {
@@ -12,11 +13,20 @@ pub(super) struct NormalMeasureEvidence {
 #[derive(Debug)]
 pub(super) enum NormalMeasureFailure {
     Sources(Box<planar_cones::ConeFailure>),
+    Storage(Box<storage::StorageFailure>),
+    SpanSequence {
+        actual: Vec<CurveSpan>,
+        expected: Vec<CurveSpan>,
+    },
     Certificate(Box<CylindricalMeasureError>),
 }
 impl std::fmt::Display for NormalMeasureFailure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::Storage(cause) => write!(f, "normal measure recapture: {cause}"),
+            Self::SpanSequence { actual, expected } => {
+                write!(f, "normal measure spans={actual:?}; expected {expected:?}")
+            }
             Self::Sources(cause) => write!(f, "normal measure sources: {cause}"),
             Self::Certificate(cause) => write!(f, "{cause}"),
         }
@@ -29,15 +39,48 @@ pub(super) fn certify(
 ) -> Result<NormalMeasureEvidence, NormalMeasureFailure> {
     let (spans, sources) = planar_cones::source_collection(original, prepared, stored)
         .map_err(|cause| NormalMeasureFailure::Sources(Box::new(cause)))?;
-    let query = CylindricalMeasureQuery {
-        sources: &sources,
-        depths: original.depths,
-        limit: CylindricalMeasureLimit::Report,
-        options: Default::default(),
-    };
+    let query = source_query(&sources, original.depths);
     let certificate = certify_cylindrical_normal_measure(query, || false)
         .map_err(|cause| NormalMeasureFailure::Certificate(Box::new(cause)))?;
     Ok(NormalMeasureEvidence { spans, certificate })
+}
+
+pub(super) fn compare(
+    original: &Request,
+    prepared: &Request,
+    bindings: &[(BindingKey, Shape)],
+    stored: &[storage::StoredProof],
+    (flux, normal): (CertifiedCylindricalFlux, NormalMeasureEvidence),
+) -> Result<pipeline::MeasureEvidence, NormalMeasureFailure> {
+    let (spans, sources) = planar_cones::source_collection(original, prepared, stored)
+        .map_err(|cause| NormalMeasureFailure::Sources(Box::new(cause)))?;
+    span_sequence(&normal.spans, &spans)?;
+    let query = source_query(&sources, original.depths);
+    let completed = (flux, normal.certificate);
+    let comparison = storage::compare_flux(prepared, bindings, stored, completed, query)
+        .map_err(|cause| NormalMeasureFailure::Storage(Box::new(cause)))?;
+    Ok(pipeline::MeasureEvidence { comparison, spans })
+}
+fn source_query<'a>(
+    sources: &'a [CylindricalProfileSource<'a>],
+    depths: [f64; 2],
+) -> CylindricalMeasureQuery<'a> {
+    CylindricalMeasureQuery {
+        sources,
+        depths,
+        limit: CylindricalMeasureLimit::Report,
+        options: Default::default(),
+    }
+}
+
+fn span_sequence(actual: &[CurveSpan], expected: &[CurveSpan]) -> Result<(), NormalMeasureFailure> {
+    if actual != expected {
+        return Err(NormalMeasureFailure::SpanSequence {
+            actual: actual.to_vec(),
+            expected: expected.to_vec(),
+        });
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -71,12 +114,11 @@ mod tests {
         let (spans, sources) =
             planar_cones::source_collection(&original, &prepared, &stored).unwrap();
         assert_eq!(evidence.spans, spans);
-        let query = CylindricalMeasureQuery {
-            sources: &sources,
-            depths: original.depths,
-            limit: CylindricalMeasureLimit::Report,
-            options: Default::default(),
-        };
+        let query = source_query(&sources, original.depths);
         assert!(evidence.certificate.matches_sources(query));
     }
 }
+
+#[cfg(test)]
+#[path = "normal_measure_comparison_tests.rs"]
+mod comparison_tests;

@@ -28,6 +28,11 @@ pub use cylindrical_clearance::{
 };
 mod cylindrical_measure;
 pub use cylindrical_measure::{
+    CertifiedCylindricalMeasureComparison, CylindricalMeasureComparisonError,
+    CylindricalMeasureComparisonFailure, CylindricalMeasureComparisonQuery,
+    compare_cylindrical_measures,
+};
+pub use cylindrical_measure::{
     CertifiedCylindricalNormalMeasure, CylindricalMeasureError, CylindricalMeasureEvidence,
     CylindricalMeasureFailure, CylindricalMeasureLimit, CylindricalMeasureOptions,
     CylindricalMeasureQuery, certify_cylindrical_normal_measure,

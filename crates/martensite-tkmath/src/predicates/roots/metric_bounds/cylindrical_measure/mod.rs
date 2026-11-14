@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Conditional closed-profile area and exact-depth normal-volume enclosures.
 mod admission;
+mod comparison;
+pub use comparison::{
+    CertifiedCylindricalMeasureComparison, CylindricalMeasureComparisonError,
+    CylindricalMeasureComparisonFailure, CylindricalMeasureComparisonQuery,
+    compare_cylindrical_measures,
+};
 mod error;
 mod profile;
 mod publication;

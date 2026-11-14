@@ -1,4 +1,7 @@
 //! Certify decoded coefficients and require the native side net to retain those curves.
+#[path = "storage_comparison.rs"]
+mod comparison;
+pub(super) use comparison::compare_flux;
 #[path = "storage_capture.rs"]
 mod capture;
 #[path = "storage_flux.rs"]
@@ -60,6 +63,9 @@ enum StorageCause {
     Profile(Box<CylindricalProfileError>),
     CapResidual(Box<CylindricalTrimError>),
     Flux(Box<CylindricalFluxError>),
+    Comparison(
+        Box<martensite_tkmath::predicates::roots::metric_bounds::CylindricalMeasureComparisonError>,
+    ),
     Depths(Box<CylindricalDepthFailure>),
     Trim {
         face: BindingKey,
@@ -78,6 +84,7 @@ enum StorageCause {
 impl std::fmt::Display for StorageFailure {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.cause {
+            StorageCause::Comparison(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Flux(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Native(cause) => write!(formatter, "{:?}: {cause}", self.key),
             StorageCause::Certificate(cause) => write!(formatter, "{:?}: {cause}", self.key),
