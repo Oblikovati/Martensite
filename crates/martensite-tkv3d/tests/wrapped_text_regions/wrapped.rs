@@ -345,5 +345,6 @@ fn edited_glyph_requests(original: &WrappedNormalRequest) -> Vec<(WrappedNormalR
         (moved, 39145599. / 335544320.),
         (support, 15626021. / 134217728.),
         (depth, 19814439. / 83886080.),
+        (glyph_request(4), 62194689. / 671088640.),
     ]
 }

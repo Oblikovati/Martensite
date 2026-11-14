@@ -183,5 +183,9 @@ publication enclosed its independent authored-volume oracle and produced
 different bytes while the prior publication stayed unchanged. Replaying the
 original request restored byte-identical geometry and identical authored
 history. The test passed in 11.07 seconds. This verifies deterministic owned
-kernel-request replay for these edits; persistent document revisions, text
-replacement, attached-body replay and composed Boolean history remain open.
+kernel-request replay for these edits; persistent document revisions, attached-body replay and composed Boolean
+history remain open. The extended test also replaced the owned captured `T`
+request with the captured lowercase `t` at its pinned placement. The replacement
+enclosed the independent volume oracle `62194689 / 671088640`; prior bytes
+stayed unchanged and original replay still matched. This extended run passed
+in 17.10 seconds. Persistent text-document replacement remains open.
