@@ -352,11 +352,12 @@ pub(super) fn decode(
     bytes: &[u8],
     keys: &[BindingKey],
 ) -> Result<(Shape, Vec<(BindingKey, Shape)>), Failure> {
-    // #432: certificates must bind the stored support frame without legacy normalization.
-    encoding::decode_with_policy(
+    // #432/#451: bind both stored support frames and rigid locations without reconstruction.
+    encoding::decode_with_policies(
         bytes,
         keys,
         martensite_tkbrep::bintools::SurfaceFrameReadPolicy::PreserveStoredV1,
+        martensite_tkbrep::bintools::LocationTransformReadPolicy::PreserveStoredRigidV1,
     )
     .map_err(|e| Failure::new(&format!("decode failed: {e:?}")))
 }

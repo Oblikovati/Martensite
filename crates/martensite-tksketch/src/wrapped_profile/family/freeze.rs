@@ -19,10 +19,11 @@ fn encode(root: Shape, bindings: Vec<(BindingKey, Shape)>) -> Checked<Frozen> {
     let bytes = encoding::encode(&root, &bindings)
         .map_err(|cause| FamilyFailure::Encoding(Box::new(cause)))?;
     let keys: Vec<_> = bindings.iter().map(|(key, _)| *key).collect();
-    let (root, bindings) = encoding::decode_with_policy(
+    let (root, bindings) = encoding::decode_with_policies(
         &bytes,
         &keys,
         martensite_tkbrep::bintools::SurfaceFrameReadPolicy::PreserveStoredV1,
+        martensite_tkbrep::bintools::LocationTransformReadPolicy::PreserveStoredRigidV1,
     )
     .map_err(|cause| FamilyFailure::Encoding(Box::new(cause)))?;
     Ok((bytes, keys, root, bindings))
