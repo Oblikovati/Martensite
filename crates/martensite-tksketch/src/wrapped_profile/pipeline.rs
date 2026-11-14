@@ -16,15 +16,20 @@ type SourceCertificates = (
     planar::PlanarEvidence,
     planar_cones::ConeEvidence,
     planar_clearance::OriginalClearance,
-    CertifiedCylindricalFlux,
+    MeasureEvidence,
     coverage::CoverageEvidence,
 );
 type FrozenParts = (Vec<u8>, Vec<BindingKey>, Shape, Vec<(BindingKey, Shape)>);
 
+pub(super) struct MeasureEvidence {
+    pub flux: CertifiedCylindricalFlux,
+    pub normal: normal_measure::NormalMeasureEvidence,
+}
+
 pub(super) struct Unqualified {
     pub bytes: Vec<u8>,
     pub coverage: coverage::CoverageEvidence,
-    pub boundary_flux: CertifiedCylindricalFlux,
+    pub measures: MeasureEvidence,
     pub keys: Vec<BindingKey>,
     pub report: ValidationReport,
     pub volume_estimate: f64,
@@ -53,9 +58,9 @@ pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
     let storage = storage_stage(request.region, request, &prepared, &bindings)?;
     bind_clearance(&clearance, request, &prepared, &storage)?;
     let cones = cone_stage(request, &prepared, &storage)?;
-    let boundary_flux = flux_stage(request, &prepared, &bindings, &storage)?;
+    let measures = measure_stage(request, &prepared, &bindings, &storage)?;
     let validation = checked_measure(request, &decoded)?;
-    let certificates = (planar, cones, clearance, boundary_flux, coverage);
+    let certificates = (planar, cones, clearance, measures, coverage);
     Ok(unqualified(
         (bytes, keys),
         validation,
@@ -117,6 +122,21 @@ fn bind_clearance(
         region: original.region,
         cause: RefusalCause::Clearance(Box::new(cause)),
     })
+}
+
+fn measure_stage(
+    original: &Request,
+    prepared: &Request,
+    bindings: &[(BindingKey, Shape)],
+    proofs: &[storage::StoredProof],
+) -> Result<MeasureEvidence, Refusal> {
+    let flux = flux_stage(original, prepared, bindings, proofs)?;
+    let normal = normal_measure::certify(original, prepared, proofs).map_err(|cause| Refusal {
+        stage: Stage::Measure,
+        region: original.region,
+        cause: RefusalCause::NormalMeasure(Box::new(cause)),
+    })?;
+    Ok(MeasureEvidence { flux, normal })
 }
 
 fn flux_stage(
@@ -187,11 +207,11 @@ fn unqualified(
     (bytes, keys): (Vec<u8>, Vec<BindingKey>),
     (report, measure): NativeMeasure,
     storage: Vec<storage::StoredProof>,
-    (planar, cones, clearance, boundary_flux, coverage): SourceCertificates,
+    (planar, cones, clearance, measures, coverage): SourceCertificates,
 ) -> Unqualified {
     Unqualified {
+        measures,
         coverage,
-        boundary_flux,
         bytes,
         keys,
         report,

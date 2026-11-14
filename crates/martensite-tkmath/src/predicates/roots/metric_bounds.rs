@@ -26,6 +26,12 @@ pub use cylindrical_clearance::{
     CylindricalClearanceOptions, CylindricalClearanceQuery, CylindricalClearanceScope,
     CylindricalClearanceSource, CylindricalPeriodicTranslation, certify_cylindrical_clearance,
 };
+mod cylindrical_measure;
+pub use cylindrical_measure::{
+    CertifiedCylindricalNormalMeasure, CylindricalMeasureError, CylindricalMeasureEvidence,
+    CylindricalMeasureFailure, CylindricalMeasureLimit, CylindricalMeasureOptions,
+    CylindricalMeasureQuery, certify_cylindrical_normal_measure,
+};
 mod cylindrical_cone;
 /// Original cylindrical profile source shared by local and collection certificates.
 pub use cylindrical_cone::CylindricalConeSource as CylindricalProfileSource;

@@ -191,3 +191,13 @@ The pipeline now checks [frozen face/wire/edge incidence and retained curve
 representation coverage](FROZEN-COVERAGE.md) before storage and flux accumulation.
 Ideal-realization measure correspondence and the remaining publication gates
 still prevent interpreting the scalar as a published body measure.
+
+
+## Conditional ideal-volume checkpoint
+
+The [normal-measure stage](NORMAL-MEASURE.md) now bounds closed-profile area
+change from retained angular and height discrepancies. It encloses authored and
+normalized-profile ideal volumes using the original radius and exact requested
+depth offsets. This geometric discrepancy remains separate from the represented
+flux integration error. Their complete comparison and the remaining publication
+gates are still required; the result remains `Unqualified`.

@@ -251,11 +251,24 @@ fn assert_certificates(result: &pipeline::Unqualified) {
     assert_cones(result);
     assert_clearance(result);
     assert_boundary_flux(result);
+    assert_normal_measure(result);
 }
 
 fn assert_boundary_flux(result: &pipeline::Unqualified) {
-    let flux = &result.boundary_flux;
+    let flux = &result.measures.flux;
     assert_eq!(flux.span_count(), result.storage.len());
     assert!(flux.absolute_error_bound() <= flux.requested_options().absolute_error_limit);
     assert!((flux.representative() - 11.10375).abs() < request().tolerance);
+}
+
+fn assert_normal_measure(result: &pipeline::Unqualified) {
+    let proof = &result.measures.normal.certificate;
+    assert_eq!(result.measures.normal.spans.len(), result.storage.len());
+    let [lo, hi] = proof.authored_area_enclosure();
+    assert!(lo <= 3.525 && 3.525 <= hi);
+    let [lo, hi] = proof.authored_volume_enclosure();
+    assert!(lo <= 11.10375 && 11.10375 <= hi);
+    assert!(proof.area_discrepancy_bound() < 1e-4);
+    assert!(proof.volume_discrepancy_bound() < 1e-4);
+    assert!(proof.operations() > 0);
 }

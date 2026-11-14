@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added source-bound closed-profile area and ideal cylindrical normal-volume enclosures, with exact requested depth arithmetic and explicit geometric-error reporting or refusal (#418).
+
 - Added frozen incidence and curve-representation coverage checks for private rational wrapped profiles, with semantic-owner diagnostics and malformed-body controls (#418).
 
 - Added certified conditional flux integration for retained rational ruled sides and cylindrical cap pcurves, with aggregate work limits and per-span receipts (#418).
