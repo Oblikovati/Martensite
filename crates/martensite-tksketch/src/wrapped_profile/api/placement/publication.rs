@@ -6,23 +6,41 @@ pub(in super::super) fn publish(
     plan: Plan,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<()> {
+    let physical = apply(result, plan, cancelled)?;
+    result.placement = Some(Box::new(Placed {
+        bytes: physical.bytes,
+        report: WrappedPlacementReport {
+            spatial_budget: physical.budget,
+            members: physical.members,
+        },
+    }));
+    Ok(())
+}
+pub(super) struct PhysicalPublication<B> {
+    pub bytes: Vec<u8>,
+    pub budget: B,
+    pub members: BTreeMap<SurfaceRegionId, WrappedWorldSpatialReport>,
+}
+pub(super) fn apply<B: PlacementBudget>(
+    result: &mut WrappedNormalResult,
+    plan: Plan<B>,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<PhysicalPublication<B>> {
     input::poll(cancelled, WrappedStage::Placement)?;
     let physical = freeze::place(&result.family.family, &plan)?;
     let members = validate_members(result, &plan, &physical, cancelled)?;
     measures::transport(result, &plan)?;
     result.budget.spatial_error = result.options.spatial_error;
-    result.placement = Some(Box::new(Placed {
+    Ok(PhysicalPublication {
         bytes: physical.bytes,
-        report: WrappedPlacementReport {
-            spatial_budget: plan.budget,
-            members,
-        },
-    }));
-    Ok(())
+        budget: plan.budget,
+        members,
+    })
 }
-fn validate_members(
+
+fn validate_members<B: PlacementBudget>(
     result: &mut WrappedNormalResult,
-    plan: &Plan,
+    plan: &Plan<B>,
     physical: &freeze::Physical,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<BTreeMap<SurfaceRegionId, WrappedWorldSpatialReport>> {
@@ -79,9 +97,9 @@ fn physical_validation(
     ))?;
     Ok(validation)
 }
-fn world_report(
+fn world_report<B: PlacementBudget>(
     report: &WrappedMemberReport,
-    plan: &Plan,
+    plan: &Plan<B>,
     trace: WrappedCertifiedBound,
 ) -> Checked<WrappedWorldSpatialReport> {
     let spatial = &report.spatial;
@@ -92,7 +110,10 @@ fn world_report(
         cap_realization_error: world_bound(spatial.cap_realization_error, plan)?,
     })
 }
-fn world_bound(bound: WrappedCertifiedBound, plan: &Plan) -> Checked<WrappedCertifiedBound> {
+fn world_bound<B: PlacementBudget>(
+    bound: WrappedCertifiedBound,
+    plan: &Plan<B>,
+) -> Checked<WrappedCertifiedBound> {
     let quantity = publication_budget::Quantity::CapDomain;
     let scaled = error::budget(publication_budget::scale_upper(
         bound.upper,

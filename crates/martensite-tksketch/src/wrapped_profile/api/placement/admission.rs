@@ -76,7 +76,7 @@ fn spatial_input(
         spatial_limit: request.options.spatial_error,
     })
 }
-fn point_norm(request: &WrappedNormalRequest, sources: &[Request]) -> Checked<f64> {
+pub(super) fn point_norm(request: &WrappedNormalRequest, sources: &[Request]) -> Checked<f64> {
     let mut norm = request.support.radius;
     let depth = request.depths.into_iter().map(f64::abs).fold(0., f64::max);
     for value in [depth, height_bound(sources), request.options.spatial_error] {

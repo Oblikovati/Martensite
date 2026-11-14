@@ -16,15 +16,22 @@ pub fn normal_extrude_profile_with_cancel(
 ) -> Checked<WrappedNormalResult> {
     input::poll(&mut cancelled, WrappedStage::Admission)?;
     let inputs = input::read(request, &mut cancelled)?;
-    let family = construct_family(&inputs, request, &mut cancelled)?;
-    input::poll(&mut cancelled, WrappedStage::History)?;
+    from_inputs(request, inputs, &mut cancelled)
+}
+pub(super) fn from_inputs(
+    request: &WrappedNormalRequest,
+    inputs: input::Inputs,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<WrappedNormalResult> {
+    let family = construct_family(&inputs, request, cancelled)?;
+    input::poll(cancelled, WrappedStage::History)?;
     let history = project_history(&family, &inputs, request.support.normal)?;
     let mut result = publish(request, family, history)?;
     if let Some(plan) = inputs.placement {
-        placement::publish(&mut result, *plan, &mut cancelled)
+        placement::publish(&mut result, *plan, cancelled)
             .map_err(|failure| failure_projection::selected(failure, request))?;
     }
-    input::poll(&mut cancelled, WrappedStage::Publication)?;
+    input::poll(cancelled, WrappedStage::Publication)?;
     Ok(result)
 }
 fn publish(

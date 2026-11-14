@@ -1,6 +1,9 @@
 //! Transport flux itself; determinant drift is part of the retained/ideal discrepancy.
 use super::*;
-pub(super) fn transport(result: &mut WrappedNormalResult, plan: &Plan) -> Checked<()> {
+pub(super) fn transport<B: PlacementBudget>(
+    result: &mut WrappedNormalResult,
+    plan: &Plan<B>,
+) -> Checked<()> {
     let determinant = plan.budget.frame().determinant_bounds();
     let mut totals = publication_budget::FamilyVolumeBounds::default();
     for (region, report) in &mut result.reports {

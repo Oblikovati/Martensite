@@ -1,10 +1,10 @@
 //! Preserve each retained cap tolerance under the actual stored affine map (#454).
 use super::*;
 
-pub(super) fn certify(
+pub(super) fn certify<B: PlacementBudget>(
     region: SurfaceRegionId,
     member: &pipeline::RetainedMember,
-    plan: &Plan,
+    plan: &Plan<B>,
 ) -> Checked<WrappedCertifiedBound> {
     member
         .storage
@@ -14,10 +14,10 @@ pub(super) fn certify(
         })
         .map(reports::bound)
 }
-fn certify_span(
+fn certify_span<B: PlacementBudget>(
     region: SurfaceRegionId,
     proof: &storage::StoredProof,
-    plan: &Plan,
+    plan: &Plan<B>,
 ) -> Checked<f64> {
     proof
         .trims
@@ -29,12 +29,12 @@ fn certify_span(
             Ok(maximum.max(checked))
         })
 }
-fn certify_cap(
+fn certify_cap<B: PlacementBudget>(
     region: SurfaceRegionId,
     span: CurveSpan,
     depth: usize,
     cap: &martensite_tkmath::predicates::roots::metric_bounds::CertifiedCylindricalTrim,
-    plan: &Plan,
+    plan: &Plan<B>,
 ) -> Checked<f64> {
     let actual = transport(
         cap.spatial_residual_bound(),

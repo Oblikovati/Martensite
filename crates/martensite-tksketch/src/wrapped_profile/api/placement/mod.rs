@@ -10,6 +10,8 @@ use martensite_tkmath::{
 };
 use std::collections::BTreeMap;
 mod admission;
+mod budget;
+use budget::{PlacementBudget, PlacementFrame};
 mod error;
 mod freeze;
 mod measures;
@@ -19,9 +21,9 @@ pub(super) use admission::prepare;
 pub(super) use error::PlacementFailure;
 use error::{at, fail};
 pub(super) use publication::publish;
-pub(super) struct Plan {
+pub(super) struct Plan<B: PlacementBudget = CertifiedFrameSpatialBudget> {
     transform: Transform3,
-    budget: CertifiedFrameSpatialBudget,
+    budget: B,
 }
 pub(super) struct Placed {
     pub bytes: Vec<u8>,
@@ -62,3 +64,6 @@ fn retained(
 }
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod rotated_budget_tests;

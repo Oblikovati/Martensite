@@ -5,7 +5,10 @@ pub(super) struct Physical {
     pub bytes: Vec<u8>,
     pub bindings: Vec<(BindingKey, Shape)>,
 }
-pub(super) fn place(family: &family::UnqualifiedFamily, plan: &Plan) -> Checked<Physical> {
+pub(super) fn place<B: PlacementBudget>(
+    family: &family::UnqualifiedFamily,
+    plan: &Plan<B>,
+) -> Checked<Physical> {
     let (root, bindings) = at(
         "canonical decode",
         pipeline::decode(&family.bytes, &family.keys),
@@ -21,9 +24,9 @@ pub(super) fn place(family: &family::UnqualifiedFamily, plan: &Plan) -> Checked<
     correspondence(family, plan, &root, &bindings)?;
     Ok(Physical { bytes, bindings })
 }
-fn correspondence(
+fn correspondence<B: PlacementBudget>(
     family: &family::UnqualifiedFamily,
-    plan: &Plan,
+    plan: &Plan<B>,
     root: &Shape,
     bindings: &[(BindingKey, Shape)],
 ) -> Checked<()> {
@@ -70,7 +73,7 @@ fn strip_bindings(
         })
         .collect()
 }
-fn check_location(location: &Location, plan: &Plan) -> Checked<()> {
+fn check_location<B: PlacementBudget>(location: &Location, plan: &Plan<B>) -> Checked<()> {
     let identity = location.is_identity();
     let power = if identity {
         None

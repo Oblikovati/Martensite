@@ -58,3 +58,39 @@ rotation-aware evidence, retain the original modelling error budget, and preserv
 selectable replay behavior. The complete body-feature API, #456 solid history,
 whole-profile support trims, authored conical profiles and wider qualification
 remain open. No package version or release tag changed.
+
+## Shared physical-publication pipeline
+
+The private placement plan now accepts either certificate type through static
+interfaces. Freeze/decoded-graph correspondence, ordered native validation,
+retained cap-trace limits, determinant-scaled flux and world bounds still use one
+implementation. The existing public result and placement report keep their
+fields and allocation pattern. Construction from resolved inputs was extracted
+without changing callback order.
+
+The 28 existing placement controls passed, with their subprocess worker ignored
+during the normal run and invoked by its parent test. A separate rotated control
+then passed on a profile with a hole and a disconnected member. It uses an exact
+quarter-turn stored matrix, the certified binary64 angle reference, the original
+modelling epsilon, and an independently expected transformed vertex. This is a
+private integration control; the public constructor still refuses nonzero chart
+origins. Both independent review axes and strict all-target TKSketch Clippy passed.
+
+A pre/post comparison of the canonical consumer's full replay payload matched
+all 57,214 bytes: native graph, authored history, reports, budget and material
+receipts. Its SHA-256 is recorded in
+[the replay measurement](references/p420-placement-interface-canonical-replay.json).
+
+The unchanged oblique consumer was measured in four alternating pairs after one
+warmup per executable, while the other task's heavy jobs were idle. Median wall
+time was 2.664s before and 2.614s after; ranges overlapped. Median GNU peak RSS was
+45,690KiB before and 45,334KiB after, also with overlapping ranges. This control
+shows no resolved regression and does not establish an improvement or whole-feature
+performance parity. [Raw trials](references/p420-placement-interface-paired.tsv)
+and [binary hashes and settings](references/p420-placement-interface-paired.json)
+are retained. The temporary baseline executable was removed after comparison.
+
+Logs: `target/qualification/p420-generic-placement-controls.log`,
+`target/qualification/p420-shared-rotated-publication-final.log`, and
+`target/qualification/p420-placement-interface-clippy-final.log`. The complete
+feature and its full affected-package gate remain unfinished.
