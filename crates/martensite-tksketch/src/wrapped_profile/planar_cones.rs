@@ -7,7 +7,7 @@ use martensite_tkmath::predicates::roots::metric_bounds::{
 use std::collections::BTreeMap;
 #[cfg(test)]
 #[path = "planar_cones_tests.rs"]
-mod tests;
+pub(super) mod tests;
 
 type ProofIndex<'a> = BTreeMap<CurveSpan, &'a storage::StoredProof>;
 type AuthoredIndex<'a> = BTreeMap<SurfaceCurveId, &'a [[f64; 2]]>;
@@ -137,10 +137,8 @@ fn source<'a>(
     proofs: &ProofIndex<'a>,
 ) -> Result<CylindricalConeSource<'a>, ConeFailure> {
     let missing = || membership(span, 0);
-    let authored = authored.get(&span.curve).copied().ok_or_else(missing)?;
+    let (authored, interval) = original_source(span, authored)?;
     let proof = proofs.get(&span).copied().ok_or_else(missing)?;
-    let interval = CylindricalProfileInterval::new(u64::from(span.index), span.level)
-        .map_err(|cause| ConeFailure::Interval { span, cause })?;
     Ok(CylindricalConeSource {
         authored,
         interval,
@@ -152,4 +150,38 @@ fn source<'a>(
 
 fn membership(span: CurveSpan, count: usize) -> ConeFailure {
     ConeFailure::Membership { span, count }
+}
+
+pub(super) fn original_source<'a>(
+    span: CurveSpan,
+    authored: &AuthoredIndex<'a>,
+) -> Result<(&'a [[f64; 2]], CylindricalProfileInterval), ConeFailure> {
+    let poles = authored
+        .get(&span.curve)
+        .copied()
+        .ok_or_else(|| membership(span, 0))?;
+    let interval = CylindricalProfileInterval::new(u64::from(span.index), span.level)
+        .map_err(|cause| ConeFailure::Interval { span, cause })?;
+    Ok((poles, interval))
+}
+
+pub(super) fn source_collection<'a>(
+    original: &'a Request,
+    prepared: &Request,
+    stored: &'a [storage::StoredProof],
+) -> Result<(Vec<CurveSpan>, Vec<CylindricalConeSource<'a>>), ConeFailure> {
+    let authored = storage::authored_index(original)
+        .map_err(|cause| ConeFailure::Authored(Box::new(cause)))?;
+    let proofs = proof_index(stored)?;
+    let spans: Vec<_> = prepared
+        .loops
+        .iter()
+        .flatten()
+        .map(|piece| piece.span)
+        .collect();
+    let sources = spans
+        .iter()
+        .map(|span| source(*span, original.radius, &authored, &proofs))
+        .collect::<Result<_, _>>()?;
+    Ok((spans, sources))
 }

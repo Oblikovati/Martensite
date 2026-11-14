@@ -1,9 +1,9 @@
 # Planar qualification of wrapped profiles (#418)
 
-Status, 2026-11-14: authored material capture and local derivative-cone
-certificates are integrated into the private pipeline. Nonadjacent clearance,
-periodic chart admission and complete deformation topology remain open. The
-operation still returns `Unqualified`.
+Status, 2026-11-14: authored material capture, local derivative cones and
+nonadjacent developed-plane clearance are integrated into the private pipeline.
+Periodic cylinder injectivity and publication remain open. The operation still
+returns `Unqualified`.
 
 ## Implemented material capture
 
@@ -91,12 +91,14 @@ normalized directions from the derivative control hull supply candidates.
 Every candidate requires an outward projection proof; choosing an axis is not
 acceptance evidence.
 
-For clearance, a projection gap at least `delta * ||n||_1` implies Euclidean
-separation of at least `delta`. Use certified expanded AABBs for broad-phase
-pruning, then adaptive hull bounds for unresolved pairs. Cache subdivision
-results by original source and exact interval, and check point witnesses before
-spending a refinement budget. Record work and incomplete causes separately
-from source identity.
+For clearance, a positive projection gap `g` with
+`g^2 >= delta^2 * ||n||_2^2` proves Euclidean separation of at least `delta`.
+The implementation checks this inequality with outward dyadic bounds, without
+a square-root estimate. Certified control-box hierarchies prune groups of
+pairs; unresolved polynomial domains use adaptive hull bounds. Subdivision
+results are cached per original source and exact interval. Point witnesses can
+refute the margin before extending a cover. Work and incomplete causes remain
+separate from source identity.
 
 The retained [Jacobian oracle](references/rational-join-cone-oracle.json)
 checks the mixed fixture's right quadratic and upper cubic derivative controls
@@ -178,3 +180,75 @@ and peak RSS 51,028 KiB. This remains inside the five-second walking-skeleton
 limit. The approximate metrics check found no cone or wrapped-profile source
 file over 500 lines, function over 20 code lines or nesting above two. The full
 PR gate must still run before pushing; these package checks do not replace it.
+
+## Implemented nonadjacent clearance
+
+`certify_cylindrical_clearance` checks original polynomials before wrapped native
+construction. Each source names its original controls and exact canonical
+interval. The request retains the common support radius and angular origin for
+later O2 binding. Original inputs are validated directly, so this stage does not
+need a constructed native curve.
+
+The within-family domain covers every unordered distinct pair except explicitly
+listed increasing unique pairs. The wrapped pipeline excludes exactly its
+cyclic adjacent pairs, which have separate cone proofs. A declared empty
+relation completes with zero domain and arithmetic work; it is distinct from a
+failed or incomplete proof. The translated-family domain covers all ordered
+pairs, including a source against its own translated copy. Its supplied binary64
+translation is exact input; uncertainty in a true cylindrical period remains a
+separate obligation.
+
+A hierarchy of certified original control boxes covers the complete requested
+relation without materializing its pair matrix. Bounding boxes are formed from
+outward restrictions of the original controls. Median splits and candidate
+axes choose traversal only; every acceptance uses a certified bound. Remaining
+curve pairs use squared projection tests. Original-parameter point witnesses
+refuse a margin that is strictly too large. Witness parameters remain exact
+dyadics even beyond binary64 endpoint precision.
+
+Curve subdivisions and midpoint samples are cached below each root and reused
+against other curves. Domains, cached nodes, local refinement level and interval
+operations have explicit refused limits. Proof subdivision never changes the
+fitted geometry, canonical span identities or history.
+
+The private pipeline requires `delta >= 4*epsilon` for all 152 nonadjacent pairs
+of the 19-piece fixture. It checks this before wrapped construction, then binds
+the original controls, exact intervals, radius and chart to the retained O2
+certificates after decoding. A changed source or interval cannot reuse the
+proof. A hole only `1e-6` from the outer boundary refuses at the clearance stage
+with requested `epsilon=1e-5`, before wrapped native construction.
+
+Independent [Jacobian squared-distance oracles](references/rational-clearance-oracle.json)
+give `25` for displacement `(3,4)` and `1/2` for `(1/2,-1/2)`. The first control
+proves the exact clearance `5`; the second exercises both an accepted smaller
+margin and a refuted larger one. A 64-curve control covers all 2,016 pairs by
+hierarchy pruning with fewer than 300 domain visits and no polynomial pair
+inspection. A quadratic arch against two separated lines computes one dyadic
+split and retains five curve nodes, confirming reuse across opposing pairs.
+
+The developed-plane homotopy now has source nesting, shared endpoint agreement,
+positive piece/join margins and nonadjacent clearance for this fixture. Before
+publication, cylinder periodic images must also be separated under a certified
+period bound. The prototype's angular admission restriction remains in force;
+this checkpoint does not establish the full-wrap or general-cone cases.
+
+## Clearance verification checkpoint
+
+The joint package run passed 470 math library tests, 3,114 math integration
+tests, 56 math doctests, 37 sketch library tests and 32 sketch integration
+tests. Twenty-one focused clearance controls cover hierarchy pruning, adaptive
+axis separation, cache reuse, source/chart binding, exact witness parameters,
+empty relations and unchanged resource refusals. Strict all-target clippy
+passed for both packages.
+
+The isolated debug fixture took 3.43 seconds and peak RSS 52,524 KiB, including
+preconstruction clearance and its later O2 binding. The five-second limit is
+unchanged. The approximate metrics script found no clearance or wrapped-profile
+file over 500 lines, function over 20 code lines or nesting above two.
+
+Next, certify the true cylindrical period and cover every relevant translated
+image before relaxing angular admission. Boundary separation alone does not
+classify periodic material for disconnected selections: a small translated
+component can lie strictly inside a larger selected component without touching
+its boundary. P4 must prove material disjointness as well, reusing planar nesting
+or a stronger certified global-box exclusion. No version change is authorized.

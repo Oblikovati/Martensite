@@ -9,6 +9,14 @@ use martensite_tkgeombase::gprop::GProps;
 use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
 use std::collections::BTreeSet;
 
+type NativeMeasure = (ValidationReport, (f64, f64));
+type SourceCertificates = (
+    planar::PlanarEvidence,
+    planar_cones::ConeEvidence,
+    planar_clearance::OriginalClearance,
+);
+type FrozenParts = (Vec<u8>, Vec<BindingKey>, Shape, Vec<(BindingKey, Shape)>);
+
 pub(super) struct Unqualified {
     pub bytes: Vec<u8>,
     pub keys: Vec<BindingKey>,
@@ -18,6 +26,7 @@ pub(super) struct Unqualified {
     pub storage: Vec<storage::StoredProof>,
     pub planar: planar::PlanarEvidence,
     pub cones: planar_cones::ConeEvidence,
+    pub clearance: planar_clearance::OriginalClearance,
 }
 
 fn at<T>(region: SurfaceRegionId, stage: Stage, result: Result<T, Failure>) -> Result<T, Refusal> {
@@ -33,22 +42,57 @@ pub(super) fn wrap_extrude(request: &Request) -> Result<Unqualified, Refusal> {
     at(region, Stage::Admission, admit(request))?;
     let planar = planar_stage(request)?;
     let prepared = planning_stage(request)?;
+    let clearance = clearance_stage(request, &prepared)?;
     let constructed = at(region, Stage::Construction, native::construct(&prepared))?;
-    let bytes = at(region, Stage::Freeze, freeze(&constructed))?;
-    let keys: Vec<_> = constructed.bindings.iter().map(|(key, _)| *key).collect();
-    let (decoded, bindings) = at(region, Stage::Freeze, decode(&bytes, &keys))?;
+    let (bytes, keys, decoded, bindings) = frozen_parts(region, &constructed)?;
     let storage = storage_stage(region, request, &prepared, &bindings)?;
+    bind_clearance(&clearance, request, &prepared, &storage)?;
     let cones = cone_stage(request, &prepared, &storage)?;
-    let (report, measure) = checked_measure(request, &decoded)?;
+    let validation = checked_measure(request, &decoded)?;
     Ok(unqualified(
-        bytes, keys, report, measure, storage, planar, cones,
+        bytes,
+        keys,
+        validation,
+        storage,
+        (planar, cones, clearance),
     ))
 }
 
-fn checked_measure(
-    request: &Request,
-    shape: &Shape,
-) -> Result<(ValidationReport, (f64, f64)), Refusal> {
+fn frozen_parts(
+    region: SurfaceRegionId,
+    constructed: &Constructed,
+) -> Result<FrozenParts, Refusal> {
+    let bytes = at(region, Stage::Freeze, freeze(constructed))?;
+    let keys: Vec<_> = constructed.bindings.iter().map(|(key, _)| *key).collect();
+    let (shape, bindings) = at(region, Stage::Freeze, decode(&bytes, &keys))?;
+    Ok((bytes, keys, shape, bindings))
+}
+
+fn clearance_stage(
+    original: &Request,
+    prepared: &Request,
+) -> Result<planar_clearance::OriginalClearance, Refusal> {
+    planar_clearance::certify(original, prepared).map_err(|cause| Refusal {
+        stage: Stage::Clearance,
+        region: original.region,
+        cause: RefusalCause::Clearance(Box::new(cause)),
+    })
+}
+
+fn bind_clearance(
+    evidence: &planar_clearance::OriginalClearance,
+    original: &Request,
+    prepared: &Request,
+    stored: &[storage::StoredProof],
+) -> Result<(), Refusal> {
+    planar_clearance::bind(evidence, original, prepared, stored).map_err(|cause| Refusal {
+        stage: Stage::Clearance,
+        region: original.region,
+        cause: RefusalCause::Clearance(Box::new(cause)),
+    })
+}
+
+fn checked_measure(request: &Request, shape: &Shape) -> Result<NativeMeasure, Refusal> {
     let report = at(
         request.region,
         Stage::Validation,
@@ -102,11 +146,9 @@ fn storage_stage(
 fn unqualified(
     bytes: Vec<u8>,
     keys: Vec<BindingKey>,
-    report: ValidationReport,
-    measure: (f64, f64),
+    (report, measure): NativeMeasure,
     storage: Vec<storage::StoredProof>,
-    planar: planar::PlanarEvidence,
-    cones: planar_cones::ConeEvidence,
+    (planar, cones, clearance): SourceCertificates,
 ) -> Unqualified {
     Unqualified {
         bytes,
@@ -117,6 +159,7 @@ fn unqualified(
         storage,
         planar,
         cones,
+        clearance,
     }
 }
 

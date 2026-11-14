@@ -143,7 +143,10 @@ with exact-sign exclusions for stationary endpoints and tangent returns. The
 [planar qualification note](PLANAR-QUALIFICATION.md) records the implementation,
 controls and moving-endpoint homotopy. Strict derivative-cone margins now pass
 for every prepared piece and adjacent pair, bound to their retained O2 sources.
-Nonadjacent clearance and periodic chart admission remain open.
+Certified hierarchy pruning and cached dyadic covers now establish all 152
+nonadjacent clearances before wrapped native construction. Their original
+source/interval/chart records bind back to retained O2 proofs. Periodic chart
+admission remains open.
 
 ## Remaining gates
 

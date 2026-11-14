@@ -4,6 +4,7 @@ mod boundaries;
 mod native;
 mod pipeline;
 mod planar;
+mod planar_clearance;
 mod planar_cones;
 mod storage;
 mod subdivision;
@@ -48,6 +49,7 @@ enum Stage {
     Admission,
     Planar,
     Planning,
+    Clearance,
     Construction,
     Freeze,
     Storage,
@@ -70,6 +72,7 @@ enum RefusalCause {
     Planning(Box<subdivision::PlanningFailure>),
     Planar(Box<planar::PlanarFailure>),
     Cones(Box<planar_cones::ConeFailure>),
+    Clearance(Box<planar_clearance::ClearanceFailure>),
 }
 impl std::fmt::Display for RefusalCause {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -79,6 +82,7 @@ impl std::fmt::Display for RefusalCause {
             Self::Planning(cause) => write!(formatter, "{cause}"),
             Self::Planar(cause) => write!(formatter, "{cause}"),
             Self::Cones(cause) => write!(formatter, "{cause}"),
+            Self::Clearance(cause) => write!(formatter, "{cause}"),
         }
     }
 }

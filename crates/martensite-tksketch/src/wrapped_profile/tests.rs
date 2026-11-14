@@ -64,6 +64,7 @@ fn rational_loop_with_hole_freezes_measures_and_exports_without_publication() {
     assert_roundtrip(&result);
     assert_storage(&result);
     assert_cones(&result);
+    assert_clearance(&result);
 }
 
 fn assert_storage(result: &pipeline::Unqualified) {
@@ -236,4 +237,11 @@ fn assert_cones(result: &pipeline::Unqualified) {
                 .all(|margin| margin.compare_f64(0.).unwrap() == Ordering::Greater)
         );
     }
+}
+
+fn assert_clearance(result: &pipeline::Unqualified) {
+    assert_eq!(result.clearance.spans.len(), 19);
+    assert_eq!(result.clearance.certificate.pair_count(), 152);
+    assert_eq!(result.clearance.certificate.excluded_pairs().len(), 19);
+    assert!(result.clearance.certificate.clearance_lower_bound() >= 4. * request().tolerance);
 }

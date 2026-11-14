@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added certified developed-profile clearance with bounding-hierarchy pruning, cached dyadic refinement, exact-parameter witnesses and later binding to retained cylindrical profile certificates (#418).
+
 - Added strict cylindrical profile tangent-cone certificates tied to retained position/derivative proofs, with exact positive margins and explicit work limits (#418).
 
 - Added exact radius/depth rounding bounds composed with cylindrical storage certificates under one requested error allowance (#418).

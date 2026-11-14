@@ -2,7 +2,7 @@
 use super::super::{native, subdivision, tests::request};
 use super::*;
 
-fn proofs() -> (Request, Request, Vec<storage::StoredProof>) {
+pub(in super::super) fn proofs() -> (Request, Request, Vec<storage::StoredProof>) {
     let original = request();
     let prepared = subdivision::prepare(&original).unwrap();
     let built = native::construct(&prepared).unwrap();
