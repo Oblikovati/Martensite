@@ -6,3 +6,4 @@ mod extrusion;
 mod fixtures;
 mod graph;
 mod regions;
+mod pair_matrix;

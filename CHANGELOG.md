@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Removed repeated pair-ledger validation during planar profile certification while preserving live geometry checks and shared work budgets (#449).
+
 - Removed quadratic backtracking from the binary32 proof-source parser on malformed whitespace records without changing accepted records or certificates (#441).
 
 - Bound Linux renderer test gates to the recorded system-font configuration so user font folders no longer changed rendered test images (#433).

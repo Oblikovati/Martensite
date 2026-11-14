@@ -12,36 +12,53 @@ pub(super) fn refresh_obligations(census: &mut BoundaryCensus) {
     });
 }
 pub(super) fn paired_domains_certified(census: &BoundaryCensus) -> bool {
-    let Some(paired) = &census.paired else {
+    let Some(certificates) = DomainCertificates::new(census) else {
         return false;
     };
     let expected = census::pair_domains(census.inputs.segments.len()).collect::<Vec<_>>();
     !expected.is_empty()
         && expected.len() == census.domains.len()
-        && paired_policy_current(census, paired)
         && census.domains.iter().zip(expected).all(|(domain, pair)| {
-            domain.occurrences == pair && domain_certificate(census, domain).is_some()
+            domain.occurrences == pair && certificates.certificate(domain).is_some()
         })
 }
 pub(crate) fn domain_certificate<'a>(
     census: &'a BoundaryCensus,
     domain: &BoundaryDomain,
 ) -> Option<BezierPairCertificate<'a>> {
-    let DomainEvidence::PairedReport { report, .. } = domain.evidence else {
-        return None;
-    };
-    if !census.source_representation_certified() || !paired_work_exact(census) {
-        return None;
+    DomainCertificates::new(census)?.certificate(domain)
+}
+
+/// Share scalar ledger/source bindings; native geometry remains live through aliased handles.
+/// Issue #449: repeating the complete ledger validation for every domain is cubic in pair count.
+pub(crate) struct DomainCertificates<'a> {
+    census: &'a BoundaryCensus,
+    source: super::source_status::CurrentSourceRepresentation<'a>,
+}
+impl<'a> DomainCertificates<'a> {
+    /// Bind immutable evidence once; `DomainCertificates::new(&census)` never freezes native aliases.
+    pub(crate) fn new(census: &'a BoundaryCensus) -> Option<Self> {
+        if !paired_work_exact(census) {
+            return None;
+        }
+        let source = super::source_status::CurrentSourceRepresentation::new(census)?;
+        Some(Self { census, source })
     }
-    let paired = census.paired.as_ref()?;
-    let retained = paired.reports.get(report)?;
-    if !paired_policy_current(census, paired) || !domain_binding_current(census, domain, retained) {
-        return None;
+    /// Recheck live geometry before using a domain proof; `view.certificate(domain)`.
+    pub(crate) fn certificate(&self, domain: &BoundaryDomain) -> Option<BezierPairCertificate<'a>> {
+        let DomainEvidence::PairedReport { report, .. } = domain.evidence else {
+            return None;
+        };
+        let paired = self.census.paired.as_ref()?;
+        let retained = paired.reports.get(report)?;
+        if !self.source.current() || !domain_binding_current(self.census, domain, retained) {
+            return None;
+        }
+        let report = retained.outcome.as_ref().ok()?;
+        (report.policy() == retained.effective)
+            .then(|| report.complete())
+            .flatten()
     }
-    let report = retained.outcome.as_ref().ok()?;
-    (report.policy() == retained.effective)
-        .then(|| report.complete())
-        .flatten()
 }
 fn paired_policy_current(census: &BoundaryCensus, paired: &PairedCensusEvidence) -> bool {
     // The retained request records its own version; version 2 adds carriers.
@@ -178,21 +195,20 @@ fn effective_work_current(
             .map_or(true, |report| report.policy() == expected)
 }
 fn reuse_work_current(census: &BoundaryCensus, paired: &PairedCensusEvidence) -> bool {
-    let mut cold = Vec::new();
-    let mut reused_count = 0;
+    let mut cold = vec![false; paired.reports.len()];
+    let (mut cold_count, mut reused_count) = (0, 0);
     for domain in &census.domains {
-        if let DomainEvidence::PairedReport { report, reused, .. } = domain.evidence {
-            if report >= paired.reports.len() || reused != cold.contains(&report) {
-                return false;
-            }
-            if reused {
-                reused_count += 1;
-            } else {
-                cold.push(report);
-            }
+        let DomainEvidence::PairedReport { report, reused, .. } = domain.evidence else {
+            continue;
+        };
+        if report >= cold.len() || reused != cold[report] {
+            return false;
         }
+        cold[report] = true;
+        cold_count += usize::from(!reused);
+        reused_count += u64::from(reused);
     }
-    cold.len() == paired.reports.len() && reused_count == paired.reused_reports
+    cold_count == paired.reports.len() && reused_count == paired.reused_reports
 }
 
 fn kinded_parents_complete(record: &PairedOccurrenceSnapshot) -> bool {

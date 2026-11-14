@@ -17,11 +17,33 @@ pub(crate) fn source_binding_faults(
     requested: SourceConformancePolicy,
     inspection: &SourceConformanceInspection,
 ) -> Vec<SourceBindingFault> {
+    binding_faults(inputs, requested, inspection, GeometryCheck::Live)
+}
+/// Check immutable captures/history separately from live native aliases.
+/// Example: `source_binding_structure_faults(inputs, policy, report)` cannot certify live geometry.
+pub(crate) fn source_binding_structure_faults(
+    inputs: &BoundaryInputs,
+    requested: SourceConformancePolicy,
+    inspection: &SourceConformanceInspection,
+) -> Vec<SourceBindingFault> {
+    binding_faults(inputs, requested, inspection, GeometryCheck::Captured)
+}
+#[derive(Clone, Copy)]
+enum GeometryCheck {
+    Captured,
+    Live,
+}
+fn binding_faults(
+    inputs: &BoundaryInputs,
+    requested: SourceConformancePolicy,
+    inspection: &SourceConformanceInspection,
+    geometry: GeometryCheck,
+) -> Vec<SourceBindingFault> {
     let mut faults = Vec::new();
     if !same_source_policy(requested, inspection.requested) {
         faults.push(SourceBindingFault::Policy);
     }
-    check_snapshots(inputs, inspection, &mut faults);
+    check_snapshots(inputs, inspection, &mut faults, geometry);
     check_required_matrix(inputs, inspection, &mut faults);
     faults
 }
@@ -30,6 +52,7 @@ fn check_snapshots(
     inputs: &BoundaryInputs,
     report: &SourceConformanceInspection,
     faults: &mut Vec<SourceBindingFault>,
+    geometry: GeometryCheck,
 ) {
     if inputs.segments.is_empty() || inputs.originals.is_empty() || inputs.constructions.is_empty()
     {
@@ -38,7 +61,7 @@ fn check_snapshots(
     check_original_snapshots(inputs, report, faults);
     check_construction_snapshots(inputs, report, faults);
     for segment in &inputs.segments {
-        check_segment(inputs, segment, faults);
+        check_segment(inputs, segment, faults, geometry);
     }
     if inputs.segments.len() != inputs.constructions.len() {
         faults.push(SourceBindingFault::ConstructionSnapshot);
@@ -86,7 +109,26 @@ fn check_segment(
     inputs: &BoundaryInputs,
     segment: &crate::sketch_region_candidates::CandidateSegment,
     faults: &mut Vec<SourceBindingFault>,
+    geometry: GeometryCheck,
 ) {
+    let Some(construction) = segment_construction(inputs, segment, faults) else {
+        return;
+    };
+    if matches!(geometry, GeometryCheck::Captured) {
+        return;
+    }
+    if let Err(cause) = current_construction_correspondence(inputs, construction, segment) {
+        faults.push(SourceBindingFault::CurrentGeometry {
+            occurrence: segment.occurrence,
+            cause: std::sync::Arc::new(cause),
+        });
+    }
+}
+fn segment_construction<'a>(
+    inputs: &'a BoundaryInputs,
+    segment: &crate::sketch_region_candidates::CandidateSegment,
+    faults: &mut Vec<SourceBindingFault>,
+) -> Option<&'a CapturedBoundaryConstruction> {
     let matches: Vec<_> = inputs
         .constructions
         .iter()
@@ -94,15 +136,11 @@ fn check_segment(
         .collect();
     if matches.len() != 1 || !binds_current_segment(matches[0], segment) {
         faults.push(SourceBindingFault::CurrentSegment(segment.occurrence));
-        return;
+        return None;
     }
-    if let Err(cause) = current_construction_correspondence(inputs, matches[0], segment) {
-        faults.push(SourceBindingFault::CurrentGeometry {
-            occurrence: segment.occurrence,
-            cause: std::sync::Arc::new(cause),
-        });
-    }
+    Some(matches[0])
 }
+
 fn check_required_matrix(
     inputs: &BoundaryInputs,
     report: &SourceConformanceInspection,

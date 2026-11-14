@@ -147,17 +147,25 @@ fn source_phase(retained: &mut PairedContactTransaction, sources: &[ArrangementS
     }
 }
 fn retain_canonical_contacts(retained: &mut PairedContactTransaction) {
-    for index in 0..retained.census.domains.len() {
-        retain_domain_contacts(retained, index);
+    let certificates =
+        crate::sketch_region_certification::DomainCertificates::new(&retained.census);
+    for (index, domain) in retained.census.domains.iter().enumerate() {
+        retain_domain_contacts(
+            &mut retained.inspection,
+            certificates.as_ref(),
+            domain,
+            index,
+        );
     }
 }
-fn retain_domain_contacts(retained: &mut PairedContactTransaction, index: usize) {
-    let domain = &retained.census.domains[index];
-    let Some(proof) =
-        crate::sketch_region_certification::domain_certificate(&retained.census, domain)
-    else {
-        retained
-            .inspection
+fn retain_domain_contacts(
+    inspection: &mut ContactTransportInspection,
+    certificates: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
+    domain: &crate::sketch_region_certification::BoundaryDomain,
+    index: usize,
+) {
+    let Some(proof) = certificates.and_then(|current| current.certificate(domain)) else {
+        inspection
             .missing
             .push(ContactTransportGap::MissingSourceBoundDomain { domain: index });
         return;
@@ -167,7 +175,7 @@ fn retain_domain_contacts(retained: &mut PairedContactTransaction, index: usize)
     else {
         return;
     };
-    retain_report_contacts(&mut retained.inspection, &proof, report, index);
+    retain_report_contacts(inspection, &proof, report, index);
 }
 
 fn retain_report_contacts(

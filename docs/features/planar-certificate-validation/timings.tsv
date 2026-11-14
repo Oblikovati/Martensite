@@ -1,0 +1,3 @@
+revision	workload	result	elapsed_seconds	user_seconds	peak_rss_kib
+main-919b8e31	two-s-56-pieces-2-contours	accepted-2-regions	50.543204025	50.52	39688
+fix-449	two-s-56-pieces-2-contours	accepted-2-regions	5.198730256	5.19	38404
