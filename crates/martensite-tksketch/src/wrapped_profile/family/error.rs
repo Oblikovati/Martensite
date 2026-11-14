@@ -10,6 +10,7 @@ pub(in super::super) enum FamilyFailure {
     Coverage(Box<coverage::CoverageFailure>),
     Member(Box<Refusal>),
     Binding(Box<planar_clearance::ClearanceFailure>),
+    History(Box<history::HistoryFailure>),
 }
 impl std::fmt::Display for FamilyFailure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -23,6 +24,7 @@ impl std::fmt::Display for FamilyFailure {
                 "family region={:?} stage={:?}: {}",
                 cause.region, cause.stage, cause.cause
             ),
+            Self::History(cause) => write!(f, "family {cause}"),
             Self::Binding(cause) => write!(f, "family retained binding: {cause}"),
         }
     }

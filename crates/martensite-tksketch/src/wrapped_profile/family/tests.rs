@@ -21,6 +21,7 @@ fn disconnected_members_share_one_frozen_table_without_publication() {
     assert_eq!(result.coverage.members, 2);
     assert_eq!(result.coverage.bindings, result.keys.len());
     assert_eq!(result.members.len(), 2);
+    assert_eq!(result.history.records.len(), result.keys.len());
     assert_eq!(result.selection.prepared.planar.members.len(), 2);
     check_measures(&result);
     let (root, bindings) = pipeline::decode(&result.bytes, &result.keys).unwrap();
@@ -43,6 +44,7 @@ fn selection_order_does_not_change_frozen_bytes_or_authored_keys() {
     let second = construct(&inputs).unwrap();
     assert_eq!(first.keys, second.keys);
     assert_eq!(first.bytes, second.bytes);
+    assert_eq!(first.history, second.history);
 }
 #[test]
 fn missing_or_reversed_family_member_is_refused() {

@@ -3,6 +3,7 @@ mod angular;
 mod boundaries;
 mod coverage;
 mod family;
+mod history;
 mod native;
 mod normal_measure;
 mod pipeline;

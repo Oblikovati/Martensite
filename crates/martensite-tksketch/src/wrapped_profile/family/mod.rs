@@ -13,6 +13,7 @@ pub(super) struct UnqualifiedFamily {
     pub members: BTreeMap<SurfaceRegionId, pipeline::RetainedMember>,
     pub selection: selection::QualifiedSelection,
     pub coverage: coverage::FamilyCoverage,
+    pub history: history::HistoryEvidence,
 }
 pub(super) fn construct(requests: &[Request]) -> Checked<UnqualifiedFamily> {
     let selection = selection::certify(requests, Default::default())
@@ -21,6 +22,8 @@ pub(super) fn construct(requests: &[Request]) -> Checked<UnqualifiedFamily> {
     let (bytes, keys, root, bindings) = freeze::construct(prepared)?;
     let (coverage, views) = coverage::certify_family(prepared, &root, &bindings)
         .map_err(|cause| FamilyFailure::Coverage(Box::new(cause)))?;
+    let history = history::certify(requests, &selection, &keys)
+        .map_err(|cause| FamilyFailure::History(Box::new(cause)))?;
     let stored = store(requests, prepared, views)?;
     bind(requests, &selection, &stored)?;
     let members = finish(requests, prepared, stored)?;
@@ -30,6 +33,7 @@ pub(super) fn construct(requests: &[Request]) -> Checked<UnqualifiedFamily> {
         members,
         selection,
         coverage,
+        history,
     })
 }
 fn store(

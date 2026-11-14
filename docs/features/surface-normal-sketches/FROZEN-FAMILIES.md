@@ -48,7 +48,8 @@ an unselected hole and disconnected material across one cylindrical turn.
 
 ## Remaining scope
 
-The result remains unqualified. Complete published history, cancellation and
+The result remains unqualified. The later [authored-history checkpoint](AUTHORED-HISTORY.md)
+binds complete private extrusion relations to its frozen keys. Cancellation and
 aggregate operation policy, replay in separate processes, concurrent-operation
 stress checks, and the final publication contract remain open. The detached
 export mutation control establishes that case only; it does not replace the
