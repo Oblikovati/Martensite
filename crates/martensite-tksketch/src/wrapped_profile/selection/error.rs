@@ -3,6 +3,7 @@ use super::*;
 #[derive(Debug)]
 pub(in super::super) enum SelectionFailure {
     Empty,
+    Cancelled,
     Material(Box<MaterialFailure>),
     Limit {
         role: &'static str,
@@ -42,6 +43,10 @@ impl std::fmt::Display for SelectionFailure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Material(cause) => write!(f, "periodic material: {cause}"),
+            Self::Cancelled => write!(
+                f,
+                "selection cancelled before preparation; expected complete selection evidence"
+            ),
             Self::Empty => write!(f, "regions=0; expected at least one selected region"),
             Self::Limit {
                 role,

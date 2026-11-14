@@ -17,14 +17,15 @@ on the same control. The callback and its state belong to the operation; no
 global or thread-local cancellation state was introduced. The control has a
 compile-time `Send` check.
 
-Selection forwards the callback into the existing periodic material checker,
-including its probe and winding work. Other existing certificate calls still
-use their current non-cancelling callbacks. Native construction, encoding,
-coverage, storage and member-check routines cannot yet be interrupted while
-running inside their outer stage. Cancellation is observed when they return;
-no latency bound is claimed. Propagating cancellation through those routines
-remains work before publication. No work budget, tolerance or geometric check
-was relaxed.
+Selection forwards the callback into fit planning, global within-boundary
+clearance, periodic boundary clearance and the material checker's probe and
+winding work. The proof-work checkpoint below records the added controls.
+Storage, cone and measure certificate calls still use their current
+non-cancelling callbacks. Planar capture, native construction, encoding,
+coverage, storage and member-check routines cannot yet be interrupted throughout
+their work. Cancellation is observed when their enclosing stage returns; no
+latency bound is claimed. Further propagation remains work before publication.
+No work budget, tolerance or geometric check was relaxed.
 
 ## Isolation evidence
 
@@ -63,3 +64,26 @@ policy and the final publication contract remain open, along with the recorded
 ThreadSanitizer startup failure, broader stress testing, general conical
 profiles, additional curve classes, glyph scale, oblique frames and replacement
 deletion. No public API, dependency, package version or release tag changed.
+
+## Planning and boundary proof checkpoint
+
+The same operation-local callback now reaches the existing bounded arithmetic
+inside a priori fit planning, the global within-boundary proof, periodic image
+planning, and each periodic image's curve-pair proof. Default entry points
+continue to delegate with a non-cancelling callback, preserving their existing
+geometry, limits and work policies. Pre-cancelled selection preparation returns
+its own typed cancellation before entering planar capture.
+
+Six additional controls cancel after arithmetic begins in planning and within
+clearance, at the transition to periodic work, and inside the final image of
+the two-turn helical fixture. The last case preserves image turn 2 and the nested
+arithmetic cancellation cause. The controls also cover pre-cancelled preparation
+and authored-owner attribution for a cancelled fit. Callback counts select test
+interruption points; they do not select geometry or become replay identity.
+
+The affected sketch package passed 140 library and 32 integration tests on
+Linux x86_64, taking 22.83 and 1.98 seconds excluding compilation. The ignored
+subprocess worker was explicitly run by its parent replay test. Strict
+all-target clippy passed. Existing default geometry, process replay, overlapping
+operations and refusal-isolation controls remained green. No dependency suite
+was rerun because dependency sources and build inputs were unchanged.

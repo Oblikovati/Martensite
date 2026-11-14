@@ -18,27 +18,39 @@ impl std::fmt::Display for PlanningFailure {
 }
 
 pub(super) fn prepare(request: &Request) -> Result<Request, PlanningFailure> {
+    prepare_with_cancel(request, || false)
+}
+pub(super) fn prepare_with_cancel(
+    request: &Request,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<Request, PlanningFailure> {
     let mut prepared = request.clone();
     prepared.loops = request
         .loops
         .iter()
-        .map(|contour| {
-            contour
-                .iter()
-                .map(|piece| prepare_curve(piece, request))
-                .collect::<Result<Vec<_>, _>>()
-                .map(|pieces| pieces.into_iter().flatten().collect())
-        })
+        .map(|contour| prepare_contour(contour, request, &mut cancelled))
         .collect::<Result<_, _>>()?;
     Ok(prepared)
+}
+fn prepare_contour(
+    contour: &[AuthoredPiece],
+    request: &Request,
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<Vec<AuthoredPiece>, PlanningFailure> {
+    contour
+        .iter()
+        .map(|piece| prepare_curve(piece, request, &mut *cancelled))
+        .collect::<Result<Vec<_>, _>>()
+        .map(|pieces| pieces.into_iter().flatten().collect())
 }
 
 fn prepare_curve(
     piece: &AuthoredPiece,
     request: &Request,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<Vec<AuthoredPiece>, PlanningFailure> {
     let query = planning_query(piece, request)?;
-    let plan = plan_cylindrical_charts(query, || false).map_err(|cause| PlanningFailure {
+    let plan = plan_cylindrical_charts(query, cancelled).map_err(|cause| PlanningFailure {
         curve: piece.span.curve,
         cause,
     })?;
@@ -140,4 +152,4 @@ fn split_poles(poles: &[[f64; 2]]) -> [Vec<[f64; 2]>; 2] {
 
 #[cfg(test)]
 #[path = "subdivision_tests.rs"]
-mod tests;
+pub(super) mod tests;

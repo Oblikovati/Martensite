@@ -18,6 +18,7 @@ mod tests;
 use crate::surface_sketch::{SurfaceCurveId, SurfaceRegionId, SurfaceVertexId};
 use martensite_tkbrep::topods::{Edge, Face, Shape};
 use martensite_tkernel::standard::Failure;
+type CancelPoll<'a> = dyn FnMut() -> bool + Send + 'a;
 
 #[derive(Clone)]
 struct AuthoredPiece {

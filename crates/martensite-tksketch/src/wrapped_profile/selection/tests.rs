@@ -236,3 +236,30 @@ fn selection_evidence_is_owned_send_and_sync() {
     check::<PreparedSelection>();
     check::<SelectionFailure>();
 }
+
+#[test]
+fn cancellation_before_selection_preparation_does_not_enter_capture() {
+    let mut malformed = request();
+    malformed.loops.clear();
+    assert!(matches!(
+        prepare_with_cancel(&[malformed], || true),
+        Err(SelectionFailure::Cancelled)
+    ));
+}
+#[test]
+fn a_selection_cancelled_in_fit_work_keeps_the_authored_owner_and_typed_cause() {
+    let original = request();
+    let mut polls = 0;
+    let result = prepare_with_cancel(&[original], || {
+        polls += 1;
+        polls >= 8
+    });
+    assert!(matches!(
+        result,
+        Err(SelectionFailure::Planning {
+            region: SurfaceRegionId(5),
+            ..
+        })
+    ));
+    assert_eq!(polls, 8);
+}

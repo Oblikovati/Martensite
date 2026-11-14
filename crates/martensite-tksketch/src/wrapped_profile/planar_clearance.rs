@@ -100,6 +100,13 @@ pub(super) fn certify_many(
     originals: &[Request],
     prepared: &[Request],
 ) -> Result<OriginalClearance, ClearanceFailure> {
+    certify_many_with_cancel(originals, prepared, || false)
+}
+pub(super) fn certify_many_with_cancel(
+    originals: &[Request],
+    prepared: &[Request],
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<OriginalClearance, ClearanceFailure> {
     let first = originals.first().ok_or(ClearanceFailure::EmptySelection)?;
     selection_binding(originals, prepared)?;
     let authored = authored_collection(originals)?;
@@ -110,14 +117,15 @@ pub(super) fn certify_many(
     let sources = sources(&spans, &authored)?;
     let excluded = excluded_pairs(prepared);
     let query = clearance_query(first, &sources, &excluded);
-    let certificate = certify_input(query, &spans)?;
-    complete_boundary(spans, certificate)
+    let certificate = certify_input(query, &spans, &mut cancelled)?;
+    complete_boundary(spans, certificate, &mut cancelled)
 }
 fn complete_boundary(
     spans: Vec<CurveSpan>,
     certificate: CertifiedCylindricalClearance,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<OriginalClearance, ClearanceFailure> {
-    let periodic = certify_periodic(&certificate, &spans)?;
+    let periodic = certify_periodic(&certificate, &spans, cancelled)?;
     Ok(OriginalClearance {
         spans,
         certificate,
@@ -189,9 +197,10 @@ fn authored_collection(
 fn certify_periodic(
     certificate: &CertifiedCylindricalClearance,
     spans: &[CurveSpan],
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<CertifiedCylindricalPeriodicClearance, ClearanceFailure> {
     certificate
-        .certify_periodic_clearance(16, || false)
+        .certify_periodic_clearance(16, cancelled)
         .map_err(|cause| ClearanceFailure::Certificate {
             spans: spans.to_vec(),
             cause: Box::new(cause),
@@ -224,8 +233,9 @@ fn clearance_query<'a>(
 fn certify_input(
     query: CylindricalClearanceQuery<'_>,
     spans: &[CurveSpan],
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<CertifiedCylindricalClearance, ClearanceFailure> {
-    certify_cylindrical_clearance(query, || false).map_err(|cause| ClearanceFailure::Certificate {
+    certify_cylindrical_clearance(query, cancelled).map_err(|cause| ClearanceFailure::Certificate {
         spans: spans.to_vec(),
         cause: Box::new(cause),
     })

@@ -17,7 +17,6 @@ pub(in super::super) struct Checkpoint {
     pub stage: FamilyStage,
     pub region: Option<SurfaceRegionId>,
 }
-pub(super) type Poll<'a> = dyn FnMut() -> bool + Send + 'a;
 pub(super) struct Control<'a> {
     cancelled: &'a mut (dyn FnMut(Checkpoint) -> bool + Send),
     cancelled_at: Option<Checkpoint>,
@@ -33,7 +32,7 @@ impl<'a> Control<'a> {
         &mut self,
         stage: FamilyStage,
         region: Option<SurfaceRegionId>,
-        operation: impl FnOnce(&mut Poll<'_>) -> Checked<T>,
+        operation: impl FnOnce(&mut CancelPoll<'_>) -> Checked<T>,
     ) -> Checked<T> {
         self.ensure_active()?;
         let point = Checkpoint { stage, region };
@@ -61,7 +60,7 @@ impl<'a> Control<'a> {
     }
 }
 
-fn check_cancellation(point: Checkpoint, poll: &mut Poll<'_>) -> Checked<()> {
+fn check_cancellation(point: Checkpoint, poll: &mut CancelPoll<'_>) -> Checked<()> {
     if poll() {
         return Err(FamilyFailure::Cancelled(point));
     }

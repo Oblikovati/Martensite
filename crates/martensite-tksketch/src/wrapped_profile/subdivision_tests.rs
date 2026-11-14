@@ -109,7 +109,7 @@ fn helical_material_spans_two_turns_with_two_certified_images_and_a_tail() {
     );
 }
 
-fn helical_request() -> Request {
+pub(in super::super) fn helical_request() -> Request {
     let mut input = near_full_request(0., 14.);
     input.tolerance = 1e-2;
     input.loops = vec![super::super::tests::contour(
@@ -122,4 +122,25 @@ fn helical_request() -> Request {
         ],
     )];
     input
+}
+
+#[test]
+fn fit_planning_observes_cancellation_after_arithmetic_has_started() {
+    use martensite_tkmath::predicates::roots::metric_bounds::{
+        BoundedArithmeticFailure, CylindricalProfileFailure,
+    };
+    let original = super::super::tests::request();
+    let before = original.loops[0][0].poles.clone();
+    let mut polls = 0;
+    let error = prepare_with_cancel(&original, || {
+        polls += 1;
+        polls >= 8
+    })
+    .err()
+    .unwrap();
+    assert_eq!(polls, 8);
+    assert_eq!(error.curve, SurfaceCurveId(10));
+    assert!(matches!(error.cause.cause,
+        CylindricalProfileFailure::Arithmetic(cause) if *cause == BoundedArithmeticFailure::Cancelled));
+    assert_eq!(original.loops[0][0].poles, before);
 }

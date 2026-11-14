@@ -37,35 +37,52 @@ pub(super) fn certify_with_cancel(
     options: MaterialOptions,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<QualifiedSelection, SelectionFailure> {
-    if cancelled() {
-        return Err(SelectionFailure::Material(Box::new(
-            MaterialFailure::Cancelled,
-        )));
-    }
-    let prepared = prepare(requests)?;
+    let prepared = prepare_with_cancel(requests, &mut cancelled)?;
     let material = material::certify_with_cancel(requests, &prepared, options, &mut cancelled)
         .map_err(|cause| SelectionFailure::Material(Box::new(cause)))?;
     Ok(QualifiedSelection { prepared, material })
 }
 
 pub(super) fn prepare(requests: &[Request]) -> Result<PreparedSelection, SelectionFailure> {
+    prepare_with_cancel(requests, || false)
+}
+pub(super) fn prepare_with_cancel(
+    requests: &[Request],
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<PreparedSelection, SelectionFailure> {
+    if cancelled() {
+        return Err(SelectionFailure::Cancelled);
+    }
     let planar = qualify(requests)?;
     let prepared = requests
         .iter()
-        .map(prepare_region)
+        .map(|request| prepare_region(request, &mut cancelled))
         .collect::<Result<Vec<_>, _>>()?;
-    let boundary_clearance = planar_clearance::certify_many(requests, &prepared)
-        .map_err(|cause| SelectionFailure::Clearance(Box::new(cause)))?;
+    let boundary_clearance = prepare_boundary(requests, &prepared, &mut cancelled)?;
     Ok(PreparedSelection {
         planar,
         prepared,
         boundary_clearance,
     })
 }
-fn prepare_region(request: &Request) -> Result<Request, SelectionFailure> {
-    subdivision::prepare(request).map_err(|cause| SelectionFailure::Planning {
-        region: request.region,
-        cause: Box::new(cause),
+fn prepare_boundary(
+    originals: &[Request],
+    prepared: &[Request],
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<planar_clearance::OriginalClearance, SelectionFailure> {
+    planar_clearance::certify_many_with_cancel(originals, prepared, cancelled)
+        .map_err(|cause| SelectionFailure::Clearance(Box::new(cause)))
+}
+
+fn prepare_region(
+    request: &Request,
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<Request, SelectionFailure> {
+    subdivision::prepare_with_cancel(request, cancelled).map_err(|cause| {
+        SelectionFailure::Planning {
+            region: request.region,
+            cause: Box::new(cause),
+        }
     })
 }
 
