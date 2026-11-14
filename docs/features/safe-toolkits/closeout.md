@@ -185,3 +185,11 @@ passed all four platforms and published the three source crates and checksums in
 [v0.3.2](https://github.com/Oblikovati/Martensite/releases/tag/v0.3.2).
 No experimental performance exception was part of that approval. The humanizer skill was unavailable; its
 prose pass is left to maintainer review.
+
+## Dependency maintenance
+
+The [rustix/xattr update record](../dependency-audit/rustix-445.md) documents
+RUSTSEC-2026-0486 and the paired dependency update needed to preserve large
+extended attributes (#445). The native-wrapper feature flags and libc backend
+remain unchanged. Dependency audit success does not establish removal of
+unsafe code from the established dependencies.
