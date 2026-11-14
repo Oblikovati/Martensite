@@ -21,13 +21,21 @@ pub(in super::super) fn certify_flux(
     bindings: &[(BindingKey, Shape)],
     proofs: &[StoredProof],
 ) -> Result<CertifiedCylindricalFlux, StorageFailure> {
-    let indexed = index(bindings)?;
-    capture::caps(prepared, &indexed)?;
-    let parts = capture_spans(prepared, &indexed, proofs)?;
+    let parts = capture_parts(prepared, bindings, proofs)?;
     let spans: Vec<_> = parts.iter().map(FluxSpan::borrowed).collect();
     let query = flux_query(&spans, prepared);
     certify_cylindrical_boundary_flux(query, || false)
         .map_err(|cause| scalar_failure(original.region, cause))
+}
+
+pub(super) fn capture_parts(
+    prepared: &Request,
+    bindings: &[(BindingKey, Shape)],
+    proofs: &[StoredProof],
+) -> Result<Vec<FluxSpan>, StorageFailure> {
+    let indexed = index(bindings)?;
+    capture::caps(prepared, &indexed)?;
+    capture_spans(prepared, &indexed, proofs)
 }
 
 pub(super) fn flux_query<'a>(

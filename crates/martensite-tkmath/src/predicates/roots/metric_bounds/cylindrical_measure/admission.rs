@@ -15,7 +15,7 @@ pub(super) fn admit(query: CylindricalMeasureQuery<'_>) -> Checked<()> {
     }
     Ok(())
 }
-fn admit_policy(p: CylindricalMeasureOptions) -> Checked<()> {
+pub(super) fn admit_policy(p: CylindricalMeasureOptions) -> Checked<()> {
     if p.behavior_version != 1
         || !(8..=4096).contains(&p.fractional_bits)
         || p.max_operations > 1_000_000
@@ -26,7 +26,7 @@ fn admit_policy(p: CylindricalMeasureOptions) -> Checked<()> {
     Ok(())
 }
 
-fn admit_limit(limit: CylindricalMeasureLimit) -> Checked<()> {
+pub(super) fn admit_limit(limit: CylindricalMeasureLimit) -> Checked<()> {
     if let CylindricalMeasureLimit::Refuse(cap) = limit
         && (!cap.is_finite() || cap < 0.)
     {
