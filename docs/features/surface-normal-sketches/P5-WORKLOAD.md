@@ -245,3 +245,27 @@ persistent text/body replay, composed Boolean history or application layout.
 Runtime-only peak memory and a controlled P4 comparison remain required. The
 remaining fresh global source checks still need investigation before claiming
 that the scale cost is acceptable.
+
+
+## Runtime-only full-text measurement
+
+The same built toolkit binary ran only
+`wrapped_text_regions::wrapped::owned_multiline_text_wraps_all_selected_material`
+with one test thread and without Cargo or compilation. It passed in 378.98
+seconds elapsed, using 378.86 seconds user CPU, 0.08 seconds system CPU and
+194,204 KiB peak RSS (about 190 MiB). The binary hash is the one recorded above;
+its feature source and fixture correspond to `daaf5a60`. Subsequent documentation
+and main forward-merge changes did not change production source.
+
+The runtime-only log is `target/qualification/p5-full-text-runtime-only.log`,
+SHA-256 `f0556410be22fcdfa61b244cf24ba9b770ab35d3f39d16caba74072033c0f573`.
+This distinguishes modelling memory from the earlier compile-inclusive peak.
+Other validation work was still active. It is one successful measurement, not
+an approved budget, an isolated benchmark campaign or evidence of performance
+parity with an earlier release.
+
+The next cost investigation preserves fresh live-geometry validation and first
+checks whether existing bulk APIs can copy Bézier state coherently under one
+read guard. A snapshot-based replacement would also need a kernel ownership and
+behavior decision; a cached validity flag under a borrowed native handle is
+not sufficient. No such replacement has been implemented or approved here.
