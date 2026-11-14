@@ -20,10 +20,11 @@ compile-time `Send` check.
 Selection forwards the callback into fit planning, global within-boundary
 clearance, periodic boundary clearance and the material checker's probe and
 winding work. The proof-work checkpoint below records the added controls.
-Storage, cone and measure certificate calls still use their current
+Retained-storage, O2 profile and both cap-residual proofs now receive that
+callback as well. Cone and measure certificate calls still use their current
 non-cancelling callbacks. Planar capture, native construction, encoding,
-coverage, storage and member-check routines cannot yet be interrupted throughout
-their work. Cancellation is observed when their enclosing stage returns; no
+coverage, native trim inspection and member-check routines cannot yet be
+interrupted throughout their work. Cancellation is observed when their enclosing stage returns; no
 latency bound is claimed. Further propagation remains work before publication.
 No work budget, tolerance or geometric check was relaxed.
 
@@ -87,3 +88,33 @@ subprocess worker was explicitly run by its parent replay test. Strict
 all-target clippy passed. Existing default geometry, process replay, overlapping
 operations and refusal-isolation controls remained green. No dependency suite
 was rerun because dependency sources and build inputs were unchanged.
+
+## Retained-storage proof checkpoint
+
+The family forwards its callback through member storage to O3 storage arithmetic,
+O2 profile certification and both cap-residual certificates. One callback covers
+all spans in that member; a cancellation after earlier span proofs completed
+still returns only failure. The latched family control refuses the enclosing
+operation with its authored region and storage stage. Existing non-cancelling
+entry points retain the same geometry, error limits and arithmetic policies.
+
+Five focused controls interrupt storage arithmetic, profile arithmetic after
+storage completes, the first cap, the last cap and a later span. They check the
+original source key, profile limit or cap-face role where applicable. Every
+case re-encodes the decoded native geometry and compares it byte for byte with
+the pre-operation encoding. A sixth control reaches storage arithmetic through
+the family entry point and checks all request fields remain unchanged.
+
+The O2 query construction moved into `storage_profile.rs` so source binding and
+policy diagnostics stay together. The error share remains the downward-rounded
+`epsilon/4`; storage uses the unchanged downward-rounded `epsilon/1000` share.
+Native capture, incidence, depth and trim checks retain their original order.
+No tolerance was widened and no numerical algorithm changed.
+
+On Linux x86_64, the affected sketch package passed 146 library tests and 32
+integration tests in 22.80 and 1.99 seconds excluding compilation. The ignored
+subprocess worker was explicitly executed by its parent replay control. Strict
+all-target clippy passed. The approximate scan found no new function over 20
+lines, file over 500 lines or nesting above two. The full affected-package PR
+gate remains required before a push. Cone, measure and native cancellation,
+aggregate operation policy, sanitizer qualification and publication remain open.

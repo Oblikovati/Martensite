@@ -191,7 +191,7 @@ fn tiny_nonzero_span_is_certified_after_native_weight_demotion() {
         level: 0,
         index: 0,
     };
-    let proof = prove_profile(&request(), span, &retained, &authored).unwrap();
+    let proof = prove_profile(&request(), span, &retained, &authored, &mut || false).unwrap();
     assert!(proof.developed_position_bound() <= request().tolerance / 4.);
 }
 

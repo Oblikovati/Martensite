@@ -8,11 +8,17 @@ mod capture;
 mod flux;
 #[path = "storage_incidence.rs"]
 mod incidence;
+#[path = "storage_profile.rs"]
+mod profile;
 #[cfg(test)]
 #[path = "storage_tests.rs"]
 pub(super) mod tests;
 #[path = "storage_trims.rs"]
 mod trims;
+use profile::prove_profile;
+#[cfg(test)]
+#[path = "storage_cancellation_tests.rs"]
+mod cancellation_tests;
 use super::*;
 use crate::surface_sketch::HistoryRole;
 pub(super) use flux::certify_flux;
@@ -143,6 +149,14 @@ pub(super) fn certify(
     request: &Request,
     bindings: &[(BindingKey, Shape)],
 ) -> Result<Vec<StoredProof>, StorageFailure> {
+    certify_with_cancel(original, request, bindings, || false)
+}
+pub(super) fn certify_with_cancel(
+    original: &Request,
+    request: &Request,
+    bindings: &[(BindingKey, Shape)],
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<Vec<StoredProof>, StorageFailure> {
     let indexed = index(bindings)?;
     capture::caps(request, &indexed)?;
     let authored = authored_index(original)?;
@@ -150,7 +164,7 @@ pub(super) fn certify(
         .loops
         .iter()
         .flatten()
-        .map(|piece| certify_span(request, piece, &indexed, &authored))
+        .map(|piece| certify_span(request, piece, &indexed, &authored, &mut cancelled))
         .collect()
 }
 
@@ -169,24 +183,36 @@ fn certify_span(
     piece: &AuthoredPiece,
     bindings: &Bindings<'_>,
     authored: &BTreeMap<SurfaceCurveId, &[[f64; 2]]>,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<StoredProof, StorageFailure> {
     let span = piece.span;
     let first_key = key(span, HistoryRole::FirstDepthEdge);
     let [a, b] = captured_span(piece, bindings)?;
-    let certificate = prove_captured(request, first_key, [&a, &b])?;
+    let certificate = prove_captured(request, first_key, [&a, &b], &mut *cancelled)?;
     let depths = prove_depths(request, first_key, &certificate)?;
-    let source = authored
-        .get(&span.curve)
-        .copied()
-        .ok_or_else(|| mismatch(first_key, "authored curve membership", vec![0], vec![1]))?;
-    let profile = prove_profile(request, span, &a, source)?;
-    let trims = trims::certify(request, piece, [&a, &b], bindings)?;
+    let source = source_for_span(authored, span)?;
+    let profile = prove_profile(request, span, &a, source, &mut *cancelled)?;
+    let trims = trims::certify(request, piece, [&a, &b], bindings, cancelled)?;
     Ok(StoredProof {
         span,
         certificate,
         profile,
         depths,
         trims,
+    })
+}
+
+fn source_for_span<'a>(
+    authored: &BTreeMap<SurfaceCurveId, &'a [[f64; 2]]>,
+    span: CurveSpan,
+) -> Result<&'a [[f64; 2]], StorageFailure> {
+    authored.get(&span.curve).copied().ok_or_else(|| {
+        mismatch(
+            key(span, HistoryRole::FirstDepthEdge),
+            "authored curve membership",
+            vec![0],
+            vec![1],
+        )
     })
 }
 
@@ -205,6 +231,7 @@ fn prove_captured(
     request: &Request,
     key: BindingKey,
     curves: [&OwnedCurve; 2],
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<CertifiedCylindricalStorage, StorageFailure> {
     let query = CylindricalStorageQuery {
         curves: curves.map(OwnedCurve::borrowed),
@@ -212,7 +239,7 @@ fn prove_captured(
         limits: CylindricalStorageLimits::uniform(storage_share(request.tolerance)),
         options: Default::default(),
     };
-    certify_cylindrical_storage(query, || false).map_err(|cause| StorageFailure {
+    certify_cylindrical_storage(query, cancelled).map_err(|cause| StorageFailure {
         key,
         cause: StorageCause::Certificate(Box::new(cause)),
     })
@@ -281,39 +308,6 @@ pub(super) fn authored_index(
         }
     }
     Ok(result)
-}
-
-fn prove_profile(
-    request: &Request,
-    span: CurveSpan,
-    curve: &OwnedCurve,
-    authored: &[[f64; 2]],
-) -> Result<CertifiedCylindricalProfile, StorageFailure> {
-    let limit = (request.tolerance / 4.).next_down().max(0.);
-    let wrap = |cause| StorageFailure {
-        key: key(span, HistoryRole::FirstDepthEdge),
-        cause: StorageCause::Profile(Box::new(cause)),
-    };
-    let options = Default::default();
-    let interval =
-        CylindricalProfileInterval::new(u64::from(span.index), span.level).map_err(|cause| {
-            wrap(CylindricalProfileError {
-                requested_options: options,
-                requested_spatial_limit: limit,
-                cause,
-            })
-        })?;
-    let query = CylindricalProfileQuery {
-        authored,
-        stored: curve.borrowed(),
-        interval,
-        support_radius: request.radius,
-        stored_radius: request.radius + request.depths[0],
-        angular_origin: 0.,
-        spatial_limit: limit,
-        options,
-    };
-    certify_cylindrical_profile(query, || false).map_err(wrap)
 }
 
 fn prove_depths(

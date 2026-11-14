@@ -95,8 +95,8 @@ fn store_with_control(
     let mut stored = BTreeMap::new();
     for view in views {
         let (original, retained) = member_sources(originals, prepared, view.region)?;
-        let member = control.run(FamilyStage::Storage, Some(view.region), |_| {
-            pipeline::store_member(original, retained, view.shape, view.bindings)
+        let member = control.run(FamilyStage::Storage, Some(view.region), |poll| {
+            pipeline::store_member_with_cancel(original, retained, view.shape, view.bindings, poll)
                 .map_err(|cause| FamilyFailure::Member(Box::new(cause)))
         })?;
         stored.insert(view.region, member);

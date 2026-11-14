@@ -80,8 +80,17 @@ pub(super) fn store_member(
     shape: Shape,
     bindings: Vec<(BindingKey, Shape)>,
 ) -> Result<StoredMember, Refusal> {
+    store_member_with_cancel(original, prepared, shape, bindings, || false)
+}
+pub(super) fn store_member_with_cancel(
+    original: &Request,
+    prepared: &Request,
+    shape: Shape,
+    bindings: Vec<(BindingKey, Shape)>,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<StoredMember, Refusal> {
     let coverage = coverage_stage(prepared, &shape, &bindings)?;
-    let storage = storage_stage(original.region, original, prepared, &bindings)?;
+    let storage = storage_stage(original, prepared, &bindings, &mut cancelled)?;
     Ok(StoredMember {
         shape,
         bindings,
@@ -238,14 +247,14 @@ fn planning_stage(request: &Request) -> Result<Request, Refusal> {
 }
 
 fn storage_stage(
-    region: SurfaceRegionId,
     original: &Request,
     request: &Request,
     bindings: &[(BindingKey, Shape)],
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<Vec<storage::StoredProof>, Refusal> {
-    storage::certify(original, request, bindings).map_err(|cause| Refusal {
+    storage::certify_with_cancel(original, request, bindings, cancelled).map_err(|cause| Refusal {
         stage: Stage::Storage,
-        region,
+        region: original.region,
         cause: RefusalCause::Storage(Box::new(cause)),
     })
 }

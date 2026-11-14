@@ -179,3 +179,23 @@ fn check_refusal(inputs: &[Request]) {
     ));
     assert_eq!(snapshot(&invalid), before);
 }
+
+#[test]
+fn family_cancellation_reaches_retained_storage_arithmetic() {
+    let inputs = requests();
+    let before = snapshot(&inputs);
+    let target = Checkpoint {
+        stage: FamilyStage::Storage,
+        region: Some(SurfaceRegionId(5)),
+    };
+    let mut polls = 0;
+    let result = construct_with_cancel(&inputs, |point| {
+        if point == target {
+            polls += 1;
+        }
+        point == target && polls >= 8
+    });
+    assert_cancelled(result, target);
+    assert_eq!(polls, 8);
+    assert_eq!(snapshot(&inputs), before);
+}

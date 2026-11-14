@@ -23,8 +23,9 @@ pub(super) fn certify(
     piece: &AuthoredPiece,
     curves: [&OwnedCurve; 2],
     bindings: &Bindings<'_>,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<TrimEvidence, StorageFailure> {
-    let caps = cap_residuals::certify(request, piece, curves, bindings)?;
+    let caps = cap_residuals::certify(request, piece, curves, bindings, cancelled)?;
     let (side_pcurves, side_tolerance) = side_trims(request, piece, bindings)?;
     let maximum_tolerance = caps.maximum_tolerance.max(side_tolerance);
     Ok(TrimEvidence {
