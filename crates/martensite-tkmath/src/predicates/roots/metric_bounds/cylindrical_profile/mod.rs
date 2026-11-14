@@ -2,6 +2,8 @@
 //! Bound authored-profile discrepancy using retained coefficients, without an atan evaluator.
 mod admission;
 mod algebra;
+mod chart_planning;
+mod chart_types;
 mod error;
 mod planning;
 #[cfg(test)]
@@ -17,6 +19,8 @@ use crate::predicates::roots::certificate_arithmetic::{
     bernstein_bounds as polynomial,
     bounded_dyadic::{Arithmetic, ArithmeticPolicy, Interval},
 };
+pub use chart_planning::plan_cylindrical_charts;
+pub use chart_types::{CylindricalChartPlan, CylindricalFitChart};
 use error::Checked;
 pub use error::{CylindricalProfileError, CylindricalProfileFailure};
 pub use planning::plan_cylindrical_fit;

@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added deterministic cylindrical multi-chart Hermite planning from original polynomial bounds under one work allowance, enabling private wrapped profiles across the cylinder parameter seam (#418).
+
 - Added outward true-circumference slab certificates for all nonzero cylindrical periodic images, bound to original profile sources with explicit incomplete results for wider selections (#418).
 
 - Added certified developed-profile clearance with bounding-hierarchy pruning, cached dyadic refinement, exact-parameter witnesses and later binding to retained cylindrical profile certificates (#418).

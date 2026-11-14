@@ -3,7 +3,8 @@
 Status, 2026-11-14: authored material capture, local derivative cones and
 nonadjacent developed-plane clearance are integrated into the private pipeline.
 A certified true-period slab now covers every nonzero image for narrow
-selections. Wider periodic classification and publication remain open. The
+selections, and multiple-chart fitting supports long curves and parameter-seam
+crossings. Wider periodic classification and publication remain open. The
 operation still returns `Unqualified`.
 
 ## Implemented material capture
@@ -230,8 +231,8 @@ split and retains five curve nodes, confirming reuse across opposing pairs.
 The developed-plane homotopy now has source nesting, shared endpoint agreement,
 positive piece/join margins and nonadjacent clearance for this fixture. Before
 publication, cylinder periodic images must also be separated under a certified
-period bound. The prototype's angular admission restriction remains in force;
-this checkpoint does not establish the full-wrap or general-cone cases.
+period bound. The later slab and multiple-chart checkpoints below determine current periodic
+admission. General periodic classification and general-cone cases remain open.
 
 ## Clearance verification checkpoint
 
@@ -247,8 +248,8 @@ preconstruction clearance and its later O2 binding. The five-second limit is
 unchanged. The approximate metrics script found no clearance or wrapped-profile
 file over 500 lines, function over 20 code lines or nesting above two.
 
-Next, certify the true cylindrical period and cover every relevant translated
-image before relaxing angular admission. Boundary separation alone does not
+The periodic slab checkpoint below covers every image for narrow selections.
+General image relations remain open for wider sources. Boundary separation alone does not
 classify periodic material for disconnected selections: a small translated
 component can lie strictly inside a larger selected component without touching
 its boundary. P4 must prove material disjointness as well, reusing planar nesting
@@ -276,9 +277,9 @@ arithmetic cost remain separate measurements.
 This additional proof uses a fresh finite arithmetic allowance from the original
 policy. Exhaustion, cancellation and insufficient precision return incomplete
 evidence. A slab wider than the permitted bound also returns incomplete evidence;
-it does not prove material overlap. The current angular admission remains in
-place. General image relations, periodic containment classification and a priori
-multiple-chart fitting are still required for wider selections.
+it does not prove material overlap. The multiple-chart checkpoint below removes the initial angular admission
+restriction. General image relations and periodic containment classification
+are still required for wider selections.
 
 Controls distinguish binary64 `TAU` from the true circumference, restrict the
 original source interval, preserve a large chart translation, refuse the
@@ -296,3 +297,54 @@ loop-with-hole fixture took 3.51 seconds with peak RSS 51,940 KiB, within the
 unchanged five-second limit. These individual timings do not establish a
 performance improvement. The approximate style scan found all inspected files
 under 500 lines, functions at most 20 code lines and nesting at most two.
+
+
+## Multiple-chart fitting checkpoint
+
+`plan_cylindrical_charts` uses the original angular polynomial to bound speed
+with respect to its declared source interval. It chooses a uniform dyadic chart
+level `L` such that `max|θ′| / 2^L <= 1`. The mean-value bound then limits every
+chart's angular variation to one radian. Each chart receives an outward midpoint
+center from its exact original control hull and the existing fourth-derivative
+Hermite sizing calculation. This is a priori geometry selection; conformance
+proof results never trigger a different fit.
+
+Chart selection and every local fit share one finite 256-bit arithmetic
+allowance. The requested geometric level includes both chart and fit
+subdivisions. Exhausting either allowance refuses the complete plan. The result
+records total work separately from each local fit's work. Original intervals
+remain exact, including when the requested source was already a dyadic
+subinterval. Increasing the work allowance leaves selected geometry unchanged.
+
+Native preparation splits source controls along those canonical intervals,
+keeps split-corner ancestry, assigns the chart center and performs the local fit
+subdivisions. Every retained O2 proof still compares with the original authored
+polynomial at the complete chart-plus-fit interval. The existing mixed fixture
+keeps its 19 pieces and their subdivision levels. A single-chart control also
+keeps the earlier center, ideal bound and local work receipt.
+
+The private pipeline admits finite angular coordinates in place of the initial
+`|s/R| <= 1.5` restriction. Required ordinary and periodic certificates still run
+before native construction. Six-radian rectangles at angular intervals `[0, 6]`
+and `[6, 12]` exercise long curves and the parameter seam. Their independent ideal
+volume is `6 * (1.2² - 0.9²) / 2 = 1.89`; the native volume estimate is checked
+within the unchanged requested `1e-3` tolerance. A 6.4-radian selection refuses
+at the clearance stage because the slab cannot establish periodic separation.
+This refusal remains incomplete evidence, not an overlap classification.
+
+Planner controls cover a long line, an exact source subinterval, original cubic
+chart centers, single-chart preservation, work exhaustion, cancellation and
+unchanged geometry under a larger work allowance. Wider profiles that can remain
+valid despite overlapping enclosing slabs still need the general periodic
+boundary and material proof. Publication remains disabled.
+
+
+Verification passed the two package suites (488 math library tests before the
+last two controls, 3,114 math integration tests, 56 math doctests, 42 sketch
+library tests and 32 sketch integration tests). The final math library run
+passed all 490 tests, including all eight chart-planning controls. The five
+native subdivision controls passed again after the final helper extraction.
+Strict all-target clippy passed for both packages. The isolated original debug
+fixture took 3.36 seconds with peak RSS 51,632 KiB; the five-second limit remains
+unchanged. The approximate style scan found no inspected file over 500 lines,
+function over 20 code lines or nesting above two. No version was changed.

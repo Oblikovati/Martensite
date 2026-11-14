@@ -291,10 +291,10 @@ fn admit_piece(piece: &AuthoredPiece, radius: f64) -> Result<(), Failure> {
         && piece
             .poles
             .iter()
-            .all(|[s, z]| s.is_finite() && z.is_finite() && (s / radius).abs() <= 1.5);
+            .all(|[s, z]| s.is_finite() && z.is_finite() && (s / radius).is_finite());
     if !valid {
         return Err(Failure::new(&format!(
-            "curve {:?} has poles {:?}; expected 2..=4 finite poles inside |s/radius| <= 1.5 chart",
+            "curve {:?} has poles {:?}; expected 2..=4 finite poles with finite s/radius",
             piece.span.curve, piece.poles
         )));
     }

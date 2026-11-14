@@ -65,6 +65,13 @@ pub enum CylindricalProfileFailure {
         /// Requested positive reference radius.
         radius: f64,
     },
+    /// The chart variation bound needs more subdivisions than the geometric budget.
+    FitChartLevel {
+        /// Original additional subdivision maximum.
+        maximum: u8,
+        /// Conservative angular variation remaining at that level.
+        angular_variation_upper: f64,
+    },
     /// The requested fit could not meet its ideal-error share within the geometric level cap.
     FitLevel {
         /// Maximum admitted geometric subdivision level.

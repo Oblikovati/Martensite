@@ -147,8 +147,10 @@ Certified hierarchy pruning and cached dyadic covers now establish all 152
 nonadjacent clearances before wrapped native construction. Their original
 source/interval/chart records bind back to retained O2 proofs. An outward
 true-circumference slab proof now excludes all nonzero periodic images when the
-whole source width leaves the required clearance. Wider periodic classification
-and multiple-chart fitting remain open.
+whole source width leaves the required clearance. A priori multiple-chart
+fitting now covers long curves and parameter-seam crossings while preserving
+original intervals and split-corner ancestry. Wider periodic classification
+remains open.
 
 ## Remaining gates
 

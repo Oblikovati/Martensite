@@ -2,7 +2,8 @@
 use super::*;
 
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CylindricalFitQuery, CylindricalProfileError, CylindricalProfileInterval, plan_cylindrical_fit,
+    CylindricalFitChart, CylindricalFitQuery, CylindricalProfileError, CylindricalProfileInterval,
+    plan_cylindrical_charts,
 };
 
 #[derive(Debug)]
@@ -37,17 +38,34 @@ fn prepare_curve(
     request: &Request,
 ) -> Result<Vec<AuthoredPiece>, PlanningFailure> {
     let query = planning_query(piece, request)?;
-    let plan = plan_cylindrical_fit(query, || false).map_err(|cause| PlanningFailure {
+    let plan = plan_cylindrical_charts(query, || false).map_err(|cause| PlanningFailure {
         curve: piece.span.curve,
         cause,
     })?;
+    Ok(plan
+        .charts()
+        .iter()
+        .flat_map(|chart| prepare_chart(piece, chart))
+        .collect())
+}
+
+fn prepare_chart(piece: &AuthoredPiece, chart: &CylindricalFitChart) -> Vec<AuthoredPiece> {
     let mut source = piece.clone();
-    source.chart_center = plan.chart_center();
+    let interval = chart.interval();
+    for bit in (0..interval.level() - piece.span.level).rev() {
+        let [left, right] = split_piece(&source);
+        source = if interval.index() >> bit & 1 == 0 {
+            left
+        } else {
+            right
+        };
+    }
+    source.chart_center = chart.fit_plan().chart_center();
     let mut pieces = vec![source];
-    for _ in 0..plan.subdivision_level() {
+    for _ in 0..chart.fit_plan().subdivision_level() {
         pieces = pieces.iter().flat_map(split_piece).collect();
     }
-    Ok(pieces)
+    pieces
 }
 
 fn planning_query<'a>(
@@ -119,3 +137,7 @@ fn split_poles(poles: &[[f64; 2]]) -> [Vec<[f64; 2]>; 2] {
     right.reverse();
     [left, right]
 }
+
+#[cfg(test)]
+#[path = "subdivision_tests.rs"]
+mod tests;
