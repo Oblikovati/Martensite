@@ -9,6 +9,11 @@ pub(super) struct Registry<'a> {
 impl<'a> Registry<'a> {
     pub fn build(request: &Request, bindings: &'a [(BindingKey, Shape)]) -> Checked<Self> {
         let owner = expected::region(request, HistoryRole::Solid);
+        let result = Self::register(bindings)?;
+        result.validate(request, owner)?;
+        Ok(result)
+    }
+    fn register(bindings: &'a [(BindingKey, Shape)]) -> Checked<Self> {
         let mut result = Self {
             by_key: BTreeMap::new(),
             shapes: IndexedMapOfShape::default(),
@@ -17,11 +22,23 @@ impl<'a> Registry<'a> {
         for (key, shape) in bindings {
             result.insert(*key, shape)?;
         }
-        result.validate(request, owner)?;
+        Ok(result)
+    }
+    pub fn build_many(requests: &[Request], bindings: &'a [(BindingKey, Shape)]) -> Checked<Self> {
+        let result = Self::register(bindings)?;
+        let definitions = family_definitions(requests)?;
+        result.validate_definitions(CoverageOwner::Family, &definitions)?;
         Ok(result)
     }
     fn validate(&self, request: &Request, owner: BindingKey) -> Checked<()> {
         let definitions = expected::definitions(request)?;
+        self.validate_definitions(owner.into(), &definitions)
+    }
+    fn validate_definitions(
+        &self,
+        owner: CoverageOwner,
+        definitions: &BTreeMap<BindingKey, ShapeEnum>,
+    ) -> Checked<()> {
         count(
             owner,
             "semantic bindings",
@@ -29,7 +46,7 @@ impl<'a> Registry<'a> {
             definitions.len(),
         )?;
         for (key, kind) in definitions {
-            kind_check(key, self.shape(key)?, kind)?;
+            kind_check(*key, self.shape(*key)?, *kind)?;
         }
         Ok(())
     }
@@ -62,7 +79,11 @@ impl<'a> Registry<'a> {
             .copied()
             .ok_or_else(|| fail(key, CoverageCause::MissingBinding(key)))
     }
-    pub fn resolve(&self, owner: BindingKey, shape: &Shape) -> Checked<BindingKey> {
+    pub fn resolve(
+        &self,
+        owner: impl Into<CoverageOwner> + Copy,
+        shape: &Shape,
+    ) -> Checked<BindingKey> {
         let index = self.shapes.find_index(shape);
         self.owners
             .get(index.wrapping_sub(1))
@@ -85,7 +106,36 @@ impl<'a> Registry<'a> {
         self.by_key.len()
     }
 }
-pub(super) fn canonical(owner: BindingKey, shape: &Shape) -> Checked<()> {
+fn family_definitions(requests: &[Request]) -> Checked<BTreeMap<BindingKey, ShapeEnum>> {
+    let mut result = BTreeMap::new();
+    for request in requests {
+        extend_definitions(&mut result, expected::definitions(request)?)?;
+    }
+    Ok(result)
+}
+
+fn extend_definitions(
+    target: &mut BTreeMap<BindingKey, ShapeEnum>,
+    definitions: BTreeMap<BindingKey, ShapeEnum>,
+) -> Checked<()> {
+    for (key, kind) in definitions {
+        if target.insert(key, kind).is_some() {
+            return Err(duplicate_definition(key));
+        }
+    }
+    Ok(())
+}
+fn duplicate_definition(key: BindingKey) -> CoverageFailure {
+    fail(
+        key,
+        CoverageCause::DuplicateBinding {
+            key,
+            role: "declared family",
+        },
+    )
+}
+
+pub(super) fn canonical(owner: impl Into<CoverageOwner> + Copy, shape: &Shape) -> Checked<()> {
     if shape.orientation() != Orientation::Forward || !shape.location().is_identity() {
         return Err(fail(
             owner,
@@ -97,7 +147,11 @@ pub(super) fn canonical(owner: BindingKey, shape: &Shape) -> Checked<()> {
     }
     Ok(())
 }
-pub(super) fn kind_check(owner: BindingKey, shape: &Shape, expected: ShapeEnum) -> Checked<()> {
+pub(super) fn kind_check(
+    owner: impl Into<CoverageOwner> + Copy,
+    shape: &Shape,
+    expected: ShapeEnum,
+) -> Checked<()> {
     let actual = native(owner, shape.shape_type())?;
     if actual != expected {
         return Err(fail(owner, CoverageCause::Kind { actual, expected }));

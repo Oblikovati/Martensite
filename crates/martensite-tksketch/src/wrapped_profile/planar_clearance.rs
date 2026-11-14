@@ -1,7 +1,10 @@
 //! Certify every nonadjacent authored pair before native construction, then bind retained O2 sources.
 use super::*;
+#[path = "planar_clearance_family.rs"]
+mod family;
 #[path = "planar_intervals.rs"]
 mod intervals;
+pub(super) use family::bind_many;
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedCylindricalClearance, CertifiedCylindricalPeriodicClearance,
     CylindricalClearanceDomain, CylindricalClearanceError, CylindricalClearanceQuery,

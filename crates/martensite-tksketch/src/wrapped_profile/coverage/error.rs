@@ -1,9 +1,19 @@
 //! Structural refusals preserve semantic owners and offending native uses.
 use super::*;
 pub(super) type Checked<T> = Result<T, CoverageFailure>;
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in super::super) enum CoverageOwner {
+    Binding(BindingKey),
+    Family,
+}
+impl From<BindingKey> for CoverageOwner {
+    fn from(key: BindingKey) -> Self {
+        Self::Binding(key)
+    }
+}
 #[derive(Debug)]
 pub(in super::super) struct CoverageFailure {
-    pub owner: BindingKey,
+    pub owner: CoverageOwner,
     pub cause: CoverageCause,
 }
 #[derive(Debug)]
@@ -110,14 +120,17 @@ impl CoverageCause {
     }
 }
 
-pub(super) fn fail(owner: BindingKey, cause: CoverageCause) -> CoverageFailure {
-    CoverageFailure { owner, cause }
+pub(super) fn fail(owner: impl Into<CoverageOwner>, cause: CoverageCause) -> CoverageFailure {
+    CoverageFailure {
+        owner: owner.into(),
+        cause,
+    }
 }
-pub(super) fn native<T>(owner: BindingKey, result: Result<T, Failure>) -> Checked<T> {
+pub(super) fn native<T>(owner: impl Into<CoverageOwner>, result: Result<T, Failure>) -> Checked<T> {
     result.map_err(|cause| fail(owner, CoverageCause::Native(Box::new(cause))))
 }
 pub(super) fn count(
-    owner: BindingKey,
+    owner: impl Into<CoverageOwner>,
     role: &'static str,
     actual: usize,
     expected: usize,

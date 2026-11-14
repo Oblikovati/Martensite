@@ -220,7 +220,7 @@ fn false_wire_closed_flag_is_refused() {
     let face = &bindings.iter().find(|(k, _)| *k == key).unwrap().1;
     direct(face)[0].set_closed(false).unwrap();
     let refusal = certify(&request, &root, &bindings).unwrap_err();
-    assert_eq!(refusal.owner, key);
+    assert_eq!(refusal.owner, CoverageOwner::Binding(key));
     assert!(matches!(refusal.cause, CoverageCause::ClosedFlag));
 }
 #[test]

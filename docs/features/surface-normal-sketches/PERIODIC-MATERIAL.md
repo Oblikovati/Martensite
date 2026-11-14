@@ -123,9 +123,11 @@ rounding is refused rather than classified as zero. Public probe types and
 private selection evidence have compile-time `Send` and `Sync` controls;
 concurrent-operation verification remains open.
 
-This gate classifies original cylindrical material. Construction of a frozen
-family, matching all retained O2 sources to the global clearance/homotopy,
-complete history, isolation, replay/concurrency and publication still remain.
+This gate classifies original cylindrical material. The later
+[frozen-family checkpoint](FROZEN-FAMILIES.md) constructs all member solids in
+one table and matches their retained O2 sources to the global boundary proofs.
+Complete history, the full isolation checks, replay/concurrency and publication
+still remain.
 General cones, additional authored curve classes, glyph scale, oblique frames
 and replacement deletion are also open. No dependency, public primitive API,
 version or release tag changed.

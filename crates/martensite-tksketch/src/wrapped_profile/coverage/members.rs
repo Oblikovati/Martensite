@@ -2,7 +2,7 @@
 use super::*;
 use martensite_tkbrep::topods::ShapeIterator;
 pub(super) fn children(
-    owner: BindingKey,
+    owner: impl Into<CoverageOwner> + Copy,
     parent: &Shape,
     kind: ShapeEnum,
     maximum: usize,
@@ -18,7 +18,7 @@ pub(super) fn children(
     }
     Ok(result)
 }
-fn capacity(owner: BindingKey, actual: usize, maximum: usize) -> Checked<()> {
+fn capacity(owner: impl Into<CoverageOwner> + Copy, actual: usize, maximum: usize) -> Checked<()> {
     if actual == maximum {
         return Err(fail(
             owner,
@@ -33,7 +33,7 @@ fn capacity(owner: BindingKey, actual: usize, maximum: usize) -> Checked<()> {
 }
 
 pub(super) fn uses(
-    owner: BindingKey,
+    owner: impl Into<CoverageOwner> + Copy,
     parent: &Shape,
     kind: ShapeEnum,
     expected: &[BoundUse],
@@ -46,7 +46,7 @@ pub(super) fn uses(
     Ok(actual)
 }
 pub(super) fn bound_uses(
-    owner: BindingKey,
+    owner: impl Into<CoverageOwner> + Copy,
     shapes: &[Shape],
     registry: &Registry<'_>,
 ) -> Checked<Vec<BoundUse>> {
@@ -69,7 +69,7 @@ pub(super) fn signature(uses: &[BoundUse]) -> Vec<(BindingKey, u8)> {
     keys
 }
 pub(super) fn compare(
-    owner: BindingKey,
+    owner: impl Into<CoverageOwner> + Copy,
     actual: &[BoundUse],
     expected: &[BoundUse],
 ) -> Checked<()> {
@@ -84,7 +84,7 @@ pub(super) fn compare(
     }
     Ok(())
 }
-pub(super) fn closed(owner: BindingKey, shape: &Shape) -> Checked<()> {
+pub(super) fn closed(owner: impl Into<CoverageOwner> + Copy, shape: &Shape) -> Checked<()> {
     if !native(owner, shape.closed())? {
         return Err(fail(owner, CoverageCause::ClosedFlag));
     }

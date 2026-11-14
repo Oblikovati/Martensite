@@ -7,11 +7,13 @@ mod edges;
 mod error;
 mod expected;
 mod faces;
+mod family;
+pub(super) use family::{FamilyCoverage, MemberView, certify_family};
 mod members;
 mod registry;
 mod representations;
 use error::{Checked, count, fail, native};
-pub(super) use error::{CoverageCause, CoverageFailure};
+pub(super) use error::{CoverageCause, CoverageFailure, CoverageOwner};
 use faces::FaceEvidence;
 use registry::Registry;
 #[cfg(test)]
