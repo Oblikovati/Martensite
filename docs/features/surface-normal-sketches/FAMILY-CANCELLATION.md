@@ -20,13 +20,13 @@ compile-time `Send` check.
 Selection forwards the callback into fit planning, global within-boundary
 clearance, periodic boundary clearance and the material checker's probe and
 winding work. The proof-work checkpoint below records the added controls.
-Retained-storage, O2 profile and both cap-residual proofs now receive that
-callback as well. Cone and measure certificate calls still use their current
-non-cancelling callbacks. Planar capture, native construction, encoding,
-coverage, native trim inspection and member-check routines cannot yet be
-interrupted throughout their work. Cancellation is observed when their enclosing stage returns; no
-latency bound is claimed. Further propagation remains work before publication.
-No work budget, tolerance or geometric check was relaxed.
+Retained-storage, O2 profile, both cap-residual proofs, regularity and join cones,
+retained flux, ideal normal measure and their final comparison now receive the
+same callback. Planar capture, native construction, encoding, coverage, native
+trim inspection, ordered native validation and native quadrature cannot yet be
+interrupted throughout their work. Cancellation is observed when their enclosing
+stage returns; no latency bound is claimed. Further propagation remains work
+before publication. No work budget, tolerance or geometric check was relaxed.
 
 ## Isolation evidence
 
@@ -116,5 +116,39 @@ integration tests in 22.80 and 1.99 seconds excluding compilation. The ignored
 subprocess worker was explicitly executed by its parent replay control. Strict
 all-target clippy passed. The approximate scan found no new function over 20
 lines, file over 500 lines or nesting above two. The full affected-package PR
-gate remains required before a push. Cone, measure and native cancellation,
-aggregate operation policy, sanitizer qualification and publication remain open.
+gate remains required before a push. The following checkpoint covers cone and
+measure cancellation. Native interruption, aggregate operation policy, sanitizer
+qualification and publication remain open.
+
+## Cone and measure checkpoint
+
+Member checks now forward the operation callback through every regularity and
+join cone, retained boundary-flux integration, ideal normal-volume certification
+and the final retained/ideal comparison. The same callback spans those stages;
+finishing a cone or scalar report does not authorize a partial member result.
+Default entry points still use the original non-cancelling behavior. Requested
+limits, integration budgets and error evidence labels are unchanged.
+
+Six added controls interrupt a regularity proof, a join after regularity
+completes, ideal-volume arithmetic, retained flux, a comparison of already
+completed measures and the composed family member checks. The family control
+covers both cone work and measure work after every cone completes. Errors retain
+the original span, pair, region, depths, source counts or nested integration
+cause as applicable. Flux and comparison controls re-encode the decoded geometry
+and require unchanged bytes. Family controls check unchanged request bits.
+
+On Linux x86_64, the sketch package passed 152 library tests and 32 integration
+tests in 22.28 and 2.02 seconds excluding compilation. The ignored subprocess
+worker was explicitly executed by its parent replay control. Strict all-target
+clippy passed. After the final structural cleanup, all 24 tests matching `cancel`
+passed. The approximate scan found no new function over 20 lines, file over 500
+lines or nesting above two. The full affected-package PR gate remains required
+before a push.
+
+This completes propagation through the current callback-capable mathematical
+proof stages. Fixed-size exact radius/depth composition has no callback API;
+cancellation is observed by the adjacent proof calls. Native-stage interruption, aggregate operation policy, sanitizer and
+broader stress qualification, the final publication contract, general conical
+profiles, additional curve classes, glyph scale, oblique frames and replacement
+deletion remain open. The result is still `UnqualifiedFamily`; no public API,
+dependency, package version or release tag changed.

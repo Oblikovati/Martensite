@@ -64,7 +64,7 @@ fn count_span(
     polls
 }
 
-fn encoded(prepared: &Request, bindings: &[(BindingKey, Shape)]) -> Vec<u8> {
+pub(super) fn encoded(prepared: &Request, bindings: &[(BindingKey, Shape)]) -> Vec<u8> {
     let root = BindingKey {
         source: Source::Region(prepared.region),
         role: HistoryRole::Solid,

@@ -21,7 +21,7 @@ use profile::prove_profile;
 mod cancellation_tests;
 use super::*;
 use crate::surface_sketch::HistoryRole;
-pub(super) use flux::certify_flux;
+pub(super) use flux::{certify_flux, certify_flux_with_cancel};
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedCylindricalDepths, CertifiedCylindricalFlux, CertifiedCylindricalProfile,
     CertifiedCylindricalStorage, CertifiedCylindricalTrim, CylindricalDepthFailure,

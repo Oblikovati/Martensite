@@ -199,3 +199,38 @@ fn family_cancellation_reaches_retained_storage_arithmetic() {
     assert_eq!(polls, 8);
     assert_eq!(snapshot(&inputs), before);
 }
+
+#[test]
+fn family_member_checks_can_cancel_inside_cones_or_after_all_cones_complete() {
+    let inputs = requests();
+    let before = snapshot(&inputs);
+    for limit in [8, cone_poll_count() + 8] {
+        cancel_member_proofs(&inputs, limit);
+        assert_eq!(snapshot(&inputs), before);
+    }
+}
+fn cone_poll_count() -> usize {
+    let (original, prepared, stored) = planar_cones::tests::proofs();
+    let mut polls = 0;
+    planar_cones::certify_with_cancel(&original, &prepared, &stored, || {
+        polls += 1;
+        false
+    })
+    .unwrap();
+    polls
+}
+fn cancel_member_proofs(inputs: &[Request], limit: usize) {
+    let target = Checkpoint {
+        stage: FamilyStage::MemberChecks,
+        region: Some(SurfaceRegionId(5)),
+    };
+    let mut polls = 0;
+    let result = construct_with_cancel(inputs, |point| {
+        if point == target {
+            polls += 1;
+        }
+        point == target && polls >= limit
+    });
+    assert_cancelled(result, target);
+    assert_eq!(polls, limit);
+}

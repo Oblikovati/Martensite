@@ -131,8 +131,8 @@ fn finish(
         let member = stored
             .remove(&original.region)
             .ok_or_else(|| membership(original.region))?;
-        let member = control.run(FamilyStage::MemberChecks, Some(original.region), |_| {
-            pipeline::finish_member(original, retained, member)
+        let member = control.run(FamilyStage::MemberChecks, Some(original.region), |poll| {
+            pipeline::finish_member_with_cancel(original, retained, member, poll)
                 .map_err(|cause| FamilyFailure::Member(Box::new(cause)))
         })?;
         members.insert(original.region, member);

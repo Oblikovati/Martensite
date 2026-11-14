@@ -12,6 +12,7 @@ pub(super) mod tests;
 type ProofIndex<'a> = BTreeMap<CurveSpan, &'a storage::StoredProof>;
 type AuthoredIndex<'a> = BTreeMap<SurfaceCurveId, &'a [[f64; 2]]>;
 
+#[derive(Default)]
 pub(super) struct ConeEvidence {
     pub pieces: Vec<SpanCone>,
     pub joins: Vec<SpanCone>,
@@ -55,37 +56,59 @@ pub(super) fn certify(
     prepared: &Request,
     stored: &[storage::StoredProof],
 ) -> Result<ConeEvidence, ConeFailure> {
+    certify_with_cancel(original, prepared, stored, || false)
+}
+pub(super) fn certify_with_cancel(
+    original: &Request,
+    prepared: &Request,
+    stored: &[storage::StoredProof],
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<ConeEvidence, ConeFailure> {
     let authored = storage::authored_index(original)
         .map_err(|cause| ConeFailure::Authored(Box::new(cause)))?;
     let proofs = proof_index(stored)?;
-    let mut evidence = ConeEvidence {
-        pieces: Vec::new(),
-        joins: Vec::new(),
+    let mut evidence = ConeEvidence::default();
+    let sources = ConeSources {
+        radius: original.radius,
+        authored: &authored,
+        proofs: &proofs,
     };
     for contour in &prepared.loops {
-        contour_cones(contour, original.radius, &authored, &proofs, &mut evidence)?;
+        contour_cones(contour, &sources, &mut evidence, &mut cancelled)?;
     }
     Ok(evidence)
 }
 
 fn contour_cones(
     contour: &[AuthoredPiece],
-    radius: f64,
-    authored: &AuthoredIndex<'_>,
-    proofs: &ProofIndex<'_>,
+    sources: &ConeSources<'_, '_>,
     evidence: &mut ConeEvidence,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<(), ConeFailure> {
     for (i, piece) in contour.iter().enumerate() {
         let next = contour[(i + 1) % contour.len()].span;
         let adjacent = [piece.span, next];
-        evidence
-            .pieces
-            .push(prove(&[piece.span], radius, authored, proofs)?);
-        evidence
-            .joins
-            .push(prove(&adjacent, radius, authored, proofs)?);
+        let regular = sources.certify(&[piece.span], &mut *cancelled)?;
+        let join = sources.certify(&adjacent, &mut *cancelled)?;
+        evidence.pieces.push(regular);
+        evidence.joins.push(join);
     }
     Ok(())
+}
+
+struct ConeSources<'a, 'source> {
+    radius: f64,
+    authored: &'a AuthoredIndex<'source>,
+    proofs: &'a ProofIndex<'source>,
+}
+impl ConeSources<'_, '_> {
+    fn certify(
+        &self,
+        spans: &[CurveSpan],
+        cancelled: &mut CancelPoll<'_>,
+    ) -> Result<SpanCone, ConeFailure> {
+        prove(spans, self.radius, self.authored, self.proofs, cancelled)
+    }
 }
 
 fn proof_index(stored: &[storage::StoredProof]) -> Result<ProofIndex<'_>, ConeFailure> {
@@ -103,24 +126,26 @@ fn prove(
     radius: f64,
     authored: &AuthoredIndex<'_>,
     proofs: &ProofIndex<'_>,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<SpanCone, ConeFailure> {
     let sources = spans
         .iter()
         .map(|span| source(*span, radius, authored, proofs))
         .collect::<Result<Vec<_>, _>>()?;
-    certify_sources(spans, &sources)
+    certify_sources(spans, &sources, cancelled)
 }
 
 fn certify_sources(
     spans: &[CurveSpan],
     sources: &[CylindricalConeSource<'_>],
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<SpanCone, ConeFailure> {
     let query = CylindricalConeQuery {
         sources,
         options: Default::default(),
     };
     let certificate =
-        certify_cylindrical_cone(query, || false).map_err(|cause| ConeFailure::Certificate {
+        certify_cylindrical_cone(query, cancelled).map_err(|cause| ConeFailure::Certificate {
             spans: spans.to_vec(),
             cause,
         })?;

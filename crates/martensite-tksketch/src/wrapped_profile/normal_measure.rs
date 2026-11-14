@@ -37,10 +37,18 @@ pub(super) fn certify(
     prepared: &Request,
     stored: &[storage::StoredProof],
 ) -> Result<NormalMeasureEvidence, NormalMeasureFailure> {
+    certify_with_cancel(original, prepared, stored, || false)
+}
+pub(super) fn certify_with_cancel(
+    original: &Request,
+    prepared: &Request,
+    stored: &[storage::StoredProof],
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<NormalMeasureEvidence, NormalMeasureFailure> {
     let (spans, sources) = planar_cones::source_collection(original, prepared, stored)
         .map_err(|cause| NormalMeasureFailure::Sources(Box::new(cause)))?;
     let query = source_query(&sources, original.depths);
-    let certificate = certify_cylindrical_normal_measure(query, || false)
+    let certificate = certify_cylindrical_normal_measure(query, cancelled)
         .map_err(|cause| NormalMeasureFailure::Certificate(Box::new(cause)))?;
     Ok(NormalMeasureEvidence { spans, certificate })
 }
@@ -52,13 +60,26 @@ pub(super) fn compare(
     stored: &[storage::StoredProof],
     (flux, normal): (CertifiedCylindricalFlux, NormalMeasureEvidence),
 ) -> Result<pipeline::MeasureEvidence, NormalMeasureFailure> {
+    compare_with_cancel(original, prepared, bindings, stored, (flux, normal), || {
+        false
+    })
+}
+pub(super) fn compare_with_cancel(
+    original: &Request,
+    prepared: &Request,
+    bindings: &[(BindingKey, Shape)],
+    stored: &[storage::StoredProof],
+    (flux, normal): (CertifiedCylindricalFlux, NormalMeasureEvidence),
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<pipeline::MeasureEvidence, NormalMeasureFailure> {
     let (spans, sources) = planar_cones::source_collection(original, prepared, stored)
         .map_err(|cause| NormalMeasureFailure::Sources(Box::new(cause)))?;
     span_sequence(&normal.spans, &spans)?;
     let query = source_query(&sources, original.depths);
     let completed = (flux, normal.certificate);
-    let comparison = storage::compare_flux(prepared, bindings, stored, completed, query)
-        .map_err(|cause| NormalMeasureFailure::Storage(Box::new(cause)))?;
+    let comparison =
+        storage::compare_flux(prepared, bindings, stored, completed, query, &mut cancelled)
+            .map_err(|cause| NormalMeasureFailure::Storage(Box::new(cause)))?;
     Ok(pipeline::MeasureEvidence { comparison, spans })
 }
 fn source_query<'a>(
@@ -87,6 +108,32 @@ fn span_sequence(actual: &[CurveSpan], expected: &[CurveSpan]) -> Result<(), Nor
 mod tests {
     use super::super::planar_cones::tests::proofs;
     use super::*;
+    #[test]
+    fn ideal_volume_arithmetic_cancellation_preserves_depths_and_source_count() {
+        let (original, prepared, stored) = proofs();
+        let mut polls = 0;
+        let error = certify_with_cancel(&original, &prepared, &stored, || {
+            polls += 1;
+            polls >= 8
+        })
+        .err()
+        .unwrap();
+        assert_cancelled_measure(error, original.depths);
+        assert_eq!(polls, 8);
+    }
+    fn assert_cancelled_measure(error: NormalMeasureFailure, depths: [f64; 2]) {
+        use martensite_tkmath::predicates::roots::metric_bounds::{
+            BoundedArithmeticFailure, CylindricalMeasureFailure,
+        };
+        let NormalMeasureFailure::Certificate(cause) = error else {
+            panic!("normal measure")
+        };
+        assert!(
+            matches!(cause.cause, CylindricalMeasureFailure::Arithmetic(cause) if *cause == BoundedArithmeticFailure::Cancelled)
+        );
+        assert_eq!(cause.requested_depths, depths);
+        assert_eq!(cause.source_count, 19);
+    }
     #[test]
     fn missing_profile_proof_refuses_the_normal_measure() {
         let (original, prepared, mut stored) = proofs();

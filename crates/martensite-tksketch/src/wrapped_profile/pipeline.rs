@@ -103,8 +103,17 @@ pub(super) fn finish_member(
     prepared: &Request,
     stored: StoredMember,
 ) -> Result<RetainedMember, Refusal> {
-    let cones = cone_stage(original, prepared, &stored.storage)?;
-    let measures = measure_stage(original, prepared, &stored.bindings, &stored.storage)?;
+    finish_member_with_cancel(original, prepared, stored, || false)
+}
+pub(super) fn finish_member_with_cancel(
+    original: &Request,
+    prepared: &Request,
+    stored: StoredMember,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<RetainedMember, Refusal> {
+    let (bindings, proofs) = (&stored.bindings, stored.storage.as_slice());
+    let cones = cone_stage(original, prepared, proofs, &mut cancelled)?;
+    let measures = measure_stage(original, prepared, bindings, proofs, &mut cancelled)?;
     let validation = checked_measure(original, &stored.shape)?;
     Ok(retained_member(
         validation,
@@ -173,17 +182,49 @@ fn measure_stage(
     prepared: &Request,
     bindings: &[(BindingKey, Shape)],
     proofs: &[storage::StoredProof],
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<MeasureEvidence, Refusal> {
-    let flux = flux_stage(original, prepared, bindings, proofs)?;
-    let normal = normal_at(
-        original.region,
-        normal_measure::certify(original, prepared, proofs),
-    )?;
-    normal_at(
-        original.region,
-        normal_measure::compare(original, prepared, bindings, proofs, (flux, normal)),
+    let flux = flux_stage(original, prepared, bindings, proofs, &mut *cancelled)?;
+    let normal = ideal_stage(original, prepared, proofs, &mut *cancelled)?;
+    compare_stage(
+        original,
+        prepared,
+        bindings,
+        proofs,
+        (flux, normal),
+        cancelled,
     )
 }
+fn ideal_stage(
+    original: &Request,
+    prepared: &Request,
+    proofs: &[storage::StoredProof],
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<normal_measure::NormalMeasureEvidence, Refusal> {
+    normal_at(
+        original.region,
+        normal_measure::certify_with_cancel(original, prepared, proofs, cancelled),
+    )
+}
+fn compare_stage(
+    original: &Request,
+    prepared: &Request,
+    bindings: &[(BindingKey, Shape)],
+    proofs: &[storage::StoredProof],
+    completed: (
+        CertifiedCylindricalFlux,
+        normal_measure::NormalMeasureEvidence,
+    ),
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<MeasureEvidence, Refusal> {
+    normal_at(
+        original.region,
+        normal_measure::compare_with_cancel(
+            original, prepared, bindings, proofs, completed, cancelled,
+        ),
+    )
+}
+
 fn normal_at<T>(
     region: SurfaceRegionId,
     result: Result<T, normal_measure::NormalMeasureFailure>,
@@ -200,12 +241,15 @@ fn flux_stage(
     prepared: &Request,
     bindings: &[(BindingKey, Shape)],
     proofs: &[storage::StoredProof],
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<CertifiedCylindricalFlux, Refusal> {
-    storage::certify_flux(original, prepared, bindings, proofs).map_err(|cause| Refusal {
-        stage: Stage::Measure,
-        region: original.region,
-        cause: RefusalCause::Storage(Box::new(cause)),
-    })
+    storage::certify_flux_with_cancel(original, prepared, bindings, proofs, cancelled).map_err(
+        |cause| Refusal {
+            stage: Stage::Measure,
+            region: original.region,
+            cause: RefusalCause::Storage(Box::new(cause)),
+        },
+    )
 }
 
 fn checked_measure(request: &Request, shape: &Shape) -> Result<NativeMeasure, Refusal> {
@@ -222,11 +266,14 @@ fn cone_stage(
     original: &Request,
     prepared: &Request,
     stored: &[storage::StoredProof],
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<planar_cones::ConeEvidence, Refusal> {
-    planar_cones::certify(original, prepared, stored).map_err(|cause| Refusal {
-        stage: Stage::Cones,
-        region: original.region,
-        cause: RefusalCause::Cones(Box::new(cause)),
+    planar_cones::certify_with_cancel(original, prepared, stored, cancelled).map_err(|cause| {
+        Refusal {
+            stage: Stage::Cones,
+            region: original.region,
+            cause: RefusalCause::Cones(Box::new(cause)),
+        }
     })
 }
 

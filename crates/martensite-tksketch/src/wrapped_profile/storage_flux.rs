@@ -21,10 +21,19 @@ pub(in super::super) fn certify_flux(
     bindings: &[(BindingKey, Shape)],
     proofs: &[StoredProof],
 ) -> Result<CertifiedCylindricalFlux, StorageFailure> {
+    certify_flux_with_cancel(original, prepared, bindings, proofs, || false)
+}
+pub(in super::super) fn certify_flux_with_cancel(
+    original: &Request,
+    prepared: &Request,
+    bindings: &[(BindingKey, Shape)],
+    proofs: &[StoredProof],
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<CertifiedCylindricalFlux, StorageFailure> {
     let parts = capture_parts(prepared, bindings, proofs)?;
     let spans: Vec<_> = parts.iter().map(FluxSpan::borrowed).collect();
     let query = flux_query(&spans, prepared);
-    certify_cylindrical_boundary_flux(query, || false)
+    certify_cylindrical_boundary_flux(query, cancelled)
         .map_err(|cause| scalar_failure(original.region, cause))
 }
 
@@ -207,5 +216,48 @@ pub(super) fn region_key(region: SurfaceRegionId) -> BindingKey {
     BindingKey {
         source: Source::Region(region),
         role: HistoryRole::Solid,
+    }
+}
+
+#[cfg(test)]
+mod cancellation_controls {
+    use super::super::{cancellation_tests::encoded, tests::frozen};
+    use super::*;
+    use martensite_tkmath::predicates::roots::{
+        RootIsolationError,
+        metric_bounds::{CylindricalFluxFailure, RationalIntegralFailure, ResidualError},
+    };
+    #[test]
+    fn retained_flux_cancellation_keeps_the_region_and_nested_integration_cause() {
+        let (original, prepared, bindings) = frozen();
+        let stored = super::super::certify(&original, &prepared, &bindings).unwrap();
+        let before = encoded(&prepared, &bindings);
+        let mut polls = 0;
+        let error = certify_flux_with_cancel(&original, &prepared, &bindings, &stored, || {
+            polls += 1;
+            polls >= 8
+        })
+        .err()
+        .unwrap();
+        assert_eq!(error.key, region_key(original.region));
+        assert_cancelled_flux(error);
+        assert_eq!(polls, 8);
+        assert_eq!(encoded(&prepared, &bindings), before);
+    }
+    fn assert_cancelled_flux(error: StorageFailure) {
+        let StorageCause::Flux(cause) = error.cause else {
+            panic!("flux")
+        };
+        assert_eq!(cause.span_count, 19);
+        let CylindricalFluxFailure::Integration { cause, .. } = cause.cause else {
+            panic!("integration")
+        };
+        let RationalIntegralFailure::Metric(cause) = *cause else {
+            panic!("metric")
+        };
+        assert!(matches!(
+            *cause,
+            ResidualError::Roots(RootIsolationError::Cancelled)
+        ));
     }
 }
