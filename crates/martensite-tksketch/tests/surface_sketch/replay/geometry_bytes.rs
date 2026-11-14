@@ -1,27 +1,38 @@
 //! A test-local native encoding binds the exported geometry to each semantic key.
 use martensite_tkbrep::bintools::{BinShapeSet, BinShapeSetBase};
+use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{message::ProgressRange, storage::IoStream};
 use martensite_tksketch::surface_sketch::DetachedNormalBody;
-use std::fmt::Write;
+use std::fmt::{Debug, Write};
 
 pub(crate) fn signature(body: &DetachedNormalBody) -> String {
-    let mut set = shape_table(body);
+    bound_signature(
+        &body.solid,
+        body.entities.iter().map(|(key, shape)| (key, shape)),
+    )
+}
+pub(crate) fn bound_signature<'a, K: Debug + 'a>(
+    root: &Shape,
+    entities: impl Iterator<Item = (&'a K, &'a Shape)>,
+) -> String {
+    let entities: Vec<_> = entities.collect();
+    let mut set = shape_table(root, &entities);
     let mut stream = IoStream::from_bytes(Vec::new());
     set.write(&mut stream, &ProgressRange::default()).unwrap();
-    set.write_shape(&body.solid, &mut stream).unwrap();
+    set.write_shape(root, &mut stream).unwrap();
     let mut keys = String::new();
-    for (key, shape) in &body.entities {
+    for (key, shape) in entities {
         write!(&mut keys, "{key:?}|").unwrap();
         set.write_shape(shape, &mut stream).unwrap();
     }
     format!("{keys}{}", encoded_hex(&mut stream))
 }
-fn shape_table(body: &DetachedNormalBody) -> BinShapeSet {
+fn shape_table<K>(root: &Shape, entities: &[(&K, &Shape)]) -> BinShapeSet {
     let mut set = BinShapeSet::new();
     set.set_with_triangles(false);
     set.set_with_normals(false);
-    set.add(&body.solid).unwrap();
-    for (_, shape) in &body.entities {
+    set.add(root).unwrap();
+    for (_, shape) in entities {
         set.add(shape).unwrap();
     }
     set

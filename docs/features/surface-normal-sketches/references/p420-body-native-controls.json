@@ -1,0 +1,79 @@
+{
+  "issue": 420,
+  "base_commit": "a8922431",
+  "platform": "Linux x86_64",
+  "rustc": "1.99.0 b940084d7eb6a299eb4bfeb8e34901bc051e7ac4",
+  "profile": {
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+    "CARGO_PROFILE_TEST_STRIP": "debuginfo"
+  },
+  "sources": {
+    "crates/martensite-tksketch/tests/surface_sketch/main.rs": "3f1be4e5604b50ea8a98245675b9b7b59976c215524d655cc2e0f95e0854e7df",
+    "crates/martensite-tksketch/tests/surface_sketch/replay/geometry_bytes.rs": "fe12057b2944a95f351b2329290a9f864a1f92b04d3ffd0b87c43e9a7d0c3778",
+    "crates/martensite-tksketch/tests/surface_sketch/wrapped_body/checks.rs": "dd3a5c042edc1033c8bbd4f14050952d63b9e86f03b4ab29bd730f9b204bbb73",
+    "crates/martensite-tksketch/tests/surface_sketch/wrapped_body/fixture.rs": "7716f6689bea48aa51e897bff542a0c1c1d37978b9a275518916e04a4f96ad26",
+    "crates/martensite-tksketch/tests/surface_sketch/wrapped_body/membership.rs": "75fb2ce49f98be7196ef26a17f0c649d8fc2d32f90a6006677ba3502914fd96e",
+    "crates/martensite-tksketch/tests/surface_sketch/wrapped_body/replay.rs": "784629503aa4483c74e08559d45ffd1a1af1c7510dd482b0875425ec1474eb04",
+    "crates/martensite-tksketch/tests/surface_sketch/wrapped_body.rs": "79d245213e8e0961c8768573010231c2a083608ba040a36796690d4faedf3a2b",
+    "crates/martensite-tksketch/tests/surface_sketch/wrapped_profile.rs": "1179ca686f0befc19a861268cdbd8fcd4c92a820fc8cd15284e9fbef0214bc32"
+  },
+  "logs": {
+    "p420-wrapped-membership.log": {
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "seconds": 28.42,
+      "sha256": "daffe465fc64cfd2074563041d3c7a0f3115c274fe1212c908a092a083064708"
+    },
+    "p420-wrapped-boolean-final.log": {
+      "passed": 8,
+      "failed": 0,
+      "ignored": 1,
+      "seconds": 35.02,
+      "sha256": "c71c44ca678429f030b0a199e54b84364472bf2c6c47bc056d1d99d2e3427426"
+    },
+    "p420-wrapped-boolean-replay-final.log": {
+      "passed": 2,
+      "failed": 0,
+      "ignored": 1,
+      "seconds": 33.74,
+      "sha256": "52831fde956a13c5ed44b8be4c1bd8d1de799095953790c3e95dd0a79dcc07c2"
+    },
+    "p420-shared-encoding-regression.log": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "seconds": 0.31,
+      "sha256": "a08f43f26dbdfbfa2d9d9af385f8e8becf57db344c229b1d701b3acc58a7b585"
+    },
+    "p420-wrapped-boolean-clippy.log": {
+      "exit_code": 0,
+      "scope": "martensite-tksketch --all-targets -- -D warnings",
+      "sha256": "325321215caf367bf90f11ebad6a1b51aa611881aaa1abaa407b126f45dbc237"
+    }
+  },
+  "evidence": [
+    "independent ideal volume regression",
+    "native ordered validation (non-exact)",
+    "far-boundary membership search in independent frame",
+    "source and tool byte preservation",
+    "tool-parent native history correspondence",
+    "selected-face native history reattachment",
+    "separate-process byte replay",
+    "concurrent versus sequential byte replay"
+  ],
+  "exclusions": [
+    "no unified immutable body-feature API",
+    "no published complete composed operation history",
+    "no whole-profile trim-policy acceptance",
+    "no multiline glyph/hole/disconnected body workload",
+    "no authored conical profiles",
+    "no sanitizer evidence",
+    "no performance parity claim",
+    "no full affected-package PR gate or hosted matrix"
+  ]
+}

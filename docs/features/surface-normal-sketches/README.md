@@ -185,3 +185,8 @@ open.
 The [revision-bound face attachment](FACE-ATTACHMENT.md) owns a selected cylindrical
 face and support snapshot, follows explicit native history, and refuses ambiguous
 reattachment. Wrapped boss/pocket and hit-mapping integration under #420 remain open.
+
+The [native boss/pocket controls](BODY-BOOLEAN-QUALIFICATION.md) exercise actual
+Fuse/Cut operations, seam-crossing and oblique placements, input preservation,
+Boolean correspondence and process/concurrent replay. The unified body-feature
+operation and its whole-profile trim contract remain open under #420.

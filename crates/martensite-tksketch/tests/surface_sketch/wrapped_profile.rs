@@ -25,7 +25,7 @@ fn solved_rectangle() -> SketchProfile {
             .collect(),
     }
 }
-fn request() -> WrappedNormalRequest {
+pub(super) fn request() -> WrappedNormalRequest {
     WrappedNormalRequest {
         profile: solved_rectangle(),
         selections: vec![selection()],
