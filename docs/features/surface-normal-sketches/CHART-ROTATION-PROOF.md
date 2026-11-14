@@ -94,3 +94,50 @@ Logs: `target/qualification/p420-generic-placement-controls.log`,
 `target/qualification/p420-shared-rotated-publication-final.log`, and
 `target/qualification/p420-placement-interface-clippy-final.log`. The complete
 feature and its full affected-package gate remain unfinished.
+
+
+## Public chart-angle operation
+
+`normal_extrude_profile_on_chart` and its cancellation variant select behavior
+version 1. They accept the same owned request as the earlier constructor. The
+angle is `support.chart_origin`, in radians; the developed coordinate `s` maps
+to the reference angle `chart_origin + s / radius`. Axis and radial vectors keep
+their normalized, projected frame meaning.
+
+`WrappedChartNormalResult` owns the physical graph and a
+`WrappedChartPlacementReport`. Its spatial budget retains the original angle,
+bounded trigonometric work and actual stored coefficients. Canonical reports,
+authored history and material receipts remain available through typed getters.
+Native exports decode fresh owners from the physical bytes. The old result
+layout and constructor admission are unchanged; the old constructor continues
+to refuse nonzero chart origins.
+
+Admission reserves the canonical allowance before fitting. Publication uses the
+shared frozen-correspondence, ordered native validation, retained trace,
+determinant-scaled flux and world-bound checks. An exactly identity stored map
+uses a decode/reencode correspondence check without adding a datum. Native
+validation retains its declared coverage; this operation does not turn sampled
+or search checks into exact checks. Unresolved bounded arithmetic returns an
+incomplete failure, and cancellation publishes no geometry.
+
+Six public controls passed on Linux x86_64: quarter-turn publication with an
+independent vertex expectation; zero-angle identity correspondence; negative
+and multi-turn oblique placements; input and native-export mutation isolation;
+and cancellation at admission and final publication. Two admission controls
+passed for quarter-turn evidence and nonfinite-angle refusal. The public
+campaign took 18.97 seconds with two build jobs and debug information disabled.
+This elapsed time is a qualification observation, not a performance comparison.
+The initial strict TKSketch library/test Clippy check passed; final review and
+broader concurrency and performance qualification remain open.
+
+The logs for this work are `/tmp/martensite-chart-public.log`,
+`/tmp/martensite-chart-admission.log` and `/tmp/martensite-chart-clippy.log`.
+These are local execution logs, not persisted acceptance artifacts. No version
+or tag was changed. The body-feature API, conical authored profiles and the
+remaining feature acceptance gates still need implementation or qualification.
+
+The oblique negative-angle replay control compared physical encoding, authored
+history, budget, placement and member reports, and material relations across
+two threads and two child processes against a single-thread result. It passed
+in 32.53 seconds on Linux x86_64. This is a determinism control; it does not
+replace the remaining concurrency stress or sanitizer qualification.

@@ -28,6 +28,14 @@ pub(super) fn apply<B: PlacementBudget>(
 ) -> Checked<PhysicalPublication<B>> {
     input::poll(cancelled, WrappedStage::Placement)?;
     let physical = freeze::place(&result.family.family, &plan)?;
+    finish(result, plan, physical, cancelled)
+}
+pub(super) fn finish<B: PlacementBudget>(
+    result: &mut WrappedNormalResult,
+    plan: Plan<B>,
+    physical: freeze::Physical,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<PhysicalPublication<B>> {
     let members = validate_members(result, &plan, &physical, cancelled)?;
     measures::transport(result, &plan)?;
     result.budget.spatial_error = result.options.spatial_error;

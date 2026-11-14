@@ -96,3 +96,12 @@ fn mutate_corner(bindings: &[(BindingKey, Shape)]) {
         .update_vertex_point(&vertex, Point3::new(100., 100., 100.), 0.)
         .unwrap();
 }
+
+#[test]
+fn unchanged_publication_preserves_the_complete_canonical_archive() {
+    let result = normal_extrude_profile(&super::super::tests::request()).unwrap();
+    let family = &result.family.family;
+    let physical = unchanged(family).unwrap();
+    assert_eq!(physical.bytes, family.bytes);
+    assert_eq!(physical.bindings.len(), family.keys.len());
+}

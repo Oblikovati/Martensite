@@ -57,23 +57,29 @@ impl WrappedNormalResult {
     }
     /// Fresh native owners with keyed references; `let detached = result.export_native()?;`.
     pub fn export_native(&self) -> Checked<DetachedWrappedBodies> {
-        let (bodies, bindings) = pipeline::decode(self.encoded_brep(), &self.family.family.keys)
-            .map_err(|cause| export_failure(error::Cause::Export(cause)))?;
-        if bindings.len() != self.history.bindings.len() {
-            return Err(export_failure(error::Cause::ExportCount {
-                actual: bindings.len(),
-                expected: self.history.bindings.len(),
-            }));
-        }
-        let entities = self
-            .history
-            .bindings
-            .iter()
-            .copied()
-            .zip(bindings.into_iter().map(|(_, shape)| shape))
-            .collect();
-        Ok(DetachedWrappedBodies { bodies, entities })
+        export_bytes(self, self.encoded_brep())
     }
+}
+pub(super) fn export_bytes(
+    result: &WrappedNormalResult,
+    bytes: &[u8],
+) -> Checked<DetachedWrappedBodies> {
+    let (bodies, bindings) = pipeline::decode(bytes, &result.family.family.keys)
+        .map_err(|cause| export_failure(error::Cause::Export(cause)))?;
+    if bindings.len() != result.history.bindings.len() {
+        return Err(export_failure(error::Cause::ExportCount {
+            actual: bindings.len(),
+            expected: result.history.bindings.len(),
+        }));
+    }
+    let entities = result
+        .history
+        .bindings
+        .iter()
+        .copied()
+        .zip(bindings.into_iter().map(|(_, shape)| shape))
+        .collect();
+    Ok(DetachedWrappedBodies { bodies, entities })
 }
 fn export_failure(cause: error::Cause) -> WrappedNormalFailure {
     let mut failure = error::failure(

@@ -10,6 +10,9 @@ use martensite_tkmath::{
 };
 use std::collections::BTreeMap;
 mod admission;
+mod chart;
+mod chart_admission;
+pub use chart::*;
 mod budget;
 use budget::{PlacementBudget, PlacementFrame};
 mod error;

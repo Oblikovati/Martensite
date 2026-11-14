@@ -18,6 +18,7 @@ pub(in super::super) enum PlacementFailure {
         cause: Failure,
     },
     Frame(FrameTransportError),
+    Rotation(martensite_tkmath::predicates::roots::metric_bounds::FrameRotationError),
     Encoding(crate::surface_sketch::failure::SurfaceFailureCause),
     Native {
         step: &'static str,
@@ -51,6 +52,7 @@ impl std::fmt::Display for PlacementFailure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::TraceTolerance { .. } => self.trace_message(f),
+            Self::Rotation(cause) => write!(f, "physical placement: {cause}"),
             Self::Frame(cause) => write!(f, "physical placement: {cause}"),
             Self::Encoding(cause) => write!(f, "physical encoding: {cause:?}"),
             Self::Native { step, cause } => write!(f, "physical {step}: {cause}"),
@@ -142,6 +144,7 @@ impl std::error::Error for PlacementFailure {
         match self {
             Self::InputFrame { cause, .. } | Self::Native { cause, .. } => Some(cause),
             Self::Frame(cause) => Some(cause),
+            Self::Rotation(cause) => Some(cause),
             _ => None,
         }
     }
@@ -157,6 +160,7 @@ pub(super) fn fail(cause: PlacementFailure) -> WrappedNormalFailure {
 }
 fn classification(cause: &PlacementFailure) -> WrappedFailureClass {
     match cause {
+        PlacementFailure::Rotation(cause) => rotation_class(&cause.cause),
         PlacementFailure::InputFrame { .. } | PlacementFailure::SpatialInput { .. } => {
             WrappedFailureClass::InvalidInput
         }
@@ -190,4 +194,17 @@ pub(super) fn at<T>(step: &'static str, result: Result<T, Failure>) -> Checked<T
 }
 pub(super) fn budget<T>(result: Result<T, publication_budget::BudgetFailure>) -> Checked<T> {
     result.map_err(|cause| fail(PlacementFailure::Budget(cause)))
+}
+
+fn rotation_class(
+    cause: &martensite_tkmath::predicates::roots::metric_bounds::FrameRotationFailure,
+) -> WrappedFailureClass {
+    use martensite_tkmath::predicates::roots::metric_bounds::FrameRotationFailure;
+    match cause {
+        FrameRotationFailure::InvalidAngle => WrappedFailureClass::InvalidInput,
+        FrameRotationFailure::Frame(cause) => {
+            classification(&PlacementFailure::Frame(cause.clone()))
+        }
+        FrameRotationFailure::Trigonometric(_) => WrappedFailureClass::Incomplete,
+    }
 }

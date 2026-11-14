@@ -15,7 +15,11 @@ pub use construct::{normal_extrude_profile, normal_extrude_profile_with_cancel};
 pub use error::{WrappedFailureClass, WrappedNormalFailure, WrappedOperation, WrappedStage};
 pub use history_types::*;
 pub use material::*;
-pub use placement::{WrappedPlacementReport, WrappedWorldSpatialReport};
+pub use placement::{
+    WrappedChartNormalResult, WrappedChartPlacementReport, WrappedPlacementReport,
+    WrappedWorldSpatialReport, normal_extrude_profile_on_chart,
+    normal_extrude_profile_on_chart_with_cancel,
+};
 pub use reports::*;
 pub use request::*;
 pub use result::*;

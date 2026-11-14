@@ -30,7 +30,7 @@ fn compile(request: &WrappedNormalRequest, sources: &[Request]) -> Checked<Plan>
         .map_err(|cause| fail(PlacementFailure::Frame(cause)))?;
     Ok(Plan { transform, budget })
 }
-fn admit_scalars(request: &WrappedNormalRequest) -> Checked<()> {
+pub(super) fn admit_scalars(request: &WrappedNormalRequest) -> Checked<()> {
     let radius = request.support.radius;
     let spatial_error = request.options.spatial_error;
     if !radius.is_finite()
@@ -49,7 +49,7 @@ fn admit_scalars(request: &WrappedNormalRequest) -> Checked<()> {
 fn canonical(support: CylinderSupport) -> bool {
     support.origin == [0.; 3] && support.axis == [0., 0., 1.] && support.radial == [1., 0., 0.]
 }
-fn transform(support: CylinderSupport) -> Result<Transform3, Failure> {
+pub(super) fn transform(support: CylinderSupport) -> Result<Transform3, Failure> {
     let [x, y, z] = support.origin;
     let axis = direction(support.axis)?;
     let radial = direction(support.radial)?;
@@ -64,7 +64,7 @@ fn transform(support: CylinderSupport) -> Result<Transform3, Failure> {
 fn direction([x, y, z]: [f64; 3]) -> Result<Direction3, Failure> {
     Direction3::new(x, y, z)
 }
-fn spatial_input(
+pub(super) fn spatial_input(
     request: &WrappedNormalRequest,
     sources: &[Request],
     transform: Transform3,

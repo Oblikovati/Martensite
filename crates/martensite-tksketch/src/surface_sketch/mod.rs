@@ -35,13 +35,15 @@ pub use result::{
 };
 pub use wrapped_profile::{
     DetachedWrappedBodies, WrappedBudgetReport, WrappedCertifiedBound, WrappedCertifiedRange,
-    WrappedEntitySource, WrappedFailureClass, WrappedHistoryKey, WrappedHistoryRecord,
-    WrappedHistoryRelation, WrappedIncidenceCoverage, WrappedMaterialRelation, WrappedMaterialWork,
-    WrappedMeasureReport, WrappedMemberReport, WrappedNativeVolumeEstimate, WrappedNormalFailure,
-    WrappedNormalOptions, WrappedNormalRequest, WrappedNormalResult, WrappedOperation,
-    WrappedOutsideMaterial, WrappedPlacementReport, WrappedRegionSelection, WrappedSourcePoint,
-    WrappedSourceSpan, WrappedSpatialReport, WrappedStage, WrappedVolumeBounds,
-    WrappedVolumePolicy, WrappedWindingLocation, WrappedWorldSpatialReport, normal_extrude_profile,
+    WrappedChartNormalResult, WrappedChartPlacementReport, WrappedEntitySource,
+    WrappedFailureClass, WrappedHistoryKey, WrappedHistoryRecord, WrappedHistoryRelation,
+    WrappedIncidenceCoverage, WrappedMaterialRelation, WrappedMaterialWork, WrappedMeasureReport,
+    WrappedMemberReport, WrappedNativeVolumeEstimate, WrappedNormalFailure, WrappedNormalOptions,
+    WrappedNormalRequest, WrappedNormalResult, WrappedOperation, WrappedOutsideMaterial,
+    WrappedPlacementReport, WrappedRegionSelection, WrappedSourcePoint, WrappedSourceSpan,
+    WrappedSpatialReport, WrappedStage, WrappedVolumeBounds, WrappedVolumePolicy,
+    WrappedWindingLocation, WrappedWorldSpatialReport, normal_extrude_profile,
+    normal_extrude_profile_on_chart, normal_extrude_profile_on_chart_with_cancel,
     normal_extrude_profile_with_cancel,
 };
 

@@ -117,3 +117,15 @@ fn encoding_failure(
 #[cfg(test)]
 #[path = "freeze_tests.rs"]
 mod tests;
+
+pub(super) fn unchanged(family: &family::UnqualifiedFamily) -> Checked<Physical> {
+    let (root, bindings) = at(
+        "unchanged canonical decode",
+        pipeline::decode(&family.bytes, &family.keys),
+    )?;
+    let canonical_root = strip(&root)?;
+    let canonical_bindings = strip_bindings(root.location(), &bindings)?;
+    let bytes = encoding::encode(&canonical_root, &canonical_bindings).map_err(encoding_failure)?;
+    compare_archive(&bytes, &family.bytes)?;
+    Ok(Physical { bytes, bindings })
+}
