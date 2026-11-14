@@ -38,9 +38,10 @@ pub use wrapped_profile::{
     WrappedHistoryRelation, WrappedIncidenceCoverage, WrappedMaterialRelation, WrappedMaterialWork,
     WrappedMeasureReport, WrappedMemberReport, WrappedNativeVolumeEstimate, WrappedNormalFailure,
     WrappedNormalOptions, WrappedNormalRequest, WrappedNormalResult, WrappedOperation,
-    WrappedOutsideMaterial, WrappedRegionSelection, WrappedSourcePoint, WrappedSourceSpan,
-    WrappedSpatialReport, WrappedStage, WrappedVolumeBounds, WrappedVolumePolicy,
-    WrappedWindingLocation, normal_extrude_profile, normal_extrude_profile_with_cancel,
+    WrappedOutsideMaterial, WrappedPlacementReport, WrappedRegionSelection, WrappedSourcePoint,
+    WrappedSourceSpan, WrappedSpatialReport, WrappedStage, WrappedVolumeBounds,
+    WrappedVolumePolicy, WrappedWindingLocation, WrappedWorldSpatialReport, normal_extrude_profile,
+    normal_extrude_profile_with_cancel,
 };
 
 /// Extrude one developed rectangle through an ordered physical normal-depth interval.

@@ -14,7 +14,7 @@ const MODES: [(ValidationStage, CheckMode); 3] = [
     (ValidationStage::Geometry, CheckMode::Sampled),
     (ValidationStage::SelfIntersection, CheckMode::NativeSearch),
 ];
-pub(super) fn certify(
+pub(in super::super) fn certify(
     region: SurfaceRegionId,
     report: &ValidationReport,
     tolerance: f64,

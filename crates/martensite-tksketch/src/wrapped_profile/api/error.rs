@@ -23,6 +23,8 @@ pub enum WrappedStage {
     Construction,
     /// Authored history publication.
     History,
+    /// Frozen physical placement and its world-space evidence.
+    Placement,
     /// Final immutable result handoff.
     Publication,
     /// Detached native decoding.
@@ -50,6 +52,7 @@ pub(super) enum Cause {
     Input(profile_input::ProfileInputFailure),
     Family(family::FamilyFailure),
     History(history_projection::HistoryMapFailure),
+    Placement(Box<placement::PlacementFailure>),
     Export(Failure),
     ExportCount { actual: usize, expected: usize },
     Cancelled,
@@ -118,10 +121,7 @@ impl std::error::Error for WrappedNormalFailure {
 impl std::fmt::Display for Cause {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Support(actual) => write!(
-                f,
-                "support={actual:?}; expected origin zero, +Z axis, +X radial and zero chart origin"
-            ),
+            Self::Support(actual) => write!(f, "support={actual:?}; expected zero chart origin"),
             Self::Depths(actual) => write!(
                 f,
                 "depths={actual:?}; expected increasing finite signed normal depths"
@@ -129,6 +129,7 @@ impl std::fmt::Display for Cause {
             Self::Input(cause) => write!(f, "{cause}"),
             Self::Family(cause) => write!(f, "{cause}"),
             Self::History(cause) => write!(f, "{cause}"),
+            Self::Placement(cause) => write!(f, "{cause}"),
             Self::Export(cause) => write!(f, "native export: {cause:?}"),
             Self::ExportCount { actual, expected } => {
                 write!(f, "export bindings={actual}; expected {expected}")
@@ -144,6 +145,7 @@ impl std::error::Error for Cause {
             Self::Input(cause) => Some(cause),
             Self::Family(cause) => Some(cause),
             Self::History(cause) => Some(cause),
+            Self::Placement(cause) => Some(cause.as_ref()),
             _ => None,
         }
     }

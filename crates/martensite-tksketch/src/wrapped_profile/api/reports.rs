@@ -33,12 +33,12 @@ pub struct WrappedMemberReport {
     pub coverage: WrappedIncidenceCoverage,
     /// Ordered native stages, retaining sampled and native-search coverage labels.
     pub validation: ValidationReport,
-    /// Requested-versus-achieved spatial evidence.
+    /// Canonical chart-frame spatial evidence; `result.placement()` reports physical-frame bounds.
     pub spatial: WrappedSpatialReport,
     /// Ideal, retained-flux and estimated native measures.
     pub measures: WrappedMeasureReport,
 }
-/// Achieved spatial bounds, with parameter and model units distinguished per field.
+/// Achieved canonical chart-frame bounds, with parameter and model units distinguished per field.
 #[derive(Clone, Debug)]
 pub struct WrappedSpatialReport {
     /// Developed displacement of the ideal profile from the authored profile.
@@ -115,11 +115,11 @@ pub struct WrappedBudgetReport {
     pub planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
     /// Requested spatial epsilon.
     pub spatial_error: f64,
-    /// Downward-rounded developed-profile allocation.
+    /// Downward-rounded canonical developed-profile allocation.
     pub profile_allowance: f64,
-    /// Downward-rounded storage-rounding allocation.
+    /// Downward-rounded canonical storage-rounding allocation.
     pub storage_allowance: f64,
-    /// Cap-trace allowance, separate from storage rounding.
+    /// Canonical cap-trace allowance, separate from storage rounding.
     pub trace_allowance: f64,
     /// Required nonadjacent and periodic clearance.
     pub required_clearance: f64,
@@ -202,7 +202,9 @@ pub(super) fn budget(
         volume: volume_report(&evidence.volume),
     }
 }
-fn volume_report(evidence: &publication_budget::FamilyVolumeBounds) -> WrappedVolumeBounds {
+pub(super) fn volume_report(
+    evidence: &publication_budget::FamilyVolumeBounds,
+) -> WrappedVolumeBounds {
     WrappedVolumeBounds {
         discrepancy: bound(evidence.discrepancy),
         representative_error: bound(evidence.representative_error),
@@ -225,9 +227,9 @@ fn incidence_coverage(member: &pipeline::RetainedMember) -> WrappedIncidenceCove
         side_pcurves: member.storage.iter().map(|p| p.trims.side_pcurves).sum(),
     }
 }
-fn bound(upper: f64) -> WrappedCertifiedBound {
+pub(super) fn bound(upper: f64) -> WrappedCertifiedBound {
     WrappedCertifiedBound { upper }
 }
-fn range([lower, upper]: [f64; 2]) -> WrappedCertifiedRange {
+pub(super) fn range([lower, upper]: [f64; 2]) -> WrappedCertifiedRange {
     WrappedCertifiedRange { lower, upper }
 }

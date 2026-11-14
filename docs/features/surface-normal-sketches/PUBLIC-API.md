@@ -15,11 +15,13 @@ authored parameter direction using integer arithmetic.
 
 Current admission supports lines and polynomial Bezier spans of degree one
 through three in the world-XY developed plane. Physical support placement is
-origin zero, +Z axis, +X radial and zero chart origin. Unsupported placements
-refuse. Inward normals reverse and negate physical depth endpoints and preserve
-the caller's first/last-depth history roles. General conics, rational and
-multi-span authored splines, oblique frames and general conical profiles remain
-open.
+constructed from the requested origin and a normalized/projected right-handed
+axis/radial frame. The stored coefficients must pass rigid admission and the
+world-space budget. Zero chart origin is still required. Invalid or unresolved
+frames refuse explicitly. Inward normals reverse and negate physical depth
+endpoints and preserve the caller's first/last-depth history roles. General
+conics, rational and multi-span authored splines, arbitrary chart origins and
+general conical profiles remain open.
 
 `WrappedNormalResult` owns frozen geometry bytes, authored history, per-region
 reports and the family budget. Reports distinguish certified ideal normal
@@ -30,13 +32,27 @@ Cap-trace approximation, coefficient rounding and filled-cap realization bounds
 have separate fields. Spatial evidence is grouped under
 `result.reports()[&region].spatial`; certified and estimated measures are under
 `result.reports()[&region].measures`. The groups retain their distinct evidence
-types and units.
+types and units. Spatial quantities in that group use the canonical chart
+frame. For a physical placement, `result.placement()` returns a
+`WrappedPlacementReport`: the original world epsilon, reduced canonical
+allowance, actual stored matrix/translation and per-member world bounds.
+`WrappedWorldSpatialReport::cap_trace_error` has also passed each cap's own
+retained edge/face tolerance, with both affine-evaluation errors accounted for.
+The exact canonical frame has no placement report and retains its original
+path and allocation.
 
 `export_native` decodes fresh native owners and maps their references to authored
 keys. Separate exports share no native topology owners. Mutating source input
 after construction leaves the frozen result unchanged. Published metadata has
 no mutation interface; request, result and failure types have compile-time
 `Send + Sync` checks.
+
+The oblique certificate covers the decoded located graph and direct location
+evaluation. A normalized analytic copy returned by a native convenience query
+is a separate floating representation and needs its own correspondence
+evidence. The [physical-frame contract](OBLIQUE-FRAMES.md) records this boundary,
+frozen-graph checks, retained-tolerance enforcement and determinant-based flux
+transport.
 
 Errors retain operation, stage, failure class, known authored entities and an
 owned cause. Cancellation at the final handoff returns an error after discarding
@@ -45,7 +61,7 @@ the constructed value. `Refuse(allowance)` rejects unmet aggregate volume bounds
 
 ## Verification
 
-On Linux x86_64, the complete library suite passed 199 tests in 30.59 seconds,
+At the P4 checkpoint on Linux x86_64, the complete library suite passed 199 tests in 30.59 seconds,
 excluding compilation. Two tests are excluded by default: the subprocess worker
 is explicitly run by its parent; the separate stress campaign has its own gate.
 The public integration controls passed seven tests in 4.22 seconds. Their ignored
@@ -60,10 +76,16 @@ receipts. These controls cover the canonical cylindrical rectangle. The library
 API controls separately cover mixed line/quadratic/cubic profiles, a hole and
 disconnected material.
 
-The runs used two build jobs, no incremental compilation and CI's unoptimized,
+Those runs used two build jobs, no incremental compilation and CI's unoptimized,
 stripped-debug profile. Strict all-target clippy passed before the subsequent
 history-helper extraction; it must be rerun before committing. The full
 repository affected-package gate has not passed for this working tree.
+
+The later [oblique qualification](P5-OBLIQUE-QUALIFICATION.md) records the composed
+library run with 274 passing tests, the 40 passing public integration controls,
+final placement checks and strict all-target clippy. Its new subprocess worker
+is executed by the process-replay parent. The complete affected-package gate
+remains required before a feature push.
 
 ## Publication qualification remains open
 
@@ -78,9 +100,10 @@ review and the remaining qualification gates before integration.
 
 Sanitizer qualification also remains open. Host startup failed before the test
 body; the host loader preload is a diagnostic lead, with no demonstrated cause
-or successful sanitizer campaign. Bug #447 and the interrupted full gate remain
-separate integration work. Glyph scale, complete application operations,
-oblique frames and replacement deletion remain P5/P6 work. No package version
+or successful sanitizer campaign. Bugs #447 and #449 have landed on main and
+were forward-merged into this feature lane; this lane's complete gate remains
+open. Full-text requalification, complete application operations, authored
+conical profiles and replacement deletion remain P5/P6 work. No package version
 or release tag changed.
 
 The [P4 review](P4-REVIEW-2026-11-14.md) records the independent standards and

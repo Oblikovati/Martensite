@@ -18,6 +18,7 @@ pub struct WrappedNormalResult {
     pub(super) support: crate::surface_sketch::CylinderSupport,
     pub(super) depths: [f64; 2],
     pub(super) options: WrappedNormalOptions,
+    pub(super) placement: Option<Box<placement::Placed>>,
 }
 impl WrappedNormalResult {
     /// Ordered authored history; `result.history().len()`.
@@ -46,13 +47,18 @@ impl WrappedNormalResult {
     }
     /// Read-only retained native encoding; `result.encoded_brep().len()`.
     pub fn encoded_brep(&self) -> &[u8] {
-        &self.family.family.bytes
+        self.placement
+            .as_ref()
+            .map_or(&self.family.family.bytes, |placed| &placed.bytes)
+    }
+    /// Physical placement evidence, absent for the exact canonical fast path; `result.placement()`.
+    pub fn placement(&self) -> Option<&WrappedPlacementReport> {
+        self.placement.as_ref().map(|placed| &placed.report)
     }
     /// Fresh native owners with keyed references; `let detached = result.export_native()?;`.
     pub fn export_native(&self) -> Checked<DetachedWrappedBodies> {
-        let (bodies, bindings) =
-            pipeline::decode(&self.family.family.bytes, &self.family.family.keys)
-                .map_err(|cause| export_failure(error::Cause::Export(cause)))?;
+        let (bodies, bindings) = pipeline::decode(self.encoded_brep(), &self.family.family.keys)
+            .map_err(|cause| export_failure(error::Cause::Export(cause)))?;
         if bindings.len() != self.history.bindings.len() {
             return Err(export_failure(error::Cause::ExportCount {
                 actual: bindings.len(),

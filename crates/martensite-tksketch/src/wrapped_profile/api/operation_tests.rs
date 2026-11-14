@@ -7,7 +7,7 @@ use martensite_tkbo::profile_extrusion::{
 };
 use std::collections::BTreeMap;
 
-fn request() -> WrappedNormalRequest {
+pub(super) fn request() -> WrappedNormalRequest {
     let inputs = family::tests::requests();
     WrappedNormalRequest {
         profile: combined_profile(&inputs),
@@ -188,7 +188,7 @@ fn face_bytes(shape: &Shape) -> Vec<u8> {
 #[test]
 fn unsupported_placement_retains_operation_stage_and_owned_cause() {
     let mut input = request();
-    input.support.origin[0] = 1.;
+    input.support.chart_origin = 1.;
     let error = normal_extrude_profile(&input).err().unwrap();
     assert_eq!(error.operation(), WrappedOperation::NormalExtrusion);
     assert_eq!(error.stage(), WrappedStage::Admission);

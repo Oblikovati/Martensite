@@ -12,6 +12,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added certified point-domain placement budgets with translation and affine-evaluation rounding bounds, downward canonical allocations and explicit spatial-limit refusals (#425).
 
+- Added certified oblique cylindrical profile placement with shared decoded locations, physical-frame validation, world-space reports and determinant-scaled retained boundary flux (#425).
+
 - Added explicit finite pair-proof work requests and work-bearing planar failures with original root-isolation causes and authored curve IDs, and reported requested, effective and consumed work on successful region sets and wrapped normal-extrusion reports without changing existing defaults (#425).
 
 - Added solved-profile cylindrical normal extrusion with typed spatial and measure reports, authored history, cooperative cancellation and detached native exports (#418).
@@ -61,6 +63,10 @@ follows [Semantic Versioning](https://semver.org/).
 - Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
 
 ### Fixed
+
+- Required placed cap traces to remain within their retained edge and face tolerances, including affine-evaluation rounding and typed span/depth refusals (#454).
+
+- Canonicalized wrapped planar proof inputs by authored IDs so reordered selections retained identical actual work receipts, while preserving original admission errors and unchanged limits (#453).
 
 - Preserved authored entities and typed failure classes in solved-profile normal extrusion errors (#448).
 

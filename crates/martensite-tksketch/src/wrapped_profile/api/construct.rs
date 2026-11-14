@@ -3,7 +3,7 @@ use super::*;
 use std::collections::BTreeMap;
 
 /// Extrude selected polynomial profiles along cylinder normals and retain achieved evidence.
-/// Current support placement is canonical +Z; other frames return an explicit refusal.
+/// The physical frame is normalized/projected from the requested axis and radial vectors.
 /// Example: `let result = normal_extrude_profile(&request)?;`.
 pub fn normal_extrude_profile(request: &WrappedNormalRequest) -> Checked<WrappedNormalResult> {
     normal_extrude_profile_with_cancel(request, || false)
@@ -19,7 +19,11 @@ pub fn normal_extrude_profile_with_cancel(
     let family = construct_family(&inputs, request, &mut cancelled)?;
     input::poll(&mut cancelled, WrappedStage::History)?;
     let history = project_history(&family, &inputs, request.support.normal)?;
-    let result = publish(request, family, history)?;
+    let mut result = publish(request, family, history)?;
+    if let Some(plan) = inputs.placement {
+        placement::publish(&mut result, *plan, &mut cancelled)
+            .map_err(|failure| failure_projection::selected(failure, request))?;
+    }
     input::poll(&mut cancelled, WrappedStage::Publication)?;
     Ok(result)
 }
@@ -38,6 +42,7 @@ fn publish(
         support: request.support,
         depths: request.depths,
         options: request.options,
+        placement: None,
     })
 }
 fn family_budget(

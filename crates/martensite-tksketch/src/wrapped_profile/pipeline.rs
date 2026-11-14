@@ -333,7 +333,7 @@ fn retained_member(
     }
 }
 
-fn ordered_checks(shape: &Shape, tolerance: f64) -> Result<ValidationReport, Failure> {
+pub(super) fn ordered_checks(shape: &Shape, tolerance: f64) -> Result<ValidationReport, Failure> {
     validate_body(shape, &resolution(tolerance)).map_err(|e| {
         Failure::new(&format!(
             "{}={} must be finite and positive",
@@ -375,7 +375,7 @@ pub(super) fn resolution(tolerance: f64) -> Resolution {
     )
 }
 
-fn estimate(shape: &Shape) -> Result<(f64, f64), Failure> {
+pub(super) fn estimate(shape: &Shape) -> Result<(f64, f64), Failure> {
     let mut props = GProps::new();
     let status =
         BRepGProp::volume_properties_gk(shape, &mut props, 1e-8, true, VolumeGKFlags::default())?;

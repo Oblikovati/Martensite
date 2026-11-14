@@ -74,6 +74,36 @@ fn consumer_receives_closed_form_measure_and_honest_validation_coverage() {
     assert!(report.spatial.cap_angular_error.upper <= result.budget().trace_allowance / 10.);
 }
 #[test]
+fn consumer_exports_an_oblique_body_with_typed_world_bounds() {
+    let mut input = request();
+    input.support.origin = [1.25, -2.5, 3.75];
+    input.support.axis = [1., 2., 3.];
+    input.support.radial = [3., -1., 2.];
+    let result = normal_extrude_profile(&input).unwrap();
+    let placement: &WrappedPlacementReport = result.placement().unwrap();
+    let world: &WrappedWorldSpatialReport = &placement.members[&SurfaceRegionId(71)];
+    assert!(placement.spatial_budget.canonical_allowance() < input.options.spatial_error);
+    assert!(world.cap_realization_error.upper <= input.options.spatial_error);
+    assert!(result.reports()[&SurfaceRegionId(71)].validation.is_valid());
+    assert_public_placed_corner(
+        &result.export_native().unwrap(),
+        input.options.spatial_error,
+    );
+}
+fn assert_public_placed_corner(native: &DetachedWrappedBodies, epsilon: f64) {
+    let key = WrappedHistoryKey {
+        source: WrappedEntitySource::Vertex(SurfaceVertexId(1)),
+        role: HistoryRole::FirstDepthVertex,
+    };
+    let vertex = martensite_tkbrep::topods::vertex(&native.entities[&key]).unwrap();
+    let point = martensite_tkbrep::brep::BRepTool::pnt(&vertex).unwrap();
+    let actual = [point.x(), point.y(), point.z()];
+    let origin = [1.25, -2.5, 3.75];
+    for (i, coordinate) in [5., -4., 1.].into_iter().enumerate() {
+        assert!((actual[i] - origin[i] - 9. * coordinate / 42_f64.sqrt()).abs() <= epsilon);
+    }
+}
+#[test]
 fn source_mutation_and_independent_native_exports_preserve_publication() {
     let mut input = request();
     let result = normal_extrude_profile(&input).unwrap();

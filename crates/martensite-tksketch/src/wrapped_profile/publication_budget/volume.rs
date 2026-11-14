@@ -60,7 +60,7 @@ impl FamilyVolumeBounds {
         )?;
         Ok(())
     }
-    pub(super) fn enforce(&self, limit: CylindricalMeasureLimit) -> Checked<()> {
+    pub(in super::super) fn enforce(&self, limit: CylindricalMeasureLimit) -> Checked<()> {
         let CylindricalMeasureLimit::Refuse(limit) = limit else {
             return Ok(());
         };
@@ -75,7 +75,11 @@ impl FamilyVolumeBounds {
         Ok(())
     }
 }
-pub(super) fn add_upper(accumulated: f64, contribution: f64, quantity: Quantity) -> Checked<f64> {
+pub(in super::super) fn add_upper(
+    accumulated: f64,
+    contribution: f64,
+    quantity: Quantity,
+) -> Checked<f64> {
     valid_bound(accumulated, quantity)?;
     valid_bound(contribution, quantity)?;
     if contribution == 0. {

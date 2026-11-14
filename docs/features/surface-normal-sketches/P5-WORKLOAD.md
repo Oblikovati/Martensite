@@ -323,3 +323,16 @@ The unchanged-default pair-work prefix ledger is retained as
 `references/p5-default-pair-budget-ledger.tsv.gz`; its decompressed SHA-256 is
 `93cc76b729792ad54fdec25c09d2f221e6cd4c2d96d8103e500a53e0ed67bf0a`.
 Only measurements were retained; temporary benchmark code was not saved.
+
+## Oblique placement follow-up
+
+The physical placement increment and its canonical-path measurements are
+recorded in [P5-OBLIQUE-QUALIFICATION.md](P5-OBLIQUE-QUALIFICATION.md). Bug #453
+now orders completed wrapped proof input by authored IDs, making actual work
+receipts independent of selection order. The earlier full-text timings above
+describe their pinned revisions. The 239-piece workload completed under the
+canonical proof schedule with the same explicit 8192 request in 322.12 seconds
+wall and 321.92 seconds user CPU; GNU-time peak RSS was 195,704 KiB. The default
+4096 control retained its typed refusal without partial geometry. The later
+qualification record keeps the single-trial and memory-comparison limits
+explicit. No default work or spatial limit changed.

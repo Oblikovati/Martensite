@@ -17,7 +17,7 @@ pub struct WrappedRegionSelection {
 /// Requested spatial accuracy, geometric subdivision limit and volume policy.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct WrappedNormalOptions {
-    /// Positive finite modelling epsilon in developed spatial units.
+    /// Positive finite world-space modelling epsilon; placement reports its canonical allocation.
     pub spatial_error: f64,
     /// Finite planar proof work, independent of spatial accuracy.
     pub planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
@@ -34,7 +34,7 @@ pub struct WrappedNormalRequest {
     pub profile: SketchProfile,
     /// Explicit material choices; bounded cells are never selected implicitly.
     pub selections: Vec<WrappedRegionSelection>,
-    /// Analytic support; noncanonical physical placements currently refuse.
+    /// Analytic support; axis/radial vectors define a normalized, projected right-handed frame.
     pub support: CylinderSupport,
     /// Increasing physical depths along the chosen support normal.
     pub depths: [f64; 2],

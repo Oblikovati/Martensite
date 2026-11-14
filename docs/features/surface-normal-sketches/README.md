@@ -172,6 +172,12 @@ request/receipt seam needed after #449; existing defaults remain unchanged.
 The [P5 workload census](P5-WORKLOAD.md) pins the existing font asset and the
 239-piece supplied-text case. Its first full modelling witness passed with an
 explicit finite work request; performance qualification and oblique frames
-remain open.
+are tracked by the current qualification records.
 
-The [oblique-frame gate](OBLIQUE-FRAMES.md) records the stored-transform, error-budget, validation and replay evidence required before accepting noncanonical frames.
+The [oblique-frame operation](OBLIQUE-FRAMES.md) now constructs qualified
+physical placements with separate world-space bounds. Its
+[qualification record](P5-OBLIQUE-QUALIFICATION.md) covers a mixed profile with
+a hole and disconnected material, retained-tolerance checks, native validation,
+replay, isolation and canonical-path measurements. Full-text requalification,
+broader application operations, authored conical profiles and P6 cleanup remain
+open.

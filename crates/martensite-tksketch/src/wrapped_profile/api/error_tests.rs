@@ -237,7 +237,7 @@ fn family_cancellation_keeps_its_class_and_known_selection() {
 #[test]
 fn selected_support_and_depth_admission_keep_all_known_regions() {
     let mut input = request();
-    input.support.origin[0] = 1.;
+    input.support.chart_origin = 1.;
     assert_public(
         &refused(&input),
         WrappedFailureClass::Unsupported,

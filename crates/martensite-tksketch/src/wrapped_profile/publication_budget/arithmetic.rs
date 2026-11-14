@@ -1,7 +1,7 @@
 //! Outward nonnegative products shared by cap-domain and homotopy bounds.
 use super::*;
 
-pub(super) fn scale_upper(value: f64, factor: f64, quantity: Quantity) -> Checked<f64> {
+pub(in super::super) fn scale_upper(value: f64, factor: f64, quantity: Quantity) -> Checked<f64> {
     volume::valid_bound(value, quantity)?;
     volume::valid_bound(factor, quantity)?;
     if value == 0. || factor == 0. {

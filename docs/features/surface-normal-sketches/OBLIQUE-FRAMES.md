@@ -1,8 +1,10 @@
 # Oblique frame implementation gate
 
-The wrapped-profile entry point currently refuses noncanonical cylinder frames.
-P5 requires oblique placement. Removing that refusal without certifying the
-stored placement would leave a gap in the world-space error contract.
+The wrapped-profile implementation now constructs noncanonical cylinder frames
+through the same intrinsic geometry pipeline. P5 qualification requires the
+stored placement, decoded graph and physical publication evidence described
+below. Arbitrary chart origins and authored conical profiles remain separate
+work.
 
 ## Existing interfaces to reuse
 
@@ -177,7 +179,8 @@ inconclusive inputs, owned binding and concurrent/sequential equality. Strict
 all-target TKMath clippy also passed. Independent numerical review found no
 correctness issue. Standards review identified missing compile-time assertions
 for three public types; those assertions were added and compiled successfully.
-Physical placement and world-space publication remain to be implemented.
+The physical placement step consumes this evidence before constructing its
+canonical geometry.
 
 ## Point-domain budget checkpoint
 
@@ -208,5 +211,71 @@ Large origins can consume epsilon through evaluation rounding even when stored
 and requested translations agree. The helper refuses those cases without
 widening the limit. It does not cover a separate scale multiplication, another
 evaluation order, native representation admission or frozen-body correspondence.
-The physical operation still needs to bind these conditions to its decoded
-transform and validate the placed body before accepting oblique frames.
+The physical operation binds these conditions to its decoded transform and
+validates each placed solid before returning a result.
+
+## Frozen physical publication
+
+The operation creates a native frame by normalizing and projecting the supplied
+axis/radial vectors, then admits the resulting coefficients through the checked
+rigid constructor from #451. The certificate compares these actual coefficients
+with exact normalization of the original vectors. The canonical-frame path
+returns before allocating a placement plan and keeps its original epsilon.
+
+For a placed request, the point-domain bound is the support radius plus maximum
+absolute requested depth, maximum absolute selected authored pole height and
+the original epsilon, summed outward. The radial/height sum bounds the ideal
+cylindrical point norm. The canonical spatial contract bounds retained points
+within the additional epsilon. Unselected source curves do not enlarge this
+domain. The resulting positive canonical allowance is used by the existing
+family construction and proof pipeline.
+
+After canonical qualification, one elementary location datum is applied to the
+compound root and every semantic binding. The physical encoding is decoded
+with both coefficient-preserving policies. Publication requires unit scale,
+the exact admitted matrix/translation bits, and the same elementary datum on
+the root and all bindings. Removing that datum, without inverse arithmetic,
+must reproduce the complete canonical graph encoding byte for byte. This binds
+the retained incidences, trims, poles, weights, tolerances and authored history
+to the placed graph. Mismatches report actual coefficients, datum structure,
+binding identity, or the first differing archive byte and both lengths.
+
+For every retained cap trace, publication also checks `M*r + 2*E` against that
+cap's original minimum edge/face tolerance. Here `M` is upper stretch, `r` the
+canonical full-interval residual bound, and `E` the point-domain affine
+evaluation bound. The common actual translation cancels in the exact trace
+difference, while its rounding contribution remains in `E`. The two independent
+evaluations require two error contributions. This same-frame comparison does
+not include ideal-frame or ideal-origin mismatch. Excess refuses with the
+region, authored span, depth, achieved bound and unchanged retained limit
+(#454). The reported physical cap-trace bound is the maximum of these checked
+per-cap bounds.
+
+Every decoded physical solid receives the ordered native validation again.
+Sampled geometry and native-search self-intersection checks keep their coverage
+labels. Native volume estimates are recomputed from those physical solids.
+The retained boundary-flux and representative intervals are multiplied by the
+positive determinant enclosure and compared with unchanged rigid-frame ideal
+volumes. The original volume refusal policy is enforced on these transported
+comparisons.
+
+`result.reports()` retains canonical chart-frame spatial quantities, alongside
+the physical native validation and transported measures.
+`result.placement()` exposes the original world epsilon, reduced canonical
+allowance, actual frame/translation, placement errors and achieved per-member
+world-space bounds. `result.encoded_brep()` and detached exports return the
+physical graph. The canonical proof archive remains private and immutable.
+
+## Native query representation
+
+The placement certificate describes the decoded located graph `A*y+t` and its
+specified direct binary64 location evaluation. `BRepAdaptorSurface` evaluates
+the original surface and then applies that location, matching this model.
+
+`BRepTool::surface` constructs a transformed analytic copy when a location is
+present. Its cylindrical-surface transformation normalizes axis directions
+again. That copy is a different floating representation; this certificate does
+not establish its extra reconstruction error. Consumers that replace the
+located representation with such a copy need correspondence evidence for that
+replacement. The placed graph's proof must not be presented as a certificate
+for every reconstructed native query result.

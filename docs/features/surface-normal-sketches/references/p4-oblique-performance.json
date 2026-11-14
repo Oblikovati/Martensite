@@ -1,0 +1,112 @@
+{
+  "baseline_source": "2d5238f6",
+  "named_functions": [
+    "request",
+    "support",
+    "combined_profile",
+    "profile_vertices",
+    "vertex",
+    "curve",
+    "contour",
+    "selection",
+    "entry_point_returns_immutable_mixed_profiles_with_holes_and_disconnected_material",
+    "check_report"
+  ],
+  "fixture_functions_identical": true,
+  "fixture_sha256": "51291b17d85e221f5ca561c2347c4e5534b857e5a1311f4f75925f569d558167",
+  "baseline_binary_sha256": "992aed91d7d795701f046c1c2c2186dc140269f5731180986b561296800bb05b",
+  "test": "surface_sketch::wrapped_profile::api::operation_tests::entry_point_returns_immutable_mixed_profiles_with_holes_and_disconnected_material",
+  "after_binary_sha256": "8d9de93773914abcf44538a9d0b408f2044dfa4f80d20c14f0a3b88979b6d680",
+  "rows": [
+    {
+      "trial": 1,
+      "variant": "before",
+      "elapsed_s": 3.99,
+      "user_s": 3.98,
+      "system_s": 0.0,
+      "peak_rss_kib": 53308,
+      "sampled_anon_kib": 21312,
+      "sampled_file_kib": 33832,
+      "sampled_rss_kib": 55144
+    },
+    {
+      "trial": 2,
+      "variant": "after",
+      "elapsed_s": 3.77,
+      "user_s": 3.76,
+      "system_s": 0.01,
+      "peak_rss_kib": 53784,
+      "sampled_anon_kib": 21336,
+      "sampled_file_kib": 34216,
+      "sampled_rss_kib": 55552
+    },
+    {
+      "trial": 3,
+      "variant": "after",
+      "elapsed_s": 4.07,
+      "user_s": 4.06,
+      "system_s": 0.01,
+      "peak_rss_kib": 53704,
+      "sampled_anon_kib": 21340,
+      "sampled_file_kib": 34252,
+      "sampled_rss_kib": 55592
+    },
+    {
+      "trial": 4,
+      "variant": "before",
+      "elapsed_s": 3.81,
+      "user_s": 3.79,
+      "system_s": 0.01,
+      "peak_rss_kib": 53776,
+      "sampled_anon_kib": 21308,
+      "sampled_file_kib": 33780,
+      "sampled_rss_kib": 55088
+    },
+    {
+      "trial": 5,
+      "variant": "before",
+      "elapsed_s": 3.73,
+      "user_s": 3.71,
+      "system_s": 0.01,
+      "peak_rss_kib": 53544,
+      "sampled_anon_kib": 21308,
+      "sampled_file_kib": 33800,
+      "sampled_rss_kib": 55108
+    },
+    {
+      "trial": 6,
+      "variant": "after",
+      "elapsed_s": 3.64,
+      "user_s": 3.63,
+      "system_s": 0.0,
+      "peak_rss_kib": 53864,
+      "sampled_anon_kib": 21336,
+      "sampled_file_kib": 34244,
+      "sampled_rss_kib": 55580
+    }
+  ],
+  "medians": {
+    "before": {
+      "elapsed_s": 3.81,
+      "user_s": 3.79,
+      "system_s": 0.01,
+      "peak_rss_kib": 53544,
+      "sampled_anon_kib": 21308,
+      "sampled_file_kib": 33800,
+      "sampled_rss_kib": 55108
+    },
+    "after": {
+      "elapsed_s": 3.77,
+      "user_s": 3.76,
+      "system_s": 0.01,
+      "peak_rss_kib": 53784,
+      "sampled_anon_kib": 21336,
+      "sampled_file_kib": 34244,
+      "sampled_rss_kib": 55580
+    }
+  },
+  "proc_sample_interval_s": 0.02,
+  "baseline_binary_size_bytes": 60300824,
+  "after_binary_size_bytes": 61006904,
+  "benchmark_copies_removed_after_completed_measurement": true
+}

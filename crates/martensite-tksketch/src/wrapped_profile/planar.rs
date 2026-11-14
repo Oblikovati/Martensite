@@ -3,6 +3,9 @@ use super::*;
 use martensite_tkbo::profile_extrusion::*;
 use std::collections::BTreeMap;
 #[cfg(test)]
+#[path = "planar_order_tests.rs"]
+mod order_tests;
+#[cfg(test)]
 #[path = "planar_tests.rs"]
 mod tests;
 
@@ -139,7 +142,18 @@ fn combined_profile(requests: &[Request]) -> Result<SketchProfile, PlanarFailure
         combined.vertices.extend(profile.vertices);
         combined.curves.extend(profile.curves);
     }
+    canonicalize_proof_input(&mut combined);
     Ok(combined)
+}
+
+fn canonicalize_proof_input(profile: &mut SketchProfile) {
+    // #453: schedule actual work by authored IDs, after original-order admission succeeds.
+    if !profile.curves.is_sorted_by_key(ProfileCurve::id) {
+        profile.curves.sort_by_key(ProfileCurve::id);
+    }
+    if !profile.vertices.is_sorted_by_key(|vertex| vertex.id) {
+        profile.vertices.sort_by_key(|vertex| vertex.id);
+    }
 }
 
 fn profile(request: &Request) -> Result<SketchProfile, PlanarFailure> {

@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 pub(super) struct Inputs {
     pub requests: Vec<Request>,
     pub directions: BTreeMap<SurfaceRegionId, profile_input::CurveDirections>,
+    pub placement: Option<Box<placement::Plan>>,
 }
 pub(super) fn read(
     request: &WrappedNormalRequest,
@@ -15,12 +16,15 @@ pub(super) fn read(
     let mut inputs = Inputs {
         requests: Vec::new(),
         directions: BTreeMap::new(),
+        placement: None,
     };
     for selection in &request.selections {
         poll(cancelled, WrappedStage::Input)?;
         inputs.push_region(request, selection, depths)?;
     }
     poll(cancelled, WrappedStage::Input)?;
+    inputs.placement = placement::prepare(request, &mut inputs.requests)
+        .map_err(|failure| failure_projection::selected(failure, request))?;
     Ok(inputs)
 }
 impl Inputs {
@@ -84,11 +88,7 @@ fn admit(request: &WrappedNormalRequest) -> Checked<()> {
     Ok(())
 }
 fn admit_support(support: crate::surface_sketch::CylinderSupport) -> Checked<()> {
-    if support.origin != [0.; 3]
-        || support.axis != [0., 0., 1.]
-        || support.radial != [1., 0., 0.]
-        || support.chart_origin != 0.
-    {
+    if support.chart_origin != 0. {
         return Err(error::failure(
             WrappedStage::Admission,
             WrappedFailureClass::Unsupported,
