@@ -26,15 +26,17 @@ fn loop_selection(
 ) -> ProfileLoop {
     let contour = &region.loops().as_slice()[id.value() as usize];
     let first = contour.first_use() as usize;
-    let mut uses: Vec<LoopUse> = region.uses().as_slice()
-        [first..first + contour.nb_uses() as usize]
+    let uses: Vec<LoopUse> = region.uses().as_slice()[first..first + contour.nb_uses() as usize]
         .iter()
         .map(|u| LoopUse {
             curve: ProfileCurveId(source_id(instance, u.curve_index().value())),
             reversed: u.is_reversed(),
         })
         .collect();
-    if (contour.signed_area() > 0.) != outer {
+    oriented_profile_loop(uses, (contour.signed_area() > 0.) != outer)
+}
+fn oriented_profile_loop(mut uses: Vec<LoopUse>, reverse: bool) -> ProfileLoop {
+    if reverse {
         uses.reverse();
         for curve_use in &mut uses {
             curve_use.reversed = !curve_use.reversed;
@@ -71,7 +73,14 @@ fn profile_curve(
     if c.kind() == Kind::Line {
         return ProfileCurve::Line { id, start, end };
     }
-    let poles = source_poles(instance, c);
+    clamped_profile_spline(id, start, end, source_poles(instance, c))
+}
+fn clamped_profile_spline(
+    id: ProfileCurveId,
+    start: ProfileVertexId,
+    end: ProfileVertexId,
+    poles: Vec<[f64; 2]>,
+) -> ProfileCurve {
     let count = poles.len();
     ProfileCurve::Spline {
         id,
@@ -305,110 +314,36 @@ fn resized_counter_glyph_keeps_the_requested_spatial_accuracy() {
     assert_eq!(request, original);
 }
 
-fn cylinder_body() -> martensite_tkbrep::topods::Shape {
-    use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeCylinder;
-    use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
-    BRepPrimAPIMakeCylinder::new(10., 4.)
-        .shape()
-        .unwrap()
-        .clone()
-}
-fn attach_tool(
-    base: &martensite_tkbrep::topods::Shape,
-    tool: &martensite_tkbrep::topods::Shape,
-    operation: martensite_tkbo::bop_algo::Operation,
-) -> martensite_tkbrep::topods::Shape {
-    use martensite_tkbo::brep_algo_api::BRepAlgoAPIBooleanOperation;
-    use martensite_tkernel::ncollection::List;
-    use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
-    let (mut arguments, mut tools) = (List::default(), List::default());
-    arguments.append(base.clone());
-    tools.append(tool.clone());
-    let mut boolean = BRepAlgoAPIBooleanOperation::new();
-    boolean.set_arguments(&arguments);
-    boolean.set_tools(&tools);
-    boolean.set_operation(operation);
-    boolean.set_non_destructive(true);
-    boolean.build().unwrap();
-    assert!(boolean.is_done());
-    boolean.shape().clone()
-}
-fn validate_attached_body(shape: &martensite_tkbrep::topods::Shape) {
-    use martensite_tkbo::body_check::validate_body;
-    let resolution = Resolution::new(
-        1e-5,
-        1e-7,
-        1e-9,
-        DisplayTolerance {
-            chordal: 1e-3,
-            angular: 0.1,
-        },
-        ToleranceCap::Refuse(1e-5),
-    );
-    let report = validate_body(shape, &resolution).unwrap();
-    assert!(report.is_valid(), "{report:?}");
-    check_one_solid(shape);
-}
-#[test]
-fn wrapped_glyph_boss_joins_its_cylindrical_support_body() {
-    let mut request = glyph_request(0);
-    shift_developed_profile(&mut request, 2.);
-    let result = normal_extrude_profile(&request).unwrap();
-    let bytes = result.encoded_brep().to_vec();
-    let native = result.export_native().unwrap();
-    let base = cylinder_body();
-    let attached = attach_tool(
-        &base,
-        &native.bodies,
-        martensite_tkbo::bop_algo::Operation::Fuse,
-    );
-    validate_attached_body(&attached);
-    assert!(body_volume_estimate(&attached) > body_volume_estimate(&base));
-    assert_eq!(result.encoded_brep(), bytes);
-}
-
-fn check_one_solid(shape: &martensite_tkbrep::topods::Shape) {
-    use martensite_tkbrep::{topexp, toptools::IndexedMapOfShape};
-    use martensite_tkg3d::top_abs::ShapeEnum;
-    let mut solids = IndexedMapOfShape::default();
-    topexp::map_shapes_of_type(shape, ShapeEnum::Solid, &mut solids).unwrap();
-    assert_eq!(solids.extent(), 1);
-}
+#[path = "body_controls.rs"]
+mod body_controls;
 
 #[test]
-fn inward_wrapped_glyph_cuts_a_pocket_in_its_support_body() {
-    let mut request = glyph_request(0);
-    request.support.normal = NormalSense::Inward;
-    shift_developed_profile(&mut request, 2.);
-    let original = request.clone();
-    let result = normal_extrude_profile(&request).unwrap();
-    let bytes = result.encoded_brep().to_vec();
-    let native = result.export_native().unwrap();
-    let base = cylinder_body();
-    let attached = attach_tool(
-        &base,
-        &native.bodies,
-        martensite_tkbo::bop_algo::Operation::Cut,
-    );
-    validate_attached_body(&attached);
-    assert!(body_volume_estimate(&attached) < body_volume_estimate(&base));
-    assert_eq!(result.encoded_brep(), bytes);
-    assert_eq!(request, original);
+fn glyph_request_edits_preserve_prior_publication_and_replay() {
+    let original = glyph_request(0);
+    let publication = normal_extrude_profile(&original).unwrap();
+    let bytes = publication.encoded_brep().to_vec();
+    for (changed, expected) in edited_glyph_requests(&original) {
+        let revised = normal_extrude_profile(&changed).unwrap();
+        check_volume_oracle(&revised, expected);
+        assert_ne!(revised.encoded_brep(), bytes);
+        assert_eq!(publication.encoded_brep(), bytes);
+        assert_eq!(revised.support(), changed.support);
+        assert_eq!(revised.depths(), changed.depths);
+    }
+    let replay = normal_extrude_profile(&original).unwrap();
+    assert_eq!(replay.encoded_brep(), bytes);
+    assert_eq!(replay.history(), publication.history());
 }
-
-fn body_volume_estimate(shape: &martensite_tkbrep::topods::Shape) -> f64 {
-    use martensite_tkgeombase::gprop::GProps;
-    use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
-    let mut properties = GProps::default();
-    let error = BRepGProp::volume_properties_gk(
-        shape,
-        &mut properties,
-        1e-8,
-        true,
-        VolumeGKFlags::default(),
-    )
-    .unwrap();
-    assert!(error.is_finite() && (0. ..=1e-8).contains(&error));
-    assert!(properties.mass().is_finite() && properties.mass() > 0.);
-    properties.mass()
+fn edited_glyph_requests(original: &WrappedNormalRequest) -> Vec<(WrappedNormalRequest, f64)> {
+    let mut moved = original.clone();
+    shift_developed_profile(&mut moved, 0.5);
+    let mut support = original.clone();
+    support.support.radius = 12.;
+    let mut depth = original.clone();
+    depth.depths[1] = 0.5;
+    vec![
+        (moved, 39145599. / 335544320.),
+        (support, 15626021. / 134217728.),
+        (depth, 19814439. / 83886080.),
+    ]
 }

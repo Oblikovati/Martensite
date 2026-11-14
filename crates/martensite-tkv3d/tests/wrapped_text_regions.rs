@@ -49,8 +49,7 @@ fn segment(fields: &[&str]) -> Segment {
     }
 }
 fn outline(contours: Contours) -> FontGlyphOutline {
-    let mut segments = Vec::new();
-    let mut ranges = Vec::new();
+    let (mut segments, mut ranges) = (Vec::new(), Vec::new());
     for (index, curves) in contours {
         assert_eq!(index, ranges.len());
         check_closed_contour(&curves);

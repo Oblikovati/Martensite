@@ -174,3 +174,14 @@ minimization, attribution and an evidence-based fix. The second probe was
 stopped after collecting the stage evidence, and all four temporary probe
 lines were removed. The original corrected full run remains active. No
 acceptance, performance equivalence or approved P5 budget is claimed.
+
+## Kernel request edit/replay control
+
+A focused glyph request test changed developed placement by 0.5, support
+radius from 10 to 12, and outward depth from 0.25 to 0.5. Each revised
+publication enclosed its independent authored-volume oracle and produced
+different bytes while the prior publication stayed unchanged. Replaying the
+original request restored byte-identical geometry and identical authored
+history. The test passed in 11.07 seconds. This verifies deterministic owned
+kernel-request replay for these edits; persistent document revisions, text
+replacement, attached-body replay and composed Boolean history remain open.
