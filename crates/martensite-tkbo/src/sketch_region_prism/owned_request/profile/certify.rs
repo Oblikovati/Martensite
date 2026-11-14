@@ -22,7 +22,7 @@ pub(crate) struct ProofEdge {
 
 /// A refusal of the proof, typed where the public seam distinguishes it.
 #[derive(Clone, Debug, PartialEq)]
-pub(crate) enum ProfileProofRefusal {
+pub(crate) enum ProfileProofCause {
     /// Two edges meet away from an authored join.
     UnexpectedContact { edges: [u64; 2], point: [f64; 2] },
     /// Branches leave `vertex` in one direction, so their order is undecided.
@@ -31,6 +31,12 @@ pub(crate) enum ProfileProofRefusal {
     Pinched { vertex: u64, hole: bool },
     /// Any other refused or incomplete obligation, rendered with its stage.
     Incomplete(String),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct ProfileProofRefusal {
+    pub cause: ProfileProofCause,
+    pub work: Option<crate::sketch_region_certification::CensusWorkReceipt>,
 }
 
 struct NeverStop;
@@ -55,7 +61,19 @@ pub(crate) struct ProfileGraphInput {
 pub(crate) fn certify_profile_graph(
     input: ProfileGraphInput,
 ) -> Result<GraphRegionCertificate, ProfileProofRefusal> {
-    let request = OwnedProfileRequest {
+    let request = owned_graph_request(input);
+    let prepared = prepare_owned_profile(request, &mut NeverStop).map_err(preparation_refusal)?;
+    prepared.inspect_plane_graph(|| false).map_err(|failure| {
+        let work =
+            crate::sketch_region_certification::CensusWorkReceipt::capture(&prepared.bridge.census);
+        ProfileProofRefusal {
+            cause: region_cause(failure),
+            work: Some(work),
+        }
+    })
+}
+fn owned_graph_request(input: ProfileGraphInput) -> OwnedProfileRequest {
+    OwnedProfileRequest {
         version: GRAPH_PROFILE_VERSION,
         operation: CallerOperationId(1),
         edges: input.edges.into_iter().map(owned_edge).collect(),
@@ -63,11 +81,7 @@ pub(crate) fn certify_profile_graph(
         regions: Vec::new(),
         declared_plane: input.plane,
         policy: policy(input.spatial_limit, input.pair_bisections),
-    };
-    let prepared = prepare_owned_profile(request, &mut NeverStop).map_err(preparation_refusal)?;
-    prepared
-        .inspect_plane_graph(|| false)
-        .map_err(region_refusal)
+    }
 }
 
 fn preparation_refusal(failure: Box<ProfilePreparationFailure>) -> ProfileProofRefusal {
@@ -76,28 +90,31 @@ fn preparation_refusal(failure: Box<ProfilePreparationFailure>) -> ProfileProofR
         ProfilePreparationCause::Stage(_) => "stage refusal".to_string(),
     };
     let (class, phase) = (failure.class, failure.phase);
-    ProfileProofRefusal::Incomplete(format!(
-        "profile preparation {class:?} at {phase:?}: {cause}"
-    ))
+    ProfileProofRefusal {
+        cause: ProfileProofCause::Incomplete(format!(
+            "profile preparation {class:?} at {phase:?}: {cause}"
+        )),
+        work: failure.pair_work,
+    }
 }
 
-fn region_refusal(failure: LoopRegionFailure) -> ProfileProofRefusal {
+fn region_cause(failure: LoopRegionFailure) -> ProfileProofCause {
     match failure.cause {
         LoopRegionCause::UnexpectedContact { sources, point } => {
             let edges = sources.map(|source| source.0);
-            ProfileProofRefusal::UnexpectedContact { edges, point }
+            ProfileProofCause::UnexpectedContact { edges, point }
         }
         LoopRegionCause::TangentBranches { vertex } => {
-            ProfileProofRefusal::TangentBranches { vertex }
+            ProfileProofCause::TangentBranches { vertex }
         }
-        LoopRegionCause::PinchedFace { vertex } => ProfileProofRefusal::Pinched {
+        LoopRegionCause::PinchedFace { vertex } => ProfileProofCause::Pinched {
             vertex,
             hole: false,
         },
         LoopRegionCause::PinchedHole { vertex } => {
-            ProfileProofRefusal::Pinched { vertex, hole: true }
+            ProfileProofCause::Pinched { vertex, hole: true }
         }
-        cause => ProfileProofRefusal::Incomplete(format!("{:?}: {cause:?}", failure.stage)),
+        cause => ProfileProofCause::Incomplete(format!("{:?}: {cause:?}", failure.stage)),
     }
 }
 

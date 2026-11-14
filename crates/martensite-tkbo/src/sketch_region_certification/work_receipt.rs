@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Value-only pair-work evidence copied from the validated shared census ledger.
-use super::BoundaryCensus;
+use super::{BoundaryCensus, CensusCause};
 
 /// Shared pair work, distinct from geometric tolerances and per-pair remaining work.
 /// Example: `let work = regions.proof_work(); assert!(work.consumed_pair_bisections <= u64::from(work.effective_pair_bisections));`.
@@ -20,6 +20,16 @@ impl CensusWorkReceipt {
             requested_pair_bisections: maximum,
             effective_pair_bisections: maximum,
             consumed_pair_bisections: census.bisections,
+        }
+    }
+    pub(crate) fn observed(outcome: &Result<BoundaryCensus, CensusCause>) -> Option<Self> {
+        match outcome {
+            Ok(census) => Some(Self::capture(census)),
+            Err(
+                CensusCause::SourceCancelled { completed }
+                | CensusCause::Cancelled { completed, .. },
+            ) => Some(Self::capture(completed)),
+            Err(_) => None,
         }
     }
 }

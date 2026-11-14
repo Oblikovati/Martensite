@@ -78,5 +78,15 @@ native handles. The focused public profile suite passed all 44 tests, including 
 effective and consumed work assertions. Three selected receipt/accounting controls passed, including unique-report
 accounting under alias reuse and owned Send/Sync receipts. Strict library
 clippy passed;
-refusal receipts and the public explicit-request entry point are not yet
+public refusal receipts and the public explicit-request entry point are not yet
 implemented. No default limit or geometric tolerance has been increased.
+
+Private preparation failures now retain the last observed census receipt, and
+graph refusals carry it alongside their existing typed cause. A missing receipt
+means no work observation is available; it is not converted to a zero-work
+claim. Cancellation controls distinguish stopping before census from stopping
+after the completed zero-work census. Crossing-graph refusal and malformed
+admission controls cover graph-level receipt retention. All 33 focused
+owned-profile tests, 44 public profile tests and strict library clippy passed.
+Existing public decline projection is unchanged. Exposing this evidence through
+the additive public work-request API remains the next step.

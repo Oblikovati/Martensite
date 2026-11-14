@@ -59,3 +59,42 @@ fn zero_pair_work_accepts_the_analytically_complete_lens() {
     let area = &result.faces[0].area;
     assert!((area.representative() - 4. / 3.).abs() <= area.absolute_error_bound() + f64::EPSILON);
 }
+
+fn crossing_input() -> ProfileGraphInput {
+    let points = [[0., 0., 0.], [2., 2., 0.], [0., 2., 0.], [2., 0., 0.]];
+    let edges = (0..4)
+        .map(|i| {
+            let next = (i + 1) % 4;
+            ProofEdge {
+                id: i as u64 + 1,
+                world_poles: vec![points[i], points[next]],
+                weights: None,
+                ends: [i as u64 + 1, next as u64 + 1],
+            }
+        })
+        .collect();
+    ProfileGraphInput {
+        edges,
+        plane: Plane3::default(),
+        spatial_limit: 1e-8,
+        pair_bisections: None,
+    }
+}
+#[test]
+fn graph_refusal_retains_observed_shared_work() {
+    let failure = certify_profile_graph(crossing_input()).unwrap_err();
+    let work = failure
+        .work
+        .expect("crossing graph reaches the completed census");
+    assert_eq!(work.requested_pair_bisections, 4096);
+    assert_eq!(work.effective_pair_bisections, 4096);
+    assert!(work.consumed_pair_bisections <= 4096);
+}
+#[test]
+fn graph_admission_failure_does_not_invent_an_observed_receipt() {
+    let mut input = lens_input(None);
+    input.edges[0].world_poles.clear();
+    let failure = certify_profile_graph(input).unwrap_err();
+    assert!(failure.work.is_none());
+    assert!(matches!(failure.cause, ProfileProofCause::Incomplete(_)));
+}

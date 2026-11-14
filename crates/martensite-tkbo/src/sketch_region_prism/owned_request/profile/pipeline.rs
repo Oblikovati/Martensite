@@ -9,7 +9,9 @@ use crate::sketch_region::{
     ArrangementCompletion, ArrangementPhase, PartitionOccurrenceIdentity, observe_partition_space,
 };
 use crate::sketch_region_candidates::observe_candidate_copies;
-use crate::sketch_region_certification::{capture_boundary_inputs, enumerate_carrier_census};
+use crate::sketch_region_certification::{
+    CensusWorkReceipt, capture_boundary_inputs, enumerate_carrier_census,
+};
 use crate::sketch_region_contact_transport::{ContactTransportPhase, transport_partition_contacts};
 use crate::sketch_region_partition_bindings::{PartitionBoundOutputs, bind_partition_outputs};
 use crate::sketch_region_source_conformance::{capture_originals, capture_space_representation};
@@ -26,6 +28,7 @@ pub(in crate::sketch_region_prism) struct ProfilePreparationFailure {
     pub callback: Option<OwnedPrismCallbackStop>,
     pub phase: OwnedPrismPhase,
     pub request: OwnedProfileRequest,
+    pub pair_work: Option<CensusWorkReceipt>,
 }
 /// Prepared profile: owned request, constructed edges and the contact transaction.
 pub(in crate::sketch_region_prism) struct PreparedProfile {
@@ -47,6 +50,7 @@ struct Retained<'a, 'p> {
     request: &'a OwnedProfileRequest,
     callbacks: OwnedPrismCallbacks<'p>,
     phase: OwnedPrismPhase,
+    pair_work: Option<CensusWorkReceipt>,
 }
 
 /// Prepare an owned profile; `prepare_owned_profile(request, &mut progress)`.
@@ -55,23 +59,42 @@ pub(in crate::sketch_region_prism) fn prepare_owned_profile(
     request: OwnedProfileRequest,
     progress: &mut dyn OwnedPrismProgress,
 ) -> Result<PreparedProfile, Box<ProfilePreparationFailure>> {
-    let mut retained = Retained {
-        request: &request,
-        callbacks: OwnedPrismCallbacks::new(progress),
-        phase: OwnedPrismPhase::Admission,
-    };
+    let mut retained = begin_profile(&request, progress);
     let outcome = execute(&mut retained);
-    let (phase, stop) = (retained.phase, retained.callbacks.stop.take());
+    let (phase, stop, work) = (
+        retained.phase,
+        retained.callbacks.stop.take(),
+        retained.pair_work,
+    );
     match (outcome, stop) {
-        (Ok((edges, bridge)), None) => Ok(PreparedProfile {
-            request,
-            edges,
-            bridge,
-        }),
-        (Ok(_), stop @ Some(_)) => Err(failed(request, cause_callback(), stop, phase)),
-        (Err(cause), stop) => Err(failed(request, cause, stop, phase)),
+        (Ok((edges, bridge)), None) => Ok(complete_profile(request, edges, bridge)),
+        (Ok(_), stop @ Some(_)) => Err(failed(request, cause_callback(), stop, phase, work)),
+        (Err(cause), stop) => Err(failed(request, cause, stop, phase, work)),
     }
 }
+fn begin_profile<'a, 'p>(
+    request: &'a OwnedProfileRequest,
+    progress: &'p mut dyn OwnedPrismProgress,
+) -> Retained<'a, 'p> {
+    Retained {
+        request,
+        callbacks: OwnedPrismCallbacks::new(progress),
+        phase: OwnedPrismPhase::Admission,
+        pair_work: None,
+    }
+}
+fn complete_profile(
+    request: OwnedProfileRequest,
+    edges: Vec<ConstructedProfileEdge>,
+    bridge: PairedContactTransaction,
+) -> PreparedProfile {
+    PreparedProfile {
+        request,
+        edges,
+        bridge,
+    }
+}
+
 fn cause_callback() -> ProfilePreparationCause {
     ProfilePreparationCause::Stage(OwnedPreparationCause::Callback)
 }
@@ -111,6 +134,7 @@ impl Retained<'_, '_> {
         let callbacks = &mut self.callbacks;
         let poll = || callbacks.poll(OwnedPrismPhase::Census);
         let census = enumerate_carrier_census(inputs, policy.census, policy.source, poll);
+        self.pair_work = CensusWorkReceipt::observed(&census);
         census.map_err(|cause| stage(cause.into()))
     }
     fn partition(&mut self, sources: &[ArrangementSource<'_>]) -> Check<PartitionBoundOutputs> {
@@ -172,17 +196,26 @@ fn failed(
     cause: ProfilePreparationCause,
     callback: Option<OwnedPrismCallbackStop>,
     phase: OwnedPrismPhase,
+    pair_work: Option<CensusWorkReceipt>,
 ) -> Box<ProfilePreparationFailure> {
-    let class = match (&callback, &cause) {
-        (Some(stop), _) => callback_class(&stop.cause),
-        (None, ProfilePreparationCause::Stage(cause)) => preparation_class(cause),
-        (None, ProfilePreparationCause::Admission(_)) => OwnedPreparationClass::Failed,
-    };
+    let class = classified_failure(&cause, callback.as_ref());
     Box::new(ProfilePreparationFailure {
         class,
         cause,
         callback,
         phase,
         request,
+        pair_work,
     })
+}
+
+fn classified_failure(
+    cause: &ProfilePreparationCause,
+    callback: Option<&OwnedPrismCallbackStop>,
+) -> OwnedPreparationClass {
+    match (callback, cause) {
+        (Some(stop), _) => callback_class(&stop.cause),
+        (None, ProfilePreparationCause::Stage(cause)) => preparation_class(cause),
+        (None, ProfilePreparationCause::Admission(_)) => OwnedPreparationClass::Failed,
+    }
 }

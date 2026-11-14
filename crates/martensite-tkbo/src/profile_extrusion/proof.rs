@@ -8,8 +8,8 @@ use super::loops::ProfileLoop;
 use super::proof_pieces::PieceTable;
 use super::topology::native_plane;
 use crate::sketch_region_prism::{
-    AuthoredLoopUse, GraphFaceProof, GraphRegionCertificate, ProfileProofRefusal,
-    certify_profile_graph,
+    AuthoredLoopUse, GraphFaceProof, GraphRegionCertificate, ProfileProofCause,
+    ProfileProofRefusal, certify_profile_graph,
 };
 
 /// One certified face: its counterclockwise outer loop, clockwise holes and certified area
@@ -80,19 +80,19 @@ fn incomplete(reason: String) -> DeclineCause {
 
 fn declined(refusal: ProfileProofRefusal, table: &PieceTable) -> DeclineCause {
     let caller = |vertex: u64| table.caller_vertex(vertex);
-    match refusal {
-        ProfileProofRefusal::UnexpectedContact { edges, point } => DeclineCause::SelfIntersecting {
+    match refusal.cause {
+        ProfileProofCause::UnexpectedContact { edges, point } => DeclineCause::SelfIntersecting {
             curves: edges.map(|edge| table.curve_of(edge)),
             point: Some(point),
         },
-        ProfileProofRefusal::TangentBranches { vertex } => match caller(vertex) {
+        ProfileProofCause::TangentBranches { vertex } => match caller(vertex) {
             Some(vertex) => DeclineCause::TangentBranches { vertex },
             None => incomplete(format!("tangent branches at split point {vertex}")),
         },
-        ProfileProofRefusal::Pinched { vertex, hole } => match caller(vertex) {
+        ProfileProofCause::Pinched { vertex, hole } => match caller(vertex) {
             Some(vertex) => DeclineCause::PinchedRegion { vertex, hole },
             None => incomplete(format!("pinched boundary at split point {vertex}")),
         },
-        ProfileProofRefusal::Incomplete(reason) => incomplete(reason),
+        ProfileProofCause::Incomplete(reason) => incomplete(reason),
     }
 }
