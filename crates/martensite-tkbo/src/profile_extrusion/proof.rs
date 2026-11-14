@@ -33,13 +33,17 @@ pub(crate) struct CertifiedRegions {
     pub work: super::PlanarProofWorkReceipt,
 }
 
-/// Certify every face of `profile`; any refusal is a typed decline.
-pub(crate) fn certify_regions(profile: &AdmittedProfile) -> Result<CertifiedRegions, DeclineCause> {
+pub(crate) struct RegionProofFailure {
+    pub cause: DeclineCause,
+    pub work: Option<super::PlanarProofWorkReceipt>,
+}
+/// Certify every face under the unchanged or explicitly requested pair-work policy.
+pub(crate) fn certify_regions(
+    profile: &AdmittedProfile,
+    pair_bisections: Option<u16>,
+) -> Result<CertifiedRegions, RegionProofFailure> {
     let table = PieceTable::new(profile);
-    let plane = native_plane(&profile.frame)
-        .map_err(|failure| incomplete(format!("declared plane: {failure}")))?;
-    let input = table.graph_input(plane, profile.resolution.weld);
-    let certificate = certify_profile_graph(input).map_err(|r| declined(r, &table))?;
+    let certificate = graph_certificate(profile, &table, pair_bisections)?;
     let mut faces = faces(&certificate, &table);
     faces.sort_by_key(|face| {
         let first = face.outer.uses[0];
@@ -51,6 +55,25 @@ pub(crate) fn certify_regions(profile: &AdmittedProfile) -> Result<CertifiedRegi
         carrier_pairs: certificate.carrier_pairs,
         components: certificate.components.len(),
         work: certificate.work,
+    })
+}
+fn graph_certificate(
+    profile: &AdmittedProfile,
+    table: &PieceTable,
+    pair_bisections: Option<u16>,
+) -> Result<GraphRegionCertificate, RegionProofFailure> {
+    let plane = native_plane(&profile.frame).map_err(|failure| RegionProofFailure {
+        cause: incomplete(format!("declared plane: {failure}")),
+        work: None,
+    })?;
+    let mut input = table.graph_input(plane, profile.resolution.weld);
+    input.pair_bisections = pair_bisections;
+    certify_profile_graph(input).map_err(|refusal| {
+        let work = refusal.work;
+        RegionProofFailure {
+            cause: declined(refusal, table),
+            work,
+        }
     })
 }
 

@@ -47,15 +47,58 @@ const DECLINE: Decliner = Decliner {
 /// # Ok::<(), OperationDecline>(())
 /// ```
 pub fn build_planar_regions(profile: &SketchProfile, resolution: Resolution) -> PlanarRegionResult {
-    let profile =
-        admit_profile(profile, resolution).map_err(|c| DECLINE.at(Stage::Admission, c))?;
-    require_closed(&profile).map_err(|c| DECLINE.at(Stage::Loops, c))?;
-    let certified = certify_regions(&profile).map_err(|c| DECLINE.at(Stage::Certification, c))?;
-    let topology = build_topology(&profile)
+    build_with_work(
+        profile,
+        resolution,
+        super::PlanarProofWorkLimit::CurrentDefault,
+    )
+    .map_err(super::PlanarRegionWorkFailure::into_decline)
+}
+/// Build every bounded region with an explicit finite shared pair-work choice.
+/// Example: `build_planar_regions_with_work(&profile, resolution, PlanarProofWorkLimit::PairBisections(8192))?`.
+pub fn build_planar_regions_with_work(
+    profile: &SketchProfile,
+    resolution: Resolution,
+    requested: super::PlanarProofWorkLimit,
+) -> super::PlanarRegionWorkResult {
+    build_with_work(profile, resolution, requested)
+}
+fn build_with_work(
+    profile: &SketchProfile,
+    resolution: Resolution,
+    requested: super::PlanarProofWorkLimit,
+) -> super::PlanarRegionWorkResult {
+    let unobserved = |decline| super::PlanarRegionWorkFailure::new(requested, decline, None);
+    let profile = admit_profile(profile, resolution)
+        .map_err(|cause| unobserved(DECLINE.at(Stage::Admission, cause)))?;
+    require_closed(&profile).map_err(|cause| unobserved(DECLINE.at(Stage::Loops, cause)))?;
+    let certified = certified_for_work(&profile, requested)?;
+    construct_regions(&profile, &certified).map_err(|decline| {
+        super::PlanarRegionWorkFailure::new(requested, decline, Some(certified.work))
+    })
+}
+fn certified_for_work(
+    profile: &AdmittedProfile,
+    requested: super::PlanarProofWorkLimit,
+) -> Result<CertifiedRegions, super::PlanarRegionWorkFailure> {
+    certify_regions(profile, requested.override_limit()).map_err(|failure| {
+        super::PlanarRegionWorkFailure::new(
+            requested,
+            DECLINE.at(Stage::Certification, failure.cause),
+            failure.work,
+        )
+    })
+}
+
+fn construct_regions(
+    profile: &AdmittedProfile,
+    certified: &CertifiedRegions,
+) -> PlanarRegionResult {
+    let topology = build_topology(profile)
         .map_err(|f| DECLINE.native(Stage::Construction, "profile topology", f))?;
     let context = RegionContext {
-        profile: &profile,
-        certified: &certified,
+        profile,
+        certified,
         topology: &topology,
     };
     let regions = certified

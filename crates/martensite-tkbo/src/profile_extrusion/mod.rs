@@ -9,8 +9,10 @@
 //! - [`extrude`] sweeps one region along a vector into an [`OperationResult`]: the solid,
 //!   its complete source to result history, findings, validation and achieved tolerance.
 //!
+//! [`build_planar_regions_with_work`] accepts a finite shared pair-work choice and
+//! retains observed work on failure. Computational limits do not alter geometric accuracy.
 //! Every operation is non-destructive and either succeeds completely or returns a typed
-//! [`OperationDecline`]; no partial result exists.
+//! decline; no partial result exists.
 mod admission;
 mod admit_curves;
 mod admitted;
@@ -37,11 +39,12 @@ mod sweep_history;
 mod sweep_images;
 mod topology;
 mod validation;
+mod work;
 
 pub use crate::body_check::ValidationReport;
 pub use crate::measured::{Evidence, IntegrationMethod, Measured, MeasuredPoint};
 pub use crate::sketch_region_certification::CensusWorkReceipt as PlanarProofWorkReceipt;
-pub use build_regions::build_planar_regions;
+pub use build_regions::{build_planar_regions, build_planar_regions_with_work};
 pub use decline::{
     DeclineCause, DeclineClass, OperationDecline, OperationKind, OperationStage,
     ValidationStageKind,
@@ -53,6 +56,7 @@ pub use profile::*;
 pub use regions::*;
 pub use resolution::*;
 pub use validation::{Finding, RegionValidation, SelfIntersectionEvidence, StageStatus};
+pub use work::{PlanarProofWorkLimit, PlanarRegionWorkFailure, PlanarRegionWorkResult};
 
 #[cfg(test)]
 mod area_translation_tests;

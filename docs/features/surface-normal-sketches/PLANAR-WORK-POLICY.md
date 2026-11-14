@@ -78,8 +78,8 @@ native handles. The focused public profile suite passed all 44 tests, including 
 effective and consumed work assertions. Three selected receipt/accounting controls passed, including unique-report
 accounting under alias reuse and owned Send/Sync receipts. Strict library
 clippy passed;
-public refusal receipts and the public explicit-request entry point are not yet
-implemented. No default limit or geometric tolerance has been increased.
+the additive explicit-request entry point and public refusal receipts are now
+implemented locally, with qualification described below. No default limit or geometric tolerance has been increased.
 
 Private preparation failures now retain the last observed census receipt, and
 graph refusals carry it alongside their existing typed cause. A missing receipt
@@ -88,5 +88,28 @@ claim. Cancellation controls distinguish stopping before census from stopping
 after the completed zero-work census. Crossing-graph refusal and malformed
 admission controls cover graph-level receipt retention. All 33 focused
 owned-profile tests, 44 public profile tests and strict library clippy passed.
-Existing public decline projection is unchanged. Exposing this evidence through
-the additive public work-request API remains the next step.
+Existing public decline projection is unchanged. The additive public work-request API now exposes this evidence.
+
+## Additive public entry point
+
+`build_planar_regions_with_work` accepts `PlanarProofWorkLimit::CurrentDefault`
+or an explicit finite `PairBisections(u16)`. The existing builder delegates to
+the same pipeline and projects failures back to its original return type.
+No field was added to the public `Resolution` structure.
+
+`PlanarRegionWorkFailure` retains the requested work choice, the existing typed
+decline and an optional observed receipt. No observed receipt is not a
+zero-work assertion. Failed operations return no partial regions. The new
+request and failure types pass compile-time Send/Sync controls.
+
+All 50 public profile tests passed, including existing defaults and declines,
+explicit default equivalence, zero-work analytical completion, unobserved
+admission failure and observed crossing failure. The existing tilted-ellipse
+fixture consumed its one permitted bisection and refused. With an explicit
+8192-bisection cap, the same profile completed with nonzero consumed work and
+its independent area of π inside the reported enclosure. Its resolution stayed
+unchanged. Wrapped-request plumbing, full glyph acceptance, replay of these
+new receipts and P5 performance-budget qualification remain open. The failure
+retains the legacy typed decline; precise root-exhaustion and curve-pair
+projection still need to be carried through without parsing rendered text.
+No default or geometric limit was increased.
