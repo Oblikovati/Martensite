@@ -18,6 +18,12 @@ pub(super) struct OriginalClearance {
 #[derive(Debug)]
 pub(super) enum ClearanceFailure {
     Authored(Box<storage::StorageFailure>),
+    EmptySelection,
+    SelectionBinding {
+        actual: Vec<SurfaceRegionId>,
+        expected: Vec<SurfaceRegionId>,
+    },
+    DuplicateSource(SurfaceCurveId),
     Sources(Box<planar_cones::ConeFailure>),
     Certificate {
         spans: Vec<CurveSpan>,
@@ -38,6 +44,27 @@ impl std::fmt::Display for ClearanceFailure {
                 f,
                 "clearance source intervals={actual:?}; expected original intervals={expected:?} with matching retained O2 coefficients"
             ),
+            _ => self.selection_message(f),
+        }
+    }
+}
+
+impl ClearanceFailure {
+    fn selection_message(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::SelectionBinding { actual, expected } => write!(
+                f,
+                "clearance regions={actual:?}; expected prepared owners={expected:?}"
+            ),
+            Self::EmptySelection => write!(
+                f,
+                "clearance regions=0; expected at least one original region"
+            ),
+            Self::DuplicateSource(curve) => write!(
+                f,
+                "clearance curve={curve:?}; expected globally unique authored curve IDs"
+            ),
+            _ => write!(f, "{self:?}"),
         }
     }
 }
@@ -46,12 +73,22 @@ pub(super) fn certify(
     original: &Request,
     prepared: &Request,
 ) -> Result<OriginalClearance, ClearanceFailure> {
-    let authored = storage::authored_index(original)
-        .map_err(|cause| ClearanceFailure::Authored(Box::new(cause)))?;
+    certify_many(
+        std::slice::from_ref(original),
+        std::slice::from_ref(prepared),
+    )
+}
+pub(super) fn certify_many(
+    originals: &[Request],
+    prepared: &[Request],
+) -> Result<OriginalClearance, ClearanceFailure> {
+    let first = originals.first().ok_or(ClearanceFailure::EmptySelection)?;
+    selection_binding(originals, prepared)?;
+    let authored = authored_collection(originals)?;
     let spans = prepared_spans(prepared);
     let sources = sources(&spans, &authored)?;
     let excluded = excluded_pairs(prepared);
-    let query = clearance_query(original, &sources, &excluded);
+    let query = clearance_query(first, &sources, &excluded);
     let certificate = certify_input(query, &spans)?;
     let periodic = certify_periodic(&certificate, &spans)?;
     Ok(OriginalClearance {
@@ -59,6 +96,30 @@ pub(super) fn certify(
         certificate,
         periodic,
     })
+}
+fn selection_binding(originals: &[Request], prepared: &[Request]) -> Result<(), ClearanceFailure> {
+    let expected: Vec<_> = originals.iter().map(|r| r.region).collect();
+    let actual: Vec<_> = prepared.iter().map(|r| r.region).collect();
+    if actual != expected {
+        return Err(ClearanceFailure::SelectionBinding { actual, expected });
+    }
+    Ok(())
+}
+
+fn authored_collection(
+    originals: &[Request],
+) -> Result<std::collections::BTreeMap<SurfaceCurveId, &[[f64; 2]]>, ClearanceFailure> {
+    let mut result = std::collections::BTreeMap::new();
+    for original in originals {
+        let indexed = storage::authored_index(original)
+            .map_err(|cause| ClearanceFailure::Authored(Box::new(cause)))?;
+        for (curve, poles) in indexed {
+            if result.insert(curve, poles).is_some() {
+                return Err(ClearanceFailure::DuplicateSource(curve));
+            }
+        }
+    }
+    Ok(result)
 }
 
 fn certify_periodic(
@@ -73,11 +134,10 @@ fn certify_periodic(
         })
 }
 
-fn prepared_spans(prepared: &Request) -> Vec<CurveSpan> {
+fn prepared_spans(prepared: &[Request]) -> Vec<CurveSpan> {
     prepared
-        .loops
         .iter()
-        .flatten()
+        .flat_map(|request| request.loops.iter().flatten())
         .map(|piece| piece.span)
         .collect()
 }
@@ -121,10 +181,10 @@ fn sources<'a>(
         .collect()
 }
 
-fn excluded_pairs(prepared: &Request) -> Vec<[usize; 2]> {
+fn excluded_pairs(prepared: &[Request]) -> Vec<[usize; 2]> {
     let mut offset = 0;
     let mut result = BTreeSet::new();
-    for contour in &prepared.loops {
+    for contour in prepared.iter().flat_map(|request| &request.loops) {
         for i in 0..contour.len() {
             let mut pair = [offset + i, offset + (i + 1) % contour.len()];
             pair.sort();

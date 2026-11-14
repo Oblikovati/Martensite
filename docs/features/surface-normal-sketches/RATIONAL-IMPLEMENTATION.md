@@ -202,3 +202,14 @@ depth offsets. This geometric discrepancy remains separate from the represented
 flux integration error. The [source-matched comparison](MEASURE-COMPARISON.md) now bounds their
 difference through the full outward enclosures. The remaining publication gates
 are still required; the result remains `Unqualified`.
+
+
+## Disconnected selection preparation
+
+The [collection selection stage](PLANAR-SELECTION.md) now reuses one global
+planar arrangement and one complete prepared boundary relation for all selected
+regions. Separate members and an island inside an unselected hole pass;
+containment in filled material and undeclared contacts refuse. A pinned periodic
+counterexample demonstrates that boundary clearance alone cannot admit a
+collection. Exact periodic material classification is the next required gate;
+collection bodies are not constructed or published yet.

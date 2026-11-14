@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added global planar selection and shared boundary-clearance preparation for disconnected wrapped-profile regions, preserving authored identities and rejecting overlapping filled selections (#418).
+
 - Added source-matched outward comparisons between retained cylindrical boundary flux and ideal normal volume, preserving separate integration, profile-displacement and representative-error evidence (#418).
 
 - Added source-bound closed-profile area and ideal cylindrical normal-volume enclosures, with exact requested depth arithmetic and explicit geometric-error reporting or refusal (#418).

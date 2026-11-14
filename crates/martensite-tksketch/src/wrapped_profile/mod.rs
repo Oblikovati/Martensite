@@ -8,6 +8,7 @@ mod pipeline;
 mod planar;
 mod planar_clearance;
 mod planar_cones;
+mod selection;
 mod storage;
 mod subdivision;
 mod tests;
