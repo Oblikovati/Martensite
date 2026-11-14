@@ -10,6 +10,14 @@ fn mixed_profile_covers_every_nonadjacent_pair() {
     assert_eq!(proof.certificate.pair_count(), 152);
     assert_eq!(proof.certificate.excluded_pairs().len(), 19);
     assert!(proof.certificate.clearance_lower_bound() >= 4. * original.tolerance);
+    assert!(
+        proof
+            .periodic
+            .separation_lower_bound()
+            .compare_f64(4. * original.tolerance)
+            .unwrap()
+            .is_ge()
+    );
 }
 
 #[test]

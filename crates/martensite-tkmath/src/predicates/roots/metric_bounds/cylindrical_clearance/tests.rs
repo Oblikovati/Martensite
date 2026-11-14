@@ -300,3 +300,6 @@ fn invalid_policy_refuses_before_capture() {
 }
 
 mod binding;
+
+#[path = "tests/periodic_slab.rs"]
+mod periodic_slab;

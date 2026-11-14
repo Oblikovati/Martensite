@@ -145,8 +145,10 @@ controls and moving-endpoint homotopy. Strict derivative-cone margins now pass
 for every prepared piece and adjacent pair, bound to their retained O2 sources.
 Certified hierarchy pruning and cached dyadic covers now establish all 152
 nonadjacent clearances before wrapped native construction. Their original
-source/interval/chart records bind back to retained O2 proofs. Periodic chart
-admission remains open.
+source/interval/chart records bind back to retained O2 proofs. An outward
+true-circumference slab proof now excludes all nonzero periodic images when the
+whole source width leaves the required clearance. Wider periodic classification
+and multiple-chart fitting remain open.
 
 ## Remaining gates
 

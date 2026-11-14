@@ -20,7 +20,7 @@ use crate::predicates::roots::certificate_arithmetic::{
 };
 use error::Checked;
 pub use error::{CylindricalClearanceError, CylindricalClearanceFailure};
-pub use report::CertifiedCylindricalClearance;
+pub use report::{CertifiedCylindricalClearance, CertifiedCylindricalPeriodicSlab};
 pub use types::*;
 type Point = [Interval; 2];
 

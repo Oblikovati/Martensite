@@ -40,6 +40,12 @@ pub enum CylindricalClearanceFailure {
         /// Offending input.
         value: f64,
     },
+    /// The source slab could not establish separation from all true periodic images.
+    /// This is incomplete evidence, not a witness of overlapping material.
+    PeriodicSlabUnresolved {
+        /// Conservative first-period slab gap, which can be negative.
+        separation_lower: DyadicBound,
+    },
     /// An original polynomial must have two through four control points.
     SourceShape {
         /// Local source position.

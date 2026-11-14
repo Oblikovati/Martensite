@@ -2,8 +2,9 @@
 
 Status, 2026-11-14: authored material capture, local derivative cones and
 nonadjacent developed-plane clearance are integrated into the private pipeline.
-Periodic cylinder injectivity and publication remain open. The operation still
-returns `Unqualified`.
+A certified true-period slab now covers every nonzero image for narrow
+selections. Wider periodic classification and publication remain open. The
+operation still returns `Unqualified`.
 
 ## Implemented material capture
 
@@ -252,3 +253,46 @@ classify periodic material for disconnected selections: a small translated
 component can lie strictly inside a larger selected component without touching
 its boundary. P4 must prove material disjointness as well, reusing planar nesting
 or a stronger certified global-box exclusion. No version change is authorized.
+
+
+## Periodic slab checkpoint
+
+The private pipeline now certifies an enclosing developed slab before native
+construction. It reuses the outward Machin π bound from trigonometric argument
+reduction. Exact original dyadic restrictions provide a control-hull width
+upper bound `W`; interval multiplication encloses the true circumference
+`T = 2πR`. The proof requires `T_lower - W >= 4ε`, with the same spatial
+clearance as ordinary pair separation.
+
+For every nonzero integer image `k`, the slab gap is at least
+`|k| T_lower - W >= T_lower - W`. This covers both signs and all image numbers
+without a finite sampling assumption or a rounded period. A bounded planar
+region enclosed by these sources lies in the slab too, so the proof also
+excludes periodic containment of disconnected material in this case. The
+certificate retains the original source proof and binds back to the later O2
+inputs and chart. Slab width, circumference interval, achieved separation and
+arithmetic cost remain separate measurements.
+
+This additional proof uses a fresh finite arithmetic allowance from the original
+policy. Exhaustion, cancellation and insufficient precision return incomplete
+evidence. A slab wider than the permitted bound also returns incomplete evidence;
+it does not prove material overlap. The current angular admission remains in
+place. General image relations, periodic containment classification and a priori
+multiple-chart fitting are still required for wider selections.
+
+Controls distinguish binary64 `TAU` from the true circumference, restrict the
+original source interval, preserve a large chart translation, refuse the
+possible disconnected-containment case, and retain resource/cancellation
+refusals. A radius of `1e-40` refuses at 128 fractional bits and passes at 256
+bits under the unchanged margin. Independent exact-rational alternating sums
+check the extracted Machin enclosure at 8, 64, 128 and 256 bits; the original
+trigonometric enclosure control also passes.
+
+Verification passed 482 math library tests, 3,114 math integration tests,
+56 math doctests, 37 sketch library tests and 32 sketch integration tests.
+The nine periodic slab controls passed again after the final test-helper edit;
+strict all-target clippy passed for both packages. The isolated debug
+loop-with-hole fixture took 3.51 seconds with peak RSS 51,940 KiB, within the
+unchanged five-second limit. These individual timings do not establish a
+performance improvement. The approximate style scan found all inspected files
+under 500 lines, functions at most 20 code lines and nesting at most two.

@@ -1,8 +1,9 @@
 //! Certify every nonadjacent authored pair before native construction, then bind retained O2 sources.
 use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::{
-    CertifiedCylindricalClearance, CylindricalClearanceDomain, CylindricalClearanceError,
-    CylindricalClearanceQuery, CylindricalClearanceSource, certify_cylindrical_clearance,
+    CertifiedCylindricalClearance, CertifiedCylindricalPeriodicSlab, CylindricalClearanceDomain,
+    CylindricalClearanceError, CylindricalClearanceQuery, CylindricalClearanceSource,
+    certify_cylindrical_clearance,
 };
 use std::collections::BTreeSet;
 #[cfg(test)]
@@ -12,6 +13,7 @@ mod tests;
 pub(super) struct OriginalClearance {
     pub spans: Vec<CurveSpan>,
     pub certificate: CertifiedCylindricalClearance,
+    pub periodic: CertifiedCylindricalPeriodicSlab,
 }
 #[derive(Debug)]
 pub(super) enum ClearanceFailure {
@@ -46,17 +48,38 @@ pub(super) fn certify(
 ) -> Result<OriginalClearance, ClearanceFailure> {
     let authored = storage::authored_index(original)
         .map_err(|cause| ClearanceFailure::Authored(Box::new(cause)))?;
-    let spans: Vec<_> = prepared
-        .loops
-        .iter()
-        .flatten()
-        .map(|piece| piece.span)
-        .collect();
+    let spans = prepared_spans(prepared);
     let sources = sources(&spans, &authored)?;
     let excluded = excluded_pairs(prepared);
     let query = clearance_query(original, &sources, &excluded);
     let certificate = certify_input(query, &spans)?;
-    Ok(OriginalClearance { spans, certificate })
+    let periodic = certify_periodic(&certificate, &spans)?;
+    Ok(OriginalClearance {
+        spans,
+        certificate,
+        periodic,
+    })
+}
+
+fn certify_periodic(
+    certificate: &CertifiedCylindricalClearance,
+    spans: &[CurveSpan],
+) -> Result<CertifiedCylindricalPeriodicSlab, ClearanceFailure> {
+    certificate
+        .certify_periodic_slab(|| false)
+        .map_err(|cause| ClearanceFailure::Certificate {
+            spans: spans.to_vec(),
+            cause: Box::new(cause),
+        })
+}
+
+fn prepared_spans(prepared: &Request) -> Vec<CurveSpan> {
+    prepared
+        .loops
+        .iter()
+        .flatten()
+        .map(|piece| piece.span)
+        .collect()
 }
 
 fn clearance_query<'a>(
@@ -120,7 +143,10 @@ pub(super) fn bind(
 ) -> Result<(), ClearanceFailure> {
     let (spans, sources) = planar_cones::source_collection(original, prepared, stored)
         .map_err(|cause| ClearanceFailure::Sources(Box::new(cause)))?;
-    if spans != evidence.spans || !evidence.certificate.matches_profiles(&sources) {
+    if spans != evidence.spans
+        || !evidence.certificate.matches_profiles(&sources)
+        || !evidence.periodic.matches_profiles(&sources)
+    {
         return Err(ClearanceFailure::Binding {
             expected: evidence.spans.clone(),
             actual: spans,

@@ -20,9 +20,10 @@ pub use parameter::MetricParameterMap;
 mod coefficients;
 mod cylindrical_clearance;
 pub use cylindrical_clearance::{
-    CertifiedCylindricalClearance, CylindricalClearanceDomain, CylindricalClearanceError,
-    CylindricalClearanceFailure, CylindricalClearanceOptions, CylindricalClearanceQuery,
-    CylindricalClearanceScope, CylindricalClearanceSource, certify_cylindrical_clearance,
+    CertifiedCylindricalClearance, CertifiedCylindricalPeriodicSlab, CylindricalClearanceDomain,
+    CylindricalClearanceError, CylindricalClearanceFailure, CylindricalClearanceOptions,
+    CylindricalClearanceQuery, CylindricalClearanceScope, CylindricalClearanceSource,
+    certify_cylindrical_clearance,
 };
 mod cylindrical_cone;
 /// Original cylindrical profile source shared by local and collection certificates.

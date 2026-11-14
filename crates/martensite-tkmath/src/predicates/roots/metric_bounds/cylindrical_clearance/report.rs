@@ -158,3 +158,7 @@ fn owned_domain(
         }
     }
 }
+
+#[path = "periodic_slab.rs"]
+mod periodic_slab;
+pub use periodic_slab::CertifiedCylindricalPeriodicSlab;
