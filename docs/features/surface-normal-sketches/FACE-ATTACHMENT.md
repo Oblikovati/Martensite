@@ -27,6 +27,27 @@ failure class and owned evidence. Validation failures retain the complete report
 Replay failures identify the first byte difference and both lengths. Failed
 operations return no attachment geometry.
 
+## Native hit coordinates and seam choice
+
+`develop_parameters` accepts the selected face's native `(u,v)` hit parameters,
+the current revision, a seam angle, and an explicit out-of-support policy.
+Existing face intersectors already return these parameters. The method maps them
+to `(radius * (u - seam_angle), v)` without projecting the world hit again or
+reducing its angular branch. The caller retains the chosen unwrapped parameter.
+The seam angle defines zero developed arc length; it does not change native trims.
+
+Coordinate measurements enclose rounding of that expression on the supplied
+binary64 parameters and native analytic radius. They exclude uncertainty in the
+intersector parameters and deviation of the stored frame from an ideal metric
+frame. The chart therefore supports authoring; its arithmetic certificate does
+not certify a modelling result or a world-point projection.
+
+Native face classification reports the selected face's trim state separately,
+with `NativeSearch` coverage. `Refuse` declines outside points. `Report` returns
+their coordinates and outside state for application feedback. Unknown or rejected
+classifications always refuse. These policies concern hit authoring; full-profile
+support-trim acceptance for boss/pocket operations remains open.
+
 ## Evidence and remaining work
 
 The local attachment campaign passed 19 tests in 0.24 seconds, including a real
@@ -40,8 +61,18 @@ after nested native/encoding diagnostics were boxed. The logs are
 `target/qualification/p420-attachment-clippy.log`.
 
 This establishes the attachment foundation. #420 still requires the complete
-wrapped boss/pocket operation, analytic hit-to-developed mapping with seam and
+wrapped boss/pocket operation, complete hit-to-sketch integration and profile
 support-trim policy, authored-history composition, and deterministic replay of
 those operations. The Boolean test exercises native history integration; it does
 not qualify wrapped multiline emboss/engrave or close #420. The wider feature
 also retains its conical-profile, performance, sanitizer and P6 exit requirements.
+
+The combined local campaign passed 25 attachment/chart tests in 0.27 seconds
+(`target/qualification/p420-chart-final.log`). Six chart controls include a real
+native ray hit, explicit seam coordinates, arithmetic underflow/overflow, stale
+revisions, nonfinite parameters, and outside reporting/refusal. These are separate
+from the completed 19-test attachment checkpoint above.
+
+Strict TKSketch all-target Clippy also passed for the chart checkpoint
+(`target/qualification/p420-chart-clippy.log`). Independent Standards and Spec
+reviews found no remaining defect in the mapping contract.

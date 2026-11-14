@@ -8,6 +8,8 @@ use martensite_tkmath::geom_abs::SurfaceType;
 pub enum AttachmentOperation {
     /// Capture mutable native input into a validated immutable record.
     Capture,
+    /// Convert native selected-face parameters into developed coordinates.
+    Develop,
     /// Restore and validate a persistence record.
     Restore,
     /// Resolve a revision and decode detached native owners.
@@ -18,6 +20,18 @@ pub enum AttachmentOperation {
 /// Typed reason no attachment or native export was returned.
 #[derive(Debug)]
 pub enum AttachmentFailureCause {
+    /// Invalid or unrepresentable analytic chart value.
+    ChartValue {
+        /// Failed chart quantity.
+        field: &'static str,
+        /// Supplied or computed value.
+        value: f64,
+    },
+    /// Native trim classification did not satisfy the requested authoring policy.
+    ChartTrim {
+        /// Actual native state, including unresolved states.
+        state: martensite_tkg3d::top_abs::State,
+    },
     /// Native geometry or topology query failed.
     Native {
         /// Native action that failed.

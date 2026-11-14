@@ -6,6 +6,8 @@ use martensite_tkbrep::{
     topods::{Face, Shape},
 };
 mod admission;
+mod chart;
+pub use chart::{CylinderParameterRequest, DevelopedCylinderHit, OutOfSupportPolicy};
 mod codec;
 mod failure;
 mod failure_class;

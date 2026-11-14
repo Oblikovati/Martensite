@@ -28,7 +28,9 @@ impl AttachmentFailure {
             Cause::Validation(_) => AttachmentFailureClass::Validation,
             Cause::Revision { .. } => AttachmentFailureClass::StaleRevision,
             Cause::HistoryImages { .. } => AttachmentFailureClass::UnresolvedHistory,
-            Cause::Membership { .. }
+            Cause::ChartValue { .. }
+            | Cause::ChartTrim { .. }
+            | Cause::Membership { .. }
             | Cause::Orientation { .. }
             | Cause::Surface { .. }
             | Cause::Resolution { .. }
@@ -41,6 +43,8 @@ impl AttachmentFailure {
 impl AttachmentFailureCause {
     pub(super) fn expected_shape(&self) -> &'static str {
         match self {
+            Self::ChartValue { .. } => CHART_EXPECTED,
+            Self::ChartTrim { .. } => TRIM_EXPECTED,
             Self::Native { .. } => "a completed native geometry/topology query",
             Self::Encoding(_) => "a complete checked root and selected-face encoding",
             Self::Membership { .. } => "exactly one selected-face use in the support body",
@@ -58,3 +62,7 @@ impl AttachmentFailureCause {
         }
     }
 }
+
+const CHART_EXPECTED: &str =
+    "finite chart inputs and finite representable coordinates with positive radius";
+const TRIM_EXPECTED: &str = "a resolved trim state admitted by the explicit out-of-support policy";

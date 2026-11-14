@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added revision-checked conversion of native cylindrical face-hit parameters into developed coordinates with explicit seams, arithmetic bounds and separate trim-search coverage (#420).
+
 - Added owned cylindrical face attachments with revision checks, checked persistence and explicit native-history reattachment that refused missing or ambiguous face images (#420).
 
 - Added certified stored-frame deviation, positive stretch and determinant bounds against exact normalized reference frames (#425).
