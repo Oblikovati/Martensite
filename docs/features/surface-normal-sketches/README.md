@@ -170,4 +170,6 @@ The [planar work-policy design](PLANAR-WORK-POLICY.md) records the additive
 request/receipt seam needed after #449; existing defaults remain unchanged.
 
 The [P5 workload census](P5-WORKLOAD.md) pins the existing font asset and the
-239-piece supplied-text case. Its modelling and performance gates remain open.
+239-piece supplied-text case. Its first full modelling witness passed with an
+explicit finite work request; performance qualification and oblique frames
+remain open.

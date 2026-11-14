@@ -134,8 +134,8 @@ All 39 sketch integration tests passed, with one existing ignored worker test.
 Strict all-target sketch clippy and compilation of the V3d toolkit test target
 passed. This is kernel request replay; persistent document and body replay
 remain open.
-The full glyph fixture has not yet passed, and these controls do not establish
-its performance budget.
+The full glyph fixture subsequently passed with an explicit 8192-bisection
+request; see `P5-WORKLOAD.md`. Its performance budget remains unapproved.
 
 ## Typed pair root refusals
 
@@ -158,3 +158,8 @@ All 28 wrapped API tests and all six focused planar work controls passed
 against that extraction. Strict library clippy passed for both affected crates.
 The tests cover work-receipt replay and exact refusal retention; they do not qualify the full text
 workload or the remaining general surfaces.
+
+
+The full 239-piece wrapped workload subsequently passed both the unchanged
+4096-default refusal and the explicit 8192-completion control. The complete
+qualification and its timing limitations are recorded in `P5-WORKLOAD.md`.

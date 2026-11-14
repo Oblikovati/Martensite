@@ -210,3 +210,38 @@ byte-identical in both controls. The focused two-test run passed in 10.97
 seconds under concurrent investigation load. This checks successful-operation
 input preservation for the fixtures; post-result source mutation, failure and
 cancellation isolation still need separate evidence.
+
+
+## First complete full-text qualification after #449
+
+The final live-check-preserving #449 fix was incorporated locally as
+`81419e64`. The full 239-piece profile then passed two controls without changing
+its geometry, selections, spatial epsilon or fit level:
+
+- The existing default consumed its 4096 shared bisections and returned the
+  original typed `SubdivisionLimit` refusal through the wrapped API.
+- An explicit 8192-bisection request published all 18 selected material regions.
+  Every member passed its retained validation and physical cap-realization bound
+  at epsilon `1e-5`. The outward sum enclosed the independent authored-volume
+  oracle `226802403 / 134217728`, and the frozen BRep was nonempty. Requested
+  and effective work remained 8192; consumed work did not exceed that cap.
+
+Both tests passed, with no ignored tests, in 587.42 seconds of test runtime.
+The enclosing Cargo command took 620.56 seconds elapsed, 638.24 seconds user
+CPU and 1.74 seconds system CPU. Its peak RSS was 1,287,176 KiB, including
+compilation; that number does not establish modelling-process peak memory.
+Other validation jobs were active, so this is qualification evidence rather
+than a controlled performance comparison. Strict V3d toolkit-test clippy passed.
+
+The retained log is `target/qualification/p5-full-text-work8192.log`, SHA-256
+`e048ff2434434d4793e7a9450d06d195d19327e4a3306b97d5f384d45e58e3a9`.
+The executed toolkit binary SHA-256 is
+`97d327cc14bd5e0e21a94a44b513d02164474c8a67b97e9a855a58a053b73dec`.
+The log records both the compiler profile and the exact test selection.
+
+This closes the first full-text modelling witness. It does not approve a P5
+performance budget or qualify oblique frames, conical authored profiles,
+persistent text/body replay, composed Boolean history or application layout.
+Runtime-only peak memory and a controlled P4 comparison remain required. The
+remaining fresh global source checks still need investigation before claiming
+that the scale cost is acceptable.

@@ -172,17 +172,43 @@ fn text_options() -> WrappedNormalOptions {
 }
 #[test]
 fn owned_multiline_text_wraps_all_selected_material() {
-    let request = text_request();
+    let mut request = text_request();
+    request.options.planar_work = PlanarProofWorkLimit::PairBisections(8192);
     assert_eq!(request.profile.curves.len(), 239);
     assert_eq!(request.selections.len(), 18);
     let result = normal_extrude_profile(&request).unwrap();
     assert_eq!(result.reports().len(), 18);
+    assert_eq!(result.options(), request.options);
+    assert_eq!(result.budget().planar_work.requested_pair_bisections, 8192);
+    assert_eq!(result.budget().planar_work.effective_pair_bisections, 8192);
+    assert!(result.budget().planar_work.consumed_pair_bisections <= 8192);
     for report in result.reports().values() {
         assert!(report.validation.is_valid());
         assert!(report.spatial.cap_realization_error.upper <= request.options.spatial_error);
     }
     assert!(!result.encoded_brep().is_empty());
     check_authored_volume(&result);
+}
+
+#[test]
+fn owned_multiline_text_default_work_refuses_without_partial_geometry() {
+    let request = text_request();
+    let failure = normal_extrude_profile(&request)
+        .err()
+        .expect("default work must refuse this unchanged profile");
+    assert_eq!(failure.class(), WrappedFailureClass::Incomplete);
+    let planar = failure.planar_work_failure().unwrap();
+    assert_eq!(
+        planar.requested_work(),
+        PlanarProofWorkLimit::CurrentDefault
+    );
+    let work = planar.proof_work().unwrap();
+    assert_eq!(work.effective_pair_bisections, 4096);
+    assert_eq!(work.consumed_pair_bisections, 4096);
+    assert!(matches!(
+        planar.pair_root_failure().unwrap().cause,
+        martensite_tkmath::predicates::roots::RootIsolationError::SubdivisionLimit { .. }
+    ));
 }
 
 fn check_authored_volume(result: &WrappedNormalResult) {
