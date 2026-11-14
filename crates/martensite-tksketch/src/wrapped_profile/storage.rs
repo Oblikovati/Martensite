@@ -110,10 +110,7 @@ fn certify_span(
 ) -> Result<StoredProof, StorageFailure> {
     let span = piece.span;
     let first_key = key(span, HistoryRole::FirstDepthEdge);
-    let a = capture::curve(first_key, bindings)?;
-    let b = capture::curve(key(span, HistoryRole::LastDepthEdge), bindings)?;
-    capture::side(key(span, HistoryRole::SideFace), [&a, &b], bindings)?;
-    incidence::span(piece, [&a, &b], bindings)?;
+    let [a, b] = captured_span(piece, bindings)?;
     let certificate = prove_captured(request, first_key, [&a, &b])?;
     let depths = prove_depths(request, first_key, &certificate)?;
     let source = authored
@@ -127,6 +124,17 @@ fn certify_span(
         profile,
         depths,
     })
+}
+
+fn captured_span(
+    piece: &AuthoredPiece,
+    bindings: &Bindings<'_>,
+) -> Result<[OwnedCurve; 2], StorageFailure> {
+    let a = capture::curve(key(piece.span, HistoryRole::FirstDepthEdge), bindings)?;
+    let b = capture::curve(key(piece.span, HistoryRole::LastDepthEdge), bindings)?;
+    capture::side(key(piece.span, HistoryRole::SideFace), [&a, &b], bindings)?;
+    incidence::span(piece, [&a, &b], bindings)?;
+    Ok([a, b])
 }
 
 fn prove_captured(
