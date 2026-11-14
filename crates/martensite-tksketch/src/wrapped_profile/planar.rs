@@ -36,7 +36,9 @@ impl PlanarEvidence {
 
 #[derive(Debug)]
 pub(super) enum PlanarFailure {
+    #[cfg(test)]
     Capture(Box<OperationDecline>),
+    WorkCapture(Box<PlanarRegionWorkFailure>),
     Selection {
         expected: MaterialIdentity,
         candidates: Vec<MaterialIdentity>,
@@ -54,6 +56,8 @@ impl std::fmt::Display for PlanarFailure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Join(cause) => write!(f, "planar join: {cause}"),
+            Self::WorkCapture(cause) => write!(f, "planar authored material: {cause}"),
+            #[cfg(test)]
             Self::Capture(cause) => write!(f, "planar authored material: {cause}"),
             Self::Selection {
                 expected,
@@ -105,6 +109,7 @@ pub(super) fn certify(request: &Request) -> Result<PlanarEvidence, PlanarFailure
     let captured = capture(std::slice::from_ref(request), request.tolerance)?;
     select(request, &captured)
 }
+#[cfg(test)]
 pub(super) fn capture(
     requests: &[Request],
     tolerance: f64,
@@ -112,6 +117,15 @@ pub(super) fn capture(
     let profile = combined_profile(requests)?;
     build_planar_regions(&profile, super::pipeline::resolution(tolerance))
         .map_err(|cause| PlanarFailure::Capture(Box::new(cause)))
+}
+pub(super) fn capture_with_work(
+    requests: &[Request],
+    tolerance: f64,
+    work: PlanarProofWorkLimit,
+) -> Result<PlanarRegionSet, PlanarFailure> {
+    let profile = combined_profile(requests)?;
+    build_planar_regions_with_work(&profile, super::pipeline::resolution(tolerance), work)
+        .map_err(|cause| PlanarFailure::WorkCapture(Box::new(cause)))
 }
 fn combined_profile(requests: &[Request]) -> Result<SketchProfile, PlanarFailure> {
     let mut combined = SketchProfile {

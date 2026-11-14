@@ -15,6 +15,7 @@ use std::collections::BTreeMap;
 pub(super) struct PlanarSelectionEvidence {
     pub members: BTreeMap<SurfaceRegionId, planar::PlanarEvidence>,
     pub certificate: RegionCertificate,
+    pub proof_work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
 }
 
 pub(super) struct PreparedSelection {
@@ -33,12 +34,26 @@ pub(super) fn certify(
 ) -> Result<QualifiedSelection, SelectionFailure> {
     certify_with_cancel(requests, options, || false)
 }
+#[cfg(test)]
 pub(super) fn certify_with_cancel(
     requests: &[Request],
     options: MaterialOptions,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<QualifiedSelection, SelectionFailure> {
+    certify_with_work(
+        requests,
+        options,
+        martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
+        cancelled,
+    )
+}
+pub(super) fn certify_with_work(
+    requests: &[Request],
+    options: MaterialOptions,
+    work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<QualifiedSelection, SelectionFailure> {
-    let prepared = prepare_with_cancel(requests, &mut cancelled)?;
+    let prepared = prepare_with_work(requests, work, &mut cancelled)?;
     let material = material::certify_with_cancel(requests, &prepared, options, &mut cancelled)
         .map_err(|cause| SelectionFailure::Material(Box::new(cause)))?;
     Ok(QualifiedSelection { prepared, material })
@@ -48,14 +63,26 @@ pub(super) fn certify_with_cancel(
 pub(super) fn prepare(requests: &[Request]) -> Result<PreparedSelection, SelectionFailure> {
     prepare_with_cancel(requests, || false)
 }
+#[cfg(test)]
 pub(super) fn prepare_with_cancel(
     requests: &[Request],
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<PreparedSelection, SelectionFailure> {
+    prepare_with_work(
+        requests,
+        martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
+        cancelled,
+    )
+}
+fn prepare_with_work(
+    requests: &[Request],
+    work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<PreparedSelection, SelectionFailure> {
     if cancelled() {
         return Err(SelectionFailure::Cancelled);
     }
-    let planar = qualify(requests)?;
+    let planar = qualify_with_work(requests, work)?;
     let prepared = requests
         .iter()
         .map(|request| prepare_region(request, &mut cancelled))
@@ -88,9 +115,19 @@ fn prepare_region(
     })
 }
 
+#[cfg(test)]
 pub(super) fn qualify(requests: &[Request]) -> Result<PlanarSelectionEvidence, SelectionFailure> {
+    qualify_with_work(
+        requests,
+        martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
+    )
+}
+fn qualify_with_work(
+    requests: &[Request],
+    work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
+) -> Result<PlanarSelectionEvidence, SelectionFailure> {
     let tolerance = admission::admit(requests)?;
-    let captured = planar::capture(requests, tolerance)
+    let captured = planar::capture_with_work(requests, tolerance, work)
         .map_err(|cause| SelectionFailure::Capture(Box::new(cause)))?;
     let mut members = BTreeMap::new();
     for request in requests {
@@ -104,5 +141,6 @@ pub(super) fn qualify(requests: &[Request]) -> Result<PlanarSelectionEvidence, S
     Ok(PlanarSelectionEvidence {
         members,
         certificate: captured.certificate(),
+        proof_work: captured.proof_work(),
     })
 }

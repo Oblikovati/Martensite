@@ -64,6 +64,26 @@ pub struct WrappedNormalFailure {
     pub(super) cause: Box<Cause>,
 }
 impl WrappedNormalFailure {
+    /// Retained planar work refusal, when planar capture failed; `failure.planar_work_failure()`.
+    pub fn planar_work_failure(
+        &self,
+    ) -> Option<&martensite_tkbo::profile_extrusion::PlanarRegionWorkFailure> {
+        let Cause::Family(family) = self.cause.as_ref() else {
+            return None;
+        };
+        let family::FamilyFailure::Selection(selection) = family else {
+            return None;
+        };
+        let planar = match selection.as_ref() {
+            selection::SelectionFailure::Capture(cause) => cause,
+            selection::SelectionFailure::Region { cause, .. } => cause,
+            _ => return None,
+        };
+        match planar.as_ref() {
+            planar::PlanarFailure::WorkCapture(cause) => Some(cause),
+            _ => None,
+        }
+    }
     /// Failed operation; `failure.operation()`.
     pub fn operation(&self) -> WrappedOperation {
         self.operation

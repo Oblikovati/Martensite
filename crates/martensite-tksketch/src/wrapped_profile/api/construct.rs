@@ -48,6 +48,7 @@ fn family_budget(
         &family.budget,
         request.options.volume,
         family.family.selection.prepared.planar.certificate,
+        family.family.selection.prepared.planar.proof_work,
     )
 }
 
@@ -96,9 +97,12 @@ fn construct_family(
     request: &WrappedNormalRequest,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<family::BudgetedFamily> {
-    family::construct_budgeted_with_cancel(&inputs.requests, request.options.volume, |_| {
-        cancelled()
-    })
+    family::construct_budgeted_with_work(
+        &inputs.requests,
+        request.options.volume,
+        request.options.planar_work,
+        |_| cancelled(),
+    )
     .map_err(|cause| failure_projection::family(cause, &inputs.requests))
 }
 fn project_history(

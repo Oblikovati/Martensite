@@ -123,6 +123,10 @@ fn planar_context(cause: &planar::PlanarFailure, region: Option<SurfaceRegionId>
         planar::PlanarFailure::SplitSource { curve, .. } => {
             context.entities.push(HistorySource::Curve(*curve))
         }
+        planar::PlanarFailure::WorkCapture(cause) => {
+            error::decline_entities(&cause.decline().cause, &mut context.entities)
+        }
+        #[cfg(test)]
         planar::PlanarFailure::Capture(cause) => {
             error::decline_entities(&cause.cause, &mut context.entities)
         }
@@ -132,6 +136,8 @@ fn planar_context(cause: &planar::PlanarFailure, region: Option<SurfaceRegionId>
 }
 fn planar_class(cause: &planar::PlanarFailure) -> Class {
     match cause {
+        planar::PlanarFailure::WorkCapture(cause) => decline_class(cause.decline().class()),
+        #[cfg(test)]
         planar::PlanarFailure::Capture(cause) => decline_class(cause.class()),
         planar::PlanarFailure::EmptyMaterial
         | planar::PlanarFailure::Selection { .. }

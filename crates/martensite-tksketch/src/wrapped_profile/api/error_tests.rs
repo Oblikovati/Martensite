@@ -31,6 +31,7 @@ fn request() -> WrappedNormalRequest {
         support: support(),
         depths: [-1., 2.],
         options: WrappedNormalOptions {
+            planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
             spatial_error: 1e-5,
             maximum_fit_level: 8,
             volume: WrappedVolumePolicy::Report,
@@ -346,4 +347,30 @@ fn shared_vertex_request() -> WrappedNormalRequest {
     }
     input.selections.push(second);
     input
+}
+
+#[test]
+fn planar_work_failure_survives_public_family_projection() {
+    let mut crossing = profile();
+    for (vertex, point) in
+        crossing
+            .vertices
+            .iter_mut()
+            .zip([[0., 0.], [2., 2.], [2., 0.], [0., 2.]])
+    {
+        vertex.point = point;
+    }
+    let work = PlanarProofWorkLimit::PairBisections(17);
+    let resolution = super::super::pipeline::resolution(1e-5);
+    let cause = build_planar_regions_with_work(&crossing, resolution, work).unwrap_err();
+    let original = cause.clone();
+    let selection = selection::SelectionFailure::Capture(Box::new(
+        planar::PlanarFailure::WorkCapture(Box::new(cause)),
+    ));
+    let public = family_failure(family::FamilyFailure::Selection(Box::new(selection)));
+    let retained = public.planar_work_failure().unwrap();
+    assert_eq!(retained, &original);
+    assert_eq!(retained.requested_work(), work);
+    assert_eq!(retained.proof_work().unwrap().effective_pair_bisections, 17);
+    assert_eq!(public.class(), WrappedFailureClass::InvalidInput);
 }

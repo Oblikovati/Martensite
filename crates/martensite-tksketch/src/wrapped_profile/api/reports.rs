@@ -111,6 +111,8 @@ pub struct WrappedVolumeBounds {
 pub struct WrappedBudgetReport {
     /// Certified planar admission coverage for the original complete selection.
     pub planar: martensite_tkbo::profile_extrusion::RegionCertificate,
+    /// Requested, effective and actually consumed planar proof work.
+    pub planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
     /// Requested spatial epsilon.
     pub spatial_error: f64,
     /// Downward-rounded developed-profile allocation.
@@ -183,10 +185,12 @@ pub(super) fn budget(
     evidence: &publication_budget::BudgetEvidence,
     policy: WrappedVolumePolicy,
     planar: martensite_tkbo::profile_extrusion::RegionCertificate,
+    planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
 ) -> WrappedBudgetReport {
     let limits = evidence.limits.shares();
     WrappedBudgetReport {
         planar,
+        planar_work,
         spatial_error: limits.spatial,
         profile_allowance: limits.profile,
         storage_allowance: limits.storage,

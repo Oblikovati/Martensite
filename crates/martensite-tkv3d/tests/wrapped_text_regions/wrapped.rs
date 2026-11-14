@@ -164,6 +164,7 @@ fn text_support() -> CylinderSupport {
 }
 fn text_options() -> WrappedNormalOptions {
     WrappedNormalOptions {
+        planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
         spatial_error: 1e-5,
         maximum_fit_level: 8,
         volume: WrappedVolumePolicy::Report,

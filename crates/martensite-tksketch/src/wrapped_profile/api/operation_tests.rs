@@ -15,6 +15,7 @@ fn request() -> WrappedNormalRequest {
         support: support(),
         depths: [-1., 2.],
         options: WrappedNormalOptions {
+            planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
             spatial_error: 1e-5,
             maximum_fit_level: 8,
             volume: WrappedVolumePolicy::Refuse(1e-4),
@@ -287,4 +288,21 @@ fn shared_corner_uses(
 fn vertex_bits(vertex: &martensite_tkbrep::topods::Vertex) -> [u64; 3] {
     let point = martensite_tkbrep::brep::BRepTool::pnt(vertex).unwrap();
     [point.x(), point.y(), point.z()].map(f64::to_bits)
+}
+
+#[test]
+fn explicit_planar_work_is_retained_and_replays_without_changing_geometry() {
+    let mut input = request();
+    input.options.planar_work =
+        martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::PairBisections(8192);
+    let first = normal_extrude_profile(&input).unwrap();
+    let replay = normal_extrude_profile(&input).unwrap();
+    assert_eq!(first.options(), input.options);
+    assert_eq!(first.budget(), replay.budget());
+    assert_eq!(first.encoded_brep(), replay.encoded_brep());
+    assert_eq!(first.budget().planar_work.requested_pair_bisections, 8192);
+    assert_eq!(first.budget().planar_work.effective_pair_bisections, 8192);
+    assert!(first.budget().planar_work.consumed_pair_bisections <= 8192);
+    check_report(&first, SurfaceRegionId(5), 11.10375);
+    check_report(&first, SurfaceRegionId(100), 3.15);
 }

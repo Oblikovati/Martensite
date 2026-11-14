@@ -19,6 +19,8 @@ pub struct WrappedRegionSelection {
 pub struct WrappedNormalOptions {
     /// Positive finite modelling epsilon in developed spatial units.
     pub spatial_error: f64,
+    /// Finite planar proof work, independent of spatial accuracy.
+    pub planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
     /// Maximum geometric dyadic fit level; current admission supports `0..=8`.
     pub maximum_fit_level: u8,
     /// Explicit report or refusal policy for retained-flux versus ideal normal volume.

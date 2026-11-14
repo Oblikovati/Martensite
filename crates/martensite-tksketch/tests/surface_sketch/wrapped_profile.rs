@@ -32,6 +32,7 @@ fn request() -> WrappedNormalRequest {
         support: super::refusals::rectangle().support,
         depths: [-1., 2.],
         options: WrappedNormalOptions {
+            planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
             spatial_error: 1e-5,
             maximum_fit_level: 8,
             volume: WrappedVolumePolicy::Refuse(1e-4),

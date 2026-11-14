@@ -108,8 +108,31 @@ admission failure and observed crossing failure. The existing tilted-ellipse
 fixture consumed its one permitted bisection and refused. With an explicit
 8192-bisection cap, the same profile completed with nonzero consumed work and
 its independent area of π inside the reported enclosure. Its resolution stayed
-unchanged. Wrapped-request plumbing, full glyph acceptance, replay of these
-new receipts and P5 performance-budget qualification remain open. The failure
+unchanged. Full glyph acceptance and P5 performance-budget qualification
+remain open. Wrapped-request plumbing and kernel replay of these receipts are
+covered by the checkpoint below. The failure
 retains the legacy typed decline; precise root-exhaustion and curve-pair
 projection still need to be carried through without parsing rendered text.
 No default or geometric limit was increased.
+
+
+## Wrapped request checkpoint
+
+The unpublished wrapped API now accepts the planar work choice in
+`WrappedNormalOptions::planar_work`. It passes that choice through selection
+and family construction to the same planar builder. Successful budget reports
+retain the actual work receipt, and `WrappedNormalFailure::planar_work_failure`
+exposes a retained planar refusal without parsing its display text. Existing
+call sites explicitly select `CurrentDefault`.
+
+The full sketch library suite passed: 240 tests, no failures and two existing
+ignored tests. Its public failure-projection control retained the exact planar
+decline and the requested and observed work values. An explicit 8192-bisection
+request replayed with identical budget evidence and frozen BRep bytes. Its two material
+regions still enclose the independently expected volumes 11.10375 and 3.15.
+All 39 sketch integration tests passed, with one existing ignored worker test.
+Strict all-target sketch clippy and compilation of the V3d toolkit test target
+passed. This is kernel request replay; persistent document and body replay
+remain open.
+The full glyph fixture has not yet passed, and these controls do not establish
+its performance budget.
