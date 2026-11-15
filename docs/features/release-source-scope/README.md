@@ -93,3 +93,23 @@ The final audit checks the scanner's directory skips against each admitted produ
 | Links | Package-root, source-file and directory links disable the proof; native Windows link creation remains outside these Unix fixture controls. |
 
 The added regressions cover hidden nested modules, Rust inputs with implicit children in the QA tree and case-variant QA paths. This audit changes neither publication versions nor the separate affected-test selection.
+
+## Referenced QA module graphs — #485
+
+The stricter source-layout proof rejected unchanged Vulkan source in the v0.13.1 hosted plan at `6df7ecc3`. Examples load literal modules from `tests/support/`; rejecting every such module made unrelated QA edits look like package-source changes. The lowercase `tests` path guard also retained the entire QA tree. Both owned minimal fixtures and the actual Vulkan layout reproduced the false positive.
+
+The scanner now follows literal owned QA modules transitively and retains their containing directories conservatively. It parses only referenced modules, rather than unrelated sibling files. Explicit `#[path]` modules resolve implicit children beside their source file; implicit children then establish their own module directory. A temporary native-rustc fixture checked this distinction before implementation and was removed. File visitation includes the module context, so importing one file through two different contexts cannot hide a dependency. Directory entries are sorted, and each file/context pair is visited once per pass.
+
+Missing, deleted or ambiguous module candidates, macro-generated modules, conditional or inline path uncertainty, textual QA includes, output-tree sources, external inputs and links keep the result unknown. Case-variant `tests` spellings still retain all QA. Tests cover those refusals, transitive paths, implicit modules and repeated file contexts. Unix fixtures cover linked QA files and directories; Windows link creation is not exercised.
+
+The actual-source regression records all Vulkan paths changed between v0.13.0 and `6df7ecc3`, including the four affected QA groups, and proves they are disjoint from the retained production inputs. The unoptimized control took about 1.7 seconds locally. It does not invoke a local release rehearsal. Package versions and affected-test selection are unchanged.
+
+## Canonical package-root coordinates — #487
+
+The next Windows release run rejected unchanged Boolean-case source. Individual source files had been canonicalized, but their package roots and changed-file comparisons could still use lexical paths. [Windows canonicalization adds extended-length prefixes](https://doc.rust-lang.org/std/fs/fn.canonicalize.html), so a valid owned include could fail its prefix check. A referenced QA input could also be compared in the wrong coordinate system.
+
+The proof now validates the original package layout and links, canonicalizes the package root once, and stores that root with its references. Source traversal, the Cargo-manifest marker and Git-relative QA input joins reuse it. Changed or deleted files are not individually canonicalized; a missing referenced input still retains publication impact.
+
+Authored paths keep their portable forward-slash spelling checks. Canonical relative paths use native `Path` components. This preserves Windows separators without accepting authored backslashes, output-tree paths, external inputs or links.
+
+Two owned Unix workspace-alias controls reproduced the read/proof refusal and the dropped missing-input comparison independently before the correction. Platform-neutral controls exercise native and canonical roots for text inputs, literal QA modules, missing inputs and Cargo-manifest literals. Existing symlink, dynamic-input and output-path controls remain in place. Local tests do not substitute for the hosted Windows release matrix. No package version, validation budget or affected-test selection changes.
