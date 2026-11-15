@@ -80,3 +80,17 @@ pub(crate) fn covered_rust_input(root: &Path, input: &Path) -> bool {
         .filter_map(|directory| package.join(directory).canonicalize().ok())
         .any(|directory| input.starts_with(directory))
 }
+/// Checks native relative components; `input_components_supported(Path::new("src/lib.rs"))`.
+pub(crate) fn input_components_supported(path: &Path) -> bool {
+    path.components().all(|component| {
+        let Component::Normal(name) = component else {
+            return false;
+        };
+        let Some(name) = name.to_str() else {
+            return false;
+        };
+        portable_relative_path(name)
+            && !name.eq_ignore_ascii_case("target")
+            && !name.eq_ignore_ascii_case(".git")
+    })
+}

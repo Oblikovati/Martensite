@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Kept release source proofs and changed-input comparisons in one canonical package-root coordinate system while preserving native Windows path components (#487).
+
 - Followed literal production QA modules while excluding disjoint test edits from release package version checks (#485).
 
 - Retained publication impact for traversing and unsupported Cargo production-target paths (#482).

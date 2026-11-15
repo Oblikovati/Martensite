@@ -16,6 +16,7 @@ use std::{
 mod rust_inputs;
 
 struct ProductionReferences {
+    package_root: PathBuf,
     paths: BTreeSet<PathBuf>,
     scanned_directories: BTreeSet<PathBuf>,
     scanned_sources: BTreeSet<(PathBuf, Option<PathBuf>)>,
@@ -27,8 +28,9 @@ struct ProductionReferences {
 }
 
 impl ProductionReferences {
-    fn new(changed: &[ChangedFile], manifest_proof: bool) -> Self {
+    fn new(package_root: PathBuf, changed: &[ChangedFile], manifest_proof: bool) -> Self {
         Self {
+            package_root,
             paths: BTreeSet::new(),
             scanned_directories: BTreeSet::new(),
             scanned_sources: BTreeSet::new(),
@@ -60,7 +62,7 @@ pub(crate) fn publication_changes<'a>(
     let Some(references) = production_references(&package, manifest, changed, false) else {
         return Cow::Borrowed(changed);
     };
-    Cow::Owned(filtered_changes(root, changed, &prefix, &references))
+    Cow::Owned(filtered_changes(changed, &prefix, &references))
 }
 fn known_source_edit(directory: &str, changed: &[ChangedFile]) -> bool {
     let prefix = format!("{directory}/");
@@ -71,22 +73,22 @@ fn known_source_edit(directory: &str, changed: &[ChangedFile]) -> bool {
     })
 }
 fn filtered_changes(
-    root: &Path,
     changed: &[ChangedFile],
     prefix: &str,
     refs: &ProductionReferences,
 ) -> Vec<ChangedFile> {
     changed
         .iter()
-        .filter(|file| {
-            !file.path.starts_with(prefix)
-                || refs
-                    .paths
-                    .iter()
-                    .any(|input| normalized(&root.join(&file.path)).starts_with(input))
-        })
+        .filter(|file| retained_input(&file.path, prefix, refs))
         .cloned()
         .collect()
+}
+fn retained_input(path: &str, prefix: &str, refs: &ProductionReferences) -> bool {
+    let Some(relative) = path.strip_prefix(prefix) else {
+        return true;
+    };
+    let path = normalized(&refs.package_root.join("tests").join(relative));
+    refs.paths.iter().any(|input| path.starts_with(input))
 }
 
 fn production_references(
@@ -98,13 +100,14 @@ fn production_references(
     if !crate::release_input_layout::known_production_layout(root, manifest) {
         return None;
     }
-    let mut references = ProductionReferences::new(changed, manifest_proof);
-    scan_directory(root, root, &mut references)?;
+    let root = root.canonicalize().ok()?;
+    let mut references = ProductionReferences::new(root.clone(), changed, manifest_proof);
+    scan_directory(&root, &root, &mut references)?;
     references.paths.clear();
     references.scanned_directories.clear();
     references.scanned_sources.clear();
     references.collecting = false;
-    scan_directory(root, root, &mut references)?;
+    scan_directory(&root, &root, &mut references)?;
     Some(references)
 }
 /// A test-target manifest edit is QA-only only when no production input retains its bytes.
@@ -121,7 +124,7 @@ pub(crate) fn manifest_is_unreferenced(
     references.manifest_inputs_known
         && !references
             .paths
-            .contains(&normalized(&root.join("Cargo.toml")))
+            .contains(&references.package_root.join("Cargo.toml"))
 }
 fn with_manifest_evidence(changed: &[ChangedFile]) -> Vec<ChangedFile> {
     let mut inputs = changed.to_vec();
@@ -316,11 +319,7 @@ fn literal_input_supported(value: &str, scope: &SourceScope<'_>) -> bool {
     let Ok(relative) = target.strip_prefix(package) else {
         return false;
     };
-    !relative.components().any(|part| {
-        part.as_os_str().to_str().is_some_and(|name| {
-            name.eq_ignore_ascii_case("target") || name.eq_ignore_ascii_case(".git")
-        })
-    })
+    crate::release_input_layout::input_components_supported(relative)
 }
 fn fixed_include_extension(tokens: &[TokenTree]) -> Option<String> {
     let suffix = concat_suffix(tokens)?;
@@ -439,3 +438,7 @@ fn normalized(path: &Path) -> PathBuf {
 #[cfg(test)]
 #[path = "release_test_inputs_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "release_source_roots_tests.rs"]
+mod source_roots_tests;
