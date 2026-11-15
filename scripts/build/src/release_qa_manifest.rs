@@ -10,7 +10,7 @@ pub(crate) fn publication_manifest<'a>(
     directory: &str,
     changed: &[ChangedFile],
 ) -> Cow<'a, PackageManifest> {
-    let Some(previous) = previous.filter(|old| only_test_targets_changed(current, old)) else {
+    let Some(previous) = previous else {
         return Cow::Borrowed(current);
     };
     let proven = eligible(root, current, previous, directory, changed);
@@ -38,6 +38,9 @@ fn eligible(
 }
 
 fn only_test_targets_changed(current: &PackageManifest, previous: &PackageManifest) -> bool {
+    if current.source.get("test") == previous.source.get("test") {
+        return false;
+    }
     if !simple_test_targets(current.source.get("test"))
         || !simple_test_targets(previous.source.get("test"))
     {
@@ -45,8 +48,9 @@ fn only_test_targets_changed(current: &PackageManifest, previous: &PackageManife
     }
     let mut current = current.source.clone();
     let mut previous = previous.source.clone();
-    let changed = current.remove("test") != previous.remove("test");
-    changed && current == previous
+    current.remove("test");
+    previous.remove("test");
+    current == previous
 }
 
 fn simple_test_targets(value: Option<&Value>) -> bool {
