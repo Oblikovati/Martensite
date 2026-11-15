@@ -7,6 +7,7 @@ use serde::Deserialize;
 use crate::error::{BuildError, BuildResult};
 use crate::process::{CommandRunner, CommandSpec};
 mod script_budget_profiles;
+mod test_build;
 mod test_parts;
 pub use test_parts::TestPart;
 
