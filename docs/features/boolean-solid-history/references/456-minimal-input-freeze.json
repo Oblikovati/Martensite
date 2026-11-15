@@ -1,0 +1,24 @@
+{
+  "before": {
+    "case": "disconnected2",
+    "history": true,
+    "solids": 2,
+    "removed_solids": 0,
+    "modified_images": 0,
+    "native_checks": true,
+    "max_tolerance": 1e-07,
+    "source_free_flags_changed": 2,
+    "execution_ns": 3650072
+  },
+  "after": {
+    "case": "disconnected2",
+    "history": true,
+    "solids": 2,
+    "removed_solids": 0,
+    "modified_images": 0,
+    "native_checks": true,
+    "max_tolerance": 1e-07,
+    "source_free_flags_changed": 2,
+    "execution_ns": 3225056
+  }
+}

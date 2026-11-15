@@ -1,0 +1,315 @@
+{
+  "source_before": "pinnedmain77053 native BOP source from446",
+  "source_after": "61fd710085b749618972c2aa782866bc9ed204f6",
+  "profile": "optimized test profile1 libraries; probeopt1; debug0",
+  "window": [
+    1794714444.8780873,
+    1794714486.5221624
+  ],
+  "cpu": 3,
+  "limitations": [
+    "four primitive workloads, not universal parity",
+    "native build wall excludes fixture construction/drop; process CPU includes them",
+    "sampled anonymous peaks are sampled, OS peak RSS includes executable pages",
+    "preexisting observable source Free flag mutation retained, not normalized; fresh inputs per operation",
+    "baseline area-only source difference not called by measured native path"
+  ],
+  "rows": [
+    {
+      "case": "overlap",
+      "history": true,
+      "pairs": 24,
+      "iterations": 9,
+      "build_before_after_ms": [
+        14.075980018518518,
+        13.95435088888889
+      ],
+      "user_before_after_ms": [
+        14.594925925925924,
+        14.429263888888888
+      ],
+      "build_percent_change": -0.8640899565757532,
+      "build_delta_ms_95": [
+        -0.22483452314814809,
+        -0.029745893518518578
+      ],
+      "warm_rss_median_before_after_kib": [
+        22016.0,
+        21834.0
+      ],
+      "sampled_anon_median_before_after_kib": [
+        1978.0,
+        1990.0
+      ],
+      "cold_rss_before_after_kib": [
+        [
+          19900,
+          20320
+        ],
+        [
+          20040,
+          20452
+        ]
+      ]
+    },
+    {
+      "case": "overlap",
+      "history": false,
+      "pairs": 8,
+      "iterations": 10,
+      "build_before_after_ms": [
+        14.0246014375,
+        13.883867350000001
+      ],
+      "user_before_after_ms": [
+        14.510874999999999,
+        14.4169875
+      ],
+      "build_percent_change": -1.0034801211797229,
+      "build_delta_ms_95": [
+        -0.4531170250000001,
+        0.3091868125
+      ],
+      "warm_rss_median_before_after_kib": [
+        22038.0,
+        21900.0
+      ],
+      "sampled_anon_median_before_after_kib": [
+        1978.0,
+        1992.0
+      ],
+      "cold_rss_before_after_kib": [
+        [
+          19832,
+          20196
+        ],
+        [
+          20032,
+          20412
+        ]
+      ]
+    },
+    {
+      "case": "cylinder",
+      "history": true,
+      "pairs": 24,
+      "iterations": 15,
+      "build_before_after_ms": [
+        8.144329536111112,
+        8.039284258333334
+      ],
+      "user_before_after_ms": [
+        8.499222222222222,
+        8.395486111111111
+      ],
+      "build_percent_change": -1.2897965058022098,
+      "build_delta_ms_95": [
+        -0.1295873999999999,
+        -0.07982378055555564
+      ],
+      "warm_rss_median_before_after_kib": [
+        23160.0,
+        22920.0
+      ],
+      "sampled_anon_median_before_after_kib": [
+        1628.0,
+        1634.0
+      ],
+      "cold_rss_before_after_kib": [
+        [
+          21628,
+          21224
+        ],
+        [
+          21248,
+          21376
+        ]
+      ]
+    },
+    {
+      "case": "cylinder",
+      "history": false,
+      "pairs": 8,
+      "iterations": 15,
+      "build_before_after_ms": [
+        7.988201208333333,
+        7.872046066666666
+      ],
+      "user_before_after_ms": [
+        8.380266666666667,
+        8.226675
+      ],
+      "build_percent_change": -1.4540838248477406,
+      "build_delta_ms_95": [
+        -0.15488281666666687,
+        -0.07413150833333354
+      ],
+      "warm_rss_median_before_after_kib": [
+        23008.0,
+        22898.0
+      ],
+      "sampled_anon_median_before_after_kib": [
+        1642.0,
+        1636.0
+      ],
+      "cold_rss_before_after_kib": [
+        [
+          21680,
+          21576
+        ],
+        [
+          21412,
+          21448
+        ]
+      ]
+    },
+    {
+      "case": "disconnected64",
+      "history": true,
+      "pairs": 24,
+      "iterations": 2,
+      "build_before_after_ms": [
+        75.06141408333333,
+        73.92243647916666
+      ],
+      "user_before_after_ms": [
+        82.81547916666666,
+        81.57158333333334
+      ],
+      "build_percent_change": -1.5173942805049911,
+      "build_delta_ms_95": [
+        -1.5587092916666667,
+        -0.7298939375
+      ],
+      "warm_rss_median_before_after_kib": [
+        26052.0,
+        25634.0
+      ],
+      "sampled_anon_median_before_after_kib": [
+        7542.0,
+        7548.0
+      ],
+      "cold_rss_before_after_kib": [
+        [
+          23560,
+          23460
+        ],
+        [
+          23688,
+          23352
+        ]
+      ]
+    },
+    {
+      "case": "disconnected64",
+      "history": false,
+      "pairs": 8,
+      "iterations": 1,
+      "build_before_after_ms": [
+        72.90847575,
+        72.197114625
+      ],
+      "user_before_after_ms": [
+        80.28225,
+        79.291
+      ],
+      "build_percent_change": -0.97569057325958,
+      "build_delta_ms_95": [
+        -1.22852425,
+        -0.10922937499999996
+      ],
+      "warm_rss_median_before_after_kib": [
+        25136.0,
+        24624.0
+      ],
+      "sampled_anon_median_before_after_kib": [
+        6802.0,
+        6800.0
+      ],
+      "cold_rss_before_after_kib": [
+        [
+          22692,
+          22276
+        ],
+        [
+          22724,
+          22472
+        ]
+      ]
+    },
+    {
+      "case": "chain12",
+      "history": true,
+      "pairs": 24,
+      "iterations": 1,
+      "build_before_after_ms": [
+        106.79470004166667,
+        105.55917683333334
+      ],
+      "user_before_after_ms": [
+        109.51854166666666,
+        108.72783333333334
+      ],
+      "build_percent_change": -1.1569143486065192,
+      "build_delta_ms_95": [
+        -1.5800764166666668,
+        -0.8874575833333334
+      ],
+      "warm_rss_median_before_after_kib": [
+        27060.0,
+        26964.0
+      ],
+      "sampled_anon_median_before_after_kib": [
+        7424.0,
+        7420.0
+      ],
+      "cold_rss_before_after_kib": [
+        [
+          25068,
+          25032
+        ],
+        [
+          25448,
+          25140
+        ]
+      ]
+    },
+    {
+      "case": "chain12",
+      "history": false,
+      "pairs": 8,
+      "iterations": 1,
+      "build_before_after_ms": [
+        105.97438325,
+        104.542395
+      ],
+      "user_before_after_ms": [
+        109.24612499999999,
+        107.03025
+      ],
+      "build_percent_change": -1.3512588666091618,
+      "build_delta_ms_95": [
+        -1.65982225,
+        -1.150523875
+      ],
+      "warm_rss_median_before_after_kib": [
+        27100.0,
+        27078.0
+      ],
+      "sampled_anon_median_before_after_kib": [
+        7422.0,
+        7418.0
+      ],
+      "cold_rss_before_after_kib": [
+        [
+          25260,
+          25260
+        ],
+        [
+          25284,
+          25308
+        ]
+      ]
+    }
+  ]
+}

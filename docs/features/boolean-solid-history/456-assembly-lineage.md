@@ -146,3 +146,6 @@ The two focused API tests passed in 0.09 s with the canonical optimized test
 profile. Strict library-and-test Clippy passed in 4.76 s, and the formatter check
 passed. The corrected reference and regression require a new canonical gate;
 the earlier exit-1 run is not counted as a pass.
+
+[Matched enabled-history performance measurements](456-performance.md) retain the
+raw timing/memory observations, #461 qualification and temporary-probe cleanup.
