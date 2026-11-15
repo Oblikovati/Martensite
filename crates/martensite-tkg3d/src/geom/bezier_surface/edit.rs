@@ -263,7 +263,7 @@ impl SurfaceState {
     }
     // Rational(nweights) with unit weights of the new size when no longer rational.
     fn update_rationality_with_size(&mut self, rows: i32, cols: i32) -> Result<(), Failure> {
-        (self.u_rational, self.v_rational) = super::state::rationality(&self.weights)?;
+        self.replay_rational_axes()?;
         if !self.is_rational() {
             self.weights = bsplslib::unit_weights(rows, cols)?;
         }

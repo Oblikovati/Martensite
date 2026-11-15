@@ -30,7 +30,10 @@ weight-grid constraints, finite coordinates, and finite weights greater than
 `gp::resolution()`. It retains nonconstant admissible grids exactly. Directional
 flags follow exact weight variation in the corresponding surface parameter.
 All-unit grids remain polynomial and use the existing shared unit-weight view.
-Copies preserve the retained coefficients and evaluation remains native.
+Copies preserve the retained coefficients and evaluation remains native. Retained
+surfaces select isocurve weights by the varying parameter. Existing weight edits
+restore legacy rationality classification; copying and UV exchange retain the
+corresponding axis convention.
 
 Constant non-unit grids receive
 `BezierSurfaceCoefficientError::ConstantNonUnitWeights`. The existing binary
@@ -84,6 +87,10 @@ rational values and first derivatives. Codec controls cover direct and grouped
 reads, nested bases, unchanged legacy demotion, unit records, and every truncated
 prefix's legacy error and cursor behavior. The curve-to-fill control proves that
 constant curve weights are already unit at the actual caller boundary.
+
+The current checkpoint passes 16 geometry controls, eight codec controls and
+strict all-target geometry/BRep Clippy. These include retained isocurves after UV
+exchange, weight mutation, copying and strict or legacy decoding.
 
 The feature must still qualify its original negative-axis signed-zero case with
 the opt-in builder and decoder and preserve its exact row check. The [performance qualification](performance.md) records faster timings on the

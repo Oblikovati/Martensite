@@ -144,3 +144,28 @@ fn truncated_records_keep_legacy_error_precedence_and_cursor() {
         assert_eq!(strict, legacy, "prefix length {length}");
     }
 }
+#[test]
+fn decoded_axis_conventions_keep_isocurves_equal_to_surface_evaluation() {
+    let mut bytes = encoded(&surface().cast());
+    for index in [2, 3] {
+        bytes[7 + index * 32 + 24..7 + index * 32 + 32].copy_from_slice(&0.25f64.to_ne_bytes());
+    }
+    for policy in [
+        BezierSurfaceWeightReadPolicy::LegacyReplay,
+        BezierSurfaceWeightReadPolicy::PreserveStoredV1,
+    ] {
+        let restored: Handle<GeomBezierSurface> = decoded(&bytes, policy).unwrap().cast();
+        assert_decoded_isocurves(&restored);
+    }
+}
+fn assert_decoded_isocurves(restored: &GeomBezierSurface) {
+    let expected = restored.value(0.5, 0.5).unwrap();
+    assert!((expected.x() - 0.2).abs() <= 2e-16);
+    for point in [
+        restored.u_iso(0.5).unwrap().value(0.5).unwrap(),
+        restored.v_iso(0.5).unwrap().value(0.5).unwrap(),
+    ] {
+        assert!((point.x() - expected.x()).abs() <= 2e-16);
+        assert!((point.y() - expected.y()).abs() <= 2e-16);
+    }
+}

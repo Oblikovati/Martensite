@@ -195,3 +195,66 @@ fn every_coordinate_rejects_nan_and_both_infinities() {
         }
     }
 }
+
+#[test]
+fn retained_surface_isocurves_follow_the_independent_rational_parameterization() {
+    for (values, along_u) in [([1., 1., 0.25, 0.25], true), ([1., 0.25, 1., 0.25], false)] {
+        let surface =
+            GeomBezierSurface::from_stored_coefficients(&poles(), &weights(values)).unwrap();
+        let curve = if along_u {
+            surface.v_iso(0.5)
+        } else {
+            surface.u_iso(0.5)
+        }
+        .unwrap();
+        let point = curve.value(0.5).unwrap();
+        let coordinate = if along_u { point.x() } else { point.y() };
+        assert!((coordinate - 0.2).abs() <= 2e-16, "{coordinate}");
+    }
+}
+
+#[test]
+fn retained_copy_keeps_isocurve_weights_and_legacy_replay_remains_unchanged() {
+    let values = [1., 1., 0.25, 0.25];
+    let retained = GeomBezierSurface::from_stored_coefficients(&poles(), &weights(values)).unwrap();
+    let copied = GeomBezierSurface::copy_of(&retained).unwrap();
+    let legacy = GeomBezierSurface::with_weights(&poles(), &weights(values)).unwrap();
+    assert_eq!(
+        (legacy.is_u_rational(), legacy.is_v_rational()),
+        (false, true)
+    );
+    for surface in [&copied, &legacy] {
+        assert!((surface.v_iso(0.5).unwrap().value(0.5).unwrap().x() - 0.2).abs() <= 2e-16);
+    }
+}
+
+fn assert_iso_evaluations(surface: &GeomBezierSurface) {
+    let expected = surface.value(0.25, 0.75).unwrap();
+    let actual = [
+        surface.u_iso(0.25).unwrap().value(0.75).unwrap(),
+        surface.v_iso(0.75).unwrap().value(0.25).unwrap(),
+    ];
+    for point in actual {
+        assert!((point.x() - expected.x()).abs() <= 2e-16);
+        assert!((point.y() - expected.y()).abs() <= 2e-16);
+        assert!((point.z() - expected.z()).abs() <= 2e-16);
+    }
+}
+#[test]
+fn retained_exchange_uv_keeps_both_isocurves_bound_to_surface_values() {
+    let surface =
+        GeomBezierSurface::from_stored_coefficients(&poles(), &weights([1., 1., 0.25, 0.25]))
+            .unwrap();
+    surface.exchange_uv().unwrap();
+    assert_iso_evaluations(&surface);
+    assert_iso_evaluations(&GeomBezierSurface::copy_of(&surface).unwrap());
+}
+#[test]
+fn retained_weight_edit_reclassifies_isocurves_and_copy_consistently() {
+    let surface =
+        GeomBezierSurface::from_stored_coefficients(&poles(), &weights([1., 1., 0.25, 0.25]))
+            .unwrap();
+    surface.set_weight(1, 1, 0.5).unwrap();
+    assert_iso_evaluations(&surface);
+    assert_iso_evaluations(&GeomBezierSurface::copy_of(&surface).unwrap());
+}

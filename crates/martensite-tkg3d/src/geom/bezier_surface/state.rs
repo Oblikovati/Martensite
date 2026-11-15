@@ -15,6 +15,12 @@ use martensite_tkmath::gp::{Point3, Vector3};
 
 pub(super) const CLASS: &str = "Geom_BezierSurface";
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum RationalAxisConvention {
+    LegacyReplay,
+    ParameterDirections,
+}
+
 #[derive(Clone)]
 pub(super) struct SurfaceState {
     pub(super) poles: Array2<'static, Point3>,
@@ -25,6 +31,7 @@ pub(super) struct SurfaceState {
     pub(super) u_max_deriv_inv: f64,
     pub(super) v_max_deriv_inv: f64,
     pub(super) max_deriv_inv_ok: bool,
+    rational_axes: RationalAxisConvention,
 }
 
 // One weight step of the file-static `Rational`: `|W(a) - W(b)| > Epsilon(|W(a)|)`.
@@ -101,6 +108,7 @@ impl SurfaceState {
             u_max_deriv_inv: 0.0,
             v_max_deriv_inv: 0.0,
             max_deriv_inv_ok: false,
+            rational_axes: RationalAxisConvention::LegacyReplay,
         }
     }
     pub(super) fn retained(
@@ -115,7 +123,7 @@ impl SurfaceState {
         } else {
             state.unit_weights()?
         };
-        (state.u_rational, state.v_rational) = flags;
+        state.retain_rational_axes(flags);
         Ok(state)
     }
     pub(super) fn retained_owned(
@@ -129,7 +137,7 @@ impl SurfaceState {
             Some(weights) => weights,
             None => state.unit_weights()?,
         };
-        (state.u_rational, state.v_rational) = flags;
+        state.retain_rational_axes(flags);
         Ok(state)
     }
     // GeomBezierSurface::init: one-based copies, rationality, unit weights otherwise,
@@ -148,6 +156,7 @@ impl SurfaceState {
             self.update_rationality()?;
         } else {
             (self.u_rational, self.v_rational) = (false, false);
+            self.rational_axes = RationalAxisConvention::LegacyReplay;
             self.weights = self.unit_weights()?;
         }
         self.max_deriv_inv_ok = false;
@@ -166,11 +175,31 @@ impl SurfaceState {
     /// `Rational(myWeights, ...)` then unit weights when neither direction is rational,
     /// the tail of most edits.
     pub(super) fn update_rationality(&mut self) -> Result<(), Failure> {
-        (self.u_rational, self.v_rational) = rationality(&self.weights)?;
+        self.replay_rational_axes()?;
         if !self.is_rational() {
             self.weights = self.unit_weights()?;
         }
         Ok(())
+    }
+    fn retain_rational_axes(&mut self, flags: (bool, bool)) {
+        (self.u_rational, self.v_rational) = flags;
+        self.rational_axes = RationalAxisConvention::ParameterDirections;
+    }
+    pub(super) fn replay_rational_axes(&mut self) -> Result<(), Failure> {
+        let flags = rationality(&self.weights)?;
+        (self.u_rational, self.v_rational) = flags;
+        self.rational_axes = RationalAxisConvention::LegacyReplay;
+        Ok(())
+    }
+    #[inline(always)]
+    fn iso_uses_weights(&self, is_u: bool) -> bool {
+        // UIso follows V; legacy flags historically use the opposite labels (#464).
+        let flag_u = is_u ^ (self.rational_axes == RationalAxisConvention::ParameterDirections);
+        if flag_u {
+            self.u_rational
+        } else {
+            self.v_rational
+        }
     }
     /// `BSplSLib::UnitWeights(NbUPoles, NbVPoles)`.
     pub(super) fn unit_weights(&self) -> Result<Array2<'static, f64>, Failure> {
@@ -316,8 +345,8 @@ impl SurfaceState {
         )
     }
     /// `UIso` (`is_u`) or `VIso`: the iso poles by BSplSLib::Iso; the curve is rational
-    /// only when the surface is rational in the direction along the curve (U for UIso,
-    /// V for VIso), as natively.
+    /// only when the surface is rational along its varying parameter. Legacy states
+    /// retain their historical flag labels (#464).
     pub(super) fn iso(&self, param: f64, is_u: bool) -> Result<Handle<dyn GeomCurve>, Failure> {
         let count: i32 = if is_u {
             self.nb_v_poles()
@@ -348,11 +377,7 @@ impl SurfaceState {
             &mut cpoles,
             target,
         )?;
-        let weighted: bool = if is_u {
-            self.u_rational
-        } else {
-            self.v_rational
-        };
+        let weighted = self.iso_uses_weights(is_u);
         let curve = if weighted {
             GeomBezierCurve::with_weights(&cpoles, &cweights)?
         } else {
