@@ -168,7 +168,9 @@ pub(super) fn workspace_runner(names: &[&str]) -> RecordingRunner {
         })
         .collect();
     let metadata = serde_json::json!({
-        "workspace_root": "/repo", "target_directory": "/repo/target", "packages": packages,
+        "workspace_root": "/repo",
+        "target_directory": crate::workspace::tests::native_target_directory(Path::new("/repo")),
+        "packages": packages,
     });
     RecordingRunner::default().with_stdout(
         "cargo metadata --format-version 1 --no-deps --locked",
@@ -186,4 +188,14 @@ fn a_reduced_workspace_never_selects_absent_script_packages() {
         &package_spec("martensite-tkmath")
     );
     assert_eq!(runner.commands().len(), 2);
+}
+
+#[test]
+fn metadata_runner_emits_a_platform_absolute_cargo_output_directory() {
+    let runner = workspace_runner(&["martensite-tkmath"]);
+    let workspace = crate::workspace::CargoWorkspace::load(&runner, Path::new("/repo")).unwrap();
+    assert!(workspace.target_directory.is_absolute());
+    assert_eq!(workspace.target_directory.file_name().unwrap(), "target");
+    #[cfg(windows)]
+    assert!(!Path::new("/repo/target").is_absolute());
 }
