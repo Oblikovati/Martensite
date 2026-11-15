@@ -1,0 +1,50 @@
+{
+  "source_sha256": "8994a727ea946d0b173d3101d764ef5c33b18f019932373f89b95ec88d2a6613",
+  "libraries": {
+    "tkgeomalgo": {
+      "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/wrapped-normal-api/target/debug/deps/libmartensite_tkgeomalgo-094423af518f4b98.rlib",
+      "sha256": "4088535f6066ef25f7399e671aa60975ff79106495d02bf7ad4e2ba8d53af68b"
+    },
+    "tkmath": {
+      "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/wrapped-normal-api/target/debug/deps/libmartensite_tkmath-1a5aa5ee27bff539.rlib",
+      "sha256": "c4ab0518e254fcf7aee54a80858648e17db8454f75b54f484b641f1d036c6942"
+    },
+    "tkernel": {
+      "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/wrapped-normal-api/target/debug/deps/libmartensite_tkernel-80a662b00517c9b5.rlib",
+      "sha256": "4f32b427489c1fa92160f681aa1b06dcf58b58268d8493d3605ed37f3f8cc064"
+    },
+    "tkg3d": {
+      "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/wrapped-normal-api/target/debug/deps/libmartensite_tkg3d-32238aa1a74b5409.rlib",
+      "sha256": "7ee9baaa1f2f1d1bb95d03061b1601ec077dadbf90620ea07f457e8590625671"
+    }
+  },
+  "compile_exit": 0,
+  "run_exit": 0,
+  "stages": [
+    {
+      "stage": "curve",
+      "rational": true,
+      "weights": [
+        4607182418800017408,
+        4607182418800017407
+      ]
+    },
+    {
+      "stage": "copy",
+      "rational": true,
+      "weights": [
+        4607182418800017408,
+        4607182418800017407
+      ]
+    },
+    {
+      "stage": "surface",
+      "u_rational": false,
+      "v_rational": false,
+      "weights": [
+        4607182418800017408,
+        4607182418800017408
+      ]
+    }
+  ]
+}

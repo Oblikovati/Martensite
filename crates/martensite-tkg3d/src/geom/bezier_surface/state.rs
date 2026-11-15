@@ -86,7 +86,12 @@ impl SurfaceState {
         poles: &Array2<'_, Point3>,
         weights: Option<&Array2<'_, f64>>,
     ) -> Result<Self, Failure> {
-        let mut state = SurfaceState {
+        let mut state = Self::empty();
+        state.init(poles, weights)?;
+        Ok(state)
+    }
+    fn empty() -> Self {
+        Self {
             poles: Array2::default(),
             weights: Array2::default(),
             eval_rep: Handle::default(),
@@ -95,8 +100,21 @@ impl SurfaceState {
             u_max_deriv_inv: 0.0,
             v_max_deriv_inv: 0.0,
             max_deriv_inv_ok: false,
+        }
+    }
+    pub(super) fn retained(
+        poles: &Array2<'_, Point3>,
+        weights: &Array2<'_, f64>,
+        flags: (bool, bool),
+    ) -> Result<Self, Failure> {
+        let mut state = Self::empty();
+        state.poles = rebased_grid(poles)?;
+        state.weights = if flags.0 || flags.1 {
+            rebased_grid(weights)?
+        } else {
+            state.unit_weights()?
         };
-        state.init(poles, weights)?;
+        (state.u_rational, state.v_rational) = flags;
         Ok(state)
     }
     // GeomBezierSurface::init: one-based copies, rationality, unit weights otherwise,

@@ -3,6 +3,7 @@ mod edit;
 mod grid;
 mod setters;
 mod state;
+mod stored_coefficients;
 mod traits;
 use super::bounded_surface::GeomBoundedSurface;
 use super::errors;
@@ -19,6 +20,7 @@ use martensite_tkg2d::geom2d::spline_data::bezier_knots;
 use martensite_tkmath::bsplclib;
 use martensite_tkmath::gp::{Point3, resolution};
 use state::{SurfaceState, rationality};
+pub use stored_coefficients::BezierSurfaceCoefficientError;
 
 /// A Bezier surface; `Handle::new(GeomBezierSurface::new(&poles)?)`.
 pub struct GeomBezierSurface {

@@ -1,7 +1,7 @@
 //! Reading one binary `Geom_Surface` record back.
+use super::BezierSurfaceWeightReadPolicy;
 use super::SurfaceFrameReadPolicy;
 use super::curve_read::read_curve;
-use super::errors::wrap_failure;
 use super::geometry_in::{read_degree, read_direction3, read_knots, read_point3};
 use super::scalars::{get_bool, get_integer, get_real, stream_get};
 use super::surface_write::code;
@@ -9,11 +9,13 @@ use martensite_tkernel::ncollection::{Array2, ArrayError};
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, Transient};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg3d::geom::{
-    GeomBSplineSurface, GeomBezierSurface, GeomConicalSurface, GeomCylindricalSurface,
-    GeomOffsetSurface, GeomPlane, GeomRectangularTrimmedSurface, GeomSphericalSurface, GeomSurface,
-    GeomSurfaceOfLinearExtrusion, GeomSurfaceOfRevolution, GeomToroidalSurface,
+    BezierSurfaceCoefficientError, GeomBSplineSurface, GeomBezierSurface, GeomConicalSurface,
+    GeomCylindricalSurface, GeomOffsetSurface, GeomPlane, GeomRectangularTrimmedSurface,
+    GeomSphericalSurface, GeomSurface, GeomSurfaceOfLinearExtrusion, GeomSurfaceOfRevolution,
+    GeomToroidalSurface,
 };
 use martensite_tkmath::gp::{Axis1, Axis3, Point3};
+type SurfacePolicies = (SurfaceFrameReadPolicy, BezierSurfaceWeightReadPolicy);
 
 /// `BinTools_SurfaceSet::ReadSurface`: the type code byte, then the record of that
 /// class; an unknown code raises "UNKNOWN SURFACE TYPE", and every failure is wrapped
@@ -26,16 +28,28 @@ pub(crate) fn read_surface_with_frame_policy(
     stream: &mut IoStream,
     policy: SurfaceFrameReadPolicy,
 ) -> Result<Handle<dyn GeomSurface>, Failure> {
-    wrap_failure("EXCEPTION in BinTools_SurfaceSet::ReadSurface(..)", || {
-        let stype = stream_get(stream) as u8;
-        read_record(stype, stream, policy)
+    read_surface_with_policies(stream, policy, BezierSurfaceWeightReadPolicy::LegacyReplay)
+}
+pub(crate) fn read_surface_with_policies(
+    stream: &mut IoStream,
+    policy: SurfaceFrameReadPolicy,
+    weights: BezierSurfaceWeightReadPolicy,
+) -> Result<Handle<dyn GeomSurface>, Failure> {
+    let stype = stream_get(stream) as u8;
+    read_record(stype, stream, (policy, weights)).map_err(|cause| {
+        if weights == BezierSurfaceWeightReadPolicy::PreserveStoredV1
+            && cause.exception_type() == BezierSurfaceCoefficientError::CONSTANT_NON_UNIT_EXCEPTION
+        {
+            return cause;
+        }
+        super::errors::wrapped("EXCEPTION in BinTools_SurfaceSet::ReadSurface(..)", &cause)
     })
 }
 
 fn read_record(
     stype: u8,
     stream: &mut IoStream,
-    policy: SurfaceFrameReadPolicy,
+    (policy, weights): SurfacePolicies,
 ) -> Result<Handle<dyn GeomSurface>, Failure> {
     match stype {
         code::PLANE => Ok(upcast(GeomPlane::new(read_axis3(stream, policy)?))),
@@ -45,10 +59,10 @@ fn read_record(
         code::TORUS => read_torus(stream, policy).map(upcast),
         code::LINEAR_EXTRUSION => read_extrusion(stream).map(upcast),
         code::REVOLUTION => read_revolution(stream).map(upcast),
-        code::BEZIER => read_bezier(stream).map(upcast),
+        code::BEZIER => read_bezier(stream, weights).map(upcast),
         code::BSPLINE => read_bspline(stream).map(upcast),
-        code::RECTANGULAR => read_trimmed(stream, policy).map(upcast),
-        code::OFFSET => read_offset(stream, policy).map(upcast),
+        code::RECTANGULAR => read_trimmed(stream, policy, weights).map(upcast),
+        code::OFFSET => read_offset(stream, policy, weights).map(upcast),
         _ => Err(Failure::new("UNKNOWN SURFACE TYPE")),
     }
 }
@@ -165,10 +179,20 @@ fn read_pole_grid(
 }
 
 /// The rational flags, the `char16_t` degrees, then the pole grid.
-fn read_bezier(stream: &mut IoStream) -> Result<GeomBezierSurface, Failure> {
+fn read_bezier(
+    stream: &mut IoStream,
+    policy: BezierSurfaceWeightReadPolicy,
+) -> Result<GeomBezierSurface, Failure> {
     let weighted = get_bool(stream) | get_bool(stream);
     let (udegree, vdegree) = (read_degree(stream)?, read_degree(stream)?);
-    let (poles, weights) = read_pole_grid(stream, (udegree + 1, vdegree + 1), weighted)?;
+    let (poles, mut weights) = read_pole_grid(stream, (udegree + 1, vdegree + 1), weighted)?;
+    if policy == BezierSurfaceWeightReadPolicy::PreserveStoredV1 {
+        if !weighted {
+            weights.init(1.);
+        }
+        return GeomBezierSurface::from_stored_coefficients(&poles, &weights)
+            .map_err(BezierSurfaceCoefficientError::into_failure);
+    }
     if weighted {
         GeomBezierSurface::with_weights(&poles, &weights)
     } else {
@@ -199,10 +223,11 @@ fn read_bspline(stream: &mut IoStream) -> Result<GeomBSplineSurface, Failure> {
 fn read_trimmed(
     stream: &mut IoStream,
     policy: SurfaceFrameReadPolicy,
+    weights: BezierSurfaceWeightReadPolicy,
 ) -> Result<GeomRectangularTrimmedSurface, Failure> {
     let u = (get_real(stream)?, get_real(stream)?);
     let v = (get_real(stream)?, get_real(stream)?);
-    let basis = read_surface_with_frame_policy(stream, policy)?;
+    let basis = read_surface_with_policies(stream, policy, weights)?;
     GeomRectangularTrimmedSurface::new(&basis, u, v, (true, true))
 }
 
@@ -211,8 +236,13 @@ fn read_trimmed(
 fn read_offset(
     stream: &mut IoStream,
     policy: SurfaceFrameReadPolicy,
+    weights: BezierSurfaceWeightReadPolicy,
 ) -> Result<GeomOffsetSurface, Failure> {
     let offset = get_real(stream)?;
-    let basis = read_surface_with_frame_policy(stream, policy)?;
+    let basis = read_surface_with_policies(stream, policy, weights)?;
     GeomOffsetSurface::new(&basis, offset, false)
 }
+
+#[cfg(test)]
+#[path = "surface_weight_tests.rs"]
+mod weight_tests;

@@ -78,6 +78,14 @@ impl BinShapeSet {
     pub fn with_surface_frame_policy(policy: SurfaceFrameReadPolicy) -> Self {
         Self::with_console_and_surface_frame_policy(Arc::new(StdoutConsole), policy)
     }
+    /// Selects weight retention for subsequent reads without changing other policies.
+    /// `set.set_bezier_surface_weight_read_policy(BezierSurfaceWeightReadPolicy::PreserveStoredV1)`.
+    pub fn set_bezier_surface_weight_read_policy(
+        &mut self,
+        policy: super::BezierSurfaceWeightReadPolicy,
+    ) {
+        self.surfaces.weight_policy = policy;
+    }
 
     /// Injects console output and fixed frame interpretation; `BinShapeSet::with_console_and_surface_frame_policy(console, policy)`.
     pub fn with_console_and_surface_frame_policy(

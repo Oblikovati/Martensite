@@ -15,6 +15,7 @@
 //! [`ConsoleOutput`](martensite_tkgeombase::geom_tools::ConsoleOutput). Values are written
 //! in the platform byte order: `DO_INVERSE` is not defined at the pinned revision.
 //! lists the native quirks this crate keeps.
+mod bezier_surface_weight_read_policy;
 mod curve2d_read;
 mod curve2d_set;
 mod curve2d_write;
@@ -54,6 +55,7 @@ mod surface_set;
 mod surface_write;
 mod table_io;
 
+pub use bezier_surface_weight_read_policy::BezierSurfaceWeightReadPolicy;
 pub use curve_set::BinCurveSet;
 pub use curve2d_set::BinCurve2dSet;
 pub use istream::BinIStream;

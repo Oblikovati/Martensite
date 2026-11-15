@@ -23,6 +23,8 @@ let shape = Shape::default();
 assert!(shape.is_null());
 ```
 
+Grouped binary readers can select `BezierSurfaceWeightReadPolicy::PreserveStoredV1` through `BinShapeSet::set_bezier_surface_weight_read_policy`. See [the retained-weight contract and native error category](../preserved-bezier-weights/README.md) (#464).
+
 ## Ownership and thread safety
 
 Shapes share their underlying topology and geometry through handles. Cloning a shape

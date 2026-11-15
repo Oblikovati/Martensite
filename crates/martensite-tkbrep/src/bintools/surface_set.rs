@@ -1,4 +1,5 @@
 //! `BinTools_SurfaceSet`: the indexed `Surfaces` table of the binary shape set.
+use super::BezierSurfaceWeightReadPolicy;
 use super::SurfaceFrameReadPolicy;
 use super::handle_table::HandleTable;
 use super::ostream::BinOStream;
@@ -32,6 +33,7 @@ static LABELS: TableLabels = TableLabels {
 /// ```
 pub struct BinSurfaceSet {
     frame_policy: SurfaceFrameReadPolicy,
+    pub(super) weight_policy: BezierSurfaceWeightReadPolicy,
     table: HandleTable<dyn GeomSurface>,
 }
 
@@ -51,6 +53,7 @@ impl BinSurfaceSet {
     pub fn with_surface_frame_policy(frame_policy: SurfaceFrameReadPolicy) -> Self {
         Self {
             frame_policy,
+            weight_policy: BezierSurfaceWeightReadPolicy::LegacyReplay,
             table: HandleTable::new("BinTools_SurfaceSet"),
         }
     }
@@ -104,9 +107,12 @@ impl BinSurfaceSet {
         progress: &ProgressRange<'_>,
     ) -> Result<(), Failure> {
         let policy = self.frame_policy;
+        let weights = self.weight_policy;
         let table = &mut self.table;
         read_table(stream, progress, &LABELS, |stream| {
-            table.add(&Self::read_surface_with_frame_policy(stream, policy)?);
+            table.add(&surface_read::read_surface_with_policies(
+                stream, policy, weights,
+            )?);
             Ok(())
         })
     }

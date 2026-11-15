@@ -10,6 +10,7 @@ use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::arrays::at;
 use martensite_tkg2d::geom2d::errors;
+use martensite_tkg3d::geom::BezierSurfaceCoefficientError;
 use martensite_tkg3d::geom::{GeomBezierCurve, GeomBezierSurface, GeomBoundedCurve};
 use martensite_tkmath::gp::Point3;
 
@@ -61,6 +62,28 @@ impl GeomFillBezierCurves {
         let mut filling = Self::new();
         filling.init_two(c1, c2, style)?;
         Ok(filling)
+    }
+    /// Retains equal-degree boundary control rows without epsilon weight demotion (#464).
+    /// `GeomFillBezierCurves::ruled_from_stored_boundaries(&first, &last)?`.
+    pub fn ruled_from_stored_boundaries(
+        c1: &Curve,
+        c2: &Curve,
+    ) -> Result<Self, BezierSurfaceCoefficientError> {
+        let a = GeomBezierCurve::copy_of(live(c1)?)?;
+        let b = GeomBezierCurve::copy_of(live(c2)?)?;
+        if a.degree() != b.degree() {
+            return Err(errors::construction(&format!(
+                "Bezier boundary degrees {} and {}; expected equal degrees",
+                a.degree(),
+                b.degree()
+            ))
+            .into());
+        }
+        let grids = ruled_control_net(&a, &b, a.is_rational() || b.is_rational())?;
+        let surface = retained_surface(grids)?;
+        Ok(Self {
+            my_surface: Handle::new(surface),
+        })
     }
     /// `Init(C1, C2, C3, C4, Type)`: the copies of the curves are chained end to start
     /// within Precision::Confusion (reversing some), Standard_ConstructionError when
@@ -177,6 +200,19 @@ impl GeomFillBezierCurves {
     }
 }
 
+fn retained_surface(
+    (poles, weights): SchemeGrids,
+) -> Result<GeomBezierSurface, BezierSurfaceCoefficientError> {
+    let weights = match weights {
+        Some(weights) => weights,
+        None => martensite_tkmath::bsplslib::unit_weights(
+            poles.nb_rows() as i32,
+            poles.nb_columns() as i32,
+        )?,
+    };
+    GeomBezierSurface::from_stored_coefficients(&poles, &weights)
+}
+
 /// The ruled Bezier surface of `Init(C1, C2)` outside the curved style: the copies
 /// raised to the higher degree, their poles and weights as the two columns.
 fn ruled(
@@ -184,6 +220,13 @@ fn ruled(
     b: &GeomBezierCurve,
     is_rat: bool,
 ) -> Result<GeomBezierSurface, Failure> {
+    bezier_surface(ruled_control_net(a, b, is_rat)?)
+}
+fn ruled_control_net(
+    a: &GeomBezierCurve,
+    b: &GeomBezierCurve,
+    is_rat: bool,
+) -> Result<SchemeGrids, Failure> {
     let deg_u: i32 = a.degree().max(b.degree());
     for curve in [a, b] {
         if curve.degree() < deg_u {
@@ -192,12 +235,11 @@ fn ruled(
     }
     let (p1, p2) = (a.poles(), b.poles());
     let weights = is_rat.then(|| [a, b].map(|c| c.weights_array(|w| w.clone())));
-    let grids = ruled_grids(
+    ruled_grids(
         [&p1, &p2],
         weights.as_ref().map(|[w1, w2]| [w1, w2]),
         deg_u + 1,
-    )?;
-    bezier_surface(grids)
+    )
 }
 
 /// The Bezier surface of a filling scheme's poles (and weights when rational).

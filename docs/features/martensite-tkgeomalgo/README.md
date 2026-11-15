@@ -19,6 +19,8 @@ evolution laws, local continuity analysis and the owned sketch spline constructi
 | `topclass`, `toptrans` | Generic 2d classification and complex transitions. |
 | `sketch_spline` | The owned sketch spline construction with certified incidences. |
 
+`GeomFillBezierCurves::ruled_from_stored_boundaries` retains equal-degree boundary control rows without epsilon weight demotion. See [the retained-weight contract](../preserved-bezier-weights/README.md) (#464).
+
 ## Ownership and thread safety
 
 Geometry handles share mutable objects; cloning a handle keeps the shared identity.

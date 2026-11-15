@@ -6,6 +6,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added opt-in coefficient-preserving ruled Bezier construction and binary replay with typed refusal of constant non-unit weight grids (#464).
+
 ### Fixed
 
 - Stabilized planar-profile area cross-checks under large coordinate translations without changing certification limits (#446).
