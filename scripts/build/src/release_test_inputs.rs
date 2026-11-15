@@ -1,4 +1,6 @@
 //! QA-only paths do not create new publication identities (#466).
+#[cfg(test)]
+use std::fs;
 use crate::release_macro_inputs::{
     LiteralMacroInputs, filename_extension, literal_string as decode_string,
     source_macro_identifier,
@@ -9,7 +11,6 @@ use proc_macro2::{TokenStream, TokenTree};
 use std::{
     borrow::Cow,
     collections::BTreeSet,
-    fs,
     path::{Component, Path, PathBuf},
 };
 
@@ -35,30 +36,9 @@ impl ProductionReferences {
     }
 }
 
-struct SourceScope<'a> {
-    parent: &'a Path,
-    package: &'a Path,
-    owner: Option<String>,
-    inline_module: bool,
-}
-impl<'a> SourceScope<'a> {
-    fn new(parent: &'a Path, package: &'a Path) -> Self {
-        Self {
-            parent,
-            package,
-            owner: None,
-            inline_module: false,
-        }
-    }
-    fn within(&self, tokens: &[TokenTree], index: usize) -> Self {
-        Self {
-            parent: self.parent,
-            package: self.package,
-            owner: macro_owner(tokens, index).or_else(|| self.owner.clone()),
-            inline_module: self.inline_module || inline_module(tokens, index),
-        }
-    }
-}
+#[path = "release_rust_inputs.rs"]
+mod rust_inputs;
+use rust_inputs::{SourceScope, scan_directory};
 /// Retains uncertain production inputs while separating proven QA-only edits.
 /// Example: `publication_changes(root, manifest, directory, changed)`.
 pub(crate) fn publication_changes<'a>(
@@ -158,52 +138,6 @@ fn changed_extensions(changed: &[ChangedFile]) -> BTreeSet<String> {
                 .to_ascii_lowercase()
         })
         .collect()
-}
-fn scan_directory(directory: &Path, root: &Path, refs: &mut ProductionReferences) -> Option<()> {
-    for entry in fs::read_dir(directory).ok()? {
-        let entry = entry.ok()?;
-        let kind = entry.file_type().ok()?;
-        if kind.is_symlink() {
-            return None;
-        }
-        if kind.is_dir() {
-            scan_child(&entry.path(), root, refs)?;
-        } else if entry.path().extension().is_some_and(|ext| ext == "rs")
-            && entry.path() != root.join("build.rs")
-        {
-            scan_source(&entry.path(), root, refs)?;
-        }
-    }
-    Some(())
-}
-fn scan_child(path: &Path, root: &Path, refs: &mut ProductionReferences) -> Option<()> {
-    if ["tests", "target", ".git"]
-        .iter()
-        .any(|name| path == root.join(name))
-    {
-        return Some(());
-    }
-    if path
-        .file_name()
-        .is_some_and(|name| matches!(name.to_str(), Some("target" | ".git")))
-    {
-        return None;
-    }
-    scan_directory(path, root, refs)
-}
-fn scan_source(path: &Path, root: &Path, refs: &mut ProductionReferences) -> Option<()> {
-    let source = fs::read_to_string(path).ok()?;
-    let tokens = source.parse::<TokenStream>().ok()?;
-    if refs.collecting {
-        refs.macros.record(tokens.clone());
-    }
-    scan_tokens(
-        tokens,
-        path.parent()?,
-        root,
-        refs,
-        &SourceScope::new(path.parent()?, root),
-    )
 }
 fn scan_tokens(
     tokens: TokenStream,
