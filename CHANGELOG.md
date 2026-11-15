@@ -6,10 +6,6 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Fixed
-
-- Corrected Windows build-driver fixtures for native absolute output paths and CRLF workflow checkouts (#478).
-
 ## [0.13.1] - 2026-11-15
 
 ### Fixed
