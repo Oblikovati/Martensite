@@ -48,11 +48,12 @@ it is not a shell command. `cargo fmt --all` can miss sources reached through
 
 Local `cargo xtask pr` still runs all stages sequentially. Release pipelines
 compute package scope since the previous release and run the selected suites
-on each supported target. CI partitions that selection into at most four shards
-per platform, with up to sixteen release test jobs running concurrently. Each
-package appears once per platform. TKGeomBase, TKPrim, TKGeomAlgo and TKTopAlgo
-start separate shards when selected; the remaining packages are distributed in
-sorted order. The limit bounds repeated dependency compilation across runners.
+on each supported target. CI partitions that selection into a fixed number of
+shards per platform: six on macOS x86_64, whose runners are slowest, and four
+elsewhere. Up to twenty release test jobs run concurrently. Each package
+appears once per platform. Packages are assigned longest measured suite first
+to the least-loaded shard (#474); a platform that cannot run a suite never
+receives it. The shard count bounds repeated dependency compilation across runners.
 The shared checks and packaging run alongside tests. A required `release` result
 checks both matrices before publication. Local `cargo xtask release` and `ci run`
 without `--checks-only` retain the complete sequential pipeline.

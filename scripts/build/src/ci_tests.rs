@@ -136,7 +136,6 @@ pub fn test_shard(
     target: &BuildTarget,
 ) -> BuildResult<()> {
     let packages = selected_shard(context, plan, shard, target)?;
-    let packages = crate::targets::runnable_test_packages(packages, target.triple());
     context.reporter.note(&format!(
         "Release test shard {shard}: {}",
         packages.join(", ")
@@ -154,12 +153,13 @@ fn selected_shard(
     shard: usize,
     target: &BuildTarget,
 ) -> BuildResult<Vec<String>> {
-    if !matches!(plan, CiPlan::Release { .. }) || !release_target(target) {
+    let release = release_target(target).filter(|_| matches!(plan, CiPlan::Release { .. }));
+    let Some(release) = release else {
         return Err(BuildError::Usage(format!(
             "test shard {shard}, plan {plan:?}, target {target:?}; expected a release on a supported target"
         )));
-    }
-    let shards = crate::release_ci::release_shards(&selected_packages(context, plan)?);
+    };
+    let shards = crate::release_ci::release_shards(&selected_packages(context, plan)?, release);
     shards.get(shard).cloned().ok_or_else(|| {
         BuildError::Usage(format!(
             "test shard {shard}; expected an index below {}",
@@ -168,9 +168,11 @@ fn selected_shard(
     })
 }
 
-fn release_target(target: &BuildTarget) -> bool {
-    matches!(target, BuildTarget::Triple(triple)
-        if crate::targets::RELEASE_TARGETS.iter().any(|target| target.triple == triple))
+fn release_target(target: &BuildTarget) -> Option<&'static crate::targets::ReleaseTarget> {
+    let triple = target.triple()?;
+    crate::targets::RELEASE_TARGETS
+        .iter()
+        .find(|release| release.triple == triple)
 }
 
 /// Fails closed on failed, cancelled or unexpectedly skipped matrix jobs.

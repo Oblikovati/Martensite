@@ -26,7 +26,8 @@ cancelled and unexpectedly skipped jobs.
 Release rehearsals and tag runs use the previous final release as their scope
 baseline. Each of the four native platforms receives up to four test shards.
 The planner puts TKGeomBase, TKPrim, TKGeomAlgo and TKTopAlgo in separate shards
-when selected, then distributes other selected packages in sorted order. This
+when selected, then distributes other selected packages in sorted order.
+(#474 replaced this heuristic with longest-first assignment by measured minutes.) This
 is a scheduling heuristic based on the long suites observed during #250;
 it does not change tests or predict equal shard durations. Every selected
 package runs once per platform, including doctests. Empty scopes produce no

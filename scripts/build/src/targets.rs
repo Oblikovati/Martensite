@@ -8,6 +8,8 @@ pub struct ReleaseTarget {
     pub triple: &'static str,
     /// The standard hosted-runner label used for native builds and tests.
     pub runner: &'static str,
+    /// Release test jobs on this platform; slower runners get more (#474).
+    pub test_shards: usize,
 }
 
 /// Release platforms. Each builds natively, so tests run on the target itself.
@@ -15,19 +17,24 @@ pub const RELEASE_TARGETS: [ReleaseTarget; 4] = [
     ReleaseTarget {
         triple: "x86_64-unknown-linux-gnu",
         runner: "ubuntu-24.04",
+        test_shards: 4,
     },
     // The generic latest label is ARM64; Intel needs its current standard image (#298).
     ReleaseTarget {
         triple: "x86_64-apple-darwin",
         runner: "macos-26-intel",
+        // Its shards took up to 2.6 times as long as Linux in run 42334254227 (#474).
+        test_shards: 6,
     },
     ReleaseTarget {
         triple: "aarch64-apple-darwin",
         runner: "macos-latest",
+        test_shards: 4,
     },
     ReleaseTarget {
         triple: "x86_64-pc-windows-msvc",
         runner: "windows-2025",
+        test_shards: 4,
     },
 ];
 

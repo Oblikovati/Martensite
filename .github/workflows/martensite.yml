@@ -173,7 +173,8 @@ jobs:
     name: release tests (${{ matrix.target }}, shard ${{ matrix.shard }})
     strategy:
       fail-fast: false
-      max-parallel: 16
+      # Covers every shard of every platform at once (#474).
+      max-parallel: 20
       matrix: ${{ fromJSON(needs.plan.outputs.test-matrix) }}
     runs-on: ${{ matrix.runner }}
     steps:

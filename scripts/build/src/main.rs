@@ -36,6 +36,7 @@ mod release_test_inputs;
 mod report;
 mod source_sdk;
 mod targets;
+mod suite_weights;
 mod thread_sanitizer;
 mod thread_sanitizer_selection;
 #[cfg(test)]
