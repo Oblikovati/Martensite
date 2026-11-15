@@ -243,5 +243,7 @@ fn cap_fixture_is_lit(mode: &str) -> bool {
 }
 
 #[cfg(test)]
-#[path = "capping_texture_scene_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "capping_texture_scene_tests.rs"]
+    mod tests;
+}

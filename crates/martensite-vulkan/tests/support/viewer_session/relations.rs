@@ -388,5 +388,7 @@ fn require_pair_parallel(
 }
 
 #[cfg(test)]
-#[path = "relation_command_contract.rs"]
-mod relation_command_contract;
+support_unit_tests! {
+    #[path = "relation_command_contract.rs"]
+    mod relation_command_contract;
+}

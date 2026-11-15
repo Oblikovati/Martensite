@@ -49,5 +49,7 @@ impl ViewerSession {
 }
 
 #[cfg(test)]
-#[path = "material_rendering_controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "material_rendering_controls.rs"]
+    mod controls;
+}

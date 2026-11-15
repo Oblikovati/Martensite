@@ -91,5 +91,7 @@ fn invalid_reference(reference: &str) -> Failure {
 }
 
 #[cfg(test)]
-#[path = "checktrinfo_reference_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "checktrinfo_reference_tests.rs"]
+    mod tests;
+}

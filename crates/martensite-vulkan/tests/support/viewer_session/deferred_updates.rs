@@ -36,5 +36,7 @@ impl ViewerSession {
 }
 
 #[cfg(test)]
-#[path = "deferred_updates_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "deferred_updates_tests.rs"]
+    mod tests;
+}

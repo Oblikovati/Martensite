@@ -52,5 +52,7 @@ fn configure_section_mesh_offset(aspect: &dyn Graphic3dAspectsSource, mode: &str
     }
 }
 #[cfg(test)]
-#[path = "capping_section_mesh_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "capping_section_mesh_tests.rs"]
+    mod tests;
+}

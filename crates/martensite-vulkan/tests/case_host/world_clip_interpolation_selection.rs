@@ -27,5 +27,7 @@ pub(crate) fn metadata(behavior: Behavior) -> String {
 }
 
 #[cfg(test)]
-#[path = "world_clip_interpolation_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "world_clip_interpolation_selection_tests.rs"]
+    mod tests;
+}

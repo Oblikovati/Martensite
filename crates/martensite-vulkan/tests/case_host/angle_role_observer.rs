@@ -1,13 +1,17 @@
 //! Optional causal observations resolve actual dimension owners, never nearby draw indices.
 #[cfg(test)]
-#[path = "angle_role_observer_controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "angle_role_observer_controls.rs"]
+    mod controls;
+}
 use super::presentation_role_scope as role_scope;
 #[path = "angle_text_wire_role.rs"]
 mod text_wire;
 #[cfg(test)]
-#[path = "angle_text_wire_controls.rs"]
-mod text_wire_controls;
+support_unit_tests! {
+    #[path = "angle_text_wire_controls.rs"]
+    mod text_wire_controls;
+}
 use super::capture_witness::{CaseWitnessDirectory, DumpWitnessWriter};
 use crate::case_view::viewer_session::ViewerSession;
 use crate::source_output::control_capture::control_dump;

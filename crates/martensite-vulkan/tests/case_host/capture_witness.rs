@@ -6,8 +6,10 @@ use std::{ffi::OsStr, io, io::Write};
 #[path = "capture_witness/camera_state.rs"]
 mod camera_state;
 #[cfg(test)]
-#[path = "capture_witness/controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "capture_witness/controls.rs"]
+    mod controls;
+}
 #[path = "capture_witness/encoding.rs"]
 mod encoding;
 #[path = "capture_witness/sequence_storage.rs"]

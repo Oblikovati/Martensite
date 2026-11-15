@@ -34,5 +34,7 @@ fn require_restored_png(
 }
 
 #[cfg(test)]
-#[path = "identic_restore_tests.rs"]
-mod identic_restore_tests;
+support_unit_tests! {
+    #[path = "identic_restore_tests.rs"]
+    mod identic_restore_tests;
+}

@@ -96,5 +96,7 @@ pub fn assert_cross_driver(capture: &FrameCapture, rgba: &[u8], depth: &[u8], ca
 }
 
 #[cfg(test)]
-#[path = "cross_driver_bound_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "cross_driver_bound_tests.rs"]
+    mod tests;
+}

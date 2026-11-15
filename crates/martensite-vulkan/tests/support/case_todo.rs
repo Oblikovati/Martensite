@@ -159,5 +159,7 @@ fn assert_required_report(report: &str, required: &[&'static str]) {
 }
 
 #[cfg(test)]
-#[path = "case_todo_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "case_todo_tests.rs"]
+    mod tests;
+}

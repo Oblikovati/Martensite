@@ -32,5 +32,7 @@ pub(crate) fn metadata(behavior: Coverage) -> String {
 }
 
 #[cfg(test)]
-#[path = "thin_line_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "thin_line_selection_tests.rs"]
+    mod tests;
+}

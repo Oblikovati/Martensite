@@ -173,5 +173,7 @@ fn trim_zeros(text: &str) -> String {
 }
 
 #[cfg(test)]
-#[path = "printf_g_tests.rs"]
-mod printf_g_tests;
+support_unit_tests! {
+    #[path = "printf_g_tests.rs"]
+    mod printf_g_tests;
+}

@@ -1,7 +1,9 @@
 //! Exact regular surface grid and edge polygons of MeshTest::tessellate.
 mod boundaries;
 #[cfg(test)]
-mod controls;
+support_unit_tests! {
+    mod controls;
+}
 mod grid;
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},

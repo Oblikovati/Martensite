@@ -37,5 +37,7 @@ pub(super) fn metadata(behavior: RenderWorldClippingBehavior) -> String {
 }
 
 #[cfg(test)]
-#[path = "world_clipping_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "world_clipping_selection_tests.rs"]
+    mod tests;
+}

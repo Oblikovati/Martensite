@@ -105,5 +105,7 @@ fn float64_metadata(reference: Grid, raster: Grid) -> String {
 }
 
 #[cfg(test)]
-#[path = "window_depth_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "window_depth_selection_tests.rs"]
+    mod tests;
+}

@@ -91,8 +91,10 @@ pub(super) fn observation_extent(
 }
 
 #[cfg(test)]
-#[path = "options_observation_controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "options_observation_controls.rs"]
+    mod controls;
+}
 
 trait UnavailableDumpWriter: DumpWitnessWriter {
     fn require_no_ties(&self) -> io::Result<()>;

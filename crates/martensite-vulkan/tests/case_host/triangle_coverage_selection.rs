@@ -63,5 +63,7 @@ pub(super) fn metadata(behavior: Behavior) -> String {
 }
 
 #[cfg(test)]
-#[path = "triangle_coverage_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "triangle_coverage_selection_tests.rs"]
+    mod tests;
+}

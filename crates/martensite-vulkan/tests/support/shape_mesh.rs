@@ -251,5 +251,7 @@ pub fn check_real(
 }
 
 #[cfg(test)]
-#[path = "shape_mesh_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "shape_mesh_tests.rs"]
+    mod tests;
+}

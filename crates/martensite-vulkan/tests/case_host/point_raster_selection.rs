@@ -30,5 +30,7 @@ pub(super) fn metadata(behavior: RenderPointRasterBehavior) -> String {
     )
 }
 #[cfg(test)]
-#[path = "point_raster_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "point_raster_selection_tests.rs"]
+    mod tests;
+}

@@ -64,5 +64,7 @@ fn load_image(path: &Path) -> Result<Handle<dyn ImagePixMapObject>, Box<dyn Erro
 }
 
 #[cfg(test)]
-#[path = "dump_diff_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "dump_diff_tests.rs"]
+    mod tests;
+}

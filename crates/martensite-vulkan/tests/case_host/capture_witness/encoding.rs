@@ -119,8 +119,10 @@ fn raster_coverage_tag(polygon_points: bool, topology: u32) -> u32 {
     topology
 }
 #[cfg(test)]
-#[path = "raster_coverage_tests.rs"]
-mod raster_coverage_tests;
+support_unit_tests! {
+    #[path = "raster_coverage_tests.rs"]
+    mod raster_coverage_tests;
+}
 
 #[cfg(all(test, feature = "raytrace-input-diagnostics"))]
 mod raytrace_controls {

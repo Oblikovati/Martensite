@@ -19,5 +19,7 @@ impl ViewerSession {
 }
 
 #[cfg(test)]
-#[path = "entity_state_response_controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "entity_state_response_controls.rs"]
+    mod controls;
+}

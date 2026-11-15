@@ -1,8 +1,6 @@
 //! Complete shape-filter and graduated-trihedron cases reuse canonical bodies.
 #![cfg(target_os = "linux")]
 include!("case_host/session_modules.rs");
-#[path = "support/case_v3d_policy_controls.rs"]
-mod case_v3d_policy_controls;
 #[path = "case_host/context_mode_transition.rs"]
 mod context_mode_transition;
 #[allow(dead_code, unused_imports)]

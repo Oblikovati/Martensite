@@ -1,4 +1,6 @@
 //! Accepted original87 retained workloads; `ordered_stencil_performance` records steady redraw/readback.
+#[cfg(test)]
+include!("../tests/support/support_unit_tests_elsewhere.rs");
 #[path = "support/device_options.rs"]
 mod device_options;
 #[path = "../tests/support/ordered_stencil_replay.rs"]

@@ -39,5 +39,7 @@ pub(crate) fn require_capture_default(value: Option<&OsStr>) -> io::Result<()> {
     ))
 }
 #[cfg(test)]
-#[path = "depth_bias_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "depth_bias_selection_tests.rs"]
+    mod tests;
+}

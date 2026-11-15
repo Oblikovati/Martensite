@@ -67,5 +67,7 @@ pub(super) fn encode(snapshot: &CameraStateSnapshot) -> Vec<u8> {
 }
 
 #[cfg(test)]
-#[path = "camera_state_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "camera_state_tests.rs"]
+    mod tests;
+}

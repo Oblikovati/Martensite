@@ -112,5 +112,7 @@ fn publish_bytes(path: &Path, bytes: &[u8], store: &impl FrameImageStore) -> io:
     store.rename(&temporary, path)
 }
 #[cfg(test)]
-#[path = "framebuffer_capture_image_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "framebuffer_capture_image_tests.rs"]
+    mod tests;
+}

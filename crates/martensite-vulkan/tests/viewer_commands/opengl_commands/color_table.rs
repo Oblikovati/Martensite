@@ -59,5 +59,7 @@ pub(crate) fn html_row(color: Color, name: &str, source: &str) -> String {
 }
 
 #[cfg(test)]
-#[path = "color_table_controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "color_table_controls.rs"]
+    mod controls;
+}

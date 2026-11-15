@@ -30,5 +30,7 @@ pub(super) fn metadata(behavior: RenderTextInterpolationBehavior) -> String {
 }
 
 #[cfg(test)]
-#[path = "text_interpolation_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "text_interpolation_selection_tests.rs"]
+    mod tests;
+}

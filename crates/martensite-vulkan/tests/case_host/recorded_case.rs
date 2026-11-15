@@ -42,5 +42,7 @@ macro_rules! recorded_case {
 }
 
 #[cfg(test)]
-#[path = "recorded_case_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "recorded_case_tests.rs"]
+    mod tests;
+}

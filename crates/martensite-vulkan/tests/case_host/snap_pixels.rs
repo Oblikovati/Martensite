@@ -71,5 +71,7 @@ pub(crate) fn snap_pixels_json(pixels: &BTreeSet<(i32, i32)>) -> String {
 }
 
 #[cfg(test)]
-#[path = "snap_pixels_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "snap_pixels_tests.rs"]
+    mod tests;
+}

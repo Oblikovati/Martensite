@@ -131,5 +131,7 @@ fn wire_detected_type(
 }
 
 #[cfg(test)]
-#[path = "entity_type_tests.rs"]
-mod entity_type_tests;
+support_unit_tests! {
+    #[path = "entity_type_tests.rs"]
+    mod entity_type_tests;
+}

@@ -33,5 +33,7 @@ pub fn assert_golden_depth(actual: &[f32], expected: &[u8], mode: &str) {
     }
 }
 #[cfg(test)]
-#[path = "native_golden_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "native_golden_tests.rs"]
+    mod tests;
+}

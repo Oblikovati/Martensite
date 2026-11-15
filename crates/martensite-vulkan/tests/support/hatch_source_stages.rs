@@ -102,5 +102,7 @@ impl HatchBoxScene {
 }
 
 #[cfg(test)]
-#[path = "hatch_source_mode_controls.rs"]
-mod source_mode_controls;
+support_unit_tests! {
+    #[path = "hatch_source_mode_controls.rs"]
+    mod source_mode_controls;
+}

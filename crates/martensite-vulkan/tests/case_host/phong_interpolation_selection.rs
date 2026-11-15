@@ -72,5 +72,7 @@ pub(crate) fn admit_observation(behavior: Behavior) -> Result<(), martensite_vul
     )
 }
 #[cfg(test)]
-#[path = "phong_interpolation_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "phong_interpolation_selection_tests.rs"]
+    mod tests;
+}

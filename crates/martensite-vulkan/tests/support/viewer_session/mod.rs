@@ -245,7 +245,9 @@ impl SourceViewOutput for ViewerSession {
 }
 
 #[cfg(test)]
-#[path = "viewer_ownership_contract.rs"]
-mod viewer_ownership_contract;
+support_unit_tests! {
+    #[path = "viewer_ownership_contract.rs"]
+    mod viewer_ownership_contract;
+}
 
 mod subview_binding;

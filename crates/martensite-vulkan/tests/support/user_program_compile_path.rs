@@ -92,5 +92,7 @@ fn within_one_level(rust: &[u8], native: &[u8]) -> bool {
 }
 
 #[cfg(test)]
-#[path = "user_program_compile_path_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "user_program_compile_path_tests.rs"]
+    mod tests;
+}

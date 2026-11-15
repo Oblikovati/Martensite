@@ -1,5 +1,6 @@
 //! Diagnostic: the submitted sphere triangles and the edge-free and edged dumps of
 //! The reference scene pbr_variants/pbr_variants, for the mesh-edge distance analysis on RADV.
+include!("support/support_unit_tests_elsewhere.rs");
 #[allow(dead_code)] // Only the device options and the view dump are used.
 #[path = "support/native_dump_grading.rs"]
 mod grading;

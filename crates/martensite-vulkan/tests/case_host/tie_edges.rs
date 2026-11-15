@@ -392,5 +392,7 @@ fn triangle_tie_edges(triangle: &[[f64; 2]; 3]) -> Vec<TieEdge> {
 }
 
 #[cfg(test)]
-#[path = "tie_edges_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "tie_edges_tests.rs"]
+    mod tests;
+}

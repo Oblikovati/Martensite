@@ -24,5 +24,7 @@ pub(crate) fn capture_configuration(
     Ok(configuration.with_projection(selected(value)?))
 }
 #[cfg(test)]
-#[path = "projection_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "projection_selection_tests.rs"]
+    mod tests;
+}

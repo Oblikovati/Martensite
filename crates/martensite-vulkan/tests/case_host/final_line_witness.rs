@@ -2,6 +2,8 @@
 use martensite_vulkan::{PrimitiveDraw, PrimitiveTopology, RenderError, RenderFrame, RenderLayer};
 
 /// Reuse renderer preparation for crossing-eye line cohorts; `prepare(draws, [409., 409.])?`.
+// Only the unit tests call this, and they compile in the `support_units` binary alone (#471).
+#[allow(dead_code)]
 pub(crate) fn prepare(
     draws: Vec<PrimitiveDraw>,
     size: [f64; 2],
@@ -149,5 +151,7 @@ fn clip_weight(draw: &PrimitiveDraw, vertex: &martensite_vulkan::RenderVertex) -
 }
 
 #[cfg(test)]
-#[path = "final_line_witness_controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "final_line_witness_controls.rs"]
+    mod controls;
+}

@@ -79,5 +79,7 @@ impl NamedObjects {
 }
 
 #[cfg(test)]
-#[path = "named_objects_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "named_objects_tests.rs"]
+    mod tests;
+}

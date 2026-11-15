@@ -213,5 +213,7 @@ fn measurement_rates(observed: &FpsObservation) -> (f64, f64) {
 }
 
 #[cfg(test)]
-#[path = "performance_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "performance_tests.rs"]
+    mod tests;
+}

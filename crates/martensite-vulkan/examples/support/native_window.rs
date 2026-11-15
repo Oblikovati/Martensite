@@ -180,5 +180,7 @@ fn channel(pixel: u64, mask: u64) -> u8 {
     (((pixel & mask) >> shift) * 255 / maximum) as u8
 }
 #[cfg(test)]
-#[path = "native_window_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "native_window_tests.rs"]
+    mod tests;
+}

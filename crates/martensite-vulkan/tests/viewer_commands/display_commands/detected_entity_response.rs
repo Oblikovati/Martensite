@@ -152,5 +152,7 @@ fn subtype_row(entity: &Handle<dyn Select3DSensitiveEntity>) -> String {
 }
 
 #[cfg(test)]
-#[path = "detected_entity_response_controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "detected_entity_response_controls.rs"]
+    mod controls;
+}

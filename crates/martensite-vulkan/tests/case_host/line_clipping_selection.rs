@@ -30,5 +30,7 @@ pub(super) fn selection_metadata(behavior: RenderLineClippingBehavior) -> String
     )
 }
 #[cfg(test)]
-#[path = "line_clipping_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "line_clipping_selection_tests.rs"]
+    mod tests;
+}

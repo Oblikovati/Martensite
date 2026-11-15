@@ -12,5 +12,7 @@ pub(crate) fn capture_path(basename: &str) -> Result<PathBuf, Box<dyn Error>> {
 }
 
 #[cfg(test)]
-#[path = "case_capture_path_controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "case_capture_path_controls.rs"]
+    mod controls;
+}

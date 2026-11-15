@@ -75,5 +75,7 @@ impl ViewerSession {
 }
 
 #[cfg(test)]
-#[path = "color_check_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "color_check_tests.rs"]
+    mod tests;
+}

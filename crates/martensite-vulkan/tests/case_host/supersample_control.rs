@@ -167,5 +167,7 @@ pub(crate) fn control_record_json(
 }
 
 #[cfg(test)]
-#[path = "supersample_control_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "supersample_control_tests.rs"]
+    mod tests;
+}

@@ -173,5 +173,7 @@ pub(crate) fn select_predefined_textures() {
 }
 
 #[cfg(test)]
-#[path = "dataset_shape_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "dataset_shape_tests.rs"]
+    mod tests;
+}

@@ -314,5 +314,7 @@ fn build_edge_remainder(
 }
 
 #[cfg(test)]
-#[path = "identic_relation_controls_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "identic_relation_controls_tests.rs"]
+    mod tests;
+}

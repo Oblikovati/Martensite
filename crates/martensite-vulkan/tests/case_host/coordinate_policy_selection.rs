@@ -69,5 +69,7 @@ pub(super) fn from_environment() -> io::Result<(RenderPipelinePolicies, Frame)> 
 }
 
 #[cfg(test)]
-#[path = "coordinate_policy_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "coordinate_policy_selection_tests.rs"]
+    mod tests;
+}

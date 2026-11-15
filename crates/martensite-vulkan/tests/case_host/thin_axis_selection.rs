@@ -28,5 +28,7 @@ pub(super) fn metadata(behavior: RenderThinAxisCoverage) -> String {
     )
 }
 #[cfg(test)]
-#[path = "thin_axis_selection_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "thin_axis_selection_tests.rs"]
+    mod tests;
+}

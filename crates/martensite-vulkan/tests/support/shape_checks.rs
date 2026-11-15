@@ -129,5 +129,7 @@ pub fn six_significant_digits(value: f64) -> f64 {
 }
 
 #[cfg(test)]
-#[path = "shape_checks_tests.rs"]
-mod tests;
+support_unit_tests! {
+    #[path = "shape_checks_tests.rs"]
+    mod tests;
+}

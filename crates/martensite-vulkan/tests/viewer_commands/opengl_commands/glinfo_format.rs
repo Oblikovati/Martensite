@@ -45,5 +45,7 @@ fn append_word(lines: &mut Vec<String>, word: &str, width: i32) {
     line.push_str(word);
 }
 #[cfg(test)]
-#[path = "glinfo_format_controls.rs"]
-mod controls;
+support_unit_tests! {
+    #[path = "glinfo_format_controls.rs"]
+    mod controls;
+}

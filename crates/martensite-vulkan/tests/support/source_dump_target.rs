@@ -51,9 +51,13 @@ pub(super) fn perform_source_dump_options(
 }
 
 #[cfg(test)]
-#[path = "source_dump_contract.rs"]
-mod source_dump_contract;
+support_unit_tests! {
+    #[path = "source_dump_contract.rs"]
+    mod source_dump_contract;
+}
 
 #[cfg(test)]
-#[path = "source_dump_options_contract.rs"]
-mod source_dump_options_contract;
+support_unit_tests! {
+    #[path = "source_dump_options_contract.rs"]
+    mod source_dump_options_contract;
+}
