@@ -1,4 +1,5 @@
 //! QA-only paths do not create new publication identities (#466).
+use crate::release_manifest_inputs::{is_include_keyword, is_include_macro};
 use crate::release_macro_inputs::{
     LiteralMacroInputs, filename_extension, literal_string as decode_string,
     source_macro_identifier,
@@ -337,14 +338,6 @@ fn owned_rust_source(value: &str, scope: &SourceScope<'_>) -> Option<()> {
     }
     let path = path.canonicalize().ok()?;
     (path.starts_with(scope.package.canonicalize().ok()?) && path.is_file()).then_some(())
-}
-fn is_include_keyword(tokens: &[TokenTree]) -> bool {
-    matches!(tokens.first(), Some(TokenTree::Ident(name))
-        if matches!(source_macro_identifier(name).as_str(), "include" | "include_bytes" | "include_str"))
-}
-fn is_include_macro(tokens: &[TokenTree]) -> bool {
-    is_include_keyword(tokens)
-        && matches!(tokens.get(1), Some(TokenTree::Punct(mark)) if mark.as_char() == '!')
 }
 fn include_argument(
     token: Option<&TokenTree>,

@@ -1,5 +1,5 @@
 //! A manifest exemption requires bounded literal inputs, without platform alias assumptions (#481).
-use crate::release_macro_inputs::literal_string;
+use crate::release_macro_inputs::{literal_string, source_macro_identifier};
 use proc_macro2::TokenTree;
 use std::{
     fs,
@@ -73,4 +73,13 @@ fn distinct_bytes(target: &Path, manifest: &Path) -> Option<bool> {
         return Some(true);
     }
     Some(fs::read(target).ok()? != fs::read(manifest).ok()?)
+}
+
+pub(crate) fn is_include_keyword(tokens: &[TokenTree]) -> bool {
+    matches!(tokens.first(), Some(TokenTree::Ident(name))
+        if matches!(source_macro_identifier(name).as_str(), "include" | "include_bytes" | "include_str"))
+}
+pub(crate) fn is_include_macro(tokens: &[TokenTree]) -> bool {
+    is_include_keyword(tokens)
+        && matches!(tokens.get(1), Some(TokenTree::Punct(mark)) if mark.as_char() == '!')
 }
