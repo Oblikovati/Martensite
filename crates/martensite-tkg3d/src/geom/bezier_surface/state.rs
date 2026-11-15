@@ -15,12 +15,6 @@ use martensite_tkmath::gp::{Point3, Vector3};
 
 pub(super) const CLASS: &str = "Geom_BezierSurface";
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum RationalAxisConvention {
-    LegacyReplay,
-    ParameterDirections,
-}
-
 #[derive(Clone)]
 pub(super) struct SurfaceState {
     pub(super) poles: Array2<'static, Point3>,
@@ -31,7 +25,7 @@ pub(super) struct SurfaceState {
     pub(super) u_max_deriv_inv: f64,
     pub(super) v_max_deriv_inv: f64,
     pub(super) max_deriv_inv_ok: bool,
-    rational_axes: RationalAxisConvention,
+    pub(super) iso_rational: (bool, bool),
 }
 
 // One weight step of the file-static `Rational`: `|W(a) - W(b)| > Epsilon(|W(a)|)`.
@@ -108,7 +102,7 @@ impl SurfaceState {
             u_max_deriv_inv: 0.0,
             v_max_deriv_inv: 0.0,
             max_deriv_inv_ok: false,
-            rational_axes: RationalAxisConvention::LegacyReplay,
+            iso_rational: (false, false),
         }
     }
     pub(super) fn retained(
@@ -156,7 +150,7 @@ impl SurfaceState {
             self.update_rationality()?;
         } else {
             (self.u_rational, self.v_rational) = (false, false);
-            self.rational_axes = RationalAxisConvention::LegacyReplay;
+            self.iso_rational = (self.u_rational, self.v_rational);
             self.weights = self.unit_weights()?;
         }
         self.max_deriv_inv_ok = false;
@@ -183,22 +177,21 @@ impl SurfaceState {
     }
     fn retain_rational_axes(&mut self, flags: (bool, bool)) {
         (self.u_rational, self.v_rational) = flags;
-        self.rational_axes = RationalAxisConvention::ParameterDirections;
+        self.iso_rational = (flags.1, flags.0);
     }
     pub(super) fn replay_rational_axes(&mut self) -> Result<(), Failure> {
         let flags = rationality(&self.weights)?;
         (self.u_rational, self.v_rational) = flags;
-        self.rational_axes = RationalAxisConvention::LegacyReplay;
+        self.iso_rational = (self.u_rational, self.v_rational);
         Ok(())
     }
     #[inline(always)]
     fn iso_uses_weights(&self, is_u: bool) -> bool {
-        // UIso follows V; legacy flags historically use the opposite labels (#464).
-        let flag_u = is_u ^ (self.rational_axes == RationalAxisConvention::ParameterDirections);
-        if flag_u {
-            self.u_rational
+        // Precompute interpretation at admission/edit boundaries, outside this hot path (#464).
+        if is_u {
+            self.iso_rational.0
         } else {
-            self.v_rational
+            self.iso_rational.1
         }
     }
     /// `BSplSLib::UnitWeights(NbUPoles, NbVPoles)`.

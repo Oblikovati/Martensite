@@ -61,6 +61,7 @@ impl SurfaceState {
             bsplslib::unit_weights(nv, nu)?
         };
         std::mem::swap(&mut self.u_rational, &mut self.v_rational);
+        std::mem::swap(&mut self.iso_rational.0, &mut self.iso_rational.1);
         self.max_deriv_inv_ok = false;
         Ok(())
     }
