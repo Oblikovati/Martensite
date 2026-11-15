@@ -6,18 +6,22 @@
 #                          long package suites run as several parts (#470)
 #   push of a v* tag    -> release on every target, then publish the GitHub release
 #   workflow_dispatch   -> `pr` or a release rehearsal on every target (never publishes)
+#   schedule, or dispatch in `cache` mode -> refresh the PR build caches on main only
 name: Martensite
 
 on:
   pull_request:
   push:
     tags: ['v[0-9]*']
+  # Refreshes on main the build caches that every PR restores (#472).
+  schedule:
+    - cron: '23 3 * * *'
   workflow_dispatch:
     inputs:
       mode:
-        description: "pr: validate this branch against main. release: rehearse a release on every target without publishing."
+        description: "pr: validate this branch against main. release: rehearse a release on every target without publishing. cache: refresh the PR build caches (run on main)."
         type: choice
-        options: [pr, release]
+        options: [pr, release, cache]
         default: release
         required: true
       version:
@@ -50,6 +54,7 @@ env:
 
 jobs:
   plan:
+    if: github.event_name != 'schedule' && inputs.mode != 'cache'
     permissions:
       contents: read
       actions: read
@@ -146,14 +151,10 @@ jobs:
           submodules: true
       - name: Install the toolchain pinned by rust-toolchain.toml
         run: rustup toolchain install
-      # PR test jobs only. The compiler inventory counts diagnostics, which a cache hit
-      # does not fully replay, and release and sanitizer jobs build from scratch.
-      - uses: kunobi-ninja/kache-action@ad7317540dcdd71c904f7a60a87b620a0c0e67ed # v1
+      # PR test jobs only; release and sanitizer jobs build from scratch.
+      - uses: ./.github/actions/restore-build-cache
         with:
-          version: v2.0.0
-          max-size: 2GiB
-          cache-key-prefix: kache-${{ matrix.package }}
-          pr-comment: false
+          package: ${{ matrix.package }}
       - if: contains(fromJSON('["martensite-vulkan", "martensite-tkvcaf", "martensite-tkxcaf", "martensite-tkfeat", "martensite-tkoffset", "martensite-tkdestl", "martensite-tkmeshvs", "martensite-tkdestep", "martensite-tkdeiges", "martensite-tkdeobj"]'), matrix.package)
         uses: ./.github/actions/setup-renderer-tests
       # The modelling suites link many large test binaries. Their script cases have CPU budgets that
@@ -225,7 +226,7 @@ jobs:
       MARTENSITE_CI_BASE_SHA: ${{ needs.plan.outputs.base-sha }}
       MARTENSITE_RELEASE_HISTORY_SHA256: ${{ needs.plan.outputs.release-history }}
     needs: [plan, checks, tests, release-tests, thread-sanitizer]
-    if: always()
+    if: always() && github.event_name != 'schedule' && inputs.mode != 'cache'
     name: ${{ needs.plan.outputs.mode == 'release' && 'release' || 'pr (x86_64-unknown-linux-gnu)' }}
     runs-on: ubuntu-24.04
     steps:
@@ -271,6 +272,48 @@ jobs:
           name: dist-reused
           path: dist/
           if-no-files-found: error
+
+  cache-plan:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'cache')
+    runs-on: ubuntu-24.04
+    outputs:
+      warm-matrix: ${{ steps.warm.outputs.warm-matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install the toolchain pinned by rust-toolchain.toml
+        run: rustup toolchain install
+      - id: warm
+        run: cargo xtask ci warm-plan
+
+  cache-warm:
+    needs: cache-plan
+    name: warm cache (${{ matrix.package }})
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.cache-plan.outputs.warm-matrix) }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+      - name: Install the toolchain pinned by rust-toolchain.toml
+        run: rustup toolchain install
+      - uses: ./.github/actions/free-runner-disk
+      - id: cache
+        uses: ./.github/actions/restore-build-cache
+        with:
+          package: ${{ matrix.package }}
+      # Compiles exactly what the package's PR test jobs compile, without running tests.
+      - run: cargo xtask ci warm --package "$WARM_PACKAGE" --target x86_64-unknown-linux-gnu
+        env:
+          WARM_PACKAGE: ${{ matrix.package }}
+      # Saved on main, so every PR can restore it; a dispatch on another branch
+      # would save a store only that branch can read.
+      - if: github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/kache
+          key: ${{ steps.cache.outputs.key }}
 
   publish:
     needs: [plan, checks, verify]

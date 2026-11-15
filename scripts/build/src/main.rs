@@ -4,6 +4,7 @@
 mod affected;
 mod archive;
 mod archive_graph;
+mod cache_warm;
 mod cargo;
 mod changelog;
 mod ci_tests;

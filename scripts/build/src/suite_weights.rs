@@ -58,6 +58,23 @@ pub(crate) fn pr_parts(package: &str) -> usize {
     lookup(&PR_PARTS, package).unwrap_or(1)
 }
 
+// Below this, a warm cache saves less time than the job spends restoring it,
+// and the repository's 10 GB cache budget must hold every warmed store (#472).
+const WARM_MINUTES: u32 = 5;
+
+/// Packages whose PR build cache the scheduled warm job refreshes on `main`.
+///
+/// ```ignore
+/// assert!(warm_packages().contains(&"martensite-vulkan"));
+/// ```
+pub(crate) fn warm_packages() -> Vec<&'static str> {
+    MEASURED_MINUTES
+        .iter()
+        .filter(|(_, minutes)| *minutes >= WARM_MINUTES)
+        .map(|(name, _)| *name)
+        .collect()
+}
+
 fn lookup<T: Copy>(table: &[(&str, T)], package: &str) -> Option<T> {
     table
         .iter()
@@ -79,6 +96,17 @@ mod tests {
     fn only_listed_packages_are_split_and_every_split_has_two_or_more_parts() {
         assert_eq!(pr_parts("martensite-tkmath"), 1);
         assert!(PR_PARTS.iter().all(|(_, parts)| *parts >= 2));
+    }
+
+    #[test]
+    fn warm_packages_are_the_long_measured_suites() {
+        let warm = warm_packages();
+        assert!(warm.contains(&"martensite-vulkan"));
+        assert!(!warm.contains(&"martensite-tkmath"));
+        assert!(
+            warm.iter()
+                .all(|name| package_minutes(name) >= WARM_MINUTES)
+        );
     }
 
     #[test]
