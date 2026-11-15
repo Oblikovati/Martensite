@@ -1,6 +1,6 @@
 //! Follow owned literal module inputs without scanning unrelated QA siblings (#485).
 use super::{ProductionReferences, inline_module, macro_owner, scan_tokens};
-use crate::release_input_layout::{covered_rust_input, portable_relative_path};
+use crate::release_input_layout::covered_rust_input;
 use proc_macro2::{TokenStream, TokenTree};
 use std::{
     fs,
@@ -163,19 +163,26 @@ fn qa_module_directory(path: &Path, package: &Path, kind: RustSourceKind) -> Opt
     Some(path.parent()?.to_path_buf())
 }
 fn owned_source(value: &str, scope: &SourceScope<'_>) -> Option<PathBuf> {
-    if !portable_relative_path(value)
+    if !super::literal_input_supported(value, scope)
         || Path::new(value)
             .extension()
             .is_none_or(|extension| extension != "rs")
     {
         return None;
     }
-    let path = scope.parent.join(value);
+    owned_path(&scope.parent.join(value), scope.package)
+}
+fn owned_path(path: &Path, package: &Path) -> Option<PathBuf> {
     if path.ancestors().any(Path::is_symlink) {
         return None;
     }
     let path = path.canonicalize().ok()?;
-    (path.is_file() && path.starts_with(scope.package.canonicalize().ok()?)).then_some(path)
+    let package = package.canonicalize().ok()?;
+    let relative = path.strip_prefix(&package).ok()?.to_str()?;
+    if !super::literal_input_supported(relative, &SourceScope::new(&package, &package)) {
+        return None;
+    }
+    path.is_file().then_some(path)
 }
 pub(super) fn check_module(
     tokens: &[TokenTree],
@@ -193,7 +200,7 @@ pub(super) fn check_module(
         return None;
     }
     let directory = directory.join(name);
-    let path = implicit_source(&directory)?;
+    let path = implicit_source(&directory, scope.package)?;
     refs.paths.insert(path.parent()?.to_path_buf());
     scan_source(&path, scope.package, refs, Some(directory))
 }
@@ -215,16 +222,13 @@ fn implicit_name(tokens: &[TokenTree], index: usize) -> Option<Option<String>> {
     };
     (mark.as_char() == ';').then(|| Some(name.to_string().trim_start_matches("r#").to_owned()))
 }
-fn implicit_source(directory: &Path) -> Option<PathBuf> {
+fn implicit_source(directory: &Path, package: &Path) -> Option<PathBuf> {
     let candidates = [directory.with_extension("rs"), directory.join("mod.rs")];
     let present: Vec<_> = candidates.iter().filter(|path| path.exists()).collect();
     let [path] = present.as_slice() else {
         return None;
     };
-    if path.ancestors().any(Path::is_symlink) {
-        return None;
-    }
-    path.canonicalize().ok().filter(|path| path.is_file())
+    owned_path(path, package)
 }
 fn visibility_start(tokens: &[TokenTree], mut end: usize) -> usize {
     if end > 0

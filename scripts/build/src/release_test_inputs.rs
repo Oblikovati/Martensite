@@ -316,9 +316,11 @@ fn literal_input_supported(value: &str, scope: &SourceScope<'_>) -> bool {
     let Ok(relative) = target.strip_prefix(package) else {
         return false;
     };
-    !relative
-        .components()
-        .any(|part| matches!(part.as_os_str().to_str(), Some("target" | ".git")))
+    !relative.components().any(|part| {
+        part.as_os_str().to_str().is_some_and(|name| {
+            name.eq_ignore_ascii_case("target") || name.eq_ignore_ascii_case(".git")
+        })
+    })
 }
 fn fixed_include_extension(tokens: &[TokenTree]) -> Option<String> {
     let suffix = concat_suffix(tokens)?;

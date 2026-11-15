@@ -153,3 +153,27 @@ fn actual_vulkan_production_inputs_are_disjoint_from_release_qa_edits() {
         "unexpected publication inputs: {selected:?}"
     );
 }
+#[test]
+fn explicit_and_implicit_qa_modules_cannot_admit_output_tree_sources() {
+    for source in ["#[path=\"target/input.rs\"] mod input;", "mod target;"] {
+        let (root, manifest) = module_fixture(&[
+            ("tests/support/root.rs", source),
+            ("tests/support/target.rs", "mod input;"),
+            ("tests/support/target/input.rs", "pub fn witness() {}"),
+        ]);
+        assert!(retains(root.path(), &manifest, "tests/unrelated.rs"));
+    }
+}
+
+#[test]
+fn case_variant_output_directories_keep_qa_module_inputs_unknown() {
+    for directory in ["target", "TARGET", ".git", ".GIT"] {
+        let source = format!("#[path=\"{directory}/input.rs\"] mod input;");
+        let input = format!("tests/support/{directory}/input.rs");
+        let (root, manifest) = module_fixture(&[
+            ("tests/support/root.rs", &source),
+            (&input, "pub fn witness() {}"),
+        ]);
+        assert!(retains(root.path(), &manifest, "tests/unrelated.rs"));
+    }
+}
