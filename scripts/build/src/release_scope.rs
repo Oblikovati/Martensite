@@ -69,8 +69,9 @@ fn scope_since_release(
 ) -> BuildResult<ReleaseScope> {
     let changed = context.git.changed_files(&reference)?;
     let packages = selected_packages(context, workspace, previous, &changed)?;
+    let manifests = changed_manifest_packages(context, workspace, &reference, &changed)?;
     let tests =
-        crate::release_impact::release_tests(context, workspace, &reference, &changed, &packages)?;
+        crate::release_impact::release_tests(context, workspace, &reference, &changed, &manifests)?;
     Ok(ReleaseScope {
         baseline: Some(reference),
         history_sha256: None,
@@ -310,3 +311,7 @@ fn check_package_version(
 #[cfg(test)]
 #[path = "release_scope_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "release_scope_qa_tests.rs"]
+mod qa_tests;
