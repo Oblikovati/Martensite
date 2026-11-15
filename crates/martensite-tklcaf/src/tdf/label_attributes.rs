@@ -207,7 +207,8 @@ fn add_to_node(
         ));
     }
     added.attribute_base().bind_self(attribute);
-    let transaction = node.core().map_or(0, |core| core.transaction());
+    let core = node.core();
+    let transaction = core.as_ref().map_or(0, |core| core.transaction());
     added.attribute_base().set_transaction(transaction);
     added.attribute_base().set_saved_transaction(0);
     let after = if append {
@@ -216,7 +217,7 @@ fn add_to_node(
         Handle::default()
     };
     node.add_attribute(&after, attribute);
-    node.set_attributes_modified(transaction != 0);
+    node.transaction_attributes(core.as_deref(), transaction != 0);
     if node_not_undo_mode(node) {
         added.after_addition()?;
     }

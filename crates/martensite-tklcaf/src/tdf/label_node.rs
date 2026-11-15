@@ -111,9 +111,24 @@ impl TdfLabelNode {
     }
     /// `AttributesModified(bool)`: setting it also marks every ancestor `MayBeModified`.
     pub fn set_attributes_modified(&self, status: bool) {
-        self.set_flag(ATTRIBUTES_MODIFIED_MASK, status);
-        if status {
-            self.all_may_be_modified();
+        if let Some(core) = self.core() {
+            core.commit_hint.manual_flags();
+        }
+        self.attribute_path(status);
+    }
+    pub(crate) fn transaction_attributes(self: &Arc<Self>, core: Option<&DataCore>, status: bool) {
+        if !status {
+            self.set_flag(ATTRIBUTES_MODIFIED_MASK, false);
+            return;
+        }
+        // The lease covers local and ancestor publication; hint locks always precede node locks.
+        let _lease = core.map(|core| core.commit_hint.mark(self));
+        self.attribute_path(true);
+    }
+    fn attribute_path(&self, status: bool) {
+        let mut father = self.mark_local_attributes(status);
+        while let Some(node) = father {
+            father = node.mark_ancestor();
         }
     }
     /// `MayBeModified()`.
@@ -122,16 +137,34 @@ impl TdfLabelNode {
     }
     /// `MayBeModified(bool)`.
     pub fn set_may_be_modified(&self, status: bool) {
+        if let Some(core) = self.core() {
+            core.commit_hint.manual_flags();
+        }
         self.set_flag(MAY_BE_MODIFIED_MASK, status);
     }
-    /// `AllMayBeModified`: this node and its ancestors up to the first one already marked.
-    pub(crate) fn all_may_be_modified(&self) {
-        self.set_may_be_modified(true);
-        let mut father = self.father();
-        while let Some(node) = father.filter(|node| !node.may_be_modified()) {
-            node.set_may_be_modified(true);
-            father = node.father();
+    pub(crate) fn clear_commit_mark(&self) {
+        // Internal progress is distinct from an untracked public flag mutation.
+        self.set_flag(MAY_BE_MODIFIED_MASK, false);
+    }
+    fn mark_local_attributes(&self, status: bool) -> Option<Arc<Self>> {
+        let mut state = self.state.write();
+        if !status {
+            state.flags &= !ATTRIBUTES_MODIFIED_MASK;
+            return None;
         }
+        state.flags |= ATTRIBUTES_MODIFIED_MASK | MAY_BE_MODIFIED_MASK;
+        state.father.as_ref().and_then(Weak::upgrade)
+    }
+    fn mark_ancestor(&self) -> Option<Arc<Self>> {
+        if self.may_be_modified() {
+            return None;
+        }
+        let mut state = self.state.write();
+        if state.flags & MAY_BE_MODIFIED_MASK != 0 {
+            return None;
+        }
+        state.flags |= MAY_BE_MODIFIED_MASK;
+        state.father.as_ref().and_then(Weak::upgrade)
     }
     /// `AddAttribute(afterAtt, newAtt)`: links `new` after `after` (at the head for null)
     /// and makes it valid on this node.

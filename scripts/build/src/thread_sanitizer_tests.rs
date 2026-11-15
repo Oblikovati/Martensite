@@ -31,6 +31,7 @@ fn startup_precedes_geometry_capture_and_group_controls() {
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tktopalgo --test toolkit -- closed_face_validation --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::open_extrusion -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::sketch_incidence::vertex_neighborhood -- --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tklcaf --lib tdf::sparse_commit::tests -- --test-threads=1 --show-output".to_owned(),
         ]
     );
 }
@@ -339,4 +340,18 @@ fn every_control_command_targets_its_declared_owner() {
             "{control:?}: {command}"
         );
     }
+}
+
+#[test]
+fn document_scope_runs_only_its_transaction_races_after_startup() {
+    let runner = runner();
+    run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &[Control::DocumentTransactions],
+    )
+    .unwrap();
+    let commands = runner.commands();
+    assert_eq!(commands.len(), 4);
+    assert!(commands[2].contains("sanitizer_startup/Cargo.toml"));
+    assert!(commands[3].contains("--package martensite-tklcaf --lib tdf::sparse_commit::tests"));
 }

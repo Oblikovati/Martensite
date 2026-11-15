@@ -22,6 +22,7 @@ mod label_node;
 mod package;
 mod reference;
 mod relocation_table;
+mod sparse_commit;
 mod tag_source;
 mod tool;
 mod tool_dump;

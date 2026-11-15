@@ -29,6 +29,7 @@ pub(crate) struct DataState {
 pub(crate) struct DataCore {
     root: Arc<TdfLabelNode>,
     pub(crate) state: SharedState<DataState>,
+    pub(super) commit_hint: super::sparse_commit::SparseCommitHint,
 }
 
 impl DataCore {
@@ -84,6 +85,7 @@ impl TdfData {
     pub fn new() -> Handle<TdfData> {
         let core = Arc::new(DataCore {
             root: Arc::new(TdfLabelNode::default()),
+            commit_hint: super::sparse_commit::SparseCommitHint::default(),
             state: SharedState::new(DataState {
                 transaction: 0,
                 nb_touched_att: 0,
@@ -210,6 +212,7 @@ impl TdfData {
     /// `Destroy`: aborts every open transaction, forgets the root attributes without
     /// backup, clears the entry table and frees the label tree.
     pub fn destroy(&self) {
+        self.core.commit_hint.manual_flags();
         // A failure while aborting cannot be reported from a destructor; the tree is freed
         // anyway, as natively.
         let _ = super::data_commit::abort_until_transaction(&self.core, 1);
