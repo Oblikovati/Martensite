@@ -26,6 +26,7 @@ This gives two properties:
 | `cargo xtask ci plan` | CI | Writes `mode`, `version`, `publish`, target `matrix`, `test-matrix` and `has-tests` to `GITHUB_OUTPUT` |
 | `cargo xtask ci run --target T` | CI | Runs the planned pipeline for one matrix target |
 | `cargo xtask ci run --target T --checks-only` | CI | Runs shared checks and release packaging, delegating tests to the matrix |
+| `cargo xtask ci run --target T --checks-only --stage S` | CI | Runs one PR check stage: `lint`, `clippy` or `build` |
 | `cargo xtask ci test --package P --target T` | CI | Revalidates affected-package membership and runs all tests for that package |
 | `cargo xtask ci test --package P --part K --target T` | CI | Runs part `K` of a package whose PR tests are split across jobs |
 | `cargo xtask ci test --shard N --target T` | CI | Recomputes a release shard and runs all selected package suites on that target |
@@ -39,7 +40,12 @@ For PRs, the planner emits one job per affected package, or several jobs for
 a package whose suite would otherwise bound the run (#470). Jobs are listed
 longest first by the measured minutes in `scripts/build/src/suite_weights.rs`,
 and no job limit applies, so the longest suites start first (#469). They run
-alongside shared lint, compiler inventory and build checks.
+alongside the shared checks, which PRs split into three parallel jobs (#473):
+`lint` (changed-file whitespace and formatting, the source unsafe ratchet and
+the compiler unsafe inventory), `clippy`, and `build` (every target of the
+affected packages). Each job computes the same affected set; the aggregate
+check requires all three. Release checks keep one job per platform, because
+packaging needs the complete sequential pipeline.
 
 A split package's parts build the same test targets. Each part lists every
 libtest target, assigns each test by a fixed FNV-1a hash of its target and name,

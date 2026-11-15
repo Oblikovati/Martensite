@@ -23,6 +23,36 @@ pub fn validate_pull_request(
     validate_pr_checks(context, base, target, true)
 }
 
+/// One independent group of shared PR checks. CI runs each as its own job so
+/// the slowest group, not their sum, bounds the checks (#473).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum CheckStage {
+    /// File linters, the source unsafe ratchet and the compiler unsafe inventory.
+    Lint,
+    /// Clippy over the affected packages.
+    Clippy,
+    /// A debug build of every target of the affected packages.
+    Build,
+}
+
+impl CheckStage {
+    /// Every stage, in the order a local run executes them.
+    pub const ALL: [Self; 3] = [Self::Lint, Self::Clippy, Self::Build];
+
+    /// The `--stage` value that selects this stage.
+    ///
+    /// ```ignore
+    /// assert_eq!(CheckStage::Clippy.name(), "clippy");
+    /// ```
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Lint => "lint",
+            Self::Clippy => "clippy",
+            Self::Build => "build",
+        }
+    }
+}
+
 /// Runs the shared PR checks; CI delegates tests to package jobs.
 ///
 /// ```ignore
@@ -34,6 +64,21 @@ pub fn validate_pr_checks(
     target: &BuildTarget,
     run_tests: bool,
 ) -> BuildResult<()> {
+    validate_pr_stages(context, base, target, &CheckStage::ALL, run_tests)
+}
+
+/// Runs only `stages` of the shared PR checks, plus tests when requested.
+///
+/// ```ignore
+/// validate_pr_stages(&context, "origin/main", &target, &[CheckStage::Clippy], false)?;
+/// ```
+pub fn validate_pr_stages(
+    context: &BuildContext<'_>,
+    base: &str,
+    target: &BuildTarget,
+    stages: &[CheckStage],
+    run_tests: bool,
+) -> BuildResult<()> {
     crate::compiler_inventory::invalidate_previous_evidence(context.root())?;
     let merge_base = context.git.merge_base(base)?;
     let changed = context.git.changed_files(&merge_base)?;
@@ -42,9 +87,25 @@ pub fn validate_pr_checks(
         changed.len()
     );
     context.reporter.note(&summary);
-    lint_changed_files(context, &merge_base, &changed)?;
-    check_expanded_inventory(context, &changed, target)?;
-    check_affected_packages(context, &merge_base, &changed, target, run_tests)
+    if stages.contains(&CheckStage::Lint) {
+        lint_changed_files(context, &merge_base, &changed)?;
+        check_expanded_inventory(context, &changed, target)?;
+    }
+    let scope = CheckScope { stages, run_tests };
+    check_affected_packages(context, &merge_base, &changed, target, scope)
+}
+
+/// Which package-level checks this run performs.
+#[derive(Clone, Copy)]
+struct CheckScope<'a> {
+    stages: &'a [CheckStage],
+    run_tests: bool,
+}
+
+impl CheckScope<'_> {
+    fn has(&self, stage: CheckStage) -> bool {
+        self.stages.contains(&stage)
+    }
 }
 
 // Kept separate from the source ratchet: compiler capture cleans a dedicated build (#411).
@@ -84,12 +145,13 @@ fn check_affected_packages(
     reference: &str,
     changed: &[ChangedFile],
     target: &BuildTarget,
-    run_tests: bool,
+    scope: CheckScope<'_>,
 ) -> BuildResult<()> {
     let checks = context.reporter.step("Find affected packages", || {
         affected(context, reference, changed)
     })?;
-    if changed.iter().any(|file| file.path == "rustfmt.toml") {
+    let rustfmt_changed = changed.iter().any(|file| file.path == "rustfmt.toml");
+    if scope.has(CheckStage::Lint) && rustfmt_changed {
         let workspace = CargoWorkspace::load(context.runner, context.root())?;
         CargoTasks::new(context.runner, context.root())
             .format_check_packages(&workspace.names())?;
@@ -100,18 +162,18 @@ fn check_affected_packages(
             .note("No Rust package is affected; build and tests are skipped.");
         return Ok(());
     }
-    run_package_checks(context, checks, target, run_tests)
+    run_package_checks(context, checks, target, scope)
 }
 
 fn run_package_checks(
     context: &BuildContext<'_>,
     checks: PackageChecks,
     target: &BuildTarget,
-    run_tests: bool,
+    scope: CheckScope<'_>,
 ) -> BuildResult<()> {
     let build = PackageSelection::Packages(checks.build.into_iter().collect());
-    check_packages(context, &build, target, false)?;
-    if !run_tests || checks.test.is_empty() {
+    check_packages(context, &build, target, scope)?;
+    if !scope.run_tests || checks.test.is_empty() {
         return Ok(());
     }
     let names: Vec<_> = checks.test.into_iter().collect();
@@ -166,18 +228,19 @@ fn check_packages(
     context: &BuildContext<'_>,
     selection: &PackageSelection,
     target: &BuildTarget,
-    run_tests: bool,
+    scope: CheckScope<'_>,
 ) -> BuildResult<()> {
     let cargo = CargoTasks::new(context.runner, context.root());
     let reporter = &context.reporter;
-    reporter.step("Clippy affected packages", || {
-        cargo.clippy(selection, target)
-    })?;
-    reporter.step("Build affected packages", || {
-        cargo.build_all_targets(selection, target)
-    })?;
-    if run_tests {
-        reporter.step("Test affected packages", || cargo.test(selection, target))?;
+    if scope.has(CheckStage::Clippy) {
+        reporter.step("Clippy affected packages", || {
+            cargo.clippy(selection, target)
+        })?;
+    }
+    if scope.has(CheckStage::Build) {
+        reporter.step("Build affected packages", || {
+            cargo.build_all_targets(selection, target)
+        })?;
     }
     Ok(())
 }
@@ -247,6 +310,47 @@ mod tests {
         assert!(commands.contains(&"git -c core.safecrlf=false diff --check base1".to_owned()));
     }
 
+    const MATH_CHANGE: &str = "M\0crates/martensite-math/src/lib.rs\0";
+
+    fn stage_commands(stage: CheckStage, diff: &str) -> Vec<String> {
+        let runner = runner_with_changes(diff);
+        let context = context_at(&runner, Path::new("/repo"));
+        validate_pr_stages(&context, "origin/main", &BuildTarget::Host, &[stage], false).unwrap();
+        runner.commands()
+    }
+
+    #[test]
+    fn stage_names_parse_back_to_their_stage() {
+        use clap::ValueEnum;
+        for stage in CheckStage::ALL {
+            assert_eq!(CheckStage::from_str(stage.name(), false), Ok(stage));
+        }
+    }
+
+    #[test]
+    fn each_ci_stage_runs_only_its_own_checks() {
+        let ran =
+            |commands: &[String], prefix: &str| commands.iter().any(|c| c.starts_with(prefix));
+        let clippy = stage_commands(CheckStage::Clippy, MATH_CHANGE);
+        assert!(ran(&clippy, "cargo clippy"));
+        assert!(!ran(&clippy, "cargo build") && !ran(&clippy, "git -c core.safecrlf=false diff"));
+        let build = stage_commands(CheckStage::Build, MATH_CHANGE);
+        assert!(ran(&build, "cargo build") && !ran(&build, "cargo clippy"));
+        assert!(!ran(&build, "cargo test"));
+    }
+
+    #[test]
+    fn lint_stage_lints_files_without_package_checks() {
+        // A documentation edit selects no package, so only the linters can run here.
+        let commands = stage_commands(CheckStage::Lint, "M\0docs/readme.md\0");
+        assert!(commands.contains(&"git -c core.safecrlf=false diff --check base1".to_owned()));
+        assert!(
+            commands
+                .iter()
+                .all(|c| !c.starts_with("cargo clippy") && !c.starts_with("cargo build"))
+        );
+    }
+
     #[test]
     fn delegated_tests_preserve_clippy_and_build() {
         let runner = RecordingRunner::default();
@@ -254,7 +358,10 @@ mod tests {
             &context_at(&runner, Path::new("/repo")),
             &PackageSelection::Packages(vec!["martensite-math".into()]),
             &BuildTarget::Host,
-            false,
+            CheckScope {
+                stages: &CheckStage::ALL,
+                run_tests: false,
+            },
         )
         .unwrap();
         assert_eq!(
