@@ -29,7 +29,12 @@ supply a finite extension bound from their invocation arguments. Alias or export
 uncertainty disables that proof. Calls inside other macro bodies are included;
 unsupported matchers and nonliteral arguments remain uncertain. Nested inline
 module path attributes remain source changes because their directory base is not
-inferred.
+inferred. Conditional or otherwise wrapped path attributes fail closed at every
+attribute depth, including inner attributes. Explicit module and `include!`
+source paths must identify regular package-owned `.rs` files; other suffixes,
+external sources and dynamic `include!` expressions remain uncertain. Byte and
+string includes retain their separate data-file handling. Referenced Rust source
+is never followed outside the package through a symlink.
 
 Packages with known non-test source edits bypass this analysis. Unfiltered change
 sets are borrowed, so ordinary release classification adds no change-list copies.

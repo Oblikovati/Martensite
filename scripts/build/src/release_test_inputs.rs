@@ -19,14 +19,25 @@ struct ProductionReferences {
     changed_extensions: BTreeSet<String>,
 }
 
-#[derive(Default)]
-struct SourceScope {
+struct SourceScope<'a> {
+    parent: &'a Path,
+    package: &'a Path,
     owner: Option<String>,
     inline_module: bool,
 }
-impl SourceScope {
+impl<'a> SourceScope<'a> {
+    fn new(parent: &'a Path, package: &'a Path) -> Self {
+        Self {
+            parent,
+            package,
+            owner: None,
+            inline_module: false,
+        }
+    }
     fn within(&self, tokens: &[TokenTree], index: usize) -> Self {
         Self {
+            parent: self.parent,
+            package: self.package,
             owner: macro_owner(tokens, index).or_else(|| self.owner.clone()),
             inline_module: self.inline_module || inline_module(tokens, index),
         }
@@ -164,21 +175,27 @@ fn scan_source(path: &Path, root: &Path, refs: &mut ProductionReferences) -> Opt
     if refs.collecting {
         refs.macros.record(tokens.clone());
     }
-    scan_tokens(tokens, path.parent()?, root, refs, &SourceScope::default())
+    scan_tokens(
+        tokens,
+        path.parent()?,
+        root,
+        refs,
+        &SourceScope::new(path.parent()?, root),
+    )
 }
 fn scan_tokens(
     tokens: TokenStream,
     parent: &Path,
     root: &Path,
     refs: &mut ProductionReferences,
-    scope: &SourceScope,
+    scope: &SourceScope<'_>,
 ) -> Option<()> {
     let tokens: Vec<_> = tokens.into_iter().collect();
     for (index, token) in tokens.iter().enumerate() {
         if !refs.collecting {
-            check_include(&tokens[index..], refs, scope.owner.as_deref())?;
+            check_include(&tokens[index..], refs, scope)?;
         }
-        check_attribute(&tokens, index, scope.inline_module)?;
+        check_attribute(&tokens, index, scope)?;
         scan_token(token, parent, root, refs, &scope.within(&tokens, index))?;
     }
     Some(())
@@ -188,7 +205,7 @@ fn scan_token(
     parent: &Path,
     root: &Path,
     refs: &mut ProductionReferences,
-    scope: &SourceScope,
+    scope: &SourceScope<'_>,
 ) -> Option<()> {
     match token {
         TokenTree::Group(group) => scan_tokens(group.stream(), parent, root, refs, scope),
@@ -230,25 +247,64 @@ fn concat_parameter(tokens: &[TokenTree]) -> Option<String> {
     };
     (dollar.as_char() == '$').then(|| source_macro_identifier(parameter))
 }
-fn check_attribute(tokens: &[TokenTree], index: usize, inline: bool) -> Option<()> {
-    if index == 0 || !matches!(&tokens[index - 1], TokenTree::Punct(mark) if mark.as_char() == '#')
-    {
+fn check_attribute(tokens: &[TokenTree], index: usize, scope: &SourceScope<'_>) -> Option<()> {
+    if !attribute_prefix(tokens, index) {
         return Some(());
     }
     if let TokenTree::Group(group) = &tokens[index] {
-        return check_path_attribute(group, inline);
+        return check_path_attribute(group, scope);
     }
     Some(())
+}
+fn attribute_prefix(tokens: &[TokenTree], index: usize) -> bool {
+    let punctuation = |offset, expected| {
+        index
+            .checked_sub(offset)
+            .and_then(|i| tokens.get(i))
+            .is_some_and(
+                |token| matches!(token, TokenTree::Punct(mark) if mark.as_char() == expected),
+            )
+    };
+    punctuation(1, '#') || punctuation(1, '!') && punctuation(2, '#')
 }
 fn check_include(
     tokens: &[TokenTree],
     refs: &ProductionReferences,
-    owner: Option<&str>,
+    scope: &SourceScope<'_>,
 ) -> Option<()> {
-    if is_include_macro(tokens) {
-        return include_argument(tokens.get(2), refs, owner);
+    if !is_include_macro(tokens) {
+        return Some(());
     }
-    Some(())
+    if matches!(tokens.first(), Some(TokenTree::Ident(name)) if source_macro_identifier(name) == "include")
+    {
+        return rust_include_argument(tokens.get(2), scope);
+    }
+    include_argument(tokens.get(2), refs, scope.owner.as_deref())
+}
+fn rust_include_argument(token: Option<&TokenTree>, scope: &SourceScope<'_>) -> Option<()> {
+    let Some(TokenTree::Group(arguments)) = token else {
+        return None;
+    };
+    let arguments: Vec<_> = arguments.stream().into_iter().collect();
+    let [TokenTree::Literal(value)] = arguments.as_slice() else {
+        return None;
+    };
+    owned_rust_source(&decode_string(&value.to_string())?, scope)
+}
+fn owned_rust_source(value: &str, scope: &SourceScope<'_>) -> Option<()> {
+    if value.contains('\\')
+        || Path::new(value)
+            .extension()
+            .is_none_or(|extension| extension != "rs")
+    {
+        return None;
+    }
+    let path = scope.parent.join(value);
+    if path.is_symlink() {
+        return None;
+    }
+    let path = path.canonicalize().ok()?;
+    (path.starts_with(scope.package.canonicalize().ok()?) && path.is_file()).then_some(())
 }
 fn is_include_macro(tokens: &[TokenTree]) -> bool {
     let Some(TokenTree::Ident(name)) = tokens.first() else {
@@ -326,29 +382,48 @@ fn record_path(path: PathBuf, root: &Path, refs: &mut ProductionReferences) -> O
         && refs.paths.insert(path.clone())
         && path.extension().is_some_and(|extension| extension == "rs")
     {
+        if !path
+            .canonicalize()
+            .ok()?
+            .starts_with(root.canonicalize().ok()?)
+        {
+            return None;
+        }
         scan_source(&path, root, refs)?;
     }
     Some(())
 }
 
-fn check_path_attribute(group: &proc_macro2::Group, inline: bool) -> Option<()> {
-    if group.delimiter() != proc_macro2::Delimiter::Bracket {
+fn check_path_attribute(group: &proc_macro2::Group, scope: &SourceScope<'_>) -> Option<()> {
+    if group.delimiter() != proc_macro2::Delimiter::Bracket || !mentions_path(group.stream()) {
         return Some(());
     }
-    let tokens: Vec<_> = group.stream().into_iter().collect();
-    let Some(TokenTree::Ident(name)) = tokens.first() else {
-        return Some(());
-    };
-    if source_macro_identifier(name) != "path" {
-        return Some(());
-    }
-    if inline {
+    if scope.inline_module {
         return None;
     }
-    let Some(TokenTree::Literal(value)) = tokens.get(2) else {
+    owned_rust_source(&direct_path_literal(group.stream())?, scope)
+}
+fn mentions_path(stream: TokenStream) -> bool {
+    stream.into_iter().any(|token| match token {
+        TokenTree::Ident(name) => source_macro_identifier(&name) == "path",
+        TokenTree::Group(group) => mentions_path(group.stream()),
+        _ => false,
+    })
+}
+fn direct_path_literal(stream: TokenStream) -> Option<String> {
+    let tokens: Vec<_> = stream.into_iter().collect();
+    let [
+        TokenTree::Ident(name),
+        TokenTree::Punct(equal),
+        TokenTree::Literal(value),
+    ] = tokens.as_slice()
+    else {
         return None;
     };
-    decode_string(&value.to_string()).map(|_| ())
+    if source_macro_identifier(name) != "path" || equal.as_char() != '=' {
+        return None;
+    }
+    decode_string(&value.to_string())
 }
 fn normalized(path: &Path) -> PathBuf {
     let mut result = PathBuf::new();

@@ -168,3 +168,49 @@ fn higher_order_macro_calls_do_not_supply_closed_literal_bounds() {
     const B: &[u8] = invoke!(asset);"#;
     assert!(selected(source, "tests/danger.rs"));
 }
+
+#[test]
+fn conditional_inline_paths_fail_closed_at_every_attribute_depth() {
+    for attribute in [
+        r##"#[cfg_attr(unix, path="../../tests/runtime.rs")]"##,
+        r##"#[cfg_attr(unix, cfg_attr(feature="x", r#path="../../tests/runtime.rs"))]"##,
+        r##"#![cfg_attr(unix, path="../../tests/runtime.rs")]"##,
+    ] {
+        let source = format!("mod outer {{ {attribute} mod runtime; }}");
+        assert!(selected(&source, "tests/runtime.rs"), "{attribute}");
+    }
+}
+
+#[test]
+fn nonstandard_rust_source_suffixes_keep_transitive_inputs_as_source() {
+    for source in [
+        r##"#[path="../tests/runtime.inc"] mod runtime;"##,
+        r##"include!("../tests/runtime.inc");"##,
+    ] {
+        let (root, manifest) = fixture(source);
+        let tests = root.path().join("crates/a/tests");
+        fs::create_dir_all(&tests).unwrap();
+        fs::write(
+            tests.join("runtime.inc"),
+            "const A: &[u8] = include_bytes!(\"data.bin\");",
+        )
+        .unwrap();
+        fs::write(tests.join("data.bin"), [1, 2, 3]).unwrap();
+        let changed = [changed("tests/data.bin")];
+        assert_eq!(
+            publication_changes(root.path(), &manifest, "crates/a", &changed).len(),
+            1
+        );
+    }
+}
+#[test]
+fn dynamic_or_external_rust_source_remains_uncertain() {
+    assert!(selected(
+        r##"include!(concat!(env!("ROOT"), ".rs"));"##,
+        "tests/data.bin"
+    ));
+    assert!(selected(
+        r##"#[path="../../shared/runtime.rs"] mod runtime;"##,
+        "tests/data.bin"
+    ));
+}
