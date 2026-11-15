@@ -59,6 +59,9 @@ pub struct CiRunArgs {
     /// Delegate tests to the required package or release-shard matrix.
     #[arg(long)]
     checks_only: bool,
+    /// Run one group of the PR checks; CI runs the groups as parallel jobs (#473).
+    #[arg(long, value_enum, requires = "checks_only")]
+    stage: Option<crate::pr::CheckStage>,
 }
 
 /// Commands that read the GitHub Actions trigger from the environment.
@@ -82,6 +85,15 @@ pub enum CiCommand {
     ThreadSanitizer,
     /// Write the pipeline mode and target matrix to `GITHUB_OUTPUT`.
     Plan,
+    /// Write the scheduled build-cache refresh matrix to `GITHUB_OUTPUT` (#472).
+    WarmPlan,
+    /// Compile one package's PR tests on `main` to refresh its build cache (#472).
+    Warm {
+        #[arg(long)]
+        package: String,
+        #[arg(long)]
+        target: String,
+    },
     /// Run the planned pipeline for one matrix target.
     Run(CiRunArgs),
     /// Run one affected package or release test shard.
@@ -90,6 +102,9 @@ pub enum CiCommand {
         package: Option<String>,
         #[arg(long, required_unless_present = "package", conflicts_with = "package")]
         shard: Option<usize>,
+        /// Zero-based part of a split package's tests (#470).
+        #[arg(long, conflicts_with = "shard")]
+        part: Option<usize>,
         #[arg(long)]
         target: String,
     },
@@ -139,6 +154,7 @@ fn dispatch(context: &BuildContext<'_>, command: BuildCommand) -> BuildResult<()
 fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()> {
     use CiCommand::{
         Gate, Plan, Publish, ReusePlan, ReuseVerify, Run, SealValidation, Test, ThreadSanitizer,
+        Warm, WarmPlan,
     };
     match command {
         ReusePlan => crate::release_reuse::discover(context),
@@ -153,12 +169,18 @@ fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()
             };
             crate::thread_sanitizer::run_selected(context, &controls)
         }
-        Run(args) => run_planned(context, &args.target, args.checks_only),
+        Run(args) => run_planned(context, &args),
         Test {
             package,
             shard,
+            part,
             target,
-        } => test_planned_selection(context, package.as_deref(), shard, target),
+        } => test_planned_selection(
+            context,
+            (package.as_deref(), part.unwrap_or(0)),
+            shard,
+            target,
+        ),
         Gate {
             checks,
             tests,
@@ -166,19 +188,31 @@ fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()
         } => crate::ci_tests::require_success(&checks, &tests, has_tests),
         Publish { dist } => publish_planned(context, &dist),
         Plan => emit_plan(context),
+        WarmPlan => {
+            let github_output = std::env::var_os("GITHUB_OUTPUT").map(PathBuf::from);
+            write_outputs(
+                &crate::cache_warm::warm_plan_outputs(),
+                github_output.as_deref(),
+            )
+        }
+        Warm { package, target } => {
+            crate::cache_warm::warm_package(context, &package, &BuildTarget::Triple(target))
+        }
     }
 }
 
 fn test_planned_selection(
     context: &BuildContext<'_>,
-    package: Option<&str>,
+    (package, part): (Option<&str>, usize),
     shard: Option<usize>,
     target: String,
 ) -> BuildResult<()> {
     let plan = current_plan()?;
     let target = BuildTarget::Triple(target);
     match (package, shard) {
-        (Some(package), None) => crate::ci_tests::test_package(context, &plan, package, &target),
+        (Some(package), None) => {
+            crate::ci_tests::test_package(context, &plan, package, part, &target)
+        }
         (None, Some(shard)) => crate::ci_tests::test_shard(context, &plan, shard, &target),
         _ => Err(BuildError::Usage(format!(
             "package {package:?}, shard {shard:?}; expected exactly one of --package or --shard"
@@ -262,8 +296,18 @@ fn capture_release_inventory(context: &BuildContext<'_>, triple: &str) -> BuildR
         })
 }
 
-fn run_planned(context: &BuildContext<'_>, triple: &str, checks_only: bool) -> BuildResult<()> {
-    dispatch_plan(context, current_plan()?, triple, checks_only)
+fn run_planned(context: &BuildContext<'_>, args: &CiRunArgs) -> BuildResult<()> {
+    let plan = current_plan()?;
+    let Some(stage) = args.stage else {
+        return dispatch_plan(context, plan, &args.target, args.checks_only);
+    };
+    let CiPlan::PullRequest { base } = plan else {
+        return Err(BuildError::Usage(format!(
+            "check stage {stage:?} with plan {plan:?}; expected a pull request plan"
+        )));
+    };
+    let target = BuildTarget::Triple(args.target.clone());
+    crate::pr::validate_pr_stages(context, &base, &target, &[stage], false)
 }
 
 fn dispatch_plan(
@@ -314,117 +358,4 @@ fn publish_planned(context: &BuildContext<'_>, dist: &Path) -> BuildResult<()> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use clap::CommandFactory;
-
-    #[test]
-    fn command_line_definition_is_consistent() {
-        Cli::command().debug_assert();
-    }
-
-    #[test]
-    fn pr_base_defaults_to_origin_main() {
-        let cli = Cli::try_parse_from(["cargo xtask", "pr"]).unwrap();
-        assert!(matches!(cli.command, BuildCommand::Pr { ref base } if base == "origin/main"));
-    }
-
-    #[test]
-    fn ci_run_requires_a_target() {
-        assert!(Cli::try_parse_from(["cargo xtask", "ci", "run"]).is_err());
-    }
-
-    #[test]
-    fn thread_sanitizer_selects_the_fixed_verification_pipeline() {
-        let cli = Cli::try_parse_from(["cargo xtask", "ci", "thread-sanitizer"]).unwrap();
-        assert!(matches!(
-            cli.command,
-            BuildCommand::Ci(CiCommand::ThreadSanitizer)
-        ));
-    }
-
-    #[test]
-    fn ci_run_arguments_are_owned_send_sync() {
-        let args = CiRunArgs {
-            target: "x86_64-unknown-linux-gnu".into(),
-            checks_only: true,
-        };
-        let args = std::sync::Arc::new(args);
-        let shared = args.clone();
-        let worker = std::thread::spawn(move || (shared.target.clone(), shared.checks_only));
-        assert_eq!(worker.join().unwrap(), (args.target.clone(), true));
-    }
-
-    #[test]
-    fn ci_run_preserves_existing_target_and_checks_only_flags() {
-        let cli = Cli::try_parse_from([
-            "cargo xtask",
-            "ci",
-            "run",
-            "--target",
-            "x86_64-unknown-linux-gnu",
-            "--checks-only",
-        ])
-        .unwrap();
-        assert!(matches!(cli.command, BuildCommand::Ci(CiCommand::Run(args))
-            if args.target == "x86_64-unknown-linux-gnu" && args.checks_only));
-    }
-
-    #[test]
-    fn ci_test_requires_exactly_one_selector() {
-        let prefix = [
-            "cargo xtask",
-            "ci",
-            "test",
-            "--target",
-            "x86_64-unknown-linux-gnu",
-        ];
-        for selector in [vec!["--package", "martensite-tkmath"], vec!["--shard", "0"]] {
-            assert!(Cli::try_parse_from(prefix.into_iter().chain(selector)).is_ok());
-        }
-        assert!(Cli::try_parse_from(prefix).is_err());
-        let both = ["--package", "martensite-tkmath", "--shard", "0"];
-        assert!(Cli::try_parse_from(prefix.into_iter().chain(both)).is_err());
-    }
-
-    #[test]
-    fn release_dispatch_delegates_only_tests_and_keeps_inventory_required() {
-        for checks_only in [false, true] {
-            assert_release_dispatch(checks_only);
-        }
-    }
-
-    fn assert_release_dispatch(checks_only: bool) {
-        let fixture = crate::release::tests::ReleaseFixture::new();
-        let runner = fixture.runner("v0.2.7\n", "0.3.0");
-        let context = crate::context::tests::context_at(&runner, fixture.root());
-        let plan = CiPlan::Release {
-            version: semver::Version::new(0, 3, 0),
-            publish: false,
-        };
-        let result = dispatch_plan_using(
-            &context,
-            plan,
-            "x86_64-unknown-linux-gnu",
-            checks_only,
-            &crate::release::tests::FixtureSourceRelease,
-        );
-        // The fake returns no compiler stream: reaching this error proves the gate still runs.
-        let error = result.unwrap_err().to_string();
-        assert!(error.contains("missing build-finished"));
-        assert_release_commands(&runner.commands(), checks_only);
-    }
-
-    fn assert_release_commands(commands: &[String], checks_only: bool) {
-        assert_eq!(
-            commands.iter().any(|c| c.starts_with("cargo test ")),
-            !checks_only
-        );
-        assert!(commands.iter().any(|c| c.starts_with("cargo package ")));
-        assert!(
-            commands
-                .iter()
-                .any(|c| c.contains("target/unsafe-inventory/build"))
-        );
-    }
-}
+mod tests;

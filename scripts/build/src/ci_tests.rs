@@ -88,7 +88,7 @@ pub fn matrix_outputs(
     let sanitizer = crate::thread_sanitizer_selection::select(&selection.names, &selection.changed);
     let packages = selection.names;
     let matrix = match plan {
-        CiPlan::PullRequest { .. } => serde_json::json!({"package": packages}),
+        CiPlan::PullRequest { .. } => crate::pr_matrix::pr_test_matrix(&packages),
         CiPlan::Release { .. } => crate::release_ci::release_test_matrix(&packages),
     };
     let mut outputs = vec![
@@ -103,14 +103,16 @@ pub fn matrix_outputs(
 }
 
 /// Revalidates membership before running unit, integration and documentation tests.
+/// A split package runs only part `part` of its planned parts (#470).
 ///
 /// ```ignore
-/// test_package(&context, &plan, "martensite-tkmath", &BuildTarget::Host)?;
+/// test_package(&context, &plan, "martensite-tkmath", 0, &BuildTarget::Host)?;
 /// ```
 pub fn test_package(
     context: &BuildContext<'_>,
     plan: &CiPlan,
     package: &str,
+    part: usize,
     target: &BuildTarget,
 ) -> BuildResult<()> {
     if !selected_packages(context, plan)?.contains(package) {
@@ -118,10 +120,13 @@ pub fn test_package(
             "test package {package:?}; expected a member of the affected package set"
         )));
     }
-    CargoTasks::new(context.runner, context.root()).test(
-        &PackageSelection::Packages(vec![package.to_owned()]),
-        target,
-    )
+    let part = crate::cargo::TestPart::planned(package, part)?;
+    let selection = PackageSelection::Packages(vec![package.to_owned()]);
+    let cargo = CargoTasks::new(context.runner, context.root());
+    match part {
+        Some(part) => cargo.test_part(&selection, target, part),
+        None => cargo.test(&selection, target),
+    }
 }
 
 /// Recomputes a release shard before running its unit, integration and doc tests.
@@ -136,7 +141,6 @@ pub fn test_shard(
     target: &BuildTarget,
 ) -> BuildResult<()> {
     let packages = selected_shard(context, plan, shard, target)?;
-    let packages = crate::targets::runnable_test_packages(packages, target.triple());
     context.reporter.note(&format!(
         "Release test shard {shard}: {}",
         packages.join(", ")
@@ -154,12 +158,13 @@ fn selected_shard(
     shard: usize,
     target: &BuildTarget,
 ) -> BuildResult<Vec<String>> {
-    if !matches!(plan, CiPlan::Release { .. }) || !release_target(target) {
+    let release = release_target(target).filter(|_| matches!(plan, CiPlan::Release { .. }));
+    let Some(release) = release else {
         return Err(BuildError::Usage(format!(
             "test shard {shard}, plan {plan:?}, target {target:?}; expected a release on a supported target"
         )));
-    }
-    let shards = crate::release_ci::release_shards(&selected_packages(context, plan)?);
+    };
+    let shards = crate::release_ci::release_shards(&selected_packages(context, plan)?, release);
     shards.get(shard).cloned().ok_or_else(|| {
         BuildError::Usage(format!(
             "test shard {shard}; expected an index below {}",
@@ -168,9 +173,11 @@ fn selected_shard(
     })
 }
 
-fn release_target(target: &BuildTarget) -> bool {
-    matches!(target, BuildTarget::Triple(triple)
-        if crate::targets::RELEASE_TARGETS.iter().any(|target| target.triple == triple))
+fn release_target(target: &BuildTarget) -> Option<&'static crate::targets::ReleaseTarget> {
+    let triple = target.triple()?;
+    crate::targets::RELEASE_TARGETS
+        .iter()
+        .find(|release| release.triple == triple)
 }
 
 /// Fails closed on failed, cancelled or unexpectedly skipped matrix jobs.
@@ -238,21 +245,31 @@ mod tests {
         assert_eq!(outputs[0].1, (!expected.is_empty()).to_string());
         assert_eq!(
             serde_json::from_str::<serde_json::Value>(&outputs[1].1).unwrap(),
-            serde_json::json!({"package": expected})
+            single_part_rows(&expected)
         );
+    }
+
+    fn single_part_rows(packages: &[&str]) -> serde_json::Value {
+        let rows: Vec<_> = packages
+            .iter()
+            .map(|package| {
+                serde_json::json!({"package": package, "part": 0, "parts": 1, "label": package})
+            })
+            .collect();
+        serde_json::json!({"include": rows})
     }
 
     #[test]
     fn package_job_runs_full_test_command_and_rejects_unaffected_package() {
         let (runner, plan) = fixture("crates/martensite-kernel/src/lib.rs");
         let context = context_at(&runner, Path::new("/repo"));
-        test_package(&context, &plan, "martensite-kernel", &BuildTarget::Host).unwrap();
+        test_package(&context, &plan, "martensite-kernel", 0, &BuildTarget::Host).unwrap();
         assert!(
             runner
                 .commands()
                 .contains(&"cargo test --locked --package martensite-kernel --no-fail-fast".into())
         );
-        assert!(test_package(&context, &plan, "martensite-math", &BuildTarget::Host).is_err());
+        assert!(test_package(&context, &plan, "martensite-math", 0, &BuildTarget::Host).is_err());
     }
 
     #[test]
@@ -276,9 +293,12 @@ mod tests {
     fn assert_pinned_package_selection(runner: &RecordingRunner, plan: &CiPlan) {
         let context = context_at(runner, Path::new("/repo"));
         let outputs = matrix_outputs(&context, plan).unwrap();
-        assert_eq!(outputs[1].1, r#"{"package":["martensite-kernel"]}"#);
-        test_package(&context, plan, "martensite-kernel", &BuildTarget::Host).unwrap();
-        assert!(test_package(&context, plan, "martensite-math", &BuildTarget::Host).is_err());
+        assert_eq!(
+            outputs[1].1,
+            r#"{"include":[{"label":"martensite-kernel","package":"martensite-kernel","part":0,"parts":1}]}"#
+        );
+        test_package(&context, plan, "martensite-kernel", 0, &BuildTarget::Host).unwrap();
+        assert!(test_package(&context, plan, "martensite-math", 0, &BuildTarget::Host).is_err());
         assert!(
             !runner
                 .commands()

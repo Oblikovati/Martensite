@@ -158,7 +158,7 @@ pub(crate) mod tests {
     pub(crate) fn metadata_at(root: &str, version: &str) -> String {
         serde_json::json!({
             "workspace_root": root,
-            "target_directory": std::path::absolute(Path::new(root).join("target")).unwrap(),
+            "target_directory": native_target_directory(Path::new(root)),
             "workspace_members": ["path+file:///repo#martensite-kernel", "path+file:///repo#martensite-math"],
             "packages": [
                 {"id":"path+file:///repo#martensite-kernel", "name": "martensite-kernel", "version": version,
@@ -172,6 +172,12 @@ pub(crate) mod tests {
             ]
         })
         .to_string()
+    }
+
+    /// Cargo outputs need drive-qualified Windows paths; `native_target_directory(Path::new("/repo"))`.
+    pub(crate) fn native_target_directory(root: &Path) -> PathBuf {
+        let target = root.join("target");
+        std::path::absolute(target).unwrap()
     }
 
     #[test]

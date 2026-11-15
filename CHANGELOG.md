@@ -10,7 +10,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added opt-in coefficient-preserving ruled Bezier construction and binary replay with typed refusal of constant non-unit weight grids (#464).
 
+## [0.13.1] - 2026-11-15
+
 ### Fixed
+
+- Separated test-only edits from release package version checks while retaining affected QA suites and conservative production-fixture checks (#466).
 
 - Retained all contributing solid parents through final Boolean Fuse assembly and preserved reverse ancestry bindings (#456).
 

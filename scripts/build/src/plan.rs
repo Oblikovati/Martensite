@@ -146,7 +146,7 @@ pub fn plan_outputs(plan: &CiPlan) -> Vec<(&'static str, String)> {
         ("mode", mode.to_owned()),
         ("version", version),
         ("publish", publish.to_string()),
-        ("matrix", matrix_json(&targets)),
+        ("matrix", matrix_json(&targets, plan)),
         (
             "base-sha",
             match plan {
@@ -157,12 +157,28 @@ pub fn plan_outputs(plan: &CiPlan) -> Vec<(&'static str, String)> {
     ]
 }
 
-fn matrix_json(targets: &[ReleaseTarget]) -> String {
-    let include: Vec<_> = targets
+// PR checks run each stage as its own job (#473); release checks stay one job
+// per platform because packaging needs the complete sequential pipeline.
+fn matrix_json(targets: &[ReleaseTarget], plan: &CiPlan) -> String {
+    let rows = targets
         .iter()
-        .map(|target| serde_json::json!({"target": target.triple, "runner": target.runner}))
-        .collect();
+        .map(|target| serde_json::json!({"target": target.triple, "runner": target.runner}));
+    let include: Vec<_> = match plan {
+        CiPlan::PullRequest { .. } => rows.flat_map(with_check_stages).collect(),
+        CiPlan::Release { .. } => rows.collect(),
+    };
     serde_json::json!({ "include": include }).to_string()
+}
+
+fn with_check_stages(row: serde_json::Value) -> Vec<serde_json::Value> {
+    crate::pr::CheckStage::ALL
+        .iter()
+        .map(|stage| {
+            let mut staged = row.clone();
+            staged["stage"] = serde_json::json!(stage.name());
+            staged
+        })
+        .collect()
 }
 
 /// Appends outputs to the `GITHUB_OUTPUT` file, or prints them locally.
@@ -211,6 +227,19 @@ mod tests {
         let outputs = plan_outputs(&plan);
         assert_eq!(outputs[0], ("mode", "pr".to_owned()));
         assert!(outputs[3].1.contains("ubuntu-24.04") && !outputs[3].1.contains("windows"));
+    }
+
+    #[test]
+    fn pull_request_checks_run_one_job_per_stage() {
+        let plan = plan_for(&trigger("pull_request", "refs/pull/7/merge", EVENT_BASE)).unwrap();
+        let matrix: serde_json::Value = serde_json::from_str(&plan_outputs(&plan)[3].1).unwrap();
+        let stages: Vec<_> = matrix["include"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|row| row["stage"].as_str().unwrap().to_owned())
+            .collect();
+        assert_eq!(stages, ["lint", "clippy", "build"]);
     }
 
     fn assert_release_matrix(plan: &CiPlan) {
