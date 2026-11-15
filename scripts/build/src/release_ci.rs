@@ -2,45 +2,41 @@
 
 use std::collections::BTreeSet;
 
-use crate::targets::RELEASE_TARGETS;
+use crate::targets::{RELEASE_TARGETS, ReleaseTarget, runnable_test_packages};
 
-// Four shards bound repeated compilation while separating the long suites in
-// docs/features/ci-build-driver/parallel-tests.md (#250).
-const RELEASE_SHARDS: usize = 4;
-const LONG_SUITES: [&str; 4] = [
-    "martensite-tkgeombase",
-    "martensite-tkprim",
-    "martensite-tkgeomalgo",
-    "martensite-tktopalgo",
-];
-
-/// Assigns selected suites once, separating measured long suites to limit the tail.
-/// Example: `let shards = release_shards(&selected);`.
-pub(crate) fn release_shards(packages: &BTreeSet<String>) -> Vec<Vec<String>> {
-    let count = packages.len().min(RELEASE_SHARDS);
-    if count == 0 {
-        return Vec::new();
+/// Assigns the suites `target` can run to its shards, longest measured suite
+/// first onto the least-loaded shard (#474). Ties keep sorted package order,
+/// so every job of one plan computes the same assignment.
+/// Example: `let shards = release_shards(&selected, &RELEASE_TARGETS[0]);`.
+pub(crate) fn release_shards(
+    packages: &BTreeSet<String>,
+    target: &ReleaseTarget,
+) -> Vec<Vec<String>> {
+    let runnable = runnable_test_packages(packages.iter().cloned().collect(), Some(target.triple));
+    let count = runnable.len().min(target.test_shards);
+    let mut shards = vec![(0_u32, Vec::new()); count];
+    for name in longest_first(runnable) {
+        // `count` is positive whenever a name exists, so a lightest shard exists.
+        if let Some(lightest) = shards.iter_mut().min_by_key(|(minutes, _)| *minutes) {
+            lightest.0 += crate::suite_weights::package_minutes(&name);
+            lightest.1.push(name);
+        }
     }
-    let mut shards = vec![Vec::new(); count];
-    let long = LONG_SUITES.iter().filter(|name| packages.contains(**name));
-    let rest = packages
-        .iter()
-        .filter(|name| !LONG_SUITES.contains(&name.as_str()));
-    let ordered = long.map(|name| (*name).to_owned()).chain(rest.cloned());
-    for (index, name) in ordered.enumerate() {
-        shards[index % count].push(name);
-    }
-    shards
+    shards.into_iter().map(|(_, names)| names).collect()
 }
 
-/// Pairs every nonempty shard with each native release platform.
+fn longest_first(mut names: Vec<String>) -> Vec<String> {
+    names.sort_by_key(|name| std::cmp::Reverse(crate::suite_weights::package_minutes(name)));
+    names
+}
+
+/// Pairs every nonempty shard with its native release platform.
 /// Example: `let matrix = release_test_matrix(&selected);`.
 pub(crate) fn release_test_matrix(packages: &BTreeSet<String>) -> serde_json::Value {
-    let shards = release_shards(packages);
     let include: Vec<_> = RELEASE_TARGETS
         .iter()
         .flat_map(|target| {
-            (0..shards.len()).map(move |shard| {
+            (0..release_shards(packages, target).len()).map(move |shard| {
                 serde_json::json!({
                     "target": target.triple, "runner": target.runner, "shard": shard,
                 })
@@ -55,15 +51,25 @@ mod tests {
     use super::*;
     use std::collections::BTreeSet;
 
+    const LONG_SUITES: [&str; 4] = [
+        "martensite-vulkan",
+        "martensite-tkbo",
+        "martensite-boolean-cases",
+        "martensite-tkoffset",
+    ];
+    const LINUX: ReleaseTarget = RELEASE_TARGETS[0];
+
+    fn names(list: &[&str]) -> BTreeSet<String> {
+        list.iter().map(|name| (*name).to_owned()).collect()
+    }
+
     #[test]
     fn shards_cover_every_selected_package_once_and_separate_long_suites() {
-        let packages = LONG_SUITES
-            .iter()
-            .copied()
-            .chain(["martensite-tkmath", "martensite-process-policy"])
-            .map(str::to_owned)
+        let packages = names(&LONG_SUITES)
+            .into_iter()
+            .chain(names(&["martensite-tkmath", "martensite-process-policy"]))
             .collect();
-        let shards = release_shards(&packages);
+        let shards = release_shards(&packages, &LINUX);
         assert_eq!(shards.len(), 4);
         let flattened: Vec<_> = shards.iter().flatten().cloned().collect();
         assert_eq!(flattened.len(), packages.len());
@@ -76,7 +82,48 @@ mod tests {
             let long = shard
                 .iter()
                 .filter(|name| LONG_SUITES.contains(&name.as_str()));
-            assert_eq!(long.count(), 1);
+            assert_eq!(long.count(), 1, "{shards:?}");
+        }
+    }
+
+    #[test]
+    fn short_suites_fill_the_least_loaded_shard_instead_of_round_robin() {
+        let packages = names(&[
+            "martensite-vulkan",
+            "martensite-tkbo",
+            "martensite-tkmath",
+            "martensite-tkg3d",
+        ]);
+        let target = ReleaseTarget {
+            test_shards: 2,
+            ..LINUX
+        };
+        let shards = release_shards(&packages, &target);
+        assert_eq!(shards[0], ["martensite-vulkan"]);
+        assert_eq!(
+            shards[1],
+            ["martensite-tkbo", "martensite-tkmath", "martensite-tkg3d"]
+        );
+    }
+
+    #[test]
+    fn platforms_without_the_renderer_never_receive_its_suite_or_an_empty_shard() {
+        let packages = names(&["martensite-vulkan", "martensite-tkmath"]);
+        let windows = RELEASE_TARGETS[3];
+        assert_eq!(release_shards(&packages, &windows), [["martensite-tkmath"]]);
+    }
+
+    #[test]
+    fn matrix_uses_each_platform_shard_count() {
+        let packages = (0..8).map(|i| format!("package-{i}")).collect();
+        let matrix = release_test_matrix(&packages);
+        let rows = matrix["include"].as_array().unwrap();
+        for target in RELEASE_TARGETS {
+            let count = rows
+                .iter()
+                .filter(|row| row["target"] == target.triple)
+                .count();
+            assert_eq!(count, target.test_shards, "{}", target.triple);
         }
     }
 
@@ -111,8 +158,8 @@ mod tests {
     fn empty_and_small_scopes_never_create_empty_shards() {
         for size in 0..7 {
             let packages = (0..size).map(|i| format!("package-{i}")).collect();
-            let shards = release_shards(&packages);
-            assert_eq!(shards.len(), size.min(RELEASE_SHARDS));
+            let shards = release_shards(&packages, &LINUX);
+            assert_eq!(shards.len(), size.min(LINUX.test_shards));
             assert!(shards.iter().all(|shard| !shard.is_empty()));
         }
     }

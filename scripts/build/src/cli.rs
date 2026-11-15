@@ -90,6 +90,9 @@ pub enum CiCommand {
         package: Option<String>,
         #[arg(long, required_unless_present = "package", conflicts_with = "package")]
         shard: Option<usize>,
+        /// Zero-based part of a split package's tests (#470).
+        #[arg(long, conflicts_with = "shard")]
+        part: Option<usize>,
         #[arg(long)]
         target: String,
     },
@@ -157,8 +160,14 @@ fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()
         Test {
             package,
             shard,
+            part,
             target,
-        } => test_planned_selection(context, package.as_deref(), shard, target),
+        } => test_planned_selection(
+            context,
+            (package.as_deref(), part.unwrap_or(0)),
+            shard,
+            target,
+        ),
         Gate {
             checks,
             tests,
@@ -171,14 +180,16 @@ fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()
 
 fn test_planned_selection(
     context: &BuildContext<'_>,
-    package: Option<&str>,
+    (package, part): (Option<&str>, usize),
     shard: Option<usize>,
     target: String,
 ) -> BuildResult<()> {
     let plan = current_plan()?;
     let target = BuildTarget::Triple(target);
     match (package, shard) {
-        (Some(package), None) => crate::ci_tests::test_package(context, &plan, package, &target),
+        (Some(package), None) => {
+            crate::ci_tests::test_package(context, &plan, package, part, &target)
+        }
         (None, Some(shard)) => crate::ci_tests::test_shard(context, &plan, shard, &target),
         _ => Err(BuildError::Usage(format!(
             "package {package:?}, shard {shard:?}; expected exactly one of --package or --shard"
@@ -385,6 +396,25 @@ mod tests {
         assert!(Cli::try_parse_from(prefix).is_err());
         let both = ["--package", "martensite-tkmath", "--shard", "0"];
         assert!(Cli::try_parse_from(prefix.into_iter().chain(both)).is_err());
+    }
+
+    #[test]
+    fn ci_test_part_belongs_to_a_package_job() {
+        let prefix = [
+            "cargo xtask",
+            "ci",
+            "test",
+            "--target",
+            "x86_64-unknown-linux-gnu",
+        ];
+        let package_part = ["--package", "martensite-vulkan", "--part", "2"];
+        let cli = Cli::try_parse_from(prefix.into_iter().chain(package_part)).unwrap();
+        assert!(matches!(
+            cli.command,
+            BuildCommand::Ci(CiCommand::Test { part: Some(2), .. })
+        ));
+        let shard_part = ["--shard", "0", "--part", "1"];
+        assert!(Cli::try_parse_from(prefix.into_iter().chain(shard_part)).is_err());
     }
 
     #[test]
