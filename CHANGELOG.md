@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-11-15
+
 ### Fixed
 
 - Separated test-only edits from release package version checks while retaining affected QA suites and conservative production-fixture checks (#466).
