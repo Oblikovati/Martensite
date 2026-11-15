@@ -24,10 +24,21 @@ fn part_rows(package: &str) -> Vec<(u32, serde_json::Value)> {
     let minutes = package_minutes(package).div_ceil(parts as u32);
     (0..parts)
         .map(|part| {
-            let row = serde_json::json!({"package": package, "part": part, "parts": parts});
+            let row = serde_json::json!({
+                "package": package, "part": part, "parts": parts,
+                "label": part_label(package, part, parts),
+            });
             (minutes, row)
         })
         .collect()
+}
+
+// Workflow expressions have no arithmetic, so the 1-based job label is built here.
+fn part_label(package: &str, part: usize, parts: usize) -> String {
+    if parts == 1 {
+        return package.to_owned();
+    }
+    format!("{package} {}/{parts}", part + 1)
 }
 
 #[cfg(test)]
@@ -70,6 +81,15 @@ mod tests {
             (0..pr_parts("martensite-vulkan") as u64).collect::<Vec<_>>()
         );
         assert!(actual.iter().all(|(_, _, parts)| *parts == 4));
+    }
+
+    #[test]
+    fn labels_name_split_parts_from_one_and_leave_whole_packages_plain() {
+        assert_eq!(
+            part_label("martensite-vulkan", 0, 4),
+            "martensite-vulkan 1/4"
+        );
+        assert_eq!(part_label("martensite-tkmath", 0, 1), "martensite-tkmath");
     }
 
     #[test]
