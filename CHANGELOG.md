@@ -10,6 +10,12 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added opt-in coefficient-preserving ruled Bezier construction and binary replay with typed refusal of constant non-unit weight grids (#464).
 
+### Fixed
+
+- Retained publication impact for traversing and unsupported Cargo production-target paths (#482).
+
+- Excluded proven test-target manifest edits and the reviewed budget-marker script from package source-version checks while retaining affected tests and conservative production-input checks (#481).
+
 ## [0.13.1] - 2026-11-15
 
 ### Fixed
