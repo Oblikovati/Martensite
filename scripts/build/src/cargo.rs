@@ -7,6 +7,8 @@ use serde::Deserialize;
 use crate::error::{BuildError, BuildResult};
 use crate::process::{CommandRunner, CommandSpec};
 mod script_budget_profiles;
+mod test_parts;
+pub use test_parts::TestPart;
 
 /// Which packages a cargo command acts on.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -200,16 +202,23 @@ impl<'a> CargoTasks<'a> {
         target: &BuildTarget,
         optimization: script_budget_profiles::Optimization,
     ) -> BuildResult<()> {
+        self.runner
+            .run(&self.test_spec(selection, target, optimization))
+    }
+
+    fn test_spec(
+        &self,
+        selection: &PackageSelection,
+        target: &BuildTarget,
+        optimization: script_budget_profiles::Optimization,
+    ) -> CommandSpec {
         let mut spec = self
             .selected("test", selection, target)
             .arg("--no-fail-fast");
         if tests_case_runner(selection) {
             spec = spec.args(["--features", "martensite-process-policy/case-runner"]);
         }
-        let spec = optimization.apply(spec);
-        self.runner.run(&renderer_test_environment(
-            spec, self.root, selection, target,
-        ))
+        renderer_test_environment(optimization.apply(spec), self.root, selection, target)
     }
 
     /// Release build that returns the shippable artifacts cargo reported.

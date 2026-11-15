@@ -27,6 +27,7 @@ This gives two properties:
 | `cargo xtask ci run --target T` | CI | Runs the planned pipeline for one matrix target |
 | `cargo xtask ci run --target T --checks-only` | CI | Runs shared checks and release packaging, delegating tests to the matrix |
 | `cargo xtask ci test --package P --target T` | CI | Revalidates affected-package membership and runs all tests for that package |
+| `cargo xtask ci test --package P --part K --target T` | CI | Runs part `K` of a package whose PR tests are split across jobs |
 | `cargo xtask ci test --shard N --target T` | CI | Recomputes a release shard and runs all selected package suites on that target |
 | `cargo xtask ci gate --checks success --tests success --has-tests` | CI | Requires successful shared checks and package tests |
 | `cargo xtask ci publish --dist DIR` | CI | Checks every asset against its checksum and creates the GitHub release |
@@ -34,8 +35,19 @@ This gives two properties:
 `ci run` reads the trigger again instead of getting the mode from the plan job.
 The trigger is the same in both jobs, so the plan is the same.
 
-For PRs, the planner emits one job per affected package. Up to four test jobs
-run concurrently, alongside shared lint, compiler inventory and build checks.
+For PRs, the planner emits one job per affected package, or several jobs for
+a package whose suite would otherwise bound the run (#470). Jobs are listed
+longest first by the measured minutes in `scripts/build/src/suite_weights.rs`,
+and no job limit applies, so the longest suites start first (#469). They run
+alongside shared lint, compiler inventory and build checks.
+
+A split package's parts build the same test targets. Each part lists every
+libtest target, assigns each test by a fixed FNV-1a hash of its target and name,
+and runs its share with `--exact` filters, so the parts are disjoint and
+together run every test once. A target that cannot be listed, such as a custom
+harness, runs whole in one part; doctests run in part 0. A part index outside
+the planned count fails instead of running nothing.
+
 Each test job runs unit, integration and documentation tests with
 `--no-fail-fast`; a failed job does not cancel the others. The existing
 `pr (x86_64-unknown-linux-gnu)` check aggregates their results. Documentation-only
@@ -72,8 +84,8 @@ When process-policy is selected, the shared test command explicitly enables
 combined toolkit invocation enabled through dependency feature unification.
 Host-math and optional external integration features remain disabled.
 
-Each package job compiles its own dependencies. The four-job limit bounds
-concurrency, not total runner minutes. Compare job compilation time, elapsed
+Each package job, and each part of a split package, compiles its own
+dependencies, so splitting raises total runner minutes while it lowers elapsed time. Compare job compilation time, elapsed
 workflow time and summed runner time before claiming a cost improvement.
 The [timing investigation](parallel-tests.md) records the baseline and remaining
 slow cases (#250).

@@ -19,6 +19,7 @@ mod lint;
 mod package_manifest;
 mod plan;
 mod pr;
+mod pr_matrix;
 mod process;
 mod publication_plan;
 mod publication_record;
@@ -35,8 +36,8 @@ mod release_sources;
 mod release_test_inputs;
 mod report;
 mod source_sdk;
-mod targets;
 mod suite_weights;
+mod targets;
 mod thread_sanitizer;
 mod thread_sanitizer_selection;
 #[cfg(test)]

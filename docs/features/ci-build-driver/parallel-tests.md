@@ -20,7 +20,8 @@ The manifests and lockfile changed, so selecting every package was appropriate.
 The PR matrix uses the existing changed-package and transitive-dependent
 selection. Base dependencies compile where needed but their tests run only
 when selected. Every selected package gets one job, with four jobs allowed
-concurrently. Shared checks run once. The aggregate PR check rejects failed,
+concurrently. (#469 later removed that limit and ordered jobs longest first;
+#470 split the longest suites into parts.) Shared checks run once. The aggregate PR check rejects failed,
 cancelled and unexpectedly skipped jobs.
 
 Release rehearsals and tag runs use the previous final release as their scope
