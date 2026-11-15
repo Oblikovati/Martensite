@@ -16,6 +16,8 @@ struct ProductionReferences {
     paths: BTreeSet<PathBuf>,
     macros: LiteralMacroInputs,
     collecting: bool,
+    manifest_proof: bool,
+    manifest_inputs_known: bool,
     changed_extensions: BTreeSet<String>,
 }
 
@@ -58,7 +60,7 @@ pub(crate) fn publication_changes<'a>(
         return Cow::Borrowed(changed);
     }
     let package = root.join(directory);
-    let Some(references) = production_references(&package, manifest, changed) else {
+    let Some(references) = production_references(&package, manifest, changed, false) else {
         return Cow::Borrowed(changed);
     };
     Cow::Owned(filtered_changes(root, changed, &prefix, &references))
@@ -94,6 +96,7 @@ fn production_references(
     root: &Path,
     manifest: &PackageManifest,
     changed: &[ChangedFile],
+    manifest_proof: bool,
 ) -> Option<ProductionReferences> {
     if !crate::release_input_layout::known_production_layout(root, manifest) {
         return None;
@@ -102,6 +105,8 @@ fn production_references(
         paths: BTreeSet::new(),
         macros: LiteralMacroInputs::default(),
         collecting: true,
+        manifest_proof,
+        manifest_inputs_known: true,
         changed_extensions: changed_extensions(changed),
     };
     scan_directory(root, root, &mut references)?;
@@ -116,13 +121,15 @@ pub(crate) fn manifest_is_unreferenced(
     manifest: &PackageManifest,
     changed: &[ChangedFile],
 ) -> bool {
-    let Some(references) = production_references(root, manifest, &with_manifest_evidence(changed))
+    let Some(references) =
+        production_references(root, manifest, &with_manifest_evidence(changed), true)
     else {
         return false;
     };
-    !references
-        .paths
-        .contains(&normalized(&root.join("Cargo.toml")))
+    references.manifest_inputs_known
+        && !references
+            .paths
+            .contains(&normalized(&root.join("Cargo.toml")))
 }
 fn with_manifest_evidence(changed: &[ChangedFile]) -> Vec<ChangedFile> {
     let mut inputs = changed.to_vec();
@@ -272,9 +279,10 @@ fn attribute_prefix(tokens: &[TokenTree], index: usize) -> bool {
 }
 fn check_include(
     tokens: &[TokenTree],
-    refs: &ProductionReferences,
+    refs: &mut ProductionReferences,
     scope: &SourceScope<'_>,
 ) -> Option<()> {
+    record_manifest_include(tokens, refs, scope);
     if !is_include_macro(tokens) {
         return Some(());
     }
@@ -283,6 +291,21 @@ fn check_include(
         return rust_include_argument(tokens.get(2), scope);
     }
     include_argument(tokens.get(2), refs, scope.owner.as_deref())
+}
+fn record_manifest_include(
+    tokens: &[TokenTree],
+    refs: &mut ProductionReferences,
+    scope: &SourceScope<'_>,
+) {
+    if !refs.manifest_proof || !refs.manifest_inputs_known || !is_include_keyword(tokens) {
+        return;
+    }
+    refs.manifest_inputs_known = is_include_macro(tokens)
+        && crate::release_manifest_inputs::literal_is_disjoint(
+            tokens.get(2),
+            scope.parent,
+            scope.package,
+        );
 }
 fn rust_include_argument(token: Option<&TokenTree>, scope: &SourceScope<'_>) -> Option<()> {
     let Some(TokenTree::Group(arguments)) = token else {
@@ -309,14 +332,13 @@ fn owned_rust_source(value: &str, scope: &SourceScope<'_>) -> Option<()> {
     let path = path.canonicalize().ok()?;
     (path.starts_with(scope.package.canonicalize().ok()?) && path.is_file()).then_some(())
 }
+fn is_include_keyword(tokens: &[TokenTree]) -> bool {
+    matches!(tokens.first(), Some(TokenTree::Ident(name))
+        if matches!(source_macro_identifier(name).as_str(), "include" | "include_bytes" | "include_str"))
+}
 fn is_include_macro(tokens: &[TokenTree]) -> bool {
-    let Some(TokenTree::Ident(name)) = tokens.first() else {
-        return false;
-    };
-    matches!(
-        source_macro_identifier(name).as_str(),
-        "include" | "include_bytes" | "include_str"
-    ) && matches!(tokens.get(1), Some(TokenTree::Punct(mark)) if mark.as_char() == '!')
+    is_include_keyword(tokens)
+        && matches!(tokens.get(1), Some(TokenTree::Punct(mark)) if mark.as_char() == '!')
 }
 fn include_argument(
     token: Option<&TokenTree>,

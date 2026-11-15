@@ -262,3 +262,33 @@ fn linked_package_root_disables_the_qa_proof() {
     std::os::unix::fs::symlink(root.path().join("owned"), root.path().join("a")).unwrap();
     assert_eq!(test_edit_count(root.path()), 1);
 }
+
+fn assert_manifest_input_refused(source: &str) {
+    let root = fixture(source, None);
+    let current = test_target("");
+    assert_eq!(publication(root.path(), &current).source, current.source);
+}
+#[test]
+fn literal_manifest_aliases_and_unbounded_inputs_remain_source() {
+    for source in [
+        "#[cfg(windows)] pub const SOURCE: &str = include_str!(\"../CARGO.TOML\");",
+        "#[cfg(windows)] pub const SOURCE: &str = include_str!(\"../CARGO~1.TOM\");",
+        "use std::include_str as read; pub const SOURCE: &str = read!(\"../CARGO.TOML\");",
+        "pub const SOURCE: &str = include_str!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/config.txt\"));",
+    ] {
+        assert_manifest_input_refused(source);
+    }
+}
+#[test]
+fn owned_literal_input_with_distinct_bytes_keeps_the_qa_exemption() {
+    let root = fixture("pub const SOURCE: &str = include_str!(\"data.txt\");", None);
+    let size = fs::metadata(root.path().join("a/Cargo.toml"))
+        .unwrap()
+        .len() as usize;
+    fs::write(root.path().join("a/src/data.txt"), vec![b'x'; size]).unwrap();
+    let current = test_target("");
+    assert_eq!(
+        publication(root.path(), &current).source,
+        manifest("").source
+    );
+}
