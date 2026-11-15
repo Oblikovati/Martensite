@@ -146,7 +146,13 @@ fn changed_release_package(
     }
     let manifest = current_manifest(context, &package.dir, inherited)?;
     let old = previous.get(&manifest.name);
-    let source_changed = package_changed(&manifest, old, &package.dir, changed);
+    let publication = crate::release_test_inputs::publication_changes(
+        context.root(),
+        &manifest,
+        &package.dir,
+        changed,
+    );
+    let source_changed = package_changed(&manifest, old, &package.dir, &publication);
     check_package_version(&manifest, old, source_changed)?;
     Ok(source_changed)
 }
