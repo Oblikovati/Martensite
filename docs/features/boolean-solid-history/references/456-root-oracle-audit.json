@@ -1,0 +1,17 @@
+{
+  "patch_sha256": "da6ccfedaa24c5c3b45a191b5278b6927dd4d0596668d8a78e12a751e6e9619f",
+  "changed_cases": 519,
+  "changed_files": 7,
+  "aggregate_flag_cases": 99,
+  "aggregate_flag_columns": {
+    "13": 99,
+    "11": 30
+  },
+  "source_changed_fields": {
+    "1": 808,
+    "3": 808,
+    "5": 713
+  },
+  "assertions": "every original line matched current golden; same case keys; geometry/RC sections byte-identical; all other core columns unchanged; only supported solid history fields changed; prior recorded parent union retained; all new parents refer to supported inputs; no generated count or survival changes",
+  "review": "all39 compact history delta patterns inspected; independent11 actual lineage controls plus two-axis source review support correction"
+}

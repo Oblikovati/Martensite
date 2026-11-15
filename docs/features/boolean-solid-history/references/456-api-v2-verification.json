@@ -1,0 +1,27 @@
+{
+  "failed_canonical_gate": {
+    "session": 25733,
+    "exit": 1,
+    "only_failed_test": "brep_algo_api_booleans::brep_algo_api_booleans_match_native_reference",
+    "log_sha256": "7a277601a397e7905200901bebcfed6e8c3bc6c8e89f9486159d01f95761f31d"
+  },
+  "reviewed_reference_patch_sha256": "62057552161e16e42debb21802cb64ce9cc7dd5c1d4deecd1f813c00a098e2bf",
+  "focused_api_tests": {
+    "exit": 0,
+    "passed": 2,
+    "seconds": 0.09,
+    "test_opt_level": 1,
+    "log": "target/qualification/456-api-v2-focused.log"
+  },
+  "strict_lib_and_tests_clippy": {
+    "exit": 0,
+    "seconds": 4.76,
+    "log": "target/qualification/456-api-v2-clippy.log"
+  },
+  "format": {
+    "exit": 0,
+    "log": "target/qualification/456-api-v2-format.log"
+  },
+  "production_changes_since_failed_gate": false,
+  "performance_scope": "reference correction changes no production execution/allocation; one additional small fuse regression; no new claim about original production patch performance"
+}

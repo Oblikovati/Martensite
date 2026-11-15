@@ -1,0 +1,134 @@
+{
+  "active_users": [],
+  "temporary_directory_removed": true,
+  "removed": [
+    {
+      "name": "after-overlap-False.brep",
+      "bytes": 10704,
+      "sha256": "3b8bc9c090f63e74e1275613ef5e872cc263a64385d848f55356ce1a6002389e"
+    },
+    {
+      "name": "after-disconnected64-True.brep",
+      "bytes": 277800,
+      "sha256": "c3e45a87e142bcaeb7d1f7ad1a1d5a38a81f8d186389b2f95bf6265a73c212da"
+    },
+    {
+      "name": "probe.rs",
+      "bytes": 6172,
+      "sha256": "aebf362d4dad803921ca88c5b1f5a6c3403cc7317f512c3f9093fedd6ff5daf6"
+    },
+    {
+      "name": "after-cylinder-False.brep",
+      "bytes": 6905,
+      "sha256": "b6d6a67f26eb8a9124babce0b680f608869d8da8ae6908d58dc7bd0ac1f89170"
+    },
+    {
+      "name": "before-chain12-False.brep",
+      "bytes": 38563,
+      "sha256": "e0ec60804c1d6594c358b29e48430a58d2ad31e418426579ce08e1ae3f45d4d4"
+    },
+    {
+      "name": "minimal-before.brep",
+      "bytes": 8838,
+      "sha256": "5d1f976ce46ca3aa39de44a1356afff3020c829aa783e0dceb3f54edf4dd3754"
+    },
+    {
+      "name": "after-disconnected64-False.brep",
+      "bytes": 277800,
+      "sha256": "c3e45a87e142bcaeb7d1f7ad1a1d5a38a81f8d186389b2f95bf6265a73c212da"
+    },
+    {
+      "name": "minimal-after.brep",
+      "bytes": 8838,
+      "sha256": "5d1f976ce46ca3aa39de44a1356afff3020c829aa783e0dceb3f54edf4dd3754"
+    },
+    {
+      "name": "before-disconnected64-True.brep",
+      "bytes": 277800,
+      "sha256": "c3e45a87e142bcaeb7d1f7ad1a1d5a38a81f8d186389b2f95bf6265a73c212da"
+    },
+    {
+      "name": "diagnose-before-before.brep",
+      "bytes": 4481,
+      "sha256": "72222153c02fceef0c776ced71b3432504d21ba289b6ee504d60d6367b77bfc3"
+    },
+    {
+      "name": "before-chain12-True.brep",
+      "bytes": 38563,
+      "sha256": "e0ec60804c1d6594c358b29e48430a58d2ad31e418426579ce08e1ae3f45d4d4"
+    },
+    {
+      "name": "after",
+      "bytes": 36513392,
+      "sha256": "0faae53d64e6b8695fad922880b4a54b341ec358aacd6cea0cd9dd8f642f2196"
+    },
+    {
+      "name": "before-overlap-True.brep",
+      "bytes": 10704,
+      "sha256": "3b8bc9c090f63e74e1275613ef5e872cc263a64385d848f55356ce1a6002389e"
+    },
+    {
+      "name": "diagnose-before-after.brep",
+      "bytes": 4481,
+      "sha256": "42c24d771ef91f869dbb655649e96db1c1ca39966afc2556ffe0c5bcc8dd592b"
+    },
+    {
+      "name": "before-cylinder-True.brep",
+      "bytes": 6905,
+      "sha256": "b6d6a67f26eb8a9124babce0b680f608869d8da8ae6908d58dc7bd0ac1f89170"
+    },
+    {
+      "name": "after-chain12-False.brep",
+      "bytes": 38563,
+      "sha256": "e0ec60804c1d6594c358b29e48430a58d2ad31e418426579ce08e1ae3f45d4d4"
+    },
+    {
+      "name": "before-disconnected64-False.brep",
+      "bytes": 277800,
+      "sha256": "c3e45a87e142bcaeb7d1f7ad1a1d5a38a81f8d186389b2f95bf6265a73c212da"
+    },
+    {
+      "name": "after-chain12-True.brep",
+      "bytes": 38563,
+      "sha256": "e0ec60804c1d6594c358b29e48430a58d2ad31e418426579ce08e1ae3f45d4d4"
+    },
+    {
+      "name": "diagnose-after-after.brep",
+      "bytes": 4481,
+      "sha256": "42c24d771ef91f869dbb655649e96db1c1ca39966afc2556ffe0c5bcc8dd592b"
+    },
+    {
+      "name": "before-cylinder-False.brep",
+      "bytes": 6905,
+      "sha256": "b6d6a67f26eb8a9124babce0b680f608869d8da8ae6908d58dc7bd0ac1f89170"
+    },
+    {
+      "name": "after-overlap-True.brep",
+      "bytes": 10704,
+      "sha256": "3b8bc9c090f63e74e1275613ef5e872cc263a64385d848f55356ce1a6002389e"
+    },
+    {
+      "name": "before-overlap-False.brep",
+      "bytes": 10704,
+      "sha256": "3b8bc9c090f63e74e1275613ef5e872cc263a64385d848f55356ce1a6002389e"
+    },
+    {
+      "name": "after-cylinder-True.brep",
+      "bytes": 6905,
+      "sha256": "b6d6a67f26eb8a9124babce0b680f608869d8da8ae6908d58dc7bd0ac1f89170"
+    },
+    {
+      "name": "diagnose-after-before.brep",
+      "bytes": 4481,
+      "sha256": "72222153c02fceef0c776ced71b3432504d21ba289b6ee504d60d6367b77bfc3"
+    },
+    {
+      "name": "before",
+      "bytes": 36519056,
+      "sha256": "56ed6c7c62141539b5d8929fcef9c5a425be80259ed4c442d436cf786510da11"
+    }
+  ],
+  "raw_measurement_sha256": "a11f68a4beb170847c871b586303836a000dc9fdd2b2345a87b77f7a44dce30c",
+  "implementations_retained": false,
+  "findings_retained": "compressed raw measurements, geometry records, provenance, summaries and baseline Free qualification"
+}

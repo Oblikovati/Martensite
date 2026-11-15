@@ -46,7 +46,7 @@ f 3e7ad7f29abcaf48 |F 21R 17R 10R 19F
 f 3e7ad7f29abcaf48 |F 20R 13R 18R 21F
 s |F 1R 2R 3F 4F 5R 6F 7F 8F 9F
 section 44 46 37 35 25 27
-case fuse done 1 errors 0 warnings 0 modified 1 generated 1 deleted 1
+case fuse done 1 errors 0 warnings 0 modified 1 generated 1 deleted 0
 result 12 18 10 1 55
 v 0000000000000000 0000000000000000 4024000000000000 3e7ad7f29abcaf48
 v 0000000000000000 0000000000000000 0000000000000000 3e7ad7f29abcaf48
