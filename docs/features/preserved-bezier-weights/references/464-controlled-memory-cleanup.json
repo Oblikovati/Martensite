@@ -1,0 +1,20 @@
+{
+  "time": "2026-11-15T20:44:31.261474+00:00",
+  "removed_probes": [
+    "target/qualification/464-memory-probe",
+    "target/qualification/464-memory-probe.rs",
+    "target/qualification/464-memory-baseline",
+    "target/qualification/464-memory-baseline.rs",
+    "target/qualification/464-memory-mainline",
+    "target/qualification/464-memory-mainline.rs",
+    "target/qualification/464-memory-candidate",
+    "target/qualification/464-memory-candidate.rs",
+    "target/qualification/464-memory-fixed-legacy",
+    "target/qualification/464-memory-fixed-legacy.rs",
+    "target/qualification/464-memory-fixed-strict",
+    "target/qualification/464-memory-fixed-strict.rs"
+  ],
+  "baseline_status_before_cleanup": "clean detached28a1c720; no lsof users; own target cargo clean835files1.3GiB",
+  "qualification_source": "8e9c6843413f717782dad59f0b824864de5fa2f1",
+  "temporary_policy_packing": "removed; no production changes retained"
+}

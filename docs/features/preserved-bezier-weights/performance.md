@@ -141,3 +141,64 @@ changes only the two directional-rationality flag bytes, from `(false, true)` to
 truthful-axis behavior, not a byte-identical replay claim. The witness file records
 exact offsets and hashes. Artifact hashes, compiler/profile details and raw
 measurements are retained under `references/464-release-*`.
+
+
+### Controlled memory follow-up, 2026-11-15
+
+The follow-up compared v0.13.0 (`d051ff699`), current main (`28a1c720`)
+and the qualified candidate (`8e9c6843`). Library profiles stayed at opt0;
+probe programs used opt2 on CPU 3. Separate crate metadata allowed all three
+versions to link into one executable. Every process warmed all four paths before
+retaining 239, 512 or 1,024 patches, isocurve pairs or decoded shape tables.
+The final shared-image campaign ran 864 processes in 12 balanced blocks.
+
+Against current main, the candidate's legacy path had exactly equal heap and
+resident-memory growth in every shared-image control. Strict decode and isocurve
+resident growth was also equal. Strict rational patches used 12, 28 and 52 KiB
+less anonymous memory at the three counts. Strict rational setup left a bounded
+464–1,872-byte live-heap difference for isocurves/decoding; it did not grow with
+the retained count. These allocator counters include setup and allocation layout.
+
+The release-relative 8 KiB anonymous increase at 1,024 decoded tables already
+exists on current main. Its `BinShapeSet` occupies 1,152 bytes versus 1,144 in
+v0.13.0, and `BinSurfaceSet` occupies 136 versus 128. Main's frame-read policy
+accounts for that layout change; #464 adds no further object-size growth.
+A temporary private policy-packing experiment retained the same sizes and was
+removed. The surface and curve sizes remain 200 and 144 bytes in all versions.
+
+Standalone programs checked the effect of executable layout. The first candidate
+program included both strict and legacy runtime branches and was 65,376 bytes
+larger than the main program. Fixed-path programs then linked only the selected
+construction path: the strict executable was 658,136 bytes smaller than main,
+while the legacy executable was 44,776 bytes larger. Both results are retained.
+
+The final fixed-path confirmation ran 384 processes in 16 balanced blocks after
+the coordinating agent confirmed its builds had finished. An earlier run may
+have overlapped compilation and remains recorded separately. Each process retained
+1,024 objects and recorded GNU peak RSS, executable-backed resident pages,
+anonymous pages and native live heap. Paired median differences for the strict
+path, in KiB, were:
+
+| Workload | Peak versus v0.13.0 | Peak versus main | Executable residency versus main |
+| --- | ---: | ---: | ---: |
+| 8-pole unit patch | -162 | -132 | -130 |
+| 26-pole rational patch | -318 | -294 | -116 |
+| 8-pole unit isocurves | -144 | -114 | -140 |
+| 26-pole rational isocurves | -96 | -70 | -92 |
+| 8-pole unit decode | -56 | -8 | -88 |
+| 26-pole rational decode | -56 | -136 | -124 |
+
+Strict peak medians were lower for every measured workload. Some paired bootstrap
+95% intervals span zero, including unit patch and unit decode versus main; those
+comparisons do not establish an improvement. All strict executable-residency
+intervals versus main were below zero. Legacy peak intervals versus both baselines
+span zero throughout. Legacy unit decode had a small positive resident-RSS interval
+versus main; executable-page layout and startup remain part of that observation.
+The shared-image test found no additional retained resident growth for that path.
+
+These controls found no repeatable peak-memory regression for the measured strict
+workloads, and separated the earlier unexplained peak signal from per-object storage.
+They do not prove universal parity for arbitrary callers, binary layouts or
+platforms. The prior standalone measurements and unfavorable observations remain
+in the record. Raw samples, all paired differences, intervals and artifact hashes
+are in `references/464-{same-image,standalone,fixed-path,controlled}-memory*`.

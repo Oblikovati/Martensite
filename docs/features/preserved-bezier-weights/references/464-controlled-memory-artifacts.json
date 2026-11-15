@@ -1,0 +1,115 @@
+{
+  "candidate_sha": "8e9c6843413f717782dad59f0b824864de5fa2f1",
+  "release_sha": "d051ff699982faba4ec2df3ee9a47e14f38dedbd",
+  "main_sha": "28a1c720158b42b65ce61fea15643219125672d7",
+  "library_profile": "dev opt0 debug0 incremental0 strip debuginfo, jobs2",
+  "probe_profile": "rustc opt2, CPU3",
+  "metadata": {
+    "b": "464_memory_baseline",
+    "m": "464_memory_main",
+    "c": "default"
+  },
+  "libraries": {
+    "b": {
+      "tkernel": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-memory-baseline/target/debug/deps/libmartensite_tkernel-4366054b2b48f2a0.rlib",
+        "bytes": 39414528,
+        "sha256": "478d7aa07a9688681b243518dc69dff2fb899e5d4be8448ca4e4847e1a32acdd"
+      },
+      "tkmath": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-memory-baseline/target/debug/deps/libmartensite_tkmath-b9318f2759924497.rlib",
+        "bytes": 31089708,
+        "sha256": "52c9a9da7d79c4cb5fa3f232cbf523d89e34898fc9f97061cbdb6490a7f38c10"
+      },
+      "tkg3d": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-memory-baseline/target/debug/deps/libmartensite_tkg3d-122ad6e8d73cb7e8.rlib",
+        "bytes": 25504410,
+        "sha256": "8436cf07751da973070e97604576c2ad9a0cbcaf8cc13c0711f770eac585c844"
+      },
+      "tkgeomalgo": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-memory-baseline/target/debug/deps/libmartensite_tkgeomalgo-619e3a26431d40b4.rlib",
+        "bytes": 65266412,
+        "sha256": "0d970d16c0d8a6f02e2a8ff01567895b0db020054527a0068ea601e4eb5920cd"
+      },
+      "tkbrep": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-memory-baseline/target/debug/deps/libmartensite_tkbrep-9cdf48a229bda3ad.rlib",
+        "bytes": 52756416,
+        "sha256": "0d002119bdc511d8420255ab910cac5386fd1e674ee458ea551925a41460a5da"
+      }
+    },
+    "m": {
+      "tkernel": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-memory-baseline/target/debug/deps/libmartensite_tkernel-20a7e22826c76667.rlib",
+        "bytes": 39412812,
+        "sha256": "ef960526f090f69a94ec5f68c80588a09429fb508b8b7718cb4c088563742f7a"
+      },
+      "tkmath": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-memory-baseline/target/debug/deps/libmartensite_tkmath-b550819f86960dc0.rlib",
+        "bytes": 31112056,
+        "sha256": "9467550f88ec7e98f81a5553d7f6ff50017a855f8819f7487e7ef7e81c1784a5"
+      },
+      "tkg3d": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-memory-baseline/target/debug/deps/libmartensite_tkg3d-72fa3f27d93fad40.rlib",
+        "bytes": 25506058,
+        "sha256": "ba4f33aa8b0a5cb3c6dac244ae3605239937ae0fc2b9cbafb4d2e1e33cc4a867"
+      },
+      "tkgeomalgo": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-memory-baseline/target/debug/libmartensite_tkgeomalgo.rlib",
+        "bytes": 65323490,
+        "sha256": "1024c6f9f17f0ce91d1f17dbe790d6863a4cfebe3abfdbed817c94c7a0734b25"
+      },
+      "tkbrep": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-memory-baseline/target/debug/libmartensite_tkbrep.rlib",
+        "bytes": 52759020,
+        "sha256": "7ba6a58a85bf931384de462a41ff434b92275d83f7cf56a47ca13285169baafb"
+      }
+    },
+    "c": {
+      "tkernel": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-preserved-bezier-weights/target/debug/deps/libmartensite_tkernel-be5b2ad5bebd446a.rlib",
+        "bytes": 39392806,
+        "sha256": "94e0d02c19812687a3fe8d9dd3d7c5e35501f4f3156d2e315ce379e79defe544"
+      },
+      "tkmath": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-preserved-bezier-weights/target/debug/deps/libmartensite_tkmath-a875d45b93c4b370.rlib",
+        "bytes": 31129212,
+        "sha256": "aad0fb93bfb301824f14e21d8849a538c89f2788dc1ca320f5f35aa6918d7337"
+      },
+      "tkg3d": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-preserved-bezier-weights/target/debug/deps/libmartensite_tkg3d-fc085c00b210295e.rlib",
+        "bytes": 25740474,
+        "sha256": "3fe6e4d6758a4a055f8daa3aadad9cc402df53b300992589cd1735f802e07f22"
+      },
+      "tkgeomalgo": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-preserved-bezier-weights/target/debug/libmartensite_tkgeomalgo.rlib",
+        "bytes": 65304980,
+        "sha256": "9cfdb32eb60d16597d25b06ba6cfe7dc521533c5810b5ac16e24472387538aa6"
+      },
+      "tkbrep": {
+        "path": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/464-preserved-bezier-weights/target/debug/libmartensite_tkbrep.rlib",
+        "bytes": 52801408,
+        "sha256": "591b40ec70ea557665b42234c1aaf5bdc8416df2a57b2a25339acf5dca296bb1"
+      }
+    }
+  },
+  "probes": {
+    "464-memory-probe.rs": {
+      "sha256": "59e6d68f762289c524ad5277a3f3fefc43118d8669517d5dd6bb21c3b069a6e9"
+    },
+    "464-memory-baseline.rs": {
+      "sha256": "04def94c674835b2896930356f5b685a822267ba0a9dde8aeee6daaf64974fbc"
+    },
+    "464-memory-candidate.rs": {
+      "sha256": "fc8f5a1a36be9e8a27634406469d7e88f0f7523f251f6ade6b2f8ecdb565c667"
+    },
+    "464-memory-fixed-legacy.rs": {
+      "sha256": "8639fae0d6973149c41e95ab362ee987deb83456ab5eb4c99ba58ffa231ee1dc"
+    },
+    "464-memory-mainline.rs": {
+      "sha256": "3c20b425868e4e4439a1b2ccb6bbc16bb202485430f072daa09d7d426a24be53"
+    },
+    "464-memory-fixed-strict.rs": {
+      "sha256": "bfa1b340d32fdbcb16f90c6d7af71ec03e261c82ad70101a4d3658fe66aa76a7"
+    }
+  }
+}
