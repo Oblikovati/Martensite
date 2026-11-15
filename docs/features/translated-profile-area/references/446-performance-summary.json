@@ -1,0 +1,30 @@
+{
+  "platform": "Linux x86_64",
+  "baseline": "77053b4cd0f6e223d94f20b30929df15466dfc09 production loop_geometry.rs plus identical regression harness",
+  "profile": "unoptimized test, incremental0, debug0, stripdebuginfo",
+  "concurrency": "#456 canonical gate active; measurements not isolated throughput benchmark",
+  "accepted_test": "origin_centered_profiles_keep_accepted_behavior, sixteen accepted profile builds",
+  "allocation_observation": "smaps anonymous at RSS peak: before3936-3940KiB, after3932-3936KiB",
+  "rss_observation": "Warm executable-backed residency differed. File-specific fsync+POSIX_FADV_DONTNEED alternating controls gave overlapping RSS: before41968-42200KiB, after41604-42884KiB. No process-wide cache drop used.",
+  "cpu_observation": "Cold controls before0.48-0.50CPU seconds, after0.49-0.51; warm six-pair before median0.48, after0.485. No material change established; host contention remains a limit.",
+  "scope": "No allocation introduced into signed_area; existing geometry iterator retained, local fixed-size carriers/endpoints only.",
+  "reserved_window": {
+    "artifact": "446-reserved-window-paired-performance.json.gz",
+    "same_cpu": 3,
+    "balanced_pairs": 32,
+    "user_cpu_mean_before_s": 0.55688984375,
+    "user_cpu_mean_after_s": 0.54576684375,
+    "wall_mean_before_s": 0.5727819285941678,
+    "wall_mean_after_s": 0.5716281813747628,
+    "paired_user_delta": {
+      "mean": -0.01112299999999999,
+      "median": -0.0066130000000000355,
+      "bootstrap_95_mean_interval": [
+        -0.023567437499999982,
+        0.00013493750000001872
+      ]
+    },
+    "interpretation": "No observed slowdown or anonymous allocation increase. Exact peak-memory parity not established; total RSS includes executable-backed residency. Existing456 renderer gate remained active, primary conical/build activity stopped during reserved window.",
+    "raw_json_sha256": "4c122be88e9e8b412aadc1f92a66ca045163fc8eae71e36b190bf4008f402a91"
+  }
+}

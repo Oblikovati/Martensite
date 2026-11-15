@@ -1,0 +1,74 @@
+[
+  {
+    "iteration": 0,
+    "variant": "before",
+    "peak": {
+      "Rss": 49268,
+      "Pss_Anon": 3940,
+      "Pss_File": 41008,
+      "Shared_Clean": 4336,
+      "Private_Dirty": 3940,
+      "Anonymous": 3940
+    }
+  },
+  {
+    "iteration": 0,
+    "variant": "after",
+    "peak": {
+      "Rss": 55136,
+      "Pss_Anon": 3932,
+      "Pss_File": 46920,
+      "Shared_Clean": 4300,
+      "Private_Dirty": 3932,
+      "Anonymous": 3932
+    }
+  },
+  {
+    "iteration": 1,
+    "variant": "before",
+    "peak": {
+      "Rss": 49624,
+      "Pss_Anon": 3940,
+      "Pss_File": 41368,
+      "Shared_Clean": 4332,
+      "Private_Dirty": 3940,
+      "Anonymous": 3940
+    }
+  },
+  {
+    "iteration": 1,
+    "variant": "after",
+    "peak": {
+      "Rss": 54536,
+      "Pss_Anon": 3932,
+      "Pss_File": 46284,
+      "Shared_Clean": 4336,
+      "Private_Dirty": 3932,
+      "Anonymous": 3932
+    }
+  },
+  {
+    "iteration": 2,
+    "variant": "before",
+    "peak": {
+      "Rss": 49140,
+      "Pss_Anon": 3936,
+      "Pss_File": 40920,
+      "Shared_Clean": 4300,
+      "Private_Dirty": 3936,
+      "Anonymous": 3936
+    }
+  },
+  {
+    "iteration": 2,
+    "variant": "after",
+    "peak": {
+      "Rss": 55212,
+      "Pss_Anon": 3936,
+      "Pss_File": 46956,
+      "Shared_Clean": 4336,
+      "Private_Dirty": 3936,
+      "Anonymous": 3936
+    }
+  }
+]

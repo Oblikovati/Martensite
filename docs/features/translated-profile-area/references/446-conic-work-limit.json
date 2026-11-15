@@ -1,0 +1,13 @@
+{
+  "issue": 458,
+  "baseline": "77053b4cd0f6e223d94f20b30929df15466dfc09",
+  "primary_integral_changed": false,
+  "max_subintervals": 4096,
+  "full_circle_certified_length": 0.0418701171875,
+  "semicircle_certified_length": 0.058502197265625,
+  "main_runtime_s": 107.86,
+  "patch_runtime_s": 101.24,
+  "runtime_note": "Concurrent #456 gate; diagnostic runtimes, not performance comparisons",
+  "same_failure_before_after": true,
+  "far_ellipse_negative_offset_excluded": "Failed loops stopped on the positive-offset circle first"
+}
