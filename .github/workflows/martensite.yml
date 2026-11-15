@@ -2,7 +2,8 @@
 # check, build, test and packaging step is `cargo xtask` (scripts/build), so a
 # contributor runs exactly what CI runs. `cargo xtask ci plan` reads the
 # trigger and chooses the pipeline and the target matrix:
-#   pull_request        -> PR validation of changed files/packages, primary target
+#   pull_request        -> PR validation of changed files/packages, primary target;
+#                          long package suites run as several parts (#470)
 #   push of a v* tag    -> release on every target, then publish the GitHub release
 #   workflow_dispatch   -> `pr` or a release rehearsal on every target (never publishes)
 name: Martensite
@@ -130,10 +131,11 @@ jobs:
     env:
       MARTENSITE_CI_BASE_SHA: ${{ needs.plan.outputs.base-sha }}
     if: needs.plan.outputs.mode == 'pr' && needs.plan.outputs.has-tests == 'true'
-    name: test (${{ matrix.package }})
+    name: test (${{ matrix.label }})
     strategy:
       fail-fast: false
-      max-parallel: 4
+      # No job limit: the plan lists the longest measured parts first, so they
+      # start first instead of queueing behind short suites (#469).
       matrix: ${{ fromJSON(needs.plan.outputs.test-matrix) }}
     runs-on: ubuntu-24.04
     steps:
@@ -160,9 +162,10 @@ jobs:
       - if: contains(fromJSON('["martensite-tkbo", "martensite-boolean-cases", "martensite-tkbool", "martensite-tkfillet", "martensite-tkcaf"]'), matrix.package)
         uses: ./.github/actions/free-runner-disk
       # The driver owns the per-package script-budget optimization profile (#447).
-      - run: cargo xtask ci test --package "$TEST_PACKAGE" --target x86_64-unknown-linux-gnu
+      - run: cargo xtask ci test --package "$TEST_PACKAGE" --part "$TEST_PART" --target x86_64-unknown-linux-gnu
         env:
           TEST_PACKAGE: ${{ matrix.package }}
+          TEST_PART: ${{ matrix.part }}
 
   release-tests:
     needs: plan
@@ -173,7 +176,8 @@ jobs:
     name: release tests (${{ matrix.target }}, shard ${{ matrix.shard }})
     strategy:
       fail-fast: false
-      max-parallel: 16
+      # Covers every shard of every platform at once (#474).
+      max-parallel: 20
       matrix: ${{ fromJSON(needs.plan.outputs.test-matrix) }}
     runs-on: ${{ matrix.runner }}
     steps:
