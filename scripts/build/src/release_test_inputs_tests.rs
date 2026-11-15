@@ -190,11 +190,8 @@ fn nonstandard_rust_source_suffixes_keep_transitive_inputs_as_source() {
         let (root, manifest) = fixture(source);
         let tests = root.path().join("crates/a/tests");
         fs::create_dir_all(&tests).unwrap();
-        fs::write(
-            tests.join("runtime.inc"),
-            "const A: &[u8] = include_bytes!(\"data.bin\");",
-        )
-        .unwrap();
+        let runtime_source = "const A: &[u8] = include_bytes!(\"data.bin\");";
+        fs::write(tests.join("runtime.inc"), runtime_source).unwrap();
         fs::write(tests.join("data.bin"), [1, 2, 3]).unwrap();
         let changed = [changed("tests/data.bin")];
         assert_eq!(
