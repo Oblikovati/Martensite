@@ -1,12 +1,13 @@
-//! Native replay of the BRepAlgoAPI Boolean classes; see the recorded capture.
+//! Recorded Boolean geometry and reviewed final-solid history (BooleanSolidHistoryV2, #456).
 #[path = "shape_dump/mod.rs"]
 mod shape_dump;
 use martensite_tkbo::bop_algo::BOPAlgoPaveFiller;
 use martensite_tkbo::brep_algo_api::{
     BRepAlgoAPIBuilderAlgo, BRepAlgoAPICommon, BRepAlgoAPICut, BRepAlgoAPIFuse, BRepAlgoAPISection,
 };
-use martensite_tkbrep::topods::Shape;
+use martensite_tkbrep::{topexp::Explorer, topods::Shape};
 use martensite_tkernel::ncollection::List;
+use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::gp::{Axis2, Direction3, Plane3, Point3};
 use martensite_tkprim::brep_prim_api::{BRepPrimAPIMakeBox, BRepPrimAPIMakeCylinder};
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
@@ -123,9 +124,34 @@ fn brep_algo_api_booleans_match_native_reference() {
     let mut rows = String::new();
     operations(&mut rows);
     filler_operations(&mut rows);
+    // Geometry stays byte-exact; final-solid deletion follows the reviewed V2 history (#456).
     let expected = include_str!("fixtures/tkbo_brep_algo_api.expected");
     for (line, (actual, wanted)) in rows.lines().zip(expected.lines()).enumerate() {
         assert_eq!(actual, wanted, "first difference at line {}", line + 1);
     }
     assert_eq!(rows, expected);
+}
+
+#[test]
+fn through_cylinder_fuse_keeps_both_contributing_solid_images() {
+    let (target, _, cylinder) = shapes();
+    let api = BRepAlgoAPIFuse::from_shapes(&target, &cylinder).unwrap();
+    let solids: Vec<_> = Explorer::new(api.shape(), ShapeEnum::Solid, ShapeEnum::Shape)
+        .unwrap()
+        .collect();
+    assert_eq!(solids.len(), 1);
+    for source in [&target, &cylinder] {
+        require_fused_solid_image(&api, source, &solids[0]);
+    }
+    assert!(!api.has_deleted());
+}
+
+fn require_fused_solid_image(api: &BRepAlgoAPIBuilderAlgo, source: &Shape, result: &Shape) {
+    assert!(!api.is_deleted(source).unwrap());
+    assert!(
+        api.modified(source)
+            .unwrap()
+            .iter()
+            .any(|image| image.is_same(result))
+    );
 }

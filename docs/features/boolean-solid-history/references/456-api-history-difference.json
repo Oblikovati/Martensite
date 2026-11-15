@@ -1,0 +1,62 @@
+{
+  "counts": [
+    36,
+    36
+  ],
+  "changes": [
+    {
+      "before": {
+        "has_deleted": true
+      },
+      "after": {
+        "has_deleted": false
+      }
+    },
+    {
+      "before": {
+        "source": "box",
+        "kind": "Solid",
+        "index": 1,
+        "removed": true,
+        "exact_result_index": 0,
+        "modified_result_indices": [],
+        "generated_result_indices": []
+      },
+      "after": {
+        "source": "box",
+        "kind": "Solid",
+        "index": 1,
+        "removed": false,
+        "exact_result_index": 0,
+        "modified_result_indices": [
+          2
+        ],
+        "generated_result_indices": []
+      }
+    },
+    {
+      "before": {
+        "source": "cylinder",
+        "kind": "Solid",
+        "index": 1,
+        "removed": true,
+        "exact_result_index": 0,
+        "modified_result_indices": [],
+        "generated_result_indices": []
+      },
+      "after": {
+        "source": "cylinder",
+        "kind": "Solid",
+        "index": 1,
+        "removed": false,
+        "exact_result_index": 0,
+        "modified_result_indices": [
+          2
+        ],
+        "generated_result_indices": []
+      }
+    }
+  ],
+  "removed_after": [],
+  "missing_trace_after": []
+}

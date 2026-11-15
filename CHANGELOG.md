@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Retained all contributing solid parents through final Boolean Fuse assembly and preserved reverse ancestry bindings (#456).
+
 - Stabilized planar-profile area cross-checks under large coordinate translations without changing certification limits (#446).
 
 - Removed repeated pair-ledger validation during planar profile certification while preserving live geometry checks and shared work budgets (#449).

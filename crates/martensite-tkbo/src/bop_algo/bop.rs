@@ -262,3 +262,9 @@ impl BuilderHooks for BOPAlgoBOP {
         perform_bop_internal1(self, filler)
     }
 }
+#[cfg(test)]
+#[path = "bop/solid_history_tests.rs"]
+mod solid_history_tests;
+
+#[path = "bop/solid_lineage.rs"]
+mod solid_lineage;
