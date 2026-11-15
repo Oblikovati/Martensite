@@ -59,6 +59,9 @@ pub struct CiRunArgs {
     /// Delegate tests to the required package or release-shard matrix.
     #[arg(long)]
     checks_only: bool,
+    /// Run one group of the PR checks; CI runs the groups as parallel jobs (#473).
+    #[arg(long, value_enum, requires = "checks_only")]
+    stage: Option<crate::pr::CheckStage>,
 }
 
 /// Commands that read the GitHub Actions trigger from the environment.
@@ -156,7 +159,7 @@ fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()
             };
             crate::thread_sanitizer::run_selected(context, &controls)
         }
-        Run(args) => run_planned(context, &args.target, args.checks_only),
+        Run(args) => run_planned(context, &args),
         Test {
             package,
             shard,
@@ -273,8 +276,18 @@ fn capture_release_inventory(context: &BuildContext<'_>, triple: &str) -> BuildR
         })
 }
 
-fn run_planned(context: &BuildContext<'_>, triple: &str, checks_only: bool) -> BuildResult<()> {
-    dispatch_plan(context, current_plan()?, triple, checks_only)
+fn run_planned(context: &BuildContext<'_>, args: &CiRunArgs) -> BuildResult<()> {
+    let plan = current_plan()?;
+    let Some(stage) = args.stage else {
+        return dispatch_plan(context, plan, &args.target, args.checks_only);
+    };
+    let CiPlan::PullRequest { base } = plan else {
+        return Err(BuildError::Usage(format!(
+            "check stage {stage:?} with plan {plan:?}; expected a pull request plan"
+        )));
+    };
+    let target = BuildTarget::Triple(args.target.clone());
+    crate::pr::validate_pr_stages(context, &base, &target, &[stage], false)
 }
 
 fn dispatch_plan(
@@ -359,6 +372,7 @@ mod tests {
         let args = CiRunArgs {
             target: "x86_64-unknown-linux-gnu".into(),
             checks_only: true,
+            stage: None,
         };
         let args = std::sync::Arc::new(args);
         let shared = args.clone();
@@ -396,6 +410,27 @@ mod tests {
         assert!(Cli::try_parse_from(prefix).is_err());
         let both = ["--package", "martensite-tkmath", "--shard", "0"];
         assert!(Cli::try_parse_from(prefix.into_iter().chain(both)).is_err());
+    }
+
+    #[test]
+    fn ci_run_stage_is_a_checks_only_selection() {
+        let prefix = [
+            "cargo xtask",
+            "ci",
+            "run",
+            "--target",
+            "x86_64-unknown-linux-gnu",
+        ];
+        let staged = ["--checks-only", "--stage", "clippy"];
+        let cli = Cli::try_parse_from(prefix.into_iter().chain(staged)).unwrap();
+        assert!(matches!(cli.command, BuildCommand::Ci(CiCommand::Run(args))
+            if args.stage == Some(crate::pr::CheckStage::Clippy)));
+        let without_checks_only = ["--stage", "build"];
+        assert!(Cli::try_parse_from(prefix.into_iter().chain(without_checks_only)).is_err());
+        assert!(
+            Cli::try_parse_from(prefix.into_iter().chain(["--checks-only", "--stage", "x"]))
+                .is_err()
+        );
     }
 
     #[test]

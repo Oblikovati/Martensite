@@ -88,7 +88,7 @@ jobs:
     env:
       MARTENSITE_CI_BASE_SHA: ${{ needs.plan.outputs.base-sha }}
       MARTENSITE_RELEASE_HISTORY_SHA256: ${{ needs.plan.outputs.release-history }}
-    name: checks (${{ matrix.target }})
+    name: checks (${{ matrix.target }}${{ matrix.stage && format(' {0}', matrix.stage) || '' }})
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
@@ -103,7 +103,8 @@ jobs:
       - if: runner.os == 'Linux'
         uses: ./.github/actions/free-runner-disk
       - uses: ./.github/actions/setup-target
-      - run: cargo xtask ci run --target ${{ matrix.target }} --checks-only
+      # A PR runs each check stage as its own job (#473); a release keeps one job per platform.
+      - run: cargo xtask ci run --target ${{ matrix.target }} --checks-only ${{ matrix.stage && format('--stage {0}', matrix.stage) || '' }}
         env:
           # Read the immutable historical archive assets during release checks (#279).
           GH_TOKEN: ${{ needs.plan.outputs.mode == 'release' && github.token || '' }}
@@ -111,7 +112,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: unsafe-inventory-${{ matrix.target }}
+          name: unsafe-inventory-${{ matrix.target }}${{ matrix.stage && format('-{0}', matrix.stage) || '' }}
           path: |
             target/unsafe-inventory/latest.json
             target/unsafe-inventory/compiler.stdout.jsonl
