@@ -202,7 +202,7 @@ fn assert_target_retains_manifest(section: &str, path: &str) {
     write_target(
         root.path(),
         path,
-        "pub const SOURCE: &str = include_str!(\"../Cargo.toml\"); fn main() { std::hint::black_box(SOURCE); }",
+        "pub const SOURCE: &str = include_str!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/Cargo.toml\")); fn main() { std::hint::black_box(SOURCE); }",
     );
     let current = manifest_with_target(section, path);
     assert_eq!(
@@ -304,6 +304,26 @@ fn manifest_case_alias_is_refused_even_when_local_bytes_differ() {
         "local case-distinct input",
     )
     .unwrap();
+    let current = test_target("");
+    assert_eq!(publication(root.path(), &current).source, current.source);
+}
+
+#[test]
+fn nested_output_directories_cannot_hide_production_source() {
+    for section in ["[lib]", "[[bin]]"] {
+        for path in ["src/target/runtime.rs", "src/.git/runtime.rs"] {
+            assert_target_retains_manifest(section, path);
+        }
+    }
+}
+#[test]
+fn default_module_below_a_skipped_directory_keeps_manifest_impact() {
+    let root = fixture("mod target;", None);
+    write_target(
+        root.path(),
+        "src/target/mod.rs",
+        "pub const SOURCE: &str = include_str!(concat!(env!(\"CARGO_MANIFEST_DIR\"), \"/Cargo.toml\"));",
+    );
     let current = test_target("");
     assert_eq!(publication(root.path(), &current).source, current.source);
 }

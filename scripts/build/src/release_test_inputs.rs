@@ -1,9 +1,9 @@
 //! QA-only paths do not create new publication identities (#466).
-use crate::release_manifest_inputs::{is_include_keyword, is_include_macro};
 use crate::release_macro_inputs::{
     LiteralMacroInputs, filename_extension, literal_string as decode_string,
     source_macro_identifier,
 };
+use crate::release_manifest_inputs::{is_include_keyword, is_include_macro};
 use crate::{git::ChangedFile, package_manifest::PackageManifest};
 use proc_macro2::{TokenStream, TokenTree};
 use std::{
@@ -177,12 +177,17 @@ fn scan_directory(directory: &Path, root: &Path, refs: &mut ProductionReferences
     Some(())
 }
 fn scan_child(path: &Path, root: &Path, refs: &mut ProductionReferences) -> Option<()> {
-    if path == root.join("tests")
-        || path
-            .file_name()
-            .is_some_and(|name| matches!(name.to_str(), Some("target" | ".git")))
+    if ["tests", "target", ".git"]
+        .iter()
+        .any(|name| path == root.join(name))
     {
         return Some(());
+    }
+    if path
+        .file_name()
+        .is_some_and(|name| matches!(name.to_str(), Some("target" | ".git")))
+    {
+        return None;
     }
     scan_directory(path, root, refs)
 }
@@ -289,6 +294,11 @@ fn check_include(
     refs: &mut ProductionReferences,
     scope: &SourceScope<'_>,
 ) -> Option<()> {
+    if is_include_keyword(tokens)
+        && matches!(tokens.get(1), Some(TokenTree::Ident(name)) if source_macro_identifier(name) == "as")
+    {
+        return None;
+    }
     record_manifest_include(tokens, refs, scope);
     if !is_include_macro(tokens) {
         return Some(());
@@ -297,7 +307,7 @@ fn check_include(
     {
         return rust_include_argument(tokens.get(2), scope);
     }
-    include_argument(tokens.get(2), refs, scope.owner.as_deref())
+    include_argument(tokens.get(2), refs, scope)
 }
 fn record_manifest_include(
     tokens: &[TokenTree],
@@ -325,7 +335,7 @@ fn rust_include_argument(token: Option<&TokenTree>, scope: &SourceScope<'_>) -> 
     owned_rust_source(&decode_string(&value.to_string())?, scope)
 }
 fn owned_rust_source(value: &str, scope: &SourceScope<'_>) -> Option<()> {
-    if value.contains('\\')
+    if !crate::release_input_layout::portable_relative_path(value)
         || Path::new(value)
             .extension()
             .is_none_or(|extension| extension != "rs")
@@ -337,25 +347,39 @@ fn owned_rust_source(value: &str, scope: &SourceScope<'_>) -> Option<()> {
         return None;
     }
     let path = path.canonicalize().ok()?;
-    (path.starts_with(scope.package.canonicalize().ok()?) && path.is_file()).then_some(())
+    crate::release_input_layout::covered_rust_input(scope.package, &path).then_some(())
 }
 fn include_argument(
     token: Option<&TokenTree>,
     refs: &ProductionReferences,
-    owner: Option<&str>,
+    scope: &SourceScope<'_>,
 ) -> Option<()> {
     let Some(TokenTree::Group(arguments)) = token else {
         return None;
     };
     let arguments: Vec<_> = arguments.stream().into_iter().collect();
     if let [TokenTree::Literal(literal)] = arguments.as_slice() {
-        return decode_string(&literal.to_string()).map(|_| ());
+        let value = decode_string(&literal.to_string())?;
+        return literal_input_supported(&value, scope).then_some(());
     }
     let extension = fixed_include_extension(&arguments).or_else(|| {
         refs.macros
-            .extension(owner?, &concat_parameter(&arguments)?)
+            .extension(scope.owner.as_deref()?, &concat_parameter(&arguments)?)
     })?;
     (!refs.changed_extensions.contains(&extension)).then_some(())
+}
+fn literal_input_supported(value: &str, scope: &SourceScope<'_>) -> bool {
+    if !crate::release_input_layout::portable_relative_path(value) {
+        return false;
+    }
+    let target = normalized(&scope.parent.join(value));
+    let package = normalized(scope.package);
+    let Ok(relative) = target.strip_prefix(package) else {
+        return false;
+    };
+    !relative
+        .components()
+        .any(|part| matches!(part.as_os_str().to_str(), Some("target" | ".git")))
 }
 fn fixed_include_extension(tokens: &[TokenTree]) -> Option<String> {
     let suffix = concat_suffix(tokens)?;
@@ -396,28 +420,26 @@ fn record_literal(
         return Some(());
     };
     let value = value.replace('\\', "/");
-    for path in [parent.join(&value), root.join(value)] {
-        record_path(normalized(&path), root, refs)?;
+    if value
+        .split('/')
+        .any(|part| part.eq_ignore_ascii_case("tests"))
+    {
+        refs.paths.insert(normalized(&root.join("tests")));
     }
-    Some(())
+    [parent.join(&value), root.join(value)]
+        .into_iter()
+        .try_for_each(|path| record_path(normalized(&path), root, refs))
 }
 fn record_path(path: PathBuf, root: &Path, refs: &mut ProductionReferences) -> Option<()> {
     if path == normalized(&root.join("Cargo.toml")) {
         refs.paths.insert(path);
         return Some(());
     }
-    if path.starts_with(root.join("tests"))
-        && refs.paths.insert(path.clone())
-        && path.extension().is_some_and(|extension| extension == "rs")
-    {
-        if !path
-            .canonicalize()
-            .ok()?
-            .starts_with(root.canonicalize().ok()?)
-        {
+    if path.starts_with(root.join("tests")) {
+        if path.extension().is_some_and(|extension| extension == "rs") {
             return None;
         }
-        scan_source(&path, root, refs)?;
+        refs.paths.insert(path);
     }
     Some(())
 }

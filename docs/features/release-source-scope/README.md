@@ -76,3 +76,20 @@ The test-target manifest exemption uses a stricter include-input check than ordi
 The literal-input proof rejects manifest-name case variants even when their local bytes differ, because case-sensitive and case-insensitive checkouts can resolve them differently. Non-ASCII, short-name (`~`), stream (`:`) and backslash spellings remain unsupported. A case-distinct local-file regression failed before this refusal was added.
 
 Release test selection compares raw manifest impact independently of publication eligibility, matching PR selection. A QA-only target edit therefore runs its package and affected dependents even when no archive is republished and no test source file changed. A normalized-content-only manifest edit selects no unaffected suites. An end-to-end named-fake regression retains an empty publication list while requiring both the changed package and its dependent; it failed before the caller used the separate test-impact list.
+
+## Bounded scanner entrypoint audit — #482
+
+The final audit checks the scanner's directory skips against each admitted production entrypoint. Nested `target` or `.git` directories now leave the proof uncertain instead of hiding Rust modules. A Rust source reference into root `tests/` also leaves it uncertain: following one file would miss that file's implicit child modules. Case-variant `tests` components retain the whole QA directory. Builtin include aliases and unsupported input paths fail closed.
+
+| Entrypoint | Proof boundary |
+| --- | --- |
+| Build script | Only the exact reviewed budget-marker program above; other programs remain uncertain. |
+| Library and binary targets | Explicit paths must be regular `.rs` inputs under the fully scanned `src/` tree. |
+| Example targets | Explicit paths must be under scanned `src/` or `examples/`; default targets use the same scanned trees. |
+| Implicit Rust modules | The complete `src/` and `examples/` trees are scanned; nested skipped directories disable the proof. |
+| Literal Rust includes and path attributes | Only owned, covered Rust files are followed. Unsupported or external sources disable the proof. |
+| Literal text and byte inputs | Portable contained paths are required; QA references retain their inputs, and output or external paths remain uncertain. |
+| Dynamic text and byte inputs | Existing bounded extension analysis remains conservative; it does not admit dynamic Rust source. |
+| Links | Package-root, source-file and directory links disable the proof; native Windows link creation remains outside these Unix fixture controls. |
+
+The added regressions cover hidden nested modules, Rust inputs with implicit children in the QA tree and case-variant QA paths. This audit changes neither publication versions nor the separate affected-test selection.

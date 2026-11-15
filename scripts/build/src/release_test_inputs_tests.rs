@@ -1,5 +1,5 @@
 use super::*;
-use crate::release_input_layout::scannable_target_path;
+use crate::release_input_layout::scannable_under;
 
 fn fixture(source: &str) -> (tempfile::TempDir, PackageManifest) {
     let directory = tempfile::tempdir().unwrap();
@@ -224,9 +224,35 @@ fn only_portable_scanned_production_target_paths_supply_a_proof() {
         "../src/runtime.rs",
         "/src/runtime.rs",
     ] {
-        assert!(!scannable_target_path(path), "{path}");
+        assert!(!scannable_under(path, "src"), "{path}");
     }
     for path in ["src/lib.rs", "src/bin/runtime.rs"] {
-        assert!(scannable_target_path(path), "{path}");
+        assert!(scannable_under(path, "src"), "{path}");
     }
+}
+
+#[test]
+fn automatic_children_in_excluded_rust_sources_remain_uncertain() {
+    let (root, manifest) = fixture("#[path=\"../tests/runtime.rs\"] mod runtime;");
+    let tests = root.path().join("crates/a/tests");
+    fs::create_dir_all(tests.join("runtime")).unwrap();
+    fs::write(tests.join("runtime.rs"), "mod inner;").unwrap();
+    fs::write(
+        tests.join("runtime/inner.rs"),
+        "const DATA: &[u8] = include_bytes!(\"data.bin\");",
+    )
+    .unwrap();
+    fs::write(tests.join("runtime/data.bin"), b"owned input").unwrap();
+    let edits = [changed("tests/runtime/data.bin")];
+    assert_eq!(
+        publication_changes(root.path(), &manifest, "crates/a", &edits).len(),
+        1
+    );
+}
+#[test]
+fn case_variant_qa_literals_remain_production_inputs() {
+    assert!(selected(
+        "#[cfg(windows)] const DATA: &[u8] = include_bytes!(\"../TESTS/data.bin\");",
+        "tests/data.bin"
+    ));
 }
