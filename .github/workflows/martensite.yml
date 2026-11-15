@@ -132,7 +132,7 @@ jobs:
     env:
       MARTENSITE_CI_BASE_SHA: ${{ needs.plan.outputs.base-sha }}
     if: needs.plan.outputs.mode == 'pr' && needs.plan.outputs.has-tests == 'true'
-    name: test (${{ matrix.package }}${{ matrix.parts > 1 && format(' {0}/{1}', matrix.part + 1, matrix.parts) || '' }})
+    name: test (${{ matrix.label }})
     strategy:
       fail-fast: false
       # No job limit: the plan lists the longest measured parts first, so they
