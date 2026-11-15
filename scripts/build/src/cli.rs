@@ -85,6 +85,15 @@ pub enum CiCommand {
     ThreadSanitizer,
     /// Write the pipeline mode and target matrix to `GITHUB_OUTPUT`.
     Plan,
+    /// Write the scheduled build-cache refresh matrix to `GITHUB_OUTPUT` (#472).
+    WarmPlan,
+    /// Compile one package's PR tests on `main` to refresh its build cache (#472).
+    Warm {
+        #[arg(long)]
+        package: String,
+        #[arg(long)]
+        target: String,
+    },
     /// Run the planned pipeline for one matrix target.
     Run(CiRunArgs),
     /// Run one affected package or release test shard.
@@ -145,6 +154,7 @@ fn dispatch(context: &BuildContext<'_>, command: BuildCommand) -> BuildResult<()
 fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()> {
     use CiCommand::{
         Gate, Plan, Publish, ReusePlan, ReuseVerify, Run, SealValidation, Test, ThreadSanitizer,
+        Warm, WarmPlan,
     };
     match command {
         ReusePlan => crate::release_reuse::discover(context),
@@ -178,6 +188,16 @@ fn dispatch_ci(context: &BuildContext<'_>, command: CiCommand) -> BuildResult<()
         } => crate::ci_tests::require_success(&checks, &tests, has_tests),
         Publish { dist } => publish_planned(context, &dist),
         Plan => emit_plan(context),
+        WarmPlan => {
+            let github_output = std::env::var_os("GITHUB_OUTPUT").map(PathBuf::from);
+            write_outputs(
+                &crate::cache_warm::warm_plan_outputs(),
+                github_output.as_deref(),
+            )
+        }
+        Warm { package, target } => {
+            crate::cache_warm::warm_package(context, &package, &BuildTarget::Triple(target))
+        }
     }
 }
 
