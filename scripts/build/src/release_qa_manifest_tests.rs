@@ -177,3 +177,88 @@ fn dynamic_manifest_reference_stays_source_without_a_recent_manifest_diff() {
     let comparison = publication_manifest(root.path(), &current, Some(&previous), "a", &[]);
     assert_eq!(comparison.source, current.source);
 }
+
+fn manifest_with_target(section: &str, path: &str) -> PackageManifest {
+    let name = if section == "[[bin]]" {
+        "name='runtime'\n"
+    } else {
+        ""
+    };
+    test_target(&format!("{section}\n{name}path={path:?}"))
+}
+fn target_comparison(root: &Path, current: &PackageManifest) -> PackageManifest {
+    let mut previous = current.clone();
+    previous.source.remove("test");
+    let changes = [changed("Cargo.toml")];
+    publication_manifest(root, current, Some(&previous), "a", &changes).into_owned()
+}
+fn write_target(root: &Path, path: &str, source: &str) {
+    let target = root.join("a").join(path);
+    fs::create_dir_all(target.parent().unwrap()).unwrap();
+    fs::write(target, source).unwrap();
+}
+fn assert_target_retains_manifest(section: &str, path: &str) {
+    let root = fixture("pub fn value() {}", None);
+    write_target(
+        root.path(),
+        path,
+        "pub const SOURCE: &str = include_str!(\"../Cargo.toml\"); fn main() { std::hint::black_box(SOURCE); }",
+    );
+    let current = manifest_with_target(section, path);
+    assert_eq!(
+        target_comparison(root.path(), &current).source,
+        current.source,
+        "{section} {path}"
+    );
+}
+#[test]
+fn traversing_and_unscanned_production_targets_cannot_hide_manifest_inputs() {
+    for section in ["[lib]", "[[bin]]"] {
+        for path in ["src/../tests/runtime.rs", "src/runtime.input"] {
+            assert_target_retains_manifest(section, path);
+        }
+    }
+}
+#[test]
+fn ordinary_rust_targets_under_src_remain_eligible_for_the_qa_proof() {
+    for section in ["[lib]", "[[bin]]"] {
+        let root = fixture("pub fn value() {}", None);
+        write_target(root.path(), "src/runtime.rs", "fn main() {}");
+        let current = manifest_with_target(section, "src/runtime.rs");
+        let mut previous = current.clone();
+        previous.source.remove("test");
+        assert_eq!(
+            target_comparison(root.path(), &current).source,
+            previous.source
+        );
+    }
+}
+
+#[cfg(unix)]
+#[test]
+fn linked_production_source_file_disables_the_qa_proof() {
+    let root = fixture("mod linked;", None);
+    let package = root.path().join("a");
+    fs::write(package.join("owned.rs"), "pub fn value() {}").unwrap();
+    std::os::unix::fs::symlink(package.join("owned.rs"), package.join("src/linked.rs")).unwrap();
+    assert_eq!(test_edit_count(root.path()), 1);
+}
+
+#[cfg(unix)]
+#[test]
+fn linked_production_source_directory_disables_the_qa_proof() {
+    let root = fixture("pub fn value() {}", None);
+    let package = root.path().join("a");
+    fs::rename(package.join("src"), package.join("owned_src")).unwrap();
+    std::os::unix::fs::symlink(package.join("owned_src"), package.join("src")).unwrap();
+    assert_eq!(test_edit_count(root.path()), 1);
+}
+
+#[cfg(unix)]
+#[test]
+fn linked_package_root_disables_the_qa_proof() {
+    let root = fixture("pub fn value() {}", None);
+    fs::rename(root.path().join("a"), root.path().join("owned")).unwrap();
+    std::os::unix::fs::symlink(root.path().join("owned"), root.path().join("a")).unwrap();
+    assert_eq!(test_edit_count(root.path()), 1);
+}

@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Retained publication impact for traversing and unsupported Cargo production-target paths (#482).
+
 - Excluded proven test-target manifest edits and the reviewed budget-marker script from package source-version checks while retaining affected tests and conservative production-input checks (#481).
 
 ## [0.13.1] - 2026-11-15

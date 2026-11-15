@@ -95,7 +95,7 @@ fn production_references(
     manifest: &PackageManifest,
     changed: &[ChangedFile],
 ) -> Option<ProductionReferences> {
-    if !crate::release_build_inputs::known_build_inputs(root, manifest) || custom_target(manifest) {
+    if !known_production_layout(root, manifest) {
         return None;
     }
     let mut references = ProductionReferences {
@@ -109,6 +109,11 @@ fn production_references(
     references.collecting = false;
     scan_directory(root, root, &mut references)?;
     Some(references)
+}
+fn known_production_layout(root: &Path, manifest: &PackageManifest) -> bool {
+    !root.is_symlink()
+        && crate::release_build_inputs::known_build_inputs(root, manifest)
+        && !custom_target(manifest)
 }
 /// A test-target manifest edit is QA-only only when no production input retains its bytes.
 pub(crate) fn manifest_is_unreferenced(
@@ -157,8 +162,20 @@ fn custom_target(manifest: &PackageManifest) -> bool {
         target
             .get("path")
             .and_then(toml::Value::as_str)
-            .is_some_and(|path| !path.starts_with("src/"))
+            .is_some_and(|path| !scannable_target_path(path))
     })
+}
+fn scannable_target_path(path: &str) -> bool {
+    let target = Path::new(path);
+    path.starts_with("src/")
+        && !path.contains('\\')
+        && !path.contains(':')
+        && target
+            .extension()
+            .is_some_and(|extension| extension == "rs")
+        && target
+            .components()
+            .all(|part| matches!(part, Component::Normal(_)))
 }
 fn scan_directory(directory: &Path, root: &Path, refs: &mut ProductionReferences) -> Option<()> {
     for entry in fs::read_dir(directory).ok()? {

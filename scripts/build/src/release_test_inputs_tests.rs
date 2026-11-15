@@ -211,3 +211,21 @@ fn dynamic_or_external_rust_source_remains_uncertain() {
         "tests/data.bin"
     ));
 }
+
+#[test]
+fn only_portable_scanned_production_target_paths_supply_a_proof() {
+    for path in [
+        "src/../tests/runtime.rs",
+        "src/runtime.input",
+        "src/runtime.RS",
+        "src/runtime.rs:hidden.rs",
+        "src\\runtime.rs",
+        "../src/runtime.rs",
+        "/src/runtime.rs",
+    ] {
+        assert!(!scannable_target_path(path), "{path}");
+    }
+    for path in ["src/lib.rs", "src/bin/runtime.rs"] {
+        assert!(scannable_target_path(path), "{path}");
+    }
+}

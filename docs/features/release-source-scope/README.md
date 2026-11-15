@@ -60,3 +60,13 @@ Literal production references to `Cargo.toml` retain publication impact. A dynam
 The Boolean-case package has a build script that reads only `OPT_LEVEL` and `CARGO_CFG_TARGET_OS` and emits the budget cfg and a `rerun-if-changed=build.rs` directive. Its reviewed LF-normalized SHA-256 is `dddebb2e5a4e8cfbf22875ca33cd1890f22b750466b38063feab8d798d2bfb29`. Only this exact program permits the QA-only proof. An edited script, a different build path or an unknown program disables it. LF and CRLF checkouts receive the same decision. This is a bound on one inspected program's inputs, not a filename or package-name exemption.
 
 Regression coverage includes test-only targets, both line endings, changed scripts, production manifest includes, historical manifest comparisons, real manifest changes and unchanged test selection. Focused read-only controls also evaluate the actual Boolean package source. No package versions or dependencies change. Release validation remains hosted; no local release rehearsal is used for this correction.
+
+## Explicit production target paths — #482
+
+The previous target guard accepted any path starting with `src/`. That included `src/../tests/runtime.rs`, whose actual source lies in the skipped QA directory, and `src/runtime.input`, whose extension the Rust-source scanner does not read. Either target could retain manifest bytes without appearing in the proof.
+
+Explicit library and binary targets now remain uncertain unless they use a forward-slash path under `src/`, contain only normal path components, reject colon-based stream syntax and end in the exact `.rs` extension covered by the scanner. The change rejects unsupported paths rather than broadening the scanner. Regression fixtures cover both library and binary targets, parent traversal, unsupported extensions, manifest includes and ordinary eligible targets. The negative control failed before the guard changed. No package versions or modelling behavior change.
+
+The portable-path controls also refuse `src/runtime.rs:hidden.rs`, which can name an NTFS alternate data stream outside directory enumeration. This is a conservative filesystem-proof guard; Cargo compilation from such a stream was not reproduced.
+
+Symlinked package roots, source files and source directories disable the proof. The scanner does not follow them. Owned Unix fixtures cover all three forms; the package-root control failed before its explicit refusal was added. Native Windows link creation is not covered by these Unix-only fixtures; the shared refusal uses the standard library's link classification.
