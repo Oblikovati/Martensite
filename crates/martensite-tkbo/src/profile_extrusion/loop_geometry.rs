@@ -37,6 +37,19 @@ impl Conic {
             Self::Ellipse(e) => e.parameter(p),
         }
     }
+    /// Translate only the carrier center: its endpoint chord is translation invariant.
+    fn relative_to(&self, origin: [f64; 2]) -> Self {
+        match self {
+            Self::Circle(c) => Self::Circle(CircleCarrier {
+                center: sub2(c.center, origin),
+                ..*c
+            }),
+            Self::Ellipse(e) => Self::Ellipse(EllipseCarrier {
+                center: sub2(e.center, origin),
+                ..*e
+            }),
+        }
+    }
     /// Green's term of the arc from `start` to `end` sweeping `sweep`.
     fn green_term(&self, start: [f64; 2], end: [f64; 2], sweep: f64) -> f64 {
         match self {
@@ -186,8 +199,35 @@ fn use_scale(geometry: &UseGeometry) -> f64 {
 /// Closed-form signed area of a loop (positive when counterclockwise), `None` when a spline
 /// bounds it.
 pub(crate) fn signed_area(profile: &AdmittedProfile, closed: &ProfileLoop) -> Option<f64> {
-    let geometry = closed.uses.iter().map(|used| use_geometry(profile, *used));
-    geometry.map(|g| green_term(&g)).sum()
+    let mut geometry = closed.uses.iter().map(|used| use_geometry(profile, *used));
+    let Some(first) = geometry.next() else {
+        return Some(0.0);
+    };
+    let origin = match &first {
+        UseGeometry::Segment { start, .. } | UseGeometry::Arc { start, .. } => *start,
+        UseGeometry::Spline { .. } => return None,
+    };
+    std::iter::once(first)
+        .chain(geometry)
+        .map(|g| green_about(&g, origin))
+        .sum()
+}
+
+/// Working-origin Green terms prevent absolute-coordinate product cancellation (#446).
+fn green_about(geometry: &UseGeometry, origin: [f64; 2]) -> Option<f64> {
+    match geometry {
+        UseGeometry::Segment { start, end } => {
+            Some(0.5 * cross(sub2(*start, origin), sub2(*end, origin)))
+        }
+        UseGeometry::Arc {
+            carrier,
+            sweep,
+            start,
+            end,
+            ..
+        } => Some(carrier.relative_to(origin).green_term(*start, *end, *sweep)),
+        UseGeometry::Spline { .. } => None,
+    }
 }
 
 /// Summed rounding scale of a loop's uses (see `use_scale`).

@@ -1,0 +1,82 @@
+{
+  "test": "profile_extrusion::area_translation_tests::controls::origin_centered_profiles_keep_accepted_behavior",
+  "method": "six alternating paired direct-executable runs; concurrent #456 canonical gate; unoptimized test profile; no performance conclusion from one sample",
+  "binaries": {
+    "before": "483a08c4278cf7a2c7d88301e11fb98d80df16bd3fa0400f6c96fb1ed0625da2",
+    "after": "aaa2974b663e0806245fc27136bbff908a86f4c2e80af85be702c89e39f41eb2"
+  },
+  "rows": [
+    {
+      "iteration": 0,
+      "variant": "before",
+      "metric": "METRIC 0.64 0.49 0.01 41704",
+      "passed": true
+    },
+    {
+      "iteration": 0,
+      "variant": "after",
+      "metric": "METRIC 0.47 0.47 0.00 54700",
+      "passed": true
+    },
+    {
+      "iteration": 1,
+      "variant": "after",
+      "metric": "METRIC 0.53 0.52 0.00 54356",
+      "passed": true
+    },
+    {
+      "iteration": 1,
+      "variant": "before",
+      "metric": "METRIC 0.49 0.48 0.00 44604",
+      "passed": true
+    },
+    {
+      "iteration": 2,
+      "variant": "before",
+      "metric": "METRIC 0.48 0.48 0.00 44672",
+      "passed": true
+    },
+    {
+      "iteration": 2,
+      "variant": "after",
+      "metric": "METRIC 0.50 0.50 0.00 53952",
+      "passed": true
+    },
+    {
+      "iteration": 3,
+      "variant": "after",
+      "metric": "METRIC 0.48 0.48 0.00 54592",
+      "passed": true
+    },
+    {
+      "iteration": 3,
+      "variant": "before",
+      "metric": "METRIC 0.49 0.48 0.00 43956",
+      "passed": true
+    },
+    {
+      "iteration": 4,
+      "variant": "before",
+      "metric": "METRIC 0.47 0.46 0.00 44780",
+      "passed": true
+    },
+    {
+      "iteration": 4,
+      "variant": "after",
+      "metric": "METRIC 0.50 0.49 0.00 54880",
+      "passed": true
+    },
+    {
+      "iteration": 5,
+      "variant": "after",
+      "metric": "METRIC 0.49 0.48 0.00 54844",
+      "passed": true
+    },
+    {
+      "iteration": 5,
+      "variant": "before",
+      "metric": "METRIC 0.48 0.48 0.00 44172",
+      "passed": true
+    }
+  ]
+}
