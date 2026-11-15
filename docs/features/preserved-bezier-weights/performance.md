@@ -1,6 +1,6 @@
 # Coefficient-retention performance qualification
 
-The final campaign compared identical native construction workloads against
+The main-baseline campaign compared identical native construction workloads against
 main `b63b9b8ba4dd7d25a951dd45bfd144b282715940`. Baseline libraries were built in
 the #456 lane; their relevant geometry/filling/codec sources matched that main.
 This was not a previous-release benchmark or a complete body-operation benchmark.
@@ -71,3 +71,73 @@ cleanup receipt records their hashes. Feature caller wiring,
 its accepted workload and the canonical affected-package gate remain separate
 qualification requirements. Existing APIs, defaults and binary versions remain
 unchanged; no package version or release tag is changed.
+
+## Previous-release comparison and isocurve correction
+
+A separate disposable checkout built the previous release, `v0.13.0` at
+`d051ff699982faba4ec2df3ee9a47e14f38dedbd`. The candidate was compared with that
+release on complete native patches, grouped face-table decoding and paired U/V
+isocurve construction, with 2, 8 and 26 poles and unit or varying rational weights.
+The probe checked a closed-form rational midpoint, both isocurves and the decoded
+surface before timing. This remains native patch/codec evidence, not full body
+publication evidence.
+
+The first 648-record campaign found a repeatable small isocurve slowdown after the
+new axis-convention check. The implementation now computes private isocurve flags
+at admission and edit boundaries. The hot path selects one stored boolean as
+before; public directional flags and legacy behavior stay unchanged. Sixteen
+geometry controls, eight codec controls and strict all-target geometry/BRep
+Clippy passed. Independent review checked every flag-assignment path.
+
+The repeat campaign measured commit `b480f8c9` in 12 balanced blocks, rotating
+release legacy, candidate legacy and candidate strict order. Libraries used the
+unoptimized profile with debug information and incremental compilation disabled;
+the probe used `rustc -C opt-level=2`, CPU 3 and native thread CPU time. The root
+agent reserved its builds during 16:30:40–16:30:58 UTC on 2026-11-15; unrelated host
+activity remained uncontrolled. There were 648 records. Construction medians were
+8.1–26.3% lower on the candidate legacy path and 37.0–66.6% lower on the strict
+factory. Isocurve comparisons improved or had paired bootstrap intervals spanning
+zero. These observations do not prove universal timing parity.
+
+Two short decoder comparisons appeared slower, so a separate confirmation used
+10,000 decodes per process instead of 500. Its 72 records cover 12 balanced blocks
+on the 8-pole unit and 26-pole rational cases, during 16:34:56–16:35:33 UTC under the
+same build reservation. Median native CPU microseconds per grouped decode:
+
+| Case | Release legacy | Candidate legacy | Candidate strict |
+| --- | ---: | ---: | ---: |
+| 8 poles, unit | 29.710 | 29.532 | 29.713 |
+| 26 poles, rational | 62.954 | 62.390 | 56.050 |
+
+The unit strict comparison's paired interval spans zero; the earlier positive
+rational legacy result reversed. No repeatable decoder slowdown was established
+by this confirmation. The rational strict comparison was faster. Raw records keep
+both campaigns, including the initial unfavorable results.
+
+### Memory attribution and remaining limit
+
+GNU time recorded each child's peak RSS. The confirmation's median paired candidate-minus-release peak RSS differences
+remained +40–94 KiB. Anonymous-page differences ranged from
+−4 to +16 KiB; file-backed residency and process layout contribute to total RSS.
+Total peak-memory parity is therefore **not established**.
+
+Native heap snapshots retained the matching workload's objects at 512 and 1,024
+instances. The strict 8-pole unit decoder used 32 fewer live heap bytes than the
+release at 1,024 instances; the strict 26-pole rational decoder used 2,896 fewer.
+Their second 512-instance growth was also lower. The candidate legacy rational
+decoder used 1,312 more live bytes, with 352 more bytes in the second increment.
+This small difference does not establish a fixed per-object increase. All sampled
+legacy patch and isocurve workloads had identical live heap to the release.
+
+The earlier cold-to-live strict isocurve delta was misleading: the strict preflight
+left fewer bytes live before retention. At 26 rational poles, final live heap was
+144 bytes lower and the second 512-isocurve-pair increment was identical across
+variants. Both cold and live counters are retained; the cold subtraction is not
+reported as extra object storage.
+
+For unit patches all encoded bytes agree. For rational patches the strict record
+changes only the two directional-rationality flag bytes, from `(false, true)` to
+`(true, false)`; coefficients and evaluated geometry agree. This is the declared
+truthful-axis behavior, not a byte-identical replay claim. The witness file records
+exact offsets and hashes. Artifact hashes, compiler/profile details and raw
+measurements are retained under `references/464-release-*`.
