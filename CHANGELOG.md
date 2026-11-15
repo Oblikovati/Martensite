@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Separated test-only edits from release package version checks while retaining affected QA suites and conservative production-fixture checks (#466).
+
 - Retained all contributing solid parents through final Boolean Fuse assembly and preserved reverse ancestry bindings (#456).
 
 - Stabilized planar-profile area cross-checks under large coordinate translations without changing certification limits (#446).
