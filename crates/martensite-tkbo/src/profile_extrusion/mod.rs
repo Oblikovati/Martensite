@@ -52,3 +52,6 @@ pub use profile::*;
 pub use regions::*;
 pub use resolution::*;
 pub use validation::{Finding, RegionValidation, SelfIntersectionEvidence, StageStatus};
+
+#[cfg(test)]
+mod area_translation_tests;

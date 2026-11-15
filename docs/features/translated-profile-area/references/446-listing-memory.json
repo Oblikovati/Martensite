@@ -1,0 +1,12 @@
+{
+  "before": {
+    "listing_summary": "2176 tests, 0 benchmarks",
+    "metrics": "0.00 0.00 0.00 12952",
+    "bytes": 357338640
+  },
+  "after": {
+    "listing_summary": "2176 tests, 0 benchmarks",
+    "metrics": "0.00 0.00 0.00 13776",
+    "bytes": 357512592
+  }
+}

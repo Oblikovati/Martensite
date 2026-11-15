@@ -1,0 +1,18 @@
+{
+  "active_copy_users": [],
+  "removed": [
+    {
+      "file": "446-before-profile-tests",
+      "bytes": 357338640
+    },
+    {
+      "file": "446-after-profile-tests",
+      "bytes": 357512592
+    },
+    {
+      "file": "446-after-final-profile-tests",
+      "bytes": 357509000
+    }
+  ],
+  "retained": "measurements and binary hashes only; normal target test artifacts preserved"
+}
