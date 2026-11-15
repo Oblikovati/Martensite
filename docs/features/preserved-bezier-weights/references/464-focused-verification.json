@@ -42,12 +42,12 @@
     "crates/martensite-tkbrep/src/bintools/shape_set.rs": "1546e40c03f9e8cf6bbc9ec742d1d4ea6c94d6cd1bda291f0225bbfe1b47de55",
     "crates/martensite-tkbrep/src/bintools/surface_read.rs": "11f0ddf65fb4f6a43f6967c7e2e29488f96ea57a7bb565d3be684596352c694c",
     "crates/martensite-tkbrep/src/bintools/surface_set.rs": "0a3af93f263ac0bda1b9ee48865c8db5ae35e47d42456948d00e9d19008a9528",
-    "crates/martensite-tkbrep/src/bintools/surface_weight_tests.rs": "ddd1492a3b58f4f2ca758fa2bf747742971c08f2cc68fa67c8d503ace9b9172c",
+    "crates/martensite-tkbrep/src/bintools/surface_weight_tests.rs": "d7087fd2907eaad635c5be3211437ee49cd465ca140dee39400400613fa0c702",
     "crates/martensite-tkg3d/src/geom/bezier_surface.rs": "4d3976c613e18fab96da680c142dc2f0b7ce6faf0869222aba136aee662bc6b4",
     "crates/martensite-tkg3d/src/geom/bezier_surface/state.rs": "38ce3f9c3411acd044b697669a83ac4e2a17f870cb150a11bc34bedf24a57771",
-    "crates/martensite-tkg3d/src/geom/bezier_surface/stored_coefficients.rs": "e4d35ce32eca0fd1e030c65622caa9b4115797a0f7a0e10bf657c051dc44fd68",
+    "crates/martensite-tkg3d/src/geom/bezier_surface/stored_coefficients.rs": "7628f830fba8302acdd9624323938c27debe62402a495b9188383f979f5ae053",
     "crates/martensite-tkg3d/src/geom/mod.rs": "beb1aca38e5ed57b79c3e23423bd2c7abb3c37e56be54d5883046dff0d287054",
-    "crates/martensite-tkg3d/tests/bezier_stored_coefficients.rs": "0d9d4f9f4c966fcc9d773932094628cae1a4467a14fbf2ab5d64e7554c0ae589",
+    "crates/martensite-tkg3d/tests/bezier_stored_coefficients.rs": "3a457b25d1323db0fcc121729d2970a83acc11b7bfaaf1ddb413f5a7221a0dac",
     "crates/martensite-tkg3d/tests/toolkit.rs": "3cfeffcf78ca52400436298e1ad0227f089f92e01cfb49605f3b16302f338876",
     "crates/martensite-tkgeomalgo/src/geom_fill/bezier_curves.rs": "ec769982ff7b07159fff1bdbcf98bbdcb8120b8431ac557517086229598badd1",
     "crates/martensite-tkgeomalgo/tests/retained_ruled_boundaries.rs": "7e2d0bb9d6e6864af8eec917915592c43a21b2e22677bf2ac4d3d34a8de4b5dd",
@@ -59,5 +59,15 @@
     "canonical affected-package gate",
     "independent review"
   ],
-  "probe_cleanup": "initial standalone probe source supplied through stdin; temporary executable and directory removed; retained measurements only"
+  "probe_cleanup": "initial standalone probe source supplied through stdin; temporary executable and directory removed; retained measurements only",
+  "review": {
+    "checkpoint": "2280961a57e6de03ec9be49aa8dc32b845f8c721",
+    "spec": "No confirmed correctness defect; feature wiring/performance/canonical gate pending",
+    "standards": "Three minimum-length findings resolved with direct Send+Sync coercions and a native-cause preservation WHY comment",
+    "delta_validation": [
+      "geometry error Send+Sync test passed",
+      "decoder policy Send+Sync/default test passed"
+    ],
+    "new_production_behavior_in_delta": false
+  }
 }

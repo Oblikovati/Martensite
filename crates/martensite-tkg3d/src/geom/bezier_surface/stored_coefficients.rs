@@ -16,6 +16,7 @@ pub enum BezierSurfaceCoefficientError {
 }
 impl From<Failure> for BezierSurfaceCoefficientError {
     fn from(cause: Failure) -> Self {
+        // Rebuilding this from Display would erase its native exception category.
         Self::Native(cause)
     }
 }

@@ -104,8 +104,8 @@ fn nested_basis_surfaces_keep_the_same_weight_policy() {
 }
 #[test]
 fn read_policy_is_send_and_sync_and_defaults_to_legacy() {
-    fn assert_send_sync<T: Send + Sync>() {}
-    assert_send_sync::<BezierSurfaceWeightReadPolicy>();
+    let policy = BezierSurfaceWeightReadPolicy::default();
+    let _: &(dyn Send + Sync) = &policy;
     assert_eq!(
         BezierSurfaceWeightReadPolicy::default(),
         BezierSurfaceWeightReadPolicy::LegacyReplay

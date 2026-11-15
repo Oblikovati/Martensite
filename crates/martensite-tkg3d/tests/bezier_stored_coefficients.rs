@@ -126,6 +126,6 @@ fn construction_and_copy_own_their_coefficients_in_both_directions() {
 }
 #[test]
 fn coefficient_error_is_send_and_sync() {
-    fn assert_send_sync<T: Send + Sync>() {}
-    assert_send_sync::<BezierSurfaceCoefficientError>();
+    let error = BezierSurfaceCoefficientError::ConstantNonUnitWeights { weight: 2. };
+    let _: &(dyn Send + Sync) = &error;
 }
