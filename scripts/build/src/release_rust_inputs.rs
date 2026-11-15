@@ -178,8 +178,9 @@ fn owned_path(path: &Path, package: &Path) -> Option<PathBuf> {
     }
     let path = path.canonicalize().ok()?;
     let package = package.canonicalize().ok()?;
-    let relative = path.strip_prefix(&package).ok()?.to_str()?;
-    if !super::literal_input_supported(relative, &SourceScope::new(&package, &package)) {
+    let relative = path.strip_prefix(&package).ok()?;
+    // Native separators are not authored backslashes (#487).
+    if !crate::release_input_layout::input_components_supported(relative) {
         return None;
     }
     path.is_file().then_some(path)

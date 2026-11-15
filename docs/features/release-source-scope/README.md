@@ -103,3 +103,13 @@ The scanner now follows literal owned QA modules transitively and retains their 
 Missing, deleted or ambiguous module candidates, macro-generated modules, conditional or inline path uncertainty, textual QA includes, output-tree sources, external inputs and links keep the result unknown. Case-variant `tests` spellings still retain all QA. Tests cover those refusals, transitive paths, implicit modules and repeated file contexts. Unix fixtures cover linked QA files and directories; Windows link creation is not exercised.
 
 The actual-source regression records all Vulkan paths changed between v0.13.0 and `6df7ecc3`, including the four affected QA groups, and proves they are disjoint from the retained production inputs. The unoptimized control took about 1.7 seconds locally. It does not invoke a local release rehearsal. Package versions and affected-test selection are unchanged.
+
+## Canonical package-root coordinates — #487
+
+The next Windows release run rejected unchanged Boolean-case source. Individual source files had been canonicalized, but their package roots and changed-file comparisons could still use lexical paths. [Windows canonicalization adds extended-length prefixes](https://doc.rust-lang.org/std/fs/fn.canonicalize.html), so a valid owned include could fail its prefix check. A referenced QA input could also be compared in the wrong coordinate system.
+
+The proof now validates the original package layout and links, canonicalizes the package root once, and stores that root with its references. Source traversal, the Cargo-manifest marker and Git-relative QA input joins reuse it. Changed or deleted files are not individually canonicalized; a missing referenced input still retains publication impact.
+
+Authored paths keep their portable forward-slash spelling checks. Canonical relative paths use native `Path` components. This preserves Windows separators without accepting authored backslashes, output-tree paths, external inputs or links.
+
+Two owned Unix workspace-alias controls reproduced the read/proof refusal and the dropped missing-input comparison independently before the correction. Platform-neutral controls exercise native and canonical roots for text inputs, literal QA modules, missing inputs and Cargo-manifest literals. Existing symlink, dynamic-input and output-path controls remain in place. Local tests do not substitute for the hosted Windows release matrix. No package version, validation budget or affected-test selection changes.
