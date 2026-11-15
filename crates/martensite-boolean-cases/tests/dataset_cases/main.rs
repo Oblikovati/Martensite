@@ -52,6 +52,7 @@ mod bugs_moddata_3;
 mod case_controls;
 mod cases;
 mod cells_test;
+mod performance_timing_controls;
 use martensite_boolean_cases::common_operation;
 mod contract_controls;
 mod gdml_public;

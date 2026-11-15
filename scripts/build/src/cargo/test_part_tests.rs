@@ -159,3 +159,26 @@ fn build_messages_keep_only_test_executables_once() {
     assert_eq!(targets[0].selector, ["--test", "views"]);
     assert!(parse_test_targets("{not json").is_err());
 }
+
+fn isolated_target_runner() -> RecordingRunner {
+    RecordingRunner::default()
+        .with_stdout(
+            &format!("{BASE} --no-run --message-format json-render-diagnostics"),
+            &artifact("test", "parallel_speedup", true),
+        )
+        .with_stdout(
+            &format!("{BASE} --test parallel_speedup -- --list --format terse"),
+            "bugs_modalg_5::bug24639: test\n",
+        )
+}
+
+#[test]
+fn isolated_performance_target_runs_in_exactly_one_part_without_other_tests() {
+    let mut runs = Vec::new();
+    for index in 0..3 {
+        let runner = isolated_target_runner();
+        run_part(&runner, index);
+        runs.extend(exact_runs(&runner.commands()));
+    }
+    assert_eq!(runs, ["--test parallel_speedup bugs_modalg_5::bug24639"]);
+}

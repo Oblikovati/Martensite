@@ -252,58 +252,6 @@ pub fn bug25232_9(s: &mut dyn Session) {
     view_result(s);
 }
 
-/// One axis of `bug24639`'s grid of edges, as a NURBS compound.
-fn edge_grid(
-    s: &mut dyn Session,
-    axis: char,
-    end: [f64; 3],
-    offset: impl Fn(f64, f64) -> [f64; 3],
-) {
-    vertex(s, "v1", [0., 0., 0.]);
-    vertex(s, "v2", end);
-    let prototype = format!("e{axis}");
-    edge(s, &prototype, "v1", "v2");
-    let mut names = Vec::new();
-    for i in 0..5 {
-        for j in 0..5 {
-            let at = offset(i as f64 + 1., j as f64 + 1.);
-            translated_copy(
-                s,
-                &prototype,
-                format!("e{axis}_{i}_{{{j}}}"),
-                at,
-                &mut names,
-            );
-        }
-    }
-    compound(s, &names_of(&names), &format!("b{axis}"));
-}
-
-pub fn bug24639(s: &mut dyn Session) {
-    println!("=========");
-    println!("OCC24639");
-    println!("=========");
-    println!();
-    let side = 5. + 1.;
-    edge_grid(s, 'z', [0., 0., side], |i, j| [i, j, 0.]);
-    edge_grid(s, 'x', [side, 0., 0.], |i, j| [0., i, j]);
-    edge_grid(s, 'y', [0., side, 0.], |i, j| [i, 0., j]);
-    for name in ["bx", "by", "bz"] {
-        nurbsconvert(s, name, name);
-    }
-    let mut bop = ScriptBop::default();
-    for name in ["bx", "by", "bz"] {
-        bop.add_compound(s, name);
-    }
-    bop.options.run_parallel = false;
-    let sequential = bop.bfillds_timed();
-    bop.options.run_parallel = true;
-    let parallel = bop.bfillds_timed();
-    if parallel > 0.8 * sequential {
-        println!("Error: Parallel execution does not give expected performance speed up");
-    }
-}
-
 pub fn bug23985(s: &mut dyn Session) {
     println!("========");
     println!("OCC23985");
