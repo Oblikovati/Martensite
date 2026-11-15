@@ -1,0 +1,15 @@
+{
+  "line_counts": [
+    300,
+    300,
+    300
+  ],
+  "expected_vs_main_history": [],
+  "main_history_vs_patch": [
+    {
+      "line": 49,
+      "before": "case fuse done 1 errors 0 warnings 0 modified 1 generated 1 deleted 1",
+      "after": "case fuse done 1 errors 0 warnings 0 modified 1 generated 1 deleted 0"
+    }
+  ]
+}

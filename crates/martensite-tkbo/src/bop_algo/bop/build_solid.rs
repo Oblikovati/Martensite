@@ -26,7 +26,7 @@ impl BOPAlgoBOP {
             self.select_fuse_solids(&argument_solids, &shared_solids, &mut face_solids)?;
         let mut result = Shape::default();
         make_container(ShapeEnum::Compound, &mut result);
-        if !self.add_built_solids(&face_solids, &mut result)? {
+        if !self.add_built_solids(&face_solids, &argument_solids, &mut result)? {
             return Ok(());
         }
         self.finish_fuse_result(result, &untouched, &containers)
@@ -115,6 +115,7 @@ impl BOPAlgoBOP {
     fn add_built_solids(
         &mut self,
         face_solids: &IndexedDataMapOfShapeListOfShape,
+        sources: &MapOfShape,
         result: &mut Shape,
     ) -> Result<bool, Failure> {
         let faces = boundary_fuse_faces(face_solids)?;
@@ -123,7 +124,7 @@ impl BOPAlgoBOP {
         }
         let mut builder = self.fuse_solid_builder(&faces);
         builder.perform()?;
-        self.retain_fuse_solids(&builder, result)
+        self.retain_fuse_solids(&builder, face_solids, sources, result)
     }
 
     fn fuse_solid_builder(&self, faces: &List<Shape>) -> BuilderSolid {
@@ -135,23 +136,22 @@ impl BOPAlgoBOP {
     }
 
     fn retain_fuse_solids(
-        &self,
+        &mut self,
         builder: &BuilderSolid,
+        face_solids: &IndexedDataMapOfShapeListOfShape,
+        sources: &MapOfShape,
         result: &mut Shape,
     ) -> Result<bool, Failure> {
+        let receiver = self.builder().options();
         if builder.options().has_errors() {
-            self.builder()
-                .options()
-                .add_error(&alert(AlertSolidBuilderFailed));
+            receiver.add_error(&alert(AlertSolidBuilderFailed));
             return Ok(false);
         }
-        self.builder()
-            .options()
-            .report()
-            .merge(builder.options().report());
+        receiver.report().merge(builder.options().report());
         for solid in builder.areas().iter() {
             BRepBuilder::default().add(result, solid)?;
         }
+        self.retain_assembled_solid_images(builder.areas(), face_solids, sources)?;
         Ok(true)
     }
 

@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Retained all contributing solid parents through final Boolean Fuse assembly and preserved reverse ancestry bindings (#456).
+
 - Removed repeated pair-ledger validation during planar profile certification while preserving live geometry checks and shared work budgets (#449).
 
 - Updated rustix to 1.1.6 and xattr to 1.7.0 to resolve RUSTSEC-2026-0486 while preserving extended-attribute values and name lists larger than 4 KiB (#445).

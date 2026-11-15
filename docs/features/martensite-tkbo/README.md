@@ -29,7 +29,8 @@ The crate has no unsafe code. It follows the workspace `forbid`.
 Run `cargo test -p martensite-tkbo`. Unit tests in `src` replay frozen progress and cancellation
 sequences under `src/**/*_fixture` and `tests/fixtures`. Those are recorded baselines, and they
 make up most of this crate's size. A change to one needs a reviewed update that states its reason
-and behaviour version.
+and behaviour version. The [history oracle version 2 correction](../boolean-solid-history/456-assembly-lineage.md#history-oracle-version-2)
+retains final Fuse solid ancestry; geometry, numerical and progress/event oracles keep their existing versions (#456).
 
 The Boolean script cases are in [`martensite-boolean-cases`](../martensite-boolean-cases/README.md),
 because the check contract they use depends on this crate.

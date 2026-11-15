@@ -1,0 +1,75 @@
+{
+  "baseline_scope": "main77053 native Boolean source;446 has unrelated loop_geometry cross-check patch not called by native primitives/BOP; not full clean-main binary",
+  "profile": "both unoptimized libraries, same artifact profile identifiers",
+  "temporary_probe_implementation_removed": true,
+  "variants": {
+    "main_history": {
+      "snapshot_sha256": "9deb31579bd5974e02aee942d77aeb3c4187a0538543ddd1ca3b939957d3c7b2",
+      "binary_sha256": "4c44738442ba0137d049b2c4efb4aab8f524c52769cf1829136f9af00abdfd93",
+      "libraries": {
+        "tkbo": {
+          "file": "libmartensite_tkbo-2667d91c81d1f57c.rlib",
+          "sha256": "c26a389ffd9a392be3f758ca4e52ec261de3d689572d691958ff32b3adb7987f"
+        },
+        "tkbrep": {
+          "file": "libmartensite_tkbrep-f7aa8edf48a19423.rlib",
+          "sha256": "50e798ae8c113c487f0aaf074c3ab1028ae2d9f01320ec4d0f6a6fae47cfe9f1"
+        },
+        "tkernel": {
+          "file": "libmartensite_tkernel-1ad39a470b09ff90.rlib",
+          "sha256": "fb98d82089090801b4f70b01215ed597d0e4783f8d52673aac9dede5149d5802"
+        },
+        "tkmath": {
+          "file": "libmartensite_tkmath-d33f3a1358a8b55c.rlib",
+          "sha256": "2ee1e1cb1a2c12da5a6879487ca926d2818ce827e21d4117eb1f025c358ca7bc"
+        },
+        "tkprim": {
+          "file": "libmartensite_tkprim-6379baee88463a9b.rlib",
+          "sha256": "548d88a7497614232823b898c9c2007c81835af278f6ad6c0edab06b6d2a5a9a"
+        },
+        "tktopalgo": {
+          "file": "libmartensite_tktopalgo-586da727a7d00cd6.rlib",
+          "sha256": "eda8d6eb7d2bfe292ae95245f76d2646dcea153cbb25dc717aa5f03b4dd8a4ba"
+        },
+        "tkg3d": {
+          "file": "libmartensite_tkg3d-8a715889ec866aa9.rlib",
+          "sha256": "b4b325e9f5199b29ff986abda75024f9ac1a0195fb13b294962c9371a9508289"
+        }
+      }
+    },
+    "patched": {
+      "snapshot_sha256": "fd0d3955e0238cca4960194a5b637023021348471d42ddcd86b1e024cd8326d4",
+      "binary_sha256": "a6f44d3c1883790207f2eaae80635aa00a8c959b5af328837b88e9906281638b",
+      "libraries": {
+        "tkbo": {
+          "file": "libmartensite_tkbo-2667d91c81d1f57c.rlib",
+          "sha256": "4acab37516956573e1438375c344b140586c2c03de236b093521d75944eca839"
+        },
+        "tkbrep": {
+          "file": "libmartensite_tkbrep-f7aa8edf48a19423.rlib",
+          "sha256": "279826bb84eb649340d6e44d4ceaf77a663e4753af5c70a2dfc34e4f9d0c4123"
+        },
+        "tkernel": {
+          "file": "libmartensite_tkernel-1ad39a470b09ff90.rlib",
+          "sha256": "222bfcd8226f285b64911afb4a978bcca28cab7d2a402584e9fdbdbd58cf533f"
+        },
+        "tkmath": {
+          "file": "libmartensite_tkmath-d33f3a1358a8b55c.rlib",
+          "sha256": "a4c4591f310bdd99abeda411e7623f85e3ac337f1a1e401cb334f2e3eab3bf29"
+        },
+        "tkprim": {
+          "file": "libmartensite_tkprim-6379baee88463a9b.rlib",
+          "sha256": "3031f506f040e11d81b49497f7163c788e19ae2e280645b827a88980c10c326d"
+        },
+        "tktopalgo": {
+          "file": "libmartensite_tktopalgo-586da727a7d00cd6.rlib",
+          "sha256": "51399ab51f64fbb67a1f5bbd7091cf68411f14c0c842b33c73fac16a5883eacf"
+        },
+        "tkg3d": {
+          "file": "libmartensite_tkg3d-8a715889ec866aa9.rlib",
+          "sha256": "1424f1d4d0d569693dc396d272cd86e4e00400ebf03c1e86f3d796b94b60b094"
+        }
+      }
+    }
+  }
+}
