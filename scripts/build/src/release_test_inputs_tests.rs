@@ -1,4 +1,5 @@
 use super::*;
+use crate::release_input_layout::scannable_target_path;
 
 fn fixture(source: &str) -> (tempfile::TempDir, PackageManifest) {
     let directory = tempfile::tempdir().unwrap();

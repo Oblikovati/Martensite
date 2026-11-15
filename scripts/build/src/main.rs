@@ -30,6 +30,7 @@ mod release;
 mod release_build_inputs;
 mod release_ci;
 mod release_impact;
+mod release_input_layout;
 mod release_macro_inputs;
 mod release_manifest;
 mod release_qa_manifest;
