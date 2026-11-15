@@ -1,7 +1,8 @@
 use super::*;
 use crate::release_input_layout::scannable_under;
+use std::fs;
 
-fn fixture(source: &str) -> (tempfile::TempDir, PackageManifest) {
+pub(super) fn fixture(source: &str) -> (tempfile::TempDir, PackageManifest) {
     let directory = tempfile::tempdir().unwrap();
     fs::create_dir_all(directory.path().join("crates/a/src")).unwrap();
     fs::write(directory.path().join("crates/a/src/lib.rs"), source).unwrap();
@@ -11,7 +12,7 @@ fn fixture(source: &str) -> (tempfile::TempDir, PackageManifest) {
             .unwrap();
     (directory, manifest)
 }
-fn changed(path: &str) -> ChangedFile {
+pub(super) fn changed(path: &str) -> ChangedFile {
     ChangedFile {
         path: format!("crates/a/{path}"),
         deleted: false,
@@ -255,4 +256,21 @@ fn case_variant_qa_literals_remain_production_inputs() {
         "#[cfg(windows)] const DATA: &[u8] = include_bytes!(\"../TESTS/data.bin\");",
         "tests/data.bin"
     ));
+}
+
+pub(super) fn actual_vulkan_manifest() -> (PathBuf, PackageManifest) {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../..")
+        .canonicalize()
+        .unwrap();
+    let workspace =
+        crate::package_manifest::parse_table(include_str!("../../../Cargo.toml")).unwrap();
+    let inherited = workspace["workspace"]["package"].as_table().unwrap();
+    let manifest = PackageManifest::parse(
+        include_str!("../../../crates/martensite-vulkan/Cargo.toml"),
+        inherited,
+    )
+    .unwrap()
+    .unwrap();
+    (root, manifest)
 }

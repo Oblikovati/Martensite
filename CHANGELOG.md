@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Followed literal production QA modules while excluding disjoint test edits from release package version checks (#485).
+
 - Retained publication impact for traversing and unsupported Cargo production-target paths (#482).
 
 - Excluded proven test-target manifest edits and the reviewed budget-marker script from package source-version checks while retaining affected tests and conservative production-input checks (#481).
