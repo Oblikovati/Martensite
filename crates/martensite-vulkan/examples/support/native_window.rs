@@ -180,11 +180,5 @@ fn channel(pixel: u64, mask: u64) -> u8 {
     (((pixel & mask) >> shift) * 255 / maximum) as u8
 }
 #[cfg(test)]
-mod tests {
-    #[test]
-    fn screen_masks_decode_channels_independently() {
-        assert_eq!(super::channel(0xff8800, 0xff0000), 255);
-        assert_eq!(super::channel(0xff8800, 0xff00), 136);
-        assert_eq!(super::channel(0, 0), 0);
-    }
-}
+#[path = "native_window_tests.rs"]
+mod tests;

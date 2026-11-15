@@ -298,19 +298,5 @@ mod dimension_cpu_contract {
 }
 
 #[cfg(test)]
-mod dimension_kind_command_contract {
-    use super::DimensionKind;
-
-    #[test]
-    fn dimension_kind_flags_match_the_command_grammar() {
-        let cases = [
-            (DimensionKind::Length, "-length"),
-            (DimensionKind::Angle, "-angle"),
-            (DimensionKind::Radius, "-radius"),
-            (DimensionKind::Diameter, "-diameter"),
-        ];
-        for (kind, flag) in cases {
-            assert_eq!(kind.flag(), flag);
-        }
-    }
-}
+#[path = "dimension_kind_command_contract.rs"]
+mod dimension_kind_command_contract;
