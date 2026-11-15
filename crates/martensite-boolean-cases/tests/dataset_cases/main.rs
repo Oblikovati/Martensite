@@ -50,6 +50,7 @@ mod bugs_moddata_1;
 mod bugs_moddata_2;
 mod bugs_moddata_3;
 mod case_controls;
+mod performance_timing_controls;
 mod cases;
 mod cells_test;
 use martensite_boolean_cases::common_operation;

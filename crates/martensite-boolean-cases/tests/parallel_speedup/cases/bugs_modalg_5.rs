@@ -1,4 +1,5 @@
 //! The unchanged 75-edge grid and 20% parallel-speedup requirement (#480).
+use crate::measurement::{filler_seconds, meets_requirement};
 use crate::support::{
     bugs_commands::options_bop::ScriptBop,
     commands::{compound, ttranslate},
@@ -60,10 +61,10 @@ pub fn bug24639(s: &mut dyn Session) {
     println!("=========\nOCC24639\n=========\n");
     let mut bop = grid_arguments(s);
     bop.options.run_parallel = false;
-    let sequential = bop.bfillds_timed();
+    let sequential = filler_seconds(&mut bop);
     bop.options.run_parallel = true;
-    let parallel = bop.bfillds_timed();
-    if parallel > 0.8 * sequential {
+    let parallel = filler_seconds(&mut bop);
+    if !meets_requirement(sequential, parallel) {
         println!("Error: Parallel execution does not give expected performance speed up");
     }
 }
