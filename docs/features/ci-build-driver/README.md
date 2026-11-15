@@ -104,8 +104,10 @@ slow cases (#250).
 | push of a `v*` tag | release of the tag's version | all | yes |
 | `workflow_dispatch`, mode `pr` | PR validation against `origin/main` | primary | no |
 | `workflow_dispatch`, mode `release` | release rehearsal of the `version` input | all | no |
+| `schedule` (daily), or `workflow_dispatch` mode `cache` on `main` | PR build-cache refresh | primary | no |
 
-Any other trigger fails in `ci plan` and names the trigger. Use the dispatch
+The cache refresh skips `ci plan` and every validation job. Any other trigger
+fails in `ci plan` and names the trigger. Use the dispatch
 release mode to run the full matrix on a release candidate before you push the
 tag.
 
@@ -255,8 +257,16 @@ versions are marked as pre-releases.
   the workflow's setup step must run the matching installer
   (`install-linux.sh --no-cargo-tools` and so on) on each runner.
 - `cargo deny` and `cargo audit` are not in the driver yet.
-- No build cache in CI. Adding one (for example, `actions/cache` keyed on
-  `Cargo.lock` and the target) is a change to the workflow only.
+- Only PR test jobs use a build cache (#472). GitHub lets a pull request
+  restore caches saved on its own ref or on `main`, never another pull
+  request's. The scheduled refresh therefore compiles each package listed by
+  `cargo xtask ci warm-plan` (suites of five or more measured minutes) with the
+  exact PR test command (`cargo xtask ci warm`) and saves its kache store on
+  `main` under `kache-<package>-<lockfile hash>-<run id>`. PR jobs restore the
+  newest store by key prefix through `.github/actions/restore-build-cache` and
+  never save, so the stores stay within the 10 GB repository budget. Release,
+  thread-sanitizer and compiler-inventory builds compile from scratch, because
+  a cache hit does not replay every diagnostic.
 - The workspace member list is `["scripts/build"]` until the first kernel
   crate lands. Then add `"crates/*"` (cargo rejects a glob that matches no
   directory).
