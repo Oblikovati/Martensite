@@ -6,6 +6,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-11-15
+
 ### Fixed
 
 - Retained all contributing solid parents through final Boolean Fuse assembly and preserved reverse ancestry bindings (#456).
