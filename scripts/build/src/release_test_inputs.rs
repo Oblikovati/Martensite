@@ -9,12 +9,16 @@ use proc_macro2::{TokenStream, TokenTree};
 use std::{
     borrow::Cow,
     collections::BTreeSet,
-    fs,
     path::{Component, Path, PathBuf},
 };
 
+#[path = "release_rust_inputs.rs"]
+mod rust_inputs;
+
 struct ProductionReferences {
     paths: BTreeSet<PathBuf>,
+    scanned_directories: BTreeSet<PathBuf>,
+    scanned_sources: BTreeSet<(PathBuf, Option<PathBuf>)>,
     macros: LiteralMacroInputs,
     collecting: bool,
     manifest_proof: bool,
@@ -26,6 +30,8 @@ impl ProductionReferences {
     fn new(changed: &[ChangedFile], manifest_proof: bool) -> Self {
         Self {
             paths: BTreeSet::new(),
+            scanned_directories: BTreeSet::new(),
+            scanned_sources: BTreeSet::new(),
             macros: LiteralMacroInputs::default(),
             collecting: true,
             manifest_proof,
@@ -35,30 +41,7 @@ impl ProductionReferences {
     }
 }
 
-struct SourceScope<'a> {
-    parent: &'a Path,
-    package: &'a Path,
-    owner: Option<String>,
-    inline_module: bool,
-}
-impl<'a> SourceScope<'a> {
-    fn new(parent: &'a Path, package: &'a Path) -> Self {
-        Self {
-            parent,
-            package,
-            owner: None,
-            inline_module: false,
-        }
-    }
-    fn within(&self, tokens: &[TokenTree], index: usize) -> Self {
-        Self {
-            parent: self.parent,
-            package: self.package,
-            owner: macro_owner(tokens, index).or_else(|| self.owner.clone()),
-            inline_module: self.inline_module || inline_module(tokens, index),
-        }
-    }
-}
+use rust_inputs::{SourceScope, scan_directory};
 /// Retains uncertain production inputs while separating proven QA-only edits.
 /// Example: `publication_changes(root, manifest, directory, changed)`.
 pub(crate) fn publication_changes<'a>(
@@ -118,6 +101,8 @@ fn production_references(
     let mut references = ProductionReferences::new(changed, manifest_proof);
     scan_directory(root, root, &mut references)?;
     references.paths.clear();
+    references.scanned_directories.clear();
+    references.scanned_sources.clear();
     references.collecting = false;
     scan_directory(root, root, &mut references)?;
     Some(references)
@@ -159,52 +144,6 @@ fn changed_extensions(changed: &[ChangedFile]) -> BTreeSet<String> {
         })
         .collect()
 }
-fn scan_directory(directory: &Path, root: &Path, refs: &mut ProductionReferences) -> Option<()> {
-    for entry in fs::read_dir(directory).ok()? {
-        let entry = entry.ok()?;
-        let kind = entry.file_type().ok()?;
-        if kind.is_symlink() {
-            return None;
-        }
-        if kind.is_dir() {
-            scan_child(&entry.path(), root, refs)?;
-        } else if entry.path().extension().is_some_and(|ext| ext == "rs")
-            && entry.path() != root.join("build.rs")
-        {
-            scan_source(&entry.path(), root, refs)?;
-        }
-    }
-    Some(())
-}
-fn scan_child(path: &Path, root: &Path, refs: &mut ProductionReferences) -> Option<()> {
-    if ["tests", "target", ".git"]
-        .iter()
-        .any(|name| path == root.join(name))
-    {
-        return Some(());
-    }
-    if path
-        .file_name()
-        .is_some_and(|name| matches!(name.to_str(), Some("target" | ".git")))
-    {
-        return None;
-    }
-    scan_directory(path, root, refs)
-}
-fn scan_source(path: &Path, root: &Path, refs: &mut ProductionReferences) -> Option<()> {
-    let source = fs::read_to_string(path).ok()?;
-    let tokens = source.parse::<TokenStream>().ok()?;
-    if refs.collecting {
-        refs.macros.record(tokens.clone());
-    }
-    scan_tokens(
-        tokens,
-        path.parent()?,
-        root,
-        refs,
-        &SourceScope::new(path.parent()?, root),
-    )
-}
 fn scan_tokens(
     tokens: TokenStream,
     parent: &Path,
@@ -217,7 +156,8 @@ fn scan_tokens(
         if !refs.collecting {
             check_include(&tokens[index..], refs, scope)?;
         }
-        check_attribute(&tokens, index, scope)?;
+        check_attribute(&tokens, index, scope, refs)?;
+        rust_inputs::check_module(&tokens, index, scope, refs)?;
         scan_token(token, parent, root, refs, &scope.within(&tokens, index))?;
     }
     Some(())
@@ -269,12 +209,17 @@ fn concat_parameter(tokens: &[TokenTree]) -> Option<String> {
     };
     (dollar.as_char() == '$').then(|| source_macro_identifier(parameter))
 }
-fn check_attribute(tokens: &[TokenTree], index: usize, scope: &SourceScope<'_>) -> Option<()> {
+fn check_attribute(
+    tokens: &[TokenTree],
+    index: usize,
+    scope: &SourceScope<'_>,
+    refs: &mut ProductionReferences,
+) -> Option<()> {
     if !attribute_prefix(tokens, index) {
         return Some(());
     }
     if let TokenTree::Group(group) = &tokens[index] {
-        return check_path_attribute(group, scope);
+        return check_path_attribute(group, scope, refs);
     }
     Some(())
 }
@@ -305,7 +250,7 @@ fn check_include(
     }
     if matches!(tokens.first(), Some(TokenTree::Ident(name)) if source_macro_identifier(name) == "include")
     {
-        return rust_include_argument(tokens.get(2), scope);
+        return rust_include_argument(tokens.get(2), scope, refs);
     }
     include_argument(tokens.get(2), refs, scope)
 }
@@ -324,7 +269,11 @@ fn record_manifest_include(
             scope.package,
         );
 }
-fn rust_include_argument(token: Option<&TokenTree>, scope: &SourceScope<'_>) -> Option<()> {
+fn rust_include_argument(
+    token: Option<&TokenTree>,
+    scope: &SourceScope<'_>,
+    refs: &mut ProductionReferences,
+) -> Option<()> {
     let Some(TokenTree::Group(arguments)) = token else {
         return None;
     };
@@ -332,22 +281,12 @@ fn rust_include_argument(token: Option<&TokenTree>, scope: &SourceScope<'_>) -> 
     let [TokenTree::Literal(value)] = arguments.as_slice() else {
         return None;
     };
-    owned_rust_source(&decode_string(&value.to_string())?, scope)
-}
-fn owned_rust_source(value: &str, scope: &SourceScope<'_>) -> Option<()> {
-    if !crate::release_input_layout::portable_relative_path(value)
-        || Path::new(value)
-            .extension()
-            .is_none_or(|extension| extension != "rs")
-    {
-        return None;
-    }
-    let path = scope.parent.join(value);
-    if path.is_symlink() {
-        return None;
-    }
-    let path = path.canonicalize().ok()?;
-    crate::release_input_layout::covered_rust_input(scope.package, &path).then_some(())
+    rust_inputs::record_source(
+        &decode_string(&value.to_string())?,
+        scope,
+        refs,
+        rust_inputs::RustSourceKind::TextualInclude,
+    )
 }
 fn include_argument(
     token: Option<&TokenTree>,
@@ -377,9 +316,11 @@ fn literal_input_supported(value: &str, scope: &SourceScope<'_>) -> bool {
     let Ok(relative) = target.strip_prefix(package) else {
         return false;
     };
-    !relative
-        .components()
-        .any(|part| matches!(part.as_os_str().to_str(), Some("target" | ".git")))
+    !relative.components().any(|part| {
+        part.as_os_str().to_str().is_some_and(|name| {
+            name.eq_ignore_ascii_case("target") || name.eq_ignore_ascii_case(".git")
+        })
+    })
 }
 fn fixed_include_extension(tokens: &[TokenTree]) -> Option<String> {
     let suffix = concat_suffix(tokens)?;
@@ -422,7 +363,7 @@ fn record_literal(
     let value = value.replace('\\', "/");
     if value
         .split('/')
-        .any(|part| part.eq_ignore_ascii_case("tests"))
+        .any(|part| part != "tests" && part.eq_ignore_ascii_case("tests"))
     {
         refs.paths.insert(normalized(&root.join("tests")));
     }
@@ -436,22 +377,28 @@ fn record_path(path: PathBuf, root: &Path, refs: &mut ProductionReferences) -> O
         return Some(());
     }
     if path.starts_with(root.join("tests")) {
-        if path.extension().is_some_and(|extension| extension == "rs") {
-            return None;
-        }
         refs.paths.insert(path);
     }
     Some(())
 }
 
-fn check_path_attribute(group: &proc_macro2::Group, scope: &SourceScope<'_>) -> Option<()> {
+fn check_path_attribute(
+    group: &proc_macro2::Group,
+    scope: &SourceScope<'_>,
+    refs: &mut ProductionReferences,
+) -> Option<()> {
     if group.delimiter() != proc_macro2::Delimiter::Bracket || !mentions_path(group.stream()) {
         return Some(());
     }
     if scope.inline_module {
         return None;
     }
-    owned_rust_source(&direct_path_literal(group.stream())?, scope)
+    rust_inputs::record_source(
+        &direct_path_literal(group.stream())?,
+        scope,
+        refs,
+        rust_inputs::RustSourceKind::Module,
+    )
 }
 fn mentions_path(stream: TokenStream) -> bool {
     stream.into_iter().any(|token| match token {

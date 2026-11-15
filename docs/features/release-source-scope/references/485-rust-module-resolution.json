@@ -1,0 +1,7 @@
+{
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+  "explicit_path_file": "tests/support/aliased.rs",
+  "implicit_child": "tests/support/child.rs",
+  "compiled_successfully": true,
+  "temporary_source_and_output_removed": true
+}
