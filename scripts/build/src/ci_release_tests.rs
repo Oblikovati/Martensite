@@ -148,3 +148,32 @@ fn sanitizer_execution_inputs_use_previous_release_scope() {
             .any(|command| command.contains("merge-base"))
     );
 }
+
+#[test]
+fn test_only_edits_keep_the_existing_package_version_and_select_qa() {
+    let mut fixture = unchanged_release();
+    fixture.runner = fixture.runner.with_stdout(
+        "git diff --name-status --no-renames -z v0.3.0",
+        "M\0crates/martensite-kernel/tests/regression.rs\0",
+    );
+    write_runtime_source(&fixture);
+    let context = context_at(&fixture.runner, fixture.directory.path());
+    let workspace = crate::workspace::CargoWorkspace::load(context.runner, context.root()).unwrap();
+    let scope = crate::release_scope::ReleaseScope::load(
+        &context,
+        &workspace,
+        &semver::Version::new(0, 3, 1),
+    )
+    .unwrap();
+    assert!(scope.packages.is_empty());
+    assert_eq!(scope.tests, ["martensite-kernel"]);
+}
+
+fn write_runtime_source(fixture: &ReleaseScopeFixture) {
+    let source = fixture
+        .directory
+        .path()
+        .join("crates/martensite-kernel/src");
+    fs::create_dir_all(&source).unwrap();
+    fs::write(source.join("lib.rs"), "pub fn value() {} ").unwrap();
+}
