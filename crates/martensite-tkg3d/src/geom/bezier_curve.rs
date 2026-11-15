@@ -27,7 +27,7 @@ impl_transient!(
 
 impl GeomBezierCurve {
     martensite_tkg2d::bezier_curve_members!(Point3);
-    fn from_state(state: BezierState) -> Self {
+    pub(super) fn from_state(state: BezierState) -> Self {
         Self {
             parent: StandardTransient::default(),
             state: SharedState::new(state),

@@ -129,3 +129,69 @@ fn coefficient_error_is_send_and_sync() {
     let error = BezierSurfaceCoefficientError::ConstantNonUnitWeights { weight: 2. };
     let _: &(dyn Send + Sync) = &error;
 }
+fn native_message(error: BezierSurfaceCoefficientError) -> String {
+    match error {
+        BezierSurfaceCoefficientError::Native(cause) => cause.message().to_owned(),
+        other => panic!("expected native validation cause, got {other:?}"),
+    }
+}
+#[test]
+fn retained_diagnostics_keep_column_major_native_floor_precedence() {
+    let error = GeomBezierSurface::from_stored_coefficients(&poles(), &weights([1., 0., -1., 1.]))
+        .err()
+        .unwrap();
+    assert_eq!(
+        native_message(error),
+        "Geom_BezierSurface: Weights(2, 1) = -1; expected > gp::Resolution()"
+    );
+}
+#[test]
+fn retained_diagnostics_keep_nonfinite_pole_before_nonfinite_weight() {
+    let mut invalid = poles();
+    invalid
+        .set_value(1, 1, Point3::new(f64::NAN, 0., 0.))
+        .unwrap();
+    let error = GeomBezierSurface::from_stored_coefficients(
+        &invalid,
+        &weights([f64::INFINITY, 1., 1., 1.]),
+    )
+    .err()
+    .unwrap();
+    assert_eq!(
+        native_message(error),
+        "Bezier pole [NaN, 0.0, 0.0]; expected finite coordinates"
+    );
+}
+#[test]
+fn retained_diagnostics_keep_the_first_row_major_nonfinite_weight() {
+    let error = GeomBezierSurface::from_stored_coefficients(
+        &poles(),
+        &weights([f64::NAN, f64::INFINITY, 1., 1.]),
+    )
+    .err()
+    .unwrap();
+    assert_eq!(
+        native_message(error),
+        "Bezier weight NaN; expected finite positive weight"
+    );
+}
+#[test]
+fn every_coordinate_rejects_nan_and_both_infinities() {
+    for axis in 0..3 {
+        for value in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let mut xyz = [0.; 3];
+            xyz[axis] = value;
+            let mut invalid = poles();
+            invalid
+                .set_value(1, 1, Point3::new(xyz[0], xyz[1], xyz[2]))
+                .unwrap();
+            let error = GeomBezierSurface::from_stored_coefficients(&invalid, &weights([1.; 4]))
+                .err()
+                .unwrap();
+            assert_eq!(
+                native_message(error),
+                format!("Bezier pole {xyz:?}; expected finite coordinates")
+            );
+        }
+    }
+}

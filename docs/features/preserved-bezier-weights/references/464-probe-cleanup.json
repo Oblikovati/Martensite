@@ -1,0 +1,23 @@
+{
+  "removed_at": "2026-11-15T07:10:15.794511+00:00",
+  "directory": "/tmp/464-matched-_3oce4ve",
+  "active_process_references": [],
+  "removed": [
+    {
+      "name": "candidate",
+      "sha256": "3e99de6e40359d0fa429f6919c44454421a81201a4997b2407135c4d0c812e52",
+      "bytes": 17025856
+    },
+    {
+      "name": "probe.rs",
+      "sha256": "19b2c0b3be65355ff11675c69875c8a19ee2b016c84c4d358f9094c8ae4610d1",
+      "bytes": 4427
+    },
+    {
+      "name": "main",
+      "sha256": "de1125a5e84e5fdcbf8382811f163455df3c1e2cf6953e27b2c6d00f300f9560",
+      "bytes": 16962752
+    }
+  ],
+  "preserved": "Compressed measurements and findings under docs/features/preserved-bezier-weights"
+}

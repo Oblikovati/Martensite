@@ -3,13 +3,19 @@
   "behavior": "StoredBezierCoefficientsV1",
   "checks": [
     {
-      "command": "cargo test -p martensite-tkg3d --test toolkit bezier_stored_coefficients -- --test-threads=1",
-      "passed": 8,
+      "command": "cargo test -p martensite-tkg3d --test toolkit bezier -- --test-threads=1",
+      "passed": 221,
+      "failed": 0,
+      "scope": "Before contiguous-copy-only followup; coefficient constructor unchanged afterward"
+    },
+    {
+      "command": "cargo test -p martensite-tkg3d --test toolkit ruled -- --test-threads=1",
+      "passed": 13,
       "failed": 0
     },
     {
-      "command": "cargo test -p martensite-tkgeomalgo --test toolkit retained_ruled_boundaries -- --test-threads=1",
-      "passed": 5,
+      "command": "cargo test -p martensite-tkgeomalgo --test toolkit geom_fill -- --test-threads=1",
+      "passed": 37,
       "failed": 0
     },
     {
@@ -18,21 +24,11 @@
       "failed": 0
     },
     {
-      "command": "cargo test -p martensite-tkbrep --test toolkit bintools_behavior -- --test-threads=1",
-      "passed": 24,
-      "failed": 0
-    },
-    {
-      "command": "cargo test -p martensite-tkg3d --test toolkit bezier_surface -- --test-threads=1",
-      "passed": 104,
-      "failed": 0
-    },
-    {
       "command": "cargo clippy -p martensite-tkg3d -p martensite-tkgeomalgo -p martensite-tkbrep --lib --tests -- -D warnings",
       "exit": 0
     },
     {
-      "command": "rustfmt --edition 2024 --config skip_children=true --check changed-Rust-files",
+      "command": "rustfmt --edition 2024 --check [new factory/grid modules and tests]",
       "exit": 0
     }
   ],
@@ -43,24 +39,37 @@
     "crates/martensite-tkbrep/src/bintools/surface_read.rs": "11f0ddf65fb4f6a43f6967c7e2e29488f96ea57a7bb565d3be684596352c694c",
     "crates/martensite-tkbrep/src/bintools/surface_set.rs": "0a3af93f263ac0bda1b9ee48865c8db5ae35e47d42456948d00e9d19008a9528",
     "crates/martensite-tkbrep/src/bintools/surface_weight_tests.rs": "d7087fd2907eaad635c5be3211437ee49cd465ca140dee39400400613fa0c702",
-    "crates/martensite-tkg3d/src/geom/bezier_surface.rs": "4d3976c613e18fab96da680c142dc2f0b7ce6faf0869222aba136aee662bc6b4",
-    "crates/martensite-tkg3d/src/geom/bezier_surface/state.rs": "38ce3f9c3411acd044b697669a83ac4e2a17f870cb150a11bc34bedf24a57771",
-    "crates/martensite-tkg3d/src/geom/bezier_surface/stored_coefficients.rs": "7628f830fba8302acdd9624323938c27debe62402a495b9188383f979f5ae053",
-    "crates/martensite-tkg3d/src/geom/mod.rs": "beb1aca38e5ed57b79c3e23423bd2c7abb3c37e56be54d5883046dff0d287054",
-    "crates/martensite-tkg3d/tests/bezier_stored_coefficients.rs": "3a457b25d1323db0fcc121729d2970a83acc11b7bfaaf1ddb413f5a7221a0dac",
-    "crates/martensite-tkg3d/tests/toolkit.rs": "3cfeffcf78ca52400436298e1ad0227f089f92e01cfb49605f3b16302f338876",
-    "crates/martensite-tkgeomalgo/src/geom_fill/bezier_curves.rs": "ec769982ff7b07159fff1bdbcf98bbdcb8120b8431ac557517086229598badd1",
-    "crates/martensite-tkgeomalgo/tests/retained_ruled_boundaries.rs": "7e2d0bb9d6e6864af8eec917915592c43a21b2e22677bf2ac4d3d34a8de4b5dd",
+    "crates/martensite-tkg3d/src/geom/bezier_surface.rs": "636c45c7e9d47861c6644fa5d697e344608fcc354492378f44b7b0a5caaee2c1",
+    "crates/martensite-tkg3d/src/geom/bezier_surface/edit.rs": "b11d64558f7e1c20b58fdef02c2abc61ddab0682139fc71fe512ad7c22315cdf",
+    "crates/martensite-tkg3d/src/geom/bezier_surface/grid.rs": "f539c07bdc33198a637ea036ef81d03e85abb16656e8ec7c077c9696324f13d8",
+    "crates/martensite-tkg3d/src/geom/bezier_surface/ruled_rows.rs": "4fca15f55bcc517dd63e0e3dbdbeccb230ed7be16d922a442811af3bf001fa58",
+    "crates/martensite-tkg3d/src/geom/bezier_surface/setters.rs": "7faa1fdbc06463e320c2ef7942bfd4afa5adb082f48317f8749543b9cfd39e2c",
+    "crates/martensite-tkg3d/src/geom/bezier_surface/state.rs": "5bdac847a25893c885b117e2a3fc84a86d57d7b1426a7904c88f52dba9cffafc",
+    "crates/martensite-tkg3d/src/geom/bezier_surface/stored_coefficients.rs": "88bc798377e5fd75ee638afd24a928589791e3f9bb87be6ccb4219394a9c37e5",
+    "crates/martensite-tkg3d/src/geom/bezier_surface/stored_ruled.rs": "214ef2dcae45d6a9faf32f9b5a05950242ed5cf4b9102ce37d94dd6dd8fa91e9",
+    "crates/martensite-tkg3d/src/geom/bezier_surface/traits.rs": "9cd910a95d32c643a405a0fdef38120504f7f517d33ca09e4d6452f38f387b03",
+    "crates/martensite-tkg3d/src/geom/mod.rs": "6e9ddce2c7ad5539f6affdf2eeb9d874142994024da5f97a177eb8a297796c8b",
+    "crates/martensite-tkg3d/tests/bezier_stored_coefficients.rs": "02c211742248fe0f42434005450ea8aae435b1d989e0c51c025d89ff85a8f744",
+    "crates/martensite-tkg3d/tests/ruled_control_grid.rs": "949b0287d7301f6a737631c22856e8adadf231e8690253362f84b15ac7f690e9",
+    "crates/martensite-tkg3d/tests/stored_ruled_geometry.rs": "845255193c946cffcd8872e83ec89904b5dd52d0e202b198e5d6f7b83f798dea",
+    "crates/martensite-tkg3d/tests/toolkit.rs": "ec83f0fd8a94408516d7b8a25315e5b4a243d9ba0b0084b76a8a6dd6d8c51e9a",
+    "crates/martensite-tkgeomalgo/src/geom_fill/bezier_curves.rs": "a0927bb4814fe41b072ef2d1c03c5c0734bc3567704c212726bdea3c0bd927a4",
+    "crates/martensite-tkgeomalgo/src/geom_fill/curves_filling.rs": "15d11be5006abc79ba8eec24fb6bf4ac4a3dbcea7376eaea2a7575382fe9b12f",
+    "crates/martensite-tkgeomalgo/tests/retained_ruled_boundaries.rs": "e2131626ad86237a4721b7642c4821c42d60e49dd7233078e0b95b5c22e8a5ec",
     "crates/martensite-tkgeomalgo/tests/toolkit.rs": "8a2c3398b15a1461433085061155d2f315b32bdd5e5e7ed1c59767e57045665f"
   },
   "pending": [
-    "actual feature regression with opt-in caller",
-    "matched timing and peak-memory qualification",
-    "canonical affected-package gate",
-    "independent review"
+    "Actual production feature caller integration and exact row qualification",
+    "Canonical affected-package gate before push",
+    "Previous-release and representative body-level performance qualification"
   ],
-  "probe_cleanup": "initial standalone probe source supplied through stdin; temporary executable and directory removed; retained measurements only",
-  "review": {
+  "probe_cleanup": "All three temporary matched probe files and their directory removed after live-reference checks; see 464-probe-cleanup.json",
+  "reviews": {
+    "spec": "No confirmed defect; owned-state factory and final contiguous copy independently reviewed",
+    "standards": "Earlier stale documentation and short helper corrected; final path reviewed clear"
+  },
+  "performance": "See performance.md and compressed raw records; no observed timing regression in final tested workload matrix; peak-memory parity not established",
+  "initial_review": {
     "checkpoint": "2280961a57e6de03ec9be49aa8dc32b845f8c721",
     "spec": "No confirmed correctness defect; feature wiring/performance/canonical gate pending",
     "standards": "Three minimum-length findings resolved with direct Send+Sync coercions and a native-cause preservation WHY comment",

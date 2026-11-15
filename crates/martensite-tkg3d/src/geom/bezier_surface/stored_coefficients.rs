@@ -1,5 +1,7 @@
 //! Checked coefficient retention without the legacy epsilon demotion (#464).
-use super::{GeomBezierSurface, SurfaceState, at2, check_pole_counts, check_weights, errors};
+use super::{
+    GeomBezierSurface, SurfaceState, check_pole_counts, check_weight_shape, check_weights, errors,
+};
 use martensite_tkernel::{ncollection::Array2, standard::Failure};
 use martensite_tkmath::gp::Point3;
 
@@ -63,34 +65,26 @@ impl GeomBezierSurface {
         weights: &Array2<'_, f64>,
     ) -> Result<Self, BezierSurfaceCoefficientError> {
         check_pole_counts(poles.nb_rows(), poles.nb_columns())?;
-        check_weights(weights, poles.nb_rows(), poles.nb_columns())?;
-        finite_coefficients(poles, weights)?;
-        let flags = exact_rationality(weights)?;
-        let first = at2(weights, weights.lower_row(), weights.lower_col())?;
+        check_weight_shape(weights, poles.nb_rows(), poles.nb_columns())?;
+        let scan = checked_uniform_weights(weights)?;
+        finite_poles(poles)?;
+        check_finite_weight(scan.nonfinite)?;
+        let flags = if scan.uniform {
+            (false, false)
+        } else {
+            exact_weight_variation(weights)
+        };
+        let first = scan.first;
         if flags == (false, false) && first != 1. {
             return Err(BezierSurfaceCoefficientError::ConstantNonUnitWeights { weight: first });
         }
         Ok(Self::stored(SurfaceState::retained(poles, weights, flags)?))
     }
 }
-fn finite_coefficients(
-    poles: &Array2<'_, Point3>,
-    weights: &Array2<'_, f64>,
-) -> Result<(), Failure> {
-    finite_poles(poles)?;
-    for weight in weights.as_slice() {
-        if !weight.is_finite() {
-            return Err(errors::construction(&format!(
-                "Bezier weight {weight}; expected finite positive weight"
-            )));
-        }
-    }
-    Ok(())
-}
-fn finite_poles(poles: &Array2<'_, Point3>) -> Result<(), Failure> {
+pub(super) fn finite_poles(poles: &Array2<'_, Point3>) -> Result<(), Failure> {
     for point in poles.as_slice() {
-        let xyz = [point.x(), point.y(), point.z()];
-        if !xyz.into_iter().all(f64::is_finite) {
+        let xyz = point.coordinates();
+        if !xyz[0].is_finite() || !xyz[1].is_finite() || !xyz[2].is_finite() {
             return Err(errors::construction(&format!(
                 "Bezier pole {xyz:?}; expected finite coordinates"
             )));
@@ -98,14 +92,54 @@ fn finite_poles(poles: &Array2<'_, Point3>) -> Result<(), Failure> {
     }
     Ok(())
 }
-fn exact_rationality(weights: &Array2<'_, f64>) -> Result<(bool, bool), Failure> {
+pub(super) fn exact_weight_variation(weights: &Array2<'_, f64>) -> (bool, bool) {
+    let values = weights.as_slice();
+    let columns = weights.nb_columns();
     let (mut u, mut v) = (false, false);
-    for row in weights.lower_row()..=weights.upper_row() {
-        for col in weights.lower_col()..=weights.upper_col() {
-            let weight = at2(weights, row, col)?;
-            u |= row < weights.upper_row() && weight != at2(weights, row + 1, col)?;
-            v |= col < weights.upper_col() && weight != at2(weights, row, col + 1)?;
+    for (index, &weight) in values.iter().enumerate() {
+        u = u || index + columns < values.len() && weight != values[index + columns];
+        v = v || index % columns + 1 < columns && weight != values[index + 1];
+        if u && v {
+            break;
         }
     }
-    Ok((u, v))
+    (u, v)
+}
+struct RetainedWeightScan {
+    first: f64,
+    uniform: bool,
+    nonfinite: Option<f64>,
+}
+impl RetainedWeightScan {
+    #[inline(always)]
+    fn record_weight(&mut self, weight: f64) {
+        if self.nonfinite.is_none() && !weight.is_finite() {
+            self.nonfinite = Some(weight);
+        }
+        self.uniform &= weight == self.first;
+    }
+}
+fn checked_uniform_weights(weights: &Array2<'_, f64>) -> Result<RetainedWeightScan, Failure> {
+    let values = weights.as_slice();
+    let mut scan = RetainedWeightScan {
+        first: values[0],
+        uniform: true,
+        nonfinite: None,
+    };
+    for &weight in values {
+        if weight <= martensite_tkmath::gp::resolution() {
+            // Only malformed grids need the retained column-major failure search.
+            check_weights(weights, weights.nb_rows(), weights.nb_columns())?;
+        }
+        scan.record_weight(weight);
+    }
+    Ok(scan)
+}
+pub(super) fn check_finite_weight(nonfinite: Option<f64>) -> Result<(), Failure> {
+    if let Some(weight) = nonfinite {
+        return Err(errors::construction(&format!(
+            "Bezier weight {weight}; expected finite positive weight"
+        )));
+    }
+    Ok(())
 }

@@ -90,6 +90,7 @@ impl SurfaceState {
         state.init(poles, weights)?;
         Ok(state)
     }
+    #[inline(always)]
     fn empty() -> Self {
         Self {
             poles: Array2::default(),
@@ -113,6 +114,20 @@ impl SurfaceState {
             rebased_grid(weights)?
         } else {
             state.unit_weights()?
+        };
+        (state.u_rational, state.v_rational) = flags;
+        Ok(state)
+    }
+    pub(super) fn retained_owned(
+        poles: Array2<'static, Point3>,
+        weights: Option<Array2<'static, f64>>,
+        flags: (bool, bool),
+    ) -> Result<Self, Failure> {
+        let mut state = Self::empty();
+        state.poles = poles;
+        state.weights = match weights {
+            Some(weights) => weights,
+            None => state.unit_weights()?,
         };
         (state.u_rational, state.v_rational) = flags;
         Ok(state)

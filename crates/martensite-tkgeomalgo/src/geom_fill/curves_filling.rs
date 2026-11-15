@@ -5,11 +5,10 @@ use super::filling::Rows;
 use super::{
     GeomFillCoons, GeomFillCurved, GeomFillFilling, GeomFillFillingStyle, GeomFillStretch,
 };
-use martensite_tkernel::ncollection::array2_failure;
 use martensite_tkernel::ncollection::{Array1, Array2};
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
-use martensite_tkg2d::geom2d::arrays::{at, one_based, put};
+use martensite_tkg2d::geom2d::arrays::{one_based, put};
 use martensite_tkg2d::geom2d::errors;
 use martensite_tkg3d::geom::GeomBoundedCurve;
 use martensite_tkmath::gp::Point3;
@@ -142,34 +141,7 @@ pub(super) fn scheme_grids(caro: &GeomFillFilling) -> Result<SchemeGrids, Failur
     Ok((poles, Some(weights)))
 }
 
-/// The two-column grids of a ruled surface: the first `n` poles (and weights, when
-/// given) of each curve as columns 1 and 2.
-pub(super) fn ruled_grids(
-    poles: [&Array1<'_, Point3>; 2],
-    weights: Option<[&Array1<'_, f64>; 2]>,
-    n: i32,
-) -> Result<SchemeGrids, Failure> {
-    Ok((
-        two_columns(poles, n)?,
-        weights.map(|w| two_columns(w, n)).transpose()?,
-    ))
-}
-
-/// `Grid(i, 1) = A(i); Grid(i, 2) = B(i)` for `i` in `1..=n`.
-fn two_columns<T: Copy + Default>(
-    columns: [&Array1<'_, T>; 2],
-    n: i32,
-) -> Result<Array2<'static, T>, Failure> {
-    let mut grid: Array2<'static, T> =
-        Array2::with_bounds(1, n, 1, 2).map_err(errors::array_bounds)?;
-    for i in 1..=n {
-        grid.set_value(i, 1, at(columns[0], i)?)
-            .map_err(array2_failure)?;
-        grid.set_value(i, 2, at(columns[1], i)?)
-            .map_err(array2_failure)?;
-    }
-    Ok(grid)
-}
+pub(super) use martensite_tkg3d::geom::ruled_control_grid as ruled_grids;
 
 /// The second search of `Arrange` at chain slot `i`: a curve that starts at `end`, or
 /// ends there (then replaced by its reversed copy), moves to slot `i`.

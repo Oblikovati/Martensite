@@ -14,7 +14,7 @@ adaptors, parameter grids, geometry hashes and one-parameter approximation (#192
 | `adv_approx` | Shared-knot B-spline approximation of one-parameter functions. |
 | `top_abs` | Shape categories, orientation composition and formatted labels. |
 
-`GeomBezierSurface::from_stored_coefficients` provides checked, exact coefficient retention with an explicit constant non-unit refusal. See [the retained-weight contract](../preserved-bezier-weights/README.md) (#464).
+`GeomBezierSurface::from_stored_coefficients` provides checked, exact coefficient retention with an explicit constant non-unit refusal. `GeomBezierSurface::ruled_with_stored_boundaries` admits owned curve rows and constructs matching native boundaries and a side surface. See [the retained-weight contract](../preserved-bezier-weights/README.md) (#464).
 
 ## Ownership and evaluation boundaries
 

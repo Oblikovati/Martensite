@@ -42,11 +42,20 @@ parameterization. The actual boundary constructor already canonicalizes `[2,2]`
 to unit weights. A regression checks that state before filling and the final unit
 rows. No additional canonicalization is hidden in the preserving surface API.
 
-`GeomFillBezierCurves::ruled_from_stored_boundaries` accepts equal-degree native
-Bezier boundaries and retains their actual control rows. It reuses the existing
-ruled-grid builder. Unequal degrees are refused explicitly, avoiding a promise
-that degree elevation leaves the original coefficient rows unchanged. The
-conical feature caller supplies two boundaries from the same fitted span.
+`GeomBezierSurface::ruled_with_stored_boundaries` consumes two
+`StoredBezierBoundary` coefficient buffers. It admits each curve into private
+owned state, builds the surface from those actual canonical rows, and returns
+`StoredRuledGeometry` containing both curves and the surface. Equal degrees are
+required; degree elevation would change the supplied coefficient rows. Finite
+coordinates and original weights are checked before native handles escape.
+Constant curve weights use the existing curve canonicalization, so both the
+curves and the side use unit coefficients in that case.
+
+The returned native geometry is mutable operation-local construction state,
+not an immutable published result. Each curve and the surface have independent
+storage. The feature caller must still validate, encode and freeze the result.
+The shared `ruled_control_grid` primitive also serves the unchanged legacy Bezier
+and B-spline filling paths; it performs no numerical admission itself.
 
 ## Binary replay and errors
 
@@ -64,7 +73,7 @@ ancestry and offending weight bits. The strict reader preserves that original
 failure through recursive reads. The feature operation must match the category
 through `BezierSurfaceCoefficientError::CONSTANT_NON_UNIT_EXCEPTION`, retain the
 original failure as its cause and return a typed operation refusal. Message text
-is not a dispatch protocol. Direct construction and filling return the Rust
+is not a dispatch protocol. Direct surface and patch construction return the Rust
 coefficient error enum.
 
 ## Verification and remaining qualification
@@ -77,7 +86,7 @@ prefix's legacy error and cursor behavior. The curve-to-fill control proves that
 constant curve weights are already unit at the actual caller boundary.
 
 The feature must still qualify its original negative-axis signed-zero case with
-the opt-in builder and decoder and preserve its exact row check. Performance and
-the affected-package gate remain pending; focused passes alone do not establish
-time or peak-memory parity. No crate version, format version or release tag is
+the opt-in builder and decoder and preserve its exact row check. The [performance qualification](performance.md) records faster timings on the
+tested native workloads and the unresolved peak-memory limitation. The affected-
+package gate and actual feature caller qualification remain pending. No crate version, format version or release tag is
 changed.

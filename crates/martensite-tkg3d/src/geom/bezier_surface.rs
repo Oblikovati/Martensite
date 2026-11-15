@@ -1,9 +1,11 @@
 //! `GeomBezierSurface`: a rational or non-rational Bezier surface on `[0, 1] x [0, 1]`.
 mod edit;
 mod grid;
+mod ruled_rows;
 mod setters;
 mod state;
 mod stored_coefficients;
+mod stored_ruled;
 mod traits;
 use super::bounded_surface::GeomBoundedSurface;
 use super::errors;
@@ -19,8 +21,10 @@ use martensite_tkernel::standard::{Failure, StandardTransient};
 use martensite_tkg2d::geom2d::spline_data::bezier_knots;
 use martensite_tkmath::bsplclib;
 use martensite_tkmath::gp::{Point3, resolution};
+pub use ruled_rows::{RuledControlGrid, ruled_control_grid};
 use state::{SurfaceState, rationality};
 pub use stored_coefficients::BezierSurfaceCoefficientError;
+pub use stored_ruled::{StoredBezierBoundary, StoredRuledGeometry};
 
 /// A Bezier surface; `Handle::new(GeomBezierSurface::new(&poles)?)`.
 pub struct GeomBezierSurface {
@@ -47,22 +51,34 @@ fn check_pole_counts(nb_u: usize, nb_v: usize) -> Result<(), Failure> {
 
 // The weight checks of the rational constructor, in the retained column-major order.
 fn check_weights(weights: &Array2<'_, f64>, nb_u: usize, nb_v: usize) -> Result<(), Failure> {
+    check_weight_shape(weights, nb_u, nb_v)?;
+    for col in weights.lower_col()..=weights.upper_col() {
+        check_weight_column(weights, col)?;
+    }
+    Ok(())
+}
+
+#[inline(always)]
+fn check_weight_column(weights: &Array2<'_, f64>, col: i32) -> Result<(), Failure> {
+    for row in weights.lower_row()..=weights.upper_row() {
+        let weight: f64 = at2(weights, row, col)?;
+        if weight <= resolution() {
+            return Err(errors::construction(&format!(
+                "Geom_BezierSurface: Weights({row}, {col}) = {weight}; expected > gp::Resolution()"
+            )));
+        }
+    }
+    Ok(())
+}
+
+#[inline(always)]
+fn check_weight_shape(weights: &Array2<'_, f64>, nb_u: usize, nb_v: usize) -> Result<(), Failure> {
     if weights.nb_rows() != nb_u || weights.nb_columns() != nb_v {
         return Err(errors::construction(&format!(
             "Geom_BezierSurface: {} x {} weights; expected {nb_u} x {nb_v}",
             weights.nb_rows(),
             weights.nb_columns()
         )));
-    }
-    for col in weights.lower_col()..=weights.upper_col() {
-        for row in weights.lower_row()..=weights.upper_row() {
-            let weight: f64 = at2(weights, row, col)?;
-            if weight <= resolution() {
-                return Err(errors::construction(&format!(
-                    "Geom_BezierSurface: Weights({row}, {col}) = {weight}; expected > gp::Resolution()"
-                )));
-            }
-        }
     }
     Ok(())
 }
