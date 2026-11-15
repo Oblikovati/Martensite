@@ -95,7 +95,7 @@ fn production_references(
     manifest: &PackageManifest,
     changed: &[ChangedFile],
 ) -> Option<ProductionReferences> {
-    if root.join("build.rs").exists() || custom_build(manifest) || custom_target(manifest) {
+    if !crate::release_build_inputs::known_build_inputs(root, manifest) || custom_target(manifest) {
         return None;
     }
     let mut references = ProductionReferences {
@@ -110,6 +110,29 @@ fn production_references(
     scan_directory(root, root, &mut references)?;
     Some(references)
 }
+/// A test-target manifest edit is QA-only only when no production input retains its bytes.
+pub(crate) fn manifest_is_unreferenced(
+    root: &Path,
+    manifest: &PackageManifest,
+    changed: &[ChangedFile],
+) -> bool {
+    let Some(references) = production_references(root, manifest, &with_manifest_evidence(changed))
+    else {
+        return false;
+    };
+    !references
+        .paths
+        .contains(&normalized(&root.join("Cargo.toml")))
+}
+fn with_manifest_evidence(changed: &[ChangedFile]) -> Vec<ChangedFile> {
+    let mut inputs = changed.to_vec();
+    inputs.push(ChangedFile {
+        path: "Cargo.toml".into(),
+        deleted: false,
+        untracked: false,
+    });
+    inputs
+}
 fn changed_extensions(changed: &[ChangedFile]) -> BTreeSet<String> {
     changed
         .iter()
@@ -121,13 +144,6 @@ fn changed_extensions(changed: &[ChangedFile]) -> BTreeSet<String> {
                 .to_ascii_lowercase()
         })
         .collect()
-}
-fn custom_build(manifest: &PackageManifest) -> bool {
-    manifest
-        .source
-        .get("package")
-        .and_then(|p| p.get("build"))
-        .is_some_and(|build| build.as_str().is_some())
 }
 fn custom_target(manifest: &PackageManifest) -> bool {
     let library = manifest.source.get("lib").into_iter();
@@ -153,7 +169,9 @@ fn scan_directory(directory: &Path, root: &Path, refs: &mut ProductionReferences
         }
         if kind.is_dir() {
             scan_child(&entry.path(), root, refs)?;
-        } else if entry.path().extension().is_some_and(|ext| ext == "rs") {
+        } else if entry.path().extension().is_some_and(|ext| ext == "rs")
+            && entry.path() != root.join("build.rs")
+        {
             scan_source(&entry.path(), root, refs)?;
         }
     }
@@ -378,6 +396,10 @@ fn record_literal(
     Some(())
 }
 fn record_path(path: PathBuf, root: &Path, refs: &mut ProductionReferences) -> Option<()> {
+    if path == normalized(&root.join("Cargo.toml")) {
+        refs.paths.insert(path);
+        return Some(());
+    }
     if path.starts_with(root.join("tests"))
         && refs.paths.insert(path.clone())
         && path.extension().is_some_and(|extension| extension == "rs")

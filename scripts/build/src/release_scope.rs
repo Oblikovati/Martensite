@@ -146,15 +146,23 @@ fn changed_release_package(
     }
     let manifest = current_manifest(context, &package.dir, inherited)?;
     let old = previous.get(&manifest.name);
-    let publication = crate::release_test_inputs::publication_changes(
-        context.root(),
-        &manifest,
-        &package.dir,
-        changed,
-    );
-    let source_changed = package_changed(&manifest, old, &package.dir, &publication);
+    let source_changed = publication_changed(context.root(), &package.dir, &manifest, old, changed);
     check_package_version(&manifest, old, source_changed)?;
     Ok(source_changed)
+}
+
+fn publication_changed(
+    root: &std::path::Path,
+    directory: &str,
+    current: &PackageManifest,
+    previous: Option<&PackageManifest>,
+    changed: &[ChangedFile],
+) -> bool {
+    let inputs = crate::release_test_inputs::publication_changes(root, current, directory, changed);
+    let comparison = crate::release_qa_manifest::publication_manifest(
+        root, current, previous, directory, changed,
+    );
+    package_changed(&comparison, previous, directory, &inputs)
 }
 
 fn manifest_changed(current: &PackageManifest, previous: Option<&PackageManifest>) -> bool {

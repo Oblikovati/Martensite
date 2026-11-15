@@ -100,3 +100,16 @@ fn reintroduction_runner(root: &std::path::Path) -> crate::fake_runner::Recordin
             "[package]\nname='a'\nversion='1.0.0'",
         )
 }
+
+#[test]
+fn qa_test_target_edits_still_select_affected_tests() {
+    let previous = manifest("1.0.0");
+    let mut current = previous.clone();
+    let target = "name='performance'\npath='tests/performance.rs'"
+        .parse::<Table>()
+        .unwrap();
+    current
+        .source
+        .insert("test".into(), toml::Value::Array(vec![target.into()]));
+    assert!(manifest_changed(&current, Some(&previous)));
+}

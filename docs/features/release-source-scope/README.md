@@ -13,7 +13,7 @@ package identity reuses its verified historical archive, including its historica
 tests; current checkout tests run against current dependencies during validation.
 
 A test path remains a publication input when production Rust references it,
-including transitive Rust modules. Custom build scripts, production targets
+including transitive Rust modules. Unreviewed custom build scripts, production targets
 outside `src/`, unreadable or unparseable sources and unresolved file includes
 retain the conservative source-changed result. Tokenization reuses the build
 driver's existing exact `proc-macro2` dependency; no dependency component or
@@ -50,3 +50,13 @@ change. Its historical 0.4.0 archive pins rustix 1.1.5 and cannot resolve alongs
 the patched TKernel's exact 1.1.6 constraint. Ignoring that change or rewriting
 published bytes would not fix the release graph. Its version decision is separate
 from this test-only classifier correction.
+
+## Test targets and the reviewed budget marker — #481
+
+A separate Cargo integration-test target is a QA change. The publication comparison now ignores differences confined to `[[test]]` entries with `name`, `path` and `harness` fields after proving that production inputs do not retain `Cargo.toml`. It does not alter the parsed manifest or the test-impact comparison. Dependency, feature, build, library, binary and unknown-field changes still count as source changes.
+
+Literal production references to `Cargo.toml` retain publication impact. A dynamic include with a `.toml` suffix remains uncertain whenever comparing manifest differences, including differences from a historical archive absent from the latest Git diff. Unreadable inputs and unsupported expressions fail closed.
+
+The Boolean-case package has a build script that reads only `OPT_LEVEL` and `CARGO_CFG_TARGET_OS` and emits the budget cfg and a `rerun-if-changed=build.rs` directive. Its reviewed LF-normalized SHA-256 is `dddebb2e5a4e8cfbf22875ca33cd1890f22b750466b38063feab8d798d2bfb29`. Only this exact program permits the QA-only proof. An edited script, a different build path or an unknown program disables it. LF and CRLF checkouts receive the same decision. This is a bound on one inspected program's inputs, not a filename or package-name exemption.
+
+Regression coverage includes test-only targets, both line endings, changed scripts, production manifest includes, historical manifest comparisons, real manifest changes and unchanged test selection. Focused read-only controls also evaluate the actual Boolean package source. No package versions or dependencies change. Release validation remains hosted; no local release rehearsal is used for this correction.
