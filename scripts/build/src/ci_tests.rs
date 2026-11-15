@@ -252,7 +252,9 @@ mod tests {
     fn single_part_rows(packages: &[&str]) -> serde_json::Value {
         let rows: Vec<_> = packages
             .iter()
-            .map(|package| serde_json::json!({"package": package, "part": 0, "parts": 1}))
+            .map(|package| {
+                serde_json::json!({"package": package, "part": 0, "parts": 1, "label": package})
+            })
             .collect();
         serde_json::json!({"include": rows})
     }
@@ -293,7 +295,7 @@ mod tests {
         let outputs = matrix_outputs(&context, plan).unwrap();
         assert_eq!(
             outputs[1].1,
-            r#"{"include":[{"package":"martensite-kernel","part":0,"parts":1}]}"#
+            r#"{"include":[{"label":"martensite-kernel","package":"martensite-kernel","part":0,"parts":1}]}"#
         );
         test_package(&context, plan, "martensite-kernel", 0, &BuildTarget::Host).unwrap();
         assert!(test_package(&context, plan, "martensite-math", 0, &BuildTarget::Host).is_err());
