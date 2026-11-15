@@ -32,7 +32,7 @@ fn literal_argument(token: Option<&TokenTree>) -> Option<String> {
 }
 
 fn owned_input(value: &str, parent: &Path, package: &Path) -> Option<PathBuf> {
-    if value.contains('\\') || value.contains(':') || Path::new(value).is_absolute() {
+    if !portable_input_name(value) {
         return None;
     }
     let target = parent.join(value);
@@ -45,6 +45,19 @@ fn owned_input(value: &str, parent: &Path, package: &Path) -> Option<PathBuf> {
     }
     let target = target.canonicalize().ok()?;
     (target.starts_with(package.canonicalize().ok()?) && target.is_file()).then_some(target)
+}
+
+fn portable_input_name(value: &str) -> bool {
+    let path = Path::new(value);
+    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+    value.is_ascii()
+        && !path.is_absolute()
+        && value.chars().all(|ch| !matches!(ch, '\\' | ':' | '~'))
+        && !name
+            .trim_end_matches([' ', '.'])
+            .eq_ignore_ascii_case("Cargo.toml")
 }
 
 fn distinct_bytes(target: &Path, manifest: &Path) -> Option<bool> {

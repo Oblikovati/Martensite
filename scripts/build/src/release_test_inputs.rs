@@ -21,6 +21,19 @@ struct ProductionReferences {
     changed_extensions: BTreeSet<String>,
 }
 
+impl ProductionReferences {
+    fn new(changed: &[ChangedFile], manifest_proof: bool) -> Self {
+        Self {
+            paths: BTreeSet::new(),
+            macros: LiteralMacroInputs::default(),
+            collecting: true,
+            manifest_proof,
+            manifest_inputs_known: true,
+            changed_extensions: changed_extensions(changed),
+        }
+    }
+}
+
 struct SourceScope<'a> {
     parent: &'a Path,
     package: &'a Path,
@@ -101,14 +114,7 @@ fn production_references(
     if !crate::release_input_layout::known_production_layout(root, manifest) {
         return None;
     }
-    let mut references = ProductionReferences {
-        paths: BTreeSet::new(),
-        macros: LiteralMacroInputs::default(),
-        collecting: true,
-        manifest_proof,
-        manifest_inputs_known: true,
-        changed_extensions: changed_extensions(changed),
-    };
+    let mut references = ProductionReferences::new(changed, manifest_proof);
     scan_directory(root, root, &mut references)?;
     references.paths.clear();
     references.collecting = false;

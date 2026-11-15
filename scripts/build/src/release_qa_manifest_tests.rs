@@ -292,3 +292,18 @@ fn owned_literal_input_with_distinct_bytes_keeps_the_qa_exemption() {
         manifest("").source
     );
 }
+
+#[test]
+fn manifest_case_alias_is_refused_even_when_local_bytes_differ() {
+    let root = fixture(
+        "#[cfg(windows)] pub const SOURCE: &str = include_str!(\"../CARGO.TOML\");",
+        None,
+    );
+    fs::write(
+        root.path().join("a/CARGO.TOML"),
+        "local case-distinct input",
+    )
+    .unwrap();
+    let current = test_target("");
+    assert_eq!(publication(root.path(), &current).source, current.source);
+}
