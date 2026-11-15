@@ -10,6 +10,11 @@ fn stopped_seconds(seconds: f64) -> f64 {
     measurement::recorded_seconds(&timer)
 }
 
+fn script_centiseconds(seconds: f64) -> f64 {
+    let printed = format!("{seconds:.2}");
+    printed.parse().unwrap()
+}
+
 #[test]
 fn displayed_centiseconds_cannot_falsely_reject_the_original_bound() {
     let serial = stopped_seconds(0.264);
@@ -17,7 +22,7 @@ fn displayed_centiseconds_cannot_falsely_reject_the_original_bound() {
     assert_eq!(serial.to_bits(), 0.264_f64.to_bits());
     assert_eq!(parallel.to_bits(), 0.207_f64.to_bits());
     assert!(measurement::meets_requirement(serial, parallel));
-    assert!(0.21 > 0.8 * 0.26);
+    assert!(script_centiseconds(parallel) > 0.8 * script_centiseconds(serial));
 }
 
 #[test]
@@ -25,7 +30,7 @@ fn displayed_centiseconds_cannot_falsely_accept_the_original_bound() {
     let serial = stopped_seconds(0.254);
     let parallel = stopped_seconds(0.204);
     assert!(!measurement::meets_requirement(serial, parallel));
-    assert!(0.20 <= 0.8 * 0.25);
+    assert!(script_centiseconds(parallel) <= 0.8 * script_centiseconds(serial));
 }
 
 #[test]
