@@ -15,7 +15,7 @@ impl LinePoints {
     }
     pub(super) fn len(&self) -> i32 {
         match self {
-            Self::Contiguous(points) => i32::try_from(points.len()).unwrap_or(i32::MAX),
+            Self::Contiguous(points) => legacy_point_count(points.len()),
             Self::Allocated(points) => points.length(),
         }
     }
@@ -95,5 +95,23 @@ impl LinePoints {
             Self::Contiguous(points) => points.iter().for_each(visit),
             Self::Allocated(points) => points.iter().for_each(visit),
         }
+    }
+}
+
+// Preserve Sequence::length's signed cast even beyond the public rank range (#496).
+fn legacy_point_count(count: usize) -> i32 {
+    count as i32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::legacy_point_count;
+
+    #[test]
+    fn signed_count_matches_sequence_without_allocating_large_lines() {
+        assert_eq!(legacy_point_count(0), 0);
+        assert_eq!(legacy_point_count(i32::MAX as usize), i32::MAX);
+        assert_eq!(legacy_point_count(i32::MAX as usize + 1), i32::MIN);
+        assert_eq!(legacy_point_count(usize::MAX), -1);
     }
 }

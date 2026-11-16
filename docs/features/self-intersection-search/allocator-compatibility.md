@@ -5,6 +5,9 @@ the original `Sequence` storage, including allocator object ownership, virtual
 policy dispatch, node release, reset exclusion and split-tail handling. Box
 rebuilds dispatch once per traversal and use slice iteration on the default path.
 The public methods and index errors are unchanged.
+Point counts retain `Sequence::length`'s signed cast, including wrapping beyond
+`i32::MAX`. Scalar tests cover zero, `i32::MAX`, the next count and `usize::MAX`
+without allocating large lines.
 
 The original PR #502 head, `28292f63fb16ed25aae45fabab01cb403d36119d`, discarded
 an explicit allocator. A live probe observed no allocation in a supplied
@@ -45,6 +48,9 @@ reader and serial native checker. The baseline used the allocator-backed line
 from main at `bef25f47`; the correction used the runtime sources at `5d09d8bb`.
 Only walking-line storage differed. Loading was outside the body wall timer;
 process CPU and peak RSS include loading. Both variants had one warm-up.
+The subsequent count correction preserves the measured workload's conversion:
+its point counts fit in `i32`, where the tested conversion and signed cast agree.
+The measurements belong to `5d09d8bb`; they were not rerun after that correction.
 
 Five alternating pairs were attempted. Continuous one-second `vmstat` samples
 required at least 65% idle CPU, at most 10% I/O wait, at most 8 runnable tasks and
