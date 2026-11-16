@@ -61,8 +61,12 @@ pub(crate) use launcher_policy::run_launcher_context_tasks;
 #[path = "context_tasks/tests.rs"]
 mod tests;
 
+// Past eight workers the holed conical self-check of #496 got slower and used twice
+// the CPU: the extra workers mostly contended on the allocator. Eight gave its best
+// time (1.33 s against 1.88 s uncapped on 32 logical CPUs) at about half the memory.
+const MAX_CONTEXT_WORKERS: usize = 8;
+
 fn context_worker_cap(task_count: usize) -> i32 {
     // Only the launcher's worker hint is bounded; the full usize iterator remains intact.
-    let maximum = i32::MAX as usize;
-    task_count.min(maximum) as i32
+    task_count.min(MAX_CONTEXT_WORKERS) as i32
 }
