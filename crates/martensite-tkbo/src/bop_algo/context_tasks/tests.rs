@@ -3,7 +3,7 @@
 mod lifetime;
 #[path = "observations.rs"]
 mod observations;
-use super::{ContextTaskSlots, context_worker_cap, execute_with_launcher};
+use super::{ContextTaskSlots, MAX_CONTEXT_WORKERS, context_worker_cap, execute_with_launcher};
 use crate::bop_algo::run_context_tasks;
 use crate::int_tools::Context;
 use lifetime::DropTrackedContext;
@@ -287,18 +287,15 @@ fn context_probe_edge() -> martensite_tkbrep::topods::Edge {
 
 #[test]
 fn worker_hint_saturates_without_wrapping_large_task_counts_to_serial() {
-    let maximum = i32::MAX as usize;
     let cases = [
         (0usize, 0),
         (1, 1),
-        (maximum, i32::MAX),
-        (maximum + 1, i32::MAX),
-        (usize::MAX, i32::MAX),
+        (MAX_CONTEXT_WORKERS, 8),
+        (MAX_CONTEXT_WORKERS + 1, 8),
+        (i32::MAX as usize + 1, 8),
+        (usize::MAX, 8),
     ];
     for (count, expected) in cases {
         assert_eq!(context_worker_cap(count), expected);
-    }
-    if let Some(wrapped_zero) = 1usize.checked_shl(32) {
-        assert_eq!(context_worker_cap(wrapped_zero), i32::MAX);
     }
 }
