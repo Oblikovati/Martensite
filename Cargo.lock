@@ -922,7 +922,7 @@ dependencies = [
 
 [[package]]
 name = "martensite-tklcaf"
-version = "0.3.6"
+version = "0.3.7"
 dependencies = [
  "martensite-tkcdf",
  "martensite-tkernel",

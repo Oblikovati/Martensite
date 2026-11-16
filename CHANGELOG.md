@@ -8,8 +8,6 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
-- Avoided broad sibling scans for proven single-label document transactions while retaining native traversal for ambiguous or reentrant changes (#489).
-
 - Kept release source proofs and changed-input comparisons in one canonical package-root coordinate system while preserving native Windows path components (#487).
 
 - Followed literal production QA modules while excluding disjoint test edits from release package version checks (#485).
@@ -21,6 +19,8 @@ follows [Semantic Versioning](https://semver.org/).
 ## [0.13.1] - 2026-11-15
 
 ### Fixed
+
+- Avoided broad sibling scans for proven single-label document transactions while retaining native traversal for ambiguous or reentrant changes (#489).
 
 - Separated test-only edits from release package version checks while retaining affected QA suites and conservative production-fixture checks (#466).
 
