@@ -291,6 +291,9 @@ runs the pinned nightly startup check before its controls; runtime startup
 failures, race reports, cancelled jobs and unexpected skips fail validation.
 The runner recomputes scope using the planner's release-history pin.
 
+The `document-transactions` control runs tklcaf’s internal sparse-transaction
+lease and race controls when that toolkit is affected (#489).
+
 An explicit local `cargo xtask ci thread-sanitizer` invocation runs all controls.
 Hosted CI requires a valid trigger and recomputes its affected selection.
 

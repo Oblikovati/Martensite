@@ -12,9 +12,10 @@ pub(crate) enum Control {
     FaceCertificate,
     OpenExtrusion,
     VertexNeighborhood,
+    DocumentTransactions,
 }
 
-pub(crate) const CONTROLS: [Control; 8] = [
+pub(crate) const CONTROLS: [Control; 9] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -23,6 +24,7 @@ pub(crate) const CONTROLS: [Control; 8] = [
     Control::FaceCertificate,
     Control::OpenExtrusion,
     Control::VertexNeighborhood,
+    Control::DocumentTransactions,
 ];
 
 impl Control {
@@ -36,6 +38,7 @@ impl Control {
             Self::FaceCertificate => "face-certificate",
             Self::OpenExtrusion => "open-extrusion",
             Self::VertexNeighborhood => "vertex-neighborhood",
+            Self::DocumentTransactions => "document-transactions",
         }
     }
 
@@ -47,6 +50,7 @@ impl Control {
             Self::FaceInput => "martensite-tkbrep",
             Self::FaceCertificate => "martensite-tktopalgo",
             Self::OpenExtrusion | Self::VertexNeighborhood => "martensite-tkmath",
+            Self::DocumentTransactions => "martensite-tklcaf",
         }
     }
 }
@@ -174,7 +178,8 @@ mod tests {
                 "face-input",
                 "face-certificate",
                 "open-extrusion",
-                "vertex-neighborhood"
+                "vertex-neighborhood",
+                "document-transactions"
             ]
         );
         assert_eq!(ids.iter().collect::<BTreeSet<_>>().len(), CONTROLS.len());

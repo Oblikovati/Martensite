@@ -111,7 +111,7 @@ pub trait TdfAttributeState: TdfAttribute {
             return Ok(());
         }
         let backup = self.backup_copy()?;
-        node.set_attributes_modified(true);
+        node.transaction_attributes(Some(&core), true);
         let backup_base = live(&backup, "TDF_Attribute::Backup")?.attribute_base();
         {
             let own = base.state.read();
@@ -137,7 +137,8 @@ pub trait TdfAttributeState: TdfAttribute {
             state.flags |= FORGOTTEN_MASK;
         }
         if let Some(node) = base.node() {
-            node.set_attributes_modified(true);
+            let core = node.core();
+            node.transaction_attributes(core.as_deref(), true);
         }
         base.validate(false);
     }

@@ -57,7 +57,21 @@ fn control_command(root: &Path, control: Control) -> CommandSpec {
         Control::FaceCertificate => face_certificate_controls(root),
         Control::OpenExtrusion => open_extrusion_controls(root),
         Control::VertexNeighborhood => vertex_neighborhood_controls(root),
+        Control::DocumentTransactions => document_transaction_controls(root),
     }
+}
+
+fn document_transaction_controls(root: &Path) -> CommandSpec {
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tklcaf",
+        "--lib",
+        "tdf::sparse_commit::tests",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ])
 }
 
 fn open_extrusion_controls(root: &Path) -> CommandSpec {
