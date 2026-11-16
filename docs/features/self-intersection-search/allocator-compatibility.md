@@ -1,5 +1,8 @@
 # Walking-line allocator compatibility (#496)
 
+Bug #507 tracks the allocator and signed-count regressions introduced by PR #502.
+The broader performance target remains in #496.
+
 `IntSurfLineOn2S::new(None)` uses contiguous points. An explicit allocator keeps
 the original `Sequence` storage, including allocator object ownership, virtual
 policy dispatch, node release, reset exclusion and split-tail handling. Box
