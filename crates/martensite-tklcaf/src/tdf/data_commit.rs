@@ -15,7 +15,7 @@ use std::sync::Arc;
 
 /// `OpenTransaction`: pushes the current time and returns the new transaction number.
 pub(crate) fn open_transaction(core: &DataCore) -> i32 {
-    core.commit_hint.open_transaction(core.root_node());
+    core.state.open_transaction(core.root_node());
     let mut state = core.state.write();
     let time = state.time;
     state.times.push(time);
@@ -37,7 +37,7 @@ pub(crate) fn commit_transaction(
     } else {
         Handle::default()
     };
-    let mut traversal = core.commit_hint.enter();
+    let mut traversal = core.state.enter();
     commit_route(core, &delta, with_delta, &traversal)?;
     close_transaction(core, &delta, with_delta);
     traversal.complete();
@@ -205,6 +205,7 @@ fn commit_label<Route: CommitRoute>(
 /// Large commits: unmodified siblings need one state read, not iterator/label clones
 /// and separate flag/brother reads. Read a modified sibling's next link after
 /// its callbacks, preserving the native iterator's mutation behavior.
+/// Untouched siblings bypass fallible result plumbing in the opt1 hot loop (#489).
 fn commit_children<Route: CommitRoute>(
     core: &DataCore,
     parent: &Arc<TdfLabelNode>,
@@ -214,27 +215,16 @@ fn commit_children<Route: CommitRoute>(
 ) -> Result<i32, Failure> {
     let (mut next, mut touched) = (walk.first_child(parent), 0);
     while let Some(child) = next {
-        let (count, following) = commit_child(core, parent, &child, delta, with_delta, walk)?;
-        touched += count;
-        next = following;
+        let state = child.state.read();
+        if state.flags & MAY_BE_MODIFIED_MASK == 0 {
+            next = state.brother.clone();
+            continue;
+        }
+        drop(state);
+        touched += commit_label(core, &child, delta, with_delta, walk.descend())?;
+        next = walk.following_child(parent, &child);
     }
     Ok(touched)
-}
-fn commit_child<Route: CommitRoute>(
-    core: &DataCore,
-    parent: &Arc<TdfLabelNode>,
-    child: &Arc<TdfLabelNode>,
-    delta: &Handle<TdfDelta>,
-    with_delta: bool,
-    walk: Route,
-) -> Result<(i32, Option<Arc<TdfLabelNode>>), Failure> {
-    let state = child.state.read();
-    if state.flags & MAY_BE_MODIFIED_MASK == 0 {
-        return Ok((0, state.brother.clone()));
-    }
-    drop(state);
-    let touched = commit_label(core, child, delta, with_delta, walk.descend())?;
-    Ok((touched, walk.following_child(parent, child)))
 }
 
 /// The attribute loop of one label in the recursive commit.
@@ -249,6 +239,8 @@ struct LabelCommit<'a> {
 }
 
 impl LabelCommit<'_> {
+    // Preserve the baseline native traversal lowering at opt1 (#489).
+    #[inline(always)]
     fn run(&mut self) -> Result<(), Failure> {
         let mut last: Handle<dyn TdfAttribute> = Handle::default();
         let mut iterator = TdfAttributeIterator::from_node(self.node, false);
@@ -263,6 +255,8 @@ impl LabelCommit<'_> {
         Ok(())
     }
     /// One attribute; returns whether it was removed from the label.
+    // The baseline inlines this per-attribute path; opt1 must retain that lowering (#489).
+    #[inline(always)]
     fn commit_attribute(
         &mut self,
         current: &Handle<dyn TdfAttribute>,

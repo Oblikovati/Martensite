@@ -13,6 +13,7 @@ mod data_set;
 mod delta;
 mod delta_on;
 mod derived_attribute;
+mod entry_storage;
 mod id_filter;
 mod iterators;
 mod label;

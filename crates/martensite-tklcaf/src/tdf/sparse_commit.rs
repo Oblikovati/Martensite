@@ -1,5 +1,5 @@
 //! A bounded document hint; unproven or reentrant traversals retain the full walk (#489).
-use super::label_node::TdfLabelNode;
+use super::{data::DataState, label_node::TdfLabelNode};
 use martensite_tkernel::standard::SharedState;
 use std::sync::{Arc, RwLockReadGuard, RwLockWriteGuard};
 mod path;
@@ -8,11 +8,11 @@ use path::{DirtyLabelPoint, SparseAncestorPath};
 pub(super) use route::{CommitRoute, NativeCommitRoute};
 
 #[derive(Default)]
-pub(super) struct SparseCommitHint {
-    state: SharedState<HintState>,
+pub(crate) struct DocumentStateCell {
+    state: SharedState<DataState>,
 }
 #[derive(Default)]
-struct HintState {
+pub(super) struct HintState {
     revision: u64,
     active: u32,
     forbidden: bool,
@@ -26,6 +26,10 @@ enum DirtyCollection {
     Many,
 }
 impl HintState {
+    fn shared_mark(&self) -> bool {
+        // Indexed documents and ambiguous dirty sets retain the native traversal.
+        matches!(self.collection, DirtyCollection::Many)
+    }
     fn discard(&mut self) {
         self.collection = DirtyCollection::Many;
         self.revision = self.revision.saturating_add(1);
@@ -58,42 +62,64 @@ pub(super) struct AttributeMarkLease<'a> {
 }
 enum MarkGuard<'a> {
     Shared {
-        _guard: RwLockReadGuard<'a, HintState>,
+        _guard: RwLockReadGuard<'a, DataState>,
     },
     Exclusive {
-        _guard: RwLockWriteGuard<'a, HintState>,
+        _guard: RwLockWriteGuard<'a, DataState>,
     },
 }
-impl SparseCommitHint {
+impl DocumentStateCell {
+    pub(crate) fn read(&self) -> RwLockReadGuard<'_, DataState> {
+        // Share the existing cell instead of allocating a second document lock (#489).
+        self.state.read()
+    }
+    pub(crate) fn write(&self) -> RwLockWriteGuard<'_, DataState> {
+        // Entry-index transitions and hint revisions must use the same exclusive lease.
+        self.state.write()
+    }
     pub(super) fn mark<'a>(&'a self, node: &Arc<TdfLabelNode>) -> AttributeMarkLease<'a> {
         let state = self.state.read();
-        if matches!(state.collection, DirtyCollection::Many) {
+        if state
+            .entry_storage
+            .hint()
+            .is_none_or(HintState::shared_mark)
+        {
             return AttributeMarkLease {
                 _guard: MarkGuard::Shared { _guard: state },
             };
         }
         drop(state);
         let mut state = self.state.write();
-        state.record(node);
+        if let Some(hint) = state.entry_storage.hint_mut() {
+            hint.record(node);
+        }
         AttributeMarkLease {
             _guard: MarkGuard::Exclusive { _guard: state },
         }
     }
     pub(super) fn manual_flags(&self) {
         let mut state = self.state.write();
-        state.forbidden = true;
-        state.discard();
+        if let Some(hint) = state.entry_storage.hint_mut() {
+            hint.forbidden = true;
+            hint.discard();
+        }
     }
     pub(super) fn open_transaction(&self, root: &Arc<TdfLabelNode>) {
         let mut state = self.state.write();
-        state.discard();
-        if !state.forbidden && state.active == 0 && !root.may_be_modified() {
-            state.collection = DirtyCollection::Empty;
+        let Some(hint) = state.entry_storage.hint_mut() else {
+            return;
+        };
+        hint.discard();
+        if !hint.forbidden && hint.active == 0 && !root.may_be_modified() {
+            hint.collection = DirtyCollection::Empty;
         }
     }
     pub(super) fn enter(&self) -> CommitTraversal<'_> {
         let mut state = self.state.write();
-        let (revision, point) = state.begin_walk();
+        let (revision, point) = state
+            .entry_storage
+            .hint_mut()
+            .map_or((0, None), HintState::begin_walk);
         CommitTraversal {
             hint: self,
             revision,
@@ -101,16 +127,17 @@ impl SparseCommitHint {
             completed: false,
         }
     }
-    fn current(&self, revision: u64) -> Option<RwLockReadGuard<'_, HintState>> {
+    fn current(&self, revision: u64) -> Option<RwLockReadGuard<'_, DataState>> {
         let state = self.state.read();
-        if state.forbidden || state.revision != revision {
+        let hint = state.entry_storage.hint()?;
+        if hint.forbidden || hint.revision != revision {
             return None;
         }
         Some(state)
     }
 }
 pub(super) struct CommitTraversal<'a> {
-    hint: &'a SparseCommitHint,
+    hint: &'a DocumentStateCell,
     revision: u64,
     point: Option<DirtyLabelPoint>,
     completed: bool,
@@ -178,9 +205,12 @@ impl CommitRoute for CommitCursor<'_, '_> {
 impl Drop for CommitTraversal<'_> {
     fn drop(&mut self) {
         let mut state = self.hint.state.write();
-        state.active = state.active.saturating_sub(1);
-        state.forbidden |= !self.completed;
-        state.discard();
+        let Some(hint) = state.entry_storage.hint_mut() else {
+            return;
+        };
+        hint.active = hint.active.saturating_sub(1);
+        hint.forbidden |= !self.completed;
+        hint.discard();
     }
 }
 #[cfg(test)]

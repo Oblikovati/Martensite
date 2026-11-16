@@ -112,7 +112,7 @@ impl TdfLabelNode {
     /// `AttributesModified(bool)`: setting it also marks every ancestor `MayBeModified`.
     pub fn set_attributes_modified(&self, status: bool) {
         if let Some(core) = self.core() {
-            core.commit_hint.manual_flags();
+            core.state.manual_flags();
         }
         self.attribute_path(status);
     }
@@ -122,7 +122,7 @@ impl TdfLabelNode {
             return;
         }
         // The lease covers local and ancestor publication; hint locks always precede node locks.
-        let _lease = core.map(|core| core.commit_hint.mark(self));
+        let _lease = core.map(|core| core.state.mark(self));
         self.attribute_path(true);
     }
     fn attribute_path(&self, status: bool) {
@@ -138,7 +138,7 @@ impl TdfLabelNode {
     /// `MayBeModified(bool)`.
     pub fn set_may_be_modified(&self, status: bool) {
         if let Some(core) = self.core() {
-            core.commit_hint.manual_flags();
+            core.state.manual_flags();
         }
         self.set_flag(MAY_BE_MODIFIED_MASK, status);
     }

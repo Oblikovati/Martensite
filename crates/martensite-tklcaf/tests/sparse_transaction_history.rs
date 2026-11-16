@@ -7,6 +7,9 @@ use probe::{CommitAction, HistoryFixture};
 #[test]
 fn a_callback_commits_a_newly_dirty_later_sibling_in_order() {
     let fixture = HistoryFixture::new(&[&[1], &[2], &[3]]);
+    assert_later_sibling_history(fixture);
+}
+fn assert_later_sibling_history(fixture: HistoryFixture) {
     let mut transaction = fixture.open();
     fixture.arm(1, CommitAction::Touch(fixture.label(2)));
     fixture.touch(1);
@@ -83,6 +86,9 @@ fn manual_flags_keep_an_unmodified_probe_visible_to_commit_callbacks() {
 #[test]
 fn nested_commit_keeps_outer_backups_until_the_outer_abort() {
     let fixture = HistoryFixture::new(&[&[1], &[2]]);
+    assert_nested_abort_history(fixture);
+}
+fn assert_nested_abort_history(fixture: HistoryFixture) {
     let mut outer = fixture.open();
     fixture.touch(0);
     let mut inner = fixture.open();
@@ -155,4 +161,20 @@ fn a_sparse_modification_commits_through_a_256_label_ancestor_chain() {
     assert_eq!(fixture.data.transaction(), 0);
     assert_eq!(fixture.probe(0).transaction(), 0);
     assert!(!fixture.data.root().may_be_modified());
+}
+
+fn indexed_fixture(paths: &[&[i32]]) -> HistoryFixture {
+    let fixture = HistoryFixture::new(paths);
+    fixture.data.set_access_by_entries(true).unwrap();
+    fixture
+}
+#[test]
+fn indexed_documents_preserve_later_sibling_callback_history() {
+    let fixture = indexed_fixture(&[&[1], &[2], &[3]]);
+    assert_later_sibling_history(fixture);
+}
+#[test]
+fn indexed_documents_preserve_nested_commit_and_abort_history() {
+    let fixture = indexed_fixture(&[&[1], &[2]]);
+    assert_nested_abort_history(fixture);
 }

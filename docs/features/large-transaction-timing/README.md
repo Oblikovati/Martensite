@@ -18,88 +18,78 @@ original traversal. Deep first marks are refused at admission. The native
 lifecycle guard stores no ancestor array; only an eligible sparse helper captures
 that bounded array under a current-revision lease. No fixture, timing ratio, tolerance or public API changes.
 
-## Concurrency and callbacks
+## Storage, concurrency and entry lookup
 
-Marking holds a hint lease through publication of local and ancestor flags.
-Reset and traversal entry take the exclusive lease. Each shortcut holds a
-revision-checked shared lease through the actual pointer decision; a new distinct
-mark cannot publish between validation and skipping siblings. Leases are released
-before attribute callbacks. Nested transactions invalidate the outer shortcut.
-The revision saturates and permanently disables the hint before wrapping.
-Lock ordering is hint before node. Documents still do not promise concurrent
-application-level mutation; these controls preserve marking safety at the
-existing shared entry points.
+The final implementation reuses the existing document-state lock. A safe enum
+stores either transaction evidence or the existing entry-index table in the same
+112-byte slot. The private document core remains 176 bytes and each label node
+112 bytes on the measured Linux x86-64 build. Unit tests check the enum's size and
+alignment against the old map and preserve the measured core/node sizes.
 
-Fifteen internal controls cover identity, fallback, depth, saturation and
-channel-coordinated reset/traversal races. Eleven owned history controls cover
-ancestor and sibling changes during callbacks, nested transactions, failure and
-undo. They pass unchanged on the candidate, current main and v0.13.0. A wide
-direct-child control moves the lookup cache away from the modified label. A
-256-level control exercises the native fallback. The original full-size timing
-fixtures and 1000:1 assertions remain byte-for-byte unchanged.
+Index enablement or public manual registration permanently switches to indexed
+storage and native traversal. Disabling automatic indexing clears bindings but
+never recreates hint state, so an earlier cursor cannot become eligible again.
+Manual registration still works while the public automatic-index flag is false.
+Enable/disable/rebuild, missing lookup output, callback order and nested undo are
+covered by owned public controls.
 
-The build driver adds the affected `document-transactions` ThreadSanitizer
-control for these internal lease tests. Local pinned-runtime startup terminated
-with SIGSEGV before executing toolkit code. That is unavailable local evidence;
-hosted sanitizer success is still required before merge.
+Marking holds the document-state lease through local and ancestor flag publication.
+Reset and index transitions take the exclusive lease. Each shortcut holds a
+revision-checked shared lease through its pointer decision. Leases end before
+attribute callbacks. Revisions saturate and disable tracking before wrapping.
+Lock ordering remains state before node. Documents still do not promise concurrent
+application-level mutation. Twenty internal controls cover identity, fallback,
+depth, saturation, reset/traversal races and index-transition invalidation.
 
-## Performance evidence and limits
+The generic traversal keeps untouched siblings outside fallible result plumbing.
+The existing attribute loop and per-attribute method retain the baseline's opt1
+inlining; outlined calls produced a measured full-commit slowdown. No public API,
+input size, tolerance, callback order or timing threshold changes.
 
-Matched binaries use opt-level 1, debug information disabled, CPU 3, one exact
-test per process and the same 181-test harness. Both v0.13.0 (`d051ff699`) and
-main (`28a1c720`) are recorded. GNU time measures peak RSS; temporary
-`MemInfo::HeapUsage` probes ran after the original timed intervals. This counter
-uses glibc `mallinfo2().uordblks`; it is allocator accounting, not a census of live
-Rust allocations. Probe sources were removed before the canonical gate.
-Compressed raw records and summaries retain every campaign, including rejected
-designs, in [references](references).
+## Measurements and qualification limits
 
-The earlier fixed-storage campaign found a deep commit-only increase of +15 µs
-per 100 commits against main, interval [5.5, 46], and an abort peak increase in
-three blocks. The refined design removes ancestor-array movement from native
-traversals. Its final campaign records 12 balanced blocks and 144 processes.
-All 48 candidate runs passed. One original release abort failed its unchanged
-timing guard: 3,018 µs exceeded creation/1000, 2,962.316 µs. That exit 101 and
-its raw measurements remain in the dataset; it is not accepted validation.
-The campaign wrapper exits 1 to retain that fact.
+Matched opt1 binaries use debug information disabled, CPU 3 and one exact case per
+process. Comparisons include v0.13.0 (`d051ff699`), main (`28a1c720`) and the local
+fix. Final fixtures use the same 188-test harness and equal-length artifact names.
+Raw records and percentile-bootstrap summaries (10,000 resamples, seed 489) are
+retained in [references](references), including every rejected design and failure.
 
-| Workload | v0.13.0 median | Main median | Candidate median |
-| --- | ---: | ---: | ---: |
-| Large sparse commit | 2,284 µs | 1,996 µs | 27 µs |
-| Large sparse abort | 2,095 µs | 2,009 µs | 41 µs |
-| Large creation, commit fixture | 2,988,942.5 µs | 3,035,440 µs | 2,977,631 µs |
-| Direct-child sparse commit | 1,724 µs | 1,709 µs | 34 µs |
-| Direct-child sparse abort | 1,746 µs | 1,694 µs | 9 µs |
-| Deep commit, 100 repeats | 1,322.5 µs | 1,321 µs | 1,325 µs |
-| Deep mutation and commit, 100 repeats | 2,330.5 µs | 2,341 µs | 2,091.5 µs |
+The final six-block default-path confirmation records 72 processes. All 24
+candidate runs pass. One original-release commit fails its unchanged 1000:1 guard;
+its exit 101 remains recorded, and the campaign wrapper exits 1. It is not accepted
+validation. Large sparse commit medians fall from 1,977.5 to 25 µs and abort from
+2,208.5 to 36.5 µs. Direct-child commit falls from 1,806 to 38 µs and abort from
+1,757 to 8 µs. Deep commit-only medians are 1,352 versus 1,326.5 µs per 100 commits.
+Creation and full-creation-commit paired intervals span zero. Normal allocator
+accounting falls by 784 bytes in the large fixtures; that counter is glibc
+`mallinfo2().uordblks`, not a census of live Rust allocations.
 
-Paired candidate-minus-baseline differences use a percentile bootstrap of the
-median, 10,000 resamples, seed 489. The deep commit-only difference is +1.5 µs
-with 95% intervals [-0.5, 6.5] against the release and [-3, 8.5] against main.
-Creation and full-creation-commit intervals span zero or improve. The prior
-repeatable deep slowdown was not detected in this campaign.
+A separate final 12-block indexed comparison records 72 successful processes.
+The 100,000-label full commit falls from 22,389.5 to 22,298.5 µs, paired difference
+−97.5 µs with 95% interval [−124.5, −47.5]. Indexed sparse commit, abort, creation,
+deep commit and peak-RSS intervals span zero or improve. The parent's initial
+build overlap is retained in the record; it is not silently removed.
 
-Large-commit peak RSS differs by +88 KiB [-36, 156] against the release and
-−86 KiB [-232, 10] against main. Abort differs by +86 KiB [-50, 254] and
-−34 KiB [-120, 54], respectively. These finite measurements detect no peak-RSS
-increase; intervals spanning zero do not prove universal memory parity.
+Peak memory remains subject to measurement limits. The final libtest large-abort
+comparison reports +140 KiB versus the release, interval [4, 210], despite lower
+allocator accounting. Minimal production-style indexed workloads have identical
+allocator heap and heap-mapping RSS; their wide kernel-peak intervals span zero.
+They show small executable-page differences and lower retained deep stack use.
+Post-timing retained-state snapshots are not certified peak bounds. The original
+large public workload is being checked separately before a merge recommendation;
+no universal time or memory parity is claimed.
 
-The fixed storage cost is explicit: private `DataCore` grows from 176 to
-224 bytes, while each label node remains 112 bytes. Normal allocator accounting
-increases by 80 bytes per document. Disabling glibc tcache identically in a
-separate attribution control reduces the difference to exactly 48 bytes, matching
-the core growth. That control ran concurrently with compilation and supplies no
-timing evidence. No per-node index or allocation is added. This constant document
-cost remains a tradeoff under the user's no-degradation requirement.
+The original separate-hint design added 48 core bytes and was rejected. A private
+hot-field layout experiment kept sizes unchanged but doubled indexed scan time;
+it was reverted. These implementations and disposable binaries are not shipped.
+The green checkpoint `341e1d5d` remains available for provenance and comparison.
 
-The prior exact-source canonical PR gate passed against `28a1c720`; its
-formatting-only predecessor failed before package checks. The refined source has
-15 passing internal controls, 181 passing integration tests and strict all-target
-Clippy. Its new canonical gate and hosted sanitizer result must pass before push
-and merge, respectively. Independent Spec and Standards reviews found no
-remaining source defect. No universal performance-parity claim is made.
+The current source passes 23 unit tests, 188 integration tests, 48 doctests and
+strict all-target Clippy. Independent Spec and Standards reviews found no
+remaining semantics or lock-order defect. The exact-source canonical PR gate is
+required before push. The pinned local TSan runtime fails before toolkit startup;
+the old checkpoint's hosted control executed all 15 tests successfully. The
+updated control must execute the expanded 20 tests before merge.
 
-No version change is included. Publishing the production fix requires an approved
-tklcaf package version change; unchanged dependent packages must retain their
-versions. Probe cleanup is recorded in
-[489-probe-cleanup.json](references/489-probe-cleanup.json).
+No versions changed. Publishing the production fix requires an explicitly approved
+tklcaf package bump; unchanged dependents retain their package versions.

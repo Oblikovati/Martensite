@@ -64,17 +64,20 @@ fn abort_direct(data: &Handle<TdfData>, middle: &TdfLabel) -> u128 {
 #[test]
 fn a_sparse_direct_child_keeps_commit_and_abort_history_with_a_distant_lookup_cache() {
     let data = TdfData::new();
-    let mut creation = command(&data);
+    measure_direct(&data, "wide_direct");
+}
+fn measure_direct(data: &Handle<TdfData>, kind: &str) {
+    let mut creation = command(data);
     let started = Instant::now();
-    let middle = direct_tree(&data);
+    let middle = direct_tree(data);
     let create_us = started.elapsed().as_micros();
     let started = Instant::now();
     creation.commit(false).unwrap();
     let create_commit_us = started.elapsed().as_micros();
-    let commit_us = commit_direct(&data, &middle);
-    let abort_us = abort_direct(&data, &middle);
+    let commit_us = commit_direct(data, &middle);
+    let abort_us = abort_direct(data, &middle);
     println!(
-        "{{\"kind\":\"wide_direct\",\"labels\":{DIRECT_LABELS},\"creation_us\":{create_us},\"creation_commit_us\":{create_commit_us},\"sparse_commit_us\":{commit_us},\"sparse_abort_us\":{abort_us}}}"
+        "{{\"kind\":\"{kind}\",\"labels\":{DIRECT_LABELS},\"creation_us\":{create_us},\"creation_commit_us\":{create_commit_us},\"sparse_commit_us\":{commit_us},\"sparse_abort_us\":{abort_us}}}"
     );
     assert_eq!(data.transaction(), 0);
     assert!(!data.root().may_be_modified());
@@ -100,15 +103,31 @@ fn repeat_deep(data: &Handle<TdfData>, leaf: &TdfLabel) -> u128 {
 #[test]
 fn repeated_deep_sparse_commits_preserve_the_value_and_single_attribute_delta() {
     let data = TdfData::new();
-    let mut creation = command(&data);
-    let leaf = deep_tree(&data);
+    measure_deep(&data, "deep");
+}
+fn measure_deep(data: &Handle<TdfData>, kind: &str) {
+    let mut creation = command(data);
+    let leaf = deep_tree(data);
     creation.commit(false).unwrap();
     let started = Instant::now();
-    let commit_us = repeat_deep(&data, &leaf);
+    let commit_us = repeat_deep(data, &leaf);
     let total_us = started.elapsed().as_micros();
     println!(
-        "{{\"kind\":\"deep\",\"depth\":256,\"repetitions\":100,\"total_us\":{total_us},\"commit_us\":{commit_us}}}"
+        "{{\"kind\":\"{kind}\",\"depth\":256,\"repetitions\":100,\"total_us\":{total_us},\"commit_us\":{commit_us}}}"
     );
     assert_eq!(integer_value(&leaf), 101);
     assert!(!data.root().may_be_modified());
+}
+
+#[test]
+fn indexed_direct_child_commits_preserve_the_existing_native_route() {
+    let data = TdfData::new();
+    data.set_access_by_entries(true).unwrap();
+    measure_direct(&data, "indexed_direct");
+}
+#[test]
+fn indexed_deep_commits_preserve_the_existing_native_route() {
+    let data = TdfData::new();
+    data.set_access_by_entries(true).unwrap();
+    measure_deep(&data, "indexed_deep");
 }

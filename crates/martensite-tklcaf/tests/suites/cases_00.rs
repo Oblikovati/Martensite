@@ -45,3 +45,6 @@ pub mod tfunction_mechanism;
 pub mod transaction_abort_variants;
 #[path = "../undo_limit_regressions.rs"]
 pub mod undo_limit_regressions;
+
+#[path = "../entry_index_compatibility.rs"]
+pub mod entry_index_compatibility;
