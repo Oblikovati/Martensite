@@ -172,3 +172,6 @@ fn quadric_tool_forwards_to_the_quadric() {
     assert!(q.torus().is_ok() && q.cone().is_err());
     assert_eq!(q.plane().position().location(), Point3::new(0.0, 0.0, 0.0));
 }
+
+#[path = "int_surf_behavior/allocator.rs"]
+mod allocator;

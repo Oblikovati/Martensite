@@ -2,15 +2,18 @@
 use super::IntSurfPntOn2S;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::BaseAllocator;
+#[path = "line_on_2s/points.rs"]
+mod points;
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
 use martensite_tkmath::bnd::{BoundingBox2, BoundingBox3};
 use martensite_tkmath::gp::{Point2, Point3};
+use points::LinePoints;
 
 /// The locked fields: the points and the three boxes, which are Whole while stale.
-/// Points are a contiguous vector: the node-per-point sequence spent most of the
+/// Default points are contiguous: the node-per-point sequence spent most of the
 /// walking-line purge in allocation, lookup and release (#496).
 struct LineOn2SState {
-    seq: Vec<IntSurfPntOn2S>,
+    seq: LinePoints,
     buv1: BoundingBox2,
     buv2: BoundingBox2,
     bxyz: BoundingBox3,
@@ -77,22 +80,21 @@ impl LineOn2SState {
 
     fn point(&mut self, member: &str, index: i32) -> Result<&mut IntSurfPntOn2S, Failure> {
         let at: usize = checked_index(member, index, self.len())?;
-        Ok(&mut self.seq[at - 1])
+        self.seq.point_mut(at)
     }
 
     fn len(&self) -> i32 {
-        // A line never holds i32::MAX points: walking lines are bounded by their step count.
-        i32::try_from(self.seq.len()).unwrap_or(i32::MAX)
+        self.seq.len()
     }
 }
 
 impl IntSurfLineOn2S {
-    /// An empty line (`IntSurf_LineOn2S(theAllocator)`). The allocator is accepted for
-    /// interface compatibility; the points use the global heap, which changes no
-    /// observable value (#496). `IntSurfLineOn2S::new(None).nb_points() == 0`.
-    pub fn new(_allocator: Option<BaseAllocator>) -> Self {
+    /// An empty line; an explicit allocator retains its node allocation and release policy.
+    /// `None` selects contiguous global-heap storage (#496).
+    /// `IntSurfLineOn2S::new(None).nb_points() == 0`.
+    pub fn new(allocator: Option<BaseAllocator>) -> Self {
         let mut state = LineOn2SState {
-            seq: Vec::new(),
+            seq: LinePoints::new(allocator),
             buv1: BoundingBox2::default(),
             buv2: BoundingBox2::default(),
             bxyz: BoundingBox3::default(),
@@ -107,7 +109,7 @@ impl IntSurfLineOn2S {
     /// Appends a point (`Add`); `line.add(&point)`.
     pub fn add(&self, p: &IntSurfPntOn2S) {
         let mut state = self.state.write();
-        state.seq.push(*p);
+        state.seq.append(*p);
         state.extend_boxes(p);
     }
 
@@ -123,7 +125,7 @@ impl IntSurfLineOn2S {
         if index < 1 || index > state.len() {
             return Err(Failure::out_of_range("NCollection_Sequence::Value"));
         }
-        Ok(state.seq[index as usize - 1])
+        state.seq.point(index as usize)
     }
 
     /// Reverses the order of the points (`Reverse`); the boxes do not change.
@@ -140,12 +142,10 @@ impl IntSurfLineOn2S {
         if index < 1 || index > state.len() {
             return Err(Failure::out_of_range(""));
         }
-        let tail: Vec<IntSurfPntOn2S> = state.seq.split_off(index as usize - 1);
+        let tail = state.seq.split(index as usize)?;
         drop(state);
         let split = IntSurfLineOn2S::new(None);
-        for p in tail.iter() {
-            split.add(p);
-        }
+        tail.for_each(|p| split.add(p));
         Ok(Handle::new(split))
     }
 
@@ -194,10 +194,10 @@ impl IntSurfLineOn2S {
     pub fn insert_before(&self, index: i32, p: &IntSurfPntOn2S) -> Result<(), Failure> {
         let mut state = self.state.write();
         if index > state.len() {
-            state.seq.push(*p);
+            state.seq.append(*p);
         } else {
             let at: usize = checked_index("InsertBefore", index, state.len())?;
-            state.seq.insert(at - 1, *p);
+            state.seq.insert_before(at, *p)?;
         }
         state.extend_boxes(p);
         Ok(())
@@ -208,7 +208,7 @@ impl IntSurfLineOn2S {
     pub fn remove_point(&self, index: i32) -> Result<(), Failure> {
         let mut state = self.state.write();
         let at: usize = checked_index("RemovePoint", index, state.len())?;
-        state.seq.remove(at - 1);
+        state.seq.remove(at)?;
         state.whole_boxes();
         Ok(())
     }
@@ -248,9 +248,8 @@ impl LineOn2SState {
     fn build_uv_box(&mut self, on_first: bool) {
         let mut uv_box = BoundingBox2::default();
         uv_box.set_void();
-        for p in self.seq.iter() {
-            uv_box.add_point(p.value_on_surface(on_first));
-        }
+        self.seq
+            .for_each(|p| uv_box.add_point(p.value_on_surface(on_first)));
         enlarge_uv_box(&mut uv_box);
         if on_first {
             self.buv1 = uv_box;
@@ -300,9 +299,7 @@ impl IntSurfLineOn2S {
         if state.bxyz.is_whole() {
             let mut xyz_box = BoundingBox3::default();
             xyz_box.set_void();
-            for p in state.seq.iter() {
-                xyz_box.add_point(p.value());
-            }
+            state.seq.for_each(|p| xyz_box.add_point(p.value()));
             enlarge_xyz_box(&mut xyz_box);
             state.bxyz = xyz_box;
         }
