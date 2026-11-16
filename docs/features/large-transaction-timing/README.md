@@ -75,9 +75,16 @@ comparison reports +140 KiB versus the release, interval [4, 210], despite lower
 allocator accounting. Minimal production-style indexed workloads have identical
 allocator heap and heap-mapping RSS; their wide kernel-peak intervals span zero.
 They show small executable-page differences and lower retained deep stack use.
-Post-timing retained-state snapshots are not certified peak bounds. The original
-large public workload is being checked separately before a merge recommendation;
-no universal time or memory parity is claimed.
+Post-timing retained-state snapshots are not certified peak bounds. A separate six-block comparison of the original million-label public workload
+without libtest passed all 36 processes. GNU time peak-RSS paired differences
+versus the release were −70 KiB [−180, 246] for commit and −100 KiB [−248, 46]
+for abort. Heap-mapping RSS was identical and allocator accounting fell by 912
+bytes. This did not reproduce the libtest increase; finite samples do not prove
+universal time or memory parity. Concurrent compilation was recorded, so this
+comparison supports memory attribution, not isolated timing. Earlier small deep
+probes used Python child high-water accounting with a pre-exec floor; those peak
+values are excluded from qualification, while their retained snapshots remain
+recorded.
 
 The original separate-hint design added 48 core bytes and was rejected. A private
 hot-field layout experiment kept sizes unchanged but doubled indexed scan time;
@@ -86,8 +93,8 @@ The green checkpoint `341e1d5d` remains available for provenance and comparison.
 
 The current source passes 23 unit tests, 188 integration tests, 48 doctests and
 strict all-target Clippy. Independent Spec and Standards reviews found no
-remaining semantics or lock-order defect. The exact-source canonical PR gate is
-required before push. The pinned local TSan runtime fails before toolkit startup;
+remaining semantics or lock-order defect. The full canonical PR gate passed on
+`e985d3a5` against pinned main `28a1c720`. The pinned local TSan runtime fails before toolkit startup;
 the old checkpoint's hosted control executed all 15 tests successfully. The
 updated control must execute the expanded 20 tests before merge.
 

@@ -65,5 +65,5 @@ are ignored there and stay mandatory on Linux.
 The preparation ran on Linux x86-64. The release candidate still needs the full
 supported platform matrix.
 
-The sparse transaction investigation and its outstanding performance qualification
+The sparse transaction fix and its measured performance and memory evidence
 are recorded under [large-transaction-timing](../large-transaction-timing/README.md) (#489).
