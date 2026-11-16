@@ -26,7 +26,7 @@ nine pairs alternated execution order. Median time was 8,570 microseconds for
 the unpatched vector and 8,063 microseconds for the compatibility implementation.
 The source and binaries were removed after measurement. These shared-machine
 measurements cover point storage only; they do not qualify whole-body time or
-peak memory. The conical body-check benchmark remains an integration gate.
+peak memory. The holed body-check comparison below uses the complete native validator.
 
 Focused verification uses:
 
@@ -35,3 +35,34 @@ cargo test --locked -p martensite-tkgeomalgo --test toolkit int_surf_behavior
 cargo test --locked -p martensite-tkgeomalgo --test toolkit
 cargo clippy --locked -p martensite-tkgeomalgo --lib --test toolkit -- -D warnings
 ```
+
+
+## Holed body check against prior main storage
+
+A release-build comparison on Linux x86_64 used Rust 1.99.0 and the same immutable
+feature dependency graph, frozen holed conical input, strict stored-geometry
+reader and serial native checker. The baseline used the allocator-backed line
+from main at `bef25f47`; the correction used the runtime sources at `5d09d8bb`.
+Only walking-line storage differed. Loading was outside the body wall timer;
+process CPU and peak RSS include loading. Both variants had one warm-up.
+
+Five alternating pairs were attempted. Continuous one-second `vmstat` samples
+required at least 65% idle CPU, at most 10% I/O wait, at most 8 runnable tasks and
+no swap-out. The first pair was discarded for swap activity and excess runnable
+tasks. The other four pairs met those conditions.
+
+| Median of four accepted pairs | Prior main | Corrected |
+| --- | ---: | ---: |
+| Native body wall time | 6.08414 s | 5.44437 s |
+| Process user CPU | 6.065 s | 5.430 s |
+| Process peak RSS | 54,646 KiB | 50,930 KiB |
+
+Median system CPU was 0.01 s in both variants. Wall and user CPU decreased by
+about 10.5%; peak RSS decreased by about 6.8%. Every run passed native validation
+and retained decoded-geometry fingerprint `c18ae14299948770` and report fingerprint
+`db1c30e775788fa9`. The report remained 540 characters. The
+[measurement record](references/502-body-benchmark.json) retains the input hash,
+reader policies, resolution, accepted and discarded pairs, and their resource
+samples. These results cover this feature workload in release mode; they make
+no debug/P1 or glyph-scale performance claim. Disposable implementations and
+binaries were removed after measurement.
