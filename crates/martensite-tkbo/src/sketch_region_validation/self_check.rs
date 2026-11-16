@@ -35,9 +35,19 @@ pub(crate) fn inspect_self_intersection(
     shape: &Shape,
     sources: &[SourceRelation],
 ) -> Vec<ValidationFinding> {
+    // Parallel tasks ran the holed conical candidate of #496 about 3x faster with an
+    // identical report; the serial comparison test pins equal findings.
+    inspect_self_intersection_with(shape, sources, true)
+}
+
+pub(super) fn inspect_self_intersection_with(
+    shape: &Shape,
+    sources: &[SourceRelation],
+    parallel: bool,
+) -> Vec<ValidationFinding> {
     let mut checker = BOPAlgoCheckerSI::new();
     checker.set_arguments(&[shape.clone()].into_iter().collect::<List<Shape>>());
-    checker.options_mut().set_run_parallel(false);
+    checker.options_mut().set_run_parallel(parallel);
     let trace = checker.perform_observed();
     let mut inspection = AnalyticInspection {
         checker: &checker,

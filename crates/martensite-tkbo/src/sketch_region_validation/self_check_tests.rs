@@ -196,3 +196,19 @@ fn completed_single_walk_is_scoped_to_its_actual_execution() {
         StageCoverage::Passed
     );
 }
+
+// Parallel execution must not change any finding, its order or its entities (#496).
+#[test]
+fn parallel_and_serial_checks_report_identical_findings() {
+    for shape in [overlapping_solids(), converted_box()] {
+        let report = |parallel| {
+            let findings = super::self_check::inspect_self_intersection_with(&shape, &[], parallel);
+            format!("{findings:?}")
+        };
+        let serial = report(false);
+        assert!(serial.len() > 2, "fixture must produce findings: {serial}");
+        for _ in 0..3 {
+            assert_eq!(report(true), serial);
+        }
+    }
+}
