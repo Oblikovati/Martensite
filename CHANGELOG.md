@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Rejected invalid raw body tolerances before native validation could mask or overwrite them, preserving refusal input state and explicit stage coverage (#490).
+
 - Restored explicit walking-line allocator ownership, allocation and reset policies, and legacy signed point counts (#507).
 
 - Kept release source proofs and changed-input comparisons in one canonical package-root coordinate system while preserving native Windows path components (#487).

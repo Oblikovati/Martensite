@@ -44,13 +44,18 @@ impl TopologyNames {
         TopologyRef { kind, index }
     }
 
+    /// Borrow indexed records without cloning topology handles during admission (#490).
+    pub(super) fn records(&self, kind: ShapeEnum) -> impl Iterator<Item = &Shape> {
+        self.maps
+            .iter()
+            .filter(move |(mapped, _)| *mapped == kind)
+            .flat_map(|(_, map)| {
+                (1..=map.extent()).filter_map(move |index| map.find_key(index).ok())
+            })
+    }
+
     /// The indexed shapes of `kind`; `names.all(ShapeEnum::Edge)`.
     pub(super) fn all(&self, kind: ShapeEnum) -> Vec<Shape> {
-        let Some((_, map)) = self.maps.iter().find(|(mapped, _)| *mapped == kind) else {
-            return Vec::new();
-        };
-        (1..=map.extent())
-            .filter_map(|index| map.find_key(index).ok().cloned())
-            .collect()
+        self.records(kind).cloned().collect()
     }
 }
