@@ -31,7 +31,7 @@ pub(super) struct PlanarEvidence {
 }
 
 impl PlanarEvidence {
-    pub(super) fn matches_request(&self, request: &Request) -> bool {
+    pub(super) fn matches_request(&self, request: &DevelopedRegionRequest) -> bool {
         requested_identity(request).is_ok_and(|id| id == self.identity)
             && self.source.matches(request)
     }
@@ -108,13 +108,13 @@ fn source_message(
 }
 
 #[cfg(test)]
-pub(super) fn certify(request: &Request) -> Result<PlanarEvidence, PlanarFailure> {
+pub(super) fn certify(request: &DevelopedRegionRequest) -> Result<PlanarEvidence, PlanarFailure> {
     let captured = capture(std::slice::from_ref(request), request.tolerance)?;
     select(request, &captured)
 }
 #[cfg(test)]
 pub(super) fn capture(
-    requests: &[Request],
+    requests: &[impl AsRef<DevelopedRegionRequest>],
     tolerance: f64,
 ) -> Result<PlanarRegionSet, PlanarFailure> {
     let profile = combined_profile(requests)?;
@@ -122,7 +122,7 @@ pub(super) fn capture(
         .map_err(|cause| PlanarFailure::Capture(Box::new(cause)))
 }
 pub(super) fn capture_with_work(
-    requests: &[Request],
+    requests: &[impl AsRef<DevelopedRegionRequest>],
     tolerance: f64,
     work: PlanarProofWorkLimit,
 ) -> Result<PlanarRegionSet, PlanarFailure> {
@@ -130,13 +130,31 @@ pub(super) fn capture_with_work(
     build_planar_regions_with_work(&profile, super::pipeline::resolution(tolerance), work)
         .map_err(|cause| PlanarFailure::WorkCapture(Box::new(cause)))
 }
-fn combined_profile(requests: &[Request]) -> Result<SketchProfile, PlanarFailure> {
+pub(super) fn capture_with_work_and_cancel(
+    requests: &[impl AsRef<DevelopedRegionRequest>],
+    tolerance: f64,
+    work: PlanarProofWorkLimit,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<PlanarRegionSet, PlanarFailure> {
+    let profile = combined_profile(requests)?;
+    build_planar_regions_with_work_and_cancel(
+        &profile,
+        super::pipeline::resolution(tolerance),
+        work,
+        cancelled,
+    )
+    .map_err(|cause| PlanarFailure::WorkCapture(Box::new(cause)))
+}
+fn combined_profile(
+    requests: &[impl AsRef<DevelopedRegionRequest>],
+) -> Result<SketchProfile, PlanarFailure> {
     let mut combined = SketchProfile {
         plane: ProfilePlane::world_xy(),
         vertices: Vec::new(),
         curves: Vec::new(),
     };
     for request in requests {
+        let request = request.as_ref();
         joins::admit(request).map_err(|cause| PlanarFailure::Join(Box::new(cause)))?;
         let profile = profile(request)?;
         combined.vertices.extend(profile.vertices);
@@ -156,7 +174,7 @@ fn canonicalize_proof_input(profile: &mut SketchProfile) {
     }
 }
 
-fn profile(request: &Request) -> Result<SketchProfile, PlanarFailure> {
+fn profile(request: &DevelopedRegionRequest) -> Result<SketchProfile, PlanarFailure> {
     let mut vertices = BTreeMap::new();
     let mut curves = Vec::new();
     for piece in request.loops.iter().flatten() {
@@ -218,7 +236,7 @@ fn spline(piece: &AuthoredPiece, start: ProfileVertexId, end: ProfileVertexId) -
 }
 
 pub(super) fn select(
-    request: &Request,
+    request: &DevelopedRegionRequest,
     captured: &PlanarRegionSet,
 ) -> Result<PlanarEvidence, PlanarFailure> {
     let expected = requested_identity(request)?;
@@ -252,7 +270,7 @@ fn unique_region<'a>(
     Ok(matches[0].0)
 }
 
-fn requested_identity(request: &Request) -> Result<MaterialIdentity, PlanarFailure> {
+fn requested_identity(request: &DevelopedRegionRequest) -> Result<MaterialIdentity, PlanarFailure> {
     let mut loops = request.loops.iter().map(|contour| {
         canonical(
             contour

@@ -5,6 +5,7 @@ pub use api::*;
 mod boundaries;
 mod cap_coordinates;
 mod coverage;
+mod developed_request;
 mod family;
 mod history;
 mod native;
@@ -22,6 +23,7 @@ mod subdivision;
 mod tests;
 
 use crate::surface_sketch::{SurfaceCurveId, SurfaceRegionId, SurfaceVertexId};
+use developed_request::DevelopedRegionRequest;
 use martensite_tkbrep::topods::{Edge, Face, Shape};
 use martensite_tkernel::standard::Failure;
 type CancelPoll<'a> = dyn FnMut() -> bool + Send + 'a;
@@ -37,12 +39,8 @@ struct AuthoredPiece {
 
 #[derive(Clone)]
 struct Request {
-    region: SurfaceRegionId,
-    loops: Vec<Vec<AuthoredPiece>>,
+    source: DevelopedRegionRequest,
     radius: f64,
-    depths: [f64; 2],
-    tolerance: f64,
-    max_fit_level: u8,
 }
 
 struct NativePiece {

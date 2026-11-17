@@ -67,12 +67,14 @@ fn geometry(
     depths: [f64; 2],
 ) -> Request {
     Request {
-        region,
-        loops,
+        source: DevelopedRegionRequest {
+            region,
+            loops,
+            depths,
+            tolerance: request.options.spatial_error,
+            max_fit_level: request.options.maximum_fit_level,
+        },
         radius: request.support.radius,
-        depths,
-        tolerance: request.options.spatial_error,
-        max_fit_level: request.options.maximum_fit_level,
     }
 }
 fn admit(request: &WrappedNormalRequest) -> Checked<()> {

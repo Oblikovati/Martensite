@@ -37,7 +37,7 @@ impl std::fmt::Display for JoinFailure {
     }
 }
 
-pub(super) fn admit(request: &Request) -> Result<(), JoinFailure> {
+pub(super) fn admit(request: &DevelopedRegionRequest) -> Result<(), JoinFailure> {
     for contour in &request.loops {
         for (i, piece) in contour.iter().enumerate() {
             let next = &contour[(i + 1) % contour.len()];

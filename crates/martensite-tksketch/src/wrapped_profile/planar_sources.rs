@@ -10,7 +10,7 @@ struct SourceCurve {
     poles: Vec<[u64; 2]>,
 }
 impl SourceSnapshot {
-    pub fn capture(request: &Request) -> Self {
+    pub fn capture(request: &DevelopedRegionRequest) -> Self {
         Self(
             request
                 .loops
@@ -20,7 +20,7 @@ impl SourceSnapshot {
                 .collect(),
         )
     }
-    pub fn matches(&self, request: &Request) -> bool {
+    pub fn matches(&self, request: &DevelopedRegionRequest) -> bool {
         self.0.len() == request.loops.iter().map(Vec::len).sum::<usize>()
             && request
                 .loops

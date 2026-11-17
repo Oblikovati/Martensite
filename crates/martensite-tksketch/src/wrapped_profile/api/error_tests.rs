@@ -144,12 +144,14 @@ fn region_budget_and_native_failures_keep_their_known_owner() {
 
 fn family_failure(cause: family::FamilyFailure) -> WrappedNormalFailure {
     let input = Request {
-        region: OWNER,
-        loops: vec![],
+        source: DevelopedRegionRequest {
+            region: OWNER,
+            loops: vec![],
+            depths: [-1., 2.],
+            tolerance: 1e-5,
+            max_fit_level: 8,
+        },
         radius: 10.,
-        depths: [-1., 2.],
-        tolerance: 1e-5,
-        max_fit_level: 8,
     };
     failure_projection::family(cause, &[input])
 }

@@ -36,12 +36,14 @@ const HOLE: &[&[[f64; 2]]] = &[
 
 pub(super) fn request() -> Request {
     Request {
-        region: SurfaceRegionId(5),
-        loops: vec![contour(10, OUTER), contour(20, HOLE)],
+        source: DevelopedRegionRequest {
+            region: SurfaceRegionId(5),
+            loops: vec![contour(10, OUTER), contour(20, HOLE)],
+            depths: [-1., 2.],
+            tolerance: 1e-5,
+            max_fit_level: 8,
+        },
         radius: 10.,
-        depths: [-1., 2.],
-        tolerance: 1e-5,
-        max_fit_level: 8,
     }
 }
 
