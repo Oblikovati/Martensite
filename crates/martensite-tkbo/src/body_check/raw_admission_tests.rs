@@ -81,7 +81,11 @@ fn assert_refused(kind: ShapeEnum, value: f64, cap: ToleranceCap) {
 fn assert_admission_report(report: &ValidationReport, subject: TopologyRef, value: f64) {
     assert_skipped_native_stages(report);
     let tolerance = report.stage(ValidationStage::Tolerance);
-    assert_eq!(report.first_non_pass(), Some(tolerance));
+    assert!(
+        report
+            .first_non_pass()
+            .is_some_and(|first| std::ptr::eq(first, tolerance))
+    );
     assert!(!report.is_exact());
     assert_eq!(tolerance.verdict, StageVerdict::Failed);
     assert_eq!(tolerance.mode, CheckMode::Exact);
