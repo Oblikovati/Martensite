@@ -112,6 +112,8 @@ const PROFILE_INTERVAL: &str = "level <= 63 and index < 2^level";
 const PROFILE_WEIGHTS: &str = "one retained weight per pole";
 const PROFILE_TRIGONOMETRIC_RANGE: &str = "reduced interval within [-7, 7]";
 const PROFILE_DIRECTION: &str = "position residual < positive stored radius";
+const PROFILE_CHART_LEVEL: &str =
+    "angular variation bound <= 1 radian within the maximum subdivision level";
 const PROFILE_FIT_LEVEL: &str =
     "ideal developed bound <= requested/2 within the maximum subdivision level";
 const PROFILE_FIT_POLICY: &str =
@@ -129,6 +131,7 @@ impl CylindricalProfileFailure {
             Self::Arithmetic(cause) => expected_arithmetic(cause),
             Self::TrigonometricRange { .. } => PROFILE_TRIGONOMETRIC_RANGE,
             Self::DirectionUnresolved { .. } => PROFILE_DIRECTION,
+            Self::FitChartLevel { .. } => PROFILE_CHART_LEVEL,
             Self::FitLevel { .. } => PROFILE_FIT_LEVEL,
             Self::FitPolicy { .. } => PROFILE_FIT_POLICY,
             Self::Uncertified { .. } => PROFILE_POSITION_CAP,

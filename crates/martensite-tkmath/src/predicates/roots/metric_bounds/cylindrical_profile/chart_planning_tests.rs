@@ -71,6 +71,10 @@ fn insufficient_chart_depth_refuses_without_selecting_fewer_charts() {
     let mut input = query(&[[0., 0.], [6., 1.]]);
     input.max_level = 2;
     let error = plan_cylindrical_charts(input, || false).unwrap_err();
+    let diagnostic = error.to_string();
+    assert!(diagnostic.contains("maximum: 2"));
+    assert!(diagnostic.contains("angular_variation_upper: 1.5"));
+    assert!(diagnostic.contains("angular variation bound <= 1 radian"));
     assert!(matches!(
         error.cause,
         CylindricalProfileFailure::FitChartLevel { maximum: 2, .. }
