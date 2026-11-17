@@ -65,6 +65,13 @@ pub enum CylindricalProfileFailure {
         /// Requested positive reference radius.
         radius: f64,
     },
+    /// Source and additional subdivisions exceed the supported combined level (#524).
+    FitIntervalLevel {
+        /// Existing dyadic level of the authored source interval.
+        source_level: u8,
+        /// Requested maximum further geometric subdivisions.
+        additional_level: u8,
+    },
     /// The requested fit could not meet its ideal-error share within the geometric level cap.
     FitLevel {
         /// Maximum admitted geometric subdivision level.
@@ -96,7 +103,16 @@ impl From<BoundedArithmeticFailure> for CylindricalProfileFailure {
 }
 impl std::fmt::Display for CylindricalProfileFailure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}; expected {}", self.expected())
+        write!(f, "{self:?}")?;
+        if let Self::FitIntervalLevel {
+            source_level,
+            additional_level,
+        } = self
+        {
+            let combined = u16::from(*source_level) + u16::from(*additional_level);
+            write!(f, " (combined level={combined})")?;
+        }
+        write!(f, "; expected {}", self.expected())
     }
 }
 
@@ -107,6 +123,7 @@ const PROFILE_TRIGONOMETRIC_RANGE: &str = "reduced interval within [-7, 7]";
 const PROFILE_DIRECTION: &str = "position residual < positive stored radius";
 const PROFILE_FIT_LEVEL: &str =
     "ideal developed bound <= requested/2 within the maximum subdivision level";
+const PROFILE_FIT_INTERVAL: &str = "source_level + additional_level <= 63";
 const PROFILE_FIT_POLICY: &str =
     "source interval level + maximum_level <= 63 and maximum_operations in 0..=1000000";
 const PROFILE_POSITION_CAP: &str = "developed-position bound <= requested spatial limit";
@@ -122,6 +139,7 @@ impl CylindricalProfileFailure {
             Self::Arithmetic(cause) => expected_arithmetic(cause),
             Self::TrigonometricRange { .. } => PROFILE_TRIGONOMETRIC_RANGE,
             Self::DirectionUnresolved { .. } => PROFILE_DIRECTION,
+            Self::FitIntervalLevel { .. } => PROFILE_FIT_INTERVAL,
             Self::FitLevel { .. } => PROFILE_FIT_LEVEL,
             Self::FitPolicy { .. } => PROFILE_FIT_POLICY,
             Self::Uncertified { .. } => PROFILE_POSITION_CAP,

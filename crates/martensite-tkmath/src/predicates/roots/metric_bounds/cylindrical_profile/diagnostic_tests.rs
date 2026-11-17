@@ -4,6 +4,11 @@ use super::BoundedArithmeticFailure;
 
 const AUTHORED: [[f64; 2]; 2] = [[0., 3.], [0., 4.]];
 const STORED: [[f64; 3]; 2] = [[1., 0., 3.], [1., 0., 4.]];
+const COMBINED_LEVEL_63_1_EXPECTATION: &[&str] = &[
+    "source_level: 63",
+    "additional_level: 1",
+    "combined level=64",
+];
 
 fn query() -> CylindricalProfileQuery<'static> {
     CylindricalProfileQuery {
@@ -21,7 +26,7 @@ fn query() -> CylindricalProfileQuery<'static> {
     }
 }
 
-fn assert_diagnostic(error: &CylindricalProfileError, fragments: &[&str]) {
+fn assert_diagnostic(error: &impl std::fmt::Display, fragments: &[&str]) {
     let message = error.to_string();
     for fragment in fragments {
         assert!(
@@ -140,4 +145,77 @@ fn actual_retained_weight_count_refusal_names_the_pole_relationship() {
         &error,
         &["poles: 2", "weights: 1", "one retained weight per pole"],
     );
+}
+
+fn fit_query(source_level: u8, max_level: u8, max_operations: u32) -> CylindricalFitQuery<'static> {
+    CylindricalFitQuery {
+        authored: &AUTHORED,
+        interval: CylindricalProfileInterval::new(0, source_level).unwrap(),
+        support_radius: 2.,
+        angular_origin: 0.,
+        spatial_limit: 1e-6,
+        max_level,
+        max_operations,
+    }
+}
+
+#[test]
+fn combined_planning_level_refusal_reports_both_inputs_and_their_sum() {
+    let input = fit_query(63, 1, 100_000);
+    let mut polls = 0;
+    let error = plan_cylindrical_fit(input, || {
+        polls += 1;
+        false
+    })
+    .unwrap_err();
+    assert_diagnostic(&error, COMBINED_LEVEL_63_1_EXPECTATION);
+    assert_diagnostic(&error, &["source_level + additional_level <= 63"]);
+    assert_eq!(polls, 0);
+    assert_eq!(error.requested_options.max_operations, input.max_operations);
+}
+
+#[test]
+fn maximum_valid_source_interval_still_accepts_a_zero_additional_level() {
+    let input = fit_query(63, 0, 100_000);
+    let plan = plan_cylindrical_fit(input, || false).unwrap();
+    assert_eq!(plan.subdivision_level(), 0);
+    assert_eq!(plan.ideal_developed_error_bound(), 0.);
+}
+
+#[test]
+fn source_interval_constructor_refuses_its_own_invalid_level_before_planning() {
+    let error = CylindricalProfileInterval::new(0, 64).unwrap_err();
+    assert_diagnostic(&error, &["index: 0", "level: 64", "level <= 63"]);
+    assert!(matches!(
+        error,
+        CylindricalProfileFailure::Interval {
+            index: 0,
+            level: 64
+        }
+    ));
+}
+
+#[test]
+fn unary_planning_work_policy_refusal_preserves_its_original_variant() {
+    let input = fit_query(0, 1, 1_000_001);
+    let error = plan_cylindrical_fit(input, || false).unwrap_err();
+    assert_diagnostic(
+        &error,
+        &[
+            "maximum_level: 1",
+            "maximum_operations: 1000001",
+            "0..=1000000",
+        ],
+    );
+    assert!(matches!(
+        error.cause,
+        CylindricalProfileFailure::FitPolicy { .. }
+    ));
+}
+
+#[test]
+fn combined_level_refusal_precedes_an_invalid_work_allowance() {
+    let error = plan_cylindrical_fit(fit_query(63, 1, 1_000_001), || false).unwrap_err();
+    assert_diagnostic(&error, COMBINED_LEVEL_63_1_EXPECTATION);
+    assert_eq!(error.requested_options.max_operations, 1_000_001);
 }
