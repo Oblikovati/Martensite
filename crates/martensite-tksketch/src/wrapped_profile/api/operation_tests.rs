@@ -7,7 +7,7 @@ use martensite_tkbo::profile_extrusion::{
 };
 use std::collections::BTreeMap;
 
-pub(super) fn request() -> WrappedNormalRequest {
+pub(in super::super) fn request() -> WrappedNormalRequest {
     let inputs = family::tests::requests();
     WrappedNormalRequest {
         profile: combined_profile(&inputs),

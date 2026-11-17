@@ -13,12 +13,8 @@ use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedCylindricalFlux, CertifiedCylindricalMeasureComparison,
 };
 
-type NativeMeasure = (ValidationReport, (f64, f64));
-type MemberCertificates = (
-    planar_cones::ConeEvidence,
-    MeasureEvidence,
-    coverage::CoverageEvidence,
-);
+mod qualification;
+pub(super) use qualification::{NativeQualification, qualify_native};
 #[cfg(test)]
 type FrozenParts = (Vec<u8>, Vec<BindingKey>, Shape, Vec<(BindingKey, Shape)>);
 
@@ -27,14 +23,16 @@ pub(super) struct MeasureEvidence {
     pub spans: Vec<CurveSpan>,
 }
 
-pub(super) struct RetainedMember {
+// Geometric receipts do not claim a native pass on any frame (#527).
+pub(super) struct MemberGeometry {
     pub coverage: coverage::CoverageEvidence,
     pub measures: MeasureEvidence,
-    pub report: ValidationReport,
-    pub volume_estimate: f64,
-    pub integration_estimate: f64,
     pub storage: Vec<storage::StoredProof>,
     pub cones: planar_cones::ConeEvidence,
+}
+pub(super) struct RetainedMember {
+    pub geometry: MemberGeometry,
+    pub native: NativeQualification,
 }
 pub(super) struct StoredMember {
     shape: Shape,
@@ -116,15 +114,27 @@ pub(super) fn finish_member_with_cancel(
     stored: StoredMember,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<RetainedMember, Refusal> {
+    let (geometry, shape) = certify_geometry(original, prepared, stored, &mut cancelled)?;
+    let native = qualify_native(original, &shape)?;
+    Ok(RetainedMember { geometry, native })
+}
+
+pub(super) fn certify_geometry(
+    original: &Request,
+    prepared: &Request,
+    stored: StoredMember,
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<(MemberGeometry, Shape), Refusal> {
     let (bindings, proofs) = (&stored.bindings, stored.storage.as_slice());
-    let cones = cone_stage(original, prepared, proofs, &mut cancelled)?;
-    let measures = measure_stage(original, prepared, bindings, proofs, &mut cancelled)?;
-    let validation = checked_measure(original, &stored.shape)?;
-    Ok(retained_member(
-        validation,
-        stored.storage,
-        (cones, measures, stored.coverage),
-    ))
+    let cones = cone_stage(original, prepared, proofs, &mut *cancelled)?;
+    let measures = measure_stage(original, prepared, bindings, proofs, &mut *cancelled)?;
+    let geometry = MemberGeometry {
+        coverage: stored.coverage,
+        measures,
+        storage: stored.storage,
+        cones,
+    };
+    Ok((geometry, stored.shape))
 }
 
 fn coverage_stage(
@@ -261,16 +271,6 @@ fn flux_stage(
     )
 }
 
-fn checked_measure(request: &Request, shape: &Shape) -> Result<NativeMeasure, Refusal> {
-    let report = at(
-        request.region,
-        Stage::Validation,
-        ordered_checks(shape, request.tolerance),
-    )?;
-    let measure = at(request.region, Stage::Measure, estimate(shape))?;
-    Ok((report, measure))
-}
-
 fn cone_stage(
     original: &Request,
     prepared: &Request,
@@ -315,22 +315,6 @@ fn storage_stage(
         region: original.region,
         cause: RefusalCause::Storage(Box::new(cause)),
     })
-}
-
-fn retained_member(
-    (report, measure): NativeMeasure,
-    storage: Vec<storage::StoredProof>,
-    (cones, measures, coverage): MemberCertificates,
-) -> RetainedMember {
-    RetainedMember {
-        measures,
-        coverage,
-        report,
-        volume_estimate: measure.0,
-        integration_estimate: measure.1,
-        storage,
-        cones,
-    }
 }
 
 pub(super) fn ordered_checks(shape: &Shape, tolerance: f64) -> Result<ValidationReport, Failure> {

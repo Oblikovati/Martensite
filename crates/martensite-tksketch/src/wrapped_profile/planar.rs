@@ -121,6 +121,7 @@ pub(super) fn capture(
     build_planar_regions(&profile, super::pipeline::resolution(tolerance))
         .map_err(|cause| PlanarFailure::Capture(Box::new(cause)))
 }
+#[cfg(test)]
 pub(super) fn capture_with_work(
     requests: &[impl AsRef<DevelopedRegionRequest>],
     tolerance: f64,

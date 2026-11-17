@@ -1,7 +1,7 @@
 //! Validation uses physical solids; published canonical and world bounds stay distinct.
 use super::*;
 use crate::surface_sketch::HistoryRole;
-pub(in super::super) fn publish(
+pub(in crate::surface_sketch::wrapped_profile) fn publish(
     result: &mut WrappedNormalResult,
     plan: Plan,
     cancelled: &mut CancelPoll<'_>,

@@ -11,14 +11,15 @@ pub struct DetachedWrappedBodies {
 }
 /// Immutable normal extrusion of selected profiles, with frozen bytes and retained evidence.
 pub struct WrappedNormalResult {
-    pub(super) family: family::BudgetedFamily,
-    pub(super) history: history_projection::HistoryPublication,
-    pub(super) reports: BTreeMap<SurfaceRegionId, WrappedMemberReport>,
-    pub(super) budget: WrappedBudgetReport,
-    pub(super) support: crate::surface_sketch::CylinderSupport,
-    pub(super) depths: [f64; 2],
-    pub(super) options: WrappedNormalOptions,
-    pub(super) placement: Option<Box<placement::Placed>>,
+    pub(in crate::surface_sketch::wrapped_profile) family: family::BudgetedFamily,
+    pub(in crate::surface_sketch::wrapped_profile) history: history_projection::HistoryPublication,
+    pub(in crate::surface_sketch::wrapped_profile) reports:
+        BTreeMap<SurfaceRegionId, WrappedMemberReport>,
+    pub(in crate::surface_sketch::wrapped_profile) budget: WrappedBudgetReport,
+    pub(in crate::surface_sketch::wrapped_profile) support: crate::surface_sketch::CylinderSupport,
+    pub(in crate::surface_sketch::wrapped_profile) depths: [f64; 2],
+    pub(in crate::surface_sketch::wrapped_profile) options: WrappedNormalOptions,
+    pub(in crate::surface_sketch::wrapped_profile) placement: Option<Box<placement::Placed>>,
 }
 impl WrappedNormalResult {
     /// Ordered authored history; `result.history().len()`.
@@ -66,19 +67,14 @@ pub(super) fn export_bytes(
 ) -> Checked<DetachedWrappedBodies> {
     let (bodies, bindings) = pipeline::decode(bytes, &result.family.family.keys)
         .map_err(|cause| export_failure(error::Cause::Export(cause)))?;
-    if bindings.len() != result.history.bindings.len() {
-        return Err(export_failure(error::Cause::ExportCount {
-            actual: bindings.len(),
-            expected: result.history.bindings.len(),
-        }));
-    }
-    let entities = result
-        .history
-        .bindings
-        .iter()
-        .copied()
-        .zip(bindings.into_iter().map(|(_, shape)| shape))
-        .collect();
+    let mut entities = BTreeMap::new();
+    export_bindings::append(
+        &result.family.family.keys,
+        &result.history.bindings,
+        bindings,
+        &mut entities,
+    )
+    .map_err(|cause| export_failure(error::Cause::ExportBindings(cause)))?;
     Ok(DetachedWrappedBodies { bodies, entities })
 }
 fn export_failure(cause: error::Cause) -> WrappedNormalFailure {

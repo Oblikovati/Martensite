@@ -30,8 +30,8 @@ fn disconnected_members_share_one_frozen_table_without_publication() {
         result.bytes
     );
     for member in result.members.values() {
-        assert!(!member.storage.is_empty());
-        assert!(!member.cones.pieces.is_empty());
+        assert!(!member.geometry.storage.is_empty());
+        assert!(!member.geometry.cones.pieces.is_empty());
     }
     fn send_sync<T: Send + Sync>() {}
     send_sync::<UnqualifiedFamily>();
@@ -151,12 +151,12 @@ fn decoded_export_mutation_does_not_change_frozen_family() {
 fn check_measures(result: &UnqualifiedFamily) {
     for (region, expected) in [(5, 11.10375), (100, 3.15)] {
         let member = &result.members[&SurfaceRegionId(region)];
-        let comparison = &member.measures.comparison;
+        let comparison = &member.geometry.measures.comparison;
         let [lo, hi] = comparison.normal_certificate().authored_volume_enclosure();
         assert!(lo <= expected && expected <= hi);
         assert!(comparison.discrepancy_bound() < 1e-4);
         assert!(comparison.representative_error_bound() < 1e-4);
-        assert!(member.volume_estimate.is_finite() && member.volume_estimate > 0.);
+        assert!(member.native.volume_estimate.is_finite() && member.native.volume_estimate > 0.);
     }
 }
 
@@ -192,6 +192,7 @@ fn an_island_in_an_unselected_hole_freezes_as_a_separate_member() {
     let family = construct(&inputs).unwrap();
     assert_eq!(family.coverage.members, 2);
     let measure = family.members[&SurfaceRegionId(100)]
+        .geometry
         .measures
         .comparison
         .normal_certificate();

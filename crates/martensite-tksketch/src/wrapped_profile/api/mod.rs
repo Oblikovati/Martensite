@@ -1,17 +1,17 @@
 //! Value-only publication boundary for the rational normal-extrusion operation.
 use super::*;
-mod construct;
-mod error;
-mod failure_projection;
-mod history_projection;
+pub(super) mod error;
+mod export_bindings;
+pub(super) mod failure_projection;
+pub(super) mod history_projection;
 mod history_types;
-mod input;
+pub(super) mod input;
 mod material;
-mod placement;
-mod reports;
+pub(super) mod placement;
+pub(super) mod reports;
 mod request;
 mod result;
-pub use construct::{normal_extrude_profile, normal_extrude_profile_with_cancel};
+pub use super::operation::{normal_extrude_profile, normal_extrude_profile_with_cancel};
 pub use error::{WrappedFailureClass, WrappedNormalFailure, WrappedOperation, WrappedStage};
 pub use history_types::*;
 pub use material::*;
@@ -31,3 +31,6 @@ pub(super) mod operation_tests;
 
 #[cfg(test)]
 mod error_tests;
+
+#[cfg(test)]
+mod planar_cancellation_tests;

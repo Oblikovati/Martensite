@@ -6,7 +6,7 @@ pub(super) fn certify(
     limit: f64,
 ) -> Checked<f64> {
     let mut maximum: f64 = 0.;
-    for proof in &retained.storage {
+    for proof in &retained.geometry.storage {
         source(original, proof)?;
         for depth in 0..2 {
             let actual = endpoint_bound(proof, depth)?;

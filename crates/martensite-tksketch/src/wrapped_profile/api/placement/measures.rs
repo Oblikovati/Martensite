@@ -20,7 +20,7 @@ fn transport_member(
     report: &mut WrappedMemberReport,
     determinant: [f64; 2],
 ) -> Checked<()> {
-    let flux = member.measures.comparison.flux_certificate();
+    let flux = member.geometry.measures.comparison.flux_certificate();
     report.measures.boundary_flux = product(report.measures.boundary_flux, determinant)?;
     let representative = product(reports::range([flux.representative(); 2]), determinant)?;
     let discrepancy = difference(report.measures.boundary_flux, report.measures.ideal_volume)?;
@@ -47,7 +47,7 @@ fn add_totals(
         representative,
         Q::RepresentativeIdeal,
     )?;
-    let comparison = &member.measures.comparison;
+    let comparison = &member.geometry.measures.comparison;
     let integration = error::budget(publication_budget::scale_upper(
         comparison.flux_certificate().absolute_error_bound(),
         determinant[1],

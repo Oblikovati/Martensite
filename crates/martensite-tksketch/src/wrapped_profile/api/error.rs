@@ -46,7 +46,7 @@ pub enum WrappedFailureClass {
     Native,
 }
 #[derive(Debug)]
-pub(super) enum Cause {
+pub(in crate::surface_sketch::wrapped_profile) enum Cause {
     Support(crate::surface_sketch::CylinderSupport),
     Depths([f64; 2]),
     Input(profile_input::ProfileInputFailure),
@@ -54,7 +54,7 @@ pub(super) enum Cause {
     History(history_projection::HistoryMapFailure),
     Placement(Box<placement::PlacementFailure>),
     Export(Failure),
-    ExportCount { actual: usize, expected: usize },
+    ExportBindings(export_bindings::ExportBindingFailure),
     Cancelled,
 }
 /// No successful or partial geometry accompanies this typed refusal.
@@ -131,9 +131,7 @@ impl std::fmt::Display for Cause {
             Self::History(cause) => write!(f, "{cause}"),
             Self::Placement(cause) => write!(f, "{cause}"),
             Self::Export(cause) => write!(f, "native export: {cause:?}"),
-            Self::ExportCount { actual, expected } => {
-                write!(f, "export bindings={actual}; expected {expected}")
-            }
+            Self::ExportBindings(cause) => write!(f, "{cause}"),
             Self::Cancelled => write!(f, "cancelled; expected completed result before handoff"),
         }
     }
@@ -142,6 +140,7 @@ impl std::error::Error for Cause {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Export(cause) => Some(cause),
+            Self::ExportBindings(cause) => Some(cause),
             Self::Input(cause) => Some(cause),
             Self::Family(cause) => Some(cause),
             Self::History(cause) => Some(cause),
@@ -154,7 +153,7 @@ impl std::error::Error for profile_input::ProfileInputFailure {}
 impl std::error::Error for family::FamilyFailure {}
 impl std::error::Error for history_projection::HistoryMapFailure {}
 
-pub(super) fn failure(
+pub(in crate::surface_sketch::wrapped_profile) fn failure(
     stage: WrappedStage,
     class: WrappedFailureClass,
     region: Option<SurfaceRegionId>,
@@ -207,7 +206,7 @@ pub(super) fn annotate(
     }
 }
 
-fn input_context(
+pub(in crate::surface_sketch::wrapped_profile) fn input_context(
     cause: &profile_input::ProfileInputFailure,
     class: WrappedFailureClass,
     entities: &mut Vec<HistorySource>,
@@ -255,7 +254,7 @@ fn input_curve(cause: &profile_input::ProfileInputFailure, entities: &mut Vec<Hi
     entities.push(HistorySource::Curve(curve));
 }
 
-fn history_projection_entities(
+pub(in crate::surface_sketch::wrapped_profile) fn history_projection_entities(
     cause: &history_projection::HistoryMapFailure,
     entities: &mut Vec<HistorySource>,
 ) {

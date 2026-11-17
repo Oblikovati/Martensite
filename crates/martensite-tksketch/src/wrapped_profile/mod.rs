@@ -10,6 +10,10 @@ mod family;
 mod history;
 mod native;
 mod normal_measure;
+mod frozen_placement;
+mod physical_frame;
+mod operation;
+mod math_cancellation;
 mod pipeline;
 mod planar;
 mod planar_clearance;
@@ -27,6 +31,16 @@ use developed_request::DevelopedRegionRequest;
 use martensite_tkbrep::topods::{Edge, Face, Shape};
 use martensite_tkernel::standard::Failure;
 type CancelPoll<'a> = dyn FnMut() -> bool + Send + 'a;
+
+// Retained typed causes determine cancellation without polling again (#526).
+pub(super) trait CancellationCause {
+    fn cancelled(&self) -> bool;
+}
+impl<T: CancellationCause + ?Sized> CancellationCause for Box<T> {
+    fn cancelled(&self) -> bool {
+        self.as_ref().cancelled()
+    }
+}
 
 #[derive(Clone)]
 struct AuthoredPiece {

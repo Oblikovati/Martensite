@@ -37,7 +37,7 @@ pub(super) fn certify(
 }
 
 pub(super) fn side_trims(
-    request: &Request,
+    request: &DevelopedRegionRequest,
     piece: &AuthoredPiece,
     bindings: &Bindings<'_>,
 ) -> Result<(usize, f64), StorageFailure> {

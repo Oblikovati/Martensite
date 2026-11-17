@@ -1,40 +1,8 @@
-//! One entry point composes source resolution, the existing geometry pipeline and publication.
+//! Publish retained evidence without converting or copying the existing report owners.
 use super::*;
 use std::collections::BTreeMap;
 
-/// Extrude selected polynomial profiles along cylinder normals and retain achieved evidence.
-/// The physical frame is normalized/projected from the requested axis and radial vectors.
-/// Example: `let result = normal_extrude_profile(&request)?;`.
-pub fn normal_extrude_profile(request: &WrappedNormalRequest) -> Checked<WrappedNormalResult> {
-    normal_extrude_profile_with_cancel(request, || false)
-}
-/// Cooperatively cancel at source, proof and handoff boundaries without returning partial geometry.
-/// Example: `normal_extrude_profile_with_cancel(&request, || cancellation.is_requested())`.
-pub fn normal_extrude_profile_with_cancel(
-    request: &WrappedNormalRequest,
-    mut cancelled: impl FnMut() -> bool + Send,
-) -> Checked<WrappedNormalResult> {
-    input::poll(&mut cancelled, WrappedStage::Admission)?;
-    let inputs = input::read(request, &mut cancelled)?;
-    from_inputs(request, inputs, &mut cancelled)
-}
-pub(super) fn from_inputs(
-    request: &WrappedNormalRequest,
-    inputs: input::Inputs,
-    cancelled: &mut CancelPoll<'_>,
-) -> Checked<WrappedNormalResult> {
-    let family = construct_family(&inputs, request, cancelled)?;
-    input::poll(cancelled, WrappedStage::History)?;
-    let history = project_history(&family, &inputs, request.support.normal)?;
-    let mut result = publish(request, family, history)?;
-    if let Some(plan) = inputs.placement {
-        placement::publish(&mut result, *plan, cancelled)
-            .map_err(|failure| failure_projection::selected(failure, request))?;
-    }
-    input::poll(cancelled, WrappedStage::Publication)?;
-    Ok(result)
-}
-fn publish(
+pub(super) fn publish(
     request: &WrappedNormalRequest,
     family: family::BudgetedFamily,
     history: history_projection::HistoryPublication,
@@ -104,25 +72,12 @@ fn missing_source(region: SurfaceRegionId) -> WrappedNormalFailure {
         ))),
     )
 }
-fn construct_family(
-    inputs: &input::Inputs,
-    request: &WrappedNormalRequest,
-    cancelled: &mut CancelPoll<'_>,
-) -> Checked<family::BudgetedFamily> {
-    family::construct_budgeted_with_work(
-        &inputs.requests,
-        request.options.volume,
-        request.options.planar_work,
-        |_| cancelled(),
-    )
-    .map_err(|cause| failure_projection::family(cause, &inputs.requests))
-}
-fn project_history(
+pub(super) fn project_history(
     family: &family::BudgetedFamily,
     inputs: &input::Inputs,
     normal: crate::surface_sketch::NormalSense,
 ) -> Checked<history_projection::HistoryPublication> {
-    history_projection::prepare(
+    history_projection::prepare_physical(
         &family.family.keys,
         &family.family.history,
         &inputs.directions,

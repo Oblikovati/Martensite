@@ -4,12 +4,12 @@ use crate::surface_sketch::{HistoryRole, NormalSense};
 use std::collections::{BTreeMap, BTreeSet};
 type Checked<T> = Result<T, HistoryMapFailure>;
 type Directions = BTreeMap<SurfaceRegionId, profile_input::CurveDirections>;
-pub(super) struct HistoryPublication {
-    pub records: Vec<WrappedHistoryRecord>,
-    pub bindings: Vec<WrappedHistoryKey>,
+pub(in crate::surface_sketch::wrapped_profile) struct HistoryPublication {
+    pub(in crate::surface_sketch::wrapped_profile) records: Vec<WrappedHistoryRecord>,
+    pub(in crate::surface_sketch::wrapped_profile) bindings: Vec<WrappedHistoryKey>,
 }
 #[derive(Debug)]
-pub(super) enum HistoryMapFailure {
+pub(in crate::surface_sketch::wrapped_profile) enum HistoryMapFailure {
     Owner(SurfaceRegionId),
     Parameter {
         owner: SurfaceRegionId,
@@ -53,34 +53,70 @@ struct Projection {
     bindings: BTreeMap<BindingKey, WrappedHistoryKey>,
 }
 
-pub(super) fn prepare(
+// Native cylinder archives retain increasing-radius order. Normalize their identities
+// before the shared caller-relative projection (#522).
+pub(in crate::surface_sketch::wrapped_profile) fn prepare_physical(
     keys: &[BindingKey],
     history: &history::HistoryEvidence,
     directions: &Directions,
     normal: NormalSense,
 ) -> Checked<HistoryPublication> {
+    let records = history.records.iter().map(|record| CallerDepthRecord {
+        native_binding: record.result,
+        caller_result: caller_key(record.result, normal),
+        original: record,
+    });
+    prepare_normalized(keys, records, directions)
+}
+
+#[cfg(test)]
+pub(in crate::surface_sketch::wrapped_profile) fn prepare(
+    keys: &[BindingKey],
+    history: &history::HistoryEvidence,
+    directions: &Directions,
+) -> Checked<HistoryPublication> {
+    let records = history.records.iter().map(|record| CallerDepthRecord {
+        native_binding: record.result,
+        caller_result: record.result,
+        original: record,
+    });
+    prepare_normalized(keys, records, directions)
+}
+
+struct CallerDepthRecord<'a> {
+    native_binding: BindingKey,
+    caller_result: BindingKey,
+    original: &'a history::HistoryRecord,
+}
+
+fn prepare_normalized<'a>(
+    keys: &[BindingKey],
+    records: impl Iterator<Item = CallerDepthRecord<'a>>,
+    directions: &Directions,
+) -> Checked<HistoryPublication> {
     let mut projection = Projection::default();
-    for record in &history.records {
-        projection.insert(record, directions, normal)?;
+    for record in records {
+        projection.insert(record, directions)?;
     }
     projection.finish(keys)
 }
 
+fn caller_key(mut key: BindingKey, normal: NormalSense) -> BindingKey {
+    key.role = role(key.role, normal);
+    key
+}
+
 impl Projection {
-    fn insert(
-        &mut self,
-        record: &history::HistoryRecord,
-        directions: &Directions,
-        normal: NormalSense,
-    ) -> Checked<()> {
-        let projected = project_record(record, directions, normal)?;
+    fn insert(&mut self, record: CallerDepthRecord<'_>, directions: &Directions) -> Checked<()> {
+        let target = record.native_binding;
+        let projected = project_record(record, directions)?;
         let key = projected.result;
         if self.records.insert(key, projected).is_some() {
             return Err(HistoryMapFailure::Duplicate(key));
         }
-        if self.bindings.insert(record.result, key).is_some() {
+        if self.bindings.insert(target, key).is_some() {
             return Err(HistoryMapFailure::Binding {
-                key: record.result,
+                key: target,
                 count: 2,
             });
         }
@@ -108,34 +144,30 @@ impl Projection {
 }
 
 fn project_record(
-    record: &history::HistoryRecord,
+    record: CallerDepthRecord<'_>,
     directions: &Directions,
-    normal: NormalSense,
 ) -> Checked<WrappedHistoryRecord> {
     Ok(WrappedHistoryRecord {
-        result: project_key(record, directions, normal)?,
-        owner: record.owner,
-        relation: relation(record.relation),
-        parents: record.parents.clone(),
+        result: project_key(record.caller_result, record.original.owner, directions)?,
+        owner: record.original.owner,
+        relation: relation(record.original.relation),
+        parents: record.original.parents.clone(),
     })
 }
 
 fn project_key(
-    record: &history::HistoryRecord,
+    result: BindingKey,
+    owner: SurfaceRegionId,
     directions: &Directions,
-    normal: NormalSense,
 ) -> Checked<WrappedHistoryKey> {
     let directions = directions
-        .get(&record.owner)
-        .ok_or(HistoryMapFailure::Owner(record.owner))?;
-    let source =
-        source(record.result.source, directions).map_err(|cause| HistoryMapFailure::Parameter {
-            owner: record.owner,
-            cause,
-        })?;
+        .get(&owner)
+        .ok_or(HistoryMapFailure::Owner(owner))?;
+    let source = source(result.source, directions)
+        .map_err(|cause| HistoryMapFailure::Parameter { owner, cause })?;
     Ok(WrappedHistoryKey {
         source,
-        role: role(record.result.role, normal),
+        role: result.role,
     })
 }
 

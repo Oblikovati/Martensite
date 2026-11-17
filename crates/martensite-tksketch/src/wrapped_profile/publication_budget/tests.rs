@@ -50,7 +50,7 @@ fn the_allowance_is_not_reset_for_each_member() {
     ));
 }
 fn member_error(member: &pipeline::RetainedMember) -> f64 {
-    let p = &member.measures.comparison;
+    let p = &member.geometry.measures.comparison;
     assert!(p.discrepancy_bound() > 0.);
     p.discrepancy_bound().max(p.representative_error_bound())
 }
@@ -62,15 +62,15 @@ fn failed_inconclusive_or_unrun_native_stages_refuse() {
     }
 }
 fn check_verdicts(inputs: &[Request], family: &mut family::UnqualifiedFamily, index: usize) {
-    let original = first_member(family).report.clone();
+    let original = first_member(family).native.report.clone();
     for verdict in [
         StageVerdict::Failed,
         StageVerdict::Inconclusive,
         StageVerdict::NotRun,
     ] {
-        first_member(family).report.stages[index].verdict = verdict;
+        first_member(family).native.report.stages[index].verdict = verdict;
         assert_native_refusal(certify(inputs, family, CylindricalMeasureLimit::Report));
-        first_member(family).report = original.clone();
+        first_member(family).native.report = original.clone();
     }
 }
 fn assert_native_refusal(result: Checked<BudgetEvidence>) {
@@ -89,7 +89,7 @@ fn changed_sources_missing_proofs_and_promoted_modes_refuse() {
     ));
     inputs[0].tolerance /= 2.;
     check_promoted_mode(&inputs, &mut family);
-    first_member(&mut family).storage.pop();
+    first_member(&mut family).geometry.storage.pop();
     assert!(matches!(
         certify(&inputs, &family, CylindricalMeasureLimit::Report),
         Err(BudgetFailure::Coverage {
@@ -99,7 +99,7 @@ fn changed_sources_missing_proofs_and_promoted_modes_refuse() {
     ));
 }
 fn check_promoted_mode(inputs: &[Request], family: &mut family::UnqualifiedFamily) {
-    first_member(family).report.stages[1].mode = CheckMode::Exact;
+    first_member(family).native.report.stages[1].mode = CheckMode::Exact;
     assert!(matches!(
         certify(inputs, family, CylindricalMeasureLimit::Report),
         Err(BudgetFailure::Native {
@@ -107,7 +107,7 @@ fn check_promoted_mode(inputs: &[Request], family: &mut family::UnqualifiedFamil
             ..
         })
     ));
-    first_member(family).report.stages[1].mode = CheckMode::Sampled;
+    first_member(family).native.report.stages[1].mode = CheckMode::Sampled;
 }
 #[test]
 fn input_order_does_not_change_budget_or_accumulation_order() {
@@ -153,7 +153,7 @@ fn upward_sums_enclose_half_ulp_loss_and_subnormal_addition() {
 #[test]
 fn budget_validation_checks_cone_sources_instead_of_only_counts() {
     let (inputs, mut family) = fixture();
-    let cones = &mut first_member(&mut family).cones;
+    let cones = &mut first_member(&mut family).geometry.cones;
     cones.pieces[0].certificate = cones.pieces[1].certificate.clone();
     assert!(matches!(
         certify(&inputs, &family, CylindricalMeasureLimit::Report),
@@ -168,8 +168,8 @@ fn budget_validation_checks_cone_sources_instead_of_only_counts() {
 fn foreign_cap_profile_cannot_borrow_an_authored_profile_publication_receipt() {
     let (inputs, mut family) = fixture();
     let member = first_member(&mut family);
-    assert!(member.storage.len() > 1);
-    member.storage[0].cap_profile = member.storage[1].cap_profile.clone();
+    assert!(member.geometry.storage.len() > 1);
+    member.geometry.storage[0].cap_profile = member.geometry.storage[1].cap_profile.clone();
     assert!(matches!(
         certify(&inputs, &family, CylindricalMeasureLimit::Report),
         Err(BudgetFailure::Cones { cause, .. })
@@ -180,7 +180,7 @@ fn foreign_cap_profile_cannot_borrow_an_authored_profile_publication_receipt() {
 #[test]
 fn missing_cap_join_blocks_publication_even_when_authored_cones_are_complete() {
     let (inputs, mut family) = fixture();
-    first_member(&mut family).cones.caps.joins.pop();
+    first_member(&mut family).geometry.cones.caps.joins.pop();
     assert!(matches!(
         certify(&inputs, &family, CylindricalMeasureLimit::Report),
         Err(BudgetFailure::Cones { .. })
@@ -211,7 +211,7 @@ fn cap_homotopy_receipt_uses_strict_clearance_under_the_original_budget() {
 fn a_foreign_lift_receipt_cannot_supply_cap_homotopy_evidence() {
     let (inputs, mut family) = fixture();
     let member = first_member(&mut family);
-    member.storage[0].cap_lift = member.storage[1].cap_lift.clone();
+    member.geometry.storage[0].cap_lift = member.geometry.storage[1].cap_lift.clone();
     assert!(matches!(
         certify(&inputs, &family, CylindricalMeasureLimit::Report),
         Err(BudgetFailure::Source(_))

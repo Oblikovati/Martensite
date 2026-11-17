@@ -14,7 +14,7 @@ pub(super) fn certify(
     let expected = prepared.loops.iter().map(Vec::len).sum();
     inventory(original.region, retained, expected)?;
     cone_binding(original, prepared, retained)?;
-    native::certify(original.region, &retained.report, limits.spatial)?;
+    native::certify(original.region, &retained.native.report, limits.spatial)?;
     bounds(retained, original, limits)
 }
 fn cone_binding(
@@ -22,7 +22,7 @@ fn cone_binding(
     prepared: &Request,
     retained: &pipeline::RetainedMember,
 ) -> Checked<()> {
-    planar_cones::bind(original, prepared, &retained.storage, &retained.cones).map_err(|cause| {
+    planar_cones::bind(original, prepared, &retained.geometry.storage, &retained.geometry.cones).map_err(|cause| {
         BudgetFailure::Cones {
             region: original.region,
             cause: Box::new(cause),
@@ -86,17 +86,17 @@ fn inventory(
     retained: &pipeline::RetainedMember,
     expected: usize,
 ) -> Checked<()> {
-    count(region, "storage spans", retained.storage.len(), expected)?;
+    count(region, "storage spans", retained.geometry.storage.len(), expected)?;
     count(
         region,
         "regularity cones",
-        retained.cones.pieces.len(),
+        retained.geometry.cones.pieces.len(),
         expected,
     )?;
-    count(region, "join cones", retained.cones.joins.len(), expected)?;
-    let spans: Vec<_> = retained.storage.iter().map(|p| p.span).collect();
-    if spans != retained.measures.spans {
-        return Err(span_failure(region, retained.measures.spans.clone(), spans));
+    count(region, "join cones", retained.geometry.cones.joins.len(), expected)?;
+    let spans: Vec<_> = retained.geometry.storage.iter().map(|p| p.span).collect();
+    if spans != retained.geometry.measures.spans {
+        return Err(span_failure(region, retained.geometry.measures.spans.clone(), spans));
     }
     Ok(())
 }
@@ -138,7 +138,7 @@ fn bounds(
 ) -> Checked<MemberBounds> {
     let region = original.region;
     let mut bounds = MemberBounds::new(retained);
-    for proof in &retained.storage {
+    for proof in &retained.geometry.storage {
         if !proof.profile.matches_reference_curve(&proof.cap_profile) {
             return Err(BudgetFailure::Source(region));
         }
@@ -155,7 +155,7 @@ impl MemberBounds {
             trace: 0.,
             trace_tolerance: 0.,
             cap_realization: 0.,
-            native_modes: retained.report.stages.each_ref().map(|stage| stage.mode),
+            native_modes: retained.native.report.stages.each_ref().map(|stage| stage.mode),
         }
     }
 

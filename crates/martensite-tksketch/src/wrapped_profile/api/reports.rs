@@ -133,7 +133,7 @@ pub struct WrappedBudgetReport {
     pub volume: WrappedVolumeBounds,
 }
 
-pub(super) fn member(
+pub(in crate::surface_sketch::wrapped_profile) fn member(
     retained: &pipeline::RetainedMember,
     bounds: &publication_budget::MemberBounds,
     planar: &planar::PlanarEvidence,
@@ -141,7 +141,7 @@ pub(super) fn member(
     WrappedMemberReport {
         planar_area: planar.area,
         coverage: incidence_coverage(retained),
-        validation: retained.report.clone(),
+        validation: retained.native.report.clone(),
         spatial: spatial_report(retained, bounds),
         measures: measure_report(retained),
     }
@@ -165,10 +165,17 @@ fn storage_max(
     retained: &pipeline::RetainedMember,
     value: impl Fn(&storage::StoredProof) -> f64,
 ) -> WrappedCertifiedBound {
-    bound(retained.storage.iter().map(value).fold(0., f64::max))
+    bound(
+        retained
+            .geometry
+            .storage
+            .iter()
+            .map(value)
+            .fold(0., f64::max),
+    )
 }
 fn measure_report(retained: &pipeline::RetainedMember) -> WrappedMeasureReport {
-    let comparison = &retained.measures.comparison;
+    let comparison = &retained.geometry.measures.comparison;
     let normal = comparison.normal_certificate();
     WrappedMeasureReport {
         ideal_volume: range(normal.profile_volume_enclosure()),
@@ -176,12 +183,12 @@ fn measure_report(retained: &pipeline::RetainedMember) -> WrappedMeasureReport {
         authored_volume: range(normal.authored_volume_enclosure()),
         retained_ideal_discrepancy: bound(comparison.discrepancy_bound()),
         native_volume: WrappedNativeVolumeEstimate {
-            value: retained.volume_estimate,
-            integration_error: retained.integration_estimate,
+            value: retained.native.volume_estimate,
+            integration_error: retained.native.integration_estimate,
         },
     }
 }
-pub(super) fn budget(
+pub(in crate::surface_sketch::wrapped_profile) fn budget(
     evidence: &publication_budget::BudgetEvidence,
     policy: WrappedVolumePolicy,
     planar: martensite_tkbo::profile_extrusion::RegionCertificate,
@@ -214,7 +221,7 @@ pub(super) fn volume_report(
 }
 
 fn incidence_coverage(member: &pipeline::RetainedMember) -> WrappedIncidenceCoverage {
-    let graph = &member.coverage;
+    let graph = &member.geometry.coverage;
     WrappedIncidenceCoverage {
         bindings: graph.binding_count,
         faces: graph.faces,
@@ -223,13 +230,25 @@ fn incidence_coverage(member: &pipeline::RetainedMember) -> WrappedIncidenceCove
         vertices: graph.vertices,
         edge_uses: graph.edge_uses,
         euler_characteristic: graph.euler_characteristic,
-        cap_pcurves: member.storage.iter().map(|p| p.trims.cap_pcurves).sum(),
-        side_pcurves: member.storage.iter().map(|p| p.trims.side_pcurves).sum(),
+        cap_pcurves: member
+            .geometry
+            .storage
+            .iter()
+            .map(|p| p.trims.cap_pcurves)
+            .sum(),
+        side_pcurves: member
+            .geometry
+            .storage
+            .iter()
+            .map(|p| p.trims.side_pcurves)
+            .sum(),
     }
 }
-pub(super) fn bound(upper: f64) -> WrappedCertifiedBound {
+pub(in crate::surface_sketch::wrapped_profile) fn bound(upper: f64) -> WrappedCertifiedBound {
     WrappedCertifiedBound { upper }
 }
-pub(super) fn range([lower, upper]: [f64; 2]) -> WrappedCertifiedRange {
+pub(in crate::surface_sketch::wrapped_profile) fn range(
+    [lower, upper]: [f64; 2],
+) -> WrappedCertifiedRange {
     WrappedCertifiedRange { lower, upper }
 }

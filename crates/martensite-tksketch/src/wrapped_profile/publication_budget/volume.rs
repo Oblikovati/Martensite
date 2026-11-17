@@ -33,7 +33,7 @@ impl FamilyVolumeBounds {
         self.auxiliary(member)
     }
     fn comparison(&mut self, member: &pipeline::RetainedMember) -> Checked<()> {
-        let proof = &member.measures.comparison;
+        let proof = &member.geometry.measures.comparison;
         self.discrepancy = add_upper(
             self.discrepancy,
             proof.discrepancy_bound(),
@@ -47,7 +47,7 @@ impl FamilyVolumeBounds {
         Ok(())
     }
     fn auxiliary(&mut self, member: &pipeline::RetainedMember) -> Checked<()> {
-        let proof = &member.measures.comparison;
+        let proof = &member.geometry.measures.comparison;
         self.integration_error = add_upper(
             self.integration_error,
             proof.flux_certificate().absolute_error_bound(),

@@ -1,5 +1,5 @@
 //! Pure owned projection fixtures exercise source identity without constructing geometry.
-use super::history_projection::{HistoryMapFailure, prepare, role};
+use super::history_projection::{HistoryMapFailure, prepare_physical as prepare, role};
 use super::*;
 use crate::surface_sketch::{HistoryRole, HistorySource, NormalSense};
 use martensite_tkbo::profile_extrusion::{
@@ -252,4 +252,40 @@ fn a_private_binding_cannot_map_to_two_different_public_identities() {
         prepare(&keys, &records, &directions, NormalSense::Outward),
         Err(HistoryMapFailure::Binding { count: 2, .. })
     ));
+}
+
+#[test]
+fn both_supports_project_the_same_caller_relative_depth_contract() {
+    let (physical_keys, physical, directions) = fixture();
+    for normal in [NormalSense::Outward, NormalSense::Inward] {
+        let (keys, caller) = normalized_fixture(&physical_keys, &physical, normal);
+        let cylinder = prepare(&physical_keys, &physical, &directions, normal).unwrap();
+        let cone = history_projection::prepare(&keys, &caller, &directions).unwrap();
+        assert_eq!(cylinder.records, cone.records);
+        assert_eq!(cylinder.bindings, cone.bindings);
+    }
+}
+
+mod depth_contract;
+
+fn normalized_fixture(
+    keys: &[BindingKey],
+    history: &history::HistoryEvidence,
+    normal: NormalSense,
+) -> (Vec<BindingKey>, history::HistoryEvidence) {
+    let normalize = |mut key: BindingKey| {
+        key.role = role(key.role, normal);
+        key
+    };
+    let keys = keys.iter().copied().map(normalize).collect();
+    let records = history
+        .records
+        .iter()
+        .cloned()
+        .map(|mut record| {
+            record.result = normalize(record.result);
+            record
+        })
+        .collect();
+    (keys, history::HistoryEvidence { records })
 }

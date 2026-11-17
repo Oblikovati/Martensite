@@ -1,12 +1,13 @@
 //! One shared rigid datum transports the frozen graph; canonical evidence stays owned.
 use super::*;
+#[cfg(test)]
+use martensite_tkmath::{gp::Point3, toploc::Location};
 use martensite_tkmath::{
-    gp::{Axis3, Direction3, Point3, Transform3},
+    gp::Transform3,
     predicates::roots::metric_bounds::{
         CertifiedFrameSpatialBudget, FrameSpatialInput, FrameTransportError, FrameTransportInput,
         certify_frame_transport,
     },
-    toploc::Location,
 };
 use std::collections::BTreeMap;
 mod admission;
@@ -23,12 +24,14 @@ mod trace;
 pub(super) use admission::prepare;
 pub(super) use error::PlacementFailure;
 use error::{at, fail};
-pub(super) use publication::publish;
-pub(super) struct Plan<B: PlacementBudget = CertifiedFrameSpatialBudget> {
+pub(in crate::surface_sketch::wrapped_profile) use publication::publish;
+pub(in crate::surface_sketch::wrapped_profile) struct Plan<
+    B: PlacementBudget = CertifiedFrameSpatialBudget,
+> {
     transform: Transform3,
     budget: B,
 }
-pub(super) struct Placed {
+pub(in crate::surface_sketch::wrapped_profile) struct Placed {
     pub bytes: Vec<u8>,
     pub report: WrappedPlacementReport,
 }

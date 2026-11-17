@@ -41,13 +41,7 @@ pub(crate) struct ProfileProofRefusal {
         martensite_tkmath::predicates::roots::RootIsolationError,
     )>,
     pub work: Option<crate::sketch_region_certification::CensusWorkReceipt>,
-}
-
-struct NeverStop;
-impl OwnedPrismProgress for NeverStop {
-    fn checkpoint(&mut self, _: OwnedPrismCheckpoint) -> Result<bool, Failure> {
-        Ok(false)
-    }
+    pub cancelled: bool,
 }
 
 /// Plane graph inputs: edges with their vertex ids, no loops or seeds.
@@ -65,18 +59,48 @@ pub(crate) struct ProfileGraphInput {
 pub(crate) fn certify_profile_graph(
     input: ProfileGraphInput,
 ) -> Result<GraphRegionCertificate, ProfileProofRefusal> {
+    let prepared = prepare_owned_profile(owned_graph_request(input), &mut NeverStop)
+        .map_err(preparation_refusal)?;
+    prepared
+        .inspect_plane_graph(|| false)
+        .map_err(|failure| inspection_refusal(&prepared, failure))
+}
+
+struct NeverStop;
+impl OwnedPrismProgress for NeverStop {
+    fn checkpoint(&mut self, _: OwnedPrismCheckpoint) -> Result<bool, Failure> {
+        Ok(false)
+    }
+}
+struct PollProgress<'a, F>(&'a mut F);
+impl<F: FnMut() -> bool + Send> OwnedPrismProgress for PollProgress<'_, F> {
+    fn checkpoint(&mut self, _: OwnedPrismCheckpoint) -> Result<bool, Failure> {
+        Ok((self.0)())
+    }
+}
+
+pub(crate) fn certify_profile_graph_with_cancel(
+    input: ProfileGraphInput,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<GraphRegionCertificate, ProfileProofRefusal> {
     let request = owned_graph_request(input);
-    let prepared = prepare_owned_profile(request, &mut NeverStop).map_err(preparation_refusal)?;
-    prepared.inspect_plane_graph(|| false).map_err(|failure| {
-        let work =
-            crate::sketch_region_certification::CensusWorkReceipt::capture(&prepared.bridge.census);
-        let root_failure = refused_pair_root(&prepared.bridge.census, &failure.cause);
-        ProfileProofRefusal {
-            root_failure,
-            cause: region_cause(failure),
-            work: Some(work),
-        }
-    })
+    let prepared = prepare_owned_profile(request, &mut PollProgress(&mut cancelled))
+        .map_err(preparation_refusal)?;
+    prepared
+        .inspect_plane_graph(&mut cancelled)
+        .map_err(|failure| inspection_refusal(&prepared, failure))
+}
+fn inspection_refusal(
+    prepared: &PreparedProfile,
+    failure: LoopRegionFailure,
+) -> ProfileProofRefusal {
+    let census = &prepared.bridge.census;
+    ProfileProofRefusal {
+        root_failure: refused_pair_root(census, &failure.cause),
+        cancelled: matches!(failure.cause, LoopRegionCause::Cancelled),
+        cause: region_cause(failure),
+        work: Some(crate::sketch_region_certification::CensusWorkReceipt::capture(census)),
+    }
 }
 fn refused_pair_root(
     census: &crate::sketch_region_certification::BoundaryCensus,
@@ -105,12 +129,14 @@ fn owned_graph_request(input: ProfileGraphInput) -> OwnedProfileRequest {
 }
 
 fn preparation_refusal(failure: Box<ProfilePreparationFailure>) -> ProfileProofRefusal {
+    let cancelled = failure.class == OwnedPreparationClass::Cancelled;
     let cause = match &failure.cause {
         ProfilePreparationCause::Admission(cause) => format!("{cause:?}"),
         ProfilePreparationCause::Stage(_) => "stage refusal".to_string(),
     };
     let (class, phase) = (failure.class, failure.phase);
     ProfileProofRefusal {
+        cancelled,
         root_failure: None,
         cause: ProfileProofCause::Incomplete(format!(
             "profile preparation {class:?} at {phase:?}: {cause}"

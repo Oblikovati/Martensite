@@ -43,7 +43,7 @@ fn canonical_spatial_domain(
 #[test]
 fn rotated_budget_publishes_hole_and_disconnected_member_through_the_shared_pipeline() {
     let (request, inputs, plan) = fixture();
-    let mut result = super::super::construct::from_inputs(&request, inputs, &mut || false).unwrap();
+    let mut result = operation::from_inputs(&request, inputs, &mut || false).unwrap();
     let physical = publication::apply(&mut result, plan, &mut || false).unwrap();
     assert_eq!(physical.members.len(), 2);
     assert_eq!(

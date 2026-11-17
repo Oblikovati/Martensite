@@ -36,6 +36,7 @@ pub struct PlanarRegionWorkFailure {
     requested: PlanarProofWorkLimit,
     observed: Option<PlanarProofWorkReceipt>,
     root_failure: Option<Box<PlanarPairRootFailure>>,
+    cancelled: bool,
 }
 impl PlanarRegionWorkFailure {
     /// Existing operation, stage, entities and cause; `failure.decline().class()`.
@@ -55,6 +56,14 @@ impl PlanarRegionWorkFailure {
     pub fn pair_root_failure(&self) -> Option<&PlanarPairRootFailure> {
         self.root_failure.as_deref()
     }
+    /// Whether the caller cancelled the operation; `failure.is_cancelled()`.
+    pub fn is_cancelled(&self) -> bool {
+        self.cancelled
+    }
+    pub(crate) fn with_cancelled(mut self, cancelled: bool) -> Self {
+        self.cancelled = cancelled;
+        self
+    }
     pub(crate) fn with_root_failure(mut self, root_failure: Option<PlanarPairRootFailure>) -> Self {
         self.root_failure = root_failure.map(Box::new);
         self
@@ -69,6 +78,7 @@ impl PlanarRegionWorkFailure {
             requested,
             observed,
             root_failure: None,
+            cancelled: false,
         }
     }
     pub(crate) fn into_decline(self) -> OperationDecline {

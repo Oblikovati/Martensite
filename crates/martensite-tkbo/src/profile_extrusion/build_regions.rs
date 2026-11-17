@@ -8,7 +8,7 @@ use super::decline::{Decliner, OperationDecline, OperationKind, OperationStage a
 use super::loop_geometry::{loop_scale, signed_area};
 use super::loops::{ProfileLoop, require_closed};
 use super::profile::{ProfileCurveId, ProfileVertexId, SketchProfile};
-use super::proof::{CertifiedFace, CertifiedRegions, certify_regions};
+use super::proof::{CertifiedFace, CertifiedRegions, certify_regions, certify_regions_with_cancel};
 use super::region_area::{RegionAreaInput, region_area};
 use super::regions::*;
 use super::resolution::Resolution;
@@ -63,6 +63,60 @@ pub fn build_planar_regions_with_work(
 ) -> super::PlanarRegionWorkResult {
     build_with_work(profile, resolution, requested)
 }
+
+/// Build bounded planar regions with a finite work limit and cooperative cancellation.
+/// Example: `build_planar_regions_with_work_and_cancel(&profile, resolution, limit, || false)?`.
+pub fn build_planar_regions_with_work_and_cancel(
+    profile: &SketchProfile,
+    resolution: Resolution,
+    requested: super::PlanarProofWorkLimit,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> super::PlanarRegionWorkResult {
+    if cancelled() {
+        return Err(cancelled_failure(requested, Stage::Admission, None));
+    }
+    let unobserved = |decline| super::PlanarRegionWorkFailure::new(requested, decline, None);
+    let profile = admit_profile(profile, resolution)
+        .map_err(|cause| unobserved(DECLINE.at(Stage::Admission, cause)))?;
+    require_closed(&profile).map_err(|cause| unobserved(DECLINE.at(Stage::Loops, cause)))?;
+    let certified = certified_for_work_with_cancel(&profile, requested, &mut cancelled)?;
+    if cancelled() {
+        return Err(cancelled_failure(
+            requested,
+            Stage::Construction,
+            Some(certified.work),
+        ));
+    }
+    construct_regions_with_cancel(&profile, &certified, requested, &mut cancelled)
+}
+
+fn certified_for_work_with_cancel(
+    profile: &AdmittedProfile,
+    requested: super::PlanarProofWorkLimit,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<CertifiedRegions, super::PlanarRegionWorkFailure> {
+    certify_regions_with_cancel(profile, requested.override_limit(), cancelled).map_err(|failure| {
+        super::PlanarRegionWorkFailure::new(
+            requested,
+            DECLINE.at(Stage::Certification, failure.cause),
+            failure.work,
+        )
+        .with_root_failure(failure.root_failure)
+        .with_cancelled(failure.cancelled)
+    })
+}
+
+fn cancelled_failure(
+    requested: super::PlanarProofWorkLimit,
+    stage: Stage,
+    work: Option<super::PlanarProofWorkReceipt>,
+) -> super::PlanarRegionWorkFailure {
+    let cause = super::DeclineCause::IncompleteCertification {
+        reason: "cancelled".into(),
+    };
+    super::PlanarRegionWorkFailure::new(requested, DECLINE.at(stage, cause), work)
+        .with_cancelled(true)
+}
 fn build_with_work(
     profile: &SketchProfile,
     resolution: Resolution,
@@ -108,6 +162,39 @@ fn construct_regions(
         .enumerate()
         .map(|(index, face)| context.region(index, face))
         .collect::<Result<Vec<_>, _>>()?;
+    Ok(context.publish(regions))
+}
+
+fn construct_regions_with_cancel(
+    profile: &AdmittedProfile,
+    certified: &CertifiedRegions,
+    requested: super::PlanarProofWorkLimit,
+    cancelled: &mut impl FnMut() -> bool,
+) -> super::PlanarRegionWorkResult {
+    let work = Some(certified.work);
+    let topology = build_topology(profile).map_err(|failure| {
+        let decline = DECLINE.native(Stage::Construction, "profile topology", failure);
+        super::PlanarRegionWorkFailure::new(requested, decline, work)
+    })?;
+    let context = RegionContext {
+        profile,
+        certified,
+        topology: &topology,
+    };
+    let mut regions = Vec::with_capacity(certified.faces.len());
+    for (index, face) in certified.faces.iter().enumerate() {
+        if cancelled() {
+            return Err(cancelled_failure(requested, Stage::Construction, work));
+        }
+        regions.push(
+            context
+                .region(index, face)
+                .map_err(|decline| super::PlanarRegionWorkFailure::new(requested, decline, work))?,
+        );
+    }
+    if cancelled() {
+        return Err(cancelled_failure(requested, Stage::Construction, work));
+    }
     Ok(context.publish(regions))
 }
 

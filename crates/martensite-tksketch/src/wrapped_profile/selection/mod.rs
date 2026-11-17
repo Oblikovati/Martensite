@@ -82,7 +82,7 @@ fn prepare_with_work(
     if cancelled() {
         return Err(SelectionFailure::Cancelled);
     }
-    let planar = qualify_with_work(requests, work)?;
+    let planar = qualify_with_work(requests, work, &mut cancelled)?;
     let prepared = requests
         .iter()
         .map(|request| prepare_region(request, &mut cancelled))
@@ -120,14 +120,16 @@ pub(super) fn qualify(requests: &[Request]) -> Result<PlanarSelectionEvidence, S
     qualify_with_work(
         requests,
         martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
+        &mut || false,
     )
 }
 fn qualify_with_work(
     requests: &[Request],
     work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
+    cancelled: &mut CancelPoll<'_>,
 ) -> Result<PlanarSelectionEvidence, SelectionFailure> {
     let tolerance = admission::admit(requests)?;
-    let captured = planar::capture_with_work(requests, tolerance, work)
+    let captured = planar::capture_with_work_and_cancel(requests, tolerance, work, cancelled)
         .map_err(|cause| SelectionFailure::Capture(Box::new(cause)))?;
     let mut members = BTreeMap::new();
     for request in requests {

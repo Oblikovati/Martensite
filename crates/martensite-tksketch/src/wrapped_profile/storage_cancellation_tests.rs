@@ -110,6 +110,7 @@ fn cancelled_after(
     })
     .err()
     .unwrap();
+    assert!(failure.is_cancelled());
     assert_eq!(polls, limit);
     assert_eq!(encoded(prepared, bindings), before);
     failure

@@ -30,36 +30,19 @@ impl Context {
         self
     }
 }
-pub(super) fn family(cause: family::FamilyFailure, selected: &[Request]) -> WrappedNormalFailure {
+pub(in crate::surface_sketch::wrapped_profile) fn family(
+    cause: family::FamilyFailure,
+) -> WrappedNormalFailure {
     let mut context = family_context(&cause);
-    add_owners(&mut context.entities, selected.iter().map(|r| r.region));
+    if cause.cancelled() {
+        context.class = Class::Cancelled;
+    }
     error::with_entities(
         context.stage,
         context.class,
         context.entities,
         error::Cause::Family(cause),
     )
-}
-pub(super) fn selected(
-    mut failure: WrappedNormalFailure,
-    request: &WrappedNormalRequest,
-) -> WrappedNormalFailure {
-    add_owners(
-        &mut failure.entities,
-        request.selections.iter().map(|r| r.region),
-    );
-    failure.entities.sort();
-    failure.entities.dedup();
-    failure
-}
-fn add_owners(entities: &mut Vec<HistorySource>, owners: impl Iterator<Item = SurfaceRegionId>) {
-    if entities
-        .iter()
-        .any(|entity| matches!(entity, HistorySource::Region(_)))
-    {
-        return;
-    }
-    entities.extend(owners.map(HistorySource::Region));
 }
 fn family_context(cause: &family::FamilyFailure) -> Context {
     use family::FamilyFailure as F;
@@ -135,6 +118,9 @@ fn planar_context(cause: &planar::PlanarFailure, region: Option<SurfaceRegionId>
     context
 }
 fn planar_class(cause: &planar::PlanarFailure) -> Class {
+    if matches!(cause, planar::PlanarFailure::WorkCapture(work) if work.is_cancelled()) {
+        return Class::Cancelled;
+    }
     match cause {
         planar::PlanarFailure::WorkCapture(cause) => decline_class(cause.decline().class()),
         #[cfg(test)]
@@ -299,7 +285,7 @@ fn history_context(cause: &history::HistoryFailure) -> Context {
     };
     Context::new(Class::Incomplete, entities)
 }
-pub(super) fn binding_source(key: BindingKey) -> HistorySource {
+pub(in crate::surface_sketch::wrapped_profile) fn binding_source(key: BindingKey) -> HistorySource {
     match key.source {
         Source::Region(region) => HistorySource::Region(region),
         Source::Span(span) => HistorySource::Curve(span.curve),
@@ -331,4 +317,11 @@ fn cone_context(region: SurfaceRegionId, cause: &planar_cones::ConeFailure) -> C
         C::Authored(_) => {}
     }
     context
+}
+
+pub(in crate::surface_sketch::wrapped_profile) fn budget(
+    cause: &publication_budget::BudgetFailure,
+) -> (WrappedStage, Class, Vec<HistorySource>) {
+    let context = budget_context(cause);
+    (context.stage, context.class, context.entities)
 }

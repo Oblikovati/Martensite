@@ -11,6 +11,11 @@ pub(super) struct PlanningFailure {
     curve: SurfaceCurveId,
     cause: CylindricalProfileError,
 }
+impl PlanningFailure {
+    pub(super) fn source_cause(&self) -> &CylindricalProfileError {
+        &self.cause
+    }
+}
 impl std::fmt::Display for PlanningFailure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "authored curve {:?}: {}", self.curve, self.cause)

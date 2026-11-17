@@ -110,11 +110,11 @@ fn append_members(
         write!(
             signature,
             "{id:?}|{:?}|{:?}|{:?}|{:?}|{:?}|",
-            member.coverage,
-            member.report,
-            member.volume_estimate.to_bits(),
-            member.integration_estimate.to_bits(),
-            member.measures.comparison
+            member.geometry.coverage,
+            member.native.report,
+            member.native.volume_estimate.to_bits(),
+            member.native.integration_estimate.to_bits(),
+            member.geometry.measures.comparison
         )
         .unwrap();
     }

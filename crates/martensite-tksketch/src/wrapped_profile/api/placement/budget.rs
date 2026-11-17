@@ -3,11 +3,11 @@ use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedFrameTransport, CertifiedRotatedFrameSpatialBudget, CertifiedRotatedFrameTransport,
 };
-pub(in super::super) trait PlacementFrame {
+pub(in crate::surface_sketch::wrapped_profile) trait PlacementFrame {
     fn stretch_bounds(&self) -> [f64; 2];
     fn determinant_bounds(&self) -> [f64; 2];
 }
-pub(in super::super) trait PlacementBudget {
+pub(in crate::surface_sketch::wrapped_profile) trait PlacementBudget {
     type Frame: PlacementFrame;
     fn frame(&self) -> &Self::Frame;
     fn input(&self) -> FrameSpatialInput;

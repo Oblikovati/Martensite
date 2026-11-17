@@ -58,10 +58,38 @@ fn targets() -> Vec<Checkpoint> {
 fn assert_cancelled<T>(result: Checked<T>, expected: Checkpoint) {
     match result {
         Err(FamilyFailure::Cancelled(actual)) => assert_eq!(actual, expected),
+        Err(FamilyFailure::Selection(cause)) => {
+            assert_eq!(
+                expected,
+                Checkpoint {
+                    stage: FamilyStage::Selection,
+                    region: None
+                }
+            );
+            assert!(
+                matches!(cause.as_ref(), selection::SelectionFailure::Capture(cause)
+                if matches!(cause.as_ref(), planar::PlanarFailure::WorkCapture(work) if work.is_cancelled()))
+            );
+        }
+        Err(FamilyFailure::Member(cause)) => assert_member_cancelled(&cause, expected),
         Err(other) => panic!("expected cancellation at {expected:?}, got {other}"),
         Ok(_) => panic!("partial family escaped cancellation at {expected:?}"),
     }
 }
+fn assert_member_cancelled(cause: &Refusal, expected: Checkpoint) {
+    use FamilyStage::{MemberChecks, Storage};
+    use RefusalCause::{Cones, NormalMeasure, Storage as Stored};
+    assert_eq!(Some(cause.region), expected.region);
+    let expected_stage = match (expected.stage, &cause.cause) {
+        (Storage, Stored(failure)) if failure.is_cancelled() => Stage::Storage,
+        (MemberChecks, Cones(failure)) if failure.cancelled() => Stage::Cones,
+        (MemberChecks, Stored(failure)) if failure.is_cancelled() => Stage::Measure,
+        (MemberChecks, NormalMeasure(failure)) if failure.cancelled() => Stage::Measure,
+        _ => panic!("expected typed cancellation at {expected:?}, got {cause:?}"),
+    };
+    assert_eq!(cause.stage, expected_stage);
+}
+
 #[test]
 fn each_family_boundary_can_cancel_without_changing_any_input_bits() {
     let inputs = requests();
@@ -235,4 +263,41 @@ fn cancel_member_proofs(inputs: &[Request], limit: usize) {
     });
     assert_cancelled(result, target);
     assert_eq!(polls, limit);
+}
+
+#[test]
+fn public_cylinder_keeps_typed_storage_and_member_cancellation_classes() {
+    use crate::surface_sketch::wrapped_profile::api;
+    let input = api::operation_tests::request();
+    for phase in [FamilyStage::Storage, FamilyStage::MemberChecks] {
+        let target = Checkpoint {
+            stage: phase,
+            region: Some(SurfaceRegionId(5)),
+        };
+        let stop = input.selections.len() + 2 + math_stop_count(&input, target);
+        let mut polls = 0;
+        let failure = api::normal_extrude_profile_with_cancel(&input, || {
+            polls += 1;
+            polls == stop
+        })
+        .err()
+        .unwrap();
+        assert_eq!(failure.class(), api::WrappedFailureClass::Cancelled);
+        assert_eq!(failure.stage(), api::WrappedStage::Construction);
+        assert_eq!(polls, stop);
+    }
+}
+fn math_stop_count(input: &WrappedNormalRequest, target: Checkpoint) -> usize {
+    let mut total = 0;
+    let mut target_polls = 0;
+    let result = construct_budgeted_with_cancel(&requests(), input.options.volume, |point| {
+        total += 1;
+        if point == target {
+            target_polls += 1;
+        }
+        point == target && target_polls == 8
+    });
+    assert_cancelled(result, target);
+    assert_eq!(target_polls, 8);
+    total
 }

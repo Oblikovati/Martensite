@@ -83,6 +83,7 @@ fn check_authored_volume(inputs: &[Request], result: &BudgetedFamily) {
         let expected = area * (last - first) * (1. + (last + first) / (2. * request.radius));
         let member = &result.family.members[&request.region];
         let [lo, hi] = member
+            .geometry
             .measures
             .comparison
             .normal_certificate()

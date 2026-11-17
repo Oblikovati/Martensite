@@ -12,7 +12,7 @@ pub(super) fn certify(family: &family::UnqualifiedFamily) -> Checked<CapHomotopy
             .members
             .get(&prepared.region)
             .ok_or(BudgetFailure::Source(prepared.region))?;
-        for proof in &member.storage {
+        for proof in &member.geometry.storage {
             envelope = envelope.max(span_envelope(proof, prepared.radius, prepared.region)?);
         }
     }

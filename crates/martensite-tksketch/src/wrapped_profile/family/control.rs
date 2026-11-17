@@ -18,7 +18,7 @@ pub(in super::super) struct Checkpoint {
     pub stage: FamilyStage,
     pub region: Option<SurfaceRegionId>,
 }
-pub(super) struct Control<'a> {
+pub(in crate::surface_sketch::wrapped_profile) struct Control<'a> {
     cancelled: &'a mut (dyn FnMut(Checkpoint) -> bool + Send),
     cancelled_at: Option<Checkpoint>,
 }
@@ -39,9 +39,9 @@ impl<'a> Control<'a> {
         let point = Checkpoint { stage, region };
         let mut poll = || self.observe(point);
         check_cancellation(point, &mut poll)?;
-        let result = operation(&mut poll);
+        let result = operation(&mut poll)?;
         check_cancellation(point, &mut poll)?;
-        result
+        Ok(result)
     }
     fn ensure_active(&self) -> Checked<()> {
         match self.cancelled_at {

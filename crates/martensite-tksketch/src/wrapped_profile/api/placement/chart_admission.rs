@@ -87,4 +87,12 @@ mod tests {
             assert!(failure.to_string().contains("finite angle"));
         }
     }
+    #[test]
+    fn unresolved_extreme_finite_chart_angle_is_incomplete() {
+        let (mut request, inputs) = inputs();
+        request.support.chart_origin = f64::MAX;
+        let failure = prepare(&request, &inputs.requests).err().unwrap();
+        assert_eq!(failure.class(), WrappedFailureClass::Incomplete);
+        assert!(failure.to_string().contains("frame rotation"));
+    }
 }

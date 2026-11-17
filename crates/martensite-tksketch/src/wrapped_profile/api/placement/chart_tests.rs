@@ -219,3 +219,22 @@ fn chart_child_signature() -> String {
         .unwrap()
         .to_owned()
 }
+#[test]
+fn rotated_inward_depths_match_the_opposite_outward_interval() {
+    let mut request = super::super::super::operation_tests::request();
+    request.support.chart_origin = 0.3;
+    request.support.normal = crate::surface_sketch::NormalSense::Inward;
+    request.depths = [-2., 1.];
+    let inward = normal_extrude_profile_on_chart(&request).unwrap();
+    request.support.normal = crate::surface_sketch::NormalSense::Outward;
+    request.depths = [-1., 2.];
+    let outward = normal_extrude_profile_on_chart(&request).unwrap();
+    assert_eq!(inward.encoded_brep(), outward.encoded_brep());
+    assert_eq!(inward.depths(), [-2., 1.]);
+    assert!(
+        inward
+            .reports()
+            .values()
+            .all(|member| member.validation.is_valid())
+    );
+}

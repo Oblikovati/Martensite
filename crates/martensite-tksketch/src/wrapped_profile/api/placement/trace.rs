@@ -7,6 +7,7 @@ pub(super) fn certify<B: PlacementBudget>(
     plan: &Plan<B>,
 ) -> Checked<WrappedCertifiedBound> {
     member
+        .geometry
         .storage
         .iter()
         .try_fold(0.0_f64, |maximum, proof| {
@@ -45,11 +46,10 @@ fn certify_cap<B: PlacementBudget>(
 }
 
 fn transport(residual: f64, stretch: f64, evaluation: f64) -> Checked<f64> {
-    let quantity = publication_budget::Quantity::Trace;
-    let scaled = error::budget(publication_budget::scale_upper(residual, stretch, quantity))?;
-    let evaluations = error::budget(publication_budget::scale_upper(evaluation, 2., quantity))?;
     // The common exact translation cancels, but two independently rounded evaluations remain.
-    error::budget(publication_budget::add_upper(scaled, evaluations, quantity))
+    error::budget(publication_budget::transport_trace(
+        residual, stretch, evaluation,
+    ))
 }
 fn enforce(
     region: SurfaceRegionId,

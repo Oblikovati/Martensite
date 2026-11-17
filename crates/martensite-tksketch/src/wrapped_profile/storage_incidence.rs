@@ -41,7 +41,10 @@ fn vertex(
     native(key, topods::vertex(lookup(key, bindings)?))
 }
 
-fn connector(source: CornerSource, bindings: &Bindings<'_>) -> Result<(), StorageFailure> {
+pub(super) fn connector(
+    source: CornerSource,
+    bindings: &Bindings<'_>,
+) -> Result<(), StorageFailure> {
     let key = BindingKey {
         source: Source::Corner(source),
         role: HistoryRole::NormalEdge,

@@ -1,7 +1,7 @@
 //! Refusals retain native, arithmetic and bounded frozen-correspondence evidence.
 use super::*;
 #[derive(Debug)]
-pub(in super::super) enum PlacementFailure {
+pub(in crate::surface_sketch::wrapped_profile) enum PlacementFailure {
     TraceTolerance {
         region: SurfaceRegionId,
         span: CurveSpan,
@@ -186,6 +186,7 @@ fn entities(cause: &PlacementFailure) -> Vec<crate::surface_sketch::HistorySourc
             vec![crate::surface_sketch::HistorySource::Region(*region)]
         }
         PlacementFailure::SemanticDatum(key) => vec![failure_projection::binding_source(*key)],
+        PlacementFailure::Budget(cause) => failure_projection::budget(cause).2,
         _ => vec![],
     }
 }
@@ -208,3 +209,7 @@ fn rotation_class(
         FrameRotationFailure::Trigonometric(_) => WrappedFailureClass::Incomplete,
     }
 }
+
+#[cfg(test)]
+#[path = "error_owner_tests.rs"]
+mod owner_tests;

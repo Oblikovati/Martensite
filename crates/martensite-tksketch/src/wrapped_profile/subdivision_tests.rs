@@ -54,10 +54,13 @@ fn near_full_request(start: f64, width: f64) -> Request {
 fn six_radian_profile_freezes_and_proves_original_interval_conformance() {
     let input = near_full_request(0., 6.);
     let result = super::super::pipeline::wrap_extrude(&input).unwrap();
-    assert!(result.member.report.is_valid());
-    assert!((result.member.volume_estimate - 1.89).abs() < input.tolerance);
+    assert!(result.member.native.report.is_valid());
+    assert!((result.member.native.volume_estimate - 1.89).abs() < input.tolerance);
     assert_periodic_margin(&result);
-    assert_eq!(result.member.storage.len(), result.clearance.spans.len());
+    assert_eq!(
+        result.member.geometry.storage.len(),
+        result.clearance.spans.len()
+    );
     assert!(!result.bytes.is_empty());
 }
 
@@ -73,11 +76,12 @@ fn wide_source_is_refused_by_periodic_evidence_before_native_construction() {
 fn multiple_charts_cross_the_cylinder_parameter_seam_without_splitting_identity() {
     let input = near_full_request(6., 6.);
     let result = super::super::pipeline::wrap_extrude(&input).unwrap();
-    assert!(result.member.report.is_valid());
-    assert!((result.member.volume_estimate - 1.89).abs() < input.tolerance);
+    assert!(result.member.native.report.is_valid());
+    assert!((result.member.native.volume_estimate - 1.89).abs() < input.tolerance);
     assert!(
         result
             .member
+            .geometry
             .storage
             .iter()
             .any(|piece| piece.span.curve == SurfaceCurveId(100))
@@ -94,8 +98,8 @@ fn assert_periodic_margin(result: &super::super::pipeline::Unqualified) {
 fn helical_material_spans_two_turns_with_two_certified_images_and_a_tail() {
     let input = helical_request();
     let result = super::super::pipeline::wrap_extrude(&input).unwrap();
-    assert!(result.member.report.is_valid());
-    assert!((result.member.volume_estimate - 2.205).abs() < input.tolerance);
+    assert!(result.member.native.report.is_valid());
+    assert!((result.member.native.volume_estimate - 2.205).abs() < input.tolerance);
     assert_eq!(result.clearance.periodic.images().len(), 2);
     assert_eq!(result.clearance.periodic.tail_start(), 3);
     assert!(

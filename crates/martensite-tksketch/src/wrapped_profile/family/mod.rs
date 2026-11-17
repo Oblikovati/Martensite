@@ -2,13 +2,14 @@
 use super::*;
 use std::collections::BTreeMap;
 mod budgeted;
-mod control;
-pub(super) use budgeted::{BudgetedFamily, construct_budgeted_with_work};
+mod cancellation;
+pub(super) mod control;
+pub(super) use budgeted::BudgetedFamily;
 #[cfg(test)]
 pub(super) use budgeted::{construct_budgeted, construct_budgeted_with_cancel};
 mod error;
-use control::{Checkpoint, Control, FamilyStage};
-mod freeze;
+pub(super) use control::{Checkpoint, Control, FamilyStage};
+pub(super) mod freeze;
 pub(super) use error::FamilyFailure;
 #[cfg(test)]
 mod control_tests;
@@ -37,26 +38,14 @@ pub(super) fn construct_with_cancel(
     mut cancelled: impl FnMut(Checkpoint) -> bool + Send,
 ) -> Checked<UnqualifiedFamily> {
     let mut control = Control::new(&mut cancelled);
-    let family = construct_controlled(
+    let family = operation::construct_controlled(
         requests,
         martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
         &mut control,
     )?;
     control.run(FamilyStage::Completion, None, |_| Ok(family))
 }
-fn construct_controlled(
-    requests: &[Request],
-    work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
-    control: &mut Control<'_>,
-) -> Checked<UnqualifiedFamily> {
-    let selection = control.run(FamilyStage::Selection, None, |poll| {
-        selection::certify_with_work(requests, Default::default(), work, poll)
-            .map_err(|cause| FamilyFailure::Selection(Box::new(cause)))
-    })?;
-    let frozen = freeze::construct_with_control(&selection.prepared.prepared, control)?;
-    qualify_frozen(requests, selection, frozen, control)
-}
-fn qualify_frozen(
+pub(super) fn qualify_frozen(
     originals: &[Request],
     selection: selection::QualifiedSelection,
     frozen: freeze::Frozen,

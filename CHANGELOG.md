@@ -72,6 +72,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Preserved cylindrical operation failures when cancellation arrived later and propagated cancellation through global planar proof work (#526).
+
+- Verified decoded export bindings by authored identity and rejected duplicate or mismatched bindings before publishing native exports (#519).
+
 - Preserved checked native conic frames and curve directions during explicitly configured binary capture, including recursive and surface-embedded curves, while retaining legacy read behavior (#455).
 
 - Required placed cap traces to remain within their retained edge and face tolerances, including affine-evaluation rounding and typed span/depth refusals (#454).

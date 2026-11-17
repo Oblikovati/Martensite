@@ -50,19 +50,11 @@ fn canonical(support: CylinderSupport) -> bool {
     support.origin == [0.; 3] && support.axis == [0., 0., 1.] && support.radial == [1., 0., 0.]
 }
 pub(super) fn transform(support: CylinderSupport) -> Result<Transform3, Failure> {
-    let [x, y, z] = support.origin;
-    let axis = direction(support.axis)?;
-    let radial = direction(support.radial)?;
-    let target = Axis3::new(Point3::new(x, y, z), axis, radial)?;
-    let transform = Transform3::displacement(Axis3::default(), target);
-    let rows = std::array::from_fn(|i| {
-        let [a, b, c] = transform.matrix().coefficients()[i];
-        [a, b, c, transform.translation_part().coordinates()[i]]
-    });
-    Transform3::from_stored_rigid_coefficients(rows)
-}
-fn direction([x, y, z]: [f64; 3]) -> Result<Direction3, Failure> {
-    Direction3::new(x, y, z)
+    crate::surface_sketch::wrapped_profile::physical_frame::stored_rigid_transform(
+        support.origin,
+        support.axis,
+        support.radial,
+    )
 }
 pub(super) fn spatial_input(
     request: &WrappedNormalRequest,

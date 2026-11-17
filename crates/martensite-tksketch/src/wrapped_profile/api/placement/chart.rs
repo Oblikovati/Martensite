@@ -73,14 +73,12 @@ pub fn normal_extrude_profile_on_chart_with_cancel(
 ) -> Checked<WrappedChartNormalResult> {
     input::poll(&mut cancelled, WrappedStage::Admission)?;
     let mut inputs = canonical_inputs(request, &mut cancelled)?;
-    let plan = chart_admission::prepare(request, &inputs.requests)
-        .map_err(|failure| failure_projection::selected(failure, request))?;
+    let plan = chart_admission::prepare(request, &inputs.requests)?;
     for source in &mut inputs.requests {
         source.tolerance = plan.budget.canonical_allowance();
     }
-    let mut base = construct::from_inputs(request, inputs, &mut cancelled)?;
-    let physical = publish_chart(&mut base, plan, &mut cancelled)
-        .map_err(|failure| failure_projection::selected(failure, request))?;
+    let mut base = operation::from_inputs(request, inputs, &mut cancelled)?;
+    let physical = publish_chart(&mut base, plan, &mut cancelled)?;
     input::poll(&mut cancelled, WrappedStage::Publication)?;
     Ok(assemble(base, physical))
 }

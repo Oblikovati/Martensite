@@ -1,5 +1,6 @@
 //! Conditional flux bound from decoded, recaptured and source-bound side/cap representations.
 use super::*;
+pub(in super::super) const MAX_CERTIFIED_SPANS: u32 = 4096;
 pub(super) struct FluxSpan {
     curves: [OwnedCurve; 2],
     cap_pcurves: [Vec<[f64; 2]>; 2],
@@ -56,7 +57,7 @@ pub(super) fn flux_query<'a>(
         spans,
         radii: prepared.depths.map(|d| prepared.radius + d),
         options: CylindricalFluxOptions {
-            max_spans: 4096,
+            max_spans: MAX_CERTIFIED_SPANS,
             ..Default::default()
         },
     }

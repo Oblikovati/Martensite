@@ -143,17 +143,7 @@ fn region_budget_and_native_failures_keep_their_known_owner() {
 }
 
 fn family_failure(cause: family::FamilyFailure) -> WrappedNormalFailure {
-    let input = Request {
-        source: DevelopedRegionRequest {
-            region: OWNER,
-            loops: vec![],
-            depths: [-1., 2.],
-            tolerance: 1e-5,
-            max_fit_level: 8,
-        },
-        radius: 10.,
-    };
-    failure_projection::family(cause, &[input])
+    failure_projection::family(cause)
 }
 
 #[test]
@@ -192,21 +182,17 @@ fn missing_vertex_keeps_curve_and_vertex_entities() {
     );
 }
 #[test]
-fn aggregate_budget_uses_known_selected_owners_without_inventing_an_owner() {
+fn aggregate_budget_does_not_invent_a_selected_owner() {
     let mut input = request();
     input.options.volume = WrappedVolumePolicy::Refuse(0.);
-    assert_public(
-        &refused(&input),
-        WrappedFailureClass::Incomplete,
-        &[HistorySource::Region(OWNER)],
-    );
+    assert_public(&refused(&input), WrappedFailureClass::Incomplete, &[]);
     let cause =
         family::FamilyFailure::Budget(Box::new(publication_budget::BudgetFailure::Policy {
             field: "volume",
             value: -1.,
         }));
     assert_public(
-        &failure_projection::family(cause, &[]),
+        &failure_projection::family(cause),
         WrappedFailureClass::InvalidInput,
         &[],
     );
@@ -222,7 +208,7 @@ fn family_admission_retains_its_owned_cause_after_projection() {
     );
 }
 #[test]
-fn family_cancellation_keeps_its_class_and_known_selection() {
+fn family_cancellation_keeps_its_class_without_a_guessed_owner() {
     let mut polls = 0;
     let error = normal_extrude_profile_with_cancel(&request(), || {
         polls += 1;
@@ -230,28 +216,16 @@ fn family_cancellation_keeps_its_class_and_known_selection() {
     })
     .err()
     .unwrap();
-    assert_public(
-        &error,
-        WrappedFailureClass::Cancelled,
-        &[HistorySource::Region(OWNER)],
-    );
+    assert_public(&error, WrappedFailureClass::Cancelled, &[]);
 }
 #[test]
-fn selected_support_and_depth_admission_keep_all_known_regions() {
+fn support_and_depth_admission_keep_no_guessed_regions() {
     let mut input = request();
     input.support.chart_origin = 1.;
-    assert_public(
-        &refused(&input),
-        WrappedFailureClass::Unsupported,
-        &[HistorySource::Region(OWNER)],
-    );
+    assert_public(&refused(&input), WrappedFailureClass::Unsupported, &[]);
     input.support = support();
     input.depths = [1., 0.];
-    assert_public(
-        &refused(&input),
-        WrappedFailureClass::InvalidInput,
-        &[HistorySource::Region(OWNER)],
-    );
+    assert_public(&refused(&input), WrappedFailureClass::InvalidInput, &[]);
 }
 #[test]
 fn nested_planar_decline_retains_its_public_unsupported_category_and_curve() {
@@ -259,10 +233,7 @@ fn nested_planar_decline_retains_its_public_unsupported_category_and_curve() {
     assert_public(
         &family_failure(family::FamilyFailure::Selection(Box::new(selection))),
         WrappedFailureClass::Unsupported,
-        &[
-            HistorySource::Region(OWNER),
-            HistorySource::Curve(SurfaceCurveId(1)),
-        ],
+        &[HistorySource::Curve(SurfaceCurveId(1))],
     );
 }
 fn unsupported_planar() -> selection::SelectionFailure {
@@ -284,10 +255,7 @@ fn history_clearance_and_coverage_keep_their_semantic_curve_keys() {
         assert_public(
             &family_failure(cause),
             WrappedFailureClass::Incomplete,
-            &[
-                HistorySource::Region(OWNER),
-                HistorySource::Curve(SurfaceCurveId(1)),
-            ],
+            &[HistorySource::Curve(SurfaceCurveId(1))],
         );
     }
 }
@@ -376,3 +344,6 @@ fn planar_work_failure_survives_public_family_projection() {
     assert_eq!(retained.proof_work().unwrap().effective_pair_bisections, 17);
     assert_eq!(public.class(), WrappedFailureClass::InvalidInput);
 }
+
+#[path = "error_owner_tests.rs"]
+mod owner_context;
