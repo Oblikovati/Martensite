@@ -244,7 +244,10 @@ fn fit_planning_refuses_invalid_limits_and_cancellation() {
     input.max_level = 64;
     assert!(matches!(
         plan_cylindrical_fit(input, || false).unwrap_err().cause,
-        CylindricalProfileFailure::FitPolicy { .. }
+        CylindricalProfileFailure::FitIntervalLevel {
+            source_level: 0,
+            additional_level: 64
+        }
     ));
     input.max_level = 8;
     input.spatial_limit = -1.;

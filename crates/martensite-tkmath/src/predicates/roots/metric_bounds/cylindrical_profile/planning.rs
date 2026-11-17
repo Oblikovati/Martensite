@@ -71,20 +71,30 @@ pub(super) fn planned_geometry(
 }
 
 pub(super) fn admit(query: CylindricalFitQuery<'_>) -> Checked<()> {
-    if u16::from(query.interval.level()) + u16::from(query.max_level) > 63
-        || query.max_operations > 1_000_000
-    {
-        return Err(CylindricalProfileFailure::FitPolicy {
-            maximum_level: query.max_level,
-            maximum_operations: query.max_operations,
-        });
-    }
+    admit_policy(query)?;
     admission::count("authored poles", query.authored.len(), 4)?;
     admission::value("support radius", 0, query.support_radius, true)?;
     admission::value("angular origin", 0, query.angular_origin, false)?;
     admit_limit(query.spatial_limit)?;
     for (index, value) in query.authored.iter().flatten().enumerate() {
         admission::value("authored coordinate", index, *value, false)?;
+    }
+    Ok(())
+}
+
+fn admit_policy(query: CylindricalFitQuery<'_>) -> Checked<()> {
+    let source_level = query.interval.level();
+    if u16::from(source_level) + u16::from(query.max_level) > 63 {
+        return Err(CylindricalProfileFailure::FitIntervalLevel {
+            source_level,
+            additional_level: query.max_level,
+        });
+    }
+    if query.max_operations > 1_000_000 {
+        return Err(CylindricalProfileFailure::FitPolicy {
+            maximum_level: query.max_level,
+            maximum_operations: query.max_operations,
+        });
     }
     Ok(())
 }

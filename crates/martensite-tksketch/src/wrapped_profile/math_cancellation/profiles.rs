@@ -59,6 +59,7 @@ impl MathCancellation for CylindricalProfileFailure {
             | Self::Weights { .. }
             | Self::TrigonometricRange { .. }
             | Self::DirectionUnresolved { .. }
+            | Self::FitIntervalLevel { .. }
             | Self::FitChartLevel { .. }
             | Self::FitLevel { .. }
             | Self::FitPolicy { .. }
@@ -66,9 +67,6 @@ impl MathCancellation for CylindricalProfileFailure {
         }
     }
 }
-
-
-
 
 impl MathCancellation for CylindricalStorageFailure {
     fn is_cancelled(&self) -> bool {
@@ -177,6 +175,3 @@ impl MathCancellation for CylindricalMeasureComparisonError {
         self.cause.is_cancelled()
     }
 }
-
-
-

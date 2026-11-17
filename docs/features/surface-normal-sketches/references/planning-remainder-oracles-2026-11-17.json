@@ -286,7 +286,6 @@
       "log_sha256": "378da1019716b231e3bf8cb38c278a4cf9fb9fa7dfee0035027ff26b96ee1ea4"
     }
   ],
-  "unchanged_production_planner_sha256": "b1b80adaa7b3a72ec3b93fae87e28047f83f6357cd187f6a856978723723119f",
   "restored_baseline_result": "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 435 filtered out; finished in 0.00s",
   "command": [
     "cargo",
@@ -300,5 +299,9 @@
   ],
   "regression_test_sha256_at_mutation": "57e23a55685e95a687909c5cfc15072017d27a2c42d0bea84355151ab0ffeb61",
   "current_regression_test_sha256": "1cd827c8f7060f75c6ce118a7c483a498d569bcf8d05a243749becd39947695f",
-  "portability_followup": "Replaced std f64::powi input construction with exact dyadic constant divisions for #201. Independent rational expectations and subdivision levels are unchanged. Mutation logs describe the earlier test-source snapshot; the full PR gate validates the current fixture."
+  "portability_followup": "Replaced std f64::powi input construction with exact dyadic constant divisions for #201. Independent rational expectations and subdivision levels are unchanged. Mutation logs describe the earlier test-source snapshot; the full PR gate validates the current fixture.",
+  "production_planner_sha256_at_mutation": "b1b80adaa7b3a72ec3b93fae87e28047f83f6357cd187f6a856978723723119f",
+  "current_production_planner_sha256": "c26ef5e07a008ff3e78ed4f46ac051a9aaebd0f603c4e48809aef8d62c4e3762",
+  "diagnostic_followup": "Separated combined interval-level refusal from unary work-policy refusal for #524. Accepted-input predicates and numerical remainder code are unchanged; mutation records refer to their original planner snapshot.",
+  "cylinder_integration_followup": "The chart planner reuses the a priori remainder with retained work accounting. Combined interval-level and angular chart-variation refusals remain distinct."
 }
