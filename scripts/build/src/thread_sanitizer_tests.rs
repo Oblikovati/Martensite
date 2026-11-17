@@ -17,12 +17,11 @@ fn startup_precedes_geometry_capture_and_group_controls() {
     )
     .unwrap();
     let commands = runner.commands();
-    assert_eq!(&commands[1..], expected_control_commands());
-}
-fn expected_control_commands() -> Vec<String> {
     let manifest =
         Path::new("/repo").join("scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml");
-    vec![
+    assert_eq!(
+        &commands[1..],
+        &[
             "rustc +nightly-2026-09-25 -Vv".to_owned(),
             format!("cargo +nightly-2026-09-25 run --locked -Zbuild-std --target x86_64-unknown-linux-gnu --manifest-path {}", manifest.display()),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkg2d --package martensite-tkg3d --lib cache_inputs_tests -- --test-threads=1 --show-output".to_owned(),
@@ -32,9 +31,11 @@ fn expected_control_commands() -> Vec<String> {
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tktopalgo --test toolkit -- closed_face_validation --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::open_extrusion -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::sketch_incidence::vertex_neighborhood -- --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tklcaf --lib tdf::sparse_commit::tests -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tksketch --test surface_sketch -- replay::parallel_operations_match_sequential_value_metadata --exact --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkv3d --lib brep_font::text_capture::tests::stress -- --test-threads=1 --show-output".to_owned(),
-    ]
+        ]
+    );
 }
 
 #[test]
@@ -341,6 +342,20 @@ fn every_control_command_targets_its_declared_owner() {
             "{control:?}: {command}"
         );
     }
+}
+
+#[test]
+fn document_scope_runs_only_its_transaction_races_after_startup() {
+    let runner = runner();
+    run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &[Control::DocumentTransactions],
+    )
+    .unwrap();
+    let commands = runner.commands();
+    assert_eq!(commands.len(), 4);
+    assert!(commands[2].contains("sanitizer_startup/Cargo.toml"));
+    assert!(commands[3].contains("--package martensite-tklcaf --lib tdf::sparse_commit::tests"));
 }
 
 #[test]

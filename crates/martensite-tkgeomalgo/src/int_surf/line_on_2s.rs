@@ -1,14 +1,19 @@
 //! `IntSurf_LineOn2S`: a polyline of points on two surfaces with lazy bounding boxes.
 use super::IntSurfPntOn2S;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::ncollection::{BaseAllocator, Sequence};
+use martensite_tkernel::ncollection::BaseAllocator;
+#[path = "line_on_2s/points.rs"]
+mod points;
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
 use martensite_tkmath::bnd::{BoundingBox2, BoundingBox3};
 use martensite_tkmath::gp::{Point2, Point3};
+use points::LinePoints;
 
 /// The locked fields: the points and the three boxes, which are Whole while stale.
+/// Default points are contiguous: the node-per-point sequence spent most of the
+/// walking-line purge in allocation, lookup and release (#496).
 struct LineOn2SState {
-    seq: Sequence<IntSurfPntOn2S>,
+    seq: LinePoints,
     buv1: BoundingBox2,
     buv2: BoundingBox2,
     bxyz: BoundingBox3,
@@ -74,21 +79,22 @@ impl LineOn2SState {
     }
 
     fn point(&mut self, member: &str, index: i32) -> Result<&mut IntSurfPntOn2S, Failure> {
-        let at: usize = checked_index(member, index, self.seq.length())?;
-        self.seq.change_value(at)
+        let at: usize = checked_index(member, index, self.len())?;
+        self.seq.point_mut(at)
+    }
+
+    fn len(&self) -> i32 {
+        self.seq.len()
     }
 }
 
 impl IntSurfLineOn2S {
-    /// An empty line; `None` is the native null allocator (`IntSurf_LineOn2S(theAllocator)`).
+    /// An empty line; an explicit allocator retains its node allocation and release policy.
+    /// `None` selects contiguous global-heap storage (#496).
     /// `IntSurfLineOn2S::new(None).nb_points() == 0`.
     pub fn new(allocator: Option<BaseAllocator>) -> Self {
-        let seq: Sequence<IntSurfPntOn2S> = match allocator {
-            Some(resource) => Sequence::with_allocator(resource),
-            None => Sequence::default(),
-        };
         let mut state = LineOn2SState {
-            seq,
+            seq: LinePoints::new(allocator),
             buv1: BoundingBox2::default(),
             buv2: BoundingBox2::default(),
             bxyz: BoundingBox3::default(),
@@ -109,17 +115,17 @@ impl IntSurfLineOn2S {
 
     /// The number of points (`NbPoints`); `line.nb_points()`.
     pub fn nb_points(&self) -> i32 {
-        self.state.read().seq.length()
+        self.state.read().len()
     }
 
     /// The point of rank `index` (`Value(Index)`), a copy because the line is locked;
     /// Standard_OutOfRange outside `1..=NbPoints`. `line.value(1)?.value()`.
     pub fn value(&self, index: i32) -> Result<IntSurfPntOn2S, Failure> {
         let state = self.state.read();
-        if index < 1 || index > state.seq.length() {
+        if index < 1 || index > state.len() {
             return Err(Failure::out_of_range("NCollection_Sequence::Value"));
         }
-        state.seq.value(index as usize).copied()
+        state.seq.point(index as usize)
     }
 
     /// Reverses the order of the points (`Reverse`); the boxes do not change.
@@ -132,17 +138,14 @@ impl IntSurfLineOn2S {
     /// the new line gets the default allocator, as natively, and this line keeps its boxes.
     /// `let tail = line.split(2)?;`
     pub fn split(&self, index: i32) -> Result<Handle<IntSurfLineOn2S>, Failure> {
-        let mut tail: Sequence<IntSurfPntOn2S> = Sequence::default();
         let mut state = self.state.write();
-        if index < 1 || index > state.seq.length() {
+        if index < 1 || index > state.len() {
             return Err(Failure::out_of_range(""));
         }
-        state.seq.split(index as usize, &mut tail)?;
+        let tail = state.seq.split(index as usize)?;
         drop(state);
         let split = IntSurfLineOn2S::new(None);
-        for p in tail.iter() {
-            split.add(p);
-        }
+        tail.for_each(|p| split.add(p));
         Ok(Handle::new(split))
     }
 
@@ -182,7 +185,7 @@ impl IntSurfLineOn2S {
     /// Removes every point and marks the boxes stale (`Clear`); `line.clear()`.
     pub fn clear(&self) {
         let mut state = self.state.write();
-        state.seq.clear(None);
+        state.seq.clear();
         state.whole_boxes();
     }
 
@@ -190,10 +193,10 @@ impl IntSurfLineOn2S {
     /// (`InsertBefore`); built boxes are extended. `line.insert_before(1, &point)?`.
     pub fn insert_before(&self, index: i32, p: &IntSurfPntOn2S) -> Result<(), Failure> {
         let mut state = self.state.write();
-        if index > state.seq.length() {
+        if index > state.len() {
             state.seq.append(*p);
         } else {
-            let at: usize = checked_index("InsertBefore", index, state.seq.length())?;
+            let at: usize = checked_index("InsertBefore", index, state.len())?;
             state.seq.insert_before(at, *p)?;
         }
         state.extend_boxes(p);
@@ -204,7 +207,7 @@ impl IntSurfLineOn2S {
     /// `line.remove_point(1)?`.
     pub fn remove_point(&self, index: i32) -> Result<(), Failure> {
         let mut state = self.state.write();
-        let at: usize = checked_index("RemovePoint", index, state.seq.length())?;
+        let at: usize = checked_index("RemovePoint", index, state.len())?;
         state.seq.remove(at)?;
         state.whole_boxes();
         Ok(())
@@ -245,9 +248,8 @@ impl LineOn2SState {
     fn build_uv_box(&mut self, on_first: bool) {
         let mut uv_box = BoundingBox2::default();
         uv_box.set_void();
-        for p in self.seq.iter() {
-            uv_box.add_point(p.value_on_surface(on_first));
-        }
+        self.seq
+            .for_each(|p| uv_box.add_point(p.value_on_surface(on_first)));
         enlarge_uv_box(&mut uv_box);
         if on_first {
             self.buv1 = uv_box;
@@ -297,9 +299,7 @@ impl IntSurfLineOn2S {
         if state.bxyz.is_whole() {
             let mut xyz_box = BoundingBox3::default();
             xyz_box.set_void();
-            for p in state.seq.iter() {
-                xyz_box.add_point(p.value());
-            }
+            state.seq.for_each(|p| xyz_box.add_point(p.value()));
             enlarge_xyz_box(&mut xyz_box);
             state.bxyz = xyz_box;
         }

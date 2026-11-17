@@ -34,3 +34,8 @@ martensite-process-policy = { path = "../martensite-process-policy", version = "
 [[test]]
 name = "dataset_cases"
 path = "tests/dataset_cases/main.rs"
+
+# Timing comparisons must not overlap ordinary dataset cases (#480).
+[[test]]
+name = "parallel_speedup"
+path = "tests/parallel_speedup/main.rs"

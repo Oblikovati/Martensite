@@ -1,0 +1,26 @@
+{
+  "baseline": "77053b4cd0f6e223d94f20b30929df15466dfc09",
+  "final_production_sha256": "4c288bcf88f3b2295ea2c0ff62c0cbe11a2c867dfe6bb93f621c7e0c2dc879ce",
+  "lib_profile_tests": {
+    "passed": 13,
+    "seconds": 1.4,
+    "log": "target/qualification/446-final-profile-lib-suite.log"
+  },
+  "public_profile_tests": {
+    "passed": 45,
+    "seconds": 7.5,
+    "log": "target/qualification/446-public-profile-suite.log"
+  },
+  "strict_clippy": {
+    "exit": 0,
+    "seconds": 14.84,
+    "log": "target/qualification/446-final-strict-clippy-after-dyadic.log"
+  },
+  "format_check": {
+    "exit": 0,
+    "log": "target/qualification/446-final-format-check.log"
+  },
+  "performance_gate": "completed matched reserved-window comparison: no observed slowdown/anonymous growth; exact total-RSS parity unproven; raw totals retained",
+  "final_test_executable_sha256": "21ca7b334ee88107685ed2cab77bf15f49c48490ca266d84ced23b761df48db0",
+  "canonical_pr_gate": "not yet run for446; required before push"
+}

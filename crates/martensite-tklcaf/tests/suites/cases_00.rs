@@ -9,6 +9,10 @@ pub mod large_transaction_timing;
 pub mod multi_transaction_manager_dump;
 #[path = "../runtime_type_parents.rs"]
 pub mod runtime_type_parents;
+#[path = "../sparse_transaction_history.rs"]
+pub mod sparse_transaction_history;
+#[path = "../sparse_transaction_scale.rs"]
+pub mod sparse_transaction_scale;
 #[path = "../tdata_std_attribute.rs"]
 pub mod tdata_std_attribute;
 #[path = "../tdata_std_collections.rs"]
@@ -41,3 +45,6 @@ pub mod tfunction_mechanism;
 pub mod transaction_abort_variants;
 #[path = "../undo_limit_regressions.rs"]
 pub mod undo_limit_regressions;
+
+#[path = "../entry_index_compatibility.rs"]
+pub mod entry_index_compatibility;

@@ -49,9 +49,12 @@ mod paired_domain_tests;
 #[cfg(test)]
 mod paired_constant_tests;
 
-pub(crate) use paired_binding::domain_certificate;
+pub(crate) use paired_binding::{DomainCertificates, domain_certificate};
 
 #[cfg(test)]
 pub(crate) use paired_tests::{
     bezier_shape as census_bezier_fixture, curved_pair as census_curved_pair_fixture,
 };
+
+#[cfg(test)]
+mod paired_validation_tests;

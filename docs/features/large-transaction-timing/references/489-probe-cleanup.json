@@ -1,0 +1,7 @@
+{
+  "timing_fixture_restored_to": "8208ff8f113f9a33808861fc9cd5df8991565425",
+  "timing_fixture_diff": "",
+  "layout_fixture_diff": "",
+  "disposable_probe_branch": "probe/489-hosted-transaction-timing deleted locally and remotely",
+  "remaining_artifacts": "Disposable baseline checkout/build, all copied benchmark executables and RecordingCargo probes removed after active-user and owned-file checks; raw findings retained."
+}

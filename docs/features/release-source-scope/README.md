@@ -1,0 +1,115 @@
+# Release source and QA scope
+
+Bug [#466](https://github.com/Oblikovati/Martensite/issues/466) blocked release
+preparation because Vulkan had 21 changed files under `tests/`, despite unchanged
+`src/` and package manifest. The release classifier previously treated every
+package file as a publication source change.
+
+Release scope now separates eligible QA-only paths from publication inputs.
+Changes outside `tests/` retain their existing classification, including
+`build.rs`, examples, runtime assets and substantive manifest edits. Test changes
+still select their package and affected dependents for QA. An unchanged published
+package identity reuses its verified historical archive, including its historical
+tests; current checkout tests run against current dependencies during validation.
+
+A test path remains a publication input when production Rust references it,
+including transitive Rust modules. Unreviewed custom build scripts, production targets
+outside `src/`, unreadable or unparseable sources and unresolved file includes
+retain the conservative source-changed result. Tokenization reuses the build
+driver's existing exact `proc-macro2` dependency; no dependency component or
+version was added.
+
+For a dynamic `include_*!(concat!(...))`, a fixed final filename extension can
+prove disjointness from changed file extensions. A `.pixels` include cannot read
+a changed `.rs` file. Matching extensions and unbounded expressions remain
+uncertain. Extension comparison is case-insensitive, and only a nonempty ASCII
+alphanumeric extension supplies this proof. Direct fixture paths are checked
+independently of that optimization. Single-arm literal macro parameters can also
+supply a finite extension bound from their invocation arguments. Alias or export
+uncertainty disables that proof. Calls inside other macro bodies are included;
+unsupported matchers and nonliteral arguments remain uncertain. Nested inline
+module path attributes remain source changes because their directory base is not
+inferred. Conditional or otherwise wrapped path attributes fail closed at every
+attribute depth, including inner attributes. Explicit module and `include!`
+source paths must identify regular package-owned `.rs` files; other suffixes,
+external sources and dynamic `include!` expressions remain uncertain. Byte and
+string includes retain their separate data-file handling. Referenced Rust source
+is never followed outside the package through a symlink.
+
+Packages with known non-test source edits bypass this analysis. Unfiltered change
+sets are borrowed, so ordinary release classification adds no change-list copies.
+
+The release regression exercises `ReleaseScope::load` with an unchanged package
+version and a test-only diff: publication scope is empty, while QA scope still
+contains the package. Additional controls cover production fixture includes,
+transitive modules, custom builds and targets, ambiguous paths and bounded dynamic
+includes. No package versions or artifact immutability rules changed.
+
+The process-policy rustix constraint update is a separate substantive manifest
+change. Its historical 0.4.0 archive pins rustix 1.1.5 and cannot resolve alongside
+the patched TKernel's exact 1.1.6 constraint. Ignoring that change or rewriting
+published bytes would not fix the release graph. Its version decision is separate
+from this test-only classifier correction.
+
+## Test targets and the reviewed budget marker — #481
+
+A separate Cargo integration-test target is a QA change. The publication comparison now ignores differences confined to `[[test]]` entries with `name`, `path` and `harness` fields after proving that production inputs do not retain `Cargo.toml`. It does not alter the parsed manifest or the test-impact comparison. Dependency, feature, build, library, binary and unknown-field changes still count as source changes.
+
+Literal production references to `Cargo.toml` retain publication impact. A dynamic include with a `.toml` suffix remains uncertain whenever comparing manifest differences, including differences from a historical archive absent from the latest Git diff. Unreadable inputs and unsupported expressions fail closed.
+
+The Boolean-case package has a build script that reads only `OPT_LEVEL` and `CARGO_CFG_TARGET_OS` and emits the budget cfg and a `rerun-if-changed=build.rs` directive. Its reviewed LF-normalized SHA-256 is `dddebb2e5a4e8cfbf22875ca33cd1890f22b750466b38063feab8d798d2bfb29`. Only this exact program permits the QA-only proof. An edited script, a different build path or an unknown program disables it. LF and CRLF checkouts receive the same decision. This is a bound on one inspected program's inputs, not a filename or package-name exemption.
+
+Regression coverage includes test-only targets, both line endings, changed scripts, production manifest includes, historical manifest comparisons, real manifest changes and unchanged test selection. Focused read-only controls also evaluate the actual Boolean package source. No package versions or dependencies change. Release validation remains hosted; no local release rehearsal is used for this correction.
+
+## Explicit production target paths — #482
+
+The previous target guard accepted any path starting with `src/`. That included `src/../tests/runtime.rs`, whose actual source lies in the skipped QA directory, and `src/runtime.input`, whose extension the Rust-source scanner does not read. Either target could retain manifest bytes without appearing in the proof.
+
+Explicit library and binary targets now remain uncertain unless they use a forward-slash path under `src/`, contain only normal path components, reject colon-based stream syntax and end in the exact `.rs` extension covered by the scanner. The change rejects unsupported paths rather than broadening the scanner. Regression fixtures cover both library and binary targets, parent traversal, unsupported extensions, manifest includes and ordinary eligible targets. The negative control failed before the guard changed. No package versions or modelling behavior change.
+
+The portable-path controls also refuse `src/runtime.rs:hidden.rs`, which can name an NTFS alternate data stream outside directory enumeration. This is a conservative filesystem-proof guard; Cargo compilation from such a stream was not reproduced.
+
+Symlinked package roots, source files and source directories disable the proof. The scanner does not follow them. Owned Unix fixtures cover all three forms; the package-root control failed before its explicit refusal was added. Native Windows link creation is not covered by these Unix-only fixtures; the shared refusal uses the standard library's link classification.
+
+The test-target manifest exemption uses a stricter include-input check than ordinary QA path filtering. Each recognized include must name an existing regular file within the package through a literal argument. Link components, external inputs, imported builtin aliases and dynamic arguments leave the exemption uncertain. The input must have different length or bytes from the current manifest; equal bytes disable the exemption. This avoids relying on platform-specific case and short-name resolution. The actual Boolean package's `restored_kinds.txt` input passes this check. Existing QA-file impact analysis keeps its previous extension-based policy.
+
+The literal-input proof rejects manifest-name case variants even when their local bytes differ, because case-sensitive and case-insensitive checkouts can resolve them differently. Non-ASCII, short-name (`~`), stream (`:`) and backslash spellings remain unsupported. A case-distinct local-file regression failed before this refusal was added.
+
+Release test selection compares raw manifest impact independently of publication eligibility, matching PR selection. A QA-only target edit therefore runs its package and affected dependents even when no archive is republished and no test source file changed. A normalized-content-only manifest edit selects no unaffected suites. An end-to-end named-fake regression retains an empty publication list while requiring both the changed package and its dependent; it failed before the caller used the separate test-impact list.
+
+## Bounded scanner entrypoint audit — #482
+
+The final audit checks the scanner's directory skips against each admitted production entrypoint. Nested `target` or `.git` directories now leave the proof uncertain instead of hiding Rust modules. A Rust source reference into root `tests/` also leaves it uncertain: following one file would miss that file's implicit child modules. Case-variant `tests` components retain the whole QA directory. Builtin include aliases and unsupported input paths fail closed.
+
+| Entrypoint | Proof boundary |
+| --- | --- |
+| Build script | Only the exact reviewed budget-marker program above; other programs remain uncertain. |
+| Library and binary targets | Explicit paths must be regular `.rs` inputs under the fully scanned `src/` tree. |
+| Example targets | Explicit paths must be under scanned `src/` or `examples/`; default targets use the same scanned trees. |
+| Implicit Rust modules | The complete `src/` and `examples/` trees are scanned; nested skipped directories disable the proof. |
+| Literal Rust includes and path attributes | Only owned, covered Rust files are followed. Unsupported or external sources disable the proof. |
+| Literal text and byte inputs | Portable contained paths are required; QA references retain their inputs, and output or external paths remain uncertain. |
+| Dynamic text and byte inputs | Existing bounded extension analysis remains conservative; it does not admit dynamic Rust source. |
+| Links | Package-root, source-file and directory links disable the proof; native Windows link creation remains outside these Unix fixture controls. |
+
+The added regressions cover hidden nested modules, Rust inputs with implicit children in the QA tree and case-variant QA paths. This audit changes neither publication versions nor the separate affected-test selection.
+
+## Referenced QA module graphs — #485
+
+The stricter source-layout proof rejected unchanged Vulkan source in the v0.13.1 hosted plan at `6df7ecc3`. Examples load literal modules from `tests/support/`; rejecting every such module made unrelated QA edits look like package-source changes. The lowercase `tests` path guard also retained the entire QA tree. Both owned minimal fixtures and the actual Vulkan layout reproduced the false positive.
+
+The scanner now follows literal owned QA modules transitively and retains their containing directories conservatively. It parses only referenced modules, rather than unrelated sibling files. Explicit `#[path]` modules resolve implicit children beside their source file; implicit children then establish their own module directory. A temporary native-rustc fixture checked this distinction before implementation and was removed. File visitation includes the module context, so importing one file through two different contexts cannot hide a dependency. Directory entries are sorted, and each file/context pair is visited once per pass.
+
+Missing, deleted or ambiguous module candidates, macro-generated modules, conditional or inline path uncertainty, textual QA includes, output-tree sources, external inputs and links keep the result unknown. Case-variant `tests` spellings still retain all QA. Tests cover those refusals, transitive paths, implicit modules and repeated file contexts. Unix fixtures cover linked QA files and directories; Windows link creation is not exercised.
+
+The actual-source regression records all Vulkan paths changed between v0.13.0 and `6df7ecc3`, including the four affected QA groups, and proves they are disjoint from the retained production inputs. The unoptimized control took about 1.7 seconds locally. It does not invoke a local release rehearsal. Package versions and affected-test selection are unchanged.
+
+## Canonical package-root coordinates — #487
+
+The next Windows release run rejected unchanged Boolean-case source. Individual source files had been canonicalized, but their package roots and changed-file comparisons could still use lexical paths. [Windows canonicalization adds extended-length prefixes](https://doc.rust-lang.org/std/fs/fn.canonicalize.html), so a valid owned include could fail its prefix check. A referenced QA input could also be compared in the wrong coordinate system.
+
+The proof now validates the original package layout and links, canonicalizes the package root once, and stores that root with its references. Source traversal, the Cargo-manifest marker and Git-relative QA input joins reuse it. Changed or deleted files are not individually canonicalized; a missing referenced input still retains publication impact.
+
+Authored paths keep their portable forward-slash spelling checks. Canonical relative paths use native `Path` components. This preserves Windows separators without accepting authored backslashes, output-tree paths, external inputs or links.
+
+Two owned Unix workspace-alias controls reproduced the read/proof refusal and the dropped missing-input comparison independently before the correction. Platform-neutral controls exercise native and canonical roots for text inputs, literal QA modules, missing inputs and Cargo-manifest literals. Existing symlink, dynamic-input and output-path controls remain in place. Local tests do not substitute for the hosted Windows release matrix. No package version, validation budget or affected-test selection changes.

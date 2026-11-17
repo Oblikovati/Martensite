@@ -21,6 +21,7 @@ mod snapshot_binding;
 mod stage_binding;
 pub(crate) use binding::{
     bind_source_conformance, current_construction_correspondence, source_binding_faults,
+    source_binding_structure_faults,
 };
 pub(crate) use binding_types::{BoundSourceConformance, SourceBindingFault};
 pub(crate) use descriptor_bits::{same_embedding, same_metric_curve, same_space_representation};

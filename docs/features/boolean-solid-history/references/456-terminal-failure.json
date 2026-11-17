@@ -1,0 +1,25 @@
+{
+  "session": 25733,
+  "terminal_exit": 1,
+  "failed_test_lines": [
+    "test brep_algo_api_booleans::brep_algo_api_booleans_match_native_reference ... FAILED"
+  ],
+  "error_lines": [
+    "error: test failed, to rerun pass `-p martensite-tkbo --test toolkit`",
+    "error: 1 target failed:",
+    "error: `cargo test --locked --package martensite-boolean-cases --package martensite-tkbo --package martensite-tkbool --package martensite-tkdeiges --package martensite-tkdeobj --package martensite-tkdestep --package martensite-tkdestl --package martensite-tkfeat --package martensite-tkfillet --package martensite-tkmeshvs --package martensite-tkoffset --no-fail-fast` failed with exit status: 101"
+  ],
+  "last_lines": [
+    "test crates/martensite-tkoffset/src/brep_offset_api/thru_sections/mod.rs - brep_offset_api::thru_sections::BRepOffsetAPIThruSections (line 36) ... ok",
+    "test crates/martensite-tkoffset/src/brep_offset_api/make_pipe_shell.rs - brep_offset_api::make_pipe_shell::BRepOffsetAPIMakePipeShell (line 24) ... ok",
+    "test crates/martensite-tkoffset/src/brep_offset_api/make_draft.rs - brep_offset_api::make_draft::BRepOffsetAPIMakeDraft (line 16) ... ok",
+    "",
+    "test result: ok. 29 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s",
+    "",
+    "all doctests ran in 0.47s; merged doctests compilation took 0.45s",
+    "error: 1 target failed:",
+    "    `-p martensite-tkbo --test toolkit`",
+    "error: `cargo test --locked --package martensite-boolean-cases --package martensite-tkbo --package martensite-tkbool --package martensite-tkdeiges --package martensite-tkdeobj --package martensite-tkdestep --package martensite-tkdestl --package martensite-tkfeat --package martensite-tkfillet --package martensite-tkmeshvs --package martensite-tkoffset --no-fail-fast` failed with exit status: 101"
+  ],
+  "log_sha256": "7a277601a397e7905200901bebcfed6e8c3bc6c8e89f9486159d01f95761f31d"
+}

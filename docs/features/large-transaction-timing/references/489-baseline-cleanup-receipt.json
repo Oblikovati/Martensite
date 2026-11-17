@@ -1,0 +1,35 @@
+{
+  "active_users": [],
+  "files": [
+    {
+      "path": "crates/martensite-tklcaf/src/tdf/data_release_tests.rs",
+      "sha256": "c5b8dbc0db7fc90400b1d04213b52ef0f20c72f2d7aa3562e4d4845e9b818c7b",
+      "disposition": "temporary probe removed"
+    },
+    {
+      "path": "crates/martensite-tklcaf/tests/large_transaction_timing.rs",
+      "sha256": "72018becd308fa19575241314e1a4c8d0597d59759d4923022e2868ade745f97",
+      "disposition": "temporary probe removed"
+    },
+    {
+      "path": "crates/martensite-tklcaf/tests/suites/cases_00.rs",
+      "sha256": "ffb6f63911664f7d94dcbfc1c351b9c956bb0a7f45a5416824f6dba45823ee3c",
+      "disposition": "regression registration retained in fix lane"
+    },
+    {
+      "path": "crates/martensite-tklcaf/tests/sparse_transaction_history.rs",
+      "sha256": "c56a5e896057e9abbc3de13031f1d915293ad335f703e41902fce18a277f0e77",
+      "disposition": "owned regression retained in fix lane"
+    },
+    {
+      "path": "crates/martensite-tklcaf/tests/sparse_transaction_history/probe.rs",
+      "sha256": "7b333eb03e02adae4880463ddada148a63b02d40fceb813b15ae53397c010912",
+      "disposition": "owned regression retained in fix lane"
+    },
+    {
+      "path": "crates/martensite-tklcaf/tests/sparse_transaction_scale.rs",
+      "sha256": "7f04699d0831b7548d2ccc6d21b73738eb34a9b10e4c056749be2f5062a39b5f",
+      "disposition": "owned regression retained in fix lane"
+    }
+  ]
+}

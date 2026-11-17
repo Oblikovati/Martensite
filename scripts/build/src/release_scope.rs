@@ -69,8 +69,9 @@ fn scope_since_release(
 ) -> BuildResult<ReleaseScope> {
     let changed = context.git.changed_files(&reference)?;
     let packages = selected_packages(context, workspace, previous, &changed)?;
+    let manifests = changed_manifest_packages(context, workspace, &reference, &changed)?;
     let tests =
-        crate::release_impact::release_tests(context, workspace, &reference, &changed, &packages)?;
+        crate::release_impact::release_tests(context, workspace, &reference, &changed, &manifests)?;
     Ok(ReleaseScope {
         baseline: Some(reference),
         history_sha256: None,
@@ -146,9 +147,23 @@ fn changed_release_package(
     }
     let manifest = current_manifest(context, &package.dir, inherited)?;
     let old = previous.get(&manifest.name);
-    let source_changed = package_changed(&manifest, old, &package.dir, changed);
+    let source_changed = publication_changed(context.root(), &package.dir, &manifest, old, changed);
     check_package_version(&manifest, old, source_changed)?;
     Ok(source_changed)
+}
+
+fn publication_changed(
+    root: &std::path::Path,
+    directory: &str,
+    current: &PackageManifest,
+    previous: Option<&PackageManifest>,
+    changed: &[ChangedFile],
+) -> bool {
+    let inputs = crate::release_test_inputs::publication_changes(root, current, directory, changed);
+    let comparison = crate::release_qa_manifest::publication_manifest(
+        root, current, previous, directory, changed,
+    );
+    package_changed(&comparison, previous, directory, &inputs)
 }
 
 fn manifest_changed(current: &PackageManifest, previous: Option<&PackageManifest>) -> bool {
@@ -296,3 +311,7 @@ fn check_package_version(
 #[cfg(test)]
 #[path = "release_scope_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "release_scope_qa_tests.rs"]
+mod qa_tests;

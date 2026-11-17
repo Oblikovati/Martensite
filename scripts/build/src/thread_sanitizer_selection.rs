@@ -12,11 +12,12 @@ pub(crate) enum Control {
     FaceCertificate,
     OpenExtrusion,
     VertexNeighborhood,
+    DocumentTransactions,
     SurfaceSketch,
     FontTextCapture,
 }
 
-pub(crate) const CONTROLS: [Control; 10] = [
+pub(crate) const CONTROLS: [Control; 11] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -25,6 +26,7 @@ pub(crate) const CONTROLS: [Control; 10] = [
     Control::FaceCertificate,
     Control::OpenExtrusion,
     Control::VertexNeighborhood,
+    Control::DocumentTransactions,
     Control::SurfaceSketch,
     Control::FontTextCapture,
 ];
@@ -40,6 +42,7 @@ impl Control {
             Self::FaceCertificate => "face-certificate",
             Self::OpenExtrusion => "open-extrusion",
             Self::VertexNeighborhood => "vertex-neighborhood",
+            Self::DocumentTransactions => "document-transactions",
             Self::SurfaceSketch => "surface-sketch",
             Self::FontTextCapture => "font-text-capture",
         }
@@ -53,6 +56,7 @@ impl Control {
             Self::FaceInput => "martensite-tkbrep",
             Self::FaceCertificate => "martensite-tktopalgo",
             Self::OpenExtrusion | Self::VertexNeighborhood => "martensite-tkmath",
+            Self::DocumentTransactions => "martensite-tklcaf",
             Self::SurfaceSketch => "martensite-tksketch",
             Self::FontTextCapture => "martensite-tkv3d",
         }
@@ -183,6 +187,7 @@ mod tests {
                 "face-certificate",
                 "open-extrusion",
                 "vertex-neighborhood",
+                "document-transactions",
                 "surface-sketch",
                 "font-text-capture"
             ]

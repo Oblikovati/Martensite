@@ -23,7 +23,7 @@ impl BOPAlgoBOP {
         }
         let mut result = Shape::default();
         make_container(ShapeEnum::Compound, &mut result);
-        if !self.add_ranged_fuse_solids(&face_solids, &mut result, &scope, observed)? {
+        if !self.add_ranged_fuse_solids(&face_solids, &solids, &mut result, &scope, observed)? {
             return Ok(());
         }
         self.finish_fuse_result(result, &untouched, &containers)
@@ -31,6 +31,7 @@ impl BOPAlgoBOP {
     fn add_ranged_fuse_solids(
         &mut self,
         face_solids: &IndexedDataMapOfShapeListOfShape,
+        sources: &MapOfShape,
         result: &mut Shape,
         scope: &ProgressScope<'_>,
         observed: &ProgressCancellation,
@@ -50,6 +51,6 @@ impl BOPAlgoBOP {
         if matches!(completion, ProgressCompletion::Cancelled { .. }) {
             observed.record_cancelled();
         }
-        self.retain_fuse_solids(&builder, result)
+        self.retain_fuse_solids(&builder, face_solids, sources, result)
     }
 }

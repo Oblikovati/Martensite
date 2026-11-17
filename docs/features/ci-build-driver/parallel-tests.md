@@ -20,13 +20,15 @@ The manifests and lockfile changed, so selecting every package was appropriate.
 The PR matrix uses the existing changed-package and transitive-dependent
 selection. Base dependencies compile where needed but their tests run only
 when selected. Every selected package gets one job, with four jobs allowed
-concurrently. Shared checks run once. The aggregate PR check rejects failed,
+concurrently. (#469 later removed that limit and ordered jobs longest first;
+#470 split the longest suites into parts.) Shared checks run once. The aggregate PR check rejects failed,
 cancelled and unexpectedly skipped jobs.
 
 Release rehearsals and tag runs use the previous final release as their scope
 baseline. Each of the four native platforms receives up to four test shards.
 The planner puts TKGeomBase, TKPrim, TKGeomAlgo and TKTopAlgo in separate shards
-when selected, then distributes other selected packages in sorted order. This
+when selected, then distributes other selected packages in sorted order.
+(#474 replaced this heuristic with longest-first assignment by measured minutes.) This
 is a scheduling heuristic based on the long suites observed during #250;
 it does not change tests or predict equal shard durations. Every selected
 package runs once per platform, including doctests. Empty scopes produce no

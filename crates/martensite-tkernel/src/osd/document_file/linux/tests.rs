@@ -281,3 +281,6 @@ fn ordinary_private_default_is_compatible_with_existing_public_mode() {
     assert_eq!(fs::read(&fixture.destination).unwrap(), b"original bytes");
     assert_eq!(fs::read(&fixture.staged).unwrap(), b"completed replacement");
 }
+
+#[path = "dependency_xattr.rs"]
+mod dependency_xattr;

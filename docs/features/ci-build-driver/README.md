@@ -26,7 +26,9 @@ This gives two properties:
 | `cargo xtask ci plan` | CI | Writes `mode`, `version`, `publish`, target `matrix`, `test-matrix` and `has-tests` to `GITHUB_OUTPUT` |
 | `cargo xtask ci run --target T` | CI | Runs the planned pipeline for one matrix target |
 | `cargo xtask ci run --target T --checks-only` | CI | Runs shared checks and release packaging, delegating tests to the matrix |
+| `cargo xtask ci run --target T --checks-only --stage S` | CI | Runs one PR check stage: `lint`, `clippy` or `build` |
 | `cargo xtask ci test --package P --target T` | CI | Revalidates affected-package membership and runs all tests for that package |
+| `cargo xtask ci test --package P --part K --target T` | CI | Runs part `K` of a package whose PR tests are split across jobs |
 | `cargo xtask ci test --shard N --target T` | CI | Recomputes a release shard and runs all selected package suites on that target |
 | `cargo xtask ci gate --checks success --tests success --has-tests` | CI | Requires successful shared checks and package tests |
 | `cargo xtask ci publish --dist DIR` | CI | Checks every asset against its checksum and creates the GitHub release |
@@ -34,8 +36,24 @@ This gives two properties:
 `ci run` reads the trigger again instead of getting the mode from the plan job.
 The trigger is the same in both jobs, so the plan is the same.
 
-For PRs, the planner emits one job per affected package. Up to four test jobs
-run concurrently, alongside shared lint, compiler inventory and build checks.
+For PRs, the planner emits one job per affected package, or several jobs for
+a package whose suite would otherwise bound the run (#470). Jobs are listed
+longest first by the measured minutes in `scripts/build/src/suite_weights.rs`,
+and no job limit applies, so the longest suites start first (#469). They run
+alongside the shared checks, which PRs split into three parallel jobs (#473):
+`lint` (changed-file whitespace and formatting, the source unsafe ratchet and
+the compiler unsafe inventory), `clippy`, and `build` (every target of the
+affected packages). Each job computes the same affected set; the aggregate
+check requires all three. Release checks keep one job per platform, because
+packaging needs the complete sequential pipeline.
+
+A split package's parts build the same test targets. Each part lists every
+libtest target, assigns each test by a fixed FNV-1a hash of its target and name,
+and runs its share with `--exact` filters, so the parts are disjoint and
+together run every test once. A target that cannot be listed, such as a custom
+harness, runs whole in one part; doctests run in part 0. A part index outside
+the planned count fails instead of running nothing.
+
 Each test job runs unit, integration and documentation tests with
 `--no-fail-fast`; a failed job does not cancel the others. The existing
 `pr (x86_64-unknown-linux-gnu)` check aggregates their results. Documentation-only
@@ -48,22 +66,32 @@ it is not a shell command. `cargo fmt --all` can miss sources reached through
 
 Local `cargo xtask pr` still runs all stages sequentially. Release pipelines
 compute package scope since the previous release and run the selected suites
-on each supported target. CI partitions that selection into at most four shards
-per platform, with up to sixteen release test jobs running concurrently. Each
-package appears once per platform. TKGeomBase, TKPrim, TKGeomAlgo and TKTopAlgo
-start separate shards when selected; the remaining packages are distributed in
-sorted order. The limit bounds repeated dependency compilation across runners.
+on each supported target. CI partitions that selection into a fixed number of
+shards per platform: six on macOS x86_64, whose runners are slowest, and four
+elsewhere. Up to twenty release test jobs run concurrently. Each package
+appears once per platform. Packages are assigned longest measured suite first
+to the least-loaded shard (#474); a platform that cannot run a suite never
+receives it. The shard count bounds repeated dependency compilation across runners.
 The shared checks and packaging run alongside tests. A required `release` result
 checks both matrices before publication. Local `cargo xtask release` and `ci run`
 without `--checks-only` retain the complete sequential pipeline.
+
+The driver selects the level-1 dev/test profile for script-budget packages,
+matching package CI. Existing per-package Cargo overrides remain in force. Local mixed selections run those
+packages in a separate Cargo command and keep every other package on its
+existing ambient profile. Each selected package runs once; workspace exclusions
+apply before profile grouping. A failed group does not skip later groups.
+The release matrix retains its existing level-1 setting for the whole shard.
+See [script-budget profiles](script-budget-profiles.md) for the policy and
+Bug #447's measurements.
 
 When process-policy is selected, the shared test command explicitly enables
 `martensite-process-policy/case-runner`. This preserves the unit tests that a
 combined toolkit invocation enabled through dependency feature unification.
 Host-math and optional external integration features remain disabled.
 
-Each package job compiles its own dependencies. The four-job limit bounds
-concurrency, not total runner minutes. Compare job compilation time, elapsed
+Each package job, and each part of a split package, compiles its own
+dependencies, so splitting raises total runner minutes while it lowers elapsed time. Compare job compilation time, elapsed
 workflow time and summed runner time before claiming a cost improvement.
 The [timing investigation](parallel-tests.md) records the baseline and remaining
 slow cases (#250).
@@ -76,8 +104,10 @@ slow cases (#250).
 | push of a `v*` tag | release of the tag's version | all | yes |
 | `workflow_dispatch`, mode `pr` | PR validation against `origin/main` | primary | no |
 | `workflow_dispatch`, mode `release` | release rehearsal of the `version` input | all | no |
+| `schedule` (daily), or `workflow_dispatch` mode `cache` on `main` | PR build-cache refresh | primary | no |
 
-Any other trigger fails in `ci plan` and names the trigger. Use the dispatch
+The cache refresh skips `ci plan` and every validation job. Any other trigger
+fails in `ci plan` and names the trigger. Use the dispatch
 release mode to run the full matrix on a release candidate before you push the
 tag.
 
@@ -227,8 +257,16 @@ versions are marked as pre-releases.
   the workflow's setup step must run the matching installer
   (`install-linux.sh --no-cargo-tools` and so on) on each runner.
 - `cargo deny` and `cargo audit` are not in the driver yet.
-- No build cache in CI. Adding one (for example, `actions/cache` keyed on
-  `Cargo.lock` and the target) is a change to the workflow only.
+- Only PR test jobs use a build cache (#472). GitHub lets a pull request
+  restore caches saved on its own ref or on `main`, never another pull
+  request's. The scheduled refresh therefore compiles each package listed by
+  `cargo xtask ci warm-plan` (suites of five or more measured minutes) with the
+  exact PR test command (`cargo xtask ci warm`) and saves its kache store on
+  `main` under `kache-<package>-<lockfile hash>-<run id>`. PR jobs restore the
+  newest store by key prefix through `.github/actions/restore-build-cache` and
+  never save, so the stores stay within the 10 GB repository budget. Release,
+  thread-sanitizer and compiler-inventory builds compile from scratch, because
+  a cache hit does not replay every diagnostic.
 - The workspace member list is `["scripts/build"]` until the first kernel
   crate lands. Then add `"crates/*"` (cargo rejects a glob that matches no
   directory).
@@ -252,6 +290,9 @@ when the planner succeeded and selected no controls. Every nonempty selection
 runs the pinned nightly startup check before its controls; runtime startup
 failures, race reports, cancelled jobs and unexpected skips fail validation.
 The runner recomputes scope using the planner's release-history pin.
+
+The `document-transactions` control runs tklcaf’s internal sparse-transaction
+lease and race controls when that toolkit is affected (#489).
 
 An explicit local `cargo xtask ci thread-sanitizer` invocation runs all controls.
 Hosted CI requires a valid trigger and recomputes its affected selection.

@@ -1,0 +1,42 @@
+[
+  {
+    "iteration": 0,
+    "variant": "before",
+    "metric": "0.63 0.48 0.01 42052"
+  },
+  {
+    "iteration": 0,
+    "variant": "after",
+    "metric": "0.68 0.50 0.01 42716"
+  },
+  {
+    "iteration": 1,
+    "variant": "after",
+    "metric": "0.62 0.51 0.01 41712"
+  },
+  {
+    "iteration": 1,
+    "variant": "before",
+    "metric": "0.60 0.49 0.01 42200"
+  },
+  {
+    "iteration": 2,
+    "variant": "before",
+    "metric": "0.60 0.50 0.01 41968"
+  },
+  {
+    "iteration": 2,
+    "variant": "after",
+    "metric": "0.60 0.49 0.01 42884"
+  },
+  {
+    "iteration": 3,
+    "variant": "after",
+    "metric": "0.61 0.51 0.01 41604"
+  },
+  {
+    "iteration": 3,
+    "variant": "before",
+    "metric": "0.62 0.49 0.01 42084"
+  }
+]

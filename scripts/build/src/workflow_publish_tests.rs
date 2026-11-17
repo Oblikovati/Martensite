@@ -84,7 +84,12 @@ fn reused_release_skips_execution_only_after_plan_evidence_and_verifies_before_p
 
 #[test]
 fn actions_read_permission_is_limited_to_evidence_consumers() {
-    let workflow = include_str!("../../../.github/workflows/martensite.yml");
+    for workflow in workflow_line_endings() {
+        assert_evidence_permissions(&workflow);
+    }
+}
+fn assert_evidence_permissions(workflow: &str) {
+    let workflow = normalized_fixture_workflow(workflow);
     let global = workflow.split("jobs:").next().unwrap();
     assert!(!global.contains("actions: read"));
     assert_eq!(workflow.matches("actions: read").count(), 2);
@@ -93,4 +98,18 @@ fn actions_read_permission_is_limited_to_evidence_consumers() {
         let permission = section.split("    steps:").next().unwrap();
         assert!(permission.contains("permissions:\n      contents: read\n      actions: read"));
     }
+}
+
+pub(crate) fn workflow_line_endings() -> [String; 2] {
+    let lf = normalized_fixture_workflow(include_str!("../../../.github/workflows/martensite.yml"))
+        .into_owned();
+    [lf.clone(), lf.replace('\n', "\r\n")]
+}
+
+/// Keeps exact YAML assertions portable across checkouts; `normalized_fixture_workflow("job:\r\n")`.
+pub(crate) fn normalized_fixture_workflow(workflow: &str) -> std::borrow::Cow<'_, str> {
+    if !workflow.contains("\r\n") {
+        return std::borrow::Cow::Borrowed(workflow);
+    }
+    std::borrow::Cow::Owned(workflow.replace("\r\n", "\n"))
 }

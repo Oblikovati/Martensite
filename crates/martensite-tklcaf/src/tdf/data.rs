@@ -5,8 +5,7 @@ use martensite_tkcdf::json_dump::class_begin;
 use martensite_tkcdf::json_dump::field_integer;
 use martensite_tkernel::{
     impl_transient,
-    ncollection::DataMap,
-    standard::{Failure, Handle, SharedState, StandardTransient, dump::DumpStream},
+    standard::{Failure, Handle, StandardTransient, dump::DumpStream},
     tcollection::AsciiString,
 };
 use std::{io, sync::Arc};
@@ -21,14 +20,29 @@ pub(crate) struct DataState {
     pub(crate) times: Vec<i32>,
     pub(crate) allow_modification: bool,
     pub(crate) access_by_entries: bool,
-    pub(crate) access_by_entries_table: DataMap<AsciiString, TdfLabel>,
+    pub(super) entry_storage: super::entry_storage::EntryStorage,
+}
+
+impl Default for DataState {
+    fn default() -> Self {
+        Self {
+            transaction: 0,
+            nb_touched_att: 0,
+            not_undo_mode: true,
+            time: 0,
+            times: Vec::new(),
+            allow_modification: true,
+            access_by_entries: false,
+            entry_storage: super::entry_storage::EntryStorage::default(),
+        }
+    }
 }
 
 /// The framework internals that the label nodes reach; they stay alive while the owning
 /// `TdfData` runs its native destruction, when its handle can no longer be upgraded.
 pub(crate) struct DataCore {
     root: Arc<TdfLabelNode>,
-    pub(crate) state: SharedState<DataState>,
+    pub(crate) state: super::sparse_commit::DocumentStateCell,
 }
 
 impl DataCore {
@@ -59,8 +73,8 @@ impl DataCore {
         TdfTool::entry(label, &mut entry);
         self.state
             .write()
-            .access_by_entries_table
-            .bind(entry, label.clone());
+            .entry_storage
+            .register(entry, label.clone());
     }
 }
 
@@ -84,16 +98,7 @@ impl TdfData {
     pub fn new() -> Handle<TdfData> {
         let core = Arc::new(DataCore {
             root: Arc::new(TdfLabelNode::default()),
-            state: SharedState::new(DataState {
-                transaction: 0,
-                nb_touched_att: 0,
-                not_undo_mode: true,
-                time: 0,
-                times: Vec::new(),
-                allow_modification: true,
-                access_by_entries: false,
-                access_by_entries_table: DataMap::default(),
-            }),
+            state: super::sparse_commit::DocumentStateCell::default(),
         });
         let data = Handle::new(TdfData {
             transient: StandardTransient::default(),
@@ -156,7 +161,7 @@ impl TdfData {
         {
             let mut state = self.core.state.write();
             state.access_by_entries = set;
-            state.access_by_entries_table.clear(true);
+            state.entry_storage.clear(set);
         }
         if !set {
             return Ok(());
@@ -177,12 +182,12 @@ impl TdfData {
     /// `GetLabel(anEntry, aLabel)`: the label bound to the entry by the fast access table.
     pub fn get_label(&self, entry: &AsciiString, label: &mut TdfLabel) -> bool {
         let state = self.core.state.read();
-        match state.access_by_entries_table.find(entry) {
-            Ok(found) => {
+        match state.entry_storage.find(entry) {
+            Some(found) => {
                 *label = found.clone();
                 true
             }
-            Err(_) => false,
+            None => false,
         }
     }
     /// `RegisterLabel`: binds a new label's entry (an internal method of the framework).
@@ -210,6 +215,7 @@ impl TdfData {
     /// `Destroy`: aborts every open transaction, forgets the root attributes without
     /// backup, clears the entry table and frees the label tree.
     pub fn destroy(&self) {
+        self.core.state.manual_flags();
         // A failure while aborting cannot be reported from a destructor; the tree is freed
         // anyway, as natively.
         let _ = super::data_commit::abort_until_transaction(&self.core, 1);
@@ -221,7 +227,7 @@ impl TdfData {
             }
             root.remove_attribute(&Handle::default(), &first);
         }
-        self.core.state.write().access_by_entries_table.clear(true);
+        self.core.state.write().entry_storage.clear(false);
         root.destroy();
     }
 }

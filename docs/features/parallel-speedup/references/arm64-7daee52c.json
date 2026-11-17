@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "issue": 480,
+  "run": 43709024633,
+  "job": 132796354561,
+  "diagnostic_commit": "7daee52c8c45c4fba991f10ba78355b8255e31fe",
+  "production_base": "fa9e6e5979c2423240b356130ec89cd216a2ab55",
+  "image": "macos-26-arm64 20261102.0473.1",
+  "physical_and_logical_cpus": 3,
+  "memory_bytes": 7516192768,
+  "guard_unchanged": true,
+  "release_validation": false,
+  "controls": [
+    {
+      "control": "isolated-1",
+      "raw_seconds": [
+        0.21019500000000002,
+        0.08683799999999997
+      ],
+      "ratio": 0.41313066438307267,
+      "stream": "CPU and elapsed time limit set to 1000 seconds\n=========\nOCC24639\n=========\n\nDIAGNOSTIC480 raw_elapsed=0.21019500000000002\n  Tps:    0.21\nDIAGNOSTIC480 raw_elapsed=0.08683799999999997\n  Tps:    0.09\nTEST COMPLETED\n\n"
+    },
+    {
+      "control": "isolated-2",
+      "raw_seconds": [
+        0.189654,
+        0.09279700000000002
+      ],
+      "ratio": 0.48929629746802084,
+      "stream": "CPU and elapsed time limit set to 1000 seconds\n=========\nOCC24639\n=========\n\nDIAGNOSTIC480 raw_elapsed=0.18965399999999999\n  Tps:    0.19\nDIAGNOSTIC480 raw_elapsed=0.09279700000000002\n  Tps:    0.09\nTEST COMPLETED\n\n"
+    },
+    {
+      "control": "isolated-3",
+      "raw_seconds": [
+        0.17833999999999994,
+        0.11342699999999994
+      ],
+      "ratio": 0.6360154760569697,
+      "stream": "CPU and elapsed time limit set to 1000 seconds\n=========\nOCC24639\n=========\n\nDIAGNOSTIC480 raw_elapsed=0.17833999999999994\n  Tps:    0.18\nDIAGNOSTIC480 raw_elapsed=0.11342699999999994\n  Tps:    0.11\nTEST COMPLETED\n\n"
+    },
+    {
+      "control": "harness-group",
+      "raw_seconds": [
+        0.39731999999999995,
+        0.26039
+      ],
+      "ratio": 0.6553659518775798,
+      "stream": "CPU and elapsed time limit set to 1000 seconds\n=========\nOCC24639\n=========\n\nDIAGNOSTIC480 raw_elapsed=0.39731999999999995\n  Tps:    0.40\nDIAGNOSTIC480 raw_elapsed=0.26039000000000001\n  Tps:    0.26\nTEST COMPLETED\n\n"
+    }
+  ]
+}

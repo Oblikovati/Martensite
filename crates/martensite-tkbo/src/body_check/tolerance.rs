@@ -7,6 +7,7 @@ use super::naming::TopologyNames;
 use super::report::{CheckMode, Finding, FindingKind, Severity, TopologyRef};
 use crate::sketch_region_validation::inspect_planar_edge_residual;
 use martensite_tkbrep::brep::BRepTool;
+use martensite_tkbrep::brep::access::{edge_tshape, face_tshape, vertex_tshape};
 use martensite_tkbrep::brep_adaptor::BRepAdaptorSurface;
 use martensite_tkbrep::topods::{self, Edge, Face, Shape};
 use martensite_tkernel::standard::Failure;
@@ -46,13 +47,23 @@ fn stored_tolerance(shape: &Shape) -> Result<f64, Failure> {
     }
 }
 
+// Compatibility getters floor invalid values; admission must inspect raw storage (#490).
+pub(super) fn raw_tolerance(shape: &Shape) -> Result<f64, Failure> {
+    let member = "body_check::raw_tolerance";
+    match shape.shape_type()? {
+        ShapeEnum::Vertex => Ok(vertex_tshape(shape, member)?.tolerance()),
+        ShapeEnum::Edge => Ok(edge_tshape(shape, member)?.tolerance()),
+        _ => Ok(face_tshape(shape, member)?.tolerance()),
+    }
+}
+
 fn value_findings(
     shape: &Shape,
     name: TopologyRef,
     budget: Option<f64>,
     findings: &mut Vec<Finding>,
 ) -> Result<(), Failure> {
-    let tolerance = stored_tolerance(shape)?;
+    let tolerance = raw_tolerance(shape)?;
     if !tolerance.is_finite() || tolerance < 0.0 {
         findings.push(defect(
             FindingKind::InvalidTolerance { tolerance },
@@ -61,6 +72,7 @@ fn value_findings(
         ));
         return Ok(());
     }
+    let tolerance = tolerance.max(martensite_tkernel::precision::confusion());
     if let Some(budget) = budget.filter(|budget| tolerance > *budget) {
         let kind = FindingKind::ToleranceAboveBudget { tolerance, budget };
         findings.push(defect(kind, name, None));
@@ -163,3 +175,7 @@ fn defect(kind: FindingKind, subject: TopologyRef, context: Option<TopologyRef>)
         context,
     }
 }
+
+#[cfg(test)]
+#[path = "tolerance_tests.rs"]
+mod tests;

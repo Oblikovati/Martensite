@@ -6,7 +6,8 @@ use martensite_tkbrep::toptools::IndexedMapOfShape;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tktopalgo::brep_check::BRepCheckStatus;
 
-/// The four ordered stages; a later stage runs only when every earlier one passed.
+/// The four ordered stages after raw tolerance admission. A later native stage runs
+/// only when every earlier native stage passed.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum ValidationStage {
     /// Closed shells, manifold edges, consistent orientation, Euler-Poincare, mapped topology.
@@ -28,7 +29,7 @@ pub enum StageVerdict {
     Failed,
     /// The stage did not complete or a check was inconclusive; never a pass.
     Inconclusive,
-    /// Not run because an earlier stage did not pass.
+    /// Not run because raw admission or an earlier ordered stage did not pass.
     NotRun,
 }
 

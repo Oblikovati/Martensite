@@ -1,0 +1,32 @@
+[
+  {
+    "iteration": 0,
+    "variant": "before",
+    "metric": "0.50 0.49 0.00 48532"
+  },
+  {
+    "iteration": 0,
+    "variant": "after-copy",
+    "metric": "0.50 0.50 0.00 52468"
+  },
+  {
+    "iteration": 1,
+    "variant": "before",
+    "metric": "0.51 0.50 0.00 49468"
+  },
+  {
+    "iteration": 1,
+    "variant": "after-copy",
+    "metric": "0.55 0.54 0.00 53748"
+  },
+  {
+    "iteration": 2,
+    "variant": "before",
+    "metric": "0.52 0.52 0.00 48400"
+  },
+  {
+    "iteration": 2,
+    "variant": "after-copy",
+    "metric": "0.50 0.50 0.00 54028"
+  }
+]

@@ -16,6 +16,36 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Rejected invalid raw body tolerances before native validation could mask or overwrite them, preserving refusal input state and explicit stage coverage (#490).
+
+- Restored explicit walking-line allocator ownership, allocation and reset policies, and legacy signed point counts (#507).
+
+- Kept release source proofs and changed-input comparisons in one canonical package-root coordinate system while preserving native Windows path components (#487).
+
+- Followed literal production QA modules while excluding disjoint test edits from release package version checks (#485).
+
+- Retained publication impact for traversing and unsupported Cargo production-target paths (#482).
+
+- Excluded proven test-target manifest edits and the reviewed budget-marker script from package source-version checks while retaining affected tests and conservative production-input checks (#481).
+
+## [0.13.1] - 2026-11-15
+
+### Fixed
+
+- Avoided broad sibling scans for proven single-label document transactions while retaining native traversal for ambiguous or reentrant changes (#489).
+
+- Separated test-only edits from release package version checks while retaining affected QA suites and conservative production-fixture checks (#466).
+
+- Retained all contributing solid parents through final Boolean Fuse assembly and preserved reverse ancestry bindings (#456).
+
+- Stabilized planar-profile area cross-checks under large coordinate translations without changing certification limits (#446).
+
+- Removed repeated pair-ledger validation during planar profile certification while preserving live geometry checks and shared work budgets (#449).
+
+- Updated rustix to 1.1.6 and xattr to 1.7.0 to resolve RUSTSEC-2026-0486 while preserving extended-attribute values and name lists larger than 4 KiB (#445).
+
+- Matched local PR test optimization to CI for script-budget packages while preserving other packages' profiles and test selection (#447).
+
 - Removed quadratic backtracking from the binary32 proof-source parser on malformed whitespace records without changing accepted records or certificates (#441).
 
 - Bound Linux renderer test gates to the recorded system-font configuration so user font folders no longer changed rendered test images (#433).

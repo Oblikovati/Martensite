@@ -1,0 +1,39 @@
+{
+  "diagnostic_only": true,
+  "base": "77053b4cd0f6e223d94f20b30929df15466dfc09",
+  "cases_checked": 4034,
+  "runtime_s": 111.77,
+  "history_rows": 519,
+  "aggregate_flag_rows": 129,
+  "changed_cases": 519,
+  "history_profiles": {
+    "21": 174,
+    "37": 174,
+    "49": 150,
+    "57": 21
+  },
+  "flag_profiles": {
+    "21": 43,
+    "37": 43,
+    "49": 43
+  },
+  "flag_columns": {
+    "13": 99,
+    "11": 30
+  },
+  "files": {
+    "states21-0.expected": 81,
+    "states21-1.expected": 93,
+    "states37-0.expected": 81,
+    "states37-1.expected": 93,
+    "states49-0.expected": 61,
+    "states49-1.expected": 89,
+    "states57-1.expected": 21
+  },
+  "unique_history_delta_patterns": 39,
+  "all_other_core_geometry_rc_fields_and_existing_ordered_events": "unchanged assertions passed",
+  "parallel_event_exclusion": "unchanged native oracle checks ordered events only for parallel=false; all case core/poll fields checked",
+  "patch_sha256": "da6ccfedaa24c5c3b45a191b5278b6927dd4d0596668d8a78e12a751e6e9619f",
+  "aggregate_flag_cases": 99,
+  "approved_correction": "BooleanSolidHistoryV2 under #456; coordinator independently reviewed exact patch"
+}

@@ -1,0 +1,53 @@
+{
+  "issue": 489,
+  "run": "https://github.com/Oblikovati/Martensite/actions/runs/43762106946",
+  "probe_sha": "29b6edd20cc15b8c948be6c77fe6fb64869077f7",
+  "production_sha": "28a1c720158b42b65ce61fea15643219125672d7",
+  "profile": "dev/test opt1, debug0, incremental0, stripdebuginfo, jobs2",
+  "records": [
+    {
+      "mode": "serial",
+      "job": 132958984913,
+      "raw_measurement_lines": [
+        "2026-11-15T21:10:02.6821959Z {\"platform\": \"Linux-7.0.0-1014-aws-x86_64-with-glibc2.39\", \"cpu_count\": 4, \"affinity\": [0, 1, 2, 3], \"test_threads\": \"1\"}",
+        "2026-11-15T21:11:09.6935174Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "2026-11-15T21:11:09.6940022Z running 168 tests",
+        "2026-11-15T21:11:14.6046279Z one modification abort 6897us exceeds creation/1000 (3745340us / 1000)",
+        "2026-11-15T21:11:14.6047685Z test large_transaction_timing::one_modification_abort_is_cheaper_than_creation ... Tree creation time 3745340 mcs",
+        "2026-11-15T21:11:14.6048618Z Creation commit time 1152264 mcs",
+        "2026-11-15T21:11:14.6048902Z One attribute modification time 4778 mcs",
+        "2026-11-15T21:11:14.6049194Z Abort of single modification time 6897 mcs",
+        "2026-11-15T21:11:19.6548795Z test large_transaction_timing::one_modification_commit_is_cheaper_than_creation ... Tree creation time 3496794 mcs",
+        "2026-11-15T21:11:19.6551487Z one modification commit 7286us exceeds creation/1000 (3496794us / 1000)",
+        "2026-11-15T21:11:19.6551920Z Creation commit time 1113001 mcs",
+        "2026-11-15T21:11:19.6552282Z One attribute modification time 4924 mcs",
+        "2026-11-15T21:11:19.6552674Z Commit of single modification time 7286 mcs",
+        "2026-11-15T21:11:20.2478198Z test result: FAILED. 166 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.55s",
+        "2026-11-15T21:11:20.7434569Z test result: ok. 48 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s"
+      ],
+      "log_sha256": "9114dec4e1a209b905456382c2918e5d9bf4eb9266f8606b6958e44e18d8f196"
+    },
+    {
+      "mode": "parallel",
+      "job": 132958985213,
+      "raw_measurement_lines": [
+        "2026-11-15T21:10:05.2353300Z {\"platform\": \"Linux-7.0.0-1014-aws-x86_64-with-glibc2.39\", \"cpu_count\": 4, \"affinity\": [0, 1, 2, 3], \"test_threads\": \"2\"}",
+        "2026-11-15T21:11:09.8724596Z test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s",
+        "2026-11-15T21:11:09.8727567Z running 168 tests",
+        "2026-11-15T21:11:14.8159427Z Tree creation time 3763030 mcs",
+        "2026-11-15T21:11:14.8161541Z one modification commit 7901us exceeds creation/1000 (3763030us / 1000)",
+        "2026-11-15T21:11:14.8162738Z Creation commit time 1166603 mcs",
+        "2026-11-15T21:11:14.8163790Z One attribute modification time 4705 mcs",
+        "2026-11-15T21:11:14.8164282Z Commit of single modification time 7901 mcs",
+        "2026-11-15T21:11:14.8417956Z Tree creation time 3778711 mcs",
+        "2026-11-15T21:11:14.8419818Z one modification abort 7312us exceeds creation/1000 (3778711us / 1000)",
+        "2026-11-15T21:11:14.8420466Z Creation commit time 1177535 mcs",
+        "2026-11-15T21:11:14.8421469Z One attribute modification time 4864 mcs",
+        "2026-11-15T21:11:14.8422396Z Abort of single modification time 7312 mcs",
+        "2026-11-15T21:11:15.4067097Z test result: FAILED. 166 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.53s",
+        "2026-11-15T21:11:15.8811863Z test result: ok. 48 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s"
+      ],
+      "log_sha256": "357fbfd9c23c91c6ae1f975b0f0183e654b4a25c24386d082afa8efbd2317b67"
+    }
+  ]
+}

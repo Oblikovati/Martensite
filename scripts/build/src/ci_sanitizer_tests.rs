@@ -156,7 +156,12 @@ fn manual_workflow_only_selection_survives_main_advancing_after_plan() {
 
 #[test]
 fn workflow_consumers_receive_the_planners_comparison_commit() {
-    let workflow = include_str!("../../../.github/workflows/martensite.yml");
+    for workflow in crate::workflow_publish_tests::workflow_line_endings() {
+        assert_comparison_commit_consumers(&workflow);
+    }
+}
+fn assert_comparison_commit_consumers(workflow: &str) {
+    let workflow = crate::workflow_publish_tests::normalized_fixture_workflow(workflow);
     assert!(workflow.contains("base-sha: ${{ steps.plan.outputs.base-sha }}"));
     for job in ["checks", "tests", "thread-sanitizer"] {
         let section = workflow.split(&format!("\n  {job}:\n")).nth(1).unwrap();

@@ -33,6 +33,8 @@ fn inspect_report_cardinalities(retained: &mut PairedContactTransaction) {
         .inspection
         .missing
         .retain(|gap| !matches!(gap, ContactTransportGap::ContactSetCardinality { .. }));
+    let certificates =
+        crate::sketch_region_certification::DomainCertificates::new(&retained.census);
     let mut seen = Vec::new();
     for (index, domain) in retained.census.domains.iter().enumerate() {
         let Some(report) = paired_report_index(domain) else {
@@ -42,7 +44,7 @@ fn inspect_report_cardinalities(retained: &mut PairedContactTransaction) {
             continue;
         }
         seen.push(report);
-        if let Some(gap) = current_cardinality_gap(retained, index, report) {
+        if let Some(gap) = current_cardinality_gap(retained, certificates.as_ref(), index, report) {
             retained.inspection.missing.push(gap);
         }
     }
@@ -59,11 +61,12 @@ fn paired_report_index(
 }
 fn current_cardinality_gap(
     retained: &PairedContactTransaction,
+    certificates: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
     domain_index: usize,
     report: usize,
 ) -> Option<ContactTransportGap> {
     let domain = &retained.census.domains[domain_index];
-    let proof = crate::sketch_region_certification::domain_certificate(&retained.census, domain)?;
+    let proof = certificates?.certificate(domain)?;
     let rows = super::topology::observed_domain_vertices(retained, domain_index);
     let observed = unique_vertex_indices(&rows).len();
     (observed != proof.contact_count()).then_some(ContactTransportGap::ContactSetCardinality {
