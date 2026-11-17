@@ -14,6 +14,18 @@ periodicity and defeaturing.
 | `body_check` | The ordered check of a result, with its stage reports. |
 | `profile_extrusion`, `measured` | Region extrusion from planar profiles, with error-bounded area and volume measures. |
 
+## Validation admission
+
+`body_check::validate_body` admits raw stored vertex, edge and face tolerances before
+running native checkers. A NaN, infinity or negative value produces an exact failed
+tolerance report; topology, geometry and self-intersection remain `NotRun`. Admission
+uses the existing indexed shape records and leaves the input unchanged. Valid values
+retain the effective `precision::confusion()` floor and the requested cap policy.
+
+This admission precedes the ordered native stages because self-intersection checking
+can overwrite an invalid stored vertex tolerance with its effective minimum (#490).
+See [the diagnosis and controls](490-raw-tolerance-admission.md).
+
 ## Ownership and thread safety
 
 Operations read their arguments and build new shapes. A shape's unchanged edges are shared with

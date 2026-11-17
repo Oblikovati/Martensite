@@ -12,7 +12,10 @@
 //! 4. **Tolerance**: valid values, vertex >= edge >= face, the resolution's cap, and the
 //!    certified planar curve/p-curve residual where it applies.
 //!
-//! A stage that fails or is inconclusive leaves every later stage `NotRun`.
+//! Raw stored tolerances are admitted before native checks can alter them (#490).
+//! Admission refusal marks tolerance failed and leaves native stages `NotRun`.
+//! After admission, a non-passing stage leaves every later stage `NotRun`.
+mod admission;
 mod census;
 mod ledger;
 mod naming;
@@ -22,6 +25,8 @@ mod tolerance;
 
 #[cfg(test)]
 mod ledger_tests;
+#[cfg(test)]
+mod raw_admission_tests;
 
 pub use ledger::ValidationReport;
 pub use report::{
@@ -47,7 +52,8 @@ pub struct ResolutionRejected {
 }
 
 /// Validates `shape` in four ordered stages under `resolution` (its tolerance cap is the
-/// tolerance budget). Checker failures become inconclusive findings, never errors.
+/// tolerance budget). Raw tolerance admission precedes native stages; refusal leaves
+/// those stages `NotRun`. Checker failures become inconclusive findings, never errors.
 ///
 /// ```
 /// use martensite_tkbo::body_check::{validate_body, CheckMode, StageVerdict, ValidationStage};
@@ -74,10 +80,22 @@ pub fn validate_body(
         Err(failure) => return Ok(unindexable(shape, &failure, budget)),
     };
     let root = names.name(shape);
+    if let Some(report) = admission::inspect(&names, root, budget) {
+        return Ok(report);
+    }
+    Ok(check_admitted_body(shape, &names, root, budget))
+}
+
+fn check_admitted_body(
+    shape: &Shape,
+    names: &TopologyNames,
+    root: TopologyRef,
+    budget: Option<f64>,
+) -> ValidationReport {
     let ledger = Ledger::new();
     let mut stages = Stages {
         shape,
-        names: &names,
+        names,
         root,
         ledger,
     };
@@ -85,7 +103,7 @@ pub fn validate_body(
     if passed && stages.geometry() && stages.self_intersection() {
         stages.tolerance(budget);
     }
-    Ok(stages.ledger.finish(census, budget))
+    stages.ledger.finish(census, budget)
 }
 
 /// The admitted resolution's cap as the tolerance budget (`NoLimit` checks none).
