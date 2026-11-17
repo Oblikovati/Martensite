@@ -157,9 +157,9 @@ fn invalid_total_level_is_refused_before_chart_count_shift() {
     input.max_level = 64;
     assert!(matches!(
         plan_cylindrical_charts(input, || false).unwrap_err().cause,
-        CylindricalProfileFailure::FitPolicy {
-            maximum_level: 64,
-            ..
+        CylindricalProfileFailure::FitIntervalLevel {
+            source_level: 0,
+            additional_level: 64,
         }
     ));
 }
