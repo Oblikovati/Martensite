@@ -39,22 +39,53 @@ struct ProfileIndex<'a> {
     curves: BTreeMap<ProfileCurveId, &'a ProfileCurve>,
 }
 
+pub(super) struct ProfileReader<'a>(ProfileIndex<'a>);
+
+impl<'a> ProfileReader<'a> {
+    pub(super) fn new(profile: &'a SketchProfile) -> Checked<Self> {
+        ProfileIndex::new(profile).map(Self)
+    }
+    pub(super) fn select(&self, selection: &ProfileSelection) -> Checked<OrientedRegion> {
+        let mut directions = BTreeMap::new();
+        let loops = std::iter::once(&selection.outer)
+            .chain(&selection.holes)
+            .enumerate()
+            .map(|(contour, uses)| {
+                read_loop(uses, selection.region, contour, &self.0, &mut directions)
+            })
+            .collect::<Checked<_>>()?;
+        Ok(OrientedRegion {
+            region: selection.region,
+            loops,
+            directions: CurveDirections(directions),
+        })
+    }
+}
+
+impl OrientedRegion {
+    pub(super) fn into_developed(
+        self,
+        depths: [f64; 2],
+        tolerance: f64,
+        max_fit_level: u8,
+    ) -> (DevelopedRegionRequest, CurveDirections) {
+        let source = DevelopedRegionRequest {
+            region: self.region,
+            loops: self.loops,
+            depths,
+            tolerance,
+            max_fit_level,
+        };
+        (source, self.directions)
+    }
+}
+
+#[cfg(test)]
 pub(super) fn from_profile(
     profile: &SketchProfile,
     selection: &ProfileSelection,
 ) -> Checked<OrientedRegion> {
-    let index = ProfileIndex::new(profile)?;
-    let mut directions = BTreeMap::new();
-    let loops = std::iter::once(&selection.outer)
-        .chain(&selection.holes)
-        .enumerate()
-        .map(|(contour, uses)| read_loop(uses, selection.region, contour, &index, &mut directions))
-        .collect::<Checked<_>>()?;
-    Ok(OrientedRegion {
-        region: selection.region,
-        loops,
-        directions: CurveDirections(directions),
-    })
+    ProfileReader::new(profile)?.select(selection)
 }
 
 fn read_loop(

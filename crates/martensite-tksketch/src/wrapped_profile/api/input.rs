@@ -18,14 +18,30 @@ pub(super) fn read(
         directions: BTreeMap::new(),
         placement: None,
     };
-    for selection in &request.selections {
-        poll(cancelled, WrappedStage::Input)?;
-        inputs.push_region(request, selection, depths)?;
-    }
+    read_regions(&mut inputs, request, depths, cancelled)?;
     poll(cancelled, WrappedStage::Input)?;
     inputs.placement = placement::prepare(request, &mut inputs.requests)
         .map_err(|failure| failure_projection::selected(failure, request))?;
     Ok(inputs)
+}
+fn read_regions(
+    inputs: &mut Inputs,
+    request: &WrappedNormalRequest,
+    depths: [f64; 2],
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<()> {
+    let Some(first) = request.selections.first() else {
+        return Ok(());
+    };
+    poll(cancelled, WrappedStage::Input)?;
+    let reader = profile_input::ProfileReader::new(&request.profile)
+        .map_err(|cause| profile_failure(cause, first.region))?;
+    inputs.push_region(request, first, depths, &reader)?;
+    for selection in request.selections.iter().skip(1) {
+        poll(cancelled, WrappedStage::Input)?;
+        inputs.push_region(request, selection, depths, &reader)?;
+    }
+    Ok(())
 }
 impl Inputs {
     fn push_region(
@@ -33,17 +49,25 @@ impl Inputs {
         request: &WrappedNormalRequest,
         selection: &WrappedRegionSelection,
         depths: [f64; 2],
+        reader: &profile_input::ProfileReader<'_>,
     ) -> Checked<()> {
-        let oriented = selected(&request.profile, selection)?;
-        self.requests
-            .push(geometry(request, oriented.region, oriented.loops, depths));
-        self.directions.insert(oriented.region, oriented.directions);
+        let oriented = selected(reader, selection)?;
+        let (source, directions) = oriented.into_developed(
+            depths,
+            request.options.spatial_error,
+            request.options.maximum_fit_level,
+        );
+        self.directions.insert(source.region, directions);
+        self.requests.push(Request {
+            source,
+            radius: request.support.radius,
+        });
         Ok(())
     }
 }
 
 fn selected(
-    profile: &martensite_tkbo::profile_extrusion::SketchProfile,
+    reader: &profile_input::ProfileReader<'_>,
     selection: &WrappedRegionSelection,
 ) -> Checked<profile_input::OrientedRegion> {
     let selected = profile_input::ProfileSelection {
@@ -51,32 +75,22 @@ fn selected(
         outer: selection.outer.clone(),
         holes: selection.holes.clone(),
     };
-    profile_input::from_profile(profile, &selected).map_err(|cause| {
-        error::failure(
-            WrappedStage::Input,
-            WrappedFailureClass::InvalidInput,
-            Some(selection.region),
-            error::Cause::Input(cause),
-        )
-    })
+    reader
+        .select(&selected)
+        .map_err(|cause| profile_failure(cause, selection.region))
 }
-fn geometry(
-    request: &WrappedNormalRequest,
+fn profile_failure(
+    cause: profile_input::ProfileInputFailure,
     region: SurfaceRegionId,
-    loops: Vec<Vec<AuthoredPiece>>,
-    depths: [f64; 2],
-) -> Request {
-    Request {
-        source: DevelopedRegionRequest {
-            region,
-            loops,
-            depths,
-            tolerance: request.options.spatial_error,
-            max_fit_level: request.options.maximum_fit_level,
-        },
-        radius: request.support.radius,
-    }
+) -> WrappedNormalFailure {
+    error::failure(
+        WrappedStage::Input,
+        WrappedFailureClass::InvalidInput,
+        Some(region),
+        error::Cause::Input(cause),
+    )
 }
+
 fn admit(request: &WrappedNormalRequest) -> Checked<()> {
     admit_support(request.support)?;
     if !request.depths.iter().all(|d| d.is_finite()) || request.depths[0] >= request.depths[1] {

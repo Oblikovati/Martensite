@@ -103,6 +103,42 @@ fn mixed_curves_and_holes_retain_exact_selected_source_controls() {
 }
 
 #[test]
+fn shared_reader_keeps_each_selections_source_directions_independent() {
+    let (request, profile, mut selection) = fixture();
+    let reader = ProfileReader::new(&profile).unwrap();
+    let first = reader.select(&selection).unwrap();
+    selection.outer.uses[0].reversed = true;
+    let second = reader.select(&selection).unwrap();
+    let curve = SurfaceCurveId(selection.outer.uses[0].curve.0);
+    assert!(!first.directions.reversed(curve).unwrap());
+    assert!(second.directions.reversed(curve).unwrap());
+    assert_geometry(&first, &request);
+    selection.outer.uses[0].reversed = false;
+    assert_geometry(&reader.select(&selection).unwrap(), &request);
+}
+
+#[test]
+fn developed_capture_moves_controls_and_keeps_the_requested_source_settings() {
+    let (request, profile, selection) = fixture();
+    let oriented = ProfileReader::new(&profile)
+        .unwrap()
+        .select(&selection)
+        .unwrap();
+    let allocation = oriented.loops[0][0].poles.as_ptr();
+    let (source, directions) = oriented.into_developed([-0.25, 0.5], 1e-6, 7);
+    assert_eq!(source.depths, [-0.25, 0.5]);
+    assert_eq!(source.tolerance.to_bits(), 1e-6_f64.to_bits());
+    assert_eq!(source.max_fit_level, 7);
+    assert_eq!(source.loops[0][0].poles.as_ptr(), allocation);
+    let captured = OrientedRegion {
+        region: source.region,
+        loops: source.loops,
+        directions,
+    };
+    assert_geometry(&captured, &request);
+}
+
+#[test]
 fn later_source_edits_do_not_change_owned_geometry_or_parameter_directions() {
     let (request, mut profile, mut selection) = fixture();
     let oriented = checked_input(&profile, &selection).unwrap();

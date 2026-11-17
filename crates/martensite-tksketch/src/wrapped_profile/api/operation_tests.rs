@@ -33,22 +33,24 @@ fn support() -> CylinderSupport {
     }
 }
 
-fn combined_profile(requests: &[Request]) -> SketchProfile {
+pub(in super::super) fn combined_profile(
+    requests: &[impl AsRef<DevelopedRegionRequest>],
+) -> SketchProfile {
     SketchProfile {
         plane: ProfilePlane::world_xy(),
         vertices: profile_vertices(requests),
         curves: requests
             .iter()
-            .flat_map(|r| &r.loops)
+            .flat_map(|r| &r.as_ref().loops)
             .flatten()
             .map(curve)
             .collect(),
     }
 }
-fn profile_vertices(requests: &[Request]) -> Vec<ProfileVertex> {
+fn profile_vertices(requests: &[impl AsRef<DevelopedRegionRequest>]) -> Vec<ProfileVertex> {
     let vertices: BTreeMap<_, _> = requests
         .iter()
-        .flat_map(|r| &r.loops)
+        .flat_map(|r| &r.as_ref().loops)
         .flatten()
         .map(|p| (vertex(p.start), p.poles[0]))
         .collect();
@@ -94,7 +96,10 @@ fn contour(pieces: &[AuthoredPiece]) -> ProfileLoop {
             .collect(),
     }
 }
-fn selection(request: &Request) -> WrappedRegionSelection {
+pub(in super::super) fn selection(
+    request: &impl AsRef<DevelopedRegionRequest>,
+) -> WrappedRegionSelection {
+    let request = request.as_ref();
     WrappedRegionSelection {
         region: request.region,
         outer: contour(&request.loops[0]),

@@ -27,7 +27,7 @@ type Checked<T> = Result<T, WrappedNormalFailure>;
 #[cfg(test)]
 mod history_tests;
 #[cfg(test)]
-mod operation_tests;
+pub(super) mod operation_tests;
 
 #[cfg(test)]
 mod error_tests;
