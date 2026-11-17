@@ -58,6 +58,8 @@ fn control_command(root: &Path, control: Control) -> CommandSpec {
         Control::OpenExtrusion => open_extrusion_controls(root),
         Control::VertexNeighborhood => vertex_neighborhood_controls(root),
         Control::DocumentTransactions => document_transaction_controls(root),
+        Control::SurfaceSketch => surface_sketch_controls(root),
+        Control::FontTextCapture => font_text_capture_controls(root),
     }
 }
 
@@ -209,6 +211,36 @@ fn sanitizer_flags(command: CommandSpec) -> CommandSpec {
         .environment("RUSTC_WRAPPER", None)
         .environment("RUSTC_WORKSPACE_WRAPPER", None)
         .environment("TSAN_OPTIONS", None)
+}
+
+fn surface_sketch_controls(root: &Path) -> CommandSpec {
+    // Independent operation contexts must preserve published value metadata (#414, #416).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tksketch",
+        "--test",
+        "surface_sketch",
+        "--",
+        "replay::parallel_operations_match_sequential_value_metadata",
+        "--exact",
+        "--test-threads=1",
+        "--show-output",
+    ])
+}
+
+fn font_text_capture_controls(root: &Path) -> CommandSpec {
+    // Private memory-font instances and immutable published snapshots have distinct stress controls (#425).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkv3d",
+        "--lib",
+        "brep_font::text_capture::tests::stress",
+        "--",
+        "--test-threads=1",
+        "--show-output",
+    ])
 }
 
 #[cfg(test)]

@@ -6,6 +6,14 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Added strict owned text capture with exact font-content bindings, caller occurrence IDs, raw glyph outlines and frozen text-builder plans. Added source-bound control-character diagnostics and an affected-package ThreadSanitizer stress control. (#425)
+
+- Added conical-sector sketches with signed normal extrusion, seam-crossing regions, validated conical carriers and preserved source history. (#417)
+
+- Added rectangular sketches on cylindrical surfaces with signed normal extrusion, seam-crossing regions, semantic history, ordered body validation and detached body exports. Existing planar extrusion interfaces were preserved. (#416)
+
 ### Fixed
 
 - Rejected invalid raw body tolerances before native validation could mask or overwrite them, preserving refusal input state and explicit stage coverage (#490).

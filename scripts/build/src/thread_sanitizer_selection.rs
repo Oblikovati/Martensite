@@ -13,9 +13,11 @@ pub(crate) enum Control {
     OpenExtrusion,
     VertexNeighborhood,
     DocumentTransactions,
+    SurfaceSketch,
+    FontTextCapture,
 }
 
-pub(crate) const CONTROLS: [Control; 9] = [
+pub(crate) const CONTROLS: [Control; 11] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -25,6 +27,8 @@ pub(crate) const CONTROLS: [Control; 9] = [
     Control::OpenExtrusion,
     Control::VertexNeighborhood,
     Control::DocumentTransactions,
+    Control::SurfaceSketch,
+    Control::FontTextCapture,
 ];
 
 impl Control {
@@ -39,6 +43,8 @@ impl Control {
             Self::OpenExtrusion => "open-extrusion",
             Self::VertexNeighborhood => "vertex-neighborhood",
             Self::DocumentTransactions => "document-transactions",
+            Self::SurfaceSketch => "surface-sketch",
+            Self::FontTextCapture => "font-text-capture",
         }
     }
 
@@ -51,6 +57,8 @@ impl Control {
             Self::FaceCertificate => "martensite-tktopalgo",
             Self::OpenExtrusion | Self::VertexNeighborhood => "martensite-tkmath",
             Self::DocumentTransactions => "martensite-tklcaf",
+            Self::SurfaceSketch => "martensite-tksketch",
+            Self::FontTextCapture => "martensite-tkv3d",
         }
     }
 }
@@ -179,10 +187,25 @@ mod tests {
                 "face-certificate",
                 "open-extrusion",
                 "vertex-neighborhood",
-                "document-transactions"
+                "document-transactions",
+                "surface-sketch",
+                "font-text-capture"
             ]
         );
         assert_eq!(ids.iter().collect::<BTreeSet<_>>().len(), CONTROLS.len());
+    }
+
+    #[test]
+    fn surface_sketch_owner_selects_control_without_unrelated_leaf_fanout() {
+        assert_eq!(
+            select(&BTreeSet::from(["martensite-tksketch".into()]), &[]),
+            [Control::SurfaceSketch]
+        );
+        assert!(select(&BTreeSet::from(["martensite-tkdeobj".into()]), &[]).is_empty());
+        assert_eq!(
+            select(&BTreeSet::from(["martensite-tkmath".into()]), &[]),
+            [Control::OpenExtrusion, Control::VertexNeighborhood]
+        );
     }
 
     #[test]
@@ -224,4 +247,17 @@ mod tests {
             );
         }
     }
+}
+
+#[cfg(test)]
+#[test]
+fn font_capture_selects_only_its_affected_owner() {
+    assert_eq!(
+        select(&BTreeSet::from(["martensite-tkv3d".into()]), &[]),
+        [Control::FontTextCapture]
+    );
+    assert!(
+        !select(&BTreeSet::from(["martensite-tksketch".into()]), &[])
+            .contains(&Control::FontTextCapture)
+    );
 }
