@@ -4,6 +4,8 @@ mod admission;
 mod algebra;
 mod error;
 mod planning;
+#[cfg(test)]
+mod planning_oracle_tests;
 mod planning_types;
 mod proof;
 mod source;

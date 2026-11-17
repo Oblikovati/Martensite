@@ -1,0 +1,304 @@
+{
+  "issue": 525,
+  "oracle_kind": "exact rational Taylor composition and four formal derivatives",
+  "scope": "Conservative ideal Hermite remainder and dyadic level; excludes stored curves, topology and native operation acceptance",
+  "tangent_derivative_polynomials": [
+    {
+      "domain": "QQ",
+      "variables": [
+        "x"
+      ],
+      "polynomial": {
+        "terms": [
+          {
+            "coefficient": {
+              "num": "1",
+              "den": "2"
+            },
+            "exponents": [
+              2
+            ]
+          },
+          {
+            "coefficient": {
+              "num": "1",
+              "den": "2"
+            },
+            "exponents": [
+              0
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "domain": "QQ",
+      "variables": [
+        "x"
+      ],
+      "polynomial": {
+        "terms": [
+          {
+            "coefficient": {
+              "num": "1",
+              "den": "2"
+            },
+            "exponents": [
+              3
+            ]
+          },
+          {
+            "coefficient": {
+              "num": "1",
+              "den": "2"
+            },
+            "exponents": [
+              1
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "domain": "QQ",
+      "variables": [
+        "x"
+      ],
+      "polynomial": {
+        "terms": [
+          {
+            "coefficient": {
+              "num": "3",
+              "den": "4"
+            },
+            "exponents": [
+              4
+            ]
+          },
+          {
+            "coefficient": {
+              "num": "1",
+              "den": "1"
+            },
+            "exponents": [
+              2
+            ]
+          },
+          {
+            "coefficient": {
+              "num": "1",
+              "den": "4"
+            },
+            "exponents": [
+              0
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "domain": "QQ",
+      "variables": [
+        "x"
+      ],
+      "polynomial": {
+        "terms": [
+          {
+            "coefficient": {
+              "num": "3",
+              "den": "2"
+            },
+            "exponents": [
+              5
+            ]
+          },
+          {
+            "coefficient": {
+              "num": "5",
+              "den": "2"
+            },
+            "exponents": [
+              3
+            ]
+          },
+          {
+            "coefficient": {
+              "num": "1",
+              "den": "1"
+            },
+            "exponents": [
+              1
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "cases": [
+    {
+      "name": "linear",
+      "half_angle_radius": "1/8",
+      "tangent_bound": "16/127",
+      "phase_derivative_bounds": [
+        "1/2",
+        "0",
+        "0"
+      ],
+      "fourth_derivative_at_zero": {
+        "num": "270565505",
+        "den": "33038369407"
+      },
+      "expected_subdivision_level": 2,
+      "exact_ideal_developed_error": "270565505/1623901933092864",
+      "requested_spatial_limit": 3.814697265625e-06,
+      "jacobian_operation_ids": [
+        "polynomial.rational.compute.derivative",
+        "polynomial.map.evaluate"
+      ],
+      "jacobian_verified": true,
+      "composite_input_sha256": "1fbd62a2f8139ef9b428816c7d7a0873edf66d1f44b70e94d4c38b581925270d"
+    },
+    {
+      "name": "quadratic",
+      "half_angle_radius": "1/16",
+      "tangent_bound": "32/511",
+      "phase_derivative_bounds": [
+        "1/2",
+        "1/2",
+        "0"
+      ],
+      "fourth_derivative_at_zero": {
+        "num": "121516823228125",
+        "den": "557473828216816"
+      },
+      "expected_subdivision_level": 3,
+      "exact_ideal_developed_error": "121516823228125/438415257672207040512",
+      "requested_spatial_limit": 3.814697265625e-06,
+      "jacobian_operation_ids": [
+        "polynomial.rational.compute.derivative",
+        "polynomial.map.evaluate"
+      ],
+      "jacobian_verified": true,
+      "composite_input_sha256": "8941f1478d14d8d37bb08ec36295c746b381cdc35eef89eb9aa41ef008d2cbc8"
+    },
+    {
+      "name": "cubic",
+      "half_angle_radius": "1/16",
+      "tangent_bound": "32/511",
+      "phase_derivative_bounds": [
+        "3/4",
+        "3/2",
+        "3/2"
+      ],
+      "fourth_derivative_at_zero": {
+        "num": "3699790828755255",
+        "den": "2229895312867264"
+      },
+      "expected_subdivision_level": 4,
+      "exact_ideal_developed_error": "1233263609585085/9352858830340416864256",
+      "requested_spatial_limit": 3.814697265625e-06,
+      "jacobian_operation_ids": [
+        "polynomial.rational.compute.derivative",
+        "polynomial.map.evaluate"
+      ],
+      "jacobian_verified": true,
+      "composite_input_sha256": "f0fd2ca1e7cf7079cfeb6810836c84f78c3be875dbc67324260049b02dd9d1f0"
+    },
+    {
+      "name": "restricted_cubic",
+      "half_angle_radius": "7/1024",
+      "tangent_bound": "14336/2097103",
+      "phase_derivative_bounds": [
+        "3/64",
+        "3/64",
+        "3/128"
+      ],
+      "fourth_derivative_at_zero": {
+        "num": "4085265154958773790700940397819775",
+        "den": "21265163453484729583073236104376745984"
+      },
+      "expected_subdivision_level": 2,
+      "exact_ideal_developed_error": "1361755051652924596900313465939925/348408438021893809489071900334108606201856",
+      "requested_spatial_limit": 5.960464477539063e-08,
+      "jacobian_operation_ids": [
+        "polynomial.rational.compute.derivative",
+        "polynomial.map.evaluate"
+      ],
+      "jacobian_verified": true,
+      "composite_input_sha256": "ac26eae235e8d47220a04c288d7c1788f8fde6689b5a093a677d63d10ecb011a"
+    }
+  ],
+  "formal_composition": "For phase derivative bounds a,b,c, set h(x)=a*x+b*x^2/2+c*x^3/6 and G(x)=sum(k=1..4) g_k(t)*h(x)^k/k!. Jacobian differentiated G four times and evaluated at x=0.",
+  "remainder_rule": "Initial developed error R*M4/192; after additional dyadic level n, divide by16^n; choose first n meeting requested_limit/2.",
+  "regression_mutations": [
+    {
+      "mutation": "remove_6",
+      "before": "&b, 6, 1",
+      "after": "&b, 0, 1",
+      "exit_code": 101,
+      "killed_by_regression_assertion": true,
+      "result": "test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 435 filtered out; finished in 0.00s",
+      "log_sha256": "e45bae34c67539716f6e4af69bc8e99847e9e16f8a91007824645b14b595d08a"
+    },
+    {
+      "mutation": "halve_6",
+      "before": "&b, 6, 1",
+      "after": "&b, 3, 1",
+      "exit_code": 101,
+      "killed_by_regression_assertion": true,
+      "result": "test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 435 filtered out; finished in 0.00s",
+      "log_sha256": "b349db16109981f4ff874e19e5a6cf7940a83b5e777bca20a8bbf4efee0320fd"
+    },
+    {
+      "mutation": "remove_3",
+      "before": "&c, 3, 1",
+      "after": "&c, 0, 1",
+      "exit_code": 101,
+      "killed_by_regression_assertion": true,
+      "result": "test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 435 filtered out; finished in 0.00s",
+      "log_sha256": "62c2b207683b582374ad1a4de9bedc475e7c7c4962b67a5050c399384f05ce52"
+    },
+    {
+      "mutation": "halve_3",
+      "before": "&c, 3, 1",
+      "after": "&c, 3, 2",
+      "exit_code": 101,
+      "killed_by_regression_assertion": true,
+      "result": "test result: FAILED. 1 passed; 3 failed; 0 ignored; 0 measured; 435 filtered out; finished in 0.00s",
+      "log_sha256": "8d91c632618365583d5028ed9e4815ffbcba34dd291fb403ed4affc58c190d92"
+    },
+    {
+      "mutation": "remove_4",
+      "before": "&e, 4, 1",
+      "after": "&e, 0, 1",
+      "exit_code": 101,
+      "killed_by_regression_assertion": true,
+      "result": "test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 435 filtered out; finished in 0.00s",
+      "log_sha256": "8ecd46a6c6adb0e4dcd76218af65f12850ddfbaab05c48f50cefdb87aef89f17"
+    },
+    {
+      "mutation": "halve_4",
+      "before": "&e, 4, 1",
+      "after": "&e, 2, 1",
+      "exit_code": 101,
+      "killed_by_regression_assertion": true,
+      "result": "test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 435 filtered out; finished in 0.00s",
+      "log_sha256": "378da1019716b231e3bf8cb38c278a4cf9fb9fa7dfee0035027ff26b96ee1ea4"
+    }
+  ],
+  "unchanged_production_planner_sha256": "b1b80adaa7b3a72ec3b93fae87e28047f83f6357cd187f6a856978723723119f",
+  "restored_baseline_result": "test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 435 filtered out; finished in 0.00s",
+  "command": [
+    "cargo",
+    "test",
+    "-p",
+    "martensite-tkmath",
+    "--lib",
+    "planning_oracle_tests",
+    "--",
+    "--test-threads=1"
+  ],
+  "regression_test_sha256_at_mutation": "57e23a55685e95a687909c5cfc15072017d27a2c42d0bea84355151ab0ffeb61",
+  "current_regression_test_sha256": "1cd827c8f7060f75c6ce118a7c483a498d569bcf8d05a243749becd39947695f",
+  "portability_followup": "Replaced std f64::powi input construction with exact dyadic constant divisions for #201. Independent rational expectations and subdivision levels are unchanged. Mutation logs describe the earlier test-source snapshot; the full PR gate validates the current fixture."
+}

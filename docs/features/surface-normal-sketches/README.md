@@ -134,10 +134,14 @@ its boundaries generally need the curve-mapping work tracked by #418. See the
 
 General curves and holes are under development under #418. The approved
 [rational representation](../../architecture/decisions/rational-wrapped-profile-representation.md)
-and [implementation record](RATIONAL-IMPLEMENTATION.md) describe the required
-publication evidence. The primitive contracts above remain unchanged.
+describes the required publication evidence. The primitive contracts above remain unchanged.
 
 TKMath's `certify_cylindrical_storage` bounds radial, ruling and height errors
 from retained curve coefficients, including linear depth interpolation.
 The [storage certificate notes](STORAGE-CERTIFICATES.md) describe its limits.
 Complete wrapped-operation qualification remains open.
+
+`certify_cylindrical_profile` checks authored position and derivative error, and
+`plan_cylindrical_fit` bounds the required Hermite subdivision before construction.
+See [the profile certificate notes](PROFILE-CERTIFICATES.md). These math helpers
+are foundations for the general operation; this increment adds no sketch entry point.

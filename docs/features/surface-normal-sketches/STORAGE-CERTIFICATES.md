@@ -62,15 +62,15 @@ caps and options, positive weight minima, and the arithmetic operation count.
 zero and whether weights were omitted. These bits bind proof evidence to its
 inputs; they are not material or topology identities.
 
-## Native binding
+## Native binding requirements
 
-The private wrapped operation runs storage certification after freezing and
-decoding. It looks up every span by its authored curve and canonical dyadic
+The downstream wrapped operation must run storage certification after freezing
+and decoding. It must look up every span by its authored curve and canonical dyadic
 interval. Missing or duplicate keys refuse. It captures actual native weights,
 including unit weights after non-rational storage, rather than reusing the
 fitter's requested coefficients.
 
-The current native bridge requires identity locations, the local +Z cap frames,
+The prototype native bridge at `c7c7f2d7` required identity locations and local +Z cap frames,
 and the expected stored radii. Each side must have two depth rows, identical
 retained weights at both depths, and control points and weights matching the
 captured boundary curves bit for bit. Under these conditions its Bezier surface
@@ -78,8 +78,8 @@ is the linear interpolation certified above. A changed side pole refuses before
 an old boundary proof can be used. Changing both a boundary and its side row
 still requires a new mathematical certificate and refuses when its bound fails.
 
-The wrapped operation allocates a cap no greater than epsilon/1000, rounded
-down. Each residual and the combined sweep bound must meet it. This protects the
+The wrapped-operation design allocates a cap no greater than epsilon/1000,
+rounded down. Each residual and the combined sweep bound must meet it. This protects the
 single storage allowance from the sum of individually admissible errors.
 
 ## Evidence and remaining work
@@ -93,13 +93,15 @@ The [retained oracle](references/rational-storage-oracle.json) records that call
 
 Other controls cover nonfinite input, nonpositive or missing weights, unsupported
 degree, cancellation and work exhaustion, mismatched coefficient counts,
-subnormal precision refusal, source-bit changes, and native binding mutations.
+subnormal precision refusal and source-bit changes. The unpublished prototype
+also exercised native binding mutations.
 Native conformance estimates and sampled body checks are not used as proof of
 these storage bounds.
 
-P2 still needs authored angular and height conformance, derivative bounds,
-endpoint/join evidence, and a priori canonical piece sizing. Before publication,
-the operation must also account for rounding of the requested radius-plus-depth
-sums and any frame transformation, and bind the certified parameter domains to
-actual face trims. P3 through P6 remain open. The native bridge currently refuses
-non-identity frames; oblique-frame qualification belongs to P5.
+The profile certificate and fit planner in this increment cover authored angular
+and height conformance, derivative bounds and a priori piece sizing. Endpoint
+and join evidence remain open. Before publishing a body, the downstream
+operation must account for radius-plus-depth rounding and frame transport, and
+bind certified parameter domains to actual face trims. Topology and represented
+measures also remain separate obligations. This increment excludes the native
+bridge; oblique-frame qualification belongs to P5.

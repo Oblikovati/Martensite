@@ -1,12 +1,15 @@
 //! One immutable native shape table, followed by explicit semantic shape references.
-use super::failure::*;
+use super::{
+    failure::*,
+    history::{Bindings, HistoryKey},
+};
 use martensite_tkbrep::{
-    bintools::{BinShapeSet, BinShapeSetBase, SurfaceFrameReadPolicy},
+    bintools::{BinShapeSet, BinShapeSetBase},
     topods::Shape,
 };
 use martensite_tkernel::{message::ProgressRange, storage::IoStream};
 
-pub(super) fn encode<K>(solid: &Shape, bindings: &[(K, Shape)]) -> Checked<Vec<u8>> {
+pub(super) fn encode(solid: &Shape, bindings: &Bindings) -> Checked<Vec<u8>> {
     let mut set = shape_table(solid, bindings)?;
     let mut stream = IoStream::from_bytes(Vec::new());
     set.write(&mut stream, &ProgressRange::default())
@@ -36,17 +39,9 @@ fn stream_bytes(stream: &mut IoStream) -> Checked<Vec<u8>> {
     }
     Ok(bytes)
 }
-pub(super) fn decode<K: Copy>(bytes: &[u8], keys: &[K]) -> Checked<(Shape, Vec<(K, Shape)>)> {
-    decode_with_policy(bytes, keys, SurfaceFrameReadPolicy::LegacyReplay)
-}
-
-pub(super) fn decode_with_policy<K: Copy>(
-    bytes: &[u8],
-    keys: &[K],
-    policy: SurfaceFrameReadPolicy,
-) -> Checked<(Shape, Vec<(K, Shape)>)> {
+pub(super) fn decode(bytes: &[u8], keys: &[HistoryKey]) -> Checked<(Shape, Bindings)> {
     let mut stream = IoStream::from_bytes(bytes.to_vec());
-    let mut set = BinShapeSet::with_surface_frame_policy(policy);
+    let mut set = BinShapeSet::new();
     set.read(&mut stream, &ProgressRange::default())
         .map_err(|error| native("decode table", error))?;
     let solid = reference(&set, &mut stream)?;
@@ -72,7 +67,7 @@ fn reference(set: &BinShapeSet, stream: &mut IoStream) -> Checked<Shape> {
     Ok(shape)
 }
 
-fn shape_table<K>(solid: &Shape, bindings: &[(K, Shape)]) -> Checked<BinShapeSet> {
+fn shape_table(solid: &Shape, bindings: &Bindings) -> Checked<BinShapeSet> {
     let mut set = BinShapeSet::new();
     set.set_with_triangles(false);
     set.set_with_normals(false);

@@ -22,11 +22,6 @@ mod trim_binding;
 mod validation;
 mod volume;
 
-// Private until the representation publication obligations pass.
-#[cfg(test)]
-#[path = "../wrapped_profile/mod.rs"]
-mod wrapped_profile;
-
 pub use cone_request::{ConeSector, ConeSupport};
 pub use failure::{SurfaceFailureCause, SurfaceSketchFailure, SurfaceStage};
 pub use history::{HistoryKey, HistoryRole, HistorySource};

@@ -24,8 +24,6 @@ martensite-tktopalgo = { path = "../martensite-tktopalgo", version = "0.4.1" }
 martensite-tkprim = { path = "../martensite-tkprim", version = "0.3.7" }
 
 [dev-dependencies]
-martensite-tkg2d = { path = "../martensite-tkg2d", version = "0.3.7" }
-martensite-tkgeomalgo = { path = "../martensite-tkgeomalgo", version = "0.3.8" }
 static_assertions = "=1.1.0"
 
 [[test]]

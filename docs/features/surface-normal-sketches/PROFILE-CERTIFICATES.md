@@ -1,10 +1,14 @@
 # Cylindrical profile certificates (#418)
 
-The private wrapped-profile pipeline compares each decoded curve to its original
-polynomial in the developed `(s,z)` plane. It restricts the original coefficients
+`certify_cylindrical_profile` compares supplied stored curve coefficients to the
+original polynomial in the developed `(s,z)` plane. It restricts the original coefficients
 to the exact dyadic interval using outward arithmetic. Rounded subdivision
 points are construction inputs only; they cannot replace the authored source in
 this check.
+
+Refusals retain offending values and name the admitted input constraints (#524).
+For caller-defined count roles, diagnostics state when the role-specific maximum
+is unavailable.
 
 ## Position and derivative bounds
 
@@ -45,13 +49,30 @@ V1 reserves half the position allowance for this ideal fit. Each geometric
 halving reduces the bound by sixteen. An insufficient level cap refuses the
 plan.
 
-The native fit shares the chosen angular polynomial and weights across depth
-curves, and rotates its local half-angle chart by the planned center. Actual
+A wrapped-profile builder must share the chosen angular polynomial and weights
+across depth curves, and rotate the local half-angle chart by the planned center. Actual
 stored coefficients must still pass the independent profile and storage checks;
 the ideal remainder does not certify floating-point construction or endpoint
 rounding.
 
+## Independent planning controls
+
+Exact rational controls cover linear, quadratic and cubic angular phases, including
+a cubic restricted to the authored interval `[1/4,1/2]` (#525). Jacobian checked
+the fourth derivatives of their Taylor compositions using exact polynomial
+differentiation and evaluation. The retained
+[oracle values](references/planning-remainder-oracles-2026-11-17.json) fix each
+expected subdivision level and bound the reported ideal remainder. Removing or
+halving the chain-rule coefficients 6, 3 or 4 makes the corresponding controls fail.
+The tests cover fit planning; stored geometry and complete-operation acceptance require
+their own evidence.
+
 ## Evidence and limits
+
+The integration measurements below came from the unpublished prototype at
+`99e8375a`, before the certificate APIs were separated for review. They describe
+that prototype and do not qualify this integration branch. Its native sketch
+bridge is excluded from this increment; the certificate tests remain in TKMath.
 
 The mixed line/quadratic/cubic loop with a rectangular hole now uses 19 pieces
 and 117 semantic bindings. The four outer curves use subdivision levels
