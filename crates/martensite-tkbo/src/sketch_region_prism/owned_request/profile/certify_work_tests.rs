@@ -25,7 +25,7 @@ fn explicit_pair_work_changes_only_the_census_bisection_limit() {
     assert_eq!(explicit.contacts.roots, inherited.contacts.roots);
     assert_eq!(explicit.region.winding, inherited.region.winding);
 }
-fn lens_input(pair_bisections: Option<u16>) -> ProfileGraphInput {
+pub(super) fn lens_input(pair_bisections: Option<u16>) -> ProfileGraphInput {
     ProfileGraphInput {
         edges: vec![
             lens_edge(1, [[0., 0., 0.], [1., -1., 0.], [2., 0., 0.]], [1, 2]),

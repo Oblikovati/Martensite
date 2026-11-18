@@ -57,6 +57,7 @@ pub(crate) enum LoopRegionStage {
 /// Typed refusal; no partial certificate accompanies it.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum LoopRegionCause {
+    GraphPolicy(Box<crate::sketch_region_certification::GraphPolicyMismatch>),
     Version {
         actual: u32,
         expected: u32,

@@ -11,12 +11,15 @@ pub enum PlanarProofVersion {
     CarrierV2,
     /// Exact Bernstein exclusion followed by that solver under the remaining budget.
     BernsteinV3,
+    /// Bernstein exclusions with exact bracket filtering for generated membership signs.
+    FilteredBernsteinV4,
 }
 impl PlanarProofVersion {
     pub(crate) fn request_version(self) -> u32 {
         match self {
             Self::CarrierV2 => 2,
             Self::BernsteinV3 => 3,
+            Self::FilteredBernsteinV4 => 4,
         }
     }
 }

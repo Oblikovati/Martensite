@@ -6,7 +6,7 @@ use super::tests::{capture, policy};
 use super::*;
 use martensite_tkmath::predicates::roots::bezier_pair::*;
 
-fn radial_source() -> martensite_tkbrep::topods::Shape {
+pub(super) fn radial_source() -> martensite_tkbrep::topods::Shape {
     let x = [
         0,
         4599676419421066576,
@@ -42,7 +42,7 @@ fn exact_exclusion_completes_the_owned_monotone_cubic_without_legacy_evidence() 
     assert_eq!(census.bisections, record.completed_work());
     assert_complete_empty_domain(&census);
 }
-fn assert_complete_empty_domain(census: &BoundaryCensus) {
+pub(super) fn assert_complete_empty_domain(census: &BoundaryCensus) {
     let certificates = DomainCertificates::new(census).unwrap();
     let proof = certificates
         .unified_certificate(&census.domains[0])
@@ -91,7 +91,7 @@ fn inconclusive_exact_hull_retains_the_genuine_crossing_solver() {
     assert_crossing_fallback(record);
     assert_complete_crossing_domain(&census);
 }
-fn assert_complete_crossing_domain(census: &BoundaryCensus) {
+pub(super) fn assert_complete_crossing_domain(census: &BoundaryCensus) {
     let paired = census.paired.as_ref().unwrap();
     let consumed: u64 = paired
         .exclusions
@@ -106,7 +106,7 @@ fn assert_complete_crossing_domain(census: &BoundaryCensus) {
             .is_some()
     );
 }
-fn assert_crossing_fallback(record: &super::bernstein_execution::BernsteinStoredReport) {
+pub(super) fn assert_crossing_fallback(record: &super::bernstein_execution::BernsteinStoredReport) {
     let execution = record.outcome.as_ref().unwrap();
     assert_eq!(
         execution.exclusion.completion(),

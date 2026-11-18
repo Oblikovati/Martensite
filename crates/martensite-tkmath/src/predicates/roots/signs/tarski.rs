@@ -12,14 +12,6 @@ pub(super) fn evaluate(
     isolation: &RootIsolation,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Vec<Ordering>, RootSignError> {
-    // #542: singleton brackets already identify exact roots; no Cauchy index is needed.
-    if isolation
-        .roots()
-        .iter()
-        .all(|root| root.bounds().0 == root.bounds().1)
-    {
-        return point_signs(&query, isolation, cancelled);
-    }
     let chain = query_chain(source, &query, cancelled)
         .map_err(|cause| RootSignStage::Evaluation.failure(cause))?;
     isolation
@@ -28,22 +20,7 @@ pub(super) fn evaluate(
         .map(|root| classify(&chain, &query, root, cancelled))
         .collect()
 }
-fn point_signs(
-    query: &IntegerPolynomial,
-    isolation: &RootIsolation,
-    cancelled: &mut impl FnMut() -> bool,
-) -> Result<Vec<Ordering>, RootSignError> {
-    poll(cancelled).map_err(|cause| RootSignStage::Evaluation.failure(cause))?;
-    isolation
-        .roots()
-        .iter()
-        .map(|root| {
-            poll(cancelled).map_err(|cause| RootSignStage::Evaluation.failure(cause))?;
-            Ok(point_sign(query, root))
-        })
-        .collect()
-}
-fn point_sign(query: &IntegerPolynomial, root: &RootBracket) -> Ordering {
+pub(super) fn point_sign(query: &IntegerPolynomial, root: &RootBracket) -> Ordering {
     sign_order(query.sign_at(root.bounds().0))
 }
 fn query_chain(

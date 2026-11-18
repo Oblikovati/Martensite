@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-//! #542: exact-point signs avoid unused query chains; mixed roots retain eager execution.
+//! Legacy evaluation retains eager query-chain work and cancellation checkpoints.
 use super::*;
 use crate::predicates::roots::{
     RootIsolationError, RootIsolationOptions, isolate_polynomial_roots,
@@ -204,4 +204,14 @@ fn invalid_tarski_sums_are_declines_in_both_directions() {
             Err(RootSignError::Variation { lower, upper })
         );
     }
+}
+
+#[test]
+fn all_point_and_empty_legacy_inputs_keep_entire_eager_execution() {
+    assert_eager_unchanged(
+        repeated_points(&[0., 1.]),
+        &[Ordering::Less, Ordering::Equal, Ordering::Greater],
+    );
+    assert_eager_unchanged(repeated_points(&[]), &[Ordering::Equal; 3]);
+    assert_eager_unchanged(fixture(&[1., 0., 1.], &[5., -7., 3.], [-1., 1.]), &[]);
 }

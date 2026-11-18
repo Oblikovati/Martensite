@@ -2,8 +2,7 @@
 //! Enclose the actual algebraic graph without replacing correspondence by point proximity.
 use super::super::{
     RootBracket, RootIsolationError,
-    certificate_arithmetic::{ExactRatio, RatioInterval, rounding::outward_binary64},
-    error::poll,
+    certificate_arithmetic::{RatioInterval, rounding::outward_binary64},
 };
 use super::{polynomial::ExactCoefficientPolynomial, projection::LinearFiberProjection};
 use num_bigint::BigInt;
@@ -49,10 +48,7 @@ fn exact_graph_interval(
 }
 
 pub(super) fn parameter_interval(root: &RootBracket) -> RatioInterval {
-    RatioInterval {
-        lower: ExactRatio::from_dyadic(root.bounds().0),
-        upper: ExactRatio::from_dyadic(root.bounds().1),
-    }
+    super::super::coefficient_enclosure::parameter_interval(root)
 }
 fn rounded_bounds(value: &RatioInterval) -> Result<[f64; 2], GraphEnvelopeFailure> {
     let lower = outward_binary64(&value.lower).ok_or(GraphEnvelopeFailure::Binary64Overflow)?;
@@ -64,11 +60,6 @@ fn power_enclosure(
     parameter: &RatioInterval,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<RatioInterval, GraphEnvelopeFailure> {
-    let mut value = RatioInterval::point(ExactRatio::from_finite(0.));
-    for coefficient in polynomial.0.iter().rev() {
-        poll(cancelled).map_err(GraphEnvelopeFailure::Root)?;
-        let term = RatioInterval::point(ExactRatio::new(coefficient.clone(), BigInt::from(1)));
-        value = value.multiply(parameter).add(&term);
-    }
-    Ok(value)
+    super::super::coefficient_enclosure::power_enclosure(&polynomial.0, parameter, cancelled)
+        .map_err(GraphEnvelopeFailure::Root)
 }

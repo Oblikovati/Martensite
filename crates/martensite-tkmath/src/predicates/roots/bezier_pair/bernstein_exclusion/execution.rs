@@ -28,7 +28,7 @@ fn admit(query: &CapturedBezierPair, policy: BezierPairExclusionPolicy) -> Check
     if !(1..=2).contains(&pair.version) {
         return Err(BezierPairExclusionFailure::PairPolicyVersion(pair.version));
     }
-    if pair.signs.version != 1 {
+    if !(1..=2).contains(&pair.signs.version) {
         return Err(BezierPairExclusionFailure::SignPolicy(
             BezierPairSignFailure::Version(pair.signs.version),
         ));
