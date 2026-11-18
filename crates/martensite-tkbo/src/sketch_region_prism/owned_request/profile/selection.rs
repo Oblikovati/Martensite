@@ -2,8 +2,8 @@
 //! #544: graph selectors bind one shared census to its actual generated-sign mode.
 use super::admission::{EXCLUSION_GRAPH_PROFILE_VERSION, FILTERED_GRAPH_PROFILE_VERSION};
 use crate::sketch_region_certification::{
-    BoundaryCensus, BoundaryInputs, CensusCause, CensusPolicy, enumerate_carrier_census,
-    enumerate_exclusion_census, enumerate_filtered_exclusion_census, graph_policy_current,
+    BoundaryCensus, BoundaryInputs, CensusCause, CensusPolicy, bind_graph_policy,
+    enumerate_carrier_census, enumerate_exclusion_census, enumerate_filtered_exclusion_census,
 };
 use crate::sketch_region_prism::region_certificate::loop_region::{
     LoopRegionCause, LoopRegionCheck, LoopRegionFailure, LoopRegionStage,
@@ -26,13 +26,8 @@ pub(super) fn census(
     }
 }
 pub(super) fn bind(version: u32, census: &BoundaryCensus) -> LoopRegionCheck<()> {
-    if graph_policy_current(census, version) {
-        return Ok(());
-    }
-    Err(LoopRegionFailure {
+    bind_graph_policy(census, version).map_err(|mismatch| LoopRegionFailure {
         stage: LoopRegionStage::Admission,
-        cause: LoopRegionCause::Obligation {
-            quantity: "owned graph selector and actual census/sign policy binding",
-        },
+        cause: LoopRegionCause::GraphPolicy(mismatch),
     })
 }

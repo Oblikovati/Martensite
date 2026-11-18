@@ -96,22 +96,6 @@ fn selected_signs_current(paired: &PairedCensusEvidence) -> bool {
     );
     matches!(mode, (1 | 2, None, 1) | (2, Some(1), 1 | 2)) && paired.selected_signs == expected
 }
-/// Bind the caller's graph selector before consuming a retained census.
-/// Example: `graph_policy_current(census, 4)` requires filtered version-2 signs.
-pub(crate) fn graph_policy_current(census: &BoundaryCensus, version: u32) -> bool {
-    let Some(paired) = census.paired.as_ref() else {
-        return false;
-    };
-    let expected = match version {
-        2 => (None, 1),
-        3 => (Some(1), 1),
-        4 => (Some(1), 2),
-        _ => return false,
-    };
-    paired.requested.version == 2
-        && (paired.exclusion_version, paired.selected_signs.version) == expected
-        && paired_policy_current(census, paired)
-}
 
 fn domain_binding_current(
     census: &BoundaryCensus,
