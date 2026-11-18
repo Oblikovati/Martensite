@@ -120,15 +120,28 @@ pub(super) fn side(
     let face = native(key, topods::face(lookup(key, bindings)?))?;
     let (surface, location) = native(key, BRepTool::surface_with_location(&face))?;
     let surface: Handle<GeomBezierSurface> = surface.cast();
-    let Some(surface) = surface.get() else {
-        return Err(mismatch(
-            key,
-            "stored Bezier surface class",
-            vec![0],
-            vec![1],
-        ));
-    };
-    let expected = vec![curves[0].poles.len() as u64, 2, 1];
+    let surface = retained_bezier_side(key, &surface)?;
+    side_dimensions(key, surface, curves[0].poles.len(), &location)?;
+    common_side_weights(key, curves)?;
+    side_rows(key, surface, curves)
+}
+
+fn retained_bezier_side(
+    key: BindingKey,
+    surface: &Handle<GeomBezierSurface>,
+) -> Result<&GeomBezierSurface, StorageFailure> {
+    surface
+        .get()
+        .ok_or_else(|| mismatch(key, "stored Bezier surface class", vec![0], vec![1]))
+}
+
+fn side_dimensions(
+    key: BindingKey,
+    surface: &GeomBezierSurface,
+    poles: usize,
+    location: &martensite_tkmath::toploc::Location,
+) -> Result<(), StorageFailure> {
+    let expected = vec![poles as u64, 2, 1];
     let actual = vec![
         surface.nb_u_poles() as u64,
         surface.nb_v_poles() as u64,
@@ -137,6 +150,10 @@ pub(super) fn side(
     if actual != expected {
         return Err(mismatch(key, "radial side dimensions", actual, expected));
     }
+    Ok(())
+}
+
+fn common_side_weights(key: BindingKey, curves: [&OwnedCurve; 2]) -> Result<(), StorageFailure> {
     if curves[0].weights != curves[1].weights {
         return Err(mismatch(
             key,
@@ -145,7 +162,7 @@ pub(super) fn side(
             curves[0].weights.iter().map(|w| w.to_bits()).collect(),
         ));
     }
-    side_rows(key, surface, curves)
+    Ok(())
 }
 
 fn side_rows(

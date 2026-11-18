@@ -123,30 +123,42 @@ pub(super) fn pcurve(
     let edge = native(edge_key, topods::edge(lookup(edge_key, bindings)?))?;
     let face = native(face_key, topods::face(lookup(face_key, bindings)?))?;
     let captured = native(edge_key, BRepTool::curve_on_face(&edge, &face))?;
-    let actual = [
-        captured.first.to_bits(),
-        captured.last.to_bits(),
-        u64::from(captured.is_stored),
-    ];
+    pcurve_domain(
+        edge_key,
+        [captured.first, captured.last],
+        captured.is_stored,
+    )?;
+    let curve: Handle<Geom2dBezierCurve> = captured.pcurve.cast();
+    let curve = retained_bezier_pcurve(edge_key, &curve)?;
+    coefficients(edge_key, curve, expected)
+}
+
+fn pcurve_domain(key: BindingKey, range: [f64; 2], stored: bool) -> Result<(), StorageFailure> {
+    let actual = [range[0].to_bits(), range[1].to_bits(), u64::from(stored)];
     let domain = [0f64.to_bits(), 1f64.to_bits(), 1];
     if actual != domain {
         return Err(mismatch(
-            edge_key,
+            key,
             "retained pcurve range/storage",
             actual.to_vec(),
             domain.to_vec(),
         ));
     }
-    let curve: Handle<Geom2dBezierCurve> = captured.pcurve.cast();
-    let curve = curve.get().ok_or_else(|| {
+    Ok(())
+}
+
+fn retained_bezier_pcurve(
+    key: BindingKey,
+    curve: &Handle<Geom2dBezierCurve>,
+) -> Result<&Geom2dBezierCurve, StorageFailure> {
+    curve.get().ok_or_else(|| {
         mismatch(
-            edge_key,
+            key,
             "retained polynomial Bezier pcurve class",
             vec![0],
             vec![1],
         )
-    })?;
-    coefficients(edge_key, curve, expected)
+    })
 }
 
 fn coefficients(
