@@ -33,7 +33,8 @@ impl BinShapeSet {
             );
             return Ok(());
         }
-        self.locations.read(stream)?;
+        self.locations
+            .read_with_policy(stream, self.location_policy)?;
         let scope = ProgressScope::with_literal(progress, "Reading", 2.0, false);
         self.read_geometry(stream, &scope.next(1.0))?;
         if !scope.more() {

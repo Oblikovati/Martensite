@@ -2,7 +2,10 @@
 //! Bound authored-profile discrepancy using retained coefficients, without an atan evaluator.
 mod admission;
 mod algebra;
+mod chart_planning;
+mod chart_types;
 mod error;
+mod lift;
 mod planning;
 #[cfg(test)]
 mod planning_oracle_tests;
@@ -11,16 +14,23 @@ mod proof;
 mod source;
 #[cfg(test)]
 mod tests;
-mod trigonometric;
+pub(in crate::predicates::roots::metric_bounds) mod trigonometric;
+mod trim;
 mod types;
 use crate::predicates::roots::certificate_arithmetic::{
     bernstein_bounds as polynomial,
     bounded_dyadic::{Arithmetic, ArithmeticPolicy, Interval},
 };
+pub use chart_planning::plan_cylindrical_charts;
+pub use chart_types::{CylindricalChartPlan, CylindricalFitChart};
 use error::Checked;
 pub use error::{CylindricalProfileError, CylindricalProfileFailure};
+pub use lift::{CertifiedCylindricalLift, CylindricalLiftError, certify_cylindrical_lift};
 pub use planning::plan_cylindrical_fit;
 pub use planning_types::{CylindricalFitPlan, CylindricalFitQuery};
+pub use trim::{
+    CertifiedCylindricalTrim, CylindricalTrimError, CylindricalTrimQuery, certify_cylindrical_trim,
+};
 pub use types::*;
 
 /// Certify developed position error and local-parameter derivative discrepancy.

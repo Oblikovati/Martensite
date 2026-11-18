@@ -3,6 +3,8 @@
 //! Polynomial and equal-weight curves stay exact; other curves are enclosed by exact
 //! Taylor models with certified Bernstein remainders. No quadrature estimate is used.
 mod curve;
+mod cylindrical_flux;
+pub use cylindrical_flux::*;
 mod error;
 mod face;
 mod integer_polynomial;

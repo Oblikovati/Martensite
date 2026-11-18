@@ -1,0 +1,18 @@
+{
+  "operation_id": "additive.rational_fixed_arity_sum.profile.compute",
+  "scope": "Exact sums for two binary64 rounding controls; not a proof of the general aggregation algorithm",
+  "cases": [
+    {
+      "name": "one_plus_half_ulp",
+      "input": {"values": [{"num": "1", "den": "1"}, {"num": "1", "den": "9007199254740992"}], "arity": 2},
+      "exact_sum": {"num": "9007199254740993", "den": "9007199254740992"},
+      "conservative_binary64_upper_bits": "0x3ff0000000000001"
+    },
+    {
+      "name": "binary64_tenth_plus_binary64_fifth",
+      "input": {"values": [{"num": "3602879701896397", "den": "36028797018963968"}, {"num": "3602879701896397", "den": "18014398509481984"}], "arity": 2},
+      "exact_sum": {"num": "10808639105689191", "den": "36028797018963968"},
+      "conservative_binary64_upper_bits": "0x3fd3333333333335"
+    }
+  ]
+}

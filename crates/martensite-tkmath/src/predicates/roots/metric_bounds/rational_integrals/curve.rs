@@ -34,14 +34,53 @@ pub(super) fn curve_integral(
         return Ok(exact_curve(exact));
     }
     let squared = product(&weight, &weight, cancelled)?;
+    quotient_integral(numerator, squared, options, width_share, cancelled)
+}
+
+/// Integrate one half of a positive-denominator rational quotient on the full unit interval.
+pub(super) fn quotient_integral(
+    numerator: Vec<BigInt>,
+    denominator: Vec<BigInt>,
+    options: RationalIntegralOptions,
+    width_share: &ExactRatio,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<CurveIntegral, RationalIntegralFailure> {
+    let denominator = nonempty_denominator(&denominator)?;
+    if denominator.len() == 1 {
+        return constant_quotient(&numerator, &denominator[0], cancelled);
+    }
     let bisection = Bisection {
         numerator,
-        denominator: squared,
+        denominator,
         width_share,
         limit: options.max_subintervals,
     };
     bisection.integrate(cancelled)
 }
+
+fn nonempty_denominator(denominator: &[BigInt]) -> Result<Vec<BigInt>, RationalIntegralFailure> {
+    if denominator.is_empty() {
+        return Err(denominator_failure());
+    }
+    Ok(trimmed(denominator))
+}
+
+fn constant_quotient(
+    numerator: &[BigInt],
+    denominator: &BigInt,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<CurveIntegral, RationalIntegralFailure> {
+    if denominator.sign() != Sign::Plus {
+        return Err(denominator_failure());
+    }
+    let exact = integrate_unit(numerator, BigInt::from(2) * denominator, cancelled)?;
+    Ok(exact_curve(exact))
+}
+
+fn denominator_failure() -> RationalIntegralFailure {
+    RationalIntegralFailure::DenominatorSign { start: 0., end: 1. }
+}
+
 fn exact_curve(value: ExactRatio) -> CurveIntegral {
     CurveIntegral {
         bounds: ContributionBounds {
@@ -100,8 +139,7 @@ impl Bisection<'_> {
                 continue;
             }
             let [left, right] = span.halves();
-            pending.push(right);
-            pending.push(left);
+            pending.extend([right, left]);
         }
         Ok(total)
     }

@@ -128,6 +128,79 @@ impl CertifiedCylindricalProfile {
     pub fn matches_source(&self, query: CylindricalProfileQuery<'_>) -> bool {
         super::admission::admit(&query).is_ok() && self.source_bits == source_bits(query)
     }
+    /// Compare retained curve representation, physical radius and chart origin across source charts.
+    /// Authored controls and support-radius units may differ; no topology equivalence is implied.
+    /// Example: `assert!(developed.matches_reference_curve(&angular));`.
+    pub fn matches_reference_curve(&self, other: &Self) -> bool {
+        let a = &self.source_bits;
+        let b = &other.source_bits;
+        let a_start = 7 + 2 * a[5] as usize;
+        let b_start = 7 + 2 * b[5] as usize;
+        [a[3], a[4], a[6]] == [b[3], b[4], b[6]] && a[a_start..] == b[b_start..]
+    }
+    pub(super) fn authored_angle_start(
+        &self,
+        arithmetic: &mut super::Arithmetic<'_>,
+    ) -> super::error::Checked<super::Interval> {
+        let [angles, _] = self.authored_chart(arithmetic)?;
+        angles
+            .into_iter()
+            .next()
+            .ok_or(CylindricalProfileFailure::Count {
+                role: "authored angle controls",
+                actual: 0,
+            })
+    }
+    fn authored_chart(
+        &self,
+        arithmetic: &mut super::Arithmetic<'_>,
+    ) -> super::error::Checked<[Vec<super::Interval>; 2]> {
+        let bits = &self.source_bits;
+        let interval = CylindricalProfileInterval::new(bits[0], bits[1] as u8)?;
+        super::source::developed(
+            &self.authored_controls(),
+            interval,
+            f64::from_bits(bits[2]),
+            f64::from_bits(bits[4]),
+            arithmetic,
+        )
+    }
+    fn authored_controls(&self) -> Vec<[f64; 2]> {
+        let count = self.source_bits[5] as usize;
+        self.source_bits[7..7 + 2 * count]
+            .as_chunks::<2>()
+            .0
+            .iter()
+            .map(|p| [f64::from_bits(p[0]), f64::from_bits(p[1])])
+            .collect()
+    }
+    pub(in crate::predicates::roots::metric_bounds) fn matches_authored(
+        &self,
+        authored: &[[f64; 2]],
+        interval: CylindricalProfileInterval,
+        radius: f64,
+        origin: f64,
+    ) -> bool {
+        // Cone composition reuses O2 without recapturing mutable native objects.
+        let bits = &self.source_bits;
+        let actual = [bits[0], bits[1], bits[2], bits[4], bits[5]];
+        let expected = [
+            interval.index(),
+            interval.level().into(),
+            radius.to_bits(),
+            origin.to_bits(),
+            authored.len() as u64,
+        ];
+        actual == expected
+            && bits[7..]
+                .iter()
+                .take(authored.len() * 2)
+                .copied()
+                .eq(authored.iter().flatten().map(|v| v.to_bits()))
+    }
+    pub(in crate::predicates::roots::metric_bounds) fn same_source(&self, other: &Self) -> bool {
+        self.source_bits == other.source_bits
+    }
     pub(super) fn assemble(
         query: CylindricalProfileQuery<'_>,
         bounds: [f64; 6],

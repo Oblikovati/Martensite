@@ -1,0 +1,8 @@
+# Exact integer frame fixture, checked with Jacobian matrix.multiply.compute and matrix.determinant.compute.
+# axis a=(1,2,3); requested radial r=(3,-1,2); k=a cross r; u=k cross a.
+quantity	x	y	z	squared_norm
+axis	1	2	3	14
+tangent_numerator	7	7	-7	147
+radial_numerator	35	-28	7	2058
+# Matrix columns are u,k,a. Gram diagonal=(2058,147,14), all off-diagonal entries=0; determinant=2058.
+# Ideal unit columns are u/sqrt(2058), k/sqrt(147), a/sqrt(14); their determinant is exactly +1.

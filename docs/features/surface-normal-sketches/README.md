@@ -29,6 +29,12 @@ end-to-end application acceptance case and the
 [owned text capture contract](TEXT-CAPTURE.md). The primitive operations below are
 foundations for that workflow.
 
+Solved-profile cylinder results report centered patch flux of `(x-t)/3` and
+expose the decoded field origin through `boundary_flux_origin()`. The
+[field-origin contract](../../architecture/decisions/cylindrical-flux-field-origin.md)
+explains its comparison with the ideal normal solid and its separate native
+volume estimate.
+
 ## Delivery tasks
 
 | Task | Scope | Depends on |
@@ -141,7 +147,56 @@ from retained curve coefficients, including linear depth interpolation.
 The [storage certificate notes](STORAGE-CERTIFICATES.md) describe its limits.
 Complete wrapped-operation qualification remains open.
 
+The [rational implementation record](RATIONAL-IMPLEMENTATION.md) records the
+current evidence and remaining gates. The [P4 API draft](PUBLIC-API.md)
+now exposes solved-profile cylindrical extrusion and separate spatial and
+measure reports. Its [cap-realization checks](CAP-REALIZATION.md) bind decoded
+trims, angular lifts, homotopy and physical cap bounds. Independent review and
+integration qualification remain open.
+
 `certify_cylindrical_profile` checks authored position and derivative error, and
 `plan_cylindrical_fit` bounds the required Hermite subdivision before construction.
 See [the profile certificate notes](PROFILE-CERTIFICATES.md). These math helpers
 are foundations for the general operation; this increment adds no sketch entry point.
+
+The family path retains [authored history](AUTHORED-HISTORY.md),
+checks [cancellation and isolation](FAMILY-CANCELLATION.md), compares
+[process and concurrent replay](FAMILY-REPLAY.md), and has an explicit
+[family error-budget gate](PUBLICATION-BUDGET.md). The composed constructor
+returns its frozen family and successful budget receipt together. Sanitizer
+qualification and the remaining implementation and application gates are open.
+
+The [directed-profile input adapter](PROFILE-INPUT.md) now reads existing
+solved-profile selections and retains original curve-direction and parameter
+correspondence through subdivision. Its mixed-profile control reaches the
+budgeted family constructor. The result API is committed locally on `feature/wrapped-normal-api`;
+integration and publication qualification remain open.
+
+The [planar work-policy design](PLANAR-WORK-POLICY.md) records the additive
+request/receipt seam needed after #449; existing defaults remain unchanged.
+
+The [P5 workload census](P5-WORKLOAD.md) pins the existing font asset and the
+239-piece supplied-text case. Its first full modelling witness passed with an
+explicit finite work request; performance qualification and oblique frames
+are tracked by the current qualification records.
+
+The [oblique-frame operation](OBLIQUE-FRAMES.md) now constructs qualified
+physical placements with separate world-space bounds. Its
+[qualification record](P5-OBLIQUE-QUALIFICATION.md) covers a mixed profile with
+a hole and disconnected material, retained-tolerance checks, native validation,
+replay, isolation and canonical-path measurements. Full-text requalification,
+broader application operations, authored conical profiles and P6 cleanup remain
+open.
+
+The [revision-bound face attachment](FACE-ATTACHMENT.md) owns a selected cylindrical
+face and support snapshot, follows explicit native history, and refuses ambiguous
+reattachment. Wrapped boss/pocket and hit-mapping integration under #420 remain open.
+
+The [native boss/pocket controls](BODY-BOOLEAN-QUALIFICATION.md) exercise actual
+Fuse/Cut operations, seam-crossing and oblique placements, input preservation,
+Boolean correspondence and process/concurrent replay. The unified body-feature
+operation and its whole-profile trim contract remain open under #420.
+
+The [rotation-aware frame proof](CHART-ROTATION-PROOF.md) certifies explicit seam
+angles using the existing bounded trigonometric engine and shared spatial
+allocation. Connecting it to nonzero-chart modelling remains open.

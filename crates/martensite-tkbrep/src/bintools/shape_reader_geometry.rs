@@ -2,12 +2,12 @@
 //! read before (or read now at its position), the object itself after its type, or a
 //! null handle for any other type (the empty markers included).
 use super::SurfaceFrameReadPolicy;
-use super::curve_read::read_curve;
+use super::curve_read::read_curve_with_frame_policy;
 use super::curve2d_read::read_curve2d;
 use super::istream::BinIStream;
 use super::object_type::ObjectType;
 use super::shape_reader::{BinShapeReader, ObjectMap};
-use super::surface_read::read_surface_with_frame_policy;
+use super::surface_read::read_surface_with_geometry_policies;
 use martensite_tkernel::ncollection::{HArray1OfReal, Vec3};
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkg2d::geom2d::Geom2dCurve;
@@ -19,7 +19,11 @@ use martensite_tkmath::poly::{Polygon3D, PolygonOnTriangulation, Triangle, Trian
 struct ObjectKind<T: ?Sized + RuntimeTyped> {
     kind: ObjectType,
     map: fn(&mut BinShapeReader) -> &mut ObjectMap<T>,
-    body: fn(&mut BinIStream<'_>, SurfaceFrameReadPolicy) -> Result<Handle<T>, Failure>,
+    body: fn(
+        &mut BinIStream<'_>,
+        SurfaceFrameReadPolicy,
+        super::CurveFrameReadPolicy,
+    ) -> Result<Handle<T>, Failure>,
 }
 
 impl BinShapeReader {
@@ -46,7 +50,7 @@ impl BinShapeReader {
         if kind != object.kind {
             return Ok(Handle::default());
         }
-        let result = (object.body)(input, self.frame_policy)?;
+        let result = (object.body)(input, self.frame_policy, self.curve_policy)?;
         (object.map)(self).bind(position, result.clone());
         Ok(result)
     }
@@ -59,8 +63,8 @@ impl BinShapeReader {
         let object = ObjectKind {
             kind: ObjectType::CURVE,
             map: |reader| &mut reader.curve_positions,
-            body: |input, _policy| {
-                let curve = read_curve(input.stream())?;
+            body: |input, _policy, curve_policy| {
+                let curve = read_curve_with_frame_policy(input.stream(), curve_policy)?;
                 input.update_position();
                 Ok(curve)
             },
@@ -76,7 +80,7 @@ impl BinShapeReader {
         let object = ObjectKind {
             kind: ObjectType::CURVE2D,
             map: |reader| &mut reader.curve2d_positions,
-            body: |input, _policy| {
+            body: |input, _policy, _curve| {
                 let curve = read_curve2d(input.stream())?;
                 input.update_position();
                 Ok(curve)
@@ -93,8 +97,8 @@ impl BinShapeReader {
         let object = ObjectKind {
             kind: ObjectType::SURFACE,
             map: |reader| &mut reader.surface_positions,
-            body: |input, policy| {
-                let surface = read_surface_with_frame_policy(input.stream(), policy)?;
+            body: |input, policy, curve| {
+                let surface = read_surface_with_geometry_policies(input.stream(), policy, curve)?;
                 input.update_position();
                 Ok(surface)
             },
@@ -110,7 +114,7 @@ impl BinShapeReader {
         let object = ObjectKind {
             kind: ObjectType::POLYGON3D,
             map: |reader| &mut reader.polygon3d_positions,
-            body: |input, _policy| polygon3d_body(input).map(Handle::new),
+            body: |input, _policy, _curve| polygon3d_body(input).map(Handle::new),
         };
         self.read_object(input, &object)
     }
@@ -123,7 +127,7 @@ impl BinShapeReader {
         let object = ObjectKind {
             kind: ObjectType::POLYGON_ON_TRIANGULATION,
             map: |reader| &mut reader.polygon_positions,
-            body: |input, _policy| polygon_on_triangulation_body(input).map(Handle::new),
+            body: |input, _policy, _curve| polygon_on_triangulation_body(input).map(Handle::new),
         };
         self.read_object(input, &object)
     }
@@ -136,7 +140,7 @@ impl BinShapeReader {
         let object = ObjectKind {
             kind: ObjectType::TRIANGULATION,
             map: |reader| &mut reader.triangulation_positions,
-            body: |input, _policy| triangulation_body(input).map(Handle::new),
+            body: |input, _policy, _curve| triangulation_body(input).map(Handle::new),
         };
         self.read_object(input, &object)
     }

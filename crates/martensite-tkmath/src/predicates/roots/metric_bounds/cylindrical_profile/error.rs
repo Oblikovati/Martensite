@@ -65,6 +65,13 @@ pub enum CylindricalProfileFailure {
         /// Requested positive reference radius.
         radius: f64,
     },
+    /// The chart variation bound needs more subdivisions than the geometric budget.
+    FitChartLevel {
+        /// Original additional subdivision maximum.
+        maximum: u8,
+        /// Conservative angular variation remaining at that level.
+        angular_variation_upper: f64,
+    },
     /// Source and additional subdivisions exceed the supported combined level (#524).
     FitIntervalLevel {
         /// Existing dyadic level of the authored source interval.
@@ -121,6 +128,8 @@ const PROFILE_INTERVAL: &str = "level <= 63 and index < 2^level";
 const PROFILE_WEIGHTS: &str = "one retained weight per pole";
 const PROFILE_TRIGONOMETRIC_RANGE: &str = "reduced interval within [-7, 7]";
 const PROFILE_DIRECTION: &str = "position residual < positive stored radius";
+const PROFILE_CHART_LEVEL: &str =
+    "angular variation bound <= 1 radian within the maximum subdivision level";
 const PROFILE_FIT_LEVEL: &str =
     "ideal developed bound <= requested/2 within the maximum subdivision level";
 const PROFILE_FIT_INTERVAL: &str = "source_level + additional_level <= 63";
@@ -139,6 +148,7 @@ impl CylindricalProfileFailure {
             Self::Arithmetic(cause) => expected_arithmetic(cause),
             Self::TrigonometricRange { .. } => PROFILE_TRIGONOMETRIC_RANGE,
             Self::DirectionUnresolved { .. } => PROFILE_DIRECTION,
+            Self::FitChartLevel { .. } => PROFILE_CHART_LEVEL,
             Self::FitIntervalLevel { .. } => PROFILE_FIT_INTERVAL,
             Self::FitLevel { .. } => PROFILE_FIT_LEVEL,
             Self::FitPolicy { .. } => PROFILE_FIT_POLICY,

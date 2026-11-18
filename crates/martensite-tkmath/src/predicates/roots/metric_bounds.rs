@@ -18,14 +18,52 @@ pub use mapped::{
 };
 pub use parameter::MetricParameterMap;
 mod coefficients;
+mod cylindrical_clearance;
+pub use cylindrical_clearance::{
+    CertifiedCylindricalClearance, CertifiedCylindricalImage,
+    CertifiedCylindricalPeriodicClearance, CertifiedCylindricalPeriodicSlab,
+    CylindricalClearanceDomain, CylindricalClearanceError, CylindricalClearanceFailure,
+    CylindricalClearanceOptions, CylindricalClearanceQuery, CylindricalClearanceScope,
+    CylindricalClearanceSource, CylindricalPeriodicTranslation, certify_cylindrical_clearance,
+};
+pub use cylindrical_clearance::{
+    CertifiedCylindricalProbe, CertifiedCylindricalProbes, CylindricalPeriodicProbe,
+    CylindricalProbeError, CylindricalProbeFailure, CylindricalProbeOptions, CylindricalProbeSense,
+};
+mod cylindrical_measure;
+pub use cylindrical_measure::{
+    CertifiedCylindricalMeasureComparison, CylindricalMeasureComparisonError,
+    CylindricalMeasureComparisonFailure, CylindricalMeasureComparisonQuery,
+    compare_cylindrical_measures,
+};
+pub use cylindrical_measure::{
+    CertifiedCylindricalNormalMeasure, CylindricalMeasureError, CylindricalMeasureEvidence,
+    CylindricalMeasureFailure, CylindricalMeasureLimit, CylindricalMeasureOptions,
+    CylindricalMeasureQuery, certify_cylindrical_normal_measure,
+};
+mod cylindrical_cone;
+/// Original cylindrical profile source shared by local and collection certificates.
+pub use cylindrical_cone::CylindricalConeSource as CylindricalProfileSource;
+pub use cylindrical_cone::{
+    CertifiedCylindricalCone, CylindricalConeBehavior, CylindricalConeError,
+    CylindricalConeFailure, CylindricalConeOptions, CylindricalConeQuery, CylindricalConeSource,
+    certify_cylindrical_cone,
+};
+mod cylindrical_depths;
+pub use cylindrical_depths::{
+    CertifiedCylindricalDepths, CylindricalDepthFailure, certify_cylindrical_depths,
+};
 mod cylindrical_profile;
 mod cylindrical_storage;
 pub use super::certificate_arithmetic::bounded_failure::BoundedArithmeticFailure;
 pub use cylindrical_profile::{
-    CertifiedCylindricalProfile, CylindricalFitPlan, CylindricalFitQuery,
-    CylindricalProfileBehavior, CylindricalProfileError, CylindricalProfileFailure,
-    CylindricalProfileInterval, CylindricalProfileOptions, CylindricalProfileQuery,
-    certify_cylindrical_profile, plan_cylindrical_fit,
+    CertifiedCylindricalLift, CertifiedCylindricalProfile, CertifiedCylindricalTrim,
+    CylindricalChartPlan, CylindricalFitChart, CylindricalFitPlan, CylindricalFitQuery,
+    CylindricalLiftError, CylindricalProfileBehavior, CylindricalProfileError,
+    CylindricalProfileFailure, CylindricalProfileInterval, CylindricalProfileOptions,
+    CylindricalProfileQuery, CylindricalTrimError, CylindricalTrimQuery, certify_cylindrical_lift,
+    certify_cylindrical_profile, certify_cylindrical_trim, plan_cylindrical_charts,
+    plan_cylindrical_fit,
 };
 mod inequality;
 mod proof;
@@ -134,8 +172,10 @@ pub use polynomial_integrals::{
 
 mod rational_integrals;
 pub use rational_integrals::{
-    CertifiedRationalMeasure, RATIONAL_TAYLOR_ORDER, RationalIntegralError,
-    RationalIntegralEvidence, RationalIntegralFailure, RationalIntegralOptions,
+    CertifiedCylindricalFlux, CertifiedRationalMeasure, CylindricalFluxError,
+    CylindricalFluxFailure, CylindricalFluxOptions, CylindricalFluxQuery, CylindricalFluxSpan,
+    CylindricalFluxWork, RATIONAL_TAYLOR_ORDER, RationalIntegralError, RationalIntegralEvidence,
+    RationalIntegralFailure, RationalIntegralOptions, certify_cylindrical_boundary_flux,
     certify_rational_boundary_integral, certify_rational_face_area,
     certify_rational_sweep_integral,
 };
@@ -162,4 +202,12 @@ mod enclosure_sum;
 pub use enclosure_sum::{
     CertifiedEnclosureSum, EnclosureSumCause, EnclosureSumError, EnclosureSumEvidence,
     EnclosureSumOperation, EnclosureSumOptions, sum_nonnegative_enclosures,
+};
+
+mod frame_transport;
+pub use frame_transport::{
+    CertifiedFrameSpatialBudget, CertifiedFrameTransport, CertifiedRotatedFrameSpatialBudget,
+    CertifiedRotatedFrameTransport, FrameRotationError, FrameRotationFailure, FrameRotationReport,
+    FrameSpatialInput, FrameTransportError, FrameTransportField, FrameTransportInput,
+    FrameTransportQuantity, certify_frame_transport, certify_frame_transport_at_angle,
 };

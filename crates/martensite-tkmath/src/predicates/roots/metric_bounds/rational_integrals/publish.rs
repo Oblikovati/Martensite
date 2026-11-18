@@ -25,7 +25,9 @@ pub(super) fn admit_boundary(
     }
     Ok(())
 }
-fn admit_options(options: RationalIntegralOptions) -> Result<(), RationalIntegralFailure> {
+pub(super) fn admit_options(
+    options: RationalIntegralOptions,
+) -> Result<(), RationalIntegralFailure> {
     if options.behavior_version != 1
         || options.max_degree > 16
         || options.max_curves == 0
@@ -99,35 +101,87 @@ impl BoundsSum {
         }
     }
 }
+#[derive(Clone, Debug)]
+pub(super) struct RoundedScalar {
+    pub enclosure: [f64; 2],
+    pub representative: f64,
+    pub absolute_error_bound: f64,
+    pub evidence: RationalIntegralEvidence,
+    pub subintervals: u64,
+}
+
 pub(super) fn rounded_measure(
     sum: BoundsSum,
     options: RationalIntegralOptions,
     operation: PolynomialIntegralOperation,
 ) -> Result<CertifiedRationalMeasure, RationalIntegralFailure> {
+    let scalar = rounded_scalar(sum, options)?;
+    Ok(CertifiedRationalMeasure {
+        enclosure: scalar.enclosure,
+        representative: scalar.representative,
+        absolute_error_bound: scalar.absolute_error_bound,
+        options,
+        operation,
+        evidence: scalar.evidence,
+        subintervals: scalar.subintervals,
+    })
+}
+
+pub(super) fn rounded_scalar(
+    sum: BoundsSum,
+    options: RationalIntegralOptions,
+) -> Result<RoundedScalar, RationalIntegralFailure> {
     let ContributionBounds { lower, upper } = &sum.bounds;
     let middle = lower.add(upper).multiply(&ExactRatio::from_finite(0.5));
     let representative = finite_enclosure(&middle)?[0];
+    let absolute_error_bound =
+        checked_error(&sum.bounds, representative, options.absolute_error_limit)?;
+    scalar_report(
+        &sum.bounds,
+        representative,
+        absolute_error_bound,
+        sum.subintervals,
+    )
+}
+
+fn checked_error(
+    bounds: &ContributionBounds,
+    representative: f64,
+    limit: f64,
+) -> Result<f64, RationalIntegralFailure> {
+    let ContributionBounds { lower, upper } = bounds;
     let exact_representative = ExactRatio::from_finite(representative);
     let error = upper
         .subtract(&exact_representative)
         .max(exact_representative.subtract(lower));
     let absolute_error_bound = finite_enclosure(&error)?[1];
-    if absolute_error_bound > options.absolute_error_limit {
+    if absolute_error_bound > limit {
         return Err(RationalIntegralFailure::ErrorLimit {
-            requested: options.absolute_error_limit,
+            requested: limit,
             achieved: absolute_error_bound,
         });
     }
-    Ok(CertifiedRationalMeasure {
-        enclosure: [finite_enclosure(lower)?[0], finite_enclosure(upper)?[1]],
+    Ok(absolute_error_bound)
+}
+
+fn scalar_report(
+    bounds: &ContributionBounds,
+    representative: f64,
+    absolute_error_bound: f64,
+    subintervals: u64,
+) -> Result<RoundedScalar, RationalIntegralFailure> {
+    Ok(RoundedScalar {
+        enclosure: [
+            finite_enclosure(&bounds.lower)?[0],
+            finite_enclosure(&bounds.upper)?[1],
+        ],
         representative,
         absolute_error_bound,
-        options,
-        operation,
-        evidence: evidence(sum.subintervals),
-        subintervals: sum.subintervals,
+        evidence: evidence(subintervals),
+        subintervals,
     })
 }
+
 fn evidence(subintervals: u64) -> RationalIntegralEvidence {
     if subintervals == 0 {
         return RationalIntegralEvidence::ExactRational;

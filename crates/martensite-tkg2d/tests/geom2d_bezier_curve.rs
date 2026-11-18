@@ -37,3 +37,6 @@ fn weights3(w1: f64, w2: f64, w3: f64) -> Array1<'static, f64> {
 
 include!("geom2d_bezier_curve/suites_0.rs");
 include!("geom2d_bezier_curve/suites_1.rs");
+
+#[path = "geom2d_bezier_curve/coefficient_snapshot.rs"]
+mod coefficient_snapshot;

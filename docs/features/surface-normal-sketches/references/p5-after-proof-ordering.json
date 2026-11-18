@@ -1,0 +1,33 @@
+{
+  "source_parent": "1db0f3fe",
+  "before_source": "2d5238f6",
+  "before_binary_sha256": "761fe244985d4ec022c539172a156e39ae67a659f6ede340ede6676673de88ce",
+  "current_binary_sha256": "78d011414429e2f0bbc894e57ce4b8092f4739d20699071bcce03835329f0918",
+  "before_binary_size_bytes": 129723048,
+  "current_binary_size_bytes": 130117288,
+  "accepted": {
+    "wall_s": 322.12,
+    "user_s": 321.92,
+    "system_s": 0.09,
+    "peak_rss_kib": 195704,
+    "log_sha256": "c735ba42634d9c0260ed909b72a1b13911016a5033f5e10c299f87082dd4fbe2"
+  },
+  "default_refusal": {
+    "wall_s": 213.7,
+    "user_s": 213.59,
+    "system_s": 0.07,
+    "peak_rss_kib": 192952,
+    "log_sha256": "3731ad89e6d7270b37a38ce44e3cfd992cd6c6d875b32129867c52fceed4151f"
+  },
+  "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)",
+  "profile": {
+    "build_jobs": 2,
+    "incremental": false,
+    "dev_debug": 0,
+    "test_debug": 0,
+    "dev_strip": "debuginfo",
+    "test_strip": "debuginfo",
+    "test_threads": 1
+  },
+  "interpretation": "One runtime-only trial per current case; prior accepted trial324.77s and193840KiB is a historical pilot. No resolved latency regression; strict peak-memory parity not established."
+}

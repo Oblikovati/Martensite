@@ -1,0 +1,8 @@
+{
+  "equal": true,
+  "before_bytes": 57214,
+  "after_bytes": 57214,
+  "before_sha256": "48536b3ee2f456100fb1a46294d12270c3e94bb1b3590859c559007a8aed1564",
+  "after_sha256": "48536b3ee2f456100fb1a46294d12270c3e94bb1b3590859c559007a8aed1564",
+  "scope": "canonical consumer full encoded graph, authored history, reports, budget, probes, material relations/locations/work across pre/post structural binaries"
+}

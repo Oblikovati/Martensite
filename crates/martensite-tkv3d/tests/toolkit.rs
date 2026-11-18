@@ -10,3 +10,6 @@ mod animation_getter_retention;
 
 #[path = "support/font_availability_disposition.rs"]
 mod font_availability_disposition;
+
+#[path = "wrapped_text_regions.rs"]
+mod wrapped_text_regions;

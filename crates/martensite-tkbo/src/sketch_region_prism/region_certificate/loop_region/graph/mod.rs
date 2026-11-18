@@ -44,18 +44,32 @@ pub(crate) fn inspect_plane_graph(
     poll(&mut cancelled, LoopRegionStage::Nesting)?;
     let components = components::nesting(request, &binding, &graph, &faces, &mut cancelled)?;
     poll(&mut cancelled, LoopRegionStage::Regions)?;
-    let mut certificate = GraphRegionCertificate {
-        faces: Vec::with_capacity(faces.bounded.len()),
-        components,
-        contacts: joins.len(),
-        carrier_pairs,
-        pair_domains,
-    };
+    let counts = (joins.len(), carrier_pairs, pair_domains);
+    let mut certificate = graph_certificate(request, &faces, components, counts);
     for (index, face) in faces.bounded.iter().enumerate() {
         let proof = face_proof(request, &binding, &certificate, index, face, &mut cancelled)?;
         certificate.faces.push(proof);
     }
     Ok(certificate)
+}
+
+fn graph_certificate(
+    request: &GraphRegionRequest<'_, '_>,
+    faces: &components::Faces,
+    components: Vec<GraphComponentProof>,
+    counts: (usize, usize, usize),
+) -> GraphRegionCertificate {
+    let (contacts, carrier_pairs, pair_domains) = counts;
+    GraphRegionCertificate {
+        faces: Vec::with_capacity(faces.bounded.len()),
+        components,
+        contacts,
+        carrier_pairs,
+        pair_domains,
+        work: crate::sketch_region_certification::CensusWorkReceipt::capture(
+            &request.bridge.census,
+        ),
+    }
 }
 
 /// Steps 2-3: rotation, orbits, components, certified orbit signs and the face split.

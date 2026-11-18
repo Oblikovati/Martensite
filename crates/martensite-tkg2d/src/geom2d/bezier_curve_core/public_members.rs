@@ -9,6 +9,14 @@
 macro_rules! bezier_curve_members {
     ($point:ty) => {
         $crate::spline_pole_members!($point);
+        /// Copy one coherent stored coefficient state without evaluating or changing its override.
+        /// Example: `let (poles, weights) = curve.poles_weights_snapshot();`.
+        pub fn poles_weights_snapshot(
+            &self,
+        ) -> (Array1<'static, $point>, Option<Array1<'static, f64>>) {
+            let state = self.state.read();
+            (state.poles.clone(), state.weights_view().cloned())
+        }
         /// Reuses protected defined `init`, bypassing constructor-only validation;
         /// `curve.init(&poles, None)?` resets the evaluation representation on success.
         pub fn init(

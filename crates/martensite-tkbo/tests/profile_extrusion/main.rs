@@ -7,3 +7,4 @@ mod fixtures;
 mod graph;
 mod pair_matrix;
 mod regions;
+mod work;

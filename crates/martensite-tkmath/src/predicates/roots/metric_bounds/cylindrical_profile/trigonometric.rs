@@ -4,7 +4,7 @@ use super::{algebra::*, *};
 use crate::predicates::roots::DyadicBound;
 use num_bigint::BigInt;
 
-pub(super) fn enclose(
+pub(in crate::predicates::roots::metric_bounds) fn enclose(
     phase: &[Interval],
     arithmetic: &mut Arithmetic<'_>,
 ) -> Checked<[Vec<Interval>; 2]> {
@@ -13,6 +13,14 @@ pub(super) fn enclose(
         let values = scalar(&phase[0], arithmetic)?;
         return Ok([vec![values[0].clone()], vec![values[1].clone()]]);
     }
+    varying_phase(phase, arithmetic)
+}
+
+#[inline(always)]
+fn varying_phase(
+    phase: &[Interval],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<[Vec<Interval>; 2]> {
     let range = hull(phase);
     let grid: BigInt = (&range.lower + &range.upper) / 2;
     let center = Interval {
@@ -72,49 +80,8 @@ fn coefficient(
     Ok(arithmetic.fraction(&value, 1, factorial)?)
 }
 
-fn atan_inverse(
-    divisor: u64,
-    bits_per_power: u16,
-    arithmetic: &mut Arithmetic<'_>,
-) -> Checked<Interval> {
-    let terms = arithmetic.fractional_bits().div_ceil(bits_per_power);
-    let one = arithmetic.scalar(1.)?;
-    let mut power = arithmetic.fraction(&one, 1, divisor)?;
-    let mut result = arithmetic.zero();
-    for k in 0..u64::from(terms) {
-        let term = arithmetic.fraction(&power, 1, 2 * k + 1)?;
-        result = if k % 2 == 0 {
-            arithmetic.add(&result, &term)?
-        } else {
-            arithmetic.subtract(&result, &term)?
-        };
-        power = arithmetic.fraction(&power, 1, divisor * divisor)?;
-    }
-    alternating_tail(result, arithmetic)
-}
-
-fn alternating_tail(result: Interval, arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
-    let tail = arithmetic.quantum();
-    Ok(arithmetic.add(
-        &result,
-        &Interval {
-            lower: -tail.upper.clone(),
-            upper: tail.upper,
-        },
-    )?)
-}
-
-fn pi(arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
-    // Machin's identity; the alternating tails are bounded by one dyadic quantum.
-    let fifth = atan_inverse(5, 4, arithmetic)?;
-    let other = atan_inverse(239, 14, arithmetic)?;
-    let first = arithmetic.fraction(&fifth, 16, 1)?;
-    let last = arithmetic.fraction(&other, 4, 1)?;
-    Ok(arithmetic.subtract(&first, &last)?)
-}
-
 fn reduced(center: &Interval, arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
-    let pi = pi(arithmetic)?;
+    let pi = crate::predicates::roots::certificate_arithmetic::circular_constants::pi(arithmetic)?;
     let period = arithmetic.fraction(&pi, 2, 1)?;
     let middle: BigInt = (&period.lower + &period.upper) / 2;
     let turns = arithmetic.integer_quotient(&center.lower, &middle)?;

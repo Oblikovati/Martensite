@@ -8,8 +8,8 @@ use super::loops::ProfileLoop;
 use super::proof_pieces::PieceTable;
 use super::topology::native_plane;
 use crate::sketch_region_prism::{
-    AuthoredLoopUse, GraphFaceProof, GraphRegionCertificate, ProfileProofRefusal,
-    certify_profile_graph,
+    AuthoredLoopUse, GraphFaceProof, GraphRegionCertificate, ProfileProofCause,
+    ProfileProofRefusal, certify_profile_graph, certify_profile_graph_with_cancel,
 };
 
 /// One certified face: its counterclockwise outer loop, clockwise holes and certified area
@@ -30,26 +30,85 @@ pub(crate) struct CertifiedRegions {
     pub carrier_pairs: usize,
     /// Connected components of the curve graph.
     pub components: usize,
+    pub work: super::PlanarProofWorkReceipt,
 }
 
-/// Certify every face of `profile`; any refusal is a typed decline.
-pub(crate) fn certify_regions(profile: &AdmittedProfile) -> Result<CertifiedRegions, DeclineCause> {
+pub(crate) struct RegionProofFailure {
+    pub cause: DeclineCause,
+    pub root_failure: Option<super::PlanarPairRootFailure>,
+    pub work: Option<super::PlanarProofWorkReceipt>,
+    pub cancelled: bool,
+}
+/// Certify every face under the unchanged or explicitly requested pair-work policy.
+pub(crate) fn certify_regions(
+    profile: &AdmittedProfile,
+    pair_bisections: Option<u16>,
+) -> Result<CertifiedRegions, RegionProofFailure> {
     let table = PieceTable::new(profile);
-    let plane = native_plane(&profile.frame)
-        .map_err(|failure| incomplete(format!("declared plane: {failure}")))?;
-    let input = table.graph_input(plane, profile.resolution.weld);
-    let certificate = certify_profile_graph(input).map_err(|r| declined(r, &table))?;
-    let mut faces = faces(&certificate, &table);
+    let input = graph_input(profile, &table, pair_bisections)?;
+    let certificate =
+        certify_profile_graph(input).map_err(|refusal| graph_refusal(refusal, &table))?;
+    Ok(assemble_certificate(certificate, &table))
+}
+pub(crate) fn certify_regions_with_cancel(
+    profile: &AdmittedProfile,
+    pair_bisections: Option<u16>,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<CertifiedRegions, RegionProofFailure> {
+    let table = PieceTable::new(profile);
+    let input = graph_input(profile, &table, pair_bisections)?;
+    let certificate = certify_profile_graph_with_cancel(input, cancelled)
+        .map_err(|refusal| graph_refusal(refusal, &table))?;
+    Ok(assemble_certificate(certificate, &table))
+}
+fn assemble_certificate(
+    certificate: GraphRegionCertificate,
+    table: &PieceTable,
+) -> CertifiedRegions {
+    let mut faces = faces(&certificate, table);
     faces.sort_by_key(|face| {
         let first = face.outer.uses[0];
         (table.caller_index(first.curve), first.reversed)
     });
-    Ok(CertifiedRegions {
+    CertifiedRegions {
         faces,
         pair_domains: certificate.pair_domains,
         carrier_pairs: certificate.carrier_pairs,
         components: certificate.components.len(),
-    })
+        work: certificate.work,
+    }
+}
+fn graph_input(
+    profile: &AdmittedProfile,
+    table: &PieceTable,
+    pair_bisections: Option<u16>,
+) -> Result<crate::sketch_region_prism::ProfileGraphInput, RegionProofFailure> {
+    let plane = native_plane(&profile.frame).map_err(|failure| RegionProofFailure {
+        cause: incomplete(format!("declared plane: {failure}")),
+        root_failure: None,
+        work: None,
+        cancelled: false,
+    })?;
+    let mut input = table.graph_input(plane, profile.resolution.weld);
+    input.pair_bisections = pair_bisections;
+    Ok(input)
+}
+fn graph_refusal(refusal: ProfileProofRefusal, table: &PieceTable) -> RegionProofFailure {
+    let work = refusal.work;
+    let root_failure =
+        refusal
+            .root_failure
+            .as_ref()
+            .map(|(sources, cause)| super::PlanarPairRootFailure {
+                curves: sources.map(|source| table.curve_of(source)),
+                cause: cause.clone(),
+            });
+    RegionProofFailure {
+        root_failure,
+        cancelled: refusal.cancelled,
+        cause: declined(refusal, table),
+        work,
+    }
 }
 
 fn faces(certificate: &GraphRegionCertificate, table: &PieceTable) -> Vec<CertifiedFace> {
@@ -78,19 +137,19 @@ fn incomplete(reason: String) -> DeclineCause {
 
 fn declined(refusal: ProfileProofRefusal, table: &PieceTable) -> DeclineCause {
     let caller = |vertex: u64| table.caller_vertex(vertex);
-    match refusal {
-        ProfileProofRefusal::UnexpectedContact { edges, point } => DeclineCause::SelfIntersecting {
+    match refusal.cause {
+        ProfileProofCause::UnexpectedContact { edges, point } => DeclineCause::SelfIntersecting {
             curves: edges.map(|edge| table.curve_of(edge)),
             point: Some(point),
         },
-        ProfileProofRefusal::TangentBranches { vertex } => match caller(vertex) {
+        ProfileProofCause::TangentBranches { vertex } => match caller(vertex) {
             Some(vertex) => DeclineCause::TangentBranches { vertex },
             None => incomplete(format!("tangent branches at split point {vertex}")),
         },
-        ProfileProofRefusal::Pinched { vertex, hole } => match caller(vertex) {
+        ProfileProofCause::Pinched { vertex, hole } => match caller(vertex) {
             Some(vertex) => DeclineCause::PinchedRegion { vertex, hole },
             None => incomplete(format!("pinched boundary at split point {vertex}")),
         },
-        ProfileProofRefusal::Incomplete(reason) => incomplete(reason),
+        ProfileProofCause::Incomplete(reason) => incomplete(reason),
     }
 }

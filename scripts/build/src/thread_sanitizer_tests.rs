@@ -17,6 +17,10 @@ fn startup_precedes_geometry_capture_and_group_controls() {
     )
     .unwrap();
     let commands = runner.commands();
+    assert_startup_control_commands(&commands);
+}
+
+fn assert_startup_control_commands(commands: &[String]) {
     let manifest =
         Path::new("/repo").join("scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml");
     assert_eq!(
@@ -34,6 +38,7 @@ fn startup_precedes_geometry_capture_and_group_controls() {
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tklcaf --lib tdf::sparse_commit::tests -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tksketch --test surface_sketch -- replay::parallel_operations_match_sequential_value_metadata --exact --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkv3d --lib brep_font::text_capture::tests::stress -- --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tksketch --lib surface_sketch::wrapped_profile::family::replay_tests::stress::different_geometry_with_shared_authored_ids_replays_under_contention -- --exact --ignored --test-threads=1 --show-output".to_owned(),
         ]
     );
 }
@@ -458,3 +463,6 @@ fn sanitizer_checkout_source(job: &str) -> &str {
         .next()
         .unwrap()
 }
+
+#[path = "thread_sanitizer_wrapped_tests.rs"]
+mod wrapped;

@@ -66,6 +66,36 @@ expected subdivision level and bound the reported ideal remainder. Removing or
 halving the chain-rule coefficients 6, 3 or 4 makes the corresponding controls fail.
 The tests cover fit planning; stored geometry and complete-operation acceptance require
 their own evidence.
+## Requested radii and shared endpoints
+
+`certify_cylindrical_depths` retains the signed requested depths and the radii
+from the storage certificate. Exact dyadic arithmetic checks that both real
+sums `R+d0` and `R+d1` are positive. Let `e0,e1` bound the distances between
+those sums and the stored radii. Linear interpolation adds at most
+`max(e0,e1)` to the existing normal-sweep storage bound. The combined bound
+must meet the same downward-rounded `epsilon/1000` allowance. Independent
+allowances for these two contributions would not establish the requested
+combined budget.
+
+The native pipeline checks each decoded boundary edge against its authored
+start and end vertex bindings. The edge must reference those same vertices;
+its retained first and last poles must match their coordinates bit for bit.
+Shared depth connectors must retain two poles and unit weights, and pass the
+same endpoint checks. Thus adjacent canonical
+profiles share their normalized first-depth endpoint. Source identity comes
+from the authored corner or canonical split, never from coordinate proximity.
+
+Finite stored endpoints need not equal the original real-valued cylindrical
+map. Their displacement is covered by the profile certificate. P3 therefore
+needs a homotopy argument that permits this consistent shared-vertex motion.
+The review's `Delta=0` endpoint premise cannot be assumed after storage. This
+is a planar topology obligation; the stopped seam/collar proof line remains
+archived.
+
+Native weight demotion is checked through the decoded coefficients. A tiny
+nonzero angular-span control becomes a polynomial native curve and still passes
+its authored-profile error certificate. No exception assumes demotion preserves
+the intended rational curve exactly.
 
 ## Evidence and limits
 
@@ -96,7 +126,20 @@ no function over 20 code lines, file over 500 lines or nesting above two in the
 profile, wrapped-pipeline and bounded-arithmetic files. The complete PR gate
 still needs to run before pushing.
 
-Endpoint homotopy, global periodic clearance, regularity, demotion, radius/depth
-rounding, actual trims, represented measures and publication remain open. These
+Endpoint homotopy, global periodic clearance, regularity, actual trims,
+represented measures and publication remain open. These
 certificates make no topology verdict. General cone profiles are outside this
 first polynomial-cylinder increment; primitive conical APIs remain available.
+
+## Endpoint and depth checkpoint, 2026-11-14
+
+Six exact-arithmetic controls pass, including a `2^-54` depth offset lost by
+binary64 addition, composition with a nonzero curve-storage bound, axis crossing
+and an unrepresentable conservative endpoint. Shared-incidence controls refuse
+a different vertex at the same point, a moved shared vertex and a curved edge
+substituted for a normal connector. The isolated loop-with-hole control took
+3.23 seconds with peak RSS 49,084 KiB before the final connector-shape guard.
+With the final connector guard enabled it took 3.36 seconds and 49,392 KiB.
+All 433 TKMath library tests, 20 TKSketch library tests and strict all-target
+clippy passed. The five-second debug target remains the walking-skeleton limit;
+P5 still needs its separate scale budget.

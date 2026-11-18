@@ -27,6 +27,7 @@ mod geometry_in;
 pub(crate) mod handle_table;
 mod istream;
 mod location_set;
+mod location_transform_read_policy;
 mod object_type;
 mod ostream;
 mod raw_enums;
@@ -58,6 +59,7 @@ pub use curve_set::BinCurveSet;
 pub use curve2d_set::BinCurve2dSet;
 pub use istream::BinIStream;
 pub use location_set::{BinLocationSet, put_transform};
+pub use location_transform_read_policy::LocationTransformReadPolicy;
 pub use object_type::ObjectType;
 pub use ostream::BinOStream;
 pub use scalars::{
@@ -75,3 +77,6 @@ pub use shape_set_base::{BinShapeSetBase, ShapeSetBaseData, THE_ASCII_VERSIONS, 
 pub use shape_writer::BinShapeWriter;
 pub use surface_frame_read_policy::SurfaceFrameReadPolicy;
 pub use surface_set::BinSurfaceSet;
+
+mod curve_frame_read_policy;
+pub use curve_frame_read_policy::CurveFrameReadPolicy;

@@ -70,3 +70,35 @@ Delete superseded production paths when the replacement gate passes. Audit
 retained public proof APIs and historical behavior versions before removal;
 their compatibility impact requires a recorded migration and explicit version
 approval. The archive is evidence, not an API compatibility exemption.
+
+## Endpoint correspondence in the implementation proof
+
+The review's O4 method used fixed authored endpoints (`Delta = 0`) in its ideal
+Hermite construction. Stored binary64 operands require a more general proof:
+incident pieces share one moving vertex throughout the straight homotopy. This
+changes the proof method, while preserving the approved epsilon-close,
+same-topology result contract and all budget allocations. It does not assert
+exact authored interpolation after coefficient storage.
+
+For each authored corner, original pieces have one common endpoint A. Decoded
+space-edge incidence binds both incident pieces to one native vertex and
+bit-identical endpoint coordinates. Their normalized profile endpoints therefore
+share B; source-bound angular-lift and cap-closure checks preserve the common
+unwrapped chart. During the homotopy, both incident endpoints are
+`(1-t)*A + t*B`. They remain equal even when B differs from A.
+
+The common strictly monotone projection at each join proves local embedding
+throughout this motion. The source-bound clearance and displacement envelopes
+exclude all nonadjacent and periodic boundary contacts. Closed contours,
+orientation and material nesting are consequently preserved without requiring
+the common vertex to stay at A. The filled-cap argument uses winding invariance
+and the separately reported physical-cap distance bound.
+
+The P4 review identified this distinction between the implementation proof and
+the original fixed-endpoint wording. The nonzero-angle control now proves a
+nonzero direction discrepancy with bounded Taylor arithmetic at exact authored
+angle 3/10, while the public-operation control verifies shared native endpoint
+identity and bit-identical coordinates at that corner. The [review follow-up](../../features/surface-normal-sketches/P4-REVIEW-2026-11-14.md#endpoint-and-structure-follow-up)
+records the executed checks. Full affected-package, sanitizer and application
+acceptance remain separate gates. No primitive API,
+geometry baseline, version or release policy changes with this proof note.

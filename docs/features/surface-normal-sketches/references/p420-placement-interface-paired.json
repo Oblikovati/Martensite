@@ -1,0 +1,133 @@
+{
+  "case": "wrapped_profile::consumer_exports_an_oblique_body_with_typed_world_bounds",
+  "warmups_per_binary": 1,
+  "pairs": 4,
+  "binaries": {
+    "before": {
+      "path": "target/qualification/p420-before-chart-placement-interface",
+      "sha256": "4279a7e7ca0a1e9b17642eed1e068a588dbd9532612891a2625813dc10363b5c"
+    },
+    "after": {
+      "path": "target/debug/deps/surface_sketch-7567b85f335a1c71",
+      "sha256": "8e79216933f80560cff1d9f3a7450d0a1dbd5a7cd24802c109e5b7243d8d0033"
+    }
+  },
+  "summary": {
+    "before": {
+      "wall_s": {
+        "median": 2.6642635149983107,
+        "min": 2.5268565739970654,
+        "max": 2.712260812004388
+      },
+      "user_s": {
+        "median": 2.6500000000000004,
+        "min": 2.51,
+        "max": 2.7
+      },
+      "peak_rss_kib": {
+        "median": 45690.0,
+        "min": 45208,
+        "max": 46140
+      }
+    },
+    "after": {
+      "wall_s": {
+        "median": 2.6139790324996284,
+        "min": 2.4698098130029393,
+        "max": 2.6543292549977195
+      },
+      "user_s": {
+        "median": 2.6,
+        "min": 2.45,
+        "max": 2.64
+      },
+      "peak_rss_kib": {
+        "median": 45334.0,
+        "min": 45004,
+        "max": 45832
+      }
+    }
+  },
+  "rows": [
+    {
+      "trial": 0,
+      "label": "before",
+      "wall_s": 2.5268565739970654,
+      "gnu_wall_s": 2.52,
+      "user_s": 2.51,
+      "system_s": 0.0,
+      "peak_rss_kib": 46140
+    },
+    {
+      "trial": 0,
+      "label": "after",
+      "wall_s": 2.5891988209987176,
+      "gnu_wall_s": 2.58,
+      "user_s": 2.58,
+      "system_s": 0.0,
+      "peak_rss_kib": 45632
+    },
+    {
+      "trial": 1,
+      "label": "after",
+      "wall_s": 2.4698098130029393,
+      "gnu_wall_s": 2.46,
+      "user_s": 2.45,
+      "system_s": 0.0,
+      "peak_rss_kib": 45004
+    },
+    {
+      "trial": 1,
+      "label": "before",
+      "wall_s": 2.6935905669961357,
+      "gnu_wall_s": 2.69,
+      "user_s": 2.68,
+      "system_s": 0.0,
+      "peak_rss_kib": 45208
+    },
+    {
+      "trial": 2,
+      "label": "before",
+      "wall_s": 2.712260812004388,
+      "gnu_wall_s": 2.7,
+      "user_s": 2.7,
+      "system_s": 0.0,
+      "peak_rss_kib": 45440
+    },
+    {
+      "trial": 2,
+      "label": "after",
+      "wall_s": 2.638759244000539,
+      "gnu_wall_s": 2.63,
+      "user_s": 2.62,
+      "system_s": 0.0,
+      "peak_rss_kib": 45036
+    },
+    {
+      "trial": 3,
+      "label": "after",
+      "wall_s": 2.6543292549977195,
+      "gnu_wall_s": 2.65,
+      "user_s": 2.64,
+      "system_s": 0.0,
+      "peak_rss_kib": 45832
+    },
+    {
+      "trial": 3,
+      "label": "before",
+      "wall_s": 2.6349364630004857,
+      "gnu_wall_s": 2.63,
+      "user_s": 2.62,
+      "system_s": 0.0,
+      "peak_rss_kib": 45940
+    }
+  ],
+  "scope": "single existing oblique consumer, isolated from other task-owned heavy jobs; no full workload memory/performance parity claim",
+  "before_commit": "bb95cf32",
+  "consumer_sources": {
+    "crates/martensite-tksketch/tests/surface_sketch/wrapped_profile.rs": "1179ca686f0befc19a861268cdbd8fcd4c92a820fc8cd15284e9fbef0214bc32",
+    "crates/martensite-tksketch/tests/surface_sketch/refusals.rs": "f60de73918ba57154e7e527aa59eca12494dd552289410c9de01a72e0b37ebf0"
+  },
+  "benchmark_stage": "before the final test-only rotated publication control and internal point_norm visibility change; executable algorithms unchanged afterward",
+  "executable_retention": "temporary baseline executable removed after comparison; hashes and measurements retained"
+}

@@ -267,3 +267,72 @@ fn fit_planning_refuses_cancellation_without_a_partial_plan() {
         CylindricalProfileFailure::Arithmetic(_)
     ));
 }
+
+#[test]
+fn reference_binding_preserves_native_bits_across_authored_unit_changes() {
+    let first = certify_cylindrical_profile(query(&STORED), || false).unwrap();
+    let authored = [[0., 3.], [0., 3.5], [0., 4.]];
+    let mut angular = query(&STORED);
+    angular.support_radius = 1.;
+    angular.authored = &authored;
+    let second = certify_cylindrical_profile(angular, || false).unwrap();
+    assert!(first.matches_reference_curve(&second));
+    assert!(second.matches_reference_curve(&first));
+    assert!(!first.matches_source(angular));
+}
+#[test]
+fn reference_binding_rejects_changed_native_operands() {
+    let first = certify_cylindrical_profile(query(&STORED), || false).unwrap();
+    let mut poles = STORED;
+    poles[0][2] = poles[0][2].next_up();
+    let mut changed = [
+        query(&poles),
+        query(&STORED),
+        query(&STORED),
+        query(&STORED),
+    ];
+    changed[1].stored.weights = Some(&[1., 1.]);
+    changed[2].stored_radius = 1_f64.next_up();
+    changed[3].angular_origin = f64::EPSILON;
+    for input in changed {
+        let second = certify_cylindrical_profile(input, || false).unwrap();
+        assert!(!first.matches_reference_curve(&second));
+        assert!(!second.matches_reference_curve(&first));
+    }
+}
+
+#[test]
+fn nonzero_authored_corner_need_not_interpolate_after_native_rounding() {
+    let authored = [[3., 3.], [3., 4.]];
+    let angle = 3. / 10.;
+    let x = 9. * martensite_cmath::cos(angle);
+    let y = 9. * martensite_cmath::sin(angle);
+    let poles = [[x, y, 3.], [x, y, 4.]];
+    let input = CylindricalProfileQuery {
+        authored: &authored,
+        support_radius: 10.,
+        stored_radius: 9.,
+        ..query(&poles)
+    };
+    let proof = certify_cylindrical_profile(input, || false).unwrap();
+    assert!(proof.angular_position_bound() > 0.);
+    let cross = endpoint_direction_cross(input);
+    assert!(cross.lower > 0.into() || cross.upper < 0.into());
+}
+fn endpoint_direction_cross(input: CylindricalProfileQuery<'_>) -> Interval {
+    let mut cancelled = || false;
+    let mut arithmetic = Arithmetic::new(
+        ArithmeticPolicy {
+            fractional_bits: 128,
+            max_operations: 100_000,
+        },
+        &mut cancelled,
+    );
+    let authored = source::authored(input, &mut arithmetic).unwrap();
+    let [cosine, sine] = trigonometric::enclose(&authored[0], &mut arithmetic).unwrap();
+    let x = arithmetic.scalar(input.stored.poles[0][0]).unwrap();
+    let y = arithmetic.scalar(input.stored.poles[0][1]).unwrap();
+    let a = arithmetic.multiply(&x, &sine[0]).unwrap();
+    let b = arithmetic.multiply(&y, &cosine[0]).unwrap();
+    arithmetic.subtract(&a, &b).unwrap()
+}

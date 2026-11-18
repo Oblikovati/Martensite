@@ -1,5 +1,6 @@
 //! `BinTools_IStream`: the input stream of the shape reader, which knows its position
 //! and the last object type it read, and follows back references.
+use super::LocationTransformReadPolicy;
 use super::errors::byte_text;
 use super::object_type::ObjectType;
 use super::scalars::{read_exact, stream_get};
@@ -192,15 +193,22 @@ impl<'s> BinIStream<'s> {
     /// `SetValues` (Standard_ConstructionError for a singular matrix);
     /// `input.read_transform()?`.
     pub fn read_transform(&mut self) -> Result<Transform3, Failure> {
+        self.read_transform_with_policy(LocationTransformReadPolicy::LegacyReplay)
+    }
+
+    /// Reads a stored location with explicit reconstruction semantics (#451).
+    /// `input.read_transform_with_policy(policy)?`.
+    pub fn read_transform_with_policy(
+        &mut self,
+        policy: LocationTransformReadPolicy,
+    ) -> Result<Transform3, Failure> {
         let mut rows = [[0.0; 4]; 3];
         for row in &mut rows {
             for value in row.iter_mut() {
                 *value = self.read_real()?;
             }
         }
-        let mut transform = Transform3::default();
-        transform.set_values(rows)?;
-        Ok(transform)
+        policy.decode(rows)
     }
 
     /// `ReadBools(b1, b2, b3)`: the bits 1, 2 and 4 of one byte; `input.read_bools3()`.

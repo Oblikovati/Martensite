@@ -15,9 +15,10 @@ pub(crate) enum Control {
     DocumentTransactions,
     SurfaceSketch,
     FontTextCapture,
+    WrappedFamily,
 }
 
-pub(crate) const CONTROLS: [Control; 11] = [
+pub(crate) const CONTROLS: [Control; 12] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -29,6 +30,7 @@ pub(crate) const CONTROLS: [Control; 11] = [
     Control::DocumentTransactions,
     Control::SurfaceSketch,
     Control::FontTextCapture,
+    Control::WrappedFamily,
 ];
 
 impl Control {
@@ -45,6 +47,7 @@ impl Control {
             Self::DocumentTransactions => "document-transactions",
             Self::SurfaceSketch => "surface-sketch",
             Self::FontTextCapture => "font-text-capture",
+            Self::WrappedFamily => "wrapped-family",
         }
     }
 
@@ -57,7 +60,7 @@ impl Control {
             Self::FaceCertificate => "martensite-tktopalgo",
             Self::OpenExtrusion | Self::VertexNeighborhood => "martensite-tkmath",
             Self::DocumentTransactions => "martensite-tklcaf",
-            Self::SurfaceSketch => "martensite-tksketch",
+            Self::SurfaceSketch | Self::WrappedFamily => "martensite-tksketch",
             Self::FontTextCapture => "martensite-tkv3d",
         }
     }
@@ -189,7 +192,8 @@ mod tests {
                 "vertex-neighborhood",
                 "document-transactions",
                 "surface-sketch",
-                "font-text-capture"
+                "font-text-capture",
+                "wrapped-family"
             ]
         );
         assert_eq!(ids.iter().collect::<BTreeSet<_>>().len(), CONTROLS.len());
@@ -199,7 +203,7 @@ mod tests {
     fn surface_sketch_owner_selects_control_without_unrelated_leaf_fanout() {
         assert_eq!(
             select(&BTreeSet::from(["martensite-tksketch".into()]), &[]),
-            [Control::SurfaceSketch]
+            [Control::SurfaceSketch, Control::WrappedFamily]
         );
         assert!(select(&BTreeSet::from(["martensite-tkdeobj".into()]), &[]).is_empty());
         assert_eq!(

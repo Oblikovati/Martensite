@@ -1,0 +1,197 @@
+{
+  "operation_id": "matrix.multiply.compute",
+  "payload": {
+    "left": {
+      "domain": "QQ",
+      "entries": [
+        [
+          {
+            "num": "1",
+            "den": "1"
+          },
+          {
+            "num": "3",
+            "den": "2"
+          }
+        ],
+        [
+          {
+            "num": "-1",
+            "den": "1"
+          },
+          {
+            "num": "3",
+            "den": "2"
+          }
+        ],
+        [
+          {
+            "num": "-3",
+            "den": "2"
+          },
+          {
+            "num": "3",
+            "den": "2"
+          }
+        ],
+        [
+          {
+            "num": "-3",
+            "den": "1"
+          },
+          {
+            "num": "0",
+            "den": "1"
+          }
+        ],
+        [
+          {
+            "num": "-3",
+            "den": "2"
+          },
+          {
+            "num": "-3",
+            "den": "2"
+          }
+        ]
+      ]
+    },
+    "right": {
+      "domain": "QQ",
+      "entries": [
+        [
+          {
+            "num": "-1",
+            "den": "1"
+          }
+        ],
+        [
+          {
+            "num": "3",
+            "den": "4"
+          }
+        ]
+      ]
+    }
+  },
+  "result": {
+    "operation_id": "matrix.multiply.compute",
+    "runtime_ms": 3,
+    "output": {
+      "left": {
+        "domain": "QQ",
+        "row_count": 5,
+        "column_count": 2,
+        "entries": [
+          [
+            {
+              "num": "1",
+              "den": "1"
+            },
+            {
+              "num": "3",
+              "den": "2"
+            }
+          ],
+          [
+            {
+              "num": "-1",
+              "den": "1"
+            },
+            {
+              "num": "3",
+              "den": "2"
+            }
+          ],
+          [
+            {
+              "num": "-3",
+              "den": "2"
+            },
+            {
+              "num": "3",
+              "den": "2"
+            }
+          ],
+          [
+            {
+              "num": "-3",
+              "den": "1"
+            },
+            {
+              "num": "0",
+              "den": "1"
+            }
+          ],
+          [
+            {
+              "num": "-3",
+              "den": "2"
+            },
+            {
+              "num": "-3",
+              "den": "2"
+            }
+          ]
+        ]
+      },
+      "right": {
+        "domain": "QQ",
+        "row_count": 2,
+        "column_count": 1,
+        "entries": [
+          [
+            {
+              "num": "-1",
+              "den": "1"
+            }
+          ],
+          [
+            {
+              "num": "3",
+              "den": "4"
+            }
+          ]
+        ]
+      },
+      "product": {
+        "domain": "QQ",
+        "row_count": 5,
+        "column_count": 1,
+        "entries": [
+          [
+            {
+              "num": "1",
+              "den": "8"
+            }
+          ],
+          [
+            {
+              "num": "17",
+              "den": "8"
+            }
+          ],
+          [
+            {
+              "num": "21",
+              "den": "8"
+            }
+          ],
+          [
+            {
+              "num": "3",
+              "den": "1"
+            }
+          ],
+          [
+            {
+              "num": "3",
+              "den": "8"
+            }
+          ]
+        ]
+      },
+      "convention": "STANDARD_ROW_BY_COLUMN_PRODUCT_OVER_QQ"
+    }
+  }
+}

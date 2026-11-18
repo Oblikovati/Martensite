@@ -11,7 +11,8 @@ pub(in crate::sketch_region_prism) use admission::{
     ProfileAdmissionCause, ProfileEdgeCause, ProfileLoopCause,
 };
 pub(crate) use certify::{
-    ProfileGraphInput, ProfileProofRefusal, ProofEdge, certify_profile_graph,
+    ProfileGraphInput, ProfileProofCause, ProfileProofRefusal, ProofEdge, certify_profile_graph,
+    certify_profile_graph_with_cancel,
 };
 pub(in crate::sketch_region_prism) use construction::ConstructedProfileEdge;
 pub(in crate::sketch_region_prism) use pipeline::{
@@ -33,3 +34,6 @@ use martensite_tkmath::gp::Plane3;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod preparation_work_tests;

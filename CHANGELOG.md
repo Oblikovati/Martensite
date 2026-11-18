@@ -8,6 +8,54 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added an explicit chart-angle normal-extrusion entry point with a separate immutable result, rotation-aware spatial evidence and detached native exports while preserving the earlier constructor for replay (#420).
+
+- Added separate rotation-aware frame and spatial-budget certificates with bounded trigonometric evidence for explicit sketch seam angles (#420).
+
+- Added revision-checked conversion of native cylindrical face-hit parameters into developed coordinates with explicit seams, arithmetic bounds and separate trim-search coverage (#420).
+
+- Added owned cylindrical face attachments with revision checks, checked persistence and explicit native-history reattachment that refused missing or ambiguous face images (#420).
+
+- Added certified stored-frame deviation, positive stretch and determinant bounds against exact normalized reference frames (#425).
+
+- Added certified point-domain placement budgets with translation and affine-evaluation rounding bounds, downward canonical allocations and explicit spatial-limit refusals (#425).
+
+- Added certified oblique cylindrical profile placement with shared decoded locations, physical-frame validation, world-space reports and determinant-scaled retained boundary flux (#425).
+
+- Added explicit finite pair-proof work requests and work-bearing planar failures with original root-isolation causes and authored curve IDs, and reported requested, effective and consumed work on successful region sets and wrapped normal-extrusion reports without changing existing defaults (#425).
+
+- Added solved-profile cylindrical normal extrusion with typed spatial and measure reports, authored history, cooperative cancellation and detached native exports (#418).
+
+- Added affected-package ThreadSanitizer execution of the wrapped-family concurrency stress campaign, retaining startup refusal and failing on campaign errors (#418).
+
+- Added exact periodic material classification for private disconnected cylindrical selections, with guarded translated witnesses, original-source snapshots, complete interval coverage and aggregate winding budgets (#418).
+
+- Added global planar selection and shared boundary-clearance preparation for disconnected wrapped-profile regions, preserving authored identities and rejecting overlapping filled selections (#418).
+
+- Added source-matched outward comparisons between retained cylindrical boundary flux and ideal normal volume, preserving separate integration, profile-displacement and representative-error evidence (#418).
+
+- Added source-bound closed-profile area and ideal cylindrical normal-volume enclosures, with exact requested depth arithmetic and explicit geometric-error reporting or refusal (#418).
+
+- Added frozen incidence and curve-representation coverage checks for private rational wrapped profiles, with semantic-owner diagnostics and malformed-body controls (#418).
+
+- Added certified conditional flux integration for retained rational ruled sides and cylindrical cap pcurves, with aggregate work limits and per-span receipts (#418).
+
+- Added full-interval cylindrical cap-trim residual certificates over retained rational space curves and polynomial pcurves, checked against both retained edge and face tolerances (#418).
+
+- Added decoded pcurve, parameter-domain and raw/effective topology-tolerance checks for rational wrapped profiles, with edge/face-scoped refusals (#418).
+
+- Added complete cylindrical boundary-image clearance with certified true-period rounding, an infinite-tail bound and aggregate proof budgets, enabling private connected profiles spanning multiple turns (#418).
+
+- Added deterministic cylindrical multi-chart Hermite planning from original polynomial bounds under one work allowance, enabling private wrapped profiles across the cylinder parameter seam (#418).
+
+- Added outward true-circumference slab certificates for all nonzero cylindrical periodic images, bound to original profile sources with explicit incomplete results for wider selections (#418).
+
+- Added certified developed-profile clearance with bounding-hierarchy pruning, cached dyadic refinement, exact-parameter witnesses and later binding to retained cylindrical profile certificates (#418).
+
+- Added strict cylindrical profile tangent-cone certificates tied to retained position/derivative proofs, with exact positive margins and explicit work limits (#418).
+
+- Added exact radius/depth rounding bounds composed with cylindrical storage certificates under one requested error allowance (#418).
+
 - Added certified cylindrical profile position and derivative bounds against original authored polynomials, plus a priori dyadic Hermite fit planning with explicit resource limits (#418).
 
 - Added `certify_cylindrical_storage` for conservative error bounds on stored cylindrical curves and their linear depth interpolation, with retained coefficient bits and explicit precision and work limits (#418).
@@ -18,7 +66,28 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added rectangular sketches on cylindrical surfaces with signed normal extrusion, seam-crossing regions, semantic history, ordered body validation and detached body exports. Existing planar extrusion interfaces were preserved. (#416)
 
+- Added checked opt-in rigid location-transform decoding for coefficient-bound geometry while preserving legacy normalization defaults (#451).
+
+- Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
+
 ### Fixed
+
+- Corrected the placed cylindrical flux contract to use `(x-t)/3` and exposed the decoded field origin on normal and chart results. The existing enclosures and volume budgets remained unchanged (#528).
+
+
+- Restored selection of the ignored wrapped-family ThreadSanitizer stress test for affected packages while retaining existing replay controls (#529).
+
+- Preserved cylindrical operation failures when cancellation arrived later and propagated cancellation through global planar proof work (#526).
+
+- Verified decoded export bindings by authored identity and rejected duplicate or mismatched bindings before publishing native exports (#519).
+
+- Preserved checked native conic frames and curve directions during explicitly configured binary capture, including recursive and surface-embedded curves, while retaining legacy read behavior (#455).
+
+- Required placed cap traces to remain within their retained edge and face tolerances, including affine-evaluation rounding and typed span/depth refusals (#454).
+
+- Canonicalized wrapped planar proof inputs by authored IDs so reordered selections retained identical actual work receipts, while preserving original admission errors and unchanged limits (#453).
+
+- Preserved authored entities and typed failure classes in solved-profile normal extrusion errors (#448).
 
 - Reported admitted input ranges and retained offending values in cylindrical profile certificate diagnostics (#524).
 
