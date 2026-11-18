@@ -12,6 +12,14 @@ pub(super) fn evaluate(
     isolation: &RootIsolation,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<Vec<Ordering>, RootSignError> {
+    // #542: singleton brackets already identify exact roots; no Cauchy index is needed.
+    if isolation
+        .roots()
+        .iter()
+        .all(|root| root.bounds().0 == root.bounds().1)
+    {
+        return point_signs(&query, isolation, cancelled);
+    }
     let chain = query_chain(source, &query, cancelled)
         .map_err(|cause| RootSignStage::Evaluation.failure(cause))?;
     isolation
@@ -19,6 +27,24 @@ pub(super) fn evaluate(
         .iter()
         .map(|root| classify(&chain, &query, root, cancelled))
         .collect()
+}
+fn point_signs(
+    query: &IntegerPolynomial,
+    isolation: &RootIsolation,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<Vec<Ordering>, RootSignError> {
+    poll(cancelled).map_err(|cause| RootSignStage::Evaluation.failure(cause))?;
+    isolation
+        .roots()
+        .iter()
+        .map(|root| {
+            poll(cancelled).map_err(|cause| RootSignStage::Evaluation.failure(cause))?;
+            Ok(point_sign(query, root))
+        })
+        .collect()
+}
+fn point_sign(query: &IntegerPolynomial, root: &RootBracket) -> Ordering {
+    sign_order(query.sign_at(root.bounds().0))
 }
 fn query_chain(
     source: IntegerPolynomial,
@@ -40,7 +66,7 @@ fn classify(
     poll(cancelled).map_err(|cause| RootSignStage::Evaluation.failure(cause))?;
     let (lower, upper) = root.bounds();
     if lower == upper {
-        return Ok(sign_order(query.sign_at(lower)));
+        return Ok(point_sign(query, root));
     }
     let first = chain
         .endpoint(lower.clone(), cancelled)
@@ -70,15 +96,4 @@ fn certified_difference(lower: usize, upper: usize) -> Result<Ordering, RootSign
     Err(RootSignError::Variation { lower, upper })
 }
 #[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn invalid_tarski_sums_are_declines_in_both_directions() {
-        for (lower, upper) in [(2, 0), (0, 2), (usize::MAX, 0)] {
-            assert_eq!(
-                certified_difference(lower, upper),
-                Err(RootSignError::Variation { lower, upper })
-            );
-        }
-    }
-}
+mod tests;
