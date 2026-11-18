@@ -197,3 +197,29 @@ impl BudgetFailure {
         }
     }
 }
+
+impl std::error::Error for BudgetFailure {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Cones { cause, .. } => cone_source(cause),
+            Self::Empty | Self::Policy { .. } | Self::Owners { .. } | Self::Inventory { .. } => {
+                None
+            }
+            Self::Spans { .. } | Self::Source(_) | Self::Coverage { .. } | Self::Native { .. } => {
+                None
+            }
+            Self::Invalid { .. }
+            | Self::Limit { .. }
+            | Self::Overflow { .. }
+            | Self::Clearance { .. } => None,
+        }
+    }
+}
+fn cone_source(cause: &planar_cones::ConeFailure) -> Option<&(dyn std::error::Error + 'static)> {
+    use planar_cones::ConeFailure as C;
+    match cause {
+        C::Authored(cause) => Some(cause.as_ref()),
+        C::Certificate { cause, .. } => Some(cause),
+        C::Binding { .. } | C::CapJoin { .. } | C::Membership { .. } | C::Interval { .. } => None,
+    }
+}

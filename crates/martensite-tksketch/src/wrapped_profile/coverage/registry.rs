@@ -7,7 +7,10 @@ pub(super) struct Registry<'a> {
     owners: Vec<BindingKey>,
 }
 impl<'a> Registry<'a> {
-    pub fn build(request: &Request, bindings: &'a [(BindingKey, Shape)]) -> Checked<Self> {
+    pub fn build(
+        request: &DevelopedRegionRequest,
+        bindings: &'a [(BindingKey, Shape)],
+    ) -> Checked<Self> {
         let owner = expected::region(request, HistoryRole::Solid);
         let result = Self::register(bindings)?;
         result.validate(request, owner)?;
@@ -24,13 +27,16 @@ impl<'a> Registry<'a> {
         }
         Ok(result)
     }
-    pub fn build_many(requests: &[Request], bindings: &'a [(BindingKey, Shape)]) -> Checked<Self> {
+    pub fn build_many<R: AsRef<DevelopedRegionRequest>>(
+        requests: &[R],
+        bindings: &'a [(BindingKey, Shape)],
+    ) -> Checked<Self> {
         let result = Self::register(bindings)?;
         let definitions = family_definitions(requests)?;
         result.validate_definitions(CoverageOwner::Family, &definitions)?;
         Ok(result)
     }
-    fn validate(&self, request: &Request, owner: BindingKey) -> Checked<()> {
+    fn validate(&self, request: &DevelopedRegionRequest, owner: BindingKey) -> Checked<()> {
         let definitions = expected::definitions(request)?;
         self.validate_definitions(owner.into(), &definitions)
     }
@@ -106,10 +112,12 @@ impl<'a> Registry<'a> {
         self.by_key.len()
     }
 }
-fn family_definitions(requests: &[Request]) -> Checked<BTreeMap<BindingKey, ShapeEnum>> {
+fn family_definitions<R: AsRef<DevelopedRegionRequest>>(
+    requests: &[R],
+) -> Checked<BTreeMap<BindingKey, ShapeEnum>> {
     let mut result = BTreeMap::new();
     for request in requests {
-        extend_definitions(&mut result, expected::definitions(request)?)?;
+        extend_definitions(&mut result, expected::definitions(request.as_ref())?)?;
     }
     Ok(result)
 }

@@ -48,8 +48,9 @@ fn seed_evidence(root: &Path) -> std::path::PathBuf {
     evidence
 }
 
-const SKIPPED_PATHS: [&str; 4] = [
+const SKIPPED_PATHS: [&str; 5] = [
     "scripts/build/src/thread_sanitizer.rs",
+    "scripts/build/src/thread_sanitizer_cone_tests.rs",
     "scripts/build/src/publish.rs",
     "docs/features/safe-toolkits/closeout.md",
     "docs/features/safe-toolkits/unsafe-source-baseline.json",

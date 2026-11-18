@@ -13,6 +13,9 @@ use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedCylindricalFlux, CertifiedCylindricalMeasureComparison,
 };
 
+// The native API requests a relative quadrature tolerance, independently of certified bounds.
+pub(in crate::surface_sketch::wrapped_profile) const NATIVE_VOLUME_RELATIVE_TOLERANCE: f64 = 1e-8;
+
 mod qualification;
 pub(super) use qualification::{NativeQualification, qualify_native};
 #[cfg(test)]
@@ -30,10 +33,7 @@ pub(super) struct MemberGeometry {
     pub storage: Vec<storage::StoredProof>,
     pub cones: planar_cones::ConeEvidence,
 }
-pub(super) struct RetainedMember {
-    pub geometry: MemberGeometry,
-    pub native: NativeQualification,
-}
+pub(super) type RetainedMember = operation::stages::QualifiedMember<MemberGeometry>;
 pub(super) struct StoredMember {
     shape: Shape,
     bindings: Vec<(BindingKey, Shape)>,
@@ -106,15 +106,7 @@ pub(super) fn finish_member(
     prepared: &Request,
     stored: StoredMember,
 ) -> Result<RetainedMember, Refusal> {
-    finish_member_with_cancel(original, prepared, stored, || false)
-}
-pub(super) fn finish_member_with_cancel(
-    original: &Request,
-    prepared: &Request,
-    stored: StoredMember,
-    mut cancelled: impl FnMut() -> bool + Send,
-) -> Result<RetainedMember, Refusal> {
-    let (geometry, shape) = certify_geometry(original, prepared, stored, &mut cancelled)?;
+    let (geometry, shape) = certify_geometry(original, prepared, stored, &mut || false)?;
     let native = qualify_native(original, &shape)?;
     Ok(RetainedMember { geometry, native })
 }
@@ -361,8 +353,13 @@ pub(super) fn resolution(tolerance: f64) -> Resolution {
 
 pub(super) fn estimate(shape: &Shape) -> Result<(f64, f64), Failure> {
     let mut props = GProps::new();
-    let status =
-        BRepGProp::volume_properties_gk(shape, &mut props, 1e-8, true, VolumeGKFlags::default())?;
+    let status = BRepGProp::volume_properties_gk(
+        shape,
+        &mut props,
+        NATIVE_VOLUME_RELATIVE_TOLERANCE,
+        true,
+        VolumeGKFlags::default(),
+    )?;
     let value = props.mass();
     if !value.is_finite() || !status.is_finite() || status < 0. {
         return Err(Failure::new(&format!(

@@ -169,7 +169,7 @@ fn failed_later_member_storage_preserves_inputs_and_decoded_geometry() {
     let selected = selection::certify(&inputs, Default::default()).unwrap();
     let prepared = &selected.prepared.prepared;
     let (bytes, _, root, bindings) = freeze::construct(prepared).unwrap();
-    let (_, mut views) = coverage::certify_family(prepared, &root, &bindings).unwrap();
+    let (_, mut views) = coverage::certify_developed_family(prepared, &root, &bindings).unwrap();
     views.last_mut().unwrap().bindings.pop();
     assert!(matches!(
         store(&inputs, prepared, views),

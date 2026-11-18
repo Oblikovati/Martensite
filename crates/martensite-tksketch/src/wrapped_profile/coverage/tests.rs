@@ -74,7 +74,7 @@ fn binding_order_does_not_change_coverage() {
     assert_eq!(certify(&request, &root, &bindings).unwrap(), expected);
 }
 
-fn direct(parent: &Shape) -> Vec<Shape> {
+pub(super) fn direct(parent: &Shape) -> Vec<Shape> {
     let mut iterator = martensite_tkbrep::topods::ShapeIterator::new(parent, true, true);
     let mut shapes = Vec::new();
     while iterator.more() {
@@ -83,7 +83,7 @@ fn direct(parent: &Shape) -> Vec<Shape> {
     }
     shapes
 }
-fn replace(parent: &mut Shape, old: &Shape, new: &Shape) {
+pub(super) fn replace(parent: &mut Shape, old: &Shape, new: &Shape) {
     let builder = martensite_tkbrep::topods::Builder;
     parent.set_free(true).unwrap();
     builder.remove(parent, old).unwrap();
@@ -255,4 +255,48 @@ fn repeat_surface_pcurve(edge: &Shape) {
         curves.retain(|r| r.get().unwrap().is_curve3d());
         curves.extend([pcurve.clone(), pcurve]);
     });
+}
+
+#[test]
+fn developed_source_covers_decoded_graph_without_support_geometry() {
+    let (request, root, bindings) = fixture();
+    let source = request.source;
+    let report = certify_developed(&source, &root, &bindings).unwrap();
+    assert_eq!(
+        (report.faces, report.wires, report.edges, report.vertices),
+        (21, 23, 57, 38)
+    );
+    assert_eq!(report.edge_uses, 114);
+    assert_eq!(report.binding_count, 117);
+    assert_eq!(report.euler_characteristic, 0);
+}
+
+#[test]
+fn developed_family_borrows_source_owner_and_preserves_actual_member_graph() {
+    let (request, member, bindings) = fixture();
+    let region = request.region;
+    let owner = DevelopedCoverageOwner(request.source);
+    let root = one_member_compound(&member);
+    let (report, views) =
+        certify_developed_family(std::slice::from_ref(&owner), &root, &bindings).unwrap();
+    assert_eq!((report.members, report.bindings), (1, 117));
+    assert_eq!(views.len(), 1);
+    assert!(views[0].shape.is_equal(&member));
+    assert_eq!(views[0].region, region);
+}
+
+struct DevelopedCoverageOwner(DevelopedRegionRequest);
+impl AsRef<DevelopedRegionRequest> for DevelopedCoverageOwner {
+    fn as_ref(&self) -> &DevelopedRegionRequest {
+        &self.0
+    }
+}
+
+fn one_member_compound(member: &Shape) -> Shape {
+    use martensite_tkbrep::topods::{Builder, Compound};
+    let mut compound = Compound::default();
+    Builder.make_compound(&mut compound);
+    let mut root = compound.into_shape();
+    Builder.add(&mut root, member).unwrap();
+    root
 }

@@ -29,18 +29,12 @@ fn read_regions(
     depths: [f64; 2],
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<()> {
-    let Some(first) = request.selections.first() else {
-        return Ok(());
-    };
-    poll(cancelled, WrappedStage::Input)?;
-    let reader = profile_input::ProfileReader::new(&request.profile)
-        .map_err(|cause| profile_failure(cause, None))?;
-    inputs.push_region(request, first, depths, &reader)?;
-    for selection in request.selections.iter().skip(1) {
-        poll(cancelled, WrappedStage::Input)?;
-        inputs.push_region(request, selection, depths, &reader)?;
-    }
-    Ok(())
+    operation::source::read(
+        &request.profile,
+        &request.selections,
+        cancelled,
+        |selection, reader| inputs.push_region(request, selection, depths, reader),
+    )
 }
 impl Inputs {
     fn push_region(
@@ -65,7 +59,7 @@ impl Inputs {
     }
 }
 
-fn selected(
+pub(in crate::surface_sketch::wrapped_profile) fn selected(
     reader: &profile_input::ProfileReader<'_>,
     selection: &WrappedRegionSelection,
 ) -> Checked<profile_input::OrientedRegion> {
@@ -78,7 +72,7 @@ fn selected(
         .select(&selected)
         .map_err(|cause| profile_failure(cause, Some(selection.region)))
 }
-fn profile_failure(
+pub(in crate::surface_sketch::wrapped_profile) fn profile_failure(
     cause: profile_input::ProfileInputFailure,
     region: Option<SurfaceRegionId>,
 ) -> WrappedNormalFailure {

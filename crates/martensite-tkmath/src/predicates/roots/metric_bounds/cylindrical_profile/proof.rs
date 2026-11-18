@@ -62,11 +62,31 @@ pub(super) fn xy_residual(
     arithmetic: &mut Arithmetic<'_>,
 ) -> Checked<Interval> {
     let scaled = polynomial::scale(&stored[3], radius, arithmetic)?;
-    let x = spatial_residual(&stored[0], &scaled, &trig[0], arithmetic)?;
-    let y = spatial_residual(&stored[1], &scaled, &trig[1], arithmetic)?;
+    scaled_xy_residual(&scaled, stored, trig, weight, arithmetic)
+}
+
+pub(super) fn scaled_xy_residual(
+    scaled: &[Interval],
+    stored: &Homogeneous,
+    trig: &[Vec<Interval>; 2],
+    weight: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Interval> {
+    scaled_xy_residual_conditioned(scaled, stored, trig, weight, None, arithmetic)
+}
+
+pub(super) fn scaled_xy_residual_conditioned(
+    scaled: &[Interval],
+    stored: &Homogeneous,
+    trig: &[Vec<Interval>; 2],
+    weight: &Interval,
+    cutoff: Option<&Interval>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Interval> {
+    let x = spatial_residual(&stored[0], scaled, &trig[0], cutoff, arithmetic)?;
+    let y = spatial_residual(&stored[1], scaled, &trig[1], cutoff, arithmetic)?;
     let xy = arithmetic.add(&x, &y)?;
-    let residual = arithmetic.divide(&xy, weight)?;
-    Ok(residual)
+    Ok(arithmetic.divide(&xy, weight)?)
 }
 
 pub(super) fn height_residual(
@@ -75,7 +95,17 @@ pub(super) fn height_residual(
     weight: &Interval,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Checked<Interval> {
-    let height = spatial_residual(&stored[2], &stored[3], height, arithmetic)?;
+    height_residual_conditioned(height, stored, weight, None, arithmetic)
+}
+
+pub(super) fn height_residual_conditioned(
+    height: &[Interval],
+    stored: &Homogeneous,
+    weight: &Interval,
+    cutoff: Option<&Interval>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Interval> {
+    let height = spatial_residual(&stored[2], &stored[3], height, cutoff, arithmetic)?;
     Ok(arithmetic.divide(&height, weight)?)
 }
 
@@ -83,10 +113,33 @@ fn spatial_residual(
     coordinate: &[Interval],
     factor: &[Interval],
     target: &[Interval],
+    cutoff: Option<&Interval>,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Checked<Interval> {
     let target = polynomial::product(factor, target, arithmetic)?;
-    refined_magnitude(&difference(coordinate, &target, arithmetic)?, arithmetic)
+    requested_magnitude(
+        &difference(coordinate, &target, arithmetic)?,
+        cutoff,
+        arithmetic,
+    )
+}
+
+fn requested_magnitude(
+    poles: &[Interval],
+    cutoff: Option<&Interval>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Interval> {
+    if let Some(cutoff) = cutoff {
+        arithmetic.check_cancelled()?;
+        let bound = polynomial::magnitude(poles);
+        if bound <= cutoff.lower {
+            return Ok(Interval {
+                lower: bound.clone(),
+                upper: bound,
+            });
+        }
+    }
+    refined_magnitude(poles, arithmetic)
 }
 
 fn report_bounds(
@@ -171,3 +224,7 @@ fn refined_magnitude(poles: &[Interval], arithmetic: &mut Arithmetic<'_>) -> Che
         upper: bound,
     })
 }
+
+#[cfg(test)]
+#[path = "proof/refinement_tests.rs"]
+mod refinement_tests;

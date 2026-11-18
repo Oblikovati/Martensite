@@ -1,0 +1,67 @@
+{
+  "source_metadata": "/tmp/martensite-544-final-workload-benchmark/metadata.json",
+  "source_head": "64110e402e131afff2e3fadcbf9e2b9d4c9b245c",
+  "binary_sha256": "1a10af6cf898b8928969dcc05cbed2baa10937d68d090161bb4b9e1ec8800b4d",
+  "cpu_affinity": [
+    10
+  ],
+  "scope": "One fixed three-run follow-up on original campaign CPU10 after formatter-only change; requires both API and whole accepted fixture process <=5 seconds. Prior CPU6 campaign includes one5.01-second whole process although all API calls were<=5. All data retained; no retry-until-green loop.",
+  "rows": [
+    {
+      "run": 1,
+      "exit_code": 0,
+      "metrics": {
+        "wall_seconds": 4.65,
+        "user_seconds": 4.64,
+        "system_seconds": 0.01,
+        "max_rss_kib": 56472,
+        "exit": 0
+      },
+      "api_seconds": 4.623892,
+      "one_test_passed": true,
+      "host_load_after": [
+        5.39794921875,
+        4.99609375,
+        4.701171875
+      ]
+    },
+    {
+      "run": 2,
+      "exit_code": 0,
+      "metrics": {
+        "wall_seconds": 4.64,
+        "user_seconds": 4.63,
+        "system_seconds": 0.01,
+        "max_rss_kib": 56208,
+        "exit": 0
+      },
+      "api_seconds": 4.612031,
+      "one_test_passed": true,
+      "host_load_after": [
+        5.7666015625,
+        5.07958984375,
+        4.72998046875
+      ]
+    },
+    {
+      "run": 3,
+      "exit_code": 0,
+      "metrics": {
+        "wall_seconds": 4.78,
+        "user_seconds": 4.77,
+        "system_seconds": 0.01,
+        "max_rss_kib": 56512,
+        "exit": 0
+      },
+      "api_seconds": 4.749587,
+      "one_test_passed": true,
+      "host_load_after": [
+        5.94580078125,
+        5.12841796875,
+        4.74755859375
+      ]
+    }
+  ],
+  "all_passed": true,
+  "all_api_and_fixture_runs_within_five_seconds": true
+}

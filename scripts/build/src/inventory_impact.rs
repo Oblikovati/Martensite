@@ -120,9 +120,10 @@ const COMPILER_INPUTS: [&str; 3] = [
 ];
 
 #[cfg(test)]
-const IRRELEVANT_INPUTS: [&str; 12] = [
+const IRRELEVANT_INPUTS: [&str; 13] = [
     "README.md",
     "scripts/build/src/thread_sanitizer.rs",
+    "scripts/build/src/thread_sanitizer_cone_tests.rs",
     "scripts/build/src/publish.rs",
     "scripts/build/src/publication_record.rs",
     "scripts/build/src/pr_inventory_tests.rs",

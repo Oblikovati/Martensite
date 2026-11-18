@@ -1,8 +1,16 @@
 //! The operation owns stage order; support-specific construction does not publish results.
 use super::*;
 use api::{error, history_projection, input, placement, reports};
-mod cylinder;
+pub(super) mod cone;
+pub(super) mod cylinder;
+mod execute;
+pub(super) mod frozen;
+mod handedness;
+pub(super) mod members;
 mod publication;
+pub(super) mod source;
+pub(super) mod stages;
+pub(super) mod topology;
 #[cfg(test)]
 pub(super) use cylinder::{construct_budgeted_with_work, construct_controlled};
 type Checked<T> = Result<T, WrappedNormalFailure>;

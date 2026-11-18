@@ -98,7 +98,10 @@ fn reduced(center: &Interval, arithmetic: &mut Arithmetic<'_>) -> Checked<Interv
     Ok(reduced)
 }
 
-fn scalar(center: &Interval, arithmetic: &mut Arithmetic<'_>) -> Checked<[Interval; 2]> {
+pub(in crate::predicates::roots::metric_bounds) fn scalar(
+    center: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<[Interval; 2]> {
     if center.lower == BigInt::from(0) && center.upper == BigInt::from(0) {
         return Ok([arithmetic.scalar(1.)?, arithmetic.zero()]);
     }

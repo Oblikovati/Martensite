@@ -45,12 +45,21 @@ pub enum WrappedFailureClass {
     /// Native serialization or decoding failed.
     Native,
 }
+// Bug #547: shared cylinder error formatting must not retain concrete cone code.
+pub(in crate::surface_sketch::wrapped_profile) trait ConeFailureCause:
+    std::error::Error + Send + Sync
+{
+    fn planar_work_failure(
+        &self,
+    ) -> Option<&martensite_tkbo::profile_extrusion::PlanarRegionWorkFailure>;
+}
 #[derive(Debug)]
 pub(in crate::surface_sketch::wrapped_profile) enum Cause {
     Support(crate::surface_sketch::CylinderSupport),
     Depths([f64; 2]),
     Input(profile_input::ProfileInputFailure),
     Family(family::FamilyFailure),
+    Cone(Box<dyn ConeFailureCause>),
     History(history_projection::HistoryMapFailure),
     Placement(Box<placement::PlacementFailure>),
     Export(Failure),
@@ -71,6 +80,9 @@ impl WrappedNormalFailure {
     pub fn planar_work_failure(
         &self,
     ) -> Option<&martensite_tkbo::profile_extrusion::PlanarRegionWorkFailure> {
+        if let Cause::Cone(cause) = self.cause.as_ref() {
+            return cause.planar_work_failure();
+        }
         let Cause::Family(family) = self.cause.as_ref() else {
             return None;
         };
@@ -128,6 +140,7 @@ impl std::fmt::Display for Cause {
             ),
             Self::Input(cause) => write!(f, "{cause}"),
             Self::Family(cause) => write!(f, "{cause}"),
+            Self::Cone(cause) => write!(f, "{cause}"),
             Self::History(cause) => write!(f, "{cause}"),
             Self::Placement(cause) => write!(f, "{cause}"),
             Self::Export(cause) => write!(f, "native export: {cause:?}"),
@@ -143,6 +156,7 @@ impl std::error::Error for Cause {
             Self::ExportBindings(cause) => Some(cause),
             Self::Input(cause) => Some(cause),
             Self::Family(cause) => Some(cause),
+            Self::Cone(cause) => Some(cause.as_ref()),
             Self::History(cause) => Some(cause),
             Self::Placement(cause) => Some(cause.as_ref()),
             _ => None,
@@ -163,7 +177,7 @@ pub(in crate::surface_sketch::wrapped_profile) fn failure(
     let class = annotate(&cause, class, &mut entities);
     with_entities(stage, class, entities, cause)
 }
-pub(super) fn with_entities(
+pub(in crate::surface_sketch::wrapped_profile) fn with_entities(
     stage: WrappedStage,
     class: WrappedFailureClass,
     mut entities: Vec<HistorySource>,

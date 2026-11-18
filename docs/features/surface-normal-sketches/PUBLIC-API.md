@@ -1,112 +1,337 @@
-# Wrapped-profile API checkpoint
+# Wrapped-profile API contract
 
-The P4 draft exposes `normal_extrude_profile` and its cancellable form
-from `martensite_tksketch::surface_sketch` (#418). The code is committed locally;
-integration qualification remains open. The existing cylinder-rectangle
-and conical-sector APIs retain their signatures and behavior.
+The current candidate exposes cylinder and cone solved-profile operations from
+`martensite_tksketch::surface_sketch` (#418). The cone implementation is preserved
+as feature working changes above integration
+`64110e402e131afff2e3fadcbf9e2b9d4c9b245c`. Phase A's curved outer contour with a
+hole now completes through the public entry. Full local library, public
+integration, explicit contention and the canonical local cone PR gate passed;
+the case-specific footprint tradeoff was accepted on 2026-11-18. Final Gate A
+review accepted a phase commit and ready PR. Required hosted checks, including
+new cone TSan, remain pending and must pass before merge. This is an
+unreleased candidate contract, not completion of general
+cone wrapping. Existing cylinder-rectangle and conical-sector APIs retain their
+signatures and behavior.
 
-## Input and result
+## Entries and owned input
 
-`WrappedNormalRequest` owns a solved `SketchProfile`, explicit region selections,
-a cylindrical support, ordered signed normal depths and accuracy options. Each
-selection names an outer loop and optional holes. Curve directions are resolved
-once; history translates dyadic spans and split vertices back to the original
-authored parameter direction using integer arithmetic.
+| Support | Public entries | Input and result |
+| --- | --- | --- |
+| Cylinder | `normal_extrude_profile`, `normal_extrude_profile_with_cancel` | `WrappedNormalRequest`, `WrappedNormalResult` |
+| Cylinder with explicit chart placement | `normal_extrude_profile_on_chart`, `normal_extrude_profile_on_chart_with_cancel` | Existing cylinder request and `WrappedChartNormalResult`; see [frame contract](OBLIQUE-FRAMES.md). |
+| Cone candidate | `normal_extrude_cone_profile`, `normal_extrude_cone_profile_with_cancel` | `WrappedConeNormalRequest`, `WrappedConeNormalResult` |
 
-Current admission supports lines and polynomial Bezier spans of degree one
-through three in the world-XY developed plane. Physical support placement is
-constructed from the requested origin and a normalized/projected right-handed
-axis/radial frame. The stored coefficients must pass rigid admission and the
-world-space budget. Zero chart origin is still required. Invalid or unresolved
-frames refuse explicitly. Inward normals reverse and negate physical depth
-endpoints and preserve the caller's first/last-depth history roles. General
-conics, rational and multi-span authored splines, arbitrary chart origins and
-general conical profiles remain open.
+A request owns a solved `SketchProfile`, explicit `WrappedRegionSelection`
+values, analytic support, increasing signed normal depths and
+`WrappedNormalOptions`. Each selection names its authored region, outer loop and
+holes; bounded cells are never selected implicitly. Current profile admission
+uses lines and polynomial Bézier spans of degrees one through three in the
+world-XY developed plane. Curve directions are resolved once; dyadic spans and
+split vertices map back to authored parameter directions with integer arithmetic.
 
-`WrappedNormalResult` owns frozen geometry bytes, authored history, per-region
-reports and the family budget. Reports distinguish certified ideal normal
-volume, retained boundary-patch flux and the native quadrature estimate. They
-also retain the sampled geometry and native-search self-intersection labels,
-incidence coverage, material-classification receipts and effective work limits.
-Cap-trace approximation, coefficient rounding and filled-cap realization bounds
-have separate fields. Spatial evidence is grouped under
-`result.reports()[&region].spatial`; certified and estimated measures are under
-`result.reports()[&region].measures`. The groups retain their distinct evidence
-types and units. Spatial quantities in that group use the canonical chart
-frame. For a physical placement, `result.placement()` returns a
-`WrappedPlacementReport`: the original world epsilon, reduced canonical
-allowance, actual stored matrix/translation and per-member world bounds.
-`WrappedWorldSpatialReport::cap_trace_error` has also passed each cap's own
-retained edge/face tolerance, with both affine-evaluation errors accounted for.
-The exact canonical frame has no placement report and retains its original
-path and allocation.
+The cylinder input uses `[arc_length, height]`. Its existing physical placement
+normalizes/projects a right-handed axis/radial frame and applies stored-frame
+admission and the world-space budget. The ordinary entry still requires zero
+chart origin; the chart-placement entries have their own recorded contract.
+Their [oblique bounds](OBLIQUE-FRAMES.md) cover the decoded located graph and
+direct location evaluation. A normalized analytic convenience-query copy is a
+separate representation requiring correspondence evidence.
 
-`export_native` decodes fresh native owners and maps their references to authored
-keys. Separate exports share no native topology owners. Mutating source input
-after construction leaves the frozen result unchanged. Published metadata has
-no mutation interface; request, result and failure types have compile-time
-`Send + Sync` checks.
+The cone input uses developed Cartesian `[x,y]` measured from the apex. Phase A
+requires exactly apex `[0,0,0]`, axis `[0,0,1]` and radial `[1,0,0]`.
+`admit_frame` returns `Unsupported` before source capture for other frames.
+The whole family must fit one admitted strict angular chart/wedge, with positive
+radius throughout its filled material and depth interval. The fitted reference
+must also satisfy the chart and perturbation margin. Chart admission and finite
+proof exhaustion return typed refusals. This scope does not establish wider
+wraps, seam occurrences, text-scale families, oblique cone placement or attachment.
+Those remain Phase B; exact primitive-span lowering and replacement deletion
+remain Phase C.
 
-The oblique certificate covers the decoded located graph and direct location
-evaluation. A normalized analytic copy returned by a native convenience query
-is a separate floating representation and needs its own correspondence
-evidence. The [physical-frame contract](OBLIQUE-FRAMES.md) records this boundary,
-frozen-graph checks, retained-tolerance enforcement and determinant-based flux
-transport.
+## Cone request example
 
-Errors retain operation, stage, failure class, known authored entities and an
-owned cause. Cancellation at the final handoff returns an error after discarding
-the constructed value. `Refuse(allowance)` rejects unmet aggregate volume bounds;
-`Report` preserves the achieved bounds. Neither mode changes spatial allocations.
+Given a solved developed `profile` and explicit `selections` that satisfy that
+scope, the request uses the existing support and option types:
 
-## Verification
+```rust
+use martensite_tkbo::profile_extrusion::{PlanarProofVersion, PlanarProofWorkLimit};
+use martensite_tksketch::surface_sketch::*;
 
-At the P4 checkpoint on Linux x86_64, the complete library suite passed 199 tests in 30.59 seconds,
-excluding compilation. Two tests are excluded by default: the subprocess worker
-is explicitly run by its parent; the separate stress campaign has its own gate.
-The public integration controls passed seven tests in 4.22 seconds. Their ignored
-worker was explicitly executed twice by the process-replay parent.
+let request = WrappedConeNormalRequest {
+    profile,
+    selections,
+    support: ConeSupport {
+        apex: [0.0; 3],
+        axis: [0.0, 0.0, 1.0],
+        radial: [1.0, 0.0, 0.0],
+        semi_angle: 0.7,
+        chart_origin: 0.0,
+        normal: NormalSense::Outward,
+    },
+    depths: [-0.1, 0.2],
+    options: WrappedNormalOptions {
+        spatial_error: 1e-4,
+        planar_work: PlanarProofWorkLimit::CurrentDefault,
+        maximum_fit_level: 8,
+        volume: WrappedVolumePolicy::Report,
+    },
+    proof: WrappedConeProofOptions::default(),
+};
+let result = normal_extrude_cone_profile(&request)?;
+let detached = result.export_native()?;
+assert_eq!(result.depths(), request.depths);
+assert_eq!(result.proof_options(), request.proof);
 
-The consumer controls check the closed-form volume of a developed rectangle,
-source-input isolation, independent native ownership, typed early and final
-handoff cancellation, refusal of an insufficient volume allowance, two-process
-replay and four concurrent operations followed by sequential replay. Replay
-compares full frozen bytes and public reports, history, budgets and material
-receipts. These controls cover the canonical cylindrical rectangle. The library
-API controls separately cover mixed line/quadratic/cubic profiles, a hole and
-disconnected material.
+let mut replay_request = request.clone();
+replay_request.proof.planar_proof = PlanarProofVersion::BernsteinV3;
+let replay = normal_extrude_cone_profile_with_cancel(&replay_request, || false)?;
+```
 
-Those runs used two build jobs, no incremental compilation and CI's unoptimized,
-stripped-debug profile. Strict all-target clippy passed before the subsequent
-history-helper extraction; it must be rerun before committing. The full
-repository affected-package gate has not passed for this working tree.
+`WrappedConeProofOptions::default()` selects `FilteredBernsteinV4` only for the
+new unreleased cone request's retained UV material proof. Explicit
+`BernsteinV3` remains available for same-policy replay; V3 and V4 may have
+different work/cancellation traces. Existing cylinder and toolkit defaults stay
+unchanged. The requested selector is rebound to the actual UV capture receipt
+and reported by `reports()[&region].material.planar_proof`.
 
-The later [oblique qualification](P5-OBLIQUE-QUALIFICATION.md) records the composed
-library run with 274 passing tests, the 40 passing public integration controls,
-final placement checks and strict all-target clippy. Its new subprocess worker
-is executed by the process-replay parent. The complete affected-package gate
-remains required before a feature push.
+The cone proof defaults retain 128 fractional arithmetic bits and one finite
+aggregate allowance of 1,000,000 charged operations. `integration` uses
+`CylindricalFluxOptions::default()` as a shared finite reference-volume and
+conditional proxy-flux policy. `WrappedConeAuthoredVolumeOptions` defaults to
+subdivision level 6, clearance level 0 and enclosure width `1e-7`.
+`maximum_fit_level` admits `0..=8`. These are explicit requested settings;
+tighter requests are not silently enlarged. `proof_options()` returns the
+original values, while leaf receipts retain actual remaining/effective settings
+and consumed work. Zero work can refuse as incomplete; it is not a no-limit mode.
 
-## Publication qualification remains open
+## Reference body and native representation
 
-The approved contract describes an exact normal extrusion of an epsilon-close
-profile with the same topology, subject to certified storage bounds. The
-[cap-trace accounting review](PUBLICATION-BUDGET.md#cap-trace-accounting-still-needs-publication-qualification)
-records the original gap relating authored-angle cap pcurves to fitted rational
-space edges. The [cap-realization composition](CAP-REALIZATION.md#filled-cap-distance-composition)
-now binds decoded controls, angular lifts, closure, homotopy cones, clearance
-and a physical filled-cap bound. That implementation still needs independent
-review and the remaining qualification gates before integration.
+The [approved rational contract](../../architecture/decisions/rational-wrapped-profile-representation.md)
+defines an exact normal extrusion of an epsilon-close profile with the same
+topology, subject to separately certified storage bounds. For a cone the chosen
+reference is the common-chart ideal q/L profile: q represents
+`tan((theta-center)/2)` and L is the rational slant function. Its executed
+composition binds original intervals, shared ideal endpoint identities,
+monotone join projections, nonadjacent clearance, a continuous angular range
+shorter than one turn and positive radius through the full depth interval.
+The filled reference-body bound is distinct from the stored proxy's checks.
 
-Sanitizer qualification also remains open. Host startup failed before the test
-body; the host loader preload is a diagnostic lead, with no demonstrated cause
-or successful sanitizer campaign. Bugs #447 and #449 have landed on main and
-were forward-merged into this feature lane; this lane's complete gate remains
-open. Full-text requalification, complete application operations, authored
-conical profiles and replacement deletion remain P5/P6 work. No package version
-or release tag changed.
+The native representation retains rational depth edges, common-weight two-row
+ruled sides and analytic `GeomConicalSurface` caps. An admitted reference slant
+`l0` gives cap radius `l0*sin(alpha)+depth*cos(alpha)`, axial origin
+`l0*cos(alpha)-depth*sin(alpha)`, U equal to theta and V equal to `L-l0`.
+Actual decoded edge/weight/row and cap-pcurve operands are certified. Shared
+native incidence alone does not prove exact geometric closure or embedding of
+the rounded patches. The actual UV material domain has its own topology and
+filled-domain certificate; its bridge to the q/L reference is reported separately.
+See the [analytic-carrier decision](../../architecture/decisions/analytic-wrapped-profile-carriers.md).
 
-The [P4 review](P4-REVIEW-2026-11-14.md) records the independent standards and
-spec findings and their follow-up checks. Bug #448 has a tested error-projection
-patch, and the endpoint-control and identified new-code size findings have been
-addressed. Broader foundation metrics and integration qualification remain open.
+The operation enforces the developed displacement allocation at epsilon/4,
+decoded depth-edge/full-ruling storage allocation at most epsilon/1000, and
+original nonadjacent clearance at least 4*epsilon. The storage limit is enforced
+separately before the total spatial comparison. Exact decoded rows and common
+weights extend the maximum endpoint storage bound through the full ruling.
+Cap traces, native tolerances, reference fill and the reference-to-proxy filled
+cap bridge must also satisfy their actual allocations and the original total
+spatial request. Passing a total epsilon cannot hide a failed storage allocation.
+
+One shared executor owns source capture, selection, keyed construction,
+freeze/decode, certification, native qualification, history and publication.
+Cylinder and cone mappings use the common `construct_mapped` incidence builder;
+support adapters provide mapping, carriers and mathematical receipts. Publication
+moves the completed owned family once and rebinds required evidence before success.
+
+## Result getters and evidence
+
+Both result families own frozen bytes and authored history. For cones:
+
+| Getter or report | Meaning |
+| --- | --- |
+| `history()`, `support()`, `depths()`, `options()`, `proof_options()` | Authored lineage and original requested input/settings. |
+| `encoded_brep()`, `export_native()` | Immutable keyed archive and independently decoded native owners. |
+| `reports()[&region]` | `WrappedConeMemberReport`: counted incidence, native validation, boundary/trace/tolerance, actual storage, material and measure evidence. |
+| `budget()` | `WrappedConeBudgetReport`: source and aggregate planar work, aggregate arithmetic/integration work, requested/achieved spatial bounds, reference/bridge bounds and family volume comparisons. |
+| `reference_body_receipt()` | Actual source-bound reference topology, filled-body and storage composition. |
+| `reference_volume_receipt(region)` | `CertifiedConicalReferenceVolume`, with integration enclosure, effective policies and work. |
+| `authored_receipt(region)`, `flux_receipt(region)` | Original-source volume and conditional proxy-flux receipts. |
+| `boundary_flux_origin()` | Origin of `F(p)=(p-origin)/3`; the canonical cone uses its apex. |
+
+`depth_storage_error[2]`, `ruled_storage_error` and `storage_allowance` report
+achieved O3 bounds and the effective allocated limit. Family fields
+`reference_developed_error`, `reference_filled_error`, `reference_storage_error`
+and `cap_reference_proxy_error` retain separate comparisons.
+`WrappedConeMaterialReport` fields `material.planar`, `material.planar_work` and
+`material.planar_proof` describe the actual retained UV proof.
+`material.chart_admission_tolerance` is the actual
+scalar admission resolution in mixed `[V,U]` chart coordinates, not a physical
+separation or spatial-error bound. Member arithmetic excludes family source
+preparation; the family total includes it. `source_planar_work` remains distinct
+from aggregate `planar_work`; integration cells aggregate reference and proxy work.
+
+Incidence and cap/side-pcurve coverage count actual retained occurrences.
+Ordered native validation keeps its original check modes, including sampled
+geometry and native-search self-intersection coverage. Those modes do not become
+exact proofs because reference or storage certification passed. Cylinder
+reports retain their existing `.spatial`, `.measures` and placement report layout.
+
+| Cone measure field | Evidence |
+| --- | --- |
+| `authored_volume` | Certified authored normal-volume enclosure under the admitted normal map. |
+| `reference_volume` | Certified volume enclosure of the executed exact q/L reference body. |
+| `boundary_flux` | Certified signed proxy patch-occurrence flux; it does not assert literal native patch closure. |
+| `native_volume` | Native quadrature estimate and integration error estimate, separate from certified measures. |
+
+`WrappedConeVolumeBounds` is used for both `member.volume` and `budget().volume`.
+Its `discrepancy` preserves authored-versus-proxy-flux meaning, and
+`integration_error` is the proxy-flux integration uncertainty.
+`authored_reference_discrepancy` is the authoritative authored-versus-reference
+body comparison; `proxy_reference_discrepancy` and `reference_integration_error`
+remain separately labelled. Reference integration uncertainty is already
+included in interval comparisons and is not added a second time.
+`WrappedVolumePolicy::Refuse(allowance)` rejects an unmet aggregate
+`authored_reference_discrepancy` for cones. `Report` retains the achieved bounds;
+neither mode widens spatial or work limits. The existing cylinder policy is unchanged.
+
+Inward normals normalize physical depths to `[-last,-first]` while public first
+and last history roles remain caller-relative. Directed source spans and split
+vertices retain authored identity. Detached export checks keyed correspondence
+and duplicates before publishing entity maps. Exports share no native topology
+owners; changing a request or one export leaves the frozen result and other
+exports isolated. Published metadata has no mutation interface, and public
+request/result types have compile-time `Send + Sync` controls.
+
+Failures retain operation, stage, class, actual known authored entities and an
+owned cause. An operation refusal is returned before a later cancellation poll
+can mask it. Cancellation and exhausted required checks return no successful
+partial geometry. Completed results, invalid input, unsupported scope,
+incomplete work and cancellation remain distinct outcomes.
+
+## Candidate measurements and remaining qualification
+
+The full Math library passed 825 tests with no failures or ignored cases. Ten test-only
+auto-trait controls cover all 63 new public Math declarations, including 47
+previously missing direct `Send + Sync` assertions. This follow-up changes no
+runtime algorithm. The
+full Sketch library passed 441 with no failures and 5 ignored controls in
+142.42 seconds; public surface-sketch integration passed 50 with no failures
+and 2 ignored controls in 25.90 seconds. Ignored subprocess workers were
+exercised by passed parent controls. The explicit four-worker, three-case
+family contention stress passed 1/0/0 in 34.97 seconds. Same-policy process and
+thread replay remains covered. Strict all-target Sketch Clippy passed before
+the declaration-order formatting follow-up.
+
+The library/public checks preceded source `64110e40`; its difference from tested
+parent `de2b7590` is only the canonical root-module declaration reorder
+`a72032dd`, with no behavior change. The final contention and benchmark runs
+used `64110e40` plus the preserved feature working changes. The first #544 full
+PR attempt stopped solely on that formatter ordering and ran no later stages.
+The corrected local run completed all planned 472 test binaries and 40 doctest
+groups, with 88402 passed, 0 failed and 157 ignored. Its final launcher exit
+status was not recovered. Component
+[PR #548](https://github.com/Oblikovati/Martensite/pull/548) was opened at
+`a72032dd` against `release/next`; its component evidence is separate from the
+subsequent full local cone gate. That gate passed with captured exit 0 at
+18:25:07 UTC on 2026-11-18. The
+[receipt](references/cone-canonical-pr-gate-2026-11-18-receipt.json) records 41
+affected packages, 473 native targets, 40 doctest crates and 520 outer summaries:
+89075 passed, 0 failed, 158 ignored and 0 filtered. The separate source unsafe
+check passed 9 with 436 filtered. Eleven nested summaries were excluded from
+these outer totals: seven SDK fixtures, including one intentional negative
+fixture, and four isolated worker summaries. The
+[verification record](VERIFICATION.md#canonical-cone-pr-gate-2026-11-18)
+retains the exact scope, source identity and command/profile inventory.
+Gate A review 2 ended with memory-only remediation after resolving all four
+reference/body correctness findings. The maintainer accepted the quantified
+Phase A code/process footprint tradeoff on 2026-11-18. Final
+[review 3](references/cone-gate-a-oracle-3-2026-11-18.md) accepted the bounded
+phase commit and ready PR. The [dated decision](PRODUCTION-MEMORY-ACCEPTANCE.md#maintainer-decision-2026-11-18)
+does not change runtime, heap, tolerance or general performance policy. Hosted
+checks, including new cone TSan, remain pending and must pass before merge.
+This acceptance does not complete #414/#418; B/C have not started. The focused
+ordinary cone concurrency control passed; driver and inventory checks passed
+46 and 9 tests. The TSan startup fixture exited 139
+before `main`, and no instrumented cone geometry ran.
+
+The final campaign compares the two cone policies in the same executable and
+uses a stronger cylinder baseline from accepted source before the shared
+executor. Every accepted-workload assertion passed.
+
+| Final workload | Three recorded seconds | Median seconds | Peak RSS range, KiB |
+| --- | --- | --- | --- |
+| Cone V3, public API timer | 9.177975 / 9.315035 / 9.701001 | 9.315035 | 56080 to 56560 |
+| Cone V4, same executable/API timer | 4.741645 / 4.822891 / 4.973667 | 4.822891 | 56404 to 56608 |
+| Pre-shared-executor cylinder, process wall | 3.82 / 3.99 / 3.95 | 3.95 | 54736 to 54872 |
+| Current cylinder, process wall | 3.98 / 3.90 / 3.84 | 3.90 | 56304 to 56680 |
+
+All three V4 API measurements met the five-second target on this accepted
+workload. Cone V3/V4 RSS ranges overlap. Cylinder wall ranges also overlap,
+with no observed runtime regression in these runs; three nonexclusive-host
+samples per case do not establish a statistically proven speedup. All six
+cylinder replays retained 221424 bytes and SHA256
+`ca2e7ed51f75ba57caced69ce679d3a0f87afecf9c70205bb1de0cc5dea00841`.
+Native bytes, history and achieved bounds were also compared separately.
+
+The CPU-6 campaign included one whole test-process time of 5.01 seconds while
+its API call took 4.973667 seconds. A fixed three-run
+[whole-fixture guard](references/cone-whole-fixture-guard-2026-11-18.json) repeated
+the final binary on the initial campaign's CPU 10. API calls took
+4.623892, 4.612031 and 4.749587 seconds; complete test processes took
+4.65, 4.64 and 4.78 seconds. All accepted assertions passed. This checks the
+stricter five-second fixture target while retaining the slower CPU-6 observation.
+
+Cylinder median GNU-time peak RSS increased from `54860` to `56624` KiB,
+by `1764` KiB (about 1.7 MiB). The separate read-only
+[memory-composition diagnostic](references/cone-final-workload-benchmark-2026-11-18-memory-composition.json)
+sampled the following values:
+
+| Sampled cylinder quantity, KiB | Earlier artifact | Current | Difference |
+| --- | --- | --- | --- |
+| VmRSS | 55000 | 56632 | +1632 |
+| File-backed RSS | 35336 | 36904 | +1568 |
+| Anonymous RSS | 19664 | 19728 | +64 |
+| Executable `r-xp` mapping | 26932 | 28520 | +1588 |
+
+Most of the sampled RSS increase was mapped executable pages. Sampling every
+25 ms and combining non-atomic status/mapping snapshots gives approximate
+composition, not exact allocation counts or proof of the cause of every byte.
+This diagnosis does not remove the measured footprint increase from review.
+`wait4_launch_peak_rss` in that diagnostic can include pre-exec launch context;
+it is not a benchmark process peak. Use the GNU-time campaign rows for actual
+process peak RSS.
+
+Final [metadata](references/cone-final-workload-benchmark-2026-11-18-metadata.json),
+[rows](references/cone-final-workload-benchmark-2026-11-18-rows.json) and
+[summary](references/cone-final-workload-benchmark-2026-11-18-summary.json) retain
+exact data and source/binary hashes. Runs used CPU affinity 6 on a nonexclusive
+host, with the recorded workspace debug assertions and package optimizations,
+stripped debug information, two build jobs, no incremental compilation and no
+RUSTFLAGS override. The cylinder baseline is source
+`7817e8d1f6c8c502fa860d4300afe32f426c603e`, retained executable SHA256
+`a3b8033108444b98a0a49fb0f3ae96c61e4cf9d2b6ecc1a2743228a873390bdd`.
+This is not a comparison against a previous published cone release.
+
+The initial campaign remains intact in its own
+[metadata](references/cone-policy-benchmark-2026-11-18-metadata.json),
+[rows](references/cone-policy-benchmark-2026-11-18-rows.json) and
+[summary](references/cone-policy-benchmark-2026-11-18-summary.json). It used a
+retained pre-#542 cylinder baseline and CPU affinity 10. Its cone medians were
+`8.698827` and `4.412819` seconds. Case 7 succeeded before its driver stopped on
+a libtest-prefix parser assumption; the replay token came from that same log,
+original metrics were retained, and no cone timing was rerun. Both campaigns
+are preserved rather than selecting only the faster observations. Neither
+campaign grants remaining kernel/application acceptance or a release.
+
+## Historical checkpoints
+
+P4's canonical-cylinder checkpoint passed 199 library tests in 30.59 seconds
+and 7 public integration controls in 4.22 seconds. Its subprocess worker was
+explicitly run by the parent; a separate stress campaign had its own gate.
+The later [oblique qualification](P5-OBLIQUE-QUALIFICATION.md) records 274 passing
+library tests, 40 public integration controls, final placement checks and strict
+Clippy. These are historical cylinder records, not current cone qualification.
+The [P4 review](P4-REVIEW-2026-11-14.md) and
+[cap-realization composition](CAP-REALIZATION.md#filled-cap-distance-composition)
+retain the earlier review and accounting history. The current bounded candidate
+review accepted a commit and ready PR; required hosted checks, including new
+cone TSan, must still pass before merge. The local affected-package pass is
+recorded above. No package version or release tag is authorized by these records.

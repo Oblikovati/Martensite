@@ -53,17 +53,40 @@ mod cylindrical_depths;
 pub use cylindrical_depths::{
     CertifiedCylindricalDepths, CylindricalDepthFailure, certify_cylindrical_depths,
 };
+mod conical_material;
+mod conical_profile;
 mod cylindrical_profile;
 mod cylindrical_storage;
 pub use super::certificate_arithmetic::bounded_failure::BoundedArithmeticFailure;
+pub use conical_material::{
+    ConicalMaterialError, ConicalMaterialEvidence, ConicalMaterialQuery, ConicalMaterialSpan,
+    certify_conical_material,
+};
+pub use conical_profile::{
+    ConeClearanceOptions, ConeRequest, ConeRequestError, ConeRequestReceipt,
+    ConicalAuthoredContour, ConicalAuthoredFlux, ConicalAuthoredFluxError,
+    ConicalAuthoredFluxQuery, ConicalAuthoredFluxStage, ConicalBoundaryError,
+    ConicalBoundaryEvidence, ConicalBoundaryFailure, ConicalBoundaryFailureKind,
+    ConicalBoundaryProofFailure, ConicalBoundaryQuery, ConicalBoundaryStage, ConicalDepthFailure,
+    ConicalJoinFailureKind, ConicalJoinProofFailure, ConicalJoinSpan, ConicalJoinsEvidence,
+    ConicalJoinsFailure, ConicalJoinsQuery, ConicalOriginalFailure, ConicalOriginalSpan,
+    ConicalReferenceError, ConicalReferenceEvidence, ConicalReferenceFailure,
+    ConicalReferenceMember, ConicalReferenceQuery, ConicalSectorEvidence, ConicalSectorFailure,
+    ConicalSectorQuery, ConicalSectorWedge, ConicalSourceFailure, ConicalStorageError,
+    ConicalStorageEvidence, ConicalStorageFailure, ConicalStorageQuery, certify_cone_request,
+    certify_conical_authored_flux, certify_conical_boundary, certify_conical_joins,
+    certify_conical_reference, certify_conical_sector, certify_conical_storage,
+};
 pub use cylindrical_profile::{
-    CertifiedCylindricalLift, CertifiedCylindricalProfile, CertifiedCylindricalTrim,
-    CylindricalChartPlan, CylindricalFitChart, CylindricalFitPlan, CylindricalFitQuery,
-    CylindricalLiftError, CylindricalProfileBehavior, CylindricalProfileError,
-    CylindricalProfileFailure, CylindricalProfileInterval, CylindricalProfileOptions,
-    CylindricalProfileQuery, CylindricalTrimError, CylindricalTrimQuery, certify_cylindrical_lift,
-    certify_cylindrical_profile, certify_cylindrical_trim, plan_cylindrical_charts,
-    plan_cylindrical_fit,
+    CertifiedConicalTrim, CertifiedConicalTrimPair, CertifiedCylindricalLift,
+    CertifiedCylindricalProfile, CertifiedCylindricalTrim, ConicalTrimCarrier, ConicalTrimError,
+    ConicalTrimPairError, ConicalTrimPairQuery, ConicalTrimQuery, CylindricalChartPlan,
+    CylindricalFitChart, CylindricalFitPlan, CylindricalFitQuery, CylindricalLiftError,
+    CylindricalProfileBehavior, CylindricalProfileError, CylindricalProfileFailure,
+    CylindricalProfileInterval, CylindricalProfileOptions, CylindricalProfileQuery,
+    CylindricalTrimError, CylindricalTrimQuery, certify_conical_trim, certify_conical_trim_pair,
+    certify_cylindrical_lift, certify_cylindrical_profile, certify_cylindrical_trim,
+    plan_cylindrical_charts, plan_cylindrical_fit,
 };
 mod inequality;
 mod proof;
@@ -172,10 +195,15 @@ pub use polynomial_integrals::{
 
 mod rational_integrals;
 pub use rational_integrals::{
-    CertifiedCylindricalFlux, CertifiedRationalMeasure, CylindricalFluxError,
-    CylindricalFluxFailure, CylindricalFluxOptions, CylindricalFluxQuery, CylindricalFluxSpan,
-    CylindricalFluxWork, RATIONAL_TAYLOR_ORDER, RationalIntegralError, RationalIntegralEvidence,
-    RationalIntegralFailure, RationalIntegralOptions, certify_cylindrical_boundary_flux,
+    AnalyticConicalFluxError, AnalyticConicalFluxFailure, AnalyticConicalFluxQuery,
+    AnalyticConicalFluxSpan, CertifiedAnalyticConicalFlux, CertifiedConicalReferenceVolume,
+    CertifiedCylindricalFlux, CertifiedRationalMeasure, ConicalReferenceVolumeError,
+    ConicalReferenceVolumeFailure, ConicalReferenceVolumeQuery, ConicalReferenceVolumeSpan,
+    ConicalReferenceVolumeTerm, CylindricalFluxError, CylindricalFluxFailure,
+    CylindricalFluxOptions, CylindricalFluxQuery, CylindricalFluxSpan, CylindricalFluxWork,
+    RATIONAL_TAYLOR_ORDER, RationalIntegralError, RationalIntegralEvidence,
+    RationalIntegralFailure, RationalIntegralOptions, certify_analytic_conical_boundary_flux,
+    certify_conical_reference_volume, certify_cylindrical_boundary_flux,
     certify_rational_boundary_integral, certify_rational_face_area,
     certify_rational_sweep_integral,
 };
@@ -211,3 +239,6 @@ pub use frame_transport::{
     FrameSpatialInput, FrameTransportError, FrameTransportField, FrameTransportInput,
     FrameTransportQuantity, certify_frame_transport, certify_frame_transport_at_angle,
 };
+
+#[cfg(test)]
+mod cone_thread_contracts;

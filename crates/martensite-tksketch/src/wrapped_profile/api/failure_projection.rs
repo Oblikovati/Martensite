@@ -3,10 +3,10 @@ use super::*;
 use crate::surface_sketch::HistorySource;
 use WrappedFailureClass as Class;
 use martensite_tkbo::profile_extrusion::DeclineClass;
-struct Context {
-    stage: WrappedStage,
-    class: Class,
-    entities: Vec<HistorySource>,
+pub(in crate::surface_sketch::wrapped_profile) struct Context {
+    pub stage: WrappedStage,
+    pub class: Class,
+    pub entities: Vec<HistorySource>,
 }
 impl Context {
     fn new(class: Class, entities: Vec<HistorySource>) -> Self {
@@ -58,7 +58,7 @@ fn family_context(cause: &family::FamilyFailure) -> Context {
         F::History(cause) => history_context(cause),
     }
 }
-fn member_context(cause: &Refusal) -> Context {
+pub(in crate::surface_sketch::wrapped_profile) fn member_context(cause: &Refusal) -> Context {
     let mut context = match &cause.cause {
         RefusalCause::Native(_) => Context::new(Class::Native, vec![]),
         RefusalCause::Coverage(cause) => coverage_context(cause),
@@ -100,7 +100,10 @@ fn relation_context(entity: HistorySource, owners: &[SurfaceRegionId; 2]) -> Con
     entities.push(entity);
     Context::new(Class::InvalidInput, entities)
 }
-fn planar_context(cause: &planar::PlanarFailure, region: Option<SurfaceRegionId>) -> Context {
+pub(in crate::surface_sketch::wrapped_profile) fn planar_context(
+    cause: &planar::PlanarFailure,
+    region: Option<SurfaceRegionId>,
+) -> Context {
     let mut context = Context::optional(planar_class(cause), region);
     match cause {
         planar::PlanarFailure::SplitSource { curve, .. } => {
@@ -117,7 +120,9 @@ fn planar_context(cause: &planar::PlanarFailure, region: Option<SurfaceRegionId>
     }
     context
 }
-fn planar_class(cause: &planar::PlanarFailure) -> Class {
+pub(in crate::surface_sketch::wrapped_profile) fn planar_class(
+    cause: &planar::PlanarFailure,
+) -> Class {
     if matches!(cause, planar::PlanarFailure::WorkCapture(work) if work.is_cancelled()) {
         return Class::Cancelled;
     }
@@ -244,7 +249,9 @@ fn clearance_context(cause: &planar_clearance::ClearanceFailure) -> Context {
     };
     Context::new(Class::Incomplete, entities)
 }
-fn coverage_context(cause: &coverage::CoverageFailure) -> Context {
+pub(in crate::surface_sketch::wrapped_profile) fn coverage_context(
+    cause: &coverage::CoverageFailure,
+) -> Context {
     let class = if matches!(cause.cause, coverage::CoverageCause::Native(_)) {
         Class::Native
     } else {
@@ -270,7 +277,9 @@ fn coverage_targets(cause: &coverage::CoverageCause, entities: &mut Vec<HistoryS
     }
 }
 
-fn history_context(cause: &history::HistoryFailure) -> Context {
+pub(in crate::surface_sketch::wrapped_profile) fn history_context(
+    cause: &history::HistoryFailure,
+) -> Context {
     use history::HistoryFailure as H;
     let entities = match cause {
         H::DuplicateTarget(key) => vec![binding_source(*key)],

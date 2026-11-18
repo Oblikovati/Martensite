@@ -29,12 +29,21 @@ impl<'a> Control<'a> {
             cancelled_at: None,
         }
     }
+    #[cfg(test)]
     pub fn run<T>(
         &mut self,
         stage: FamilyStage,
         region: Option<SurfaceRegionId>,
         operation: impl FnOnce(&mut CancelPoll<'_>) -> Checked<T>,
     ) -> Checked<T> {
+        self.run_for(stage, region, operation)
+    }
+    pub fn run_for<T, E: From<Checkpoint>>(
+        &mut self,
+        stage: FamilyStage,
+        region: Option<SurfaceRegionId>,
+        operation: impl FnOnce(&mut CancelPoll<'_>) -> Result<T, E>,
+    ) -> Result<T, E> {
         self.ensure_active()?;
         let point = Checkpoint { stage, region };
         let mut poll = || self.observe(point);
@@ -43,9 +52,9 @@ impl<'a> Control<'a> {
         check_cancellation(point, &mut poll)?;
         Ok(result)
     }
-    fn ensure_active(&self) -> Checked<()> {
+    fn ensure_active<E: From<Checkpoint>>(&self) -> Result<(), E> {
         match self.cancelled_at {
-            Some(point) => Err(FamilyFailure::Cancelled(point)),
+            Some(point) => Err(E::from(point)),
             None => Ok(()),
         }
     }
@@ -61,9 +70,18 @@ impl<'a> Control<'a> {
     }
 }
 
-fn check_cancellation(point: Checkpoint, poll: &mut CancelPoll<'_>) -> Checked<()> {
+fn check_cancellation<E: From<Checkpoint>>(
+    point: Checkpoint,
+    poll: &mut CancelPoll<'_>,
+) -> Result<(), E> {
     if poll() {
-        return Err(FamilyFailure::Cancelled(point));
+        return Err(E::from(point));
     }
     Ok(())
+}
+
+impl From<Checkpoint> for FamilyFailure {
+    fn from(point: Checkpoint) -> Self {
+        Self::Cancelled(point)
+    }
 }

@@ -4,10 +4,12 @@ use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::CylindricalMeasureLimit;
 #[cfg(test)]
 mod tests;
-pub(in super::super) struct BudgetedFamily {
-    pub family: UnqualifiedFamily,
-    pub budget: publication_budget::BudgetEvidence,
-}
+pub(in super::super) type BudgetedFamily = operation::stages::Budgeted<
+    selection::QualifiedSelection,
+    pipeline::MemberGeometry,
+    publication_budget::BudgetEvidence,
+>;
+
 #[cfg(test)]
 pub(in super::super) fn construct_budgeted(
     requests: &[Request],

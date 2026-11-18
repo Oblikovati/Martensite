@@ -58,11 +58,11 @@ fn missing_or_reversed_family_member_is_refused() {
         .clone();
     root.set_free(true).unwrap();
     Builder.remove(&mut root, &member).unwrap();
-    assert!(coverage::certify_family(&prepared.prepared, &root, &bindings).is_err());
+    assert!(coverage::certify_developed_family(&prepared.prepared, &root, &bindings).is_err());
     Builder
         .add(&mut root, &member.oriented(Orientation::Reversed))
         .unwrap();
-    assert!(coverage::certify_family(&prepared.prepared, &root, &bindings).is_err());
+    assert!(coverage::certify_developed_family(&prepared.prepared, &root, &bindings).is_err());
 }
 
 fn frozen_fixture() -> (Vec<Request>, Shape, Vec<(BindingKey, Shape)>) {
@@ -78,10 +78,10 @@ fn duplicate_unbound_and_noncompound_family_roots_are_refused() {
         .value()
         .unwrap()
         .clone();
-    assert!(coverage::certify_family(&prepared, &member, &bindings).is_err());
+    assert!(coverage::certify_developed_family(&prepared, &member, &bindings).is_err());
     root.set_free(true).unwrap();
     Builder.add(&mut root, &member).unwrap();
-    assert!(coverage::certify_family(&prepared, &root, &bindings).is_err());
+    assert!(coverage::certify_developed_family(&prepared, &root, &bindings).is_err());
     Builder.remove(&mut root, &member).unwrap();
     let (_, other_root, _) = frozen_fixture();
     let other = ShapeIterator::new(&other_root, true, true)
@@ -89,14 +89,14 @@ fn duplicate_unbound_and_noncompound_family_roots_are_refused() {
         .unwrap()
         .clone();
     Builder.add(&mut root, &other).unwrap();
-    assert!(coverage::certify_family(&prepared, &root, &bindings).is_err());
+    assert!(coverage::certify_developed_family(&prepared, &root, &bindings).is_err());
 }
 #[test]
 fn aliased_cross_member_bindings_and_duplicate_owners_are_refused() {
     let (mut prepared, root, mut bindings) = frozen_fixture();
     alias_solids(&mut bindings);
     assert!(matches!(
-        coverage::certify_family(&prepared, &root, &bindings),
+        coverage::certify_developed_family(&prepared, &root, &bindings),
         Err(coverage::CoverageFailure {
             cause: coverage::CoverageCause::AliasedBindings { .. },
             ..
@@ -104,7 +104,7 @@ fn aliased_cross_member_bindings_and_duplicate_owners_are_refused() {
     ));
     let (_, root, bindings) = frozen_fixture();
     prepared.push(prepared[0].clone());
-    assert!(coverage::certify_family(&prepared, &root, &bindings).is_err());
+    assert!(coverage::certify_developed_family(&prepared, &root, &bindings).is_err());
 }
 #[test]
 fn retained_global_binding_requires_every_member_and_exact_o2_sources() {
@@ -112,7 +112,7 @@ fn retained_global_binding_requires_every_member_and_exact_o2_sources() {
     let selection = selection::certify(&originals, Default::default()).unwrap();
     let prepared = &selection.prepared.prepared;
     let (_, _, root, bindings) = freeze::construct(prepared).unwrap();
-    let (_, views) = coverage::certify_family(prepared, &root, &bindings).unwrap();
+    let (_, views) = coverage::certify_developed_family(prepared, &root, &bindings).unwrap();
     let mut stored = store(&originals, prepared, views).unwrap_or_else(|e| panic!("{e}"));
     bind(&originals, &selection, &stored).unwrap();
     let removed = stored.remove(&SurfaceRegionId(100)).unwrap();
@@ -140,8 +140,8 @@ fn decoded_export_mutation_does_not_change_frozen_family() {
     Builder.remove(&mut exported, &member).unwrap();
     let (root, bindings) = pipeline::decode(&result.bytes, &result.keys).unwrap();
     let prepared = &result.selection.prepared.prepared;
-    assert!(coverage::certify_family(prepared, &exported, &bindings).is_err());
-    assert!(coverage::certify_family(prepared, &root, &bindings).is_ok());
+    assert!(coverage::certify_developed_family(prepared, &exported, &bindings).is_err());
+    assert!(coverage::certify_developed_family(prepared, &root, &bindings).is_ok());
     assert_eq!(
         crate::surface_sketch::encoding::encode(&root, &bindings).unwrap(),
         result.bytes

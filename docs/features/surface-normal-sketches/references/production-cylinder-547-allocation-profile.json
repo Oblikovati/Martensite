@@ -1,0 +1,137 @@
+{
+  "scope": "glibc memusage diagnostic, no timer, mmap tracing, identical argv0 and equal-length injected output paths; not a runtime or RSS benchmark.",
+  "rows": [
+    {
+      "label": "before",
+      "exit_code": 0,
+      "argv0": "consumer",
+      "output_argument_bytes": 42,
+      "heap_total_bytes": 997062241,
+      "heap_peak_bytes": 16880805,
+      "stack_peak_bytes": 312512,
+      "calls": {
+        "malloc": {
+          "calls": 13187571,
+          "bytes": 545673569,
+          "failed": 0
+        },
+        "realloc": {
+          "calls": 911825,
+          "bytes": 187595414,
+          "failed": 0
+        },
+        "calloc": {
+          "calls": 3618612,
+          "bytes": 263780970,
+          "failed": 0
+        }
+      },
+      "native_sha256": "77958916b25ae0639f71315392109cbb1b279d47a3f381b9ff1663b49929196a",
+      "evidence_sha256": "560adbd32919b674940036a80d00d39e5b8657084afc4ddf31328282d9b1bdf5",
+      "log": "/tmp/martensite-547-heap-normalized/run-01.log",
+      "command": [
+        "/usr/bin/taskset",
+        "-c",
+        "10",
+        "/usr/bin/memusage",
+        "--no-timer",
+        "--mmap",
+        "--progname=consumer",
+        "/usr/bin/bash",
+        "-c",
+        "exec -a consumer \"$1\" \"$2\"",
+        "matched-launcher",
+        "/tmp/martensite-gatea2-production-cylinder/bins/before-consumer",
+        "/tmp/martensite-547-heap-normalized/run-01"
+      ]
+    },
+    {
+      "label": "after",
+      "exit_code": 0,
+      "argv0": "consumer",
+      "output_argument_bytes": 42,
+      "heap_total_bytes": 997062240,
+      "heap_peak_bytes": 16880804,
+      "stack_peak_bytes": 311952,
+      "calls": {
+        "malloc": {
+          "calls": 13187571,
+          "bytes": 545673568,
+          "failed": 0
+        },
+        "realloc": {
+          "calls": 911825,
+          "bytes": 187595414,
+          "failed": 0
+        },
+        "calloc": {
+          "calls": 3618612,
+          "bytes": 263780970,
+          "failed": 0
+        }
+      },
+      "native_sha256": "77958916b25ae0639f71315392109cbb1b279d47a3f381b9ff1663b49929196a",
+      "evidence_sha256": "560adbd32919b674940036a80d00d39e5b8657084afc4ddf31328282d9b1bdf5",
+      "log": "/tmp/martensite-547-heap-normalized/run-02.log",
+      "command": [
+        "/usr/bin/taskset",
+        "-c",
+        "10",
+        "/usr/bin/memusage",
+        "--no-timer",
+        "--mmap",
+        "--progname=consumer",
+        "/usr/bin/bash",
+        "-c",
+        "exec -a consumer \"$1\" \"$2\"",
+        "matched-launcher",
+        "/tmp/martensite-gatea2-production-cylinder/bins/after-consumer",
+        "/tmp/martensite-547-heap-normalized/run-02"
+      ]
+    },
+    {
+      "label": "fixed",
+      "exit_code": 0,
+      "argv0": "consumer",
+      "output_argument_bytes": 42,
+      "heap_total_bytes": 997062240,
+      "heap_peak_bytes": 16880804,
+      "stack_peak_bytes": 311952,
+      "calls": {
+        "malloc": {
+          "calls": 13187571,
+          "bytes": 545673568,
+          "failed": 0
+        },
+        "realloc": {
+          "calls": 911825,
+          "bytes": 187595414,
+          "failed": 0
+        },
+        "calloc": {
+          "calls": 3618612,
+          "bytes": 263780970,
+          "failed": 0
+        }
+      },
+      "native_sha256": "77958916b25ae0639f71315392109cbb1b279d47a3f381b9ff1663b49929196a",
+      "evidence_sha256": "560adbd32919b674940036a80d00d39e5b8657084afc4ddf31328282d9b1bdf5",
+      "log": "/tmp/martensite-547-heap-normalized/run-03.log",
+      "command": [
+        "/usr/bin/taskset",
+        "-c",
+        "10",
+        "/usr/bin/memusage",
+        "--no-timer",
+        "--mmap",
+        "--progname=consumer",
+        "/usr/bin/bash",
+        "-c",
+        "exec -a consumer \"$1\" \"$2\"",
+        "matched-launcher",
+        "/tmp/martensite-gatea2-production-cylinder/bins/fixed-consumer",
+        "/tmp/martensite-547-heap-normalized/run-03"
+      ]
+    }
+  ]
+}

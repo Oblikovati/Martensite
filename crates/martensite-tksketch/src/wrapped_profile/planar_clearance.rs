@@ -3,7 +3,7 @@ use super::*;
 #[path = "planar_clearance_family.rs"]
 mod family;
 #[path = "planar_intervals.rs"]
-mod intervals;
+pub(super) mod intervals;
 pub(super) use family::bind_many;
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedCylindricalClearance, CertifiedCylindricalPeriodicClearance,

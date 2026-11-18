@@ -1,0 +1,29 @@
+{
+  "before": {
+    ".gcc_except_table": 2482304,
+    ".rodata": 1774812,
+    ".eh_frame": 2444552,
+    ".text": 24675333,
+    ".data.rel.ro": 1056936,
+    ".data": 9800,
+    ".bss": 284
+  },
+  "after": {
+    ".gcc_except_table": 2527188,
+    ".rodata": 1789276,
+    ".eh_frame": 2470836,
+    ".text": 24802421,
+    ".data.rel.ro": 1069552,
+    ".data": 9808,
+    ".bss": 284
+  },
+  "fixed": {
+    ".gcc_except_table": 2527192,
+    ".rodata": 1776412,
+    ".eh_frame": 2456048,
+    ".text": 24740869,
+    ".data.rel.ro": 1058192,
+    ".data": 9808,
+    ".bss": 284
+  }
+}

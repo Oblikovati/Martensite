@@ -115,7 +115,7 @@ fn whole_interval(
     })
 }
 
-fn split_piece(piece: &AuthoredPiece) -> [AuthoredPiece; 2] {
+pub(super) fn split_piece(piece: &AuthoredPiece) -> [AuthoredPiece; 2] {
     let level = piece.span.level + 1;
     let first = piece.span.index * 2;
     let joint = CornerSource::Split {

@@ -18,7 +18,7 @@ pub(super) fn admit(query: CylindricalFluxQuery<'_>) -> Checked<()> {
     Ok(())
 }
 
-fn policy(options: CylindricalFluxOptions) -> Checked<()> {
+pub(super) fn policy(options: CylindricalFluxOptions) -> Checked<()> {
     if options.behavior_version != 1
         || options.max_degree > 16
         || !(1..=4096).contains(&options.max_spans)
@@ -49,7 +49,7 @@ fn admit_span(
     common_weights(index, span.boundaries)
 }
 
-fn matching_counts(index: usize, curves: [MetricBezier<'_, 3>; 2]) -> Checked<()> {
+pub(super) fn matching_counts(index: usize, curves: [MetricBezier<'_, 3>; 2]) -> Checked<()> {
     let counts = curves.map(|c| c.poles.len());
     if counts[0] != counts[1] {
         return Err(CylindricalFluxFailure::PairCounts {
@@ -72,7 +72,7 @@ fn admit_pair<const DIM: usize>(
     Ok(())
 }
 
-fn admit_curve<const DIM: usize>(
+pub(super) fn admit_curve<const DIM: usize>(
     span: usize,
     curve: MetricBezier<'_, DIM>,
     role: &'static str,
@@ -122,7 +122,7 @@ fn value_check(
     Ok(())
 }
 
-fn common_weights(span: usize, curves: [MetricBezier<'_, 3>; 2]) -> Checked<()> {
+pub(super) fn common_weights(span: usize, curves: [MetricBezier<'_, 3>; 2]) -> Checked<()> {
     for pole in 0..curves[0].poles.len() {
         let weights = curves.map(|curve| curve.weights.map_or(1., |values| values[pole]));
         if weights[0].to_bits() != weights[1].to_bits() {

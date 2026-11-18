@@ -36,7 +36,7 @@ pub(super) fn certify(
     })
 }
 
-pub(super) fn side_trims(
+pub(in crate::surface_sketch::wrapped_profile) fn side_trims(
     request: &DevelopedRegionRequest,
     piece: &AuthoredPiece,
     bindings: &Bindings<'_>,
@@ -114,7 +114,7 @@ fn side_bindings(piece: &AuthoredPiece) -> [TrimBinding; 4] {
     ]
 }
 
-pub(super) fn pcurve(
+pub(in crate::surface_sketch::wrapped_profile) fn pcurve(
     edge_key: BindingKey,
     face_key: BindingKey,
     expected: &[[f64; 2]],
@@ -185,7 +185,7 @@ fn coefficients(
     Ok(points)
 }
 
-fn topology_tolerances(
+pub(in crate::surface_sketch::wrapped_profile) fn topology_tolerances(
     edge_key: BindingKey,
     face_key: BindingKey,
     maximum: f64,

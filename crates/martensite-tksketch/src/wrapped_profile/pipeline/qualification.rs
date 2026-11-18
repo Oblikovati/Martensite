@@ -1,5 +1,7 @@
 //! Native observations stay separate from geometric receipts and keep their original order (#527).
-use super::{Refusal, Request, Shape, Stage, ValidationReport, at, estimate, ordered_checks};
+use super::{
+    DevelopedRegionRequest, Refusal, Shape, Stage, ValidationReport, at, estimate, ordered_checks,
+};
 
 pub(in super::super) struct NativeQualification {
     pub report: ValidationReport,
@@ -8,7 +10,7 @@ pub(in super::super) struct NativeQualification {
 }
 
 pub(in super::super) fn qualify_native(
-    request: &Request,
+    request: &DevelopedRegionRequest,
     shape: &Shape,
 ) -> Result<NativeQualification, Refusal> {
     let report = at(

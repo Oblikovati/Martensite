@@ -8,14 +8,21 @@ mod error;
 mod expected;
 mod faces;
 mod family;
-pub(super) use family::{FamilyCoverage, MemberView, certify_family};
+pub(super) use family::{FamilyCoverage, MemberView, certify_developed_family};
 mod members;
+mod occurrences;
+pub(super) use occurrences::Occurrences;
+use operation::topology::DevelopedMapHandedness;
 mod registry;
 mod representations;
 use error::{Checked, count, fail, native};
 pub(super) use error::{CoverageCause, CoverageFailure, CoverageOwner};
 use faces::FaceEvidence;
 use registry::Registry;
+#[cfg(test)]
+mod handedness_tests;
+#[cfg(test)]
+mod occurrence_index_tests;
 #[cfg(test)]
 mod tests;
 
@@ -49,19 +56,55 @@ pub(super) fn certify(
     root: &Shape,
     bindings: &[(BindingKey, Shape)],
 ) -> Checked<CoverageEvidence> {
+    certify_developed(request, root, bindings)
+}
+
+pub(super) fn certify_developed(
+    request: &DevelopedRegionRequest,
+    root: &Shape,
+    bindings: &[(BindingKey, Shape)],
+) -> Checked<CoverageEvidence> {
+    inspect(request, root, bindings, DevelopedMapHandedness::Preserving).map(|(report, _)| report)
+}
+pub(super) fn certify_developed_oriented(
+    request: &DevelopedRegionRequest,
+    root: &Shape,
+    bindings: &[(BindingKey, Shape)],
+    handedness: DevelopedMapHandedness,
+) -> Checked<(CoverageEvidence, Occurrences)> {
+    let (report, faces) = inspect(request, root, bindings, handedness)?;
+    Ok((report, Occurrences::new(faces)?))
+}
+fn inspect(
+    request: &DevelopedRegionRequest,
+    root: &Shape,
+    bindings: &[(BindingKey, Shape)],
+    handedness: DevelopedMapHandedness,
+) -> Checked<(CoverageEvidence, Vec<FaceEvidence>)> {
     let registry = Registry::build(request, bindings)?;
+    let faces = root_faces(request, root, &registry, handedness)?;
+    let edge_faces = edges::incidences(&faces)?;
+    edges::endpoints(request, &registry)?;
+    representations::check(&registry, &edge_faces)?;
+    let report = evidence(&registry, &faces, &edge_faces)?;
+    Ok((report, faces))
+}
+
+fn root_faces(
+    request: &DevelopedRegionRequest,
+    root: &Shape,
+    registry: &Registry<'_>,
+    handedness: DevelopedMapHandedness,
+) -> Checked<Vec<FaceEvidence>> {
     let owner = expected::region(request, HistoryRole::Solid);
     if !root.is_equal(registry.shape(owner)?) {
         return Err(fail(owner, CoverageCause::RootBinding));
     }
-    let expected_faces = expected::faces(request);
+    let expected_faces = expected::faces(request, handedness);
     let shell = shell(owner, root)?;
-    members::uses(owner, &shell, ShapeEnum::Face, &expected_faces, &registry)?;
-    let faces = check_faces(request, &registry)?;
-    let edge_faces = edges::incidences(&faces)?;
-    edges::endpoints(request, &registry)?;
-    representations::check(&registry, &edge_faces)?;
-    evidence(&registry, &faces, &edge_faces)
+    let mut uses = members::uses(owner, &shell, ShapeEnum::Face, &expected_faces, registry)?;
+    occurrences::order_uses(&mut uses)?;
+    check_faces(request, registry, handedness, &uses)
 }
 
 fn shell(owner: BindingKey, root: &Shape) -> Checked<Shape> {
@@ -83,14 +126,19 @@ fn shell(owner: BindingKey, root: &Shape) -> Checked<Shape> {
     members::closed(owner, &shell)?;
     Ok(shell)
 }
-fn check_faces(request: &Request, registry: &Registry<'_>) -> Checked<Vec<FaceEvidence>> {
-    let mut result = cap_faces(request, registry)?;
+fn check_faces(
+    request: &DevelopedRegionRequest,
+    registry: &Registry<'_>,
+    handedness: DevelopedMapHandedness,
+    uses: &[BoundUse],
+) -> Checked<Vec<FaceEvidence>> {
+    let mut result = cap_faces(request, registry, handedness, uses)?;
     for piece in request.loops.iter().flatten() {
         let owner = expected::span(piece.span, HistoryRole::SideFace);
         result.push(faces::check(
             owner,
             &[expected::side(piece)],
-            Orientation::Forward,
+            occurrences::face_orientation(owner, uses)?,
             registry,
         )?);
     }
@@ -109,13 +157,18 @@ const CAP_USES: &[(HistoryRole, HistoryRole, Orientation)] = &[
     ),
 ];
 
-fn cap_faces(request: &Request, registry: &Registry<'_>) -> Checked<Vec<FaceEvidence>> {
+fn cap_faces(
+    request: &DevelopedRegionRequest,
+    registry: &Registry<'_>,
+    handedness: DevelopedMapHandedness,
+    uses: &[BoundUse],
+) -> Checked<Vec<FaceEvidence>> {
     let mut result = Vec::new();
-    for &(face, edge, orientation) in CAP_USES {
+    for &(face, edge, _) in CAP_USES {
         result.push(faces::check(
             expected::region(request, face),
-            &expected::cap(request, edge),
-            orientation,
+            &expected::cap(request, edge, handedness),
+            occurrences::face_orientation(expected::region(request, face), uses)?,
             registry,
         )?);
     }

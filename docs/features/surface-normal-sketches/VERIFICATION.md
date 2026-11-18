@@ -299,3 +299,158 @@ and is recorded in `/tmp/martensite417-pr-gate.log`. Reviewed toolkit source
 remained unchanged while the supplied visual-workflow documentation was added
 in commit `bbe6c11f`. Hosted checks, including ThreadSanitizer, remain required
 before integration.
+
+
+## Fresh cone-lane sanitizer startup control, 2026-11-18
+
+The pinned startup fixture was checked again with `nightly-2026-09-25`, target
+`x86_64-unknown-linux-gnu`, `-Zbuild-std` and flags
+`-Zsanitizer=thread -Cforce-frame-pointers=yes`. The compiler was
+`rustc 1.100.0-nightly`, commit `f7575a9da8e4a4fca3b5668d5a2ea7476db44b3f`,
+with LLVM 23.1.1 and installed `rust-src`. The run used two build jobs, no
+incremental compilation and zero dev/test debug information. Compiler wrappers,
+encoded flags, `LD_PRELOAD`, `LD_LIBRARY_PATH` and `TSAN_OPTIONS` were cleared.
+The command was:
+
+```sh
+cargo +nightly-2026-09-25 run --locked -Zbuild-std --target x86_64-unknown-linux-gnu --manifest-path scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml
+```
+
+The fixture and its standard-library/dependency closure compiled successfully
+in 15.26 seconds. Execution then exited 139 before either the `main_entered`
+or `completed` marker. This is a fresh startup failure; its runtime cause was
+not established. The command did not build or run an instrumented cone-operation
+closure, so it supplies no cone ThreadSanitizer pass.
+
+The [terminal receipt](references/cone-tsan-startup-2026-11-18-receipt.json) and
+[build/run log](references/cone-tsan-startup-2026-11-18.log) retain the exact
+command, flags, binary/log hashes, exit status and absent markers. The receipt
+records checkout HEAD `64110e402e131afff2e3fadcbf9e2b9d4c9b245c` and requested
+feature snapshot `6e8424f77f1e6556c0660d3ee8107c4368da6c71`; those identify the
+attempt's context, not a successful instrumented test of that feature tree.
+
+The earlier startup observation above remains historical. Cone TSan coverage
+is still pending.
+
+### Ordinary public cone concurrency control
+
+The focused ordinary test
+`surface_sketch::wrapped_profile::operation::cone::tests::completed::concurrency::overlapping_public_cone_operations_and_shared_readers_preserve_owned_evidence`
+passed 1/0/0 in 9.71 seconds on 2026-11-18. It overlaps two public cone operations
+with two shared-result readers/native exporters, comparing complete native,
+history, budget, report, support, option and reference/flux/authored receipt
+evidence against the sequential result. It checks input-mutation isolation and
+pairwise nonpartner ownership of export roots and every bound entity.
+
+The [ordinary test log](references/cone-public-concurrency-2026-11-18.log) records
+that focused pass, not a broader suite rerun. Publication removed only one extra
+blank line at EOF while retaining the final newline; all log content and results
+are unchanged. The unchanged original `/tmp/martensite-cone-public-concurrency.log`
+has SHA256 `1ef8d291f9333895c08407f6672fe097a4c1029f55c450e646361d0ad7aa5176`;
+the published log has SHA256
+`5e0f00966532aa9991281a6a6fd75d3817ae6d7fe616a209f7bcbfbcd322973f`.
+This normalization applies only to that published log; startup and driver
+receipts retain their original bytes. The 155-line test file
+`crates/martensite-tksketch/src/wrapped_profile/operation/cone/tests/completed/concurrency.rs`
+has SHA256 `722a884d54414d28197cbb420ebb1b642e6bde87ce8703ae404062c0912879f6`;
+its parent `completed.rs` has SHA256
+`41893c68020496c366ef1c0f8f44e2fa3a0ee911e351f7e62c2b47b6ef26f1d8`.
+No instrumented cone control was built or run, and this ordinary pass does not
+qualify TSan or the final gate.
+
+### Sanitizer driver and impact selection checks
+
+The driver checks passed 46/0/0 and inventory/impact checks passed 9/0/0.
+Both terminal exit files recorded zero. The
+[driver receipt](references/cone-tsan-driver-2026-11-18-receipt.json) retains the
+seven frozen source hashes, executed scope and startup-failure reference;
+formatting and diff checks also passed for the owned driver files.
+
+These are ordinary driver/selection checks, separate from the passed ordinary
+cone concurrency control. The fresh startup fixture still exited 139 before
+either main marker, and no instrumented cone geometry was built or run. Cone
+TSan qualification remains pending. The ordinary local cone PR gate passed,
+and the subsequent review accepted bounded Phase A delivery as recorded below.
+
+## Canonical cone PR gate, 2026-11-18
+
+The canonical local command
+`cargo xtask pr --base 54e2df1ac23383962ef90120ffc200567b9e1f83` passed on its
+second attempt, with child and shell exit 0 at 18:25:07 UTC. No exception,
+resource guard or stop signal interrupted it. The source manifests before and
+after were identical across 29166 tracked/untracked files, SHA256
+`ad52bcd02ca9adefe35c1945b1705b520cfb82ccdf999d8ddee46ca6ecda770d`,
+with no changed source paths. HEAD was `64110e40` plus the frozen feature work;
+HEAD alone does not identify that snapshot. These post-gate documentation
+updates are separate from the qualified source manifest.
+
+The [bounded terminal receipt](references/cone-canonical-pr-gate-2026-11-18-receipt.json)
+has SHA256 `67feda7e50ecb906b41905807df4abe0e0211992d0836ef430b87a0e1cd2f2fb`.
+It preserves the complete command/profile inventory, source/log/dataset hashes
+and exclusions. Source unsafe-inventory, whitespace, Rust formatting,
+affected-package Clippy, builds and tests passed; expanded unsafe diagnostics
+were collected. Collection alone does not establish the separate baseline
+comparison recorded as pending in the receipt. Forty-one packages were
+selected. Ordinary and script-budget test groups ran sequentially under the
+existing driver policies, with two build jobs, disabled incremental compilation
+and stripped debug information. The owned dataset was clean at
+`34d65afd72cd3ca8ac1f9d17e5ca408b30e9b4b6`, with no object alternates.
+
+| Outer affected-package scope | Count |
+| --- | --- |
+| Native targets | 473 |
+| Doctest crates | 40 |
+| Result summaries, including separate compile-fail batches | 520 |
+| Passed | 89075 (87612 native, 1463 doctest) |
+| Failed / ignored / filtered | 0 / 158 / 0 |
+
+The separate source unsafe-inventory command passed 9 with 436 filtered.
+Highlighted outer libraries were the build driver at 445/0 and Sketch at
+447/0 with 5 ignored. All native declared test counts matched their enclosing
+results, and no outer summaries were missing.
+
+Eleven nested summaries are excluded to avoid double counting: seven SDK
+fixtures and four isolated workers. One SDK fixture intentionally failed;
+its parent `a_failed_external_measurement_never_gets_an_acceptance_checksum`
+passed, so that expected child failure is not an outer gate failure. The raw
+log is identified by SHA256
+`384387381267f99b379e6f4fcb8ff6c455dc48f3b1ef149147bf8dd49bedb96a`;
+it is not copied into the feature directory. Default ignored entries remain
+ignored by this gate; earlier explicitly exercised workers/stress are separate
+evidence.
+
+This is a local affected-package pass, not hosted or release-matrix acceptance,
+a new benchmark or a TSan run. Startup still failed with 139 before `main`, and
+no instrumented cone geometry ran. After this gate, the maintainer explicitly
+accepted the quantified Phase A code/process footprint tradeoff on 2026-11-18;
+the [dated decision](PRODUCTION-MEMORY-ACCEPTANCE.md#maintainer-decision-2026-11-18)
+is separate from the unchanged gate/evidence receipts. It grants no blanket
+runtime, heap, tolerance or performance waiver. Final Gate A review 3
+subsequently accepted the phase commit and ready PR, as recorded below.
+Required hosted checks, including new cone TSan, remain pending before merge;
+B/C have not started. No whole-feature or release claim follows from this gate.
+
+## Final Gate A delivery review, 2026-11-18
+
+Oracle review 3 of 3 accepted the next bounded Phase A delivery step: commit the
+reviewed candidate and open its ready PR. It reviewed immutable tree
+`1474c2ee5e672f30e62b8b7f6b344c4656c0bb17` against main merge-base
+`9e11ab3864c8786ce05b3bdf35123f4a87fc1b05`, with no material correctness blocker.
+The four previous reference/body findings remained resolved; the maintainer's
+case-specific footprint acceptance resolved the remaining finding.
+
+The [review report](references/cone-gate-a-oracle-3-2026-11-18.md) is preserved
+verbatim, SHA256
+`2ead126f564c82572cc730b5b1a6a117342801e2adbe4ca0ce4580e3ac3a4f7b`.
+It verifies that the changed runtime/test/build paths match the successful
+canonical gate and unchanged prior numerical sources. These publication-status
+updates change documentation only; the report describes its immutable reviewed
+tree, not these later prose updates.
+
+Required hosted checks, including the new cone TSan control, must be green
+before merge. Local startup exit 139 supplies no instrumented cone coverage;
+an older component TSan pass cannot substitute. Any required hosted failure
+must be resolved. This acceptance covers only the canonical-frame,
+single-common-chart curved outer-plus-hole Phase A operation in both senses.
+It does not complete #414/#418. B/C have not started, and no version, tag,
+release or blanket performance authorization is granted.

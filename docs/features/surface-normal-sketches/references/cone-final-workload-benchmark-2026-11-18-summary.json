@@ -1,0 +1,65 @@
+{
+  "cone_v3": {
+    "runs": 3,
+    "seconds": [
+      9.177975,
+      9.315035,
+      9.701001
+    ],
+    "median_seconds": 9.315035,
+    "peak_rss_kib": [
+      56560,
+      56324,
+      56080
+    ],
+    "median_peak_rss_kib": 56324
+  },
+  "cone_v4": {
+    "runs": 3,
+    "seconds": [
+      4.741645,
+      4.822891,
+      4.973667
+    ],
+    "median_seconds": 4.822891,
+    "peak_rss_kib": [
+      56404,
+      56608,
+      56524
+    ],
+    "median_peak_rss_kib": 56524
+  },
+  "cylinder_before": {
+    "runs": 3,
+    "seconds": [
+      3.82,
+      3.99,
+      3.95
+    ],
+    "median_seconds": 3.95,
+    "peak_rss_kib": [
+      54860,
+      54736,
+      54872
+    ],
+    "median_peak_rss_kib": 54860
+  },
+  "cylinder_after": {
+    "runs": 3,
+    "seconds": [
+      3.98,
+      3.9,
+      3.84
+    ],
+    "median_seconds": 3.9,
+    "peak_rss_kib": [
+      56680,
+      56624,
+      56304
+    ],
+    "median_peak_rss_kib": 56624
+  },
+  "all_v4_api_runs_within_five_seconds": true,
+  "all_tests_passed": true,
+  "all_cylinder_replays_equal_accepted": true
+}

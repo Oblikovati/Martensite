@@ -16,9 +16,10 @@ pub(crate) enum Control {
     SurfaceSketch,
     FontTextCapture,
     WrappedFamily,
+    WrappedCone,
 }
 
-pub(crate) const CONTROLS: [Control; 12] = [
+pub(crate) const CONTROLS: [Control; 13] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -31,6 +32,7 @@ pub(crate) const CONTROLS: [Control; 12] = [
     Control::SurfaceSketch,
     Control::FontTextCapture,
     Control::WrappedFamily,
+    Control::WrappedCone,
 ];
 
 impl Control {
@@ -48,6 +50,7 @@ impl Control {
             Self::SurfaceSketch => "surface-sketch",
             Self::FontTextCapture => "font-text-capture",
             Self::WrappedFamily => "wrapped-family",
+            Self::WrappedCone => "wrapped-cone",
         }
     }
 
@@ -60,7 +63,7 @@ impl Control {
             Self::FaceCertificate => "martensite-tktopalgo",
             Self::OpenExtrusion | Self::VertexNeighborhood => "martensite-tkmath",
             Self::DocumentTransactions => "martensite-tklcaf",
-            Self::SurfaceSketch | Self::WrappedFamily => "martensite-tksketch",
+            Self::SurfaceSketch | Self::WrappedFamily | Self::WrappedCone => "martensite-tksketch",
             Self::FontTextCapture => "martensite-tkv3d",
         }
     }
@@ -193,7 +196,8 @@ mod tests {
                 "document-transactions",
                 "surface-sketch",
                 "font-text-capture",
-                "wrapped-family"
+                "wrapped-family",
+                "wrapped-cone"
             ]
         );
         assert_eq!(ids.iter().collect::<BTreeSet<_>>().len(), CONTROLS.len());
@@ -203,7 +207,11 @@ mod tests {
     fn surface_sketch_owner_selects_control_without_unrelated_leaf_fanout() {
         assert_eq!(
             select(&BTreeSet::from(["martensite-tksketch".into()]), &[]),
-            [Control::SurfaceSketch, Control::WrappedFamily]
+            [
+                Control::SurfaceSketch,
+                Control::WrappedFamily,
+                Control::WrappedCone
+            ]
         );
         assert!(select(&BTreeSet::from(["martensite-tkdeobj".into()]), &[]).is_empty());
         assert_eq!(
