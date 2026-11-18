@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Avoided unused Sturm–Tarski query chains for certified point roots and empty root sets while preserving exact signs and the existing mixed-root path (#542).
+
 - Refused negative grid sample counts in generic curve–surface extrema searches with a typed error instead of an indexing panic (#535).
 
 - Rejected invalid raw body tolerances before native validation could mask or overwrite them, preserving refusal input state and explicit stage coverage (#490).
