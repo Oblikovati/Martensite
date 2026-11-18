@@ -15,15 +15,18 @@ pub use work_receipt::CensusWorkReceipt;
 mod bernstein_binding;
 mod bernstein_execution;
 mod domain_certificate;
+mod graph_policy;
 mod paired_admission;
 mod paired_binding;
 mod paired_execution;
 mod paired_types;
 pub(crate) use coverage::inspect_contact_coverage;
 pub(crate) use domain_certificate::CertifiedPairDomain;
+pub(crate) use graph_policy::{GraphPolicyMismatch, bind_graph_policy};
 pub(crate) use outcome::*;
 pub(crate) use paired_admission::{
-    enumerate_carrier_census, enumerate_exclusion_census, enumerate_source_bound_census,
+    enumerate_carrier_census, enumerate_exclusion_census, enumerate_filtered_exclusion_census,
+    enumerate_source_bound_census,
 };
 #[cfg(test)]
 mod tests;
@@ -71,3 +74,6 @@ mod paired_validation_tests;
 
 #[cfg(test)]
 mod bernstein_tests;
+
+#[cfg(test)]
+mod filtered_tests;

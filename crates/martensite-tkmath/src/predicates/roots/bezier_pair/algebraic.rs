@@ -31,11 +31,39 @@ pub(super) fn query_evaluation(
     degree_limit: u16,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<signs::RootSignEvaluation, signs::RootSignError> {
+    let (source, query) = admitted_polynomials(source, query, degree_limit)?;
+    signs::evaluate_isolated(source, query, isolation.clone(), cancelled)
+}
+pub(super) fn membership_evaluation(
+    source: &ExactCoefficientPolynomial,
+    query: &ExactCoefficientPolynomial,
+    isolation: &RootIsolation,
+    settings: super::sign_policy::EffectivePairSigns,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<signs::RootSignEvaluation, signs::RootSignError> {
+    if settings.requested.version != 2 {
+        return query_evaluation(
+            source,
+            query,
+            isolation,
+            settings.effective_limit,
+            cancelled,
+        );
+    }
+    let (source, query) = admitted_polynomials(source, query, settings.effective_limit)?;
+    signs::evaluate_isolated_filtered(source, query, isolation.clone(), cancelled)
+}
+fn admitted_polynomials(
+    source: &ExactCoefficientPolynomial,
+    query: &ExactCoefficientPolynomial,
+    degree_limit: u16,
+) -> Result<(IntegerPolynomial, IntegerPolynomial), signs::RootSignError> {
     let source = source.primitive(degree_limit).map_err(source_failure)?;
     let query =
         IntegerPolynomial::accept_zero(query.primitive(degree_limit)).map_err(query_failure)?;
-    signs::evaluate_isolated(source, query, isolation.clone(), cancelled)
+    Ok((source, query))
 }
+
 fn source_failure(cause: RootIsolationError) -> signs::RootSignError {
     signs::RootSignError::Root {
         stage: signs::RootSignStage::Source,

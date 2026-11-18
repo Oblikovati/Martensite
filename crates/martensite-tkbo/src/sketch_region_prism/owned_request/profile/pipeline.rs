@@ -9,10 +9,7 @@ use crate::sketch_region::{
     ArrangementCompletion, ArrangementPhase, PartitionOccurrenceIdentity, observe_partition_space,
 };
 use crate::sketch_region_candidates::observe_candidate_copies;
-use crate::sketch_region_certification::{
-    CensusWorkReceipt, capture_boundary_inputs, enumerate_carrier_census,
-    enumerate_exclusion_census,
-};
+use crate::sketch_region_certification::{CensusWorkReceipt, capture_boundary_inputs};
 use crate::sketch_region_contact_transport::{ContactTransportPhase, transport_partition_contacts};
 use crate::sketch_region_partition_bindings::{PartitionBoundOutputs, bind_partition_outputs};
 use crate::sketch_region_source_conformance::{capture_originals, capture_space_representation};
@@ -134,23 +131,23 @@ impl Retained<'_, '_> {
         let policy = self.request.policy;
         let callbacks = &mut self.callbacks;
         let poll = || callbacks.poll(OwnedPrismPhase::Census);
-        let census = if self.request.version == super::admission::EXCLUSION_GRAPH_PROFILE_VERSION {
-            enumerate_exclusion_census(inputs, policy.census, policy.source, poll)
-        } else {
-            enumerate_carrier_census(inputs, policy.census, policy.source, poll)
-        };
+        let census = super::selection::census(
+            self.request.version,
+            inputs,
+            (policy.census, policy.source),
+            poll,
+        );
         self.pair_work = CensusWorkReceipt::observed(&census);
         census.map_err(|cause| stage(cause.into()))
     }
     fn partition(&mut self, sources: &[ArrangementSource<'_>]) -> Check<PartitionBoundOutputs> {
         self.enter(OwnedPrismPhase::Partition(ArrangementPhase::Admission))?;
         let originals = capture_originals(sources).map_err(native)?;
-        let callbacks = &mut self.callbacks;
-        let poll = &mut |p| callbacks.poll(OwnedPrismPhase::Partition(p));
+        let poll = &mut |p| self.callbacks.poll(OwnedPrismPhase::Partition(p));
         let observed = observe_partition_space(sources, poll, capture_space_representation);
         let copied = match &observed.completion {
             ArrangementCompletion::Arranged(owned) => {
-                let poll = &mut |p| callbacks.poll(OwnedPrismPhase::Candidate(p));
+                let poll = &mut |p| self.callbacks.poll(OwnedPrismPhase::Candidate(p));
                 let plane = self.request.declared_plane;
                 Some(observe_candidate_copies(
                     owned,

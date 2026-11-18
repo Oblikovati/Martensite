@@ -43,6 +43,7 @@ impl PreparedProfile {
         &self,
         cancelled: impl FnMut() -> bool,
     ) -> LoopRegionCheck<GraphRegionCertificate> {
+        super::selection::bind(self.request.version, &self.bridge.census)?;
         let ends: Vec<[u64; 2]> = self
             .request
             .edges

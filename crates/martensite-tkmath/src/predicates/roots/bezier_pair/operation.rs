@@ -12,7 +12,6 @@ use super::{
     algebraic, equations::PairedEquations, projection::LinearFiberProjection,
     source::OwnedBezierSource,
 };
-
 pub(super) struct PairContact {
     pub candidate_index: usize,
     pub root: RootBracket,
@@ -299,7 +298,7 @@ fn prepare_constant(
 ) -> Result<PreparedEvidence, PairOperationFailure> {
     let exclusion = ConstantEquationExclusion::from_checked_equations(equations, self_domain)
         .ok_or(PairOperationFailure::NonLinearFiber)?;
-    if signs.version != 1 {
+    if !(1..=2).contains(&signs.version) {
         return Err(PairOperationFailure::SignPolicy(
             PairSignPolicyFailure::Version(signs.version),
         ));

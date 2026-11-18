@@ -449,3 +449,39 @@ fn assert_cancelled_without_witness(cancelled: &BezierPairExclusionReport) {
         ))
     ));
 }
+#[test]
+fn filtered_sign_request_is_retained_and_strictly_source_policy_bound() {
+    let source = monotone();
+    let mut requested = policy();
+    requested.pair_policy.signs.version = 2;
+    let report = source.certify_bernstein_exclusion(requested, || false);
+    assert_eq!(report.completion(), BezierPairExclusionCompletion::Excluded);
+    assert_eq!(report.policy().pair_policy.signs.version, 2);
+    assert!(report.matches_source(&source, requested));
+    let mut changed = requested;
+    changed.pair_policy.signs.version = 1;
+    assert!(!report.matches_source(&source, changed));
+    changed = requested;
+    changed.pair_policy.signs.degree_limit = BezierPairSignAdmission::Explicit(1);
+    assert!(!report.matches_source(&source, changed));
+    assert_filtered_source_and_refusal(&report, &source, requested);
+}
+fn assert_filtered_source_and_refusal(
+    report: &BezierPairExclusionReport,
+    source: &CapturedBezierPair,
+    requested: BezierPairExclusionPolicy,
+) {
+    let changed_source =
+        CapturedBezierPair::self_off_diagonal(&[[0., 0.], [2., 0.]], None, [0., 1.]).unwrap();
+    assert!(!report.matches_source(&changed_source, requested));
+    let mut changed = requested;
+    changed.pair_policy.signs.version = 3;
+    assert!(matches!(
+        source
+            .certify_bernstein_exclusion(changed, || false)
+            .failure(),
+        Some(BezierPairExclusionFailure::SignPolicy(
+            BezierPairSignFailure::Version(3)
+        ))
+    ));
+}

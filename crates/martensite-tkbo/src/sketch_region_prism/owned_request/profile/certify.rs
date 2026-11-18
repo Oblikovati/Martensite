@@ -234,3 +234,7 @@ fn contact_policy(limit: f64, roots: RootIsolationOptions) -> ContactTransportPo
 #[cfg(test)]
 #[path = "certify_work_tests.rs"]
 mod work_tests;
+
+#[cfg(test)]
+#[path = "filtered_work_tests.rs"]
+mod filtered_work_tests;

@@ -80,13 +80,23 @@ pub(super) fn paired_policy_current(
     census: &BoundaryCensus,
     paired: &PairedCensusEvidence,
 ) -> bool {
-    // The retained request records its own version; version 2 adds carriers.
-    (1..=2).contains(&paired.requested.version)
-        && paired.requested.signs == BezierPairSignOptions::derived()
+    selected_signs_current(paired)
+        && paired.requested.signs == paired.selected_signs
         && paired.requested.roots == census.requested.roots
         && paired.requested.requested_world_error.to_bits()
             == census.requested.max_world_error.to_bits()
 }
+fn selected_signs_current(paired: &PairedCensusEvidence) -> bool {
+    let mut expected = BezierPairSignOptions::derived();
+    expected.version = paired.selected_signs.version;
+    let mode = (
+        paired.requested.version,
+        paired.exclusion_version,
+        expected.version,
+    );
+    matches!(mode, (1 | 2, None, 1) | (2, Some(1), 1 | 2)) && paired.selected_signs == expected
+}
+
 fn domain_binding_current(
     census: &BoundaryCensus,
     domain: &BoundaryDomain,

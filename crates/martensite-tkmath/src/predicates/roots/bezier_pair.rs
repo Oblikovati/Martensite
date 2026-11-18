@@ -125,3 +125,6 @@ pub use bernstein_exclusion::{
     BezierPairBernsteinExclusion, BezierPairExclusionCompletion, BezierPairExclusionFailure,
     BezierPairExclusionPolicy, BezierPairExclusionReport,
 };
+
+#[cfg(test)]
+mod filtered_graph_tests;
