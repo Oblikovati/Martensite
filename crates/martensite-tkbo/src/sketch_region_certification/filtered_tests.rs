@@ -22,7 +22,8 @@ fn legacy_bernstein_keeps_its_native_poll_work_signature() {
         paired.exclusions.len() as u64,
         census.domains.len() as u64,
     ];
-    assert_eq!(signature, [1739, 1, 0, 3, 3]);
+    // #544: sign-1 replay is pinned to the original eager source 54e2df1a.
+    assert_eq!(signature, [1754, 1, 0, 3, 3]);
     assert_eq!(paired.requested.signs.version, 1);
 }
 
