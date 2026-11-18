@@ -61,16 +61,7 @@ fn zero_angle_uses_the_verified_identity_publication_path() {
             .operations,
         0
     );
-    assert!(
-        result
-            .reports()
-            .values()
-            .all(|report| report.validation.is_valid())
-    );
-    assert!(
-        result.placement.spatial_budget.world_error_bound().unwrap()
-            <= request.options.spatial_error
-    );
+    assert_identity_chart_validation(&result, &request);
 }
 #[test]
 fn signed_and_multiturn_oblique_charts_follow_the_requested_reference() {
@@ -141,18 +132,8 @@ fn source_and_native_export_mutation_cannot_change_published_chart_geometry() {
 fn cancellation_at_final_publication_returns_no_result() {
     let mut request = super::super::super::operation_tests::request();
     request.support.chart_origin = 0.3;
-    let mut total = 0;
-    let result = normal_extrude_profile_on_chart_with_cancel(&request, || {
-        total += 1;
-        false
-    })
-    .unwrap();
-    assert!(total > 1);
-    assert_eq!(result.material_work(), result.base.material_work());
-    assert_eq!(
-        result.material_relations().collect::<Vec<_>>(),
-        result.base.material_relations().collect::<Vec<_>>()
-    );
+    let (result, total) = count_chart_polls(&request);
+    assert_chart_material_work(&result, total);
     let mut current = 0;
     let failure = normal_extrude_profile_on_chart_with_cancel(&request, || {
         current += 1;
@@ -236,5 +217,40 @@ fn rotated_inward_depths_match_the_opposite_outward_interval() {
             .reports()
             .values()
             .all(|member| member.validation.is_valid())
+    );
+}
+
+fn assert_identity_chart_validation(
+    result: &WrappedChartNormalResult,
+    request: &WrappedNormalRequest,
+) {
+    assert!(
+        result
+            .reports()
+            .values()
+            .all(|report| report.validation.is_valid())
+    );
+    assert!(
+        result.placement.spatial_budget.world_error_bound().unwrap()
+            <= request.options.spatial_error
+    );
+}
+
+fn count_chart_polls(request: &WrappedNormalRequest) -> (WrappedChartNormalResult, usize) {
+    let mut total = 0;
+    let result = normal_extrude_profile_on_chart_with_cancel(request, || {
+        total += 1;
+        false
+    })
+    .unwrap();
+    (result, total)
+}
+
+fn assert_chart_material_work(result: &WrappedChartNormalResult, total: usize) {
+    assert!(total > 1);
+    assert_eq!(result.material_work(), result.base.material_work());
+    assert_eq!(
+        result.material_relations().collect::<Vec<_>>(),
+        result.base.material_relations().collect::<Vec<_>>()
     );
 }

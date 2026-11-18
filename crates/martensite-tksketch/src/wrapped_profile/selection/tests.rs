@@ -249,14 +249,7 @@ fn cancellation_before_selection_preparation_does_not_enter_capture() {
 #[test]
 fn a_selection_cancelled_in_fit_work_keeps_the_authored_owner_and_typed_cause() {
     let originals = [request()];
-    let mut planar_polls = 0;
-    let work = martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault;
-    qualify_with_work(&originals, work, &mut || {
-        planar_polls += 1;
-        false
-    })
-    .unwrap();
-    let stop = planar_polls + 8;
+    let stop = successful_planar_polls(&originals) + 8;
     let mut polls = 0;
     let result = prepare_with_cancel(&originals, || {
         polls += 1;
@@ -270,4 +263,15 @@ fn a_selection_cancelled_in_fit_work_keeps_the_authored_owner_and_typed_cause() 
         }) if crate::surface_sketch::wrapped_profile::math_cancellation::MathCancellation::is_cancelled(cause.source_cause())
     ));
     assert_eq!(polls, stop);
+}
+
+fn successful_planar_polls(originals: &[Request]) -> usize {
+    let mut planar_polls = 0;
+    let work = martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault;
+    qualify_with_work(originals, work, &mut || {
+        planar_polls += 1;
+        false
+    })
+    .unwrap();
+    planar_polls
 }

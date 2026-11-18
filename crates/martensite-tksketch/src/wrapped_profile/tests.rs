@@ -62,25 +62,7 @@ fn rational_loop_with_hole_freezes_measures_and_exports_without_publication() {
     assert_eq!(result.member.geometry.coverage.euler_characteristic, 0);
     assert!(result.planar.area.encloses(3.525));
     assert_eq!(result.planar.certificate.components, 2);
-    assert_eq!(
-        result
-            .member
-            .native
-            .report
-            .stage(ValidationStage::Geometry)
-            .mode,
-        CheckMode::Sampled
-    );
-    assert!(!result.member.native.report.is_exact());
-    assert!(
-        result.member.native.report.is_valid(),
-        "{:?}",
-        result.member.native.report
-    );
-    assert!(result.member.native.volume_estimate > 0.);
-    assert!((0. ..=1e-8).contains(&result.member.native.integration_estimate));
-    // Green's integral gives authored area 3.775 - 0.25 = 3.525.
-    assert!((result.member.native.volume_estimate - 11.10375).abs() < 1e-5);
+    assert_native_observations(&result);
     assert_roundtrip(&result);
     assert_certificates(&result);
 }
@@ -243,7 +225,6 @@ fn admission_refuses_open_joins_duplicate_ids_and_unbounded_charts() {
 }
 
 fn assert_cones(result: &pipeline::Unqualified) {
-    use std::cmp::Ordering;
     assert_eq!(result.member.geometry.cones.pieces.len(), 19);
     assert_eq!(result.member.geometry.cones.joins.len(), 19);
     for proof in result
@@ -254,18 +235,22 @@ fn assert_cones(result: &pipeline::Unqualified) {
         .iter()
         .chain(&result.member.geometry.cones.joins)
     {
-        assert_eq!(
-            proof.spans.len(),
-            proof.certificate.directional_margin_bounds().len()
-        );
-        assert!(
-            proof
-                .certificate
-                .directional_margin_bounds()
-                .iter()
-                .all(|margin| margin.compare_f64(0.).unwrap() == Ordering::Greater)
-        );
+        assert_span_cone_margins(proof);
     }
+}
+fn assert_span_cone_margins(proof: &planar_cones::SpanCone) {
+    use std::cmp::Ordering;
+    assert_eq!(
+        proof.spans.len(),
+        proof.certificate.directional_margin_bounds().len()
+    );
+    assert!(
+        proof
+            .certificate
+            .directional_margin_bounds()
+            .iter()
+            .all(|margin| margin.compare_f64(0.).unwrap() == Ordering::Greater)
+    );
 }
 
 fn assert_clearance(result: &pipeline::Unqualified) {
@@ -323,4 +308,18 @@ fn assert_measure_comparison(result: &pipeline::Unqualified) {
     let [lo, hi] = proof.difference_enclosure();
     assert!(lo <= hi);
     assert!(proof.operations() > 0);
+}
+
+fn assert_native_observations(result: &pipeline::Unqualified) {
+    let native = &result.member.native;
+    assert_eq!(
+        native.report.stage(ValidationStage::Geometry).mode,
+        CheckMode::Sampled
+    );
+    assert!(!native.report.is_exact());
+    assert!(native.report.is_valid(), "{:?}", native.report);
+    assert!(native.volume_estimate > 0.);
+    assert!((0. ..=1e-8).contains(&native.integration_estimate));
+    // Green's integral gives authored area 3.775 - 0.25 = 3.525.
+    assert!((native.volume_estimate - 11.10375).abs() < 1e-5);
 }

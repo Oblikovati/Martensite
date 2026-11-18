@@ -126,6 +126,14 @@ fn endpoints(
     poles: &[[f64; 2]],
     index: &ProfileIndex<'_>,
 ) -> Checked<()> {
+    finite_controls(curve, poles)?;
+    for (vertex, point) in vertices.into_iter().zip([poles[0], poles[poles.len() - 1]]) {
+        let expected = index.vertex(curve, vertex)?;
+        matching_endpoint(curve, vertex, point, expected)?;
+    }
+    Ok(())
+}
+fn finite_controls(curve: ProfileCurveId, poles: &[[f64; 2]]) -> Checked<()> {
     for (control, point) in poles.iter().copied().enumerate() {
         if !point.iter().all(|value| value.is_finite()) {
             return Err(ProfileInputFailure::NonFinite {
@@ -135,16 +143,21 @@ fn endpoints(
             });
         }
     }
-    for (vertex, point) in vertices.into_iter().zip([poles[0], poles[poles.len() - 1]]) {
-        let expected = index.vertex(curve, vertex)?;
-        if point.map(f64::to_bits) != expected.map(f64::to_bits) {
-            return Err(ProfileInputFailure::Endpoint {
-                curve,
-                vertex,
-                point,
-                expected,
-            });
-        }
+    Ok(())
+}
+fn matching_endpoint(
+    curve: ProfileCurveId,
+    vertex: ProfileVertexId,
+    point: [f64; 2],
+    expected: [f64; 2],
+) -> Checked<()> {
+    if point.map(f64::to_bits) != expected.map(f64::to_bits) {
+        return Err(ProfileInputFailure::Endpoint {
+            curve,
+            vertex,
+            point,
+            expected,
+        });
     }
     Ok(())
 }

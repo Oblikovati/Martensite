@@ -124,7 +124,20 @@ fn split_piece(piece: &AuthoredPiece) -> [AuthoredPiece; 2] {
         level,
     };
     let [left, right] = split_poles(&piece.poles);
-    let make = |index, start, end, poles| AuthoredPiece {
+    [
+        split_half(piece, level, first, piece.start, joint, left),
+        split_half(piece, level, first + 1, joint, piece.end, right),
+    ]
+}
+fn split_half(
+    piece: &AuthoredPiece,
+    level: u8,
+    index: u64,
+    start: CornerSource,
+    end: CornerSource,
+    poles: Vec<[f64; 2]>,
+) -> AuthoredPiece {
+    AuthoredPiece {
         span: CurveSpan {
             curve: piece.span.curve,
             level,
@@ -134,11 +147,7 @@ fn split_piece(piece: &AuthoredPiece) -> [AuthoredPiece; 2] {
         end,
         poles,
         chart_center: piece.chart_center,
-    };
-    [
-        make(first, piece.start, joint, left),
-        make(first + 1, joint, piece.end, right),
-    ]
+    }
 }
 
 fn split_poles(poles: &[[f64; 2]]) -> [Vec<[f64; 2]>; 2] {

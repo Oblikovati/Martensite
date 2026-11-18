@@ -90,24 +90,19 @@ fn inventory(
     retained: &pipeline::RetainedMember,
     expected: usize,
 ) -> Checked<()> {
-    count(
-        region,
-        "storage spans",
-        retained.geometry.storage.len(),
-        expected,
-    )?;
-    count(
-        region,
-        "regularity cones",
-        retained.geometry.cones.pieces.len(),
-        expected,
-    )?;
-    count(
-        region,
-        "join cones",
-        retained.geometry.cones.joins.len(),
-        expected,
-    )?;
+    for (field, actual) in [
+        ("storage spans", retained.geometry.storage.len()),
+        ("regularity cones", retained.geometry.cones.pieces.len()),
+        ("join cones", retained.geometry.cones.joins.len()),
+    ] {
+        count(region, field, actual, expected)?;
+    }
+    matching_measure_spans(region, retained)
+}
+fn matching_measure_spans(
+    region: SurfaceRegionId,
+    retained: &pipeline::RetainedMember,
+) -> Checked<()> {
     let spans: Vec<_> = retained.geometry.storage.iter().map(|p| p.span).collect();
     if spans != retained.geometry.measures.spans {
         return Err(span_failure(

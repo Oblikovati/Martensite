@@ -232,19 +232,15 @@ fn incidence_coverage(member: &pipeline::RetainedMember) -> WrappedIncidenceCove
         vertices: graph.vertices,
         edge_uses: graph.edge_uses,
         euler_characteristic: graph.euler_characteristic,
-        cap_pcurves: member
-            .geometry
-            .storage
-            .iter()
-            .map(|p| p.trims.cap_pcurves)
-            .sum(),
-        side_pcurves: member
-            .geometry
-            .storage
-            .iter()
-            .map(|p| p.trims.side_pcurves)
-            .sum(),
+        cap_pcurves: pcurve_count(member, |proof| proof.trims.cap_pcurves),
+        side_pcurves: pcurve_count(member, |proof| proof.trims.side_pcurves),
     }
+}
+fn pcurve_count(
+    member: &pipeline::RetainedMember,
+    count: impl Fn(&storage::StoredProof) -> usize,
+) -> usize {
+    member.geometry.storage.iter().map(count).sum()
 }
 pub(in crate::surface_sketch::wrapped_profile) fn bound(upper: f64) -> WrappedCertifiedBound {
     WrappedCertifiedBound { upper }

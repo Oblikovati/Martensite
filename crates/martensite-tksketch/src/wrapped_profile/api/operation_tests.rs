@@ -118,19 +118,7 @@ fn entry_point_returns_immutable_mixed_profiles_with_holes_and_disconnected_mate
     assert_eq!(result.support(), input.support);
     assert_eq!(result.options(), input.options);
     assert!(result.budget().volume.discrepancy.upper <= 1e-4);
-    assert!(
-        result
-            .history()
-            .iter()
-            .any(|r| r.relation == WrappedHistoryRelation::Created)
-    );
-    let detached = result.export_native().unwrap();
-    assert!(!detached.bodies.is_null());
-    assert_eq!(detached.entities.len(), result.history().len());
-    fn send_sync<T: Send + Sync>() {}
-    send_sync::<WrappedNormalRequest>();
-    send_sync::<WrappedNormalResult>();
-    send_sync::<WrappedNormalFailure>();
+    assert_public_history_and_export(&result);
 }
 fn check_report(result: &WrappedNormalResult, region: SurfaceRegionId, expected: f64) {
     let report = &result.reports()[&region];
@@ -310,4 +298,20 @@ fn explicit_planar_work_is_retained_and_replays_without_changing_geometry() {
     assert!(first.budget().planar_work.consumed_pair_bisections <= 8192);
     check_report(&first, SurfaceRegionId(5), 11.10375);
     check_report(&first, SurfaceRegionId(100), 3.15);
+}
+
+fn assert_public_history_and_export(result: &WrappedNormalResult) {
+    assert!(
+        result
+            .history()
+            .iter()
+            .any(|r| r.relation == WrappedHistoryRelation::Created)
+    );
+    let detached = result.export_native().unwrap();
+    assert!(!detached.bodies.is_null());
+    assert_eq!(detached.entities.len(), result.history().len());
+    fn send_sync<T: Send + Sync>() {}
+    send_sync::<WrappedNormalRequest>();
+    send_sync::<WrappedNormalResult>();
+    send_sync::<WrappedNormalFailure>();
 }

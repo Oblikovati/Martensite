@@ -321,15 +321,7 @@ fn shared_vertex_request() -> WrappedNormalRequest {
 
 #[test]
 fn planar_work_failure_survives_public_family_projection() {
-    let mut crossing = profile();
-    for (vertex, point) in
-        crossing
-            .vertices
-            .iter_mut()
-            .zip([[0., 0.], [2., 2.], [2., 0.], [0., 2.]])
-    {
-        vertex.point = point;
-    }
+    let crossing = crossing_profile_for_work_refusal();
     let work = PlanarProofWorkLimit::PairBisections(17);
     let resolution = super::super::pipeline::resolution(1e-5);
     let cause = build_planar_regions_with_work(&crossing, resolution, work).unwrap_err();
@@ -347,3 +339,16 @@ fn planar_work_failure_survives_public_family_projection() {
 
 #[path = "error_owner_tests.rs"]
 mod owner_context;
+
+fn crossing_profile_for_work_refusal() -> SketchProfile {
+    let mut crossing = profile();
+    for (vertex, point) in
+        crossing
+            .vertices
+            .iter_mut()
+            .zip([[0., 0.], [2., 2.], [2., 0.], [0., 2.]])
+    {
+        vertex.point = point;
+    }
+    crossing
+}
