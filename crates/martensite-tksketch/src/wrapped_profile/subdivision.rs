@@ -132,7 +132,7 @@ fn split_piece(piece: &AuthoredPiece) -> [AuthoredPiece; 2] {
 fn split_half(
     piece: &AuthoredPiece,
     level: u8,
-    index: u64,
+    index: u32,
     start: CornerSource,
     end: CornerSource,
     poles: Vec<[f64; 2]>,
