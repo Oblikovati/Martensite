@@ -170,7 +170,7 @@ fn scalar_axis(
         1,
         (2 * order - 1 + axis as u64) * (2 * order + axis as u64),
     )?;
-    *sum = if order % 2 == 0 {
+    *sum = if order.is_multiple_of(2) {
         arithmetic.add(sum, term)?
     } else {
         arithmetic.subtract(sum, term)?
