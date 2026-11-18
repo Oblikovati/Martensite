@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Bound authored-profile discrepancy using retained coefficients, without an atan evaluator.
 mod admission;
-mod algebra;
+pub(in crate::predicates::roots::metric_bounds) mod algebra;
 mod chart_planning;
 mod chart_types;
 mod error;
@@ -29,7 +29,10 @@ pub use lift::{CertifiedCylindricalLift, CylindricalLiftError, certify_cylindric
 pub use planning::plan_cylindrical_fit;
 pub use planning_types::{CylindricalFitPlan, CylindricalFitQuery};
 pub use trim::{
-    CertifiedCylindricalTrim, CylindricalTrimError, CylindricalTrimQuery, certify_cylindrical_trim,
+    CertifiedConicalTrim, CertifiedConicalTrimPair, CertifiedCylindricalTrim, ConicalTrimCarrier,
+    ConicalTrimError, ConicalTrimPairError, ConicalTrimPairQuery, ConicalTrimQuery,
+    CylindricalTrimError, CylindricalTrimQuery, certify_conical_trim, certify_conical_trim_pair,
+    certify_cylindrical_trim,
 };
 pub use types::*;
 

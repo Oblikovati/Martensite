@@ -34,9 +34,30 @@ pub(super) fn certify(
     keys: &[BindingKey],
 ) -> Checked<HistoryEvidence> {
     bind_sources(originals, selection)?;
+    certify_records(&selection.prepared.prepared, keys)
+}
+
+// Support admission owns the geometric source/clearance receipts; do not reconstruct them here.
+pub(super) fn certify_developed<O, P>(
+    originals: &[O],
+    prepared: &[P],
+    keys: &[BindingKey],
+) -> Checked<HistoryEvidence>
+where
+    O: AsRef<DevelopedRegionRequest>,
+    P: AsRef<DevelopedRegionRequest>,
+{
+    source::bind_developed(originals, prepared)?;
+    certify_records(prepared, keys)
+}
+
+fn certify_records<P: AsRef<DevelopedRegionRequest>>(
+    prepared: &[P],
+    keys: &[BindingKey],
+) -> Checked<HistoryEvidence> {
     let mut records = Records::new();
-    for prepared in &selection.prepared.prepared {
-        records::region(prepared, &mut records)?;
+    for region in prepared {
+        records::region(region.as_ref(), &mut records)?;
     }
     bind_targets(&records, keys)?;
     Ok(HistoryEvidence {

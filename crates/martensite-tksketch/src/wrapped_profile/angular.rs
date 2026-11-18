@@ -10,7 +10,7 @@ fn choose(n: usize, k: usize) -> f64 {
     (0..k).fold(1., |value, i| value * (n - i) as f64 / (i + 1) as f64)
 }
 
-fn product(a: &[f64], b: &[f64]) -> Vec<f64> {
+pub(super) fn product(a: &[f64], b: &[f64]) -> Vec<f64> {
     let (m, n) = (a.len() - 1, b.len() - 1);
     let mut result = vec![0.; m + n + 1];
     for (i, x) in a.iter().enumerate() {

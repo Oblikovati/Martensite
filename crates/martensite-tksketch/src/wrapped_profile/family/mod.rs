@@ -20,14 +20,9 @@ mod replay_tests;
 #[cfg(test)]
 pub(super) mod tests;
 type Checked<T> = Result<T, FamilyFailure>;
-pub(super) struct UnqualifiedFamily {
-    pub bytes: Vec<u8>,
-    pub keys: Vec<BindingKey>,
-    pub members: BTreeMap<SurfaceRegionId, pipeline::RetainedMember>,
-    pub selection: selection::QualifiedSelection,
-    pub coverage: coverage::FamilyCoverage,
-    pub history: history::HistoryEvidence,
-}
+pub(super) type UnqualifiedFamily =
+    operation::stages::OwnedFamily<selection::QualifiedSelection, pipeline::MemberGeometry>;
+
 #[cfg(test)]
 pub(super) fn construct(requests: &[Request]) -> Checked<UnqualifiedFamily> {
     construct_with_cancel(requests, |_| false)
@@ -45,41 +40,6 @@ pub(super) fn construct_with_cancel(
     )?;
     control.run(FamilyStage::Completion, None, |_| Ok(family))
 }
-pub(super) fn qualify_frozen(
-    originals: &[Request],
-    selection: selection::QualifiedSelection,
-    frozen: freeze::Frozen,
-    control: &mut Control<'_>,
-) -> Checked<UnqualifiedFamily> {
-    let (bytes, keys, root, bindings) = frozen;
-    let (coverage, views) = bind_coverage(&selection.prepared.prepared, &root, &bindings, control)?;
-    let history = history_stage(originals, &selection, &keys, control)?;
-    let members = checked_members(originals, &selection, views, control)?;
-    let result = UnqualifiedFamily {
-        bytes,
-        keys,
-        members,
-        selection,
-        coverage,
-        history,
-    };
-    Ok(result)
-}
-
-fn checked_members(
-    originals: &[Request],
-    selection: &selection::QualifiedSelection,
-    views: Vec<coverage::MemberView>,
-    control: &mut Control<'_>,
-) -> Checked<BTreeMap<SurfaceRegionId, pipeline::RetainedMember>> {
-    let prepared = &selection.prepared.prepared;
-    let stored = store_with_control(originals, prepared, views, control)?;
-    control.run(FamilyStage::Binding, None, |_| {
-        bind(originals, selection, &stored)
-    })?;
-    finish(originals, prepared, stored, control)
-}
-
 #[cfg(test)]
 fn store(
     originals: &[Request],
@@ -87,31 +47,21 @@ fn store(
     views: Vec<coverage::MemberView>,
 ) -> Checked<BTreeMap<SurfaceRegionId, pipeline::StoredMember>> {
     let mut cancelled = |_| false;
-    store_with_control(
+    operation::members::store(
+        &operation::cylinder::CylinderStages {
+            work: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit::CurrentDefault,
+            volume:
+                martensite_tkmath::predicates::roots::metric_bounds::CylindricalMeasureLimit::Report,
+        },
         originals,
         prepared,
         views,
+        &mut (),
         &mut Control::new(&mut cancelled),
     )
 }
-fn store_with_control(
-    originals: &[Request],
-    prepared: &[Request],
-    views: Vec<coverage::MemberView>,
-    control: &mut Control<'_>,
-) -> Checked<BTreeMap<SurfaceRegionId, pipeline::StoredMember>> {
-    let mut stored = BTreeMap::new();
-    for view in views {
-        let (original, retained) = member_sources(originals, prepared, view.region)?;
-        let member = control.run(FamilyStage::Storage, Some(view.region), |poll| {
-            pipeline::store_member_with_cancel(original, retained, view.shape, view.bindings, poll)
-                .map_err(|cause| FamilyFailure::Member(Box::new(cause)))
-        })?;
-        stored.insert(view.region, member);
-    }
-    Ok(stored)
-}
-fn bind(
+
+pub(super) fn bind(
     originals: &[Request],
     selection: &selection::QualifiedSelection,
     stored: &BTreeMap<SurfaceRegionId, pipeline::StoredMember>,
@@ -128,68 +78,11 @@ fn bind(
     )
     .map_err(|cause| FamilyFailure::Binding(Box::new(cause)))
 }
-fn finish(
-    originals: &[Request],
-    prepared: &[Request],
-    mut stored: BTreeMap<SurfaceRegionId, pipeline::StoredMember>,
-    control: &mut Control<'_>,
-) -> Checked<BTreeMap<SurfaceRegionId, pipeline::RetainedMember>> {
-    let mut members = BTreeMap::new();
-    for (original, retained) in originals.iter().zip(prepared) {
-        let member = stored
-            .remove(&original.region)
-            .ok_or_else(|| membership(original.region))?;
-        let member = control.run(FamilyStage::MemberChecks, Some(original.region), |poll| {
-            pipeline::finish_member_with_cancel(original, retained, member, poll)
-                .map_err(|cause| FamilyFailure::Member(Box::new(cause)))
-        })?;
-        members.insert(original.region, member);
-    }
-    Ok(members)
-}
-fn membership(region: SurfaceRegionId) -> FamilyFailure {
+pub(super) fn membership(region: SurfaceRegionId) -> FamilyFailure {
     FamilyFailure::Native {
         region: Some(region),
         cause: Box::new(Failure::new(&format!(
             "family member={region:?}; expected one original, prepared and decoded member"
         ))),
     }
-}
-
-fn history_stage(
-    originals: &[Request],
-    selection: &selection::QualifiedSelection,
-    keys: &[BindingKey],
-    control: &mut Control<'_>,
-) -> Checked<history::HistoryEvidence> {
-    control.run(FamilyStage::History, None, |_| {
-        history::certify(originals, selection, keys)
-            .map_err(|cause| FamilyFailure::History(Box::new(cause)))
-    })
-}
-fn bind_coverage(
-    prepared: &[Request],
-    root: &Shape,
-    bindings: &[(BindingKey, Shape)],
-    control: &mut Control<'_>,
-) -> Checked<(coverage::FamilyCoverage, Vec<coverage::MemberView>)> {
-    control.run(FamilyStage::Coverage, None, |_| {
-        coverage::certify_family(prepared, root, bindings)
-            .map_err(|cause| FamilyFailure::Coverage(Box::new(cause)))
-    })
-}
-fn member_sources<'a>(
-    originals: &'a [Request],
-    prepared: &'a [Request],
-    region: SurfaceRegionId,
-) -> Checked<(&'a Request, &'a Request)> {
-    let original = originals
-        .iter()
-        .find(|r| r.region == region)
-        .ok_or_else(|| membership(region))?;
-    let retained = prepared
-        .iter()
-        .find(|r| r.region == region)
-        .ok_or_else(|| membership(region))?;
-    Ok((original, retained))
 }

@@ -1,0 +1,35 @@
+{
+  "scope": "Rejected attribute-only inline trial only",
+  "ownership_verified": true,
+  "exclusive_build_lock_acquired": true,
+  "live_trial_executable_or_cwd_processes": [],
+  "removed": [
+    "/tmp/martensite-gatea2-production-cylinder/inline-trial",
+    "/tmp/martensite-gatea2-production-cylinder/target-inline-trial",
+    "/tmp/martensite-gatea2-production-cylinder/bins/inline-trial-consumer",
+    "/tmp/martensite-gatea2-production-cylinder/receipts/inline-trial-attribute-only.patch",
+    "/tmp/martensite-gatea2-production-cylinder/build_inline_trial_consumer.py",
+    "/tmp/martensite-gatea2-production-cylinder/analyze_inline_trial.py"
+  ],
+  "source_generator_and_analysis_script_removed": true,
+  "findings_and_numeric_provenance_retained": [
+    "receipts/inline-trial-attribute-receipt.json",
+    "receipts/inline-trial-setup.json",
+    "receipts/inline-trial-source-sha256.json",
+    "receipts/inline-trial-rustc-commands.json",
+    "receipts/inline-trial-build-receipt.json",
+    "receipts/inline-trial-static-comparison.json",
+    "receipts/inline-trial-build.log"
+  ],
+  "preserved_binary_sha256": {
+    "before": "2be3edd78e1073902acbf88a54bbde40a9874439d66accc236fb50c5b55577f2",
+    "after": "f16d751cc515f97428ad155635335ea90edb2e0e62d36fd4fc79cca0671f6c21",
+    "fixed": "8404f80a5c9466214ca993373b2cdd3cc179099d2158d805d92e6af286f7e15e"
+  },
+  "before_after_fixed_snapshots_preserved": true,
+  "other_targets_preserved": true,
+  "active_repository_source_indices_and_targets_changed": false,
+  "runtime_executions_or_adoption": false,
+  "static_selected_section_gain_bytes": 1316,
+  "remaining_selected_section_growth_over_baseline_bytes": 123468
+}

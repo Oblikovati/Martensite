@@ -1,6 +1,8 @@
 //! Value-only publication boundary for the rational normal-extrusion operation.
 use super::*;
+mod cone;
 pub(super) mod error;
+pub use cone::*;
 mod export_bindings;
 pub(super) mod failure_projection;
 pub(super) mod history_projection;

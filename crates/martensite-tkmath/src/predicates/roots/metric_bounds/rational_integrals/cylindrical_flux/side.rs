@@ -6,14 +6,24 @@ use crate::predicates::roots::polynomial::IntegerPolynomial;
 use num_bigint::BigInt;
 type Homogeneous = coefficients::HomogeneousCurve;
 
+#[inline(always)]
 pub(super) fn integrate(
     span: CylindricalFluxSpan<'_>,
     options: RationalIntegralOptions,
     share: &ExactRatio,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<curve::CurveIntegral, RationalIntegralFailure> {
-    let mut a = capture(span.boundaries[0], cancelled)?;
-    let mut b = capture(span.boundaries[1], cancelled)?;
+    integrate_boundaries(span.boundaries, options, share, cancelled)
+}
+
+pub(super) fn integrate_boundaries(
+    boundaries: [MetricBezier<'_, 3>; 2],
+    options: RationalIntegralOptions,
+    share: &ExactRatio,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<curve::CurveIntegral, RationalIntegralFailure> {
+    let mut a = capture(boundaries[0], cancelled)?;
+    let mut b = capture(boundaries[1], cancelled)?;
     align(&mut a, &mut b);
     let numerator = numerator(&a, &b, cancelled)?;
     let squared = product(&a[3], &a[3], cancelled)?;

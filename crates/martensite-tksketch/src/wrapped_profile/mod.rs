@@ -4,6 +4,7 @@ mod api;
 pub use api::*;
 mod boundaries;
 mod cap_coordinates;
+mod cone_mapping;
 mod coverage;
 mod developed_request;
 mod family;

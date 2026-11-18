@@ -61,6 +61,7 @@ fn control_command(root: &Path, control: Control) -> CommandSpec {
         Control::SurfaceSketch => surface_sketch_controls(root),
         Control::FontTextCapture => font_text_capture_controls(root),
         Control::WrappedFamily => wrapped_family_controls(root),
+        Control::WrappedCone => wrapped_cone_controls(root),
     }
 }
 
@@ -255,6 +256,22 @@ fn wrapped_family_controls(root: &Path) -> CommandSpec {
         "--",
         "--exact",
         "--ignored",
+        "--test-threads=1",
+        "--show-output",
+    ])
+}
+
+const WRAPPED_CONE_TEST: &str = "surface_sketch::wrapped_profile::operation::cone::tests::completed::concurrency::overlapping_public_cone_operations_and_shared_readers_preserve_owned_evidence";
+fn wrapped_cone_controls(root: &Path) -> CommandSpec {
+    // #414: public cone operations and shared immutable result readers need their own control.
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tksketch",
+        "--lib",
+        WRAPPED_CONE_TEST,
+        "--",
+        "--exact",
         "--test-threads=1",
         "--show-output",
     ])

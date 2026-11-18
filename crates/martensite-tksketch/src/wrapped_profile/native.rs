@@ -3,83 +3,63 @@ use super::{boundaries::*, *};
 use crate::surface_sketch::HistoryRole;
 use martensite_tkbrep::{
     brep::{BRepBuilder, BRepTool},
-    topods::{Builder, Shell, Solid, Vertex},
+    topods::{Builder, Vertex},
 };
 use martensite_tkernel::standard::Handle;
-use martensite_tkg3d::geom::{GeomBezierCurve, GeomCylindricalSurface};
-use martensite_tkmath::gp::{Axis3, Point3};
+use martensite_tkg3d::geom::GeomBezierCurve;
+use martensite_tkmath::gp::Point3;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeVertex;
 
+mod cylinder;
+use operation::topology::DevelopedMapHandedness;
+pub(super) trait CarrierBuilder {
+    fn handedness(&self) -> DevelopedMapHandedness;
+    fn caps(&self) -> Result<[Face; 2], Failure>;
+    fn vertex_pair(&self, point: [f64; 2]) -> Result<[Vertex; 2], Failure>;
+    fn curves(
+        &self,
+        source: &AuthoredPiece,
+        ends: [&[Vertex; 2]; 2],
+    ) -> Result<[Handle<GeomBezierCurve>; 2], Failure>;
+    fn attach(
+        &self,
+        source: &AuthoredPiece,
+        edges: &[Edge; 2],
+        caps: &[Face; 2],
+    ) -> Result<(), Failure>;
+    fn check_caps(&self, pieces: &[NativePiece], caps: &[Face; 2]) -> Result<(), Failure>;
+}
 pub(super) fn construct(request: &Request) -> Result<Constructed, Failure> {
-    let caps = request
-        .depths
-        .map(|d| cap(request.radius + d, request.tolerance / 4.));
-    let caps = [caps[0].clone()?, caps[1].clone()?];
+    construct_mapped(&request.source, &cylinder::Cylinder(request))
+}
+pub(super) fn construct_mapped(
+    request: &DevelopedRegionRequest,
+    mapping: &impl CarrierBuilder,
+) -> Result<Constructed, Failure> {
+    let caps = mapping.caps()?;
     let mut bindings = cap_history(request, &caps);
     let mut pieces = Vec::new();
     for contour in &request.loops {
-        contour_pieces(request, contour, &caps, &mut pieces, &mut bindings)?;
+        contour_pieces(request, mapping, contour, &caps, &mut pieces, &mut bindings)?;
     }
-    finish(request, &caps, &pieces, bindings)
+    finish(request, mapping, &caps, &pieces, bindings)
 }
-
 fn finish(
-    request: &Request,
+    request: &DevelopedRegionRequest,
+    mapping: &impl CarrierBuilder,
     caps: &[Face; 2],
     pieces: &[NativePiece],
     mut bindings: Vec<(BindingKey, Shape)>,
 ) -> Result<Constructed, Failure> {
-    let solid = assemble(caps, pieces)?;
+    let solid = assemble(caps, pieces, mapping.handedness())?;
     martensite_tktopalgo::brep_lib::same_parameter_shape(&solid, request.tolerance, false)?;
-    retained_cap_parameters(request, pieces, caps)?;
+    mapping.check_caps(pieces, caps)?;
     let source = Source::Region(request.region);
     bindings.insert(0, (key(source, HistoryRole::Solid), solid.clone()));
     Ok(Constructed { solid, bindings })
 }
 
-fn retained_cap_parameters(
-    request: &Request,
-    pieces: &[NativePiece],
-    caps: &[Face; 2],
-) -> Result<(), Failure> {
-    for (source, piece) in request.loops.iter().flatten().zip(pieces) {
-        for (depth, cap) in caps.iter().enumerate() {
-            let captured = BRepTool::curve_on_face(&piece.edges[depth], cap)?;
-            let curve: Handle<martensite_tkg2d::geom2d::Geom2dBezierCurve> = captured.pcurve.cast();
-            let expected: Vec<_> = cap_coordinates::angular_controls(&source.poles, request.radius);
-            retained_poles(&curve, &expected)?;
-        }
-    }
-    Ok(())
-}
-
-fn retained_poles(
-    curve: &Handle<martensite_tkg2d::geom2d::Geom2dBezierCurve>,
-    expected: &[[f64; 2]],
-) -> Result<(), Failure> {
-    let Some(curve) = curve.get() else {
-        return Err(Failure::new(
-            "native conformance replaced an authored Bezier pcurve",
-        ));
-    };
-    let poles = curve.poles();
-    let actual: Vec<_> = poles.iter().map(|p| [p.x(), p.y()]).collect();
-    if actual != expected {
-        return Err(Failure::new(&format!(
-            "native pcurve poles={actual:?}; expected unchanged authored poles={expected:?}"
-        )));
-    }
-    Ok(())
-}
-
-fn cap(radius: f64, tolerance: f64) -> Result<Face, Failure> {
-    let surface = Handle::new(GeomCylindricalSurface::new(Axis3::default(), radius)?).into_cast();
-    let mut face = Face::default();
-    BRepBuilder::default().make_face_on_surface(&mut face, &surface, tolerance)?;
-    Ok(face)
-}
-
-fn cap_history(request: &Request, caps: &[Face; 2]) -> Vec<(BindingKey, Shape)> {
+fn cap_history(request: &DevelopedRegionRequest, caps: &[Face; 2]) -> Vec<(BindingKey, Shape)> {
     let source = Source::Region(request.region);
     vec![
         (
@@ -94,30 +74,31 @@ fn cap_history(request: &Request, caps: &[Face; 2]) -> Vec<(BindingKey, Shape)> 
 }
 
 fn contour_pieces(
-    request: &Request,
+    request: &DevelopedRegionRequest,
+    mapping: &impl CarrierBuilder,
     contour: &[AuthoredPiece],
     caps: &[Face; 2],
     pieces: &mut Vec<NativePiece>,
     history: &mut Vec<(BindingKey, Shape)>,
 ) -> Result<(), Failure> {
-    let incidences = ContourIncidences::new(contour, request)?;
+    let incidences = ContourIncidences::new(contour, mapping)?;
     let first = pieces.len();
     for (i, source) in contour.iter().enumerate() {
-        let piece = incidences.piece_at(request, source, i, caps)?;
+        let piece = incidences.piece_at(request, mapping, source, i, caps)?;
         record_history(source, &piece, &incidences.vertices[i], history);
         pieces.push(piece);
     }
-    cap_wires(caps, &pieces[first..])
+    cap_wires(caps, &pieces[first..], mapping.handedness())
 }
 struct ContourIncidences {
     vertices: Vec<[Vertex; 2]>,
     connectors: Vec<Edge>,
 }
 impl ContourIncidences {
-    fn new(contour: &[AuthoredPiece], request: &Request) -> Result<Self, Failure> {
+    fn new(contour: &[AuthoredPiece], mapping: &impl CarrierBuilder) -> Result<Self, Failure> {
         let vertices = contour
             .iter()
-            .map(|p| vertex_pair(p.poles[0], request))
+            .map(|p| mapping.vertex_pair(p.poles[0]))
             .collect::<Result<Vec<_>, _>>()?;
         let connectors = vertices
             .iter()
@@ -130,7 +111,8 @@ impl ContourIncidences {
     }
     fn piece_at(
         &self,
-        request: &Request,
+        request: &DevelopedRegionRequest,
+        mapping: &impl CarrierBuilder,
         source: &AuthoredPiece,
         i: usize,
         caps: &[Face; 2],
@@ -138,22 +120,13 @@ impl ContourIncidences {
         let next = (i + 1) % self.vertices.len();
         piece(
             request,
+            mapping,
             source,
             [&self.vertices[i], &self.vertices[next]],
             [self.connectors[i].clone(), self.connectors[next].clone()],
             caps,
         )
     }
-}
-
-fn vertex_pair(point: [f64; 2], request: &Request) -> Result<[Vertex; 2], Failure> {
-    let make = |depth| -> Result<Vertex, Failure> {
-        let [x, y, z] = angular::endpoint(point, request.radius, request.radius + depth);
-        let vertex = BRepBuilderAPIMakeVertex::new(Point3::new(x, y, z))?.vertex()?;
-        BRepBuilder::default().update_vertex_tolerance(&vertex, request.tolerance / 2.)?;
-        Ok(vertex)
-    };
-    Ok([make(request.depths[0])?, make(request.depths[1])?])
 }
 
 fn connector(vertices: &[Vertex; 2]) -> Result<Edge, Failure> {
@@ -171,33 +144,20 @@ fn connector(vertices: &[Vertex; 2]) -> Result<Edge, Failure> {
     edge(&curve3(&poles)?, [&vertices[0], &vertices[1]])
 }
 
-fn depth_curve(
-    coefficients: &[[f64; 4]],
-    radius: f64,
-    ends: [&Vertex; 2],
-) -> Result<Handle<martensite_tkg3d::geom::GeomBezierCurve>, Failure> {
-    let mut poles = angular::at_radius(coefficients, radius);
-    let last = poles.points.len() - 1;
-    for (index, vertex) in [(0, ends[0]), (last, ends[1])] {
-        let point = BRepTool::pnt(vertex)?;
-        poles.points[index] = [point.x(), point.y(), point.z()];
-    }
-    curve3(&poles)
-}
-
 fn piece(
-    request: &Request,
+    request: &DevelopedRegionRequest,
+    mapping: &impl CarrierBuilder,
     source: &AuthoredPiece,
     ends: [&[Vertex; 2]; 2],
     connectors: [Edge; 2],
     caps: &[Face; 2],
 ) -> Result<NativePiece, Failure> {
-    let curves = boundary_curves(request, source, ends)?;
+    let curves = mapping.curves(source, ends)?;
     let edges = [
         edge(&curves[0], [&ends[0][0], &ends[1][0]])?,
         edge(&curves[1], [&ends[0][1], &ends[1][1]])?,
     ];
-    attach_cap_curves(request, source, &edges, caps)?;
+    mapping.attach(source, &edges, caps)?;
     let side = side(&curves, &edges, &connectors, request.tolerance / 2.)?;
     Ok(NativePiece {
         edges,
@@ -205,63 +165,51 @@ fn piece(
         side,
     })
 }
-fn boundary_curves(
-    request: &Request,
-    source: &AuthoredPiece,
-    ends: [&[Vertex; 2]; 2],
-) -> Result<[Handle<GeomBezierCurve>; 2], Failure> {
-    let coefficients = angular::coefficients(&source.poles, request.radius, source.chart_center);
-    let make = |i| {
-        depth_curve(
-            &coefficients,
-            request.radius + request.depths[i],
-            [&ends[0][i], &ends[1][i]],
-        )
-    };
-    Ok([make(0)?, make(1)?])
-}
-fn attach_cap_curves(
-    request: &Request,
-    source: &AuthoredPiece,
-    edges: &[Edge; 2],
-    caps: &[Face; 2],
-) -> Result<(), Failure> {
-    let pcurve = curve2(
-        &source
-            .poles
-            .iter()
-            .map(|[s, z]| [s / request.radius, *z])
-            .collect::<Vec<_>>(),
-    )?;
-    attach(&edges[0], &pcurve, &caps[0], request.tolerance / 2.)?;
-    attach(&edges[1], &pcurve, &caps[1], request.tolerance / 2.)
-}
 
-fn cap_wires(caps: &[Face; 2], pieces: &[NativePiece]) -> Result<(), Failure> {
+fn cap_wires(
+    caps: &[Face; 2],
+    pieces: &[NativePiece],
+    handedness: DevelopedMapHandedness,
+) -> Result<(), Failure> {
     for (depth, cap) in caps.iter().enumerate() {
-        let edges: Vec<_> = pieces
-            .iter()
-            .map(|p| p.edges[depth].clone().into_shape())
-            .collect();
+        let edges = cap_edges(pieces, depth, handedness);
         let boundary = wire(&edges)?;
         Builder.add(&mut cap.clone(), &boundary)?;
     }
     Ok(())
 }
 
-fn assemble(caps: &[Face; 2], pieces: &[NativePiece]) -> Result<Shape, Failure> {
-    let mut shell = Shell::default();
-    Builder.make_shell(&mut shell);
-    Builder.add(&mut shell, &caps[0].reversed())?;
-    Builder.add(&mut shell, &caps[1])?;
-    for piece in pieces {
-        Builder.add(&mut shell, &piece.side)?;
+fn cap_edges(
+    pieces: &[NativePiece],
+    depth: usize,
+    handedness: DevelopedMapHandedness,
+) -> Vec<Shape> {
+    // #540: reverse oriented incidence, never the authored curve's parameterization or identity.
+    if handedness.reverses() {
+        return pieces
+            .iter()
+            .rev()
+            .map(|piece| piece.edges[depth].reversed())
+            .collect();
     }
-    shell.set_closed(true)?;
-    let mut solid = Solid::default();
-    Builder.make_solid(&mut solid);
-    Builder.add(&mut solid, &shell)?;
-    Ok(solid.into_shape())
+    pieces
+        .iter()
+        .map(|piece| piece.edges[depth].clone().into_shape())
+        .collect()
+}
+
+fn assemble(
+    caps: &[Face; 2],
+    pieces: &[NativePiece],
+    handedness: DevelopedMapHandedness,
+) -> Result<Shape, Failure> {
+    let mut assembly = operation::topology::SolidAssembly::new();
+    assembly.add(&caps[0], true)?;
+    assembly.add(&caps[1], false)?;
+    for piece in pieces {
+        assembly.add(&piece.side, handedness.reverses())?;
+    }
+    Ok(assembly.finish()?.into_shape())
 }
 
 fn key(source: Source, role: HistoryRole) -> BindingKey {

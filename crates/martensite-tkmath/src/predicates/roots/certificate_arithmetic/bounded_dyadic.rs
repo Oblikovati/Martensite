@@ -9,7 +9,7 @@ use num_bigint::{BigInt, Sign};
 
 const MAX_INTEGER_BITS: u64 = 16_384;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub(in crate::predicates::roots) struct ArithmeticPolicy {
     pub fractional_bits: u16,
     pub max_operations: u32,
@@ -34,6 +34,20 @@ impl Interval {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
+pub(in crate::predicates::roots) enum PositiveSqrtFailure {
+    Arithmetic(Failure),
+    InvalidInterval {
+        lower: DyadicBound,
+        upper: DyadicBound,
+    },
+}
+impl From<Failure> for PositiveSqrtFailure {
+    fn from(cause: Failure) -> Self {
+        Self::Arithmetic(cause)
+    }
+}
+
 pub(in crate::predicates::roots) struct Arithmetic<'a> {
     options: ArithmeticPolicy,
     unit: BigInt,
@@ -53,6 +67,9 @@ impl<'a> Arithmetic<'a> {
     }
     pub fn operations(&self) -> u32 {
         self.operations
+    }
+    pub fn policy(&self) -> ArithmeticPolicy {
+        self.options
     }
     pub fn fractional_bits(&self) -> u16 {
         self.options.fractional_bits
@@ -102,6 +119,29 @@ impl<'a> Arithmetic<'a> {
             .iter()
             .fold(products[0].clone(), |a, b| a.max(b.clone()));
         self.rounded(&lower, &upper, &self.unit)
+    }
+    pub fn positive_sqrt(&mut self, value: &Interval) -> Result<Interval, PositiveSqrtFailure> {
+        self.charge()?;
+        self.positive_sqrt_domain(value)?;
+        let lower = &value.lower * &self.unit;
+        let upper = &value.upper * &self.unit;
+        check_bits(lower.bits().max(upper.bits()))?;
+        let lower_root = lower.sqrt();
+        let mut upper_root = upper.sqrt();
+        if &upper_root * &upper_root < upper {
+            upper_root += 1;
+        }
+        Ok(checked(lower_root, upper_root)?)
+    }
+    fn positive_sqrt_domain(&self, value: &Interval) -> Result<(), PositiveSqrtFailure> {
+        if value.lower > value.upper {
+            let exponent = -i32::from(self.options.fractional_bits);
+            return Err(PositiveSqrtFailure::InvalidInterval {
+                lower: DyadicBound::new(value.lower.clone(), exponent),
+                upper: DyadicBound::new(value.upper.clone(), exponent),
+            });
+        }
+        self.positive_denominator(&value.lower).map_err(Into::into)
     }
     pub fn fraction(
         &mut self,

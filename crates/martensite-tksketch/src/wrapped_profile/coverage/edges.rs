@@ -37,7 +37,7 @@ fn opposite(owner: BindingKey, uses: &[BoundUse]) -> Checked<()> {
     }
     Ok(())
 }
-pub(super) fn endpoints(request: &Request, registry: &Registry<'_>) -> Checked<()> {
+pub(super) fn endpoints(request: &DevelopedRegionRequest, registry: &Registry<'_>) -> Checked<()> {
     for piece in request.loops.iter().flatten() {
         piece_endpoints(piece, registry)?;
     }

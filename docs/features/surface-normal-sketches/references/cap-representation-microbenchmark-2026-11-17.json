@@ -1,0 +1,313 @@
+{
+  "rounds": 7,
+  "warmup_rounds": 2,
+  "construction_batch": 100,
+  "archive_batch": 100,
+  "evaluation_batch": 20000,
+  "sample_grid": [
+    17,
+    17
+  ],
+  "process_peak_rss_kib": 23936,
+  "cases": [
+    {
+      "outward": true,
+      "rational": {
+        "construct_batch_ns": [
+          841046,
+          834243,
+          829975,
+          846155,
+          838501,
+          840676,
+          837369
+        ],
+        "encode_batch_ns": [
+          3402113,
+          3379061,
+          3382276,
+          3395010,
+          3397294,
+          3403255,
+          3391403
+        ],
+        "decode_batch_ns": [
+          2783509,
+          2768661,
+          2784631,
+          2784631,
+          2787266,
+          2783649,
+          2779993
+        ],
+        "evaluate_batch_ns": [
+          19002089,
+          19090554,
+          19053044,
+          19008552,
+          18992252,
+          19461328,
+          20101383
+        ],
+        "archive_bytes": 375,
+        "sampled_max_error": 1.3608726004012153e-15,
+        "decoded_sampled_max_error": 1.3608726004012153e-15,
+        "strict_byte_replay": true
+      },
+      "analytic": {
+        "construct_batch_ns": [
+          208085,
+          208586,
+          207253,
+          210168,
+          207955,
+          208707,
+          207283
+        ],
+        "encode_batch_ns": [
+          2972699,
+          2969884,
+          2976496,
+          3005760,
+          2998487,
+          3006832,
+          2992566
+        ],
+        "decode_batch_ns": [
+          2508130,
+          2507709,
+          2503561,
+          2517316,
+          2519320,
+          2507538,
+          2511325
+        ],
+        "evaluate_batch_ns": [
+          14950385,
+          14851201,
+          14848527,
+          14961134,
+          14901013,
+          14921752,
+          14841263
+        ],
+        "archive_bytes": 289,
+        "sampled_max_error": 7.691850745534255e-16,
+        "decoded_sampled_max_error": 7.691850745534255e-16,
+        "strict_byte_replay": true
+      }
+    },
+    {
+      "outward": false,
+      "rational": {
+        "construct_batch_ns": [
+          845143,
+          847688,
+          846817,
+          857716,
+          846787,
+          848229,
+          834613
+        ],
+        "encode_batch_ns": [
+          3388298,
+          3392114,
+          3380723,
+          3385653,
+          3380603,
+          3391433,
+          3393518
+        ],
+        "decode_batch_ns": [
+          2787015,
+          2776236,
+          2772769,
+          2774252,
+          2760646,
+          2786815,
+          2786033
+        ],
+        "evaluate_batch_ns": [
+          19043285,
+          19070977,
+          19114718,
+          19153901,
+          19063793,
+          20403813,
+          20318886
+        ],
+        "archive_bytes": 375,
+        "sampled_max_error": 9.992007221626409e-16,
+        "decoded_sampled_max_error": 9.992007221626409e-16,
+        "strict_byte_replay": true
+      },
+      "analytic": {
+        "construct_batch_ns": [
+          212423,
+          212473,
+          211952,
+          215929,
+          208797,
+          208716,
+          211411
+        ],
+        "encode_batch_ns": [
+          2982427,
+          2990622,
+          2987697,
+          2991464,
+          2993046,
+          3119700,
+          3013194
+        ],
+        "decode_batch_ns": [
+          2510965,
+          2511716,
+          2496849,
+          2493212,
+          2506106,
+          2525291,
+          2762740
+        ],
+        "evaluate_batch_ns": [
+          14986813,
+          14832607,
+          15187533,
+          15138954,
+          14832186,
+          14936620,
+          15717905
+        ],
+        "archive_bytes": 289,
+        "sampled_max_error": 6.661338147750939e-16,
+        "decoded_sampled_max_error": 6.661338147750939e-16,
+        "strict_byte_replay": true
+      }
+    }
+  ],
+  "experiment_source_sha256": "358d412105864d00aa3837362756e117ac270884bd6278f6df881ca8a2c81b70",
+  "baseline_head": "698820f038c2a222e98f08248ac303af54d422b1",
+  "toolchain": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+  "fixture": {
+    "semi_angle": 0.5,
+    "chart_center": 0.2,
+    "slant": [
+      3.0,
+      4.0
+    ],
+    "depth": 0.1,
+    "tolerance": 1e-08,
+    "normals": [
+      "outward",
+      "inward"
+    ]
+  },
+  "profile": {
+    "cargo": "test",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "optimization": "unoptimized"
+  },
+  "excluded": [
+    "whole-body construction and validation",
+    "fitted analytic pcurve implementation and certification",
+    "modeling acceptance",
+    "per-representation peak memory",
+    "release-mode performance",
+    "physical placement"
+  ],
+  "oracle": {
+    "kind": "sampled estimate against independent authored closed-form formula",
+    "certified": false
+  },
+  "topology": {
+    "per_representation": {
+      "faces": 1,
+      "edges": 0,
+      "wires": 0,
+      "solids": 0
+    },
+    "trimmed": false
+  },
+  "source_hashes": {
+    "Cargo.lock": "ae5a5ca217961e6592020d9ed11db2b27fa0306afa98828177b87c5ea6a0bb8e",
+    "crates/martensite-tksketch/src/wrapped_profile/conical_mapping/cap_patch.rs": "3869715610b4768e4d846e4ab7d9a8f2d9b8f29b9f93f1f959aa5f896acbb7ea",
+    "crates/martensite-tkg3d/src/geom/conical_surface.rs": "6a43a0588d606e7b4e8b03d6aeb86c28624406c22ded6f71c4ddac446f78bf0e",
+    "crates/martensite-tksketch/src/surface_sketch/encoding.rs": "011dd9fa227759aa371fc2e4ebaedc9402ebdce686e998dcc41afa62346b6882",
+    "crates/martensite-tkbrep/src/bintools/surface_write.rs": "43b6ebab0fc3a12d076f0d2ecebc2f74e3752f1183e976473c4d826a78c6208d",
+    "crates/martensite-tkbrep/src/bintools/surface_read.rs": "e351405b9840ea6d5884b6f82cf78de1cfdc6768e03467121174d9e70b72613f",
+    "crates/martensite-tkg3d/src/geom/bezier_surface.rs": "636c45c7e9d47861c6644fa5d697e344608fcc354492378f44b7b0a5caaee2c1",
+    "crates/martensite-tkmath/src/elslib/values.rs": "7cf60e55b7cc310f7dfb1167d317308566300d76559ad0e802c70536f34813ef"
+  },
+  "command": [
+    "flock",
+    "/tmp/martensite-512-owner-qualification.lock",
+    "env",
+    "CARGO_PROFILE_DEV_DEBUG=0",
+    "CARGO_TARGET_DIR=/tmp/martensite-512-primary-contract-target",
+    "cargo",
+    "test",
+    "-p",
+    "martensite-tksketch",
+    "--lib",
+    "cap_representation_measurement",
+    "--",
+    "--ignored",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "platform": {
+    "system": "Linux",
+    "release": "7.2.15-76070215-generic",
+    "machine": "x86_64",
+    "cpu_model": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S"
+  },
+  "measurement_scope": "Untrimmed native caps only. Mapping coordinates were prepared outside timed evaluation loops; both representations cover the same physical patch. No whole operation performance claim.",
+  "derived_medians": [
+    {
+      "outward": true,
+      "construct": {
+        "rational_ns_per_call": 8385.01,
+        "analytic_ns_per_call": 2080.85,
+        "analytic_over_rational": 0.24816309103984371
+      },
+      "encode": {
+        "rational_ns_per_call": 33950.1,
+        "analytic_ns_per_call": 29925.66,
+        "analytic_over_rational": 0.8814601429745421
+      },
+      "decode": {
+        "rational_ns_per_call": 27836.49,
+        "analytic_ns_per_call": 25081.3,
+        "analytic_over_rational": 0.9010223630924732
+      },
+      "evaluate": {
+        "rational_ns_per_call": 952.6522,
+        "analytic_ns_per_call": 745.05065,
+        "analytic_over_rational": 0.7820804381704047
+      }
+    },
+    {
+      "outward": false,
+      "construct": {
+        "rational_ns_per_call": 8468.17,
+        "analytic_ns_per_call": 2119.52,
+        "analytic_over_rational": 0.25029256616246487
+      },
+      "encode": {
+        "rational_ns_per_call": 33882.98,
+        "analytic_ns_per_call": 29914.64,
+        "analytic_over_rational": 0.8828810216810917
+      },
+      "decode": {
+        "rational_ns_per_call": 27762.36,
+        "analytic_ns_per_call": 25109.65,
+        "analytic_over_rational": 0.9044494055980832
+      },
+      "evaluate": {
+        "rational_ns_per_call": 955.7359,
+        "analytic_ns_per_call": 749.34065,
+        "analytic_over_rational": 0.7840457285323278
+      }
+    }
+  ]
+}

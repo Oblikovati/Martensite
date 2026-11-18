@@ -1,6 +1,6 @@
 //! Shared corners collect both incident curve parents before a single record is emitted.
 use super::*;
-pub(super) fn region(request: &Request, records: &mut Records) -> Checked<()> {
+pub(super) fn region(request: &DevelopedRegionRequest, records: &mut Records) -> Checked<()> {
     region_images(request, records)?;
     let mut corners: BTreeMap<CornerSource, Parents> = BTreeMap::new();
     for piece in request.loops.iter().flatten() {
@@ -12,7 +12,7 @@ pub(super) fn region(request: &Request, records: &mut Records) -> Checked<()> {
     }
     Ok(())
 }
-fn all_parents(request: &Request) -> Parents {
+fn all_parents(request: &DevelopedRegionRequest) -> Parents {
     let mut parents = BTreeSet::from([HistorySource::Region(request.region)]);
     for piece in request.loops.iter().flatten() {
         parents.insert(HistorySource::Curve(piece.span.curve));
@@ -21,7 +21,7 @@ fn all_parents(request: &Request) -> Parents {
     }
     parents
 }
-fn region_images(request: &Request, records: &mut Records) -> Checked<()> {
+fn region_images(request: &DevelopedRegionRequest, records: &mut Records) -> Checked<()> {
     let images = Images {
         owner: request.region,
         source: Source::Region(request.region),

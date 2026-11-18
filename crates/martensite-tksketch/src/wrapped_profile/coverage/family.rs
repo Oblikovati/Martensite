@@ -10,8 +10,8 @@ pub(in super::super) struct MemberView {
     pub shape: Shape,
     pub bindings: Vec<(BindingKey, Shape)>,
 }
-pub(in super::super) fn certify_family(
-    requests: &[Request],
+pub(in super::super) fn certify_developed_family<R: AsRef<DevelopedRegionRequest>>(
+    requests: &[R],
     root: &Shape,
     bindings: &[(BindingKey, Shape)],
 ) -> Checked<(FamilyCoverage, Vec<MemberView>)> {
@@ -20,17 +20,15 @@ pub(in super::super) fn certify_family(
     root_members(requests, root, &registry)?;
     let views = requests
         .iter()
-        .map(|r| member_view(r, &registry))
+        .map(|r| member_view(r.as_ref(), &registry))
         .collect::<Checked<Vec<_>>>()?;
-    Ok((
-        FamilyCoverage {
-            members: requests.len(),
-            bindings: registry.len(),
-        },
-        views,
-    ))
+    let report = FamilyCoverage {
+        members: requests.len(),
+        bindings: registry.len(),
+    };
+    Ok((report, views))
 }
-fn member_view(request: &Request, registry: &Registry<'_>) -> Checked<MemberView> {
+fn member_view(request: &DevelopedRegionRequest, registry: &Registry<'_>) -> Checked<MemberView> {
     let shape = registry
         .shape(expected::region(request, HistoryRole::Solid))?
         .clone();
@@ -46,7 +44,7 @@ fn member_view(request: &Request, registry: &Registry<'_>) -> Checked<MemberView
     })
 }
 
-fn require_members(requests: &[Request]) -> Checked<()> {
+fn require_members<R>(requests: &[R]) -> Checked<()> {
     if requests.is_empty() {
         return Err(fail(
             CoverageOwner::Family,
@@ -59,13 +57,17 @@ fn require_members(requests: &[Request]) -> Checked<()> {
     }
     Ok(())
 }
-fn root_members(requests: &[Request], root: &Shape, registry: &Registry<'_>) -> Checked<()> {
+fn root_members<R: AsRef<DevelopedRegionRequest>>(
+    requests: &[R],
+    root: &Shape,
+    registry: &Registry<'_>,
+) -> Checked<()> {
     let owner = CoverageOwner::Family;
     registry::canonical(owner, root)?;
     registry::kind_check(owner, root, ShapeEnum::Compound)?;
     let roots: Vec<_> = requests
         .iter()
-        .map(|r| BoundUse::forward(expected::region(r, HistoryRole::Solid)))
+        .map(|r| BoundUse::forward(expected::region(r.as_ref(), HistoryRole::Solid)))
         .collect();
     members::uses(owner, root, ShapeEnum::Solid, &roots, registry)?;
     Ok(())

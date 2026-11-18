@@ -21,7 +21,8 @@ pub struct WrappedCertifiedBound {
 pub struct WrappedNativeVolumeEstimate {
     /// Native reported volume in cubic model units.
     pub value: f64,
-    /// Native reported integration error estimate.
+    /// Unchanged raw native error estimate: relative when positive volume exceeds
+    /// native `epsilon(1)`, otherwise absolute. This is not a certified bound.
     pub integration_error: f64,
 }
 /// Validation and achieved errors for one selected material component.

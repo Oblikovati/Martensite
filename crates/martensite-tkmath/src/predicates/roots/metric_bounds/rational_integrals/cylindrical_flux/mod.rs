@@ -10,6 +10,11 @@ use crate::predicates::roots::metric_bounds::{
 };
 use crate::predicates::roots::{certificate_arithmetic::ExactRatio as Ratio, error::poll};
 mod admission;
+mod analytic_cone;
+pub use analytic_cone::{
+    AnalyticConicalFluxError, AnalyticConicalFluxFailure, AnalyticConicalFluxQuery,
+    AnalyticConicalFluxSpan, CertifiedAnalyticConicalFlux, certify_analytic_conical_boundary_flux,
+};
 mod binding;
 mod caps;
 mod error;

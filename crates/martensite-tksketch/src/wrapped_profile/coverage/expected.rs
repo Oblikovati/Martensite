@@ -1,6 +1,6 @@
 //! Expected incidence uses authored span/corner labels, never native traversal positions.
 use super::*;
-pub(super) fn region(request: &Request, role: HistoryRole) -> BindingKey {
+pub(super) fn region(request: &DevelopedRegionRequest, role: HistoryRole) -> BindingKey {
     BindingKey {
         source: Source::Region(request.region),
         role,
@@ -18,7 +18,9 @@ pub(super) fn corner(corner: CornerSource, role: HistoryRole) -> BindingKey {
         role,
     }
 }
-pub(super) fn definitions(request: &Request) -> Checked<BTreeMap<BindingKey, ShapeEnum>> {
+pub(super) fn definitions(
+    request: &DevelopedRegionRequest,
+) -> Checked<BTreeMap<BindingKey, ShapeEnum>> {
     let mut result = BTreeMap::new();
     insert(
         &mut result,
@@ -69,7 +71,10 @@ fn insert(
     }
     Ok(())
 }
-pub(super) fn faces(request: &Request) -> Vec<BoundUse> {
+pub(super) fn faces(
+    request: &DevelopedRegionRequest,
+    handedness: DevelopedMapHandedness,
+) -> Vec<BoundUse> {
     let mut uses = vec![
         BoundUse::new(
             region(request, HistoryRole::FirstDepthFace),
@@ -77,13 +82,12 @@ pub(super) fn faces(request: &Request) -> Vec<BoundUse> {
         ),
         BoundUse::forward(region(request, HistoryRole::LastDepthFace)),
     ];
-    uses.extend(
-        request
-            .loops
-            .iter()
-            .flatten()
-            .map(|p| BoundUse::forward(span(p.span, HistoryRole::SideFace))),
-    );
+    uses.extend(request.loops.iter().flatten().map(|p| {
+        BoundUse::new(
+            span(p.span, HistoryRole::SideFace),
+            handedness.boundary_orientation(),
+        )
+    }));
     uses
 }
 pub(super) fn side(piece: &AuthoredPiece) -> Vec<BoundUse> {
@@ -100,18 +104,35 @@ pub(super) fn side(piece: &AuthoredPiece) -> Vec<BoundUse> {
         ),
     ]
 }
-pub(super) fn cap(request: &Request, role: HistoryRole) -> Vec<Vec<BoundUse>> {
+pub(super) fn cap(
+    request: &DevelopedRegionRequest,
+    role: HistoryRole,
+    handedness: DevelopedMapHandedness,
+) -> Vec<Vec<BoundUse>> {
     request
         .loops
         .iter()
-        .map(|contour| {
-            contour
-                .iter()
-                .map(|p| BoundUse::forward(span(p.span, role)))
-                .collect()
-        })
+        .map(|contour| cap_contour(contour, role, handedness))
         .collect()
 }
+fn cap_contour(
+    contour: &[AuthoredPiece],
+    role: HistoryRole,
+    handedness: DevelopedMapHandedness,
+) -> Vec<BoundUse> {
+    if handedness.reverses() {
+        return contour
+            .iter()
+            .rev()
+            .map(|p| BoundUse::new(span(p.span, role), Orientation::Reversed))
+            .collect();
+    }
+    contour
+        .iter()
+        .map(|p| BoundUse::forward(span(p.span, role)))
+        .collect()
+}
+
 pub(super) fn ends(piece: &AuthoredPiece, role: HistoryRole) -> Vec<BoundUse> {
     vec![
         BoundUse::forward(corner(piece.start, role)),

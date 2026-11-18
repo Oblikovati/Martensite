@@ -16,7 +16,7 @@ pub(super) fn elevate(
     )?)
 }
 
-pub(super) fn difference(
+pub(in crate::predicates::roots::metric_bounds) fn difference(
     a: &[Interval],
     b: &[Interval],
     arithmetic: &mut Arithmetic<'_>,
@@ -38,7 +38,7 @@ pub(super) fn sum(
     Ok(polynomial::sum(&a, &b, arithmetic)?)
 }
 
-pub(super) fn hull(poles: &[Interval]) -> Interval {
+pub(in crate::predicates::roots::metric_bounds) fn hull(poles: &[Interval]) -> Interval {
     Interval {
         lower: polynomial::lower(poles),
         upper: poles
@@ -47,14 +47,14 @@ pub(super) fn hull(poles: &[Interval]) -> Interval {
     }
 }
 
-pub(super) fn point_upper(value: &Interval) -> Interval {
+pub(in crate::predicates::roots::metric_bounds) fn point_upper(value: &Interval) -> Interval {
     Interval {
         lower: value.upper.clone(),
         upper: value.upper.clone(),
     }
 }
 
-pub(super) fn magnitude(poles: &[Interval]) -> Interval {
+pub(in crate::predicates::roots::metric_bounds) fn magnitude(poles: &[Interval]) -> Interval {
     let bound = polynomial::magnitude(poles);
     Interval {
         lower: bound.clone(),
@@ -77,7 +77,7 @@ pub(super) fn widen(
     Ok(())
 }
 
-pub(super) fn remainder(
+pub(in crate::predicates::roots::metric_bounds) fn remainder(
     amplitude: &Interval,
     order: u64,
     arithmetic: &mut Arithmetic<'_>,

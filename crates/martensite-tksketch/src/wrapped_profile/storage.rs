@@ -16,7 +16,7 @@ mod profile;
 #[path = "storage_tests.rs"]
 pub(super) mod tests;
 #[path = "storage_trims.rs"]
-mod trims;
+pub(in crate::surface_sketch::wrapped_profile) mod trims;
 use profile::prove_profile;
 #[cfg(test)]
 #[path = "storage_cancellation_tests.rs"]
@@ -25,7 +25,7 @@ use super::*;
 use crate::surface_sketch::HistoryRole;
 #[cfg(test)]
 pub(super) use flux::certify_flux;
-pub(super) use flux::certify_flux_with_cancel;
+pub(super) use flux::{MAX_CERTIFIED_SPANS, certify_flux_with_cancel};
 use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedCylindricalDepths, CertifiedCylindricalFlux, CertifiedCylindricalLift,
     CertifiedCylindricalProfile, CertifiedCylindricalStorage, CertifiedCylindricalTrim,
@@ -50,12 +50,12 @@ pub(super) struct StoredProof {
     pub trims: trims::TrimEvidence,
 }
 
-struct OwnedCurve {
-    poles: Vec<[f64; 3]>,
-    weights: Vec<f64>,
+pub(in crate::surface_sketch::wrapped_profile) struct OwnedCurve {
+    pub(in crate::surface_sketch::wrapped_profile) poles: Vec<[f64; 3]>,
+    pub(in crate::surface_sketch::wrapped_profile) weights: Vec<f64>,
 }
 impl OwnedCurve {
-    fn borrowed(&self) -> MetricBezier<'_, 3> {
+    pub(in crate::surface_sketch::wrapped_profile) fn borrowed(&self) -> MetricBezier<'_, 3> {
         MetricBezier {
             poles: &self.poles,
             weights: Some(&self.weights),
@@ -65,7 +65,7 @@ impl OwnedCurve {
 
 #[derive(Debug)]
 pub(super) struct StorageFailure {
-    key: BindingKey,
+    pub(in crate::surface_sketch::wrapped_profile) key: BindingKey,
     cause: StorageCause,
 }
 #[derive(Debug)]
@@ -191,7 +191,9 @@ pub(super) fn certify_with_cancel(
         .collect()
 }
 
-fn index(bindings: &[(BindingKey, Shape)]) -> Result<Bindings<'_>, StorageFailure> {
+pub(in crate::surface_sketch::wrapped_profile) fn index(
+    bindings: &[(BindingKey, Shape)],
+) -> Result<Bindings<'_>, StorageFailure> {
     let mut indexed = Bindings::new();
     for (key, shape) in bindings {
         if indexed.insert(*key, shape).is_some() {
@@ -285,7 +287,7 @@ fn source_for_span<'a>(
     })
 }
 
-fn captured_span(
+pub(in crate::surface_sketch::wrapped_profile) fn captured_span(
     piece: &AuthoredPiece,
     bindings: &Bindings<'_>,
 ) -> Result<[OwnedCurve; 2], StorageFailure> {
@@ -314,14 +316,20 @@ fn prove_captured(
     })
 }
 
-fn key(span: CurveSpan, role: HistoryRole) -> BindingKey {
+pub(in crate::surface_sketch::wrapped_profile) fn key(
+    span: CurveSpan,
+    role: HistoryRole,
+) -> BindingKey {
     BindingKey {
         source: Source::Span(span),
         role,
     }
 }
 
-fn lookup<'a>(key: BindingKey, bindings: &Bindings<'a>) -> Result<&'a Shape, StorageFailure> {
+pub(in crate::surface_sketch::wrapped_profile) fn lookup<'a>(
+    key: BindingKey,
+    bindings: &Bindings<'a>,
+) -> Result<&'a Shape, StorageFailure> {
     bindings
         .get(&key)
         .copied()
@@ -351,7 +359,7 @@ fn mismatch(
     }
 }
 
-fn storage_share(tolerance: f64) -> f64 {
+pub(in crate::surface_sketch::wrapped_profile) fn storage_share(tolerance: f64) -> f64 {
     let nearest = tolerance / 1000.;
     if nearest == 0. {
         return 0.;
@@ -398,3 +406,38 @@ fn prove_depths(
 
 #[path = "storage_cause_cancellation.rs"]
 mod cause_cancellation;
+
+impl StorageFailure {
+    pub(super) fn public_class(&self) -> WrappedFailureClass {
+        use StorageCause as C;
+        match &self.cause {
+            C::Native(_) => WrappedFailureClass::Native,
+            C::Trim { cause, .. } => cause.public_class(),
+            C::Certificate(_)
+            | C::Profile(_)
+            | C::Lift(_)
+            | C::CapResidual(_)
+            | C::Flux(_)
+            | C::Comparison(_)
+            | C::Depths(_)
+            | C::Tolerance { .. }
+            | C::Mismatch { .. } => WrappedFailureClass::Incomplete,
+        }
+    }
+}
+impl std::error::Error for StorageFailure {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        use StorageCause as C;
+        match &self.cause {
+            C::Native(cause) => Some(cause.as_ref()),
+            C::Certificate(cause) => Some(cause.as_ref()),
+            C::Profile(cause) => Some(cause.as_ref()),
+            C::CapResidual(cause) => Some(cause.as_ref()),
+            C::Flux(cause) => Some(cause.as_ref()),
+            C::Comparison(cause) => Some(cause.as_ref()),
+            C::Depths(cause) => Some(cause.as_ref()),
+            C::Trim { cause, .. } => Some(cause.as_ref()),
+            C::Lift(_) | C::Tolerance { .. } | C::Mismatch { .. } => None,
+        }
+    }
+}

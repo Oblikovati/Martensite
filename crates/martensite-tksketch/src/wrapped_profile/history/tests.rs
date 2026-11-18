@@ -184,3 +184,95 @@ fn noncanonical_alias(source: CornerSource) -> CornerSource {
         level: level + 1,
     }
 }
+
+#[test]
+fn developed_history_borrows_distinct_owners_and_retains_cylinder_records() {
+    let (originals, selection, keys) = fixture();
+    let expected = certify(&originals, &selection, &keys).unwrap();
+    let originals: Vec<_> = originals.into_iter().map(|r| r.source).collect();
+    let prepared: Vec<_> = selection
+        .prepared
+        .prepared
+        .into_iter()
+        .map(|r| DevelopedHistoryOwner(r.source))
+        .collect();
+    assert_eq!(
+        certify_developed(&originals, &prepared, &keys).unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn developed_history_refuses_a_gap_in_the_original_parameter_cover() {
+    let (originals, mut prepared, keys) = developed_fixture();
+    prepared[0].loops[0].pop();
+    assert!(matches!(
+        certify_developed(&originals, &prepared, &keys),
+        Err(HistoryFailure::SourceBinding)
+    ));
+}
+
+#[test]
+fn developed_history_refuses_duplicate_parameter_intervals() {
+    let (originals, mut prepared, keys) = developed_fixture();
+    let duplicate = prepared[0].loops[0][0].clone();
+    prepared[0].loops[0].push(duplicate);
+    assert!(matches!(
+        certify_developed(&originals, &prepared, &keys),
+        Err(HistoryFailure::SourceBinding)
+    ));
+}
+
+#[test]
+fn developed_history_refuses_changed_or_missing_region_owners() {
+    let (originals, mut prepared, keys) = developed_fixture();
+    prepared[0].region = SurfaceRegionId(999);
+    assert!(matches!(
+        certify_developed(&originals, &prepared, &keys),
+        Err(HistoryFailure::SourceBinding)
+    ));
+    prepared.clear();
+    assert!(matches!(
+        certify_developed(&originals, &prepared, &keys),
+        Err(HistoryFailure::SourceBinding)
+    ));
+}
+
+#[test]
+fn developed_history_refuses_relabelled_corners_and_duplicate_targets() {
+    let (originals, mut prepared, mut keys) = developed_fixture();
+    keys.push(keys[0]);
+    assert!(matches!(
+        certify_developed(&originals, &prepared, &keys),
+        Err(HistoryFailure::DuplicateTarget(_))
+    ));
+    keys.pop();
+    prepared[0].loops[0][0].start = CornerSource::Authored(SurfaceVertexId(999));
+    assert!(matches!(
+        certify_developed(&originals, &prepared, &keys),
+        Err(HistoryFailure::Corners { .. })
+    ));
+}
+
+fn developed_fixture() -> (
+    Vec<DevelopedRegionRequest>,
+    Vec<DevelopedRegionRequest>,
+    Vec<BindingKey>,
+) {
+    let (originals, selection, keys) = fixture();
+    let originals = originals.into_iter().map(|r| r.source).collect();
+    let prepared = selection
+        .prepared
+        .prepared
+        .into_iter()
+        .map(|r| r.source)
+        .collect();
+    (originals, prepared, keys)
+}
+
+struct DevelopedHistoryOwner(DevelopedRegionRequest);
+impl AsRef<DevelopedRegionRequest> for DevelopedHistoryOwner {
+    fn as_ref(&self) -> &DevelopedRegionRequest {
+        &self.0
+    }
+}

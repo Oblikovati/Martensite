@@ -1,0 +1,28 @@
+{
+  "before_source": "7817e8d1f6c8c502fa860d4300afe32f426c603e",
+  "after_source_tree": "cb24809b7ce1041300da4fced24e11f6596a347a",
+  "build_receipts": "/tmp/martensite-gatea2-production-cylinder/receipts",
+  "identical_consumer_sha256": "bca5f0d02f5e0fd074958656b62584e6990510bc1da0a0a8953b212940fc74fe",
+  "binary_sha256": {
+    "before": "2be3edd78e1073902acbf88a54bbde40a9874439d66accc236fb50c5b55577f2",
+    "after": "f16d751cc515f97428ad155635335ea90edb2e0e62d36fd4fc79cca0671f6c21",
+    "fixed": "8404f80a5c9466214ca993373b2cdd3cc179099d2158d805d92e6af286f7e15e"
+  },
+  "cpu_affinity": [
+    10
+  ],
+  "exclusive_host": false,
+  "fixed_source_tree": "6e8424f77f1e6556c0660d3ee8107c4368da6c71",
+  "plan": [
+    "before",
+    "after",
+    "fixed",
+    "fixed",
+    "after",
+    "before",
+    "before",
+    "after",
+    "fixed"
+  ],
+  "scope": "One fixed matched nine-run before/unfixed/fixed non-libtest production-consumer campaign; full accepted public mixed-profile, hole and disconnected cylinder constructor, independent known measures, source isolation and two disjoint exports. No geometry/limit/check changes. Exact native and public evidence output must match."
+}

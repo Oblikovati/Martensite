@@ -146,6 +146,24 @@ pub(super) fn capture_with_work_and_cancel(
     )
     .map_err(|cause| PlanarFailure::WorkCapture(Box::new(cause)))
 }
+pub(super) fn capture_with_proof_and_cancel(
+    requests: &[impl AsRef<DevelopedRegionRequest>],
+    tolerance: f64,
+    work: PlanarProofWorkLimit,
+    version: PlanarProofVersion,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<PlanarRegionSet, PlanarFailure> {
+    let profile = combined_profile(requests)?;
+    build_planar_regions_with_proof_and_cancel(
+        &profile,
+        super::pipeline::resolution(tolerance),
+        work,
+        version,
+        cancelled,
+    )
+    .map_err(|cause| PlanarFailure::WorkCapture(Box::new(cause)))
+}
+
 fn combined_profile(
     requests: &[impl AsRef<DevelopedRegionRequest>],
 ) -> Result<SketchProfile, PlanarFailure> {

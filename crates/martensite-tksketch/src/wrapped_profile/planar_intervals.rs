@@ -11,7 +11,7 @@ pub(super) fn complete(
     }
     groups.keys().eq(authored.keys()) && groups.values().all(|spans| partition(spans))
 }
-fn partition(spans: &[CurveSpan]) -> bool {
+pub(in super::super) fn partition(spans: &[CurveSpan]) -> bool {
     let level = spans.iter().map(|s| s.level).max().unwrap_or(0);
     if !valid_level(spans, level) {
         return false;

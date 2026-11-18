@@ -25,7 +25,7 @@ fn affected_sketch_selection_runs_both_replay_controls_after_startup() {
             .any(|command| command.contains(WRAPPED_STRESS_TEST)),
         "affected sketch commands omit ignored wrapped-family stress: {commands:?}"
     );
-    assert_eq!(commands.len(), 5);
+    assert_eq!(commands.len(), 6);
 }
 
 #[test]
@@ -90,4 +90,5 @@ fn unrelated_affected_leaf_does_not_schedule_sketch_stress() {
     run_selected(&context, &selected).unwrap();
     assert_eq!(runner.commands(), before);
     assert!(!selected.contains(&Control::WrappedFamily));
+    assert!(!selected.contains(&Control::WrappedCone));
 }
