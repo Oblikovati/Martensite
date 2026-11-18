@@ -74,6 +74,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Avoided unused Sturm–Tarski query chains for certified point roots and empty root sets while preserving exact signs and the existing mixed-root path (#542).
+
 - Refused negative grid sample counts in generic curve–surface extrema searches with a typed error instead of an indexing panic (#535).
 
 - Corrected the placed cylindrical flux contract to use `(x-t)/3` and exposed the decoded field origin on normal and chart results. The existing enclosures and volume budgets remained unchanged (#528).
