@@ -29,6 +29,25 @@ fn enumerate_with_pair_version(
     inputs: BoundaryInputs,
     policies: (CensusPolicy, SourceConformancePolicy),
     pair_version: u32,
+    cancelled: impl FnMut() -> bool,
+) -> Result<BoundaryCensus, CensusCause> {
+    enumerate_selected(inputs, policies, pair_version, None, cancelled)
+}
+/// Exact sign exclusions augment the carrier route without changing its released policy.
+/// Example: `enumerate_exclusion_census(inputs, policy, source_policy, || false)`.
+pub(crate) fn enumerate_exclusion_census(
+    inputs: BoundaryInputs,
+    policy: CensusPolicy,
+    source_policy: SourceConformancePolicy,
+    cancelled: impl FnMut() -> bool,
+) -> Result<BoundaryCensus, CensusCause> {
+    enumerate_selected(inputs, (policy, source_policy), 2, Some(1), cancelled)
+}
+fn enumerate_selected(
+    inputs: BoundaryInputs,
+    policies: (CensusPolicy, SourceConformancePolicy),
+    pair_version: u32,
+    exclusion_version: Option<u32>,
     mut cancelled: impl FnMut() -> bool,
 ) -> Result<BoundaryCensus, CensusCause> {
     let (policy, source_policy) = policies;
@@ -36,6 +55,7 @@ fn enumerate_with_pair_version(
     let mut retained = census::empty_census(inputs, policy);
     let mut evidence = capture_pair_evidence(&retained);
     evidence.requested.version = pair_version;
+    evidence.exclusion_version = exclusion_version;
     retained.paired = Some(evidence);
     if admit_source_binding(&mut retained, source_policy, &mut cancelled) {
         return Err(CensusCause::SourceCancelled {
@@ -60,6 +80,8 @@ pub(super) fn admit_source_binding(
 }
 fn capture_pair_evidence(census: &BoundaryCensus) -> PairedCensusEvidence {
     PairedCensusEvidence {
+        exclusion_version: None,
+        exclusions: Vec::new(),
         requested: BezierPairPolicy {
             version: 1,
             roots: census.requested.roots,

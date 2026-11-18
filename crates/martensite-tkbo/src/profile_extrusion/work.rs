@@ -2,6 +2,25 @@
 //! Explicit computational work is independent of geometric accuracy.
 use super::{OperationDecline, PlanarProofWorkReceipt, PlanarRegionSet, ProfileCurveId};
 
+/// Select the exact planar proof behavior while retaining earlier replay semantics.
+/// Example: `PlanarProofVersion::BernsteinV3` enables source-bound exact exclusions.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum PlanarProofVersion {
+    /// Released common-carrier and pair solver behavior.
+    CarrierV2,
+    /// Exact Bernstein exclusion followed by that solver under the remaining budget.
+    BernsteinV3,
+}
+impl PlanarProofVersion {
+    pub(crate) fn request_version(self) -> u32 {
+        match self {
+            Self::CarrierV2 => 2,
+            Self::BernsteinV3 => 3,
+        }
+    }
+}
+
 /// Original root-isolation refusal and its authored parent curves.
 /// Example: `failure.pair_root_failure().map(|pair| pair.curves)`.
 #[derive(Clone, Debug, PartialEq)]

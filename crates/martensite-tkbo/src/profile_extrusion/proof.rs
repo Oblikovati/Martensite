@@ -9,7 +9,8 @@ use super::proof_pieces::PieceTable;
 use super::topology::native_plane;
 use crate::sketch_region_prism::{
     AuthoredLoopUse, GraphFaceProof, GraphRegionCertificate, ProfileProofCause,
-    ProfileProofRefusal, certify_profile_graph, certify_profile_graph_with_cancel,
+    ProfileProofRefusal, certify_profile_graph, certify_profile_graph_version_with_cancel,
+    certify_profile_graph_with_cancel,
 };
 
 /// One certified face: its counterclockwise outer loop, clockwise holes and certified area
@@ -24,6 +25,7 @@ pub(crate) struct CertifiedFace {
 /// curve (forward use first), and the proof's evidence counts.
 pub(crate) struct CertifiedRegions {
     pub faces: Vec<CertifiedFace>,
+    pub version: super::PlanarProofVersion,
     /// Pair domains certified in total.
     pub pair_domains: usize,
     /// Pair domains certified by the common-carrier route.
@@ -61,6 +63,24 @@ pub(crate) fn certify_regions_with_cancel(
         .map_err(|refusal| graph_refusal(refusal, &table))?;
     Ok(assemble_certificate(certificate, &table))
 }
+pub(crate) fn certify_regions_version_with_cancel(
+    profile: &AdmittedProfile,
+    pair_bisections: Option<u16>,
+    version: super::PlanarProofVersion,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<CertifiedRegions, RegionProofFailure> {
+    if version == super::PlanarProofVersion::CarrierV2 {
+        return certify_regions_with_cancel(profile, pair_bisections, cancelled);
+    }
+    let table = PieceTable::new(profile);
+    let input = graph_input(profile, &table, pair_bisections)?;
+    let certificate =
+        certify_profile_graph_version_with_cancel(input, version.request_version(), cancelled)
+            .map_err(|refusal| graph_refusal(refusal, &table))?;
+    let mut certified = assemble_certificate(certificate, &table);
+    certified.version = version;
+    Ok(certified)
+}
 fn assemble_certificate(
     certificate: GraphRegionCertificate,
     table: &PieceTable,
@@ -72,6 +92,7 @@ fn assemble_certificate(
     });
     CertifiedRegions {
         faces,
+        version: super::PlanarProofVersion::CarrierV2,
         pair_domains: certificate.pair_domains,
         carrier_pairs: certificate.carrier_pairs,
         components: certificate.components.len(),
