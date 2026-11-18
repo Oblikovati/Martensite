@@ -34,3 +34,6 @@ mod error_tests;
 
 #[cfg(test)]
 mod planar_cancellation_tests;
+
+#[cfg(test)]
+mod triangle_clearance_tests;
