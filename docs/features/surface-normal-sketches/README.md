@@ -29,6 +29,12 @@ end-to-end application acceptance case and the
 [owned text capture contract](TEXT-CAPTURE.md). The primitive operations below are
 foundations for that workflow.
 
+Solved-profile cylinder results report centered patch flux of `(x-t)/3` and
+expose the decoded field origin through `boundary_flux_origin()`. The
+[field-origin contract](../../architecture/decisions/cylindrical-flux-field-origin.md)
+explains its comparison with the ideal normal solid and its separate native
+volume estimate.
+
 ## Delivery tasks
 
 | Task | Scope | Depends on |

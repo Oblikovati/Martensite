@@ -39,6 +39,13 @@ The new zero-angle path returns the existing frame evidence and compares its
 allocation, translation, evaluation, placement and world bounds with the original
 path. This is compatibility evidence, not a performance-parity measurement.
 
+The reported boundary flux uses `F_t(x)=(x-t)/3` with the actual decoded
+translation. `result.boundary_flux_origin()` reads the chart result's own
+spatial budget. Determinant scaling is exact for this centered field even when
+the represented patch chain is geometrically open; the
+[field-origin decision](../../architecture/decisions/cylindrical-flux-field-origin.md)
+gives the affine identity and the independent ideal-solid comparison.
+
 ## Qualification and integration status
 
 The focused frame campaign passed 41 tests: the existing 32 controls and nine

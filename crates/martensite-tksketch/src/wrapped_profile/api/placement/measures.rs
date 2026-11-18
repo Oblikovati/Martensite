@@ -1,9 +1,10 @@
-//! Transport flux itself; determinant drift is part of the retained/ideal discrepancy.
+//! Transport the centered field; its origin is the archive-bound decoded translation (#528).
 use super::*;
-pub(super) fn transport<B: PlacementBudget>(
+pub(super) fn transport_centered_flux<B: PlacementBudget>(
     result: &mut WrappedNormalResult,
     plan: &Plan<B>,
 ) -> Checked<()> {
+    // The shared decoded datum binds x=A*y+t; F(x)=(x-t)/3 cancels t exactly.
     let determinant = plan.budget.frame().determinant_bounds();
     let mut totals = publication_budget::FamilyVolumeBounds::default();
     for (region, report) in &mut result.reports {
@@ -113,3 +114,6 @@ mod tests {
         assert!(product(reports::range([f64::MAX; 2]), [2.; 2]).is_err());
     }
 }
+
+#[cfg(test)]
+mod field_tests;

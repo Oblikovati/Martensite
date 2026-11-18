@@ -56,6 +56,13 @@ impl WrappedNormalResult {
     pub fn placement(&self) -> Option<&WrappedPlacementReport> {
         self.placement.as_ref().map(|placed| &placed.report)
     }
+    /// Origin of `F(p)=(p-origin)/3` for every reported boundary flux.
+    /// Uses the decoded placement translation, or zero for the canonical graph.
+    /// Example: `let origin = result.boundary_flux_origin();`.
+    pub fn boundary_flux_origin(&self) -> [f64; 3] {
+        self.placement()
+            .map_or([0.; 3], |placed| placed.spatial_budget.input().translation)
+    }
     /// Fresh native owners with keyed references; `let detached = result.export_native()?;`.
     pub fn export_native(&self) -> Checked<DetachedWrappedBodies> {
         export_bytes(self, self.encoded_brep())

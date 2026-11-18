@@ -105,3 +105,19 @@ fn unchanged_publication_preserves_the_complete_canonical_archive() {
     assert_eq!(physical.bytes, family.bytes);
     assert_eq!(physical.bindings.len(), family.keys.len());
 }
+
+#[test]
+fn changed_translation_cannot_reuse_the_centered_flux_origin_budget() {
+    let plan = plan();
+    let mut coefficients = std::array::from_fn(|i| {
+        let [a, b, c] = plan.transform.matrix().coefficients()[i];
+        [a, b, c, plan.transform.translation_part().coordinates()[i]]
+    });
+    coefficients[0][3] += 1.;
+    let changed = Transform3::from_stored_rigid_coefficients(coefficients).unwrap();
+    let refusal = check_location(&Location::new(changed), &plan)
+        .err()
+        .unwrap();
+    assert!(refusal.to_string().contains("Coefficients"));
+    assert_eq!(refusal.class(), WrappedFailureClass::Incomplete);
+}

@@ -53,6 +53,11 @@ impl WrappedChartNormalResult {
     pub fn placement(&self) -> &WrappedChartPlacementReport {
         &self.placement
     }
+    /// Decoded translation used by the reported field `F(p)=(p-origin)/3`.
+    /// Example: `let origin = result.boundary_flux_origin();`.
+    pub fn boundary_flux_origin(&self) -> [f64; 3] {
+        self.placement.spatial_budget.input().translation
+    }
     /// Independent mutable native export; `let native = result.export_native()?;`.
     pub fn export_native(&self) -> Checked<DetachedWrappedBodies> {
         result::export_bytes(&self.base, &self.bytes)

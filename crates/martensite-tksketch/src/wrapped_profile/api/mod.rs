@@ -37,3 +37,6 @@ mod planar_cancellation_tests;
 
 #[cfg(test)]
 mod triangle_clearance_tests;
+
+#[cfg(test)]
+mod flux_origin_tests;

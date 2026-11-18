@@ -63,11 +63,13 @@ pub struct WrappedSpatialReport {
 pub struct WrappedMeasureReport {
     /// Volume of the ideal normalized-profile normal extrusion.
     pub ideal_volume: WrappedCertifiedRange,
-    /// Signed integral through the retained boundary patches; this is not a closed-body volume claim.
+    /// Signed patch flux of `F(p)=(p-origin)/3`, with origin from the result's
+    /// `boundary_flux_origin()`; zero on the canonical graph. Parameter multiplicity
+    /// is retained, and geometric closure of the native patches is not claimed.
     pub boundary_flux: WrappedCertifiedRange,
     /// Original authored profile's ideal normal volume.
     pub authored_volume: WrappedCertifiedRange,
-    /// Certified retained-flux versus ideal-volume discrepancy.
+    /// Certified centered-field patch-flux versus ideal normal-solid volume discrepancy.
     pub retained_ideal_discrepancy: WrappedCertifiedBound,
     /// Native volume estimate, separate from the certified ideal volume and flux.
     pub native_volume: WrappedNativeVolumeEstimate,

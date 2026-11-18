@@ -37,6 +37,13 @@ it is not subtracted from the comparison or added a second time. The comparison
 is arithmetic evidence conditional on the closed-profile and boundary premises.
 It does not prove body validity or geometric injectivity.
 
+Physical publication transports the canonical flux as the centered field
+`F_t(x)=(x-t)/3`. The normal and chart result types expose the actual decoded
+`t` through `boundary_flux_origin()`. Because this field has divergence one,
+its flux on the independently closed ideal normal solid equals the ideal
+volume. This comparison does not assert closure of the native patch chain;
+see the [field-origin decision](../../architecture/decisions/cylindrical-flux-field-origin.md).
+
 ## Provenance
 
 The comparison requires a nonempty one-to-one pairing of every supplied flux

@@ -64,7 +64,8 @@ topology evidence. Propagate the upper stretch bound to tolerance and distance
 bounds. Re-run the ordered native checks on the placed result before publication.
 The original canonical validation report alone does not validate the placed body.
 
-Use a certified determinant interval to transport retained flux and its error.
+Use a certified determinant interval to transport the centered retained flux of
+`F_t(x)=(x-t)/3` and its error, where `t` is the decoded stored translation.
 The authored ideal normal-volume oracle remains invariant under the ideal rigid
 frame. Keep the native volume estimate distinct and recompute or transport it
 with its numerical error explicitly. Do not label it a certified body volume.
@@ -142,8 +143,8 @@ Refuse a nonpositive remainder; do not retry with a looser request. Preserve the
 identity placement's current allocation exactly. Recheck the final achieved
 world bound against the original epsilon after decoding the frozen result.
 
-For volume, recompute the placed retained-flux enclosure using the certified
-positive determinant. The target ideal volume remains the rigid-frame oracle.
+For the centered-field comparison, transport the retained-flux enclosure using
+the certified positive determinant. The target ideal volume remains the rigid-frame oracle.
 The discrepancy includes both the canonical retained/ideal difference and the
 `(det(A)-1) * ideal_volume` term; scaling only the old discrepancy would omit
 that term.
@@ -254,13 +255,17 @@ per-cap bounds.
 Every decoded physical solid receives the ordered native validation again.
 Sampled geometry and native-search self-intersection checks keep their coverage
 labels. Native volume estimates are recomputed from those physical solids.
-The retained boundary-flux and representative intervals are multiplied by the
-positive determinant enclosure and compared with unchanged rigid-frame ideal
-volumes. The original volume refusal policy is enforced on these transported
+The retained boundary-flux and representative intervals describe
+`F_t(x)=(x-t)/3`, with `t` taken from the decoded datum. They are multiplied by
+the positive determinant enclosure and compared with unchanged rigid-frame
+ideal volumes. This formula requires no geometric closure of the native patch
+chain. The [field-origin decision](../../architecture/decisions/cylindrical-flux-field-origin.md)
+derives the comparison from `div(F_t)=1` on the closed ideal solid. The original volume refusal policy is enforced on these transported
 comparisons.
 
 `result.reports()` retains canonical chart-frame spatial quantities, alongside
 the physical native validation and transported measures.
+`result.boundary_flux_origin()` exposes that actual decoded translation.
 `result.placement()` exposes the original world epsilon, reduced canonical
 allowance, actual frame/translation, placement errors and achieved per-member
 world-space bounds. `result.encoded_brep()` and detached exports return the

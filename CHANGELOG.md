@@ -72,6 +72,9 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Corrected the placed cylindrical flux contract to use `(x-t)/3` and exposed the decoded field origin on normal and chart results. The existing enclosures and volume budgets remained unchanged (#528).
+
+
 - Restored selection of the ignored wrapped-family ThreadSanitizer stress test for affected packages while retaining existing replay controls (#529).
 
 - Preserved cylindrical operation failures when cancellation arrived later and propagated cancellation through global planar proof work (#526).

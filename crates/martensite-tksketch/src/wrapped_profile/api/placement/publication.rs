@@ -37,7 +37,7 @@ pub(super) fn finish<B: PlacementBudget>(
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<PhysicalPublication<B>> {
     let members = validate_members(result, &plan, &physical, cancelled)?;
-    measures::transport(result, &plan)?;
+    measures::transport_centered_flux(result, &plan)?;
     result.budget.spatial_error = result.options.spatial_error;
     Ok(PhysicalPublication {
         bytes: physical.bytes,

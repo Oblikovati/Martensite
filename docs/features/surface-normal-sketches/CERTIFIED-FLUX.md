@@ -8,6 +8,20 @@ volume still requires ideal-realization correspondence and injectivity proofs.
 The private pipeline now checks [frozen incidence and representation
 coverage](FROZEN-COVERAGE.md) before accumulating flux. The result remains `Unqualified`.
 
+## Field origin after placement
+
+The mathematical certificate uses `F_0(y)=y/3` in its canonical stored frame.
+Published cylinder and chart results report the transported centered field
+`F_t(x)=(x-t)/3`. Their `boundary_flux_origin()` getter returns the actual decoded
+translation, or zero for the canonical identity graph. The existing placement
+budget and frozen correspondence bind this value to the reported patches.
+
+The exact affine identity is `Q_t=det(A)*Q_0`, without a patch-closure premise.
+For `x/3` at the world origin, an additional oriented-area term is required.
+The [field-origin decision](../../architecture/decisions/cylindrical-flux-field-origin.md)
+derives both formulas and the comparison with the closed ideal normal solid.
+The report keeps the native volume estimate separate.
+
 ## Ruled-side reduction
 
 The decoded side-net check requires two rows with the same retained weights.
