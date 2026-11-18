@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added opt-in exact bracket filtering for generated Bézier pair membership signs while retaining the earlier sign policy for replay (#544).
+
 - Added opt-in exact Bernstein exclusion for planar Bézier pair and self queries while preserving the existing solver routes (#539).
 
 - Added an explicit chart-angle normal-extrusion entry point with a separate immutable result, rotation-aware spatial evidence and detached native exports while preserving the earlier constructor for replay (#420).

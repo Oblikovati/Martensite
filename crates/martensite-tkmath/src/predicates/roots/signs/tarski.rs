@@ -43,7 +43,7 @@ fn point_signs(
         })
         .collect()
 }
-fn point_sign(query: &IntegerPolynomial, root: &RootBracket) -> Ordering {
+pub(super) fn point_sign(query: &IntegerPolynomial, root: &RootBracket) -> Ordering {
     sign_order(query.sign_at(root.bounds().0))
 }
 fn query_chain(

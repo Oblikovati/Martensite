@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Exact power-basis interval Horner evaluation shared by root certificates.
 use super::{
-    RootIsolationError,
+    RootBracket, RootIsolationError,
     certificate_arithmetic::{ExactRatio, RatioInterval},
     error::poll,
 };
@@ -18,4 +18,10 @@ pub(super) fn power_enclosure(
         value = value.multiply(parameter).add(&term);
     }
     Ok(value)
+}
+pub(super) fn parameter_interval(root: &RootBracket) -> RatioInterval {
+    RatioInterval {
+        lower: ExactRatio::from_dyadic(root.bounds().0),
+        upper: ExactRatio::from_dyadic(root.bounds().1),
+    }
 }
