@@ -4,6 +4,10 @@
 //! [`FuncExtCS`] on each half of a closed curve.
 mod conic;
 mod glob_min;
+#[cfg(test)]
+mod invalid_samples_tests;
+#[cfg(test)]
+mod sampling_contract_tests;
 
 use super::func_ext_cs::FuncExtCS;
 use crate::extrema::failures::{extremum_index, not_done, null_object};
@@ -237,6 +241,7 @@ impl<'a> GenExtCS<'a> {
     /// on each half of a closed curve covering more than two thirds of its period,
     /// then only the minima of a divided curve;
     /// `extrema.perform_range(&curve, 12, (0., 1.), 1e-9)?`.
+    /// The general search refuses negative U/V sample counts with `Standard_OutOfRange`.
     pub fn perform_range(
         &mut self,
         curve: &'a dyn Adaptor3dCurve,

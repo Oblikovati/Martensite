@@ -90,6 +90,21 @@ impl GenExtCS<'_> {
         Ok((nb_samples, step_c))
     }
 
+    fn require_nonnegative_grid(&self) -> Result<(), Failure> {
+        // Negative counts can initialize an empty grid; never cast them to usize (#535).
+        if self.usample >= 0 && self.vsample >= 0 {
+            return Ok(());
+        }
+        Err(Failure::with_type(
+            "Standard_OutOfRange",
+            &format!(
+                "Extrema_GenExtCS::Perform - grid samples ({}, {}); expected nonnegative U and V counts",
+                self.usample, self.vsample
+            ),
+            "",
+        ))
+    }
+
     /// `GlobMinGenCS`: the swarm over `(t, u, v)` seeded from the curve samples and
     /// the surface grid.
     pub(super) fn glob_min_gen_cs(
@@ -98,6 +113,7 @@ impl GenExtCS<'_> {
         (tuv_inf, tuv_sup): (&Vector<'_>, &Vector<'_>),
         tuv: &mut Vector<'_>,
     ) -> Result<(), Failure> {
+        self.require_nonnegative_grid()?;
         let mut seeding = Seeding::new(3)?;
         let (min_tuv, max_tuv) = inner_bounds(tuv_inf, tuv_sup)?;
         let step_cu: f64 = (max_tuv[1] - min_tuv[1]) / f64::from(self.tsample);

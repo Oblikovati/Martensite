@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Refused negative grid sample counts in generic curve–surface extrema searches with a typed error instead of an indexing panic (#535).
+
 - Rejected invalid raw body tolerances before native validation could mask or overwrite them, preserving refusal input state and explicit stage coverage (#490).
 
 - Restored explicit walking-line allocator ownership, allocation and reset policies, and legacy signed point counts (#507).
