@@ -17,6 +17,10 @@ fn startup_precedes_geometry_capture_and_group_controls() {
     )
     .unwrap();
     let commands = runner.commands();
+    assert_startup_control_commands(&commands);
+}
+
+fn assert_startup_control_commands(commands: &[String]) {
     let manifest =
         Path::new("/repo").join("scripts/build/tests/fixtures/thread_sanitizer_startup/Cargo.toml");
     assert_eq!(

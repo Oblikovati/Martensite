@@ -67,6 +67,22 @@ fn insufficient_pair_work_refuses_without_relaxing_the_profile() {
     let profile = ellipse();
     let requested = PlanarProofWorkLimit::PairBisections(1);
     let failure = build_planar_regions_with_work(&profile, resolution(), requested).unwrap_err();
+    assert_exhausted_pair_receipt(&failure, requested);
+    let completed = build_planar_regions_with_work(
+        &profile,
+        resolution(),
+        PlanarProofWorkLimit::PairBisections(8192),
+    )
+    .unwrap();
+    assert!(completed.proof_work().consumed_pair_bisections > 0);
+    assert_eq!(completed.resolution(), resolution());
+    assert!(completed.regions()[0].area().encloses(std::f64::consts::PI));
+}
+
+fn assert_exhausted_pair_receipt(
+    failure: &PlanarRegionWorkFailure,
+    requested: PlanarProofWorkLimit,
+) {
     assert_eq!(failure.requested_work(), requested);
     let observed = failure.proof_work().unwrap();
     assert_eq!(observed.effective_pair_bisections, 1);
@@ -77,13 +93,4 @@ fn insufficient_pair_work_refuses_without_relaxing_the_profile() {
         root.cause,
         martensite_tkmath::predicates::roots::RootIsolationError::SubdivisionLimit { .. }
     ));
-    let completed = build_planar_regions_with_work(
-        &profile,
-        resolution(),
-        PlanarProofWorkLimit::PairBisections(8192),
-    )
-    .unwrap();
-    assert!(completed.proof_work().consumed_pair_bisections > 0);
-    assert_eq!(completed.resolution(), resolution());
-    assert!(completed.regions()[0].area().encloses(std::f64::consts::PI));
 }

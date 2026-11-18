@@ -172,10 +172,7 @@ fn construct_regions_with_cancel(
     cancelled: &mut impl FnMut() -> bool,
 ) -> super::PlanarRegionWorkResult {
     let work = Some(certified.work);
-    let topology = build_topology(profile).map_err(|failure| {
-        let decline = DECLINE.native(Stage::Construction, "profile topology", failure);
-        super::PlanarRegionWorkFailure::new(requested, decline, work)
-    })?;
+    let topology = topology_with_receipt(profile, requested, work)?;
     let context = RegionContext {
         profile,
         certified,
@@ -186,16 +183,23 @@ fn construct_regions_with_cancel(
         if cancelled() {
             return Err(cancelled_failure(requested, Stage::Construction, work));
         }
-        regions.push(
-            context
-                .region(index, face)
-                .map_err(|decline| super::PlanarRegionWorkFailure::new(requested, decline, work))?,
-        );
+        regions.push(context.region_with_receipt(index, face, requested, work)?);
     }
     if cancelled() {
         return Err(cancelled_failure(requested, Stage::Construction, work));
     }
     Ok(context.publish(regions))
+}
+
+fn topology_with_receipt(
+    profile: &AdmittedProfile,
+    requested: super::PlanarProofWorkLimit,
+    work: Option<super::PlanarProofWorkReceipt>,
+) -> Result<ProfileTopology, super::PlanarRegionWorkFailure> {
+    build_topology(profile).map_err(|failure| {
+        let decline = DECLINE.native(Stage::Construction, "profile topology", failure);
+        super::PlanarRegionWorkFailure::new(requested, decline, work)
+    })
 }
 
 struct RegionContext<'a> {
@@ -205,6 +209,17 @@ struct RegionContext<'a> {
 }
 
 impl RegionContext<'_> {
+    fn region_with_receipt(
+        &self,
+        index: usize,
+        face: &CertifiedFace,
+        requested: super::PlanarProofWorkLimit,
+        work: Option<super::PlanarProofWorkReceipt>,
+    ) -> Result<PlanarRegion, super::PlanarRegionWorkFailure> {
+        self.region(index, face)
+            .map_err(|decline| super::PlanarRegionWorkFailure::new(requested, decline, work))
+    }
+
     fn publish(&self, regions: Vec<PlanarRegion>) -> PlanarRegionSet {
         let certificate = RegionCertificate {
             pair_domains: self.certified.pair_domains,
