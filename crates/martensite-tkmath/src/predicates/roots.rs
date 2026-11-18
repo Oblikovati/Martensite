@@ -6,8 +6,8 @@ pub mod bezier_line;
 /// Source-bound exact Bézier pair and canonical self-contact certificates.
 pub mod bezier_pair;
 mod certificate_arithmetic;
-mod coefficient_enclosure;
 mod chain;
+mod coefficient_enclosure;
 mod dyadic;
 mod error;
 mod isolate;
