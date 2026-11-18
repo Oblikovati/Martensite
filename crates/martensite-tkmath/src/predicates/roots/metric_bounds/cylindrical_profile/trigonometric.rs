@@ -13,6 +13,14 @@ pub(in crate::predicates::roots::metric_bounds) fn enclose(
         let values = scalar(&phase[0], arithmetic)?;
         return Ok([vec![values[0].clone()], vec![values[1].clone()]]);
     }
+    varying_phase(phase, arithmetic)
+}
+
+#[inline(always)]
+fn varying_phase(
+    phase: &[Interval],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<[Vec<Interval>; 2]> {
     let range = hull(phase);
     let grid: BigInt = (&range.lower + &range.upper) / 2;
     let center = Interval {
