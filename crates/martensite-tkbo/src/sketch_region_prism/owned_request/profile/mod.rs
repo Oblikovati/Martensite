@@ -7,6 +7,7 @@ mod construction;
 mod pipeline;
 mod regions;
 mod request;
+mod selection;
 pub(in crate::sketch_region_prism) use admission::{
     ProfileAdmissionCause, ProfileEdgeCause, ProfileLoopCause,
 };

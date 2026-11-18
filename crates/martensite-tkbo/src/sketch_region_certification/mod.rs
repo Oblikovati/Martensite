@@ -23,7 +23,8 @@ pub(crate) use coverage::inspect_contact_coverage;
 pub(crate) use domain_certificate::CertifiedPairDomain;
 pub(crate) use outcome::*;
 pub(crate) use paired_admission::{
-    enumerate_carrier_census, enumerate_exclusion_census, enumerate_source_bound_census,
+    enumerate_carrier_census, enumerate_exclusion_census, enumerate_filtered_exclusion_census,
+    enumerate_source_bound_census,
 };
 #[cfg(test)]
 mod tests;
@@ -59,7 +60,7 @@ mod paired_domain_tests;
 #[cfg(test)]
 mod paired_constant_tests;
 
-pub(crate) use paired_binding::{DomainCertificates, domain_certificate};
+pub(crate) use paired_binding::{DomainCertificates, domain_certificate, graph_policy_current};
 
 #[cfg(test)]
 pub(crate) use paired_tests::{
@@ -71,3 +72,6 @@ mod paired_validation_tests;
 
 #[cfg(test)]
 mod bernstein_tests;
+
+#[cfg(test)]
+mod filtered_tests;

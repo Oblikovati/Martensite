@@ -1,7 +1,8 @@
 # Decision: opt-in exact bracket filtering for graph membership
 
 Status: approved for implementation under the maintainer's #544 delegation on
-2026-11-18. Focused Math qualification passed; component review and the full PR gate remain pending.
+2026-11-18. Focused Math and TKBO routing controls passed; component review and the full PR
+gate remain pending.
 
 Actual source-pair inspection found expensive generated-membership sign chains
 whose signs can sometimes be established on their existing exact root brackets.
@@ -24,11 +25,14 @@ If any root is undecided, discard the attempt and evaluate the original query on
 the entire original isolation with the existing evaluator. Cancellation is an
 error at `RootSignStage::Evaluation`; it cannot become an inconclusive attempt.
 Keep upstream source/query degree admission and all primary-root and
-exceptional-fibre computation unchanged. No new public result fields or enum
-variants are needed; the existing effective-sign receipt retains the request.
+exceptional-fibre computation unchanged. The Math result needs no new public fields or enum variants; its existing
+effective-sign receipt retains the request.
 
 This is one conditioned stage in the shared pair pipeline. It adds no source
 cache, root refinement, tolerance adjustment, subdivision allowance or separate
-wrap algorithm. A later additive topology policy may request it explicitly while
-keeping the earlier Bernstein policy available for replay. Performance must be
+wrap algorithm. The additive `PlanarProofVersion::FilteredBernsteinV4` requests it through
+owned graph version 4. `BernsteinV3` remains graph version 3 with sign version 1;
+default builders remain on `CarrierV2`. The private census retains its selected
+sign settings and binds them to the owned request before graph consumption.
+No source, degree, root-work or world-error setting is widened. Performance must be
 measured on accepted identical workloads after functional qualification.

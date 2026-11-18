@@ -3,7 +3,7 @@
 use super::fixtures::*;
 use martensite_tkbo::profile_extrusion::*;
 
-fn monotone_triangle() -> SketchProfile {
+pub(super) fn monotone_triangle() -> SketchProfile {
     let x = [
         0,
         4599676419421066576,

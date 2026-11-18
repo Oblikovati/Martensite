@@ -71,9 +71,56 @@ cargo clippy -p martensite-tkmath --all-targets -- -D warnings
 ```
 
 The structural checkpoint is `acdb1126`; version-1 actual graph controls passed
-both before and after that extraction. Final strict all-target Clippy passed. Component review and the full PR gate
-remain pending.
+both before and after that extraction. Final strict all-target Math Clippy passed. Component review and the full PR
+gate remain pending.
 
-See the [decision](decision.md) for scope and replay requirements. Topology
-consumer routing is a separate integration step; this Math change does not
-silently migrate an existing planar-proof version.
+See the [decision](decision.md) for scope and replay requirements. The topology selector below keeps earlier planar-proof versions selectable.
+
+
+## Topology selector
+
+`PlanarProofVersion::FilteredBernsteinV4` selects owned graph request version 4.
+It uses the same source capture, native partition, contact transport and graph
+proof as `BernsteinV3`, with generated-sign policy version 2. The outer pair
+policy stays at version 2 and the Bernstein-exclusion policy stays at version 1.
+`CarrierV2`, the default builders and `BernsteinV3` retain sign policy version 1.
+
+The census retains the selected sign settings separately from each requested,
+effective and source-bound numerical receipt. Graph consumption checks the
+owned selector against that mode: request 2 uses carriers, request 3 uses exact
+exclusions with sign version 1, and request 4 uses exact exclusions with sign
+version 2. Unknown request version 5 and relabeled or mutated receipts refuse.
+A binding mismatch returns its typed refusal before a later cancellation
+callback can replace it.
+
+Exclusion and fallback keep their actual work receipts. Fallback subtracts only
+completed exclusion subdivisions and copies the full remaining policy,
+including sign version 2. Native occurrence counts, source-conformance checks,
+root and degree limits, world-error limits and ordered publication checks stay
+unchanged. This selector does not change the cone request default or establish
+a whole-operation performance result.
+
+
+TKBO routing qualification passed 100 certification controls, 39 owned-profile
+controls and 57 public profile-extrusion controls. The three V1 callback/error
+and reuse controls also passed, for 199 focused TKBO controls in total. Strict
+all-target TKBO Clippy passed. Before the routing change, the
+native V3 crossing fixture recorded 1,739 cancellation polls, one charged
+subdivision, no reused reports, three exclusions and three domains. The same
+control passed afterward. The existing public default-versus-`CarrierV2` control
+also retained equal polls, work, census and area. V4 controls exercise native
+exclusion and solver fallback, remaining policy/work, receipt mutation,
+selector relabeling and unknown graph request version 5.
+
+The public test executable requires the dataset submodule. The first compile
+attempt found an empty worktree dataset directory; initializing its pinned
+`34d65afd72cd3ca8ac1f9d17e5ca408b30e9b4b6` revision resolved the missing files.
+That attempt did not run tests. The initialized copy has no object alternates.
+
+```sh
+cargo test -p martensite-tkbo --lib sketch_region_certification::
+cargo test -p martensite-tkbo --lib sketch_region_prism::owned_request::profile::
+cargo test -p martensite-tkbo --test toolkit profile_extrusion::
+cargo test -p martensite-tkbo --lib sketch_region_prism::owned_request::progress_tests::
+cargo clippy -p martensite-tkbo --all-targets -- -D warnings
+```
