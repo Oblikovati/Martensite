@@ -141,20 +141,41 @@ fn scalar(center: &Interval, arithmetic: &mut Arithmetic<'_>) -> Checked<[Interv
     let mut result = terms.clone();
     for k in 1..=32u64 {
         for axis in 0..2 {
-            let product = arithmetic.multiply(&terms[axis], &square)?;
-            terms[axis] = arithmetic.fraction(
-                &product,
-                1,
-                (2 * k - 1 + axis as u64) * (2 * k + axis as u64),
+            scalar_axis(
+                k,
+                axis,
+                &square,
+                &mut terms[axis],
+                &mut result[axis],
+                arithmetic,
             )?;
-            result[axis] = if k % 2 == 0 {
-                arithmetic.add(&result[axis], &terms[axis])?
-            } else {
-                arithmetic.subtract(&result[axis], &terms[axis])?
-            };
         }
     }
     scalar_tail(&argument, result, arithmetic)
+}
+
+// Keep the recurrence's update inlined when separating its responsibility (#533).
+#[inline(always)]
+fn scalar_axis(
+    order: u64,
+    axis: usize,
+    square: &Interval,
+    term: &mut Interval,
+    sum: &mut Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<()> {
+    let product = arithmetic.multiply(term, square)?;
+    *term = arithmetic.fraction(
+        &product,
+        1,
+        (2 * order - 1 + axis as u64) * (2 * order + axis as u64),
+    )?;
+    *sum = if order % 2 == 0 {
+        arithmetic.add(sum, term)?
+    } else {
+        arithmetic.subtract(sum, term)?
+    };
+    Ok(())
 }
 
 fn scalar_tail(
