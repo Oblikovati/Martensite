@@ -98,3 +98,30 @@ fn graph_admission_failure_does_not_invent_an_observed_receipt() {
     assert!(failure.work.is_none());
     assert!(matches!(failure.cause, ProfileProofCause::Incomplete(_)));
 }
+
+#[test]
+fn graph_opt_in_retains_its_selector_in_the_owned_request() {
+    let mut request = owned_graph_request(lens_input(Some(17)));
+    assert_eq!(request.version, GRAPH_PROFILE_VERSION);
+    request.version = super::super::admission::EXCLUSION_GRAPH_PROFILE_VERSION;
+    let prepared = prepare_owned_profile(request, &mut NeverStop)
+        .unwrap_or_else(|_| panic!("version-three graph preparation"));
+    assert_eq!(prepared.request.version, 3);
+    let paired = prepared.bridge.census.paired.as_ref().unwrap();
+    assert_eq!(paired.exclusion_version, Some(1));
+    assert_eq!(paired.requested.version, 2);
+    assert!(paired.reports.is_empty());
+    assert!(!paired.exclusions.is_empty());
+}
+
+#[test]
+fn earlier_owned_graph_request_keeps_carrier_mode_and_empty_exclusions() {
+    let request = owned_graph_request(lens_input(Some(17)));
+    let prepared = prepare_owned_profile(request, &mut NeverStop)
+        .unwrap_or_else(|_| panic!("released graph preparation"));
+    assert_eq!(prepared.request.version, 2);
+    let paired = prepared.bridge.census.paired.as_ref().unwrap();
+    assert_eq!(paired.exclusion_version, None);
+    assert!(paired.exclusions.is_empty());
+    assert!(!paired.reports.is_empty());
+}

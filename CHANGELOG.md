@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added opt-in exact Bernstein exclusion for planar Bézier pair and self queries while preserving the existing solver routes (#539).
+
 - Added an explicit chart-angle normal-extrusion entry point with a separate immutable result, rotation-aware spatial evidence and detached native exports while preserving the earlier constructor for replay (#420).
 
 - Added separate rotation-aware frame and spatial-budget certificates with bounded trigonometric evidence for explicit sketch seam angles (#420).

@@ -210,3 +210,56 @@ fn triple_contact_sources() -> Vec<Shape> {
     sources.push(census_bezier_fixture(&[[0.5, -1.], [0.5, 1.]], None));
     sources
 }
+
+fn exclusion_bridge(edges: Vec<Shape>) -> PairedContactTransaction {
+    let (previous, mapped, edges) = actual_inputs_for(edges);
+    let census = crate::sketch_region_certification::enumerate_exclusion_census(
+        previous.inputs,
+        previous.requested,
+        previous.source_policy.unwrap(),
+        || false,
+    )
+    .unwrap_or_else(|_| panic!("source-bound exclusion census"));
+    assert_excluded_cross_domain(&census);
+    transport_partition_contacts(
+        census,
+        mapped,
+        contact_policy(),
+        &binding_sources(&edges),
+        |_| false,
+    )
+    .unwrap_or_else(|_| panic!("actual excluded-domain transaction"))
+}
+fn assert_excluded_cross_domain(census: &crate::sketch_region_certification::BoundaryCensus) {
+    let proof = census.paired.as_ref().unwrap().exclusions[1]
+        .outcome
+        .as_ref()
+        .unwrap();
+    assert!(proof.exclusion.complete().is_some());
+    assert!(proof.fallback.is_none());
+}
+
+#[test]
+fn bernstein_excluded_domain_accepts_actual_zero_native_contacts() {
+    let edges = vec![
+        census_bezier_fixture(&[[0., 0.], [1., 0.]], None),
+        census_bezier_fixture(&[[0., 1.], [1., 1.]], None),
+    ];
+    let retained = exclusion_bridge(edges);
+    assert!(retained.inspection.contacts.is_empty());
+    assert!(
+        !retained
+            .inspection
+            .missing
+            .iter()
+            .any(|gap| matches!(gap, ContactTransportGap::ContactSetCardinality { .. }))
+    );
+}
+#[test]
+fn bernstein_excluded_domain_rejects_extra_observed_native_partition_vertices() {
+    let retained = exclusion_bridge(degenerate_fixture(15));
+    assert!(retained.inspection.contacts.is_empty());
+    assert!(retained.inspection.missing.iter().any(|gap| matches!(gap,
+        ContactTransportGap::ContactSetCardinality { report: 1, expected: 0, observed } if *observed > 0)));
+    super::test_fixture::assert_private_incomplete(&retained);
+}

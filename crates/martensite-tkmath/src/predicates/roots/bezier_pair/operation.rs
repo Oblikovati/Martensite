@@ -194,7 +194,7 @@ fn constant_proof(
         evidence: PairProofEvidence::ConstantExcluded(checked.exclusion),
     }
 }
-fn validate_world_request(value: f64) -> Result<(), PairOperationFailure> {
+pub(super) fn validate_world_request(value: f64) -> Result<(), PairOperationFailure> {
     if !value.is_finite() || value <= 0. {
         return Err(PairOperationFailure::WorldRequest(value));
     }
@@ -367,7 +367,7 @@ impl PreparedProjection {
     }
 }
 
-fn checked_equations(
+pub(super) fn checked_equations(
     sources: &[OwnedBezierSource; 2],
     self_domain: bool,
     options: RootIsolationOptions,

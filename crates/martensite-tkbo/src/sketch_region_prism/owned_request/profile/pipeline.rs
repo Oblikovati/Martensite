@@ -11,6 +11,7 @@ use crate::sketch_region::{
 use crate::sketch_region_candidates::observe_candidate_copies;
 use crate::sketch_region_certification::{
     CensusWorkReceipt, capture_boundary_inputs, enumerate_carrier_census,
+    enumerate_exclusion_census,
 };
 use crate::sketch_region_contact_transport::{ContactTransportPhase, transport_partition_contacts};
 use crate::sketch_region_partition_bindings::{PartitionBoundOutputs, bind_partition_outputs};
@@ -133,7 +134,11 @@ impl Retained<'_, '_> {
         let policy = self.request.policy;
         let callbacks = &mut self.callbacks;
         let poll = || callbacks.poll(OwnedPrismPhase::Census);
-        let census = enumerate_carrier_census(inputs, policy.census, policy.source, poll);
+        let census = if self.request.version == super::admission::EXCLUSION_GRAPH_PROFILE_VERSION {
+            enumerate_exclusion_census(inputs, policy.census, policy.source, poll)
+        } else {
+            enumerate_carrier_census(inputs, policy.census, policy.source, poll)
+        };
         self.pair_work = CensusWorkReceipt::observed(&census);
         census.map_err(|cause| stage(cause.into()))
     }

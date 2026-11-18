@@ -8,7 +8,7 @@ use super::decline::{Decliner, OperationDecline, OperationKind, OperationStage a
 use super::loop_geometry::{loop_scale, signed_area};
 use super::loops::{ProfileLoop, require_closed};
 use super::profile::{ProfileCurveId, ProfileVertexId, SketchProfile};
-use super::proof::{CertifiedFace, CertifiedRegions, certify_regions, certify_regions_with_cancel};
+use super::proof::{CertifiedFace, CertifiedRegions, certify_regions};
 use super::region_area::{RegionAreaInput, region_area};
 use super::regions::*;
 use super::resolution::Resolution;
@@ -70,16 +70,30 @@ pub fn build_planar_regions_with_work_and_cancel(
     profile: &SketchProfile,
     resolution: Resolution,
     requested: super::PlanarProofWorkLimit,
+    cancelled: impl FnMut() -> bool + Send,
+) -> super::PlanarRegionWorkResult {
+    build_planar_regions_with_proof_and_cancel(
+        profile,
+        resolution,
+        requested,
+        super::PlanarProofVersion::CarrierV2,
+        cancelled,
+    )
+}
+/// Build planar regions with an explicit versioned exact proof route and finite work.
+/// Example: `build_planar_regions_with_proof_and_cancel(&profile, resolution, limit, PlanarProofVersion::BernsteinV3, || false)?`.
+pub fn build_planar_regions_with_proof_and_cancel(
+    profile: &SketchProfile,
+    resolution: Resolution,
+    requested: super::PlanarProofWorkLimit,
+    version: super::PlanarProofVersion,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> super::PlanarRegionWorkResult {
     if cancelled() {
         return Err(cancelled_failure(requested, Stage::Admission, None));
     }
-    let unobserved = |decline| super::PlanarRegionWorkFailure::new(requested, decline, None);
-    let profile = admit_profile(profile, resolution)
-        .map_err(|cause| unobserved(DECLINE.at(Stage::Admission, cause)))?;
-    require_closed(&profile).map_err(|cause| unobserved(DECLINE.at(Stage::Loops, cause)))?;
-    let certified = certified_for_work_with_cancel(&profile, requested, &mut cancelled)?;
+    let profile = admit_closed_profile(profile, resolution, requested)?;
+    let certified = certified_for_work_with_cancel(&profile, requested, version, &mut cancelled)?;
     if cancelled() {
         return Err(cancelled_failure(
             requested,
@@ -90,12 +104,31 @@ pub fn build_planar_regions_with_work_and_cancel(
     construct_regions_with_cancel(&profile, &certified, requested, &mut cancelled)
 }
 
+fn admit_closed_profile(
+    profile: &SketchProfile,
+    resolution: Resolution,
+    requested: super::PlanarProofWorkLimit,
+) -> Result<AdmittedProfile, super::PlanarRegionWorkFailure> {
+    let unobserved = |decline| super::PlanarRegionWorkFailure::new(requested, decline, None);
+    let profile = admit_profile(profile, resolution)
+        .map_err(|cause| unobserved(DECLINE.at(Stage::Admission, cause)))?;
+    require_closed(&profile).map_err(|cause| unobserved(DECLINE.at(Stage::Loops, cause)))?;
+    Ok(profile)
+}
+
 fn certified_for_work_with_cancel(
     profile: &AdmittedProfile,
     requested: super::PlanarProofWorkLimit,
+    version: super::PlanarProofVersion,
     cancelled: impl FnMut() -> bool + Send,
 ) -> Result<CertifiedRegions, super::PlanarRegionWorkFailure> {
-    certify_regions_with_cancel(profile, requested.override_limit(), cancelled).map_err(|failure| {
+    super::proof::certify_regions_version_with_cancel(
+        profile,
+        requested.override_limit(),
+        version,
+        cancelled,
+    )
+    .map_err(|failure| {
         super::PlanarRegionWorkFailure::new(
             requested,
             DECLINE.at(Stage::Certification, failure.cause),
@@ -234,6 +267,7 @@ impl RegionContext<'_> {
             resolution: self.profile.resolution,
             certificate,
             proof_work: self.certified.work,
+            proof_version: self.certified.version,
         }
     }
 

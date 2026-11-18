@@ -53,7 +53,8 @@ fn paired_report_index(
     domain: &crate::sketch_region_certification::BoundaryDomain,
 ) -> Option<usize> {
     match domain.evidence {
-        crate::sketch_region_certification::DomainEvidence::PairedReport { report, .. } => {
+        crate::sketch_region_certification::DomainEvidence::PairedReport { report, .. }
+        | crate::sketch_region_certification::DomainEvidence::BernsteinReport { report, .. } => {
             Some(report)
         }
         _ => None,
@@ -66,7 +67,7 @@ fn current_cardinality_gap(
     report: usize,
 ) -> Option<ContactTransportGap> {
     let domain = &retained.census.domains[domain_index];
-    let proof = certificates?.certificate(domain)?;
+    let proof = certificates?.unified_certificate(domain)?;
     let rows = super::topology::observed_domain_vertices(retained, domain_index);
     let observed = unique_vertex_indices(&rows).len();
     (observed != proof.contact_count()).then_some(ContactTransportGap::ContactSetCardinality {

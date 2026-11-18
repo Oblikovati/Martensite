@@ -19,7 +19,7 @@ pub(super) fn paired_domains_certified(census: &BoundaryCensus) -> bool {
     !expected.is_empty()
         && expected.len() == census.domains.len()
         && census.domains.iter().zip(expected).all(|(domain, pair)| {
-            domain.occurrences == pair && certificates.certificate(domain).is_some()
+            domain.occurrences == pair && certificates.unified_certificate(domain).is_some()
         })
 }
 pub(crate) fn domain_certificate<'a>(
@@ -44,14 +44,30 @@ impl<'a> DomainCertificates<'a> {
         let source = super::source_status::CurrentSourceRepresentation::new(census)?;
         Some(Self { census, source })
     }
-    /// Recheck live geometry before using a domain proof; `view.certificate(domain)`.
+    /// Borrow only genuine solver evidence; exact exclusions have no solver report.
     pub(crate) fn certificate(&self, domain: &BoundaryDomain) -> Option<BezierPairCertificate<'a>> {
+        self.unified_certificate(domain)?.solver()
+    }
+    /// Consume a source-bound empty domain or a genuine solver certificate.
+    pub(crate) fn unified_certificate(
+        &self,
+        domain: &BoundaryDomain,
+    ) -> Option<super::domain_certificate::CertifiedPairDomain<'a>> {
+        if !self.source.current() {
+            return None;
+        }
+        if let DomainEvidence::BernsteinReport { report, .. } = domain.evidence {
+            return super::bernstein_binding::certificate(self.census, domain, report);
+        }
+        self.solver_certificate(domain)
+            .map(super::domain_certificate::CertifiedPairDomain::Solver)
+    }
+    fn solver_certificate(&self, domain: &BoundaryDomain) -> Option<BezierPairCertificate<'a>> {
         let DomainEvidence::PairedReport { report, .. } = domain.evidence else {
             return None;
         };
-        let paired = self.census.paired.as_ref()?;
-        let retained = paired.reports.get(report)?;
-        if !self.source.current() || !domain_binding_current(self.census, domain, retained) {
+        let retained = self.census.paired.as_ref()?.reports.get(report)?;
+        if !domain_binding_current(self.census, domain, retained) {
             return None;
         }
         let report = retained.outcome.as_ref().ok()?;
@@ -60,7 +76,10 @@ impl<'a> DomainCertificates<'a> {
             .flatten()
     }
 }
-fn paired_policy_current(census: &BoundaryCensus, paired: &PairedCensusEvidence) -> bool {
+pub(super) fn paired_policy_current(
+    census: &BoundaryCensus,
+    paired: &PairedCensusEvidence,
+) -> bool {
     // The retained request records its own version; version 2 adds carriers.
     (1..=2).contains(&paired.requested.version)
         && paired.requested.signs == BezierPairSignOptions::derived()
@@ -77,17 +96,22 @@ fn domain_binding_current(
         return false;
     }
     let pair = domain.occurrences;
-    let Some(sources) = current_sources(census, pair) else {
-        return false;
-    };
-    let mode = super::paired_execution::query_mode(pair);
-    sources == record.sources
-        && mode == record.mode
+    metadata_current(census, pair, record.sources, record.mode)
+        && report_source_current(census, record)
+}
+pub(super) fn metadata_current(
+    census: &BoundaryCensus,
+    pair: [usize; 2],
+    sources: [usize; 2],
+    mode: PairedQueryMode,
+) -> bool {
+    current_sources(census, pair) == Some(sources)
+        && super::paired_execution::query_mode(pair) == mode
         && pair
             .into_iter()
             .all(|index| occurrence_current(census, index))
-        && report_source_current(census, record)
 }
+
 fn current_sources(census: &BoundaryCensus, pair: [usize; 2]) -> Option<[usize; 2]> {
     let records = &census.paired.as_ref()?.occurrences;
     let mut sources = [
@@ -166,6 +190,12 @@ pub(super) fn paired_work_exact(census: &BoundaryCensus) -> bool {
     let Some(paired) = &census.paired else {
         return false;
     };
+    if paired.exclusion_version.is_some() {
+        return super::bernstein_binding::work_exact(census, paired);
+    }
+    if !paired.exclusions.is_empty() {
+        return false;
+    }
     let mut used = 0;
     for record in &paired.reports {
         if !effective_work_current(paired, record, used) {
@@ -253,9 +283,11 @@ fn recorded_kinded_parents(
         .collect()
 }
 
-fn parameter_binding_current(census: &BoundaryCensus, domain: &BoundaryDomain) -> bool {
-    let DomainEvidence::PairedReport { source_slots, .. } = domain.evidence else {
-        return false;
+pub(super) fn parameter_binding_current(census: &BoundaryCensus, domain: &BoundaryDomain) -> bool {
+    let source_slots = match domain.evidence {
+        DomainEvidence::PairedReport { source_slots, .. }
+        | DomainEvidence::BernsteinReport { source_slots, .. } => source_slots,
+        _ => return false,
     };
     Some(source_slots) == super::paired_execution::parameter_slots(census, domain.occurrences)
 }
