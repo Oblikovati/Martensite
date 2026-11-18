@@ -8,6 +8,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Added certified cylindrical profile position and derivative bounds against original authored polynomials, plus a priori dyadic Hermite fit planning with explicit resource limits (#418).
+
+- Added `certify_cylindrical_storage` for conservative error bounds on stored cylindrical curves and their linear depth interpolation, with retained coefficient bits and explicit precision and work limits (#418).
+
 - Added strict owned text capture with exact font-content bindings, caller occurrence IDs, raw glyph outlines and frozen text-builder plans. Added source-bound control-character diagnostics and an affected-package ThreadSanitizer stress control. (#425)
 
 - Added conical-sector sketches with signed normal extrusion, seam-crossing regions, validated conical carriers and preserved source history. (#417)
@@ -15,6 +19,8 @@ follows [Semantic Versioning](https://semver.org/).
 - Added rectangular sketches on cylindrical surfaces with signed normal extrusion, seam-crossing regions, semantic history, ordered body validation and detached body exports. Existing planar extrusion interfaces were preserved. (#416)
 
 ### Fixed
+
+- Reported admitted input ranges and retained offending values in cylindrical profile certificate diagnostics (#524).
 
 - Rejected invalid raw body tolerances before native validation could mask or overwrite them, preserving refusal input state and explicit stage coverage (#490).
 
