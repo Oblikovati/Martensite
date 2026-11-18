@@ -2,7 +2,7 @@
 //! Cauchy-Schwarz separation uses squared quantities, with no square-root estimate.
 use super::*;
 use context::Context;
-use num_bigint::Sign;
+use num_bigint::{BigInt, Sign};
 
 pub(super) fn separated(
     context: &mut Context<'_, '_>,
@@ -38,12 +38,17 @@ fn direction(
     if gap.sign() != Sign::Plus {
         return Ok(false);
     }
+    meets_squared_clearance(context, &n, gap)
+}
+
+#[inline(always)]
+fn meets_squared_clearance(context: &mut Context<'_, '_>, n: &Point, gap: BigInt) -> Checked<bool> {
     let gap = Interval {
         lower: gap.clone(),
         upper: gap,
     };
     let square = context.arithmetic.multiply(&gap, &gap)?;
-    let norm_square = dot(&n, &n, &mut context.arithmetic)?;
+    let norm_square = dot(n, n, &mut context.arithmetic)?;
     let threshold = context
         .arithmetic
         .multiply(&context.delta_square, &norm_square)?;

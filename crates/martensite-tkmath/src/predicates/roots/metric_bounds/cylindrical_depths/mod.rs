@@ -21,10 +21,7 @@ pub fn certify_cylindrical_depths(
 ) -> Checked<CertifiedCylindricalDepths> {
     admit(radius, depths, limit)?;
     let stored = storage.stored_radii();
-    let errors = [
-        endpoint(radius, depths[0], stored[0], 0)?,
-        endpoint(radius, depths[1], stored[1], 1)?,
-    ];
+    let errors = sweep_endpoint_errors(radius, depths, stored)?;
     let maximum = errors[0].clone().max(errors[1].clone());
     let combined = maximum.add(&ExactRatio::from_finite(storage.normal_sweep_error_bound()));
     let combined = upper(&combined)?;
@@ -50,6 +47,11 @@ fn admit(radius: f64, depths: [f64; 2], limit: f64) -> Checked<()> {
     for (index, depth) in depths.into_iter().enumerate() {
         finite("depth", index, depth)?;
     }
+    admit_depth_ranges(radius, depths, limit)
+}
+
+#[inline(always)]
+fn admit_depth_ranges(radius: f64, depths: [f64; 2], limit: f64) -> Checked<()> {
     if radius <= 0. {
         return Err(CylindricalDepthFailure::Value {
             field: "positive support radius",
@@ -68,6 +70,18 @@ fn admit(radius: f64, depths: [f64; 2], limit: f64) -> Checked<()> {
         return Err(CylindricalDepthFailure::DepthOrder { depths });
     }
     Ok(())
+}
+
+#[inline(always)]
+fn sweep_endpoint_errors(
+    radius: f64,
+    depths: [f64; 2],
+    stored: [f64; 2],
+) -> Checked<[ExactRatio; 2]> {
+    Ok([
+        endpoint(radius, depths[0], stored[0], 0)?,
+        endpoint(radius, depths[1], stored[1], 1)?,
+    ])
 }
 
 fn finite(field: &'static str, index: usize, value: f64) -> Checked<()> {

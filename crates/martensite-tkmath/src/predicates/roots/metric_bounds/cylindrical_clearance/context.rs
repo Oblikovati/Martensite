@@ -55,18 +55,28 @@ impl<'a, 'q> Context<'a, 'q> {
         excluded: BTreeSet<[usize; 2]>,
         cancelled: &'a mut (dyn FnMut() -> bool + Send),
     ) -> Checked<Self> {
-        let mut arithmetic = Arithmetic::new(
+        let arithmetic = Arithmetic::new(
             ArithmeticPolicy {
                 fractional_bits: query.options.fractional_bits,
                 max_operations: query.options.max_operations,
             },
             cancelled,
         );
+        let mut result = Self::initialize_clearance(query, excluded, arithmetic)?;
+        result.capture_roots()?;
+        Ok(result)
+    }
+    #[inline(always)]
+    fn initialize_clearance(
+        query: CylindricalClearanceQuery<'q>,
+        excluded: BTreeSet<[usize; 2]>,
+        mut arithmetic: Arithmetic<'a>,
+    ) -> Checked<Self> {
         let delta = arithmetic.scalar(query.requested_clearance)?;
         let delta_square = arithmetic.multiply(&delta, &delta)?;
         let offset = query.domain.offset();
         let shift = [arithmetic.scalar(offset[0])?, arithmetic.scalar(offset[1])?];
-        let mut result = Self {
+        Ok(Self {
             arithmetic,
             query,
             curves: Vec::new(),
@@ -76,9 +86,7 @@ impl<'a, 'q> Context<'a, 'q> {
             delta,
             delta_square,
             statistics: Statistics::default(),
-        };
-        result.capture_roots()?;
-        Ok(result)
+        })
     }
     fn capture_roots(&mut self) -> Checked<()> {
         self.reserve_nodes(self.query.sources.len() as u32)?;

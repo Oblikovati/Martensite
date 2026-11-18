@@ -9,15 +9,7 @@ pub(super) fn margins(
     query: CylindricalConeQuery<'_>,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Checked<Option<Vec<DyadicBound>>> {
-    let n = [
-        arithmetic.scalar(direction[0])?,
-        arithmetic.scalar(direction[1])?,
-    ];
-    let magnitude = n[0].magnitude().max(n[1].magnitude());
-    let norm = Interval {
-        lower: magnitude.clone(),
-        upper: magnitude,
-    };
+    let (n, norm) = capture_direction_norm(direction, arithmetic)?;
     let mut margins = Vec::new();
     for (poles, source) in derivatives.iter().zip(query.sources) {
         let margin = margin(poles, source, &n, &norm, arithmetic)?;
@@ -30,6 +22,23 @@ pub(super) fn margins(
         ));
     }
     Ok(Some(margins))
+}
+
+#[inline(always)]
+fn capture_direction_norm(
+    direction: [f64; 2],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<([Interval; 2], Interval)> {
+    let n = [
+        arithmetic.scalar(direction[0])?,
+        arithmetic.scalar(direction[1])?,
+    ];
+    let magnitude = n[0].magnitude().max(n[1].magnitude());
+    let norm = Interval {
+        lower: magnitude.clone(),
+        upper: magnitude,
+    };
+    Ok((n, norm))
 }
 
 fn margin(

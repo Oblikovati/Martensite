@@ -11,26 +11,48 @@ pub(super) fn integrate(
 ) -> Checked<ExactRatio> {
     let mut total = ExactRatio::from_finite(0.);
     for (depth, radius) in radii.into_iter().enumerate() {
-        let area = cap_area(span.cap_pcurves[depth], options, cancelled).map_err(|cause| {
-            CylindricalFluxFailure::Cap {
-                span: index,
-                depth,
-                cause: Box::new(cause),
-            }
-        })?;
-        let radius = ExactRatio::from_finite(radius);
-        let factor = radius
-            .multiply(&radius)
-            .divide(&ExactRatio::from_finite(3.));
-        let flux = area.multiply(&factor);
-        total = if depth == 0 {
-            total.subtract(&flux)
-        } else {
-            total.add(&flux)
-        };
+        accumulate_cap(
+            &mut total,
+            span.cap_pcurves[depth],
+            radius,
+            options,
+            index,
+            depth,
+            cancelled,
+        )?;
     }
     Ok(total)
 }
+
+#[inline(always)]
+fn accumulate_cap(
+    total: &mut ExactRatio,
+    poles: &[[f64; 2]],
+    radius: f64,
+    options: CylindricalFluxOptions,
+    index: usize,
+    depth: usize,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Checked<()> {
+    let area =
+        cap_area(poles, options, cancelled).map_err(|cause| CylindricalFluxFailure::Cap {
+            span: index,
+            depth,
+            cause: Box::new(cause),
+        })?;
+    let radius = ExactRatio::from_finite(radius);
+    let factor = radius
+        .multiply(&radius)
+        .divide(&ExactRatio::from_finite(3.));
+    let flux = area.multiply(&factor);
+    *total = if depth == 0 {
+        total.subtract(&flux)
+    } else {
+        total.add(&flux)
+    };
+    Ok(())
+}
+
 fn cap_area(
     poles: &[[f64; 2]],
     options: CylindricalFluxOptions,
