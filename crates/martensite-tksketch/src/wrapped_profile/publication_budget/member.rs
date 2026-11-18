@@ -22,11 +22,15 @@ fn cone_binding(
     prepared: &Request,
     retained: &pipeline::RetainedMember,
 ) -> Checked<()> {
-    planar_cones::bind(original, prepared, &retained.geometry.storage, &retained.geometry.cones).map_err(|cause| {
-        BudgetFailure::Cones {
-            region: original.region,
-            cause: Box::new(cause),
-        }
+    planar_cones::bind(
+        original,
+        prepared,
+        &retained.geometry.storage,
+        &retained.geometry.cones,
+    )
+    .map_err(|cause| BudgetFailure::Cones {
+        region: original.region,
+        cause: Box::new(cause),
     })
 }
 
@@ -86,17 +90,31 @@ fn inventory(
     retained: &pipeline::RetainedMember,
     expected: usize,
 ) -> Checked<()> {
-    count(region, "storage spans", retained.geometry.storage.len(), expected)?;
+    count(
+        region,
+        "storage spans",
+        retained.geometry.storage.len(),
+        expected,
+    )?;
     count(
         region,
         "regularity cones",
         retained.geometry.cones.pieces.len(),
         expected,
     )?;
-    count(region, "join cones", retained.geometry.cones.joins.len(), expected)?;
+    count(
+        region,
+        "join cones",
+        retained.geometry.cones.joins.len(),
+        expected,
+    )?;
     let spans: Vec<_> = retained.geometry.storage.iter().map(|p| p.span).collect();
     if spans != retained.geometry.measures.spans {
-        return Err(span_failure(region, retained.geometry.measures.spans.clone(), spans));
+        return Err(span_failure(
+            region,
+            retained.geometry.measures.spans.clone(),
+            spans,
+        ));
     }
     Ok(())
 }
@@ -155,7 +173,12 @@ impl MemberBounds {
             trace: 0.,
             trace_tolerance: 0.,
             cap_realization: 0.,
-            native_modes: retained.native.report.stages.each_ref().map(|stage| stage.mode),
+            native_modes: retained
+                .native
+                .report
+                .stages
+                .each_ref()
+                .map(|stage| stage.mode),
         }
     }
 

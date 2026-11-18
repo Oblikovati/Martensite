@@ -32,7 +32,6 @@ impl MathCancellation for RationalIntegralFailure {
     }
 }
 
-
 impl MathCancellation for CylindricalFluxFailure {
     fn is_cancelled(&self) -> bool {
         match self {
@@ -59,7 +58,6 @@ impl MathCancellation for CylindricalFluxError {
         self.cause.is_cancelled()
     }
 }
-
 
 impl MathCancellation for CylindricalMeasureError {
     fn is_cancelled(&self) -> bool {

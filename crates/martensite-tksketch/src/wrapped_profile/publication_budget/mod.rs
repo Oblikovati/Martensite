@@ -10,12 +10,12 @@ mod member;
 mod native;
 #[cfg(test)]
 mod tests;
-mod volume;
 mod trace_transport;
-pub(super) use trace_transport::transport_trace;
+mod volume;
 pub(super) use arithmetic::scale_upper;
 pub(super) use error::{BudgetFailure, Quantity};
 pub(super) use native::certify as certify_native;
+pub(super) use trace_transport::transport_trace;
 pub(super) use volume::add_upper;
 type Checked<T> = Result<T, BudgetFailure>;
 #[derive(Clone, Copy, Debug, PartialEq)]
