@@ -93,7 +93,7 @@ impl CapturedBezierPair {
             cancelled,
         ))
     }
-    fn is_self(&self) -> bool {
+    pub(super) fn is_self(&self) -> bool {
         let domain = self.domain;
         // Self canonicalization is derived from capture mode, never supplied source identities.
         domain == CapturedPairDomain::SelfOffDiagonal

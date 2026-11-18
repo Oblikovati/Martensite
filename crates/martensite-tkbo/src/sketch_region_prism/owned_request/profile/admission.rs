@@ -72,10 +72,15 @@ pub(in crate::sketch_region_prism) enum ProfileLoopCause {
 /// Request version of a plane graph profile: edges only, no authored loops or
 /// regions; the plane graph proof derives every face.
 pub(in crate::sketch_region_prism) const GRAPH_PROFILE_VERSION: u32 = 2;
+/// Graph proof with exact Bernstein exclusions followed by the unchanged carrier solver.
+pub(in crate::sketch_region_prism) const EXCLUSION_GRAPH_PROFILE_VERSION: u32 = 3;
 
 /// Admit one version-1 profile request or a version-2 plane graph; `admit(&request)?`.
 pub(super) fn admit(request: &OwnedProfileRequest) -> Result<(), ProfileAdmissionCause> {
-    if request.version == GRAPH_PROFILE_VERSION {
+    if matches!(
+        request.version,
+        GRAPH_PROFILE_VERSION | EXCLUSION_GRAPH_PROFILE_VERSION
+    ) {
         return admit_graph(request);
     }
     if request.version != 1 {

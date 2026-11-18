@@ -52,7 +52,7 @@ mod copy_retention_tests;
 mod owned_request;
 pub(crate) use owned_request::profile::{
     ProfileGraphInput, ProfileProofCause, ProfileProofRefusal, ProofEdge, certify_profile_graph,
-    certify_profile_graph_with_cancel,
+    certify_profile_graph_version_with_cancel, certify_profile_graph_with_cancel,
 };
 pub(crate) use region_certificate::loop_region::graph::{GraphFaceProof, GraphRegionCertificate};
 pub(crate) use region_certificate::loop_region::{

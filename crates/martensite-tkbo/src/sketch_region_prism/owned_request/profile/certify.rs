@@ -81,9 +81,18 @@ impl<F: FnMut() -> bool + Send> OwnedPrismProgress for PollProgress<'_, F> {
 
 pub(crate) fn certify_profile_graph_with_cancel(
     input: ProfileGraphInput,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<GraphRegionCertificate, ProfileProofRefusal> {
+    certify_profile_graph_version_with_cancel(input, GRAPH_PROFILE_VERSION, cancelled)
+}
+/// Retain the explicitly selected graph behavior in the owned request.
+pub(crate) fn certify_profile_graph_version_with_cancel(
+    input: ProfileGraphInput,
+    version: u32,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<GraphRegionCertificate, ProfileProofRefusal> {
-    let request = owned_graph_request(input);
+    let mut request = owned_graph_request(input);
+    request.version = version;
     let prepared = prepare_owned_profile(request, &mut PollProgress(&mut cancelled))
         .map_err(preparation_refusal)?;
     prepared

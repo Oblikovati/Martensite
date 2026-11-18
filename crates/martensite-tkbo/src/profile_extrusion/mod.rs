@@ -45,7 +45,8 @@ pub use crate::body_check::ValidationReport;
 pub use crate::measured::{Evidence, IntegrationMethod, Measured, MeasuredPoint};
 pub use crate::sketch_region_certification::CensusWorkReceipt as PlanarProofWorkReceipt;
 pub use build_regions::{
-    build_planar_regions, build_planar_regions_with_work, build_planar_regions_with_work_and_cancel,
+    build_planar_regions, build_planar_regions_with_proof_and_cancel,
+    build_planar_regions_with_work, build_planar_regions_with_work_and_cancel,
 };
 pub use decline::{
     DeclineCause, DeclineClass, OperationDecline, OperationKind, OperationStage,
@@ -59,7 +60,8 @@ pub use regions::*;
 pub use resolution::*;
 pub use validation::{Finding, RegionValidation, SelfIntersectionEvidence, StageStatus};
 pub use work::{
-    PlanarPairRootFailure, PlanarProofWorkLimit, PlanarRegionWorkFailure, PlanarRegionWorkResult,
+    PlanarPairRootFailure, PlanarProofVersion, PlanarProofWorkLimit, PlanarRegionWorkFailure,
+    PlanarRegionWorkResult,
 };
 
 #[cfg(test)]
