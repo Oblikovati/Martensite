@@ -238,7 +238,7 @@ fn unsupported_profile_precision_refuses() {
 }
 
 #[test]
-fn fit_planning_refuses_invalid_limits_and_cancellation() {
+fn fit_planning_refuses_invalid_limits() {
     let authored = [[-3., 0.], [-1., 0.]];
     let mut input = fit_query(&authored);
     input.max_level = 64;
@@ -255,6 +255,12 @@ fn fit_planning_refuses_invalid_limits_and_cancellation() {
         plan_cylindrical_fit(input, || false).unwrap_err().cause,
         CylindricalProfileFailure::Value { .. }
     ));
+}
+
+#[test]
+fn fit_planning_refuses_cancellation_without_a_partial_plan() {
+    let authored = [[-3., 0.], [-1., 0.]];
+    let mut input = fit_query(&authored);
     input.spatial_limit = 1e-5;
     assert!(matches!(
         plan_cylindrical_fit(input, || true).unwrap_err().cause,

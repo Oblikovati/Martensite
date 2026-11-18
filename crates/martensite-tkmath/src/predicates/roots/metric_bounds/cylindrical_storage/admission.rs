@@ -99,15 +99,16 @@ fn value(
     Ok(())
 }
 
+const STORAGE_RESIDUAL_ORDER: [CylindricalStorageResidual; 5] = [
+    CylindricalStorageResidual::FirstRadius,
+    CylindricalStorageResidual::LastRadius,
+    CylindricalStorageResidual::ScaledRuling,
+    CylindricalStorageResidual::HeightDrift,
+    CylindricalStorageResidual::NormalSweep,
+];
+
 pub(super) fn accept(bounds: [f64; 5], limits: CylindricalStorageLimits) -> Checked<()> {
-    use CylindricalStorageResidual::*;
-    let residuals = [
-        FirstRadius,
-        LastRadius,
-        ScaledRuling,
-        HeightDrift,
-        NormalSweep,
-    ];
+    let residuals = STORAGE_RESIDUAL_ORDER;
     let limits = [
         limits.radial_distance,
         limits.radial_distance,

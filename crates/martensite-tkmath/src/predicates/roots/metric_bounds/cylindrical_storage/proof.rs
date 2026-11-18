@@ -36,14 +36,7 @@ fn normal_sweep(
     radii: &[Interval; 2],
     arithmetic: &mut Arithmetic<'_>,
 ) -> Checked<f64> {
-    if bounds[0] >= radius_values[0] {
-        return Err(
-            super::CylindricalStorageFailure::ReferenceDirectionUnresolved {
-                radial_bound: bounds[0],
-                radius: radius_values[0],
-            },
-        );
-    }
+    reference_direction(bounds[0], radius_values[0])?;
     let radial = arithmetic.scalar(bounds[0])?;
     let scaled = arithmetic.multiply(&radii[1], &radial)?;
     let last = arithmetic.upper_quotient(&scaled.upper, &radii[0].lower)?;
@@ -57,6 +50,19 @@ fn normal_sweep(
     let height = arithmetic.scalar(bounds[3])?;
     let total = arithmetic.add(&xy, &height)?;
     arithmetic.upper_f64(total.upper).map_err(Into::into)
+}
+
+#[inline(always)]
+fn reference_direction(radial_bound: f64, radius: f64) -> Checked<()> {
+    if radial_bound >= radius {
+        return Err(
+            super::CylindricalStorageFailure::ReferenceDirectionUnresolved {
+                radial_bound,
+                radius,
+            },
+        );
+    }
+    Ok(())
 }
 
 fn radial(
