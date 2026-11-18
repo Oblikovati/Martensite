@@ -157,19 +157,34 @@ fn assert_all_cancellations(f: &Fixture) {
     }
 }
 #[test]
-fn empty_and_all_point_inputs_keep_542_results_and_exact_poll_counts() {
+fn opt_in_empty_and_all_point_inputs_use_only_the_exact_point_attempt() {
     for f in [
         fixture(&[0., 0., 1., 0., -2., 0., 1.], &[0., 1.], [-1., 1.], 0.001),
         fixture(&[1., 0., 1.], &[2.], [-1., 1.], 0.001),
     ] {
-        let mut calls = 0;
-        let current = run(&f, &mut || {
-            calls += 1;
-            false
-        })
-        .unwrap();
-        let old = eager(&f);
-        assert_eq!((current, calls), old);
+        assert_opt_in_points(&f);
+        assert_all_cancellations(&f);
+    }
+}
+fn assert_opt_in_points(f: &Fixture) {
+    let expected = eager(f).0;
+    let (attempted, count) = attempted(f);
+    assert_eq!(attempted.as_deref(), Some(expected.signs()));
+    assert_eq!(count, 1 + f.isolation.roots().len());
+    let mut calls = 0;
+    let current = run(f, &mut || {
+        calls += 1;
+        false
+    })
+    .unwrap();
+    assert_eq!(current, expected);
+    assert_eq!(calls, count);
+}
+#[test]
+fn opt_in_singletons_keep_zero_constant_and_subnormal_signs() {
+    for query in [vec![], vec![-3.], vec![0., f64::from_bits(1)]] {
+        let f = fixture(&[0., 0., 1., 0., -2., 0., 1.], &query, [-1., 1.], 0.001);
+        assert_opt_in_points(&f);
         assert_all_cancellations(&f);
     }
 }

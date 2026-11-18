@@ -8,7 +8,7 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- Added opt-in exact bracket filtering for generated Bézier pair membership signs and the `FilteredBernsteinV4` planar-proof selector while retaining earlier sign and planar-proof policies for replay (#544).
+- Added opt-in exact point-root and bracket filtering for generated Bézier pair membership signs and the `FilteredBernsteinV4` planar-proof selector while retaining earlier sign and planar-proof policies for replay (#544).
 
 - Added opt-in exact Bernstein exclusion for planar Bézier pair and self queries while preserving the existing solver routes (#539).
 
@@ -75,8 +75,6 @@ follows [Semantic Versioning](https://semver.org/).
 - Added coherent owned Bézier pole/weight snapshots and used them for fresh sketch-source capture without changing evaluator bindings or validation budgets (#449).
 
 ### Fixed
-
-- Avoided unused Sturm–Tarski query chains for certified point roots and empty root sets while preserving exact signs and the existing mixed-root path (#542).
 
 - Refused negative grid sample counts in generic curve–surface extrema searches with a typed error instead of an indexing panic (#535).
 

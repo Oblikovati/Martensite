@@ -1,8 +1,8 @@
 # Decision: opt-in exact bracket filtering for graph membership
 
 Status: approved for implementation under the maintainer's #544 delegation on
-2026-11-18. Focused Math and TKBO routing controls passed; component review and the full PR
-gate remain pending.
+2026-11-18. Math compatibility qualification passed. Restored legacy TKBO
+callback controls, component review and the full PR gate remain pending.
 
 Actual source-pair inspection found expensive generated-membership sign chains
 whose signs can sometimes be established on their existing exact root brackets.
@@ -15,9 +15,11 @@ helper. Keep its graph wrapper's original operations, errors and cancellation
 polls. Record this extraction separately from the numerical policy change.
 
 Select the filter only through retained `BezierPairSignOptions.version == 2`.
-Version 1 and `derived()` retain their existing evaluator, including #542. For version 2, keep #542's
-all-point path first and reuse its exact point-sign function for singleton roots
-in mixed isolations. Accept a nonpoint sign only when exact interval evaluation
+Version 1 and `derived()` retain the original eager evaluator for every
+isolation. The attempted #542 default shortcut failed the full owned-operation
+callback replay gate (`8238` observed versus `8268` expected) and was removed.
+Version 2 alone uses the same all-root attempt for empty, point-only and mixed
+isolations, reusing the exact point-sign function for singleton roots. Accept a nonpoint sign only when exact interval evaluation
 is strict throughout the original bracket. An exactly zero normalized query
 is the sole global-zero case.
 

@@ -78,7 +78,7 @@ fn run_graph(index: usize, version: u32) -> (super::operation::AccountedPairOutc
 fn actual_graph_sources_pin_complete_candidates_signs_work_and_polls() {
     for index in 0..3 {
         let (outcome, polls) = run_graph(index, 1);
-        assert_eq!(polls, [694, 1687, 694][index]);
+        assert_eq!(polls, [1184, 1687, 1184][index]);
         assert_graph(index, outcome, 1);
     }
 }

@@ -14,13 +14,6 @@ pub(super) fn evaluate(
     isolation: RootIsolation,
     cancelled: &mut impl FnMut() -> bool,
 ) -> Result<RootSignEvaluation, RootSignError> {
-    if isolation
-        .roots()
-        .iter()
-        .all(|r| r.bounds().0 == r.bounds().1)
-    {
-        return evaluate_isolated(source, query, isolation, cancelled);
-    }
     match attempt(&query, &isolation, cancelled)? {
         Some(signs) => Ok(RootSignEvaluation { isolation, signs }),
         None => evaluate_isolated(source, query, isolation, cancelled),
