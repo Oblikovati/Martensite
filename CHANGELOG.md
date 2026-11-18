@@ -72,6 +72,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Restored selection of the ignored wrapped-family ThreadSanitizer stress test for affected packages while retaining existing replay controls (#529).
+
 - Preserved cylindrical operation failures when cancellation arrived later and propagated cancellation through global planar proof work (#526).
 
 - Verified decoded export bindings by authored identity and rejected duplicate or mismatched bindings before publishing native exports (#519).

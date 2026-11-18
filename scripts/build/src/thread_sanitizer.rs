@@ -60,6 +60,7 @@ fn control_command(root: &Path, control: Control) -> CommandSpec {
         Control::DocumentTransactions => document_transaction_controls(root),
         Control::SurfaceSketch => surface_sketch_controls(root),
         Control::FontTextCapture => font_text_capture_controls(root),
+        Control::WrappedFamily => wrapped_family_controls(root),
     }
 }
 
@@ -238,6 +239,22 @@ fn font_text_capture_controls(root: &Path) -> CommandSpec {
         "--lib",
         "brep_font::text_capture::tests::stress",
         "--",
+        "--test-threads=1",
+        "--show-output",
+    ])
+}
+
+fn wrapped_family_controls(root: &Path) -> CommandSpec {
+    // #529: the ignored family campaign supplements the existing primitive replay control.
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::wrapped_profile::family::replay_tests::stress::different_geometry_with_shared_authored_ids_replays_under_contention",
+        "--",
+        "--exact",
+        "--ignored",
         "--test-threads=1",
         "--show-output",
     ])
