@@ -1,0 +1,1359 @@
+{
+  "date": "2026-11-18",
+  "issues": [
+    496,
+    535
+  ],
+  "decision": "Do not adopt the allocation candidate: strict performance qualification is inconclusive. Retain the separately tested #535 correctness fix.",
+  "compiled_candidate_production_sha256": {
+    "crates/martensite-tkgeombase/src/extrema/curve_surface/gen_ext_cs/mod.rs": "25e083660a9761638ad99b33ab312ac48239c7a24fbc0b2af5dc5d24518dbfde",
+    "crates/martensite-tkgeombase/src/extrema/curve_surface/gen_ext_cs/glob_min.rs": "773c8f9b2b6425cdaa6cb381b7a2e0c6b489aba45d48d7623ced684038d6b86e"
+  },
+  "provenance": "Reconstructed from main93df84f8 and the tracked patch captured before baseline reversal. Current algorithm source matched; one later public doc comment was excluded from comparison.",
+  "comparison": {
+    "metadata": {
+      "release_commit": "bef25f47548431c8f128f08f66a1f719bcee4982",
+      "starting_main": "93df84f80bfbd471003c89a30ce619e6ed8b0163",
+      "source_fixture_diff_empty": true,
+      "file_sha256": {
+        "crates/martensite-tkgeombase/src/extrema/curve_surface/gen_ext_cs/conic.rs": "dae4c167cead977cda89b578cb770def00800ffd0293735c6ad059285cd4d2f2",
+        "crates/martensite-tkgeombase/src/extrema/curve_surface/gen_ext_cs/glob_min.rs": "5e0b3ea17bfba1c18e1e6d437555a820eebaa4cb40d256f5ca8fbd7118577762",
+        "crates/martensite-tkgeombase/src/extrema/curve_surface/gen_ext_cs/mod.rs": "21e4e96420516bbfa36b20ae969a42057a6308c54eeaa24234c6f0821304e56f",
+        "crates/martensite-tkgeombase/src/extrema/curve_surface/ext_cs/analytic.rs": "9d941387cb889f60d6badfd5ea9005cb60b2cb1f4c465a8c282665c0a558fe46",
+        "crates/martensite-tkgeombase/src/extrema/curve_surface/ext_cs/generic.rs": "3345f5f2a11387d3efb4c91d9eb9e1e9a185eefb779875ec6375b0c6cee7a9ff",
+        "crates/martensite-tkgeombase/src/extrema/curve_surface/ext_cs/mod.rs": "8d13f9152abf2bb150272f250f01ff62f45c3e7d24347d0b5ac61c699cd5ad14",
+        "crates/martensite-tkgeombase/tests/fixtures/curve_surface_corpus/expected-00.txt": "e8c478134ee29d7547f97be2dfcf1ce47840d6270c960cad33cb41c7d7aca4e0",
+        "crates/martensite-tkgeombase/tests/fixtures/curve_surface_corpus/inputs-00.txt": "edf4dd815c35b837c2e142229ee76adb5055232e155e46180bee5d103b16d194",
+        "crates/martensite-tkgeombase/tests/curve_surface_corpus.rs": "1f0a6a2632821ee244759a507f82b68ee92a6a2f86df607e00d6aba88e9a330a"
+      },
+      "build_environment": {
+        "CARGO_TARGET_DIR": "$TMP/martensite-extrema-v0131-target",
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+        "CARGO_PROFILE_TEST_STRIP": "debuginfo"
+      },
+      "rustc": "rustc 1.99.0 (b940084d7 2026-09-28)\nbinary: rustc\ncommit-hash: b940084d7eb6a299eb4bfeb8e34901bc051e7ac4\ncommit-date: 2026-09-28\nhost: x86_64-unknown-linux-gnu\nrelease: 1.99.0\nLLVM version: 23.1.1\n",
+      "build_started_utc": "2026-11-18T03:36:07Z",
+      "baseline_executable": "$TMP/martensite-extrema-v0131-target/debug/deps/toolkit-19e6718eb58d86c7",
+      "baseline_executable_sha256": "72b832ce230117c700e6ee50cfa88a2a280ce8f43d232d530119e28e07f567a5",
+      "build_finished_utc": "2026-11-18T03:36:49Z"
+    },
+    "candidate_metadata": {
+      "source": "$TMP/martensite-512-primary-contract-target/debug/deps/toolkit-19e6718eb58d86c7",
+      "after_executable": "$TMP/martensite-496-owned-after/toolkit",
+      "sha256": "d201ba4bd4a52efa3bd2a244430073c46dfcd05b9ae3e7339e4a2810751cfd43",
+      "source_revision": "93df84f8 plus #535 guard, owned tests and isolated #496 grid patch",
+      "source_grid": "Owned Array2, checked scalar read once per grid cell",
+      "cleanup": "Delete this owned binary after performance investigation"
+    },
+    "admission_before": {
+      "time_ns": 1794973094045718501,
+      "cpus": {
+        "0": [
+          32604890,
+          29468866
+        ],
+        "1": [
+          32340115,
+          26532411
+        ],
+        "2": [
+          32235933,
+          23874234
+        ],
+        "3": [
+          32310586,
+          29817806
+        ],
+        "4": [
+          32216211,
+          23918737
+        ],
+        "5": [
+          32276744,
+          28650018
+        ],
+        "6": [
+          32277495,
+          29316428
+        ],
+        "7": [
+          32252630,
+          27809585
+        ],
+        "8": [
+          32290303,
+          30415347
+        ],
+        "9": [
+          32360450,
+          28413446
+        ],
+        "10": [
+          32332744,
+          30307724
+        ],
+        "11": [
+          32311065,
+          30103489
+        ],
+        "12": [
+          32314193,
+          29778211
+        ],
+        "13": [
+          32364820,
+          26935786
+        ],
+        "14": [
+          32340602,
+          30410155
+        ],
+        "15": [
+          32338080,
+          29334967
+        ],
+        "16": [
+          32303875,
+          29811765
+        ],
+        "17": [
+          32255803,
+          25632206
+        ],
+        "18": [
+          32214270,
+          19495451
+        ],
+        "19": [
+          32281719,
+          30175686
+        ],
+        "20": [
+          32212735,
+          19824882
+        ],
+        "21": [
+          32271143,
+          28580755
+        ],
+        "22": [
+          32274431,
+          29348152
+        ],
+        "23": [
+          32259321,
+          27488523
+        ],
+        "24": [
+          32281526,
+          30355648
+        ],
+        "25": [
+          32303991,
+          28558200
+        ],
+        "26": [
+          32530465,
+          30186654
+        ],
+        "27": [
+          32368353,
+          29933421
+        ],
+        "28": [
+          32327325,
+          29631773
+        ],
+        "29": [
+          32345417,
+          26439086
+        ],
+        "30": [
+          32309841,
+          30433814
+        ],
+        "31": [
+          32295719,
+          29201788
+        ]
+      },
+      "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=2916844788\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+      "loadavg": "2.70 2.94 3.32 4/5805 4098595\n"
+    },
+    "admission_after": {
+      "time_ns": 1794973094346118328,
+      "cpus": {
+        "0": [
+          32604922,
+          29468896
+        ],
+        "1": [
+          32340146,
+          26532439
+        ],
+        "2": [
+          32235963,
+          23874264
+        ],
+        "3": [
+          32310617,
+          29817837
+        ],
+        "4": [
+          32216241,
+          23918737
+        ],
+        "5": [
+          32276776,
+          28650047
+        ],
+        "6": [
+          32277526,
+          29316457
+        ],
+        "7": [
+          32252660,
+          27809614
+        ],
+        "8": [
+          32290332,
+          30415376
+        ],
+        "9": [
+          32360479,
+          28413474
+        ],
+        "10": [
+          32332774,
+          30307754
+        ],
+        "11": [
+          32311095,
+          30103519
+        ],
+        "12": [
+          32314225,
+          29778240
+        ],
+        "13": [
+          32364850,
+          26935811
+        ],
+        "14": [
+          32340632,
+          30410185
+        ],
+        "15": [
+          32338109,
+          29334996
+        ],
+        "16": [
+          32303905,
+          29811794
+        ],
+        "17": [
+          32255834,
+          25632236
+        ],
+        "18": [
+          32214300,
+          19495451
+        ],
+        "19": [
+          32281750,
+          30175717
+        ],
+        "20": [
+          32212765,
+          19824912
+        ],
+        "21": [
+          32271174,
+          28580785
+        ],
+        "22": [
+          32274461,
+          29348182
+        ],
+        "23": [
+          32259350,
+          27488552
+        ],
+        "24": [
+          32281555,
+          30355677
+        ],
+        "25": [
+          32304020,
+          28558229
+        ],
+        "26": [
+          32530496,
+          30186683
+        ],
+        "27": [
+          32368383,
+          29933451
+        ],
+        "28": [
+          32327355,
+          29631802
+        ],
+        "29": [
+          32345446,
+          26439115
+        ],
+        "30": [
+          32309870,
+          30433842
+        ],
+        "31": [
+          32295750,
+          29201818
+        ]
+      },
+      "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=2916844900\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+      "loadavg": "2.70 2.94 3.32 5/5806 4098596\n"
+    },
+    "cpu": 2,
+    "cpu_busy_fraction_before": 0.0,
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "timer": "perf_counter_ns wall; wait4 child user/system seconds and ru_maxrss KiB",
+    "warmups": [
+      {
+        "variant": "release",
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "phase": "warmup",
+        "wall": 0.30781195,
+        "user": 0.29687199999999997,
+        "system": 0.002998,
+        "peak_rss_kib": 25756,
+        "stdout": "$TMP/martensite-496-release-comparison-output-001-release.log",
+        "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+      },
+      {
+        "variant": "candidate",
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "phase": "warmup",
+        "wall": 0.291299961,
+        "user": 0.285497,
+        "system": 0.004991,
+        "peak_rss_kib": 24648,
+        "stdout": "$TMP/martensite-496-release-comparison-output-002-candidate.log",
+        "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+      },
+      {
+        "variant": "release",
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "phase": "warmup",
+        "wall": 0.56458351,
+        "user": 0.554568,
+        "system": 0.008993,
+        "peak_rss_kib": 31292,
+        "stdout": "$TMP/martensite-496-release-comparison-output-023-release.log",
+        "stdout_sha256": "a65d88f9cd656b3c64e08e64d00d297d0516a0cb7d99f4399064ca9d7da46262"
+      },
+      {
+        "variant": "candidate",
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "phase": "warmup",
+        "wall": 0.545204848,
+        "user": 0.535449,
+        "system": 0.009007,
+        "peak_rss_kib": 30756,
+        "stdout": "$TMP/martensite-496-release-comparison-output-024-candidate.log",
+        "stdout_sha256": "a9d83e514ebe1a65408ff309604070cf98944be68c1f2dbf6b97fed05a6ac856"
+      }
+    ],
+    "samples": [
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "pair": 0,
+        "variant": "release",
+        "repetitions": 2,
+        "wall": 0.597414873,
+        "user": 0.592098,
+        "system": 0.004007,
+        "peak_rss_kib": 26640,
+        "runs": [
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.298136791,
+            "user": 0.295491,
+            "system": 0.002003,
+            "peak_rss_kib": 25556,
+            "stdout": "$TMP/martensite-496-release-comparison-output-003-release.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          },
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.299278082,
+            "user": 0.296607,
+            "system": 0.0020039999999999997,
+            "peak_rss_kib": 26640,
+            "stdout": "$TMP/martensite-496-release-comparison-output-004-release.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "pair": 0,
+        "variant": "candidate",
+        "repetitions": 2,
+        "wall": 0.5882089500000001,
+        "user": 0.5819399999999999,
+        "system": 0.004995,
+        "peak_rss_kib": 26044,
+        "runs": [
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.294146117,
+            "user": 0.289628,
+            "system": 0.003994,
+            "peak_rss_kib": 24644,
+            "stdout": "$TMP/martensite-496-release-comparison-output-005-candidate.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          },
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.294062833,
+            "user": 0.29231199999999996,
+            "system": 0.001001,
+            "peak_rss_kib": 26044,
+            "stdout": "$TMP/martensite-496-release-comparison-output-006-candidate.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "pair": 1,
+        "variant": "candidate",
+        "repetitions": 2,
+        "wall": 0.5974272860000001,
+        "user": 0.586475,
+        "system": 0.006013999999999999,
+        "peak_rss_kib": 25904,
+        "runs": [
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.300142892,
+            "user": 0.293724,
+            "system": 0.0030069999999999997,
+            "peak_rss_kib": 24852,
+            "stdout": "$TMP/martensite-496-release-comparison-output-007-candidate.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          },
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.297284394,
+            "user": 0.292751,
+            "system": 0.0030069999999999997,
+            "peak_rss_kib": 25904,
+            "stdout": "$TMP/martensite-496-release-comparison-output-008-candidate.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "pair": 1,
+        "variant": "release",
+        "repetitions": 2,
+        "wall": 0.601890282,
+        "user": 0.5912229999999999,
+        "system": 0.008986,
+        "peak_rss_kib": 26192,
+        "runs": [
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.301780141,
+            "user": 0.296824,
+            "system": 0.003997,
+            "peak_rss_kib": 24836,
+            "stdout": "$TMP/martensite-496-release-comparison-output-009-release.log",
+            "stdout_sha256": "d5015857c9a8c49b4ba175cbb1b9e27ffa3bd225a0c6527ab9419870b6a84075"
+          },
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.300110141,
+            "user": 0.29439899999999997,
+            "system": 0.0049889999999999995,
+            "peak_rss_kib": 26192,
+            "stdout": "$TMP/martensite-496-release-comparison-output-010-release.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "pair": 2,
+        "variant": "release",
+        "repetitions": 2,
+        "wall": 0.605641673,
+        "user": 0.5946130000000001,
+        "system": 0.008992,
+        "peak_rss_kib": 25984,
+        "runs": [
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.305126893,
+            "user": 0.297682,
+            "system": 0.005993,
+            "peak_rss_kib": 25984,
+            "stdout": "$TMP/martensite-496-release-comparison-output-011-release.log",
+            "stdout_sha256": "d5015857c9a8c49b4ba175cbb1b9e27ffa3bd225a0c6527ab9419870b6a84075"
+          },
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.30051478,
+            "user": 0.296931,
+            "system": 0.002999,
+            "peak_rss_kib": 25420,
+            "stdout": "$TMP/martensite-496-release-comparison-output-012-release.log",
+            "stdout_sha256": "d5015857c9a8c49b4ba175cbb1b9e27ffa3bd225a0c6527ab9419870b6a84075"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "pair": 2,
+        "variant": "candidate",
+        "repetitions": 2,
+        "wall": 0.589289379,
+        "user": 0.5765499999999999,
+        "system": 0.008978,
+        "peak_rss_kib": 25384,
+        "runs": [
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.295397723,
+            "user": 0.29016,
+            "system": 0.0029909999999999997,
+            "peak_rss_kib": 25008,
+            "stdout": "$TMP/martensite-496-release-comparison-output-013-candidate.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          },
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.293891656,
+            "user": 0.28639,
+            "system": 0.005987,
+            "peak_rss_kib": 25384,
+            "stdout": "$TMP/martensite-496-release-comparison-output-014-candidate.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "pair": 3,
+        "variant": "candidate",
+        "repetitions": 2,
+        "wall": 0.593412097,
+        "user": 0.583402,
+        "system": 0.007990999999999998,
+        "peak_rss_kib": 25096,
+        "runs": [
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.299030765,
+            "user": 0.29370799999999997,
+            "system": 0.0039959999999999996,
+            "peak_rss_kib": 25096,
+            "stdout": "$TMP/martensite-496-release-comparison-output-015-candidate.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          },
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.294381332,
+            "user": 0.289694,
+            "system": 0.003994999999999999,
+            "peak_rss_kib": 25032,
+            "stdout": "$TMP/martensite-496-release-comparison-output-016-candidate.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "pair": 3,
+        "variant": "release",
+        "repetitions": 2,
+        "wall": 0.599129155,
+        "user": 0.594687,
+        "system": 0.002996,
+        "peak_rss_kib": 25532,
+        "runs": [
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.301112847,
+            "user": 0.298479,
+            "system": 0.001996,
+            "peak_rss_kib": 25532,
+            "stdout": "$TMP/martensite-496-release-comparison-output-017-release.log",
+            "stdout_sha256": "d5015857c9a8c49b4ba175cbb1b9e27ffa3bd225a0c6527ab9419870b6a84075"
+          },
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.298016308,
+            "user": 0.29620799999999997,
+            "system": 0.001,
+            "peak_rss_kib": 25492,
+            "stdout": "$TMP/martensite-496-release-comparison-output-018-release.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "pair": 4,
+        "variant": "release",
+        "repetitions": 2,
+        "wall": 0.603579608,
+        "user": 0.593782,
+        "system": 0.005986999999999999,
+        "peak_rss_kib": 26080,
+        "runs": [
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.305499823,
+            "user": 0.301238,
+            "system": 0.002992,
+            "peak_rss_kib": 26080,
+            "stdout": "$TMP/martensite-496-release-comparison-output-019-release.log",
+            "stdout_sha256": "d5015857c9a8c49b4ba175cbb1b9e27ffa3bd225a0c6527ab9419870b6a84075"
+          },
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.298079785,
+            "user": 0.29254399999999997,
+            "system": 0.002995,
+            "peak_rss_kib": 26012,
+            "stdout": "$TMP/martensite-496-release-comparison-output-020-release.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "pair": 4,
+        "variant": "candidate",
+        "repetitions": 2,
+        "wall": 0.743410372,
+        "user": 0.731665,
+        "system": 0.00998,
+        "peak_rss_kib": 25352,
+        "runs": [
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.293911363,
+            "user": 0.288898,
+            "system": 0.003984,
+            "peak_rss_kib": 24968,
+            "stdout": "$TMP/martensite-496-release-comparison-output-021-candidate.log",
+            "stdout_sha256": "bb8d63ec2d07027b19c87144327cacd40af3680aff5560e9c6d220fa1457c5ea"
+          },
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+            "phase": "timed",
+            "wall": 0.449499009,
+            "user": 0.44276699999999997,
+            "system": 0.005996,
+            "peak_rss_kib": 25352,
+            "stdout": "$TMP/martensite-496-release-comparison-output-022-candidate.log",
+            "stdout_sha256": "e03e72d68b9127c886da8be09ae1d9f40cdfb1e6652357f956a682ded0dc763f"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "pair": 0,
+        "variant": "candidate",
+        "repetitions": 1,
+        "wall": 0.53868766,
+        "user": 0.531978,
+        "system": 0.005999,
+        "peak_rss_kib": 30712,
+        "runs": [
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+            "phase": "timed",
+            "wall": 0.53868766,
+            "user": 0.531978,
+            "system": 0.005999,
+            "peak_rss_kib": 30712,
+            "stdout": "$TMP/martensite-496-release-comparison-output-025-candidate.log",
+            "stdout_sha256": "8ba3ede7cb096d8470155cc1ff00f0bc456eccb4cb40a5d65e025700f5a494eb"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "pair": 0,
+        "variant": "release",
+        "repetitions": 1,
+        "wall": 0.558377509,
+        "user": 0.5485479999999999,
+        "system": 0.008992,
+        "peak_rss_kib": 30848,
+        "runs": [
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+            "phase": "timed",
+            "wall": 0.558377509,
+            "user": 0.5485479999999999,
+            "system": 0.008992,
+            "peak_rss_kib": 30848,
+            "stdout": "$TMP/martensite-496-release-comparison-output-026-release.log",
+            "stdout_sha256": "0b03ac1394f6381032b9aa9f465db7c4885a21b7edbfa4dd862a497798422c20"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "pair": 1,
+        "variant": "release",
+        "repetitions": 1,
+        "wall": 0.807171679,
+        "user": 0.7973779999999999,
+        "system": 0.009004,
+        "peak_rss_kib": 31008,
+        "runs": [
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+            "phase": "timed",
+            "wall": 0.807171679,
+            "user": 0.7973779999999999,
+            "system": 0.009004,
+            "peak_rss_kib": 31008,
+            "stdout": "$TMP/martensite-496-release-comparison-output-027-release.log",
+            "stdout_sha256": "fd56958c78febf44c7c7ab14006730ff238885222da98ef3fd420da1fc0b96f2"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "pair": 1,
+        "variant": "candidate",
+        "repetitions": 1,
+        "wall": 0.862014465,
+        "user": 0.852402,
+        "system": 0.0060019999999999995,
+        "peak_rss_kib": 30280,
+        "runs": [
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+            "phase": "timed",
+            "wall": 0.862014465,
+            "user": 0.852402,
+            "system": 0.0060019999999999995,
+            "peak_rss_kib": 30280,
+            "stdout": "$TMP/martensite-496-release-comparison-output-028-candidate.log",
+            "stdout_sha256": "0455ba9405d721a56a9b975323a559c095cc40ade68cdf0725d50b258fabf2ff"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "pair": 2,
+        "variant": "candidate",
+        "repetitions": 1,
+        "wall": 0.537706134,
+        "user": 0.526044,
+        "system": 0.011,
+        "peak_rss_kib": 30072,
+        "runs": [
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+            "phase": "timed",
+            "wall": 0.537706134,
+            "user": 0.526044,
+            "system": 0.011,
+            "peak_rss_kib": 30072,
+            "stdout": "$TMP/martensite-496-release-comparison-output-029-candidate.log",
+            "stdout_sha256": "8ba3ede7cb096d8470155cc1ff00f0bc456eccb4cb40a5d65e025700f5a494eb"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "pair": 2,
+        "variant": "release",
+        "repetitions": 1,
+        "wall": 0.561404139,
+        "user": 0.5519999999999999,
+        "system": 0.007984999999999999,
+        "peak_rss_kib": 31056,
+        "runs": [
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+            "phase": "timed",
+            "wall": 0.561404139,
+            "user": 0.5519999999999999,
+            "system": 0.007984999999999999,
+            "peak_rss_kib": 31056,
+            "stdout": "$TMP/martensite-496-release-comparison-output-030-release.log",
+            "stdout_sha256": "a65d88f9cd656b3c64e08e64d00d297d0516a0cb7d99f4399064ca9d7da46262"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "pair": 3,
+        "variant": "release",
+        "repetitions": 1,
+        "wall": 0.561774574,
+        "user": 0.5523549999999999,
+        "system": 0.007989999999999999,
+        "peak_rss_kib": 31008,
+        "runs": [
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+            "phase": "timed",
+            "wall": 0.561774574,
+            "user": 0.5523549999999999,
+            "system": 0.007989999999999999,
+            "peak_rss_kib": 31008,
+            "stdout": "$TMP/martensite-496-release-comparison-output-031-release.log",
+            "stdout_sha256": "a65d88f9cd656b3c64e08e64d00d297d0516a0cb7d99f4399064ca9d7da46262"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "pair": 3,
+        "variant": "candidate",
+        "repetitions": 1,
+        "wall": 0.544844632,
+        "user": 0.539431,
+        "system": 0.003994999999999999,
+        "peak_rss_kib": 30840,
+        "runs": [
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+            "phase": "timed",
+            "wall": 0.544844632,
+            "user": 0.539431,
+            "system": 0.003994999999999999,
+            "peak_rss_kib": 30840,
+            "stdout": "$TMP/martensite-496-release-comparison-output-032-candidate.log",
+            "stdout_sha256": "a9d83e514ebe1a65408ff309604070cf98944be68c1f2dbf6b97fed05a6ac856"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "pair": 4,
+        "variant": "candidate",
+        "repetitions": 1,
+        "wall": 0.540281368,
+        "user": 0.533146,
+        "system": 0.00599,
+        "peak_rss_kib": 30964,
+        "runs": [
+          {
+            "variant": "candidate",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+            "phase": "timed",
+            "wall": 0.540281368,
+            "user": 0.533146,
+            "system": 0.00599,
+            "peak_rss_kib": 30964,
+            "stdout": "$TMP/martensite-496-release-comparison-output-033-candidate.log",
+            "stdout_sha256": "8ba3ede7cb096d8470155cc1ff00f0bc456eccb4cb40a5d65e025700f5a494eb"
+          }
+        ]
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "pair": 4,
+        "variant": "release",
+        "repetitions": 1,
+        "wall": 0.558181226,
+        "user": 0.55151,
+        "system": 0.006005,
+        "peak_rss_kib": 31720,
+        "runs": [
+          {
+            "variant": "release",
+            "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+            "phase": "timed",
+            "wall": 0.558181226,
+            "user": 0.55151,
+            "system": 0.006005,
+            "peak_rss_kib": 31720,
+            "stdout": "$TMP/martensite-496-release-comparison-output-034-release.log",
+            "stdout_sha256": "0b03ac1394f6381032b9aa9f465db7c4885a21b7edbfa4dd862a497798422c20"
+          }
+        ]
+      }
+    ],
+    "status": "completed",
+    "release_executable_sha256": "72b832ce230117c700e6ee50cfa88a2a280ce8f43d232d530119e28e07f567a5",
+    "candidate_executable_sha256": "d201ba4bd4a52efa3bd2a244430073c46dfcd05b9ae3e7339e4a2810751cfd43",
+    "campaign_wall_seconds": 13.91136984602781,
+    "host_after": {
+      "time_ns": 1794973108539467402,
+      "cpus": {
+        "0": [
+          32606365,
+          29470286
+        ],
+        "1": [
+          32341567,
+          26533297
+        ],
+        "2": [
+          32237382,
+          23874294
+        ],
+        "3": [
+          32312042,
+          29819233
+        ],
+        "4": [
+          32217662,
+          23919758
+        ],
+        "5": [
+          32278199,
+          28651392
+        ],
+        "6": [
+          32278950,
+          29317842
+        ],
+        "7": [
+          32254079,
+          27810910
+        ],
+        "8": [
+          32291758,
+          30416772
+        ],
+        "9": [
+          32361906,
+          28414776
+        ],
+        "10": [
+          32334199,
+          30309152
+        ],
+        "11": [
+          32312518,
+          30104915
+        ],
+        "12": [
+          32315646,
+          29779616
+        ],
+        "13": [
+          32366276,
+          26937092
+        ],
+        "14": [
+          32342054,
+          30411587
+        ],
+        "15": [
+          32339533,
+          29336362
+        ],
+        "16": [
+          32305334,
+          29813198
+        ],
+        "17": [
+          32257256,
+          25633049
+        ],
+        "18": [
+          32215720,
+          19496641
+        ],
+        "19": [
+          32283171,
+          30177124
+        ],
+        "20": [
+          32214185,
+          19825329
+        ],
+        "21": [
+          32272599,
+          28582173
+        ],
+        "22": [
+          32275886,
+          29349571
+        ],
+        "23": [
+          32260775,
+          27489893
+        ],
+        "24": [
+          32282976,
+          30357083
+        ],
+        "25": [
+          32305443,
+          28559601
+        ],
+        "26": [
+          32531926,
+          30188078
+        ],
+        "27": [
+          32369809,
+          29934847
+        ],
+        "28": [
+          32328782,
+          29633194
+        ],
+        "29": [
+          32346878,
+          26440468
+        ],
+        "30": [
+          32311297,
+          30435249
+        ],
+        "31": [
+          32297174,
+          29203197
+        ]
+      },
+      "pressure": "some avg10=0.00 avg60=0.00 avg300=0.00 total=2916868118\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+      "loadavg": "3.15 3.03 3.34 5/5817 4098823\n"
+    },
+    "summary": [
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+        "release": {
+          "wall": {
+            "median": 0.300945141,
+            "min": 0.2987074365,
+            "max": 0.3028208365
+          },
+          "user": {
+            "median": 0.296891,
+            "min": 0.29561149999999997,
+            "max": 0.2973435
+          },
+          "system": {
+            "median": 0.0029934999999999996,
+            "min": 0.001498,
+            "max": 0.004496
+          },
+          "peak_rss_kib": {
+            "median": 26080,
+            "min": 25532,
+            "max": 26640
+          }
+        },
+        "candidate": {
+          "wall": {
+            "median": 0.2967060485,
+            "min": 0.29410447500000003,
+            "max": 0.371705186
+          },
+          "user": {
+            "median": 0.291701,
+            "min": 0.28827499999999995,
+            "max": 0.3658325
+          },
+          "system": {
+            "median": 0.003995499999999999,
+            "min": 0.0024975,
+            "max": 0.00499
+          },
+          "peak_rss_kib": {
+            "median": 25384,
+            "min": 25096,
+            "max": 26044
+          }
+        }
+      },
+      {
+        "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+        "release": {
+          "wall": {
+            "median": 0.561404139,
+            "min": 0.558181226,
+            "max": 0.807171679
+          },
+          "user": {
+            "median": 0.5519999999999999,
+            "min": 0.5485479999999999,
+            "max": 0.7973779999999999
+          },
+          "system": {
+            "median": 0.007989999999999999,
+            "min": 0.006005,
+            "max": 0.009004
+          },
+          "peak_rss_kib": {
+            "median": 31008,
+            "min": 30848,
+            "max": 31720
+          }
+        },
+        "candidate": {
+          "wall": {
+            "median": 0.540281368,
+            "min": 0.537706134,
+            "max": 0.862014465
+          },
+          "user": {
+            "median": 0.533146,
+            "min": 0.526044,
+            "max": 0.852402
+          },
+          "system": {
+            "median": 0.005999,
+            "min": 0.003994999999999999,
+            "max": 0.011
+          },
+          "peak_rss_kib": {
+            "median": 30712,
+            "min": 30072,
+            "max": 30964
+          }
+        }
+      }
+    ],
+    "source_hash_limit": "Baseline files hashed before build. Candidate executable supplied frozen by coordinator; candidate lane files below were hashed after timing and need coordinator build-provenance confirmation.",
+    "candidate_lane_head": "b64a2d77faa9384f7df9dc51c4c9d61d6753d05b",
+    "candidate_lane_current_source_sha256": {
+      "crates/martensite-tkgeombase/src/extrema/curve_surface/gen_ext_cs/conic.rs": "dae4c167cead977cda89b578cb770def00800ffd0293735c6ad059285cd4d2f2",
+      "crates/martensite-tkgeombase/src/extrema/curve_surface/gen_ext_cs/glob_min.rs": "773c8f9b2b6425cdaa6cb381b7a2e0c6b489aba45d48d7623ced684038d6b86e",
+      "crates/martensite-tkgeombase/src/extrema/curve_surface/gen_ext_cs/invalid_samples_tests.rs": "fa119d46ff0f0263239bd1f9340c52e1b58ddb8b77558955fc87e488ce588868",
+      "crates/martensite-tkgeombase/src/extrema/curve_surface/gen_ext_cs/mod.rs": "d38184a92622ba82fd29955ffb5bcb2015ca712d2ecc0bd5733e2f92f5cc0cfd",
+      "crates/martensite-tkgeombase/src/extrema/curve_surface/gen_ext_cs/sampling_contract_tests.rs": "7f1f6d78fa9bc2532a91af1ee8e75565ee7be640b566542cf7b65e5a737417b8",
+      "crates/martensite-tkgeombase/src/extrema/curve_surface/ext_cs/analytic.rs": "9d941387cb889f60d6badfd5ea9005cb60b2cb1f4c465a8c282665c0a558fe46",
+      "crates/martensite-tkgeombase/src/extrema/curve_surface/ext_cs/generic.rs": "3345f5f2a11387d3efb4c91d9eb9e1e9a185eefb779875ec6375b0c6cee7a9ff",
+      "crates/martensite-tkgeombase/src/extrema/curve_surface/ext_cs/mod.rs": "8d13f9152abf2bb150272f250f01ff62f45c3e7d24347d0b5ac61c699cd5ad14",
+      "crates/martensite-tkgeombase/tests/fixtures/curve_surface_corpus/expected-00.txt": "e8c478134ee29d7547f97be2dfcf1ce47840d6270c960cad33cb41c7d7aca4e0",
+      "crates/martensite-tkgeombase/tests/fixtures/curve_surface_corpus/inputs-00.txt": "edf4dd815c35b837c2e142229ee76adb5055232e155e46180bee5d103b16d194"
+    },
+    "assessment": {
+      "performance_qualified": false,
+      "observed": "Candidate median wall and total CPU lower in both corpora; peak RSS lower in every paired sample. One of five paired time/CPU samples regressed in each corpus; no samples discarded.",
+      "uncertainty": "The high wall-time samples also consumed proportionally more child CPU. This cannot be attributed solely to scheduler contention. Baseline+candidate sampling distributions overlap; five pairs do not prove no degradation.",
+      "scope": "Unoptimized test-profile corpus comparison to v0.13.1; no release-profile timing, whole-cone workload, five-second claim or complete-operation relevance measurement.",
+      "source_fixture_dependency_diff_empty": true,
+      "all_processes_passed_exactly_one_test": true,
+      "timed_invocations": 30,
+      "warmup_invocations": 4
+    }
+  },
+  "paired_analysis": [
+    {
+      "workload": "construction_corpus_replay::curve_surface_corpus::ex_cs_complete_family",
+      "pairs": [
+        {
+          "pair": 0,
+          "release_wall": 0.558377509,
+          "candidate_wall": 0.53868766,
+          "release_cpu": 0.5575399999999999,
+          "candidate_cpu": 0.5379769999999999,
+          "wall_change_percent": -3.5262611195179816,
+          "cpu_change_percent": -3.5088065430282978,
+          "rss_change_kib": -136
+        },
+        {
+          "pair": 1,
+          "release_wall": 0.807171679,
+          "candidate_wall": 0.862014465,
+          "release_cpu": 0.8063819999999999,
+          "candidate_cpu": 0.858404,
+          "wall_change_percent": 6.794438832138461,
+          "cpu_change_percent": 6.451284874910401,
+          "rss_change_kib": -728
+        },
+        {
+          "pair": 2,
+          "release_wall": 0.561404139,
+          "candidate_wall": 0.537706134,
+          "release_cpu": 0.559985,
+          "candidate_cpu": 0.537044,
+          "wall_change_percent": -4.221202401929558,
+          "cpu_change_percent": -4.096716876344897,
+          "rss_change_kib": -984
+        },
+        {
+          "pair": 3,
+          "release_wall": 0.561774574,
+          "candidate_wall": 0.544844632,
+          "release_cpu": 0.560345,
+          "candidate_cpu": 0.543426,
+          "wall_change_percent": -3.013654014181133,
+          "cpu_change_percent": -3.0193898401877473,
+          "rss_change_kib": -168
+        },
+        {
+          "pair": 4,
+          "release_wall": 0.558181226,
+          "candidate_wall": 0.540281368,
+          "release_cpu": 0.557515,
+          "candidate_cpu": 0.5391360000000001,
+          "wall_change_percent": -3.2068183532922956,
+          "cpu_change_percent": -3.2965929167824926,
+          "rss_change_kib": -756
+        }
+      ],
+      "wall_paired_median_percent": -3.2068183532922956,
+      "cpu_paired_median_percent": -3.2965929167824926
+    },
+    {
+      "workload": "construction_corpus_replay::curve_surface_corpus::ex_genecs_complete_family",
+      "pairs": [
+        {
+          "pair": 0,
+          "release_wall": 0.2987074365,
+          "candidate_wall": 0.29410447500000003,
+          "release_cpu": 0.2980525,
+          "candidate_cpu": 0.29346749999999994,
+          "wall_change_percent": -1.5409597946182907,
+          "cpu_change_percent": -1.5383195913471814,
+          "rss_change_kib": -596
+        },
+        {
+          "pair": 1,
+          "release_wall": 0.300945141,
+          "candidate_wall": 0.29871364300000003,
+          "release_cpu": 0.3001045,
+          "candidate_cpu": 0.29624449999999997,
+          "wall_change_percent": -0.7414966038611026,
+          "cpu_change_percent": -1.2862186338425508,
+          "rss_change_kib": -288
+        },
+        {
+          "pair": 2,
+          "release_wall": 0.3028208365,
+          "candidate_wall": 0.2946446895,
+          "release_cpu": 0.30180250000000003,
+          "candidate_cpu": 0.29276399999999997,
+          "wall_change_percent": -2.69999485322735,
+          "cpu_change_percent": -2.994839340297073,
+          "rss_change_kib": -600
+        },
+        {
+          "pair": 3,
+          "release_wall": 0.2995645775,
+          "candidate_wall": 0.2967060485,
+          "release_cpu": 0.2988415,
+          "candidate_cpu": 0.2956965,
+          "wall_change_percent": -0.9542279744339965,
+          "cpu_change_percent": -1.0523973410654142,
+          "rss_change_kib": -436
+        },
+        {
+          "pair": 4,
+          "release_wall": 0.301789804,
+          "candidate_wall": 0.371705186,
+          "release_cpu": 0.2998845,
+          "candidate_cpu": 0.3708225,
+          "wall_change_percent": 23.16691322016964,
+          "cpu_change_percent": 23.65510721627826,
+          "rss_change_kib": -728
+        }
+      ],
+      "wall_paired_median_percent": -0.9542279744339965,
+      "cpu_paired_median_percent": -1.2862186338425508
+    }
+  ],
+  "limitations": [
+    "Unoptimized component corpora, not the complete cone operation",
+    "No proof of no degradation; adverse trials retained",
+    "No five-second or cone speedup claim",
+    "The allocation candidate is removed, not shipped"
+  ]
+}
