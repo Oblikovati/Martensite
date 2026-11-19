@@ -126,5 +126,9 @@ replace the default-layout measurements or grant a memory exception.
 initial tree-index study and the final contiguous-index study. The Linux
 x86_64 PR gate passed with `cargo xtask pr --base
 9e11ab3864c8786ce05b3bdf35123f4a87fc1b05`, including lint, clippy, builds
-and affected-package tests. Hosted checks remain pending. The small-case
-resident-memory tradeoff remains unresolved under the no-degradation constraint.
+and affected-package tests. [Hosted checks](https://github.com/Oblikovati/Martensite/actions/runs/44470644480)
+passed on `63a60f5253a98c68f8081ef05248d6cf7943db11`. On 2026-11-19 the
+maintainer accepted the measured 144 KiB and 116 KiB small-case RSS increases
+for [PR #556](https://github.com/Oblikovati/Martensite/pull/556), which merged
+as `b7dc518b412036048e4f8582cf600aa040f86d64`. This records approval of that
+specific tradeoff; it grants no general performance or memory exception.
