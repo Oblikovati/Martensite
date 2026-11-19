@@ -156,3 +156,22 @@ A deterministic counter control expects 21,945 record visits for 210 cold misses
 in the literal oracle; indexed lookups read the existing record inventory once.
 These controls establish lookup semantics; whole-operation time and peak memory
 require the same accepted workload and matching build provenance.
+
+## Native contact discovery (#566)
+
+Each immutable contact phase now builds an observed-incidence view from the
+retained partition snapshot and accepted source-domain bindings. It indexes
+native vertex IDs once and retains ordered parameter lists for each occurrence
+at each actual endpoint. Report queries intersect these endpoint lists.
+Cardinality comes from actual shared native vertices, including observations
+in reports certified to have no numerical contacts. Self-contact counts keep
+the existing off-diagonal rule based on exact parameter bits.
+
+The view preserves the first snapshot observation of a duplicate vertex ID,
+source-row aliases and incidence order. It stays inside the phase that created
+it; live geometry validation remains at the existing certificate boundary.
+Regression controls compare complete rows and ordered diagnostics with the
+literal discovery path. Local counters distinguish snapshot entries, endpoint
+lookups, source/incidence visits, parameter products and vertex deduplication;
+they do not claim to count the internal key comparisons of the ordered maps.
+No tolerance, public API, numerical work budget or package version changed.

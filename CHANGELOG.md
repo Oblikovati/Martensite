@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Reused complete native endpoint-incidence discovery across contact-cardinality reports while preserving empty-report and self-contact diagnostics (#566).
+
 - Indexed Census report reuse by source pair and query mode, preserving the first retained outcome and solver work (#567).
 
 - Reused native-source validation within private owned-profile graph batches, preserving live alias checks for borrowed inputs and exact source-history matching (#555).
