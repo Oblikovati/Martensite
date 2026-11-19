@@ -1,9 +1,9 @@
 # Surface wrapped Sketch3D implementation state
 
-Updated: 2026-11-19, 22:05 UTC. The maintainer resumed implementation after the
-21:29 snapshot. The new work below records two disposable current-V6 timer
-passes. Remote commit and issue states remain those observed at the original
-snapshot unless a later receipt is named.
+Updated: 2026-11-19, 23:23 UTC. Implementation is active. This record includes
+the V6 measurements, exact-point optimization and version-2 volume controls.
+Remote commit and issue states remain those observed at the original snapshot
+unless a later receipt is named.
 
 ## Delivery verdict
 
@@ -11,10 +11,13 @@ The bounded cylinder and cone foundations are implemented. Phase A's
 single-chart curved cone operation is merged into `release/next`. The newer B1
 directed cone operation and geometric planar proof V6 work locally, including
 the narrow-cone `O.` fixture with a hole and a disconnected dot in both normal
-senses. Their latest targeted qualification passed 206 tests.
+senses. The V6 checkpoint passed 206 targeted tests; the later volume-policy
+round passed 140 partially overlapping tests, detailed below.
 
-The full capability is not delivered. B1/V6 remains uncommitted and unpushed;
-its five-second target is unmet. Shared performance fixes are being qualified
+The full capability is not delivered. B1/V6 and volume policy 2 are locally
+checkpointed in `6fca95d2`; `427bad37` preserves verbatim evidence in a verified
+archive alongside whitespace-clean display copies. Neither has been pushed.
+The five-second target is unmet. Shared performance fixes are being qualified
 on a separate main-line branch and have not been incorporated into B1. Wider
 charts, periodic topology, full text-on-body acceptance, integration and final
 QA remain open. There are currently no open integration PRs for these lanes.
@@ -319,8 +322,8 @@ release candidate. The latest shared fixes have not yet been forwarded to B1.
 | --- | --- | --- |
 | Remote patch line | `main`, `b61a031d0bde0e21d283e0f94975f79b9ae15574` | Remote authoritative baseline. |
 | Remote feature candidate | `release/next`, `2e8ab886d4755c9c0165d7f59f2a92ead61f3612` | Includes Phase A and main synchronization PR #559. |
-| Active capability | `feature/cone-chart-atlas`, HEAD `2e8ab886`, substantial staged/unstaged/untracked B1/V6 work; no remote branch | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1` |
-| Shared-fix integration | `fix/census-contact-indexes`, HEAD `2ab520fe`; cold-source refinement and README uncommitted; unpushed | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix567-census-report-index` |
+| Active capability | `feature/cone-chart-atlas`, source checkpoint `6fca95d2`, evidence packaging `427bad37`; no remote branch | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1` |
+| Shared-fix integration | `fix/census-contact-indexes`, HEAD `2ab520fe`; cold-source refinement, README and two Clippy corrections uncommitted; unpushed | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix567-census-report-index` |
 | Original #566 lane | `fix/566-contact-cardinality-index`, HEAD `b61a031d` plus preserved frozen changes | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix566-contact-cardinality-index` |
 | Superseded #564 lane | `fix/564-contact-row-iteration`, preserved unfinished source | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix564-contact-row-iteration` |
 | Clean benchmark baseline | Detached `b61a031d` | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/564-main-baseline` |

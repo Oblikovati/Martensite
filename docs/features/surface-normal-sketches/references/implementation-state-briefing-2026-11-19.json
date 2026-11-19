@@ -2,11 +2,11 @@
   "snapshot_utc": "2026-11-19T21:29:50Z",
   "implementation_status": "active",
   "briefing": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/docs/features/surface-normal-sketches/IMPLEMENTATION-STATE-BRIEFING-2026-11-19.md",
-  "briefing_sha256": "1d11518631b5db48878fb574e141122621ba074da9e2b13fe408fe3103ac3a0c",
+  "briefing_sha256": "4a0e2de38e96acbd8a15357c127fd6b5ac41feb41d5d549883e8e2cd8611383c",
   "remote_main": "b61a031d0bde0e21d283e0f94975f79b9ae15574",
   "remote_release_next": "2e8ab886d4755c9c0165d7f59f2a92ead61f3612",
-  "capability_head": "2e8ab886d4755c9c0165d7f59f2a92ead61f3612",
-  "capability_uncommitted": true,
+  "capability_head": "427bad376cfd6cd89665b6f0573579e03080e6ef",
+  "capability_uncommitted": false,
   "capability_targeted_tests": {
     "tkbo": 184,
     "math": 18,
@@ -24,7 +24,7 @@
   "capability_target_met": false,
   "local_relative_links_verified": true,
   "scope_of_this_task": "implementation and functional qualification of #569/#570; shared-fix gate remains live",
-  "updated_utc": "2026-11-19T23:05:03.364757+00:00",
+  "updated_utc": "2026-11-19T23:23:06.828888+00:00",
   "current_v6_attribution": "references/v6-stage-attribution-2026-11-19/summary.json",
   "cold_r1_identity_invocations": 1,
   "cold_r1_timed_samples": 0,
@@ -40,5 +40,8 @@
   "point569_focused_tests": 21,
   "point569_functional_invocations": 14,
   "accumulation570_tests": 140,
-  "accumulation570_reference": "references/conical-accumulation-570-2026-11-19/summary.json"
+  "accumulation570_reference": "references/conical-accumulation-570-2026-11-19/summary.json",
+  "capability_source_checkpoint": "6fca95d28468bad2d709915af29f115ca4cbb6ff",
+  "capability_remote_pushed": false,
+  "raw_log_storage": "references/log-storage-2026-11-19.json"
 }
