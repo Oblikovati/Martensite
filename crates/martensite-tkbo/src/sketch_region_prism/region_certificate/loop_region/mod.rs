@@ -52,3 +52,7 @@ fn poll(cancelled: &mut impl FnMut() -> bool, stage: LoopRegionStage) -> LoopReg
     }
     Ok(())
 }
+
+pub(crate) mod integral_program;
+
+pub(crate) mod program_trace;

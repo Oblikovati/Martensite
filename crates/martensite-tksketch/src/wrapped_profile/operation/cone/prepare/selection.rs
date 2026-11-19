@@ -40,7 +40,7 @@ fn select_members(
     Ok(members)
 }
 
-pub(super) fn sector(
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn sector(
     request: &WrappedConeNormalRequest,
     originals: &[DevelopedRegionRequest],
     work: &mut Work,
@@ -61,7 +61,9 @@ pub(super) fn sector(
     work.charge(first_region(originals)?, None, proof.operations())?;
     Ok(proof)
 }
-pub(super) fn first_region(originals: &[DevelopedRegionRequest]) -> ConeChecked<SurfaceRegionId> {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn first_region(
+    originals: &[DevelopedRegionRequest],
+) -> ConeChecked<SurfaceRegionId> {
     originals
         .first()
         .map(|source| source.region)
@@ -77,7 +79,9 @@ pub(super) fn first_region(originals: &[DevelopedRegionRequest]) -> ConeChecked<
             )
         })
 }
-pub(super) fn wedge(sector: &ConicalSectorEvidence) -> ConeChecked<ConicalSectorWedge> {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn wedge(
+    sector: &ConicalSectorEvidence,
+) -> ConeChecked<ConicalSectorWedge> {
     sector.wedge().ok_or_else(|| {
         failure(
             None,
@@ -91,20 +95,20 @@ pub(super) fn wedge(sector: &ConicalSectorEvidence) -> ConeChecked<ConicalSector
     })
 }
 pub(super) fn completed(
+    executed_selection: WrappedConeExecutionSelection,
     planar: PlanarSelectionEvidence,
     prepared: Vec<Prepared>,
-    sector: ConicalSectorEvidence,
-    sector_options: ConeClearanceOptions,
+    domain: domain::DomainEvidence,
     clearance: CertifiedCylindricalClearance,
     arithmetic_operations: u32,
 ) -> Selection {
     Selection {
+        executed_selection,
         prepared,
         planar: planar.members,
         census: planar.certificate,
         work: planar.proof_work,
-        sector,
-        sector_options,
+        domain,
         clearance,
         arithmetic_operations,
     }
@@ -134,7 +138,9 @@ fn sector_failure(
     )
 }
 
-fn sector_index(cause: &ConicalSectorFailure) -> Option<usize> {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn sector_index(
+    cause: &ConicalSectorFailure,
+) -> Option<usize> {
     match cause {
         ConicalSectorFailure::PoleCount { span, .. }
         | ConicalSectorFailure::Point { span, .. }

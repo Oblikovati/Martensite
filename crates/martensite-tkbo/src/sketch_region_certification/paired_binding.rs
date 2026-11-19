@@ -156,7 +156,10 @@ fn selected_signs_current(paired: &PairedCensusEvidence) -> bool {
         paired.exclusion_version,
         expected.version,
     );
-    matches!(mode, (1 | 2, None, 1) | (2, Some(1), 1 | 2)) && paired.selected_signs == expected
+    matches!(
+        mode,
+        (1 | 2, None, 1) | (2, Some(1), 1 | 2) | (2, Some(2), 2)
+    ) && paired.selected_signs == expected
 }
 
 fn domain_binding_current(

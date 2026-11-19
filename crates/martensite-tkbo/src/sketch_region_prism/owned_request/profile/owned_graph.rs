@@ -122,14 +122,25 @@ fn inspect_owned(
     cancelled: impl FnMut() -> bool,
     access: &OwnedGraphAccess<'_>,
 ) -> Result<GraphRegionCertificate, super::certify::ProfileProofRefusal> {
-    super::regions::inspect_graph(
+    let Some(options) = prepared.request.integral_program else {
+        return super::regions::inspect_graph(
+            &prepared.request,
+            &prepared.edges,
+            &prepared.bridge,
+            cancelled,
+            SourceAccess::Owned(access),
+        )
+        .map_err(|failure| super::certify::inspection_refusal(prepared, failure));
+    };
+    super::regions::inspect_program_graph(
         &prepared.request,
         &prepared.edges,
         &prepared.bridge,
         cancelled,
+        options,
         SourceAccess::Owned(access),
     )
-    .map_err(|failure| super::certify::inspection_refusal(prepared, failure))
+    .map_err(|failure| super::certify::program_inspection_refusal(prepared, failure))
 }
 
 #[cfg(test)]

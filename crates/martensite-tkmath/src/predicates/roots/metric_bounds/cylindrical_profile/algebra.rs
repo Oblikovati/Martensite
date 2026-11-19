@@ -27,7 +27,7 @@ pub(in crate::predicates::roots::metric_bounds) fn difference(
     Ok(polynomial::difference(&a, &b, arithmetic)?)
 }
 
-pub(super) fn sum(
+pub(in crate::predicates::roots::metric_bounds) fn sum(
     a: &[Interval],
     b: &[Interval],
     arithmetic: &mut Arithmetic<'_>,

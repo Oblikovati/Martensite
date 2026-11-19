@@ -89,20 +89,20 @@ pub fn build_planar_regions_with_proof_and_cancel(
     version: super::PlanarProofVersion,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> super::PlanarRegionWorkResult {
-    if cancelled() {
-        return Err(cancelled_failure(requested, Stage::Admission, None));
-    }
-    let profile = admit_closed_profile(profile, resolution, requested)?;
-    let certified = certified_for_work_with_cancel(&profile, requested, version, &mut cancelled)?;
-    if cancelled() {
-        return Err(cancelled_failure(
-            requested,
-            Stage::Construction,
-            Some(certified.work),
-        ));
-    }
-    construct_regions_with_cancel(&profile, &certified, requested, &mut cancelled)
+    let allowance = version
+        .integral_options()
+        .map(|options| options.max_total_subintervals);
+    program::build_selected(
+        profile,
+        resolution,
+        requested,
+        version,
+        allowance,
+        &mut cancelled,
+    )
 }
+mod program;
+pub use program::build_planar_regions_with_integration_budget_and_cancel;
 
 fn admit_closed_profile(
     profile: &SketchProfile,
@@ -128,15 +128,7 @@ fn certified_for_work_with_cancel(
         version,
         cancelled,
     )
-    .map_err(|failure| {
-        super::PlanarRegionWorkFailure::new(
-            requested,
-            DECLINE.at(Stage::Certification, failure.cause),
-            failure.work,
-        )
-        .with_root_failure(failure.root_failure)
-        .with_cancelled(failure.cancelled)
-    })
+    .map_err(|failure| region_work_failure(requested, version, failure))
 }
 
 fn cancelled_failure(
@@ -268,6 +260,7 @@ impl RegionContext<'_> {
             certificate,
             proof_work: self.certified.work,
             proof_version: self.certified.version,
+            integral: None,
         }
     }
 
@@ -374,4 +367,20 @@ fn curve_edges(
         regions: bounded(curve.id()).map(|region| region.id).collect(),
     };
     profile.curves.iter().map(entry).collect()
+}
+
+fn region_work_failure(
+    requested: super::PlanarProofWorkLimit,
+    version: super::PlanarProofVersion,
+    failure: super::proof::RegionProofFailure,
+) -> super::PlanarRegionWorkFailure {
+    let integral = program::refusal_program(version, &failure);
+    super::PlanarRegionWorkFailure::new(
+        requested,
+        DECLINE.at(Stage::Certification, failure.cause),
+        failure.work,
+    )
+    .with_root_failure(failure.root_failure)
+    .with_cancelled(failure.cancelled)
+    .with_integral_failure(integral)
 }

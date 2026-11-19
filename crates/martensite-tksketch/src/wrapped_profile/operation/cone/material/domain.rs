@@ -19,7 +19,7 @@ pub(super) fn request(
         ..prepared.source.clone()
     })
 }
-fn curve_ids(
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn curve_ids(
     prepared: &Prepared,
     count: usize,
 ) -> ConeChecked<BTreeMap<CurveSpan, SurfaceCurveId>> {

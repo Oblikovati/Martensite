@@ -4,7 +4,7 @@ use super::*;
 mod allocation;
 mod binding;
 mod boundary;
-pub(super) use boundary::query as boundary_query;
+pub(super) use boundary::{prepared_query, query as boundary_query};
 mod capture;
 mod trims;
 mod work;
@@ -23,6 +23,7 @@ pub(in crate::surface_sketch::wrapped_profile) struct SpanProof {
     pub boundary: std::sync::Arc<ConicalBoundaryEvidence>,
     pub storage: allocation::StorageEvidence,
     pub trims: [CertifiedConicalTrim; 2],
+    pub developed_boundary: Option<ConicalDevelopedBoundaryEvidence>,
     pub cap_pcurves: usize,
     pub side_pcurves: usize,
     pub maximum_tolerance: f64,
@@ -50,8 +51,9 @@ pub(super) fn capture(
 ) -> ConeChecked<Stored> {
     let (coverage, occurrences) = graph(original.region, prepared, &view)?;
     let bindings = captured_index(original.region, &view.bindings)?;
+    retain_actual_bindings(prepared, &view, work);
     let carriers = capture::carriers(prepared, &bindings)?;
-    let (spans, joins, capture_operations) = capture_proofs(
+    let proofs = capture_proofs(
         original,
         prepared,
         &bindings,
@@ -60,15 +62,25 @@ pub(super) fn capture(
         work,
         cancelled,
     )?;
-    Ok(Stored {
+    Ok(complete_stored(view, coverage, carriers, proofs))
+}
+type CapturedProofs = (Vec<SpanProof>, ConicalJoinsEvidence, u32);
+fn complete_stored(
+    view: coverage::MemberView,
+    coverage: coverage::CoverageEvidence,
+    carriers: [ConicalTrimCarrier; 2],
+    (spans, joins, capture_operations): CapturedProofs,
+) -> Stored {
+    Stored {
         shape: view.shape,
         coverage,
         spans,
         carriers,
         joins,
         capture_operations,
-    })
+    }
 }
+
 fn graph(
     region: SurfaceRegionId,
     prepared: &Prepared,
@@ -154,4 +166,11 @@ pub(super) fn bind(
     stored: &BTreeMap<SurfaceRegionId, Stored>,
 ) -> ConeChecked<()> {
     binding::certify(originals, selection, stored)
+}
+
+fn retain_actual_bindings(prepared: &Prepared, view: &coverage::MemberView, work: &mut Work) {
+    if domain::directed(prepared) {
+        work.actual_bindings
+            .insert(prepared.source.region, view.bindings.clone());
+    }
 }

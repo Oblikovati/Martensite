@@ -1,0 +1,317 @@
+{
+  "kind": "post_cache_v5_functional_checkpoint_not_performance_gate",
+  "date": "2026-11-19",
+  "run_revision": "1f709afa70a24cf52c15d23f7d79dfea68a88088 plus uncommitted B1 integration",
+  "subsequent_head": "756a585d; subsequent fast-forward changed only AGENTS standing rule; Rust inputs preserved",
+  "source_manifest_sha256": "1f90e3c0d5caa36c32f08e5ec110e1c0660d8b1d6cb48062bd98ffb9731acdd5",
+  "runs": {
+    "owned-program-controls-fixed": {
+      "terminal": {
+        "exit_code": 0,
+        "source_changed": [],
+        "finished": "2026-11-19T08:35:06.470395+00:00"
+      },
+      "running_receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "martensite-tkbo",
+          "--lib",
+          "owned_graph::tests",
+          "--",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "pid": 4081848,
+        "started": "2026-11-19T08:30:59.957325+00:00",
+        "settings": {
+          "CARGO_TARGET_DIR": "/tmp/martensite-cone-b1-cached-target",
+          "CARGO_BUILD_JOBS": "2",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+          "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+          "CARGO_TERM_COLOR": "never"
+        },
+        "source_paths": 20926
+      },
+      "source_manifest_sha256": "1f90e3c0d5caa36c32f08e5ec110e1c0660d8b1d6cb48062bd98ffb9731acdd5",
+      "output_log_sha256": "294f6961f2611bad1f424f65d9e2401cc1d9f895f388febcca1c2388bac4f929",
+      "terminal_sha256": "c79af39d2c37e0a6361d4d5f64a9c60a53c7240c02946235d6f5fb4e9d36ae2c",
+      "running_receipt_sha256": "f9ce662d5ad9ba1568a45503ad5e221bf1ff21eb25809b8114b35a36b8aa53fa",
+      "summary": "test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 2259 filtered out; finished in 0.93s"
+    },
+    "composite-controls": {
+      "terminal": {
+        "exit_code": 0,
+        "source_changed": [],
+        "finished": "2026-11-19T08:35:10.948383+00:00"
+      },
+      "running_receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "martensite-tkbo",
+          "--lib",
+          "composite_tests",
+          "--",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "pid": 4099467,
+        "started": "2026-11-19T08:35:07.541808+00:00",
+        "settings": {
+          "CARGO_TARGET_DIR": "/tmp/martensite-cone-b1-cached-target",
+          "CARGO_BUILD_JOBS": "2",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+          "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+          "CARGO_TERM_COLOR": "never"
+        },
+        "source_paths": 20926
+      },
+      "source_manifest_sha256": "1f90e3c0d5caa36c32f08e5ec110e1c0660d8b1d6cb48062bd98ffb9731acdd5",
+      "output_log_sha256": "93963279a13fbfb46522b7f7c2518fd9711f000201de56a1d134b30382cac35a",
+      "terminal_sha256": "5b0b43906a99448af84f0ff99a656c2d582c567053de77aa7bd3ceabd296c7d2",
+      "running_receipt_sha256": "eff1cb843a71068b0a9f1ca49a97f26be4653272b6421430fec80f5ea1fb78e1",
+      "summary": "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 2268 filtered out; finished in 2.27s"
+    },
+    "integral-ledger-controls": {
+      "terminal": {
+        "exit_code": 0,
+        "source_changed": [],
+        "finished": "2026-11-19T08:35:13.062554+00:00"
+      },
+      "running_receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "martensite-tkbo",
+          "--lib",
+          "integral_program::tests",
+          "--",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "pid": 4099733,
+        "started": "2026-11-19T08:35:11.958361+00:00",
+        "settings": {
+          "CARGO_TARGET_DIR": "/tmp/martensite-cone-b1-cached-target",
+          "CARGO_BUILD_JOBS": "2",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+          "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+          "CARGO_TERM_COLOR": "never"
+        },
+        "source_paths": 20926
+      },
+      "source_manifest_sha256": "1f90e3c0d5caa36c32f08e5ec110e1c0660d8b1d6cb48062bd98ffb9731acdd5",
+      "output_log_sha256": "188bd330461ddfab3a33a0e21f9270b9636f6bf24f73ec2fe80dc67dc98ffef1",
+      "terminal_sha256": "b2202253748d5f5814b767640f1f0957644ab12b16173f64b7877ddd290e2ae7",
+      "running_receipt_sha256": "3eabc74e28c67f8e3f2fbeddb3a54d700dbd0b1744984a05ec548e9386d0c2bb",
+      "summary": "test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 2269 filtered out; finished in 0.01s"
+    },
+    "complete-punctuation": {
+      "terminal": {
+        "exit_code": 0,
+        "source_changed": [],
+        "finished": "2026-11-19T08:38:13.722130+00:00"
+      },
+      "running_receipt": {
+        "command": [
+          "cargo",
+          "test",
+          "--locked",
+          "-p",
+          "martensite-tksketch",
+          "--lib",
+          "narrow::complete::",
+          "--",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "pid": 4099804,
+        "started": "2026-11-19T08:35:14.263729+00:00",
+        "settings": {
+          "CARGO_TARGET_DIR": "/tmp/martensite-cone-b1-cached-target",
+          "CARGO_BUILD_JOBS": "2",
+          "CARGO_INCREMENTAL": "0",
+          "CARGO_PROFILE_DEV_DEBUG": "0",
+          "CARGO_PROFILE_TEST_DEBUG": "0",
+          "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+          "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+          "CARGO_TERM_COLOR": "never"
+        },
+        "source_paths": 20926
+      },
+      "source_manifest_sha256": "1f90e3c0d5caa36c32f08e5ec110e1c0660d8b1d6cb48062bd98ffb9731acdd5",
+      "output_log_sha256": "d8633f2f89bea8523fbe30c01e7e3bd41584f8ecca7ca14e48d7e4775840d754",
+      "terminal_sha256": "fcff8cabe286412abe15c7e7f240e0ea1b04eda83ecb457b816cc026aa6348a8",
+      "running_receipt_sha256": "a573f022cf35c1f3d4caf57b601634c6d22066aa612be44067f374b17c1acfcf",
+      "summary": "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 485 filtered out; finished in 78.27s"
+    }
+  },
+  "public_results": {
+    "Inward": {
+      "api_seconds": 37.925987
+    },
+    "Outward": {
+      "api_seconds": 39.965076
+    },
+    "each": {
+      "arithmetic_operations": 984593,
+      "requested_max_operations": 1000000,
+      "integration_subintervals": 501,
+      "derived_side_faces": 167,
+      "derived_side_face_definition": "Sum of member report.faces minus two; not independently counted fit spans."
+    }
+  },
+  "preserved_binary_identity": {
+    "copied": "2026-11-19T08:39:43.115290+00:00",
+    "source_path": "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+    "preserved_binary": "/tmp/martensite-b1-matched-benchmark/bins/b1-owned-v5-tests",
+    "binary_sha256": "61ed9ad5c70630c671ca930f52ce67d41bc513965e67b172d921285d3f9652a7",
+    "run_terminal": {
+      "exit_code": 0,
+      "source_changed": [],
+      "finished": "2026-11-19T08:38:13.722130+00:00"
+    },
+    "source_manifest": "/tmp/martensite-b1-round2-complete-punctuation/source-before.json",
+    "source_manifest_sha256": "1f90e3c0d5caa36c32f08e5ec110e1c0660d8b1d6cb48062bd98ffb9731acdd5",
+    "scope": "Functional complete O. after main555/V5 integration. Runtime diagnostics only; matched benchmark deferred until heavy canonical gate idle."
+  },
+  "preserved_binary_identity_receipt_sha256": "c6d98b9a6e3461e49511ce9e4f0d6fe4de76b840e7740b51eecd47e88cf19619",
+  "cleanup_receipt": {
+    "finished": "2026-11-19T08:36:44.663841+00:00",
+    "cargo_clean": "     Removed 439 files, 1.2GiB total\n",
+    "source_restored_and_clean": true,
+    "removed_disposable_files": [
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/a-optdeps-opt0-consumer",
+        "sha256": "9c504c75d29d898d418ed0d49075272a9e1c91e2f73480326bb0f5adf12d5efa"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/a-optdeps-opt3-consumer",
+        "sha256": "90db4211b005c457f2e5c379fe7e1aa0f9a702ada82994aff578d400fd30ebab"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/optdeps-consumer.rs",
+        "sha256": "5bd1906fcb8ac9713979f7e17943e9cd43e5a5cc3c7dd05f4e70d03291f0ec1d"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/optdeps-link-plan.py",
+        "sha256": "adde112833fa2a5c9e7d32e64f8fa607234b49960431551a14a819badd0b20d0"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/offline-ef-seed-consumer",
+        "sha256": "1df018faa37897f0a85e72b321c0e6a99ec70e45eca6711de865abd58bd9b55c"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/offline-filler-phase-consumer",
+        "sha256": "db60b5f40d4b5f403612bc58aaeaaf1f20d937c0bbcae8d8f71054cfb107560c"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/offline-si-phase-consumer",
+        "sha256": "7e29b83084cb06b31d41fbbcf52583b126c09bea94e390f1230387a4d5d53cdc"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/offline-si-flat.perf.data",
+        "sha256": "50130f9d76dcb93852e8d173893e28edeec88b582c5fcbce172483a497d1bc92"
+      },
+      {
+        "path": "/tmp/martensite-ef-seed-once.py",
+        "sha256": "9f8697e726e6082411a69441bcffafd72047c2d5a10fcd65d2294de636d9f450"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/ef-seed-patch/0.probed.rs",
+        "sha256": "1bac8ff6fa9badc224e11bb0f506fc7bd0199a2ab7353ec9b2520ee5d209b4ed"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/ef-seed-patch/1.probed.rs",
+        "sha256": "b30262c47ba73c17bda5e324c467f38120e95aa99546dfc131799283931ae1ac"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/ef-seed-patch/0.original.rs",
+        "sha256": "2cccdb0172560107bedd0f210566b448611bffff09578b469cd69bd755330f77"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/ef-seed-patch/1.original.rs",
+        "sha256": "a949f3aa20c851df7812fd9dba37cb9033e24eed0a1bebc1db9c39efd3cc038d"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/ef-seed-patch/link-plan.py",
+        "sha256": "2a84eacacf30757831a7cbd0ec963278398a85a38126a1f857c0aad3c26d9403"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/ef-seed-patch/prepare.py",
+        "sha256": "10ee9a6cedb3ec0e609a740d3eb4aea3fee10c82708e05c14369d333c63a5de6"
+      },
+      {
+        "path": "/tmp/martensite-b1-body-stage-probe/ef-seed-patch/ef-seeds.patch",
+        "sha256": "40ae21b0286c85959fc011c80a6d414187a91e701056476cb5d28eaf699af6e7"
+      }
+    ],
+    "preserved_assets": {
+      "/tmp/martensite-b1-matched-benchmark/bins/a-cone-tests": "7e7c13bfe25dfb4e468f7615b5ac23be8f54ca753e6c06e3cf16cbf7a4ffaf45",
+      "/tmp/martensite-b1-body-stage-probe/offline-body-consumer": "156d8d644f7a436f8e4ab127bf405ad655543c5617d4b3d1653d6c353b31abdc",
+      "/tmp/martensite-b1-body-stage-probe/region-1.brep": "e9526a2667b84fb327d51ef2f67fb19aa49b49e69208f1560d770484225c0d82",
+      "/tmp/martensite-b1-body-stage-probe/region-2.brep": "c1a0c0463ac5f76debc89e279dcf601947502411c5ab0bf45ac0a79f14fa158c"
+    },
+    "retained_evidence": "B1 feature references b1-native-stage-optdeps and b1-ef-seed diagnostics JSON; original raw measurements/manifests retained; broader EF investigation remains active"
+  },
+  "cleanup_receipt_sha256": "449af8d50afeb92577987c896dcc7d4e91403781c429e738bef13bc001676709",
+  "scope": [
+    "Functional observations during concurrent F1 canonical QA; no matched benchmark or five-second acceptance.",
+    "Private TKBO cache/V5 integration; runtime Math/Sketch input files preserved.",
+    "F1 canonical retry build passed; testing ongoing at checkpoint, whole gate not passed.",
+    "B1 phase review 0 of 3; independent actual self-intersection, performance and full corpus remain.",
+    "Cleanup was performed by the coordinator; no source restoration or cleanup was performed by this documentation update."
+  ],
+  "normal_public_build": {
+    "terminal": {
+      "exit_code": 0,
+      "source_changed": [],
+      "finished": "2026-11-19T08:46:29.778110+00:00"
+    },
+    "invocation": {
+      "command": [
+        "cargo",
+        "build",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "--message-format=json"
+      ],
+      "pid": 4126175,
+      "started": "2026-11-19T08:46:26.089526+00:00",
+      "settings": {
+        "CARGO_TARGET_DIR": "/tmp/martensite-cone-b1-cached-target",
+        "CARGO_BUILD_JOBS": "2",
+        "CARGO_INCREMENTAL": "0",
+        "CARGO_PROFILE_DEV_DEBUG": "0",
+        "CARGO_PROFILE_TEST_DEBUG": "0",
+        "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+        "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+        "CARGO_TERM_COLOR": "never"
+      },
+      "source_paths": 20926
+    },
+    "terminal_sha256": "c534ce0bbc31e91cd3735b3bfcb7ba154840af04b3b52f7d11372a162de793bf",
+    "invocation_sha256": "976d02af10fe8229dc5080c9715f85e610fb7d591880f4ab3ca86507fcb4967c",
+    "output_log_sha256": "8a5a42ff1eda728f73e3f034aaa024ad293e055b4fd9227e682c2ab3025d5194",
+    "source_manifest_sha256": "1f90e3c0d5caa36c32f08e5ec110e1c0660d8b1d6cb48062bd98ffb9731acdd5",
+    "scope": "Normal public build only; does not rerun or replace the earlier functional executions."
+  }
+}

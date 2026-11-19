@@ -128,3 +128,9 @@ pub use bernstein_exclusion::{
 
 #[cfg(test)]
 mod filtered_graph_tests;
+
+mod geometric;
+pub use geometric::{
+    BezierPairGeometricCertificate, BezierPairGeometricCompletion, BezierPairGeometricFailure,
+    BezierPairGeometricKind, BezierPairGeometricReport, CertifiedBezierEndpointContact,
+};

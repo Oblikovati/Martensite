@@ -11,15 +11,24 @@ use crate::predicates::roots::{
 pub(in super::super) fn coefficients(
     query: AnalyticConicalFluxQuery<'_>,
     cancelled: &mut (impl FnMut() -> bool + Send),
-) -> Checked<([Density; 2], u32)> {
+    operations: &mut u32,
+) -> Checked<[Density; 2]> {
     let policy = ArithmeticPolicy {
         fractional_bits: query.arithmetic.fractional_bits,
         max_operations: query.arithmetic.max_operations,
     };
     let mut arithmetic = Arithmetic::new(policy, cancelled);
-    let first = density(query.carriers[0], 0, &mut arithmetic)?;
-    let last = density(query.carriers[1], 1, &mut arithmetic)?;
-    Ok(([first, last], arithmetic.operations()))
+    let result = both(query, &mut arithmetic);
+    *operations = arithmetic.operations();
+    result
+}
+fn both(
+    query: AnalyticConicalFluxQuery<'_>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<[Density; 2]> {
+    let first = density(query.carriers[0], 0, arithmetic)?;
+    let last = density(query.carriers[1], 1, arithmetic)?;
+    Ok([first, last])
 }
 
 fn density(

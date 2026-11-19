@@ -3,6 +3,7 @@
 //! Polynomial and equal-weight curves stay exact; other curves are enclosed by exact
 //! Taylor models with certified Bernstein remainders. No quadrature estimate is used.
 mod conical_reference_volume;
+mod conical_sum;
 mod curve;
 pub use conical_reference_volume::*;
 mod cylindrical_flux;
@@ -10,7 +11,9 @@ pub use cylindrical_flux::*;
 mod error;
 mod face;
 mod integer_polynomial;
+mod program;
 mod publish;
+pub use program::*;
 mod subinterval;
 mod types;
 use super::super::{certificate_arithmetic::ExactRatio, error::poll};

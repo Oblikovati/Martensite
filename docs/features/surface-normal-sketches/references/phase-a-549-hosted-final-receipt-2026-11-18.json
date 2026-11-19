@@ -1,0 +1,51 @@
+{
+  "observed_utc": "2026-11-18T20:16:01.086555+00:00",
+  "head": "7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe",
+  "base": "release/next",
+  "pr_state": "OPEN",
+  "workflow_status": "completed",
+  "workflow_conclusion": "success",
+  "workflow_url": "https://github.com/Oblikovati/Martensite/actions/runs/44378122033",
+  "checks": {
+    "SUCCESS": 55,
+    "SKIPPED": 4
+  },
+  "final_pr_verification": {
+    "__typename": "CheckRun",
+    "completedAt": "2026-11-18T20:15:02Z",
+    "conclusion": "SUCCESS",
+    "detailsUrl": "https://github.com/Oblikovati/Martensite/actions/runs/44378122033/job/135100855039",
+    "name": "pr (x86_64-unknown-linux-gnu)",
+    "startedAt": "2026-11-18T20:14:25Z",
+    "status": "COMPLETED",
+    "workflowName": "Martensite"
+  },
+  "sonar": [
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-18T19:19:09Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://github.com/Oblikovati/Martensite/runs/135066529463",
+      "name": "SonarCloud",
+      "startedAt": "2026-11-18T19:19:03Z",
+      "status": "COMPLETED",
+      "workflowName": ""
+    },
+    {
+      "__typename": "CheckRun",
+      "completedAt": "2026-11-18T19:19:01Z",
+      "conclusion": "SUCCESS",
+      "detailsUrl": "https://sonarcloud.io/dashboard?id=Oblikovati_Martensite&pullRequest=549",
+      "name": "SonarCloud Code Analysis",
+      "startedAt": "2026-11-18T19:13:26Z",
+      "status": "COMPLETED",
+      "workflowName": ""
+    }
+  ],
+  "new_cone_tsan_receipt": "/tmp/martensite-549-hosted-tsan-receipt.json",
+  "new_cone_tsan_actually_ran_and_passed": true,
+  "new_cone_tsan_log_sha256": "b4a4edce313f2b68eee8d8aa7acf8435433d8dfce91bd7429e1d2a3942a7602c",
+  "failed_or_pending": [],
+  "merge_performed": false,
+  "source_changes": false
+}

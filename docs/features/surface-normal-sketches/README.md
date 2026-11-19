@@ -7,11 +7,12 @@ their interfaces and behaviour.
 
 The primitive entries accept developed cylindrical rectangles and conical
 annular sectors, including their admitted seam crossings. Solved-profile
-cylindrical extrusion has a separate owned-result API. The current unreleased
-candidate also completes the Phase A curved-profile cone workload with a hole
-under the restricted contract below. Final Gate A review accepted a phase commit
-and ready PR; required hosted checks, including new cone TSan, must pass before
-merge. Wider wrapping and attachment capability remain outside that acceptance.
+cylindrical extrusion has a separate owned-result API. The unreleased Phase A
+implementation also completes the curved-profile cone workload with a hole
+under the restricted contract below. [PR #549](https://github.com/Oblikovati/Martensite/pull/549)
+merged into `release/next` after the required hosted checks, including the new
+cone TSan control, passed. Wider wrapping and attachment capability remain
+outside that acceptance.
 
 ## Existing kernel support
 
@@ -23,6 +24,9 @@ measured volume. It does not solve a general sketch constraint system.
 `Adaptor3dCurveOnSurface` evaluator. These are geometry building blocks. The new
 operation must also construct shared topology, account for periodicity, retain
 source identity and validate the completed solid.
+
+See [geometric planar proof V6](CENSUS-V6.md) for the opt-in Census method and
+its remaining integration and performance checks.
 
 See [the geometry contract](DESIGN.md), [the cone sector contract](CONE.md) and
 [the evidence plan](VERIFICATION.md).
@@ -146,12 +150,12 @@ candidate solved-profile entry below handles admitted polynomial curves. See the
 The [API contract](PUBLIC-API.md) describes `normal_extrude_profile` for cylinders
 and the unreleased `normal_extrude_cone_profile` candidate. Both use the shared
 executor and keyed incidence builder. Existing cylinder and primitive
-interfaces retain their signatures and behavior. The cone work is preserved
-above candidate integration `64110e402e131afff2e3fadcbf9e2b9d4c9b245c` plus feature
-working changes. It remains unreleased; review acceptance covers the bounded
-phase commit and ready PR only. The change
-from the earlier `de2b7590` checkpoint only reorders canonical root-module
-declarations and changes no behavior.
+interfaces retain their signatures and behavior. Phase A was integrated by
+PR #549 at merge `8f2b423103d13b22d9724747946b43ee1ca15ded` into `release/next`.
+Hosted evidence identifies tested PR head
+`7a2aa0814a3f8c5b049aaec74b5d98bd26b296fe`; the merge is recorded separately
+because those receipts were captured before it. The implementation remains
+unreleased, and B/C qualification remains outstanding.
 
 For cones, Phase A admits solved world-XY developed polynomial profiles within
 one strict family angular chart/wedge, away from the apex and axis throughout
@@ -197,12 +201,16 @@ memory-only remediation; all four reference/body correctness findings were
 resolved. The maintainer accepted
 the case-specific footprint tradeoff on 2026-11-18. Final
 [Gate A review 3](references/cone-gate-a-oracle-3-2026-11-18.md) accepted the
-bounded phase commit and ready PR. Required hosted checks, including new cone
-TSan, remain pending and must pass before merge; B/C have not started. Ordinary
-cone concurrency passed, and sanitizer-driver/inventory checks passed 46 and 9
-tests respectively. The fresh
-TSan startup fixture exited 139 before `main`; no instrumented cone control was
-built or run.
+bounded phase commit and ready PR. The
+[final hosted receipt](references/phase-a-549-hosted-final-receipt-2026-11-18.json)
+records 55 successful and 4 skipped checks on PR head `7a2aa081`, including
+successful Linux affected-package verification and Sonar checks. The new
+[cone TSan receipt](references/phase-a-549-hosted-tsan-receipt-2026-11-18.json)
+records actual execution of the public overlapping-operation/shared-reader
+control: 1 passed, 0 failed, 0 ignored in 167.83 seconds. These conditions were
+satisfied before merge `8f2b4231`. The local startup exit 139 remains a historical
+failed attempt, not that hosted run. B/C and full-feature qualification remain
+outstanding; no version, tag or release was authorized.
 
 The [final accepted-workload campaign](references/cone-final-workload-benchmark-2026-11-18-summary.json)
 uses source `64110e40` plus the preserved feature changes. In the same executable,
@@ -246,6 +254,84 @@ That earlier driver stopped on a libtest prefix after successful case 7; token
 extraction used the existing log and retained its metrics without rerunning
 cone timings. The final campaign is recorded separately, with no discarded
 first-campaign observations.
+
+### B1 functional checkpoint, 2026-11-19
+
+Two complete public-operation controls passed for an owned polynomial `O.`:
+eight curves for the outer/counter pair and four for the dot, in two regions
+and three loops. The outward API run took `150.110240` seconds and the inward
+run `114.468438`. Both used 984593 of the original 1000000 arithmetic operations
+and 501 integration subintervals, with epsilon `1e-4`, fit level 8, authored
+level 6/width `1e-7` and 128-bit arithmetic. The logged `retained_spans: 167`
+is a derived side-face count, summed as member `faces - 2`, not an independently
+counted fit-span total.
+
+The [compact functional receipt](references/b1-functional-punctuation-2026-11-19.json)
+retains commands, environment, matching source-manifest hash and unprobed binary
+identity. Source is HEAD `8f2b4231` plus uncommitted B1 code; that merge commit
+alone does not contain B1. The branch uses explicit composite UV proof V5,
+positive-X domain policy 2 with actual UV-trim/normal-material evidence, and
+conditioned authored method 2 with per-batch pi reuse. Defaults and legacy replay
+remain unchanged. These are runtime diagnostics, not a matched benchmark or
+performance gate. No five-second acceptance was established; B1 was incomplete
+at phase-gate attempt 0 of 3 at this initial checkpoint.
+
+Main bug #555 passed its canonical local gate with unchanged source and its
+specific RSS tradeoff received maintainer approval. [PR #556](https://github.com/Oblikovati/Martensite/pull/556)
+merged tested head `63a60f5253a98c68f8081ef05248d6cf7943db11` into main at
+`b7dc518b412036048e4f8582cf600aa040f86d64`, after
+[CI run 44470644480](https://github.com/Oblikovati/Martensite/actions/runs/44470644480)
+passed. The #557 qualification record landed at `e4e64a85c9ba7b877844197b8e8bdedda89c83ac`.
+The #558 standing rule at `b61a031d0bde0e21d283e0f94975f79b9ae15574`
+pre-approves up to 10% higher peak RSS for at least 50% lower runtime on matched,
+accepted representative workloads, interpreted conservatively as halving runtime.
+Accuracy, validation coverage and performance on other accepted workloads remain
+required; this rule is separate from the specific #555 approval.
+
+At that earlier checkpoint, F1 forward integration through #558 was clean.
+Its canonical retry had built and was testing; that checkpoint recorded neither
+a whole-gate pass nor a candidate merge. The [native-stage findings](references/b1-native-stage-findings-2026-11-19.md)
+retain the rejected numeric-dependency experiment and its measurements. Issues
+#496 and #498 remain open, as do #551, #552, #553 and #523 until validated
+integration. The remaining full-capability requirements are unchanged.
+
+### B1 cache/V5 functional checkpoint, 2026-11-19
+
+After private TKBO cache/V5 integration, focused controls passed 19, 10 and 9
+cases, followed by both complete public polynomial `O.` controls. Each run ended
+with exit 0 and no source changes. Inward API time was `37.925987` seconds and
+outward `39.965076`; each consumed the same 984593/1000000 arithmetic operations
+and 501 integration cells, with 167 derived side faces. Math/Sketch runtime input
+files were preserved. These timings were collected during concurrent F1 QA and
+establish no matched performance result or five-second acceptance.
+
+The [checkpoint and cleanup receipt](references/b1-cache-v5-functional-2026-11-19.json)
+records commands, log/source hashes and preserved binary `61ed9ad5…`. Runs used
+HEAD `1f709afa` plus uncommitted B1 work; the subsequent fast-forward to
+`756a585d` changed only the #558 rule in `AGENTS.md`, preserving Rust inputs.
+At this cache/V5 checkpoint, B1 review was 0 of 3, with independent actual
+self-intersection coverage, performance and the full corpus still required.
+
+The coordinator completed experiment cleanup after retaining the findings:
+16 disposable files and the A experimental build cache (1.2 GiB) were removed.
+Four immutable fixture/consumer/snapshot assets were verified unchanged. The
+receipt preserves their hashes and cleanup scope; the broader EF investigation
+continues.
+
+### B1 bounded correctness checkpoint, 2026-11-19
+
+Correctness review 2 accepted the remediation and Standards recheck 2 passed.
+[The current findings and receipts](references/b1-directed-correctness-attribution-2026-11-19.md)
+record two complete directed O. passes, five selection/replay controls and 218
+focused Math controls, all with unchanged source guards. Each operation used
+989355/1000000 arithmetic operations, 444 cells and 148 spans, with coverage
+148/148/10730/592/4/6. Geometry remains Sampled and SI Exact under the ADR's
+bounded proxy contract; no literal closed-native claim follows. Inward/outward
+API times were 13.094710/13.385182 seconds; a separate restored stage probe took
+13.388177 seconds outward. These are diagnostics, not matched performance or
+five-second acceptance. Full canonical, hosted, concurrency/TSan, matched
+runtime/peak-memory and the remaining capability matrix are still open. No B1
+commit, push or release approval is recorded.
 
 Wider profiles, text-scale cone workloads, multiple charts and seam occurrences,
 oblique placement and attachment remain Phase B. Primitive exact-span lowering,

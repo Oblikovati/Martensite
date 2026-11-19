@@ -1,0 +1,124 @@
+
+running 1 test
+test surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si ... {"probe":"v6-stage","stage":"operation/cone/input.rs:capture_with_selection","seconds":0.000255362,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:census","seconds":0.068525621,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:partition","seconds":0.032752326,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:contacts","seconds":0.003384193,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/prepare/selection.rs:planar","seconds":0.177649409,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/domain.rs:certify","seconds":0.003487254,"metric_units":14792}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000199149,"metric_units":585}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.029534179,"metric_units":80961}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000182006,"metric_units":585}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.029716266,"metric_units":85988}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000169123,"metric_units":585}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.035503427,"metric_units":86008}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000223964,"metric_units":585}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.037500993,"metric_units":86036}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000177769,"metric_units":585}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.026930371,"metric_units":76030}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000189501,"metric_units":585}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.030347775,"metric_units":81045}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000164715,"metric_units":585}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.026928537,"metric_units":80949}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000189992,"metric_units":585}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.026176605,"metric_units":76008}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000161749,"metric_units":496}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.001010560,"metric_units":2386}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000147483,"metric_units":496}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.005807518,"metric_units":13629}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000164003,"metric_units":496}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.002786968,"metric_units":6115}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:radius","seconds":0.000169033,"metric_units":496}
+{"probe":"v6-stage","stage":"operation/cone/prepare/fit.rs:plan","seconds":0.006337589,"metric_units":13599}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:prepare_regions","seconds":0.261303318,"metric_units":695418}
+{"probe":"v6-stage","stage":"operation/cone/prepare/clearance.rs:certify","seconds":0.006479452,"metric_units":14764}
+{"probe":"v6-stage","stage":"operation/cone/prepare/directed.rs:finalize","seconds":0.013491128,"metric_units":12140}
+{"probe":"v6-stage","stage":"operation/cone/prepare.rs:select_with_execution","seconds":0.462464430,"metric_units":737114}
+{"probe":"v6-stage","stage":"control/Selection/None","seconds":0.462479869,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Construction/Some(SurfaceRegionId(1))","seconds":0.201374026,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Construction/Some(SurfaceRegionId(2))","seconds":0.017669301,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Encoding/None","seconds":0.070680520,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Coverage/None","seconds":0.003990675,"metric_units":0}
+{"probe":"v6-stage","stage":"control/History/None","seconds":0.001695057,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/storage.rs:capture","seconds":0.185336134,"metric_units":147608}
+{"probe":"v6-stage","stage":"control/Storage/Some(SurfaceRegionId(1))","seconds":0.185364958,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/storage.rs:capture","seconds":0.017104385,"metric_units":11826}
+{"probe":"v6-stage","stage":"control/Storage/Some(SurfaceRegionId(2))","seconds":0.017119774,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Binding/None","seconds":0.000254351,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:census","seconds":0.355330186,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:partition","seconds":0.466268380,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:contacts","seconds":1.979101455,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/material.rs:certify_uv","seconds":4.514183822,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/material.rs:certify","seconds":4.523206961,"metric_units":13338}
+{"probe":"v6-stage","stage":"operation/cone/measures/reference.rs:certify","seconds":0.577518022,"metric_units":475}
+{"probe":"v6-stage","stage":"operation/cone/measures/flux.rs:certify","seconds":0.541344685,"metric_units":954}
+{"probe":"v6-stage","stage":"operation/cone/measures.rs:authored_for_chart","seconds":0.011502698,"metric_units":29953}
+{"probe":"v6-stage","stage":"operation/cone/measures.rs:geometry","seconds":5.653640111,"metric_units":44720}
+{"probe":"v6-stage","stage":"control/MemberChecks/Some(SurfaceRegionId(1))","seconds":5.653654479,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:census","seconds":0.005782111,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:partition","seconds":0.022602411,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/sketch_region_prism/owned_request/profile/pipeline.rs:contacts","seconds":0.002939801,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/material.rs:certify_uv","seconds":0.141859081,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/material.rs:certify","seconds":0.142942696,"metric_units":1494}
+{"probe":"v6-stage","stage":"operation/cone/measures/reference.rs:certify","seconds":0.017698846,"metric_units":475}
+{"probe":"v6-stage","stage":"operation/cone/measures/flux.rs:certify","seconds":0.027266923,"metric_units":954}
+{"probe":"v6-stage","stage":"operation/cone/measures.rs:authored_for_chart","seconds":0.003831942,"metric_units":6739}
+{"probe":"v6-stage","stage":"operation/cone/measures.rs:geometry","seconds":0.191785430,"metric_units":9662}
+{"probe":"v6-stage","stage":"control/MemberChecks/Some(SurfaceRegionId(2))","seconds":0.191797933,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/actual.rs:certify_family","seconds":0.109390801,"metric_units":35904}
+{"probe":"v6-stage","stage":"control/MemberChecks/None","seconds":0.109422590,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/mod.rs:topology","seconds":0.724353332,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/mod.rs:geometry","seconds":1.386656517,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/certified_conical/ordered.rs:certified_stage","seconds":0.064203753,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/mod.rs:tolerance","seconds":0.007258332,"metric_units":0}
+{"probe":"v6-stage","stage":"pipeline/qualification.rs:certified_conical_checks","seconds":2.190141009,"metric_units":0}
+{"probe":"v6-stage","stage":"pipeline.rs:estimate","seconds":0.102806455,"metric_units":0}
+{"probe":"v6-stage","stage":"control/MemberChecks/Some(SurfaceRegionId(1))","seconds":2.292994662,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/mod.rs:topology","seconds":0.040912458,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/mod.rs:geometry","seconds":0.095466431,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/certified_conical/ordered.rs:certified_stage","seconds":0.003351313,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/mod.rs:tolerance","seconds":0.000673367,"metric_units":0}
+{"probe":"v6-stage","stage":"pipeline/qualification.rs:certified_conical_checks","seconds":0.141142364,"metric_units":0}
+{"probe":"v6-stage","stage":"pipeline.rs:estimate","seconds":0.008843417,"metric_units":0}
+{"probe":"v6-stage","stage":"control/MemberChecks/Some(SurfaceRegionId(2))","seconds":0.150022790,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/material/reference.rs:certify","seconds":0.039376534,"metric_units":2521}
+{"probe":"v6-stage","stage":"operation/cone/measures.rs:budget","seconds":0.122710643,"metric_units":2521}
+{"probe":"v6-stage","stage":"control/Budget/None","seconds":0.122725760,"metric_units":0}
+{"probe":"v6-stage","stage":"control/Completion/None","seconds":0.000002124,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/publication.rs:publish","seconds":0.017962213,"metric_units":0}
+{"probe":"v6-stage","stage":"operation/cone/mod.rs:execute_with_selection","seconds":9.501935683,"metric_units":0}
+{"event":"directed_narrow_cone_api","sense":"Outward","seconds":9.501943}
+{"event":"narrow_cone_completed_work","arithmetic_operations":989355,"integration_subintervals":444,"retained_spans":148}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/mod.rs:topology","seconds":0.764373368,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/mod.rs:geometry","seconds":1.472969818,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/certified_conical/ordered.rs:certified_stage","seconds":0.074713824,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/mod.rs:topology","seconds":0.757178964,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/mod.rs:geometry","seconds":1.429775999,"metric_units":0}
+{"probe":"v6-stage","stage":"../../../martensite-tkbo/src/body_check/certified_conical/ordered.rs:certified_stage","seconds":0.068961749,"metric_units":0}
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 513 filtered out; finished in 15.35s
+
+	Command being timed: "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86 surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si --exact --nocapture --test-threads=1"
+	User time (seconds): 15.23
+	System time (seconds): 0.02
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:15.35
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 64340
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 9191
+	Voluntary context switches: 6
+	Involuntary context switches: 1226
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 48
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

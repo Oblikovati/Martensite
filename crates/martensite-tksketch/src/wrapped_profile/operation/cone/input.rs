@@ -9,6 +9,28 @@ pub(super) fn capture(
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Inputs> {
     admit(request).map_err(ConeFailure::public)?;
+    capture_admitted(request, cancelled)
+}
+pub(super) fn capture_with_selection(
+    request: &WrappedConeNormalRequest,
+    execution: WrappedConeExecutionSelection,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<Inputs> {
+    if matches!(
+        execution,
+        WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 { .. }
+    ) {
+        return capture(request, cancelled);
+    }
+    admit(request).map_err(ConeFailure::public)?;
+    // #563: reject the selected policy before source capture can observe a later stop.
+    super::prepare::directed::admit(request, execution).map_err(ConeFailure::public)?;
+    capture_admitted(request, cancelled)
+}
+fn capture_admitted(
+    request: &WrappedConeNormalRequest,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<Inputs> {
     let mut inputs = Inputs {
         originals: Vec::new(),
         directions: BTreeMap::new(),

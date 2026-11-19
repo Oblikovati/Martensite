@@ -4,6 +4,11 @@ use super::angle::*;
 use super::boundary::*;
 use super::developed::CombinedFailure;
 use super::*;
+pub(super) mod chart;
+pub use chart::{
+    ConicalChartJoinsError, certify_conical_joins_in_chart,
+    certify_conical_joins_in_chart_with_refinement,
+};
 
 /// One retained boundary and the exact query to which it was bound.
 #[derive(Clone, Copy)]
@@ -126,8 +131,8 @@ impl std::fmt::Display for ConicalJoinProofFailure {
 }
 impl std::error::Error for ConicalJoinProofFailure {}
 /// Conditional common-direction proof; it does not establish whole-body topology.
-#[derive(Debug)]
 pub struct ConicalJoinsEvidence {
+    pub(super) chart: Option<super::boundary_chart::ChartBinding>,
     pub(super) input: Vec<BoundarySnapshot>,
     pub(super) contour_lengths: Vec<usize>,
     pub(super) options: ConeClearanceOptions,
@@ -137,6 +142,9 @@ pub struct ConicalJoinsEvidence {
 impl ConicalJoinsEvidence {
     /// Recheck inputs and policy; `evidence.matches(&query)`.
     pub fn matches(&self, query: &ConicalJoinsQuery<'_>) -> bool {
+        self.chart.is_none() && self.matches_inputs(query)
+    }
+    fn matches_inputs(&self, query: &ConicalJoinsQuery<'_>) -> bool {
         self.options == query.options
             && self.contour_lengths == query.contour_lengths
             && self.input.len() == query.spans.len()
@@ -185,15 +193,16 @@ pub(super) fn admit(query: &ConicalJoinsQuery<'_>) -> Result<(), ConicalJoinsFai
             actual: query.spans.len(),
         });
     }
-    if !(8..=4096).contains(&query.options.fractional_bits)
-        || query.options.max_operations > 1_000_000
-    {
-        return Err(ConicalJoinsFailure::Policy {
-            actual: query.options,
-        });
-    }
+    admit_policy(query.options)?;
     admit_contour_lengths(query)
 }
+fn admit_policy(actual: ConeClearanceOptions) -> Result<(), ConicalJoinsFailure> {
+    if !(8..=4096).contains(&actual.fractional_bits) || actual.max_operations > 1_000_000 {
+        return Err(ConicalJoinsFailure::Policy { actual });
+    }
+    Ok(())
+}
+
 pub(super) fn requests<'a>(
     query: &'a ConicalJoinsQuery<'a>,
 ) -> Result<Vec<super::spatial::SpatialRequest<'a>>, ConicalJoinsFailure> {
@@ -269,6 +278,7 @@ fn joins_evidence(
     operations: u32,
 ) -> ConicalJoinsEvidence {
     ConicalJoinsEvidence {
+        chart: None,
         input: query
             .spans
             .iter()
@@ -314,4 +324,17 @@ fn contours_message(
         out,
         "contours={count}, total={total:?}; expected nonzero lengths totaling {spans}"
     )
+}
+
+// Legacy Debug is a replay surface; new chart authority remains private.
+impl std::fmt::Debug for ConicalJoinsEvidence {
+    fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        out.debug_struct("ConicalJoinsEvidence")
+            .field("input", &self.input)
+            .field("contour_lengths", &self.contour_lengths)
+            .field("options", &self.options)
+            .field("directions", &self.directions)
+            .field("operations", &self.operations)
+            .finish()
+    }
 }

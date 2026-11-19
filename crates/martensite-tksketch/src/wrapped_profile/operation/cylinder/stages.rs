@@ -7,6 +7,7 @@ pub(in crate::surface_sketch::wrapped_profile) struct CylinderStages {
     pub volume: CylindricalMeasureLimit,
 }
 impl SupportStages for CylinderStages {
+    type NativeEvidence = ();
     type Original = Request;
     type Prepared = Request;
     type Context = ();

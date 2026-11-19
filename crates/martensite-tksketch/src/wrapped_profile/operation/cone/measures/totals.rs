@@ -1,12 +1,14 @@
 //! The family gate publishes one q/L reference and separately labelled native proxies.
 use super::comparison::add;
 use super::*;
+mod native_validation;
 pub(super) fn certify(
     request: &WrappedConeNormalRequest,
     family: &OwnedFamily<Selection, Geometry>,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Budget> {
+    native_validation::require(family)?;
     let reference = material::certify_reference(request, family, work, cancelled)?;
     let mut bounds = accumulated(family)?;
     verify_work(request, family, work, reference.operations())?;
@@ -33,6 +35,7 @@ fn completed(
         )
     })?;
     Ok(Budget {
+        actual_certificate: work.actual_certificate.clone(),
         spatial_error: bounds.spatial_error,
         volume: bounds.volume,
         arithmetic_operations: work.consumed,
@@ -155,6 +158,7 @@ fn verify_work(
     let members = member_operations(family)?;
     let total = members
         .checked_add(reference_operations)
+        .and_then(|total| total.checked_add(work.actual_operations))
         .ok_or_else(work_overflow)?;
     if work.requested != request.proof.arithmetic || work.consumed != total {
         return Err(scalar(

@@ -21,19 +21,24 @@ pub(super) struct MaterialIdentity {
     holes: Vec<LoopIdentity>,
 }
 
-#[derive(Debug)]
 pub(super) struct PlanarEvidence {
     pub area: Measured,
+    pub selected_region: RegionId,
     #[cfg(test)]
     pub certificate: RegionCertificate,
     identity: MaterialIdentity,
     source: source::SourceSnapshot,
+    integral: Option<PlanarIntegralEvidence>,
 }
 
 impl PlanarEvidence {
     pub(super) fn matches_request(&self, request: &DevelopedRegionRequest) -> bool {
         requested_identity(request).is_ok_and(|id| id == self.identity)
             && self.source.matches(request)
+            && self.integral.as_ref().is_none_or(|proof| {
+                combined_profile(std::slice::from_ref(request))
+                    .is_ok_and(|profile| proof.matches_profile(&profile))
+            })
     }
 }
 
@@ -164,6 +169,46 @@ pub(super) fn capture_with_proof_and_cancel(
     .map_err(|cause| PlanarFailure::WorkCapture(Box::new(cause)))
 }
 
+pub(super) fn capture_with_integration_budget_and_cancel(
+    requests: &[impl AsRef<DevelopedRegionRequest>],
+    tolerance: f64,
+    work: PlanarProofWorkLimit,
+    version: PlanarProofVersion,
+    remaining: u64,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<PlanarRegionSet, PlanarFailure> {
+    let profile = combined_profile(requests)?;
+    build_planar_regions_with_integration_budget_and_cancel(
+        &profile,
+        super::pipeline::resolution(tolerance),
+        work,
+        version,
+        remaining,
+        cancelled,
+    )
+    .map_err(|cause| PlanarFailure::WorkCapture(Box::new(cause)))
+}
+impl PlanarEvidence {
+    pub(super) fn integral_program_evidence(&self) -> Option<&PlanarIntegralEvidence> {
+        self.integral.as_ref()
+    }
+}
+impl std::fmt::Debug for PlanarEvidence {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut output = f.debug_struct("PlanarEvidence");
+        output.field("area", &self.area);
+        #[cfg(test)]
+        output.field("certificate", &self.certificate);
+        output
+            .field("identity", &self.identity)
+            .field("source", &self.source);
+        if let Some(integral) = &self.integral {
+            output.field("integral", integral);
+        }
+        output.finish()
+    }
+}
+
 fn combined_profile(
     requests: &[impl AsRef<DevelopedRegionRequest>],
 ) -> Result<SketchProfile, PlanarFailure> {
@@ -262,10 +307,12 @@ pub(super) fn select(
     let selected = unique_region(&expected, captured)?;
     Ok(PlanarEvidence {
         area: selected.area(),
+        selected_region: selected.id(),
         #[cfg(test)]
         certificate: captured.certificate(),
         identity: expected,
         source: source::SourceSnapshot::capture(request),
+        integral: captured.integral_program_evidence().cloned(),
     })
 }
 

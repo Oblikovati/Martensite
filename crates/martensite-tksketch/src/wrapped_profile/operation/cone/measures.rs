@@ -22,7 +22,7 @@ pub(super) fn geometry(
     let material = material::certify(request, original, prepared, &stored, work, &mut *cancelled)?;
     let reference_volume = reference::certify(request, prepared, work, cancelled)?;
     let flux = flux::certify(request, original.region, &stored, work, cancelled)?;
-    let authored = authored::certify(request, original, flux.enclosure(), work, cancelled)?;
+    let authored = authored_for_chart(request, original, prepared, &flux, work, cancelled)?;
     let arithmetic_operations = stored.capture_operations + work.consumed - started;
     let geometry = Geometry {
         coverage: stored.coverage,
@@ -42,6 +42,12 @@ pub(super) fn budget(
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Budget> {
+    if matches!(
+        family.selection.executed_selection,
+        WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
+    ) {
+        actual::validate_family(family, work)?;
+    }
     totals::certify(request, family, work, cancelled)
 }
 pub(super) fn spatial(spans: &[storage::SpanProof]) -> ConeChecked<f64> {
@@ -102,4 +108,22 @@ fn scalar(field: &'static str, actual: f64, expected: &'static str) -> ConeFailu
         },
     )
     .at(WrappedStage::Publication)
+}
+
+fn authored_for_chart(
+    request: &WrappedConeNormalRequest,
+    original: &DevelopedRegionRequest,
+    prepared: &Prepared,
+    flux: &CertifiedAnalyticConicalFlux,
+    work: &mut storage::Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<ConicalAuthoredFlux> {
+    authored::certify(
+        request,
+        original,
+        prepared.chart_domain.as_deref(),
+        flux.enclosure(),
+        work,
+        cancelled,
+    )
 }

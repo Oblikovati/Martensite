@@ -8,6 +8,10 @@ pub(in crate::surface_sketch::wrapped_profile) struct Work {
     pub consumed: u32,
     pub integration_cells: u32,
     pub planar: Option<PlanarProofWorkReceipt>,
+    pub actual_operations: u32,
+    pub actual_certificate:
+        Option<std::sync::Arc<martensite_tkbo::body_check::CertifiedConicalBody>>,
+    pub actual_bindings: BTreeMap<SurfaceRegionId, Vec<(BindingKey, Shape)>>,
 }
 impl Work {
     pub(in crate::surface_sketch::wrapped_profile) fn new(requested: ConeClearanceOptions) -> Self {
@@ -16,6 +20,9 @@ impl Work {
             consumed: 0,
             integration_cells: 0,
             planar: None,
+            actual_bindings: BTreeMap::new(),
+            actual_operations: 0,
+            actual_certificate: None,
         }
     }
     pub(in crate::surface_sketch::wrapped_profile) fn remaining(&self) -> ConeClearanceOptions {
@@ -23,6 +30,25 @@ impl Work {
             max_operations: self.requested.max_operations - self.consumed,
             ..self.requested
         }
+    }
+    pub(in crate::surface_sketch::wrapped_profile) fn remaining_checked(
+        &self,
+        region: SurfaceRegionId,
+        span: Option<CurveSpan>,
+    ) -> ConeChecked<ConeClearanceOptions> {
+        let options = self.remaining();
+        if options.max_operations == 0 {
+            return Err(failure(
+                region,
+                span,
+                ConeCause::Scalar {
+                    field: "remaining cone arithmetic operations",
+                    actual: 0.,
+                    expected: "positive remaining grant from the original finite allowance",
+                },
+            ));
+        }
+        Ok(options)
     }
     pub(in crate::surface_sketch::wrapped_profile) fn profile(&self) -> CylindricalProfileOptions {
         let options = self.remaining();

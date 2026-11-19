@@ -1,0 +1,134 @@
+// SPDX-License-Identifier: GPL-2.0-only
+//! Actual native UV operands retained after both independently accepted chart traces.
+use super::boundary_snapshot::BoundarySnapshot;
+use super::*;
+mod binding;
+mod material;
+pub(in crate::predicates::roots::metric_bounds) use binding::domain_bits;
+pub(in crate::predicates::roots::metric_bounds) use material::{
+    half_pi, span_bounds_with_refinement, validate_with_refinement,
+};
+#[cfg(test)]
+pub(in crate::predicates::roots::metric_bounds) use material::{span_bounds, validate};
+
+/// Immutable actual-UV angular proof and slant operands, not a material topology certificate.
+#[derive(Debug)]
+pub struct ConicalDevelopedBoundaryEvidence {
+    source: BoundarySnapshot,
+    domain: Vec<u64>,
+    pair: Vec<u64>,
+    uv_bits: [Vec<[u64; 2]>; 2],
+    carriers: [[u64; 3]; 2],
+    reference: u64,
+    options: ConeClearanceOptions,
+    operations: u32,
+    operands: RetainedOperands,
+}
+#[derive(Debug)]
+pub(super) struct RetainedOperands {
+    pub(super) uv: [Interval; 2],
+    pub(super) angular: Interval,
+    pub(super) delta: Vec<Interval>,
+}
+/// Checked original/source authority paired with its actual decoded UV witness.
+#[derive(Clone, Copy)]
+pub struct ConicalDevelopedBoundarySpan<'a> {
+    /// Full query reconstructed against actual decoded edges.
+    pub source: ConicalBoundaryQuery<'a>,
+    /// Executed source-bound spatial and storage receipt.
+    pub boundary: &'a ConicalBoundaryEvidence,
+    /// Actual accepted trace operands, owned independently of any source borrow.
+    pub evidence: &'a ConicalDevelopedBoundaryEvidence,
+}
+impl ConicalDevelopedBoundaryEvidence {
+    /// Actual producing pair work, already charged once; `let work = evidence.operations();`.
+    pub fn operations(&self) -> u32 {
+        self.operations
+    }
+    /// Rebind actual geometry, chart, grid and reference bits; `assert!(evidence.matches(&pair, &source, &boundary, &domain, reference));`.
+    pub fn matches(
+        &self,
+        pair: &ConicalTrimPairQuery<'_>,
+        source: &ConicalBoundaryQuery<'_>,
+        boundary: &ConicalBoundaryEvidence,
+        domain: &ConicalChartDomainEvidence,
+        reference: f64,
+    ) -> bool {
+        self.matches_with_refinement(
+            pair,
+            source,
+            boundary,
+            domain,
+            reference,
+            ConicalPrimitiveRefinement::UnsplitV1,
+        )
+    }
+    /// Rebind actual operands and explicit primitive authority; `proof.matches_with_refinement(&pair, &source, &boundary, &domain, reference, refinement)`.
+    pub fn matches_with_refinement(
+        &self,
+        pair: &ConicalTrimPairQuery<'_>,
+        source: &ConicalBoundaryQuery<'_>,
+        boundary: &ConicalBoundaryEvidence,
+        domain: &ConicalChartDomainEvidence,
+        reference: f64,
+        refinement: ConicalPrimitiveRefinement,
+    ) -> bool {
+        self.source.matches(source)
+            && boundary.matches_chart_with_refinement(source, domain, refinement)
+            && self.options == boundary.options()
+            && self.domain == binding::domain_bits_selected(domain, refinement)
+            && self.pair == binding::pair_bits(pair)
+            && self.reference == reference.to_bits()
+    }
+}
+pub(super) fn capture(
+    pair: ConicalTrimPairQuery<'_>,
+    source: ConicalBoundaryQuery<'_>,
+    boundary: &ConicalBoundaryEvidence,
+    selection: (&ConicalChartDomainEvidence, ConicalPrimitiveRefinement),
+    reference: f64,
+    operations: u32,
+    operands: RetainedOperands,
+) -> ConicalDevelopedBoundaryEvidence {
+    ConicalDevelopedBoundaryEvidence {
+        source: BoundarySnapshot::capture(&source),
+        domain: binding::domain_bits_selected(selection.0, selection.1),
+        pair: binding::pair_bits(&pair),
+        uv_bits: pair
+            .pcurves
+            .map(|poles| poles.iter().map(|p| p.map(f64::to_bits)).collect()),
+        carriers: pair.carriers.map(|c| {
+            [
+                c.radius.to_bits(),
+                c.axial_origin.to_bits(),
+                c.semi_angle.to_bits(),
+            ]
+        }),
+        reference: reference.to_bits(),
+        options: boundary.options(),
+        operations,
+        operands,
+    }
+}
+pub(in crate::predicates::roots::metric_bounds) fn fingerprint(
+    evidence: &ConicalDevelopedBoundaryEvidence,
+) -> Vec<u64> {
+    let mut bits = evidence.source.bits.clone();
+    for values in [&evidence.domain, &evidence.pair] {
+        bits.push(values.len() as u64);
+        bits.extend(values);
+    }
+    bits.extend([
+        evidence.reference,
+        u64::from(evidence.options.fractional_bits),
+        u64::from(evidence.options.max_operations),
+        u64::from(evidence.operations),
+    ]);
+    bits
+}
+
+pub(in crate::predicates::roots::metric_bounds) fn trig(
+    domain: &ConicalChartDomainEvidence,
+) -> [&Interval; 2] {
+    [&domain.sine, &domain.cosine]
+}

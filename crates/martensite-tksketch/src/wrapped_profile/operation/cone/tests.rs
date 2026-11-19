@@ -3,6 +3,7 @@ use super::*;
 mod completed;
 mod frozen;
 mod inward;
+mod narrow;
 use martensite_tkbo::profile_extrusion::{
     LoopUse, ProfileCurve, ProfileCurveId, ProfileLoop, ProfilePlane, ProfileVertex,
     ProfileVertexId, SketchProfile,

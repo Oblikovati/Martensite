@@ -1,0 +1,13 @@
+{
+  "exit_code": 0,
+  "environment": {
+    "CARGO_TARGET_DIR": "/tmp/martensite-cone-b1-cached-target",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+    "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+    "CARGO_TERM_COLOR": "never"
+  }
+}

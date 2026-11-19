@@ -4,7 +4,7 @@ use super::*;
 use crate::predicates::roots::metric_bounds::CylindricalProfileBehavior;
 
 pub(super) fn admit(query: AnalyticConicalFluxQuery<'_>) -> Checked<()> {
-    ruled::policy(query.options).map_err(|cause| error::input(None, None, cause))?;
+    parent_policy(query.options)?;
     arithmetic_policy(query.arithmetic)?;
     span_count(query.spans.len(), query.options.max_spans)?;
     for (depth, carrier) in query.carriers.into_iter().enumerate() {
@@ -79,4 +79,17 @@ fn admit_pair<const DIM: usize>(
             .map_err(|cause| error::input(Some(index), Some(depth), cause))?;
     }
     Ok(())
+}
+
+fn parent_policy(options: CylindricalFluxOptions) -> Checked<()> {
+    let invalid = || error::input(None, None, CylindricalFluxFailure::Policy(options));
+    if !(1..=2).contains(&options.behavior_version) {
+        return Err(invalid());
+    }
+    // Child scalar/cylinder policy remains1; an invalid parent still reports its original2.
+    ruled::policy(CylindricalFluxOptions {
+        behavior_version: 1,
+        ..options
+    })
+    .map_err(|_| invalid())
 }

@@ -4,6 +4,8 @@ use super::inverse::*;
 use super::*;
 use crate::predicates::roots::certificate_arithmetic::bernstein_curve::bisect;
 
+pub(super) mod conditioned;
+
 pub(super) type Cell = (Vec<Interval>, Vec<Interval>, u8);
 
 pub(super) fn integrate_span(

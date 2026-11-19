@@ -16,6 +16,12 @@
 //! Admission refusal marks tolerance failed and leaves native stages `NotRun`.
 //! After admission, a non-passing stage leaves every later stage `NotRun`.
 mod admission;
+mod certified_conical;
+pub use certified_conical::{
+    CertifiedConicalBody, CertifiedPlanarMaterial, ConicalBindingError, ConicalNativeCap,
+    ConicalNativeCensus, ConicalNativeGeometry, ConicalNativeMember, bind_conical_actual_family,
+    capture_conical_actual_family, validate_body_with_certified_conical,
+};
 mod census;
 mod ledger;
 mod naming;

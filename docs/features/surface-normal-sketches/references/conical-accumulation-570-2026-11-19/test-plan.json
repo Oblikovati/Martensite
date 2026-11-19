@@ -1,0 +1,41 @@
+{
+  "source_freeze_sha256": "e030fab4954178e532f0eff96b9e2ae7a77f531594fdeced9a15e510a3128162",
+  "runs": [
+    [
+      "math-integrals",
+      "martensite_tkmath",
+      "rational_integrals"
+    ],
+    [
+      "sketch-flux-accounting",
+      "martensite_tksketch",
+      "operation::cone::measures::flux::tests"
+    ],
+    [
+      "sketch-error-projection",
+      "martensite_tksketch",
+      "operation::cone::error::tests::accumulation"
+    ],
+    [
+      "legacy-v1-complete",
+      "martensite_tksketch",
+      "geometric_v6_"
+    ],
+    [
+      "v2-complete",
+      "martensite_tksketch",
+      "accumulation_v2_preserves_complete_actual_si_and_original_caps"
+    ]
+  ],
+  "artifacts": {
+    "martensite_tksketch": {
+      "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+      "sha256": "e145cee78b8e9e326576e74a08d6cfffd24d6280dce12dfba135b7af1732725b"
+    },
+    "martensite_tkmath": {
+      "path": "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tkmath-fed422b24a04790c",
+      "sha256": "0642be7327c820c5b6b70dd96fcef84e7e8e5518de7139dfa4865beb6eafc666"
+    }
+  },
+  "meaning": "functional correctness, not a performance campaign; host tests/compilers may run concurrently"
+}

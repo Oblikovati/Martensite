@@ -39,8 +39,9 @@ fn candidate(
     let uv = cap_uv(&fit, prepared.reference_slant);
     let view = fit.view();
     let query = boundary_query(prepared, original, piece, &view, &poles, turns[0]);
-    let boundary = certify(prepared.source.region, piece.span, query, work, cancelled)?;
+    let boundary = certify(prepared, piece.span, query, work, cancelled)?;
     Ok(SpanFit {
+        transition: None,
         fit,
         poles,
         uv,
@@ -92,13 +93,14 @@ fn candidate_edges(
 }
 
 fn certify(
-    region: SurfaceRegionId,
+    prepared: &Prepared,
     span: CurveSpan,
     query: ConicalBoundaryQuery<'_>,
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<std::sync::Arc<ConicalBoundaryEvidence>> {
-    let result = certify_conical_boundary(query, work.remaining(), cancelled);
+    let region = prepared.source.region;
+    let result = domain::certify_boundary(prepared, query, work.remaining(), cancelled);
     let operations = match &result {
         Ok(proof) => proof.operations(),
         Err(cause) => cause.operations(),

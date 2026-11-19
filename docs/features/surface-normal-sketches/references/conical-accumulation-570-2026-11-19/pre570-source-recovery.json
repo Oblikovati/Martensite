@@ -1,0 +1,145 @@
+{
+  "prior_head": "2e8ab886d4755c9c0165d7f59f2a92ead61f3612",
+  "files": [
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals.rs",
+      "sha256": "9b93b43238ef73a6ee56d9e0073e49c21350c11872cba0b92adfe4e9a14f5e49",
+      "source": ":"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum.rs",
+      "baseline": "absent from prior source inventory; #570 addition"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_sum/tests.rs",
+      "baseline": "absent from prior source inventory; #570 addition"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/admission.rs",
+      "sha256": "3b8af26fae56ab53019a22ae7d6d9458edd1388cc716116b04d6c7ba85e6ef4a",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/execution.rs",
+      "sha256": "5726ab8cc8d9113016879406e157db201edcc82f9bb0c7f1ca9ff9b4907c8a9f",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/types.rs",
+      "sha256": "c4236f2ab2943fce28ae90f7940b1f5eb38496c152b3c326ed00b1095e03a24e",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/tests.rs",
+      "sha256": "6723c4953a96446211274ee74cd9e50bc024b5b7d3e6ea76d024ddffc96131b2",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/conical_reference_volume/tests/accumulation.rs",
+      "baseline": "absent from prior source inventory; #570 addition"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone.rs",
+      "sha256": "c0baf258caff32d48092510146307a689138ab3b43798ffe5231d8b621c56ef2",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/admission.rs",
+      "sha256": "47bedb0b0efebbd11cf9ea367790f4a313abeb8fccc5401c0f45b9e7ec5b774f",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/binding.rs",
+      "sha256": "50d0af9d752041b1b6d40418d1e2f1185ee2b10d4a3fb55b0cc33304550d82a8",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/error.rs",
+      "sha256": "75f4462d6cba6ecea4594fa50d8171da9ad7dc0ee110e9a8b15c167ea4460974",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/execution.rs",
+      "sha256": "667aa443cfad8ca213b930cdd9b63b321a9f5c6803c352a7ad14dee997cbffb2",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/types.rs",
+      "sha256": "ae7454f3aa4835edb37066a336ee4115e94f41530ad861bc36bc18171cafe540",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/caps.rs",
+      "sha256": "a2c6903bd4ad2fac03ab30190f85ca53d1d4f9db0c94335a0b767b0bef33cef8",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/caps/coefficients.rs",
+      "sha256": "a7d1b7e0192798f873b427a0aa80ea38824443920a889cb1a646086d4e664273",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/tests.rs",
+      "sha256": "76163ea20c5974c8be62aae1c8366998834b0c68ecde886f9c50c20f34ac56c5",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/analytic_cone/tests/accumulation.rs",
+      "baseline": "absent from prior source inventory; #570 addition"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/side.rs",
+      "sha256": "fac8d2d7450ac64b141d36f4b22558c3d9bc13c8e81bfd79b94fa6f5914585f0",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/side/accounting_tests.rs",
+      "baseline": "absent from prior source inventory; #570 addition"
+    },
+    {
+      "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/rational_integrals/cylindrical_flux/types.rs",
+      "sha256": "3c47dbb333f58c7161a88ed90371b243d218cfae2b5a5df1d8fb7f6c9eb9bba4",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/input/policy.rs",
+      "sha256": "531008183e36cfd5be503e0fcfde29fcdba97cf0dc210973d8cc64d0d80c3351",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/measures/flux.rs",
+      "sha256": "811acbdf73d6b155a12b886976dfc7572c460ff772f9ae6f5095004af5e9d209",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/measures/flux/tests.rs",
+      "baseline": "absent from prior source inventory; #570 addition"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/error.rs",
+      "sha256": "29771787951ea9718c6f5c75632888c65df5f878c7814a08be6ee0a661d86322",
+      "source": "hash-verified inverse of #570-only additions"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/error/projection/integrals.rs",
+      "sha256": "7fc42d60bfff5cea448977bce18f87f1454a6c61165619b08655efd7f0a64f9a",
+      "source": "HEAD:"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/error/tests.rs",
+      "sha256": "c44a8b1390dcc0ed9c0ebc0aa7a667fbd7bd9ddac69fa6415a082a8f9a40c532",
+      "source": "hash-verified inverse of #570-only additions"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/error/tests/accumulation.rs",
+      "baseline": "absent from prior source inventory; #570 addition"
+    },
+    {
+      "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/tests/narrow/complete/directed.rs",
+      "sha256": "67b83ffabdc4536d2ec20efb7ad59f92448fd7058de89231a9b9eac7c713b7d5",
+      "source": "hash-verified inverse of #570-only additions"
+    }
+  ],
+  "active_worktree_modified": false,
+  "scope": "all pre-existing Rust files from 32-path author touched list; prose is not reconstructed; additional new #570 files excluded"
+}

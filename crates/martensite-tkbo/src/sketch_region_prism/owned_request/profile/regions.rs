@@ -59,23 +59,55 @@ pub(super) fn inspect_graph(
     cancelled: impl FnMut() -> bool,
     access: crate::sketch_region_certification::SourceAccess<'_>,
 ) -> LoopRegionCheck<GraphRegionCertificate> {
+    bind_integral_selection(owned, None)?;
     super::selection::bind(owned.version, &bridge.census)?;
-    let ends: Vec<[u64; 2]> = owned
+    with_graph_request(owned, edges, bridge, |request| {
+        match access {
+        crate::sketch_region_certification::SourceAccess::Live => inspect_plane_graph(request, cancelled),
+        crate::sketch_region_certification::SourceAccess::Owned(_) => crate::sketch_region_prism::region_certificate::loop_region::graph::inspect_plane_graph_with_access(request, cancelled, access),
+    }
+    })
+}
+pub(super) fn inspect_program_graph(
+    owned: &OwnedProfileRequest,
+    edges: &[ConstructedProfileEdge],
+    bridge: &PairedContactTransaction,
+    cancelled: impl FnMut() -> bool,
+    options: martensite_tkmath::predicates::roots::metric_bounds::IntegralProgramOptions,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
+) -> Result<GraphRegionCertificate, Box<crate::sketch_region_prism::ProgramGraphFailure>> {
+    let failure = |failure| program_refusal(failure, options);
+    bind_integral_selection(owned, Some(options)).map_err(failure)?;
+    super::selection::bind(owned.version, &bridge.census).map_err(failure)?;
+    with_graph_request(owned, edges, bridge, |request| {
+        match access {
+        crate::sketch_region_certification::SourceAccess::Live => crate::sketch_region_prism::region_certificate::loop_region::graph::inspect_plane_graph_program(request, cancelled, options),
+        crate::sketch_region_certification::SourceAccess::Owned(_) => crate::sketch_region_prism::region_certificate::loop_region::graph::inspect_plane_graph_program_with_access(request, cancelled, options, access),
+    }
+    })
+}
+fn with_graph_request<T, E>(
+    owned: &OwnedProfileRequest,
+    edges: &[ConstructedProfileEdge],
+    bridge: &PairedContactTransaction,
+    inspect: impl FnOnce(&GraphRegionRequest<'_, '_>) -> Result<T, E>,
+) -> Result<T, E> {
+    let ends = owned
         .edges
         .iter()
         .map(|edge| [edge.start.0, edge.end.0])
-        .collect();
-    let sources: Vec<_> = edges.iter().map(ConstructedProfileEdge::source).collect();
+        .collect::<Vec<_>>();
+    let sources = edges
+        .iter()
+        .map(ConstructedProfileEdge::source)
+        .collect::<Vec<_>>();
     let request = GraphRegionRequest {
         bridge,
         sources: &sources,
         ends: &ends,
         options: owned.policy.region,
     };
-    match access {
-        crate::sketch_region_certification::SourceAccess::Live => inspect_plane_graph(&request, cancelled),
-        crate::sketch_region_certification::SourceAccess::Owned(_) => crate::sketch_region_prism::region_certificate::loop_region::graph::inspect_plane_graph_with_access(&request, cancelled, access),
-    }
+    inspect(&request)
 }
 
 fn authored_loop(owned: &OwnedProfileLoop) -> AuthoredLoop {
@@ -87,4 +119,38 @@ fn authored_loop(owned: &OwnedProfileLoop) -> AuthoredLoop {
         name: owned.name,
         uses: uses.collect(),
     }
+}
+
+fn bind_integral_selection(
+    request: &OwnedProfileRequest,
+    expected: Option<martensite_tkmath::predicates::roots::metric_bounds::IntegralProgramOptions>,
+) -> crate::sketch_region_prism::region_certificate::loop_region::LoopRegionCheck<()> {
+    use crate::sketch_region_prism::region_certificate::loop_region::*;
+    let program_version = matches!(
+        request.version,
+        super::admission::COMPOSITE_GRAPH_PROFILE_VERSION
+            | super::admission::GEOMETRIC_GRAPH_PROFILE_VERSION
+    );
+    if request.integral_program == expected && program_version == expected.is_some() {
+        return Ok(());
+    }
+    Err(LoopRegionFailure {
+        stage: LoopRegionStage::Admission,
+        cause: LoopRegionCause::IntegralSelection(Box::new(IntegralSelectionMismatch {
+            graph_version: request.version,
+            retained: request.integral_program,
+            expected,
+        })),
+    })
+}
+
+fn program_refusal(
+    failure: crate::sketch_region_prism::region_certificate::loop_region::LoopRegionFailure,
+    options: martensite_tkmath::predicates::roots::metric_bounds::IntegralProgramOptions,
+) -> Box<crate::sketch_region_prism::ProgramGraphFailure> {
+    Box::new(crate::sketch_region_prism::ProgramGraphFailure {
+        failure,
+        options,
+        consumed: 0,
+    })
 }

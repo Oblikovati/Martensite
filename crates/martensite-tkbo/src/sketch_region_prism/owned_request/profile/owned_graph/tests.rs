@@ -3,6 +3,7 @@
 use super::super::tests::{Continue, Profile};
 use super::*;
 mod early_failures;
+mod program;
 mod recapture;
 mod unified;
 #[derive(Default)]

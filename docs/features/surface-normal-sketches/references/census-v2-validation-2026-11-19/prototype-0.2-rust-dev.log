@@ -1,0 +1,20 @@
+   Compiling autocfg v1.5.1
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.47
+   Compiling num-bigint v0.4.8
+   Compiling num-rational v0.4.2
+   Compiling census_bench v0.2.0 (/tmp/martensite-census02-5e0fxgjy/census-v2-prototype-0.2/rust)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 2.27s
+     Running `/tmp/martensite-census02-5e0fxgjy/target/debug/census_bench /tmp/martensite-census02-5e0fxgjy/census-v2-prototype-0.2/curves.txt dev`
+cargo profile: dev; debug-assertions: true
+   control underflow counterexample (h=2^-600)      certified=false expected=false ok
+   control shares P and crosses again               certified=false expected=false ok
+   control lens (two shared ends)                   certified=false expected=false ok
+   control hairpin, opposite sides                  certified=true  expected=true  ok
+   control scaled hairpin (x 2^-600)                certified=true  expected=true  ok
+O137: Stats { self_excluded: 137, sweep_candidates: 137, box_excluded: 9179, adjacent_certified: 137, hull_excluded: 0, unresolved: 0 }
+   predicates/run 2204, exact fallbacks 119
+   census v2: 3.770 ms/run   |   all-pairs exact BigRational root test: 806.8 ms (9179 pairs excluded)
+dot11: Stats { self_excluded: 11, sweep_candidates: 11, box_excluded: 44, adjacent_certified: 11, hull_excluded: 0, unresolved: 0 }
+   predicates/run 169, exact fallbacks 8
+   census v2: 0.261 ms/run   |   all-pairs exact BigRational root test: 4.7 ms (44 pairs excluded)

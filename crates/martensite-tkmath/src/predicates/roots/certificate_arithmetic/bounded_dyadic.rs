@@ -222,6 +222,10 @@ impl<'a> Arithmetic<'a> {
             divide_ceil(upper, denominator),
         )
     }
+    /// Charge one finite certificate step in the same remaining work ledger.
+    pub fn certificate_step(&mut self) -> Checked<()> {
+        self.charge()
+    }
     pub fn check_cancelled(&mut self) -> Checked<()> {
         if (self.cancelled)() {
             return Err(Failure::Cancelled);

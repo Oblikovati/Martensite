@@ -101,7 +101,7 @@ struct AxisConstructionSettings {
     limit: f64,
     axis: usize,
 }
-fn measure_captured_axes(
+pub(super) fn measure_captured_axes(
     bounds: [&RatioInterval; 2],
     sources: [super::BezierPairCurve<'_>; 2],
     maps: [MetricParameterMap; 2],

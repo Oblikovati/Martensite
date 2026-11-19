@@ -33,6 +33,8 @@ pub(crate) struct CertifiedRegions {
     /// Connected components of the curve graph.
     pub components: usize,
     pub work: super::PlanarProofWorkReceipt,
+    pub programs: Option<std::sync::Arc<crate::sketch_region_prism::GraphIntegralEvidence>>,
+    pub parents: Vec<(u64, super::ProfileCurveId, usize)>,
 }
 
 pub(crate) struct RegionProofFailure {
@@ -40,6 +42,8 @@ pub(crate) struct RegionProofFailure {
     pub root_failure: Option<super::PlanarPairRootFailure>,
     pub work: Option<super::PlanarProofWorkReceipt>,
     pub cancelled: bool,
+    pub program: Option<Box<crate::sketch_region_prism::ProgramGraphFailure>>,
+    pub program_source: Option<super::ProfileCurveId>,
 }
 /// Certify every face under the unchanged or explicitly requested pair-work policy.
 pub(crate) fn certify_regions(
@@ -74,9 +78,18 @@ pub(crate) fn certify_regions_version_with_cancel(
     }
     let table = PieceTable::new(profile);
     let input = graph_input(profile, &table, pair_bisections)?;
-    let certificate =
-        certify_profile_graph_version_with_cancel(input, version.request_version(), cancelled)
-            .map_err(|refusal| graph_refusal(refusal, &table))?;
+    let result = match version.integral_options() {
+        Some(options) => crate::sketch_region_prism::certify_profile_program_with_cancel(
+            input,
+            version.request_version(),
+            options,
+            cancelled,
+        ),
+        None => {
+            certify_profile_graph_version_with_cancel(input, version.request_version(), cancelled)
+        }
+    };
+    let certificate = result.map_err(|refusal| graph_refusal(refusal, &table))?;
     let mut certified = assemble_certificate(certificate, &table);
     certified.version = version;
     Ok(certified)
@@ -97,6 +110,12 @@ fn assemble_certificate(
         carrier_pairs: certificate.carrier_pairs,
         components: certificate.components.len(),
         work: certificate.work,
+        parents: if certificate.programs.is_some() {
+            table.integral_parents()
+        } else {
+            Vec::new()
+        },
+        programs: certificate.programs,
     }
 }
 fn graph_input(
@@ -109,6 +128,8 @@ fn graph_input(
         root_failure: None,
         work: None,
         cancelled: false,
+        program: None,
+        program_source: None,
     })?;
     let mut input = table.graph_input(plane, profile.resolution.weld);
     input.pair_bisections = pair_bisections;
@@ -116,15 +137,15 @@ fn graph_input(
 }
 fn graph_refusal(refusal: ProfileProofRefusal, table: &PieceTable) -> RegionProofFailure {
     let work = refusal.work;
-    let root_failure =
-        refusal
-            .root_failure
-            .as_ref()
-            .map(|(sources, cause)| super::PlanarPairRootFailure {
-                curves: sources.map(|source| table.curve_of(source)),
-                cause: cause.clone(),
-            });
+    let program = refusal.program.clone();
+    let program_source = program
+        .as_ref()
+        .and_then(|failure| failure.offender())
+        .map(|source| table.curve_of(source.0));
+    let root_failure = pair_root_failure(&refusal, table);
     RegionProofFailure {
+        program,
+        program_source,
         root_failure,
         cancelled: refusal.cancelled,
         cause: declined(refusal, table),
@@ -173,4 +194,17 @@ fn declined(refusal: ProfileProofRefusal, table: &PieceTable) -> DeclineCause {
         },
         ProfileProofCause::Incomplete(reason) => incomplete(reason),
     }
+}
+
+fn pair_root_failure(
+    refusal: &ProfileProofRefusal,
+    table: &PieceTable,
+) -> Option<super::PlanarPairRootFailure> {
+    refusal
+        .root_failure
+        .as_ref()
+        .map(|(sources, cause)| super::PlanarPairRootFailure {
+            curves: sources.map(|source| table.curve_of(source)),
+            cause: cause.clone(),
+        })
 }

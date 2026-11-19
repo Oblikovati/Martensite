@@ -55,7 +55,7 @@ fn incidence(piece: &AuthoredPiece, endpoint: usize) -> (CornerSource, [f64; 2])
     }
     (piece.end, piece.poles[piece.poles.len() - 1])
 }
-fn canonical(source: CornerSource) -> CornerSource {
+pub(super) fn canonical(source: CornerSource) -> CornerSource {
     let CornerSource::Split {
         curve,
         numerator,

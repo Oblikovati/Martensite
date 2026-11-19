@@ -20,25 +20,68 @@ pub(super) fn certify(
     Ok(())
 }
 fn sector(originals: &[DevelopedRegionRequest], selection: &Selection) -> ConeChecked<()> {
-    let spans: Vec<_> = originals
-        .iter()
-        .flat_map(|r| r.loops.iter().flatten())
-        .map(|piece| piece.poles.as_slice())
-        .collect();
-    let angle = selection
+    let spans = domain::original_spans(originals);
+    let prepared = selection
         .prepared
         .first()
-        .map_or(0., |prepared| prepared.semi_angle);
-    let query = ConicalSectorQuery {
-        spans: &spans,
-        semi_angle: angle,
-        options: selection.sector_options,
-    };
-    if !selection.sector.matches(&query) {
-        return Err(family_mismatch("sector original source binding"));
+        .ok_or_else(|| family_mismatch("domain member owner"))?;
+    let matches = domain_matches(&selection.domain, prepared, &spans);
+    let owners_match = selection
+        .prepared
+        .iter()
+        .all(|prepared| authority_matches(&selection.domain, prepared, &spans));
+    if !matches || !owners_match {
+        return Err(family_mismatch("domain original source binding"));
     }
     Ok(())
 }
+
+fn domain_matches(
+    domain: &domain::DomainEvidence,
+    prepared: &Prepared,
+    spans: &[&[[f64; 2]]],
+) -> bool {
+    match domain {
+        domain::DomainEvidence::Legacy { sector, options } => sector.matches(&ConicalSectorQuery {
+            spans,
+            semi_angle: prepared.semi_angle,
+            options: *options,
+        }),
+        domain::DomainEvidence::Chart(proof) => chart_matches(proof, prepared, spans),
+    }
+}
+fn chart_matches(
+    proof: &ConicalChartDomainEvidence,
+    prepared: &Prepared,
+    spans: &[&[[f64; 2]]],
+) -> bool {
+    proof.matches(&ConicalChartDomainQuery {
+        spans,
+        semi_angle: prepared.semi_angle,
+        chart_origin: prepared.chart_origin,
+        fit_center: prepared.chart_center,
+        developed_turn: 0,
+        physical_turn: 0,
+        options: proof.options(),
+    })
+}
+
+fn authority_matches(
+    selected: &domain::DomainEvidence,
+    prepared: &Prepared,
+    spans: &[&[[f64; 2]]],
+) -> bool {
+    match (selected, prepared.chart_domain.as_deref()) {
+        (domain::DomainEvidence::Legacy { .. }, None) => true,
+        (domain::DomainEvidence::Chart(selected), Some(actual)) => {
+            selected.options() == actual.options()
+                && chart_matches(selected, prepared, spans)
+                && chart_matches(actual, prepared, spans)
+        }
+        _ => false,
+    }
+}
+
 fn original(
     originals: &[DevelopedRegionRequest],
     region: SurfaceRegionId,
@@ -92,7 +135,7 @@ fn bind_span(
     proof: &SpanProof,
 ) -> ConeChecked<()> {
     let query = boundary::query(original, prepared, piece, &proof.curves)?;
-    if proof.span != piece.span || !proof.boundary.matches(&query) {
+    if proof.span != piece.span || !domain::matches_boundary(prepared, &proof.boundary, &query) {
         return Err(mismatch(
             original.region,
             Some(piece.span),

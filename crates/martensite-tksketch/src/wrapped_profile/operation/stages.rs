@@ -25,6 +25,7 @@ pub(in crate::surface_sketch::wrapped_profile) trait SupportStages {
     type Context;
     type Stored;
     type Geometry;
+    type NativeEvidence: Default;
     type Limits;
     type Budget;
     type Error: From<Checkpoint>;
@@ -71,6 +72,30 @@ pub(in crate::surface_sketch::wrapped_profile) trait SupportStages {
         context: &mut Self::Context,
         cancelled: &mut CancelPoll<'_>,
     ) -> Result<(Self::Geometry, Shape), Self::Error>;
+    fn defer_native_checks(&self) -> bool {
+        false
+    }
+    fn certify_native_family(
+        &self,
+        _originals: &[Self::Original],
+        _selection: &Self::Selection,
+        _members: &BTreeMap<SurfaceRegionId, (Self::Geometry, Shape)>,
+        _context: &mut Self::Context,
+        _cancelled: &mut CancelPoll<'_>,
+    ) -> Result<Self::NativeEvidence, Self::Error> {
+        Ok(Self::NativeEvidence::default())
+    }
+    fn qualify_native(
+        &self,
+        original: &Self::Original,
+        _prepared: &Self::Prepared,
+        _geometry: &Self::Geometry,
+        shape: &Shape,
+        _evidence: &Self::NativeEvidence,
+    ) -> Result<pipeline::NativeQualification, Self::Error> {
+        pipeline::qualify_native(original.as_ref(), shape)
+            .map_err(|cause| Self::native(original.as_ref().region, cause))
+    }
     fn budget(
         &self,
         originals: &[Self::Original],

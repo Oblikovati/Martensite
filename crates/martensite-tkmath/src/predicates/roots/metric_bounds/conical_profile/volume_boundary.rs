@@ -232,29 +232,37 @@ pub(super) fn sum_contours(
     level: u8,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<Interval, BoundaryFailure> {
+    sum_contours_using(contours, level, arithmetic, integrate_span)
+}
+pub(super) fn sum_contours_using(
+    contours: &[Contour<'_>],
+    level: u8,
+    arithmetic: &mut Arithmetic<'_>,
+    integrate: fn(&[[f64; 2]], u8, &mut Arithmetic<'_>) -> Result<Interval, SourceBoundFailure>,
+) -> Result<Interval, BoundaryFailure> {
     let mut total = arithmetic.zero();
     for (index, contour) in contours.iter().enumerate() {
-        let value = sum_contour(index, contour, level, arithmetic)?;
+        let value = sum_contour_using(index, contour, level, arithmetic, integrate)?;
         total = arithmetic
             .add(&total, &value)
             .map_err(BoundaryFailure::Arithmetic)?;
     }
     Ok(total)
 }
-pub(super) fn sum_contour(
+fn sum_contour_using(
     index: usize,
     contour: &Contour<'_>,
     level: u8,
     arithmetic: &mut Arithmetic<'_>,
+    integrate: fn(&[[f64; 2]], u8, &mut Arithmetic<'_>) -> Result<Interval, SourceBoundFailure>,
 ) -> Result<Interval, BoundaryFailure> {
     let mut total = arithmetic.zero();
     for (span, poles) in contour.spans.iter().enumerate() {
-        let value =
-            integrate_span(poles, level, arithmetic).map_err(|cause| BoundaryFailure::Span {
-                contour: index,
-                span,
-                cause,
-            })?;
+        let value = integrate(poles, level, arithmetic).map_err(|cause| BoundaryFailure::Span {
+            contour: index,
+            span,
+            cause,
+        })?;
         total = arithmetic
             .add(&total, &value)
             .map_err(BoundaryFailure::Arithmetic)?;

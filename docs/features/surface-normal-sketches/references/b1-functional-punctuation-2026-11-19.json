@@ -1,0 +1,109 @@
+{
+  "schema": "martensite.b1-functional-diagnostics.v1",
+  "recorded_on": "2026-11-19",
+  "status": "functional fixture passes; B1 phase gate 0/3, incomplete",
+  "source": {
+    "worktree_head": "8f2b423103d13b22d9724747946b43ee1ca15ded",
+    "implementation": "uncommitted B1 changes; base commit alone does not include B1",
+    "matching_source_before_manifests": true,
+    "source_before_sha256": "0f7908fb3fbf56a305516cff574e58ad02c7da33c177150b7111362e203a5cbe",
+    "source_paths": 20913,
+    "unprobed_accepted_binary_sha256": "590a0534aebe4c52f9ebf051dbebeb4a7fdf29e15de7d7af7ea69036a0020f33",
+    "run_identity_sha256": "a4dbb9ac12122778aba88e2677bd46be82e28b21358c18bb3f9577a63045ade3"
+  },
+  "profile": {
+    "fixture": "owned polynomial O. (eight O curves plus four dot curves)",
+    "selected_regions": 2,
+    "selected_loops": 3,
+    "semi_angle_radians": 0.125,
+    "signed_depths": [
+      -0.1,
+      0.2
+    ],
+    "spatial_error": 0.0001,
+    "maximum_fit_level": 8,
+    "authored_subdivision_level": 6,
+    "authored_clearance_level": 0,
+    "authored_enclosure_width": 1e-07,
+    "arithmetic_fractional_bits": 128,
+    "arithmetic_operation_limit": 1000000,
+    "domain_policy": "PositiveXCommonChartV2",
+    "planar_proof": "FilteredCompositeBernsteinV5",
+    "max_components": 64,
+    "requested_integration_subintervals": 8192,
+    "authored_method": "ConditionedSimpsonV2"
+  },
+  "environment": {
+    "CARGO_TARGET_DIR": "/tmp/martensite-cone-chart-atlas-target",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+    "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "count_note": "derived_side_face_count is the sum of report.coverage.faces - 2 per member. The log names it retained_spans; it is not an independently counted fit-span total.",
+  "runs": [
+    {
+      "sense": "Outward",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::outward_narrow_polynomial_punctuation_completes_with_independent_bounds",
+        "--",
+        "--nocapture"
+      ],
+      "started_utc": "2026-11-19T06:07:08.228991+00:00",
+      "terminal": {
+        "exit_code": 0,
+        "source_changed": [],
+        "finished": "2026-11-19T06:09:39.560851+00:00"
+      },
+      "api_seconds": 150.11024,
+      "arithmetic_operations": 984593,
+      "integration_subintervals": 501,
+      "derived_side_face_count": 167,
+      "test_result": "1 passed; 0 failed; 0 ignored; 486 filtered out",
+      "log_sha256": "a7ca485f599fee42051ae14bcd55007590e2793a18e8770ff2677297669aceb0",
+      "artifact_directory": "/tmp/martensite-b1-half-pi-complete-outward"
+    },
+    {
+      "sense": "Inward",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::inward_narrow_polynomial_punctuation_completes_with_independent_bounds",
+        "--",
+        "--nocapture"
+      ],
+      "started_utc": "2026-11-19T06:11:05.475478+00:00",
+      "terminal": {
+        "exit_code": 0,
+        "source_changed": [],
+        "finished": "2026-11-19T06:13:01.094835+00:00"
+      },
+      "api_seconds": 114.468438,
+      "arithmetic_operations": 984593,
+      "integration_subintervals": 501,
+      "derived_side_face_count": 167,
+      "test_result": "1 passed; 0 failed; 0 ignored; 486 filtered out",
+      "log_sha256": "d38365449a74791de4470f0e23fc8f61f873250b528d8f343b6f77e686adf0f2",
+      "artifact_directory": "/tmp/martensite-b1-half-pi-complete-inward"
+    }
+  ],
+  "exclusions": [
+    "Runtime diagnostics only; not a matched benchmark, performance gate or five-second acceptance.",
+    "No B1 phase, full capability, hosted or new B1 sanitizer acceptance.",
+    "Probe/build-driver activity is separate; these results identify the unprobed accepted binary.",
+    "No limit, tolerance, version or replay-default changes are inferred from these observations."
+  ]
+}

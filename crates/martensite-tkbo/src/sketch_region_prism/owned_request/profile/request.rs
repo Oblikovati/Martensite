@@ -47,6 +47,8 @@ pub(in crate::sketch_region_prism) struct OwnedProfilePolicy {
 #[derive(Clone)]
 pub(in crate::sketch_region_prism) struct OwnedProfileRequest {
     pub version: u32,
+    pub integral_program:
+        Option<martensite_tkmath::predicates::roots::metric_bounds::IntegralProgramOptions>,
     pub operation: CallerOperationId,
     pub edges: Vec<OwnedProfileEdge>,
     pub loops: Vec<OwnedProfileLoop>,

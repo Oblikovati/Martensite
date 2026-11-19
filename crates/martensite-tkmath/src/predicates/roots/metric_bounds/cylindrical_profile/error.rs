@@ -197,3 +197,5 @@ impl std::error::Error for CylindricalProfileError {}
 #[cfg(test)]
 #[path = "diagnostic_tests.rs"]
 mod diagnostic_tests;
+
+impl std::error::Error for CylindricalProfileFailure {}

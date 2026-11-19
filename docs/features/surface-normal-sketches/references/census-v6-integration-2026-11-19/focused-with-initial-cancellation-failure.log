@@ -1,0 +1,278 @@
+warning: crates/martensite-tkmeshvs/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkmeshvs` (manifest) generated 1 warning
+warning: crates/martensite-raster-core/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-raster-core` (manifest) generated 1 warning
+warning: crates/martensite-tkcdf/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkcdf` (manifest) generated 1 warning
+warning: crates/martensite-tkxsbase/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkxsbase` (manifest) generated 1 warning
+warning: crates/martensite-tkgeombase/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkgeombase` (manifest) generated 1 warning
+warning: crates/martensite-tktopalgo/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tktopalgo` (manifest) generated 1 warning
+warning: crates/martensite-tkg3d/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkg3d` (manifest) generated 1 warning
+warning: crates/martensite-tkexpress/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkexpress` (manifest) generated 1 warning
+warning: crates/martensite-tkbo/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkbo` (manifest) generated 1 warning
+warning: crates/martensite-tkdeiges/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkdeiges` (manifest) generated 1 warning
+warning: crates/martensite-tkxcaf/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkxcaf` (manifest) generated 1 warning
+warning: crates/martensite-tkdeobj/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkdeobj` (manifest) generated 1 warning
+warning: crates/martensite-tkde/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkde` (manifest) generated 1 warning
+warning: crates/martensite-tkv3d/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkv3d` (manifest) generated 1 warning
+warning: crates/martensite-tkgeomalgo/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkgeomalgo` (manifest) generated 1 warning
+warning: crates/martensite-tkprim/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkprim` (manifest) generated 1 warning
+warning: crates/martensite-tkbool/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkbool` (manifest) generated 1 warning
+warning: crates/martensite-tkvcaf/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkvcaf` (manifest) generated 1 warning
+warning: crates/martensite-vulkan/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-vulkan` (manifest) generated 1 warning
+warning: crates/martensite-tkfeat/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkfeat` (manifest) generated 1 warning
+warning: crates/martensite-tkdeply/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkdeply` (manifest) generated 1 warning
+warning: crates/martensite-tkg2d/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkg2d` (manifest) generated 1 warning
+warning: crates/martensite-tkcaf/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkcaf` (manifest) generated 1 warning
+warning: crates/martensite-geometry-raster/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-geometry-raster` (manifest) generated 1 warning
+warning: crates/martensite-tkoffset/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkoffset` (manifest) generated 1 warning
+warning: crates/martensite-tkmesh/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkmesh` (manifest) generated 1 warning
+warning: crates/martensite-tksketch/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tksketch` (manifest) generated 1 warning
+warning: crates/martensite-tkdestl/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkdestl` (manifest) generated 1 warning
+warning: crates/martensite-cmath/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-cmath` (manifest) generated 1 warning
+warning: crates/martensite-test-support/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-test-support` (manifest) generated 1 warning
+warning: crates/martensite-tkhlr/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkhlr` (manifest) generated 1 warning
+warning: crates/martensite-process-policy/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-process-policy` (manifest) generated 1 warning
+warning: crates/martensite-tkbrep/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkbrep` (manifest) generated 1 warning
+warning: crates/martensite-tkxmesh/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkxmesh` (manifest) generated 1 warning
+warning: crates/martensite-tkdestep/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkdestep` (manifest) generated 1 warning
+warning: crates/martensite-tkfillet/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkfillet` (manifest) generated 1 warning
+warning: crates/martensite-tktobj/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tktobj` (manifest) generated 1 warning
+warning: crates/martensite-tkservice/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkservice` (manifest) generated 1 warning
+warning: crates/martensite-tkhelix/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkhelix` (manifest) generated 1 warning
+warning: crates/martensite-tklcaf/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tklcaf` (manifest) generated 1 warning
+warning: crates/martensite-tkshhealing/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkshhealing` (manifest) generated 1 warning
+warning: crates/martensite-tkernel/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkernel` (manifest) generated 1 warning
+warning: crates/martensite-tkmath/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkmath` (manifest) generated 1 warning
+warning: crates/martensite-boolean-cases/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-boolean-cases` (manifest) generated 1 warning
+warning: crates/martensite-topology-test-support/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-topology-test-support` (manifest) generated 1 warning
+warning: crates/martensite-tkrwmesh/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkrwmesh` (manifest) generated 1 warning
+   Compiling martensite-tkmath v0.3.9 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkmath)
+   Compiling martensite-tkg2d v0.3.7 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkg2d)
+   Compiling martensite-tkg3d v0.3.9 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkg3d)
+   Compiling martensite-tkgeombase v0.3.6 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkgeombase)
+   Compiling martensite-tkbrep v0.3.11 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkbrep)
+   Compiling martensite-tkgeomalgo v0.3.8 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkgeomalgo)
+   Compiling martensite-tktopalgo v0.4.3 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tktopalgo)
+   Compiling martensite-tkshhealing v0.3.9 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkshhealing)
+   Compiling martensite-tkservice v0.4.1 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkservice)
+   Compiling martensite-raster-core v0.7.0 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-raster-core)
+   Compiling martensite-tkmesh v0.3.8 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkmesh)
+   Compiling martensite-tkprim v0.3.10 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkprim)
+   Compiling martensite-tkhlr v0.3.6 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkhlr)
+   Compiling martensite-geometry-raster v0.7.0 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-geometry-raster)
+   Compiling martensite-topology-test-support v0.7.0 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-topology-test-support)
+   Compiling martensite-tkbo v0.8.2 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkbo)
+    Finished `test` profile [unoptimized] target(s) in 5m 37s
+     Running unittests src/lib.rs (/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tkbo-4828b1def3597974)
+
+running 13 tests
+test bop_algo::checker_si::face_binding::tests::vertex_tests::missing_and_duplicate_endpoint_uses_refuse_before_geometric_checks ... ok
+test bop_ds::tools::tests::interfering_types_are_the_geometric_types_and_solids ... ok
+test profile_extrusion::composite_tests::geometric::geometric_v6_never_widens_a_zero_integral_loan ... ok
+test profile_extrusion::composite_tests::geometric::geometric_v6_publishes_the_same_rectangle_with_its_actual_program_loan ... ok
+test sketch_region_certification::geometric_tests::geometric_census_cancellation_never_publishes_complete_pair_coverage ... 
+thread 'sketch_region_certification::geometric_tests::geometric_census_cancellation_never_publishes_complete_pair_coverage' (983595) panicked at crates/martensite-tkbo/src/sketch_region_certification/geometric_tests.rs:122:5:
+assertion `left == right` failed
+  left: 1195
+ right: 1
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+FAILED
+test sketch_region_certification::geometric_tests::geometric_census_issues_endpoint_evidence_without_solver_roots ... ok
+test sketch_region_certification::geometric_tests::geometric_census_rejects_changed_source_policy_and_parameter_axis ... ok
+test sketch_region_certification::geometric_tests::geometric_census_retains_genuine_general_fallback_and_charges_work_once ... ok
+test sketch_region_prism::frozen::ordered_validation::operation_tests::unknown_current_behavior_is_incomplete_before_any_geometric_work ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::program::geometric_v6_owned_graph_keeps_live_program_and_native_contact_evidence ... ok
+test sketch_region_prism::region_certificate::embedding::annular_validation::tests::a_mismatched_pair_or_changed_geometric_conclusion_is_never_an_exact_pass ... ok
+test sketch_region_prism::tolerance_inspection::inspection_tests::inflated_metadata_report_and_refuse_do_not_change_exact_geometric_error ... ok
+test sketch_region_validation::diagnostic_tests::geometric_defects_keep_native_status_order ... ok
+
+failures:
+
+failures:
+    sketch_region_certification::geometric_tests::geometric_census_cancellation_never_publishes_complete_pair_coverage
+
+test result: FAILED. 12 passed; 1 failed; 0 ignored; 0 measured; 2279 filtered out; finished in 0.58s
+
+error: test failed, to rerun pass `-p martensite-tkbo --lib`

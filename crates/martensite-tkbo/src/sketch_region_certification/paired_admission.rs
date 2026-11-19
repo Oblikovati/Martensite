@@ -131,7 +131,7 @@ pub(crate) fn enumerate_filtered_exclusion_census_with_access(
         access,
     )
 }
-fn enumerate_selected(
+pub(super) fn enumerate_selected(
     inputs: BoundaryInputs,
     policies: (CensusPolicy, SourceConformancePolicy),
     pair_version: u32,
@@ -230,4 +230,24 @@ fn source_history_rows(
         .filter(|row| row.output.is_same(&source.edge))
         .cloned()
         .collect()
+}
+
+pub(crate) fn enumerate_geometric_census_with_access(
+    inputs: BoundaryInputs,
+    policy: CensusPolicy,
+    source_policy: SourceConformancePolicy,
+    cancelled: impl FnMut() -> bool,
+    access: super::SourceAccess<'_>,
+) -> Result<BoundaryCensus, CensusCause> {
+    let mut signs = BezierPairSignOptions::derived();
+    signs.version = 2;
+    enumerate_selected(
+        inputs,
+        (policy, source_policy),
+        2,
+        Some(2),
+        signs,
+        cancelled,
+        access,
+    )
 }

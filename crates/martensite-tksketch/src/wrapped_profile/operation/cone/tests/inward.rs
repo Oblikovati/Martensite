@@ -118,7 +118,11 @@ pub(super) fn check_vertex(
         _ => return 0,
     };
     let source = authored_vertex(request, id);
-    let expected = expected_point(source.point, -depth, request.support.semi_angle);
+    let physical_depth = match request.support.normal {
+        NormalSense::Outward => depth,
+        NormalSense::Inward => -depth,
+    };
+    let expected = expected_point(source.point, physical_depth, request.support.semi_angle);
     check_point(request, shape, key, source, expected);
     1
 }

@@ -2,6 +2,7 @@
 //! Candidate whole-span angular discrepancy bound on the unit parameter interval.
 use super::angle::*;
 use super::*;
+mod conditioned;
 use crate::predicates::roots::certificate_arithmetic::bernstein_bounds::difference;
 use crate::predicates::roots::certificate_arithmetic::bernstein_bounds::lower;
 use crate::predicates::roots::certificate_arithmetic::bernstein_bounds::product;
@@ -9,6 +10,9 @@ use crate::predicates::roots::certificate_arithmetic::bernstein_bounds::scale;
 use crate::predicates::roots::certificate_arithmetic::bernstein_curve::derivative;
 use crate::predicates::roots::metric_bounds::CylindricalProfileFailure;
 use crate::predicates::roots::metric_bounds::cylindrical_profile::algebra;
+pub(super) use conditioned::{
+    absolute_coefficient_mean, angular_in_chart_selected, weighted_primitive_error_selected,
+};
 
 pub(super) struct AngularSpanRequest<'a> {
     pub(super) source: &'a [[f64; 2]],

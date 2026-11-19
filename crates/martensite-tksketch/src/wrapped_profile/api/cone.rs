@@ -6,6 +6,10 @@ mod reports;
 pub use reports::*;
 mod proof;
 pub use proof::*;
+mod domain_policy;
+pub use domain_policy::*;
+mod execution_selection;
+pub use execution_selection::*;
 /// Owned cone-normal extrusion input; `normal_extrude_cone_profile(&request)?`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct WrappedConeNormalRequest {
@@ -72,6 +76,20 @@ impl WrappedConeNormalResult {
     /// Canonical Phase A supports use the apex; `let origin = result.boundary_flux_origin();`.
     pub fn boundary_flux_origin(&self) -> [f64; 3] {
         self.support.apex
+    }
+    /// Executed whole-orbit and face integral programs, present only for explicit V5.
+    /// Example: `result.planar_integral_receipt(region).map(|proof| proof.entry_allowance())`.
+    pub fn planar_integral_receipt(
+        &self,
+        region: SurfaceRegionId,
+    ) -> Option<&martensite_tkbo::profile_extrusion::PlanarIntegralEvidence> {
+        self.family
+            .family
+            .members
+            .get(&region)?
+            .geometry
+            .material
+            .integral_program_evidence()
     }
     /// Original, effective and consumed integration work; `result.flux_receipt(region)`.
     pub fn flux_receipt(

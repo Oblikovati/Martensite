@@ -78,7 +78,7 @@ pub enum ResidualViolation {
     Stationary(RootBracket),
 }
 /// No complete decision is returned after unsupported input or exhausted work.
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ResidualError {
     /// Missing or mismatched control arrays.
     Shape {

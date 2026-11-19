@@ -97,6 +97,13 @@ pub(super) fn conditional_volume(
     input: &VolumeInput<'_>,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<ConditionalVolumeEvidence, BoundaryFailure> {
+    conditional_volume_using(input, arithmetic, sum_contours)
+}
+pub(super) fn conditional_volume_using(
+    input: &VolumeInput<'_>,
+    arithmetic: &mut Arithmetic<'_>,
+    integrate: impl FnOnce(&[Contour<'_>], u8, &mut Arithmetic<'_>) -> Result<Interval, BoundaryFailure>,
+) -> Result<ConditionalVolumeEvidence, BoundaryFailure> {
     admit_volume(input, arithmetic)?;
     let start = arithmetic.operations();
     let clearances = prove_boundary_clearance(input, arithmetic)?;
@@ -104,7 +111,7 @@ pub(super) fn conditional_volume(
     if area.lower <= 0.into() {
         return Err(BoundaryFailure::UnresolvedArea);
     }
-    let inverse = sum_contours(input.contours, input.level, arithmetic)?;
+    let inverse = integrate(input.contours, input.level, arithmetic)?;
     if inverse.lower <= 0.into() {
         return Err(BoundaryFailure::UnresolvedInverse);
     }

@@ -36,7 +36,7 @@ fn exact_exclusion_completes_the_owned_monotone_cubic_without_legacy_evidence() 
     let execution = record.outcome.as_ref().unwrap();
     assert_eq!(
         execution.exclusion.completion(),
-        BezierPairExclusionCompletion::Excluded
+        super::conditioned_stage::ConditionedCompletion::Complete
     );
     assert!(execution.fallback.is_none());
     assert_eq!(census.bisections, record.completed_work());
@@ -110,7 +110,7 @@ pub(super) fn assert_crossing_fallback(record: &super::bernstein_execution::Bern
     let execution = record.outcome.as_ref().unwrap();
     assert_eq!(
         execution.exclusion.completion(),
-        BezierPairExclusionCompletion::Inconclusive
+        super::conditioned_stage::ConditionedCompletion::Inconclusive
     );
     let fallback = execution.fallback.as_ref().unwrap();
     assert_eq!(fallback.complete().unwrap().contact_count(), 1);

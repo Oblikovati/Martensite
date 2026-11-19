@@ -45,3 +45,14 @@ pub(crate) fn certificate_in<'a>(
         None => super::domain_certificate(census, domain),
     }
 }
+
+pub(crate) fn unified_certificate_in<'a>(
+    census: &'a BoundaryCensus,
+    domain: &BoundaryDomain,
+    view: Option<&DomainCertificates<'a>>,
+) -> Option<CertifiedPairDomain<'a>> {
+    match view {
+        Some(view) => view.unified_certificate(domain),
+        None => DomainCertificates::new(census)?.unified_certificate(domain),
+    }
+}

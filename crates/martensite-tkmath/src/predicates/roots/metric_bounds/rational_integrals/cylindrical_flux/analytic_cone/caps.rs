@@ -11,25 +11,27 @@ pub(super) struct Density {
 }
 
 pub(super) fn accumulate(
-    sum: &mut publish::BoundsSum,
+    sum: &mut super::super::super::conical_sum::ConicalSum,
     index: usize,
     span: AnalyticConicalFluxSpan<'_>,
     densities: &[Density; 2],
-    cancelled: &mut impl FnMut() -> bool,
+    operations: &mut u32,
+    cancelled: &mut (impl FnMut() -> bool + Send),
 ) -> Checked<()> {
     for (depth, density) in densities.iter().enumerate() {
-        let moments = moments::integrate(span.cap_pcurves[depth], cancelled).map_err(|cause| {
-            AnalyticConicalFluxFailure::Cap {
-                span: index,
-                depth,
-                cause: Box::new(cause),
-            }
-        })?;
+        let moments = measured_moments(index, depth, span.cap_pcurves[depth], cancelled)?;
         let contribution = contribution(density, &moments);
         sum.accumulate(
             publish::reversed_bounds(contribution, span.cap_reversed[depth]),
             0,
-        );
+            operations,
+            cancelled,
+        )
+        .map_err(|cause| AnalyticConicalFluxFailure::Arithmetic {
+            span: Some(index),
+            depth: Some(depth),
+            cause: Box::new(cause),
+        })?;
     }
     Ok(())
 }
@@ -53,4 +55,17 @@ fn scaled(bounds: &ContributionBounds, factor: &ExactRatio) -> ContributionBound
         lower: lower.multiply(factor),
         upper: upper.multiply(factor),
     }
+}
+
+fn measured_moments(
+    index: usize,
+    depth: usize,
+    poles: &[[f64; 2]],
+    cancelled: &mut impl FnMut() -> bool,
+) -> Checked<[ExactRatio; 2]> {
+    moments::integrate(poles, cancelled).map_err(|cause| AnalyticConicalFluxFailure::Cap {
+        span: index,
+        depth,
+        cause: Box::new(cause),
+    })
 }

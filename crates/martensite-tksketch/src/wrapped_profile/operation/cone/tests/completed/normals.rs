@@ -36,7 +36,9 @@ fn check_face(
         checked[3] += 1;
     }
 }
-pub(super) fn faces(root: &Shape) -> Vec<Shape> {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone::tests) fn faces(
+    root: &Shape,
+) -> Vec<Shape> {
     children(root)
         .iter()
         .flat_map(children)
@@ -54,7 +56,10 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone::tests) fn childr
     }
     result
 }
-pub(super) fn key(detached: &DetachedWrappedBodies, face: &Shape) -> WrappedHistoryKey {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone::tests) fn key(
+    detached: &DetachedWrappedBodies,
+    face: &Shape,
+) -> WrappedHistoryKey {
     assert_eq!(face.shape_type().unwrap(), ShapeEnum::Face);
     let keys: Vec<_> = detached
         .entities
@@ -75,7 +80,10 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone::tests) fn cap(
         HistoryRole::FirstDepthFace | HistoryRole::LastDepthFace
     )
 }
-pub(super) fn physical_cap_role(role: HistoryRole, normal: NormalSense) -> HistoryRole {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone::tests) fn physical_cap_role(
+    role: HistoryRole,
+    normal: NormalSense,
+) -> HistoryRole {
     match (normal, role) {
         (NormalSense::Inward, HistoryRole::FirstDepthFace) => HistoryRole::LastDepthFace,
         (NormalSense::Inward, HistoryRole::LastDepthFace) => HistoryRole::FirstDepthFace,
@@ -91,13 +99,20 @@ fn curve(key: WrappedHistoryKey) -> Option<SurfaceCurveId> {
         _ => None,
     }
 }
-fn derivatives(face: &Shape, u: f64, v: f64) -> martensite_tkg3d::geom::GeomSurfaceD1 {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone::tests) fn derivatives(
+    face: &Shape,
+    u: f64,
+    v: f64,
+) -> martensite_tkg3d::geom::GeomSurfaceD1 {
     let face = martensite_tkbrep::topods::face(face).unwrap();
     let (surface, location) = BRepTool::surface_with_location(&face).unwrap();
     assert!(location.is_identity());
     surface.get().unwrap().d1(u, v).unwrap()
 }
-fn normal(face: &Shape, derivatives: &martensite_tkg3d::geom::GeomSurfaceD1) -> Vector3 {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone::tests) fn normal(
+    face: &Shape,
+    derivatives: &martensite_tkg3d::geom::GeomSurfaceD1,
+) -> Vector3 {
     let normal = derivatives.d1u.crossed(derivatives.d1v);
     match face.orientation() {
         Orientation::Forward => normal,

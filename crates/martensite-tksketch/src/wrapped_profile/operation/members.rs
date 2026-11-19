@@ -16,6 +16,9 @@ pub(super) fn qualify<S: SupportStages>(
     control.run_for::<_, S::Error>(FamilyStage::Binding, None, |_| {
         support.bind(originals, selection, &stored)
     })?;
+    if support.defer_native_checks() {
+        return directed::finish(support, originals, selection, stored, context, control);
+    }
     finish(support, originals, prepared, stored, context, control)
 }
 pub(in crate::surface_sketch::wrapped_profile) fn store<S: SupportStages>(
@@ -76,3 +79,5 @@ fn sources<'a, S: SupportStages>(
         .ok_or_else(|| S::missing(region))?;
     Ok((original, retained))
 }
+
+mod directed;

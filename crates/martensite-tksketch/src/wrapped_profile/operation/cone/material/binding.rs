@@ -88,7 +88,7 @@ pub(super) fn validate(
     validate_domain(prepared, proofs, material)?;
     let spans = spans(&material.original, prepared, proofs)?;
     let query = query(prepared, material.carriers, material.options, &spans);
-    if !material.normal.matches(&query) {
+    if !developed::matches(&query, prepared, proofs, material)? {
         return Err(mismatch(
             prepared.source.region,
             None,
@@ -107,6 +107,7 @@ fn validate_domain(
         material.requested_planar_proof,
         material.planar_proof,
     )?;
+    validate_original_program_policy(prepared.source.region, material)?;
     let uv = domain::request(prepared, proofs)?;
     if !material.uv.matches_request(&uv) {
         return Err(mismatch(
@@ -146,6 +147,22 @@ fn trims(
                 region,
                 Some(proof.span),
                 "filled actual carrier/trim source binding",
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_original_program_policy(
+    region: SurfaceRegionId,
+    material: &MaterialEvidence,
+) -> ConeChecked<()> {
+    if let Some(proof) = material.uv.integral_program_evidence() {
+        if proof.requested_proof_version() != material.requested_planar_proof {
+            return Err(mismatch(
+                region,
+                None,
+                "retained original integral program policy",
             ));
         }
     }

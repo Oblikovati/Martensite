@@ -2,6 +2,7 @@
 use super::super::super::stages::OwnedFamily;
 use super::*;
 mod inputs;
+mod query;
 struct Inputs<'a> {
     spans: Vec<Vec<ConicalJoinSpan<'a>>>,
     lengths: Vec<Vec<usize>>,
@@ -22,7 +23,7 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn certify(
         request.options.spatial_error,
         work.remaining(),
     );
-    let result = certify_conical_reference(query, cancelled);
+    let result = query.certify(cancelled);
     let region = first_region(family)?;
     let operations = result.as_ref().map_or_else(
         |cause| cause.operations,
@@ -52,7 +53,7 @@ pub(super) fn validate(family: &ConeBudgeted) -> ConeChecked<()> {
         proof.requested_spatial_limit(),
         proof.options(),
     );
-    if !proof.matches(&query) {
+    if !query.matches(proof) {
         return Err(mismatch(
             first_region(&family.family)?,
             None,
@@ -73,22 +74,6 @@ impl<'a> Inputs<'a> {
                 joins,
             })
             .collect()
-    }
-    fn query<'b>(
-        &'b self,
-        members: &'b [ConicalReferenceMember<'b>],
-        family: &'b OwnedFamily<Selection, Geometry>,
-        limit: f64,
-        options: ConeClearanceOptions,
-    ) -> ConicalReferenceQuery<'b> {
-        ConicalReferenceQuery {
-            members,
-            clearance: &family.selection.clearance,
-            sector: &family.selection.sector,
-            sector_spans: &self.sector,
-            spatial_limit: limit,
-            options,
-        }
     }
 }
 fn first_region(family: &OwnedFamily<Selection, Geometry>) -> ConeChecked<SurfaceRegionId> {

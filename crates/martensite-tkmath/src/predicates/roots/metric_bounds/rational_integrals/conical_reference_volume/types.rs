@@ -62,7 +62,7 @@ impl CertifiedConicalReferenceVolume {
     pub fn requested_options(&self) -> CylindricalFluxOptions {
         self.options
     }
-    /// Unclamped aggregate policy; `proof.effective_options()`.
+    /// Unclamped parent policy; parent2 retains scalar term algorithm1. `proof.effective_options()`.
     pub fn effective_options(&self) -> CylindricalFluxOptions {
         self.options
     }
@@ -83,7 +83,7 @@ impl CertifiedConicalReferenceVolume {
     pub fn integration_subintervals(&self) -> u64 {
         self.scalar.subintervals
     }
-    /// Bounded trig/depth operations; exact coefficient algebra is bounded by admitted degrees.
+    /// Bounded trig/depth work and, for parent2, actual outward accumulation operations.
     /// Example: `assert!(proof.arithmetic_operations() <= proof.requested_arithmetic().max_operations)`.
     pub fn arithmetic_operations(&self) -> u32 {
         self.operations

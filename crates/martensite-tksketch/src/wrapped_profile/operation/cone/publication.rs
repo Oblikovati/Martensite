@@ -5,7 +5,7 @@ mod reports;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
-pub(super) use tests::assert_publication;
+pub(super) use tests::{assert_publication, assert_publication_core};
 
 pub(super) fn publish(
     request: &WrappedConeNormalRequest,
@@ -17,7 +17,11 @@ pub(super) fn publish(
     let history = project_history(request, &inputs, &family)?;
     let reports = reports::members(&family).map_err(ConeFailure::public)?;
     let budget = reports::budget(request, &family);
-    super::material::validate_publication(&family).map_err(ConeFailure::public)?;
+    super::material::validate_publication(
+        &family,
+        u64::from(request.proof.integration.max_total_subintervals),
+    )
+    .map_err(ConeFailure::public)?;
     input::poll(cancelled, WrappedStage::Publication)?;
     Ok(assemble(request, family, history, reports, budget))
 }

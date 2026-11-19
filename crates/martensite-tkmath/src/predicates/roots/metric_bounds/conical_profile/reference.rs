@@ -4,6 +4,13 @@ use super::boundary_snapshot::BoundarySnapshot;
 use super::*;
 use crate::predicates::roots::metric_bounds::cylindrical_profile::trigonometric;
 mod binding;
+mod chart;
+mod context;
+pub use chart::{
+    ConicalChartReferenceQuery, certify_conical_chart_reference,
+    certify_conical_chart_reference_with_refinement,
+};
+use context::{ReferenceDomain, ReferenceInputs};
 mod geometry;
 #[cfg(test)]
 mod tests;
@@ -105,7 +112,7 @@ impl ConicalReferenceEvidence {
     }
     /// Rebind the complete inputs and already executed component proofs; `proof.matches(&query)`.
     pub fn matches(&self, query: &ConicalReferenceQuery<'_>) -> bool {
-        binding::matches(self, query)
+        binding::matches(self, &ReferenceInputs::from(query))
     }
 }
 /// Execute the conditional reference-body composition over the declared selected material.
@@ -114,6 +121,7 @@ pub fn certify_conical_reference(
     query: ConicalReferenceQuery<'_>,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<ConicalReferenceEvidence, ConicalReferenceError> {
+    let query = ReferenceInputs::from(&query);
     binding::admit(&query)?;
     let policy = ArithmeticPolicy {
         fractional_bits: query.options.fractional_bits,

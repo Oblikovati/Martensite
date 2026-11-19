@@ -1,0 +1,333 @@
+{
+  "kind": "original_167_side_storage_eta_and_primitive_bound_roi_diagnostic",
+  "date": "2026-11-19",
+  "summary": {
+    "source_restored": true,
+    "case_diagnostics": [
+      {
+        "event": "narrow_cone_api",
+        "sense": "Inward",
+        "seconds": 37.419896
+      },
+      {
+        "event": "narrow_cone_api",
+        "sense": "Outward",
+        "seconds": 35.812592
+      }
+    ],
+    "eta": [
+      {
+        "sense": "Inward",
+        "region": 1,
+        "receipt_records": 156,
+        "unique_spans": 156,
+        "max_eta": 1.2589921160398212e-13
+      },
+      {
+        "sense": "Inward",
+        "region": 2,
+        "receipt_records": 11,
+        "unique_spans": 11,
+        "max_eta": 1.9972149342346723e-13
+      },
+      {
+        "sense": "Outward",
+        "region": 1,
+        "receipt_records": 156,
+        "unique_spans": 156,
+        "max_eta": 1.3673109821604975e-13
+      },
+      {
+        "sense": "Outward",
+        "region": 2,
+        "receipt_records": 11,
+        "unique_spans": 11,
+        "max_eta": 2.1066712066827112e-13
+      }
+    ],
+    "primitive_old_bound_replay_mismatches": 0,
+    "mismatch_examples": [],
+    "primitive_sites": {
+      "source_angular": {
+        "records": 644,
+        "min_ratio": 0.7355565530565703,
+        "median_ratio": 0.8321555637790526,
+        "max_ratio": 0.9633789516910067,
+        "at_least_10pct_reduction": 636
+      },
+      "weighted_native": {
+        "records": 334,
+        "min_ratio": 0.6378378954550862,
+        "median_ratio": 0.7887537702206202,
+        "max_ratio": 0.8037877298451409,
+        "at_least_10pct_reduction": 334
+      }
+    },
+    "scope": "Offline directed-integer hull-conditioning forecast only; not caller min selection, fitted span prediction, production charged work or performance acceptance"
+  },
+  "terminal": {
+    "started": "2026-11-19T09:26:45.249031+00:00",
+    "head": "756a585d558515eb3cd246918d5e91acfea0f562",
+    "scope": "One diagnostic complete O pair; no modeling or acceptance change; exact source restoration before analysis",
+    "records": [
+      {
+        "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/storage/capture.rs",
+        "before": "d083a5e93550009c5137673b3c17d9ad2b126a8caad8ff5f43ba3f9e7183ca16",
+        "candidate": "0e54cdc66f3b660b6bd594614bb3b7b1c1798fdd04fd58f6b8756bb71a2a6d11",
+        "backup": "/tmp/martensite-b1-storage-eta-probe-source/capture.rs.before",
+        "patch": "/tmp/martensite-b1-storage-eta-probe-source/storage-eta-probe.patch"
+      },
+      {
+        "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/angular/conditioned/primitive.rs",
+        "before": "0032bc42db954647025a8f03423d0f0bcd4cfcfb79224172c19e7b5e7cafed37",
+        "candidate": "9187b28a0588aab8afab8719679815572a9beb38209876d9bbe80a8e76bb9e93",
+        "backup": "/tmp/martensite-b1-primitive-roi-probe-source/primitive.rs.before",
+        "patch": "/tmp/martensite-b1-primitive-roi-probe-source/primitive-roi-probe.patch"
+      }
+    ],
+    "settings": {
+      "CARGO_TARGET_DIR": "/tmp/martensite-cone-b1-cached-target",
+      "CARGO_BUILD_JOBS": "2",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+      "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+      "CARGO_TERM_COLOR": "never"
+    },
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tksketch",
+      "--lib",
+      "narrow::complete::",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "child_pid": 41919,
+    "child_exit": 0,
+    "source_changed_after_restoration": [],
+    "finished": "2026-11-19T09:29:27.722006+00:00"
+  },
+  "invocation": {
+    "started": "2026-11-19T09:26:45.249031+00:00",
+    "head": "756a585d558515eb3cd246918d5e91acfea0f562",
+    "scope": "One diagnostic complete O pair; no modeling or acceptance change; exact source restoration before analysis",
+    "records": [
+      {
+        "path": "crates/martensite-tksketch/src/wrapped_profile/operation/cone/storage/capture.rs",
+        "before": "d083a5e93550009c5137673b3c17d9ad2b126a8caad8ff5f43ba3f9e7183ca16",
+        "candidate": "0e54cdc66f3b660b6bd594614bb3b7b1c1798fdd04fd58f6b8756bb71a2a6d11",
+        "backup": "/tmp/martensite-b1-storage-eta-probe-source/capture.rs.before",
+        "patch": "/tmp/martensite-b1-storage-eta-probe-source/storage-eta-probe.patch"
+      },
+      {
+        "path": "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/angular/conditioned/primitive.rs",
+        "before": "0032bc42db954647025a8f03423d0f0bcd4cfcfb79224172c19e7b5e7cafed37",
+        "candidate": "9187b28a0588aab8afab8719679815572a9beb38209876d9bbe80a8e76bb9e93",
+        "backup": "/tmp/martensite-b1-primitive-roi-probe-source/primitive.rs.before",
+        "patch": "/tmp/martensite-b1-primitive-roi-probe-source/primitive-roi-probe.patch"
+      }
+    ],
+    "settings": {
+      "CARGO_TARGET_DIR": "/tmp/martensite-cone-b1-cached-target",
+      "CARGO_BUILD_JOBS": "2",
+      "CARGO_INCREMENTAL": "0",
+      "CARGO_PROFILE_DEV_DEBUG": "0",
+      "CARGO_PROFILE_TEST_DEBUG": "0",
+      "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+      "CARGO_PROFILE_TEST_STRIP": "debuginfo",
+      "CARGO_TERM_COLOR": "never"
+    },
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tksketch",
+      "--lib",
+      "narrow::complete::",
+      "--",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "child_pid": 41919
+  },
+  "source_receipt_sha256": {
+    "roi-summary.json": "9a2363ff93ac5eb637df140fdefae07a23b7aaee9023c29baf8e313c749b82c4",
+    "terminal.json": "c1c2f2c4871d117bfa7c370fadd19fcf1e089868c554afb07bbd73ef9e0b5cb4",
+    "running.json": "70698f8a487900d5a4d8270fa46f654e05ac0337a6a1c1ffed708661932ec93f",
+    "roi-records.json": "478e54f54629725bbf803b8893043f169221a0d4055d5ec8e82f79a1964e464b",
+    "output.log": "29c3b49454df68bd2841e6c8a7242f85334ba2a73913de6f390a52919f4ce33e",
+    "source-before-probe.json": "1f90e3c0d5caa36c32f08e5ec110e1c0660d8b1d6cb48062bd98ffb9731acdd5",
+    "source-during-probe.json": "d8337f89ab50bae14c0b1a74bf838e5a92fa8db7c01eb1f6da81bbaa76ff046e",
+    "source-after-restoration.json": "1f90e3c0d5caa36c32f08e5ec110e1c0660d8b1d6cb48062bd98ffb9731acdd5"
+  },
+  "requested_policy": {
+    "spatial_tolerance": 0.0001,
+    "fractional_bits": 128,
+    "family_max_operations": 1000000,
+    "fit_level": 8,
+    "authored_level": 6,
+    "authored_enclosure_width": 1e-07,
+    "original_O3_upper": 1e-07
+  },
+  "eta_maxima_exact_bits": [
+    {
+      "sense": "Inward",
+      "region": 1,
+      "records": 156,
+      "curve": 3,
+      "level": 5,
+      "index": 30,
+      "eta_storage_exact": [
+        "18907318146658866941177247 * 2^-127",
+        "21420640859041556398615553 * 2^-127"
+      ],
+      "eta_storage_value_enclosure_bits": [
+        [
+          4413324841676055234,
+          4413324841676055235
+        ],
+        [
+          4414011416794404608,
+          4414011416794404609
+        ]
+      ],
+      "eta_storage_upward_bits": [
+        4413324841676055235,
+        4414011416794404609
+      ],
+      "maximum_upward_bits": 4414011416794404609,
+      "maximum_upward_value": 1.2589921160398212e-13,
+      "requested_spatial_tolerance_bits": 4547007122018943789,
+      "fractional_bits": 128,
+      "generation_max_operations": 704503,
+      "generation_operations": 2817,
+      "global_operations_at_capture": 816659,
+      "full_decoded_record_sha256": "62191078c720b5214ba2c16cd0d0b4ea2016b049665fbf09392e8e1674a6d0a2"
+    },
+    {
+      "sense": "Inward",
+      "region": 2,
+      "records": 11,
+      "curve": 11,
+      "level": 1,
+      "index": 1,
+      "eta_storage_exact": [
+        "67317528184016095239518593 * 2^-128",
+        "67961702507122072842581587 * 2^-128"
+      ],
+      "eta_storage_value_enclosure_bits": [
+        [
+          4416860826903851572,
+          4416860826903851573
+        ],
+        [
+          4416935818664988602,
+          4416935818664988603
+        ]
+      ],
+      "eta_storage_upward_bits": [
+        4416860826903851573,
+        4416935818664988603
+      ],
+      "maximum_upward_bits": 4416935818664988603,
+      "maximum_upward_value": 1.9972149342346723e-13,
+      "requested_spatial_tolerance_bits": 4547007122018943789,
+      "fractional_bits": 128,
+      "generation_max_operations": 268752,
+      "generation_operations": 2290,
+      "global_operations_at_capture": 920249,
+      "full_decoded_record_sha256": "8f67f09a0e95a34b8d03589f3401b182e3d1e98f53b8da86f7f4e2ddd048dda6"
+    },
+    {
+      "sense": "Outward",
+      "region": 1,
+      "records": 156,
+      "curve": 3,
+      "level": 5,
+      "index": 30,
+      "eta_storage_exact": [
+        "39172078249360071338447023 * 2^-128",
+        "11631795433164177813453457 * 2^-126"
+      ],
+      "eta_storage_value_enclosure_bits": [
+        [
+          4413584265291744710,
+          4413584265291744711
+        ],
+        [
+          4414440512030823097,
+          4414440512030823098
+        ]
+      ],
+      "eta_storage_upward_bits": [
+        4413584265291744711,
+        4414440512030823098
+      ],
+      "maximum_upward_bits": 4414440512030823098,
+      "maximum_upward_value": 1.3673109821604975e-13,
+      "requested_spatial_tolerance_bits": 4547007122018943789,
+      "fractional_bits": 128,
+      "generation_max_operations": 704503,
+      "generation_operations": 2817,
+      "global_operations_at_capture": 816659,
+      "full_decoded_record_sha256": "67cb001040dad74240e4bc741cedf6c8128bd357a47a1bc4618ea79e7a844886"
+    },
+    {
+      "sense": "Outward",
+      "region": 2,
+      "records": 11,
+      "curve": 11,
+      "level": 1,
+      "index": 1,
+      "eta_storage_exact": [
+        "560049269167330076272025 * 2^-121",
+        "34795038387071683906079771 * 2^-127"
+      ],
+      "eta_storage_value_enclosure_bits": [
+        [
+          4417369419632074543,
+          4417369419632074544
+        ],
+        [
+          4417125386379338585,
+          4417125386379338586
+        ]
+      ],
+      "eta_storage_upward_bits": [
+        4417369419632074544,
+        4417125386379338586
+      ],
+      "maximum_upward_bits": 4417369419632074544,
+      "maximum_upward_value": 2.1066712066827112e-13,
+      "requested_spatial_tolerance_bits": 4547007122018943789,
+      "fractional_bits": 128,
+      "generation_max_operations": 268752,
+      "generation_operations": 2290,
+      "global_operations_at_capture": 920249,
+      "full_decoded_record_sha256": "366fa7651ad8323d2b3cb7ab44550c8ddd570ec6d247455f0202451fa9f42019"
+    }
+  ],
+  "unique_key_audit": {
+    "Inward": {
+      "unique_span_keys": 167,
+      "ordered_key_sha256": "e4e4f3cb0e251ae248b2d8d19607150518480cb142068f3ad04e0aaa26587100"
+    },
+    "Outward": {
+      "unique_span_keys": 167,
+      "ordered_key_sha256": "e4e4f3cb0e251ae248b2d8d19607150518480cb142068f3ad04e0aaa26587100"
+    }
+  },
+  "eta_record_count": 334,
+  "source_restoration_manifest_equality": true,
+  "scope": [
+    "334 actual eta records across two senses,167 unique spans each:156 O and11 dot. Applies to original167-side geometry only.",
+    "Exact dyadic maxima and upward binary64 bits retained; primitive ROI is an offline bound-conditioning forecast, not work/performance acceptance.",
+    "No caller min selection, tolerance/budget changes, production adoption or SI claim."
+  ]
+}

@@ -2,7 +2,9 @@
 //! Whole-span slant derivative bound.
 use super::slant::*;
 use super::*;
+mod retained;
 use crate::predicates::roots::certificate_arithmetic::bernstein_curve::derivative;
+pub(super) use retained::retained_derivative;
 
 pub(super) fn radial_lower(
     q: &[Interval],

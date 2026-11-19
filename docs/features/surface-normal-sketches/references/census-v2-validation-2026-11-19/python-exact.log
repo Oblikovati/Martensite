@@ -1,0 +1,31 @@
+== fixture checks
+O: 137 curves, endpoint-graph components [66, 71], degrees [2]
+dot: 11 curves, endpoint-graph components [11], degrees [2]
+all 148 fixture pairs share the recorded endpoint bit-for-bit
+split budget consumed only by fallbacks (exclusions spent 0 splits): {'O': 'start 3852, unexplained drift 0', 'dot': 'start 2765, unexplained drift 0'}
+
+== census v2 (exact)
+-- O137  (16.3 ms, pure Python + Fraction)
+   self: excluded by monotone hodograph                    137
+   distinct pairs (N(N-1)/2)                               9316
+   sweep candidates (closed boxes overlap)                 137
+   excluded by disjoint boxes (never enumerated)           9179
+   adjacent: sole contact proven by sector certificate     137
+   unresolved -> existing general solver                   0
+-- dot11  (1.3 ms, pure Python + Fraction)
+   self: excluded by monotone hodograph                    11
+   distinct pairs (N(N-1)/2)                               55
+   sweep candidates (closed boxes overlap)                 11
+   excluded by disjoint boxes (never enumerated)           44
+   adjacent: sole contact proven by sector certificate     11
+   unresolved -> existing general solver                   0
+
+contacts matching fixture (pair, end indices, exact point): 148/148
+total census v2 wall time, both members: 17.7 ms
+
+== negative / positive controls for the sector certificate
+   extra crossing                                -> inconclusive (falls back)
+   lens (two shared ends)                        -> inconclusive (falls back)
+   collinear overlap                             -> inconclusive (falls back)
+   hairpin, opposite sides (should certify)      -> CERTIFIED
+   (float sampling confirms control 1 crosses the line again near x=0.785)

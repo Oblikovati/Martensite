@@ -8,6 +8,12 @@ use crate::predicates::roots::certificate_arithmetic::{
     bounded_dyadic::{Arithmetic, ArithmeticPolicy, Interval},
 };
 mod bounds;
+pub(super) mod developed;
+pub use developed::{
+    ConicalDevelopedMaterialError, ConicalDevelopedMaterialFailure,
+    certify_conical_material_with_developed_boundaries,
+    certify_conical_material_with_developed_boundaries_and_refinement,
+};
 mod input;
 mod source;
 #[cfg(test)]

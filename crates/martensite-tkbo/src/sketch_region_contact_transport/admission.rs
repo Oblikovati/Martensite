@@ -354,7 +354,10 @@ fn check_simple_root(
     index: usize,
     proofs: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
 ) -> Result<(), ContactTransportGap> {
-    let multiplicity = retained_root_multiplicity(retained, index, proofs)?;
+    let Some(multiplicity) = retained_root_multiplicity(retained, index, proofs)? else {
+        // The endpoint sector proves one parameter pair without a projected polynomial root.
+        return Ok(());
+    };
     if multiplicity != 1 {
         return Err(ContactTransportGap::RepeatedRootCorrespondence {
             identity: retained.inspection.contacts[index].identity,
@@ -367,23 +370,26 @@ fn retained_root_multiplicity(
     retained: &PairedContactTransaction,
     index: usize,
     proofs: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
-) -> Result<usize, ContactTransportGap> {
+) -> Result<Option<usize>, ContactTransportGap> {
     let contact = &retained.inspection.contacts[index];
     let domain_index = contact.occurrence_domains[0];
     let domain = &retained.census.domains[domain_index];
-    let proof =
-        crate::sketch_region_certification::certificate_in(&retained.census, domain, proofs)
-            .ok_or(ContactTransportGap::MissingSourceBoundDomain {
-                domain: domain_index,
-            })?;
+    let proof = crate::sketch_region_certification::unified_certificate_in(
+        &retained.census,
+        domain,
+        proofs,
+    )
+    .ok_or(ContactTransportGap::MissingSourceBoundDomain {
+        domain: domain_index,
+    })?;
     let root = (0..proof.contact_count())
         .filter_map(|i| proof.contact(i))
-        .find(|root| root.candidate_index == contact.identity.candidate_root)
+        .find(|root| root.key() == contact.identity.proof_key)
         .ok_or(ContactTransportGap::MissingRetainedContactRoot {
             identity: contact.identity,
             contact_count: proof.contact_count(),
         })?;
-    Ok(root.parameter.multiplicity())
+    Ok(root.projected_multiplicity())
 }
 
 fn additional_source_gap(

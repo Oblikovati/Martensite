@@ -3,7 +3,9 @@
 use super::angle::*;
 use super::spatial::*;
 use super::*;
+mod cached;
 use crate::predicates::roots::certificate_arithmetic::bernstein_curve::derivative;
+pub(super) use cached::prepare_projection_in_chart_selected;
 
 pub(super) struct FitBounds {
     pub(super) radius: Interval,
@@ -17,12 +19,21 @@ pub(super) fn fit_bounds_captured(
     w: &[Interval],
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<FitBounds, SpatialFailure> {
+    fit_bounds_metric(request, a, w, None, arithmetic)
+}
+fn fit_bounds_metric(
+    request: &SpatialRequest<'_>,
+    a: &[Interval],
+    w: &[Interval],
+    retained_rate: Option<Interval>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<FitBounds, SpatialFailure> {
     let minimum = slant::positive_lower("weight", w, arithmetic).map_err(SpatialFailure::Slant)?;
     let radius = arithmetic.divide(&magnitude_interval(a), &minimum)?;
-    let rate =
-        super::slant_derivative::fit_rate(a, w, arithmetic).map_err(SpatialFailure::Slant)?;
-    let denominator = arithmetic.multiply(&minimum, &minimum)?;
-    let radial_rate = arithmetic.divide(&magnitude_interval(&rate), &denominator)?;
+    let radial_rate = match retained_rate {
+        Some(rate) => rate,
+        None => legacy_fit_rate(a, w, &minimum, arithmetic)?,
+    };
     let angle =
         angular::capture_fit(request.angular_fit, arithmetic).map_err(SpatialFailure::Angular)?;
     let rate = derivative(&angle, arithmetic)?;
@@ -36,6 +47,17 @@ pub(super) fn fit_bounds_captured(
     })
 }
 
+fn legacy_fit_rate(
+    a: &[Interval],
+    w: &[Interval],
+    minimum: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<Interval, SpatialFailure> {
+    let rate =
+        super::slant_derivative::fit_rate(a, w, arithmetic).map_err(SpatialFailure::Slant)?;
+    let denominator = arithmetic.multiply(&minimum, &minimum)?;
+    Ok(arithmetic.divide(&magnitude_interval(&rate), &denominator)?)
+}
 pub(super) struct Bounds {
     pub(super) radial_error: Interval,
     pub(super) radial_rate_error: Interval,
@@ -91,12 +113,14 @@ pub(super) fn authored_join(
 ) -> Result<bool, CombinedFailure> {
     let end = authored_endpoint(first, true, arithmetic)?;
     let start = authored_endpoint(second, false, arithmetic)?;
-    Ok(end
-        .iter()
-        .zip(start)
-        .all(|(a, b)| a.lower == a.upper && b.lower == b.upper && a.lower == b.lower))
+    Ok(endpoint_match(&end, &start))
 }
 
+fn endpoint_match(end: &[Interval; 2], start: &[Interval; 2]) -> bool {
+    end.iter()
+        .zip(start)
+        .all(|(a, b)| a.lower == a.upper && b.lower == b.upper && a.lower == b.lower)
+}
 pub(super) fn fit_join(
     first: &SpatialRequest<'_>,
     second: &SpatialRequest<'_>,
@@ -170,6 +194,7 @@ pub(super) struct PreparedProjection<'a> {
     request: &'a SpatialRequest<'a>,
     poles: Vec<[Interval; 2]>,
     error: Interval,
+    authored: Option<[[Interval; 2]; 2]>,
 }
 
 pub(super) fn prepare_projection<'a>(
@@ -186,15 +211,27 @@ pub(super) fn prepare_projection<'a>(
         request,
         poles,
         error,
+        authored: None,
     })
 }
 
+fn prepared_authored_join(
+    first: &PreparedProjection<'_>,
+    second: &PreparedProjection<'_>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<bool, CombinedFailure> {
+    match (&first.authored, &second.authored) {
+        (Some(a), Some(b)) => Ok(endpoint_match(&a[1], &b[0])),
+        (None, None) => authored_join(first.request, second.request, arithmetic),
+        _ => Err(CombinedFailure::JoinMismatch),
+    }
+}
 pub(super) fn prepared_join_direction(
     first: &PreparedProjection<'_>,
     second: &PreparedProjection<'_>,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<[f64; 2], CombinedFailure> {
-    if !authored_join(first.request, second.request, arithmetic)?
+    if !prepared_authored_join(first, second, arithmetic)?
         || !fit_join(first.request, second.request, arithmetic).map_err(CombinedFailure::Spatial)?
     {
         return Err(CombinedFailure::JoinMismatch);

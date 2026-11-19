@@ -261,7 +261,7 @@ fn wedge_from_axes(lower: Interval, upper: Interval) -> (u8, num_bigint::BigInt)
     (wedge, first_margin.min(second_margin))
 }
 
-fn common_wedge(
+pub(super) fn common_wedge(
     spans: &[&[[f64; 2]]],
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<(u8, Option<num_bigint::BigInt>), SectorFailure> {

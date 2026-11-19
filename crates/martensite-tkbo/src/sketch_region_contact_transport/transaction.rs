@@ -231,7 +231,7 @@ fn retain_report_contacts(
     for contact in 0..proof.contact_count() {
         let identity = ReportContactIdentity {
             report,
-            candidate_root: proof.contact(contact).unwrap().candidate_index,
+            proof_key: proof.contact(contact).unwrap().key(),
         };
         retain_contact_occurrence(inspection, identity, domain_index);
     }

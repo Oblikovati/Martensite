@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Shared monotone projections cover self/adjacent pairs; the exact complement uses clearance.
 use super::*;
-pub(super) fn bind(query: &ConicalReferenceQuery<'_>) -> Result<(), ConicalReferenceFailure> {
+pub(super) fn bind(query: &ReferenceInputs<'_>) -> Result<(), ConicalReferenceFailure> {
     let sources = sources(query)?;
     let clearance = query.clearance;
     if !clearance.matches_sources(&sources)
@@ -19,7 +19,7 @@ pub(super) fn bind(query: &ConicalReferenceQuery<'_>) -> Result<(), ConicalRefer
     sector(query)
 }
 fn sources<'a>(
-    query: &ConicalReferenceQuery<'a>,
+    query: &ReferenceInputs<'a>,
 ) -> Result<Vec<CylindricalClearanceSource<'a>>, ConicalReferenceFailure> {
     query
         .members
@@ -39,7 +39,7 @@ fn sources<'a>(
         })
         .collect()
 }
-fn exclusions(query: &ConicalReferenceQuery<'_>) -> Vec<[usize; 2]> {
+fn exclusions(query: &ReferenceInputs<'_>) -> Vec<[usize; 2]> {
     let mut result = std::collections::BTreeSet::new();
     let mut offset = 0;
     for count in query
@@ -59,8 +59,8 @@ fn adjacent(count: usize, offset: usize, result: &mut std::collections::BTreeSet
         result.insert(pair);
     }
 }
-fn sector(query: &ConicalReferenceQuery<'_>) -> Result<(), ConicalReferenceFailure> {
-    let policy = query.sector.sector.policy;
+fn sector(query: &ReferenceInputs<'_>) -> Result<(), ConicalReferenceFailure> {
+    let policy = query.sector.policy();
     let sector = ConicalSectorQuery {
         spans: query.sector_spans,
         semi_angle: query.members[0].spans[0].query.semi_angle,
@@ -75,12 +75,13 @@ fn sector(query: &ConicalReferenceQuery<'_>) -> Result<(), ConicalReferenceFailu
             "executed original PositiveX quarter-turn wedge",
         ));
     }
+    chart::bind_domain(query)?;
     if !covers_originals(query) {
         return Err(binding_failure("sector and original-boundary coverage"));
     }
     Ok(())
 }
-fn covers_originals(query: &ConicalReferenceQuery<'_>) -> bool {
+fn covers_originals(query: &ReferenceInputs<'_>) -> bool {
     let originals: Vec<_> = query
         .members
         .iter()
@@ -96,7 +97,7 @@ fn covers_originals(query: &ConicalReferenceQuery<'_>) -> bool {
             .all(|original| query.sector_spans.contains(original))
 }
 pub(super) fn separation(
-    query: &ConicalReferenceQuery<'_>,
+    query: &ReferenceInputs<'_>,
     displacement: &Interval,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<(), ConicalReferenceFailure> {

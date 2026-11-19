@@ -1,0 +1,426 @@
+warning: crates/martensite-tkmeshvs/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkmeshvs` (manifest) generated 1 warning
+warning: crates/martensite-raster-core/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-raster-core` (manifest) generated 1 warning
+warning: crates/martensite-tkcdf/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkcdf` (manifest) generated 1 warning
+warning: crates/martensite-tkxsbase/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkxsbase` (manifest) generated 1 warning
+warning: crates/martensite-tkgeombase/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkgeombase` (manifest) generated 1 warning
+warning: crates/martensite-tktopalgo/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tktopalgo` (manifest) generated 1 warning
+warning: crates/martensite-tkg3d/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkg3d` (manifest) generated 1 warning
+warning: crates/martensite-tkexpress/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkexpress` (manifest) generated 1 warning
+warning: crates/martensite-tkbo/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkbo` (manifest) generated 1 warning
+warning: crates/martensite-tkdeiges/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkdeiges` (manifest) generated 1 warning
+warning: crates/martensite-tkxcaf/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkxcaf` (manifest) generated 1 warning
+warning: crates/martensite-tkdeobj/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkdeobj` (manifest) generated 1 warning
+warning: crates/martensite-tkde/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkde` (manifest) generated 1 warning
+warning: crates/martensite-tkv3d/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkv3d` (manifest) generated 1 warning
+warning: crates/martensite-tkgeomalgo/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkgeomalgo` (manifest) generated 1 warning
+warning: crates/martensite-tkprim/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkprim` (manifest) generated 1 warning
+warning: crates/martensite-tkbool/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkbool` (manifest) generated 1 warning
+warning: crates/martensite-tkvcaf/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkvcaf` (manifest) generated 1 warning
+warning: crates/martensite-vulkan/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-vulkan` (manifest) generated 1 warning
+warning: crates/martensite-tkfeat/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkfeat` (manifest) generated 1 warning
+warning: crates/martensite-tkdeply/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkdeply` (manifest) generated 1 warning
+warning: crates/martensite-tkg2d/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkg2d` (manifest) generated 1 warning
+warning: crates/martensite-tkcaf/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkcaf` (manifest) generated 1 warning
+warning: crates/martensite-geometry-raster/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-geometry-raster` (manifest) generated 1 warning
+warning: crates/martensite-tkoffset/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkoffset` (manifest) generated 1 warning
+warning: crates/martensite-tkmesh/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkmesh` (manifest) generated 1 warning
+warning: crates/martensite-tksketch/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tksketch` (manifest) generated 1 warning
+warning: crates/martensite-tkdestl/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkdestl` (manifest) generated 1 warning
+warning: crates/martensite-cmath/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-cmath` (manifest) generated 1 warning
+warning: crates/martensite-test-support/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-test-support` (manifest) generated 1 warning
+warning: crates/martensite-tkhlr/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkhlr` (manifest) generated 1 warning
+warning: crates/martensite-process-policy/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-process-policy` (manifest) generated 1 warning
+warning: crates/martensite-tkbrep/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkbrep` (manifest) generated 1 warning
+warning: crates/martensite-tkxmesh/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkxmesh` (manifest) generated 1 warning
+warning: crates/martensite-tkdestep/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkdestep` (manifest) generated 1 warning
+warning: crates/martensite-tkfillet/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkfillet` (manifest) generated 1 warning
+warning: crates/martensite-tktobj/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tktobj` (manifest) generated 1 warning
+warning: crates/martensite-tkservice/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkservice` (manifest) generated 1 warning
+warning: crates/martensite-tkhelix/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkhelix` (manifest) generated 1 warning
+warning: crates/martensite-tklcaf/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tklcaf` (manifest) generated 1 warning
+warning: crates/martensite-tkshhealing/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkshhealing` (manifest) generated 1 warning
+warning: crates/martensite-tkernel/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkernel` (manifest) generated 1 warning
+warning: crates/martensite-tkmath/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkmath` (manifest) generated 1 warning
+warning: crates/martensite-boolean-cases/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-boolean-cases` (manifest) generated 1 warning
+warning: crates/martensite-topology-test-support/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-topology-test-support` (manifest) generated 1 warning
+warning: crates/martensite-tkrwmesh/Cargo.toml: only one of `license` or `license-file` is necessary
+`license` should be used if the package license can be expressed with a standard SPDX expression.
+`license-file` should be used if the package uses a non-standard license.
+See https://doc.rust-lang.org/cargo/reference/manifest.html#the-license-and-license-file-fields for more information.
+warning: `martensite-tkrwmesh` (manifest) generated 1 warning
+   Compiling martensite-tkbo v0.8.2 (/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/crates/martensite-tkbo)
+    Finished `test` profile [unoptimized] target(s) in 3m 36s
+     Running unittests src/lib.rs (/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tkbo-4828b1def3597974)
+
+running 184 tests
+test bop_algo::checker_si::face_binding::tests::vertex_tests::missing_and_duplicate_endpoint_uses_refuse_before_geometric_checks ... ok
+test bop_ds::tools::tests::interfering_types_are_the_geometric_types_and_solids ... ok
+test profile_extrusion::composite_tests::chunks::explicit_whole_face_combines_outer_chunks_and_hole_before_area ... ok
+test profile_extrusion::composite_tests::chunks::whole_face_component_limit_is_not_a_per_chunk_allowance ... ok
+test profile_extrusion::composite_tests::default_and_all_old_versions_retain_no_program_authority ... ok
+test profile_extrusion::composite_tests::explicit_program_retains_requested_and_minimum_actual_loan ... ok
+test profile_extrusion::composite_tests::geometric::geometric_v6_never_widens_a_zero_integral_loan ... ok
+test profile_extrusion::composite_tests::geometric::geometric_v6_publishes_the_same_rectangle_with_its_actual_program_loan ... ok
+test profile_extrusion::composite_tests::mutations::actual_coefficients_and_program_role_are_not_scalar_substitutions ... ok
+test profile_extrusion::composite_tests::mutations::altered_generation_grant_and_observed_work_refuse_rebinding ... ok
+test profile_extrusion::composite_tests::mutations::reverse_derived_step_must_refer_to_an_earlier_actual_source_reversal ... ok
+test profile_extrusion::composite_tests::mutations::source_signed_zero_order_and_authored_identity_are_bound ... ok
+test profile_extrusion::composite_tests::nonprogram_budget_entry_refuses_before_late_cancel_without_fabricated_entities ... ok
+test profile_extrusion::composite_tests::zero_program_allowance_is_honest_and_never_widened ... ok
+test sketch_region_certification::bernstein_tests::cancelled_exact_execution_keeps_actual_work_and_no_fallback ... ok
+test sketch_region_certification::bernstein_tests::exact_domain_refuses_mutated_source_domain_and_parameter_binding ... ok
+test sketch_region_certification::bernstein_tests::exact_domain_refuses_policy_and_work_ledger_mutation ... ok
+test sketch_region_certification::bernstein_tests::exact_exclusion_completes_the_owned_monotone_cubic_without_legacy_evidence ... ok
+test sketch_region_certification::bernstein_tests::inconclusive_exact_hull_retains_the_genuine_crossing_solver ... ok
+test sketch_region_certification::bernstein_tests::released_carrier_census_keeps_the_original_non_linear_fiber_refusal ... ok
+test sketch_region_certification::bernstein_tests::zero_budget_is_never_increased_for_exact_proof_or_solver_fallback ... ok
+test sketch_region_certification::binding_mutation_tests::changed_original_coefficient_or_support_placement_never_matches_old_report ... ok
+test sketch_region_certification::binding_mutation_tests::full_parent_matrix_preserves_reversed_shared_and_located_originals ... ok
+test sketch_region_certification::binding_mutation_tests::scalar_controls_weights_native_trim_and_physical_copy_changes_invalidate_proof ... ok
+test sketch_region_certification::binding_mutation_tests::signed_zero_basis_and_original_orientation_remain_full_descriptor_bits ... ok
+test sketch_region_certification::coverage_binding_tests::altered_incidence_curve_or_line_coefficients_never_accept_source_id_only ... ok
+test sketch_region_certification::coverage_binding_tests::altered_separately_declared_source_policy_cannot_reuse_old_attached_proof ... ok
+test sketch_region_certification::coverage_binding_tests::changed_incidence_root_or_world_policy_is_not_reused_from_identical_ids ... ok
+test sketch_region_certification::coverage_binding_tests::exact_native_membership_cannot_promote_canonical_contact_dual_axis_or_partition ... ok
+test sketch_region_certification::coverage_binding_tests::missing_stale_or_out_of_range_native_map_returns_typed_incomplete_evidence ... ok
+test sketch_region_certification::coverage_binding_tests::nonzero_representation_error_never_establishes_original_contact_or_world_topology ... ok
+test sketch_region_certification::coverage_binding_tests::old_native_curved_split_raw_parameter_and_point_survive_new_exact_transport ... ok
+test sketch_region_certification::coverage_binding_tests::orphan_report_and_duplicate_producer_id_are_visible_unbound_not_empty_passes ... ok
+test sketch_region_certification::coverage_binding_tests::parent_or_construction_mutation_after_attachment_reinserts_observed_representation_gap ... ok
+test sketch_region_certification::coverage_binding_tests::valid_reversed_physical_reuse_preserves_actual_descriptor_and_contact_incompleteness ... ok
+test sketch_region_certification::filtered_tests::filtered_native_crossing_keeps_the_real_fallback_and_remaining_policy ... ok
+test sketch_region_certification::filtered_tests::filtered_native_exclusion_retains_actual_policy_and_domain_cardinality ... ok
+test sketch_region_certification::filtered_tests::filtered_receipts_reject_source_policy_and_mode_mutation ... ok
+test sketch_region_certification::filtered_tests::filtered_zero_work_keeps_version_two_in_actual_fallback_requests ... ok
+test sketch_region_certification::filtered_tests::legacy_bernstein_keeps_its_native_poll_work_signature ... ok
+test sketch_region_certification::filtered_tests::unknown_filtered_sign_mode_and_old_mode_relabeling_are_refused ... ok
+test sketch_region_certification::geometric_tests::geometric_census_cancellation_never_publishes_complete_pair_coverage ... ok
+test sketch_region_certification::geometric_tests::geometric_census_issues_endpoint_evidence_without_solver_roots ... ok
+test sketch_region_certification::geometric_tests::geometric_census_rejects_changed_source_policy_and_parameter_axis ... ok
+test sketch_region_certification::geometric_tests::geometric_census_retains_genuine_general_fallback_and_charges_work_once ... ok
+test sketch_region_certification::live_geometry_tests::current_correspondence_inspection_preserves_reachable_geometry_and_topology_flags ... ok
+test sketch_region_certification::live_geometry_tests::live_copied_curve_mutation_preserves_scalar_history_but_invalidates_current_geometry ... ok
+test sketch_region_certification::live_geometry_tests::live_plane_mutation_is_not_hidden_by_unchanged_face_identity ... ok
+test sketch_region_certification::live_geometry_tests::live_stored_pcurve_mutation_rejects_current_map_without_changing_scalar_capture ... ok
+test sketch_region_certification::live_geometry_tests::missing_live_support_retains_actual_typed_capture_failure ... ok
+test sketch_region_certification::live_geometry_tests::unsupported_actual_support_is_typed_and_never_matches_historical_plane ... ok
+test sketch_region_certification::paired_constant_tests::actual_polynomial_line_self_has_complete_source_bound_constant_exclusion ... ok
+test sketch_region_certification::paired_constant_tests::empty_source_admission_retains_original_typed_empty_cause ... ok
+test sketch_region_certification::paired_constant_tests::missing_admitted_universe_is_not_vacuously_complete_pair_coverage ... ok
+test sketch_region_certification::paired_constant_tests::regular_rational_line_self_keeps_actual_denominator_and_owned_weights ... ok
+test sketch_region_certification::paired_constant_tests::reversed_line_alias_keeps_cross_occurrence_coincidence_incomplete ... ok
+test sketch_region_certification::paired_domain_tests::actual_exceptional_fibre_preserves_original_typed_cause_and_whole_domain_gap ... ok
+test sketch_region_certification::paired_domain_tests::binary_scales_and_axis_swaps_keep_source_bound_contacts_and_current_history ... ok
+test sketch_region_certification::paired_domain_tests::canonical_parameter_slots_preserve_reversed_alias_axes_with_distinct_parameters ... ok
+test sketch_region_certification::paired_domain_tests::complete_distinct_empty_retains_original_candidates_excluded_by_actual_trim ... ok
+test sketch_region_certification::paired_domain_tests::immutable_captured_failure_names_actual_source_slot_and_keeps_raw_coefficients ... ok
+test sketch_region_certification::paired_domain_tests::near_tangent_binary_perturbations_preserve_exact_two_or_zero_root_dispositions ... ok
+test sketch_region_certification::paired_domain_tests::omitted_occurrence_capture_is_incomplete_without_indexing_a_missing_record ... ok
+test sketch_region_certification::paired_domain_tests::shared_endpoint_stays_exact_closed_domain_contact_not_an_omitted_pair ... ok
+test sketch_region_certification::paired_domain_tests::tangency_retains_double_root_instead_of_point_proximity_or_duplicate_contacts ... ok
+test sketch_region_certification::paired_domain_tests::wrong_capture_weight_count_keeps_typed_capture_failure_and_zero_spent_work ... ok
+test sketch_region_certification::paired_domain_tests::wrong_parameter_slot_mapping_invalidates_current_binding_without_changing_exact_roots ... ok
+test sketch_region_certification::paired_native_tests::native_aggregate_copy_replays_actual_shared_located_and_rational_source_descriptors ... ok
+test sketch_region_certification::paired_native_tests::native_fixture_source_capture_and_original_caller_geometry_remain_distinct ... ok
+test sketch_region_certification::paired_retention_tests::actual_source_and_policy_mutation_cannot_rebind_a_previous_complete_report ... ok
+test sketch_region_certification::paired_retention_tests::cancellation_after_actual_pair_work_retains_failed_report_and_exact_spent_prefix ... ok
+test sketch_region_certification::paired_retention_tests::complete_closed_curve_alias_hit_is_valid_with_zero_new_split_allowance ... ok
+test sketch_region_certification::paired_retention_tests::exact_cold_hits_need_no_new_budget_and_accounted_failure_hits_do_not_retry ... ok
+test sketch_region_certification::paired_retention_tests::forged_gap_removal_or_modified_work_never_promotes_current_coverage ... ok
+test sketch_region_certification::paired_retention_tests::full_history_kind_and_occurrence_changes_reject_binding_without_rewriting_the_report ... ok
+test sketch_region_certification::paired_retention_tests::global_failure_work_is_spent_and_not_hidden_as_complete_empty_or_refunded ... ok
+test sketch_region_certification::paired_retention_tests::located_source_occurrences_keep_distinct_domains_and_actual_world_coefficients ... ok
+test sketch_region_certification::paired_retention_tests::retained_owned_report_survives_later_caller_geometry_mutation_failure_and_cancel ... ok
+test sketch_region_certification::paired_retention_tests::reversed_aliases_reuse_cold_report_and_retain_all_full_original_parent_keys ... ok
+test sketch_region_certification::paired_retention_tests::unrelated_callback_failure_propagates_without_rewriting_previous_report ... 
+thread 'sketch_region_certification::paired_retention_tests::unrelated_callback_failure_propagates_without_rewriting_previous_report' (988646) panicked at crates/martensite-tkbo/src/sketch_region_certification/paired_retention_tests.rs:261:13:
+Box<dyn Any>
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+ok
+test sketch_region_certification::paired_tests::actual_closed_cubic_self_uses_general_provider_and_retains_remaining_obligations ... ok
+test sketch_region_certification::paired_tests::curved_pair_keeps_original_root_and_paired_parameter_evidence ... ok
+test sketch_region_certification::paired_tests::generic_crossing_and_cusp_self_domains_have_independent_expected_dispositions ... ok
+test sketch_region_certification::paired_tests::paired_evidence_is_not_interpreted_by_the_one_axis_approximate_inspector ... ok
+test sketch_region_certification::paired_tests::positive_dimensional_overlap_retains_typed_failure_not_an_empty_certificate ... ok
+test sketch_region_certification::paired_tests::rational_and_polynomial_sources_share_the_same_domain_consumer ... ok
+test sketch_region_certification::paired_validation_tests::borrowed_validation_keeps_domain_specific_binding_checks ... ok
+test sketch_region_certification::paired_validation_tests::borrowed_validation_rechecks_global_work_after_each_edit ... ok
+test sketch_region_certification::paired_validation_tests::borrowed_validation_refuses_native_geometry_mutated_through_an_alias ... ok
+test sketch_region_certification::paired_validation_tests::borrowed_validation_refuses_native_pcurve_mutated_through_an_alias ... ok
+test sketch_region_certification::paired_validation_tests::borrowed_validation_refuses_native_support_mutated_through_an_alias ... ok
+test sketch_region_certification::paired_validation_tests::borrowed_validation_retains_analytic_contact_counts_for_every_alias_domain ... ok
+test sketch_region_certification::source_binding_tests::actual_report_survives_failure_retry_and_source_topology_alias_changes ... ok
+test sketch_region_certification::source_binding_tests::cancelled_source_phase_keeps_full_owned_failure_and_does_not_start_pairs ... ok
+test sketch_region_certification::source_binding_tests::changed_policy_or_effective_stage_limit_is_not_rebound_to_a_more_lenient_request ... ok
+test sketch_region_certification::source_binding_tests::full_matrix_discharges_only_representation_and_retains_all_topology_obligations ... ok
+test sketch_region_certification::source_binding_tests::legacy_census_keeps_its_poll_order_and_source_obligation_without_implicit_policy ... ok
+test sketch_region_certification::source_binding_tests::missing_or_duplicate_parent_row_never_passes_as_complete_matrix ... ok
+test sketch_region_certification::source_binding_tests::omitted_original_and_extra_unrepresented_source_are_not_empty_passes ... ok
+test sketch_region_certification::source_binding_tests::work_receipt_and_effective_root_budget_must_match_actual_stage_prefix ... ok
+test sketch_region_certification::tests::actual_mapped_split_witnesses_require_history_and_shared_vertex_incidence ... ok
+test sketch_region_certification::tests::cancellation_preserves_owned_prefix_and_actual_next_domain ... ok
+test sketch_region_certification::tests::candidate_parent_coverage_keeps_missing_partition_certificate ... ok
+test sketch_region_certification::tests::captured_result_survives_later_failure_cancel_and_source_alias_changes ... ok
+test sketch_region_certification::tests::coincidence_and_self_contacts_never_become_empty_passes ... ok
+test sketch_region_certification::tests::cubic_self_domain_is_explicitly_incomplete_not_fixture_specific_success ... ok
+test sketch_region_certification::tests::every_cross_and_self_domain_is_retained_in_stable_order ... ok
+test sketch_region_certification::tests::invalid_policy_is_typed_even_when_all_domains_are_unsupported ... ok
+test sketch_region_certification::tests::missing_generated_parent_does_not_get_repaired_by_world_proximity ... ok
+test sketch_region_certification::tests::native_curved_split_keeps_actual_parameter_and_construction_difference ... ok
+test sketch_region_certification::tests::nonlinear_cross_pairs_remain_visible_and_unsupported ... ok
+test sketch_region_certification::tests::numerical_cancellation_retains_actual_failed_domain_evidence ... ok
+test sketch_region_certification::tests::original_locations_and_reversed_aliases_remain_distinct_source_domains ... ok
+test sketch_region_certification::tests::reversed_shared_occurrence_reuses_pair_report_without_losing_original_keys ... ok
+test sketch_region_certification::tests::source_mutation_does_not_rewrite_retained_owned_coefficients_or_pcurves ... ok
+test sketch_region_certification::tests::typed_empty_and_invalid_inputs_preserve_actual_admission_cause ... ok
+test sketch_region_certification::work_receipt::tests::receipt_counts_unique_reports_instead_of_alias_domains ... ok
+test sketch_region_certification::work_receipt::tests::work_receipt_is_owned_send_and_sync ... ok
+test sketch_region_contact_transport::admission::reuse_tests::admission_recomputes_cardinality_instead_of_retaining_stale_observations ... ok
+test sketch_region_contact_transport::declared_plane_tests::exact_translated_support_does_not_require_world_origin_plane ... ok
+test sketch_region_contact_transport::general_tests::bernstein_excluded_domain_accepts_actual_zero_native_contacts ... ok
+test sketch_region_contact_transport::general_tests::bernstein_excluded_domain_rejects_extra_observed_native_partition_vertices ... ok
+test sketch_region_contact_transport::general_tests::curved_rational_trimmed_reversed_and_permuted_pairs_use_identical_binding ... ok
+test sketch_region_contact_transport::general_tests::native_nearby_topology_cannot_override_complete_exact_empty_contact_domain ... ok
+test sketch_region_contact_transport::general_tests::original_shared_endpoint_keeps_modified_vertex_history_in_self_domain ... ok
+test sketch_region_contact_transport::general_tests::permissive_construction_limits_cannot_choose_between_two_actual_contacts ... ok
+test sketch_region_contact_transport::general_tests::repeated_contact_root_remains_explicitly_unproved_with_actual_provider_evidence ... ok
+test sketch_region_contact_transport::general_tests::triple_incidence_needs_independent_cross_report_correspondence ... ok
+test sketch_region_contact_transport::general_tests::two_distinct_algebraic_contacts_require_two_actual_shared_vertices ... ok
+test sketch_region_contact_transport::mutation_tests::changed_census_curve_rejects_old_source_bound_contact_certificate ... ok
+test sketch_region_contact_transport::mutation_tests::changed_original_curve_invalidates_actual_partition_binding ... ok
+test sketch_region_contact_transport::native_tests::actual_native_own_and_representative_parameter_values_remain_unmodified ... ok
+test sketch_region_contact_transport::native_tests::actual_point_snapshots_replay_native_ds_copy_and_directed_contexts ... ok
+test sketch_region_contact_transport::retained_transaction_tests::earlier_receipt_survives_later_policy_failure_cancellation_retry_and_source_mutation ... ok
+test sketch_region_contact_transport::revision_tests::rebuilding_census_after_contact_preserving_edit_uses_current_source_revision ... ok
+test sketch_region_contact_transport::revision_tests::source_edit_between_census_and_partition_cannot_reuse_contact_proof ... ok
+test sketch_region_contact_transport::storage_tests::contact_source_copy_polygon_is_isolated_in_both_directions ... ok
+test sketch_region_contact_transport::tests::actual_directed_generated_points_keep_copy_identity_and_typed_candidate_failure ... ok
+test sketch_region_contact_transport::tests::actual_shared_vertex_keeps_native_approximation_separate_from_exact_root ... ok
+test sketch_region_contact_transport::tests::actual_sources_are_independently_proved_exact_without_promoting_region ... ok
+test sketch_region_contact_transport::tests::actual_unique_contact_has_bounded_local_construction_without_candidate_or_body_success ... ok
+test sketch_region_contact_transport::tests::in_solver_cancellation_retains_typed_prefix_and_retries_original_owned_inputs ... ok
+test sketch_region_contact_transport::tests::missing_actual_shared_vertex_never_admits_from_retained_metric_evidence ... ok
+test sketch_region_contact_transport::tests::missing_native_generated_history_cannot_be_replaced_by_near_points_and_parent_membership ... ok
+test sketch_region_contact_transport::tests::original_exact_contact_bracket_bounds_actual_world_point_without_native_snap ... ok
+test sketch_region_contact_transport::tests::phase_cancellation_retains_original_completed_source_proofs ... ok
+test sketch_region_contact_transport::tests::policy_failure_retains_owned_original_outcomes ... ok
+test sketch_region_contact_transport::tests::reversed_alias_identity_queries_reuse_only_actual_full_scalar_source_inputs ... ok
+test sketch_region_contact_transport::tests::zero_limits_reject_native_construction_error_without_changing_certified_root ... ok
+test sketch_region_contact_transport::topology::source_index::tests::duplicate_input_parents_keep_literal_one_way_subset_semantics ... ok
+test sketch_region_contact_transport::topology::source_index::tests::empty_inputs_and_wrong_vector_lengths_never_match ... ok
+test sketch_region_contact_transport::topology::source_index::tests::equality::domain_parent_identity_changes_cannot_admit_an_original_parent ... ok
+test sketch_region_contact_transport::topology::source_index::tests::equality::full_source_lineage_topology_orientation_and_location_identity_are_required ... ok
+test sketch_region_contact_transport::topology::source_index::tests::equality::separately_allocated_equal_transform_locations_do_not_collapse ... ok
+test sketch_region_contact_transport::topology::source_index::tests::every_source_parent_needs_an_accepted_matching_domain_row ... ok
+test sketch_region_contact_transport::topology::source_index::tests::exhaustive::indexed_rows_equal_the_literal_predicate_for_generated_duplicate_permutations ... ok
+test sketch_region_contact_transport::topology::source_index::tests::exhaustive::permuted_domain_rows_preserve_output_source_row_order ... ok
+test sketch_region_contact_transport::topology::source_index::tests::original_source_row_order_and_alias_duplicates_survive_indexing ... ok
+test sketch_region_contact_transport::types::identity_tests::endpoint_debug_names_its_actual_proof_without_a_projected_root ... ok
+test sketch_region_contact_transport::types::identity_tests::projected_root_debug_preserves_earlier_receipt_bytes ... ok
+test sketch_region_prism::frozen::ordered_validation::operation_tests::unknown_current_behavior_is_incomplete_before_any_geometric_work ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::early_failures::callback_native_failure_inside_census_matches_live_failed_class_phase_and_trace ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::early_failures::corrupt_work_or_source_policy_cannot_admit_owned_cache_or_reorder_live_refusals ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::early_failures::unsupported_or_missing_first_report_preserves_live_pair_context_without_owned_capture ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::early_failures::valid_first_report_then_invalid_domain_precedes_aggregate_matrix_obligations ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::owned_graph_cancellation_preserves_each_phase_first_checkpoint_and_failure ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::owned_graph_capture_batches_are_linear_and_match_live_certificate_bytes ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::owned_graph_source_revision_changes_start_fresh_capture_batches ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::program::composite_final_actual_cancellation_preserves_live_cause_program_and_work ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::program::composite_owned_graph_keeps_live_program_bytes_trace_and_linear_source_captures ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::program::earlier_composite_pair_refusal_precedes_later_cancel_without_owned_capture ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::program::geometric_v6_owned_graph_keeps_live_program_and_native_contact_evidence ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::program::zero_program_budget_retains_live_actual_options_consumption_and_pair_work ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::program::zero_program_cells_complete_actual_polynomial_profiles_with_live_evidence ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::recapture::owned_batches_recapture_curve_edits_and_preserve_existing_live_view_guards ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::recapture::owned_manifest_rejects_wrong_source_order_coefficients_and_declared_policy ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::unified::cancellation_in_final_actual_graph_checkpoint_preserves_live_cause_and_work ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::unified::different_requested_selector_cannot_mint_owned_unified_source_authority ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::unified::first_unified_binding_refusal_does_not_skip_ahead_to_a_later_owned_domain ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::unified::real_first_exclusions_and_solver_fallbacks_share_only_one_actual_source_scan ... ok
+test sketch_region_prism::owned_request::profile::owned_graph::tests::unified::selected_unified_owned_producer_keeps_live_bytes_trace_and_linear_captures ... ok
+test sketch_region_prism::region_certificate::embedding::annular_validation::tests::a_mismatched_pair_or_changed_geometric_conclusion_is_never_an_exact_pass ... ok
+test sketch_region_prism::tolerance_inspection::inspection_tests::inflated_metadata_report_and_refuse_do_not_change_exact_geometric_error ... ok
+test sketch_region_validation::diagnostic_tests::geometric_defects_keep_native_status_order ... ok
+
+test result: ok. 184 passed; 0 failed; 0 ignored; 0 measured; 2110 filtered out; finished in 4.36s
+

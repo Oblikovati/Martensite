@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::*;
-pub(super) fn admit(query: &ConicalReferenceQuery<'_>) -> Result<(), ConicalReferenceError> {
+mod chart_binding;
+pub(super) fn admit(query: &ReferenceInputs<'_>) -> Result<(), ConicalReferenceError> {
     if query.members.is_empty() || !query.spatial_limit.is_finite() || query.spatial_limit <= 0. {
         return Err(error(
             binding_failure("nonempty family and finite positive epsilon"),
@@ -23,14 +24,14 @@ pub(super) fn admit(query: &ConicalReferenceQuery<'_>) -> Result<(), ConicalRefe
 fn admit_member(
     member: &ConicalReferenceMember<'_>,
     index: usize,
-    query: &ConicalReferenceQuery<'_>,
+    query: &ReferenceInputs<'_>,
 ) -> Result<(), ConicalReferenceError> {
     let joins = ConicalJoinsQuery {
         spans: member.spans,
         contour_lengths: member.contour_lengths,
         options: member.joins.options,
     };
-    if !member.joins.matches(&joins) || member.joins.directions.len() != member.spans.len() {
+    if !chart_binding::joins_match_selected(member, &joins, query.sector, query.refinement) {
         return Err(error(
             binding_failure("executed source-bound common monotone ideal joins"),
             0,
@@ -47,9 +48,10 @@ fn admit_member(
 }
 fn admit_span(
     span: &ConicalJoinSpan<'_>,
-    query: &ConicalReferenceQuery<'_>,
+    query: &ReferenceInputs<'_>,
 ) -> Result<(), ConicalReferenceFailure> {
     let input = span.query;
+    admit_chart_authority(span, query)?;
     let first = first(query)?;
     if !span.boundary.matches(&input) || !same_chart(input, first) {
         return Err(binding_failure(
@@ -66,8 +68,23 @@ fn admit_span(
     }
     Ok(())
 }
+fn admit_chart_authority(
+    span: &ConicalJoinSpan<'_>,
+    query: &ReferenceInputs<'_>,
+) -> Result<(), ConicalReferenceFailure> {
+    let input = span.query;
+    if let ReferenceDomain::Chart(domain) = query.sector {
+        if !span
+            .boundary
+            .matches_chart_with_refinement(&input, domain, query.refinement)
+        {
+            return Err(binding_failure("executed chart-metric boundary authority"));
+        }
+    }
+    Ok(())
+}
 fn first<'a>(
-    query: &ConicalReferenceQuery<'a>,
+    query: &ReferenceInputs<'a>,
 ) -> Result<ConicalBoundaryQuery<'a>, ConicalReferenceFailure> {
     query
         .members
@@ -88,7 +105,7 @@ fn same_chart(input: ConicalBoundaryQuery<'_>, first: ConicalBoundaryQuery<'_>) 
 }
 
 pub(super) fn evidence(
-    query: &ConicalReferenceQuery<'_>,
+    query: &ReferenceInputs<'_>,
     bounds: [f64; 3],
     operations: u32,
 ) -> ConicalReferenceEvidence {
@@ -108,7 +125,7 @@ pub(super) fn evidence(
         operations,
     }
 }
-fn snapshots(query: &ConicalReferenceQuery<'_>) -> Vec<Vec<BoundarySnapshot>> {
+fn snapshots(query: &ReferenceInputs<'_>) -> Vec<Vec<BoundarySnapshot>> {
     query
         .members
         .iter()
@@ -122,7 +139,7 @@ fn snapshots(query: &ConicalReferenceQuery<'_>) -> Vec<Vec<BoundarySnapshot>> {
         .collect()
 }
 
-pub(super) fn matches(proof: &ConicalReferenceEvidence, query: &ConicalReferenceQuery<'_>) -> bool {
+pub(super) fn matches(proof: &ConicalReferenceEvidence, query: &ReferenceInputs<'_>) -> bool {
     proof.spatial_limit == query.spatial_limit.to_bits()
         && proof.options == query.options
         && proof.components == components(query)
@@ -143,10 +160,24 @@ pub(super) fn matches(proof: &ConicalReferenceEvidence, query: &ConicalReference
             })
 }
 
-fn components(query: &ConicalReferenceQuery<'_>) -> Vec<u64> {
+fn components(query: &ReferenceInputs<'_>) -> Vec<u64> {
+    let mut bits = policy_bits(query);
+    if query.refinement != ConicalPrimitiveRefinement::UnsplitV1 {
+        bits.extend([3, query.refinement.tag()]);
+    }
+    if let ReferenceDomain::Chart(proof) = query.sector {
+        chart_bits(proof, &mut bits);
+    }
+    for member in query.members {
+        join_bits(member.joins, &mut bits);
+        boundary_bits(member.spans, &mut bits);
+    }
+    bits
+}
+fn policy_bits(query: &ReferenceInputs<'_>) -> Vec<u64> {
     let policy = query.clearance.requested_options();
-    let sector = query.sector.sector.policy;
-    let mut bits = vec![
+    let sector = query.sector.policy();
+    vec![
         query.clearance.clearance_lower_bound().to_bits(),
         u64::from(policy.fractional_bits),
         u64::from(policy.max_domains),
@@ -157,12 +188,7 @@ fn components(query: &ConicalReferenceQuery<'_>) -> Vec<u64> {
         u64::from(sector.max_operations),
         u64::from(query.clearance.operations()),
         u64::from(query.sector.operations()),
-    ];
-    for member in query.members {
-        join_bits(member.joins, &mut bits);
-        boundary_bits(member.spans, &mut bits);
-    }
-    bits
+    ]
 }
 fn join_bits(joins: &ConicalJoinsEvidence, bits: &mut Vec<u64>) {
     bits.extend([
@@ -188,5 +214,21 @@ fn boundary_bits(spans: &[ConicalJoinSpan<'_>], bits: &mut Vec<u64>) {
             u64::from(policy.max_operations),
             u64::from(span.boundary.operations()),
         ]);
+    }
+}
+
+// The executed component owns its source order even when coverage is the same set.
+pub(super) fn chart_bits(proof: &ConicalChartDomainEvidence, bits: &mut Vec<u64>) {
+    bits.extend([
+        2,
+        proof.chart_origin().to_bits(),
+        proof.fit_center().to_bits(),
+        proof.developed_turn() as u64,
+        proof.physical_turn() as u64,
+        proof.sector.source.len() as u64,
+    ]);
+    for span in &proof.sector.source {
+        bits.push(span.len() as u64);
+        bits.extend(span.iter().flatten().copied());
     }
 }

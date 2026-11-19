@@ -27,9 +27,9 @@ fn owned_filtered_graph_keeps_its_actual_selector_and_signs() {
     assert!((area.representative() - 4. / 3.).abs() <= area.absolute_error_bound() + f64::EPSILON);
 }
 #[test]
-fn owned_graph_refuses_unknown_five_before_native_work() {
+fn owned_graph_refuses_unknown_six_before_native_work() {
     let mut request = owned_graph_request(lens_input(None));
-    request.version = 5;
+    request.version = 6;
     let failure = prepare_owned_profile(request, &mut NeverStop)
         .err()
         .unwrap();
@@ -37,7 +37,7 @@ fn owned_graph_refuses_unknown_five_before_native_work() {
     assert!(matches!(
         failure.cause,
         ProfilePreparationCause::Admission(
-            super::super::admission::ProfileAdmissionCause::UnsupportedVersion { actual: 5, .. }
+            super::super::admission::ProfileAdmissionCause::UnsupportedVersion { actual: 6, .. }
         )
     ));
 }
@@ -170,7 +170,7 @@ fn assert_scalar(diagnostic: &GraphPolicyMismatch, mutation: usize) {
 #[test]
 fn unknown_retained_selector_reports_admitted_versions_and_observed_policy() {
     let mut prepared = prepared(4);
-    prepared.request.version = 5;
+    prepared.request.version = 6;
     let failure = prepared.inspect_plane_graph(|| false).unwrap_err();
     assert_diagnostic(&prepared, failure, |diagnostic| {
         assert_eq!(diagnostic.requested_graph_version, 5);

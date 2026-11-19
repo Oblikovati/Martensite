@@ -17,7 +17,7 @@ pub struct ConicalTrimPairQuery<'a> {
     pub options: CylindricalProfileOptions,
 }
 impl<'a> ConicalTrimPairQuery<'a> {
-    pub(super) fn queries(self) -> [ConicalTrimQuery<'a>; 2] {
+    pub(in crate::predicates::roots::metric_bounds) fn queries(self) -> [ConicalTrimQuery<'a>; 2] {
         std::array::from_fn(|depth| ConicalTrimQuery {
             curve: self.curves[depth],
             pcurve: self.pcurves[depth],

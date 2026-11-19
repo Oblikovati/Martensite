@@ -1,10 +1,11 @@
 //! Whole-operation controls combine independent inequalities, ownership and replay.
 use super::*;
 use std::fmt::Write;
+mod chart_policy;
 mod concurrency;
-mod native_flux;
+pub(super) mod native_flux;
 pub(super) mod normals;
-mod occurrences;
+pub(super) mod occurrences;
 mod policies;
 const WORKER: &str =
     "surface_sketch::wrapped_profile::operation::cone::tests::completed::process_worker";
@@ -42,10 +43,24 @@ fn check_completed(mut request: WrappedConeNormalRequest) -> WrappedConeNormalRe
     assert_eq!(request, before);
     assert_eq!(result.proof_options(), before.proof);
     assert_eq!(result.support(), before.support);
+    check_legacy_policy(&result);
     check_measure(&result);
     check_coverage(&result);
     check_export_isolation(&result, &mut request, &before);
     result
+}
+fn check_legacy_policy(result: &WrappedConeNormalResult) {
+    assert_eq!(
+        result.execution_selection(),
+        crate::surface_sketch::WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 {
+            domain: crate::surface_sketch::WrappedConeDomainPolicy::LegacySectorV1,
+        }
+    );
+    assert_eq!(
+        result.domain_policy(),
+        crate::surface_sketch::WrappedConeDomainPolicy::LegacySectorV1
+    );
+    assert!(result.chart_domain_receipt().is_none());
 }
 fn check_export_isolation(
     result: &WrappedConeNormalResult,

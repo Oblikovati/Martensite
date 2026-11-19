@@ -23,9 +23,12 @@ mod orientation;
 mod types;
 pub(crate) use types::*;
 
+mod area;
 use super::binding::bind_segments;
 use super::measure::{FaceUses, certified_face_area};
+use super::program_trace::ProgramTrace;
 use super::types::*;
+use martensite_tkmath::predicates::roots::metric_bounds::IntegralProgramOptions;
 
 /// Certify every bounded face of the plane graph; `inspect_plane_graph(&request, || false)`.
 pub(crate) fn inspect_plane_graph(
@@ -40,7 +43,43 @@ pub(crate) fn inspect_plane_graph(
 }
 pub(crate) fn inspect_plane_graph_with_access(
     request: &GraphRegionRequest<'_, '_>,
+    cancelled: impl FnMut() -> bool,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
+) -> LoopRegionCheck<GraphRegionCertificate> {
+    inspect_graph_core(request, cancelled, None, &mut None, access)
+}
+pub(crate) fn inspect_plane_graph_program(
+    request: &GraphRegionRequest<'_, '_>,
+    cancelled: impl FnMut() -> bool,
+    options: IntegralProgramOptions,
+) -> Result<GraphRegionCertificate, Box<ProgramGraphFailure>> {
+    inspect_plane_graph_program_with_access(
+        request,
+        cancelled,
+        options,
+        crate::sketch_region_certification::SourceAccess::Live,
+    )
+}
+pub(crate) fn inspect_plane_graph_program_with_access(
+    request: &GraphRegionRequest<'_, '_>,
+    cancelled: impl FnMut() -> bool,
+    options: IntegralProgramOptions,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
+) -> Result<GraphRegionCertificate, Box<ProgramGraphFailure>> {
+    let mut program = None;
+    inspect_graph_core(request, cancelled, Some(options), &mut program, access).map_err(|failure| {
+        Box::new(ProgramGraphFailure {
+            failure,
+            options,
+            consumed: program.as_ref().map_or(0, ProgramTrace::consumed),
+        })
+    })
+}
+fn inspect_graph_core(
+    request: &GraphRegionRequest<'_, '_>,
     mut cancelled: impl FnMut() -> bool,
+    options: Option<IntegralProgramOptions>,
+    program: &mut Option<ProgramTrace>,
     access: crate::sketch_region_certification::SourceAccess<'_>,
 ) -> LoopRegionCheck<GraphRegionCertificate> {
     poll(&mut cancelled, LoopRegionStage::Admission)?;
@@ -54,33 +93,38 @@ pub(crate) fn inspect_plane_graph_with_access(
         expected,
         access,
     )?;
-    let (graph, faces) = graph_faces(request, &binding, &mut cancelled)?;
-    complete_graph(
+    *program = options.map(|options| ProgramTrace::new(options, &binding));
+    finish_graph(
         request,
         &binding,
-        &graph,
-        &faces,
         (joins.len(), carrier_pairs, pair_domains),
         &mut cancelled,
+        program,
     )
 }
-
-fn complete_graph(
+fn finish_graph(
     request: &GraphRegionRequest<'_, '_>,
     binding: &super::binding::SegmentBinding<'_>,
-    graph: &components::Graph,
-    faces: &components::Faces,
     counts: (usize, usize, usize),
     cancelled: &mut impl FnMut() -> bool,
+    program: &mut Option<ProgramTrace>,
 ) -> LoopRegionCheck<GraphRegionCertificate> {
+    let (graph, faces) = graph_faces(request, binding, cancelled, program.as_mut())?;
     poll(cancelled, LoopRegionStage::Nesting)?;
-    let components = components::nesting(request, binding, graph, faces, cancelled)?;
+    let components = components::nesting(request, binding, &graph, &faces, cancelled)?;
     poll(cancelled, LoopRegionStage::Regions)?;
-    let mut certificate = graph_certificate(request, faces, components, counts);
-    for (index, face) in faces.bounded.iter().enumerate() {
-        let proof = face_proof(request, binding, &certificate, index, face, cancelled)?;
-        certificate.faces.push(proof);
-    }
+    let mut certificate = graph_certificate(request, &faces, components, counts);
+    certify_faces(
+        request,
+        binding,
+        &faces,
+        &mut certificate,
+        cancelled,
+        program,
+    )?;
+    certificate.programs = program
+        .take()
+        .map(|trace| std::sync::Arc::new(trace.finish()));
     Ok(certificate)
 }
 
@@ -92,6 +136,7 @@ fn graph_certificate(
 ) -> GraphRegionCertificate {
     let (contacts, carrier_pairs, pair_domains) = counts;
     GraphRegionCertificate {
+        programs: None,
         faces: Vec::with_capacity(faces.bounded.len()),
         components,
         contacts,
@@ -108,11 +153,16 @@ fn graph_faces(
     request: &GraphRegionRequest<'_, '_>,
     binding: &super::binding::SegmentBinding<'_>,
     cancelled: &mut impl FnMut() -> bool,
+    program: Option<&mut ProgramTrace>,
 ) -> LoopRegionCheck<(components::Graph, components::Faces)> {
     poll(cancelled, LoopRegionStage::Faces)?;
     let rotation = darts::rotation(request, binding)?;
     let graph = components::components(request, darts::orbits(request, &rotation));
-    let signs = orientation::signs(request, binding, &graph, cancelled)?;
+    let signs = if let Some(program) = program {
+        orientation::signs_with_program(request, binding, &graph, cancelled, Some(program))?
+    } else {
+        orientation::signs(request, binding, &graph, cancelled)?
+    };
     let faces = components::classify(request, &graph, &signs)?;
     Ok((graph, faces))
 }
@@ -124,10 +174,9 @@ fn face_proof(
     index: usize,
     face: &components::BoundedFace,
     cancelled: &mut impl FnMut() -> bool,
+    program: Option<&mut ProgramTrace>,
 ) -> LoopRegionCheck<GraphFaceProof> {
-    let holes: Vec<usize> = (0..certificate.components.len())
-        .filter(|k| certificate.components[*k].container == Some(index))
-        .collect();
+    let holes = contained_components(certificate, index);
     let hole_uses: Vec<&[AuthoredLoopUse]> = holes
         .iter()
         .map(|k| certificate.components[*k].outer.as_slice())
@@ -138,7 +187,7 @@ fn face_proof(
         outer: &outer,
         holes: &hole_uses,
     };
-    let area = certified_face_area(request.options.area, binding, uses, cancelled)?;
+    let area = selected_area(request, binding, uses, program, cancelled)?;
     Ok(GraphFaceProof {
         uses: outer,
         component: face.component,
@@ -152,4 +201,47 @@ fn poll(cancelled: &mut impl FnMut() -> bool, stage: LoopRegionStage) -> LoopReg
         return refuse(stage, LoopRegionCause::Cancelled);
     }
     Ok(())
+}
+
+fn certify_faces(
+    request: &GraphRegionRequest<'_, '_>,
+    binding: &super::binding::SegmentBinding<'_>,
+    faces: &components::Faces,
+    certificate: &mut GraphRegionCertificate,
+    cancelled: &mut impl FnMut() -> bool,
+    program: &mut Option<ProgramTrace>,
+) -> LoopRegionCheck<()> {
+    for (index, face) in faces.bounded.iter().enumerate() {
+        let proof = face_proof(
+            request,
+            binding,
+            certificate,
+            index,
+            face,
+            cancelled,
+            program.as_mut(),
+        )?;
+        certificate.faces.push(proof);
+    }
+    Ok(())
+}
+
+fn selected_area(
+    request: &GraphRegionRequest<'_, '_>,
+    binding: &super::binding::SegmentBinding<'_>,
+    uses: FaceUses<'_>,
+    program: Option<&mut ProgramTrace>,
+    cancelled: &mut impl FnMut() -> bool,
+) -> LoopRegionCheck<area::GraphArea> {
+    if let Some(program) = program {
+        return super::measure::certified_program_face_area(binding, uses, program, cancelled)
+            .map(area::GraphArea::Program);
+    }
+    certified_face_area(request.options.area, binding, uses, cancelled).map(area::GraphArea::Legacy)
+}
+
+fn contained_components(certificate: &GraphRegionCertificate, index: usize) -> Vec<usize> {
+    (0..certificate.components.len())
+        .filter(|k| certificate.components[*k].container == Some(index))
+        .collect()
 }

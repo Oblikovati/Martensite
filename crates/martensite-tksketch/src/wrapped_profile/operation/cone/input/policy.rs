@@ -21,7 +21,7 @@ pub(super) fn admit(proof: WrappedConeProofOptions) -> ConeChecked<()> {
     .at(WrappedStage::Admission))
 }
 fn integration(options: CylindricalFluxOptions) -> bool {
-    options.behavior_version == 1
+    (1..=2).contains(&options.behavior_version)
         && options.max_degree <= 16
         && (1..=4096).contains(&options.max_spans)
         && (1..=65536).contains(&options.max_subintervals_per_span)

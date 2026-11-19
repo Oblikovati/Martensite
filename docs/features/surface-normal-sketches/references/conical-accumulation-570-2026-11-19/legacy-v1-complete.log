@@ -1,0 +1,11 @@
+
+running 2 tests
+test surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_inward_requires_complete_actual_si ... {"event":"directed_narrow_cone_api","sense":"Inward","seconds":9.731494}
+{"event":"narrow_cone_completed_work","arithmetic_operations":989355,"integration_subintervals":444,"retained_spans":148}
+ok
+test surface_sketch::wrapped_profile::operation::cone::tests::narrow::complete::directed::geometric_v6_outward_requires_complete_actual_si ... {"event":"directed_narrow_cone_api","sense":"Outward","seconds":9.327720}
+{"event":"narrow_cone_completed_work","arithmetic_operations":989355,"integration_subintervals":444,"retained_spans":148}
+ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 517 filtered out; finished in 30.24s
+

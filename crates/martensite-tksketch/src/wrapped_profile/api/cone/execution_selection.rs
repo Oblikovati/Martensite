@@ -1,0 +1,62 @@
+//! Explicit stored-proxy and required-check choices remain distinct during replay.
+use super::*;
+
+/// Select a complete stored-proxy behavior independently of the unchanged request.
+/// Example: `let selection = WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1;`.
+#[non_exhaustive]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WrappedConeExecutionSelection {
+    /// Existing rounded proxy and native SI search, with the selected domain policy.
+    RoundedProxyNativeSearchV1 {
+        /// Existing domain proof, retaining its original construction and replay behavior.
+        domain: WrappedConeDomainPolicy,
+    },
+    /// Directed physical rows, PositiveXCommonChartV2, HalfSplitV1 and required certified SI.
+    /// Requires explicitly requested FilteredCompositeBernsteinV5 planar proof.
+    /// Missing or incomplete certification refuses; native search is not a fallback.
+    DirectedCommonChartRequireCertifiedV1,
+}
+
+impl WrappedConeNormalResult {
+    /// Actual directed-mode coverage borrowed from the retained native-bound certificate.
+    /// Rounded modes return `None`; counts describe completed checks, not a standalone proof.
+    /// Example: `let coverage = result.actual_self_intersection_coverage();`.
+    pub fn actual_self_intersection_coverage(
+        &self,
+    ) -> Option<&martensite_tkmath::predicates::roots::metric_bounds::ConicalActualPatchCoverage>
+    {
+        self.family
+            .budget
+            .actual_certificate
+            .as_ref()
+            .map(|issued| issued.certificate().coverage())
+    }
+    /// Executed proxy/check selection; replay retains it alongside the original request.
+    /// Example: `let selection = result.execution_selection();`.
+    pub fn execution_selection(&self) -> WrappedConeExecutionSelection {
+        self.family.family.selection.executed_selection
+    }
+}
+
+/// Execute the selected complete cone behavior without changing request defaults.
+/// Request FilteredCompositeBernsteinV5 for the directed selection; other planar modes refuse.
+/// Example: `request.proof.planar_proof = PlanarProofVersion::FilteredCompositeBernsteinV5 { max_components: 64, max_total_subintervals: 100_000 }; normal_extrude_cone_profile_with_selection(&request, selection)?;`.
+pub fn normal_extrude_cone_profile_with_selection(
+    request: &WrappedConeNormalRequest,
+    selection: WrappedConeExecutionSelection,
+) -> Checked<WrappedConeNormalResult> {
+    normal_extrude_cone_profile_with_selection_and_cancel(request, selection, || false)
+}
+
+/// Cancel the selected complete operation without publishing partial geometry.
+/// Example: `normal_extrude_cone_profile_with_selection_and_cancel(&request, selection, || stop())`.
+pub fn normal_extrude_cone_profile_with_selection_and_cancel(
+    request: &WrappedConeNormalRequest,
+    selection: WrappedConeExecutionSelection,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Checked<WrappedConeNormalResult> {
+    operation::cone::execute_with_selection(request, selection, &mut cancelled)
+}
+
+#[cfg(test)]
+mod tests;

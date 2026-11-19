@@ -3,6 +3,7 @@ use super::*;
 use martensite_tkbo::profile_extrusion::PlanarProofVersion;
 mod binding;
 mod domain;
+pub(super) use domain::curve_ids as source_curve_ids;
 mod reference;
 pub(super) use reference::certify as certify_reference;
 #[cfg(test)]
@@ -11,6 +12,7 @@ mod tests;
 pub(in crate::surface_sketch::wrapped_profile) struct MaterialEvidence {
     original: DevelopedRegionRequest,
     uv: planar::PlanarEvidence,
+    pub(super) selected_material: Option<martensite_tkbo::body_check::CertifiedPlanarMaterial>,
     normal: ConicalMaterialEvidence,
     carriers: [ConicalTrimCarrier; 2],
     options: ConeClearanceOptions,
@@ -20,6 +22,11 @@ pub(in crate::surface_sketch::wrapped_profile) struct MaterialEvidence {
     pub(super) planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
 }
 impl MaterialEvidence {
+    pub(in crate::surface_sketch::wrapped_profile) fn integral_program_evidence(
+        &self,
+    ) -> Option<&martensite_tkbo::profile_extrusion::PlanarIntegralEvidence> {
+        self.uv.integral_program_evidence()
+    }
     pub(super) fn proof_version(&self) -> PlanarProofVersion {
         self.planar_proof
     }
@@ -40,20 +47,20 @@ pub(super) fn certify(
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<MaterialEvidence> {
-    let (uv, census, planar_work, planar_proof) =
-        certify_uv(request, original, prepared, stored, work, cancelled)?;
+    let captured = certify_uv(request, original, prepared, stored, work, cancelled)?;
     let options = work.remaining();
     let normal = certify_normal(original, prepared, stored, work, cancelled)?;
     Ok(MaterialEvidence {
         original: original.clone(),
-        uv,
+        uv: captured.uv,
+        selected_material: captured.selected,
         normal,
         carriers: stored.carriers,
         options,
-        planar_proof,
+        planar_proof: captured.version,
         requested_planar_proof: request.proof.planar_proof,
-        census,
-        planar_work,
+        census: captured.census,
+        planar_work: captured.work,
     })
 }
 fn certify_uv(
@@ -63,30 +70,59 @@ fn certify_uv(
     stored: &storage::Stored,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
-) -> ConeChecked<(
-    planar::PlanarEvidence,
-    martensite_tkbo::profile_extrusion::RegionCertificate,
-    martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
-    PlanarProofVersion,
-)> {
+) -> ConeChecked<CapturedUvMaterial> {
     let uv_request = domain::request(prepared, &stored.spans)?;
     let captured = capture_uv(
         &uv_request,
         request.options.planar_work,
         request.proof.planar_proof,
         work,
+        request.proof.integration,
         cancelled,
     )?;
+    finish_uv(request, original, prepared, &uv_request, captured)
+}
+fn finish_uv(
+    request: &WrappedConeNormalRequest,
+    original: &DevelopedRegionRequest,
+    prepared: &Prepared,
+    uv_request: &DevelopedRegionRequest,
+    captured: martensite_tkbo::profile_extrusion::PlanarRegionSet,
+) -> ConeChecked<CapturedUvMaterial> {
     let version = selected_version(
         original.region,
         request.proof.planar_proof,
         captured.proof_version(),
     )?;
-    let uv = planar::select(&uv_request, &captured)
+    let uv = planar::select(uv_request, &captured)
         .map_err(|cause| planar_failure(original.region, cause))?;
-    Ok((uv, captured.certificate(), captured.proof_work(), version))
+    let selected = retain_selected_material(prepared, &uv, &captured)?;
+    Ok(CapturedUvMaterial {
+        uv,
+        selected,
+        census: captured.certificate(),
+        work: captured.proof_work(),
+        version,
+    })
 }
 fn capture_uv(
+    source: &DevelopedRegionRequest,
+    requested: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
+    version: PlanarProofVersion,
+    work: &mut storage::Work,
+    integration: CylindricalFluxOptions,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<martensite_tkbo::profile_extrusion::PlanarRegionSet> {
+    if matches!(
+        version,
+        PlanarProofVersion::FilteredCompositeBernsteinV5 { .. }
+            | PlanarProofVersion::GeometricCompositeV6 { .. }
+    ) {
+        return capture_program_uv(source, requested, version, work, integration, cancelled);
+    }
+    capture_legacy_uv(source, requested, version, work, cancelled)
+}
+fn capture_legacy_uv(
     source: &DevelopedRegionRequest,
     requested: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
     version: PlanarProofVersion,
@@ -116,7 +152,8 @@ fn selected_version(
     requested: PlanarProofVersion,
     actual: PlanarProofVersion,
 ) -> ConeChecked<PlanarProofVersion> {
-    if requested != actual {
+    let compatible = compatible_planar_modes(requested, actual);
+    if !compatible {
         return Err(mismatch(
             region,
             None,
@@ -135,6 +172,9 @@ fn certify_normal(
 ) -> ConeChecked<ConicalMaterialEvidence> {
     let spans = binding::spans(original, prepared, &stored.spans)?;
     let query = binding::query(prepared, stored.carriers, work.remaining(), &spans);
+    if prepared.chart_domain.is_some() {
+        return developed::certify(query, original, prepared, &stored.spans, work, cancelled);
+    }
     let result = certify_conical_material(query, &mut *cancelled);
     let operations = result.as_ref().map_or_else(
         |cause| cause.operations,
@@ -144,7 +184,11 @@ fn certify_normal(
     result.map_err(|cause| math_failure(original.region, &stored.spans, cause))
 }
 
-pub(super) fn validate_publication(family: &ConeBudgeted) -> ConeChecked<()> {
+pub(super) fn validate_publication(
+    family: &ConeBudgeted,
+    integration_limit: u64,
+) -> ConeChecked<()> {
+    program::validate_family(family, integration_limit)?;
     for prepared in &family.family.selection.prepared {
         let region = prepared.source.region;
         let member = family
@@ -193,4 +237,59 @@ pub(super) fn mismatch(
     field: &'static str,
 ) -> ConeFailure {
     storage::mismatch(region, span, field, vec![0], vec![1])
+}
+
+mod developed;
+mod program;
+use program::capture_program_uv;
+
+fn compatible_planar_modes(requested: PlanarProofVersion, actual: PlanarProofVersion) -> bool {
+    match (composite_options(requested), composite_options(actual)) {
+        (Some(requested_options), Some(actual_options)) => {
+            std::mem::discriminant(&requested) == std::mem::discriminant(&actual)
+                && requested_options.0 == actual_options.0
+                && actual_options.1 <= requested_options.1
+        }
+        _ => requested == actual,
+    }
+}
+
+fn composite_options(version: PlanarProofVersion) -> Option<(u16, u64)> {
+    match version {
+        PlanarProofVersion::FilteredCompositeBernsteinV5 {
+            max_components,
+            max_total_subintervals,
+        }
+        | PlanarProofVersion::GeometricCompositeV6 {
+            max_components,
+            max_total_subintervals,
+        } => Some((max_components, max_total_subintervals)),
+        _ => None,
+    }
+}
+
+struct CapturedUvMaterial {
+    uv: planar::PlanarEvidence,
+    selected: Option<martensite_tkbo::body_check::CertifiedPlanarMaterial>,
+    census: martensite_tkbo::profile_extrusion::RegionCertificate,
+    work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
+    version: PlanarProofVersion,
+}
+fn retain_selected_material(
+    prepared: &Prepared,
+    uv: &planar::PlanarEvidence,
+    captured: &martensite_tkbo::profile_extrusion::PlanarRegionSet,
+) -> ConeChecked<Option<martensite_tkbo::body_check::CertifiedPlanarMaterial>> {
+    if !super::domain::directed(prepared) {
+        return Ok(None);
+    }
+    martensite_tkbo::body_check::CertifiedPlanarMaterial::from_region(captured, uv.selected_region)
+        .map(Some)
+        .map_err(|cause| {
+            storage::failure(
+                prepared.source.region,
+                None,
+                ConeCause::Native(Box::new(cause)),
+            )
+        })
 }

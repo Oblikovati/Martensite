@@ -120,3 +120,5 @@ fn check_snapshot_mutations(
         ));
     }
 }
+
+mod chart_joins;

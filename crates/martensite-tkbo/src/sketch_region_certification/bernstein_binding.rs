@@ -19,7 +19,7 @@ fn execution_certificate(
     execution: &super::bernstein_execution::BernsteinExecution,
 ) -> Option<CertifiedPairDomain<'_>> {
     if let Some(proof) = execution.exclusion.complete() {
-        return Some(CertifiedPairDomain::Excluded { _proof: proof });
+        return Some(proof);
     }
     execution
         .fallback
@@ -74,7 +74,7 @@ fn exclusion_policy(
 }
 
 pub(super) fn work_exact(census: &BoundaryCensus, paired: &PairedCensusEvidence) -> bool {
-    if paired.exclusion_version != Some(1)
+    if !matches!(paired.exclusion_version, Some(1 | 2))
         || !paired.reports.is_empty()
         || !super::paired_binding::paired_policy_current(census, paired)
     {
@@ -102,22 +102,23 @@ fn record_work_current(
     record.effective == expected
         && record.completed_work() <= remaining
         && record.outcome.as_ref().map_or(true, |execution| {
-            execution_work_current(execution, expected)
+            execution_work_current(execution, expected, paired.exclusion_version.unwrap_or(0))
         })
 }
 fn execution_work_current(
     execution: &super::bernstein_execution::BernsteinExecution,
     expected: BezierPairPolicy,
+    version: u32,
 ) -> bool {
     let policy = BezierPairExclusionPolicy {
-        version: 1,
+        version,
         pair_policy: expected,
     };
     if execution.exclusion.policy() != policy {
         return false;
     }
-    let inconclusive =
-        execution.exclusion.completion() == BezierPairExclusionCompletion::Inconclusive;
+    let inconclusive = execution.exclusion.completion()
+        == super::conditioned_stage::ConditionedCompletion::Inconclusive;
     if inconclusive != execution.fallback.is_some() {
         return false;
     }

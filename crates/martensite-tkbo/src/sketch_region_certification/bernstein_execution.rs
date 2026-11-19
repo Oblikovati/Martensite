@@ -10,7 +10,7 @@ pub(crate) struct BernsteinStoredReport {
     pub outcome: Result<BernsteinExecution, Box<BezierPairCaptureFailure>>,
 }
 pub(crate) struct BernsteinExecution {
-    pub exclusion: BezierPairExclusionReport,
+    pub exclusion: super::conditioned_stage::ConditionedStage,
     pub fallback: Option<BezierPairReport>,
 }
 impl BernsteinStoredReport {
@@ -25,7 +25,8 @@ impl BernsteinStoredReport {
     }
     pub(super) fn cancelled(&self) -> bool {
         self.outcome.as_ref().is_ok_and(|execution| {
-            execution.exclusion.completion() == BezierPairExclusionCompletion::Cancelled
+            execution.exclusion.completion()
+                == super::conditioned_stage::ConditionedCompletion::Cancelled
                 || execution
                     .fallback
                     .as_ref()
@@ -89,9 +90,17 @@ fn certify(
     policy: BezierPairExclusionPolicy,
     cancelled: &mut impl FnMut() -> bool,
 ) -> BernsteinExecution {
-    let exclusion = query.certify_bernstein_exclusion(policy, &mut *cancelled);
-    let fallback =
-        (exclusion.completion() == BezierPairExclusionCompletion::Inconclusive).then(|| {
+    let exclusion = match policy.version {
+        2 => super::conditioned_stage::ConditionedStage::Geometric(
+            query.certify_geometric(policy.pair_policy, &mut *cancelled),
+        ),
+        _ => super::conditioned_stage::ConditionedStage::Bernstein(
+            query.certify_bernstein_exclusion(policy, &mut *cancelled),
+        ),
+    };
+    let fallback = (exclusion.completion()
+        == super::conditioned_stage::ConditionedCompletion::Inconclusive)
+        .then(|| {
             query.certify(
                 remaining_after_exclusion(&exclusion, policy.pair_policy),
                 cancelled,
@@ -122,7 +131,7 @@ fn reference(
 }
 
 pub(super) fn remaining_after_exclusion(
-    exclusion: &BezierPairExclusionReport,
+    exclusion: &super::conditioned_stage::ConditionedStage,
     requested: BezierPairPolicy,
 ) -> BezierPairPolicy {
     let mut remaining = requested;

@@ -23,6 +23,8 @@ mod carriers;
 mod decline;
 mod ellipse;
 mod extrude;
+mod integral_evidence;
+mod integral_failure;
 mod loop_geometry;
 mod loops;
 mod operation_result;
@@ -30,6 +32,8 @@ mod plane_math;
 mod profile;
 mod proof;
 mod proof_pieces;
+pub use integral_evidence::PlanarIntegralEvidence;
+pub use integral_failure::{PlanarIntegralFailure, PlanarIntegralPolicyFailure};
 mod region_area;
 mod regions;
 mod resolution;
@@ -45,8 +49,9 @@ pub use crate::body_check::ValidationReport;
 pub use crate::measured::{Evidence, IntegrationMethod, Measured, MeasuredPoint};
 pub use crate::sketch_region_certification::CensusWorkReceipt as PlanarProofWorkReceipt;
 pub use build_regions::{
-    build_planar_regions, build_planar_regions_with_proof_and_cancel,
-    build_planar_regions_with_work, build_planar_regions_with_work_and_cancel,
+    build_planar_regions, build_planar_regions_with_integration_budget_and_cancel,
+    build_planar_regions_with_proof_and_cancel, build_planar_regions_with_work,
+    build_planar_regions_with_work_and_cancel,
 };
 pub use decline::{
     DeclineCause, DeclineClass, OperationDecline, OperationKind, OperationStage,
@@ -66,3 +71,6 @@ pub use work::{
 
 #[cfg(test)]
 mod area_translation_tests;
+
+#[cfg(test)]
+mod composite_tests;

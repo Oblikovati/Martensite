@@ -4,7 +4,6 @@ use crate::predicates::roots::metric_bounds::CylindricalProfileFailure;
 pub(super) type Checked<T> = Result<T, AnalyticConicalFluxFailure>;
 
 /// No partial scalar accompanies any incomplete supplied occurrence.
-#[derive(Debug)]
 pub struct AnalyticConicalFluxError {
     /// Original integration/error policy.
     pub requested_options: CylindricalFluxOptions,
@@ -12,6 +11,10 @@ pub struct AnalyticConicalFluxError {
     pub requested_arithmetic: CylindricalProfileOptions,
     /// Complete supplied occurrence count.
     pub span_count: usize,
+    /// Actual completed bounded coefficient and accumulation operations, including failure.
+    pub operations: u32,
+    /// Actual examined scalar integration cells, including failed or cancelled terms.
+    pub integration_subintervals: u64,
     /// Owned typed failure, with local span/depth where known.
     pub cause: AnalyticConicalFluxFailure,
 }
@@ -19,6 +22,15 @@ pub struct AnalyticConicalFluxError {
 /// Unsupported data or incomplete work; positions identify local occurrences, not persistent names.
 #[derive(Debug)]
 pub enum AnalyticConicalFluxFailure {
+    /// Outward contribution import or same-grid accumulation refused.
+    Arithmetic {
+        /// Actual supplied span, absent for aggregate publication.
+        span: Option<usize>,
+        /// Actual cap row, absent for a side or aggregate contribution.
+        depth: Option<usize>,
+        /// Original typed arithmetic, precision, work or cancellation cause.
+        cause: Box<crate::predicates::roots::certificate_arithmetic::bounded_failure::BoundedArithmeticFailure>,
+    },
     /// Existing shared ruled/polynomial admission refused the actual data.
     Input {
         /// Offending local span, absent for policy/count checks.
@@ -70,7 +82,29 @@ impl std::fmt::Display for AnalyticConicalFluxError {
         )
     }
 }
-impl std::error::Error for AnalyticConicalFluxError {}
+impl std::error::Error for AnalyticConicalFluxError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        Some(&self.cause)
+    }
+}
+impl std::fmt::Display for AnalyticConicalFluxFailure {
+    fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            out,
+            "{self:?}; expected admitted cone flux data and completion within the requested policies"
+        )
+    }
+}
+impl std::error::Error for AnalyticConicalFluxFailure {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Coefficients { cause, .. } => Some(cause.as_ref()),
+            Self::Cap { cause, .. } => Some(cause.as_ref()),
+            Self::Integration { cause, .. } => Some(cause.as_ref()),
+            _ => None,
+        }
+    }
+}
 
 pub(super) fn integration(
     span: Option<usize>,
@@ -90,5 +124,26 @@ pub(super) fn input(
         span,
         depth,
         cause: Box::new(cause),
+    }
+}
+
+#[derive(Default)]
+pub(super) struct ExecutionWork {
+    pub(super) operations: u32,
+    pub(super) cells: u64,
+}
+impl std::fmt::Debug for AnalyticConicalFluxError {
+    fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut record = out.debug_struct("AnalyticConicalFluxError");
+        record
+            .field("requested_options", &self.requested_options)
+            .field("requested_arithmetic", &self.requested_arithmetic)
+            .field("span_count", &self.span_count);
+        if self.requested_options.behavior_version == 2 {
+            record
+                .field("operations", &self.operations)
+                .field("integration_subintervals", &self.integration_subintervals);
+        }
+        record.field("cause", &self.cause).finish()
     }
 }

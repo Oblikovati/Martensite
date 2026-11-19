@@ -1,0 +1,12 @@
+{
+  "removed_temporary_implementations": [
+    "/tmp/martensite-census-v2-review-l614c7ls",
+    "/tmp/martensite-census-v2-range-review"
+  ],
+  "known_test_build_run_handles_terminal": true,
+  "no_live_cwd_refs": true,
+  "frozen_production_paths_unchanged": 13,
+  "user_archive_preserved": "/home/vmiguel/git/oblikovati-workspace/Martensite/census-v2-prototype.zip",
+  "archive_sha256": "e199f9628888cfdf7f9c684d5648be37ffcf4bcaa3614e3688b115917216afbe",
+  "retained_evidence": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/docs/features/surface-normal-sketches/references/census-v2-validation-2026-11-19"
+}

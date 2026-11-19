@@ -15,7 +15,7 @@ pub struct CylindricalFluxSpan<'a> {
 /// Finite conditional flux policy; independent of spatial modelling tolerances.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CylindricalFluxOptions {
-    /// Supported integration behavior revision, currently 1.
+    /// Behavior1 remains the default; conical entries additionally admit outward aggregate behavior2.
     pub behavior_version: u32,
     /// Maximum stored degree, in `0..=16`.
     pub max_degree: u16,
@@ -41,7 +41,10 @@ impl Default for CylindricalFluxOptions {
     }
 }
 impl CylindricalFluxOptions {
-    pub(super) fn engine(self, remaining: u32) -> RationalIntegralOptions {
+    pub(in crate::predicates::roots::metric_bounds::rational_integrals) fn engine(
+        self,
+        remaining: u32,
+    ) -> RationalIntegralOptions {
         RationalIntegralOptions {
             behavior_version: self.behavior_version,
             max_degree: self.max_degree,
