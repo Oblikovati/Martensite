@@ -4748,6 +4748,14 @@
     "semantic_checks": "all executed consumers accepted; public evidence and native BRep bytes equal across compared processes and all small-case iterations",
     "runtime": "all three final matched workloads faster",
     "memory": "final small-case peak-RSS medians increased by 144 and 116 KiB with overlapping ranges; sampled heap, anonymous and stack maxima unchanged in the separate ASLR-off control; no new memory waiver assumed",
-    "merge_gate": "canonical PR gate passed; hosted checks remain pending; resident-memory tradeoff remains explicit"
+    "merge_gate": "canonical and hosted checks passed for 63a60f5253a98c68f8081ef05248d6cf7943db11; maintainer accepted the measured RSS tradeoff for PR #556 on 2026-11-19; merged as b7dc518b412036048e4f8582cf600aa040f86d64"
+  },
+  "approval": {
+    "date": "2026-11-19",
+    "scope": "PR #556 measured 144 KiB and 116 KiB small-case peak-RSS increases only",
+    "decision": "Accepted this RSS tradeoff and merge #556",
+    "hosted_run": "https://github.com/Oblikovati/Martensite/actions/runs/44470644480",
+    "tested_commit": "63a60f5253a98c68f8081ef05248d6cf7943db11",
+    "merge_commit": "b7dc518b412036048e4f8582cf600aa040f86d64"
   }
 }
