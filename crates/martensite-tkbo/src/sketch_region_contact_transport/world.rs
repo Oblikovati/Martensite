@@ -23,8 +23,20 @@ pub(super) fn retain_world_bounds(
     retained: &mut PairedContactTransaction,
     cancelled: &mut super::progress::ContactProgress<'_>,
 ) {
+    retain_world_bounds_with_access(
+        retained,
+        cancelled,
+        crate::sketch_region_certification::SourceAccess::Live,
+    );
+}
+pub(super) fn retain_world_bounds_with_access(
+    retained: &mut PairedContactTransaction,
+    cancelled: &mut super::progress::ContactProgress<'_>,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
+) {
+    let proofs = access.owned_certificates(&retained.census);
     for contact in 0..retained.inspection.contacts.len() {
-        let rows = measure_contact_points(retained, contact, cancelled);
+        let rows = measure_contact_points(retained, contact, cancelled, proofs.as_ref());
         retained.inspection.completed_bisections += rows
             .iter()
             .map(|row| row.report.as_ref().map_or(0, |report| report.bisections))
@@ -39,8 +51,9 @@ fn measure_contact_points(
     retained: &PairedContactTransaction,
     contact: usize,
     cancelled: &mut super::progress::ContactProgress<'_>,
+    proofs: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
 ) -> Vec<ContactWorldMeasurement> {
-    let Some(inputs) = contact_metric_inputs(retained, contact) else {
+    let Some(inputs) = contact_metric_inputs(retained, contact, proofs) else {
         return Vec::new();
     };
     let mut measured = Vec::new();
@@ -70,10 +83,11 @@ fn append_vertex_bounds(
         }
     }
 }
-fn contact_metric_inputs(
-    retained: &PairedContactTransaction,
+fn contact_metric_inputs<'a>(
+    retained: &'a PairedContactTransaction,
     contact: usize,
-) -> Option<ContactMetricInputs<'_>> {
+    proofs: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
+) -> Option<ContactMetricInputs<'a>> {
     let axes = super::topology::canonical_occurrences(retained, contact)?;
     let id = retained.census.inputs.segments[axes[0]].occurrence;
     let construction = retained
@@ -85,14 +99,19 @@ fn contact_metric_inputs(
     Some(ContactMetricInputs {
         construction,
         originals: &retained.census.inputs.originals,
-        bounds: contact_bounds(retained, contact)?,
+        bounds: contact_bounds(retained, contact, proofs)?,
         requested: retained.requested,
     })
 }
-fn contact_bounds(retained: &PairedContactTransaction, contact: usize) -> Option<[DyadicBound; 2]> {
+fn contact_bounds(
+    retained: &PairedContactTransaction,
+    contact: usize,
+    proofs: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
+) -> Option<[DyadicBound; 2]> {
     let row = &retained.inspection.contacts[contact];
     let domain = &retained.census.domains[*row.occurrence_domains.first()?];
-    let proof = crate::sketch_region_certification::domain_certificate(&retained.census, domain)?;
+    let proof =
+        crate::sketch_region_certification::certificate_in(&retained.census, domain, proofs)?;
     let root = (0..proof.contact_count())
         .filter_map(|i| proof.contact(i))
         .find(|candidate| candidate.candidate_index == row.identity.candidate_root)?;
@@ -206,7 +225,7 @@ fn singleton_point_inputs(
     retained: &PairedContactTransaction,
     contact: usize,
 ) -> Option<ContactMetricInputs<'_>> {
-    let inputs = contact_metric_inputs(retained, contact)?;
+    let inputs = contact_metric_inputs(retained, contact, None)?;
     let zero = inputs
         .bounds
         .iter()

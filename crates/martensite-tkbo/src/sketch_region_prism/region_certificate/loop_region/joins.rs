@@ -32,31 +32,26 @@ pub(super) fn certify(
 pub(super) fn certify_contacts(
     census: &BoundaryCensus,
     binding: &SegmentBinding<'_>,
+    expected: Expected,
+) -> LoopRegionCheck<(Vec<JoinProof>, usize, usize)> {
+    certify_contacts_with_access(
+        census,
+        binding,
+        expected,
+        crate::sketch_region_certification::SourceAccess::Live,
+    )
+}
+pub(super) fn certify_contacts_with_access(
+    census: &BoundaryCensus,
+    binding: &SegmentBinding<'_>,
     mut expected: Expected,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
 ) -> LoopRegionCheck<(Vec<JoinProof>, usize, usize)> {
     domain_count(census, binding.sources.len())?;
-    let certificates = DomainCertificates::new(census);
+    let certificates = access.certificates(census);
     first_unavailable(census, binding, certificates.as_ref())?;
-    current_matrix(census)?;
-    let mut joins = Vec::new();
-    let mut carriers = 0;
-    for domain in &census.domains {
-        let [first, second] = domain.occurrences;
-        let sources = [source(binding, first)?, source(binding, second)?];
-        let unavailable = LoopRegionFailure {
-            stage: STAGE,
-            cause: LoopRegionCause::PairUnavailable { sources },
-        };
-        let proof = certificates
-            .as_ref()
-            .and_then(|current| current.certificate(domain))
-            .ok_or(unavailable)?;
-        carriers += usize::from(proof.sign_stage() == BezierPairSignStage::SkippedCommonCarrier);
-        let wanted = expected.remove(&key(first, second)).unwrap_or_default();
-        let wanted = oriented(wanted, first > second);
-        let found = (0..proof.contact_count()).map(|i| proof.contact(i).expect("indexed contact"));
-        joins.extend(match_contacts(sources, found, wanted)?);
-    }
+    current_matrix(census, certificates.as_ref(), access)?;
+    let (joins, carriers) = matched_domains(census, binding, &mut expected, certificates.as_ref())?;
     if let Some(((low, high), parameters)) = expected.into_iter().next() {
         let sources = [source(binding, low)?, source(binding, high)?];
         let missing = LoopRegionCause::MissingJoin {
@@ -66,6 +61,42 @@ pub(super) fn certify_contacts(
         return refuse(STAGE, missing);
     }
     Ok((joins, carriers, census.domains.len()))
+}
+fn matched_domains(
+    census: &BoundaryCensus,
+    binding: &SegmentBinding<'_>,
+    expected: &mut Expected,
+    certificates: Option<&DomainCertificates<'_>>,
+) -> LoopRegionCheck<(Vec<JoinProof>, usize)> {
+    let mut joins = Vec::new();
+    let mut carriers = 0;
+    for domain in &census.domains {
+        let (found, carrier) = matched_domain(domain, binding, expected, certificates)?;
+        carriers += usize::from(carrier);
+        joins.extend(found);
+    }
+    Ok((joins, carriers))
+}
+fn matched_domain(
+    domain: &crate::sketch_region_certification::BoundaryDomain,
+    binding: &SegmentBinding<'_>,
+    expected: &mut Expected,
+    certificates: Option<&DomainCertificates<'_>>,
+) -> LoopRegionCheck<(Vec<JoinProof>, bool)> {
+    let [first, second] = domain.occurrences;
+    let sources = [source(binding, first)?, source(binding, second)?];
+    let unavailable = LoopRegionFailure {
+        stage: STAGE,
+        cause: LoopRegionCause::PairUnavailable { sources },
+    };
+    let proof = certificates
+        .and_then(|current| current.certificate(domain))
+        .ok_or(unavailable)?;
+    let carrier = proof.sign_stage() == BezierPairSignStage::SkippedCommonCarrier;
+    let wanted = expected.remove(&key(first, second)).unwrap_or_default();
+    let wanted = oriented(wanted, first > second);
+    let found = (0..proof.contact_count()).map(|i| proof.contact(i).expect("indexed contact"));
+    Ok((match_contacts(sources, found, wanted)?, carrier))
 }
 fn domain_count(census: &BoundaryCensus, sources: usize) -> LoopRegionCheck<()> {
     let expected = sources * (sources + 1) / 2;
@@ -101,8 +132,17 @@ fn first_unavailable(
     }
     Ok(())
 }
-fn current_matrix(census: &BoundaryCensus) -> LoopRegionCheck<()> {
-    let gaps = census.current_obligations();
+fn current_matrix(
+    census: &BoundaryCensus,
+    certificates: Option<&DomainCertificates<'_>>,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
+) -> LoopRegionCheck<()> {
+    let gaps = match (access, certificates) {
+        (crate::sketch_region_certification::SourceAccess::Owned(_), Some(view)) => {
+            view.current_obligations()
+        }
+        _ => census.current_obligations(),
+    };
     let open = gaps.contains(&CertificationObligation::ExhaustivePairAndSelfDomains)
         || gaps.contains(&CertificationObligation::FailedWorkAccounting);
     if open {

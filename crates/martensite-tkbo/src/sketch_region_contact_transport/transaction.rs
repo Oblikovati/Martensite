@@ -11,17 +11,41 @@ pub(crate) fn transport_partition_contacts(
     mapped: crate::sketch_region_partition_bindings::PartitionBoundOutputs,
     policy: ContactTransportPolicy,
     sources: &[ArrangementSource<'_>],
+    cancelled: impl FnMut(ContactTransportPhase) -> bool,
+) -> Result<PairedContactTransaction, ContactTransportStop> {
+    transport_partition_contacts_with_access(
+        census,
+        mapped,
+        policy,
+        sources,
+        cancelled,
+        crate::sketch_region_certification::SourceAccess::Live,
+    )
+}
+pub(crate) fn transport_partition_contacts_with_access(
+    census: crate::sketch_region_certification::BoundaryCensus,
+    mapped: crate::sketch_region_partition_bindings::PartitionBoundOutputs,
+    policy: ContactTransportPolicy,
+    sources: &[ArrangementSource<'_>],
     mut cancelled: impl FnMut(ContactTransportPhase) -> bool,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
 ) -> Result<PairedContactTransaction, ContactTransportStop> {
     let mut progress = super::progress::ContactProgress::new(&mut cancelled);
     let mut retained =
         checked_contact_transaction(empty_contact_transaction(census, mapped, policy))?;
     for phase in CONTACT_PHASES {
         retained = enter_contact_phase(retained, phase, &mut progress)?;
-        execute_contact_phase(&mut retained, sources, phase, &mut progress);
+        execute_contact_phase(&mut retained, sources, phase, &mut progress, access);
         retained = retain_in_stage_stop(retained, &progress)?;
     }
-    super::admission::inspect_contact_admission(&mut retained);
+    match access {
+        crate::sketch_region_certification::SourceAccess::Live => {
+            super::admission::inspect_contact_admission(&mut retained)
+        }
+        crate::sketch_region_certification::SourceAccess::Owned(_) => {
+            super::admission::inspect_contact_admission_with_access(&mut retained, access)
+        }
+    }
     Ok(retained)
 }
 const CONTACT_PHASES: [ContactTransportPhase; 6] = [
@@ -37,26 +61,42 @@ fn execute_contact_phase(
     sources: &[ArrangementSource<'_>],
     phase: ContactTransportPhase,
     cancelled: &mut super::progress::ContactProgress<'_>,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
 ) {
     if phase == ContactTransportPhase::SourceBinding {
         source_phase(retained, sources);
         return super::exact_sources::capture_exact_sources(retained, cancelled);
     }
     if phase == ContactTransportPhase::WorldConstruction {
-        return super::world::retain_world_bounds(retained, cancelled);
+        return match access {
+            crate::sketch_region_certification::SourceAccess::Live => {
+                super::world::retain_world_bounds(retained, cancelled)
+            }
+            crate::sketch_region_certification::SourceAccess::Owned(_) => {
+                super::world::retain_world_bounds_with_access(retained, cancelled, access)
+            }
+        };
     }
-    execute_observation_phase(retained, phase);
+    execute_observation_phase(retained, phase, access);
 }
 fn execute_observation_phase(
     retained: &mut PairedContactTransaction,
     phase: ContactTransportPhase,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
 ) {
     use super::{generated::retain_generated_vertices, topology::*};
     match phase {
-        ContactTransportPhase::CanonicalContacts => retain_canonical_contacts(retained),
+        ContactTransportPhase::CanonicalContacts => retain_canonical_contacts(retained, access),
         ContactTransportPhase::TopologyBinding => retain_topological_incidences(retained),
         ContactTransportPhase::GeneratedBinding => retain_generated_vertices(retained),
-        ContactTransportPhase::ParameterConstruction => retain_parameter_measurements(retained),
+        ContactTransportPhase::ParameterConstruction => match access {
+            crate::sketch_region_certification::SourceAccess::Live => {
+                retain_parameter_measurements(retained)
+            }
+            crate::sketch_region_certification::SourceAccess::Owned(_) => {
+                retain_parameter_measurements_with_access(retained, access)
+            }
+        },
         ContactTransportPhase::SourceBinding | ContactTransportPhase::WorldConstruction => {}
     }
 }
@@ -146,9 +186,11 @@ fn source_phase(retained: &mut PairedContactTransaction, sources: &[ArrangementS
         PartitionObservation::Captured(_) => {}
     }
 }
-fn retain_canonical_contacts(retained: &mut PairedContactTransaction) {
-    let certificates =
-        crate::sketch_region_certification::DomainCertificates::new(&retained.census);
+fn retain_canonical_contacts(
+    retained: &mut PairedContactTransaction,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
+) {
+    let certificates = access.certificates(&retained.census);
     for (index, domain) in retained.census.domains.iter().enumerate() {
         retain_domain_contacts(
             &mut retained.inspection,

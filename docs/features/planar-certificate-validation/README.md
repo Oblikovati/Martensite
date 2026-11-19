@@ -22,8 +22,8 @@ construction once, sharing the immutable source-history and matrix checks.
 Each domain still validates its occurrence,
 parameter-axis mapping, history, source coefficients, report and effective
 policy. Native geometry can change through interior-mutable aliases even
-while the census is borrowed, so source geometry must still be checked
-fresh for every segment on every certificate lookup. The regression tests
+while the census is borrowed. Borrowed certificate views still check source
+geometry fresh for every segment on every certificate lookup. The regression tests
 include copied-curve, stored-pcurve and support-plane alias mutations,
 forged ledger entries and a 56-edge public profile with independent closed-form areas.
 The same accepted two-glyph workload took 5.199 seconds (5.19 CPU seconds),
@@ -58,3 +58,73 @@ Verification on Linux:
 The broad unrelated Boolean test campaign was stopped; it supplies no
 acceptance evidence. The integration gate and other platforms remain the
 coordinator's checks before merge and release.
+
+## Owned graph batches (#555)
+
+The graph-only profile entry point constructs fresh native edges from owned
+coefficients and returns a scalar graph certificate. Its native handles stay
+inside that call. A private validation view borrows the request owner and
+checks the complete source inventory before a read-only batch. Certificate
+lookups in that batch reuse this source check. The next batch validates
+the sources again; no validity state is stored on a returned census or
+contact transaction.
+
+Preparation that returns native handles keeps the live validation path.
+Borrowed certificate views still recheck curve, pcurve and support geometry
+on each lookup, including after an alias changes them. Both paths retain
+the existing per-domain source, history, report and policy checks.
+
+Contact transport also indexes immutable parent reports for each read-only
+batch. Matching preserves the original source-vector order and full parent
+identity. Equal parent-vector lengths and the original one-way membership
+test remain significant, including their behavior with duplicate parents.
+The index contains source-row positions and supplies no native freshness
+authority.
+
+The focused controls compare owned and live certificates, rendered debug
+bytes and callback traces. They also count actual source validations and
+exercise source revisions, native alias edits and mismatched source
+manifests. Focused verification on Linux x86_64 passed nine owned-path
+controls, nine source-index controls and six existing borrowed-view
+controls. The owned controls include the earlier-failure and native
+callback-error cases. The final index uses contiguous candidate rows and sorted admission keys.
+The earlier #449 measurements above describe that fix only.
+
+### Matched public workloads
+
+The before build used clean main `9e11ab3864c8786ce05b3bdf35123f4a87fc1b05`.
+Both builds used Rust 1.99.0 with ordinary optimization level 0, the existing
+Math/num-bigint level 3 and TKBO level 1 overrides, and debug information
+disabled. Each study pinned both versions to one idle physical core.
+The consumers called the same public API with the existing fixtures and
+resolution; their timers excluded validation and export.
+
+| Accepted workload | Median API time before | After | Median peak RSS before | After |
+| --- | ---: | ---: | ---: | ---: |
+| Two rectangles, 56 curves | 4.496840 s | 0.395095 s | 35,516 KiB | 35,444 KiB |
+| Two-span parabola segment | 16.304809 ms | 15.365912 ms | 29,172 KiB | 29,316 KiB |
+| Rational two-span half-disc | 27.221607 ms | 26.583895 ms | 29,436 KiB | 29,552 KiB |
+
+The rectangle study alternated three processes per version. Each small
+study alternated nine processes per version, with 32 calls per process;
+the table reports the median process average. Every call checked its
+independent area, source mapping, ordered validation and input isolation.
+Public evidence and native BRep bytes matched across processes and across
+all repeated small calls. The 56-curve API was about 11.4 times faster.
+These are local measurements on a shared host, not runtime bounds.
+
+Peak RSS was lower for the rectangle case. The small-case medians rose by
+144 KiB and 116 KiB; the ranges overlapped: 28,892 to 29,288 versus
+29,112 to 29,540 KiB for the parabola, and 29,132 to 29,724 versus
+29,120 to 29,704 KiB for the half-disc. An additional ASLR-disabled memory
+attribution control found the same sampled heap (504 KiB), anonymous
+memory (84 KiB) and stack (132 KiB) maxima. Its extra resident pages were
+in executable mappings. That control diagnoses residency and does not
+replace the default-layout measurements or grant a memory exception.
+
+[Raw measurements and provenance](555-performance.json) retain both the
+initial tree-index study and the final contiguous-index study. The Linux
+x86_64 PR gate passed with `cargo xtask pr --base
+9e11ab3864c8786ce05b3bdf35123f4a87fc1b05`, including lint, clippy, builds
+and affected-package tests. Hosted checks remain pending. The small-case
+resident-memory tradeoff remains unresolved under the no-degradation constraint.
