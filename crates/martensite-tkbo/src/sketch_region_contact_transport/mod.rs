@@ -53,3 +53,5 @@ pub(crate) use world::recertify_contact_point;
 mod point_snapshot;
 pub(crate) use point_snapshot::ContactPointQuerySnapshot;
 pub(crate) use world::capture_contact_point_query;
+
+pub(crate) use transaction::transport_partition_contacts_with_access;

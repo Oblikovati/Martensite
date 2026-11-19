@@ -144,48 +144,45 @@ impl BoundaryCensus {
     /// Return authoritative current obligations after possible private stage input edits.
     /// Example: `census.current_obligations().contains(&CertificationObligation::SourceConversionAndPlane)`.
     pub(crate) fn current_obligations(&self) -> Vec<CertificationObligation> {
-        let mut current = self.missing.clone();
-        if !self.source_representation_certified()
-            && !current.contains(&CertificationObligation::SourceConversionAndPlane)
-        {
-            current.push(CertificationObligation::SourceConversionAndPlane);
-        }
-        if self.paired.is_some() {
-            restore_paired_obligations(self, &mut current);
-        }
-        current
+        obligations_from(
+            self,
+            || self.source_representation_certified(),
+            || super::paired_binding::paired_domains_certified(self),
+        )
     }
 }
 
-fn restore_pair_obligation(
+pub(super) fn obligations_from(
     census: &BoundaryCensus,
+    source: impl FnOnce() -> bool,
+    complete: impl FnOnce() -> bool,
+) -> Vec<CertificationObligation> {
+    let mut current = census.missing.clone();
+    let gap = CertificationObligation::SourceConversionAndPlane;
+    if !source() && !current.contains(&gap) {
+        current.push(gap);
+    }
+    if census.paired.is_some() {
+        super::paired_binding::restore_operation_obligations(&mut current);
+        append_missing(
+            &mut current,
+            CertificationObligation::ExhaustivePairAndSelfDomains,
+            complete(),
+        );
+        append_missing(
+            &mut current,
+            CertificationObligation::FailedWorkAccounting,
+            super::paired_binding::paired_work_exact(census),
+        );
+    }
+    current
+}
+fn append_missing(
     current: &mut Vec<CertificationObligation>,
     gap: CertificationObligation,
+    valid: bool,
 ) {
-    let valid = match gap {
-        CertificationObligation::ExhaustivePairAndSelfDomains => {
-            super::paired_binding::paired_domains_certified(census)
-        }
-        CertificationObligation::FailedWorkAccounting => {
-            super::paired_binding::paired_work_exact(census)
-        }
-        _ => false,
-    };
     if !valid && !current.contains(&gap) {
         current.push(gap);
     }
-}
-
-fn restore_paired_obligations(census: &BoundaryCensus, current: &mut Vec<CertificationObligation>) {
-    super::paired_binding::restore_operation_obligations(current);
-    restore_pair_obligation(
-        census,
-        current,
-        CertificationObligation::ExhaustivePairAndSelfDomains,
-    );
-    restore_pair_obligation(
-        census,
-        current,
-        CertificationObligation::FailedWorkAccounting,
-    );
 }

@@ -78,6 +78,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Reused native-source validation within private owned-profile graph batches, preserving live alias checks for borrowed inputs and exact source-history matching (#555).
+
 - Decoupled cylinder-only error reporting from cone-specific failure formatting while preserving typed causes and diagnostics (#547).
 
 - Clarified the raw native volume error-status units and corrected cone numerical verification to compare occurrence flux at the same field origin without changing native estimates or certified bounds (#546).

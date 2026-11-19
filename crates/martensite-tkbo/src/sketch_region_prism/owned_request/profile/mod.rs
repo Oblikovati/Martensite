@@ -36,5 +36,7 @@ use martensite_tkmath::gp::Plane3;
 #[cfg(test)]
 mod tests;
 
+mod owned_graph;
 #[cfg(test)]
 mod preparation_work_tests;
+pub(crate) use owned_graph::OwnedGraphAccess;

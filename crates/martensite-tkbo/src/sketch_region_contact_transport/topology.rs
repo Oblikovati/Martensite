@@ -1,14 +1,36 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Shared DS topology supplies observations; a metric bound never supplies contact identity.
 use super::*;
+mod source_index;
 use crate::sketch_region::{PartitionObservation, SourcePartitionObservation};
 use crate::sketch_region_partition_bindings::PartitionEndpointBinding;
 use martensite_tkmath::predicates::roots::metric_bounds::MetricParameterMap;
+pub(super) use source_index::SourceIndex;
 
+pub(super) fn compile_source_index(retained: &PairedContactTransaction) -> Option<SourceIndex> {
+    let PartitionObservation::Captured(snapshot) = &retained.mapped.arrangement.partition else {
+        return None;
+    };
+    let current = retained.current_partition.as_ref()?.as_ref().ok()?;
+    Some(SourceIndex::new(
+        retained
+            .census
+            .inputs
+            .segments
+            .iter()
+            .map(|segment| segment.parents.as_slice()),
+        &snapshot.sources,
+        current
+            .domains
+            .iter()
+            .map(|row| (row.source_index, row.parent.as_ref(), row.decision.is_ok())),
+    ))
+}
 pub(super) fn retain_topological_incidences(retained: &mut PairedContactTransaction) {
+    let sources = compile_source_index(retained);
     for index in 0..retained.inspection.contacts.len() {
         let domain = retained.inspection.contacts[index].occurrence_domains[0];
-        let rows = observed_domain_vertices(retained, domain);
+        let rows = observed_domain_vertices_with_index(retained, domain, sources.as_ref());
         retained.inspection.contacts[index].observed_vertices = rows;
         // WHY: even a unique report-local root and shared DS vertex need independent source correspondence.
         let identity = retained.inspection.contacts[index].identity;
@@ -20,6 +42,13 @@ pub(super) fn retain_topological_incidences(retained: &mut PairedContactTransact
 pub(super) fn observed_domain_vertices(
     retained: &PairedContactTransaction,
     domain_index: usize,
+) -> Vec<ObservedContactVertex> {
+    observed_domain_vertices_with_index(retained, domain_index, None)
+}
+pub(super) fn observed_domain_vertices_with_index(
+    retained: &PairedContactTransaction,
+    domain_index: usize,
+    sources: Option<&SourceIndex>,
 ) -> Vec<ObservedContactVertex> {
     let PartitionObservation::Captured(snapshot) = &retained.mapped.arrangement.partition else {
         return Vec::new();
@@ -33,7 +62,9 @@ pub(super) fn observed_domain_vertices(
     endpoints
         .endpoints
         .iter()
-        .flat_map(|endpoint| observed_endpoint_rows(retained, domain_index, snapshot, endpoint))
+        .flat_map(|endpoint| {
+            observed_endpoint_rows(retained, domain_index, snapshot, endpoint, sources)
+        })
         .collect()
 }
 fn observed_endpoint_rows(
@@ -41,6 +72,7 @@ fn observed_endpoint_rows(
     domain_index: usize,
     snapshot: &crate::sketch_region::OwnedPartitionSnapshot,
     endpoint: &PartitionEndpointBinding,
+    sources: Option<&SourceIndex>,
 ) -> Vec<ObservedContactVertex> {
     let Some(vertex) = snapshot
         .vertices
@@ -49,7 +81,7 @@ fn observed_endpoint_rows(
     else {
         return Vec::new();
     };
-    parameter_rows(retained, domain_index, endpoint, vertex)
+    parameter_rows(retained, domain_index, endpoint, vertex, sources)
 }
 
 pub(super) fn canonical_occurrences(
@@ -86,11 +118,13 @@ fn parameter_rows(
     domain_index: usize,
     endpoint: &PartitionEndpointBinding,
     vertex: &crate::sketch_region::PartitionVertexObservation,
+    sources: Option<&SourceIndex>,
 ) -> Vec<ObservedContactVertex> {
     let Some(axes) = domain_axes(retained, domain_index) else {
         return Vec::new();
     };
-    let parameters = axes.map(|occurrence| native_axis_parameters(retained, occurrence, endpoint));
+    let parameters =
+        axes.map(|occurrence| native_axis_parameters(retained, occurrence, endpoint, sources));
     distinct_parameter_rows(axes, &parameters, vertex)
 }
 fn distinct_parameter_rows(
@@ -134,13 +168,14 @@ fn native_axis_parameters(
     retained: &PairedContactTransaction,
     occurrence: usize,
     endpoint: &PartitionEndpointBinding,
+    sources: Option<&SourceIndex>,
 ) -> Vec<f64> {
     let PartitionObservation::Captured(snapshot) = &retained.mapped.arrangement.partition else {
         return Vec::new();
     };
     let mut parameters = Vec::new();
-    for source in &snapshot.sources {
-        if source_matches_occurrence(retained, occurrence, source) {
+    for (row, source) in snapshot.sources.iter().enumerate() {
+        if matches_row(retained, occurrence, row, source, sources) {
             append_source_parameters(source.source_index, endpoint, &mut parameters);
         }
     }
@@ -201,11 +236,23 @@ fn observe_vertex(
 }
 
 pub(super) fn retain_parameter_measurements(retained: &mut PairedContactTransaction) {
+    retain_parameter_measurements_with_access(
+        retained,
+        crate::sketch_region_certification::SourceAccess::Live,
+    );
+}
+pub(super) fn retain_parameter_measurements_with_access(
+    retained: &mut PairedContactTransaction,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
+) {
+    let proofs = access.owned_certificates(&retained.census);
     for contact in 0..retained.inspection.contacts.len() {
         let measurements = retained.inspection.contacts[contact]
             .observed_vertices
             .iter()
-            .map(|vertex| measure_parameters(retained, contact, vertex.native_parameters))
+            .map(|vertex| {
+                measure_parameters(retained, contact, vertex.native_parameters, proofs.as_ref())
+            })
             .collect::<Vec<_>>();
         for (vertex, measurement) in retained.inspection.contacts[contact]
             .observed_vertices
@@ -220,12 +267,14 @@ fn measure_parameters(
     retained: &PairedContactTransaction,
     contact: usize,
     native: [f64; 2],
+    proofs: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
 ) -> Option<NativeParameterMeasurement> {
     let axes = canonical_occurrences(retained, contact)?;
     let maps = native_maps(retained, axes)?;
     let row = &retained.inspection.contacts[contact];
     let domain = &retained.census.domains[row.occurrence_domains[0]];
-    let proof = crate::sketch_region_certification::domain_certificate(&retained.census, domain)?;
+    let proof =
+        crate::sketch_region_certification::certificate_in(&retained.census, domain, proofs)?;
     let index = (0..proof.contact_count())
         .find(|&i| proof.contact(i).unwrap().candidate_index == row.identity.candidate_root)?;
     Some(proof.measure_native_parameters(
@@ -242,11 +291,20 @@ pub(super) fn original_source_endpoint(
     vertex: i32,
     parameter: f64,
 ) -> bool {
+    original_source_endpoint_with_index(retained, occurrence, vertex, parameter, None)
+}
+pub(super) fn original_source_endpoint_with_index(
+    retained: &PairedContactTransaction,
+    occurrence: usize,
+    vertex: i32,
+    parameter: f64,
+    sources: Option<&SourceIndex>,
+) -> bool {
     let PartitionObservation::Captured(snapshot) = &retained.mapped.arrangement.partition else {
         return false;
     };
-    snapshot.sources.iter().any(|source| {
-        source_matches_occurrence(retained, occurrence, source)
+    snapshot.sources.iter().enumerate().any(|(row, source)| {
+        matches_row(retained, occurrence, row, source, sources)
             && source.source_vertices.iter().any(|child| {
                 child.shape_index == vertex && child.parameter.to_bits() == parameter.to_bits()
             })
@@ -258,12 +316,29 @@ pub(super) fn only_axis_incidences(
     axes: [usize; 2],
     vertex: i32,
 ) -> bool {
-    unrelated_source_indices(retained, axes, vertex).is_some_and(|sources| sources.is_empty())
+    only_axis_incidences_with_index(retained, axes, vertex, None)
+}
+pub(super) fn only_axis_incidences_with_index(
+    retained: &PairedContactTransaction,
+    axes: [usize; 2],
+    vertex: i32,
+    sources: Option<&SourceIndex>,
+) -> bool {
+    unrelated_source_indices_with_index(retained, axes, vertex, sources)
+        .is_some_and(|sources| sources.is_empty())
 }
 pub(super) fn unrelated_source_indices(
     retained: &PairedContactTransaction,
     axes: [usize; 2],
     vertex: i32,
+) -> Option<Vec<i32>> {
+    unrelated_source_indices_with_index(retained, axes, vertex, None)
+}
+pub(super) fn unrelated_source_indices_with_index(
+    retained: &PairedContactTransaction,
+    axes: [usize; 2],
+    vertex: i32,
+    sources: Option<&SourceIndex>,
 ) -> Option<Vec<i32>> {
     let PartitionObservation::Captured(snapshot) = &retained.mapped.arrangement.partition else {
         return None;
@@ -271,7 +346,8 @@ pub(super) fn unrelated_source_indices(
     let endpoint = retained_endpoint(retained, vertex)?;
     let mut unrelated = Vec::new();
     for incidence in &endpoint.incidences {
-        let admitted = source_index_admitted(retained, axes, snapshot, incidence.source_index);
+        let admitted =
+            source_index_admitted(retained, axes, snapshot, incidence.source_index, sources);
         if !admitted && !unrelated.contains(&incidence.source_index) {
             unrelated.push(incidence.source_index);
         }
@@ -296,11 +372,28 @@ fn source_index_admitted(
     axes: [usize; 2],
     snapshot: &crate::sketch_region::OwnedPartitionSnapshot,
     source_index: i32,
+    sources: Option<&SourceIndex>,
 ) -> bool {
-    snapshot.sources.iter().any(|source| {
+    snapshot.sources.iter().enumerate().any(|(row, source)| {
         source.source_index == source_index
             && axes
                 .into_iter()
-                .any(|axis| source_matches_occurrence(retained, axis, source))
+                .any(|axis| matches_row(retained, axis, row, source, sources))
     })
+}
+
+fn matches_row(
+    retained: &PairedContactTransaction,
+    occurrence: usize,
+    row: usize,
+    source: &SourcePartitionObservation,
+    index: Option<&SourceIndex>,
+) -> bool {
+    match index {
+        Some(index) => index
+            .matching_source_rows(occurrence)
+            .binary_search(&row)
+            .is_ok(),
+        None => source_matches_occurrence(retained, occurrence, source),
+    }
 }

@@ -442,6 +442,14 @@ milestone and issue states its own scope, dependencies, and acceptance criteria.
   regressions (add tests when unsure), no stale docs, no security or quality
   degradation. Any one blocks a merge regardless of approval; when in doubt,
   double-check and live-test with the automated checks.
+- **Pre-approved memory/runtime tradeoffs (2026-11-19).** The maintainer
+  pre-approved up to 10% higher peak memory for changes that demonstrate at least
+  50% lower runtime on matched, accepted representative workloads. Interpret the
+  performance threshold conservatively as halving runtime. Record revisions,
+  effective settings, time and peak memory; identify intentional configuration
+  changes in the comparison. Preserve accuracy, validation coverage and runtime
+  performance on other accepted workloads. Changes within these measured limits
+  need no further memory-tradeoff approval.
 - **PR evaluation:** audit each PR (pros, cons, recommended fix) and carry
   approved tickets through yourself: resolve soft blockers (rebase or base
   retarget, missing tests/docs/CHANGELOG, small fixes and easy decisions) as
