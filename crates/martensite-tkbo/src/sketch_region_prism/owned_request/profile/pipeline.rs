@@ -4,11 +4,13 @@
 use super::super::classification::{
     arrangement_class, callback_class, candidate_class, preparation_class,
 };
+use super::owned_graph::FreshGraphRequest;
 use super::*;
 use crate::sketch_region::{
     ArrangementCompletion, ArrangementPhase, PartitionOccurrenceIdentity, observe_partition_space,
 };
 use crate::sketch_region_candidates::observe_candidate_copies;
+use crate::sketch_region_certification::SourceAccess;
 use crate::sketch_region_certification::{capture_boundary_inputs, enumerate_carrier_census};
 use crate::sketch_region_contact_transport::{ContactTransportPhase, transport_partition_contacts};
 use crate::sketch_region_partition_bindings::{PartitionBoundOutputs, bind_partition_outputs};
@@ -55,13 +57,33 @@ pub(in crate::sketch_region_prism) fn prepare_owned_profile(
     request: OwnedProfileRequest,
     progress: &mut dyn OwnedPrismProgress,
 ) -> Result<PreparedProfile, Box<ProfilePreparationFailure>> {
+    let (outcome, stop, phase) = run_preparation(&request, progress, None);
+    finished(outcome, stop, phase, request)
+}
+type NativePreparation = Check<(Vec<ConstructedProfileEdge>, PairedContactTransaction)>;
+pub(super) fn run_preparation(
+    request: &OwnedProfileRequest,
+    progress: &mut dyn OwnedPrismProgress,
+    owner: Option<&FreshGraphRequest>,
+) -> (
+    NativePreparation,
+    Option<OwnedPrismCallbackStop>,
+    OwnedPrismPhase,
+) {
     let mut retained = Retained {
-        request: &request,
+        request,
         callbacks: OwnedPrismCallbacks::new(progress),
         phase: OwnedPrismPhase::Admission,
     };
-    let outcome = execute(&mut retained);
-    let (phase, stop) = (retained.phase, retained.callbacks.stop.take());
+    let outcome = execute(&mut retained, owner);
+    (outcome, retained.callbacks.stop.take(), retained.phase)
+}
+pub(super) fn finished(
+    outcome: NativePreparation,
+    stop: Option<OwnedPrismCallbackStop>,
+    phase: OwnedPrismPhase,
+    request: OwnedProfileRequest,
+) -> Result<PreparedProfile, Box<ProfilePreparationFailure>> {
     match (outcome, stop) {
         (Ok((edges, bridge)), None) => Ok(PreparedProfile {
             request,
@@ -77,15 +99,20 @@ fn cause_callback() -> ProfilePreparationCause {
 }
 fn execute(
     retained: &mut Retained<'_, '_>,
+    owner: Option<&FreshGraphRequest>,
 ) -> Check<(Vec<ConstructedProfileEdge>, PairedContactTransaction)> {
     super::admission::admit(retained.request).map_err(ProfilePreparationCause::Admission)?;
     retained.enter(OwnedPrismPhase::Admission)?;
     retained.enter(OwnedPrismPhase::Construction)?;
     let edges = super::construction::construct(retained.request).map_err(native)?;
     let sources: Vec<_> = edges.iter().map(ConstructedProfileEdge::source).collect();
-    let census = retained.census(&sources)?;
+    let permit = owner.map(|owner| owner.access(&edges));
+    let access = permit
+        .as_ref()
+        .map_or(SourceAccess::Live, SourceAccess::Owned);
+    let census = retained.census(&sources, access)?;
     let partition = retained.partition(&sources)?;
-    let bridge = retained.contacts(census, partition, &sources)?;
+    let bridge = retained.contacts(census, partition, &sources, access)?;
     Ok((edges, bridge))
 }
 fn native(cause: martensite_tkernel::standard::Failure) -> ProfilePreparationCause {
@@ -102,7 +129,11 @@ impl Retained<'_, '_> {
         }
         Ok(())
     }
-    fn census(&mut self, sources: &[ArrangementSource<'_>]) -> Check<BoundaryCensus> {
+    fn census(
+        &mut self,
+        sources: &[ArrangementSource<'_>],
+        access: SourceAccess<'_>,
+    ) -> Check<BoundaryCensus> {
         self.enter(OwnedPrismPhase::SourceCapture)?;
         let inputs = capture_boundary_inputs(sources, self.request.declared_plane);
         let inputs = inputs.map_err(|cause| stage(cause.into()))?;
@@ -110,7 +141,7 @@ impl Retained<'_, '_> {
         let policy = self.request.policy;
         let callbacks = &mut self.callbacks;
         let poll = || callbacks.poll(OwnedPrismPhase::Census);
-        let census = enumerate_carrier_census(inputs, policy.census, policy.source, poll);
+        let census = enumerate_profile_census(inputs, policy, poll, access);
         census.map_err(|cause| stage(cause.into()))
     }
     fn partition(&mut self, sources: &[ArrangementSource<'_>]) -> Check<PartitionBoundOutputs> {
@@ -141,6 +172,7 @@ impl Retained<'_, '_> {
         census: BoundaryCensus,
         partition: PartitionBoundOutputs,
         sources: &[ArrangementSource<'_>],
+        access: SourceAccess<'_>,
     ) -> Check<PairedContactTransaction> {
         self.enter(OwnedPrismPhase::Contact(
             ContactTransportPhase::SourceBinding,
@@ -148,8 +180,36 @@ impl Retained<'_, '_> {
         let policy = self.request.policy.contacts;
         let callbacks = &mut self.callbacks;
         let poll = |p| callbacks.poll(OwnedPrismPhase::Contact(p));
-        let bridge = transport_partition_contacts(census, partition, policy, sources, poll);
+        let bridge = match access {
+            SourceAccess::Live => {
+                transport_partition_contacts(census, partition, policy, sources, poll)
+            }
+            SourceAccess::Owned(_) => {
+                crate::sketch_region_contact_transport::transport_partition_contacts_with_access(
+                    census, partition, policy, sources, poll, access,
+                )
+            }
+        };
         bridge.map_err(|cause| stage(OwnedPreparationCause::Contact(cause)))
+    }
+}
+fn enumerate_profile_census(
+    inputs: crate::sketch_region_certification::BoundaryInputs,
+    policy: OwnedProfilePolicy,
+    poll: impl FnMut() -> bool,
+    access: SourceAccess<'_>,
+) -> Result<BoundaryCensus, crate::sketch_region_certification::CensusCause> {
+    match access {
+        SourceAccess::Live => enumerate_carrier_census(inputs, policy.census, policy.source, poll),
+        SourceAccess::Owned(_) => {
+            crate::sketch_region_certification::enumerate_carrier_census_with_access(
+                inputs,
+                policy.census,
+                policy.source,
+                poll,
+                access,
+            )
+        }
     }
 }
 fn require_candidates(bound: &PartitionBoundOutputs) -> Check<()> {

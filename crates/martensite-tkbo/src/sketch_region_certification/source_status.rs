@@ -51,12 +51,16 @@ impl<'a> CurrentSourceRepresentation<'a> {
         })
     }
     pub(super) fn current(&self) -> bool {
+        self.current_with_observer(|| {})
+    }
+    pub(super) fn current_with_observer(&self, mut capture: impl FnMut()) -> bool {
         self.census
             .inputs
             .segments
             .iter()
             .zip(&self.constructions)
             .all(|(segment, construction)| {
+                capture();
                 current_construction_correspondence(&self.census.inputs, construction, segment)
                     .is_ok()
             })

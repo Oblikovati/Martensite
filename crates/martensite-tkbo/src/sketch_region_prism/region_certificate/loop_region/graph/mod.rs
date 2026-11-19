@@ -24,35 +24,67 @@ mod types;
 pub(crate) use types::*;
 
 use super::binding::bind_segments;
-use super::joins::certify_contacts;
 use super::measure::{FaceUses, certified_face_area};
 use super::types::*;
 
 /// Certify every bounded face of the plane graph; `inspect_plane_graph(&request, || false)`.
 pub(crate) fn inspect_plane_graph(
     request: &GraphRegionRequest<'_, '_>,
+    cancelled: impl FnMut() -> bool,
+) -> LoopRegionCheck<GraphRegionCertificate> {
+    inspect_plane_graph_with_access(
+        request,
+        cancelled,
+        crate::sketch_region_certification::SourceAccess::Live,
+    )
+}
+pub(crate) fn inspect_plane_graph_with_access(
+    request: &GraphRegionRequest<'_, '_>,
     mut cancelled: impl FnMut() -> bool,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
 ) -> LoopRegionCheck<GraphRegionCertificate> {
     poll(&mut cancelled, LoopRegionStage::Admission)?;
     let binding = bind_segments(request.bridge, request.sources, request.options.version)?;
     darts::require_ends(request, &binding)?;
     poll(&mut cancelled, LoopRegionStage::Joins)?;
     let expected = darts::incidence_contacts(request, &binding)?;
-    let (joins, carrier_pairs, pair_domains) =
-        certify_contacts(&request.bridge.census, &binding, expected)?;
+    let (joins, carrier_pairs, pair_domains) = super::joins::certify_contacts_with_access(
+        &request.bridge.census,
+        &binding,
+        expected,
+        access,
+    )?;
     let (graph, faces) = graph_faces(request, &binding, &mut cancelled)?;
-    poll(&mut cancelled, LoopRegionStage::Nesting)?;
-    let components = components::nesting(request, &binding, &graph, &faces, &mut cancelled)?;
-    poll(&mut cancelled, LoopRegionStage::Regions)?;
+    complete_graph(
+        request,
+        &binding,
+        &graph,
+        &faces,
+        (joins.len(), carrier_pairs, pair_domains),
+        &mut cancelled,
+    )
+}
+
+fn complete_graph(
+    request: &GraphRegionRequest<'_, '_>,
+    binding: &super::binding::SegmentBinding<'_>,
+    graph: &components::Graph,
+    faces: &components::Faces,
+    counts: (usize, usize, usize),
+    cancelled: &mut impl FnMut() -> bool,
+) -> LoopRegionCheck<GraphRegionCertificate> {
+    poll(cancelled, LoopRegionStage::Nesting)?;
+    let components = components::nesting(request, binding, graph, faces, cancelled)?;
+    poll(cancelled, LoopRegionStage::Regions)?;
     let mut certificate = GraphRegionCertificate {
         faces: Vec::with_capacity(faces.bounded.len()),
         components,
-        contacts: joins.len(),
-        carrier_pairs,
-        pair_domains,
+        contacts: counts.0,
+        carrier_pairs: counts.1,
+        pair_domains: counts.2,
     };
     for (index, face) in faces.bounded.iter().enumerate() {
-        let proof = face_proof(request, &binding, &certificate, index, face, &mut cancelled)?;
+        let proof = face_proof(request, binding, &certificate, index, face, cancelled)?;
         certificate.faces.push(proof);
     }
     Ok(certificate)

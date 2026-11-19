@@ -4,8 +4,15 @@ use super::{census, outcome::*, paired_types::*};
 use martensite_tkmath::predicates::roots::bezier_pair::*;
 
 pub(super) fn enumerate_paired_domains(
+    census: BoundaryCensus,
+    cancelled: &mut impl FnMut() -> bool,
+) -> Result<BoundaryCensus, CensusCause> {
+    enumerate_paired_domains_with_access(census, cancelled, super::SourceAccess::Live)
+}
+pub(super) fn enumerate_paired_domains_with_access(
     mut census: BoundaryCensus,
     cancelled: &mut impl FnMut() -> bool,
+    access: super::SourceAccess<'_>,
 ) -> Result<BoundaryCensus, CensusCause> {
     for pair in census::pair_domains(census.inputs.segments.len()) {
         if cancelled() {
@@ -16,7 +23,12 @@ pub(super) fn enumerate_paired_domains(
             return Err(stopped(census, pair, true));
         }
     }
-    super::paired_binding::refresh_obligations(&mut census);
+    match access {
+        super::SourceAccess::Live => super::paired_binding::refresh_obligations(&mut census),
+        super::SourceAccess::Owned(_) => {
+            super::paired_binding::refresh_obligations_with_access(&mut census, access)
+        }
+    }
     Ok(census)
 }
 fn append_pair(

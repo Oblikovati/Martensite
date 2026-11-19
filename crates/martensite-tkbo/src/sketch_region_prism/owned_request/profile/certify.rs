@@ -62,13 +62,10 @@ pub(crate) fn certify_profile_graph(
         declared_plane: input.plane,
         policy: policy(input.spatial_limit),
     };
-    let prepared = prepare_owned_profile(request, &mut NeverStop).map_err(preparation_refusal)?;
-    prepared
-        .inspect_plane_graph(|| false)
-        .map_err(region_refusal)
+    super::owned_graph::run(request, &mut NeverStop)
 }
 
-fn preparation_refusal(failure: Box<ProfilePreparationFailure>) -> ProfileProofRefusal {
+pub(super) fn preparation_refusal(failure: Box<ProfilePreparationFailure>) -> ProfileProofRefusal {
     let cause = match &failure.cause {
         ProfilePreparationCause::Admission(cause) => format!("{cause:?}"),
         ProfilePreparationCause::Stage(_) => "stage refusal".to_string(),
@@ -79,7 +76,7 @@ fn preparation_refusal(failure: Box<ProfilePreparationFailure>) -> ProfileProofR
     ))
 }
 
-fn region_refusal(failure: LoopRegionFailure) -> ProfileProofRefusal {
+pub(super) fn region_refusal(failure: LoopRegionFailure) -> ProfileProofRefusal {
     match failure.cause {
         LoopRegionCause::UnexpectedContact { sources, point } => {
             let edges = sources.map(|source| source.0);

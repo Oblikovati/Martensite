@@ -58,3 +58,8 @@ pub(crate) use paired_tests::{
 
 #[cfg(test)]
 mod paired_validation_tests;
+
+mod source_access;
+pub(crate) use source_access::{SourceAccess, certificate_in};
+
+pub(crate) use paired_admission::enumerate_carrier_census_with_access;
