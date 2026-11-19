@@ -59,11 +59,7 @@ pub(crate) struct ProfileGraphInput {
 pub(crate) fn certify_profile_graph(
     input: ProfileGraphInput,
 ) -> Result<GraphRegionCertificate, ProfileProofRefusal> {
-    let prepared = prepare_owned_profile(owned_graph_request(input), &mut NeverStop)
-        .map_err(preparation_refusal)?;
-    prepared
-        .inspect_plane_graph(|| false)
-        .map_err(|failure| inspection_refusal(&prepared, failure))
+    super::owned_graph::run(owned_graph_request(input), &mut NeverStop)
 }
 
 struct NeverStop;
@@ -72,7 +68,7 @@ impl OwnedPrismProgress for NeverStop {
         Ok(false)
     }
 }
-struct PollProgress<'a, F>(&'a mut F);
+pub(super) struct PollProgress<'a, F>(pub(super) &'a mut F);
 impl<F: FnMut() -> bool + Send> OwnedPrismProgress for PollProgress<'_, F> {
     fn checkpoint(&mut self, _: OwnedPrismCheckpoint) -> Result<bool, Failure> {
         Ok((self.0)())
@@ -93,13 +89,9 @@ pub(crate) fn certify_profile_graph_version_with_cancel(
 ) -> Result<GraphRegionCertificate, ProfileProofRefusal> {
     let mut request = owned_graph_request(input);
     request.version = version;
-    let prepared = prepare_owned_profile(request, &mut PollProgress(&mut cancelled))
-        .map_err(preparation_refusal)?;
-    prepared
-        .inspect_plane_graph(&mut cancelled)
-        .map_err(|failure| inspection_refusal(&prepared, failure))
+    super::owned_graph::run_with_cancel(request, &mut cancelled)
 }
-fn inspection_refusal(
+pub(super) fn inspection_refusal(
     prepared: &PreparedProfile,
     failure: LoopRegionFailure,
 ) -> ProfileProofRefusal {
@@ -137,7 +129,7 @@ fn owned_graph_request(input: ProfileGraphInput) -> OwnedProfileRequest {
     }
 }
 
-fn preparation_refusal(failure: Box<ProfilePreparationFailure>) -> ProfileProofRefusal {
+pub(super) fn preparation_refusal(failure: Box<ProfilePreparationFailure>) -> ProfileProofRefusal {
     let cancelled = failure.class == OwnedPreparationClass::Cancelled;
     let cause = match &failure.cause {
         ProfilePreparationCause::Admission(cause) => format!("{cause:?}"),

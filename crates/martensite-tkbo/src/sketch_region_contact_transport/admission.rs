@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Report-local construction conformance never establishes cross-report contact equality.
 use super::*;
+mod cardinality;
 use crate::sketch_region::OriginalMemberIdentity;
+use cardinality::report_cardinality_gaps;
 use martensite_tkmath::predicates::roots::{
     bezier_pair::PairParameterDecision, metric_bounds::ResidualDecision,
 };
@@ -12,89 +14,55 @@ pub(crate) struct BoundedContactConstruction {
     pub directed_contexts: Vec<(usize, crate::sketch_region::PartitionOccurrenceIdentity)>,
 }
 pub(super) fn inspect_contact_admission(retained: &mut PairedContactTransaction) {
-    inspect_report_cardinalities(retained);
-    for index in 0..retained.inspection.contacts.len() {
-        let decision = bounded_construction(retained, index);
-        let contact = &mut retained.inspection.contacts[index];
-        contact.missing.clear();
-        match decision {
-            Ok(bounded) => contact.bounded_construction = Some(bounded),
-            Err(cause) => {
-                contact.bounded_construction = None;
-                contact.missing.push(cause);
-            }
-        }
-    }
-    reject_cross_report_aliases(retained);
+    inspect_contact_admission_with_access(
+        retained,
+        crate::sketch_region_certification::SourceAccess::Live,
+    );
 }
-fn inspect_report_cardinalities(retained: &mut PairedContactTransaction) {
-    // WHY: admission can be repeated after evidence repair; old observations are not current proof.
+pub(super) fn inspect_contact_admission_with_access(
+    retained: &mut PairedContactTransaction,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
+) {
     retained
         .inspection
         .missing
         .retain(|gap| !matches!(gap, ContactTransportGap::ContactSetCardinality { .. }));
-    let certificates =
-        crate::sketch_region_certification::DomainCertificates::new(&retained.census);
-    let mut seen = Vec::new();
-    for (index, domain) in retained.census.domains.iter().enumerate() {
-        let Some(report) = paired_report_index(domain) else {
-            continue;
-        };
-        if seen.contains(&report) {
-            continue;
-        }
-        seen.push(report);
-        if let Some(gap) = current_cardinality_gap(retained, certificates.as_ref(), index, report) {
-            retained.inspection.missing.push(gap);
+    let sources = super::topology::compile_source_index(retained);
+    let proofs = access.owned_certificates(&retained.census);
+    let gaps = report_cardinality_gaps(retained, proofs.as_ref(), sources.as_ref());
+    retained.inspection.missing.extend(gaps);
+    for index in 0..retained.inspection.contacts.len() {
+        let decision = bounded_construction(retained, index, proofs.as_ref(), sources.as_ref());
+        let contact = &mut retained.inspection.contacts[index];
+        apply_bounded_decision(contact, decision);
+    }
+    reject_cross_report_aliases(retained);
+}
+fn apply_bounded_decision(
+    contact: &mut ObservedPairedContact,
+    decision: Result<BoundedContactConstruction, ContactTransportGap>,
+) {
+    contact.missing.clear();
+    match decision {
+        Ok(bounded) => contact.bounded_construction = Some(bounded),
+        Err(cause) => {
+            contact.bounded_construction = None;
+            contact.missing.push(cause);
         }
     }
-}
-fn paired_report_index(
-    domain: &crate::sketch_region_certification::BoundaryDomain,
-) -> Option<usize> {
-    match domain.evidence {
-        crate::sketch_region_certification::DomainEvidence::PairedReport { report, .. }
-        | crate::sketch_region_certification::DomainEvidence::BernsteinReport { report, .. } => {
-            Some(report)
-        }
-        _ => None,
-    }
-}
-fn current_cardinality_gap(
-    retained: &PairedContactTransaction,
-    certificates: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
-    domain_index: usize,
-    report: usize,
-) -> Option<ContactTransportGap> {
-    let domain = &retained.census.domains[domain_index];
-    let proof = certificates?.unified_certificate(domain)?;
-    let rows = super::topology::observed_domain_vertices(retained, domain_index);
-    let observed = unique_vertex_indices(&rows).len();
-    (observed != proof.contact_count()).then_some(ContactTransportGap::ContactSetCardinality {
-        report,
-        expected: proof.contact_count(),
-        observed,
-    })
-}
-fn unique_vertex_indices(rows: &[ObservedContactVertex]) -> Vec<i32> {
-    let mut indices = Vec::new();
-    for row in rows {
-        if !indices.contains(&row.vertex_index) {
-            indices.push(row.vertex_index);
-        }
-    }
-    indices
 }
 fn bounded_construction(
     retained: &PairedContactTransaction,
     index: usize,
+    proofs: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
+    sources: Option<&super::topology::SourceIndex>,
 ) -> Result<BoundedContactConstruction, ContactTransportGap> {
-    check_contact_prerequisites(retained, index)?;
-    if let Some(cause) = additional_source_gap(retained, index) {
+    check_contact_prerequisites(retained, index, proofs)?;
+    if let Some(cause) = additional_source_gap(retained, index, sources) {
         return Err(cause);
     }
     let contact = &retained.inspection.contacts[index];
-    let eligible = eligible_vertices(retained, index);
+    let eligible = eligible_vertices(retained, index, sources);
     let selected = choose_eligible_vertex(contact.identity, &eligible)?;
     Ok(bounded_vertex(contact.identity, selected))
 }
@@ -121,13 +89,14 @@ fn bounded_observed_vertices(
         .filter(|row| vertex_bounds_hold(contact, row))
 }
 
-fn eligible_vertices(
-    retained: &PairedContactTransaction,
+fn eligible_vertices<'a>(
+    retained: &'a PairedContactTransaction,
     index: usize,
-) -> Vec<&ObservedContactVertex> {
+    sources: Option<&super::topology::SourceIndex>,
+) -> Vec<&'a ObservedContactVertex> {
     let contact = &retained.inspection.contacts[index];
     bounded_observed_vertices(contact)
-        .filter(|row| generated_parents_hold(retained, index, row))
+        .filter(|row| generated_parents_hold(retained, index, row, sources))
         .collect()
 }
 fn choose_eligible_vertex<'a>(
@@ -146,6 +115,7 @@ fn choose_eligible_vertex<'a>(
 fn check_contact_prerequisites(
     retained: &PairedContactTransaction,
     index: usize,
+    proofs: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
 ) -> Result<(), ContactTransportGap> {
     check_source_identity(retained, index)?;
     let contact = &retained.inspection.contacts[index];
@@ -154,7 +124,7 @@ fn check_contact_prerequisites(
             report: contact.identity.report,
         });
     }
-    check_simple_root(retained, index)?;
+    check_simple_root(retained, index, proofs)?;
     if contact.observed_vertices.is_empty() {
         return Err(ContactTransportGap::MissingActualPairIncidence {
             identity: contact.identity,
@@ -244,18 +214,19 @@ fn generated_parents_hold(
     retained: &PairedContactTransaction,
     index: usize,
     vertex: &ObservedContactVertex,
+    sources: Option<&super::topology::SourceIndex>,
 ) -> bool {
     let Some(axes) = super::topology::canonical_occurrences(retained, index) else {
         return false;
     };
     let parents = source_axis_parents(retained, axes);
-    super::topology::only_axis_incidences(retained, axes, vertex.vertex_index)
+    super::topology::only_axis_incidences_with_index(retained, axes, vertex.vertex_index, sources)
         && !vertex.generated_observations.is_empty()
         && vertex.generated_observations.iter().all(|row| {
             actual_points_read(row)
                 && copied_history_preserved(row)
                 && (same_parent_set(&parents, &row.native_history.generated)
-                    || original_endpoint_history(retained, axes, vertex, row))
+                    || original_endpoint_history(retained, axes, vertex, row, sources))
         })
 }
 
@@ -348,6 +319,7 @@ fn original_endpoint_history(
     axes: [usize; 2],
     vertex: &ObservedContactVertex,
     row: &super::generated::GeneratedContactObservation,
+    sources: Option<&super::topology::SourceIndex>,
 ) -> bool {
     let native = row
         .native_history
@@ -357,20 +329,22 @@ fn original_endpoint_history(
         .collect::<Vec<_>>();
     !vertex.original_parents.is_empty()
         && same_parent_set(&native, &vertex.original_parents)
-        && matches_source_endpoints(retained, axes, vertex)
+        && matches_source_endpoints(retained, axes, vertex, sources)
 }
 
 fn matches_source_endpoints(
     retained: &PairedContactTransaction,
     axes: [usize; 2],
     vertex: &ObservedContactVertex,
+    sources: Option<&super::topology::SourceIndex>,
 ) -> bool {
     axes.into_iter().enumerate().all(|(axis, occurrence)| {
-        super::topology::original_source_endpoint(
+        super::topology::original_source_endpoint_with_index(
             retained,
             occurrence,
             vertex.vertex_index,
             vertex.native_parameters[axis],
+            sources,
         )
     })
 }
@@ -378,8 +352,9 @@ fn matches_source_endpoints(
 fn check_simple_root(
     retained: &PairedContactTransaction,
     index: usize,
+    proofs: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
 ) -> Result<(), ContactTransportGap> {
-    let multiplicity = retained_root_multiplicity(retained, index)?;
+    let multiplicity = retained_root_multiplicity(retained, index, proofs)?;
     if multiplicity != 1 {
         return Err(ContactTransportGap::RepeatedRootCorrespondence {
             identity: retained.inspection.contacts[index].identity,
@@ -391,14 +366,16 @@ fn check_simple_root(
 fn retained_root_multiplicity(
     retained: &PairedContactTransaction,
     index: usize,
+    proofs: Option<&crate::sketch_region_certification::DomainCertificates<'_>>,
 ) -> Result<usize, ContactTransportGap> {
     let contact = &retained.inspection.contacts[index];
     let domain_index = contact.occurrence_domains[0];
     let domain = &retained.census.domains[domain_index];
-    let proof = crate::sketch_region_certification::domain_certificate(&retained.census, domain)
-        .ok_or(ContactTransportGap::MissingSourceBoundDomain {
-            domain: domain_index,
-        })?;
+    let proof =
+        crate::sketch_region_certification::certificate_in(&retained.census, domain, proofs)
+            .ok_or(ContactTransportGap::MissingSourceBoundDomain {
+                domain: domain_index,
+            })?;
     let root = (0..proof.contact_count())
         .filter_map(|i| proof.contact(i))
         .find(|root| root.candidate_index == contact.identity.candidate_root)
@@ -412,12 +389,17 @@ fn retained_root_multiplicity(
 fn additional_source_gap(
     retained: &PairedContactTransaction,
     index: usize,
+    sources: Option<&super::topology::SourceIndex>,
 ) -> Option<ContactTransportGap> {
     let contact = &retained.inspection.contacts[index];
     let axes = super::topology::canonical_occurrences(retained, index)?;
     for vertex in bounded_observed_vertices(contact) {
-        let sources =
-            super::topology::unrelated_source_indices(retained, axes, vertex.vertex_index)?;
+        let sources = super::topology::unrelated_source_indices_with_index(
+            retained,
+            axes,
+            vertex.vertex_index,
+            sources,
+        )?;
         if !sources.is_empty() {
             return Some(ContactTransportGap::AdditionalIncidentSources {
                 identity: contact.identity,

@@ -12,7 +12,13 @@ pub(crate) fn enumerate_source_bound_census(
     source_policy: SourceConformancePolicy,
     cancelled: impl FnMut() -> bool,
 ) -> Result<BoundaryCensus, CensusCause> {
-    enumerate_with_pair_version(inputs, (policy, source_policy), 1, cancelled)
+    enumerate_with_pair_version(
+        inputs,
+        (policy, source_policy),
+        1,
+        cancelled,
+        super::SourceAccess::Live,
+    )
 }
 /// The same census with pair policy version 2, whose distinct pairs on one
 /// proper conic or line complete by the exact common-carrier route.
@@ -23,13 +29,29 @@ pub(crate) fn enumerate_carrier_census(
     source_policy: SourceConformancePolicy,
     cancelled: impl FnMut() -> bool,
 ) -> Result<BoundaryCensus, CensusCause> {
-    enumerate_with_pair_version(inputs, (policy, source_policy), 2, cancelled)
+    enumerate_carrier_census_with_access(
+        inputs,
+        policy,
+        source_policy,
+        cancelled,
+        super::SourceAccess::Live,
+    )
+}
+pub(crate) fn enumerate_carrier_census_with_access(
+    inputs: BoundaryInputs,
+    policy: CensusPolicy,
+    source_policy: SourceConformancePolicy,
+    cancelled: impl FnMut() -> bool,
+    access: super::SourceAccess<'_>,
+) -> Result<BoundaryCensus, CensusCause> {
+    enumerate_with_pair_version(inputs, (policy, source_policy), 2, cancelled, access)
 }
 fn enumerate_with_pair_version(
     inputs: BoundaryInputs,
     policies: (CensusPolicy, SourceConformancePolicy),
     pair_version: u32,
     cancelled: impl FnMut() -> bool,
+    access: super::SourceAccess<'_>,
 ) -> Result<BoundaryCensus, CensusCause> {
     enumerate_selected(
         inputs,
@@ -38,6 +60,7 @@ fn enumerate_with_pair_version(
         None,
         BezierPairSignOptions::derived(),
         cancelled,
+        access,
     )
 }
 /// Exact sign exclusions augment the carrier route without changing its released policy.
@@ -48,6 +71,21 @@ pub(crate) fn enumerate_exclusion_census(
     source_policy: SourceConformancePolicy,
     cancelled: impl FnMut() -> bool,
 ) -> Result<BoundaryCensus, CensusCause> {
+    enumerate_exclusion_census_with_access(
+        inputs,
+        policy,
+        source_policy,
+        cancelled,
+        super::SourceAccess::Live,
+    )
+}
+pub(crate) fn enumerate_exclusion_census_with_access(
+    inputs: BoundaryInputs,
+    policy: CensusPolicy,
+    source_policy: SourceConformancePolicy,
+    cancelled: impl FnMut() -> bool,
+    access: super::SourceAccess<'_>,
+) -> Result<BoundaryCensus, CensusCause> {
     enumerate_selected(
         inputs,
         (policy, source_policy),
@@ -55,6 +93,7 @@ pub(crate) fn enumerate_exclusion_census(
         Some(1),
         BezierPairSignOptions::derived(),
         cancelled,
+        access,
     )
 }
 /// #544: retain filtered signs only through the explicit new census selector.
@@ -65,6 +104,21 @@ pub(crate) fn enumerate_filtered_exclusion_census(
     source_policy: SourceConformancePolicy,
     cancelled: impl FnMut() -> bool,
 ) -> Result<BoundaryCensus, CensusCause> {
+    enumerate_filtered_exclusion_census_with_access(
+        inputs,
+        policy,
+        source_policy,
+        cancelled,
+        super::SourceAccess::Live,
+    )
+}
+pub(crate) fn enumerate_filtered_exclusion_census_with_access(
+    inputs: BoundaryInputs,
+    policy: CensusPolicy,
+    source_policy: SourceConformancePolicy,
+    cancelled: impl FnMut() -> bool,
+    access: super::SourceAccess<'_>,
+) -> Result<BoundaryCensus, CensusCause> {
     let mut signs = BezierPairSignOptions::derived();
     signs.version = 2;
     enumerate_selected(
@@ -74,6 +128,7 @@ pub(crate) fn enumerate_filtered_exclusion_census(
         Some(1),
         signs,
         cancelled,
+        access,
     )
 }
 fn enumerate_selected(
@@ -83,6 +138,7 @@ fn enumerate_selected(
     exclusion_version: Option<u32>,
     signs: BezierPairSignOptions,
     mut cancelled: impl FnMut() -> bool,
+    access: super::SourceAccess<'_>,
 ) -> Result<BoundaryCensus, CensusCause> {
     let (policy, source_policy) = policies;
     census::validate_policy(policy).map_err(CensusCause::Policy)?;
@@ -96,7 +152,14 @@ fn enumerate_selected(
             completed: Box::new(retained),
         });
     }
-    paired_execution::enumerate_paired_domains(retained, &mut cancelled)
+    match access {
+        super::SourceAccess::Live => {
+            paired_execution::enumerate_paired_domains(retained, &mut cancelled)
+        }
+        super::SourceAccess::Owned(_) => {
+            paired_execution::enumerate_paired_domains_with_access(retained, &mut cancelled, access)
+        }
+    }
 }
 pub(super) fn admit_source_binding(
     retained: &mut BoundaryCensus,

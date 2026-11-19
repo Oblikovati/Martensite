@@ -4,7 +4,15 @@ use super::{census, outcome::*, paired_types::*};
 use martensite_tkmath::predicates::roots::bezier_pair::*;
 
 pub(super) fn refresh_obligations(census: &mut BoundaryCensus) {
-    let complete = paired_domains_certified(census);
+    refresh_obligations_with_access(census, super::SourceAccess::Live);
+}
+pub(super) fn refresh_obligations_with_access(
+    census: &mut BoundaryCensus,
+    access: super::SourceAccess<'_>,
+) {
+    let complete = access
+        .certificates(census)
+        .is_some_and(|view| domains_with(census, &view));
     let work = paired_work_exact(census);
     census.missing.retain(|gap| {
         !(*gap == CertificationObligation::ExhaustivePairAndSelfDomains && complete
@@ -15,6 +23,9 @@ pub(super) fn paired_domains_certified(census: &BoundaryCensus) -> bool {
     let Some(certificates) = DomainCertificates::new(census) else {
         return false;
     };
+    domains_with(census, &certificates)
+}
+pub(super) fn domains_with(census: &BoundaryCensus, certificates: &DomainCertificates<'_>) -> bool {
     let expected = census::pair_domains(census.inputs.segments.len()).collect::<Vec<_>>();
     !expected.is_empty()
         && expected.len() == census.domains.len()
@@ -34,6 +45,7 @@ pub(crate) fn domain_certificate<'a>(
 pub(crate) struct DomainCertificates<'a> {
     census: &'a BoundaryCensus,
     source: super::source_status::CurrentSourceRepresentation<'a>,
+    owned_current: Option<(bool, &'a crate::sketch_region_prism::OwnedGraphAccess<'a>)>,
 }
 impl<'a> DomainCertificates<'a> {
     /// Bind immutable evidence once; `DomainCertificates::new(&census)` never freezes native aliases.
@@ -42,7 +54,51 @@ impl<'a> DomainCertificates<'a> {
             return None;
         }
         let source = super::source_status::CurrentSourceRepresentation::new(census)?;
-        Some(Self { census, source })
+        Some(Self {
+            census,
+            source,
+            owned_current: None,
+        })
+    }
+    pub(super) fn validate_owned(
+        &mut self,
+        owner: &'a crate::sketch_region_prism::OwnedGraphAccess<'a>,
+    ) {
+        if !self.first_report_available() {
+            return;
+        }
+        if owner.binds(self.census) {
+            #[cfg(test)]
+            let current = self
+                .source
+                .current_with_observer(|| owner.observed_capture());
+            #[cfg(not(test))]
+            let current = self.source.current();
+            self.owned_current = Some((current, owner));
+        }
+    }
+    fn first_report_available(&self) -> bool {
+        self.census
+            .domains
+            .first()
+            .and_then(|first| self.bound_certificate(first))
+            .is_some()
+    }
+    fn current_source(&self) -> bool {
+        match self.owned_current {
+            Some((current, _owner)) => current,
+            None => self.source.current(),
+        }
+    }
+    pub(crate) fn current_obligations(&self) -> Vec<CertificationObligation> {
+        if self.owned_current.is_none() {
+            return self.census.current_obligations();
+        }
+        super::outcome::obligations_from(
+            self.census,
+            || self.current_source(),
+            || domains_with(self.census, self),
+        )
     }
     /// Borrow only genuine solver evidence; exact exclusions have no solver report.
     pub(crate) fn certificate(&self, domain: &BoundaryDomain) -> Option<BezierPairCertificate<'a>> {
@@ -53,9 +109,15 @@ impl<'a> DomainCertificates<'a> {
         &self,
         domain: &BoundaryDomain,
     ) -> Option<super::domain_certificate::CertifiedPairDomain<'a>> {
-        if !self.source.current() {
+        if !self.current_source() {
             return None;
         }
+        self.bound_certificate(domain)
+    }
+    fn bound_certificate(
+        &self,
+        domain: &BoundaryDomain,
+    ) -> Option<super::domain_certificate::CertifiedPairDomain<'a>> {
         if let DomainEvidence::BernsteinReport { report, .. } = domain.evidence {
             return super::bernstein_binding::certificate(self.census, domain, report);
         }

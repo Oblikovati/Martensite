@@ -65,3 +65,5 @@ mod sweep_query_tests;
 #[cfg(test)]
 pub(in crate::sketch_region_prism) mod annular_construction;
 pub(crate) mod diagnostic_envelope;
+
+pub(crate) use owned_request::profile::OwnedGraphAccess;

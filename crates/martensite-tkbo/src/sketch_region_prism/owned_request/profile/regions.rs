@@ -43,23 +43,41 @@ impl PreparedProfile {
         &self,
         cancelled: impl FnMut() -> bool,
     ) -> LoopRegionCheck<GraphRegionCertificate> {
-        super::selection::bind(self.request.version, &self.bridge.census)?;
-        let ends: Vec<[u64; 2]> = self
-            .request
-            .edges
-            .iter()
-            .map(|edge| [edge.start.0, edge.end.0])
-            .collect();
-        let sources = self.sources();
-        let request = GraphRegionRequest {
-            bridge: &self.bridge,
-            sources: &sources,
-            ends: &ends,
-            options: self.request.policy.region,
-        };
-        inspect_plane_graph(&request, cancelled)
+        inspect_graph(
+            &self.request,
+            &self.edges,
+            &self.bridge,
+            cancelled,
+            crate::sketch_region_certification::SourceAccess::Live,
+        )
     }
 }
+pub(super) fn inspect_graph(
+    owned: &OwnedProfileRequest,
+    edges: &[ConstructedProfileEdge],
+    bridge: &PairedContactTransaction,
+    cancelled: impl FnMut() -> bool,
+    access: crate::sketch_region_certification::SourceAccess<'_>,
+) -> LoopRegionCheck<GraphRegionCertificate> {
+    super::selection::bind(owned.version, &bridge.census)?;
+    let ends: Vec<[u64; 2]> = owned
+        .edges
+        .iter()
+        .map(|edge| [edge.start.0, edge.end.0])
+        .collect();
+    let sources: Vec<_> = edges.iter().map(ConstructedProfileEdge::source).collect();
+    let request = GraphRegionRequest {
+        bridge,
+        sources: &sources,
+        ends: &ends,
+        options: owned.policy.region,
+    };
+    match access {
+        crate::sketch_region_certification::SourceAccess::Live => inspect_plane_graph(&request, cancelled),
+        crate::sketch_region_certification::SourceAccess::Owned(_) => crate::sketch_region_prism::region_certificate::loop_region::graph::inspect_plane_graph_with_access(&request, cancelled, access),
+    }
+}
+
 fn authored_loop(owned: &OwnedProfileLoop) -> AuthoredLoop {
     let uses = owned.uses.iter().map(|directed| AuthoredLoopUse {
         source: RegionSourceId(directed.edge.0),

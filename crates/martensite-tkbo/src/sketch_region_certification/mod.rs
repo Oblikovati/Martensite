@@ -77,3 +77,10 @@ mod bernstein_tests;
 
 #[cfg(test)]
 mod filtered_tests;
+mod source_access;
+pub(crate) use source_access::{SourceAccess, certificate_in};
+
+pub(crate) use paired_admission::{
+    enumerate_carrier_census_with_access, enumerate_exclusion_census_with_access,
+    enumerate_filtered_exclusion_census_with_access,
+};
