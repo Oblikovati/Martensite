@@ -2,6 +2,10 @@
 //! Every cold solver execution spends the shared remaining budget, including failed and cancelled work.
 use super::{census, outcome::*, paired_types::*};
 use martensite_tkmath::predicates::roots::bezier_pair::*;
+mod report_reuse;
+use report_reuse::{ReportLookup, ReportReuseIndex};
+#[cfg(test)]
+mod tests;
 
 pub(super) fn enumerate_paired_domains(
     census: BoundaryCensus,
@@ -10,15 +14,24 @@ pub(super) fn enumerate_paired_domains(
     enumerate_paired_domains_with_access(census, cancelled, super::SourceAccess::Live)
 }
 pub(super) fn enumerate_paired_domains_with_access(
+    census: BoundaryCensus,
+    cancelled: &mut impl FnMut() -> bool,
+    access: super::SourceAccess<'_>,
+) -> Result<BoundaryCensus, CensusCause> {
+    let mut reports = ReportReuseIndex::capture(&census);
+    enumerate_with_lookup(census, cancelled, access, &mut reports)
+}
+fn enumerate_with_lookup(
     mut census: BoundaryCensus,
     cancelled: &mut impl FnMut() -> bool,
     access: super::SourceAccess<'_>,
+    reports: &mut impl ReportLookup,
 ) -> Result<BoundaryCensus, CensusCause> {
     for pair in census::pair_domains(census.inputs.segments.len()) {
         if cancelled() {
             return Err(stopped(census, pair, false));
         }
-        let evidence = append_pair(&mut census, pair, cancelled);
+        let evidence = append_pair(&mut census, pair, cancelled, reports);
         if evidence_cancelled(&census, evidence) {
             return Err(stopped(census, pair, true));
         }
@@ -35,8 +48,9 @@ fn append_pair(
     census: &mut BoundaryCensus,
     pair: [usize; 2],
     cancelled: &mut impl FnMut() -> bool,
+    reports: &mut impl ReportLookup,
 ) -> DomainEvidence {
-    let evidence = evaluate_pair(census, pair, cancelled);
+    let evidence = evaluate_pair(census, pair, cancelled, reports);
     census.domains.push(BoundaryDomain {
         occurrences: pair,
         evidence,
@@ -47,17 +61,19 @@ fn evaluate_pair(
     census: &mut BoundaryCensus,
     pair: [usize; 2],
     cancelled: &mut impl FnMut() -> bool,
+    reports: &mut impl ReportLookup,
 ) -> DomainEvidence {
     let sources = canonical_sources(census, pair);
     if pair[0] != pair[1] && sources[0] == sources[1] {
         return DomainEvidence::Unsupported(CensusGap::SamePhysicalCurve);
     }
     let mode = query_mode(pair);
-    if let Some(report) = reused_report(census, sources, mode) {
+    if let Some(report) = reports.find(sources, mode) {
         census.paired.as_mut().unwrap().reused_reports += 1;
         return report_reference(census, pair, report, true);
     }
     let report = retain_execution(census, sources, mode, cancelled);
+    reports.remember(sources, mode, report);
     report_reference(census, pair, report, false)
 }
 fn canonical_sources(census: &BoundaryCensus, pair: [usize; 2]) -> [usize; 2] {
@@ -66,19 +82,6 @@ fn canonical_sources(census: &BoundaryCensus, pair: [usize; 2]) -> [usize; 2] {
     // Operation-local traversal rank canonicalizes execution only, never persistent names or geometry order.
     sources.sort();
     sources
-}
-fn reused_report(
-    census: &BoundaryCensus,
-    sources: [usize; 2],
-    mode: PairedQueryMode,
-) -> Option<usize> {
-    census
-        .paired
-        .as_ref()
-        .unwrap()
-        .reports
-        .iter()
-        .position(|record| record.sources == sources && record.mode == mode)
 }
 fn retain_execution(
     census: &mut BoundaryCensus,

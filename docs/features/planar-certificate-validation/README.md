@@ -132,3 +132,27 @@ maintainer accepted the measured 144 KiB and 116 KiB small-case RSS increases
 for [PR #556](https://github.com/Oblikovati/Martensite/pull/556), which merged
 as `b7dc518b412036048e4f8582cf600aa040f86d64`. This records approval of that
 specific tradeoff; it grants no general performance or memory exception.
+
+## Census report reuse (#567)
+
+Each Census enumeration owns an ordered index from its canonical source pair
+and query mode to the first retained report address. Existing report keys enter
+the index once. A cold solver result is indexed at its actual append position;
+later occurrences reuse that position, including when its outcome is a capture
+failure or incomplete proof. The index is discarded when enumeration ends.
+Report vectors keep their original order and remain the evidence owners.
+
+The index stores execution addresses within one Census. Source, policy and
+revision checks still run through the existing certificate bindings. Solver
+execution order, shared remaining budgets and cancellation callbacks stay in
+the enumeration driver. The lookup tree is never traversed to publish geometry
+or assign persistent identities.
+
+Regression controls run indexed and literal lookups through the same solver
+driver, comparing retained graph coefficients, roots, membership and exceptional
+signs, contacts, policies, work and callbacks. They cover reversed aliases,
+query modes, duplicate keys, cached failures and cancellation checkpoints.
+A deterministic counter control expects 21,945 record visits for 210 cold misses
+in the literal oracle; indexed lookups read the existing record inventory once.
+These controls establish lookup semantics; whole-operation time and peak memory
+require the same accepted workload and matching build provenance.
