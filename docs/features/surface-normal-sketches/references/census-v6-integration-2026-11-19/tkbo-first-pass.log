@@ -246,4 +246,3 @@ test sketch_region_prism::tolerance_inspection::inspection_tests::inflated_metad
 test sketch_region_validation::diagnostic_tests::geometric_defects_keep_native_status_order ... ok
 
 test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 2279 filtered out; finished in 0.52s
-

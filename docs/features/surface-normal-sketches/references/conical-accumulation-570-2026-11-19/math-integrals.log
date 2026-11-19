@@ -135,4 +135,3 @@ test predicates::roots::metric_bounds::rational_integrals::tests::singular_sweep
 test predicates::roots::metric_bounds::rational_integrals::tests::unmet_budgets_are_incomplete_without_partial_results ... ok
 
 test result: ok. 133 passed; 0 failed; 0 ignored; 0 measured; 939 filtered out; finished in 0.54s
-

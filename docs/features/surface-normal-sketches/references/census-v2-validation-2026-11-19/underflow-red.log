@@ -13,4 +13,3 @@ failures:
     finite_range_review::exact_second_contact_prevents_endpoint_only_certificate_at_finite_underflow
 
 test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
-

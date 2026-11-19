@@ -312,7 +312,7 @@ test sketch_region_certification::paired_retention_tests::global_failure_work_is
 test sketch_region_certification::paired_retention_tests::located_source_occurrences_keep_distinct_domains_and_actual_world_coefficients ... ok
 test sketch_region_certification::paired_retention_tests::retained_owned_report_survives_later_caller_geometry_mutation_failure_and_cancel ... ok
 test sketch_region_certification::paired_retention_tests::reversed_aliases_reuse_cold_report_and_retain_all_full_original_parent_keys ... ok
-test sketch_region_certification::paired_retention_tests::unrelated_callback_failure_propagates_without_rewriting_previous_report ... 
+test sketch_region_certification::paired_retention_tests::unrelated_callback_failure_propagates_without_rewriting_previous_report ...
 thread 'sketch_region_certification::paired_retention_tests::unrelated_callback_failure_propagates_without_rewriting_previous_report' (988646) panicked at crates/martensite-tkbo/src/sketch_region_certification/paired_retention_tests.rs:261:13:
 Box<dyn Any>
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
@@ -423,4 +423,3 @@ test sketch_region_prism::tolerance_inspection::inspection_tests::inflated_metad
 test sketch_region_validation::diagnostic_tests::geometric_defects_keep_native_status_order ... ok
 
 test result: ok. 184 passed; 0 failed; 0 ignored; 0 measured; 2110 filtered out; finished in 4.36s
-

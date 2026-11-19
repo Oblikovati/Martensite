@@ -4,4 +4,3 @@ test surface_sketch::wrapped_profile::operation::cone::measures::flux::tests::fa
 test surface_sketch::wrapped_profile::operation::cone::measures::flux::tests::successful_flux_charge_refusal_keeps_the_actual_computed_work ... ok
 
 test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 517 filtered out; finished in 0.00s
-

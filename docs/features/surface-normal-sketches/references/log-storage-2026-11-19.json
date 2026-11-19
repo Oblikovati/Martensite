@@ -1,0 +1,162 @@
+{
+  "raw_capture_commit": "6fca95d28468bad2d709915af29f115ca4cbb6ff",
+  "archive": "raw-evidence-logs-2026-11-19.tar.gz",
+  "archive_sha256": "ca3856d978802135048ca8debe6c2f6099b0ab9169f045ebf572e4a3d5f9a84e",
+  "archive_encoding": "gzip tar; only verbatim text logs, safe relative member names",
+  "display_normalization": "trailing spaces/tabs/CR removed from lines; one final newline; no other content changed",
+  "historical_hash_semantics": "historical receipt log hashes refer to raw archive members, not normalized display copies",
+  "logs": [
+    {
+      "display_path": "references/census-v2-validation-2026-11-19/kernel-predicate-green.log",
+      "archive_member": "references/census-v2-validation-2026-11-19/kernel-predicate-green.log",
+      "raw_sha256": "c060633b6bec507336df0088da04ed8c7f802792fb97197d71df00c5c5926f18",
+      "display_sha256": "3720a74849887b31b76f037e8e1ebb728976ccb12ac3872b62092bc89eb901cf",
+      "raw_bytes": 362,
+      "display_bytes": 361
+    },
+    {
+      "display_path": "references/census-v2-validation-2026-11-19/underflow-red.log",
+      "archive_member": "references/census-v2-validation-2026-11-19/underflow-red.log",
+      "raw_sha256": "c4b82804ceb24acc253e1f97f14943064a396ccb5f64ec0265c485d1bb5dbb63",
+      "display_sha256": "9c60d0e566968183954b119c3be51e31ddfaa55ca78a7782d95608ded0c2c5ea",
+      "raw_bytes": 866,
+      "display_bytes": 865
+    },
+    {
+      "display_path": "references/census-v6-integration-2026-11-19/1-v5.log",
+      "archive_member": "references/census-v6-integration-2026-11-19/1-v5.log",
+      "raw_sha256": "e084ca2309f342286f4ba89f774149c5cdab9ea9039725d87f707747cb1da6c3",
+      "display_sha256": "ccacbebfebd85b2337bd7334b1704900fdb5dd853520dfb51d28cf04eeb319f5",
+      "raw_bytes": 484,
+      "display_bytes": 483
+    },
+    {
+      "display_path": "references/census-v6-integration-2026-11-19/1-v6.log",
+      "archive_member": "references/census-v6-integration-2026-11-19/1-v6.log",
+      "raw_sha256": "577c497480ffa40bc71290ec234cfa6214bd7355774a115b23d37492d01c062c",
+      "display_sha256": "1ea96b0195d6360b2525317a6ac2a412758dd0cb439bb3d1d70c61b811f3e53e",
+      "raw_bytes": 457,
+      "display_bytes": 456
+    },
+    {
+      "display_path": "references/census-v6-integration-2026-11-19/2-v5.log",
+      "archive_member": "references/census-v6-integration-2026-11-19/2-v5.log",
+      "raw_sha256": "1154cbbddc97c7a399a00738f4ab5339cc0b6e28a92cc4defd5b9abc7700cb54",
+      "display_sha256": "cb7dc5d85b4cd33d226298f48044a9e4446258a450c9816f8b79d671019e45c6",
+      "raw_bytes": 484,
+      "display_bytes": 483
+    },
+    {
+      "display_path": "references/census-v6-integration-2026-11-19/2-v6.log",
+      "archive_member": "references/census-v6-integration-2026-11-19/2-v6.log",
+      "raw_sha256": "e85235fea4466bcf55d98f51948e3c7fa53e054cbbe2a99e5dc6958a7e8f9576",
+      "display_sha256": "07d4e421be4d40cf031bc34a96cbbd9296f71ee1599ff8e062c4d72401dfadaf",
+      "raw_bytes": 457,
+      "display_bytes": 456
+    },
+    {
+      "display_path": "references/census-v6-integration-2026-11-19/3-v5.log",
+      "archive_member": "references/census-v6-integration-2026-11-19/3-v5.log",
+      "raw_sha256": "b8ba8529744a0252408f77ce831d3e409f554704ef84c7329d11248526b7f979",
+      "display_sha256": "5f7fb9dc0c8d3ac2ae4685bd4cc5e51c3fa2a40b68b948930a62a19f74c9335b",
+      "raw_bytes": 484,
+      "display_bytes": 483
+    },
+    {
+      "display_path": "references/census-v6-integration-2026-11-19/affected-regressions-final.log",
+      "archive_member": "references/census-v6-integration-2026-11-19/affected-regressions-final.log",
+      "raw_sha256": "5969aca274844a5b8faf6bfaddd5ce3445b8e5d6f7228ba6cc56e0c143fc5c20",
+      "display_sha256": "5abe952574fc9ee9b36d8d01f09009d798bd3453680aee4b5d69668dbb343b30",
+      "raw_bytes": 46131,
+      "display_bytes": 46129
+    },
+    {
+      "display_path": "references/census-v6-integration-2026-11-19/focused-with-initial-cancellation-failure.log",
+      "archive_member": "references/census-v6-integration-2026-11-19/focused-with-initial-cancellation-failure.log",
+      "raw_sha256": "8e3aa483a60d73281ba77cfe97efb7e560edc1805d10ce0fdd48bc2e5aac5719",
+      "display_sha256": "7f441c2a5db308e009a4aa957175ae24b2ab829f86d055f83695ae358bf4e43e",
+      "raw_bytes": 25863,
+      "display_bytes": 25862
+    },
+    {
+      "display_path": "references/census-v6-integration-2026-11-19/math-cone-final.log",
+      "archive_member": "references/census-v6-integration-2026-11-19/math-cone-final.log",
+      "raw_sha256": "895ab2971c0872f8e25e5367d41a6b749e07fbdd46d55bc36d924924d5f47e63",
+      "display_sha256": "9b0fa00448191cbf5edc8f7f81567c4ca5fc0c387b6f9e556feecee03930a7f3",
+      "raw_bytes": 26394,
+      "display_bytes": 26393
+    },
+    {
+      "display_path": "references/census-v6-integration-2026-11-19/math-cone-first-pass.log",
+      "archive_member": "references/census-v6-integration-2026-11-19/math-cone-first-pass.log",
+      "raw_sha256": "da0e087e59f65ad7ac8158f56400acda52ea06c0f746f8e59af563c0254bf4db",
+      "display_sha256": "4fbb74239af6b80ec083763433c9392b6832fb820b2e58ec566fc43e82809739",
+      "raw_bytes": 26394,
+      "display_bytes": 26393
+    },
+    {
+      "display_path": "references/census-v6-integration-2026-11-19/tkbo-first-pass.log",
+      "archive_member": "references/census-v6-integration-2026-11-19/tkbo-first-pass.log",
+      "raw_sha256": "4b8b8df5003169d571f81866c5e09b4b617d4ac35f44b91993ea07c0d1114856",
+      "display_sha256": "87d9634ecb1775e098461affbc0224574ab7f9e739f747bfd144f6fea8727daa",
+      "raw_bytes": 22650,
+      "display_bytes": 22649
+    },
+    {
+      "display_path": "references/conical-accumulation-570-2026-11-19/legacy-v1-complete.log",
+      "archive_member": "references/conical-accumulation-570-2026-11-19/legacy-v1-complete.log",
+      "raw_sha256": "ca2561e04d88ea3f60ffde37c5d6a00696834319ac09928822361a922d4e2ee9",
+      "display_sha256": "1047ce4b59414dc77b8a3e3042bebdc83b9615a253a0cfd3ad638b9664122f54",
+      "raw_bytes": 798,
+      "display_bytes": 797
+    },
+    {
+      "display_path": "references/conical-accumulation-570-2026-11-19/math-integrals.log",
+      "archive_member": "references/conical-accumulation-570-2026-11-19/math-integrals.log",
+      "raw_sha256": "7cbdd366bbaae1aa8cc7cf19255b6fa2915a64d816ebf5e55987ae5c6d0af651",
+      "display_sha256": "e3dc51bb0986d737f64bb41fb5b836c553504258cf9d7f2d61bf8b7fe510fb9f",
+      "raw_bytes": 20796,
+      "display_bytes": 20795
+    },
+    {
+      "display_path": "references/conical-accumulation-570-2026-11-19/sketch-error-projection.log",
+      "archive_member": "references/conical-accumulation-570-2026-11-19/sketch-error-projection.log",
+      "raw_sha256": "9ba7d483d33b3e2ee7efb33f9a76ee21a01969f8086edb008038962cf01b91f2",
+      "display_sha256": "34fa522d7be4975374dc1ada6e3bcd01b709fbaeafded9fc845845861c573e9e",
+      "raw_bytes": 272,
+      "display_bytes": 271
+    },
+    {
+      "display_path": "references/conical-accumulation-570-2026-11-19/sketch-flux-accounting.log",
+      "archive_member": "references/conical-accumulation-570-2026-11-19/sketch-flux-accounting.log",
+      "raw_sha256": "a5c205c4048b73f9fabac0d37fa2cf697f6f3e1121b0066a023feaf7c297c246",
+      "display_sha256": "a4f01b9cc4dca42ec20fe80454bd5c098a16420e0c412f748fec4c5083231156",
+      "raw_bytes": 423,
+      "display_bytes": 422
+    },
+    {
+      "display_path": "references/conical-accumulation-570-2026-11-19/v2-complete.log",
+      "archive_member": "references/conical-accumulation-570-2026-11-19/v2-complete.log",
+      "raw_sha256": "e6ab3b350863ec9ae2df1e656fec5ba188fde625e30adc7169df4e0244e2c854",
+      "display_sha256": "090c7638d0115aa8b0a61099a2a4498e39ea89afc7e778aede95df7d92920562",
+      "raw_bytes": 842,
+      "display_bytes": 841
+    },
+    {
+      "display_path": "references/fit-charge-attribution-2026-11-19/run.log",
+      "archive_member": "references/fit-charge-attribution-2026-11-19/run.log",
+      "raw_sha256": "94a629c777a6f1c6c93aef01176ff050f247b1feec07858c4bdcd3a2f1ee383f",
+      "display_sha256": "a47c9699ee0bbb0b2e8ef8c3a0fd357e8bab7852cb778863f980773828ae0478",
+      "raw_bytes": 25376,
+      "display_bytes": 25375
+    },
+    {
+      "display_path": "references/volume-bits-attribution-2026-11-19/run.log",
+      "archive_member": "references/volume-bits-attribution-2026-11-19/run.log",
+      "raw_sha256": "f7b035f5dcf5c62eea1ada5cfcbfb94cb29b543ff47683349f3401b62c90393a",
+      "display_sha256": "4a151b42f2b88678c1751c48a695e66dc7d8af6dd594e5f32325d62a44e5fcf7",
+      "raw_bytes": 381880,
+      "display_bytes": 381879
+    }
+  ]
+}

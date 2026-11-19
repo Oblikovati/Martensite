@@ -252,7 +252,7 @@ test bop_algo::checker_si::face_binding::tests::vertex_tests::missing_and_duplic
 test bop_ds::tools::tests::interfering_types_are_the_geometric_types_and_solids ... ok
 test profile_extrusion::composite_tests::geometric::geometric_v6_never_widens_a_zero_integral_loan ... ok
 test profile_extrusion::composite_tests::geometric::geometric_v6_publishes_the_same_rectangle_with_its_actual_program_loan ... ok
-test sketch_region_certification::geometric_tests::geometric_census_cancellation_never_publishes_complete_pair_coverage ... 
+test sketch_region_certification::geometric_tests::geometric_census_cancellation_never_publishes_complete_pair_coverage ...
 thread 'sketch_region_certification::geometric_tests::geometric_census_cancellation_never_publishes_complete_pair_coverage' (983595) panicked at crates/martensite-tkbo/src/sketch_region_certification/geometric_tests.rs:122:5:
 assertion `left == right` failed
   left: 1195
