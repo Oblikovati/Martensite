@@ -26,7 +26,7 @@ fn profile(quadrant: Quadrant) -> SketchProfile {
     let mut vertices = Vec::new();
     let mut curves = Vec::new();
     for (first, scales) in [(1, [4., 18.]), (5, [3., 16.])] {
-        append_oval(first, scales, quadrant, &mut vertices, &mut curves);
+        append_oval(first, scales, 84., quadrant, &mut vertices, &mut curves);
     }
     append_dot(quadrant, &mut vertices, &mut curves);
     SketchProfile {
@@ -38,21 +38,25 @@ fn profile(quadrant: Quadrant) -> SketchProfile {
 fn append_oval(
     first: u64,
     scales: [f64; 2],
+    center: f64,
     quadrant: Quadrant,
     vertices: &mut Vec<ProfileVertex>,
     curves: &mut Vec<ProfileCurve>,
 ) {
     for quarter in 0..4 {
-        let poles = oval_controls(scales, quarter, quadrant);
+        let poles = oval_controls(scales, center, quarter, quadrant);
         let id = first + u64::from(quarter);
         vertices.push(vertex(id, poles[0]));
         curves.push(cubic(id, first + u64::from((quarter + 1) % 4), poles));
     }
 }
-fn oval_controls(scales: [f64; 2], quarter: u32, quadrant: Quadrant) -> [[f64; 2]; 4] {
+fn oval_controls(scales: [f64; 2], center: f64, quarter: u32, quadrant: Quadrant) -> [[f64; 2]; 4] {
     [[1., 0.], [1., 0.5], [0.5, 1.], [0., 1.]].map(|point| {
         let point = rotate(point, quarter);
-        transform([84. + scales[0] * point[0], scales[1] * point[1]], quadrant)
+        transform(
+            [center + scales[0] * point[0], scales[1] * point[1]],
+            quadrant,
+        )
     })
 }
 fn rotate(mut point: [f64; 2], turns: u32) -> [f64; 2] {
@@ -130,4 +134,24 @@ fn contour(first: u64, reversed: bool) -> ProfileLoop {
         uses.reverse();
     }
     ProfileLoop { uses }
+}
+
+pub(super) fn two_ovals_and_dot() -> WrappedConeNormalRequest {
+    let mut request = request(NormalSense::Outward, Quadrant::PositiveX);
+    for (first, scales) in [(17, [4., 18.]), (21, [3., 16.])] {
+        append_oval(
+            first,
+            scales,
+            108.,
+            Quadrant::PositiveX,
+            &mut request.profile.vertices,
+            &mut request.profile.curves,
+        );
+    }
+    request.selections.push(WrappedRegionSelection {
+        region: SurfaceRegionId(3),
+        outer: contour(17, false),
+        holes: vec![contour(21, true)],
+    });
+    request
 }

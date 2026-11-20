@@ -333,8 +333,9 @@ five-second acceptance. Full canonical, hosted, concurrency/TSan, matched
 runtime/peak-memory and the remaining capability matrix are still open. No B1
 commit, push or release approval is recorded.
 
-[Captured-input cone work](CONICAL-INPUT-WORK.md) records the local family
-admission and trim qualification for the 239-curve text fixture.
+[Captured-input cone work](CONICAL-INPUT-WORK.md) records the original
+and physical-angle grants, the 239-curve text qualification, and the
+native validation timings and replay results for attached text.
 
 [Recentered cone charts](RECENTERED-CONE-CHART.md) extend the public polynomial
 operation past the datum-centered angular cut for families that fit within one

@@ -12,6 +12,9 @@ pub enum WrappedConeArithmeticGrantPolicy {
     /// Admit the requested aggregate against captured original spans and fit level.
     /// The ceiling is `min(16_000_000, max(1_000_000, spans * (level + 1) * 4096))`.
     InputBoundV1,
+    /// Scale by captured span count, fit level and an outward physical-angle extent.
+    /// The cap is `clamp((2048 * spans + ceil(10000 * radians)) * (level + 1), 1M, 16M)`.
+    PhysicalAngleBoundV2,
 }
 
 /// Immutable admission facts; these do not promise completion or a CPU-time bound.
@@ -24,7 +27,7 @@ pub struct WrappedConeArithmeticGrantReceipt {
     pub source_spans: u32,
     /// Original admitted maximum fit level.
     pub maximum_fit_level: u8,
-    /// Versioned allowance coefficient, not a measurement of algorithmic cost.
+    /// Base allowance per source span and fit level for the selected policy.
     pub operations_per_span_level: u32,
     /// Caller-requested aggregate; admission never replaces or clamps it.
     pub requested_operations: u32,

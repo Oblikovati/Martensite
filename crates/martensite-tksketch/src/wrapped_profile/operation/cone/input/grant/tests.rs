@@ -156,3 +156,28 @@ fn assert_ceiling_diagnostic(proof: WrappedConeProofOptions) {
             .contains("aggregate arithmetic <=16000000")
     );
 }
+
+#[test]
+fn angle_scaled_receipt_rebinds_the_exact_cone_semi_angle_and_policy() {
+    let (mut request, inputs) = captured();
+    let policy = WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 {
+        arithmetic: PhysicalAngleBoundV2,
+    };
+    let grant = capture(&ConeRun::from(&request), policy, &inputs.originals)
+        .unwrap()
+        .unwrap();
+    grant
+        .validate(&ConeRun::from(&request), policy, &inputs.originals)
+        .unwrap();
+    assert!(
+        grant
+            .validate(&ConeRun::from(&request), selection(), &inputs.originals)
+            .is_err()
+    );
+    request.support.semi_angle = request.support.semi_angle.next_up();
+    assert!(
+        grant
+            .validate(&ConeRun::from(&request), policy, &inputs.originals)
+            .is_err()
+    );
+}

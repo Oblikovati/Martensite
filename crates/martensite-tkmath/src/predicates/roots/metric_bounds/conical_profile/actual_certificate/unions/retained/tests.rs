@@ -50,3 +50,28 @@ fn weighted_projection_bound_encloses_the_exact_minimum_for_both_orientations() 
         assert_eq!(bound, arithmetic.scalar(0.0625).unwrap());
     }
 }
+
+#[test]
+fn one_zero_or_negative_step_refuses_despite_the_other_positive_steps() {
+    let mut cancelled = || false;
+    let mut arithmetic = Arithmetic::new(
+        sector_api::policy(ConeClearanceOptions::default()),
+        &mut cancelled,
+    );
+    for x in [2., 1.] {
+        let rows = [
+            [[0., 0., 0.], [2., 0., 0.], [4., 0., 0.]],
+            [[0., 0., 1.], [2., 0., 1.], [x, 1., 1.]],
+        ]
+        .map(|row| row.map(|pole| point(pole, &mut arithmetic)).to_vec());
+        let axis = point([1., 0., 0.], &mut arithmetic);
+        assert!(matches!(
+            minimum_step(&rows, &axis, true, &mut arithmetic),
+            Err(ConicalActualPatchFailure::Unresolved {
+                quantity: "retained side projected control step",
+                expected: "strictly positive",
+                ..
+            })
+        ));
+    }
+}

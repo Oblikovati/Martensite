@@ -98,9 +98,10 @@ steps projected perpendicular to the shared ruling. This floating-point
 choice only supplies an axis. Outward interval arithmetic decides the sign
 and margin of every required bound.
 
-Let `d` be the minimum positive projected control step over both rows,
-`n` the curve degree, and `w_min` and `w_max` bounds on the common positive
-weights in the rows. The projected derivative is bounded below by
+Let `d` be the minimum outward lower bound over every consecutive projected
+control step in both rows. A zero, negative or inconclusive step refuses the
+proof. Let `n` be the curve degree and `w_min` and `w_max` bounds on the
+common positive weights in the rows. The projected derivative is bounded below by
 `n * d * (w_min / w_max)^2`. In the derivative numerator, the pair of
 indices `i < j` contributes a positive weight product times
 `(j - i) * (p_j - p_i)`. Consecutive differences at least `d` bound this
@@ -212,5 +213,90 @@ placed tool's own native validation. A separate 12-second CPU sample
 of the pocket captured 2,356 leaf samples and none in the repeated
 polygon segment-box calculation. That window leaves its share across
 the whole call unresolved. The timers and transient profiles were
-removed after collection. Full multiline determinism across processes
-and matched peak-memory measurements remain open.
+removed after collection.
+
+
+## Arithmetic grant calibrated by physical angle
+
+The 20-curve control adds a second copy of the polynomial O from the
+12-curve O. fixture and shifts it outward in developed slant. With a
+one-million-operation request it exhausts the allowance while fitting
+the second O. It completes with 276 fitted spans, 828 integration cells
+and 2,001,936 arithmetic operations. A coefficient of 10,000 applied
+only to count and fit level would still grant just 1.8 million.
+
+`PhysicalAngleBoundV2` is an opt-in policy. Along with the selected span
+count and fit level, it uses the sum of outward bounds on each original
+span's physical angular extent. It encloses each pole direction with
+the portable trigonometric functions. The complement of the largest
+certified gap between directions encloses the span's control hull when
+that interval fits in an open half-plane. Other hulls receive a
+full-turn allowance in developed angle. The sum is divided by a
+lower bound on the sine of the captured cone semi-angle and rounded
+outward. The resulting ceiling is the following expression, with
+outward rounding before the angular credit is converted to an integer.
+
+```text
+clamp((2048 * spans + ceil(10000 * physical_radians)) * (fit_level + 1), 1M, 16M)
+```
+
+The policy binds the raw control coefficients and semi-angle before
+proof work begins. The caller must request an allowance within the
+ceiling. Refusal leaves the request and the ceiling intact. Individual
+exact primitives still draw at most one million operations from the
+remaining allowance. The 4,096-span chart limit and the 16-million
+arithmetic ceiling govern different resources. Neither implies that a
+profile at the other limit will complete.
+
+The new policy admits an explicit 2.2-million request for the
+20-curve control and a 4.5-million request for the 239-curve text.
+Both completed. The full outward text kept its 3,057,275 arithmetic
+operations and 1,017 integration cells. These settings are calibrated
+against the measured fixtures. Angular
+extent alone cannot predict work from clearance, fitting tolerance or
+the number of interacting regions. `InputBoundV1` remains selectable for
+previous requests and replay. The existing bounded-accumulation
+O. control had a 4.68 s median API time across three pinned runs on
+the final build. Median process peak RSS was 67,092 KiB.
+
+## Native validation and replay
+
+A later full-call boss probe measured 144.16 s. Per-stage timers recorded
+45.88 s in the placed members' native self-intersection checks and
+57.49 s in the finished solid's native self-intersection check. The
+placed members spent 1.19 s on topology, 2.54 s on geometry and 0.23 s
+on native volume estimates. The finished solid spent 1.91 s on
+topology and 3.50 s on geometry.
+
+A second profile compared the first line alone with both lines on
+the same support. It retained 11 and 18 material regions, respectively.
+The native checker already pairs shapes through a bounding-box
+hierarchy and removes contained subshape pairs before the
+intersection stages. The table records the candidates that reached
+the edge–face and face–face stages of the finished solid's check.
+
+| Boss input | Original curves | Final faces | Edge–face pairs | Face–face pairs | Edge–face seconds | Face–face seconds | Final self-intersection seconds |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| First line | 147 | 226 | 1,734 | 749 | 15.43 | 17.29 | 36.69 |
+| Both lines | 239 | 362 | 2,836 | 1,236 | 24.10 | 30.26 | 61.49 |
+
+Face count grew 1.60× and candidate counts grew 1.64× and 1.65×.
+These two cases show roughly proportional candidate growth for this
+layout. The timing profiles ran on separate cores of the shared Linux
+host and are diagnostic samples.
+
+The placed tool adds a common stored location. Stripping that location
+and re-encoding reproduces the canonical graph bytes and semantic
+bindings. The certified positive determinant establishes that the same
+exact mathematical self-intersection result holds in the placed
+frame. The existing world validation still reruns the native search.
+A transported proof would need to bind the certificate to the exact
+decoded placement and retain the ordered world topology, geometry
+and tolerance checks. The Boolean creates a different graph and still
+requires validation of the finished solid.
+
+Two processes reproduced 2,062,743 bytes exactly, including both
+archives, composed history, validation, footprint and placement
+reports for the full outward operation. Temporary timers, replay
+files and grant experiments were removed. Matched peak-memory
+qualification remains open.

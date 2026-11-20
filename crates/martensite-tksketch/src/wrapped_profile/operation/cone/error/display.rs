@@ -103,7 +103,7 @@ impl ConeCause {
             ProofOptions(actual) => proof_policy(out, actual),
             InputBoundProofOptions { actual, ceiling } => write!(
                 out,
-                "InputBoundV1 proof policy={actual:?}; expected precision 8..4096, aggregate arithmetic <={ceiling}, finite integration and authored-volume settings"
+                "input-bound proof policy={actual:?}; expected precision 8..4096, aggregate arithmetic <={ceiling}, finite integration and authored-volume settings"
             ),
             ExecutionProof(actual) => expected(
                 out,
