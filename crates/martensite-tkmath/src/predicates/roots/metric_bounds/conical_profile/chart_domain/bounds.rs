@@ -39,19 +39,24 @@ fn admit_sources(
 pub(super) fn certify(
     query: &ConicalChartDomainQuery<'_>,
     version: ConicalChartDomainVersion,
+    restriction: Option<ConicalOriginalSpan<'_>>,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<ConicalChartDomainEvidence, Failure> {
     let (wedge, margin) = sector::common_wedge(query.spans, arithmetic).map_err(Failure::Sector)?;
     self::wedge(wedge)?;
-    let ranges = ranges(query, arithmetic)?;
+    let ranges = ranges(query, restriction, arithmetic)?;
     let offset = fit_offset(query, version, arithmetic)?;
     check_chart(&ranges.0, offset.as_ref(), arithmetic)?;
     arithmetic.check_cancelled()?;
-    Ok(evidence(query, version, margin, ranges, offset, arithmetic))
+    let scope = restriction.map_or(0, restriction_key);
+    Ok(evidence(
+        query, version, scope, margin, ranges, offset, arithmetic,
+    ))
 }
 fn evidence(
     query: &ConicalChartDomainQuery<'_>,
     version: ConicalChartDomainVersion,
+    source_scope: u64,
     margin: Option<num_bigint::BigInt>,
     (physical, sine, cosine, minimum_x): (Interval, Interval, Interval, Interval),
     fit_offset: Option<Interval>,
@@ -60,7 +65,7 @@ fn evidence(
     let sector = captured_sector(query, margin, arithmetic);
     ConicalChartDomainEvidence {
         version,
-        span_limit: version.span_limit(),
+        source_scope,
         sector,
         chart: [query.chart_origin.to_bits(), query.fit_center.to_bits()],
         turns: [query.developed_turn, query.physical_turn],
@@ -93,18 +98,29 @@ fn captured_sector(
 }
 fn ranges(
     query: &ConicalChartDomainQuery<'_>,
+    restriction: Option<ConicalOriginalSpan<'_>>,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<(Interval, Interval, Interval, Interval), Failure> {
-    let alpha = arithmetic.scalar(query.semi_angle)?;
+    let [cosine, sine] = support_trigonometry(query.semi_angle, arithmetic)?;
+    let (developed, minimum_x) = match restriction {
+        Some(span) => restricted::restricted_range(span, arithmetic)?,
+        None => authored_range(query.spans, arithmetic)?,
+    };
+    let physical = arithmetic.divide(&developed, &sine)?;
+    Ok((physical, sine, cosine, minimum_x))
+}
+fn support_trigonometry(
+    semi_angle: f64,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<[Interval; 2], Failure> {
+    let alpha = arithmetic.scalar(semi_angle)?;
     let [cosine, sine] =
         crate::predicates::roots::metric_bounds::cylindrical_profile::trigonometric::scalar(
             &alpha, arithmetic,
         )
         .map_err(Failure::Trigonometric)?;
     positive_lower(&sine, "strictly positive certified sine", arithmetic)?;
-    let (developed, minimum_x) = authored_range(query.spans, arithmetic)?;
-    let physical = arithmetic.divide(&developed, &sine)?;
-    Ok((physical, sine, cosine, minimum_x))
+    Ok([cosine, sine])
 }
 fn fit_offset(
     query: &ConicalChartDomainQuery<'_>,
@@ -149,7 +165,7 @@ fn authored_range(
     ))
 }
 
-fn include(bounds: &mut Option<Interval>, value: Interval) {
+pub(super) fn include(bounds: &mut Option<Interval>, value: Interval) {
     // Domain admission retains only the extrema, even for the full source capacity.
     *bounds = Some(match bounds.take() {
         Some(existing) => Interval {

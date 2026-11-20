@@ -68,22 +68,23 @@ fn prepare_curve(
 }
 
 fn prepare_chart(piece: &AuthoredPiece, chart: &CylindricalFitChart) -> Vec<AuthoredPiece> {
-    let mut source = piece.clone();
     let interval = chart.interval();
-    for bit in (0..interval.level() - piece.span.level).rev() {
-        let [left, right] = split_piece(&source);
-        source = if interval.index() >> bit & 1 == 0 {
-            left
-        } else {
-            right
-        };
-    }
+    let mut source = restrict_piece(piece, interval.index(), interval.level());
     source.chart_center = chart.fit_plan().chart_center();
     let mut pieces = vec![source];
     for _ in 0..chart.fit_plan().subdivision_level() {
         pieces = pieces.iter().flat_map(split_piece).collect();
     }
     pieces
+}
+
+pub(super) fn restrict_piece(piece: &AuthoredPiece, index: u64, level: u8) -> AuthoredPiece {
+    let mut source = piece.clone();
+    for bit in (0..level - piece.span.level).rev() {
+        let [left, right] = split_piece(&source);
+        source = if index >> bit & 1 == 0 { left } else { right };
+    }
+    source
 }
 
 fn planning_query<'a>(

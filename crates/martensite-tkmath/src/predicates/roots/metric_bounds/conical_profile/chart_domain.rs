@@ -8,6 +8,8 @@ pub(super) mod diagnostics_tests;
 mod family_tests;
 #[cfg(test)]
 mod recentered_tests;
+mod restricted;
+pub use restricted::{ConicalSubspanChartError, certify_conical_subspan_chart};
 #[cfg(test)]
 mod tests;
 /// Select the common-chart geometry and finite source capacity.
@@ -66,7 +68,9 @@ pub struct ConicalChartDomainQuery<'a> {
 /// Immutable source-bound PositiveX wedge, sine and physical-range certificate.
 pub struct ConicalChartDomainEvidence {
     version: ConicalChartDomainVersion,
-    span_limit: usize,
+    // A leading bit records the level, including intervals whose index has leading zeros.
+    // Zero identifies the existing whole-source authority.
+    pub(super) source_scope: u64,
     pub(super) sector: sector::SectorEvidence,
     chart: [u64; 2],
     turns: [i32; 2],
@@ -169,22 +173,33 @@ pub fn certify_conical_chart_domain_with_version(
     bounds::admit(&query, version).map_err(|cause| domain_error(cause, 0))?;
     let policy = sector_api::policy(query.options);
     let mut arithmetic = Arithmetic::new(policy, &mut cancelled);
-    bounds::certify(&query, version, &mut arithmetic)
+    bounds::certify(&query, version, None, &mut arithmetic)
         .map_err(|cause| domain_error(cause, arithmetic.operations()))
 }
 impl ConicalChartDomainEvidence {
+    pub(super) fn covers_restriction(&self, original: Option<ConicalOriginalSpan<'_>>) -> bool {
+        self.source_restriction()
+            .is_none_or(|scope| original.is_some_and(|span| restricted::covers(scope, span)))
+    }
+
     pub(super) fn contains_original(&self, original: &[[f64; 2]]) -> bool {
         self.sector
             .original_index
             .contains_exact(&self.sector.source, original)
     }
+    /// Return the captured dyadic source interval, when restricted.
+    /// Example: `assert_eq!(proof.source_restriction(), Some((1, 2)))`.
+    pub fn source_restriction(&self) -> Option<(u64, u8)> {
+        decode_restriction(self.source_scope)
+    }
+
     /// Executed chart behavior; `proof.version()`.
     pub fn version(&self) -> ConicalChartDomainVersion {
         self.version
     }
     /// Fixed admitted source cap; `proof.span_limit()`.
     pub fn span_limit(&self) -> usize {
-        self.span_limit
+        source_capacity(self.version, self.source_scope)
     }
     /// Complete captured original-source count; `proof.source_span_count()`.
     pub fn source_span_count(&self) -> usize {
@@ -232,9 +247,9 @@ impl ConicalChartDomainEvidence {
         query: &ConicalChartDomainQuery<'_>,
         version: ConicalChartDomainVersion,
     ) -> bool {
-        self.version == version
-            && self.span_limit == version.span_limit()
-            && (1..=self.span_limit).contains(&query.spans.len())
+        self.source_scope == 0
+            && self.version == version
+            && (1..=self.span_limit()).contains(&query.spans.len())
             && self.sector.matches(
                 query.spans,
                 query.semi_angle,
@@ -256,6 +271,18 @@ impl ConicalChartDomainEvidence {
         self.sector.admits_bound(bound)
     }
 }
+pub(super) fn source_capacity(version: ConicalChartDomainVersion, scope: u64) -> usize {
+    if scope == 0 { version.span_limit() } else { 1 }
+}
+pub(super) fn decode_restriction(scope: u64) -> Option<(u64, u8)> {
+    let level = scope.checked_ilog2()?;
+    Some((scope ^ (1 << level), level as u8))
+}
+fn restriction_key(span: ConicalOriginalSpan<'_>) -> u64 {
+    // Admission checked index < 2^level, leaving that bit free at every supported level.
+    span.index | (1_u64 << span.level)
+}
+
 fn domain_error(cause: ConicalChartDomainFailure, operations: u32) -> ConicalChartDomainError {
     ConicalChartDomainError { cause, operations }
 }

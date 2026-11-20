@@ -107,3 +107,39 @@ after. Median peak RSS was 67,812 and 67,380 KiB, respectively.
 The 239-curve standalone text control passed with 3,057,275 arithmetic
 operations and 1,017 integration cells. The temporary baseline build
 and replay files were removed.
+
+## Charts over exact source intervals
+
+A local chart certifies a dyadic interval of one original span in the
+positive-X wedge. The proof restricts the original controls with
+outward rounding and verifies a strictly positive X bound for each
+restricted control. The curve's slope is a weighted average of the
+control slopes, with weights proportional to their X coordinates and
+Bernstein basis values. The extreme slopes enclose the developed angle.
+The existing chart checks bound the physical angle using the certified
+sine and fit center.
+
+The chart receipt retains the original control bits and the dyadic
+address. Boundary certification checks both and accepts descendant
+intervals within that address. The boundary proof refuses a sibling
+interval or an omitted address before doing spatial arithmetic. A
+one-bit change to the original controls also causes refusal. The source
+matcher used by the existing reference path requires whole-source
+coverage. Chart capacity follows the version and scope. The interval
+address occupies the slot that previously held the derived capacity,
+keeping the per-span receipt at 88 bytes on Linux x86_64.
+
+The 8.64-radian control reproduces the nonpositive stored weight in an
+unsplit fit. Four chart intervals, chosen as the two halves of each
+original, pass through the normal fitting code. All adjacent fitted
+pieces match at both depth endpoints and in unwrapped cap UV. The test
+assigns the intervals and centers. A production planner still needs to
+choose them and carry their authority into a closed cap proof.
+
+The legacy, recentered, disconnected-atlas and oblique replay workers
+matched the archives and reports from `508b1e9f` byte for byte. Five
+paired runs on one pinned Linux core measured a standalone O. median of
+4.830 s on that revision and 5.151 s with the restricted-chart changes.
+Median process peak RSS rose from 66,660 to 67,508 KiB. The candidate
+met the 5.4 s elapsed-time limit. The measured increases leave the
+performance comparison open for integration.

@@ -12,7 +12,7 @@ mod refinement_tests;
 pub(super) mod tests;
 pub(in crate::predicates::roots::metric_bounds) struct ChartBinding {
     version: ConicalChartDomainVersion,
-    span_limit: usize,
+    source_scope: u64,
     source: sector::SourceBits,
     support: [u64; 6],
     options: ConeClearanceOptions,
@@ -30,7 +30,7 @@ impl ChartBinding {
     ) -> Self {
         Self {
             version: domain.version(),
-            span_limit: domain.span_limit(),
+            source_scope: domain.source_scope,
             source: Arc::clone(&domain.sector.source),
             support: support(domain),
             options: domain.options(),
@@ -47,7 +47,7 @@ impl ChartBinding {
         refinement: ConicalPrimitiveRefinement,
     ) -> bool {
         self.version == domain.version()
-            && self.span_limit == domain.span_limit()
+            && self.source_scope == domain.source_scope
             && self.refinement == refinement
             && self.support == support(domain)
             && self.options == domain.options()
@@ -58,7 +58,7 @@ impl ChartBinding {
 impl PartialEq for ChartBinding {
     fn eq(&self, other: &Self) -> bool {
         self.version == other.version
-            && self.span_limit == other.span_limit
+            && self.source_scope == other.source_scope
             && self.refinement == other.refinement
             && self.support == other.support
             && self.options == other.options
@@ -189,6 +189,11 @@ fn admit_membership(
     query: &ConicalBoundaryQuery<'_>,
     domain: &ConicalChartDomainEvidence,
 ) -> Result<(), combined::CombinedFailure> {
+    if let Some((index, level)) = domain.source_restriction()
+        && !domain.covers_restriction(query.original)
+    {
+        return Err(restricted_membership_error(query, index, level));
+    }
     let original = query.original.map_or(query.source, |source| source.poles);
     if domain.contains_original(original) {
         return Ok(());
@@ -206,6 +211,25 @@ fn admit_membership(
         &expected,
         index,
     ))
+}
+
+fn restricted_membership_error(
+    query: &ConicalBoundaryQuery<'_>,
+    index: u64,
+    level: u8,
+) -> combined::CombinedFailure {
+    let actual = query
+        .original
+        .map(|span| [span.index, u64::from(span.level)]);
+    let actual = actual.as_ref().map_or(&[][..], |span| &span[..]);
+    let expected = [index, u64::from(level)];
+    let mismatch = usize::from(actual.first() == Some(&index));
+    binding_error(
+        "original span membership in executed chart restriction",
+        actual,
+        &expected,
+        mismatch,
+    )
 }
 
 fn domain_source_bits(domain: &ConicalChartDomainEvidence) -> Vec<u64> {
@@ -339,7 +363,11 @@ impl ChartBinding {
             bits.extend([2, self.refinement.tag()]);
         }
         if self.version != ConicalChartDomainVersion::OriginalV2 {
-            bits.extend([4, self.version.tag(), self.span_limit as u64]);
+            let cap = chart_domain::source_capacity(self.version, self.source_scope);
+            bits.extend([4, self.version.tag(), cap as u64]);
+        }
+        if let Some((index, level)) = chart_domain::decode_restriction(self.source_scope) {
+            bits.extend([8, index, u64::from(level)]);
         }
         bits
     }

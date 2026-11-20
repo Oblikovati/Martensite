@@ -126,13 +126,17 @@ fn family_geometry_failure_retains_the_global_original_source_index() {
 }
 
 #[test]
-fn family_sources_versions_and_stored_capacity_cannot_be_rebound() {
+fn family_sources_versions_and_scope_cannot_be_rebound() {
     let mut spans = vec![LINE.as_slice(); 239];
     let mut proof = family(input(&spans)).unwrap();
     assert!(!proof.matches_with_version(&input(&spans), ConicalChartDomainVersion::OriginalV2));
-    proof.span_limit -= 1;
+    assert_eq!(
+        proof.span_limit(),
+        ConicalChartDomainVersion::FamilyV3.span_limit()
+    );
+    proof.source_scope = 1;
     assert!(!proof.matches_with_version(&input(&spans), ConicalChartDomainVersion::FamilyV3));
-    proof.span_limit += 1;
+    proof.source_scope = 0;
     let changed = [[80., -18.], [84., 24_f64.next_up()]];
     spans[238] = changed.as_slice();
     assert!(!proof.matches_with_version(&input(&spans), ConicalChartDomainVersion::FamilyV3));

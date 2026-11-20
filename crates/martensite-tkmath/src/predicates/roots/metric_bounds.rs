@@ -87,12 +87,12 @@ pub use conical_profile::{
     ConicalReferenceFailure, ConicalReferenceMember, ConicalReferenceQuery, ConicalSectorEvidence,
     ConicalSectorFailure, ConicalSectorQuery, ConicalSectorWedge, ConicalSourceFailure,
     ConicalStorageError, ConicalStorageEvidence, ConicalStorageFailure, ConicalStorageQuery,
-    certify_cone_request, certify_conical_atlas_reference, certify_conical_authored_flux,
-    certify_conical_authored_flux_with_method, certify_conical_boundary,
-    certify_conical_boundary_in_chart, certify_conical_chart_domain,
+    ConicalSubspanChartError, certify_cone_request, certify_conical_atlas_reference,
+    certify_conical_authored_flux, certify_conical_authored_flux_with_method,
+    certify_conical_boundary, certify_conical_boundary_in_chart, certify_conical_chart_domain,
     certify_conical_chart_domain_with_version, certify_conical_chart_reference,
     certify_conical_joins, certify_conical_reference, certify_conical_sector,
-    certify_conical_storage,
+    certify_conical_storage, certify_conical_subspan_chart,
 };
 pub use conical_profile::{
     ConicalActualAdjacent, ConicalActualCapCarrier, ConicalActualCapId, ConicalActualCapQuery,

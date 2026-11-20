@@ -189,3 +189,76 @@ fn cancellation_and_exhaustion_publish_no_chart_receipt() {
     empty.max_operations = 0;
     assert!(certify_conical_boundary_in_chart(query, &context, empty, || false).is_err());
 }
+
+#[test]
+fn restricted_boundary_authority_requires_the_exact_original_and_an_owned_interval() {
+    let poles = poles();
+    let mut boundary = query(&poles);
+    let spans = [SOURCE.as_slice()];
+    let input = ConicalChartDomainQuery {
+        spans: &spans,
+        semi_angle: boundary.semi_angle,
+        chart_origin: boundary.chart_origin,
+        fit_center: boundary.fit_center,
+        developed_turn: 0,
+        physical_turn: 0,
+        options: options(),
+    };
+    let left = certify_conical_subspan_chart(input, 0, 1, || false).unwrap();
+    let right = certify_conical_subspan_chart(input, 1, 1, || false).unwrap();
+    let within = ConicalOriginalSpan {
+        poles: &SOURCE,
+        index: 1,
+        level: 2,
+    };
+    boundary.original = Some(within);
+    let proof = certify_conical_boundary_in_chart(boundary, &left, options(), || false).unwrap();
+    assert!(proof.matches_chart(&boundary, &left));
+    assert!(!proof.matches_chart(&boundary, &right));
+    assert_scope_refusals(boundary, &left, within);
+}
+
+fn assert_scope_refusals(
+    boundary: ConicalBoundaryQuery<'_>,
+    domain: &ConicalChartDomainEvidence,
+    within: ConicalOriginalSpan<'_>,
+) {
+    let changed = [[80., 0.], [80_f64.next_up(), 0.]];
+    let rejected = [
+        (
+            None,
+            "original span membership in executed chart restriction",
+        ),
+        (
+            Some(ConicalOriginalSpan { index: 2, ..within }),
+            "original span membership in executed chart restriction",
+        ),
+        (
+            Some(ConicalOriginalSpan {
+                poles: &changed,
+                ..within
+            }),
+            "original span membership in executed chart domain",
+        ),
+    ];
+    for (original, field) in rejected {
+        let query = ConicalBoundaryQuery {
+            original,
+            ..boundary
+        };
+        let err =
+            certify_conical_boundary_in_chart(query, domain, options(), || false).unwrap_err();
+        assert_eq!(err.operations(), 0);
+        assert_binding_field(&err, field);
+    }
+}
+
+fn assert_binding_field(error: &ConicalBoundaryError, expected: &str) {
+    let ConicalBoundaryFailure::Proof(proof) = error.cause() else {
+        panic!("expected proof binding failure, got {error:?}");
+    };
+    let combined::CombinedFailure::Binding { field, .. } = proof.inner.as_ref() else {
+        panic!("expected binding failure, got {proof:?}");
+    };
+    assert_eq!(*field, expected);
+}

@@ -10,7 +10,7 @@ pub(super) fn plan(
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Vec<AuthoredPiece>> {
-    let mut pending = vec![original.clone()];
+    let mut pending = vec![seed_piece(prepared, original)?];
     let mut accepted = Vec::new();
     while let Some(mut piece) = pending.pop() {
         let candidate = candidate(prepared, original, &mut piece, endpoints, work, cancelled);
@@ -24,6 +24,44 @@ pub(super) fn plan(
     }
     Ok(accepted)
 }
+fn seed_piece(prepared: &Prepared, original: &AuthoredPiece) -> ConeChecked<AuthoredPiece> {
+    let scope = prepared
+        .chart_domain
+        .as_ref()
+        .and_then(|chart| chart.source_restriction());
+    let Some((index, level)) = scope else {
+        return Ok(original.clone());
+    };
+    let within = level
+        .checked_sub(original.span.level)
+        .is_some_and(|extra| index >> extra == u64::from(original.span.index));
+    if level > prepared.source.max_fit_level || !within {
+        return Err(restriction_failure(prepared, original.span, index, level));
+    }
+    Ok(subdivision::restrict_piece(original, index, level))
+}
+
+fn restriction_failure(
+    prepared: &Prepared,
+    source: CurveSpan,
+    index: u64,
+    level: u8,
+) -> ConeFailure {
+    failure(
+        Some(prepared.source.region),
+        Some(source),
+        ConeCause::Binding {
+            field: "local chart restriction within authored span and allowed fit level",
+            actual: vec![index, u64::from(level)],
+            expected: vec![
+                u64::from(source.index),
+                u64::from(source.level),
+                u64::from(prepared.source.max_fit_level),
+            ],
+        },
+    )
+}
+
 fn candidate(
     prepared: &mut Prepared,
     original: &AuthoredPiece,
