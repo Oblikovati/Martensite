@@ -135,31 +135,31 @@ fn authored_range(
     spans: &[&[[f64; 2]]],
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<(Interval, Interval), Failure> {
-    let mut angles = Vec::new();
-    let mut coordinates = Vec::new();
+    let mut angles = None;
+    let mut coordinates = None;
     for point in spans.iter().flat_map(|span| span.iter()) {
-        angles.push(
-            angle::initial_angle(*point, arithmetic)
-                .map_err(|cause| angle_failure(cause, *point))?,
-        );
-        coordinates.push(arithmetic.scalar(point[0])?);
+        let angle = angle::initial_angle(*point, arithmetic)
+            .map_err(|cause| angle_failure(cause, *point))?;
+        include(&mut angles, angle);
+        include(&mut coordinates, arithmetic.scalar(point[0])?);
     }
-    Ok((hull(&angles), hull(&coordinates)))
+    Ok((
+        angles.unwrap_or_else(|| arithmetic.zero()),
+        coordinates.unwrap_or_else(|| arithmetic.zero()),
+    ))
 }
-pub(super) fn hull(values: &[Interval]) -> Interval {
-    Interval {
-        lower: values
-            .iter()
-            .map(|v| v.lower.clone())
-            .min()
-            .unwrap_or_default(),
-        upper: values
-            .iter()
-            .map(|v| v.upper.clone())
-            .max()
-            .unwrap_or_default(),
-    }
+
+fn include(bounds: &mut Option<Interval>, value: Interval) {
+    // Domain admission retains only the extrema, even for the full source capacity.
+    *bounds = Some(match bounds.take() {
+        Some(existing) => Interval {
+            lower: existing.lower.min(value.lower),
+            upper: existing.upper.max(value.upper),
+        },
+        None => value,
+    });
 }
+
 pub(in super::super) fn width(
     range: &Interval,
     arithmetic: &mut Arithmetic<'_>,

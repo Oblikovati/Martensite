@@ -62,3 +62,48 @@ with the atlas implementation. Median peak RSS was 66,876 KiB and
 66,812 KiB. Each run charged 989,355 arithmetic operations and used 444
 integration cells and 148 retained spans. The samples leave the
 five-second and non-degradation gates open.
+
+## Shared endpoints between local charts
+
+An authored incidence carries one developed direction and slant. Its
+half-angle tangent depends on the chart center and the selected turns.
+The endpoint table checks the raw authored point bits once per use and
+records the most recent projection for that incidence. It recomputes
+the projection from the retained direction and slant when any chart
+input changes. The fit therefore shares the incidence across charts
+without reusing a tangent from a different chart.
+
+The boundary control uses two adjacent line spans on a 0.125-radian
+cone. Their combined physical lift spans 6.68 radians. The common
+chart refuses that input, and both local charts issue bounded
+boundary certificates. The two fits have distinct tangent endpoints
+and bit-identical native endpoint coordinates at both depths. The
+unwrapped cap UV endpoints also agree bit for bit after the existing
+endpoint canonicalization. Chart domain admission accumulates its two
+control-hull ranges in a single pass and owns only their extrema.
+
+An earlier 8.64-radian control exposed a fitter limit. Each original
+span fits within a half-angle chart, but the undivided Hermite fit
+produces a nonpositive Bernstein weight. Local chart planning must
+account for the stored weight bound as well as the angular interval.
+A chart assigned to a dyadic subspan needs its receipt bound to the
+exact restricted original controls. The current domain receipt names
+whole original spans.
+
+For a connected region, the existing joins and filled-domain proofs
+bind one fit center per member and require a physical interval narrower
+than one turn. The local endpoint control establishes the stored join
+needed by a connected atlas. The remaining proof must bind the local
+fits back to one closed unwrapped cap domain and exclude overlap of
+periodic material images. A common UV domain gives the cap a global
+parameterization while the rational fits keep their local charts.
+
+The new regression refused on `c80cb77c` and passed with chart-local
+endpoint projections. The legacy, recentered, disconnected-atlas and
+oblique-placed replay workers produced identical archives and reports
+before and after the change. Three alternate pairs on the same pinned
+CPU measured the standalone O. median at 4.721 s before and 4.709 s
+after. Median peak RSS was 67,812 and 67,380 KiB, respectively.
+The 239-curve standalone text control passed with 3,057,275 arithmetic
+operations and 1,017 integration cells. The temporary baseline build
+and replay files were removed.

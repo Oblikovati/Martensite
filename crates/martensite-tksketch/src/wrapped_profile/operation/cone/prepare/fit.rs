@@ -65,7 +65,7 @@ fn candidate_fit(
         physical_turns: [0; 2],
         outward: true,
     };
-    let shared = endpoints.pair(prepared, piece, &query)?;
+    let shared = endpoints.pair(prepared.source.region, piece, &query)?;
     let fit = cone_mapping::fit::fit_span(&query, &shared).map_err(|cause| {
         failure(
             Some(prepared.source.region),

@@ -1,54 +1,96 @@
-//! A common-chart reference computes ideal incidences once by authored or dyadic identity.
+//! Retain an authored incidence once while projecting it into the owning fit chart.
 use super::*;
-use cone_mapping::fit::{FitInput, IdealEndpoint};
+use cone_mapping::fit::{FitFailure, FitInput, IdealEndpoint, SourceIncidence};
+
 #[derive(Default)]
 pub(super) struct EndpointPool(BTreeMap<CornerSource, PooledEndpoint>);
-#[derive(Clone, Copy)]
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct ProjectionKey {
+    chart: [u64; 3],
+    turns: [i32; 2],
+}
+impl ProjectionKey {
+    fn at(input: &FitInput<'_>, end: usize) -> Self {
+        Self {
+            chart: [input.semi_angle, input.origin, input.center].map(f64::to_bits),
+            turns: [input.developed_turns[end], input.physical_turns[end]],
+        }
+    }
+}
+
 struct PooledEndpoint {
     source: [u64; 2],
-    ideal: IdealEndpoint,
+    incidence: SourceIncidence,
+    key: ProjectionKey,
+    projection: IdealEndpoint,
 }
 impl EndpointPool {
     pub(super) fn pair(
         &mut self,
-        prepared: &Prepared,
+        region: SurfaceRegionId,
         piece: &AuthoredPiece,
         input: &FitInput<'_>,
     ) -> ConeChecked<[IdealEndpoint; 2]> {
         Ok([
-            self.endpoint(prepared, piece, input, 0)?,
-            self.endpoint(prepared, piece, input, 1)?,
+            self.endpoint(region, piece, input, 0)?,
+            self.endpoint(region, piece, input, 1)?,
         ])
     }
+
     fn endpoint(
         &mut self,
-        prepared: &Prepared,
+        region: SurfaceRegionId,
         piece: &AuthoredPiece,
         input: &FitInput<'_>,
-        endpoint: usize,
+        end: usize,
     ) -> ConeChecked<IdealEndpoint> {
-        let (corner, point) = incidence(piece, endpoint);
+        let (corner, point) = incidence(piece, end);
         let key = canonical(corner);
-        if let Some(previous) = self.0.get(&key) {
-            return bind(prepared.source.region, piece.span, point, previous);
+        if let Some(previous) = self.0.get_mut(&key) {
+            bind(region, piece.span, point, previous.source)?;
+            return candidate(region, piece.span, previous.project(input, end));
         }
-        let ideal = cone_mapping::fit::ideal_endpoint(input, endpoint).map_err(|cause| {
-            failure(
-                Some(prepared.source.region),
-                Some(piece.span),
-                ConeCause::Candidate(cause),
-            )
-        })?;
-        self.0.insert(
-            key,
-            PooledEndpoint {
-                source: point.map(f64::to_bits),
-                ideal,
-            },
-        );
-        Ok(ideal)
+        let endpoint = candidate(
+            region,
+            piece.span,
+            PooledEndpoint::capture(point, input, end),
+        )?;
+        let projection = endpoint.projection;
+        self.0.insert(key, endpoint);
+        Ok(projection)
     }
 }
+
+impl PooledEndpoint {
+    fn capture(point: [f64; 2], input: &FitInput<'_>, end: usize) -> Result<Self, FitFailure> {
+        let incidence = SourceIncidence::capture(input, end)?;
+        Ok(Self {
+            source: point.map(f64::to_bits),
+            key: ProjectionKey::at(input, end),
+            incidence,
+            projection: incidence.project(input, end)?,
+        })
+    }
+
+    fn project(&mut self, input: &FitInput<'_>, end: usize) -> Result<IdealEndpoint, FitFailure> {
+        let key = ProjectionKey::at(input, end);
+        if self.key != key {
+            self.projection = self.incidence.project(input, end)?;
+            self.key = key;
+        }
+        Ok(self.projection)
+    }
+}
+
+fn candidate<T>(
+    region: SurfaceRegionId,
+    span: CurveSpan,
+    result: Result<T, FitFailure>,
+) -> ConeChecked<T> {
+    result.map_err(|cause| failure(Some(region), Some(span), ConeCause::Candidate(cause)))
+}
+
 fn incidence(piece: &AuthoredPiece, endpoint: usize) -> (CornerSource, [f64; 2]) {
     if endpoint == 0 {
         return (piece.start, piece.poles[0]);
@@ -75,10 +117,10 @@ fn bind(
     region: SurfaceRegionId,
     span: CurveSpan,
     actual: [f64; 2],
-    previous: &PooledEndpoint,
-) -> ConeChecked<IdealEndpoint> {
-    if previous.source == actual.map(f64::to_bits) {
-        return Ok(previous.ideal);
+    expected: [u64; 2],
+) -> ConeChecked<()> {
+    if expected == actual.map(f64::to_bits) {
+        return Ok(());
     }
     Err(failure(
         Some(region),
@@ -86,7 +128,7 @@ fn bind(
         ConeCause::Binding {
             field: "shared ideal incidence source",
             actual: actual.map(f64::to_bits).to_vec(),
-            expected: previous.source.to_vec(),
+            expected: expected.to_vec(),
         },
     ))
 }
@@ -111,19 +153,13 @@ mod tests {
     }
     #[test]
     fn pooled_identity_refuses_a_different_source_point() {
-        let previous = PooledEndpoint {
-            source: [4., 0.].map(f64::to_bits),
-            ideal: IdealEndpoint {
-                tangent: 0.,
-                slant: 4.,
-            },
-        };
+        let expected = [4., 0.].map(f64::to_bits);
         let span = CurveSpan {
             curve: SurfaceCurveId(4),
             index: 0,
             level: 0,
         };
-        assert!(bind(SurfaceRegionId(1), span, [4., 0.], &previous).is_ok());
-        assert!(bind(SurfaceRegionId(1), span, [5., 0.], &previous).is_err());
+        assert!(bind(SurfaceRegionId(1), span, [4., 0.], expected).is_ok());
+        assert!(bind(SurfaceRegionId(1), span, [5., 0.], expected).is_err());
     }
 }
