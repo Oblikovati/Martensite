@@ -5,6 +5,7 @@ pub(super) enum ReferenceQuery<'a> {
     Legacy(ConicalReferenceQuery<'a>),
     Chart(ConicalChartReferenceQuery<'a>),
     Refined(ConicalChartReferenceQuery<'a>, ConicalPrimitiveRefinement),
+    Atlas(AtlasQuery<'a>),
 }
 impl ReferenceQuery<'_> {
     pub(super) fn certify(
@@ -17,6 +18,11 @@ impl ReferenceQuery<'_> {
             Self::Refined(query, refinement) => {
                 certify_conical_chart_reference_with_refinement(query, refinement, cancelled)
             }
+            Self::Atlas(query) => certify_conical_atlas_reference(
+                query.borrow(),
+                ConicalPrimitiveRefinement::HalfSplitV1,
+                cancelled,
+            ),
         }
     }
     pub(super) fn matches(&self, proof: &ConicalReferenceEvidence) -> bool {
@@ -25,6 +31,9 @@ impl ReferenceQuery<'_> {
             Self::Chart(query) => proof.matches_chart(query),
             Self::Refined(query, refinement) => {
                 proof.matches_chart_with_refinement(query, *refinement)
+            }
+            Self::Atlas(query) => {
+                proof.matches_atlas(&query.borrow(), ConicalPrimitiveRefinement::HalfSplitV1)
             }
         }
     }
@@ -46,6 +55,17 @@ impl Inputs<'_> {
         };
         match &family.selection.domain {
             DomainEvidence::Legacy { sector, .. } => source.legacy(sector),
+            DomainEvidence::Atlas(_) => ReferenceQuery::Atlas(AtlasQuery {
+                source,
+                domains: self
+                    .atlas
+                    .iter()
+                    .map(|(domain, range)| ConicalAtlasReferenceDomain {
+                        domain,
+                        domain_spans: &self.sector[range.clone()],
+                    })
+                    .collect(),
+            }),
             DomainEvidence::Chart(proof, _) => {
                 let query = source.chart(proof);
                 match query {
@@ -57,6 +77,21 @@ impl Inputs<'_> {
                     query => query,
                 }
             }
+        }
+    }
+}
+pub(super) struct AtlasQuery<'a> {
+    source: QuerySource<'a>,
+    domains: Vec<ConicalAtlasReferenceDomain<'a>>,
+}
+impl AtlasQuery<'_> {
+    fn borrow(&self) -> ConicalAtlasReferenceQuery<'_> {
+        ConicalAtlasReferenceQuery {
+            members: self.source.members,
+            domains: &self.domains,
+            clearance: self.source.clearance,
+            spatial_limit: self.source.spatial_limit,
+            options: self.source.options,
         }
     }
 }

@@ -1,11 +1,13 @@
 //! Original planar receipts and every fitted interval are rebound before composing reference authority.
 use super::*;
+use crate::surface_sketch::wrapped_profile::operation::cone::domain::DomainEvidence;
 pub(super) fn capture(family: &OwnedFamily<Selection, Geometry>) -> ConeChecked<Inputs<'_>> {
     let mut inputs = Inputs {
         spans: Vec::new(),
         lengths: Vec::new(),
         sector: Vec::new(),
         joins: Vec::new(),
+        atlas: Vec::new(),
     };
     for prepared in &family.selection.prepared {
         member(family, prepared, &mut inputs)?;
@@ -29,8 +31,8 @@ fn member<'a>(
         prepared,
         &geometry.spans,
     )?);
-    metadata(prepared, geometry, inputs);
-    Ok(())
+    let atlas = matches!(&family.selection.domain, DomainEvidence::Atlas(_));
+    metadata(prepared, geometry, inputs, atlas)
 }
 fn validate_original(
     family: &OwnedFamily<Selection, Geometry>,
@@ -53,10 +55,16 @@ fn validate_original(
     }
     binding::validate(prepared, &geometry.spans, &geometry.material)
 }
-fn metadata<'a>(prepared: &Prepared, geometry: &'a Geometry, inputs: &mut Inputs<'a>) {
+fn metadata<'a>(
+    prepared: &'a Prepared,
+    geometry: &'a Geometry,
+    inputs: &mut Inputs<'a>,
+    atlas: bool,
+) -> ConeChecked<()> {
     inputs
         .lengths
         .push(prepared.source.loops.iter().map(Vec::len).collect());
+    let start = inputs.sector.len();
     inputs.sector.extend(
         geometry
             .material
@@ -67,6 +75,13 @@ fn metadata<'a>(prepared: &Prepared, geometry: &'a Geometry, inputs: &mut Inputs
             .map(|piece| piece.poles.as_slice()),
     );
     inputs.joins.push(&geometry.joins);
+    if atlas {
+        let proof = prepared.chart_domain.as_deref().ok_or_else(|| {
+            mismatch(prepared.source.region, None, "reference atlas member chart")
+        })?;
+        inputs.atlas.push((proof, start..inputs.sector.len()));
+    }
+    Ok(())
 }
 fn spans<'a>(
     original: &'a DevelopedRegionRequest,

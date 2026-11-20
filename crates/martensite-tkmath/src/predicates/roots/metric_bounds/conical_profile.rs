@@ -430,8 +430,9 @@ pub use chart_domain::{
     certify_conical_chart_domain_with_version,
 };
 pub use reference::{
-    ConicalChartReferenceQuery, ConicalReferenceError, ConicalReferenceEvidence,
-    ConicalReferenceFailure, ConicalReferenceMember, ConicalReferenceQuery,
+    ConicalAtlasReferenceDomain, ConicalAtlasReferenceQuery, ConicalChartReferenceQuery,
+    ConicalReferenceError, ConicalReferenceEvidence, ConicalReferenceFailure,
+    ConicalReferenceMember, ConicalReferenceQuery, certify_conical_atlas_reference,
     certify_conical_chart_reference, certify_conical_chart_reference_with_refinement,
     certify_conical_reference,
 };

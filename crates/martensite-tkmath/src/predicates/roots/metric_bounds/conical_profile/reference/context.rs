@@ -6,6 +6,7 @@ pub(super) struct ReferenceInputs<'a> {
     pub clearance: &'a CertifiedCylindricalClearance,
     pub sector: ReferenceDomain<'a>,
     pub sector_spans: &'a [&'a [[f64; 2]]],
+    pub atlas: Option<&'a [ConicalAtlasReferenceDomain<'a>]>,
     pub spatial_limit: f64,
     pub options: ConeClearanceOptions,
     pub refinement: ConicalPrimitiveRefinement,
@@ -22,6 +23,7 @@ impl<'a> From<&ConicalReferenceQuery<'a>> for ReferenceInputs<'a> {
             clearance: query.clearance,
             sector: ReferenceDomain::Legacy(query.sector),
             sector_spans: query.sector_spans,
+            atlas: None,
             spatial_limit: query.spatial_limit,
             options: query.options,
             refinement: ConicalPrimitiveRefinement::UnsplitV1,
@@ -35,10 +37,20 @@ impl<'a> From<&ConicalChartReferenceQuery<'a>> for ReferenceInputs<'a> {
             clearance: query.clearance,
             sector: ReferenceDomain::Chart(query.domain),
             sector_spans: query.domain_spans,
+            atlas: None,
             spatial_limit: query.spatial_limit,
             options: query.options,
             refinement: ConicalPrimitiveRefinement::UnsplitV1,
         }
+    }
+}
+impl<'a> ReferenceInputs<'a> {
+    pub(super) fn member_domain(&self, index: usize) -> ReferenceDomain<'a> {
+        self.atlas
+            .and_then(|domains| domains.get(index))
+            .map_or(self.sector, |binding| {
+                ReferenceDomain::Chart(binding.domain)
+            })
     }
 }
 impl ReferenceDomain<'_> {

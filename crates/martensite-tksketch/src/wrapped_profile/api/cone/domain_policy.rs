@@ -14,19 +14,35 @@ pub enum WrappedConeDomainPolicy {
     PositiveXFamilyChartV3,
     /// A single Positive-X chart centered on the selected family, within one physical period.
     PositiveXRecenteredChartV4,
+    /// One independently centered Positive-X chart per disconnected region.
+    PositiveXRegionAtlasV5,
 }
 impl WrappedConeNormalResult {
     /// Retained cone-domain behavior; `assert_eq!(result.domain_policy(), policy)`.
     pub fn domain_policy(&self) -> WrappedConeDomainPolicy {
         self.family.family.selection.domain.policy()
     }
-    /// Executed quantitative domain receipt; legacy results return `None`.
+    /// Executed common chart receipt, if there was one chart for the whole request.
     /// Example: `let center = result.chart_domain_receipt().map(|proof| proof.fit_center());`.
     pub fn chart_domain_receipt(
         &self,
     ) -> Option<&martensite_tkmath::predicates::roots::metric_bounds::ConicalChartDomainEvidence>
     {
         self.family.family.selection.domain.chart()
+    }
+    /// Chart for one selected region, including atlas members.
+    /// Example: `result.region_chart_domain_receipt(SurfaceRegionId(1))`.
+    pub fn region_chart_domain_receipt(
+        &self,
+        region: SurfaceRegionId,
+    ) -> Option<&martensite_tkmath::predicates::roots::metric_bounds::ConicalChartDomainEvidence>
+    {
+        let family = &self.family.family;
+        family
+            .members
+            .contains_key(&region)
+            .then(|| family.selection.domain.region_chart(region))
+            .flatten()
     }
 }
 /// Select an explicit domain proof for a complete canonical cone operation.

@@ -78,14 +78,7 @@ fn domain_typed_refusal_precedes_accounting_failure_and_keeps_offender() {
         max_operations: 0,
         ..request.proof.arithmetic
     });
-    let failure = charged(
-        Err(cause),
-        &originals,
-        WrappedConeDomainPolicy::PositiveXCommonChartV2,
-        &mut work,
-    )
-    .err()
-    .unwrap();
+    let failure = charged(Err(cause), &originals, &mut work).err().unwrap();
     assert_eq!(failure.region, Some(originals[0].region));
     assert_eq!(failure.span, Some(span));
     assert!(matches!(failure.cause, ConeCause::Domain(_)));

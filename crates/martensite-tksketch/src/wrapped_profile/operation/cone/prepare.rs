@@ -48,8 +48,7 @@ pub(super) fn select_with_execution(
     let started = work.consumed;
     let planar = selection::planar(request, originals, work, cancelled)?;
     let domain = domain::certify(request, originals, policy, work, cancelled)?;
-    let chart = admitted_chart(request, &domain)?;
-    let mut prepared = prepare_regions(request, originals, &chart, execution, work, cancelled)?;
+    let mut prepared = prepare_regions(request, originals, &domain, execution, work, cancelled)?;
     let clearance = clearance::certify(originals, &prepared, work, cancelled)?;
     directed::finalize(execution, originals, &mut prepared, work, cancelled)?;
     Ok(selection::completed(
@@ -65,40 +64,44 @@ pub(super) fn select_with_execution(
 struct AdmittedConeChart<'a> {
     wedge: ConicalSectorWedge,
     center: f64,
-    domain: &'a domain::DomainEvidence,
+    proof: Option<&'a std::sync::Arc<ConicalChartDomainEvidence>>,
 }
 fn admitted_chart<'a>(
     request: &WrappedConeNormalRequest,
     domain: &'a domain::DomainEvidence,
+    region: SurfaceRegionId,
+    wedge: ConicalSectorWedge,
 ) -> ConeChecked<AdmittedConeChart<'a>> {
-    let wedge = domain.wedge()?;
-    let center = match domain.chart() {
+    let proof = domain.owner(region)?;
+    let center = match proof {
         Some(chart) => chart.fit_center(),
         None => common_center(request, wedge)?,
     };
     Ok(AdmittedConeChart {
         wedge,
         center,
-        domain,
+        proof,
     })
 }
 
 fn prepare_regions(
     request: &WrappedConeNormalRequest,
     originals: &[DevelopedRegionRequest],
-    chart: &AdmittedConeChart<'_>,
+    domain: &domain::DomainEvidence,
     execution: WrappedConeExecutionSelection,
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Vec<Prepared>> {
+    let wedge = domain.wedge()?;
     let mut endpoints = endpoints::EndpointPool::default();
     let prepared = originals
         .iter()
         .map(|source| {
+            let chart = admitted_chart(request, domain, source.region, wedge)?;
             prepare_region(
                 request,
                 source,
-                chart,
+                &chart,
                 execution,
                 &mut endpoints,
                 work,
@@ -152,7 +155,7 @@ fn initial(
         semi_angle: request.support.semi_angle,
         chart_origin: request.support.chart_origin,
         chart_center: chart.center,
-        chart_domain: chart.domain.chart_owner(),
+        chart_domain: chart.proof.cloned(),
         arithmetic_operations: 0,
         radii: Vec::new(),
         wedge: chart.wedge,
@@ -257,6 +260,9 @@ fn execution_domain(execution: WrappedConeExecutionSelection) -> WrappedConeDoma
         }
         WrappedConeExecutionSelection::DirectedRecenteredChartRequireCertifiedV3 { .. } => {
             WrappedConeDomainPolicy::PositiveXRecenteredChartV4
+        }
+        WrappedConeExecutionSelection::DirectedRegionAtlasRequireCertifiedV4 { .. } => {
+            WrappedConeDomainPolicy::PositiveXRegionAtlasV5
         }
     }
 }

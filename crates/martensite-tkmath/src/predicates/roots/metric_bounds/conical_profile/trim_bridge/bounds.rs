@@ -123,7 +123,9 @@ fn position_bound(
 ) -> Checked<Interval> {
     match version {
         ConicalChartDomainVersion::OriginalV2 => arithmetic.add(xy_l1, axial_and_storage),
-        ConicalChartDomainVersion::FamilyV3 | ConicalChartDomainVersion::RecenteredV4 => {
+        ConicalChartDomainVersion::FamilyV3
+        | ConicalChartDomainVersion::RecenteredV4
+        | ConicalChartDomainVersion::AtlasMemberV5 => {
             // Changing radius contributes its absolute difference. At fixed radius the
             // chord is at most radius times angle. Both facts hold in Euclidean norm.
             // The storage L1 bound also bounds Euclidean storage error.

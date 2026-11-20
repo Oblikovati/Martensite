@@ -24,6 +24,9 @@ pub(super) fn certify(
     Ok(())
 }
 fn sector(originals: &[DevelopedRegionRequest], selection: &Selection) -> ConeChecked<()> {
+    if let domain::DomainEvidence::Atlas(charts) = &selection.domain {
+        return atlas(originals, &selection.prepared, charts);
+    }
     let spans = domain::original_spans(originals);
     let prepared = selection
         .prepared
@@ -40,6 +43,43 @@ fn sector(originals: &[DevelopedRegionRequest], selection: &Selection) -> ConeCh
     Ok(())
 }
 
+fn atlas(
+    originals: &[DevelopedRegionRequest],
+    prepared: &[Prepared],
+    charts: &BTreeMap<SurfaceRegionId, std::sync::Arc<ConicalChartDomainEvidence>>,
+) -> ConeChecked<()> {
+    if originals.len() != prepared.len() || charts.len() != prepared.len() {
+        return Err(family_mismatch("complete atlas region inventory"));
+    }
+    for (original, member) in originals.iter().zip(prepared) {
+        let region = original.region;
+        let spans = domain::original_spans(std::slice::from_ref(original));
+        if member.source.region != region || !atlas_matches(charts.get(&region), member, &spans) {
+            return Err(mismatch(
+                region,
+                None,
+                "atlas member source binding",
+                vec![0],
+                vec![1],
+            ));
+        }
+    }
+    Ok(())
+}
+fn atlas_matches(
+    selected: Option<&std::sync::Arc<ConicalChartDomainEvidence>>,
+    member: &Prepared,
+    spans: &[&[[f64; 2]]],
+) -> bool {
+    let (Some(selected), Some(actual)) = (selected, &member.chart_domain) else {
+        return false;
+    };
+    selected.version() == ConicalChartDomainVersion::AtlasMemberV5
+        && selected.version() == actual.version()
+        && selected.options() == actual.options()
+        && chart_matches(selected, member, spans)
+        && (std::sync::Arc::ptr_eq(selected, actual) || chart_matches(actual, member, spans))
+}
 fn domain_matches(
     domain: &domain::DomainEvidence,
     prepared: &Prepared,
@@ -52,6 +92,7 @@ fn domain_matches(
             options: *options,
         }),
         domain::DomainEvidence::Chart(proof, _) => chart_matches(proof, prepared, spans),
+        domain::DomainEvidence::Atlas(_) => false,
     }
 }
 fn chart_matches(

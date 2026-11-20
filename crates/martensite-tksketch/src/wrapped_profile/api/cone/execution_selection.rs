@@ -26,6 +26,11 @@ pub enum WrappedConeExecutionSelection {
         /// Finite aggregate admission; the request retains the actual requested allowance.
         arithmetic: WrappedConeArithmeticGrantPolicy,
     },
+    /// Independently centered cone regions with certified periodic and stored-solid separation.
+    DirectedRegionAtlasRequireCertifiedV4 {
+        /// Finite aggregate admission; the request retains the actual requested allowance.
+        arithmetic: WrappedConeArithmeticGrantPolicy,
+    },
 }
 impl WrappedConeExecutionSelection {
     pub(in crate::surface_sketch::wrapped_profile) fn is_directed(self) -> bool {
@@ -34,6 +39,7 @@ impl WrappedConeExecutionSelection {
             Self::DirectedCommonChartRequireCertifiedV1
                 | Self::DirectedFamilyChartRequireCertifiedV2 { .. }
                 | Self::DirectedRecenteredChartRequireCertifiedV3 { .. }
+                | Self::DirectedRegionAtlasRequireCertifiedV4 { .. }
         )
     }
 }

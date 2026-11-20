@@ -39,9 +39,9 @@ pub(super) fn certify(
     }
     Ok(())
 }
-fn pair(a: &CapCapture, b: &CapCapture, arithmetic: &mut Arithmetic<'_>) -> Outcome<()> {
+pub(super) fn pair(a: &CapCapture, b: &CapCapture, arithmetic: &mut Arithmetic<'_>) -> Outcome<()> {
     let same = a.source.carrier().member == b.source.carrier().member;
-    if !same && let (Some(first), Some(last)) = (&a.slant, &b.slant) {
+    if !same && let (CapExtent::Slant(first), CapExtent::Slant(last)) = (&a.extent, &b.extent) {
         arithmetic.certificate_step()?;
         if separated(first, last) || separated(&a.level, &b.level) {
             return Ok(());

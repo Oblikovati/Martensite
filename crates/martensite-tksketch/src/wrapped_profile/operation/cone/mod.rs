@@ -98,13 +98,15 @@ pub(in crate::surface_sketch::wrapped_profile) fn execute_with_domain(
     domain_policy: WrappedConeDomainPolicy,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<WrappedConeNormalResult> {
-    execute_with_selection(
-        request,
-        WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 {
-            domain: domain_policy,
-        },
-        cancelled,
-    )
+    execute_with_selection(request, execution_for_domain(domain_policy), cancelled)
+}
+fn execution_for_domain(domain: WrappedConeDomainPolicy) -> WrappedConeExecutionSelection {
+    if domain == WrappedConeDomainPolicy::PositiveXRegionAtlasV5 {
+        return WrappedConeExecutionSelection::DirectedRegionAtlasRequireCertifiedV4 {
+            arithmetic: WrappedConeArithmeticGrantPolicy::OriginalV1,
+        };
+    }
+    WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 { domain }
 }
 pub(in crate::surface_sketch::wrapped_profile) fn execute_with_selection(
     request: &WrappedConeNormalRequest,

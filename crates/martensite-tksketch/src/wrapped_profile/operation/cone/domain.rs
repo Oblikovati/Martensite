@@ -1,40 +1,54 @@
 //! Retain the selected domain authority without changing the shared operation sequence.
 use super::*;
+use std::sync::Arc;
 pub(in crate::surface_sketch::wrapped_profile) enum DomainEvidence {
     Legacy {
         sector: ConicalSectorEvidence,
         options: ConeClearanceOptions,
     },
-    Chart(
-        std::sync::Arc<ConicalChartDomainEvidence>,
-        WrappedConeDomainPolicy,
-    ),
+    Chart(Arc<ConicalChartDomainEvidence>, WrappedConeDomainPolicy),
+    Atlas(BTreeMap<SurfaceRegionId, Arc<ConicalChartDomainEvidence>>),
 }
 impl DomainEvidence {
     pub(in crate::surface_sketch::wrapped_profile) fn policy(&self) -> WrappedConeDomainPolicy {
         match self {
             Self::Legacy { .. } => WrappedConeDomainPolicy::LegacySectorV1,
             Self::Chart(_, policy) => *policy,
+            Self::Atlas(_) => WrappedConeDomainPolicy::PositiveXRegionAtlasV5,
         }
     }
     pub(in crate::surface_sketch::wrapped_profile) fn chart(
         &self,
     ) -> Option<&ConicalChartDomainEvidence> {
         match self {
-            Self::Legacy { .. } => None,
+            Self::Legacy { .. } | Self::Atlas(_) => None,
             Self::Chart(proof, _) => Some(proof),
         }
     }
-    pub(super) fn chart_owner(&self) -> Option<std::sync::Arc<ConicalChartDomainEvidence>> {
+    pub(super) fn owner(
+        &self,
+        region: SurfaceRegionId,
+    ) -> ConeChecked<Option<&Arc<ConicalChartDomainEvidence>>> {
         match self {
-            Self::Legacy { .. } => None,
-            Self::Chart(proof, _) => Some(std::sync::Arc::clone(proof)),
+            Self::Legacy { .. } => Ok(None),
+            Self::Chart(proof, _) => Ok(Some(proof)),
+            Self::Atlas(charts) => charts
+                .get(&region)
+                .map(Some)
+                .ok_or_else(|| prepare::failure(Some(region), None, ConeCause::Missing(region))),
         }
+    }
+    pub(in crate::surface_sketch::wrapped_profile) fn region_chart(
+        &self,
+        region: SurfaceRegionId,
+    ) -> Option<&ConicalChartDomainEvidence> {
+        self.owner(region).ok().flatten().map(Arc::as_ref)
     }
     pub(super) fn wedge(&self) -> ConeChecked<ConicalSectorWedge> {
         match self {
             Self::Legacy { sector, .. } => prepare::selection::wedge(sector),
             Self::Chart(proof, _) => Ok(proof.wedge()),
+            Self::Atlas(_) => Ok(ConicalSectorWedge::PositiveX),
         }
     }
 }
@@ -75,6 +89,9 @@ pub(super) fn certify(
             work,
             cancelled,
         ),
+        WrappedConeDomainPolicy::PositiveXRegionAtlasV5 => {
+            atlas(request, originals, work, cancelled)
+        }
     }
 }
 fn chart(
@@ -85,6 +102,16 @@ fn chart(
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<DomainEvidence> {
+    chart_proof(request, originals, version, work, cancelled)
+        .map(|proof| DomainEvidence::Chart(proof, policy))
+}
+fn chart_proof(
+    request: &WrappedConeNormalRequest,
+    originals: &[DevelopedRegionRequest],
+    version: ConicalChartDomainVersion,
+    work: &mut storage::Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<Arc<ConicalChartDomainEvidence>> {
     let spans = original_spans(originals);
     let query = ConicalChartDomainQuery {
         spans: &spans,
@@ -98,17 +125,63 @@ fn chart(
     charged(
         certify_conical_chart_domain_with_version(query, version, cancelled),
         originals,
-        policy,
         work,
     )
+}
+fn atlas(
+    request: &WrappedConeNormalRequest,
+    originals: &[DevelopedRegionRequest],
+    work: &mut storage::Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<DomainEvidence> {
+    let version = ConicalChartDomainVersion::AtlasMemberV5;
+    admit_atlas_capacity(originals, version.span_limit())?;
+    let charts = originals
+        .iter()
+        .map(|original| {
+            let chart = chart_proof(
+                request,
+                std::slice::from_ref(original),
+                version,
+                work,
+                cancelled,
+            )
+            .map_err(|mut failure| {
+                failure.region = Some(original.region);
+                failure
+            })?;
+            Ok((original.region, chart))
+        })
+        .collect::<ConeChecked<_>>()?;
+    Ok(DomainEvidence::Atlas(charts))
+}
+fn admit_atlas_capacity(originals: &[DevelopedRegionRequest], limit: usize) -> ConeChecked<()> {
+    let actual = originals
+        .iter()
+        .flat_map(|source| &source.loops)
+        .map(Vec::len)
+        .sum();
+    if !(1..=limit).contains(&actual) {
+        let cause = ConicalChartDomainFailure::SourceCount { actual, limit };
+        return Err(failure(
+            originals,
+            ConicalChartDomainError {
+                cause,
+                operations: 0,
+            },
+        ));
+    }
+    Ok(())
 }
 fn fit_center(
     support: ConeSupport,
     spans: &[&[[f64; 2]]],
     version: ConicalChartDomainVersion,
 ) -> f64 {
-    if version != ConicalChartDomainVersion::RecenteredV4
-        || !(1..=version.span_limit()).contains(&spans.len())
+    if !matches!(
+        version,
+        ConicalChartDomainVersion::RecenteredV4 | ConicalChartDomainVersion::AtlasMemberV5
+    ) || !(1..=version.span_limit()).contains(&spans.len())
     {
         return support.chart_origin;
     }
@@ -127,9 +200,8 @@ fn fit_center(
 fn charged(
     result: Result<ConicalChartDomainEvidence, ConicalChartDomainError>,
     originals: &[DevelopedRegionRequest],
-    policy: WrappedConeDomainPolicy,
     work: &mut storage::Work,
-) -> ConeChecked<DomainEvidence> {
+) -> ConeChecked<Arc<ConicalChartDomainEvidence>> {
     let operations = result.as_ref().map_or_else(
         |cause| cause.operations,
         ConicalChartDomainEvidence::operations,
@@ -139,7 +211,7 @@ fn charged(
     match (result, charged) {
         (Err(cause), _) => Err(failure(originals, cause)),
         (Ok(_), Err(cause)) => Err(cause),
-        (Ok(proof), Ok(())) => Ok(DomainEvidence::Chart(std::sync::Arc::new(proof), policy)),
+        (Ok(proof), Ok(())) => Ok(Arc::new(proof)),
     }
 }
 pub(super) fn original_spans(originals: &[DevelopedRegionRequest]) -> Vec<&[[f64; 2]]> {

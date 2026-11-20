@@ -3,9 +3,13 @@
 use super::boundary_snapshot::BoundarySnapshot;
 use super::*;
 use crate::predicates::roots::metric_bounds::cylindrical_profile::trigonometric;
+mod atlas;
 mod binding;
 mod chart;
 mod context;
+pub use atlas::{
+    ConicalAtlasReferenceDomain, ConicalAtlasReferenceQuery, certify_conical_atlas_reference,
+};
 pub use chart::{
     ConicalChartReferenceQuery, certify_conical_chart_reference,
     certify_conical_chart_reference_with_refinement,

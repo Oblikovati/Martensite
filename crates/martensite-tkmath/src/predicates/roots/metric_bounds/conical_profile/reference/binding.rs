@@ -16,6 +16,14 @@ pub(super) fn admit(query: &ReferenceInputs<'_>) -> Result<(), ConicalReferenceE
             0,
         ));
     }
+    if let Some(atlas) = query.atlas
+        && atlas.len() != query.members.len()
+    {
+        return Err(error(
+            binding_failure("one chart per selected reference member"),
+            0,
+        ));
+    }
     for (index, member) in query.members.iter().enumerate() {
         admit_member(member, index, query)?;
     }
@@ -31,14 +39,15 @@ fn admit_member(
         contour_lengths: member.contour_lengths,
         options: member.joins.options,
     };
-    if !chart_binding::joins_match_selected(member, &joins, query.sector, query.refinement) {
+    let domain = query.member_domain(index);
+    if !chart_binding::joins_match_selected(member, &joins, domain, query.refinement) {
         return Err(error(
             binding_failure("executed source-bound common monotone ideal joins"),
             0,
         ));
     }
     for (span, input) in member.spans.iter().enumerate() {
-        admit_span(input, query).map_err(|cause| ConicalReferenceError {
+        admit_span(input, query, domain).map_err(|cause| ConicalReferenceError {
             offender: Some([index, span]),
             cause,
             operations: 0,
@@ -49,11 +58,12 @@ fn admit_member(
 fn admit_span(
     span: &ConicalJoinSpan<'_>,
     query: &ReferenceInputs<'_>,
+    domain: ReferenceDomain<'_>,
 ) -> Result<(), ConicalReferenceFailure> {
     let input = span.query;
-    admit_chart_authority(span, query)?;
+    admit_chart_authority(span, domain, query.refinement)?;
     let first = first(query)?;
-    if !span.boundary.matches(&input) || !same_chart(input, first, query.sector) {
+    if !span.boundary.matches(&input) || !same_chart(input, first, domain) {
         return Err(binding_failure(
             "one canonical outward ideal q/L chart, support and depths",
         ));
@@ -70,13 +80,14 @@ fn admit_span(
 }
 fn admit_chart_authority(
     span: &ConicalJoinSpan<'_>,
-    query: &ReferenceInputs<'_>,
+    authority: ReferenceDomain<'_>,
+    refinement: ConicalPrimitiveRefinement,
 ) -> Result<(), ConicalReferenceFailure> {
     let input = span.query;
-    if let ReferenceDomain::Chart(domain) = query.sector
+    if let ReferenceDomain::Chart(domain) = authority
         && !span
             .boundary
-            .matches_chart_with_refinement(&input, domain, query.refinement)
+            .matches_chart_with_refinement(&input, domain, refinement)
     {
         return Err(binding_failure("executed chart-metric boundary authority"));
     }
@@ -100,7 +111,7 @@ fn same_chart(
 ) -> bool {
     let center = match domain {
         ReferenceDomain::Legacy(_) => input.chart_origin,
-        ReferenceDomain::Chart(_) => first.fit_center,
+        ReferenceDomain::Chart(chart) => chart.fit_center(),
     };
     input.semi_angle == first.semi_angle
         && input.chart_origin == first.chart_origin
@@ -172,7 +183,16 @@ fn components(query: &ReferenceInputs<'_>) -> Vec<u64> {
     if query.refinement != ConicalPrimitiveRefinement::UnsplitV1 {
         bits.extend([3, query.refinement.tag()]);
     }
-    if let ReferenceDomain::Chart(proof) = query.sector {
+    if let Some(atlas) = query.atlas {
+        bits.extend([5, atlas.len() as u64]);
+        for member in atlas {
+            bits.extend([
+                u64::from(member.domain.options().max_operations),
+                u64::from(member.domain.operations()),
+            ]);
+            chart_bits(member.domain, &mut bits);
+        }
+    } else if let ReferenceDomain::Chart(proof) = query.sector {
         chart_bits(proof, &mut bits);
     }
     for member in query.members {

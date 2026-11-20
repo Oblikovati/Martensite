@@ -17,10 +17,10 @@ pub(super) fn capture_with_selection(
     execution: WrappedConeExecutionSelection,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Inputs> {
-    if matches!(
-        execution,
-        WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 { .. }
-    ) {
+    if let WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 { domain } = execution {
+        if domain == WrappedConeDomainPolicy::PositiveXRegionAtlasV5 {
+            return Err(rounded_atlas().public());
+        }
         return capture(request, cancelled);
     }
     admit_with_ceiling(request, grant::admission_ceiling(execution))
@@ -31,6 +31,19 @@ pub(super) fn capture_with_selection(
     inputs.grant =
         grant::capture(request, execution, &inputs.originals).map_err(ConeFailure::public)?;
     Ok(inputs)
+}
+fn rounded_atlas() -> ConeFailure {
+    ConeFailure::new(
+        None,
+        None,
+        WrappedFailureClass::Unsupported,
+        ConeCause::Scalar {
+            field: "atlas native qualification mode",
+            actual: 0.,
+            expected: "directed stored-solid separation",
+        },
+    )
+    .at(WrappedStage::Admission)
 }
 fn capture_admitted(
     request: &WrappedConeNormalRequest,

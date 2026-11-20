@@ -60,11 +60,10 @@ fn nearest(
         &mut || false,
     )
     .unwrap();
-    let chart = admitted_chart(request, &domain).unwrap();
     prepare_regions(
         request,
         originals,
-        &chart,
+        &domain,
         WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1,
         work,
         &mut || false,

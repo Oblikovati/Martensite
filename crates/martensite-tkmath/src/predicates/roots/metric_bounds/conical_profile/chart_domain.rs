@@ -22,20 +22,26 @@ pub enum ConicalChartDomainVersion {
     FamilyV3,
     /// Fit around a separate finite center while retaining the original physical datum.
     RecenteredV4,
+    /// Independently centered region in a source-bound cone chart atlas.
+    AtlasMemberV5,
 }
 impl ConicalChartDomainVersion {
     /// Fixed original-source cap; `assert_eq!(ConicalChartDomainVersion::FamilyV3.span_limit(), 4096)`.
     pub const fn span_limit(self) -> usize {
         match self {
             Self::OriginalV2 => 128,
-            Self::FamilyV3 | Self::RecenteredV4 => 4096,
+            Self::FamilyV3 | Self::RecenteredV4 | Self::AtlasMemberV5 => 4096,
         }
+    }
+    pub(super) fn allows_offset(self) -> bool {
+        matches!(self, Self::RecenteredV4 | Self::AtlasMemberV5)
     }
     pub(super) const fn tag(self) -> u64 {
         match self {
             Self::OriginalV2 => 2,
             Self::FamilyV3 => 3,
             Self::RecenteredV4 => 4,
+            Self::AtlasMemberV5 => 5,
         }
     }
 }

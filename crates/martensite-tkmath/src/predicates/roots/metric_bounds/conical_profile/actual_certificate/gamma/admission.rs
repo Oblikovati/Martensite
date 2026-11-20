@@ -116,9 +116,9 @@ fn span_binding(
     for cap_id in span.caps {
         cap_ownership(cap_id, span, query, caps)?;
     }
-    let first = &query.spans[0].previous;
-    uniform_center(q.fit_center, first.fit_center)?;
-    uniform(q, first)
+    let first = &query.spans[0];
+    center_mode(span, first)?;
+    uniform(q, &first.previous)
 }
 fn parent_failure(
     span: &ConicalDirectedGammaSpan<'_>,
@@ -135,7 +135,7 @@ fn parent_failure(
     error::binding("nearest boundary authority", actual, expected)
 }
 fn chart(q: &ConicalBoundaryQuery<'_>, domain: &ConicalChartDomainEvidence) -> Outcome<()> {
-    let center = if domain.version() == ConicalChartDomainVersion::RecenteredV4 {
+    let center = if domain.version().allows_offset() {
         domain.fit_center().to_bits()
     } else {
         0
@@ -178,6 +178,24 @@ fn cap_ownership(
         ));
     }
     Ok(())
+}
+fn center_mode(
+    current: &ConicalDirectedGammaSpan<'_>,
+    first: &ConicalDirectedGammaSpan<'_>,
+) -> Outcome<()> {
+    let actual = current.domain.version() == ConicalChartDomainVersion::AtlasMemberV5;
+    let expected = first.domain.version() == ConicalChartDomainVersion::AtlasMemberV5;
+    if actual != expected {
+        return Err(error::binding(
+            "one family chart mode",
+            vec![u64::from(actual)],
+            vec![u64::from(expected)],
+        ));
+    }
+    if actual {
+        return Ok(());
+    }
+    uniform_center(current.previous.fit_center, first.previous.fit_center)
 }
 fn uniform_center(actual: f64, expected: f64) -> Outcome<()> {
     if actual.to_bits() != expected.to_bits() {

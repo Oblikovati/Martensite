@@ -8,6 +8,7 @@ struct Inputs<'a> {
     lengths: Vec<Vec<usize>>,
     sector: Vec<&'a [[f64; 2]]>,
     joins: Vec<&'a ConicalJoinsEvidence>,
+    atlas: Vec<(&'a ConicalChartDomainEvidence, std::ops::Range<usize>)>,
 }
 pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn certify(
     request: &WrappedConeNormalRequest,

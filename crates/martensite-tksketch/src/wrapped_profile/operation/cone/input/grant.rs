@@ -27,6 +27,9 @@ pub(super) fn admission_ceiling(execution: WrappedConeExecutionSelection) -> u32
         }
         | WrappedConeExecutionSelection::DirectedRecenteredChartRequireCertifiedV3 {
             arithmetic: WrappedConeArithmeticGrantPolicy::InputBoundV1,
+        }
+        | WrappedConeExecutionSelection::DirectedRegionAtlasRequireCertifiedV4 {
+            arithmetic: WrappedConeArithmeticGrantPolicy::InputBoundV1,
         } => INPUT_HARD_CEILING,
         _ => ORIGINAL_CEILING,
     }

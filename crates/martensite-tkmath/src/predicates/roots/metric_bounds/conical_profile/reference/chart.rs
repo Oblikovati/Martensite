@@ -98,9 +98,15 @@ pub(super) fn angular(
     domain: &ConicalChartDomainEvidence,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<(), ConicalReferenceFailure> {
+    angular_members(query.members, domain, arithmetic)
+}
+pub(super) fn angular_members(
+    members: &[ConicalReferenceMember<'_>],
+    domain: &ConicalChartDomainEvidence,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<(), ConicalReferenceFailure> {
     let mut values = Vec::new();
-    for value in query
-        .members
+    for value in members
         .iter()
         .flat_map(|m| m.spans)
         .flat_map(|s| s.query.angular_fit)
@@ -178,6 +184,13 @@ pub(super) fn homotopy(
     displacement: &Interval,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<(), ConicalReferenceFailure> {
+    homotopy_range(domain, displacement, arithmetic).map(|_| ())
+}
+pub(super) fn homotopy_range(
+    domain: &ConicalChartDomainEvidence,
+    displacement: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<Interval, ConicalReferenceFailure> {
     let minimum = arithmetic.subtract(&domain.minimum_x, displacement)?;
     let minimum = Interval {
         lower: minimum.lower.clone(),
@@ -198,9 +211,11 @@ pub(super) fn homotopy(
     bounds::width(&expanded, arithmetic).map_err(project)?;
     if let Some(offset) = &domain.fit_offset {
         let local = arithmetic.subtract(&expanded, offset)?;
-        return bounds::chart_membership(&local, arithmetic).map_err(project);
+        bounds::chart_membership(&local, arithmetic).map_err(project)?;
+    } else {
+        bounds::chart_membership(&expanded, arithmetic).map_err(project)?;
     }
-    bounds::chart_membership(&expanded, arithmetic).map_err(project)
+    Ok(expanded)
 }
 fn project(cause: ConicalChartDomainFailure) -> ConicalReferenceFailure {
     match cause {

@@ -110,7 +110,10 @@ fn check_authored_volume(source: &WrappedConeNormalRequest, result: &WrappedCone
     assert!(volume.upper <= endpoints[0].max(endpoints[1]));
 }
 
-fn check_depth_vertices(source: &WrappedConeNormalRequest, result: &WrappedConeNormalResult) {
+pub(super) fn check_depth_vertices(
+    source: &WrappedConeNormalRequest,
+    result: &WrappedConeNormalResult,
+) {
     let detached = result.export_native().unwrap();
     let mut checked = 0;
     for (key, shape) in &detached.entities {
@@ -146,7 +149,7 @@ fn physical_depth(source: &WrappedConeNormalRequest, role: HistoryRole) -> Optio
     })
 }
 
-fn crossing_request() -> WrappedConeNormalRequest {
+pub(super) fn crossing_request() -> WrappedConeNormalRequest {
     let mut source = request();
     source.support.semi_angle = 0.125;
     source.profile.curves[2] = ProfileCurve::Line {

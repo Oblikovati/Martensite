@@ -6,6 +6,7 @@ pub(super) fn cap(
     cosine: &Interval,
     period: &Interval,
     bound_slant: bool,
+    atlas: bool,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Outcome<CapCapture> {
     let points = cap_points(query, arithmetic)?;
@@ -19,14 +20,20 @@ pub(super) fn cap(
     let radial = arithmetic.multiply(&r0, cosine)?;
     let axial = arithmetic.multiply(&z0, sine)?;
     let level = arithmetic.subtract(&radial, &axial)?;
-    let slant = bound_slant
-        .then(|| slant_coordinate(&r0, &z0, &v, sine, cosine, arithmetic))
-        .transpose()?;
+    let extent = if atlas {
+        CapExtent::Atlas(Box::new(super::atlas::cap_box(
+            &u, &v, &radius, &z0, cosine, arithmetic,
+        )?))
+    } else if bound_slant {
+        CapExtent::Slant(slant_coordinate(&r0, &z0, &v, sine, cosine, arithmetic)?)
+    } else {
+        CapExtent::Legacy
+    };
     Ok(CapCapture {
         source: ConicalActualCapSnapshot::capture(query),
         u,
         level,
-        slant,
+        extent,
     })
 }
 fn slant_coordinate(

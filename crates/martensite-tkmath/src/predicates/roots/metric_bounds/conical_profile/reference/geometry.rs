@@ -42,6 +42,9 @@ fn allocations(
         arithmetic,
     )?;
     topology::separation(query, displacement, arithmetic)?;
+    if let Some(domains) = query.atlas {
+        return super::atlas::separate(query.members, domains, displacement, arithmetic);
+    }
     angular_chart(query, arithmetic)?;
     if let ReferenceDomain::Chart(domain) = query.sector {
         chart::homotopy(domain, displacement, arithmetic)?;
@@ -136,6 +139,17 @@ fn minimum_x(
     query: &ReferenceInputs<'_>,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<Interval, ConicalReferenceFailure> {
+    if let Some(atlas) = query.atlas {
+        let lower = atlas
+            .iter()
+            .map(|member| &member.domain.minimum_x.lower)
+            .min()
+            .ok_or_else(|| binding_failure("nonempty atlas filled material"))?;
+        return Ok(Interval {
+            lower: lower.clone(),
+            upper: lower.clone(),
+        });
+    }
     let mut minimum = None;
     for x in query
         .sector_spans

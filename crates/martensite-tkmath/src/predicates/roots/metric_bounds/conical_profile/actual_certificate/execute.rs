@@ -34,6 +34,7 @@ fn run(
     let hierarchy = stage(result, Stage::Hierarchy, query, arithmetic, position)?;
     let result = caps::certify(
         query,
+        &sides,
         &support.sine,
         &support.cosine,
         refine,

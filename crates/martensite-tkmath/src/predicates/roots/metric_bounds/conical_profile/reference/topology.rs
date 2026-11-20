@@ -16,6 +16,9 @@ pub(super) fn bind(query: &ReferenceInputs<'_>) -> Result<(), ConicalReferenceFa
     if clearance.excluded_pairs() != exclusions(query) {
         return Err(binding_failure("only source-keyed adjacent pairs excluded"));
     }
+    if let Some(atlas) = query.atlas {
+        return super::atlas::bind_domains(query, atlas);
+    }
     sector(query)
 }
 fn sources<'a>(
@@ -107,7 +110,13 @@ pub(super) fn separation(
         displacement.upper.clone(),
         -i32::from(arithmetic.fractional_bits()),
     );
-    if !query.sector.admits_bound(&bound) {
+    let admitted = match query.atlas {
+        Some(atlas) => atlas
+            .iter()
+            .all(|member| member.domain.admits_bound(&bound)),
+        None => query.sector.admits_bound(&bound),
+    };
+    if !admitted {
         return Err(binding_failure(
             "perturbed ideal fit remains inside strict source wedge",
         ));

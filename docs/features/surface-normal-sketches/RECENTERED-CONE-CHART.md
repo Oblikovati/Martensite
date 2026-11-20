@@ -33,8 +33,9 @@ The native cap parameters retain the continuous physical angles.
 
 The current operation uses one positive-X chart for a family in the
 canonical frame. It refuses families whose required angular hull cannot
-be certified within a single revolution. A multiple-chart atlas and
-separate periodic-image qualification remain open.
+be certified within a single revolution. The separate
+[cone region atlas](CONE-REGION-ATLAS.md) certifies disconnected
+regions whose combined authored lift spans more than one turn.
 
 ## Verification
 

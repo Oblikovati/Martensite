@@ -9,8 +9,7 @@ pub(super) fn admit(
     admit_sources(query, version)?;
     if !query.chart_origin.is_finite()
         || !query.fit_center.is_finite()
-        || (version != ConicalChartDomainVersion::RecenteredV4
-            && query.chart_origin.to_bits() != query.fit_center.to_bits())
+        || (!version.allows_offset() && query.chart_origin.to_bits() != query.fit_center.to_bits())
         || query.developed_turn != 0
         || query.physical_turn != 0
     {
@@ -112,7 +111,7 @@ fn fit_offset(
     version: ConicalChartDomainVersion,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<Option<Interval>, Failure> {
-    if version != ConicalChartDomainVersion::RecenteredV4 {
+    if !version.allows_offset() {
         return Ok(None);
     }
     let center = arithmetic.scalar(query.fit_center)?;
