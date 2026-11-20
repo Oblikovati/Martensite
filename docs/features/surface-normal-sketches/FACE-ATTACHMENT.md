@@ -322,4 +322,36 @@ control repeats the refusal a physical turn away. The cone control
 validates the resulting solid and classifies points inside and outside
 the retained bore. Both tool APIs report the number of excluded wires.
 Enclosure overlap can refuse a profile whose actual material is clear.
-General outer trims and seam-crossing inner wires remain open.
+Inner wires that cross the native seam still require a separate proof.
+
+## Shaped outer trims
+
+Cylinder and cone features can also use a shaped outer wire in one UV
+lift narrower than a full turn. Each directed pcurve must join the next
+exactly at its stored endpoint. The checker accepts lines with exactly
+representable endpoints, full positive-weight Béziers and full clamped
+non-periodic B-splines with positive weights.
+
+One spatial index serves the authored footprint and both retained caps.
+A line can be cleared by proving the whole footprint is on one side of
+it. For a curved edge, the check clears its entire control hull. Once
+the footprint is clear of every boundary, replacing each arc with its
+chord inside its hull preserves the winding at every point in the
+footprint. The checker requires winding one and excludes inner wires
+separately. On cones it rounds the conversion from certified angle and
+slant back to native UV outward.
+
+The native tests reattach to a sloped cylinder cap and a curved cone
+cap, then cut and validate a pocket on each. The cylinder test also
+refuses an outside region that lies within the outer wire's bounding
+box. A curved hull can overlap valid material and cause a refusal.
+Shaped wires that require paired seam edges and pcurves without
+certified endpoints remain outside this proof.
+
+On the same Linux x86_64 debug build, three isolated runs of the
+unchanged standalone outward cone `O.` fixture gave a median API
+time of 4.850 s with the selectable bounded volume accumulator and
+5.655 s with the original accumulator. Both retained 148 spans and
+444 integration subintervals. The bounded accumulator meets the 5.4 s
+target for this fixture. These runs time standalone extrusion. The
+trim check and Boolean have separate correctness tests.

@@ -136,7 +136,7 @@ impl CylinderFaceAttachment {
             kind,
         };
         attempt.poll(&mut cancelled, CylinderFeatureStage::Admission)?;
-        let (support, band) = self
+        let (support, mut band) = self
             .resolve_band(revision, request)
             .map_err(|cause| attempt.footprint(cause))?;
         let solid = admit(
@@ -147,7 +147,7 @@ impl CylinderFaceAttachment {
             request.support.normal,
         )?;
         let tool = self
-            .build_trimmed_tool(revision, request, &band, &mut cancelled)
+            .build_trimmed_tool(revision, request, &mut band, &mut cancelled)
             .map_err(|cause| attempt.footprint(cause))?;
         let native = tool
             .extrusion()

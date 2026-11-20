@@ -26,6 +26,8 @@ pub struct ConicalDevelopment {
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum ConicalDevelopmentFailure {
+    /// A native UV query requires a lifted angular enclosure.
+    MissingAngle,
     /// The supplied chart parameter is outside the supported scalar domain.
     Input {
         /// Invalid field.

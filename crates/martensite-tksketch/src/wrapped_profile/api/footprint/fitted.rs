@@ -4,7 +4,7 @@ use bounds::Intervals;
 
 pub(super) fn check(
     tool: &WrappedChartNormalResult,
-    band: &band::Band,
+    band: &mut band::Band,
     exclusions: &mut holes::Exclusions,
     cancelled: &mut CancelPoll<'_>,
 ) -> FootprintChecked<usize> {
@@ -13,24 +13,30 @@ pub(super) fn check(
     for region in tool.fitted_sources() {
         extrusion::poll(cancelled, WrappedStage::Publication)?;
         spans += check_region(region, intervals)?;
-        check_inner(region, tool.support().chart_origin, exclusions)?;
+        check_full_trim(
+            region,
+            tool.support().chart_origin,
+            exclusions,
+            &mut band.outer,
+        )?;
     }
     Ok(spans)
 }
 
-fn check_inner(
+fn check_full_trim(
     region: &Request,
     seam: f64,
     exclusions: &mut holes::Exclusions,
+    outer: &mut Option<outer::OuterTrim>,
 ) -> FootprintChecked<()> {
-    if !exclusions.present() {
+    if !exclusions.present() && outer.is_none() {
         return Ok(());
     }
     let mut envelope = holes::TrimBox::empty();
     for &pole in region.loops.iter().flatten().flat_map(|piece| &piece.poles) {
         envelope.include(cap_coordinates::angular_pole(pole, region.radius));
     }
-    bounds::check_holes(region.region, envelope, seam, true, exclusions)
+    bounds::check_trim(region.region, envelope, seam, true, exclusions, outer)
 }
 
 fn intervals(band: &band::Band, seam: f64) -> FootprintChecked<Intervals> {

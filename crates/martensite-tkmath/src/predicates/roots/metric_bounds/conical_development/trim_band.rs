@@ -90,6 +90,26 @@ impl ConicalDevelopment {
             angular: Some(angular),
         })
     }
+
+    /// Map a bounded, already lifted normal-chart footprint back to native UV.
+    /// Example: `let area = chart.native_footprint_envelope(footprint)?;`.
+    pub fn native_footprint_envelope(&self, footprint: ConicalFootprint) -> Checked<[[f64; 2]; 2]> {
+        let Some(angular) = footprint.angular else {
+            return Err(ConicalDevelopmentFailure::MissingAngle);
+        };
+        admit_bounds([angular, footprint.slant])?;
+        let mut cancelled = || false;
+        let mut arithmetic = Arithmetic::new(ArithmeticPolicy::default(), &mut cancelled);
+        let angular = enclose(
+            signed(angular, self.growing == self.direct),
+            &mut arithmetic,
+        )?;
+        let seam = arithmetic.scalar(self.seam)?;
+        let u = binary64(arithmetic.add(&angular, &seam)?)?;
+        let slant = enclose(footprint.slant, &mut arithmetic)?;
+        let v = binary64(arithmetic.subtract(&slant, &self.offset)?)?;
+        Ok([u, signed(v, self.growing)])
+    }
 }
 
 impl ConicalTrimBand {
@@ -207,6 +227,9 @@ fn admit_bounds(bounds: [[f64; 2]; 2]) -> Checked<()> {
 }
 fn ordered([a, b]: [f64; 2], positive: bool) -> [f64; 2] {
     if positive { [a, b] } else { [b, a] }
+}
+fn signed([lo, hi]: [f64; 2], positive: bool) -> [f64; 2] {
+    if positive { [lo, hi] } else { [-hi, -lo] }
 }
 fn inward(first: Interval, last: Interval) -> Checked<[f64; 2]> {
     Ok([binary64(first)?[1], binary64(last)?[0]])

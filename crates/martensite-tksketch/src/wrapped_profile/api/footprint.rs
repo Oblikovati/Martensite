@@ -17,10 +17,12 @@ mod feature;
 pub use feature::*;
 mod fitted;
 mod holes;
+mod outer;
+pub use outer::OuterTrimRefusal;
 #[cfg(test)]
 mod tests;
 
-/// Evidence that all selected authored controls lie strictly inside a supported trim band.
+/// Evidence that the selected authored footprint lies strictly inside supported native trims.
 /// Example: `assert_eq!(report.revision, current_revision)`.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CylinderFootprintReport {
@@ -28,7 +30,7 @@ pub struct CylinderFootprintReport {
     pub attachment: FaceAttachmentId,
     /// Support revision used to check the footprint.
     pub revision: SupportRevision,
-    /// Exact axial bounds of the selected trim band in native coordinates.
+    /// Outward axial extent of the selected trim in native coordinates.
     pub axial: [f64; 2],
     /// Native angular bounds for a partial band. A paired seam reports an entire period.
     pub angular: Option<[f64; 2]>,
@@ -49,7 +51,7 @@ pub enum CylinderFootprintFailure {
         /// The selected face's revision-bound chart.
         expected: Box<CylinderSupport>,
     },
-    /// No complete rectangular trim band could be proved from the native wires.
+    /// A complete supported trim could not be proved from the native wires.
     UnsupportedTrim {
         /// Failed structural requirement.
         expected: &'static str,
@@ -101,6 +103,15 @@ pub enum CylinderFootprintFailure {
         /// Whether the enclosure came from the retained cap pcurves.
         fitted: bool,
     },
+    /// The footprint cannot be proved within the shaped outer trim.
+    OuterTrim {
+        /// Region whose authored or fitted footprint was checked.
+        region: SurfaceRegionId,
+        /// Whether the envelope came from retained cap pcurves.
+        fitted: bool,
+        /// Boundary separation or winding refusal.
+        cause: OuterTrimRefusal,
+    },
 }
 
 impl std::fmt::Display for CylinderFootprintFailure {
@@ -121,8 +132,8 @@ impl std::error::Error for CylinderFootprintFailure {
 type FootprintChecked<T> = Result<T, CylinderFootprintFailure>;
 
 impl CylinderFaceAttachment {
-    /// Check the selected authored footprint against a proved rectangular cylindrical trim band.
-    /// Supports partial bands and full bands with a paired native seam and bounded inner wires.
+    /// Check the selected authored footprint against the supported cylindrical native trims.
+    /// Supports rectangular bands or a bounded shaped outer wire, with bounded inner wires.
     /// The report describes the authored footprint in the requested chart.
     /// Example: `attachment.certify_footprint(revision, &request)?`.
     pub fn certify_footprint(
@@ -130,8 +141,8 @@ impl CylinderFaceAttachment {
         revision: SupportRevision,
         request: &WrappedNormalRequest,
     ) -> FootprintChecked<CylinderFootprintReport> {
-        let (_, band) = self.resolve_band(revision, request)?;
-        bounds::check(request, &band)?;
+        let (_, mut band) = self.resolve_band(revision, request)?;
+        bounds::check(request, &mut band)?;
         Ok(self.footprint_report(revision, request, &band))
     }
 

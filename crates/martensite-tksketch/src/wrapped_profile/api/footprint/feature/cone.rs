@@ -56,7 +56,7 @@ impl ConeFeatureResult {
 }
 
 impl ConeFaceAttachment {
-    /// Apply a boss or pocket to the selected conical band using the given native seam.
+    /// Apply a boss or pocket to the selected conical trim using the given native seam.
     /// The request starts at depth zero and uses the corresponding radial normal sense.
     /// Example: `attachment.apply_wrapped_profile(revision, seam, WrappedFeatureKind::Boss, &request, selection)?`.
     pub fn apply_wrapped_profile(

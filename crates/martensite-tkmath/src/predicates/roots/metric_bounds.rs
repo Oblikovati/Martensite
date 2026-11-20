@@ -3,10 +3,12 @@
 mod arithmetic;
 mod curve_identity;
 pub use curve_identity::{CurveIdentityDecision, MetricCurveChain, compare_curve_chains};
+mod affine_coordinate;
 mod affine_support;
 #[cfg(test)]
 mod curve_identity_tests;
 mod mapped;
+pub use affine_coordinate::exact_affine_coordinate;
 mod parameter;
 mod prism_jacobian;
 pub use prism_jacobian::affine_prism_jacobian;

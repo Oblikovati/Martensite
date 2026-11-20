@@ -340,8 +340,8 @@ admission and trim qualification for the 239-curve text fixture.
 operation past the datum-centered angular cut for families that fit within one
 physical revolution. The [cone region atlas](CONE-REGION-ATLAS.md) uses
 separate charts for disconnected regions and certifies separation after
-wrapping. Connected profiles that need several fit charts, seam occurrences,
-larger cone text workloads and cone-face attachment remain Phase B. Primitive exact-span lowering,
+wrapping. Connected profiles that need several fit charts and wider
+periodic cone text remain Phase B. Primitive exact-span lowering,
 replacement deletion and the broader acceptance corpus remain Phase C.
 
 Earlier checkpoint records remain available: [rational implementation](RATIONAL-IMPLEMENTATION.md),
@@ -353,11 +353,12 @@ and [planar work policy](PLANAR-WORK-POLICY.md). The existing cylinder
 [text census](P5-WORKLOAD.md) and [oblique qualification](P5-OBLIQUE-QUALIFICATION.md)
 do not qualify those scenarios for the new cone path.
 
-The [revision-bound face attachment](FACE-ATTACHMENT.md) owns a selected cylindrical
-face and support snapshot, follows explicit native history, and refuses ambiguous
-reattachment. It can build a normal tool with authored and fitted cap containment
-in a rectangular cylindrical trim band. It publishes a validated wrapped boss
-or pocket on that band with composed history. General support trims and full
+The [revision-bound face attachments](FACE-ATTACHMENT.md) capture selected
+cylinder or cone faces with their support bodies and follow explicit native
+history. They check the authored footprint and both retained caps before
+publishing a wrapped boss or pocket with composed history. Supported trims
+include rectangular bands, bounded inner wires, and shaped outer wires with
+certified endpoints in one UV lift. General support trims and full
 hit-to-sketch integration under #420 remain open.
 
 The [native boss/pocket controls](BODY-BOOLEAN-QUALIFICATION.md) exercise actual

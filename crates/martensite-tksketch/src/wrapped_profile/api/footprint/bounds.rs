@@ -2,7 +2,7 @@
 use super::*;
 pub(super) type Intervals = [Option<[f64; 2]>; 2];
 
-pub(super) fn check(request: &WrappedNormalRequest, band: &band::Band) -> FootprintChecked<()> {
+pub(super) fn check(request: &WrappedNormalRequest, band: &mut band::Band) -> FootprintChecked<()> {
     let intervals = authored_intervals(request, band)?;
     let mut exclusions = holes::Exclusions::new(&band.holes)?;
     let reader = profile_input::ProfileReader::new(&request.profile)
@@ -10,23 +10,25 @@ pub(super) fn check(request: &WrappedNormalRequest, band: &band::Band) -> Footpr
     for selection in &request.selections {
         let region = input::selected(&reader, selection).map_err(source_error)?;
         check_region(region.region, &region.loops, intervals)?;
-        check_authored_holes(
+        check_authored_trim(
             region.region,
             &region.loops,
             request.support,
             &mut exclusions,
+            &mut band.outer,
         )?;
     }
     Ok(())
 }
 
-pub(super) fn check_authored_holes(
+pub(super) fn check_authored_trim(
     region: SurfaceRegionId,
     loops: &[Vec<AuthoredPiece>],
     support: CylinderSupport,
     exclusions: &mut holes::Exclusions,
+    outer: &mut Option<outer::OuterTrim>,
 ) -> FootprintChecked<()> {
-    if !exclusions.present() {
+    if !exclusions.present() && outer.is_none() {
         return Ok(());
     }
     let mut envelope = holes::TrimBox::empty();
@@ -38,18 +40,35 @@ pub(super) fn check_authored_holes(
         (arc[0] / support.radius).next_down(),
         (arc[1] / support.radius).next_up(),
     ];
-    check_holes(region, envelope, support.chart_origin, false, exclusions)
+    check_trim(
+        region,
+        envelope,
+        support.chart_origin,
+        false,
+        exclusions,
+        outer,
+    )
 }
 
-pub(super) fn check_holes(
+pub(super) fn check_trim(
     region: SurfaceRegionId,
     mut bounds: holes::TrimBox,
     seam: f64,
     fitted: bool,
     exclusions: &mut holes::Exclusions,
+    outer: &mut Option<outer::OuterTrim>,
 ) -> FootprintChecked<()> {
     let [lower, upper] = bounds.0[0];
     bounds.0[0] = [(lower + seam).next_down(), (upper + seam).next_up()];
+    if let Some(outer) = outer
+        && let Some(cause) = outer.check(bounds)?
+    {
+        return Err(CylinderFootprintFailure::OuterTrim {
+            region,
+            fitted,
+            cause,
+        });
+    }
     if let Some(wire) = exclusions.overlap(bounds)? {
         return Err(CylinderFootprintFailure::InnerTrimOverlap {
             region,

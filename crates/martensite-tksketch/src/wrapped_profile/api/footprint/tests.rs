@@ -261,6 +261,79 @@ fn drilled_attachment() -> CylinderFaceAttachment {
     freeze(&cut)
 }
 
+#[test]
+fn cylinder_pocket_can_be_cut_on_a_sloped_selected_cap() {
+    let attachment = tilted_cap_attachment();
+    let radius = attachment
+        .extrusion_support(REVISION, 0., NormalSense::Inward)
+        .unwrap()
+        .radius;
+    let outside = request(&attachment, [radius * 0.35, radius * 0.45], [2.65, 2.85]);
+    let error = attachment
+        .certify_footprint(REVISION, &outside)
+        .unwrap_err();
+    assert!(
+        matches!(
+            error,
+            CylinderFootprintFailure::OuterTrim {
+                region: SurfaceRegionId(3),
+                fitted: false,
+                ..
+            }
+        ),
+        "{error}"
+    );
+    let mut inside = request(&attachment, [radius * 0.15, radius * 0.22], [1.2, 1.4]);
+    inside.depths = [0., 0.05];
+    let feature = attachment
+        .apply_wrapped_profile(REVISION, CylinderFeatureKind::Pocket, &inside)
+        .unwrap();
+    assert!(feature.tool().shaped_outer_edges() >= 3);
+    assert!(feature.validation().is_valid());
+    assert_eq!(
+        feature.export_native().unwrap().body.shape_type().unwrap(),
+        ShapeEnum::Solid
+    );
+}
+
+fn tilted_cap_attachment() -> CylinderFaceAttachment {
+    let base = attachment(None);
+    let mut parent = request(&base, [1., 5.], [1., 3.5]);
+    parent.support.normal = NormalSense::Outward;
+    make_triangle(&mut parent);
+    let placed = normal_extrude_profile_on_chart(&parent).unwrap();
+    let native = placed.export_native().unwrap();
+    let cap = WrappedHistoryKey {
+        source: WrappedEntitySource::Region(SurfaceRegionId(3)),
+        role: HistoryRole::LastDepthFace,
+    };
+    let face = topods::face(&native.entities[&cap]).unwrap();
+    CylinderFaceAttachment::capture(
+        FaceAttachmentId(19),
+        REVISION,
+        &native.bodies,
+        &face,
+        resolution(),
+    )
+    .unwrap()
+}
+
+fn make_triangle(parent: &mut WrappedNormalRequest) {
+    parent.profile.vertices.remove(2);
+    parent.profile.curves.truncate(3);
+    parent.profile.curves[1] = ProfileCurve::Line {
+        id: ProfileCurveId(2),
+        start: ProfileVertexId(2),
+        end: ProfileVertexId(4),
+    };
+    parent.profile.curves[2] = ProfileCurve::Line {
+        id: ProfileCurveId(3),
+        start: ProfileVertexId(4),
+        end: ProfileVertexId(1),
+    };
+    parent.selections[0].outer.uses.truncate(3);
+}
+
 fn bore_support(support: &Shape) -> Shape {
     use martensite_tkbo::brep_algo_api::BRepAlgoAPICut;
     use martensite_tkernel::ncollection::List;

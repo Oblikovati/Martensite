@@ -96,3 +96,26 @@ fn native_hole_envelope_accounts_for_signed_meridian_and_angular_directions() {
     assert!(footprint.angular.is_some());
     assert!(full.limits().angular.is_none());
 }
+
+#[test]
+fn native_footprint_encloses_input_across_chart_orientations() {
+    for (angle, direct, uv) in [
+        (0.4, true, [[0.5, 0.9], [3., 4.]]),
+        (-0.4, true, [[-0.9, -0.5], [-4., -3.]]),
+        (0.4, false, [[-0.9, -0.5], [3., 4.]]),
+    ] {
+        let chart = ConicalDevelopment::new(angle, 2., 0.7, direct).unwrap();
+        let proof = chart.native_trim_envelope(uv).unwrap();
+        let native = chart.native_footprint_envelope(proof).unwrap();
+        for ([lo, hi], [authored_lo, authored_hi]) in native.into_iter().zip(uv) {
+            assert!(lo <= authored_lo && hi >= authored_hi);
+        }
+        assert!(matches!(
+            chart.native_footprint_envelope(ConicalFootprint {
+                angular: None,
+                ..proof
+            }),
+            Err(ConicalDevelopmentFailure::MissingAngle),
+        ));
+    }
+}

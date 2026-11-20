@@ -32,6 +32,15 @@ pub enum ConeFootprintFailure {
         /// Caller depth row when checking a retained fitted cap.
         depth_row: Option<usize>,
     },
+    /// The footprint cannot be proved within the shaped outer trim.
+    OuterTrim {
+        /// Region whose authored or fitted footprint was checked.
+        region: SurfaceRegionId,
+        /// Caller depth row when checking a retained fitted cap.
+        depth_row: Option<usize>,
+        /// Boundary separation or winding refusal.
+        cause: OuterTrimRefusal,
+    },
     /// The source or one retained cap enclosure could not be proved inside the trim.
     Metric {
         /// Authored region, when available.
@@ -99,6 +108,14 @@ impl std::fmt::Display for ConeFootprintFailure {
             } => write!(
                 f,
                 "cone region={region:?} depth_row={depth_row:?} touches inner trim {wire}, expected disjoint footprint and trim enclosures"
+            ),
+            Self::OuterTrim {
+                region,
+                depth_row,
+                cause,
+            } => write!(
+                f,
+                "cone region={region:?} depth_row={depth_row:?} outer trim={cause:?}, expected strict separation and unit material winding"
             ),
             Self::Metric {
                 region,

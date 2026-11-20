@@ -6,7 +6,7 @@ use martensite_tkbrep::{brep::BRepTool, topexp::Explorer, topods};
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkmath::bvh::{BvhBox, BvhBoxSet, BvhSetTraverse, BvhVec2d};
 use martensite_tktopalgo::brep_check::{BRepCheckStatus, BRepCheckWire};
-mod curves;
+pub(super) mod curves;
 mod periodic;
 type Checked<T> = Result<T, BandFailure>;
 
@@ -23,15 +23,23 @@ impl TrimBox {
             *upper = upper.max(value);
         }
     }
-    fn include_box(&mut self, bounds: Self) {
+    pub(super) fn include_box(&mut self, bounds: Self) {
         let [[u0, u1], [v0, v1]] = bounds.0;
         self.include([u0, v0]);
         self.include([u1, v1]);
     }
-    fn finite(self) -> bool {
+    pub(super) fn finite(self) -> bool {
         self.0
             .iter()
             .all(|[a, b]| a.is_finite() && b.is_finite() && a <= b)
+    }
+    pub(super) fn corners(self) -> [[f64; 2]; 4] {
+        let [[u0, u1], [v0, v1]] = self.0;
+        [[u0, v0], [u1, v0], [u1, v1], [u0, v1]]
+    }
+    pub(super) fn bvh(self) -> BvhBox<BvhVec2d> {
+        let [[u0, u1], [v0, v1]] = self.0;
+        BvhBox::from_corners(BvhVec2d::new(u0, v0), BvhVec2d::new(u1, v1))
     }
     fn strictly_inside(self, limits: [[f64; 2]; 2]) -> bool {
         self.finite()

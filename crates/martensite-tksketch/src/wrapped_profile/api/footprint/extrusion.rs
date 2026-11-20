@@ -8,6 +8,7 @@ pub struct CylinderTrimmedTool {
     extrusion: WrappedChartNormalResult,
     fitted_spans: usize,
     inner_trims: usize,
+    shaped_outer_edges: usize,
 }
 
 impl CylinderTrimmedTool {
@@ -24,6 +25,11 @@ impl CylinderTrimmedTool {
     /// Example: `let excluded = tool.excluded_trim_wires();`.
     pub fn excluded_trim_wires(&self) -> usize {
         self.inner_trims
+    }
+    /// Checked shaped outer edge count. Rectangular bands return zero.
+    /// Example: `let edges = tool.shaped_outer_edges();`.
+    pub fn shaped_outer_edges(&self) -> usize {
+        self.shaped_outer_edges
     }
 
     /// The qualified normal tool. Example: `tool.extrusion().export_native()?`.
@@ -53,15 +59,15 @@ impl CylinderFaceAttachment {
         mut cancelled: impl FnMut() -> bool + Send,
     ) -> FootprintChecked<CylinderTrimmedTool> {
         poll(&mut cancelled, WrappedStage::Admission)?;
-        let (_, band) = self.resolve_band(revision, request)?;
-        self.build_trimmed_tool(revision, request, &band, &mut cancelled)
+        let (_, mut band) = self.resolve_band(revision, request)?;
+        self.build_trimmed_tool(revision, request, &mut band, &mut cancelled)
     }
 
     pub(super) fn build_trimmed_tool(
         &self,
         revision: SupportRevision,
         request: &WrappedNormalRequest,
-        band: &band::Band,
+        band: &mut band::Band,
         cancelled: &mut CancelPoll<'_>,
     ) -> FootprintChecked<CylinderTrimmedTool> {
         let mut exclusions = holes::Exclusions::new(&band.holes)?;
@@ -75,13 +81,14 @@ impl CylinderFaceAttachment {
             extrusion,
             fitted_spans,
             inner_trims: band.holes.len(),
+            shaped_outer_edges: band.outer.as_ref().map_or(0, outer::OuterTrim::edge_count),
         })
     }
 }
 
 fn read_inside(
     request: &WrappedNormalRequest,
-    band: &band::Band,
+    band: &mut band::Band,
     exclusions: &mut holes::Exclusions,
     cancelled: &mut CancelPoll<'_>,
 ) -> FootprintChecked<input::Inputs> {
@@ -90,7 +97,13 @@ fn read_inside(
     for region in &inputs.requests {
         poll(cancelled, WrappedStage::Input)?;
         bounds::check_region(region.region, &region.loops, intervals)?;
-        bounds::check_authored_holes(region.region, &region.loops, request.support, exclusions)?;
+        bounds::check_authored_trim(
+            region.region,
+            &region.loops,
+            request.support,
+            exclusions,
+            &mut band.outer,
+        )?;
     }
     Ok(inputs)
 }

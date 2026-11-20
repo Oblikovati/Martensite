@@ -1,4 +1,4 @@
-//! Recognize a trim rectangle from every directed native occurrence, including its seam.
+//! Capture the selected native outer trim and the enclosures of all inner wires.
 use super::*;
 use martensite_tkbrep::{
     brep::BRepTool, brep_adaptor::BRepAdaptorSurface, topexp::Explorer, topods,
@@ -14,7 +14,7 @@ pub(super) enum BandFailure {
     Native(Box<Failure>),
     Unsupported(&'static str),
 }
-type BandChecked<T> = Result<T, BandFailure>;
+pub(super) type BandChecked<T> = Result<T, BandFailure>;
 
 fn native<T>(result: Result<T, Failure>) -> BandChecked<T> {
     result.map_err(|cause| BandFailure::Native(Box::new(cause)))
@@ -27,6 +27,7 @@ pub(super) struct Band {
     pub axial: [f64; 2],
     pub angular: Option<[f64; 2]>,
     pub holes: Vec<holes::TrimBox>,
+    pub outer: Option<outer::OuterTrim>,
 }
 
 struct Use {
@@ -37,15 +38,29 @@ struct Use {
 pub(super) fn capture(face: &Face) -> BandChecked<Band> {
     let forward = native(topods::face(&face.oriented(Orientation::Forward)))?;
     let (outer, inner) = face_wires(&forward)?;
-    let uses = occurrences(&forward, &outer)?;
+    let (bounds, angular, outer) = match rectangle_domain(&forward, &outer) {
+        Ok((bounds, angular)) => (bounds, angular, None),
+        Err(BandFailure::Unsupported(_)) => {
+            let shaped = outer::OuterTrim::capture(&forward, &outer)?;
+            let bounds = shaped.bounds();
+            (bounds, Some(bounds.0[0]), Some(shaped))
+        }
+        Err(cause) => return Err(cause),
+    };
+    Ok(Band {
+        axial: bounds.0[1],
+        angular,
+        holes: holes::capture(&forward, &inner, bounds.0)?,
+        outer,
+    })
+}
+
+fn rectangle_domain(face: &Face, wire: &Shape) -> BandChecked<(holes::TrimBox, Option<[f64; 2]>)> {
+    let uses = occurrences(face, wire)?;
     let [[u0, u1], [v0, v1]] = envelope(&uses)?;
     let sides = rectangle(&uses, [u0, v0], [u1, v1])?;
-    let angular = angular_band(&forward, sides, [u0, u1])?;
-    Ok(Band {
-        axial: [v0, v1],
-        angular,
-        holes: holes::capture(&forward, &inner, [[u0, u1], [v0, v1]])?,
-    })
+    let angular = angular_band(face, sides, [u0, u1])?;
+    Ok((holes::TrimBox([[u0, u1], [v0, v1]]), angular))
 }
 
 fn occurrences(face: &Face, wire: &Shape) -> BandChecked<[Use; 4]> {
@@ -87,7 +102,7 @@ fn face_wires(face: &Face) -> BandChecked<(Shape, Vec<Shape>)> {
         native(wires.next())?;
     }
     if occurrences != 1 {
-        return Err(unsupported("one uniquely occurring rectangular outer wire"));
+        return Err(unsupported("one uniquely occurring outer wire"));
     }
     Ok((outer, inner))
 }
@@ -119,7 +134,7 @@ fn edge_use(shape: &Shape, face: &Face) -> BandChecked<Use> {
     Ok(Use { edge, points })
 }
 
-fn endpoints(
+pub(super) fn endpoints(
     origin: [f64; 2],
     direction: [f64; 2],
     interval: [f64; 2],
