@@ -62,7 +62,6 @@ pub struct ConicalChartDomainEvidence {
     version: ConicalChartDomainVersion,
     span_limit: usize,
     pub(super) sector: sector::SectorEvidence,
-    by_coefficients: Vec<usize>,
     chart: [u64; 2],
     turns: [i32; 2],
     pub(super) physical: Interval,
@@ -169,14 +168,9 @@ pub fn certify_conical_chart_domain_with_version(
 }
 impl ConicalChartDomainEvidence {
     pub(super) fn contains_original(&self, original: &[[f64; 2]]) -> bool {
-        self.by_coefficients
-            .binary_search_by(|&index| {
-                self.sector.source[index]
-                    .iter()
-                    .copied()
-                    .cmp(original.iter().map(|point| point.map(f64::to_bits)))
-            })
-            .is_ok()
+        self.sector
+            .original_index
+            .contains_exact(&self.sector.source, original)
     }
     /// Executed chart behavior; `proof.version()`.
     pub fn version(&self) -> ConicalChartDomainVersion {

@@ -405,6 +405,7 @@ mod sector;
 mod sector_api;
 mod slant;
 mod slant_derivative;
+mod source_index;
 mod spatial;
 mod storage;
 mod storage_api;

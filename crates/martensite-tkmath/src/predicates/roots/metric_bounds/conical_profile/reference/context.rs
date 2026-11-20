@@ -42,6 +42,13 @@ impl<'a> From<&ConicalChartReferenceQuery<'a>> for ReferenceInputs<'a> {
     }
 }
 impl ReferenceDomain<'_> {
+    pub fn covers_originals<'a>(self, fitted: impl Iterator<Item = &'a [[f64; 2]]>) -> bool {
+        let sector = match self {
+            Self::Legacy(proof) => &proof.sector,
+            Self::Chart(proof) => &proof.sector,
+        };
+        sector.original_index.covers(&sector.source, fitted)
+    }
     pub fn policy(self) -> ArithmeticPolicy {
         match self {
             Self::Legacy(proof) => proof.sector.policy,

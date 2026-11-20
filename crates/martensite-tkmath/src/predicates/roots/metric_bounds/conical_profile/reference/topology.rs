@@ -82,19 +82,12 @@ fn sector(query: &ReferenceInputs<'_>) -> Result<(), ConicalReferenceFailure> {
     Ok(())
 }
 fn covers_originals(query: &ReferenceInputs<'_>) -> bool {
-    let originals: Vec<_> = query
+    let fitted = query
         .members
         .iter()
         .flat_map(|member| member.spans)
-        .filter_map(|span| span.query.original.map(|original| original.poles))
-        .collect();
-    query
-        .sector_spans
-        .iter()
-        .all(|original| originals.contains(original))
-        && originals
-            .iter()
-            .all(|original| query.sector_spans.contains(original))
+        .filter_map(|span| span.query.original.map(|original| original.poles));
+    query.sector.covers_originals(fitted)
 }
 pub(super) fn separation(
     query: &ReferenceInputs<'_>,

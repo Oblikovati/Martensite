@@ -59,14 +59,10 @@ fn evidence(
     arithmetic: &Arithmetic<'_>,
 ) -> ConicalChartDomainEvidence {
     let sector = captured_sector(query, margin, arithmetic);
-    // Sort only indices. The proof and its diagnostics retain authored source order.
-    let mut by_coefficients: Vec<_> = (0..sector.source.len()).collect();
-    by_coefficients.sort_unstable_by(|&a, &b| sector.source[a].cmp(&sector.source[b]));
     ConicalChartDomainEvidence {
         version,
         span_limit: version.span_limit(),
         sector,
-        by_coefficients,
         chart: [query.chart_origin.to_bits(), query.fit_center.to_bits()],
         turns: [query.developed_turn, query.physical_turn],
         physical,
@@ -81,8 +77,11 @@ fn captured_sector(
     margin: Option<num_bigint::BigInt>,
     arithmetic: &Arithmetic<'_>,
 ) -> sector::SectorEvidence {
+    let source = sector::source_bits(query.spans);
+    let original_index = source_index::OriginalSourceIndex::from_sources(&source);
     sector::SectorEvidence {
-        source: sector::source_bits(query.spans),
+        source,
+        original_index,
         angle: query.semi_angle.to_bits(),
         policy: sector_api::policy(query.options),
         operations: arithmetic.operations(),

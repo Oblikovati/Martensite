@@ -23,6 +23,7 @@ pub enum ConicalSectorWedge {
 
 pub(super) struct SectorEvidence {
     pub(super) source: SourceBits,
+    pub(super) original_index: source_index::OriginalSourceIndex,
     pub(super) angle: u64,
     pub(super) policy: ArithmeticPolicy,
     pub(super) operations: u32,
@@ -146,8 +147,11 @@ pub(super) fn certify(
     arithmetic
         .check_cancelled()
         .map_err(SectorFailure::Arithmetic)?;
+    let source = source_bits(spans);
+    let original_index = source_index::OriginalSourceIndex::from_sources(&source);
     Ok(SectorEvidence {
-        source: source_bits(spans),
+        source,
+        original_index,
         angle: angle.to_bits(),
         policy,
         operations: arithmetic.operations(),

@@ -134,3 +134,40 @@ byte. Three local pairs on the outward text case measured median API time at
 201,716 KiB. In a separate sampled run, resident file pages accounted for
 1,060 KiB of the 1,080 KiB difference at the observed peaks. The paired result
 still needs to clear the peak-memory gate. [Audit receipt](references/source-incidence-audit-2026-11-20.json)
+
+## Cone reference source coverage, 2026-11-20
+
+The reference proof checked complete coverage by scanning the fitted-source
+list for every original and scanning the original list for every fitted span.
+It now queries the coefficient index captured by the chart or legacy sector.
+It tracks one flag per original entry and checks that every distinct source was
+seen. Fitted spans can repeat an original and arrive in any order. Coverage
+continues to treat signed zeros as equal. The separate chart membership check
+compares the raw coefficient bits, and the chart receipt retains authored order.
+
+The isolated coverage benchmark used four-pole sources, eight fitted
+occurrences per source in reverse source order, five runs per size and the
+workspace Rust toolchain with optimization level 3. It alternated the previous
+and indexed checks on logical CPU 20. Median coverage times exclude the
+one-time index build, listed separately below.
+
+| Original spans | Fitted occurrences | Previous | Indexed | Index build |
+| ---: | ---: | ---: | ---: | ---: |
+| 128 | 1,024 | 0.099 ms | 0.062 ms | 0.001 ms |
+| 1,024 | 8,192 | 3.754 ms | 0.580 ms | 0.004 ms |
+| 4,096 | 32,768 | 59.267 ms | 2.892 ms | 0.012 ms |
+
+The 4,096-source control also refused a missing source and a one-ULP change.
+Before-and-after binary comparisons matched encoded BRep, history and budget
+for both the legacy curved-holed cone and the recentered crossing.
+
+The focused suites passed 242 Math tests and 130 Sketch cone tests. Strict
+Clippy passed for both crates.
+
+Three alternating full-operation pairs on the existing directed outward O.
+fixture compared the indexed build to local checkpoint `84740668`.
+Median API time was 5.422 s before and 5.440 s after. Median peak process
+RSS was 66,804 KiB before and 66,584 KiB after. Every run charged 989,355
+arithmetic operations and used 444 integration cells and 148 retained
+spans. The isolated speedup did not establish an end-to-end speedup or
+meet the five-second target.
