@@ -38,7 +38,7 @@ pub(crate) struct CertifiedRegions {
 }
 
 pub(crate) struct RegionProofFailure {
-    pub cause: DeclineCause,
+    pub cause: Box<DeclineCause>,
     pub root_failure: Option<super::PlanarPairRootFailure>,
     pub work: Option<super::PlanarProofWorkReceipt>,
     pub cancelled: bool,
@@ -124,7 +124,7 @@ fn graph_input(
     pair_bisections: Option<u16>,
 ) -> Result<crate::sketch_region_prism::ProfileGraphInput, RegionProofFailure> {
     let plane = native_plane(&profile.frame).map_err(|failure| RegionProofFailure {
-        cause: incomplete(format!("declared plane: {failure}")),
+        cause: Box::new(incomplete(format!("declared plane: {failure}"))),
         root_failure: None,
         work: None,
         cancelled: false,
@@ -148,7 +148,7 @@ fn graph_refusal(refusal: ProfileProofRefusal, table: &PieceTable) -> RegionProo
         program_source,
         root_failure,
         cancelled: refusal.cancelled,
-        cause: declined(refusal, table),
+        cause: Box::new(declined(refusal, table)),
         work,
     }
 }

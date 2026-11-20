@@ -103,8 +103,10 @@ fn run(stop: usize, limit: u32) -> (Checked<Interval>, u32, usize) {
         polls += 1;
         polls == stop
     };
-    let mut policy = ArithmeticPolicy::default();
-    policy.max_operations = limit;
+    let policy = ArithmeticPolicy {
+        max_operations: limit,
+        ..Default::default()
+    };
     let mut arithmetic = Arithmetic::new(policy, &mut callback);
     let result = weighted_primitive_error(
         &residual,

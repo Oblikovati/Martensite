@@ -111,7 +111,7 @@ fn capture_caps(
             .map(|(curve, side)| (*curve, side.0))
             .collect();
         caps.push(
-            native::capture_cap(cap.id.0, &cap.face, &sides, &cap.material, &curves)
+            native::capture_cap(cap.id.0, &cap.face, sides, &cap.material, &curves)
                 .map_err(|cause| error(Some(binding.id), None, Some(cap.id), cause))?,
         );
     }

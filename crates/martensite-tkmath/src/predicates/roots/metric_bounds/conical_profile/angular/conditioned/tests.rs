@@ -97,8 +97,10 @@ fn run(stop: usize, limit: u32) -> (Result<AngularEvidence, AngularSpanFailure>,
         polls += 1;
         polls == stop
     };
-    let mut policy = ArithmeticPolicy::default();
-    policy.max_operations = limit;
+    let policy = ArithmeticPolicy {
+        max_operations: limit,
+        ..Default::default()
+    };
     let mut arithmetic = Arithmetic::new(policy, &mut callback);
     let result = from_residual(&residual, arithmetic.zero(), &denominator, &mut arithmetic);
     let operations = arithmetic.operations();

@@ -95,7 +95,7 @@ fn real_span() -> AnalyticConicalFluxSpan<'static> {
     const A: [[f64; 3]; 2] = [[0., 0., 1.], [1., 0., 1.]];
     const B: [[f64; 3]; 2] = [[0., 1., 1.], [1., 1., 1.]];
     const UV: [[f64; 2]; 2] = [[0.; 2]; 2];
-    let span = AnalyticConicalFluxSpan {
+    AnalyticConicalFluxSpan {
         boundaries: [&A, &B].map(|poles| MetricBezier {
             poles,
             weights: None,
@@ -103,6 +103,5 @@ fn real_span() -> AnalyticConicalFluxSpan<'static> {
         cap_pcurves: [&UV, &UV],
         side_reversed: false,
         cap_reversed: [false; 2],
-    };
-    span
+    }
 }

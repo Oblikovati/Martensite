@@ -4,9 +4,9 @@ use super::*;
 use martensite_tkbrep::topexp;
 pub(super) fn verify(side: &SideGeometry) -> Result<(), Failure> {
     let rows = [ends(&side.edges[0])?, ends(&side.edges[1])?];
-    for row in 0..2 {
+    for (row, vertices) in rows.iter().enumerate() {
         let last = side.rows[row].len() - 1;
-        for (vertex, pole) in rows[row]
+        for (vertex, pole) in vertices
             .iter()
             .zip([side.rows[row][0], side.rows[row][last]])
         {

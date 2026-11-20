@@ -4,6 +4,9 @@ use super::inverse::*;
 use super::quadrature::*;
 use super::*;
 
+type SpanIntegrator =
+    fn(&[[f64; 2]], u8, &mut Arithmetic<'_>) -> Result<Interval, SourceBoundFailure>;
+
 pub(super) type SourceBits = Vec<Vec<Vec<[u64; 2]>>>;
 pub(super) struct Contour<'a> {
     pub(super) spans: Vec<&'a [[f64; 2]]>,
@@ -238,7 +241,7 @@ pub(super) fn sum_contours_using(
     contours: &[Contour<'_>],
     level: u8,
     arithmetic: &mut Arithmetic<'_>,
-    integrate: fn(&[[f64; 2]], u8, &mut Arithmetic<'_>) -> Result<Interval, SourceBoundFailure>,
+    integrate: SpanIntegrator,
 ) -> Result<Interval, BoundaryFailure> {
     let mut total = arithmetic.zero();
     for (index, contour) in contours.iter().enumerate() {
@@ -254,7 +257,7 @@ fn sum_contour_using(
     contour: &Contour<'_>,
     level: u8,
     arithmetic: &mut Arithmetic<'_>,
-    integrate: fn(&[[f64; 2]], u8, &mut Arithmetic<'_>) -> Result<Interval, SourceBoundFailure>,
+    integrate: SpanIntegrator,
 ) -> Result<Interval, BoundaryFailure> {
     let mut total = arithmetic.zero();
     for (span, poles) in contour.spans.iter().enumerate() {

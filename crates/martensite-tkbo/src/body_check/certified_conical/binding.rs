@@ -124,6 +124,6 @@ pub(super) fn error(
         member,
         side,
         cap,
-        cause,
+        cause: Box::new(cause),
     }
 }

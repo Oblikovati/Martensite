@@ -157,14 +157,14 @@ fn validate_original_program_policy(
     region: SurfaceRegionId,
     material: &MaterialEvidence,
 ) -> ConeChecked<()> {
-    if let Some(proof) = material.uv.integral_program_evidence() {
-        if proof.requested_proof_version() != material.requested_planar_proof {
-            return Err(mismatch(
-                region,
-                None,
-                "retained original integral program policy",
-            ));
-        }
+    if let Some(proof) = material.uv.integral_program_evidence()
+        && proof.requested_proof_version() != material.requested_planar_proof
+    {
+        return Err(mismatch(
+            region,
+            None,
+            "retained original integral program policy",
+        ));
     }
     Ok(())
 }

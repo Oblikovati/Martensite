@@ -36,7 +36,9 @@ fn incomplete() -> ConicalBindingError {
         member: Some(ConicalActualMemberId(19)),
         side: None,
         cap: None,
-        cause: native::rejected("independent ordered-stage refusal control"),
+        cause: Box::new(native::rejected(
+            "independent ordered-stage refusal control",
+        )),
     }
 }
 #[test]

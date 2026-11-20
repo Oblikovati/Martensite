@@ -1,0 +1,24 @@
+{
+  "invocation": {
+    "cmd": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "martensite-tkmath",
+      "-p",
+      "martensite-tksketch",
+      "--lib",
+      "--tests",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "started": "2026-11-19T23:48:57.456236+00:00"
+  },
+  "terminal": {
+    "exit_code": 0,
+    "source_changed": [],
+    "finished": "2026-11-19T23:49:01.282950+00:00"
+  }
+}

@@ -163,7 +163,7 @@ fn certified_for_work(
     certify_regions(profile, requested.override_limit()).map_err(|failure| {
         super::PlanarRegionWorkFailure::new(
             requested,
-            DECLINE.at(Stage::Certification, failure.cause),
+            DECLINE.at(Stage::Certification, *failure.cause),
             failure.work,
         )
         .with_root_failure(failure.root_failure)
@@ -377,7 +377,7 @@ fn region_work_failure(
     let integral = program::refusal_program(version, &failure);
     super::PlanarRegionWorkFailure::new(
         requested,
-        DECLINE.at(Stage::Certification, failure.cause),
+        DECLINE.at(Stage::Certification, *failure.cause),
         failure.work,
     )
     .with_root_failure(failure.root_failure)

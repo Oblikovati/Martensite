@@ -79,7 +79,7 @@ fn side_expectation(request: &WrappedConeNormalRequest, key: WrappedHistoryKey) 
         .find(|source| oracles::id(source).0 == curve.0)
         .unwrap();
     let poles = oracles::controls(&request.profile, source);
-    let t = (span.index as f64 + 0.5) / 2_f64.powi(i32::from(span.level));
+    let t = (span.index as f64 + 0.5) / martensite_cmath::powi(2., i32::from(span.level));
     let point = evaluate(poles.clone(), t);
     let tangent = tangent(&poles, t, span.reversed);
     let depth = physical_mid_depth(request);

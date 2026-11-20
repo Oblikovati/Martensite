@@ -55,7 +55,7 @@ fn legacy_fit_rate(
 ) -> Result<Interval, SpatialFailure> {
     let rate =
         super::slant_derivative::fit_rate(a, w, arithmetic).map_err(SpatialFailure::Slant)?;
-    let denominator = arithmetic.multiply(&minimum, &minimum)?;
+    let denominator = arithmetic.multiply(minimum, minimum)?;
     Ok(arithmetic.divide(&magnitude_interval(&rate), &denominator)?)
 }
 pub(super) struct Bounds {

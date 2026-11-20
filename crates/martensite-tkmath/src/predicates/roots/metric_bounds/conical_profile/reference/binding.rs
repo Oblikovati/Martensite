@@ -73,13 +73,12 @@ fn admit_chart_authority(
     query: &ReferenceInputs<'_>,
 ) -> Result<(), ConicalReferenceFailure> {
     let input = span.query;
-    if let ReferenceDomain::Chart(domain) = query.sector {
-        if !span
+    if let ReferenceDomain::Chart(domain) = query.sector
+        && !span
             .boundary
             .matches_chart_with_refinement(&input, domain, query.refinement)
-        {
-            return Err(binding_failure("executed chart-metric boundary authority"));
-        }
+    {
+        return Err(binding_failure("executed chart-metric boundary authority"));
     }
     Ok(())
 }

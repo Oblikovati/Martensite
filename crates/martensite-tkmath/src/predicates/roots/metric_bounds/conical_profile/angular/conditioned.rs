@@ -103,5 +103,5 @@ pub(in super::super) fn absolute_coefficient_mean(
         sum = arithmetic.add(&sum, &magnitude_interval(std::slice::from_ref(coefficient)))?;
     }
     // Every Bernstein basis function is nonnegative and integrates to 1/(degree+1).
-    Ok(arithmetic.fraction(&sum, 1, residual.len() as u64)?)
+    arithmetic.fraction(&sum, 1, residual.len() as u64)
 }

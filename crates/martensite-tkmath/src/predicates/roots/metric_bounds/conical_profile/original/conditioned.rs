@@ -3,12 +3,13 @@
 use super::*;
 #[cfg(test)]
 mod tests;
+type RestrictedDisplacement = (DisplacementEvidence, Option<[Vec<Interval>; 2]>);
 pub(super) fn displacement(
     source: &[Vec<Interval>; 2],
     child: &[Vec<Interval>; 2],
     original: ConicalOriginalSpan<'_>,
     arithmetic: &mut Arithmetic<'_>,
-) -> Result<(DisplacementEvidence, Option<[Vec<Interval>; 2]>), ConicalOriginalFailure> {
+) -> Result<RestrictedDisplacement, ConicalOriginalFailure> {
     let (x, first) = axis(&source[0], &child[0], original, arithmetic)?;
     let (y, second) = axis(&source[1], &child[1], original, arithmetic)?;
     let evidence = displacement_from_axes(x, y, arithmetic)?;

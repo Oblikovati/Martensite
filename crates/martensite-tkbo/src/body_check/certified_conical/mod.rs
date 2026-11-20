@@ -2,6 +2,8 @@
 //! Native binding is separate from the opaque mathematical family certificate.
 mod binding;
 mod census;
+#[cfg(test)]
+mod error_tests;
 mod material;
 pub use census::ConicalNativeCensus;
 mod native;
@@ -49,7 +51,7 @@ pub struct ConicalBindingError {
     /// Offending cap, if present.
     pub cap: Option<ConicalActualCapId>,
     /// Original native/binding cause.
-    pub cause: Failure,
+    pub cause: Box<Failure>,
 }
 impl std::fmt::Display for ConicalBindingError {
     fn fmt(&self, output: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -62,7 +64,7 @@ impl std::fmt::Display for ConicalBindingError {
 }
 impl std::error::Error for ConicalBindingError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        Some(&self.cause)
+        Some(self.cause.as_ref())
     }
 }
 /// Operation-local independent capture; native handles never enter the issued body receipt.

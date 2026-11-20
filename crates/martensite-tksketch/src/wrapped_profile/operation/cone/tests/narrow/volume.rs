@@ -39,8 +39,8 @@ fn ratio(numerator: i128, denominator: i128) -> [f64; 2] {
 #[test]
 fn dyadic_depth_coefficients_and_symmetric_volume_oracle_are_independent() {
     let a = DEPTH_NUMERATOR as f64;
-    assert_eq!(-a / 2_f64.powi(55), -0.1);
-    assert_eq!(a / 2_f64.powi(54), 0.2);
+    assert_eq!(-a / martensite_cmath::powi(2., 55), -0.1);
+    assert_eq!(a / martensite_cmath::powi(2., 54), 0.2);
     // Symmetric depths[-1/8,1/8] cancel the inverse-slant term exactly.
     assert_eq!(366 * 480 / (5 * 4), 183 * 48);
     for region in [SurfaceRegionId(1), SurfaceRegionId(2)] {

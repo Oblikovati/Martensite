@@ -1,6 +1,6 @@
 # Surface wrapped Sketch3D implementation state
 
-Updated: 2026-11-19, 23:23 UTC. Implementation is active. This record includes
+Updated: 2026-11-20. Implementation is active. This record includes
 the V6 measurements, exact-point optimization and version-2 volume controls.
 Remote commit and issue states remain those observed at the original snapshot
 unless a later receipt is named.
@@ -13,6 +13,14 @@ directed cone operation and geometric planar proof V6 work locally, including
 the narrow-cone `O.` fixture with a hole and a disconnected dot in both normal
 senses. The V6 checkpoint passed 206 targeted tests; the later volume-policy
 round passed 140 partially overlapping tests, detailed below.
+
+The post-lint pass completed 256 selected tests, including eight complete cone
+operations. This overlaps earlier coverage. Math, Boolean and Sketch Clippy
+checks passed with warnings denied. The [cleanup receipt](references/b1-lint-regressions-2026-11-20/summary.json)
+records 20 source paths, commands, source checks and verbatim logs. Failure-only
+payload storage changed in the unpublished cone error and a private profile
+error; successful operations gained no allocation. The five-second time/RSS
+gate and the full affected-package gate remain pending for B1.
 
 The full capability is not delivered. B1/V6 and volume policy 2 are locally
 checkpointed in `6fca95d2`; `427bad37` preserves verbatim evidence in a verified
@@ -426,7 +434,8 @@ admission accepts V5/V6; synchronize them before delivery.
 Local shared-fix evidence, all under `/tmp/`:
 
 - `martensite-census-contact-indexes-source-freeze.json`: original 17-file candidate.
-- `martensite-census-contact-indexes-cold-source-freeze.json`: current 18-file candidate.
+- `martensite-census-contact-indexes-cold-source-freeze.json`: original cold 18-file candidate.
+- `martensite-census-contact-indexes-cold-clippy-r1-source-freeze.json`: final 18-file candidate after two mechanical Clippy fixes.
 - `martensite-census-contact-indexes-cold-focused.log`: 68 passing focused tests.
 - `martensite-census-contact-indexes-cold-{standards,spec}-review.md`: source acceptance.
 - `martensite-census-contact-indexes-public-api/campaign-r1/`: original complete benchmark; its exact source corresponds to committed tree `2ab520fe`.
@@ -442,7 +451,9 @@ The original #564 source checkout remains until supersession is integrated.
 Dataset-dependent lanes use independent clean `martensite-test-data` checkouts
 at `34d65afd72cd3ca8ac1f9d17e5ca408b30e9b4b6`, without object alternates.
 
-Do not restart a build from an old running-file alone. The recorded normal
-build completed; the next benchmark preparation is linking, followed by a fresh
-identity check and declared timed pairs when authorized work resumes. No build,
-link, benchmark, PR or release was started to write this briefing.
+The shared-fix canonical gate is live. Its final-source benchmark needs a
+normal-build/link check and a fresh declared campaign after that gate. The
+#569 baseline and fixed consumers are linked; all 14 functional invocations
+passed. Their strict timing campaign has not started. Existing flagged and
+partial campaigns remain preserved. A running-file alone does not establish
+process liveness.
