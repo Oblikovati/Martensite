@@ -4,6 +4,7 @@ use super::boundary_snapshot::BoundarySnapshot;
 use super::*;
 mod binding;
 mod material;
+mod motion;
 pub(in crate::predicates::roots::metric_bounds) use super::boundary_chart::ChartBinding;
 pub(in crate::predicates::roots::metric_bounds) use material::{
     half_pi, span_bounds_with_refinement, validate_with_refinement,
@@ -82,6 +83,7 @@ impl ConicalDevelopedBoundaryEvidence {
     }
 }
 pub(super) struct JoinOperands<'a> {
+    trace: &'a RetainedOperands,
     pub(super) uv: &'a [[u64; 2]],
     pub(super) capture: &'a spatial::SpatialCapture,
     pub(super) carriers: [[u64; 3]; 2],
@@ -114,6 +116,7 @@ pub(super) fn join_uv<'a>(
         ConicalPrimitiveRefinement::UnsplitV1,
     )?;
     Some(JoinOperands {
+        trace: &issued.operands,
         uv: &issued.uv_bits[0],
         capture: &captured.capture,
         carriers: issued.carriers,

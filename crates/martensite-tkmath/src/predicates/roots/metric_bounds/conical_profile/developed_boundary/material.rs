@@ -104,7 +104,21 @@ fn displacement(
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<Interval, CylindricalProfileFailure> {
     // The Euclidean polar triangle uses Lfit*sin(alpha), independently of signed normal depth.
-    let weights = &retained.capture.weights;
+    let (radial, minimum) =
+        slant_difference(reference, operands, &retained.capture.weights, arithmetic)?;
+    let radius = arithmetic.divide(&algebra::magnitude(&retained.capture.numerator), &minimum)?;
+    let radius = arithmetic.multiply(&radius, sine)?;
+    let angular = arithmetic.multiply(&radius, &operands.angular)?;
+    let source = arithmetic.add(&retained.evidence.bound, &retained.evidence.original)?;
+    let error = arithmetic.add(&radial, &angular)?;
+    Ok(arithmetic.add(&source, &error)?)
+}
+pub(super) fn slant_difference(
+    reference: f64,
+    operands: &RetainedOperands,
+    weights: &[Interval],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<(Interval, Interval), CylindricalProfileFailure> {
     let lower = polynomial::lower(weights);
     let minimum = Interval {
         lower: lower.clone(),
@@ -114,13 +128,9 @@ fn displacement(
     let shift = polynomial::scale(weights, &reference, arithmetic)?;
     let residual = algebra::sum(&operands.delta, &shift, arithmetic)?;
     let radial = arithmetic.divide(&algebra::magnitude(&residual), &minimum)?;
-    let radius = arithmetic.divide(&algebra::magnitude(&retained.capture.numerator), &minimum)?;
-    let radius = arithmetic.multiply(&radius, sine)?;
-    let angular = arithmetic.multiply(&radius, &operands.angular)?;
-    let source = arithmetic.add(&retained.evidence.bound, &retained.evidence.original)?;
-    let error = arithmetic.add(&radial, &angular)?;
-    Ok(arithmetic.add(&source, &error)?)
+    Ok((radial, minimum))
 }
+
 fn original_controls(
     capture: &spatial::SpatialCapture,
 ) -> Result<&[Vec<Interval>; 2], CylindricalProfileFailure> {

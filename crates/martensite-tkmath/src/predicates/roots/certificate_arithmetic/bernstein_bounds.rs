@@ -34,6 +34,18 @@ fn accumulate(
     Ok(())
 }
 
+pub(in crate::predicates::roots) fn integrate_unit(
+    coefficients: &[Interval],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Interval> {
+    let mut sum = arithmetic.zero();
+    for coefficient in coefficients {
+        sum = arithmetic.add(&sum, coefficient)?;
+    }
+    // Every Bernstein basis function of degree n has integral 1/(n+1).
+    arithmetic.fraction(&sum, 1, coefficients.len() as u64)
+}
+
 pub(in crate::predicates::roots) fn scale(
     a: &[Interval],
     factor: &Interval,

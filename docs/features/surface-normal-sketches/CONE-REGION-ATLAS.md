@@ -236,3 +236,51 @@ Four replay controls matched `4a8cc2bc` byte for byte. In three paired
 standalone O. runs after the suites finished, median API time was
 4.764 s on the baseline and 4.741 s on the candidate. Median peak RSS
 was 67,580 KiB and 67,500 KiB, respectively.
+
+
+## Separation throughout the cap interpolation
+
+The join proof now also bounds the motion of each span from the authored
+curve to the decoded cap. It adds the outward angle and slant residuals
+from source restriction, fitting and cap trim. This bounds displacement
+in the numerical angle/slant plane. The spatial error in model units is
+still checked by the retained boundary proof.
+
+The decoded clearance must name the same reflected controls
+`(angle, -slant)`, whole span intervals and adjacent pairs. Its unit
+angular scale fixes the period at `2π`. The unwrapped-profile and periodic
+margins must both exceed twice the maximum span motion. The difference
+is a lower bound on the separation throughout interpolation. The gap
+to a periodic copy is at most one full turn, so the motion bound is
+strictly below half a turn. At a shared endpoint, both authored lifts
+are within that bound of the same cap endpoint. Distinct lifts of the
+same authored point differ by at least one full turn, so the lifts
+agree. The join proof handles the excluded adjacent pairs.
+
+The closed-strip test also checks the filled cap against its periodic
+copies at the decoded endpoint. Since the boundaries remain disjoint throughout the
+interpolation, that fill classification cannot change.
+
+## Signed volume of the decoded cap reference
+
+The retained cap polynomials give the signed planar area
+`A = ∮ v du` and first slant moment `B = ½ ∮ v² du` in angle `u`
+and relative slant `v`. Bounded Bernstein polynomial integration
+encloses both integrals. With semi-angle `α`, slant reference `L₀`,
+depth midpoint `d̄` and outward sign `s`, the signed normal volume is
+`Δd * ((L₀ sin α + s d̄ cos α) A + sin α B)`. The check refuses
+unless the radius is proved positive at the minimum slant and signed
+depth. An independent rectangle checks both normal senses and refusal
+when inward extrusion crosses the axis.
+
+The closed-strip test encloses a positive reference volume. Publication
+still needs to bind the reference measure to the native body's stored
+geometry and its error budget.
+
+The metric-bound suite passed 806 tests. The wrapped-profile suite
+passed 535 tests with eight ignored. Clippy passed with warnings
+denied. Four replay controls matched `97d72a46` byte for byte.
+Five paired standalone O. runs on one pinned Linux x86_64 core after
+the suites finished measured median API times of 4.988 s on the
+baseline and 4.936 s on the candidate. Median peak RSS was 67,816 KiB
+and 67,364 KiB, respectively.

@@ -466,7 +466,9 @@ fn admit_source_point(pole: usize, point: &[f64; 2]) -> Result<(), ConicalSource
 }
 
 pub use joins::{
-    ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalChartJoinsError, certify_conical_cap_joins,
+    ConicalCapClearanceRelation, ConicalCapHomotopyEvidence, ConicalCapHomotopyFailure,
+    ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalCapVolumeError, ConicalCapVolumeEvidence,
+    ConicalCapVolumeFailure, ConicalChartJoinsError, certify_conical_cap_joins,
     certify_conical_joins_in_chart, certify_conical_joins_in_chart_with_refinement,
 };
 

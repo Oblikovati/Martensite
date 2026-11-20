@@ -45,7 +45,7 @@ fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {
     let stored = storage::capture(original, &prepared, body, &mut work, &mut || false).unwrap();
     assert_per_span_authority(original, &prepared, &stored.spans);
     assert_certified_contour(original, &prepared, &stored);
-    assert_periodic_cap_material(&prepared, &request, &stored.spans);
+    assert_periodic_cap_material(&prepared, &request, &stored, &clearance, &mut work);
 }
 
 fn decode_strip(prepared: &Prepared, support: ConeSupport) -> coverage::MemberView {
@@ -248,9 +248,11 @@ fn assert_closed_wide_uv(prepared: &Prepared) {
 fn assert_periodic_cap_material(
     prepared: &Prepared,
     request: &WrappedConeNormalRequest,
-    spans: &[storage::SpanProof],
+    stored: &storage::Stored,
+    authored_clearance: &CertifiedCylindricalClearance,
+    work: &mut Work,
 ) {
-    let uv = periodic_uv_request(prepared, spans);
+    let uv = periodic_uv_request(prepared, &stored.spans);
     let profiles = std::slice::from_ref(&uv);
     let planar = planar_cap_material(profiles, request);
     let boundary_clearance =
@@ -260,6 +262,7 @@ fn assert_periodic_cap_material(
         prepared: vec![uv.clone()],
         boundary_clearance,
     };
+    let region = uv.region;
     let material = periodic_selection::material::certify_with_cancel(
         &[uv],
         &prepared,
@@ -267,10 +270,52 @@ fn assert_periodic_cap_material(
         || false,
     )
     .unwrap();
+    let homotopy = assert_homotopy(
+        &stored.joins,
+        &prepared.boundary_clearance,
+        authored_clearance,
+    );
+    let volume = homotopy
+        .signed_normal_volume(work.remaining(), || false)
+        .unwrap();
+    work.charge(region, None, volume.operations()).unwrap();
+    let [lower, upper] = volume
+        .enclosure()
+        .each_ref()
+        .map(|endpoint| endpoint.binary64_bounds().unwrap());
+    assert!(lower[0] > 0.);
+    assert!(upper[1] - lower[0] < 1e-10);
     let images = prepared.boundary_clearance.periodic.images();
     assert_eq!(images.len(), 1);
     assert_eq!(images[0].translation().turn(), 1);
     assert_eq!(material.relations.len(), 2);
+}
+
+fn assert_homotopy<'a>(
+    joins: &'a ConicalJoinsEvidence,
+    cap_clearance: &planar_clearance::OriginalClearance,
+    authored_clearance: &CertifiedCylindricalClearance,
+) -> ConicalCapHomotopyEvidence<'a> {
+    let homotopy = joins
+        .certify_cap_homotopy(&cap_clearance.certificate, &cap_clearance.periodic)
+        .unwrap();
+    assert!(
+        homotopy
+            .motion_upper_bound()
+            .compare_f64(0.)
+            .unwrap()
+            .is_gt()
+    );
+    for gap in homotopy.separation_lower_bounds() {
+        assert!(gap.compare_f64(0.).unwrap().is_gt());
+    }
+    assert!(matches!(
+        joins.certify_cap_homotopy(authored_clearance, &cap_clearance.periodic),
+        Err(ConicalCapHomotopyFailure::Binding(
+            ConicalCapClearanceRelation::Nonadjacent
+        ))
+    ));
+    homotopy
 }
 
 fn planar_cap_material(

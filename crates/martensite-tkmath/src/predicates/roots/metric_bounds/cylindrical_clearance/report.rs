@@ -109,6 +109,21 @@ impl CertifiedCylindricalClearance {
                     )
             })
     }
+    pub(in crate::predicates::roots::metric_bounds) fn matches_whole_control_bits(
+        &self,
+        sources: impl ExactSizeIterator<Item = impl ExactSizeIterator<Item = [u64; 2]>>,
+    ) -> bool {
+        self.sources.len() == sources.len()
+            && self.sources.iter().zip(sources).all(|(stored, poles)| {
+                let count = poles.len();
+                (2..=4).contains(&count)
+                    && stored
+                        .iter()
+                        .copied()
+                        .eq(curve_words(0, 0, count, poles.flatten()))
+            })
+    }
+
     /// Declared support radius; `proof.support_radius()`.
     pub fn support_radius(&self) -> f64 {
         self.radius
@@ -161,13 +176,23 @@ fn source_bits(source: &CylindricalClearanceSource<'_>) -> Vec<u64> {
 }
 
 fn source_words(source: CylindricalClearanceSource<'_>) -> impl Iterator<Item = u64> + '_ {
-    [
+    curve_words(
         source.interval.index(),
-        source.interval.level().into(),
-        source.authored.len() as u64,
-    ]
-    .into_iter()
-    .chain(source.authored.iter().flatten().map(|v| v.to_bits()))
+        source.interval.level(),
+        source.authored.len(),
+        source.authored.iter().flatten().map(|v| v.to_bits()),
+    )
+}
+
+fn curve_words(
+    index: u64,
+    level: u8,
+    count: usize,
+    coordinates: impl Iterator<Item = u64>,
+) -> impl Iterator<Item = u64> {
+    [index, u64::from(level), count as u64]
+        .into_iter()
+        .chain(coordinates)
 }
 
 fn original_matches(old: &[u64], source: &CylindricalClearanceSource<'_>) -> bool {

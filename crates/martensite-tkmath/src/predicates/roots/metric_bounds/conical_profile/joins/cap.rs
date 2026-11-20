@@ -3,6 +3,11 @@
 use super::super::boundary_chart::ChartBinding;
 use super::super::developed_boundary::{join_carriers, join_uv};
 use super::*;
+mod homotopy;
+pub use homotopy::{
+    ConicalCapClearanceRelation, ConicalCapHomotopyEvidence, ConicalCapHomotopyFailure,
+    ConicalCapVolumeError, ConicalCapVolumeEvidence, ConicalCapVolumeFailure,
+};
 mod projection;
 use projection::Projection;
 
@@ -29,7 +34,9 @@ pub struct ConicalCapJoinsQuery<'a> {
 
 pub(super) struct CapBinding {
     reference: u64,
+    support: [u64; 5],
     carriers: [[u64; 3]; 2],
+    motion: DyadicBound,
     spans: Vec<CapSpanBinding>,
 }
 struct CapSpanBinding {
@@ -59,7 +66,9 @@ pub fn certify_conical_cap_joins(
 struct Capture<'a, 'q> {
     query: &'q ConicalCapJoinsQuery<'a>,
     support: [u64; 5],
-    binding: CapBinding,
+    motion: num_bigint::BigInt,
+    carriers: [[u64; 3]; 2],
+    spans: Vec<CapSpanBinding>,
 }
 
 impl Capture<'_, '_> {
@@ -70,14 +79,15 @@ impl Capture<'_, '_> {
     ) -> Result<Projection, ConicalJoinsFailure> {
         let span = &self.query.spans[index];
         let operands = operands(self.query, span)
-            .filter(|operands| operands.carriers == self.binding.carriers)
+            .filter(|operands| operands.carriers == self.carriers)
             .ok_or(ConicalJoinsFailure::Boundary { index })?;
         if common_support(&span.cap.source) != self.support {
             return Err(ConicalJoinsFailure::Boundary { index });
         }
         let projection = Projection::capture(operands.uv, operands.capture, arithmetic)
             .map_err(|cause| failure(index, cause))?;
-        self.binding.spans.push(CapSpanBinding {
+        self.include_motion(self.query.reference_slant, &operands, index, arithmetic)?;
+        self.spans.push(CapSpanBinding {
             chart: ChartBinding::capture_selected(
                 span.chart,
                 ConicalPrimitiveRefinement::UnsplitV1,
@@ -85,6 +95,21 @@ impl Capture<'_, '_> {
             uv: operands.uv.to_vec(),
         });
         Ok(projection)
+    }
+    fn include_motion(
+        &mut self,
+        reference: f64,
+        operands: &super::super::developed_boundary::JoinOperands<'_>,
+        index: usize,
+        arithmetic: &mut Arithmetic<'_>,
+    ) -> Result<(), ConicalJoinsFailure> {
+        let bound = operands
+            .motion_upper(reference, arithmetic)
+            .map_err(|cause| failure(index, cause))?;
+        if bound > self.motion {
+            self.motion = bound;
+        }
+        Ok(())
     }
 }
 
@@ -118,11 +143,9 @@ fn execute(
     let mut capture = Capture {
         query,
         support: common_support(&first.cap.source),
-        binding: CapBinding {
-            reference: query.reference_slant.to_bits(),
-            carriers: join_carriers(first.cap.evidence),
-            spans: Vec::with_capacity(query.spans.len()),
-        },
+        motion: 0.into(),
+        carriers: join_carriers(first.cap.evidence),
+        spans: Vec::with_capacity(query.spans.len()),
     };
     let mut directions = Vec::with_capacity(query.spans.len());
     let mut start = 0;
@@ -131,7 +154,16 @@ fn execute(
         prove_ring(&mut capture, start..end, arithmetic, &mut directions)?;
         start = end;
     }
-    Ok((directions, capture.binding))
+    Ok((
+        directions,
+        CapBinding {
+            reference: query.reference_slant.to_bits(),
+            support: capture.support,
+            carriers: capture.carriers,
+            motion: DyadicBound::new(capture.motion, -i32::from(arithmetic.fractional_bits())),
+            spans: capture.spans,
+        },
+    ))
 }
 
 fn prove_ring(
@@ -168,7 +200,7 @@ fn evidence(
 ) -> ConicalJoinsEvidence {
     ConicalJoinsEvidence {
         chart: None,
-        cap_charts: Some(binding),
+        cap_charts: Some(Box::new(binding)),
         input: query
             .spans
             .iter()
