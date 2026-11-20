@@ -4,13 +4,14 @@ use super::{domain_certificate::CertifiedPairDomain, outcome::*, paired_types::*
 use martensite_tkmath::predicates::roots::bezier_pair::*;
 
 pub(super) fn certificate<'a>(
-    census: &'a BoundaryCensus,
+    view: &super::paired_binding::DomainCertificates<'a>,
     domain: &BoundaryDomain,
     index: usize,
 ) -> Option<CertifiedPairDomain<'a>> {
+    let census = view.census();
     let paired = census.paired.as_ref()?;
     let record = paired.exclusions.get(index)?;
-    if !binding_current(census, domain, record) {
+    if !binding_current(view, domain, record) {
         return None;
     }
     execution_certificate(record.outcome.as_ref().ok()?)
@@ -28,18 +29,13 @@ fn execution_certificate(
         .map(CertifiedPairDomain::Solver)
 }
 fn binding_current(
-    census: &BoundaryCensus,
+    view: &super::paired_binding::DomainCertificates<'_>,
     domain: &BoundaryDomain,
     record: &super::bernstein_execution::BernsteinStoredReport,
 ) -> bool {
-    super::paired_binding::parameter_binding_current(census, domain)
-        && super::paired_binding::metadata_current(
-            census,
-            domain.occurrences,
-            record.sources,
-            record.mode,
-        )
-        && source_current(census, record)
+    super::paired_binding::parameter_binding_current(view.census(), domain)
+        && view.metadata_current(domain.occurrences, record.sources, record.mode)
+        && source_current(view.census(), record)
 }
 
 fn source_current(

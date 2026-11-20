@@ -4,7 +4,7 @@ use super::*;
 use martensite_tkmath::predicates::roots::metric_bounds::{
     IntegralProgramFailure, IntegralProgramOptions, IntegralProgramVersion, RationalIntegralOptions,
 };
-fn options() -> IntegralProgramOptions {
+pub(super) fn options() -> IntegralProgramOptions {
     IntegralProgramOptions {
         version: IntegralProgramVersion::V1,
         integration: RationalIntegralOptions::default(),

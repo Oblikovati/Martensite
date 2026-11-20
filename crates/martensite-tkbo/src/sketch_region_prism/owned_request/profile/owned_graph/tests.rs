@@ -2,7 +2,9 @@
 //! #555: the real fresh producer shares geometry/callback results with the live path.
 use super::super::tests::{Continue, Profile};
 use super::*;
+mod conditioned_occurrences;
 mod early_failures;
+mod occurrences;
 mod program;
 mod recapture;
 mod unified;

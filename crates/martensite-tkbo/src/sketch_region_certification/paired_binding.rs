@@ -2,6 +2,7 @@
 //! Coverage is recomputed from the actual complete occurrence matrix, not a mutable gap vector.
 use super::{census, outcome::*, paired_types::*};
 use martensite_tkmath::predicates::roots::bezier_pair::*;
+mod occurrence;
 
 pub(super) fn refresh_obligations(census: &mut BoundaryCensus) {
     refresh_obligations_with_access(census, super::SourceAccess::Live);
@@ -45,6 +46,9 @@ pub(crate) fn domain_certificate<'a>(
 pub(crate) struct DomainCertificates<'a> {
     census: &'a BoundaryCensus,
     source: super::source_status::CurrentSourceRepresentation<'a>,
+    owned_occurrences: Option<Vec<bool>>,
+    #[cfg(test)]
+    pub(crate) occurrence_visits: std::cell::Cell<[usize; 2]>,
     owned_current: Option<(bool, &'a crate::sketch_region_prism::OwnedGraphAccess<'a>)>,
 }
 impl<'a> DomainCertificates<'a> {
@@ -58,6 +62,9 @@ impl<'a> DomainCertificates<'a> {
             census,
             source,
             owned_current: None,
+            owned_occurrences: None,
+            #[cfg(test)]
+            occurrence_visits: Default::default(),
         })
     }
     pub(super) fn validate_owned(
@@ -74,6 +81,9 @@ impl<'a> DomainCertificates<'a> {
                 .current_with_observer(|| owner.observed_capture());
             #[cfg(not(test))]
             let current = self.source.current();
+            self.owned_occurrences = current.then(|| {
+                occurrence::capture(self.census, &mut |kind| self.observe_occurrence(kind))
+            });
             self.owned_current = Some((current, owner));
         }
     }
@@ -119,7 +129,7 @@ impl<'a> DomainCertificates<'a> {
         domain: &BoundaryDomain,
     ) -> Option<super::domain_certificate::CertifiedPairDomain<'a>> {
         if let DomainEvidence::BernsteinReport { report, .. } = domain.evidence {
-            return super::bernstein_binding::certificate(self.census, domain, report);
+            return super::bernstein_binding::certificate(self, domain, report);
         }
         self.solver_certificate(domain)
             .map(super::domain_certificate::CertifiedPairDomain::Solver)
@@ -129,13 +139,52 @@ impl<'a> DomainCertificates<'a> {
             return None;
         };
         let retained = self.census.paired.as_ref()?.reports.get(report)?;
-        if !domain_binding_current(self.census, domain, retained) {
+        if !self.domain_binding_current(domain, retained) {
             return None;
         }
         let report = retained.outcome.as_ref().ok()?;
         (report.policy() == retained.effective)
             .then(|| report.complete())
             .flatten()
+    }
+    pub(super) fn census(&self) -> &'a BoundaryCensus {
+        self.census
+    }
+    fn domain_binding_current(&self, domain: &BoundaryDomain, record: &PairedStoredReport) -> bool {
+        if !parameter_binding_current(self.census, domain) {
+            return false;
+        }
+        self.metadata_current(domain.occurrences, record.sources, record.mode)
+            && report_source_current(self.census, record)
+    }
+    pub(super) fn metadata_current(
+        &self,
+        pair: [usize; 2],
+        sources: [usize; 2],
+        mode: PairedQueryMode,
+    ) -> bool {
+        current_sources(self.census, pair) == Some(sources)
+            && super::paired_execution::query_mode(pair) == mode
+            && pair.into_iter().all(|index| {
+                occurrence::current_or_retained(
+                    self.census,
+                    index,
+                    self.owned_occurrences.as_deref(),
+                    &mut |kind| self.observe_occurrence(kind),
+                )
+            })
+    }
+    fn observe_occurrence(&self, _kind: occurrence::Predicate) {
+        #[cfg(test)]
+        {
+            let slot = match _kind {
+                occurrence::Predicate::Relation => 0,
+                occurrence::Predicate::PhysicalPrefix => 1,
+            };
+            let mut visits = self.occurrence_visits.get();
+            visits[slot] += 1;
+            self.occurrence_visits.set(visits);
+        }
     }
 }
 pub(super) fn paired_policy_current(
@@ -162,31 +211,6 @@ fn selected_signs_current(paired: &PairedCensusEvidence) -> bool {
     ) && paired.selected_signs == expected
 }
 
-fn domain_binding_current(
-    census: &BoundaryCensus,
-    domain: &BoundaryDomain,
-    record: &PairedStoredReport,
-) -> bool {
-    if !parameter_binding_current(census, domain) {
-        return false;
-    }
-    let pair = domain.occurrences;
-    metadata_current(census, pair, record.sources, record.mode)
-        && report_source_current(census, record)
-}
-pub(super) fn metadata_current(
-    census: &BoundaryCensus,
-    pair: [usize; 2],
-    sources: [usize; 2],
-    mode: PairedQueryMode,
-) -> bool {
-    current_sources(census, pair) == Some(sources)
-        && super::paired_execution::query_mode(pair) == mode
-        && pair
-            .into_iter()
-            .all(|index| occurrence_current(census, index))
-}
-
 fn current_sources(census: &BoundaryCensus, pair: [usize; 2]) -> Option<[usize; 2]> {
     let records = &census.paired.as_ref()?.occurrences;
     let mut sources = [
@@ -195,61 +219,6 @@ fn current_sources(census: &BoundaryCensus, pair: [usize; 2]) -> Option<[usize; 
     ];
     sources.sort();
     Some(sources)
-}
-fn occurrence_current(census: &BoundaryCensus, index: usize) -> bool {
-    let Some(record) = census
-        .paired
-        .as_ref()
-        .and_then(|paired| paired.occurrences.get(index))
-    else {
-        return false;
-    };
-    let Some(current) = census.inputs.segments.get(index) else {
-        return false;
-    };
-    same_occurrence_metadata(&record.source, current)
-        && kinded_parents_complete(record)
-        && current_relations(census, current, &record.relations)
-        && current_physical_group(census, index, current) == Some(record.physical_source)
-}
-fn same_occurrence_metadata(
-    old: &crate::sketch_region_candidates::CandidateSegment,
-    current: &crate::sketch_region_candidates::CandidateSegment,
-) -> bool {
-    census::same_capture(old, current)
-        && old.edge.is_equal(&current.edge)
-        && old.parents == current.parents
-        && old.occurrence == current.occurrence
-        && old.reversed == current.reversed
-}
-fn current_physical_group(
-    census: &BoundaryCensus,
-    index: usize,
-    current: &crate::sketch_region_candidates::CandidateSegment,
-) -> Option<usize> {
-    census.inputs.segments[..=index]
-        .iter()
-        .position(|source| census::same_capture(source, current))
-}
-
-fn current_relations(
-    census: &BoundaryCensus,
-    source: &crate::sketch_region_candidates::CandidateSegment,
-    recorded: &[crate::sketch_region::ArrangementRelation],
-) -> bool {
-    let actual = census
-        .inputs
-        .relations
-        .iter()
-        .filter(|row| row.output.is_same(&source.edge))
-        .collect::<Vec<_>>();
-    actual.len() == recorded.len()
-        && actual.iter().zip(recorded).all(|(a, b)| {
-            a.output.is_equal(&b.output)
-                && a.preserved == b.preserved
-                && a.modified == b.modified
-                && a.generated == b.generated
-        })
 }
 fn report_source_current(census: &BoundaryCensus, record: &PairedStoredReport) -> bool {
     let Ok(report) = &record.outcome else {
@@ -316,20 +285,6 @@ fn reuse_work_current(census: &BoundaryCensus, paired: &PairedCensusEvidence) ->
     cold_count == paired.reports.len() && reused_count == paired.reused_reports
 }
 
-fn kinded_parents_complete(record: &PairedOccurrenceSnapshot) -> bool {
-    let kinded = recorded_kinded_parents(record);
-    !record.source.parents.is_empty()
-        && !kinded.is_empty()
-        && record
-            .source
-            .parents
-            .iter()
-            .all(|parent| kinded.contains(&parent))
-        && kinded
-            .iter()
-            .all(|parent| record.source.parents.contains(parent))
-}
-
 pub(super) fn restore_operation_obligations(current: &mut Vec<CertificationObligation>) {
     for gap in [
         CertificationObligation::MappedSplitCorrespondence,
@@ -341,21 +296,6 @@ pub(super) fn restore_operation_obligations(current: &mut Vec<CertificationOblig
             current.push(gap);
         }
     }
-}
-
-fn recorded_kinded_parents(
-    record: &PairedOccurrenceSnapshot,
-) -> Vec<&crate::sketch_region::OriginalMemberIdentity> {
-    record
-        .relations
-        .iter()
-        .flat_map(|row| {
-            row.preserved
-                .iter()
-                .chain(&row.modified)
-                .chain(&row.generated)
-        })
-        .collect()
 }
 
 pub(super) fn parameter_binding_current(census: &BoundaryCensus, domain: &BoundaryDomain) -> bool {
