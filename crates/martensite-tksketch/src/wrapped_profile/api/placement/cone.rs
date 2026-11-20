@@ -97,18 +97,30 @@ pub fn normal_extrude_cone_profile_on_chart_with_cancel(
     selection: WrappedConeExecutionSelection,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<WrappedPlacedConeResult> {
-    input::poll(&mut cancelled, WrappedStage::Admission)?;
+    cone_on_chart(request, selection, &mut cancelled, |_, _| Ok(())).map(|(body, ())| body)
+}
+
+pub(in crate::surface_sketch::wrapped_profile::api) fn cone_on_chart<T, E>(
+    request: &WrappedConeNormalRequest,
+    selection: WrappedConeExecutionSelection,
+    cancelled: &mut CancelPoll<'_>,
+    inspect: impl FnOnce(&[DevelopedRegionRequest], &mut CancelPoll<'_>) -> Result<T, E>,
+) -> Result<(WrappedPlacedConeResult, T), E>
+where
+    E: From<WrappedNormalFailure>,
+{
+    input::poll(cancelled, WrappedStage::Admission)?;
     let (transform, frame) = frame(request.support)?;
     let mut run = canonical_run(request);
-    let mut inputs =
-        operation_cone::input::capture_with_selection(&run, selection, &mut cancelled)?;
+    let mut inputs = operation_cone::input::capture_with_selection(&run, selection, cancelled)?;
+    let inspected = inspect(&inputs.originals, cancelled)?;
     let plan = allocate(request, transform, &frame, &inputs.originals)?;
     run.options.spatial_error = plan.budget.canonical_allowance();
     for source in &mut inputs.originals {
         source.tolerance = run.options.spatial_error;
     }
-    let base = operation_cone::execute_captured(&run, selection, inputs, &mut cancelled)?;
-    publish(request, base, plan, &mut cancelled)
+    let base = operation_cone::execute_captured(&run, selection, inputs, cancelled)?;
+    Ok((publish(request, base, plan, cancelled)?, inspected))
 }
 
 fn canonical_run(request: &WrappedConeNormalRequest) -> ConeRun<'_> {

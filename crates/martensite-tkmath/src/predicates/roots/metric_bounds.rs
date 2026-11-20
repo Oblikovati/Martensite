@@ -56,7 +56,9 @@ pub use cylindrical_depths::{
 };
 mod conical_development;
 mod conical_material;
-pub use conical_development::{ConicalDevelopment, ConicalDevelopmentFailure};
+pub use conical_development::{
+    ConicalDevelopment, ConicalDevelopmentFailure, ConicalFootprint, ConicalTrimBand,
+};
 mod conical_profile;
 mod cylindrical_profile;
 mod cylindrical_storage;

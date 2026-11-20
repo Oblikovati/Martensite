@@ -10,6 +10,19 @@ use martensite_tkg3d::{
 };
 use martensite_tkmath::geom_abs::CurveType;
 
+pub(super) enum BandFailure {
+    Native(Box<Failure>),
+    Unsupported(&'static str),
+}
+type BandChecked<T> = Result<T, BandFailure>;
+
+fn native<T>(result: Result<T, Failure>) -> BandChecked<T> {
+    result.map_err(|cause| BandFailure::Native(Box::new(cause)))
+}
+fn unsupported(expected: &'static str) -> BandFailure {
+    BandFailure::Unsupported(expected)
+}
+
 pub(super) struct Band {
     pub axial: [f64; 2],
     pub angular: Option<[f64; 2]>,
@@ -20,7 +33,7 @@ struct Use {
     points: [[f64; 2]; 2],
 }
 
-pub(super) fn capture(face: &Face) -> FootprintChecked<Band> {
+pub(super) fn capture(face: &Face) -> BandChecked<Band> {
     let forward = native(topods::face(&face.oriented(Orientation::Forward)))?;
     let uses = occurrences(&forward)?;
     let [[u0, u1], [v0, v1]] = envelope(&uses)?;
@@ -32,7 +45,7 @@ pub(super) fn capture(face: &Face) -> FootprintChecked<Band> {
     })
 }
 
-fn occurrences(face: &Face) -> FootprintChecked<[Use; 4]> {
+fn occurrences(face: &Face) -> BandChecked<[Use; 4]> {
     let wire = only_wire(face)?;
     let mut edges = native(Explorer::new(&wire, ShapeEnum::Edge, ShapeEnum::Shape))?;
     let mut uses = Vec::with_capacity(4);
@@ -47,7 +60,7 @@ fn occurrences(face: &Face) -> FootprintChecked<[Use; 4]> {
         .map_err(|_| unsupported("four directed rectangular trim occurrences"))
 }
 
-fn only_wire(face: &Face) -> FootprintChecked<Shape> {
+fn only_wire(face: &Face) -> BandChecked<Shape> {
     let mut wires = native(Explorer::new(face, ShapeEnum::Wire, ShapeEnum::Shape))?;
     if !wires.more() {
         return Err(unsupported("one native outer trim wire"));
@@ -62,7 +75,7 @@ fn only_wire(face: &Face) -> FootprintChecked<Shape> {
     Ok(wire)
 }
 
-fn edge_use(shape: &Shape, face: &Face) -> FootprintChecked<Use> {
+fn edge_use(shape: &Shape, face: &Face) -> BandChecked<Use> {
     let edge = native(topods::edge(shape))?;
     let pcurve = native(BRepTool::curve_on_face(&edge, face))?;
     if !pcurve.is_stored
@@ -94,7 +107,7 @@ fn endpoints(
     direction: [f64; 2],
     interval: [f64; 2],
     orientation: Orientation,
-) -> FootprintChecked<[[f64; 2]; 2]> {
+) -> BandChecked<[[f64; 2]; 2]> {
     let moving = match direction.map(f64::abs) {
         [1., 0.] => 0,
         [0., 1.] => 1,
@@ -119,7 +132,7 @@ fn exact_add(a: f64, b: f64) -> Option<f64> {
     (sum.is_finite() && sum - large == small).then_some(sum)
 }
 
-fn envelope(uses: &[Use; 4]) -> FootprintChecked<[[f64; 2]; 2]> {
+fn envelope(uses: &[Use; 4]) -> BandChecked<[[f64; 2]; 2]> {
     let mut bounds = [[f64::INFINITY, f64::NEG_INFINITY]; 2];
     for point in uses.iter().flat_map(|edge| edge.points) {
         if !point.iter().all(|value| value.is_finite()) {
@@ -135,11 +148,7 @@ fn envelope(uses: &[Use; 4]) -> FootprintChecked<[[f64; 2]; 2]> {
     Ok(bounds)
 }
 
-fn rectangle(
-    uses: &[Use; 4],
-    [u0, v0]: [f64; 2],
-    [u1, v1]: [f64; 2],
-) -> FootprintChecked<[&Edge; 2]> {
+fn rectangle(uses: &[Use; 4], [u0, v0]: [f64; 2], [u1, v1]: [f64; 2]) -> BandChecked<[&Edge; 2]> {
     let corners = [[u0, v0], [u1, v0], [u1, v1], [u0, v1]];
     let mut sides = Vec::with_capacity(4);
     for i in 0..4 {
@@ -158,11 +167,7 @@ fn rectangle(
     Ok([sides[1], sides[3]])
 }
 
-fn angular_band(
-    face: &Face,
-    sides: [&Edge; 2],
-    bounds: [f64; 2],
-) -> FootprintChecked<Option<[f64; 2]>> {
+fn angular_band(face: &Face, sides: [&Edge; 2], bounds: [f64; 2]) -> BandChecked<Option<[f64; 2]>> {
     let adaptor = native(BRepAdaptorSurface::with_face(face, false))?;
     let period = native(adaptor.u_period())?;
     let width =

@@ -242,8 +242,36 @@ The chart supplies an estimated apex and frame for the existing placed cone
 extrusion. Two native frustum controls use four developed hits to author a
 solved profile, on an axis-aligned and an oblique face. Each checks both
 exported depth vertices for every hit against the native surface evaluated
-with its first derivatives. Whole-curve containment on the selected cone
-face and attached Boolean bosses and pockets require further qualification.
+with its first derivatives.
 
 The local checks passed 34 attachment tests and three tests for bounded
 cone development.
+
+## Conical trim bands
+
+`ConeAuthoringChart::extrude_within_trim_band` shares the cylinder's
+native trim reader. It accepts one rectangular trim in native UV. A full
+angular period requires the same native seam edge to occur on both sides.
+The operation uses the captured profile and the existing placed cone
+executor.
+
+The authored proof bounds each filled region by the rectangle of its
+developed controls. The nearest point of the rectangle supplies a lower
+slant bound and the farthest corner supplies the upper bound. The
+angles use the cone operation's selected lift. For a partial band a
+candidate shift is accepted only when outward bounds for the physical
+period place the whole angle enclosure strictly inside the native limits.
+The right half-plane has an unambiguous lift and can refuse before fitting.
+
+Each retained cap has its own envelope of decoded polynomial pcurve
+coefficients. Its slant is `V + R sin(alpha) + Z cos(alpha)` from the
+stored radius, axial origin and angle. The result records both caps in
+caller depth order, along with the counted spans. The trim report describes
+the normal chart. The placed tool carries its own world-space error bounds.
+
+Controls exercised axis-aligned and oblique partial frustums, a narrowing
+frustum with a hole, and an inward tool crossing a full native seam.
+A separate control placed a valid standalone tool beyond the selected
+angular trim and verified refusal before fitting. Rectangular enclosures
+can refuse a profile whose filled region actually fits. General trim
+wires and native Boolean bosses and pockets on selected cones remain open.

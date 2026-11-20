@@ -16,6 +16,7 @@ mod chart_admission;
 mod cone;
 pub(super) use chart::from_canonical_inputs;
 pub use chart::*;
+pub(super) use cone::cone_on_chart;
 pub use cone::*;
 mod budget;
 use budget::{PlacementBudget, PlacementFrame};

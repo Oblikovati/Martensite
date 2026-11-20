@@ -9,6 +9,8 @@ use crate::surface_sketch::{
 };
 mod band;
 mod bounds;
+mod cone;
+pub use cone::{ConeFootprintFailure, ConeFootprintReport, ConeRegionFootprint, ConeTrimmedTool};
 mod extrusion;
 pub use extrusion::CylinderTrimmedTool;
 mod feature;
@@ -166,8 +168,13 @@ fn check_support(actual: CylinderSupport, expected: CylinderSupport) -> Footprin
     Ok(())
 }
 
-fn native<T>(result: Result<T, Failure>) -> FootprintChecked<T> {
-    result.map_err(|cause| CylinderFootprintFailure::Native(Box::new(cause)))
+impl From<band::BandFailure> for CylinderFootprintFailure {
+    fn from(cause: band::BandFailure) -> Self {
+        match cause {
+            band::BandFailure::Native(cause) => Self::Native(cause),
+            band::BandFailure::Unsupported(expected) => Self::UnsupportedTrim { expected },
+        }
+    }
 }
 fn unsupported(expected: &'static str) -> CylinderFootprintFailure {
     CylinderFootprintFailure::UnsupportedTrim { expected }

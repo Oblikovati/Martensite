@@ -22,6 +22,10 @@ pub(in crate::surface_sketch::wrapped_profile) struct MaterialEvidence {
     pub(super) planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
 }
 impl MaterialEvidence {
+    pub(in crate::surface_sketch::wrapped_profile) fn carriers(&self) -> [ConicalTrimCarrier; 2] {
+        self.carriers
+    }
+
     pub(in crate::surface_sketch::wrapped_profile) fn integral_program_evidence(
         &self,
     ) -> Option<&martensite_tkbo::profile_extrusion::PlanarIntegralEvidence> {

@@ -373,7 +373,7 @@ fn magnitude_interval(values: &[Interval]) -> Interval {
 }
 
 mod actual_certificate;
-mod angle;
+pub(super) mod angle;
 pub use actual_certificate::*;
 mod angular;
 mod boundary;

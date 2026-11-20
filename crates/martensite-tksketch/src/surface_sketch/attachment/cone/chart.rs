@@ -61,6 +61,16 @@ impl ConeFaceAttachment {
 }
 
 impl ConeAuthoringChart {
+    pub(in crate::surface_sketch) fn trim_face(
+        &self,
+    ) -> (&Face, FaceAttachmentId, SupportRevision) {
+        (&self.face, self.attempt.id, self.attempt.revision)
+    }
+
+    pub(in crate::surface_sketch) fn development(&self) -> &ConicalDevelopment {
+        &self.metric
+    }
+
     fn capture(attempt: Attempt, face: Face, seam: f64, tolerance: f64) -> ConeChecked<Self> {
         let adaptor = attempt.native(
             "selected cone adaptor",

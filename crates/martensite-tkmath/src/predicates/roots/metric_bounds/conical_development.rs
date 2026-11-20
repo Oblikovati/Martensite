@@ -7,11 +7,15 @@ use crate::predicates::roots::{
     DyadicBound,
     certificate_arithmetic::bounded_dyadic::{Arithmetic, ArithmeticPolicy, Interval},
 };
+mod trim_band;
+pub use trim_band::{ConicalFootprint, ConicalTrimBand};
 
 /// A cone chart with a certified native-to-apex slant offset and angular scale.
 #[derive(Clone, Debug)]
 pub struct ConicalDevelopment {
     sine: Interval,
+    cosine: Interval,
+    semi_angle: f64,
     offset: Interval,
     seam: f64,
     growing: bool,
@@ -40,6 +44,20 @@ pub enum ConicalDevelopmentFailure {
     Arithmetic(BoundedArithmeticFailure),
     /// The existing outward trigonometric enclosure could not complete.
     Trigonometric(Box<CylindricalProfileFailure>),
+    /// An interval could not be ordered or strictly enclosed by the trim.
+    Footprint {
+        /// Quantity in the developed normal chart.
+        field: &'static str,
+        /// Actual outward interval or rejected endpoints.
+        actual: [f64; 2],
+        /// Required open interval.
+        required: [f64; 2],
+    },
+    /// A developed control rectangle or cap envelope could not be resolved.
+    Envelope {
+        /// Rejected ordered Cartesian or UV intervals.
+        bounds: [[f64; 2]; 2],
+    },
 }
 
 type Checked<T> = Result<T, ConicalDevelopmentFailure>;
@@ -57,11 +75,13 @@ impl ConicalDevelopment {
         let mut cancelled = || false;
         let mut arithmetic = Arithmetic::new(ArithmeticPolicy::default(), &mut cancelled);
         let angle = arithmetic.scalar(semi_angle.abs())?;
-        let [_, sine] = trig(&angle, &mut arithmetic)?;
+        let [cosine, sine] = trig(&angle, &mut arithmetic)?;
         let radius = arithmetic.scalar(radius)?;
         let offset = arithmetic.divide(&radius, &sine)?;
         Ok(Self {
             sine,
+            cosine,
+            semi_angle: semi_angle.abs(),
             offset,
             seam,
             growing: semi_angle > 0.,
@@ -83,8 +103,7 @@ impl ConicalDevelopment {
     }
 
     fn slant(&self, v: f64, arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
-        let native = arithmetic.scalar(if self.growing { v } else { -v })?;
-        let slant = arithmetic.add(&self.offset, &native)?;
+        let slant = self.meridian(v, arithmetic)?;
         if slant.lower <= 0.into() {
             return Err(ConicalDevelopmentFailure::Slant {
                 v,
@@ -94,7 +113,17 @@ impl ConicalDevelopment {
         Ok(slant)
     }
 
+    fn meridian(&self, v: f64, arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
+        let native = arithmetic.scalar(if self.growing { v } else { -v })?;
+        Ok(arithmetic.add(&self.offset, &native)?)
+    }
+
     fn phase(&self, u: f64, arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
+        let angle = self.relative_angle(u, arithmetic)?;
+        Ok(arithmetic.multiply(&angle, &self.sine)?)
+    }
+
+    fn relative_angle(&self, u: f64, arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
         let u = arithmetic.scalar(u)?;
         let seam = arithmetic.scalar(self.seam)?;
         let sign_matches = self.growing == self.direct;
@@ -103,8 +132,7 @@ impl ConicalDevelopment {
         } else {
             (&seam, &u)
         };
-        let angle = arithmetic.subtract(first, last)?;
-        Ok(arithmetic.multiply(&angle, &self.sine)?)
+        Ok(arithmetic.subtract(first, last)?)
     }
 }
 
@@ -150,6 +178,23 @@ fn binary64(interval: Interval) -> Checked<[f64; 2]> {
 
 impl std::fmt::Display for ConicalDevelopmentFailure {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Self::Footprint {
+            field,
+            actual,
+            required,
+        } = self
+        {
+            return write!(
+                f,
+                "{field}={actual:?}, expected a finite enclosure strictly inside {required:?}"
+            );
+        }
+        if let Self::Envelope { bounds } = self {
+            return write!(
+                f,
+                "footprint envelope={bounds:?}, expected ordered finite bounds and a resolved chart away from the apex"
+            );
+        }
         write!(
             f,
             "{self:?}, expected finite UV on the positive-radius cone nappe"

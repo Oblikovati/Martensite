@@ -4,7 +4,7 @@ use super::*;
 use crate::predicates::roots::certificate_arithmetic::circular_constants;
 
 #[derive(Debug)]
-pub(super) enum InitialAngleFailure {
+pub(in crate::predicates::roots::metric_bounds) enum InitialAngleFailure {
     InvalidPoint([f64; 2]),
     ReductionOutOfRange,
     InvalidSupport {
@@ -44,7 +44,8 @@ impl From<BoundedArithmeticFailure> for InitialAngleFailure {
         Self::Arithmetic(cause)
     }
 }
-pub(super) type AngleResult<T> = Result<T, InitialAngleFailure>;
+pub(in crate::predicates::roots::metric_bounds) type AngleResult<T> =
+    Result<T, InitialAngleFailure>;
 
 #[derive(Clone, Copy)]
 pub(super) struct AnchorRequest {
@@ -205,7 +206,7 @@ pub(super) fn scale_developed(
     Ok((scaled, sine[0].clone()))
 }
 
-pub(super) fn initial_angle(
+pub(in crate::predicates::roots::metric_bounds) fn initial_angle(
     point: [f64; 2],
     arithmetic: &mut Arithmetic<'_>,
 ) -> AngleResult<Interval> {

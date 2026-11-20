@@ -34,6 +34,7 @@ pub use result::{
     DetachedNormalBody, NormalExtrusionResult, SurfaceDiagnostic, VolumeErrorEstimates,
 };
 pub use wrapped_profile::{
+    ConeFootprintFailure, ConeFootprintReport, ConeRegionFootprint, ConeTrimmedTool,
     CylinderBodyRef, CylinderFeatureCause, CylinderFeatureFailure, CylinderFeatureHistory,
     CylinderFeatureKind, CylinderFeatureParent, CylinderFeatureRelation, CylinderFeatureResult,
     CylinderFeatureSource, CylinderFeatureStage, CylinderFootprintFailure, CylinderFootprintReport,
