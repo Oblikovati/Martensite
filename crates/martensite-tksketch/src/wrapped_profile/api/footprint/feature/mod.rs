@@ -13,6 +13,8 @@ use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
 use std::collections::BTreeMap;
 
 mod body;
+mod cone;
+pub use cone::*;
 mod failure;
 mod history;
 use failure::{Attempt, FeatureChecked};
@@ -39,6 +41,10 @@ pub enum CylinderFeatureKind {
 pub struct CylinderFeatureResult {
     kind: CylinderFeatureKind,
     tool: CylinderTrimmedTool,
+    archive: FeatureArchive,
+}
+
+struct FeatureArchive {
     bytes: Vec<u8>,
     validation: ValidationReport,
     history: CylinderFeatureHistory,
@@ -67,17 +73,17 @@ impl CylinderFeatureResult {
     /// Original and tool-parent relations into the frozen Boolean body.
     /// Example: `feature.history().images.len()`.
     pub fn history(&self) -> &CylinderFeatureHistory {
-        &self.history
+        &self.archive.history
     }
 
     /// Ordered native validation with its actual check modes. Example: `feature.validation().is_valid()`.
     pub fn validation(&self) -> &ValidationReport {
-        &self.validation
+        &self.archive.validation
     }
 
     /// Frozen solid and its image references. Example: `feature.encoded_brep().len()`.
     pub fn encoded_brep(&self) -> &[u8] {
-        &self.bytes
+        &self.archive.bytes
     }
 
     /// Decode fresh native owners. Example: `let solid = feature.export_native()?.body;`.
@@ -88,6 +94,12 @@ impl CylinderFeatureResult {
             revision: report.revision,
             kind: self.kind,
         };
+        self.archive.export(attempt)
+    }
+}
+
+impl FeatureArchive {
+    fn export(&self, attempt: Attempt) -> FeatureChecked<DetachedCylinderFeature> {
         body::decode(
             &self.bytes,
             self.history.images.keys().copied().collect(),
@@ -127,7 +139,13 @@ impl CylinderFaceAttachment {
         let (support, band) = self
             .resolve_band(revision, request)
             .map_err(|cause| attempt.footprint(cause))?;
-        let solid = admit(attempt, &support, request)?;
+        let solid = admit(
+            attempt,
+            &support.body,
+            support.face.orientation(),
+            request.depths,
+            request.support.normal,
+        )?;
         let tool = self
             .build_trimmed_tool(revision, request, &band, &mut cancelled)
             .map_err(|cause| attempt.footprint(cause))?;
@@ -135,47 +153,64 @@ impl CylinderFaceAttachment {
             .extrusion()
             .export_native()
             .map_err(|cause| attempt.tool(cause))?;
-        let boolean = boolean(attempt, &solid, &native.bodies, &mut cancelled)?;
-        let captured =
-            history::capture(attempt, &support, &solid, &native, &boolean, &mut cancelled)?;
-        let (bytes, validation) = body::freeze(
+        let archive = apply_material(
             attempt,
-            &captured,
+            &support.face,
+            &solid,
+            &native,
             &self.record().resolution,
             &mut cancelled,
         )?;
         Ok(CylinderFeatureResult {
             kind,
             tool,
-            bytes,
-            validation,
-            history: captured.history,
+            archive,
         })
     }
 }
 
 fn admit(
     attempt: Attempt,
-    support: &DetachedCylinderSupport,
-    request: &WrappedNormalRequest,
+    support: &Shape,
+    orientation: Orientation,
+    depths: [f64; 2],
+    normal: NormalSense,
 ) -> FeatureChecked<Shape> {
-    if request.depths[0] != 0. || !request.depths[1].is_finite() || request.depths[1] <= 0. {
+    if depths[0] != 0. || !depths[1].is_finite() || depths[1] <= 0. {
         return Err(attempt.fail(
             CylinderFeatureStage::Admission,
-            CylinderFeatureCause::Depths(request.depths),
+            CylinderFeatureCause::Depths(depths),
         ));
     }
-    let expected = normal_sense(attempt, support.face.orientation())?;
-    if request.support.normal != expected {
+    let expected = normal_sense(attempt, orientation)?;
+    if normal != expected {
         return Err(attempt.fail(
             CylinderFeatureStage::Admission,
             CylinderFeatureCause::Normal {
-                actual: request.support.normal,
+                actual: normal,
                 expected,
             },
         ));
     }
-    body::single_solid(attempt, &support.body, CylinderFeatureStage::Admission)
+    body::single_solid(attempt, support, CylinderFeatureStage::Admission)
+}
+
+fn apply_material(
+    attempt: Attempt,
+    selected_face: &Face,
+    support: &Shape,
+    tool: &DetachedWrappedBodies,
+    resolution: &martensite_tkbo::profile_extrusion::Resolution,
+    cancelled: &mut CancelPoll<'_>,
+) -> FeatureChecked<FeatureArchive> {
+    let boolean = boolean(attempt, support, &tool.bodies, cancelled)?;
+    let captured = history::capture(attempt, selected_face, support, tool, &boolean, cancelled)?;
+    let (bytes, validation) = body::freeze(attempt, &captured, resolution, cancelled)?;
+    Ok(FeatureArchive {
+        bytes,
+        validation,
+        history: captured.history,
+    })
 }
 
 fn normal_sense(attempt: Attempt, orientation: Orientation) -> FeatureChecked<NormalSense> {

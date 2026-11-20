@@ -12,6 +12,7 @@ use martensite_tkbo::profile_extrusion::{
 };
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkmath::gp::{Axis2, Direction3, Point3};
+mod material;
 
 const UV: [[f64; 2]; 4] = [[0.5, 3.], [0.5, 4.], [0.9, 4.], [0.9, 3.]];
 const DEPTHS: [f64; 2] = [-0.1, 0.2];
@@ -23,6 +24,10 @@ fn native_cone_chart_can_author_a_physical_normal_extrusion() {
 
 #[test]
 fn oblique_selected_cone_authors_a_tool_in_world_coordinates() {
+    verify_workflow(&oblique_attachment());
+}
+
+fn oblique_attachment() -> ConeFaceAttachment {
     let origin = Point3::new(3., -5., 7.);
     let axis = Direction3::new(0., 3., 4.).unwrap();
     let radial = Direction3::new(1., 0., 0.).unwrap();
@@ -31,8 +36,7 @@ fn oblique_selected_cone_authors_a_tool_in_world_coordinates() {
     let body = maker.shape().unwrap();
     let face = select_kind(body, SurfaceType::Cone);
     let resolution = super::super::super::tests::resolution();
-    let attachment = ConeFaceAttachment::capture(ID, REVISION, body, &face, resolution).unwrap();
-    verify_workflow(&attachment);
+    ConeFaceAttachment::capture(ID, REVISION, body, &face, resolution).unwrap()
 }
 
 fn verify_workflow(attachment: &ConeFaceAttachment) {

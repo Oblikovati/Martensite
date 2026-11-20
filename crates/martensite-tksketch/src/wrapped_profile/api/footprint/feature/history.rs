@@ -65,7 +65,7 @@ pub(super) struct Captured {
 
 pub(super) fn capture(
     attempt: Attempt,
-    support: &DetachedCylinderSupport,
+    selected_face: &Face,
     source_solid: &Shape,
     tool: &DetachedWrappedBodies,
     boolean: &BRepAlgoAPIBooleanOperation,
@@ -84,7 +84,7 @@ pub(super) fn capture(
             )
         })?;
     let mut audit = Audit::new(attempt, &index, native, &solid)?;
-    audit.support(support, source_solid, cancelled)?;
+    audit.support(selected_face, source_solid, cancelled)?;
     audit.tool(tool, cancelled)?;
     let history = audit.finish()?;
     Ok(Captured {
@@ -135,7 +135,7 @@ impl<'a> Audit<'a> {
 
     fn support(
         &mut self,
-        support: &DetachedCylinderSupport,
+        selected_face: &Face,
         solid: &Shape,
         cancelled: &mut CancelPoll<'_>,
     ) -> FeatureChecked<()> {
@@ -145,7 +145,7 @@ impl<'a> Audit<'a> {
             if reference.kind == ShapeEnum::Solid {
                 continue;
             }
-            let source = if shape.is_same(&support.face) {
+            let source = if shape.is_same(selected_face) {
                 CylinderFeatureSource::SupportFace(self.attempt.attachment)
             } else {
                 CylinderFeatureSource::SupportMember(reference)

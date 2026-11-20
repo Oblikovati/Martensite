@@ -273,5 +273,28 @@ Controls exercised axis-aligned and oblique partial frustums, a narrowing
 frustum with a hole, and an inward tool crossing a full native seam.
 A separate control placed a valid standalone tool beyond the selected
 angular trim and verified refusal before fitting. Rectangular enclosures
-can refuse a profile whose filled region actually fits. General trim
-wires and native Boolean bosses and pockets on selected cones remain open.
+can refuse a profile whose filled region actually fits. General support
+trim wires remain open.
+
+## Conical bosses and pockets
+
+`ConeFaceAttachment::apply_wrapped_profile` resolves the frozen revision
+and native seam once and uses the same checked profile for fitting and
+trim coverage. The request starts at depth zero and must use the radial
+normal sense required by the selected face and the material operation.
+The native UV normal depends on frame handedness, which the attachment
+accounts for before applying this check.
+
+The cone and cylinder paths share the non-destructive Boolean operation,
+source-to-image audit, frozen-byte replay and ordered validation. A
+successful result contains one solid. The selected support face must be
+modified or removed, and each region's exposed depth cap must retain a
+face image. The result keeps the checked tool and exposes separate
+validation and composed histories for the material body.
+
+The native controls compare the changes in solid mass to the retained
+tool flux and the analytic volume of the unmodified frustum. They include
+an inward cut crossing the full native angular seam and a partial-band
+pocket that leaves an island inside a cubic hole. The oblique boss replay sends
+the saved support bytes to a fresh process, where restore and the
+recomputed operation reproduce the frozen shape and history.

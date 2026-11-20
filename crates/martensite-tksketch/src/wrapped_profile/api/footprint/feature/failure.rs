@@ -48,6 +48,8 @@ pub enum CylinderFeatureCause {
     },
     /// The attachment, chart or trim-checked tool refused the request.
     Footprint(Box<CylinderFootprintFailure>),
+    /// The conical attachment, chart or trim-checked tool refused the request.
+    ConeFootprint(Box<ConeFootprintFailure>),
     /// The qualified normal tool could not be exported.
     ToolExport(Box<WrappedNormalFailure>),
     /// A native query failed during the stated stage.
@@ -145,6 +147,16 @@ impl Attempt {
             _ => CylinderFeatureStage::Tool,
         };
         self.fail(stage, CylinderFeatureCause::Footprint(Box::new(cause)))
+    }
+    pub(super) fn cone_footprint(self, cause: ConeFootprintFailure) -> CylinderFeatureFailure {
+        let stage = match &cause {
+            ConeFootprintFailure::Attachment(_)
+            | ConeFootprintFailure::SupportMismatch { .. }
+            | ConeFootprintFailure::UnsupportedTrim { .. }
+            | ConeFootprintFailure::Native(_) => CylinderFeatureStage::Admission,
+            _ => CylinderFeatureStage::Tool,
+        };
+        self.fail(stage, CylinderFeatureCause::ConeFootprint(Box::new(cause)))
     }
     pub(super) fn tool(self, cause: WrappedNormalFailure) -> CylinderFeatureFailure {
         self.fail(

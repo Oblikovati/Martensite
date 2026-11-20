@@ -54,9 +54,18 @@ impl ConeFaceAttachment {
         revision: SupportRevision,
         seam: f64,
     ) -> ConeChecked<ConeAuthoringChart> {
+        self.chart_and_body(revision, seam).map(|(chart, _)| chart)
+    }
+
+    pub(in crate::surface_sketch) fn chart_and_body(
+        &self,
+        revision: SupportRevision,
+        seam: f64,
+    ) -> ConeChecked<(ConeAuthoringChart, Shape)> {
         let attempt = self.attempt(AttachmentOperation::Develop);
-        let DecodedFace { face, .. } = self.resolve(&attempt, revision)?;
-        ConeAuthoringChart::capture(attempt, face, seam, self.record().resolution.sew)
+        let DecodedFace { body, face } = self.resolve(&attempt, revision)?;
+        let chart = ConeAuthoringChart::capture(attempt, face, seam, self.record().resolution.sew)?;
+        Ok((chart, body))
     }
 }
 
@@ -69,6 +78,18 @@ impl ConeAuthoringChart {
 
     pub(in crate::surface_sketch) fn development(&self) -> &ConicalDevelopment {
         &self.metric
+    }
+
+    pub(in crate::surface_sketch) fn radial_orientation(
+        &self,
+    ) -> martensite_tkg3d::top_abs::Orientation {
+        let orientation = self.face.orientation();
+        // The native dU cross dV normal changes sign with the carrier's handedness.
+        if self.direct {
+            orientation
+        } else {
+            martensite_tkg3d::top_abs::reverse(orientation)
+        }
     }
 
     fn capture(attempt: Attempt, face: Face, seam: f64, tolerance: f64) -> ConeChecked<Self> {
