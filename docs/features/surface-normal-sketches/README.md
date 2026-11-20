@@ -341,7 +341,7 @@ operation past the datum-centered angular cut for families that fit within one
 physical revolution. The [cone region atlas](CONE-REGION-ATLAS.md) uses
 separate charts for disconnected regions and certifies separation after
 wrapping. Connected profiles that need several fit charts, seam occurrences,
-larger cone text workloads, oblique placement and attachment remain Phase B. Primitive exact-span lowering,
+larger cone text workloads and cone-face attachment remain Phase B. Primitive exact-span lowering,
 replacement deletion and the broader acceptance corpus remain Phase C.
 
 Earlier checkpoint records remain available: [rational implementation](RATIONAL-IMPLEMENTATION.md),
@@ -367,4 +367,5 @@ the public trim-band feature operation.
 
 The [rotation-aware frame proof](CHART-ROTATION-PROOF.md) supplies bounded
 trigonometric and spatial-allocation evidence for the existing cylinder chart
-placement path. Extending accounted placement to cones remains Phase B.
+placement path. [Placed cone profiles](CONE-PLACEMENT.md) reuse that frame
+proof for oblique cone supports and explicit chart angles.

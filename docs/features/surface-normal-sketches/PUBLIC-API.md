@@ -18,7 +18,8 @@ signatures and behavior.
 | --- | --- | --- |
 | Cylinder | `normal_extrude_profile`, `normal_extrude_profile_with_cancel` | `WrappedNormalRequest`, `WrappedNormalResult` |
 | Cylinder with explicit chart placement | `normal_extrude_profile_on_chart`, `normal_extrude_profile_on_chart_with_cancel` | Existing cylinder request and `WrappedChartNormalResult`; see [frame contract](OBLIQUE-FRAMES.md). |
-| Cone candidate | `normal_extrude_cone_profile`, `normal_extrude_cone_profile_with_cancel` | `WrappedConeNormalRequest`, `WrappedConeNormalResult` |
+| Canonical cone | `normal_extrude_cone_profile`, `normal_extrude_cone_profile_with_cancel` | `WrappedConeNormalRequest`, `WrappedConeNormalResult` |
+| Placed cone | `normal_extrude_cone_profile_on_chart`, `normal_extrude_cone_profile_on_chart_with_cancel` | Existing request and execution selector, `WrappedPlacedConeResult`. See [cone placement](CONE-PLACEMENT.md). |
 
 A request owns a solved `SketchProfile`, explicit `WrappedRegionSelection`
 values, analytic support, increasing signed normal depths and
@@ -36,16 +37,19 @@ Their [oblique bounds](OBLIQUE-FRAMES.md) cover the decoded located graph and
 direct location evaluation. A normalized analytic convenience-query copy is a
 separate representation requiring correspondence evidence.
 
-The cone input uses developed Cartesian `[x,y]` measured from the apex. Phase A
-requires exactly apex `[0,0,0]`, axis `[0,0,1]` and radial `[1,0,0]`.
-`admit_frame` returns `Unsupported` before source capture for other frames.
-The whole family must fit one admitted strict angular chart/wedge, with positive
-radius throughout its filled material and depth interval. The fitted reference
-must also satisfy the chart and perturbation margin. Chart admission and finite
-proof exhaustion return typed refusals. This scope does not establish wider
-wraps, seam occurrences, text-scale families, oblique cone placement or attachment.
-Those remain Phase B; exact primitive-span lowering and replacement deletion
-remain Phase C.
+The cone input uses developed Cartesian `[x,y]` measured from the apex.
+The canonical entry requires apex `[0,0,0]`, axis `[0,0,1]` and radial
+`[1,0,0]`. It returns `Unsupported` before source capture for other
+frames. The placed entry uses the requested frame and chart angle and
+reserves a canonical error allowance before fitting.
+
+A selected chart must retain positive radius throughout its filled
+material and depth interval. The fitted reference must also satisfy the
+chart and perturbation margins. The [cone region atlas](CONE-REGION-ATLAS.md)
+can use multiple charts for disconnected regions. Connected profiles
+requiring multiple charts, seam occurrences, larger text families, and
+cone-face attachment remain Phase B. Exact primitive-span lowering and
+replacement deletion remain Phase C.
 
 ## Cone request example
 

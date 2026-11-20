@@ -32,10 +32,10 @@ requires strictly disjoint member boxes and retains the existing
 within-member side, cap, and incidence checks. An overlapping box can
 leave separation unresolved even when the solids are disjoint.
 
-The working scope is the canonical cone frame and one positive-X chart
-per connected region. A connected region that needs several fit charts
-still requires the connected atlas path. Cone-face attachment and oblique
-cone placement remain separate work.
+The atlas fits one positive-X chart per connected region. A connected
+region that needs several fit charts requires the connected atlas path.
+The [placed cone entry](CONE-PLACEMENT.md) can place the completed atlas
+in an oblique frame. Cone-face attachment remains separate work.
 
 ## Local verification
 

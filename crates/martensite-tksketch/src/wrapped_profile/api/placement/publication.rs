@@ -62,7 +62,7 @@ fn validate_members<B: PlacementBudget>(
     }
     Ok(members)
 }
-fn solid(region: SurfaceRegionId, physical: &freeze::Physical) -> Checked<&Shape> {
+pub(super) fn solid(region: SurfaceRegionId, physical: &freeze::Physical) -> Checked<&Shape> {
     let key = BindingKey {
         source: Source::Region(region),
         role: HistoryRole::Solid,
@@ -89,7 +89,7 @@ fn validate(
     };
     Ok(())
 }
-fn physical_validation(
+pub(super) fn physical_validation(
     region: SurfaceRegionId,
     shape: &Shape,
     tolerance: f64,
@@ -118,7 +118,7 @@ fn world_report<B: PlacementBudget>(
         cap_realization_error: world_bound(spatial.cap_realization_error, plan)?,
     })
 }
-fn world_bound<B: PlacementBudget>(
+pub(super) fn world_bound<B: PlacementBudget>(
     bound: WrappedCertifiedBound,
     plan: &Plan<B>,
 ) -> Checked<WrappedCertifiedBound> {
@@ -135,7 +135,7 @@ fn world_bound<B: PlacementBudget>(
     ))?;
     enforce_world(world, plan.budget.input().spatial_limit)
 }
-fn enforce_world(world: f64, requested: f64) -> Checked<WrappedCertifiedBound> {
+pub(super) fn enforce_world(world: f64, requested: f64) -> Checked<WrappedCertifiedBound> {
     if world > requested {
         return error::budget(Err(publication_budget::BudgetFailure::Limit {
             quantity: publication_budget::Quantity::WorldSpatial,

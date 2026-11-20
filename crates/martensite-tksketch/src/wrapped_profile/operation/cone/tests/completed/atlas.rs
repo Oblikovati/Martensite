@@ -164,7 +164,7 @@ fn check_members(result: &WrappedConeNormalResult) {
     assert_eq!(coverage.cap_self_domains, 4);
     assert_eq!(coverage.cap_pairs, 6);
 }
-fn separated_request() -> WrappedConeNormalRequest {
+pub(in crate::surface_sketch::wrapped_profile) fn separated_request() -> WrappedConeNormalRequest {
     let mut source = shifted(-82.5);
     append_image(&mut source, shifted(16.5));
     source

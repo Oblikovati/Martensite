@@ -1,7 +1,7 @@
 //! Whole-operation controls combine independent inequalities, ownership and replay.
 use super::*;
 use std::fmt::Write;
-mod atlas;
+pub(super) mod atlas;
 mod chart_policy;
 mod concurrency;
 pub(super) mod native_flux;

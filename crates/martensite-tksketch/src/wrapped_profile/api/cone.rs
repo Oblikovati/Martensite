@@ -138,8 +138,11 @@ impl WrappedConeNormalResult {
     }
     /// Independent keyed native owners; `let detached = result.export_native()?;`.
     pub fn export_native(&self) -> Checked<DetachedWrappedBodies> {
-        let (bodies, bindings) = pipeline::decode(self.encoded_brep(), &self.family.family.keys)
-            .map_err(|cause| {
+        self.export_bytes(self.encoded_brep())
+    }
+    pub(super) fn export_bytes(&self, bytes: &[u8]) -> Checked<DetachedWrappedBodies> {
+        let (bodies, bindings) =
+            pipeline::decode(bytes, &self.family.family.keys).map_err(|cause| {
                 export_failure(WrappedFailureClass::Native, error::Cause::Export(cause))
             })?;
         let entities = self.export_entities(bindings)?;

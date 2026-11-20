@@ -20,8 +20,10 @@ pub use error::{WrappedFailureClass, WrappedNormalFailure, WrappedOperation, Wra
 pub use history_types::*;
 pub use material::*;
 pub use placement::{
-    WrappedChartNormalResult, WrappedChartPlacementReport, WrappedPlacementReport,
-    WrappedWorldSpatialReport, normal_extrude_profile_on_chart,
+    WrappedChartNormalResult, WrappedChartPlacementReport, WrappedConePlacementReport,
+    WrappedPlacedConeMemberReport, WrappedPlacedConeResult, WrappedPlacementReport,
+    WrappedWorldSpatialReport, normal_extrude_cone_profile_on_chart,
+    normal_extrude_cone_profile_on_chart_with_cancel, normal_extrude_profile_on_chart,
     normal_extrude_profile_on_chart_with_cancel,
 };
 pub use reports::*;

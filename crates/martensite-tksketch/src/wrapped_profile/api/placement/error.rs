@@ -17,6 +17,10 @@ pub(in crate::surface_sketch::wrapped_profile) enum PlacementFailure {
         support: crate::surface_sketch::CylinderSupport,
         cause: Failure,
     },
+    ConeFrame {
+        support: crate::surface_sketch::ConeSupport,
+        cause: Failure,
+    },
     Frame(FrameTransportError),
     Rotation(martensite_tkmath::predicates::roots::metric_bounds::FrameRotationError),
     Encoding(crate::surface_sketch::failure::SurfaceFailureCause),
@@ -94,6 +98,10 @@ impl PlacementFailure {
                 f,
                 "physical radius={radius}, spatial_error={spatial_error}; expected finite radius>0, finite spatial_error>0 and finite 4*spatial_error"
             ),
+            Self::ConeFrame { support, cause } => write!(
+                f,
+                "physical cone support={support:?}: {cause}; expected finite apex and a nonzero nonparallel rigid frame"
+            ),
             Self::InputFrame { support, cause } => write!(
                 f,
                 "physical support: {support:?}: {cause}; expected finite origin/vectors and a nonzero nonparallel rigid frame"
@@ -142,7 +150,9 @@ impl PlacementFailure {
 impl std::error::Error for PlacementFailure {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Self::InputFrame { cause, .. } | Self::Native { cause, .. } => Some(cause),
+            Self::InputFrame { cause, .. }
+            | Self::ConeFrame { cause, .. }
+            | Self::Native { cause, .. } => Some(cause),
             Self::Frame(cause) => Some(cause),
             Self::Rotation(cause) => Some(cause),
             _ => None,
@@ -161,9 +171,9 @@ pub(super) fn fail(cause: PlacementFailure) -> WrappedNormalFailure {
 fn classification(cause: &PlacementFailure) -> WrappedFailureClass {
     match cause {
         PlacementFailure::Rotation(cause) => rotation_class(&cause.cause),
-        PlacementFailure::InputFrame { .. } | PlacementFailure::SpatialInput { .. } => {
-            WrappedFailureClass::InvalidInput
-        }
+        PlacementFailure::InputFrame { .. }
+        | PlacementFailure::ConeFrame { .. }
+        | PlacementFailure::SpatialInput { .. } => WrappedFailureClass::InvalidInput,
         PlacementFailure::Frame(
             FrameTransportError::NonFinite { .. }
             | FrameTransportError::ZeroAxis { .. }

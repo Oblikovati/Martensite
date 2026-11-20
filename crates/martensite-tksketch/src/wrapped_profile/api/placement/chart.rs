@@ -117,9 +117,7 @@ fn publish_chart(
     plan: Plan<CertifiedRotatedFrameSpatialBudget>,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<publication::PhysicalPublication<CertifiedRotatedFrameSpatialBudget>> {
-    if plan.transform.matrix().coefficients() == &[[1., 0., 0.], [0., 1., 0.], [0., 0., 1.]]
-        && plan.transform.translation_part().coordinates() == &[0.; 3]
-    {
+    if freeze::identity(plan.transform) {
         input::poll(cancelled, WrappedStage::Placement)?;
         let physical = freeze::unchanged(&result.family.family)?;
         return publication::finish(result, plan, physical, cancelled);
