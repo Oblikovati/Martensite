@@ -101,6 +101,10 @@ geometry stages (1.3 s) and pave-block construction (0.8 s).
   The context-task tests now pin that the caller and every worker use the
   caller's context and its cached services. A cache test fails against the
   previous lookup, because a slow build then blocks a lookup of another shape.
+- The `shared-context` ThreadSanitizer control runs the context-task, cache and
+  self-check tests in CI. On the development host (Linux 7.2) ThreadSanitizer
+  crashes before `main`, including the driver's own startup control, so the
+  hosted job is the sanitizer evidence.
 - Face–face tasks still create a context per task, as the native code does.
   Sharing it would also save repeated classifier builds in serial mode; that
   needs its own measurement.
