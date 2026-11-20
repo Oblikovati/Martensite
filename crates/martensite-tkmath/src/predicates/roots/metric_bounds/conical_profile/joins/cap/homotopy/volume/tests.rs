@@ -55,7 +55,9 @@ pub(super) fn rectangle_support(depth: f64, outward: bool) -> CapBinding {
         support: [0.5_f64.to_bits(), 0, 0, depth.to_bits(), u64::from(outward)],
         carriers: [[0; 3]; 2],
         motion: DyadicBound::new(0.into(), 0),
-        component_motion: std::array::from_fn(|_| DyadicBound::new(0.into(), 0)),
+        slant_motion: DyadicBound::new(0.into(), 0),
+        squared_world_motion: DyadicBound::new(0.into(), 0),
+        trace_position_upper: 0.,
         spans: Vec::new(),
     }
 }

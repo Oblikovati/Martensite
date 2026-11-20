@@ -5,6 +5,25 @@ pub(super) fn request(
     prepared: &Prepared,
     spans: &[storage::SpanProof],
 ) -> ConeChecked<DevelopedRegionRequest> {
+    // Swapping coordinates preserves the authored winding under cone development.
+    projected_request(prepared, spans, |[u, v]| [v, u])
+}
+
+#[cfg(test)]
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn periodic_request(
+    prepared: &Prepared,
+    spans: &[storage::SpanProof],
+) -> ConeChecked<Request> {
+    // Reflect slant to preserve authored winding while keeping angle on the periodic axis.
+    let source = projected_request(prepared, spans, |[u, v]| [u, -v])?;
+    Ok(Request { source, radius: 1. })
+}
+
+fn projected_request(
+    prepared: &Prepared,
+    spans: &[storage::SpanProof],
+    project: impl Fn([f64; 2]) -> [f64; 2] + Copy,
+) -> ConeChecked<DevelopedRegionRequest> {
     let index = index(prepared.source.region, spans)?;
     let ids = curve_ids(prepared, spans.len())?;
     let vertices = vertices(&prepared.source);
@@ -12,11 +31,23 @@ pub(super) fn request(
         .source
         .loops
         .iter()
-        .map(|contour| contour_request(prepared.source.region, contour, &index, &ids, &vertices))
+        .map(|contour| {
+            contour_request(
+                prepared.source.region,
+                contour,
+                &index,
+                &ids,
+                &vertices,
+                project,
+            )
+        })
         .collect::<ConeChecked<_>>()?;
     Ok(DevelopedRegionRequest {
         loops,
-        ..prepared.source.clone()
+        region: prepared.source.region,
+        depths: prepared.source.depths,
+        tolerance: prepared.source.tolerance,
+        max_fit_level: prepared.source.max_fit_level,
     })
 }
 pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn curve_ids(
@@ -77,6 +108,7 @@ fn contour_request(
     index: &SpanIndex<'_>,
     ids: &BTreeMap<CurveSpan, SurfaceCurveId>,
     vertices: &BTreeMap<CornerSource, SurfaceVertexId>,
+    project: impl Fn([f64; 2]) -> [f64; 2] + Copy,
 ) -> ConeChecked<Vec<AuthoredPiece>> {
     let mut pieces = Vec::new();
     for (position, piece) in contour.iter().enumerate() {
@@ -88,7 +120,7 @@ fn contour_request(
             .get(&next.span)
             .ok_or_else(|| mismatch(region, Some(next.span), "actual UV successor owner"))?;
         admit(region, piece, next, proof, next_proof)?;
-        pieces.push(transformed(piece, proof, ids, vertices));
+        pieces.push(transformed(piece, proof, ids, vertices, project));
     }
     Ok(pieces)
 }
@@ -138,19 +170,17 @@ fn transformed(
     proof: &storage::SpanProof,
     ids: &BTreeMap<CurveSpan, SurfaceCurveId>,
     vertices: &BTreeMap<CornerSource, SurfaceVertexId>,
+    project: impl Fn([f64; 2]) -> [f64; 2],
 ) -> AuthoredPiece {
-    let mut transformed = piece.clone();
-    transformed.span = CurveSpan {
-        curve: ids[&piece.span],
-        level: 0,
-        index: 0,
-    };
-    transformed.start = CornerSource::Authored(vertices[&piece.start]);
-    transformed.end = CornerSource::Authored(vertices[&piece.end]);
-    // Development has negative UV Jacobian. Swapping coordinates preserves authored winding.
-    transformed.poles = proof.pcurves[0]
-        .iter()
-        .map(|point| [point[1], point[0]])
-        .collect();
-    transformed
+    AuthoredPiece {
+        span: CurveSpan {
+            curve: ids[&piece.span],
+            level: 0,
+            index: 0,
+        },
+        start: CornerSource::Authored(vertices[&piece.start]),
+        end: CornerSource::Authored(vertices[&piece.end]),
+        poles: proof.pcurves[0].iter().copied().map(project).collect(),
+        chart_center: piece.chart_center,
+    }
 }

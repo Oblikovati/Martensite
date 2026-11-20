@@ -469,8 +469,8 @@ pub use joins::{
     ConicalCapClearanceRelation, ConicalCapHomotopyEvidence, ConicalCapHomotopyFailure,
     ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalCapNormalError, ConicalCapNormalEvidence,
     ConicalCapVolumeError, ConicalCapVolumeEvidence, ConicalCapVolumeFailure,
-    ConicalChartJoinsError, certify_conical_cap_joins, certify_conical_joins_in_chart,
-    certify_conical_joins_in_chart_with_refinement,
+    ConicalChartJoinsError, ConicalDecodedCapEvidence, certify_conical_cap_joins,
+    certify_conical_joins_in_chart, certify_conical_joins_in_chart_with_refinement,
 };
 
 mod trim_bridge;

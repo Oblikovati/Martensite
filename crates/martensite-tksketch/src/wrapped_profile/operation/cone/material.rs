@@ -4,6 +4,8 @@ use martensite_tkbo::profile_extrusion::PlanarProofVersion;
 mod binding;
 mod domain;
 pub(super) use domain::curve_ids as source_curve_ids;
+#[cfg(test)]
+pub(super) use domain::periodic_request;
 mod reference;
 pub(super) use reference::certify as certify_reference;
 #[cfg(test)]

@@ -96,13 +96,14 @@ pub fn certify_conical_trim_pair_with_developed_boundary_and_refinement(
         &mut cancelled,
         |traces, common, _, arithmetic| {
             let operations = arithmetic.operations();
+            let position_upper = traces[0].residual_bounds()[2].max(traces[1].residual_bounds()[2]);
             let evidence = super::developed_boundary::capture(
                 pair,
                 source,
                 boundary,
                 (domain, refinement),
                 reference_slant,
-                operations,
+                (operations, position_upper),
                 common.into_retained(),
             );
             (trace::accepted_pair(traces, operations), evidence)

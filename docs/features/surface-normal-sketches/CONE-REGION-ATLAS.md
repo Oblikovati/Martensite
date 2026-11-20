@@ -364,3 +364,55 @@ Seven cone and cylinder replay workers matched `1090f497` byte for byte.
 Five paired standalone O. runs on one pinned Linux x86_64 core measured
 median API times of 4.697 s on the baseline and 4.642 s on the candidate.
 Median peak RSS went from 68,360 KiB to 67,740 KiB.
+
+## Decoded cap and ruling correspondence
+
+The decoded cap and exact reference use the same unwrapped angle and
+relative slant. With identical semi-angle and canonical frame, the
+meridian terms in relative slant cancel. The radius and axial datum
+differences are constant over the entire cap. Their absolute sum gives
+a world-space upper bound for each decoded cap.
+
+The paired trim proof already bounds the difference between the
+decoded cap trace and the corresponding stored edge, including edge
+storage. The joins retain the largest such bound already issued for
+this contour. Adding the cap datum error gives the endpoint
+correspondence with the exact reference. The stored side uses the
+decoded edge control rows with common weights, and both sides are
+affine in depth. The maximum endpoint bound therefore covers every
+point along each corresponding ruling.
+
+The filled-reference calculation now bounds distance in quadrature.
+At equal depth, its squared distance is the squared slant difference
+plus `2 r₁ r₂ (1 − cos(Δu))`. Each span uses its own swept radius,
+angular residual and slant residual in this inequality. The joins
+retain the maximum squared bound and the final measurement takes one
+outward square root. The radius check still covers the whole fill.
+The strip refused chart-wide compositions at `1.367e-4` and
+`1.088e-4` against the unchanged `1e-4` model-unit limit.
+
+The decoded receipt adds the larger cap or side bound to the certified
+filled-reference discrepancy and checks the sum against the original
+spatial limit. It reports the two cap errors and the ruled-side error
+separately. The work receipt includes both reference measurements and
+the decoded comparison. Native topology and intersection validation
+remain separate obligations for publication.
+
+The closed-strip test uses the same source-keyed UV projection as
+the existing cone path, with angle on the periodic axis. The test
+reverses the decoded span iteration order before projection. The
+projected loops still follow the prepared source incidences. The
+projection allocates only the replacement poles and loops. The
+closed-strip result still needs to go through the public atlas
+selection and publication stages.
+
+The metric-bound suite passed 815 tests and the cone operation suite
+passed 141, with three operation tests ignored. Clippy passed with
+warnings denied. Seven cone and cylinder replay workers matched
+`e4c2e6c1` byte for byte. In five pinned pairs started on a quieter
+core, the standalone O. medians were 5.259 s on the baseline and
+5.287 s on the candidate. The median paired time difference was
++0.003 s. Peak RSS medians were 68,048 KiB and 67,848 KiB. During
+concurrent application builds, the paired medians were 4.790 s and
+4.957 s on one core, and 5.997 s and 5.782 s on another. Those runs
+show the host-load variation, so timing qualification remains open.

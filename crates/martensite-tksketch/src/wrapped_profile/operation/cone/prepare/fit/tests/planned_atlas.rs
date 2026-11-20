@@ -42,10 +42,13 @@ fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {
         crate::surface_sketch::wrapped_profile::pipeline::resolution(original.tolerance);
     let report = validate_body(&body.shape, &resolution).unwrap();
     assert!(report.is_valid(), "{report:?}");
-    let stored = storage::capture(original, &prepared, body, &mut work, &mut || false).unwrap();
+    let mut stored = storage::capture(original, &prepared, body, &mut work, &mut || false).unwrap();
     assert_per_span_authority(original, &prepared, &stored.spans);
     assert_certified_contour(original, &prepared, &stored);
+    // Decoded span iteration order is not curve identity.
+    stored.spans.reverse();
     let cap = assert_periodic_cap_material(&prepared, &request, &stored, &mut work);
+    stored.spans.reverse();
     let homotopy = assert_homotopy(&stored.joins, &cap, &clearance);
     assert_closed_strip_measures(&run, original, &stored, &homotopy, &mut work);
 }
@@ -255,7 +258,11 @@ fn assert_periodic_cap_material(
     stored: &storage::Stored,
     work: &mut Work,
 ) -> planar_clearance::OriginalClearance {
-    let uv = periodic_uv_request(prepared, &stored.spans);
+    let uv = crate::surface_sketch::wrapped_profile::operation::cone::material::periodic_request(
+        prepared,
+        &stored.spans,
+    )
+    .unwrap();
     let profiles = std::slice::from_ref(&uv);
     let planar = planar_cap_material(profiles, request, work);
     let boundary_clearance = certified_cap_clearance(&uv, work);
@@ -312,13 +319,15 @@ fn assert_closed_strip_measures(
 ) {
     use crate::surface_sketch::wrapped_profile::operation::cone::measures;
     let options = work.remaining();
-    let proof = homotopy
-        .certify_normal_reference(original.tolerance, options, || false)
+    let decoded = homotopy
+        .certify_decoded_reference(original.tolerance, options, || false)
         .unwrap();
+    work.charge(original.region, None, decoded.operations())
+        .unwrap();
+    assert_decoded_boundary(&decoded, original.tolerance);
+    let proof = decoded.normal();
     assert_eq!(proof.requested_spatial_limit(), original.tolerance);
     assert_eq!(proof.options(), options);
-    work.charge(original.region, None, proof.operations())
-        .unwrap();
     assert!(proof.radius_bounds()[0].compare_f64(0.).unwrap().is_gt());
     assert!(proof.filled_error().compare_f64(0.).unwrap().is_gt());
     assert!(
@@ -337,6 +346,16 @@ fn assert_closed_strip_measures(
             .unwrap();
     let authored = measures::range(authored.volume()).unwrap();
     assert_volume_agreement([reference.lower, reference.upper], authored, &flux);
+}
+
+fn assert_decoded_boundary(proof: &ConicalDecodedCapEvidence, limit: f64) {
+    assert!(proof.operations() > proof.normal().operations());
+    assert!(proof.composed_error().compare_f64(limit).unwrap().is_le());
+    assert!(proof.composed_error() >= proof.normal().filled_error());
+    assert!(proof.ruled_side_error().compare_f64(0.).unwrap().is_gt());
+    for bound in proof.cap_errors() {
+        assert!(bound.compare_f64(1e-12).unwrap().is_lt());
+    }
 }
 
 fn assert_volume_agreement(
@@ -408,43 +427,5 @@ fn planar_cap_material(
         members: [(cap.region, planar::select(cap, &set).unwrap())].into(),
         certificate: set.certificate(),
         proof_work: set.proof_work(),
-    }
-}
-
-fn periodic_uv_request(prepared: &Prepared, spans: &[storage::SpanProof]) -> Request {
-    let loops = vec![
-        spans
-            .iter()
-            .enumerate()
-            .map(|(i, span)| {
-                assert_eq!(span.pcurves[0], span.pcurves[1]);
-                periodic_uv_piece(i, spans.len(), &span.pcurves[0])
-            })
-            .collect(),
-    ];
-    Request {
-        source: DevelopedRegionRequest {
-            region: prepared.source.region,
-            loops,
-            depths: prepared.source.depths,
-            tolerance: prepared.source.tolerance,
-            max_fit_level: prepared.source.max_fit_level,
-        },
-        radius: 1.,
-    }
-}
-
-fn periodic_uv_piece(index: usize, count: usize, uv: &[[f64; 2]]) -> AuthoredPiece {
-    AuthoredPiece {
-        span: CurveSpan {
-            curve: SurfaceCurveId(index as u64 + 1),
-            index: 0,
-            level: 0,
-        },
-        start: CornerSource::Authored(SurfaceVertexId(index as u64 + 1)),
-        end: CornerSource::Authored(SurfaceVertexId(((index + 1) % count) as u64 + 1)),
-        // Keep angle on the periodic axis and reflect slant to preserve winding.
-        poles: uv.iter().map(|&[u, v]| [u, -v]).collect(),
-        chart_center: 0.,
     }
 }

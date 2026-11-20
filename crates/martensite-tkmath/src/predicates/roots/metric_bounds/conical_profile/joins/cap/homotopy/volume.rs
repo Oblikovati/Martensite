@@ -9,7 +9,7 @@ use crate::predicates::roots::{
     metric_bounds::cylindrical_profile::trigonometric,
 };
 mod normal;
-pub use normal::{ConicalCapNormalError, ConicalCapNormalEvidence};
+pub use normal::{ConicalCapNormalError, ConicalCapNormalEvidence, ConicalDecodedCapEvidence};
 mod types;
 pub use types::*;
 #[cfg(test)]
@@ -132,6 +132,7 @@ fn integrate_volume(
 struct Meridian {
     center_radius: Interval,
     reference_radius: Interval,
+    reference_slant: Interval,
     depth_minimum: Interval,
     thickness: Interval,
     sine: Interval,
@@ -149,6 +150,7 @@ impl Meridian {
         Ok(Self {
             center_radius: arithmetic.add(&reference_radius, &center_depth)?,
             reference_radius,
+            reference_slant: reference,
             depth_minimum: arithmetic.multiply(&lowest, &cosine)?,
             thickness,
             sine,

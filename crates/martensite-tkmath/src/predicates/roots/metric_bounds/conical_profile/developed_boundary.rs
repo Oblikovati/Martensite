@@ -23,6 +23,7 @@ pub struct ConicalDevelopedBoundaryEvidence {
     reference: u64,
     options: ConeClearanceOptions,
     operations: u32,
+    position_upper: f64,
     operands: RetainedOperands,
 }
 #[derive(Debug)]
@@ -87,6 +88,13 @@ pub(super) struct JoinOperands<'a> {
     pub(super) uv: &'a [[u64; 2]],
     pub(super) capture: &'a spatial::SpatialCapture,
     pub(super) carriers: [[u64; 3]; 2],
+    pub(super) position_upper: f64,
+}
+
+impl JoinOperands<'_> {
+    pub(super) fn slant_hull(&self) -> &Interval {
+        &self.trace.uv[1]
+    }
 }
 
 pub(super) fn join_carriers(evidence: &ConicalDevelopedBoundaryEvidence) -> [[u64; 3]; 2] {
@@ -120,6 +128,7 @@ pub(super) fn join_uv<'a>(
         uv: &issued.uv_bits[0],
         capture: &captured.capture,
         carriers: issued.carriers,
+        position_upper: issued.position_upper,
     })
 }
 pub(super) fn capture(
@@ -128,7 +137,7 @@ pub(super) fn capture(
     boundary: &ConicalBoundaryEvidence,
     selection: (&ConicalChartDomainEvidence, ConicalPrimitiveRefinement),
     reference: f64,
-    operations: u32,
+    (operations, position_upper): (u32, f64),
     operands: RetainedOperands,
 ) -> ConicalDevelopedBoundaryEvidence {
     ConicalDevelopedBoundaryEvidence {
@@ -148,6 +157,7 @@ pub(super) fn capture(
         reference: reference.to_bits(),
         options: boundary.options(),
         operations,
+        position_upper,
         operands,
     }
 }

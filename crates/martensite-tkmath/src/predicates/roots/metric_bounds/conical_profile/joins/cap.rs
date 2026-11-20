@@ -7,9 +7,11 @@ mod homotopy;
 pub use homotopy::{
     ConicalCapClearanceRelation, ConicalCapHomotopyEvidence, ConicalCapHomotopyFailure,
     ConicalCapNormalError, ConicalCapNormalEvidence, ConicalCapVolumeError,
-    ConicalCapVolumeEvidence, ConicalCapVolumeFailure,
+    ConicalCapVolumeEvidence, ConicalCapVolumeFailure, ConicalDecodedCapEvidence,
 };
+pub(super) mod metric;
 mod projection;
+use metric::MotionMetric;
 use projection::Projection;
 
 /// One decoded cap trace, its source-bound spatial proof and its own fit chart.
@@ -38,7 +40,9 @@ pub(super) struct CapBinding {
     support: [u64; 5],
     carriers: [[u64; 3]; 2],
     motion: DyadicBound,
-    component_motion: [DyadicBound; 2],
+    slant_motion: DyadicBound,
+    squared_world_motion: DyadicBound,
+    trace_position_upper: f64,
     spans: Vec<CapSpanBinding>,
 }
 struct CapSpanBinding {
@@ -69,7 +73,10 @@ struct Capture<'a, 'q> {
     query: &'q ConicalCapJoinsQuery<'a>,
     support: [u64; 5],
     motion: num_bigint::BigInt,
-    component_motion: [num_bigint::BigInt; 2],
+    slant_motion: num_bigint::BigInt,
+    squared_world_motion: num_bigint::BigInt,
+    metric: MotionMetric<'a>,
+    trace_position_upper: f64,
     carriers: [[u64; 3]; 2],
     spans: Vec<CapSpanBinding>,
 }
@@ -90,6 +97,7 @@ impl Capture<'_, '_> {
         let projection = Projection::capture(operands.uv, operands.capture, arithmetic)
             .map_err(|cause| failure(index, cause))?;
         self.include_motion(self.query.reference_slant, &operands, index, arithmetic)?;
+        self.trace_position_upper = self.trace_position_upper.max(operands.position_upper);
         self.spans.push(CapSpanBinding {
             chart: ChartBinding::capture_selected(
                 span.chart,
@@ -113,9 +121,13 @@ impl Capture<'_, '_> {
         let bound = arithmetic
             .add(&angular, &slant)
             .map_err(|cause| failure(index, cause.into()))?;
+        let squared = self
+            .metric
+            .squared_motion(operands.slant_hull(), &angular, &slant, arithmetic)
+            .map_err(|cause| failure(index, cause.into()))?;
         max_into(&mut self.motion, bound.upper);
-        max_into(&mut self.component_motion[0], angular.upper);
-        max_into(&mut self.component_motion[1], slant.upper);
+        max_into(&mut self.slant_motion, slant.upper);
+        max_into(&mut self.squared_world_motion, squared.upper);
         Ok(())
     }
 }
@@ -153,11 +165,15 @@ fn execute(
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<(Vec<[f64; 2]>, CapBinding), ConicalJoinsFailure> {
     let first = &query.spans[0];
+    let metric = metric(first, query.reference_slant, arithmetic)?;
     let mut capture = Capture {
         query,
         support: common_support(&first.cap.source),
         motion: 0.into(),
-        component_motion: [0.into(), 0.into()],
+        slant_motion: 0.into(),
+        squared_world_motion: 0.into(),
+        metric,
+        trace_position_upper: 0.,
         carriers: join_carriers(first.cap.evidence),
         spans: Vec::with_capacity(query.spans.len()),
     };
@@ -175,12 +191,41 @@ fn execute(
             support: capture.support,
             carriers: capture.carriers,
             motion: DyadicBound::new(capture.motion, -i32::from(arithmetic.fractional_bits())),
-            component_motion: capture
-                .component_motion
-                .map(|bound| DyadicBound::new(bound, -i32::from(arithmetic.fractional_bits()))),
+            slant_motion: DyadicBound::new(
+                capture.slant_motion,
+                -i32::from(arithmetic.fractional_bits()),
+            ),
+            squared_world_motion: DyadicBound::new(
+                capture.squared_world_motion,
+                -i32::from(arithmetic.fractional_bits()),
+            ),
+            trace_position_upper: capture.trace_position_upper,
             spans: capture.spans,
         },
     ))
+}
+
+fn metric<'a>(
+    first: &ConicalCapJoinSpan<'a>,
+    reference_slant: f64,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<MotionMetric<'a>, ConicalJoinsFailure> {
+    if first.chart.options().fractional_bits != arithmetic.fractional_bits() {
+        return Err(ConicalJoinsFailure::Boundary { index: 0 });
+    }
+    let source = &first.cap.source;
+    let depth = if source.outward {
+        source.depths[1]
+    } else {
+        -source.depths[0]
+    };
+    MotionMetric::new(
+        reference_slant,
+        depth,
+        super::super::developed_boundary::trig(first.chart),
+        arithmetic,
+    )
+    .map_err(|cause| failure(0, cause.into()))
 }
 
 fn prove_ring(

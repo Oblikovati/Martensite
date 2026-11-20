@@ -7,7 +7,7 @@ use crate::predicates::roots::metric_bounds::{
 };
 pub use volume::{
     ConicalCapNormalError, ConicalCapNormalEvidence, ConicalCapVolumeError,
-    ConicalCapVolumeEvidence, ConicalCapVolumeFailure,
+    ConicalCapVolumeEvidence, ConicalCapVolumeFailure, ConicalDecodedCapEvidence,
 };
 
 /// Which complete boundary relation must stay strictly separated.

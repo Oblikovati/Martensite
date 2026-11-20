@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Transfer the boundary isotopy to the normal image of the complete winding fill.
 use super::*;
+mod decoded;
+pub use decoded::ConicalDecodedCapEvidence;
 
 /// Bounded volume and spatial discrepancy of the exact cap reference over the complete depth interval.
 #[derive(Debug)]
@@ -96,28 +98,58 @@ impl ConicalCapHomotopyEvidence<'_> {
     ) -> Result<ConicalCapNormalEvidence, ConicalCapNormalError> {
         admit_limit(spatial_limit)?;
         let mut arithmetic = volume_arithmetic(options, &mut cancelled)?;
-        let moments = self.moments(&mut arithmetic)?;
-        let meridian = Meridian::capture(self.cap, &mut arithmetic)
-            .map_err(|cause| error(cause, None, &arithmetic))?;
-        let [bound, radii] = spatial(
-            self.cap,
-            &moments,
-            &meridian,
-            spatial_limit,
-            &mut arithmetic,
-        )
-        .map_err(|cause| spatial_error(cause, arithmetic.operations()))?;
-        let volume = integrate_volume(&meridian, &moments, &mut arithmetic)
-            .map_err(|cause| error(cause, None, &arithmetic))?;
-        let bits = options.fractional_bits;
-        Ok(ConicalCapNormalEvidence {
-            volume: exact_enclosure(&volume, bits),
-            displacement: DyadicBound::new(bound.upper, -i32::from(bits)),
-            radii: exact_enclosure(&radii, bits),
-            spatial_limit,
-            options,
-            operations: arithmetic.operations(),
+        let measures = self.normal_measures(spatial_limit, &mut arithmetic)?;
+        Ok(measures.evidence(spatial_limit, &arithmetic, arithmetic.operations()))
+    }
+
+    fn normal_measures(
+        &self,
+        spatial_limit: f64,
+        arithmetic: &mut Arithmetic<'_>,
+    ) -> Result<NormalMeasures, ConicalCapNormalError> {
+        let moments = self.moments(arithmetic)?;
+        let meridian = Meridian::capture(self.cap, arithmetic)
+            .map_err(|cause| error(cause, None, arithmetic))?;
+        let [displacement, radii] =
+            spatial(self.cap, &moments, &meridian, spatial_limit, arithmetic)
+                .map_err(|cause| spatial_error(cause, arithmetic.operations()))?;
+        let volume = integrate_volume(&meridian, &moments, arithmetic)
+            .map_err(|cause| error(cause, None, arithmetic))?;
+        Ok(NormalMeasures {
+            volume,
+            displacement,
+            radii,
+            meridian,
         })
+    }
+}
+
+struct NormalMeasures {
+    volume: Interval,
+    displacement: Interval,
+    radii: Interval,
+    meridian: Meridian,
+}
+impl NormalMeasures {
+    fn evidence(
+        self,
+        spatial_limit: f64,
+        arithmetic: &Arithmetic<'_>,
+        operations: u32,
+    ) -> ConicalCapNormalEvidence {
+        let policy = arithmetic.policy();
+        let bits = policy.fractional_bits;
+        ConicalCapNormalEvidence {
+            volume: exact_enclosure(&self.volume, bits),
+            displacement: DyadicBound::new(self.displacement.upper, -i32::from(bits)),
+            radii: exact_enclosure(&self.radii, bits),
+            spatial_limit,
+            options: ConeClearanceOptions {
+                fractional_bits: bits,
+                max_operations: policy.max_operations,
+            },
+            operations,
+        }
     }
 }
 
@@ -152,10 +184,10 @@ fn spatial(
     spatial_limit: f64,
     arithmetic: &mut Arithmetic<'_>,
 ) -> SpatialResult<[Interval; 2]> {
-    let [angle, slant] = capture_motion(&cap.component_motion, arithmetic)?;
+    let slant = import_bound(&cap.slant_motion, arithmetic)?;
     let radii = swept_radii(moments, meridian, &slant, arithmetic)?;
-    let arc = arithmetic.multiply(&angle, &radii)?;
-    let bound = arithmetic.add(&slant, &arc)?;
+    let squared = import_bound(&cap.squared_world_motion, arithmetic)?;
+    let bound = displacement_upper(squared.upper, arithmetic)?;
     reference::geometry::allocated(
         &bound,
         spatial_limit,
@@ -166,26 +198,32 @@ fn spatial(
     Ok([bound, radii])
 }
 
-fn capture_motion(
-    [angle, slant]: &[DyadicBound; 2],
+fn displacement_upper(
+    upper: num_bigint::BigInt,
     arithmetic: &mut Arithmetic<'_>,
-) -> SpatialResult<[Interval; 2]> {
-    let upper = |bound: &DyadicBound| {
-        bound
-            .binary64_bounds()
-            .map(|bounds| bounds[1])
-            .ok_or_else(|| {
-                ConicalReferenceFailure::Arithmetic(
-                    BoundedArithmeticFailure::UnrepresentableBound {
-                        bound: bound.clone(),
-                    },
-                )
-            })
+) -> SpatialResult<Interval> {
+    use crate::predicates::roots::certificate_arithmetic::bounded_dyadic::PositiveSqrtFailure;
+    if upper == 0.into() {
+        return Ok(arithmetic.zero());
+    }
+    let squared = Interval {
+        lower: upper.clone(),
+        upper,
     };
-    Ok([
-        arithmetic.scalar(upper(angle)?)?,
-        arithmetic.scalar(upper(slant)?)?,
-    ])
+    arithmetic
+        .positive_sqrt(&squared)
+        .map_err(|cause| match cause {
+            PositiveSqrtFailure::Arithmetic(cause) => cause.into(),
+            PositiveSqrtFailure::InvalidInterval { .. } => ConicalReferenceFailure::Binding {
+                field: "ordered squared cap displacement bound",
+            },
+        })
+}
+
+fn import_bound(bound: &DyadicBound, arithmetic: &mut Arithmetic<'_>) -> Checked<Interval> {
+    crate::predicates::roots::metric_bounds::conical_profile::trim_bridge::bounds::captured_storage(
+        bound, arithmetic,
+    )
 }
 
 fn swept_radii(

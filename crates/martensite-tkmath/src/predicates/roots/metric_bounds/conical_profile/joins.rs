@@ -9,7 +9,7 @@ pub use cap::{
     ConicalCapClearanceRelation, ConicalCapHomotopyEvidence, ConicalCapHomotopyFailure,
     ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalCapNormalError, ConicalCapNormalEvidence,
     ConicalCapVolumeError, ConicalCapVolumeEvidence, ConicalCapVolumeFailure,
-    certify_conical_cap_joins,
+    ConicalDecodedCapEvidence, certify_conical_cap_joins,
 };
 pub(super) mod chart;
 pub use chart::{
