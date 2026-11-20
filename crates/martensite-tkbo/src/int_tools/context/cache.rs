@@ -24,15 +24,25 @@ impl<T> ShapeCache<T> {
         shape: &Shape,
         create: impl FnOnce() -> Result<T, Failure>,
     ) -> Result<Cached<T>, Failure> {
+        if let Some(service) = self.entries.read().seek(shape) {
+            return Ok(service.clone());
+        }
+        // Build outside the map lock: workers share one context (#496), and a slow build
+        // under the lock would stall every lookup in this cache. When two workers race, both
+        // build and the first insert wins, so all callers still share one service.
+        let built = Arc::new(self.allocator.allocate_value(SharedState::new(create()?)));
         let mut entries = self.entries.write();
         if let Some(service) = entries.seek(shape) {
             return Ok(service.clone());
         }
-        let service = Arc::new(self.allocator.allocate_value(SharedState::new(create()?)));
-        entries.bind(shape.clone(), service.clone());
-        Ok(service)
+        entries.bind(shape.clone(), built.clone());
+        Ok(built)
     }
     pub(super) fn clear(&self) {
         self.entries.write().clear(true);
     }
 }
+
+#[cfg(test)]
+#[path = "cache_tests.rs"]
+mod tests;

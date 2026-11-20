@@ -21,15 +21,19 @@ impl CurveCache {
     }
     fn get(&self, curve: &Handle<dyn GeomCurve>) -> Result<Cached<ProjectPointOnCurve>, Failure> {
         let key = curve.cast::<StandardTransient>().as_ptr() as usize;
+        if let Some((_, projector)) = self.entries.read().seek(&key) {
+            return Ok(projector.clone());
+        }
+        // As in `ShapeCache::get`: build outside the lock; the first insert wins a race.
+        let mut projector = ProjectPointOnCurve::new();
+        projector.init_curve(curve, curve.first_parameter(), curve.last_parameter())?;
+        let built = Arc::new(self.allocator.allocate_value(SharedState::new(projector)));
         let mut entries = self.entries.write();
         if let Some((_, projector)) = entries.seek(&key) {
             return Ok(projector.clone());
         }
-        let mut projector = ProjectPointOnCurve::new();
-        projector.init_curve(curve, curve.first_parameter(), curve.last_parameter())?;
-        let projector = Arc::new(self.allocator.allocate_value(SharedState::new(projector)));
-        entries.bind(key, (curve.clone(), projector.clone()));
-        Ok(projector)
+        entries.bind(key, (curve.clone(), built.clone()));
+        Ok(built)
     }
 }
 impl Context {
