@@ -97,8 +97,7 @@ impl BOPAlgoPaveFiller {
         observed: &ProgressCancellation,
     ) -> Result<Vec<ProgressCompletion>, Failure> {
         let tasks = planar_preparation_scope(outer, inputs.len());
-        let mut work =
-            execute_planar_inputs(inputs, &tasks, self.options.run_parallel(), observed)?;
+        let mut work = execute_planar_inputs(inputs, &tasks, self.options.parallelism(), observed)?;
         let completions = planar_preparation_completions(&mut work)?;
         if native_user_break(&self.options, &tasks, observed) {
             return Ok(completions);

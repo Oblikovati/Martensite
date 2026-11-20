@@ -38,14 +38,8 @@ pub(super) fn fill_feature_gaps(
             completion: None,
         })
         .collect();
-    let pooled = parallel && tasks.len() != 1;
-    run_context_tasks(
-        &mut tasks,
-        &(),
-        pooled,
-        || (),
-        |task, _| task.perform(connections),
-    )?;
+    let pooled = crate::bop_algo::Parallelism::from_flag(parallel).for_tasks(tasks.len());
+    run_context_tasks(&mut tasks, &(), pooled, |task, _| task.perform(connections))?;
     collect_feature_gaps(tasks)
 }
 fn collect_feature_gaps(

@@ -47,9 +47,13 @@ fn pcurve_computation_does_not_attach_to_the_source_before_storage() {
         let (mut filler, tasks) = one_pcurve_task();
         let source = tasks[0].edge.clone();
         let face = tasks[0].face.clone();
-        let outputs =
-            execute_pcurve_tasks(tasks, &ProgressScope::default(), &filler.context, parallel)
-                .unwrap();
+        let outputs = execute_pcurve_tasks(
+            tasks,
+            &ProgressScope::default(),
+            &filler.context,
+            crate::bop_algo::Parallelism::from_flag(parallel),
+        )
+        .unwrap();
         let (task, outcome) = outputs.into_iter().next().unwrap();
         assert_eq!(outcome, ProgressCompletion::Completed);
         assert!(!task.pcurve.is_null());
@@ -73,9 +77,13 @@ fn actual_null_face_failure_is_caught_with_original_typed_cause_in_both_settings
     for parallel in [false, true] {
         let (filler, mut tasks) = one_pcurve_task();
         tasks[0].face = Face::default();
-        let outputs =
-            execute_pcurve_tasks(tasks, &ProgressScope::default(), &filler.context, parallel)
-                .unwrap();
+        let outputs = execute_pcurve_tasks(
+            tasks,
+            &ProgressScope::default(),
+            &filler.context,
+            crate::bop_algo::Parallelism::from_flag(parallel),
+        )
+        .unwrap();
         assert_caught_failure(&outputs[0]);
     }
 }

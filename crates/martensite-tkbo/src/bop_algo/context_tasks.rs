@@ -3,25 +3,28 @@
 //! and both `run_launcher_context_tasks` paths use the existing native-failure bridge;
 //! the SDK launcher owns unwind, stop/wait and worker-index diagnostic aggregation.
 //! Raw error text is not a cross-thread determinism promise; geometry merges by input order.
+//! Every worker uses the caller's context. Its caches are internally locked, so one context
+//! serves all workers. A context per worker, as in the native design, rebuilt each cached
+//! service once per worker: on the 239-curve conical text check of #419 eight workers then
+//! used 813 MB against 243 MB serial, and the shared context used 267 MB.
 use martensite_tkernel::{
     osd::{Launcher, ThreadPool},
     standard::{Failure, raise_native_failure},
 };
-#[path = "context_tasks/slots.rs"]
-mod slots;
-use slots::ContextTaskSlots;
+#[path = "context_tasks/parallelism.rs"]
+mod parallelism;
+pub(crate) use parallelism::Parallelism;
 
-/// Reuse the exact caller context and lazy worker contexts on the existing executor.
-/// Example: `run_context_tasks(tasks, &context, parallel, Context::default, perform)?`.
+/// Run tasks with the caller's context, serially or on the existing executor.
+/// Example: `run_context_tasks(tasks, &context, options.parallelism(), perform)?`.
 /// The caller owns any task scopes; each worker creates its borrowed range locally.
-pub(crate) fn run_context_tasks<T: Send, C: Send + Sync>(
+pub(crate) fn run_context_tasks<T: Send, C: Sync>(
     tasks: &mut [T],
     main: &C,
-    parallel: bool,
-    make_context: impl Fn() -> C + Sync,
+    parallel: Parallelism,
     perform: impl Fn(&mut T, &C) -> Result<(), Failure> + Sync,
 ) -> Result<(), Failure> {
-    if !parallel {
+    if !parallel.enabled() {
         for task in tasks {
             perform(task, main)?;
         }
@@ -29,26 +32,21 @@ pub(crate) fn run_context_tasks<T: Send, C: Send + Sync>(
     }
     let launcher = Launcher::new(
         ThreadPool::default_pool(-1),
-        context_worker_cap(tasks.len()),
+        parallel.worker_cap(tasks.len()),
     );
-    execute_with_launcher(tasks, main, &launcher, make_context, perform)
+    execute_with_launcher(tasks, main, &launcher, perform)
 }
 
 /// Use caller-owned worker reservations without replacing task choreography.
-/// Example: `execute_with_launcher(tasks, main, launcher, make_context, perform)?`.
-pub(super) fn execute_with_launcher<T: Send, C: Send + Sync>(
+/// Example: `execute_with_launcher(tasks, main, launcher, perform)?`.
+pub(super) fn execute_with_launcher<T: Send, C: Sync>(
     tasks: &mut [T],
     main: &C,
     launcher: &Launcher<'_>,
-    make_context: impl Fn() -> C + Sync,
     perform: impl Fn(&mut T, &C) -> Result<(), Failure> + Sync,
 ) -> Result<(), Failure> {
-    let contexts = ContextTaskSlots::new(main, launcher);
-    launcher.perform_iter(tasks.iter_mut(), |thread_index, task| {
-        let result = contexts
-            .at(thread_index, &make_context)
-            .and_then(|context| perform(task, context));
-        raise_native_failure(result);
+    launcher.perform_iter(tasks.iter_mut(), |_, task| {
+        raise_native_failure(perform(task, main));
     })
 }
 
@@ -60,13 +58,3 @@ pub(crate) use launcher_policy::run_launcher_context_tasks;
 #[cfg(test)]
 #[path = "context_tasks/tests.rs"]
 mod tests;
-
-// Past eight workers the holed conical self-check of #496 got slower and used twice
-// the CPU: the extra workers mostly contended on the allocator. Eight gave its best
-// time (1.33 s against 1.88 s uncapped on 32 logical CPUs) at about half the memory.
-const MAX_CONTEXT_WORKERS: usize = 8;
-
-fn context_worker_cap(task_count: usize) -> i32 {
-    // Only the launcher's worker hint is bounded; the full usize iterator remains intact.
-    task_count.min(MAX_CONTEXT_WORKERS) as i32
-}

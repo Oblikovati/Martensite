@@ -95,11 +95,6 @@ pub(super) fn check_pairs(
         .collect())
 }
 
-fn new_worker_context() -> Handle<Context> {
-    // The existing launcher owns lazy worker slots; the caller's context is never replaced.
-    Handle::new(Context::default())
-}
-
 fn run_pair_callbacks(
     work: &mut [SameDomainPairWork<'_>],
     context: &Handle<Context>,
@@ -109,8 +104,7 @@ fn run_pair_callbacks(
     run_launcher_context_tasks(
         work,
         context,
-        parallel,
-        new_worker_context,
+        crate::bop_algo::Parallelism::from_flag(parallel),
         |task, actual| task.perform(actual, observed),
     )
 }

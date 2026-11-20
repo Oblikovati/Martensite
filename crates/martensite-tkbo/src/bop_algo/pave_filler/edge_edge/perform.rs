@@ -51,7 +51,7 @@ impl BOPAlgoPaveFiller {
             return Ok(Vec::new());
         };
         let scope = edge_intersection_scope(boundary.scope, tasks.len());
-        let outputs = execute_edge_tasks(tasks, &scope, self.options.run_parallel(), "PerformEE")?;
+        let outputs = execute_edge_tasks(tasks, &scope, self.options.parallelism(), "PerformEE")?;
         let (tasks, mut completions) = unpack_edge_tasks(outputs, boundary.observed);
         if boundary.cancelled(&self.options) {
             return Ok(completions);

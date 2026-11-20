@@ -16,16 +16,12 @@ pub(super) fn execute_pcurve_tasks(
     tasks: Vec<PCurveTask>,
     scope: &ProgressScope<'_>,
     context: &Handle<Context>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
 ) -> Result<Vec<(PCurveTask, ProgressCompletion)>, Failure> {
     let mut work = allocate_pcurve_invocations(tasks, scope);
-    run_launcher_context_tasks(
-        &mut work,
-        context,
-        parallel,
-        || Handle::new(Context::default()),
-        |item, context| item.perform(context),
-    )?;
+    run_launcher_context_tasks(&mut work, context, parallel, |item, context| {
+        item.perform(context)
+    })?;
     work.into_iter()
         .map(PCurveInvocation::into_output)
         .collect()

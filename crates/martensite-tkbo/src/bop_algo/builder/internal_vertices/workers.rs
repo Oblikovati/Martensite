@@ -50,8 +50,7 @@ pub(super) fn classify_pairs(
     run_launcher_context_tasks(
         &mut work,
         context,
-        parallel,
-        || Handle::new(Context::default()),
+        crate::bop_algo::Parallelism::from_flag(parallel),
         |item, actual| item.perform(actual, observed),
     )?;
     collect_inside(work)

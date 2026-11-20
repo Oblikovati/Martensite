@@ -42,7 +42,7 @@ impl BOPAlgoPaveFiller {
             tasks,
             &scope,
             &self.context,
-            self.options.run_parallel(),
+            self.options.parallelism(),
         )?;
         self.commit_pcurve_outputs(outputs, outer, observed)
     }

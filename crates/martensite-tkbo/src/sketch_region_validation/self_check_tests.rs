@@ -197,6 +197,18 @@ fn completed_single_walk_is_scoped_to_its_actual_execution() {
     );
 }
 
+// The check bounds its workers; serial stays serial (#496).
+#[test]
+fn the_self_check_runs_on_at_most_four_workers() {
+    use crate::bop_algo::Parallelism;
+    let shape = converted_box();
+    let parallel = super::self_check::configured_checker(&shape, true);
+    let four = std::num::NonZeroUsize::new(4).unwrap();
+    assert_eq!(parallel.options().parallelism(), Parallelism::limited(four));
+    let serial = super::self_check::configured_checker(&shape, false);
+    assert_eq!(serial.options().parallelism(), Parallelism::SERIAL);
+}
+
 // Parallel execution must not change any finding, its order or its entities (#496).
 #[test]
 fn parallel_and_serial_checks_report_identical_findings() {

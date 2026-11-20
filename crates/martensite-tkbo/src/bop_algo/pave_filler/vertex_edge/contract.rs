@@ -320,7 +320,13 @@ fn edge_batch_rows(parallel: bool) -> Vec<EdgeScalarRow> {
                 .x()
         })
         .collect();
-    execute_vertex_edge_work(&mut work, &context, &ProgressScope::default(), parallel).unwrap();
+    execute_vertex_edge_work(
+        &mut work,
+        &context,
+        &ProgressScope::default(),
+        crate::bop_algo::Parallelism::from_flag(parallel),
+    )
+    .unwrap();
     work.iter_mut()
         .zip(expected)
         .map(|(item, parameter)| edge_scalar_row(item, parameter))

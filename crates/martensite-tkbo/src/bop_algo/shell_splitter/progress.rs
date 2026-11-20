@@ -83,8 +83,7 @@ fn execute_tasks(tasks: &mut [ShellBlockTask<'_, '_>], parallel: bool) -> Result
     crate::bop_algo::run_context_tasks(
         tasks,
         &(),
-        parallel,
-        || (),
+        crate::bop_algo::Parallelism::from_flag(parallel),
         |task, _| {
             let completion = run_block(task.block, task.scope)?;
             task.outcome = Ok(completion);

@@ -99,7 +99,7 @@ impl BOPAlgoPaveFiller {
             tasks,
             &scope,
             &self.context,
-            self.options.run_parallel(),
+            self.options.parallelism(),
             "ForceInterfEF",
         )?;
         let (tasks, outcomes) = unpack_edge_face_tasks(outputs, boundary.observed);

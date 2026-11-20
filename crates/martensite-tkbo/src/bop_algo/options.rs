@@ -1,11 +1,12 @@
 //! Shared options and alert reporting for Boolean algorithms.
-use super::{AlertUserBreak, FaceGroupingVersion};
+use super::{AlertUserBreak, FaceGroupingVersion, Parallelism};
 use martensite_tkernel::message::{AlertHandle, Gravity, MsgFile, ProgressScope, Report};
 use martensite_tkernel::ncollection::BaseAllocator;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::RuntimeType;
 use martensite_tkernel::tcollection::AsciiString;
 use std::io::{self, Write};
+use std::num::NonZeroUsize;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Once};
 
@@ -26,6 +27,8 @@ pub struct Options {
     allocator: Option<BaseAllocator>,
     report: Arc<Report>,
     run_parallel: bool,
+    // `None` leaves the worker count to the task count, as the native options do.
+    max_workers: Option<NonZeroUsize>,
     fuzzy_value: f64,
     use_obb: bool,
     face_grouping_version: FaceGroupingVersion,
@@ -62,6 +65,7 @@ impl Options {
             allocator,
             report: Arc::new(Report::new()),
             run_parallel: Self::get_parallel_mode(),
+            max_workers: None,
             fuzzy_value: precision::confusion(),
             use_obb: false,
             face_grouping_version: FaceGroupingVersion::default(),
@@ -148,6 +152,21 @@ impl Options {
         self.run_parallel
     }
 
+    /// Bounds the workers of every parallel stage; `options.limit_workers(NonZeroUsize::MIN)`.
+    /// Inherited with the options, so the bound reaches each sub-algorithm (#496).
+    pub(crate) fn limit_workers(&mut self, max_workers: NonZeroUsize) {
+        self.max_workers = Some(max_workers);
+    }
+
+    /// The parallel mode with its worker bound; `options.parallelism().enabled()`.
+    pub(crate) fn parallelism(&self) -> Parallelism {
+        match (self.run_parallel, self.max_workers) {
+            (false, _) => Parallelism::SERIAL,
+            (true, None) => Parallelism::UNLIMITED,
+            (true, Some(max_workers)) => Parallelism::limited(max_workers),
+        }
+    }
+
     /// Applies the lower bound, preserving NaN as `std::max` does; `options.set_fuzzy_value(0.0)`.
     pub fn set_fuzzy_value(&mut self, tolerance: f64) {
         self.fuzzy_value = if tolerance < precision::confusion() {
@@ -197,3 +216,7 @@ impl Options {
 pub(super) fn normalized_collection_allocator(allocator: Option<&BaseAllocator>) -> BaseAllocator {
     allocator.cloned().unwrap_or_else(BaseAllocator::common)
 }
+
+#[cfg(test)]
+#[path = "options_tests.rs"]
+mod tests;

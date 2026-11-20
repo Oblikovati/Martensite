@@ -20,16 +20,12 @@ pub(super) fn execute_split_edge_tasks(
     scope: &ProgressScope<'_>,
     structure: &DataStructure,
     context: &Handle<Context>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
 ) -> Result<Vec<(SplitEdgeTask, ProgressCompletion)>, Failure> {
     let mut work = allocated_split_invocations(tasks, scope);
-    run_launcher_context_tasks(
-        &mut work,
-        context,
-        parallel,
-        || Handle::new(Context::default()),
-        |item, context| item.perform(structure, context),
-    )?;
+    run_launcher_context_tasks(&mut work, context, parallel, |item, context| {
+        item.perform(structure, context)
+    })?;
     work.into_iter()
         .map(SplitEdgeInvocation::into_output)
         .collect()
