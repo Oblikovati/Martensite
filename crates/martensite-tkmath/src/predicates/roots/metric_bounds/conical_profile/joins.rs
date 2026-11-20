@@ -4,6 +4,8 @@ use super::angle::*;
 use super::boundary::*;
 use super::developed::CombinedFailure;
 use super::*;
+mod cap;
+pub use cap::{ConicalCapJoinSpan, ConicalCapJoinsQuery, certify_conical_cap_joins};
 pub(super) mod chart;
 pub use chart::{
     ConicalChartJoinsError, certify_conical_joins_in_chart,
@@ -133,6 +135,7 @@ impl std::error::Error for ConicalJoinProofFailure {}
 /// Conditional common-direction proof; it does not establish whole-body topology.
 pub struct ConicalJoinsEvidence {
     pub(super) chart: Option<super::boundary_chart::ChartBinding>,
+    cap_charts: Option<cap::CapBinding>,
     pub(super) input: Vec<BoundarySnapshot>,
     pub(super) contour_lengths: Vec<usize>,
     pub(super) options: ConeClearanceOptions,
@@ -142,7 +145,7 @@ pub struct ConicalJoinsEvidence {
 impl ConicalJoinsEvidence {
     /// Recheck inputs and policy; `evidence.matches(&query)`.
     pub fn matches(&self, query: &ConicalJoinsQuery<'_>) -> bool {
-        self.chart.is_none() && self.matches_inputs(query)
+        self.chart.is_none() && self.cap_charts.is_none() && self.matches_inputs(query)
     }
     fn matches_inputs(&self, query: &ConicalJoinsQuery<'_>) -> bool {
         self.options == query.options
@@ -256,18 +259,17 @@ pub(super) fn failure(index: usize, cause: CombinedFailure) -> ConicalJoinsFailu
 use super::boundary_snapshot::BoundarySnapshot;
 
 fn admit_contour_lengths(query: &ConicalJoinsQuery<'_>) -> Result<(), ConicalJoinsFailure> {
-    if query.contour_lengths.len() > query.spans.len() {
-        return Err(contour_count_failure(query, None));
+    admit_lengths(query.contour_lengths, query.spans.len())
+}
+fn admit_lengths(lengths: &[usize], spans: usize) -> Result<(), ConicalJoinsFailure> {
+    if lengths.len() > spans {
+        return Err(contour_count_failure(lengths.len(), spans, None));
     }
-    let total = query
-        .contour_lengths
+    let total = lengths
         .iter()
         .try_fold(0_usize, |sum, count| sum.checked_add(*count));
-    if query.contour_lengths.is_empty()
-        || query.contour_lengths.contains(&0)
-        || total != Some(query.spans.len())
-    {
-        return Err(contour_count_failure(query, total));
+    if lengths.is_empty() || lengths.contains(&0) || total != Some(spans) {
+        return Err(contour_count_failure(lengths.len(), spans, total));
     }
     Ok(())
 }
@@ -279,6 +281,7 @@ fn joins_evidence(
 ) -> ConicalJoinsEvidence {
     ConicalJoinsEvidence {
         chart: None,
+        cap_charts: None,
         input: query
             .spans
             .iter()
@@ -303,14 +306,11 @@ fn join_request<'a>(span: &'a ConicalJoinSpan<'a>) -> super::spatial::SpatialReq
     request
 }
 
-fn contour_count_failure(
-    query: &ConicalJoinsQuery<'_>,
-    total: Option<usize>,
-) -> ConicalJoinsFailure {
+fn contour_count_failure(count: usize, spans: usize, total: Option<usize>) -> ConicalJoinsFailure {
     ConicalJoinsFailure::Contours {
-        count: query.contour_lengths.len(),
+        count,
         total,
-        spans: query.spans.len(),
+        spans,
     }
 }
 

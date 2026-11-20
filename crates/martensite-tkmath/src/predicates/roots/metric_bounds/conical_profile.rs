@@ -466,8 +466,8 @@ fn admit_source_point(pole: usize, point: &[f64; 2]) -> Result<(), ConicalSource
 }
 
 pub use joins::{
-    ConicalChartJoinsError, certify_conical_joins_in_chart,
-    certify_conical_joins_in_chart_with_refinement,
+    ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalChartJoinsError, certify_conical_cap_joins,
+    certify_conical_joins_in_chart, certify_conical_joins_in_chart_with_refinement,
 };
 
 mod trim_bridge;

@@ -1,5 +1,8 @@
 //! Complete closed contours retain their selected metric and exact source owners.
 use super::*;
+mod cap;
+#[cfg(test)]
+pub(in super::super::super) use cap::cap_join_spans;
 pub(in super::super::super) fn certify(
     original: &DevelopedRegionRequest,
     prepared: &Prepared,
@@ -8,13 +11,7 @@ pub(in super::super::super) fn certify(
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<ConicalJoinsEvidence> {
     if !prepared.local_charts.is_empty() {
-        return Err(mismatch(
-            original.region,
-            None,
-            "whole-contour cone chart authority for join certification",
-            vec![0],
-            vec![1],
-        ));
+        return cap::certify(original, prepared, spans, work, cancelled);
     }
     let mut queries = Vec::with_capacity(spans.len());
     for (piece, proof) in prepared.source.loops.iter().flatten().zip(spans) {

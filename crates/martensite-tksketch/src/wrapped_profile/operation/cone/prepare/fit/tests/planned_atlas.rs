@@ -38,16 +38,14 @@ fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {
     .unwrap();
     assert!(clearance.operations() > 0);
     let body = decode_strip(&prepared, request.support);
-    let captures =
-        storage::capture_spans(original, &prepared, &body, &mut work, &mut || false).unwrap();
-    assert_per_span_authority(original, &prepared, &captures.spans);
-    assert_pending_contour_proof(original, &prepared, &captures.spans, &mut work);
-
     let resolution =
         crate::surface_sketch::wrapped_profile::pipeline::resolution(original.tolerance);
     let report = validate_body(&body.shape, &resolution).unwrap();
     assert!(report.is_valid(), "{report:?}");
-    assert_periodic_cap_material(&prepared, &request, &captures.spans);
+    let stored = storage::capture(original, &prepared, body, &mut work, &mut || false).unwrap();
+    assert_per_span_authority(original, &prepared, &stored.spans);
+    assert_certified_contour(original, &prepared, &stored);
+    assert_periodic_cap_material(&prepared, &request, &stored.spans);
 }
 
 fn decode_strip(prepared: &Prepared, support: ConeSupport) -> coverage::MemberView {
@@ -85,25 +83,47 @@ fn assert_per_span_authority(
     reject_sibling_chart(prepared, spans);
 }
 
-fn assert_pending_contour_proof(
+fn assert_certified_contour(
     original: &DevelopedRegionRequest,
     prepared: &Prepared,
-    spans: &[storage::SpanProof],
-    work: &mut Work,
+    stored: &storage::Stored,
 ) {
-    let consumed = work.consumed;
-    let Err(failure) = storage::capture_joins(original, prepared, spans, work, &mut || false)
-    else {
-        panic!("local evidence alone cannot authorize contour publication");
+    let spans = storage::cap_join_spans(original, prepared, &stored.spans).unwrap();
+    let lengths = [spans.len()];
+    let query = ConicalCapJoinsQuery {
+        spans: &spans,
+        contour_lengths: &lengths,
+        reference_slant: prepared.reference_slant,
+        options: stored.joins.cap_join_options().unwrap(),
     };
-    assert!(matches!(
-        failure.cause,
-        ConeCause::Binding {
-            field: "whole-contour cone chart authority for join certification",
-            ..
-        }
-    ));
-    assert_eq!(work.consumed, consumed);
+    assert!(stored.joins.matches_cap_joins(&query));
+    assert_eq!(stored.joins.directions().len(), spans.len());
+    let mut reordered = spans.clone();
+    reordered.rotate_left(1);
+    let changed = ConicalCapJoinsQuery {
+        spans: &reordered,
+        ..query
+    };
+    assert!(!stored.joins.matches_cap_joins(&changed));
+    assert_broken_order(&spans, &changed);
+}
+
+fn assert_broken_order(spans: &[ConicalCapJoinSpan<'_>], original: &ConicalCapJoinsQuery<'_>) {
+    let mut broken = spans.to_vec();
+    broken.swap(0, 1);
+    let query = ConicalCapJoinsQuery {
+        spans: &broken,
+        contour_lengths: original.contour_lengths,
+        reference_slant: original.reference_slant,
+        options: original.options,
+    };
+    let error =
+        certify_conical_cap_joins(query, || false).expect_err("an open incidence must refuse");
+    assert_eq!(error.index, Some(0));
+    assert!(
+        matches!(error.cause.as_ref(), ConicalJoinsFailure::Proof { cause, .. }
+        if cause.kind() == ConicalJoinFailureKind::Join)
+    );
 }
 
 fn reject_other_chart(prepared: &Prepared, spans: &[storage::SpanProof]) {

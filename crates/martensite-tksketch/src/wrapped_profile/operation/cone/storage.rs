@@ -4,7 +4,9 @@ use super::*;
 mod allocation;
 mod binding;
 mod boundary;
-pub(super) use boundary::{joins as capture_joins, prepared_query, query as boundary_query};
+#[cfg(test)]
+pub(super) use boundary::cap_join_spans;
+pub(super) use boundary::{prepared_query, query as boundary_query};
 mod capture;
 mod trims;
 mod work;
@@ -51,7 +53,7 @@ pub(super) fn capture(
 ) -> ConeChecked<Stored> {
     let started = work.consumed;
     let captured = capture_spans(original, prepared, &view, work, cancelled)?;
-    let joins = capture_joins(original, prepared, &captured.spans, work, cancelled)?;
+    let joins = boundary::joins(original, prepared, &captured.spans, work, cancelled)?;
     Ok(Stored {
         shape: view.shape,
         coverage: captured.coverage,
@@ -62,13 +64,13 @@ pub(super) fn capture(
     })
 }
 
-pub(super) struct CapturedSpans {
+struct CapturedSpans {
     coverage: coverage::CoverageEvidence,
-    pub(super) spans: Vec<SpanProof>,
+    spans: Vec<SpanProof>,
     carriers: [ConicalTrimCarrier; 2],
 }
 
-pub(super) fn capture_spans(
+fn capture_spans(
     original: &DevelopedRegionRequest,
     prepared: &Prepared,
     view: &coverage::MemberView,

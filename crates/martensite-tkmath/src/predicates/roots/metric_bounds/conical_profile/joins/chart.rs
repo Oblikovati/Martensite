@@ -14,7 +14,7 @@ pub struct ConicalChartJoinsError {
     pub cause: Box<ConicalJoinsFailure>,
 }
 impl ConicalChartJoinsError {
-    fn new(cause: ConicalJoinsFailure, operations: u32) -> Self {
+    pub(super) fn new(cause: ConicalJoinsFailure, operations: u32) -> Self {
         let index = match &cause {
             ConicalJoinsFailure::Boundary { index } | ConicalJoinsFailure::Proof { index, .. } => {
                 Some(*index)
@@ -78,7 +78,7 @@ pub fn certify_conical_joins_in_chart_with_refinement(
     refinement: ConicalPrimitiveRefinement,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<ConicalJoinsEvidence, ConicalChartJoinsError> {
-    admit_components(&query)?;
+    admit_components(query.contour_lengths, query.spans.len(), query.options)?;
     let mut arithmetic = Arithmetic::new(sector_api::policy(query.options), &mut cancelled);
     let directions = execute(&query, (domain, refinement), &mut arithmetic)
         .map_err(|cause| ConicalChartJoinsError::new(cause, arithmetic.operations()))?;
@@ -113,17 +113,21 @@ impl ConicalJoinsEvidence {
             })
     }
 }
-fn admit_components(query: &ConicalJoinsQuery<'_>) -> Result<(), ConicalChartJoinsError> {
-    admit_policy(query.options).map_err(|cause| ConicalChartJoinsError::new(cause, 0))?;
-    admit_contour_lengths(query).map_err(|cause| ConicalChartJoinsError::new(cause, 0))?;
-    if query.contour_lengths.len() > 128 {
+pub(super) fn admit_components(
+    lengths: &[usize],
+    spans: usize,
+    options: ConeClearanceOptions,
+) -> Result<(), ConicalChartJoinsError> {
+    admit_policy(options).map_err(|cause| ConicalChartJoinsError::new(cause, 0))?;
+    admit_lengths(lengths, spans).map_err(|cause| ConicalChartJoinsError::new(cause, 0))?;
+    if lengths.len() > 128 {
         return Err(ConicalChartJoinsError::new(
-            contour_count_failure(query, Some(query.spans.len())),
+            contour_count_failure(lengths.len(), spans, Some(spans)),
             0,
         ));
     }
     let mut start = 0;
-    for count in query.contour_lengths {
+    for count in lengths {
         if *count > 128 {
             return Err(component_size(start, *count));
         }

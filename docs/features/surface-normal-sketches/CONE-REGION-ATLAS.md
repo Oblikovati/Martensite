@@ -195,10 +195,9 @@ material proof then uses the decoded pcurves. The control refuses a
 missing slot, a chart for another curve, and a sibling interval.
 
 The existing contour join theorem requires a shared fit center and
-identical half-angle endpoints at each join. Local-chart contours
-refuse at that gate before running join arithmetic. Publication still
-needs a common reference for the authored-to-cap homotopy and its
-measures.
+identical half-angle endpoints at each join. At this stage the contour
+check refused local charts. The decoded-cap proof below handles those
+joins in the shared angle/slant plane.
 
 The cone suite passed 141 tests with three ignored. The final
 closed-strip test ran in 16.0 s, and Clippy passed with warnings denied.
@@ -206,3 +205,34 @@ Four replay controls reproduced their reports and archives across
 independent processes. Three pinned standalone O. runs had a median
 API time of 4.793 s and median peak RSS of 67,640 KiB. These are
 current-build measurements. The paired performance gate remains open.
+
+## Joins in decoded angle and slant
+
+The join certificate binds every decoded span to its own chart and
+requires the same physical datum, cap carriers and slant origin across
+the contour. Both decoded cap rows must agree. At each join, the
+original Cartesian endpoints must agree exactly and the retained
+unwrapped UV endpoints must have identical bits.
+
+For an authored source `(x,y)`, let `q = x² + y²`. The angle rate is
+`(x y' - y x') / (q sin α)` and the slant rate is `q' / (2 sqrt(q))`.
+The proof encloses both rates from the exact restricted Bernstein
+controls. It also encloses the derivative of the retained cap cubic
+from its coefficients. A strictly positive projection shared by both
+derivatives on both adjacent spans gives strict ordering throughout
+straight interpolation in angle and slant. This proves the local
+adjacent-span condition. Nonadjacent and periodic separation during
+the interpolation require their own checks.
+
+The closed strip now passes the complete retained-storage stage,
+including the contour join certificate. The check refuses a one-bit
+cap gap and opposing derivatives. The strip also refuses broken span
+order and rejects reuse of a certificate after a rotation of the
+bound span sequence.
+
+The checks passed 256 cone math tests and 141 cone operation tests,
+with three operation tests ignored. Clippy passed with warnings denied.
+Four replay controls matched `4a8cc2bc` byte for byte. In three paired
+standalone O. runs after the suites finished, median API time was
+4.764 s on the baseline and 4.741 s on the candidate. Median peak RSS
+was 67,580 KiB and 67,500 KiB, respectively.

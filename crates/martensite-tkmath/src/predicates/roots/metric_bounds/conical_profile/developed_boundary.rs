@@ -81,6 +81,44 @@ impl ConicalDevelopedBoundaryEvidence {
             && self.reference == reference.to_bits()
     }
 }
+pub(super) struct JoinOperands<'a> {
+    pub(super) uv: &'a [[u64; 2]],
+    pub(super) capture: &'a spatial::SpatialCapture,
+    pub(super) carriers: [[u64; 3]; 2],
+}
+
+pub(super) fn join_carriers(evidence: &ConicalDevelopedBoundaryEvidence) -> [[u64; 3]; 2] {
+    evidence.carriers
+}
+
+// Join admission borrows the already bound cap controls once and performs no fingerprint serialization.
+pub(super) fn join_uv<'a>(
+    context: &'a ConicalDevelopedBoundarySpan<'_>,
+    chart: &ConicalChartDomainEvidence,
+    reference_slant: f64,
+    bits: u16,
+) -> Option<JoinOperands<'a>> {
+    let issued = context.evidence;
+    if !issued.source.matches(&context.source)
+        || issued.reference != reference_slant.to_bits()
+        || issued.options != context.boundary.options()
+        || !issued.domain.matches(chart)
+        || issued.uv_bits[0] != issued.uv_bits[1]
+    {
+        return None;
+    }
+    let captured = context.boundary.retained_in_chart_with_refinement(
+        &context.source,
+        chart,
+        bits,
+        ConicalPrimitiveRefinement::UnsplitV1,
+    )?;
+    Some(JoinOperands {
+        uv: &issued.uv_bits[0],
+        capture: &captured.capture,
+        carriers: issued.carriers,
+    })
+}
 pub(super) fn capture(
     pair: ConicalTrimPairQuery<'_>,
     source: ConicalBoundaryQuery<'_>,
