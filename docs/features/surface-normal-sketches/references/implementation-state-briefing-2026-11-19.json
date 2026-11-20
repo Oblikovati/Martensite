@@ -2,10 +2,10 @@
   "snapshot_utc": "2026-11-19T21:29:50Z",
   "implementation_status": "active",
   "briefing": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/docs/features/surface-normal-sketches/IMPLEMENTATION-STATE-BRIEFING-2026-11-19.md",
-  "briefing_sha256": "73bf409253003ba328c06b4e848c4e864d12cd50ec57f1abbc9aa3c37a515a19",
+  "briefing_sha256": "015475ef2aeec5af9399672538c2a5c402052783e6fc82d8b36c027f046babd5",
   "remote_main": "b61a031d0bde0e21d283e0f94975f79b9ae15574",
   "remote_release_next": "2e8ab886d4755c9c0165d7f59f2a92ead61f3612",
-  "capability_head": "abde8bd2e4ddf57000cc4e99ca7d8b1d95fbf3b2",
+  "capability_head": "7747b805",
   "capability_uncommitted": false,
   "capability_targeted_tests": {
     "tkbo": 184,
@@ -24,7 +24,7 @@
   "capability_target_met": false,
   "local_relative_links_verified": true,
   "scope_of_this_task": "Surface capability attribution and integration; shared-fix performance held, QA dedup qualification progressing",
-  "updated_utc": "2026-11-20T04:29:21.039119+00:00",
+  "updated_utc": "2026-11-20T04:37:11.932266+00:00",
   "current_v6_attribution": "references/v6-stage-attribution-2026-11-19/summary.json",
   "cold_r1_identity_invocations": 1,
   "cold_r1_timed_samples": 0,
@@ -41,7 +41,7 @@
   "point569_functional_invocations": 14,
   "accumulation570_tests": 140,
   "accumulation570_reference": "references/conical-accumulation-570-2026-11-19/summary.json",
-  "capability_source_checkpoint": "abde8bd2",
+  "capability_source_checkpoint": "7747b805",
   "capability_remote_pushed": false,
   "raw_log_storage": "references/log-storage-2026-11-19.json",
   "post_lint_test_passes": 256,
@@ -74,5 +74,7 @@
   "point569_strict_watch_terminal": "abnormal supervisor exit143; zero campaign/consumer executions",
   "shared_indexes_b1_reference": "references/shared-indexes-b1-2026-11-20/terminal.json",
   "native_stage_attribution": "references/native-stage-attribution-2026-11-20/summary.json",
-  "point569_strict_benchmark_accepted": false
+  "point569_strict_benchmark_accepted": false,
+  "handle574_b1_reference": "references/handle-clone-574-b1-2026-11-20/summary.json",
+  "handle574_performance_accepted": false
 }

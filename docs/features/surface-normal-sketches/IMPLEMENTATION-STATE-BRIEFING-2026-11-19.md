@@ -23,7 +23,7 @@ error; successful operations gained no allocation. The five-second time/RSS
 gate and the full affected-package gate remain pending for B1.
 
 The full capability is not delivered. The B1/V6 foundation is checkpointed in
-`6fca95d2`, with later implementation at `abde8bd2`. Exact-point measurement
+`6fca95d2`, with later implementation at `7747b805`. Exact-point measurement
 (#569), shared indexes (#566/#567), and scalar owned metadata reuse (#572) are
 incorporated locally; none of B1 is pushed. The five-second target remains
 unqualified. PR #571 remains green and held for performance acceptance.
@@ -116,10 +116,9 @@ record the contract.
 | Attachment | `CylinderFaceAttachment` captures/restores owned selected-face records, verifies revisions, exports detached support and follows explicit history with ambiguity refusal. Chart hit-to-developed mapping and persistence are present. |
 | Boss/pocket workflow | Existing Boolean and history machinery is available for reuse. The complete attached text emboss/engrave/edit/replay case is not qualified. |
 
-Current implementations reuse TKBO planar regions/contact transport and TKMath
-exact predicates/integration. Text capture remains above modelling; TKSketch
-does not gain a viewer dependency. Display tessellation supplies no modelling
-or acceptance decisions.
+The pipeline reuses TKBO planar regions/contact transport and TKMath exact
+predicates/integration. Text capture stays above modelling without a TKSketch
+viewer dependency. Display tessellation supplies no modelling or acceptance evidence.
 
 ## Geometric planar proof V6
 
@@ -333,15 +332,15 @@ contains a tested local adaptation; main-first integration remains required.
 | --- | --- | --- |
 | Remote patch line | `main`, `b61a031d0bde0e21d283e0f94975f79b9ae15574` | Remote authoritative baseline. |
 | Remote feature candidate | `release/next`, `2e8ab886d4755c9c0165d7f59f2a92ead61f3612` | Includes Phase A and main synchronization PR #559. |
-| Active capability | `feature/cone-chart-atlas`, source checkpoint `abde8bd2`; no remote branch | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1` |
+| Active capability | `feature/cone-chart-atlas`, source checkpoint `7747b805`; no remote branch | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1` |
 | Shared-fix integration | `fix/census-contact-indexes`, HEAD `9774ac64`; PR #571 green, performance held | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix567-census-report-index` |
 | Original #566 lane | `fix/566-contact-cardinality-index`, HEAD `b61a031d` plus preserved frozen changes | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix566-contact-cardinality-index` |
 | Superseded #564 lane | `fix/564-contact-row-iteration`, preserved unfinished source | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix564-contact-row-iteration` |
 | Clean benchmark baseline | Detached `b61a031d` | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/564-main-baseline` |
 | Archived earlier approach | `archive/wrapped-polynomial-profiles-2026-11-13` | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/conical-surface-sketches` |
 
-The shared integration checkout retained its old physical directory name to
-reuse the build cache; its branch is now `fix/census-contact-indexes`.
+The shared checkout retains its old directory name for its build cache; its branch
+is `fix/census-contact-indexes`.
 The root checkout at `/home/vmiguel/git/oblikovati-workspace/Martensite` is still
 on local main `4b76a823` and has unrelated user changes, PNGs and supplied ZIPs.
 Do not treat that local HEAD as current remote main or discard its contents.
@@ -403,8 +402,11 @@ For the 139-face O body, topology and geometry constructors alone took 0.586323 
 and 1.218910 s. These are nested durations; do not add them together. Independent
 oracle checks after the operation boundary are excluded. All six instrumented
 files were restored byte for byte and 13 probe artifacts removed. This diagnostic
-does not qualify the five-second gate or RSS. Bug #574 addresses redundant runtime
-projection while cloning an owning Handle; its end-to-end effect is unmeasured.
+does not qualify the five-second gate or RSS. The reviewed #574 Handle fix is now
+local at `7747b805`: [both complete controls](references/handle-clone-574-b1-2026-11-20/summary.json)
+passed at 4.987650/4.967412 s, versus 5.387059/5.394606 s before it. Ten Handle
+regressions also passed. These diagnostic runs overlap compilation; matched
+time/RSS and main integration remain pending. TSan startup crashed before main.
 
 ## Remaining delivery work
 
