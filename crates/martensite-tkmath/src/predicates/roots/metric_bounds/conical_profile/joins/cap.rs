@@ -5,9 +5,10 @@ use super::super::developed_boundary::{join_carriers, join_uv};
 use super::*;
 mod homotopy;
 pub use homotopy::{
-    ConicalCapClearanceRelation, ConicalCapHomotopyEvidence, ConicalCapHomotopyFailure,
-    ConicalCapNormalError, ConicalCapNormalEvidence, ConicalCapVolumeError,
-    ConicalCapVolumeEvidence, ConicalCapVolumeFailure, ConicalDecodedCapEvidence,
+    ConicalCapClearanceRelation, ConicalCapFamilyHomotopyError, ConicalCapHomotopyEvidence,
+    ConicalCapHomotopyFailure, ConicalCapNormalError, ConicalCapNormalEvidence,
+    ConicalCapVolumeError, ConicalCapVolumeEvidence, ConicalCapVolumeFailure,
+    ConicalDecodedCapEvidence, certify_conical_cap_family_homotopy,
 };
 pub(super) mod metric;
 mod projection;

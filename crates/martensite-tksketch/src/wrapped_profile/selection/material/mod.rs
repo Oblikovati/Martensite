@@ -38,18 +38,88 @@ pub(in super::super) fn certify_with_cancel(
     options: MaterialOptions,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<PeriodicMaterialEvidence> {
+    certify_bound(
+        requests,
+        RelationInputs {
+            prepared: &prepared.prepared,
+            planar: &prepared.planar,
+            boundary: &prepared.boundary_clearance,
+        },
+        options,
+        &mut cancelled,
+    )
+    .map_err(|error| {
+        debug_assert!(error.operations <= options.probes.max_operations);
+        error.cause
+    })
+}
+
+// Decoded cone cap polynomials already cover their whole parameter intervals.
+#[cfg(test)]
+pub(in super::super) fn certify_projected_with_cancel(
+    requests: &[Request],
+    planar: &PlanarSelectionEvidence,
+    boundary: &planar_clearance::OriginalClearance,
+    options: MaterialOptions,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<PeriodicMaterialEvidence, MaterialWorkFailure> {
+    certify_bound(
+        requests,
+        RelationInputs {
+            prepared: requests,
+            planar,
+            boundary,
+        },
+        options,
+        &mut cancelled,
+    )
+}
+
+#[derive(Debug)]
+pub(in super::super) struct MaterialWorkFailure {
+    pub operations: u32,
+    pub cause: MaterialFailure,
+}
+impl From<MaterialFailure> for MaterialWorkFailure {
+    fn from(cause: MaterialFailure) -> Self {
+        Self {
+            operations: 0,
+            cause,
+        }
+    }
+}
+
+struct RelationInputs<'a> {
+    prepared: &'a [Request],
+    planar: &'a PlanarSelectionEvidence,
+    boundary: &'a planar_clearance::OriginalClearance,
+}
+
+fn certify_bound(
+    requests: &[Request],
+    inputs: RelationInputs<'_>,
+    options: MaterialOptions,
+    cancelled: &mut CancelPoll<'_>,
+) -> Result<PeriodicMaterialEvidence, MaterialWorkFailure> {
     if cancelled() {
-        return Err(MaterialFailure::Cancelled);
+        return Err(MaterialFailure::Cancelled.into());
     }
     admit(options)?;
-    let regions = source::bind(requests, prepared)?;
-    let periodic = &prepared.boundary_clearance.periodic;
+    let regions = source::bind(requests, &inputs)?;
+    let periodic = &inputs.boundary.periodic;
     let (jobs, inputs) = jobs::plan(&regions, periodic, options.probes.max_probes)?;
     let probes = periodic
-        .certify_probes(&inputs, options.probes, &mut cancelled)
-        .map_err(|cause| MaterialFailure::Probe(Box::new(cause)))?;
-    let mut work = winding::WindingWork::new(options, &mut cancelled);
-    let relations = classify(&regions, &jobs, &probes, &mut work)?;
+        .certify_probes_with_work(&inputs, options.probes, &mut *cancelled)
+        .map_err(|error| MaterialWorkFailure {
+            operations: error.operations,
+            cause: MaterialFailure::Probe(Box::new(error.cause)),
+        })?;
+    let mut work = winding::WindingWork::new(options, cancelled);
+    let relations =
+        classify(&regions, &jobs, &probes, &mut work).map_err(|cause| MaterialWorkFailure {
+            operations: probes.operations(),
+            cause,
+        })?;
     Ok(material_evidence(probes, relations, work))
 }
 fn material_evidence(

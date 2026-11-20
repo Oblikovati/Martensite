@@ -40,6 +40,17 @@ impl PlanarIntegralEvidence {
             && self.valid_grant()
             && self.valid_lineage()
     }
+    /// Check that two receipts share one immutable issuance. Use
+    /// `proof.shares_issuance(&other)` before verifying a shared family profile once.
+    pub fn shares_issuance(&self, other: &Self) -> bool {
+        self.requested == other.requested
+            && self.entry_allowance == other.entry_allowance
+            && Arc::ptr_eq(&self.graph, &other.graph)
+            && Arc::ptr_eq(&self.source, &other.source)
+            && Arc::ptr_eq(&self.source_bits, &other.source_bits)
+            && Arc::ptr_eq(&self.parents, &other.parents)
+    }
+
     fn valid_grant(&self) -> bool {
         let Some(mut requested) = self.requested.integral_options() else {
             return false;

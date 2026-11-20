@@ -13,7 +13,7 @@ fn exclusions_cover_only_adjacent_pairs_in_sorted_contour_order() {
         [7, 9],
         [8, 9],
     ];
-    assert!(adjacencies(&[4, 2, 1, 3]).eq(expected));
+    assert!(adjacencies([4, 2, 1, 3]).eq(expected));
 }
 
 #[test]

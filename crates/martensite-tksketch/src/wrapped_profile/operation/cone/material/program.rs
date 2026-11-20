@@ -1,16 +1,28 @@
 //! A V5 UV program borrows and charges the same finite operation integration allowance.
 use super::*;
-pub(super) fn capture_program_uv(
-    source: &DevelopedRegionRequest,
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn capture_program_uv(
+    sources: &[impl AsRef<DevelopedRegionRequest>],
     requested: martensite_tkbo::profile_extrusion::PlanarProofWorkLimit,
     version: PlanarProofVersion,
     work: &mut storage::Work,
     integration: CylindricalFluxOptions,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<martensite_tkbo::profile_extrusion::PlanarRegionSet> {
+    let source = sources.first().map(AsRef::as_ref).ok_or_else(|| {
+        ConeFailure::new(
+            None,
+            None,
+            WrappedFailureClass::Incomplete,
+            ConeCause::Scalar {
+                field: "UV program members",
+                actual: 0.,
+                expected: "at least one decoded member",
+            },
+        )
+    })?;
     let remaining = u64::from(work.integration(integration).max_total_subintervals);
     let result = planar::capture_with_integration_budget_and_cancel(
-        std::slice::from_ref(source),
+        sources,
         source.tolerance,
         work.planar_remaining(requested),
         version,

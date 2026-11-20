@@ -111,17 +111,19 @@ impl CertifiedCylindricalClearance {
     }
     pub(in crate::predicates::roots::metric_bounds) fn matches_whole_control_bits(
         &self,
-        sources: impl ExactSizeIterator<Item = impl ExactSizeIterator<Item = [u64; 2]>>,
+        mut sources: impl Iterator<Item = impl ExactSizeIterator<Item = [u64; 2]>>,
     ) -> bool {
-        self.sources.len() == sources.len()
-            && self.sources.iter().zip(sources).all(|(stored, poles)| {
-                let count = poles.len();
-                (2..=4).contains(&count)
-                    && stored
-                        .iter()
-                        .copied()
-                        .eq(curve_words(0, 0, count, poles.flatten()))
-            })
+        self.sources.iter().all(|stored| {
+            let Some(poles) = sources.next() else {
+                return false;
+            };
+            let count = poles.len();
+            (2..=4).contains(&count)
+                && stored
+                    .iter()
+                    .copied()
+                    .eq(curve_words(0, 0, count, poles.flatten()))
+        }) && sources.next().is_none()
     }
 
     /// Declared support radius; `proof.support_radius()`.

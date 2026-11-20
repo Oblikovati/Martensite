@@ -6,27 +6,82 @@ pub(super) fn request(
     spans: &[storage::SpanProof],
 ) -> ConeChecked<DevelopedRegionRequest> {
     // Swapping coordinates preserves the authored winding under cone development.
-    projected_request(prepared, spans, |[u, v]| [v, u])
+    projected_request(prepared, spans, 1, |[u, v]| [v, u])
 }
 
 #[cfg(test)]
-pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn periodic_request(
-    prepared: &Prepared,
-    spans: &[storage::SpanProof],
-) -> ConeChecked<Request> {
-    // Reflect slant to preserve authored winding while keeping angle on the periodic axis.
-    let source = projected_request(prepared, spans, |[u, v]| [u, -v])?;
-    Ok(Request { source, radius: 1. })
+type DecodedMember<'a> = (&'a Prepared, &'a [storage::SpanProof]);
+
+#[cfg(test)]
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn periodic_requests(
+    members: &[DecodedMember<'_>],
+) -> ConeChecked<Vec<Request>> {
+    let bases = periodic_bases(members)?;
+    members
+        .iter()
+        .map(|&(prepared, spans)| {
+            // Reflect slant while keeping angle on the periodic axis.
+            let source =
+                projected_request(prepared, spans, bases[&prepared.source.region], |[u, v]| {
+                    [u, -v]
+                })?;
+            Ok(Request { source, radius: 1. })
+        })
+        .collect()
+}
+
+#[cfg(test)]
+fn periodic_bases(members: &[DecodedMember<'_>]) -> ConeChecked<BTreeMap<SurfaceRegionId, u64>> {
+    let mut first = 1_u64;
+    let mut bases = BTreeMap::new();
+    for (region, count) in periodic_counts(members)? {
+        bases.insert(region, first);
+        // A span contributes one curve and at most two distinct corner keys.
+        first = first
+            .checked_add(count as u64)
+            .and_then(|n| n.checked_add(count as u64))
+            .ok_or_else(|| mismatch(region, None, "bounded synthetic cap source keys"))?;
+    }
+    Ok(bases)
+}
+
+#[cfg(test)]
+fn periodic_counts(members: &[DecodedMember<'_>]) -> ConeChecked<BTreeMap<SurfaceRegionId, usize>> {
+    let mut counts = BTreeMap::new();
+    let datum = members.first().map(|(prepared, _)| cap_datum(prepared));
+    for &(prepared, spans) in members {
+        let region = prepared.source.region;
+        if datum != Some(cap_datum(prepared)) {
+            return Err(mismatch(region, None, "shared periodic cap datum"));
+        }
+        if counts.insert(region, spans.len()).is_some() {
+            return Err(mismatch(region, None, "unique periodic cap region"));
+        }
+    }
+    Ok(counts)
+}
+
+#[cfg(test)]
+fn cap_datum(prepared: &Prepared) -> [u64; 5] {
+    [
+        prepared.reference_slant,
+        prepared.chart_origin,
+        prepared.semi_angle,
+        prepared.source.depths[0],
+        prepared.source.depths[1],
+    ]
+    .map(f64::to_bits)
 }
 
 fn projected_request(
     prepared: &Prepared,
     spans: &[storage::SpanProof],
+    first: u64,
     project: impl Fn([f64; 2]) -> [f64; 2] + Copy,
 ) -> ConeChecked<DevelopedRegionRequest> {
     let index = index(prepared.source.region, spans)?;
-    let ids = curve_ids(prepared, spans.len())?;
-    let vertices = vertices(&prepared.source);
+    let ids = curve_ids_from(prepared, spans.len(), first)?;
+    let vertices = vertices(&prepared.source, first);
     let loops = prepared
         .source
         .loops
@@ -54,6 +109,14 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn curve_ids(
     prepared: &Prepared,
     count: usize,
 ) -> ConeChecked<BTreeMap<CurveSpan, SurfaceCurveId>> {
+    curve_ids_from(prepared, count, 1)
+}
+
+fn curve_ids_from(
+    prepared: &Prepared,
+    count: usize,
+    first: u64,
+) -> ConeChecked<BTreeMap<CurveSpan, SurfaceCurveId>> {
     let ids: BTreeMap<_, _> = prepared
         .source
         .loops
@@ -71,7 +134,7 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn curve_ids(
     Ok(ids
         .keys()
         .enumerate()
-        .map(|(i, span)| (*span, SurfaceCurveId(i as u64 + 1)))
+        .map(|(i, span)| (*span, SurfaceCurveId(first + i as u64)))
         .collect())
 }
 
@@ -88,7 +151,10 @@ fn index(region: SurfaceRegionId, spans: &[storage::SpanProof]) -> ConeChecked<S
     }
     Ok(index)
 }
-fn vertices(source: &DevelopedRegionRequest) -> BTreeMap<CornerSource, SurfaceVertexId> {
+fn vertices(
+    source: &DevelopedRegionRequest,
+    first: u64,
+) -> BTreeMap<CornerSource, SurfaceVertexId> {
     let corners: BTreeMap<_, _> = source
         .loops
         .iter()
@@ -99,7 +165,7 @@ fn vertices(source: &DevelopedRegionRequest) -> BTreeMap<CornerSource, SurfaceVe
     corners
         .keys()
         .enumerate()
-        .map(|(i, corner)| (*corner, SurfaceVertexId(i as u64 + 1)))
+        .map(|(i, corner)| (*corner, SurfaceVertexId(first + i as u64)))
         .collect()
 }
 fn contour_request(

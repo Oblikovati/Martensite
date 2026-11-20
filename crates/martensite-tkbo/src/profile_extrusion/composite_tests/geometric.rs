@@ -23,3 +23,15 @@ fn geometric_v6_publishes_the_same_rectangle_with_its_actual_program_loan() {
 fn geometric_v6_never_widens_a_zero_integral_loan() {
     assert_zero_loan(build(&profile(), geometric(1024), 0));
 }
+
+#[test]
+fn separately_issued_programs_accept_the_same_profile_but_only_clones_share_issuance() {
+    let source = profile();
+    let first = build(&source, geometric(1024), 17).unwrap();
+    let second = build(&source, geometric(1024), 17).unwrap();
+    let first = first.integral_program_evidence().unwrap();
+    let second = second.integral_program_evidence().unwrap();
+    assert!(first.shares_issuance(&first.clone()));
+    assert!(first.matches_profile(&source) && second.matches_profile(&source));
+    assert!(!first.shares_issuance(second));
+}

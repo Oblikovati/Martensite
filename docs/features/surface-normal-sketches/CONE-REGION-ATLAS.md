@@ -416,3 +416,49 @@ core, the standalone O. medians were 5.259 s on the baseline and
 concurrent application builds, the paired medians were 4.790 s and
 4.957 s on one core, and 5.997 s and 5.782 s on another. Those runs
 show the host-load variation, so timing qualification remains open.
+
+## Periodic clearance across selected regions
+
+The family proof checks that all members use the same cone support,
+unwrapped angular datum and slant origin. It binds the reflected cap
+polynomials and adjacency exclusions in their recorded contour order
+against one clearance certificate. The periodic images use that same
+boundary relation. Twice the largest member motion bounds the loss of
+clearance while all members interpolate simultaneously. An omitted or
+reordered member cannot reuse the family receipt.
+
+Projected cap curves and corners get unique witness keys from their
+region and recorded source keys. Their keys survive changes to member
+iteration order. The clearance and winding stages borrow the same
+projected profiles. One index locates each selected planar region by
+its directed boundary. The winding stage verifies the full profile
+against the shared integral program once, then checks each member's
+source coefficients and topology. Cloned receipts share program
+issuance. Independently rebuilt programs still have their own
+complete-profile binding.
+
+The family cap census borrows the remaining integration cells from the
+cone work ledger. Periodic probes report arithmetic spent even when
+a probe fails or a subsequent winding check refuses. Successful
+probe work and refused probe work are each charged once.
+
+The fixtures use prepared and decoded rational cone caps. A wide strip
+and a separate region pass one family clearance and both periodic
+containment directions. In the containment pair the boundaries clear,
+but a translated region lies inside the other's material and the
+winding check refuses. Adding a certified hole around that image
+allows both regions and their decoded reference measurements.
+The public connected-atlas operation still needs to publish these
+family receipts.
+
+The checks passed 816 metric-bound tests, 14 planar-integral tests,
+144 cone operation tests and 31 shared selection tests. Three cone
+replay workers were ignored by the suite. All seven replay controls
+matched `f56bb312` byte for byte when run separately. Clippy passed
+with warnings denied across the three affected toolkits.
+
+Five alternating pairs ran the standalone O. control on the same
+pinned Linux x86_64 core. The median API time was 4.774 s on
+`f56bb312` and 4.706 s with the family changes. Peak RSS medians
+were 68,256 KiB and 67,748 KiB. This measures the existing standalone
+operation. The connected-atlas family still needs a public benchmark.

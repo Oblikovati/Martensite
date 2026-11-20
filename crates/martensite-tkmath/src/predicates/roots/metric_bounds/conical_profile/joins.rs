@@ -6,10 +6,11 @@ use super::developed::CombinedFailure;
 use super::*;
 mod cap;
 pub use cap::{
-    ConicalCapClearanceRelation, ConicalCapHomotopyEvidence, ConicalCapHomotopyFailure,
-    ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalCapNormalError, ConicalCapNormalEvidence,
-    ConicalCapVolumeError, ConicalCapVolumeEvidence, ConicalCapVolumeFailure,
-    ConicalDecodedCapEvidence, certify_conical_cap_joins,
+    ConicalCapClearanceRelation, ConicalCapFamilyHomotopyError, ConicalCapHomotopyEvidence,
+    ConicalCapHomotopyFailure, ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalCapNormalError,
+    ConicalCapNormalEvidence, ConicalCapVolumeError, ConicalCapVolumeEvidence,
+    ConicalCapVolumeFailure, ConicalDecodedCapEvidence, certify_conical_cap_family_homotopy,
+    certify_conical_cap_joins,
 };
 pub(super) mod chart;
 pub use chart::{

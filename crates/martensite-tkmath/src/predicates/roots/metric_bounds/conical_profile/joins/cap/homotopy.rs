@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! The checked cap clearance separates the entire interpolation by the triangle inequality.
 use super::*;
+mod family;
+pub use family::{ConicalCapFamilyHomotopyError, certify_conical_cap_family_homotopy};
 mod volume;
 use crate::predicates::roots::metric_bounds::{
     CertifiedCylindricalClearance, CertifiedCylindricalPeriodicClearance, CylindricalClearanceScope,
@@ -42,7 +44,7 @@ impl std::fmt::Display for ConicalCapHomotopyFailure {
             Self::Joins => write!(out, "join certificate; expected decoded cap reference"),
             Self::Binding(relation) => write!(
                 out,
-                "{relation:?} clearance; expected the same reflected cap controls, adjacency exclusions and unit angular period scale"
+                "{relation:?} clearance; expected the same cap coordinates, reflected controls, adjacency exclusions and unit angular period scale"
             ),
             Self::Gap {
                 relation,
@@ -85,36 +87,59 @@ impl ConicalJoinsEvidence {
         clearance: &CertifiedCylindricalClearance,
         periodic: &CertifiedCylindricalPeriodicClearance,
     ) -> Result<ConicalCapHomotopyEvidence<'_>, ConicalCapHomotopyFailure> {
-        use ConicalCapClearanceRelation::{Nonadjacent, Periodic};
-        let cap = self
-            .cap_charts
-            .as_deref()
-            .ok_or(ConicalCapHomotopyFailure::Joins)?;
-        admit_clearance(clearance, cap, &self.contour_lengths)?;
-        if !periodic.matches_boundary(clearance) {
-            return Err(ConicalCapHomotopyFailure::Binding(Periodic));
-        }
-        let within = DyadicBound::from_f64(clearance.clearance_lower_bound())
-            .map_err(|_| ConicalCapHomotopyFailure::Binding(Nonadjacent))?;
-        let required = cap.motion.scale_pow2(1);
-        let margins = [
-            separation(Nonadjacent, &within, &required)?,
-            separation(Periodic, periodic.separation_lower_bound(), &required)?,
-        ];
-        Ok(ConicalCapHomotopyEvidence { cap, margins })
+        let member = cap_member(self)?;
+        let margins = certify_margins(std::iter::once(member), clearance, periodic)?;
+        Ok(ConicalCapHomotopyEvidence {
+            cap: member.0,
+            margins,
+        })
     }
 }
 
-fn admit_clearance(
+type CapMember<'a> = (&'a CapBinding, &'a [usize]);
+
+fn cap_member(joins: &ConicalJoinsEvidence) -> Result<CapMember<'_>, ConicalCapHomotopyFailure> {
+    let cap = joins
+        .cap_charts
+        .as_deref()
+        .ok_or(ConicalCapHomotopyFailure::Joins)?;
+    Ok((cap, &joins.contour_lengths))
+}
+
+fn certify_margins<'a>(
+    members: impl Iterator<Item = CapMember<'a>> + Clone,
     clearance: &CertifiedCylindricalClearance,
-    cap: &CapBinding,
-    lengths: &[usize],
+    periodic: &CertifiedCylindricalPeriodicClearance,
+) -> Result<[DyadicBound; 2], ConicalCapHomotopyFailure> {
+    use ConicalCapClearanceRelation::{Nonadjacent, Periodic};
+    admit_clearance(clearance, members.clone())?;
+    if !periodic.matches_boundary(clearance) {
+        return Err(ConicalCapHomotopyFailure::Binding(Periodic));
+    }
+    let within = DyadicBound::from_f64(clearance.clearance_lower_bound())
+        .map_err(|_| ConicalCapHomotopyFailure::Binding(Nonadjacent))?;
+    let motion = members
+        .map(|(cap, _)| &cap.motion)
+        .max()
+        .ok_or(ConicalCapHomotopyFailure::Joins)?;
+    let required = motion.scale_pow2(1);
+    Ok([
+        separation(Nonadjacent, &within, &required)?,
+        separation(Periodic, periodic.separation_lower_bound(), &required)?,
+    ])
+}
+
+fn admit_clearance<'a>(
+    clearance: &CertifiedCylindricalClearance,
+    members: impl Iterator<Item = CapMember<'a>> + Clone,
 ) -> Result<(), ConicalCapHomotopyFailure> {
     let same_chart = clearance.support_radius().to_bits() == 1_f64.to_bits()
         && clearance.angular_origin().to_bits() == 0_f64.to_bits();
-    let reflected = cap
-        .spans
-        .iter()
+    let lengths = members
+        .clone()
+        .flat_map(|(_, lengths)| lengths.iter().copied());
+    let reflected = members
+        .flat_map(|(cap, _)| &cap.spans)
         .map(|span| span.uv.iter().map(|&[u, v]| [u, v ^ (1_u64 << 63)]));
     if !same_chart
         || clearance.scope() != CylindricalClearanceScope::Within
@@ -132,10 +157,10 @@ fn admit_clearance(
     Ok(())
 }
 
-fn adjacencies(lengths: &[usize]) -> impl Iterator<Item = [usize; 2]> + '_ {
+fn adjacencies(lengths: impl IntoIterator<Item = usize>) -> impl Iterator<Item = [usize; 2]> {
     lengths
-        .iter()
-        .scan(0, |start, &length| {
+        .into_iter()
+        .scan(0, |start, length| {
             let begin = *start;
             *start += length;
             Some((begin, length))

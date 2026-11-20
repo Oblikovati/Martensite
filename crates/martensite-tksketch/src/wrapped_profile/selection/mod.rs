@@ -131,15 +131,12 @@ fn qualify_with_work(
     let tolerance = admission::admit(requests)?;
     let captured = planar::capture_with_work_and_cancel(requests, tolerance, work, cancelled)
         .map_err(|cause| SelectionFailure::Capture(Box::new(cause)))?;
-    let mut members = BTreeMap::new();
-    for request in requests {
-        let evidence =
-            planar::select(request, &captured).map_err(|cause| SelectionFailure::Region {
-                region: request.region,
-                cause: Box::new(cause),
-            })?;
-        members.insert(request.region, evidence);
-    }
+    let members = planar::select_members(requests, &captured).map_err(|(region, cause)| {
+        SelectionFailure::Region {
+            region,
+            cause: Box::new(cause),
+        }
+    })?;
     Ok(PlanarSelectionEvidence {
         members,
         certificate: captured.certificate(),

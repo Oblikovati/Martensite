@@ -8,6 +8,9 @@ use martensite_tkbo::{
     profile_extrusion::{PlanarProofVersion, ProfileCurve, ProfileCurveId, ProfileVertexId},
 };
 
+mod family;
+mod periodic;
+
 const STRIP: [[f64; 2]; 4] = [
     [10., -5.5],
     [10.625, -5.84375],
@@ -26,7 +29,7 @@ fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {
         super::super::super::selection::planar(&run, &inputs.originals, &mut work, &mut || false)
             .unwrap();
     assert!(planar.members[&original.region].area.encloses(5445. / 256.));
-    let mut prepared = prepare_strip(&run, original, &mut work);
+    let mut prepared = prepare_local(&run, original, None, &mut work);
     super::super::super::canonicalize::uv_endpoints(&mut prepared).unwrap();
     assert_closed_wide_uv(&prepared);
     let clearance = super::super::super::clearance::certify(
@@ -37,7 +40,7 @@ fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {
     )
     .unwrap();
     assert!(clearance.operations() > 0);
-    let body = decode_strip(&prepared, request.support);
+    let body = decode_member(&prepared, request.support);
     let resolution =
         crate::surface_sketch::wrapped_profile::pipeline::resolution(original.tolerance);
     let report = validate_body(&body.shape, &resolution).unwrap();
@@ -53,7 +56,7 @@ fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {
     assert_closed_strip_measures(&run, original, &stored, &homotopy, &mut work);
 }
 
-fn decode_strip(prepared: &Prepared, support: ConeSupport) -> coverage::MemberView {
+fn decode_member(prepared: &Prepared, support: ConeSupport) -> coverage::MemberView {
     let built = native::construct(prepared, support).unwrap();
     let keys: Vec<_> = built.bindings.iter().map(|(key, _)| *key).collect();
     let bytes = crate::surface_sketch::encoding::encode(&built.solid, &built.bindings).unwrap();
@@ -181,9 +184,10 @@ fn strip_request() -> WrappedConeNormalRequest {
     request
 }
 
-fn prepare_strip(
+fn prepare_local(
     run: &ConeRun<'_>,
     original: &DevelopedRegionRequest,
+    shared_slant: Option<f64>,
     work: &mut Work,
 ) -> Prepared {
     let chart = super::super::super::AdmittedConeChart {
@@ -195,15 +199,30 @@ fn prepare_strip(
         domain: WrappedConeDomainPolicy::PositiveXRecenteredChartV4,
     };
     let mut prepared = super::super::super::initial(run, original, &chart, execution).unwrap();
-    let mut endpoints = endpoints::EndpointPool::default();
-    let mut pieces = Vec::new();
-    for edge in &original.loops[0] {
-        super::super::super::radius(&mut prepared, edge, work, &mut || false).unwrap();
-        let parts = fit_edge(&mut prepared, edge, &mut endpoints, work);
-        pieces.extend(parts);
+    if let Some(reference) = shared_slant {
+        prepared.reference_slant = reference;
     }
-    prepared.source.loops = vec![pieces];
+    let mut endpoints = endpoints::EndpointPool::default();
+    prepared.source.loops = original
+        .loops
+        .iter()
+        .map(|contour| fit_contour(&mut prepared, contour, &mut endpoints, work))
+        .collect();
     prepared
+}
+
+fn fit_contour(
+    prepared: &mut Prepared,
+    contour: &[AuthoredPiece],
+    endpoints: &mut endpoints::EndpointPool,
+    work: &mut Work,
+) -> Vec<AuthoredPiece> {
+    let mut pieces = Vec::new();
+    for edge in contour {
+        super::super::super::radius(prepared, edge, work, &mut || false).unwrap();
+        pieces.extend(fit_edge(prepared, edge, endpoints, work));
+    }
+    pieces
 }
 
 fn fit_edge(
@@ -258,56 +277,15 @@ fn assert_periodic_cap_material(
     stored: &storage::Stored,
     work: &mut Work,
 ) -> planar_clearance::OriginalClearance {
-    let uv = crate::surface_sketch::wrapped_profile::operation::cone::material::periodic_request(
-        prepared,
-        &stored.spans,
-    )
-    .unwrap();
-    let profiles = std::slice::from_ref(&uv);
-    let planar = planar_cap_material(profiles, request, work);
-    let boundary_clearance = certified_cap_clearance(&uv, work);
-    let prepared = periodic_selection::PreparedSelection {
-        planar,
-        prepared: vec![uv.clone()],
-        boundary_clearance,
-    };
-    let region = uv.region;
-    let material = qualify_periodic_material(uv, &prepared, work);
-    work.charge(region, None, material.probes.operations())
-        .unwrap();
-    let images = prepared.boundary_clearance.periodic.images();
+    let profiles = periodic::project(&[(prepared, &stored.spans)]);
+    let planar = periodic::planar(&profiles, request, work);
+    let boundary = periodic::clearance(&profiles, work);
+    let material = periodic::classify(&profiles, &planar, &boundary, work).unwrap();
+    let images = boundary.periodic.images();
     assert_eq!(images.len(), 1);
     assert_eq!(images[0].translation().turn(), 1);
     assert_eq!(material.relations.len(), 2);
-    prepared.boundary_clearance
-}
-
-fn qualify_periodic_material(
-    uv: Request,
-    prepared: &periodic_selection::PreparedSelection,
-    work: &Work,
-) -> periodic_selection::PeriodicMaterialEvidence {
-    let remaining = work.remaining();
-    let mut options = periodic_selection::MaterialOptions::default();
-    options.probes.fractional_bits = remaining.fractional_bits;
-    options.probes.max_operations = remaining.max_operations;
-    periodic_selection::material::certify_with_cancel(&[uv], prepared, options, || false).unwrap()
-}
-
-fn certified_cap_clearance(uv: &Request, work: &mut Work) -> planar_clearance::OriginalClearance {
-    let profiles = std::slice::from_ref(uv);
-    let allowance = work.remaining();
-    let proof =
-        planar_clearance::certify_many_with_limit(profiles, profiles, allowance, || false).unwrap();
-    let within_work = proof.certificate.operations();
-    let periodic_work = proof.periodic.operations();
-    assert_eq!(
-        proof.periodic.requested_options().max_operations,
-        allowance.max_operations - within_work
-    );
-    work.charge(uv.region, None, within_work + periodic_work)
-        .unwrap();
-    proof
+    boundary
 }
 
 fn assert_closed_strip_measures(
@@ -402,30 +380,4 @@ fn assert_homotopy<'a>(
         ))
     ));
     homotopy
-}
-
-fn planar_cap_material(
-    profiles: &[Request],
-    request: &WrappedConeNormalRequest,
-    work: &mut Work,
-) -> periodic_selection::PlanarSelectionEvidence {
-    let version = PlanarProofVersion::GeometricCompositeV6 {
-        max_components: 64,
-        max_total_subintervals: 100_000,
-    };
-    let cap = &profiles[0];
-    let set = planar::capture_with_proof_and_cancel(
-        profiles,
-        cap.tolerance,
-        work.planar_remaining(request.options.planar_work),
-        version,
-        || false,
-    )
-    .unwrap();
-    work.charge_planar(cap.region, set.proof_work()).unwrap();
-    periodic_selection::PlanarSelectionEvidence {
-        members: [(cap.region, planar::select(cap, &set).unwrap())].into(),
-        certificate: set.certificate(),
-        proof_work: set.proof_work(),
-    }
 }

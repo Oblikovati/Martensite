@@ -27,7 +27,7 @@ pub use report::{
     CertifiedCylindricalPeriodicClearance, CertifiedCylindricalPeriodicSlab,
     CertifiedCylindricalProbe, CertifiedCylindricalProbes, CylindricalPeriodicProbe,
     CylindricalPeriodicTranslation, CylindricalProbeError, CylindricalProbeFailure,
-    CylindricalProbeOptions, CylindricalProbeSense,
+    CylindricalProbeOptions, CylindricalProbeSense, CylindricalProbeWorkError,
 };
 pub use types::*;
 type Point = [Interval; 2];

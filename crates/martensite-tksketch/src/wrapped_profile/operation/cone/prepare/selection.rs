@@ -15,31 +15,15 @@ pub(super) fn planar(
     )
     .map_err(|cause| failure(None, None, ConeCause::Planar(Box::new(cause))))?;
     work.charge_planar(first_region(originals)?, captured.proof_work())?;
-    let members = select_members(originals, &captured)?;
+    let members = planar::select_members(originals, &captured).map_err(|(region, cause)| {
+        failure(Some(region), None, ConeCause::Planar(Box::new(cause)))
+    })?;
     Ok(PlanarSelectionEvidence {
         members,
         certificate: captured.certificate(),
         proof_work: captured.proof_work(),
     })
 }
-fn select_members(
-    originals: &[DevelopedRegionRequest],
-    captured: &martensite_tkbo::profile_extrusion::PlanarRegionSet,
-) -> ConeChecked<BTreeMap<SurfaceRegionId, planar::PlanarEvidence>> {
-    let mut members = BTreeMap::new();
-    for source in originals {
-        let evidence = planar::select(source, captured).map_err(|cause| {
-            failure(
-                Some(source.region),
-                None,
-                ConeCause::Planar(Box::new(cause)),
-            )
-        })?;
-        members.insert(source.region, evidence);
-    }
-    Ok(members)
-}
-
 pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn sector(
     request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],

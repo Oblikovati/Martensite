@@ -5,7 +5,7 @@ mod binding;
 mod domain;
 pub(super) use domain::curve_ids as source_curve_ids;
 #[cfg(test)]
-pub(super) use domain::periodic_request;
+pub(super) use domain::periodic_requests;
 mod reference;
 pub(super) use reference::certify as certify_reference;
 #[cfg(test)]
@@ -124,7 +124,14 @@ fn capture_uv(
         PlanarProofVersion::FilteredCompositeBernsteinV5 { .. }
             | PlanarProofVersion::GeometricCompositeV6 { .. }
     ) {
-        return capture_program_uv(source, requested, version, work, integration, cancelled);
+        return capture_program_uv(
+            std::slice::from_ref(source),
+            requested,
+            version,
+            work,
+            integration,
+            cancelled,
+        );
     }
     capture_legacy_uv(source, requested, version, work, cancelled)
 }
@@ -247,6 +254,8 @@ pub(super) fn mismatch(
 
 mod developed;
 mod program;
+#[cfg(test)]
+pub(super) use program::capture_program_uv as capture_periodic_program;
 use program::capture_program_uv;
 
 fn compatible_planar_modes(requested: PlanarProofVersion, actual: PlanarProofVersion) -> bool {

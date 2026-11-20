@@ -15,7 +15,7 @@ mod joins;
 pub(super) mod source;
 
 type LoopIdentity = Vec<(ProfileCurveId, bool)>;
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) struct MaterialIdentity {
     outer: LoopIdentity,
     holes: Vec<LoopIdentity>,
@@ -33,13 +33,24 @@ pub(super) struct PlanarEvidence {
 
 impl PlanarEvidence {
     pub(super) fn matches_request(&self, request: &DevelopedRegionRequest) -> bool {
+        self.matches_member(request)
+            && self
+                .integral
+                .as_ref()
+                .is_none_or(|proof| matches_integral_profile(proof, std::slice::from_ref(request)))
+    }
+
+    pub(super) fn matches_member(&self, request: &DevelopedRegionRequest) -> bool {
         requested_identity(request).is_ok_and(|id| id == self.identity)
             && self.source.matches(request)
-            && self.integral.as_ref().is_none_or(|proof| {
-                combined_profile(std::slice::from_ref(request))
-                    .is_ok_and(|profile| proof.matches_profile(&profile))
-            })
     }
+}
+
+pub(super) fn matches_integral_profile(
+    proof: &PlanarIntegralEvidence,
+    requests: &[impl AsRef<DevelopedRegionRequest>],
+) -> bool {
+    combined_profile(requests).is_ok_and(|profile| proof.matches_profile(&profile))
 }
 
 #[derive(Debug)]
@@ -305,7 +316,59 @@ pub(super) fn select(
 ) -> Result<PlanarEvidence, PlanarFailure> {
     let expected = requested_identity(request)?;
     let selected = unique_region(&expected, captured)?;
-    Ok(PlanarEvidence {
+    Ok(selected_evidence(request, captured, expected, selected))
+}
+
+pub(super) fn select_members(
+    requests: &[impl AsRef<DevelopedRegionRequest>],
+    captured: &PlanarRegionSet,
+) -> Result<BTreeMap<SurfaceRegionId, PlanarEvidence>, (SurfaceRegionId, PlanarFailure)> {
+    if let [request] = requests {
+        let request = request.as_ref();
+        return select(request, captured)
+            .map(|proof| [(request.region, proof)].into())
+            .map_err(|cause| (request.region, cause));
+    }
+    let mut index = BTreeMap::<_, Vec<_>>::new();
+    for candidate in captured.regions() {
+        index
+            .entry(region_identity(candidate))
+            .or_default()
+            .push(candidate);
+    }
+    requests
+        .iter()
+        .map(|request| {
+            let request = request.as_ref();
+            select_indexed(request, captured, &index)
+                .map(|proof| (request.region, proof))
+                .map_err(|cause| (request.region, cause))
+        })
+        .collect()
+}
+
+fn select_indexed(
+    request: &DevelopedRegionRequest,
+    captured: &PlanarRegionSet,
+    index: &BTreeMap<MaterialIdentity, Vec<&PlanarRegion>>,
+) -> Result<PlanarEvidence, PlanarFailure> {
+    let expected = requested_identity(request)?;
+    if let Some([selected]) = index.get(&expected).map(Vec::as_slice) {
+        return Ok(selected_evidence(request, captured, expected, selected));
+    }
+    Err(PlanarFailure::Selection {
+        expected,
+        candidates: captured.regions().iter().map(region_identity).collect(),
+    })
+}
+
+fn selected_evidence(
+    request: &DevelopedRegionRequest,
+    captured: &PlanarRegionSet,
+    expected: MaterialIdentity,
+    selected: &PlanarRegion,
+) -> PlanarEvidence {
+    PlanarEvidence {
         area: selected.area(),
         selected_region: selected.id(),
         #[cfg(test)]
@@ -313,7 +376,7 @@ pub(super) fn select(
         identity: expected,
         source: source::SourceSnapshot::capture(request),
         integral: captured.integral_program_evidence().cloned(),
-    })
+    }
 }
 
 fn unique_region<'a>(
