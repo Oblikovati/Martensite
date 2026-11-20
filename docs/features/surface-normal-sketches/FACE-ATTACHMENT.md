@@ -83,8 +83,31 @@ in the assertion-enabled build. That includes the original body, edited
 body and process replay, and is not an extrusion benchmark.
 
 This covers edits to support, placement and depth for the outward text
-boss. Changes to text content, seam-crossing attached text, inward edit
-replay and general selected-face trim certification remain separate gates.
+boss.
+
+## Multiline pocket content edit across the seam
+
+The [pocket replay](references/multiline-content-edit-2026-11-20/summary.json)
+starts from the original 239-curve, 18-region pocket. It removes the
+exclamation mark's 10 lines and two regions. A translation of -0.3125 in
+developed arc length places the first remaining outline across the native
+cylinder seam. The edited Boolean cut keeps one valid solid and all 16
+remaining floor faces. Authored region and vertex keys for retained text
+are identical. The original body, the two requests and the two frozen
+extrusion tools retain their bytes or values.
+
+Independent Green integration gives retained area `1265699/196608`. The
+inward radial depth integral is `79/320`, so the volume oracle for the
+edited tool is `99990221/62914560`. The test checks that the certified
+tool volume encloses this value. The native Boolean volume estimate is
+used to check the direction of the cut.
+
+The fresh process reads the saved support BRep from its parent, restores
+the selected face record, and rebuilds the edited feature. Both the tool
+and cut body match byte for byte, as does the ordered authored history.
+The test took 416.24 s for the original pocket, edited pocket and process
+replay in the assertion-enabled build. General selected-face trim
+certification and periodic profiles beyond this fixture remain open.
 
 ## Evidence and remaining work
 

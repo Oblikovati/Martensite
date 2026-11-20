@@ -14,12 +14,6 @@ fn multiline_boss_retains_all_eighteen_selected_caps_on_one_support() {
     );
 }
 
-#[test]
-fn multiline_pocket_retains_all_eighteen_selected_floors_on_one_support() {
-    // The inward/outward radial Jacobian ratio is exactly 79/81 at these depths.
-    complete_multiline_attachment(NormalSense::Inward, Operation::Cut, 663607031. / 402653184.);
-}
-
 fn multiline_request(normal: NormalSense) -> WrappedNormalRequest {
     let mut request = text_request();
     request.support.normal = normal;

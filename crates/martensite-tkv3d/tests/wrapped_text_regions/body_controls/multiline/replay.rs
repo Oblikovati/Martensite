@@ -1,4 +1,4 @@
-//! Recompute wrapped text against a revised selected face and replay the complete boss.
+//! Recompute wrapped text against a saved selected face and replay complete features.
 use super::*;
 use martensite_tkbrep::{
     brep_adaptor::BRepAdaptorSurface,
@@ -12,6 +12,8 @@ use martensite_tksketch::surface_sketch::attachment::{
     AttachmentFailureClass, CylinderFaceAttachment, FaceAttachmentId, SupportRevision,
 };
 use std::fmt::Write;
+#[path = "replay/content.rs"]
+mod content;
 
 const FIRST: SupportRevision = SupportRevision(41);
 const EDITED: SupportRevision = SupportRevision(42);
@@ -21,7 +23,14 @@ const PREFIX: &str = "MULTILINE_BODY_REPLAY:";
 #[test]
 fn multiline_boss_replays_after_support_placement_and_depth_edits() {
     let first = original_support();
-    let original = publish(&first, FIRST, [0., 4.], 0.25, 226802403. / 134217728.);
+    let original = publish(
+        &first,
+        FIRST,
+        multiline_request(NormalSense::Outward),
+        [0., 4.],
+        0.25,
+        226802403. / 134217728.,
+    );
     let revised = revise_support(&first);
     let edited = edited_publication(&revised);
     check_edited_publication(&first, &original, &edited);
@@ -107,29 +116,55 @@ struct Publication {
 fn edited_publication(attachment: &CylinderFaceAttachment) -> Publication {
     // Exact Green area times the radius-12 radial integral at depth 3/8.
     let expected = (42000445. / 6291456.) * (195. / 512.);
-    publish(attachment, EDITED, [0.5, 4.125], 0.375, expected)
+    publish(
+        attachment,
+        EDITED,
+        multiline_request(NormalSense::Outward),
+        [0.5, 4.125],
+        0.375,
+        expected,
+    )
 }
 
 fn publish(
     attachment: &CylinderFaceAttachment,
     revision: SupportRevision,
+    mut request: WrappedNormalRequest,
     placement: [f64; 2],
     depth: f64,
     expected: f64,
 ) -> Publication {
-    let mut request = multiline_request(NormalSense::Outward);
-    request.support = attachment
-        .extrusion_support(revision, 0., NormalSense::Outward)
-        .unwrap();
+    let normal = request.support.normal;
+    request.support = attachment.extrusion_support(revision, 0., normal).unwrap();
     request.depths = [0., depth];
     place_developed(&mut request, placement);
     let source = attachment.export_native(revision).unwrap();
+    let original = request.clone();
     let result = normal_extrude_profile(&request).unwrap();
+    assert_eq!(result.reports().len(), request.selections.len());
     check_volume_oracle(&result, expected);
+    let publication = attach_checked(&source.body, &result, &request);
+    assert_eq!(request, original);
+    publication
+}
+
+fn attach_checked(
+    support: &Shape,
+    result: &WrappedNormalResult,
+    request: &WrappedNormalRequest,
+) -> Publication {
+    let tool_bytes = result.encoded_brep().to_vec();
     let native = result.export_native().unwrap();
-    let boolean = attach_tool(&source.body, &native.bodies, Operation::Fuse);
-    check_publication(&boolean, &native.entities, &request);
-    publication(boolean.shape(), &result, &native.entities)
+    let normal = request.support.normal;
+    let operation = match normal {
+        NormalSense::Outward => Operation::Fuse,
+        NormalSense::Inward => Operation::Cut,
+    };
+    let boolean = attach_tool(support, &native.bodies, operation);
+    check_publication(&boolean, &native.entities, request);
+    check_attachment_volume_direction(boolean.shape(), support, normal);
+    assert_eq!(result.encoded_brep(), tool_bytes);
+    publication(boolean.shape(), result, &native.entities, tool_bytes)
 }
 
 fn place_developed(request: &mut WrappedNormalRequest, shift: [f64; 2]) {
@@ -163,11 +198,12 @@ fn publication(
     shape: &Shape,
     result: &WrappedNormalResult,
     entities: &BTreeMap<WrappedHistoryKey, Shape>,
+    tool: Vec<u8>,
 ) -> Publication {
     Publication {
         shape: shape.clone(),
         body: native_snapshot(shape),
-        tool: result.encoded_brep().to_vec(),
+        tool,
         // Fitted subdivisions may change when support or depth changes.
         authored_keys: entities
             .keys()

@@ -1,0 +1,43 @@
+{
+  "source_head": "811ed596",
+  "changed_rust_file_sha256": {
+    "crates/martensite-tkv3d/tests/wrapped_text_regions/body_controls/multiline.rs": "77d0164f6dd2800d96f334be3d1854fed3917677faf63303681b254192fc4d69",
+    "crates/martensite-tkv3d/tests/wrapped_text_regions/body_controls/multiline/replay.rs": "af7d004542e18ae715520d80dec2ce2426aad50c4fef324183c5bc52d2403446",
+    "crates/martensite-tkv3d/tests/wrapped_text_regions/body_controls/multiline/replay/content.rs": "10590a780fd433128a51eea2e699c74e139e4947d1307f2681147fb9111876aa"
+  },
+  "test_run": {
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tkv3d",
+      "--test",
+      "toolkit",
+      "wrapped_text_regions::wrapped::body_controls::multiline::replay::content::multiline_pocket_replays_punctuation_removal_across_native_seam",
+      "--",
+      "--exact",
+      "--nocapture"
+    ],
+    "exit": 0,
+    "passed": true,
+    "source_changed": [],
+    "wall_s": 423.94056620198535
+  },
+  "test_seconds": 416.24,
+  "original_curves": 239,
+  "original_regions": 18,
+  "edited_curves": 229,
+  "edited_regions": 16,
+  "unwrapped_native_seam_shift": -0.3125,
+  "tool_oracle": {
+    "retained_green_area": "1265699/196608",
+    "depth_integral": "79/320",
+    "volume": "99990221/62914560"
+  },
+  "same_process_isolation": true,
+  "fresh_process_replays_saved_support": true,
+  "earlier_attempt": "intentionally stopped before completion to restore original isolation assertions",
+  "general_trim_coverage": false,
+  "performance_qualified": false
+}
