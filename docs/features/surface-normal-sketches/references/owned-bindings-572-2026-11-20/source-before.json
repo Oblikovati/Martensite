@@ -1,0 +1,14 @@
+{
+  "crates/martensite-tkbo/src/sketch_region_certification/paired_binding/occurrence.rs": "7dd92cad96f0e227be15584785974509f7b981c9ff542b82ef14760bc9da7666",
+  "crates/martensite-tkbo/src/sketch_region_certification/paired_binding/occurrence/tests.rs": "917692b12584e56badab6dd0adda822e73e35b82c3f35a692dc021e05afea833",
+  "crates/martensite-tkbo/src/sketch_region_prism/owned_request/profile/owned_graph/tests/conditioned_occurrences.rs": "c6ef8d95f42cad6d789173a618f24184f5e934c5e715744e64766b8fb4790f1d",
+  "crates/martensite-tkbo/src/sketch_region_prism/owned_request/profile/owned_graph/tests/conditioned_occurrences/refusals.rs": "f4bc9b1afc0bcfdd47290b7c6c969a4d5b860505ac6193085114eae0ac008042",
+  "crates/martensite-tkbo/src/sketch_region_prism/owned_request/profile/owned_graph/tests/occurrences.rs": "6627b6508556fade014199fe163ea1ff6cca115605a85ef7e57c08d1501f8973",
+  "CHANGELOG.md": "b5caf1894a9c4c28bebe476aecfc88cd4b96c36db8f0bc735e568d5bc38e62c6",
+  "crates/martensite-tkbo/src/sketch_region_certification/bernstein_binding.rs": "d4d6210f427ad2247187dac7c38e497febe93a9d1f9c9485d7aaa96af0c8f501",
+  "crates/martensite-tkbo/src/sketch_region_certification/paired_binding.rs": "8540af4b4d61978a2675db042bf163427c8ac6ac919011034173f47bbd4653f1",
+  "crates/martensite-tkbo/src/sketch_region_prism/owned_request/profile/owned_graph/tests.rs": "3f46c43a59c9d6c37cbecbce0c37425a63d3737150090953882b8ef9e8c8dcee",
+  "crates/martensite-tkbo/src/sketch_region_prism/owned_request/profile/owned_graph/tests/program.rs": "b107568e8877ec49a8ba84efe11fcec21e7209ab832185d52e641e4dba5a5678",
+  "crates/martensite-tkbo/src/sketch_region_prism/owned_request/profile/owned_graph/tests/recapture.rs": "1becb90654d10d2565a4c6a610cb59722bca7906ef03e0d7cac226196adbb890",
+  "docs/features/planar-certificate-validation/README.md": "c39cd53bce945271c043786ef94a7288c9b49c92a06c715495f41b26eecd46cb"
+}

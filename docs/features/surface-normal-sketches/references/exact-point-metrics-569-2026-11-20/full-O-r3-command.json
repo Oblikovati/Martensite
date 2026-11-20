@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "cargo",
+    "test",
+    "--locked",
+    "-p",
+    "martensite-tksketch",
+    "--lib",
+    "accumulation_v2_preserves_complete_actual_si_and_original_caps",
+    "--",
+    "--test-threads=1"
+  ],
+  "actual_test_source": "src/wrapped_profile/operation/cone/tests/narrow/complete/directed.rs:120,124 under src/lib.rs surface_sketch module",
+  "prior_wrong_target_attempts_preserved": true,
+  "required_test_count": 2
+}

@@ -1,0 +1,7 @@
+{
+  "CHANGELOG.md": "87a41013903091465bbf8069322fc6aff51efa60303e2ab57f4c2431810a6588",
+  "docs/features/planar-certificate-validation/README.md": "225b2689563e78659c234781bce691478c9a1335cf8f0f5a778dd74ae83b8ce8",
+  "crates/martensite-tkmath/src/predicates/roots/bezier_pair/native_parameter_construction.rs": "02db740dd14290df7e438b49dd3cbde468da4f07632a3c24ef62430462dbe8a0",
+  "crates/martensite-tkmath/src/predicates/roots/bezier_pair/native_parameter_construction/point_tests.rs": "ad383c39fa4ba1fc3edb2ba090b27b7397945f34b284ccecf2efc664a3cdebf7",
+  "crates/martensite-tkmath/src/predicates/roots/bezier_pair/native_parameter_construction/point_tests/controls.rs": "a7e872dad66eeb5937ba711f553ae7a780adb26bf679f98bd12cb6e3e7dac56f"
+}

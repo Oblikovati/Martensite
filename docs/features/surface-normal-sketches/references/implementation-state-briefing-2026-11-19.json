@@ -2,11 +2,11 @@
   "snapshot_utc": "2026-11-19T21:29:50Z",
   "implementation_status": "active",
   "briefing": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/docs/features/surface-normal-sketches/IMPLEMENTATION-STATE-BRIEFING-2026-11-19.md",
-  "briefing_sha256": "de70ba37b713763dcb07423f5dec08bc81400b1bd184003f1c77ac04731efb59",
+  "briefing_sha256": "4f8b19c547502cae9a5efdf6041ebdd1a8283bd10e30f5df2446b85e09950261",
   "remote_main": "b61a031d0bde0e21d283e0f94975f79b9ae15574",
   "remote_release_next": "2e8ab886d4755c9c0165d7f59f2a92ead61f3612",
-  "capability_head": "11884b4c77844e9c6bc20e755df01623e2b7e59d",
-  "capability_uncommitted": true,
+  "capability_head": "93026c2e",
+  "capability_uncommitted": false,
   "capability_targeted_tests": {
     "tkbo": 184,
     "math": 18,
@@ -24,7 +24,7 @@
   "capability_target_met": false,
   "local_relative_links_verified": true,
   "scope_of_this_task": "Surface capability attribution and integration; shared-fix performance held, QA dedup qualification progressing",
-  "updated_utc": "2026-11-20T01:33:20.767543+00:00",
+  "updated_utc": "2026-11-20T02:48:01.722913+00:00",
   "current_v6_attribution": "references/v6-stage-attribution-2026-11-19/summary.json",
   "cold_r1_identity_invocations": 1,
   "cold_r1_timed_samples": 0,
@@ -41,7 +41,7 @@
   "point569_functional_invocations": 14,
   "accumulation570_tests": 140,
   "accumulation570_reference": "references/conical-accumulation-570-2026-11-19/summary.json",
-  "capability_source_checkpoint": "11884b4c77844e9c6bc20e755df01623e2b7e59d",
+  "capability_source_checkpoint": "93026c2e",
   "capability_remote_pushed": false,
   "raw_log_storage": "references/log-storage-2026-11-19.json",
   "post_lint_test_passes": 256,
@@ -59,5 +59,17 @@
   "uv_material_probe_operation_passed": true,
   "current_open_integration_prs": [
     571
-  ]
+  ],
+  "capability_head_kind": "Last Rust implementation commit; later evidence commits may follow",
+  "point569_b1_math_controls_passed": 21,
+  "point569_b1_complete_operations_passed": 2,
+  "point569_b1_reference": "references/exact-point-metrics-569-2026-11-20/summary.json",
+  "owned572_main_source_commit": "77582311",
+  "owned572_main_focused_passes": 22,
+  "owned572_b1_source_commit": "6e176cf0",
+  "owned572_b1_focused_passes": 49,
+  "owned572_b1_complete_operations_passed": 2,
+  "owned572_b1_reference": "references/owned-bindings-572-2026-11-20/terminal.json",
+  "physcad_reference": "references/physcad-reference-2026-11-17/summary.json",
+  "point569_strict_watch_terminal": "abnormal supervisor exit143; zero campaign/consumer executions"
 }

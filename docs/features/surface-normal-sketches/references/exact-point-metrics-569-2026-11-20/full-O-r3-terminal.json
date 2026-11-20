@@ -1,0 +1,15 @@
+{
+  "finished": "2026-11-20T02:44:48.602915+00:00",
+  "exit_code": 0,
+  "summaries": [
+    [
+      "2",
+      "0"
+    ]
+  ],
+  "source_changed": [],
+  "log_sha256": "662a71f76a40cec4341d870deef923af964ad1f994b835ca53867e98ae4d2ae9",
+  "math_21_previously_passed": true,
+  "success": true,
+  "timing_usable_for_acceptance": false
+}

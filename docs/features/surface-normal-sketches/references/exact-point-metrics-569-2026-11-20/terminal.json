@@ -1,0 +1,26 @@
+{
+  "finished": "2026-11-20T02:39:28.965155+00:00",
+  "source_changed": [],
+  "tests": [
+    {
+      "name": "math-point-tests",
+      "exit_code": 0,
+      "summaries": [
+        [
+          "21",
+          "0"
+        ]
+      ],
+      "log_sha256": "4da8fa70598bd10fcfd8ca67134023ba0304720120a7143e339e510060f8186a"
+    },
+    {
+      "name": "full-O",
+      "exit_code": 101,
+      "summaries": [],
+      "log_sha256": "2bf6e38589e50ab3b09c20c49acd86de5eef5cf943b12e895292b968229fb495"
+    }
+  ],
+  "success": false,
+  "timing_usable_for_acceptance": false,
+  "main_integration_pending": true
+}

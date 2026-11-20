@@ -22,13 +22,13 @@ payload storage changed in the unpublished cone error and a private profile
 error; successful operations gained no allocation. The five-second time/RSS
 gate and the full affected-package gate remain pending for B1.
 
-The full capability is not delivered. B1/V6 and volume policy 2 are locally
-checkpointed in `6fca95d2`; `427bad37` preserves verbatim evidence in a verified
-archive alongside whitespace-clean display copies. Neither has been pushed.
-The five-second target is unmet. Shared performance fixes are being qualified
-on a separate main-line branch and have not been incorporated into B1. Wider
-charts, periodic topology, full text-on-body acceptance, integration and final
-QA remain open. There are currently no open integration PRs for these lanes.
+The full capability is not delivered. The B1/V6 foundation is checkpointed in
+`6fca95d2`, with later implementation at `93026c2e`. Exact-point measurement
+(#569) and owned metadata reuse (#572) are incorporated locally; none of B1 is
+pushed. The five-second target remains unqualified. Native incidence and report
+lookup fixes (#566/#567) remain separate in green PR #571, held for performance
+acceptance. Wider charts, periodic topology, full text-on-body acceptance,
+integration and final QA remain open. B1 has no integration PR.
 
 ## Required product behavior
 
@@ -301,8 +301,12 @@ probe binaries and the instrumented emitted artifacts were removed. Raw logs,
 profiles, stage records, work deltas and restoration hashes are retained in the
 [current attribution receipt](references/v6-stage-attribution-2026-11-19/summary.json).
 
-Latest receipts compare Martensite variants. They do not establish the requested
-PhysCAD behavior/performance reference for the complete application workflow.
+The earlier [PhysCAD reference receipts](references/physcad-reference-2026-11-17/README.md)
+cover wrapped cylinder/cone text, seams, holes, joins and cuts. They were
+reconciled from the previous worktree without new runs. Owned 239-curve cone
+text had complete profile selection and native validity; cylinder text lost a
+region and failed its exact-volume oracle. These observations do not qualify
+Martensite performance or replace the full application acceptance workflow.
 
 ## Open defects and integration status
 
@@ -352,8 +356,13 @@ focused Math tests passed, including 13 new controls; standards and spec source
 reviews accepted it. Both normal benchmark consumers compiled. All 14 functional
 preflight invocations passed, with identical public signatures across seven
 workloads. Those comparisons do not expose every private rational; the unit
-controls check complete private values against the original formulas. Strict
-runtime/RSS qualification, the final gate and integration remain pending.
+controls check complete private values against the original formulas.
+The same exact-point arithmetic is now present locally in B1 at `93026c2e`,
+with its existing internal visibility retained. All 21 Math controls and both
+complete cone directions passed; source hashes stayed unchanged. The
+[receipt](references/exact-point-metrics-569-2026-11-20/summary.json) preserves
+two incorrect test-target attempts, including a zero-test refusal. Runtime/RSS
+qualification, the final gate and main-first integration remain pending.
 
 Task [#570](https://github.com/Oblikovati/Martensite/issues/570) is implemented
 locally in B1 as explicit parent operation version 2. It rounds only weighted
@@ -378,9 +387,14 @@ No version bump or release tag was made.
 
 The [graph-reader counter pass](GRAPH-READER-ATTRIBUTION-2026-11-20.md) found
 27,225,464 repeated relation/prefix predicate evaluations on the 137-source
-owned view. Bug #572 has a main-based fix in progress. Native capture already
-ran once per view; the repeated work was immutable metadata verification.
-The pass establishes counts, not an achievable speedup.
+owned view. Bug #572 is committed locally on main-based work at `77582311`
+and adapted to both B1 certificate paths at `6e176cf0`. Main passed 22 focused
+controls; B1 passed 49 focused controls and both complete cone directions.
+Native capture still runs once per admitted view. B1 retains actual first-bound
+eligibility before caching; its source reviews accepted the frozen adaptation.
+The [execution receipt](references/owned-bindings-572-2026-11-20/terminal.json)
+retains the final source hashes, actual predicate counts and complete controls.
+The pass establishes counts, not an achievable speedup or RSS acceptance.
 
 ## Remaining delivery work
 
