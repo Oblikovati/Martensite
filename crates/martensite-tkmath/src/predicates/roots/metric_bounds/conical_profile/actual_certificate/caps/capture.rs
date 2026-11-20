@@ -4,7 +4,7 @@ pub(super) fn cap(
     query: &ConicalActualCapQuery<'_>,
     sine: &Interval,
     cosine: &Interval,
-    period: &Interval,
+    period: Option<&Interval>,
     bound_slant: bool,
     atlas: bool,
     arithmetic: &mut Arithmetic<'_>,
@@ -16,7 +16,9 @@ pub(super) fn cap(
     let z0 = arithmetic.scalar(query.carrier.axial_origin)?;
     let radius = filled_radius(&r0, &v, sine, arithmetic)?;
     numeric::positive("entire cap rectangle radius", &radius, arithmetic)?;
-    pairs::width(&u, period, arithmetic)?;
+    if let Some(period) = period {
+        pairs::width(&u, period, arithmetic)?;
+    }
     let radial = arithmetic.multiply(&r0, cosine)?;
     let axial = arithmetic.multiply(&z0, sine)?;
     let level = arithmetic.subtract(&radial, &axial)?;

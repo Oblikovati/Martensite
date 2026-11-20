@@ -11,7 +11,7 @@ pub(in super::super) struct LocalChart {
 #[derive(Clone, Copy)]
 pub(in super::super) struct BoundaryMetric<'a> {
     pub(in super::super) chart: Option<&'a ConicalChartDomainEvidence>,
-    directed: bool,
+    pub(in super::super) refinement: ConicalPrimitiveRefinement,
 }
 
 impl Prepared {
@@ -34,8 +34,7 @@ impl Prepared {
                     u64::from(limit),
                 )
             })?;
-        if self.chart_domain.is_some() || directed(self) || evidence.source_restriction().is_none()
-        {
+        if self.chart_domain.is_some() || evidence.source_restriction().is_none() {
             return Err(local_failure(
                 self,
                 span,
@@ -71,7 +70,7 @@ impl Prepared {
         };
         Ok(BoundaryMetric {
             chart,
-            directed: directed(self),
+            refinement: refinement(self.executed_selection),
         })
     }
 
@@ -140,14 +139,13 @@ impl BoundaryMetric<'_> {
         cancelled: &mut CancelPoll<'_>,
     ) -> Result<ConicalBoundaryEvidence, ConicalBoundaryError> {
         match self.chart {
-            Some(domain) if self.directed => certify_conical_boundary_in_chart_with_refinement(
+            Some(domain) => certify_conical_boundary_in_chart_with_refinement(
                 query,
                 domain,
                 options,
-                ConicalPrimitiveRefinement::HalfSplitV1,
+                self.refinement,
                 cancelled,
             ),
-            Some(domain) => certify_conical_boundary_in_chart(query, domain, options, cancelled),
             None => certify_conical_boundary(query, options, cancelled),
         }
     }
@@ -158,12 +156,7 @@ impl BoundaryMetric<'_> {
         query: &ConicalBoundaryQuery<'_>,
     ) -> bool {
         match self.chart {
-            Some(domain) if self.directed => proof.matches_chart_with_refinement(
-                query,
-                domain,
-                ConicalPrimitiveRefinement::HalfSplitV1,
-            ),
-            Some(domain) => proof.matches_chart(query, domain),
+            Some(domain) => proof.matches_chart_with_refinement(query, domain, self.refinement),
             None => proof.matches_legacy(query),
         }
     }

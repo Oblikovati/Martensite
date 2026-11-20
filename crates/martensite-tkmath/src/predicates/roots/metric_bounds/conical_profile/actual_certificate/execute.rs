@@ -8,14 +8,34 @@ pub fn certify_conical_actual_patches(
     query: ConicalActualPatchQuery<'_>,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<ConicalActualPatchCertificate, ConicalActualPatchError> {
+    certify(query, None, &mut cancelled)
+}
+
+/// Certify actual rational sides and rebound periodic cap material in the same native inventory.
+/// The decoded reference must carry checked periodic fill and the actual source bindings must match.
+/// Example: `let proof = certify_conical_actual_patches_with_periodic_caps(query, caps, || false)?;`.
+pub fn certify_conical_actual_patches_with_periodic_caps(
+    query: ConicalActualPatchQuery<'_>,
+    caps: ConicalActualPeriodicCaps<'_>,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<ConicalActualPatchCertificate, ConicalActualPatchError> {
+    certify(query, Some(caps), &mut cancelled)
+}
+
+fn certify(
+    query: ConicalActualPatchQuery<'_>,
+    periodic: Option<ConicalActualPeriodicCaps<'_>>,
+    cancelled: &mut (dyn FnMut() -> bool + Send),
+) -> Result<ConicalActualPatchCertificate, ConicalActualPatchError> {
     let mut position = error::FailurePosition::default();
     admission::admit(&query, &mut position)
         .map_err(|v| position.error(v, Stage::Binding, query.options, 0))?;
-    let mut arithmetic = Arithmetic::new(sector_api::policy(query.options), &mut cancelled);
-    run(&query, &mut arithmetic, &mut position)
+    let mut arithmetic = Arithmetic::new(sector_api::policy(query.options), cancelled);
+    run(&query, periodic, &mut arithmetic, &mut position)
 }
 fn run(
     query: &ConicalActualPatchQuery<'_>,
+    periodic: Option<ConicalActualPeriodicCaps<'_>>,
     arithmetic: &mut Arithmetic<'_>,
     position: &mut error::FailurePosition,
 ) -> Result<ConicalActualPatchCertificate, ConicalActualPatchError> {
@@ -32,15 +52,19 @@ fn run(
         .all(|side| side.domain.version() != ConicalChartDomainVersion::OriginalV2);
     let result = hierarchy::certify(&sides, query.adjacent, refine, arithmetic);
     let hierarchy = stage(result, Stage::Hierarchy, query, arithmetic, position)?;
-    let result = caps::certify(
-        query,
-        &sides,
-        &support.sine,
-        &support.cosine,
-        refine,
-        arithmetic,
-        position,
-    );
+    let result = if let Some(authority) = periodic {
+        caps::certify_periodic(query, authority, support, arithmetic, position)
+    } else {
+        caps::certify(
+            query,
+            &sides,
+            &support.sine,
+            &support.cosine,
+            refine,
+            arithmetic,
+            position,
+        )
+    };
     let caps = stage(result, Stage::Cap, query, arithmetic, position)?;
     position.clear();
     final_checkpoint(query, arithmetic, position)?;

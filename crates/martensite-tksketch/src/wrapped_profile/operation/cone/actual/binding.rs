@@ -38,7 +38,10 @@ fn member(
 ) -> ConeChecked<ConicalNativeMember> {
     let actual = FaceBindings::capture(prepared.source.region, shape, bindings)?;
     let sides = side_bindings(prepared, &actual)?;
-    let curves = curves(prepared, &retained_family(prepared)?.inventory)?;
+    let curves = match &geometry.material.periodic_curves {
+        Some(curves) => std::borrow::Cow::Borrowed(curves.as_slice()),
+        None => std::borrow::Cow::Owned(curves(prepared, &retained_family(prepared)?.inventory)?),
+    };
     let caps = (0..2)
         .map(|row| cap(prepared, geometry, row, &actual, &curves))
         .collect::<ConeChecked<_>>()?;

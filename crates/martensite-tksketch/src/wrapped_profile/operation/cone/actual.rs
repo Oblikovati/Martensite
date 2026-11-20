@@ -7,6 +7,7 @@ use martensite_tkbo::body_check::{
 use std::sync::Arc;
 pub(super) mod binding;
 mod errors;
+mod periodic;
 mod queries;
 mod validation;
 pub(in crate::surface_sketch::wrapped_profile) type NativeEvidence = Option<Arc<NativeFamily>>;
@@ -27,8 +28,21 @@ pub(super) fn certify_family(
     let captured = capture_conical_actual_family(&native)
         .map_err(|cause| errors::binding(&directed.inventory, cause))?;
     let sides = queries::sides(originals, selection, members, &captured)?;
+    let periodic = selection
+        .executed_selection
+        .is_connected_atlas()
+        .then(|| periodic::capture(selection, members))
+        .transpose()?;
     let options = remaining(work, originals)?;
-    let certificate = certify(&captured, &sides, directed, options, work, cancelled)?;
+    let certificate = certify(
+        &captured,
+        &sides,
+        directed,
+        periodic.as_deref(),
+        options,
+        work,
+        cancelled,
+    )?;
     Ok(retain(work, certificate, native))
 }
 fn remaining(
@@ -60,6 +74,7 @@ fn certify(
     captured: &martensite_tkbo::body_check::ConicalNativeGeometry,
     sides: &[ConicalActualSideQuery<'_>],
     family: &prepare::directed::DirectedFamily,
+    periodic: Option<&[periodic::Member<'_>]>,
     options: ConeClearanceOptions,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
@@ -73,7 +88,14 @@ fn certify(
             refinement: family.gamma.primitive_refinement(),
             options,
         };
-        issue(captured, query, &family.inventory, work, cancelled)
+        issue(
+            captured,
+            query,
+            &family.inventory,
+            periodic,
+            work,
+            cancelled,
+        )
     })
 }
 
@@ -81,10 +103,19 @@ fn issue(
     captured: &martensite_tkbo::body_check::ConicalNativeGeometry,
     query: ConicalActualPatchQuery<'_>,
     inventory: &prepare::directed::Inventory,
+    periodic: Option<&[periodic::Member<'_>]>,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Arc<CertifiedConicalBody>> {
-    let result = certify_conical_actual_patches(query, &mut *cancelled);
+    let result = if let Some(members) = periodic {
+        let authority = work
+            .connected
+            .as_ref()
+            .ok_or_else(|| global_missing("certified periodic material and decoded reference"))?;
+        periodic::certify(query, members, &authority.reference, cancelled)
+    } else {
+        certify_conical_actual_patches(query, &mut *cancelled)
+    };
     let operations = result
         .as_ref()
         .map_or_else(|cause| cause.operations, |proof| proof.operations());

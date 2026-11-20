@@ -2,7 +2,7 @@
 use super::*;
 use crate::surface_sketch::wrapped_profile::{planar_clearance, selection as periodic_selection};
 use martensite_tkbo::{
-    body_check::validate_body,
+    body_check::{CheckMode, ValidationStage, validate_body},
     profile_extrusion::{PlanarProofVersion, ProfileCurve, ProfileCurveId, ProfileVertexId},
 };
 
@@ -33,6 +33,14 @@ fn public_connected_atlas_publishes_strip_wider_than_one_turn() {
     assert_eq!(report.coverage.cap_pcurves, 2 * (report.coverage.faces - 2));
     assert!(result.budget().achieved_spatial_error.upper <= request.options.spatial_error);
     let caps = result.reference_body_receipt().decoded_caps().unwrap();
+    assert!(result.reference_body_receipt().has_separated_decoded_fill());
+    assert_eq!(
+        report
+            .validation
+            .stage(ValidationStage::SelfIntersection)
+            .mode,
+        CheckMode::Exact,
+    );
     assert_eq!(caps.len(), 1);
     assert_decoded_boundary(&caps[0], request.options.spatial_error);
     assert!(
@@ -48,15 +56,27 @@ fn public_connected_atlas_publishes_strip_wider_than_one_turn() {
 
 #[test]
 fn public_connected_atlas_keeps_the_narrow_outlined_profile() {
-    let request = super::super::super::super::tests::supported_common_chart_request();
+    let mut request = super::super::super::super::tests::supported_common_chart_request();
+    request.proof.arithmetic.max_operations = 1_250_000;
     let result = execute_atlas(&request).unwrap();
     assert_eq!(result.reports().len(), request.selections.len());
-    assert!(
+    assert_eq!(
         result
-            .reports()
-            .values()
-            .all(|report| report.validation.is_valid())
+            .actual_self_intersection_coverage()
+            .unwrap()
+            .side_self_domains,
+        132
     );
+    for report in result.reports().values() {
+        assert!(report.validation.is_valid());
+        assert_eq!(
+            report
+                .validation
+                .stage(ValidationStage::SelfIntersection)
+                .mode,
+            CheckMode::Exact,
+        );
+    }
     assert!(result.budget().achieved_spatial_error.upper <= request.options.spatial_error);
     assert!(
         result
@@ -64,6 +84,7 @@ fn public_connected_atlas_keeps_the_narrow_outlined_profile() {
             .decoded_solid_separation()
             .is_some()
     );
+    assert!(result.reference_body_receipt().has_separated_decoded_fill());
 }
 
 fn select_uv_program(request: &mut WrappedConeNormalRequest) {
@@ -78,8 +99,8 @@ fn execute_atlas(request: &WrappedConeNormalRequest) -> Checked<WrappedConeNorma
 }
 
 fn atlas_selection() -> WrappedConeExecutionSelection {
-    WrappedConeExecutionSelection::ConnectedChartAtlasV6 {
-        arithmetic: WrappedConeArithmeticGrantPolicy::OriginalV1,
+    WrappedConeExecutionSelection::DirectedConnectedChartAtlasV7 {
+        arithmetic: WrappedConeArithmeticGrantPolicy::PhysicalAngleBoundV2,
     }
 }
 

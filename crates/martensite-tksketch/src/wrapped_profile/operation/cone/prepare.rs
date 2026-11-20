@@ -284,7 +284,8 @@ fn execution_domain(execution: WrappedConeExecutionSelection) -> WrappedConeDoma
         WrappedConeExecutionSelection::DirectedRegionAtlasRequireCertifiedV4 { .. } => {
             WrappedConeDomainPolicy::PositiveXRegionAtlasV5
         }
-        WrappedConeExecutionSelection::ConnectedChartAtlasV6 { .. } => {
+        WrappedConeExecutionSelection::ConnectedChartAtlasV6 { .. }
+        | WrappedConeExecutionSelection::DirectedConnectedChartAtlasV7 { .. } => {
             WrappedConeDomainPolicy::PositiveXConnectedAtlasV6
         }
     }

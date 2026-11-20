@@ -547,3 +547,66 @@ The targeted directed-row archive test took 0.52 s. The selected
 checks passed 820 metric-bound tests and 151 cone tests, with three
 cone replay workers ignored. Clippy passed with warnings denied.
 The native probe instrumentation and backup files were removed.
+
+## Directed connected validation
+
+`DirectedConnectedChartAtlasV7` uses directed rows and the connected
+chart domain. It checks the decoded cap fills against every retained
+periodic image and checks distinct fills in the unwrapped chart. Both
+directions of containment are checked. A witness outside the target's
+control hull box needs no winding query. The winding budget is shared
+across the family.
+
+The native checker rebinds the actual carrier, trim coefficients and
+wire roles to the decoded cap certificate. Caps from opposite depths
+of the same member also need a strict level separation. All caps
+share one verified planar program and curve index. The existing side
+proofs cover adjacent rulings, nonincident sides and side-to-cap
+intersections. Ordered native validation uses the resulting
+self-intersection certificate, and rigid placement rebinds it to the
+placed graph. The Boolean output still goes through native validation.
+
+The selector retains the existing proof and arithmetic policies.
+Select `PhysicalAngleBoundV2` and request the needed allowance before
+starting the operation. The connected `O.` fixture needs more than one
+million operations under the directed atlas. Direct execution uses a
+zero chart origin. The placement API builds in that frame and
+transports the result to the requested datum.
+
+Three interleaved assertion-enabled Linux x86_64 runs pinned to CPU 20
+used the same authored `O.` fixture and spatial limit. V6 at `b31a55fc`
+used its original one-million-operation grant. V7 used an explicit
+1.25-million request under the physical-angle policy and published
+132 fitted sides with exact self-intersection coverage.
+
+| Run | V6 wall time (s) | V7 wall time (s) | V6 peak RSS (KiB) | V7 peak RSS (KiB) |
+| --- | ---: | ---: | ---: | ---: |
+| 1 | 22.56 | 4.77 | 125,880 | 66,308 |
+| 2 | 22.60 | 4.88 | 125,908 | 66,548 |
+| 3 | 21.29 | 4.85 | 125,812 | 66,508 |
+| Median | 22.56 | 4.85 | 125,880 | 66,508 |
+
+The V7 median met the 5.4 s target on the matched core. Initial runs on
+CPU 28 varied from 21.12 to 32.64 s for V6 and 9.33 to 10.76 s for V7.
+
+### Attached text
+
+Both selectors completed the 239-curve outward boss and preserved all
+18 selected caps. A single pair on CPU 20 used the same
+assertion-enabled test executable, support, seam, error limit, and
+8,810,496-operation request.
+
+| Stage | Transported V5 (s) | Directed atlas V7 (s) |
+| --- | ---: | ---: |
+| Build, place and trim tool | 18.68 | 21.80 |
+| Fuse | 15.18 | 16.65 |
+| Validate decoded solid | 65.34 | 63.64 |
+| Complete API call | 99.56 | 102.47 |
+
+V5 produced 339 fitted sides and peaked at 317,736 KiB. V7 produced 331
+and peaked at 310,320 KiB. An earlier pair without stage timers on
+CPU 27 took 113.03 s for V5 and 164.05 s for V7. The timings vary by
+run. The pairs establish full-call coverage and leave the attached-text
+runtime gate open. Final native validation takes most of the time in
+both measured calls. The extra V7 time on CPU 20 came from the tool and
+Fuse stages.

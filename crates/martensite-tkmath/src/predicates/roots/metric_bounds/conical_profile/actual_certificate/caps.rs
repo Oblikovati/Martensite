@@ -5,6 +5,8 @@ use super::*;
 mod atlas;
 mod capture;
 mod pairs;
+mod periodic;
+pub(super) use periodic::certify as certify_periodic;
 pub(super) struct CapCapture {
     pub(super) source: ConicalActualCapSnapshot,
     pub(super) u: Interval,
@@ -36,7 +38,7 @@ pub(super) fn certify(
             cap,
             sine,
             cosine,
-            &period,
+            Some(&period),
             bound_slant,
             atlas,
             arithmetic,

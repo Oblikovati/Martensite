@@ -285,3 +285,11 @@ mod boundary_metric;
 pub(super) fn directed(prepared: &Prepared) -> bool {
     prepared.executed_selection.is_directed()
 }
+
+pub(super) fn refinement(execution: WrappedConeExecutionSelection) -> ConicalPrimitiveRefinement {
+    if execution.is_directed() && !execution.is_connected_atlas() {
+        ConicalPrimitiveRefinement::HalfSplitV1
+    } else {
+        ConicalPrimitiveRefinement::UnsplitV1
+    }
+}

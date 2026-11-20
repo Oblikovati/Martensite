@@ -1,9 +1,11 @@
 //! Bind periodic filled caps once, then loan one reference receipt to each decoded member.
-use super::super::super::stages::OwnedFamily;
 use super::super::prepare::selection::first_region;
 use super::*;
 use crate::surface_sketch::wrapped_profile::{planar_clearance, selection as periodic};
 use measures::MemberReferenceVolume;
+mod native_material;
+mod publication;
+pub(super) use publication::validate;
 
 type Members = BTreeMap<SurfaceRegionId, (MaterialEvidence, MemberReferenceVolume)>;
 pub(in crate::surface_sketch::wrapped_profile::operation::cone) struct Captured {
@@ -13,28 +15,31 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) struct Captured 
 }
 pub(in crate::surface_sketch::wrapped_profile::operation::cone) struct Binding {
     boundary: planar_clearance::OriginalClearance,
-    material: periodic::PeriodicMaterialEvidence,
+    material: Option<periodic::PeriodicMaterialEvidence>,
     pub operations: u32,
 }
 #[derive(Debug)]
 pub(in crate::surface_sketch::wrapped_profile) enum Refusal {
     Clearance(planar_clearance::ClearanceFailure),
     Material(periodic::MaterialFailure),
-    Reference(ConicalDecodedFamilyError),
+    Reference {
+        cause: ConicalDecodedFamilyError,
+        overlap: Option<[SurfaceRegionId; 2]>,
+    },
 }
 impl std::fmt::Display for Refusal {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Clearance(cause) => cause.fmt(f),
             Self::Material(cause) => cause.fmt(f),
-            Self::Reference(cause) => cause.fmt(f),
+            Self::Reference { cause, .. } => cause.fmt(f),
         }
     }
 }
 impl std::error::Error for Refusal {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Self::Reference(cause) => Some(cause),
+            Self::Reference { cause, .. } => Some(cause),
             _ => None,
         }
     }
@@ -44,7 +49,7 @@ impl Refusal {
         match self {
             Self::Clearance(cause) => cause.cancelled(),
             Self::Material(cause) => cause.cancelled(),
-            Self::Reference(cause) => cause.is_cancelled(),
+            Self::Reference { cause, .. } => cause.is_cancelled(),
         }
     }
 }
@@ -84,15 +89,38 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn capture(
     let started = work.consumed;
     let members = ordered_members(selection, stored)?;
     let profiles = projected(&members)?;
-    let (planar, version) = capture_planar(request, &profiles, work, cancelled)?;
+    let native = selection
+        .executed_selection
+        .is_directed()
+        .then_some(members.as_slice());
+    let captured = capture_planar(request, &profiles, native, work, cancelled)?;
     let boundary = clearance(&profiles, region, work, cancelled)?;
-    let material = winding(&profiles, &planar, &boundary, region, work, cancelled)?;
-    let reference = reference(request, &members, &boundary, region, work, cancelled)?;
+    let material = native
+        .is_none()
+        .then(|| {
+            winding(
+                &profiles,
+                &captured.planar,
+                &boundary,
+                region,
+                work,
+                cancelled,
+            )
+        })
+        .transpose()?;
+    let reference = reference(
+        request,
+        &members,
+        &boundary,
+        native.is_some(),
+        region,
+        work,
+        cancelled,
+    )?;
     let members = member_receipts(
         originals,
         &members,
-        planar,
-        version,
+        captured,
         request.proof.planar_proof,
         &reference,
     )?;
@@ -133,9 +161,10 @@ fn projected(members: &[Member<'_>]) -> ConeChecked<Vec<Request>> {
 fn capture_planar(
     request: &ConeRun<'_>,
     profiles: &[Request],
+    native: Option<&[Member<'_>]>,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
-) -> ConeChecked<(periodic::PlanarSelectionEvidence, PlanarProofVersion)> {
+) -> ConeChecked<PlanarCapture> {
     let captured = capture_program_uv(
         profiles,
         request.options.planar_work,
@@ -151,14 +180,25 @@ fn capture_planar(
     )?;
     let members = planar::select_members(profiles, &captured)
         .map_err(|(region, cause)| planar_failure(region, cause))?;
-    Ok((
-        periodic::PlanarSelectionEvidence {
-            members,
-            certificate: captured.certificate(),
-            proof_work: captured.proof_work(),
-        },
+    let planar = periodic::PlanarSelectionEvidence {
+        members,
+        certificate: captured.certificate(),
+        proof_work: captured.proof_work(),
+    };
+    let native = native
+        .map(|members| native_material::select(members, profiles, &planar, &captured))
+        .transpose()?
+        .unwrap_or_default();
+    Ok(PlanarCapture {
+        planar,
         version,
-    ))
+        native,
+    })
+}
+struct PlanarCapture {
+    planar: periodic::PlanarSelectionEvidence,
+    version: PlanarProofVersion,
+    native: native_material::Selected,
 }
 fn clearance(
     profiles: &[Request],
@@ -209,6 +249,7 @@ fn reference(
     request: &ConeRun<'_>,
     members: &[Member<'_>],
     boundary: &planar_clearance::OriginalClearance,
+    check_fill: bool,
     region: SurfaceRegionId,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
@@ -218,14 +259,25 @@ fn reference(
         max_operations: work.requested.max_operations - work.consumed,
         ..work.requested
     };
-    let result = certify_conical_decoded_family(
-        &joins,
-        &boundary.certificate,
-        &boundary.periodic,
-        request.options.spatial_error,
-        policy,
-        cancelled,
-    );
+    let result = if check_fill {
+        certify_conical_decoded_family_with_fill(
+            &joins,
+            &boundary.certificate,
+            &boundary.periodic,
+            request.options.spatial_error,
+            policy,
+            cancelled,
+        )
+    } else {
+        certify_conical_decoded_family(
+            &joins,
+            &boundary.certificate,
+            &boundary.periodic,
+            request.options.spatial_error,
+            policy,
+            cancelled,
+        )
+    };
     let spent = result.as_ref().map_or_else(
         |error| error.operations,
         ConicalReferenceEvidence::operations,
@@ -236,16 +288,41 @@ fn reference(
             .member
             .and_then(|index| members.get(index))
             .map(|(prepared, _)| prepared.source.region);
-        refused(owner, Refusal::Reference(error))
+        let overlap = fill_overlap(&error, members);
+        refused(
+            owner,
+            Refusal::Reference {
+                cause: error,
+                overlap,
+            },
+        )
     })?;
     charged?;
     Ok(reference)
 }
+fn fill_overlap(
+    error: &ConicalDecodedFamilyError,
+    members: &[Member<'_>],
+) -> Option<[SurfaceRegionId; 2]> {
+    let ConicalDecodedFamilyFailure::Fill(ConicalDecodedFillFailure::Overlap {
+        source,
+        target,
+        ..
+    }) = &error.cause
+    else {
+        return None;
+    };
+    let region = |index: usize| {
+        members
+            .get(index)
+            .map(|(prepared, _)| prepared.source.region)
+    };
+    Some([region(*source)?, region(*target)?])
+}
 fn member_receipts(
     originals: &[DevelopedRegionRequest],
     members: &[Member<'_>],
-    mut planar: periodic::PlanarSelectionEvidence,
-    version: PlanarProofVersion,
+    mut captured: PlanarCapture,
     requested: PlanarProofVersion,
     reference: &ConicalReferenceEvidence,
 ) -> ConeChecked<Members> {
@@ -263,7 +340,7 @@ fn member_receipts(
             if region != prepared.source.region {
                 return Err(mismatch(region, None, "atlas receipt source order"));
             }
-            let receipts = member_receipt(original, stored, cap, &mut planar, version, requested)?;
+            let receipts = member_receipt(original, stored, cap, &mut captured, requested)?;
             Ok((region, receipts))
         })
         .collect()
@@ -272,11 +349,11 @@ fn member_receipt(
     original: &DevelopedRegionRequest,
     stored: &storage::Stored,
     cap: &ConicalDecodedCapEvidence,
-    planar: &mut periodic::PlanarSelectionEvidence,
-    version: PlanarProofVersion,
+    captured: &mut PlanarCapture,
     requested: PlanarProofVersion,
 ) -> ConeChecked<(MaterialEvidence, MemberReferenceVolume)> {
-    let uv = planar
+    let uv = captured
+        .planar
         .members
         .remove(&original.region)
         .ok_or_else(|| mismatch(original.region, None, "selected decoded cap material"))?;
@@ -288,17 +365,24 @@ fn member_receipt(
             "positive signed decoded reference volume",
         ));
     }
+    let (selected_material, periodic_curves) = captured
+        .native
+        .remove(&original.region)
+        .map_or((None, None), |(material, curves)| {
+            (Some(material), Some(curves))
+        });
     let material = MaterialEvidence {
         original: original.clone(),
         uv,
-        selected_material: None,
+        selected_material,
+        periodic_curves,
         normal: MaterialRealization::Decoded(cap_error(cap)?),
         carriers: stored.carriers,
         options: cap.normal().options(),
-        planar_proof: version,
+        planar_proof: captured.version,
         requested_planar_proof: requested,
-        census: planar.certificate,
-        planar_work: planar.proof_work,
+        census: captured.planar.certificate,
+        planar_work: captured.planar.proof_work,
     };
     Ok((material, MemberReferenceVolume::Decoded(volume)))
 }
@@ -317,136 +401,4 @@ fn refused(region: Option<SurfaceRegionId>, cause: Refusal) -> ConeFailure {
         WrappedFailureClass::Incomplete,
         ConeCause::Atlas(Box::new(cause)),
     )
-}
-
-pub(super) fn validate(family: &ConeBudgeted, binding: &Binding, limit: u64) -> ConeChecked<()> {
-    let prepared = &family.family.selection.prepared;
-    let region = prepared
-        .first()
-        .ok_or_else(|| {
-            refused(
-                None,
-                Refusal::Clearance(planar_clearance::ClearanceFailure::EmptySelection),
-            )
-        })?
-        .source
-        .region;
-    let reference = &family.budget.reference;
-    let caps = reference
-        .decoded_caps()
-        .filter(|caps| caps.len() == prepared.len())
-        .ok_or_else(|| mismatch(region, None, "complete published decoded atlas"))?;
-    let joins = prepared.iter().filter_map(|prepared| {
-        family
-            .family
-            .members
-            .get(&prepared.source.region)
-            .map(|member| &member.geometry.joins)
-    });
-    if !reference.shares_decoded_join_issuance(joins) {
-        return Err(mismatch(
-            region,
-            None,
-            "complete decoded atlas reference join issuance",
-        ));
-    }
-    relations(reference, binding, region, caps.len())?;
-    let mut cells = PublishedCells {
-        integral: None,
-        total: 0,
-    };
-    for (prepared, cap) in prepared.iter().zip(caps) {
-        cells.member(&family.family, prepared, cap, limit)?;
-    }
-    if cells.total != u64::from(family.budget.integration_subintervals) {
-        return Err(mismatch(
-            region,
-            None,
-            "one decoded atlas UV program and retained flux cell total",
-        ));
-    }
-    Ok(())
-}
-fn relations(
-    reference: &ConicalReferenceEvidence,
-    binding: &Binding,
-    region: SurfaceRegionId,
-    count: usize,
-) -> ConeChecked<()> {
-    if !binding
-        .boundary
-        .periodic
-        .matches_boundary(&binding.boundary.certificate)
-        || binding.material.probes.probes().len() != binding.material.relations.len()
-        || (count > 1 && reference.decoded_solid_separation().is_none())
-    {
-        return Err(mismatch(
-            region,
-            None,
-            "complete decoded atlas periodic and native solid relations",
-        ));
-    }
-    Ok(())
-}
-struct PublishedCells<'a> {
-    integral: Option<&'a martensite_tkbo::profile_extrusion::PlanarIntegralEvidence>,
-    total: u64,
-}
-impl<'a> PublishedCells<'a> {
-    fn member(
-        &mut self,
-        family: &'a OwnedFamily<Selection, Geometry>,
-        prepared: &Prepared,
-        cap: &ConicalDecodedCapEvidence,
-        limit: u64,
-    ) -> ConeChecked<()> {
-        let region = prepared.source.region;
-        let geometry = &family
-            .members
-            .get(&region)
-            .ok_or_else(|| mismatch(region, None, "published atlas member"))?
-            .geometry;
-        let original =
-            family.selection.planar.get(&region).ok_or_else(|| {
-                mismatch(region, None, "published atlas original planar evidence")
-            })?;
-        let material = &geometry.material;
-        if !original.matches_request(&material.original)
-            || geometry.reference_volume.enclosure() != volume_bounds(cap)?
-            || material.spatial_error().to_bits() != cap_error(cap)?.to_bits()
-        {
-            return Err(mismatch(
-                region,
-                None,
-                "published atlas material and normal measures",
-            ));
-        }
-        self.add(region, geometry, limit)
-    }
-    fn add(
-        &mut self,
-        region: SurfaceRegionId,
-        geometry: &'a Geometry,
-        limit: u64,
-    ) -> ConeChecked<()> {
-        let proof = geometry
-            .material
-            .integral_program_evidence()
-            .ok_or_else(|| mismatch(region, None, "decoded atlas planar integral receipt"))?;
-        if let Some(first) = self.integral {
-            if !first.shares_issuance(proof) {
-                return Err(mismatch(
-                    region,
-                    None,
-                    "shared atlas planar integral issuance",
-                ));
-            }
-        } else {
-            program::validate_entry(region, proof, limit, 0)?;
-            self.total = proof.integration_subintervals();
-            self.integral = Some(proof);
-        }
-        self.total = program::member_cells(region, self.total, 0, geometry)?;
-        Ok(())
-    }
 }

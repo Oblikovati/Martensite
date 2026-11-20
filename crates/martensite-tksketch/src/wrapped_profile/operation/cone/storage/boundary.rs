@@ -183,12 +183,8 @@ fn matches_directed(
     requested: ConeClearanceOptions,
 ) -> bool {
     metric.chart.is_some_and(|domain| {
-        proof.matches_current(
-            query,
-            domain,
-            ConicalPrimitiveRefinement::HalfSplitV1,
-            requested.fractional_bits,
-        ) && reusable(metric, proof.boundary(), query, requested)
+        proof.matches_current(query, domain, metric.refinement, requested.fractional_bits)
+            && reusable(metric, proof.boundary(), query, requested)
     })
 }
 fn reusable(

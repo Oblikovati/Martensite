@@ -142,7 +142,7 @@ fn captured_use(
 ) -> Result<UvEdge, Failure> {
     let captured = edge_uv(edge, face, rows)?;
     let (curve, polynomial) = curves.find(captured.side)?;
-    match_polynomial(polynomial, curve, &captured)?;
+    match_polynomial(polynomial, curve, &captured, curves.material)?;
     uses.push(LoopUse {
         curve,
         reversed: captured.reversed,
@@ -176,20 +176,16 @@ fn polynomial_matches(
     degree: u32,
     poles: &[[f64; 2]],
     knots: &[f64],
+    material: &CertifiedPlanarMaterial,
 ) -> Result<(), Failure> {
-    let actual: Vec<_> = edge
-        .poles
-        .iter()
-        .map(|p| [p[1].to_bits(), p[0].to_bits()])
-        .collect();
-    let expected: Vec<_> = poles.iter().map(|p| p.map(f64::to_bits)).collect();
-    let expected_knots: Vec<_> = std::iter::repeat_n(0_f64.to_bits(), poles.len())
-        .chain(std::iter::repeat_n(1_f64.to_bits(), poles.len()))
-        .collect();
+    let actual = edge.poles.iter().map(|p| material.project(*p));
+    let expected = poles.iter().map(|p| p.map(f64::to_bits));
+    let expected_knots = std::iter::repeat_n(0_f64.to_bits(), poles.len())
+        .chain(std::iter::repeat_n(1_f64.to_bits(), poles.len()));
     if degree as usize + 1 != poles.len()
-        || actual != expected
+        || !actual.eq(expected)
         || edge.weights.iter().any(|w| w.to_bits() != 1_f64.to_bits())
-        || knots.iter().map(|x| x.to_bits()).collect::<Vec<_>>() != expected_knots
+        || !knots.iter().map(|x| x.to_bits()).eq(expected_knots)
     {
         return Err(rejected(&format!(
             "actual cap curve={id:?} differs from issued polynomial material"
@@ -235,6 +231,7 @@ fn match_polynomial(
     curve: &ProfileCurve,
     id: ProfileCurveId,
     edge: &UvEdge,
+    material: &CertifiedPlanarMaterial,
 ) -> Result<(), Failure> {
     let ProfileCurve::Spline {
         degree,
@@ -248,7 +245,7 @@ fn match_polynomial(
             "selected material requires polynomial Bezier source",
         ));
     };
-    polynomial_matches(id, edge, *degree, poles, knots)?;
+    polynomial_matches(id, edge, *degree, poles, knots, material)?;
     Ok(())
 }
 

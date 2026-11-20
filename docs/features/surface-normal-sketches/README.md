@@ -341,8 +341,10 @@ native validation timings and replay results for attached text.
 operation past the datum-centered angular cut for families that fit within one
 physical revolution. The [cone region atlas](CONE-REGION-ATLAS.md) uses
 separate charts for disconnected regions and certifies separation after
-wrapping. Connected profiles that need several fit charts and wider
-periodic cone text remain Phase B. Primitive exact-span lowering,
+wrapping. The [directed connected selector](CONE-REGION-ATLAS.md#directed-connected-validation)
+certifies native self-intersection for connected profiles that need
+several fit charts. Wider periodic text still needs qualification.
+Primitive exact-span lowering,
 replacement deletion and the broader acceptance corpus remain Phase C.
 
 Earlier checkpoint records remain available: [rational implementation](RATIONAL-IMPLEMENTATION.md),

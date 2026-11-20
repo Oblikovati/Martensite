@@ -3,12 +3,15 @@
 use super::super::{joins::CapBinding, trim_bridge::bounds::captured_storage};
 use super::*;
 use crate::predicates::roots::DyadicBound;
+mod fill;
+pub use fill::ConicalDecodedFillFailure;
 
 use std::sync::Arc;
 pub(super) struct DecodedFamily {
     members: Vec<ConicalDecodedCapEvidence>,
     solid_gap: Option<DyadicBound>,
     joins: Vec<Arc<CapBinding>>,
+    separated_fill: bool,
 }
 impl std::fmt::Debug for DecodedFamily {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -37,6 +40,8 @@ pub enum ConicalDecodedFamilyFailure {
     Member(Box<ConicalCapNormalError>),
     /// Family separation or arithmetic policy.
     Family(ConicalReferenceFailure),
+    /// Exact winding of the decoded endpoint failed.
+    Fill(ConicalDecodedFillFailure),
 }
 impl std::fmt::Display for ConicalDecodedFamilyError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -52,7 +57,13 @@ impl std::error::Error for ConicalDecodedFamilyError {
         match &self.cause {
             ConicalDecodedFamilyFailure::Homotopy(cause) => Some(cause.as_ref()),
             ConicalDecodedFamilyFailure::Member(cause) => Some(cause.as_ref()),
-            ConicalDecodedFamilyFailure::Family(_) => None,
+            ConicalDecodedFamilyFailure::Fill(ConicalDecodedFillFailure::Winding(cause)) => {
+                Some(cause.as_ref())
+            }
+            ConicalDecodedFamilyFailure::Fill(ConicalDecodedFillFailure::Probe(cause)) => {
+                Some(cause.as_ref())
+            }
+            ConicalDecodedFamilyFailure::Family(_) | ConicalDecodedFamilyFailure::Fill(_) => None,
         }
     }
 }
@@ -68,6 +79,7 @@ impl ConicalDecodedFamilyError {
                 )
             }
             ConicalDecodedFamilyFailure::Homotopy(_) => false,
+            ConicalDecodedFamilyFailure::Fill(cause) => cause.cancelled(),
         }
     }
 }
@@ -86,6 +98,14 @@ fn cancelled_member(cause: &ConicalCapNormalError) -> bool {
     }
 }
 impl ConicalReferenceEvidence {
+    /// Whether the issuance checked filled disjointness, including all periodic images.
+    /// Example: `assert!(proof.has_separated_decoded_fill());`.
+    pub fn has_separated_decoded_fill(&self) -> bool {
+        self.decoded
+            .as_ref()
+            .is_some_and(|family| family.separated_fill)
+    }
+
     /// Decoded local-chart receipts in the certified contour-owner order. Use `proof.decoded_caps()`.
     pub fn decoded_caps(&self) -> Option<&[ConicalDecodedCapEvidence]> {
         self.decoded
@@ -128,9 +148,55 @@ pub fn certify_conical_decoded_family(
     options: ConeClearanceOptions,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<ConicalReferenceEvidence, ConicalDecodedFamilyError> {
+    certify_family(
+        joins,
+        clearance,
+        periodic,
+        false,
+        spatial_limit,
+        options,
+        &mut cancelled,
+    )
+}
+
+/// Certify both the periodic decoded fill and its full-depth reference from the same cap sources.
+/// Example: `certify_conical_decoded_family_with_fill(&joins, &within, &periodic, epsilon, options, || false)?`.
+pub fn certify_conical_decoded_family_with_fill(
+    joins: &[&ConicalJoinsEvidence],
+    clearance: &CertifiedCylindricalClearance,
+    periodic: &Periodic,
+    spatial_limit: f64,
+    options: ConeClearanceOptions,
+    mut cancelled: impl FnMut() -> bool + Send,
+) -> Result<ConicalReferenceEvidence, ConicalDecodedFamilyError> {
+    certify_family(
+        joins,
+        clearance,
+        periodic,
+        true,
+        spatial_limit,
+        options,
+        &mut cancelled,
+    )
+}
+
+fn certify_family(
+    joins: &[&ConicalJoinsEvidence],
+    clearance: &CertifiedCylindricalClearance,
+    periodic: &Periodic,
+    check_fill: bool,
+    spatial_limit: f64,
+    options: ConeClearanceOptions,
+    cancelled: &mut (dyn FnMut() -> bool + Send),
+) -> Result<ConicalReferenceEvidence, ConicalDecodedFamilyError> {
     let proofs = bind(joins, clearance, periodic, options)?;
-    let (members, spent) = measure(&proofs, spatial_limit, options, &mut cancelled)?;
-    let (solid_gap, used) = separate(&proofs[0], &members, loan(options, spent), &mut cancelled)
+    let fill_spent = if check_fill {
+        fill::certify(joins, periodic, loan(options, 0), cancelled).map_err(fill_refusal)?
+    } else {
+        0
+    };
+    let (members, spent) = measure(&proofs, spatial_limit, options, fill_spent, cancelled)?;
+    let (solid_gap, used) = separate(&proofs[0], &members, loan(options, spent), cancelled)
         .map_err(|(cause, used)| failed(cause, spent + used))?;
     let joins = joins
         .iter()
@@ -140,8 +206,22 @@ pub fn certify_conical_decoded_family(
         members,
         solid_gap,
         joins,
+        separated_fill: check_fill,
     };
     summarize(family, spatial_limit, options, spent + used)
+}
+fn fill_refusal(
+    (cause, operations): (ConicalDecodedFillFailure, u32),
+) -> ConicalDecodedFamilyError {
+    let member = match &cause {
+        ConicalDecodedFillFailure::Overlap { source, .. } => Some(*source),
+        _ => None,
+    };
+    ConicalDecodedFamilyError {
+        member,
+        operations,
+        cause: ConicalDecodedFamilyFailure::Fill(cause),
+    }
 }
 type Periodic = super::super::cylindrical_clearance::CertifiedCylindricalPeriodicClearance;
 fn bind<'a>(
@@ -174,10 +254,10 @@ fn measure(
     proofs: &[ConicalCapHomotopyEvidence<'_>],
     limit: f64,
     options: ConeClearanceOptions,
+    mut spent: u32,
     cancelled: &mut (dyn FnMut() -> bool + Send),
 ) -> Result<(Vec<ConicalDecodedCapEvidence>, u32), ConicalDecodedFamilyError> {
     let mut members = Vec::with_capacity(proofs.len());
-    let mut spent = 0;
     for (index, proof) in proofs.iter().enumerate() {
         let member = proof
             .certify_decoded_reference(limit, loan(options, spent), &mut *cancelled)

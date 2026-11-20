@@ -50,6 +50,44 @@ struct CapSpanBinding {
     chart: ChartBinding,
     uv: Vec<[u64; 2]>,
 }
+impl CapBinding {
+    pub(in super::super) fn reflected_poles(&self) -> impl Iterator<Item = Vec<[f64; 2]>> + '_ {
+        self.spans.iter().map(|span| {
+            span.uv
+                .iter()
+                .map(|&[u, v]| [f64::from_bits(u), -f64::from_bits(v)])
+                .collect()
+        })
+    }
+
+    pub(in super::super) fn matches_carrier(
+        &self,
+        row: usize,
+        radius: f64,
+        z: f64,
+        angle: f64,
+    ) -> bool {
+        self.carriers.get(row) == Some(&[radius, z, angle].map(f64::to_bits))
+    }
+
+    pub(in super::super) fn matches_uv(
+        &self,
+        index: usize,
+        poles: &[[f64; 2]],
+        weights: &[f64],
+    ) -> bool {
+        weights.len() == poles.len()
+            && weights
+                .iter()
+                .all(|weight| weight.to_bits() == 1_f64.to_bits())
+            && self.spans.get(index).is_some_and(|span| {
+                poles
+                    .iter()
+                    .map(|point| point.map(f64::to_bits))
+                    .eq(span.uv.iter().copied())
+            })
+    }
+}
 
 /// Prove the same positive derivative projection on both sides of every closed
 /// join throughout the straight interpolation in unwrapped angle/slant coordinates.

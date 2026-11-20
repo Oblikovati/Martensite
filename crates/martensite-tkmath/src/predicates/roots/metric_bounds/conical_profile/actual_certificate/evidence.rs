@@ -12,7 +12,7 @@ pub struct ConicalActualPatchCoverage {
     pub nonincident_pairs: u64,
     /// All side/carrier pairs, including cross-member pairs.
     pub side_cap_pairs: u64,
-    /// Entire cap UV rectangles proved injective.
+    /// Cap domains proved injective through a rectangle or certified periodic fill.
     pub cap_self_domains: usize,
     /// All distinct cap pairs separated.
     pub cap_pairs: u64,

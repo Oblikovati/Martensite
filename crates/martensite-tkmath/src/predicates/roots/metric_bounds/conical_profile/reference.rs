@@ -17,7 +17,8 @@ pub use chart::{
 };
 use context::{ReferenceDomain, ReferenceInputs};
 pub use decoded_family::{
-    ConicalDecodedFamilyError, ConicalDecodedFamilyFailure, certify_conical_decoded_family,
+    ConicalDecodedFamilyError, ConicalDecodedFamilyFailure, ConicalDecodedFillFailure,
+    certify_conical_decoded_family, certify_conical_decoded_family_with_fill,
 };
 pub(super) mod geometry;
 #[cfg(test)]

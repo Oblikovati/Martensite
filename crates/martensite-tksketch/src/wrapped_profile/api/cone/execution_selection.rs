@@ -44,13 +44,25 @@ pub enum WrappedConeExecutionSelection {
         /// Finite aggregate arithmetic admission.
         arithmetic: WrappedConeArithmeticGrantPolicy,
     },
+    /// Connected local charts with certified native side and periodic cap validation.
+    DirectedConnectedChartAtlasV7 {
+        /// Finite aggregate arithmetic admission.
+        arithmetic: WrappedConeArithmeticGrantPolicy,
+    },
 }
 impl WrappedConeExecutionSelection {
     pub(in crate::surface_sketch::wrapped_profile) fn is_connected_atlas(self) -> bool {
-        matches!(self, Self::ConnectedChartAtlasV6 { .. })
+        matches!(
+            self,
+            Self::ConnectedChartAtlasV6 { .. } | Self::DirectedConnectedChartAtlasV7 { .. }
+        )
     }
     pub(in crate::surface_sketch::wrapped_profile) fn requires_transported_placement(self) -> bool {
-        matches!(self, Self::DirectedTransportedPlacementV5 { .. })
+        matches!(
+            self,
+            Self::DirectedTransportedPlacementV5 { .. }
+                | Self::DirectedConnectedChartAtlasV7 { .. }
+        )
     }
 
     pub(in crate::surface_sketch::wrapped_profile) fn is_directed(self) -> bool {
@@ -61,6 +73,7 @@ impl WrappedConeExecutionSelection {
                 | Self::DirectedRecenteredChartRequireCertifiedV3 { .. }
                 | Self::DirectedRegionAtlasRequireCertifiedV4 { .. }
                 | Self::DirectedTransportedPlacementV5 { .. }
+                | Self::DirectedConnectedChartAtlasV7 { .. }
         )
     }
 }

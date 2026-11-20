@@ -33,7 +33,7 @@ impl SideRows {
 }
 
 pub(super) struct CapCurves<'a> {
-    by_id: BTreeMap<ProfileCurveId, &'a ProfileCurve>,
+    pub(super) material: &'a CertifiedPlanarMaterial,
     by_side: BTreeMap<u64, Option<ProfileCurveId>>,
 }
 impl<'a> CapCurves<'a> {
@@ -41,10 +41,6 @@ impl<'a> CapCurves<'a> {
         material: &'a CertifiedPlanarMaterial,
         curves: &[(ProfileCurveId, u64)],
     ) -> Self {
-        let mut by_id = BTreeMap::new();
-        for curve in &material.profile().curves {
-            by_id.entry(curve.id()).or_insert(curve);
-        }
         let mut by_side = BTreeMap::new();
         for &(curve, side) in curves {
             by_side
@@ -52,7 +48,7 @@ impl<'a> CapCurves<'a> {
                 .and_modify(|old| *old = None)
                 .or_insert(Some(curve));
         }
-        Self { by_id, by_side }
+        Self { material, by_side }
     }
     pub(super) fn find(&self, side: u64) -> Result<(ProfileCurveId, &'a ProfileCurve), Failure> {
         let key = self
@@ -62,9 +58,8 @@ impl<'a> CapCurves<'a> {
             .flatten()
             .ok_or_else(|| rejected("missing/ambiguous source curve-to-side binding"))?;
         let curve = self
-            .by_id
-            .get(&key)
-            .copied()
+            .material
+            .curve(key)
             .ok_or_else(|| rejected("selected material curve missing"))?;
         Ok((key, curve))
     }

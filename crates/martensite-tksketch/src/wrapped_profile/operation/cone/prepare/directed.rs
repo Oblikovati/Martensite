@@ -25,7 +25,7 @@ pub(super) fn finalize(
     finalize_rows(
         originals,
         prepared,
-        ConicalPrimitiveRefinement::HalfSplitV1,
+        domain::refinement(execution),
         work,
         cancelled,
     )

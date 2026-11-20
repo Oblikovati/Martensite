@@ -48,23 +48,13 @@ fn selected_call(
     cancelled: &mut CancelPoll<'_>,
 ) -> Result<(CertifiedConicalTrimPair, ConicalDevelopedBoundaryEvidence), ConicalChartTrimPairError>
 {
-    if super::super::super::domain::directed(prepared) {
-        return certify_conical_trim_pair_with_developed_boundary_and_refinement(
-            pair,
-            boundary,
-            proof,
-            domain,
-            prepared.reference_slant,
-            ConicalPrimitiveRefinement::HalfSplitV1,
-            cancelled,
-        );
-    }
-    certify_conical_trim_pair_with_developed_boundary(
+    certify_conical_trim_pair_with_developed_boundary_and_refinement(
         pair,
         boundary,
         proof,
         domain,
         prepared.reference_slant,
+        super::super::super::domain::refinement(prepared.executed_selection),
         cancelled,
     )
 }

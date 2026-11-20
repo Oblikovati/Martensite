@@ -28,6 +28,8 @@ mod hierarchy;
 mod unions;
 pub use evidence::{ConicalActualPatchCertificate, ConicalActualPatchCoverage};
 mod execute;
-pub use execute::certify_conical_actual_patches;
+pub use execute::{
+    certify_conical_actual_patches, certify_conical_actual_patches_with_periodic_caps,
+};
 #[cfg(test)]
 mod tests;

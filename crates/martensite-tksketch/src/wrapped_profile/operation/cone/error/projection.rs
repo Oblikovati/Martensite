@@ -47,6 +47,19 @@ fn shared_context(failure: &ConeFailure) -> Option<shared::Context> {
                     .retain(|source| matches!(source, HistorySource::Region(_)));
                 Some(context)
             }
+            material::atlas::Refusal::Reference {
+                overlap: Some(owners),
+                ..
+            } => {
+                let mut entities = owners.map(HistorySource::Region).to_vec();
+                entities.sort();
+                entities.dedup();
+                Some(shared::Context {
+                    stage: failure.stage,
+                    class: Class::InvalidInput,
+                    entities,
+                })
+            }
             _ => None,
         },
     }

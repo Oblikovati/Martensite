@@ -141,3 +141,22 @@ pub struct ConicalActualPatchQuery<'a> {
     /// Actual remaining arithmetic allowance.
     pub options: ConeClearanceOptions,
 }
+
+/// Native side identities in the exact contour order of one decoded join issuance.
+#[derive(Clone, Copy)]
+pub struct ConicalActualPeriodicMember<'a> {
+    /// Stable member label.
+    pub member: ConicalActualMemberId,
+    /// Issued decoded cap/row correspondence.
+    pub joins: &'a ConicalJoinsEvidence,
+    /// Actual sides, with each contour in authored order.
+    pub sides: &'a [ConicalActualSideId],
+}
+/// Decoded cap authority for charts crossing a full angular period.
+#[derive(Clone, Copy)]
+pub struct ConicalActualPeriodicCaps<'a> {
+    /// Decoded reference issued after complete periodic filled material admission.
+    pub reference: &'a ConicalReferenceEvidence,
+    /// Members in the reference's issuing order.
+    pub members: &'a [ConicalActualPeriodicMember<'a>],
+}

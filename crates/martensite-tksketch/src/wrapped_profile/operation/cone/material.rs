@@ -2,6 +2,10 @@
 use super::*;
 use martensite_tkbo::profile_extrusion::PlanarProofVersion;
 pub(super) mod atlas;
+pub(super) type NativeCurveMap = Vec<(
+    martensite_tkbo::profile_extrusion::ProfileCurveId,
+    ConicalActualSideId,
+)>;
 mod binding;
 mod domain;
 pub(super) use domain::curve_ids as source_curve_ids;
@@ -16,6 +20,7 @@ pub(in crate::surface_sketch::wrapped_profile) struct MaterialEvidence {
     original: DevelopedRegionRequest,
     uv: planar::PlanarEvidence,
     pub(super) selected_material: Option<martensite_tkbo::body_check::CertifiedPlanarMaterial>,
+    pub(super) periodic_curves: Option<NativeCurveMap>,
     normal: MaterialRealization,
     carriers: [ConicalTrimCarrier; 2],
     options: ConeClearanceOptions,
@@ -68,6 +73,7 @@ pub(super) fn certify(
         original: original.clone(),
         uv: captured.uv,
         selected_material: captured.selected,
+        periodic_curves: None,
         normal: MaterialRealization::Common(normal),
         carriers: stored.carriers,
         options,
