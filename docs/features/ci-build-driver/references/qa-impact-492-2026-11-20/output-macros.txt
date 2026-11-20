@@ -1,0 +1,5 @@
+before=true visited=599 resources=204 unknown={}
+macro_disjoint=45 macro_unknown={}
+before=false visited=599 resources=204 unknown={}
+macro_disjoint=45 macro_unknown={}
+normal_fingerprint_delta=[] elapsed=2.168895285s

@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-20",
+  "base": "b61a031d0bde0e21d283e0f94975f79b9ae15574",
+  "candidate_freeze": "martensite-471-revival-source-freeze-v5.json",
+  "candidate_freeze_sha256": "91637ee317d2ef3278d44df8386e9945cb4ed37a641ecadf940d24651b2e2d08",
+  "kept_files": {
+    "output.txt": "1c0c1c3dcde08fcae0f6be06844babbdca1391fae76dae6f13435aa31ab4042e",
+    "output-supported.txt": "a08e47d80d1744918ef06ef05fa7e8d1a194a5ea7d3cad3d3346f1edbf6b98ee",
+    "output-macros.txt": "f18850fd48f3bd6d52f5569fd600beb21a8ea363f1cc045772750327046c5cfd",
+    "output-calls.txt": "1fccee232e2e61c959505a256efcc085d9df2179281a775ba9f726e9a74e8774",
+    "receipt.json": "d65f39e662f3c132ca0d2ce1435d1808900c1c6f78c2f5b76a93c0cb10fa15d0"
+  },
+  "removed_prototype_files": {
+    "probe.rs": "aff3165950f21e2401f608c62c34280fef4363f663b93ea171e6c4e89758c171",
+    "probe": "cb286f922dc9975977d3ae5233817564efdffafaa003acc1813f9de5e1ec91d5",
+    "probe-supported": "d3f5b30a61b638777684b394e6fc7e7825c91363e616275f9cd870d482322012",
+    "probe-macros": "9f7fff801f227cb5888ee3403be1d48f8968a22b792c486d434ae8565b5eee7f",
+    "probe-calls": "8f525df2c2949fe9a7f511e215873a59a952de05e6bd027e3979f5b13dc4eb1b"
+  },
+  "status": "diagnostic only; no owner-only acceptance; production selector unchanged; Bug492 open"
+}

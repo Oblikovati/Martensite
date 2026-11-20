@@ -315,3 +315,62 @@ before the verify job restores it, verification fails and publication stops. The
 reads flat ZIP entries through Python's standard library on Ubuntu, with a
 1 GiB compressed and expanded limit per artifact; it never extracts archive paths.
 No release tag or package version is created by this process.
+
+## Shared Vulkan control ownership (#471)
+
+The `martensite-vulkan` integration target `support_units` owns the unit
+controls for shared viewer/session helpers, native example fixtures and
+regular-grid construction. Other regression hosts include the same helper
+implementation with those control-module declarations disabled. Their distinct
+native regression cases and worker CPU/stream policies remain in each host.
+
+Shared modules declare control modules through `support_unit_tests!`. The
+owner expands the declarations, and ordinary hosts use the empty declaration
+macro from `tests/support/support_unit_tests_elsewhere.rs`. Assertion bodies
+remain in ordinary Rust sibling files. This preserves their module paths,
+including the exact identities used by checkpoint worker dispatch. The owner
+also includes the regular-grid controls formerly registered by
+`regular_surface_tessellation_cpu`.
+
+The library's private `hatch_surface` module already uses the canonical
+`tests/support/hatch_scene.rs` fixture. Its controls now run through that same
+source in the owner, against the compiled renderer library. Native backend
+regressions stay in the library harness; only the nested example window's
+channel-mask control moves to `support_units`. No renderer implementation is
+copied into the owner.
+
+Ownership validation compares native libtest `--list` inventories before and
+after the change. Every distinct shared control must have one owner, every
+host-specific regression must remain, and transferred regular-grid controls
+must appear in `support_units`. Repeat the comparison for diagnostic features
+and supported platforms; a default Linux inventory cannot establish those
+configurations. Keep temporary-root uniqueness, process leases and state
+restoration checks when controls share a harness.
+
+The Linux default-feature `--list` inventory of existing gate executables on
+2026-11-20 listed 240 common controls in 116 helper-bearing targets: 27,840
+registrations, or 27,600 beyond one registration per control. The same inventory
+listed 126 integration targets and 1,752 library tests. The Linux timing target uses
+`cfg(all(target_os = "linux", not(debug_assertions)))` and listed no cases with
+debug assertions enabled. Each candidate needs its own inventory;
+source-level preservation alone cannot prove that every control is reachable.
+
+An earlier partial gate-log snapshot showed 239 fully captured common control
+names in each of 99 completed hosts. Interleaved output hid one name from the
+simple status-line parser. Neither those counts nor whole-host elapsed times
+measure the controls' individual cost. Compile time, executable size, test wall
+time and peak RSS need separate before/after measurements. Shared helper source
+is still parsed and type-checked in each including target.
+
+The package's test targets come from Cargo metadata; the owner needs no
+hard-coded target-name classifier. Compiler-inventory rows include target
+names, so a changed target inventory needs a fresh reviewed capture. An old
+worktree's compiler-baseline edits are not evidence for a new candidate.
+
+The fresh Linux compiler capture adds two `support_units` attribution rows:
+11 emitted unsafe-block spans from `examples/support/native_window.rs` and one
+from `tests/support/dataset_shape.rs`. These existing implementations and their
+unsafe attributes are unchanged. The owner reaches channel-mask and dataset
+parsing controls; the real environment-setter callers remain unchanged. Their
+existing policy and safety gap is tracked by [#573](https://github.com/Oblikovati/Martensite/issues/573),
+related to #95. This attribution review grants no new unsafe allowance.

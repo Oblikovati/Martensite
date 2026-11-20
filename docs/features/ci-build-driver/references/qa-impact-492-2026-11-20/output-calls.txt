@@ -1,0 +1,7 @@
+before=true visited=599 resources=204 unknown={}
+macro_disjoint=45 macro_unknown={}
+nonlocal_macros=["#", "&", "assert", "assert_eq", "assert_ne", "cfg", "concat", "debug_assert_eq", "env", "eprintln", "format", "if", "impl_transient", "include_bytes", "include_str", "json", "matches", "panic", "println", "retained_view_methods", "unreachable", "vec", "world_clip_v4_pair", "write", "|"]
+before=false visited=599 resources=204 unknown={}
+macro_disjoint=45 macro_unknown={}
+nonlocal_macros=["#", "&", "assert", "assert_eq", "assert_ne", "cfg", "concat", "debug_assert_eq", "env", "eprintln", "format", "if", "impl_transient", "include_bytes", "include_str", "json", "matches", "panic", "println", "retained_view_methods", "unreachable", "vec", "world_clip_v4_pair", "write", "|"]
+normal_fingerprint_delta=[] elapsed=2.684051554s

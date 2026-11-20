@@ -198,6 +198,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Ran shared Vulkan support controls in one owning test binary, preserving distinct native regressions and worker identities (#471).
+
 - Detached non-destructive `BRepAlgoAPIBuilderAlgo` Boolean results with a deep copy and merged copy history so later source vertex or location mutations cannot invalidate completed results (#457).
 
 - Replaced `BaseAllocator`'s inner `Box<AllocatorFacadeFields>` with `Arc<AllocatorFacadeFields>` to fix a Stacked Borrows violation detected by Miri under `allocator-api2` and added Miri-verified `Send`/`Sync` audit tests for all audited collection and allocator implementations (#63).
