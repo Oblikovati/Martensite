@@ -211,7 +211,7 @@ fn triple_contact_sources() -> Vec<Shape> {
     sources
 }
 
-fn exclusion_bridge(edges: Vec<Shape>) -> PairedContactTransaction {
+pub(super) fn exclusion_bridge(edges: Vec<Shape>) -> PairedContactTransaction {
     let (previous, mapped, edges) = actual_inputs_for(edges);
     let census = crate::sketch_region_certification::enumerate_exclusion_census(
         previous.inputs,

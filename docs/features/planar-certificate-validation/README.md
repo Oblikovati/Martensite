@@ -221,3 +221,66 @@ endpoint. The measurement retains the observed parameter and requested limit
 with their original signed-zero bits. Exact differential controls cover endpoint
 and interior points, reversed and extreme maps, invalid operands and threshold
 boundaries. This change adds no public API or numerical work policy.
+
+
+## Census report reuse (#567)
+
+Before enumerating, a Census selects its solver or conditioned report store
+and checks that store plus the complete physical source inventory. An empty selected report inventory whose physical sources equal their
+occurrence positions gives a different source-pair/mode key for every logical
+domain. Those queries cannot reuse a report, so that path retains no lookup
+index. Every numerical query still executes in the original order.
+
+Other states use an ordered index from canonical source pair and query mode
+to the first retained report address. Existing report keys enter once. A cold
+result enters at its actual append position; later occurrences reuse
+that position, including capture failures and incomplete proofs. The index is
+discarded when enumeration ends. Report vectors retain their original order
+and remain the evidence owners.
+
+The index stores execution addresses within one Census. Source, policy and
+revision checks still run through the existing certificate bindings. Solver
+execution order, shared remaining budgets and cancellation callbacks stay in
+the enumeration driver. The lookup tree is never traversed to publish geometry
+or assign persistent identities.
+
+Regression controls run indexed and literal lookups through the same solver
+driver, comparing retained graph coefficients, roots, membership and exceptional
+signs, contacts, policies, work and callbacks. They cover reversed aliases,
+query modes, duplicate keys, cached failures and cancellation checkpoints.
+A deterministic counter control expects 21,945 record visits for 210 cold misses
+in the literal oracle; indexed lookups read the existing record inventory once.
+Additional controls check the complete unique-key condition, cancellation and
+actual proof/failure parity of the path without an index. Missing metadata,
+nonidentity mappings, aliases and existing reports retain indexed lookup.
+These controls establish lookup semantics; whole-operation time and peak memory
+require the same accepted workload and matching build provenance.
+
+## Native contact discovery (#566)
+
+Each immutable contact phase now builds an observed-incidence view from the
+retained partition snapshot and accepted source-domain bindings. It indexes
+native vertex IDs once and retains ordered parameter lists for each occurrence
+at each actual endpoint. Report queries intersect these endpoint lists.
+Cardinality comes from actual shared native vertices, including observations
+in reports certified to have no numerical contacts. Self-contact counts keep
+the existing off-diagonal rule based on exact parameter bits.
+
+The view preserves the first snapshot observation of a duplicate vertex ID,
+source-row aliases and incidence order. It stays inside the phase that created
+it; live geometry validation remains at the existing certificate boundary.
+Regression controls compare complete rows and ordered diagnostics with the
+literal discovery path. Local counters distinguish snapshot entries, endpoint
+lookups, source/incidence visits, parameter products and vertex deduplication;
+they do not claim to count the internal key comparisons of the ordered maps.
+No tolerance, public API, numerical work budget or package version changed.
+
+The B1 conditioned path uses this same enumeration-local lookup for Bernstein,
+geometric and genuine fallback evidence. It seeds only the selected report
+vector; numeric slots in the other vector have no authority. ColdUnique still
+requires the selected vector to be empty and every occurrence to map to its
+own physical-source slot. Native axes accept both retained evidence variants,
+and cardinality consumes their unified certificates, including completed empty
+proofs. Differential controls compare source slots, full conditioned outcomes,
+work and callback order with literal lookup, including aliases, seeded failures,
+mixed-vector refusals, geometric endpoints and native extra-vertex gaps.

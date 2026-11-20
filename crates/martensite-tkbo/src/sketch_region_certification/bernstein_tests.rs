@@ -167,12 +167,14 @@ fn cancelled_exact_execution_keeps_actual_work_and_no_fallback() {
     let paired = census.paired.as_mut().unwrap();
     paired.exclusions.clear();
     census.bisections = 0;
+    let mut reports = super::paired_execution::test_report_lookup(&census);
     let evidence = super::bernstein_execution::evaluate(
         &mut census,
         [0, 0],
         [0, 0],
         super::paired_types::PairedQueryMode::SelfOffDiagonal,
         &mut || true,
+        &mut reports,
     );
     let DomainEvidence::BernsteinReport { report, .. } = evidence else {
         panic!("actual exact execution")

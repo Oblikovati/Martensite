@@ -3,9 +3,14 @@
 use super::{census, outcome::*, paired_types::*};
 use martensite_tkmath::predicates::roots::bezier_pair::*;
 mod report_reuse;
-use report_reuse::{ReportLookup, ReportReuseIndex};
+pub(super) use report_reuse::ReportLookup;
+use report_reuse::ReportReuseIndex;
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+pub(super) fn test_report_lookup(census: &BoundaryCensus) -> impl ReportLookup + use<> {
+    ReportReuseIndex::capture(census)
+}
 
 pub(super) fn enumerate_paired_domains(
     census: BoundaryCensus,
@@ -68,12 +73,10 @@ fn evaluate_pair(
         return DomainEvidence::Unsupported(CensusGap::SamePhysicalCurve);
     }
     let mode = query_mode(pair);
-    if census
-        .paired
-        .as_ref()
-        .is_some_and(|paired| paired.exclusion_version.is_some())
-    {
-        return super::bernstein_execution::evaluate(census, pair, sources, mode, cancelled);
+    if conditioned_reports_selected(census) {
+        return super::bernstein_execution::evaluate(
+            census, pair, sources, mode, cancelled, reports,
+        );
     }
     if let Some(report) = reports.find(sources, mode) {
         census.paired.as_mut().unwrap().reused_reports += 1;
@@ -82,6 +85,12 @@ fn evaluate_pair(
     let report = retain_execution(census, sources, mode, cancelled);
     reports.remember(sources, mode, report);
     report_reference(census, pair, report, false)
+}
+fn conditioned_reports_selected(census: &BoundaryCensus) -> bool {
+    census
+        .paired
+        .as_ref()
+        .is_some_and(|paired| paired.exclusion_version.is_some())
 }
 fn canonical_sources(census: &BoundaryCensus, pair: [usize; 2]) -> [usize; 2] {
     let records = &census.paired.as_ref().unwrap().occurrences;

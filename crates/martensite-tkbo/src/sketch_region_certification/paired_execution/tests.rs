@@ -3,6 +3,7 @@
 use super::*;
 use crate::sketch_region_certification::paired_tests::{curved_pair, paired};
 mod cold_unique;
+mod conditioned;
 mod replay;
 use replay::{compare_censuses, result_snapshot};
 

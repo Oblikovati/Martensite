@@ -5,7 +5,7 @@ use super::source_binding_tests::source_policy;
 use super::tests::{capture, policy};
 use super::*;
 
-fn endpoint_census() -> BoundaryCensus {
+pub(super) fn endpoint_census() -> BoundaryCensus {
     endpoint_census_with_cancel(|| false).unwrap_or_else(|_| panic!("geometric Census"))
 }
 fn endpoint_census_with_cancel(

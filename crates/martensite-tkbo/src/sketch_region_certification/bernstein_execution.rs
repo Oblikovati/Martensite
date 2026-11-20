@@ -40,15 +40,12 @@ pub(super) fn evaluate(
     sources: [usize; 2],
     mode: PairedQueryMode,
     cancelled: &mut impl FnMut() -> bool,
+    reports: &mut impl super::paired_execution::ReportLookup,
 ) -> DomainEvidence {
     let Some(paired) = census.paired.as_mut() else {
         return DomainEvidence::Unsupported(CensusGap::BezierPair);
     };
-    if let Some(report) = paired
-        .exclusions
-        .iter()
-        .position(|record| record.sources == sources && record.mode == mode)
-    {
+    if let Some(report) = reports.find(sources, mode) {
         paired.reused_reports += 1;
         return reference(census, pair, report, true);
     }
@@ -59,6 +56,7 @@ pub(super) fn evaluate(
     };
     let report = paired.exclusions.len();
     paired.exclusions.push(record);
+    reports.remember(sources, mode, report);
     reference(census, pair, report, false)
 }
 fn execute(

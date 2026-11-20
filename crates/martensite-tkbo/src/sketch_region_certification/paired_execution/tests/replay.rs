@@ -52,7 +52,7 @@ fn record_snapshot(record: &PairedStoredReport) -> Vec<String> {
     }
     result
 }
-fn report_snapshot(report: &BezierPairReport) -> Vec<String> {
+pub(super) fn report_snapshot(report: &BezierPairReport) -> Vec<String> {
     let mut rows = vec![format!(
         "{:?} {:?} {:?}",
         report.policy(),
@@ -70,7 +70,7 @@ fn report_snapshot(report: &BezierPairReport) -> Vec<String> {
     }
     rows
 }
-fn curve_snapshot(curve: BezierPairCurve<'_>) -> String {
+pub(super) fn curve_snapshot(curve: BezierPairCurve<'_>) -> String {
     let controls = curve
         .controls
         .iter()
