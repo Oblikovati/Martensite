@@ -10,7 +10,7 @@ use martensite_tkbrep::{
 };
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeEdge;
 
-fn bridge_for(edges: Vec<Shape>) -> PairedContactTransaction {
+pub(super) fn bridge_for(edges: Vec<Shape>) -> PairedContactTransaction {
     // WHY: every authored family exercises the same production entry and policy.
     bridge_request(edges, contact_policy())
 }
@@ -185,7 +185,7 @@ fn native_nearby_topology_cannot_override_complete_exact_empty_contact_domain() 
     super::test_fixture::assert_private_incomplete(&retained);
 }
 
-fn degenerate_fixture(mode: usize) -> Vec<Shape> {
+pub(super) fn degenerate_fixture(mode: usize) -> Vec<Shape> {
     assert!(
         (14..=16).contains(&mode),
         "degenerate fixture mode={mode}; expected 14..=16"

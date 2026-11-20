@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Shared DS topology supplies observations; a metric bound never supplies contact identity.
 use super::*;
+pub(super) mod incidence_view;
 mod source_index;
 use crate::sketch_region::{PartitionObservation, SourcePartitionObservation};
 use crate::sketch_region_partition_bindings::PartitionEndpointBinding;
@@ -28,9 +29,18 @@ pub(super) fn compile_source_index(retained: &PairedContactTransaction) -> Optio
 }
 pub(super) fn retain_topological_incidences(retained: &mut PairedContactTransaction) {
     let sources = compile_source_index(retained);
+    let observations = incidence_view::compile(
+        &retained.census.inputs,
+        &retained.mapped.arrangement.partition,
+        retained
+            .current_partition
+            .as_ref()
+            .and_then(|row| row.as_ref().ok()),
+        sources.as_ref(),
+    );
     for index in 0..retained.inspection.contacts.len() {
         let domain = retained.inspection.contacts[index].occurrence_domains[0];
-        let rows = observed_domain_vertices_with_index(retained, domain, sources.as_ref());
+        let rows = retained_domain_rows(retained, domain, observations.as_ref());
         retained.inspection.contacts[index].observed_vertices = rows;
         // WHY: even a unique report-local root and shared DS vertex need independent source correspondence.
         let identity = retained.inspection.contacts[index].identity;
@@ -39,12 +49,23 @@ pub(super) fn retain_topological_incidences(retained: &mut PairedContactTransact
             .push(ContactTransportGap::MissingCanonicalTopologyCorrespondence { identity });
     }
 }
+fn retained_domain_rows(
+    retained: &PairedContactTransaction,
+    domain: usize,
+    observations: Option<&incidence_view::ObservedIncidences<'_>>,
+) -> Vec<ObservedContactVertex> {
+    observations
+        .and_then(|view| domain_axes(retained, domain).map(|axes| view.rows(axes)))
+        .unwrap_or_default()
+}
+#[cfg(test)]
 pub(super) fn observed_domain_vertices(
     retained: &PairedContactTransaction,
     domain_index: usize,
 ) -> Vec<ObservedContactVertex> {
     observed_domain_vertices_with_index(retained, domain_index, None)
 }
+#[cfg(test)]
 pub(super) fn observed_domain_vertices_with_index(
     retained: &PairedContactTransaction,
     domain_index: usize,
@@ -67,6 +88,7 @@ pub(super) fn observed_domain_vertices_with_index(
         })
         .collect()
 }
+#[cfg(test)]
 fn observed_endpoint_rows(
     retained: &PairedContactTransaction,
     domain_index: usize,
@@ -108,6 +130,7 @@ pub(super) fn domain_axes(
     }
     Some(axes)
 }
+#[cfg(test)]
 fn parameter_rows(
     retained: &PairedContactTransaction,
     domain_index: usize,
@@ -122,22 +145,38 @@ fn parameter_rows(
         axes.map(|occurrence| native_axis_parameters(retained, occurrence, endpoint, sources));
     distinct_parameter_rows(axes, &parameters, vertex)
 }
+#[cfg(test)]
 fn distinct_parameter_rows(
     axes: [usize; 2],
     parameters: &[Vec<f64>; 2],
     vertex: &crate::sketch_region::PartitionVertexObservation,
 ) -> Vec<ObservedContactVertex> {
-    parameters[0]
-        .iter()
-        .flat_map(|first| {
-            parameters[1].iter().filter_map(|second| {
-                if axes[0] == axes[1] && first.to_bits() == second.to_bits() {
-                    return None;
-                }
-                Some(observe_vertex(vertex, [*first, *second]))
-            })
-        })
-        .collect()
+    distinct_parameter_rows_observed(axes, [&parameters[0], &parameters[1]], vertex, &mut |_| {})
+}
+fn distinct_parameter_rows_observed(
+    axes: [usize; 2],
+    parameters: [&[f64]; 2],
+    vertex: &crate::sketch_region::PartitionVertexObservation,
+    observe: &mut impl FnMut(incidence_view::DiscoveryStep),
+) -> Vec<ObservedContactVertex> {
+    let mut rows = Vec::new();
+    for first in parameters[0] {
+        for second in parameters[1] {
+            observe(incidence_view::DiscoveryStep::ParameterProduct);
+            rows.extend(distinct_parameter_row(axes, [*first, *second], vertex));
+        }
+    }
+    rows
+}
+fn distinct_parameter_row(
+    axes: [usize; 2],
+    parameters: [f64; 2],
+    vertex: &crate::sketch_region::PartitionVertexObservation,
+) -> Option<ObservedContactVertex> {
+    if axes[0] == axes[1] && parameters[0].to_bits() == parameters[1].to_bits() {
+        return None;
+    }
+    Some(observe_vertex(vertex, parameters))
 }
 
 fn native_maps(
@@ -159,6 +198,7 @@ fn native_maps(
         .collect::<Option<_>>()?;
     Some([mapped[0], mapped[1]])
 }
+#[cfg(test)]
 fn native_axis_parameters(
     retained: &PairedContactTransaction,
     occurrence: usize,
@@ -176,6 +216,7 @@ fn native_axis_parameters(
     }
     parameters
 }
+#[cfg(test)]
 fn append_source_parameters(
     source_index: i32,
     endpoint: &PartitionEndpointBinding,
@@ -204,6 +245,13 @@ fn source_matches_occurrence(
     let Some(Ok(current)) = &retained.current_partition else {
         return false;
     };
+    source_matches_parents(parents, source, current)
+}
+fn source_matches_parents(
+    parents: &[crate::sketch_region::OriginalMemberIdentity],
+    source: &SourcePartitionObservation,
+    current: &crate::sketch_region_partition_bindings::PartitionTransactionInspection,
+) -> bool {
     !parents.is_empty()
         && parents.len() == source.parents.len()
         && parents.iter().all(|parent| source.parents.contains(parent))
