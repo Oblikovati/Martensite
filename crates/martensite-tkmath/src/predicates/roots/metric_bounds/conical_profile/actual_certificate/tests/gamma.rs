@@ -130,6 +130,58 @@ fn gamma_transform_rejects_unsupported_row_and_nonfinite_source() {
     });
 }
 
+#[test]
+fn gamma_refuses_a_family_mixing_whole_and_restricted_charts_before_work() {
+    fixture(|query| {
+        let whole = query.spans[0];
+        let mut source = whole.previous;
+        source.original = Some(ConicalOriginalSpan {
+            poles: source.source,
+            index: 0,
+            level: 0,
+        });
+        let restricted = restrict_chart(source);
+        let parent =
+            certify_conical_boundary_in_chart(source, &restricted, options(), || false).unwrap();
+        let local = ConicalDirectedGammaSpan {
+            previous: source,
+            parent: &parent,
+            domain: &restricted,
+            id: ConicalActualSideId(11),
+            ..whole
+        };
+        let spans = [whole, local];
+        let mixed = ConicalDirectedGammaQuery {
+            spans: &spans,
+            ..query
+        };
+        let error = certify_conical_directed_gamma(mixed, || true).unwrap_err();
+        assert_eq!(error.side, Some(local.id));
+        assert_eq!(error.operations, 0);
+        assert!(matches!(
+            error.cause.as_ref(),
+            ConicalActualPatchFailure::Binding {
+                field: "one family chart mode",
+                ..
+            }
+        ));
+    });
+}
+
+fn restrict_chart(source: ConicalBoundaryQuery<'_>) -> ConicalChartDomainEvidence {
+    let spans = [source.source];
+    let query = ConicalChartDomainQuery {
+        spans: &spans,
+        semi_angle: source.semi_angle,
+        chart_origin: 0.,
+        fit_center: 0.,
+        developed_turn: 0,
+        physical_turn: 0,
+        options: options(),
+    };
+    certify_conical_subspan_chart(query, 0, 0, || false).unwrap()
+}
+
 fn wrong_parent_failure(failure: &ConicalActualPatchError) {
     assert_eq!(failure.operations, 0);
     assert_eq!(failure.side, Some(ConicalActualSideId(9)));

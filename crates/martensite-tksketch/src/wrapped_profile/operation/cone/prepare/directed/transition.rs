@@ -40,8 +40,8 @@ fn issue(
         parent: &fit.boundary,
         previous: storage::prepared_query(original, prepared, piece, &fit.poles)?,
         current: storage::prepared_query(original, prepared, piece, &poles)?,
-        domain: chart(prepared)?,
-        refinement: ConicalPrimitiveRefinement::HalfSplitV1,
+        domain: chart(prepared, piece.span, fit)?,
+        refinement: plan.gamma.primitive_refinement(),
         gamma: plan.gamma,
     };
     let options = work.remaining_checked(original.region, Some(piece.span))?;

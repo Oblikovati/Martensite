@@ -5,6 +5,7 @@ pub(super) fn certify(
     members: &OriginalMembers<'_>,
     prepared: &[Prepared],
     inventory: &Inventory,
+    refinement: ConicalPrimitiveRefinement,
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<std::sync::Arc<ConicalDirectedGammaEvidence>> {
@@ -14,7 +15,7 @@ pub(super) fn certify(
     let query = ConicalDirectedGammaQuery {
         spans: &spans,
         caps: &caps,
-        refinement: ConicalPrimitiveRefinement::HalfSplitV1,
+        refinement,
         options: work.remaining_checked(region, None)?,
     };
     let result = certify_conical_directed_gamma(query, cancelled);
@@ -51,7 +52,7 @@ fn span<'a>(
         member: ConicalActualMemberId(original.region.0),
         previous: storage::prepared_query(original, member, piece, &fit.poles)?,
         parent: &fit.boundary,
-        domain: chart(member)?,
+        domain: chart(member, piece.span, fit)?,
         caps: inventory.cap_pair(original.region)?,
     })
 }

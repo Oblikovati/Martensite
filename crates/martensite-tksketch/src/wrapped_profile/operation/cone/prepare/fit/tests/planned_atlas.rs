@@ -6,6 +6,7 @@ use martensite_tkbo::{
     profile_extrusion::{PlanarProofVersion, ProfileCurve, ProfileCurveId, ProfileVertexId},
 };
 
+mod directed_rows;
 mod family;
 mod periodic;
 mod placement;

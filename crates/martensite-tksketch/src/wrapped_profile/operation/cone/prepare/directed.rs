@@ -22,9 +22,27 @@ pub(super) fn finalize(
     if !execution.is_directed() {
         return Ok(());
     }
+    finalize_rows(
+        originals,
+        prepared,
+        ConicalPrimitiveRefinement::HalfSplitV1,
+        work,
+        cancelled,
+    )
+}
+
+pub(super) fn finalize_rows(
+    originals: &[DevelopedRegionRequest],
+    prepared: &mut [Prepared],
+    refinement: ConicalPrimitiveRefinement,
+    work: &mut Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<()> {
     let inventory = Inventory::capture(prepared)?;
     let members = operation::source::by_region(originals);
-    let gamma = gamma::certify(originals, &members, prepared, &inventory, work, cancelled)?;
+    let gamma = gamma::certify(
+        originals, &members, prepared, &inventory, refinement, work, cancelled,
+    )?;
     let endpoints = std::sync::Arc::new(FinalEndpoints::plan(prepared, &gamma)?);
     let plan = DirectedPlan {
         gamma: &gamma,
@@ -80,16 +98,26 @@ fn retain(
     }
 }
 
-fn chart(prepared: &Prepared) -> ConeChecked<&ConicalChartDomainEvidence> {
-    prepared.chart_domain.as_deref().ok_or_else(|| {
-        missing(
-            prepared.source.region,
-            None,
-            "directed chart domain authority",
-        )
-    })
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn chart<'a>(
+    prepared: &'a Prepared,
+    span: CurveSpan,
+    fit: &SpanFit,
+) -> ConeChecked<&'a ConicalChartDomainEvidence> {
+    prepared
+        .boundary_metric(span, fit.local_chart)?
+        .chart
+        .ok_or_else(|| {
+            missing(
+                prepared.source.region,
+                Some(span),
+                "directed chart domain authority",
+            )
+        })
 }
-fn fit<'a>(prepared: &'a Prepared, piece: &AuthoredPiece) -> ConeChecked<&'a SpanFit> {
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn fit<'a>(
+    prepared: &'a Prepared,
+    piece: &AuthoredPiece,
+) -> ConeChecked<&'a SpanFit> {
     prepared.fits.get(&piece.span).ok_or_else(|| {
         missing(
             prepared.source.region,

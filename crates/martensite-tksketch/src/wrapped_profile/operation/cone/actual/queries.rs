@@ -61,12 +61,13 @@ fn side<'a>(
 ) -> ConeChecked<ConicalActualSideQuery<'a>> {
     let region = original.region;
     let id = family.inventory.side(region, proof.span)?;
+    let fit = prepare::directed::fit(prepared, piece)?;
     Ok(ConicalActualSideQuery {
         id,
         member: ConicalActualMemberId(region.0),
         current: storage::boundary_query(original, prepared, piece, &proof.curves)?,
-        transition: transition(prepared, proof.span)?,
-        domain: domain(prepared)?,
+        transition: transition(region, fit)?,
+        domain: prepare::directed::chart(prepared, piece.span, fit)?,
         caps: family.inventory.cap_pair(region)?,
         orientation: actual
             .side_orientation(id)
@@ -74,16 +75,8 @@ fn side<'a>(
     })
 }
 
-fn transition(prepared: &Prepared, span: CurveSpan) -> ConeChecked<&ConicalBoundaryZRowEvidence> {
-    prepared
-        .fits
-        .get(&span)
-        .and_then(|fit| fit.transition.as_deref())
-        .ok_or_else(|| missing(prepared.source.region, "actual checked row transition"))
-}
-fn domain(prepared: &Prepared) -> ConeChecked<&ConicalChartDomainEvidence> {
-    prepared
-        .chart_domain
+fn transition(region: SurfaceRegionId, fit: &SpanFit) -> ConeChecked<&ConicalBoundaryZRowEvidence> {
+    fit.transition
         .as_deref()
-        .ok_or_else(|| missing(prepared.source.region, "actual chart domain"))
+        .ok_or_else(|| missing(region, "actual checked row transition"))
 }

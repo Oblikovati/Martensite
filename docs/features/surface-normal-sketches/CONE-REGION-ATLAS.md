@@ -524,3 +524,26 @@ dot, 19.21 s combined. Selection and fitting took 0.41 s. The shared
 decoded-cap binding, periodic winding and reference measurements
 together took 1.46 s. This run timed native validation as a whole.
 The temporary stage timers and profiler output were removed.
+
+The native phase probe ran the same connected O. call on Linux x86_64
+CPU 24 in 19.30 s. The ordered body checker recorded the following
+times in seconds. Edge–face and face–face are parts of self-intersection.
+
+| Region | Topology | Geometry | Self-intersection | Edge–face | Face–face |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Outlined region | 0.525 | 1.017 | 14.170 | 7.289 | 5.649 |
+| Dot | 0.012 | 0.025 | 1.121 | 0.235 | 0.827 |
+
+The directed-row proof resolves each fitted span's restricted chart
+and accepts different fit centers within that family. It refuses a
+mixture of restricted and whole-chart authorities before arithmetic.
+The wide strip's moved rows survived archive encoding and decoding.
+Every decoded depth edge reused its issued boundary receipt, and
+both cap curves rebound to their joins. The connected operation
+still needs complete certified side and periodic cap validation to
+replace the native searches measured above.
+
+The targeted directed-row archive test took 0.52 s. The selected
+checks passed 820 metric-bound tests and 151 cone tests, with three
+cone replay workers ignored. Clippy passed with warnings denied.
+The native probe instrumentation and backup files were removed.

@@ -183,19 +183,38 @@ fn center_mode(
     current: &ConicalDirectedGammaSpan<'_>,
     first: &ConicalDirectedGammaSpan<'_>,
 ) -> Outcome<()> {
-    let actual = current.domain.version() == ConicalChartDomainVersion::AtlasMemberV5;
-    let expected = first.domain.version() == ConicalChartDomainVersion::AtlasMemberV5;
+    let actual = chart_family(current.domain);
+    let expected = chart_family(first.domain);
     if actual != expected {
         return Err(error::binding(
             "one family chart mode",
-            vec![u64::from(actual)],
-            vec![u64::from(expected)],
+            vec![actual as u64],
+            vec![expected as u64],
         ));
     }
-    if actual {
+    if actual != ChartFamily::Common {
+        // Source binding has already checked the center and interval of every
+        // local authority. The movement bound acts on world-space Z rows.
         return Ok(());
     }
     uniform_center(current.previous.fit_center, first.previous.fit_center)
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ChartFamily {
+    Common = 0,
+    RegionAtlas = 1,
+    RestrictedAtlas = 2,
+}
+
+fn chart_family(domain: &ConicalChartDomainEvidence) -> ChartFamily {
+    if domain.source_restriction().is_some() {
+        return ChartFamily::RestrictedAtlas;
+    }
+    match domain.version() {
+        ConicalChartDomainVersion::AtlasMemberV5 => ChartFamily::RegionAtlas,
+        _ => ChartFamily::Common,
+    }
 }
 fn uniform_center(actual: f64, expected: f64) -> Outcome<()> {
     if actual.to_bits() != expected.to_bits() {

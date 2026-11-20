@@ -70,7 +70,7 @@ fn certify(
             caps,
             adjacent,
             gamma: &family.gamma,
-            refinement: ConicalPrimitiveRefinement::HalfSplitV1,
+            refinement: family.gamma.primitive_refinement(),
             options,
         };
         issue(captured, query, &family.inventory, work, cancelled)

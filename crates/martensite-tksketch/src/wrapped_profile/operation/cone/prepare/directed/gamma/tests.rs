@@ -22,6 +22,7 @@ fn check_carriers(sense: NormalSense) {
         &members,
         &prepared,
         &inventory,
+        ConicalPrimitiveRefinement::HalfSplitV1,
         &mut work,
         &mut || false,
     )
