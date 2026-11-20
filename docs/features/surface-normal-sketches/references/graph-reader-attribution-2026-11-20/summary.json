@@ -1,0 +1,180 @@
+{
+  "contexts": [
+    {
+      "n": 12,
+      "domains": 78,
+      "owned": true,
+      "begin": {
+        "unified_certificate_calls": 0,
+        "bound_certificate_calls": 1,
+        "metadata_current_calls": 1,
+        "occurrence_current_calls": 2,
+        "relation_filter_predicates": 72,
+        "physical_prefix_predicates": 2,
+        "captured_query_calls": 1,
+        "geometric_source_matches": 0,
+        "native_current_sweeps": 1,
+        "native_capture_observations": 12,
+        "fallback_source_comparisons": 0,
+        "bernstein_source_matches": 0
+      },
+      "end": {
+        "unified_certificate_calls": 234,
+        "bound_certificate_calls": 235,
+        "metadata_current_calls": 235,
+        "occurrence_current_calls": 470,
+        "relation_filter_predicates": 16920,
+        "physical_prefix_predicates": 3044,
+        "captured_query_calls": 235,
+        "geometric_source_matches": 0,
+        "native_current_sweeps": 1,
+        "native_capture_observations": 12,
+        "fallback_source_comparisons": 0,
+        "bernstein_source_matches": 0
+      },
+      "reader_delta": {
+        "unified_certificate_calls": 234,
+        "bound_certificate_calls": 234,
+        "metadata_current_calls": 234,
+        "occurrence_current_calls": 468,
+        "relation_filter_predicates": 16848,
+        "physical_prefix_predicates": 3042,
+        "captured_query_calls": 234,
+        "geometric_source_matches": 0,
+        "native_current_sweeps": 0,
+        "native_capture_observations": 0,
+        "fallback_source_comparisons": 0,
+        "bernstein_source_matches": 0
+      },
+      "retained_records": {
+        "solver_records": 78,
+        "geometric_records": 0,
+        "bernstein_records": 0,
+        "conditioned_complete_empty": 0,
+        "conditioned_complete_contact": 0,
+        "solver_fallback_records": 0,
+        "capture_failure_records": 0
+      }
+    },
+    {
+      "n": 137,
+      "domains": 9453,
+      "owned": true,
+      "begin": {
+        "unified_certificate_calls": 0,
+        "bound_certificate_calls": 1,
+        "metadata_current_calls": 1,
+        "occurrence_current_calls": 2,
+        "relation_filter_predicates": 822,
+        "physical_prefix_predicates": 2,
+        "captured_query_calls": 1,
+        "geometric_source_matches": 1,
+        "native_current_sweeps": 1,
+        "native_capture_observations": 137,
+        "fallback_source_comparisons": 0,
+        "bernstein_source_matches": 0
+      },
+      "end": {
+        "unified_certificate_calls": 28359,
+        "bound_certificate_calls": 28360,
+        "metadata_current_calls": 28360,
+        "occurrence_current_calls": 56720,
+        "relation_filter_predicates": 23311920,
+        "physical_prefix_predicates": 3913544,
+        "captured_query_calls": 28360,
+        "geometric_source_matches": 28360,
+        "native_current_sweeps": 1,
+        "native_capture_observations": 137,
+        "fallback_source_comparisons": 0,
+        "bernstein_source_matches": 0
+      },
+      "reader_delta": {
+        "unified_certificate_calls": 28359,
+        "bound_certificate_calls": 28359,
+        "metadata_current_calls": 28359,
+        "occurrence_current_calls": 56718,
+        "relation_filter_predicates": 23311098,
+        "physical_prefix_predicates": 3913542,
+        "captured_query_calls": 28359,
+        "geometric_source_matches": 28359,
+        "native_current_sweeps": 0,
+        "native_capture_observations": 0,
+        "fallback_source_comparisons": 0,
+        "bernstein_source_matches": 0
+      },
+      "retained_records": {
+        "solver_records": 0,
+        "geometric_records": 9453,
+        "bernstein_records": 0,
+        "conditioned_complete_empty": 9316,
+        "conditioned_complete_contact": 137,
+        "solver_fallback_records": 0,
+        "capture_failure_records": 0
+      }
+    },
+    {
+      "n": 11,
+      "domains": 66,
+      "owned": true,
+      "begin": {
+        "unified_certificate_calls": 0,
+        "bound_certificate_calls": 1,
+        "metadata_current_calls": 1,
+        "occurrence_current_calls": 2,
+        "relation_filter_predicates": 66,
+        "physical_prefix_predicates": 2,
+        "captured_query_calls": 1,
+        "geometric_source_matches": 1,
+        "native_current_sweeps": 1,
+        "native_capture_observations": 11,
+        "fallback_source_comparisons": 0,
+        "bernstein_source_matches": 0
+      },
+      "end": {
+        "unified_certificate_calls": 198,
+        "bound_certificate_calls": 199,
+        "metadata_current_calls": 199,
+        "occurrence_current_calls": 398,
+        "relation_filter_predicates": 13134,
+        "physical_prefix_predicates": 2378,
+        "captured_query_calls": 199,
+        "geometric_source_matches": 199,
+        "native_current_sweeps": 1,
+        "native_capture_observations": 11,
+        "fallback_source_comparisons": 0,
+        "bernstein_source_matches": 0
+      },
+      "reader_delta": {
+        "unified_certificate_calls": 198,
+        "bound_certificate_calls": 198,
+        "metadata_current_calls": 198,
+        "occurrence_current_calls": 396,
+        "relation_filter_predicates": 13068,
+        "physical_prefix_predicates": 2376,
+        "captured_query_calls": 198,
+        "geometric_source_matches": 198,
+        "native_current_sweeps": 0,
+        "native_capture_observations": 0,
+        "fallback_source_comparisons": 0,
+        "bernstein_source_matches": 0
+      },
+      "retained_records": {
+        "solver_records": 0,
+        "geometric_records": 66,
+        "bernstein_records": 0,
+        "conditioned_complete_empty": 55,
+        "conditioned_complete_contact": 11,
+        "solver_fallback_records": 0,
+        "capture_failure_records": 0
+      }
+    }
+  ],
+  "work": {
+    "event": "narrow_cone_completed_work",
+    "arithmetic_operations": 994535,
+    "integration_subintervals": 444,
+    "retained_spans": 148
+  },
+  "math_instrumentation": "none; primitive work unmeasured",
+  "timing_acceptance": false
+}

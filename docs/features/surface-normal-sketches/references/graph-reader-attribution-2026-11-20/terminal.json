@@ -1,0 +1,19 @@
+{
+  "started": "2026-11-20T01:50:42.247369+00:00",
+  "timings_usable_for_acceptance": false,
+  "math_instrumented": false,
+  "build_exit": 0,
+  "binary": "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86",
+  "binary_sha256": "c802063fef2d7cad49ec958d7ff9e35c580fa4d5a86f52fccaf61298a6417b00",
+  "test_exit": 0,
+  "observations": 8,
+  "source_changed_during_probe": [],
+  "restore_conflicts": [],
+  "restored_source_hashes": true,
+  "git_status_after_restore": "",
+  "head_after": "1e1800dff56893d3cbd334dca045f0f21d362db0",
+  "target_consumers_at_cleanup": [],
+  "discarded_probe_files": 13,
+  "discarded_probe_bytes": 142691801,
+  "finished": "2026-11-20T01:51:32.047625+00:00"
+}

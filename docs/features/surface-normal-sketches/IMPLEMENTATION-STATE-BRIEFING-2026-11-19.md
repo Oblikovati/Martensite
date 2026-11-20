@@ -372,9 +372,15 @@ runs overlapped other host work; their timers do not qualify performance or
 the five-second target. Source and execution receipts are
 [retained here](references/conical-accumulation-570-2026-11-19/summary.json).
 
-The #566/#567 main-line gate has passed Clippy and builds and is running affected
-package tests. It is not yet green, merged or forwarded into B1. No version bump
-or release tag was made.
+PR #571 (#566/#567) passed its local canonical gate and required hosted checks.
+It remains unmerged because final-source performance acceptance is unresolved.
+No version bump or release tag was made.
+
+The [graph-reader counter pass](GRAPH-READER-ATTRIBUTION-2026-11-20.md) found
+27,225,464 repeated relation/prefix predicate evaluations on the 137-source
+owned view. Bug #572 has a main-based fix in progress. Native capture already
+ran once per view; the repeated work was immutable metadata verification.
+The pass establishes counts, not an achievable speedup.
 
 ## Remaining delivery work
 
@@ -388,9 +394,10 @@ or release tag was made.
 2. Finish the latest shared-fix benchmark against the same clean baseline,
    compiler, profiles and accepted output. Preserve previous observations and
    guard refusals. Resolve any memory/runtime result outside the approved policy.
-   Finish affected regressions and `cargo xtask pr`, commit the cold-source
-   refinement, create the integration PR to main, review the exact final tree,
-   wait for required hosted checks, and merge. Reconcile #564 only after #566 lands.
+   PR #571 has passed source review, local `cargo xtask pr` and required hosted
+   checks; performance acceptance still blocks merge. Reconcile #564 only after
+   #566 lands. Include #569 endpoint measurement and #572 occurrence binding
+   fixes after their own review and qualification.
 3. Forward main into `release/next` and incorporate the tested fixes into B1.
    Preserve V3–V6 unified domain/contact evidence: main currently has a simpler
    paired-report path. Blindly copying native/cardinality or report-index files
