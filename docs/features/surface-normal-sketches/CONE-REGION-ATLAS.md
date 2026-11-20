@@ -133,8 +133,8 @@ The 8.64-radian control reproduces the nonpositive stored weight in an
 unsplit fit. Four chart intervals, chosen as the two halves of each
 original, pass through the normal fitting code. All adjacent fitted
 pieces match at both depth endpoints and in unwrapped cap UV. The test
-assigns the intervals and centers. A production planner still needs to
-choose them and carry their authority into a closed cap proof.
+assigns the intervals and centers. The planner below makes those choices
+from the source controls.
 
 The legacy, recentered, disconnected-atlas and oblique replay workers
 matched the archives and reports from `508b1e9f` byte for byte. Five
@@ -143,3 +143,38 @@ paired runs on one pinned Linux core measured a standalone O. median of
 Median process peak RSS rose from 66,660 to 67,508 KiB. The candidate
 met the 5.4 s elapsed-time limit. The measured increases leave the
 performance comparison open for integration.
+
+## Automatically planned closed strip
+
+The chart planner bisects captured Bernstein controls in increasing
+parameter order until each physical angular range is strictly narrower
+than π. It checks the rounded fit center against the resulting exact
+range. The charts partition the original span. They share one immutable
+original-control snapshot, and their work receipts sum to the complete
+planning ledger. Fit-level, chart-count and arithmetic limits bound the
+search.
+
+The closed control uses a four-edge strip on a 0.125-radian cone with an
+authored area of 5445/256. The fitted boundary spans more than one
+physical revolution. The normal fitter uses the planned charts and the
+existing constructor builds a closed solid with two analytic caps.
+Native topology, geometry, self-intersection and tolerance checks pass.
+
+Both caps carry the same retained UV polynomials. Keeping angle as the
+first coordinate gives the cone a period of 2π. Reflecting the slant
+coordinate preserves the authored winding. The existing periodic
+clearance and material code proves both containment directions for the
+one-turn image and excludes all farther images. This check uses the
+retained polynomials directly and performs no additional fitting.
+
+This regression runs the construction and cap checks together. Public
+publication still needs to retain each fit's chart authority and compose
+the authored-to-fitted reference and boundary proofs across the charts.
+
+The 253 cone math tests and 18 cone preparation tests passed, including
+the 16.2 s closed-strip check. Clippy passed with warnings denied. Four
+replay controls matched `a22c9588` byte for byte. On one pinned Linux
+core, three paired standalone O. runs measured medians of 4.999 s and
+4.915 s. Median peak RSS was 67,320 and 67,516 KiB, respectively.
+The elapsed-time limit passed. The higher measured RSS provides no
+basis to clear the existing integration gate.

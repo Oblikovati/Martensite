@@ -129,3 +129,4 @@ fn check_snapshot_mutations(
 mod chart_joins;
 
 mod chart_transition;
+mod planned_atlas;

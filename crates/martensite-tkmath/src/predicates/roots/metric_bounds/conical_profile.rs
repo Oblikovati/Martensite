@@ -426,8 +426,10 @@ pub use angle::{
 pub use chart_domain::{
     ConicalChartDomainBound, ConicalChartDomainError, ConicalChartDomainEvidence,
     ConicalChartDomainFailure, ConicalChartDomainQuery, ConicalChartDomainRequirement,
-    ConicalChartDomainVersion, ConicalSubspanChartError, certify_conical_chart_domain,
+    ConicalChartDomainVersion, ConicalChartPlan, ConicalChartPlanError, ConicalChartPlanFailure,
+    ConicalChartPlanQuery, ConicalSubspanChartError, certify_conical_chart_domain,
     certify_conical_chart_domain_with_version, certify_conical_subspan_chart,
+    plan_conical_subspan_charts,
 };
 pub use reference::{
     ConicalAtlasReferenceDomain, ConicalAtlasReferenceQuery, ConicalChartReferenceQuery,

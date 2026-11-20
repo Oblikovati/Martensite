@@ -32,7 +32,7 @@ pub(super) fn certify(
 ) -> Checked<PeriodicMaterialEvidence> {
     certify_with_cancel(requests, prepared, options, || false)
 }
-pub(super) fn certify_with_cancel(
+pub(in super::super) fn certify_with_cancel(
     requests: &[Request],
     prepared: &PreparedSelection,
     options: MaterialOptions,

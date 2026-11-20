@@ -49,20 +49,17 @@ pub(super) fn certify(
     check_chart(&ranges.0, offset.as_ref(), arithmetic)?;
     arithmetic.check_cancelled()?;
     let scope = restriction.map_or(0, restriction_key);
-    Ok(evidence(
-        query, version, scope, margin, ranges, offset, arithmetic,
-    ))
+    let sector = captured_sector(query, margin, arithmetic);
+    Ok(evidence(query, version, scope, sector, ranges, offset))
 }
-fn evidence(
+pub(super) fn evidence(
     query: &ConicalChartDomainQuery<'_>,
     version: ConicalChartDomainVersion,
     source_scope: u64,
-    margin: Option<num_bigint::BigInt>,
+    sector: sector::SectorEvidence,
     (physical, sine, cosine, minimum_x): (Interval, Interval, Interval, Interval),
     fit_offset: Option<Interval>,
-    arithmetic: &Arithmetic<'_>,
 ) -> ConicalChartDomainEvidence {
-    let sector = captured_sector(query, margin, arithmetic);
     ConicalChartDomainEvidence {
         version,
         source_scope,
@@ -76,7 +73,7 @@ fn evidence(
         minimum_x,
     }
 }
-fn captured_sector(
+pub(super) fn captured_sector(
     query: &ConicalChartDomainQuery<'_>,
     margin: Option<num_bigint::BigInt>,
     arithmetic: &Arithmetic<'_>,
@@ -109,7 +106,7 @@ fn ranges(
     let physical = arithmetic.divide(&developed, &sine)?;
     Ok((physical, sine, cosine, minimum_x))
 }
-fn support_trigonometry(
+pub(super) fn support_trigonometry(
     semi_angle: f64,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<[Interval; 2], Failure> {
@@ -122,7 +119,7 @@ fn support_trigonometry(
     positive_lower(&sine, "strictly positive certified sine", arithmetic)?;
     Ok([cosine, sine])
 }
-fn fit_offset(
+pub(super) fn fit_offset(
     query: &ConicalChartDomainQuery<'_>,
     version: ConicalChartDomainVersion,
     arithmetic: &mut Arithmetic<'_>,
@@ -134,7 +131,7 @@ fn fit_offset(
     let datum = arithmetic.scalar(query.chart_origin)?;
     Ok(Some(arithmetic.subtract(&center, &datum)?))
 }
-fn check_chart(
+pub(super) fn check_chart(
     physical: &Interval,
     offset: Option<&Interval>,
     arithmetic: &mut Arithmetic<'_>,

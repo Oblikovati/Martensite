@@ -21,6 +21,7 @@ pub enum ConicalSectorWedge {
     NegativeY,
 }
 
+#[derive(Clone)]
 pub(super) struct SectorEvidence {
     pub(super) source: SourceBits,
     pub(super) original_index: source_index::OriginalSourceIndex,

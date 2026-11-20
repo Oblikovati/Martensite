@@ -6,8 +6,13 @@ pub(super) mod bounds;
 pub(super) mod diagnostics_tests;
 #[cfg(test)]
 mod family_tests;
+mod planning;
 #[cfg(test)]
 mod recentered_tests;
+pub use planning::{
+    ConicalChartPlan, ConicalChartPlanError, ConicalChartPlanFailure, ConicalChartPlanQuery,
+    plan_conical_subspan_charts,
+};
 mod restricted;
 pub use restricted::{ConicalSubspanChartError, certify_conical_subspan_chart};
 #[cfg(test)]

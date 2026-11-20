@@ -90,7 +90,15 @@ pub(super) fn restricted_range(
     let [x, y] = capture_planar(original.poles, arithmetic)?;
     let x = restrict(&x, original.index, original.level, arithmetic)?;
     let y = restrict(&y, original.index, original.level, arithmetic)?;
-    let (slopes, minimum_x) = slope_hull(&x, &y, arithmetic)?;
+    developed_range(&x, &y, arithmetic)
+}
+
+pub(super) fn developed_range(
+    x: &[Interval],
+    y: &[Interval],
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<(Interval, Interval), ConicalChartDomainFailure> {
+    let (slopes, minimum_x) = slope_hull(x, y, arithmetic)?;
     let lower = slope_angle(slopes.lower, arithmetic)?;
     let upper = slope_angle(slopes.upper, arithmetic)?;
     Ok((

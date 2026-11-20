@@ -3,6 +3,7 @@
 use super::sector::SourceBits;
 use std::cmp::Ordering;
 
+#[derive(Clone)]
 pub(super) struct OriginalSourceIndex {
     ordered: Vec<usize>,
 }
