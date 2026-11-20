@@ -16,6 +16,16 @@ impl CylinderFaceAttachment {
         seam: f64,
         normal: NormalSense,
     ) -> Checked<CylinderSupport> {
+        self.resolve_chart(revision, seam, normal)
+            .map(|(_, chart)| chart)
+    }
+
+    pub(in crate::surface_sketch) fn resolve_chart(
+        &self,
+        revision: SupportRevision,
+        seam: f64,
+        normal: NormalSense,
+    ) -> Checked<(DetachedCylinderSupport, CylinderSupport)> {
         let attempt = Attempt::new(
             AttachmentOperation::Develop,
             self.record.id,
@@ -29,7 +39,8 @@ impl CylinderFaceAttachment {
             }));
         }
         let selected = codec::decode(&attempt, &self.record.brep)?;
-        support(&attempt, &selected.face, seam, normal)
+        let chart = support(&attempt, &selected.face, seam, normal)?;
+        Ok((selected, chart))
     }
 }
 

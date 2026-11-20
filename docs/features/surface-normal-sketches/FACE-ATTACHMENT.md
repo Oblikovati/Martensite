@@ -64,6 +64,35 @@ analytic surface. The attachment record still owns the selected trims and
 support body. A whole-profile trim check and Boolean history composition
 belong to the attached feature operation.
 
+## Checking a rectangular trim band
+
+`attachment.certify_footprint(current_revision, &request)` checks the
+authored footprint in the chart of the selected native face. It checks the
+revision and request frame against one decoded attachment. Then it reads
+every directed trim occurrence and requires one rectangular outer wire
+with exact straight pcurve corners. A full band must have two uses of the
+same native seam edge and a span equal to the native period. The seam is
+periodic in that case. Distinct angular sides of a partial band remain
+physical boundaries.
+
+The shared profile reader resolves the selected original curves and their
+controls. A positive Bézier basis keeps each selected polynomial within
+its control hull, so strict containment of the controls proves strict
+containment of the authored bounded material. The partial band's arc
+length interval is rounded inward. Refusals identify the region and
+curve, the coordinate, and the required interval. A hull that cannot be
+proved inside is inconclusive about the actual curve. Supports with
+additional wires or unrecognized trim geometry return a typed refusal.
+
+The [local controls](references/cylindrical-trim-band-2026-11-20/summary.json)
+checked a full seam crossing, a partial angular boundary, an axial
+boundary, a stale revision and mismatched chart, and a cylindrical
+support with a real bore trim loop. The original 239-curve outline and
+the 229-curve seam-crossing edit also passed footprint admission on their
+saved support. The report covers the authored footprint. Post-fit trim
+coverage, general curved or holed supports and Boolean feature
+publication require separate checks.
+
 ## Multiline boss edit and replay
 
 The [local qualification](references/multiline-attached-replay-2026-11-20/summary.json)

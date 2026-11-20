@@ -31,6 +31,32 @@ fn multiline_pocket_replays_punctuation_removal_across_native_seam() {
     );
 }
 
+#[test]
+fn native_trim_band_admits_full_multiline_outline_and_seam_edit() {
+    let saved = original_support();
+    let mut original = multiline_request(NormalSense::Inward);
+    let mut edited = edited_request();
+    assert_first_outline_crosses_seam(&edited);
+    check_native_band(&saved, &mut original, [0., 4.], 18);
+    check_native_band(&saved, &mut edited, [SEAM_SHIFT, 4.], 16);
+}
+
+fn check_native_band(
+    attachment: &CylinderFaceAttachment,
+    request: &mut WrappedNormalRequest,
+    shift: [f64; 2],
+    expected: usize,
+) {
+    request.support = attachment
+        .extrusion_support(FIRST, 0., NormalSense::Inward)
+        .unwrap();
+    place_developed(request, shift);
+    let report = attachment.certify_footprint(FIRST, request).unwrap();
+    assert_eq!(report.angular, None);
+    assert_eq!(report.axial, [0., 8.]);
+    assert_eq!(report.regions, expected);
+}
+
 fn without_exclamation(attachment: &CylinderFaceAttachment) -> Publication {
     let request = edited_request();
     assert_first_outline_crosses_seam(&request);

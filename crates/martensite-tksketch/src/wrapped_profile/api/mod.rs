@@ -4,6 +4,8 @@ mod cone;
 pub(super) mod error;
 pub use cone::*;
 mod export_bindings;
+mod footprint;
+pub use footprint::*;
 pub(super) mod failure_projection;
 pub(super) mod history_projection;
 mod history_types;

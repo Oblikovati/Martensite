@@ -34,8 +34,9 @@ pub use result::{
     DetachedNormalBody, NormalExtrusionResult, SurfaceDiagnostic, VolumeErrorEstimates,
 };
 pub use wrapped_profile::{
-    DetachedWrappedBodies, WrappedBudgetReport, WrappedCertifiedBound, WrappedCertifiedRange,
-    WrappedChartNormalResult, WrappedChartPlacementReport, WrappedConeArithmeticGrantPolicy,
+    CylinderFootprintFailure, CylinderFootprintReport, DetachedWrappedBodies, WrappedBudgetReport,
+    WrappedCertifiedBound, WrappedCertifiedRange, WrappedChartNormalResult,
+    WrappedChartPlacementReport, WrappedConeArithmeticGrantPolicy,
     WrappedConeArithmeticGrantReceipt, WrappedConeAuthoredVolumeOptions, WrappedConeBudgetReport,
     WrappedConeDomainPolicy, WrappedConeExecutionSelection, WrappedConeMaterialReport,
     WrappedConeMemberReport, WrappedConeNormalRequest, WrappedConeNormalResult,
