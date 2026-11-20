@@ -2,6 +2,7 @@
 //! A whole concatenated rectangle is injective under the coupled f/D inequalities.
 use super::*;
 use capture::SideCapture;
+mod retained;
 pub(super) fn certify(
     pair: &ConicalActualAdjacent,
     a: &SideCapture,
@@ -31,6 +32,24 @@ pub(super) fn certify(
         arithmetic,
     )
 }
+pub(super) fn certify_retained(
+    pair: &ConicalActualAdjacent,
+    sides: [&SideCapture; 2],
+    barriers: &barriers::Barriers,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Outcome<Interval> {
+    arithmetic.certificate_step()?;
+    shared(pair, sides[0], sides[1])?;
+    let [first, last] = retained::projected(pair, sides, arithmetic)?;
+    coupled(
+        &first,
+        &last,
+        (&sides[0].du_error, &sides[1].du_error),
+        &barriers.dv_lower,
+        arithmetic,
+    )
+}
+
 fn chord(pair: &ConicalActualAdjacent, a: &SideCapture, b: &SideCapture) -> [f64; 3] {
     let first = if pair.u_slots[0] == 1 {
         0

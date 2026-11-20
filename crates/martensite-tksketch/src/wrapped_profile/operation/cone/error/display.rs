@@ -77,9 +77,12 @@ impl ConeCause {
     }
     fn context_message(&self, out: &mut Formatter<'_>) -> Result {
         match self {
-            Support(_) | ProofOptions(_) | ExecutionProof(_) | Depths(_) | SourceAnchor { .. } => {
-                self.admission_message(out)
-            }
+            Support(_)
+            | ProofOptions(_)
+            | InputBoundProofOptions { .. }
+            | ExecutionProof(_)
+            | Depths(_)
+            | SourceAnchor { .. } => self.admission_message(out),
             Scalar { .. } => self.scalar_message(out),
             Limit { .. } => self.limit_message(out),
             Missing(region) => write!(out, "region={region:?}; expected one retained owner"),
@@ -98,6 +101,10 @@ impl ConeCause {
         match self {
             Support(actual) => expected(out, "support", actual, "canonical apex/axis/radial frame"),
             ProofOptions(actual) => proof_policy(out, actual),
+            InputBoundProofOptions { actual, ceiling } => write!(
+                out,
+                "InputBoundV1 proof policy={actual:?}; expected precision 8..4096, aggregate arithmetic <={ceiling}, finite integration and authored-volume settings"
+            ),
             ExecutionProof(actual) => expected(
                 out,
                 "directed planar proof",

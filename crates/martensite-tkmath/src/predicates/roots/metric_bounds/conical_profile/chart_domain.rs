@@ -5,7 +5,35 @@ pub(super) mod bounds;
 #[cfg(test)]
 pub(super) mod diagnostics_tests;
 #[cfg(test)]
+mod family_tests;
+#[cfg(test)]
 mod tests;
+/// Select finite source capacity without changing geometric or arithmetic limits.
+/// Example: `let version = ConicalChartDomainVersion::FamilyV3;`.
+#[non_exhaustive]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum ConicalChartDomainVersion {
+    /// Original admission of at most 128 complete authored source spans.
+    #[default]
+    OriginalV2,
+    /// Explicit selected-family admission of at most 4096 original source spans.
+    FamilyV3,
+}
+impl ConicalChartDomainVersion {
+    /// Fixed original-source cap; `assert_eq!(ConicalChartDomainVersion::FamilyV3.span_limit(), 4096)`.
+    pub const fn span_limit(self) -> usize {
+        match self {
+            Self::OriginalV2 => 128,
+            Self::FamilyV3 => 4096,
+        }
+    }
+    pub(super) const fn tag(self) -> u64 {
+        match self {
+            Self::OriginalV2 => 2,
+            Self::FamilyV3 => 3,
+        }
+    }
+}
 /// Complete authored boundary and explicit common angular lift.
 #[derive(Clone, Copy)]
 pub struct ConicalChartDomainQuery<'a> {
@@ -26,6 +54,8 @@ pub struct ConicalChartDomainQuery<'a> {
 }
 /// Immutable source-bound PositiveX wedge, sine and physical-range certificate.
 pub struct ConicalChartDomainEvidence {
+    version: ConicalChartDomainVersion,
+    span_limit: usize,
     pub(super) sector: sector::SectorEvidence,
     chart: [u64; 2],
     turns: [i32; 2],
@@ -45,6 +75,13 @@ pub struct ConicalChartDomainError {
 /// Typed common-chart refusal, independent of legacy sector behavior.
 #[derive(Debug)]
 pub enum ConicalChartDomainFailure {
+    /// The selected family exceeds its fixed original-source capacity.
+    SourceCount {
+        /// Complete original source count before any proof work.
+        actual: usize,
+        /// Fixed cap of the explicitly selected behavior.
+        limit: usize,
+    },
     /// Invalid original geometry, precision or work policy.
     Sector(ConicalSectorFailure),
     /// The supplied chart or turns do not select this PositiveX common-chart behavior.
@@ -102,15 +139,40 @@ pub enum ConicalChartDomainRequirement {
 /// Certify one quantitative common chart; `certify_conical_chart_domain(query, || false)?`.
 pub fn certify_conical_chart_domain(
     query: ConicalChartDomainQuery<'_>,
+    cancelled: impl FnMut() -> bool + Send,
+) -> Result<ConicalChartDomainEvidence, ConicalChartDomainError> {
+    certify_conical_chart_domain_with_version(
+        query,
+        ConicalChartDomainVersion::OriginalV2,
+        cancelled,
+    )
+}
+/// Certify an explicitly bounded original-source family using the same chart pipeline.
+/// Example: `certify_conical_chart_domain_with_version(query, ConicalChartDomainVersion::FamilyV3, || false)?`.
+pub fn certify_conical_chart_domain_with_version(
+    query: ConicalChartDomainQuery<'_>,
+    version: ConicalChartDomainVersion,
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<ConicalChartDomainEvidence, ConicalChartDomainError> {
-    bounds::admit(&query).map_err(|cause| domain_error(cause, 0))?;
+    bounds::admit(&query, version).map_err(|cause| domain_error(cause, 0))?;
     let policy = sector_api::policy(query.options);
     let mut arithmetic = Arithmetic::new(policy, &mut cancelled);
-    bounds::certify(&query, &mut arithmetic)
+    bounds::certify(&query, version, &mut arithmetic)
         .map_err(|cause| domain_error(cause, arithmetic.operations()))
 }
 impl ConicalChartDomainEvidence {
+    /// Executed source-capacity behavior; `proof.version()`.
+    pub fn version(&self) -> ConicalChartDomainVersion {
+        self.version
+    }
+    /// Fixed admitted source cap; `proof.span_limit()`.
+    pub fn span_limit(&self) -> usize {
+        self.span_limit
+    }
+    /// Complete captured original-source count; `proof.source_span_count()`.
+    pub fn source_span_count(&self) -> usize {
+        self.sector.source.len()
+    }
     /// Captured physical datum; `proof.chart_origin()`.
     pub fn chart_origin(&self) -> f64 {
         f64::from_bits(self.chart[0])
@@ -143,13 +205,25 @@ impl ConicalChartDomainEvidence {
         exact_enclosure(&self.sine, self.sector.policy.fractional_bits)
     }
 
-    /// Rebind all geometry, chart labels and policy; `proof.matches(&query)`.
+    /// Rebind the original capacity and all input fields; `proof.matches(&query)`.
     pub fn matches(&self, query: &ConicalChartDomainQuery<'_>) -> bool {
-        self.sector.matches(
-            query.spans,
-            query.semi_angle,
-            sector_api::policy(query.options),
-        ) && self.chart == [query.chart_origin.to_bits(), query.fit_center.to_bits()]
+        self.matches_with_version(query, ConicalChartDomainVersion::OriginalV2)
+    }
+    /// Rebind the explicit capacity and all original inputs; `proof.matches_with_version(&query, proof.version())`.
+    pub fn matches_with_version(
+        &self,
+        query: &ConicalChartDomainQuery<'_>,
+        version: ConicalChartDomainVersion,
+    ) -> bool {
+        self.version == version
+            && self.span_limit == version.span_limit()
+            && (1..=self.span_limit).contains(&query.spans.len())
+            && self.sector.matches(
+                query.spans,
+                query.semi_angle,
+                sector_api::policy(query.options),
+            )
+            && self.chart == [query.chart_origin.to_bits(), query.fit_center.to_bits()]
             && self.turns == [query.developed_turn, query.physical_turn]
     }
     /// Actual work, charged once by the composing operation; `proof.operations()`.
@@ -202,6 +276,9 @@ impl std::error::Error for ConicalChartDomainError {}
 impl std::fmt::Display for ConicalChartDomainFailure {
     fn fmt(&self, out: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::SourceCount { actual, limit } => {
+                write!(out, "family source spans={actual}; expected 1..={limit}")
+            }
             Self::Unresolved { bound } => write!(out, "{bound}"),
             Self::Wedge {
                 actual_mask,

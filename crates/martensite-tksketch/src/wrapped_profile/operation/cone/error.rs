@@ -13,6 +13,10 @@ pub(in crate::surface_sketch::wrapped_profile) enum ConeCause {
     // Admission snapshots stay off the inline fit-refusal path.
     Support(Box<ConeSupport>),
     ProofOptions(Box<WrappedConeProofOptions>),
+    InputBoundProofOptions {
+        actual: Box<WrappedConeProofOptions>,
+        ceiling: u32,
+    },
     ExecutionProof(Box<martensite_tkbo::profile_extrusion::PlanarProofVersion>),
     Depths([f64; 2]),
     ActualPatch(Box<ConicalActualPatchError>),
@@ -126,9 +130,12 @@ impl ConeFailure {
             ConeCause::Clearance(cause) => cause.is_cancelled(),
             ConeCause::Flux(cause) => flux_cancelled(cause),
             ConeCause::Authored(cause) => cause.is_cancelled(),
-            ProofOptions(_) | ExecutionProof(_) | Support(_) | SourceAnchor { .. } | Depths(_) => {
-                false
-            }
+            ProofOptions(_)
+            | InputBoundProofOptions { .. }
+            | ExecutionProof(_)
+            | Support(_)
+            | SourceAnchor { .. }
+            | Depths(_) => false,
             Scalar { .. } | Limit { .. } | Missing(_) | Native(_) | Encoding(_) => false,
             NativeQualification(_) | Coverage(_) | History(_) | Candidate(_) => false,
             Coefficients(_) | Binding { .. } | ActualBinding(_) | ActualValidation(_) => false,

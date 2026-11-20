@@ -7,7 +7,7 @@ mod actual;
 mod domain;
 mod error;
 pub(in crate::surface_sketch::wrapped_profile) use error::{ConeCause, ConeFailure};
-mod input;
+pub(in crate::surface_sketch::wrapped_profile) mod input;
 mod material;
 mod measures;
 mod native;
@@ -51,6 +51,7 @@ impl AsRef<DevelopedRegionRequest> for Prepared {
 }
 pub(in crate::surface_sketch::wrapped_profile) struct Inputs {
     pub originals: Vec<DevelopedRegionRequest>,
+    pub grant: Option<input::grant::CapturedGrant>,
     pub directions: BTreeMap<SurfaceRegionId, profile_input::CurveDirections>,
 }
 pub(in crate::surface_sketch::wrapped_profile) struct Selection {

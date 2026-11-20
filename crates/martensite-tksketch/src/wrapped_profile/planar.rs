@@ -12,7 +12,7 @@ mod tests;
 #[path = "planar_joins.rs"]
 mod joins;
 #[path = "planar_sources.rs"]
-mod source;
+pub(super) mod source;
 
 type LoopIdentity = Vec<(ProfileCurveId, bool)>;
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -1,0 +1,20 @@
+{
+  "test_result": "1 passed; 2 failed; 0 ignored",
+  "fixed_allowance_refusal_control": "passed",
+  "published_body": false,
+  "performance_accepted": false,
+  "operations": [
+    {
+      "event": "conical_text_api",
+      "normal": "Inward",
+      "seconds": 10.904707507,
+      "refusal": "WrappedNormalFailure { operation: NormalExtrusion, stage: Construction, class: Incomplete, entities: [Region(SurfaceRegionId(2001)), Curve(SurfaceCurveId(2003)), Curve(SurfaceCurveId(2004))], cause: Cone(ConeFailure { stage: Construction, class: Incomplete, region: Some(SurfaceRegionId(2001)), span: Some(CurveSpan { curve: SurfaceCurveId(2003), level: 0, index: 0 }), cause: ActualPair { cause: ConicalActualPatchError { stage: Adjacent, side: Some(ConicalActualSideId(11)), cap: None, operations: 49618, options: ConeClearanceOptions { fractional_bits: 128, max_operations: 1000000 }, cause: SidePair { sides: [ConicalActualSideId(11), ConicalActualSideId(12)], cause: Unresolved { quantity: \"whole-union f_u\", lower: DyadicBound { significand: -23737901916200382244836725305718788939, exponent: -128 }, upper: DyadicBound { significand: -23737901916200382244836725305718788939, exponent: -128 }, expected: \"strictly positive\" } } }, entities: [Region(SurfaceRegionId(2001)), Curve(SurfaceCurveId(2003)), Region(SurfaceRegionId(2001)), Curve(SurfaceCurveId(2004))] } }) }"
+    },
+    {
+      "event": "conical_text_api",
+      "normal": "Outward",
+      "seconds": 11.236730171,
+      "refusal": "WrappedNormalFailure { operation: NormalExtrusion, stage: Construction, class: Incomplete, entities: [Region(SurfaceRegionId(2001)), Curve(SurfaceCurveId(2003)), Curve(SurfaceCurveId(2004))], cause: Cone(ConeFailure { stage: Construction, class: Incomplete, region: Some(SurfaceRegionId(2001)), span: Some(CurveSpan { curve: SurfaceCurveId(2003), level: 0, index: 0 }), cause: ActualPair { cause: ConicalActualPatchError { stage: Adjacent, side: Some(ConicalActualSideId(11)), cap: None, operations: 49618, options: ConeClearanceOptions { fractional_bits: 128, max_operations: 1000000 }, cause: SidePair { sides: [ConicalActualSideId(11), ConicalActualSideId(12)], cause: Unresolved { quantity: \"whole-union f_u\", lower: DyadicBound { significand: -23472176824048722567347621865295774207, exponent: -128 }, upper: DyadicBound { significand: -23472176824048722567347621865295774207, exponent: -128 }, expected: \"strictly positive\" } } }, entities: [Region(SurfaceRegionId(2001)), Curve(SurfaceCurveId(2003)), Region(SurfaceRegionId(2001)), Curve(SurfaceCurveId(2004))] } }) }"
+    }
+  ]
+}

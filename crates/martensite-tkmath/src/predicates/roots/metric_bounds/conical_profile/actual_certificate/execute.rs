@@ -26,9 +26,20 @@ fn run(
     let barriers = stage(result, Stage::SideCap, query, arithmetic, position)?;
     union_all(query, &sides, &barriers, support, arithmetic, position)?;
     position.clear();
-    let result = hierarchy::certify(&sides, query.adjacent, arithmetic);
+    let refine = query
+        .sides
+        .iter()
+        .all(|side| side.domain.version() == ConicalChartDomainVersion::FamilyV3);
+    let result = hierarchy::certify(&sides, query.adjacent, refine, arithmetic);
     let hierarchy = stage(result, Stage::Hierarchy, query, arithmetic, position)?;
-    let result = caps::certify(query, &support.sine, &support.cosine, arithmetic, position);
+    let result = caps::certify(
+        query,
+        &support.sine,
+        &support.cosine,
+        refine,
+        arithmetic,
+        position,
+    );
     let caps = stage(result, Stage::Cap, query, arithmetic, position)?;
     position.clear();
     final_checkpoint(query, arithmetic, position)?;
@@ -56,15 +67,19 @@ fn union_all(
         .collect::<BTreeMap<_, _>>();
     for pair in query.adjacent {
         position.side(pair.sides[0]);
-        let a = &sides[indices[&pair.sides[0]]];
-        let b = &sides[indices[&pair.sides[1]]];
-        let result =
-            unions::certify(pair, a, b, barriers, sine, cosine, arithmetic).map_err(|cause| {
-                ConicalActualPatchFailure::SidePair {
-                    sides: pair.sides,
-                    cause: Box::new(cause),
-                }
-            });
+        let locations = pair.sides.map(|id| indices[&id]);
+        let [a, b] = locations.map(|index| &sides[index]);
+        let result = if locations.iter().all(|&index| {
+            query.sides[index].domain.version() == ConicalChartDomainVersion::FamilyV3
+        }) {
+            unions::certify_retained(pair, [a, b], barriers, arithmetic)
+        } else {
+            unions::certify(pair, a, b, barriers, sine, cosine, arithmetic)
+        };
+        let result = result.map_err(|cause| ConicalActualPatchFailure::SidePair {
+            sides: pair.sides,
+            cause: Box::new(cause),
+        });
         stage(result, Stage::Adjacent, query, arithmetic, position)?;
     }
     Ok(())

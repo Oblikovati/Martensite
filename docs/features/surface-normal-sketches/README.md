@@ -333,6 +333,9 @@ five-second acceptance. Full canonical, hosted, concurrency/TSan, matched
 runtime/peak-memory and the remaining capability matrix are still open. No B1
 commit, push or release approval is recorded.
 
+[Captured-input cone work](CONICAL-INPUT-WORK.md) records the local family
+admission and trim qualification for the 239-curve text fixture.
+
 Wider profiles, text-scale cone workloads, multiple charts and seam occurrences,
 oblique placement and attachment remain Phase B. Primitive exact-span lowering,
 replacement deletion and the broader acceptance corpus remain Phase C.

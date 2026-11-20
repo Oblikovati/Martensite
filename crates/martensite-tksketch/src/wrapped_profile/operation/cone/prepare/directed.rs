@@ -17,10 +17,7 @@ pub(super) fn finalize(
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<()> {
-    if !matches!(
-        execution,
-        WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
-    ) {
+    if !execution.is_directed() {
         return Ok(());
     }
     let inventory = Inventory::capture(prepared)?;
@@ -122,14 +119,13 @@ pub(in super::super) fn admit(
     execution: WrappedConeExecutionSelection,
 ) -> ConeChecked<()> {
     use martensite_tkbo::profile_extrusion::PlanarProofVersion;
-    if matches!(
-        execution,
-        WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
-    ) && !matches!(
-        request.proof.planar_proof,
-        PlanarProofVersion::FilteredCompositeBernsteinV5 { .. }
-            | PlanarProofVersion::GeometricCompositeV6 { .. }
-    ) {
+    if execution.is_directed()
+        && !matches!(
+            request.proof.planar_proof,
+            PlanarProofVersion::FilteredCompositeBernsteinV5 { .. }
+                | PlanarProofVersion::GeometricCompositeV6 { .. }
+        )
+    {
         return Err(ConeFailure::new(
             None,
             None,

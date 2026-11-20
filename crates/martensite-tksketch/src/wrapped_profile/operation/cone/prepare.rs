@@ -247,5 +247,8 @@ fn execution_domain(execution: WrappedConeExecutionSelection) -> WrappedConeDoma
         WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1 => {
             WrappedConeDomainPolicy::PositiveXCommonChartV2
         }
+        WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 { .. } => {
+            WrappedConeDomainPolicy::PositiveXFamilyChartV3
+        }
     }
 }

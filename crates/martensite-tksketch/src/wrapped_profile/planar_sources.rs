@@ -1,7 +1,9 @@
 //! Owned source coefficients prevent a planar identity from certifying later geometry edits.
 use super::*;
 #[derive(Debug)]
-pub(super) struct SourceSnapshot(BTreeMap<SurfaceCurveId, SourceCurve>);
+pub(in crate::surface_sketch::wrapped_profile) struct SourceSnapshot(
+    BTreeMap<SurfaceCurveId, SourceCurve>,
+);
 #[derive(Debug)]
 struct SourceCurve {
     span: CurveSpan,

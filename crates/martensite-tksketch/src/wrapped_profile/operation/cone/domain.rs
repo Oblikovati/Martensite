@@ -5,13 +5,16 @@ pub(in crate::surface_sketch::wrapped_profile) enum DomainEvidence {
         sector: ConicalSectorEvidence,
         options: ConeClearanceOptions,
     },
-    Chart(std::sync::Arc<ConicalChartDomainEvidence>),
+    Chart(
+        std::sync::Arc<ConicalChartDomainEvidence>,
+        WrappedConeDomainPolicy,
+    ),
 }
 impl DomainEvidence {
     pub(in crate::surface_sketch::wrapped_profile) fn policy(&self) -> WrappedConeDomainPolicy {
         match self {
             Self::Legacy { .. } => WrappedConeDomainPolicy::LegacySectorV1,
-            Self::Chart(_) => WrappedConeDomainPolicy::PositiveXCommonChartV2,
+            Self::Chart(_, policy) => *policy,
         }
     }
     pub(in crate::surface_sketch::wrapped_profile) fn chart(
@@ -19,19 +22,19 @@ impl DomainEvidence {
     ) -> Option<&ConicalChartDomainEvidence> {
         match self {
             Self::Legacy { .. } => None,
-            Self::Chart(proof) => Some(proof),
+            Self::Chart(proof, _) => Some(proof),
         }
     }
     pub(super) fn chart_owner(&self) -> Option<std::sync::Arc<ConicalChartDomainEvidence>> {
         match self {
             Self::Legacy { .. } => None,
-            Self::Chart(proof) => Some(std::sync::Arc::clone(proof)),
+            Self::Chart(proof, _) => Some(std::sync::Arc::clone(proof)),
         }
     }
     pub(super) fn wedge(&self) -> ConeChecked<ConicalSectorWedge> {
         match self {
             Self::Legacy { sector, .. } => prepare::selection::wedge(sector),
-            Self::Chart(proof) => Ok(proof.wedge()),
+            Self::Chart(proof, _) => Ok(proof.wedge()),
         }
     }
 }
@@ -48,14 +51,29 @@ pub(super) fn certify(
             sector: prepare::selection::sector(request, originals, work, cancelled)?,
             options,
         }),
-        WrappedConeDomainPolicy::PositiveXCommonChartV2 => {
-            chart(request, originals, work, cancelled)
-        }
+        WrappedConeDomainPolicy::PositiveXCommonChartV2 => chart(
+            request,
+            originals,
+            policy,
+            ConicalChartDomainVersion::OriginalV2,
+            work,
+            cancelled,
+        ),
+        WrappedConeDomainPolicy::PositiveXFamilyChartV3 => chart(
+            request,
+            originals,
+            policy,
+            ConicalChartDomainVersion::FamilyV3,
+            work,
+            cancelled,
+        ),
     }
 }
 fn chart(
     request: &WrappedConeNormalRequest,
     originals: &[DevelopedRegionRequest],
+    policy: WrappedConeDomainPolicy,
+    version: ConicalChartDomainVersion,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<DomainEvidence> {
@@ -70,14 +88,16 @@ fn chart(
         options: work.remaining(),
     };
     charged(
-        certify_conical_chart_domain(query, cancelled),
+        certify_conical_chart_domain_with_version(query, version, cancelled),
         originals,
+        policy,
         work,
     )
 }
 fn charged(
     result: Result<ConicalChartDomainEvidence, ConicalChartDomainError>,
     originals: &[DevelopedRegionRequest],
+    policy: WrappedConeDomainPolicy,
     work: &mut storage::Work,
 ) -> ConeChecked<DomainEvidence> {
     let operations = result.as_ref().map_or_else(
@@ -89,7 +109,7 @@ fn charged(
     match (result, charged) {
         (Err(cause), _) => Err(failure(originals, cause)),
         (Ok(_), Err(cause)) => Err(cause),
-        (Ok(proof), Ok(())) => Ok(DomainEvidence::Chart(std::sync::Arc::new(proof))),
+        (Ok(proof), Ok(())) => Ok(DomainEvidence::Chart(std::sync::Arc::new(proof), policy)),
     }
 }
 pub(super) fn original_spans(originals: &[DevelopedRegionRequest]) -> Vec<&[[f64; 2]]> {
@@ -166,8 +186,5 @@ pub(super) fn matches_boundary(
 }
 
 pub(super) fn directed(prepared: &Prepared) -> bool {
-    matches!(
-        prepared.executed_selection,
-        WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
-    )
+    prepared.executed_selection.is_directed()
 }

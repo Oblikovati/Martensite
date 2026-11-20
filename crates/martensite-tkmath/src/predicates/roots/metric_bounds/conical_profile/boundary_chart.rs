@@ -11,6 +11,8 @@ mod refinement_tests;
 pub(super) mod tests;
 #[derive(PartialEq)]
 pub(super) struct ChartBinding {
+    version: ConicalChartDomainVersion,
+    span_limit: usize,
     source: Vec<Vec<[u64; 2]>>,
     support: [u64; 6],
     options: ConeClearanceOptions,
@@ -26,6 +28,8 @@ impl ChartBinding {
         refinement: ConicalPrimitiveRefinement,
     ) -> Self {
         Self {
+            version: domain.version(),
+            span_limit: domain.span_limit(),
             source: domain.sector.source.clone(),
             support: support(domain),
             options: domain.options(),
@@ -41,7 +45,9 @@ impl ChartBinding {
         domain: &ConicalChartDomainEvidence,
         refinement: ConicalPrimitiveRefinement,
     ) -> bool {
-        self.refinement == refinement
+        self.version == domain.version()
+            && self.span_limit == domain.span_limit()
+            && self.refinement == refinement
             && self.source == domain.sector.source
             && self.support == support(domain)
             && self.options == domain.options()
@@ -324,6 +330,9 @@ impl ChartBinding {
         ]);
         if self.refinement != ConicalPrimitiveRefinement::UnsplitV1 {
             bits.extend([2, self.refinement.tag()]);
+        }
+        if self.version != ConicalChartDomainVersion::OriginalV2 {
+            bits.extend([4, self.version.tag(), self.span_limit as u64]);
         }
         bits
     }

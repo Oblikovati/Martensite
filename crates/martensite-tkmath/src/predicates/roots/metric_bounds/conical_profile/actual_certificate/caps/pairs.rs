@@ -41,6 +41,12 @@ pub(super) fn certify(
 }
 fn pair(a: &CapCapture, b: &CapCapture, arithmetic: &mut Arithmetic<'_>) -> Outcome<()> {
     let same = a.source.carrier().member == b.source.carrier().member;
+    if !same && let (Some(first), Some(last)) = (&a.slant, &b.slant) {
+        arithmetic.certificate_step()?;
+        if separated(first, last) || separated(&a.level, &b.level) {
+            return Ok(());
+        }
+    }
     let mut gap = initial_gap(a, b, same, arithmetic)?;
     if gap.upper < 0.into() {
         gap = reverse_gap(a, b, same, &gap, arithmetic)?;
@@ -51,6 +57,10 @@ fn pair(a: &CapCapture, b: &CapCapture, arithmetic: &mut Arithmetic<'_>) -> Outc
         "cross-member filled-cap phase gap"
     };
     numeric::positive(quantity, &gap, arithmetic)
+}
+
+fn separated(a: &Interval, b: &Interval) -> bool {
+    a.upper < b.lower || b.upper < a.lower
 }
 
 fn initial_gap(

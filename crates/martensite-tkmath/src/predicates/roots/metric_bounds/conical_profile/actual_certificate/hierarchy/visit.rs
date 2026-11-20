@@ -5,13 +5,15 @@ pub(super) fn certify(
     nodes: &[Node],
     root: usize,
     allowed: &BTreeSet<[usize; 2]>,
-    names: &[ConicalActualSideId],
+    sides: &[SideCapture],
+    refine: bool,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Outcome<HierarchyStats> {
     let domain = Inventory {
         nodes,
         allowed,
-        names,
+        sides,
+        refine,
         bits: arithmetic.fractional_bits(),
     };
     let mut pending = vec![[root, root]];
@@ -20,7 +22,14 @@ pub(super) fn certify(
     while let Some(pair) = pending.pop() {
         arithmetic.certificate_step()?;
         stats.visits += 1;
-        visit(&domain, pair, &mut pending, &mut seen, &mut stats)?;
+        visit(
+            &domain,
+            pair,
+            &mut pending,
+            &mut seen,
+            &mut stats,
+            arithmetic,
+        )?;
     }
     complete(&domain, root, &seen, &stats)?;
     Ok(stats)
@@ -28,7 +37,8 @@ pub(super) fn certify(
 struct Inventory<'a> {
     nodes: &'a [Node],
     allowed: &'a BTreeSet<[usize; 2]>,
-    names: &'a [ConicalActualSideId],
+    sides: &'a [SideCapture],
+    refine: bool,
     bits: u16,
 }
 fn visit(
@@ -37,6 +47,7 @@ fn visit(
     pending: &mut Vec<[usize; 2]>,
     seen: &mut BTreeSet<[usize; 2]>,
     stats: &mut HierarchyStats,
+    arithmetic: &mut Arithmetic<'_>,
 ) -> Outcome<()> {
     let a = &domain.nodes[pair[0]];
     let b = &domain.nodes[pair[1]];
@@ -50,12 +61,12 @@ fn visit(
         return Ok(());
     }
     if let (Kind::Leaf(x), Kind::Leaf(y)) = (a.kind, b.kind) {
-        return leaf_pair(domain, [a, b], [x, y], seen, stats);
+        return leaf_pair(domain, [a, b], [x, y], seen, stats, arithmetic);
     }
     expand(domain.nodes, pair, pending);
     Ok(())
 }
-fn separated(a: &Hull, b: &Hull) -> bool {
+pub(super) fn separated(a: &Hull, b: &Hull) -> bool {
     (0..3).any(|i| a.upper[i] < b.lower[i] || b.upper[i] < a.lower[i])
 }
 fn expand(nodes: &[Node], pair: [usize; 2], pending: &mut Vec<[usize; 2]>) {
@@ -119,16 +130,43 @@ fn leaf_pair(
     indices: [usize; 2],
     seen: &mut BTreeSet<[usize; 2]>,
     stats: &mut HierarchyStats,
+    arithmetic: &mut Arithmetic<'_>,
 ) -> Outcome<()> {
     let [x, y] = indices;
     let key = if x < y { [x, y] } else { [y, x] };
-    if !domain.allowed.contains(&key) {
-        return Err(residual(domain, nodes, indices));
+    if domain.allowed.contains(&key) {
+        seen.insert(key);
+        stats.adjacent_pairs += 1;
+        return Ok(());
     }
-    seen.insert(key);
-    stats.adjacent_pairs += 1;
-    Ok(())
+    if domain.refine && refined_pair(domain, indices, stats, arithmetic)? {
+        stats.excluded_pairs += 1;
+        return Ok(());
+    }
+    Err(residual(domain, nodes, indices))
 }
+
+fn refined_pair(
+    domain: &Inventory<'_>,
+    indices: [usize; 2],
+    stats: &mut HierarchyStats,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Outcome<bool> {
+    let sides = indices.map(|index| &domain.sides[index]);
+    refine::separated(sides, &mut stats.visits, arithmetic)
+        .map_err(|cause| pair_failure(sides.map(|side| side.source.id), cause))
+}
+
+pub(super) fn pair_failure(
+    sides: [ConicalActualSideId; 2],
+    cause: ConicalActualPatchFailure,
+) -> ConicalActualPatchFailure {
+    ConicalActualPatchFailure::SidePair {
+        sides,
+        cause: Box::new(cause),
+    }
+}
+
 fn residual(
     domain: &Inventory<'_>,
     nodes: [&Node; 2],
@@ -138,7 +176,7 @@ fn residual(
     let lower = nodes.map(|n| dyadic_points(&n.bounds.lower, exponent));
     let upper = nodes.map(|n| dyadic_points(&n.bounds.upper, exponent));
     ConicalActualPatchFailure::UnresolvedSidePair {
-        sides: indices.map(|i| domain.names[i]),
+        sides: indices.map(|i| domain.sides[i].source.id),
         lower: Box::new(lower),
         upper: Box::new(upper),
         expected: "strict complete hull separation for nonincident actual sides",

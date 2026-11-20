@@ -27,7 +27,7 @@ impl Work {
     }
     pub(in crate::surface_sketch::wrapped_profile) fn remaining(&self) -> ConeClearanceOptions {
         ConeClearanceOptions {
-            max_operations: self.requested.max_operations - self.consumed,
+            max_operations: (self.requested.max_operations - self.consumed).min(1_000_000),
             ..self.requested
         }
     }
@@ -105,6 +105,23 @@ mod tests {
         work.charge(region, None, 200).unwrap();
         assert_eq!(work.profile().max_operations, requested - 300);
         assert_eq!(work.consumed, 300);
+    }
+    #[test]
+    fn aggregate_grants_lend_bounded_leaves_and_keep_one_final_remainder() {
+        let mut options = ConeClearanceOptions::default();
+        options.max_operations = 2_000_211;
+        let mut work = Work::new(options);
+        let region = SurfaceRegionId(41);
+        assert_eq!(work.remaining().max_operations, 1_000_000);
+        work.charge(region, None, 1_000_000).unwrap();
+        assert_eq!(work.profile().max_operations, 1_000_000);
+        work.charge(region, None, 1_000_000).unwrap();
+        assert_eq!(work.remaining().max_operations, 211);
+        work.charge(region, None, 211).unwrap();
+        assert!(work.remaining_checked(region, None).is_err());
+        assert_eq!(work.consumed, 2_000_211);
+        assert!(work.charge(region, None, 1).is_err());
+        assert_eq!(work.consumed, 2_000_211);
     }
     #[test]
     fn exhausted_work_retains_owner_and_does_not_wrap() {

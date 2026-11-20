@@ -175,10 +175,7 @@ pub(super) fn admit_policy(policy: ArithmeticPolicy) -> Result<(), SectorFailure
     }
     Ok(())
 }
-pub(super) fn admit_geometry(
-    spans: &[&[[f64; 2]]],
-    angle: f64,
-) -> Result<(), SectorFailure> {
+pub(super) fn admit_geometry(spans: &[&[[f64; 2]]], angle: f64) -> Result<(), SectorFailure> {
     if !angle.is_finite() || angle <= 0. || angle >= std::f64::consts::FRAC_PI_2 {
         return Err(SectorFailure::Angle(angle));
     }

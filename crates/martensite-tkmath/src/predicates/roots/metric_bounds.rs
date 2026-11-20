@@ -24,7 +24,8 @@ pub use cylindrical_clearance::{
     CertifiedCylindricalPeriodicClearance, CertifiedCylindricalPeriodicSlab,
     CylindricalClearanceDomain, CylindricalClearanceError, CylindricalClearanceFailure,
     CylindricalClearanceOptions, CylindricalClearanceQuery, CylindricalClearanceScope,
-    CylindricalClearanceSource, CylindricalPeriodicTranslation, certify_cylindrical_clearance,
+    CylindricalClearanceSource, CylindricalClearanceWorkError, CylindricalPeriodicTranslation,
+    certify_cylindrical_clearance, certify_cylindrical_clearance_with_work,
 };
 pub use cylindrical_clearance::{
     CertifiedCylindricalProbe, CertifiedCylindricalProbes, CylindricalPeriodicProbe,
@@ -65,26 +66,6 @@ pub use conical_material::{
     certify_conical_material_with_developed_boundaries_and_refinement,
 };
 pub use conical_profile::{
-    ConicalBoundaryZRowError, ConicalBoundaryZRowEvidence, ConicalBoundaryZRowFailure,
-    ConicalBoundaryZRowTransition, certify_conical_boundary_z_rows,
-    certify_conical_boundary_in_chart_with_refinement,
-    certify_conical_chart_reference_with_refinement,
-    certify_conical_joins_in_chart_with_refinement,
-    certify_conical_trim_pair_in_chart_with_refinement,
-    certify_conical_trim_pair_with_developed_boundary_and_refinement,
-};
-pub use conical_profile::{
-    ConicalActualAdjacent, ConicalActualCapCarrier, ConicalActualCapId,
-    ConicalActualCapQuery, ConicalActualCapSnapshot, ConicalActualContourRole,
-    ConicalActualMemberId, ConicalActualPatchCertificate, ConicalActualPatchCoverage,
-    ConicalActualPatchError, ConicalActualPatchFailure, ConicalActualPatchQuery,
-    ConicalActualPatchStage, ConicalActualSideId, ConicalActualSideQuery,
-    ConicalActualSideSnapshot, ConicalActualUvContourSnapshot, ConicalActualUvEdgeSnapshot,
-    ConicalActualUvContour, ConicalActualUvEdge, ConicalDirectedGammaQuery,
-    ConicalDirectedGammaSpan, ConicalDirectedGammaEvidence, certify_conical_directed_gamma,
-    certify_conical_actual_patches,
-};
-pub use conical_profile::{
     ConeClearanceOptions, ConeRequest, ConeRequestError, ConeRequestReceipt,
     ConicalAuthoredContour, ConicalAuthoredFlux, ConicalAuthoredFluxError,
     ConicalAuthoredFluxMethod, ConicalAuthoredFluxQuery, ConicalAuthoredFluxStage,
@@ -92,18 +73,37 @@ pub use conical_profile::{
     ConicalBoundaryFailureKind, ConicalBoundaryProofFailure, ConicalBoundaryQuery,
     ConicalBoundaryStage, ConicalChartDomainBound, ConicalChartDomainError,
     ConicalChartDomainEvidence, ConicalChartDomainFailure, ConicalChartDomainQuery,
-    ConicalChartDomainRequirement, ConicalChartReferenceQuery, ConicalDepthFailure,
-    ConicalJoinFailureKind, ConicalJoinProofFailure, ConicalJoinSpan, ConicalJoinsEvidence,
-    ConicalJoinsFailure, ConicalJoinsQuery, ConicalOriginalFailure, ConicalOriginalSpan,
-    ConicalPrimitiveRefinement,
-    ConicalReferenceError, ConicalReferenceEvidence, ConicalReferenceFailure,
-    ConicalReferenceMember, ConicalReferenceQuery, ConicalSectorEvidence, ConicalSectorFailure,
-    ConicalSectorQuery, ConicalSectorWedge, ConicalSourceFailure, ConicalStorageError,
-    ConicalStorageEvidence, ConicalStorageFailure, ConicalStorageQuery, certify_cone_request,
+    ConicalChartDomainRequirement, ConicalChartDomainVersion, ConicalChartReferenceQuery,
+    ConicalDepthFailure, ConicalJoinFailureKind, ConicalJoinProofFailure, ConicalJoinSpan,
+    ConicalJoinsEvidence, ConicalJoinsFailure, ConicalJoinsQuery, ConicalOriginalFailure,
+    ConicalOriginalSpan, ConicalPrimitiveRefinement, ConicalReferenceError,
+    ConicalReferenceEvidence, ConicalReferenceFailure, ConicalReferenceMember,
+    ConicalReferenceQuery, ConicalSectorEvidence, ConicalSectorFailure, ConicalSectorQuery,
+    ConicalSectorWedge, ConicalSourceFailure, ConicalStorageError, ConicalStorageEvidence,
+    ConicalStorageFailure, ConicalStorageQuery, certify_cone_request,
     certify_conical_authored_flux, certify_conical_authored_flux_with_method,
     certify_conical_boundary, certify_conical_boundary_in_chart, certify_conical_chart_domain,
-    certify_conical_chart_reference, certify_conical_joins, certify_conical_reference,
-    certify_conical_sector, certify_conical_storage,
+    certify_conical_chart_domain_with_version, certify_conical_chart_reference,
+    certify_conical_joins, certify_conical_reference, certify_conical_sector,
+    certify_conical_storage,
+};
+pub use conical_profile::{
+    ConicalActualAdjacent, ConicalActualCapCarrier, ConicalActualCapId, ConicalActualCapQuery,
+    ConicalActualCapSnapshot, ConicalActualContourRole, ConicalActualMemberId,
+    ConicalActualPatchCertificate, ConicalActualPatchCoverage, ConicalActualPatchError,
+    ConicalActualPatchFailure, ConicalActualPatchQuery, ConicalActualPatchStage,
+    ConicalActualSideId, ConicalActualSideQuery, ConicalActualSideSnapshot, ConicalActualUvContour,
+    ConicalActualUvContourSnapshot, ConicalActualUvEdge, ConicalActualUvEdgeSnapshot,
+    ConicalDirectedGammaEvidence, ConicalDirectedGammaQuery, ConicalDirectedGammaSpan,
+    certify_conical_actual_patches, certify_conical_directed_gamma,
+};
+pub use conical_profile::{
+    ConicalBoundaryZRowError, ConicalBoundaryZRowEvidence, ConicalBoundaryZRowFailure,
+    ConicalBoundaryZRowTransition, certify_conical_boundary_in_chart_with_refinement,
+    certify_conical_boundary_z_rows, certify_conical_chart_reference_with_refinement,
+    certify_conical_joins_in_chart_with_refinement,
+    certify_conical_trim_pair_in_chart_with_refinement,
+    certify_conical_trim_pair_with_developed_boundary_and_refinement,
 };
 pub use cylindrical_profile::{
     CertifiedConicalTrim, CertifiedConicalTrimPair, CertifiedCylindricalLift,

@@ -7,11 +7,13 @@ pub(super) struct CapCapture {
     pub(super) source: ConicalActualCapSnapshot,
     pub(super) u: Interval,
     pub(super) level: Interval,
+    pub(super) slant: Option<Interval>,
 }
 pub(super) fn certify(
     query: &ConicalActualPatchQuery<'_>,
     sine: &Interval,
     cosine: &Interval,
+    bound_slant: bool,
     arithmetic: &mut Arithmetic<'_>,
     position: &mut error::FailurePosition,
 ) -> Outcome<Vec<CapCapture>> {
@@ -21,7 +23,14 @@ pub(super) fn certify(
     for cap in query.caps {
         position.clear();
         position.cap(cap.carrier.id);
-        result.push(capture::cap(cap, sine, cosine, &period, arithmetic)?);
+        result.push(capture::cap(
+            cap,
+            sine,
+            cosine,
+            &period,
+            bound_slant,
+            arithmetic,
+        )?);
     }
     position.clear();
     pairs::certify(&result, &period, arithmetic)?;

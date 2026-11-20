@@ -1,5 +1,6 @@
 //! Capture directed solved sources before any fit, native owner or proof is created.
 use super::*;
+pub(in crate::surface_sketch::wrapped_profile) mod grant;
 mod policy;
 pub(super) fn poll(cancelled: &mut CancelPoll<'_>, stage: WrappedStage) -> Checked<()> {
     super::super::input::poll(cancelled, stage)
@@ -22,10 +23,14 @@ pub(super) fn capture_with_selection(
     ) {
         return capture(request, cancelled);
     }
-    admit(request).map_err(ConeFailure::public)?;
+    admit_with_ceiling(request, grant::admission_ceiling(execution))
+        .map_err(ConeFailure::public)?;
     // #563: reject the selected policy before source capture can observe a later stop.
     super::prepare::directed::admit(request, execution).map_err(ConeFailure::public)?;
-    capture_admitted(request, cancelled)
+    let mut inputs = capture_admitted(request, cancelled)?;
+    inputs.grant =
+        grant::capture(request, execution, &inputs.originals).map_err(ConeFailure::public)?;
+    Ok(inputs)
 }
 fn capture_admitted(
     request: &WrappedConeNormalRequest,
@@ -33,6 +38,7 @@ fn capture_admitted(
 ) -> Checked<Inputs> {
     let mut inputs = Inputs {
         originals: Vec::new(),
+        grant: None,
         directions: BTreeMap::new(),
     };
     super::super::source::read(
@@ -76,8 +82,15 @@ fn duplicate_region(region: SurfaceRegionId) -> ConeFailure {
 }
 
 fn admit(request: &WrappedConeNormalRequest) -> ConeChecked<()> {
+    admit_with_ceiling(request, 1_000_000)
+}
+fn admit_with_ceiling(request: &WrappedConeNormalRequest, ceiling: u32) -> ConeChecked<()> {
     admit_scalars(request)?;
-    policy::admit(request.proof)?;
+    if ceiling == 1_000_000 {
+        policy::admit(request.proof)?;
+    } else {
+        policy::admit_with_ceiling(request.proof, ceiling)?;
+    }
     admit_volume(request.options.volume)?;
     admit_limits(request)?;
     admit_frame(request.support)?;

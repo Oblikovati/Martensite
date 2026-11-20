@@ -2,13 +2,11 @@
 use super::*;
 use crate::predicates::roots::certificate_arithmetic::circular_constants;
 type Failure = ConicalChartDomainFailure;
-pub(super) fn admit(query: &ConicalChartDomainQuery<'_>) -> Result<(), Failure> {
-    sector::admit(
-        query.spans,
-        query.semi_angle,
-        sector_api::policy(query.options),
-    )
-    .map_err(Failure::Sector)?;
+pub(super) fn admit(
+    query: &ConicalChartDomainQuery<'_>,
+    version: ConicalChartDomainVersion,
+) -> Result<(), Failure> {
+    admit_sources(query, version)?;
     if !query.chart_origin.is_finite()
         || query.chart_origin.to_bits() != query.fit_center.to_bits()
         || query.developed_turn != 0
@@ -21,46 +19,68 @@ pub(super) fn admit(query: &ConicalChartDomainQuery<'_>) -> Result<(), Failure> 
     }
     Ok(())
 }
+fn admit_sources(
+    query: &ConicalChartDomainQuery<'_>,
+    version: ConicalChartDomainVersion,
+) -> Result<(), Failure> {
+    let policy = sector_api::policy(query.options);
+    if version == ConicalChartDomainVersion::OriginalV2 {
+        return sector::admit(query.spans, query.semi_angle, policy).map_err(Failure::Sector);
+    }
+    sector::admit_policy(policy).map_err(Failure::Sector)?;
+    let actual = query.spans.len();
+    let limit = version.span_limit();
+    if !(1..=limit).contains(&actual) {
+        return Err(Failure::SourceCount { actual, limit });
+    }
+    sector::admit_geometry(query.spans, query.semi_angle).map_err(Failure::Sector)
+}
 pub(super) fn certify(
     query: &ConicalChartDomainQuery<'_>,
+    version: ConicalChartDomainVersion,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<ConicalChartDomainEvidence, Failure> {
     let (wedge, margin) = sector::common_wedge(query.spans, arithmetic).map_err(Failure::Sector)?;
     self::wedge(wedge)?;
-    let (physical, sine, cosine, minimum_x) = ranges(query, arithmetic)?;
-    width(&physical, arithmetic)?;
+    let ranges = ranges(query, arithmetic)?;
+    width(&ranges.0, arithmetic)?;
     arithmetic.check_cancelled()?;
-    Ok(evidence(
-        query, margin, physical, sine, cosine, minimum_x, arithmetic,
-    ))
+    Ok(evidence(query, version, margin, ranges, arithmetic))
 }
 fn evidence(
     query: &ConicalChartDomainQuery<'_>,
+    version: ConicalChartDomainVersion,
     margin: Option<num_bigint::BigInt>,
-    physical: Interval,
-    sine: Interval,
-    cosine: Interval,
-    minimum_x: Interval,
+    (physical, sine, cosine, minimum_x): (Interval, Interval, Interval, Interval),
     arithmetic: &Arithmetic<'_>,
 ) -> ConicalChartDomainEvidence {
     ConicalChartDomainEvidence {
-        sector: sector::SectorEvidence {
-            source: sector::source_bits(query.spans),
-            angle: query.semi_angle.to_bits(),
-            policy: sector_api::policy(query.options),
-            operations: arithmetic.operations(),
-            wedge: 1,
-            margin: DyadicBound::new(
-                margin.unwrap_or_default(),
-                -i32::from(query.options.fractional_bits),
-            ),
-        },
+        version,
+        span_limit: version.span_limit(),
+        sector: captured_sector(query, margin, arithmetic),
         chart: [query.chart_origin.to_bits(), query.fit_center.to_bits()],
         turns: [query.developed_turn, query.physical_turn],
         physical,
         sine,
         cosine,
         minimum_x,
+    }
+}
+fn captured_sector(
+    query: &ConicalChartDomainQuery<'_>,
+    margin: Option<num_bigint::BigInt>,
+    arithmetic: &Arithmetic<'_>,
+) -> sector::SectorEvidence {
+    sector::SectorEvidence {
+        source: sector::source_bits(query.spans),
+        angle: query.semi_angle.to_bits(),
+        policy: sector_api::policy(query.options),
+        operations: arithmetic.operations(),
+        wedge: 1,
+        margin: DyadicBound::new(
+            margin.unwrap_or_default(),
+            -i32::from(query.options.fractional_bits),
+        ),
     }
 }
 fn ranges(

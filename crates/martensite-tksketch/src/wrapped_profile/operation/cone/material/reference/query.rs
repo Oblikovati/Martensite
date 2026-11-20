@@ -46,11 +46,14 @@ impl Inputs<'_> {
         };
         match &family.selection.domain {
             DomainEvidence::Legacy { sector, .. } => source.legacy(sector),
-            DomainEvidence::Chart(proof) => {
+            DomainEvidence::Chart(proof, _) => {
                 let query = source.chart(proof);
                 match (family.selection.executed_selection, query) {
                     (
-                        WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1,
+                        WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
+                        | WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 {
+                            ..
+                        },
                         ReferenceQuery::Chart(query),
                     ) => ReferenceQuery::Refined(query, ConicalPrimitiveRefinement::HalfSplitV1),
                     (_, query) => query,

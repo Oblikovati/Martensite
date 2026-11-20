@@ -15,7 +15,12 @@ fn native_source(cause: &ConeCause) -> Option<&(dyn std::error::Error + 'static)
         | TrimPair(_) | ChartTrimPair(_) => None,
         Clearance(_) | Flux(_) | Authored(_) | Material(_) | DevelopedMaterial(_)
         | Reference(_) => None,
-        ReferenceVolume(_) | Support(_) | ProofOptions(_) | ExecutionProof(_) | Depths(_) => None,
+        ReferenceVolume(_)
+        | Support(_)
+        | ProofOptions(_)
+        | InputBoundProofOptions { .. }
+        | ExecutionProof(_)
+        | Depths(_) => None,
         SourceAnchor { .. } | Scalar { .. } | Limit { .. } | Missing(_) => None,
         Encoding(_) | Coverage(_) | History(_) | Candidate(_) | ActualValidation(_) => None,
         Coefficients(_) | Binding { .. } | Cancelled(_) => None,
@@ -52,7 +57,12 @@ fn extended_mathematical(cause: &ConeCause) -> Option<&(dyn std::error::Error + 
         | Planar(_)
         | ActualBinding(_)
         | ActualValidation(_) => None,
-        Support(_) | ProofOptions(_) | ExecutionProof(_) | Depths(_) | SourceAnchor { .. } => None,
+        Support(_)
+        | ProofOptions(_)
+        | InputBoundProofOptions { .. }
+        | ExecutionProof(_)
+        | Depths(_)
+        | SourceAnchor { .. } => None,
         Scalar { .. } | Limit { .. } | Missing(_) | Encoding(_) | Coverage(_) => None,
         History(_) | Candidate(_) | Coefficients(_) | Binding { .. } | Cancelled(_) => None,
     }

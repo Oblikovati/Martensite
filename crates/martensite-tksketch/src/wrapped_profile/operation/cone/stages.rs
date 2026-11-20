@@ -35,7 +35,8 @@ impl SupportStages for ConeStages<'_> {
             WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 { domain } => {
                 prepare::select_with_policy(self.request, originals, domain, context, cancelled)
             }
-            WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1 => {
+            WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
+            | WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 { .. } => {
                 prepare::select_with_execution(
                     self.request,
                     originals,
@@ -138,10 +139,7 @@ impl SupportStages for ConeStages<'_> {
         measures::geometry(self.request, original, prepared, stored, context, cancelled)
     }
     fn defer_native_checks(&self) -> bool {
-        matches!(
-            self.execution_selection,
-            WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
-        )
+        self.execution_selection.is_directed()
     }
     fn certify_native_family(
         &self,

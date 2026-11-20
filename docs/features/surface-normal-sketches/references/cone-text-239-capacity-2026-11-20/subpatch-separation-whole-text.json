@@ -1,0 +1,23 @@
+{
+  "test_result": "1 passed; 2 failed; 0 ignored",
+  "side_domains": "completed in both senses",
+  "first_unresolved_cap_regions": [
+    1001,
+    10001
+  ],
+  "published_body": false,
+  "runs": [
+    {
+      "event": "conical_text_api",
+      "normal": "Inward",
+      "seconds": 15.109914982,
+      "refusal": "WrappedNormalFailure { operation: NormalExtrusion, stage: Construction, class: Incomplete, entities: [Region(SurfaceRegionId(1001)), Region(SurfaceRegionId(10001))], cause: Cone(ConeFailure { stage: Construction, class: Incomplete, region: Some(SurfaceRegionId(1001)), span: None, cause: ActualPair { cause: ConicalActualPatchError { stage: Cap, side: None, cap: Some(ConicalActualCapId(1)), operations: 726441, options: ConeClearanceOptions { fractional_bits: 128, max_operations: 1000000 }, cause: CapPair { caps: [ConicalActualCapId(1), ConicalActualCapId(23)], cause: Unresolved { quantity: \"cross-member filled-cap phase gap\", lower: DyadicBound { significand: -26036290043581785, exponent: -58 }, upper: DyadicBound { significand: -26036290043581785, exponent: -58 }, expected: \"strictly positive\" } } }, entities: [Region(SurfaceRegionId(1001)), Region(SurfaceRegionId(10001))] } }) }"
+    },
+    {
+      "event": "conical_text_api",
+      "normal": "Outward",
+      "seconds": 12.297293202,
+      "refusal": "WrappedNormalFailure { operation: NormalExtrusion, stage: Construction, class: Incomplete, entities: [Region(SurfaceRegionId(1001)), Region(SurfaceRegionId(10001))], cause: Cone(ConeFailure { stage: Construction, class: Incomplete, region: Some(SurfaceRegionId(1001)), span: None, cause: ActualPair { cause: ConicalActualPatchError { stage: Cap, side: None, cap: Some(ConicalActualCapId(1)), operations: 712453, options: ConeClearanceOptions { fractional_bits: 128, max_operations: 1000000 }, cause: CapPair { caps: [ConicalActualCapId(1), ConicalActualCapId(23)], cause: Unresolved { quantity: \"cross-member filled-cap phase gap\", lower: DyadicBound { significand: -26036290043581785, exponent: -58 }, upper: DyadicBound { significand: -26036290043581785, exponent: -58 }, expected: \"strictly positive\" } } }, entities: [Region(SurfaceRegionId(1001)), Region(SurfaceRegionId(10001))] } }) }"
+    }
+  ]
+}

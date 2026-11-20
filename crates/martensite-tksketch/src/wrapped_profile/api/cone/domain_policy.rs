@@ -10,6 +10,8 @@ pub enum WrappedConeDomainPolicy {
     LegacySectorV1,
     /// Positive-X common chart with bounded positive sine and strict angular width.
     PositiveXCommonChartV2,
+    /// The same quantitative chart with an explicitly selected 4096-source family cap.
+    PositiveXFamilyChartV3,
 }
 impl WrappedConeNormalResult {
     /// Retained cone-domain behavior; `assert_eq!(result.domain_policy(), policy)`.

@@ -230,4 +230,7 @@ pub(super) fn chart_bits(proof: &ConicalChartDomainEvidence, bits: &mut Vec<u64>
         bits.push(span.len() as u64);
         bits.extend(span.iter().flatten().copied());
     }
+    if proof.version() != ConicalChartDomainVersion::OriginalV2 {
+        bits.extend([4, proof.version().tag(), proof.span_limit() as u64]);
+    }
 }

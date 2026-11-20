@@ -73,7 +73,7 @@ pub(super) fn bind_domain(query: &ReferenceInputs<'_>) -> Result<(), ConicalRefe
         ));
     }
     let input = domain_input(query, domain);
-    if !domain.matches(&input) {
+    if !domain.matches_with_version(&input, domain.version()) {
         return Err(binding_failure("actual chart domain and common lift"));
     }
     Ok(())

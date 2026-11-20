@@ -47,7 +47,7 @@ fn domain_matches(
             semi_angle: prepared.semi_angle,
             options: *options,
         }),
-        domain::DomainEvidence::Chart(proof) => chart_matches(proof, prepared, spans),
+        domain::DomainEvidence::Chart(proof, _) => chart_matches(proof, prepared, spans),
     }
 }
 fn chart_matches(
@@ -55,15 +55,18 @@ fn chart_matches(
     prepared: &Prepared,
     spans: &[&[[f64; 2]]],
 ) -> bool {
-    proof.matches(&ConicalChartDomainQuery {
-        spans,
-        semi_angle: prepared.semi_angle,
-        chart_origin: prepared.chart_origin,
-        fit_center: prepared.chart_center,
-        developed_turn: 0,
-        physical_turn: 0,
-        options: proof.options(),
-    })
+    proof.matches_with_version(
+        &ConicalChartDomainQuery {
+            spans,
+            semi_angle: prepared.semi_angle,
+            chart_origin: prepared.chart_origin,
+            fit_center: prepared.chart_center,
+            developed_turn: 0,
+            physical_turn: 0,
+            options: proof.options(),
+        },
+        proof.version(),
+    )
 }
 
 fn authority_matches(
@@ -73,8 +76,10 @@ fn authority_matches(
 ) -> bool {
     match (selected, prepared.chart_domain.as_deref()) {
         (domain::DomainEvidence::Legacy { .. }, None) => true,
-        (domain::DomainEvidence::Chart(selected), Some(actual)) => {
-            selected.options() == actual.options()
+        (domain::DomainEvidence::Chart(selected, _), Some(actual)) => {
+            selected.version() == actual.version()
+                && selected.span_limit() == actual.span_limit()
+                && selected.options() == actual.options()
                 && chart_matches(selected, prepared, spans)
                 && chart_matches(actual, prepared, spans)
         }

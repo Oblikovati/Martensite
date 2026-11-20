@@ -42,10 +42,7 @@ pub(super) fn budget(
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<Budget> {
-    if matches!(
-        family.selection.executed_selection,
-        WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
-    ) {
+    if family.selection.executed_selection.is_directed() {
         actual::validate_family(family, work)?;
     }
     totals::certify(request, family, work, cancelled)

@@ -22,8 +22,24 @@ pub(super) fn publish(
         u64::from(request.proof.integration.max_total_subintervals),
     )
     .map_err(ConeFailure::public)?;
+    if let Some(grant) = &inputs.grant {
+        grant
+            .validate(
+                request,
+                family.family.selection.executed_selection,
+                &inputs.originals,
+            )
+            .map_err(ConeFailure::public)?;
+    }
     input::poll(cancelled, WrappedStage::Publication)?;
-    Ok(assemble(request, family, history, reports, budget))
+    Ok(assemble(
+        request,
+        family,
+        history,
+        reports,
+        budget,
+        inputs.grant,
+    ))
 }
 
 fn assemble(
@@ -32,6 +48,7 @@ fn assemble(
     history: history_projection::HistoryPublication,
     reports: BTreeMap<SurfaceRegionId, WrappedConeMemberReport>,
     budget: WrappedConeBudgetReport,
+    arithmetic_grant: Option<input::grant::CapturedGrant>,
 ) -> WrappedConeNormalResult {
     WrappedConeNormalResult {
         family,
@@ -42,6 +59,7 @@ fn assemble(
         depths: request.depths,
         options: request.options,
         proof: request.proof,
+        arithmetic_grant,
     }
 }
 

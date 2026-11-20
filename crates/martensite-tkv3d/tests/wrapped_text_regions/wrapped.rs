@@ -1,4 +1,6 @@
 //! Fixed dyadic layout isolates geometry qualification from platform font metrics.
+#[path = "conical_text.rs"]
+mod conical_text;
 use super::*;
 use martensite_tkbo::profile_extrusion::*;
 use martensite_tksketch::surface_sketch::*;

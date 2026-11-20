@@ -107,7 +107,9 @@ pub(super) fn reference(cause: &ConicalReferenceFailure) -> Class {
 pub(super) fn domain(cause: &ConicalChartDomainFailure) -> Class {
     match cause {
         ConicalChartDomainFailure::Sector(cause) => sector(cause),
-        ConicalChartDomainFailure::Chart { .. } => Class::Unsupported,
+        ConicalChartDomainFailure::Chart { .. } | ConicalChartDomainFailure::SourceCount { .. } => {
+            Class::Unsupported
+        }
         ConicalChartDomainFailure::Unresolved { .. }
         | ConicalChartDomainFailure::Wedge { .. }
         | ConicalChartDomainFailure::Point { .. }

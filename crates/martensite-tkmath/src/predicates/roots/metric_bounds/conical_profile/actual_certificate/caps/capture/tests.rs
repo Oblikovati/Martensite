@@ -26,8 +26,8 @@ fn fixture(
 fn positive_filled_radius_and_disjoint_phase_certify_the_whole_rectangles() {
     fixture(|query, arithmetic, sine, cosine| {
         let period = arithmetic.scalar(6.).unwrap();
-        let a = cap(&query[0], sine, cosine, &period, arithmetic).unwrap();
-        let b = cap(&query[1], sine, cosine, &period, arithmetic).unwrap();
+        let a = cap(&query[0], sine, cosine, &period, false, arithmetic).unwrap();
+        let b = cap(&query[1], sine, cosine, &period, false, arithmetic).unwrap();
         let ten = arithmetic.scalar(10.).unwrap();
         let v = arithmetic.scalar(2.).unwrap();
         let v = Interval {
@@ -43,13 +43,63 @@ fn positive_filled_radius_and_disjoint_phase_certify_the_whole_rectangles() {
 fn overlapping_cap_envelopes_are_inconclusive_not_success() {
     fixture(|query, arithmetic, sine, cosine| {
         let period = arithmetic.scalar(6.).unwrap();
-        let a = cap(&query[0], sine, cosine, &period, arithmetic).unwrap();
+        let a = cap(&query[0], sine, cosine, &period, false, arithmetic).unwrap();
         let mut other = query[0];
         other.carrier.member = ConicalActualMemberId(2);
-        let b = cap(&other, sine, cosine, &period, arithmetic).unwrap();
+        let b = cap(&other, sine, cosine, &period, false, arithmetic).unwrap();
         assert!(matches!(
             pairs::certify(&[a, b], &period, arithmetic),
             Err(ConicalActualPatchFailure::CapPair { .. })
+        ));
+    });
+}
+
+#[test]
+fn caps_with_identical_phase_and_level_separate_along_common_slant() {
+    fixture(|query, arithmetic, sine, cosine| {
+        let period = arithmetic.scalar(6.).unwrap();
+        let lower = cap(&query[0], sine, cosine, &period, true, arithmetic).unwrap();
+        let poles = [[0., 4.], [0.125, 6.]];
+        let edges = [edge(2, &poles, &[1., 1.])];
+        let wires = [wire(&edges)];
+        let higher = cap(
+            &cap_query(2, &wires),
+            sine,
+            cosine,
+            &period,
+            true,
+            arithmetic,
+        )
+        .unwrap();
+        assert_eq!(lower.u, higher.u);
+        assert_eq!(lower.level, higher.level);
+        pairs::certify(&[lower, higher], &period, arithmetic).unwrap();
+    });
+}
+
+#[test]
+fn family_cap_separation_refuses_shared_slant_endpoints_and_phase_overlap() {
+    fixture(|query, arithmetic, sine, cosine| {
+        let period = arithmetic.scalar(6.).unwrap();
+        let lower = cap(&query[0], sine, cosine, &period, true, arithmetic).unwrap();
+        let poles = [[0., 2.], [0.125, 4.]];
+        let edges = [edge(2, &poles, &[1., 1.])];
+        let wires = [wire(&edges)];
+        let higher = cap(
+            &cap_query(2, &wires),
+            sine,
+            cosine,
+            &period,
+            true,
+            arithmetic,
+        )
+        .unwrap();
+        assert!(matches!(
+            pairs::certify(&[lower, higher], &period, arithmetic),
+            Err(ConicalActualPatchFailure::CapPair {
+                caps: [ConicalActualCapId(1), ConicalActualCapId(2)],
+                ..
+            })
         ));
     });
 }
@@ -98,7 +148,7 @@ fn filled_rectangle_crossing_the_axis_refuses_with_actual_radius_bounds() {
         let wires = [wire(&edges)];
         let query = cap_query(1, &wires);
         let period = arithmetic.scalar(6.).unwrap();
-        let failure = cap(&query, sine, cosine, &period, arithmetic)
+        let failure = cap(&query, sine, cosine, &period, false, arithmetic)
             .err()
             .unwrap();
         assert_crossing_radius(failure);

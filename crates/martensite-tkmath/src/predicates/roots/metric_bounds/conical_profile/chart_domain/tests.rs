@@ -122,6 +122,7 @@ fn early_middle_and_final_cancellation_checkpoints_refuse_without_partial_succes
 fn source_snapshots_and_numeric_receipts_are_send_and_sync() {
     fn shared<T: Send + Sync>() {}
     shared::<ConicalChartDomainEvidence>();
+    shared::<ConicalChartDomainVersion>();
     shared::<ConicalChartDomainError>();
     shared::<ConicalChartDomainFailure>();
     shared::<ConicalChartDomainQuery<'static>>();

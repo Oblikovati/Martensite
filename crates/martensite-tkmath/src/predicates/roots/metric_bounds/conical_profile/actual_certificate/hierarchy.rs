@@ -2,6 +2,7 @@
 //! Finite disjoint node products cover every actual unordered side pair once.
 use super::*;
 use capture::SideCapture;
+mod refine;
 mod tree;
 mod visit;
 #[derive(Clone)]
@@ -29,6 +30,7 @@ pub(super) struct HierarchyStats {
 pub(super) fn certify(
     sides: &[SideCapture],
     adjacent: &[ConicalActualAdjacent],
+    refine: bool,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Outcome<HierarchyStats> {
     let bounds = sides
@@ -39,13 +41,7 @@ pub(super) fn certify(
     let mut source = (0..sides.len()).collect::<Vec<_>>();
     let root = tree::build(&bounds, &mut source, 0, &mut nodes, arithmetic)?;
     let allowed = allowed(sides, adjacent)?;
-    visit::certify(
-        &nodes,
-        root,
-        &allowed,
-        &sides.iter().map(|s| s.source.id).collect::<Vec<_>>(),
-        arithmetic,
-    )
+    visit::certify(&nodes, root, &allowed, sides, refine, arithmetic)
 }
 fn allowed(
     sides: &[SideCapture],

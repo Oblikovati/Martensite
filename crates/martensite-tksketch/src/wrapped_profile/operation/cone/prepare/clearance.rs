@@ -15,12 +15,36 @@ pub(super) fn certify(
     let excluded = adjacent(prepared);
     let tolerance = originals.first().map_or(0., |r| r.tolerance);
     let query = query(&sources, &excluded, tolerance, work.remaining());
-    let proof = certify_cylindrical_clearance(query, cancelled)
-        .map_err(|cause| failure(None, None, ConeCause::Clearance(Box::new(cause))))?;
     let region = selection::first_region(originals)?;
-    work.charge(region, None, proof.operations())?;
-    Ok(proof)
+    charge(
+        certify_cylindrical_clearance_with_work(query, cancelled),
+        region,
+        work,
+    )
 }
+
+fn charge(
+    outcome: Result<CertifiedCylindricalClearance, CylindricalClearanceWorkError>,
+    region: SurfaceRegionId,
+    work: &mut Work,
+) -> ConeChecked<CertifiedCylindricalClearance> {
+    match outcome {
+        Ok(proof) => {
+            work.charge(region, None, proof.operations())?;
+            Ok(proof)
+        }
+        Err(error) => {
+            // A bounded leaf's typed refusal takes precedence over ledger bookkeeping.
+            let _ = work.charge(region, None, error.operations);
+            Err(failure(
+                None,
+                None,
+                ConeCause::Clearance(Box::new(error.cause)),
+            ))
+        }
+    }
+}
+
 fn query<'a>(
     sources: &'a [CylindricalClearanceSource<'a>],
     excluded: &'a [[usize; 2]],
@@ -94,3 +118,6 @@ fn adjacent(prepared: &[Prepared]) -> Vec<[usize; 2]> {
     }
     result.into_iter().collect()
 }
+
+#[cfg(test)]
+mod tests;

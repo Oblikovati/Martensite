@@ -85,6 +85,7 @@ fn complete(
         radius,
         common.angular.clone(),
         storage,
+        input.domain.version(),
         arithmetic,
     )
 }
@@ -95,21 +96,46 @@ fn compose(
     radius: Interval,
     angular: Interval,
     storage: Interval,
+    version: ConicalChartDomainVersion,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<[f64; 3], CylindricalProfileFailure> {
-    let radial = xy_l1_upper(&radial, arithmetic)?;
+    let radial_l1 = xy_l1_upper(&radial, arithmetic)?;
     let angular = arithmetic.multiply(&radius, &angular)?;
-    let angular = xy_l1_upper(&angular, arithmetic)?;
-    let xy = arithmetic.add(&radial, &angular)?;
+    let angular_l1 = xy_l1_upper(&angular, arithmetic)?;
+    let xy = arithmetic.add(&radial_l1, &angular_l1)?;
     let xy = arithmetic.add(&xy, &storage)?;
     let z = arithmetic.add(&axial, &storage)?;
-    let total = arithmetic.add(&xy, &z)?;
+    let total = position_bound(version, &xy, &z, &radial, &angular, arithmetic)?;
     Ok([
         arithmetic.upper_f64(xy.upper)?,
         arithmetic.upper_f64(z.upper)?,
         arithmetic.upper_f64(total.upper)?,
     ])
 }
+
+fn position_bound(
+    version: ConicalChartDomainVersion,
+    xy_l1: &Interval,
+    axial_and_storage: &Interval,
+    radial: &Interval,
+    angular: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Interval> {
+    match version {
+        ConicalChartDomainVersion::OriginalV2 => arithmetic.add(xy_l1, axial_and_storage),
+        ConicalChartDomainVersion::FamilyV3 => {
+            // Changing radius contributes its absolute difference. At fixed radius the
+            // chord is at most radius times angle. Both facts hold in Euclidean norm.
+            // The storage L1 bound also bounds Euclidean storage error.
+            let xy = arithmetic.add(radial, angular)?;
+            arithmetic.add(&xy, axial_and_storage)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests;
+
 pub(in super::super) fn captured_storage(
     value: &DyadicBound,
     arithmetic: &mut Arithmetic<'_>,

@@ -4,6 +4,8 @@ use crate::surface_sketch::ConeSupport;
 use std::collections::BTreeMap;
 mod reports;
 pub use reports::*;
+mod arithmetic_grant;
+pub use arithmetic_grant::*;
 mod proof;
 pub use proof::*;
 mod domain_policy;
@@ -37,6 +39,8 @@ pub struct WrappedConeNormalResult {
     pub(in crate::surface_sketch::wrapped_profile) depths: [f64; 2],
     pub(in crate::surface_sketch::wrapped_profile) options: WrappedNormalOptions,
     pub(in crate::surface_sketch::wrapped_profile) proof: WrappedConeProofOptions,
+    pub(in crate::surface_sketch::wrapped_profile) arithmetic_grant:
+        Option<operation::cone::input::grant::CapturedGrant>,
 }
 impl WrappedConeNormalResult {
     /// Caller-relative derived/split/created lineage; `result.history().len()`.

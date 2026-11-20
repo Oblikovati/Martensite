@@ -38,7 +38,7 @@ pub struct CertifiedConicalTrim {
     pub(super) operations: u32,
 }
 impl CertifiedConicalTrim {
-    /// XY L1, axial, and summed bounds, in model units; `proof.residual_bounds()`.
+    /// XY L1, axial, and Euclidean position bounds in model units; `proof.residual_bounds()`.
     pub fn residual_bounds(&self) -> [f64; 3] {
         self.bounds
     }

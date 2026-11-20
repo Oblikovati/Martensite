@@ -434,11 +434,10 @@ time/RSS and main integration remain pending. TSan startup crashed before main.
    Meet the recorded five-second/debug criterion or obtain an explicit reviewed
    change. Sparse Census coverage is for text-scale growth; it is not the main
    remaining lever for this fixture.
-5. Complete sparse certified pair coverage before text-scale #425, and resolve
-   its separate finite arithmetic-work policy using measured fitting/storage
-   costs. Complete multi-chart/wider profiles, seam/period occurrences,
-   accounted cone placement/attachment, full per-face checks and the complete
-   multiline attached-body text acceptance with edits and replay.
+5. The [239-curve cone text case](CONICAL-INPUT-WORK.md) now passes locally
+   in both normal senses within one chart. Qualify sparse pair coverage for
+   larger inputs, multi-chart/wider profiles, seam and periodic occurrences,
+   accounted cone placement and attachment, and full multiline edit replay.
 6. Run the affected canonical and hosted gates for the final source, including
    required concurrency/isolation evidence and matched performance. Remove the
    superseded production paths only after their replacement gates pass. This is

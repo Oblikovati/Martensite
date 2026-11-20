@@ -22,7 +22,12 @@ fn shared_context(failure: &ConeFailure) -> Option<shared::Context> {
         NativeQualification(cause) => Some(shared::member_context(cause)),
         Coverage(cause) => Some(shared::coverage_context(cause)),
         History(cause) => Some(shared::history_context(cause)),
-        Support(_) | ProofOptions(_) | ExecutionProof(_) | Depths(_) | SourceAnchor { .. } => None,
+        Support(_)
+        | ProofOptions(_)
+        | InputBoundProofOptions { .. }
+        | ExecutionProof(_)
+        | Depths(_)
+        | SourceAnchor { .. } => None,
         Scalar { .. } | Limit { .. } | Missing(_) | Native(_) | Encoding(_) => None,
         Storage(_) | Candidate(_) | Coefficients(_) | Boundary(_) => None,
         Radius(_) | Sector(_) | Domain(_) | Joins(_) | ChartJoins(_) | TrimPair(_)
@@ -37,7 +42,7 @@ fn shared_context(failure: &ConeFailure) -> Option<shared::Context> {
 fn admission_class(cause: &ConeCause) -> Option<Class> {
     match cause {
         Support(_) | ExecutionProof(_) => Some(Class::Unsupported),
-        ProofOptions(_) | Depths(_) => Some(Class::InvalidInput),
+        ProofOptions(_) | InputBoundProofOptions { .. } | Depths(_) => Some(Class::InvalidInput),
         Native(_) | Encoding(_) => Some(Class::Native),
         ActualBinding(_) | ActualValidation(_) => Some(Class::Incomplete),
         Storage(cause) => Some(cause.public_class()),
@@ -66,7 +71,12 @@ fn mathematical_class(cause: &ConeCause) -> Option<Class> {
         Material(_) | DevelopedMaterial(_) => material_class(cause),
         Reference(cause) => Some(numerical::reference(&cause.cause)),
         ReferenceVolume(_) | Flux(_) | Clearance(_) | Authored(_) => integral_class(cause),
-        Support(_) | ProofOptions(_) | ExecutionProof(_) | Depths(_) | SourceAnchor { .. } => None,
+        Support(_)
+        | ProofOptions(_)
+        | InputBoundProofOptions { .. }
+        | ExecutionProof(_)
+        | Depths(_)
+        | SourceAnchor { .. } => None,
         Scalar { .. } | Limit { .. } | Missing(_) | Native(_) | Encoding(_) => None,
         NativeQualification(_) | Storage(_) | Coverage(_) | History(_) => None,
         ActualBinding(_) | ActualValidation(_) => None,

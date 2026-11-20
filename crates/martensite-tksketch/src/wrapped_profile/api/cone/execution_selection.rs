@@ -12,9 +12,24 @@ pub enum WrappedConeExecutionSelection {
         domain: WrappedConeDomainPolicy,
     },
     /// Directed physical rows, PositiveXCommonChartV2, HalfSplitV1 and required certified SI.
-    /// Requires explicitly requested FilteredCompositeBernsteinV5 planar proof.
+    /// Requires explicitly requested FilteredCompositeBernsteinV5 or GeometricCompositeV6.
     /// Missing or incomplete certification refuses; native search is not a fallback.
     DirectedCommonChartRequireCertifiedV1,
+    /// The same directed certified pipeline with PositiveXFamilyChartV3 source capacity.
+    /// Numerical/work limits remain requested separately; no limit grows after refusal.
+    DirectedFamilyChartRequireCertifiedV2 {
+        /// Finite aggregate admission; the request retains the actual requested allowance.
+        arithmetic: WrappedConeArithmeticGrantPolicy,
+    },
+}
+impl WrappedConeExecutionSelection {
+    pub(in crate::surface_sketch::wrapped_profile) fn is_directed(self) -> bool {
+        matches!(
+            self,
+            Self::DirectedCommonChartRequireCertifiedV1
+                | Self::DirectedFamilyChartRequireCertifiedV2 { .. }
+        )
+    }
 }
 
 impl WrappedConeNormalResult {
@@ -39,7 +54,7 @@ impl WrappedConeNormalResult {
 }
 
 /// Execute the selected complete cone behavior without changing request defaults.
-/// Request FilteredCompositeBernsteinV5 for the directed selection; other planar modes refuse.
+/// Request FilteredCompositeBernsteinV5 or GeometricCompositeV6 for directed selections.
 /// Example: `request.proof.planar_proof = PlanarProofVersion::FilteredCompositeBernsteinV5 { max_components: 64, max_total_subintervals: 100_000 }; normal_extrude_cone_profile_with_selection(&request, selection)?;`.
 pub fn normal_extrude_cone_profile_with_selection(
     request: &WrappedConeNormalRequest,

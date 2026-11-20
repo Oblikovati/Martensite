@@ -372,8 +372,8 @@ fn magnitude_interval(values: &[Interval]) -> Interval {
     }
 }
 
-mod angle;
 mod actual_certificate;
+mod angle;
 pub use actual_certificate::*;
 mod angular;
 mod boundary;
@@ -425,7 +425,8 @@ pub use angle::{
 pub use chart_domain::{
     ConicalChartDomainBound, ConicalChartDomainError, ConicalChartDomainEvidence,
     ConicalChartDomainFailure, ConicalChartDomainQuery, ConicalChartDomainRequirement,
-    certify_conical_chart_domain,
+    ConicalChartDomainVersion, certify_conical_chart_domain,
+    certify_conical_chart_domain_with_version,
 };
 pub use reference::{
     ConicalChartReferenceQuery, ConicalReferenceError, ConicalReferenceEvidence,

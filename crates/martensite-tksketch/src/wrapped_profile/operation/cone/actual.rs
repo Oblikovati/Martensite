@@ -129,10 +129,7 @@ pub(super) fn validate_family(
     family: &super::super::stages::OwnedFamily<Selection, Geometry>,
     work: &storage::Work,
 ) -> ConeChecked<()> {
-    if !matches!(
-        family.selection.executed_selection,
-        WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
-    ) {
+    if !family.selection.executed_selection.is_directed() {
         return Ok(());
     }
     let body = work

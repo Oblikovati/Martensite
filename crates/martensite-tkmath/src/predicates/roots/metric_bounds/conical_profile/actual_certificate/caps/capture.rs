@@ -5,6 +5,7 @@ pub(super) fn cap(
     sine: &Interval,
     cosine: &Interval,
     period: &Interval,
+    bound_slant: bool,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Outcome<CapCapture> {
     let points = cap_points(query, arithmetic)?;
@@ -18,11 +19,29 @@ pub(super) fn cap(
     let radial = arithmetic.multiply(&r0, cosine)?;
     let axial = arithmetic.multiply(&z0, sine)?;
     let level = arithmetic.subtract(&radial, &axial)?;
+    let slant = bound_slant
+        .then(|| slant_coordinate(&r0, &z0, &v, sine, cosine, arithmetic))
+        .transpose()?;
     Ok(CapCapture {
         source: ConicalActualCapSnapshot::capture(query),
         u,
         level,
+        slant,
     })
+}
+fn slant_coordinate(
+    r0: &Interval,
+    z0: &Interval,
+    v: &Interval,
+    sine: &Interval,
+    cosine: &Interval,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Interval> {
+    // In common carrier coordinates, r*sin(alpha)+z*cos(alpha) = S0+v.
+    let radial = arithmetic.multiply(r0, sine)?;
+    let axial = arithmetic.multiply(z0, cosine)?;
+    let origin = arithmetic.add(&radial, &axial)?;
+    arithmetic.add(&origin, v)
 }
 fn edge_points(
     edge: &ConicalActualUvEdge<'_>,

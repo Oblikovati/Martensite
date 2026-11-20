@@ -1,0 +1,66 @@
+{
+  "math-clearance-with-work": {
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tkmath",
+      "--lib",
+      "cylindrical_clearance",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit": 0,
+    "time_s": 101.32347528700484,
+    "source_changed": [],
+    "summary": [
+      "test result: ok. 51 passed; 0 failed; 0 ignored; 0 measured; 1047 filtered out; finished in 0.03s"
+    ]
+  },
+  "math-conical-profile": {
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tkmath",
+      "--lib",
+      "conical_profile",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit": 0,
+    "time_s": 0.25568408699473366,
+    "source_changed": [],
+    "summary": [
+      "test result: ok. 229 passed; 0 failed; 0 ignored; 0 measured; 869 filtered out; finished in 0.17s"
+    ]
+  },
+  "sketch-cone": {
+    "argv": [
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "martensite-tksketch",
+      "--lib",
+      "wrapped_profile::operation::cone::",
+      "--",
+      "--test-threads=2"
+    ],
+    "exit": 0,
+    "time_s": 228.61514417798026,
+    "source_changed": [],
+    "summary": [
+      "test result: ok. 127 passed; 0 failed; 1 ignored; 0 measured; 401 filtered out; finished in 120.57s"
+    ]
+  },
+  "sketch-cone-api": {
+    "exit": 0,
+    "binary_sha256": "6b52d46ca24872c1cd469635b51422894f89fb24148a4eaa4ac053ac9310c3c1",
+    "summary": [
+      "test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 518 filtered out; finished in 6.30s"
+    ]
+  }
+}
