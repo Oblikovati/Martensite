@@ -23,7 +23,7 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn certify(
         family,
         request.options.spatial_error,
         work.remaining(),
-    );
+    )?;
     let result = query.certify(cancelled);
     let region = first_region(family)?;
     let operations = result.as_ref().map_or_else(
@@ -53,7 +53,7 @@ pub(super) fn validate(family: &ConeBudgeted) -> ConeChecked<()> {
         &family.family,
         proof.requested_spatial_limit(),
         proof.options(),
-    );
+    )?;
     if !query.matches(proof) {
         return Err(mismatch(
             first_region(&family.family)?,

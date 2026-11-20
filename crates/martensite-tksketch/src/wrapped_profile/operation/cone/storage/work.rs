@@ -12,6 +12,8 @@ pub(in crate::surface_sketch::wrapped_profile) struct Work {
     pub actual_certificate:
         Option<std::sync::Arc<martensite_tkbo::body_check::CertifiedConicalBody>>,
     pub actual_bindings: BTreeMap<SurfaceRegionId, Vec<(BindingKey, Shape)>>,
+    pub(in crate::surface_sketch::wrapped_profile::operation::cone) connected:
+        Option<Box<material::atlas::Captured>>,
 }
 impl Work {
     pub(in crate::surface_sketch::wrapped_profile) fn new(requested: ConeClearanceOptions) -> Self {
@@ -23,6 +25,7 @@ impl Work {
             actual_bindings: BTreeMap::new(),
             actual_operations: 0,
             actual_certificate: None,
+            connected: None,
         }
     }
     pub(in crate::surface_sketch::wrapped_profile) fn remaining(&self) -> ConeClearanceOptions {

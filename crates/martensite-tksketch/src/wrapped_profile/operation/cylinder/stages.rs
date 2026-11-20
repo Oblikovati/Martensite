@@ -79,6 +79,8 @@ impl SupportStages for CylinderStages {
         originals: &[Request],
         selection: &Self::Selection,
         stored: &BTreeMap<SurfaceRegionId, Self::Stored>,
+        _: &mut (),
+        _: &mut CancelPoll<'_>,
     ) -> FamilyChecked<()> {
         family::bind(originals, selection, stored)
     }

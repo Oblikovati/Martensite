@@ -92,7 +92,7 @@ pub(super) fn validate_family(family: &ConeBudgeted, limit: u64) -> ConeChecked<
     }
     Ok(())
 }
-fn validate_entry(
+pub(super) fn validate_entry(
     region: SurfaceRegionId,
     proof: &martensite_tkbo::profile_extrusion::PlanarIntegralEvidence,
     limit: u64,
@@ -107,7 +107,7 @@ fn validate_entry(
     }
     Ok(())
 }
-fn member_cells(
+pub(super) fn member_cells(
     region: SurfaceRegionId,
     consumed: u64,
     uv: u64,

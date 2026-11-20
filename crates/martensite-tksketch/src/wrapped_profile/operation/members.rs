@@ -13,8 +13,8 @@ pub(super) fn qualify<S: SupportStages>(
 ) -> Result<Members<S::Geometry>, S::Error> {
     let prepared = S::prepared(selection);
     let stored = store(support, originals, prepared, views, context, control)?;
-    control.run_for::<_, S::Error>(FamilyStage::Binding, None, |_| {
-        support.bind(originals, selection, &stored)
+    control.run_for::<_, S::Error>(FamilyStage::Binding, None, |poll| {
+        support.bind(originals, selection, &stored, context, poll)
     })?;
     if support.defer_native_checks() {
         return directed::finish(support, originals, selection, stored, context, control);

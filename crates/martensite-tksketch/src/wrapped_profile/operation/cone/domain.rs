@@ -8,6 +8,9 @@ pub(in crate::surface_sketch::wrapped_profile) enum DomainEvidence {
     },
     Chart(Arc<ConicalChartDomainEvidence>, WrappedConeDomainPolicy),
     Atlas(BTreeMap<SurfaceRegionId, Arc<ConicalChartDomainEvidence>>),
+    Connected {
+        reference_slant: f64,
+    },
 }
 impl DomainEvidence {
     pub(in crate::surface_sketch::wrapped_profile) fn policy(&self) -> WrappedConeDomainPolicy {
@@ -15,13 +18,14 @@ impl DomainEvidence {
             Self::Legacy { .. } => WrappedConeDomainPolicy::LegacySectorV1,
             Self::Chart(_, policy) => *policy,
             Self::Atlas(_) => WrappedConeDomainPolicy::PositiveXRegionAtlasV5,
+            Self::Connected { .. } => WrappedConeDomainPolicy::PositiveXConnectedAtlasV6,
         }
     }
     pub(in crate::surface_sketch::wrapped_profile) fn chart(
         &self,
     ) -> Option<&ConicalChartDomainEvidence> {
         match self {
-            Self::Legacy { .. } | Self::Atlas(_) => None,
+            Self::Legacy { .. } | Self::Atlas(_) | Self::Connected { .. } => None,
             Self::Chart(proof, _) => Some(proof),
         }
     }
@@ -30,7 +34,7 @@ impl DomainEvidence {
         region: SurfaceRegionId,
     ) -> ConeChecked<Option<&Arc<ConicalChartDomainEvidence>>> {
         match self {
-            Self::Legacy { .. } => Ok(None),
+            Self::Legacy { .. } | Self::Connected { .. } => Ok(None),
             Self::Chart(proof, _) => Ok(Some(proof)),
             Self::Atlas(charts) => charts
                 .get(&region)
@@ -48,7 +52,7 @@ impl DomainEvidence {
         match self {
             Self::Legacy { sector, .. } => prepare::selection::wedge(sector),
             Self::Chart(proof, _) => Ok(proof.wedge()),
-            Self::Atlas(_) => Ok(ConicalSectorWedge::PositiveX),
+            Self::Atlas(_) | Self::Connected { .. } => Ok(ConicalSectorWedge::PositiveX),
         }
     }
 }
@@ -92,7 +96,29 @@ pub(super) fn certify(
         WrappedConeDomainPolicy::PositiveXRegionAtlasV5 => {
             atlas(request, originals, work, cancelled)
         }
+        WrappedConeDomainPolicy::PositiveXConnectedAtlasV6 => connected(originals),
     }
+}
+fn connected(originals: &[DevelopedRegionRequest]) -> ConeChecked<DomainEvidence> {
+    admit_atlas_capacity(
+        originals,
+        ConicalChartDomainVersion::AtlasMemberV5.span_limit(),
+    )?;
+    let first = originals
+        .iter()
+        .min_by_key(|source| source.region)
+        .ok_or_else(|| {
+            prepare::failure(
+                None,
+                None,
+                ConeCause::Scalar {
+                    field: "connected cone atlas members",
+                    actual: 0.,
+                    expected: "at least one source region",
+                },
+            )
+        })?;
+    prepare::reference(first).map(|reference_slant| DomainEvidence::Connected { reference_slant })
 }
 fn chart(
     request: &ConeRun<'_>,

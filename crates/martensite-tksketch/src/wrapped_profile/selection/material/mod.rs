@@ -55,7 +55,6 @@ pub(in super::super) fn certify_with_cancel(
 }
 
 // Decoded cone cap polynomials already cover their whole parameter intervals.
-#[cfg(test)]
 pub(in super::super) fn certify_projected_with_cancel(
     requests: &[Request],
     planar: &PlanarSelectionEvidence,

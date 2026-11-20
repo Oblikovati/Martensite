@@ -238,6 +238,14 @@ fn swept_radii(
         upper: slant_motion.upper.clone(),
     };
     let swept_slants = arithmetic.add(&slant_hull, &motion)?;
+    let developed_slants = arithmetic.add(&meridian.reference_slant, &swept_slants)?;
+    if developed_slants.lower <= 0.into() {
+        return Err(ConicalReferenceFailure::Bound {
+            field: "positive developed slant over the filled cap interpolation",
+            actual: arithmetic.upper_f64(developed_slants.lower)?,
+            limit: 0.,
+        });
+    }
     let radii = meridian_radius(meridian, &swept_slants, arithmetic)?;
     if radii.lower <= 0.into() {
         return Err(ConicalReferenceFailure::Bound {

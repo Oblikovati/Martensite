@@ -8,6 +8,7 @@ use martensite_tkbo::{
 
 mod family;
 mod periodic;
+mod placement;
 
 const STRIP: [[f64; 2]; 4] = [
     [10., -5.5],
@@ -15,6 +16,71 @@ const STRIP: [[f64; 2]; 4] = [
     [31.875, 17.53125],
     [30., 16.5],
 ];
+
+#[test]
+fn public_connected_atlas_publishes_strip_wider_than_one_turn() {
+    let mut request = strip_request();
+    select_uv_program(&mut request);
+    let result = execute_atlas(&request).unwrap();
+    assert_eq!(
+        result.domain_policy(),
+        WrappedConeDomainPolicy::PositiveXConnectedAtlasV6
+    );
+    let report = &result.reports()[&SurfaceRegionId(1)];
+    assert!(report.validation.is_valid());
+    assert!(report.coverage.faces > 2 + STRIP.len());
+    assert_eq!(report.coverage.cap_pcurves, 2 * (report.coverage.faces - 2));
+    assert!(result.budget().achieved_spatial_error.upper <= request.options.spatial_error);
+    let caps = result.reference_body_receipt().decoded_caps().unwrap();
+    assert_eq!(caps.len(), 1);
+    assert_decoded_boundary(&caps[0], request.options.spatial_error);
+    assert!(
+        result
+            .reference_volume_receipt(SurfaceRegionId(1))
+            .is_none()
+    );
+    assert_eq!(
+        result.export_native().unwrap().entities.len(),
+        result.history().len()
+    );
+}
+
+#[test]
+fn public_connected_atlas_keeps_the_narrow_outlined_profile() {
+    let request = super::super::super::super::tests::supported_common_chart_request();
+    let result = execute_atlas(&request).unwrap();
+    assert_eq!(result.reports().len(), request.selections.len());
+    assert!(
+        result
+            .reports()
+            .values()
+            .all(|report| report.validation.is_valid())
+    );
+    assert!(result.budget().achieved_spatial_error.upper <= request.options.spatial_error);
+    assert!(
+        result
+            .reference_body_receipt()
+            .decoded_solid_separation()
+            .is_some()
+    );
+}
+
+fn select_uv_program(request: &mut WrappedConeNormalRequest) {
+    request.proof.planar_proof = PlanarProofVersion::GeometricCompositeV6 {
+        max_components: 64,
+        max_total_subintervals: 100_000,
+    };
+}
+
+fn execute_atlas(request: &WrappedConeNormalRequest) -> Checked<WrappedConeNormalResult> {
+    crate::surface_sketch::normal_extrude_cone_profile_with_selection(request, atlas_selection())
+}
+
+fn atlas_selection() -> WrappedConeExecutionSelection {
+    WrappedConeExecutionSelection::ConnectedChartAtlasV6 {
+        arithmetic: WrappedConeArithmeticGrantPolicy::OriginalV1,
+    }
+}
 
 #[test]
 fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {

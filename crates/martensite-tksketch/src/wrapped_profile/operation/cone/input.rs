@@ -20,7 +20,11 @@ pub(in crate::surface_sketch::wrapped_profile) fn capture_with_selection(
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Inputs> {
     if let WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 { domain } = execution {
-        if domain == WrappedConeDomainPolicy::PositiveXRegionAtlasV5 {
+        if matches!(
+            domain,
+            WrappedConeDomainPolicy::PositiveXRegionAtlasV5
+                | WrappedConeDomainPolicy::PositiveXConnectedAtlasV6
+        ) {
             return Err(rounded_atlas().public());
         }
         admit_with_ceiling(request, 1_000_000).map_err(ConeFailure::public)?;
@@ -29,7 +33,8 @@ pub(in crate::surface_sketch::wrapped_profile) fn capture_with_selection(
     if matches!(
         execution,
         WrappedConeExecutionSelection::DirectedTransportedPlacementV5 {
-            domain: WrappedConeDomainPolicy::LegacySectorV1,
+            domain: WrappedConeDomainPolicy::LegacySectorV1
+                | WrappedConeDomainPolicy::PositiveXConnectedAtlasV6,
             ..
         }
     ) {

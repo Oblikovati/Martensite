@@ -11,7 +11,7 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn certify(
 ) -> ConeChecked<ComparisonBounds> {
     let authored = range(geometry.authored.volume())?;
     let reference = &geometry.reference_volume;
-    let reference_integration_error = reference.absolute_error_bound();
+    let reference_integration_error = reference.absolute_error_bound()?;
     let authored_reference_discrepancy =
         distance([authored.lower, authored.upper], reference.enclosure())?;
     let proxy_reference_discrepancy = distance(geometry.flux.enclosure(), reference.enclosure())?;

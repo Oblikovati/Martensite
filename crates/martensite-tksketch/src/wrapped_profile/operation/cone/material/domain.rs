@@ -9,10 +9,8 @@ pub(super) fn request(
     projected_request(prepared, spans, 1, |[u, v]| [v, u])
 }
 
-#[cfg(test)]
 type DecodedMember<'a> = (&'a Prepared, &'a [storage::SpanProof]);
 
-#[cfg(test)]
 pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn periodic_requests(
     members: &[DecodedMember<'_>],
 ) -> ConeChecked<Vec<Request>> {
@@ -30,7 +28,6 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn periodic_requ
         .collect()
 }
 
-#[cfg(test)]
 fn periodic_bases(members: &[DecodedMember<'_>]) -> ConeChecked<BTreeMap<SurfaceRegionId, u64>> {
     let mut first = 1_u64;
     let mut bases = BTreeMap::new();
@@ -45,7 +42,6 @@ fn periodic_bases(members: &[DecodedMember<'_>]) -> ConeChecked<BTreeMap<Surface
     Ok(bases)
 }
 
-#[cfg(test)]
 fn periodic_counts(members: &[DecodedMember<'_>]) -> ConeChecked<BTreeMap<SurfaceRegionId, usize>> {
     let mut counts = BTreeMap::new();
     let datum = members.first().map(|(prepared, _)| cap_datum(prepared));
@@ -61,7 +57,6 @@ fn periodic_counts(members: &[DecodedMember<'_>]) -> ConeChecked<BTreeMap<Surfac
     Ok(counts)
 }
 
-#[cfg(test)]
 fn cap_datum(prepared: &Prepared) -> [u64; 5] {
     [
         prepared.reference_slant,

@@ -6,6 +6,7 @@ use super::*;
 #[derive(Debug)]
 pub struct ConicalDecodedCapEvidence {
     normal: ConicalCapNormalEvidence,
+    developed: DyadicBound,
     caps: [DyadicBound; 2],
     ruled_side: DyadicBound,
     composed: DyadicBound,
@@ -15,6 +16,10 @@ impl ConicalDecodedCapEvidence {
     /// Exact normal-reference measurements. Read them with `let proof = evidence.normal();`.
     pub fn normal(&self) -> &ConicalCapNormalEvidence {
         &self.normal
+    }
+    /// Authored-to-reference error in developed sketch units. Use `proof.developed_error()`.
+    pub fn developed_error(&self) -> &DyadicBound {
+        &self.developed
     }
 
     /// Model-unit bounds for both decoded cap carriers, in depth order.
@@ -55,9 +60,17 @@ impl ConicalCapHomotopyEvidence<'_> {
         let mut arithmetic = volume_arithmetic(options, &mut cancelled)?;
         let measures = self.normal_measures(spatial_limit, &mut arithmetic)?;
         let normal_operations = arithmetic.operations();
+        let developed = developed(self.cap, &measures, &mut arithmetic)
+            .map_err(|cause| spatial_error(cause.into(), arithmetic.operations()))?;
         let bounds = calculate(self.cap, &measures, spatial_limit, &mut arithmetic)
             .map_err(|cause| spatial_error(cause, arithmetic.operations()))?;
-        Ok(bounds.evidence(measures, spatial_limit, normal_operations, &arithmetic))
+        Ok(bounds.evidence(
+            measures,
+            developed,
+            spatial_limit,
+            normal_operations,
+            &arithmetic,
+        ))
     }
 }
 
@@ -70,6 +83,7 @@ impl DecodedBounds {
     fn evidence(
         self,
         measures: NormalMeasures,
+        developed: Interval,
         spatial_limit: f64,
         normal_operations: u32,
         arithmetic: &Arithmetic<'_>,
@@ -80,12 +94,40 @@ impl DecodedBounds {
         let normal = measures.evidence(spatial_limit, arithmetic, normal_operations);
         ConicalDecodedCapEvidence {
             normal,
+            developed: to_bound(developed),
             caps: self.caps.map(to_bound),
             ruled_side: to_bound(self.ruled_side),
             composed: to_bound(self.composed),
             operations: arithmetic.operations(),
         }
     }
+}
+fn developed(
+    cap: &CapBinding,
+    measures: &NormalMeasures,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Checked<Interval> {
+    // Remove the signed depth offset to recover the depth-zero swept radius.
+    // That radius multiplies the unwrapped physical angle in the developed plane.
+    let depth = arithmetic.multiply(&measures.meridian.thickness, &measures.meridian.cosine)?;
+    let depth = Interval {
+        lower: measures.meridian.depth_minimum.lower.clone(),
+        upper: arithmetic
+            .add(&measures.meridian.depth_minimum, &depth)?
+            .upper,
+    };
+    let radius = arithmetic.subtract(&measures.radii, &depth)?;
+    let magnitude = radius.upper.max(-radius.lower);
+    let angular = import_bound(&cap.motion, arithmetic)?;
+    let slant = import_bound(&cap.slant_motion, arithmetic)?;
+    let arc = arithmetic.multiply(
+        &Interval {
+            lower: magnitude.clone(),
+            upper: magnitude,
+        },
+        &angular,
+    )?;
+    arithmetic.add(&slant, &arc)
 }
 fn calculate(
     cap: &CapBinding,

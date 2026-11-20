@@ -141,6 +141,7 @@ pub(super) fn evidence(
         filled: bounds[1],
         storage: bounds[2],
         operations,
+        decoded: None,
     }
 }
 fn snapshots(query: &ReferenceInputs<'_>) -> Vec<Vec<BoundarySnapshot>> {
@@ -158,7 +159,8 @@ fn snapshots(query: &ReferenceInputs<'_>) -> Vec<Vec<BoundarySnapshot>> {
 }
 
 pub(super) fn matches(proof: &ConicalReferenceEvidence, query: &ReferenceInputs<'_>) -> bool {
-    proof.spatial_limit == query.spatial_limit.to_bits()
+    proof.decoded.is_none()
+        && proof.spatial_limit == query.spatial_limit.to_bits()
         && proof.options == query.options
         && proof.components == components(query)
         && proof.input.len() == query.members.len()

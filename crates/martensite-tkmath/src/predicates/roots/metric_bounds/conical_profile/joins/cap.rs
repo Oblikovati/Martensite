@@ -36,7 +36,7 @@ pub struct ConicalCapJoinsQuery<'a> {
     pub options: ConeClearanceOptions,
 }
 
-pub(super) struct CapBinding {
+pub(in super::super) struct CapBinding {
     reference: u64,
     support: [u64; 5],
     carriers: [[u64; 3]; 2],
@@ -263,7 +263,7 @@ fn evidence(
 ) -> ConicalJoinsEvidence {
     ConicalJoinsEvidence {
         chart: None,
-        cap_charts: Some(Box::new(binding)),
+        cap_charts: Some(std::sync::Arc::new(binding)),
         input: query
             .spans
             .iter()

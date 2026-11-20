@@ -74,7 +74,7 @@ pub(in crate::surface_sketch::wrapped_profile) struct Geometry {
     pub spans: Vec<storage::SpanProof>,
     pub flux: CertifiedAnalyticConicalFlux,
     pub authored: ConicalAuthoredFlux,
-    pub reference_volume: CertifiedConicalReferenceVolume,
+    pub reference_volume: measures::MemberReferenceVolume,
     pub joins: ConicalJoinsEvidence,
     pub material: material::MaterialEvidence,
     pub arithmetic_operations: u32,
@@ -89,6 +89,7 @@ pub(in crate::surface_sketch::wrapped_profile) struct Budget {
     pub volume: WrappedConeVolumeBounds,
     pub reference: ConicalReferenceEvidence,
     pub cap_reference_proxy_error: f64,
+    connected: Option<Box<material::atlas::Binding>>,
 }
 pub(in crate::surface_sketch::wrapped_profile) struct ConeRun<'a> {
     profile: &'a martensite_tkbo::profile_extrusion::SketchProfile,
@@ -124,6 +125,11 @@ pub(in crate::surface_sketch::wrapped_profile) fn execute_with_domain(
     execute_with_selection(request, execution_for_domain(domain_policy), cancelled)
 }
 fn execution_for_domain(domain: WrappedConeDomainPolicy) -> WrappedConeExecutionSelection {
+    if domain == WrappedConeDomainPolicy::PositiveXConnectedAtlasV6 {
+        return WrappedConeExecutionSelection::ConnectedChartAtlasV6 {
+            arithmetic: WrappedConeArithmeticGrantPolicy::OriginalV1,
+        };
+    }
     if domain == WrappedConeDomainPolicy::PositiveXRegionAtlasV5 {
         return WrappedConeExecutionSelection::DirectedRegionAtlasRequireCertifiedV4 {
             arithmetic: WrappedConeArithmeticGrantPolicy::OriginalV1,

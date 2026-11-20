@@ -63,6 +63,8 @@ pub(in crate::surface_sketch::wrapped_profile) trait SupportStages {
         originals: &[Self::Original],
         selection: &Self::Selection,
         stored: &BTreeMap<SurfaceRegionId, Self::Stored>,
+        context: &mut Self::Context,
+        cancelled: &mut CancelPoll<'_>,
     ) -> Result<(), Self::Error>;
     fn geometry(
         &self,

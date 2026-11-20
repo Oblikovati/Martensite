@@ -14,7 +14,9 @@ pub(super) use comparison::{
 #[cfg(test)]
 pub(super) use flux::certify as native_flux;
 mod flux;
+mod member_reference;
 mod reference;
+pub(in crate::surface_sketch::wrapped_profile) use member_reference::MemberReferenceVolume;
 mod totals;
 pub(super) fn geometry(
     request: &ConeRun<'_>,
@@ -25,8 +27,8 @@ pub(super) fn geometry(
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<(Geometry, Shape)> {
     let started = work.consumed;
-    let material = material::certify(request, original, prepared, &stored, work, &mut *cancelled)?;
-    let reference_volume = reference::certify(request, prepared, work, cancelled)?;
+    let (material, reference_volume) =
+        member_reference::certify(request, original, prepared, &stored, work, cancelled)?;
     let flux = flux::certify(request, original.region, &stored, work, cancelled)?;
     let authored = authored_for_chart(request, original, prepared, &flux, work, cancelled)?;
     let arithmetic_operations = stored.capture_operations + work.consumed - started;

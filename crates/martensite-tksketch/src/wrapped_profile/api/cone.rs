@@ -119,12 +119,14 @@ impl WrappedConeNormalResult {
             .map(|member| &member.geometry.authored)
     }
     /// Executed reference topology, filled-body and storage composition; `result.reference_body_receipt()`.
+    /// Connected atlas cap receipts are ordered by the request's region selections.
     pub fn reference_body_receipt(
         &self,
     ) -> &martensite_tkmath::predicates::roots::metric_bounds::ConicalReferenceEvidence {
         &self.family.budget.reference
     }
     /// Source-bound reference-volume integration settings and actual work; `result.reference_volume_receipt(region)`.
+    /// Connected atlas volume evidence is available through `result.reference_body_receipt().decoded_caps()`.
     pub fn reference_volume_receipt(
         &self,
         region: SurfaceRegionId,
@@ -134,7 +136,7 @@ impl WrappedConeNormalResult {
             .family
             .members
             .get(&region)
-            .map(|member| &member.geometry.reference_volume)
+            .and_then(|member| member.geometry.reference_volume.common())
     }
     /// Independent keyed native owners; `let detached = result.export_native()?;`.
     pub fn export_native(&self) -> Checked<DetachedWrappedBodies> {

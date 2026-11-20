@@ -5,6 +5,7 @@ use super::boundary::*;
 use super::developed::CombinedFailure;
 use super::*;
 mod cap;
+pub(super) use cap::CapBinding;
 pub use cap::{
     ConicalCapClearanceRelation, ConicalCapFamilyHomotopyError, ConicalCapHomotopyEvidence,
     ConicalCapHomotopyFailure, ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalCapNormalError,
@@ -141,7 +142,7 @@ impl std::error::Error for ConicalJoinProofFailure {}
 /// Conditional common-direction proof; it does not establish whole-body topology.
 pub struct ConicalJoinsEvidence {
     pub(super) chart: Option<super::boundary_chart::ChartBinding>,
-    cap_charts: Option<Box<cap::CapBinding>>,
+    pub(super) cap_charts: Option<std::sync::Arc<cap::CapBinding>>,
     pub(super) input: Vec<BoundarySnapshot>,
     pub(super) contour_lengths: Vec<usize>,
     pub(super) options: ConeClearanceOptions,

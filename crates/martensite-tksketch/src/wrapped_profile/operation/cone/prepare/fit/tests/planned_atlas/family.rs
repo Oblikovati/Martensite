@@ -4,6 +4,56 @@ use crate::surface_sketch::wrapped_profile::family::Control;
 use martensite_tkbo::profile_extrusion::{LoopUse, ProfileLoop, ProfileVertex};
 
 #[test]
+fn public_connected_atlas_reports_the_periodic_overlap_owners() {
+    let mut request = containment_request();
+    select_uv_program(&mut request);
+    let Err(error) = execute_atlas(&request) else {
+        panic!("two wrapped volumes overlap");
+    };
+    assert_eq!(error.class(), WrappedFailureClass::InvalidInput, "{error}");
+    assert_eq!(
+        error.entities(),
+        &[
+            crate::surface_sketch::HistorySource::Region(SurfaceRegionId(1)),
+            crate::surface_sketch::HistorySource::Region(SurfaceRegionId(2)),
+        ]
+    );
+}
+
+#[test]
+fn public_connected_atlas_publishes_regions_inside_a_periodic_hole() {
+    let mut request = holed_request();
+    select_uv_program(&mut request);
+    let result = execute_atlas(&request).unwrap();
+    assert_eq!(result.reports().len(), 2);
+    assert!(
+        result
+            .reports()
+            .values()
+            .all(|report| report.validation.is_valid())
+    );
+    let proof = result.reference_body_receipt();
+    assert_eq!(proof.decoded_caps().unwrap().len(), 2);
+    assert!(
+        proof
+            .decoded_solid_separation()
+            .unwrap()
+            .compare_f64(0.)
+            .unwrap()
+            .is_gt()
+    );
+    let first = result.planar_integral_receipt(SurfaceRegionId(1)).unwrap();
+    let second = result.planar_integral_receipt(SurfaceRegionId(2)).unwrap();
+    assert!(first.shares_issuance(second));
+    let members = &result.family.family.members;
+    let first = &members[&SurfaceRegionId(1)].geometry.joins;
+    let second = &members[&SurfaceRegionId(2)].geometry.joins;
+    assert!(proof.shares_decoded_join_issuance([first, second]));
+    assert!(!proof.shares_decoded_join_issuance([second, first]));
+    assert!(!proof.shares_decoded_join_issuance([first]));
+}
+
+#[test]
 fn disjoint_closed_atlas_members_bind_one_family_certificate() {
     let mut request = strip_request();
     append_quad(
@@ -54,11 +104,7 @@ fn a_periodic_image_inside_another_region_refuses_despite_boundary_clearance() {
 #[test]
 fn a_periodic_image_inside_a_certified_hole_keeps_both_regions() {
     use periodic_selection::material::OutsideReason;
-    let mut request = containment_request();
-    let mut hole = sector_quad(request.support.semi_angle, [20.5, 23.5], [-1.2, -0.5]);
-    hole.reverse();
-    let hole = append_loop(&mut request, 50, hole);
-    request.selections[0].holes.push(hole);
+    let request = holed_request();
     let mut work = Work::new(request.proof.arithmetic);
     let (prepared, stored) = freeze_family(&request, &mut work);
     let projections = projections(&prepared, &stored);
@@ -71,6 +117,15 @@ fn a_periodic_image_inside_a_certified_hole_keeps_both_regions() {
             && matches!(relation.reason, OutsideReason::InsideHole(_))
     }));
     assert_member_measures(&projections, homotopies(&stored, &boundary), &mut work);
+}
+
+fn holed_request() -> WrappedConeNormalRequest {
+    let mut request = containment_request();
+    let mut hole = sector_quad(request.support.semi_angle, [20.5, 23.5], [-1.2, -0.5]);
+    hole.reverse();
+    let hole = append_loop(&mut request, 50, hole);
+    request.selections[0].holes.push(hole);
+    request
 }
 
 fn containment_request() -> WrappedConeNormalRequest {

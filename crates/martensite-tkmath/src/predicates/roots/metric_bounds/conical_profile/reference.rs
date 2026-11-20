@@ -7,6 +7,7 @@ mod atlas;
 mod binding;
 mod chart;
 mod context;
+mod decoded_family;
 pub use atlas::{
     ConicalAtlasReferenceDomain, ConicalAtlasReferenceQuery, certify_conical_atlas_reference,
 };
@@ -15,6 +16,9 @@ pub use chart::{
     certify_conical_chart_reference_with_refinement,
 };
 use context::{ReferenceDomain, ReferenceInputs};
+pub use decoded_family::{
+    ConicalDecodedFamilyError, ConicalDecodedFamilyFailure, certify_conical_decoded_family,
+};
 pub(super) mod geometry;
 #[cfg(test)]
 mod tests;
@@ -44,7 +48,6 @@ pub struct ConicalReferenceQuery<'a> {
     pub options: ConeClearanceOptions,
 }
 /// Source-bound completed reference homotopy, full-depth normal map and storage allocation.
-#[derive(Debug)]
 pub struct ConicalReferenceEvidence {
     input: Vec<Vec<BoundarySnapshot>>,
     lengths: Vec<Vec<usize>>,
@@ -55,6 +58,25 @@ pub struct ConicalReferenceEvidence {
     filled: f64,
     storage: f64,
     operations: u32,
+    decoded: Option<Box<decoded_family::DecodedFamily>>,
+}
+impl std::fmt::Debug for ConicalReferenceEvidence {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut out = f.debug_struct("ConicalReferenceEvidence");
+        out.field("input", &self.input)
+            .field("lengths", &self.lengths)
+            .field("spatial_limit", &self.spatial_limit)
+            .field("options", &self.options)
+            .field("components", &self.components)
+            .field("developed", &self.developed)
+            .field("filled", &self.filled)
+            .field("storage", &self.storage)
+            .field("operations", &self.operations);
+        if let Some(decoded) = &self.decoded {
+            out.field("decoded", decoded);
+        }
+        out.finish()
+    }
 }
 /// A missing source binding, failed bound or incomplete arithmetic certificate.
 #[derive(Debug)]

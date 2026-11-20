@@ -206,7 +206,9 @@ fn limit_context(region: Option<SurfaceRegionId>, span: Option<CurveSpan>) -> Co
     entities.extend(span.map(|span| HistorySource::Curve(span.curve)));
     Context::new(Class::Incomplete, entities)
 }
-fn material_context(cause: &selection::MaterialFailure) -> Context {
+pub(in crate::surface_sketch::wrapped_profile) fn material_context(
+    cause: &selection::MaterialFailure,
+) -> Context {
     use selection::MaterialFailure as M;
     match cause {
         M::Admission(cause) => selection_context(cause),

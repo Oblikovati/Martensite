@@ -475,3 +475,52 @@ The metric-bound suite passed 816 tests and the cone operation suite
 passed 145, with three ignored. Clippy passed with warnings denied.
 Three pinned standalone O. runs had a median API time of 4.958 s and
 median process peak RSS of 67,676 KiB. These runs had no paired baseline.
+
+## Public connected atlas
+
+`ConnectedChartAtlasV6` runs through the shared cone operation and
+requires an explicit V5 or V6 planar proof. It takes the shared slant
+datum from the authored region with the smallest semantic key. The
+authored curves must lie in the certified positive-X developed wedge.
+The operation uses the requested fit and integration limits. The
+decoded cap profiles use one UV integral program across the family.
+The operation checks periodic winding before measuring any reference
+solid. An overlapping image reports both region keys. The cone result
+retains the decoded cap receipts in request order.
+
+The closest points of disjoint closed fills on the periodic cover
+reach their boundaries. Over the full depth interval, slant and depth
+are orthogonal in the meridian plane. The shorter angular chord is at
+least half the shortest angular difference times the certified minimum
+radius. The world-space lower bound uses the smaller of this angular
+scale and one. The decoded caps and sides have pointwise correspondence
+with the reference shell. Outside the storage-error neighborhood,
+their straight interpolation preserves the shell winding, so removing
+two storage-error bounds leaves a lower gap for the decoded solids.
+The operation also requires ordered native validity for each member.
+Native intersection search remains labeled `NativeSearch`.
+
+The wide-strip fixtures use fixed-panel authored volume integration.
+The conditioned shortcut exceeded the original `1e-7` authored
+enclosure width for both normal senses.
+
+The final scope checks passed 819 metric-bound tests, 150 cone tests
+and three public API integration tests. The cone suite ignored three
+replay workers. Seven existing cone and cylinder replay controls
+matched `cae6e377` byte for byte when run separately. Clippy passed
+with warnings denied.
+
+Five paired runs on Linux x86_64 pinned to CPU 30 measured the
+existing outlined-profile operation at 5.435 s median on
+`cae6e377` and 5.428 s with the atlas changes. Median peak RSS was
+68,372 KiB and 68,136 KiB. Three same-core runs of the connected
+mode on the outlined profile took 22.48 s median and peaked at
+126,028 KiB median. The connected mode exceeded the 5.4 s
+performance target.
+
+A full timed call of the connected mode took 21.90 s. Ordered native
+validation used 17.92 s for the outlined region and 1.28 s for the
+dot, 19.21 s combined. Selection and fitting took 0.41 s. The shared
+decoded-cap binding, periodic winding and reference measurements
+together took 1.46 s. This run timed native validation as a whole.
+The temporary stage timers and profiler output were removed.

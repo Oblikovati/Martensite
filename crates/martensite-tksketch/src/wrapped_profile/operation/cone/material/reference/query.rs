@@ -45,7 +45,7 @@ impl Inputs<'_> {
         family: &'a OwnedFamily<Selection, Geometry>,
         spatial_limit: f64,
         options: ConeClearanceOptions,
-    ) -> ReferenceQuery<'a> {
+    ) -> ConeChecked<ReferenceQuery<'a>> {
         let source = QuerySource {
             members,
             clearance: &family.selection.clearance,
@@ -53,7 +53,7 @@ impl Inputs<'_> {
             spatial_limit,
             options,
         };
-        match &family.selection.domain {
+        Ok(match &family.selection.domain {
             DomainEvidence::Legacy { sector, .. } => source.legacy(sector),
             DomainEvidence::Atlas(_) => ReferenceQuery::Atlas(AtlasQuery {
                 source,
@@ -77,7 +77,14 @@ impl Inputs<'_> {
                     query => query,
                 }
             }
-        }
+            DomainEvidence::Connected { .. } => {
+                return Err(mismatch(
+                    first_region(family)?,
+                    None,
+                    "legacy reference cannot bind a connected cap atlas",
+                ));
+            }
+        })
     }
 }
 pub(super) struct AtlasQuery<'a> {

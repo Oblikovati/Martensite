@@ -146,6 +146,8 @@ fn check_accumulation_receipts(result: &WrappedConeNormalResult) {
         assert_eq!(
             geometry
                 .reference_volume
+                .common()
+                .unwrap()
                 .requested_options()
                 .behavior_version,
             2
@@ -153,6 +155,8 @@ fn check_accumulation_receipts(result: &WrappedConeNormalResult) {
         assert_eq!(
             geometry
                 .reference_volume
+                .common()
+                .unwrap()
                 .effective_options()
                 .behavior_version,
             2

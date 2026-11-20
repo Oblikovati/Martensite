@@ -24,6 +24,9 @@ pub(super) fn certify(
     Ok(())
 }
 fn sector(originals: &[DevelopedRegionRequest], selection: &Selection) -> ConeChecked<()> {
+    if let domain::DomainEvidence::Connected { reference_slant } = &selection.domain {
+        return connected(originals, &selection.prepared, *reference_slant);
+    }
     if let domain::DomainEvidence::Atlas(charts) = &selection.domain {
         return atlas(originals, &selection.prepared, charts);
     }
@@ -39,6 +42,39 @@ fn sector(originals: &[DevelopedRegionRequest], selection: &Selection) -> ConeCh
         .all(|member| authority_matches(&selection.domain, prepared, member, &spans));
     if !matches || !owners_match {
         return Err(family_mismatch("domain original source binding"));
+    }
+    Ok(())
+}
+
+fn connected(
+    originals: &[DevelopedRegionRequest],
+    prepared: &[Prepared],
+    slant: f64,
+) -> ConeChecked<()> {
+    let datum = originals
+        .iter()
+        .min_by_key(|source| source.region)
+        .map(prepare::reference)
+        .transpose()?;
+    if datum.map(f64::to_bits) != Some(slant.to_bits()) || originals.len() != prepared.len() {
+        return Err(family_mismatch(
+            "complete connected atlas and source slant datum",
+        ));
+    }
+    for (original, prepared) in originals.iter().zip(prepared) {
+        if original.region != prepared.source.region
+            || prepared.local_charts.is_empty()
+            || prepared.chart_domain.is_some()
+            || prepared.reference_slant.to_bits() != slant.to_bits()
+        {
+            return Err(mismatch(
+                original.region,
+                None,
+                "connected atlas member authority",
+                vec![0],
+                vec![1],
+            ));
+        }
     }
     Ok(())
 }
@@ -92,7 +128,7 @@ fn domain_matches(
             options: *options,
         }),
         domain::DomainEvidence::Chart(proof, _) => chart_matches(proof, prepared, spans),
-        domain::DomainEvidence::Atlas(_) => false,
+        domain::DomainEvidence::Atlas(_) | domain::DomainEvidence::Connected { .. } => false,
     }
 }
 fn chart_matches(

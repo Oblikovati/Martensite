@@ -39,7 +39,8 @@ impl SupportStages for ConeStages<'_> {
             | WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 { .. }
             | WrappedConeExecutionSelection::DirectedRecenteredChartRequireCertifiedV3 { .. }
             | WrappedConeExecutionSelection::DirectedRegionAtlasRequireCertifiedV4 { .. }
-            | WrappedConeExecutionSelection::DirectedTransportedPlacementV5 { .. } => {
+            | WrappedConeExecutionSelection::DirectedTransportedPlacementV5 { .. }
+            | WrappedConeExecutionSelection::ConnectedChartAtlasV6 { .. } => {
                 prepare::select_with_execution(
                     self.request,
                     originals,
@@ -128,8 +129,21 @@ impl SupportStages for ConeStages<'_> {
         originals: &[DevelopedRegionRequest],
         selection: &Selection,
         stored: &BTreeMap<SurfaceRegionId, storage::Stored>,
+        context: &mut storage::Work,
+        cancelled: &mut CancelPoll<'_>,
     ) -> ConeChecked<()> {
-        storage::bind(originals, selection, stored)
+        storage::bind(originals, selection, stored)?;
+        if selection.executed_selection.is_connected_atlas() {
+            context.connected = Some(Box::new(material::atlas::capture(
+                self.request,
+                originals,
+                selection,
+                stored,
+                context,
+                cancelled,
+            )?));
+        }
+        Ok(())
     }
     fn geometry(
         &self,

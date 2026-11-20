@@ -73,6 +73,14 @@ fn admitted_chart<'a>(
     region: SurfaceRegionId,
     wedge: ConicalSectorWedge,
 ) -> ConeChecked<AdmittedConeChart<'a>> {
+    if let domain::DomainEvidence::Connected { reference_slant } = domain {
+        return Ok(AdmittedConeChart {
+            wedge,
+            center: request.support.chart_origin,
+            proof: None,
+            local_reference_slant: Some(*reference_slant),
+        });
+    }
     let proof = domain.owner(region)?;
     let center = match proof {
         Some(chart) => chart.fit_center(),
@@ -275,6 +283,9 @@ fn execution_domain(execution: WrappedConeExecutionSelection) -> WrappedConeDoma
         }
         WrappedConeExecutionSelection::DirectedRegionAtlasRequireCertifiedV4 { .. } => {
             WrappedConeDomainPolicy::PositiveXRegionAtlasV5
+        }
+        WrappedConeExecutionSelection::ConnectedChartAtlasV6 { .. } => {
+            WrappedConeDomainPolicy::PositiveXConnectedAtlasV6
         }
     }
 }

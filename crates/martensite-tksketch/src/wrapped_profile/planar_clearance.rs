@@ -118,7 +118,6 @@ pub(super) fn certify_many_with_cancel(
     })
 }
 
-#[cfg(test)]
 pub(super) fn certify_many_with_limit(
     originals: &[Request],
     prepared: &[Request],

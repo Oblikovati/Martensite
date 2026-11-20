@@ -37,6 +37,7 @@ impl ConeCause {
             Sector(cause) => Some(("single-turn sector", cause.as_ref())),
             Domain(cause) => Some(("source-bound chart domain", cause.as_ref())),
             ChartPlan(cause) => Some(("local chart planning", cause.as_ref())),
+            Atlas(cause) => Some(("decoded cone atlas", cause.as_ref())),
             Joins(cause) => Some(("source joins", cause.as_ref())),
             ChartJoins(cause) => Some(("chart source joins", cause.as_ref())),
             TrimPair(cause) => Some(("analytic cap trim pair", cause.as_ref())),

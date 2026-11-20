@@ -60,6 +60,7 @@ pub(in crate::surface_sketch::wrapped_profile) enum ConeCause {
     Sector(Box<ConicalSectorFailure>),
     Domain(Box<ConicalChartDomainError>),
     ChartPlan(Box<ConicalChartPlanError>),
+    Atlas(Box<material::atlas::Refusal>),
     Joins(Box<ConicalJoinsFailure>),
     ChartJoins(Box<ConicalChartJoinsError>),
     TrimPair(Box<ConicalTrimPairError>),
@@ -129,6 +130,7 @@ impl ConeFailure {
             Boundary(_) | Radius(_) | Sector(_) | Domain(_) | Joins(_) | ChartJoins(_)
             | TrimPair(_) | ChartTrimPair(_) => self.local_cancelled(),
             ChartPlan(cause) => cause.is_cancelled(),
+            Atlas(cause) => cause.cancelled(),
             ConeCause::Clearance(cause) => cause.is_cancelled(),
             ConeCause::Flux(cause) => flux_cancelled(cause),
             ConeCause::Authored(cause) => cause.is_cancelled(),

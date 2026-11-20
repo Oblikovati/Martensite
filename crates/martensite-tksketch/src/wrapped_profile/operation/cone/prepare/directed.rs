@@ -122,7 +122,7 @@ pub(in super::super) fn admit(
     execution: WrappedConeExecutionSelection,
 ) -> ConeChecked<()> {
     use martensite_tkbo::profile_extrusion::PlanarProofVersion;
-    if execution.is_directed()
+    if (execution.is_directed() || execution.is_connected_atlas())
         && !matches!(
             request.proof.planar_proof,
             PlanarProofVersion::FilteredCompositeBernsteinV5 { .. }

@@ -38,8 +38,17 @@ pub enum WrappedConeExecutionSelection {
         /// Finite aggregate admission; the request retains the actual requested allowance.
         arithmetic: WrappedConeArithmeticGrantPolicy,
     },
+    /// Source-bound local charts, decoded cap reference and native member validation.
+    /// Requires explicitly requested FilteredCompositeBernsteinV5 or GeometricCompositeV6.
+    ConnectedChartAtlasV6 {
+        /// Finite aggregate arithmetic admission.
+        arithmetic: WrappedConeArithmeticGrantPolicy,
+    },
 }
 impl WrappedConeExecutionSelection {
+    pub(in crate::surface_sketch::wrapped_profile) fn is_connected_atlas(self) -> bool {
+        matches!(self, Self::ConnectedChartAtlasV6 { .. })
+    }
     pub(in crate::surface_sketch::wrapped_profile) fn requires_transported_placement(self) -> bool {
         matches!(self, Self::DirectedTransportedPlacementV5 { .. })
     }
@@ -78,7 +87,7 @@ impl WrappedConeNormalResult {
 }
 
 /// Execute the selected complete cone behavior without changing request defaults.
-/// Request FilteredCompositeBernsteinV5 or GeometricCompositeV6 for directed selections.
+/// Request FilteredCompositeBernsteinV5 or GeometricCompositeV6 for directed or connected-atlas selections.
 /// Example: `request.proof.planar_proof = PlanarProofVersion::FilteredCompositeBernsteinV5 { max_components: 64, max_total_subintervals: 100_000 }; normal_extrude_cone_profile_with_selection(&request, selection)?;`.
 pub fn normal_extrude_cone_profile_with_selection(
     request: &WrappedConeNormalRequest,

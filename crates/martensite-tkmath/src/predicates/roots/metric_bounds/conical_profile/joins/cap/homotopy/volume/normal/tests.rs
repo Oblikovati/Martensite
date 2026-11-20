@@ -37,6 +37,25 @@ fn a_positive_decoded_cap_can_still_have_an_unresolved_swept_radius() {
 }
 
 #[test]
+fn positive_outward_depth_does_not_hide_a_developed_apex_crossing() {
+    let mut never = || false;
+    let mut arithmetic = volume_arithmetic(Default::default(), &mut never).unwrap();
+    let moments = rectangle_moments(&mut arithmetic);
+    let mut cap = rectangle_support(4., true);
+    cap.reference = 0.5_f64.to_bits();
+    cap.support[2] = 2_f64.to_bits();
+    cap.slant_motion = DyadicBound::from_f64(1.).unwrap();
+    let meridian = Meridian::capture(&cap, &mut arithmetic).unwrap();
+    assert!(matches!(
+        spatial(&cap, &moments, &meridian, 2., &mut arithmetic),
+        Err(ConicalReferenceFailure::Bound {
+            field: "positive developed slant over the filled cap interpolation",
+            ..
+        })
+    ));
+}
+
+#[test]
 fn exceeding_the_spatial_allowance_preserves_the_requested_limit() {
     let mut never = || false;
     let mut arithmetic = volume_arithmetic(Default::default(), &mut never).unwrap();

@@ -38,6 +38,17 @@ fn shared_context(failure: &ConeFailure) -> Option<shared::Context> {
         }
         ActualPatch(_) | ActualPair { .. } | DirectedRows(_) => None,
         ChartPlan(_) => None,
+        Atlas(cause) => match cause.as_ref() {
+            material::atlas::Refusal::Material(cause) => {
+                let mut context = shared::material_context(cause);
+                // Projected witness keys identify decoded spans, not authored curves.
+                context
+                    .entities
+                    .retain(|source| matches!(source, HistorySource::Region(_)));
+                Some(context)
+            }
+            _ => None,
+        },
     }
 }
 fn admission_class(cause: &ConeCause) -> Option<Class> {
@@ -56,7 +67,7 @@ fn admission_class(cause: &ConeCause) -> Option<Class> {
         | Material(_) | DevelopedMaterial(_) => None,
         Reference(_) | ReferenceVolume(_) | Flux(_) | Clearance(_) | Authored(_) => None,
         ActualPatch(_) | ActualPair { .. } | DirectedRows(_) => None,
-        ChartPlan(_) => None,
+        ChartPlan(_) | Atlas(_) => None,
     }
 }
 fn mathematical_class(cause: &ConeCause) -> Option<Class> {
@@ -69,6 +80,7 @@ fn mathematical_class(cause: &ConeCause) -> Option<Class> {
         Sector(cause) => Some(numerical::sector(cause)),
         Domain(cause) => Some(numerical::domain(&cause.cause)),
         ChartPlan(cause) => Some(chart_plan_class(&cause.cause)),
+        Atlas(_) => None,
         Joins(_) | ChartJoins(_) => join_class(cause),
         TrimPair(_) | ChartTrimPair(_) => trim_class(cause),
         Material(_) | DevelopedMaterial(_) => material_class(cause),

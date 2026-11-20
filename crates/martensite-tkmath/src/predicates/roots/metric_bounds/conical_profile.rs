@@ -433,9 +433,10 @@ pub use chart_domain::{
 };
 pub use reference::{
     ConicalAtlasReferenceDomain, ConicalAtlasReferenceQuery, ConicalChartReferenceQuery,
-    ConicalReferenceError, ConicalReferenceEvidence, ConicalReferenceFailure,
-    ConicalReferenceMember, ConicalReferenceQuery, certify_conical_atlas_reference,
-    certify_conical_chart_reference, certify_conical_chart_reference_with_refinement,
+    ConicalDecodedFamilyError, ConicalDecodedFamilyFailure, ConicalReferenceError,
+    ConicalReferenceEvidence, ConicalReferenceFailure, ConicalReferenceMember,
+    ConicalReferenceQuery, certify_conical_atlas_reference, certify_conical_chart_reference,
+    certify_conical_chart_reference_with_refinement, certify_conical_decoded_family,
     certify_conical_reference,
 };
 pub use request::{

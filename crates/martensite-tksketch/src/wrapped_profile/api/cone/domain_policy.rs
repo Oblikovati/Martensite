@@ -16,6 +16,8 @@ pub enum WrappedConeDomainPolicy {
     PositiveXRecenteredChartV4,
     /// One independently centered Positive-X chart per disconnected region.
     PositiveXRegionAtlasV5,
+    /// Local Positive-X charts over exact subintervals of connected or disconnected contours.
+    PositiveXConnectedAtlasV6,
 }
 impl WrappedConeNormalResult {
     /// Retained cone-domain behavior; `assert_eq!(result.domain_policy(), policy)`.
@@ -31,6 +33,7 @@ impl WrappedConeNormalResult {
         self.family.family.selection.domain.chart()
     }
     /// Chart for one selected region, including atlas members.
+    /// The connected atlas certifies each fitted interval individually.
     /// Example: `result.region_chart_domain_receipt(SurfaceRegionId(1))`.
     pub fn region_chart_domain_receipt(
         &self,

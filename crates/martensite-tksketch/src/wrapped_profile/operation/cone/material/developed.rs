@@ -31,19 +31,22 @@ pub(super) fn matches(
     proofs: &[storage::SpanProof],
     material: &MaterialEvidence,
 ) -> ConeChecked<bool> {
+    let MaterialRealization::Common(normal) = &material.normal else {
+        return Ok(false);
+    };
     let Some(domain) = prepared.chart_domain.as_deref() else {
-        return Ok(material.normal.matches(query));
+        return Ok(normal.matches(query));
     };
     let contexts = contexts(&material.original, prepared, proofs)?;
     Ok(if super::super::domain::directed(prepared) {
-        material.normal.matches_developed_with_refinement(
+        normal.matches_developed_with_refinement(
             query,
             &contexts,
             domain,
             ConicalPrimitiveRefinement::HalfSplitV1,
         )
     } else {
-        material.normal.matches_developed(query, &contexts, domain)
+        normal.matches_developed(query, &contexts, domain)
     })
 }
 fn contexts<'a>(

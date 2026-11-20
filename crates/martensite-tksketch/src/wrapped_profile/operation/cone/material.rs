@@ -1,6 +1,7 @@
 //! Filled-material evidence combines actual compact UV topology with the whole normal map.
 use super::*;
 use martensite_tkbo::profile_extrusion::PlanarProofVersion;
+pub(super) mod atlas;
 mod binding;
 mod domain;
 pub(super) use domain::curve_ids as source_curve_ids;
@@ -15,13 +16,17 @@ pub(in crate::surface_sketch::wrapped_profile) struct MaterialEvidence {
     original: DevelopedRegionRequest,
     uv: planar::PlanarEvidence,
     pub(super) selected_material: Option<martensite_tkbo::body_check::CertifiedPlanarMaterial>,
-    normal: ConicalMaterialEvidence,
+    normal: MaterialRealization,
     carriers: [ConicalTrimCarrier; 2],
     options: ConeClearanceOptions,
     planar_proof: PlanarProofVersion,
     requested_planar_proof: PlanarProofVersion,
     pub(super) census: martensite_tkbo::profile_extrusion::RegionCertificate,
     pub(super) planar_work: martensite_tkbo::profile_extrusion::PlanarProofWorkReceipt,
+}
+enum MaterialRealization {
+    Common(ConicalMaterialEvidence),
+    Decoded(f64),
 }
 impl MaterialEvidence {
     pub(in crate::surface_sketch::wrapped_profile) fn carriers(&self) -> [ConicalTrimCarrier; 2] {
@@ -42,7 +47,10 @@ impl MaterialEvidence {
         self.original.tolerance
     }
     pub(super) fn spatial_error(&self) -> f64 {
-        self.normal.spatial_error()
+        match &self.normal {
+            MaterialRealization::Common(proof) => proof.spatial_error(),
+            MaterialRealization::Decoded(error) => *error,
+        }
     }
 }
 pub(super) fn certify(
@@ -60,7 +68,7 @@ pub(super) fn certify(
         original: original.clone(),
         uv: captured.uv,
         selected_material: captured.selected,
-        normal,
+        normal: MaterialRealization::Common(normal),
         carriers: stored.carriers,
         options,
         planar_proof: captured.version,
@@ -201,6 +209,9 @@ pub(super) fn validate_publication(
     family: &ConeBudgeted,
     integration_limit: u64,
 ) -> ConeChecked<()> {
+    if let Some(atlas) = &family.budget.connected {
+        return atlas::validate(family, atlas, integration_limit);
+    }
     program::validate_family(family, integration_limit)?;
     for prepared in &family.family.selection.prepared {
         let region = prepared.source.region;
