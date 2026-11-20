@@ -11,7 +11,7 @@ struct Inputs<'a> {
     atlas: Vec<(&'a ConicalChartDomainEvidence, std::ops::Range<usize>)>,
 }
 pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn certify(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     family: &OwnedFamily<Selection, Geometry>,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,

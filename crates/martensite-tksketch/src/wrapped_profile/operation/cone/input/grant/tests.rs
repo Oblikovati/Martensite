@@ -38,7 +38,7 @@ fn original_selection_keeps_old_admission_and_no_extra_source_snapshot() {
     let original = WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1;
     assert_eq!(admission_ceiling(original), 1_000_000);
     assert!(
-        capture(&request, original, &inputs.originals)
+        capture(&ConeRun::from(&request), original, &inputs.originals)
             .unwrap()
             .is_none()
     );
@@ -49,29 +49,29 @@ fn original_selection_keeps_old_admission_and_no_extra_source_snapshot() {
 fn requested_aggregate_is_preserved_and_never_clamped_to_input_ceiling() {
     let (mut request, inputs) = captured();
     request.proof.arithmetic.max_operations = 1_000_000;
-    let grant = capture(&request, selection(), &inputs.originals)
+    let grant = capture(&ConeRun::from(&request), selection(), &inputs.originals)
         .unwrap()
         .unwrap();
     assert_eq!(grant.receipt.requested_operations, 1_000_000);
     assert_eq!(grant.receipt.input_ceiling, 1_000_000);
     request.proof.arithmetic.max_operations += 1;
-    assert!(capture(&request, selection(), &inputs.originals).is_err());
+    assert!(capture(&ConeRun::from(&request), selection(), &inputs.originals).is_err());
     assert_eq!(request.proof.arithmetic.max_operations, 1_000_001);
 }
 
 #[test]
 fn snapshot_rejects_raw_source_edits_order_and_loop_partition_changes() {
     let (request, mut inputs) = captured();
-    let grant = capture(&request, selection(), &inputs.originals)
+    let grant = capture(&ConeRun::from(&request), selection(), &inputs.originals)
         .unwrap()
         .unwrap();
     grant
-        .validate(&request, selection(), &inputs.originals)
+        .validate(&ConeRun::from(&request), selection(), &inputs.originals)
         .unwrap();
     inputs.originals[0].loops[0].swap(0, 1);
     assert!(
         grant
-            .validate(&request, selection(), &inputs.originals)
+            .validate(&ConeRun::from(&request), selection(), &inputs.originals)
             .is_err()
     );
     inputs.originals[0].loops[0].swap(0, 1);
@@ -79,7 +79,7 @@ fn snapshot_rejects_raw_source_edits_order_and_loop_partition_changes() {
     inputs.originals[0].loops.insert(1, tail);
     assert!(
         grant
-            .validate(&request, selection(), &inputs.originals)
+            .validate(&ConeRun::from(&request), selection(), &inputs.originals)
             .is_err()
     );
     let tail = inputs.originals[0].loops.remove(1);
@@ -87,7 +87,7 @@ fn snapshot_rejects_raw_source_edits_order_and_loop_partition_changes() {
     inputs.originals[0].loops[0][0].poles[0][0] = 4_f64.next_up();
     assert!(
         grant
-            .validate(&request, selection(), &inputs.originals)
+            .validate(&ConeRun::from(&request), selection(), &inputs.originals)
             .is_err()
     );
 }
@@ -95,26 +95,26 @@ fn snapshot_rejects_raw_source_edits_order_and_loop_partition_changes() {
 #[test]
 fn snapshot_rejects_selector_limits_and_source_metadata_mutations() {
     let (mut request, mut inputs) = captured();
-    let grant = capture(&request, selection(), &inputs.originals)
+    let grant = capture(&ConeRun::from(&request), selection(), &inputs.originals)
         .unwrap()
         .unwrap();
     let original = WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1;
     assert!(
         grant
-            .validate(&request, original, &inputs.originals)
+            .validate(&ConeRun::from(&request), original, &inputs.originals)
             .is_err()
     );
     request.options.maximum_fit_level -= 1;
     assert!(
         grant
-            .validate(&request, selection(), &inputs.originals)
+            .validate(&ConeRun::from(&request), selection(), &inputs.originals)
             .is_err()
     );
     request.options.maximum_fit_level += 1;
     inputs.originals[0].depths[0] = inputs.originals[0].depths[0].next_up();
     assert!(
         grant
-            .validate(&request, selection(), &inputs.originals)
+            .validate(&ConeRun::from(&request), selection(), &inputs.originals)
             .is_err()
     );
 }
@@ -124,14 +124,14 @@ fn receipt_and_selector_are_shareable_immutable_values() {
     static_assertions::assert_impl_all!(WrappedConeArithmeticGrantReceipt: Send, Sync);
     static_assertions::assert_impl_all!(WrappedConeArithmeticGrantPolicy: Send, Sync);
     let (request, inputs) = captured();
-    let grant = capture(&request, selection(), &inputs.originals)
+    let grant = capture(&ConeRun::from(&request), selection(), &inputs.originals)
         .unwrap()
         .unwrap();
     let mut receipt = grant.receipt;
     receipt.requested_operations = 0;
     assert_ne!(receipt, grant.receipt);
     grant
-        .validate(&request, selection(), &inputs.originals)
+        .validate(&ConeRun::from(&request), selection(), &inputs.originals)
         .unwrap();
 }
 

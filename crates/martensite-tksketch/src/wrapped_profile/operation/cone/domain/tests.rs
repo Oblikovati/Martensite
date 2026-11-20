@@ -8,7 +8,7 @@ fn chart_receipt_retains_source_policy_and_exactly_once_work() {
     let originals = originals(&request);
     let mut work = storage::Work::new(request.proof.arithmetic);
     let domain = certify(
-        &request,
+        &ConeRun::from(&request),
         &originals,
         WrappedConeDomainPolicy::PositiveXCommonChartV2,
         &mut work,
@@ -101,7 +101,7 @@ fn chart_selection() -> (Inputs, Selection) {
     let inputs = input::capture(&request, &mut || false).unwrap();
     let mut work = storage::Work::new(request.proof.arithmetic);
     let selected = prepare::select_with_policy(
-        &request,
+        &ConeRun::from(&request),
         &inputs.originals,
         WrappedConeDomainPolicy::PositiveXCommonChartV2,
         &mut work,

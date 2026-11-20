@@ -53,7 +53,7 @@ impl DomainEvidence {
     }
 }
 pub(super) fn certify(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     policy: WrappedConeDomainPolicy,
     work: &mut storage::Work,
@@ -95,7 +95,7 @@ pub(super) fn certify(
     }
 }
 fn chart(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     policy: WrappedConeDomainPolicy,
     version: ConicalChartDomainVersion,
@@ -106,7 +106,7 @@ fn chart(
         .map(|proof| DomainEvidence::Chart(proof, policy))
 }
 fn chart_proof(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     version: ConicalChartDomainVersion,
     work: &mut storage::Work,
@@ -129,7 +129,7 @@ fn chart_proof(
     )
 }
 fn atlas(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,

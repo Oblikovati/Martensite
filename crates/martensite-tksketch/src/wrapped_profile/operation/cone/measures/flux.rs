@@ -1,7 +1,7 @@
 //! The actual frozen cap and side occurrences supply the conditional centered patch flux.
 use super::*;
 pub(super) fn certify(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     region: SurfaceRegionId,
     stored: &storage::Stored,
     work: &mut storage::Work,

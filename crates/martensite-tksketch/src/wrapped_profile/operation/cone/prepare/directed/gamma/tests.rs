@@ -53,7 +53,7 @@ fn nearest(
     work: &mut Work,
 ) -> Vec<Prepared> {
     let domain = domain::certify(
-        request,
+        &ConeRun::from(request),
         originals,
         WrappedConeDomainPolicy::PositiveXCommonChartV2,
         work,
@@ -61,7 +61,7 @@ fn nearest(
     )
     .unwrap();
     prepare_regions(
-        request,
+        &ConeRun::from(request),
         originals,
         &domain,
         WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1,

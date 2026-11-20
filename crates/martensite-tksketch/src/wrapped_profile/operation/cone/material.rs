@@ -40,7 +40,7 @@ impl MaterialEvidence {
     }
 }
 pub(super) fn certify(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     original: &DevelopedRegionRequest,
     prepared: &Prepared,
     stored: &storage::Stored,
@@ -64,7 +64,7 @@ pub(super) fn certify(
     })
 }
 fn certify_uv(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     original: &DevelopedRegionRequest,
     prepared: &Prepared,
     stored: &storage::Stored,
@@ -83,7 +83,7 @@ fn certify_uv(
     finish_uv(request, original, prepared, &uv_request, captured)
 }
 fn finish_uv(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     original: &DevelopedRegionRequest,
     prepared: &Prepared,
     uv_request: &DevelopedRegionRequest,

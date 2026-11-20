@@ -209,8 +209,13 @@ mod reuse_tests {
         let request = super::super::super::tests::request();
         let inputs = input::capture(&request, &mut || false).unwrap();
         let mut work = Work::new(request.proof.arithmetic);
-        let selection =
-            prepare::select(&request, &inputs.originals, &mut work, &mut || false).unwrap();
+        let selection = prepare::select(
+            &ConeRun::from(&request),
+            &inputs.originals,
+            &mut work,
+            &mut || false,
+        )
+        .unwrap();
         let (original, prepared) = (&inputs.originals[0], &selection.prepared[0]);
         let piece = &prepared.source.loops[0][0];
         let fit = &prepared.fits[&piece.span];

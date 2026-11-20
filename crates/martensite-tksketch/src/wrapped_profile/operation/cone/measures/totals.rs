@@ -3,7 +3,7 @@ use super::comparison::add;
 use super::*;
 mod native_validation;
 pub(super) fn certify(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     family: &OwnedFamily<Selection, Geometry>,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
@@ -139,7 +139,7 @@ fn cap_bridge(
     }
     Ok(maximum)
 }
-fn enforce_spatial(request: &WrappedConeNormalRequest, actual: f64) -> ConeChecked<()> {
+fn enforce_spatial(request: &ConeRun<'_>, actual: f64) -> ConeChecked<()> {
     if actual > request.options.spatial_error {
         return Err(scalar(
             "achieved cone spatial bound",
@@ -150,7 +150,7 @@ fn enforce_spatial(request: &WrappedConeNormalRequest, actual: f64) -> ConeCheck
     Ok(())
 }
 fn verify_work(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     family: &OwnedFamily<Selection, Geometry>,
     work: &storage::Work,
     reference_operations: u32,

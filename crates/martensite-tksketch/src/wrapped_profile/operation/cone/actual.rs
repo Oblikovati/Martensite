@@ -15,7 +15,7 @@ pub(in crate::surface_sketch::wrapped_profile) struct NativeFamily {
     members: BTreeMap<SurfaceRegionId, ConicalNativeMember>,
 }
 pub(super) fn certify_family(
-    _request: &WrappedConeNormalRequest,
+    _request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     selection: &Selection,
     members: &BTreeMap<SurfaceRegionId, (Geometry, Shape)>,

@@ -8,7 +8,7 @@ mod endpoints;
 mod fit;
 pub(super) mod selection;
 pub(super) fn select(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
@@ -22,7 +22,7 @@ pub(super) fn select(
     )
 }
 pub(super) fn select_with_policy(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     policy: WrappedConeDomainPolicy,
     work: &mut Work,
@@ -37,7 +37,7 @@ pub(super) fn select_with_policy(
     )
 }
 pub(super) fn select_with_execution(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     execution: WrappedConeExecutionSelection,
     work: &mut Work,
@@ -67,7 +67,7 @@ struct AdmittedConeChart<'a> {
     proof: Option<&'a std::sync::Arc<ConicalChartDomainEvidence>>,
 }
 fn admitted_chart<'a>(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     domain: &'a domain::DomainEvidence,
     region: SurfaceRegionId,
     wedge: ConicalSectorWedge,
@@ -85,7 +85,7 @@ fn admitted_chart<'a>(
 }
 
 fn prepare_regions(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     domain: &domain::DomainEvidence,
     execution: WrappedConeExecutionSelection,
@@ -113,7 +113,7 @@ fn prepare_regions(
 }
 
 fn prepare_region(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     source: &DevelopedRegionRequest,
     chart: &AdmittedConeChart<'_>,
     execution: WrappedConeExecutionSelection,
@@ -139,7 +139,7 @@ fn prepare_region(
     Ok(prepared)
 }
 fn initial(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     source: &DevelopedRegionRequest,
     chart: &AdmittedConeChart<'_>,
     execution: WrappedConeExecutionSelection,
@@ -230,10 +230,7 @@ pub(super) fn failure(
         .at(WrappedStage::Construction)
 }
 
-fn common_center(
-    request: &WrappedConeNormalRequest,
-    wedge: ConicalSectorWedge,
-) -> ConeChecked<f64> {
+fn common_center(request: &ConeRun<'_>, wedge: ConicalSectorWedge) -> ConeChecked<f64> {
     if wedge == ConicalSectorWedge::PositiveX {
         return Ok(request.support.chart_origin);
     }

@@ -35,8 +35,8 @@ pub(super) fn admission_ceiling(execution: WrappedConeExecutionSelection) -> u32
     }
 }
 
-pub(super) fn capture(
-    request: &WrappedConeNormalRequest,
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn capture(
+    request: &ConeRun<'_>,
     execution: WrappedConeExecutionSelection,
     originals: &[DevelopedRegionRequest],
 ) -> ConeChecked<Option<CapturedGrant>> {
@@ -53,7 +53,7 @@ pub(super) fn capture(
 }
 
 fn admission(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
 ) -> ConeChecked<WrappedConeArithmeticGrantReceipt> {
     let spans = source_count(originals)?;
@@ -121,7 +121,7 @@ fn input_ceiling(spans: u32, level: u8) -> ConeChecked<u32> {
 impl CapturedGrant {
     pub(in crate::surface_sketch::wrapped_profile) fn validate(
         &self,
-        request: &WrappedConeNormalRequest,
+        request: &ConeRun<'_>,
         execution: WrappedConeExecutionSelection,
         originals: &[DevelopedRegionRequest],
     ) -> ConeChecked<()> {

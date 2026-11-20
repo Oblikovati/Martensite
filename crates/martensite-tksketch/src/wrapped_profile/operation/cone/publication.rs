@@ -8,7 +8,7 @@ mod tests;
 pub(super) use tests::{assert_publication, assert_publication_core};
 
 pub(super) fn publish(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     inputs: Inputs,
     family: ConeBudgeted,
     cancelled: &mut CancelPoll<'_>,
@@ -43,7 +43,7 @@ pub(super) fn publish(
 }
 
 fn assemble(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     family: ConeBudgeted,
     history: history_projection::HistoryPublication,
     reports: BTreeMap<SurfaceRegionId, WrappedConeMemberReport>,
@@ -64,7 +64,7 @@ fn assemble(
 }
 
 fn project_history(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     inputs: &Inputs,
     family: &ConeBudgeted,
 ) -> Checked<history_projection::HistoryPublication> {

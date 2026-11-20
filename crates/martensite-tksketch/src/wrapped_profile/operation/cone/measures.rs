@@ -11,7 +11,7 @@ mod flux;
 mod reference;
 mod totals;
 pub(super) fn geometry(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     original: &DevelopedRegionRequest,
     prepared: &Prepared,
     stored: storage::Stored,
@@ -37,7 +37,7 @@ pub(super) fn geometry(
     Ok((geometry, stored.shape))
 }
 pub(super) fn budget(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     family: &OwnedFamily<Selection, Geometry>,
     work: &mut storage::Work,
     cancelled: &mut CancelPoll<'_>,
@@ -108,7 +108,7 @@ fn scalar(field: &'static str, actual: f64, expected: &'static str) -> ConeFailu
 }
 
 fn authored_for_chart(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     original: &DevelopedRegionRequest,
     prepared: &Prepared,
     flux: &CertifiedAnalyticConicalFlux,

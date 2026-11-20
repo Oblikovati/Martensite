@@ -115,7 +115,7 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn actual_failur
 }
 
 pub(in super::super) fn admit(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     execution: WrappedConeExecutionSelection,
 ) -> ConeChecked<()> {
     use martensite_tkbo::profile_extrusion::PlanarProofVersion;

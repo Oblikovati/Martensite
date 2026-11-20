@@ -2,7 +2,7 @@
 use super::*;
 use crate::surface_sketch::wrapped_profile::operation::stages::{OwnedFamily, SupportStages};
 pub(super) struct ConeStages<'a> {
-    pub request: &'a WrappedConeNormalRequest,
+    pub request: &'a ConeRun<'a>,
     pub execution_selection: WrappedConeExecutionSelection,
 }
 impl SupportStages for ConeStages<'_> {

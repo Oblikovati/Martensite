@@ -4,8 +4,13 @@ fn source_inventory_rejects_repeated_authored_span_before_gamma_generation() {
     let request = crate::surface_sketch::wrapped_profile::operation::cone::tests::request();
     let inputs = input::capture(&request, &mut || false).unwrap();
     let mut work = Work::new(request.proof.arithmetic);
-    let mut selection =
-        prepare::select(&request, &inputs.originals, &mut work, &mut || false).unwrap();
+    let mut selection = prepare::select(
+        &ConeRun::from(&request),
+        &inputs.originals,
+        &mut work,
+        &mut || false,
+    )
+    .unwrap();
     let duplicate = selection.prepared[0].source.loops[0].clone();
     selection.prepared[0].source.loops.push(duplicate);
     let consumed = work.consumed;

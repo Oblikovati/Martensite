@@ -5,15 +5,17 @@ mod policy;
 pub(super) fn poll(cancelled: &mut CancelPoll<'_>, stage: WrappedStage) -> Checked<()> {
     super::super::input::poll(cancelled, stage)
 }
+#[cfg(test)]
 pub(super) fn capture(
     request: &WrappedConeNormalRequest,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Inputs> {
-    admit(request).map_err(ConeFailure::public)?;
-    capture_admitted(request, cancelled)
+    let run = ConeRun::from(request);
+    admit_with_ceiling(&run, 1_000_000).map_err(ConeFailure::public)?;
+    capture_admitted(&run, cancelled)
 }
-pub(super) fn capture_with_selection(
-    request: &WrappedConeNormalRequest,
+pub(in crate::surface_sketch::wrapped_profile) fn capture_with_selection(
+    request: &ConeRun<'_>,
     execution: WrappedConeExecutionSelection,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Inputs> {
@@ -21,16 +23,14 @@ pub(super) fn capture_with_selection(
         if domain == WrappedConeDomainPolicy::PositiveXRegionAtlasV5 {
             return Err(rounded_atlas().public());
         }
-        return capture(request, cancelled);
+        admit_with_ceiling(request, 1_000_000).map_err(ConeFailure::public)?;
+        return capture_admitted(request, cancelled);
     }
     admit_with_ceiling(request, grant::admission_ceiling(execution))
         .map_err(ConeFailure::public)?;
     // #563: reject the selected policy before source capture can observe a later stop.
     super::prepare::directed::admit(request, execution).map_err(ConeFailure::public)?;
-    let mut inputs = capture_admitted(request, cancelled)?;
-    inputs.grant =
-        grant::capture(request, execution, &inputs.originals).map_err(ConeFailure::public)?;
-    Ok(inputs)
+    capture_admitted(request, cancelled)
 }
 fn rounded_atlas() -> ConeFailure {
     ConeFailure::new(
@@ -45,18 +45,15 @@ fn rounded_atlas() -> ConeFailure {
     )
     .at(WrappedStage::Admission)
 }
-fn capture_admitted(
-    request: &WrappedConeNormalRequest,
-    cancelled: &mut CancelPoll<'_>,
-) -> Checked<Inputs> {
+fn capture_admitted(request: &ConeRun<'_>, cancelled: &mut CancelPoll<'_>) -> Checked<Inputs> {
     let mut inputs = Inputs {
         originals: Vec::new(),
         grant: None,
         directions: BTreeMap::new(),
     };
     super::super::source::read(
-        &request.profile,
-        &request.selections,
+        request.profile,
+        request.selections,
         cancelled,
         |selection, reader| push_region(&mut inputs, request, selection, reader),
     )?;
@@ -64,7 +61,7 @@ fn capture_admitted(
 }
 fn push_region(
     inputs: &mut Inputs,
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     selection: &WrappedRegionSelection,
     reader: &profile_input::ProfileReader<'_>,
 ) -> Checked<()> {
@@ -94,10 +91,7 @@ fn duplicate_region(region: SurfaceRegionId) -> ConeFailure {
     )
 }
 
-fn admit(request: &WrappedConeNormalRequest) -> ConeChecked<()> {
-    admit_with_ceiling(request, 1_000_000)
-}
-fn admit_with_ceiling(request: &WrappedConeNormalRequest, ceiling: u32) -> ConeChecked<()> {
+fn admit_with_ceiling(request: &ConeRun<'_>, ceiling: u32) -> ConeChecked<()> {
     admit_scalars(request)?;
     if ceiling == 1_000_000 {
         policy::admit(request.proof)?;
@@ -109,7 +103,7 @@ fn admit_with_ceiling(request: &WrappedConeNormalRequest, ceiling: u32) -> ConeC
     admit_frame(request.support)?;
     Ok(())
 }
-fn admit_scalars(request: &WrappedConeNormalRequest) -> ConeChecked<()> {
+fn admit_scalars(request: &ConeRun<'_>) -> ConeChecked<()> {
     for (field, actual) in [
         ("semi-angle", request.support.semi_angle),
         ("spatial-error", request.options.spatial_error),
@@ -128,7 +122,7 @@ fn admit_scalars(request: &WrappedConeNormalRequest) -> ConeChecked<()> {
     Ok(())
 }
 
-fn admit_limits(request: &WrappedConeNormalRequest) -> ConeChecked<()> {
+fn admit_limits(request: &ConeRun<'_>) -> ConeChecked<()> {
     let [first, last] = request.depths;
     if !first.is_finite() || !last.is_finite() || first >= last {
         return Err(ConeFailure::new(
@@ -178,7 +172,7 @@ fn scalar(field: &'static str, actual: f64, expected: &'static str) -> ConeFailu
     )
     .at(WrappedStage::Admission)
 }
-fn physical_depths(request: &WrappedConeNormalRequest) -> [f64; 2] {
+fn physical_depths(request: &ConeRun<'_>) -> [f64; 2] {
     match request.support.normal {
         NormalSense::Outward => request.depths,
         NormalSense::Inward => [-request.depths[1], -request.depths[0]],

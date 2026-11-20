@@ -90,11 +90,14 @@ pub(super) fn fixture_with_policy(
     let request = crate::surface_sketch::wrapped_profile::operation::cone::tests::request();
     let inputs = input::capture(&request, &mut || false).unwrap();
     let mut work = Work::new(request.proof.arithmetic);
-    let selection =
-        prepare::select_with_policy(&request, &inputs.originals, policy, &mut work, &mut || {
-            false
-        })
-        .unwrap();
+    let selection = prepare::select_with_policy(
+        &ConeRun::from(&request),
+        &inputs.originals,
+        policy,
+        &mut work,
+        &mut || false,
+    )
+    .unwrap();
     let prepared = &selection.prepared[0];
     check_native(&request, &inputs.originals[0], prepared, check);
 }

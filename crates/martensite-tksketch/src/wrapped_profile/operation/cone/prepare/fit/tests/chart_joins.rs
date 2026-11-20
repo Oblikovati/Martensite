@@ -26,7 +26,7 @@ fn chart_fixture() -> (Inputs, Selection, ConeClearanceOptions) {
     let inputs = input::capture(&request, &mut || false).unwrap();
     let mut work = Work::new(request.proof.arithmetic);
     let selected = super::super::super::select_with_policy(
-        &request,
+        &ConeRun::from(&request),
         &inputs.originals,
         WrappedConeDomainPolicy::PositiveXCommonChartV2,
         &mut work,
@@ -152,7 +152,7 @@ fn check_domain_binding(
     request.support.chart_origin += 0.125;
     let mut work = Work::new(request.proof.arithmetic);
     let changed = domain::certify(
-        &request,
+        &ConeRun::from(&request),
         originals,
         WrappedConeDomainPolicy::PositiveXCommonChartV2,
         &mut work,

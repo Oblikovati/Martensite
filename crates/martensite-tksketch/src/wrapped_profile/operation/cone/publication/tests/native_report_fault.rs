@@ -38,7 +38,8 @@ fn observed_case(stage: ValidationStage, verdict: StageVerdict) -> bool {
 }
 
 fn constructed(request: &WrappedConeNormalRequest, inputs: &Inputs) -> (Family, storage::Work) {
-    let support = legacy_stages(request);
+    let run = ConeRun::from(request);
+    let support = legacy_stages(&run);
     support.limits(&inputs.originals).unwrap();
     let mut context = support.context();
     let mut poll = |_| false;
@@ -85,7 +86,8 @@ fn budget_and_publish(
     family: Family,
     context: &mut storage::Work,
 ) -> Checked<WrappedConeNormalResult> {
-    let support = legacy_stages(request);
+    let run = ConeRun::from(request);
+    let support = legacy_stages(&run);
     let expected = family.members[&SurfaceRegionId(1)].native.report.clone();
     let prior_work = (context.consumed, context.integration_cells);
     let budget = support
@@ -94,12 +96,7 @@ fn budget_and_publish(
             assert_eq!((context.consumed, context.integration_cells), prior_work);
             retained_failure(cause, &expected)
         })?;
-    publish(
-        request,
-        inputs,
-        ConeBudgeted { family, budget },
-        &mut || false,
-    )
+    publish(&run, inputs, ConeBudgeted { family, budget }, &mut || false)
 }
 
 fn observation(
@@ -138,7 +135,7 @@ fn published_report(
     true
 }
 
-fn legacy_stages(request: &WrappedConeNormalRequest) -> stages::ConeStages<'_> {
+fn legacy_stages<'a>(request: &'a ConeRun<'a>) -> stages::ConeStages<'a> {
     stages::ConeStages {
         request,
         execution_selection: WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 {

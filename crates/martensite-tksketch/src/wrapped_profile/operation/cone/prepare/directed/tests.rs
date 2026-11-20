@@ -3,7 +3,7 @@ use super::*;
 fn directed_mode_requires_actual_requested_program_material_authority() {
     let request = super::super::super::tests::request();
     let failure = admit(
-        &request,
+        &ConeRun::from(&request),
         WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1,
     )
     .unwrap_err();
@@ -22,7 +22,7 @@ fn rounded_modes_preserve_their_existing_planar_policy_admission() {
     ] {
         assert!(
             admit(
-                &request,
+                &ConeRun::from(&request),
                 WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 { domain }
             )
             .is_ok()

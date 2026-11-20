@@ -2,7 +2,7 @@
 use super::*;
 use crate::surface_sketch::wrapped_profile::selection::PlanarSelectionEvidence;
 pub(super) fn planar(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
@@ -41,7 +41,7 @@ fn select_members(
 }
 
 pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn sector(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     originals: &[DevelopedRegionRequest],
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,

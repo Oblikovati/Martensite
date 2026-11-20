@@ -1,7 +1,7 @@
 //! Original authored contours supply independent normal-volume integration evidence.
 use super::*;
 pub(super) fn certify(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     original: &DevelopedRegionRequest,
     domain: Option<&ConicalChartDomainEvidence>,
     flux: [f64; 2],
@@ -61,7 +61,7 @@ fn charged(
 }
 
 fn query<'a>(
-    request: &WrappedConeNormalRequest,
+    request: &ConeRun<'_>,
     original: &DevelopedRegionRequest,
     contours: &'a [ConicalAuthoredContour<'a>],
     flux: [f64; 2],

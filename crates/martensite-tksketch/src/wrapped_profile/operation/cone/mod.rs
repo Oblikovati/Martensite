@@ -87,6 +87,26 @@ pub(in crate::surface_sketch::wrapped_profile) struct Budget {
     pub reference: ConicalReferenceEvidence,
     pub cap_reference_proxy_error: f64,
 }
+pub(in crate::surface_sketch::wrapped_profile) struct ConeRun<'a> {
+    profile: &'a martensite_tkbo::profile_extrusion::SketchProfile,
+    selections: &'a [WrappedRegionSelection],
+    pub support: ConeSupport,
+    pub depths: [f64; 2],
+    pub options: WrappedNormalOptions,
+    proof: WrappedConeProofOptions,
+}
+impl<'a> From<&'a WrappedConeNormalRequest> for ConeRun<'a> {
+    fn from(request: &'a WrappedConeNormalRequest) -> Self {
+        Self {
+            profile: &request.profile,
+            selections: &request.selections,
+            support: request.support,
+            depths: request.depths,
+            options: request.options,
+            proof: request.proof,
+        }
+    }
+}
 pub(in crate::surface_sketch::wrapped_profile) fn execute(
     request: &WrappedConeNormalRequest,
     cancelled: &mut CancelPoll<'_>,
@@ -114,7 +134,18 @@ pub(in crate::surface_sketch::wrapped_profile) fn execute_with_selection(
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<WrappedConeNormalResult> {
     input::poll(cancelled, WrappedStage::Admission)?;
-    let inputs = input::capture_with_selection(request, execution_selection, cancelled)?;
+    let run = ConeRun::from(request);
+    let inputs = input::capture_with_selection(&run, execution_selection, cancelled)?;
+    execute_captured(&run, execution_selection, inputs, cancelled)
+}
+pub(in crate::surface_sketch::wrapped_profile) fn execute_captured(
+    request: &ConeRun<'_>,
+    execution_selection: WrappedConeExecutionSelection,
+    mut inputs: Inputs,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<WrappedConeNormalResult> {
+    inputs.grant = input::grant::capture(request, execution_selection, &inputs.originals)
+        .map_err(ConeFailure::public)?;
     let mut checkpoint = |_| cancelled();
     let family = super::execute::budgeted(
         &stages::ConeStages {

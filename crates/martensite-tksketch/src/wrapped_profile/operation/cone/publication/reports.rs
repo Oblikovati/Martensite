@@ -153,10 +153,7 @@ fn with_owner(mut cause: ConeFailure, region: SurfaceRegionId) -> ConeFailure {
     cause
 }
 
-pub(super) fn budget(
-    request: &WrappedConeNormalRequest,
-    family: &ConeBudgeted,
-) -> WrappedConeBudgetReport {
+pub(super) fn budget(request: &ConeRun<'_>, family: &ConeBudgeted) -> WrappedConeBudgetReport {
     WrappedConeBudgetReport {
         planar: family.family.selection.census,
         source_planar_work: family.family.selection.work,
