@@ -189,9 +189,10 @@ No tolerance, public API, numerical work budget or package version changed.
 
 The unified V3–V6 reader uses the same occurrence predicates as the main-line
 fix. A view first checks its actual first bound report, the complete owned
-source inventory and the current native representations. It then retains one
-occurrence/history decision per segment for that read-only epoch. The initial
-bound check remains live and precedes the flags.
+source inventory and the current native representations. It then retains the first
+failed occurrence index, or the segment count when all pass. Earlier successful
+checks are reused; the failed row refuses, and later rows use the literal
+predicate. The initial bound check remains live and precedes this marker.
 
 Both solver and conditioned report bindings read metadata through the same
 view. Parameter slots, physical source indices, query mode, full captured query,
@@ -200,9 +201,10 @@ Borrowed views retain fresh native and occurrence checks, including after a
 curve, pcurve or support alias changes. Missing occurrence indices refuse
 before any prefix slice is accessed.
 
-An admitted view adds one O(n) `Vec<bool>` allocation, with one byte per
-occurrence. Per-domain captured-query allocations are unchanged. Time and
-peak-RSS qualification remain pending. Focused controls compare real owned
+The view holds an `Option<usize>` marker and adds no cache-owned heap storage.
+Existing predicate and captured-query allocations are unchanged. Removing the
+O(n) cache allocation does not establish an RSS improvement; time and peak-RSS
+qualification remain pending. Focused controls compare real owned
 and live readers for V3–V6, count evaluated predicates, preserve the initial
 eligibility checks and exercise first/later metadata, source, mode and policy
 refusals. Existing cancellation, work, integral-program and alias guards remain

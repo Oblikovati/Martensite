@@ -25,7 +25,7 @@ fn compare_graph(prepared: &super::super::super::PreparedProfile) {
 #[test]
 fn owned_occurrence_refusals_match_live_for_first_and_later_history_and_source_edits() {
     for index in [0, 2] {
-        for mutation in 0..5 {
+        for mutation in 0..6 {
             let mut prepared = prepared();
             mutate_occurrence(&mut prepared.bridge.census, index, mutation);
             assert!(prepared.inspect_plane_graph(|| false).is_err());
@@ -34,6 +34,10 @@ fn owned_occurrence_refusals_match_live_for_first_and_later_history_and_source_e
     }
 }
 fn mutate_occurrence(census: &mut BoundaryCensus, index: usize, mutation: usize) {
+    if mutation == 5 {
+        census.paired.as_mut().unwrap().occurrences.truncate(index);
+        return;
+    }
     let record = &mut census.paired.as_mut().unwrap().occurrences[index];
     match mutation {
         0 => record.source.reversed = !record.source.reversed,

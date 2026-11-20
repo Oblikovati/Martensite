@@ -9,20 +9,25 @@ pub(super) enum Predicate {
     #[cfg(test)]
     PhysicalPrefix,
 }
-pub(super) fn capture(census: &BoundaryCensus, observer: &mut impl FnMut(Predicate)) -> Vec<bool> {
-    (0..census.inputs.segments.len())
-        .map(|index| observed(census, index, observer))
-        .collect()
+pub(super) fn capture(census: &BoundaryCensus, observer: &mut impl FnMut(Predicate)) -> usize {
+    let count = census.inputs.segments.len();
+    (0..count)
+        .find(|&index| !observed(census, index, observer))
+        .unwrap_or(count)
 }
 pub(super) fn current_or_retained(
     census: &BoundaryCensus,
     index: usize,
-    retained: Option<&[bool]>,
+    retained: Option<usize>,
     observer: &mut impl FnMut(Predicate),
 ) -> bool {
+    if index >= census.inputs.segments.len() {
+        return false;
+    }
     match retained {
-        Some(flags) => flags.get(index).copied().unwrap_or(false),
-        None => observed(census, index, observer),
+        Some(marker) if index < marker => true,
+        Some(marker) if index == marker => false,
+        _ => observed(census, index, observer),
     }
 }
 pub(super) fn observed(

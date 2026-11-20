@@ -46,7 +46,7 @@ pub(crate) fn domain_certificate<'a>(
 pub(crate) struct DomainCertificates<'a> {
     census: &'a BoundaryCensus,
     source: super::source_status::CurrentSourceRepresentation<'a>,
-    owned_occurrences: Option<Vec<bool>>,
+    owned_valid_prefix: Option<usize>,
     #[cfg(test)]
     pub(crate) occurrence_visits: std::cell::Cell<[usize; 2]>,
     owned_current: Option<(bool, &'a crate::sketch_region_prism::OwnedGraphAccess<'a>)>,
@@ -62,7 +62,7 @@ impl<'a> DomainCertificates<'a> {
             census,
             source,
             owned_current: None,
-            owned_occurrences: None,
+            owned_valid_prefix: None,
             #[cfg(test)]
             occurrence_visits: Default::default(),
         })
@@ -81,7 +81,7 @@ impl<'a> DomainCertificates<'a> {
                 .current_with_observer(|| owner.observed_capture());
             #[cfg(not(test))]
             let current = self.source.current();
-            self.owned_occurrences = current.then(|| {
+            self.owned_valid_prefix = current.then(|| {
                 occurrence::capture(self.census, &mut |kind| self.observe_occurrence(kind))
             });
             self.owned_current = Some((current, owner));
@@ -169,7 +169,7 @@ impl<'a> DomainCertificates<'a> {
                 occurrence::current_or_retained(
                     self.census,
                     index,
-                    self.owned_occurrences.as_deref(),
+                    self.owned_valid_prefix,
                     &mut |kind| self.observe_occurrence(kind),
                 )
             })
