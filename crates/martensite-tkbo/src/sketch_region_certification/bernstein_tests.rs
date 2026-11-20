@@ -175,6 +175,7 @@ fn cancelled_exact_execution_keeps_actual_work_and_no_fallback() {
         super::paired_types::PairedQueryMode::SelfOffDiagonal,
         &mut || true,
         &mut reports,
+        &super::paired_execution::PairSourcePool::default(),
     );
     let DomainEvidence::BernsteinReport { report, .. } = evidence else {
         panic!("actual exact execution")

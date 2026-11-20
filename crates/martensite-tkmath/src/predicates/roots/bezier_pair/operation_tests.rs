@@ -28,7 +28,7 @@ fn real_parabola_pair_certifies_unique_bounded_contact_and_world_error() {
     );
     assert_eq!(proof.contacts[0].world.point, [0.5, 0.25]);
     assert_eq!(proof.contacts[0].world.achieved_error, 0.);
-    assert_eq!(proof.sources[0].controls, a);
+    assert_eq!(proof.sources[0].controls.as_ref(), a.as_slice());
     verify_denominator_certificates(&proof);
     assert_eq!(proof.graph().unwrap().projection.alpha.0, vec![(-2).into()]);
 }

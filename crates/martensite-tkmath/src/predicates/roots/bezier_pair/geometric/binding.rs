@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Complete bit snapshots distinguish source provenance from geometric zero equality.
 use super::*;
-pub(super) fn key(query: &CapturedBezierPair, policy: BezierPairPolicy) -> Vec<u64> {
-    let mut bits = vec![
-        u64::from(query.is_self()),
+pub(super) fn policy_bits(policy: BezierPairPolicy) -> [u64; 9] {
+    let [kind, limit] = match policy.signs.degree_limit {
+        BezierPairSignAdmission::DerivedProjection => [0, 0],
+        BezierPairSignAdmission::Explicit(limit) => [1, u64::from(limit)],
+    };
+    [
         u64::from(policy.version),
         u64::from(policy.roots.version),
         u64::from(policy.roots.max_degree),
@@ -11,25 +14,29 @@ pub(super) fn key(query: &CapturedBezierPair, policy: BezierPairPolicy) -> Vec<u
         policy.roots.max_width.to_bits(),
         u64::from(policy.signs.version),
         policy.requested_world_error.to_bits(),
-    ];
-    match policy.signs.degree_limit {
-        BezierPairSignAdmission::DerivedProjection => bits.extend([0, 0]),
-        BezierPairSignAdmission::Explicit(limit) => bits.extend([1, u64::from(limit)]),
-    }
-    for curve in query.captured_curves() {
-        curve_bits(curve, &mut bits);
-    }
-    bits
+        kind,
+        limit,
+    ]
 }
-fn curve_bits(curve: BezierPairCurve<'_>, bits: &mut Vec<u64>) {
-    bits.extend(curve.interval.map(f64::to_bits));
-    bits.push(curve.controls.len() as u64);
-    bits.extend(curve.controls.iter().flat_map(|p| p.map(f64::to_bits)));
-    match curve.weights {
-        None => bits.push(0),
-        Some(weights) => {
-            bits.extend([1, weights.len() as u64]);
-            bits.extend(weights.iter().map(|v| v.to_bits()));
-        }
+
+pub(super) fn same_curve(left: BezierPairCurve<'_>, right: BezierPairCurve<'_>) -> bool {
+    left.interval.map(f64::to_bits) == right.interval.map(f64::to_bits)
+        && left.controls.len() == right.controls.len()
+        && left
+            .controls
+            .iter()
+            .zip(right.controls)
+            .all(|(a, b)| a.map(f64::to_bits) == b.map(f64::to_bits))
+        && same_weights(left.weights, right.weights)
+}
+
+fn same_weights(left: Option<&[f64]>, right: Option<&[f64]>) -> bool {
+    match (left, right) {
+        (None, None) => true,
+        (Some(left), Some(right)) => left
+            .iter()
+            .map(|w| w.to_bits())
+            .eq(right.iter().map(|w| w.to_bits())),
+        _ => false,
     }
 }

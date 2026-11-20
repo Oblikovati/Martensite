@@ -61,6 +61,20 @@ fn conditioned_cold_unique_matches_full_literal_outcomes_slots_and_callbacks() {
     }
 }
 #[test]
+fn geometric_domains_share_captured_controls_across_retained_reports() {
+    let census = fresh(3, false);
+    let mut lookup = ReportReuseIndex::capture(&census);
+    let (complete, _) = execute(census, &mut lookup, usize::MAX);
+    let complete = complete.unwrap_or_else(|_| panic!("complete geometric census"));
+    let records = &complete.paired.unwrap().exclusions;
+    let first = records[0].outcome.as_ref().unwrap().exclusion.source();
+    let cross = records[1].outcome.as_ref().unwrap().exclusion.source();
+    assert!(std::ptr::eq(
+        first.captured_curves()[0].controls,
+        cross.captured_curves()[0].controls,
+    ));
+}
+#[test]
 fn conditioned_aliases_keep_map_reuse_and_full_source_slot_order() {
     for case in 0..3 {
         compare_complete(case, true);

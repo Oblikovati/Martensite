@@ -47,6 +47,24 @@ impl BezierPairGeometricReport {
     }
     /// Rebind every source, mode and policy bit; `assert!(report.matches_source(&query,policy))`.
     pub fn matches_source(&self, query: &CapturedBezierPair, policy: BezierPairPolicy) -> bool {
-        binding::key(&self.source, self.policy) == binding::key(query, policy)
+        self.matches_curves(query.captured_curves(), query.is_self(), policy)
+    }
+
+    /// Compare ordered source curves and policy bits directly. Pass both copies of
+    /// the source for a self domain. Example: `report.matches_curves([a, b], false, policy)`.
+    pub fn matches_curves(
+        &self,
+        curves: [BezierPairCurve<'_>; 2],
+        self_off_diagonal: bool,
+        policy: BezierPairPolicy,
+    ) -> bool {
+        self.source.is_self() == self_off_diagonal
+            && binding::policy_bits(self.policy) == binding::policy_bits(policy)
+            && self
+                .source
+                .captured_curves()
+                .into_iter()
+                .zip(curves)
+                .all(|(a, b)| binding::same_curve(a, b))
     }
 }

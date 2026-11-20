@@ -15,7 +15,6 @@ pub(crate) enum ConditionedStage {
     Geometric(BezierPairGeometricReport),
 }
 impl ConditionedStage {
-    #[cfg(test)]
     pub(super) fn source(&self) -> &CapturedBezierPair {
         match self {
             Self::Bernstein(report) => report.source(),

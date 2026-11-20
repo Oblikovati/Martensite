@@ -3,8 +3,10 @@
 use super::{census, outcome::*, paired_types::*};
 use martensite_tkmath::predicates::roots::bezier_pair::*;
 mod report_reuse;
+mod source_pool;
 pub(super) use report_reuse::ReportLookup;
 use report_reuse::ReportReuseIndex;
+pub(super) use source_pool::PairSourcePool;
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
@@ -32,11 +34,12 @@ fn enumerate_with_lookup(
     access: super::SourceAccess<'_>,
     reports: &mut impl ReportLookup,
 ) -> Result<BoundaryCensus, CensusCause> {
+    let source_pool = PairSourcePool::capture(&census);
     for pair in census::pair_domains(census.inputs.segments.len()) {
         if cancelled() {
             return Err(stopped(census, pair, false));
         }
-        let evidence = append_pair(&mut census, pair, cancelled, reports);
+        let evidence = append_pair(&mut census, pair, cancelled, reports, &source_pool);
         if evidence_cancelled(&census, evidence) {
             return Err(stopped(census, pair, true));
         }
@@ -54,19 +57,30 @@ fn append_pair(
     pair: [usize; 2],
     cancelled: &mut impl FnMut() -> bool,
     reports: &mut impl ReportLookup,
+    source_pool: &PairSourcePool,
 ) -> DomainEvidence {
-    let evidence = evaluate_pair(census, pair, cancelled, reports);
+    let evidence = evaluate_with_pool(census, pair, cancelled, reports, source_pool);
     census.domains.push(BoundaryDomain {
         occurrences: pair,
         evidence,
     });
     evidence
 }
+#[cfg(test)]
 fn evaluate_pair(
     census: &mut BoundaryCensus,
     pair: [usize; 2],
     cancelled: &mut impl FnMut() -> bool,
     reports: &mut impl ReportLookup,
+) -> DomainEvidence {
+    evaluate_with_pool(census, pair, cancelled, reports, &PairSourcePool::default())
+}
+fn evaluate_with_pool(
+    census: &mut BoundaryCensus,
+    pair: [usize; 2],
+    cancelled: &mut impl FnMut() -> bool,
+    reports: &mut impl ReportLookup,
+    source_pool: &PairSourcePool,
 ) -> DomainEvidence {
     let sources = canonical_sources(census, pair);
     if pair[0] != pair[1] && sources[0] == sources[1] {
@@ -75,7 +89,13 @@ fn evaluate_pair(
     let mode = query_mode(pair);
     if conditioned_reports_selected(census) {
         return super::bernstein_execution::evaluate(
-            census, pair, sources, mode, cancelled, reports,
+            census,
+            pair,
+            sources,
+            mode,
+            cancelled,
+            reports,
+            source_pool,
         );
     }
     if let Some(report) = reports.find(sources, mode) {
@@ -145,7 +165,7 @@ pub(super) fn captured_query(
     sources: [usize; 2],
     mode: PairedQueryMode,
 ) -> Result<CapturedBezierPair, Box<BezierPairCaptureFailure>> {
-    let views = sources.map(|index| source_view(&census.inputs.segments[index]));
+    let views = source_views(census, sources);
     let query = match mode {
         PairedQueryMode::Distinct => CapturedBezierPair::capture_pair(views[0], views[1]),
         PairedQueryMode::SelfOffDiagonal => CapturedBezierPair::self_off_diagonal(
@@ -155,6 +175,12 @@ pub(super) fn captured_query(
         ),
     };
     query.map_err(Box::new)
+}
+pub(super) fn source_views(
+    census: &BoundaryCensus,
+    sources: [usize; 2],
+) -> [BezierPairCurve<'_>; 2] {
+    sources.map(|index| source_view(&census.inputs.segments[index]))
 }
 fn source_view(source: &crate::sketch_region_candidates::CandidateSegment) -> BezierPairCurve<'_> {
     BezierPairCurve {

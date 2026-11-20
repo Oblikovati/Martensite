@@ -662,3 +662,41 @@ billion over three pairs. Median peak RSS rose from 237,152 to 251,992
 KiB. The experiment was removed because the memory increase exceeded
 the approved tradeoff for that speed improvement. The three paired
 baseline O. runs on CPU 20 took 4.99 s, 4.57 s and 4.66 s.
+
+### Geometry retained by the zero-depth Boolean
+
+The V7 239-curve boss had 349 decoded result faces with a unique tool
+face parent. All 331 side images and all 18 last-depth cap images
+matched the parent's stored surface record and placed transform.
+They also matched the parent's oriented pcurve records, grouping the
+records by wire and comparing curve coefficients and parameter bounds
+independent of enumeration order. Each parent produced one image.
+
+The complete isolated face archives matched for the 18 caps. The
+331 side archives differed. Direct proof reuse can compare the actual
+carrier and trim through the native conical binder. Publication still
+requires coverage of the decoded incidences, including the attachment
+seam, and native checks for pairs outside the transferred certificate.
+
+### Shared planar pair captures
+
+The geometric census now captures each physical source curve once.
+Pair queries and their reports share those immutable coefficients.
+Rebinding a completed geometric report compares the ordered control,
+weight, interval and policy bits directly. The source and policy checks
+still apply to each pair.
+
+Three paired assertion-enabled runs on CPU 20 compared the change with
+`3200cfbb`. The attached fixture here measures through placed-tool
+validation. All three V7 tool archives matched their paired controls
+byte for byte.
+
+| Workload | Baseline wall (s) | Shared wall (s) | Baseline instructions (billions) | Shared instructions (billions) | Baseline peak RSS (KiB) | Shared peak RSS (KiB) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| O. median | 4.58 | 4.31 | 45.75 | 45.41 | 66,780 | 64,540 |
+| 239-curve V7 tool median | 22.10 | 21.47 | 234.40 | 232.21 | 234,944 | 229,048 |
+
+The new O. runs took 4.16–4.54 s. A single transported V5 control also
+matched its previous tool archive byte for byte and used 204.09 billion
+instructions versus 204.34 billion. Its wall times were 21.21 s and
+19.92 s, respectively.

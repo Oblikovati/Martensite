@@ -42,14 +42,24 @@ fn source_current(
     census: &BoundaryCensus,
     record: &super::bernstein_execution::BernsteinStoredReport,
 ) -> bool {
-    let Ok(query) = super::paired_execution::captured_query(census, record.sources, record.mode)
-    else {
-        return false;
-    };
     let Ok(execution) = &record.outcome else {
         return false;
     };
     let Some(policy) = exclusion_policy(census, record.effective) else {
+        return false;
+    };
+    if let super::conditioned_stage::ConditionedStage::Geometric(report) = &execution.exclusion
+        && execution.fallback.is_none()
+    {
+        return policy.version == 2
+            && report.matches_curves(
+                super::paired_execution::source_views(census, record.sources),
+                record.mode == PairedQueryMode::SelfOffDiagonal,
+                policy.pair_policy,
+            );
+    }
+    let Ok(query) = super::paired_execution::captured_query(census, record.sources, record.mode)
+    else {
         return false;
     };
     execution.exclusion.matches_source(&query, policy)

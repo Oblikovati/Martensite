@@ -82,7 +82,7 @@ pub use public_constant_certificate::{BezierPairConstantExclusion, BezierPairSig
 pub use public_graph_certificate::{
     BezierPairGraphCertificate, BezierPairMembership, BezierPairProjection,
 };
-pub use public_query::BezierPairCurve;
+pub use public_query::{BezierPairCurve, CapturedBezierCurve};
 pub use public_report::{BezierPairFailure, BezierPairReport};
 pub use query::{CapturedBezierPair, PairQueryPolicy as BezierPairPolicy};
 pub use sign_policy::{

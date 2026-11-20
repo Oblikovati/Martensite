@@ -4,11 +4,12 @@ use super::super::{RootIsolationError, bernstein, error::poll};
 use super::polynomial::ExactCoefficientPolynomial;
 use crate::predicates::{NonFiniteCoordinate, exact_coordinate, exact_point};
 use num_bigint::{BigInt, Sign};
+use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct OwnedBezierSource {
-    pub controls: Vec<[f64; 2]>,
-    pub weights: Option<Vec<f64>>,
+    pub controls: Arc<[[f64; 2]]>,
+    pub weights: Option<Arc<[f64]>>,
     pub interval: [f64; 2],
 }
 #[derive(Clone, Debug, PartialEq)]
@@ -68,8 +69,8 @@ impl OwnedBezierSource {
         }
         check_weight_count(controls.len(), weights)?;
         Ok(Self {
-            controls: controls.to_vec(),
-            weights: weights.map(<[f64]>::to_vec),
+            controls: Arc::from(controls),
+            weights: weights.map(Arc::from),
             interval,
         })
     }

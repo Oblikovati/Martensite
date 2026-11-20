@@ -20,6 +20,27 @@ fn signed_zero_geometry_does_not_erase_raw_source_or_policy_bits() {
     changed.signs.degree_limit = BezierPairSignAdmission::Explicit(32);
     assert!(!report.matches_source(&query, changed));
 }
+
+#[test]
+fn borrowed_source_rebind_keeps_trim_weight_presence_order_and_domain() {
+    let query = hairpin(1.);
+    let [left, right] = query.captured_curves();
+    let report = query.clone().into_geometric_report(policy(), || false);
+    assert!(report.matches_curves([left, right], false, policy()));
+    assert!(!report.matches_curves([right, left], false, policy()));
+    assert!(!report.matches_curves([left, right], true, policy()));
+    let trimmed = BezierPairCurve {
+        interval: [-0., 1.],
+        ..left
+    };
+    assert!(!report.matches_curves([trimmed, right], false, policy()));
+    let weights = [1.; 4];
+    let weighted = BezierPairCurve {
+        weights: Some(&weights),
+        ..left
+    };
+    assert!(!report.matches_curves([weighted, right], false, policy()));
+}
 #[test]
 fn invalid_policy_precedes_cancellation_and_retains_original_values() {
     let query = hairpin(1.);

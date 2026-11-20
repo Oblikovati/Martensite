@@ -57,11 +57,20 @@ impl CapturedBezierPair {
     pub fn certify_geometric(
         &self,
         policy: BezierPairPolicy,
+        cancelled: impl FnMut() -> bool,
+    ) -> BezierPairGeometricReport {
+        self.clone().into_geometric_report(policy, cancelled)
+    }
+    /// Execute and retain this owned capture without cloning its source reference counts.
+    /// Example: `let report = query.into_geometric_report(policy, || false);`.
+    pub fn into_geometric_report(
+        self,
+        policy: BezierPairPolicy,
         mut cancelled: impl FnMut() -> bool,
     ) -> BezierPairGeometricReport {
-        let outcome = execution::execute(self, policy, &mut cancelled);
+        let outcome = execution::execute(&self, policy, &mut cancelled);
         BezierPairGeometricReport {
-            source: self.clone(),
+            source: self,
             policy,
             outcome,
         }

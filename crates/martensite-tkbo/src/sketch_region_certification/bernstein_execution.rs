@@ -41,6 +41,7 @@ pub(super) fn evaluate(
     mode: PairedQueryMode,
     cancelled: &mut impl FnMut() -> bool,
     reports: &mut impl super::paired_execution::ReportLookup,
+    source_pool: &super::paired_execution::PairSourcePool,
 ) -> DomainEvidence {
     let Some(paired) = census.paired.as_mut() else {
         return DomainEvidence::Unsupported(CensusGap::BezierPair);
@@ -49,7 +50,7 @@ pub(super) fn evaluate(
         paired.reused_reports += 1;
         return reference(census, pair, report, true);
     }
-    let record = execute(census, sources, mode, cancelled);
+    let record = execute(census, sources, mode, cancelled, source_pool);
     census.bisections += record.completed_work();
     let Some(paired) = census.paired.as_mut() else {
         return DomainEvidence::Unsupported(CensusGap::BezierPair);
@@ -64,6 +65,7 @@ fn execute(
     sources: [usize; 2],
     mode: PairedQueryMode,
     cancelled: &mut impl FnMut() -> bool,
+    source_pool: &super::paired_execution::PairSourcePool,
 ) -> BernsteinStoredReport {
     let effective = super::paired_execution::remaining_policy(census);
     let policy = BezierPairExclusionPolicy {
@@ -74,8 +76,9 @@ fn execute(
             .unwrap_or(0),
         pair_policy: effective,
     };
-    let outcome = super::paired_execution::captured_query(census, sources, mode)
-        .map(|query| certify(&query, policy, cancelled));
+    let outcome = source_pool
+        .query(census, sources, mode)
+        .map(|query| certify(query, policy, cancelled));
     BernsteinStoredReport {
         sources,
         mode,
@@ -84,13 +87,13 @@ fn execute(
     }
 }
 fn certify(
-    query: &CapturedBezierPair,
+    query: CapturedBezierPair,
     policy: BezierPairExclusionPolicy,
     cancelled: &mut impl FnMut() -> bool,
 ) -> BernsteinExecution {
     let exclusion = match policy.version {
         2 => super::conditioned_stage::ConditionedStage::Geometric(
-            query.certify_geometric(policy.pair_policy, &mut *cancelled),
+            query.into_geometric_report(policy.pair_policy, &mut *cancelled),
         ),
         _ => super::conditioned_stage::ConditionedStage::Bernstein(
             query.certify_bernstein_exclusion(policy, &mut *cancelled),
@@ -99,7 +102,7 @@ fn certify(
     let fallback = (exclusion.completion()
         == super::conditioned_stage::ConditionedCompletion::Inconclusive)
         .then(|| {
-            query.certify(
+            exclusion.source().certify(
                 remaining_after_exclusion(&exclusion, policy.pair_policy),
                 cancelled,
             )
