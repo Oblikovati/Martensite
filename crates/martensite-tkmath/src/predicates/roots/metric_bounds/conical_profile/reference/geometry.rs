@@ -95,7 +95,7 @@ fn capture(
     }
     Ok(arithmetic.scalar(upper)?)
 }
-pub(super) fn allocated(
+pub(in super::super) fn allocated(
     bound: &Interval,
     epsilon: f64,
     denominator: u64,

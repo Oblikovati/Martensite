@@ -324,3 +324,43 @@ ways across the five pairs.
 Five paired runs of the cylinder chart replay worker measured total
 process medians of 7.35 s and 7.25 s, with peak RSS medians of 61,104 KiB
 and 60,972 KiB, respectively.
+
+## Filled normal-reference displacement
+
+The cap join receipt now retains the maximum angular and slant
+residuals separately. Denote them by `δu` and `δL`. The cap's
+Bernstein slant hull, expanded by `δL`, encloses the entire
+interpolation. The extrema of a linear slant coordinate over a
+bounded fill lie on its boundary, so this hull also encloses the
+interior. The meridian calculation bounds the radius of that hull
+at every normal depth. It requires a strictly positive lower bound.
+
+At a fixed depth, moving slant along the cone meridian costs at most
+`δL`. The angular move at the destination radius costs at most
+`Rmax * δu` by the chord inequality. Their sum bounds the distance
+between any two points along one boundary parameter's interpolation.
+If a chart point belongs to one endpoint fill and lies outside the
+other, its winding can change only when the interpolated boundary
+crosses it. The corresponding point on the destination boundary is
+therefore within the same bound in world space. This argument applies
+in both directions and at every depth. Periodic filled-overlap
+admission remains a separate condition for the exact reference solid.
+
+The combined receipt measures the filled distance and signed volume
+from one traversal of the cap polynomials and one meridian calculation.
+Both use the operation's remaining arithmetic allowance. The closed
+strip exercises the requested spatial limit, positive swept radius,
+and the previous authored and decoded flux volume comparisons.
+The rectangle tests check both normal senses and refusal when the
+swept radius enclosure can include the axis.
+
+This bound measures the exact filled reference. Public publication
+still needs to compose it with the decoded cap and ruling storage
+bounds and carry the periodic material receipt.
+
+The checks passed 811 metric-bound tests and 141 cone operation tests,
+with three operation tests ignored. Clippy passed with warnings denied.
+Seven cone and cylinder replay workers matched `1090f497` byte for byte.
+Five paired standalone O. runs on one pinned Linux x86_64 core measured
+median API times of 4.697 s on the baseline and 4.642 s on the candidate.
+Median peak RSS went from 68,360 KiB to 67,740 KiB.

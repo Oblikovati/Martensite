@@ -7,8 +7,9 @@ use super::*;
 mod cap;
 pub use cap::{
     ConicalCapClearanceRelation, ConicalCapHomotopyEvidence, ConicalCapHomotopyFailure,
-    ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalCapVolumeError, ConicalCapVolumeEvidence,
-    ConicalCapVolumeFailure, certify_conical_cap_joins,
+    ConicalCapJoinSpan, ConicalCapJoinsQuery, ConicalCapNormalError, ConicalCapNormalEvidence,
+    ConicalCapVolumeError, ConicalCapVolumeEvidence, ConicalCapVolumeFailure,
+    certify_conical_cap_joins,
 };
 pub(super) mod chart;
 pub use chart::{

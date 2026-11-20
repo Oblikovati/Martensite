@@ -8,6 +8,8 @@ use crate::predicates::roots::{
     },
     metric_bounds::cylindrical_profile::trigonometric,
 };
+mod normal;
+pub use normal::{ConicalCapNormalError, ConicalCapNormalEvidence};
 mod types;
 pub use types::*;
 #[cfg(test)]
@@ -24,19 +26,8 @@ impl ConicalCapHomotopyEvidence<'_> {
         options: ConeClearanceOptions,
         mut cancelled: impl FnMut() -> bool + Send,
     ) -> Result<ConicalCapVolumeEvidence, ConicalCapVolumeError> {
-        let policy = sector_api::policy(options);
-        sector::admit_policy(policy).map_err(|cause| ConicalCapVolumeError {
-            cause: ConicalCapVolumeFailure::Policy(cause),
-            span: None,
-            operations: 0,
-        })?;
-        let mut arithmetic = Arithmetic::new(policy, &mut cancelled);
-        let mut moments = Moments::empty(&arithmetic);
-        for (index, span) in self.cap.spans.iter().enumerate() {
-            moments
-                .include(&span.uv, &mut arithmetic)
-                .map_err(|cause| error(cause.into(), Some(index), &arithmetic))?;
-        }
+        let mut arithmetic = volume_arithmetic(options, &mut cancelled)?;
+        let moments = self.moments(&mut arithmetic)?;
         let volume = finish(self.cap, moments, &mut arithmetic)
             .map_err(|cause| error(cause, None, &arithmetic))?;
         Ok(ConicalCapVolumeEvidence {
@@ -44,12 +35,36 @@ impl ConicalCapHomotopyEvidence<'_> {
             operations: arithmetic.operations(),
         })
     }
+
+    fn moments(&self, arithmetic: &mut Arithmetic<'_>) -> Result<Moments, ConicalCapVolumeError> {
+        let mut moments = Moments::empty(arithmetic);
+        for (index, span) in self.cap.spans.iter().enumerate() {
+            moments
+                .include(&span.uv, arithmetic)
+                .map_err(|cause| error(cause.into(), Some(index), arithmetic))?;
+        }
+        Ok(moments)
+    }
+}
+
+fn volume_arithmetic(
+    options: ConeClearanceOptions,
+    cancelled: &mut (dyn FnMut() -> bool + Send),
+) -> Result<Arithmetic<'_>, ConicalCapVolumeError> {
+    let policy = sector_api::policy(options);
+    sector::admit_policy(policy).map_err(|cause| ConicalCapVolumeError {
+        cause: ConicalCapVolumeFailure::Policy(cause),
+        span: None,
+        operations: 0,
+    })?;
+    Ok(Arithmetic::new(policy, cancelled))
 }
 
 struct Moments {
     area: Interval,
     slant: Interval,
     minimum_v: Option<num_bigint::BigInt>,
+    maximum_v: Option<num_bigint::BigInt>,
 }
 impl Moments {
     fn empty(arithmetic: &Arithmetic<'_>) -> Self {
@@ -57,6 +72,7 @@ impl Moments {
             area: arithmetic.zero(),
             slant: arithmetic.zero(),
             minimum_v: None,
+            maximum_v: None,
         }
     }
 
@@ -77,6 +93,12 @@ impl Moments {
             Some(old) => old.min(minimum),
             None => minimum,
         });
+        let maximum = v.iter().map(|coefficient| &coefficient.upper).max();
+        if let Some(maximum) = maximum
+            && self.maximum_v.as_ref().is_none_or(|old| maximum > old)
+        {
+            self.maximum_v = Some(maximum.clone());
+        }
         Ok(())
     }
 }
@@ -87,8 +109,19 @@ fn finish(
     arithmetic: &mut Arithmetic<'_>,
 ) -> VolumeResult<Interval> {
     let meridian = Meridian::capture(cap, arithmetic)?;
-    let minimum = moments.minimum_v.ok_or(ConicalCapVolumeFailure::Empty)?;
+    let minimum = moments
+        .minimum_v
+        .clone()
+        .ok_or(ConicalCapVolumeFailure::Empty)?;
     meridian.admit_radius(minimum, arithmetic)?;
+    integrate_volume(&meridian, &moments, arithmetic)
+}
+
+fn integrate_volume(
+    meridian: &Meridian,
+    moments: &Moments,
+    arithmetic: &mut Arithmetic<'_>,
+) -> VolumeResult<Interval> {
     let radius_area = arithmetic.multiply(&meridian.center_radius, &moments.area)?;
     let slant = arithmetic.fraction(&moments.slant, 1, 2)?;
     let radial_moment = arithmetic.multiply(&meridian.sine, &slant)?;
@@ -102,6 +135,7 @@ struct Meridian {
     depth_minimum: Interval,
     thickness: Interval,
     sine: Interval,
+    cosine: Interval,
 }
 impl Meridian {
     fn capture(cap: &CapBinding, arithmetic: &mut Arithmetic<'_>) -> VolumeResult<Self> {
@@ -118,6 +152,7 @@ impl Meridian {
             depth_minimum: arithmetic.multiply(&lowest, &cosine)?,
             thickness,
             sine,
+            cosine,
         })
     }
 

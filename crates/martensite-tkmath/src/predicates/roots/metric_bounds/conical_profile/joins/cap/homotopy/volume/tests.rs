@@ -39,7 +39,7 @@ fn a_nonpositive_radius_refuses_the_cap_volume() {
     ));
 }
 
-fn rectangle_moments(arithmetic: &mut Arithmetic<'_>) -> Moments {
+pub(super) fn rectangle_moments(arithmetic: &mut Arithmetic<'_>) -> Moments {
     let mut moments = Moments::empty(arithmetic);
     let points = [[0_f64, 0.], [0., 3.], [2., 3.], [2., 0.]].map(|point| point.map(f64::to_bits));
     for prefix in 0..points.len() {
@@ -49,12 +49,13 @@ fn rectangle_moments(arithmetic: &mut Arithmetic<'_>) -> Moments {
     moments
 }
 
-fn rectangle_support(depth: f64, outward: bool) -> CapBinding {
+pub(super) fn rectangle_support(depth: f64, outward: bool) -> CapBinding {
     CapBinding {
         reference: 10_f64.to_bits(),
         support: [0.5_f64.to_bits(), 0, 0, depth.to_bits(), u64::from(outward)],
         carriers: [[0; 3]; 2],
         motion: DyadicBound::new(0.into(), 0),
+        component_motion: std::array::from_fn(|_| DyadicBound::new(0.into(), 0)),
         spans: Vec::new(),
     }
 }

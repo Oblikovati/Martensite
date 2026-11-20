@@ -5,11 +5,11 @@ use super::super::spatial::SpatialFailure;
 use super::*;
 
 impl JoinOperands<'_> {
-    pub(in super::super) fn motion_upper(
+    pub(in super::super) fn motion_intervals(
         &self,
         reference: f64,
         arithmetic: &mut Arithmetic<'_>,
-    ) -> Result<num_bigint::BigInt, CombinedFailure> {
+    ) -> Result<[Interval; 2], CombinedFailure> {
         let original = self
             .capture
             .comparison
@@ -22,8 +22,7 @@ impl JoinOperands<'_> {
         let angular = arithmetic.add(&angular, &self.capture.angular)?;
         let angular = arithmetic.add(&angular, &self.trace.angular)?;
         let slant = self.slant_upper(reference, &original.displacement.delta, arithmetic)?;
-        // This L1 sum bounds Euclidean motion in the numerical cap coordinates.
-        Ok(arithmetic.add(&angular, &slant)?.upper)
+        Ok([angular, slant])
     }
 
     fn slant_upper(

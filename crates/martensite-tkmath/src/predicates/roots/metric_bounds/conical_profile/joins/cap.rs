@@ -6,7 +6,8 @@ use super::*;
 mod homotopy;
 pub use homotopy::{
     ConicalCapClearanceRelation, ConicalCapHomotopyEvidence, ConicalCapHomotopyFailure,
-    ConicalCapVolumeError, ConicalCapVolumeEvidence, ConicalCapVolumeFailure,
+    ConicalCapNormalError, ConicalCapNormalEvidence, ConicalCapVolumeError,
+    ConicalCapVolumeEvidence, ConicalCapVolumeFailure,
 };
 mod projection;
 use projection::Projection;
@@ -37,6 +38,7 @@ pub(super) struct CapBinding {
     support: [u64; 5],
     carriers: [[u64; 3]; 2],
     motion: DyadicBound,
+    component_motion: [DyadicBound; 2],
     spans: Vec<CapSpanBinding>,
 }
 struct CapSpanBinding {
@@ -67,6 +69,7 @@ struct Capture<'a, 'q> {
     query: &'q ConicalCapJoinsQuery<'a>,
     support: [u64; 5],
     motion: num_bigint::BigInt,
+    component_motion: [num_bigint::BigInt; 2],
     carriers: [[u64; 3]; 2],
     spans: Vec<CapSpanBinding>,
 }
@@ -103,13 +106,23 @@ impl Capture<'_, '_> {
         index: usize,
         arithmetic: &mut Arithmetic<'_>,
     ) -> Result<(), ConicalJoinsFailure> {
-        let bound = operands
-            .motion_upper(reference, arithmetic)
+        let [angular, slant] = operands
+            .motion_intervals(reference, arithmetic)
             .map_err(|cause| failure(index, cause))?;
-        if bound > self.motion {
-            self.motion = bound;
-        }
+        // The sum bounds displacement in the numerical cap plane, independent of physical radius.
+        let bound = arithmetic
+            .add(&angular, &slant)
+            .map_err(|cause| failure(index, cause.into()))?;
+        max_into(&mut self.motion, bound.upper);
+        max_into(&mut self.component_motion[0], angular.upper);
+        max_into(&mut self.component_motion[1], slant.upper);
         Ok(())
+    }
+}
+
+fn max_into(maximum: &mut num_bigint::BigInt, value: num_bigint::BigInt) {
+    if value > *maximum {
+        *maximum = value;
     }
 }
 
@@ -144,6 +157,7 @@ fn execute(
         query,
         support: common_support(&first.cap.source),
         motion: 0.into(),
+        component_motion: [0.into(), 0.into()],
         carriers: join_carriers(first.cap.evidence),
         spans: Vec::with_capacity(query.spans.len()),
     };
@@ -161,6 +175,9 @@ fn execute(
             support: capture.support,
             carriers: capture.carriers,
             motion: DyadicBound::new(capture.motion, -i32::from(arithmetic.fractional_bits())),
+            component_motion: capture
+                .component_motion
+                .map(|bound| DyadicBound::new(bound, -i32::from(arithmetic.fractional_bits()))),
             spans: capture.spans,
         },
     ))

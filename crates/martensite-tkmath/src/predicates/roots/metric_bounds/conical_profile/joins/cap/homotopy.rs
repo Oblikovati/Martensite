@@ -5,7 +5,10 @@ mod volume;
 use crate::predicates::roots::metric_bounds::{
     CertifiedCylindricalClearance, CertifiedCylindricalPeriodicClearance, CylindricalClearanceScope,
 };
-pub use volume::{ConicalCapVolumeError, ConicalCapVolumeEvidence, ConicalCapVolumeFailure};
+pub use volume::{
+    ConicalCapNormalError, ConicalCapNormalEvidence, ConicalCapVolumeError,
+    ConicalCapVolumeEvidence, ConicalCapVolumeFailure,
+};
 
 /// Which complete boundary relation must stay strictly separated.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

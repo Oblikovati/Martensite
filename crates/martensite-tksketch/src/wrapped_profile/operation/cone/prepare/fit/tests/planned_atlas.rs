@@ -47,7 +47,7 @@ fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {
     assert_certified_contour(original, &prepared, &stored);
     let cap = assert_periodic_cap_material(&prepared, &request, &stored, &mut work);
     let homotopy = assert_homotopy(&stored.joins, &cap, &clearance);
-    assert_closed_strip_volume(&run, original, &stored, &homotopy, &mut work);
+    assert_closed_strip_measures(&run, original, &stored, &homotopy, &mut work);
 }
 
 fn decode_strip(prepared: &Prepared, support: ConeSupport) -> coverage::MemberView {
@@ -303,7 +303,7 @@ fn certified_cap_clearance(uv: &Request, work: &mut Work) -> planar_clearance::O
     proof
 }
 
-fn assert_closed_strip_volume(
+fn assert_closed_strip_measures(
     run: &ConeRun<'_>,
     original: &DevelopedRegionRequest,
     stored: &storage::Stored,
@@ -311,12 +311,24 @@ fn assert_closed_strip_volume(
     work: &mut Work,
 ) {
     use crate::surface_sketch::wrapped_profile::operation::cone::measures;
-    let volume = homotopy
-        .signed_normal_volume(work.remaining(), || false)
+    let options = work.remaining();
+    let proof = homotopy
+        .certify_normal_reference(original.tolerance, options, || false)
         .unwrap();
-    work.charge(original.region, None, volume.operations())
+    assert_eq!(proof.requested_spatial_limit(), original.tolerance);
+    assert_eq!(proof.options(), options);
+    work.charge(original.region, None, proof.operations())
         .unwrap();
-    let reference = measures::range(volume.enclosure().clone()).unwrap();
+    assert!(proof.radius_bounds()[0].compare_f64(0.).unwrap().is_gt());
+    assert!(proof.filled_error().compare_f64(0.).unwrap().is_gt());
+    assert!(
+        proof
+            .filled_error()
+            .compare_f64(original.tolerance)
+            .unwrap()
+            .is_le()
+    );
+    let reference = measures::range(proof.volume().clone()).unwrap();
     assert!(reference.lower > 0.);
     assert!(reference.upper - reference.lower < 1e-10);
     let flux = measures::native_flux(run, original.region, stored, work, &mut || false).unwrap();

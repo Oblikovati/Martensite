@@ -52,6 +52,9 @@ fn reference_body_types_are_send_sync() {
     assert_send_sync::<ConicalReferenceEvidence>();
     assert_send_sync::<ConicalReferenceError>();
     assert_send_sync::<ConicalReferenceFailure>();
+    assert_send_sync::<ConicalCapHomotopyEvidence<'static>>();
+    assert_send_sync::<ConicalCapNormalEvidence>();
+    assert_send_sync::<ConicalCapNormalError>();
 }
 #[test]
 fn source_sector_types_are_send_sync() {

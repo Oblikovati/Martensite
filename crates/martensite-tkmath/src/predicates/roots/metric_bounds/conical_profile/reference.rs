@@ -15,7 +15,7 @@ pub use chart::{
     certify_conical_chart_reference_with_refinement,
 };
 use context::{ReferenceDomain, ReferenceInputs};
-mod geometry;
+pub(super) mod geometry;
 #[cfg(test)]
 mod tests;
 mod topology;
