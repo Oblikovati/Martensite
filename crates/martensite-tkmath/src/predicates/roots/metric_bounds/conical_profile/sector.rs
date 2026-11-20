@@ -160,15 +160,25 @@ pub(super) fn admit(
     angle: f64,
     policy: ArithmeticPolicy,
 ) -> Result<(), SectorFailure> {
+    admit_policy(policy)?;
+    if spans.is_empty() || spans.len() > 128 {
+        return Err(SectorFailure::SpanCount(spans.len()));
+    }
+    admit_geometry(spans, angle)
+}
+pub(super) fn admit_policy(policy: ArithmeticPolicy) -> Result<(), SectorFailure> {
     if !(8..=4096).contains(&policy.fractional_bits) || policy.max_operations > 1_000_000 {
         return Err(SectorFailure::Policy {
             fractional_bits: policy.fractional_bits,
             max_operations: policy.max_operations,
         });
     }
-    if spans.is_empty() || spans.len() > 128 {
-        return Err(SectorFailure::SpanCount(spans.len()));
-    }
+    Ok(())
+}
+pub(super) fn admit_geometry(
+    spans: &[&[[f64; 2]]],
+    angle: f64,
+) -> Result<(), SectorFailure> {
     if !angle.is_finite() || angle <= 0. || angle >= std::f64::consts::FRAC_PI_2 {
         return Err(SectorFailure::Angle(angle));
     }
