@@ -185,8 +185,9 @@ fn bind_span(
     piece: &AuthoredPiece,
     proof: &SpanProof,
 ) -> ConeChecked<()> {
-    let query = boundary::query(original, prepared, piece, &proof.curves)?;
-    if proof.span != piece.span || !domain::matches_boundary(prepared, &proof.boundary, &query) {
+    let input = boundary::BoundaryInput::new(original, prepared, piece, "frozen fit membership")?;
+    let query = input.query(&proof.curves);
+    if proof.span != piece.span || !input.metric()?.matches(&proof.boundary, &query) {
         return Err(mismatch(
             original.region,
             Some(piece.span),

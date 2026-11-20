@@ -34,6 +34,7 @@ pub(in crate::surface_sketch::wrapped_profile) struct Prepared {
     pub chart_origin: f64,
     pub chart_center: f64,
     pub chart_domain: Option<std::sync::Arc<ConicalChartDomainEvidence>>,
+    local_charts: Vec<domain::LocalChart>,
     pub arithmetic_operations: u32,
     pub radii: Vec<ConeRequestReceipt>,
     pub wedge: ConicalSectorWedge,
@@ -41,6 +42,7 @@ pub(in crate::surface_sketch::wrapped_profile) struct Prepared {
 pub(in crate::surface_sketch::wrapped_profile) struct SpanFit {
     pub transition: Option<std::sync::Arc<ConicalBoundaryZRowEvidence>>,
     pub fit: cone_mapping::fit::OwnedFit,
+    local_chart: Option<domain::ChartSlot>,
     pub developed_turn: i32,
     pub uv: [[f64; 2]; 4],
     pub poles: [angular::RationalPoles; 2],

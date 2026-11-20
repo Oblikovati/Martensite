@@ -32,6 +32,10 @@ pub(super) fn certify(
         source,
         piece,
         expected: &fit.uv,
+        chart: source
+            .prepared
+            .boundary_metric(piece.span, fit.local_chart)?
+            .chart,
     };
     let (side_count, side_tolerance) = side(source, piece)?;
     let caps = cap.captured()?;
@@ -65,6 +69,7 @@ struct CapCapture<'a, 'b> {
     source: &'a SourceCapture<'b>,
     piece: &'a AuthoredPiece,
     expected: &'a [[f64; 2]],
+    chart: Option<&'b ConicalChartDomainEvidence>,
 }
 impl CapCapture<'_, '_> {
     fn captured(&self) -> ConeChecked<CapturedCaps> {
@@ -104,7 +109,7 @@ impl CapCapture<'_, '_> {
         CertifiedConicalTrimPair,
         Option<ConicalDevelopedBoundaryEvidence>,
     )> {
-        if let Some(domain) = self.source.prepared.chart_domain.as_deref() {
+        if let Some(domain) = self.chart {
             let (pair, evidence) =
                 chart::certify(self, query, curves, boundary, domain, work, cancelled)?;
             return Ok((pair, Some(evidence)));

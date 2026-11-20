@@ -167,9 +167,9 @@ clearance and material code proves both containment directions for the
 one-turn image and excludes all farther images. This check uses the
 retained polynomials directly and performs no additional fitting.
 
-This regression runs the construction and cap checks together. Public
-publication still needs to retain each fit's chart authority and compose
-the authored-to-fitted reference and boundary proofs across the charts.
+This regression first ran the construction and cap checks together.
+The retained-span check below also binds the decoded coefficients to
+each fit's chart.
 
 The 253 cone math tests and 18 cone preparation tests passed, including
 the 16.2 s closed-strip check. Clippy passed with warnings denied. Four
@@ -178,3 +178,31 @@ core, three paired standalone O. runs measured medians of 4.999 s and
 4.915 s. Median peak RSS was 67,320 and 67,516 KiB, respectively.
 The elapsed-time limit passed. The higher measured RSS provides no
 basis to clear the existing integration gate.
+
+## Chart authority on decoded spans
+
+Preparation owns each local chart once. A fitted span keeps a two-byte
+slot for its chart, including when further fitting splits the planned
+interval. Resolution checks both the authored curve ID and the dyadic
+interval before binding the decoded coefficients. A layout probe on
+Linux x86_64 measured 272 bytes per fit before and after adding the slot.
+
+The closed strip now goes through archive encoding and decoding,
+original clearance, and the same retained span capture used by the
+existing operation. That capture binds both depth edges and certifies
+both retained cap pcurves against the selected chart. The periodic
+material proof then uses the decoded pcurves. The control refuses a
+missing slot, a chart for another curve, and a sibling interval.
+
+The existing contour join theorem requires a shared fit center and
+identical half-angle endpoints at each join. Local-chart contours
+refuse at that gate before running join arithmetic. Publication still
+needs a common reference for the authored-to-cap homotopy and its
+measures.
+
+The cone suite passed 141 tests with three ignored. The final
+closed-strip test ran in 16.0 s, and Clippy passed with warnings denied.
+Four replay controls reproduced their reports and archives across
+independent processes. Three pinned standalone O. runs had a median
+API time of 4.793 s and median peak RSS of 67,640 KiB. These are
+current-build measurements. The paired performance gate remains open.

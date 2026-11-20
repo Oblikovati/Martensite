@@ -120,7 +120,10 @@ fn matches_first(prepared: &Prepared, original: &DevelopedRegionRequest) -> bool
         }
     });
     let query = storage::boundary_query(original, prepared, piece, &curves).unwrap();
-    matches_boundary(prepared, &fit.boundary, &query)
+    prepared
+        .boundary_metric(piece.span, fit.local_chart)
+        .unwrap()
+        .matches(&fit.boundary, &query)
 }
 fn changed_domain(
     originals: &[DevelopedRegionRequest],

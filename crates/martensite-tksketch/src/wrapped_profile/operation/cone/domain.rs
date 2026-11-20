@@ -253,39 +253,8 @@ fn source_owner(
 #[cfg(test)]
 mod tests;
 
-pub(super) fn certify_boundary(
-    prepared: &Prepared,
-    query: ConicalBoundaryQuery<'_>,
-    options: ConeClearanceOptions,
-    cancelled: &mut CancelPoll<'_>,
-) -> Result<ConicalBoundaryEvidence, ConicalBoundaryError> {
-    match prepared.chart_domain.as_deref() {
-        Some(domain) if directed(prepared) => certify_conical_boundary_in_chart_with_refinement(
-            query,
-            domain,
-            options,
-            ConicalPrimitiveRefinement::HalfSplitV1,
-            cancelled,
-        ),
-        Some(domain) => certify_conical_boundary_in_chart(query, domain, options, cancelled),
-        None => certify_conical_boundary(query, options, cancelled),
-    }
-}
-pub(super) fn matches_boundary(
-    prepared: &Prepared,
-    proof: &ConicalBoundaryEvidence,
-    query: &ConicalBoundaryQuery<'_>,
-) -> bool {
-    match prepared.chart_domain.as_deref() {
-        Some(domain) if directed(prepared) => proof.matches_chart_with_refinement(
-            query,
-            domain,
-            ConicalPrimitiveRefinement::HalfSplitV1,
-        ),
-        Some(domain) => proof.matches_chart(query, domain),
-        None => proof.matches_legacy(query),
-    }
-}
+pub(super) use boundary_metric::{BoundaryMetric, ChartSlot, LocalChart, covers};
+mod boundary_metric;
 
 pub(super) fn directed(prepared: &Prepared) -> bool {
     prepared.executed_selection.is_directed()

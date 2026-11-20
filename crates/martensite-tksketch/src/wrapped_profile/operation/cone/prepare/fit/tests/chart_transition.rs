@@ -87,7 +87,7 @@ fn prepare(
     .unwrap();
     prepared.chart_domain = Some(std::sync::Arc::new(domain));
     prepared.chart_center = center;
-    plan(prepared, source, endpoints, work, &mut || false).unwrap()
+    plan(prepared, source, None, endpoints, work, &mut || false).unwrap()
 }
 
 fn check_distinct_charts(prepared: &Prepared, spans: [CurveSpan; 2]) {
@@ -120,6 +120,7 @@ fn preassigned_local_restrictions_fit_the_wider_boundary() {
     prepared.fits.clear();
     assert_needs_two_charts(prepared, &left, &right, options);
     assert_unsplit_weight_refusal(prepared, &left, options);
+    prepared.chart_domain = None;
     let pieces = fit_local_halves(prepared, [&left, &right], options);
     let joins = pieces
         .windows(2)
@@ -161,6 +162,7 @@ fn assert_unsplit_weight_refusal(
     let result = plan(
         prepared,
         left,
+        None,
         &mut endpoints::EndpointPool::default(),
         &mut work,
         &mut || false,
@@ -184,9 +186,16 @@ fn fit_local_halves(
     let mut pieces = Vec::new();
     for (original, centers) in originals.into_iter().zip([[-3.3, -1.1], [1.3, 3.4]]) {
         for (index, center) in (0..=1).zip(centers) {
-            bind_local_half(prepared, original, index, center, &mut work);
-            let fitted =
-                plan(prepared, original, &mut endpoints, &mut work, &mut || false).unwrap();
+            let proof = local_half(prepared, original, index, center, &mut work);
+            let fitted = plan(
+                prepared,
+                original,
+                Some(proof),
+                &mut endpoints,
+                &mut work,
+                &mut || false,
+            )
+            .unwrap();
             assert!(
                 fitted
                     .iter()
@@ -198,13 +207,13 @@ fn fit_local_halves(
     pieces
 }
 
-fn bind_local_half(
+fn local_half(
     prepared: &mut Prepared,
     source: &AuthoredPiece,
     index: u64,
     center: f64,
     work: &mut Work,
-) {
+) -> ConicalChartDomainEvidence {
     let spans = [&source.poles[..]];
     let query = local_query(&spans, prepared, center, work);
     let domain = certify_conical_subspan_chart(query, index, 1, || false).unwrap();
@@ -214,8 +223,7 @@ fn bind_local_half(
         domain.operations(),
     )
     .unwrap();
-    prepared.chart_domain = Some(std::sync::Arc::new(domain));
-    prepared.chart_center = center;
+    domain
 }
 
 fn local_query<'a>(

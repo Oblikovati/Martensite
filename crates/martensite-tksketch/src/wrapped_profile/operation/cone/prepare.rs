@@ -156,6 +156,7 @@ fn initial(
         chart_origin: request.support.chart_origin,
         chart_center: chart.center,
         chart_domain: chart.proof.cloned(),
+        local_charts: Vec::new(),
         arithmetic_operations: 0,
         radii: Vec::new(),
         wedge: chart.wedge,
@@ -171,7 +172,9 @@ fn prepare_contour(
     let mut pieces = Vec::new();
     for source in contour {
         radius(prepared, source, work, cancelled)?;
-        pieces.extend(fit::plan(prepared, source, endpoints, work, cancelled)?);
+        pieces.extend(fit::plan(
+            prepared, source, None, endpoints, work, cancelled,
+        )?);
     }
     Ok(pieces)
 }

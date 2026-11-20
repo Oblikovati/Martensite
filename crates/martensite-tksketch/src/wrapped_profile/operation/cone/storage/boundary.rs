@@ -6,36 +6,17 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn query<'a>(
     piece: &'a AuthoredPiece,
     curves: &'a [retained::OwnedCurve; 2],
 ) -> ConeChecked<ConicalBoundaryQuery<'a>> {
-    let fit = prepared
-        .fits
-        .get(&piece.span)
-        .ok_or_else(|| missing(original.region, piece.span, "frozen fit membership"))?;
-    let original = original_interval(original, prepared, piece.span)?;
-    Ok(BoundaryInput {
-        prepared,
-        piece,
-        fit,
-        original,
-    }
-    .query(curves))
+    Ok(BoundaryInput::new(original, prepared, piece, "frozen fit membership")?.query(curves))
 }
+
 pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn prepared_query<'a>(
     original: &'a DevelopedRegionRequest,
     prepared: &'a Prepared,
     piece: &'a AuthoredPiece,
     poles: &'a [angular::RationalPoles; 2],
 ) -> ConeChecked<ConicalBoundaryQuery<'a>> {
-    let fit = prepared
-        .fits
-        .get(&piece.span)
-        .ok_or_else(|| missing(original.region, piece.span, "prepared boundary membership"))?;
-    let input = BoundaryInput {
-        prepared,
-        piece,
-        fit,
-        original: original_interval(original, prepared, piece.span)?,
-    };
-    let view = fit.fit.view();
+    let input = BoundaryInput::new(original, prepared, piece, "prepared boundary membership")?;
+    let view = input.fit.fit.view();
     let edges =
         [0, 1].map(|depth| input.edge(&view, depth, &poles[depth].points, &poles[depth].weights));
     Ok(input.with_edges(edges))
@@ -57,14 +38,37 @@ fn original_interval<'a>(
 fn missing(region: SurfaceRegionId, span: CurveSpan, field: &'static str) -> ConeFailure {
     mismatch(region, Some(span), field, vec![0], vec![1])
 }
-struct BoundaryInput<'a> {
+pub(super) struct BoundaryInput<'a> {
     prepared: &'a Prepared,
     piece: &'a AuthoredPiece,
     fit: &'a SpanFit,
     original: ConicalOriginalSpan<'a>,
 }
 impl<'a> BoundaryInput<'a> {
-    fn query(&self, curves: &'a [retained::OwnedCurve; 2]) -> ConicalBoundaryQuery<'a> {
+    pub(super) fn new(
+        original: &'a DevelopedRegionRequest,
+        prepared: &'a Prepared,
+        piece: &'a AuthoredPiece,
+        field: &'static str,
+    ) -> ConeChecked<Self> {
+        let fit = prepared
+            .fits
+            .get(&piece.span)
+            .ok_or_else(|| missing(original.region, piece.span, field))?;
+        Ok(Self {
+            prepared,
+            piece,
+            fit,
+            original: original_interval(original, prepared, piece.span)?,
+        })
+    }
+
+    pub(super) fn metric(&self) -> ConeChecked<domain::BoundaryMetric<'a>> {
+        self.prepared
+            .boundary_metric(self.piece.span, self.fit.local_chart)
+    }
+
+    pub(super) fn query(&self, curves: &'a [retained::OwnedCurve; 2]) -> ConicalBoundaryQuery<'a> {
         self.with_edges(self.edges(curves))
     }
     fn with_edges(&self, edges: [ConicalStorageQuery<'a>; 2]) -> ConicalBoundaryQuery<'a> {
@@ -120,28 +124,28 @@ pub(super) fn certify(
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<std::sync::Arc<ConicalBoundaryEvidence>> {
-    let query = query(original, prepared, piece, curves)?;
-    let fit = prepared
-        .fits
-        .get(&piece.span)
-        .ok_or_else(|| missing(original.region, piece.span, "retained boundary receipt"))?;
+    let input = BoundaryInput::new(original, prepared, piece, "frozen fit membership")?;
+    let query = input.query(curves);
+    let fit = input.fit;
+    let metric = input.metric()?;
     if domain::directed(prepared) {
-        return directed_reuse(prepared, piece, fit, &query, work.requested);
+        return directed_reuse(prepared, piece, fit, metric, &query, work.requested);
     }
-    if reusable(prepared, &fit.boundary, &query, work.requested) {
+    if reusable(metric, &fit.boundary, &query, work.requested) {
         return Ok(std::sync::Arc::clone(&fit.boundary));
     }
-    issue_boundary(prepared, piece.span, query, work, cancelled)
+    issue_boundary(original.region, piece.span, metric, query, work, cancelled)
 }
 fn issue_boundary(
-    prepared: &Prepared,
+    region: SurfaceRegionId,
     span: CurveSpan,
+    metric: domain::BoundaryMetric<'_>,
     query: ConicalBoundaryQuery<'_>,
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<std::sync::Arc<ConicalBoundaryEvidence>> {
-    let region = prepared.source.region;
-    let proof = domain::certify_boundary(prepared, query, work.remaining(), cancelled)
+    let proof = metric
+        .certify(query, work.remaining(), cancelled)
         .map_err(|cause| failure(region, Some(span), ConeCause::Boundary(Box::new(cause))))?;
     work.charge(region, Some(span), proof.operations())?;
     Ok(std::sync::Arc::new(proof))
@@ -150,6 +154,7 @@ fn directed_reuse(
     prepared: &Prepared,
     piece: &AuthoredPiece,
     fit: &SpanFit,
+    metric: domain::BoundaryMetric<'_>,
     query: &ConicalBoundaryQuery<'_>,
     requested: ConeClearanceOptions,
 ) -> ConeChecked<std::sync::Arc<ConicalBoundaryEvidence>> {
@@ -158,7 +163,7 @@ fn directed_reuse(
         .transition
         .as_ref()
         .ok_or_else(|| missing(region, piece.span, "issued directed transition"))?;
-    let matches = matches_directed(prepared, proof, query, requested);
+    let matches = matches_directed(metric, proof, query, requested);
     if !matches {
         return Err(mismatch(
             region,
@@ -172,34 +177,34 @@ fn directed_reuse(
 }
 
 fn matches_directed(
-    prepared: &Prepared,
+    metric: domain::BoundaryMetric<'_>,
     proof: &ConicalBoundaryZRowEvidence,
     query: &ConicalBoundaryQuery<'_>,
     requested: ConeClearanceOptions,
 ) -> bool {
-    prepared.chart_domain.as_deref().is_some_and(|domain| {
+    metric.chart.is_some_and(|domain| {
         proof.matches_current(
             query,
             domain,
             ConicalPrimitiveRefinement::HalfSplitV1,
             requested.fractional_bits,
-        ) && reusable(prepared, proof.boundary(), query, requested)
+        ) && reusable(metric, proof.boundary(), query, requested)
     })
 }
 fn reusable(
-    prepared: &Prepared,
+    metric: domain::BoundaryMetric<'_>,
     proof: &ConicalBoundaryEvidence,
     query: &ConicalBoundaryQuery<'_>,
     requested: ConeClearanceOptions,
 ) -> bool {
     let generated = proof.options();
-    domain::matches_boundary(prepared, proof, query)
+    metric.matches(proof, query)
         && generated.fractional_bits == requested.fractional_bits
         && generated.max_operations <= requested.max_operations
         && proof.operations() <= generated.max_operations
 }
 mod joins;
-pub(super) use joins::certify as joins;
+pub(in super::super) use joins::certify as joins;
 
 #[cfg(test)]
 mod reuse_tests {
@@ -221,7 +226,10 @@ mod reuse_tests {
         let fit = &prepared.fits[&piece.span];
         let curves = actual_curves(fit);
         let query = query(original, prepared, piece, &curves).unwrap();
-        check_mutations(prepared, &fit.boundary, query, work.requested);
+        let metric = prepared
+            .boundary_metric(piece.span, fit.local_chart)
+            .unwrap();
+        check_mutations(metric, &fit.boundary, query, work.requested);
         let consumed = work.consumed;
         let reused = certify(original, prepared, piece, &curves, &mut work, &mut || false).unwrap();
         assert!(std::sync::Arc::ptr_eq(&reused, &fit.boundary));
@@ -235,16 +243,16 @@ mod reuse_tests {
         })
     }
     fn check_mutations(
-        prepared: &Prepared,
+        metric: domain::BoundaryMetric<'_>,
         proof: &ConicalBoundaryEvidence,
         query: ConicalBoundaryQuery<'_>,
         policy: ConeClearanceOptions,
     ) {
-        assert!(reusable(prepared, proof, &query, policy));
+        assert!(reusable(metric, proof, &query, policy));
         for changed in changed_policies(proof, policy) {
-            assert!(!reusable(prepared, proof, &query, changed));
+            assert!(!reusable(metric, proof, &query, changed));
         }
-        check_query_mutations(prepared, proof, query, policy);
+        check_query_mutations(metric, proof, query, policy);
     }
     fn changed_policies(
         proof: &ConicalBoundaryEvidence,
@@ -262,22 +270,22 @@ mod reuse_tests {
         ]
     }
     fn check_query_mutations(
-        prepared: &Prepared,
+        metric: domain::BoundaryMetric<'_>,
         proof: &ConicalBoundaryEvidence,
         query: ConicalBoundaryQuery<'_>,
         policy: ConeClearanceOptions,
     ) {
         let mut changed = query;
         changed.spatial_limit *= 2.;
-        assert!(!reusable(prepared, proof, &changed, policy));
+        assert!(!reusable(metric, proof, &changed, policy));
         changed = query;
         changed.depths[1] = changed.depths[1].next_up();
-        assert!(!reusable(prepared, proof, &changed, policy));
+        assert!(!reusable(metric, proof, &changed, policy));
         changed = query;
         let mut original = changed.original.unwrap();
         original.index += 1;
         changed.original = Some(original);
-        assert!(!reusable(prepared, proof, &changed, policy));
+        assert!(!reusable(metric, proof, &changed, policy));
     }
     fn check_reproof(
         original: &DevelopedRegionRequest,

@@ -134,6 +134,7 @@ fn original_pair_error_outranks_secondary_bookkeeping_failure() {
             source,
             piece,
             expected: &fit.uv,
+            chart: source.prepared.chart_domain.as_deref(),
         };
         let original = refusal(source.carriers[1]);
         let mut work = Work::new(ConeClearanceOptions {

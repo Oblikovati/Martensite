@@ -125,6 +125,7 @@ fn cap<'a, 'b>(source: &'a SourceCapture<'b>, piece: &'a AuthoredPiece) -> CapCa
         source,
         piece,
         expected: &source.prepared.fits[&piece.span].uv,
+        chart: source.prepared.chart_domain.as_deref(),
     }
 }
 
