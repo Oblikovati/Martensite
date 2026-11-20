@@ -1,0 +1,99 @@
+{
+  "base": "4021a62e50a526ae253ba2b119c0f442237cf25f",
+  "source_sha256": {
+    "Cargo.lock": "ae5a5ca217961e6592020d9ed11db2b27fa0306afa98828177b87c5ea6a0bb8e",
+    "Cargo.toml": "6b8e22b47df0f47dfa9b88359deddacb18bbd9699b6fa136551083db7d3ddd2e",
+    "crates/martensite-tksketch/src/surface_sketch/mod.rs": "f6d82e4181f4cfd236973d248e961152948c027dadc66632f83992384194a435",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint.rs": "46d586efaafefe1afdd0fdca0ebc7f90989e8f48c0fee0cda776bb94eb64b808",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/extrusion.rs": "294784cc10c9cf9ff02bdb87d8e0eef7b2b53c0b7a6de94e8357872604274c1f",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/feature/body.rs": "97756e2e883b827e8f0ba75c1cfd6903a6dbbde104215861f7f4003f33a7537a",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/feature/failure.rs": "389716b56bd9a80fc560c428eefbe7571b8aa5d83867b6b74627c264f5c41ca7",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/feature/history.rs": "3090c0cb037e99f055e596874a8d45688103ca0d56b14b8b2e20f67ec6f3cbc9",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/feature/mod.rs": "318473e797ee43c92481a6dedb34f4fa9e97ab5788bb02109c88cc3e9e3f5c2b",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/feature/tests.rs": "3866bc51f3852cba7e0211137a43e4c68a2ffd991af318707cb1a78da1ea4c5f",
+    "crates/martensite-tksketch/src/wrapped_profile/api/footprint/tests.rs": "c88e3681a8ae3c760bf51475a38ae6a56c2b162afc21993a432293433d8829a6",
+    "crates/martensite-tkv3d/tests/wrapped_text_regions/body_controls/multiline/replay.rs": "920eceb7aa65c38a319c04502eb82f0e00d2639e2c5c7991d49d31724e54f449",
+    "crates/martensite-tkv3d/tests/wrapped_text_regions/wrapped.rs": "13751a1c074cbc586e40c1a06d85e2c2b304d4729f6e6f1c10cd82a2199284b7"
+  },
+  "binary_sha256": {
+    "/tmp/martensite-cone-b1-cached-target/debug/deps/martensite_tksketch-1bce81d5a48f0d86": "24fa4e8f1e950e07fabc695a84d53bc773eb0c9df3898231637662da2210c2a3",
+    "/tmp/martensite-cone-b1-cached-target/debug/deps/toolkit-8b42000acf67b0b4": "e2d926feb4212a914cfc913c5f3426b6aa77b3ffd2c363cbc4af8a77bf6635f7"
+  },
+  "stages": {
+    "footprint": {
+      "command": "cargo test --locked -p martensite-tksketch --lib wrapped_profile::api::footprint::",
+      "passed": 14,
+      "summary": "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 531 filtered out; finished in 4.62s",
+      "log_sha256": "3bb2f238b9f16dfe5c87c4366f3ceb54befbadb9bbb8f69cd54615a63957c701"
+    },
+    "attachment": {
+      "command": "martensite_tksketch surface_sketch::attachment::",
+      "passed": 27,
+      "summary": "test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 518 filtered out; finished in 0.08s",
+      "log_sha256": "a9c3fc126fe8a9ba93ee2153d52aab8f6ec9b33ff5ff2ab735d257b8f11b40b0"
+    },
+    "multiline-admission": {
+      "command": "toolkit --exact wrapped_text_regions::wrapped::body_controls::multiline::replay::content::native_trim_band_admits_full_multiline_outline_and_seam_edit",
+      "passed": 1,
+      "summary": "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 698 filtered out; finished in 0.06s",
+      "log_sha256": "eea2de9a269e6ebbe92fbae97f6119be67db9d5b5bd3338a9787539427d17eec"
+    },
+    "pocket": {
+      "command": "cargo test --locked -p martensite-tkv3d --test toolkit multiline_pocket_replays_punctuation_removal_across_native_seam -- --nocapture",
+      "passed": 1,
+      "summary": "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 698 filtered out; finished in 396.15s",
+      "log_sha256": "ceece2c154a872ad92ffd6143379ff8e8e3a3cc25c1fe0fffa0d80510af70582"
+    },
+    "boss": {
+      "command": "cargo test --locked -p martensite-tkv3d --test toolkit multiline_boss_replays_after_support_placement_and_depth_edits -- --nocapture",
+      "passed": 1,
+      "summary": "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 698 filtered out; finished in 389.43s",
+      "log_sha256": "c8ab85d28221c2d6ab5cba38698ccdf24b8f7b5a05aed8c8c67a1306c94ea1c4"
+    },
+    "clippy": {
+      "command": "cargo clippy --locked -p martensite-tksketch --all-targets -- -D warnings",
+      "passed": 0,
+      "summary": "Finished `dev` profile [unoptimized] target(s) in 3.13s",
+      "log_sha256": "cde4fae108d5bccf5a3cad9a5b70b292d8befc3a1bdf5d02c3a3a3a4bfb71f84"
+    },
+    "clippy-toolkit": {
+      "command": "cargo clippy --locked -p martensite-tkv3d --test toolkit -- -D warnings",
+      "passed": 0,
+      "summary": "Finished `dev` profile [unoptimized] target(s) in 49.71s",
+      "log_sha256": "c7d5edccc37349f973d4042459a9f10708f3b158128fae38ee9960d960a0cee4"
+    }
+  },
+  "verification": {
+    "focused_tests_passed": 44,
+    "fresh_process_replays_executed": 2,
+    "workloads": {
+      "boss_original_and_edited": {
+        "regions": [
+          18,
+          18
+        ],
+        "curves": [
+          239,
+          239
+        ]
+      },
+      "pocket_original_and_edited": {
+        "regions": [
+          18,
+          16
+        ],
+        "curves": [
+          239,
+          229
+        ]
+      }
+    },
+    "excluded": [
+      "general curved or holed trims",
+      "conical supports",
+      "matched runtime and peak RSS",
+      "full CI and sanitizers"
+    ],
+    "timing_scope": "Concurrent functional tests; each multiline test builds an original, an edit and a process replay."
+  }
+}

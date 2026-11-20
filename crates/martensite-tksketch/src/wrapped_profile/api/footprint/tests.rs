@@ -255,7 +255,7 @@ fn bore_support(support: &Shape) -> Shape {
     cut.shape().clone()
 }
 
-fn attachment(angle: Option<f64>) -> CylinderFaceAttachment {
+pub(super) fn attachment(angle: Option<f64>) -> CylinderFaceAttachment {
     let mut maker = match angle {
         Some(angle) => BRepPrimAPIMakeCylinder::with_angle(10., 4., angle).unwrap(),
         None => BRepPrimAPIMakeCylinder::new(10., 4.),
@@ -290,7 +290,7 @@ fn selected_cylinder(body: &Shape) -> Face {
         })
         .unwrap()
 }
-fn request(
+pub(super) fn request(
     attachment: &CylinderFaceAttachment,
     [x0, x1]: [f64; 2],
     [y0, y1]: [f64; 2],

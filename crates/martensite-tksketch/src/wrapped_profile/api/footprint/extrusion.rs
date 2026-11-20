@@ -47,14 +47,24 @@ impl CylinderFaceAttachment {
         mut cancelled: impl FnMut() -> bool + Send,
     ) -> FootprintChecked<CylinderTrimmedTool> {
         poll(&mut cancelled, WrappedStage::Admission)?;
-        let band = self.resolve_band(revision, request)?;
-        let inputs = read_inside(request, &band, &mut cancelled)?;
-        let extrusion = placement::from_canonical_inputs(request, inputs, &mut cancelled)
+        let (_, band) = self.resolve_band(revision, request)?;
+        self.build_trimmed_tool(revision, request, &band, &mut cancelled)
+    }
+
+    pub(super) fn build_trimmed_tool(
+        &self,
+        revision: SupportRevision,
+        request: &WrappedNormalRequest,
+        band: &band::Band,
+        cancelled: &mut CancelPoll<'_>,
+    ) -> FootprintChecked<CylinderTrimmedTool> {
+        let inputs = read_inside(request, band, cancelled)?;
+        let extrusion = placement::from_canonical_inputs(request, inputs, cancelled)
             .map_err(extrusion_error)?;
-        let fitted_spans = fitted::check(&extrusion, &band, &mut cancelled)?;
-        poll(&mut cancelled, WrappedStage::Publication)?;
+        let fitted_spans = fitted::check(&extrusion, band, cancelled)?;
+        poll(cancelled, WrappedStage::Publication)?;
         Ok(CylinderTrimmedTool {
-            footprint: self.footprint_report(revision, request, &band),
+            footprint: self.footprint_report(revision, request, band),
             extrusion,
             fitted_spans,
         })

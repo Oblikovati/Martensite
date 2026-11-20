@@ -45,8 +45,8 @@ not certify a modelling result or a world-point projection.
 Native face classification reports the selected face's trim state separately,
 with `NativeSearch` coverage. `Refuse` declines outside points. `Report` returns
 their coordinates and outside state for application feedback. Unknown or rejected
-classifications always refuse. These policies concern hit authoring; full-profile
-support-trim acceptance for boss/pocket operations remains open.
+classifications always refuse. A boss or pocket checks its entire footprint
+separately against the selected face's trims.
 
 ## Resolving the extrusion chart
 
@@ -104,14 +104,49 @@ The tool retains the authored report, the number of checked fitted spans
 and the chart extruder's spatial placement report. The trim certificate
 covers both cap pcurves in the requested chart, including the interior
 of each cap enclosed by its wires. The spatial report accounts for
-stored placement separately. General curved or holed supports and
-Boolean feature publication still need their own checks.
+stored placement separately. General curved or holed supports still need
+their own trim checks.
 
 The [fitted-tool checks](references/cylindrical-trim-band-2026-11-20/fitted-tool.json)
 decoded both caps of a tool on a partial cylinder with a shifted seam.
 The tool matched the standalone chart extrusion bytes and authored
 history. A second tool crossed the paired seam on a full cylinder. All
 49 selected tests and strict all-target TKSketch Clippy passed.
+
+## Applying a wrapped boss or pocket
+
+`attachment.apply_wrapped_profile(revision, kind, &request)` uses one
+decoded support for trim checks and the material operation. Supply depths
+from zero to a positive finite depth. A boss follows the normal out of
+the solid and a pocket follows the normal into it. On a reversed cylinder
+face those senses are reversed relative to the radius.
+
+The operation builds the same trim-checked tool, then calls the native
+non-destructive Fuse or Cut. The result must contain one solid without
+loose topology. The frozen solid passes ordered body validation at the
+attachment's recorded resolution before publication. The result keeps
+the validation modes and the tool's spatial and volume evidence. Its
+Boolean validation has sampled and native-search stages.
+
+The history joins native Boolean images and removals to the selected
+face, the other members of the input solid, and the semantic extrusion
+keys. The extrusion history carries those keys back to the authored
+regions, curves and vertices. Result references address the immutable
+archive. Support member references address the exact revision's decoded
+solid. Persistent names across edits belong to the application. Fresh
+exports decode independent owners.
+
+Cancellation is polled during tool construction and at the boundaries
+of native Boolean construction, history and validation. A native failure
+keeps its original cause when cancellation is requested after it failed.
+
+The [public operation checks](references/cylindrical-trim-band-2026-11-20/boolean-feature.json)
+passed 44 selected tests and strict Clippy in TKSketch and the TKV3D test
+target. The existing multiline edit tests now use this entry point. The
+boss replays after support, position and depth edits. The pocket replays
+after removing punctuation and moving the first glyph across the seam.
+Both fresh processes reproduce the solid archive, extrusion archive and
+composed history byte for byte.
 
 ## Multiline boss edit and replay
 
@@ -170,12 +205,10 @@ after nested native/encoding diagnostics were boxed. The logs are
 `target/qualification/p420-attachment-final.log` and
 `target/qualification/p420-attachment-clippy.log`.
 
-This establishes the attachment foundation. #420 still requires the complete
-wrapped boss/pocket operation, complete hit-to-sketch integration and profile
-support-trim policy, authored-history composition, and deterministic replay of
-those operations. The Boolean test exercises native history integration; it does
-not qualify wrapped multiline emboss/engrave or close #420. The wider feature
-also retains its conical-profile, performance, sanitizer and P6 exit requirements.
+This earlier attachment campaign checked native history rebinding. The
+remaining #420 work covers general support trims and the complete application
+hit-to-sketch workflow. The wider feature retains its conical-profile,
+performance, sanitizer and P6 exit requirements.
 
 The combined local campaign passed 25 attachment/chart tests in 0.27 seconds
 (`target/qualification/p420-chart-final.log`). Six chart controls include a real

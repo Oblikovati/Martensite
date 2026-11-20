@@ -65,9 +65,9 @@ Logs are under `target/qualification/`: `p420-wrapped-membership.log`,
 `p420-wrapped-boolean-final.log`, `p420-wrapped-boolean-replay-final.log`,
 `p420-wrapped-boolean-clippy.log`, and `p420-shared-encoding-regression.log`.
 
-These controls qualify the rectangle integration cases above. #420 still needs
-the unified immutable operation result, complete composed history, whole-profile
-support-trim policy, editable sketch replay, and multiline glyph/hole/disconnected
-workloads. Native validation and membership searches do not become exact proofs
-through these tests. Authored conical profiles, performance qualification,
-sanitizer execution and P6 cleanup remain open for the wider feature.
+These controls qualify the rectangle integration cases above. The later
+[public trim-band feature](FACE-ATTACHMENT.md#applying-a-wrapped-boss-or-pocket)
+adds immutable results and composed history for supported rectangular cylinder
+bands. Native body validation retains its sampled and native-search coverage.
+General support trims, conical profiles, performance qualification, sanitizer
+execution and P6 cleanup remain open for the wider feature.

@@ -53,6 +53,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added normal extrusion tools checked against the authored and fitted cap footprints of a selected cylindrical trim band (#420).
 
+- Added non-destructive wrapped bosses and pockets on cylindrical trim bands, with validated solid output and composed Boolean history (#420, #425).
+
 - Added revision-checked extraction of the extrusion chart from a saved cylindrical face, so edits could reuse the selected face's native location, axes and radius (#420).
 
 - Added revision-checked conversion of native cylindrical face-hit parameters into developed coordinates with explicit seams, arithmetic bounds and separate trim-search coverage (#420).

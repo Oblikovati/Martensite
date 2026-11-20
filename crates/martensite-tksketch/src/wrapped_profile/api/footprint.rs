@@ -2,12 +2,17 @@
 use super::*;
 use crate::surface_sketch::{
     CylinderSupport,
-    attachment::{AttachmentFailure, CylinderFaceAttachment, FaceAttachmentId, SupportRevision},
+    attachment::{
+        AttachmentFailure, CylinderFaceAttachment, DetachedCylinderSupport, FaceAttachmentId,
+        SupportRevision,
+    },
 };
 mod band;
 mod bounds;
 mod extrusion;
 pub use extrusion::CylinderTrimmedTool;
+mod feature;
+pub use feature::*;
 mod fitted;
 #[cfg(test)]
 mod tests;
@@ -113,7 +118,7 @@ impl CylinderFaceAttachment {
         revision: SupportRevision,
         request: &WrappedNormalRequest,
     ) -> FootprintChecked<CylinderFootprintReport> {
-        let band = self.resolve_band(revision, request)?;
+        let (_, band) = self.resolve_band(revision, request)?;
         bounds::check(request, &band)?;
         Ok(self.footprint_report(revision, request, &band))
     }
@@ -122,7 +127,7 @@ impl CylinderFaceAttachment {
         &self,
         revision: SupportRevision,
         request: &WrappedNormalRequest,
-    ) -> FootprintChecked<band::Band> {
+    ) -> FootprintChecked<(DetachedCylinderSupport, band::Band)> {
         let (detached, support) = self
             .resolve_chart(
                 revision,
@@ -131,7 +136,8 @@ impl CylinderFaceAttachment {
             )
             .map_err(|cause| CylinderFootprintFailure::Attachment(Box::new(cause)))?;
         check_support(request.support, support)?;
-        band::capture(&detached.face)
+        let band = band::capture(&detached.face)?;
+        Ok((detached, band))
     }
 
     fn footprint_report(

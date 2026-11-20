@@ -352,13 +352,14 @@ do not qualify those scenarios for the new cone path.
 The [revision-bound face attachment](FACE-ATTACHMENT.md) owns a selected cylindrical
 face and support snapshot, follows explicit native history, and refuses ambiguous
 reattachment. It can build a normal tool with authored and fitted cap containment
-in a rectangular cylindrical trim band. Wrapped boss/pocket and hit-mapping
-integration under #420 remain open.
+in a rectangular cylindrical trim band. It publishes a validated wrapped boss
+or pocket on that band with composed history. General support trims and full
+hit-to-sketch integration under #420 remain open.
 
 The [native boss/pocket controls](BODY-BOOLEAN-QUALIFICATION.md) exercise actual
 Fuse/Cut operations, seam-crossing and oblique placements, input preservation,
-Boolean correspondence and process/concurrent replay. The unified body-feature
-operation and its whole-profile trim contract remain open under #420.
+Boolean correspondence and process/concurrent replay. These controls predate
+the public trim-band feature operation.
 
 The [rotation-aware frame proof](CHART-ROTATION-PROOF.md) supplies bounded
 trigonometric and spatial-allocation evidence for the existing cylinder chart

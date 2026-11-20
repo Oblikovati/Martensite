@@ -11,6 +11,9 @@ use martensite_tkmath::geom_abs::SurfaceType;
 use martensite_tksketch::surface_sketch::attachment::{
     AttachmentFailureClass, CylinderFaceAttachment, FaceAttachmentId, SupportRevision,
 };
+use martensite_tksketch::surface_sketch::{
+    CylinderFeatureKind, CylinderFeatureResult, CylinderFeatureSource,
+};
 use std::fmt::Write;
 #[path = "replay/content.rs"]
 mod content;
@@ -108,6 +111,7 @@ fn selected_cylinder(body: &Shape) -> Face {
 struct Publication {
     shape: Shape,
     body: Vec<u8>,
+    archive: Vec<u8>,
     tool: Vec<u8>,
     authored_keys: Vec<WrappedHistoryKey>,
     history: String,
@@ -140,31 +144,18 @@ fn publish(
     place_developed(&mut request, placement);
     let source = attachment.export_native(revision).unwrap();
     let original = request.clone();
-    let result = normal_extrude_profile(&request).unwrap();
-    assert_eq!(result.reports().len(), request.selections.len());
-    check_volume_oracle(&result, expected);
-    let publication = attach_checked(&source.body, &result, &request);
-    assert_eq!(request, original);
-    publication
-}
-
-fn attach_checked(
-    support: &Shape,
-    result: &WrappedNormalResult,
-    request: &WrappedNormalRequest,
-) -> Publication {
-    let tool_bytes = result.encoded_brep().to_vec();
-    let native = result.export_native().unwrap();
-    let normal = request.support.normal;
-    let operation = match normal {
-        NormalSense::Outward => Operation::Fuse,
-        NormalSense::Inward => Operation::Cut,
+    let kind = match normal {
+        NormalSense::Outward => CylinderFeatureKind::Boss,
+        NormalSense::Inward => CylinderFeatureKind::Pocket,
     };
-    let boolean = attach_tool(support, &native.bodies, operation);
-    check_publication(&boolean, &native.entities, request);
-    check_attachment_volume_direction(boolean.shape(), support, normal);
-    assert_eq!(result.encoded_brep(), tool_bytes);
-    publication(boolean.shape(), result, &native.entities, tool_bytes)
+    let result = attachment
+        .apply_wrapped_profile(revision, kind, &request)
+        .unwrap();
+    let native = result.export_native().unwrap();
+    check_publication(&result, &request, expected);
+    check_attachment_volume_direction(&native.body, &source.body, normal);
+    assert_eq!(request, original);
+    publication(native.body, &result)
 }
 
 fn place_developed(request: &mut WrappedNormalRequest, shift: [f64; 2]) {
@@ -185,43 +176,61 @@ fn translate(point: &mut [f64; 2], [s, z]: [f64; 2]) {
 }
 
 fn check_publication(
-    boolean: &martensite_tkbo::brep_algo_api::BRepAlgoAPIBooleanOperation,
-    entities: &BTreeMap<WrappedHistoryKey, Shape>,
+    result: &CylinderFeatureResult,
     request: &WrappedNormalRequest,
+    expected: f64,
 ) {
-    validate_attached_body(boolean.shape());
-    check_tool_history(boolean, entities);
-    selected_depth_caps_survive(boolean, entities, request);
+    let tool = result.tool().extrusion();
+    assert_eq!(tool.reports().len(), request.selections.len());
+    check_member_volume_oracle(tool.reports(), expected);
+    assert!(result.validation().is_valid());
+    assert_eq!(result.validation().census.len(), 1);
+    check_depth_faces(result, request);
 }
 
-fn publication(
-    shape: &Shape,
-    result: &WrappedNormalResult,
-    entities: &BTreeMap<WrappedHistoryKey, Shape>,
-    tool: Vec<u8>,
-) -> Publication {
+fn check_depth_faces(result: &CylinderFeatureResult, request: &WrappedNormalRequest) {
+    let mut surviving = std::collections::BTreeSet::new();
+    for (image, parents) in &result.history().images {
+        if image.kind == ShapeEnum::Face {
+            surviving.extend(parents.iter().map(|parent| parent.source));
+        }
+    }
+    for selection in &request.selections {
+        let key = WrappedHistoryKey {
+            source: WrappedEntitySource::Region(selection.region),
+            role: SurfaceHistoryRole::LastDepthFace,
+        };
+        assert!(surviving.contains(&CylinderFeatureSource::Tool(key)));
+    }
+}
+
+fn publication(shape: Shape, result: &CylinderFeatureResult) -> Publication {
+    let extrusion = result.tool().extrusion();
+    let mut authored_keys: Vec<_> = extrusion
+        .history()
+        .iter()
+        .map(|record| record.result)
+        .filter(|key| {
+            matches!(
+                key.source,
+                WrappedEntitySource::Region(_) | WrappedEntitySource::Vertex(_)
+            )
+        })
+        .collect();
+    authored_keys.sort_unstable();
     Publication {
-        shape: shape.clone(),
-        body: native_snapshot(shape),
-        tool,
-        // Fitted subdivisions may change when support or depth changes.
-        authored_keys: entities
-            .keys()
-            .copied()
-            .filter(|key| {
-                matches!(
-                    key.source,
-                    WrappedEntitySource::Region(_) | WrappedEntitySource::Vertex(_)
-                )
-            })
-            .collect(),
-        history: format!("{:?}", result.history()),
+        body: native_snapshot(&shape),
+        shape,
+        archive: result.encoded_brep().to_vec(),
+        tool: extrusion.encoded_brep().to_vec(),
+        authored_keys,
+        history: format!("{:?} {:?}", result.history(), extrusion.history()),
     }
 }
 
 fn signature(publication: &Publication) -> String {
     let mut signature = publication.history.clone();
-    for bytes in [&publication.body, &publication.tool] {
+    for bytes in [&publication.archive, &publication.tool] {
         signature.push('|');
         for byte in bytes {
             write!(signature, "{byte:02x}").unwrap();
