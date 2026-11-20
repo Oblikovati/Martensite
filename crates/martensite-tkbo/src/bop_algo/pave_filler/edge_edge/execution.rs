@@ -19,12 +19,12 @@ struct EdgeEdgeInvocation<'a> {
 pub(super) fn execute_edge_tasks(
     tasks: Vec<EdgeEdgeTask>,
     scope: &ProgressScope<'_>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
     worksite: &'static str,
 ) -> Result<Vec<(EdgeEdgeTask, ProgressCompletion)>, Failure> {
     let mut work = allocated_edge_invocations(tasks, scope, worksite);
-    let pooled = parallel && work.len() != 1;
-    run_context_tasks(&mut work, &(), pooled, || (), |work, _| work.perform())?;
+    let pooled = parallel.for_tasks(work.len());
+    run_context_tasks(&mut work, &(), pooled, |work, _| work.perform())?;
     work.into_iter()
         .map(EdgeEdgeInvocation::into_output)
         .collect()

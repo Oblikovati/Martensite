@@ -88,7 +88,7 @@ impl BOPAlgoPaveFiller {
             false,
         );
         let outputs =
-            execute_edge_tasks(tasks, &scope, self.options.run_parallel(), "ForceInterfEE")?;
+            execute_edge_tasks(tasks, &scope, self.options.parallelism(), "ForceInterfEE")?;
         let (tasks, completions) = unpack_edge_tasks(outputs, boundary.observed);
         if boundary.cancelled(&self.options) {
             return Ok(completions);

@@ -6,7 +6,7 @@ pub use enums::{Glue, Operation};
 pub use face_grouping_version::FaceGroupingVersion;
 mod context_tasks;
 mod parallel;
-pub(crate) use context_tasks::{run_context_tasks, run_launcher_context_tasks};
+pub(crate) use context_tasks::{Parallelism, run_context_tasks, run_launcher_context_tasks};
 mod progress;
 pub(crate) mod progress_result;
 pub(crate) use progress_result::ProgressCancellation;

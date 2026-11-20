@@ -22,11 +22,15 @@ fn configured_parallel_and_serial_execution_preserve_ordered_owned_results() {
 fn execute_rows(parallel: bool) -> Vec<([i32; 2], [u64; 3])> {
     let range = ProgressRange::default();
     let scope = ProgressScope::unnamed(&range, 1.0, false);
-    execute_face_inputs(prepared_inputs(parallel), &scope, parallel)
-        .unwrap()
-        .into_iter()
-        .map(|output| terminal_row(output, parallel))
-        .collect()
+    execute_face_inputs(
+        prepared_inputs(parallel),
+        &scope,
+        crate::bop_algo::Parallelism::from_flag(parallel),
+    )
+    .unwrap()
+    .into_iter()
+    .map(|output| terminal_row(output, parallel))
+    .collect()
 }
 
 fn prepared_inputs(parallel: bool) -> Vec<FaceFaceTaskInput> {
@@ -58,7 +62,7 @@ fn empty_inputs_return_an_empty_terminal_sequence() {
     let range = ProgressRange::default();
     let scope = ProgressScope::unnamed(&range, 1.0, false);
     assert!(
-        execute_face_inputs(Vec::new(), &scope, true)
+        execute_face_inputs(Vec::new(), &scope, crate::bop_algo::Parallelism::UNLIMITED)
             .unwrap()
             .is_empty()
     );
@@ -191,7 +195,12 @@ fn execute_inputs_with_hooks(
     let (indicator, events) = face_progress_indicator(cancelled);
     let range = indicator.start();
     let scope = ProgressScope::unnamed(&range, 1.0, false);
-    let outputs = execute_face_inputs(inputs, &scope, parallel).unwrap();
+    let outputs = execute_face_inputs(
+        inputs,
+        &scope,
+        crate::bop_algo::Parallelism::from_flag(parallel),
+    )
+    .unwrap();
     let events = std::mem::take(&mut *events.lock().unwrap_or_else(|cause| {
         panic!("FF progress events {cause:?}, expected an unpoisoned event mutex")
     }));
@@ -219,7 +228,8 @@ fn native_singleton_dispatch_keeps_failure_unwrapped_in_both_configurations() {
             output: None,
             progress: None,
         }];
-        let failure = run_face_work(&mut work, parallel).unwrap_err();
+        let failure = run_face_work(&mut work, crate::bop_algo::Parallelism::from_flag(parallel))
+            .unwrap_err();
         assert_eq!(failure.exception_type(), "Standard_Failure");
         assert_failure_ordinal(failure, 0);
     }
@@ -236,7 +246,7 @@ fn native_multi_task_parallel_dispatch_keeps_the_launcher_failure_wrapper() {
         },
         FaceFaceWork::new((1, prepared_plane_input()), ProgressRange::default()),
     ];
-    let failure = run_face_work(&mut work, true).unwrap_err();
+    let failure = run_face_work(&mut work, crate::bop_algo::Parallelism::UNLIMITED).unwrap_err();
     assert_eq!(failure.exception_type(), "Standard_ProgramError");
     assert_failure_ordinal(failure, 0);
     assert!(work[0].output.is_none());
@@ -247,7 +257,8 @@ fn singleton_direct_execution_preserves_the_configured_parallel_kernel_flag() {
     let mut input = prepared_plane_input();
     input.parallel = true;
     let scope = ProgressScope::default();
-    let mut outputs = execute_face_inputs(vec![input], &scope, true).unwrap();
+    let mut outputs =
+        execute_face_inputs(vec![input], &scope, crate::bop_algo::Parallelism::UNLIMITED).unwrap();
     assert_eq!(outputs.len(), 1);
     let row = terminal_row(outputs.pop().unwrap(), true);
     assert_eq!(row.1.map(f64::from_bits), [0.5, 0.0, 0.0]);

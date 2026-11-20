@@ -17,9 +17,10 @@ pub(crate) enum Control {
     FontTextCapture,
     WrappedFamily,
     WrappedCone,
+    SharedContext,
 }
 
-pub(crate) const CONTROLS: [Control; 13] = [
+pub(crate) const CONTROLS: [Control; 14] = [
     Control::Cache2d,
     Control::Cache3d,
     Control::Capture,
@@ -33,6 +34,7 @@ pub(crate) const CONTROLS: [Control; 13] = [
     Control::FontTextCapture,
     Control::WrappedFamily,
     Control::WrappedCone,
+    Control::SharedContext,
 ];
 
 impl Control {
@@ -51,6 +53,7 @@ impl Control {
             Self::FontTextCapture => "font-text-capture",
             Self::WrappedFamily => "wrapped-family",
             Self::WrappedCone => "wrapped-cone",
+            Self::SharedContext => "shared-context",
         }
     }
 
@@ -65,6 +68,7 @@ impl Control {
             Self::DocumentTransactions => "martensite-tklcaf",
             Self::SurfaceSketch | Self::WrappedFamily | Self::WrappedCone => "martensite-tksketch",
             Self::FontTextCapture => "martensite-tkv3d",
+            Self::SharedContext => "martensite-tkbo",
         }
     }
 }
@@ -197,7 +201,8 @@ mod tests {
                 "surface-sketch",
                 "font-text-capture",
                 "wrapped-family",
-                "wrapped-cone"
+                "wrapped-cone",
+                "shared-context"
             ]
         );
         assert_eq!(ids.iter().collect::<BTreeSet<_>>().len(), CONTROLS.len());

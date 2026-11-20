@@ -85,7 +85,7 @@ impl BOPAlgoPaveFiller {
             &scope,
             structure,
             &self.context,
-            self.options.run_parallel(),
+            self.options.parallelism(),
         )?;
         let (tasks, outcomes) = unpack_split_edge_tasks(outputs, observed);
         if self.options.has_errors() {

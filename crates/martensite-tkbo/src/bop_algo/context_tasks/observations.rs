@@ -3,32 +3,9 @@ use crate::int_tools::Context;
 use martensite_tkernel::standard::Handle;
 use std::{
     collections::{HashMap, HashSet},
-    sync::{
-        Arc, Barrier, Mutex,
-        atomic::{AtomicUsize, Ordering},
-    },
+    sync::{Arc, Barrier, Mutex},
     thread::ThreadId,
 };
-
-/// Count construction of actual contexts without substituting their behavior; `factory.context()`.
-#[derive(Default)]
-pub(super) struct NativeContextFactory {
-    pub created: AtomicUsize,
-}
-
-impl NativeContextFactory {
-    /// Construct one native-equivalent worker context; `factory.context()`.
-    pub fn context(&self) -> Context {
-        self.created.fetch_add(1, Ordering::SeqCst);
-        Context::default()
-    }
-
-    /// Construct one owning worker handle; `factory.handle()`.
-    pub fn handle(&self) -> Handle<Context> {
-        self.created.fetch_add(1, Ordering::SeqCst);
-        Handle::new(Context::default())
-    }
-}
 
 /// Observe identity/reuse with a deterministic rendezvous; `trace.record(context)`.
 pub(super) struct ContextTrace {
@@ -62,7 +39,7 @@ impl ContextTrace {
         }
     }
 
-    /// Prove reuse and distinct identities without timing assumptions; `trace.record(context)`.
+    /// Record which context a thread used, after every worker has started; `trace.record(context)`.
     pub fn record<C>(&self, context: &C) {
         let address = context as *const C as usize;
         self.record_address(address);
@@ -79,18 +56,17 @@ impl ContextTrace {
         let first = self.first_visits.lock().unwrap().insert(thread);
         let previous = self.contexts.lock().unwrap().insert(thread, address);
         assert!(previous.is_none_or(|before| before == address));
-        assert_eq!(address == self.main, thread == self.caller);
         if first {
             self.barrier.wait();
         }
     }
 
-    /// Check the observed identity cardinality after joining; `trace.assert_isolated(2)`.
-    pub fn assert_isolated(&self, workers: usize) {
+    /// Check after joining that every thread, caller included, used the main one; `trace.assert_shared(2)`.
+    pub fn assert_shared(&self, workers: usize) {
         let contexts = self.contexts.lock().unwrap();
         assert_eq!(contexts.len(), workers);
-        let addresses: HashSet<usize> = contexts.values().copied().collect();
-        assert_eq!(addresses.len(), workers);
+        assert!(contexts.contains_key(&self.caller));
+        assert!(contexts.values().all(|address| *address == self.main));
     }
 }
 

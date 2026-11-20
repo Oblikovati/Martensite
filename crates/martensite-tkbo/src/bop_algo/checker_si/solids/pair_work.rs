@@ -14,7 +14,7 @@ pub(super) fn execute_pairs(
     pairs: Vec<(i32, i32)>,
     every: bool,
     scope: &ProgressScope<'_>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
     observed: &ProgressCancellation,
 ) -> Result<Vec<(i32, i32)>, Failure> {
     let mut work: Vec<_> = pairs
@@ -26,14 +26,10 @@ pub(super) fn execute_pairs(
             interferes: false,
         })
         .collect();
-    let pooled = parallel && work.len() != 1;
-    run_context_tasks(
-        &mut work,
-        &(),
-        pooled,
-        || (),
-        |item, _| item.perform(structure, observed),
-    )?;
+    let pooled = parallel.for_tasks(work.len());
+    run_context_tasks(&mut work, &(), pooled, |item, _| {
+        item.perform(structure, observed)
+    })?;
     Ok(work
         .into_iter()
         .filter(|item| item.interferes)

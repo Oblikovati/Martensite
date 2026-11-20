@@ -29,7 +29,7 @@ impl BOPAlgoCheckerSI {
             inputs,
             &scope,
             &self.filler.context_handle(),
-            self.filler.options().run_parallel(),
+            self.filler.options().parallelism(),
             observed,
         )?;
         if observe_user_break(self.filler.options(), &outer, observed) {
@@ -93,7 +93,7 @@ impl BOPAlgoCheckerSI {
             pairs,
             kind == ShapeEnum::Solid,
             &scope,
-            self.filler.options().run_parallel(),
+            self.filler.options().parallelism(),
             observed,
         )?;
         if observe_user_break(self.filler.options(), &outer, observed) {

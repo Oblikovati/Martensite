@@ -103,7 +103,7 @@ fn classification_worker_failure_aborts_rendezvous_and_publishes_no_parts() {
     let before = fixture.snapshot();
     let context = Context::default();
     let trace = ClassificationRendezvous::new(&context);
-    let observer = |actual: &Context| failing_entry(actual, &context, &trace, false);
+    let observer = |actual: &Context| failing_entry(actual, &trace, false);
     let (completion, parts) = with_owned_workers(&fixture, &context, &observer);
     assert_failed_without_parts(completion, &parts, "injected classification failure");
     assert_eq!(fixture.snapshot(), before);
@@ -115,7 +115,7 @@ fn classification_worker_unwind_releases_peer_and_preserves_failure() {
     let before = fixture.snapshot();
     let context = Context::default();
     let trace = ClassificationRendezvous::new(&context);
-    let observer = |actual: &Context| failing_entry(actual, &context, &trace, true);
+    let observer = |actual: &Context| failing_entry(actual, &trace, true);
     let (completion, parts) = with_owned_workers(&fixture, &context, &observer);
     assert_failed_without_parts(completion, &parts, "injected classification unwind");
     assert_eq!(fixture.snapshot(), before);
@@ -123,12 +123,11 @@ fn classification_worker_unwind_releases_peer_and_preserves_failure() {
 
 fn failing_entry(
     actual: &Context,
-    main: &Context,
     trace: &ClassificationRendezvous,
     unwind: bool,
 ) -> Result<(), Failure> {
     let _unwind = AbortOnUnwind(trace);
-    if !std::ptr::eq(actual, main) {
+    if !trace.on_caller_thread() {
         return trace.observe(actual);
     }
     if unwind {

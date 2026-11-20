@@ -31,9 +31,14 @@ impl ClassificationExecution<'_> {
         perform: impl Fn(&mut T, &Context) -> Result<(), Failure> + Sync,
     ) -> Result<(), Failure> {
         if let Some(launcher) = self.launcher {
-            return execute_with_launcher(tasks, context, launcher, Context::default, perform);
+            return execute_with_launcher(tasks, context, launcher, perform);
         }
-        crate::bop_algo::run_launcher_context_tasks(tasks, context, true, Context::default, perform)
+        crate::bop_algo::run_launcher_context_tasks(
+            tasks,
+            context,
+            crate::bop_algo::Parallelism::UNLIMITED,
+            perform,
+        )
     }
 }
 

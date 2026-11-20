@@ -7,7 +7,7 @@ use martensite_tkernel::message::{ProgressRange, ProgressScope};
 struct SelfFaceWork<'p> {
     index: i32,
     face: Face,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
     progress: Option<ProgressRange<'p>>,
     termination: crate::bop_algo::checker_si::FaceTermination,
     failure: Option<Failure>,
@@ -24,7 +24,7 @@ impl BOPAlgoCheckerSI {
             return Ok(crate::bop_algo::ProgressCompletion::Completed);
         }
         schedule_face_phase(trace.as_deref_mut());
-        let parallel = self.filler.options().run_parallel();
+        let parallel = self.filler.options().parallelism();
         self.structure_mut()?.interference_table_mut().clear(false);
         let outer = ProgressScope::unnamed(range, 1., false);
         let candidates = self_intersection_candidates(self.structure_mut()?, trace.as_deref_mut())?;
@@ -86,20 +86,14 @@ fn face_progress_completion(
 }
 fn run_self_face_work(
     candidates: Vec<(i32, Face)>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
     scope: &ProgressScope<'_>,
     observed: &ProgressCancellation,
     trace: Option<&mut SelfCheckCompletion>,
 ) -> Result<Vec<(i32, crate::bop_algo::checker_si::FaceTermination)>, Failure> {
     let mut work = prepare_self_face_work(candidates, parallel, scope);
-    let pooled = parallel && work.len() != 1;
-    let joined = run_context_tasks(
-        &mut work,
-        &(),
-        pooled,
-        || (),
-        |item, _| item.perform(observed),
-    );
+    let pooled = parallel.for_tasks(work.len());
+    let joined = run_context_tasks(&mut work, &(), pooled, |item, _| item.perform(observed));
     if let Err(joined_failure) = joined {
         return Err(first_self_face_failure(&mut work, trace).unwrap_or(joined_failure));
     }
@@ -120,7 +114,7 @@ fn first_self_face_failure(
 }
 fn prepare_self_face_work<'p>(
     candidates: Vec<(i32, Face)>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
     scope: &'p ProgressScope<'p>,
 ) -> Vec<SelfFaceWork<'p>> {
     candidates
@@ -147,7 +141,7 @@ impl SelfFaceWork<'_> {
         if observe_user_break(&Options::default(), &scope, observed) {
             return Ok(());
         }
-        match self_face_termination(&self.face, self.parallel) {
+        match self_face_termination(&self.face, self.parallel.enabled()) {
             Ok(termination) => self.termination = termination,
             Err(failure) => {
                 self.failure = Some(failure.clone());
@@ -181,7 +175,7 @@ mod failure_report_tests {
         SelfFaceWork {
             index,
             face: Face::default(),
-            parallel: true,
+            parallel: crate::bop_algo::Parallelism::UNLIMITED,
             progress: None,
             termination: crate::bop_algo::checker_si::FaceTermination::NotAttempted,
             failure: message.map(Failure::new),

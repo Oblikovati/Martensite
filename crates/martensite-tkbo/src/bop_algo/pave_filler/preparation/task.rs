@@ -98,19 +98,13 @@ impl<'p> PlanarPcurveWork<'p> {
 pub(super) fn execute_planar_inputs<'p>(
     inputs: Vec<PlanarPcurveInput>,
     scope: &'p ProgressScope<'p>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
     observed: &ProgressCancellation,
 ) -> Result<Vec<PlanarPcurveWork<'p>>, Failure> {
     let mut work = reserved_planar_work(inputs, scope);
     // OSDParallel pure For keeps serial and singleton failures unwrapped.
-    let pooled = parallel && work.len() != 1;
-    run_context_tasks(
-        &mut work,
-        &(),
-        pooled,
-        || (),
-        |item, _| item.perform(observed),
-    )?;
+    let pooled = parallel.for_tasks(work.len());
+    run_context_tasks(&mut work, &(), pooled, |item, _| item.perform(observed))?;
     Ok(work)
 }
 
