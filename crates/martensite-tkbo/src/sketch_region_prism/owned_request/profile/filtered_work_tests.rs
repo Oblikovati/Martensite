@@ -27,9 +27,9 @@ fn owned_filtered_graph_keeps_its_actual_selector_and_signs() {
     assert!((area.representative() - 4. / 3.).abs() <= area.absolute_error_bound() + f64::EPSILON);
 }
 #[test]
-fn owned_graph_refuses_unknown_six_before_native_work() {
+fn owned_graph_refuses_unknown_seven_before_native_work() {
     let mut request = owned_graph_request(lens_input(None));
-    request.version = 6;
+    request.version = 7;
     let failure = prepare_owned_profile(request, &mut NeverStop)
         .err()
         .unwrap();
@@ -37,7 +37,7 @@ fn owned_graph_refuses_unknown_six_before_native_work() {
     assert!(matches!(
         failure.cause,
         ProfilePreparationCause::Admission(
-            super::super::admission::ProfileAdmissionCause::UnsupportedVersion { actual: 6, .. }
+            super::super::admission::ProfileAdmissionCause::UnsupportedVersion { actual: 7, .. }
         )
     ));
 }

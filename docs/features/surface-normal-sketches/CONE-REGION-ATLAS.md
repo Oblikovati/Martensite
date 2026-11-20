@@ -610,3 +610,55 @@ run. The pairs establish full-call coverage and leave the attached-text
 runtime gate open. Final native validation takes most of the time in
 both measured calls. The extra V7 time on CPU 20 came from the tool and
 Fuse stages.
+
+### Attached-text instruction counts and candidate provenance
+
+`perf stat -e instructions:u` on CPU 20 measured 204.34 billion
+instructions for transported V5 tool construction and 234.39 billion
+for V7. Both calls used the same 239-curve boss fixture, stopped after
+placed tool validation, and ran in the same assertion-enabled executable.
+In a separate stage probe, rebuilding the V7 decoded-cap planar proof
+took 4.77 s. Cap clearance and the reference proof took 0.11 s and
+0.03 s. Tool placement took 4.24 s for V5 and 4.46 s for V7.
+
+The complete attached calls, including validation and test assertions,
+retired 1.063 trillion instructions for V5 and 1.061 trillion for V7.
+The API wall times for that pair were 101.06 s and 112.23 s,
+respectively. The 5.4 s standalone acceptance gate uses debug wall time.
+
+The candidate census counted the edge–face block tasks and face–face
+tasks actually submitted during self-intersection validation of the
+decoded solid. It joined those tasks to the frozen result identities and
+Boolean history. The counts describe ancestry.
+
+| Selector | Search stage | Tool–tool | Tool–support | Support–support |
+| --- | --- | ---: | ---: | ---: |
+| V5 | Edge–face | 2,075 | 759 | 2 |
+| V5 | Face–face | 830 | 402 | 4 |
+| V7 | Edge–face | 2,037 | 745 | 2 |
+| V7 | Face–face | 813 | 395 | 4 |
+
+V7 had 2,850 tool–tool tasks out of 3,996 in these stages. All 813
+tool–tool face pairs involved a face incident to the tool–support
+seam. Of the tool–tool edge–face tasks, 331 involved neither a seam
+edge nor a seam-incident face. Reusing a certificate requires binding
+the actual carrier, proving containment of the filled trim with its
+holes, and checking what happens to the source incidence. Two images
+of a split source face also need a disjointness check.
+
+An experimental V7 boss started the tool 0.001 model units inside the
+support. The published solid passed validation and retained all 18
+last-depth caps. The first-depth edges gave way to 331 generated seam
+edges. Fuse rose from 18.08 s to 37.46 s and final validation from
+71.31 s to 78.88 s. The API call took 141.65 s and retired 1.338
+trillion instructions, 26% more than the zero-depth V7 call. Peak RSS
+rose from 309,140 to 631,336 KiB. This fixture provides no speed case
+for burying the tool. The production depth rule remains zero.
+
+A separate experiment compared borrowed planar coefficient bits during
+each proof rebind. It preserved the placed tool archive byte for byte
+and reduced the median V7 tool instruction count from 234.38 to 232.32
+billion over three pairs. Median peak RSS rose from 237,152 to 251,992
+KiB. The experiment was removed because the memory increase exceeded
+the approved tradeoff for that speed improvement. The three paired
+baseline O. runs on CPU 20 took 4.99 s, 4.57 s and 4.66 s.
