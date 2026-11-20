@@ -16,7 +16,7 @@ pub(super) fn capture<'a>(
         let Some(vertex) = vertices.get(&endpoint.vertex_index) else {
             continue;
         };
-        append_endpoint(&mut axes, position, *vertex, endpoint, bindings, observe);
+        append_endpoint(&mut axes, position, vertex, endpoint, bindings, observe);
     }
     ObservedIncidences { axes }
 }

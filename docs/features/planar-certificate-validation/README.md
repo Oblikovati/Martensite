@@ -135,12 +135,18 @@ specific tradeoff; it grants no general performance or memory exception.
 
 ## Census report reuse (#567)
 
-Each Census enumeration owns an ordered index from its canonical source pair
-and query mode to the first retained report address. Existing report keys enter
-the index once. A cold solver result is indexed at its actual append position;
-later occurrences reuse that position, including when its outcome is a capture
-failure or incomplete proof. The index is discarded when enumeration ends.
-Report vectors keep their original order and remain the evidence owners.
+Before enumerating, a Census checks its retained reports and complete physical
+source inventory. An empty report inventory whose physical sources equal their
+occurrence positions gives a different source-pair/mode key for every logical
+domain. Those queries cannot reuse a report, so that path retains no lookup
+index. Every numerical query still executes in the original order.
+
+Other states use an ordered index from canonical source pair and query mode
+to the first retained report address. Existing report keys enter once. A cold
+solver result enters at its actual append position; later occurrences reuse
+that position, including capture failures and incomplete proofs. The index is
+discarded when enumeration ends. Report vectors retain their original order
+and remain the evidence owners.
 
 The index stores execution addresses within one Census. Source, policy and
 revision checks still run through the existing certificate bindings. Solver
@@ -154,6 +160,9 @@ signs, contacts, policies, work and callbacks. They cover reversed aliases,
 query modes, duplicate keys, cached failures and cancellation checkpoints.
 A deterministic counter control expects 21,945 record visits for 210 cold misses
 in the literal oracle; indexed lookups read the existing record inventory once.
+Additional controls check the complete unique-key condition, cancellation and
+actual proof/failure parity of the path without an index. Missing metadata,
+nonidentity mappings, aliases and existing reports retain indexed lookup.
 These controls establish lookup semantics; whole-operation time and peak memory
 require the same accepted workload and matching build provenance.
 

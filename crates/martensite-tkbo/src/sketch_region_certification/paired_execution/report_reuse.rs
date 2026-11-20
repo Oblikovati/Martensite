@@ -8,23 +8,34 @@ pub(super) trait ReportLookup {
     fn find(&mut self, sources: [usize; 2], mode: PairedQueryMode) -> Option<usize>;
     fn remember(&mut self, sources: [usize; 2], mode: PairedQueryMode, report: usize);
 }
-pub(super) struct ReportReuseIndex {
-    first_reports: BTreeMap<QueryKey, usize>,
+pub(super) enum ReportReuseIndex {
+    ColdUnique,
+    IndexedMap(BTreeMap<QueryKey, usize>),
 }
 impl ReportReuseIndex {
     pub(super) fn capture(census: &BoundaryCensus) -> Self {
-        let reports = census.paired.as_ref().into_iter().flat_map(|paired| {
-            paired
-                .reports
+        let Some(paired) = &census.paired else {
+            return Self::from_keys([]);
+        };
+        let unique = paired.reports.is_empty()
+            && paired.occurrences.len() == census.inputs.segments.len()
+            && paired
+                .occurrences
                 .iter()
-                .map(|record| (record.sources, record.mode))
-        });
+                .enumerate()
+                .all(|(slot, row)| row.physical_source == slot);
+        // Complete pair enumeration cannot repeat a key when physical sources are their positions.
+        if unique {
+            return Self::ColdUnique;
+        }
+        let reports = paired
+            .reports
+            .iter()
+            .map(|record| (record.sources, record.mode));
         Self::from_keys(reports)
     }
     pub(super) fn from_keys(keys: impl IntoIterator<Item = ([usize; 2], PairedQueryMode)>) -> Self {
-        let mut retained = Self {
-            first_reports: BTreeMap::new(),
-        };
+        let mut retained = Self::IndexedMap(BTreeMap::new());
         for (report, (sources, mode)) in keys.into_iter().enumerate() {
             retained.remember(sources, mode, report);
         }
@@ -33,12 +44,19 @@ impl ReportReuseIndex {
 }
 impl ReportLookup for ReportReuseIndex {
     fn find(&mut self, sources: [usize; 2], mode: PairedQueryMode) -> Option<usize> {
-        let key = query_key(sources, mode);
-        self.first_reports.get(&key).copied()
+        match self {
+            Self::ColdUnique => None,
+            Self::IndexedMap(first_reports) => {
+                first_reports.get(&query_key(sources, mode)).copied()
+            }
+        }
     }
     fn remember(&mut self, sources: [usize; 2], mode: PairedQueryMode, report: usize) {
-        let key = query_key(sources, mode);
-        self.first_reports.entry(key).or_insert(report);
+        if let Self::IndexedMap(first_reports) = self {
+            first_reports
+                .entry(query_key(sources, mode))
+                .or_insert(report);
+        }
     }
 }
 fn query_key(sources: [usize; 2], mode: PairedQueryMode) -> QueryKey {

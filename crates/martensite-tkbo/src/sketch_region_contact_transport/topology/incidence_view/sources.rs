@@ -53,7 +53,7 @@ fn append_sources(
         if matches_source(segment, source, current, index, occurrence, position) {
             bindings
                 .entry(source.source_index)
-                .or_insert_with(Vec::new)
+                .or_default()
                 .push((occurrence, position));
         }
     }

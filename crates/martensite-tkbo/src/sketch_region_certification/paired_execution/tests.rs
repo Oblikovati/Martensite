@@ -2,6 +2,7 @@
 //! The old literal lookup drives the same numerical calls as the indexed implementation.
 use super::*;
 use crate::sketch_region_certification::paired_tests::{curved_pair, paired};
+mod cold_unique;
 mod replay;
 use replay::{compare_censuses, result_snapshot};
 
@@ -25,7 +26,9 @@ impl ReportLookup for LiteralLookup {
 fn fresh() -> BoundaryCensus {
     let mut shapes = curved_pair();
     shapes.push(shapes[0].reversed());
-    let mut census = paired(&shapes);
+    reset(paired(&shapes))
+}
+fn reset(mut census: BoundaryCensus) -> BoundaryCensus {
     census.domains.clear();
     census.bisections = 0;
     let retained = census.paired.as_mut().unwrap();
