@@ -11,7 +11,7 @@ mod snapshot;
 pub struct CertifiedConicalBody {
     certificate: Arc<ConicalActualPatchCertificate>,
     census: ConicalNativeCensus,
-    members: Vec<(ConicalActualMemberId, Vec<u64>)>,
+    members: Vec<(ConicalActualMemberId, snapshot::MemberSnapshot)>,
 }
 /// Bind the complete issued numeric proof to independently captured actual geometry.
 /// Example: `let body = bind_conical_actual_family(&native, &query, proof)?;`.
@@ -35,7 +35,7 @@ pub fn bind_conical_actual_family(
         members: actual
             .members
             .iter()
-            .map(|member| (member.id, snapshot::member(member)))
+            .map(|member| (member.id, snapshot::member(member, &actual.adjacent)))
             .collect(),
     })
 }
@@ -47,12 +47,15 @@ impl CertifiedConicalBody {
         members: &[ConicalNativeMember],
     ) -> Result<(), ConicalBindingError> {
         let actual = capture(members)?;
-        let found: Vec<_> = actual
-            .members
-            .iter()
-            .map(|member| (member.id, snapshot::member(member)))
-            .collect();
-        if found != self.members {
+        let matching = actual.members.len() == self.members.len()
+            && actual
+                .members
+                .iter()
+                .zip(&self.members)
+                .all(|(member, (id, expected))| {
+                    member.id == *id && expected.matches(member, &actual.adjacent)
+                });
+        if !matching {
             return Err(error(
                 None,
                 None,
@@ -67,12 +70,15 @@ impl CertifiedConicalBody {
         member: &ConicalNativeMember,
     ) -> Result<(), ConicalBindingError> {
         let actual = capture(std::slice::from_ref(member))?;
-        let found = snapshot::member(&actual.members[0]);
-        if !self
+        let matching = self
             .members
-            .iter()
-            .any(|(id, bits)| *id == member.id && *bits == found)
-        {
+            .binary_search_by_key(&member.id, |(id, _)| *id)
+            .is_ok_and(|index| {
+                self.members[index]
+                    .1
+                    .matches(&actual.members[0], &actual.adjacent)
+            });
+        if !matching {
             return Err(error(
                 Some(member.id),
                 None,

@@ -16,15 +16,17 @@ fn check_carriers(sense: NormalSense) {
     let mut work = Work::new(request.proof.arithmetic);
     let prepared = nearest(&request, &inputs.originals, &mut work);
     let inventory = Inventory::capture(&prepared).unwrap();
+    let members = operation::source::by_region(&inputs.originals);
     let issued = certify(
         &inputs.originals,
+        &members,
         &prepared,
         &inventory,
         &mut work,
         &mut || false,
     )
     .unwrap();
-    let spans = spans(&inputs.originals, &prepared, &inventory).unwrap();
+    let spans = spans(&members, &prepared, &inventory).unwrap();
     let actual = captured_caps(&request, &prepared, &inventory);
     assert_rebind(&issued, &spans, actual);
 }

@@ -103,16 +103,16 @@ fn location_bits(transform: &Transform3) -> Result<Vec<u64>, Failure> {
         .collect()
 }
 impl SideSource {
-    pub(in crate::body_check::certified_conical) fn append(&self, bits: &mut Vec<u64>) {
+    pub(in crate::body_check::certified_conical) fn append(&self, bits: &mut impl Extend<u64>) {
         bits.extend([self.wire_orientation, self.boundaries.len() as u64]);
         for boundary in &self.boundaries {
-            bits.push(boundary.use_orientation);
+            bits.extend([boundary.use_orientation]);
             append_curve(&boundary.pcurve, bits);
             append_curve(&boundary.spatial, bits);
         }
     }
 }
-fn append_curve<const D: usize>(curve: &CurveSource<D>, bits: &mut Vec<u64>) {
+fn append_curve<const D: usize>(curve: &CurveSource<D>, bits: &mut impl Extend<u64>) {
     bits.extend([
         D as u64,
         curve.degree as u64,
@@ -121,8 +121,8 @@ fn append_curve<const D: usize>(curve: &CurveSource<D>, bits: &mut Vec<u64>) {
         curve.weights.len() as u64,
     ]);
     bits.extend(curve.range);
-    bits.extend(curve.poles.iter().flatten());
-    bits.extend(&curve.weights);
-    bits.push(curve.location.len() as u64);
-    bits.extend(&curve.location);
+    bits.extend(curve.poles.iter().flatten().copied());
+    bits.extend(curve.weights.iter().copied());
+    bits.extend([curve.location.len() as u64]);
+    bits.extend(curve.location.iter().copied());
 }

@@ -171,3 +171,45 @@ RSS was 66,804 KiB before and 66,584 KiB after. Every run charged 989,355
 arithmetic operations and used 444 integration cells and 148 retained
 spans. The isolated speedup did not establish an end-to-end speedup or
 meet the five-second target.
+
+## Native replay and planar material
+
+The native cone binder already indexes edges by exact native identity. The
+replay snapshot used to repeat the search over every pair of sides. It now
+records each member's slice of the same sorted incidence list, including both
+side IDs and their edge slots. A new native capture still checks complete
+coverage and rejects shared non-ruling edges, multiple shared edges between a
+pair of sides, and rulings shared across members. Replay compares native
+geometry directly against the issued coefficient stream, without allocating
+another serialized member.
+
+The two caps of a member share one immutable selected UV material. Native
+snapshots keep its version, work counters and a reference to the exact
+coefficient bits that the planar program captured. Rebinding material from
+an independently issued program still compares every bit. The planar
+program checks a supplied source without allocating a temporary coefficient
+array and indexes authored IDs for its lineage and integral replay. The
+cone's directed fitting stages also share a single original-region index.
+
+The cone, placement, footprint and planar/native proof suites passed, as did
+the 239-curve text controls in both directions and strict Clippy for the two
+changed crates. Separate processes reproduced the legacy, recentered, atlas
+and placed cone replay signatures byte for byte against `b486891f`.
+
+Three alternating runs per build pinned the outward directed O. fixture to
+CPU 20 on Linux x86_64. The median API time was 5.291 s before and 5.320 s
+after. Candidate times ranged from 5.304 s to 5.717 s. The median meets the
+revised 5.4 s threshold for this fixture. Median whole-process peak RSS was
+66,524 KiB before and 67,064 KiB after. The run kept 989,355 arithmetic
+operations, 444 integration cells and 148 fitted spans.
+
+With the existing selectable bounded volume accumulator, the same fixture
+ran at a median of 4.717 s before and 4.703 s after. All three candidate
+samples were below 5.4 s. Median process peak RSS was 66,932 KiB before and
+67,036 KiB after. Both builds charged 994,535 arithmetic operations with the
+same cell and span counts.
+
+A separate two-pair residency check of the original accumulation mode
+sampled Linux process memory. At the sampled peak, median anonymous RSS fell
+by 12 KiB and median file-backed RSS rose by 162 KiB. The change in measured
+process peak RSS in the timing runs still needs qualification for integration.

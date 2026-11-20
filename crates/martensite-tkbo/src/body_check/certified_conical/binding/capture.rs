@@ -20,7 +20,7 @@ pub(super) fn family(
         members.push(member(binding)?);
     }
     members.sort_by_key(|member| member.id);
-    let adjacent = adjacency(&members)?;
+    let adjacent = adjacency(&mut members)?;
     let mut side_orientations = BTreeMap::new();
     for side in members.iter().flat_map(|member| &member.sides) {
         side_orientations.entry(side.id).or_insert(side.orientation);
@@ -38,7 +38,7 @@ fn member(binding: &ConicalNativeMember) -> Result<MemberGeometry, ConicalBindin
     let mut materials: Vec<_> = binding
         .caps
         .iter()
-        .map(|cap| (cap.id.0, cap.material.source_bits()))
+        .map(|cap| (cap.id.0, cap.material.source()))
         .collect();
     materials.sort_by_key(|(id, _)| *id);
     Ok(MemberGeometry {
@@ -46,6 +46,7 @@ fn member(binding: &ConicalNativeMember) -> Result<MemberGeometry, ConicalBindin
         sides,
         caps,
         materials,
+        adjacency: 0..0,
     })
 }
 fn face_coverage(binding: &ConicalNativeMember) -> Result<(), Failure> {
@@ -63,15 +64,40 @@ fn face_coverage(binding: &ConicalNativeMember) -> Result<(), Failure> {
     Ok(())
 }
 fn adjacency(
-    members: &[MemberGeometry],
+    members: &mut [MemberGeometry],
 ) -> Result<Vec<ConicalActualAdjacent>, ConicalBindingError> {
+    let (adjacent, counts) = collect_adjacency(members)?;
+    // Pairs are ordered by their first side and never span two members.
+    let mut start = 0;
+    for (member, count) in members.iter_mut().zip(counts) {
+        member.adjacency = start..start + count;
+        start += count;
+    }
+    Ok(adjacent)
+}
+
+fn collect_adjacency(
+    members: &[MemberGeometry],
+) -> Result<(Vec<ConicalActualAdjacent>, Vec<usize>), ConicalBindingError> {
     let sides: Vec<_> = members
         .iter()
-        .flat_map(|member| member.sides.iter().map(move |side| (member.id, side)))
+        .enumerate()
+        .flat_map(|(index, member)| member.sides.iter().map(move |side| (index, side)))
         .collect();
     let mut adjacent = Vec::new();
-    append_adjacency(&sides, &mut adjacent)?;
-    Ok(adjacent)
+    let mut counts = vec![0; members.len()];
+    for ([first, second], shared) in actual_shared_edges(&sides) {
+        let (owner, first_side) = sides[first];
+        let (other, second_side) = sides[second];
+        let pair = admitted_pair(
+            (members[owner].id, first_side),
+            (members[other].id, second_side),
+            shared,
+        )?;
+        adjacent.push(pair);
+        counts[owner] += 1;
+    }
+    Ok((adjacent, counts))
 }
 
 fn capture_sides(binding: &ConicalNativeMember) -> Result<Vec<native::Side>, ConicalBindingError> {
@@ -137,26 +163,12 @@ fn oriented_faces(actual: &[Shape], supplied: &[&Face]) -> Result<(), Failure> {
     Ok(())
 }
 
-fn append_adjacency(
-    sides: &[(ConicalActualMemberId, &native::Side)],
-    adjacent: &mut Vec<ConicalActualAdjacent>,
-) -> Result<(), ConicalBindingError> {
-    for ([first, second], shared) in actual_shared_edges(sides) {
-        let (owner, first) = sides[first];
-        let (other, second) = sides[second];
-        append_pair(owner, first, other, second, shared, adjacent)?;
-    }
-    Ok(())
-}
-
 struct PairSlots {
     slots: [usize; 2],
     multiple: bool,
 }
 
-fn actual_shared_edges(
-    sides: &[(ConicalActualMemberId, &native::Side)],
-) -> BTreeMap<[usize; 2], PairSlots> {
+fn actual_shared_edges(sides: &[(usize, &native::Side)]) -> BTreeMap<[usize; 2], PairSlots> {
     let mut edges = IndexedMapOfShape::default();
     let mut uses = Vec::<Vec<[usize; 2]>>::new();
     let mut pairs = BTreeMap::<[usize; 2], PairSlots>::new();
@@ -205,14 +217,11 @@ fn require_same_owner(
     Ok(())
 }
 
-fn append_pair(
-    owner: ConicalActualMemberId,
-    first: &native::Side,
-    other: ConicalActualMemberId,
-    second: &native::Side,
+fn admitted_pair(
+    (owner, first): (ConicalActualMemberId, &native::Side),
+    (other, second): (ConicalActualMemberId, &native::Side),
     shared: PairSlots,
-    adjacent: &mut Vec<ConicalActualAdjacent>,
-) -> Result<(), ConicalBindingError> {
+) -> Result<ConicalActualAdjacent, ConicalBindingError> {
     let slots = shared_slots(shared).map_err(|cause| {
         error(
             Some(owner),
@@ -222,14 +231,13 @@ fn append_pair(
         )
     })?;
     require_same_owner(owner, other, first)?;
-    adjacent.push(ConicalActualAdjacent {
+    Ok(ConicalActualAdjacent {
         sides: [
             ConicalActualSideId(first.id),
             ConicalActualSideId(second.id),
         ],
         u_slots: slots,
-    });
-    Ok(())
+    })
 }
 
 fn shared_slots(shared: PairSlots) -> Result<[u8; 2], Failure> {

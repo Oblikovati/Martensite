@@ -77,7 +77,8 @@ struct MemberGeometry {
     id: ConicalActualMemberId,
     sides: Vec<native::Side>,
     caps: Vec<native::Cap>,
-    materials: Vec<(u64, Vec<u64>)>,
+    materials: Vec<(u64, material::MaterialSource)>,
+    adjacency: std::ops::Range<usize>,
 }
 /// Decode every native face and incidence against explicit source/material bindings.
 /// Example: `let actual = capture_conical_actual_family(&members)?;`.

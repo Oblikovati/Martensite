@@ -2,12 +2,13 @@
 use super::*;
 pub(super) fn certify(
     originals: &[DevelopedRegionRequest],
+    members: &OriginalMembers<'_>,
     prepared: &[Prepared],
     inventory: &Inventory,
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<std::sync::Arc<ConicalDirectedGammaEvidence>> {
-    let spans = spans(originals, prepared, inventory)?;
+    let spans = spans(members, prepared, inventory)?;
     let caps = caps(prepared, inventory)?;
     let region = selection::first_region(originals)?;
     let query = ConicalDirectedGammaQuery {
@@ -25,7 +26,7 @@ pub(super) fn certify(
     finish(result, charged, query, inventory)
 }
 fn spans<'a>(
-    originals: &'a [DevelopedRegionRequest],
+    originals: &OriginalMembers<'a>,
     prepared: &'a [Prepared],
     inventory: &Inventory,
 ) -> ConeChecked<Vec<ConicalDirectedGammaSpan<'a>>> {

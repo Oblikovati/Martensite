@@ -8,6 +8,19 @@ fn issued() -> PlanarIntegralEvidence {
         .unwrap()
         .clone()
 }
+
+#[test]
+fn cloned_program_shares_captured_sources_and_rejects_an_unknown_parent() {
+    use std::sync::Arc;
+    let original = issued();
+    let mut clone = original.clone();
+    assert!(Arc::ptr_eq(&original.source, &clone.source));
+    assert!(Arc::ptr_eq(&original.source_bits, &clone.source_bits));
+    assert!(Arc::ptr_eq(&original.parents, &clone.parents));
+    Arc::make_mut(&mut clone.parents)[0].1 = ProfileCurveId(u64::MAX);
+    assert!(!clone.matches_profile(&profile()));
+    assert!(original.matches_profile(&profile()));
+}
 #[test]
 fn source_signed_zero_order_and_authored_identity_are_bound() {
     let proof = issued();

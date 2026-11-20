@@ -1,26 +1,75 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Complete owned numeric and incidence snapshots, never hashes or native aliases.
 use super::*;
-pub(super) fn member(member: &MemberGeometry) -> Vec<u64> {
-    let mut bits = vec![
+pub(super) struct MemberSnapshot {
+    geometry: Vec<u64>,
+    materials: Vec<(u64, material::MaterialSource)>,
+}
+
+pub(super) fn member(
+    member: &MemberGeometry,
+    adjacent: &[ConicalActualAdjacent],
+) -> MemberSnapshot {
+    let mut geometry = Vec::new();
+    geometry_bits(member, adjacent, &mut geometry);
+    MemberSnapshot {
+        geometry,
+        materials: member.materials.clone(),
+    }
+}
+
+impl MemberSnapshot {
+    pub(super) fn matches(
+        &self,
+        member: &MemberGeometry,
+        adjacent: &[ConicalActualAdjacent],
+    ) -> bool {
+        let mut comparison = BitComparison {
+            expected: self.geometry.iter().copied(),
+            matches: true,
+        };
+        geometry_bits(member, adjacent, &mut comparison);
+        comparison.matches
+            && comparison.expected.next().is_none()
+            && self.materials == member.materials
+    }
+}
+
+struct BitComparison<'a> {
+    expected: std::iter::Copied<std::slice::Iter<'a, u64>>,
+    matches: bool,
+}
+impl Extend<u64> for BitComparison<'_> {
+    fn extend<T: IntoIterator<Item = u64>>(&mut self, bits: T) {
+        for bit in bits {
+            self.matches &= self.expected.next() == Some(bit);
+        }
+    }
+}
+
+fn geometry_bits(
+    member: &MemberGeometry,
+    adjacent: &[ConicalActualAdjacent],
+    bits: &mut impl Extend<u64>,
+) {
+    bits.extend([
         member.id.0,
         member.sides.len() as u64,
         member.caps.len() as u64,
-    ];
+    ]);
     for side in &member.sides {
-        side_bits(side, &mut bits);
+        side_bits(side, bits);
     }
     for cap in &member.caps {
-        cap_bits(cap, &mut bits);
+        cap_bits(cap, bits);
     }
-    for (id, source) in &member.materials {
-        bits.extend([*id, source.len() as u64]);
-        bits.extend(source);
+    for incidence in &adjacent[member.adjacency.clone()] {
+        let [first, second] = incidence.sides;
+        let [first_slot, second_slot] = incidence.u_slots.map(u64::from);
+        bits.extend([first.0, first_slot + 2, second.0, second_slot + 2]);
     }
-    incidences(&member.sides, &mut bits);
-    bits
 }
-fn side_bits(side: &native::Side, bits: &mut Vec<u64>) {
+fn side_bits(side: &native::Side, bits: &mut impl Extend<u64>) {
     bits.extend([side.id, side.orientation as u64, side.weights.len() as u64]);
     for row in &side.rows {
         bits.extend(row.iter().flatten().map(|x| x.to_bits()));
@@ -28,7 +77,7 @@ fn side_bits(side: &native::Side, bits: &mut Vec<u64>) {
     bits.extend(side.weights.iter().map(|x| x.to_bits()));
     side.source.append(bits);
 }
-fn cap_bits(cap: &native::Cap, bits: &mut Vec<u64>) {
+fn cap_bits(cap: &native::Cap, bits: &mut impl Extend<u64>) {
     bits.extend([cap.id, cap.orientation as u64, cap.contours.len() as u64]);
     bits.extend(cap.frame.iter().flatten().map(|x| x.to_bits()));
     bits.extend(cap.datums.map(f64::to_bits));
@@ -43,7 +92,7 @@ fn cap_bits(cap: &native::Cap, bits: &mut Vec<u64>) {
         }
     }
 }
-fn edge_bits(edge: &native::UvEdge, bits: &mut Vec<u64>) {
+fn edge_bits(edge: &native::UvEdge, bits: &mut impl Extend<u64>) {
     bits.extend([
         edge.side,
         edge.row as u64,
@@ -53,26 +102,4 @@ fn edge_bits(edge: &native::UvEdge, bits: &mut Vec<u64>) {
     bits.extend(edge.range.map(f64::to_bits));
     bits.extend(edge.poles.iter().flatten().map(|x| x.to_bits()));
     bits.extend(edge.weights.iter().map(|x| x.to_bits()));
-}
-
-fn incidences(sides: &[native::Side], bits: &mut Vec<u64>) {
-    for (i, first) in sides.iter().enumerate() {
-        for second in &sides[i + 1..] {
-            shared_edges(first, second, bits);
-        }
-    }
-}
-
-fn shared_edges(first: &native::Side, second: &native::Side, bits: &mut Vec<u64>) {
-    for (a, edge) in first.edges.iter().enumerate() {
-        shared_edge(first.id, a, edge, second, bits);
-    }
-}
-
-fn shared_edge(first_id: u64, a: usize, edge: &Shape, second: &native::Side, bits: &mut Vec<u64>) {
-    for (b, candidate) in second.edges.iter().enumerate() {
-        if edge.is_same(candidate) {
-            bits.extend([first_id, a as u64, second.id, b as u64]);
-        }
-    }
 }

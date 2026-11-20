@@ -67,4 +67,5 @@ Three alternating pairs on the existing directed outward O. fixture
 measured median API times of 5.367 s at `5c30a092` and 5.315 s with the
 placement changes. Median peak RSS was 67,196 KiB and 66,868 KiB.
 Arithmetic operations, integration cells, and retained spans matched
-in all six runs. The five-second target remains open.
+in all six runs. The 5.315 s median falls below the maintainer's revised
+5.4 s threshold for this fixture. [Follow-up source and replay audit](FOLLOWUP-PERFORMANCE-CHECKS-2026-11-19.md#native-replay-and-planar-material)

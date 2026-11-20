@@ -10,6 +10,8 @@ pub(in crate::surface_sketch::wrapped_profile) struct DirectedFamily {
     pub gamma: std::sync::Arc<ConicalDirectedGammaEvidence>,
     pub inventory: Inventory,
 }
+type OriginalMembers<'a> = BTreeMap<SurfaceRegionId, &'a DevelopedRegionRequest>;
+
 pub(super) fn finalize(
     execution: WrappedConeExecutionSelection,
     originals: &[DevelopedRegionRequest],
@@ -21,14 +23,15 @@ pub(super) fn finalize(
         return Ok(());
     }
     let inventory = Inventory::capture(prepared)?;
-    let gamma = gamma::certify(originals, prepared, &inventory, work, cancelled)?;
+    let members = operation::source::by_region(originals);
+    let gamma = gamma::certify(originals, &members, prepared, &inventory, work, cancelled)?;
     let endpoints = std::sync::Arc::new(FinalEndpoints::plan(prepared, &gamma)?);
     let plan = DirectedPlan {
         gamma: &gamma,
         inventory: &inventory,
         endpoints: &endpoints,
     };
-    finalize_members(originals, prepared, &plan, work, cancelled)?;
+    finalize_members(&members, prepared, &plan, work, cancelled)?;
     endpoints.validate(prepared)?;
     retain(prepared, DirectedFamily { gamma, inventory }, endpoints);
     Ok(())
@@ -39,7 +42,7 @@ struct DirectedPlan<'a> {
     endpoints: &'a FinalEndpoints,
 }
 fn finalize_members(
-    originals: &[DevelopedRegionRequest],
+    originals: &OriginalMembers<'_>,
     prepared: &mut [Prepared],
     plan: &DirectedPlan<'_>,
     work: &mut Work,
@@ -56,6 +59,15 @@ fn finalize_members(
     }
     Ok(())
 }
+fn original<'a>(
+    originals: &OriginalMembers<'a>,
+    region: SurfaceRegionId,
+) -> ConeChecked<&'a DevelopedRegionRequest> {
+    originals
+        .get(&region)
+        .copied()
+        .ok_or_else(|| missing(region, None, "directed original member owner"))
+}
 fn retain(
     prepared: &mut [Prepared],
     family: DirectedFamily,
@@ -68,15 +80,6 @@ fn retain(
     }
 }
 
-fn original(
-    originals: &[DevelopedRegionRequest],
-    region: SurfaceRegionId,
-) -> ConeChecked<&DevelopedRegionRequest> {
-    originals
-        .iter()
-        .find(|source| source.region == region)
-        .ok_or_else(|| missing(region, None, "directed original member owner"))
-}
 fn chart(prepared: &Prepared) -> ConeChecked<&ConicalChartDomainEvidence> {
     prepared.chart_domain.as_deref().ok_or_else(|| {
         missing(

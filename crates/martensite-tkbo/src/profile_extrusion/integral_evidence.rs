@@ -11,9 +11,9 @@ pub struct PlanarIntegralEvidence {
     pub(crate) requested: PlanarProofVersion,
     pub(crate) entry_allowance: u64,
     pub(crate) graph: Arc<GraphIntegralEvidence>,
-    pub(crate) source: SketchProfile,
-    pub(crate) source_bits: Vec<u64>,
-    pub(crate) parents: Vec<(u64, ProfileCurveId, usize)>,
+    pub(crate) source: Arc<SketchProfile>,
+    pub(crate) source_bits: Arc<[u64]>,
+    pub(crate) parents: Arc<[(u64, ProfileCurveId, usize)]>,
 }
 impl PlanarIntegralEvidence {
     /// Original selectable behavior, before the caller loan; `proof.requested_proof_version()`.
@@ -34,8 +34,8 @@ impl PlanarIntegralEvidence {
     }
     /// Exact original source and all retained program roles; `proof.matches_profile(&profile)`.
     pub fn matches_profile(&self, profile: &SketchProfile) -> bool {
-        self.source == *profile
-            && self.source_bits == snapshot::bits(profile)
+        (std::ptr::eq(self.source.as_ref(), profile) || self.source.as_ref() == profile)
+            && snapshot::matches(profile, &self.source_bits)
             && self.graph.matches_issued_sources()
             && self.valid_grant()
             && self.valid_lineage()
@@ -59,9 +59,9 @@ impl PlanarIntegralEvidence {
             requested,
             entry_allowance,
             graph,
-            source: source.clone(),
-            source_bits: snapshot::bits(source),
-            parents,
+            source: Arc::new(source.clone()),
+            source_bits: snapshot::bits(source).into(),
+            parents: parents.into(),
         }
     }
 }
@@ -71,25 +71,21 @@ impl PlanarIntegralEvidence {
         if self.parents.len() != self.graph.sources.len() {
             return false;
         }
-        let mut indices = std::collections::BTreeMap::<ProfileCurveId, usize>::new();
+        let mut indices: std::collections::BTreeMap<_, _> = self
+            .source
+            .curves
+            .iter()
+            .map(|authored| (authored.id(), 0))
+            .collect();
         for ((source, curve, piece), actual) in self.parents.iter().zip(&self.graph.sources) {
-            if !self.has_parent(*curve, *source, actual.id.0) {
+            let Some(expected) = indices.get_mut(curve) else {
                 return false;
-            }
-            let expected = indices.entry(*curve).or_default();
-            if *piece != *expected {
+            };
+            if *source != actual.id.0 || *piece != *expected {
                 return false;
             }
             *expected += 1;
         }
         true
-    }
-    fn has_parent(&self, curve: ProfileCurveId, source: u64, actual: u64) -> bool {
-        source == actual
-            && self
-                .source
-                .curves
-                .iter()
-                .any(|authored| authored.id() == curve)
     }
 }
