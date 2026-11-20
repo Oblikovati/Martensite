@@ -1,0 +1,84 @@
+{
+  "base_head": "da08ca1a46c622c4a63fceb696ba1a06f807bdc8",
+  "current_committed_head": "22d81b77e13b91bf2262374a98e816232d5c9f8c",
+  "test_source_manifest_sha256": "5b0fe8f18066e30d4e04574067c6de75ffd0acd8c1a160db2c0bae99247c1605",
+  "final_two_sources_unchanged": true,
+  "unchanged_prior_crate_inputs_checked": 21015,
+  "new_integration_tests_passed": 2,
+  "existing_controls_passed_separately": 5,
+  "final_new_tests_total_seconds": 207.16,
+  "full_multiline_curves": 239,
+  "selected_material_regions": 18,
+  "outward_authored_volume": "226802403/134217728",
+  "inward_authored_volume": "663607031/402653184",
+  "independent_area": "42000445/6291456",
+  "final_cap_guard": "Only Face in output qualifies; source must also be Face",
+  "strict_clippy": [
+    {
+      "name": "clippy-tkv3d",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "martensite-tkv3d",
+        "--lib",
+        "--test",
+        "toolkit",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "clippy-driver",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "martensite-build",
+        "--bin",
+        "martensite-build",
+        "--tests",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0
+    }
+  ],
+  "earlier_attempts": {
+    "existing_short_exact_selector": {
+      "tests": 0,
+      "accepted": false
+    },
+    "new_attempt1": {
+      "exit": 101,
+      "tests": 0,
+      "cause": "test HistoryRole import ambiguity"
+    },
+    "new_attempt2": {
+      "tests_passed": 2,
+      "seconds": 203.19,
+      "accepted_for_final_source": false,
+      "cause": "weaker cap image assertion"
+    },
+    "new_attempt3": {
+      "exit": 101,
+      "tests": 0,
+      "cause": "Option match used for Result-returning shape_type"
+    },
+    "new_attempt4": {
+      "exit": 0,
+      "tests_passed": 2,
+      "final_source": true
+    }
+  },
+  "performance_accepted": false,
+  "peak_RSS_measured": false,
+  "TSan_coverage_claimed": false,
+  "full_feature_complete": false,
+  "remaining_scope": "Cone text, chart atlas/periodicity, persistent full multiline body edit/replay and final affected/hosted/time-RSS qualification"
+}

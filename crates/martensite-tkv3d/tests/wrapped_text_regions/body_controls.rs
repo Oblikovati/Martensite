@@ -2,6 +2,8 @@
 use super::*;
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
+#[path = "body_controls/multiline.rs"]
+mod multiline;
 
 fn cylinder_body() -> martensite_tkbrep::topods::Shape {
     use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeCylinder;
