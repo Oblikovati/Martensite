@@ -15,7 +15,8 @@ use martensite_tkbrep::topods::{Face, Shape};
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::predicates::roots::metric_bounds::*;
 pub use material::CertifiedPlanarMaterial;
-pub use ordered::validate_body_with_certified_conical;
+pub use ordered::{validate_body_with_certified_conical, validate_body_with_transported_conical};
+mod transport;
 
 /// Explicit source-to-native member mapping, used only during operation qualification.
 /// Example: `let captured = capture_conical_actual_family(&members)?;`.

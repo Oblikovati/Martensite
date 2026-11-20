@@ -289,11 +289,11 @@ The placed tool adds a common stored location. Stripping that location
 and re-encoding reproduces the canonical graph bytes and semantic
 bindings. The certified positive determinant establishes that the same
 exact mathematical self-intersection result holds in the placed
-frame. The existing world validation still reruns the native search.
-A transported proof would need to bind the certificate to the exact
-decoded placement and retain the ordered world topology, geometry
-and tolerance checks. The Boolean creates a different graph and still
-requires validation of the finished solid.
+frame. The existing selectors retain native search for replay. The
+[transported placement selector](CONE-PLACEMENT.md#transported-self-intersection-certificate)
+rebinds that certificate and retains the ordered world topology,
+geometry and tolerance checks. The Boolean result has its own ordered
+validation on the finished solid.
 
 Two processes reproduced 2,062,743 bytes exactly, including both
 archives, composed history, validation, footprint and placement

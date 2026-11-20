@@ -31,8 +31,19 @@ pub enum WrappedConeExecutionSelection {
         /// Finite aggregate admission; the request retains the actual requested allowance.
         arithmetic: WrappedConeArithmeticGrantPolicy,
     },
+    /// Directed construction with the canonical intersection certificate rebound after placement.
+    DirectedTransportedPlacementV5 {
+        /// Any of the directed chart domains, V2 through V5.
+        domain: WrappedConeDomainPolicy,
+        /// Finite aggregate admission; the request retains the actual requested allowance.
+        arithmetic: WrappedConeArithmeticGrantPolicy,
+    },
 }
 impl WrappedConeExecutionSelection {
+    pub(in crate::surface_sketch::wrapped_profile) fn requires_transported_placement(self) -> bool {
+        matches!(self, Self::DirectedTransportedPlacementV5 { .. })
+    }
+
     pub(in crate::surface_sketch::wrapped_profile) fn is_directed(self) -> bool {
         matches!(
             self,
@@ -40,6 +51,7 @@ impl WrappedConeExecutionSelection {
                 | Self::DirectedFamilyChartRequireCertifiedV2 { .. }
                 | Self::DirectedRecenteredChartRequireCertifiedV3 { .. }
                 | Self::DirectedRegionAtlasRequireCertifiedV4 { .. }
+                | Self::DirectedTransportedPlacementV5 { .. }
         )
     }
 }

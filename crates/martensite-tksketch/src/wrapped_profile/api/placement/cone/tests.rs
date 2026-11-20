@@ -12,6 +12,9 @@ const DIRECTED: WrappedConeExecutionSelection =
     WrappedConeExecutionSelection::DirectedRecenteredChartRequireCertifiedV3 {
         arithmetic: WrappedConeArithmeticGrantPolicy::OriginalV1,
     };
+#[path = "tests/transport.rs"]
+mod transport;
+
 const WORKER: &str = "surface_sketch::wrapped_profile::api::placement::cone::tests::process_worker";
 const PREFIX: &str = "PLACED_CONE=";
 

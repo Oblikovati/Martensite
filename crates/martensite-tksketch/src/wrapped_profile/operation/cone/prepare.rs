@@ -248,7 +248,8 @@ fn common_center(request: &ConeRun<'_>, wedge: ConicalSectorWedge) -> ConeChecke
 
 fn execution_domain(execution: WrappedConeExecutionSelection) -> WrappedConeDomainPolicy {
     match execution {
-        WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 { domain } => domain,
+        WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 { domain }
+        | WrappedConeExecutionSelection::DirectedTransportedPlacementV5 { domain, .. } => domain,
         WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1 => {
             WrappedConeDomainPolicy::PositiveXCommonChartV2
         }

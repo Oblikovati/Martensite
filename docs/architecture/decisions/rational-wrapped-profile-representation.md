@@ -102,3 +102,23 @@ identity and bit-identical coordinates at that corner. The [review follow-up](..
 records the executed checks. Full affected-package, sanitizer and application
 acceptance remain separate gates. No primitive API,
 geometry baseline, version or release policy changes with this proof note.
+
+
+## Placement reuses exact intersection evidence
+
+The explicit `DirectedTransportedPlacementV5` selector permits a
+canonical self-intersection certificate to serve the corresponding
+stage for a placed cone tool. A byte-identical stripped archive binds
+the placed root and semantic entities to the canonical graph. The
+actual common datum must match the certified positive-determinant
+matrix, and the bound geometry must rebind to the canonical proof
+after removing the datum. An invertible affine map preserves
+intersections and their exact incidences.
+
+The placed member still runs the topology, sampled geometry and
+tolerance stages on its own graph. If the certificate cannot be
+rebound, the operation refuses with the stage evidence. Earlier
+selectors retain their native-search reports for replay. The
+finished Boolean solid has its own ordered validation on its decoded
+graph. The decision changes the placement check policy and preserves
+the geometry contract and error allocations.

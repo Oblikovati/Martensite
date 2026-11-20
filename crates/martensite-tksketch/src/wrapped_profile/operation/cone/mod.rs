@@ -4,6 +4,7 @@ use crate::surface_sketch::{ConeSupport, HistoryRole, NormalSense};
 use martensite_tkmath::predicates::roots::metric_bounds::*;
 use std::collections::BTreeMap;
 mod actual;
+pub(in crate::surface_sketch::wrapped_profile) use actual::placed_members;
 mod domain;
 mod error;
 pub(in crate::surface_sketch::wrapped_profile) use error::{ConeCause, ConeFailure};

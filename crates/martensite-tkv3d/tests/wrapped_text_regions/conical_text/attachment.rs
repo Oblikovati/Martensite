@@ -1,6 +1,7 @@
 //! Attach the owned multiline cone text to a selected analytic support face (#425).
 use super::super::body_controls::{attachment_resolution, body_volume_estimate};
 use super::*;
+use martensite_tkbo::body_check::{CheckMode, ValidationStage};
 use martensite_tkbrep::{brep_adaptor::BRepAdaptorSurface, topexp::Explorer, topods};
 use martensite_tkg3d::{adaptor3d::Adaptor3dSurface, top_abs::ShapeEnum};
 use martensite_tkmath::{
@@ -33,7 +34,8 @@ fn attached_text(kind: WrappedFeatureKind, normal: NormalSense) {
     let before = attachment.record().clone();
     let request = attached_request(&attachment, normal);
     let original = request.clone();
-    let selection = WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 {
+    let selection = WrappedConeExecutionSelection::DirectedTransportedPlacementV5 {
+        domain: WrappedConeDomainPolicy::PositiveXFamilyChartV3,
         arithmetic: WrappedConeArithmeticGrantPolicy::InputBoundV1,
     };
     let started = std::time::Instant::now();
@@ -44,6 +46,7 @@ fn attached_text(kind: WrappedFeatureKind, normal: NormalSense) {
     );
     let feature = outcome.unwrap_or_else(|cause| panic!("attached cone text refused: {cause:?}"));
     check_attached_result(&feature, &attachment, &request);
+    check_intersection_modes(&feature, CheckMode::Exact);
     assert_eq!(attachment.record(), &before);
     assert_eq!(request, original);
 }
@@ -142,4 +145,24 @@ fn assert_expected_volume_change(normal: NormalSense, delta: f64) {
         NormalSense::Outward => assert!(delta > 0., "boss volume delta={delta}"),
         NormalSense::Inward => assert!(delta < 0., "pocket volume delta={delta}"),
     }
+}
+
+fn check_intersection_modes(feature: &ConeFeatureResult, placed: CheckMode) {
+    for member in feature.tool().extrusion().placement().members.values() {
+        assert!(member.validation.is_valid());
+        assert_eq!(
+            member
+                .validation
+                .stage(ValidationStage::SelfIntersection)
+                .mode,
+            placed
+        );
+    }
+    assert_eq!(
+        feature
+            .validation()
+            .stage(ValidationStage::SelfIntersection)
+            .mode,
+        CheckMode::NativeSearch
+    );
 }

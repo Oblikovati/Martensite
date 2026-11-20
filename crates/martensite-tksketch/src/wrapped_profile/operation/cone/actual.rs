@@ -125,6 +125,13 @@ fn missing(region: SurfaceRegionId, field: &'static str) -> ConeFailure {
     storage::mismatch(region, None, field, vec![], vec![1])
 }
 
+pub(in crate::surface_sketch::wrapped_profile) fn placed_members(
+    result: &WrappedConeNormalResult,
+    bindings: &[(BindingKey, Shape)],
+) -> Checked<BTreeMap<SurfaceRegionId, ConicalNativeMember>> {
+    binding::placed_members(&result.family.family, bindings).map_err(ConeFailure::public)
+}
+
 pub(super) fn validate_family(
     family: &super::super::stages::OwnedFamily<Selection, Geometry>,
     work: &storage::Work,

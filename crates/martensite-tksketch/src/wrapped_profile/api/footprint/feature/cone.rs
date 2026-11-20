@@ -115,7 +115,7 @@ impl ConeFaceAttachment {
             attempt,
             chart.trim_face().0,
             &solid,
-            &native,
+            native,
             &self.record().resolution,
             &mut cancelled,
         )?;

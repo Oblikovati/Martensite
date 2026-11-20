@@ -38,7 +38,8 @@ impl SupportStages for ConeStages<'_> {
             WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
             | WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 { .. }
             | WrappedConeExecutionSelection::DirectedRecenteredChartRequireCertifiedV3 { .. }
-            | WrappedConeExecutionSelection::DirectedRegionAtlasRequireCertifiedV4 { .. } => {
+            | WrappedConeExecutionSelection::DirectedRegionAtlasRequireCertifiedV4 { .. }
+            | WrappedConeExecutionSelection::DirectedTransportedPlacementV5 { .. } => {
                 prepare::select_with_execution(
                     self.request,
                     originals,

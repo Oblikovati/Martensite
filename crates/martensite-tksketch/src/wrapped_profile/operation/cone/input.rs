@@ -26,11 +26,33 @@ pub(in crate::surface_sketch::wrapped_profile) fn capture_with_selection(
         admit_with_ceiling(request, 1_000_000).map_err(ConeFailure::public)?;
         return capture_admitted(request, cancelled);
     }
+    if matches!(
+        execution,
+        WrappedConeExecutionSelection::DirectedTransportedPlacementV5 {
+            domain: WrappedConeDomainPolicy::LegacySectorV1,
+            ..
+        }
+    ) {
+        return Err(transport_domain().public());
+    }
     admit_with_ceiling(request, grant::admission_ceiling(execution))
         .map_err(ConeFailure::public)?;
     // #563: reject the selected policy before source capture can observe a later stop.
     super::prepare::directed::admit(request, execution).map_err(ConeFailure::public)?;
     capture_admitted(request, cancelled)
+}
+fn transport_domain() -> ConeFailure {
+    ConeFailure::new(
+        None,
+        None,
+        WrappedFailureClass::Unsupported,
+        ConeCause::Scalar {
+            field: "transported cone domain version",
+            actual: 1.,
+            expected: "directed chart domain V2 through V5",
+        },
+    )
+    .at(WrappedStage::Admission)
 }
 fn rounded_atlas() -> ConeFailure {
     ConeFailure::new(

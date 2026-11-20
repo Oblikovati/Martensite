@@ -6,6 +6,7 @@ use martensite_tkmath::predicates::roots::metric_bounds::{
     CertifiedRotatedFrameSpatialBudget, CertifiedRotatedFrameTransport,
 };
 mod members;
+mod qualification;
 
 type ConePlan = Plan<CertifiedRotatedFrameSpatialBudget>;
 

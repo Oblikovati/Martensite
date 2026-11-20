@@ -157,7 +157,7 @@ impl CylinderFaceAttachment {
             attempt,
             &support.face,
             &solid,
-            &native,
+            native,
             &self.record().resolution,
             &mut cancelled,
         )?;
@@ -199,12 +199,14 @@ fn apply_material(
     attempt: Attempt,
     selected_face: &Face,
     support: &Shape,
-    tool: &DetachedWrappedBodies,
+    tool: DetachedWrappedBodies,
     resolution: &martensite_tkbo::profile_extrusion::Resolution,
     cancelled: &mut CancelPoll<'_>,
 ) -> FeatureChecked<FeatureArchive> {
     let boolean = boolean(attempt, support, &tool.bodies, cancelled)?;
-    let captured = history::capture(attempt, selected_face, support, tool, &boolean, cancelled)?;
+    let captured = history::capture(attempt, selected_face, support, &tool, &boolean, cancelled)?;
+    // The captured solid and history own their bindings. Publication can reuse the workspace's memory.
+    drop((boolean, tool));
     let (bytes, validation) = body::freeze(attempt, &captured, resolution, cancelled)?;
     Ok(FeatureArchive {
         bytes,

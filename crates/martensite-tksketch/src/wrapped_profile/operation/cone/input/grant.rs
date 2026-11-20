@@ -35,7 +35,8 @@ fn grant_policy(execution: WrappedConeExecutionSelection) -> WrappedConeArithmet
     match execution {
         DirectedFamilyChartRequireCertifiedV2 { arithmetic }
         | DirectedRecenteredChartRequireCertifiedV3 { arithmetic }
-        | DirectedRegionAtlasRequireCertifiedV4 { arithmetic } => arithmetic,
+        | DirectedRegionAtlasRequireCertifiedV4 { arithmetic }
+        | DirectedTransportedPlacementV5 { arithmetic, .. } => arithmetic,
         _ => OriginalV1,
     }
 }

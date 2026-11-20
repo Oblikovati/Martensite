@@ -9,15 +9,19 @@ const STAGES: [ValidationStage; 4] = [
     ValidationStage::SelfIntersection,
     ValidationStage::Tolerance,
 ];
-const MODES: [(ValidationStage, CheckMode); 3] = [
-    (ValidationStage::Topology, CheckMode::Exact),
-    (ValidationStage::Geometry, CheckMode::Sampled),
-    (ValidationStage::SelfIntersection, CheckMode::NativeSearch),
-];
 pub(in super::super) fn certify(
     region: SurfaceRegionId,
     report: &ValidationReport,
     tolerance: f64,
+) -> Checked<()> {
+    certify_with_mode(region, report, tolerance, CheckMode::NativeSearch)
+}
+
+pub(in super::super) fn certify_with_mode(
+    region: SurfaceRegionId,
+    report: &ValidationReport,
+    tolerance: f64,
+    intersection_mode: CheckMode,
 ) -> Checked<()> {
     for (actual, expected) in report.stages.iter().zip(STAGES) {
         stage_pass(region, actual, expected)?;
@@ -28,10 +32,19 @@ pub(in super::super) fn certify(
     if report.census.len() != 1 {
         return Err(failure(region, ValidationStage::Topology));
     }
-    for (stage, mode) in MODES {
-        require_mode(region, report, stage, mode)?;
-    }
-    Ok(())
+    require_mode(region, report, ValidationStage::Topology, CheckMode::Exact)?;
+    require_mode(
+        region,
+        report,
+        ValidationStage::Geometry,
+        CheckMode::Sampled,
+    )?;
+    require_mode(
+        region,
+        report,
+        ValidationStage::SelfIntersection,
+        intersection_mode,
+    )
 }
 fn stage_pass(
     region: SurfaceRegionId,

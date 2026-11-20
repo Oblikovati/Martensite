@@ -18,6 +18,21 @@ pub fn validate_body_with_certified_conical(
 ) -> Result<ValidationReport, ResolutionRejected> {
     validate_member(member, resolution, || evidence.rebind_member(member))
 }
+/// Rebind the canonical certificate under the exact stored, invertible placement matrix.
+/// Topology, sampled geometry and tolerances are checked on the placed shape.
+/// Example: `validate_body_with_transported_conical(&member, &resolution, &proof, &frame)?;`.
+pub fn validate_body_with_transported_conical(
+    member: &ConicalNativeMember,
+    resolution: &Resolution,
+    evidence: &CertifiedConicalBody,
+    frame: &CertifiedRotatedFrameTransport,
+) -> Result<ValidationReport, ResolutionRejected> {
+    validate_member(member, resolution, || {
+        let canonical = transport::strip_member(member, frame)?;
+        evidence.rebind_member(&canonical)
+    })
+}
+
 fn validate_member(
     member: &ConicalNativeMember,
     resolution: &Resolution,

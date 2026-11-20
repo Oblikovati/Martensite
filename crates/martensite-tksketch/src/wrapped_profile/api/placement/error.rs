@@ -48,6 +48,10 @@ pub(in crate::surface_sketch::wrapped_profile) enum PlacementFailure {
         expected: Option<u8>,
     },
     Member(SurfaceRegionId),
+    TransportValidation {
+        region: SurfaceRegionId,
+        report: Box<martensite_tkbo::body_check::ValidationReport>,
+    },
     Interval {
         actual: [f64; 2],
     },
@@ -124,6 +128,10 @@ impl PlacementFailure {
                 "physical SemanticDatum binding={key:?} has a different datum; expected the shared decoded root datum"
             ),
             Self::Member(region) => write!(f, "missing {region:?}; expected one owned solid"),
+            Self::TransportValidation { region, report } => write!(
+                f,
+                "placed region={region:?}; expected ordered validation with rebound certificate: {report:?}"
+            ),
             _ => self.graph_message(f),
         }
     }
@@ -192,7 +200,7 @@ fn entities(cause: &PlacementFailure) -> Vec<crate::surface_sketch::HistorySourc
             crate::surface_sketch::HistorySource::Region(*region),
             crate::surface_sketch::HistorySource::Curve(span.curve),
         ],
-        PlacementFailure::Member(region) => {
+        PlacementFailure::Member(region) | PlacementFailure::TransportValidation { region, .. } => {
             vec![crate::surface_sketch::HistorySource::Region(*region)]
         }
         PlacementFailure::SemanticDatum(key) => vec![failure_projection::binding_source(*key)],

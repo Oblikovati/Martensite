@@ -8,6 +8,8 @@ use martensite_tkbrep::{
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 use std::collections::BTreeSet;
+type BindingIndex<'a> = BTreeMap<BindingKey, Option<&'a Shape>>;
+type Family = super::super::super::stages::OwnedFamily<Selection, Geometry>;
 
 pub(super) fn members(
     selection: &Selection,
@@ -24,7 +26,7 @@ pub(super) fn members(
             .actual_bindings
             .get(&region)
             .ok_or_else(|| missing(region, "actual source/native bindings"))?;
-        found.push(member(prepared, geometry, shape, bindings)?);
+        found.push(member(prepared, geometry, shape, &binding_index(bindings))?);
     }
     Ok(found)
 }
@@ -32,7 +34,7 @@ fn member(
     prepared: &Prepared,
     geometry: &Geometry,
     shape: &Shape,
-    bindings: &[(BindingKey, Shape)],
+    bindings: &BindingIndex<'_>,
 ) -> ConeChecked<ConicalNativeMember> {
     let actual = FaceBindings::capture(prepared.source.region, shape, bindings)?;
     let sides = side_bindings(prepared, &actual)?;
@@ -55,7 +57,7 @@ fn retained_family(prepared: &Prepared) -> ConeChecked<&prepare::directed::Direc
 }
 fn side_bindings(
     prepared: &Prepared,
-    actual: &FaceBindings<'_>,
+    actual: &FaceBindings<'_, '_>,
 ) -> ConeChecked<Vec<(ConicalActualSideId, Face)>> {
     let family = retained_family(prepared)?;
     prepared
@@ -79,7 +81,7 @@ fn cap(
     prepared: &Prepared,
     geometry: &Geometry,
     row: usize,
-    actual: &FaceBindings<'_>,
+    actual: &FaceBindings<'_, '_>,
     curves: &[(ProfileCurveId, ConicalActualSideId)],
 ) -> ConeChecked<ConicalNativeCap> {
     let region = prepared.source.region;
@@ -125,23 +127,27 @@ fn faces(region: SurfaceRegionId, shape: &Shape) -> ConeChecked<Vec<Shape>> {
     }
     Ok(faces)
 }
-struct FaceBindings<'a> {
-    keys: BTreeMap<BindingKey, Option<&'a Shape>>,
+fn binding_index(bindings: &[(BindingKey, Shape)]) -> BindingIndex<'_> {
+    let mut keys = BTreeMap::new();
+    for (key, shape) in bindings {
+        keys.entry(*key)
+            .and_modify(|old| *old = None)
+            .or_insert(Some(shape));
+    }
+    keys
+}
+
+struct FaceBindings<'lookup, 'shape> {
+    keys: &'lookup BindingIndex<'shape>,
     faces: IndexedMapOfShape,
     ambiguous: BTreeSet<usize>,
 }
-impl<'a> FaceBindings<'a> {
+impl<'lookup, 'shape> FaceBindings<'lookup, 'shape> {
     fn capture(
         region: SurfaceRegionId,
         shape: &Shape,
-        bindings: &'a [(BindingKey, Shape)],
+        keys: &'lookup BindingIndex<'shape>,
     ) -> ConeChecked<Self> {
-        let mut keys = BTreeMap::new();
-        for (key, face) in bindings {
-            keys.entry(*key)
-                .and_modify(|old| *old = None)
-                .or_insert(Some(face));
-        }
         let mut native_faces = IndexedMapOfShape::default();
         let mut ambiguous = BTreeSet::new();
         for face in faces(region, shape)? {
@@ -181,7 +187,7 @@ fn native(region: SurfaceRegionId, cause: Failure) -> ConeFailure {
 }
 
 pub(super) fn published_members(
-    family: &super::super::super::stages::OwnedFamily<Selection, Geometry>,
+    family: &Family,
     work: &storage::Work,
 ) -> ConeChecked<Vec<ConicalNativeMember>> {
     family
@@ -195,14 +201,14 @@ pub(super) fn published_members(
                 .ok_or_else(|| {
                     missing(prepared.source.region, "published actual source bindings")
                 })?;
-            published_member(family, prepared, bindings)
+            published_member(family, prepared, &binding_index(bindings))
         })
         .collect()
 }
 fn published_member(
-    family: &super::super::super::stages::OwnedFamily<Selection, Geometry>,
+    family: &Family,
     prepared: &Prepared,
-    bindings: &[(BindingKey, Shape)],
+    bindings: &BindingIndex<'_>,
 ) -> ConeChecked<ConicalNativeMember> {
     let region = prepared.source.region;
     let geometry = &family
@@ -212,24 +218,37 @@ fn published_member(
         .geometry;
     member(prepared, geometry, root(region, bindings)?, bindings)
 }
-fn root(region: SurfaceRegionId, bindings: &[(BindingKey, Shape)]) -> ConeChecked<&Shape> {
+fn root<'a>(region: SurfaceRegionId, bindings: &BindingIndex<'a>) -> ConeChecked<&'a Shape> {
     let key = BindingKey {
         source: Source::Region(region),
         role: HistoryRole::Solid,
     };
-    let roots: Vec<_> = bindings
-        .iter()
-        .filter(|(candidate, _)| *candidate == key)
-        .map(|(_, shape)| shape)
-        .collect();
-    if roots.len() != 1 {
-        return Err(missing(region, "published actual member root"));
-    }
-    Ok(roots[0])
+    bindings
+        .get(&key)
+        .copied()
+        .flatten()
+        .ok_or_else(|| missing(region, "published actual member root"))
 }
+
+pub(super) fn placed_members(
+    family: &Family,
+    bindings: &[(BindingKey, Shape)],
+) -> ConeChecked<BTreeMap<SurfaceRegionId, ConicalNativeMember>> {
+    let lookup = binding_index(bindings);
+    family
+        .selection
+        .prepared
+        .iter()
+        .map(|prepared| {
+            let member = published_member(family, prepared, &lookup)?;
+            Ok((prepared.source.region, member))
+        })
+        .collect()
+}
+
 #[cfg(test)]
 pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn retained_members(
-    family: &super::super::super::stages::OwnedFamily<Selection, Geometry>,
+    family: &Family,
 ) -> ConeChecked<Vec<ConicalNativeMember>> {
     let (_, bindings) = pipeline::decode(&family.bytes, &family.keys).map_err(|cause| {
         ConeFailure::new(
@@ -239,10 +258,11 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn retained_memb
             ConeCause::Native(Box::new(cause)),
         )
     })?;
+    let lookup = binding_index(&bindings);
     family
         .selection
         .prepared
         .iter()
-        .map(|prepared| published_member(family, prepared, &bindings))
+        .map(|prepared| published_member(family, prepared, &lookup))
         .collect()
 }

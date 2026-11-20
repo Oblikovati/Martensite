@@ -1,30 +1,31 @@
 //! Rebind trace limits and qualify the actual located cone solid for each authored member.
 use super::*;
+use martensite_tkbo::body_check::ValidationReport;
 pub(super) fn certify(
     base: &WrappedConeNormalResult,
     plan: &ConePlan,
     physical: &freeze::Physical,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<BTreeMap<SurfaceRegionId, WrappedPlacedConeMemberReport>> {
+    let certificate = qualification::capture(base, physical)?;
     base.reports()
         .iter()
         .map(|(region, report)| {
             input::poll(cancelled, WrappedStage::Placement)?;
             let solid = publication::solid(*region, physical)?;
             let trace = cap_trace(*region, base, plan, cancelled)?;
-            Ok((*region, member(*region, report, solid, trace, plan)?))
+            let validation = qualification::validate(certificate.as_ref(), *region, solid, plan)?;
+            Ok((*region, member(report, solid, trace, plan, validation)?))
         })
         .collect()
 }
 fn member(
-    region: SurfaceRegionId,
     source: &WrappedConeMemberReport,
     solid: &Shape,
     cap_trace_error: WrappedCertifiedBound,
     plan: &ConePlan,
+    validation: ValidationReport,
 ) -> Checked<WrappedPlacedConeMemberReport> {
-    let validation =
-        publication::physical_validation(region, solid, plan.budget.input().spatial_limit)?;
     let (value, integration_error) = at("physical native cone volume", pipeline::estimate(solid))?;
     let boundary_flux = measures::product(
         source.boundary_flux,

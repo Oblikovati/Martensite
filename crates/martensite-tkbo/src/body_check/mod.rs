@@ -21,6 +21,7 @@ pub use certified_conical::{
     CertifiedConicalBody, CertifiedPlanarMaterial, ConicalBindingError, ConicalNativeCap,
     ConicalNativeCensus, ConicalNativeGeometry, ConicalNativeMember, bind_conical_actual_family,
     capture_conical_actual_family, validate_body_with_certified_conical,
+    validate_body_with_transported_conical,
 };
 mod census;
 mod ledger;
