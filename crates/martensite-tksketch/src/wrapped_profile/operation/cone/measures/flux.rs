@@ -1,6 +1,6 @@
 //! The actual frozen cap and side occurrences supply the conditional centered patch flux.
 use super::*;
-pub(super) fn certify(
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn certify(
     request: &ConeRun<'_>,
     region: SurfaceRegionId,
     stored: &storage::Stored,

@@ -1,6 +1,6 @@
 //! Original authored contours supply independent normal-volume integration evidence.
 use super::*;
-pub(super) fn certify(
+pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn certify(
     request: &ConeRun<'_>,
     original: &DevelopedRegionRequest,
     domain: Option<&ConicalChartDomainEvidence>,

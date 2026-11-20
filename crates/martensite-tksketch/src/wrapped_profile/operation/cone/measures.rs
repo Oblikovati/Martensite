@@ -4,9 +4,15 @@ use super::*;
 use martensite_tkmath::predicates::roots::DyadicBound;
 mod authored;
 mod comparison;
+#[cfg(test)]
+pub(super) use authored::certify as authored_volume;
 pub(super) use comparison::member_volume;
 #[cfg(test)]
-pub(super) use comparison::{ComparisonBounds, certify as comparison};
+pub(super) use comparison::{
+    ComparisonBounds, certify as comparison, distance as enclosure_distance,
+};
+#[cfg(test)]
+pub(super) use flux::certify as native_flux;
 mod flux;
 mod reference;
 mod totals;

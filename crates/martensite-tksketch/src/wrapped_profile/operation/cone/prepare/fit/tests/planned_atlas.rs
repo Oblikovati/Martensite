@@ -45,7 +45,9 @@ fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {
     let stored = storage::capture(original, &prepared, body, &mut work, &mut || false).unwrap();
     assert_per_span_authority(original, &prepared, &stored.spans);
     assert_certified_contour(original, &prepared, &stored);
-    assert_periodic_cap_material(&prepared, &request, &stored, &clearance, &mut work);
+    let cap = assert_periodic_cap_material(&prepared, &request, &stored, &mut work);
+    let homotopy = assert_homotopy(&stored.joins, &cap, &clearance);
+    assert_closed_strip_volume(&run, original, &stored, &homotopy, &mut work);
 }
 
 fn decode_strip(prepared: &Prepared, support: ConeSupport) -> coverage::MemberView {
@@ -159,6 +161,8 @@ fn reject_sibling_chart(prepared: &Prepared, spans: &[storage::SpanProof]) {
 fn strip_request() -> WrappedConeNormalRequest {
     let mut request = super::super::super::super::tests::request();
     request.support.semi_angle = 0.125;
+    // The long edges need 256 Simpson panels to meet the original enclosure width.
+    request.proof.authored_volume.subdivision_level = 8;
     request.selections[0].holes.clear();
     request.profile.vertices.truncate(STRIP.len());
     for (vertex, point) in request.profile.vertices.iter_mut().zip(STRIP) {
@@ -249,46 +253,97 @@ fn assert_periodic_cap_material(
     prepared: &Prepared,
     request: &WrappedConeNormalRequest,
     stored: &storage::Stored,
-    authored_clearance: &CertifiedCylindricalClearance,
     work: &mut Work,
-) {
+) -> planar_clearance::OriginalClearance {
     let uv = periodic_uv_request(prepared, &stored.spans);
     let profiles = std::slice::from_ref(&uv);
-    let planar = planar_cap_material(profiles, request);
-    let boundary_clearance =
-        planar_clearance::certify_many_with_cancel(profiles, profiles, || false).unwrap();
+    let planar = planar_cap_material(profiles, request, work);
+    let boundary_clearance = certified_cap_clearance(&uv, work);
     let prepared = periodic_selection::PreparedSelection {
         planar,
         prepared: vec![uv.clone()],
         boundary_clearance,
     };
     let region = uv.region;
-    let material = periodic_selection::material::certify_with_cancel(
-        &[uv],
-        &prepared,
-        periodic_selection::MaterialOptions::default(),
-        || false,
-    )
-    .unwrap();
-    let homotopy = assert_homotopy(
-        &stored.joins,
-        &prepared.boundary_clearance,
-        authored_clearance,
-    );
-    let volume = homotopy
-        .signed_normal_volume(work.remaining(), || false)
+    let material = qualify_periodic_material(uv, &prepared, work);
+    work.charge(region, None, material.probes.operations())
         .unwrap();
-    work.charge(region, None, volume.operations()).unwrap();
-    let [lower, upper] = volume
-        .enclosure()
-        .each_ref()
-        .map(|endpoint| endpoint.binary64_bounds().unwrap());
-    assert!(lower[0] > 0.);
-    assert!(upper[1] - lower[0] < 1e-10);
     let images = prepared.boundary_clearance.periodic.images();
     assert_eq!(images.len(), 1);
     assert_eq!(images[0].translation().turn(), 1);
     assert_eq!(material.relations.len(), 2);
+    prepared.boundary_clearance
+}
+
+fn qualify_periodic_material(
+    uv: Request,
+    prepared: &periodic_selection::PreparedSelection,
+    work: &Work,
+) -> periodic_selection::PeriodicMaterialEvidence {
+    let remaining = work.remaining();
+    let mut options = periodic_selection::MaterialOptions::default();
+    options.probes.fractional_bits = remaining.fractional_bits;
+    options.probes.max_operations = remaining.max_operations;
+    periodic_selection::material::certify_with_cancel(&[uv], prepared, options, || false).unwrap()
+}
+
+fn certified_cap_clearance(uv: &Request, work: &mut Work) -> planar_clearance::OriginalClearance {
+    let profiles = std::slice::from_ref(uv);
+    let allowance = work.remaining();
+    let proof =
+        planar_clearance::certify_many_with_limit(profiles, profiles, allowance, || false).unwrap();
+    let within_work = proof.certificate.operations();
+    let periodic_work = proof.periodic.operations();
+    assert_eq!(
+        proof.periodic.requested_options().max_operations,
+        allowance.max_operations - within_work
+    );
+    work.charge(uv.region, None, within_work + periodic_work)
+        .unwrap();
+    proof
+}
+
+fn assert_closed_strip_volume(
+    run: &ConeRun<'_>,
+    original: &DevelopedRegionRequest,
+    stored: &storage::Stored,
+    homotopy: &ConicalCapHomotopyEvidence<'_>,
+    work: &mut Work,
+) {
+    use crate::surface_sketch::wrapped_profile::operation::cone::measures;
+    let volume = homotopy
+        .signed_normal_volume(work.remaining(), || false)
+        .unwrap();
+    work.charge(original.region, None, volume.operations())
+        .unwrap();
+    let reference = measures::range(volume.enclosure().clone()).unwrap();
+    assert!(reference.lower > 0.);
+    assert!(reference.upper - reference.lower < 1e-10);
+    let flux = measures::native_flux(run, original.region, stored, work, &mut || false).unwrap();
+    let authored =
+        measures::authored_volume(run, original, None, flux.enclosure(), work, &mut || false)
+            .unwrap();
+    let authored = measures::range(authored.volume()).unwrap();
+    assert_volume_agreement([reference.lower, reference.upper], authored, &flux);
+}
+
+fn assert_volume_agreement(
+    reference: [f64; 2],
+    authored: WrappedCertifiedRange,
+    flux: &CertifiedAnalyticConicalFlux,
+) {
+    use crate::surface_sketch::wrapped_profile::operation::cone::measures::enclosure_distance;
+    const MAX_VOLUME_DIFFERENCE: f64 = 5e-5;
+    let authored_gap = enclosure_distance(reference, [authored.lower, authored.upper]).unwrap();
+    let proxy_gap = enclosure_distance(reference, flux.enclosure()).unwrap();
+    assert!(
+        authored_gap <= MAX_VOLUME_DIFFERENCE,
+        "authored gap={authored_gap}"
+    );
+    assert!(
+        proxy_gap <= MAX_VOLUME_DIFFERENCE,
+        "decoded occurrence flux gap={proxy_gap}"
+    );
 }
 
 fn assert_homotopy<'a>(
@@ -321,6 +376,7 @@ fn assert_homotopy<'a>(
 fn planar_cap_material(
     profiles: &[Request],
     request: &WrappedConeNormalRequest,
+    work: &mut Work,
 ) -> periodic_selection::PlanarSelectionEvidence {
     let version = PlanarProofVersion::GeometricCompositeV6 {
         max_components: 64,
@@ -330,11 +386,12 @@ fn planar_cap_material(
     let set = planar::capture_with_proof_and_cancel(
         profiles,
         cap.tolerance,
-        request.options.planar_work,
+        work.planar_remaining(request.options.planar_work),
         version,
         || false,
     )
     .unwrap();
+    work.charge_planar(cap.region, set.proof_work()).unwrap();
     periodic_selection::PlanarSelectionEvidence {
         members: [(cap.region, planar::select(cap, &set).unwrap())].into(),
         certificate: set.certificate(),

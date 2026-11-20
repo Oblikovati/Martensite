@@ -284,3 +284,43 @@ Five paired standalone O. runs on one pinned Linux x86_64 core after
 the suites finished measured median API times of 4.988 s on the
 baseline and 4.936 s on the candidate. Median peak RSS was 67,816 KiB
 and 67,364 KiB, respectively.
+
+## Shared cap allowance and decoded volume comparison
+
+The within-profile check and periodic image check can draw from one
+remaining arithmetic allowance. The within-profile check charges its
+work first. Periodic planning and image traversal then share what is
+left. A refusal reports the work already done, including any unfinished
+image, and retains the original cause. Existing cylinder callers keep
+their original limits. The reduced-allowance test completes with the
+exact measured grant and refuses with one operation less.
+
+The closed-strip regression now charges the cap clearance, periodic
+probes and signed normal-volume integral to the cone arithmetic ledger.
+It also charges the cap planar census against the remaining pair budget.
+It compares certified volume enclosures from the original authored
+contour, the exact cap reference and the analytic flux of the archived
+side and cap occurrences. The test requires each reference discrepancy
+to be at most `5e-5` cubic model units. The authored integral uses 256
+Simpson panels to meet the unchanged `1e-7` enclosure-width limit on
+the long strip edges.
+
+The retained flux is conditional on the decoded patch occurrences.
+The flux discrepancy measures their agreement with the exact cap
+reference. Public atlas publication still needs the filled spatial bound
+and complete binding of periodic material and measure evidence. The
+[native flux note](BUG546-NATIVE-FLUX-CONTROL.md) covers geometric closure
+and the native volume estimator.
+
+The metric-bound suite passed 808 tests. The wrapped-profile suite
+passed 536 tests with eight ignored. Clippy passed with warnings
+denied. Seven cone and cylinder replay workers matched `1c238c6c`
+byte for byte. In five pairs after the suites finished, the standalone
+O. medians were 4.728 s on the baseline and 4.804 s on the candidate,
+with peak RSS medians of 67,612 KiB and 67,556 KiB. The median
+candidate-minus-baseline time across the matched pairs was −0.004 s.
+The candidate meets the 5.4 s time limit. Time differences went both
+ways across the five pairs.
+Five paired runs of the cylinder chart replay worker measured total
+process medians of 7.35 s and 7.25 s, with peak RSS medians of 61,104 KiB
+and 60,972 KiB, respectively.
