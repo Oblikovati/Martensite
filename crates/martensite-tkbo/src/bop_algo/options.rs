@@ -152,8 +152,9 @@ impl Options {
         self.run_parallel
     }
 
-    /// Bounds the workers of every parallel stage; `options.limit_workers(NonZeroUsize::MIN)`.
-    /// Inherited with the options, so the bound reaches each sub-algorithm (#496).
+    /// Bounds the workers of every pave-filler and self-check stage; builder stages keep one
+    /// worker per task. Inherited with the options, so the bound reaches each pave filler (#496).
+    /// Example: `options.limit_workers(NonZeroUsize::MIN)`.
     pub(crate) fn limit_workers(&mut self, max_workers: NonZeroUsize) {
         self.max_workers = Some(max_workers);
     }
