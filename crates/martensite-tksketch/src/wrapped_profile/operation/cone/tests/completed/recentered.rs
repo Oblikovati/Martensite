@@ -40,6 +40,27 @@ fn process_worker() {
 }
 
 #[test]
+fn recentered_directed_cone_rebinds_exact_constant_native_weights() {
+    let mut source = request();
+    source.proof.planar_proof = PlanarProofVersion::GeometricCompositeV6 {
+        max_components: 64,
+        max_total_subintervals: 100_000,
+    };
+    let result = complete(&source, SELECTED);
+    let member = &result.family.family.members[&SurfaceRegionId(1)];
+    let radial = member
+        .geometry
+        .spans
+        .iter()
+        .find(|span| span.span.curve == SurfaceCurveId(1))
+        .unwrap();
+    for row in &radial.curves {
+        assert!(row.weights.iter().all(|weight| *weight == 1.));
+    }
+    assert!(result.reports()[&SurfaceRegionId(1)].validation.is_valid());
+}
+
+#[test]
 fn recentered_inward_normal_preserves_world_positions_and_depth_roles() {
     let mut source = crossing_request();
     source.support.normal = NormalSense::Inward;

@@ -88,8 +88,25 @@ fn candidate_edges(
                 ConeCause::Coefficients(cause),
             )
         })?;
+    if domain::directed(prepared) {
+        native_weight_gauge(&mut poles);
+    }
     bind_native_endpoints(prepared, piece, &mut poles);
     Ok(poles)
+}
+
+fn native_weight_gauge(rows: &mut [angular::RationalPoles; 2]) {
+    // #536: the two rows share the same positive weights. Native Bézier storage
+    // encodes a constant weight as unit weights, with no change in the curve.
+    let weights = &rows[0].weights;
+    if weights
+        .first()
+        .is_some_and(|first| *first != 1. && weights.iter().all(|w| w == first))
+    {
+        for row in rows {
+            row.weights.fill(1.);
+        }
+    }
 }
 
 fn certify(
