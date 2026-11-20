@@ -7,6 +7,7 @@ pub struct CylinderTrimmedTool {
     footprint: CylinderFootprintReport,
     extrusion: WrappedChartNormalResult,
     fitted_spans: usize,
+    inner_trims: usize,
 }
 
 impl CylinderTrimmedTool {
@@ -18,6 +19,11 @@ impl CylinderTrimmedTool {
     /// Each counted span has two checked cap pcurves. Example: `tool.fitted_spans()`.
     pub fn fitted_spans(&self) -> usize {
         self.fitted_spans
+    }
+    /// Number of bounded support holes excluded by both footprint checks.
+    /// Example: `let excluded = tool.excluded_trim_wires();`.
+    pub fn excluded_trim_wires(&self) -> usize {
+        self.inner_trims
     }
 
     /// The qualified normal tool. Example: `tool.extrusion().export_native()?`.
@@ -58,15 +64,17 @@ impl CylinderFaceAttachment {
         band: &band::Band,
         cancelled: &mut CancelPoll<'_>,
     ) -> FootprintChecked<CylinderTrimmedTool> {
-        let inputs = read_inside(request, band, cancelled)?;
+        let mut exclusions = holes::Exclusions::new(&band.holes)?;
+        let inputs = read_inside(request, band, &mut exclusions, cancelled)?;
         let extrusion = placement::from_canonical_inputs(request, inputs, cancelled)
             .map_err(extrusion_error)?;
-        let fitted_spans = fitted::check(&extrusion, band, cancelled)?;
+        let fitted_spans = fitted::check(&extrusion, band, &mut exclusions, cancelled)?;
         poll(cancelled, WrappedStage::Publication)?;
         Ok(CylinderTrimmedTool {
             footprint: self.footprint_report(revision, request, band),
             extrusion,
             fitted_spans,
+            inner_trims: band.holes.len(),
         })
     }
 }
@@ -74,6 +82,7 @@ impl CylinderFaceAttachment {
 fn read_inside(
     request: &WrappedNormalRequest,
     band: &band::Band,
+    exclusions: &mut holes::Exclusions,
     cancelled: &mut CancelPoll<'_>,
 ) -> FootprintChecked<input::Inputs> {
     let intervals = bounds::authored_intervals(request, band)?;
@@ -81,6 +90,7 @@ fn read_inside(
     for region in &inputs.requests {
         poll(cancelled, WrappedStage::Input)?;
         bounds::check_region(region.region, &region.loops, intervals)?;
+        bounds::check_authored_holes(region.region, &region.loops, request.support, exclusions)?;
     }
     Ok(inputs)
 }

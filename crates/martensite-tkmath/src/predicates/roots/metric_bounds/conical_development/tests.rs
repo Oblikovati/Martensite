@@ -73,3 +73,26 @@ fn cap_projection_uses_stored_slant_origin_and_one_physical_turn() {
         .is_err()
     );
 }
+
+#[test]
+fn native_hole_envelope_accounts_for_signed_meridian_and_angular_directions() {
+    let direct = ConicalDevelopment::new(0.4, 2., 0.7, true).unwrap();
+    let narrowing = ConicalDevelopment::new(-0.4, 2., -0.7, true).unwrap();
+    let positive = direct.native_trim_envelope([[0.5, 0.9], [3., 4.]]).unwrap();
+    let reversed = narrowing
+        .native_trim_envelope([[-0.9, -0.5], [-4., -3.]])
+        .unwrap();
+    assert_eq!(positive, reversed);
+    let full = direct
+        .trim_band([1., 8.], None)
+        .unwrap()
+        .with_angular_enclosures();
+    let footprint = full
+        .authored(
+            [[8., 9.], [-0.5, 0.5]],
+            crate::predicates::roots::metric_bounds::ConicalSectorWedge::PositiveX,
+        )
+        .unwrap();
+    assert!(footprint.angular.is_some());
+    assert!(full.limits().angular.is_none());
+}

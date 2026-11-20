@@ -13,6 +13,7 @@ pub struct ConicalTrimBand {
     semi_angle: f64,
     slant: [f64; 2],
     angular: Option<[f64; 2]>,
+    enclose_full_angles: bool,
 }
 
 /// Outward bounds of an admitted developed or stored cap footprint.
@@ -50,6 +51,7 @@ impl ConicalDevelopment {
             semi_angle: self.semi_angle,
             slant,
             angular,
+            enclose_full_angles: false,
         })
     }
 
@@ -66,9 +68,37 @@ impl ConicalDevelopment {
         admit_open("angular band", band)?;
         Ok(band)
     }
+
+    /// Outward normal-chart enclosure of a bounded native UV trim.
+    /// Example: `let bounds = chart.native_trim_envelope([[0.5, 0.75], [3., 4.]])?;`.
+    pub fn native_trim_envelope(&self, uv: [[f64; 2]; 2]) -> Checked<ConicalFootprint> {
+        admit_bounds(uv)?;
+        let mut cancelled = || false;
+        let mut arithmetic = Arithmetic::new(ArithmeticPolicy::default(), &mut cancelled);
+        let [v0, v1] = ordered(uv[1], self.growing);
+        let [u0, u1] = ordered(uv[0], self.growing == self.direct);
+        let slant = outward(
+            self.meridian(v0, &mut arithmetic)?,
+            self.meridian(v1, &mut arithmetic)?,
+        )?;
+        let angular = outward(
+            self.relative_angle(u0, &mut arithmetic)?,
+            self.relative_angle(u1, &mut arithmetic)?,
+        )?;
+        Ok(ConicalFootprint {
+            slant,
+            angular: Some(angular),
+        })
+    }
 }
 
 impl ConicalTrimBand {
+    /// Retain unwrapped angles for full bands so their internal trims can be excluded.
+    /// Example: `let checked = band.with_angular_enclosures();`.
+    pub fn with_angular_enclosures(mut self) -> Self {
+        self.enclose_full_angles = true;
+        self
+    }
     /// Inward positive slant bounds and optional native angular clip.
     /// Example: `let limits = band.limits();`.
     pub fn limits(&self) -> ConicalFootprint {
@@ -90,15 +120,22 @@ impl ConicalTrimBand {
         let mut arithmetic = Arithmetic::new(ArithmeticPolicy::default(), &mut cancelled);
         let slant = radius_bounds(bounds, &mut arithmetic)?;
         inside("authored slant", slant, self.slant)?;
-        let angular = self
-            .angular
-            .map(|trim| {
-                let phase = phase_bounds(bounds, wedge, &mut arithmetic)?;
-                let physical = arithmetic.divide(&phase, &self.sine)?;
-                lift_into_trim(physical, trim, &mut arithmetic)
-            })
-            .transpose()?;
+        let angular = self.authored_angles(bounds, wedge, &mut arithmetic)?;
         Ok(ConicalFootprint { slant, angular })
+    }
+
+    fn authored_angles(
+        &self,
+        bounds: [[f64; 2]; 2],
+        wedge: ConicalSectorWedge,
+        arithmetic: &mut Arithmetic<'_>,
+    ) -> Checked<Option<[f64; 2]>> {
+        if self.angular.is_none() && !self.enclose_full_angles {
+            return Ok(None);
+        }
+        let phase = phase_bounds(bounds, wedge, arithmetic)?;
+        let physical = arithmetic.divide(&phase, &self.sine)?;
+        self.angle_enclosure(physical, arithmetic).map(Some)
     }
 
     /// Prove containment of retained pcurves projected along the canonical cone normals.
@@ -125,14 +162,24 @@ impl ConicalTrimBand {
         inside("fitted radius", radius, [0., f64::INFINITY])?;
         let slant = binary64(arithmetic.add(&offset, &v)?)?;
         inside("fitted slant", slant, self.slant)?;
-        let angular = self
-            .angular
-            .map(|trim| {
-                let physical = enclose(uv[0], &mut arithmetic)?;
-                lift_into_trim(physical, trim, &mut arithmetic)
-            })
-            .transpose()?;
+        let angular = if self.angular.is_some() || self.enclose_full_angles {
+            let physical = enclose(uv[0], &mut arithmetic)?;
+            Some(self.angle_enclosure(physical, &mut arithmetic)?)
+        } else {
+            None
+        };
         Ok(ConicalFootprint { slant, angular })
+    }
+
+    fn angle_enclosure(
+        &self,
+        actual: Interval,
+        arithmetic: &mut Arithmetic<'_>,
+    ) -> Checked<[f64; 2]> {
+        match self.angular {
+            Some(trim) => lift_into_trim(actual, trim, arithmetic),
+            None => binary64(actual),
+        }
     }
 
     fn cap_slant_origin(
@@ -163,6 +210,9 @@ fn ordered([a, b]: [f64; 2], positive: bool) -> [f64; 2] {
 }
 fn inward(first: Interval, last: Interval) -> Checked<[f64; 2]> {
     Ok([binary64(first)?[1], binary64(last)?[0]])
+}
+fn outward(first: Interval, last: Interval) -> Checked<[f64; 2]> {
+    Ok([binary64(first)?[0], binary64(last)?[1]])
 }
 fn admit_open(field: &'static str, actual: [f64; 2]) -> Checked<()> {
     if actual[0] >= actual[1] {

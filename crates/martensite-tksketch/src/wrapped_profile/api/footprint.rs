@@ -16,6 +16,7 @@ pub use extrusion::CylinderTrimmedTool;
 mod feature;
 pub use feature::*;
 mod fitted;
+mod holes;
 #[cfg(test)]
 mod tests;
 
@@ -91,6 +92,15 @@ pub enum CylinderFootprintFailure {
         /// Inward bounds in cap pcurve coordinates, excluding the endpoints.
         required_interval: [f64; 2],
     },
+    /// A whole-region enclosure touches a bounded inner support trim.
+    InnerTrimOverlap {
+        /// Region whose authored or fitted footprint could not be separated.
+        region: SurfaceRegionId,
+        /// One-based inner wire ordinal in this frozen support only.
+        wire: usize,
+        /// Whether the enclosure came from the retained cap pcurves.
+        fitted: bool,
+    },
 }
 
 impl std::fmt::Display for CylinderFootprintFailure {
@@ -112,7 +122,7 @@ type FootprintChecked<T> = Result<T, CylinderFootprintFailure>;
 
 impl CylinderFaceAttachment {
     /// Check the selected authored footprint against a proved rectangular cylindrical trim band.
-    /// Supports partial bands and full bands with a paired native seam. Other trims refuse.
+    /// Supports partial bands and full bands with a paired native seam and bounded inner wires.
     /// The report describes the authored footprint in the requested chart.
     /// Example: `attachment.certify_footprint(revision, &request)?`.
     pub fn certify_footprint(

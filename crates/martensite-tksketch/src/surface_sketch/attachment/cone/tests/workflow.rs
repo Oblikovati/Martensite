@@ -13,6 +13,7 @@ use martensite_tkbo::profile_extrusion::{
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkmath::gp::{Axis2, Direction3, Point3};
 mod material;
+mod support_holes;
 
 const UV: [[f64; 2]; 4] = [[0.5, 3.], [0.5, 4.], [0.9, 4.], [0.9, 3.]];
 const DEPTHS: [f64; 2] = [-0.1, 0.2];

@@ -23,6 +23,15 @@ pub enum ConeFootprintFailure {
     Native(Box<Failure>),
     /// A requested region has no matching authored or fitted result.
     MissingRegion(SurfaceRegionId),
+    /// A whole-region enclosure touches a bounded interior support trim.
+    InnerTrimOverlap {
+        /// Owning region of the authored or fitted footprint.
+        region: SurfaceRegionId,
+        /// One-based inner wire ordinal local to this frozen support only.
+        wire: usize,
+        /// Caller depth row when checking a retained fitted cap.
+        depth_row: Option<usize>,
+    },
     /// The source or one retained cap enclosure could not be proved inside the trim.
     Metric {
         /// Authored region, when available.
@@ -82,6 +91,14 @@ impl std::fmt::Display for ConeFootprintFailure {
             Self::MissingRegion(region) => write!(
                 f,
                 "missing region {region:?}, expected each authored region and its fitted result"
+            ),
+            Self::InnerTrimOverlap {
+                region,
+                wire,
+                depth_row,
+            } => write!(
+                f,
+                "cone region={region:?} depth_row={depth_row:?} touches inner trim {wire}, expected disjoint footprint and trim enclosures"
             ),
             Self::Metric {
                 region,

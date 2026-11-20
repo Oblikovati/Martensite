@@ -81,14 +81,15 @@ its control hull, so strict containment of the controls proves strict
 containment of the authored bounded material. The partial band's arc
 length interval is rounded inward. Refusals identify the region and
 curve, the coordinate, and the required interval. A hull that cannot be
-proved inside is inconclusive about the actual curve. Supports with
-additional wires or unrecognized trim geometry return a typed refusal.
+proved inside is inconclusive about the actual curve. The current
+implementation also checks bounded inner wires.
 
 The [local controls](references/cylindrical-trim-band-2026-11-20/summary.json)
 checked a full seam crossing, a partial angular boundary, an axial
 boundary, a stale revision and mismatched chart, and a cylindrical
-support with a real bore trim loop. The original 239-curve outline and
-the 229-curve seam-crossing edit also passed footprint admission on their
+support with a real bore trim loop, which that first version refused.
+The original 239-curve outline and the 229-curve seam-crossing edit also
+passed footprint admission on their
 saved support. The report covers the authored footprint.
 
 `attachment.extrude_within_trim_band(current_revision, &request)` builds
@@ -104,8 +105,8 @@ The tool retains the authored report, the number of checked fitted spans
 and the chart extruder's spatial placement report. The trim certificate
 covers both cap pcurves in the requested chart, including the interior
 of each cap enclosed by its wires. The spatial report accounts for
-stored placement separately. General curved or holed supports still need
-their own trim checks.
+stored placement separately. The same band can contain
+[bounded inner support trims](#bounded-inner-support-trims).
 
 The [fitted-tool checks](references/cylindrical-trim-band-2026-11-20/fitted-tool.json)
 decoded both caps of a tool on a partial cylinder with a shifted seam.
@@ -273,8 +274,7 @@ Controls exercised axis-aligned and oblique partial frustums, a narrowing
 frustum with a hole, and an inward tool crossing a full native seam.
 A separate control placed a valid standalone tool beyond the selected
 angular trim and verified refusal before fitting. Rectangular enclosures
-can refuse a profile whose filled region actually fits. General support
-trim wires remain open.
+can refuse a profile whose filled region actually fits.
 
 ## Conical bosses and pockets
 
@@ -298,3 +298,28 @@ an inward cut crossing the full native angular seam and a partial-band
 pocket that leaves an island inside a cubic hole. The oblique boss replay sends
 the saved support bytes to a fresh process, where restore and the
 recomputed operation reproduce the frozen shape and history.
+
+## Bounded inner support trims
+
+Cylinder and cone features can use a rectangular outer trim with closed
+inner wires in a single native UV lift. The reader checks each complete
+wire and encloses the stored pcurves using directed line or conic bounds
+or the control hull of a positive-weight Bézier or B-spline. Inner wires
+whose enclosures reach the outer boundary or native seam require a
+different proof.
+
+A single indexed set of periodic hole enclosures serves both the
+authored and retained cap checks. The cylinder uses native angular and
+axial coordinates. The cone converts the hole enclosures to relative
+physical angle and slant, with the same signed meridian and angular
+orientation as its authoring chart. The checks compare each whole
+region's enclosure, including the region interior. Period shifts are
+rounded outward and contact with a hole enclosure refuses.
+
+Controls on native drilled cylinders and frustums publish pockets away
+from a bore and refuse a filled region surrounding it. The cylinder
+control repeats the refusal a physical turn away. The cone control
+validates the resulting solid and classifies points inside and outside
+the retained bore. Both tool APIs report the number of excluded wires.
+Enclosure overlap can refuse a profile whose actual material is clear.
+General outer trims and seam-crossing inner wires remain open.

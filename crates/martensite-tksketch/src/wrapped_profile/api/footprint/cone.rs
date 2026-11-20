@@ -16,6 +16,7 @@ type ConeChecked<T> = Result<T, ConeFootprintFailure>;
 pub struct ConeTrimmedTool {
     extrusion: WrappedPlacedConeResult,
     footprint: ConeFootprintReport,
+    inner_trims: usize,
 }
 
 /// Source identity and authored and fitted coverage in one selected native trim band.
@@ -57,6 +58,12 @@ impl ConeTrimmedTool {
     pub fn footprint(&self) -> &ConeFootprintReport {
         &self.footprint
     }
+
+    /// Number of bounded support holes excluded by the authored and fitted proofs.
+    /// Example: `let excluded = tool.excluded_trim_wires();`.
+    pub fn excluded_trim_wires(&self) -> usize {
+        self.inner_trims
+    }
 }
 
 impl ConeAuthoringChart {
@@ -82,15 +89,17 @@ impl ConeAuthoringChart {
         mut cancelled: impl FnMut() -> bool + Send,
     ) -> ConeChecked<ConeTrimmedTool> {
         input::poll(&mut cancelled, WrappedStage::Admission)?;
-        let plan = TrimPlan::capture(self, revision, request.support)?;
+        let mut plan = TrimPlan::capture(self, revision, request.support)?;
+        let inner_trims = plan.native.holes.len();
         let (extrusion, authored) =
             placement::cone_on_chart(request, selection, &mut cancelled, |sources, cancelled| {
-                authored_envelopes(&plan.metric, sources, cancelled)
+                authored_envelopes(&plan.metric, &mut plan.exclusions, sources, cancelled)
             })?;
         let footprint = plan.finish(&extrusion, &authored, &mut cancelled)?;
         Ok(ConeTrimmedTool {
             extrusion,
             footprint,
+            inner_trims,
         })
     }
 }
@@ -100,6 +109,7 @@ struct TrimPlan {
     revision: SupportRevision,
     native: band::Band,
     metric: ConicalTrimBand,
+    exclusions: holes::Exclusions,
 }
 
 impl TrimPlan {
@@ -117,20 +127,25 @@ impl TrimPlan {
         }
         let (face, id, revision) = chart.trim_face();
         let native = band::capture(face)?;
-        let metric = chart
+        let mut metric = chart
             .development()
             .trim_band(native.axial, native.angular)
             .map_err(|cause| failure::metric(None, None, cause))?;
+        let exclusions = capture_exclusions(chart, &native.holes)?;
+        if exclusions.present() {
+            metric = metric.with_angular_enclosures();
+        }
         Ok(Self {
             id,
             revision,
             native,
             metric,
+            exclusions,
         })
     }
 
     fn finish(
-        self,
+        mut self,
         extrusion: &WrappedPlacedConeResult,
         authored: &BTreeMap<SurfaceRegionId, AuthoredEnvelope>,
         cancelled: &mut CancelPoll<'_>,
@@ -148,7 +163,7 @@ impl TrimPlan {
     }
 
     fn check_regions(
-        &self,
+        &mut self,
         extrusion: &WrappedPlacedConeResult,
         authored: &BTreeMap<SurfaceRegionId, AuthoredEnvelope>,
         cancelled: &mut CancelPoll<'_>,
@@ -166,9 +181,11 @@ impl TrimPlan {
                 .get(&region)
                 .ok_or(ConeFootprintFailure::MissingRegion(region))?
                 .geometry;
-            let authored = bounds.check(&self.metric, region, prepared.wedge)?;
+            let authored =
+                bounds.check(&self.metric, &mut self.exclusions, region, prepared.wedge)?;
             let caps = checked_caps(
                 &self.metric,
+                &mut self.exclusions,
                 region,
                 geometry,
                 extrusion.support().normal,
@@ -183,6 +200,7 @@ impl TrimPlan {
 
 fn checked_caps(
     metric: &ConicalTrimBand,
+    exclusions: &mut holes::Exclusions,
     region: SurfaceRegionId,
     geometry: &operation::cone::Geometry,
     normal: NormalSense,
@@ -197,8 +215,8 @@ fn checked_caps(
     Ok(ConeRegionFootprint {
         authored,
         caps: [
-            first.check(metric, region, 0)?,
-            last.check(metric, region, 1)?,
+            first.check(metric, exclusions, region, 0)?,
+            last.check(metric, exclusions, region, 1)?,
         ],
         fitted_spans: geometry.spans.len(),
     })
@@ -212,12 +230,15 @@ impl CapEnvelope {
     fn check(
         self,
         metric: &ConicalTrimBand,
+        exclusions: &mut holes::Exclusions,
         region: SurfaceRegionId,
         row: usize,
     ) -> ConeChecked<ConicalFootprint> {
-        metric
+        let footprint = metric
             .fitted(self.carrier, self.bounds.0)
-            .map_err(|cause| failure::metric(Some(region), Some(row), cause))
+            .map_err(|cause| failure::metric(Some(region), Some(row), cause))?;
+        check_exclusions(exclusions, footprint, region, Some(row))?;
+        Ok(footprint)
     }
 }
 
@@ -247,20 +268,26 @@ impl AuthoredEnvelope {
     fn check(
         self,
         metric: &ConicalTrimBand,
+        exclusions: &mut holes::Exclusions,
         region: SurfaceRegionId,
         wedge: ConicalSectorWedge,
     ) -> ConeChecked<ConicalFootprint> {
         match self {
             Self::Certified(footprint) => Ok(footprint),
-            Self::NeedsWedge(bounds) => metric
-                .authored(bounds.0, wedge)
-                .map_err(|cause| failure::metric(Some(region), None, cause)),
+            Self::NeedsWedge(bounds) => {
+                let footprint = metric
+                    .authored(bounds.0, wedge)
+                    .map_err(|cause| failure::metric(Some(region), None, cause))?;
+                check_exclusions(exclusions, footprint, region, None)?;
+                Ok(footprint)
+            }
         }
     }
 }
 
 fn authored_envelopes(
     metric: &ConicalTrimBand,
+    exclusions: &mut holes::Exclusions,
     authored: &[DevelopedRegionRequest],
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<BTreeMap<SurfaceRegionId, AuthoredEnvelope>> {
@@ -276,6 +303,7 @@ fn authored_envelopes(
         if region.0[0][0] > 0. {
             proof = AuthoredEnvelope::Certified(proof.check(
                 metric,
+                exclusions,
                 original.region,
                 ConicalSectorWedge::PositiveX,
             )?);
@@ -283,6 +311,48 @@ fn authored_envelopes(
         bounds.insert(original.region, proof);
     }
     Ok(bounds)
+}
+
+fn capture_exclusions(
+    chart: &ConeAuthoringChart,
+    inner: &[holes::TrimBox],
+) -> ConeChecked<holes::Exclusions> {
+    let mut envelopes = Vec::with_capacity(inner.len());
+    for bounds in inner {
+        let footprint = chart
+            .development()
+            .native_trim_envelope(bounds.0)
+            .map_err(|cause| failure::metric(None, None, cause))?;
+        envelopes.push(normal_box(footprint)?);
+    }
+    Ok(holes::Exclusions::new(&envelopes)?)
+}
+
+fn normal_box(footprint: ConicalFootprint) -> ConeChecked<holes::TrimBox> {
+    let angular = footprint
+        .angular
+        .ok_or(ConeFootprintFailure::UnsupportedTrim {
+            expected: "angular enclosure for a bounded inner trim check",
+        })?;
+    Ok(holes::TrimBox([angular, footprint.slant]))
+}
+
+fn check_exclusions(
+    exclusions: &mut holes::Exclusions,
+    footprint: ConicalFootprint,
+    region: SurfaceRegionId,
+    depth_row: Option<usize>,
+) -> ConeChecked<()> {
+    if exclusions.present()
+        && let Some(wire) = exclusions.overlap(normal_box(footprint)?)?
+    {
+        return Err(ConeFootprintFailure::InnerTrimOverlap {
+            region,
+            wire,
+            depth_row,
+        });
+    }
+    Ok(())
 }
 
 #[derive(Clone, Copy)]

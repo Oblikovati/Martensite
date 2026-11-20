@@ -26,6 +26,7 @@ fn unsupported(expected: &'static str) -> BandFailure {
 pub(super) struct Band {
     pub axial: [f64; 2],
     pub angular: Option<[f64; 2]>,
+    pub holes: Vec<holes::TrimBox>,
 }
 
 struct Use {
@@ -35,19 +36,20 @@ struct Use {
 
 pub(super) fn capture(face: &Face) -> BandChecked<Band> {
     let forward = native(topods::face(&face.oriented(Orientation::Forward)))?;
-    let uses = occurrences(&forward)?;
+    let (outer, inner) = face_wires(&forward)?;
+    let uses = occurrences(&forward, &outer)?;
     let [[u0, u1], [v0, v1]] = envelope(&uses)?;
     let sides = rectangle(&uses, [u0, v0], [u1, v1])?;
     let angular = angular_band(&forward, sides, [u0, u1])?;
     Ok(Band {
         axial: [v0, v1],
         angular,
+        holes: holes::capture(&forward, &inner, [[u0, u1], [v0, v1]])?,
     })
 }
 
-fn occurrences(face: &Face) -> BandChecked<[Use; 4]> {
-    let wire = only_wire(face)?;
-    let mut edges = native(Explorer::new(&wire, ShapeEnum::Edge, ShapeEnum::Shape))?;
+fn occurrences(face: &Face, wire: &Shape) -> BandChecked<[Use; 4]> {
+    let mut edges = native(Explorer::new(wire, ShapeEnum::Edge, ShapeEnum::Shape))?;
     let mut uses = Vec::with_capacity(4);
     while edges.more() {
         if uses.len() == 4 {
@@ -60,19 +62,34 @@ fn occurrences(face: &Face) -> BandChecked<[Use; 4]> {
         .map_err(|_| unsupported("four directed rectangular trim occurrences"))
 }
 
-fn only_wire(face: &Face) -> BandChecked<Shape> {
+fn face_wires(face: &Face) -> BandChecked<(Shape, Vec<Shape>)> {
     let mut wires = native(Explorer::new(face, ShapeEnum::Wire, ShapeEnum::Shape))?;
     if !wires.more() {
         return Err(unsupported("one native outer trim wire"));
     }
-    let wire = wires.current().clone();
+    let first = wires.current().clone();
     native(wires.next())?;
-    if wires.more() {
-        return Err(unsupported(
-            "one native outer trim wire without additional loops",
-        ));
+    if !wires.more() {
+        return Ok((first, Vec::new()));
     }
-    Ok(wire)
+    let outer = native(martensite_tkbrep::brep_tools::outer_wire(face))?.into_shape();
+    let mut inner = Vec::new();
+    let mut occurrences = usize::from(first.is_same(&outer));
+    if occurrences == 0 {
+        inner.push(first);
+    }
+    while wires.more() {
+        if wires.current().is_same(&outer) {
+            occurrences += 1;
+        } else {
+            inner.push(wires.current().clone());
+        }
+        native(wires.next())?;
+    }
+    if occurrences != 1 {
+        return Err(unsupported("one uniquely occurring rectangular outer wire"));
+    }
+    Ok((outer, inner))
 }
 
 fn edge_use(shape: &Shape, face: &Face) -> BandChecked<Use> {
@@ -172,10 +189,7 @@ fn angular_band(face: &Face, sides: [&Edge; 2], bounds: [f64; 2]) -> BandChecked
     let period = native(adaptor.u_period())?;
     let width =
         exact_add(bounds[1], -bounds[0]).ok_or_else(|| unsupported("exact angular trim width"))?;
-    if sides[0].is_same(sides[1])
-        && width == period
-        && native(BRepTool::is_closed_on_face(sides[0], face))?
-    {
+    if sides[0].is_same(sides[1]) && width == period && stored_seam(face, sides[0])? {
         return Ok(None);
     }
     if width < period && !sides[0].is_same(sides[1]) {
@@ -184,4 +198,9 @@ fn angular_band(face: &Face, sides: [&Edge; 2], bounds: [f64; 2]) -> BandChecked
     Err(unsupported(
         "distinct partial angular boundaries or one paired native seam over a period",
     ))
+}
+
+pub(super) fn stored_seam(face: &Face, edge: &Edge) -> BandChecked<bool> {
+    let (surface, location) = native(BRepTool::surface_with_location(face))?;
+    native(BRepTool::is_closed_on_surface(edge, &surface, &location))
 }

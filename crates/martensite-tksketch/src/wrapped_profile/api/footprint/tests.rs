@@ -216,7 +216,40 @@ fn radius_mismatch_and_stale_revisions_refuse_before_profile_check() {
 }
 
 #[test]
-fn round_bore_adds_a_trim_loop_that_the_band_does_not_admit() {
+fn round_support_bore_refuses_an_overlapping_footprint_even_on_another_turn() {
+    let attachment = drilled_attachment();
+    let turn = std::f64::consts::TAU * 10.;
+    for start in [0., turn] {
+        let proposal = request(&attachment, [14.5 + start, 17. + start], [1.1, 2.9]);
+        let result = attachment.certify_footprint(REVISION, &proposal);
+        assert!(
+            matches!(
+                result,
+                Err(CylinderFootprintFailure::InnerTrimOverlap {
+                    region: SurfaceRegionId(3),
+                    wire: 1,
+                    fitted: false,
+                })
+            ),
+            "{result:?}"
+        );
+    }
+}
+
+#[test]
+fn selected_cylinder_can_publish_a_pocket_away_from_its_support_bore() {
+    let attachment = drilled_attachment();
+    let proposal = request(&attachment, [1., 2.], [1., 2.]);
+    let original = attachment.record().brep.clone();
+    let feature = attachment
+        .apply_wrapped_profile(REVISION, CylinderFeatureKind::Pocket, &proposal)
+        .unwrap();
+    assert_eq!(feature.tool().excluded_trim_wires(), 1);
+    assert!(feature.validation().is_valid());
+    assert_eq!(attachment.record().brep, original);
+}
+
+fn drilled_attachment() -> CylinderFaceAttachment {
     let support = BRepPrimAPIMakeCylinder::new(10., 4.)
         .shape()
         .unwrap()
@@ -225,12 +258,7 @@ fn round_bore_adds_a_trim_loop_that_the_band_does_not_admit() {
     let face = selected_cylinder(&cut);
     let wires = Explorer::new(&face, ShapeEnum::Wire, ShapeEnum::Shape).unwrap();
     assert!(wires.count() > 1);
-    let attachment = freeze(&cut);
-    let proposal = request(&attachment, [15.5, 15.75], [1.75, 2.25]);
-    assert!(matches!(
-        attachment.certify_footprint(REVISION, &proposal),
-        Err(CylinderFootprintFailure::UnsupportedTrim { .. })
-    ));
+    freeze(&cut)
 }
 
 fn bore_support(support: &Shape) -> Shape {
