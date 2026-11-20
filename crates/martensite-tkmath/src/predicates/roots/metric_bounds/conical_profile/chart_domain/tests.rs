@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::*;
 const LINE: [[f64; 2]; 2] = [[80., -18.], [84., 24.]];
-fn query<'a>(spans: &'a [&'a [[f64; 2]]]) -> ConicalChartDomainQuery<'a> {
+pub(super) fn query<'a>(spans: &'a [&'a [[f64; 2]]]) -> ConicalChartDomainQuery<'a> {
     ConicalChartDomainQuery {
         spans,
         semi_angle: 0.125,

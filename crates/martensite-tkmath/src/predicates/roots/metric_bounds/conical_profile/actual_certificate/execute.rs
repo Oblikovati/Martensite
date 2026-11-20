@@ -29,7 +29,7 @@ fn run(
     let refine = query
         .sides
         .iter()
-        .all(|side| side.domain.version() == ConicalChartDomainVersion::FamilyV3);
+        .all(|side| side.domain.version() != ConicalChartDomainVersion::OriginalV2);
     let result = hierarchy::certify(&sides, query.adjacent, refine, arithmetic);
     let hierarchy = stage(result, Stage::Hierarchy, query, arithmetic, position)?;
     let result = caps::certify(
@@ -70,7 +70,7 @@ fn union_all(
         let locations = pair.sides.map(|id| indices[&id]);
         let [a, b] = locations.map(|index| &sides[index]);
         let result = if locations.iter().all(|&index| {
-            query.sides[index].domain.version() == ConicalChartDomainVersion::FamilyV3
+            query.sides[index].domain.version() != ConicalChartDomainVersion::OriginalV2
         }) {
             unions::certify_retained(pair, [a, b], barriers, arithmetic)
         } else {

@@ -336,8 +336,10 @@ commit, push or release approval is recorded.
 [Captured-input cone work](CONICAL-INPUT-WORK.md) records the local family
 admission and trim qualification for the 239-curve text fixture.
 
-Wider profiles, text-scale cone workloads, multiple charts and seam occurrences,
-oblique placement and attachment remain Phase B. Primitive exact-span lowering,
+[Recentered cone charts](RECENTERED-CONE-CHART.md) extend the public polynomial
+operation past the datum-centered angular cut for families that fit within one
+physical revolution. Multiple-chart profiles, seam occurrences, larger cone
+text workloads, oblique placement and attachment remain Phase B. Primitive exact-span lowering,
 replacement deletion and the broader acceptance corpus remain Phase C.
 
 Earlier checkpoint records remain available: [rational implementation](RATIONAL-IMPLEMENTATION.md),

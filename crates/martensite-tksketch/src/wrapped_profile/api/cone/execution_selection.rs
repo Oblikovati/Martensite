@@ -21,6 +21,11 @@ pub enum WrappedConeExecutionSelection {
         /// Finite aggregate admission; the request retains the actual requested allowance.
         arithmetic: WrappedConeArithmeticGrantPolicy,
     },
+    /// Directed certified pipeline with a center chosen from the complete authored family.
+    DirectedRecenteredChartRequireCertifiedV3 {
+        /// Finite aggregate admission; the request retains the actual requested allowance.
+        arithmetic: WrappedConeArithmeticGrantPolicy,
+    },
 }
 impl WrappedConeExecutionSelection {
     pub(in crate::surface_sketch::wrapped_profile) fn is_directed(self) -> bool {
@@ -28,6 +33,7 @@ impl WrappedConeExecutionSelection {
             self,
             Self::DirectedCommonChartRequireCertifiedV1
                 | Self::DirectedFamilyChartRequireCertifiedV2 { .. }
+                | Self::DirectedRecenteredChartRequireCertifiedV3 { .. }
         )
     }
 }

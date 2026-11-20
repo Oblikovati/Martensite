@@ -72,9 +72,13 @@ fn admitted_chart<'a>(
     domain: &'a domain::DomainEvidence,
 ) -> ConeChecked<AdmittedConeChart<'a>> {
     let wedge = domain.wedge()?;
+    let center = match domain.chart() {
+        Some(chart) => chart.fit_center(),
+        None => common_center(request, wedge)?,
+    };
     Ok(AdmittedConeChart {
         wedge,
-        center: common_center(request, wedge)?,
+        center,
         domain,
     })
 }
@@ -250,6 +254,9 @@ fn execution_domain(execution: WrappedConeExecutionSelection) -> WrappedConeDoma
         }
         WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 { .. } => {
             WrappedConeDomainPolicy::PositiveXFamilyChartV3
+        }
+        WrappedConeExecutionSelection::DirectedRecenteredChartRequireCertifiedV3 { .. } => {
+            WrappedConeDomainPolicy::PositiveXRecenteredChartV4
         }
     }
 }

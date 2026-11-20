@@ -53,7 +53,7 @@ fn admit_span(
     let input = span.query;
     admit_chart_authority(span, query)?;
     let first = first(query)?;
-    if !span.boundary.matches(&input) || !same_chart(input, first) {
+    if !span.boundary.matches(&input) || !same_chart(input, first, query.sector) {
         return Err(binding_failure(
             "one canonical outward ideal q/L chart, support and depths",
         ));
@@ -93,12 +93,20 @@ fn first<'a>(
         .ok_or_else(|| binding_failure("nonempty first member"))
 }
 
-fn same_chart(input: ConicalBoundaryQuery<'_>, first: ConicalBoundaryQuery<'_>) -> bool {
+fn same_chart(
+    input: ConicalBoundaryQuery<'_>,
+    first: ConicalBoundaryQuery<'_>,
+    domain: ReferenceDomain<'_>,
+) -> bool {
+    let center = match domain {
+        ReferenceDomain::Legacy(_) => input.chart_origin,
+        ReferenceDomain::Chart(_) => first.fit_center,
+    };
     input.semi_angle == first.semi_angle
         && input.chart_origin == first.chart_origin
         && input.depths == first.depths
         && input.outward
-        && input.fit_center == input.chart_origin
+        && input.fit_center == center
         && input.physical_turn == 0
         && input.developed_turn == 0
 }

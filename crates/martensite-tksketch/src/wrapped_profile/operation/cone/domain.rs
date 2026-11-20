@@ -67,6 +67,14 @@ pub(super) fn certify(
             work,
             cancelled,
         ),
+        WrappedConeDomainPolicy::PositiveXRecenteredChartV4 => chart(
+            request,
+            originals,
+            policy,
+            ConicalChartDomainVersion::RecenteredV4,
+            work,
+            cancelled,
+        ),
     }
 }
 fn chart(
@@ -82,7 +90,7 @@ fn chart(
         spans: &spans,
         semi_angle: request.support.semi_angle,
         chart_origin: request.support.chart_origin,
-        fit_center: request.support.chart_origin,
+        fit_center: fit_center(request.support, &spans, version),
         developed_turn: 0,
         physical_turn: 0,
         options: work.remaining(),
@@ -93,6 +101,28 @@ fn chart(
         policy,
         work,
     )
+}
+fn fit_center(
+    support: ConeSupport,
+    spans: &[&[[f64; 2]]],
+    version: ConicalChartDomainVersion,
+) -> f64 {
+    if version != ConicalChartDomainVersion::RecenteredV4
+        || !(1..=version.span_limit()).contains(&spans.len())
+    {
+        return support.chart_origin;
+    }
+    let (min, max) = spans
+        .iter()
+        .flat_map(|span| span.iter())
+        .map(|[x, y]| y / x)
+        .fold((f64::INFINITY, f64::NEG_INFINITY), |(min, max), slope| {
+            (min.min(slope), max.max(slope))
+        });
+    // Positive-X angular extrema occur at control poles. This estimate only chooses a
+    // center; domain admission certifies the whole angular range using bounded arithmetic.
+    let angle = (martensite_cmath::atan(min) + martensite_cmath::atan(max)) * 0.5;
+    support.chart_origin + angle / martensite_cmath::sin(support.semi_angle)
 }
 fn charged(
     result: Result<ConicalChartDomainEvidence, ConicalChartDomainError>,

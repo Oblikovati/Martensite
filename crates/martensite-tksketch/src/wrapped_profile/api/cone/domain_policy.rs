@@ -12,13 +12,15 @@ pub enum WrappedConeDomainPolicy {
     PositiveXCommonChartV2,
     /// The same quantitative chart with an explicitly selected 4096-source family cap.
     PositiveXFamilyChartV3,
+    /// A single Positive-X chart centered on the selected family, within one physical period.
+    PositiveXRecenteredChartV4,
 }
 impl WrappedConeNormalResult {
     /// Retained cone-domain behavior; `assert_eq!(result.domain_policy(), policy)`.
     pub fn domain_policy(&self) -> WrappedConeDomainPolicy {
         self.family.family.selection.domain.policy()
     }
-    /// Executed V2 domain receipt; legacy results return `None`.
+    /// Executed quantitative domain receipt; legacy results return `None`.
     /// Example: `let center = result.chart_domain_receipt().map(|proof| proof.fit_center());`.
     pub fn chart_domain_receipt(
         &self,

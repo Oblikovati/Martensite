@@ -8,7 +8,9 @@ pub(super) fn admit(
 ) -> Result<(), Failure> {
     admit_sources(query, version)?;
     if !query.chart_origin.is_finite()
-        || query.chart_origin.to_bits() != query.fit_center.to_bits()
+        || !query.fit_center.is_finite()
+        || (version != ConicalChartDomainVersion::RecenteredV4
+            && query.chart_origin.to_bits() != query.fit_center.to_bits())
         || query.developed_turn != 0
         || query.physical_turn != 0
     {
@@ -43,15 +45,17 @@ pub(super) fn certify(
     let (wedge, margin) = sector::common_wedge(query.spans, arithmetic).map_err(Failure::Sector)?;
     self::wedge(wedge)?;
     let ranges = ranges(query, arithmetic)?;
-    width(&ranges.0, arithmetic)?;
+    let offset = fit_offset(query, version, arithmetic)?;
+    check_chart(&ranges.0, offset.as_ref(), arithmetic)?;
     arithmetic.check_cancelled()?;
-    Ok(evidence(query, version, margin, ranges, arithmetic))
+    Ok(evidence(query, version, margin, ranges, offset, arithmetic))
 }
 fn evidence(
     query: &ConicalChartDomainQuery<'_>,
     version: ConicalChartDomainVersion,
     margin: Option<num_bigint::BigInt>,
     (physical, sine, cosine, minimum_x): (Interval, Interval, Interval, Interval),
+    fit_offset: Option<Interval>,
     arithmetic: &Arithmetic<'_>,
 ) -> ConicalChartDomainEvidence {
     let sector = captured_sector(query, margin, arithmetic);
@@ -66,6 +70,7 @@ fn evidence(
         chart: [query.chart_origin.to_bits(), query.fit_center.to_bits()],
         turns: [query.developed_turn, query.physical_turn],
         physical,
+        fit_offset,
         sine,
         cosine,
         minimum_x,
@@ -101,8 +106,32 @@ fn ranges(
     positive_lower(&sine, "strictly positive certified sine", arithmetic)?;
     let (developed, minimum_x) = authored_range(query.spans, arithmetic)?;
     let physical = arithmetic.divide(&developed, &sine)?;
-    chart_membership(&physical, arithmetic)?;
     Ok((physical, sine, cosine, minimum_x))
+}
+fn fit_offset(
+    query: &ConicalChartDomainQuery<'_>,
+    version: ConicalChartDomainVersion,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<Option<Interval>, Failure> {
+    if version != ConicalChartDomainVersion::RecenteredV4 {
+        return Ok(None);
+    }
+    let center = arithmetic.scalar(query.fit_center)?;
+    let datum = arithmetic.scalar(query.chart_origin)?;
+    Ok(Some(arithmetic.subtract(&center, &datum)?))
+}
+fn check_chart(
+    physical: &Interval,
+    offset: Option<&Interval>,
+    arithmetic: &mut Arithmetic<'_>,
+) -> Result<(), Failure> {
+    if let Some(offset) = offset {
+        let local = arithmetic.subtract(physical, offset)?;
+        chart_membership(&local, arithmetic)?;
+    } else {
+        chart_membership(physical, arithmetic)?;
+    }
+    width(physical, arithmetic)
 }
 fn authored_range(
     spans: &[&[[f64; 2]]],

@@ -145,7 +145,14 @@ fn developed_branch(
     domain: &ConicalChartDomainEvidence,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Result<(), ConicalReferenceFailure> {
-    let phase = arithmetic.multiply(range, &domain.sine)?;
+    let datum_range;
+    let relative = if let Some(offset) = &domain.fit_offset {
+        datum_range = arithmetic.add(range, offset)?;
+        &datum_range
+    } else {
+        range
+    };
+    let phase = arithmetic.multiply(relative, &domain.sine)?;
     let pi = crate::predicates::roots::certificate_arithmetic::circular_constants::pi(arithmetic)?;
     let half = arithmetic.fraction(&pi, 1, 2)?;
     if phase.lower <= -half.lower.clone() || phase.upper >= half.lower {
@@ -189,6 +196,10 @@ pub(super) fn homotopy(
         upper: &domain.physical.upper + &margin.upper,
     };
     bounds::width(&expanded, arithmetic).map_err(project)?;
+    if let Some(offset) = &domain.fit_offset {
+        let local = arithmetic.subtract(&expanded, offset)?;
+        return bounds::chart_membership(&local, arithmetic).map_err(project);
+    }
     bounds::chart_membership(&expanded, arithmetic).map_err(project)
 }
 fn project(cause: ConicalChartDomainFailure) -> ConicalReferenceFailure {

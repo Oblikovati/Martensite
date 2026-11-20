@@ -36,7 +36,8 @@ impl SupportStages for ConeStages<'_> {
                 prepare::select_with_policy(self.request, originals, domain, context, cancelled)
             }
             WrappedConeExecutionSelection::DirectedCommonChartRequireCertifiedV1
-            | WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 { .. } => {
+            | WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 { .. }
+            | WrappedConeExecutionSelection::DirectedRecenteredChartRequireCertifiedV3 { .. } => {
                 prepare::select_with_execution(
                     self.request,
                     originals,

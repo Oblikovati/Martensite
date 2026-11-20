@@ -112,11 +112,13 @@ fn span_binding(
     {
         return Err(parent_failure(span, query));
     }
-    chart(q)?;
+    chart(q, span.domain)?;
     for cap_id in span.caps {
         cap_ownership(cap_id, span, query, caps)?;
     }
-    uniform(q, &query.spans[0].previous)
+    let first = &query.spans[0].previous;
+    uniform_center(q.fit_center, first.fit_center)?;
+    uniform(q, first)
 }
 fn parent_failure(
     span: &ConicalDirectedGammaSpan<'_>,
@@ -132,27 +134,31 @@ fn parent_failure(
     expected.push(u64::from(span.parent.options().fractional_bits));
     error::binding("nearest boundary authority", actual, expected)
 }
-fn chart(q: &ConicalBoundaryQuery<'_>) -> Outcome<()> {
-    if q.chart_origin.to_bits() != 0
-        || q.fit_center.to_bits() != 0
-        || q.developed_turn != 0
-        || q.physical_turn != 0
-        || !q.outward
-    {
-        let actual = vec![
-            q.chart_origin.to_bits(),
-            q.fit_center.to_bits(),
-            q.developed_turn as u64,
-            q.physical_turn as u64,
-            u64::from(q.outward),
-        ];
+fn chart(q: &ConicalBoundaryQuery<'_>, domain: &ConicalChartDomainEvidence) -> Outcome<()> {
+    let center = if domain.version() == ConicalChartDomainVersion::RecenteredV4 {
+        domain.fit_center().to_bits()
+    } else {
+        0
+    };
+    let actual = chart_bits(q);
+    let expected = [0, center, 0, 0, 1];
+    if actual != expected {
         return Err(error::binding(
             "qualified common chart",
-            actual,
-            vec![0, 0, 0, 0, 1],
+            actual.to_vec(),
+            expected.to_vec(),
         ));
     }
     Ok(())
+}
+fn chart_bits(q: &ConicalBoundaryQuery<'_>) -> [u64; 5] {
+    [
+        q.chart_origin.to_bits(),
+        q.fit_center.to_bits(),
+        q.developed_turn as u64,
+        q.physical_turn as u64,
+        u64::from(q.outward),
+    ]
 }
 fn cap_ownership(
     id: ConicalActualCapId,
@@ -173,13 +179,23 @@ fn cap_ownership(
     }
     Ok(())
 }
+fn uniform_center(actual: f64, expected: f64) -> Outcome<()> {
+    if actual.to_bits() != expected.to_bits() {
+        return Err(error::binding(
+            "family fit center",
+            vec![actual.to_bits()],
+            vec![expected.to_bits()],
+        ));
+    }
+    Ok(())
+}
 fn uniform(a: &ConicalBoundaryQuery<'_>, b: &ConicalBoundaryQuery<'_>) -> Outcome<()> {
-    let actual = vec![
+    let actual = [
         a.semi_angle.to_bits(),
         a.depths[0].to_bits(),
         a.depths[1].to_bits(),
     ];
-    let expected = vec![
+    let expected = [
         b.semi_angle.to_bits(),
         b.depths[0].to_bits(),
         b.depths[1].to_bits(),
@@ -187,8 +203,8 @@ fn uniform(a: &ConicalBoundaryQuery<'_>, b: &ConicalBoundaryQuery<'_>) -> Outcom
     if actual != expected {
         return Err(error::binding(
             "family angle/physical depths",
-            actual,
-            expected,
+            actual.to_vec(),
+            expected.to_vec(),
         ));
     }
     Ok(())

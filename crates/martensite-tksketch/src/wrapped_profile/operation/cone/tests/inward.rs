@@ -152,7 +152,7 @@ fn check_point(
     }
 }
 
-fn expected_point([x, y]: [f64; 2], physical_depth: f64, alpha: f64) -> [f64; 3] {
+pub(super) fn expected_point([x, y]: [f64; 2], physical_depth: f64, alpha: f64) -> [f64; 3] {
     let (s, c) = (martensite_cmath::sin(alpha), martensite_cmath::cos(alpha));
     let slant = martensite_cmath::hypot(x, y);
     let theta = martensite_cmath::atan2(y, x) / s;

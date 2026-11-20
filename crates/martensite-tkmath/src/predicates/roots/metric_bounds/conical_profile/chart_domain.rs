@@ -7,8 +7,10 @@ pub(super) mod diagnostics_tests;
 #[cfg(test)]
 mod family_tests;
 #[cfg(test)]
+mod recentered_tests;
+#[cfg(test)]
 mod tests;
-/// Select finite source capacity without changing geometric or arithmetic limits.
+/// Select the common-chart geometry and finite source capacity.
 /// Example: `let version = ConicalChartDomainVersion::FamilyV3;`.
 #[non_exhaustive]
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -18,19 +20,22 @@ pub enum ConicalChartDomainVersion {
     OriginalV2,
     /// Explicit selected-family admission of at most 4096 original source spans.
     FamilyV3,
+    /// Fit around a separate finite center while retaining the original physical datum.
+    RecenteredV4,
 }
 impl ConicalChartDomainVersion {
     /// Fixed original-source cap; `assert_eq!(ConicalChartDomainVersion::FamilyV3.span_limit(), 4096)`.
     pub const fn span_limit(self) -> usize {
         match self {
             Self::OriginalV2 => 128,
-            Self::FamilyV3 => 4096,
+            Self::FamilyV3 | Self::RecenteredV4 => 4096,
         }
     }
     pub(super) const fn tag(self) -> u64 {
         match self {
             Self::OriginalV2 => 2,
             Self::FamilyV3 => 3,
+            Self::RecenteredV4 => 4,
         }
     }
 }
@@ -43,7 +48,7 @@ pub struct ConicalChartDomainQuery<'a> {
     pub semi_angle: f64,
     /// Physical angular datum.
     pub chart_origin: f64,
-    /// One common rational-fit center; this behavior requires the datum's exact bits.
+    /// Common rational-fit center. Datum-centered versions require the datum's exact bits.
     pub fit_center: f64,
     /// Continuous developed lift; this behavior requires zero.
     pub developed_turn: i32,
@@ -61,6 +66,7 @@ pub struct ConicalChartDomainEvidence {
     chart: [u64; 2],
     turns: [i32; 2],
     pub(super) physical: Interval,
+    pub(super) fit_offset: Option<Interval>,
     pub(super) sine: Interval,
     pub(super) cosine: Interval,
     pub(super) minimum_x: Interval,
@@ -172,7 +178,7 @@ impl ConicalChartDomainEvidence {
             })
             .is_ok()
     }
-    /// Executed source-capacity behavior; `proof.version()`.
+    /// Executed chart behavior; `proof.version()`.
     pub fn version(&self) -> ConicalChartDomainVersion {
         self.version
     }
@@ -300,7 +306,7 @@ impl std::fmt::Display for ConicalChartDomainFailure {
             }
             Self::Chart { centers, turns } => write!(
                 out,
-                "centers={centers:?}, turns={turns:?}; expected equal finite center bits and zero turns"
+                "centers={centers:?}, turns={turns:?}; expected finite centers, equal center bits for datum-centered versions, and zero turns"
             ),
             _ => write!(out, "{self:?}"),
         }
