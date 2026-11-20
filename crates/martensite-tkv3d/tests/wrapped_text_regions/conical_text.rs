@@ -2,6 +2,8 @@
 use super::*;
 use martensite_tkbo::body_check::{CheckMode, ValidationStage};
 use martensite_tkmath::predicates::roots::metric_bounds::ConicalChartDomainVersion;
+#[path = "conical_text/attachment.rs"]
+mod attachment;
 #[path = "conical_text/oracles.rs"]
 mod oracles;
 

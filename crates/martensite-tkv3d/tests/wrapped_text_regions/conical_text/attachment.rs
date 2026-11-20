@@ -1,0 +1,145 @@
+//! Attach the owned multiline cone text to a selected analytic support face (#425).
+use super::super::body_controls::{attachment_resolution, body_volume_estimate};
+use super::*;
+use martensite_tkbrep::{brep_adaptor::BRepAdaptorSurface, topexp::Explorer, topods};
+use martensite_tkg3d::{adaptor3d::Adaptor3dSurface, top_abs::ShapeEnum};
+use martensite_tkmath::{
+    geom_abs::SurfaceType,
+    gp::{Axis2, Point3, StandardDirection3},
+};
+use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeCone;
+use martensite_tksketch::surface_sketch::{
+    HistoryRole,
+    attachment::{ConeFaceAttachment, FaceAttachmentId, SupportRevision},
+};
+use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeShape;
+use std::collections::BTreeSet;
+
+const REVISION: SupportRevision = SupportRevision(3);
+const SEAM: f64 = 2.5;
+
+#[test]
+fn multiline_cone_boss_retains_all_selected_caps() {
+    attached_text(WrappedFeatureKind::Boss, NormalSense::Outward);
+}
+
+#[test]
+fn multiline_cone_pocket_retains_all_selected_caps() {
+    attached_text(WrappedFeatureKind::Pocket, NormalSense::Inward);
+}
+
+fn attached_text(kind: WrappedFeatureKind, normal: NormalSense) {
+    let attachment = text_attachment();
+    let before = attachment.record().clone();
+    let request = attached_request(&attachment, normal);
+    let original = request.clone();
+    let selection = WrappedConeExecutionSelection::DirectedFamilyChartRequireCertifiedV2 {
+        arithmetic: WrappedConeArithmeticGrantPolicy::InputBoundV1,
+    };
+    let started = std::time::Instant::now();
+    let outcome = attachment.apply_wrapped_profile(REVISION, SEAM, kind, &request, selection);
+    eprintln!(
+        r#"{{"event":"conical_text_attached_api","normal":"{normal:?}","seconds":{}}}"#,
+        started.elapsed().as_secs_f64()
+    );
+    let feature = outcome.unwrap_or_else(|cause| panic!("attached cone text refused: {cause:?}"));
+    check_attached_result(&feature, &attachment, &request);
+    assert_eq!(attachment.record(), &before);
+    assert_eq!(request, original);
+}
+
+fn attached_request(
+    attachment: &ConeFaceAttachment,
+    normal: NormalSense,
+) -> WrappedConeNormalRequest {
+    let mut request = request(normal);
+    let chart = attachment.authoring_chart(REVISION, SEAM).unwrap();
+    request.support = chart.extrusion_support(REVISION, normal).unwrap();
+    request.proof.arithmetic.max_operations = 8_810_496;
+    request
+}
+
+fn text_attachment() -> ConeFaceAttachment {
+    let (sine, cosine) = martensite_cmath::sincos(0.125);
+    let axes = Axis2::with_standard_frame(
+        Point3::new(0., 0., 85. * cosine),
+        StandardDirection3::Z,
+        StandardDirection3::X,
+    );
+    let mut maker =
+        BRepPrimAPIMakeCone::with_axes(axes, 85. * sine, 115. * sine, 30. * cosine).unwrap();
+    let body = maker.shape().unwrap();
+    ConeFaceAttachment::capture(
+        FaceAttachmentId(44),
+        REVISION,
+        body,
+        &lateral_face(body),
+        attachment_resolution(),
+    )
+    .unwrap()
+}
+
+fn lateral_face(body: &topods::Shape) -> topods::Face {
+    let mut faces = Explorer::new(body, ShapeEnum::Face, ShapeEnum::Shape).unwrap();
+    while faces.more() {
+        let face = topods::face(faces.current()).unwrap();
+        let surface = BRepAdaptorSurface::with_face(&face, false).unwrap();
+        if surface.get_type().unwrap() == SurfaceType::Cone {
+            return face;
+        }
+        faces.next().unwrap();
+    }
+    panic!("expected a conical lateral face on the multiline support");
+}
+
+fn check_attached_result(
+    feature: &ConeFeatureResult,
+    attachment: &ConeFaceAttachment,
+    request: &WrappedConeNormalRequest,
+) {
+    let canonical = feature.tool().extrusion().canonical();
+    check_reports(canonical);
+    oracles::check_volume(canonical, request.support.normal);
+    assert_eq!(feature.tool().footprint().regions.len(), 18);
+    assert!(feature.validation().is_valid());
+    let detached = feature.export_native().unwrap();
+    assert_eq!(detached.body.shape_type().unwrap(), ShapeEnum::Solid);
+    let caps = exposed_cap_regions(feature.history(), &detached);
+    assert_eq!(
+        caps,
+        request.selections.iter().map(|item| item.region).collect()
+    );
+    let support = attachment.export_native(REVISION).unwrap();
+    let delta = body_volume_estimate(&detached.body) - body_volume_estimate(&support.body);
+    assert_expected_volume_change(request.support.normal, delta);
+}
+
+fn exposed_cap_regions(
+    history: &WrappedFeatureHistory,
+    detached: &DetachedWrappedFeature,
+) -> BTreeSet<SurfaceRegionId> {
+    let mut covered = BTreeSet::new();
+    for (reference, parents) in &history.images {
+        assert_eq!(
+            detached.entities[reference].shape_type().unwrap(),
+            reference.kind
+        );
+        if reference.kind == ShapeEnum::Face {
+            covered.extend(parents.iter().filter_map(|parent| match parent.source {
+                CylinderFeatureSource::Tool(WrappedHistoryKey {
+                    source: WrappedEntitySource::Region(region),
+                    role: HistoryRole::LastDepthFace,
+                }) => Some(region),
+                _ => None,
+            }));
+        }
+    }
+    covered
+}
+
+fn assert_expected_volume_change(normal: NormalSense, delta: f64) {
+    match normal {
+        NormalSense::Outward => assert!(delta > 0., "boss volume delta={delta}"),
+        NormalSense::Inward => assert!(delta < 0., "pocket volume delta={delta}"),
+    }
+}

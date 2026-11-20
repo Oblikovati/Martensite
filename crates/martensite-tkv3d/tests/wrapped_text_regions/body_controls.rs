@@ -69,7 +69,7 @@ fn validate_attached_body(shape: &martensite_tkbrep::topods::Shape) {
     check_one_solid(shape);
 }
 
-fn attachment_resolution() -> Resolution {
+pub(super) fn attachment_resolution() -> Resolution {
     Resolution::new(
         1e-5,
         1e-7,
@@ -130,7 +130,7 @@ fn inward_wrapped_glyph_cuts_a_pocket_in_its_support_body() {
     assert_eq!(request, original);
 }
 
-fn body_volume_estimate(shape: &martensite_tkbrep::topods::Shape) -> f64 {
+pub(super) fn body_volume_estimate(shape: &martensite_tkbrep::topods::Shape) -> f64 {
     use martensite_tkgeombase::gprop::GProps;
     use martensite_tktopalgo::brep_gprop::{BRepGProp, VolumeGKFlags};
     let mut properties = GProps::default();

@@ -166,3 +166,51 @@ are single observations from the assertion-enabled build. No matched
 runtime or peak-memory comparison was run. The fixture uses one positive-X
 chart and a canonical cone frame. Wider and periodic profiles, edited
 support or placement, and attached-body replay still have separate gates.
+
+## Text on a selected support solid
+
+Two TKV3D controls use the same owned 239-curve fixture and the public
+`ConeFaceAttachment::apply_wrapped_profile` entry. The support is a native
+frustum with an eighth-radian semi-angle and a full turn around its axis.
+The chart seam is 2.5 radians from the support's angular datum. The profile
+stays within the slant ends and clear of the paired native seam.
+Both calls keep the original spatial limit of `1e-5`, depth range
+`[0, 0.25]`, and explicit 8,810,496-operation request.
+
+Both normal directions passed. Fuse produced a boss and Cut produced a
+pocket, each as one validated solid. The detached history contains a face
+image for every selected last-depth cap. The controls check the original
+authored-volume bounds and the direction of the Boolean volume change
+using native quadrature. The captured support record and the request
+compare equal before and after each call.
+
+The assertion-enabled Linux x86_64 build took 136.89 s for the attached
+boss and 139.74 s for the pocket. The corresponding standalone calls in
+the same execution took 13.65 s and 13.80 s. The API timers exclude setup,
+compilation and test assertions. These are single observations on the
+shared host. They establish a starting point for attached-text
+performance. The 5.4 s target applies to the separate standalone `O.`
+fixture.
+
+A separate stage probe passed the boss with a 140.06 s API time using the
+same fixture. It recorded the following wall times.
+
+| Stage | Seconds |
+| --- | ---: |
+| Resolve and admit the selected support | <0.01 |
+| Extrude, place and trim the tool | 63.80 |
+| Export the tool | 0.06 |
+| Run native Fuse | 16.13 |
+| Compose history | 0.02 |
+| Encode and decode the result | 0.15 |
+| Validate the decoded solid | 59.77 |
+| Check byte-for-byte archive replay | 0.07 |
+
+Tool construction and final body validation account for about 88% of
+this run. The tool timer includes the canonical extrusion and the
+placed tool's own native validation. A separate 12-second CPU sample
+of the pocket captured 2,356 leaf samples and none in the repeated
+polygon segment-box calculation. That window leaves its share across
+the whole call unresolved. The timers and transient profiles were
+removed after collection. Full multiline determinism across processes
+and matched peak-memory measurements remain open.
