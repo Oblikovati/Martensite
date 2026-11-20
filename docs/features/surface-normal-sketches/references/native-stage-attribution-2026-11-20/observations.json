@@ -1,0 +1,348 @@
+[
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "operation_begin",
+    "seconds": 0.0
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.006473025
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.007138588
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.01250836
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.013199009
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.00245736
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.002818118
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.005548984
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.005918739
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.002000544
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.002350913
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.002335895
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.00268962
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.284110989
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.298620665
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.427626713
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.440646711
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.057336263
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.064856459
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.106818135
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.113344749
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.006359936
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.007255604
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.01408477
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.014960732
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.586322824
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.691402039
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "body_topology",
+    "seconds": 0.700263867,
+    "faces": 139
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 1.218909742
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 1.320462818
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "body_geometry",
+    "seconds": 1.320484187,
+    "faces": 139
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "certified_member_rebind",
+    "seconds": 0.060557297
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "body_tolerance",
+    "seconds": 0.006135701,
+    "faces": 139
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "ordered_cone_validation",
+    "seconds": 2.09411442
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_volume_estimate",
+    "seconds": 0.092758261
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_qualification",
+    "seconds": 2.186893099
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.030932194
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.036701497
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "body_topology",
+    "seconds": 0.037491479,
+    "faces": 13
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.086222369
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.091658324
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "body_geometry",
+    "seconds": 0.091668454,
+    "faces": 13
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "certified_member_rebind",
+    "seconds": 0.002674181
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "body_tolerance",
+    "seconds": 0.000518019,
+    "faces": 13
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "ordered_cone_validation",
+    "seconds": 0.133005983
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_volume_estimate",
+    "seconds": 0.007381117
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_qualification",
+    "seconds": 0.140401257
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "publication_family_rebind",
+    "seconds": 0.065729816
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "operation_end",
+    "seconds": 5.573639244
+  },
+  {
+    "event": "directed_narrow_cone_api",
+    "sense": "Outward",
+    "seconds": 5.573666
+  },
+  {
+    "event": "narrow_cone_completed_work",
+    "arithmetic_operations": 994535,
+    "integration_subintervals": 444,
+    "retained_spans": 148
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.592677992
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.697867842
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "body_topology",
+    "seconds": 0.707487032,
+    "faces": 139
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 1.287288763
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 1.396523592
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "body_geometry",
+    "seconds": 1.396546003,
+    "faces": 139
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "certified_member_rebind",
+    "seconds": 0.060173948
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "ordered_cone_validation",
+    "seconds": 2.170351901
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 0.589872477
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 0.70039488
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "body_topology",
+    "seconds": 0.707951622,
+    "faces": 139
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_analyzer",
+    "seconds": 1.22369868
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "native_inspection",
+    "seconds": 1.325469568
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "body_geometry",
+    "seconds": 1.325498411,
+    "faces": 139
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "certified_member_rebind",
+    "seconds": 0.071819371
+  },
+  {
+    "probe": "b1_native_stages_20261120",
+    "stage": "ordered_cone_validation",
+    "seconds": 2.111044638
+  }
+]

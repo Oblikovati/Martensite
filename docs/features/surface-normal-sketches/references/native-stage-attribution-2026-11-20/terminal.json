@@ -1,0 +1,11 @@
+{
+  "finished": "2026-11-20T03:59:34.272691+00:00",
+  "passed": true,
+  "failure": null,
+  "source_drift": [],
+  "restored_original_hashes": true,
+  "git_status_after": "",
+  "discarded_artifact_count": 13,
+  "discarded_artifact_bytes": 143373818,
+  "timing_usable_for_acceptance": false
+}

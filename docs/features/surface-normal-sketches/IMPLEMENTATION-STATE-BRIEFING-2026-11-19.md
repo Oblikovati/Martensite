@@ -23,11 +23,11 @@ error; successful operations gained no allocation. The five-second time/RSS
 gate and the full affected-package gate remain pending for B1.
 
 The full capability is not delivered. The B1/V6 foundation is checkpointed in
-`6fca95d2`, with later implementation at `93026c2e`. Exact-point measurement
-(#569) and owned metadata reuse (#572) are incorporated locally; none of B1 is
-pushed. The five-second target remains unqualified. Native incidence and report
-lookup fixes (#566/#567) remain separate in green PR #571, held for performance
-acceptance. Wider charts, periodic topology, full text-on-body acceptance,
+`6fca95d2`, with later implementation at `abde8bd2`. Exact-point measurement
+(#569), shared indexes (#566/#567), and scalar owned metadata reuse (#572) are
+incorporated locally; none of B1 is pushed. The five-second target remains
+unqualified. PR #571 remains green and held for performance acceptance.
+Wider charts, periodic topology, full text-on-body acceptance,
 integration and final QA remain open. B1 has no integration PR.
 
 ## Required product behavior
@@ -138,8 +138,8 @@ remaining split allowance. Logical self/distinct pair order is retained.
 Endpoint evidence carries actual endpoint parameters and the shared point.
 `ContactProofKey` distinguishes endpoint evidence from a projected root. No
 algebraic root bracket or multiplicity is invented. Native parameter measurement
-reuses the existing exact interval construction. Earlier projected-root
-diagnostic formatting is preserved.
+uses the #569 exact-point path for endpoints; nonpoint intervals retain the
+existing construction. Earlier projected-root diagnostic formatting is preserved.
 
 V6 still retains the complete logical pair matrix. Sparse sweep coverage from
 the specialist prototype has not been integrated. Native partition correspondence,
@@ -317,16 +317,15 @@ Martensite performance or replace the full application acceptance workflow.
 | #562 admitted side-boundary source bits lost by native binding | Local snapshot/binding remediation and mutation controls exist; unmerged. |
 | #563 later cancellation masking an unsupported proof selection | Local precedence regression passes; unmerged. |
 | #566 repeated native report/endpoint/vertex discovery | Implemented and locally tested; commit `2ab520fe` on integration branch, not main. Actual same-snapshot observations determine cardinality, including empty numerical domains. |
-| #567 growing report-vector reuse search | Initial index commit `a694c916`, plus uncommitted lower-memory cold-source refinement. Local tests/reviews pass; fresh benchmark remains pending. |
+| #567 growing report-vector reuse search | Final main-based candidate `9774ac64`; local B1 adaptation `5696a884` retains V3–V6 evidence. PR #571 is green, held for performance acceptance. |
 | #564 matching-source iterator | Superseded by #566's production route. Two useful independent assertions were ported. Keep open until #566 lands, then reconcile/close and clean its obsolete lane. |
 | #565 repeated exact membership normalization | Open; separate investigation, no qualified production fix or savings claim. |
 | #496 and #498 native SI cost/authority | Directed B1 provides a bounded tested alternative; broader scope and integration remain open. |
 | #551, #552, #553 and #523 | Open B1 domain, join, trim and failure-reporting items. Reconcile their local remediation and acceptance against the final merged candidate before closure. |
 
-The two shared fixes have source-level Standards and Spec acceptance. That is
-not canonical validation, hosted CI or merge approval. No current integration
-PR exists. Main-line fixes land on main first and are forward-merged into the
-release candidate. The latest shared fixes have not yet been forwarded to B1.
+The shared fixes have source-level Standards and Spec acceptance and green
+canonical/hosted checks in PR #571. Performance still blocks integration. B1
+contains a tested local adaptation; main-first integration remains required.
 
 ## Branches and exact local locations
 
@@ -334,8 +333,8 @@ release candidate. The latest shared fixes have not yet been forwarded to B1.
 | --- | --- | --- |
 | Remote patch line | `main`, `b61a031d0bde0e21d283e0f94975f79b9ae15574` | Remote authoritative baseline. |
 | Remote feature candidate | `release/next`, `2e8ab886d4755c9c0165d7f59f2a92ead61f3612` | Includes Phase A and main synchronization PR #559. |
-| Active capability | `feature/cone-chart-atlas`, source checkpoint `6fca95d2`, evidence packaging `427bad37`; no remote branch | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1` |
-| Shared-fix integration | `fix/census-contact-indexes`, HEAD `2ab520fe`; cold-source refinement, README and two Clippy corrections uncommitted; unpushed | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix567-census-report-index` |
+| Active capability | `feature/cone-chart-atlas`, source checkpoint `abde8bd2`; no remote branch | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1` |
+| Shared-fix integration | `fix/census-contact-indexes`, HEAD `9774ac64`; PR #571 green, performance held | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix567-census-report-index` |
 | Original #566 lane | `fix/566-contact-cardinality-index`, HEAD `b61a031d` plus preserved frozen changes | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix566-contact-cardinality-index` |
 | Superseded #564 lane | `fix/564-contact-row-iteration`, preserved unfinished source | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix564-contact-row-iteration` |
 | Clean benchmark baseline | Detached `b61a031d` | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/564-main-baseline` |
@@ -386,15 +385,26 @@ It remains unmerged because final-source performance acceptance is unresolved.
 No version bump or release tag was made.
 
 The [graph-reader counter pass](GRAPH-READER-ATTRIBUTION-2026-11-20.md) found
-27,225,464 repeated relation/prefix predicate evaluations on the 137-source
-owned view. Bug #572 is committed locally on main-based work at `77582311`
-and adapted to both B1 certificate paths at `6e176cf0`. Main passed 22 focused
-controls; B1 passed 49 focused controls and both complete cone directions.
-Native capture still runs once per admitted view. B1 retains actual first-bound
-eligibility before caching; its source reviews accepted the frozen adaptation.
-The [execution receipt](references/owned-bindings-572-2026-11-20/terminal.json)
-retains the final source hashes, actual predicate counts and complete controls.
-The pass establishes counts, not an achievable speedup or RSS acceptance.
+27,225,464 repeated relation/prefix evaluations on the 137-source owned view.
+Main candidate `5578942` uses a scalar first-failure prefix, with no cache-owned
+heap storage. B1 adaptation `abde8bd2` passed 54 focused controls and both
+complete cone directions; both source reviews accepted it. Native capture and
+first-bound eligibility remain required. The [prefix receipt](references/owned-prefix-b1-2026-11-20/terminal.json)
+records 994535 operations, 444 cells and 148 spans for both directions.
+The [shared-index adaptation](references/shared-indexes-b1-2026-11-20/terminal.json)
+passed 88 focused controls plus both complete operations. These counts overlap
+older rounds and establish neither unique BDD totals nor performance acceptance.
+
+The latest [native stage attribution](references/native-stage-attribution-2026-11-20/summary.json)
+passed the outward operation at `abde8bd2` in 5.573639 s. Across UV and final
+checks, 16 native analyzer constructors consumed 2.850048 s. Final qualification
+of both bodies took 2.327294 s, including 0.100139 s of native volume estimates.
+For the 139-face O body, topology and geometry constructors alone took 0.586323 s
+and 1.218910 s. These are nested durations; do not add them together. Independent
+oracle checks after the operation boundary are excluded. All six instrumented
+files were restored byte for byte and 13 probe artifacts removed. This diagnostic
+does not qualify the five-second gate or RSS. Bug #574 addresses redundant runtime
+projection while cloning an owning Handle; its end-to-end effect is unmeasured.
 
 ## Remaining delivery work
 
@@ -481,5 +491,7 @@ checks. Its final-source build and link passed. All three timed pairs were
 flagged for sibling activity; later isolation checks refused before consumers
 ran. Performance acceptance is held. Allocation and resident-map diagnostics
 do not qualify RSS. The #569 consumers are linked; all 14 functional invocations
-passed, and their strict campaign remains unrun. Earlier receipts are preserved.
+passed. The first strict campaign stopped after 20 timed executions when a
+compiler appeared; short 5–20 ms API blocks also underresolve its CPU-load guard.
+All samples remain diagnostic; longer blocks are required for acceptance.
 A running-file alone does not establish process liveness.

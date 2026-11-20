@@ -1,0 +1,81 @@
+{
+  "finished": "2026-11-20T03:10:58.873700+00:00",
+  "base_head": "3b6bb98910e80faf6bc12cbe10e7c153c75de957",
+  "source_changed": [],
+  "source_manifest_sha256": "e12e516fdd1470ad26ec5e6808bdf9557ef4c9f362554cd18f69396ed6331eda",
+  "target_consumers": [],
+  "target_initial_bytes": 2441907383,
+  "target_final_bytes": 2445415718,
+  "target_growth_bytes": 3508335,
+  "timing_usable_for_acceptance": false,
+  "tests": {
+    "paired-attempt2": {
+      "passed": 20,
+      "failed": 0,
+      "exit": 0
+    },
+    "topology-incidence_view": {
+      "passed": 10,
+      "failed": 0,
+      "exit": 0
+    },
+    "admission-cardinality": {
+      "passed": 9,
+      "failed": 0,
+      "exit": 0
+    },
+    "sketch_region_contact_transport-general_tests": {
+      "passed": 9,
+      "failed": 0,
+      "exit": 0
+    },
+    "owned_graph-tests": {
+      "passed": 29,
+      "failed": 0,
+      "exit": 0
+    },
+    "bernstein_tests": {
+      "passed": 7,
+      "failed": 0,
+      "exit": 0
+    },
+    "geometric_tests": {
+      "passed": 4,
+      "failed": 0,
+      "exit": 0
+    },
+    "full-O-attempt2": {
+      "passed": 2,
+      "failed": 0,
+      "exit": 0
+    }
+  },
+  "prior_failed_attempt": {
+    "paired-attempt1": {
+      "exit": 101,
+      "tests_executed": 0,
+      "cause": "missing lookup argument in existing direct cancellation test; test-only plumbing fixed"
+    }
+  },
+  "api_seconds_diagnostic": {
+    "Inward": 5.660814,
+    "Outward": 6.133612
+  },
+  "full_operation_work": {
+    "Inward": [
+      994535,
+      444,
+      148
+    ],
+    "Outward": [
+      994535,
+      444,
+      148
+    ]
+  },
+  "main_integration_pending": true,
+  "push_performed": false,
+  "native_helper_subtree_exact_main_9774ac64": true,
+  "commit": "5696a884ecd989fc78cd2de07cff0db1b8b88b4d",
+  "git_status_after_commit": ""
+}
