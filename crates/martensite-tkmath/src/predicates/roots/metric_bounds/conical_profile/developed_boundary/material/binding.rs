@@ -19,17 +19,17 @@ pub(super) fn boundary_authority(
     domain: &ConicalChartDomainEvidence,
     refinement: ConicalPrimitiveRefinement,
 ) -> Result<(), ConicalDevelopedMaterialFailure> {
-    let actual = context
-        .boundary
-        .chart
-        .as_ref()
-        .map(|authority| authority.diagnostic_bits())
-        .unwrap_or_default();
-    compare(
-        "issued boundary chart authority",
-        actual,
-        context.evidence.domain.clone(),
-    )?;
+    let actual = context.boundary.chart.as_ref();
+    let issued = &context.evidence.domain;
+    if actual != Some(issued) {
+        return compare(
+            "issued boundary chart authority",
+            actual
+                .map(ChartBinding::diagnostic_bits)
+                .unwrap_or_default(),
+            issued.diagnostic_bits(),
+        );
+    }
     let actual_turn = context
         .boundary
         .source_anchor_turn_adjustment()

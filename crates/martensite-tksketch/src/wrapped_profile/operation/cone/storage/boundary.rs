@@ -10,7 +10,7 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn query<'a>(
         .fits
         .get(&piece.span)
         .ok_or_else(|| missing(original.region, piece.span, "frozen fit membership"))?;
-    let original = original_interval(original, piece.span)?;
+    let original = original_interval(original, prepared, piece.span)?;
     Ok(BoundaryInput {
         prepared,
         piece,
@@ -33,22 +33,20 @@ pub(in crate::surface_sketch::wrapped_profile::operation::cone) fn prepared_quer
         prepared,
         piece,
         fit,
-        original: original_interval(original, piece.span)?,
+        original: original_interval(original, prepared, piece.span)?,
     };
     let view = fit.fit.view();
     let edges =
         [0, 1].map(|depth| input.edge(&view, depth, &poles[depth].points, &poles[depth].weights));
     Ok(input.with_edges(edges))
 }
-fn original_interval(
-    original: &DevelopedRegionRequest,
+fn original_interval<'a>(
+    original: &'a DevelopedRegionRequest,
+    prepared: &Prepared,
     span: CurveSpan,
-) -> ConeChecked<ConicalOriginalSpan<'_>> {
-    let authored = original
-        .loops
-        .iter()
-        .flatten()
-        .find(|source| source.span.curve == span.curve)
+) -> ConeChecked<ConicalOriginalSpan<'a>> {
+    let authored = prepared
+        .authored_piece(original, span.curve)
         .ok_or_else(|| missing(original.region, span, "authored span membership"))?;
     Ok(ConicalOriginalSpan {
         poles: &authored.poles,

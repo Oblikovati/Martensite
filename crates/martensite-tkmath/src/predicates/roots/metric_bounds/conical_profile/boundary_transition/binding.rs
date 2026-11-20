@@ -138,12 +138,11 @@ pub(super) fn checked_span<'a>(
     input: &'a ConicalBoundaryZRowTransition<'_>,
     bits: u16,
 ) -> Result<&'a super::super::actual_certificate::GammaSpanCapture, ConicalBoundaryZRowFailure> {
-    let ids = input.gamma.span_ids();
-    if !ids.contains(&input.span.0) {
+    if input.gamma.span_capture(input.span).is_none() {
         return Err(error::mismatch(
             "issued source side",
             vec![input.span.0],
-            ids,
+            input.gamma.span_ids(),
         ));
     }
     lookup(input, bits).ok_or_else(|| authority_mismatch(input, bits))

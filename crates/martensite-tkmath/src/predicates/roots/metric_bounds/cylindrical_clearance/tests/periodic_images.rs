@@ -25,6 +25,7 @@ fn two_relevant_images_and_the_infinite_tail_are_all_covered() {
     );
     for (index, image) in proof.images().iter().enumerate() {
         assert_image_receipt(image, index, proof.requested_clearance());
+        assert!(original.shares_sources(image.clearance_certificate()));
     }
     assert_periodic_receipt(&proof, &original);
 }

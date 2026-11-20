@@ -1,56 +1,52 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Every Math source is matched against an independently decoded native entity.
 use super::*;
+use std::collections::BTreeMap;
 pub(super) fn validate(
     actual: &ConicalNativeGeometry,
     query: &ConicalActualPatchQuery<'_>,
 ) -> Result<(), ConicalBindingError> {
-    let sides: Vec<_> = actual
-        .members
-        .iter()
-        .flat_map(|member| member.sides.iter().map(move |side| (member, side)))
-        .collect();
+    let sides = actual.members.iter().map(|member| member.sides.len()).sum();
     let caps = actual
         .members
         .iter()
         .map(|member| member.caps.len())
         .sum::<usize>();
-    inventory(actual, query, sides.len(), caps)?;
-    for (member, side) in sides {
-        match_side(member, side, query)?;
+    inventory(actual, query, sides, caps)?;
+    let expected = unique_by_id(query.sides, |side| side.id.0);
+    for member in &actual.members {
+        let caps = cap_rows(member);
+        for side in &member.sides {
+            match_side(member, side, &expected, &caps)?;
+        }
     }
     actual.with_cap_queries(|caps, _| match_caps(caps, query.caps))
 }
 fn match_side(
     member: &MemberGeometry,
     side: &native::Side,
-    query: &ConicalActualPatchQuery<'_>,
+    expected: &BTreeMap<u64, Option<&ConicalActualSideQuery<'_>>>,
+    caps: &CapRows,
 ) -> Result<(), ConicalBindingError> {
-    let found: Vec<_> = query
-        .sides
-        .iter()
-        .filter(|candidate| candidate.id.0 == side.id)
-        .collect();
-    if found.len() != 1 {
-        return Err(side_mismatch(member, side));
-    }
-    let expected = found[0];
+    let expected = expected
+        .get(&side.id)
+        .copied()
+        .flatten()
+        .ok_or_else(|| side_mismatch(member, side))?;
     if expected.member != member.id || expected.orientation != side.orientation {
         return Err(side_mismatch(member, side));
     }
-    match_rows(member, side, expected)?;
+    match_rows(member, side, expected, caps)?;
     Ok(())
 }
 fn match_caps(
     actual: &[ConicalActualCapQuery<'_>],
     expected: &[ConicalActualCapQuery<'_>],
 ) -> Result<(), ConicalBindingError> {
+    let expected = unique_by_id(expected, |cap| cap.carrier.id.0);
     for cap in actual {
-        let found: Vec<_> = expected
-            .iter()
-            .filter(|candidate| candidate.carrier.id == cap.carrier.id)
-            .collect();
-        if found.len() != 1 || cap_bits(cap) != cap_bits(found[0]) {
+        let comparison = expected.get(&cap.carrier.id.0).copied().flatten();
+        if comparison.is_none_or(|expected| cap_bits(cap) != cap_bits(expected)) {
             return Err(error(
                 Some(cap.carrier.member),
                 None,
@@ -60,6 +56,16 @@ fn match_caps(
         }
     }
     Ok(())
+}
+fn unique_by_id<T>(values: &[T], id: impl Fn(&T) -> u64) -> BTreeMap<u64, Option<&T>> {
+    let mut result = BTreeMap::new();
+    for value in values {
+        result
+            .entry(id(value))
+            .and_modify(|old| *old = None)
+            .or_insert(Some(value));
+    }
+    result
 }
 fn cap_bits(cap: &ConicalActualCapQuery<'_>) -> Vec<u64> {
     let c = cap.carrier;
@@ -120,25 +126,34 @@ fn match_rows(
     member: &MemberGeometry,
     side: &native::Side,
     expected: &ConicalActualSideQuery<'_>,
+    caps: &CapRows,
 ) -> Result<(), ConicalBindingError> {
     for row in 0..2 {
         match_row_geometry(member, side, expected, row)?;
-        let caps: Vec<_> = member
-            .caps
-            .iter()
-            .filter(|cap| {
-                cap.contours
-                    .iter()
-                    .flat_map(|contour| &contour.edges)
-                    .any(|edge| edge.side == side.id && edge.row == row)
-            })
-            .map(|cap| ConicalActualCapId(cap.id))
-            .collect();
-        if caps != [expected.caps[row]] {
+        if caps.get(&(side.id, row)).copied().flatten() != Some(expected.caps[row]) {
             return Err(side_mismatch(member, side));
         }
     }
     Ok(())
+}
+
+type CapRows = BTreeMap<(u64, usize), Option<ConicalActualCapId>>;
+
+fn cap_rows(member: &MemberGeometry) -> CapRows {
+    let mut rows = CapRows::new();
+    for cap in &member.caps {
+        let id = Some(ConicalActualCapId(cap.id));
+        for edge in cap.contours.iter().flat_map(|contour| &contour.edges) {
+            rows.entry((edge.side, edge.row))
+                .and_modify(|owner| {
+                    if *owner != id {
+                        *owner = None;
+                    }
+                })
+                .or_insert(id);
+        }
+    }
+    rows
 }
 
 fn match_row_geometry(

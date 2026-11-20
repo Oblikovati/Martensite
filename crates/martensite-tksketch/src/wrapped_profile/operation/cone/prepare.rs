@@ -140,6 +140,7 @@ fn initial(
     Ok(Prepared {
         executed_selection: execution,
         source: source.clone(),
+        authored_positions: source_positions::AuthoredPositions::capture(source),
         fits: BTreeMap::new(),
         final_endpoints: None,
         directed_family: None,

@@ -123,11 +123,10 @@ fn classify_one(
     })
 }
 fn target<'a>(regions: &[&'a Request], id: SurfaceRegionId) -> Checked<&'a Request> {
-    regions
-        .iter()
-        .find(|r| r.region == id)
-        .copied()
-        .ok_or(MaterialFailure::Source(id))
+    let index = regions
+        .binary_search_by_key(&id, |region| region.region)
+        .map_err(|_| MaterialFailure::Source(id))?;
+    Ok(regions[index])
 }
 fn overlap(job: &Job, probe: CylindricalPeriodicProbe) -> MaterialFailure {
     MaterialFailure::Overlap {

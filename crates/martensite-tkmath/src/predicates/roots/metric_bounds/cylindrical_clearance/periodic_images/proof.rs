@@ -41,7 +41,7 @@ fn bind_sources<'a>(
 ) -> Vec<CylindricalClearanceSource<'a>> {
     poles
         .iter()
-        .zip(&source.intervals)
+        .zip(source.intervals.iter())
         .map(|(authored, interval)| CylindricalClearanceSource {
             authored,
             interval: *interval,
@@ -88,13 +88,26 @@ fn certify_image(
     cancelled: &mut (dyn FnMut() -> bool + Send),
 ) -> Checked<CertifiedCylindricalClearance> {
     let query = image_query(source, inputs, shift, options);
-    certify_cylindrical_clearance(query, cancelled).map_err(|cause| {
-        CylindricalClearanceFailure::PeriodicImage {
+    super::super::super::execute(query, cancelled)
+        .map(|report| {
+            // Every image query borrows the same controls reconstructed from this snapshot.
+            CertifiedCylindricalClearance::with_sources(
+                query,
+                report,
+                Arc::clone(&source.sources),
+                Arc::clone(&source.intervals),
+            )
+        })
+        .map_err(|(cause, _)| CylindricalClearanceFailure::PeriodicImage {
             turn: shift.turn,
             offset: shift.offset,
-            cause: Box::new(cause),
-        }
-    })
+            cause: Box::new(CylindricalClearanceError {
+                requested_clearance: query.requested_clearance,
+                requested_options: query.options,
+                source_count: query.sources.len(),
+                cause,
+            }),
+        })
 }
 
 fn image_query<'a>(

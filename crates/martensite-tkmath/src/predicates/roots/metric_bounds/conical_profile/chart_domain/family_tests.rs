@@ -196,3 +196,25 @@ fn boundary_authority_and_diagnostic_bits_bind_the_domain_version() {
         ChartBinding::capture(&old).diagnostic_bits()
     );
 }
+
+#[test]
+fn chart_binding_accepts_independent_exact_sources_and_refuses_mutation() {
+    use super::super::boundary_chart::ChartBinding;
+    let flat = [[80., 0.], [84., 0.]];
+    let spans = [LINE.as_slice(), flat.as_slice()];
+    let chart = family(input(&spans)).unwrap();
+    let binding = ChartBinding::capture(&chart);
+    let rebuilt = family(input(&spans)).unwrap();
+    assert!(!std::sync::Arc::ptr_eq(
+        &chart.sector.source,
+        &rebuilt.sector.source
+    ));
+    drop(chart);
+    assert!(binding.matches(&rebuilt));
+    assert!(rebuilt.contains_original(&flat));
+    let changed_zero = [[80., -0.], [84., 0.]];
+    assert!(!rebuilt.contains_original(&changed_zero));
+    let reordered = [flat.as_slice(), LINE.as_slice()];
+    let reordered = family(input(&reordered)).unwrap();
+    assert!(!binding.matches(&reordered));
+}

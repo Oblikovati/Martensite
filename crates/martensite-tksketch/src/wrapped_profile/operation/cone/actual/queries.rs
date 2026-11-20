@@ -15,31 +15,51 @@ pub(super) fn sides<'a>(
 ) -> ConeChecked<Vec<ConicalActualSideQuery<'a>>> {
     let mut sides = Vec::new();
     let family = family(selection)?;
+    let originals = operation::source::by_region(originals);
     for prepared in &selection.prepared {
         let region = prepared.source.region;
         let original = originals
-            .iter()
-            .find(|original| original.region == region)
+            .get(&region)
+            .copied()
             .ok_or_else(|| missing(region, "actual original member"))?;
         let (geometry, _) = members
             .get(&region)
             .ok_or_else(|| missing(region, "actual retained geometry"))?;
-        for proof in &geometry.spans {
-            sides.push(side(original, prepared, proof, family, actual)?);
-        }
+        append_sides(original, prepared, geometry, family, actual, &mut sides)?;
     }
     sides.sort_by_key(|side| side.id);
     Ok(sides)
 }
+fn append_sides<'a>(
+    original: &'a DevelopedRegionRequest,
+    prepared: &'a Prepared,
+    geometry: &'a Geometry,
+    family: &prepare::directed::DirectedFamily,
+    actual: &martensite_tkbo::body_check::ConicalNativeGeometry,
+    sides: &mut Vec<ConicalActualSideQuery<'a>>,
+) -> ConeChecked<()> {
+    let mut by_span = BTreeMap::new();
+    for piece in prepared.source.loops.iter().flatten() {
+        by_span.entry(piece.span).or_insert(piece);
+    }
+    for proof in &geometry.spans {
+        let piece = by_span
+            .get(&proof.span)
+            .copied()
+            .ok_or_else(|| missing(original.region, "actual prepared piece"))?;
+        sides.push(side(original, prepared, piece, proof, family, actual)?);
+    }
+    Ok(())
+}
 fn side<'a>(
     original: &'a DevelopedRegionRequest,
     prepared: &'a Prepared,
+    piece: &'a AuthoredPiece,
     proof: &'a storage::SpanProof,
     family: &prepare::directed::DirectedFamily,
     actual: &martensite_tkbo::body_check::ConicalNativeGeometry,
 ) -> ConeChecked<ConicalActualSideQuery<'a>> {
     let region = original.region;
-    let piece = piece(prepared, proof.span)?;
     let id = family.inventory.side(region, proof.span)?;
     Ok(ConicalActualSideQuery {
         id,
@@ -54,15 +74,6 @@ fn side<'a>(
     })
 }
 
-fn piece(prepared: &Prepared, span: CurveSpan) -> ConeChecked<&AuthoredPiece> {
-    prepared
-        .source
-        .loops
-        .iter()
-        .flatten()
-        .find(|piece| piece.span == span)
-        .ok_or_else(|| missing(prepared.source.region, "actual prepared piece"))
-}
 fn transition(prepared: &Prepared, span: CurveSpan) -> ConeChecked<&ConicalBoundaryZRowEvidence> {
     prepared
         .fits

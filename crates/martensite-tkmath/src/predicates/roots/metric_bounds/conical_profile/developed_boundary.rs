@@ -4,7 +4,7 @@ use super::boundary_snapshot::BoundarySnapshot;
 use super::*;
 mod binding;
 mod material;
-pub(in crate::predicates::roots::metric_bounds) use binding::domain_bits;
+pub(in crate::predicates::roots::metric_bounds) use super::boundary_chart::ChartBinding;
 pub(in crate::predicates::roots::metric_bounds) use material::{
     half_pi, span_bounds_with_refinement, validate_with_refinement,
 };
@@ -15,7 +15,7 @@ pub(in crate::predicates::roots::metric_bounds) use material::{span_bounds, vali
 #[derive(Debug)]
 pub struct ConicalDevelopedBoundaryEvidence {
     source: BoundarySnapshot,
-    domain: Vec<u64>,
+    domain: ChartBinding,
     pair: Vec<u64>,
     uv_bits: [Vec<[u64; 2]>; 2],
     carriers: [[u64; 3]; 2],
@@ -76,7 +76,7 @@ impl ConicalDevelopedBoundaryEvidence {
         self.source.matches(source)
             && boundary.matches_chart_with_refinement(source, domain, refinement)
             && self.options == boundary.options()
-            && self.domain == binding::domain_bits_selected(domain, refinement)
+            && self.domain.matches_selected(domain, refinement)
             && self.pair == binding::pair_bits(pair)
             && self.reference == reference.to_bits()
     }
@@ -92,7 +92,7 @@ pub(super) fn capture(
 ) -> ConicalDevelopedBoundaryEvidence {
     ConicalDevelopedBoundaryEvidence {
         source: BoundarySnapshot::capture(&source),
-        domain: binding::domain_bits_selected(selection.0, selection.1),
+        domain: ChartBinding::capture_selected(selection.0, selection.1),
         pair: binding::pair_bits(&pair),
         uv_bits: pair
             .pcurves
@@ -114,10 +114,9 @@ pub(in crate::predicates::roots::metric_bounds) fn fingerprint(
     evidence: &ConicalDevelopedBoundaryEvidence,
 ) -> Vec<u64> {
     let mut bits = evidence.source.bits.clone();
-    for values in [&evidence.domain, &evidence.pair] {
-        bits.push(values.len() as u64);
-        bits.extend(values);
-    }
+    // The material binding verifies and stores the common chart once for every span.
+    bits.push(evidence.pair.len() as u64);
+    bits.extend(&evidence.pair);
     bits.extend([
         evidence.reference,
         u64::from(evidence.options.fractional_bits),

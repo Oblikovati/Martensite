@@ -1,17 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
 use super::*;
-pub(in crate::predicates::roots::metric_bounds) fn domain_bits(
-    domain: &ConicalChartDomainEvidence,
-) -> Vec<u64> {
-    super::super::boundary_chart::ChartBinding::capture(domain).diagnostic_bits()
-}
-pub(super) fn domain_bits_selected(
-    domain: &ConicalChartDomainEvidence,
-    refinement: ConicalPrimitiveRefinement,
-) -> Vec<u64> {
-    super::super::boundary_chart::ChartBinding::capture_selected(domain, refinement)
-        .diagnostic_bits()
-}
 pub(super) fn pair_bits(pair: &ConicalTrimPairQuery<'_>) -> Vec<u64> {
     let mut bits = vec![
         u64::from(pair.options.fractional_bits),

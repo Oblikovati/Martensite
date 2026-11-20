@@ -41,7 +41,8 @@ pub fn certify_conical_material_with_developed_boundaries_and_refinement(
     let mut arithmetic = Arithmetic::new(policy, &mut cancelled);
     let spatial = bounds::certify_developed(&query, contexts, domain, refinement, &mut arithmetic)?;
     Ok(ConicalMaterialEvidence {
-        bits: fingerprint(&query, contexts, domain, refinement),
+        bits: fingerprint(&query, contexts),
+        chart: Some(ChartBinding::capture_selected(domain, refinement)),
         spatial,
         operations: arithmetic.operations(),
     })
@@ -91,15 +92,16 @@ impl ConicalMaterialEvidence {
         domain: &ConicalChartDomainEvidence,
         refinement: ConicalPrimitiveRefinement,
     ) -> bool {
-        validate(query, contexts, domain, refinement).is_ok()
-            && self.bits == fingerprint(query, contexts, domain, refinement)
+        self.chart
+            .as_ref()
+            .is_some_and(|chart| chart.matches_selected(domain, refinement))
+            && validate(query, contexts, domain, refinement).is_ok()
+            && self.bits == fingerprint(query, contexts)
     }
 }
 fn fingerprint(
     query: &ConicalMaterialQuery<'_>,
     contexts: &[ConicalDevelopedBoundarySpan<'_>],
-    domain: &ConicalChartDomainEvidence,
-    refinement: ConicalPrimitiveRefinement,
 ) -> Vec<u64> {
     let mut bits = input::bits(query);
     bits.extend([0x6465_7665_6c6f_7065, 1, contexts.len() as u64]);
@@ -107,10 +109,6 @@ fn fingerprint(
         let authority = developed_boundary::fingerprint(context.evidence);
         bits.push(authority.len() as u64);
         bits.extend(authority);
-    }
-    bits.extend(developed_boundary::domain_bits(domain));
-    if refinement == ConicalPrimitiveRefinement::HalfSplitV1 {
-        bits.extend([0x7265_6669_6e65_6d74, 1]);
     }
     bits
 }

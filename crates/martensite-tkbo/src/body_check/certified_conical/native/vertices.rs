@@ -2,6 +2,7 @@
 //! Native vertices and shared corners equal the exact actual surface boundaries.
 use super::*;
 use martensite_tkbrep::topexp;
+use martensite_tkbrep::toptools::IndexedMapOfShape;
 pub(super) fn verify(side: &SideGeometry) -> Result<(), Failure> {
     let rows = [ends(&side.edges[0])?, ends(&side.edges[1])?];
     for (row, vertices) in rows.iter().enumerate() {
@@ -39,22 +40,23 @@ pub(in crate::body_check::certified_conical) fn complete(
     root: &Shape,
     sides: &[Side],
 ) -> Result<(), Failure> {
-    let edges: Vec<_> = sides.iter().flat_map(|side| &side.edges).collect();
+    let mut edges = IndexedMapOfShape::default();
+    for edge in sides.iter().flat_map(|side| &side.edges) {
+        edges.add(edge.clone());
+    }
     for actual in children(root, ShapeEnum::Edge)? {
-        if !edges.iter().any(|edge| edge.is_same(&actual)) {
+        if !edges.contains(&actual) {
             return Err(rejected("native root has an uncovered edge"));
         }
     }
-    let endpoints = edges
-        .iter()
-        .map(|edge| ends(edge))
-        .collect::<Result<Vec<_>, _>>()?;
+    let mut endpoints = IndexedMapOfShape::default();
+    for index in 1..=edges.extent() {
+        for vertex in ends(edges.find_key(index)?)? {
+            endpoints.add(vertex.into_shape());
+        }
+    }
     for actual in children(root, ShapeEnum::Vertex)? {
-        if !endpoints
-            .iter()
-            .flatten()
-            .any(|vertex| vertex.is_same(&actual))
-        {
+        if !endpoints.contains(&actual) {
             return Err(rejected("native root has an uncovered vertex"));
         }
     }

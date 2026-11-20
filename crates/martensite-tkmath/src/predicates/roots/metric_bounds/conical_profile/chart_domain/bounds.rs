@@ -54,10 +54,15 @@ fn evidence(
     (physical, sine, cosine, minimum_x): (Interval, Interval, Interval, Interval),
     arithmetic: &Arithmetic<'_>,
 ) -> ConicalChartDomainEvidence {
+    let sector = captured_sector(query, margin, arithmetic);
+    // Sort only indices. The proof and its diagnostics retain authored source order.
+    let mut by_coefficients: Vec<_> = (0..sector.source.len()).collect();
+    by_coefficients.sort_unstable_by(|&a, &b| sector.source[a].cmp(&sector.source[b]));
     ConicalChartDomainEvidence {
         version,
         span_limit: version.span_limit(),
-        sector: captured_sector(query, margin, arithmetic),
+        sector,
+        by_coefficients,
         chart: [query.chart_origin.to_bits(), query.fit_center.to_bits()],
         turns: [query.developed_turn, query.physical_turn],
         physical,

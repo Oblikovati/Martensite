@@ -101,3 +101,36 @@ Evidence: [fit charges](references/fit-charge-attribution-2026-11-19/summary.jso
 [current stage attribution](references/v6-stage-attribution-2026-11-19/summary.json).
 The raw logs preserve every observed attempt and sum measurement. These are
 Martensite diagnostics, not a PhysCAD comparison or final performance approval.
+
+## Source and incidence audit, 2026-11-20
+
+The wrapped cylinder and cone pipelines were checked at input capture, fitting,
+stored trims, periodic material, native qualification, history and publication.
+The review followed snapshot and lookup calls inside the region, span, edge
+and image loops. A proof that validates new geometry can still require a full
+pass over that geometry. A span that only needs to identify an already captured
+source can use its immutable coefficient record or an indexed reference.
+
+| Path | Repeated work found | Change |
+| --- | --- | --- |
+| Cone chart, boundary, trim and material proofs | Each fitted span copied a chart's complete coefficient list. Material rebinding repeatedly built the serialized list. | Each chart owns one immutable ordered source list. Receipts share it. Material retains one chart binding and span-local inputs. Independent captures compare every coefficient bit. |
+| Cone directed transitions and cap ownership | Every span rebuilt the full side-ID list. Cap and side ownership were repeatedly searched by ID. | Reuse the issued side index and build one cap index. Serialize the full lists only to report a mismatch. |
+| Cone source reconstruction | Clearance scanned the complete set of original curves for each fitted span. Storage and material searched each member's curves again. | Index authored curve ownership once for clearance. Reuse positions into each original member for retained proof queries. |
+| Native cone faces, cap edges and rulings | Each face or edge searched the native member. Shared rulings were found by comparing all pairs of sides. | Index exact native identity and incidence. Visit side pairs that actually share an edge in the original pair order. |
+| Cylinder periodic clearance | Every translated image retained its own copy of the same authored curves and intervals. | Share the source snapshot. Keep separate geometric proof, translation and work receipts for every image. |
+| Shared storage and cylinder placement and material | Repeated linear region and shape lookups ran inside member or witness loops. | Index the member owners and use the existing sorted archive keys and sorted region IDs for lookup. |
+
+This work leaves the arithmetic and geometry policies intact. Native graph
+round trips and body validation still run at the ownership boundaries. The
+geometric pair census and bounded intersection proofs keep their own search
+and work policies. Wider cone charts and general attachment trims are separate
+requirements.
+
+348 selected tests passed, including inward and outward 239-curve cone
+text and the cylinder's periodic material checks. An independent before-and-after
+replay of the curved, holed cone matched its BRep, history and budget byte for
+byte. Three local pairs on the outward text case measured median API time at
+14.94 s before and 14.63 s after. Median process peak RSS rose from 200,360 to
+201,716 KiB. In a separate sampled run, resident file pages accounted for
+1,060 KiB of the 1,080 KiB difference at the observed peaks. The paired result
+still needs to clear the peak-memory gate. [Audit receipt](references/source-incidence-audit-2026-11-20.json)

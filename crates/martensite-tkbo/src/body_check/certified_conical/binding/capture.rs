@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Explicit source identities cover every actual native face exactly once.
 use super::*;
+use martensite_tkbrep::toptools::IndexedMapOfShape;
+use std::collections::BTreeMap;
 pub(super) fn family(
     bindings: &[ConicalNativeMember],
 ) -> Result<ConicalNativeGeometry, ConicalBindingError> {
@@ -19,7 +21,15 @@ pub(super) fn family(
     }
     members.sort_by_key(|member| member.id);
     let adjacent = adjacency(&members)?;
-    Ok(ConicalNativeGeometry { members, adjacent })
+    let mut side_orientations = BTreeMap::new();
+    for side in members.iter().flat_map(|member| &member.sides) {
+        side_orientations.entry(side.id).or_insert(side.orientation);
+    }
+    Ok(ConicalNativeGeometry {
+        members,
+        adjacent,
+        side_orientations,
+    })
 }
 fn member(binding: &ConicalNativeMember) -> Result<MemberGeometry, ConicalBindingError> {
     face_coverage(binding).map_err(|cause| error(Some(binding.id), None, None, cause))?;
@@ -63,21 +73,6 @@ fn adjacency(
     append_adjacency(&sides, &mut adjacent)?;
     Ok(adjacent)
 }
-fn shared(first: &native::Side, second: &native::Side) -> Result<Option<[u8; 2]>, Failure> {
-    let pairs: Vec<_> = first
-        .edges
-        .iter()
-        .enumerate()
-        .flat_map(|(i, a)| {
-            second
-                .edges
-                .iter()
-                .enumerate()
-                .filter_map(move |(j, b)| a.is_same(b).then_some([i, j]))
-        })
-        .collect();
-    shared_slots(pairs)
-}
 
 fn capture_sides(binding: &ConicalNativeMember) -> Result<Vec<native::Side>, ConicalBindingError> {
     let mut sides = Vec::new();
@@ -103,6 +98,7 @@ fn capture_caps(
     binding: &ConicalNativeMember,
     sides: &[native::Side],
 ) -> Result<Vec<native::Cap>, ConicalBindingError> {
+    let rows = native::SideRows::capture(sides);
     let mut caps = Vec::new();
     for cap in &binding.caps {
         let curves: Vec<_> = cap
@@ -111,7 +107,7 @@ fn capture_caps(
             .map(|(curve, side)| (*curve, side.0))
             .collect();
         caps.push(
-            native::capture_cap(cap.id.0, &cap.face, sides, &cap.material, &curves)
+            native::capture_cap(cap.id.0, &cap.face, &rows, &cap.material, &curves)
                 .map_err(|cause| error(Some(binding.id), None, Some(cap.id), cause))?,
         );
     }
@@ -121,15 +117,18 @@ fn capture_caps(
 }
 
 fn oriented_faces(actual: &[Shape], supplied: &[&Face]) -> Result<(), Failure> {
+    let mut faces = IndexedMapOfShape::default();
+    let mut counts = Vec::<[usize; 4]>::new();
+    for &face in supplied {
+        let key = faces.add(Shape::clone(face));
+        if key > counts.len() {
+            counts.push([0; 4]);
+        }
+        counts[key - 1][face.orientation() as usize] += 1;
+    }
     for face in actual {
-        if supplied
-            .iter()
-            .filter(|candidate| {
-                candidate.is_same(face) && candidate.orientation() == face.orientation()
-            })
-            .count()
-            != 1
-        {
+        let key = faces.find_index(face);
+        if key == 0 || counts[key - 1][face.orientation() as usize] != 1 {
             return Err(native::rejected(
                 "actual native face lacks unique oriented source binding",
             ));
@@ -142,12 +141,52 @@ fn append_adjacency(
     sides: &[(ConicalActualMemberId, &native::Side)],
     adjacent: &mut Vec<ConicalActualAdjacent>,
 ) -> Result<(), ConicalBindingError> {
-    for (i, (owner, first)) in sides.iter().enumerate() {
-        for (other, second) in &sides[i + 1..] {
-            append_pair(*owner, first, *other, second, adjacent)?;
-        }
+    for ([first, second], shared) in actual_shared_edges(sides) {
+        let (owner, first) = sides[first];
+        let (other, second) = sides[second];
+        append_pair(owner, first, other, second, shared, adjacent)?;
     }
     Ok(())
+}
+
+struct PairSlots {
+    slots: [usize; 2],
+    multiple: bool,
+}
+
+fn actual_shared_edges(
+    sides: &[(ConicalActualMemberId, &native::Side)],
+) -> BTreeMap<[usize; 2], PairSlots> {
+    let mut edges = IndexedMapOfShape::default();
+    let mut uses = Vec::<Vec<[usize; 2]>>::new();
+    let mut pairs = BTreeMap::<[usize; 2], PairSlots>::new();
+    for (index, (_, side)) in sides.iter().enumerate() {
+        for (slot, edge) in side.edges.iter().enumerate() {
+            let key = edges.add(edge.clone());
+            if key > uses.len() {
+                uses.push(Vec::new());
+            }
+            record_incidence(&mut uses[key - 1], &mut pairs, [index, slot]);
+        }
+    }
+    pairs
+}
+
+fn record_incidence(
+    uses: &mut Vec<[usize; 2]>,
+    pairs: &mut BTreeMap<[usize; 2], PairSlots>,
+    [index, slot]: [usize; 2],
+) {
+    for &[other, previous_slot] in uses.iter().filter(|entry| entry[0] < index) {
+        pairs
+            .entry([other, index])
+            .and_modify(|shared| shared.multiple = true)
+            .or_insert(PairSlots {
+                slots: [previous_slot, slot],
+                multiple: false,
+            });
+    }
+    uses.push([index, slot]);
 }
 
 fn require_same_owner(
@@ -171,38 +210,35 @@ fn append_pair(
     first: &native::Side,
     other: ConicalActualMemberId,
     second: &native::Side,
+    shared: PairSlots,
     adjacent: &mut Vec<ConicalActualAdjacent>,
 ) -> Result<(), ConicalBindingError> {
-    if let Some(slots) = shared(first, second).map_err(|cause| {
+    let slots = shared_slots(shared).map_err(|cause| {
         error(
             Some(owner),
             Some(ConicalActualSideId(first.id)),
             None,
             cause,
         )
-    })? {
-        require_same_owner(owner, other, first)?;
-        adjacent.push(ConicalActualAdjacent {
-            sides: [
-                ConicalActualSideId(first.id),
-                ConicalActualSideId(second.id),
-            ],
-            u_slots: slots,
-        });
-    }
+    })?;
+    require_same_owner(owner, other, first)?;
+    adjacent.push(ConicalActualAdjacent {
+        sides: [
+            ConicalActualSideId(first.id),
+            ConicalActualSideId(second.id),
+        ],
+        u_slots: slots,
+    });
     Ok(())
 }
 
-fn shared_slots(pairs: Vec<[usize; 2]>) -> Result<Option<[u8; 2]>, Failure> {
-    if pairs.is_empty() {
-        return Ok(None);
-    }
-    if pairs.len() != 1 || pairs[0].iter().any(|slot| *slot < 2) {
+fn shared_slots(shared: PairSlots) -> Result<[u8; 2], Failure> {
+    if shared.multiple || shared.slots.iter().any(|slot| *slot < 2) {
         return Err(native::rejected(
             "actual sides have unsupported shared non-ruling incidence",
         ));
     }
-    Ok(Some(pairs[0].map(|slot| (slot - 2) as u8)))
+    Ok(shared.slots.map(|slot| (slot - 2) as u8))
 }
 
 fn unique_caps(
@@ -218,4 +254,23 @@ fn unique_caps(
         ));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn indexed_incidence_preserves_pair_order_and_refuses_a_second_shared_edge() {
+        let mut pairs = BTreeMap::new();
+        record_incidence(&mut vec![[0, 3]], &mut pairs, [2, 2]);
+        record_incidence(&mut vec![[0, 2]], &mut pairs, [1, 3]);
+        assert_eq!(pairs.keys().copied().collect::<Vec<_>>(), [[0, 1], [0, 2]]);
+        assert_eq!(
+            shared_slots(pairs.remove(&[0, 1]).unwrap()).unwrap(),
+            [0, 1]
+        );
+        record_incidence(&mut vec![[0, 2]], &mut pairs, [2, 3]);
+        assert!(shared_slots(pairs.remove(&[0, 2]).unwrap()).is_err());
+    }
 }

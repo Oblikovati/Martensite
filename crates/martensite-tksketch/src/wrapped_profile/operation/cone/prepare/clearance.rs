@@ -6,10 +6,17 @@ pub(super) fn certify(
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
 ) -> ConeChecked<CertifiedCylindricalClearance> {
+    let mut by_curve = BTreeMap::new();
+    for piece in originals
+        .iter()
+        .flat_map(|source| source.loops.iter().flatten())
+    {
+        by_curve.entry(piece.span.curve).or_insert(piece);
+    }
     let mut sources = Vec::new();
     for input in prepared {
         for piece in input.source.loops.iter().flatten() {
-            sources.push(source(originals, piece)?);
+            sources.push(source(&by_curve, piece)?);
         }
     }
     let excluded = adjacent(prepared);
@@ -66,13 +73,11 @@ fn query<'a>(
 }
 
 fn source<'a>(
-    originals: &'a [DevelopedRegionRequest],
+    originals: &BTreeMap<SurfaceCurveId, &'a AuthoredPiece>,
     piece: &AuthoredPiece,
 ) -> ConeChecked<CylindricalClearanceSource<'a>> {
     let authored = originals
-        .iter()
-        .flat_map(|r| r.loops.iter().flatten())
-        .find(|p| p.span.curve == piece.span.curve)
+        .get(&piece.span.curve)
         .ok_or_else(|| source_failure(piece.span, "authored-source", 0., "one original owner"))?;
     let interval = CylindricalProfileInterval::new(u64::from(piece.span.index), piece.span.level)
         .map_err(|_| {

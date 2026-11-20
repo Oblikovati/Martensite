@@ -226,7 +226,7 @@ pub(super) fn chart_bits(proof: &ConicalChartDomainEvidence, bits: &mut Vec<u64>
         proof.physical_turn() as u64,
         proof.sector.source.len() as u64,
     ]);
-    for span in &proof.sector.source {
+    for span in proof.sector.source.iter() {
         bits.push(span.len() as u64);
         bits.extend(span.iter().flatten().copied());
     }

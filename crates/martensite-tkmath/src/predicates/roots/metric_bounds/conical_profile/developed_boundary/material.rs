@@ -42,11 +42,13 @@ pub(in crate::predicates::roots::metric_bounds) fn validate_with_refinement(
         context.boundary.input.bits.clone(),
         issued.source.bits.clone(),
     )?;
-    compare(
-        "actual developed chart authority",
-        super::binding::domain_bits_selected(domain, refinement),
-        issued.domain.clone(),
-    )?;
+    if !issued.domain.matches_selected(domain, refinement) {
+        return compare(
+            "actual developed chart authority",
+            ChartBinding::capture_selected(domain, refinement).diagnostic_bits(),
+            issued.domain.diagnostic_bits(),
+        );
+    }
     binding::boundary_authority(context, domain, refinement)?;
     binding::material_operands(query, span, context)?;
     Ok(())

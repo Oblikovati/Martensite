@@ -13,6 +13,7 @@ use martensite_tkg3d::{
     top_abs::{Orientation, ShapeEnum},
 };
 mod cap;
+pub(super) use cap::SideRows;
 mod side;
 mod vertices;
 pub(super) use vertices::complete as complete_entities;
@@ -93,9 +94,9 @@ pub(super) fn capture_side(id: u64, face: &Face) -> Result<Side, Failure> {
 pub(super) fn capture_cap(
     id: u64,
     face: &Face,
-    sides: &[Side],
+    rows: &SideRows,
     material: &CertifiedPlanarMaterial,
     curves: &[(ProfileCurveId, u64)],
 ) -> Result<Cap, Failure> {
-    cap::capture(id, face, sides, material, curves)
+    cap::capture(id, face, rows, material, curves)
 }

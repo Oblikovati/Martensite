@@ -4,11 +4,14 @@ use super::*;
 use crate::profile_extrusion::{LoopUse, ProfileCurve, ProfileLoop};
 use martensite_tkbrep::brep_tools::WireExplorer;
 use martensite_tkg2d::geom2d::Geom2dBezierCurve;
+mod lookup;
+pub(in super::super) use lookup::SideRows;
+use lookup::{CapCurves, WireEdges};
 
 pub(super) fn capture(
     id: u64,
     face: &Face,
-    sides: &[Side],
+    rows: &SideRows,
     material: &CertifiedPlanarMaterial,
     curves: &[(ProfileCurveId, u64)],
 ) -> Result<Cap, Failure> {
@@ -23,7 +26,8 @@ pub(super) fn capture(
     selected_trim_domain(face, "cap")?;
     let (frame, datums) = carrier_values(cone);
     let forward = topods::face(&face.oriented(Orientation::Forward))?;
-    let contours = contours(&forward, sides, material, curves)?;
+    let curves = CapCurves::new(material, curves);
+    let contours = contours(&forward, rows, material, &curves)?;
     cap_result(id, face, frame, datums, contours)
 }
 fn frame(cone: &GeomConicalSurface) -> [[f64; 3]; 4] {
@@ -43,11 +47,11 @@ fn frame(cone: &GeomConicalSurface) -> [[f64; 3]; 4] {
 fn contour(
     face: &Face,
     wire: &topods::Wire,
-    sides: &[Side],
+    rows: &SideRows,
     material: &CertifiedPlanarMaterial,
-    curves: &[(ProfileCurveId, u64)],
+    curves: &CapCurves<'_>,
 ) -> Result<Contour, Failure> {
-    let (mut edges, uses) = contour_edges(face, wire, sides, material, curves)?;
+    let (mut edges, uses) = contour_edges(face, wire, rows, curves)?;
     let role = material
         .loop_role(&ProfileLoop { uses })
         .ok_or_else(|| rejected("actual directed cap loop differs from selected material"))?;
@@ -64,30 +68,7 @@ fn contour(
         edges,
     })
 }
-fn unique_edge(actual: &[Shape], edge: &topods::Edge) -> Result<usize, Failure> {
-    let found: Vec<_> = actual
-        .iter()
-        .enumerate()
-        .filter(|(_, candidate)| candidate.is_same(edge))
-        .map(|(i, _)| i)
-        .collect();
-    if found.len() != 1 {
-        return Err(rejected("ambiguous actual native cap edge occurrence"));
-    }
-    Ok(found[0])
-}
-fn curve_id(curves: &[(ProfileCurveId, u64)], side: u64) -> Result<ProfileCurveId, Failure> {
-    let found: Vec<_> = curves
-        .iter()
-        .filter(|(_, candidate)| *candidate == side)
-        .map(|(curve, _)| *curve)
-        .collect();
-    if found.len() != 1 {
-        return Err(rejected("missing/ambiguous source curve-to-side binding"));
-    }
-    Ok(found[0])
-}
-fn edge_uv(edge: &topods::Edge, face: &Face, sides: &[Side]) -> Result<UvEdge, Failure> {
+fn edge_uv(edge: &topods::Edge, face: &Face, rows: &SideRows) -> Result<UvEdge, Failure> {
     let captured = BRepTool::curve_on_face(edge, face)?;
     if !captured.is_stored || [captured.first, captured.last] != [0., 1.] {
         return Err(rejected(
@@ -104,35 +85,22 @@ fn edge_uv(edge: &topods::Edge, face: &Face, sides: &[Side]) -> Result<UvEdge, F
         ));
     }
     let (poles, weights) = uv_controls(curve)?;
-    let links = links(edge, sides)?;
-    uv_result(edge, poles, weights, links, [captured.first, captured.last])
-}
-fn match_curve(
-    material: &CertifiedPlanarMaterial,
-    id: ProfileCurveId,
-    edge: &UvEdge,
-) -> Result<(), Failure> {
-    let curve = material
-        .profile()
-        .curves
-        .iter()
-        .find(|curve| curve.id() == id)
-        .ok_or_else(|| rejected("selected material curve missing"))?;
-    match_polynomial(curve, id, edge)
+    let link = rows.find(edge)?;
+    uv_result(edge, poles, weights, link, [captured.first, captured.last])
 }
 
 fn contours(
     forward: &Face,
-    sides: &[Side],
+    rows: &SideRows,
     material: &CertifiedPlanarMaterial,
-    curves: &[(ProfileCurveId, u64)],
+    curves: &CapCurves<'_>,
 ) -> Result<Vec<Contour>, Failure> {
     let mut contours = Vec::new();
     for shape in children(forward, ShapeEnum::Wire)? {
         contours.push(contour(
             forward,
             &topods::wire(&shape)?,
-            sides,
+            rows,
             material,
             curves,
         )?);
@@ -145,25 +113,21 @@ fn contours(
 fn contour_edges(
     face: &Face,
     wire: &topods::Wire,
-    sides: &[Side],
-    material: &CertifiedPlanarMaterial,
-    curves: &[(ProfileCurveId, u64)],
+    rows: &SideRows,
+    curves: &CapCurves<'_>,
 ) -> Result<(Vec<UvEdge>, Vec<LoopUse>), Failure> {
     let actual = children(wire, ShapeEnum::Edge)?;
-    let mut visited = vec![false; actual.len()];
+    let mut wire_edges = WireEdges::capture(&actual);
     let mut explorer = WireExplorer::with_wire_on_face(wire, face)?;
     let (mut edges, mut uses) = (Vec::new(), Vec::new());
     while explorer.more() {
         let edge = explorer.current();
-        let slot = unique_edge(&actual, edge)?;
-        if std::mem::replace(&mut visited[slot], true) {
-            return Err(rejected("repeated actual cap wire edge"));
-        }
-        let captured = captured_use(edge, face, sides, material, curves, &mut uses)?;
+        wire_edges.visit(edge)?;
+        let captured = captured_use(edge, face, rows, curves, &mut uses)?;
         edges.push(captured);
         explorer.next()?;
     }
-    if visited.iter().any(|seen| !seen) {
+    if edges.len() != actual.len() {
         return Err(rejected("native wire explorer omitted cap edge"));
     }
     Ok((edges, uses))
@@ -172,14 +136,13 @@ fn contour_edges(
 fn captured_use(
     edge: &topods::Edge,
     face: &Face,
-    sides: &[Side],
-    material: &CertifiedPlanarMaterial,
-    curves: &[(ProfileCurveId, u64)],
+    rows: &SideRows,
+    curves: &CapCurves<'_>,
     uses: &mut Vec<LoopUse>,
 ) -> Result<UvEdge, Failure> {
-    let captured = edge_uv(edge, face, sides)?;
-    let curve = curve_id(curves, captured.side)?;
-    match_curve(material, curve, &captured)?;
+    let captured = edge_uv(edge, face, rows)?;
+    let (curve, polynomial) = curves.find(captured.side)?;
+    match_polynomial(polynomial, curve, &captured)?;
     uses.push(LoopUse {
         curve,
         reversed: captured.reversed,
@@ -195,21 +158,6 @@ fn carrier_values(cone: &GeomConicalSurface) -> ([[f64; 3]; 4], [f64; 3]) {
         cone.semi_angle(),
     ];
     (frame, datums)
-}
-
-fn links(edge: &topods::Edge, sides: &[Side]) -> Result<Vec<(u64, usize)>, Failure> {
-    let links: Vec<_> = sides
-        .iter()
-        .flat_map(|side| {
-            (0..2).filter_map(move |row| side.edges[row].is_same(edge).then_some((side.id, row)))
-        })
-        .collect();
-    if links.len() != 1 {
-        return Err(rejected(
-            "cap edge requires exactly one actual side-row incidence",
-        ));
-    }
-    Ok(links)
 }
 
 fn uv_controls(curve: &Geom2dBezierCurve) -> Result<(Vec<[f64; 2]>, Vec<f64>), Failure> {
@@ -270,12 +218,12 @@ fn uv_result(
     edge: &topods::Edge,
     poles: Vec<[f64; 2]>,
     weights: Vec<f64>,
-    links: Vec<(u64, usize)>,
+    (side, row): (u64, usize),
     range: [f64; 2],
 ) -> Result<UvEdge, Failure> {
     Ok(UvEdge {
-        side: links[0].0,
-        row: links[0].1,
+        side,
+        row,
         reversed: orientation(edge)? < 0,
         poles,
         weights,

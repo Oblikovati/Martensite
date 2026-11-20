@@ -6,9 +6,13 @@ pub(super) fn certify(
     stored: &BTreeMap<SurfaceRegionId, Stored>,
 ) -> ConeChecked<()> {
     sector(originals, selection)?;
+    let originals = operation::source::by_region(originals);
     let mut clearance = Vec::new();
     for prepared in &selection.prepared {
-        let original = original(originals, prepared.source.region)?;
+        let original = originals
+            .get(&prepared.source.region)
+            .copied()
+            .ok_or_else(|| missing(prepared.source.region))?;
         let member = stored
             .get(&original.region)
             .ok_or_else(|| missing(original.region))?;
@@ -29,7 +33,7 @@ fn sector(originals: &[DevelopedRegionRequest], selection: &Selection) -> ConeCh
     let owners_match = selection
         .prepared
         .iter()
-        .all(|prepared| authority_matches(&selection.domain, prepared, &spans));
+        .all(|member| authority_matches(&selection.domain, prepared, member, &spans));
     if !matches || !owners_match {
         return Err(family_mismatch("domain original source binding"));
     }
@@ -71,30 +75,31 @@ fn chart_matches(
 
 fn authority_matches(
     selected: &domain::DomainEvidence,
+    first: &Prepared,
     prepared: &Prepared,
     spans: &[&[[f64; 2]]],
 ) -> bool {
-    match (selected, prepared.chart_domain.as_deref()) {
+    match (selected, &prepared.chart_domain) {
         (domain::DomainEvidence::Legacy { .. }, None) => true,
         (domain::DomainEvidence::Chart(selected, _), Some(actual)) => {
             selected.version() == actual.version()
                 && selected.span_limit() == actual.span_limit()
                 && selected.options() == actual.options()
-                && chart_matches(selected, prepared, spans)
-                && chart_matches(actual, prepared, spans)
+                && chart_scalars(first) == chart_scalars(prepared)
+                && (std::sync::Arc::ptr_eq(selected, actual)
+                    || chart_matches(actual, prepared, spans))
         }
         _ => false,
     }
 }
 
-fn original(
-    originals: &[DevelopedRegionRequest],
-    region: SurfaceRegionId,
-) -> ConeChecked<&DevelopedRegionRequest> {
-    originals
-        .iter()
-        .find(|original| original.region == region)
-        .ok_or_else(|| missing(region))
+fn chart_scalars(prepared: &Prepared) -> [u64; 3] {
+    [
+        prepared.semi_angle,
+        prepared.chart_origin,
+        prepared.chart_center,
+    ]
+    .map(f64::to_bits)
 }
 fn missing(region: SurfaceRegionId) -> ConeFailure {
     failure(region, None, ConeCause::Missing(region))
@@ -129,7 +134,7 @@ fn bind_member<'a>(
     }
     for (piece, proof) in pieces.into_iter().zip(&stored.spans) {
         bind_span(original, prepared, piece, proof)?;
-        clearance.push(clearance_source(original, piece.span)?);
+        clearance.push(clearance_source(original, prepared, piece.span)?);
     }
     Ok(())
 }
@@ -151,11 +156,12 @@ fn bind_span(
     }
     Ok(())
 }
-fn clearance_source(
-    original: &DevelopedRegionRequest,
+fn clearance_source<'a>(
+    original: &'a DevelopedRegionRequest,
+    prepared: &Prepared,
     span: CurveSpan,
-) -> ConeChecked<CylindricalClearanceSource<'_>> {
-    let source = source_piece(original, span)?;
+) -> ConeChecked<CylindricalClearanceSource<'a>> {
+    let source = source_piece(original, prepared, span)?;
     let interval = source_interval(original.region, span)?;
     Ok(CylindricalClearanceSource {
         authored: &source.poles,
@@ -163,12 +169,13 @@ fn clearance_source(
     })
 }
 
-fn source_piece(original: &DevelopedRegionRequest, span: CurveSpan) -> ConeChecked<&AuthoredPiece> {
-    original
-        .loops
-        .iter()
-        .flatten()
-        .find(|source| source.span.curve == span.curve)
+fn source_piece<'a>(
+    original: &'a DevelopedRegionRequest,
+    prepared: &Prepared,
+    span: CurveSpan,
+) -> ConeChecked<&'a AuthoredPiece> {
+    prepared
+        .authored_piece(original, span.curve)
         .ok_or_else(|| {
             mismatch(
                 original.region,

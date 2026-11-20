@@ -3,18 +3,26 @@
 use super::*;
 pub(super) fn issue(
     query: &ConicalDirectedGammaQuery<'_>,
+    caps: CapIndex,
     arithmetic: &mut Arithmetic<'_>,
     position: &mut error::FailurePosition,
 ) -> Outcome<ConicalDirectedGammaEvidence> {
-    let (records, gaps) = records(query, arithmetic, position)?;
+    let (records, gaps) = records(query, &caps, arithmetic, position)?;
     position.clear();
     let gamma = select(&records, &gaps, arithmetic)?;
     arithmetic.check_cancelled()?;
-    Ok(publish(query, records, gamma, arithmetic.operations()))
+    Ok(publish(
+        query,
+        records,
+        caps,
+        gamma,
+        arithmetic.operations(),
+    ))
 }
 fn capture(
     span: &ConicalDirectedGammaSpan<'_>,
     query: &ConicalDirectedGammaQuery<'_>,
+    caps: &CapIndex,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Outcome<GammaSpanCapture> {
     let storage = [
@@ -29,7 +37,7 @@ fn capture(
     let cosine = span.domain.cosine.clone();
     numeric::positive("family sine", &sine, arithmetic)?;
     numeric::positive("family cosine", &cosine, arithmetic)?;
-    let levels = levels(span, query, &sine, &cosine, arithmetic)?;
+    let levels = levels(span, query, caps, &sine, &cosine, arithmetic)?;
     Ok(record(
         span,
         query.refinement,
@@ -40,14 +48,14 @@ fn capture(
 fn cap_level(
     id: ConicalActualCapId,
     query: &ConicalDirectedGammaQuery<'_>,
+    caps: &CapIndex,
     sine: &Interval,
     cosine: &Interval,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Outcome<Interval> {
-    let cap = query
-        .caps
-        .iter()
-        .find(|v| v.id == id)
+    let cap = caps
+        .get(&id)
+        .and_then(|&index| query.caps.get(index))
         .ok_or_else(|| error::shape("carrier", id.0 as usize, "declared actual cap"))?;
     let radius = arithmetic.scalar(cap.radius)?;
     let origin = arithmetic.scalar(cap.axial_origin)?;
@@ -95,6 +103,7 @@ pub(super) fn transform(gamma: [f64; 2], row: usize, old: f64) -> Outcome<f64> {
 
 fn records(
     query: &ConicalDirectedGammaQuery<'_>,
+    caps: &CapIndex,
     arithmetic: &mut Arithmetic<'_>,
     position: &mut error::FailurePosition,
 ) -> Outcome<(Vec<GammaSpanCapture>, [Vec<Interval>; 2])> {
@@ -102,7 +111,7 @@ fn records(
     let mut gaps: [Vec<Interval>; 2] = std::array::from_fn(|_| Vec::new());
     for span in query.spans {
         position.side(span.id);
-        let record = capture(span, query, arithmetic)?;
+        let record = capture(span, query, caps, arithmetic)?;
         for (row, values) in gaps.iter_mut().enumerate() {
             values.push(numeric::magnitude(
                 &arithmetic.subtract(&record.cap_levels[row], &record.depths[row])?,
@@ -115,6 +124,7 @@ fn records(
 fn publish(
     query: &ConicalDirectedGammaQuery<'_>,
     records: Vec<GammaSpanCapture>,
+    cap_index: CapIndex,
     gamma: [f64; 2],
     operations: u32,
 ) -> ConicalDirectedGammaEvidence {
@@ -131,19 +141,21 @@ fn publish(
         records: records.into(),
         index: std::sync::Arc::new(index),
         caps: query.caps.to_vec().into(),
+        cap_index: std::sync::Arc::new(cap_index),
     }
 }
 
 fn levels(
     span: &ConicalDirectedGammaSpan<'_>,
     query: &ConicalDirectedGammaQuery<'_>,
+    caps: &CapIndex,
     sine: &Interval,
     cosine: &Interval,
     arithmetic: &mut Arithmetic<'_>,
 ) -> Outcome<[Interval; 2]> {
     Ok([
-        cap_level(span.caps[0], query, sine, cosine, arithmetic)?,
-        cap_level(span.caps[1], query, sine, cosine, arithmetic)?,
+        cap_level(span.caps[0], query, caps, sine, cosine, arithmetic)?,
+        cap_level(span.caps[1], query, caps, sine, cosine, arithmetic)?,
     ])
 }
 fn record(

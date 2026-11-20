@@ -3,6 +3,7 @@
 use super::*;
 pub(super) mod admission;
 mod execute;
+type CapIndex = BTreeMap<ConicalActualCapId, usize>;
 /// Immutable issued family policy; caller-supplied movement scalars are not authority.
 #[derive(Clone)]
 pub struct ConicalDirectedGammaEvidence {
@@ -13,6 +14,7 @@ pub struct ConicalDirectedGammaEvidence {
     records: std::sync::Arc<[GammaSpanCapture]>,
     index: std::sync::Arc<BTreeMap<ConicalActualSideId, usize>>,
     caps: std::sync::Arc<[ConicalActualCapCarrier]>,
+    cap_index: std::sync::Arc<CapIndex>,
 }
 pub(in crate::predicates::roots::metric_bounds::conical_profile) struct GammaSpanCapture {
     pub(in crate::predicates::roots::metric_bounds::conical_profile) parent_storage: [Interval; 2],
@@ -46,10 +48,10 @@ pub fn certify_conical_directed_gamma(
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Result<ConicalDirectedGammaEvidence, ConicalActualPatchError> {
     let mut position = error::FailurePosition::default();
-    admission::admit(&query, &mut position)
+    let caps = admission::admit(&query, &mut position)
         .map_err(|v| position.error(v, ConicalActualPatchStage::Binding, query.options, 0))?;
     let mut arithmetic = Arithmetic::new(sector_api::policy(query.options), &mut cancelled);
-    execute::issue(&query, &mut arithmetic, &mut position).map_err(|v| {
+    execute::issue(&query, caps, &mut arithmetic, &mut position).map_err(|v| {
         position.error(
             v,
             ConicalActualPatchStage::Gamma,
@@ -76,7 +78,9 @@ impl ConicalDirectedGammaEvidence {
         self.refinement
     }
     pub(super) fn carrier(&self, id: ConicalActualCapId) -> Option<&ConicalActualCapCarrier> {
-        self.caps.iter().find(|v| v.id == id)
+        self.cap_index
+            .get(&id)
+            .and_then(|&index| self.caps.get(index))
     }
     /// Compare all source, domain, mode, carrier and policy operands; `proof.matches(query)`.
     pub fn matches(&self, query: &ConicalDirectedGammaQuery<'_>) -> bool {
@@ -136,18 +140,8 @@ impl ConicalDirectedGammaEvidence {
             && self.options == other.options
             && self.refinement == other.refinement
             && self.operations == other.operations
-            && self.caps.len() == other.caps.len()
-            && self
-                .caps
-                .iter()
-                .zip(other.caps.iter())
-                .all(|(a, b)| admission::same_carrier(a, b))
-            && self.records.len() == other.records.len()
-            && self
-                .records
-                .iter()
-                .zip(other.records.iter())
-                .all(|(a, b)| same_record(a, b))
+            && same_capture(&self.caps, &other.caps, admission::same_carrier)
+            && same_capture(&self.records, &other.records, same_record)
     }
     fn record_matches(
         &self,
@@ -191,6 +185,15 @@ impl ConicalDirectedGammaEvidence {
         self.record_matches(record, &span, refinement)
             .then_some(record)
     }
+}
+
+fn same_capture<T>(
+    left: &std::sync::Arc<[T]>,
+    right: &std::sync::Arc<[T]>,
+    equal: impl Fn(&T, &T) -> bool,
+) -> bool {
+    std::sync::Arc::ptr_eq(left, right)
+        || (left.len() == right.len() && left.iter().zip(right.iter()).all(|(a, b)| equal(a, b)))
 }
 
 fn same_record(a: &GammaSpanCapture, b: &GammaSpanCapture) -> bool {

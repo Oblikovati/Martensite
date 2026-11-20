@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 //! Complete source, physical-role and incidence admission before numerical setup.
 use super::*;
+type SideIndex<'a, 'b> = BTreeMap<ConicalActualSideId, &'a ConicalActualSideQuery<'b>>;
 pub(super) fn admit(
     query: &ConicalActualPatchQuery<'_>,
     position: &mut error::FailurePosition,
@@ -10,11 +11,11 @@ pub(super) fn admit(
         return Err(error::shape("actual sides", 0, "nonempty complete family"));
     }
     precision(query)?;
-    complete_sides(query, position)?;
+    let sides = complete_sides(query, position)?;
     position.clear();
-    caps(query, position)?;
+    caps(query, &sides, position)?;
     position.clear();
-    adjacencies(query, position)?;
+    adjacencies(query, &sides, position)?;
     position.clear();
     Ok(())
 }
@@ -44,14 +45,14 @@ fn precision(query: &ConicalActualPatchQuery<'_>) -> Outcome<()> {
     }
     Ok(())
 }
-fn complete_sides(
-    query: &ConicalActualPatchQuery<'_>,
+fn complete_sides<'a>(
+    query: &ConicalActualPatchQuery<'a>,
     position: &mut error::FailurePosition,
-) -> Outcome<()> {
-    let mut ids = BTreeSet::new();
+) -> Outcome<SideIndex<'a, 'a>> {
+    let mut sides = SideIndex::new();
     for side in query.sides {
         position.side(side.id);
-        if !ids.insert(side.id) {
+        if sides.insert(side.id, side).is_some() {
             return Err(error::shape(
                 "duplicate actual side",
                 side.id.0 as usize,
@@ -60,8 +61,8 @@ fn complete_sides(
         }
         side_binding(side, query)?;
     }
-    side_inventory(query, &ids)?;
-    Ok(())
+    side_inventory(query, &sides)?;
+    Ok(sides)
 }
 fn side_binding(
     side: &ConicalActualSideQuery<'_>,
@@ -102,7 +103,11 @@ fn physical_roles(side: &ConicalActualSideQuery<'_>, issued: &GammaSpanCapture) 
     }
     Ok(())
 }
-fn caps(query: &ConicalActualPatchQuery<'_>, position: &mut error::FailurePosition) -> Outcome<()> {
+fn caps(
+    query: &ConicalActualPatchQuery<'_>,
+    sides: &SideIndex<'_, '_>,
+    position: &mut error::FailurePosition,
+) -> Outcome<()> {
     let mut ids = BTreeSet::new();
     let mut uses = BTreeSet::new();
     for cap in query.caps {
@@ -117,7 +122,7 @@ fn caps(query: &ConicalActualPatchQuery<'_>, position: &mut error::FailurePositi
             ));
         }
         carrier_source(cap, query)?;
-        cap_edges(cap, query, &mut uses)?;
+        cap_edges(cap, sides, &mut uses)?;
     }
     complete_caps(query, &ids, &uses)
 }
@@ -166,7 +171,7 @@ fn complete_caps(
 }
 fn cap_edges(
     cap: &ConicalActualCapQuery<'_>,
-    query: &ConicalActualPatchQuery<'_>,
+    sides: &SideIndex<'_, '_>,
     uses: &mut BTreeSet<(ConicalActualSideId, usize)>,
 ) -> Outcome<()> {
     outer_contour(cap)?;
@@ -176,7 +181,7 @@ fn cap_edges(
             return Err(error::shape("cap contour edges", 0, "nonempty"));
         }
         for edge in contour.edges {
-            cap_edge(edge, cap, query, uses)?;
+            cap_edge(edge, cap, sides, uses)?;
         }
     }
     Ok(())
@@ -184,11 +189,17 @@ fn cap_edges(
 fn cap_edge(
     edge: &ConicalActualUvEdge<'_>,
     cap: &ConicalActualCapQuery<'_>,
-    query: &ConicalActualPatchQuery<'_>,
+    sides: &SideIndex<'_, '_>,
     uses: &mut BTreeSet<(ConicalActualSideId, usize)>,
 ) -> Outcome<()> {
     edge_range(edge)?;
-    let side = cap_incident_side(query, edge.side)?;
+    let side = sides.get(&edge.side).ok_or_else(|| {
+        error::shape(
+            "cap incident side",
+            edge.side.0 as usize,
+            "declared actual side",
+        )
+    })?;
     if side.member != cap.carrier.member || side.caps[edge.row] != cap.carrier.id {
         let actual = vec![cap.carrier.member.0, cap.carrier.id.0];
         let expected = vec![side.member.0, side.caps[edge.row].0];
@@ -218,6 +229,7 @@ fn edge_range(edge: &ConicalActualUvEdge<'_>) -> Outcome<()> {
 }
 fn adjacencies(
     query: &ConicalActualPatchQuery<'_>,
+    sides: &SideIndex<'_, '_>,
     position: &mut error::FailurePosition,
 ) -> Outcome<()> {
     let mut slots = BTreeSet::new();
@@ -231,19 +243,19 @@ fn adjacencies(
             ));
         }
         for (id, slot) in pair.sides.into_iter().zip(pair.u_slots) {
-            adjacent_slot(query, &mut slots, id, slot)?;
+            adjacent_slot(sides, &mut slots, id, slot)?;
         }
     }
     complete_slots(query, slots.len())?;
     Ok(())
 }
 fn adjacent_slot(
-    query: &ConicalActualPatchQuery<'_>,
+    sides: &SideIndex<'_, '_>,
     slots: &mut BTreeSet<(ConicalActualSideId, u8)>,
     id: ConicalActualSideId,
     slot: u8,
 ) -> Outcome<()> {
-    if slot > 1 || !query.sides.iter().any(|s| s.id == id) || !slots.insert((id, slot)) {
+    if slot > 1 || !sides.contains_key(&id) || !slots.insert((id, slot)) {
         return Err(error::binding(
             "actual shared U-slot incidence",
             vec![id.0, u64::from(slot)],
@@ -253,11 +265,8 @@ fn adjacent_slot(
     Ok(())
 }
 
-fn side_inventory(
-    query: &ConicalActualPatchQuery<'_>,
-    ids: &BTreeSet<ConicalActualSideId>,
-) -> Outcome<()> {
-    let actual = ids.iter().map(|i| i.0).collect::<Vec<_>>();
+fn side_inventory(query: &ConicalActualPatchQuery<'_>, ids: &SideIndex<'_, '_>) -> Outcome<()> {
+    let actual = ids.keys().map(|i| i.0).collect::<Vec<_>>();
     let mut expected = query.gamma.span_ids();
     expected.sort();
     if actual != expected {
@@ -294,17 +303,6 @@ fn outer_contour(cap: &ConicalActualCapQuery<'_>) -> Outcome<()> {
         ));
     }
     Ok(())
-}
-
-fn cap_incident_side<'a, 'b>(
-    query: &'a ConicalActualPatchQuery<'b>,
-    id: ConicalActualSideId,
-) -> Outcome<&'a ConicalActualSideQuery<'b>> {
-    query
-        .sides
-        .iter()
-        .find(|s| s.id == id)
-        .ok_or_else(|| error::shape("cap incident side", id.0 as usize, "declared actual side"))
 }
 
 fn complete_slots(query: &ConicalActualPatchQuery<'_>, actual: usize) -> Outcome<()> {

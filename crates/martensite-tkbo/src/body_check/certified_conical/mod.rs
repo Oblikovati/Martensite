@@ -71,6 +71,7 @@ impl std::error::Error for ConicalBindingError {
 pub struct ConicalNativeGeometry {
     members: Vec<MemberGeometry>,
     adjacent: Vec<ConicalActualAdjacent>,
+    side_orientations: std::collections::BTreeMap<u64, i8>,
 }
 struct MemberGeometry {
     id: ConicalActualMemberId,

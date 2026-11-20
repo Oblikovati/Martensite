@@ -32,11 +32,7 @@ impl ConicalNativeGeometry {
     /// Actual shell orientation for one exhaustively bound source side.
     /// Example: `actual.side_orientation(side_id)`.
     pub fn side_orientation(&self, id: ConicalActualSideId) -> Option<i8> {
-        self.members
-            .iter()
-            .flat_map(|member| &member.sides)
-            .find(|side| side.id == id.0)
-            .map(|side| side.orientation)
+        self.side_orientations.get(&id.0).copied()
     }
 }
 fn edges(contour: &native::Contour) -> Vec<ConicalActualUvEdge<'_>> {

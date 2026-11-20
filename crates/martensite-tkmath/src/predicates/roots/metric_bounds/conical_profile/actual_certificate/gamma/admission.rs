@@ -59,12 +59,12 @@ fn frame(cap: &ConicalActualCapCarrier) -> Outcome<()> {
 pub(super) fn admit(
     query: &ConicalDirectedGammaQuery<'_>,
     position: &mut error::FailurePosition,
-) -> Outcome<()> {
+) -> Outcome<CapIndex> {
     numeric::policy(query.options)?;
     if query.spans.is_empty() {
         return Err(error::shape("gamma spans", 0, "nonempty complete family"));
     }
-    cap_inventory(query, position)?;
+    let caps = cap_inventory(query, position)?;
     position.clear();
     let mut sides = BTreeSet::new();
     for span in query.spans {
@@ -76,20 +76,20 @@ pub(super) fn admit(
                 "unique",
             ));
         }
-        span_binding(span, query)?;
+        span_binding(span, query, &caps)?;
     }
     position.clear();
-    Ok(())
+    Ok(caps)
 }
 fn cap_inventory(
     query: &ConicalDirectedGammaQuery<'_>,
     position: &mut error::FailurePosition,
-) -> Outcome<()> {
-    let mut ids = BTreeSet::new();
-    for cap in query.caps {
+) -> Outcome<CapIndex> {
+    let mut indices = CapIndex::new();
+    for (index, cap) in query.caps.iter().enumerate() {
         position.cap(cap.id);
         carrier(cap)?;
-        if !ids.insert(cap.id) {
+        if indices.insert(cap.id, index).is_some() {
             return Err(error::shape(
                 "duplicate cap ID",
                 cap.id.0 as usize,
@@ -97,11 +97,12 @@ fn cap_inventory(
             ));
         }
     }
-    Ok(())
+    Ok(indices)
 }
 fn span_binding(
     span: &ConicalDirectedGammaSpan<'_>,
     query: &ConicalDirectedGammaQuery<'_>,
+    caps: &CapIndex,
 ) -> Outcome<()> {
     let q = &span.previous;
     if !span
@@ -113,7 +114,7 @@ fn span_binding(
     }
     chart(q)?;
     for cap_id in span.caps {
-        cap_ownership(cap_id, span, query)?;
+        cap_ownership(cap_id, span, query, caps)?;
     }
     uniform(q, &query.spans[0].previous)
 }
@@ -157,11 +158,11 @@ fn cap_ownership(
     id: ConicalActualCapId,
     span: &ConicalDirectedGammaSpan<'_>,
     query: &ConicalDirectedGammaQuery<'_>,
+    caps: &CapIndex,
 ) -> Outcome<()> {
-    let cap = query
-        .caps
-        .iter()
-        .find(|c| c.id == id)
+    let cap = caps
+        .get(&id)
+        .and_then(|&index| query.caps.get(index))
         .ok_or_else(|| error::shape("missing cap", id.0 as usize, "declared carrier"))?;
     if cap.member != span.member || cap.semi_angle.to_bits() != span.previous.semi_angle.to_bits() {
         return Err(error::binding(

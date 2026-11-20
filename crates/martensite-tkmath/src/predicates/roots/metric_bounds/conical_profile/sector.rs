@@ -4,6 +4,9 @@ use super::*;
 use crate::predicates::roots::certificate_arithmetic::ExactRatio;
 use crate::predicates::roots::certificate_arithmetic::bounded_dyadic::ArithmeticPolicy;
 use crate::predicates::roots::metric_bounds::cylindrical_profile::trigonometric;
+use std::sync::Arc;
+
+pub(super) type SourceBits = Arc<[Vec<[u64; 2]>]>;
 
 /// The strict developed-plane quarter-turn wedge established by a sector receipt.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -19,7 +22,7 @@ pub enum ConicalSectorWedge {
 }
 
 pub(super) struct SectorEvidence {
-    pub(super) source: Vec<Vec<[u64; 2]>>,
+    pub(super) source: SourceBits,
     pub(super) angle: u64,
     pub(super) policy: ArithmeticPolicy,
     pub(super) operations: u32,
@@ -210,7 +213,7 @@ pub(super) fn point_wedge(
     Ok(wedge_from_axes(lower, upper))
 }
 
-pub(super) fn source_bits(spans: &[&[[f64; 2]]]) -> Vec<Vec<[u64; 2]>> {
+pub(super) fn source_bits(spans: &[&[[f64; 2]]]) -> SourceBits {
     spans
         .iter()
         .map(|poles| poles.iter().map(|point| point.map(f64::to_bits)).collect())

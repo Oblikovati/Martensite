@@ -1,5 +1,16 @@
 //! Resolve one owned profile index and directed selections for either analytic support.
 use super::*;
+use std::collections::BTreeMap;
+
+pub(super) fn by_region<T: AsRef<DevelopedRegionRequest>>(
+    sources: &[T],
+) -> BTreeMap<SurfaceRegionId, &T> {
+    let mut indexed = BTreeMap::new();
+    for source in sources {
+        indexed.entry(source.as_ref().region).or_insert(source);
+    }
+    indexed
+}
 pub(in crate::surface_sketch::wrapped_profile) fn read(
     profile: &martensite_tkbo::profile_extrusion::SketchProfile,
     selections: &[WrappedRegionSelection],

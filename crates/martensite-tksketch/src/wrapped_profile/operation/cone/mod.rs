@@ -13,6 +13,7 @@ mod measures;
 mod native;
 mod prepare;
 mod publication;
+mod source_positions;
 mod stages;
 mod storage;
 #[cfg(test)]
@@ -22,6 +23,7 @@ pub(in crate::surface_sketch::wrapped_profile) type ConeBudgeted =
     super::stages::Budgeted<Selection, Geometry, Budget>;
 pub(in crate::surface_sketch::wrapped_profile) struct Prepared {
     pub source: DevelopedRegionRequest,
+    authored_positions: source_positions::AuthoredPositions,
     pub executed_selection: WrappedConeExecutionSelection,
     pub fits: BTreeMap<CurveSpan, SpanFit>,
     pub directed_family: Option<std::sync::Arc<prepare::directed::DirectedFamily>>,

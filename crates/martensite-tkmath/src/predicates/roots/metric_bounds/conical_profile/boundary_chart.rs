@@ -3,34 +3,35 @@
 use super::boundary::{admit_query, combined_request, evidence, proof_error};
 use super::boundary_snapshot::BoundarySnapshot;
 use super::*;
+use std::sync::Arc;
 #[cfg(test)]
 mod anchor_tests;
 #[cfg(test)]
 mod refinement_tests;
 #[cfg(test)]
 pub(super) mod tests;
-#[derive(PartialEq)]
-pub(super) struct ChartBinding {
+pub(in crate::predicates::roots::metric_bounds) struct ChartBinding {
     version: ConicalChartDomainVersion,
     span_limit: usize,
-    source: Vec<Vec<[u64; 2]>>,
+    source: sector::SourceBits,
     support: [u64; 6],
     options: ConeClearanceOptions,
     operations: u32,
     refinement: ConicalPrimitiveRefinement,
 }
 impl ChartBinding {
+    #[cfg(test)]
     pub(super) fn capture(domain: &ConicalChartDomainEvidence) -> Self {
         Self::capture_selected(domain, ConicalPrimitiveRefinement::UnsplitV1)
     }
-    pub(super) fn capture_selected(
+    pub(in crate::predicates::roots::metric_bounds) fn capture_selected(
         domain: &ConicalChartDomainEvidence,
         refinement: ConicalPrimitiveRefinement,
     ) -> Self {
         Self {
             version: domain.version(),
             span_limit: domain.span_limit(),
-            source: domain.sector.source.clone(),
+            source: Arc::clone(&domain.sector.source),
             support: support(domain),
             options: domain.options(),
             operations: domain.operations(),
@@ -40,7 +41,7 @@ impl ChartBinding {
     pub(super) fn matches(&self, domain: &ConicalChartDomainEvidence) -> bool {
         self.matches_selected(domain, ConicalPrimitiveRefinement::UnsplitV1)
     }
-    pub(super) fn matches_selected(
+    pub(in crate::predicates::roots::metric_bounds) fn matches_selected(
         &self,
         domain: &ConicalChartDomainEvidence,
         refinement: ConicalPrimitiveRefinement,
@@ -48,11 +49,25 @@ impl ChartBinding {
         self.version == domain.version()
             && self.span_limit == domain.span_limit()
             && self.refinement == refinement
-            && self.source == domain.sector.source
             && self.support == support(domain)
             && self.options == domain.options()
             && self.operations == domain.operations()
+            && same_sources(&self.source, &domain.sector.source)
     }
+}
+impl PartialEq for ChartBinding {
+    fn eq(&self, other: &Self) -> bool {
+        self.version == other.version
+            && self.span_limit == other.span_limit
+            && self.refinement == other.refinement
+            && self.support == other.support
+            && self.options == other.options
+            && self.operations == other.operations
+            && same_sources(&self.source, &other.source)
+    }
+}
+fn same_sources(left: &sector::SourceBits, right: &sector::SourceBits) -> bool {
+    Arc::ptr_eq(left, right) || left.as_ref() == right.as_ref()
 }
 /// Bound a cone boundary with its executed quantitative chart authority.
 /// Example: `certify_conical_boundary_in_chart(query, &domain, options, || false)?`.
@@ -170,20 +185,12 @@ fn admit_support(
     }
     Ok(())
 }
-fn original_member(original: &[[f64; 2]], domain: &ConicalChartDomainEvidence) -> bool {
-    domain.sector.source.iter().any(|source| {
-        source
-            .iter()
-            .copied()
-            .eq(original.iter().map(|p| p.map(f64::to_bits)))
-    })
-}
 fn admit_membership(
     query: &ConicalBoundaryQuery<'_>,
     domain: &ConicalChartDomainEvidence,
 ) -> Result<(), combined::CombinedFailure> {
     let original = query.original.map_or(query.source, |source| source.poles);
-    if original_member(original, domain) {
+    if domain.contains_original(original) {
         return Ok(());
     }
     let actual: Vec<_> = original.iter().flatten().map(|v| v.to_bits()).collect();
@@ -318,7 +325,7 @@ impl std::fmt::Debug for ConicalBoundaryEvidence {
 impl ChartBinding {
     pub(super) fn diagnostic_bits(&self) -> Vec<u64> {
         let mut bits = vec![1, self.source.len() as u64];
-        for span in &self.source {
+        for span in self.source.iter() {
             bits.push(span.len() as u64);
             bits.extend(span.iter().flatten().copied());
         }
@@ -335,5 +342,11 @@ impl ChartBinding {
             bits.extend([4, self.version.tag(), self.span_limit as u64]);
         }
         bits
+    }
+}
+
+impl std::fmt::Debug for ChartBinding {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.diagnostic_bits(), f)
     }
 }

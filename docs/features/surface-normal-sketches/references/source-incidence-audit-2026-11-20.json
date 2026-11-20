@@ -1,0 +1,404 @@
+{
+  "base": "b1872e58d93deaae3feea961d1900b49ab5c352f",
+  "source_sha256": {
+    "Cargo.lock": "ae5a5ca217961e6592020d9ed11db2b27fa0306afa98828177b87c5ea6a0bb8e",
+    "Cargo.toml": "6b8e22b47df0f47dfa9b88359deddacb18bbd9699b6fa136551083db7d3ddd2e",
+    "crates/martensite-tkbo/src/body_check/certified_conical/binding.rs": "22a9f75727666f1dcd3457f8a95b5c7b85926f7e77e6ef131a624c27cf579f1a",
+    "crates/martensite-tkbo/src/body_check/certified_conical/binding/capture.rs": "71df501097f1eef224051699249ad1e490258776ff7095ff27c35de88562a6fb",
+    "crates/martensite-tkbo/src/body_check/certified_conical/binding/matching.rs": "1101354b3f558d363db38c35ed21ba56f443c98479c702e0ca9cdaa01eb785c4",
+    "crates/martensite-tkbo/src/body_check/certified_conical/mod.rs": "40e82ca18d3b862c61d7baf4b83ca6a79abe6f648041ddf5a9e72c1560c96d53",
+    "crates/martensite-tkbo/src/body_check/certified_conical/native.rs": "4424d0ea9fae572fd7dd3dba320bf309eddaaa24fbb0349b358dfbe70ab78be9",
+    "crates/martensite-tkbo/src/body_check/certified_conical/native/cap.rs": "bec6c7d37238ea04f842407480f513b7dc5dc72748426d92865458e9f7177259",
+    "crates/martensite-tkbo/src/body_check/certified_conical/native/cap/lookup.rs": "1bec7e171cfe905c18a02648de59c4931dab8aba929f6c0a3c712c263ea2a10f",
+    "crates/martensite-tkbo/src/body_check/certified_conical/native/vertices.rs": "906c1d1fef9cc6a064e45808cf76d135f9ca755b8286854551dadb9a86b9b610",
+    "crates/martensite-tkbo/src/body_check/certified_conical/query.rs": "93ffc47688b0a033eb76aa09f9f279a2feb68fd824b4cb296f22b3d126f651aa",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_material.rs": "6024a0e01348194ef77f17fee509cbd104b44e9e17a2f97b3323d87bf7d44c75",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_material/developed.rs": "0e74afeba13801aab631c5f29c4fb40c1d43d9ce6297671971e3a0936cc909f8",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/actual_certificate/admission.rs": "daa06a1ea3fd884e08cc06aae5eb674267e10e87817a865d1d7fb10e93ad6afd",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/actual_certificate/gamma.rs": "4f8229605eb80d323ec2973c88c9c0df4e84f89f1acb7254db88066a6bc304f4",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/actual_certificate/gamma/admission.rs": "304cc697b06d17a7b15fd7b79db2df71f160b7f5e9d04478f51b79ee1cd42986",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/actual_certificate/gamma/execute.rs": "c38ab833ec09d5f4859bfe1bc359ceda269c83ff24510c325d26733d6195554e",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/boundary_chart.rs": "f46fc5eb219d4670c15c1bfbf47a09b8eec68582b401005f6108d021a0cdca69",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/boundary_transition/binding.rs": "8652f64632d1b4b5d09ca5172e2869bc60e09a9d39ea19a335ab3cc084429173",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/chart_domain.rs": "ab16abb8284b489ff44e1074ce0b077ffe680c51b17d88e0e9697e63c67c1920",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/chart_domain/bounds.rs": "b4905831e394ebfbac2011893facb4f2dc013e07c0d911d7b5f5c2f8b51018a9",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/chart_domain/family_tests.rs": "fcc0e3fbb6a6b7e4c0f80f07f2260bca948df6d927a614397fbba66a8edd558e",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/developed_boundary.rs": "1f9f1197d210f47f95801f613c52f5c51f478c789f9a9f91f9b9775082265c06",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/developed_boundary/binding.rs": "2bdfed1c23c4d0473ccd46193306b8f1465292a893ef22b39bd79cb52e67ae8f",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/developed_boundary/material.rs": "29236718e9508e9a8708cd76a93be47bcbc8baa01334f16e15030f237ad4e324",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/developed_boundary/material/binding.rs": "34e67ee553e488fe46f20def613e502f614b6f6a20a924a47937152ad2fb98c5",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/reference/binding.rs": "967cabce9fbb493944c7689e377aa28e18da7ad8e69f07291af89842ea42fe1d",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/conical_profile/sector.rs": "9176a4ed4fed181f11ff2a6aed12cd1ade3af3c0843602767c75fe162e76164f",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/cylindrical_clearance/mod.rs": "f535dc80cd3fb2b66586a690a98a0b3c7b6b3727f10441a695b33592e489d041",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/cylindrical_clearance/periodic_images/proof.rs": "8668d9f9fe6b7a659f5459d870e87b8535771154abbc173be1012335fa33c140",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/cylindrical_clearance/report.rs": "aec2f50c71169dab920cde5b9a1b5699e7c523758ef6750b11f15f0d0e8290d6",
+    "crates/martensite-tkmath/src/predicates/roots/metric_bounds/cylindrical_clearance/tests/periodic_images.rs": "aece426a014bb0578e785928f02bbc168cd3e236a75a688425f8888323ba8b26",
+    "crates/martensite-tksketch/src/wrapped_profile/api/placement/publication.rs": "0851c5be93107b2b2bf90fa76fb46b53ffd42d0bd19f8f18a37e5f1cca7d690f",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/actual/binding.rs": "754380d881b6622391f3fa36c86db4fad368ec1851c50a07dcb837605ed5c124",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/actual/queries.rs": "b143d491dcfa174b739ce01d0d392bc4149952220b758e97aff243d4e4eae1ed",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/material/binding.rs": "ab08607912c64aac64d9d566a9905803a7664bd9e6e69663cd7936401259f968",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/mod.rs": "4a8f7654e8e8282c29a61bd1537f64a044f92ed43600dc3dc0091eaf775c0af5",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/prepare.rs": "9ca09902188406551b59f843726e0d2d1b0c265d6346180fc6427adf156f6ee8",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/prepare/clearance.rs": "bffd848a559bd37b9ada477a3f3ca1ef841ae2668b7b1c98b452d908f838c189",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/source_positions.rs": "cea1f04fb70633a9464ddc004a807bf70af1a00b183593aa8fb8e48f55d2430e",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/storage/binding.rs": "5262af79fe70525040ab1489818ff4561ddde4ff9bfd8cc915b300cef5b8673d",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/cone/storage/boundary.rs": "a015fa7250c3def9431568cb22dd7b7a0f1342e4d72d9a6ee863d90a82e11eda",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/members.rs": "67713bd136bd33fc43c45d1b31af378f509e5082ad3f632c160c454db36a4344",
+    "crates/martensite-tksketch/src/wrapped_profile/operation/source.rs": "26c07be2b180ac884ac8fe385670542a3cd95be41a6f26615637b59216d0fe88",
+    "crates/martensite-tksketch/src/wrapped_profile/selection/material/mod.rs": "d689f64b6866d939f41bee87e0b7b796d3290c6635677f79b3b95c07d4d2c60f"
+  },
+  "settings": {
+    "CARGO_PROFILE_TEST_DEBUG": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_BUILD_JOBS": "2",
+    "CARGO_TARGET_DIR": "/tmp/martensite-cone-b1-cached-target",
+    "CARGO_PROFILE_DEV_STRIP": "debuginfo",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_TEST_STRIP": "debuginfo"
+  },
+  "results": {
+    "profiles": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkmath",
+        "--lib",
+        "predicates::roots::metric_bounds::conical_"
+      ],
+      "exit": 0,
+      "seconds": 89.492,
+      "source_changes": [],
+      "summary": [
+        "Finished `test` profile [unoptimized] target(s) in 1m 29s",
+        "test result: ok. 245 passed; 0 failed; 0 ignored; 0 measured; 862 filtered out; finished in 0.11s"
+      ],
+      "log_sha256": "3a1945c25941aedebf555d806185253a4bb5ae933d69f86d6197306c91bae7e8"
+    },
+    "clearance": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkmath",
+        "--lib",
+        "predicates::roots::metric_bounds::cylindrical_clearance"
+      ],
+      "exit": 0,
+      "seconds": 0.078,
+      "source_changes": [],
+      "summary": [
+        "Finished `test` profile [unoptimized] target(s) in 0.03s",
+        "test result: ok. 51 passed; 0 failed; 0 ignored; 0 measured; 1056 filtered out; finished in 0.01s"
+      ],
+      "log_sha256": "c7aff37e8a454076bd3c81d15f257863d05fc1245c1e0357e6ce3ea7807214dd"
+    },
+    "native": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkbo",
+        "--lib",
+        "body_check::certified_conical"
+      ],
+      "exit": 0,
+      "seconds": 304.76,
+      "source_changes": [],
+      "summary": [
+        "Finished `test` profile [unoptimized] target(s) in 5m 04s",
+        "test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 2343 filtered out; finished in 0.02s"
+      ],
+      "log_sha256": "1397152adf33aa55e2ecb84849424da0b84f27cadcd5b3fd53a7dd5a4a54d562"
+    },
+    "footprint": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "wrapped_profile::api::footprint::"
+      ],
+      "exit": 0,
+      "seconds": 97.741,
+      "source_changes": [],
+      "summary": [
+        "Finished `test` profile [unoptimized] target(s) in 1m 33s",
+        "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 531 filtered out; finished in 4.22s"
+      ],
+      "log_sha256": "007360701c0ff0fbbed8c4f0aad1aaabea94fe0d2363382ebdecfb9f1ac3c5d0"
+    },
+    "cylindrical-material": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "wrapped_profile::selection::material"
+      ],
+      "exit": 0,
+      "seconds": 0.199,
+      "source_changes": [],
+      "summary": [
+        "Finished `test` profile [unoptimized] target(s) in 0.03s",
+        "test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 531 filtered out; finished in 0.12s"
+      ],
+      "log_sha256": "20134f9f8fe6f753bb9cfa35f59e05ab3a8432409d3264094bf11e39c8efe5e0"
+    },
+    "cone-replay": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "wrapped_profile::operation::cone::tests::completed"
+      ],
+      "exit": 0,
+      "seconds": 14.452,
+      "source_changes": [],
+      "summary": [
+        "Finished `test` profile [unoptimized] target(s) in 0.03s",
+        "test result: ok. 11 passed; 0 failed; 1 ignored; 0 measured; 533 filtered out; finished in 14.38s"
+      ],
+      "log_sha256": "115e04cbf0d766965fabc663905de1273477ef4d803ee89230318bfad39a62d5"
+    },
+    "full-text": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "martensite-tkv3d",
+        "--test",
+        "toolkit",
+        "conical_text::",
+        "--",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "exit": 0,
+      "seconds": 75.013,
+      "source_changes": [],
+      "summary": [
+        "Finished `test` profile [unoptimized] target(s) in 41.56s",
+        "test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 696 filtered out; finished in 33.40s"
+      ],
+      "log_sha256": "06419ef210592054173fcf99b00c73e2000cf3648efc657402853e6534337bca"
+    },
+    "clippy": {
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "martensite-tkmath",
+        "-p",
+        "martensite-tkbo",
+        "-p",
+        "martensite-tksketch",
+        "--lib",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit": 0,
+      "seconds": 45.017,
+      "source_changes": [],
+      "summary": [
+        "Finished `dev` profile [unoptimized] target(s) in 44.94s"
+      ],
+      "log_sha256": "2e1de0f5f4f38dedec3bac4c8397c6f488730133e821979b756bbc87c910910a"
+    }
+  },
+  "focused_pass_count": 348,
+  "before_after_replay": {
+    "sha256": "53914e60e816f5bddfb038a52a91ec550adc8755b46062defdf3135ec113a810",
+    "identical": true,
+    "bytes": 132845,
+    "scope": "complete legacy curved holed cone; serialized history, budget and retained BRep"
+  },
+  "performance": {
+    "case": "wrapped_text_regions::wrapped::conical_text::outward_multiline_cone_text_completes_under_explicit_input_bound_and_original_spatial_cap",
+    "cpu": 6,
+    "smt_siblings": [
+      22
+    ],
+    "order": [
+      [
+        "before",
+        "after"
+      ],
+      [
+        "after",
+        "before"
+      ],
+      [
+        "before",
+        "after"
+      ]
+    ],
+    "binary_sha256": {
+      "before": "e2d926feb4212a914cfc913c5f3426b6aa77b3ffd2c363cbc4af8a77bf6635f7",
+      "after": "989d6a5f7b0dd6ccedd5872d78c1d7a7d24fbe79c862acd544605bb023f41745"
+    },
+    "samples": [
+      {
+        "pair": 1,
+        "variant": "before",
+        "api_seconds": 14.969315644,
+        "wall_seconds": 15.2,
+        "peak_rss_kib": 200360,
+        "work": {
+          "event": "conical_text_work",
+          "arithmetic_operations": 3057275,
+          "integration_subintervals": 1017
+        },
+        "other_core_busy": 0.0006578947368421095,
+        "sibling_busy": [
+          0.0625
+        ],
+        "log_sha256": "12b41bd49c1202c2025ecc2713937404dd9cf7a7d49c6abceec868c69ad323d3"
+      },
+      {
+        "pair": 1,
+        "variant": "after",
+        "api_seconds": 14.63393889,
+        "wall_seconds": 14.8,
+        "peak_rss_kib": 201624,
+        "work": {
+          "event": "conical_text_work",
+          "arithmetic_operations": 3057275,
+          "integration_subintervals": 1017
+        },
+        "other_core_busy": 0.0006756756756756799,
+        "sibling_busy": [
+          0.06283783783783783
+        ],
+        "log_sha256": "74a38c53dcaafba85514a613f7e88e1b29e114fdd98ef98c0b73ce5b73c201ae"
+      },
+      {
+        "pair": 2,
+        "variant": "after",
+        "api_seconds": 14.760278648,
+        "wall_seconds": 14.92,
+        "peak_rss_kib": 201764,
+        "work": {
+          "event": "conical_text_work",
+          "arithmetic_operations": 3057275,
+          "integration_subintervals": 1017
+        },
+        "other_core_busy": 0.0006702412868632751,
+        "sibling_busy": [
+          0.044906166219839144
+        ],
+        "log_sha256": "d4c406c89923b2d628716e17db1d67e1f69a475564a5ea7f51d60e6d1464d782"
+      },
+      {
+        "pair": 2,
+        "variant": "before",
+        "api_seconds": 14.937254976,
+        "wall_seconds": 15.11,
+        "peak_rss_kib": 200364,
+        "work": {
+          "event": "conical_text_work",
+          "arithmetic_operations": 3057275,
+          "integration_subintervals": 1017
+        },
+        "other_core_busy": 0.0006618133686300653,
+        "sibling_busy": [
+          0.03970880211780278
+        ],
+        "log_sha256": "c3e3c8ee2c70f59b18f9d2cc3ef792c239b64b975a507905093fa19b1a390c3c"
+      },
+      {
+        "pair": 3,
+        "variant": "before",
+        "api_seconds": 14.893773852,
+        "wall_seconds": 15.07,
+        "peak_rss_kib": 200204,
+        "work": {
+          "event": "conical_text_work",
+          "arithmetic_operations": 3057275,
+          "integration_subintervals": 1017
+        },
+        "other_core_busy": 0.0013271400132713765,
+        "sibling_busy": [
+          0.025215660252156602
+        ],
+        "log_sha256": "fe26ee6afeecd38138aa20829bcd09363b6aba8a3b173d11e611cc9b74ce7c65"
+      },
+      {
+        "pair": 3,
+        "variant": "after",
+        "api_seconds": 14.557552755,
+        "wall_seconds": 14.72,
+        "peak_rss_kib": 201716,
+        "work": {
+          "event": "conical_text_work",
+          "arithmetic_operations": 3057275,
+          "integration_subintervals": 1017
+        },
+        "other_core_busy": 0.0006793478260870532,
+        "sibling_busy": [
+          0.051630434782608696
+        ],
+        "log_sha256": "05bd14efcab719b6989776cb1adc00d1a63d6bec07ff8d1acb2fb0be6530aa70"
+      }
+    ],
+    "scope": "local paired runtime and process peak RSS for the identical outward complete cone fixture",
+    "medians": {
+      "before": {
+        "api_seconds": 14.937254976,
+        "wall_seconds": 15.11,
+        "peak_rss_kib": 200360
+      },
+      "after": {
+        "api_seconds": 14.63393889,
+        "wall_seconds": 14.8,
+        "peak_rss_kib": 201716
+      }
+    },
+    "source_and_binary_hashes_unchanged": true
+  },
+  "peak_diagnostic": {
+    "scope": "one sampled proc status run per variant with an approximately 50 ms sampling interval",
+    "sampled_peaks_kib": {
+      "before": {
+        "VmHWM": 200816,
+        "VmRSS": 200816,
+        "RssAnon": 151004,
+        "RssFile": 49812,
+        "RssShmem": 0,
+        "seconds": 4.275
+      },
+      "after": {
+        "VmHWM": 201896,
+        "VmRSS": 201896,
+        "RssAnon": 151024,
+        "RssFile": 50872,
+        "RssShmem": 0,
+        "seconds": 4.023
+      }
+    },
+    "increase_in_rss_file_kib": 1060,
+    "increase_in_rss_anon_kib": 20
+  },
+  "performance_accepted": false,
+  "performance_gap": "The local measured increase in process peak RSS lacks a qualifying speedup.",
+  "scope": "Wrapped conical and cylindrical proof-source and native incidence scaling audit.",
+  "excluded": [
+    "larger/wider cone atlas behavior",
+    "generic curved or holed support trims",
+    "full CI and release qualification"
+  ],
+  "benchmark_preflight": "One baseline selection passed before the timing parser was corrected. The declared three pairs were then captured in full."
+}

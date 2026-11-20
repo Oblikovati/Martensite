@@ -98,7 +98,11 @@ pub(super) fn capture(
 ) -> Result<ConicalNativeGeometry, ConicalBindingError> {
     let actual = capture::family(members)?;
     for (binding, member) in members.iter().map(|binding| {
-        let member = actual.members.iter().find(|member| member.id == binding.id);
+        let member = actual
+            .members
+            .binary_search_by_key(&binding.id, |member| member.id)
+            .ok()
+            .map(|index| &actual.members[index]);
         (binding, member)
     }) {
         let member = member.ok_or_else(|| {

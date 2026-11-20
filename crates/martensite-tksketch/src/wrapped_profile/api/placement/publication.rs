@@ -67,12 +67,12 @@ fn solid(region: SurfaceRegionId, physical: &freeze::Physical) -> Checked<&Shape
         source: Source::Region(region),
         role: HistoryRole::Solid,
     };
-    physical
+    // Frozen archive decoding preserves the semantic key order used during construction.
+    let index = physical
         .bindings
-        .iter()
-        .find(|(candidate, _)| *candidate == key)
-        .map(|(_, shape)| shape)
-        .ok_or_else(|| fail(PlacementFailure::Member(region)))
+        .binary_search_by_key(&key, |(candidate, _)| *candidate)
+        .map_err(|_| fail(PlacementFailure::Member(region)))?;
+    Ok(&physical.bindings[index].1)
 }
 fn validate(
     region: SurfaceRegionId,

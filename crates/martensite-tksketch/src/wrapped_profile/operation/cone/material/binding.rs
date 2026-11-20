@@ -15,7 +15,7 @@ fn span<'a>(
     prepared: &Prepared,
     proof: &'a storage::SpanProof,
 ) -> ConeChecked<ConicalMaterialSpan<'a>> {
-    let source = original_piece(original, proof.span)?;
+    let source = original_piece(original, prepared, proof.span)?;
     retained_fit(prepared, proof)?;
     let interval = CylindricalProfileInterval::new(u64::from(proof.span.index), proof.span.level)
         .map_err(|_| {
@@ -31,15 +31,13 @@ fn span<'a>(
         uv: &proof.pcurves[0],
     })
 }
-fn original_piece(
-    original: &DevelopedRegionRequest,
+fn original_piece<'a>(
+    original: &'a DevelopedRegionRequest,
+    prepared: &Prepared,
     span: CurveSpan,
-) -> ConeChecked<&AuthoredPiece> {
-    original
-        .loops
-        .iter()
-        .flatten()
-        .find(|piece| piece.span.curve == span.curve)
+) -> ConeChecked<&'a AuthoredPiece> {
+    prepared
+        .authored_piece(original, span.curve)
         .ok_or_else(|| {
             mismatch(
                 original.region,

@@ -4,8 +4,10 @@ use martensite_tkbo::profile_extrusion::ProfileCurveId;
 use martensite_tkbrep::{
     topexp::Explorer,
     topods::{self, Face},
+    toptools::IndexedMapOfShape,
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
+use std::collections::BTreeSet;
 
 pub(super) fn members(
     selection: &Selection,
@@ -32,11 +34,11 @@ fn member(
     shape: &Shape,
     bindings: &[(BindingKey, Shape)],
 ) -> ConeChecked<ConicalNativeMember> {
-    let actual = faces(prepared.source.region, shape)?;
-    let sides = side_bindings(prepared, bindings, &actual)?;
+    let actual = FaceBindings::capture(prepared.source.region, shape, bindings)?;
+    let sides = side_bindings(prepared, &actual)?;
     let curves = curves(prepared, &retained_family(prepared)?.inventory)?;
     let caps = (0..2)
-        .map(|row| cap(prepared, geometry, row, bindings, &actual, &curves))
+        .map(|row| cap(prepared, geometry, row, &actual, &curves))
         .collect::<ConeChecked<_>>()?;
     Ok(ConicalNativeMember {
         id: ConicalActualMemberId(prepared.source.region.0),
@@ -53,8 +55,7 @@ fn retained_family(prepared: &Prepared) -> ConeChecked<&prepare::directed::Direc
 }
 fn side_bindings(
     prepared: &Prepared,
-    bindings: &[(BindingKey, Shape)],
-    actual: &[Shape],
+    actual: &FaceBindings<'_>,
 ) -> ConeChecked<Vec<(ConicalActualSideId, Face)>> {
     let family = retained_family(prepared)?;
     prepared
@@ -69,7 +70,7 @@ fn side_bindings(
             };
             Ok((
                 family.inventory.side(prepared.source.region, piece.span)?,
-                face(prepared.source.region, key, bindings, actual)?,
+                actual.face(prepared.source.region, key)?,
             ))
         })
         .collect()
@@ -78,8 +79,7 @@ fn cap(
     prepared: &Prepared,
     geometry: &Geometry,
     row: usize,
-    bindings: &[(BindingKey, Shape)],
-    actual: &[Shape],
+    actual: &FaceBindings<'_>,
     curves: &[(ProfileCurveId, ConicalActualSideId)],
 ) -> ConeChecked<ConicalNativeCap> {
     let region = prepared.source.region;
@@ -95,7 +95,7 @@ fn cap(
     };
     Ok(ConicalNativeCap {
         id: retained_family(prepared)?.inventory.cap_pair(region)?[row],
-        face: face(region, key, bindings, actual)?,
+        face: actual.face(region, key)?,
         material: material.clone(),
         curves: curves.to_vec(),
     })
@@ -125,25 +125,56 @@ fn faces(region: SurfaceRegionId, shape: &Shape) -> ConeChecked<Vec<Shape>> {
     }
     Ok(faces)
 }
-fn face(
-    region: SurfaceRegionId,
-    key: BindingKey,
-    bindings: &[(BindingKey, Shape)],
-    faces: &[Shape],
-) -> ConeChecked<Face> {
-    let bound: Vec<_> = bindings
-        .iter()
-        .filter(|(candidate, _)| *candidate == key)
-        .map(|(_, shape)| shape)
-        .collect();
-    if bound.len() != 1 {
-        return Err(missing(region, "unique actual source face key"));
+struct FaceBindings<'a> {
+    keys: BTreeMap<BindingKey, Option<&'a Shape>>,
+    faces: IndexedMapOfShape,
+    ambiguous: BTreeSet<usize>,
+}
+impl<'a> FaceBindings<'a> {
+    fn capture(
+        region: SurfaceRegionId,
+        shape: &Shape,
+        bindings: &'a [(BindingKey, Shape)],
+    ) -> ConeChecked<Self> {
+        let mut keys = BTreeMap::new();
+        for (key, face) in bindings {
+            keys.entry(*key)
+                .and_modify(|old| *old = None)
+                .or_insert(Some(face));
+        }
+        let mut native_faces = IndexedMapOfShape::default();
+        let mut ambiguous = BTreeSet::new();
+        for face in faces(region, shape)? {
+            let before = native_faces.extent();
+            let index = native_faces.add(face);
+            if index <= before {
+                ambiguous.insert(index);
+            }
+        }
+        Ok(Self {
+            keys,
+            faces: native_faces,
+            ambiguous,
+        })
     }
-    let actual: Vec<_> = faces.iter().filter(|face| face.is_same(bound[0])).collect();
-    if actual.len() != 1 {
-        return Err(missing(region, "unique actual native face occurrence"));
+
+    fn face(&self, region: SurfaceRegionId, key: BindingKey) -> ConeChecked<Face> {
+        let bound = self
+            .keys
+            .get(&key)
+            .copied()
+            .flatten()
+            .ok_or_else(|| missing(region, "unique actual source face key"))?;
+        let index = self.faces.find_index(bound);
+        if index == 0 || self.ambiguous.contains(&index) {
+            return Err(missing(region, "unique actual native face occurrence"));
+        }
+        let found = self
+            .faces
+            .find_key(index)
+            .map_err(|cause| native(region, cause))?;
+        topods::face(found).map_err(|cause| native(region, cause))
     }
-    topods::face(actual[0]).map_err(|cause| native(region, cause))
 }
 fn native(region: SurfaceRegionId, cause: Failure) -> ConeFailure {
     storage::failure(region, None, ConeCause::Native(Box::new(cause)))
