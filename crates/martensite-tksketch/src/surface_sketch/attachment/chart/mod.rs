@@ -4,6 +4,7 @@ use martensite_tkbo::{body_check::CheckMode, measured::Measured};
 use martensite_tkg3d::top_abs::State;
 mod arithmetic;
 mod mapping;
+pub(super) use mapping::classify;
 #[cfg(test)]
 mod tests;
 

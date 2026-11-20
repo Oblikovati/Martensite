@@ -20,7 +20,13 @@ pub(super) fn apply(
     let support = codec::decode(&attempt, &attachment.record.brep)?;
     let radius = radius(&attempt, &support.face)?;
     let tolerance = attachment.record.resolution.sew;
-    let trim_state = classify(&attempt, &support.face, tolerance, request)?;
+    let trim_state = classify(
+        &attempt,
+        &support.face,
+        tolerance,
+        request.uv,
+        request.outside,
+    )?;
     report(&attempt, request, radius, trim_state)
 }
 fn report(
@@ -62,13 +68,14 @@ fn radius(attempt: &Attempt, face: &Face) -> Checked<f64> {
     let cylinder = attempt.native("selected cylinder radius", adaptor.cylinder())?;
     Ok(cylinder.radius())
 }
-fn classify(
+pub(in crate::surface_sketch::attachment) fn classify(
     attempt: &Attempt,
     face: &Face,
     tolerance: f64,
-    request: CylinderParameterRequest,
+    uv: [f64; 2],
+    outside: OutOfSupportPolicy,
 ) -> Checked<State> {
-    let uv = Point2::new(request.uv[0], request.uv[1]);
+    let uv = Point2::new(uv[0], uv[1]);
     let classifier = attempt.native(
         "selected face trim classification",
         BRepClassFaceClassifier::with_face_point2d(face, &uv, tolerance, false, tolerance),
@@ -76,7 +83,7 @@ fn classify(
     let state = classifier.state();
     if classifier.rejected()
         || state == State::Unknown
-        || (state == State::Out && request.outside == OutOfSupportPolicy::Refuse)
+        || (state == State::Out && outside == OutOfSupportPolicy::Refuse)
     {
         return Err(attempt.reject(AttachmentFailureCause::ChartTrim { state }));
     }

@@ -1,4 +1,4 @@
-//! Revision-bound cylinder selection with owned replay data and explicit history images (#420).
+//! Revision-bound analytic face selection with owned replay data and explicit history images (#420).
 use super::encoding;
 use martensite_tkbo::{body_check::ValidationReport, profile_extrusion::Resolution};
 use martensite_tkbrep::{
@@ -9,6 +9,11 @@ mod admission;
 mod chart;
 pub use chart::{CylinderParameterRequest, DevelopedCylinderHit, OutOfSupportPolicy};
 mod codec;
+mod cone;
+pub use cone::{
+    ConeAttachmentFailure, ConeAttachmentRecord, ConeAuthoringChart, ConeFaceAttachment,
+    ConeParameterRequest, DetachedConeSupport, DevelopedConeHit,
+};
 mod failure;
 mod failure_class;
 mod reattach;
@@ -17,6 +22,10 @@ pub use failure::*;
 pub use failure_class::AttachmentFailureClass;
 type Checked<T> = Result<T, AttachmentFailure>;
 use failure::Attempt;
+struct DecodedFace {
+    body: Shape,
+    face: Face,
+}
 
 /// Caller-owned logical identity; never derived from geometry or native traversal order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]

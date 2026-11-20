@@ -219,3 +219,31 @@ from the completed 19-test attachment checkpoint above.
 Strict TKSketch all-target Clippy also passed for the chart checkpoint
 (`target/qualification/p420-chart-clippy.log`). Independent Standards and Spec
 reviews found no remaining defect in the mapping contract.
+
+## Conical face selection and chart authoring
+
+`ConeFaceAttachment` freezes one explicitly selected native conical face
+with its support body. Capture checks the native identity and orientation
+of the selected occurrence. Restore replays the frozen body and selected
+reference byte for byte and runs the ordered body checks. A changed body
+requires a new revision and one current face from native history. Clones
+share the frozen record, and each native export decodes fresh owners.
+
+`authoring_chart` opens a revision-bound face and seam once. Repeated UV
+hits reuse that native face. For a growing cone the chart uses slant
+`R / sin(alpha) + v` and developed phase `sin(alpha) * (u - seam)`.
+A narrowing cone reverses the meridian and the angular direction of a
+direct frame. An indirect frame reverses the angular direction again.
+Outward interval arithmetic bounds the developed Cartesian coordinates
+for exact binary64 UV. The result reports the native trim search separately.
+The apex and the other nappe refuse development.
+
+The chart supplies an estimated apex and frame for the existing placed cone
+extrusion. Two native frustum controls use four developed hits to author a
+solved profile, on an axis-aligned and an oblique face. Each checks both
+exported depth vertices for every hit against the native surface evaluated
+with its first derivatives. Whole-curve containment on the selected cone
+face and attached Boolean bosses and pockets require further qualification.
+
+The local checks passed 34 attachment tests and three tests for bounded
+cone development.
