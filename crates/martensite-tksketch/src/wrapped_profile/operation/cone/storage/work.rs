@@ -108,8 +108,10 @@ mod tests {
     }
     #[test]
     fn aggregate_grants_lend_bounded_leaves_and_keep_one_final_remainder() {
-        let mut options = ConeClearanceOptions::default();
-        options.max_operations = 2_000_211;
+        let options = ConeClearanceOptions {
+            max_operations: 2_000_211,
+            ..Default::default()
+        };
         let mut work = Work::new(options);
         let region = SurfaceRegionId(41);
         assert_eq!(work.remaining().max_operations, 1_000_000);

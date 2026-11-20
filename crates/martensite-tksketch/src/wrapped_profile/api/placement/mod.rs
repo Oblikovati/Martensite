@@ -13,6 +13,7 @@ use std::collections::BTreeMap;
 mod admission;
 mod chart;
 mod chart_admission;
+pub(super) use chart::from_canonical_inputs;
 pub use chart::*;
 mod budget;
 use budget::{PlacementBudget, PlacementFrame};

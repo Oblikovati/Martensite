@@ -11,7 +11,17 @@ pub(in crate::surface_sketch::wrapped_profile) fn read(
     request: &WrappedNormalRequest,
     cancelled: &mut CancelPoll<'_>,
 ) -> Checked<Inputs> {
-    admit(request)?;
+    admit_support(request.support)?;
+    let mut inputs = read_canonical_chart(request, cancelled)?;
+    inputs.placement = placement::prepare(request, &mut inputs.requests)?;
+    Ok(inputs)
+}
+
+pub(super) fn read_canonical_chart(
+    request: &WrappedNormalRequest,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<Inputs> {
+    admit_depths(request.depths)?;
     let depths = physical_depths(request.depths, request.support.normal);
     let mut inputs = Inputs {
         requests: Vec::new(),
@@ -20,7 +30,6 @@ pub(in crate::surface_sketch::wrapped_profile) fn read(
     };
     read_regions(&mut inputs, request, depths, cancelled)?;
     poll(cancelled, WrappedStage::Input)?;
-    inputs.placement = placement::prepare(request, &mut inputs.requests)?;
     Ok(inputs)
 }
 fn read_regions(
@@ -84,14 +93,13 @@ pub(in crate::surface_sketch::wrapped_profile) fn profile_failure(
     )
 }
 
-fn admit(request: &WrappedNormalRequest) -> Checked<()> {
-    admit_support(request.support)?;
-    if !request.depths.iter().all(|d| d.is_finite()) || request.depths[0] >= request.depths[1] {
+fn admit_depths(depths: [f64; 2]) -> Checked<()> {
+    if !depths.iter().all(|d| d.is_finite()) || depths[0] >= depths[1] {
         return Err(error::failure(
             WrappedStage::Admission,
             WrappedFailureClass::InvalidInput,
             None,
-            error::Cause::Depths(request.depths),
+            error::Cause::Depths(depths),
         ));
     }
     Ok(())

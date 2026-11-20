@@ -6,6 +6,9 @@ use crate::surface_sketch::{
 };
 mod band;
 mod bounds;
+mod extrusion;
+pub use extrusion::CylinderTrimmedTool;
+mod fitted;
 #[cfg(test)]
 mod tests;
 
@@ -47,6 +50,8 @@ pub enum CylinderFootprintFailure {
     Native(Box<Failure>),
     /// The selected source cannot be captured by the wrapped profile reader.
     Source(Box<WrappedNormalFailure>),
+    /// Construction or placement of the normal tool failed or was cancelled.
+    Extrusion(Box<WrappedNormalFailure>),
     /// No authored material is selected.
     EmptySelection,
     /// The control hull could not be proved strictly inside a physical trim boundary.
@@ -62,6 +67,23 @@ pub enum CylinderFootprintFailure {
         /// Certified inward interval, excluding its endpoints.
         required_interval: [f64; 2],
     },
+    /// A retained cap control could not be proved strictly inside the physical trim.
+    FittedControlOutside {
+        /// Selected region that owns the fitted span.
+        region: SurfaceRegionId,
+        /// Authored curve that produced the cap pcurve.
+        curve: SurfaceCurveId,
+        /// Denominator exponent of the fitted curve interval in loop traversal direction.
+        fit_level: u8,
+        /// Lower endpoint numerator in loop traversal direction.
+        fit_index: u32,
+        /// Chart axis, 0 for radians relative to the seam and 1 for axial height.
+        axis: usize,
+        /// Retained pcurve control coordinate.
+        coordinate: f64,
+        /// Inward bounds in cap pcurve coordinates, excluding the endpoints.
+        required_interval: [f64; 2],
+    },
 }
 
 impl std::fmt::Display for CylinderFootprintFailure {
@@ -74,7 +96,7 @@ impl std::error::Error for CylinderFootprintFailure {
         match self {
             Self::Attachment(cause) => Some(cause.as_ref()),
             Self::Native(cause) => Some(cause.as_ref()),
-            Self::Source(cause) => Some(cause.as_ref()),
+            Self::Source(cause) | Self::Extrusion(cause) => Some(cause.as_ref()),
             _ => None,
         }
     }
@@ -91,6 +113,16 @@ impl CylinderFaceAttachment {
         revision: SupportRevision,
         request: &WrappedNormalRequest,
     ) -> FootprintChecked<CylinderFootprintReport> {
+        let band = self.resolve_band(revision, request)?;
+        bounds::check(request, &band)?;
+        Ok(self.footprint_report(revision, request, &band))
+    }
+
+    fn resolve_band(
+        &self,
+        revision: SupportRevision,
+        request: &WrappedNormalRequest,
+    ) -> FootprintChecked<band::Band> {
         let (detached, support) = self
             .resolve_chart(
                 revision,
@@ -99,15 +131,22 @@ impl CylinderFaceAttachment {
             )
             .map_err(|cause| CylinderFootprintFailure::Attachment(Box::new(cause)))?;
         check_support(request.support, support)?;
-        let band = band::capture(&detached.face)?;
-        bounds::check(request, &band)?;
-        Ok(CylinderFootprintReport {
+        band::capture(&detached.face)
+    }
+
+    fn footprint_report(
+        &self,
+        revision: SupportRevision,
+        request: &WrappedNormalRequest,
+        band: &band::Band,
+    ) -> CylinderFootprintReport {
+        CylinderFootprintReport {
             attachment: self.record().id,
             revision,
             axial: band.axial,
             angular: band.angular,
             regions: request.selections.len(),
-        })
+        }
     }
 }
 

@@ -351,7 +351,9 @@ do not qualify those scenarios for the new cone path.
 
 The [revision-bound face attachment](FACE-ATTACHMENT.md) owns a selected cylindrical
 face and support snapshot, follows explicit native history, and refuses ambiguous
-reattachment. Wrapped boss/pocket and hit-mapping integration under #420 remain open.
+reattachment. It can build a normal tool with authored and fitted cap containment
+in a rectangular cylindrical trim band. Wrapped boss/pocket and hit-mapping
+integration under #420 remain open.
 
 The [native boss/pocket controls](BODY-BOOLEAN-QUALIFICATION.md) exercise actual
 Fuse/Cut operations, seam-crossing and oblique placements, input preservation,

@@ -62,6 +62,10 @@ impl WrappedChartNormalResult {
     pub fn export_native(&self) -> Checked<DetachedWrappedBodies> {
         result::export_bytes(&self.base, &self.bytes)
     }
+
+    pub(in crate::surface_sketch::wrapped_profile::api) fn fitted_sources(&self) -> &[Request] {
+        &self.base.family.family.selection.prepared.prepared
+    }
 }
 /// Extrude with a finite chart angle using behavior version one.
 /// Example: `let result = normal_extrude_profile_on_chart(&request)?;`.
@@ -77,14 +81,21 @@ pub fn normal_extrude_profile_on_chart_with_cancel(
     mut cancelled: impl FnMut() -> bool + Send,
 ) -> Checked<WrappedChartNormalResult> {
     input::poll(&mut cancelled, WrappedStage::Admission)?;
-    let mut inputs = canonical_inputs(request, &mut cancelled)?;
+    let inputs = input::read_canonical_chart(request, &mut cancelled)?;
+    from_canonical_inputs(request, inputs, &mut cancelled)
+}
+pub(in crate::surface_sketch::wrapped_profile::api) fn from_canonical_inputs(
+    request: &WrappedNormalRequest,
+    mut inputs: input::Inputs,
+    cancelled: &mut CancelPoll<'_>,
+) -> Checked<WrappedChartNormalResult> {
     let plan = chart_admission::prepare(request, &inputs.requests)?;
     for source in &mut inputs.requests {
         source.tolerance = plan.budget.canonical_allowance();
     }
-    let mut base = operation::from_inputs(request, inputs, &mut cancelled)?;
-    let physical = publish_chart(&mut base, plan, &mut cancelled)?;
-    input::poll(&mut cancelled, WrappedStage::Publication)?;
+    let mut base = operation::from_inputs(request, inputs, cancelled)?;
+    let physical = publish_chart(&mut base, plan, cancelled)?;
+    input::poll(cancelled, WrappedStage::Publication)?;
     Ok(assemble(base, physical))
 }
 fn assemble(
@@ -101,17 +112,6 @@ fn assemble(
     }
 }
 
-fn canonical_inputs(
-    request: &WrappedNormalRequest,
-    cancelled: &mut CancelPoll<'_>,
-) -> Checked<input::Inputs> {
-    let mut canonical = request.clone();
-    canonical.support.origin = [0.; 3];
-    canonical.support.axis = [0., 0., 1.];
-    canonical.support.radial = [1., 0., 0.];
-    canonical.support.chart_origin = 0.;
-    input::read(&canonical, cancelled)
-}
 fn publish_chart(
     result: &mut WrappedNormalResult,
     plan: Plan<CertifiedRotatedFrameSpatialBudget>,

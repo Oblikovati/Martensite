@@ -51,6 +51,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 - Added revision-bound footprint checks for rectangular cylindrical trim bands, including full bands with a paired native seam (#420).
 
+- Added normal extrusion tools checked against the authored and fitted cap footprints of a selected cylindrical trim band (#420).
+
 - Added revision-checked extraction of the extrusion chart from a saved cylindrical face, so edits could reuse the selected face's native location, axes and radius (#420).
 
 - Added revision-checked conversion of native cylindrical face-hit parameters into developed coordinates with explicit seams, arithmetic bounds and separate trim-search coverage (#420).

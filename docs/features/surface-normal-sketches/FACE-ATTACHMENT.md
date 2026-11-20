@@ -89,9 +89,29 @@ checked a full seam crossing, a partial angular boundary, an axial
 boundary, a stale revision and mismatched chart, and a cylindrical
 support with a real bore trim loop. The original 239-curve outline and
 the 229-curve seam-crossing edit also passed footprint admission on their
-saved support. The report covers the authored footprint. Post-fit trim
-coverage, general curved or holed supports and Boolean feature
-publication require separate checks.
+saved support. The report covers the authored footprint.
+
+`attachment.extrude_within_trim_band(current_revision, &request)` builds
+the normal tool in the same chart. It checks the authored controls before
+fitting and sends the captured sources to the existing chart extruder.
+The extruder verifies that both stored cap pcurves of each fitted span
+match the fitted controls. The trim check uses those controls directly.
+For a partial band it subtracts the seam angle from the native angular
+bounds and rounds inward. The axial bounds stay in native units. A
+failed check identifies the region, curve, fitted interval and boundary.
+
+The tool retains the authored report, the number of checked fitted spans
+and the chart extruder's spatial placement report. The trim certificate
+covers both cap pcurves in the requested chart, including the interior
+of each cap enclosed by its wires. The spatial report accounts for
+stored placement separately. General curved or holed supports and
+Boolean feature publication still need their own checks.
+
+The [fitted-tool checks](references/cylindrical-trim-band-2026-11-20/fitted-tool.json)
+decoded both caps of a tool on a partial cylinder with a shifted seam.
+The tool matched the standalone chart extrusion bytes and authored
+history. A second tool crossed the paired seam on a full cylinder. All
+49 selected tests and strict all-target TKSketch Clippy passed.
 
 ## Multiline boss edit and replay
 

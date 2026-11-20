@@ -1,7 +1,21 @@
 //! A convex native band contains the filled footprint when it contains every source pole.
 use super::*;
+pub(super) type Intervals = [Option<[f64; 2]>; 2];
 
 pub(super) fn check(request: &WrappedNormalRequest, band: &band::Band) -> FootprintChecked<()> {
+    let intervals = authored_intervals(request, band)?;
+    let reader = profile_input::ProfileReader::new(&request.profile)
+        .map_err(|cause| source_error(input::profile_failure(cause, None)))?;
+    for selection in &request.selections {
+        let region = input::selected(&reader, selection).map_err(source_error)?;
+        check_region(region.region, &region.loops, intervals)?;
+    }
+    Ok(())
+}
+pub(super) fn authored_intervals(
+    request: &WrappedNormalRequest,
+    band: &band::Band,
+) -> FootprintChecked<Intervals> {
     if request.selections.is_empty() {
         return Err(CylinderFootprintFailure::EmptySelection);
     }
@@ -9,13 +23,7 @@ pub(super) fn check(request: &WrappedNormalRequest, band: &band::Band) -> Footpr
         .angular
         .map(|ranges| inward_arc(ranges, request.support))
         .transpose()?;
-    let reader = profile_input::ProfileReader::new(&request.profile)
-        .map_err(|cause| source_error(input::profile_failure(cause, None)))?;
-    for selection in &request.selections {
-        let region = input::selected(&reader, selection).map_err(source_error)?;
-        check_region(region, [arc, Some(band.axial)])?;
-    }
-    Ok(())
+    Ok([arc, Some(band.axial)])
 }
 fn source_error(cause: WrappedNormalFailure) -> CylinderFootprintFailure {
     CylinderFootprintFailure::Source(Box::new(cause))
@@ -31,13 +39,14 @@ fn inward_arc([first, last]: [f64; 2], support: CylinderSupport) -> FootprintChe
     Ok([lower, upper])
 }
 
-fn check_region(
-    region: profile_input::OrientedRegion,
-    intervals: [Option<[f64; 2]>; 2],
+pub(super) fn check_region(
+    region: SurfaceRegionId,
+    loops: &[Vec<AuthoredPiece>],
+    intervals: Intervals,
 ) -> FootprintChecked<()> {
-    for piece in region.loops.iter().flatten() {
+    for piece in loops.iter().flatten() {
         for &pole in &piece.poles {
-            check_pole(region.region, piece.span.curve, pole, intervals)?;
+            check_pole(region, piece.span.curve, pole, intervals)?;
         }
     }
     Ok(())
@@ -46,21 +55,23 @@ fn check_pole(
     region: SurfaceRegionId,
     curve: SurfaceCurveId,
     pole: [f64; 2],
-    intervals: [Option<[f64; 2]>; 2],
+    intervals: Intervals,
 ) -> FootprintChecked<()> {
-    for (axis, bound) in intervals.into_iter().enumerate() {
-        let Some([lower, upper]) = bound else {
-            continue;
-        };
-        if !(lower < pole[axis] && pole[axis] < upper) {
-            return Err(CylinderFootprintFailure::ControlOutside {
-                region,
-                curve,
-                axis,
-                coordinate: pole[axis],
-                required_interval: [lower, upper],
-            });
-        }
-    }
-    Ok(())
+    let Some((axis, required_interval)) = outside(pole, intervals) else {
+        return Ok(());
+    };
+    Err(CylinderFootprintFailure::ControlOutside {
+        region,
+        curve,
+        axis,
+        coordinate: pole[axis],
+        required_interval,
+    })
+}
+
+pub(super) fn outside(pole: [f64; 2], intervals: Intervals) -> Option<(usize, [f64; 2])> {
+    intervals.into_iter().enumerate().find_map(|(axis, bound)| {
+        let [lower, upper] = bound?;
+        (!(lower < pole[axis] && pole[axis] < upper)).then_some((axis, [lower, upper]))
+    })
 }
