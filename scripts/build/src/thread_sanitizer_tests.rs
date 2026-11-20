@@ -32,6 +32,7 @@ fn startup_precedes_geometry_capture_and_group_controls() {
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::open_extrusion -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkmath --lib predicates::roots::sketch_incidence::vertex_neighborhood -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tklcaf --lib tdf::sparse_commit::tests -- --test-threads=1 --show-output".to_owned(),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkbo --lib -- bop_algo::context_tasks int_tools::context::cache sketch_region_validation::self_check_tests --test-threads=1 --show-output".to_owned(),
         ]
     );
 }
@@ -354,4 +355,18 @@ fn document_scope_runs_only_its_transaction_races_after_startup() {
     assert_eq!(commands.len(), 4);
     assert!(commands[2].contains("sanitizer_startup/Cargo.toml"));
     assert!(commands[3].contains("--package martensite-tklcaf --lib tdf::sparse_commit::tests"));
+}
+
+#[test]
+fn shared_context_scope_runs_the_tkbo_worker_races_after_startup() {
+    let runner = runner();
+    run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &[Control::SharedContext],
+    )
+    .unwrap();
+    let commands = runner.commands();
+    assert_eq!(commands.len(), 4);
+    assert!(commands[2].contains("sanitizer_startup/Cargo.toml"));
+    assert!(commands[3].contains("--package martensite-tkbo --lib -- bop_algo::context_tasks"));
 }

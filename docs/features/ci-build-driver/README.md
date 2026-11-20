@@ -294,6 +294,9 @@ The runner recomputes scope using the planner's release-history pin.
 The `document-transactions` control runs tklcaf’s internal sparse-transaction
 lease and race controls when that toolkit is affected (#489).
 
+The `shared-context` control runs tkbo's context-task, cache and serial-versus-parallel
+self-check tests, where workers share one intersection context (#496).
+
 An explicit local `cargo xtask ci thread-sanitizer` invocation runs all controls.
 Hosted CI requires a valid trigger and recomputes its affected selection.
 
