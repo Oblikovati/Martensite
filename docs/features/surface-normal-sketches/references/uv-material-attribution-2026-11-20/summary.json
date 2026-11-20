@@ -1,0 +1,62 @@
+{
+  "recorded_utc": "2026-11-20T01:31:35.384749+00:00",
+  "source_checkpoint": "11884b4c77844e9c6bc20e755df01623e2b7e59d",
+  "fixture": "complete outward O. / PositiveX common chart / planar V6 / volume2",
+  "whole_api_diagnostic_seconds": 8.021473,
+  "whole_test_seconds": 13.24,
+  "timings_usable_for_acceptance": false,
+  "concurrent_compilation": true,
+  "debug_assertions": true,
+  "overflow_checks": true,
+  "ordinary_opt_level": 0,
+  "tkbo_opt_level": 1,
+  "math_opt_level": 3,
+  "work": {
+    "event": "narrow_cone_completed_work",
+    "arithmetic_operations": 994535,
+    "integration_subintervals": 444,
+    "retained_spans": 148
+  },
+  "observations": 112,
+  "o137_seconds": {
+    "uv_capture": 4.134472703,
+    "uv_domain_request": 0.000410621,
+    "uv_finish": 0.000446036,
+    "program_admission": 0.00239289,
+    "program_certification": 3.156080944,
+    "program_construction": 0.97571346,
+    "program_issue": 5.8298e-05,
+    "owned_native_edges": 0.002767183,
+    "owned_census": 0.314818428,
+    "owned_partition": 0.405358474,
+    "owned_contacts": 1.8835305089999999,
+    "graph_join_validation": 0.483454329,
+    "graph_faces": 0.017687869,
+    "graph_nesting": 0.022910359,
+    "graph_face_certification": 0.019660431,
+    "region_topology": 0.003214962,
+    "region_set_publication": 4.4302e-05,
+    "region_face": 0.023925589,
+    "region_native_publication": 0.9480799169999999,
+    "region_measured_area": 0.00020686199999999999,
+    "region_assembly": 0.00014602000000000001
+  },
+  "o137_native_region_publications": [
+    0.764715376,
+    0.183364541
+  ],
+  "dot11_uv_capture_seconds": 0.076132941,
+  "nested_timers_must_not_be_added_twice": true,
+  "source_function_fact": "RegionContext constructs and validates all certified bounded regions; planar::select subsequently chooses exactly one by authored loop identity. Individual region timing rows were not bound to the selected id.",
+  "restored_original_source": true,
+  "discarded_probe_bytes": 143153367,
+  "no_numeric_policy_budget_or_baseline_change": true,
+  "exclusions": [
+    "matched timing/RSS acceptance",
+    "five-second debug gate",
+    "current final-body qualification stage attribution",
+    "new optimization savings"
+  ],
+  "experiment_helper_removed": true,
+  "redundant_source_backups_removed": true
+}

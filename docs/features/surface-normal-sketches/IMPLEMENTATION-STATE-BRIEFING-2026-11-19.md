@@ -379,8 +379,12 @@ or release tag was made.
 ## Remaining delivery work
 
 1. Attribute current V6 stages before further Census optimization. The two
-   disposable passes above are complete. Split the remaining nested UV-material
-   cost next; keep shared-fix qualification running independently.
+   earlier disposable passes and the [nested UV-material pass](UV-MATERIAL-ATTRIBUTION-2026-11-20.md)
+   are complete. The latter passed the full outward operation at `11884b4c`:
+   O137 UV capture took 4.134473 s, including contact transport 1.883531 s,
+   graph contact verification 0.483454 s and native validation 0.948080 s.
+   These are nested diagnostics under concurrent compilation, without time/RSS
+   acceptance. Source restoration and artifact cleanup passed.
 2. Finish the latest shared-fix benchmark against the same clean baseline,
    compiler, profiles and accepted output. Preserve previous observations and
    guard refusals. Resolve any memory/runtime result outside the approved policy.
@@ -451,9 +455,10 @@ The original #564 source checkout remains until supersession is integrated.
 Dataset-dependent lanes use independent clean `martensite-test-data` checkouts
 at `34d65afd72cd3ca8ac1f9d17e5ca408b30e9b4b6`, without object alternates.
 
-The shared-fix canonical gate is live. Its final-source benchmark needs a
-normal-build/link check and a fresh declared campaign after that gate. The
-#569 baseline and fixed consumers are linked; all 14 functional invocations
-passed. Their strict timing campaign has not started. Existing flagged and
-partial campaigns remain preserved. A running-file alone does not establish
-process liveness.
+Shared-fix PR #571 at `9774ac64` passed its local canonical gate and hosted
+checks. Its final-source build and link passed. All three timed pairs were
+flagged for sibling activity; later isolation checks refused before consumers
+ran. Performance acceptance is held. Allocation and resident-map diagnostics
+do not qualify RSS. The #569 consumers are linked; all 14 functional invocations
+passed, and their strict campaign remains unrun. Earlier receipts are preserved.
+A running-file alone does not establish process liveness.
