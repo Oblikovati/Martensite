@@ -204,6 +204,7 @@ fn reusable(
         && proof.operations() <= generated.max_operations
 }
 mod joins;
+pub(in super::super) use joins::bind_cap_joins;
 #[cfg(test)]
 pub(in super::super) use joins::cap_join_spans;
 pub(super) use joins::certify as joins;

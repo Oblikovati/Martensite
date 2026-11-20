@@ -44,6 +44,12 @@ pub struct ConicalChartPlanError {
     /// Actual work before refusal.
     pub operations: u32,
 }
+impl ConicalChartPlanError {
+    /// Whether planning observed cancellation. Example: `error.is_cancelled()`.
+    pub fn is_cancelled(&self) -> bool {
+        matches!(&self.cause, ConicalChartPlanFailure::Domain(cause) if cause.was_cancelled())
+    }
+}
 
 /// Chart planning admission and proof failures.
 #[derive(Debug)]

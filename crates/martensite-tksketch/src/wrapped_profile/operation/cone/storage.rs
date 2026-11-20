@@ -4,6 +4,7 @@ use super::*;
 mod allocation;
 mod binding;
 mod boundary;
+pub(super) use boundary::bind_cap_joins;
 #[cfg(test)]
 pub(super) use boundary::cap_join_spans;
 pub(super) use boundary::{prepared_query, query as boundary_query};
@@ -53,7 +54,14 @@ pub(super) fn capture(
 ) -> ConeChecked<Stored> {
     let started = work.consumed;
     let captured = capture_spans(original, prepared, &view, work, cancelled)?;
-    let joins = boundary::joins(original, prepared, &captured.spans, work, cancelled)?;
+    let joins = boundary::joins(
+        original,
+        prepared,
+        &captured.spans,
+        captured.carriers,
+        work,
+        cancelled,
+    )?;
     Ok(Stored {
         shape: view.shape,
         coverage: captured.coverage,

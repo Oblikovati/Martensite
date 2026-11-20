@@ -1,5 +1,6 @@
 //! Real fitted and archived cone caps cover both disjoint and contained periodic regions.
 use super::*;
+use crate::surface_sketch::wrapped_profile::family::Control;
 use martensite_tkbo::profile_extrusion::{LoopUse, ProfileLoop, ProfileVertex};
 
 #[test]
@@ -11,6 +12,7 @@ fn disjoint_closed_atlas_members_bind_one_family_certificate() {
         100,
         [[40., 0.], [41., 0.], [41., 1.], [40., 1.]],
     );
+    request.selections.reverse();
     let mut work = Work::new(request.proof.arithmetic);
     let (prepared, stored) = freeze_family(&request, &mut work);
     let projections = projections(&prepared, &stored);
@@ -151,44 +153,58 @@ fn freeze_family(
     let inputs = input::capture(request, &mut || false).unwrap();
     super::super::super::super::selection::planar(&run, &inputs.originals, work, &mut || false)
         .unwrap();
-    let [x, y] = inputs.originals[0].loops[0][0].poles[0];
-    let reference = martensite_cmath::hypot(x, y);
+    let owner = inputs
+        .originals
+        .iter()
+        .min_by_key(|source| source.region)
+        .unwrap();
+    let reference = super::super::super::super::reference(owner).unwrap();
     let prepared = inputs
         .originals
         .iter()
-        .map(|source| prepare_member(&run, source, reference, work))
+        .map(|source| prepare_local(&run, source, Some(reference), work))
         .collect::<Vec<_>>();
-    let stored = inputs
-        .originals
-        .iter()
-        .zip(&prepared)
-        .map(|(source, prepared)| freeze_member(request, source, prepared, work))
-        .collect();
+    let stored = capture_family(&run, &inputs.originals, &prepared, work);
     (prepared, stored)
 }
 
-fn prepare_member(
+fn capture_family(
     run: &ConeRun<'_>,
-    source: &DevelopedRegionRequest,
-    reference: f64,
+    originals: &[DevelopedRegionRequest],
+    prepared: &[Prepared],
     work: &mut Work,
-) -> Prepared {
-    let mut prepared = prepare_local(run, source, Some(reference), work);
-    super::super::super::super::canonicalize::uv_endpoints(&mut prepared).unwrap();
-    prepared
+) -> Vec<storage::Stored> {
+    let mut continue_operation = |_| false;
+    let mut control = Control::new(&mut continue_operation);
+    let stage = stages::ConeStages {
+        request: run,
+        execution_selection: prepared[0].executed_selection,
+    };
+    let (_, keys, root, names) =
+        operation::frozen::construct(&stage, prepared, &mut control).unwrap();
+    let (coverage, members) = coverage::certify_developed_family(prepared, &root, &names).unwrap();
+    let history = history::certify_developed(originals, prepared, &keys).unwrap();
+    assert_eq!(coverage.members, prepared.len());
+    assert_eq!(coverage.bindings, history.records.len());
+    let mut stored =
+        operation::members::store(&stage, originals, prepared, members, work, &mut control)
+            .unwrap();
+    originals
+        .iter()
+        .zip(prepared)
+        .map(|(source, prepared)| {
+            let member = stored.remove(&source.region).unwrap();
+            validate_member(source, prepared, &member);
+            member
+        })
+        .collect()
 }
 
-fn freeze_member(
-    request: &WrappedConeNormalRequest,
-    source: &DevelopedRegionRequest,
-    prepared: &Prepared,
-    work: &mut Work,
-) -> storage::Stored {
-    let body = decode_member(prepared, request.support);
+fn validate_member(source: &DevelopedRegionRequest, prepared: &Prepared, stored: &storage::Stored) {
     let resolution = crate::surface_sketch::wrapped_profile::pipeline::resolution(source.tolerance);
-    let report = validate_body(&body.shape, &resolution).unwrap();
+    let report = validate_body(&stored.shape, &resolution).unwrap();
     assert!(report.is_valid(), "{report:?}");
-    storage::capture(source, prepared, body, work, &mut || false).unwrap()
+    storage::bind_cap_joins(source, prepared, stored).unwrap();
 }
 
 fn projections(prepared: &[Prepared], stored: &[storage::Stored]) -> Vec<Request> {

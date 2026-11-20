@@ -37,6 +37,7 @@ fn shared_context(failure: &ConeFailure) -> Option<shared::Context> {
             None
         }
         ActualPatch(_) | ActualPair { .. } | DirectedRows(_) => None,
+        ChartPlan(_) => None,
     }
 }
 fn admission_class(cause: &ConeCause) -> Option<Class> {
@@ -55,6 +56,7 @@ fn admission_class(cause: &ConeCause) -> Option<Class> {
         | Material(_) | DevelopedMaterial(_) => None,
         Reference(_) | ReferenceVolume(_) | Flux(_) | Clearance(_) | Authored(_) => None,
         ActualPatch(_) | ActualPair { .. } | DirectedRows(_) => None,
+        ChartPlan(_) => None,
     }
 }
 fn mathematical_class(cause: &ConeCause) -> Option<Class> {
@@ -66,6 +68,7 @@ fn mathematical_class(cause: &ConeCause) -> Option<Class> {
         Radius(cause) => Some(numerical::depth(cause.cause())),
         Sector(cause) => Some(numerical::sector(cause)),
         Domain(cause) => Some(numerical::domain(&cause.cause)),
+        ChartPlan(cause) => Some(chart_plan_class(&cause.cause)),
         Joins(_) | ChartJoins(_) => join_class(cause),
         TrimPair(_) | ChartTrimPair(_) => trim_class(cause),
         Material(_) | DevelopedMaterial(_) => material_class(cause),
@@ -81,6 +84,16 @@ fn mathematical_class(cause: &ConeCause) -> Option<Class> {
         NativeQualification(_) | Storage(_) | Coverage(_) | History(_) => None,
         ActualBinding(_) | ActualValidation(_) => None,
         Budget(_) | Planar(_) | Cancelled(_) | Binding { .. } => None,
+    }
+}
+
+fn chart_plan_class(cause: &ConicalChartPlanFailure) -> Class {
+    match cause {
+        ConicalChartPlanFailure::Domain(cause) => numerical::domain(cause),
+        ConicalChartPlanFailure::Limits { .. } => Class::InvalidInput,
+        ConicalChartPlanFailure::Level { .. } | ConicalChartPlanFailure::Capacity { .. } => {
+            Class::Incomplete
+        }
     }
 }
 

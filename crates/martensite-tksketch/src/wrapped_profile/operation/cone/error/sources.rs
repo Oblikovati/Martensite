@@ -25,6 +25,7 @@ fn native_source(cause: &ConeCause) -> Option<&(dyn std::error::Error + 'static)
         Encoding(_) | Coverage(_) | History(_) | Candidate(_) | ActualValidation(_) => None,
         Coefficients(_) | Binding { .. } | Cancelled(_) => None,
         ActualPatch(_) | ActualPair { .. } | DirectedRows(_) => None,
+        ChartPlan(_) => None,
     }
 }
 fn mathematical(cause: &ConeCause) -> Option<&(dyn std::error::Error + 'static)> {
@@ -33,6 +34,7 @@ fn mathematical(cause: &ConeCause) -> Option<&(dyn std::error::Error + 'static)>
         Radius(cause) => Some(cause.as_ref()),
         Sector(cause) => Some(cause.as_ref()),
         Domain(cause) => Some(cause.as_ref()),
+        ChartPlan(cause) => Some(cause.as_ref()),
         Joins(cause) => Some(cause.as_ref()),
         ChartJoins(cause) => Some(cause.as_ref()),
         TrimPair(cause) => Some(cause.as_ref()),
@@ -65,6 +67,7 @@ fn extended_mathematical(cause: &ConeCause) -> Option<&(dyn std::error::Error + 
         | SourceAnchor { .. } => None,
         Scalar { .. } | Limit { .. } | Missing(_) | Encoding(_) | Coverage(_) => None,
         History(_) | Candidate(_) | Coefficients(_) | Binding { .. } | Cancelled(_) => None,
+        ChartPlan(_) => None,
     }
 }
 

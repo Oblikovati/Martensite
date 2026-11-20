@@ -1,5 +1,7 @@
 //! Budget-driven dyadic fits precede native construction; only spatial refusals subdivide.
 use super::*;
+mod local;
+pub(super) use local::plan as plan_local;
 #[cfg(test)]
 mod tests;
 use martensite_cmath::atan;

@@ -163,19 +163,26 @@ fn bind_member<'a>(
     stored: &Stored,
     clearance: &mut Vec<CylindricalClearanceSource<'a>>,
 ) -> ConeChecked<()> {
-    let pieces: Vec<_> = prepared.source.loops.iter().flatten().collect();
-    if pieces.len() != stored.spans.len() {
+    let count: usize = prepared.source.loops.iter().map(Vec::len).sum();
+    if count != stored.spans.len() {
         return Err(mismatch(
             original.region,
             None,
             "stored span count",
             vec![stored.spans.len() as u64],
-            vec![pieces.len() as u64],
+            vec![count as u64],
         ));
     }
-    for (piece, proof) in pieces.into_iter().zip(&stored.spans) {
-        bind_span(original, prepared, piece, proof)?;
+    let common_chart = prepared.local_charts.is_empty();
+    for (piece, proof) in prepared.source.loops.iter().flatten().zip(&stored.spans) {
+        if common_chart {
+            bind_span(original, prepared, piece, proof)?;
+        }
         clearance.push(clearance_source(original, prepared, piece.span)?);
+    }
+    if !common_chart {
+        // Cap join binding already rechecks each local chart and retained edge.
+        bind_cap_joins(original, prepared, stored)?;
     }
     Ok(())
 }

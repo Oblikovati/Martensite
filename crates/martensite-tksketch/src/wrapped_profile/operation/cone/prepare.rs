@@ -65,6 +65,7 @@ struct AdmittedConeChart<'a> {
     wedge: ConicalSectorWedge,
     center: f64,
     proof: Option<&'a std::sync::Arc<ConicalChartDomainEvidence>>,
+    local_reference_slant: Option<f64>,
 }
 fn admitted_chart<'a>(
     request: &ConeRun<'_>,
@@ -81,6 +82,7 @@ fn admitted_chart<'a>(
         wedge,
         center,
         proof,
+        local_reference_slant: None,
     })
 }
 
@@ -128,6 +130,7 @@ fn prepare_region(
         loops.push(prepare_contour(
             &mut prepared,
             contour,
+            chart.local_reference_slant.is_some(),
             endpoints,
             work,
             cancelled,
@@ -151,7 +154,10 @@ fn initial(
         fits: BTreeMap::new(),
         final_endpoints: None,
         directed_family: None,
-        reference_slant: reference(source)?,
+        reference_slant: match chart.local_reference_slant {
+            Some(slant) => slant,
+            None => reference(source)?,
+        },
         semi_angle: request.support.semi_angle,
         chart_origin: request.support.chart_origin,
         chart_center: chart.center,
@@ -165,6 +171,7 @@ fn initial(
 fn prepare_contour(
     prepared: &mut Prepared,
     contour: &[AuthoredPiece],
+    local_charts: bool,
     endpoints: &mut endpoints::EndpointPool,
     work: &mut Work,
     cancelled: &mut CancelPoll<'_>,
@@ -172,13 +179,17 @@ fn prepare_contour(
     let mut pieces = Vec::new();
     for source in contour {
         radius(prepared, source, work, cancelled)?;
-        pieces.extend(fit::plan(
-            prepared, source, None, endpoints, work, cancelled,
-        )?);
+        if local_charts {
+            fit::plan_local(prepared, source, endpoints, work, cancelled, &mut pieces)?;
+        } else {
+            pieces.extend(fit::plan(
+                prepared, source, None, endpoints, work, cancelled,
+            )?);
+        }
     }
     Ok(pieces)
 }
-fn reference(source: &DevelopedRegionRequest) -> ConeChecked<f64> {
+pub(super) fn reference(source: &DevelopedRegionRequest) -> ConeChecked<f64> {
     let point = source
         .loops
         .first()

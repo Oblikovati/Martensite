@@ -47,6 +47,21 @@ impl ConicalDevelopedBoundaryEvidence {
     pub fn operations(&self) -> u32 {
         self.operations
     }
+    /// Bind both decoded cap polynomials and carriers without rebuilding their trim snapshots.
+    /// Example: `assert!(proof.matches_decoded_caps(pcurves, carriers));`.
+    pub fn matches_decoded_caps(
+        &self,
+        pcurves: [&[[f64; 2]]; 2],
+        carriers: [ConicalTrimCarrier; 2],
+    ) -> bool {
+        self.carriers == carriers.map(carrier_bits)
+            && self.uv_bits.iter().zip(pcurves).all(|(stored, poles)| {
+                stored
+                    .iter()
+                    .copied()
+                    .eq(poles.iter().map(|pole| pole.map(f64::to_bits)))
+            })
+    }
     /// Rebind actual geometry, chart, grid and reference bits; `assert!(evidence.matches(&pair, &source, &boundary, &domain, reference));`.
     pub fn matches(
         &self,
@@ -147,19 +162,17 @@ pub(super) fn capture(
         uv_bits: pair
             .pcurves
             .map(|poles| poles.iter().map(|p| p.map(f64::to_bits)).collect()),
-        carriers: pair.carriers.map(|c| {
-            [
-                c.radius.to_bits(),
-                c.axial_origin.to_bits(),
-                c.semi_angle.to_bits(),
-            ]
-        }),
+        carriers: pair.carriers.map(carrier_bits),
         reference: reference.to_bits(),
         options: boundary.options(),
         operations,
         position_upper,
         operands,
     }
+}
+
+fn carrier_bits(carrier: ConicalTrimCarrier) -> [u64; 3] {
+    [carrier.radius, carrier.axial_origin, carrier.semi_angle].map(f64::to_bits)
 }
 pub(in crate::predicates::roots::metric_bounds) fn fingerprint(
     evidence: &ConicalDevelopedBoundaryEvidence,

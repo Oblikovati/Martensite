@@ -90,16 +90,18 @@ fn pending_siblings_count_towards_the_limit() {
 fn planner_preserves_depth_exhaustion_and_cancellation() {
     let mut input = query();
     input.max_level = 0;
+    let Err(depth) = plan_conical_subspan_charts(input, || false) else {
+        panic!("expected maximum chart depth to refuse");
+    };
     assert!(matches!(
-        plan_conical_subspan_charts(input, || false),
-        Err(ConicalChartPlanError {
-            cause: ConicalChartPlanFailure::Level { index: 0, level: 0 },
-            ..
-        })
+        depth.cause,
+        ConicalChartPlanFailure::Level { index: 0, level: 0 }
     ));
+    assert!(!depth.is_cancelled());
     let Err(error) = plan_conical_subspan_charts(query(), || true) else {
         panic!("expected cancellation to stop chart planning");
     };
+    assert!(error.is_cancelled());
     let ConicalChartPlanFailure::Domain(cause) = error.cause else {
         panic!("expected domain arithmetic cancellation");
     };

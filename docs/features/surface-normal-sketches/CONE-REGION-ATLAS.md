@@ -462,3 +462,16 @@ pinned Linux x86_64 core. The median API time was 4.774 s on
 `f56bb312` and 4.706 s with the family changes. Peak RSS medians
 were 68,256 KiB and 67,748 KiB. This measures the existing standalone
 operation. The connected-atlas family still needs a public benchmark.
+
+The local chart planner now feeds the shared cone fitter. It charges
+planning work on either completion or refusal and keeps the affected
+authored span on the error. The family fixtures use the operation's
+compound archive, coverage, history and storage stages. Their frozen
+cap joins rebind to both decoded trim polynomials, the two cone
+carriers and each span's original chart. Changing a single decoded
+coefficient by one ULP refuses at that span.
+
+The metric-bound suite passed 816 tests and the cone operation suite
+passed 145, with three ignored. Clippy passed with warnings denied.
+Three pinned standalone O. runs had a median API time of 4.958 s and
+median process peak RSS of 67,676 KiB. These runs had no paired baseline.

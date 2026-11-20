@@ -299,7 +299,13 @@ impl From<BoundedArithmeticFailure> for ConicalChartDomainFailure {
 impl ConicalChartDomainError {
     /// Whether the actual proof observed cancellation; `error.is_cancelled()`.
     pub fn is_cancelled(&self) -> bool {
-        match &self.cause {
+        self.cause.was_cancelled()
+    }
+}
+
+impl ConicalChartDomainFailure {
+    fn was_cancelled(&self) -> bool {
+        match self {
             ConicalChartDomainFailure::Arithmetic(BoundedArithmeticFailure::Cancelled) => true,
             ConicalChartDomainFailure::Sector(ConicalSectorFailure::Arithmetic(
                 BoundedArithmeticFailure::Cancelled,

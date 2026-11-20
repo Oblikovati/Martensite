@@ -1,8 +1,6 @@
 //! The automatic plan is consumed by the same fitter and native cap constructor.
 use super::*;
-use crate::surface_sketch::wrapped_profile::{
-    planar_clearance, selection as periodic_selection, storage::MAX_CERTIFIED_SPANS,
-};
+use crate::surface_sketch::wrapped_profile::{planar_clearance, selection as periodic_selection};
 use martensite_tkbo::{
     body_check::validate_body,
     profile_extrusion::{PlanarProofVersion, ProfileCurve, ProfileCurveId, ProfileVertexId},
@@ -29,8 +27,7 @@ fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {
         super::super::super::selection::planar(&run, &inputs.originals, &mut work, &mut || false)
             .unwrap();
     assert!(planar.members[&original.region].area.encloses(5445. / 256.));
-    let mut prepared = prepare_local(&run, original, None, &mut work);
-    super::super::super::canonicalize::uv_endpoints(&mut prepared).unwrap();
+    let prepared = prepare_local(&run, original, None, &mut work);
     assert_closed_wide_uv(&prepared);
     let clearance = super::super::super::clearance::certify(
         &inputs.originals,
@@ -46,14 +43,45 @@ fn planned_charts_construct_a_closed_cone_strip_wider_than_one_turn() {
     let report = validate_body(&body.shape, &resolution).unwrap();
     assert!(report.is_valid(), "{report:?}");
     let mut stored = storage::capture(original, &prepared, body, &mut work, &mut || false).unwrap();
+    storage::bind_cap_joins(original, &prepared, &stored).unwrap();
+    reject_changed_cap(original, &prepared, &mut stored);
     assert_per_span_authority(original, &prepared, &stored.spans);
     assert_certified_contour(original, &prepared, &stored);
     // Decoded span iteration order is not curve identity.
     stored.spans.reverse();
+    let error = storage::bind_cap_joins(original, &prepared, &stored).unwrap_err();
+    assert_eq!(error.region, Some(original.region));
     let cap = assert_periodic_cap_material(&prepared, &request, &stored, &mut work);
     stored.spans.reverse();
     let homotopy = assert_homotopy(&stored.joins, &cap, &clearance);
     assert_closed_strip_measures(&run, original, &stored, &homotopy, &mut work);
+}
+
+#[test]
+fn local_chart_level_refusal_keeps_its_source_and_typed_cause() {
+    let request = strip_request();
+    let run = ConeRun::from(&request);
+    let mut inputs = input::capture(&request, &mut || false).unwrap();
+    let original = &mut inputs.originals[0];
+    original.max_fit_level = 0;
+    let mut work = Work::new(request.proof.arithmetic);
+    let Err(error) = plan_local_region(&run, original, None, &mut work, &mut || false) else {
+        panic!("the wide strip needs subdivided charts");
+    };
+    assert_eq!(error.region, Some(original.region));
+    assert!(
+        original.loops[0]
+            .iter()
+            .any(|piece| Some(piece.span) == error.span)
+    );
+    let ConeCause::ChartPlan(cause) = &error.cause else {
+        panic!("expected the local chart planning refusal: {error}");
+    };
+    assert!(matches!(
+        cause.cause,
+        ConicalChartPlanFailure::Level { index: 0, level: 0 }
+    ));
+    assert!(cause.operations > 0 && work.consumed >= cause.operations);
 }
 
 fn decode_member(prepared: &Prepared, support: ConeSupport) -> coverage::MemberView {
@@ -96,7 +124,8 @@ fn assert_certified_contour(
     prepared: &Prepared,
     stored: &storage::Stored,
 ) {
-    let spans = storage::cap_join_spans(original, prepared, &stored.spans).unwrap();
+    let spans =
+        storage::cap_join_spans(original, prepared, &stored.spans, stored.carriers).unwrap();
     let lengths = [spans.len()];
     let query = ConicalCapJoinsQuery {
         spans: &spans,
@@ -114,6 +143,26 @@ fn assert_certified_contour(
     };
     assert!(!stored.joins.matches_cap_joins(&changed));
     assert_broken_order(&spans, &changed);
+}
+
+fn reject_changed_cap(
+    original: &DevelopedRegionRequest,
+    prepared: &Prepared,
+    stored: &mut storage::Stored,
+) {
+    let bound = stored.spans[0].pcurves[1][1][0];
+    stored.spans[0].pcurves[1][1][0] = bound.next_up();
+    let error = storage::bind_cap_joins(original, prepared, stored).unwrap_err();
+    assert_eq!(error.region, Some(original.region));
+    assert_eq!(error.span, Some(stored.spans[0].span));
+    assert!(matches!(
+        error.cause,
+        ConeCause::Binding {
+            field: "exact decoded cap polynomials and carrier binding",
+            ..
+        }
+    ));
+    stored.spans[0].pcurves[1][1][0] = bound;
 }
 
 fn assert_broken_order(spans: &[ConicalCapJoinSpan<'_>], original: &ConicalCapJoinsQuery<'_>) {
@@ -190,67 +239,38 @@ fn prepare_local(
     shared_slant: Option<f64>,
     work: &mut Work,
 ) -> Prepared {
+    plan_local_region(run, original, shared_slant, work, &mut || false).unwrap()
+}
+
+fn plan_local_region(
+    run: &ConeRun<'_>,
+    original: &DevelopedRegionRequest,
+    shared_slant: Option<f64>,
+    work: &mut Work,
+    cancelled: &mut CancelPoll<'_>,
+) -> ConeChecked<Prepared> {
     let chart = super::super::super::AdmittedConeChart {
         wedge: ConicalSectorWedge::PositiveX,
         center: run.support.chart_origin,
         proof: None,
+        local_reference_slant: Some(match shared_slant {
+            Some(slant) => slant,
+            None => super::super::super::reference(original)?,
+        }),
     };
     let execution = WrappedConeExecutionSelection::RoundedProxyNativeSearchV1 {
         domain: WrappedConeDomainPolicy::PositiveXRecenteredChartV4,
     };
-    let mut prepared = super::super::super::initial(run, original, &chart, execution).unwrap();
-    if let Some(reference) = shared_slant {
-        prepared.reference_slant = reference;
-    }
     let mut endpoints = endpoints::EndpointPool::default();
-    prepared.source.loops = original
-        .loops
-        .iter()
-        .map(|contour| fit_contour(&mut prepared, contour, &mut endpoints, work))
-        .collect();
-    prepared
-}
-
-fn fit_contour(
-    prepared: &mut Prepared,
-    contour: &[AuthoredPiece],
-    endpoints: &mut endpoints::EndpointPool,
-    work: &mut Work,
-) -> Vec<AuthoredPiece> {
-    let mut pieces = Vec::new();
-    for edge in contour {
-        super::super::super::radius(prepared, edge, work, &mut || false).unwrap();
-        pieces.extend(fit_edge(prepared, edge, endpoints, work));
-    }
-    pieces
-}
-
-fn fit_edge(
-    prepared: &mut Prepared,
-    edge: &AuthoredPiece,
-    endpoints: &mut endpoints::EndpointPool,
-    work: &mut Work,
-) -> Vec<AuthoredPiece> {
-    let query = ConicalChartPlanQuery {
-        authored: &edge.poles,
-        semi_angle: prepared.semi_angle,
-        chart_origin: prepared.chart_origin,
-        max_level: prepared.source.max_fit_level,
-        max_charts: MAX_CERTIFIED_SPANS as usize,
-        options: work.remaining(),
-    };
-    let chart_plan = plan_conical_subspan_charts(query, || false).unwrap();
-    work.charge(
-        prepared.source.region,
-        Some(edge.span),
-        chart_plan.operations(),
+    super::super::super::prepare_region(
+        run,
+        original,
+        &chart,
+        execution,
+        &mut endpoints,
+        work,
+        cancelled,
     )
-    .unwrap();
-    let mut fitted = Vec::new();
-    for proof in chart_plan.into_charts() {
-        fitted.extend(plan(prepared, edge, Some(proof), endpoints, work, &mut || false).unwrap());
-    }
-    fitted
 }
 
 fn assert_closed_wide_uv(prepared: &Prepared) {
