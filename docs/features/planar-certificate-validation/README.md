@@ -207,3 +207,17 @@ and live readers for V3–V6, count evaluated predicates, preserve the initial
 eligibility checks and exercise first/later metadata, source, mode and policy
 refusals. Existing cancellation, work, integral-program and alias guards remain
 part of the targeted verification.
+
+## Exact point parameter measurements (#569)
+
+Native-parameter measurement now evaluates an exact point once when applying
+its affine map and computing its distance from the observed parameter. Identity
+maps retain the exact point directly. Non-point intervals keep the existing
+interval formulas.
+
+Source-trim intersection and scalar admission remain in their original order.
+Endpoint maps still validate both supplied endpoints, including an unused
+endpoint. The measurement retains the observed parameter and requested limit
+with their original signed-zero bits. Exact differential controls cover endpoint
+and interior points, reversed and extreme maps, invalid operands and threshold
+boundaries. This change adds no public API or numerical work policy.
