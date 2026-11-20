@@ -48,6 +48,44 @@ their coordinates and outside state for application feedback. Unknown or rejecte
 classifications always refuse. These policies concern hit authoring; full-profile
 support-trim acceptance for boss/pocket operations remains open.
 
+## Resolving the extrusion chart
+
+Use `attachment.extrusion_support(current_revision, seam, normal)` when
+recomputing a wrapped profile. It decodes the recorded face and reads its
+native location, axial and radial directions, and radius. The returned
+`CylinderSupport` uses the same unwrapped seam angle and axial origin as
+`develop_parameters`. `NormalSense` selects increasing or decreasing
+radius regardless of the face's topology orientation. An indirect native
+frame refuses because the extruder requires a right-handed chart.
+
+Use `normal_extrude_profile_on_chart` for a nonzero seam angle with the
+rotation-aware spatial certificate. The extrusion chart describes the
+analytic surface. The attachment record still owns the selected trims and
+support body. A whole-profile trim check and Boolean history composition
+belong to the attached feature operation.
+
+## Multiline boss edit and replay
+
+The [local qualification](references/multiline-attached-replay-2026-11-20/summary.json)
+passed all 27 attachment controls and the full edited boss. The fixture
+retains 239 authored curves and 18 selected regions. It follows an explicit
+history image from a radius-10 support to a radius-12 support, restores the
+revised record, translates the layout in the developed chart and changes
+depth from 0.25 to 0.375. The previous support revision refuses access to
+the new chart. Every exposed cap survives the edit, and the original body
+encoding and authored region and vertex keys are preserved.
+
+The edited tool and Boolean body replayed byte for byte in a fresh process,
+along with the ordered authored history. Both builds checked the exact
+fixture volume oracle for the tool, the ordered native body checks, and the
+membership of Boolean history images. The three-body test took 387.69 s
+in the assertion-enabled build. That includes the original body, edited
+body and process replay, and is not an extrusion benchmark.
+
+This covers edits to support, placement and depth for the outward text
+boss. Changes to text content, seam-crossing attached text, inward edit
+replay and general selected-face trim certification remain separate gates.
+
 ## Evidence and remaining work
 
 The local attachment campaign passed 19 tests in 0.24 seconds, including a real

@@ -12,6 +12,7 @@ mod codec;
 mod failure;
 mod failure_class;
 mod reattach;
+mod support;
 pub use failure::*;
 pub use failure_class::AttachmentFailureClass;
 type Checked<T> = Result<T, AttachmentFailure>;

@@ -64,7 +64,13 @@ fn native_snapshot(shape: &martensite_tkbrep::topods::Shape) -> Vec<u8> {
 }
 fn validate_attached_body(shape: &martensite_tkbrep::topods::Shape) {
     use martensite_tkbo::body_check::validate_body;
-    let resolution = Resolution::new(
+    let report = validate_body(shape, &attachment_resolution()).unwrap();
+    assert!(report.is_valid(), "{report:?}");
+    check_one_solid(shape);
+}
+
+fn attachment_resolution() -> Resolution {
+    Resolution::new(
         1e-5,
         1e-7,
         1e-9,
@@ -73,11 +79,9 @@ fn validate_attached_body(shape: &martensite_tkbrep::topods::Shape) {
             angular: 0.1,
         },
         ToleranceCap::Refuse(1e-5),
-    );
-    let report = validate_body(shape, &resolution).unwrap();
-    assert!(report.is_valid(), "{report:?}");
-    check_one_solid(shape);
+    )
 }
+
 #[test]
 fn wrapped_glyph_boss_joins_its_cylindrical_support_body() {
     let mut request = glyph_request(0);

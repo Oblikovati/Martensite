@@ -1,5 +1,7 @@
 //! Every selected glyph must retain its exposed cap after attachment (#425).
 use super::*;
+#[path = "multiline/replay.rs"]
+mod replay;
 use martensite_tkbo::bop_algo::Operation;
 use martensite_tksketch::surface_sketch::HistoryRole as SurfaceHistoryRole;
 
@@ -27,7 +29,7 @@ fn multiline_request(normal: NormalSense) -> WrappedNormalRequest {
     request
 }
 
-fn multiline_support() -> martensite_tkbrep::topods::Shape {
+fn multiline_support(radius: f64) -> martensite_tkbrep::topods::Shape {
     use martensite_tkmath::gp::{Axis2, Point3, StandardDirection3};
     use martensite_tkprim::brep_prim_api::BRepPrimAPIMakeCylinder;
     let axes = Axis2::with_standard_frame(
@@ -35,7 +37,7 @@ fn multiline_support() -> martensite_tkbrep::topods::Shape {
         StandardDirection3::Z,
         StandardDirection3::X,
     );
-    BRepPrimAPIMakeCylinder::with_axes(axes, 10., 8.)
+    BRepPrimAPIMakeCylinder::with_axes(axes, radius, 8.)
         .shape()
         .unwrap()
         .clone()
@@ -49,7 +51,7 @@ fn complete_multiline_attachment(normal: NormalSense, operation: Operation, expe
     check_volume_oracle(&result, expected);
     let bytes = result.encoded_brep().to_vec();
     let native = result.export_native().unwrap();
-    let base = multiline_support();
+    let base = multiline_support(10.);
     let attached = attach_tool(&base, &native.bodies, operation);
     validate_attached_body(attached.shape());
     check_tool_history(&attached, &native.entities);
