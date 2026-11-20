@@ -54,7 +54,7 @@ The application owns gestures and rendering; the kernel supplies the modelling.
 | #418 general profile curves, holes and disconnected material | Open; cylinder work and bounded cone Phase A exist, B1/V6 is local, broader rational/conic/spline and cone scope remains incomplete. |
 | #419 full bands, periodic holes and seam-independent topology | Open; full/multiple wraps are not qualified by the current common-chart cone operation. |
 | #420 attached bosses/pockets, support revisions and replay | Open; attachment and coordinate primitives exist, full body-feature integration remains unqualified. |
-| #425 multiline text workflow | Open; owned text capture exists, complete wrapped text-on-body acceptance remains outstanding. |
+| #425 multiline text workflow | Open; owned capture and both bounded 18-region cylinder boss/pocket controls pass. Persistent full multiline body edits/replay and cone text remain outstanding. |
 
 See [visual acceptance](VISUAL-WORKFLOW.md), [owned text capture](TEXT-CAPTURE.md)
 and [public API](PUBLIC-API.md). Existing solved-profile input is not a new
@@ -114,7 +114,7 @@ record the contract.
 | B1 execution choice | `DirectedCommonChartRequireCertifiedV1` uses directed construction and requires its certified SI evidence. Missing/incomplete certification refuses; native search does not substitute for it. Actual code admits composite V5 and V6. |
 | Owned text input | `brep_font::capture_owned_font_text` in TKV3D captures exact owned font bytes, scalar occurrence IDs, glyph prototypes, multiline outlines, counters and disconnected material. It owns no live native font/library handle after publication. Cluster shaping is outside that scalar-occurrence interface. |
 | Attachment | `CylinderFaceAttachment` captures/restores owned selected-face records, verifies revisions, exports detached support and follows explicit history with ambiguity refusal. Chart hit-to-developed mapping and persistence are present. |
-| Boss/pocket workflow | Existing Boolean and history machinery is available for reuse. The complete attached text emboss/engrave/edit/replay case is not qualified. |
+| Boss/pocket workflow | [Both complete multiline cylinder compositions](MULTILINE-ATTACHMENT-2026-11-20.md) pass through existing Boolean/history APIs. Persistent attachment and full body edits/replay remain unqualified. |
 
 The pipeline reuses TKBO planar regions/contact transport and TKMath exact
 predicates/integration. Text capture stays above modelling without a TKSketch
@@ -332,7 +332,7 @@ contains a tested local adaptation; main-first integration remains required.
 | --- | --- | --- |
 | Remote patch line | `main`, `b61a031d0bde0e21d283e0f94975f79b9ae15574` | Remote authoritative baseline. |
 | Remote feature candidate | `release/next`, `2e8ab886d4755c9c0165d7f59f2a92ead61f3612` | Includes Phase A and main synchronization PR #559. |
-| Active capability | `feature/cone-chart-atlas`, source checkpoint `7747b805`; no remote branch | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1` |
+| Active capability | `feature/cone-chart-atlas`, model checkpoint `7747b805`, latest tests `3fa45d05`; no remote branch | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1` |
 | Shared-fix integration | `fix/census-contact-indexes`, HEAD `9774ac64`; PR #571 green, performance held | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix567-census-report-index` |
 | Original #566 lane | `fix/566-contact-cardinality-index`, HEAD `b61a031d` plus preserved frozen changes | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix566-contact-cardinality-index` |
 | Superseded #564 lane | `fix/564-contact-row-iteration`, preserved unfinished source | `/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/fix564-contact-row-iteration` |

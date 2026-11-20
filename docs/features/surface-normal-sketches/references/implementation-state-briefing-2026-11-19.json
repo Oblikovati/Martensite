@@ -2,10 +2,10 @@
   "snapshot_utc": "2026-11-19T21:29:50Z",
   "implementation_status": "active",
   "briefing": "/home/vmiguel/git/oblikovati-workspace/Martensite/.slim/worktrees/cone-chart-atlas-b1/docs/features/surface-normal-sketches/IMPLEMENTATION-STATE-BRIEFING-2026-11-19.md",
-  "briefing_sha256": "015475ef2aeec5af9399672538c2a5c402052783e6fc82d8b36c027f046babd5",
+  "briefing_sha256": "3ac0b2c2e45597d7bfbf45dbb15ad4a133d1202714b5fde783403d4add8d17ff",
   "remote_main": "b61a031d0bde0e21d283e0f94975f79b9ae15574",
   "remote_release_next": "2e8ab886d4755c9c0165d7f59f2a92ead61f3612",
-  "capability_head": "7747b805",
+  "capability_head": "3fa45d05",
   "capability_uncommitted": false,
   "capability_targeted_tests": {
     "tkbo": 184,
@@ -24,7 +24,7 @@
   "capability_target_met": false,
   "local_relative_links_verified": true,
   "scope_of_this_task": "Surface capability attribution and integration; shared-fix performance held, QA dedup qualification progressing",
-  "updated_utc": "2026-11-20T04:37:11.932266+00:00",
+  "updated_utc": "2026-11-20T05:07:35.169081+00:00",
   "current_v6_attribution": "references/v6-stage-attribution-2026-11-19/summary.json",
   "cold_r1_identity_invocations": 1,
   "cold_r1_timed_samples": 0,
@@ -60,7 +60,7 @@
   "current_open_integration_prs": [
     571
   ],
-  "capability_head_kind": "Last Rust implementation commit; later evidence commits may follow",
+  "capability_head_kind": "Latest Rust/test checkpoint; later evidence-only commits may follow",
   "point569_b1_math_controls_passed": 21,
   "point569_b1_complete_operations_passed": 2,
   "point569_b1_reference": "references/exact-point-metrics-569-2026-11-20/summary.json",
@@ -76,5 +76,12 @@
   "native_stage_attribution": "references/native-stage-attribution-2026-11-20/summary.json",
   "point569_strict_benchmark_accepted": false,
   "handle574_b1_reference": "references/handle-clone-574-b1-2026-11-20/summary.json",
-  "handle574_performance_accepted": false
+  "handle574_performance_accepted": false,
+  "capability_model_source_head": "7747b805",
+  "multiline_attachment_reference": "references/multiline-attachment-2026-11-20/summary.json",
+  "multiline_attachment_tests_passed": 2,
+  "multiline_prior_distinct_controls_passed": 5,
+  "multiline_performance_accepted": false,
+  "handle574_b1_sanitizer_reference": "references/handle-clone-574-b1-sanitizer-2026-11-20/summary.json",
+  "handle574_b1_driver_tests_passed": 61
 }
