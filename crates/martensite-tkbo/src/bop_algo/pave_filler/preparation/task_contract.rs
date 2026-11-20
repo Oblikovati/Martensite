@@ -18,9 +18,13 @@ fn completed_projection_is_deferred_until_parent_store_and_has_closed_form_uv() 
     let face = input.face.clone();
     let range = ProgressRange::default();
     let scope = ProgressScope::unnamed(&range, 1.0, false);
-    let mut work =
-        execute_planar_inputs(vec![input], &scope, false, &ProgressCancellation::default())
-            .unwrap();
+    let mut work = execute_planar_inputs(
+        vec![input],
+        &scope,
+        crate::bop_algo::Parallelism::SERIAL,
+        &ProgressCancellation::default(),
+    )
+    .unwrap();
     assert!(!BRepTool::curve_on_face(&edge, &face).unwrap().is_stored);
     assert_completed(&mut work[0]);
     work[0].store_curve().unwrap();
@@ -36,7 +40,13 @@ fn worker_cancel_is_silent_latched_and_not_mistaken_for_completion() {
     let range = indicator.start();
     let scope = ProgressScope::unnamed(&range, 1.0, false);
     let observed = ProgressCancellation::default();
-    let mut work = execute_planar_inputs(vec![plane_input()], &scope, false, &observed).unwrap();
+    let mut work = execute_planar_inputs(
+        vec![plane_input()],
+        &scope,
+        crate::bop_algo::Parallelism::SERIAL,
+        &observed,
+    )
+    .unwrap();
     assert!(observed.is_cancelled());
     assert_eq!(polls.load(Ordering::SeqCst), 1);
     assert_eq!(work[0].take_completion().unwrap(), cancelled_planar_work(0));
@@ -109,9 +119,14 @@ fn singleton_parallel_keeps_the_actual_direct_typed_failure() {
         let range = ProgressRange::default();
         let scope = ProgressScope::unnamed(&range, 1.0, false);
         let observed = ProgressCancellation::default();
-        let actual = execute_planar_inputs(vec![input], &scope, parallel, &observed)
-            .err()
-            .unwrap();
+        let actual = execute_planar_inputs(
+            vec![input],
+            &scope,
+            crate::bop_algo::Parallelism::from_flag(parallel),
+            &observed,
+        )
+        .err()
+        .unwrap();
         assert_eq!(actual, expected);
         assert!(!observed.is_cancelled());
     }

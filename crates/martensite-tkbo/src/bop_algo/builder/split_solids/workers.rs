@@ -61,14 +61,8 @@ pub(super) fn execute(
             completion: None,
         })
         .collect();
-    let pooled = parallel && work.len() != 1;
-    run_context_tasks(
-        &mut work,
-        &(),
-        pooled,
-        || (),
-        |item, _| item.perform(observed),
-    )?;
+    let pooled = crate::bop_algo::Parallelism::from_flag(parallel).for_tasks(work.len());
+    run_context_tasks(&mut work, &(), pooled, |item, _| item.perform(observed))?;
     collect(work)
 }
 fn collect(work: Vec<SplitSolidWork<'_>>) -> Result<SplitSolidOutcome, Failure> {

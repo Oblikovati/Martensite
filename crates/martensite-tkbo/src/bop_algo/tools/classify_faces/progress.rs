@@ -184,7 +184,10 @@ fn serial_tasks(
     execution: &ClassificationExecution<'_>,
 ) -> Result<(), Failure> {
     // Native context-dependent Perform still catches through Launcher(max0) in serial mode.
-    let launcher = crate::bop_algo::context_tasks::context_task_launcher(false, tasks.len());
+    let launcher = crate::bop_algo::context_tasks::context_task_launcher(
+        crate::bop_algo::Parallelism::SERIAL,
+        tasks.len(),
+    );
     let serial = ClassificationExecution {
         observer: execution.observer,
         launcher: Some(&launcher),

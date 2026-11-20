@@ -81,7 +81,7 @@ impl BOPAlgoPaveFiller {
         observed: &ProgressCancellation,
     ) -> Result<Vec<ProgressCompletion>, Failure> {
         let tasks = ve_task_scope(outer, work.len());
-        execute_vertex_edge_work(work, &self.context, &tasks, self.options.run_parallel())?;
+        execute_vertex_edge_work(work, &self.context, &tasks, self.options.parallelism())?;
         let completions = collect_ve_completions(work, observed)?;
         if native_user_break(&self.options, outer, observed) {
             return Ok(completions);

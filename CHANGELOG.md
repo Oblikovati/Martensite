@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 
+- Ran the body self-intersection check's tasks on up to four workers that share one intersection context, halving the check's time on large conical bodies with at most 5% more peak memory; parallel Boolean operations now share that context too instead of building one per worker (#496).
+
 - Reused complete native endpoint-incidence discovery across contact-cardinality reports while preserving empty-report and self-contact diagnostics (#566).
 
 - Indexed Census report reuse by source pair and query mode, preserving the first retained outcome and solver work (#567).

@@ -56,8 +56,7 @@ pub(super) fn split_irregular(
     run_launcher_context_tasks(
         &mut tasks,
         context,
-        parallel,
-        new_worker_context,
+        crate::bop_algo::Parallelism::from_flag(parallel),
         |task, worker_context| task.perform(face, worker_context, observed),
     )
 }
@@ -75,11 +74,6 @@ fn wire_tasks<'b, 'p>(
             range: Some(scope.next(1.)),
         })
         .collect()
-}
-
-fn new_worker_context() -> Handle<Context> {
-    let context = Context::default();
-    Handle::new(context)
 }
 
 #[cfg(test)]

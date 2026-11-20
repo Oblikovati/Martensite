@@ -58,7 +58,24 @@ fn control_command(root: &Path, control: Control) -> CommandSpec {
         Control::OpenExtrusion => open_extrusion_controls(root),
         Control::VertexNeighborhood => vertex_neighborhood_controls(root),
         Control::DocumentTransactions => document_transaction_controls(root),
+        Control::SharedContext => shared_context_controls(root),
     }
+}
+
+fn shared_context_controls(root: &Path) -> CommandSpec {
+    // Context-task workers share one intersection context and its locked caches (#496).
+    sanitized_cargo(root, "test").args([
+        "--no-fail-fast",
+        "--package",
+        "martensite-tkbo",
+        "--lib",
+        "--",
+        "bop_algo::context_tasks",
+        "int_tools::context::cache",
+        "sketch_region_validation::self_check_tests",
+        "--test-threads=1",
+        "--show-output",
+    ])
 }
 
 fn document_transaction_controls(root: &Path) -> CommandSpec {

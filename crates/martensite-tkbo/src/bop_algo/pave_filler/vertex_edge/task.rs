@@ -109,17 +109,13 @@ pub(super) fn execute_vertex_edge_work(
     work: &mut [VertexEdgeWork],
     main: &Handle<Context>,
     scope: &ProgressScope<'_>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
 ) -> Result<(), Failure> {
     main.get().ok_or_else(missing_structure)?;
     let mut invocations = vertex_edge_invocations(work, scope);
-    run_launcher_context_tasks(
-        &mut invocations,
-        main,
-        parallel,
-        || Handle::new(Context::default()),
-        |invocation, context| invocation.perform(context),
-    )
+    run_launcher_context_tasks(&mut invocations, main, parallel, |invocation, context| {
+        invocation.perform(context)
+    })
 }
 
 // The lexical envelope is Send but not Sync: its owned range Cell is never shared.

@@ -51,7 +51,13 @@ fn assert_cancelled_edge_mode(parallel: bool) {
     let range = indicator.start();
     let scope = ProgressScope::unnamed(&range, 2.0, false);
     let tasks = vec![unstarted_ee_task(), unstarted_ee_task()];
-    let output = execute_edge_tasks(tasks, &scope, parallel, "PerformEE").unwrap();
+    let output = execute_edge_tasks(
+        tasks,
+        &scope,
+        crate::bop_algo::Parallelism::from_flag(parallel),
+        "PerformEE",
+    )
+    .unwrap();
     assert_eq!(trace.queries.load(Ordering::SeqCst), 2);
     for (ordinal, (_, completion)) in output.into_iter().enumerate() {
         assert_cancelled_ordinal(completion, ordinal);

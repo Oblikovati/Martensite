@@ -22,7 +22,7 @@ pub(super) fn execute_vertices(
     inputs: Vec<VertexSolidInput>,
     scope: &ProgressScope<'_>,
     context: &Handle<Context>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
     observed: &ProgressCancellation,
 ) -> Result<Vec<(i32, i32, State)>, Failure> {
     let mut work: Vec<_> = inputs
@@ -33,13 +33,9 @@ pub(super) fn execute_vertices(
             state: State::Unknown,
         })
         .collect();
-    run_launcher_context_tasks(
-        &mut work,
-        context,
-        parallel,
-        || Handle::new(Context::default()),
-        |item, context| item.perform(context, observed),
-    )?;
+    run_launcher_context_tasks(&mut work, context, parallel, |item, context| {
+        item.perform(context, observed)
+    })?;
     Ok(work
         .into_iter()
         .map(|item| (item.input.vertex_index, item.input.solid_index, item.state))
