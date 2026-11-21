@@ -1,7 +1,7 @@
 //! The discretised contour of the constraints, in the initial surface parameters and
 //! in space, for the criteria of `GeomPlate_MakeApprox`.
 use super::GeomPlateBuildPlateSurface;
-use crate::geom_plate::{GeomPlateCurveConstraint, live};
+use crate::geom_plate::GeomPlateCurveConstraintState;
 use martensite_tkernel::ncollection::Sequence;
 use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::{Point2, Xy, Xyz};
@@ -55,7 +55,7 @@ impl GeomPlateBuildPlateSurface {
         }
         for i in 1..=self.nt_lin_cont() {
             let lin_handle = self.lin_cont[(i - 1) as usize].clone();
-            let lin: &GeomPlateCurveConstraint = live(&lin_handle, "a curve constraint")?;
+            let lin: &GeomPlateCurveConstraintState = super::curve_state(&lin_handle)?;
             if lin.order() == -1 {
                 continue;
             }
