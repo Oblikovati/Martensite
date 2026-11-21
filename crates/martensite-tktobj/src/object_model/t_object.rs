@@ -2,7 +2,7 @@
 use super::{DeletionMode, ModelObject};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, SharedState},
 };
 use martensite_tklcaf::{
     guid_from_text,
@@ -19,11 +19,10 @@ const TOBJECT_ID: Guid = guid_from_text("bbdab6a7-dca9-11d4-ba37-0060b0ee18ea");
 /// `martensite_object_model_ObjectAttribute`; `ObjectAttribute::set(&label, &object)`.
 #[derive(Default)]
 pub struct ObjectAttribute {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     element: SharedState<Handle<dyn ModelObject>>,
 }
-impl_transient!(ObjectAttribute, "martensite_object_model_ObjectAttribute", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(ObjectAttribute, "martensite_object_model_ObjectAttribute", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl ObjectAttribute {
     /// `GetID`.
@@ -86,7 +85,7 @@ impl TdfAttribute for ObjectAttribute {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     fn paste(
         &self,

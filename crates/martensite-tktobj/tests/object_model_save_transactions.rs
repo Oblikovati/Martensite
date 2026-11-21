@@ -7,7 +7,7 @@ use martensite_tkcdf::{
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient, exceptions},
+    standard::{Failure, Handle, exceptions},
     tcollection::{AsciiString, ExtendedString},
 };
 use martensite_tklcaf::{tdf::TdfLabel, tdoc_std::TDocStdApplication};
@@ -25,11 +25,10 @@ enum WriterOutcome {
 }
 
 struct FixedDocumentWriter {
-    transient: StandardTransient,
     base: PcdmStorageDriverBase,
     outcome: WriterOutcome,
 }
-impl_transient!(FixedDocumentWriter, "FixedDocumentWriter", dyn PcdmStorageDriver, transient,
+impl_transient!(FixedDocumentWriter, "FixedDocumentWriter", dyn PcdmStorageDriver,
     interfaces: [dyn PcdmStorageDriver, dyn PcdmWriter]);
 impl PcdmStorageDriver for FixedDocumentWriter {
     fn storage_driver_base(&self) -> &PcdmStorageDriverBase {
@@ -69,7 +68,6 @@ impl PcdmWriter for FixedDocumentWriter {
 fn model_with_writer(outcome: WriterOutcome) -> Handle<PrivateModel> {
     let model = PrivateModel::new();
     let writer = Handle::new(FixedDocumentWriter {
-        transient: StandardTransient::default(),
         base: PcdmStorageDriverBase::default(),
         outcome,
     });
@@ -80,7 +78,7 @@ fn model_with_writer(outcome: WriterOutcome) -> Handle<PrivateModel> {
             &AsciiString::from("Fixed document fixture"),
             &AsciiString::from("object_model"),
             &Handle::default(),
-            &writer.cast(),
+            &writer.upcast(),
         )
         .unwrap();
     assert!(model.load(&ExtendedString::default()).unwrap());
@@ -150,10 +148,9 @@ fn successful_save_publishes_bytes_and_final_path_then_supports_save_again() {
 }
 
 struct RejectingStoreObject {
-    transient: StandardTransient,
     base: ModelObjectBase,
 }
-impl_transient!(RejectingStoreObject, "RejectingStoreObject", dyn ModelObject, transient,
+impl_transient!(RejectingStoreObject, "RejectingStoreObject", dyn ModelObject,
     interfaces: [dyn ModelObject]);
 impl ModelObject for RejectingStoreObject {
     fn object_base(&self) -> &ModelObjectBase {
@@ -168,10 +165,9 @@ fn attach_rejecting_object(model: &Handle<PrivateModel>) -> Handle<RejectingStor
     model.open_command().unwrap();
     let label: TdfLabel = model.get_main_partition().unwrap().new_label().unwrap();
     let object = Handle::new(RejectingStoreObject {
-        transient: StandardTransient::default(),
         base: ModelObjectBase::new(&label),
     });
-    ModelObjectBase::attach(&object.cast(), true).unwrap();
+    ModelObjectBase::attach(&object.upcast(), true).unwrap();
     model.commit_command().unwrap();
     object
 }

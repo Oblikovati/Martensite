@@ -18,10 +18,7 @@ use super::{
 use martensite_tkernel::{
     impl_transient_interface,
     ncollection::HSequence,
-    standard::{
-        Failure, Handle, RuntimeType, SharedState, StandardTransient, Transient, WeakHandle,
-        exceptions,
-    },
+    standard::{Failure, Handle, RuntimeType, SharedState, Transient, WeakHandle, exceptions},
     tcollection::HExtendedString,
 };
 use martensite_tklcaf::tdf::{TdfLabel, TdfRelocationTable};
@@ -194,7 +191,7 @@ pub trait ModelObject: Transient {
         kind: Option<&'static RuntimeType>,
     ) -> Result<Handle<dyn ObjectIterator>, Failure> {
         let label = self.get_reference_label()?;
-        Ok(ReferenceIterator::new(&label, kind, true)?.cast())
+        Ok(ReferenceIterator::new(&label, kind, true)?.into_upcast())
     }
     /// `RemoveAllReferences`: forgets every attribute of the reference label.
     fn remove_all_references(&self) -> Result<(), Failure> {
@@ -206,7 +203,7 @@ pub trait ModelObject: Transient {
         kind: Option<&'static RuntimeType>,
     ) -> Handle<dyn ObjectIterator> {
         let sequence = self.object_base().back_references();
-        Handle::new(TypedSequenceIterator::new(&sequence, kind)).cast()
+        Handle::new(TypedSequenceIterator::new(&sequence, kind)).into_upcast()
     }
     /// `AddBackReference(theObject)`.
     fn add_back_reference(&self, object: &Handle<dyn ModelObject>) {
@@ -344,7 +341,7 @@ pub trait ModelObject: Transient {
 impl_transient_interface!(
     dyn ModelObject,
     "martensite_object_model_ModelObject",
-    StandardTransient
+    dyn Transient
 );
 
 use super::ModelObjectData;

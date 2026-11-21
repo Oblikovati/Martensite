@@ -46,7 +46,7 @@ pub(crate) fn init_new_model<M: DocumentModel + ?Sized>(
         }
         objects.next()?;
     }
-    model.update_back_references(&model.get_main_partition()?.cast())?;
+    model.update_back_references(&model.get_main_partition()?.into_upcast())?;
     if model.is_to_check() {
         let checker = model.get_checker()?;
         let checker = martensite_tkcdf::live(
@@ -64,7 +64,7 @@ pub(crate) fn init_new_model<M: DocumentModel + ?Sized>(
 fn referred_objects(
     object: &dyn ModelObject,
 ) -> Result<Option<Vec<Handle<dyn ModelObject>>>, Failure> {
-    let iterator: Handle<dyn LabelIterator> = object.get_references(None)?.cast();
+    let iterator: Handle<dyn LabelIterator> = object.get_references(None)?.into_cast();
     let Some(iterator) = iterator.get() else {
         return Ok(None);
     };

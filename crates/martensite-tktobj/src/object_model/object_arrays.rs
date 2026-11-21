@@ -4,7 +4,7 @@
 use super::{ModelObject, ModelObjectData};
 use martensite_tkernel::{
     ncollection::HArray1,
-    standard::{Failure, Guid, Handle, RuntimeTyped},
+    standard::{Failure, Guid, Handle, HandleUpcast, RuntimeTyped},
     tcollection::ExtendedString,
 };
 use martensite_tklcaf::{
@@ -13,7 +13,9 @@ use martensite_tklcaf::{
 };
 
 /// The members of a `TDataStd` array attribute that the ObjectModel array tools use.
-pub trait ArrayAttribute: TdfAttribute + RuntimeTyped + Sized {
+pub trait ArrayAttribute:
+    TdfAttribute + RuntimeTyped + HandleUpcast<dyn TdfAttribute> + Sized
+{
     /// The item type of the array.
     type Item: Clone + Send + Sync + 'static;
     /// `GetID`.
@@ -83,7 +85,7 @@ fn store_array<A: ArrayAttribute>(
     }
     if array.is_null() {
         if !attribute.is_null() {
-            label.forget_attribute(&attribute.cast())?;
+            label.forget_attribute(&attribute.into_upcast())?;
         }
         return Ok(());
     }

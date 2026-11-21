@@ -3,7 +3,7 @@
 use super::{DocumentModel, DocumentModelState, ModelObject};
 use martensite_tkernel::{
     impl_transient,
-    message::{Algorithm, Gravity, Status},
+    message::{AlgorithmSource, AlgorithmState, Gravity, Status},
     standard::{Failure, Handle, RuntimeTyped, SharedState},
 };
 
@@ -12,28 +12,34 @@ pub struct ModelIntegrityCheck {
     // C++ destroys the derived model member before its Message_Algorithm base.
     // Keep the inherited messenger alive while a last-owned model is destroyed.
     model: Handle<dyn DocumentModel>,
-    algorithm: Algorithm,
+    algorithm: AlgorithmState,
     to_fix: SharedState<bool>,
 }
 impl_transient!(
     ModelIntegrityCheck,
     "martensite_object_model_ModelIntegrityCheck",
-    Algorithm,
-    algorithm
+    dyn AlgorithmSource,
+    interfaces: [dyn AlgorithmSource]
 );
+
+impl AlgorithmSource for ModelIntegrityCheck {
+    fn algorithm_state(&self) -> &AlgorithmState {
+        &self.algorithm
+    }
+}
 
 impl ModelIntegrityCheck {
     /// `martensite_object_model_ModelIntegrityCheck(theModel)`: the fix mode is off.
     pub fn new(model: &Handle<dyn DocumentModel>) -> Self {
         Self {
-            algorithm: Algorithm::with_runtime_type(Self::static_type()),
+            algorithm: AlgorithmState::with_runtime_type(Self::static_type()),
             model: model.clone(),
             to_fix: SharedState::new(false),
         }
     }
-    /// The embedded `Message_Algorithm` (statuses and messages).
-    pub fn algorithm(&self) -> &Algorithm {
-        &self.algorithm
+    /// The inherited status and message interface. Example: `checker.algorithm().get_status()`.
+    pub fn algorithm(&self) -> &dyn AlgorithmSource {
+        self
     }
     /// `SetToFix(theToFix)`.
     pub fn set_to_fix(&self, to_fix: bool) {

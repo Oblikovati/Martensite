@@ -1,8 +1,8 @@
 //! `martensite_object_model_ObjectIterator`: the interface of the iterators on ObjectModel objects.
 use super::ModelObject;
 use martensite_tkernel::{
-    impl_transient_interface,
-    standard::{Failure, Handle, StandardTransient, Transient},
+    impl_transient,
+    standard::{Failure, Handle, Transient},
 };
 
 /// `martensite_object_model_ObjectIterator`'s virtual members; an iterator moves through `&self` (its
@@ -27,11 +27,6 @@ pub trait ObjectIterator: Transient {
         Handle::default()
     }
 }
-impl_transient_interface!(
-    dyn ObjectIterator,
-    "martensite_object_model_ObjectIterator",
-    StandardTransient
-);
 
 /// `martensite_object_model_ObjectIterator` itself: the empty iterator.
 ///
@@ -41,14 +36,13 @@ impl_transient_interface!(
 /// assert!(!iterator.more() && iterator.value().is_null());
 /// ```
 #[derive(Default)]
-pub struct StandardObjectIterator {
-    transient: StandardTransient,
-}
+pub struct StandardObjectIterator {}
+impl_transient!(StandardObjectIterator, "martensite_object_model_ObjectIterator", dyn Transient,
+    interfaces: [dyn ObjectIterator]);
 super::canonical_runtime_type::canonical_object_model_type!(
-    StandardObjectIterator,
     dyn ObjectIterator,
-    transient,
-    [dyn ObjectIterator]
+    StandardObjectIterator,
+    []
 );
 
 impl ObjectIterator for StandardObjectIterator {}

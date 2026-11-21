@@ -19,10 +19,10 @@ fn a_sequence_iterator_skips_other_types_and_stops_at_a_null_entry() {
     });
     let sequence = Handle::new(BackReferences::default());
     for object in [
-        container.cast(),
-        plain.cast(),
+        container.upcast(),
+        plain.upcast(),
         Handle::default(),
-        plain.cast(),
+        plain.upcast(),
     ] {
         sequence.append(object);
     }
@@ -75,9 +75,9 @@ fn a_reference_iterator_filters_the_referred_type() {
     let (holder, container) = fixture.command(|| {
         let holder = fixture.create_object();
         let container = TestContainer::new(&fixture.my_partition.new_label().unwrap());
-        holder.set_reference(&container.cast(), 1, 0).unwrap();
+        holder.set_reference(&container.upcast(), 1, 0).unwrap();
         holder
-            .set_reference(&fixture.create_object().cast(), 2, 0)
+            .set_reference(&fixture.create_object().into_upcast(), 2, 0)
             .unwrap();
         (holder, container)
     });
@@ -104,7 +104,7 @@ fn a_label_iterator_base_starts_empty_or_on_a_label() {
         LabelIteratorBase::with_label(&fixture.my_partition.get_child_label().unwrap(), false)
             .unwrap();
     assert!(started.child_iterator().more());
-    started.set_current(&object.cast(), &object.get_label());
+    started.set_current(&object.upcast(), &object.get_label());
     assert!(started.object() == object && started.node() == object.get_label());
     let failure = LabelIteratorBase::with_label(&Default::default(), false)
         .err()
@@ -126,7 +126,7 @@ fn a_model_iterator_keeps_a_stack_of_child_iterators() {
     fixture.command(|| {
         fixture.create_object().add_child();
     });
-    let model: Handle<dyn DocumentModel> = fixture.my_model().clone().cast();
+    let model: Handle<dyn DocumentModel> = fixture.my_model().upcast();
     let iterator = ModelIterator::new(&model).unwrap();
     assert!(iterator.object() == fixture.my_partition);
     assert_eq!(iterator.iterators().len(), 1);

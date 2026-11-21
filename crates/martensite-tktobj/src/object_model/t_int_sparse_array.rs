@@ -3,7 +3,7 @@
 use martensite_tkernel::{
     impl_transient,
     ncollection::SparseArray,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Guid, Handle, SharedState, exceptions},
 };
 use martensite_tklcaf::{
     guid_from_text,
@@ -38,18 +38,16 @@ struct SparseState {
 /// assert_eq!((array.size(), array.value(5).unwrap()), (1, 7));
 /// ```
 pub struct IntegerSparseArray {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     state: SharedState<SparseState>,
 }
-impl_transient!(IntegerSparseArray, "martensite_object_model_IntegerSparseArray", dyn TdfAttribute, transient,
+impl_transient!(IntegerSparseArray, "martensite_object_model_IntegerSparseArray", dyn TdfAttribute,
     interfaces: [dyn TdfAttribute]);
 
 impl Default for IntegerSparseArray {
     /// `martensite_object_model_IntegerSparseArray()`: blocks of 100 items, backup enabled.
     fn default() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: TdfAttributeBase::default(),
             state: SharedState::new(SparseState {
                 vector: SparseArray::new(100),
@@ -223,11 +221,11 @@ impl TdfAttribute for IntegerSparseArray {
                 copy.state.write().old_map.exchange(&mut state.old_map);
             }
         }
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     /// `Restore(theDelta)`: applies the old values saved in the delta.
     fn restore(&self, delta: &Handle<dyn TdfAttribute>) -> Result<(), Failure> {
-        let delta: Handle<IntegerSparseArray> = delta.cast();
+        let delta: Handle<IntegerSparseArray> = delta.downcast();
         let Some(delta) = delta.get() else {
             return Ok(());
         };
@@ -241,7 +239,7 @@ impl TdfAttribute for IntegerSparseArray {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     /// `Paste`: the values (not the delta).
     fn paste(
@@ -249,7 +247,7 @@ impl TdfAttribute for IntegerSparseArray {
         into: &Handle<dyn TdfAttribute>,
         _relocation_table: &Handle<TdfRelocationTable>,
     ) -> Result<(), Failure> {
-        let target: Handle<IntegerSparseArray> = into.cast();
+        let target: Handle<IntegerSparseArray> = into.downcast();
         let Some(target) = target.get() else {
             return Ok(());
         };

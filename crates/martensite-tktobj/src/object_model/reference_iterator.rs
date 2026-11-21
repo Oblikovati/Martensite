@@ -3,18 +3,16 @@
 use super::{LabelIterator, LabelIteratorBase, ObjectIterator, ReferenceAttribute};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, RuntimeType, StandardTransient},
+    standard::{Failure, Handle, RuntimeType},
 };
 use martensite_tklcaf::tdf::TdfLabel;
 
 /// `martensite_object_model_ReferenceIterator`; `ReferenceIterator::new(&label, None, true)`.
 pub struct ReferenceIterator {
-    transient: StandardTransient,
     base: LabelIteratorBase,
     kind: Option<&'static RuntimeType>,
 }
-impl_transient!(ReferenceIterator, "martensite_object_model_ReferenceIterator", dyn LabelIterator,
-    transient, interfaces: [dyn ObjectIterator, dyn LabelIterator]);
+impl_transient!(ReferenceIterator, "martensite_object_model_ReferenceIterator", dyn LabelIterator, interfaces: [dyn ObjectIterator, dyn LabelIterator]);
 
 impl ReferenceIterator {
     /// `martensite_object_model_ReferenceIterator(theLabel, theType, theRecursive)`.
@@ -24,7 +22,6 @@ impl ReferenceIterator {
         recursive: bool,
     ) -> Result<Handle<ReferenceIterator>, Failure> {
         let iterator = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: LabelIteratorBase::with_label(label, recursive)?,
             kind,
         });

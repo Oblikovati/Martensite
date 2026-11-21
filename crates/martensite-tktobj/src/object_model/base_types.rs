@@ -1,5 +1,6 @@
 //! Usable immediate parent interfaces for the declared ObjectModel class hierarchy.
 use super::{LabelIterator, ModelObject, ModelPartition, ObjectIterator};
+use martensite_tkernel::standard::Transient;
 use martensite_tklcaf::{tdf::TdfAttribute, tdoc_std::TDocStdApplication};
 
 /// The immediate parent interface of `DocumentApplication`; use `Handle<DocumentApplicationParent>` for parent dispatch.
@@ -32,11 +33,11 @@ pub type IntegerSparseArrayParent = dyn TdfAttribute;
 pub type NameIndexParent = dyn TdfAttribute;
 
 /// The immediate algorithm base of `ModelIntegrityCheck`; use `Handle<ModelIntegrityCheckParent>` for shared status access.
-pub type ModelIntegrityCheckParent = martensite_tkernel::message::Algorithm;
+pub type ModelIntegrityCheckParent = dyn martensite_tkernel::message::AlgorithmSource;
 
-/// The model's reference-count base; borrow it with `model.transient_base()`.
-pub type DocumentModelParent = martensite_tkernel::standard::StandardTransient;
-/// The object's reference-count base; borrow it with `object.transient_base()`.
-pub type ModelObjectParent = martensite_tkernel::standard::StandardTransient;
-/// The iterator's reference-count base; borrow it with `iterator.transient_base()`.
-pub type ObjectIteratorParent = martensite_tkernel::standard::StandardTransient;
+/// The model's root interface. Example: `model.upcast::<DocumentModelParent>()`.
+pub type DocumentModelParent = dyn Transient;
+/// The object's root interface. Example: `object.upcast::<ModelObjectParent>()`.
+pub type ModelObjectParent = dyn Transient;
+/// The iterator's root interface. Example: `iterator.upcast::<ObjectIteratorParent>()`.
+pub type ObjectIteratorParent = dyn Transient;

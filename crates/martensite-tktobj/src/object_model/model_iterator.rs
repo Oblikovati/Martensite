@@ -2,16 +2,15 @@
 use super::{DocumentModel, ModelObject, ObjectIterator};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 
 /// `martensite_object_model_ModelIterator`; `ModelIterator::new(&model)`.
 pub struct ModelIterator {
-    transient: StandardTransient,
     object: SharedState<Handle<dyn ModelObject>>,
     iterators: SharedState<Vec<Handle<dyn ObjectIterator>>>,
 }
-impl_transient!(ModelIterator, "martensite_object_model_ModelIterator", dyn ObjectIterator, transient,
+impl_transient!(ModelIterator, "martensite_object_model_ModelIterator", dyn ObjectIterator,
     interfaces: [dyn ObjectIterator]);
 
 impl ModelIterator {
@@ -23,7 +22,6 @@ impl ModelIterator {
         )?
         .get_root()?;
         let iterator = Handle::new(Self {
-            transient: StandardTransient::default(),
             object: SharedState::new(root.clone()),
             iterators: SharedState::new(Vec::new()),
         });

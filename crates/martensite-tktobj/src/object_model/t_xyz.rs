@@ -1,7 +1,7 @@
 //! `martensite_object_model_CoordinateAttribute`: the document data framework attribute that stores a `gp_XYZ`.
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Guid, Handle, SharedState, StandardTransient},
+    standard::{Failure, Guid, Handle, SharedState},
     tcollection::AsciiString,
 };
 use martensite_tklcaf::{
@@ -30,11 +30,10 @@ const TXYZ_ID: Guid = guid_from_text("3bbefb50-e618-11d4-ba38-0060b0ee18ea");
 /// ```
 #[derive(Default)]
 pub struct CoordinateAttribute {
-    transient: StandardTransient,
     base: TdfAttributeBase,
     xyz: SharedState<Xyz>,
 }
-impl_transient!(CoordinateAttribute, "martensite_object_model_CoordinateAttribute", dyn TdfAttribute, transient, interfaces: [dyn TdfAttribute]);
+impl_transient!(CoordinateAttribute, "martensite_object_model_CoordinateAttribute", dyn TdfAttribute, interfaces: [dyn TdfAttribute]);
 
 impl CoordinateAttribute {
     /// `GetID`.
@@ -88,7 +87,7 @@ impl TdfAttribute for CoordinateAttribute {
         Ok(())
     }
     fn new_empty(&self) -> Handle<dyn TdfAttribute> {
-        Handle::new(Self::new()).cast()
+        Handle::new(Self::new()).into_upcast()
     }
     fn paste(
         &self,

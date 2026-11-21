@@ -1,7 +1,7 @@
 //! Immediate transient-parent borrowing and concrete destruction obligations.
 use crate::object_model_document::{ObjectFixture, TestDocumentModel, serial};
 use martensite_tkernel::{
-    standard::{Handle, RuntimeTyped, StandardTransient, Transient},
+    standard::{Handle, RuntimeTyped, Transient},
     tcollection::ExtendedString,
 };
 use martensite_tklcaf::{tdata_std::TDataStdInteger, tdoc_std::TDocStdDocument};
@@ -12,36 +12,40 @@ use martensite_tktobj::object_model::{
 };
 use std::sync::Arc;
 
-fn assert_transient_parent(parent: &StandardTransient, child: &dyn Transient) {
-    assert_eq!(
-        StandardTransient::static_type().name(),
-        "Standard_Transient"
-    );
-    assert!(std::ptr::eq(parent, child.transient_base()));
-    assert_eq!(parent.ref_count(), child.transient_base().ref_count());
+fn assert_transient_parent<T: Transient>(parent: &Handle<dyn Transient>, child: &Handle<T>) {
+    assert!(parent.is_kind(<dyn Transient>::static_type()));
+    assert_eq!(parent.object_address(), child.object_address());
+    assert_eq!(parent.ref_count(), child.ref_count());
+    assert!(std::ptr::eq(
+        parent.dynamic_type().unwrap(),
+        child.dynamic_type().unwrap()
+    ));
 }
 
 #[test]
-fn model_parent_alias_borrows_the_shared_reference_count_base() {
+fn model_parent_alias_shares_the_model_owner() {
     let _serial = serial();
     let model = TestDocumentModel::new();
-    let parent: &DocumentModelParent = model.transient_base();
-    assert_transient_parent(parent, model.get().unwrap());
+    assert_transient_parent(&model.upcast::<DocumentModelParent>(), &model);
 }
 
 #[test]
-fn object_parent_alias_borrows_the_shared_reference_count_base() {
+fn object_parent_alias_shares_the_object_owner() {
     let fixture = ObjectFixture::set_up();
     let object = fixture.create_object();
-    let parent: &ModelObjectParent = object.transient_base();
-    assert_transient_parent(parent, object.get().unwrap());
+    assert_transient_parent(&object.upcast::<ModelObjectParent>(), &object);
 }
 
 #[test]
-fn iterator_parent_alias_borrows_the_shared_reference_count_base() {
-    let iterator = StandardObjectIterator::default();
-    let parent: &ObjectIteratorParent = iterator.transient_base();
-    assert_transient_parent(parent, &iterator);
+fn iterator_weak_parent_expires_with_the_iterator() {
+    let iterator = Handle::new(StandardObjectIterator::default());
+    let parent = iterator.upcast::<ObjectIteratorParent>();
+    assert_transient_parent(&parent, &iterator);
+    let weak = parent.downgrade();
+    drop(iterator);
+    assert_eq!(weak.ref_count(), 1);
+    drop(parent);
+    assert!(weak.upgrade().is_null());
 }
 
 #[test]
@@ -109,7 +113,7 @@ fn default_checker_drop_releases_its_model_handle_without_closing_the_model() {
     let _serial = serial();
     let (model, application, _document) = model_with_registered_document();
     let opened = application.nb_documents().unwrap();
-    let shared: Handle<dyn DocumentModel> = model.cast();
+    let shared: Handle<dyn DocumentModel> = model.upcast();
     let count = model.ref_count();
     let checker = ModelIntegrityCheck::new(&shared);
     assert_eq!(model.ref_count(), count + 1);

@@ -13,11 +13,7 @@ fn assert_dynamic_class<T: RuntimeTyped + Transient>(object: &T, name: &str) {
     assert_eq!(erased.dynamic_type().name(), name);
     assert!(std::ptr::eq(erased.dynamic_type(), T::static_type()));
     assert!(std::ptr::eq(
-        erased.dynamic_type_ref(),
-        T::static_type_ref()
-    ));
-    assert!(std::ptr::eq(
-        erased.dynamic_type_handle().get().unwrap(),
+        martensite_tkernel::standard::RuntimeType::registered_by_name(name).unwrap(),
         T::static_type()
     ));
 }
@@ -57,7 +53,7 @@ fn sequence_iterator_dynamic_dispatch_retains_its_own_descriptor() {
 #[test]
 fn model_checker_and_iterator_dispatch_retain_distinct_descriptors() {
     let fixture = ObjectFixture::set_up();
-    let model: Handle<dyn DocumentModel> = fixture.my_model().cast();
+    let model: Handle<dyn DocumentModel> = fixture.my_model().upcast();
     let checker = ModelIntegrityCheck::new(&model);
     let iterator = ModelIterator::new(&model).unwrap();
     assert_dynamic_class(&checker, "martensite_object_model_ModelIntegrityCheck");
@@ -97,17 +93,13 @@ fn hidden_partition_dynamic_dispatch_does_not_collapse_to_its_parent() {
 fn assert_erased_dispatch(value: &dyn Transient, concrete: &dyn Transient, name: &str) {
     assert_eq!(value.dynamic_type().name(), name);
     assert!(std::ptr::eq(value.dynamic_type(), concrete.dynamic_type()));
-    assert!(std::ptr::eq(
-        value.dynamic_type_ref(),
-        concrete.dynamic_type_ref()
-    ));
 }
 
 #[test]
 fn abstract_model_interface_dispatches_the_external_model_descriptor() {
     let fixture = ObjectFixture::set_up();
     let concrete = fixture.my_model();
-    let model: Handle<dyn DocumentModel> = concrete.cast();
+    let model: Handle<dyn DocumentModel> = concrete.upcast();
     assert_erased_dispatch(
         model.get().unwrap(),
         concrete.get().unwrap(),
@@ -119,7 +111,7 @@ fn abstract_model_interface_dispatches_the_external_model_descriptor() {
 fn abstract_object_interface_dispatches_the_external_object_descriptor() {
     let fixture = ObjectFixture::set_up();
     let concrete = fixture.create_object();
-    let object: Handle<dyn ModelObject> = concrete.cast();
+    let object: Handle<dyn ModelObject> = concrete.upcast();
     assert_erased_dispatch(
         object.get().unwrap(),
         concrete.get().unwrap(),
@@ -132,7 +124,7 @@ fn abstract_label_iterator_dispatches_the_concrete_iterator_descriptor() {
     let fixture = ObjectFixture::set_up();
     let label = fixture.my_partition.new_label().unwrap();
     let concrete = ObjectTreeIterator::new(&label, None, false, false).unwrap();
-    let iterator: Handle<dyn LabelIterator> = concrete.cast();
+    let iterator: Handle<dyn LabelIterator> = concrete.upcast();
     assert_erased_dispatch(
         iterator.get().unwrap(),
         concrete.get().unwrap(),

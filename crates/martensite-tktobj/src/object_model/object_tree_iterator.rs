@@ -3,19 +3,17 @@ use super::ModelObjectBase;
 use super::{LabelIterator, LabelIteratorBase, ObjectIterator};
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, RuntimeType, StandardTransient},
+    standard::{Failure, Handle, RuntimeType},
 };
 use martensite_tklcaf::tdf::TdfLabel;
 
 /// `martensite_object_model_ObjectTreeIterator`; `ObjectTreeIterator::new(&label, None, false, false)`.
 pub struct ObjectTreeIterator {
-    transient: StandardTransient,
     base: LabelIteratorBase,
     kind: Option<&'static RuntimeType>,
     all_sub_children: bool,
 }
-impl_transient!(ObjectTreeIterator, "martensite_object_model_ObjectTreeIterator", dyn LabelIterator,
-    transient, interfaces: [dyn ObjectIterator, dyn LabelIterator]);
+impl_transient!(ObjectTreeIterator, "martensite_object_model_ObjectTreeIterator", dyn LabelIterator, interfaces: [dyn ObjectIterator, dyn LabelIterator]);
 
 impl ObjectTreeIterator {
     /// `martensite_object_model_ObjectTreeIterator(theLabel, theType, theRecursive, theAllSubChildren)`: the
@@ -28,7 +26,6 @@ impl ObjectTreeIterator {
         all_sub_children: bool,
     ) -> Result<Handle<ObjectTreeIterator>, Failure> {
         let iterator = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: LabelIteratorBase::with_label(label, recursive)?,
             kind,
             all_sub_children,
