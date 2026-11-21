@@ -162,6 +162,13 @@ run `cargo xtask pr --base origin/release/next` for the full workspace gate.
 The [TKernel migration guide](TKERNEL-MIGRATION.md) shows how to convert class
 declarations, handles, and persistent objects.
 
+## Local verification
+
+`martensite-process-policy` uses TKernel platform adapters and has no transient
+classes of its own. With the new TKernel ownership model at `5f4399a6`, its 13
+tests and documentation tests passed, and all-target Clippy passed with warnings
+denied. Its package source required no migration.
+
 ## Risks and open points
 
 - Persistence reads and writes class names; the name registry must stay complete and
