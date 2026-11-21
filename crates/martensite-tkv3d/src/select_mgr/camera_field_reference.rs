@@ -23,7 +23,7 @@ impl SelectMgrCameraFieldReference {
     }
 }
 impl HandleReference<Graphic3dCamera> for SelectMgrCameraFieldReference {
-    fn observe(&self) -> HandleObserver<Graphic3dCamera> {
+    fn observe(&self) -> HandleObserver<'_, Graphic3dCamera> {
         match &self.field {
             Some(field) => field.observe(),
             None => static_empty_manager_camera().observe(),

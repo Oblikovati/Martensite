@@ -4,7 +4,7 @@ use crate::inherited_native_type::inherited_native_type;
 use crate::{prs_mgr::PrsMgrPresentableObjectMembers, prs3d::Prs3dShadingAspect};
 use martensite_tkernel::{
     quantity::{Color, NamedColor},
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use martensite_tkservice::{aspect::AspectTypeOfFacingModel, graphic3d::*, image::*};
@@ -75,7 +75,10 @@ impl Graphic3dTextureRoot for XrDeviceTexture {
         // Texture reads use the retained image source while resource parameters remain native.
         self.core.texture_root_base()
     }
-    fn get_image(&self, supported: &Handle<ImageSupportedFormats>) -> Handle<ImagePixMap> {
+    fn get_image(
+        &self,
+        supported: &Handle<ImageSupportedFormats>,
+    ) -> Handle<dyn ImagePixMapObject> {
         // The XR texture bypasses the root file/image path and forwards the exact handle.
         self.image.read_image(supported)
     }

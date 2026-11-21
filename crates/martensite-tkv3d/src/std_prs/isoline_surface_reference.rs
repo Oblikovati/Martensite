@@ -1,11 +1,11 @@
 //! Native const handle slots are read anew across valid application callbacks.
-use super::StdPrsIsolineSurfaceSource;
-use martensite_tkernel::standard::{Handle, RuntimeTyped, SharedState};
-pub(super) enum IsolineSurfaceReference<'a, S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized> {
+use super::StdPrsIsolineSurfaceTarget;
+use martensite_tkernel::standard::{Handle, SharedState};
+pub(super) enum IsolineSurfaceReference<'a, S: StdPrsIsolineSurfaceTarget + ?Sized> {
     Borrowed(&'a Handle<S>),
     Live(&'a SharedState<Handle<S>>),
 }
-impl<S: StdPrsIsolineSurfaceSource + RuntimeTyped + ?Sized> IsolineSurfaceReference<'_, S> {
+impl<S: StdPrsIsolineSurfaceTarget + ?Sized> IsolineSurfaceReference<'_, S> {
     pub(super) fn snapshot(&self) -> Handle<S> {
         // A method callback may replace a live slot; never retain a lock during virtual dispatch.
         match self {

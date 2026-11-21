@@ -26,8 +26,8 @@ fn collect_colored_triangles<S: AisColoredShapeSource + ?Sized>(
     object: &S,
 ) -> Result<Handle<Graphic3dArrayOfTriangles>, Failure> {
     let shading = drawer.shading_aspect();
-    let reference = shading.aspect_ref();
-    let aspect = reference.observe();
+    let aspect_reference = shading.aspect_ref();
+    let aspect = aspect_reference.observe();
     let textured = aspect.to_map_texture() && !aspect.texture_map().is_null();
     let fields = object.shape_base().fields.read();
     let (origin, repeat, scale) = (fields.uv_origin, fields.uv_repeat, fields.uv_scale);

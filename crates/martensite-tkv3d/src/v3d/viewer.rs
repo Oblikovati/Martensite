@@ -187,7 +187,8 @@ impl V3dViewer {
         for pass_subviews in [true, false] {
             let mut cursor = self.defined_view_iterator();
             while cursor.more() {
-                let reference = cursor.value_ref().observe();
+                let node = cursor.value_ref();
+                let reference = node.observe();
                 if let Some(view) = reference.get().filter(|v| v.is_subview() == pass_subviews) {
                     visit(view);
                 }

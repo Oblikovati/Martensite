@@ -23,11 +23,17 @@ impl AisInteractiveContext {
         if object.is_null() {
             return Ok(());
         }
-        let status = self.fields.read().objects.seek(object).map(Handle::observe);
-        let Some(status) = status else {
+        // Read the scalar under the guard: no status owner is added and no callback runs.
+        let status_mode = self
+            .fields
+            .read()
+            .objects
+            .seek(object)
+            .map(|status| status.display_mode());
+        let Some(status_mode) = status_mode else {
             return Ok(());
         };
-        if status.display_mode() == mode {
+        if status_mode == mode {
             self.erase_registered_presentation(object, mode)?;
         }
         if object.display_status() == PrsMgrDisplayStatus::Displayed && update {

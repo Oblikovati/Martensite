@@ -56,6 +56,9 @@ impl<'a> AisViewCubeShadingRef<'a> {
     }
     /// Invoke user code outside the slot lock with a real owning snapshot.
     /// Replacing the slot does not retire its captured value until this callback returns.
+    /// The snapshot adds one shading-aspect owner during the callback (#592). A drawer-bound
+    /// slot upgrades its weak drawer only for the lookup, so the drawer count is unchanged
+    /// during the callback; an expired drawer raises a typed Standard_NullObject.
     /// Example: `alias.with_shading(|style| style.is_some())`.
     pub fn with_shading<R>(&self, inspect: impl FnOnce(Option<&Prs3dShadingAspect>) -> R) -> R {
         let current = self.current();

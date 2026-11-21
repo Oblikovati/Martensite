@@ -1,10 +1,14 @@
 //! Reopen bucket chains between callbacks, retaining native position rather than a key snapshot.
 use super::{AisInteractiveContext, AisInteractiveObject};
-use martensite_tkernel::standard::{Failure, Handle, HandleObserver, exceptions::program_error};
+use martensite_tkernel::standard::{Failure, Handle, exceptions::program_error};
 pub(super) struct AisObjectWalk {
     bucket: usize,
     table: usize,
-    current: Option<HandleObserver<dyn AisInteractiveObject>>,
+    // A real owner of the current key, taken under the context lock: the callback runs
+    // unlocked, so the key cannot stay borrowed from the map (#592). The object count is one
+    // higher than native while its callback runs; a callback that removes the object defers
+    // its retirement until the walk moves on, and the identity check below still sees it gone.
+    current: Option<Handle<dyn AisInteractiveObject>>,
 }
 impl AisObjectWalk {
     pub(super) fn new(context: &AisInteractiveContext) -> Result<Self, Failure> {
@@ -23,7 +27,7 @@ impl AisObjectWalk {
         Ok(walk)
     }
     pub(super) fn current(&self) -> Option<&Handle<dyn AisInteractiveObject>> {
-        self.current.as_deref()
+        self.current.as_ref()
     }
     pub(super) fn next(&mut self, context: &AisInteractiveContext) -> Result<(), Failure> {
         if self.current.is_none() {
@@ -40,7 +44,7 @@ impl AisObjectWalk {
     fn chain_successor(
         &self,
         context: &AisInteractiveContext,
-    ) -> Result<Option<HandleObserver<dyn AisInteractiveObject>>, Failure> {
+    ) -> Result<Option<Handle<dyn AisInteractiveObject>>, Failure> {
         let fields = context.fields.read();
         let table = fields
             .objects
@@ -51,13 +55,13 @@ impl AisObjectWalk {
         }
         let current = self
             .current
-            .as_deref()
+            .as_ref()
             .expect("AIS cursor None; expected a current map node");
         let mut chain = table.chain(self.bucket)?;
         if !chain.any(|(key, _)| key == current) {
             return Err(self.invalidated(self.table));
         }
-        Ok(chain.next().map(|(key, _)| key.observe()))
+        Ok(chain.next().map(|(key, _)| key.clone()))
     }
     fn seek_bucket(&mut self, context: &AisInteractiveContext) -> Result<(), Failure> {
         let fields = context.fields.read();
@@ -66,7 +70,7 @@ impl AisObjectWalk {
         };
         while self.bucket < table.len() {
             if let Some((key, _)) = table.chain(self.bucket)?.next() {
-                self.current = Some(key.observe());
+                self.current = Some(key.clone());
                 break;
             }
             self.bucket += 1;

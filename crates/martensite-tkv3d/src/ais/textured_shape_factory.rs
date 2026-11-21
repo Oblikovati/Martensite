@@ -32,7 +32,9 @@ impl AisTexturedTextureFactory for AisNativeTexturedTextureFactory {
         source: AisTexturedTextureSource,
     ) -> Result<Handle<dyn Graphic3dTexture2DSource>, Failure> {
         let texture = match source {
-            AisTexturedTextureSource::PixMap(pixels) => Graphic3dTexture2D::from_pix_map(pixels),
+            AisTexturedTextureSource::PixMap(pixels) => {
+                Graphic3dTexture2D::from_pix_map(pixels.into_upcast())
+            }
             AisTexturedTextureSource::Predefined(name) => Graphic3dTexture2D::from_name(name)?,
             AisTexturedTextureSource::File(path) => Graphic3dTexture2D::from_file(&path),
         };

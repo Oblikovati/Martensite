@@ -100,8 +100,10 @@ impl AisInteractiveContext {
             return false;
         }
         let pixels = self.detected_click_position();
-        // Invoke the field directly; a storage lease keeps owner counts unchanged.
-        let owner = self.fields.read().last_picked.observe();
+        // Invoke the field's current owner outside the context lock: the click callback may
+        // change context state. The snapshot is one extra owner during the callback, so a
+        // callback that clears the field defers the owner's retirement until it returns (#592).
+        let owner = self.fields.read().last_picked.clone();
         let Some(owner) = owner.get() else {
             return false;
         };

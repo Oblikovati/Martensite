@@ -154,6 +154,11 @@ fn remove_first(
 /// After removing the slot, its last lease keeps one actual owner until it drops (#592).
 /// This replaces the former zero-count storage observer without a synthetic owner count.
 ///
+/// Each lease clones the entry's outer `Arc`, so iteration leaves the target count unchanged
+/// while the list still holds the entry. Only after Remove or Clear takes the entry out of the
+/// list, and every other owner has dropped, is the lease the target's one real inner owner;
+/// the target then retires when that lease drops, not when Remove or Clear returns.
+///
 /// Example: `let first = filters.iter().next();`. Each step takes a short read lock; no
 /// lock survives into callbacks. Concurrent mutation is memory-safe, with per-step visibility;
 /// it is not an atomic snapshot or a promise that UI callbacks may run on arbitrary threads.

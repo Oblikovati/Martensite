@@ -6,10 +6,15 @@
 //! from the same node.
 //! Removing the active node invalidates the native iterator; here advancing from it returns
 //! the typed `NoSuchObject` of the sequence cursor instead of reading freed storage. The
-//! cursor is detached: it holds node identities only, so no field guard and no intrusive
-//! owner survive a callback, and repeated handles in different nodes stay distinct.
+//! cursor is detached: it holds node identities only, so no field guard survives a callback,
+//! and repeated handles in different nodes stay distinct.
+//!
+//! Each step lends a real snapshot owner of the current node's handle (#592): the node
+//! storage is a plain handle sequence and the callback runs without its guard, so the visited
+//! object has one owner more than native while its callback runs. A callback that removes the
+//! current node defers that object's retirement until the step's snapshot drops.
 use martensite_tkernel::ncollection::{Sequence, SequenceNativeCursor};
-use martensite_tkernel::standard::{Failure, Handle, HandleObserver, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkservice::graphic3d::{
     Graphic3dGroup, Graphic3dStructureMembers as _, Graphic3dStructureSource,
 };
@@ -27,7 +32,7 @@ impl LiveNodeCursor {
     pub(super) fn next(
         &mut self,
         presentation: &dyn Graphic3dStructureSource,
-    ) -> Result<Option<HandleObserver<dyn Graphic3dGroup>>, Failure> {
+    ) -> Result<Option<Handle<dyn Graphic3dGroup>>, Failure> {
         let structure = presentation.cstructure();
         let Some(structure) = structure.get() else {
             return Ok(None);
@@ -42,16 +47,14 @@ impl LiveNodeCursor {
     pub(super) fn advance<T: ?Sized + RuntimeTyped>(
         &mut self,
         items: &Sequence<Handle<T>>,
-    ) -> Result<Option<HandleObserver<T>>, Failure> {
+    ) -> Result<Option<Handle<T>>, Failure> {
         match &mut self.cursor {
             None => self.cursor = Some(SequenceNativeCursor::new(items, true)),
             Some(cursor) => cursor.next(items)?,
         }
         let position = self.cursor.as_ref().map(SequenceNativeCursor::position);
-        // A non-owning observer: the node keeps the only owner, as natively.
-        Ok(position
-            .and_then(|position| position.value(items))
-            .map(Handle::observe))
+        // The snapshot is taken under the caller's short guard and outlives it.
+        Ok(position.and_then(|position| position.value(items)).cloned())
     }
 }
 
