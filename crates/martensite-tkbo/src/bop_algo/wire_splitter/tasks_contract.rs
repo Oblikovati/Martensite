@@ -35,7 +35,7 @@ fn owned_wire_range_has_one_worker_scope_and_refuses_reexecution() {
     let scope = ProgressScope::unnamed(&range, 1., false);
     let mut blocks = [ConnexityBlock::default()];
     let mut tasks = wire_tasks(&mut blocks, &scope);
-    let context = new_worker_context();
+    let context = Handle::new(Context::default());
     let observed = ProgressCancellation::default();
     tasks[0]
         .perform(&Face::default(), &context, &observed)

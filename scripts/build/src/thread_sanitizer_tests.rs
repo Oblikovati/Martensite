@@ -41,6 +41,7 @@ fn expected_control_commands() -> Vec<String> {
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkv3d --lib brep_font::text_capture::tests::stress -- --test-threads=1 --show-output".to_owned(),
             "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tksketch --lib surface_sketch::wrapped_profile::family::replay_tests::stress::different_geometry_with_shared_authored_ids_replays_under_contention -- --exact --ignored --test-threads=1 --show-output".to_owned(),
             format!("cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tksketch --lib {WRAPPED_CONE_TEST} -- --exact --test-threads=1 --show-output"),
+            "cargo +nightly-2026-09-25 test --locked -Zbuild-std --target x86_64-unknown-linux-gnu --no-fail-fast --package martensite-tkbo --lib -- bop_algo::context_tasks int_tools::context::cache sketch_region_validation::self_check_tests --test-threads=1 --show-output".to_owned(),
     ]
 }
 
@@ -470,3 +471,17 @@ mod wrapped;
 
 #[path = "thread_sanitizer_cone_tests.rs"]
 mod wrapped_cone;
+
+#[test]
+fn shared_context_scope_runs_the_tkbo_worker_races_after_startup() {
+    let runner = runner();
+    run_selected(
+        &context_at(&runner, Path::new("/repo")),
+        &[Control::SharedContext],
+    )
+    .unwrap();
+    let commands = runner.commands();
+    assert_eq!(commands.len(), 4);
+    assert!(commands[2].contains("sanitizer_startup/Cargo.toml"));
+    assert!(commands[3].contains("--package martensite-tkbo --lib -- bop_algo::context_tasks"));
+}

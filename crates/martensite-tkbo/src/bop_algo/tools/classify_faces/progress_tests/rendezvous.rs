@@ -33,7 +33,7 @@ impl ClassificationRendezvous {
         }
     }
 
-    /// Require both actual contexts before classification; `trace.observe(context)?`.
+    /// Require both actual task threads before classification; `trace.observe(context)?`.
     pub fn observe(&self, context: &Context) -> Result<(), Failure> {
         let entries = self.register(context);
         self.wait_for_peer(entries)
@@ -42,7 +42,8 @@ impl ClassificationRendezvous {
     fn register(&self, context: &Context) -> std::sync::MutexGuard<'_, Entries> {
         let thread = std::thread::current().id();
         let address = context as *const Context as usize;
-        assert_eq!(thread == self.caller, address == self.main);
+        // Workers share the caller's context (#496); only the threads differ.
+        assert_eq!(address, self.main);
         let mut entries = self.entries.lock().unwrap();
         assert!(entries.contexts.insert(thread, address).is_none());
         self.changed.notify_all();
@@ -68,6 +69,12 @@ impl ClassificationRendezvous {
         Ok(())
     }
 
+    /// Whether this thread is the caller's; the shared context cannot tell them apart.
+    /// Example: `if !trace.on_caller_thread() { trace.observe(context)?; }`.
+    pub fn on_caller_thread(&self) -> bool {
+        std::thread::current().id() == self.caller
+    }
+
     /// Release any waiting peer on an injected failure; `trace.abort()`.
     pub fn abort(&self) {
         let mut entries = self
@@ -78,12 +85,17 @@ impl ClassificationRendezvous {
         self.changed.notify_all();
     }
 
-    /// Verify concurrent distinct contexts after joining; `trace.assert_two()`.
+    /// Verify two concurrent threads, caller included, on the caller's context; `trace.assert_two()`.
     pub fn assert_two(&self) {
         let entries = self.entries.lock().unwrap();
         assert_eq!(entries.contexts.len(), 2);
-        let values: std::collections::HashSet<usize> = entries.contexts.values().copied().collect();
-        assert_eq!(values.len(), 2);
+        assert!(entries.contexts.contains_key(&self.caller));
+        assert!(
+            entries
+                .contexts
+                .values()
+                .all(|address| *address == self.main)
+        );
         assert!(!entries.aborted);
     }
 }

@@ -59,7 +59,7 @@ impl BOPAlgoPaveFiller {
             tasks,
             &scope,
             &context,
-            self.options.run_parallel(),
+            self.options.parallelism(),
             "PerformEF",
         )?;
         let (tasks, mut completions) = unpack_edge_face_tasks(outputs, boundary.observed);

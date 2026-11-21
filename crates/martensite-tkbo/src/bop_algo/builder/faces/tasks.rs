@@ -60,14 +60,8 @@ pub(super) fn perform_face_tasks(
     let scope = ProgressScope::with_literal(range, "Splitting faces", builders.len() as f64, false);
     let mut tasks = reserve_face_tasks(builders, &scope);
     // OSDParallel::For at native runs one input inline; this hint does not alter Face options.
-    let pooled = parallel && tasks.len() != 1;
-    run_context_tasks(
-        &mut tasks,
-        &(),
-        pooled,
-        || (),
-        |task, ()| task.perform(observed),
-    )?;
+    let pooled = crate::bop_algo::Parallelism::from_flag(parallel).for_tasks(tasks.len());
+    run_context_tasks(&mut tasks, &(), pooled, |task, ()| task.perform(observed))?;
     Ok(collect_task_outcomes(tasks))
 }
 

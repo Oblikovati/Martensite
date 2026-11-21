@@ -30,14 +30,29 @@ use super::outcome::{
 use crate::bop_algo::{BOPAlgoCheckerSI, FaceTermination, SelfCheckCompletion};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::{ncollection::List, standard::Failure};
+use std::num::NonZeroUsize;
+
+// Each worker adds memory (allocator arenas and in-flight task data), so the check bounds its
+// workers. On the 239-curve conical text check of #419 (release, 15.2 s and 242 MB serial),
+// four workers took 7.3-7.5 s at +3-5% peak memory and eight 6.3-7.0 s at +10-11%, within the
+// approved tradeoff only at four. Boolean operations keep one worker per task (#496).
+const SELF_CHECK_WORKERS: NonZeroUsize = NonZeroUsize::new(4).unwrap();
 
 pub(crate) fn inspect_self_intersection(
     shape: &Shape,
     sources: &[SourceRelation],
 ) -> Vec<ValidationFinding> {
-    let mut checker = BOPAlgoCheckerSI::new();
-    checker.set_arguments(&[shape.clone()].into_iter().collect::<List<Shape>>());
-    checker.options_mut().set_run_parallel(false);
+    // Parallel tasks ran the holed conical candidate of #496 about 3x faster with an
+    // identical report; the serial comparison test pins equal findings.
+    inspect_self_intersection_with(shape, sources, true)
+}
+
+pub(super) fn inspect_self_intersection_with(
+    shape: &Shape,
+    sources: &[SourceRelation],
+    parallel: bool,
+) -> Vec<ValidationFinding> {
+    let mut checker = configured_checker(shape, parallel);
     let trace = checker.perform_observed();
     let mut inspection = AnalyticInspection {
         checker: &checker,
@@ -47,6 +62,15 @@ pub(crate) fn inspect_self_intersection(
     };
     inspection.consume(trace);
     inspection.findings
+}
+
+/// One-argument checker with the bounded worker policy; `configured_checker(&shape, true)`.
+pub(super) fn configured_checker(shape: &Shape, parallel: bool) -> BOPAlgoCheckerSI {
+    let mut checker = BOPAlgoCheckerSI::new();
+    checker.set_arguments(&[shape.clone()].into_iter().collect::<List<Shape>>());
+    checker.options_mut().set_run_parallel(parallel);
+    checker.options_mut().limit_workers(SELF_CHECK_WORKERS);
+    checker
 }
 
 struct AnalyticInspection<'a> {

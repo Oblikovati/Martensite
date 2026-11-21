@@ -44,8 +44,7 @@ fn dispatch_vertex_face_work(
     run_launcher_context_tasks(
         work,
         context,
-        filler.options.run_parallel(),
-        Context::default,
+        filler.options.parallelism(),
         |task, context| compute_vertex_face_work(task, context, observed),
     )
 }

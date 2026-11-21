@@ -60,7 +60,7 @@ impl BOPAlgoPaveFiller {
         // BOPAlgoPaveFiller_6 keeps even a zero-task scope active through storage.
         let tasks_scope = face_intersection_scope(scope, inputs.len());
         let outputs =
-            execute_face_inputs_in_scope(inputs, &tasks_scope, self.options.run_parallel())?;
+            execute_face_inputs_in_scope(inputs, &tasks_scope, self.options.parallelism())?;
         let (tasks, completions) = unpack_face_outputs(outputs, observed);
         if native_user_break(&self.options, scope, observed) {
             return Ok(completions);

@@ -21,17 +21,13 @@ pub(super) fn execute_edge_face_tasks(
     tasks: Vec<EdgeFaceTask>,
     scope: &ProgressScope<'_>,
     context: &Handle<Context>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
     worksite: &'static str,
 ) -> Result<Vec<(EdgeFaceTask, ProgressCompletion)>, Failure> {
     let mut work = allocated_edge_face_invocations(tasks, scope, worksite);
-    run_launcher_context_tasks(
-        &mut work,
-        context,
-        parallel,
-        || Handle::new(Context::default()),
-        |work, context| work.perform(context),
-    )?;
+    run_launcher_context_tasks(&mut work, context, parallel, |work, context| {
+        work.perform(context)
+    })?;
     work.into_iter()
         .map(EdgeFaceInvocation::into_output)
         .collect()

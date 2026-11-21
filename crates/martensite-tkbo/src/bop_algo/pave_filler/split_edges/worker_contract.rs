@@ -77,7 +77,7 @@ fn actual_null_edge_failure_crosses_the_context_launcher_without_ds_storage() {
             &scope,
             filler.data_structure().unwrap(),
             &filler.context,
-            parallel,
+            crate::bop_algo::Parallelism::from_flag(parallel),
         )
         .err()
         .unwrap();

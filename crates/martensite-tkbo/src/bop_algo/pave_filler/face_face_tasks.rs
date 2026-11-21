@@ -40,7 +40,7 @@ impl<'p> FaceFaceWork<'p> {
 pub(super) fn execute_face_inputs(
     inputs: Vec<FaceFaceTaskInput>,
     outer: &ProgressScope<'_>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
 ) -> Result<Vec<FaceFaceTaskOutput>, Failure> {
     let scope = face_intersection_scope(outer, inputs.len());
     execute_face_inputs_in_scope(inputs, &scope, parallel)
@@ -51,16 +51,19 @@ pub(super) fn execute_face_inputs(
 pub(super) fn execute_face_inputs_in_scope(
     inputs: Vec<FaceFaceTaskInput>,
     scope: &ProgressScope<'_>,
-    parallel: bool,
+    parallel: crate::bop_algo::Parallelism,
 ) -> Result<Vec<FaceFaceTaskOutput>, Failure> {
     let mut work = prepared_face_work(inputs, scope);
     run_face_work(&mut work, parallel)?;
     work.into_iter().map(FaceFaceWork::into_output).collect()
 }
 
-fn run_face_work(work: &mut [FaceFaceWork<'_>], parallel: bool) -> Result<(), Failure> {
-    let pooled = parallel && work.len() != 1;
-    run_context_tasks(work, &(), pooled, || (), |work, _| execute_face_work(work))
+fn run_face_work(
+    work: &mut [FaceFaceWork<'_>],
+    parallel: crate::bop_algo::Parallelism,
+) -> Result<(), Failure> {
+    let pooled = parallel.for_tasks(work.len());
+    run_context_tasks(work, &(), pooled, |work, _| execute_face_work(work))
 }
 
 /// Keep the native assigning scope alive through post-join polls and result storage.

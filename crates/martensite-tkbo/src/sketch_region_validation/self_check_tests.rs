@@ -196,3 +196,31 @@ fn completed_single_walk_is_scoped_to_its_actual_execution() {
         StageCoverage::Passed
     );
 }
+
+// The check bounds its workers; serial stays serial (#496).
+#[test]
+fn the_self_check_runs_on_at_most_four_workers() {
+    use crate::bop_algo::Parallelism;
+    let shape = converted_box();
+    let parallel = super::self_check::configured_checker(&shape, true);
+    let four = std::num::NonZeroUsize::new(4).unwrap();
+    assert_eq!(parallel.options().parallelism(), Parallelism::limited(four));
+    let serial = super::self_check::configured_checker(&shape, false);
+    assert_eq!(serial.options().parallelism(), Parallelism::SERIAL);
+}
+
+// Parallel execution must not change any finding, its order or its entities (#496).
+#[test]
+fn parallel_and_serial_checks_report_identical_findings() {
+    for shape in [overlapping_solids(), converted_box()] {
+        let report = |parallel| {
+            let findings = super::self_check::inspect_self_intersection_with(&shape, &[], parallel);
+            format!("{findings:?}")
+        };
+        let serial = report(false);
+        assert!(serial.len() > 2, "fixture must produce findings: {serial}");
+        for _ in 0..3 {
+            assert_eq!(report(true), serial);
+        }
+    }
+}
