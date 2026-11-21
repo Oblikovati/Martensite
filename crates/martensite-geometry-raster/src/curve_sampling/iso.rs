@@ -25,8 +25,8 @@ pub(super) fn draw_curve(
 }
 fn spline_geometry(curve: &Adaptor3dIsoCurve) -> Result<Option<Handle<dyn GeomCurve>>, Failure> {
     match curve.get_type()? {
-        CurveType::BezierCurve => Ok(Some(curve.bezier()?.cast::<dyn GeomCurve>())),
-        CurveType::BSplineCurve => Ok(Some(curve.bspline()?.cast::<dyn GeomCurve>())),
+        CurveType::BezierCurve => Ok(Some(curve.bezier()?.into_upcast::<dyn GeomCurve>())),
+        CurveType::BSplineCurve => Ok(Some(curve.bspline()?.into_upcast::<dyn GeomCurve>())),
         _ => Ok(None),
     }
 }

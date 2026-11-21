@@ -36,7 +36,7 @@ impl SpatialBezierDrawable {
     ) -> Self {
         Self {
             curve: SpatialCurveDrawable::with_look(
-                curve.cast::<dyn GeomCurve>(),
+                curve.into_upcast::<dyn GeomCurve>(),
                 CurveLook::new(colors.0),
                 settings,
             ),
@@ -52,7 +52,7 @@ impl SpatialBezierDrawable {
         &self.poles
     }
     fn bezier(&self) -> Handle<GeomBezierCurve> {
-        self.curve.curve().cast::<GeomBezierCurve>()
+        self.curve.curve().into_downcast::<GeomBezierCurve>()
     }
     /// Finds the first pole after `index`; `curve.find_pole((x,y), display, 1., 0)?`.
     pub fn find_pole(

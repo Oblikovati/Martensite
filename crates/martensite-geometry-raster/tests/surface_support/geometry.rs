@@ -3,7 +3,7 @@ use martensite_tkernel::{precision, standard::Handle, storage::IoStream};
 use martensite_tkg3d::geom::{GeomPlane, GeomRectangularTrimmedSurface, GeomSurface};
 use martensite_tkmath::gp::Axis3;
 pub fn plane() -> Handle<dyn GeomSurface> {
-    Handle::new(GeomPlane::new(Axis3::default())).cast()
+    Handle::new(GeomPlane::new(Axis3::default())).into_upcast()
 }
 pub fn fixture(index: usize) -> Handle<dyn GeomSurface> {
     match index {
@@ -25,5 +25,5 @@ fn read(record: &str) -> Handle<dyn GeomSurface> {
 }
 fn trim(u: (f64, f64)) -> Handle<dyn GeomSurface> {
     Handle::new(GeomRectangularTrimmedSurface::new(&plane(), u, (-5., 5.), (true, true)).unwrap())
-        .cast()
+        .into_upcast()
 }

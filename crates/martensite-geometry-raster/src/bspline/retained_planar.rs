@@ -28,7 +28,7 @@ impl PlanarSplineDrawable {
     ) -> Self {
         Self {
             curve: PlanarCurveDrawable::with_look(
-                curve.cast::<dyn Geom2dCurve>(),
+                curve.into_upcast::<dyn Geom2dCurve>(),
                 CurveLook::new(look.curve_color),
                 settings,
             ),
@@ -49,7 +49,7 @@ impl PlanarSplineDrawable {
         &self.knots
     }
     fn bspline(&self) -> Handle<Geom2dBSplineCurve> {
-        self.curve.curve().cast::<Geom2dBSplineCurve>()
+        self.curve.curve().into_downcast::<Geom2dBSplineCurve>()
     }
     fn rendering(&self) -> SplineRendering<'_> {
         SplineRendering::new(
