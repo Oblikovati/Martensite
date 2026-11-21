@@ -23,6 +23,7 @@ struct ToolFields {
 /// assert_eq!(tool.max_tolerance(), 2.0);
 /// assert_eq!(tool.limit_tolerance(5.0), 2.0);
 /// ```
+#[derive(Default)]
 pub struct ShapeUpgradeTool {
     data: UpgradeToolData,
 }
@@ -64,14 +65,6 @@ impl_transient!(
     dyn Transient,
     interfaces: [dyn UpgradeTool]
 );
-
-impl Default for ShapeUpgradeTool {
-    fn default() -> Self {
-        Self {
-            data: UpgradeToolData::default(),
-        }
-    }
-}
 
 impl ShapeUpgradeTool {
     /// no context, precision and minimal tolerance

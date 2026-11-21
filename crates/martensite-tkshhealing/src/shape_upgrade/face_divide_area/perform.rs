@@ -77,7 +77,7 @@ impl ShapeUpgradeFaceDivideArea {
         };
         let surface = self
             .split_surface_tool()
-            .cast::<ShapeUpgradeSplitSurfaceArea>();
+            .downcast::<ShapeUpgradeSplitSurfaceArea>();
         if surface.is_null() {
             return Ok(None);
         }

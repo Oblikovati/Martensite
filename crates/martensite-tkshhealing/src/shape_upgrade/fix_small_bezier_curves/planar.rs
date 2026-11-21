@@ -99,11 +99,10 @@ impl ShapeUpgradeFixSmallBezierCurves {
 }
 
 fn planar_split_accepted(tool: &Handle<dyn SplitCurve2d>, reversed: bool) -> Result<bool, Failure> {
-    let criterion = tool.cast::<dyn SplitCurve>();
-    criterion.perform(true)?;
+    tool.perform(true)?;
     Ok(if reversed {
-        criterion.status_flag(ShapeExtendStatus::Done)
+        tool.status_flag(ShapeExtendStatus::Done)
     } else {
-        !criterion.status_flag(ShapeExtendStatus::Fail)
+        !tool.status_flag(ShapeExtendStatus::Fail)
     })
 }

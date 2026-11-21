@@ -9,7 +9,7 @@ use martensite_tkg2d::geom2d::{
 use martensite_tkmath::gp::{Axis2d, Point2};
 use martensite_tkshhealing::{
     shape_extend::ShapeExtendStatus,
-    shape_upgrade::{ShapeUpgradeSplitCurve, ShapeUpgradeSplitCurve2d, SplitCurve},
+    shape_upgrade::{ShapeUpgradeSplitCurve2d, SplitCurve},
 };
 fn quadratic() -> Handle<dyn Geom2dCurve> {
     let poles = [
@@ -84,10 +84,11 @@ fn native_offset_null_piece_crash_stays_an_explicit_divergence() {
     assert!(split.curves().array1().iter().all(Handle::is_null));
 }
 #[test]
-fn native_parent_projection_observes_the_same_parameter_state() {
+fn split_curve_interface_observes_the_same_parameter_state() {
     let split = Handle::new(ShapeUpgradeSplitCurve2d::new());
     split.init_curve(&quadratic()).unwrap();
-    let base = split.cast::<ShapeUpgradeSplitCurve>();
+    let base = split.upcast::<dyn SplitCurve>();
+    assert_eq!(base.object_address(), split.object_address());
     insert_middle(&split);
     assert_eq!(
         base.split_values().object_address(),

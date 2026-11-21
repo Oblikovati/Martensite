@@ -52,7 +52,7 @@ fn apply<
 pub(super) fn registrator(
     messages: &Handle<ShapeExtendMsgRegistrator>,
 ) -> Handle<dyn BasicMsgRegistrator> {
-    messages.clone().cast::<dyn BasicMsgRegistrator>()
+    messages.upcast()
 }
 
 /// The operator DirectFaces.

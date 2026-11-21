@@ -96,6 +96,12 @@ impl SplitCurve for ShapeUpgradeSplitCurve2dContinuity {
     }
 }
 
+impl SplitCurve2d for ShapeUpgradeSplitCurve2dContinuity {
+    fn curve_geometry(&self) -> &CurveSplit2dData {
+        &self.geometry
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -107,11 +113,5 @@ mod tests {
         assert_eq!(settings.criterion, Shape::C1);
         assert_eq!(settings.order, 1);
         assert_eq!(settings.tolerance, precision::p_confusion());
-    }
-}
-
-impl SplitCurve2d for ShapeUpgradeSplitCurve2dContinuity {
-    fn curve_geometry(&self) -> &CurveSplit2dData {
-        &self.geometry
     }
 }

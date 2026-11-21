@@ -210,7 +210,8 @@ macro_rules! define_curve_splitter {
             }
         }
 
-        #[doc = concat!("The standard `", $native, "` criterion.")]
+        #[doc = concat!("The standard `", $native, "` criterion for a private curve copy.")]
+        /// Offset construction from a null piece returns a typed failure. Native OCC966 crashes here.
         #[derive(Default)]
         pub struct $leaf {
             geometry: $data,

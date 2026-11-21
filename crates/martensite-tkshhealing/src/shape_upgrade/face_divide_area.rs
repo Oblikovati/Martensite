@@ -27,7 +27,9 @@ impl Default for ShapeUpgradeFaceDivideArea {
     fn default() -> Self {
         let state = FaceDivideData::default();
         state.set_precision(1e-5);
-        state.set_split_surface_tool(&Handle::new(ShapeUpgradeSplitSurfaceArea::new()).cast());
+        state.set_split_surface_tool(
+            &Handle::new(ShapeUpgradeSplitSurfaceArea::new()).into_upcast(),
+        );
         Self {
             state,
             settings: SharedState::new(AreaDivisionSettings {

@@ -41,6 +41,10 @@ impl Default for TransferParameterData {
     }
 }
 impl TransferParameterData {
+    pub(crate) fn set_max_tolerance(&self, tolerance: f64) {
+        self.with_mut(|fields| fields.max_tolerance = tolerance);
+    }
+
     pub(in crate::shape_analysis) fn init(&self, edge: &Edge, face: &Face) -> Result<(), Failure> {
         operations::initialize(self, edge, face)
     }
@@ -91,8 +95,7 @@ pub trait TransferParameters: Transient {
     fn transfer_parameter_data(&self) -> &TransferParameterData;
     /// Stores the upper bound used by projection-based implementations; `tool.set_max_tolerance(1e-6)`.
     fn set_max_tolerance(&self, tolerance: f64) {
-        self.transfer_parameter_data()
-            .with_mut(|fields| fields.max_tolerance = tolerance);
+        self.transfer_parameter_data().set_max_tolerance(tolerance);
     }
     /// Discover unoriented curve ranges; `tool.init(&edge,&face)?`.
     fn init(&self, edge: &Edge, face: &Face) -> Result<(), Failure> {
@@ -152,7 +155,6 @@ impl ShapeAnalysisTransferParameters {
     }
     /// Store the tolerance used by subclasses; `tool.set_max_tolerance(1e-6)`.
     pub fn set_max_tolerance(&self, tolerance: f64) {
-        self.state
-            .with_mut(|fields| fields.max_tolerance = tolerance);
+        self.state.set_max_tolerance(tolerance);
     }
 }

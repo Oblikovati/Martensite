@@ -46,7 +46,7 @@ impl ShapeUpgradeShapeDivideClosed {
         face_tool.set_nb_split_points(count);
         face_tool.set_wire_divide_tool(&Handle::default());
         self.parent
-            .set_split_face_tool(&Handle::new(face_tool).cast());
+            .set_split_face_tool(&Handle::new(face_tool).into_upcast());
     }
 
     /// Perform closed-face division with the inherited context policy.
