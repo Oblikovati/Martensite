@@ -34,7 +34,7 @@ fn trimmed_pcurve(edge: &Shape, face: &Shape) -> Handle<dyn Geom2dCurve> {
         .unwrap_or_else(|failure| panic!("pcurve: {failure:?}"));
     let trimmed = Geom2dTrimmedCurve::new(&found.pcurve, found.first, found.last, true, true)
         .unwrap_or_else(|failure| panic!("pcurve {} {}: {failure:?}", found.first, found.last));
-    Handle::new(trimmed).cast()
+    Handle::new(trimmed).into_upcast()
 }
 
 /// `pcurve name edge face`, for the first edge in `edges`; `pcurve_of_edge(s, "ee", "ff")`.

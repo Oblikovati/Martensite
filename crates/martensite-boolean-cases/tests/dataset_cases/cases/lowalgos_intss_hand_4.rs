@@ -266,7 +266,7 @@ fn trimmed(s: &mut dyn Session, name: &str, surface: &Surface) -> Surface {
         (true, true),
     )
     .unwrap_or_else(|failure| panic!("trim {name}: {failure:?}"));
-    bound_surface(s, name, Handle::new(trimmed).cast())
+    bound_surface(s, name, Handle::new(trimmed).into_upcast())
 }
 
 /// The script's loop over `res_N`, with the overlap of each curve and the earlier ones.
@@ -382,7 +382,7 @@ pub fn bug567_2(s: &mut dyn Session) {
 }
 
 fn basis_of(s: &mut dyn Session, name: &str, surface: &Surface) -> Surface {
-    let trimmed = surface.cast::<GeomRectangularTrimmedSurface>();
+    let trimmed = surface.downcast::<GeomRectangularTrimmedSurface>();
     let basis = trimmed.get().map_or_else(
         || surface.clone(),
         GeomRectangularTrimmedSurface::basis_surface,
