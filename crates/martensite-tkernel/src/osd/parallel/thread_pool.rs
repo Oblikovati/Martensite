@@ -11,12 +11,11 @@ use std::sync::{
 /// A thread pool; `ThreadPool::new(4).nb_threads() == 4`.
 pub struct ThreadPool {
     // Transient base: the pool is shared by handle.
-    parent: StandardTransient,
     workers: Mutex<Vec<Arc<Worker>>>,
     nb_default_threads: AtomicI32,
 }
 
-impl_transient!(ThreadPool, "OSD_ThreadPool", StandardTransient, parent);
+impl_transient!(ThreadPool, "OSD_ThreadPool", StandardTransient);
 
 impl ThreadPool {
     /// The process-wide pool, sized by the first call only (a static
@@ -29,7 +28,6 @@ impl ThreadPool {
     /// launched by default; `ThreadPool::new(2)`.
     pub fn new(nb_threads: i32) -> Self {
         let pool: Self = Self {
-            parent: StandardTransient::default(),
             workers: Mutex::new(Vec::new()),
             nb_default_threads: AtomicI32::new(0),
         };

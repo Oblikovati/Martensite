@@ -1,6 +1,8 @@
 //! Callbacks: the default and the typed callback.
 use super::{BaseDriver, Schema};
-use crate::standard::{Failure, Handle, StandardPersistent, StandardTransient, Transient};
+use crate::standard::{
+    Failure, Handle, Persistent, StandardPersistent, StandardTransient, Transient,
+};
 use crate::tcollection::AsciiString;
 use std::{
     fmt,
@@ -15,16 +17,16 @@ use std::{
 /// mutable callback state synchronized, as `Schema::type_binding` returns a shared callback.
 pub trait CallBack: Transient {
     /// A fresh object of the callback's type; `callback.new_persistent()`.
-    fn new_persistent(&self) -> Handle<StandardPersistent>;
+    fn new_persistent(&self) -> Handle<dyn Persistent>;
 
     /// `Add`: registers the objects `persistent` references with `schema`.
     /// Example: `callback.add(&object, &schema)?`.
-    fn add(&self, persistent: &Handle<StandardPersistent>, schema: &Schema) -> Result<(), Failure>;
+    fn add(&self, persistent: &Handle<dyn Persistent>, schema: &Schema) -> Result<(), Failure>;
 
     /// `Write`: writes the object's fields; `callback.write(&object, &mut driver, &schema)?`.
     fn write(
         &self,
-        persistent: &Handle<StandardPersistent>,
+        persistent: &Handle<dyn Persistent>,
         driver: &mut dyn BaseDriver,
         schema: &Schema,
     ) -> Result<(), Failure>;
@@ -32,7 +34,7 @@ pub trait CallBack: Transient {
     /// `Read`: reads the object's fields; `callback.read(&object, &mut driver, &schema)?`.
     fn read(
         &self,
-        persistent: &Handle<StandardPersistent>,
+        persistent: &Handle<dyn Persistent>,
         driver: &mut dyn BaseDriver,
         schema: &Schema,
     ) -> Result<(), Failure>;
@@ -45,15 +47,12 @@ pub trait CallBack: Transient {
 /// assert!(DefaultCallBack::default().new_persistent().is_some());
 /// ```
 #[derive(Clone, Default)]
-pub struct DefaultCallBack {
-    parent: StandardTransient,
-}
+pub struct DefaultCallBack {}
 
 crate::impl_transient!(
     DefaultCallBack,
     "Storage_DefaultCallBack",
     dyn CallBack,
-    parent,
     interfaces: [dyn CallBack]
 );
 
@@ -66,17 +65,17 @@ impl fmt::Debug for DefaultCallBack {
 }
 
 impl CallBack for DefaultCallBack {
-    fn new_persistent(&self) -> Handle<StandardPersistent> {
-        Handle::new(StandardPersistent::default())
+    fn new_persistent(&self) -> Handle<dyn Persistent> {
+        Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>()
     }
 
-    fn add(&self, _: &Handle<StandardPersistent>, _: &Schema) -> Result<(), Failure> {
+    fn add(&self, _: &Handle<dyn Persistent>, _: &Schema) -> Result<(), Failure> {
         Ok(())
     }
 
     fn write(
         &self,
-        _: &Handle<StandardPersistent>,
+        _: &Handle<dyn Persistent>,
         _: &mut dyn BaseDriver,
         _: &Schema,
     ) -> Result<(), Failure> {
@@ -86,7 +85,7 @@ impl CallBack for DefaultCallBack {
     /// Skips the object's data with the driver's `skip_object`.
     fn read(
         &self,
-        _: &Handle<StandardPersistent>,
+        _: &Handle<dyn Persistent>,
         driver: &mut dyn BaseDriver,
         _: &Schema,
     ) -> Result<(), Failure> {
@@ -112,7 +111,6 @@ struct TypedFields {
 /// assert_eq!(typed.index(), 3);
 /// ```
 pub struct TypedCallBack {
-    parent: StandardTransient,
     fields: RwLock<TypedFields>,
 }
 
@@ -126,7 +124,6 @@ impl TypedCallBack {
     /// A typed callback with index 0; `TypedCallBack::new(&name, &callback)`.
     pub fn new(type_name: &AsciiString, callback: &Handle<dyn CallBack>) -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: RwLock::new(TypedFields {
                 type_name: type_name.clone(),
                 callback: callback.clone(),
@@ -174,12 +171,7 @@ impl TypedCallBack {
     }
 }
 
-crate::impl_transient!(
-    TypedCallBack,
-    "Storage_TypedCallBack",
-    StandardTransient,
-    parent
-);
+crate::impl_transient!(TypedCallBack, "Storage_TypedCallBack", StandardTransient);
 
 /// A shared array of callback handles `(1, len)`: the per-type callback
 /// table that schema writes and binary complete-info reads index by type number.

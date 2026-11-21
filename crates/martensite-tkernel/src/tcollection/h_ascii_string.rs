@@ -14,14 +14,12 @@ use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 #[repr(C)]
 #[derive(Default)]
 pub struct HAsciiString {
-    parent: StandardTransient,
     value: RwLock<AsciiString>,
 }
 crate::impl_transient!(
     HAsciiString,
     "TCollection_HAsciiString",
     StandardTransient,
-    parent,
     handle_key_policy: HAsciiStringHasher
 );
 impl std::fmt::Debug for HAsciiString {
@@ -36,7 +34,6 @@ impl From<AsciiString> for HAsciiString {
     /// Takes the string's storage.
     fn from(value: AsciiString) -> Self {
         Self {
-            parent: StandardTransient::default(),
             value: RwLock::new(value),
         }
     }

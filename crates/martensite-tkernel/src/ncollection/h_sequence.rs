@@ -12,13 +12,11 @@ mod handle_append;
 use std::sync::{PoisonError, RwLock};
 /// Handle-shared sequence; `let items = Handle::new(HSequence::<i32>::default()); items.get().unwrap().append(1);`.
 pub struct HSequence<T> {
-    base: StandardTransient,
     items: RwLock<Sequence<T>>,
 }
 impl<T> Default for HSequence<T> {
     fn default() -> Self {
         Self {
-            base: StandardTransient::default(),
             items: RwLock::new(Sequence::default()),
         }
     }
@@ -33,7 +31,6 @@ impl<T> HSequence<T> {
     /// Moves sequence storage into a fresh transient wrapper; `HSequence::from_owned(values)`.
     pub fn from_owned(items: Sequence<T>) -> Self {
         Self {
-            base: StandardTransient::default(),
             items: RwLock::new(items),
         }
     }

@@ -1,6 +1,6 @@
 //! Type bindings and object registration against the current data set.
 use super::Schema;
-use crate::standard::{Failure, Handle, StandardPersistent};
+use crate::standard::{Failure, Handle, Persistent};
 use crate::storage::PersistentNumbers;
 use crate::storage::{BaseDriver, CallBack, TypedCallBack};
 use crate::tcollection::AsciiString;
@@ -57,7 +57,7 @@ impl Schema {
     /// Example: `schema.add_persistent(&object, "PColStd_HArray1OfInteger")?`.
     pub fn add_persistent(
         &self,
-        persistent: &Handle<StandardPersistent>,
+        persistent: &Handle<dyn Persistent>,
         type_name: &str,
     ) -> Result<bool, Failure> {
         let Some(object) = persistent.get() else {
@@ -79,10 +79,7 @@ impl Schema {
 
     /// Queues an object not yet queued or typed (reference set to -1).
     /// Example: `schema.persistent_to_add(&object)?`.
-    pub fn persistent_to_add(
-        &self,
-        persistent: &Handle<StandardPersistent>,
-    ) -> Result<bool, Failure> {
+    pub fn persistent_to_add(&self, persistent: &Handle<dyn Persistent>) -> Result<bool, Failure> {
         let Some(object) = persistent.get() else {
             return Ok(false);
         };
@@ -101,7 +98,7 @@ impl Schema {
     /// Example: `schema.write_persistent_object_header(&object, &mut driver)?`.
     pub fn write_persistent_object_header(
         &self,
-        persistent: &Handle<StandardPersistent>,
+        persistent: &Handle<dyn Persistent>,
         driver: &mut dyn BaseDriver,
     ) -> Result<(), Failure> {
         let object = persistent.get().ok_or_else(|| {
@@ -118,7 +115,7 @@ impl Schema {
     /// Example: `schema.write_persistent_reference(&object, &mut driver)?`.
     pub fn write_persistent_reference(
         &self,
-        persistent: &Handle<StandardPersistent>,
+        persistent: &Handle<dyn Persistent>,
         driver: &mut dyn BaseDriver,
     ) -> Result<(), Failure> {
         let reference = persistent

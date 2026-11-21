@@ -2,7 +2,8 @@
 use super::{Quantity, Unit};
 use crate::standard::{Failure, Handle};
 use crate::units::support::{item, object, stream_real, write_bytes};
-use crate::units::token::{ShiftedToken, Token};
+use crate::units::token::ShiftedToken;
+use crate::units::{TokenObject, UnitObject};
 use std::io::Write;
 use std::sync::{PoisonError, RwLock};
 
@@ -11,7 +12,7 @@ pub struct ShiftedUnit {
     unit: Unit,
     movement: RwLock<f64>,
 }
-crate::impl_transient!(ShiftedUnit, "Units_ShiftedUnit", Unit, unit);
+crate::impl_transient!(ShiftedUnit, "Units_ShiftedUnit", Unit, interfaces: [dyn UnitObject]);
 
 impl ShiftedUnit {
     /// Full constructor; `ShiftedUnit::new(b"degree Celsius", b"deg.C", 1.0, 273.15, &q)`.
@@ -57,7 +58,7 @@ impl ShiftedUnit {
         *self.movement.read().unwrap_or_else(PoisonError::into_inner)
     }
     /// `Token()` override: a shifted token for the first symbol; `shifted.token()?`.
-    pub fn token(&self) -> Result<Handle<Token>, Failure> {
+    pub fn token(&self) -> Result<Handle<dyn TokenObject>, Failure> {
         let symbol = item(&self.unit.symbols_sequence(), 1)?;
         let quantity = self.unit.quantity();
         let dimensions = object(&quantity, "Units_ShiftedUnit::Token")?.dimensions();
@@ -68,7 +69,7 @@ impl ShiftedUnit {
             self.movement(),
             &dimensions,
         );
-        Ok(Handle::new(token).cast::<Token>())
+        Ok(Handle::new(token).into_upcast::<dyn TokenObject>())
     }
     /// `Dump` override, which also prints the move; `shifted.dump(&mut out)?`.
     pub fn dump(&self, out: &mut dyn Write) -> Result<(), Failure> {
@@ -81,6 +82,20 @@ impl ShiftedUnit {
         let name = self.unit.name();
         let line = [b"\t\tName:  ".as_slice(), name.as_bytes(), tail.as_bytes()];
         write_bytes(out, &line.concat())
+    }
+}
+
+impl crate::units::UnitObject for ShiftedUnit {
+    fn unit_state(&self) -> &Unit {
+        &self.unit
+    }
+
+    fn first_symbol_token(&self) -> Result<Handle<dyn TokenObject>, Failure> {
+        self.token()
+    }
+
+    fn dump_unit(&self, out: &mut dyn Write) -> Result<(), Failure> {
+        self.dump(out)
     }
 }
 
@@ -102,7 +117,7 @@ mod tests {
             &quantity,
         ));
         unit.get().unwrap().set_movement(273.15);
-        let base: Handle<Unit> = unit.cast();
+        let base: Handle<dyn UnitObject> = unit.upcast();
         let token = base.token().unwrap();
         assert!(token.is_instance_name("Units_ShiftedToken"));
         let mut out = Vec::new();

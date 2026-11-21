@@ -1,14 +1,15 @@
 //! Value conversions between SI and the active units of a units system.
 use super::UnitsSystem;
 use crate::standard::{Failure, Handle};
+use crate::units::UnitObject;
 use crate::units::context::Units;
 use crate::units::support::{item, object};
-use crate::units::unit::{ShiftedUnit, Unit};
+use crate::units::unit::ShiftedUnit;
 use crate::units::unit_sentence::UnitSentence;
 
 /// The active unit's factor and move (move 0 for a plain unit).
-fn factor_and_move(unit: &Handle<Unit>) -> Result<(f64, f64), Failure> {
-    if let Some(shifted) = unit.cast::<ShiftedUnit>().get() {
+fn factor_and_move(unit: &Handle<dyn UnitObject>) -> Result<(f64, f64), Failure> {
+    if let Some(shifted) = unit.downcast_ref::<ShiftedUnit>() {
         return Ok((shifted.unit().value(), shifted.movement()));
     }
     Ok((object(unit, "Units_UnitsSystem")?.value(), 0.0))
@@ -63,7 +64,7 @@ impl UnitsSystem {
         let Some(unit) = self.active(units, quantity)? else {
             return Ok(value);
         };
-        if unit.cast::<ShiftedUnit>().is_some() {
+        if unit.downcast_ref::<ShiftedUnit>().is_some() {
             let (factor, movement) = factor_and_move(&unit)?;
             return Ok(value * (factor + movement));
         }
@@ -71,7 +72,11 @@ impl UnitsSystem {
     }
     /// The active unit of a specified quantity (`None` when index 0); an unspecified
     /// quantity must at least exist in the dictionary.
-    fn active(&self, units: &Units, quantity: &[u8]) -> Result<Option<Handle<Unit>>, Failure> {
+    fn active(
+        &self,
+        units: &Units,
+        quantity: &[u8],
+    ) -> Result<Option<Handle<dyn UnitObject>>, Failure> {
         let Some((index, found)) = self.find(quantity)? else {
             Self::known_quantity(units, quantity)?;
             return Ok(None);

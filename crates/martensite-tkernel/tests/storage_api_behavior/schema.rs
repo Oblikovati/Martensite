@@ -1,6 +1,6 @@
 //! Schemas: writing, the callback registry, bindings and type migration.
 use super::fakes::{FixedClock, ScriptedDriver, TableFile, UnreadableTable};
-use martensite_tkernel::standard::{Handle, StandardPersistent};
+use martensite_tkernel::standard::{Handle, Persistent, StandardPersistent};
 use martensite_tkernel::storage::{
     CallBack, Data, DefaultCallBack, OpenMode, Schema, SchemaContext, StorageError,
     StreamException, TypeMigration, TypedCallBack,
@@ -74,7 +74,7 @@ fn a_driver_not_open_for_writing_is_a_mode_error_and_null_data_does_nothing() {
 #[test]
 fn a_root_object_without_a_bound_type_fails_in_the_data_section() {
     let data = Handle::new(Data::default());
-    let object = Handle::new(StandardPersistent::default());
+    let object = Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>();
     data.get().unwrap().add_named_root(&"doc".into(), &object);
     let mut driver = ScriptedDriver::opened(OpenMode::Write);
     let failure = schema().write(&mut driver, &data).unwrap_err();
@@ -86,7 +86,7 @@ fn a_root_object_without_a_bound_type_fails_in_the_data_section() {
 #[test]
 fn bindings_need_a_write_in_progress() {
     let schema = schema();
-    let object = Handle::new(StandardPersistent::default());
+    let object = Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>();
     for failure in [
         schema.has_type_binding(&"T".into()).unwrap_err(),
         schema.persistent_to_add(&object).unwrap_err(),

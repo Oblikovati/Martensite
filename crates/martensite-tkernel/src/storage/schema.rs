@@ -27,7 +27,6 @@ pub use migration::{MigrationFile, MigrationSource, NativeMigrationSource, TypeM
 /// assert!(!schema.is_using_default_callback());
 /// ```
 pub struct Schema {
-    parent: StandardTransient,
     callbacks: DataMap<AsciiString, Handle<TypedCallBack>>,
     callback_state: bool,
     default_callback: Handle<dyn CallBack>,
@@ -54,7 +53,6 @@ impl Schema {
     /// Example: `Schema::with_context(clock, SchemaContext::default())`.
     pub fn with_context(clock: Arc<dyn CreationDateSource>, context: SchemaContext) -> Self {
         let mut schema = Self {
-            parent: StandardTransient::default(),
             callbacks: DataMap::default(),
             callback_state: false,
             default_callback: Handle::default(),
@@ -156,7 +154,7 @@ impl Schema {
     /// Back to a fresh default callback.
     /// Example: `schema.reset_default_callback()`.
     pub fn reset_default_callback(&mut self) {
-        self.default_callback = Handle::new(DefaultCallBack::default()).cast();
+        self.default_callback = Handle::new(DefaultCallBack::default()).into_upcast();
     }
 
     /// `DefaultCallBack`; `schema.default_callback()` returns a null handle when absent.
@@ -197,4 +195,4 @@ impl Schema {
     }
 }
 
-crate::impl_transient!(Schema, "Storage_Schema", StandardTransient, parent);
+crate::impl_transient!(Schema, "Storage_Schema", StandardTransient);

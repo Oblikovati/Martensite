@@ -9,7 +9,6 @@ use std::{ptr::NonNull, sync::OnceLock};
 /// Polymorphic allocator object; `AllocatorObject::default().resource().allocate(16)`.
 #[repr(C)]
 pub struct AllocatorObject {
-    parent: StandardTransient,
     resource: BaseAllocator,
 }
 impl AllocatorObject {
@@ -17,7 +16,6 @@ impl AllocatorObject {
     /// Derived virtual dispatch requires prior `from_handle` registration; standalone objects use
     /// only their embedded policy. Registration keeps a weak original-object alias, never a copy.
     pub fn resource(&self) -> &BaseAllocator {
-        // A borrowed policy does not acquire intrusive allocator ownership.
         &self.resource
     }
     /// The shared static common allocator handle; `AllocatorObject::common_base_allocator().ref_count()`.
@@ -51,17 +49,13 @@ impl AllocatorObject {
         self.resource.optimal_calls_allocate()
     }
     fn wrapping(resource: BaseAllocator) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            resource,
-        }
+        Self { resource }
     }
 }
 crate::impl_transient!(
     AllocatorObject,
     "NCollection_BaseAllocator",
     StandardTransient,
-    parent,
     interfaces: [dyn AllocatorSource]
 );
 
@@ -85,7 +79,7 @@ macro_rules! allocator_subclass {
                 }
             }
         }
-        crate::impl_transient!($name, $type_name, AllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+        crate::impl_transient!($name, $type_name, AllocatorObject, interfaces: [dyn AllocatorSource]);
         // SAFETY: these concrete policies own disjoint allocations until their documented release.
         unsafe impl AllocatorSource for $name {
             fn allocator_object_base(&self) -> &AllocatorObject {

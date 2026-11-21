@@ -4,7 +4,7 @@
 //! Buckets hold handles and
 //! report a slot past the last append as null, the value of a zero-filled
 //! slot, never stale data.
-use crate::standard::{Handle, StandardPersistent};
+use crate::standard::{Handle, Persistent};
 
 /// One chunk of persistent objects; `Bucket::with_size(4)`.
 ///
@@ -15,7 +15,7 @@ use crate::standard::{Handle, StandardPersistent};
 /// assert_eq!(bucket.space_size(), 4);
 /// ```
 pub struct Bucket {
-    space: Vec<Handle<StandardPersistent>>,
+    space: Vec<Handle<dyn Persistent>>,
     space_size: i32,
 }
 
@@ -51,7 +51,7 @@ impl Bucket {
     }
 
     /// The object at `index`, null past the last append.
-    fn slot(&self, index: i32) -> Handle<StandardPersistent> {
+    fn slot(&self, index: i32) -> Handle<dyn Persistent> {
         usize::try_from(index)
             .ok()
             .and_then(|index| self.space.get(index))
@@ -63,11 +63,11 @@ impl Bucket {
 /// Objects appended in order across buckets of `bucket_size` slots.
 ///
 /// ```
-/// use martensite_tkernel::standard::{Handle, StandardPersistent};
+/// use martensite_tkernel::standard::{Handle, Persistent, StandardPersistent};
 /// use martensite_tkernel::storage::BucketOfPersistent;
 /// let mut objects = BucketOfPersistent::new(2, 1);
 /// for _ in 0..3 {
-///     objects.append(&Handle::new(StandardPersistent::default()));
+///     objects.append(&Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>());
 /// }
 /// assert_eq!(objects.length(), 3);
 /// assert!(objects.value(3).is_some());
@@ -102,7 +102,7 @@ impl BucketOfPersistent {
     }
 
     /// Fills the current bucket, then opens a new one; `objects.append(&object)`.
-    pub fn append(&mut self, object: &Handle<StandardPersistent>) {
+    pub fn append(&mut self, object: &Handle<dyn Persistent>) {
         let full = self
             .buckets
             .last()
@@ -118,7 +118,7 @@ impl BucketOfPersistent {
 
     /// `Value`: the object at one-based `index`, null outside the stored range.
     /// Example: `objects.value(1)`.
-    pub fn value(&self, index: i32) -> Handle<StandardPersistent> {
+    pub fn value(&self, index: i32) -> Handle<dyn Persistent> {
         let offset = index - 1;
         let bucket = offset.div_euclid(self.bucket_size.max(1));
         let slot = offset - self.bucket_size * bucket;
@@ -205,7 +205,7 @@ impl<'a> BucketIterator<'a> {
     }
 
     /// `Value`: the current slot, null for an empty slot or no collection; `walk.value()`.
-    pub fn value(&self) -> Handle<StandardPersistent> {
+    pub fn value(&self) -> Handle<dyn Persistent> {
         self.current_bucket()
             .map(|bucket| bucket.slot(self.index))
             .unwrap_or_default()

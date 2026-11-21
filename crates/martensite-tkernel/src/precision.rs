@@ -5,6 +5,9 @@
 //! exact, stable bits. Overloads take distinct Rust names: the one-argument
 //! parametric forms divide by a curve speed `t` and carry a `_with_speed` suffix.
 
+#[cfg(test)]
+mod tests;
+
 /// Tolerance for comparing angles, in radians.
 ///
 /// ```
@@ -71,11 +74,7 @@ pub const fn approximation() -> f64 {
 
 /// Converts a 3D tolerance `p` to parameter space
 /// for a curve of speed `t`.
-///
-/// ```
-/// assert_eq!(martensite_tkernel::precision::parametric_with_speed(1.0, 4.0), 0.25);
-/// ```
-pub const fn parametric_with_speed(p: f64, t: f64) -> f64 {
+const fn parametric_with_speed(p: f64, t: f64) -> f64 {
     p / t
 }
 
@@ -107,16 +106,6 @@ pub const fn square_p_confusion() -> f64 {
 /// ```
 pub const fn p_intersection_with_speed(t: f64) -> f64 {
     parametric_with_speed(intersection(), t)
-}
-
-/// `approximation()` in parameter space for speed `t`.
-///
-/// ```
-/// use martensite_tkernel::precision::{approximation, p_approximation_with_speed};
-/// assert_eq!(p_approximation_with_speed(2.0), approximation() / 2.0);
-/// ```
-pub const fn p_approximation_with_speed(t: f64) -> f64 {
-    parametric_with_speed(approximation(), t)
 }
 
 /// Converts `p` to parameter space with the

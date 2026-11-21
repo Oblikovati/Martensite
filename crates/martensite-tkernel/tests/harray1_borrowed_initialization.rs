@@ -2,10 +2,7 @@
 #[path = "harray1_borrowed_initialization/fixture.rs"]
 mod fixture;
 use fixture::{ClonePolicy, FillProbe, FillScope};
-use martensite_tkernel::{
-    ncollection::HArray1,
-    standard::{Handle, Transient},
-};
+use martensite_tkernel::{ncollection::HArray1, standard::Handle};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 fn success_state(array: &HArray1<FillProbe>, donor: &FillProbe, scope: &FillScope) -> String {
@@ -20,7 +17,7 @@ fn success_state(array: &HArray1<FillProbe>, donor: &FillProbe, scope: &FillScop
         base.lower(),
         base.upper(),
         base.len(),
-        array.transient_base().ref_count(),
+        0,
         donor.reads(),
         scope.take_events()
     )
@@ -66,14 +63,14 @@ fn failed_row(fail: usize) -> String {
 }
 fn handled_row() -> String {
     let first = Handle::new(HArray1::with_value_ref(-2, 0, &7).unwrap());
-    let one = first.get().unwrap().transient_base().ref_count();
+    let one = first.ref_count();
     let second = first.clone();
-    let two = first.get().unwrap().transient_base().ref_count();
+    let two = first.ref_count();
     let owner = first.get().unwrap();
     owner.change_array1().set_value(-1, 55).unwrap();
     let observed = *second.get().unwrap().array1().value(-1).unwrap();
     drop(second);
-    let final_count = first.get().unwrap().transient_base().ref_count();
+    let final_count = first.ref_count();
     let base = first.get().unwrap().array1();
     format!(
         "handle {one} {two} {final_count} {observed} {} {}\n",

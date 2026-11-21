@@ -1,7 +1,7 @@
 //! The root section, a map from root names to roots.
 use super::{BaseDriver, OpenMode, Root, SectionStatus, StorageError, StreamException};
 use crate::ncollection::{DataMap, HSequence};
-use crate::standard::{Failure, Handle, StandardPersistent, StandardTransient};
+use crate::standard::{Failure, Handle, Persistent, StandardTransient};
 use crate::tcollection::AsciiString;
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
@@ -14,17 +14,16 @@ struct RootFields {
 /// Named roots of a set of data; `roots()` walks the map in its bucket order.
 ///
 /// ```
-/// use martensite_tkernel::standard::{Handle, StandardPersistent};
+/// use martensite_tkernel::standard::{Handle, Persistent};
 /// use martensite_tkernel::storage::{Root, RootData};
 /// use martensite_tkernel::tcollection::AsciiString;
 /// let roots = RootData::default();
 /// let name = AsciiString::new("doc");
-/// roots.add_root(&Handle::new(Root::new(&name, &Handle::<StandardPersistent>::default())));
+/// roots.add_root(&Handle::new(Root::new(&name, &Handle::<dyn Persistent>::default())));
 /// assert!(roots.is_root(&name));
 /// ```
 #[derive(Default)]
 pub struct RootData {
-    parent: StandardTransient,
     fields: Mutex<RootFields>,
 }
 
@@ -105,7 +104,7 @@ impl RootData {
     pub fn update_root(
         &self,
         name: &AsciiString,
-        object: &Handle<StandardPersistent>,
+        object: &Handle<dyn Persistent>,
     ) -> Result<(), Failure> {
         let root = self.find(name);
         let Some(root) = root.get() else {
@@ -138,4 +137,4 @@ impl RootData {
     }
 }
 
-crate::impl_transient!(RootData, "Storage_RootData", StandardTransient, parent);
+crate::impl_transient!(RootData, "Storage_RootData", StandardTransient);

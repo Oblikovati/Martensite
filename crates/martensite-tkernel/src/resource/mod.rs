@@ -48,7 +48,6 @@ static DEBUG: AtomicBool = AtomicBool::new(false);
 #[derive(Clone)]
 pub struct ResourceManager {
     // Transient base: the manager is shared by handle.
-    parent: StandardTransient,
     name: AsciiString,
     reference: DataMap<AsciiString, AsciiString>,
     user: DataMap<AsciiString, AsciiString>,
@@ -57,12 +56,7 @@ pub struct ResourceManager {
     initialized: bool,
     host: ResourceHost,
 }
-impl_transient!(
-    ResourceManager,
-    "Resource_Manager",
-    StandardTransient,
-    parent
-);
+impl_transient!(ResourceManager, "Resource_Manager", StandardTransient);
 impl ResourceManager {
     /// Loads `$CSF_<name>Defaults/<name>` then `$CSF_<name>UserDefaults/<name>`;
     /// `ResourceManager::new("App", false, host)?`.
@@ -114,7 +108,6 @@ impl ResourceManager {
     }
     fn with_state(name: &str, verbose: bool, host: ResourceHost) -> Self {
         Self {
-            parent: StandardTransient::default(),
             name: c_string(name),
             reference: DataMap::default(),
             user: DataMap::default(),

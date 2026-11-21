@@ -5,25 +5,21 @@ use std::{
     hash::{Hash, Hasher},
     ops::Deref,
 };
-impl<T: ?Sized + RuntimeTyped> Deref for Handle<T> {
+impl<T: ?Sized> Deref for Handle<T> {
     type Target = T;
     fn deref(&self) -> &T {
         self.get()
             .expect("Null handle; expected a live object for dereference")
     }
 }
-impl<T: ?Sized + RuntimeTyped, U: ?Sized + RuntimeTyped> PartialEq<Handle<U>> for Handle<T> {
+impl<T: ?Sized, U: ?Sized> PartialEq<Handle<U>> for Handle<T> {
     fn eq(&self, other: &Handle<U>) -> bool {
-        match (&self.owner, &other.owner) {
-            (Some(left), Some(right)) => left.address() == right.address(),
-            (None, None) => true,
-            _ => false,
-        }
+        self.object_address() == other.object_address()
     }
 }
-impl<T: ?Sized + RuntimeTyped> Eq for Handle<T> {}
+impl<T: ?Sized> Eq for Handle<T> {}
 /// Formats handle identity without borrowing object contents; `format!("{handle:?}")`.
-impl<T: ?Sized + RuntimeTyped> std::fmt::Debug for Handle<T> {
+impl<T: ?Sized> std::fmt::Debug for Handle<T> {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter
             .debug_struct("Handle")
@@ -44,20 +40,20 @@ impl<T: RuntimeTyped> PartialEq<Handle<T>> for *const T {
     }
 }
 /// Orders by object address, null first.
-impl<T: ?Sized + RuntimeTyped, U: ?Sized + RuntimeTyped> PartialOrd<Handle<U>> for Handle<T> {
+impl<T: ?Sized, U: ?Sized> PartialOrd<Handle<U>> for Handle<T> {
     fn partial_cmp(&self, other: &Handle<U>) -> Option<Ordering> {
-        Some(self.address().cmp(&other.address()))
+        Some(self.hash_code().cmp(&other.hash_code()))
     }
 }
-impl<T: ?Sized + RuntimeTyped> Ord for Handle<T> {
+impl<T: ?Sized> Ord for Handle<T> {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.address().cmp(&other.address())
+        self.hash_code().cmp(&other.hash_code())
     }
 }
 /// Hashes the object address that [`Handle::hash_code`] returns.
-impl<T: ?Sized + RuntimeTyped> Hash for Handle<T> {
+impl<T: ?Sized> Hash for Handle<T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        self.address().hash(state);
+        self.hash_code().hash(state);
     }
 }
 /// The default map policy hashes the object address; Rust operators retain identity.

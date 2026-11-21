@@ -2,14 +2,14 @@
 #![allow(non_snake_case)]
 include!("handles/support.rs");
 use martensite_tkernel::ncollection::{
-    AllocatorObject, HeapAllocatorObject, IncrementalAllocatorObject,
+    AllocatorSource, HeapAllocatorObject, IncrementalAllocatorObject,
 };
 #[test]
 fn HandleOperationsTest__BasicHandleOperations() {
     let derived = Handle::new(TestDerived::default());
     assert!(!derived.is_null());
     let const_derived = &derived;
-    let _const_base = derived.view::<TestBase>();
+    let _const_base = derived.view::<dyn TestBase>();
     let derived_ptr = derived.as_ptr();
     let const_ptr = const_derived.as_ptr();
     assert!(!derived_ptr.is_null());
@@ -17,19 +17,19 @@ fn HandleOperationsTest__BasicHandleOperations() {
     assert_eq!(derived_ptr, const_ptr);
     assert_eq!(&*derived as *const TestDerived, derived_ptr);
     assert_eq!(&**const_derived as *const TestDerived, const_ptr);
-    let base = derived.cast::<TestBase>();
+    let base = derived.upcast::<dyn TestBase>();
     assert!(!base.is_null());
-    assert_eq!(base.as_ptr().cast::<()>(), derived.as_ptr().cast::<()>());
+    assert_eq!(base.object_address(), derived.as_ptr().cast::<()>());
 }
 #[test]
 fn HandleOperationsTest__HandleDownCast() {
     let derived = Handle::new(TestDerived::default());
-    let base = derived.cast::<TestBase>();
-    let down_cast = base.cast::<TestDerived>();
+    let base = derived.upcast::<dyn TestBase>();
+    let down_cast = base.downcast::<TestDerived>();
     assert!(!down_cast.is_null());
     assert_eq!(down_cast.as_ptr(), derived.as_ptr());
     let other = Handle::new(TestOther::default());
-    let transient = other.cast::<StandardTransient>();
+    let transient = other.upcast::<dyn Transient>();
     assert!(transient.cast::<TestDerived>().is_null());
 }
 #[test]
@@ -37,7 +37,7 @@ fn HandleOperationsTest__HandleComparisons() {
     let derived = Handle::new(TestDerived::default());
     let derived2 = derived.clone();
     let derived3 = Handle::new(TestDerived::default());
-    let base = derived.cast::<TestBase>();
+    let base = derived.upcast::<dyn TestBase>();
     assert!(derived == derived.clone());
     assert!(derived == derived2);
     assert!(derived == base);
@@ -55,13 +55,14 @@ fn HandleOperationsTest__HandleComparisons() {
 }
 #[test]
 fn HandleOperationsTest__AllocatorHandleCasting() {
-    let base_ptr = Handle::new(IncrementalAllocatorObject::default()).cast::<AllocatorObject>();
+    let base_ptr =
+        Handle::new(IncrementalAllocatorObject::default()).upcast::<dyn AllocatorSource>();
     assert!(!base_ptr.is_null());
     let incremental = base_ptr.cast::<IncrementalAllocatorObject>();
     assert!(!incremental.is_null());
-    let base = incremental.cast::<AllocatorObject>();
+    let base = incremental.upcast::<dyn AllocatorSource>();
     assert!(!base.is_null());
-    assert_eq!(base.as_ptr(), base_ptr.as_ptr());
+    assert_eq!(base.object_address(), base_ptr.object_address());
     assert!(base_ptr.cast::<HeapAllocatorObject>().is_null());
 }
 #[test]
@@ -75,9 +76,9 @@ fn HandleOperationsTest__HandleCopyAndAssignment() {
     derived3.clone_from(&derived1);
     assert!(!derived3.is_null());
     assert_eq!(derived1.as_ptr(), derived3.as_ptr());
-    // Rust self-move preserves ownership without a second mutable alias.
-    let derived1 = derived1;
-    assert!(!derived1.is_null());
+    let moved = derived1;
+    assert!(!moved.is_null());
+    assert_eq!(moved.ref_count(), 3);
     derived3 = Handle::default();
     assert!(derived3.is_null());
 }
@@ -85,18 +86,18 @@ fn HandleOperationsTest__HandleCopyAndAssignment() {
 fn HandleOperationsTest__HandleWithDifferentTypes() {
     let derived = Handle::new(TestDerived::default());
     let other = Handle::new(TestOther::default());
-    let derived_transient = derived.cast::<StandardTransient>();
-    let other_transient = other.cast::<StandardTransient>();
+    let derived_transient = derived.upcast::<dyn Transient>();
+    let other_transient = other.upcast::<dyn Transient>();
     assert!(!(derived_transient == other_transient));
     assert!(derived_transient != other_transient);
     assert!(derived_transient == derived);
     assert!(other_transient == other);
     assert_eq!(
-        derived_transient.as_ptr().cast::<()>(),
+        derived_transient.object_address(),
         derived.as_ptr().cast::<()>()
     );
     assert_eq!(
-        other_transient.as_ptr().cast::<()>(),
+        other_transient.object_address(),
         other.as_ptr().cast::<()>()
     );
 }

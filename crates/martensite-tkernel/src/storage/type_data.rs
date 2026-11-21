@@ -23,7 +23,6 @@ struct TypeFields {
 /// ```
 #[derive(Default)]
 pub struct TypeData {
-    parent: StandardTransient,
     fields: Mutex<TypeFields>,
 }
 
@@ -140,4 +139,4 @@ impl TypeData {
     }
 }
 
-crate::impl_transient!(TypeData, "Storage_TypeData", StandardTransient, parent);
+crate::impl_transient!(TypeData, "Storage_TypeData", StandardTransient);

@@ -30,19 +30,20 @@ mod handle;
 mod runtime_type;
 mod shared_state;
 mod transient;
-pub use handle::{Handle, HandleObserver, HandleView, WeakHandle};
+pub use handle::{Handle, HandleObserver, HandleUpcast, HandleView, WeakHandle};
 pub(crate) use runtime_type::c_prefix;
 pub use runtime_type::{
-    InterfaceCaster, InterfaceEntry, RuntimeType, RuntimeTyped, project_concrete, project_interface,
+    InterfaceCaster, InterfaceEntry, RuntimeType, RuntimeTyped, TransientHandleTarget,
+    own_interface, project_concrete, project_interface,
 };
 pub use shared_state::{SharedReadFailure, SharedState};
-pub use transient::{StandardTransient, Transient, TransientStorage};
+pub use transient::{StandardTransient, Transient};
 pub mod assert;
 pub mod error_handler;
 pub use error_handler::{ErrorHandler, ErrorHandlerCallback};
 mod persistent;
 pub mod type_queries;
-pub use persistent::StandardPersistent;
+pub use persistent::{Persistent, StandardPersistent};
 mod stack_trace;
 pub use stack_trace::stack_trace;
 pub mod dump;

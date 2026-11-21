@@ -2,13 +2,13 @@
 use crate::standard::{Handle, IntrusiveReferenceSlot, StandardTransient};
 #[test]
 fn reference_slot_constructor_moves_exactly_one_existing_native_owner() {
-    let target = Handle::new(StandardTransient::default());
-    let observed = target.observe();
+    let target = Handle::new(StandardTransient);
+    let observed = target.downgrade();
     let pointer = target.object_address();
     let slot = IntrusiveReferenceSlot::from_owned(target);
     assert_eq!(observed.ref_count(), 1);
     assert_eq!(slot.object_address(), pointer);
-    assert_eq!(slot.observe().ref_count(), 1);
+    assert_eq!(slot.observe().ref_count(), 2);
     slot.clear().unwrap();
     assert!(slot.is_null());
     assert_eq!(observed.ref_count(), 0);
@@ -17,7 +17,7 @@ fn reference_slot_constructor_moves_exactly_one_existing_native_owner() {
 #[test]
 fn reference_slot_actual_pointer_and_ownership_remain_native_separate() {
     let slot = IntrusiveReferenceSlot::<StandardTransient>::default();
-    let first = Handle::new(StandardTransient::default());
+    let first = Handle::new(StandardTransient);
     assert!(slot.is_null());
     slot.assign(&first).unwrap();
     let address = slot.reference_address();
@@ -32,8 +32,8 @@ fn reference_slot_actual_pointer_and_ownership_remain_native_separate() {
 #[test]
 fn reference_slot_retiring_pointer_is_actual_and_conflicts_fail_explicitly() {
     let slot = IntrusiveReferenceSlot::<StandardTransient>::default();
-    let old = Handle::new(StandardTransient::default());
-    let next = Handle::new(StandardTransient::default());
+    let old = Handle::new(StandardTransient);
+    let next = Handle::new(StandardTransient);
     slot.assign(&old).unwrap();
     let retiring = slot.begin_retirement(next.object_address()).unwrap();
     assert_eq!(slot.object_address(), old.object_address());
@@ -46,7 +46,7 @@ fn reference_slot_retiring_pointer_is_actual_and_conflicts_fail_explicitly() {
     assert_eq!(next.ref_count(), 1);
     slot.assign(&old).unwrap();
     drop(retiring);
-    slot.finish_retirement(next.observe());
+    slot.finish_retirement(next.clone());
     assert_eq!(slot.object_address(), next.object_address());
     assert_eq!(next.ref_count(), 2);
 }
@@ -64,13 +64,13 @@ fn assert_reference_slot_ownership(
 fn reference_slot_const_transport_preserves_actual_slot_and_same_target_count() {
     use crate::standard::HandleReference;
     let slot = IntrusiveReferenceSlot::<StandardTransient>::default();
-    let target = Handle::new(StandardTransient::default());
+    let target = Handle::new(StandardTransient);
     slot.assign(&target).unwrap();
     let borrowed: &dyn HandleReference<StandardTransient> = &slot;
     assert!(!borrowed.is_null());
     assert_eq!(borrowed.object_address(), target.object_address());
     assert_eq!(borrowed.reference_address(), slot.reference_address());
-    assert_eq!(borrowed.observe().ref_count(), 2);
+    assert_eq!(borrowed.observe().ref_count(), 3);
     slot.assign(borrowed).unwrap();
     assert_eq!(target.ref_count(), 2);
 }
@@ -78,9 +78,9 @@ fn reference_slot_const_transport_preserves_actual_slot_and_same_target_count() 
 fn reference_slot_retiring_projection_refuses_a_fabricated_live_pointee() {
     use crate::standard::catch_native_failure;
     let slot = IntrusiveReferenceSlot::<StandardTransient>::default();
-    let target = Handle::new(StandardTransient::default());
+    let target = Handle::new(StandardTransient);
     slot.assign(&target).unwrap();
-    let storage = target.observe();
+    let storage = target.downgrade();
     drop(target);
     drop(slot.begin_retirement(std::ptr::null()).unwrap());
     assert!(!slot.is_null());
@@ -89,7 +89,7 @@ fn reference_slot_retiring_projection_refuses_a_fabricated_live_pointee() {
     assert_retiring_projection_failure(&failure);
     assert_eq!(storage.ref_count(), 0);
     drop(storage);
-    slot.finish_retirement(Handle::<StandardTransient>::default().observe());
+    slot.finish_retirement(Handle::<StandardTransient>::default());
 }
 
 fn assert_retiring_projection_failure(failure: &crate::standard::Failure) {
@@ -101,17 +101,16 @@ fn assert_retiring_projection_failure(failure: &crate::standard::Failure) {
 #[test]
 fn reference_slot_retiring_reborrow_checks_actual_pointer_and_phase() {
     let slot = IntrusiveReferenceSlot::<StandardTransient>::default();
-    let target = Handle::new(StandardTransient::default());
-    let foreign = StandardTransient::default();
+    let target = Handle::new(StandardTransient);
+    let foreign = Handle::new(StandardTransient);
     slot.assign(&target).unwrap();
     assert!(slot.with_retiring_pointee(&*target, |_| ()).is_err());
     let ownership = slot.begin_retirement(std::ptr::null()).unwrap();
-    assert!(slot.with_retiring_pointee(&foreign, |_| ()).is_err());
-    assert_eq!(
-        slot.with_retiring_pointee(&*target, |p| p.ref_count())
-            .unwrap(),
-        2
+    assert!(slot.with_retiring_pointee(&*foreign, |_| ()).is_err());
+    assert!(
+        slot.with_retiring_pointee(&*target, |p| std::ptr::eq(p, &*target))
+            .unwrap()
     );
     drop(ownership);
-    slot.finish_retirement(Handle::<StandardTransient>::default().observe());
+    slot.finish_retirement(Handle::<StandardTransient>::default());
 }

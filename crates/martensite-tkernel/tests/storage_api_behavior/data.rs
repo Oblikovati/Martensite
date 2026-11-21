@@ -1,6 +1,6 @@
 //! Data sets, roots, root data, type data and internal data.
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Handle, StandardPersistent};
+use martensite_tkernel::standard::{Handle, Persistent, StandardPersistent};
 use martensite_tkernel::storage::{
     Data, InternalData, Root, RootData, StorageError, TypeData, version,
 };
@@ -13,7 +13,7 @@ fn name(text: &str) -> AsciiString {
 #[test]
 fn unnamed_roots_take_the_next_root_number_and_rebinding_replaces() {
     let data = Data::default();
-    let object = Handle::new(StandardPersistent::default());
+    let object = Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>();
     data.add_root(&object);
     data.add_root(&Handle::default());
     data.add_named_root(&name("1"), &Handle::default());
@@ -37,7 +37,7 @@ fn roots_share_their_objects_with_earlier_root_lists() {
     let roots = RootData::default();
     roots.add_root(&Handle::new(Root::new(&name("doc"), &Handle::default())));
     let listed = roots.roots();
-    let object = Handle::new(StandardPersistent::default());
+    let object = Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>();
     roots.update_root(&name("doc"), &object).unwrap();
     let first = listed
         .get()
@@ -55,7 +55,7 @@ fn root_accessors_keep_every_field() {
     root.set_name(&name("n"));
     root.set_type(&name("PDocStd_Document"));
     root.set_reference(4);
-    root.set_object(&Handle::new(StandardPersistent::default()));
+    root.set_object(&Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>());
     assert_eq!(root.name().as_bytes(), b"n");
     assert_eq!(root.type_name().as_bytes(), b"PDocStd_Document");
     assert_eq!(root.reference(), 4);

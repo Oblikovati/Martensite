@@ -1,7 +1,7 @@
 //! Explicit first-failure delivery, leaving infallible entry points unchanged.
 use super::Messenger;
 use crate::message::Gravity;
-use crate::standard::{Failure, Handle, StandardTransient};
+use crate::standard::{Failure, Handle, Transient};
 use crate::tcollection::{AsciiString, ExtendedString};
 
 impl Messenger {
@@ -45,7 +45,7 @@ impl Messenger {
     /// Delivers a non-null object in snapshot order; `messenger.try_send_object(&object, g)?`.
     pub fn try_send_object(
         &self,
-        object: &Handle<StandardTransient>,
+        object: &Handle<dyn Transient>,
         gravity: Gravity,
     ) -> Result<(), Failure> {
         for printer in self.snapshot() {

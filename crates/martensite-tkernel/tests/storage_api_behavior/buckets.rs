@@ -1,15 +1,15 @@
 //! Buckets, buckets of persistent objects and their iterator.
-use martensite_tkernel::standard::{Handle, StandardPersistent};
+use martensite_tkernel::standard::{Handle, Persistent, StandardPersistent};
 use martensite_tkernel::storage::{Bucket, BucketIterator, BucketOfPersistent};
 
-fn objects(count: usize) -> Vec<Handle<StandardPersistent>> {
+fn objects(count: usize) -> Vec<Handle<dyn Persistent>> {
     (0..count)
-        .map(|_| Handle::new(StandardPersistent::default()))
+        .map(|_| Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>())
         .collect()
 }
 
-fn same(left: &Handle<StandardPersistent>, right: &Handle<StandardPersistent>) -> bool {
-    std::ptr::eq(left.as_ptr(), right.as_ptr())
+fn same(left: &Handle<dyn Persistent>, right: &Handle<dyn Persistent>) -> bool {
+    left == right
 }
 
 #[test]

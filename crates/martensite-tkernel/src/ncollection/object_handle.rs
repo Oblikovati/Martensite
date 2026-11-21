@@ -4,11 +4,9 @@
 //! the adaptor has no runtime type of its own, so its dynamic type is
 //! the base transient type.
 use crate::standard::{Handle, RuntimeType, RuntimeTyped, StandardTransient, Transient};
-use std::any::{Any, TypeId};
 
 /// The adaptor: a transient owning one object.
 struct HandleAdaptor<T> {
-    parent: StandardTransient,
     object: T,
 }
 
@@ -18,23 +16,11 @@ impl<T: Send + Sync + 'static> RuntimeTyped for HandleAdaptor<T> {
     fn static_type() -> &'static RuntimeType {
         StandardTransient::static_type() // `Ptr` declares no RTTI of its own
     }
-    fn project_from(object: &dyn crate::standard::Transient) -> Option<&Self> {
-        crate::standard::project_concrete::<Self>(object)
-    }
 }
 
 impl<T: Send + Sync + 'static> Transient for HandleAdaptor<T> {
     fn dynamic_type(&self) -> &'static RuntimeType {
         StandardTransient::static_type()
-    }
-    fn project(&self, requested: TypeId) -> Option<&dyn Any> {
-        if requested == TypeId::of::<Self>() {
-            return Some(self);
-        }
-        self.parent.project(requested)
-    }
-    fn transient_base(&self) -> &StandardTransient {
-        &self.parent
     }
 }
 
@@ -49,10 +35,7 @@ impl<T: Send + Sync + 'static> ObjectHandle<T> {
     /// Example: `ObjectHandle::new(5).get() == Some(&5)`.
     pub fn new(object: T) -> Self {
         Self {
-            handle: Handle::new(HandleAdaptor {
-                parent: StandardTransient::default(),
-                object,
-            }),
+            handle: Handle::new(HandleAdaptor { object }),
         }
     }
 
@@ -69,19 +52,19 @@ impl<T: Send + Sync + 'static> ObjectHandle<T> {
         self.handle.is_null()
     }
 
-    /// The same object as a `Handle<StandardTransient>`, the base class.
+    /// The same object as a `Handle<dyn Transient>`, the base class.
     ///
     /// Example: `ObjectHandle::new(1).transient().ref_count() == 2`.
-    pub fn transient(&self) -> Handle<StandardTransient> {
-        self.handle.cast()
+    pub fn transient(&self) -> Handle<dyn Transient> {
+        self.handle.upcast()
     }
 
     /// Recovers the typed handle when `other` holds an adaptor of `T`, else null.
     ///
     /// Example: `ObjectHandle::<i32>::down_cast(&h.transient()).get() == Some(&1)`.
-    pub fn down_cast(other: &Handle<StandardTransient>) -> Self {
+    pub fn down_cast(other: &Handle<dyn Transient>) -> Self {
         Self {
-            handle: other.cast(),
+            handle: other.downcast(),
         }
     }
 }

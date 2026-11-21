@@ -187,8 +187,11 @@ impl<T> std::ops::DerefMut for AllocatedBox<T> {
 impl BaseAllocator {
     /// Reports actual handle retention; `arena.ref_count() == 1` for a fresh arena.
     pub fn ref_count(&self) -> i32 {
-        self.source_observer()
-            .map_or(0, |source| source.ref_count())
+        let count = match &self.fields.reference {
+            super::reference::AllocatorReference::Owned(owner) => owner.ref_count(),
+            _ => self.fields.registration.read().ref_count(),
+        };
+        i32::try_from(count).unwrap_or(i32::MAX)
     }
     /// Restores a typed owner for an initialized allocation abandoned to raw ownership.
     /// # Safety

@@ -2,7 +2,7 @@
 use martensite_tkernel::{
     impl_transient,
     message::{Algorithm, Status},
-    standard::{Handle, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeTyped, Transient},
 };
 
 struct DerivedMessageAlgorithm {
@@ -15,18 +15,13 @@ impl DerivedMessageAlgorithm {
         }
     }
 }
-impl_transient!(
-    DerivedMessageAlgorithm,
-    "Probe_MessageAlgorithm",
-    Algorithm,
-    parent
-);
+impl_transient!(DerivedMessageAlgorithm, "Probe_MessageAlgorithm", Algorithm);
 
 #[test]
 fn algorithm_handles_mutate_one_real_base_subobject() {
     let derived = Handle::new(DerivedMessageAlgorithm::new());
-    let base: Handle<Algorithm> = derived.cast();
-    let root: Handle<StandardTransient> = base.cast();
+    let base = &derived.parent;
+    let root = derived.upcast::<dyn Transient>();
     base.set_status_with_integer(Status::FAIL2, 17);
     assert!(derived.parent.get_status().is_set(Status::FAIL2));
     assert_eq!(base.get_message_numbers(Status::FAIL2).unwrap().len(), 1);
@@ -34,12 +29,9 @@ fn algorithm_handles_mutate_one_real_base_subobject() {
         root.dynamic_type().unwrap().name(),
         "Probe_MessageAlgorithm"
     );
-    assert_eq!(
-        base.dynamic_type().unwrap().name(),
-        "Probe_MessageAlgorithm"
-    );
+    assert_eq!(base.dynamic_type().name(), "Probe_MessageAlgorithm");
     assert!(!root.cast::<DerivedMessageAlgorithm>().is_null());
-    assert_eq!(root.ref_count(), 3);
+    assert_eq!(root.ref_count(), 2);
     base.change_status().clear_status(Status::FAIL2);
     assert!(!derived.parent.get_status().is_fail());
     assert!(
@@ -67,7 +59,7 @@ fn standalone_algorithm_handles_and_self_merging_preserve_state() {
         algorithm.get_message_numbers(Status::WARN1).unwrap().len(),
         1
     );
-    let root: Handle<StandardTransient> = alias.cast();
+    let root = alias.upcast::<dyn Transient>();
     assert_eq!(root.dynamic_type().unwrap().name(), "Message_Algorithm");
     assert!(!root.cast::<Algorithm>().is_null());
     alias.clear_status();

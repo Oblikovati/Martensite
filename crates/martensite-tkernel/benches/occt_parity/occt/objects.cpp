@@ -13,6 +13,12 @@ using parity::Clock;
 using parity::Sample;
 using parity::since;
 
+class HandleProbe : public Standard_Transient
+{
+public:
+  DEFINE_STANDARD_RTTI_INLINE(HandleProbe, Standard_Transient)
+};
+
 Sample handle_create(long long n)
 {
   const auto start = Clock::now();
@@ -39,6 +45,67 @@ Sample handle_clone(long long n)
     count += copy->GetRefCount();
   }
   return since(start, clones, count);
+}
+
+Sample handle_upcast(long long n)
+{
+  Handle(HandleProbe) owner = new HandleProbe();
+  const auto start = Clock::now();
+  long long count = 0;
+  for (long long i = 0; i < n; ++i)
+  {
+    parity::keep(owner);
+    Handle(Standard_Transient) base = owner;
+    parity::keep(base);
+    count += base->GetRefCount();
+  }
+  return since(start, n, count);
+}
+
+Sample handle_downcast(long long n)
+{
+  Handle(Standard_Transient) base = new HandleProbe();
+  const auto start = Clock::now();
+  long long count = 0;
+  for (long long i = 0; i < n; ++i)
+  {
+    parity::keep(base);
+    Handle(HandleProbe) concrete = Handle(HandleProbe)::DownCast(base);
+    parity::keep(concrete);
+    count += concrete.IsNull() ? 0 : concrete->GetRefCount();
+  }
+  return since(start, n, count);
+}
+
+Sample handle_downcast_ref(long long n)
+{
+  Handle(Standard_Transient) base = new HandleProbe();
+  const auto start = Clock::now();
+  long long count = 0;
+  for (long long i = 0; i < n; ++i)
+  {
+    parity::keep(base);
+    const auto* concrete = dynamic_cast<const HandleProbe*>(base.get());
+    parity::keep(concrete);
+    count += concrete != nullptr;
+  }
+  return since(start, n, count);
+}
+
+Sample handle_is_kind(long long n)
+{
+  Handle(Standard_Transient) base = new HandleProbe();
+  const auto& kind = STANDARD_TYPE(Standard_Transient);
+  base->DynamicType();
+  const auto start = Clock::now();
+  long long count = 0;
+  for (long long i = 0; i < n; ++i)
+  {
+    parity::keep(base);
+    parity::keep(kind);
+    count += base->IsKind(kind);
+  }
+  return since(start, n, count);
 }
 
 // 32-byte values from an incremental arena, kept until the arena is reset.
@@ -69,5 +136,9 @@ void parity::objects(std::vector<Case>& cases)
   cases.insert(cases.end(),
                {{"handle_create", handle_create},
                 {"handle_clone", handle_clone},
+                {"handle_upcast", handle_upcast},
+                {"handle_downcast", handle_downcast},
+                {"handle_downcast_ref", handle_downcast_ref},
+                {"handle_is_kind", handle_is_kind},
                 {"inc_allocator_value", inc_allocator_value}});
 }

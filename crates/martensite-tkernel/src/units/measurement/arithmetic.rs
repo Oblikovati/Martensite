@@ -2,8 +2,9 @@
 //! have no object, is a `Standard_NullObject` error.
 use super::Measurement;
 use crate::standard::{Failure, Handle};
+use crate::units::TokenObject;
 use crate::units::support::object;
-use crate::units::token::{Token, TokenHandle};
+use crate::units::token::TokenHandle;
 use std::ops::{Add, Div, Mul, Sub};
 
 impl Measurement {
@@ -62,7 +63,7 @@ impl Measurement {
     /// Raises value and token; `a.power(2.0)?`.
     pub fn power(&self, exponent: f64) -> Result<Measurement, Failure> {
         let value = martensite_cmath::pow(self.measurement, exponent);
-        let token: Handle<Token> =
+        let token: Handle<dyn TokenObject> =
             object(&self.token, "Units_Measurement::Power")?.power(exponent)?;
         Ok(Measurement::with_token(value, &token))
     }
@@ -109,10 +110,11 @@ impl Div<f64> for &Measurement {
 mod tests {
     use super::*;
     use crate::units::Dimensions;
+    use crate::units::Token;
 
     fn metres(value: f64, word: &[u8], factor: f64) -> Measurement {
         let token = Token::with_dimensions(word, b"U", factor, &Dimensions::a_length());
-        Measurement::with_token(value, &Handle::new(token))
+        Measurement::with_token(value, &Handle::new(token).into_upcast())
     }
 
     #[test]
@@ -127,7 +129,7 @@ mod tests {
         assert_eq!((&km / &m).unwrap().measurement(), 0.002);
         assert_eq!(km.power(2.0).unwrap().token().get().unwrap().value(), 1e6);
         let time = Token::with_dimensions(b"s", b"U", 1.0, &Dimensions::a_time());
-        let seconds = Measurement::with_token(2.0, &Handle::new(time));
+        let seconds = Measurement::with_token(2.0, &Handle::new(time).into_upcast());
         assert!(!(&km + &seconds).unwrap().has_token());
         assert!((&Measurement::new() + &km).is_err());
     }

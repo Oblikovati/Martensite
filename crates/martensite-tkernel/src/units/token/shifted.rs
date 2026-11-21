@@ -2,6 +2,7 @@
 //! (temperatures such as `deg.C`).
 use super::Token;
 use crate::standard::Handle;
+use crate::units::TokenObject;
 use crate::units::dimensions::Dimensions;
 
 /// A token with an additive offset; `ShiftedToken::new(b"deg.C", b" ", 1.0, 273.15, &dims)`.
@@ -9,7 +10,7 @@ pub struct ShiftedToken {
     token: Token,
     movement: f64,
 }
-crate::impl_transient!(ShiftedToken, "Units_ShiftedToken", Token, token);
+crate::impl_transient!(ShiftedToken, "Units_ShiftedToken", Token, interfaces: [dyn TokenObject]);
 
 impl ShiftedToken {
     /// Builds the base token (dimensions copied) and stores the move;
@@ -44,7 +45,7 @@ impl ShiftedToken {
     }
     /// A new shifted copy with copied dimensions (`Creates` override);
     /// `shifted.creates()`.
-    pub fn creates(&self) -> Handle<Token> {
+    pub fn creates(&self) -> Handle<dyn TokenObject> {
         let token = &self.token;
         let copy = ShiftedToken::new(
             token.word().as_bytes(),
@@ -53,7 +54,31 @@ impl ShiftedToken {
             self.movement,
             &token.dimensions(),
         );
-        Handle::new(copy).cast::<Token>()
+        Handle::new(copy).into_upcast::<dyn TokenObject>()
+    }
+}
+
+impl crate::units::TokenObject for ShiftedToken {
+    fn token_state(&self) -> &Token {
+        &self.token
+    }
+
+    fn copy_token(&self) -> Handle<dyn TokenObject> {
+        self.creates()
+    }
+
+    fn token_multiplied(&self, value: f64) -> f64 {
+        self.multiplied(value)
+    }
+
+    fn token_divided(&self, value: f64) -> f64 {
+        self.divided(value)
+    }
+
+    fn dump_token_tail(&self, shift: i32, out: &mut dyn std::io::Write) -> std::io::Result<()> {
+        let indent = "  ".repeat(shift.max(0) as usize);
+        let movement = crate::units::support::stream_real(self.movement());
+        writeln!(out, "{indent}  move  : {movement}")
     }
 }
 
@@ -70,7 +95,7 @@ mod tests {
         let copy = celsius.creates();
         assert!(copy.is_instance_name("Units_ShiftedToken"));
         assert_eq!(
-            copy.cast::<ShiftedToken>().get().unwrap().movement(),
+            copy.downcast_ref::<ShiftedToken>().unwrap().movement(),
             273.15
         );
         assert_eq!(celsius.token().word(), "deg.C");

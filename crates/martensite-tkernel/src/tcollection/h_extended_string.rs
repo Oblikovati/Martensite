@@ -15,14 +15,12 @@ pub use hasher::HExtendedStringHasher;
 #[repr(C)]
 #[derive(Default)]
 pub struct HExtendedString {
-    parent: StandardTransient,
     string: RwLock<ExtendedString>,
 }
 crate::impl_transient!(
     HExtendedString,
     "TCollection_HExtendedString",
     StandardTransient,
-    parent,
     handle_key_policy: HExtendedStringHasher
 );
 impl HExtendedString {
@@ -70,7 +68,6 @@ impl HExtendedString {
 impl From<ExtendedString> for HExtendedString {
     fn from(string: ExtendedString) -> Self {
         Self {
-            parent: StandardTransient::default(),
             string: RwLock::new(string),
         }
     }

@@ -3,7 +3,7 @@
 use martensite_tkernel::standard::{Handle, StandardTransient, WeakHandle};
 
 fn owned_transient() -> Handle<StandardTransient> {
-    Handle::new(StandardTransient::default())
+    Handle::new(StandardTransient)
 }
 
 #[test]

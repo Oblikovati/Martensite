@@ -4,16 +4,16 @@ use crate::ncollection::{
     AllocatorDispatchCode, AllocatorInvocation, AllocatorObject, AllocatorSource, BaseAllocator,
     Sequence,
 };
-use crate::standard::{Failure, Handle, SharedState, Transient};
+use crate::standard::{Failure, Handle, SharedState};
 use std::sync::Arc;
 
 #[derive(Default)]
 struct RetirementFreeRecorder {
     parent: AllocatorObject,
-    free_counts: SharedState<Vec<i32>>,
+    free_counts: Arc<SharedState<Vec<usize>>>,
 }
 crate::impl_transient!(RetirementFreeRecorder, "Martensite_RetirementFreeRecorder",
-    AllocatorObject, parent, interfaces: [dyn AllocatorSource]);
+    AllocatorObject, interfaces: [dyn AllocatorSource]);
 // SAFETY: both recorders allocate and free through the same Standard heap implementation.
 unsafe impl AllocatorSource for RetirementFreeRecorder {
     fn allocator_object_base(&self) -> &AllocatorObject {
@@ -113,18 +113,18 @@ fn rust_payload_unwind_keeps_current_resource_allocation_cleanup() {
     execute_current_resource_case(true);
 }
 
-fn record_retirement_free(source: &RetirementFreeRecorder) {
-    source
-        .free_counts
-        .write()
-        .push(source.transient_base().ref_count());
+fn retirement_free_log(source: &RetirementFreeRecorder) -> Arc<SharedState<Vec<usize>>> {
+    source.free_counts.clone()
 }
 unsafe fn retirement_recorder_free(
     invocation: &AllocatorInvocation,
     pointer: *mut u8,
 ) -> Result<(), Failure> {
+    let owners = invocation.ref_count();
     // SAFETY: plain trace values cannot cause callbacks or resource retirement.
-    crate::standard::raise_native_failure(unsafe { invocation.capture(record_retirement_free) });
+    let log =
+        crate::standard::raise_native_failure(unsafe { invocation.capture(retirement_free_log) });
+    log.write().push(owners);
     // SAFETY: fixture passes the original compatible Standard allocation pointer.
     unsafe { invocation.free_base(pointer) }
 }

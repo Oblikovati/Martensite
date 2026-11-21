@@ -1,4 +1,4 @@
-//! Transient runtime type queries, `this()` and persistent objects.
+//! Transient runtime type queries and persistent objects.
 use martensite_tkernel::ncollection::{AllocatorObject, HeapAllocatorObject};
 use martensite_tkernel::standard::{
     Handle, RuntimeTyped, StandardPersistent, StandardTransient, Transient, type_queries,
@@ -33,7 +33,7 @@ fn type_queries_reject_null_objects() {
     assert!(!type_queries::is_instance_handle::<StandardTransient, _>(
         &null
     ));
-    let handle = Handle::new(StandardPersistent::default()).cast::<StandardTransient>();
+    let handle = Handle::new(StandardPersistent::default()).upcast::<dyn Transient>();
     assert!(type_queries::is_kind_handle::<StandardPersistent, _>(
         &handle
     ));
@@ -41,32 +41,8 @@ fn type_queries_reject_null_objects() {
         &handle
     ));
     assert!(type_queries::is_kind::<StandardTransient>(
-        handle.view::<StandardTransient>().transient()
+        handle.view::<dyn Transient>().transient()
     ));
-}
-#[test]
-fn this_rejects_an_object_no_handle_owns() {
-    let object = StandardTransient::default();
-    let Err(failure) = object.this() else {
-        panic!("This() accepted an object with reference count 0");
-    };
-    assert_eq!("Standard_ProgramError", failure.exception_type());
-    assert_eq!(
-        "Attempt to create handle to object created in stack, not yet constructed, or destroyed",
-        failure.message()
-    );
-    let handle = Handle::new(StandardTransient::default());
-    assert!(handle.this().is_ok());
-}
-#[test]
-fn reference_counter_sequence() {
-    let object = StandardTransient::default();
-    assert_eq!(0, object.ref_count());
-    object.increment_ref_counter();
-    object.increment_ref_counter();
-    assert_eq!(1, object.decrement_ref_counter());
-    assert_eq!(0, object.decrement_ref_counter());
-    assert_eq!(-1, object.decrement_ref_counter());
 }
 #[test]
 fn persistent_numbers_start_at_zero_and_are_shared() {
