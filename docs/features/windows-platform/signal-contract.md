@@ -57,7 +57,7 @@ AGENTS.md's API-conflict rule. Foreign unwinding is not a system-API exception.
 
 ## Capability query
 
-`Osd::signal_capabilities()` returns `SignalCapabilities` without installing
+The internal TKernel probe returns `SignalCapabilities` without installing
 handlers or changing trap masks. Windows reports console interruptions and
 floating-point trap control as available, and recoverable native faults as
 unavailable. These fields describe mechanisms, not successful handler
