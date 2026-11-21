@@ -114,7 +114,7 @@ fn carrier(detached: &DetachedWrappedBodies, role: HistoryRole) -> ConicalTrimCa
     let (surface, location) =
         martensite_tkbrep::brep::BRepTool::surface_with_location(&face).unwrap();
     assert!(location.is_identity());
-    let cone: Handle<GeomConicalSurface> = surface.cast();
+    let cone: Handle<GeomConicalSurface> = surface.downcast();
     let cone = cone.get().unwrap();
     ConicalTrimCarrier {
         radius: cone.ref_radius(),

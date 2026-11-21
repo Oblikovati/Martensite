@@ -34,7 +34,7 @@ struct Snapshot {
 fn snapshot(body: &DetachedNormalBody) -> Snapshot {
     let (face, edge) = bound_pair(body);
     let (surface, _) = BRepTool::surface_with_location(&face).unwrap();
-    let cone = surface.cast::<GeomConicalSurface>();
+    let cone = surface.downcast::<GeomConicalSurface>();
     let curve = BRepTool::curve_with_location(&edge).unwrap();
     let pcurve = BRepTool::curve_on_face(&edge, &face).unwrap();
     Snapshot {
@@ -47,7 +47,7 @@ fn mutate(body: &DetachedNormalBody) {
     let (face, edge) = bound_pair(body);
     let (surface, _) = BRepTool::surface_with_location(&face).unwrap();
     surface
-        .cast::<GeomConicalSurface>()
+        .downcast::<GeomConicalSurface>()
         .get()
         .unwrap()
         .set_semi_angle(0.4)

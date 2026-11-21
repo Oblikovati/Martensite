@@ -42,11 +42,11 @@ pub(super) fn curve2(poles: &[[f64; 2]]) -> Result<Handle<dyn Geom2dCurve>, Fail
             .set_value(i as i32 + 1, Point2::new(*x, *y))
             .map_err(array_failure)?;
     }
-    Ok(Handle::new(Geom2dBezierCurve::new(&points)?).into_cast())
+    Ok(Handle::new(Geom2dBezierCurve::new(&points)?).into_upcast())
 }
 
 pub(super) fn edge(curve: &Handle<GeomBezierCurve>, ends: [&Vertex; 2]) -> Result<Edge, Failure> {
-    let curve: Handle<dyn GeomCurve> = curve.cast();
+    let curve: Handle<dyn GeomCurve> = curve.upcast();
     let edge =
         BRepBuilderAPIMakeEdge::from_curve_vertices_params(&curve, ends[0], ends[1], 0., 1.)?
             .edge()?;
@@ -85,7 +85,7 @@ pub(super) fn side(
 ) -> Result<Face, Failure> {
     let fill =
         GeomFillBezierCurves::with_two(&curves[0], &curves[1], GeomFillFillingStyle::StretchStyle)?;
-    let surface: Handle<dyn GeomSurface> = fill.surface().cast();
+    let surface: Handle<dyn GeomSurface> = fill.surface().into_upcast();
     let mut face = Face::default();
     BRepBuilder::default().make_face_on_surface(&mut face, &surface, tolerance)?;
     side_pcurves(&face, edges, connectors, tolerance)?;

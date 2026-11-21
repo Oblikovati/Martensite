@@ -39,7 +39,7 @@ fn changed_side_control_net_refuses_the_stale_boundary_binding() {
 fn change_side(key: BindingKey, bindings: &[(BindingKey, Shape)]) {
     let indexed = index(bindings).unwrap();
     let face = topods::face(lookup(key, &indexed).unwrap()).unwrap();
-    let surface: Handle<GeomBezierSurface> = BRepTool::surface(&face).unwrap().cast();
+    let surface: Handle<GeomBezierSurface> = BRepTool::surface(&face).unwrap().into_downcast();
     let surface = surface.get().unwrap();
     let p = surface.pole(2, 1).unwrap();
     surface
@@ -104,9 +104,12 @@ fn change_boundary_and_row(span: CurveSpan, bindings: &[(BindingKey, Shape)]) {
     let indexed = index(bindings).unwrap();
     let edge =
         topods::edge(lookup(key(span, HistoryRole::FirstDepthEdge), &indexed).unwrap()).unwrap();
-    let curve: Handle<GeomBezierCurve> = BRepTool::curve_with_location(&edge).unwrap().curve.cast();
+    let curve: Handle<GeomBezierCurve> = BRepTool::curve_with_location(&edge)
+        .unwrap()
+        .curve
+        .into_downcast();
     let face = topods::face(lookup(key(span, HistoryRole::SideFace), &indexed).unwrap()).unwrap();
-    let surface: Handle<GeomBezierSurface> = BRepTool::surface(&face).unwrap().cast();
+    let surface: Handle<GeomBezierSurface> = BRepTool::surface(&face).unwrap().into_downcast();
     let p = curve.get().unwrap().pole(2).unwrap();
     let point = Point3::new(p.x() + 0.001, p.y(), p.z());
     curve.get().unwrap().set_pole(2, point).unwrap();

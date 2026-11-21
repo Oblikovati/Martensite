@@ -17,7 +17,7 @@ pub(super) fn curve(
         [captured.first, captured.last],
         captured.location.is_identity(),
     )?;
-    let curve: Handle<GeomBezierCurve> = captured.curve.cast();
+    let curve: Handle<GeomBezierCurve> = captured.curve.downcast();
     let Some(curve) = curve.get() else {
         return Err(mismatch(key, "stored Bezier class", vec![0], vec![1]));
     };
@@ -66,7 +66,7 @@ pub(super) fn caps(request: &Request, bindings: &Bindings<'_>) -> Result<(), Sto
 fn cap(key: BindingKey, radius: f64, bindings: &Bindings<'_>) -> Result<(), StorageFailure> {
     let face = native(key, topods::face(lookup(key, bindings)?))?;
     let (surface, location) = native(key, BRepTool::surface_with_location(&face))?;
-    let cylinder: Handle<GeomCylindricalSurface> = surface.cast();
+    let cylinder: Handle<GeomCylindricalSurface> = surface.downcast();
     let Some(cylinder) = cylinder.get() else {
         return Err(mismatch(key, "analytic cylinder class", vec![0], vec![1]));
     };
@@ -119,7 +119,7 @@ pub(super) fn side(
 ) -> Result<(), StorageFailure> {
     let face = native(key, topods::face(lookup(key, bindings)?))?;
     let (surface, location) = native(key, BRepTool::surface_with_location(&face))?;
-    let surface: Handle<GeomBezierSurface> = surface.cast();
+    let surface: Handle<GeomBezierSurface> = surface.downcast();
     let surface = retained_bezier_side(key, &surface)?;
     side_dimensions(key, surface, curves[0].poles.len(), &location)?;
     common_side_weights(key, curves)?;
