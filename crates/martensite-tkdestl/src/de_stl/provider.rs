@@ -35,7 +35,6 @@ impl DeStlProvider {
     pub fn with_node(node: &Handle<dyn DeConfigurationNode>) -> Self {
         Self {
             base: DeProviderBase::with_node(node),
-            ..Self::default()
         }
     }
 }
