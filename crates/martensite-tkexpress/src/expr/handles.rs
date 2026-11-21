@@ -3,12 +3,12 @@ use super::errors::null_object;
 use super::general_expression::ExprGeneralExpression;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::standard::{
-    Failure, Handle, RuntimeType, RuntimeTyped, StandardTransient, WeakHandle,
+    Failure, Handle, RuntimeType, RuntimeTyped, Transient, TransientHandleTarget, WeakHandle,
 };
 use martensite_tkernel::tcollection::AsciiString;
 use std::sync::OnceLock;
 
-/// `Handle<ExprGeneralExpression>`; `let sum: ExprHandle = ExprSum::new(&a, &b).cast();`.
+/// `Handle<ExprGeneralExpression>`; `let sum: ExprHandle = ExprSum::new(&a, &b).into_upcast();`.
 pub type ExprHandle = Handle<dyn ExprGeneralExpression>;
 
 /// Borrow the object of `handle`, or fail as the null-handle failure does;
@@ -60,24 +60,24 @@ pub fn one_based<T: Default>(values: Vec<T>) -> Array1<'static, T> {
 /// `me` request on an object no handle owns returns a null-handle failure.
 #[derive(Default)]
 pub struct ExprSelfLink {
-    pointer: OnceLock<WeakHandle<StandardTransient>>,
+    pointer: OnceLock<WeakHandle<dyn Transient>>,
 }
 impl ExprSelfLink {
     /// Remember `handle` as the handle of the object holding this link;
     /// `link.bind(&handle)`.
-    pub fn bind<T: ?Sized + RuntimeTyped>(&self, handle: &Handle<T>) {
-        let root: Handle<StandardTransient> = handle.cast();
+    pub fn bind<T: ?Sized + TransientHandleTarget>(&self, handle: &Handle<T>) {
+        let root = handle.cast::<dyn Transient>();
         // A second bind keeps the first pointer: the object has one identity.
         let _ = self.pointer.set(root.downgrade());
     }
     /// A new handle to the object, projected to `U`; `let me: ExprHandle = link.me()?;`.
-    pub fn me<U: ?Sized + RuntimeTyped>(&self) -> Result<Handle<U>, Failure> {
+    pub fn me<U: ?Sized + TransientHandleTarget>(&self) -> Result<Handle<U>, Failure> {
         let me: Handle<U> = self
             .pointer
             .get()
             .map(WeakHandle::upgrade)
             .unwrap_or_default()
-            .cast();
+            .into_cast();
         if me.is_null() {
             return Err(martensite_tkernel::standard::exceptions::program_error(
                 "Attempt to create handle to object created in stack, not yet constructed, or destroyed",
@@ -123,7 +123,24 @@ mod tests {
     fn an_unbound_link_refuses_me() {
         let link: ExprSelfLink = ExprSelfLink::default();
         assert!(link.address().is_null());
-        let failure: Failure = link.me::<StandardTransient>().expect_err("unbound");
+        let failure: Failure = link.me::<dyn Transient>().expect_err("unbound");
         assert_eq!(failure.exception_type(), "Standard_ProgramError");
+    }
+
+    #[test]
+    fn a_bound_link_keeps_the_first_identity_without_retaining_its_owner() {
+        use martensite_tkernel::standard::StandardTransient;
+        let link = ExprSelfLink::default();
+        let first = Handle::new(StandardTransient);
+        let other = Handle::new(StandardTransient);
+        link.bind(&first);
+        link.bind(&other);
+        assert_eq!(link.address(), first.object_address());
+        assert_eq!(link.me::<dyn Transient>().unwrap(), first);
+        assert_eq!(first.ref_count(), 1);
+        drop(first);
+        let error = link.me::<dyn Transient>().unwrap_err();
+        assert_eq!(error.exception_type(), "Standard_ProgramError");
+        assert_eq!(other.ref_count(), 1);
     }
 }

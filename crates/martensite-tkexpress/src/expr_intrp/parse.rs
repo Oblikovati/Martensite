@@ -1,7 +1,7 @@
 //! `ExprIntrp::Parse`: one run of the interpreter over a text.
 use super::analysis::ExprIntrpAnalysis;
 use super::context::ExprIntrpParseContext;
-use super::generator::ExprIntrpGenerator;
+use super::generator::ExprIntrpGeneratorObject;
 use super::parser::ExprIntrpParser;
 use super::scanner::ExprIntrpScanner;
 use martensite_tkernel::standard::Handle;
@@ -23,7 +23,7 @@ pub struct ExprIntrpParseOutcome {
 /// matches go to `output`;
 /// `parse(&generator, &AsciiString::new("x+1"), &mut std::io::sink()).accepted`.
 pub fn parse(
-    generator: &Handle<ExprIntrpGenerator>,
+    generator: &Handle<dyn ExprIntrpGeneratorObject>,
     text: &AsciiString,
     output: &mut dyn Write,
 ) -> ExprIntrpParseOutcome {

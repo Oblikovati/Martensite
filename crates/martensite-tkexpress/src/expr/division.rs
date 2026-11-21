@@ -24,7 +24,7 @@ declare_binary_class!(
 /// The value of a numeric operand, `None` otherwise.
 fn value_of(operand: &ExprHandle) -> Option<f64> {
     operand
-        .cast::<ExprNumericValue>()
+        .downcast::<ExprNumericValue>()
         .get()
         .map(ExprNumericValue::get_value)
 }

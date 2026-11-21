@@ -19,7 +19,7 @@ pub mod token;
 
 pub use analysis::ExprIntrpAnalysis;
 pub use gen_exp::ExprIntrpGenExp;
-pub use generator::ExprIntrpGenerator;
+pub use generator::{ExprIntrpGenerator, ExprIntrpGeneratorObject};
 pub use parser::ExprIntrpParser;
 pub use scanner::ExprIntrpScanner;
 pub use token::ExprIntrpTokenKind;

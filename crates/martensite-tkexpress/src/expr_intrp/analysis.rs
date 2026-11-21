@@ -1,7 +1,7 @@
 //! Semantic action stacks and the named objects visible during a parse.
 //!
 //! Each parse owns its stacks and explicitly shares its interpreter's generator.
-use super::generator::{ExprIntrpGenerator, first_function, first_named};
+use super::generator::{ExprIntrpGeneratorObject, first_function, first_named};
 use crate::expr::{
     ExprFunctionHandle, ExprHandle, ExprNamedExpression, ExprNamedFunction, ExprRelationHandle,
 };
@@ -20,7 +20,7 @@ pub struct ExprIntrpAnalysis {
     values: Vec<i32>,
     functions: Vec<Handle<ExprNamedFunction>>,
     named: Vec<Handle<dyn ExprNamedExpression>>,
-    master: Handle<ExprIntrpGenerator>,
+    master: Handle<dyn ExprIntrpGeneratorObject>,
 }
 impl ExprIntrpAnalysis {
     /// Empty stacks and no master (`ExprIntrpAnalysis()`); `ExprIntrpAnalysis::new()`.
@@ -29,7 +29,7 @@ impl ExprIntrpAnalysis {
     }
     /// Start a parse for `agen` (`SetMaster`): empty the stacks and copy the
     /// definitions the generator knows; `analysis.set_master(&generator)`.
-    pub fn set_master(&mut self, agen: &Handle<ExprIntrpGenerator>) {
+    pub fn set_master(&mut self, agen: &Handle<dyn ExprIntrpGeneratorObject>) {
         self.reset_all();
         self.master = agen.clone();
         if let Some(master) = agen.get() {

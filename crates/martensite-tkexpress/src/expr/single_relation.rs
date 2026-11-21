@@ -40,7 +40,8 @@ pub trait ExprSingleRelation: ExprGeneralRelation {
 impl_transient_interface!(
     dyn ExprSingleRelation,
     "Expr_SingleRelation",
-    dyn ExprGeneralRelation
+    dyn ExprGeneralRelation,
+    upcasts: [dyn ExprGeneralRelation]
 );
 
 /// `ExprSingleRelation::IsLinear`: both members linear, the first asked first;

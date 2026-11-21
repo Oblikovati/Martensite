@@ -145,7 +145,7 @@ impl ExprIntrpParseContext<'_> {
                     arguments.push(self.pop_required("ExprIntrp_EndDiffFunction")?);
                 }
                 arguments.reverse();
-                ExprPolyFunction::new(&function, &arguments).cast()
+                ExprPolyFunction::new(&function, &arguments).into_upcast()
             }
         };
         self.recept.push(&application);

@@ -12,12 +12,11 @@ use super::poly_expression::{
 use super::sum::ExprSum;
 use super::unary_kit::shallow_of;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 
 /// `f(u1, ..., un)`; `ExprPolyFunction::new(&f, &[u, v, w])`.
 pub struct ExprPolyFunction {
-    parent: StandardTransient,
     core: ExprPolyCore,
     function: ExprFunctionHandle,
 }
@@ -25,7 +24,6 @@ impl_transient!(
     ExprPolyFunction,
     "Expr_PolyFunction",
     dyn ExprPolyExpression,
-    parent,
     interfaces: [dyn ExprGeneralExpression, dyn ExprPolyExpression]
 );
 impl ExprPolyFunction {
@@ -33,7 +31,6 @@ impl ExprPolyFunction {
     /// variables is not checked internally; `ExprPolyFunction::new(&f, &[u, v, w])`.
     pub fn new(func: &ExprFunctionHandle, exps: &[ExprHandle]) -> Handle<Self> {
         let object: Self = Self {
-            parent: StandardTransient::default(),
             core: ExprPolyCore::new(exps),
             function: func.clone(),
         };
@@ -91,7 +88,7 @@ impl ExprGeneralExpression for ExprPolyFunction {
             .iter()
             .map(copy_share)
             .collect::<Result<_, _>>()?;
-        Ok(Self::new(&self.function, &copies).cast())
+        Ok(Self::new(&self.function, &copies).into_upcast())
     }
     fn is_identical(&self, other: &ExprHandle) -> Result<bool, Failure> {
         let other_expression = deref(other, "Expr_PolyFunction::IsIdentical")?;

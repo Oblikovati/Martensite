@@ -25,7 +25,7 @@ impl ExprGeneralExpression for ExprSquareRoot {
     }
     fn derivative(&self, x: &Handle<ExprNamedUnknown>) -> Result<ExprHandle, Failure> {
         quotient_rule(self, x, |operand| {
-            let root: ExprHandle = ExprSquareRoot::new(&copy_share(operand)?).cast();
+            let root: ExprHandle = ExprSquareRoot::new(&copy_share(operand)?).into_upcast();
             shallow_of(&real_multiply(2.0, &root))
         })
     }
