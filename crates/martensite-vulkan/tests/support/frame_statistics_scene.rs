@@ -157,7 +157,7 @@ fn display_array(scene: &ViewerScene, array: &ArraySpec) {
     let structure = new_structure(scene);
     let group = structure.new_group().unwrap();
     group.set_group_primitives_aspect(&unlit_style([1., 1., 0., 1.]));
-    group.add_primitive_array(&primitive_array(array), true);
+    group.add_primitive_array(&primitive_array(array).upcast(), true);
     structure.display();
 }
 

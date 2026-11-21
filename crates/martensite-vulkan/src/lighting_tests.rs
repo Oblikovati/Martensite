@@ -117,7 +117,7 @@ fn std430_sources_keep_eighty_byte_stride_and_enabled_count() {
     let set = martensite_tkernel::standard::Handle::new(
         martensite_tkservice::graphic3d::Graphic3dLightSet::default(),
     );
-    set.add(&light).unwrap();
+    set.add(&light.upcast()).unwrap();
     let bytes = state(identity_clip(), identity_clip(), false)
         .with_lights(RenderLightSet::snapshot(&set, identity_clip()).unwrap())
         .encode();

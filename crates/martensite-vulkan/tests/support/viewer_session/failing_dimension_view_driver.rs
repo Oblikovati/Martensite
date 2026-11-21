@@ -5,18 +5,16 @@ use martensite_tkservice::{graphic3d::*, null_driver::NullGraphicDriver};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 pub(super) struct FailingDimensionViewDriver {
-    transient: StandardTransient,
     inner: Handle<dyn Graphic3dGraphicDriver>,
     requested: AtomicUsize,
     fail_at: usize,
 }
-martensite_tkernel::impl_transient!(FailingDimensionViewDriver, "Martensite_FailingDimensionViewDriver", StandardTransient, transient,
+martensite_tkernel::impl_transient!(FailingDimensionViewDriver, "Martensite_FailingDimensionViewDriver", StandardTransient,
     interfaces: [dyn Graphic3dGraphicDriver]);
 
 impl FailingDimensionViewDriver {
     pub(super) fn new_handle(fail_at: usize) -> Handle<dyn Graphic3dGraphicDriver> {
         Handle::new(Self {
-            transient: StandardTransient::default(),
             inner: NullGraphicDriver::new_handle(),
             requested: AtomicUsize::new(0),
             fail_at,

@@ -97,7 +97,7 @@ fn probe_image(format: ImageFormat) -> Handle<ImagePixMap> {
 /// GetImage returns a null image.
 fn probe_texture(format: Option<ImageFormat>) -> Handle<Graphic3dTexture2D> {
     match format {
-        Some(format) => Handle::new(Graphic3dTexture2D::from_pix_map(probe_image(format))),
+        Some(format) => Handle::new(Graphic3dTexture2D::from_pix_map(probe_image(format).into_upcast())),
         None => Handle::new(Graphic3dTexture2D::from_file(
             &"/nonexistent/martensite-missing.png".into(),
         )),
@@ -113,7 +113,7 @@ fn textured_aspect(format: Option<ImageFormat>) -> Handle<Graphic3dAspectFillAre
     fill.set_interior_style(AspectInteriorStyle::Solid);
     fill.set_shading_model(Graphic3dTypeOfShadingModel::Unlit);
     fill.set_interior_color(Color::named(NamedColor::WHITE));
-    fill.set_texture_set(Handle::new(set));
+    fill.set_texture_set(Handle::new(set).into_upcast());
     fill.set_texture_map_on(true);
     fill
 }
@@ -176,7 +176,7 @@ impl ProbeView {
             Graphic3dStructure::new(&self.viewer.structure_manager(), &Handle::default()).unwrap();
         let group = structure.new_group().unwrap();
         group.set_group_primitives_aspect(&textured_aspect(format).cast());
-        group.add_primitive_array(&quad(), true);
+        group.add_primitive_array(&quad().upcast(), true);
         structure.display();
         let v3d = self.view.get().unwrap();
         v3d.redraw();

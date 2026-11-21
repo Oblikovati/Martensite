@@ -83,7 +83,7 @@ impl CapCoordinateFixture {
             &self.driver.texture_images,
             scene,
             Mat4::identity(),
-            &self.plane,
+            &self.plane.upcast(),
         )
         .unwrap();
     }
@@ -115,7 +115,7 @@ fn coordinate_plane() -> Handle<Graphic3dClipPlane> {
     let image = Handle::new(ImagePixMap::default());
     assert!(image.init_zero(ImageFormat::Rgba, 2, 2, 0, 0));
     image.set_top_down(true);
-    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image));
+    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast()));
     texture.get_params().set_scale(Vec2::new(2., -4.));
     texture.get_params().set_translation(Vec2::new(0.25, 0.5));
     let plane = Handle::new(Graphic3dClipPlane::default());

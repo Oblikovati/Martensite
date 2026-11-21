@@ -13,14 +13,14 @@ mod recording_device;
 #[allow(dead_code)]
 #[path = "support/view_setup.rs"]
 mod view_setup;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle, StandardTransient, Transient};
 use martensite_tkservice::graphic3d::*;
 use martensite_tkv3d::v3d::V3dViewer;
 use martensite_vulkan::*;
 
 const NATIVE: &str = include_str!("fixtures/view_framebuffer/native.txt");
 
-fn dims(label: &str, view: &dyn Graphic3dCView, fbo: &Handle<StandardTransient>) -> String {
+fn dims(label: &str, view: &dyn Graphic3dCView, fbo: &Handle<dyn Transient>) -> String {
     // Native leaves the outputs untouched (-7) for a null or foreign handle.
     let d = if fbo.cast::<RenderFrameBuffer>().is_null() {
         [-7; 4]
@@ -31,7 +31,7 @@ fn dims(label: &str, view: &dyn Graphic3dCView, fbo: &Handle<StandardTransient>)
 }
 
 /// The probe line without the native GL texture estimate (`bytes=`).
-fn fbo(label: &str, fbo: &Handle<StandardTransient>) -> String {
+fn fbo(label: &str, fbo: &Handle<dyn Transient>) -> String {
     let handle = fbo.cast::<RenderFrameBuffer>();
     let Some(f) = handle.get() else {
         return format!("fbo {label} null");
@@ -97,7 +97,7 @@ fn view_framebuffers_follow_the_native_queries() {
     lines.push(fbo("negative", &view.fbo_create(-4, 8)));
     lines.push(fbo("huge", &view.fbo_create(129, 8)));
     lines.push(fbo("one", &view.fbo_create(1, 1)));
-    let mut other = Handle::new(StandardTransient::default());
+    let mut other = Handle::new(StandardTransient).into_upcast();
     lines.push(dims("foreign", view, &other));
     view.fbo_release(&mut other);
     lines.push(format!(

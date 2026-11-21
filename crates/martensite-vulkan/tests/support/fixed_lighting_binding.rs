@@ -9,7 +9,7 @@ pub fn fixed_adjacent_groups(fixture: &LightingScene, mode: &str) {
     }
     let group = fixture.base.structure.new_group().unwrap();
     group.set_group_primitives_aspect(&fixture.aspect.cast());
-    group.add_primitive_array(&fixture.vertices, true);
+    group.add_primitive_array(&fixture.vertices.upcast(), true);
     let mut rotation = Transform3::default();
     rotation
         .set_rotation(

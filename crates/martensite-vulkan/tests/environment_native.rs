@@ -104,7 +104,7 @@ fn side_pixmap(ppm: &[u8], top_down: bool) -> Handle<ImagePixMap> {
     image
 }
 fn cube_map(top_down: bool, z_inverted: bool) -> Handle<dyn Graphic3dCubeMap> {
-    let sides: Vec<_> = SIDES.iter().map(|ppm| side_pixmap(ppm, top_down)).collect();
+    let sides: Vec<_> = SIDES.iter().map(|ppm| side_pixmap(ppm, top_down)).map(Handle::into_upcast).collect();
     let cube = Handle::new(Graphic3dCubeMapSeparate::from_images(&sides).unwrap());
     cube.set_z_inversion(z_inverted);
     cube.cast()

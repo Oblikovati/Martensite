@@ -170,7 +170,7 @@ fn path_traced(scene: &RaytraceScene, dumps: &mut Vec<Vec<u8>>) {
 }
 
 fn cube_map() -> Handle<dyn Graphic3dCubeMap> {
-    let sides: Vec<_> = (0..6).map(cube_side).collect();
+    let sides: Vec<_> = (0..6).map(cube_side).map(Handle::into_upcast).collect();
     Handle::new(Graphic3dCubeMapSeparate::from_images(&sides).unwrap()).cast()
 }
 
@@ -183,7 +183,7 @@ fn capture_dumps(driver: &Handle<Graphic3dRenderDriver>) -> Vec<Vec<u8>> {
     let mut dumps = vec![scene.dump()];
     global_illumination(&scene, true);
     path_traced(&scene, &mut dumps);
-    let environment = Graphic3dTextureEnv::from_pix_map(ramp_texture());
+    let environment = Graphic3dTextureEnv::from_pix_map(ramp_texture().into_upcast());
     scene.view().set_texture_env(&Handle::new(environment));
     scene.params(|params| params.ray_tracing.use_environment_map_background = true);
     path_traced(&scene, &mut dumps);

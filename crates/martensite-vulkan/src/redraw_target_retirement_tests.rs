@@ -1,7 +1,7 @@
 //! Last old target owners must retire after every publication/binding lease.
 use super::super::view_binding_tests::{attach_binding_gui, binding_fixture_for_policy};
 use super::*;
-use martensite_tkernel::standard::{Transient, WeakHandle};
+use martensite_tkernel::standard::WeakHandle;
 use std::sync::atomic::{AtomicBool, AtomicUsize};
 
 #[derive(Default)]
@@ -68,19 +68,17 @@ impl RetirementWitness {
     }
 }
 struct FinalOwnerWindow {
-    transient: StandardTransient,
     neutral: AspectNeutralWindow,
     view: WeakHandle<Graphic3dRenderView>,
     witness: Arc<RetirementWitness>,
 }
-martensite_tkernel::impl_transient!(FinalOwnerWindow, "Martensite_FinalOwnerWindow", dyn AspectWindow, transient, interfaces: [dyn AspectWindow]);
+martensite_tkernel::impl_transient!(FinalOwnerWindow, "Martensite_FinalOwnerWindow", dyn AspectWindow, interfaces: [dyn AspectWindow]);
 impl FinalOwnerWindow {
     fn new(view: &Handle<Graphic3dRenderView>, witness: Arc<RetirementWitness>) -> Self {
         let neutral = AspectNeutralWindow::default();
         neutral.set_virtual(true);
         neutral.set_size(1, 1);
         Self {
-            transient: Default::default(),
             neutral,
             view: view.downgrade(),
             witness,
@@ -162,7 +160,7 @@ fn pending_window_retirement(policy: crate::RenderGuiSurfacePolicy) -> PendingWi
     let weak = first.downgrade();
     drop(first);
     assert_eq!(witness.calls.load(Ordering::Relaxed), 0);
-    assert_eq!(weak.upgrade().transient_base().ref_count(), 3);
+    assert_eq!(weak.upgrade().ref_count(), 3);
     (view, witness, weak)
 }
 fn assert_window_retirement(policy: crate::RenderGuiSurfacePolicy) {
@@ -183,15 +181,13 @@ fn checked_publication_retires_the_final_old_window_after_all_leases() {
     assert_window_retirement(crate::RenderGuiSurfacePolicy::CheckedV2);
 }
 struct FinalOwnerFramebuffer {
-    transient: StandardTransient,
     view: WeakHandle<Graphic3dRenderView>,
     witness: Arc<RetirementWitness>,
 }
 martensite_tkernel::impl_transient!(
     FinalOwnerFramebuffer,
     "Martensite_FinalOwnerFramebuffer",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 impl Drop for FinalOwnerFramebuffer {
     fn drop(&mut self) {
@@ -207,7 +203,6 @@ fn pending_framebuffer_retirement() -> PendingFramebufferRetirement {
     let (view, _) = binding_fixture_for_policy(crate::RenderGuiSurfacePolicy::LegacyV1);
     let witness = Arc::new(RetirementWitness::default());
     let first = Handle::new(FinalOwnerFramebuffer {
-        transient: Default::default(),
         view: view.downgrade(),
         witness: witness.clone(),
     });
@@ -215,7 +210,7 @@ fn pending_framebuffer_retirement() -> PendingFramebufferRetirement {
     let weak = first.downgrade();
     drop(first);
     assert_eq!(witness.calls.load(Ordering::Relaxed), 0);
-    assert_eq!(weak.upgrade().transient_base().ref_count(), 2);
+    assert_eq!(weak.upgrade().ref_count(), 2);
     (view, witness, weak)
 }
 #[test]

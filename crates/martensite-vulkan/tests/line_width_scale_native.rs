@@ -49,7 +49,7 @@ fn line_scene(width: f32) -> (Handle<Graphic3dRenderDriver>, scene::ViewerScene)
     );
     segment.add_vertex(-10., 0.1, 0.).unwrap();
     segment.add_vertex(10., 0.1, 0.).unwrap();
-    scene.group.add_primitive_array(&segment, true);
+    scene.group.add_primitive_array(&segment.upcast(), true);
     scene.view.get().unwrap().camera().set_scale(40.);
     (driver, scene)
 }

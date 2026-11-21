@@ -10,7 +10,7 @@ use crate::{
 };
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::{Failure, Handle};
-use martensite_tkservice::{aspect::AspectTypeOfMarker, graphic3d::Graphic3dCLight};
+use martensite_tkservice::{aspect::AspectTypeOfMarker, graphic3d::{Graphic3dCLight, Graphic3dCLightSource}};
 use martensite_tkv3d::std_select::StdSelectTypeOfSelectionImage;
 use std::error::Error;
 
@@ -123,7 +123,7 @@ mod tests {
         let light = Graphic3dCLight::new(Graphic3dTypeOfLightSource::Directional);
         light.set_name(&name.into());
         light.set_headlight(true).unwrap();
-        Handle::new(light)
+        Handle::new(light).into_upcast()
     }
 
     #[test]

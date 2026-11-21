@@ -20,7 +20,7 @@ pub fn fixed_cap_light_source(scene: &ViewerScene, mode: &str) {
     let light = Handle::new(Graphic3dCLight::new(kind));
     light.set_color(Color::new(0.75, 0.5, 0.25, ColorSpace::Rgb).unwrap());
     configure_fixed_cap_source(&light, kind);
-    scene.cview().lights().add(&light).unwrap();
+    scene.cview().lights().add(&light.upcast()).unwrap();
 }
 fn configure_fixed_cap_source(light: &Graphic3dCLight, kind: Graphic3dTypeOfLightSource) {
     if kind != Graphic3dTypeOfLightSource::Positional {

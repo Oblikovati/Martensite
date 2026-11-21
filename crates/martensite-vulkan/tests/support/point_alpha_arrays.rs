@@ -34,7 +34,7 @@ pub fn replace_alpha_points(group: &dyn Graphic3dGroup, mode: &str) {
     group.clear(false);
     configure_point_alpha(&*style, mode);
     group.set_group_primitives_aspect(&style);
-    group.add_primitive_array(&point_alpha_array(mode), true);
+    group.add_primitive_array(&point_alpha_array(mode).upcast(), true);
     configure_point_clipping(group, mode);
 }
 fn point_alpha_array(mode: &str) -> Handle<Graphic3dArrayOfPrimitives> {
@@ -104,7 +104,7 @@ fn configure_alpha_image(style: &dyn Graphic3dAspectsSource, mode: &str) {
         16
     ));
     image.set_top_down(true);
-    let marker = Graphic3dMarkerImage::from_images(Handle::new(image), Handle::default()).unwrap();
+    let marker = Graphic3dMarkerImage::from_images(Handle::new(image).into_upcast(), Handle::default()).unwrap();
     style.set_marker_image(Handle::new(marker));
 }
 fn alpha_marker_type(mode: &str) -> AspectTypeOfMarker {

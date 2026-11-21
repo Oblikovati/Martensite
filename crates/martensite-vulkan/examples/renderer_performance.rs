@@ -85,7 +85,7 @@ fn benchmark(
     scene.window.set_size(256, 256);
     scene.view.must_be_resized();
     for _ in 1..draws {
-        scene.group.add_primitive_array(&scene.vertices, true);
+        scene.group.add_primitive_array(&scene.vertices.upcast(), true);
     }
     for index in 0..warmup {
         timed_redraw(&scene, index, resize);

@@ -6,7 +6,7 @@ use super::ViewerSession;
 pub type LightPresentationSetup<'a> = &'a dyn Fn(&AisLightSource) -> Result<(), Failure>;
 use martensite_tkernel::ncollection::{List, Vec2};
 use martensite_tkernel::standard::{Failure, Handle};
-use martensite_tkservice::graphic3d::Graphic3dTransformPersMembers as _;
+use martensite_tkservice::graphic3d::{Graphic3dCLightSource, Graphic3dTransformPersMembers as _};
 use martensite_tkv3d::ais::{
     AisInteractiveObject, AisKindOfInteractive, AisLightSource, AisLightSourceMembers as _,
     AisLightSourceSource as _,

@@ -125,7 +125,7 @@ impl ProbeView {
             Graphic3dStructure::new(&self.viewer.structure_manager(), &Handle::default()).unwrap();
         let group = structure.new_group().unwrap();
         group.set_group_primitives_aspect(&hollow_aspect(transparency).cast());
-        group.add_primitive_array(&quad(), true);
+        group.add_primitive_array(&quad().upcast(), true);
         structure.display();
         let v3d = self.view.get().unwrap();
         v3d.redraw();

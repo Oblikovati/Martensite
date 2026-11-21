@@ -2,20 +2,21 @@
 //! GlClipping, no GL context) line by line.
 use super::*;
 use martensite_tkernel::ncollection::Vec4;
+use martensite_tkservice::graphic3d::{Graphic3dClipPlane, Graphic3dSequenceOfHClipPlane};
 
 const NATIVE: &str = include_str!("../tests/fixtures/clipping_state/native.txt");
 
-struct Planes(Vec<(&'static str, Handle<Graphic3dClipPlane>)>);
+struct Planes(Vec<(&'static str, Handle<dyn Graphic3dClipPlaneSource>)>);
 
 impl Planes {
-    fn add(&mut self, name: &'static str, a: f64, d: f64) -> Handle<Graphic3dClipPlane> {
+    fn add(&mut self, name: &'static str, a: f64, d: f64) -> Handle<dyn Graphic3dClipPlaneSource> {
         let equation = Vec4::new(a, 1. - a, 0., d);
-        let plane = Handle::new(Graphic3dClipPlane::from_equation(equation).unwrap());
+        let plane: Handle<dyn Graphic3dClipPlaneSource> = Handle::new(Graphic3dClipPlane::from_equation(equation).unwrap()).into_upcast();
         self.0.push((name, plane.clone()));
         plane
     }
 
-    fn name(&self, plane: &Handle<Graphic3dClipPlane>) -> &'static str {
+    fn name(&self, plane: &Handle<dyn Graphic3dClipPlaneSource>) -> &'static str {
         if plane.is_null() {
             return "none";
         }
@@ -26,12 +27,12 @@ impl Planes {
     }
 }
 
-fn sequence(planes: &[&Handle<Graphic3dClipPlane>]) -> Handle<Graphic3dSequenceOfHClipPlane> {
+fn sequence(planes: &[&Handle<dyn Graphic3dClipPlaneSource>]) -> Handle<dyn Graphic3dClipPlaneSequenceSource> {
     let sequence = Handle::new(Graphic3dSequenceOfHClipPlane::default());
     for plane in planes {
-        sequence.append((*plane).clone());
+        sequence.append_reference(*plane);
     }
-    sequence
+    sequence.into_upcast()
 }
 
 fn print(out: &mut Vec<String>, names: &Planes, label: &str, state: &RenderClippingState) {

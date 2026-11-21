@@ -190,7 +190,7 @@ pub fn apply_texture_set(
     let aspect = drawer.shading_aspect().get().unwrap().aspect();
     let aspect = aspect.get().unwrap();
     aspect.set_texture_map_on(true);
-    aspect.set_texture_set(Handle::new(set));
+    aspect.set_texture_set(Handle::new(set).into_upcast());
     value.set_to_update(1);
     context.display(object, false).unwrap();
     value.synchronize_aspects();

@@ -18,7 +18,7 @@ fn retained_view() -> Handle<dyn Graphic3dCView> {
 fn small_texture() -> Handle<dyn Graphic3dTextureMap> {
     let image = Handle::new(ImagePixMap::default());
     assert!(image.init_wrapper(ImageFormat::Rgb, Some(vec![90; 5 * 3 * 3]), 5, 3, 15));
-    Handle::new(Graphic3dTexture2D::from_pix_map(image)).cast()
+    Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast())).cast()
 }
 
 #[test]

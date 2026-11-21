@@ -5,7 +5,7 @@
 use crate::source_output::capture_path;
 use martensite_tkernel::standard::Handle;
 use martensite_tkernel::tcollection::AsciiString;
-use martensite_tkservice::image::{ImageAlienPixMap, ImageDiff, ImagePixMap};
+use martensite_tkservice::image::{ImageAlienPixMap, ImageDiff, ImagePixMapObject};
 use std::error::Error;
 use std::path::Path;
 
@@ -52,7 +52,7 @@ pub(crate) fn diff_files(
 }
 
 /// Load the image file at `path`.
-fn load_image(path: &Path) -> Result<Handle<ImagePixMap>, Box<dyn Error>> {
+fn load_image(path: &Path) -> Result<Handle<dyn ImagePixMapObject>, Box<dyn Error>> {
     let name = path.to_string_lossy().into_owned();
     let image = ImageAlienPixMap::default();
     if !image.load(&AsciiString::from(name.as_str())) {
@@ -60,7 +60,7 @@ fn load_image(path: &Path) -> Result<Handle<ImagePixMap>, Box<dyn Error>> {
             format!("dump {name} cannot be read; expected a PNG, JPEG, BMP or GIF image").into(),
         );
     }
-    Ok(Handle::new(image).cast())
+    Ok(Handle::new(image).into_upcast())
 }
 
 #[cfg(test)]

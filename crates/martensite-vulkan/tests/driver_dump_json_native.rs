@@ -147,14 +147,14 @@ fn fill_group(group: &Handle<dyn Graphic3dGroup>) -> Arc<DumpingElement> {
     fill.set_interior_style(AspectInteriorStyle::Solid);
     fill.set_shading_model(Graphic3dTypeOfShadingModel::Unlit);
     group.set_group_primitives_aspect(&fill.cast::<dyn Graphic3dAspectsSource>());
-    group.add_primitive_array(&triangle(), true);
+    group.add_primitive_array(&triangle().upcast(), true);
     group.set_stencil_test_options(true);
     group.set_flipping_options(true, &Axis2::default());
     let line =
         Graphic3dAspectLine3d::new(Color::named(NamedColor::GREEN), AspectTypeOfLine::Dash, 2.)
             .unwrap();
     group.set_primitives_aspect(&Handle::new(line).cast::<dyn Graphic3dAspectsSource>());
-    group.add_primitive_array(&segment(), true);
+    group.add_primitive_array(&segment().upcast(), true);
     group.add_text(&label(), false);
     group.set_flipping_options(false, &Axis2::default());
     group.set_stencil_test_options(false);

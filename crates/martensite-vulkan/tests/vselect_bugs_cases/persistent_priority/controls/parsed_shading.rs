@@ -2,7 +2,7 @@
 use super::*;
 use crate::viewer_objects::PrimitiveArrayObject;
 use martensite_tkservice::graphic3d::{
-    Graphic3dArrayOfQuadrangles, Graphic3dAspectsMembers as _, Graphic3dAspectsSource,
+    Graphic3dArrayOfQuadrangles, Graphic3dArraySource, Graphic3dAspectsMembers as _, Graphic3dAspectsSource,
     Graphic3dMaterialAspect, Graphic3dStructureMembers as _,
 };
 use martensite_tkv3d::ais::PrimitiveArrayPresentation;
@@ -111,14 +111,14 @@ fn legacy_raw_array_keeps_linked_group_when_material_creates_owned_aspect() {
     assert_raw_group_stays_linked(&session, &group);
 }
 
-fn uncolored_quad() -> Handle<martensite_tkservice::graphic3d::Graphic3dArrayOfPrimitives> {
+fn uncolored_quad() -> Handle<dyn Graphic3dArraySource> {
     let array =
         Handle::new(Graphic3dArrayOfQuadrangles::with_options(4, 0, false, false, false).unwrap());
     for point in objects::CORNERS {
         let point = martensite_tkmath::gp::Point3::new(point[0], point[1], point[2]);
         array.add_vertex_pnt(&point).unwrap();
     }
-    array.cast()
+    array.into_upcast()
 }
 
 #[test]

@@ -146,6 +146,6 @@ fn replace_fixed_fixture_vertices(fixture: &mut LightingScene, mode: &str) {
         .base
         .group
         .set_group_primitives_aspect(&fixture.aspect.cast());
-    fixture.base.group.add_primitive_array(&vertices, true);
+    fixture.base.group.add_primitive_array(&vertices.upcast(), true);
     fixture.vertices = vertices;
 }

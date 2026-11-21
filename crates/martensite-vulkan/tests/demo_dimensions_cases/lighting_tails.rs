@@ -43,7 +43,7 @@ fn ambient_light()
 -> Result<Handle<dyn Graphic3dCLightSource>, martensite_tkernel::standard::Failure> {
     let light = Handle::new(Graphic3dCLight::new(LightKind::Ambient));
     light.set_intensity(1.)?;
-    Ok(light)
+    Ok(light.into_upcast())
 }
 fn directional_light()
 -> Result<Handle<dyn Graphic3dCLightSource>, martensite_tkernel::standard::Failure> {
@@ -51,7 +51,7 @@ fn directional_light()
     light.set_direction_coords(0., 0., -1.)?;
     light.set_headlight(true)?;
     light.set_intensity(1.)?;
-    Ok(light)
+    Ok(light.into_upcast())
 }
 
 #[cfg(test)]

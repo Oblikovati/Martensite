@@ -99,7 +99,7 @@ fn check_mixed_persistence(driver: &Handle<Graphic3dRenderDriver>) {
     group.set_transform_persistence(&persistence);
     let vertices = super::view_setup::triangle_vertices();
     position_half(&vertices, 5.);
-    group.add_primitive_array(&vertices, true);
+    group.add_primitive_array(&vertices.upcast(), true);
     peer.display();
     scene.render_view().try_redraw().unwrap();
     let capture = scene.render_view().capture().unwrap();

@@ -1,22 +1,20 @@
 //! Real derived camera atom exercises the widget's dynamic animation transport during GPU captures.
 use super::view_cube_widget::CubeWidgetClock;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkv3d::ais::*;
 use std::sync::Arc;
 /// Capture subclass keeps native timeline storage and delegates its real camera interpolation.
 /// Example: `scene.cube.set_view_animation(&CubeWidgetAnimation::new(&clock).cast())`.
 pub struct CubeWidgetAnimation {
-    transient: StandardTransient,
     base: AisAnimationCameraBase,
     clock: Arc<CubeWidgetClock>,
 }
-martensite_tkernel::impl_transient!(CubeWidgetAnimation,"CaptureSeekAnimation",dyn AisAnimationCameraSource,transient,
+martensite_tkernel::impl_transient!(CubeWidgetAnimation,"CaptureSeekAnimation",dyn AisAnimationCameraSource,
     interfaces:[dyn AisAnimationCameraSource,dyn AisAnimationSource]);
 impl CubeWidgetAnimation {
     /// Own a stopped native half-second camera timeline; `CubeWidgetAnimation::new(&clock)`.
     pub fn new(clock: &Arc<CubeWidgetClock>) -> Handle<Self> {
         let animation = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisAnimationCameraBase::new("AisViewCube", &Handle::default()),
             clock: clock.clone(),
         });

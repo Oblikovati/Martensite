@@ -158,7 +158,7 @@ fn replay(driver: &Handle<Graphic3dRenderDriver>) -> Vec<String> {
     fill.set_shading_model(Graphic3dTypeOfShadingModel::Unlit);
     fill.set_interior_color(Color::named(NamedColor::WHITE));
     group.set_group_primitives_aspect(&fill.cast::<dyn Graphic3dAspectsSource>());
-    group.add_primitive_array(&triangle(), true);
+    group.add_primitive_array(&triangle().upcast(), true);
     let element = Arc::new(DumpingElement::default());
     let draw_group = group.cast::<Graphic3dDrawGroup>();
     draw_group.get().unwrap().add_element(element.clone());

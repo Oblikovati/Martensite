@@ -10,18 +10,18 @@ fn plane(a: f64, b: f64, c: f64, d: f64) -> Handle<Graphic3dClipPlane> {
 fn layer_origin_recomputes_w_from_the_plane_location_in_double() {
     let far = plane(1., 0., 0., -(1.0e6 + 1.));
     assert_eq!(
-        snapshot_chain(far.clone()).unwrap(),
+        snapshot_chain(far.clone().into_upcast()).unwrap(),
         vec![[1., 0., 0., -1_000_001.]]
     );
-    let local = snapshot_chain_around(far, Some([1.0e6, 0., 0.])).unwrap();
+    let local = snapshot_chain_around(far.into_upcast(), Some([1.0e6, 0., 0.])).unwrap();
     assert_eq!(local, vec![[1., 0., 0., -1.]]);
 }
 
 #[test]
 fn layer_origin_applies_to_every_plane_of_a_chain() {
     let first = plane(0., 1., 0., -3.);
-    Graphic3dClipPlane::set_chain_next_plane(&first, plane(0., 0., 1., 2.)).unwrap();
-    let local = snapshot_chain_around(first, Some([10., 1., -1.])).unwrap();
+    Graphic3dClipPlane::set_chain_next_plane(&first.upcast(), plane(0., 0., 1., 2.).into_upcast()).unwrap();
+    let local = snapshot_chain_around(first.into_upcast(), Some([10., 1., -1.])).unwrap();
     assert_eq!(local, vec![[0., 1., 0., -2.], [0., 0., 1., 1.]]);
 }
 

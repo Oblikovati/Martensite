@@ -104,7 +104,7 @@ fn lights(row: &str) -> OwnedResult<RenderLightSet> {
     ambient.set_color(color([0.125, 0.25, 0.5]));
     ambient.set_intensity(2.)?;
     let set = Handle::new(Graphic3dLightSet::default());
-    set.add(&ambient)?;
+    set.add(&ambient.upcast())?;
     set.add(&source_light(row)?)?;
     Ok(RenderLightSet::snapshot(&set, identity_clip())?)
 }
@@ -122,7 +122,7 @@ fn source_light(row: &str) -> OwnedResult<Handle<dyn Graphic3dCLightSource>> {
         1.
     })?;
     configure_source(&light, kind)?;
-    Ok(light)
+    Ok(light.into_upcast())
 }
 fn configure_source(light: &Graphic3dCLight, kind: Graphic3dTypeOfLightSource) -> OwnedResult<()> {
     if kind != Graphic3dTypeOfLightSource::Positional {

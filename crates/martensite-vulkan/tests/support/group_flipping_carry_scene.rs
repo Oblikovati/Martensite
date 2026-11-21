@@ -54,14 +54,14 @@ fn append_carry_destination(scene: &ViewerScene, mode: &str, log: &CarryModelLog
     let green = super::super::scene::unlit_style([0., 1., 0., 1.]);
     next.set_group_primitives_aspect(&green);
     record_model(&next, "before-pop", log);
-    next.add_primitive_array(&scene.vertices, true);
+    next.add_primitive_array(&scene.vertices.upcast(), true);
     if mode != "flip-carry-balanced" && !mode.ends_with("-plain") {
         next.set_flipping_options(false, &Axis2::default());
     }
     let white = super::super::scene::unlit_style([1., 1., 1., 1.]);
     next.set_primitives_aspect(&white);
     record_model(&next, "after-pop", log);
-    next.add_primitive_array(&scene.vertices, true);
+    next.add_primitive_array(&scene.vertices.upcast(), true);
 }
 
 fn record_model(group: &Handle<dyn Graphic3dGroup>, label: &'static str, log: &CarryModelLog) {
@@ -103,5 +103,5 @@ fn append_carry_source_geometry(scene: &ViewerScene, mode: &str, log: &CarryMode
     if mode.starts_with("flip-carry-noninteger") {
         record_model(&scene.group, "local-after", log);
     }
-    scene.group.add_primitive_array(&scene.vertices, true);
+    scene.group.add_primitive_array(&scene.vertices.upcast(), true);
 }

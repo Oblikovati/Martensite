@@ -131,7 +131,7 @@ mod tests {
     fn binding_identity_texture() -> Handle<Graphic3dTexture2D> {
         let image = Handle::new(ImagePixMap::default());
         assert!(image.init_wrapper(ImageFormat::Rgba, Some(vec![255; 4]), 1, 1, 4));
-        Handle::new(Graphic3dTexture2D::from_pix_map(image))
+        Handle::new(Graphic3dTexture2D::from_pix_map(image.into_upcast()))
     }
     /// A distinct one-texel texture image.
     fn texture_image(

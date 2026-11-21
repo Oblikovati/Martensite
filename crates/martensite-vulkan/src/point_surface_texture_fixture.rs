@@ -58,10 +58,10 @@ fn configure_group(
     colors: bool,
     normals: bool,
 ) -> (Handle<Graphic3dTexture2D>, Handle<Graphic3dAspects>) {
-    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(texture_pixels(top_down)));
+    let texture = Handle::new(Graphic3dTexture2D::from_pix_map(texture_pixels(top_down).into_upcast()));
     let aspect = mapped_aspect(&texture);
     group.set_group_primitives_aspect(&aspect.cast());
-    group.add_primitive_array(&texture_array(colors, normals), true);
+    group.add_primitive_array(&texture_array(colors, normals).upcast(), true);
     (texture, aspect)
 }
 fn mapped_aspect(texture: &Handle<Graphic3dTexture2D>) -> Handle<Graphic3dAspects> {

@@ -4,11 +4,11 @@
 //! `MyPArrayObject` of an array: drawn with the shading aspect, selected per triangle set or
 //! per segment.
 use martensite_tkernel::quantity::Color;
-use martensite_tkernel::standard::{Failure, Handle, HandleReference, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, HandleReference};
 use martensite_tkmath::toploc::Location;
 use martensite_tkservice::aspect::AspectTypeOfFacingModel;
 use martensite_tkservice::graphic3d::{
-    Graphic3dArrayOfPrimitives, Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles,
+    Graphic3dArrayOfPrimitives, Graphic3dArraySource, Graphic3dArrayOfSegments, Graphic3dArrayOfTriangles,
     Graphic3dAspectsReplaceMap, Graphic3dAspectsSource, Graphic3dGroupMembers as _,
     Graphic3dPresentationAttributesSource as _, Graphic3dStructureMembers as _,
     Graphic3dStructureSource,
@@ -29,18 +29,16 @@ use martensite_tkv3d::select3d::{
 
 /// `MyPArrayObject`: an interactive object of a primitive array.
 pub struct PrimitiveArrayObject {
-    transient: StandardTransient,
     base: AisInteractiveObjectBase,
-    parray: Handle<Graphic3dArrayOfPrimitives>,
+    parray: Handle<dyn Graphic3dArraySource>,
 }
-martensite_tkernel::impl_transient!(PrimitiveArrayObject, "MyPArrayObject", dyn AisInteractiveObject, transient,
+martensite_tkernel::impl_transient!(PrimitiveArrayObject, "MyPArrayObject", dyn AisInteractiveObject,
     interfaces: [dyn AisInteractiveObject, dyn SelectMgrSelectableObject, dyn PrsMgrPresentableObject]);
 
 impl PrimitiveArrayObject {
     /// `MyPArrayObject(thePArray)`; `PrimitiveArrayObject::new(array)`.
-    pub fn new(parray: Handle<Graphic3dArrayOfPrimitives>) -> Handle<Self> {
+    pub fn new(parray: Handle<dyn Graphic3dArraySource>) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             parray,
         });

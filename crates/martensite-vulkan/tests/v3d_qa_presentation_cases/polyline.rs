@@ -29,7 +29,7 @@ pub(super) fn bound_stage(
 ) -> Result<Handle<Graphic3dArrayOfPrimitives>, Failure> {
     session.view().viewer().driver().enable_vbo(enabled);
     let array = red_bound_polyline()?;
-    session.display_object("pl01", PrimitiveArrayObject::new(array.clone()).cast())?;
+    session.display_object("pl01", PrimitiveArrayObject::new(array.upcast()).cast())?;
     Ok(array)
 }
 

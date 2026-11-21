@@ -52,5 +52,5 @@ fn capture_light(
     if kind >= 2 {
         light.set_range(5.0)?;
     }
-    Ok(light)
+    Ok(light.into_upcast())
 }

@@ -185,7 +185,7 @@ fn triangle_structure(
     fill.set_shading_model(Graphic3dTypeOfShadingModel::Unlit);
     fill.set_interior_color(Color::named(NamedColor::WHITE));
     group.set_group_primitives_aspect(&fill.cast::<dyn Graphic3dAspectsSource>());
-    group.add_primitive_array(&array, true);
+    group.add_primitive_array(&array.upcast(), true);
     let element = Arc::new(QueryElement {
         layer,
         log: log.clone(),

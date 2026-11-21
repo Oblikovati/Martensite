@@ -89,13 +89,13 @@ fn capture_writer_context_types_keep_send_sync_bounds() {
 
 #[test]
 fn valid_counting_destination_observes_projection_allocation_and_type_callbacks() {
-    use martensite_tkernel::standard::Transient;
+    use martensite_tkservice::image::ImagePixMapSource;
     let destination = counting_capture_destination();
     owned_frame_capture()
         .write_image(&destination, Graphic3dBufferType::Rgba, 0)
         .unwrap();
     assert_eq!(destination.callbacks.load(Ordering::Relaxed), 3);
-    let _ = destination.transient_base();
+    assert!(std::ptr::eq(destination.original_image_base().unwrap(), &destination.inner.base));
     assert_eq!(destination.callbacks.load(Ordering::Relaxed), 4);
     assert_eq!(
         destination.inner.base.data().data.row(0).unwrap(),

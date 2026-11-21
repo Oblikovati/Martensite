@@ -5,7 +5,7 @@ use martensite_tkservice::image::{
     ImageSourceError, ImageSourceFailureClass, ImageSourceOperation, image_pix_map_allocate,
     image_pix_map_clear,
 };
-use std::any::{Any, TypeId};
+use std::sync::OnceLock;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 #[derive(Clone, Copy)]
@@ -30,8 +30,12 @@ pub(super) struct CaptureDestinationProbe {
     pub failure: ImageSourceError,
 }
 martensite_tkernel::impl_transient!(CaptureDestinationProbe, "Martensite_CaptureDestinationProbe",
-    ImagePixMap, base, interfaces: [dyn ImagePixMapSource]);
+    ImagePixMap, interfaces: [dyn ImagePixMapSource]);
 impl ImagePixMapSource for CaptureDestinationProbe {
+    fn original_image_base(&self) -> Option<&ImagePixMap> {
+        Some(&self.base)
+    }
+
     fn allocate_image(&self, request: ImageAllocationRequest) -> Result<(), ImageSourceError> {
         self.allocations.fetch_add(1, Ordering::Relaxed);
         if matches!(self.mode, DestinationMode::RefuseAllocation) {
@@ -102,18 +106,20 @@ pub(super) struct CountingImageDestination {
 impl Transient for CountingImageDestination {
     fn dynamic_type(&self) -> &'static RuntimeType {
         self.callbacks.fetch_add(1, Ordering::Relaxed);
-        self.inner.dynamic_type()
-    }
-    fn project(&self, requested: TypeId) -> Option<&dyn Any> {
-        self.callbacks.fetch_add(1, Ordering::Relaxed);
-        self.inner.project(requested)
-    }
-    fn transient_base(&self) -> &StandardTransient {
-        self.callbacks.fetch_add(1, Ordering::Relaxed);
-        self.inner.transient_base()
+        static TYPE: OnceLock<&'static RuntimeType> = OnceLock::new();
+        TYPE.get_or_init(|| RuntimeType::register::<Self>(
+            "Martensite_CountingImageDestination",
+            std::mem::size_of::<Self>(),
+            Some(<ImagePixMap as martensite_tkernel::standard::RuntimeTyped>::static_type()),
+        ))
     }
 }
 impl ImagePixMapSource for CountingImageDestination {
+    fn original_image_base(&self) -> Option<&ImagePixMap> {
+        self.callbacks.fetch_add(1, Ordering::Relaxed);
+        self.inner.original_image_base()
+    }
+
     fn allocate_image(&self, request: ImageAllocationRequest) -> Result<(), ImageSourceError> {
         self.callbacks.fetch_add(1, Ordering::Relaxed);
         self.inner.allocate_image(request)
@@ -125,9 +131,7 @@ pub(super) fn counting_capture_destination() -> CountingImageDestination {
         callbacks: AtomicUsize::new(0),
     }
 }
-pub(super) struct MissingCaptureImage {
-    pub base: StandardTransient,
-}
+pub(super) struct MissingCaptureImage;
 martensite_tkernel::impl_transient!(MissingCaptureImage, "Martensite_MissingCaptureImage",
-    StandardTransient, base, interfaces: [dyn ImagePixMapSource]);
+    StandardTransient, interfaces: [dyn ImagePixMapSource]);
 impl ImagePixMapSource for MissingCaptureImage {}

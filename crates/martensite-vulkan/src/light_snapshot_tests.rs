@@ -4,7 +4,7 @@ use crate::identity_clip;
 use Graphic3dTypeOfLightSource as Kind;
 use martensite_tkernel::quantity::{Color, ColorSpace};
 fn source(kind: Kind) -> Handle<dyn Graphic3dCLightSource> {
-    Handle::new(Graphic3dCLight::new(kind))
+    Handle::new(Graphic3dCLight::new(kind)).into_upcast()
 }
 fn set(sources: &[Handle<dyn Graphic3dCLightSource>]) -> Handle<Graphic3dLightSet> {
     let lights = Handle::new(Graphic3dLightSet::default());
