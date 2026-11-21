@@ -5,7 +5,7 @@ use crate::hlr_algo::{
 };
 use crate::hlr_topo_brep::{MapOfShapeTool, OutLiner};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, Transient};
 use martensite_tkg3d::top_abs::Orientation;
 use std::sync::RwLockWriteGuard;
 
@@ -27,18 +27,12 @@ use std::sync::RwLockWriteGuard;
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct InternalAlgo {
-    base: StandardTransient,
     ds: SharedState<Handle<Data>>,
     proj: SharedState<Projector>,
     shapes: SharedState<Vec<ShapeBounds>>,
     mst: SharedState<MapOfShapeTool>,
 }
-impl_transient!(
-    InternalAlgo,
-    "HLRBRep_InternalAlgo",
-    StandardTransient,
-    base
-);
+impl_transient!(InternalAlgo, "HLRBRep_InternalAlgo", StandardTransient);
 
 pub(super) fn unknown_shape(member: &str, i: i32) -> Failure {
     Failure::with_message(
@@ -51,7 +45,6 @@ impl InternalAlgo {
     /// HLRBRep_InternalAlgo(): no shape, the default projector; `InternalAlgo::new()?`.
     pub fn new() -> Result<Self, Failure> {
         Ok(Self {
-            base: StandardTransient::default(),
             ds: SharedState::new(Handle::default()),
             proj: SharedState::new(Projector::new()?),
             shapes: SharedState::new(Vec::new()),
@@ -168,7 +161,7 @@ impl InternalAlgo {
     pub fn load_with_data(
         &self,
         s: &Handle<OutLiner>,
-        s_data: &Handle<StandardTransient>,
+        s_data: &Handle<dyn Transient>,
         nb_iso: i32,
     ) {
         self.shapes.write().push(ShapeBounds::with_data(
@@ -216,11 +209,7 @@ impl InternalAlgo {
     }
 
     /// ShapeData(I, SData); `algo.set_shape_data(1, &data)?`.
-    pub fn set_shape_data(
-        &self,
-        i: i32,
-        s_data: &Handle<StandardTransient>,
-    ) -> Result<(), Failure> {
+    pub fn set_shape_data(&self, i: i32, s_data: &Handle<dyn Transient>) -> Result<(), Failure> {
         let k = self.check("ShapeData", i)?;
         self.shapes.write()[k].set_shape_data(s_data);
         Ok(())

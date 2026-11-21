@@ -62,22 +62,20 @@ fn bezier_2d(ec: &Curve) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     if ec.is_rational()? {
         let mut weights = array(n, "HLRBRep::MakeEdge")?;
         ec.poles_and_weights(&mut poles, &mut weights)?;
-        return Ok(Handle::new(Geom2dBezierCurve::with_weights(&poles, &weights)?).cast());
+        return Ok(Handle::new(Geom2dBezierCurve::with_weights(&poles, &weights)?).into_upcast());
     }
     ec.poles(&mut poles)?;
-    Ok(Handle::new(Geom2dBezierCurve::new(&poles)?).cast())
+    Ok(Handle::new(Geom2dBezierCurve::new(&poles)?).into_upcast())
 }
 
 // The basis B-spline of the edge's 3D curve (through a trimmed curve), copied.
 fn edge_bspline_copy(ec: &Curve) -> Result<Handle<GeomBSplineCurve>, Failure> {
     let (mut a_curve, _, _) = BRepTool::curve(&ec.get_curve().edge())?;
     // `DynamicType() == STANDARD_TYPE(Geom_TrimmedCurve)`: no class derives from it.
-    let trimmed = a_curve.cast::<GeomTrimmedCurve>();
-    if let Some(trimmed) = trimmed.get() {
+    if let Some(trimmed) = a_curve.downcast_ref::<GeomTrimmedCurve>() {
         a_curve = trimmed.basis_curve();
     }
-    let bspl = a_curve.cast::<GeomBSplineCurve>();
-    let bspl = bspl.get().ok_or_else(|| {
+    let bspl = a_curve.downcast_ref::<GeomBSplineCurve>().ok_or_else(|| {
         Failure::with_type(
             "Standard_NullObject",
             "HLRBRep::MakeEdge: the edge curve is not a B-spline; expected Geom_BSplineCurve",
@@ -106,13 +104,13 @@ fn bspline_2d(ec: &Curve, sta: f64, end: f64) -> Result<Handle<dyn Geom2dCurve>,
         ec.poles_and_weights(&mut poles, &mut weights)?;
         let c =
             Geom2dBSplineCurve::with_weights(&poles, &weights, &knots, &mults, degree, periodic)?;
-        return Ok(Handle::new(c).cast());
+        return Ok(Handle::new(c).into_upcast());
     }
     ec.poles(&mut poles)?;
     Ok(Handle::new(Geom2dBSplineCurve::new(
         &poles, &knots, &mults, degree, periodic,
     )?)
-    .cast())
+    .into_upcast())
 }
 
 // A periodic B-spline that is not closed is segmented to [sta, end] first.
@@ -131,13 +129,13 @@ fn periodic_segment_2d(
         ec.poles_and_weights_of(the_curve, &mut poles, &mut weights)?;
         let c =
             Geom2dBSplineCurve::with_weights(&poles, &weights, &knots, &mults, degree, periodic)?;
-        return Ok(Handle::new(c).cast());
+        return Ok(Handle::new(c).into_upcast());
     }
     ec.poles_of(the_curve, &mut poles)?;
     Ok(Handle::new(Geom2dBSplineCurve::new(
         &poles, &knots, &mults, degree, periodic,
     )?)
-    .cast())
+    .into_upcast())
 }
 
 // The default case: a degree 1 B-spline through 15 projected points, knotted at
@@ -159,7 +157,7 @@ fn polyline_2d(ec: &Curve, u1: f64, u2: f64) -> Result<Handle<dyn Geom2dCurve>, 
     }
     poles[NB_PNT] = ec.value(u2)?;
     knots[NB_PNT] = u2;
-    Ok(Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 1, false)?).cast())
+    Ok(Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 1, false)?).into_upcast())
 }
 
 /// HLRBRep::MakeEdge3d(ec, U1, U2): an empty copy of the curve's 3D edge on
