@@ -9,7 +9,7 @@ use martensite_tkernel::{
     impl_transient,
     message::{Message, ProgressRange},
     ncollection::IndexedDataMap,
-    standard::{Failure, Handle, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped},
     tcollection::{AsciiString, ExtendedString},
 };
 use martensite_tklcaf::tdoc_std::TDocStdDocument;
@@ -32,10 +32,9 @@ use martensite_tkxcaf::xcaf_doc::{XCAFDocDocumentTool, XCAFDocShapeTool};
 /// ```
 #[derive(Default)]
 pub struct DePlyProvider {
-    transient: StandardTransient,
     base: DeProviderBase,
 }
-impl_transient!(DePlyProvider, "DePlyProvider", dyn DeProvider, transient, interfaces: [dyn DeProvider]);
+impl_transient!(DePlyProvider, "DePlyProvider", dyn DeProvider, interfaces: [dyn DeProvider]);
 
 fn path_text(path: &AsciiString) -> String {
     String::from_utf8_lossy(path.as_bytes()).into_owned()
