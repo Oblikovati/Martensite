@@ -19,8 +19,8 @@ type Curves2d = Array1<'static, Handle<dyn Geom2dCurve>>;
 /// The vertical 2d line at `u`, trimmed to `[v1, v2]`.
 fn iso_restriction(u: f64, v1: f64, v2: f64) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let line: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dLine::from_point(Point2::new(u, 0.0), Direction2::Y)).cast();
-    Ok(Handle::new(Geom2dTrimmedCurve::new(&line, v1, v2, true, true)?).cast())
+        Handle::new(Geom2dLine::from_point(Point2::new(u, 0.0), Direction2::Y)).into_upcast();
+    Ok(Handle::new(Geom2dTrimmedCurve::new(&line, v1, v2, true, true)?).into_upcast())
 }
 
 /// The restrictions and traces of a sweep with their errors (`myCurve2d`, `CError`).
@@ -82,7 +82,7 @@ impl GeomFillSweep {
         let ratio = (self.s_last - self.s_first) / (self.last - self.first);
         let func =
             GeomFillSweepFunction::new(&self.my_sec, &self.my_loc, self.first, self.s_first, ratio);
-        let func: Handle<dyn SweepFunction> = Handle::new(func).cast();
+        let func: Handle<dyn SweepFunction> = Handle::new(func).into_upcast();
         let mut approx = SweepApproximation::new(&func);
         let options = SweepOptions {
             continuity,
@@ -115,7 +115,7 @@ impl GeomFillSweep {
             (self.sec()?.is_u_periodic()?, false),
         )?;
         let force = self.my_force_approx_c1 && !bspline.is_cn_v(1)?;
-        self.my_surface = Handle::new(bspline).cast();
+        self.my_surface = Handle::new(bspline).into_upcast();
         self.s_error = approx.max_error_on_surf()?;
         if force {
             self.force_c1()?;
@@ -193,5 +193,5 @@ fn approximated_curve(
         approx.curves_2d_degree()?,
         false,
     )?;
-    Ok(Handle::new(c).cast())
+    Ok(Handle::new(c).into_upcast())
 }

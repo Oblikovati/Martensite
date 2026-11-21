@@ -16,7 +16,7 @@ pub(super) fn offset_curve(
     curve: &Geom2dAdaptorCurve,
     offset: f64,
 ) -> Result<Adaptor2dOffsetCurve, Failure> {
-    let basis: Handle<dyn Adaptor2dCurve2d> = Handle::new(copy_adaptor(curve)?).cast();
+    let basis: Handle<dyn Adaptor2dCurve2d> = Handle::new(copy_adaptor(curve)?).into_upcast();
     Adaptor2dOffsetCurve::with_offset(&basis, offset)
 }
 

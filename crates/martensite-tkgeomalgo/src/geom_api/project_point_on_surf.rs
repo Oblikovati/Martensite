@@ -24,7 +24,7 @@ use martensite_tkmath::gp::Point3;
 /// use martensite_tkgeombase::extrema::ExtAlgo;
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Axis3, Point3};
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
 /// let p = ProjectPointOnSurf::with_surface(Point3::new(1.0, 2.0, 3.0), &plane, ExtAlgo::Grad).unwrap();
 /// assert_eq!(p.lower_distance().unwrap(), 3.0);
 /// ```

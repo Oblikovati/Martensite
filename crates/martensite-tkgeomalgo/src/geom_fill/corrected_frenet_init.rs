@@ -272,7 +272,7 @@ impl GeomFillCorrectedFrenet {
         if is_const || is_planar {
             let law = LawConstant::new();
             law.set(angle_at, first, last);
-            return Ok((is_zero, Handle::new(law).cast()));
+            return Ok((is_zero, Handle::new(law).into_upcast()));
         }
         let func = interpolated_law(&parameters, &evol_at, first, last)?;
         Ok((is_zero, func))
@@ -298,5 +298,5 @@ fn interpolated_law(
     law_at.perform()?;
     let mut bs = law_at.curve()?;
     smoothlaw(&mut bs, evol_at, parameters, 0.1)?;
-    Ok(Handle::new(LawBSpFunc::with_curve(&bs, first, last)).cast())
+    Ok(Handle::new(LawBSpFunc::with_curve(&bs, first, last)).into_upcast())
 }

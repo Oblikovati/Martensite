@@ -4,7 +4,7 @@ use super::pipe_error::GeomFillPipeError;
 use super::sweep_failures::not_implemented;
 use martensite_tkernel::impl_transient_interface;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::{Matrix3, Point2, Point3, Vector2, Vector3};
@@ -200,5 +200,5 @@ pub trait GeomFillLocationLaw: Transient {
 impl_transient_interface!(
     dyn GeomFillLocationLaw,
     "GeomFill_LocationLaw",
-    StandardTransient
+    dyn Transient
 );

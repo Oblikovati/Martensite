@@ -14,7 +14,7 @@ use std::f64::consts::PI;
 /// The periodic directions of a quadric (`myHS1IsUPeriodic`, `myHS1IsVPeriodic`): U on
 /// the cylinder, the cone and the sphere, both on the torus; the periodic
 /// bi-parametric surfaces are processed upstream.
-fn periodic_directions(surface: &GeomAdaptorSurface) -> Result<(bool, bool), Failure> {
+fn periodic_directions(surface: &dyn Adaptor3dSurface) -> Result<(bool, bool), Failure> {
     Ok(match surface.get_type()? {
         SurfaceType::Cylinder | SurfaceType::Cone | SurfaceType::Sphere => (true, false),
         SurfaceType::Torus => (true, true),
@@ -26,8 +26,8 @@ fn periodic_directions(surface: &GeomAdaptorSurface) -> Result<(bool, bool), Fai
 /// quadrics brought into the adaptor ranges by turns of 2 Pi (`GeomInt::AdjustPeriodic`
 /// with no tolerance).
 pub(super) fn adjust_periodic(
-    hs1: &GeomAdaptorSurface,
-    hs2: &GeomAdaptorSurface,
+    hs1: &dyn Adaptor3dSurface,
+    hs2: &dyn Adaptor3dSurface,
     uv: &mut [f64; 4],
 ) -> Result<(), Failure> {
     let lmf: f64 = PI + PI;
@@ -53,6 +53,14 @@ pub fn quadric_parameters(
     ptref: Point3,
     member: &str,
 ) -> Result<(f64, f64), Failure> {
+    parameters_on_quadric(hs, ptref, member)
+}
+
+fn parameters_on_quadric(
+    hs: &dyn Adaptor3dSurface,
+    ptref: Point3,
+    member: &str,
+) -> Result<(f64, f64), Failure> {
     let quad: IntSurfQuadric = match hs.get_type()? {
         SurfaceType::Plane => IntSurfQuadric::from_plane(&hs.plane()?),
         SurfaceType::Cylinder => IntSurfQuadric::from_cylinder(&hs.cylinder()?),
@@ -74,13 +82,13 @@ pub fn quadric_parameters(
 
 /// `Parameters(myHS1, myHS2, Ptref, U1, V1, U2, V2)`: the parameters on both quadrics.
 pub(super) fn parameters(
-    hs1: &GeomAdaptorSurface,
-    hs2: &GeomAdaptorSurface,
+    hs1: &dyn Adaptor3dSurface,
+    hs2: &dyn Adaptor3dSurface,
     ptref: Point3,
 ) -> Result<[f64; 4], Failure> {
     const MEMBER: &str = "GeomInt_LineConstructor::Parameters";
-    let (u1, v1) = quadric_parameters(hs1, ptref, MEMBER)?;
-    let (u2, v2) = quadric_parameters(hs2, ptref, MEMBER)?;
+    let (u1, v1) = parameters_on_quadric(hs1, ptref, MEMBER)?;
+    let (u2, v2) = parameters_on_quadric(hs2, ptref, MEMBER)?;
     Ok([u1, v1, u2, v2])
 }
 

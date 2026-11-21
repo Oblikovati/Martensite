@@ -3,7 +3,7 @@
 use super::bound_parameter::BoundParameter;
 use super::{GeomFillBoundary, GeomFillBoundaryTolerances};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::errors;
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dCurveOnSurface, Adaptor3dSurface};
@@ -15,7 +15,6 @@ use martensite_tkmath::gp::{Point2, Point3, Vector2, Vector3};
 ///
 /// `let bound = GeomFillBoundWithSurf::new(&curve_on_surface, 1e-4, 1e-2); bound.norm(0.5)?`
 pub struct GeomFillBoundWithSurf {
-    parent: StandardTransient,
     tolerances: GeomFillBoundaryTolerances,
     my_con_s: Adaptor3dCurveOnSurface,
     my_par: BoundParameter,
@@ -24,7 +23,6 @@ impl_transient!(
     GeomFillBoundWithSurf,
     "GeomFill_BoundWithSurf",
     dyn GeomFillBoundary,
-    parent,
     interfaces: [dyn GeomFillBoundary]
 );
 
@@ -34,7 +32,6 @@ impl GeomFillBoundWithSurf {
     /// `GeomFillBoundWithSurf::new(&curve_on_surface, 1e-4, 1e-2)`.
     pub fn new(curve_on_surf: &Adaptor3dCurveOnSurface, tol3d: f64, tolang: f64) -> Self {
         Self {
-            parent: StandardTransient::default(),
             tolerances: GeomFillBoundaryTolerances::new(tol3d, tolang),
             my_con_s: Adaptor3dCurveOnSurface::copy_of(curve_on_surf),
             my_par: BoundParameter::default(),

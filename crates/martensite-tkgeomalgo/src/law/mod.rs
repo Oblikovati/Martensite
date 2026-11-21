@@ -16,7 +16,7 @@ mod interpolate;
 mod interpolate_perform;
 mod mix;
 
-pub use bsp_func::LawBSpFunc;
+pub use bsp_func::{BSplineLaw, LawBSpFunc};
 pub use bsp_func_intervals::LawBSplineKnotSplitting;
 pub use bsp_func_laws::{LawInterpol, LawS};
 pub use bspline::LawBSpline;

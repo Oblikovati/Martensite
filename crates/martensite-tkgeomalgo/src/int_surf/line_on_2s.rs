@@ -4,7 +4,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::BaseAllocator;
 #[path = "line_on_2s/points.rs"]
 mod points;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkmath::bnd::{BoundingBox2, BoundingBox3};
 use martensite_tkmath::gp::{Point2, Point3};
 use points::LinePoints;
@@ -26,15 +26,9 @@ struct LineOn2SState {
 /// either extends a built box or marks it stale.
 /// `let line = IntSurfLineOn2S::new(None); line.add(&IntSurfPntOn2S::new());`
 pub struct IntSurfLineOn2S {
-    parent: StandardTransient,
     state: SharedState<LineOn2SState>,
 }
-impl_transient!(
-    IntSurfLineOn2S,
-    "IntSurf_LineOn2S",
-    StandardTransient,
-    parent
-);
+impl_transient!(IntSurfLineOn2S, "IntSurf_LineOn2S", dyn Transient);
 
 impl Default for IntSurfLineOn2S {
     fn default() -> Self {
@@ -101,7 +95,6 @@ impl IntSurfLineOn2S {
         };
         state.whole_boxes();
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

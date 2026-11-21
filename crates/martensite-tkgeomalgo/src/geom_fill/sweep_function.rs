@@ -6,7 +6,7 @@ use super::sweep_failures::{live, sweep_failure};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, LinearVector};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::arrays::one_based;
 use martensite_tkgeombase::approx::SweepFunction;
 use martensite_tkgeombase::geom_lib;
@@ -20,7 +20,6 @@ use martensite_tkmath::gp::{Matrix3, Point3, Vector3};
 /// as the native members, and handed back to the next evaluation.
 /// `let f = GeomFillSweepFunction::new(&section, &location, 0.0, 0.0, 1.0);`.
 pub struct GeomFillSweepFunction {
-    parent: StandardTransient,
     my_loc: Handle<dyn GeomFillLocationLaw>,
     my_sec: Handle<dyn GeomFillSectionLaw>,
     pub(super) myf: f64,
@@ -33,7 +32,6 @@ impl_transient!(
     GeomFillSweepFunction,
     "GeomFill_SweepFunction",
     dyn SweepFunction,
-    parent,
     interfaces: [dyn SweepFunction]
 );
 
@@ -88,7 +86,6 @@ impl GeomFillSweepFunction {
         ratio_parameter_on_s: f64,
     ) -> Self {
         Self {
-            parent: StandardTransient::default(),
             my_loc: location.clone(),
             my_sec: section.clone(),
             myf: first_parameter,

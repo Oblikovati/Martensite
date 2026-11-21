@@ -2,11 +2,11 @@
 //! `curve_constraint_eval`.
 use crate::law::LawFunction;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dCurveOnSurface};
-use martensite_tkg3d::geom_adaptor::GeomAdaptorSurface;
+use martensite_tkg3d::geom_adaptor::GeomSurfaceAdaptor;
 use martensite_tkgeombase::geom_lprop::SLProps;
 
 #[derive(Clone)]
@@ -69,22 +69,20 @@ impl CurveConstraintState {
 /// use martensite_tkg3d::geom_adaptor::GeomAdaptorCurve;
 /// use martensite_tkmath::gp::{Direction3, Point3};
 /// let line: Handle<dyn GeomCurve> =
-///     Handle::new(GeomLine::from_point(Point3::default(), Direction3::new(1.0, 0.0, 0.0).unwrap())).cast();
+///     Handle::new(GeomLine::from_point(Point3::default(), Direction3::new(1.0, 0.0, 0.0).unwrap())).into_upcast();
 /// let curve: Handle<dyn Adaptor3dCurve> =
-///     Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 2.0).unwrap()).cast();
+///     Handle::new(GeomAdaptorCurve::with_range(&line, 0.0, 2.0).unwrap()).into_upcast();
 /// let c = GeomPlateCurveConstraint::new(&curve, 0, 10, 1e-4, 0.01, 0.1).unwrap();
 /// assert_eq!(c.length().unwrap(), 2.0);
 /// ```
 pub struct GeomPlateCurveConstraint {
-    parent: StandardTransient,
     pub(super) state: SharedState<CurveConstraintState>,
     pub(super) lprop: SharedState<SLProps>,
 }
 impl_transient!(
     GeomPlateCurveConstraint,
     "GeomPlate_CurveConstraint",
-    StandardTransient,
-    parent
+    dyn Transient
 );
 
 // The Standard_Failure the native members raise for a constraint without surface.
@@ -95,7 +93,6 @@ pub(super) fn not_on_surface() -> Failure {
 impl GeomPlateCurveConstraint {
     fn from_parts(state: CurveConstraintState, lprop: SLProps) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
             lprop: SharedState::new(lprop),
         }
@@ -275,7 +272,8 @@ impl GeomPlateCurveConstraint {
 fn geom_surface_of(
     on_surface: &Adaptor3dCurveOnSurface,
 ) -> Result<Handle<dyn martensite_tkg3d::geom::GeomSurface>, Failure> {
-    let adaptor: Handle<GeomAdaptorSurface> = on_surface.get_surface().cast();
+    let surface = on_surface.get_surface();
+    let adaptor = surface.view::<dyn GeomSurfaceAdaptor>();
     let geom = adaptor.get().ok_or_else(|| {
         Failure::new("GeomPlate_CurveConstraint : Surface must be GeomAdaptor_Surface")
     })?;

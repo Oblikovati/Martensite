@@ -7,7 +7,7 @@ use crate::law::LawFunction;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::arrays::{at, put};
 use martensite_tkg3d::geom::GeomCurve;
 use martensite_tkmath::geom_abs::Shape;
@@ -19,7 +19,6 @@ use martensite_tkmath::gp::{Point3, Transform3, Vector3};
 /// StdFail_NotDone, as natively. A B-spline input is shared, not copied.
 /// `let law = GeomFillEvolvedSection::new(&curve, &law)?;`.
 pub struct GeomFillEvolvedSection {
-    parent: StandardTransient,
     first: f64,
     last: f64,
     curve: SectionCurve,
@@ -30,7 +29,6 @@ impl_transient!(
     GeomFillEvolvedSection,
     "GeomFill_EvolvedSection",
     dyn GeomFillSectionLaw,
-    parent,
     interfaces: [dyn GeomFillSectionLaw]
 );
 
@@ -42,7 +40,6 @@ impl GeomFillEvolvedSection {
         let my_law = law.trim(first, last, 1.0e-20)?;
         let curve = SectionCurve::new(c)?;
         Ok(Self {
-            parent: StandardTransient::default(),
             first,
             last,
             curve,

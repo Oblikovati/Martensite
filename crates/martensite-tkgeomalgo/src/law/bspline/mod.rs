@@ -8,7 +8,7 @@ mod query;
 
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::geom2d::arrays::{at, one_based, put, rebased};
 use martensite_tkg2d::geom2d::errors;
 use martensite_tkg2d::geom2d::spline_data::{
@@ -167,10 +167,9 @@ fn checked_weights(
 ///
 /// `let law = LawBSpline::new(&poles, &knots, &mults, 3, false)?; law.value(0.5)?`.
 pub struct LawBSpline {
-    parent: StandardTransient,
     state: SharedState<LawBSplineData>,
 }
-impl_transient!(LawBSpline, "Law_BSpline", StandardTransient, parent);
+impl_transient!(LawBSpline, "Law_BSpline", dyn Transient);
 
 impl LawBSpline {
     /// A non-rational law (`Law_BSpline(Poles, Knots, Mults, Degree, Periodic)`);
@@ -206,7 +205,6 @@ impl LawBSpline {
 
     fn from_data(data: LawBSplineData) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(data),
         }
     }

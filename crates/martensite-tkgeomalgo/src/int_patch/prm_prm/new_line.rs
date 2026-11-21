@@ -110,7 +110,7 @@ impl IntPatchPrmPrmIntersection {
         result.add(&the_line.point(high)?);
         let rwl = IntPatchWLine::new_undecided(&result, false);
         rwl.set_creating_way_info(IntPatchWLType::PrmPrm);
-        Ok(Handle::new(rwl).cast())
+        Ok(Handle::new(rwl).into_upcast())
     }
 }
 

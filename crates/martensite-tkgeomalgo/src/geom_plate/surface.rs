@@ -4,7 +4,7 @@ use crate::plate::PlatePlate;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Sequence;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, SharedState};
 use martensite_tkg3d::geom::errors::undefined_derivative;
 use martensite_tkg3d::geom::{
     GeomCurve, GeomGeometry, GeomSurface, GeomSurfaceD1, GeomSurfaceD2, GeomSurfaceD3,
@@ -22,7 +22,6 @@ use std::io;
 /// members, `Copy` keeps the initial surface and the plate but not the bounds.
 /// `let s = GeomPlateSurface::new(&plane, &plate); s.set_bounds(0.0, 1.0, 0.0, 1.0)?;`
 pub struct GeomPlateSurface {
-    parent: StandardTransient,
     surfinter: PlatePlate,
     surfinit: Handle<dyn GeomSurface>,
     bounds: SharedState<SurfaceBounds>,
@@ -31,7 +30,6 @@ impl_transient!(
     GeomPlateSurface,
     "GeomPlate_Surface",
     dyn GeomSurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface]
 );
 
@@ -41,7 +39,6 @@ impl GeomPlateSurface {
     /// `GeomPlateSurface::new(&plane, &plate)`.
     pub fn new(surfinit: &Handle<dyn GeomSurface>, surfinter: &PlatePlate) -> Self {
         Self {
-            parent: StandardTransient::default(),
             surfinter: surfinter.clone(),
             surfinit: surfinit.clone(),
             bounds: SharedState::new((0.0, 0.0, 0.0, 0.0)),
@@ -95,7 +92,7 @@ impl GeomGeometry for GeomPlateSurface {
     /// A plate surface on the same initial surface and plate, with null bounds
     /// (`Copy`).
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(Self::new(&self.surfinit, &self.surfinter)).cast())
+        Ok(Handle::new(Self::new(&self.surfinit, &self.surfinter)).into_upcast())
     }
     /// `Geom_Surface::DumpJson`, which the class does not override.
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {

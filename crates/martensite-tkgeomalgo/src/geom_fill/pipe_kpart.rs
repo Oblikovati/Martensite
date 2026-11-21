@@ -107,14 +107,14 @@ impl GeomFillPipe {
         }
         axis.rotate(Axis1::new(f.p0, z_ref), -PI / 2.0)?;
         let cylinder: Handle<dyn GeomSurface> =
-            Handle::new(GeomCylindricalSurface::new(axis, self.my_radius)?).cast();
+            Handle::new(GeomCylindricalSurface::new(axis, self.my_radius)?).into_upcast();
         // The native code stores the cylinder before trimming it.
         self.my_surface = cylinder.clone();
         let alpha = f.v1.angle_with_ref(f.v2, z_ref);
         let u = (PI / 2.0, PI / 2.0 + alpha);
         let trimmed =
             GeomRectangularTrimmedSurface::new(&cylinder, u, rails.path_range()?, (true, true))?;
-        self.my_surface = Handle::new(trimmed).cast();
+        self.my_surface = Handle::new(trimmed).into_upcast();
         self.my_status = GeomFillPipeError::PipeOk;
         Ok(true)
     }
@@ -135,14 +135,15 @@ impl GeomFillPipe {
             vv1 = -vv1;
             vv2 = 2.0 * PI + vv1 - delta_v;
         }
-        let torus: Handle<dyn GeomSurface> = Handle::new(GeomToroidalSurface::from_torus(t)).cast();
+        let torus: Handle<dyn GeomSurface> =
+            Handle::new(GeomToroidalSurface::from_torus(t)).into_upcast();
         let trimmed = GeomRectangularTrimmedSurface::new(
             &torus,
             rails.path_range()?,
             (vv1, vv2),
             (true, true),
         )?;
-        self.my_surface = Handle::new(trimmed).cast();
+        self.my_surface = Handle::new(trimmed).into_upcast();
         self.my_exch_uv = true;
         self.my_status = GeomFillPipeError::PipeOk;
         Ok(true)

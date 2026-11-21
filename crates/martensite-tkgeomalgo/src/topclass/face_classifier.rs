@@ -22,7 +22,7 @@ use martensite_tkmath::gp::{Line2, Point2};
 /// use martensite_tkgeomalgo::geom2d_hatch::{Classifier, Element, Elements};
 /// use martensite_tkmath::gp::{Axis2d, Point2};
 /// let circle = Geom2dCircle::from_axis(Axis2d::default(), 1.0, true).unwrap();
-/// let curve: Handle<dyn Geom2dCurve> = Handle::new(circle).cast();
+/// let curve: Handle<dyn Geom2dCurve> = Handle::new(circle).into_upcast();
 /// let mut disc = Elements::new();
 /// let edge = Geom2dAdaptorCurve::with_curve(&curve).unwrap();
 /// disc.bind(1, Element::new(edge, Orientation::Forward));

@@ -9,7 +9,7 @@ use super::trihedron_law::{GeomFillTrihedronLaw, TrihedronD0, TrihedronD1, Trihe
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, LinearVector};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::geom2d::arrays::one_based;
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkgeombase::geom_lib;
@@ -31,7 +31,6 @@ struct CatFields {
 /// The native scratch members (`Point`, `V1`..`V3`) are kept local.
 /// `let law = GeomFillCurveAndTrihedron::new(&frenet); law.set_curve(&path)?;`.
 pub struct GeomFillCurveAndTrihedron {
-    parent: StandardTransient,
     my_law: Handle<dyn GeomFillTrihedronLaw>,
     fields: SharedState<CatFields>,
 }
@@ -39,7 +38,6 @@ impl_transient!(
     GeomFillCurveAndTrihedron,
     "GeomFill_CurveAndTrihedron",
     dyn GeomFillLocationLaw,
-    parent,
     interfaces: [dyn GeomFillLocationLaw]
 );
 
@@ -49,7 +47,6 @@ impl GeomFillCurveAndTrihedron {
         let mut trans = Matrix3::default();
         trans.set_identity();
         Self {
-            parent: StandardTransient::default(),
             my_law: trihedron.clone(),
             fields: SharedState::new(CatFields {
                 my_curve: Handle::default(),
@@ -138,7 +135,7 @@ impl GeomFillLocationLaw for GeomFillCurveAndTrihedron {
         let fields = self.fields.read().clone();
         copy.set_curve(&fields.my_curve)?;
         copy.set_trsf(&fields.trans)?;
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn d0(&self, param: f64, placement: &mut LocationD0) -> Result<bool, Failure> {
         let point = self

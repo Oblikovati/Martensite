@@ -12,7 +12,7 @@ use martensite_tkg3d::geom::{
     GeomCurve, GeomOffsetSurface, GeomPlane, GeomRectangularTrimmedSurface, GeomSurface,
     GeomTrimmedCurve,
 };
-use martensite_tkg3d::geom_adaptor::{GeomAdaptorCurve, GeomAdaptorSurface};
+use martensite_tkg3d::geom_adaptor::{GeomAdaptorCurve, GeomSurfaceAdaptor};
 use martensite_tkgeombase::geom_proj_lib;
 use martensite_tkmath::elclib;
 use martensite_tkmath::geom_abs::{CurveType, SurfaceType};
@@ -31,7 +31,7 @@ pub(super) struct IsoRange {
 /// The Geom surface of an adaptor that is a `GeomAdaptor_Surface` (the native code casts
 /// the adaptor; another adaptor raises Standard_NullObject).
 pub(super) fn geom_surface(s: &Adaptor3dSurfaceHandle) -> Result<Handle<dyn GeomSurface>, Failure> {
-    let gas: Handle<GeomAdaptorSurface> = s.cast::<GeomAdaptorSurface>();
+    let gas = s.view::<dyn GeomSurfaceAdaptor>();
     match gas.get() {
         Some(adaptor) => Ok(adaptor.surface()),
         None => Err(Failure::with_message(
@@ -79,7 +79,7 @@ fn trimmed_iso(
         true,
         true,
     )?)
-    .cast())
+    .into_upcast())
 }
 
 /// The trim range of the offset of a line or a parabola (1e4 at most) or of a hyperbola
@@ -158,7 +158,7 @@ pub(super) fn get_iso(
     // Make trimmed surface (trimmed in U with the bounds of the other direction).
     let rts =
         GeomRectangularTrimmedSurface::with_one_direction(&gos.cast(), m_tr, cap_tr, true, true)?;
-    let rts: Handle<dyn GeomSurface> = Handle::new(rts).cast();
+    let rts: Handle<dyn GeomSurface> = Handle::new(rts).into_upcast();
     Ok(Some(iso(&rts)?))
 }
 
@@ -317,4 +317,17 @@ pub(super) fn pl_intersection(
     result.direction = ders.0[iso];
     result.points = projected_intersections(&c1, &c2, d1.point, result.direction)?;
     Ok(result)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use martensite_tkg3d::geom_adaptor::GeomAdaptorSurfaceOfLinearExtrusion;
+
+    #[test]
+    fn geom_surface_accepts_the_swept_adaptor_family() {
+        let swept = Handle::new(GeomAdaptorSurfaceOfLinearExtrusion::default()).into_upcast();
+        // A curve-backed adaptor is a valid family member with no stored Geom surface.
+        assert!(geom_surface(&swept).unwrap().is_null());
+    }
 }

@@ -109,7 +109,7 @@ fn short_segment(
     (knots[1], knots[2]) = (first, last);
     (mults[1], mults[2]) = (2, 2);
     let c2d: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 1, false)?).cast();
+        Handle::new(Geom2dBSplineCurve::new(&poles, &knots, &mults, 1, false)?).into_upcast();
     // Check the same parameter at the middle point.
     let pmid: Point3 = curve.value(0.5 * (first + last))?;
     let pmidcurve2d = Point2::from((p2d1.xy() + p2d2.xy()) * 0.5);

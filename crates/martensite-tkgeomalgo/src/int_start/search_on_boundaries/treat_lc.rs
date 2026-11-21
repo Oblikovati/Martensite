@@ -89,7 +89,7 @@ fn tangent_point(
     let r: f64 = cyl.radius();
     let u1: (f64, f64) = (axis_line.first_parameter(), axis_line.last_parameter());
     let u2: (f64, f64) = (c_edge_ref.first_parameter(), c_edge_ref.last_parameter());
-    let c_axis: Handle<dyn GeomCurve> = Handle::new(axis_line).cast();
+    let c_axis: Handle<dyn GeomCurve> = Handle::new(axis_line).into_upcast();
     let c1 = GeomAdaptorCurve::with_curve(&c_axis)?;
     let c2 = GeomAdaptorCurve::with_curve(&c_edge)?;
     let tol: f64 = precision::p_confusion();

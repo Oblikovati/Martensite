@@ -15,7 +15,7 @@ use martensite_tkg2d::geom2d_adaptor::Geom2dAdaptorCurve;
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Direction2, Point2};
 /// let line: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?)).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?)).into_upcast();
 /// let q = QualifiedCurve::new(&Geom2dAdaptorCurve::with_curve(&line)?, Position::Outside)?;
 /// assert!(q.is_outside());
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())

@@ -26,7 +26,7 @@ use martensite_tkmath::math::{FunctionSet, FunctionSetRoot, Vector};
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Direction2, Point2};
 /// let line: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, -1.0), Direction2::new(1.0, 0.0)?)).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(0.0, -1.0), Direction2::new(1.0, 0.0)?)).into_upcast();
 /// let q = unqualified(&Geom2dAdaptorCurve::with_range(&line, -5.0, 5.0)?)?;
 /// let circ = Circ2d3TanIter::curve_pnt_pnt(&q, Point2::new(-1.0, 0.0), Point2::new(1.0, 0.0), 0.0, 1e-9)?;
 /// assert!(circ.is_done());

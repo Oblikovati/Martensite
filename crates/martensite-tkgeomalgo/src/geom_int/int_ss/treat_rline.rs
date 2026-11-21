@@ -74,7 +74,7 @@ fn trimmed_arc(
     let tf: f64 = std_max(tf, c2d.first_parameter());
     let tl: f64 = std_min(tl, c2d.last_parameter());
     let trimmed: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dTrimmedCurve::new(&c2d, tf, tl, true, true)?).cast();
+        Handle::new(Geom2dTrimmedCurve::new(&c2d, tf, tl, true, true)?).into_upcast();
     Ok((trimmed, tf, tl))
 }
 

@@ -9,7 +9,7 @@ mod bisectors;
 pub use bisectors::{BCirc, BElips, BHyper, BLine, BParab};
 
 use martensite_tkernel::impl_transient_interface;
-use martensite_tkernel::standard::{Failure, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Transient};
 use martensite_tkmath::gp::{Circle2, Ellipse2, Hyperbola2, Line2, Parabola2, Point2};
 
 /// GccInt_IType: the kind of a bisecting locus; `IType::Cir as i32 == 1`.
@@ -46,7 +46,7 @@ fn not_implemented(member: &str) -> Failure {
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkgeomalgo::gcc_int::{BLine, Bisec, IType};
 /// use martensite_tkmath::gp::Line2;
-/// let bisector: Handle<dyn Bisec> = Handle::new(BLine::new(Line2::default())).cast();
+/// let bisector: Handle<dyn Bisec> = Handle::new(BLine::new(Line2::default())).into_upcast();
 /// assert_eq!(bisector.arc_type(), IType::Lin);
 /// assert!(bisector.circle().is_err());
 /// ```
@@ -78,4 +78,4 @@ pub trait Bisec: Transient {
         Err(not_implemented("Ellipse"))
     }
 }
-impl_transient_interface!(dyn Bisec, "GccInt_Bisec", StandardTransient);
+impl_transient_interface!(dyn Bisec, "GccInt_Bisec", dyn Transient);

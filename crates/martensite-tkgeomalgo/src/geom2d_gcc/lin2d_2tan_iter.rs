@@ -19,7 +19,7 @@ use martensite_tkmath::math::{Function, FunctionRoot, FunctionSet, FunctionSetRo
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::{Axis2d, Direction2, Point2};
 /// let axis = Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0)?);
-/// let circle: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 1.0, true)?).cast();
+/// let circle: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_axis(axis, 1.0, true)?).into_upcast();
 /// let q = unqualified(&Geom2dAdaptorCurve::with_curve(&circle)?)?;
 /// let lin = Lin2d2TanIter::through_point(&q, Point2::new(3.0, 0.0), 1.0, 1e-9)?;
 /// assert!(lin.is_done());
