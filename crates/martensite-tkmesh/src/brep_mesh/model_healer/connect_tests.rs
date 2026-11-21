@@ -8,7 +8,7 @@ fn samples(values: &[f64], orientation: Orientation) -> PCurveHandle {
         orientation,
         &Handle::default(),
     ))
-    .cast();
+    .into_upcast();
     for (index, x) in values.iter().enumerate() {
         curve.add_point(Point2::new(*x, 0.0), index as f64);
     }

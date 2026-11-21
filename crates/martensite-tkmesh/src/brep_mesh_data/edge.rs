@@ -8,7 +8,7 @@ use martensite_tkbrep::{brep::BRepTool, topods::Edge};
 use martensite_tkernel::{
     impl_transient,
     ncollection::BaseAllocator,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkg3d::top_abs::Orientation;
 struct EdgeFields {
@@ -20,26 +20,24 @@ struct EdgeFields {
 }
 /// Native `BRepMeshData_Edge`; `DiscreteEdge::new(&edge, &allocator)?`.
 pub struct DiscreteEdge {
-    transient: StandardTransient,
     shape: ShapeState,
     status: StatusOwner,
     allocator: MeshAllocator,
     fields: SharedState<EdgeFields>,
     pcurves: SharedState<ArenaVec<PCurveHandle, BaseAllocator>>,
 }
-impl_transient!(DiscreteEdge, "BRepMeshData_Edge", dyn MeshEdge, transient,
+impl_transient!(DiscreteEdge, "BRepMeshData_Edge", dyn MeshEdge,
     interfaces: [dyn MeshEdge, dyn TessellatedShape, dyn MeshShape]);
 mesh_tessellation_members!(DiscreteEdge);
 impl DiscreteEdge {
     /// Read topology flags and create the empty 3D curve; `DiscreteEdge::new(&edge, &allocator)?`.
     pub fn new(edge: &Edge, allocator: &MeshAllocator) -> Result<Self, Failure> {
         Ok(Self {
-            transient: StandardTransient::default(),
             shape: ShapeState::new(edge),
             status: StatusOwner::default(),
             allocator: allocator.clone(),
             fields: SharedState::new(EdgeFields {
-                curve: Handle::new(DiscreteCurve::new(allocator)).cast(),
+                curve: Handle::new(DiscreteCurve::new(allocator)).into_upcast(),
                 angular: f64::MAX,
                 same_param: BRepTool::same_parameter(edge)?,
                 same_range: BRepTool::same_range(edge)?,
@@ -58,7 +56,7 @@ impl MeshEdge for DiscreteEdge {
     }
     fn add_pcurve(&self, face: FacePtr, orientation: Orientation) -> PCurveHandle {
         let pcurve: PCurveHandle =
-            Handle::new(DiscretePCurve::new(face, orientation, &self.allocator)).cast();
+            Handle::new(DiscretePCurve::new(face, orientation, &self.allocator)).into_upcast();
         self.pcurves.write().push(pcurve.clone());
         pcurve
     }

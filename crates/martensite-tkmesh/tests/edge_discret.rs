@@ -95,12 +95,7 @@ fn endpoint_points_are_read_after_tessellator_callbacks() {
     let model = BRepMeshModelBuilder::new().perform(&fixtures::model_shape(4), &settings());
     let edge = model.get_edge(0).unwrap();
     let (first, last) = martensite_tkbrep::topexp::vertices(&edge.get_edge().unwrap(), false);
-    let callback = Handle::new(callbacks::MutatingEndpoints {
-        transient: Default::default(),
-        first,
-        last,
-    })
-    .cast();
+    let callback = Handle::new(callbacks::MutatingEndpoints { first, last }).into_upcast();
     BRepMeshEdgeDiscret::tessellate_3d(&edge, &callback, true).unwrap();
     assert_eq!(edge.get_curve().get_point(0).unwrap().x(), 7.0);
     assert_eq!(edge.get_curve().get_point(1).unwrap().x(), 14.0);

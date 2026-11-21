@@ -39,7 +39,8 @@ fn null_and_empty_shape_bounds_remain_distinct() {
 #[test]
 fn empty_wire_uses_configured_deflection() {
     let allocator = Handle::new(IncrementalAllocatorObject::default());
-    let wire: WireHandle = Handle::new(DiscreteWire::new(&Wire::default(), 0, &allocator)).cast();
+    let wire: WireHandle =
+        Handle::new(DiscreteWire::new(&Wire::default(), 0, &allocator)).into_upcast();
     let parameters = MeshParameters {
         deflection: 0.25,
         ..Default::default()

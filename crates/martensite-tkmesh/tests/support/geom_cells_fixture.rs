@@ -7,9 +7,11 @@ use martensite_tkg3d::geom::*;
 use martensite_tkmath::gp::{Axis1, Axis3, Direction3, Plane3, Point3};
 pub fn cells_surface(kind: i32) -> Handle<dyn GeomSurface> {
     match kind {
-        0 => Handle::new(GeomPlane::from_pln(Plane3::default())).cast(),
-        1 => Handle::new(GeomSphericalSurface::new(Axis3::default(), 2.0).unwrap()).cast(),
-        2 => Handle::new(GeomToroidalSurface::new(Axis3::default(), 3.0, 1.0).unwrap()).cast(),
+        0 => Handle::new(GeomPlane::from_pln(Plane3::default())).into_upcast(),
+        1 => Handle::new(GeomSphericalSurface::new(Axis3::default(), 2.0).unwrap()).into_upcast(),
+        2 => {
+            Handle::new(GeomToroidalSurface::new(Axis3::default(), 3.0, 1.0).unwrap()).into_upcast()
+        }
         3..=5 => spline_surface(kind),
         _ => swept_surface(kind),
     }
@@ -35,7 +37,7 @@ fn spline_surface(kind: i32) -> Handle<dyn GeomSurface> {
         }
     }
     if kind != 5 {
-        return Handle::new(GeomBezierSurface::new(&poles).unwrap()).cast();
+        return Handle::new(GeomBezierSurface::new(&poles).unwrap()).into_upcast();
     }
     let knots = two_values(0.0, 1.0);
     let mults = two_values(4, 4);
@@ -49,7 +51,7 @@ fn spline_surface(kind: i32) -> Handle<dyn GeomSurface> {
         )
         .unwrap(),
     )
-    .cast()
+    .into_upcast()
 }
 fn swept_surface(kind: i32) -> Handle<dyn GeomSurface> {
     let curve = if kind < 8 {
@@ -57,15 +59,15 @@ fn swept_surface(kind: i32) -> Handle<dyn GeomSurface> {
             Point3::new(2.0, 0.0, 0.0),
             Direction3::Z,
         )))
-        .cast()
+        .into_upcast()
     } else {
         spline_curve(if kind < 10 { 3 } else { 1 })
     };
     if kind % 2 == 0 {
         return Handle::new(GeomSurfaceOfLinearExtrusion::new(&curve, Direction3::Y).unwrap())
-            .cast();
+            .into_upcast();
     }
-    Handle::new(GeomSurfaceOfRevolution::new(&curve, Axis1::default()).unwrap()).cast()
+    Handle::new(GeomSurfaceOfRevolution::new(&curve, Axis1::default()).unwrap()).into_upcast()
 }
 fn spline_curve(degree: i32) -> Handle<dyn GeomCurve> {
     let mut poles = Array1::with_bounds(1, degree + 1).unwrap();
@@ -82,7 +84,7 @@ fn spline_curve(degree: i32) -> Handle<dyn GeomCurve> {
         )
         .unwrap(),
     )
-    .cast()
+    .into_upcast()
 }
 fn two_values<T: Default + Clone>(first: T, last: T) -> Array1<'static, T> {
     let mut values = Array1::with_bounds(1, 2).unwrap();
