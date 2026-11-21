@@ -13,7 +13,7 @@ use crate::v3d::V3dViewer;
 use martensite_tkernel::ncollection::Vec2;
 use martensite_tkernel::standard::dump::DumpStream;
 use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient, Transient, WeakHandle,
+    Failure, Handle, HandleReference, SharedState, Transient, WeakHandle,
 };
 use martensite_tkmath::toploc::Location;
 use martensite_tkservice::aspect::{AspectVKeyFlags, AspectVKeyMouse};
@@ -350,10 +350,9 @@ impl<T: SelectMgrEntityOwnerSource + ?Sized> SelectMgrEntityOwnerMembers for T {
 ///
 /// Example: `let owner = SelectMgrEntityOwner::new(0); owner.set_priority(3);`.
 pub struct SelectMgrEntityOwner {
-    transient: StandardTransient,
     base: SelectMgrEntityOwnerBase,
 }
-martensite_tkernel::impl_transient!(SelectMgrEntityOwner, "SelectMgrEntityOwner", StandardTransient, transient,
+martensite_tkernel::impl_transient!(SelectMgrEntityOwner, "SelectMgrEntityOwner", dyn martensite_tkernel::standard::Transient,
     interfaces: [dyn SelectMgrEntityOwnerSource]);
 
 impl SelectMgrEntityOwnerSource for SelectMgrEntityOwner {
@@ -366,7 +365,6 @@ impl SelectMgrEntityOwner {
     /// An owner of `selectable` (null for none); the bound handle.
     fn bound(selectable: &Handle<dyn SelectMgrSelectableObject>, priority: i32) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: SelectMgrEntityOwnerBase::new(selectable, priority),
         });
         select_mgr_entity_owner_bind(&owner.clone().cast());

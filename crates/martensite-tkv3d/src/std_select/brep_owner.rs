@@ -2,7 +2,7 @@
 use super::{StdSelectShapeFields, StdSelectShapeRef, StdSelectShapeSource};
 use crate::select_mgr::*;
 use martensite_tkbrep::topods::Shape;
-use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Handle, SharedState};
 use std::sync::atomic::{AtomicI32, Ordering};
 /// Actual derived fields; `StdSelectBRepOwnerBase::new(&shape,&object,7,true)`.
 pub struct StdSelectBRepOwnerBase {
@@ -89,10 +89,9 @@ pub trait StdSelectBRepOwnerMembers: StdSelectBRepOwnerSource {
 impl<S: StdSelectBRepOwnerSource + ?Sized> StdSelectBRepOwnerMembers for S {}
 /// Concrete native BRep owner; `let owner=StdSelectBRepOwner::with_shape(&shape,7,true);`.
 pub struct StdSelectBRepOwner {
-    transient: StandardTransient,
     base: StdSelectBRepOwnerBase,
 }
-martensite_tkernel::impl_transient!(StdSelectBRepOwner,"StdSelectBRepOwner",dyn SelectMgrEntityOwnerSource,transient,interfaces:[dyn StdSelectBRepOwnerSource,dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(StdSelectBRepOwner,"StdSelectBRepOwner",dyn SelectMgrEntityOwnerSource,interfaces:[dyn StdSelectBRepOwnerSource,dyn SelectMgrEntityOwnerSource]);
 impl StdSelectBRepOwner {
     /// Construct a null-shape priority owner; `Self::new(5)`.
     pub fn new(priority: i32) -> Handle<Self> {
@@ -112,7 +111,6 @@ impl StdSelectBRepOwner {
         decomposed: bool,
     ) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: StdSelectBRepOwnerBase::new(shape, selectable, priority, decomposed),
         });
         select_mgr_entity_owner_bind(&object.cast());

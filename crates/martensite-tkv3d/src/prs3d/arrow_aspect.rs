@@ -3,7 +3,7 @@ use super::basic_aspect::{Prs3dBasicAspect, dump_graphic_aspects};
 use super::prs3d_invalid_angle;
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::aspect::AspectTypeOfLine;
 use martensite_tkservice::graphic3d::{Graphic3dAspectLine3d, Graphic3dAspectsMembers as _};
 use martensite_tkservice::json_dump::{class_begin, field_real};
@@ -24,11 +24,10 @@ struct Prs3dArrowShape {
 /// uninitialized; the implementation uses `true`, the value of the default constructor.
 /// Example: `let arrow = Prs3dArrowAspect::new?; arrow.set_angle(0.2)?;`.
 pub struct Prs3dArrowAspect {
-    transient: StandardTransient,
     arrow_aspect: SharedState<Handle<Graphic3dAspectLine3d>>,
     shape: SharedState<Prs3dArrowShape>,
 }
-martensite_tkernel::impl_transient!(Prs3dArrowAspect, "Prs3dArrowAspect", dyn Prs3dBasicAspect, transient,
+martensite_tkernel::impl_transient!(Prs3dArrowAspect, "Prs3dArrowAspect", dyn Prs3dBasicAspect,
     interfaces: [dyn Prs3dBasicAspect]);
 
 /// The white solid line of the arrow constructors.
@@ -57,7 +56,6 @@ impl Prs3dArrowAspect {
     }
     fn build(aspect: Handle<Graphic3dAspectLine3d>, angle: f64, length: f64) -> Self {
         Self {
-            transient: StandardTransient::default(),
             arrow_aspect: SharedState::new(aspect),
             shape: SharedState::new(Prs3dArrowShape {
                 angle,

@@ -13,15 +13,13 @@ struct SelectionLimitEvaluations {
     last: f64,
 }
 struct SelectionLimitCurveFake {
-    base: StandardTransient,
     scenario: usize,
     evaluations: SharedState<SelectionLimitEvaluations>,
 }
-martensite_tkernel::impl_transient!(SelectionLimitCurveFake,"SelectionLimitCurveProbe",dyn Adaptor3dCurve,base,interfaces:[dyn Adaptor3dCurve]);
+martensite_tkernel::impl_transient!(SelectionLimitCurveFake,"SelectionLimitCurveProbe",dyn Adaptor3dCurve,interfaces:[dyn Adaptor3dCurve]);
 impl SelectionLimitCurveFake {
     fn new(scenario: usize) -> Self {
         Self {
-            base: Default::default(),
             scenario,
             evaluations: Default::default(),
         }

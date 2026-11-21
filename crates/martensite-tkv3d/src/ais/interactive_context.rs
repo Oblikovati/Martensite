@@ -81,7 +81,6 @@ impl AisInteractiveContextFields {
 /// Interactive context; construction, detection and dynamic highlighting follow native behavior.
 /// Example: `let context=AisInteractiveContext::new(&viewer)?`.
 pub struct AisInteractiveContext {
-    transient: StandardTransient,
     pub(super) this: SharedState<WeakHandle<AisInteractiveContext>>,
     /// Protected state is shared by all handles; release its guard before callbacks.
     pub fields: SharedState<AisInteractiveContextFields>,
@@ -89,15 +88,13 @@ pub struct AisInteractiveContext {
 martensite_tkernel::impl_transient!(
     AisInteractiveContext,
     "AisInteractiveContext",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 impl AisInteractiveContext {
     /// Create all native managers, selection, filters, drawers and initial styles.
     /// Example: `AisInteractiveContext::new(&viewer)?`.
     pub fn new(viewer: &Handle<V3dViewer>) -> Result<Handle<Self>, Failure> {
         let context = Handle::new(Self {
-            transient: StandardTransient::default(),
             fields: SharedState::new(AisInteractiveContextFields::new(viewer)?),
             this: SharedState::default(),
         });

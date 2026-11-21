@@ -6,7 +6,7 @@ use crate::prs_mgr::{PrsMgrPresentableObjectMembers, prs_mgr_presentable_bind};
 use crate::select_mgr::{SelectMgrEntityOwnerSource, SelectMgrSelection};
 use martensite_tkbrep::topods::{Edge, Face, Shape};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkgeombase::gce::MakePln;
 use martensite_tkmath::elclib;
@@ -33,12 +33,11 @@ pub struct PrsDimLengthDimensionFields {
 
 /// `PrsDimLengthDimension`; `PrsDimLengthDimension::from_points(&a, &b, &plane)?`.
 pub struct PrsDimLengthDimension {
-    transient: StandardTransient,
     pub(super) base: PrsDimDimensionBase,
     /// The protected fields.
     pub fields: SharedState<PrsDimLengthDimensionFields>,
 }
-martensite_tkernel::impl_transient!(PrsDimLengthDimension, "PrsDimLengthDimension", dyn PrsDimDimensionSource, transient,
+martensite_tkernel::impl_transient!(PrsDimLengthDimension, "PrsDimLengthDimension", dyn PrsDimDimensionSource,
     interfaces: [dyn PrsDimDimensionSource, dyn crate::ais::AisInteractiveObject, dyn crate::select_mgr::SelectMgrSelectableObject, dyn crate::prs_mgr::PrsMgrPresentableObject]);
 prs_dim_dimension_impls!(PrsDimLengthDimension);
 
@@ -51,7 +50,6 @@ impl PrsDimLengthDimension {
     }
     fn new_unflown() -> Handle<Self> {
         let dimension = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: PrsDimDimensionBase::new(PrsDimKindOfDimension::Length),
             fields: SharedState::new(PrsDimLengthDimensionFields {
                 first_point: Point3::default(),

@@ -8,7 +8,7 @@ use super::{
 use crate::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeManager};
 use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::Point3;
 use martensite_tkservice::json_dump::{base_class, class_begin, field_dumped, field_integer};
 use std::io;
@@ -34,12 +34,11 @@ impl FacePoints {
 ///
 /// Example: `let face = Select3DSensitiveFace::new(&owner, &points, Select3DTypeOfSensitivity::Interior)?;`.
 pub struct Select3DSensitiveFace {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     sens_type: Select3DTypeOfSensitivity,
     face_points: FacePoints,
 }
-martensite_tkernel::impl_transient!(Select3DSensitiveFace, "Select3DSensitiveFace", dyn Select3DSensitiveEntity, transient,
+martensite_tkernel::impl_transient!(Select3DSensitiveFace, "Select3DSensitiveFace", dyn Select3DSensitiveEntity,
     interfaces: [dyn Select3DSensitiveEntity]);
 
 impl Select3DSensitiveFace {
@@ -59,7 +58,6 @@ impl Select3DSensitiveFace {
             )),
         };
         Ok(Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
             sens_type,
             face_points,

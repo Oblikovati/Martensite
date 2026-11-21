@@ -14,7 +14,7 @@ use martensite_tkbrep::topods::{self, Edge, Shape};
 use martensite_tkbrep::toptools::{IndexedDataMapOfShapeListOfShape, MapOfShape};
 use martensite_tkernel::ncollection::DataMap;
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkmath::geom_abs::Shape as Continuity;
 use martensite_tkservice::aspect::AspectTypeOfLine;
@@ -101,19 +101,15 @@ fn brep_shape(owner: &Handle<dyn SelectMgrEntityOwnerSource>) -> Option<Shape> {
 /// `AisTypeFilter`: accepts the interactive objects of a kind.
 /// Example: `AisTypeFilter::new(AisKindOfInteractive::Shape)`.
 pub struct AisTypeFilter {
-    transient: StandardTransient,
     kind: AisKindOfInteractive,
 }
-martensite_tkernel::impl_transient!(AisTypeFilter, "AisTypeFilter", dyn SelectMgrFilter, transient,
+martensite_tkernel::impl_transient!(AisTypeFilter, "AisTypeFilter", dyn SelectMgrFilter,
     interfaces: [dyn SelectMgrFilter]);
 
 impl AisTypeFilter {
     /// The filter of a kind; `AisTypeFilter::new(AisKindOfInteractive::Datum)`.
     pub fn new(kind: AisKindOfInteractive) -> Self {
-        Self {
-            transient: StandardTransient::default(),
-            kind,
-        }
+        Self { kind }
     }
     /// `myKind`: the accepted kind; `filter.kind()`.
     pub fn kind(&self) -> AisKindOfInteractive {
@@ -182,10 +178,9 @@ struct AttributeCriteria {
 /// `AisAttributeFilter`: accepts the interactive objects whose own color and width (when set
 /// on the object) are the filter's. Example: `AisAttributeFilter::with_color(NamedColor::RED)`.
 pub struct AisAttributeFilter {
-    transient: StandardTransient,
     criteria: SharedState<AttributeCriteria>,
 }
-martensite_tkernel::impl_transient!(AisAttributeFilter, "AisAttributeFilter", dyn SelectMgrFilter, transient,
+martensite_tkernel::impl_transient!(AisAttributeFilter, "AisAttributeFilter", dyn SelectMgrFilter,
     interfaces: [dyn SelectMgrFilter]);
 
 impl Default for AisAttributeFilter {
@@ -198,7 +193,6 @@ impl Default for AisAttributeFilter {
 impl AisAttributeFilter {
     fn with_criteria(color: NamedColor, width: f64, has_color: bool, has_width: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             criteria: SharedState::new(AttributeCriteria {
                 color,
                 width,
@@ -268,10 +262,9 @@ impl SelectMgrFilter for AisAttributeFilter {
 /// `AisExclusionFilter`: refuses (or, without the exclusion flag, accepts only) the kinds
 /// and signatures stored. Example: `AisExclusionFilter::new(true)`.
 pub struct AisExclusionFilter {
-    transient: StandardTransient,
     state: SharedState<ExclusionState>,
 }
-martensite_tkernel::impl_transient!(AisExclusionFilter, "AisExclusionFilter", dyn SelectMgrFilter, transient,
+martensite_tkernel::impl_transient!(AisExclusionFilter, "AisExclusionFilter", dyn SelectMgrFilter,
     interfaces: [dyn SelectMgrFilter]);
 
 struct ExclusionState {
@@ -284,7 +277,6 @@ impl AisExclusionFilter {
     /// Example: `AisExclusionFilter::new(true)`.
     pub fn new(exclusion_flag_on: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             state: SharedState::new(ExclusionState {
                 is_exclusion_flag_on: exclusion_flag_on,
                 stored_types: DataMap::default(),
@@ -442,10 +434,9 @@ impl SelectMgrFilter for AisExclusionFilter {
 /// Example: `let filter = AisBadEdgeFilter::default; filter.set_contour(1);`.
 #[derive(Default)]
 pub struct AisBadEdgeFilter {
-    transient: StandardTransient,
     state: SharedState<BadEdgeState>,
 }
-martensite_tkernel::impl_transient!(AisBadEdgeFilter, "AisBadEdgeFilter", dyn SelectMgrFilter, transient,
+martensite_tkernel::impl_transient!(AisBadEdgeFilter, "AisBadEdgeFilter", dyn SelectMgrFilter,
     interfaces: [dyn SelectMgrFilter]);
 
 #[derive(Default)]
@@ -503,10 +494,9 @@ impl SelectMgrFilter for AisBadEdgeFilter {
 /// `AisC0RegularityFilter`: accepts the edges of a shape shared by exactly two faces with a
 /// C0 continuity between them. Example: `AisC0RegularityFilter::new(&shape)?`.
 pub struct AisC0RegularityFilter {
-    transient: StandardTransient,
     map_of_edges: MapOfShape,
 }
-martensite_tkernel::impl_transient!(AisC0RegularityFilter, "AisC0RegularityFilter", dyn SelectMgrFilter, transient,
+martensite_tkernel::impl_transient!(AisC0RegularityFilter, "AisC0RegularityFilter", dyn SelectMgrFilter,
     interfaces: [dyn SelectMgrFilter]);
 
 impl AisC0RegularityFilter {
@@ -530,10 +520,7 @@ impl AisC0RegularityFilter {
                 map_of_edges.add(edge);
             }
         }
-        Ok(Self {
-            transient: StandardTransient::default(),
-            map_of_edges,
-        })
+        Ok(Self { map_of_edges })
     }
 }
 

@@ -46,10 +46,9 @@ martensite_tkernel::impl_transient_interface!(
 );
 /// Native base class with the inherited no-op frame hook; `AisBaseAnimationObject::new("move", &context, &object)`.
 pub struct AisBaseAnimationObject {
-    transient: StandardTransient,
     base: AisBaseAnimationObjectBase,
 }
-martensite_tkernel::impl_transient!(AisBaseAnimationObject,"AisBaseAnimationObject",dyn AisAnimationSource,transient,
+martensite_tkernel::impl_transient!(AisBaseAnimationObject,"AisBaseAnimationObject",dyn AisAnimationSource,
     interfaces:[dyn AisAnimationSource,dyn AisBaseAnimationObjectSource]);
 impl AisBaseAnimationObject {
     /// Expose native protected construction for derived atoms; `AisBaseAnimationObject::new("move", &context, &object)`.
@@ -59,7 +58,6 @@ impl AisBaseAnimationObject {
         object: &Handle<dyn AisInteractiveObject>,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: AisBaseAnimationObjectBase::new(name, context, object),
         }
     }

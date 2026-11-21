@@ -18,19 +18,15 @@ pub struct AisAnimationCameraFields {
 }
 /// Interpolate the live view camera without scheduling immediate redraws; `AisAnimationCamera::new("orbit", &view)`.
 pub struct AisAnimationCamera {
-    transient: StandardTransient,
     base: super::AisAnimationCameraBase,
 }
-martensite_tkernel::impl_transient!(AisAnimationCamera,"AisAnimationCamera",dyn AisAnimationSource,transient,
+martensite_tkernel::impl_transient!(AisAnimationCamera,"AisAnimationCamera",dyn AisAnimationSource,
     interfaces:[dyn super::AisAnimationCameraSource,dyn AisAnimationSource]);
 impl AisAnimationCamera {
     /// Construct a stopped animation with unspecified endpoints; `AisAnimationCamera::new("orbit", &view)`.
     pub fn new(name: impl Into<AsciiString>, view: &Handle<dyn V3dViewSource>) -> Self {
         let base = super::AisAnimationCameraBase::new(name, view);
-        Self {
-            transient: StandardTransient::default(),
-            base,
-        }
+        Self { base }
     }
 
     /// Explicit copied target; native View equivalence uses AisAnimationCameraMembers::target_view_ref.

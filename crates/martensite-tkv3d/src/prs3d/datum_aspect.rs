@@ -7,7 +7,7 @@ use super::{
 };
 use martensite_tkernel::quantity::{Color, NamedColor};
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::aspect::{AspectTypeOfFacingModel, AspectTypeOfLine, AspectTypeOfMarker};
 use martensite_tkservice::graphic3d::Graphic3dAspectsMembers as _;
 use martensite_tkservice::json_dump::{class_begin, field_integer};
@@ -29,12 +29,11 @@ struct Prs3dDatumState {
 ///
 /// Example: `let datum = Prs3dDatumAspect::new()?; datum.set_axis_length(10.0, 20.0, 30.0);`.
 pub struct Prs3dDatumAspect {
-    transient: StandardTransient,
     shaded_aspects: [Handle<Prs3dShadingAspect>; Prs3dDatumParts::NB],
     line_aspects: [Handle<Prs3dLineAspect>; Prs3dDatumParts::NB],
     state: SharedState<Prs3dDatumState>,
 }
-martensite_tkernel::impl_transient!(Prs3dDatumAspect, "Prs3dDatumAspect", dyn Prs3dBasicAspect, transient,
+martensite_tkernel::impl_transient!(Prs3dDatumAspect, "Prs3dDatumAspect", dyn Prs3dBasicAspect,
     interfaces: [dyn Prs3dBasicAspect]);
 
 /// The default axis length, the same as in the interactive context.
@@ -105,7 +104,6 @@ impl Prs3dDatumAspect {
             to_draw_arrows: true,
         };
         Ok(Self {
-            transient: StandardTransient::default(),
             shaded_aspects,
             line_aspects,
             state: SharedState::new(state),

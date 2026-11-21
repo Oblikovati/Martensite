@@ -28,18 +28,16 @@ pub struct AisTextLabelFields {
 }
 /// Interactive annotation with native text and selection placement; `AisTextLabel::new()`.
 pub struct AisTextLabel {
-    transient: StandardTransient,
     pub(super) base: AisInteractiveObjectBase,
     /// Shared native annotation fields.
     pub fields: SharedState<AisTextLabelFields>,
 }
-martensite_tkernel::impl_transient!(AisTextLabel,"AisTextLabel",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisTextLabel,"AisTextLabel",dyn AisInteractiveObject,
     interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisTextLabel {
     /// Create a yellow serif question-mark label in display mode zero; `AisTextLabel::new()`.
     pub fn new() -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             fields: SharedState::new(AisTextLabelFields {
                 formatter: Handle::default(),

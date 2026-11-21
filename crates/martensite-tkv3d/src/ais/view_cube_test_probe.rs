@@ -9,12 +9,11 @@ use martensite_tkernel::{
 use martensite_tkservice::{graphic3d::*, null_driver::NullGraphicDriver};
 use std::sync::atomic::{AtomicUsize, Ordering};
 pub(super) struct CubePresentationProbe {
-    transient: StandardTransient,
     pub display: AisViewCubePresentationBase,
     _context: Handle<AisInteractiveContext>,
     pub side_calls: AtomicUsize,
 }
-martensite_tkernel::impl_transient!(CubePresentationProbe,"CubePresentationProbe",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(CubePresentationProbe,"CubePresentationProbe",dyn AisInteractiveObject,
     interfaces:[dyn AisInteractiveObject,dyn PrsMgrPresentableObject,dyn SelectMgrSelectableObject]);
 impl CubePresentationProbe {
     pub fn new() -> Handle<Self> {
@@ -22,7 +21,6 @@ impl CubePresentationProbe {
             AisInteractiveContext::new(&V3dViewer::new(&NullGraphicDriver::new_handle()).unwrap())
                 .unwrap();
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             display: AisViewCubePresentationBase::new().unwrap(),
             _context: context.clone(),
             side_calls: AtomicUsize::new(0),

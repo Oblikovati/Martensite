@@ -6,7 +6,7 @@ use super::{
     PrsMgrDisplayStatus, PrsMgrPresentableObject, PrsMgrPresentableObjectMembers as _,
     PrsMgrPresentation,
 };
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient, WeakHandle};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, WeakHandle};
 use martensite_tkmath::toploc::Datum3;
 use martensite_tkservice::graphic3d::{
     Graphic3dDisplayPriority, Graphic3dStructureDisplay as _, Graphic3dStructureManager,
@@ -26,7 +26,6 @@ pub(crate) struct ImmediateState {
 ///
 /// Example: `let manager = PrsMgrPresentationManager::new(&viewer.structure_manager()); manager.display(&object, 0)?;`.
 pub struct PrsMgrPresentationManager {
-    transient: StandardTransient,
     structure_manager: Handle<Graphic3dStructureManager>,
     this: SharedState<WeakHandle<PrsMgrPresentationManager>>,
     pub(crate) immediate: SharedState<ImmediateState>,
@@ -34,8 +33,7 @@ pub struct PrsMgrPresentationManager {
 martensite_tkernel::impl_transient!(
     PrsMgrPresentationManager,
     "PrsMgrPresentationManager",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 
 /// The children of an object when it propagates its visual state, else none.
@@ -54,7 +52,6 @@ impl PrsMgrPresentationManager {
     /// Example: `PrsMgrPresentationManager::new(&viewer.structure_manager())`.
     pub fn new(structure_manager: &Handle<Graphic3dStructureManager>) -> Handle<Self> {
         let manager = Handle::new(Self {
-            transient: StandardTransient::default(),
             structure_manager: structure_manager.clone(),
             this: SharedState::new(WeakHandle::default()),
             immediate: SharedState::new(ImmediateState::default()),

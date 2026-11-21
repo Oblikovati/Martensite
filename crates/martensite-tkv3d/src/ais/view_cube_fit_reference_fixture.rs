@@ -4,19 +4,18 @@ use super::view_cube_animation_source_fixture::*;
 use crate::v3d::V3dViewSource;
 use crate::{prs_mgr::*, select_mgr::*, v3d::V3dView};
 use martensite_tkernel::standard::{
-    Failure, Handle, HandleFieldRef, HandleReference, SharedState, StandardTransient,
+    Failure, Handle, HandleFieldRef, HandleReference, SharedState,
 };
 use martensite_tkservice::graphic3d::*;
 use std::sync::Arc;
 pub(super) struct CubeFitReferenceProbe {
-    transient: StandardTransient,
     pub(super) base: AisViewCubeInteractionBase,
     pub(super) policy: usize,
     pub(super) trace: Arc<CubeTransportTrace>,
     pub(super) original_end: Handle<Graphic3dCamera>,
     pub(super) replacement: Handle<Graphic3dCamera>,
 }
-martensite_tkernel::impl_transient!(CubeFitReferenceProbe,"FitReferenceCube",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(CubeFitReferenceProbe,"FitReferenceCube",dyn AisInteractiveObject,
     interfaces:[dyn AisInteractiveObject,dyn AisViewCubeSource,dyn PrsMgrPresentableObject,dyn SelectMgrSelectableObject]);
 impl CubeFitReferenceProbe {
     pub(super) fn new(
@@ -28,7 +27,6 @@ impl CubeFitReferenceProbe {
         let original_end = base.fields.read().end.clone();
         let replacement = fit_reference_replacement_camera(view);
         let cube = Handle::new(Self {
-            transient: StandardTransient::default(),
             base,
             policy,
             trace: trace.clone(),

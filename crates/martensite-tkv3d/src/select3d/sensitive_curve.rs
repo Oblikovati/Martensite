@@ -4,7 +4,7 @@ use super::{
 };
 use crate::impl_select3d_poly;
 use crate::select_mgr::SelectMgrEntityOwnerSource;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::geom::GeomCurve;
 use martensite_tkmath::gp::Point3;
 
@@ -12,11 +12,10 @@ use martensite_tkmath::gp::Point3;
 ///
 /// Example: `let curve = Select3DSensitiveCurve::from_points(&owner, &points)?;`.
 pub struct Select3DSensitiveCurve {
-    transient: StandardTransient,
     /// The poly state.
     pub core: Select3DSensitivePolyCore,
 }
-martensite_tkernel::impl_transient!(Select3DSensitiveCurve, "Select3DSensitiveCurve", dyn super::Select3DSensitivePolySource, transient,
+martensite_tkernel::impl_transient!(Select3DSensitiveCurve, "Select3DSensitiveCurve", dyn super::Select3DSensitivePolySource,
     interfaces: [dyn Select3DSensitiveEntity, dyn super::Select3DSensitiveSet, dyn super::Select3DSensitivePolySource]);
 impl_select3d_poly!(Select3DSensitiveCurve, |curve: &Select3DSensitiveCurve| {
     let connected =
@@ -28,10 +27,7 @@ impl Select3DSensitiveCurve {
     /// A curve of a core, with the sensitivity factor 3.
     fn of(core: Select3DSensitivePolyCore) -> Self {
         core.entity.fields.write().sensitivity_factor = 3;
-        Self {
-            transient: StandardTransient::default(),
-            core,
-        }
+        Self { core }
     }
     /// `Select3DSensitiveCurve(owner, GeomCurve, nbPnts)`: `nb_pnts` evenly spaced points of
     /// the curve, with BVH. Example: `Select3DSensitiveCurve::from_curve(&owner, &*curve, 17)?`.

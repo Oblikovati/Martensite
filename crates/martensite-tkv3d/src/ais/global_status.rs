@@ -13,7 +13,6 @@ struct GlobalDisplayState {
 }
 /// Context status for one interactive object; `let status = AisGlobalStatus::new()`.
 pub struct AisGlobalStatus {
-    transient: StandardTransient,
     display: SharedState<GlobalDisplayState>,
     style: SharedState<Handle<Prs3dDrawer>>,
     modes: SharedState<List<i32>>,
@@ -21,14 +20,12 @@ pub struct AisGlobalStatus {
 martensite_tkernel::impl_transient!(
     AisGlobalStatus,
     "AisGlobalStatus",
-    StandardTransient,
-    transient
+    dyn martensite_tkernel::standard::Transient
 );
 impl AisGlobalStatus {
     /// Start with mode zero and no highlighting or selection modes; `AisGlobalStatus::new()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             display: SharedState::default(),
             style: SharedState::default(),
             modes: SharedState::default(),

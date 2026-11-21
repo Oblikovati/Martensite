@@ -3,7 +3,7 @@ use super::{
     AisColoredDrawerCompounds, colored_compound_reference_group::ColoredCompoundReferenceGroupFake,
 };
 use martensite_tkbrep::topods::Compound;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::{graphic3d::*, null_driver::NullGraphicDriver};
 use std::{
     fmt::Write,
@@ -108,7 +108,6 @@ pub(super) fn compound_reference_presentation(
     let owner = Handle::new(Graphic3dStructureManager::new(&driver).unwrap());
     let prs = Graphic3dStructure::new(&owner, &Handle::default()).unwrap();
     let wrapper = ColoredCompoundReferenceStructureFake {
-        transient: Default::default(),
         inner: prs.cstructure(),
         trace: Arc::clone(trace),
         _owner: owner,
@@ -117,12 +116,11 @@ pub(super) fn compound_reference_presentation(
     prs.cast()
 }
 struct ColoredCompoundReferenceStructureFake {
-    transient: StandardTransient,
     inner: Handle<dyn Graphic3dCStructure>,
     trace: Arc<ColoredCompoundGraphicsTrace>,
     _owner: Handle<Graphic3dStructureManager>,
 }
-martensite_tkernel::impl_transient!(ColoredCompoundReferenceStructureFake,"Martensite_ColoredCompoundReferenceStructure",StandardTransient,transient,interfaces:[dyn Graphic3dCStructure]);
+martensite_tkernel::impl_transient!(ColoredCompoundReferenceStructureFake,"Martensite_ColoredCompoundReferenceStructure",dyn martensite_tkernel::standard::Transient,interfaces:[dyn Graphic3dCStructure]);
 impl Graphic3dCStructure for ColoredCompoundReferenceStructureFake {
     fn cstructure_base(&self) -> &Graphic3dCStructureBase {
         let structure = &self.inner;

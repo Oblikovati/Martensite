@@ -4,12 +4,11 @@ use crate::{
     prs_mgr::PrsMgrPresentationManager, prs3d::Prs3dDrawer, select_mgr::*, v3d::V3dViewer,
 };
 use martensite_tkernel::standard::{
-    Failure, Handle, HandleReference, SharedState, StandardTransient, WeakHandle,
+    Failure, Handle, HandleReference, SharedState, WeakHandle,
     raise_native_failure,
 };
 use std::sync::atomic::{AtomicBool, Ordering};
 pub(super) struct ViewerManagerCallbackOwner {
-    transient: StandardTransient,
     base: SelectMgrEntityOwnerBase,
     context: WeakHandle<AisInteractiveContext>,
     replacement: WeakHandle<V3dViewer>,
@@ -18,7 +17,7 @@ pub(super) struct ViewerManagerCallbackOwner {
     armed: AtomicBool,
     pub records: SharedState<[i32; 8]>,
 }
-martensite_tkernel::impl_transient!(ViewerManagerCallbackOwner,"ViewerManagerCallbackOwner",dyn SelectMgrEntityOwnerSource,transient,
+martensite_tkernel::impl_transient!(ViewerManagerCallbackOwner,"ViewerManagerCallbackOwner",dyn SelectMgrEntityOwnerSource,
     interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl ViewerManagerCallbackOwner {
     pub(super) fn new(
@@ -28,7 +27,6 @@ impl ViewerManagerCallbackOwner {
         mode: i32,
     ) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: SelectMgrEntityOwnerBase::new(&Handle::default(), 0),
             context: context.downgrade(),
             replacement: replacement.downgrade(),

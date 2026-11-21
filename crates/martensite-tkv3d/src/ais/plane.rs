@@ -1,7 +1,7 @@
 //! Martensite AisPlane state and datum identity.
 use super::{AisInteractiveObject, AisInteractiveObjectBase, AisKindOfInteractive};
 use crate::{prs_mgr::*, select_mgr::*, select3d::Select3DTypeOfSensitivity};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::geom::{GeomAxis2Placement, GeomPlane};
 use martensite_tkmath::gp::Point3;
 /// Coordinate plane category; `AisTypeOfPlane::XYPlane`.
@@ -64,17 +64,15 @@ impl Default for AisPlaneFields {
 }
 /// A selectable planar datum; `AisPlane::new(&geometry, false)?`.
 pub struct AisPlane {
-    transient: StandardTransient,
     pub(super) base: AisInteractiveObjectBase,
     /// Native mutable state and cached geometry.
     pub fields: SharedState<AisPlaneFields>,
 }
-martensite_tkernel::impl_transient!(AisPlane,"AisPlane",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisPlane,"AisPlane",dyn AisInteractiveObject,
     interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisPlane {
     fn from_fields(fields: AisPlaneFields) -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             fields: SharedState::new(fields),
         });

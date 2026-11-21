@@ -3,7 +3,7 @@ use super::*;
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 use std::{
     fmt::Write,
@@ -13,19 +13,17 @@ use std::{
     },
 };
 pub(super) struct ColoredDispatchFake {
-    transient: StandardTransient,
     base: AisColoredShapeBase,
     pub prs: SharedState<Handle<PrsMgrPresentation>>,
     pub rows: Mutex<String>,
     pub failure: AtomicI32,
 }
-martensite_tkernel::impl_transient!(ColoredDispatchFake,"ColoredDispatchProbe",dyn AisColoredShapeSource,transient,
+martensite_tkernel::impl_transient!(ColoredDispatchFake,"ColoredDispatchProbe",dyn AisColoredShapeSource,
     interfaces:[dyn AisColoredShapeSource,dyn AisShapeSource,dyn AisInteractiveObject,
     dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl ColoredDispatchFake {
     pub fn new(shape: &Shape) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisColoredShapeBase::new(shape),
             prs: SharedState::default(),
             rows: Mutex::new(String::new()),

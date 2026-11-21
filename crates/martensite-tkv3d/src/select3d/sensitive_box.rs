@@ -7,7 +7,7 @@ use crate::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeMa
 use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::bnd::BoundingBox3;
 use martensite_tkmath::bvh::BvhBox;
 use martensite_tkmath::gp::{Point3, Xyz};
@@ -18,12 +18,11 @@ use std::io;
 ///
 /// Example: `let entity = Select3DSensitiveBox::from_bounds(&owner, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0);`.
 pub struct Select3DSensitiveBox {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     bounds: Select3DBndBox3d,
     center3d: Point3,
 }
-martensite_tkernel::impl_transient!(Select3DSensitiveBox, "Select3DSensitiveBox", dyn Select3DSensitiveEntity, transient,
+martensite_tkernel::impl_transient!(Select3DSensitiveBox, "Select3DSensitiveBox", dyn Select3DSensitiveEntity,
     interfaces: [dyn Select3DSensitiveEntity]);
 
 impl Select3DSensitiveBox {
@@ -48,7 +47,6 @@ impl Select3DSensitiveBox {
         z_max: f64,
     ) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
             bounds: BvhBox::from_corners(
                 Vec3::new(x_min, y_min, z_min),

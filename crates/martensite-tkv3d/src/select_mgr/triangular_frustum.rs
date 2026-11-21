@@ -2,7 +2,7 @@
 use super::{
     SelectMgrBaseFrustum, SelectMgrBaseFrustumBase, SelectMgrBaseIntersector, SelectMgrFrustumCore,
 };
-use martensite_tkernel::standard::{SharedState, StandardTransient};
+use martensite_tkernel::standard::SharedState;
 use martensite_tkmath::gp::Point2;
 
 /// The three input pixels used when rebuilding a triangular selecting volume.
@@ -14,7 +14,6 @@ pub struct SelectMgrSelectionTriangle {
 
 /// One triangular part of a polyline selector, composed with the native frustum state.
 pub struct SelectMgrTriangularFrustum {
-    transient: StandardTransient,
     /// Inherited camera, builder and tolerance; `volume.base.window_size()`.
     pub base: SelectMgrBaseFrustumBase,
     /// Protected template geometry; `volume.frustum_core.read().vertices()`.
@@ -23,7 +22,7 @@ pub struct SelectMgrTriangularFrustum {
     pub selection_triangle: SharedState<SelectMgrSelectionTriangle>,
 }
 martensite_tkernel::impl_transient!(SelectMgrTriangularFrustum, "SelectMgrTriangularFrustum",
-    dyn SelectMgrBaseFrustum, transient, interfaces: [dyn SelectMgrBaseFrustum, dyn SelectMgrBaseIntersector]);
+    dyn SelectMgrBaseFrustum, interfaces: [dyn SelectMgrBaseFrustum, dyn SelectMgrBaseIntersector]);
 
 impl Default for SelectMgrTriangularFrustum {
     fn default() -> Self {
@@ -44,7 +43,6 @@ impl SelectMgrTriangularFrustum {
     /// Create the empty volume used by a frustum set; `SelectMgrTriangularFrustum::new()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: SelectMgrBaseFrustumBase::default(),
             frustum_core: SharedState::new(SelectMgrFrustumCore::new()),
             selection_triangle: SharedState::new(SelectMgrSelectionTriangle::default()),

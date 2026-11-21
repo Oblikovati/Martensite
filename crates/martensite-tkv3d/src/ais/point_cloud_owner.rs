@@ -57,15 +57,13 @@ martensite_tkernel::impl_transient_interface!(
 );
 /// Selected/detected point indices are zero-based; `AisPointCloudOwner::new(&cloud.cast())`.
 pub struct AisPointCloudOwner {
-    transient: StandardTransient,
     base: AisPointCloudOwnerBase,
 }
-martensite_tkernel::impl_transient!(AisPointCloudOwner,"AisPointCloudOwner",dyn SelectMgrEntityOwnerSource,transient,interfaces:[dyn AisPointCloudOwnerSource,dyn SelectMgrEntityOwnerSource]);
+martensite_tkernel::impl_transient!(AisPointCloudOwner,"AisPointCloudOwner",dyn SelectMgrEntityOwnerSource,interfaces:[dyn AisPointCloudOwnerSource,dyn SelectMgrEntityOwnerSource]);
 impl AisPointCloudOwner {
     /// Bind an owner with priority five and independent maps; `AisPointCloudOwner::new(&cloud.cast())`.
     pub fn new(origin: &Handle<dyn AisPointCloudSource>) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisPointCloudOwnerBase::new(origin),
         });
         select_mgr_entity_owner_bind(&owner.cast());

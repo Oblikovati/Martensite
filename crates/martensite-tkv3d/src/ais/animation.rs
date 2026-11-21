@@ -125,16 +125,14 @@ impl martensite_tkernel::standard::RuntimeTyped for dyn AisAnimationSource {
 
 /// Native concrete animation container; `Handle::new(AisAnimation::new("timeline"))`.
 pub struct AisAnimation {
-    transient: StandardTransient,
     base: AisAnimationBase,
 }
-martensite_tkernel::impl_transient!(AisAnimation,"AisAnimation",StandardTransient,transient,
+martensite_tkernel::impl_transient!(AisAnimation,"AisAnimation",dyn martensite_tkernel::standard::Transient,
     interfaces:[dyn AisAnimationSource]);
 impl AisAnimation {
     /// Construct an empty named timeline; `AisAnimation::new("timeline")`.
     pub fn new(name: impl Into<AsciiString>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: AisAnimationBase::new(name),
         }
     }

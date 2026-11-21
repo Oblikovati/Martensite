@@ -84,7 +84,6 @@ macro_rules! composition_filter {
         #[doc = $doc]
         #[derive(Default)]
         pub struct $name {
-            transient: StandardTransient,
             base: SelectMgrCompositionFilterBase,
         }
         martensite_tkernel::impl_transient!($name, $native, dyn SelectMgrCompositionFilter, transient,
@@ -133,19 +132,17 @@ pub type SelectMgrDisabledObjects = Shared<SharedState<BTreeSet<usize>>>;
 /// `SelectMgrAndOrFilter`: the stored filters combined by AND or OR, refusing the disabled
 /// objects. Example: `SelectMgrAndOrFilter::new(SelectMgrFilterType::Or)`.
 pub struct SelectMgrAndOrFilter {
-    transient: StandardTransient,
     base: SelectMgrCompositionFilterBase,
     disabled_objects: SharedState<Handle<SelectMgrDisabledObjects>>,
     filter_type: SharedState<SelectMgrFilterType>,
 }
-martensite_tkernel::impl_transient!(SelectMgrAndOrFilter, "SelectMgrAndOrFilter", dyn SelectMgrCompositionFilter, transient,
+martensite_tkernel::impl_transient!(SelectMgrAndOrFilter, "SelectMgrAndOrFilter", dyn SelectMgrCompositionFilter,
     interfaces: [dyn SelectMgrCompositionFilter, dyn SelectMgrFilter]);
 
 impl SelectMgrAndOrFilter {
     /// A filter of a type without disabled objects; `SelectMgrAndOrFilter::new(SelectMgrFilterType::And)`.
     pub fn new(filter_type: SelectMgrFilterType) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: SelectMgrCompositionFilterBase::default(),
             disabled_objects: SharedState::new(Handle::default()),
             filter_type: SharedState::new(filter_type),

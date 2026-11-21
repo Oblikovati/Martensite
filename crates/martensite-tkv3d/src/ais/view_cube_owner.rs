@@ -8,12 +8,11 @@ use martensite_tkernel::{
 use martensite_tkservice::aspect::{AspectVKeyFlags, AspectVKeyMouse};
 /// Owner identity and orientation; `owner.main_orientation()`.
 pub struct AisViewCubeOwner {
-    transient: StandardTransient,
     base: SelectMgrEntityOwnerBase,
     /// Native protected orientation, retained for picking and camera dispatch.
     pub orientation: SharedState<V3dTypeOfOrientation>,
 }
-martensite_tkernel::impl_transient!(AisViewCubeOwner,"AisViewCubeOwner",dyn SelectMgrEntityOwnerSource,transient,
+martensite_tkernel::impl_transient!(AisViewCubeOwner,"AisViewCubeOwner",dyn SelectMgrEntityOwnerSource,
     interfaces:[dyn SelectMgrEntityOwnerSource]);
 impl AisViewCubeOwner {
     /// Own a part with native priority five; `AisViewCubeOwner::new(&cube,orientation,5)`.
@@ -31,7 +30,6 @@ impl AisViewCubeOwner {
         priority: i32,
     ) -> Handle<Self> {
         let owner = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: SelectMgrEntityOwnerBase::new(&cube.cast(), priority),
             orientation: SharedState::new(orientation),
         });

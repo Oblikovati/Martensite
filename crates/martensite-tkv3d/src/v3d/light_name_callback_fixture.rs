@@ -84,10 +84,9 @@ impl ObservedRetainedView {
     }
 }
 pub(super) struct CallbackObservedView {
-    transient: StandardTransient,
     retained: ObservedRetainedView,
 }
-martensite_tkernel::impl_transient!(CallbackObservedView,"Martensite_CallbackObservedView",StandardTransient,transient,
+martensite_tkernel::impl_transient!(CallbackObservedView,"Martensite_CallbackObservedView",dyn martensite_tkernel::standard::Transient,
     interfaces:[dyn Graphic3dCView,dyn Graphic3dDataStructureManager]);
 impl CallbackObservedView {
     /// Register a real retained backend with a byte observer; `CallbackObservedView::create(manager,control)`.
@@ -98,7 +97,6 @@ impl CallbackObservedView {
         let base = Graphic3dRetainedView::new(manager, &[]).unwrap();
         base.set_fbo(&Handle::new(StandardTransient::default()));
         let view = Handle::new(Self {
-            transient: Default::default(),
             retained: ObservedRetainedView {
                 base,
                 control: control.clone(),

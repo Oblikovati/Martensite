@@ -4,24 +4,22 @@ use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::quantity::Color;
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::graphic3d::Graphic3dMaterialAspect;
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 /// Genuine native parent interface; `let parent: Handle<AisColoredShapeParent> = object.cast();`.
 pub type AisColoredShapeParent = dyn AisShapeSource;
 /// Native per-subshape appearance owner; `let object=AisColoredShape::new(&shape);`.
 pub struct AisColoredShape {
-    transient: StandardTransient,
     base: AisColoredShapeBase,
 }
-martensite_tkernel::impl_transient!(AisColoredShape,"AisColoredShape",dyn AisShapeSource,transient,
+martensite_tkernel::impl_transient!(AisColoredShape,"AisColoredShape",dyn AisShapeSource,
     interfaces:[dyn AisColoredShapeSource,dyn AisShapeSource,dyn AisInteractiveObject,
     dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisColoredShape {
     /// Retain topology and initialize native custom-map/line aliases; `AisColoredShape::new(&shape)`.
     pub fn new(shape: &Shape) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisColoredShapeBase::new(shape),
         });
         prs_mgr_presentable_bind(&object.clone().cast());

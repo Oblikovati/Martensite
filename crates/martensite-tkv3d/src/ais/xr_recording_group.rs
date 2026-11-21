@@ -30,13 +30,12 @@ struct XrRecordedGroupState {
     clears: i32,
 }
 pub(crate) struct XrRecordingGroup {
-    transient: StandardTransient,
     inner: NullGroup,
     events: Arc<XrRecordingEvents>,
     index: i32,
     recorded: SharedState<XrRecordedGroupState>,
 }
-martensite_tkernel::impl_transient!(XrRecordingGroup,"Martensite_XrRecordingGroup",StandardTransient,transient,interfaces:[dyn Graphic3dGroup]);
+martensite_tkernel::impl_transient!(XrRecordingGroup,"Martensite_XrRecordingGroup",dyn martensite_tkernel::standard::Transient,interfaces:[dyn Graphic3dGroup]);
 impl XrRecordingGroup {
     pub fn new(
         structure: &Handle<dyn Graphic3dStructureSource>,
@@ -45,7 +44,6 @@ impl XrRecordingGroup {
     ) -> Self {
         // Keep the real group bounds and parent structure link; no canned geometry is returned.
         Self {
-            transient: StandardTransient::default(),
             inner: NullGroup::new(structure),
             events,
             index,

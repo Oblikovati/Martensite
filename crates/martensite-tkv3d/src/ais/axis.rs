@@ -37,12 +37,11 @@ pub(super) struct AxisGeometry {
 }
 /// Interactive line, coordinate axis or ray; `AisAxis::new(&line, units)?`.
 pub struct AisAxis {
-    transient: StandardTransient,
     pub(super) base: AisInteractiveObjectBase,
     pub(super) geometry: SharedState<AxisGeometry>,
     pub(super) units: Arc<SharedState<UnitsApi>>,
 }
-martensite_tkernel::impl_transient!(AisAxis,"AisAxis",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisAxis,"AisAxis",dyn AisInteractiveObject,
     interfaces:[dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisAxis {
     /// Construct an infinite datum and snapshot its selection ends; `AisAxis::new(&line, units)?`.
@@ -85,7 +84,6 @@ impl AisAxis {
     }
     fn allocate(units: Arc<SharedState<UnitsApi>>) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: AisInteractiveObjectBase::new(PrsMgrTypeOfPresentation3d::AllView),
             geometry: SharedState::default(),
             units,

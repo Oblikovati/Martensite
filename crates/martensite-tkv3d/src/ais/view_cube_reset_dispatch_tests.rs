@@ -2,16 +2,15 @@
 use super::{view_cube_interaction_fixture::widget_rows, *};
 use crate::{prs_mgr::*, select_mgr::*};
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 use std::sync::atomic::{AtomicUsize, Ordering};
 struct CubeResetOverrides {
-    transient: StandardTransient,
     base: AisViewCubeInteractionBase,
     attributes: AtomicUsize,
     highlights: AtomicUsize,
 }
-martensite_tkernel::impl_transient!(CubeResetOverrides,"CubeResetOverrides",dyn AisInteractiveObject,transient,interfaces:[dyn AisInteractiveObject,dyn AisViewCubeSource,dyn PrsMgrPresentableObject,dyn SelectMgrSelectableObject]);
+martensite_tkernel::impl_transient!(CubeResetOverrides,"CubeResetOverrides",dyn AisInteractiveObject,interfaces:[dyn AisInteractiveObject,dyn AisViewCubeSource,dyn PrsMgrPresentableObject,dyn SelectMgrSelectableObject]);
 impl AisInteractiveObject for CubeResetOverrides {
     fn interactive_base(&self) -> &AisInteractiveObjectBase {
         &self.base.presentation.interactive
@@ -63,7 +62,6 @@ impl PrsMgrPresentableObject for CubeResetOverrides {
 #[test]
 fn native_reset_styles_dispatches_both_real_application_unset_overrides() {
     let cube = Handle::new(CubeResetOverrides {
-        transient: StandardTransient::default(),
         base: AisViewCubeInteractionBase::new().unwrap(),
         attributes: AtomicUsize::new(0),
         highlights: AtomicUsize::new(0),

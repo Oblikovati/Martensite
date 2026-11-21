@@ -9,7 +9,7 @@ use crate::select3d::{Select3DSensitiveGroup, Select3DSensitiveSegment};
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::topods::{Edge, Face, Shape, Vertex};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkgeombase::gce::{MakeCirc, MakePln, Root};
 use martensite_tkmath::elclib;
@@ -44,12 +44,11 @@ pub struct PrsDimAngleDimensionFields {
 
 /// `PrsDimAngleDimension`; `PrsDimAngleDimension::from_points(&a, &center, &b)?`.
 pub struct PrsDimAngleDimension {
-    transient: StandardTransient,
     pub(super) base: PrsDimDimensionBase,
     /// The protected fields.
     pub fields: SharedState<PrsDimAngleDimensionFields>,
 }
-martensite_tkernel::impl_transient!(PrsDimAngleDimension, "PrsDimAngleDimension", dyn PrsDimDimensionSource, transient,
+martensite_tkernel::impl_transient!(PrsDimAngleDimension, "PrsDimAngleDimension", dyn PrsDimDimensionSource,
     interfaces: [dyn PrsDimDimensionSource, dyn crate::ais::AisInteractiveObject, dyn crate::select_mgr::SelectMgrSelectableObject, dyn crate::prs_mgr::PrsMgrPresentableObject]);
 prs_dim_dimension_impls!(PrsDimAngleDimension);
 
@@ -67,7 +66,6 @@ fn is_same_line(first: &Point3, center: &Point3, second: &Point3) -> Result<bool
 impl PrsDimAngleDimension {
     fn create(setup: impl FnOnce(&Self) -> Result<(), Failure>) -> Result<Handle<Self>, Failure> {
         let dimension = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: PrsDimDimensionBase::new(PrsDimKindOfDimension::PlaneAngle),
             fields: SharedState::new(PrsDimAngleDimensionFields::default()),
         });

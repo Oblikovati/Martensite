@@ -3,7 +3,7 @@ use super::shape_reference::{StdSelectShapeFields, StdSelectShapeRef};
 use crate::{prs_mgr::*, prs3d::Prs3dDrawer, std_prs::*};
 use martensite_tkbrep::topods::{Shape, TopoDSShapeReadSource};
 use martensite_tkernel::standard::HandleReference;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkservice::graphic3d::Graphic3dStructureSource;
 /// Genuine derived state; `let base=StdSelectShapeBase::new(&shape,&drawer);`.
 pub struct StdSelectShapeBase {
@@ -62,15 +62,13 @@ pub trait StdSelectShapeMembers: StdSelectShapeSource {
 impl<S: StdSelectShapeSource + ?Sized> StdSelectShapeMembers for S {}
 /// Native highlight presentation object; `let object=StdSelectShape::new(&shape,&drawer);`.
 pub struct StdSelectShape {
-    transient: StandardTransient,
     base: StdSelectShapeBase,
 }
-martensite_tkernel::impl_transient!(StdSelectShape,"StdSelectShape",dyn PrsMgrPresentableObject,transient,interfaces:[dyn StdSelectShapeSource,dyn PrsMgrPresentableObject]);
+martensite_tkernel::impl_transient!(StdSelectShape,"StdSelectShape",dyn PrsMgrPresentableObject,interfaces:[dyn StdSelectShapeSource,dyn PrsMgrPresentableObject]);
 impl StdSelectShape {
     /// Allocate real geometry and register its inherited presentation identity; `Self::new(&shape,&drawer)`.
     pub fn new(shape: &Shape, drawer: &Handle<Prs3dDrawer>) -> Handle<Self> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: StdSelectShapeBase::new(shape, drawer),
         });
         prs_mgr_presentable_bind(&object.cast());

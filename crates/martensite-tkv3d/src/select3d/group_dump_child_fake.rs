@@ -6,7 +6,7 @@ use crate::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeMa
 use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkmath::{bvh::BvhBox, gp::Point3};
 use std::{
     io,
@@ -31,13 +31,12 @@ impl GroupDumpContext {
     }
 }
 pub(super) struct GroupDumpChildFake {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     context: Arc<GroupDumpContext>,
     identity: i32,
     invalid_bounds: bool,
 }
-martensite_tkernel::impl_transient!(GroupDumpChildFake,"Martensite_GroupDumpChild",dyn Select3DSensitiveEntity,transient,interfaces:[dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(GroupDumpChildFake,"Martensite_GroupDumpChild",dyn Select3DSensitiveEntity,interfaces:[dyn Select3DSensitiveEntity]);
 impl GroupDumpChildFake {
     pub(super) fn new(
         owner: &Handle<dyn SelectMgrEntityOwnerSource>,
@@ -47,7 +46,6 @@ impl GroupDumpChildFake {
     ) -> Self {
         // Virtual diagnostics are independent of stored sphere geometry and group membership.
         Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
             context,
             identity,

@@ -7,7 +7,7 @@ use super::{
 use crate::select_basics::{SelectBasicsPickResult, SelectBasicsSelectingVolumeManager};
 use crate::select_mgr::SelectMgrEntityOwnerSource;
 use martensite_tkernel::ncollection::Vec3;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::bvh::BvhBox;
 use martensite_tkmath::gp::Point3;
 use std::sync::{
@@ -49,12 +49,11 @@ impl GroupFaultContext {
     }
 }
 pub(super) struct GroupFaultChildFake {
-    transient: StandardTransient,
     base: Select3DSensitiveEntityBase,
     context: Arc<GroupFaultContext>,
     identity: i32,
 }
-martensite_tkernel::impl_transient!(GroupFaultChildFake, "GroupFaultChild", dyn Select3DSensitiveEntity, transient, interfaces:[dyn Select3DSensitiveEntity]);
+martensite_tkernel::impl_transient!(GroupFaultChildFake, "GroupFaultChild", dyn Select3DSensitiveEntity, interfaces:[dyn Select3DSensitiveEntity]);
 impl GroupFaultChildFake {
     pub(super) fn new(
         owner: &Handle<dyn SelectMgrEntityOwnerSource>,
@@ -63,7 +62,6 @@ impl GroupFaultChildFake {
     ) -> Self {
         // Each member has independent owner fields but records into the injected shared scenario.
         Self {
-            transient: StandardTransient::default(),
             base: Select3DSensitiveEntityBase::new(owner),
             context,
             identity,

@@ -3,23 +3,21 @@ use super::{
     color_scale_recording::record_scale_vertices,
     colored_compound_reference_graphics::ColoredCompoundGraphicsTrace,
 };
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::{Handle};
 use martensite_tkmath::gp::Axis2;
 use martensite_tkservice::{graphic3d::*, null_driver::NullGroup};
 use std::{fmt::Write, sync::Arc};
 pub(super) struct ColoredCompoundReferenceGroupFake {
-    transient: StandardTransient,
     inner: NullGroup,
     trace: Arc<ColoredCompoundGraphicsTrace>,
 }
-martensite_tkernel::impl_transient!(ColoredCompoundReferenceGroupFake,"Martensite_ColoredCompoundReferenceGroup",StandardTransient,transient,interfaces:[dyn Graphic3dGroup]);
+martensite_tkernel::impl_transient!(ColoredCompoundReferenceGroupFake,"Martensite_ColoredCompoundReferenceGroup",dyn martensite_tkernel::standard::Transient,interfaces:[dyn Graphic3dGroup]);
 impl ColoredCompoundReferenceGroupFake {
     pub(super) fn new(
         prs: &Handle<dyn Graphic3dStructureSource>,
         trace: &Arc<ColoredCompoundGraphicsTrace>,
     ) -> Self {
         Self {
-            transient: Default::default(),
             inner: NullGroup::new(prs),
             trace: Arc::clone(trace),
         }

@@ -114,18 +114,16 @@ martensite_tkernel::impl_transient_interface!(
 /// Concrete picking/highlight/camera widget; `AisViewCube::new?`.
 /// Whole-class equivalence remains partial while generated RTTI declarations and base aliases await complete proof.
 pub struct AisViewCube {
-    transient: StandardTransient,
     /// Native constructor and mutable interaction state.
     pub interaction: AisViewCubeInteractionBase,
 }
-martensite_tkernel::impl_transient!(AisViewCube,"AisViewCube",dyn AisInteractiveObject,transient,
+martensite_tkernel::impl_transient!(AisViewCube,"AisViewCube",dyn AisInteractiveObject,
     interfaces:[dyn AisViewCubeSource,dyn AisInteractiveObject,dyn SelectMgrSelectableObject,dyn PrsMgrPresentableObject]);
 impl AisViewCube {
     /// Create a stopped 0.5-second native widget; attach its context before picking/clicking.
     /// Example: `let cube=AisViewCube::new()?; context.display(&cube.cast(),false)?`.
     pub fn new() -> Result<Handle<Self>, Failure> {
         let object = Handle::new(Self {
-            transient: StandardTransient::default(),
             interaction: AisViewCubeInteractionBase::new()?,
         });
         prs_mgr_presentable_bind(&object.cast());
