@@ -1,5 +1,5 @@
 //! ShapeUpgradeFixSmallBezierCurves.
-use super::{FixSmallCurves, FixSmallCurvesData, SplitCurve};
+use super::{FixSmallCurves, FixSmallCurvesData};
 use crate::shape_upgrade::{UpgradeTool, UpgradeToolData};
 use crate::{shape_analysis::ShapeAnalysisEdge, shape_extend::ShapeExtendStatus};
 use martensite_tkbrep::{
