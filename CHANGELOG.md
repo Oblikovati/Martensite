@@ -78,6 +78,10 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- Replaced transient object ownership with typed Rust handles and static class descriptors. Callers use compile-time upcasts, checked downcasts and explicit weak references (#592).
+
+- Restricted toolkit internals with no production callers outside their crate. Use the public palette lookups to access named colors whose unused constants were removed (#591).
+
 - Replaced `AsciiString`'s shared allocation with owned bytes and removed `buffer_identity`. Borrow `as_bytes` or `as_bytes_with_nul` while the string is live, and copy the bytes when they must survive an edit (#588).
 
 ### Fixed

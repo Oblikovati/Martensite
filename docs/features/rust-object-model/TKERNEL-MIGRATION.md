@@ -88,3 +88,9 @@ Custom allocators declare `dyn AllocatorSource` in their implementation.
 short-lived owner while inspecting actual fields and releases it before the
 virtual body continues. Use `AllocatorInvocation::ref_count()` at a callback
 boundary when measuring owners independently of that capture.
+
+## Access the named-color palette
+
+Look up a palette entry with `NamedColor::from_name("GRAY68")` or
+`NamedColor::from_index(200)` when a constant has been removed. The palette
+keeps its names, aliases, and integer indices for persisted data.

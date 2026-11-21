@@ -158,7 +158,9 @@ include `tkbo` and `geometry-raster`. `tkv3d` uses it in tests.
    for geometry toolkits a release timing of a representative workload when one exists.
 
 Run crate-scoped checks during the migration. Before opening the integration PR,
-run the full workspace gate against `release/next` with `cargo xtask pr`.
+run `cargo xtask pr --base origin/release/next` for the full workspace gate.
+The [TKernel migration guide](TKERNEL-MIGRATION.md) shows how to convert class
+declarations, handles, and persistent objects.
 
 ## Risks and open points
 
