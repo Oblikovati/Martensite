@@ -17,16 +17,16 @@ use martensite_tkmath::toploc::Location;
 use support::{make_edge, make_vertex};
 
 fn plane() -> Handle<dyn GeomSurface> {
-    Handle::new(GeomPlane::new(Axis3::default())).into_cast()
+    Handle::new(GeomPlane::new(Axis3::default())).into_upcast()
 }
 
 fn x_line() -> Handle<dyn GeomCurve> {
-    Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_cast()
+    Handle::new(GeomLine::new(Axis1::new(Point3::default(), Direction3::X))).into_upcast()
 }
 
 fn u_line() -> Handle<dyn Geom2dCurve> {
     let axis = Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap());
-    Handle::new(Geom2dLine::new(axis)).into_cast()
+    Handle::new(Geom2dLine::new(axis)).into_upcast()
 }
 
 fn face_on_plane() -> Face {
@@ -52,7 +52,7 @@ fn triangulation() -> Handle<Triangulation> {
 }
 
 fn edge_tshape(edge: &Edge) -> Handle<BRepTEdge> {
-    edge.tshape().cast::<BRepTEdge>()
+    edge.tshape().downcast::<BRepTEdge>()
 }
 
 #[test]
@@ -190,8 +190,7 @@ fn internal_vertices_get_points_on_the_curves() {
         .unwrap();
     let points = inner
         .tshape()
-        .cast::<martensite_tkbrep::brep::BRepTVertex>()
-        .get()
+         .downcast_ref::<martensite_tkbrep::brep::BRepTVertex>()
         .unwrap()
         .points();
     assert!(points[0].get().unwrap().is_point_on_curve());
@@ -273,7 +272,7 @@ fn empty_copies_keep_geometry_but_not_polygons() {
         .update_edge_polygon3d(&edge, &polygon, &Location::default())
         .unwrap();
     let copy = edge.tshape().get().unwrap().empty_copy().unwrap();
-    let copy = copy.cast::<BRepTEdge>();
+    let copy = copy.into_downcast::<BRepTEdge>();
     let curves = copy.get().unwrap().curves();
     assert_eq!(curves.len(), 1);
     assert!(curves[0].get().unwrap().is_curve3d());

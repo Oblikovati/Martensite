@@ -66,7 +66,7 @@ fn BRepGraph_GeometryTest__SameDomainFaces_SharedSurfaceAcrossOwnedUses() {
     let mut graph = BRepGraph::new();
     graph.clear().unwrap();
     let surface: Handle<dyn GeomSurface> =
-        Handle::new(GeomPlane::from_pln(Plane3::default())).into_cast();
+        Handle::new(GeomPlane::from_pln(Plane3::default())).into_upcast();
     let first = geometry_shared_face(&mut graph, &surface);
     let second = geometry_shared_face(&mut graph, &surface);
     assert!(first.is_valid());

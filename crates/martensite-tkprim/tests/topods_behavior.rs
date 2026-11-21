@@ -307,7 +307,7 @@ fn hshape_and_alert_share_their_shape() {
 
 #[test]
 fn typed_shapes_convert_to_shapes() {
-    let tshape: Handle<dyn TShape> = Handle::new(TSolid::new()).into_cast();
+    let tshape: Handle<dyn TShape> = Handle::new(TSolid::new()).into_upcast();
     let mut solid = Solid::default();
     Builder.make_shape(&mut solid, &tshape);
     assert_eq!(solid.orientation(), Orientation::Forward);

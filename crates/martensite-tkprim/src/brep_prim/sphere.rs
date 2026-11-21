@@ -62,13 +62,13 @@ impl BRepPrimSphere {
         let normal = axes.y_direction().reversed();
         let frame = Axis2::with_x_direction(axes.location(), normal, axes.x_direction())?;
         let meridian: Handle<dyn GeomCurve> =
-            Handle::new(GeomCircle::new(frame, self.my_radius)?).cast();
+            Handle::new(GeomCircle::new(frame, self.my_radius)?).into_upcast();
         let x_axis = Axis2d::new(
             Point2::new(0.0, 0.0),
             Direction2::from_standard(StandardDirection2::X),
         );
         let pmeridian: Handle<dyn Geom2dCurve> =
-            Handle::new(Geom2dCircle::from_axis(x_axis, self.my_radius, true)?).cast();
+            Handle::new(Geom2dCircle::from_axis(x_axis, self.my_radius, true)?).into_upcast();
         self.revolution.set_meridian(meridian, pmeridian);
         Ok(())
     }
@@ -87,6 +87,6 @@ impl BRepPrimRevolutionDerived for BRepPrimSphere {
     /// the radius.
     fn derived_lateral_face(&self) -> Result<Face, Failure> {
         let surface = GeomSphericalSurface::new(self.revolution.axes().axis3(), self.my_radius)?;
-        lateral_face_on(&self.revolution, Handle::new(surface).cast())
+        lateral_face_on(&self.revolution, Handle::new(surface).into_upcast())
     }
 }

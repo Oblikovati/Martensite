@@ -97,7 +97,7 @@ fn BRepGraphTest__AddPCurve_NewPCurve_RetrievableViaFindPCurveCoEdgeId() {
     let aFaceId = FaceId::new(0);
 
     let anAxis = Axis2d::new(Point2::new(0.0, 0.0), Direction2::new(1.0, 0.0).unwrap());
-    let aCurve2d: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(anAxis)).into_cast();
+    let aCurve2d: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::new(anAxis)).into_upcast();
     let _ = myGraph.editor().co_edges().add_with_pcurve(
         anEdgeId,
         aFaceId,

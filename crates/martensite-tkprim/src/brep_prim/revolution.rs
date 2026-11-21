@@ -29,9 +29,9 @@ fn null_meridian(member: &str) -> Failure {
 /// use martensite_tkmath::gp::{Axis2, Direction2, Direction3, Point2, Point3};
 /// use martensite_tkprim::brep_prim::{BRepPrimOneAxis, BRepPrimRevolution};
 /// let meridian: Handle<dyn GeomCurve> =
-///     Handle::new(GeomLine::from_point(Point3::new(1.0, 0.0, 0.0), Direction3::new(0.0, 0.0, 1.0)?)).cast();
+///     Handle::new(GeomLine::from_point(Point3::new(1.0, 0.0, 0.0), Direction3::new(0.0, 0.0, 1.0)?)).into_upcast();
 /// let pmeridian: Handle<dyn Geom2dCurve> =
-///     Handle::new(Geom2dLine::from_point(Point2::new(1.0, 0.0), Direction2::new(0.0, 1.0)?)).cast();
+///     Handle::new(Geom2dLine::from_point(Point2::new(1.0, 0.0), Direction2::new(0.0, 1.0)?)).into_upcast();
 /// let mut cylinder = BRepPrimRevolution::new(Axis2::default(), 0.0, 2.0, meridian, pmeridian);
 /// assert!(cylinder.has_top()?);
 /// assert!(!cylinder.shell()?.is_null());
@@ -100,7 +100,7 @@ impl BRepPrimOneAxis for BRepPrimRevolution {
     /// meridian around the axis.
     fn make_empty_lateral_face(&self) -> Result<Face, Failure> {
         let surface = GeomSurfaceOfRevolution::new(&self.my_meridian, self.axes().axis())?;
-        lateral_face_on(self, Handle::new(surface).cast())
+        lateral_face_on(self, Handle::new(surface).into_upcast())
     }
 
     /// `MakeEmptyMeridianEdge(Ang)`: an edge on a copy of the meridian rotated by
@@ -110,7 +110,7 @@ impl BRepPrimOneAxis for BRepPrimRevolution {
             .my_meridian
             .get()
             .ok_or_else(|| null_meridian("MakeEmptyMeridianEdge"))?;
-        let copy: Handle<dyn GeomCurve> = meridian.copy()?.cast();
+        let copy: Handle<dyn GeomCurve> = meridian.copy()?.into_cast();
         let mut rotation = Transform3::default();
         rotation.set_rotation(self.axes().axis(), angle)?;
         if let Some(curve) = copy.get() {

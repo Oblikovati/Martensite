@@ -72,7 +72,7 @@ fn BRepAdaptor_CompCurve_Test__OCC29430_ArcBoundaryPoints() {
     let arcMaker =
         MakeArcOfCircle::from_parameters(Circle3::new(aFrame, 1.0).unwrap(), r45, r225, true)
             .unwrap();
-    let anArc: Handle<dyn GeomCurve> = arcMaker.value().unwrap().cast();
+    let anArc: Handle<dyn GeomCurve> = arcMaker.value().unwrap().into_upcast();
     let aWire = make_wire(&make_edge_on_whole_curve(&anArc));
 
     let aCurve = BRepAdaptorCompCurve::with_wire(&aWire, false).unwrap();
@@ -139,13 +139,13 @@ fn BRepAdaptor_CompCurve_Test__OCC30869_ReversedEdgeBoundaryPoints() {
         Direction3::new(0., 0., -1.).unwrap(),
     )
     .unwrap();
-    let aCircle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(anAx2, 1.0).unwrap()).cast();
+    let aCircle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::new(anAx2, 1.0).unwrap()).into_upcast();
 
     let t1 = PI / 2.0; // 1.5707963267949
     let t2 = 3.0 * PI / 2.0; // 4.71238898038469
 
     let aTrimmed: Handle<dyn GeomCurve> =
-        Handle::new(GeomTrimmedCurve::new(&aCircle, t1, t2, true, true).unwrap()).cast();
+        Handle::new(GeomTrimmedCurve::new(&aCircle, t1, t2, true, true).unwrap()).into_upcast();
     let mut anEdge = make_edge_on_whole_curve(&aTrimmed);
 
     // Reverse the edge, then wrap it in a wire

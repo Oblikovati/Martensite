@@ -115,9 +115,8 @@ fn BRepPrimAPI_MakeTorusTest__LateralFaceParameterization() {
     assert!(an_exp.more(), "No faces found");
     let a_face = topods::face(an_exp.current()).unwrap();
     let a_surface = BRepTool::surface(&a_face).unwrap();
-    let a_torus_surf = a_surface.cast::<GeomToroidalSurface>();
-    let a_torus_surf = a_torus_surf
-        .get()
+    let a_torus_surf = a_surface
+        .downcast_ref::<GeomToroidalSurface>()
         .expect("Lateral face is not a toroidal surface");
     assert!((a_torus_surf.major_radius() - r1).abs() <= 1e-10);
     assert!((a_torus_surf.minor_radius() - r2).abs() <= 1e-10);

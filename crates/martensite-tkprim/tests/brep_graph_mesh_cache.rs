@@ -18,7 +18,7 @@ use martensite_tkbrep::brep_graph::{
 use martensite_tkbrep::brep_graph_inc::populate::{self, Options};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::ProgressRange;
-use martensite_tkernel::standard::{Failure, Guid, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Guid, Handle};
 use martensite_tkmath::poly::{Polygon2D, Polygon3D, PolygonOnTriangulation, Triangulation};
 use std::sync::Mutex;
 use support::make_box;
@@ -196,11 +196,10 @@ fn the_effective_view_falls_back_to_nothing_without_meshes() {
 
 /// A driver that fills every dirty face with one triangulation and logs the calls.
 struct FillingDriver {
-    transient: StandardTransient,
     recipe: u64,
     calls: Mutex<Vec<(SlotId, usize)>>,
 }
-impl_transient!(FillingDriver, "FillingDriver", dyn CacheMeshDriver, transient,
+impl_transient!(FillingDriver, "FillingDriver", dyn CacheMeshDriver,
     interfaces: [dyn CacheMeshDriver]);
 
 impl CacheMeshDriver for FillingDriver {
@@ -231,7 +230,6 @@ impl CacheMeshDriver for FillingDriver {
 
 fn driver(recipe: u64) -> Handle<FillingDriver> {
     Handle::new(FillingDriver {
-        transient: StandardTransient::default(),
         recipe,
         calls: Mutex::new(Vec::new()),
     })
@@ -244,7 +242,7 @@ fn a_driver_refills_the_dirty_faces_once() {
     let range = ProgressRange::default();
     assert!(!cache.ensure(&mut graph, 0, &range).unwrap());
     let first = driver(4);
-    cache.register_driver(0, &first.cast::<dyn CacheMeshDriver>());
+    cache.register_driver(0, &first.upcast::<dyn CacheMeshDriver>());
     let solid = NodeId::from(SolidId::new(0));
     assert!(cache.needs(&graph, solid, 0).unwrap());
     assert!(cache.ensure(&mut graph, 0, &range).unwrap());
@@ -252,7 +250,7 @@ fn a_driver_refills_the_dirty_faces_once() {
     assert!(!cache.needs(&graph, solid, 0).unwrap());
     assert_eq!(*first.calls.lock().unwrap(), vec![(0, 6)]);
     let generation = cache.state(0).generation;
-    cache.register_driver(0, &driver(5).cast::<dyn CacheMeshDriver>());
+    cache.register_driver(0, &driver(5).into_upcast::<dyn CacheMeshDriver>());
     assert_eq!(cache.state(0).generation, generation + 1);
     assert!(cache.needs(&graph, solid, 0).unwrap());
     cache.unregister_driver(0);
@@ -263,7 +261,7 @@ fn a_driver_refills_the_dirty_faces_once() {
 fn fresh_meshes_copy_with_their_slots() {
     let source = box_graph();
     let cache = mesh(&source);
-    cache.register_driver(1, &driver(9).cast::<dyn CacheMeshDriver>());
+    cache.register_driver(1, &driver(9).into_upcast::<dyn CacheMeshDriver>());
     cache.set_active_display_slot(1);
     source
         .mesh()

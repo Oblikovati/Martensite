@@ -45,7 +45,7 @@ fn original_pole_line(x: f64, y: f64) -> GeomAdaptorCurve {
         Point3::new(x, y, -100.),
         Direction3::Z,
     )))
-    .into_cast();
+    .into_upcast();
     GeomAdaptorCurve::with_curve(&line).unwrap()
 }
 

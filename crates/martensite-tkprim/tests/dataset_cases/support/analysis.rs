@@ -42,9 +42,9 @@ pub fn gproject_errors(
     continuity: Continuity,
 ) -> GprojectErrors {
     let hcur: Handle<dyn Adaptor3dCurve> =
-        Handle::new(GeomAdaptorCurve::with_curve(curve).unwrap()).cast();
+        Handle::new(GeomAdaptorCurve::with_curve(curve).unwrap()).into_upcast();
     let hsur: Handle<dyn Adaptor3dSurface> =
-        Handle::new(GeomAdaptorSurface::with_surface(surface).unwrap()).cast();
+        Handle::new(GeomAdaptorSurface::with_surface(surface).unwrap()).into_upcast();
     let projector = CompProjectedCurve::with_tol3d(tol3d, &hsur, &hcur, -1.0).unwrap();
     projector.set_continuity(continuity);
     projector.set_proj3d(true);
@@ -114,7 +114,7 @@ pub fn mk2dcurve_by_index(edge: &Shape, index: i32) -> Handle<dyn Geom2dCurve> {
     let found = BRepTool::curve_on_surface_by_index(&edge, index).unwrap();
     assert!(!found.pcurve.is_null(), "edge has no 2d curve");
     let trimmed = Geom2dTrimmedCurve::new(&found.pcurve, found.first, found.last, true, true);
-    Handle::new(trimmed.unwrap()).cast()
+    Handle::new(trimmed.unwrap()).into_upcast()
 }
 
 /// `GeomliteTest_CurveCommands` `splitc12d c 0`: Geom2dConvert::CurveToBSplineCurve

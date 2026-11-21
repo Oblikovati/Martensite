@@ -164,7 +164,7 @@ impl BRepSweepNumLinearRegularSweep for BRepSweepTranslation {
             point,
             martensite_tkmath::gp::Direction3::from_vector(self.my_vec)?,
         );
-        let curve: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(line)).cast();
+        let curve: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(line)).into_upcast();
         let mut edge = Edge::default();
         self.brep_builder().make_edge_with_curve(
             &mut edge,

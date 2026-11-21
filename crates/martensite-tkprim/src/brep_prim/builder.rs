@@ -56,7 +56,8 @@ impl BRepPrimBuilder {
     /// `MakeFace(F, P)`: a face on a `Geom_Plane` of `plane`;
     /// `builder.make_face(&mut face, plane)?`.
     pub fn make_face(&self, face: &mut Face, plane: Plane3) -> Result<(), Failure> {
-        let surface: Handle<dyn GeomSurface> = Handle::new(GeomPlane::from_pln(plane)).cast();
+        let surface: Handle<dyn GeomSurface> =
+            Handle::new(GeomPlane::from_pln(plane)).into_upcast();
         self.my_builder
             .make_face_on_surface(face, &surface, precision::confusion())
     }
@@ -76,7 +77,7 @@ impl BRepPrimBuilder {
     /// `MakeEdge(E, L)`: an edge on a `Geom_Line` of `line`;
     /// `builder.make_edge_line(&mut edge, line)?`.
     pub fn make_edge_line(&self, edge: &mut Edge, line: Line3) -> Result<(), Failure> {
-        let curve: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(line)).cast();
+        let curve: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(line)).into_upcast();
         self.my_builder
             .make_edge_with_curve(edge, &curve, precision::confusion())
     }
@@ -84,7 +85,7 @@ impl BRepPrimBuilder {
     /// `MakeEdge(E, C)`: an edge on a `Geom_Circle` of `circle`;
     /// `builder.make_edge_circle(&mut edge, circle)?`.
     pub fn make_edge_circle(&self, edge: &mut Edge, circle: Circle3) -> Result<(), Failure> {
-        let curve: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(circle)).cast();
+        let curve: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(circle)).into_upcast();
         self.my_builder
             .make_edge_with_curve(edge, &curve, precision::confusion())
     }
@@ -92,7 +93,8 @@ impl BRepPrimBuilder {
     /// `SetPCurve(E, F, L)`: the p-curve of `edge` on `face` is a `Geom2d_Line`;
     /// `builder.set_pcurve_line(&edge, &face, line)?`.
     pub fn set_pcurve_line(&self, edge: &Edge, face: &Face, line: Line2) -> Result<(), Failure> {
-        let pcurve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(line)).cast();
+        let pcurve: Handle<dyn Geom2dCurve> =
+            Handle::new(Geom2dLine::from_lin2d(line)).into_upcast();
         self.my_builder
             .update_edge_pcurve_on_face(edge, &pcurve, face, precision::confusion())
     }
@@ -108,8 +110,9 @@ impl BRepPrimBuilder {
         last: Line2,
     ) -> Result<(), Failure> {
         let forward = Edge::unchecked(edge.oriented(Orientation::Forward));
-        let first: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(first)).cast();
-        let last: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(last)).cast();
+        let first: Handle<dyn Geom2dCurve> =
+            Handle::new(Geom2dLine::from_lin2d(first)).into_upcast();
+        let last: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_lin2d(last)).into_upcast();
         self.my_builder.update_edge_pcurves_on_face(
             &forward,
             (&first, &last),
@@ -128,7 +131,8 @@ impl BRepPrimBuilder {
         face: &Face,
         circle: Circle2,
     ) -> Result<(), Failure> {
-        let pcurve: Handle<dyn Geom2dCurve> = Handle::new(Geom2dCircle::from_circ2d(circle)).cast();
+        let pcurve: Handle<dyn Geom2dCurve> =
+            Handle::new(Geom2dCircle::from_circ2d(circle)).into_upcast();
         self.my_builder
             .update_edge_pcurve_on_face(edge, &pcurve, face, precision::confusion())
     }

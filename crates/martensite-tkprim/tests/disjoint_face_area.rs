@@ -38,7 +38,7 @@ fn copied_face_surface(face: &Face) -> Handle<dyn GeomSurface> {
         .unwrap()
         .transformed(location.transformation())
         .unwrap()
-        .cast()
+        .into_cast()
 }
 
 fn face_with_original_disjoint_wires() -> Face {
