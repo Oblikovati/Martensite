@@ -1,12 +1,12 @@
-//! Runtime descriptor and handle projection for `Cache`.
+//! Runtime descriptor and trait coercion for `Cache`.
 use martensite_tkernel::{
     ncollection::Array1,
-    standard::{Handle, RuntimeTyped, StandardTransient},
+    standard::{Handle, RuntimeTyped, Transient},
 };
 use martensite_tkmath::bsplslib::Cache;
 
 #[test]
-fn surface_cache_handle_projects_to_standard_transient() {
+fn surface_cache_handle_upcasts_to_standard_transient() {
     let knots: Array1<'static, f64> = flat_knots();
     let cache: Cache = Cache::new(1, false, &knots, 1, false, &knots, None).unwrap();
     let handle: Handle<Cache> = Handle::new(cache);
@@ -19,15 +19,19 @@ fn surface_cache_handle_projects_to_standard_transient() {
     assert!(handle.is_instance_name("BSplSLib_Cache"));
     assert!(handle.is_kind_name("Standard_Transient"));
     assert_eq!(handle.ref_count(), 1);
-    assert_base_projection(&handle);
+    assert_root_round_trip(&handle);
 }
 
-fn assert_base_projection(handle: &Handle<Cache>) {
-    let base: Handle<StandardTransient> = handle.cast();
+fn assert_root_round_trip(handle: &Handle<Cache>) {
+    let base = handle.upcast::<dyn Transient>();
     assert!(base.is_instance_name("BSplSLib_Cache"));
     assert!(base.is_kind_name("Standard_Transient"));
     assert_eq!(base.object_address(), handle.object_address());
+    assert!(std::ptr::eq(base.downcast_ref::<Cache>().unwrap(), handle.get().unwrap()));
     assert_eq!(base.ref_count(), 2);
+    let recovered = base.into_downcast::<Cache>();
+    assert!(recovered == *handle);
+    assert_eq!(recovered.ref_count(), 2);
 }
 
 fn flat_knots() -> Array1<'static, f64> {

@@ -1,10 +1,10 @@
 //! Handle-facing virtual interface of BvhObject, separate from value state.
 use super::BvhProperties;
-use martensite_tkernel::standard::{StandardTransient, Transient};
+use martensite_tkernel::standard::Transient;
 use std::sync::Arc;
 
 /// Shared-object operations, usable through a base handle.
-/// Example: `let base = set.cast::<dyn BvhObjectTransientSource>(); base.mark_dirty();`.
+/// Example: `let base = set.upcast::<dyn BvhObjectTransientSource>(); base.mark_dirty();`.
 pub trait BvhObjectTransientSource: Transient {
     /// Read shared geometric properties; `object.properties()`.
     fn properties(&self) -> Option<Arc<dyn BvhProperties>>;
@@ -18,5 +18,22 @@ pub trait BvhObjectTransientSource: Transient {
 martensite_tkernel::impl_transient_interface!(
     dyn BvhObjectTransientSource,
     "BVH_ObjectTransient",
-    StandardTransient
+    dyn Transient
 );
+
+#[cfg(test)]
+mod tests {
+    use super::BvhObjectTransientSource;
+    use martensite_tkernel::standard::{RuntimeType, RuntimeTyped, Transient};
+
+    #[test]
+    fn object_interface_keeps_its_public_class_name_and_parent() {
+        let descriptor = <dyn BvhObjectTransientSource>::static_type();
+        let persisted = RuntimeType::registered_by_name("BVH_ObjectTransient").unwrap();
+        assert!(std::ptr::eq(descriptor, persisted));
+        assert!(std::ptr::eq(
+            descriptor.parent().unwrap(),
+            <dyn Transient>::static_type()
+        ));
+    }
+}
