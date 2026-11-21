@@ -28,7 +28,7 @@ fn rev_axis(axis: &Axis3, second: martensite_tkmath::gp::Direction3) -> Result<A
 
 /// The circle of an iso, reversed when the p-curve runs against the axis.
 fn circle_curve(ci: Circle3, opposite: bool) -> Result<Handle<dyn GeomCurve>, Failure> {
-    let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(ci)).cast();
+    let circle: Handle<dyn GeomCurve> = Handle::new(GeomCircle::from_circ(ci)).into_upcast();
     if opposite {
         circle.get().ok_or_else(null_curve)?.reverse()?;
     }
@@ -37,7 +37,7 @@ fn circle_curve(ci: Circle3, opposite: bool) -> Result<Handle<dyn GeomCurve>, Fa
 
 /// The line of an iso, reversed when the p-curve runs against the axis.
 fn line_curve(l: Line3, opposite: bool) -> Result<Handle<dyn GeomCurve>, Failure> {
-    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(l)).cast();
+    let line: Handle<dyn GeomCurve> = Handle::new(GeomLine::from_lin(l)).into_upcast();
     if opposite {
         line.get().ok_or_else(null_curve)?.reverse()?;
     }

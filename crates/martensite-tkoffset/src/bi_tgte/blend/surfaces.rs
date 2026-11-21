@@ -47,7 +47,7 @@ fn support(or: &Shape) -> Result<Option<Support>, Failure> {
             let c = BRepTool::curve_with_location(&s.edge)?;
             s.curve = live(&c.curve, "curve")?
                 .transformed(c.location.transformation())?
-                .cast();
+                .into_cast();
         }
         ShapeEnum::Face => {
             s.face = topods::face(or)?;

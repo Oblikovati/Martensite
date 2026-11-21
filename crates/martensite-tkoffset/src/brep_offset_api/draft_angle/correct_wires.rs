@@ -548,7 +548,7 @@ impl BRepOffsetAPIDraftAngle {
                         let te = edge_tshape(&an_edge, "BRepOffsetAPI_DraftAngle::CorrectWires")?;
                         te.change_curves(|curves| -> Result<(), Failure> {
                             for idx in 0..curves.len() {
-                                let gc = curves[idx].clone().cast::<dyn BRepGCurve>();
+                                let gc = curves[idx].cast::<dyn BRepGCurve>();
                                 let Some(g) = gc.get() else { continue };
                                 if g.is_curve_on_surface_at(&the_surf, &l) {
                                     let pc: Handle<dyn Geom2dCurve> = g.pcurve()?;
@@ -561,7 +561,7 @@ impl BRepOffsetAPIDraftAngle {
                                             )
                                         })?
                                         .translated(offset)?
-                                        .cast();
+                                        .into_cast();
                                     g.set_pcurve(&pc)?;
                                     let item = curves.remove(idx);
                                     curves.push(item);

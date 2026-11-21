@@ -65,7 +65,7 @@ fn extent_edge(f: &Face, ef: &Face, e: &Edge) -> Result<Edge, Failure> {
     }
     extend_curve_to_point(&mut ext_c, Point3::new(pf2d.x(), pf2d.y(), 0.), 1, false)?;
     extend_curve_to_point(&mut ext_c, Point3::new(pl2d.x(), pl2d.y(), 0.), 1, true)?;
-    let cne2d = geom_api::to_2d(&ext_c.cast::<dyn GeomCurve>(), &xoy)?;
+    let cne2d = geom_api::to_2d(&ext_c.upcast::<dyn GeomCurve>(), &xoy)?;
     let builder = BRepBuilder::default();
     builder.make_edge(&mut ne)?;
     builder.update_edge_pcurve_on_face(&ne, &cne2d, ef, BRepTool::edge_tolerance(e)?)?;

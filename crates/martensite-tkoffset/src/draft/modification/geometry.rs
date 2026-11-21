@@ -84,7 +84,7 @@ fn rotated_surface(
     axe: Axis1,
     theta: f64,
 ) -> Result<Handle<dyn GeomSurface>, Failure> {
-    Ok(live(s, "surface")?.rotated(axe, theta)?.cast())
+    Ok(live(s, "surface")?.rotated(axe, theta)?.into_cast())
 }
 
 /// The drafted surface (the
@@ -101,7 +101,7 @@ pub(super) fn new_surface(
     let surface = live(s, "surface")?;
 
     if surface.is_instance_name("Geom_Plane") {
-        let pl = live(&s.clone().cast::<GeomPlane>(), "plane")?.pln();
+        let pl = live(&s.downcast::<GeomPlane>(), "plane")?.pln();
         if let Some((axe, theta)) = find_rotation(&pl, oris, direction, angle, neutral_plane)? {
             if theta.abs() > precision::angular() {
                 new_s = rotated_surface(s, axe, theta)?;
@@ -115,7 +115,7 @@ pub(super) fn new_surface(
             return Ok(new_s);
         }
         let cy: Cylinder3 =
-            live(&s.clone().cast::<GeomCylindricalSurface>(), "cylinder")?.cylinder()?;
+            live(&s.downcast::<GeomCylindricalSurface>(), "cylinder")?.cylinder()?;
         testdir = direction.dot(cy.axis().direction());
         if testdir.abs() <= 1. - precision::angular() {
             return Ok(new_s);
@@ -162,7 +162,7 @@ pub(super) fn new_surface(
                 alpha = -alpha;
             }
             let co = Cone3::new(axcone, alpha, rad)?;
-            new_s = Handle::new(GeomConicalSurface::from_cone(co)).cast();
+            new_s = Handle::new(GeomConicalSurface::from_cone(co)).into_upcast();
         } else {
             new_s = s.clone();
         }
@@ -172,7 +172,7 @@ pub(super) fn new_surface(
             return Ok(new_s);
         }
 
-        let co1: Cone3 = live(&s.clone().cast::<GeomConicalSurface>(), "cone")?.cone()?;
+        let co1: Cone3 = live(&s.downcast::<GeomConicalSurface>(), "cone")?.cone()?;
 
         testdir = direction.dot(co1.axis().direction());
         if testdir.abs() <= 1. - precision::angular() {
@@ -212,14 +212,14 @@ pub(super) fn new_surface(
                 new_s = s.clone();
             } else {
                 let co = Cone3::new(axcone, alpha, rad)?;
-                new_s = Handle::new(GeomConicalSurface::from_cone(co)).cast();
+                new_s = Handle::new(GeomConicalSurface::from_cone(co)).into_upcast();
             }
         } else {
             new_s = Handle::new(GeomCylindricalSurface::from_cylinder(Cylinder3::new(
                 axcone,
                 i2s.circle(1)?.radius(),
             )?))
-            .cast();
+            .into_upcast();
         }
     }
     Ok(new_s)
@@ -240,10 +240,10 @@ pub(super) fn new_curve(
     let surface = live(s, "surface")?;
 
     if surface.is_instance_name("Geom_Plane") {
-        let pl = live(&s.clone().cast::<GeomPlane>(), "plane")?.pln();
+        let pl = live(&s.downcast::<GeomPlane>(), "plane")?.pln();
         if let Some((axe, theta)) = find_rotation(&pl, oris, direction, angle, neutral_plane)? {
             if theta.abs() > precision::angular() {
-                new_c = live(c, "curve")?.rotated(axe, theta)?.cast();
+                new_c = live(c, "curve")?.rotated(axe, theta)?.into_cast();
             } else {
                 new_c = c.clone();
             }
@@ -255,16 +255,16 @@ pub(super) fn new_curve(
         return Ok(new_c);
     }
 
-    let lin: Line3 = live(&c.clone().cast::<GeomLine>(), "line")?.lin();
+    let lin: Line3 = live(&c.downcast::<GeomLine>(), "line")?.lin();
     // The reference normal stays the default direction on other surfaces.
     let mut norm = Direction3::default();
     if surface.is_instance_name("Geom_CylindricalSurface") {
-        let cy = live(&s.clone().cast::<GeomCylindricalSurface>(), "cylinder")?.cylinder()?;
+        let cy = live(&s.downcast::<GeomCylindricalSurface>(), "cylinder")?.cylinder()?;
         let (u, v) = elslib::cylinder_parameters(cy.position(), cy.radius(), lin.location());
         let (_, d1u, d1v) = elslib::cylinder_d1(u, v, cy.position(), cy.radius());
         norm = Direction3::from_vector(d1u.crossed(d1v))?;
     } else if surface.is_instance_name("Geom_ConicalSurface") {
-        let co = live(&s.clone().cast::<GeomConicalSurface>(), "cone")?.cone()?;
+        let co = live(&s.downcast::<GeomConicalSurface>(), "cone")?.cone()?;
         let (u, v) = elslib::cone_parameters(
             co.position(),
             co.ref_radius(),
@@ -286,7 +286,7 @@ pub(super) fn new_curve(
         if lires.direction().dot(lin.direction()) < 0. {
             lires.reverse();
         }
-        new_c = Handle::new(GeomLine::from_lin(lires)).cast();
+        new_c = Handle::new(GeomLine::from_lin(lires)).into_upcast();
     }
     Ok(new_c)
 }

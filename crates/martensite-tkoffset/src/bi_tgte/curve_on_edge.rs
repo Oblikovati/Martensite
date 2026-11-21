@@ -5,7 +5,7 @@ use martensite_tkbrep::topods::Edge;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomBezierCurve, GeomCurve, GeomCurveD1, GeomCurveD2, GeomCurveD3,
@@ -58,7 +58,6 @@ impl Default for CurveOnEdgeState {
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct BiTgteCurveOnEdge {
-    parent: StandardTransient,
     state: SharedState<CurveOnEdgeState>,
 }
 
@@ -66,7 +65,6 @@ impl_transient!(
     BiTgteCurveOnEdge,
     "BiTgte_CurveOnEdge",
     dyn Adaptor3dCurve,
-    parent,
     interfaces: [dyn Adaptor3dCurve]
 );
 
@@ -80,7 +78,6 @@ impl BiTgteCurveOnEdge {
     /// An empty one; `BiTgteCurveOnEdge::new()`.
     pub fn new() -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(CurveOnEdgeState::default()),
         }
     }
@@ -98,11 +95,11 @@ impl BiTgteCurveOnEdge {
         let mut s = self.state.write();
         s.my_edge = edge.clone();
         let (c, f, l) = BRepTool::curve(&s.my_edge)?;
-        s.my_curv = Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).cast();
+        s.my_curv = Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).into_upcast();
 
         s.my_eon_f = eon_f.clone();
         let (c, f, l) = BRepTool::curve(&s.my_eon_f)?;
-        s.my_con_f = Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).cast();
+        s.my_con_f = Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).into_upcast();
 
         // peut on generer un cercle de rayon nul
         let curv = GeomAdaptorCurve::with_curve(&s.my_curv)?;
@@ -135,10 +132,9 @@ impl BiTgteCurveOnEdge {
 impl Adaptor3dCurve for BiTgteCurveOnEdge {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
         let copy = Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(self.state.snapshot()),
         };
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
 
     fn first_parameter(&self) -> Result<f64, Failure> {

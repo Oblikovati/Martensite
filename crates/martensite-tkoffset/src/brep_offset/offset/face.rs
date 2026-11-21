@@ -46,7 +46,7 @@ fn trimmed(
     u: (f64, f64),
     v: (f64, f64),
 ) -> Result<Handle<dyn GeomSurface>, Failure> {
-    Ok(Handle::new(GeomRectangularTrimmedSurface::new(s, u, v, (true, true))?).cast())
+    Ok(Handle::new(GeomRectangularTrimmedSurface::new(s, u, v, (true, true))?).into_upcast())
 }
 
 /// The parameters of one side treatment of an offset surface with a degenerated side.
@@ -87,11 +87,7 @@ impl BRepOffsetOffset {
         let (mut s, l) = BRepTool::surface_with_location(face)?;
         // The surfaces are untrimmed, which avoids copies in the extensions.
         if s.is_instance_name("Geom_RectangularTrimmedSurface") {
-            s = live(
-                &s.clone().cast::<GeomRectangularTrimmedSurface>(),
-                "surface",
-            )?
-            .basis_surface();
+            s = live(&s.downcast::<GeomRectangularTrimmedSurface>(), "surface")?.basis_surface();
         }
         let mut is_transformed = false;
         if (s.is_kind_name("Geom_BSplineSurface")
@@ -100,13 +96,13 @@ impl BRepOffsetOffset {
             || s.is_kind_name("Geom_OffsetSurface"))
             && !l.is_identity()
         {
-            s = live(&s, "surface")?.copy()?.cast();
+            s = live(&s, "surface")?.copy()?.into_cast();
             live(&s, "surface")?.transform(l.transformation())?;
             is_transformed = true;
         }
         // The particular case of the cone.
         if s.is_instance_name("Geom_ConicalSurface") {
-            let co = s.clone().cast::<GeomConicalSurface>();
+            let co = s.downcast::<GeomConicalSurface>();
             let co = live(&co, "cone")?;
             let cone = co.cone()?;
             let (_, vc) = elslib::cone_parameters(
@@ -162,7 +158,7 @@ impl BRepOffsetOffset {
                 }
                 if the_surf.is_instance_name("Geom_ConicalSurface") {
                     let the_cone =
-                        live(&the_surf.clone().cast::<GeomConicalSurface>(), "cone")?.cone()?;
+                        live(&the_surf.downcast::<GeomConicalSurface>(), "cone")?.cone()?;
                     let apex = the_cone.apex();
                     let (_, vapex) = elslib::cone_parameters(
                         the_cone.position(),
@@ -376,11 +372,8 @@ fn side_apex(
     if BRepOffsetTool::gabarit(&iso)? <= TOL_APEX {
         return Ok(None);
     }
-    let basis_surf = live(
-        &the_surf.clone().cast::<GeomOffsetSurface>(),
-        "offset surface",
-    )?
-    .basis_surface();
+    let basis_surf =
+        live(&the_surf.downcast::<GeomOffsetSurface>(), "offset surface")?.basis_surface();
     let basis = live(&basis_surf, "surface")?;
     let papex = basis.value(side.apex.0, side.apex.1)?;
     let pfirst = surf.value(side.apex.0, side.apex.1)?;
@@ -390,12 +383,12 @@ fn side_apex(
     let line_apex: Handle<dyn martensite_tkg3d::geom::GeomCurve> = Handle::new(
         GeomLine::from_point(papex, Direction3::from_vector(dir_apex)?),
     )
-    .cast();
+    .into_upcast();
     let dir_generatrix = basis.dn(side.apex.0, side.apex.1, side.dn.0, side.dn.1)?;
     let line_generatrix: Handle<dyn martensite_tkg3d::geom::GeomCurve> = Handle::new(
         GeomLine::from_point(pfirst, Direction3::from_vector(dir_generatrix)?),
     )
-    .cast();
+    .into_upcast();
     let the_extrema = ExtremaCurveCurve::with_curves(&line_generatrix, &line_apex)?;
     let (pint1, _) = the_extrema.nearest_points()?;
     let length = pfirst.distance(&pint1);
@@ -403,9 +396,9 @@ fn side_apex(
         let mut a_surf: Handle<dyn GeomBoundedSurface> = Handle::new(
             GeomRectangularTrimmedSurface::new(the_surf, (uf1, uf2), (vf1, vf2), (true, true))?,
         )
-        .cast();
+        .into_upcast();
         extend_surf_by_length(&mut a_surf, length, 1, side.in_u, side.after)?;
-        *the_surf = a_surf.cast();
+        *the_surf = a_surf.upcast();
         let (u1, u2, v1, v2) = live(the_surf, "surface")?.bounds();
         let s = live(the_surf, "surface")?;
         return Ok(Some(match end {
@@ -624,5 +617,5 @@ fn vertex_image(v: &Vertex, p: Point3, map_ss: &mut ShapeMap) -> Result<Shape, F
 /// `new Geom2dLine(P1, gp_Vec2d(P1, P2))`.
 fn line_through(p1: Point2, p2: Point2) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     let d = martensite_tkmath::gp::Direction2::from_vector(Vector2::between(p1, p2))?;
-    Ok(Handle::new(Geom2dLine::from_point(p1, d)).cast())
+    Ok(Handle::new(Geom2dLine::from_point(p1, d)).into_upcast())
 }
