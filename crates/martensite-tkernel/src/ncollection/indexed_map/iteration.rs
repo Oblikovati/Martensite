@@ -9,18 +9,20 @@ impl<K: Debug, H: HashPolicy<K>> IndexedMap<K, H> {
         }
     }
     /// Returns an exhausted key iterator; `map.iter()!=map.end()`.
-    pub fn end(&self) -> IndexedMapIter<'_, K> {
+    #[cfg(test)]
+    pub(crate) fn end(&self) -> IndexedMapIter<'_, K> {
         IndexedMapIter {
             keys: self.storage.payload().keys(),
             position: self.len(),
         }
     }
     /// Traverses keys paired with one-based indices; `for (key,index) in map.indexed_items() {}`.
-    pub fn indexed_items(&self) -> IndexedMapItems<'_, K> {
+    pub(crate) fn indexed_items(&self) -> IndexedMapItems<'_, K> {
         IndexedMapItems { inner: self.iter() }
     }
     /// Returns the exhausted indexed range; `map.indexed_items()!=map.indexed_end()`.
-    pub fn indexed_end(&self) -> IndexedMapItems<'_, K> {
+    #[cfg(test)]
+    pub(crate) fn indexed_end(&self) -> IndexedMapItems<'_, K> {
         IndexedMapItems { inner: self.end() }
     }
 }

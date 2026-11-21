@@ -46,11 +46,12 @@ impl<K: Debug, H: HashPolicy<K>> IndexedMap<K, H> {
         self.storage.nb_buckets()
     }
     /// Borrows the retained hash policy; `map.hasher().salt`.
-    pub fn hasher(&self) -> &H {
+    #[cfg(test)]
+    pub(crate) fn hasher(&self) -> &H {
         &self.hasher
     }
     /// Borrows the node allocator; `map.allocator()==&arena`.
-    pub fn allocator(&self) -> &BaseAllocator {
+    pub(crate) fn allocator(&self) -> &BaseAllocator {
         self.storage.allocator()
     }
     /// Grows hash storage and rechains keys in bucket order; `map.resize(200)`.
@@ -81,16 +82,19 @@ impl<K: Debug, H: HashPolicy<K>> IndexedMap<K, H> {
         self.place(key, false)
     }
     /// Inserts a key and borrows the stored key; `map.added(42)`.
-    pub fn added(&mut self, key: K) -> &K {
+    #[cfg(test)]
+    pub(crate) fn added(&mut self, key: K) -> &K {
         let index = self.place(key, false);
         self.storage.key_at(index)
     }
     /// Assigns an equivalent key in place; `map.emplace(42)==1`.
-    pub fn emplace(&mut self, key: K) -> usize {
+    #[cfg(test)]
+    pub(crate) fn emplace(&mut self, key: K) -> usize {
         self.place(key, true)
     }
     /// Assigns a key and borrows the stored key; `map.emplaced(42)`.
-    pub fn emplaced(&mut self, key: K) -> &K {
+    #[cfg(test)]
+    pub(crate) fn emplaced(&mut self, key: K) -> &K {
         let index = self.place(key, true);
         self.storage.key_at(index)
     }
@@ -99,7 +103,8 @@ impl<K: Debug, H: HashPolicy<K>> IndexedMap<K, H> {
         self.storage.clear(release);
     }
     /// Swaps entries, allocator and hash policy; `map.exchange(&mut other)`.
-    pub fn exchange(&mut self, other: &mut Self) {
+    #[cfg(test)]
+    pub(crate) fn exchange(&mut self, other: &mut Self) {
         std::mem::swap(&mut self.hasher, &mut other.hasher);
         std::mem::swap(&mut self.storage, &mut other.storage);
     }
@@ -130,15 +135,8 @@ impl<K: Debug + Clone, H: HashPolicy<K>> IndexedMap<K, H> {
     ///
     /// Adding hashes and searches the borrowed key before copying it on a
     /// miss, for value-semantic keys; allocator-failure effects are not reproduced.
-    ///
-    /// # Example
-    /// ```
-    /// use martensite_tkernel::ncollection::IndexedMap;
-    /// let mut map = IndexedMap::<i32>::default();
-    /// assert_eq!(map.add_ref(&42), 1);
-    /// assert_eq!(map.add_ref(&42), 1);
-    /// ```
-    pub fn add_ref(&mut self, key: &K) -> usize {
+    #[cfg(test)]
+    pub(crate) fn add_ref(&mut self, key: &K) -> usize {
         self.prepare_add();
         let (index, bucket) = self.lookup_with_bucket(key);
         if index != 0 {
@@ -147,7 +145,8 @@ impl<K: Debug + Clone, H: HashPolicy<K>> IndexedMap<K, H> {
         self.append_new_at_bucket_with(bucket, || key.clone())
     }
     /// Borrows the stored key, copying the argument only on a miss; `map.added_ref(&42)`.
-    pub fn added_ref(&mut self, key: &K) -> &K {
+    #[cfg(test)]
+    pub(crate) fn added_ref(&mut self, key: &K) -> &K {
         let index = self.add_ref(key);
         self.storage.key_at(index)
     }
@@ -172,6 +171,7 @@ impl<K: Debug, H: HashPolicy<K>> std::ops::Index<usize> for IndexedMap<K, H> {
 }
 mod cursor;
 mod iteration;
+#[cfg(test)]
 mod method_contracts;
 mod operations;
 mod signed_overloads;
@@ -189,12 +189,14 @@ impl<K: Debug, H: HashPolicy<K>> IndexedMap<K, H> {
         self.append_new_at_bucket(key, bucket)
     }
     /// Constructs after resizing, then assigns an equivalent key; `map.emplace_with(|| 7)`.
-    pub fn emplace_with(&mut self, construct: impl FnOnce() -> K) -> usize {
+    #[cfg(test)]
+    pub(crate) fn emplace_with(&mut self, construct: impl FnOnce() -> K) -> usize {
         self.prepare_add();
         self.place_prepared(construct(), true)
     }
     /// Constructs after resizing and keeps an equivalent key; `map.try_emplace_with(|| 7)`.
-    pub fn try_emplace_with(&mut self, construct: impl FnOnce() -> K) -> usize {
+    #[cfg(test)]
+    pub(crate) fn try_emplace_with(&mut self, construct: impl FnOnce() -> K) -> usize {
         self.prepare_add();
         self.place_prepared(construct(), false)
     }

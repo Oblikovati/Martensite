@@ -1,5 +1,6 @@
 //! Destination aliases are explicit because Rust cannot borrow a mutable map as an operand.
 use super::{PackedInteger, PackedMap};
+#[cfg(test)]
 use crate::ncollection::packed_map_algo as algo;
 
 /// Identifies a set-operation operand without overlapping Rust references.
@@ -14,7 +15,8 @@ pub enum PackedMapOperand<'a, T: PackedInteger> {
 
 impl<T: PackedInteger> PackedMap<T> {
     /// Applies union, including destination aliases; `map.union_operands(Destination, Borrowed(&other))`.
-    pub fn union_operands(
+    #[cfg(test)]
+    pub(crate) fn union_operands(
         &mut self,
         left: PackedMapOperand<'_, T>,
         right: PackedMapOperand<'_, T>,
@@ -30,7 +32,8 @@ impl<T: PackedInteger> PackedMap<T> {
     }
 
     /// Applies intersection with explicit aliases; `map.intersection_operands(Destination, Borrowed(&other))`.
-    pub fn intersection_operands(
+    #[cfg(test)]
+    pub(crate) fn intersection_operands(
         &mut self,
         left: PackedMapOperand<'_, T>,
         right: PackedMapOperand<'_, T>,
@@ -47,7 +50,8 @@ impl<T: PackedInteger> PackedMap<T> {
     }
 
     /// Applies subtraction with ordered aliases; `map.subtraction_operands(Borrowed(&left), Destination)`.
-    pub fn subtraction_operands(
+    #[cfg(test)]
+    pub(crate) fn subtraction_operands(
         &mut self,
         left: PackedMapOperand<'_, T>,
         right: PackedMapOperand<'_, T>,
@@ -66,7 +70,8 @@ impl<T: PackedInteger> PackedMap<T> {
     }
 
     /// Applies difference with explicit aliases; `map.difference_operands(Destination, Destination)` clears it.
-    pub fn difference_operands(
+    #[cfg(test)]
+    pub(crate) fn difference_operands(
         &mut self,
         left: PackedMapOperand<'_, T>,
         right: PackedMapOperand<'_, T>,
@@ -81,6 +86,7 @@ impl<T: PackedInteger> PackedMap<T> {
         }
     }
 
+    #[cfg(test)]
     fn union_destination(&mut self, other: &Self) {
         if self.is_empty() {
             self.assign(other);
@@ -89,6 +95,7 @@ impl<T: PackedInteger> PackedMap<T> {
         algo::unite(self, other);
     }
 
+    #[cfg(test)]
     fn intersect_destination(&mut self, other: &Self) {
         if self.is_empty() || other.is_empty() {
             self.clear();
@@ -97,6 +104,7 @@ impl<T: PackedInteger> PackedMap<T> {
         algo::intersect(self, other);
     }
 
+    #[cfg(test)]
     fn subtract_from_left(&mut self, left: &Self) {
         // Right-alias subtraction builds a default map, resetting the destination modulus.
         let mut copy = Self::default();

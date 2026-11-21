@@ -3,7 +3,7 @@ use super::{PackedInteger, PackedMap, PackedMapNode, PackedWord};
 
 impl<T: PackedInteger> PackedMap<T> {
     /// Finds the next low set bit; empty search returns the block base and all-ones mask; `PackedMap::find_next(&node, &mut mask)`.
-    pub fn find_next(node: &PackedMapNode<T>, mask: &mut T::Word) -> T {
+    pub(crate) fn find_next(node: &PackedMapNode<T>, mask: &mut T::Word) -> T {
         let selected = node.bits().bits() & mask.bits();
         if selected == 0 {
             *mask = T::Word::from_bits(u64::MAX);
@@ -14,7 +14,8 @@ impl<T: PackedInteger> PackedMap<T> {
         T::from_bits(node.key().bits().wrapping_add(u64::from(offset)))
     }
     /// Finds the highest set bit; empty search returns the block's last key and all-ones mask; `PackedMap::find_prev(&node, &mut mask)`.
-    pub fn find_prev(node: &PackedMapNode<T>, mask: &mut T::Word) -> T {
+    #[cfg(test)]
+    pub(crate) fn find_prev(node: &PackedMapNode<T>, mask: &mut T::Word) -> T {
         let selected = node.bits().bits() & mask.bits();
         if selected == 0 {
             *mask = T::Word::from_bits(u64::MAX);

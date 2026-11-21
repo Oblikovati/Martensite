@@ -1,9 +1,12 @@
 //! Iterator expressions and the distinct checked legacy / cached STL key domains.
-use super::{PackedInteger, PackedMap, PackedMapIter};
+#[cfg(test)]
+use super::PackedMap;
+use super::{PackedInteger, PackedMapIter};
 use crate::standard::Failure;
 impl<'a, T: PackedInteger> PackedMapIter<'a, T> {
     /// Constructs an iterator at the first packed bit; `let cursor = PackedMapIter::new(&map)`.
-    pub fn new(map: &'a PackedMap<T>) -> Self {
+    #[cfg(test)]
+    pub(crate) fn new(map: &'a PackedMap<T>) -> Self {
         map.iter()
     }
     /// Returns the legacy key or its error at end; `cursor.key_checked()?`.
@@ -25,27 +28,32 @@ impl<'a, T: PackedInteger> PackedMapIter<'a, T> {
         &self.cached_key
     }
     /// Returns the STL arrow pointer to iterator-owned cached storage; `cursor.value_ptr()`.
-    pub fn value_ptr(&self) -> *const T {
+    #[cfg(test)]
+    pub(crate) fn value_ptr(&self) -> *const T {
         std::ptr::from_ref(&self.cached_key)
     }
     /// Copies the iterator state and returns its destination; `cursor.assign(&other)`.
-    pub fn assign(&mut self, other: &Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign(&mut self, other: &Self) -> &mut Self {
         self.clone_from(other);
         self
     }
     /// Returns the destination of prefix increment; `cursor.advance_returning()`.
-    pub fn advance_returning(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn advance_returning(&mut self) -> &mut Self {
         self.advance();
         self
     }
     /// Copies the old state before incrementing; `let previous = cursor.post_advance()`.
-    pub fn post_advance(&mut self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn post_advance(&mut self) -> Self {
         let previous = self.clone();
         self.advance();
         previous
     }
     /// Compares iterator state, treating all end iterators as equal; `cursor.is_equal(&other)`.
-    pub fn is_equal(&self, other: &Self) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_equal(&self, other: &Self) -> bool {
         self == other
     }
 }

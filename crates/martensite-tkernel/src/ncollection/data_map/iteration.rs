@@ -1,6 +1,8 @@
 //! Safe ranges borrow the map and follow its bucket chains in bucket order.
 use super::DataMapStorage;
-use crate::ncollection::slot_chains::{ChainPosition, SlotRange};
+#[cfg(test)]
+use crate::ncollection::slot_chains::ChainPosition;
+use crate::ncollection::slot_chains::SlotRange;
 /// Shared key/value traversal in bucket order; `map.items()`.
 pub struct DataMapItems<'a, K, V> {
     entries: SlotRange<'a, K, V>,
@@ -11,6 +13,7 @@ impl<'a, K, V> DataMapItems<'a, K, V> {
             entries: SlotRange::new(source.view()),
         }
     }
+    #[cfg(test)]
     pub(super) fn from_position(
         source: Option<&'a DataMapStorage<K, V>>,
         position: ChainPosition,

@@ -41,7 +41,8 @@ impl OrderedDataCursor {
         self.entry.is_some()
     }
     /// Borrows the current key from its map; `cursor.key(&map)?`.
-    pub fn key<'a, K, V, H: HashPolicy<K>>(
+    #[cfg(test)]
+    pub(crate) fn key<'a, K, V, H: HashPolicy<K>>(
         &self,
         map: &'a OrderedDataMap<K, V, H>,
     ) -> Result<&'a K, Failure> {
@@ -64,7 +65,8 @@ impl OrderedDataCursor {
     }
     /// Advances through insertion-order links; a cursor off its map's live entries becomes
     /// exhausted; `cursor.advance(&map)`.
-    pub fn advance<K, V, H: HashPolicy<K>>(&mut self, map: &OrderedDataMap<K, V, H>) {
+    #[cfg(test)]
+    pub(crate) fn advance<K, V, H: HashPolicy<K>>(&mut self, map: &OrderedDataMap<K, V, H>) {
         let next = self
             .checked_slot(map)
             .ok()
@@ -96,23 +98,27 @@ impl OrderedDataCursor {
     }
 
     /// Copies cursor state and returns the destination; `cursor.assign(&other)`.
-    pub fn assign(&mut self, other: &Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign(&mut self, other: &Self) -> &mut Self {
         self.clone_from(other);
         self
     }
 
     /// Preserves self-assignment safely; `cursor.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
 
     /// Compares node identity, treating exhausted cursors as equal; `cursor.is_equal(&other)`.
-    pub fn is_equal(&self, other: &Self) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_equal(&self, other: &Self) -> bool {
         self == other
     }
 
     /// Advances and returns this cursor, matching prefix increment; `cursor.advance_returning(&map)`.
-    pub fn advance_returning<K, V, H: HashPolicy<K>>(
+    #[cfg(test)]
+    pub(crate) fn advance_returning<K, V, H: HashPolicy<K>>(
         &mut self,
         map: &OrderedDataMap<K, V, H>,
     ) -> &mut Self {
@@ -121,7 +127,11 @@ impl OrderedDataCursor {
     }
 
     /// Advances while returning the old state, matching postfix increment; `cursor.post_advance(&map)`.
-    pub fn post_advance<K, V, H: HashPolicy<K>>(&mut self, map: &OrderedDataMap<K, V, H>) -> Self {
+    #[cfg(test)]
+    pub(crate) fn post_advance<K, V, H: HashPolicy<K>>(
+        &mut self,
+        map: &OrderedDataMap<K, V, H>,
+    ) -> Self {
         let previous = self.clone();
         self.advance(map);
         previous

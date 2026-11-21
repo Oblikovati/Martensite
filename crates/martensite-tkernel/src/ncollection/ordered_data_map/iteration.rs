@@ -28,7 +28,8 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         }
     }
     /// Returns an exhausted pair iterator; `map.items()!=map.items_end()`.
-    pub fn items_end(&self) -> OrderedDataItems<'_, K, V> {
+    #[cfg(test)]
+    pub(crate) fn items_end(&self) -> OrderedDataItems<'_, K, V> {
         OrderedDataItems {
             inner: OrderedItems::default(),
         }

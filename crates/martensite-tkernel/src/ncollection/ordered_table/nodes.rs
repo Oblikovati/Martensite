@@ -3,13 +3,13 @@
 use super::{OrderSlot, OrderedItems, OrderedTable};
 
 /// Shared ordered node view; `map.first_node().unwrap().key()`.
-pub struct OrderedNodeRef<'a, K, V> {
+pub(crate) struct OrderedNodeRef<'a, K, V> {
     inner: OrderedItems<'a, K, V>,
     pair: (&'a K, &'a V),
 }
 
 /// Exclusive ordered-data node view; `*map.first_node_mut().unwrap().change_value()=7`.
-pub struct OrderedNodeMut<'a, K, V> {
+pub(crate) struct OrderedNodeMut<'a, K, V> {
     order: &'a [OrderSlot],
     keys: &'a [K],
     values: &'a mut [V],
@@ -47,7 +47,8 @@ impl<'a, K, V> OrderedNodeRef<'a, K, V> {
         self.pair.1
     }
     /// Follows the insertion-order link, `None` after the last entry; `node.order_next()`.
-    pub fn order_next(&self) -> Option<Self> {
+    #[cfg(test)]
+    pub(crate) fn order_next(&self) -> Option<Self> {
         let mut inner = self.inner.clone();
         inner.advance();
         Self::at(inner)
@@ -60,7 +61,8 @@ impl<K, V> OrderedNodeMut<'_, K, V> {
         &self.keys[self.slot]
     }
     /// Borrows the current value; `node.value()`.
-    pub fn value(&self) -> &V {
+    #[cfg(test)]
+    pub(crate) fn value(&self) -> &V {
         &self.values[self.slot]
     }
     /// Edits only the current value; `*node.change_value()=7`.

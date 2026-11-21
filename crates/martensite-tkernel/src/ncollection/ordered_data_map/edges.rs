@@ -1,6 +1,6 @@
-use super::{
-    Failure, HashPolicy, OrderedDataMap, OrderedNodeMut, OrderedNodeRef, empty_ordered_data,
-};
+use super::{Failure, HashPolicy, OrderedDataMap, empty_ordered_data};
+#[cfg(test)]
+use super::{OrderedNodeMut, OrderedNodeRef};
 use crate::ncollection::HashBucketTable;
 impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
     /// The key table with each chain's `(key, item)` pairs, or `None`
@@ -17,11 +17,13 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         self.table.buckets()
     }
     /// The head of the insertion order as a node view, `None` when empty; `map.first_node()`.
-    pub fn first_node(&self) -> Option<OrderedNodeRef<'_, K, V>> {
+    #[cfg(test)]
+    pub(crate) fn first_node(&self) -> Option<OrderedNodeRef<'_, K, V>> {
         self.table.first_node()
     }
     /// The head node with an exclusive item, `None` when empty; `map.first_node_mut()`.
-    pub fn first_node_mut(&mut self) -> Option<OrderedNodeMut<'_, K, V>> {
+    #[cfg(test)]
+    pub(crate) fn first_node_mut(&mut self) -> Option<OrderedNodeMut<'_, K, V>> {
         self.table.first_node_mut()
     }
     /// Borrows the first inserted remaining key; `map.first()?`.
@@ -29,26 +31,31 @@ impl<K, V, H: HashPolicy<K>> OrderedDataMap<K, V, H> {
         Ok(self.table.key(self.checked_node_slot(self.table.first())?))
     }
     /// Borrows the last inserted remaining key; `map.last()?`.
-    pub fn last(&self) -> Result<&K, Failure> {
+    #[cfg(test)]
+    pub(crate) fn last(&self) -> Result<&K, Failure> {
         Ok(self.table.key(self.checked_node_slot(self.table.last())?))
     }
     /// Borrows the first remaining value; `map.first_value()?`.
-    pub fn first_value(&self) -> Result<&V, Failure> {
+    #[cfg(test)]
+    pub(crate) fn first_value(&self) -> Result<&V, Failure> {
         Ok(self
             .table
             .value(self.checked_node_slot(self.table.first())?))
     }
     /// Borrows the last remaining value; `map.last_value()?`.
-    pub fn last_value(&self) -> Result<&V, Failure> {
+    #[cfg(test)]
+    pub(crate) fn last_value(&self) -> Result<&V, Failure> {
         Ok(self.table.value(self.checked_node_slot(self.table.last())?))
     }
     /// Borrows the first remaining value exclusively; `*map.change_first_value()?=42`.
-    pub fn change_first_value(&mut self) -> Result<&mut V, Failure> {
+    #[cfg(test)]
+    pub(crate) fn change_first_value(&mut self) -> Result<&mut V, Failure> {
         let slot = self.checked_node_slot(self.table.first())?;
         Ok(self.table.value_mut(slot))
     }
     /// Borrows the last remaining value exclusively; `*map.change_last_value()?=42`.
-    pub fn change_last_value(&mut self) -> Result<&mut V, Failure> {
+    #[cfg(test)]
+    pub(crate) fn change_last_value(&mut self) -> Result<&mut V, Failure> {
         let slot = self.checked_node_slot(self.table.last())?;
         Ok(self.table.value_mut(slot))
     }

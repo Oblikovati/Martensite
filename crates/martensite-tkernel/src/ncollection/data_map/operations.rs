@@ -13,15 +13,18 @@ impl<K: Debug, V, H: HashPolicy<K>> DataMap<K, V, H> {
         self.place(key, || value, false).1
     }
     /// Constructs or replaces an item, returning insertion status; `map.emplace(1,||42)`.
-    pub fn emplace(&mut self, key: K, construct: impl FnOnce() -> V) -> bool {
+    #[cfg(test)]
+    pub(crate) fn emplace(&mut self, key: K, construct: impl FnOnce() -> V) -> bool {
         self.place(key, construct, true).0
     }
     /// Constructs or replaces an item and returns it; `map.emplaced(1,||42)`.
-    pub fn emplaced(&mut self, key: K, construct: impl FnOnce() -> V) -> &mut V {
+    #[cfg(test)]
+    pub(crate) fn emplaced(&mut self, key: K, construct: impl FnOnce() -> V) -> &mut V {
         self.place(key, construct, true).1
     }
     /// Constructs only for an absent key; `map.try_emplace(1,||42)`.
-    pub fn try_emplace(&mut self, key: K, construct: impl FnOnce() -> V) -> bool {
+    #[cfg(test)]
+    pub(crate) fn try_emplace(&mut self, key: K, construct: impl FnOnce() -> V) -> bool {
         self.place(key, construct, false).0
     }
     /// Returns an existing item or constructs it lazily; `map.try_emplaced(1,||42)`.

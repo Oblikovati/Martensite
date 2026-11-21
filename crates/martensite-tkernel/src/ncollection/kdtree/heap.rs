@@ -4,12 +4,14 @@ pub(super) struct NearestHeap {
     capacity: usize,
 }
 impl NearestHeap {
+    #[cfg(test)]
     pub(super) fn new(capacity: usize) -> Self {
         Self {
             entries: Vec::with_capacity(capacity),
             capacity,
         }
     }
+    #[cfg(test)]
     pub(super) fn threshold(&self) -> Option<f64> {
         if self.entries.len() == self.capacity {
             Some(self.entries[0].0)
@@ -17,6 +19,7 @@ impl NearestHeap {
             None
         }
     }
+    #[cfg(test)]
     pub(super) fn offer(&mut self, distance: f64, index: usize) {
         if self.entries.len() < self.capacity {
             self.entries.push((distance, index));
@@ -26,6 +29,7 @@ impl NearestHeap {
             self.sift_down();
         }
     }
+    #[cfg(test)]
     fn sift_up(&mut self) {
         let mut index = self.entries.len() - 1;
         while index > 0 {
@@ -37,6 +41,7 @@ impl NearestHeap {
             index = parent;
         }
     }
+    #[cfg(test)]
     fn sift_down(&mut self) {
         let mut index = 0;
         loop {
@@ -53,6 +58,7 @@ impl NearestHeap {
             index = largest;
         }
     }
+    #[cfg(test)]
     pub(super) fn sorted(mut self) -> Vec<(f64, usize)> {
         let mut result = vec![(0.0, 0); self.entries.len()];
         for position in (0..result.len()).rev() {

@@ -30,3 +30,5 @@ pub mod units_methods;
 extern crate self as martensite_tkernel;
 #[cfg(test)]
 include!("ncollection/array_visibility_tests.rs");
+#[cfg(test)]
+include!("ncollection/map_visibility_tests.rs");

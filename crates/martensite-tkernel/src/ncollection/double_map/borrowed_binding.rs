@@ -6,14 +6,16 @@ impl<A: Debug + Clone, B: Debug + Clone, H1: HashPolicy<A>, H2: HashPolicy<B>>
     DoubleMap<A, B, H1, H2>
 {
     /// Copies both keys only when the pair can be bound; `map.bind_ref(&first, &second)?`.
-    pub fn bind_ref(&mut self, first: &A, second: &B) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn bind_ref(&mut self, first: &A, second: &B) -> Result<(), Failure> {
         if self.try_bind_ref(first, second) {
             return Ok(());
         }
         Err(duplicate_pair(first, second))
     }
     /// Checks both keys before invoking either copy; `assert!(map.try_bind_ref(&1, &2))`.
-    pub fn try_bind_ref(&mut self, first: &A, second: &B) -> bool {
+    #[cfg(test)]
+    pub(crate) fn try_bind_ref(&mut self, first: &A, second: &B) -> bool {
         let Some((one, two)) = self.prepare_binding(first, second) else {
             return false;
         };
@@ -24,7 +26,8 @@ impl<A: Debug + Clone, B: Debug + Clone, H1: HashPolicy<A>, H2: HashPolicy<B>>
 }
 impl<A: Debug + Clone, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H1, H2> {
     /// Copies Key1 after allocation while transferring Key2; `map.bind_key1_ref(&1,5)?`.
-    pub fn bind_key1_ref(&mut self, first: &A, second: B) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn bind_key1_ref(&mut self, first: &A, second: B) -> Result<(), Failure> {
         let Some((one, two)) = self.prepare_binding(first, &second) else {
             return Err(duplicate_pair(first, &second));
         };
@@ -32,7 +35,8 @@ impl<A: Debug + Clone, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap
         Ok(())
     }
     /// Copies only the first key on successful insertion; `map.try_bind_key1_ref(&1,5)`.
-    pub fn try_bind_key1_ref(&mut self, first: &A, second: B) -> bool {
+    #[cfg(test)]
+    pub(crate) fn try_bind_key1_ref(&mut self, first: &A, second: B) -> bool {
         let Some((one, two)) = self.prepare_binding(first, &second) else {
             return false;
         };
@@ -42,7 +46,8 @@ impl<A: Debug + Clone, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap
 }
 impl<A: Debug, B: Debug + Clone, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H1, H2> {
     /// Transfers Key1 while copying Key2 into its allocated base field; `map.bind_key2_ref(1,&5)?`.
-    pub fn bind_key2_ref(&mut self, first: A, second: &B) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn bind_key2_ref(&mut self, first: A, second: &B) -> Result<(), Failure> {
         let Some((one, two)) = self.prepare_binding(&first, second) else {
             return Err(duplicate_pair(&first, second));
         };
@@ -50,7 +55,8 @@ impl<A: Debug, B: Debug + Clone, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap
         Ok(())
     }
     /// Copies only the second key on successful insertion; `map.try_bind_key2_ref(1,&5)`.
-    pub fn try_bind_key2_ref(&mut self, first: A, second: &B) -> bool {
+    #[cfg(test)]
+    pub(crate) fn try_bind_key2_ref(&mut self, first: A, second: &B) -> bool {
         let Some((one, two)) = self.prepare_binding(&first, second) else {
             return false;
         };

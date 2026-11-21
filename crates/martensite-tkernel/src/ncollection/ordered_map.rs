@@ -1,5 +1,7 @@
 //! Hash keys threaded in insertion order over safe slots.
-use super::ordered_table::{OrderedItems, OrderedNodeRef, OrderedTable, buckets_from_int};
+#[cfg(test)]
+use super::ordered_table::OrderedNodeRef;
+use super::ordered_table::{OrderedItems, OrderedTable, buckets_from_int};
 use super::{BaseAllocator, DefaultHashPolicy, HashPolicy};
 use crate::standard::Failure;
 /// An insertion-ordered set; `OrderedMap::<i32>::default().add(42)`.
@@ -23,7 +25,8 @@ impl<K, H: HashPolicy<K>> OrderedMap<K, H> {
     }
     /// The signed-count constructors; a negative count raises Standard_OutOfRange;
     /// `OrderedMap::with_int_buckets(policy, 10, BaseAllocator::common())?`.
-    pub fn with_int_buckets(
+    #[cfg(test)]
+    pub(crate) fn with_int_buckets(
         hasher: H,
         buckets: i32,
         resource: BaseAllocator,
@@ -35,7 +38,8 @@ impl<K, H: HashPolicy<K>> OrderedMap<K, H> {
         ))
     }
     /// A negative size raises Standard_OutOfRange; `map.resize_int(200)?`.
-    pub fn resize_int(&mut self, size: i32) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn resize_int(&mut self, size: i32) -> Result<(), Failure> {
         self.resize(buckets_from_int(size)?);
         Ok(())
     }
@@ -59,7 +63,8 @@ impl<K, H: HashPolicy<K>> OrderedMap<K, H> {
         self.table.buckets()
     }
     /// The head of the insertion order as a node view, `None` when empty; `map.first_node()`.
-    pub fn first_node(&self) -> Option<OrderedNodeRef<'_, K, ()>> {
+    #[cfg(test)]
+    pub(crate) fn first_node(&self) -> Option<OrderedNodeRef<'_, K, ()>> {
         self.table.first_node()
     }
     /// Counts unique keys; `map.len()==3`.
@@ -67,7 +72,8 @@ impl<K, H: HashPolicy<K>> OrderedMap<K, H> {
         self.table.len()
     }
     /// Returns the key extent; `map.extent()==3`.
-    pub fn extent(&self) -> usize {
+    #[cfg(test)]
+    pub(crate) fn extent(&self) -> usize {
         self.len()
     }
     /// Checks for no keys; `map.is_empty()`.
@@ -79,7 +85,8 @@ impl<K, H: HashPolicy<K>> OrderedMap<K, H> {
         self.table.bucket_count()
     }
     /// Borrows the retained hash policy; `map.hasher().salt`.
-    pub fn hasher(&self) -> &H {
+    #[cfg(test)]
+    pub(crate) fn hasher(&self) -> &H {
         &self.table.hasher
     }
     /// Borrows the node allocator; `map.allocator()==&arena`.
@@ -95,7 +102,8 @@ impl<K, H: HashPolicy<K>> OrderedMap<K, H> {
         self.table.lookup(key).is_some()
     }
     /// Borrows an equivalent stored key if present; `map.contained(&42)`.
-    pub fn contained(&self, key: &K) -> Option<&K> {
+    #[cfg(test)]
+    pub(crate) fn contained(&self, key: &K) -> Option<&K> {
         Some(self.table.key(self.table.lookup(key)?))
     }
     /// Appends a new key without changing duplicate order; `map.add(42)`.
@@ -103,29 +111,35 @@ impl<K, H: HashPolicy<K>> OrderedMap<K, H> {
         self.table.place(key, || (), false, false).0
     }
     /// Borrows a stored key, appending only when absent; `map.added(42)`.
-    pub fn added(&mut self, key: K) -> &K {
+    #[cfg(test)]
+    pub(crate) fn added(&mut self, key: K) -> &K {
         let (_, slot) = self.table.place(key, || (), false, false);
         self.table.key(slot)
     }
     /// Replaces an equivalent key without changing its position; `map.emplace(42)`.
-    pub fn emplace(&mut self, key: K) -> bool {
+    #[cfg(test)]
+    pub(crate) fn emplace(&mut self, key: K) -> bool {
         self.table.place(key, || (), true, false).0
     }
     /// Reconstructs and returns the stored key; `map.emplaced(42)`.
-    pub fn emplaced(&mut self, key: K) -> &K {
+    #[cfg(test)]
+    pub(crate) fn emplaced(&mut self, key: K) -> &K {
         let (_, slot) = self.table.place(key, || (), true, false);
         self.table.key(slot)
     }
     /// Adds without replacing an equivalent key; `map.try_emplace(42)`.
-    pub fn try_emplace(&mut self, key: K) -> bool {
+    #[cfg(test)]
+    pub(crate) fn try_emplace(&mut self, key: K) -> bool {
         self.add(key)
     }
     /// Returns an existing key or appends it; `map.try_emplaced(42)`.
-    pub fn try_emplaced(&mut self, key: K) -> &K {
+    #[cfg(test)]
+    pub(crate) fn try_emplaced(&mut self, key: K) -> &K {
         self.added(key)
     }
     /// Unlinks a key while preserving all other positions; `map.remove(&42)`.
-    pub fn remove(&mut self, key: &K) -> bool {
+    #[cfg(test)]
+    pub(crate) fn remove(&mut self, key: &K) -> bool {
         self.table.remove(key)
     }
     /// Frees keys, optionally freeing bucket storage; `map.clear(false)`.
@@ -137,22 +151,26 @@ impl<K, H: HashPolicy<K>> OrderedMap<K, H> {
         self.edge(self.table.first())
     }
     /// Borrows the latest remaining key; `map.last()?`.
-    pub fn last(&self) -> Result<&K, Failure> {
+    #[cfg(test)]
+    pub(crate) fn last(&self) -> Result<&K, Failure> {
         self.edge(self.table.last())
     }
     /// Swaps storage, order, policies and allocators; `map.exchange(&mut other)`.
     /// Uses Rust policy swapping; use `exchange_with` for explicit policy callbacks.
-    pub fn exchange(&mut self, other: &mut Self) {
+    #[cfg(test)]
+    pub(crate) fn exchange(&mut self, other: &mut Self) {
         std::mem::swap(self, other);
     }
     /// Swaps both maps and returns the destination, matching move assignment; `map.move_assign(&mut source)`.
     /// Uses Rust policy swapping; use `move_assign_with` for explicit policy callbacks.
-    pub fn move_assign(&mut self, source: &mut Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn move_assign(&mut self, source: &mut Self) -> &mut Self {
         self.exchange(source);
         self
     }
     /// Preserves copy/move self-assignment safely; `map.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
     /// Borrows keys in insertion order; `map.iter()`.
@@ -162,7 +180,8 @@ impl<K, H: HashPolicy<K>> OrderedMap<K, H> {
         }
     }
     /// Returns an exhausted iterator; `map.iter()!=map.end()`.
-    pub fn end(&self) -> OrderedMapIter<'_, K> {
+    #[cfg(test)]
+    pub(crate) fn end(&self) -> OrderedMapIter<'_, K> {
         OrderedMapIter::default()
     }
     fn edge(&self, slot: Option<usize>) -> Result<&K, Failure> {
@@ -179,7 +198,8 @@ impl<K, H: HashPolicy<K> + Default> OrderedMap<K, H> {
 impl<K, H: HashPolicy<K> + Clone> OrderedMap<K, H> {
     /// Compatibility transfer retaining a cloned source policy; use `move_from_with` for explicit policy moves.
     /// Moves the entries, leaving source allocator and bucket selection intact; `OrderedMap::move_from(&mut source)`.
-    pub fn move_from(source: &mut Self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn move_from(source: &mut Self) -> Self {
         let empty = Self::with_allocator(
             source.hasher().clone(),
             source.bucket_count(),
@@ -195,16 +215,19 @@ impl<K, H: HashPolicy<K> + Default> Default for OrderedMap<K, H> {
 }
 impl<K: Clone, H: HashPolicy<K>> OrderedMap<K, H> {
     /// Copies order retaining destination hash policy and allocator; `map.assign(&source)`.
-    pub fn assign(&mut self, source: &Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign(&mut self, source: &Self) -> &mut Self {
         self.table.assign(&source.table, false);
         self
     }
     /// Copies a key only when absent, preserving duplicate identity; `map.add_ref(&42)`.
-    pub fn add_ref(&mut self, key: &K) -> bool {
+    #[cfg(test)]
+    pub(crate) fn add_ref(&mut self, key: &K) -> bool {
         self.table.place_borrowed(key, &(), false).0
     }
     /// Returns the stored key, copying only on a miss; `map.added_ref(&42)`.
-    pub fn added_ref(&mut self, key: &K) -> &K {
+    #[cfg(test)]
+    pub(crate) fn added_ref(&mut self, key: &K) -> &K {
         let (_, slot) = self.table.place_borrowed(key, &(), false);
         self.table.key(slot)
     }
@@ -225,7 +248,8 @@ fn empty_ordered() -> Failure {
 }
 impl<'a, K> OrderedMapIter<'a, K> {
     /// Checks whether the cursor has a current key; `cursor.more()`.
-    pub fn more(&self) -> bool {
+    #[cfg(test)]
+    pub(crate) fn more(&self) -> bool {
         self.inner.more()
     }
     /// Borrows the current key without advancing; `cursor.key()?`.
@@ -240,39 +264,47 @@ impl<'a, K> OrderedMapIter<'a, K> {
         self.key()
     }
     /// Advances the legacy cursor; `cursor.advance()`.
-    pub fn advance(&mut self) {
+    #[cfg(test)]
+    pub(crate) fn advance(&mut self) {
         self.inner.advance();
     }
     /// Restarts at the map's first key, or stays exhausted for a default cursor; `cursor.reset()`.
-    pub fn reset(&mut self) {
+    #[cfg(test)]
+    pub(crate) fn reset(&mut self) {
         self.inner.restart();
     }
     /// Reinitializes a cursor on another borrowed map; `cursor.initialize(&map)`.
-    pub fn initialize<H: HashPolicy<K>>(&mut self, map: &'a OrderedMap<K, H>) {
+    #[cfg(test)]
+    pub(crate) fn initialize<H: HashPolicy<K>>(&mut self, map: &'a OrderedMap<K, H>) {
         self.inner = map.table.items();
     }
     /// Compares current-node identity; `cursor.is_equal(&other)`.
-    pub fn is_equal(&self, other: &Self) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_equal(&self, other: &Self) -> bool {
         self == other
     }
     /// Advances and returns this iterator, as prefix increment does; `cursor.advance_returning()`.
-    pub fn advance_returning(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn advance_returning(&mut self) -> &mut Self {
         self.advance();
         self
     }
     /// Returns the current state and then advances, as postfix increment does; `cursor.post_advance()`.
-    pub fn post_advance(&mut self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn post_advance(&mut self) -> Self {
         let previous = self.clone();
         self.advance();
         previous
     }
     /// Copies iterator state and returns the destination; `cursor.assign(&other)`.
-    pub fn assign(&mut self, other: &Self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign(&mut self, other: &Self) -> &mut Self {
         self.clone_from(other);
         self
     }
     /// Models iterator self-assignment without aliasing references; `cursor.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
 }

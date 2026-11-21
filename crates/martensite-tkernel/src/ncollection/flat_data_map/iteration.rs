@@ -53,13 +53,14 @@ impl<K: Debug, V, H: HashPolicy<K>> FlatDataMap<K, V, H> {
         }
     }
     /// Returns an exhausted pair iterator; `map.items()!=map.items_end()`.
-    pub fn items_end(&self) -> FlatDataItems<'_, K, V> {
+    #[cfg(test)]
+    pub(crate) fn items_end(&self) -> FlatDataItems<'_, K, V> {
         FlatDataItems {
             inner: self.end_items(),
         }
     }
     /// Borrows values exclusively while keeping keys immutable; `for (_,value) in map.items_mut() {}`.
-    pub fn items_mut(&mut self) -> impl Iterator<Item = (&K, &mut V)> {
+    pub(crate) fn items_mut(&mut self) -> impl Iterator<Item = (&K, &mut V)> {
         self.table
             .slots
             .iter_mut()

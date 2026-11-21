@@ -28,7 +28,7 @@ impl<K: Debug, V, H: HashPolicy<K>> FlatDataMap<K, V, H> {
         }
     }
     /// Returns the number of bindings; `map.len()==3`.
-    pub fn len(&self) -> usize {
+    pub(crate) fn len(&self) -> usize {
         self.table.count
     }
     /// Returns the binding extent; `map.extent()==3`.
@@ -44,7 +44,8 @@ impl<K: Debug, V, H: HashPolicy<K>> FlatDataMap<K, V, H> {
         self.table.slots.len()
     }
     /// Borrows the injected hash policy; `map.hasher().salt`.
-    pub fn hasher(&self) -> &H {
+    #[cfg(test)]
+    pub(crate) fn hasher(&self) -> &H {
         &self.table.hasher
     }
     /// Reserves space for an element count at the load limit; `map.reserve(100)`.
@@ -65,12 +66,14 @@ impl<K: Debug, V, H: HashPolicy<K>> FlatDataMap<K, V, H> {
         Some(&mut self.table.slots[index].as_mut()?.value)
     }
     /// Borrows the stored key and its value as an optional pair; `map.contained(&42)`.
-    pub fn contained(&self, key: &K) -> Option<(&K, &V)> {
+    #[cfg(test)]
+    pub(crate) fn contained(&self, key: &K) -> Option<(&K, &V)> {
         let slot = self.table.slots[self.table.lookup(key)?].as_ref()?;
         Some((&slot.key, &slot.value))
     }
     /// Borrows the stored key and its value exclusively; `map.contained_mut(&42)`.
-    pub fn contained_mut(&mut self, key: &K) -> Option<(&K, &mut V)> {
+    #[cfg(test)]
+    pub(crate) fn contained_mut(&mut self, key: &K) -> Option<(&K, &mut V)> {
         let index = self.table.lookup(key)?;
         let slot = self.table.slots[index].as_mut()?;
         Some((&slot.key, &mut slot.value))
@@ -98,15 +101,17 @@ impl<K: Debug, V, H: HashPolicy<K>> FlatDataMap<K, V, H> {
 }
 impl<K: Debug, V, H: HashPolicy<K> + Default> FlatDataMap<K, V, H> {
     /// Selects capacity with a default policy; `FlatDataMap::<i32,i32>::new(10)`.
-    pub fn new(hint: usize) -> Self {
+    pub(crate) fn new(hint: usize) -> Self {
         Self::with_hasher(H::default(), hint)
     }
     /// Moves storage and leaves an empty source; `FlatDataMap::move_from(&mut source)`.
-    pub fn move_from(source: &mut Self) -> Self {
+    #[cfg(test)]
+    pub(crate) fn move_from(source: &mut Self) -> Self {
         Self::move_from_with(source, std::mem::take)
     }
     /// Replaces storage with a moved source; `map.move_assign(&mut source)`.
-    pub fn move_assign(&mut self, source: &mut Self) {
+    #[cfg(test)]
+    pub(crate) fn move_assign(&mut self, source: &mut Self) {
         self.move_assign_returning(source);
     }
 }
@@ -117,11 +122,11 @@ impl<K: Debug, V, H: HashPolicy<K> + Default> Default for FlatDataMap<K, V, H> {
 }
 impl<K: Clone, V: Clone, H: Clone> FlatDataMap<K, V, H> {
     /// Copies storage layout and hash policy; `map.assign(&source)`.
-    pub fn assign(&mut self, source: &Self) {
+    pub(crate) fn assign(&mut self, source: &Self) {
         self.assign_returning(source);
     }
     /// Copies after releasing destination pairs and returns it; `map.assign_returning(&source)`.
-    pub fn assign_returning(&mut self, source: &Self) -> &mut Self {
+    pub(crate) fn assign_returning(&mut self, source: &Self) -> &mut Self {
         self.table.clone_from(&source.table);
         self
     }
@@ -160,15 +165,19 @@ mod binding;
 mod cursor;
 mod iteration;
 pub use cursor::FlatDataCursorMut;
+#[cfg(test)]
 mod transfer;
 
+#[cfg(test)]
 mod borrowed_emplacement;
 mod cursor_contracts;
+#[cfg(test)]
 mod pointer_contracts;
 
 impl<K, V, H> FlatDataMap<K, V, H> {
     /// Preserves self-assignment without copying keys, values or policy; `map.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    #[cfg(test)]
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
 }

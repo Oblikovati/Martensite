@@ -42,7 +42,7 @@ impl<K: Debug, H: HashPolicy<K>> IndexedMap<K, H> {
 }
 impl<K: Debug + Clone, H: HashPolicy<K>> IndexedMap<K, H> {
     /// Copies index order while retaining destination policy and allocator; `map.assign(&source)`.
-    pub fn assign(&mut self, source: &Self) -> &mut Self {
+    pub(crate) fn assign(&mut self, source: &Self) -> &mut Self {
         // Assignment retains the destination policy, allocator, and bucket table.
         self.clear(false);
         if source.is_empty() {
@@ -70,7 +70,8 @@ impl<K: Debug + Clone, H: HashPolicy<K> + Clone> Clone for IndexedMap<K, H> {
 
 impl<K: Debug + Clone, H: HashPolicy<K>> IndexedMap<K, H> {
     /// Copies into the existing key with assignment semantics; `map.substitute_ref(1, &7)?`.
-    pub fn substitute_ref(&mut self, index: usize, key: &K) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn substitute_ref(&mut self, index: usize, key: &K) -> Result<(), Failure> {
         let place = self
             .storage
             .prepare_substitute(index, key, &self.hasher, "IndexedMap")?;

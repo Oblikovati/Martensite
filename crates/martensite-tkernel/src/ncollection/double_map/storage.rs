@@ -3,8 +3,10 @@
 //! second-key base), so construction is `Key2` then `Key1` and destruction `Key1` then
 //! `Key2`. The second table and its links are private
 //! state; only the first table is public, through `buckets()`.
+#[cfg(test)]
+use crate::ncollection::HashBucketTable;
 use crate::ncollection::{
-    BaseAllocator, HashBucketTable,
+    BaseAllocator,
     base_map::planned_bucket_count,
     map_payload::construct_value_then_key,
     slot_chains::{ChainView, SlotChains, SlotLink, SlotPayload},
@@ -45,6 +47,7 @@ impl<A, B> DoubleStorage<A, B> {
     pub(super) fn view(&self) -> ChainView<'_, A, B> {
         ChainView::new(&self.first, &self.payload)
     }
+    #[cfg(test)]
     pub(super) fn buckets(&self) -> Option<HashBucketTable<'_, A, B>> {
         HashBucketTable::of(self.view())
     }
@@ -139,6 +142,7 @@ impl<A, B> DoubleStorage<A, B> {
         self.allocator = requested.unwrap_or_else(BaseAllocator::common);
     }
     /// Exchanges tables, slots, counts and allocator identity.
+    #[cfg(test)]
     pub(super) fn exchange(&mut self, other: &mut Self) {
         std::mem::swap(self, other);
     }

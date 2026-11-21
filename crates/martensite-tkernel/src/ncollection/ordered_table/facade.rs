@@ -3,7 +3,7 @@
 use super::*;
 impl<K, V, H> OrderedTable<K, V, H> {
     /// Move construction: the empty base, the moved policy, then the graph.
-    pub fn move_from_with(source: &mut Self, take_policy: impl FnOnce(&mut H) -> H) -> Self {
+    pub(crate) fn move_from_with(source: &mut Self, take_policy: impl FnOnce(&mut H) -> H) -> Self {
         let buckets = source.bucket_count();
         let resource = source.resource().clone();
         let mut moved =

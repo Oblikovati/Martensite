@@ -40,7 +40,8 @@ readonly_flat_cursor_contracts!(FlatDataValues);
 
 impl<'a, K, V> FlatDataValues<'a, K, V> {
     /// Checks for a current iterator position; `cursor.more()`.
-    pub fn more(&self) -> bool {
+    #[cfg(test)]
+    pub(crate) fn more(&self) -> bool {
         self.inner.more()
     }
     /// Advances the iterator without yielding its previous value; `cursor.advance()`.
@@ -48,14 +49,15 @@ impl<'a, K, V> FlatDataValues<'a, K, V> {
         self.inner.advance();
     }
     /// Borrows the current key; `cursor.key()?`.
-    pub fn key(&self) -> Result<&'a K, Failure> {
+    #[cfg(test)]
+    pub(crate) fn key(&self) -> Result<&'a K, Failure> {
         FlatDataItems {
             inner: self.inner.clone(),
         }
         .key()
     }
     /// Borrows the current item without advancing; `cursor.value()?`.
-    pub fn value(&self) -> Result<&'a V, Failure> {
+    pub(crate) fn value(&self) -> Result<&'a V, Failure> {
         FlatDataItems {
             inner: self.inner.clone(),
         }

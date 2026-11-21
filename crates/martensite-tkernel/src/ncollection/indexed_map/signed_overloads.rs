@@ -1,10 +1,12 @@
 //! Checked legacy int overloads define negative-input behavior.
-use super::super::hash_policy::buckets_from_int;
-use super::{BaseAllocator, Debug, Failure, HashPolicy, IndexedMap};
+#[cfg(test)]
+use super::{super::hash_policy::buckets_from_int, BaseAllocator};
+use super::{Debug, Failure, HashPolicy, IndexedMap};
 
 impl<K: Debug, H: HashPolicy<K>> IndexedMap<K, H> {
     /// Checks a signed initial count before creating the map; `IndexedMap::with_int_buckets(policy, 3, arena)?`.
-    pub fn with_int_buckets(
+    #[cfg(test)]
+    pub(crate) fn with_int_buckets(
         hasher: H,
         buckets: i32,
         resource: BaseAllocator,
@@ -17,7 +19,8 @@ impl<K: Debug, H: HashPolicy<K>> IndexedMap<K, H> {
     }
 
     /// Treats negative resize requests as zero; `map.resize_int(-1)`.
-    pub fn resize_int(&mut self, requested: i32) {
+    #[cfg(test)]
+    pub(crate) fn resize_int(&mut self, requested: i32) {
         self.resize(requested.max(0) as usize);
     }
 
@@ -27,7 +30,8 @@ impl<K: Debug, H: HashPolicy<K>> IndexedMap<K, H> {
     }
 
     /// Replaces a signed index after validating its range; `map.substitute_int(1, 42)?`.
-    pub fn substitute_int(&mut self, index: i32, key: K) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn substitute_int(&mut self, index: i32, key: K) -> Result<(), Failure> {
         self.substitute(self.checked_signed_index(index)?, key)
     }
 
@@ -40,7 +44,8 @@ impl<K: Debug, H: HashPolicy<K>> IndexedMap<K, H> {
     }
 
     /// Removes a signed index with swap-last behavior; `map.remove_from_index_int(1)?`.
-    pub fn remove_from_index_int(&mut self, index: i32) -> Result<(), Failure> {
+    #[cfg(test)]
+    pub(crate) fn remove_from_index_int(&mut self, index: i32) -> Result<(), Failure> {
         self.remove_from_index(self.checked_signed_index(index)?)
     }
 

@@ -5,7 +5,7 @@ use crate::standard::Failure;
 
 impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H1, H2> {
     /// Checks the legacy signed constructor; `DoubleMap::with_int_buckets(p1, p2, -1, arena)`.
-    pub fn with_int_buckets(
+    pub(crate) fn with_int_buckets(
         first: H1,
         second: H2,
         buckets: i32,
@@ -19,16 +19,16 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H
         ))
     }
     /// Rejects negative resize requests; `map.resize_int(100)?`.
-    pub fn resize_int(&mut self, requested: i32) -> Result<(), Failure> {
+    pub(crate) fn resize_int(&mut self, requested: i32) -> Result<(), Failure> {
         self.resize(buckets_from_int(requested)?);
         Ok(())
     }
     /// Preserves copy/move self-assignment identity; `map.assign_self()`.
-    pub fn assign_self(&mut self) -> &mut Self {
+    pub(crate) fn assign_self(&mut self) -> &mut Self {
         self
     }
     /// Moves pairs and exchanges allocator/policy state, leaving source empty; `map.move_assign(&mut source)`.
-    pub fn move_assign(&mut self, source: &mut Self) -> &mut Self {
+    pub(crate) fn move_assign(&mut self, source: &mut Self) -> &mut Self {
         std::mem::swap(&mut self.first_policy, &mut source.first_policy);
         std::mem::swap(&mut self.second_policy, &mut source.second_policy);
         self.clear(true);
@@ -36,7 +36,7 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H
         self
     }
     /// Moves pairs with explicit moved-from policy behavior; `DoubleMap::move_from_with(&mut source, std::mem::take, std::mem::take)`.
-    pub fn move_from_with(
+    pub(crate) fn move_from_with(
         source: &mut Self,
         first_move: impl FnOnce(&mut H1) -> H1,
         second_move: impl FnOnce(&mut H2) -> H2,
@@ -53,11 +53,11 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A>, H2: HashPolicy<B>> DoubleMap<A, B, H
         moved
     }
     /// Returns the second-key pointer, null when absent; `map.seek1_ptr(&1)`.
-    pub fn seek1_ptr(&self, key: &A) -> *const B {
+    pub(crate) fn seek1_ptr(&self, key: &A) -> *const B {
         self.seek1(key).map_or(std::ptr::null(), std::ptr::from_ref)
     }
     /// Returns the first-key pointer, null when absent; `map.seek2_ptr(&2)`.
-    pub fn seek2_ptr(&self, key: &B) -> *const A {
+    pub(crate) fn seek2_ptr(&self, key: &B) -> *const A {
         self.seek2(key).map_or(std::ptr::null(), std::ptr::from_ref)
     }
     fn exchange_bindings(&mut self, other: &mut Self) {
@@ -69,7 +69,7 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A> + Default, H2: HashPolicy<B> + Defaul
     DoubleMap<A, B, H1, H2>
 {
     /// Creates default policies with a checked signed bucket count; `DoubleMap::<i32, i32>::new_int(0)?`.
-    pub fn new_int(buckets: i32) -> Result<Self, Failure> {
+    pub(crate) fn new_int(buckets: i32) -> Result<Self, Failure> {
         Self::with_int_buckets(
             H1::default(),
             H2::default(),
@@ -79,7 +79,7 @@ impl<A: Debug, B: Debug, H1: HashPolicy<A> + Default, H2: HashPolicy<B> + Defaul
     }
     /// Moves pairs and resets source policies to defaults; `DoubleMap::move_from(&mut source)`.
     /// Use `move_from_with` when a custom hasher has different moved-from behavior.
-    pub fn move_from(source: &mut Self) -> Self {
+    pub(crate) fn move_from(source: &mut Self) -> Self {
         Self::move_from_with(source, std::mem::take, std::mem::take)
     }
 }

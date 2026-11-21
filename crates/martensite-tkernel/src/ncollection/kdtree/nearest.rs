@@ -1,4 +1,6 @@
-use super::{Array1, KDTree, KdPoint, Region, heap::NearestHeap};
+#[cfg(test)]
+use super::{Array1, heap::NearestHeap};
+use super::{KDTree, KdPoint, Region};
 trait NearestVisitor {
     fn threshold(&self) -> Option<f64>;
     fn offer(&mut self, distance: f64, index: usize);
@@ -18,6 +20,7 @@ impl NearestVisitor for BestPoint {
         }
     }
 }
+#[cfg(test)]
 impl NearestVisitor for NearestHeap {
     fn threshold(&self) -> Option<f64> {
         self.threshold()
@@ -40,7 +43,13 @@ impl<P: KdPoint, const D: usize, const R: bool> KDTree<P, D, R> {
         best.index
     }
     /// Collects all nearest-distance ties within an absolute distance tolerance; `tree.nearest_points(&q,0.0,&mut distance)`.
-    pub fn nearest_points(&self, query: &P, tolerance: f64, distance: &mut f64) -> Vec<usize> {
+    #[cfg(test)]
+    pub(crate) fn nearest_points(
+        &self,
+        query: &P,
+        tolerance: f64,
+        distance: &mut f64,
+    ) -> Vec<usize> {
         self.nearest_point(query, Some(distance));
         if self.is_empty() {
             return Vec::new();
@@ -62,7 +71,8 @@ impl<P: KdPoint, const D: usize, const R: bool> KDTree<P, D, R> {
         result
     }
     /// Resizes one-based output arrays and returns the count; `tree.k_nearest_points(&q,3,&mut indices,&mut distances)`.
-    pub fn k_nearest_points(
+    #[cfg(test)]
+    pub(crate) fn k_nearest_points(
         &self,
         query: &P,
         count: usize,

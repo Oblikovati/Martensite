@@ -15,11 +15,13 @@ use super::{
 use std::collections::HashMap;
 mod iteration;
 mod links;
+#[cfg(test)]
 mod nodes;
 mod placement;
 pub(super) use iteration::{OrderedItems, OrderedItemsMut};
 use links::OrderSlot;
-pub use nodes::{OrderedNodeMut, OrderedNodeRef};
+#[cfg(test)]
+pub(crate) use nodes::{OrderedNodeMut, OrderedNodeRef};
 
 /// The ordered maps' table: policy, slot storage, order links and entry identities.
 pub(super) struct OrderedTable<K, V, H> {
@@ -32,7 +34,7 @@ pub(super) struct OrderedTable<K, V, H> {
 }
 
 impl<K, V, H> OrderedTable<K, V, H> {
-    pub fn new(hasher: H, buckets: usize, resource: BaseAllocator) -> Self {
+    pub(crate) fn new(hasher: H, buckets: usize, resource: BaseAllocator) -> Self {
         Self::new_with_policy(|| hasher, buckets, resource)
     }
     /// Constructors build the empty base before the policy.
@@ -64,13 +66,14 @@ impl<K, V, H> OrderedTable<K, V, H> {
     pub(crate) fn first(&self) -> SlotLink {
         self.first
     }
-    pub fn last(&self) -> SlotLink {
+    #[cfg(test)]
+    pub(crate) fn last(&self) -> SlotLink {
         self.last
     }
-    pub fn key(&self, slot: usize) -> &K {
+    pub(crate) fn key(&self, slot: usize) -> &K {
         self.storage.payload().key(slot)
     }
-    pub fn value(&self, slot: usize) -> &V {
+    pub(crate) fn value(&self, slot: usize) -> &V {
         self.storage.payload().value(slot)
     }
     pub(crate) fn value_mut(&mut self, slot: usize) -> &mut V {
@@ -80,6 +83,7 @@ impl<K, V, H> OrderedTable<K, V, H> {
         self.storage.payload_mut().entry_mut(slot)
     }
     /// The slot inserted after `slot`, if any remains.
+    #[cfg(test)]
     pub(crate) fn next_slot(&self, slot: usize) -> SlotLink {
         self.order[slot].next
     }
@@ -121,7 +125,7 @@ impl<K, V, H> OrderedTable<K, V, H> {
         self.storage.resize(requested, &self.hasher);
     }
     /// Drops entries in bucket/chain order; `release` frees the table.
-    pub fn clear(&mut self, release: bool) {
+    pub(crate) fn clear(&mut self, release: bool) {
         self.reset_order();
         self.storage.clear(release);
     }
