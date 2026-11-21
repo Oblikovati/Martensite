@@ -74,7 +74,7 @@ pub fn bspline(out: &mut Sink, c: &Handle<GeomBSplineCurve>) -> Result<(), Failu
 
 /// `hx_curve`: the B-spline flag, the range and the B-spline data of a builder curve.
 pub fn curve(out: &mut Sink, c: &Handle<dyn GeomCurve>) -> Result<(), Failure> {
-    let b: Handle<GeomBSplineCurve> = c.cast();
+    let b: Handle<GeomBSplineCurve> = c.downcast();
     flag(out, !b.is_null());
     if let Some(c) = c.get() {
         real(out, c.first_parameter());
@@ -168,10 +168,10 @@ fn adaptor(r: &mut Reader<'_>) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
     if kind == 1 {
         let (radius, first, last) = (r.real(), r.real(), r.real());
         let circle: Handle<dyn GeomCurve> =
-            Handle::new(GeomCircle::new(Axis2::default(), radius)?).cast();
-        return Ok(Handle::new(GeomAdaptorCurve::with_range(&circle, first, last)?).cast());
+            Handle::new(GeomCircle::new(Axis2::default(), radius)?).into_upcast();
+        return Ok(Handle::new(GeomAdaptorCurve::with_range(&circle, first, last)?).into_upcast());
     }
-    Ok(Handle::new(Adaptor3dCurveBase::default()).cast())
+    Ok(Handle::new(Adaptor3dCurveBase).into_upcast())
 }
 
 /// `adaptor tol cont maxseg maxdeg`: HelixGeom_Tools::ApprCurve3D.
