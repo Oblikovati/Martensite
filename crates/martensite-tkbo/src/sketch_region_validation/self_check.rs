@@ -38,13 +38,18 @@ use std::num::NonZeroUsize;
 // approved tradeoff only at four. Boolean operations keep one worker per task (#496).
 const SELF_CHECK_WORKERS: NonZeroUsize = NonZeroUsize::new(4).unwrap();
 
+// #580: four workers halved one check, but across the ~19 checks of an attached cone-text
+// operation glibc kept freed memory in the worker threads' arenas. Peak RSS rose from 310 MB
+// to 470 MB for 37% less time (316 MB with MALLOC_ARENA_MAX=1), outside the approved
+// tradeoff, so the check stays serial until its parallel path fits that limit.
+pub(super) const SELF_CHECK_PARALLEL: bool = false;
+
 pub(crate) fn inspect_self_intersection(
     shape: &Shape,
     sources: &[SourceRelation],
 ) -> Vec<ValidationFinding> {
-    // Parallel tasks ran the holed conical candidate of #496 about 3x faster with an
-    // identical report; the serial comparison test pins equal findings.
-    inspect_self_intersection_with(shape, sources, true)
+    // The serial comparison test pins identical findings for the parallel path.
+    inspect_self_intersection_with(shape, sources, SELF_CHECK_PARALLEL)
 }
 
 pub(super) fn inspect_self_intersection_with(
