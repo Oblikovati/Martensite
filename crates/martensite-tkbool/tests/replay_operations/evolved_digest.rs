@@ -6,7 +6,7 @@ use martensite_tkbrep::{
     topods::{self, Edge, Face, Shape, ShapeIterator},
     toptools::IndexedMapOfShape,
 };
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, TransientHandleTarget};
 use martensite_tkg3d::top_abs::{self, ShapeEnum};
 use martensite_tkmath::gp::Point3;
 
@@ -17,7 +17,7 @@ fn key_point(key: &mut Vec<u64>, point: Point3) {
         point.z().to_bits(),
     ]);
 }
-fn key_type<T: RuntimeTyped + ?Sized>(key: &mut Vec<u64>, value: &Handle<T>) {
+fn key_type<T: TransientHandleTarget + ?Sized>(key: &mut Vec<u64>, value: &Handle<T>) {
     let name = value.dynamic_type().map_or("null", |kind| kind.name());
     key.push(name.len() as u64);
     key.extend(name.bytes().map(u64::from));
