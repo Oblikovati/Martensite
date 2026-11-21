@@ -7,15 +7,9 @@
 use crate::standard::{Handle, Persistent};
 
 /// One chunk of persistent objects; `Bucket::with_size(4)`.
-///
-/// ```
-/// use martensite_tkernel::storage::Bucket;
-/// let mut bucket = Bucket::with_size(4);
-/// bucket.clear();
-/// assert_eq!(bucket.space_size(), 4);
-/// ```
-pub struct Bucket {
+struct Bucket {
     space: Vec<Handle<dyn Persistent>>,
+    #[cfg(test)]
     space_size: i32,
 }
 
@@ -28,15 +22,17 @@ impl Default for Bucket {
 
 impl Bucket {
     /// Example: `Bucket::with_size(10)`.
-    pub fn with_size(space_size: i32) -> Self {
+    fn with_size(_space_size: i32) -> Self {
         Self {
             space: Vec::new(),
-            space_size,
+            #[cfg(test)]
+            space_size: _space_size,
         }
     }
 
     /// The capacity given at construction; `bucket.space_size()`.
-    pub fn space_size(&self) -> i32 {
+    #[cfg(test)]
+    fn space_size(&self) -> i32 {
         self.space_size
     }
 
@@ -61,18 +57,7 @@ impl Bucket {
 }
 
 /// Objects appended in order across buckets of `bucket_size` slots.
-///
-/// ```
-/// use martensite_tkernel::standard::{Handle, Persistent, StandardPersistent};
-/// use martensite_tkernel::storage::BucketOfPersistent;
-/// let mut objects = BucketOfPersistent::new(2, 1);
-/// for _ in 0..3 {
-///     objects.append(&Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>());
-/// }
-/// assert_eq!(objects.length(), 3);
-/// assert!(objects.value(3).is_some());
-/// ```
-pub struct BucketOfPersistent {
+pub(super) struct BucketOfPersistent {
     buckets: Vec<Bucket>,
     bucket_size: i32,
     length: i32,
@@ -118,7 +103,8 @@ impl BucketOfPersistent {
 
     /// `Value`: the object at one-based `index`, null outside the stored range.
     /// Example: `objects.value(1)`.
-    pub fn value(&self, index: i32) -> Handle<dyn Persistent> {
+    #[cfg(test)]
+    fn value(&self, index: i32) -> Handle<dyn Persistent> {
         let offset = index - 1;
         let bucket = offset.div_euclid(self.bucket_size.max(1));
         let slot = offset - self.bucket_size * bucket;
@@ -141,16 +127,7 @@ impl BucketOfPersistent {
 
 /// Walks every bucket slot up to each bucket's last object. On an
 /// empty collection it still yields one (null) slot.
-///
-/// ```
-/// use martensite_tkernel::storage::{BucketIterator, BucketOfPersistent};
-/// let objects = BucketOfPersistent::new(4, 1);
-/// let mut walk = BucketIterator::new(Some(&objects));
-/// assert!(walk.more() && walk.value().is_null());
-/// walk.next();
-/// assert!(!walk.more());
-/// ```
-pub struct BucketIterator<'a> {
+pub(super) struct BucketIterator<'a> {
     source: Option<&'a BucketOfPersistent>,
     bucket_index: usize,
     current: usize,
@@ -179,7 +156,7 @@ impl<'a> BucketIterator<'a> {
 
     /// Restarts on `source`; `None` keeps the previous collection but stops.
     /// Example: `walk.init(Some(&objects))`.
-    pub fn init(&mut self, source: Option<&'a BucketOfPersistent>) {
+    fn init(&mut self, source: Option<&'a BucketOfPersistent>) {
         let Some(source) = source else {
             self.more = false;
             return;
@@ -197,7 +174,8 @@ impl<'a> BucketIterator<'a> {
     }
 
     /// `Reset`: back to the first slot of the collection given last; `walk.reset()`.
-    pub fn reset(&mut self) {
+    #[cfg(test)]
+    fn reset(&mut self) {
         match self.source {
             Some(source) => self.restart(source),
             None => self.more = false,
@@ -241,3 +219,7 @@ impl<'a> BucketIterator<'a> {
         self.source?.buckets.get(self.current)
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/storage_api_behavior/buckets.rs"]
+mod bucket_tests;

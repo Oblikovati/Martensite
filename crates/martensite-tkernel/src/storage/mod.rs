@@ -20,12 +20,12 @@ pub use base_driver::{
     BaseDriver, DataSections, DriverBase, DriverPrimitives, DriverValue, HeaderSections,
     TableSections,
 };
-pub use bucket::{Bucket, BucketIterator, BucketOfPersistent};
+use bucket::{BucketIterator, BucketOfPersistent};
 pub(crate) use callback::CallBackTable;
 pub use callback::{CallBack, DefaultCallBack, TypedCallBack};
 pub use data::Data;
-pub use header_data::{HeaderData, HeaderFields};
-pub use internal_data::{InternalData, ReadArray};
+pub use header_data::HeaderData;
+pub(crate) use internal_data::InternalData;
 pub(crate) use kinds::STORAGE_HIERARCHY;
 pub use kinds::{
     OpenMode, Position, SolveMode, StorageError, StreamException, stream_ext_char_parity_error,
@@ -34,13 +34,13 @@ pub use kinds::{
 };
 pub use kinds::{exception_bytes, exception_stacks};
 pub(crate) use numbers::PersistentNumbers;
-pub use root::Root;
-pub use root_data::RootData;
+pub(crate) use root::Root;
+pub(crate) use root_data::RootData;
 pub use schema::{
     CreationDateSource, MigrationFile, MigrationSource, NativeCreationDate, NativeMigrationSource,
     Schema, SchemaContext, TypeMigration,
 };
-pub use status::SectionStatus;
+use status::SectionStatus;
 pub use stream::borrowed_failure::{
     BorrowedInputUnwind, StreamBridgeObservation, StreamBridgeStage, StreamPanicPayload,
     StreamRejoinCause, StreamRejoinFailure,
@@ -52,10 +52,17 @@ pub use type_data::TypeData;
 use crate::tcollection::AsciiString;
 
 /// The version of Storage's read/write routines, `"1.3"`.
-///
-/// ```
-/// assert_eq!(martensite_tkernel::storage::version().as_bytes(), b"1.3");
-/// ```
-pub fn version() -> AsciiString {
+pub(super) fn version() -> AsciiString {
     AsciiString::new("1.3")
 }
+
+#[cfg(test)]
+#[path = "../../tests/storage_api_behavior/data.rs"]
+mod data_tests;
+
+#[cfg(test)]
+#[path = "../../tests/storage_api_behavior/root_sections.rs"]
+mod root_section_tests;
+#[cfg(test)]
+#[path = "../../tests/storage_api_behavior/scripted_driver.rs"]
+mod scripted_driver;

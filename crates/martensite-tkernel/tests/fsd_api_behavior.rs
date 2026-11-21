@@ -1,7 +1,5 @@
-//! Behavior of the FSD drivers and Base64 over in-memory and failing file systems. The
+//! Behavior of the FSD drivers over in-memory and failing file systems. The
 //! byte formats are compared with reviewed baselines.
-#[path = "fsd_api_behavior/base64.rs"]
-mod base64;
 #[path = "fsd_api_behavior/binary.rs"]
 mod binary;
 #[path = "fsd_api_behavior/cmp_dialect_inheritance.rs"]

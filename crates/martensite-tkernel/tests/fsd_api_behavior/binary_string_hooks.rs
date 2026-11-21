@@ -1,5 +1,5 @@
 //! Supplemental tests of the protected binary string API.
-#[path = "fsd_api_behavior/fakes.rs"]
+#[path = "fakes.rs"]
 mod fakes;
 use fakes::{RefusingFileSystem, with_file};
 use martensite_tkernel::fsd::{BinaryFile, MemoryFileSystem};
@@ -70,7 +70,7 @@ fn protected_binary_string_hooks_match_native_fixture() {
     append_stream_counts(&mut output);
     assert_eq!(
         output,
-        include_str!("fixtures/oracle/tkernel_binary_string_hooks.expected")
+        include_str!("../fixtures/oracle/tkernel_binary_string_hooks.expected")
     );
 }
 

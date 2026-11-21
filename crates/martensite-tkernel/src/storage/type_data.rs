@@ -123,11 +123,6 @@ impl TypeData {
         self.lock().status.error
     }
 
-    /// Example: `types.error_status_extension()`.
-    pub fn error_status_extension(&self) -> AsciiString {
-        self.lock().status.extension.clone()
-    }
-
     /// Example: `types.clear_error_status()`.
     pub fn clear_error_status(&self) {
         self.lock().status.clear();

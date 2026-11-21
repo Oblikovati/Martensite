@@ -5,8 +5,6 @@ pub mod foundation_supplemental;
 pub mod fsd_api_behavior;
 #[path = "../fsd_binary_file.rs"]
 pub mod fsd_binary_file;
-#[path = "../fsd_binary_string_hooks.rs"]
-pub mod fsd_binary_string_hooks;
 #[path = "../fsd_binary_supplemental.rs"]
 pub mod fsd_binary_supplemental;
 #[path = "../h_array1_of_real_supplemental.rs"]
