@@ -62,7 +62,7 @@ fn record_finished_output(
     let segment = i32::from(entity.is_kind(
         <Select3DSensitiveSegment as martensite_tkernel::standard::RuntimeTyped>::static_type(),
     ));
-    let count = entity.ref_count();
+    let count = slot.ref_count();
     let owners = incoming.ref_count();
     let same = i32::from(entity.owner_id() == *incoming);
     writeln!(
