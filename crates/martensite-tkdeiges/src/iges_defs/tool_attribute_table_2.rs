@@ -12,13 +12,14 @@
     clippy::needless_return,
     reason = "the members keep the order and the locals of the record they read"
 )]
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataIgesEntity, iges_array1_item, iges_array1_set, iges_array2_set, iges_live,
-    iges_new_array1, iges_new_array2,
+    iges_array1_item, iges_array1_set, iges_array2_set, iges_live, iges_new_array1, iges_new_array2,
 };
 use crate::iges_defs::{IgesDefsAttributeDef, IgesDefsAttributeTable, IgesDefsToolAttributeTable};
 use martensite_tkernel::ncollection::{HArray1, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::{InterfaceCheck, InterfaceCopyTool, InterfaceShareTool};
 
@@ -68,8 +69,8 @@ impl IgesDefsToolAttributeTable {
         let mut ab: Handle<IgesDefsAttributeDef> = another.definition();
         let mut na: i32 = another.nb_attributes()?;
         let mut nr: i32 = another.nb_rows()?;
-        let mut list2: Handle<HArray2<Handle<StandardTransient>>> =
-            iges_new_array2::<Handle<StandardTransient>>(1, na, 1, nr)?;
+        let mut list2: Handle<HArray2<Handle<dyn Transient>>> =
+            iges_new_array2::<Handle<dyn Transient>>(1, na, 1, nr)?;
         for k in 1..=nr {
             for i in 1..=na {
                 let mut avc: i32 = iges_live(&ab, "IgesDefsToolAttributeTable::own_copy")?
@@ -155,10 +156,10 @@ impl IgesDefsToolAttributeTable {
                         }
                     }
                     4 => {
-                        let mut other_ent: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+                        let mut other_ent: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
                             another.attribute_list(i, k)?.cast();
-                        let mut attr_ent: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-                            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, avc)?;
+                        let mut attr_ent: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+                            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, avc)?;
                         iges_array2_set(
                             &list2,
                             i,
@@ -178,7 +179,7 @@ impl IgesDefsToolAttributeTable {
                                     )?
                                     .cast(),
                                 )?
-                                .cast::<IgesDataIgesEntity>(),
+                                .cast::<dyn IgesDataEntityKind>(),
                                 "IgesDefsToolAttributeTable::own_copy",
                             )?;
                         }

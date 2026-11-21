@@ -102,7 +102,7 @@ fn case_iges(typenum: i32, formnum: i32) -> i32 {
     return 0;
 }
 
-fn category(cn: i32, _ent: &Handle<martensite_tkernel::standard::StandardTransient>) -> i32 {
+fn category(cn: i32, _ent: &Handle<dyn martensite_tkernel::standard::Transient>) -> i32 {
     if ((cn == 4) || (cn == 5)) || (cn == 17) {
         return InterfaceCategory::number("Piping");
     }

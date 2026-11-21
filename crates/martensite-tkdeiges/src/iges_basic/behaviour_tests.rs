@@ -1,5 +1,6 @@
 //! What the sample round can't see: derived values against closed forms, and the record of a file.
 use crate::iges_basic::{IgesBasicGroup, IgesBasicToolGroup};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_new_array1, iges_new_array2};
 use crate::iges_geom::{
     IgesGeomBSplineSurface, IgesGeomCircularArc, IgesGeomConicArc, IgesGeomCopiousData,
@@ -281,7 +282,7 @@ fn the_group_modes_move_between_their_forms() {
 #[test]
 fn a_group_keeps_its_entities_when_it_grows_or_shrinks() -> Result<(), Failure> {
     let group = IgesBasicGroup::with_nb(2)?;
-    let line: Handle<IgesDataIgesEntity> = Handle::new(IgesGeomLine::new()).cast();
+    let line: Handle<dyn IgesDataEntityKind> = Handle::new(IgesGeomLine::new()).cast();
     group.set_value(1, &line)?;
     group.set_nb(4)?;
     assert_eq!(group.nb_entities(), 4);
@@ -308,8 +309,8 @@ fn correcting_a_group_drops_its_null_entities() -> Result<(), Failure> {
 
 #[test]
 fn a_tree_tells_operands_from_operations() -> Result<(), Failure> {
-    let operands = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, 3)?;
-    let line: Handle<IgesDataIgesEntity> = Handle::new(IgesGeomLine::new()).cast();
+    let operands = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, 3)?;
+    let line: Handle<dyn IgesDataEntityKind> = Handle::new(IgesGeomLine::new()).cast();
     crate::iges_data::iges_array1_set(&operands, 1, line.clone(), "tree")?;
     crate::iges_data::iges_array1_set(&operands, 2, line, "tree")?;
     let operations = iges_new_array1::<i32>(1, 3)?;

@@ -12,7 +12,7 @@
     clippy::needless_return,
     reason = "the members keep the order and the locals of the record they read"
 )]
-use crate::iges_data::IgesDataIgesEntity;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_dimen::IgesDimen;
 use crate::iges_draw::{
     IgesDrawCircArraySubfigure, IgesDrawConnectPoint, IgesDrawDrawing, IgesDrawDrawingWithRotation,
@@ -83,7 +83,7 @@ fn case_iges(typenum: i32, formnum: i32) -> i32 {
     return 0;
 }
 
-fn category(cn: i32, _ent: &Handle<martensite_tkernel::standard::StandardTransient>) -> i32 {
+fn category(cn: i32, _ent: &Handle<dyn martensite_tkernel::standard::Transient>) -> i32 {
     if cn == 9 {
         return InterfaceCategory::number("Auxiliary");
     }
@@ -139,7 +139,7 @@ iges_package_tables! {
     general_extra: { fn own_implied_case(
     &self,
     cn: i32,
-    ent: &Handle<IgesDataIgesEntity>,
+    ent: &Handle<dyn IgesDataEntityKind>,
     iter: &mut InterfaceEntityIterator,
 ) -> Result<(), Failure> {
     iges_case_dispatch!(cn, ent, Ok(()), Ok(()), [
@@ -150,8 +150,8 @@ iges_package_tables! {
 fn own_renew_case(
     &self,
     cn: i32,
-    entfrom: &Handle<IgesDataIgesEntity>,
-    entto: &Handle<IgesDataIgesEntity>,
+    entfrom: &Handle<dyn IgesDataEntityKind>,
+    entto: &Handle<dyn IgesDataEntityKind>,
     tc: &InterfaceCopyTool,
 ) -> Result<(), Failure> {
     iges_case_dispatch!(cn, entfrom, Ok(()), Ok(()), [
@@ -159,7 +159,7 @@ fn own_renew_case(
         14 => IgesDrawViewsVisibleWithAttr, IgesDrawToolViewsVisibleWithAttr;
     ], |tool, typed| tool.own_renew(&typed, &entto.cast(), tc))
 }
-fn own_delete_case(&self, cn: i32, ent: &Handle<IgesDataIgesEntity>) {
+fn own_delete_case(&self, cn: i32, ent: &Handle<dyn IgesDataEntityKind>) {
     let forget = || -> Result<(), Failure> {
         iges_case_dispatch!(cn, ent, Ok(()), Ok(()), [
             13 => IgesDrawViewsVisible, IgesDrawToolViewsVisible;

@@ -25,7 +25,8 @@ use crate::iges_data::{
     iges_new_array1, iges_real_text,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -261,7 +262,7 @@ impl IgesSolidToolSelectedComponent {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesSolidToolSelectedComponent::own_shared")?;
-        iter.get_one_item(&ent_live.component().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.component().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -305,7 +306,7 @@ impl IgesSolidToolSelectedComponent {
         let another_live = iges_live(another, "IgesSolidToolSelectedComponent::own_copy")?;
         let ent_live = iges_live(ent, "IgesSolidToolSelectedComponent::own_copy")?;
         let temp_entity = tc
-            .transferred(&another_live.component().cast::<StandardTransient>())?
+            .transferred(&another_live.component().cast::<dyn Transient>())?
             .cast::<IgesSolidBooleanTree>();
         let temp_select_point: Xyz = Xyz::from(another_live.select_point());
         ent_live.init(&temp_entity, temp_select_point);
@@ -434,7 +435,7 @@ impl IgesSolidToolShell {
         let ent_live = iges_live(ent, "IgesSolidToolShell::own_shared")?;
         let nbfaces: i32 = ent_live.nb_faces()?;
         for i in 1..=nbfaces {
-            iter.get_one_item(&ent_live.face(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.face(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }

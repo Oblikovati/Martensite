@@ -11,7 +11,7 @@ macro_rules! iges_block_0000 {
         let mut $control_code_strings: Handle<HArray1<Handle<HAsciiString>>> = Default::default();
         crate::iges_shared_blocks::iges_block_0057!($box_heights, $box_widths, $nb_chars);
         let mut $char_set_codes: Handle<HArray1<i32>> = Default::default();
-        let mut $char_set_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+        let mut $char_set_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
             Default::default();
         crate::iges_shared_blocks::iges_block_0021!(
             $mirror_flags,
@@ -51,9 +51,9 @@ macro_rules! iges_block_0002 {
         if $up == 0 {
             return Ok(());
         }
-        let mut $temp_display_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+        let mut $temp_display_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
             Default::default();
-        let mut $anew: Handle<StandardTransient> = Default::default();
+        let mut $anew: Handle<dyn martensite_tkernel::standard::Transient> = Default::default();
         {
             $i = 1;
             while $i <= $up {
@@ -66,7 +66,7 @@ macro_rules! iges_block_0002 {
         $up = $newdisp.nb_entities();
         $i = 0;
         if $up > 0 {
-            $temp_display_entities = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, $up)?;
+            $temp_display_entities = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, $up)?;
         }
     };
 }
@@ -347,15 +347,16 @@ pub(crate) use iges_block_0018;
 
 macro_rules! iges_block_0019 {
     ($temp_connect_points:ident, $temp_cont_flow_assocs:ident, $temp_flow_assocs:ident, $temp_flow_names:ident, $temp_joins:ident, $temp_text_display_templates:ident) => {
-        let mut $temp_flow_assocs: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut $temp_flow_assocs: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            Default::default();
         let mut $temp_connect_points: Handle<HArray1<Handle<IgesDrawConnectPoint>>> =
             Default::default();
-        let mut $temp_joins: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut $temp_joins: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
         let mut $temp_flow_names: Handle<HArray1<Handle<HAsciiString>>> = Default::default();
         let mut $temp_text_display_templates: Handle<
             HArray1<Handle<IgesGraphTextDisplayTemplate>>,
         > = Default::default();
-        let mut $temp_cont_flow_assocs: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+        let mut $temp_cont_flow_assocs: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
             Default::default();
     };
 }
@@ -369,7 +370,7 @@ macro_rules! iges_block_0020 {
         let mut $leader_entities: Handle<HArray1<Handle<IgesDimenLeaderArrow>>> =
             Default::default();
         let mut $label_levels: Handle<HArray1<i32>> = Default::default();
-        let mut $displayed_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
+        let mut $displayed_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
             Default::default();
     };
 }

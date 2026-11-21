@@ -10,6 +10,7 @@
 use crate::iges_basic::IgesBasicSubfigureDef;
 use crate::iges_basic::entity_shape::iges_placement_methods;
 use crate::iges_basic::shared_runs::iges_shared_041;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataIgesEntity;
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::standard::{Failure, Handle};
@@ -25,12 +26,12 @@ iges_entity! {
 /// to S is a parametrised surface S(u, v) given by
 /// O(u, v) = S(u, v) + d * N(u, v);
 /// u1 `= u `= u2; v1 `= v `= v2;
-IgesGeomOffsetSurface, IgesGeomOffsetSurfaceState, "IgesGeomOffsetSurface", parent IgesDataIgesEntity, { indicator: Xyz, distance: f64, surface: Handle<IgesDataIgesEntity> }
+IgesGeomOffsetSurface, IgesGeomOffsetSurfaceState, "IgesGeomOffsetSurface", parent IgesDataIgesEntity, { indicator: Xyz, distance: f64, surface: Handle<dyn IgesDataEntityKind> }
 }
 impl IgesGeomOffsetSurface {
     iges_methods! {
     get distance = distance: f64;
-    get surface = surface: Handle<IgesDataIgesEntity>;
+    get surface = surface: Handle<dyn IgesDataEntityKind>;
     }
     iges_placement_methods! {
     vector offset_indicator = indicator;
@@ -41,7 +42,12 @@ impl IgesGeomOffsetSurface {
     /// - anIndicator : Offset indicator
     /// - aDistance   : Offset distance
     /// - aSurface    : Surface that is offset
-    pub fn init(&self, an_indicator: Xyz, a_distance: f64, a_surface: &Handle<IgesDataIgesEntity>) {
+    pub fn init(
+        &self,
+        an_indicator: Xyz,
+        a_distance: f64,
+        a_surface: &Handle<dyn IgesDataEntityKind>,
+    ) {
         {
             let mut state = self.state.write();
             state.indicator = an_indicator;
@@ -58,11 +64,11 @@ iges_entity! {
 /// above cases the plane is defined within definition space
 /// by means of coefficients A, B, C, D where at least one of
 /// A, B, C is non-zero and A * XT + B * YT + C * ZT = D
-IgesGeomPlane, IgesGeomPlaneState, "IgesGeomPlane", parent IgesDataIgesEntity, { a: f64, b: f64, c: f64, d: f64, curve: Handle<IgesDataIgesEntity>, attach: Xyz, size: f64 }
+IgesGeomPlane, IgesGeomPlaneState, "IgesGeomPlane", parent IgesDataIgesEntity, { a: f64, b: f64, c: f64, d: f64, curve: Handle<dyn IgesDataEntityKind>, attach: Xyz, size: f64 }
 }
 impl IgesGeomPlane {
     iges_methods! {
-    get bounding_curve = curve: Handle<IgesDataIgesEntity>;
+    get bounding_curve = curve: Handle<dyn IgesDataEntityKind>;
     get symbol_size = size: f64;
     }
     iges_placement_methods! {
@@ -77,7 +83,7 @@ impl IgesGeomPlane {
         b: f64,
         c: f64,
         d: f64,
-        a_curve: &Handle<IgesDataIgesEntity>,
+        a_curve: &Handle<dyn IgesDataEntityKind>,
         attach: Xyz,
         a_size: f64,
     ) {
@@ -220,12 +226,12 @@ iges_entity! {
 /// points, lines, circles, conics, rational B-splines,
 /// parametric splines or any parametric curve defined in
 /// the IGES specification.
-IgesGeomRuledSurface, IgesGeomRuledSurfaceState, "IgesGeomRuledSurface", parent IgesDataIgesEntity, { curve1: Handle<IgesDataIgesEntity>, curve2: Handle<IgesDataIgesEntity>, dir_flag: i32, dev_flag: i32 }
+IgesGeomRuledSurface, IgesGeomRuledSurfaceState, "IgesGeomRuledSurface", parent IgesDataIgesEntity, { curve1: Handle<dyn IgesDataEntityKind>, curve2: Handle<dyn IgesDataEntityKind>, dir_flag: i32, dev_flag: i32 }
 }
 impl IgesGeomRuledSurface {
     iges_methods! {
-    get first_curve = curve1: Handle<IgesDataIgesEntity>;
-    get second_curve = curve2: Handle<IgesDataIgesEntity>;
+    get first_curve = curve1: Handle<dyn IgesDataEntityKind>;
+    get second_curve = curve2: Handle<dyn IgesDataEntityKind>;
     get direction_flag = dir_flag: i32;
     }
     /// This method is used to set the fields of the class
@@ -240,8 +246,8 @@ impl IgesGeomRuledSurface {
     ///   0 = Possibly not
     pub fn init(
         &self,
-        a_curve: &Handle<IgesDataIgesEntity>,
-        another_curve: &Handle<IgesDataIgesEntity>,
+        a_curve: &Handle<dyn IgesDataEntityKind>,
+        another_curve: &Handle<dyn IgesDataEntityKind>,
         a_dir_flag: i32,
         a_dev_flag: i32,
     ) {

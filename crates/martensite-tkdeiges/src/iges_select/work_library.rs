@@ -1,17 +1,19 @@
 //! The reading, writing and dumping of files of the norm by a work session.
 use super::IgesSelectFileModifier;
 use crate::iges_appli::IgesAppli;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataFileProtocol, IgesDataIgesDumper, IgesDataIgesEntity, IgesDataIgesModel,
-    IgesDataIgesWriter, IgesDataProtocolOps,
+    IgesDataFileProtocol, IgesDataIgesDumper, IgesDataIgesModel, IgesDataIgesWriter,
+    IgesDataProtocolOps,
 };
 use crate::iges_defs::IgesDefs;
 use crate::iges_file::iges_file_read_stream;
 use crate::iges_solid::IgesSolid;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
     message::Message,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkxsbase::{
     if_select::{IFSelectContextWrite, IFSelectWorkLibrary, IFSelectWorkLibraryBase},
@@ -32,7 +34,6 @@ use std::sync::OnceLock;
 /// assert_eq!(IgesSelectWorkLibrary::new(false).dump_levels(), (4, 6));
 /// ```
 pub struct IgesSelectWorkLibrary {
-    transient: StandardTransient,
     base: IFSelectWorkLibraryBase,
     themodefnes: bool,
 }
@@ -40,7 +41,6 @@ impl_transient!(
     IgesSelectWorkLibrary,
     "IgesSelectWorkLibrary",
     dyn IFSelectWorkLibrary,
-    transient,
     interfaces: [dyn IFSelectWorkLibrary]
 );
 
@@ -51,7 +51,6 @@ impl IgesSelectWorkLibrary {
         IgesAppli::init();
         IgesDefs::init();
         let library = Self {
-            transient: StandardTransient::default(),
             base: IFSelectWorkLibraryBase::new(),
             themodefnes: modefnes,
         };
@@ -188,13 +187,13 @@ impl IFSelectWorkLibrary for IgesSelectWorkLibrary {
         &self,
         model: &Handle<dyn InterfaceInterfaceModel>,
         protocol: &Handle<dyn InterfaceProtocol>,
-        entity: &Handle<StandardTransient>,
+        entity: &Handle<dyn Transient>,
         s: &mut dyn Write,
         level: i32,
     ) -> Result<(), Failure> {
         let igesmod = model.cast::<IgesDataIgesModel>();
         let igespro = protocol.cast::<dyn IgesDataProtocolOps>();
-        let mut igesent = entity.cast::<IgesDataIgesEntity>();
+        let mut igesent = entity.cast::<dyn IgesDataEntityKind>();
         let Some(live) = igesmod.get() else {
             return Ok(());
         };

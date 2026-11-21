@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::ncollection::HArray1;
@@ -43,7 +44,7 @@ the_nb_chars: Handle<HArray1<i32>>,
 the_box_widths: Handle<HArray1<f64>>,
 the_box_heights: Handle<HArray1<f64>>,
 the_char_set_codes: Handle<HArray1<i32>>,
-the_char_set_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_char_set_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 the_slant_angles: Handle<HArray1<f64>>,
 the_rotation_angles: Handle<HArray1<f64>>,
 the_mirror_flags: Handle<HArray1<i32>>,
@@ -115,7 +116,7 @@ impl IgesDimenNewGeneralNote {
         box_widths: &Handle<HArray1<f64>>,
         box_heights: &Handle<HArray1<f64>>,
         char_set_codes: &Handle<HArray1<i32>>,
-        char_set_entities: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        char_set_entities: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         sl_angles: &Handle<HArray1<f64>>,
         rot_angles: &Handle<HArray1<f64>>,
         mirror_flags: &Handle<HArray1<i32>>,

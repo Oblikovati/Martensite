@@ -14,6 +14,7 @@ use crate::iges_basic::entity_shape::{
 use crate::iges_basic::{
     IgesBasicHArray1OfHArray1OfIgesEntity, IgesBasicHArray1OfHArray1OfInteger,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_data::{iges_array1_item, iges_live};
 use crate::iges_geom::{IgesGeomDirection, IgesGeomPoint, IgesGeomTransformationMatrix};
@@ -29,13 +30,13 @@ iges_entity! {
 /// poles of a single face.
 /// From IGES-5.3, a Loop can be free with Form Number 0,
 /// else it is a bound of a face (it is the default)
-IgesSolidLoop, IgesSolidLoopState, "IgesSolidLoop", parent IgesDataIgesEntity, { types: Handle<HArray1<i32>>, edges: Handle<HArray1<Handle<IgesDataIgesEntity>>>, index: Handle<HArray1<i32>>, orientation_flags: Handle<HArray1<i32>>, nb_parameter_curves: Handle<HArray1<i32>>, isoparametric_flags: Handle<IgesBasicHArray1OfHArray1OfInteger>, curves: Handle<IgesBasicHArray1OfHArray1OfIgesEntity> }
+IgesSolidLoop, IgesSolidLoopState, "IgesSolidLoop", parent IgesDataIgesEntity, { types: Handle<HArray1<i32>>, edges: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>, index: Handle<HArray1<i32>>, orientation_flags: Handle<HArray1<i32>>, nb_parameter_curves: Handle<HArray1<i32>>, isoparametric_flags: Handle<IgesBasicHArray1OfHArray1OfInteger>, curves: Handle<IgesBasicHArray1OfHArray1OfIgesEntity> }
 }
 impl IgesSolidLoop {
     iges_methods! {
     len nb_edges = edges;
     item edge_type = types: i32;
-    item edge = edges: Handle<IgesDataIgesEntity>;
+    item edge = edges: Handle<dyn IgesDataEntityKind>;
     item nb_parameter_curves = nb_parameter_curves: i32;
     item list_index = index: i32;
     }
@@ -57,7 +58,7 @@ impl IgesSolidLoop {
     pub fn init(
         &self,
         types: &Handle<HArray1<i32>>,
-        edges: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        edges: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         index: &Handle<HArray1<i32>>,
         orient: &Handle<HArray1<i32>>,
         nb_parameter_curves: &Handle<HArray1<i32>>,
@@ -136,9 +137,9 @@ impl IgesSolidLoop {
         &self,
         edge_index: i32,
         curve_index: i32,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let the_curves = self.state.read().curves.clone();
-        let mut acurve: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut acurve: Handle<dyn IgesDataEntityKind> = Handle::default();
         if !iges_live(&the_curves, "IgesSolidLoop::parametric_curve")?
             .value(edge_index)?
             .is_null()
@@ -416,12 +417,12 @@ iges_entity! {
 /// From IGES-5.3, From 1 says that at least one item is a Brep
 /// else all are Primitives, Boolean Trees, Solid Instances or
 /// other Assemblies
-IgesSolidSolidAssembly, IgesSolidSolidAssemblyState, "IgesSolidSolidAssembly", parent IgesDataIgesEntity, { items: Handle<HArray1<Handle<IgesDataIgesEntity>>>, matrices: Handle<HArray1<Handle<IgesGeomTransformationMatrix>>> }
+IgesSolidSolidAssembly, IgesSolidSolidAssemblyState, "IgesSolidSolidAssembly", parent IgesDataIgesEntity, { items: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>, matrices: Handle<HArray1<Handle<IgesGeomTransformationMatrix>>> }
 }
 impl IgesSolidSolidAssembly {
     iges_methods! {
     len_checked nb_items = items;
-    item item = items: Handle<IgesDataIgesEntity>;
+    item item = items: Handle<dyn IgesDataEntityKind>;
     item transf_matrix = matrices: Handle<IgesGeomTransformationMatrix>;
     }
     /// This method is used to set the fields of the class
@@ -433,7 +434,7 @@ impl IgesSolidSolidAssembly {
     ///   do not match
     pub fn init(
         &self,
-        items: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        items: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         matrices: &Handle<HArray1<Handle<IgesGeomTransformationMatrix>>>,
     ) -> Result<(), Failure> {
         if iges_array1_lower(items, "IgesSolidSolidAssembly::init")? != 1

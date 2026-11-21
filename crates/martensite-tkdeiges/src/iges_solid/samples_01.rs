@@ -12,6 +12,7 @@ use crate::iges_basic::nested_arrays::nested_entity_lists;
 use crate::iges_basic::{
     IgesBasicHArray1OfHArray1OfIgesEntity, IgesBasicHArray1OfHArray1OfInteger,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_data::{iges_array1_set, iges_new_array1};
 use crate::iges_geom::samples_01::{
@@ -44,7 +45,7 @@ pub(crate) fn sample_iges_solid_block() -> Result<Handle<IgesSolidBlock>, Failur
 }
 pub(crate) fn sample_iges_solid_boolean_tree() -> Result<Handle<IgesSolidBooleanTree>, Failure> {
     let object = Handle::new(IgesSolidBooleanTree::new());
-    let operands: Handle<HArray1<Handle<IgesDataIgesEntity>>> = boolean_tree_operands()?;
+    let operands: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = boolean_tree_operands()?;
     let operations: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, 3).and_then(|list| {
         iges_array1_set(&list, 3, 1, "sample")?;
         Ok(list)
@@ -94,9 +95,9 @@ pub(crate) fn sample_iges_solid_cylindrical_surface()
 }
 pub(crate) fn sample_iges_solid_edge_list() -> Result<Handle<IgesSolidEdgeList>, Failure> {
     let object = Handle::new(IgesSolidEdgeList::new());
-    let curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> = sample_list([
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
+    let curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = sample_list([
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
     ])?;
     let start_vertex_list: Handle<HArray1<Handle<IgesSolidVertexList>>> = sample_list([
         sample_iges_solid_vertex_list()?,
@@ -128,8 +129,8 @@ pub(crate) fn sample_iges_solid_ellipsoid() -> Result<Handle<IgesSolidEllipsoid>
 }
 pub(crate) fn sample_iges_solid_face() -> Result<Handle<IgesSolidFace>, Failure> {
     let object = Handle::new(IgesSolidFace::new());
-    let a_surface: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_surface: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let outer_loop_flag: bool = true;
     let loops: Handle<HArray1<Handle<IgesSolidLoop>>> =
         sample_list([sample_iges_solid_loop()?, sample_iges_solid_loop()?])?;
@@ -139,9 +140,9 @@ pub(crate) fn sample_iges_solid_face() -> Result<Handle<IgesSolidFace>, Failure>
 pub(crate) fn sample_iges_solid_loop() -> Result<Handle<IgesSolidLoop>, Failure> {
     let object = Handle::new(IgesSolidLoop::new());
     let types: Handle<HArray1<i32>> = sample_list([1, 1])?;
-    let edges: Handle<HArray1<Handle<IgesDataIgesEntity>>> = sample_list([
-        sample_iges_solid_vertex_list()?.cast::<IgesDataIgesEntity>(),
-        sample_iges_solid_vertex_list()?.cast::<IgesDataIgesEntity>(),
+    let edges: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = sample_list([
+        sample_iges_solid_vertex_list()?.cast::<dyn IgesDataEntityKind>(),
+        sample_iges_solid_vertex_list()?.cast::<dyn IgesDataEntityKind>(),
     ])?;
     let index: Handle<HArray1<i32>> = sample_list([1, 2])?;
     let orient: Handle<HArray1<i32>> = sample_list([1, 0])?;
@@ -209,9 +210,9 @@ pub(crate) fn sample_iges_solid_shell() -> Result<Handle<IgesSolidShell>, Failur
 pub(crate) fn sample_iges_solid_solid_assembly() -> Result<Handle<IgesSolidSolidAssembly>, Failure>
 {
     let object = Handle::new(IgesSolidSolidAssembly::new());
-    let items: Handle<HArray1<Handle<IgesDataIgesEntity>>> = sample_list([
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
+    let items: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = sample_list([
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
     ])?;
     let matrices: Handle<HArray1<Handle<IgesGeomTransformationMatrix>>> = sample_list([
         sample_iges_geom_transformation_matrix()?,
@@ -223,15 +224,16 @@ pub(crate) fn sample_iges_solid_solid_assembly() -> Result<Handle<IgesSolidSolid
 pub(crate) fn sample_iges_solid_solid_instance() -> Result<Handle<IgesSolidSolidInstance>, Failure>
 {
     let object = Handle::new(IgesSolidSolidInstance::new());
-    let an_entity: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let an_entity: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     object.init(&an_entity);
     Ok(object)
 }
 pub(crate) fn sample_iges_solid_solid_of_linear_extrusion()
 -> Result<Handle<IgesSolidSolidOfLinearExtrusion>, Failure> {
     let object = Handle::new(IgesSolidSolidOfLinearExtrusion::new());
-    let a_curve: Handle<IgesDataIgesEntity> = sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_curve: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let length: f64 = 2.5;
     let direction: Xyz = Xyz::new(3.5, 4.5, 5.5);
     object.init(&a_curve, length, direction);
@@ -240,7 +242,8 @@ pub(crate) fn sample_iges_solid_solid_of_linear_extrusion()
 pub(crate) fn sample_iges_solid_solid_of_revolution()
 -> Result<Handle<IgesSolidSolidOfRevolution>, Failure> {
     let object = Handle::new(IgesSolidSolidOfRevolution::new());
-    let a_curve: Handle<IgesDataIgesEntity> = sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_curve: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let fract: f64 = 2.5;
     let axis_pnt: Xyz = Xyz::new(3.5, 4.5, 5.5);
     let direction: Xyz = Xyz::new(4.5, 5.5, 6.5);

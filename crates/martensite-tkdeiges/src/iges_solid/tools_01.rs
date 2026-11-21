@@ -13,15 +13,17 @@ use crate::iges_basic::shared_runs::{
     iges_shared_002, iges_shared_004, iges_shared_010, iges_shared_017, iges_shared_025,
     iges_shared_039, iges_shared_040, iges_shared_043, iges_shared_046,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_xyz, iges_dump_xyz_l, iges_live, iges_new_array1,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -182,9 +184,9 @@ impl IgesSolidToolBooleanTree {
         let ent_live = iges_live(ent, "IgesSolidToolBooleanTree::read_own_params")?;
         let mut length: i32 = 0;
         let mut intvalue: i32 = 0;
-        let mut entvalue: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut entvalue: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut temp_operations: Handle<HArray1<i32>> = Handle::default();
-        let mut temp_operands: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut temp_operands: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         let st: bool =
             pr.read_integer_text(&pr.current(), "Length of post-order notation", &mut length)?;
         if st && length > 0 {
@@ -194,7 +196,7 @@ impl IgesSolidToolBooleanTree {
                 0,
                 "IgesSolidToolBooleanTree::read_own_params",
             )?;
-            temp_operands = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, length)?;
+            temp_operands = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, length)?;
             if pr.read_entity(ir, &pr.current(), "Operand 1", &mut entvalue, false)? {
                 iges_array1_set(
                     &temp_operands,
@@ -286,7 +288,7 @@ impl IgesSolidToolBooleanTree {
         let length: i32 = ent_live.length()?;
         for i in 1..=length {
             if ent_live.is_operand(i)? {
-                iter.get_one_item(&ent_live.operand(i)?.cast::<StandardTransient>());
+                iter.get_one_item(&ent_live.operand(i)?.cast::<dyn Transient>());
             }
         }
         Ok(())
@@ -356,13 +358,13 @@ impl IgesSolidToolBooleanTree {
         let ent_live = iges_live(ent, "IgesSolidToolBooleanTree::own_copy")?;
         let length: i32 = another_live.length()?;
         let temp_operations: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, length)?;
-        let temp_operands: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, length)?;
+        let temp_operands: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, length)?;
         for i in 1..=length {
             if another_live.is_operand(i)? {
                 let new_ent = tc
-                    .transferred(&another_live.operand(i)?.cast::<StandardTransient>())?
-                    .cast::<IgesDataIgesEntity>();
+                    .transferred(&another_live.operand(i)?.cast::<dyn Transient>())?
+                    .cast::<dyn IgesDataEntityKind>();
                 iges_array1_set(
                     &temp_operands,
                     i,

@@ -11,6 +11,7 @@ use super::{IgesSolidLoop, IgesSolidVertexList};
 use crate::iges_basic::entity_shape::{
     iges_array1_length, iges_array1_lower, iges_placement_methods,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_data::iges_array1_item;
 use crate::iges_geom::{IgesGeomDirection, IgesGeomPoint};
@@ -78,12 +79,12 @@ iges_entity! {
 /// The Boolean tree describes a binary tree structure
 /// composed of regularized Boolean operations and operands,
 /// in post-order notation.
-IgesSolidBooleanTree, IgesSolidBooleanTreeState, "IgesSolidBooleanTree", parent IgesDataIgesEntity, { operands: Handle<HArray1<Handle<IgesDataIgesEntity>>>, operations: Handle<HArray1<i32>> }
+IgesSolidBooleanTree, IgesSolidBooleanTreeState, "IgesSolidBooleanTree", parent IgesDataIgesEntity, { operands: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>, operations: Handle<HArray1<i32>> }
 }
 impl IgesSolidBooleanTree {
     iges_methods! {
     len_checked length = operands;
-    item operand = operands: Handle<IgesDataIgesEntity>;
+    item operand = operands: Handle<dyn IgesDataEntityKind>;
     }
     /// This method is used to set the fields of the class
     /// BooleanTree
@@ -91,7 +92,7 @@ impl IgesSolidBooleanTree {
     /// - operations : Array containing integer type for operations
     pub fn init(
         &self,
-        operands: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        operands: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         operations: &Handle<HArray1<i32>>,
     ) -> Result<(), Failure> {
         if iges_array1_lower(operands, "IgesSolidBooleanTree::init")? != 1
@@ -308,12 +309,12 @@ iges_entity! {
 /// defines EdgeList, Type `504` Form `1`
 /// EdgeList is defined as a segment joining two vertices
 /// It contains one or more edge tuples.
-IgesSolidEdgeList, IgesSolidEdgeListState, "IgesSolidEdgeList", parent IgesDataIgesEntity, { curves: Handle<HArray1<Handle<IgesDataIgesEntity>>>, start_vertex_list: Handle<HArray1<Handle<IgesSolidVertexList>>>, start_vertex_index: Handle<HArray1<i32>>, end_vertex_list: Handle<HArray1<Handle<IgesSolidVertexList>>>, end_vertex_index: Handle<HArray1<i32>> }
+IgesSolidEdgeList, IgesSolidEdgeListState, "IgesSolidEdgeList", parent IgesDataIgesEntity, { curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>, start_vertex_list: Handle<HArray1<Handle<IgesSolidVertexList>>>, start_vertex_index: Handle<HArray1<i32>>, end_vertex_list: Handle<HArray1<Handle<IgesSolidVertexList>>>, end_vertex_index: Handle<HArray1<i32>> }
 }
 impl IgesSolidEdgeList {
     iges_methods! {
     len nb_edges = curves;
-    item curve = curves: Handle<IgesDataIgesEntity>;
+    item curve = curves: Handle<dyn IgesDataEntityKind>;
     item start_vertex_list = start_vertex_list: Handle<IgesSolidVertexList>;
     item start_vertex_index = start_vertex_index: i32;
     item end_vertex_list = end_vertex_list: Handle<IgesSolidVertexList>;
@@ -334,7 +335,7 @@ impl IgesSolidEdgeList {
     ///   endVertexList and endVertexIndex do no match
     pub fn init(
         &self,
-        curves: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        curves: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         start_vertex_list: &Handle<HArray1<Handle<IgesSolidVertexList>>>,
         start_vertex_index: &Handle<HArray1<i32>>,
         end_vertex_list: &Handle<HArray1<Handle<IgesSolidVertexList>>>,
@@ -430,11 +431,11 @@ impl IgesSolidEllipsoid {
 iges_entity! {
 /// defines Face, Type `510` Form Number `1`
 /// Face entity is a bound (partial) which has finite area
-IgesSolidFace, IgesSolidFaceState, "IgesSolidFace", parent IgesDataIgesEntity, { surface: Handle<IgesDataIgesEntity>, has_outer_loop: bool, loops: Handle<HArray1<Handle<IgesSolidLoop>>> }
+IgesSolidFace, IgesSolidFaceState, "IgesSolidFace", parent IgesDataIgesEntity, { surface: Handle<dyn IgesDataEntityKind>, has_outer_loop: bool, loops: Handle<HArray1<Handle<IgesSolidLoop>>> }
 }
 impl IgesSolidFace {
     iges_methods! {
-    get surface = surface: Handle<IgesDataIgesEntity>;
+    get surface = surface: Handle<dyn IgesDataEntityKind>;
     len_checked nb_loops = loops;
     item loop_ = loops: Handle<IgesSolidLoop>;
     }
@@ -444,7 +445,7 @@ impl IgesSolidFace {
     /// - loops         : Array of loops bounding the face
     pub fn init(
         &self,
-        a_surface: &Handle<IgesDataIgesEntity>,
+        a_surface: &Handle<dyn IgesDataEntityKind>,
         outer_loop_flag: bool,
         loops: &Handle<HArray1<Handle<IgesSolidLoop>>>,
     ) -> Result<(), Failure> {

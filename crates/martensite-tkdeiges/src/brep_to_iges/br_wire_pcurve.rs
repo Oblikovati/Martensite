@@ -2,7 +2,8 @@
 use super::br_wire::origin_of;
 use super::{BRepToIgesBRWire, BRepToIgesOriginMap};
 use crate::geom2d_to_iges::Geom2dToIgesGeom2dCurve;
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use martensite_cmath::sin;
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::brep_tools;
@@ -143,7 +144,7 @@ impl BRepToIgesBRWire {
         origins: &BRepToIgesOriginMap,
         length: f64,
         b_rep_mode: bool,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if edge.is_null()
             || !self.get_p_curve_mode()
             || (!b_rep_mode && BRepTool::degenerated(edge)?)
@@ -175,7 +176,7 @@ impl BRepToIgesBRWire {
         (located, bounds): (&Handle<dyn GeomSurface>, brep_tools::UVBounds),
         length: f64,
         b_rep_mode: bool,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let analytic = !self.get_convert_surface_mode() && b_rep_mode;
         let surface = underlying_surface(located);
         let kinds = SurfaceKinds::of(&surface);

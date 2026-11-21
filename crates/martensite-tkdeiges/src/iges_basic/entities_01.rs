@@ -8,11 +8,13 @@
     reason = "the members keep the form of the rules they state, and values a reader then ignores"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, IgesDataNameEntity};
 use crate::iges_data::{iges_array1_item, iges_array1_set, iges_new_array1};
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, exceptions};
 use martensite_tkernel::tcollection::HAsciiString;
 
 iges_entity! {
@@ -64,13 +66,13 @@ iges_entity! {
 /// Contains a list of the symbolic names used by the
 /// referencing files and the DE pointers to the
 /// corresponding definitions within the referenced file
-IgesBasicExternalRefFileIndex, IgesBasicExternalRefFileIndexState, "IgesBasicExternalRefFileIndex", parent IgesDataIgesEntity, { names: Handle<HArray1<Handle<HAsciiString>>>, entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> }
+IgesBasicExternalRefFileIndex, IgesBasicExternalRefFileIndexState, "IgesBasicExternalRefFileIndex", parent IgesDataIgesEntity, { names: Handle<HArray1<Handle<HAsciiString>>>, entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> }
 }
 impl IgesBasicExternalRefFileIndex {
     iges_methods! {
     len_checked nb_entries = names;
     item name = names: Handle<HAsciiString>;
-    item entity = entities: Handle<IgesDataIgesEntity>;
+    item entity = entities: Handle<dyn IgesDataEntityKind>;
     }
     /// This method is used to set the fields of the class
     /// ExternalRefFileIndex
@@ -81,7 +83,7 @@ impl IgesBasicExternalRefFileIndex {
     pub fn init(
         &self,
         a_name_array: &Handle<HArray1<Handle<HAsciiString>>>,
-        all_entities: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_entities: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         if iges_array1_lower(a_name_array, "IgesBasicExternalRefFileIndex::init")? != 1
             || iges_array1_lower(all_entities, "IgesBasicExternalRefFileIndex::init")? != 1
@@ -212,7 +214,7 @@ iges_entity! {
 /// non Ordered,     WithoutBackP : form  7
 /// Ordered, non WithoutBackP : form 14
 /// Ordered,     WithoutBackP : form 15
-custom_default IgesBasicGroup, IgesBasicGroupState, "IgesBasicGroup", parent IgesDataIgesEntity, { entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> }
+custom_default IgesBasicGroup, IgesBasicGroupState, "IgesBasicGroup", parent IgesDataIgesEntity, { entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> }
 }
 impl Default for IgesBasicGroup {
     fn default() -> Self {
@@ -233,14 +235,14 @@ impl IgesBasicGroup {
 impl IgesBasicGroup {
     iges_methods! {
     len nb_entities = entities;
-    item entity = entities: Handle<IgesDataIgesEntity>;
+    item entity = entities: Handle<dyn IgesDataEntityKind>;
     }
     /// This method is used to set the fields of the class Group
     /// - allEntities : Used to store pointers to members of
     ///   the Group.
     pub fn init(
         &self,
-        all_entities: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_entities: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         if !all_entities.is_null() && iges_array1_lower(all_entities, "IgesBasicGroup::init")? != 1
         {
@@ -309,8 +311,8 @@ impl IgesBasicGroup {
         if nb == oldnb || nb <= 0 {
             return Ok(());
         }
-        let newents: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nb)?;
+        let newents: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nb)?;
         if oldnb > nb {
             oldnb = nb;
         }
@@ -326,15 +328,19 @@ impl IgesBasicGroup {
         Ok(())
     }
     /// returns the specific entity from the Group
-    pub fn value(&self, index: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn value(&self, index: i32) -> Result<Handle<dyn Transient>, Failure> {
         let the_entities = self.state.read().entities.clone();
         Ok(
             iges_array1_item(&the_entities, index, "IgesBasicGroup::value")?
-                .cast::<StandardTransient>(),
+                .cast::<dyn Transient>(),
         )
     }
     /// Sets a new value for item `Index`
-    pub fn set_value(&self, index: i32, ent: &Handle<IgesDataIgesEntity>) -> Result<(), Failure> {
+    pub fn set_value(
+        &self,
+        index: i32,
+        ent: &Handle<dyn IgesDataEntityKind>,
+    ) -> Result<(), Failure> {
         let the_entities = self.state.read().entities.clone();
         iges_array1_set(
             &the_entities,

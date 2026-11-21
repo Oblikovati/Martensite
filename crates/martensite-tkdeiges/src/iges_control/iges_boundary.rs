@@ -1,6 +1,7 @@
 //! `IgesControlIgesBoundary`: the boundary that checks its representations against each other, and
 //! keeps the one that holds together when they disagree.
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use crate::iges_geom::IgesGeomBSplineCurve;
 use crate::iges_to_brep::{
     BoundaryCurves, BoundaryFlags, BoundaryPlace, BoundarySequences, IgesToBRep,
@@ -40,7 +41,6 @@ impl_transient!(
     IgesControlIgesBoundary,
     "IgesControlIgesBoundary",
     IgesToBRepIgesBoundary,
-    base,
     interfaces: [dyn IgesToBRepBoundaryOps]
 );
 
@@ -266,8 +266,10 @@ impl BoundaryJob {
 }
 
 fn is_bspline_pair(sequences: &BoundarySequences, rank: i32) -> Result<bool, Failure> {
-    let (curve_3d, curve_2d): (Handle<IgesDataIgesEntity>, Handle<IgesDataIgesEntity>) =
-        (sequences.curve_3d(rank)?, sequences.curve_2d(rank)?);
+    let (curve_3d, curve_2d): (
+        Handle<dyn IgesDataEntityKind>,
+        Handle<dyn IgesDataEntityKind>,
+    ) = (sequences.curve_3d(rank)?, sequences.curve_2d(rank)?);
     Ok(curve_3d.cast::<IgesGeomBSplineCurve>().is_some()
         && curve_2d.cast::<IgesGeomBSplineCurve>().is_some())
 }

@@ -1,8 +1,10 @@
 //! `IgesToBRepCurveAndSurface`: the settings, the model and the process of a transfer of geometry.
-use crate::iges_data::{IgesDataIgesEntity, IgesDataIgesModel, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataIgesModel, iges_live};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::message::Msg;
 use martensite_tkernel::precision;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkg3d::adaptor3d::Adaptor3dSurface;
 use martensite_tkg3d::geom::GeomSurface;
@@ -223,7 +225,11 @@ impl IgesToBRepCurveAndSurface {
         self.tp.clone()
     }
     /// Records a fail on an entity; `tool.send_fail(&entity, &message)`.
-    pub fn send_fail<T: ?Sized + RuntimeTyped>(&self, start: &Handle<T>, message: &Msg) {
+    pub fn send_fail<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        &self,
+        start: &Handle<T>,
+        message: &Msg,
+    ) {
         if let Some(process) = self.tp.get() {
             process.send_fail(&start.cast(), message);
         }
@@ -232,7 +238,7 @@ impl IgesToBRepCurveAndSurface {
     /// stands for it; `tool.no_result(&entity, &failure)`.
     pub(super) fn no_result<S, R>(&self, start: &Handle<S>, failure: &Failure) -> R
     where
-        S: ?Sized + RuntimeTyped,
+        S: ?Sized + RuntimeTyped + TransientHandleTarget,
         R: Default,
     {
         if let Some(process) = self.tp.get() {
@@ -241,27 +247,43 @@ impl IgesToBRepCurveAndSurface {
         R::default()
     }
     /// Records a warning on an entity; `tool.send_warning(&entity, &message)`.
-    pub fn send_warning<T: ?Sized + RuntimeTyped>(&self, start: &Handle<T>, message: &Msg) {
+    pub fn send_warning<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        &self,
+        start: &Handle<T>,
+        message: &Msg,
+    ) {
         if let Some(process) = self.tp.get() {
             process.send_warning(&start.cast(), message);
         }
     }
     /// Records an information on an entity; `tool.send_msg(&entity, &message)`.
-    pub fn send_msg<T: ?Sized + RuntimeTyped>(&self, start: &Handle<T>, message: &Msg) {
+    pub fn send_msg<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        &self,
+        start: &Handle<T>,
+        message: &Msg,
+    ) {
         if let Some(process) = self.tp.get() {
             process.send_msg(&start.cast(), message);
         }
     }
     /// Records the fail of a catalog key.
-    pub(super) fn fail_key<T: ?Sized + RuntimeTyped>(&self, start: &Handle<T>, key: &str) {
+    pub(super) fn fail_key<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        &self,
+        start: &Handle<T>,
+        key: &str,
+    ) {
         self.send_fail(start, &Msg::from_key(&key.into()));
     }
     /// Records the warning of a catalog key.
-    pub(super) fn warn_key<T: ?Sized + RuntimeTyped>(&self, start: &Handle<T>, key: &str) {
+    pub(super) fn warn_key<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        &self,
+        start: &Handle<T>,
+        key: &str,
+    ) {
         self.send_warning(start, &Msg::from_key(&key.into()));
     }
     /// Records the warning of a catalog key with its arguments.
-    pub(super) fn warn_with_args<T: ?Sized + RuntimeTyped>(
+    pub(super) fn warn_with_args<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         start: &Handle<T>,
         key: &str,
@@ -275,7 +297,7 @@ impl IgesToBRepCurveAndSurface {
         Ok(())
     }
     /// The message that an entity gave no shape, with its label.
-    pub(super) fn label_message<T: ?Sized + RuntimeTyped>(
+    pub(super) fn label_message<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         entity: &Handle<T>,
         what: &[u8],
@@ -291,13 +313,13 @@ impl IgesToBRepCurveAndSurface {
     }
     fn bound_shape_binder(
         &self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Handle<TransferBRepShapeBinder>, Failure> {
         Ok(self.process()?.find(&start.cast()).cast())
     }
     fn bound_list_binder(
         &self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Handle<TransferBRepShapeListBinder>, Failure> {
         Ok(self.process()?.find(&start.cast()).cast())
     }
@@ -305,7 +327,10 @@ impl IgesToBRepCurveAndSurface {
     ///
     /// # Errors
     /// A null object failure for a null process.
-    pub fn has_shape_result(&self, start: &Handle<IgesDataIgesEntity>) -> Result<bool, Failure> {
+    pub fn has_shape_result(
+        &self,
+        start: &Handle<dyn IgesDataEntityKind>,
+    ) -> Result<bool, Failure> {
         Ok(self
             .bound_shape_binder(start)?
             .get()
@@ -315,7 +340,10 @@ impl IgesToBRepCurveAndSurface {
     ///
     /// # Errors
     /// A null object failure for a null process.
-    pub fn get_shape_result(&self, start: &Handle<IgesDataIgesEntity>) -> Result<Shape, Failure> {
+    pub fn get_shape_result(
+        &self,
+        start: &Handle<dyn IgesDataEntityKind>,
+    ) -> Result<Shape, Failure> {
         let binder = self.bound_shape_binder(start)?;
         Ok(match binder.get() {
             Some(live) if live.has_result() => live.result(),
@@ -328,7 +356,7 @@ impl IgesToBRepCurveAndSurface {
     /// A failure of the binding of the result.
     pub fn set_shape_result(
         &self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         result: &Shape,
     ) -> Result<(), Failure> {
         let binder = Handle::new(TransferBRepShapeBinder::new());
@@ -339,7 +367,7 @@ impl IgesToBRepCurveAndSurface {
     ///
     /// # Errors
     /// A null object failure for a null process.
-    pub fn nb_shape_result(&self, start: &Handle<IgesDataIgesEntity>) -> Result<i32, Failure> {
+    pub fn nb_shape_result(&self, start: &Handle<dyn IgesDataEntityKind>) -> Result<i32, Failure> {
         match self.bound_list_binder(start)?.get() {
             Some(live) => live.nb_shapes(),
             None => Ok(0),
@@ -352,7 +380,7 @@ impl IgesToBRepCurveAndSurface {
     /// A null object failure for a null process.
     pub fn get_shape_result_at(
         &self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         num: i32,
     ) -> Result<Shape, Failure> {
         let binder = self.bound_list_binder(start)?;
@@ -370,7 +398,7 @@ impl IgesToBRepCurveAndSurface {
     /// A failure of the binding of the result.
     pub fn add_shape_result(
         &self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         result: &Shape,
     ) -> Result<(), Failure> {
         let mut binder = self.bound_list_binder(start)?;
@@ -485,7 +513,7 @@ mod no_result_tests {
         let tool = IgesToBRepCurveAndSurface::new();
         let entity = Handle::new(IgesDataIgesEntity::default());
         let failure = Failure::new("the geometry refused it");
-        let result: Handle<IgesDataIgesEntity> = tool.no_result(&entity, &failure);
+        let result: Handle<dyn IgesDataEntityKind> = tool.no_result(&entity, &failure);
         assert!(result.is_null());
         let process = tool.get_transfer_process();
         let check = process.get().unwrap().check(&entity.cast());

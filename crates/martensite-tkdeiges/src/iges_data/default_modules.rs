@@ -1,12 +1,14 @@
 //! The modules of the undefined entities, which are the ones of the basic protocol.
 use super::{
     IgesDataDirChecker, IgesDataDumpResult, IgesDataFreeFormatEntity, IgesDataGeneralModule,
-    IgesDataIgesDumper, IgesDataIgesEntity, IgesDataSpecificModule, IgesDataUndefinedEntity,
-    iges_live,
+    IgesDataIgesDumper, IgesDataSpecificModule, IgesDataUndefinedEntity, iges_live,
 };
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::IgesDataUndefinedEntitySource;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceGeneralModule,
@@ -23,14 +25,11 @@ use std::io::Write;
 /// assert!(!IgesDataDefaultGeneral::default().iges_new_void(0, &mut made));
 /// ```
 #[derive(Default)]
-pub struct IgesDataDefaultGeneral {
-    transient: StandardTransient,
-}
+pub struct IgesDataDefaultGeneral {}
 impl_transient!(
     IgesDataDefaultGeneral,
     "IgesDataDefaultGeneral",
     dyn IgesDataGeneralModule,
-    transient,
     interfaces: [dyn InterfaceGeneralModule, dyn IgesDataGeneralModule]
 );
 crate::impl_iges_general_module!(IgesDataDefaultGeneral);
@@ -39,13 +38,13 @@ impl IgesDataGeneralModule for IgesDataDefaultGeneral {
     fn own_shared_case(
         &self,
         cn: i32,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         if cn == 0 {
             return Ok(());
         }
-        let undefined = ent.cast::<IgesDataUndefinedEntity>();
+        let undefined = ent.cast::<dyn IgesDataUndefinedEntitySource>();
         let Some(live) = undefined.get() else {
             return Ok(());
         };
@@ -58,19 +57,19 @@ impl IgesDataGeneralModule for IgesDataDefaultGeneral {
         }
         Ok(())
     }
-    fn dir_checker(&self, _cn: i32, _ent: &Handle<IgesDataIgesEntity>) -> IgesDataDirChecker {
+    fn dir_checker(&self, _cn: i32, _ent: &Handle<dyn IgesDataEntityKind>) -> IgesDataDirChecker {
         IgesDataDirChecker::new()
     }
     fn own_check_case(
         &self,
         _cn: i32,
-        _ent: &Handle<IgesDataIgesEntity>,
+        _ent: &Handle<dyn IgesDataEntityKind>,
         _shares: &InterfaceShareTool,
         _ach: &mut Handle<InterfaceCheck>,
     ) -> Result<(), Failure> {
         Ok(())
     }
-    fn iges_new_void(&self, cn: i32, entto: &mut Handle<StandardTransient>) -> bool {
+    fn iges_new_void(&self, cn: i32, entto: &mut Handle<dyn Transient>) -> bool {
         *entto = match cn {
             1 => Handle::new(IgesDataUndefinedEntity::new()).cast(),
             2 => Handle::new(IgesDataFreeFormatEntity::new()).cast(),
@@ -81,15 +80,15 @@ impl IgesDataGeneralModule for IgesDataDefaultGeneral {
     fn own_copy_case(
         &self,
         cn: i32,
-        entfrom: &Handle<IgesDataIgesEntity>,
-        entto: &Handle<IgesDataIgesEntity>,
+        entfrom: &Handle<dyn IgesDataEntityKind>,
+        entto: &Handle<dyn IgesDataEntityKind>,
         tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure> {
         if cn == 0 {
             return Ok(());
         }
-        let from = entfrom.cast::<IgesDataUndefinedEntity>();
-        let to = entto.cast::<IgesDataUndefinedEntity>();
+        let from = entfrom.cast::<dyn IgesDataUndefinedEntitySource>();
+        let to = entto.cast::<dyn IgesDataUndefinedEntitySource>();
         let source = iges_live(&from, "undefined entity: copy")?;
         let target = iges_live(&to, "undefined entity: copy")?;
         let cont = Handle::new(InterfaceUndefinedContent::new());
@@ -113,14 +112,11 @@ impl IgesDataGeneralModule for IgesDataDefaultGeneral {
 /// let _module = IgesDataDefaultSpecific::default();
 /// ```
 #[derive(Default)]
-pub struct IgesDataDefaultSpecific {
-    transient: StandardTransient,
-}
+pub struct IgesDataDefaultSpecific {}
 impl_transient!(
     IgesDataDefaultSpecific,
     "IgesDataDefaultSpecific",
     dyn IgesDataSpecificModule,
-    transient,
     interfaces: [dyn IgesDataSpecificModule]
 );
 
@@ -128,12 +124,12 @@ impl IgesDataSpecificModule for IgesDataDefaultSpecific {
     fn own_dump(
         &self,
         _cn: i32,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         dumper: &IgesDataIgesDumper,
         s: &mut dyn Write,
         _own: i32,
     ) -> IgesDataDumpResult {
-        let undefined = ent.cast::<IgesDataUndefinedEntity>();
+        let undefined = ent.cast::<dyn IgesDataUndefinedEntitySource>();
         let Some(live) = undefined.get() else {
             return Ok(());
         };

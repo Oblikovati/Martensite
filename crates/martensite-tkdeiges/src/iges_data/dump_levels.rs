@@ -5,6 +5,7 @@ use super::{
     iges_dump_list_header, iges_dump_xy, iges_dump_xy_t, iges_dump_xy_tz, iges_dump_xyz,
     iges_dump_xyz_t,
 };
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
     standard::{Failure, Handle, RuntimeTyped},
     tcollection::HAsciiString,
@@ -192,7 +193,7 @@ pub fn iges_dump_strings(
 ///
 /// # Errors
 /// A failure of the stream or of an item.
-pub fn iges_dump_entities<T: ?Sized + RuntimeTyped>(
+pub fn iges_dump_entities<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
     s: &mut dyn Write,
     dumper: &IgesDataIgesDumper,
     level: i32,

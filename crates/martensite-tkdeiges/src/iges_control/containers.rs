@@ -2,7 +2,7 @@
 use super::IgesControlIgesBoundary;
 use crate::iges_to_brep::{IgesToBRepAlgoContainer, IgesToBRepBoundaryOps, IgesToBRepToolKind};
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
 
 /// Makes the boundary that checks its representations.
 ///
@@ -12,14 +12,11 @@ use martensite_tkernel::standard::{Handle, StandardTransient};
 /// assert!(IgesControlToolContainer::new().iges_boundary().is_some());
 /// ```
 #[derive(Default)]
-pub struct IgesControlToolContainer {
-    transient: StandardTransient,
-}
+pub struct IgesControlToolContainer {}
 impl_transient!(
     IgesControlToolContainer,
     "IgesControlToolContainer",
     dyn IgesToBRepToolKind,
-    transient,
     interfaces: [dyn IgesToBRepToolKind]
 );
 
@@ -45,14 +42,11 @@ impl IgesToBRepToolKind for IgesControlToolContainer {
 /// assert_eq!(IgesControlAlgoContainer::TYPE_NAME, "IgesControlAlgoContainer");
 /// ```
 #[derive(Default)]
-pub struct IgesControlAlgoContainer {
-    transient: StandardTransient,
-}
+pub struct IgesControlAlgoContainer {}
 impl_transient!(
     IgesControlAlgoContainer,
     "IgesControlAlgoContainer",
-    IgesToBRepAlgoContainer,
-    transient
+    IgesToBRepAlgoContainer
 );
 
 impl IgesControlAlgoContainer {

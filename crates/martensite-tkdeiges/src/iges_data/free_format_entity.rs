@@ -1,4 +1,5 @@
 //! An undefined entity given by hand: its type, form and parameters are set one by one.
+use super::IgesDataUndefinedEntitySource;
 use super::{
     IgesDataEntityKind, IgesDataIgesEntity, IgesDataIgesWriter, IgesDataUndefinedEntity,
     iges_array1_item, iges_live,
@@ -10,6 +11,13 @@ use martensite_tkernel::{
     tcollection::HAsciiString,
 };
 use martensite_tkxsbase::interface::{InterfaceParamType, InterfaceUndefinedContent};
+
+type FreeFormatParam = (
+    bool,
+    InterfaceParamType,
+    Handle<dyn IgesDataEntityKind>,
+    Handle<HAsciiString>,
+);
 
 /// An undefined entity whose content is written through this class.
 ///
@@ -30,7 +38,7 @@ impl_transient!(
     IgesDataFreeFormatEntity,
     "IgesDataFreeFormatEntity",
     IgesDataUndefinedEntity,
-    parent
+    interfaces: [dyn IgesDataEntityKind, dyn IgesDataUndefinedEntitySource]
 );
 
 impl std::ops::Deref for IgesDataFreeFormatEntity {
@@ -43,6 +51,12 @@ impl std::ops::Deref for IgesDataFreeFormatEntity {
 impl IgesDataEntityKind for IgesDataFreeFormatEntity {
     fn iges_entity(&self) -> &IgesDataIgesEntity {
         self.parent.iges_entity()
+    }
+}
+
+impl IgesDataUndefinedEntitySource for IgesDataFreeFormatEntity {
+    fn undefined_entity(&self) -> &IgesDataUndefinedEntity {
+        &self.parent
     }
 }
 
@@ -74,22 +88,11 @@ impl IgesDataFreeFormatEntity {
     ///
     /// # Errors
     /// An out of range failure for a bad number.
-    pub fn param_data(
-        &self,
-        num: i32,
-    ) -> Result<
-        (
-            bool,
-            InterfaceParamType,
-            Handle<IgesDataIgesEntity>,
-            Handle<HAsciiString>,
-        ),
-        Failure,
-    > {
+    pub fn param_data(&self, num: i32) -> Result<FreeFormatParam, Failure> {
         let content = self.content();
         let cont = iges_live(&content, "free format entity")?;
         let (is_entity, ptype, entity, literal) = cont.param_data(num)?;
-        let entity = entity.cast::<IgesDataIgesEntity>();
+        let entity = entity.cast::<dyn IgesDataEntityKind>();
         Ok((is_entity && entity.is_some(), ptype, entity, literal))
     }
     /// The type of a parameter.
@@ -112,7 +115,7 @@ impl IgesDataFreeFormatEntity {
     ///
     /// # Errors
     /// An interface failure when the parameter is no entity.
-    pub fn param_entity(&self, num: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn param_entity(&self, num: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let content = self.content();
         Ok(iges_live(&content, "free format entity")?
             .param_entity(num)?
@@ -167,7 +170,7 @@ impl IgesDataFreeFormatEntity {
     pub fn add_entity(
         &self,
         ptype: InterfaceParamType,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
         negative: bool,
     ) -> Result<(), Failure> {
         let content = self.content();
@@ -191,7 +194,7 @@ impl IgesDataFreeFormatEntity {
     /// A failure of the content.
     pub fn add_entities(
         &self,
-        ents: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        ents: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         let Some(list) = ents.get() else {
             return self.add_literal_text(InterfaceParamType::ParamInteger, "0");
@@ -246,7 +249,7 @@ impl IgesDataFreeFormatEntity {
             } else if cont.is_param_entity(i)? {
                 let negative = negatives.get(next_negative) == Some(&i);
                 next_negative += usize::from(negative);
-                let entity = cont.param_entity(i)?.cast::<IgesDataIgesEntity>();
+                let entity = cont.param_entity(i)?.cast::<dyn IgesDataEntityKind>();
                 iw.send_entity(&entity, negative)?;
             } else {
                 iw.send_string(&cont.param_value(i)?)?;

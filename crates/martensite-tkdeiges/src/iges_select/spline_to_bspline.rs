@@ -1,8 +1,9 @@
 //! A transformer that finds the spline forms to convert.
-use crate::iges_data::IgesDataIgesEntity;
+use crate::iges_data::IgesDataEntityKind;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::{
@@ -30,7 +31,6 @@ struct SplineFields {
 /// assert!(transformer.label().as_bytes().ends_with(b"continuity"));
 /// ```
 pub struct IgesSelectSplineToBSpline {
-    transient: StandardTransient,
     thetryc2: bool,
     state: SharedState<SplineFields>,
 }
@@ -38,7 +38,6 @@ impl_transient!(
     IgesSelectSplineToBSpline,
     "IgesSelectSplineToBSpline",
     dyn IFSelectTransformer,
-    transient,
     interfaces: [dyn IFSelectTransformer]
 );
 
@@ -46,7 +45,6 @@ impl IgesSelectSplineToBSpline {
     /// A transformer; `try_c2` would try to recover the continuity.
     pub fn new(try_c2: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             thetryc2: try_c2,
             state: SharedState::new(SplineFields::default()),
         }
@@ -67,7 +65,7 @@ impl IFSelectTransformer for IgesSelectSplineToBSpline {
     ) -> Result<bool, Failure> {
         let mut found = false;
         for i in 1..=g.size() {
-            if let Some(entity) = g.entity(i)?.cast::<IgesDataIgesEntity>().get() {
+            if let Some(entity) = g.entity(i)?.cast::<dyn IgesDataEntityKind>().get() {
                 found |= matches!(entity.type_number(), 112 | 126);
             }
         }
@@ -85,11 +83,7 @@ impl IFSelectTransformer for IgesSelectSplineToBSpline {
         }
         Ok(false)
     }
-    fn updated(
-        &self,
-        entfrom: &Handle<StandardTransient>,
-        entto: &mut Handle<StandardTransient>,
-    ) -> bool {
+    fn updated(&self, entfrom: &Handle<dyn Transient>, entto: &mut Handle<dyn Transient>) -> bool {
         let state = self.state.read();
         if !state.thefound {
             *entto = entfrom.clone();

@@ -13,14 +13,16 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesEntity, IgesDataIgesReaderData,
-    IgesDataIgesWriter, IgesDataParamReader, iges_array1_set, iges_array2_set, iges_live,
-    iges_new_array1, iges_new_array2,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesReaderData, IgesDataIgesWriter,
+    IgesDataParamReader, iges_array1_set, iges_array2_set, iges_live, iges_new_array1,
+    iges_new_array2,
 };
 use crate::iges_defs::{IgesDefsAttributeDef, IgesDefsAttributeTable};
 use martensite_tkernel::ncollection::{HArray1, HArray2};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkxsbase::interface::InterfaceEntityIterator;
 
@@ -45,7 +47,7 @@ impl IgesDefsToolAttributeTable {
         let mut j: i32 = Default::default();
         let mut st: bool = true;
         let mut ab: Handle<IgesDefsAttributeDef> = ent.definition();
-        let mut list2: Handle<HArray2<Handle<StandardTransient>>> = Default::default();
+        let mut list2: Handle<HArray2<Handle<dyn Transient>>> = Default::default();
         if ab.is_null() {
             pr.add_fail("No Attribute Definition as Structure", "");
             return Ok(());
@@ -56,7 +58,7 @@ impl IgesDefsToolAttributeTable {
             st = pr.read_integer_text(&pr.current(), "No. of rows", &mut nr)?;
         }
         if st {
-            list2 = iges_new_array2::<Handle<StandardTransient>>(1, na, 1, nr)?;
+            list2 = iges_new_array2::<Handle<dyn Transient>>(1, na, 1, nr)?;
         }
         for k in 1..=nr {
             for i in 1..=na {
@@ -135,8 +137,8 @@ impl IgesDefsToolAttributeTable {
                         }
                     }
                     4 => {
-                        let mut attr_ent: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-                            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, avc)?;
+                        let mut attr_ent: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+                            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, avc)?;
                         iges_array2_set(
                             &list2,
                             i,
@@ -144,7 +146,7 @@ impl IgesDefsToolAttributeTable {
                             attr_ent.cast(),
                             "IgesDefsToolAttributeTable::read_own_params",
                         )?;
-                        let mut item: Handle<IgesDataIgesEntity> = Default::default();
+                        let mut item: Handle<dyn IgesDataEntityKind> = Default::default();
                         for j in 1..=avc {
                             if pr.read_entity(ir, &pr.current(), "Value", &mut item, false)? {
                                 iges_array1_set(

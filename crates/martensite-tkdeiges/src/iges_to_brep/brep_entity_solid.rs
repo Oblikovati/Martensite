@@ -1,5 +1,6 @@
 //! The shells and solids of the BRep entities of IGES.
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use crate::iges_solid::{IgesSolidManifoldSolid, IgesSolidShell};
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{self, Shape, Shell, Solid};
@@ -59,7 +60,7 @@ impl IgesToBRepBRepEntity {
         start: &Handle<IgesSolidShell>,
         range: &ProgressRange,
     ) -> Result<Shape, Failure> {
-        let entity: Handle<IgesDataIgesEntity> = start.cast();
+        let entity: Handle<dyn IgesDataEntityKind> = start.cast();
         if !self.has_shape_result(&entity)? {
             self.built_shell(start, range)?;
         }
@@ -120,7 +121,7 @@ impl IgesToBRepBRepEntity {
         start: &Handle<IgesSolidManifoldSolid>,
         range: &ProgressRange,
     ) -> Result<Shape, Failure> {
-        let entity: Handle<IgesDataIgesEntity> = start.cast();
+        let entity: Handle<dyn IgesDataEntityKind> = start.cast();
         if !self.has_shape_result(&entity)? {
             self.built_solid(start, range)?;
         }

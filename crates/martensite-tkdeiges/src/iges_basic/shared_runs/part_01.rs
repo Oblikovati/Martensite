@@ -163,7 +163,7 @@ pub(crate) use iges_shared_004;
 macro_rules! iges_shared_005 {
     ($ent:ident, $ent_array:ident, $ent_live:ident, $ir:ident, $nbval:ident, $pr:ident, $self:ident) => {
         let mut $nbval: i32 = 0;
-        let mut $ent_array: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut $ent_array: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         if $pr.read_integer_text(&$pr.current(), "Count of Entities", &mut $nbval)? {
             $pr.read_ents(
                 $ir,
@@ -312,10 +312,10 @@ pub(crate) use iges_shared_013;
 macro_rules! iges_shared_014 {
     ($another_live:ident, $tc:ident, $temp_axis:ident, $temp_location:ident, $temp_radius:ident) => {
         let $temp_location = $tc
-            .transferred(&$another_live.location_point().cast::<StandardTransient>())?
+            .transferred(&$another_live.location_point().cast::<dyn Transient>())?
             .cast::<IgesGeomPoint>();
         let $temp_axis = $tc
-            .transferred(&$another_live.axis().cast::<StandardTransient>())?
+            .transferred(&$another_live.axis().cast::<dyn Transient>())?
             .cast::<IgesGeomDirection>();
         $temp_radius = $another_live.radius();
     };

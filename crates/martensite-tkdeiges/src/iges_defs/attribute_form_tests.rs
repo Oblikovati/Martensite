@@ -1,4 +1,5 @@
 //! The forms of an attribute definition: without values, with values, and with values and templates.
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_set, iges_new_array1};
 use crate::iges_defs::{
     IgesDefsAttributeDef, IgesDefsGenericData, IgesDefsHArray1OfHArray1OfTextDisplayTemplate,
@@ -9,18 +10,19 @@ use crate::iges_test_samples::{
     sample_list,
 };
 use martensite_tkernel::ncollection::HArray1;
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
 use martensite_tkernel::tcollection::HAsciiString;
 
-fn values() -> Result<Handle<HArray1<Handle<StandardTransient>>>, Failure> {
-    sample_list::<Handle<StandardTransient>>([
+fn values() -> Result<Handle<HArray1<Handle<dyn Transient>>>, Failure> {
+    sample_list::<Handle<dyn Transient>>([
         sample_list::<i32>([3, 4])?.cast(),
         sample_list::<f64>([1.5, 2.5])?.cast(),
     ])
 }
 
 fn definition(
-    values: &Handle<HArray1<Handle<StandardTransient>>>,
+    values: &Handle<HArray1<Handle<dyn Transient>>>,
     templates: &Handle<IgesDefsHArray1OfHArray1OfTextDisplayTemplate>,
 ) -> Result<Handle<IgesDefsAttributeDef>, Failure> {
     let object = Handle::new(IgesDefsAttributeDef::new());
@@ -37,12 +39,12 @@ fn definition(
 }
 
 /// A value of every data type: none, integer, real, text, entity, none, logical.
-fn values_of_every_type() -> Result<Handle<HArray1<Handle<StandardTransient>>>, Failure> {
+fn values_of_every_type() -> Result<Handle<HArray1<Handle<dyn Transient>>>, Failure> {
     let text = Handle::new(HAsciiString::new("value"));
-    let entity: Handle<IgesDataIgesEntity> = sample_iges_graph_color()?.cast();
-    let list = iges_new_array1::<Handle<StandardTransient>>(1, 7)?;
+    let entity: Handle<dyn IgesDataEntityKind> = sample_iges_graph_color()?.cast();
+    let list = iges_new_array1::<Handle<dyn Transient>>(1, 7)?;
     let set =
-        |rank: i32, value: Handle<StandardTransient>| iges_array1_set(&list, rank, value, "sample");
+        |rank: i32, value: Handle<dyn Transient>| iges_array1_set(&list, rank, value, "sample");
     set(2, sample_list::<i32>([3, 4])?.cast())?;
     set(3, sample_list::<f64>([1.5, 2.5])?.cast())?;
     set(
@@ -51,7 +53,7 @@ fn values_of_every_type() -> Result<Handle<HArray1<Handle<StandardTransient>>>, 
     )?;
     set(
         5,
-        sample_list::<Handle<IgesDataIgesEntity>>([entity.clone(), entity])?.cast(),
+        sample_list::<Handle<dyn IgesDataEntityKind>>([entity.clone(), entity])?.cast(),
     )?;
     set(7, sample_list::<i32>([0, 1])?.cast())?;
     Ok(list)
@@ -104,7 +106,7 @@ fn generic_data_holds_every_data_type() -> Result<(), Failure> {
         Handle::new(HAsciiString::new("value")).cast(),
         "sample",
     )?;
-    let entity: Handle<StandardTransient> = sample_iges_graph_color()?.cast();
+    let entity: Handle<dyn Transient> = sample_iges_graph_color()?.cast();
     iges_array1_set(&values, 5, entity, "sample")?;
     object.init(
         16,

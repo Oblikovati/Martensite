@@ -12,16 +12,18 @@ use super::{
     IgesSolidSolidOfLinearExtrusion, IgesSolidToolShell,
 };
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_entities, iges_live, iges_new_array1,
 };
 use crate::iges_geom::IgesGeomTransformationMatrix;
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -47,7 +49,7 @@ impl IgesSolidToolShell {
         let temp_orientation: Handle<HArray1<i32>> = iges_new_array1::<i32>(1, nbfaces)?;
         for i in 1..=nbfaces {
             let face = tc
-                .transferred(&another_live.face(i)?.cast::<StandardTransient>())?
+                .transferred(&another_live.face(i)?.cast::<dyn Transient>())?
                 .cast::<IgesSolidFace>();
             iges_array1_set(&temp_faces, i, face.clone(), "IgesSolidToolShell::own_copy")?;
             iges_array1_set(
@@ -116,14 +118,14 @@ impl IgesSolidToolSolidAssembly {
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesSolidToolSolidAssembly::read_own_params")?;
         let mut nbitems: i32 = 0;
-        let mut temp_items: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut temp_items: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         let mut temp_matrices: Handle<HArray1<Handle<IgesGeomTransformationMatrix>>> =
             Handle::default();
         let st: bool = pr.read_integer_text(&pr.current(), "Number of Items", &mut nbitems)?;
         if st && nbitems > 0 {
-            temp_items = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbitems)?;
+            temp_items = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbitems)?;
             temp_matrices = iges_new_array1::<Handle<IgesGeomTransformationMatrix>>(1, nbitems)?;
-            let mut anent: Handle<IgesDataIgesEntity> = Handle::default();
+            let mut anent: Handle<dyn IgesDataEntityKind> = Handle::default();
             for i in 1..=nbitems {
                 if pr.read_entity(ir, &pr.current(), "Solid assembly items", &mut anent, false)? {
                     iges_array1_set(
@@ -193,10 +195,10 @@ impl IgesSolidToolSolidAssembly {
         let ent_live = iges_live(ent, "IgesSolidToolSolidAssembly::own_shared")?;
         let nbitems: i32 = ent_live.nb_items()?;
         for i in 1..=nbitems {
-            iter.get_one_item(&ent_live.item(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.item(i)?.cast::<dyn Transient>());
         }
         for i in 1..=nbitems {
-            iter.get_one_item(&ent_live.transf_matrix(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.transf_matrix(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }
@@ -239,14 +241,14 @@ impl IgesSolidToolSolidAssembly {
         let another_live = iges_live(another, "IgesSolidToolSolidAssembly::own_copy")?;
         let ent_live = iges_live(ent, "IgesSolidToolSolidAssembly::own_copy")?;
         let nbitems: i32 = another_live.nb_items()?;
-        let temp_items: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbitems)?;
+        let temp_items: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbitems)?;
         let temp_matrices: Handle<HArray1<Handle<IgesGeomTransformationMatrix>>> =
             iges_new_array1::<Handle<IgesGeomTransformationMatrix>>(1, nbitems)?;
         for i in 1..=nbitems {
             let localent = tc
-                .transferred(&another_live.item(i)?.cast::<StandardTransient>())?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.item(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(
                 &temp_items,
                 i,
@@ -256,7 +258,7 @@ impl IgesSolidToolSolidAssembly {
         }
         for i in 1..=nbitems {
             let newlocalent = tc
-                .transferred(&another_live.transf_matrix(i)?.cast::<StandardTransient>())?
+                .transferred(&another_live.transf_matrix(i)?.cast::<dyn Transient>())?
                 .cast::<IgesGeomTransformationMatrix>();
             iges_array1_set(
                 &temp_matrices,
@@ -310,7 +312,7 @@ impl IgesSolidToolSolidInstance {
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesSolidToolSolidInstance::read_own_params")?;
-        let mut temp_entity: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut temp_entity: Handle<dyn IgesDataEntityKind> = Handle::default();
         pr.read_entity(ir, &pr.current(), "Solid Entity", &mut temp_entity, false)?;
         self.dir_checker(ent).check_type_and_form(pr.check(), ent);
         ent_live.init(&temp_entity);
@@ -341,7 +343,7 @@ impl IgesSolidToolSolidInstance {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesSolidToolSolidInstance::own_shared")?;
-        iter.get_one_item(&ent_live.entity().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.entity().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -382,8 +384,8 @@ impl IgesSolidToolSolidInstance {
         let another_live = iges_live(another, "IgesSolidToolSolidInstance::own_copy")?;
         let ent_live = iges_live(ent, "IgesSolidToolSolidInstance::own_copy")?;
         let temp_entity = tc
-            .transferred(&another_live.entity().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.entity().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         ent_live.init(&temp_entity);
         Ok(())
     }
@@ -423,7 +425,7 @@ impl IgesSolidToolSolidOfLinearExtrusion {
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesSolidToolSolidOfLinearExtrusion::read_own_params")?;
-        let mut temp_entity: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut temp_entity: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut temp_direction: Xyz = Xyz::default();
         let mut temp_length: f64 = 0.0;
         let mut tempreal: f64 = 0.0;

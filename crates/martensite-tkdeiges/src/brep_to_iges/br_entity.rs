@@ -1,10 +1,12 @@
 //! `BRepToIgesBREntity`: the process and the model of a translation of shapes, and any shape.
 use super::{BRepToIgesBRShell, BRepToIgesBRSolid, BRepToIgesBRWire};
-use crate::iges_data::{IgesDataIgesEntity, IgesDataIgesModel, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataIgesModel, iges_live};
 use martensite_tkbrep::topods::{self, Shape};
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::ncollection::DataMap;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkxsbase::interface::InterfaceStatic;
 use martensite_tkxsbase::transfer::{
@@ -43,7 +45,7 @@ fn shape_finder(start: &Shape) -> Handle<dyn TransferFinder> {
     Handle::new(TransferBRepShapeMapper::new(start)).cast()
 }
 
-fn transient_finder(start: &Handle<StandardTransient>) -> Handle<dyn TransferFinder> {
+fn transient_finder(start: &Handle<dyn Transient>) -> Handle<dyn TransferFinder> {
     Handle::new(TransferTransientMapper::new(start)).cast()
 }
 
@@ -109,7 +111,7 @@ impl BRepToIgesBREntity {
         &self,
         start: &Shape,
         range: &ProgressRange,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if start.is_null() {
             return Ok(Handle::default());
         }
@@ -156,7 +158,7 @@ impl BRepToIgesBREntity {
     /// A null object failure for a null process.
     pub fn add_fail_transient(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         text: &str,
     ) -> Result<(), Failure> {
         iges_live(&self.process, WHERE)?.add_fail_text(&transient_finder(start), text, "");
@@ -168,7 +170,7 @@ impl BRepToIgesBREntity {
     /// A null object failure for a null process.
     pub fn add_warning_transient(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         text: &str,
     ) -> Result<(), Failure> {
         iges_live(&self.process, WHERE)?.add_warning_text(&transient_finder(start), text, "");
@@ -183,7 +185,7 @@ impl BRepToIgesBREntity {
     fn found_result(
         &self,
         finder: &Handle<dyn TransferFinder>,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+    ) -> Result<Handle<dyn Transient>, Failure> {
         let binder = self.found_binder(finder)?;
         Ok(match binder.get() {
             Some(live) if live.has_result() => live.result(),
@@ -193,7 +195,7 @@ impl BRepToIgesBREntity {
     fn bound_result(
         &self,
         finder: &Handle<dyn TransferFinder>,
-        result: &Handle<StandardTransient>,
+        result: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         let binder = Handle::new(TransferSimpleBinderOfTransient::new());
         iges_live(&binder, WHERE)?.set_result(result)?;
@@ -213,7 +215,7 @@ impl BRepToIgesBREntity {
     ///
     /// # Errors
     /// A null object failure for a null process.
-    pub fn get_shape_result(&self, start: &Shape) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn get_shape_result(&self, start: &Shape) -> Result<Handle<dyn Transient>, Failure> {
         self.found_result(&shape_finder(start))
     }
     /// Records the result of a shape; `tool.set_shape_result(&shape, &entity)?`.
@@ -223,7 +225,7 @@ impl BRepToIgesBREntity {
     pub fn set_shape_result(
         &self,
         start: &Shape,
-        result: &Handle<StandardTransient>,
+        result: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         self.bound_result(&shape_finder(start), result)
     }
@@ -231,7 +233,7 @@ impl BRepToIgesBREntity {
     ///
     /// # Errors
     /// A null object failure for a null process.
-    pub fn has_transient_result(&self, start: &Handle<StandardTransient>) -> Result<bool, Failure> {
+    pub fn has_transient_result(&self, start: &Handle<dyn Transient>) -> Result<bool, Failure> {
         Ok(self
             .found_binder(&transient_finder(start))?
             .get()
@@ -243,8 +245,8 @@ impl BRepToIgesBREntity {
     /// A null object failure for a null process.
     pub fn get_transient_result(
         &self,
-        start: &Handle<StandardTransient>,
-    ) -> Result<Handle<StandardTransient>, Failure> {
+        start: &Handle<dyn Transient>,
+    ) -> Result<Handle<dyn Transient>, Failure> {
         self.found_result(&transient_finder(start))
     }
     /// Records the result of an object; `tool.set_transient_result(&object, &entity)?`.
@@ -253,8 +255,8 @@ impl BRepToIgesBREntity {
     /// A failure of the binding of the result.
     pub fn set_transient_result(
         &self,
-        start: &Handle<StandardTransient>,
-        result: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
+        result: &Handle<dyn Transient>,
     ) -> Result<(), Failure> {
         self.bound_result(&transient_finder(start), result)
     }

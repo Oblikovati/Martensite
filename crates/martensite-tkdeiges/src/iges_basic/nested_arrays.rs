@@ -1,5 +1,5 @@
 //! Arrays of shared arrays: a rank of a loop or a boundary holds a list of its own, which may be null.
-use crate::iges_data::IgesDataIgesEntity;
+use crate::iges_data::IgesDataEntityKind;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::{Array1, HArray1};
 use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
@@ -20,10 +20,10 @@ macro_rules! iges_nested_array {
     ($(#[$meta:meta])* $class:ident, $recorded:literal, $element:ty) => {
         $(#[$meta])*
         pub struct $class {
-            transient: StandardTransient,
+
             lists: RwLock<Array1<'static, Handle<HArray1<$element>>>>,
         }
-        impl_transient!($class, $recorded, StandardTransient, transient);
+        impl_transient!($class, $recorded, StandardTransient);
         impl $class {
             /// An array of bounds `low..=up`, with every list null.
             ///
@@ -32,7 +32,7 @@ macro_rules! iges_nested_array {
             pub fn with_bounds(low: i32, up: i32) -> Result<Self, Failure> {
                 let lists = Array1::with_bounds(low, up)
                     .map_err(|error| error.into_failure(stringify!($class)))?;
-                Ok(Self { transient: StandardTransient::default(), lists: RwLock::new(lists) })
+                Ok(Self { lists: RwLock::new(lists) })
             }
             /// The lower bound.
             pub fn lower(&self) -> i32 {
@@ -72,7 +72,7 @@ macro_rules! iges_nested_array {
 
 iges_nested_array! {
     /// An array of lists of entities.
-    IgesBasicHArray1OfHArray1OfIgesEntity, "IgesBasicHArray1OfHArray1OfIgesEntity", Handle<IgesDataIgesEntity>
+    IgesBasicHArray1OfHArray1OfIgesEntity, "IgesBasicHArray1OfHArray1OfIgesEntity", Handle<dyn IgesDataEntityKind>
 }
 iges_nested_array! {
     /// An array of lists of integers.
@@ -99,7 +99,7 @@ pub(crate) fn nested_entity_lists() -> Result<Handle<IgesBasicHArray1OfHArray1Of
     use crate::iges_test_samples::sample_list;
     let nested = IgesBasicHArray1OfHArray1OfIgesEntity::with_bounds(1, 2)?;
     for rank in 1..=2 {
-        let line = || -> Result<Handle<IgesDataIgesEntity>, Failure> {
+        let line = || -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
             Ok(sample_iges_geom_line()?.cast())
         };
         nested.set_value(rank, &sample_list([line()?, line()?])?)?;

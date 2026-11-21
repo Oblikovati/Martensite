@@ -13,7 +13,8 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
-use crate::iges_data::{IgesDataIgesEntity, IgesDataViewKindEntity, iges_array1_item};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataViewKindEntity, iges_array1_item};
 use crate::iges_entity;
 use martensite_tkernel::ncollection::HArray1;
 use martensite_tkernel::standard::{Failure, Handle, exceptions};
@@ -26,7 +27,7 @@ iges_entity! {
 /// views and the associated entity Displays.
 IgesDrawViewsVisible, IgesDrawViewsVisibleState, "IgesDrawViewsVisible", kind dyn IgesDataViewKindEntity, {
 the_view_entities: Handle<HArray1<Handle<dyn IgesDataViewKindEntity>>>,
-the_display_entity: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_display_entity: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 }
 }
 
@@ -64,7 +65,7 @@ impl IgesDrawViewsVisible {
     pub fn init(
         &self,
         all_view_entities: &Handle<HArray1<Handle<dyn IgesDataViewKindEntity>>>,
-        all_display_entity: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_display_entity: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         if !all_display_entity.is_null() {
             if iges_array1_lower(all_display_entity, "IgesDrawViewsVisible::init")? != 1 {
@@ -94,7 +95,7 @@ impl IgesDrawViewsVisible {
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
     pub fn init_implied(
         &self,
-        all_display_entity: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_display_entity: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         if !all_display_entity.is_null() {
             if iges_array1_lower(all_display_entity, "IgesDrawViewsVisible::init_implied")? != 1 {
@@ -127,7 +128,7 @@ impl IgesDrawViewsVisible {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn displayed_entity(&self, index: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn displayed_entity(&self, index: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_display_entity,
             index,

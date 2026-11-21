@@ -103,6 +103,6 @@ pub use protocol::{
 pub use reader_data::{IgesDataIgesReaderData, IgesDataTextLines};
 pub use reader_tool::IgesDataIgesReaderTool;
 pub use tool_location::IgesDataToolLocation;
-pub use undefined_entity::IgesDataUndefinedEntity;
+pub use undefined_entity::{IgesDataUndefinedEntity, IgesDataUndefinedEntitySource};
 pub use writer::IgesDataIgesWriter;
 pub use writer_param::IgesDataWriterParam;

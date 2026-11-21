@@ -13,10 +13,12 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, exceptions};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, exceptions};
 use martensite_tkernel::tcollection::HAsciiString;
 
 iges_entity! {
@@ -31,7 +33,7 @@ IgesDefsGenericData, IgesDefsGenericDataState, "IgesDefsGenericData", parent Ige
 the_nb_property_values: i32,
 the_name: Handle<HAsciiString>,
 the_types: Handle<HArray1<i32>>,
-the_values: Handle<HArray1<Handle<StandardTransient>>>,
+the_values: Handle<HArray1<Handle<dyn Transient>>>,
 }
 }
 
@@ -54,7 +56,7 @@ impl IgesDefsGenericData {
         nb_prop_val: i32,
         a_name: &Handle<HAsciiString>,
         all_types: &Handle<HArray1<i32>>,
-        all_values: &Handle<HArray1<Handle<StandardTransient>>>,
+        all_values: &Handle<HArray1<Handle<dyn Transient>>>,
     ) -> Result<(), Failure> {
         if ((!all_types.is_null()) && (!all_values.is_null()))
             && (((iges_array1_lower(all_values, "IgesDefsGenericData::init")? != 1)
@@ -103,7 +105,7 @@ impl IgesDefsGenericData {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn value(&self, index: i32) -> Result<Handle<StandardTransient>, Failure> {
+    pub fn value(&self, index: i32) -> Result<Handle<dyn Transient>, Failure> {
         iges_array1_item(
             &self.state.read().the_values,
             index,
@@ -161,13 +163,13 @@ impl IgesDefsGenericData {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn value_as_entity(&self, index: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn value_as_entity(&self, index: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         Ok(iges_array1_item(
             &self.state.read().the_values,
             index,
             "IgesDefsGenericData::value_as_entity",
         )?
-        .cast::<IgesDataIgesEntity>())
+        .cast::<dyn IgesDataEntityKind>())
     }
     /// Returns Attribute Value &lt;AttrNum, rank ValueNum&gt; as a Boolean
     /// Error if Index out of Range, or not a Logical

@@ -13,11 +13,12 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::iges_read_integer_item;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    IgesDataViewKindEntity, iges_array1_set, iges_dump_xyz_l, iges_new_array1,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataViewKindEntity,
+    iges_array1_set, iges_dump_xyz_l, iges_new_array1,
 };
 use crate::iges_dimen::IgesDimenLeaderArrow;
 use crate::iges_draw::IgesDrawLabelDisplay;
@@ -61,11 +62,11 @@ impl IgesDrawToolLabelDisplay {
             text_locations = iges_new_array1::<Xyz>(1, nbval)?;
             leader_entities = iges_new_array1::<Handle<IgesDimenLeaderArrow>>(1, nbval)?;
             label_levels = iges_new_array1::<i32>(1, nbval)?;
-            displayed_entities = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbval)?;
+            displayed_entities = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbval)?;
             let mut temp_view: Handle<dyn IgesDataViewKindEntity> = Default::default();
             let mut temp_xyz: Xyz = Default::default();
             let mut temp_leader_arrow: Handle<IgesDimenLeaderArrow> = Default::default();
-            let mut temp_displayed_entity: Handle<IgesDataIgesEntity> = Default::default();
+            let mut temp_displayed_entity: Handle<dyn IgesDataEntityKind> = Default::default();
             for i in 1..=nbval {
                 if pr.read_entity_typed(
                     ir,
@@ -223,7 +224,7 @@ impl IgesDrawToolLabelDisplay {
         text_locations = iges_new_array1::<Xyz>(1, nbval)?;
         leader_entities = iges_new_array1::<Handle<IgesDimenLeaderArrow>>(1, nbval)?;
         label_levels = iges_new_array1::<i32>(1, nbval)?;
-        displayed_entities = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbval)?;
+        displayed_entities = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbval)?;
         for i in 1..=nbval {
             let mut temp_view: Handle<dyn IgesDataViewKindEntity> =
                 tc.transferred(&another.view_item(i)?.cast())?.cast();
@@ -253,7 +254,7 @@ impl IgesDrawToolLabelDisplay {
                 another.label_level(i)?,
                 "IgesDrawToolLabelDisplay::own_copy",
             )?;
-            let mut temp_entity: Handle<IgesDataIgesEntity> =
+            let mut temp_entity: Handle<dyn IgesDataEntityKind> =
                 tc.transferred(&another.displayed_entity(i)?.cast())?.cast();
             iges_array1_set(
                 &displayed_entities,

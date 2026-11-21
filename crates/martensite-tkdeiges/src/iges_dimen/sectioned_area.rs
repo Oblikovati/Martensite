@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
 use crate::{iges_entity, iges_methods};
 use martensite_tkernel::ncollection::HArray1;
@@ -32,18 +33,18 @@ iges_entity! {
 /// space, and the specification of any enclosed definition
 /// curves (commonly known as islands).
 IgesDimenSectionedArea, IgesDimenSectionedAreaState, "IgesDimenSectionedArea", parent IgesDataIgesEntity, {
-the_exterior_curve: Handle<IgesDataIgesEntity>,
+the_exterior_curve: Handle<dyn IgesDataEntityKind>,
 the_pattern: i32,
 the_passing_point: Xyz,
 the_distance: f64,
 the_angle: f64,
-the_island_curves: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_island_curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 }
 }
 
 impl IgesDimenSectionedArea {
     iges_methods! {
-    get exterior_curve = the_exterior_curve: Handle<IgesDataIgesEntity>;
+    get exterior_curve = the_exterior_curve: Handle<dyn IgesDataEntityKind>;
     get pattern = the_pattern: i32;
     get distance = the_distance: f64;
     get angle = the_angle: f64;
@@ -54,12 +55,12 @@ impl IgesDimenSectionedArea {
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
     pub fn init(
         &self,
-        a_curve: &Handle<IgesDataIgesEntity>,
+        a_curve: &Handle<dyn IgesDataEntityKind>,
         a_pattern: i32,
         a_point: Xyz,
         a_distance: f64,
         an_angle: f64,
-        some_islands: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        some_islands: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         if !some_islands.is_null() {
             if iges_array1_lower(some_islands, "IgesDimenSectionedArea::init")? != 1 {
@@ -128,7 +129,7 @@ impl IgesDimenSectionedArea {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn island_curve(&self, num: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn island_curve(&self, num: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_island_curves,
             num,

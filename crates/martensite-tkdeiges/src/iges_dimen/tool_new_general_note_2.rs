@@ -12,9 +12,9 @@
     clippy::needless_return,
     reason = "the members keep the order and the locals of the record they read"
 )]
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesEntity, iges_array1_set, iges_live,
-    iges_new_array1,
+    IgesDataDefType, IgesDataDirChecker, iges_array1_set, iges_live, iges_new_array1,
 };
 use crate::iges_dimen::{IgesDimenNewGeneralNote, IgesDimenToolNewGeneralNote};
 use martensite_tkernel::ncollection::HArray1;
@@ -149,7 +149,7 @@ impl IgesDimenToolNewGeneralNote {
         control_code_strings = iges_new_array1::<Handle<HAsciiString>>(1, nbval)?;
         crate::iges_shared_blocks::iges_block_0065!(box_heights, box_widths, nb_chars, nbval);
         char_set_codes = iges_new_array1::<i32>(1, nbval)?;
-        char_set_entities = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nbval)?;
+        char_set_entities = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nbval)?;
         crate::iges_shared_blocks::iges_block_0023!(
             mirror_flags,
             nbval,
@@ -230,7 +230,7 @@ impl IgesDimenToolNewGeneralNote {
                 "IgesDimenToolNewGeneralNote::own_copy",
             )?;
             if another.is_char_set_entity(i)? {
-                let mut char_set_entity: Handle<IgesDataIgesEntity> =
+                let mut char_set_entity: Handle<dyn IgesDataEntityKind> =
                     tc.transferred(&another.char_set_entity(i)?.cast())?.cast();
                 iges_array1_set(
                     &char_set_entities,

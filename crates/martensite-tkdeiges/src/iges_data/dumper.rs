@@ -3,7 +3,10 @@ use super::{
     IgesDataDefList, IgesDataDefType, IgesDataDumpResult, IgesDataIgesEntity, IgesDataIgesModel,
     IgesDataProtocolOps, IgesDataSpecificLib, iges_entity_of, iges_real_text,
 };
-use martensite_tkernel::standard::{Handle, RuntimeTyped, StandardTransient};
+use crate::iges_data::IgesDataEntityKind;
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
+use martensite_tkernel::standard::{Handle, RuntimeTyped};
 use martensite_tkxsbase::interface::{
     InterfaceEntityIterator, InterfaceModelEntities, InterfaceMsg, InterfaceSignTypeBase,
 };
@@ -17,7 +20,7 @@ use std::io::Write;
 /// let protocol = Handle::new(IgesDataProtocol::default());
 /// let dumper = IgesDataIgesDumper::new(&IgesDataIgesModel::new(), &protocol.cast());
 /// let mut text = Vec::new();
-/// dumper.print_d_num(&Handle::<IgesDataIgesEntity>::default(), &mut text).unwrap();
+/// dumper.print_d_num(&Handle::<dyn IgesDataEntityKind>::default(), &mut text).unwrap();
 /// assert_eq!(text, b"  D0(Null)  ");
 /// ```
 pub struct IgesDataIgesDumper {
@@ -36,7 +39,7 @@ impl IgesDataIgesDumper {
             thelib: IgesDataSpecificLib::new(protocol),
         }
     }
-    fn number_of(&self, ent: &Handle<IgesDataIgesEntity>) -> i32 {
+    fn number_of(&self, ent: &Handle<dyn IgesDataEntityKind>) -> i32 {
         self.themodel
             .get()
             .map_or(0, |model| model.number(&ent.cast()))
@@ -45,7 +48,7 @@ impl IgesDataIgesDumper {
     ///
     /// # Errors
     /// A failure of the stream.
-    pub fn print_d_num<T: ?Sized + RuntimeTyped>(
+    pub fn print_d_num<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         ent: &Handle<T>,
         s: &mut dyn Write,
@@ -73,7 +76,7 @@ impl IgesDataIgesDumper {
     ///
     /// # Errors
     /// A failure of the stream.
-    pub fn print_short<T: ?Sized + RuntimeTyped>(
+    pub fn print_short<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         ent: &Handle<T>,
         s: &mut dyn Write,
@@ -103,7 +106,7 @@ impl IgesDataIgesDumper {
     ///
     /// # Errors
     /// A failure of the stream or of a module.
-    pub fn dump<T: ?Sized + RuntimeTyped>(
+    pub fn dump<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         ent: &Handle<T>,
         s: &mut dyn Write,
@@ -147,7 +150,7 @@ impl IgesDataIgesDumper {
     }
     fn dump_directory(
         &self,
-        entity: &Handle<IgesDataIgesEntity>,
+        entity: &Handle<dyn IgesDataEntityKind>,
         live: &IgesDataIgesEntity,
         s: &mut dyn Write,
         own: i32,
@@ -240,7 +243,7 @@ impl IgesDataIgesDumper {
             _ => Ok(()),
         }
     }
-    fn dump_ref<T: ?Sized + RuntimeTyped>(
+    fn dump_ref<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         s: &mut dyn Write,
         label: &str,
@@ -295,14 +298,14 @@ impl IgesDataIgesDumper {
     ///
     /// # Errors
     /// A failure of the stream or of the module.
-    pub fn own_dump<T: ?Sized + RuntimeTyped>(
+    pub fn own_dump<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         ent: &Handle<T>,
         s: &mut dyn Write,
         own: i32,
     ) -> IgesDataDumpResult {
         let entity = iges_entity_of(ent);
-        let transient: Handle<StandardTransient> = entity.cast();
+        let transient: Handle<dyn Transient> = entity.cast();
         if let Some((module, cn)) = self.thelib.select(&transient)
             && let Some(live) = module.get()
         {

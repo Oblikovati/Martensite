@@ -1,6 +1,8 @@
 //! The criteria a directory entry must meet for a kind of entity: checked, and corrected.
 use super::param_reader::iges_msg;
 use super::{IgesDataDefType, IgesDataIgesEntity};
+use crate::iges_data::IgesDataEntityKind;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::standard::{Handle, RuntimeTyped};
 use martensite_tkxsbase::interface::InterfaceCheck;
 
@@ -143,8 +145,12 @@ impl IgesDataDirChecker {
         self.thehierst = val;
     }
     /// Checks a whole directory entry; what is wrong goes to `ach`.
-    pub fn check<T: ?Sized + RuntimeTyped>(&self, ach: &Handle<InterfaceCheck>, ent: &Handle<T>) {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+    pub fn check<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        &self,
+        ach: &Handle<InterfaceCheck>,
+        ent: &Handle<T>,
+    ) {
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let (Some(check), Some(live)) = (ach.get(), entity.get()) else {
             return;
         };
@@ -195,12 +201,12 @@ impl IgesDataDirChecker {
     }
     /// Checks the type and form only, by warnings: this is called on reading, where a failure
     /// would mean that the entity could not be loaded.
-    pub fn check_type_and_form<T: ?Sized + RuntimeTyped>(
+    pub fn check_type_and_form<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         ach: &Handle<InterfaceCheck>,
         ent: &Handle<T>,
     ) {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let (Some(check), Some(live)) = (ach.get(), entity.get()) else {
             return;
         };
@@ -215,8 +221,11 @@ impl IgesDataDirChecker {
         }
     }
     /// Brings a directory entry to the criteria; true when something changed.
-    pub fn correct<T: ?Sized + RuntimeTyped>(&self, ent: &Handle<T>) -> bool {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+    pub fn correct<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
+        &self,
+        ent: &Handle<T>,
+    ) -> bool {
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return false;
         };
@@ -322,7 +331,7 @@ fn check_range(check: &InterfaceCheck, value: i32, max: i32, key: &str) {
 mod tests {
     use super::{Handle, IgesDataDirChecker, IgesDataIgesEntity, InterfaceCheck};
 
-    fn entity_of(type_number: i32, form: i32) -> Handle<IgesDataIgesEntity> {
+    fn entity_of(type_number: i32, form: i32) -> Handle<dyn IgesDataEntityKind> {
         let entity = Handle::new(IgesDataIgesEntity::default());
         entity.get().unwrap().init_type_and_form(type_number, form);
         entity

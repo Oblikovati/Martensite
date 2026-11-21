@@ -1,7 +1,8 @@
 //! Planes (type 108) with their bounding curves, and perforated planes.
 use super::{IgesToBRep, IgesToBRepTopoSurface};
 use crate::iges_basic::IgesBasicSingleParent;
-use crate::iges_data::{IgesDataIgesEntity, IgesDataToolLocation, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataToolLocation, iges_live};
 use crate::iges_geom::{IgesGeomCurveOnSurface, IgesGeomPlane};
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topexp::Explorer;
@@ -65,7 +66,7 @@ impl IgesToBRepTopoSurface {
     fn add_perforation(
         &mut self,
         start: &Handle<IgesBasicSingleParent>,
-        child: &Handle<IgesDataIgesEntity>,
+        child: &Handle<dyn IgesDataEntityKind>,
         rank: i32,
         (result, plane): (&mut Shape, Plane3),
     ) -> Result<(), Failure> {

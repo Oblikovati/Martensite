@@ -12,6 +12,7 @@ use crate::iges_basic::entity_shape::{
     iges_array1_lower, iges_array2_col_length, iges_array2_fill, iges_array2_row_length,
     iges_placement_methods,
 };
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, IgesDataTransfEntity};
 use crate::iges_data::{iges_array2_item, iges_array2_set, iges_new_array2};
 use crate::{iges_entity, iges_methods};
@@ -25,12 +26,12 @@ iges_entity! {
 /// a generatrix, and start and terminate rotation angles. The
 /// surface is created by rotating the generatrix about the axis
 /// of rotation through the start and terminate rotation angles.
-IgesGeomSurfaceOfRevolution, IgesGeomSurfaceOfRevolutionState, "IgesGeomSurfaceOfRevolution", parent IgesDataIgesEntity, { line: Handle<IgesGeomLine>, generatrix: Handle<IgesDataIgesEntity>, start_angle: f64, end_angle: f64 }
+IgesGeomSurfaceOfRevolution, IgesGeomSurfaceOfRevolutionState, "IgesGeomSurfaceOfRevolution", parent IgesDataIgesEntity, { line: Handle<IgesGeomLine>, generatrix: Handle<dyn IgesDataEntityKind>, start_angle: f64, end_angle: f64 }
 }
 impl IgesGeomSurfaceOfRevolution {
     iges_methods! {
     get axis_of_revolution = line: Handle<IgesGeomLine>;
-    get generatrix = generatrix: Handle<IgesDataIgesEntity>;
+    get generatrix = generatrix: Handle<dyn IgesDataEntityKind>;
     get start_angle = start_angle: f64;
     get end_angle = end_angle: f64;
     }
@@ -42,7 +43,7 @@ impl IgesGeomSurfaceOfRevolution {
     pub fn init(
         &self,
         an_axis: &Handle<IgesGeomLine>,
-        a_generatrix: &Handle<IgesDataIgesEntity>,
+        a_generatrix: &Handle<dyn IgesDataEntityKind>,
         a_start_angle: f64,
         an_end_angle: f64,
     ) {
@@ -63,11 +64,11 @@ iges_entity! {
 /// called directrix. The curve may be a line, circular arc,
 /// conic arc, parametric spline curve, rational B-spline
 /// curve or composite curve.
-IgesGeomTabulatedCylinder, IgesGeomTabulatedCylinderState, "IgesGeomTabulatedCylinder", parent IgesDataIgesEntity, { directrix: Handle<IgesDataIgesEntity>, end: Xyz }
+IgesGeomTabulatedCylinder, IgesGeomTabulatedCylinderState, "IgesGeomTabulatedCylinder", parent IgesDataIgesEntity, { directrix: Handle<dyn IgesDataEntityKind>, end: Xyz }
 }
 impl IgesGeomTabulatedCylinder {
     iges_methods! {
-    get directrix = directrix: Handle<IgesDataIgesEntity>;
+    get directrix = directrix: Handle<dyn IgesDataEntityKind>;
     }
     iges_placement_methods! {
     point end_point = end;
@@ -80,7 +81,7 @@ impl IgesGeomTabulatedCylinder {
     ///   generatrix
     ///   The start point of the directrix is identical to the start
     ///   point of the generatrix
-    pub fn init(&self, a_directrix: &Handle<IgesDataIgesEntity>, an_end: Xyz) {
+    pub fn init(&self, a_directrix: &Handle<dyn IgesDataEntityKind>, an_end: Xyz) {
         {
             let mut state = self.state.write();
             state.directrix = a_directrix.clone();
@@ -187,11 +188,11 @@ iges_entity! {
 /// surface is defined as the interior of the outer boundaries
 /// and exterior of the inner boundaries and includes the
 /// boundary curves.
-IgesGeomTrimmedSurface, IgesGeomTrimmedSurfaceState, "IgesGeomTrimmedSurface", parent IgesDataIgesEntity, { surface: Handle<IgesDataIgesEntity>, flag: i32, outer_curve: Handle<IgesGeomCurveOnSurface>, inner_curves: Handle<HArray1<Handle<IgesGeomCurveOnSurface>>> }
+IgesGeomTrimmedSurface, IgesGeomTrimmedSurfaceState, "IgesGeomTrimmedSurface", parent IgesDataIgesEntity, { surface: Handle<dyn IgesDataEntityKind>, flag: i32, outer_curve: Handle<IgesGeomCurveOnSurface>, inner_curves: Handle<HArray1<Handle<IgesGeomCurveOnSurface>>> }
 }
 impl IgesGeomTrimmedSurface {
     iges_methods! {
-    get surface = surface: Handle<IgesDataIgesEntity>;
+    get surface = surface: Handle<dyn IgesDataEntityKind>;
     get outer_contour = outer_curve: Handle<IgesGeomCurveOnSurface>;
     get outer_boundary_type = flag: i32;
     len nb_inner_contours = inner_curves;
@@ -213,7 +214,7 @@ impl IgesGeomTrimmedSurface {
     ///   inner boundary
     pub fn init(
         &self,
-        a_surface: &Handle<IgesDataIgesEntity>,
+        a_surface: &Handle<dyn IgesDataEntityKind>,
         a_flag: i32,
         an_outer: &Handle<IgesGeomCurveOnSurface>,
         an_inner: &Handle<HArray1<Handle<IgesGeomCurveOnSurface>>>,

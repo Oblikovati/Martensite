@@ -4,7 +4,7 @@ use super::{IgesDataDirPart, IgesDataDirValues, IgesDataGlobalSection, IgesDataI
 use martensite_tkernel::{
     impl_transient,
     ncollection::HSequence,
-    standard::{Failure, Handle, SharedState, StandardTransient, exceptions},
+    standard::{Failure, Handle, SharedState, exceptions},
     tcollection::HAsciiString,
 };
 use martensite_tkxsbase::interface::{
@@ -34,7 +34,6 @@ struct ReaderDataFields {
 /// assert_eq!(data.find_next_record(2), 0);
 /// ```
 pub struct IgesDataIgesReaderData {
-    transient: StandardTransient,
     base: InterfaceFileReaderDataBase,
     state: SharedState<ReaderDataFields>,
 }
@@ -42,7 +41,6 @@ impl_transient!(
     IgesDataIgesReaderData,
     "IgesDataIgesReaderData",
     dyn InterfaceFileReaderData,
-    transient,
     interfaces: [dyn InterfaceFileReaderData]
 );
 
@@ -51,7 +49,6 @@ impl IgesDataIgesReaderData {
     pub fn new(nbe: i32, nbp: i32) -> Self {
         let places = usize::try_from(nbe + 1).unwrap_or(1);
         Self {
-            transient: StandardTransient::default(),
             base: InterfaceFileReaderDataBase::new(nbe, nbp),
             state: SharedState::new(ReaderDataFields {
                 thestar: Handle::new(IgesDataTextLines::default()),

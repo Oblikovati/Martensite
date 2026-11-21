@@ -1,6 +1,7 @@
 //! Ruled surfaces, surfaces of revolution and tabulated cylinders.
 use super::{IgesToBRep, IgesToBRepTopoSurface};
-use crate::iges_data::{IgesDataIgesEntity, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::iges_live;
 use crate::iges_geom::{
     IgesGeomLine, IgesGeomRuledSurface, IgesGeomSurfaceOfRevolution, IgesGeomTabulatedCylinder,
 };
@@ -143,7 +144,7 @@ fn wire_of_shape(shape: &Shape) -> Result<Wire, Failure> {
 impl IgesToBRepTopoSurface {
     fn surface_warn_if_c0(
         &self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         shape: &Shape,
     ) -> Result<(), Failure> {
         if shape.shape_type()? != ShapeEnum::Face {
@@ -159,7 +160,7 @@ impl IgesToBRepTopoSurface {
     fn ruled_directrix(
         &self,
         start: &Handle<IgesGeomRuledSurface>,
-        curve: &Handle<IgesDataIgesEntity>,
+        curve: &Handle<dyn IgesDataEntityKind>,
         tool: &mut super::IgesToBRepTopoCurve,
         reversed: bool,
     ) -> Result<Option<RuledDirectrix>, Failure> {

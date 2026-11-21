@@ -2,7 +2,8 @@
 //! the kinds, and the basic, offset, trimmed and bounded surfaces.
 use super::{IgesToBRep, IgesToBRepBasicSurface, IgesToBRepCurveAndSurface, IgesToBRepTopoCurve};
 use crate::iges_basic::IgesBasicSingleParent;
-use crate::iges_data::{IgesDataIgesEntity, IgesDataToolLocation, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataToolLocation, iges_live};
 use crate::iges_geom::{
     IgesGeomBoundedSurface, IgesGeomOffsetSurface, IgesGeomPlane, IgesGeomRuledSurface,
     IgesGeomSurfaceOfRevolution, IgesGeomTabulatedCylinder, IgesGeomTrimmedSurface,
@@ -12,6 +13,7 @@ use martensite_tkbrep::brep_tools;
 use martensite_tkbrep::topods::{self, Face, Shape, ShapeIterator};
 use martensite_tkernel::message::Msg;
 use martensite_tkernel::precision;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, exceptions};
 use martensite_tkg3d::geom::{
     GeomOffsetSurface, GeomPlane, GeomRectangularTrimmedSurface, GeomSurface,
@@ -106,16 +108,16 @@ impl IgesToBRepTopoSurface {
     /// The message that an entity of a surface did not give a shape.
     pub(super) fn label_message(
         &self,
-        entity: &Handle<IgesDataIgesEntity>,
+        entity: &Handle<dyn IgesDataEntityKind>,
         what: &[u8],
     ) -> Result<Msg, Failure> {
         self.base.label_message(entity, what)
     }
     /// A fail for a part that did not give a shape.
-    pub(super) fn label_fail<T: ?Sized + RuntimeTyped>(
+    pub(super) fn label_fail<T: ?Sized + RuntimeTyped + TransientHandleTarget>(
         &self,
         start: &Handle<T>,
-        entity: &Handle<IgesDataIgesEntity>,
+        entity: &Handle<dyn IgesDataEntityKind>,
         what: &[u8],
     ) -> Result<(), Failure> {
         self.send_fail(start, &self.label_message(entity, what)?);
@@ -125,7 +127,7 @@ impl IgesToBRepTopoSurface {
     /// similarity.
     pub(super) fn moved_to_location(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         shape: &mut Shape,
     ) -> Result<(), Failure> {
         let entity = iges_live(start, WHERE)?;
@@ -155,7 +157,7 @@ impl IgesToBRepTopoSurface {
     /// A failure of the entity or of the construction of the shape.
     pub fn transfer_topo_surface(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Shape, Failure> {
         self.u_length = 1.0;
         if start.is_null() {
@@ -171,7 +173,7 @@ impl IgesToBRepTopoSurface {
     }
     fn dispatch_topo_surface(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Shape, Failure> {
         if IgesToBRep::is_basic_surface(start) {
             return self.transfer_topo_basic_surface(start);
@@ -218,7 +220,7 @@ impl IgesToBRepTopoSurface {
     /// A failure of the entity or of the construction of the face.
     pub fn transfer_topo_basic_surface(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<Shape, Failure> {
         if start.is_null() {
             self.fail_key(start, "IGES_1005");
@@ -258,7 +260,7 @@ impl IgesToBRepTopoSurface {
     fn offset_basis_face(
         &self,
         start: &Handle<IgesGeomOffsetSurface>,
-        basis: &Handle<IgesDataIgesEntity>,
+        basis: &Handle<dyn IgesDataEntityKind>,
         shape: &Shape,
     ) -> Result<Option<Face>, Failure> {
         let kind = shape.shape_type()?;

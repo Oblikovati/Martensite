@@ -12,16 +12,18 @@ use super::{
     IgesBasicToolSingleParent,
 };
 use crate::iges_basic::entity_shape::{iges_send_read_status, iges_tool};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_dump_entities, iges_dump_string, iges_dump_xyz_l,
     iges_live, iges_msg, iges_new_array1, iges_real_text,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
 use martensite_tkernel::tcollection::HAsciiString;
 use martensite_tkmath::gp::Xyz;
 use martensite_tkxsbase::interface::{
@@ -40,8 +42,8 @@ impl IgesBasicToolSingleParent {
             return Ok(false);
         }
         let nb: i32 = ent_live.nb_children();
-        let ent_array: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nb)?;
+        let ent_array: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nb)?;
         for i in 1..=nb {
             iges_array1_set(
                 &ent_array,
@@ -86,15 +88,15 @@ impl IgesBasicToolSingleParent {
         let ent_live = iges_live(ent, "IgesBasicToolSingleParent::own_copy")?;
         let a_nb_parent_entities: i32 = another_live.nb_parent_entities();
         let aparent = tc
-            .transferred(&another_live.single_parent().cast::<StandardTransient>())?
-            .cast::<IgesDataIgesEntity>();
+            .transferred(&another_live.single_parent().cast::<dyn Transient>())?
+            .cast::<dyn IgesDataEntityKind>();
         let upper: i32 = another_live.nb_children();
-        let ent_array: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, upper)?;
+        let ent_array: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, upper)?;
         for i in 1..=upper {
             let myentity = tc
-                .transferred(&another_live.child(i)?.cast::<StandardTransient>())?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.child(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(
                 &ent_array,
                 i,
@@ -224,7 +226,7 @@ impl IgesBasicToolSingularSubfigure {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesBasicToolSingularSubfigure::own_shared")?;
-        iter.get_one_item(&ent_live.subfigure().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.subfigure().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.
@@ -271,7 +273,7 @@ impl IgesBasicToolSingularSubfigure {
         let mut ahas_scale: bool = false;
         let mut a_scale: f64 = 0.0;
         let a_subfigure_def = tc
-            .transferred(&another_live.subfigure().cast::<StandardTransient>())?
+            .transferred(&another_live.subfigure().cast::<dyn Transient>())?
             .cast::<IgesBasicSubfigureDef>();
         a_translation = another_live.translation();
         ahas_scale = another_live.has_scale_factor();
@@ -328,7 +330,7 @@ impl IgesBasicToolSubfigureDef {
         let mut temp_depth: i32 = 0;
         let mut temp_name: Handle<HAsciiString> = Handle::default();
         let mut nbval: i32 = 0;
-        let mut ent_array: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Handle::default();
+        let mut ent_array: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Handle::default();
         if !pr.read_integer(&pr.current(), &mut temp_depth)? {
             let msg208 = iges_msg("XSTEP_208");
             pr.send_fail(&msg208);
@@ -378,7 +380,7 @@ impl IgesBasicToolSubfigureDef {
         let ent_live = iges_live(ent, "IgesBasicToolSubfigureDef::own_shared")?;
         let nb: i32 = ent_live.nb_entities();
         for i in 1..=nb {
-            iter.get_one_item(&ent_live.associated_entity(i)?.cast::<StandardTransient>());
+            iter.get_one_item(&ent_live.associated_entity(i)?.cast::<dyn Transient>());
         }
         Ok(())
     }
@@ -434,16 +436,12 @@ impl IgesBasicToolSubfigureDef {
         )?));
         lower = 1;
         upper = another_live.nb_entities();
-        let ent_array: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(lower, upper)?;
+        let ent_array: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(lower, upper)?;
         for i in lower..=upper {
             let myentity = tc
-                .transferred(
-                    &another_live
-                        .associated_entity(i)?
-                        .cast::<StandardTransient>(),
-                )?
-                .cast::<IgesDataIgesEntity>();
+                .transferred(&another_live.associated_entity(i)?.cast::<dyn Transient>())?
+                .cast::<dyn IgesDataEntityKind>();
             iges_array1_set(
                 &ent_array,
                 i,

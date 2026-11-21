@@ -1,7 +1,8 @@
 //! `IgesToBRepIgesBoundary`: the wires of boundary entities (types 141, 142 and 508), with their 3D
 //! and 2D representations. A tool container gives the kind of boundary a transfer uses.
 use super::{IgesToBRep, IgesToBRepCurveAndSurface, IgesToBRepTopoCurve};
-use crate::iges_data::{IgesDataIgesEntity, iges_array1_item, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{iges_array1_item, iges_live};
 use martensite_tkbrep::topods::{Face, Wire};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::impl_transient_interface;
@@ -19,7 +20,7 @@ use super::iges_boundary_reverse::{reverse_curves_2d, reverse_curves_3d};
 const WHERE: &str = "IgesToBRepIgesBoundary";
 
 /// The parameter curves of a boundary.
-pub type IgesToBRepCurves2d = Handle<HArray1<Handle<IgesDataIgesEntity>>>;
+pub type IgesToBRepCurves2d = Handle<HArray1<Handle<dyn IgesDataEntityKind>>>;
 
 /// Which representations of a boundary are good so far; all are until a transfer says otherwise.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -45,7 +46,7 @@ impl Default for BoundaryFlags {
 /// The curves of one transfer: a 3D entity or the edges made of one, with the parameter curves.
 pub struct BoundaryCurves<'a> {
     /// The 3D curve entity, when `use_wire_data` is false.
-    pub entity_3d: &'a Handle<IgesDataIgesEntity>,
+    pub entity_3d: &'a Handle<dyn IgesDataEntityKind>,
     /// The edges of the 3D curve, when `use_wire_data` is true.
     pub wire_data_3d: &'a Handle<ShapeExtendWireData>,
     /// Which of those to use.
@@ -99,7 +100,7 @@ impl dyn IgesToBRepBoundaryOps {
     pub fn init(
         &self,
         settings: &IgesToBRepCurveAndSurface,
-        entity: &Handle<IgesDataIgesEntity>,
+        entity: &Handle<dyn IgesDataEntityKind>,
         face: &Face,
         trans: Transform2,
         u_fact: f64,
@@ -122,7 +123,7 @@ impl dyn IgesToBRepBoundaryOps {
     pub fn transfer_entity(
         &self,
         flags: &mut BoundaryFlags,
-        curve_3d: &Handle<IgesDataIgesEntity>,
+        curve_3d: &Handle<dyn IgesDataEntityKind>,
         reverse_3d: bool,
         curves_2d: &IgesToBRepCurves2d,
         number: i32,
@@ -168,7 +169,7 @@ impl dyn IgesToBRepBoundaryOps {
 #[derive(Default)]
 pub struct BoundaryState {
     pub(crate) settings: IgesToBRepCurveAndSurface,
-    pub(crate) entity: Handle<IgesDataIgesEntity>,
+    pub(crate) entity: Handle<dyn IgesDataEntityKind>,
     pub(crate) wire_data: Handle<ShapeExtendWireData>,
     pub(crate) wire_data_3d: Handle<ShapeExtendWireData>,
     pub(crate) wire_data_2d: Handle<ShapeExtendWireData>,
@@ -187,14 +188,12 @@ pub struct BoundaryState {
 /// ```
 #[derive(Default)]
 pub struct IgesToBRepIgesBoundary {
-    transient: StandardTransient,
     pub(crate) state: SharedState<BoundaryState>,
 }
 impl_transient!(
     IgesToBRepIgesBoundary,
     "IgesToBRepIgesBoundary",
     dyn IgesToBRepBoundaryOps,
-    transient,
     interfaces: [dyn IgesToBRepBoundaryOps]
 );
 
@@ -225,8 +224,8 @@ impl IgesToBRepIgesBoundary {
 
 /// The sequences of curves and their preference, as both kinds of boundary find them.
 pub(crate) struct BoundarySequences {
-    pub(crate) seq_3d: Vec<Handle<StandardTransient>>,
-    pub(crate) seq_2d: Vec<Handle<StandardTransient>>,
+    pub(crate) seq_3d: Vec<Handle<dyn Transient>>,
+    pub(crate) seq_2d: Vec<Handle<dyn Transient>>,
     pub(crate) len_3d: i32,
     pub(crate) len_2d: i32,
 }
@@ -256,19 +255,19 @@ impl BoundarySequences {
         })
     }
     /// The 3D curve of a rank from 1.
-    pub(crate) fn curve_3d(&self, rank: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub(crate) fn curve_3d(&self, rank: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         rank_of(&self.seq_3d, rank)
     }
     /// The 2D curve of a rank from 1.
-    pub(crate) fn curve_2d(&self, rank: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub(crate) fn curve_2d(&self, rank: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         rank_of(&self.seq_2d, rank)
     }
 }
 
 fn rank_of(
-    list: &[Handle<StandardTransient>],
+    list: &[Handle<dyn Transient>],
     rank: i32,
-) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
     usize::try_from(rank - 1)
         .ok()
         .and_then(|index| list.get(index))

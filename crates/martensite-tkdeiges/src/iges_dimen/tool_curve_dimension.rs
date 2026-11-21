@@ -13,9 +13,10 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
 };
 use crate::iges_dimen::{
     IgesDimenCurveDimension, IgesDimenGeneralNote, IgesDimenLeaderArrow, IgesDimenWitnessLine,
@@ -45,8 +46,8 @@ impl IgesDimenToolCurveDimension {
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
         let mut note: Handle<IgesDimenGeneralNote> = Default::default();
-        let mut first_curve: Handle<IgesDataIgesEntity> = Default::default();
-        let mut second_curve: Handle<IgesDataIgesEntity> = Default::default();
+        let mut first_curve: Handle<dyn IgesDataEntityKind> = Default::default();
+        let mut second_curve: Handle<dyn IgesDataEntityKind> = Default::default();
         crate::iges_shared_blocks::iges_block_0029!(
             first_leader,
             first_witness,
@@ -164,9 +165,9 @@ impl IgesDimenToolCurveDimension {
         tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure> {
         let mut note: Handle<IgesDimenGeneralNote> = tc.transferred(&another.note().cast())?.cast();
-        let mut first_curve: Handle<IgesDataIgesEntity> =
+        let mut first_curve: Handle<dyn IgesDataEntityKind> =
             tc.transferred(&another.first_curve().cast())?.cast();
-        let mut second_curve: Handle<IgesDataIgesEntity> =
+        let mut second_curve: Handle<dyn IgesDataEntityKind> =
             tc.transferred(&another.second_curve().cast())?.cast();
         crate::iges_shared_blocks::iges_block_0069!(another, first_leader, second_leader, tc);
         let mut first_witness: Handle<IgesDimenWitnessLine> =

@@ -2,13 +2,15 @@
 use super::IgesSelectModelModifier;
 use super::modifier_bases::{iges_model_modifier, modifier_base};
 use crate::iges_basic::IgesBasicHArray1OfHArray1OfIgesEntity;
-use crate::iges_data::{IgesDataIgesEntity, IgesDataIgesModel, iges_array1_set, iges_new_array1};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataIgesModel, iges_array1_set, iges_new_array1};
 use crate::iges_geom::{
     IgesGeomBoundary, IgesGeomBoundedSurface, IgesGeomCurveOnSurface, IgesGeomTrimmedSurface,
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     ncollection::HArray1,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::{if_select::IFSelectContextModif, interface::InterfaceCopyTool};
@@ -34,7 +36,6 @@ impl IgesSelectRemoveCurves {
     /// The modifier.
     pub fn new(uv: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: modifier_base(true),
             the_uv: SharedState::new(uv),
         }
@@ -77,7 +78,7 @@ fn edit_boundary(bndy: &IgesGeomBoundary, uv: bool) -> Result<bool, Failure> {
     if nb == 0 {
         return Ok(false);
     }
-    let arc3d: Handle<HArray1<Handle<IgesDataIgesEntity>>> = iges_new_array1(1, nb)?;
+    let arc3d: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = iges_new_array1(1, nb)?;
     let arcuv = Handle::new(IgesBasicHArray1OfHArray1OfIgesEntity::with_bounds(1, nb)?);
     let sens = iges_new_array1(1, nb)?;
     let mut res = false;
@@ -114,7 +115,7 @@ fn edit_boundary(bndy: &IgesGeomBoundary, uv: bool) -> Result<bool, Failure> {
 }
 
 /// Removes the curves an entity holds; true when something changed.
-fn edit(ent: &Handle<StandardTransient>, uv: bool) -> Result<bool, Failure> {
+fn edit(ent: &Handle<dyn Transient>, uv: bool) -> Result<bool, Failure> {
     if let Some(trimmed) = ent.cast::<IgesGeomTrimmedSurface>().get() {
         let mut res = edit(&trimmed.outer_contour().cast(), uv)?;
         for rank in 1..=trimmed.nb_inner_contours() {

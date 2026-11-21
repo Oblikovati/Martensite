@@ -13,10 +13,11 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
     IgesDataDefType, IgesDataDirChecker, IgesDataDumpResult, IgesDataIgesDumper,
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    iges_array1_set, iges_dump_entities, iges_new_array1,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
+    iges_dump_entities, iges_new_array1,
 };
 use crate::iges_dimen::IgesDimenDimensionedGeometry;
 use martensite_tkernel::ncollection::HArray1;
@@ -44,9 +45,9 @@ impl IgesDimenToolDimensionedGeometry {
         pr: &mut IgesDataParamReader,
     ) -> Result<(), Failure> {
         let mut temp_nb_dimen: i32 = Default::default();
-        let mut a_dim_entity: Handle<IgesDataIgesEntity> = Default::default();
+        let mut a_dim_entity: Handle<dyn IgesDataEntityKind> = Default::default();
         let mut nbgeom: i32 = 0;
-        let mut geom_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> = Default::default();
+        let mut geom_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = Default::default();
         pr.read_integer_text(&pr.current(), "Number of Dimensions", &mut temp_nb_dimen)?;
         pr.read_integer_text(&pr.current(), "number of entities", &mut nbgeom)?;
         pr.read_entity(
@@ -122,8 +123,8 @@ impl IgesDimenToolDimensionedGeometry {
             return Ok(false);
         }
         let mut nb: i32 = ent.nb_geometry_entities()?;
-        let mut ent_array: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nb)?;
+        let mut ent_array: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nb)?;
         for i in 1..=nb {
             iges_array1_set(
                 &ent_array,
@@ -176,13 +177,13 @@ impl IgesDimenToolDimensionedGeometry {
         tc: &mut InterfaceCopyTool,
     ) -> Result<(), Failure> {
         let mut nb_dim: i32 = another.nb_dimensions();
-        let mut anentity: Handle<IgesDataIgesEntity> =
+        let mut anentity: Handle<dyn IgesDataEntityKind> =
             tc.transferred(&another.dimension_entity().cast())?.cast();
         let mut upper: i32 = another.nb_geometry_entities()?;
-        let mut ent_array: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-            iges_new_array1::<Handle<IgesDataIgesEntity>>(1, upper)?;
+        let mut ent_array: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+            iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, upper)?;
         for i in 1..=upper {
-            let mut myentity: Handle<IgesDataIgesEntity> =
+            let mut myentity: Handle<dyn IgesDataEntityKind> =
                 tc.transferred(&another.geometry_entity(i)?.cast())?.cast();
             iges_array1_set(
                 &ent_array,

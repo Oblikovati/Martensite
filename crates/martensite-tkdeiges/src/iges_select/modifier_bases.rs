@@ -3,7 +3,7 @@
 use crate::iges_data::{IgesDataIgesModel, IgesDataIgesWriter, IgesDataProtocolOps};
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::{
@@ -79,14 +79,12 @@ impl_transient_interface!(
 
 /// A modifier as the trace of the context reads it: its selection only.
 struct TracedModifier {
-    transient: StandardTransient,
     base: IFSelectGeneralModifierBase,
 }
 impl_transient!(
     TracedModifier,
     "IgesSelectTracedModifier",
     dyn IFSelectGeneralModifier,
-    transient,
     interfaces: [dyn IFSelectGeneralModifier]
 );
 impl IFSelectGeneralModifier for TracedModifier {
@@ -111,7 +109,6 @@ pub fn iges_model_modifier_perform<M: IgesSelectModelModifier + ?Sized>(
     tc: &mut InterfaceCopyTool,
 ) -> Result<(), Failure> {
     let traced = TracedModifier {
-        transient: StandardTransient::default(),
         base: IFSelectGeneralModifierBase::new(false),
     };
     traced.set_selection(&modifier.selection());
@@ -146,7 +143,7 @@ macro_rules! iges_model_modifier {
     ($(#[$meta:meta])* $class:ident, $recorded:literal, { $($field:ident: $ty:ty),* $(,)? }, $self_:ident => $label:expr) => {
         $(#[$meta])*
         pub struct $class {
-            transient: martensite_tkernel::standard::StandardTransient,
+
             base: martensite_tkxsbase::if_select::IFSelectGeneralModifierBase,
             $($field: martensite_tkernel::standard::SharedState<$ty>,)*
         }
@@ -154,7 +151,6 @@ macro_rules! iges_model_modifier {
             $class,
             $recorded,
             dyn $crate::iges_select::IgesSelectModelModifier,
-            transient,
             interfaces: [
                 dyn martensite_tkxsbase::if_select::IFSelectGeneralModifier,
                 dyn martensite_tkxsbase::if_select::IFSelectModifier,

@@ -1,8 +1,9 @@
 //! The protocols of the norm: what a package knows of its entities, and several as one.
 use super::{IgesDataIgesModel, IgesDataUndefinedEntity};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient, impl_transient_interface,
-    standard::{Handle, RuntimeType, RuntimeTyped, SharedState, StandardTransient},
+    standard::{Handle, RuntimeType, RuntimeTyped, SharedState},
 };
 use martensite_tkxsbase::interface::{InterfaceInterfaceModel, InterfaceProtocol};
 
@@ -44,12 +45,12 @@ pub fn iges_protocol_is_suitable_model(model: &Handle<dyn InterfaceInterfaceMode
 }
 
 /// The entity kept for what is not recognised.
-pub fn iges_protocol_unknown_entity() -> Handle<StandardTransient> {
+pub fn iges_protocol_unknown_entity() -> Handle<dyn Transient> {
     Handle::new(IgesDataUndefinedEntity::new()).cast()
 }
 
 /// Whether an entity is the one kept for what is not recognised.
-pub fn iges_protocol_is_unknown_entity(ent: &Handle<StandardTransient>) -> bool {
+pub fn iges_protocol_is_unknown_entity(ent: &Handle<dyn Transient>) -> bool {
     ent.is_kind(IgesDataUndefinedEntity::static_type())
 }
 
@@ -89,15 +90,14 @@ macro_rules! impl_iges_protocol {
             }
             fn unknown_entity(
                 &self,
-            ) -> martensite_tkernel::standard::Handle<
-                martensite_tkernel::standard::StandardTransient,
-            > {
+            ) -> martensite_tkernel::standard::Handle<dyn martensite_tkernel::standard::Transient>
+            {
                 $crate::iges_data::iges_protocol_unknown_entity()
             }
             fn is_unknown_entity(
                 &self,
                 ent: &martensite_tkernel::standard::Handle<
-                    martensite_tkernel::standard::StandardTransient,
+                    dyn martensite_tkernel::standard::Transient,
                 >,
             ) -> bool {
                 $crate::iges_data::iges_protocol_is_unknown_entity(ent)
@@ -116,14 +116,11 @@ macro_rules! impl_iges_protocol {
 /// assert_eq!(protocol.type_number(IgesDataUndefinedEntity::static_type()), 1);
 /// ```
 #[derive(Default)]
-pub struct IgesDataProtocol {
-    transient: StandardTransient,
-}
+pub struct IgesDataProtocol {}
 impl_transient!(
     IgesDataProtocol,
     "IgesDataProtocol",
     dyn IgesDataProtocolOps,
-    transient,
     interfaces: [dyn InterfaceProtocol, dyn IgesDataProtocolOps]
 );
 crate::impl_iges_protocol!(IgesDataProtocol);
@@ -141,14 +138,12 @@ impl IgesDataProtocolOps for IgesDataProtocol {}
 /// ```
 #[derive(Default)]
 pub struct IgesDataFileProtocol {
-    transient: StandardTransient,
     theresources: SharedState<Vec<Handle<dyn IgesDataProtocolOps>>>,
 }
 impl_transient!(
     IgesDataFileProtocol,
     "IgesDataFileProtocol",
     dyn IgesDataProtocolOps,
-    transient,
     interfaces: [dyn InterfaceProtocol, dyn IgesDataProtocolOps]
 );
 crate::impl_iges_protocol!(IgesDataFileProtocol);

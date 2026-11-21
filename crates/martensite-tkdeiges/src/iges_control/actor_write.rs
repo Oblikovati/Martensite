@@ -2,7 +2,8 @@
 use crate::brep_to_iges::BRepToIgesBREntity;
 use crate::brep_to_iges_brep::BRepToIgesBRepEntity;
 use crate::geom_to_iges::{GeomToIgesGeomCurve, GeomToIgesGeomSurface};
-use crate::iges_data::{IgesDataIgesEntity, IgesDataIgesModel, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataIgesModel, iges_live};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::ProgressRange;
 use martensite_tkernel::standard::{Failure, Handle};
@@ -33,7 +34,6 @@ impl_transient!(
     IgesControlActorWrite,
     "IgesControlActorWrite",
     TransferActorOfFinderProcess,
-    base,
     interfaces: [dyn TransferActorOps<TransferFinderKind>, dyn TransferActorOfFinderProcessOps]
 );
 
@@ -44,7 +44,7 @@ impl IgesControlActorWrite {
         model: &Handle<IgesDataIgesModel>,
         process: &Handle<TransferFinderProcess>,
         range: &ProgressRange<'_>,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let shape = mapper.value();
         if shape.is_null() {
             return Ok(Handle::default());
@@ -72,7 +72,7 @@ impl IgesControlActorWrite {
     fn geometry_entity(
         mapper: &TransferTransientMapper,
         model: &Handle<IgesDataIgesModel>,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let value = mapper.value();
         let curve = value.cast::<dyn GeomCurve>();
         if let Some(live) = curve.get() {

@@ -11,6 +11,7 @@ use crate::iges_basic::entity_shape::{iges_array2_fill, spline_coefficients};
 use crate::iges_basic::nested_arrays::nested_entity_lists;
 use crate::iges_basic::samples_01::sample_iges_basic_subfigure_def;
 use crate::iges_basic::{IgesBasicHArray1OfHArray1OfIgesEntity, IgesBasicSubfigureDef};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_data::{iges_array1_set, iges_new_array1, iges_new_array2};
 use crate::iges_geom::{
@@ -105,11 +106,11 @@ pub(crate) fn sample_iges_geom_boundary() -> Result<Handle<IgesGeomBoundary>, Fa
     let object = Handle::new(IgesGeomBoundary::new());
     let a_type: i32 = 2;
     let a_preference: i32 = 3;
-    let a_surface: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
-    let all_model_curves: Handle<HArray1<Handle<IgesDataIgesEntity>>> = sample_list([
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
+    let a_surface: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
+    let all_model_curves: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = sample_list([
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
     ])?;
     let all_senses: Handle<HArray1<i32>> = sample_list([3, 4])?;
     let all_parameter_curves: Handle<IgesBasicHArray1OfHArray1OfIgesEntity> =
@@ -128,8 +129,8 @@ pub(crate) fn sample_iges_geom_bounded_surface() -> Result<Handle<IgesGeomBounde
 {
     let object = Handle::new(IgesGeomBoundedSurface::new());
     let a_type: i32 = 2;
-    let a_surface: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_surface: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let a_boundary: Handle<HArray1<Handle<IgesGeomBoundary>>> =
         sample_list([sample_iges_geom_boundary()?, sample_iges_geom_boundary()?])?;
     object.init(a_type, &a_surface, &a_boundary)?;
@@ -147,9 +148,9 @@ pub(crate) fn sample_iges_geom_circular_arc() -> Result<Handle<IgesGeomCircularA
 pub(crate) fn sample_iges_geom_composite_curve() -> Result<Handle<IgesGeomCompositeCurve>, Failure>
 {
     let object = Handle::new(IgesGeomCompositeCurve::new());
-    let all_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>> = sample_list([
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>(),
+    let all_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = sample_list([
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>(),
     ])?;
     object.init(&all_entities)?;
     Ok(object)
@@ -184,12 +185,12 @@ pub(crate) fn sample_iges_geom_curve_on_surface() -> Result<Handle<IgesGeomCurve
 {
     let object = Handle::new(IgesGeomCurveOnSurface::new());
     let a_mode: i32 = 2;
-    let a_surface: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
-    let a_curve_uv: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
-    let a_curve3d: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_surface: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
+    let a_curve_uv: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
+    let a_curve3d: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let a_preference: i32 = 6;
     object.init(a_mode, &a_surface, &a_curve_uv, &a_curve3d, a_preference);
     Ok(object)
@@ -206,8 +207,8 @@ pub(crate) fn sample_iges_geom_flash() -> Result<Handle<IgesGeomFlash>, Failure>
     let a_dim1: f64 = 2.5;
     let a_dim2: f64 = 3.5;
     let a_rotation: f64 = 4.5;
-    let a_reference: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_reference: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     object.init(a_point, a_dim1, a_dim2, a_rotation, &a_reference);
     Ok(object)
 }
@@ -220,11 +221,11 @@ pub(crate) fn sample_iges_geom_line() -> Result<Handle<IgesGeomLine>, Failure> {
 }
 pub(crate) fn sample_iges_geom_offset_curve() -> Result<Handle<IgesGeomOffsetCurve>, Failure> {
     let object = Handle::new(IgesGeomOffsetCurve::new());
-    let a_base_curve: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_base_curve: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let an_offset_type: i32 = 3;
-    let a_function: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_function: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let a_function_coord: i32 = 5;
     let a_tapered_offset_type: i32 = 6;
     let off_distance1: f64 = 6.5;
@@ -254,8 +255,8 @@ pub(crate) fn sample_iges_geom_offset_surface() -> Result<Handle<IgesGeomOffsetS
     let object = Handle::new(IgesGeomOffsetSurface::new());
     let an_indicator: Xyz = Xyz::new(1.5, 2.5, 3.5);
     let a_distance: f64 = 2.5;
-    let a_surface: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_surface: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     object.init(an_indicator, a_distance, &a_surface);
     Ok(object)
 }
@@ -265,7 +266,8 @@ pub(crate) fn sample_iges_geom_plane() -> Result<Handle<IgesGeomPlane>, Failure>
     let b: f64 = 2.5;
     let c: f64 = 3.5;
     let d: f64 = 4.5;
-    let a_curve: Handle<IgesDataIgesEntity> = sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_curve: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let attach: Xyz = Xyz::new(6.5, 7.5, 8.5);
     let a_size: f64 = 7.5;
     object.init(a, b, c, d, &a_curve, attach, a_size);
@@ -280,9 +282,10 @@ pub(crate) fn sample_iges_geom_point() -> Result<Handle<IgesGeomPoint>, Failure>
 }
 pub(crate) fn sample_iges_geom_ruled_surface() -> Result<Handle<IgesGeomRuledSurface>, Failure> {
     let object = Handle::new(IgesGeomRuledSurface::new());
-    let a_curve: Handle<IgesDataIgesEntity> = sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
-    let another_curve: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_curve: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
+    let another_curve: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let a_dir_flag: i32 = 4;
     let a_dev_flag: i32 = 5;
     object.init(&a_curve, &another_curve, a_dir_flag, a_dev_flag);
@@ -338,8 +341,8 @@ pub(crate) fn sample_iges_geom_surface_of_revolution()
 -> Result<Handle<IgesGeomSurfaceOfRevolution>, Failure> {
     let object = Handle::new(IgesGeomSurfaceOfRevolution::new());
     let an_axis: Handle<IgesGeomLine> = sample_iges_geom_line()?;
-    let a_generatrix: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_generatrix: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let a_start_angle: f64 = 3.5;
     let an_end_angle: f64 = 4.5;
     object.init(&an_axis, &a_generatrix, a_start_angle, an_end_angle);
@@ -348,8 +351,8 @@ pub(crate) fn sample_iges_geom_surface_of_revolution()
 pub(crate) fn sample_iges_geom_tabulated_cylinder()
 -> Result<Handle<IgesGeomTabulatedCylinder>, Failure> {
     let object = Handle::new(IgesGeomTabulatedCylinder::new());
-    let a_directrix: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_directrix: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let an_end: Xyz = Xyz::new(2.5, 3.5, 4.5);
     object.init(&a_directrix, an_end);
     Ok(object)
@@ -364,8 +367,8 @@ pub(crate) fn sample_iges_geom_transformation_matrix()
 pub(crate) fn sample_iges_geom_trimmed_surface() -> Result<Handle<IgesGeomTrimmedSurface>, Failure>
 {
     let object = Handle::new(IgesGeomTrimmedSurface::new());
-    let a_surface: Handle<IgesDataIgesEntity> =
-        sample_iges_geom_line()?.cast::<IgesDataIgesEntity>();
+    let a_surface: Handle<dyn IgesDataEntityKind> =
+        sample_iges_geom_line()?.cast::<dyn IgesDataEntityKind>();
     let a_flag: i32 = 3;
     let an_outer: Handle<IgesGeomCurveOnSurface> = sample_iges_geom_curve_on_surface()?;
     let an_inner: Handle<HArray1<Handle<IgesGeomCurveOnSurface>>> = sample_list([

@@ -2,7 +2,8 @@
 use super::{IgesToBRep, IgesToBRepActor, IgesToBRepCurveAndSurface, one_transfer_at_a_time};
 use crate::de_iges::xs_shape_fix_parameters;
 use crate::iges_appli::IgesAppli;
-use crate::iges_data::{IgesDataIgesEntity, IgesDataIgesModel, iges_live, iges_msg};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataIgesModel, iges_live, iges_msg};
 use crate::iges_file::iges_file_read;
 use crate::iges_select::IgesSelectWorkLibrary;
 use crate::iges_solid::IgesSolid;
@@ -233,7 +234,7 @@ impl IgesToBRepReader {
     fn transfer_root(
         &mut self,
         output: &TransferOutput,
-        entity: &Handle<IgesDataIgesEntity>,
+        entity: &Handle<dyn IgesDataEntityKind>,
         range: &ProgressRange<'_>,
     ) -> Result<(), Failure> {
         self.done = true;
@@ -343,7 +344,7 @@ impl IgesToBRepReader {
     /// Heals the geometry of an entity and keeps the result.
     fn keep_healed(
         &mut self,
-        entity: &Handle<IgesDataIgesEntity>,
+        entity: &Handle<dyn IgesDataEntityKind>,
         shape: &Shape,
         (first_item, resolution, max_tolerance): (i32, f64, f64),
         range: &ProgressRange<'_>,

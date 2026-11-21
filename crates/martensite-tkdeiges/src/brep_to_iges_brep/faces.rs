@@ -5,7 +5,8 @@ use crate::geom_to_iges::GeomToIgesGeomSurface;
 use crate::iges_basic::{
     IgesBasicHArray1OfHArray1OfIgesEntity, IgesBasicHArray1OfHArray1OfInteger,
 };
-use crate::iges_data::{IgesDataIgesEntity, iges_array1_set, iges_live, iges_new_array1};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{iges_array1_set, iges_live, iges_new_array1};
 use crate::iges_solid::{IgesSolidFace, IgesSolidLoop, IgesSolidManifoldSolid, IgesSolidShell};
 use martensite_tkbrep::brep::BRepTool;
 use martensite_tkbrep::brep_tools::{self, WireExplorer};
@@ -24,7 +25,7 @@ const WHERE: &str = "BRepToIgesBRepEntity";
 /// What a wire gives to its loop, by edge.
 #[derive(Default)]
 struct LoopItems {
-    curves_2d: Vec<Handle<IgesDataIgesEntity>>,
+    curves_2d: Vec<Handle<dyn IgesDataEntityKind>>,
     types: Vec<i32>,
     indices: Vec<i32>,
     orientations: Vec<i32>,
@@ -56,7 +57,7 @@ impl BRepToIgesBRepEntity {
     ///
     /// # Errors
     /// A failure of the curve of the edge.
-    pub fn transfer_edge(&self, edge: &Edge) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn transfer_edge(&self, edge: &Edge) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let rank = self.index_edge(edge);
         if rank != 0 {
             let known = self.curves[rank as usize - 1].clone();
@@ -77,7 +78,7 @@ impl BRepToIgesBRepEntity {
         edge: &Edge,
         face: &Face,
         length: f64,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         if edge.is_null() {
             return Ok(Handle::default());
         }
@@ -160,7 +161,7 @@ impl BRepToIgesBRepEntity {
         }
         let items = self.loop_items(wire, face, length)?;
         let count = items.curves_2d.len() as i32;
-        let edges: Handle<HArray1<Handle<IgesDataIgesEntity>>> = iges_new_array1(1, count)?;
+        let edges: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> = iges_new_array1(1, count)?;
         let nb_curves: Handle<HArray1<i32>> = iges_new_array1(1, count)?;
         let iso_flags = Handle::new(IgesBasicHArray1OfHArray1OfInteger::with_bounds(1, count)?);
         let curves = Handle::new(IgesBasicHArray1OfHArray1OfIgesEntity::with_bounds(
@@ -168,7 +169,7 @@ impl BRepToIgesBRepEntity {
         )?);
         for rank in 1..=count {
             let at = rank as usize - 1;
-            let list: Handle<IgesDataIgesEntity> = if items.types[at] == 0 {
+            let list: Handle<dyn IgesDataEntityKind> = if items.types[at] == 0 {
                 self.edge_list.cast()
             } else {
                 self.vertex_list.cast()
@@ -196,7 +197,7 @@ impl BRepToIgesBRepEntity {
         &self,
         start: &Face,
         surface: &Handle<dyn GeomSurface>,
-    ) -> Result<(Handle<IgesDataIgesEntity>, f64), Failure> {
+    ) -> Result<(Handle<dyn IgesDataEntityKind>, f64), Failure> {
         let bounds = brep_tools::uv_bounds(start)?;
         let mut tool = GeomToIgesGeomSurface::new();
         tool.set_b_rep_mode(true);

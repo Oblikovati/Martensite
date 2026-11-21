@@ -12,6 +12,7 @@
     clippy::needless_return,
     reason = "the members keep the order and the locals of the record they read"
 )]
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, IgesDataLineFontEntity, IgesDataViewKindEntity};
 use crate::iges_dimen::{
     IgesDimenGeneralNote, IgesDimenLeaderArrow, IgesDimenNewDimensionedGeometry,
@@ -41,11 +42,11 @@ pub(crate) fn sample_iges_dimen_new_dimensioned_geometry()
 -> Result<Handle<IgesDimenNewDimensionedGeometry>, Failure> {
     let object = Handle::new(IgesDimenNewDimensionedGeometry::new());
     let arg_0: i32 = 2;
-    let arg_1: Handle<IgesDataIgesEntity> = sample_iges_graph_color()?.cast();
+    let arg_1: Handle<dyn IgesDataEntityKind> = sample_iges_graph_color()?.cast();
     let arg_2: i32 = 2;
     let arg_3: f64 = 4.5;
-    let arg_4: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_4: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;
@@ -81,8 +82,8 @@ pub(crate) fn sample_iges_dimen_new_general_note()
     let arg_16: Handle<HArray1<f64>> = sample_list::<f64>([17.5, 18.5])?;
     let arg_17: Handle<HArray1<f64>> = sample_list::<f64>([18.5, 19.5])?;
     let arg_18: Handle<HArray1<i32>> = sample_list::<i32>([2, 2])?;
-    let arg_19: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_19: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;
@@ -120,7 +121,7 @@ pub(crate) fn sample_iges_dimen_point_dimension() -> Result<Handle<IgesDimenPoin
     let object = Handle::new(IgesDimenPointDimension::new());
     let arg_0: Handle<IgesDimenGeneralNote> = sample_iges_dimen_general_note()?.cast();
     let arg_1: Handle<IgesDimenLeaderArrow> = sample_iges_dimen_leader_arrow()?.cast();
-    let arg_2: Handle<IgesDataIgesEntity> = sample_iges_graph_color()?.cast();
+    let arg_2: Handle<dyn IgesDataEntityKind> = sample_iges_graph_color()?.cast();
     object.init(&arg_0, &arg_1, &arg_2);
     Ok(object)
 }
@@ -149,13 +150,13 @@ pub(crate) fn sample_iges_dimen_section() -> Result<Handle<IgesDimenSection>, Fa
 pub(crate) fn sample_iges_dimen_sectioned_area() -> Result<Handle<IgesDimenSectionedArea>, Failure>
 {
     let object = Handle::new(IgesDimenSectionedArea::new());
-    let arg_0: Handle<IgesDataIgesEntity> = sample_iges_graph_color()?.cast();
+    let arg_0: Handle<dyn IgesDataEntityKind> = sample_iges_graph_color()?.cast();
     let arg_1: i32 = 2;
     let arg_2: Xyz = Xyz::new(2.25, 1.5, 2.5);
     let arg_3: f64 = 4.5;
     let arg_4: f64 = 5.5;
-    let arg_5: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_5: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;
@@ -175,7 +176,7 @@ pub(crate) fn sample_iges_dimen_witness_line() -> Result<Handle<IgesDimenWitness
 pub(crate) fn sample_iges_draw_circ_array_subfigure()
 -> Result<Handle<IgesDrawCircArraySubfigure>, Failure> {
     let object = Handle::new(IgesDrawCircArraySubfigure::new());
-    let arg_0: Handle<IgesDataIgesEntity> = sample_iges_graph_color()?.cast();
+    let arg_0: Handle<dyn IgesDataEntityKind> = sample_iges_graph_color()?.cast();
     let arg_1: i32 = 2;
     let arg_2: Xyz = Xyz::new(2.25, 1.5, 2.5);
     let arg_3: f64 = 4.5;
@@ -190,7 +191,7 @@ pub(crate) fn sample_iges_draw_circ_array_subfigure()
 pub(crate) fn sample_iges_draw_connect_point() -> Result<Handle<IgesDrawConnectPoint>, Failure> {
     let object = Handle::new(IgesDrawConnectPoint::new());
     let arg_0: Xyz = Xyz::new(0.25, 1.5, 2.5);
-    let arg_1: Handle<IgesDataIgesEntity> = sample_iges_graph_color()?.cast();
+    let arg_1: Handle<dyn IgesDataEntityKind> = sample_iges_graph_color()?.cast();
     let arg_2: i32 = 2;
     let arg_3: i32 = 2;
     let arg_4: Handle<HAsciiString> = Handle::new(HAsciiString::new("sample4"));
@@ -202,7 +203,7 @@ pub(crate) fn sample_iges_draw_connect_point() -> Result<Handle<IgesDrawConnectP
     let arg_8: i32 = 2;
     let arg_9: i32 = 2;
     let arg_10: i32 = 2;
-    let arg_11: Handle<IgesDataIgesEntity> = sample_iges_graph_color()?.cast();
+    let arg_11: Handle<dyn IgesDataEntityKind> = sample_iges_graph_color()?.cast();
     object.init(
         arg_0, &arg_1, arg_2, arg_3, &arg_4, &arg_5, &arg_6, &arg_7, arg_8, arg_9, arg_10, &arg_11,
     );
@@ -217,8 +218,8 @@ pub(crate) fn sample_iges_draw_drawing() -> Result<Handle<IgesDrawDrawing>, Fail
             sample_iges_draw_view()?.cast(),
         ])?;
     let arg_1: Handle<HArray1<Xy>> = sample_list::<Xy>([Xy::new(1.25, 1.5), Xy::new(2.25, 1.5)])?;
-    let arg_2: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_2: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;
@@ -236,8 +237,8 @@ pub(crate) fn sample_iges_draw_drawing_with_rotation()
         ])?;
     let arg_1: Handle<HArray1<Xy>> = sample_list::<Xy>([Xy::new(1.25, 1.5), Xy::new(2.25, 1.5)])?;
     let arg_2: Handle<HArray1<f64>> = sample_list::<f64>([3.5, 4.5])?;
-    let arg_3: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_3: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;
@@ -260,8 +261,8 @@ pub(crate) fn sample_iges_draw_label_display() -> Result<Handle<IgesDrawLabelDis
             sample_iges_dimen_leader_arrow()?.cast(),
         ])?;
     let arg_3: Handle<HArray1<i32>> = sample_list::<i32>([2, 2])?;
-    let arg_4: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_4: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;
@@ -294,8 +295,8 @@ pub(crate) fn sample_iges_draw_network_subfigure_def()
     let object = Handle::new(IgesDrawNetworkSubfigureDef::new());
     let arg_0: i32 = 2;
     let arg_1: Handle<HAsciiString> = Handle::new(HAsciiString::new("sample1"));
-    let arg_2: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_2: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;
@@ -338,8 +339,8 @@ pub(crate) fn sample_iges_draw_planar() -> Result<Handle<IgesDrawPlanar>, Failur
     let arg_0: i32 = 1;
     let arg_1: Handle<IgesGeomTransformationMatrix> =
         sample_iges_geom_transformation_matrix()?.cast();
-    let arg_2: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_2: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;
@@ -350,7 +351,7 @@ pub(crate) fn sample_iges_draw_planar() -> Result<Handle<IgesDrawPlanar>, Failur
 pub(crate) fn sample_iges_draw_rect_array_subfigure()
 -> Result<Handle<IgesDrawRectArraySubfigure>, Failure> {
     let object = Handle::new(IgesDrawRectArraySubfigure::new());
-    let arg_0: Handle<IgesDataIgesEntity> = sample_iges_graph_color()?.cast();
+    let arg_0: Handle<dyn IgesDataEntityKind> = sample_iges_graph_color()?.cast();
     let arg_1: f64 = 2.5;
     let arg_2: Xyz = Xyz::new(2.25, 1.5, 2.5);
     let arg_3: i32 = 2;
@@ -415,8 +416,8 @@ pub(crate) fn sample_iges_draw_views_visible() -> Result<Handle<IgesDrawViewsVis
             sample_iges_draw_view()?.cast(),
             sample_iges_draw_view()?.cast(),
         ])?;
-    let arg_1: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_1: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;
@@ -444,8 +445,8 @@ pub(crate) fn sample_iges_draw_views_visible_with_attr()
         sample_iges_graph_color()?.cast(),
     ])?;
     let arg_5: Handle<HArray1<i32>> = sample_list::<i32>([2, 2])?;
-    let arg_6: Handle<HArray1<Handle<IgesDataIgesEntity>>> =
-        sample_list::<Handle<IgesDataIgesEntity>>([
+    let arg_6: Handle<HArray1<Handle<dyn IgesDataEntityKind>>> =
+        sample_list::<Handle<dyn IgesDataEntityKind>>([
             sample_iges_graph_color()?.cast(),
             sample_iges_graph_color()?.cast(),
         ])?;

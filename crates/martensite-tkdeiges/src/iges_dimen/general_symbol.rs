@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, iges_array1_item};
 use crate::iges_dimen::{IgesDimenGeneralNote, IgesDimenLeaderArrow};
 use crate::{iges_entity, iges_methods};
@@ -26,7 +27,7 @@ iges_entity! {
 /// a symbol, and zero, one or more associated leaders.
 IgesDimenGeneralSymbol, IgesDimenGeneralSymbolState, "IgesDimenGeneralSymbol", parent IgesDataIgesEntity, {
 the_note: Handle<IgesDimenGeneralNote>,
-the_geoms: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_geoms: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 the_leaders: Handle<HArray1<Handle<IgesDimenLeaderArrow>>>,
 }
 }
@@ -46,7 +47,7 @@ impl IgesDimenGeneralSymbol {
     pub fn init(
         &self,
         a_note: &Handle<IgesDimenGeneralNote>,
-        all_geoms: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_geoms: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
         all_leaders: &Handle<HArray1<Handle<IgesDimenLeaderArrow>>>,
     ) -> Result<(), Failure> {
         if (!all_geoms.is_null())
@@ -103,7 +104,7 @@ impl IgesDimenGeneralSymbol {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn geom_entity(&self, index: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn geom_entity(&self, index: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_geoms,
             index,

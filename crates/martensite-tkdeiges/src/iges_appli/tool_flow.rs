@@ -14,10 +14,11 @@
 )]
 use crate::iges_appli::IgesAppliFlow;
 use crate::iges_basic::entity_shape::iges_tool;
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::iges_read_text_item;
 use crate::iges_data::{
-    IgesDataIgesEntity, IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader,
-    iges_array1_set, iges_new_array1,
+    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, iges_array1_set,
+    iges_new_array1,
 };
 use crate::iges_draw::IgesDrawConnectPoint;
 use crate::iges_graph::IgesGraphTextDisplayTemplate;
@@ -74,7 +75,7 @@ impl IgesAppliToolFlow {
             nf = 0;
         }
         if nf > 0 {
-            temp_flow_assocs = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nf)?;
+            temp_flow_assocs = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nf)?;
         } else {
             pr.add_fail("Number of Flow Associativities: Not Positive", "");
         }
@@ -90,7 +91,7 @@ impl IgesAppliToolFlow {
             nj = 0;
         }
         if nj > 0 {
-            temp_joins = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, nj)?;
+            temp_joins = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, nj)?;
         } else {
             pr.add_fail("Number of Joins: Not Positive", "");
         }
@@ -115,7 +116,7 @@ impl IgesAppliToolFlow {
             np = 0;
         }
         if np > 0 {
-            temp_cont_flow_assocs = iges_new_array1::<Handle<IgesDataIgesEntity>>(1, np)?;
+            temp_cont_flow_assocs = iges_new_array1::<Handle<dyn IgesDataEntityKind>>(1, np)?;
         } else {
             pr.add_fail("Number of Continuation Flows Not Positive", "");
         }
@@ -130,7 +131,7 @@ impl IgesAppliToolFlow {
             temp_function_flag = 0;
         }
         for i in 1..=nf {
-            let mut temp_entity: Handle<IgesDataIgesEntity> = Default::default();
+            let mut temp_entity: Handle<dyn IgesDataEntityKind> = Default::default();
             if pr.read_entity(
                 ir,
                 &pr.current(),
@@ -165,7 +166,7 @@ impl IgesAppliToolFlow {
             }
         }
         for i in 1..=nj {
-            let mut temp_entity: Handle<IgesDataIgesEntity> = Default::default();
+            let mut temp_entity: Handle<dyn IgesDataEntityKind> = Default::default();
             if pr.read_entity(ir, &pr.current(), "Join", &mut temp_entity, false)? {
                 iges_array1_set(
                     &temp_joins,
@@ -203,7 +204,7 @@ impl IgesAppliToolFlow {
             }
         }
         for i in 1..=np {
-            let mut temp_entity: Handle<IgesDataIgesEntity> = Default::default();
+            let mut temp_entity: Handle<dyn IgesDataEntityKind> = Default::default();
             if pr.read_entity(
                 ir,
                 &pr.current(),

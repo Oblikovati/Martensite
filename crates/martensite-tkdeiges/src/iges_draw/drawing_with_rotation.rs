@@ -13,6 +13,7 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{IgesDataIgesEntity, IgesDataViewKindEntity, iges_array1_item, iges_live};
 use crate::iges_draw::{IgesDrawPerspectiveView, IgesDrawView};
 use crate::iges_entity;
@@ -30,7 +31,7 @@ IgesDrawDrawingWithRotation, IgesDrawDrawingWithRotationState, "IgesDrawDrawingW
 the_views: Handle<HArray1<Handle<dyn IgesDataViewKindEntity>>>,
 the_view_origins: Handle<HArray1<Xy>>,
 the_orientation_angles: Handle<HArray1<f64>>,
-the_annotations: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_annotations: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 }
 }
 
@@ -51,7 +52,7 @@ impl IgesDrawDrawingWithRotation {
         all_views: &Handle<HArray1<Handle<dyn IgesDataViewKindEntity>>>,
         all_view_origins: &Handle<HArray1<Xy>>,
         all_orientation_angles: &Handle<HArray1<f64>>,
-        all_annotations: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_annotations: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         let mut len: i32 = iges_array1_length(all_views, "IgesDrawDrawingWithRotation::init")?;
         if ((iges_array1_lower(all_views, "IgesDrawDrawingWithRotation::init")? != 1)
@@ -153,7 +154,7 @@ impl IgesDrawDrawingWithRotation {
     ///
     /// # Errors
     /// A failure when a list or a referred entity is not set up, or a rank is out of range.
-    pub fn annotation(&self, index: i32) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn annotation(&self, index: i32) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_annotations,
             index,

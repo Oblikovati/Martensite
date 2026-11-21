@@ -1,5 +1,7 @@
 //! The sorting of entities by the view or the drawing they are attached to.
-use crate::iges_data::{IgesDataIgesEntity, IgesDataIgesModel, IgesDataViewKindEntity};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataIgesModel, IgesDataViewKindEntity};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
     ncollection::{HSequence, IndexedMap},
@@ -15,9 +17,9 @@ const TYPE_FOR_DRAWING: i32 = 404;
 #[derive(Default)]
 struct SorterFields {
     themodel: Handle<IgesDataIgesModel>,
-    themap: IndexedMap<Handle<StandardTransient>>,
-    theitems: IndexedMap<Handle<StandardTransient>>,
-    thefinals: IndexedMap<Handle<StandardTransient>>,
+    themap: IndexedMap<Handle<dyn Transient>>,
+    theitems: IndexedMap<Handle<dyn Transient>>,
+    thefinals: IndexedMap<Handle<dyn Transient>>,
     theinditem: Vec<i32>,
     theindfin: Vec<i32>,
 }
@@ -35,14 +37,12 @@ struct SorterFields {
 /// ```
 #[derive(Default)]
 pub struct IgesSelectViewSorter {
-    transient: StandardTransient,
     state: SharedState<SorterFields>,
 }
 impl_transient!(
     IgesSelectViewSorter,
     "IgesSelectViewSorter",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 
 impl IgesSelectViewSorter {
@@ -59,12 +59,12 @@ impl IgesSelectViewSorter {
         };
     }
     /// Adds an entity, a list or a model, as `ent` is one; false when it is none or nothing changed.
-    pub fn add(&self, ent: &Handle<StandardTransient>) -> bool {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+    pub fn add(&self, ent: &Handle<dyn Transient>) -> bool {
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         if entity.is_some() {
             return self.add_entity(&entity);
         }
-        let list = ent.cast::<HSequence<Handle<StandardTransient>>>();
+        let list = ent.cast::<HSequence<Handle<dyn Transient>>>();
         if list.is_some() {
             self.add_list(&list);
             return true;
@@ -77,14 +77,14 @@ impl IgesSelectViewSorter {
         false
     }
     /// Adds an entity under its view, itself for a view or a drawing; false when it is there.
-    pub fn add_entity(&self, igesent: &Handle<IgesDataIgesEntity>) -> bool {
+    pub fn add_entity(&self, igesent: &Handle<dyn IgesDataEntityKind>) -> bool {
         let Some(live) = igesent.get() else {
             return false;
         };
-        let key: Handle<StandardTransient> = igesent.cast();
+        let key: Handle<dyn Transient> = igesent.cast();
         let is_own_set = live.type_number() == TYPE_FOR_DRAWING
             || igesent.is_kind(<dyn IgesDataViewKindEntity>::static_type());
-        let view: Handle<StandardTransient> = if is_own_set {
+        let view: Handle<dyn Transient> = if is_own_set {
             key.clone()
         } else {
             live.view().cast()
@@ -107,8 +107,8 @@ impl IgesSelectViewSorter {
         true
     }
     /// Adds the entities of a list.
-    pub fn add_list(&self, list: &Handle<HSequence<Handle<StandardTransient>>>) {
-        let items: Vec<Handle<StandardTransient>> = list.get().map_or_else(Vec::new, |live| {
+    pub fn add_list(&self, list: &Handle<HSequence<Handle<dyn Transient>>>) {
+        let items: Vec<Handle<dyn Transient>> = list.get().map_or_else(Vec::new, |live| {
             live.sequence(|items| items.iter().cloned().collect())
         });
         for item in &items {
@@ -145,7 +145,7 @@ impl IgesSelectViewSorter {
             if *numitem > 0
                 && let Ok(item) = theitems.find_key(*numitem as usize)
             {
-                let entity = item.cast::<IgesDataIgesEntity>();
+                let entity = item.cast::<dyn IgesDataEntityKind>();
                 let is_frame = alsoframes
                     && entity
                         .get()
@@ -210,7 +210,7 @@ impl IgesSelectViewSorter {
         &self,
         num: i32,
         final_sets: bool,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let state = self.state.read();
         let sets = if final_sets {
             &state.thefinals
@@ -245,8 +245,8 @@ impl IgesSelectViewSorter {
 }
 
 fn final_index(
-    finals: &mut IndexedMap<Handle<StandardTransient>>,
-    item: &Handle<StandardTransient>,
+    finals: &mut IndexedMap<Handle<dyn Transient>>,
+    item: &Handle<dyn Transient>,
 ) -> i32 {
     match finals.find_index(item) {
         0 => finals.add(item.clone()) as i32,
@@ -256,10 +256,10 @@ fn final_index(
 
 /// The drawing of an item: itself, or the last one sharing it, null when none.
 fn drawing_of(
-    item: &Handle<StandardTransient>,
+    item: &Handle<dyn Transient>,
     g: &InterfaceGraph,
-) -> Result<Handle<StandardTransient>, Failure> {
-    let entity = item.cast::<IgesDataIgesEntity>();
+) -> Result<Handle<dyn Transient>, Failure> {
+    let entity = item.cast::<dyn IgesDataEntityKind>();
     let Some(live) = entity.get() else {
         return Ok(Handle::default());
     };
@@ -272,7 +272,7 @@ fn drawing_of(
     while list.more() {
         let sharing = list.value()?;
         let is_drawing = sharing
-            .cast::<IgesDataIgesEntity>()
+            .cast::<dyn IgesDataEntityKind>()
             .get()
             .is_some_and(|draw| draw.type_number() == TYPE_FOR_DRAWING);
         if is_drawing {

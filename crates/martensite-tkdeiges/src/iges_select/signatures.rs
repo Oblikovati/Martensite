@@ -1,9 +1,11 @@
 //! The signatures of entities: their label, type, status and level. The one of the color is with
 //! the color entity, in `sign_color`.
-use crate::iges_data::{IgesDataIgesEntity, IgesDataLevelListEntity, IgesDataUndefinedEntity};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataLevelListEntity, IgesDataUndefinedEntity};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, RuntimeTyped, SharedState, StandardTransient},
+    standard::{Failure, Handle, RuntimeTyped, SharedState},
     tcollection::AsciiString,
 };
 use martensite_tkxsbase::{
@@ -17,7 +19,7 @@ macro_rules! iges_signature {
     ($(#[$meta:meta])* $class:ident, $recorded:literal, { $($field:ident: $ty:ty),* $(,)? }) => {
         $(#[$meta])*
         pub struct $class {
-            transient: StandardTransient,
+
             base: IFSelectSignatureBase,
             $($field: $ty,)*
         }
@@ -25,7 +27,6 @@ macro_rules! iges_signature {
             $class,
             $recorded,
             dyn IFSelectSignature,
-            transient,
             interfaces: [dyn MoniToolSignText, dyn InterfaceSignType, dyn IFSelectSignature]
         );
         impl MoniToolSignText for $class {
@@ -34,8 +35,8 @@ macro_rules! iges_signature {
             }
             fn text(
                 &self,
-                ent: &Handle<StandardTransient>,
-                context: &Handle<StandardTransient>,
+                ent: &Handle<dyn Transient>,
+                context: &Handle<dyn Transient>,
             ) -> AsciiString {
                 interface_sign_type_text(self, ent, context)
             }
@@ -67,7 +68,6 @@ impl IgesSelectIGESName {
     /// The signature.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new("IGES Name (Short Label)"),
         }
     }
@@ -76,10 +76,10 @@ impl IgesSelectIGESName {
 impl InterfaceSignType for IgesSelectIGESName {
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return "?".to_owned();
         };
@@ -131,7 +131,6 @@ impl IgesSelectClassType {
     /// The signature.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new("Class Type"),
         }
     }
@@ -140,7 +139,7 @@ impl IgesSelectClassType {
 impl InterfaceSignType for IgesSelectClassType {
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
         ent.dynamic_type().map_or_else(String::new, |kind| {
@@ -176,7 +175,6 @@ impl IgesSelectIGESTypeForm {
     /// the construction stays only until then.
     pub fn new(withform: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new(Self::name_of(withform)),
             theform: SharedState::new(withform),
         }
@@ -198,10 +196,10 @@ impl IgesSelectIGESTypeForm {
 impl InterfaceSignType for IgesSelectIGESTypeForm {
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return "?".to_owned();
         };
@@ -242,7 +240,6 @@ impl IgesSelectSignLevelNumber {
     /// The signature; `countmode` gives a value fit to count.
     pub fn new(countmode: bool) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new("Level Number"),
             thecountmode: countmode,
         }
@@ -262,7 +259,7 @@ impl IgesSelectSignLevelNumber {
 impl InterfaceSignType for IgesSelectSignLevelNumber {
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
         let none = if self.thecountmode {
@@ -270,7 +267,7 @@ impl InterfaceSignType for IgesSelectSignLevelNumber {
         } else {
             "/0/"
         };
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return none.to_owned();
         };
@@ -322,7 +319,6 @@ impl IgesSelectSignStatus {
     /// The signature.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: IFSelectSignatureBase::new("D.E. Status"),
         }
     }
@@ -331,10 +327,10 @@ impl IgesSelectSignStatus {
 impl InterfaceSignType for IgesSelectSignStatus {
     fn value(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> String {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         entity.get().map_or_else(String::new, |live| {
             format!(
                 "{},{},{},{}",
@@ -367,12 +363,12 @@ impl IFSelectSignature for IgesSelectSignStatus {
     /// else one.
     fn matches(
         &self,
-        ent: &Handle<StandardTransient>,
+        ent: &Handle<dyn Transient>,
         _model: &Handle<dyn InterfaceInterfaceModel>,
         text: &AsciiString,
         exact: bool,
     ) -> Result<bool, Failure> {
-        let entity = ent.cast::<IgesDataIgesEntity>();
+        let entity = ent.cast::<dyn IgesDataEntityKind>();
         let Some(live) = entity.get() else {
             return Ok(false);
         };

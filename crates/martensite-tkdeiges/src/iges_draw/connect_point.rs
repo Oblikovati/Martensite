@@ -12,6 +12,7 @@
     clippy::needless_return,
     reason = "the members keep the order and the locals of the record they read"
 )]
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::IgesDataIgesEntity;
 use crate::iges_graph::IgesGraphTextDisplayTemplate;
 use crate::{iges_entity, iges_methods};
@@ -28,7 +29,7 @@ iges_entity! {
 /// Associative Instance, or it may stand alone.
 IgesDrawConnectPoint, IgesDrawConnectPointState, "IgesDrawConnectPoint", parent IgesDataIgesEntity, {
 the_point: Xyz,
-the_display_symbol: Handle<IgesDataIgesEntity>,
+the_display_symbol: Handle<dyn IgesDataEntityKind>,
 the_type_flag: i32,
 the_function_flag: i32,
 the_function_identifier: Handle<HAsciiString>,
@@ -38,13 +39,13 @@ the_function_template: Handle<IgesGraphTextDisplayTemplate>,
 the_point_identifier: i32,
 the_function_code: i32,
 the_swap_flag: bool,
-the_owner_subfigure: Handle<IgesDataIgesEntity>,
+the_owner_subfigure: Handle<dyn IgesDataEntityKind>,
 }
 }
 
 impl IgesDrawConnectPoint {
     iges_methods! {
-    get display_symbol = the_display_symbol: Handle<IgesDataIgesEntity>;
+    get display_symbol = the_display_symbol: Handle<dyn IgesDataEntityKind>;
     get type_flag = the_type_flag: i32;
     get function_flag = the_function_flag: i32;
     get function_identifier = the_function_identifier: Handle<HAsciiString>;
@@ -54,7 +55,7 @@ impl IgesDrawConnectPoint {
     get point_identifier = the_point_identifier: i32;
     get function_code = the_function_code: i32;
     get swap_flag = the_swap_flag: bool;
-    get owner_subfigure = the_owner_subfigure: Handle<IgesDataIgesEntity>;
+    get owner_subfigure = the_owner_subfigure: Handle<dyn IgesDataEntityKind>;
     }
     /// This method is used to set the fields of the class
     /// ConnectPoint
@@ -73,7 +74,7 @@ impl IgesDrawConnectPoint {
     pub fn init(
         &self,
         a_point: Xyz,
-        a_display_symbol: &Handle<IgesDataIgesEntity>,
+        a_display_symbol: &Handle<dyn IgesDataEntityKind>,
         a_type_flag: i32,
         a_function_flag: i32,
         a_function_identifier: &Handle<HAsciiString>,
@@ -83,7 +84,7 @@ impl IgesDrawConnectPoint {
         a_point_identifier: i32,
         a_function_code: i32,
         a_swap_flag: i32,
-        an_owner_subfigure: &Handle<IgesDataIgesEntity>,
+        an_owner_subfigure: &Handle<dyn IgesDataEntityKind>,
     ) {
         {
             let mut state = self.state.write();

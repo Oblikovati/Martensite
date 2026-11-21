@@ -1,10 +1,12 @@
 //! `IgesToBRepActor`: the actor of a transfer of IGES entities to shapes.
 use super::{IgesToBRep, IgesToBRepCurveAndSurface};
-use crate::iges_data::{IgesDataIgesEntity, IgesDataIgesModel, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataIgesModel, iges_live};
 use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tkshhealing::shape_extend::ShapeExtendExplorer;
 use martensite_tkshhealing::shape_fix::ShapeFixShapeTolerance;
@@ -46,7 +48,6 @@ impl_transient!(
     IgesToBRepActor,
     "IgesToBRepActor",
     TransferActorOfTransientProcess,
-    base,
     interfaces: [dyn TransferActorOps<TransferTransientKind>, dyn TransferActorOfTransientProcessOps]
 );
 
@@ -64,7 +65,7 @@ impl Default for IgesToBRepActor {
 }
 
 /// Whether an entity is one a transfer can give a shape for.
-fn has_geometry(entity: &Handle<IgesDataIgesEntity>) -> bool {
+fn has_geometry(entity: &Handle<dyn IgesDataEntityKind>) -> bool {
     let Some(live) = entity.get() else {
         return false;
     };
@@ -150,7 +151,7 @@ impl IgesToBRepActor {
     }
     fn transferred_shape(
         &self,
-        entity: &Handle<IgesDataIgesEntity>,
+        entity: &Handle<dyn IgesDataEntityKind>,
         model: &Handle<IgesDataIgesModel>,
         process: &Handle<TransferTransientProcess>,
         range: &ProgressRange,
@@ -195,12 +196,12 @@ impl TransferActorOps<TransferTransientKind> for IgesToBRepActor {
     fn actor(&self) -> &TransferActor<TransferTransientKind> {
         self.base.actor()
     }
-    fn recognize(&self, start: &Handle<StandardTransient>) -> bool {
+    fn recognize(&self, start: &Handle<dyn Transient>) -> bool {
         has_geometry(&start.cast())
     }
     fn transferring(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         tp: &Handle<dyn TransferProcessOps<TransferTransientKind>>,
         progress: &ProgressRange<'_>,
     ) -> Result<Handle<dyn TransferBinder>, Failure> {
@@ -215,12 +216,12 @@ impl TransferActorOfTransientProcessOps for IgesToBRepActor {
     /// The binder of the shape of an entity, null without a shape.
     fn transfer(
         &self,
-        start: &Handle<StandardTransient>,
+        start: &Handle<dyn Transient>,
         process: &Handle<TransferTransientProcess>,
         range: &ProgressRange<'_>,
     ) -> Result<Handle<dyn TransferBinder>, Failure> {
         let model = self.state.read().model.cast::<IgesDataIgesModel>();
-        let entity: Handle<IgesDataIgesEntity> = start.cast();
+        let entity: Handle<dyn IgesDataEntityKind> = start.cast();
         let (Some(live_model), true) = (model.get(), entity.is_some()) else {
             return Ok(Handle::default());
         };

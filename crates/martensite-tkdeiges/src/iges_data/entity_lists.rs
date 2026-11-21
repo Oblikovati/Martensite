@@ -4,8 +4,10 @@ use super::{
     IgesDataEntityKind, IgesDataIgesEntity, IgesDataNameEntity, IgesDataSingleParentEntity,
     iges_entity_of,
 };
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::TransientHandleTarget;
 use martensite_tkernel::{
-    standard::{Failure, Handle, RuntimeType, RuntimeTyped, StandardTransient},
+    standard::{Failure, Handle, RuntimeType, RuntimeTyped},
     tcollection::HAsciiString,
 };
 use martensite_tkmath::gp::{GeneralTransform3, Xyz};
@@ -22,7 +24,7 @@ impl IgesDataIgesEntity {
     ///
     /// # Errors
     /// An interface failure unless exactly one is there.
-    pub fn unique_parent(&self) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    pub fn unique_parent(&self) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let count = self.nb_typed_properties(<dyn IgesDataSingleParentEntity>::static_type());
         if count != 1 {
             return Err(interface_error(&format!(
@@ -127,16 +129,16 @@ impl IgesDataIgesEntity {
     pub fn typed_associativity(
         &self,
         atype: &RuntimeType,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let found = self.state.read().the_assocs.typed_entity(atype, 0)?;
         Ok(iges_entity_of(&found))
     }
     /// Adds an associativity. Reserved to the reading and copying of entities.
-    pub(super) fn add_associativity(&self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    pub(super) fn add_associativity(&self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         self.state.write().the_assocs.append(ent)
     }
     /// Removes an associativity.
-    fn remove_associativity(&self, ent: &Handle<StandardTransient>) -> Result<(), Failure> {
+    fn remove_associativity(&self, ent: &Handle<dyn Transient>) -> Result<(), Failure> {
         self.state.write().the_assocs.remove(ent)
     }
     /// Sets the associativities as read, and marks them as present.
@@ -153,9 +155,9 @@ impl IgesDataIgesEntity {
     ///
     /// # Errors
     /// A null object failure when `this` is null.
-    pub fn associate<T: ?Sized + RuntimeTyped + IgesDataEntityKind>(
+    pub fn associate<T: ?Sized + RuntimeTyped + TransientHandleTarget + IgesDataEntityKind>(
         this: &Handle<T>,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<(), Failure> {
         let Some(target) = ent.get() else {
             return Ok(());
@@ -166,9 +168,9 @@ impl IgesDataIgesEntity {
     ///
     /// # Errors
     /// A failure when `this` is null or not there.
-    pub fn dissociate<T: ?Sized + RuntimeTyped + IgesDataEntityKind>(
+    pub fn dissociate<T: ?Sized + RuntimeTyped + TransientHandleTarget + IgesDataEntityKind>(
         this: &Handle<T>,
-        ent: &Handle<IgesDataIgesEntity>,
+        ent: &Handle<dyn IgesDataEntityKind>,
     ) -> Result<(), Failure> {
         let Some(target) = ent.get() else {
             return Ok(());
@@ -202,7 +204,7 @@ impl IgesDataIgesEntity {
         &self,
         atype: &RuntimeType,
         anum: i32,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         let found = self.state.read().the_props.typed_entity(atype, anum)?;
         Ok(iges_entity_of(&found))
     }
@@ -210,7 +212,7 @@ impl IgesDataIgesEntity {
     ///
     /// # Errors
     /// A null object failure for a null entity.
-    pub fn add_property<T: ?Sized + RuntimeTyped + IgesDataEntityKind>(
+    pub fn add_property<T: ?Sized + RuntimeTyped + TransientHandleTarget + IgesDataEntityKind>(
         &self,
         ent: &Handle<T>,
     ) -> Result<(), Failure> {
@@ -220,7 +222,9 @@ impl IgesDataIgesEntity {
     ///
     /// # Errors
     /// A failure for a null entity, or one that is not there.
-    pub fn remove_property<T: ?Sized + RuntimeTyped + IgesDataEntityKind>(
+    pub fn remove_property<
+        T: ?Sized + RuntimeTyped + TransientHandleTarget + IgesDataEntityKind,
+    >(
         &self,
         ent: &Handle<T>,
     ) -> Result<(), Failure> {

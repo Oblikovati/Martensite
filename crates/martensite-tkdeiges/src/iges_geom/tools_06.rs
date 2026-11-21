@@ -9,15 +9,17 @@
 )]
 use super::{IgesGeomCopiousData, IgesGeomCurveOnSurface, IgesGeomToolCopiousData};
 use crate::iges_basic::entity_shape::{iges_send_read_status, iges_tool};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesEntity,
-    IgesDataIgesReaderData, IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
+    IgesDataDefType, IgesDataDirChecker, IgesDataIgesDumper, IgesDataIgesReaderData,
+    IgesDataIgesWriter, IgesDataParamReader, IgesDataStatus,
 };
 use crate::iges_data::{
     IgesDataDumpResult, iges_array1_set, iges_live, iges_msg, iges_new_array1, iges_real_text,
 };
 use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::Transient;
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{GeneralTransform3, Xyz};
 use martensite_tkxsbase::interface::{
     InterfaceCheck, InterfaceCopyTool, InterfaceEntityIterator, InterfaceShareTool,
@@ -404,9 +406,9 @@ impl IgesGeomToolCurveOnSurface {
         let ent_live = iges_live(ent, "IgesGeomToolCurveOnSurface::read_own_params")?;
         let mut a_mode: i32 = 0;
         let mut a_preference: i32 = 0;
-        let mut a_surface: Handle<IgesDataIgesEntity> = Handle::default();
-        let mut a_curve_uv: Handle<IgesDataIgesEntity> = Handle::default();
-        let mut a_curve3d: Handle<IgesDataIgesEntity> = Handle::default();
+        let mut a_surface: Handle<dyn IgesDataEntityKind> = Handle::default();
+        let mut a_curve_uv: Handle<dyn IgesDataEntityKind> = Handle::default();
+        let mut a_curve3d: Handle<dyn IgesDataEntityKind> = Handle::default();
         let mut a_status: IgesDataStatus = IgesDataStatus::default();
         if !pr.read_integer(&pr.current(), &mut a_mode)? {
             let msg276 = iges_msg("XSTEP_276");
@@ -461,9 +463,9 @@ impl IgesGeomToolCurveOnSurface {
         iter: &mut InterfaceEntityIterator,
     ) -> Result<(), Failure> {
         let ent_live = iges_live(ent, "IgesGeomToolCurveOnSurface::own_shared")?;
-        iter.get_one_item(&ent_live.surface().cast::<StandardTransient>());
-        iter.get_one_item(&ent_live.curve_uv().cast::<StandardTransient>());
-        iter.get_one_item(&ent_live.curve3d().cast::<StandardTransient>());
+        iter.get_one_item(&ent_live.surface().cast::<dyn Transient>());
+        iter.get_one_item(&ent_live.curve_uv().cast::<dyn Transient>());
+        iter.get_one_item(&ent_live.curve3d().cast::<dyn Transient>());
         Ok(())
     }
     /// The checker of the directory part of this kind of entity.

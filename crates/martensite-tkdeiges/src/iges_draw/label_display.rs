@@ -13,9 +13,9 @@
     reason = "the members keep the order and the locals of the record they read"
 )]
 use crate::iges_basic::entity_shape::{iges_array1_length, iges_array1_lower};
+use crate::iges_data::IgesDataEntityKind;
 use crate::iges_data::{
-    IgesDataIgesEntity, IgesDataLabelDisplayEntity, IgesDataViewKindEntity, iges_array1_item,
-    iges_live,
+    IgesDataLabelDisplayEntity, IgesDataViewKindEntity, iges_array1_item, iges_live,
 };
 use crate::iges_dimen::IgesDimenLeaderArrow;
 use crate::iges_draw::{IgesDrawPerspectiveView, IgesDrawView};
@@ -34,7 +34,7 @@ the_views: Handle<HArray1<Handle<dyn IgesDataViewKindEntity>>>,
 the_text_locations: Handle<HArray1<Xyz>>,
 the_leader_entities: Handle<HArray1<Handle<IgesDimenLeaderArrow>>>,
 the_label_levels: Handle<HArray1<i32>>,
-the_displayed_entities: Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+the_displayed_entities: Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
 }
 }
 
@@ -60,7 +60,7 @@ impl IgesDrawLabelDisplay {
         all_text_locations: &Handle<HArray1<Xyz>>,
         all_leader_entities: &Handle<HArray1<Handle<IgesDimenLeaderArrow>>>,
         all_label_levels: &Handle<HArray1<i32>>,
-        all_displayed_entities: &Handle<HArray1<Handle<IgesDataIgesEntity>>>,
+        all_displayed_entities: &Handle<HArray1<Handle<dyn IgesDataEntityKind>>>,
     ) -> Result<(), Failure> {
         let mut ln: i32 = iges_array1_length(all_views, "IgesDrawLabelDisplay::init")?;
         if ((((iges_array1_lower(all_views, "IgesDrawLabelDisplay::init")? != 1)
@@ -160,7 +160,7 @@ impl IgesDrawLabelDisplay {
     pub fn displayed_entity(
         &self,
         entity_index: i32,
-    ) -> Result<Handle<IgesDataIgesEntity>, Failure> {
+    ) -> Result<Handle<dyn IgesDataEntityKind>, Failure> {
         iges_array1_item(
             &self.state.read().the_displayed_entities,
             entity_index,

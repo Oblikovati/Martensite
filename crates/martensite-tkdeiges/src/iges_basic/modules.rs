@@ -13,7 +13,8 @@ use super::{
 };
 use crate::iges_data::{iges_data_init, iges_data_protocol};
 use crate::iges_package_tables;
-use martensite_tkernel::standard::{Handle, StandardTransient};
+use martensite_tkernel::standard::Handle;
+use martensite_tkernel::standard::Transient;
 use martensite_tkxsbase::interface::InterfaceCategory;
 
 /// The case of a type and form, 0 when not recognised.
@@ -41,7 +42,7 @@ fn iges_basic_case_iges(typenum: i32, formnum: i32) -> i32 {
 }
 
 /// The category of a case.
-fn iges_basic_category(cn: i32, _ent: &Handle<StandardTransient>) -> i32 {
+fn iges_basic_category(cn: i32, _ent: &Handle<dyn Transient>) -> i32 {
     if cn == 10 || cn == 11 {
         return InterfaceCategory::number("Auxiliary");
     }

@@ -5,9 +5,10 @@ use super::edit_header_fields::{
 use crate::iges_data::{
     IgesDataBasicEditor, IgesDataIgesModel, IgesDataTextLines, iges_atoi, iges_live,
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::{
     impl_transient,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
     tcollection::{AsciiString, HAsciiString},
 };
 use martensite_tkxsbase::{
@@ -202,14 +203,12 @@ fn complete_definition(num: i32, value: &InterfaceTypedValue) -> Result<(), Fail
 /// assert_eq!(editor.get().unwrap().label().as_bytes(), b"IGES Header");
 /// ```
 pub struct IgesSelectEditHeader {
-    transient: StandardTransient,
     base: IFSelectEditorBase,
 }
 impl_transient!(
     IgesSelectEditHeader,
     "IgesSelectEditHeader",
     dyn IFSelectEditor,
-    transient,
     interfaces: [dyn IFSelectEditor]
 );
 
@@ -220,7 +219,6 @@ impl IgesSelectEditHeader {
     /// A failure of a definition.
     pub fn new() -> Result<Handle<Self>, Failure> {
         let editor = Handle::new(Self {
-            transient: StandardTransient::default(),
             base: IFSelectEditorBase::new(30),
         });
         let live = iges_live(&editor, "IGES edit header")?;
@@ -257,7 +255,7 @@ impl IFSelectEditor for IgesSelectEditHeader {
     fn load(
         &self,
         form: &Handle<IFSelectEditForm>,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let modl = model.cast::<IgesDataIgesModel>();
@@ -321,7 +319,7 @@ impl IFSelectEditor for IgesSelectEditHeader {
     fn apply(
         &self,
         form: &Handle<IFSelectEditForm>,
-        _ent: &Handle<StandardTransient>,
+        _ent: &Handle<dyn Transient>,
         model: &Handle<dyn InterfaceInterfaceModel>,
     ) -> Result<bool, Failure> {
         let modl = model.cast::<IgesDataIgesModel>();

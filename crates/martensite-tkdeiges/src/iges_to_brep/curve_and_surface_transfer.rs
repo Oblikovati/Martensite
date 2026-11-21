@@ -4,7 +4,8 @@ use super::{
     IgesToBRepTopoSurface,
 };
 use crate::iges_basic::{IgesBasicGroup, IgesBasicSingularSubfigure, IgesBasicSubfigureDef};
-use crate::iges_data::{IgesDataIgesEntity, IgesDataToolLocation, iges_live};
+use crate::iges_data::IgesDataEntityKind;
+use crate::iges_data::{IgesDataToolLocation, iges_live};
 use martensite_tkbrep::brep::BRepBuilder;
 use martensite_tkbrep::topods::{Compound, Shape};
 use martensite_tkernel::message::{Msg, ProgressRange, ProgressScope};
@@ -23,7 +24,7 @@ impl IgesToBRepCurveAndSurface {
     /// A failure of the entity or of the construction of the shape.
     pub fn transfer_curve_and_surface(
         &self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         range: &ProgressRange,
     ) -> Result<Shape, Failure> {
         if start.is_null() {
@@ -45,7 +46,7 @@ impl IgesToBRepCurveAndSurface {
     /// The shape of an item, or the result it has; a failed transfer is the fail of the catalog.
     fn item_shape(
         &mut self,
-        item: &Handle<IgesDataIgesEntity>,
+        item: &Handle<dyn IgesDataEntityKind>,
         range: &ProgressRange,
     ) -> Result<Shape, Failure> {
         if self.has_shape_result(item)? {
@@ -63,7 +64,7 @@ impl IgesToBRepCurveAndSurface {
         start: &Handle<IgesBasicSingularSubfigure>,
         range: &ProgressRange,
     ) -> Result<(Shape, Transform3), Failure> {
-        let definition: Handle<IgesDataIgesEntity> = live.subfigure().cast();
+        let definition: Handle<dyn IgesDataEntityKind> = live.subfigure().cast();
         let translation = live.translation() * self.get_unit_factor();
         let mut placement = Transform3::default();
         placement.set_translation(Vector3::from(translation));
@@ -93,7 +94,7 @@ impl IgesToBRepCurveAndSurface {
     /// The compound of the entities of a subfigure definition; a null shape without an entity.
     fn subfigure_definition_shape(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         live: &IgesBasicSubfigureDef,
         range: &ProgressRange,
         only_visible: bool,
@@ -134,7 +135,7 @@ impl IgesToBRepCurveAndSurface {
     /// shape give one warning at the end.
     fn group_shape(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         live: &IgesBasicGroup,
         range: &ProgressRange,
         only_visible: bool,
@@ -185,7 +186,7 @@ impl IgesToBRepCurveAndSurface {
     /// A failure of the entity or of the construction of the shape.
     pub fn transfer_geometry(
         &mut self,
-        start: &Handle<IgesDataIgesEntity>,
+        start: &Handle<dyn IgesDataEntityKind>,
         range: &ProgressRange,
     ) -> Result<Shape, Failure> {
         let Some(entity) = start.get() else {
