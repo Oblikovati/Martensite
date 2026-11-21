@@ -4,7 +4,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::Message;
 use martensite_tkernel::ncollection::DataMap;
 use martensite_tkernel::quantity::{Color, ColorSpace};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkrwmesh::rw_mesh::{RwMeshMaterialMap, RwMeshMaterialMapBase, add_material_to};
 use martensite_tkservice::image::{ImageTextureHashPolicy, ImageTextureSource};
@@ -16,13 +16,12 @@ use std::io::{BufWriter, Write};
 /// Writes materials to an MTL file, created when the first one arrives;
 /// `RwObjObjMaterialMap::new(&AsciiString::new("model.mtl"))`.
 pub struct RwObjObjMaterialMap {
-    transient: StandardTransient,
     base: RwMeshMaterialMapBase,
     file: Option<BufWriter<File>>,
     image_map: DataMap<Handle<dyn ImageTextureSource>, AsciiString, ImageTextureHashPolicy>,
 }
 
-impl_transient!(RwObjObjMaterialMap, "RwObjObjMaterialMap", dyn RwMeshMaterialMap, transient, interfaces: [dyn RwMeshMaterialMap]);
+impl_transient!(RwObjObjMaterialMap, "RwObjObjMaterialMap", dyn RwMeshMaterialMap, interfaces: [dyn RwMeshMaterialMap]);
 
 /// The values of a material statement.
 struct MaterialValues {
@@ -104,7 +103,6 @@ impl RwObjObjMaterialMap {
     /// A map writing the named file; `RwObjObjMaterialMap::new(&file)`.
     pub fn new(file: &AsciiString) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: RwMeshMaterialMapBase::new(file),
             file: None,
             image_map: DataMap::default(),

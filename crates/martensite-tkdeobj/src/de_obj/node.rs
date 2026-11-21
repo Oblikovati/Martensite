@@ -1,10 +1,6 @@
 use super::{RwObjInternalSection, serialization};
 use martensite_tkde::de::{DeConfigurationContext, DeConfigurationNodeBase};
-use martensite_tkernel::{
-    ncollection::List,
-    standard::{SharedState, StandardTransient},
-    tcollection::AsciiString,
-};
+use martensite_tkernel::{ncollection::List, standard::SharedState, tcollection::AsciiString};
 use martensite_tkrwmesh::rw_mesh::RwMeshCoordinateSystem;
 
 /// The settings scope of this format and vendor.
@@ -16,7 +12,6 @@ const SCOPE: &str = "provider.OBJ.Martensite";
 /// building a provider: a standalone settings value has no owning self.
 #[derive(Default)]
 pub struct DeObjConfigurationNode {
-    pub(super) transient: StandardTransient,
     pub(super) base: DeConfigurationNodeBase,
     /// Mutable OBJ transfer parameters.
     pub internal_parameters: SharedState<RwObjInternalSection>,
@@ -29,7 +24,6 @@ impl DeObjConfigurationNode {
     /// Copies settings into independent state; `DeObjConfigurationNode::copied_from(&node)`.
     pub fn copied_from(source: &Self) -> Self {
         Self {
-            transient: StandardTransient::default(),
             base: source.base.copied_state(),
             internal_parameters: SharedState::new(source.internal_parameters.snapshot()),
         }
