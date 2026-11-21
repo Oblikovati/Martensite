@@ -1,5 +1,4 @@
 //! Reviewed target-specific compiler counts complement the lexical ratchet.
-use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
@@ -27,7 +26,7 @@ pub(super) fn verify(
     compare(&baseline, triple, compiler, actual)
 }
 
-pub(super) fn baseline_path(root: &Path, triple: &str) -> BuildResult<PathBuf> {
+fn baseline_path(root: &Path, triple: &str) -> BuildResult<PathBuf> {
     if triple.is_empty()
         || !triple
             .bytes()
@@ -48,16 +47,6 @@ fn compare(
     compiler: &str,
     actual: &[SummaryEntry],
 ) -> BuildResult<()> {
-    compare_compiler(baseline, triple, compiler)?;
-    if baseline.summary != actual {
-        return Err(BuildError::LintFailed(format!(
-            "compiler inventory changed for {triple}; review target/unsafe-inventory/latest.json and update the baseline only for approved changes"
-        )));
-    }
-    Ok(())
-}
-
-fn compare_compiler(baseline: &Baseline, triple: &str, compiler: &str) -> BuildResult<()> {
     let compiler = compiler.lines().next().unwrap_or_default();
     if baseline.target != triple || baseline.compiler != compiler {
         return Err(BuildError::LintFailed(format!(
@@ -65,30 +54,10 @@ fn compare_compiler(baseline: &Baseline, triple: &str, compiler: &str) -> BuildR
             baseline.target, baseline.compiler
         )));
     }
-    Ok(())
-}
-
-pub(super) fn verify_migration_ceiling(
-    baseline: &str,
-    triple: &str,
-    compiler: &str,
-    actual: &[SummaryEntry],
-) -> BuildResult<()> {
-    let baseline: Baseline = serde_json::from_str(baseline)
-        .map_err(|error| super::output_error(format!("migration base inventory: {error}")))?;
-    compare_compiler(&baseline, triple, compiler)?;
-    let approved = baseline
-        .summary
-        .iter()
-        .map(|entry| (&entry.location, entry.emitted_primary_spans))
-        .collect::<BTreeMap<_, _>>();
-    for entry in actual {
-        let ceiling = approved.get(&entry.location).copied().unwrap_or(0);
-        if entry.emitted_primary_spans > ceiling {
-            return Err(BuildError::LintFailed(format!(
-                "migration compiler inventory {entry:?} exceeds the base's reviewed ceiling {ceiling}; inspect target/unsafe-inventory/migration/"
-            )));
-        }
+    if baseline.summary != actual {
+        return Err(BuildError::LintFailed(format!(
+            "compiler inventory changed for {triple}; review target/unsafe-inventory/latest.json and update the baseline only for approved changes"
+        )));
     }
     Ok(())
 }
@@ -137,25 +106,6 @@ mod tests {
         assert!(compare(&baseline, "target", "rustc pinned", &[]).is_err());
         assert!(compare(&baseline, "other-target", "rustc pinned", &[entry(2)]).is_err());
         assert!(compare(&baseline, "target", "rustc other", &[entry(2)]).is_err());
-    }
-
-    #[test]
-    fn migration_ceiling_allows_less_coverage_but_rejects_new_warnings() {
-        let serialized = serde_json::json!({
-            "target": "target",
-            "compiler": "rustc pinned",
-            "summary": [entry(2)]
-        })
-        .to_string();
-        assert!(
-            verify_migration_ceiling(&serialized, "target", "rustc pinned", &[entry(1)]).is_ok()
-        );
-        assert!(
-            verify_migration_ceiling(&serialized, "target", "rustc pinned", &[entry(3)]).is_err()
-        );
-        assert!(verify_migration_ceiling(&serialized, "target", "rustc other", &[]).is_err());
-        let empty = r#"{"target":"target","compiler":"rustc pinned","summary":[]}"#;
-        assert!(verify_migration_ceiling(empty, "target", "rustc pinned", &[entry(1)]).is_err());
     }
 
     #[test]

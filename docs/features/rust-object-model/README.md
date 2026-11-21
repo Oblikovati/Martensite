@@ -12,8 +12,9 @@ feature replaces that with Rust's own model: plain structs in `Arc<T>`, traits i
 `Arc<dyn Trait>`, compile-time upcasts and `Any` downcasts.
 
 It starts in `martensite-tkernel` and then moves through every toolkit in dependency order.
-It is a breaking change for every toolkit, so it lands on a long-lived branch and ships in a
-minor release.
+The migration stays on `feature/rust-object-model` until every toolkit builds
+and passes. Submit one integration PR to `release/next` for the complete
+migration. A release and its version require separate maintainer approval.
 
 ## Why
 
@@ -137,7 +138,7 @@ dependency level, from `cargo metadata`:
 
 `martensite-build` (the xtask driver) has no object model. The release candidate
 added `tksketch` after this migration was planned. Its normal dependencies
-include `tkbo`, and `tkv3d` uses it in tests.
+include `tkbo` and `geometry-raster`. `tkv3d` uses it in tests.
 
 ## Procedure per crate
 
@@ -151,60 +152,13 @@ include `tkbo`, and `tkv3d` uses it in tests.
    dependencies for unit tests as well as integration tests. At the later
    dependency's step, run any newly eligible suite. Run `occt-parity` after the
    `tkernel` step and after any step that touches `tkernel`.
-4. Commit in small steps; open one PR per crate into `feature/rust-object-model`.
+4. Commit each crate locally and integrate it into `feature/rust-object-model`
+   in dependency order.
 5. Report the measured effect to the maintainer: the parity table for `tkernel` steps, and
    for geometry toolkits a release timing of a representative workload when one exists.
 
-### Temporary gate on the feature branch
-
-Bootstrap the feature branch with the workflow, driver, migration order and
-`migration-step` at zero before opening the first crate PR. In each crate PR,
-advance that file by one. Use the event base commit to run the gate locally on Linux.
-
-```sh
-cargo xtask object-model-pr --base <feature-base-sha> --plan
-cargo xtask object-model-pr --base <feature-base-sha>
-```
-
-The hosted job builds the driver from that base and checks the candidate merge
-commit. It refuses changes outside the next crate and its migration records,
-including changes to the driver, workflow and compiler baselines. Review the
-exact base and merge commit and verify the gate files in the PR diff before
-merging. The branch uses the standard pull request event with read-only
-permissions.
-
-For `process-policy`, `test-support`, or `topology-test-support`, a PR can record
-the audit in `<crate-short-name>-verification.md` if the crate needs no source
-changes. Its suite runs at the same point in the migration order.
-
-For a crate with an unmigrated dev dependency, the job runs Clippy and builds
-the library. Once the last required dev dependency migrates, it builds all
-targets and runs that crate's deferred suite. This also makes the crate's
-ThreadSanitizer controls eligible.
-
-| Deferred full suites | First eligible after |
-| --- | --- |
-| `tkhlr`, `tkshhealing` | `tkprim` |
-| `tkbo` | `geometry-raster` |
-| `tkbool` | `boolean-cases` |
-| `tkcaf`, `tkfeat`, `vulkan` | `tkfillet` |
-| `tkdeiges`, `tkdestep` | `tkdestl` |
-
-The gate checks toolkit source counts against the event base per file and
-unsafe construct. Update the candidate's source baseline when counts fall. The
-gate requires that baseline to match the candidate tree. Run
-`cargo test -p martensite-build unsafe_inventory_matches_reviewed_baseline`
-to see the actual counts when they differ from the record. Scoped compiler
-diagnostics go in `target/unsafe-inventory/migration/`. Their group counts must
-stay within the event base's reviewed compiler inventory. A scoped capture can
-emit fewer warnings because the compiler checks fewer targets.
-
-Once the cursor reaches the end, branch from the completed feature tip and
-remove the temporary gate and cursor on that integration branch. Open the
-integration PR to `release/next` with all feature commits as ancestors. The
-ordinary PR gate will run the workspace compiler inventory, affected package
-suites, and sanitizer controls. Record any compiler inventory removals in
-the reviewed full baseline before merging.
+Run crate-scoped checks during the migration. Before opening the integration PR,
+run the full workspace gate against `release/next` with `cargo xtask pr`.
 
 ## Risks and open points
 
