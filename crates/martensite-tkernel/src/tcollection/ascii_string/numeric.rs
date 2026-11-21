@@ -2,16 +2,17 @@
 use super::AsciiString;
 use super::raise::no_number;
 use crate::standard::{Failure, character, strtod};
+mod real;
 
 impl AsciiString {
     /// Decimal `%d`; `AsciiString::from_integer(-12).as_bytes() == b"-12"`.
     pub fn from_integer(value: i32) -> Self {
-        Self::new(&value.to_string())
+        Self::from_raw(itoa::Buffer::new().format(value).as_bytes())
     }
     /// C's default `%g` (six significant digits, `inf`,
     /// `-nan`, `-0`); `AsciiString::from_real(3.3).as_bytes() == b"3.3"`.
     pub fn from_real(value: f64) -> Self {
-        Self::new(&format_general(value))
+        real::format_general(value)
     }
     /// `strtol` base 10 of the C string, the `long` result truncated to
     /// `int`; `Standard_NumericError` without digits; `AsciiString::new("42x").integer_value()? == 42`.
@@ -95,37 +96,5 @@ fn clamp_long(magnitude: u64, negative: bool) -> i64 {
         (-(magnitude.min(1_u64 << 63) as i128)) as i64
     } else {
         magnitude.min(i64::MAX as u64) as i64
-    }
-}
-
-/// C's `%g` with the default precision 6 in the C locale.
-fn format_general(value: f64) -> String {
-    if !value.is_finite() {
-        return format_non_finite(value);
-    }
-    let scientific = format!("{value:.5e}");
-    let (mantissa, exponent) = scientific.split_once('e').unwrap_or((&scientific, "0"));
-    let exponent: i32 = exponent.parse().unwrap_or(0);
-    // %g picks %e when the exponent is below -4 or at least the precision.
-    if !(-4..6).contains(&exponent) {
-        return format!("{}e{exponent:+03}", trim_fraction(mantissa));
-    }
-    let decimals = (5 - exponent).max(0) as usize;
-    trim_fraction(&format!("{value:.decimals$}")).into()
-}
-
-/// glibc's `inf`/`nan` spellings, signed by the sign bit.
-fn format_non_finite(value: f64) -> String {
-    let sign = if value.is_sign_negative() { "-" } else { "" };
-    let name = if value.is_nan() { "nan" } else { "inf" };
-    format!("{sign}{name}")
-}
-
-/// `%g` drops trailing fraction zeros and a bare decimal point.
-fn trim_fraction(digits: &str) -> &str {
-    if digits.contains('.') {
-        digits.trim_end_matches('0').trim_end_matches('.')
-    } else {
-        digits
     }
 }

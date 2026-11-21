@@ -8,7 +8,7 @@ use crate::tcollection::ascii_string::{c_string_prefix, negative_width};
 impl HAsciiString {
     /// Example: `object.assign_cat("tail")`.
     pub fn assign_cat(&self, other: impl AsRef<[u8]>) {
-        self.edit().assign_cat(c_string_prefix(other.as_ref()));
+        self.edit().assign_cat_c_bytes(Some(other.as_ref()));
     }
     /// Example: `object.assign_cat_string(&other)`.
     pub fn assign_cat_string(&self, other: &HAsciiString) {

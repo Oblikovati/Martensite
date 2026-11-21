@@ -11,10 +11,7 @@ impl AsciiString {
         if needle.is_empty() {
             return -1;
         }
-        self.as_bytes()
-            .windows(needle.len())
-            .position(|part| part == needle)
-            .map_or(-1, |index| index as i32 + 1)
+        memchr::memmem::find(self.as_bytes(), needle).map_or(-1, |index| index as i32 + 1)
     }
     /// Searches only through the first NUL; `text.search_c_string(Some(b"part\0ignored"))`.
     pub fn search_c_string(&self, what: Option<&[u8]>) -> i32 {
@@ -31,10 +28,7 @@ impl AsciiString {
         if needle.is_empty() {
             return -1;
         }
-        self.as_bytes()
-            .windows(needle.len())
-            .rposition(|part| part == needle)
-            .map_or(-1, |index| index as i32 + 1)
+        memchr::memmem::rfind(self.as_bytes(), needle).map_or(-1, |index| index as i32 + 1)
     }
     /// Searches the NUL-terminated prefix; `text.search_from_end_c_string(Some(b"part\0ignored"))`.
     pub fn search_from_end_c_string(&self, what: Option<&[u8]>) -> i32 {

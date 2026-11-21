@@ -109,9 +109,9 @@ greppable.
 
 The accepted API changes of #583 still apply and are best done in the same pass: public items
 that no other toolkit calls become crate-private (#591, list in
-[consumed-public-api.tsv](../tkernel-occt-parity/consumed-public-api.tsv)), `AsciiString`
-loses its buffer identity (#588), and the raw `Sequence`/`List` node functions are decided
-with measurements (#586).
+[consumed-public-api.tsv](../tkernel-occt-parity/consumed-public-api.tsv)),
+[`AsciiString` loses its buffer identity](ASCII-STRING-MIGRATION.md) (#588),
+and measurements guide the raw `Sequence` and `List` node changes (#586).
 
 ## Migration order
 

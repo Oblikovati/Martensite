@@ -1,5 +1,5 @@
 //! Constructors, ownership transfer and the shared empty string.
-use super::{AsciiString, c_string_length};
+use super::{AsciiBytes, AsciiString, c_string_length};
 use std::sync::OnceLock;
 
 impl AsciiString {
@@ -18,12 +18,11 @@ impl AsciiString {
         if length == 0 {
             return Self::default();
         }
-        let mut terminated = Vec::with_capacity(super::storage::padded_byte_capacity(length));
+        let mut terminated =
+            AsciiBytes::with_capacity(super::storage::padded_byte_capacity(length));
         terminated.resize(length, byte);
         terminated.push(0);
-        Self {
-            terminated: super::allocation::OwnedAsciiBuffer::from_vector(terminated),
-        }
+        Self { terminated }
     }
     /// Copies at most `maximum` bytes, stopping at the first NUL or the span end
     /// (a bounded C string); `AsciiString::with_max_length("hello", 3)`.

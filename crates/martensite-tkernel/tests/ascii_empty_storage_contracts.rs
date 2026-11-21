@@ -30,11 +30,13 @@ fn clear_copy_and_move_source_reset_to_shared_storage() {
     text.copy("owned");
     text.copy("");
     assert_eq!(empty_buffer_address(&text), expected);
-    text.copy("owned");
-    let previous = text.as_bytes_with_nul().as_ptr();
-    let moved = AsciiString::move_from(&mut text);
-    assert_eq!(moved.as_bytes_with_nul().as_ptr(), previous);
-    assert_eq!(empty_buffer_address(&text), expected);
+    for bytes in [b"owned".as_slice(), b"a heap-allocated string"] {
+        text.copy(bytes);
+        let moved = AsciiString::move_from(&mut text);
+        assert_eq!(moved.as_bytes(), bytes);
+        assert_eq!(moved.as_bytes_with_nul().last(), Some(&0));
+        assert_eq!(empty_buffer_address(&text), expected);
+    }
 }
 
 #[test]
