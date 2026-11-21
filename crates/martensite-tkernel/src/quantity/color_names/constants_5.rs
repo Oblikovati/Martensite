@@ -1,22 +1,12 @@
 // Named-color table data: entry order is the `NamedColor` index, so keep entries in place.
 
 impl NamedColor {
-    /// Named color WHEAT3; `NamedColor::WHEAT3.name()` identifies its canonical entry.
-    pub const WHEAT3: Self = Self(500);
-    /// Named color WHEAT4; `NamedColor::WHEAT4.name()` identifies its canonical entry.
-    pub const WHEAT4: Self = Self(501);
-    /// Named color WHITESMOKE; `NamedColor::WHITESMOKE.name()` identifies its canonical entry.
-    pub const WHITESMOKE: Self = Self(502);
     /// Named color YELLOW; `NamedColor::YELLOW.name()` identifies its canonical entry.
     pub const YELLOW: Self = Self(503);
     /// Named color YELLOW2; `NamedColor::YELLOW2.name()` identifies its canonical entry.
     pub const YELLOW2: Self = Self(504);
     /// Named color YELLOW3; `NamedColor::YELLOW3.name()` identifies its canonical entry.
     pub const YELLOW3: Self = Self(505);
-    /// Named color YELLOW4; `NamedColor::YELLOW4.name()` identifies its canonical entry.
-    pub const YELLOW4: Self = Self(506);
-    /// Named color YELLOWGREEN; `NamedColor::YELLOWGREEN.name()` identifies its canonical entry.
-    pub const YELLOWGREEN: Self = Self(507);
     /// Named color WHITE; `NamedColor::WHITE.name()` identifies its canonical entry.
     pub const WHITE: Self = Self(508);
     /// Alias BLUE1 of BLUE; `NamedColor::BLUE1 == NamedColor::BLUE`.
