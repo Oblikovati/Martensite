@@ -62,7 +62,7 @@ fn project_compound_wireframe(
         writeln!(trace.rows.lock().unwrap(), "wf-failed {count}").unwrap();
         trace.fail.store(false, Ordering::Relaxed);
         alias
-            .with_shape(|shape| StdPrsWfShape::add(prs, shape, drawer))
+            .with_shape(|shape| StdPrsWfShape::add_reference(prs, shape, drawer))
             .unwrap();
     }
 }

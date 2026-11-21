@@ -1,18 +1,18 @@
 //! Actual compound subclass reads authoritative old Value fields from its native destructor callback.
 use super::AisColoredDrawerCompounds;
 use martensite_tkbrep::topods::{TCompound, TShape, TShapeBase};
-use martensite_tkernel::standard::{Failure, Handle, HandleObserver};
+use martensite_tkernel::standard::{Failure, Handle, WeakHandle};
 use std::{
     fmt::Write,
     sync::{Arc, Mutex, Weak},
 };
 pub(super) struct ColoredCompoundValueDropFake {
-    parent: TCompound,
+    topology: TCompound,
     owner: Weak<AisColoredDrawerCompounds>,
-    incoming: HandleObserver<dyn TShape>,
+    incoming: WeakHandle<dyn TShape>,
     rows: Arc<Mutex<String>>,
 }
-martensite_tkernel::impl_transient!(ColoredCompoundValueDropFake,"CompoundValueDestructorProbe",TCompound,parent,interfaces:[dyn TShape]);
+martensite_tkernel::impl_transient!(ColoredCompoundValueDropFake,"CompoundValueDestructorProbe",TCompound,interfaces:[dyn TShape]);
 impl ColoredCompoundValueDropFake {
     pub(super) fn new(
         owner: &Arc<AisColoredDrawerCompounds>,
@@ -20,21 +20,19 @@ impl ColoredCompoundValueDropFake {
         rows: &Arc<Mutex<String>>,
     ) -> Handle<Self> {
         Handle::new(Self {
-            parent: TCompound::new(),
+            topology: TCompound::new(),
             owner: Arc::downgrade(owner),
-            incoming: incoming.observe(),
+            incoming: incoming.downgrade(),
             rows: Arc::clone(rows),
         })
     }
 }
 impl TShape for ColoredCompoundValueDropFake {
     fn tshape_base(&self) -> &TShapeBase {
-        let parent = &self.parent;
-        parent.tshape_base()
+        self.topology.tshape_base()
     }
     fn empty_copy(&self) -> Result<Handle<dyn TShape>, Failure> {
-        let parent = &self.parent;
-        parent.empty_copy()
+        self.topology.empty_copy()
     }
 }
 impl Drop for ColoredCompoundValueDropFake {
