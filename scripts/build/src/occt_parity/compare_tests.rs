@@ -1,5 +1,5 @@
 //! Parsing, medians and verdicts of the OCCT parity comparison.
-use super::*;
+use super::{CaseLine, SideRuns, Standing, compare, parse_lines, render_table, standing, verdict};
 
 fn runs(origin: &str, rounds: &[&str]) -> SideRuns {
     let mut runs = SideRuns::default();

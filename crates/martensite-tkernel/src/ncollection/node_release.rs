@@ -2,7 +2,7 @@
 use super::BaseAllocator;
 use crate::standard::memory::raw_heap::{heap_allocate, heap_free};
 use allocator_api2::alloc::Allocator;
-use std::{alloc::Layout, ptr::NonNull};
+use std::{alloc::Layout, mem::ManuallyDrop, ptr::NonNull};
 struct NodeAllocationRelease<F: FnOnce()> {
     release: Option<F>,
 }
@@ -41,7 +41,8 @@ pub(super) fn allocate_common_node<T>(construct: impl FnOnce() -> T) -> *mut T {
     let value = construct();
     // SAFETY: the allocation has the exact size and alignment and is not yet initialized.
     unsafe { allocation.cast::<T>().write(value) };
-    std::mem::forget(release);
+    // Transfer the allocation from the unwind guard to the initialized node.
+    let _ = ManuallyDrop::new(release);
     allocation.cast().as_ptr()
 }
 
@@ -55,4 +56,18 @@ pub(super) unsafe fn release_owned_node<T>(pointer: *mut T, allocation: Option<&
     let pointer = unsafe { NonNull::new_unchecked(pointer) };
     // SAFETY: its allocation header is still live when the destructor completes or unwinds.
     unsafe { release_node_payload(pointer.as_ptr(), || heap_free(pointer.cast())) };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::allocate_common_node;
+
+    #[test]
+    fn common_node_constructor_unwind_releases_heap_reservation() {
+        // Miri checks that the allocation is reclaimed even though no node is returned.
+        let result = std::panic::catch_unwind(|| {
+            allocate_common_node::<u64>(|| panic!("node construction failed"))
+        });
+        assert!(result.is_err());
+    }
 }

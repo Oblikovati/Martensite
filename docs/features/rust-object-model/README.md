@@ -1,6 +1,6 @@
 # Rust-native object model
 
-Status: downstream toolkit migration in progress. Decided by the maintainer on 2026-11-21.
+The maintainer approved the migration on 2026-11-21.
 Tracking issue: #592.
 
 Martensite's object model copies C++: classes inherit by embedding their parent struct
@@ -11,10 +11,9 @@ or a search in a table of interface casters), and every copy updates two counts.
 feature replaces that with Rust's own model: plain structs in `Arc<T>`, traits in
 `Arc<dyn Trait>`, compile-time upcasts and `Any` downcasts.
 
-It starts in `martensite-tkernel` and then moves through every toolkit in dependency order.
-The migration stays on `feature/rust-object-model` until every toolkit builds
-and passes. Submit one integration PR to `release/next` for the complete
-migration. A release and its version require separate maintainer approval.
+The migration started in `martensite-tkernel` and moved through the toolkits in
+dependency order. Pull request #593 integrates the complete migration into
+`release/next`. A release and its version require separate maintainer approval.
 
 ## Why
 

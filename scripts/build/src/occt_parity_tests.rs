@@ -1,7 +1,11 @@
 //! The OCCT parity pipeline with recorded commands and a temporary workspace.
-use super::*;
+use super::{
+    ParityRequest, ParityToolkit, bench_executable, case_command, compile_command, cpp_sources,
+    run_occt_parity,
+};
 use crate::context::tests::context_at;
 use crate::fake_runner::RecordingRunner;
+use std::path::{Path, PathBuf};
 
 const CARGO_BENCH: &str = "cargo bench --locked --no-run --package martensite-tkernel \
                            --bench occt_parity --message-format=json";
