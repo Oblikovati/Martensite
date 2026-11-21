@@ -1,6 +1,7 @@
 # Rust-native object model
 
-Status: planned. Decided by the maintainer on 2026-11-21. Tracking issue: #592.
+Status: foundation migration in progress. Decided by the maintainer on 2026-11-21.
+Tracking issue: #592.
 
 Martensite's object model copies C++: classes inherit by embedding their parent struct
 (`parent: StandardTransient`), abstract classes are traits, and `Handle<T>` stores a
@@ -127,14 +128,16 @@ dependency level, from `cargo metadata`:
 7. `tkgeomalgo`, `tkde`
 8. `tktopalgo`
 9. `tkhlr`, `tkshhealing`, `tkprim`, `tkhelix`
-10. `tkmesh`, `tkbo`, `topology-test-support`, `tkxsbase`
+10. `tkmesh`, `tkbo`, `topology-test-support`, `tkxsbase`, `tksketch`
 11. `geometry-raster`, `tkbool`, `tkcaf`, `tkv3d`, `tkxmesh`
 12. `boolean-cases`, `tkvcaf`, `tkfeat`, `tkfillet`, `tkmeshvs`
 13. `tkxcaf`, `tkoffset`
 14. `tkdeiges`, `tkrwmesh`, `tkdestep`, `tkdestl`
 15. `tkdeobj`, `tkdeply`
 
-`martensite-build` (the xtask driver) has no object model.
+`martensite-build` (the xtask driver) has no object model. The release candidate
+added `tksketch` after this migration was planned. Its normal dependencies
+include `tkbo`, and `tkv3d` uses it in tests.
 
 ## Procedure per crate
 
@@ -143,8 +146,11 @@ dependency level, from `cargo metadata`:
 2. Keep observable behavior: output, traversal order (`tests/map_traversal_order.rs`), error
    types and messages. When a ported behavior looks like a bug, check the OCCT source before
    changing it (maintainer instruction).
-3. Build, run Clippy and test the crate and every migrated crate it reaches; run the
-   `occt-parity` harness after the `tkernel` step and after any step that touches `tkernel`.
+3. Build and run Clippy on the crate. Run affected migrated test suites once
+   their workspace dev-dependencies have also migrated. Cargo resolves those
+   dependencies for unit tests as well as integration tests. At the later
+   dependency's step, run any newly eligible suite. Run `occt-parity` after the
+   `tkernel` step and after any step that touches `tkernel`.
 4. Commit in small steps; open one PR per crate into `feature/rust-object-model`.
 5. Report the measured effect to the maintainer: the parity table for `tkernel` steps, and
    for geometry toolkits a release timing of a representative workload when one exists.
