@@ -71,8 +71,7 @@ fn planar(face: &Face) -> Result<bool, Failure> {
     if surf.is_null() {
         return Ok(false);
     }
-    let trimmed = surf.cast::<GeomRectangularTrimmedSurface>();
-    if let Some(t) = trimmed.get() {
+    if let Some(t) = surf.downcast_ref::<GeomRectangularTrimmedSurface>() {
         surf = t.basis_surface();
     }
     Ok(GeomAdaptorSurface::with_surface(&surf)?.get_type()? == SurfaceType::Plane)
