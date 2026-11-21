@@ -1,6 +1,6 @@
 //! Buckets, buckets of persistent objects and their iterator.
-use martensite_tkernel::standard::{Handle, Persistent, StandardPersistent};
-use martensite_tkernel::storage::{Bucket, BucketIterator, BucketOfPersistent};
+use super::{Bucket, BucketIterator, BucketOfPersistent};
+use crate::standard::{Handle, Persistent, StandardPersistent};
 
 fn objects(count: usize) -> Vec<Handle<dyn Persistent>> {
     (0..count)

@@ -1,10 +1,8 @@
 //! Data sets, roots, root data, type data and internal data.
-use martensite_tkernel::ncollection::HArray1;
-use martensite_tkernel::standard::{Handle, Persistent, StandardPersistent};
-use martensite_tkernel::storage::{
-    Data, InternalData, Root, RootData, StorageError, TypeData, version,
-};
-use martensite_tkernel::tcollection::{AsciiString, ExtendedString};
+use crate::ncollection::HArray1;
+use crate::standard::{Handle, Persistent, StandardPersistent};
+use crate::storage::{Data, InternalData, Root, RootData, StorageError, TypeData, version};
+use crate::tcollection::{AsciiString, ExtendedString};
 
 fn name(text: &str) -> AsciiString {
     AsciiString::new(text)

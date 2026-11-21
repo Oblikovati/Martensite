@@ -14,8 +14,9 @@ use std::sync::{Mutex, MutexGuard, PoisonError};
 /// use martensite_tkernel::storage::Data;
 /// use martensite_tkernel::tcollection::AsciiString;
 /// let data = Data::default();
-/// data.add_root(&Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>());
-/// assert!(data.is_root(&AsciiString::new("1")));
+/// let object = Handle::new(StandardPersistent::default()).into_upcast::<dyn Persistent>();
+/// data.add_named_root(&AsciiString::new("1"), &object);
+/// assert_eq!(data.number_of_roots(), 1);
 /// ```
 pub struct Data {
     header: Handle<HeaderData>,
@@ -61,7 +62,7 @@ impl Data {
 
     /// Clears this, the header, root and type statuses.
     /// Example: `data.clear_error_status()`.
-    pub fn clear_error_status(&self) {
+    pub(super) fn clear_error_status(&self) {
         self.status().clear();
         self.header().clear_error_status();
         self.root_section().clear_error_status();
@@ -86,7 +87,7 @@ impl Data {
     }
 
     /// `RootData`; `data.root_data()`.
-    pub fn root_data(&self) -> Handle<RootData> {
+    pub(crate) fn root_data(&self) -> Handle<RootData> {
         self.roots.clone()
     }
 
@@ -96,7 +97,7 @@ impl Data {
     }
 
     /// `InternalData`; `data.internal_data()`.
-    pub fn internal_data(&self) -> Handle<InternalData> {
+    pub(crate) fn internal_data(&self) -> Handle<InternalData> {
         self.internal.clone()
     }
 
@@ -111,7 +112,8 @@ impl Data {
 
 impl Data {
     /// Named by the next root number; `data.add_root(&object)`.
-    pub fn add_root(&self, object: &Handle<dyn Persistent>) {
+    #[cfg(test)]
+    pub(crate) fn add_root(&self, object: &Handle<dyn Persistent>) {
         let name = AsciiString::from_integer(self.root_section().number_of_roots() + 1);
         self.add_named_root(&name, object);
     }
@@ -123,17 +125,19 @@ impl Data {
     }
 
     /// Nothing happens for an unknown name; `data.remove_root(&name)`.
-    pub fn remove_root(&self, name: &AsciiString) {
+    #[cfg(test)]
+    pub(crate) fn remove_root(&self, name: &AsciiString) {
         self.root_section().remove_root(name);
     }
 
     /// Example: `data.roots()`.
-    pub fn roots(&self) -> Handle<HSequence<Handle<Root>>> {
+    pub(super) fn roots(&self) -> Handle<HSequence<Handle<Root>>> {
         self.root_section().roots()
     }
 
     /// The named root or a null handle; `data.find(&name)`.
-    pub fn find(&self, name: &AsciiString) -> Handle<Root> {
+    #[cfg(test)]
+    pub(crate) fn find(&self, name: &AsciiString) -> Handle<Root> {
         self.root_section().find(name)
     }
 
@@ -143,7 +147,8 @@ impl Data {
     }
 
     /// Example: `data.is_root(&name)`.
-    pub fn is_root(&self, name: &AsciiString) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_root(&self, name: &AsciiString) -> bool {
         self.root_section().is_root(name)
     }
 
@@ -153,64 +158,68 @@ impl Data {
     }
 
     /// Example: `data.is_type(&name)`.
-    pub fn is_type(&self, name: &AsciiString) -> bool {
+    #[cfg(test)]
+    pub(crate) fn is_type(&self, name: &AsciiString) -> bool {
         self.type_section().is_type(name)
     }
 
     /// Example: `data.types()`.
-    pub fn types(&self) -> Handle<HSequence<AsciiString>> {
+    pub(super) fn types(&self) -> Handle<HSequence<AsciiString>> {
         self.type_section().types()
     }
 }
 
 impl Data {
     /// Example: `data.creation_date()`.
-    pub fn creation_date(&self) -> AsciiString {
+    pub(super) fn creation_date(&self) -> AsciiString {
         self.header().creation_date()
     }
 
     /// Example: `data.storage_version()`.
-    pub fn storage_version(&self) -> AsciiString {
+    pub(super) fn storage_version(&self) -> AsciiString {
         self.header().storage_version()
     }
 
     /// Example: `data.schema_version()`.
-    pub fn schema_version(&self) -> AsciiString {
+    pub(super) fn schema_version(&self) -> AsciiString {
         self.header().schema_version()
     }
 
     /// Example: `data.schema_name()`.
-    pub fn schema_name(&self) -> AsciiString {
+    pub(super) fn schema_name(&self) -> AsciiString {
         self.header().schema_name()
     }
 
     /// Example: `data.set_application_version(&version)`.
-    pub fn set_application_version(&self, version: &AsciiString) {
+    #[cfg(test)]
+    pub(crate) fn set_application_version(&self, version: &AsciiString) {
         self.header().set_application_version(version);
     }
 
     /// Example: `data.application_version()`.
-    pub fn application_version(&self) -> AsciiString {
+    pub(super) fn application_version(&self) -> AsciiString {
         self.header().application_version()
     }
 
     /// Example: `data.set_application_name(&name)`.
-    pub fn set_application_name(&self, name: &ExtendedString) {
+    #[cfg(test)]
+    pub(crate) fn set_application_name(&self, name: &ExtendedString) {
         self.header().set_application_name(name);
     }
 
     /// Example: `data.application_name()`.
-    pub fn application_name(&self) -> ExtendedString {
+    pub(super) fn application_name(&self) -> ExtendedString {
         self.header().application_name()
     }
 
     /// Example: `data.set_data_type(&data_type)`.
-    pub fn set_data_type(&self, data_type: &ExtendedString) {
+    #[cfg(test)]
+    pub(crate) fn set_data_type(&self, data_type: &ExtendedString) {
         self.header().set_data_type(data_type);
     }
 
     /// Example: `data.data_type()`.
-    pub fn data_type(&self) -> ExtendedString {
+    pub(super) fn data_type(&self) -> ExtendedString {
         self.header().data_type()
     }
 
@@ -225,12 +234,13 @@ impl Data {
     }
 
     /// Example: `data.add_to_comments(&comment)`.
-    pub fn add_to_comments(&self, comment: &ExtendedString) {
+    #[cfg(test)]
+    pub(crate) fn add_to_comments(&self, comment: &ExtendedString) {
         self.header().add_to_comments(comment);
     }
 
     /// Example: `data.comments()`.
-    pub fn comments(&self) -> Sequence<ExtendedString> {
+    pub(super) fn comments(&self) -> Sequence<ExtendedString> {
         self.header().comments()
     }
 

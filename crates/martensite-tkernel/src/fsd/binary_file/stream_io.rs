@@ -1,12 +1,22 @@
 //! Binary file reads and writes through an [`IoStream`] instead of the driver's `FILE*`.
 //! The writers return the byte size and, with `only_count`, write nothing.
+#[cfg(test)]
+use super::input_info;
+#[cfg(test)]
 use super::strings::bytes_from_units;
-use super::{BinaryFile, FileHeader, input_fields, input_info, input_source::OwnedReadSource};
+use super::{BinaryFile, FileHeader, input_fields, input_source::OwnedReadSource};
+#[cfg(test)]
 use crate::ncollection::Sequence;
-use crate::standard::{Failure, Handle};
-use crate::storage::{HeaderData, IoStream, StorageError, StreamException};
+use crate::standard::Failure;
+#[cfg(test)]
+use crate::standard::Handle;
+use crate::storage::IoStream;
+#[cfg(test)]
+use crate::storage::{HeaderData, StorageError, StreamException};
+#[cfg(test)]
 use crate::tcollection::{AsciiString, ExtendedString};
 
+#[cfg(test)]
 fn stream_write(stream: &mut IoStream, bytes: &[u8], member: &str) -> Result<(), Failure> {
     stream.write(bytes);
     if stream.fail() {
@@ -18,6 +28,7 @@ fn stream_write(stream: &mut IoStream, bytes: &[u8], member: &str) -> Result<(),
     Ok(())
 }
 
+#[cfg(test)]
 impl BinaryFile {
     /// Writes one host-order integer and returns its size, 4; `BinaryFile::put_integer_stream(&mut out, 1, false)?`.
     fn put_integer_stream(
@@ -31,21 +42,18 @@ impl BinaryFile {
         Ok(4)
     }
 
-    /// Reads one host-order integer: a short read keeps the bytes it got and is a
-    /// `Storage_StreamTypeMismatchError`; `BinaryFile::get_integer_stream(&mut input, &mut v)?`.
-    pub fn get_integer_stream(stream: &mut IoStream, value: &mut i32) -> Result<(), Failure> {
-        input_fields::integer(&mut OwnedReadSource(stream), value)
-    }
-
     /// Reads a reference number, encoded like an integer.
     /// Example: `BinaryFile::get_reference_stream(&mut input, &mut reference)?`.
-    pub fn get_reference_stream(stream: &mut IoStream, value: &mut i32) -> Result<(), Failure> {
+    pub(super) fn get_reference_stream(
+        stream: &mut IoStream,
+        value: &mut i32,
+    ) -> Result<(), Failure> {
         input_fields::integer(&mut OwnedReadSource(stream), value)
     }
 
     /// Writes the length and the bytes, `4 + length` bytes.
     /// Example: `BinaryFile::write_string_stream(&mut out, &text, false)?`.
-    pub fn write_string_stream(
+    pub(super) fn write_string_stream(
         stream: &mut IoStream,
         text: &AsciiString,
         only_count: bool,
@@ -59,7 +67,7 @@ impl BinaryFile {
 
     /// Reads a length-prefixed string; the text stops at its
     /// first NUL; `BinaryFile::read_string_stream(&mut input, &mut text)?`.
-    pub fn read_string_stream(
+    pub(super) fn read_string_stream(
         stream: &mut IoStream,
         text: &mut AsciiString,
     ) -> Result<(), Failure> {
@@ -68,7 +76,7 @@ impl BinaryFile {
 
     /// Writes the unit count and the host-order UTF-16 units.
     /// Example: `BinaryFile::write_extended_string_stream(&mut out, &text, false)?`.
-    pub fn write_extended_string_stream(
+    pub(super) fn write_extended_string_stream(
         stream: &mut IoStream,
         text: &ExtendedString,
         only_count: bool,
@@ -81,18 +89,9 @@ impl BinaryFile {
         Ok(size + 2 * text.length())
     }
 
-    /// Reads a length-prefixed UTF-16 string; the text stops
-    /// at its first zero unit; `BinaryFile::read_extended_string_stream(&mut input, &mut text)?`.
-    pub fn read_extended_string_stream(
-        stream: &mut IoStream,
-        text: &mut ExtendedString,
-    ) -> Result<(), Failure> {
-        input_fields::extended(&mut OwnedReadSource(stream), text)
-    }
-
     /// Writes the 52-byte file header.
     /// Example: `BinaryFile::write_header_stream(&mut out, &header, false)?`.
-    pub fn write_header_stream(
+    pub(super) fn write_header_stream(
         stream: &mut IoStream,
         header: &FileHeader,
         only_count: bool,
@@ -103,22 +102,14 @@ impl BinaryFile {
         }
         Ok(size)
     }
-
-    /// Reads the file header; a short read stops at that field.
-    /// Example: `BinaryFile::read_header_stream(&mut input, &mut header)?`.
-    pub fn read_header_stream(
-        stream: &mut IoStream,
-        header: &mut FileHeader,
-    ) -> Result<(), Failure> {
-        input_fields::header(&mut OwnedReadSource(stream), header)
-    }
 }
 
+#[cfg(test)]
 impl BinaryFile {
     /// Writes the info section and returns its byte size.
     /// Example: `BinaryFile::write_info_stream(&mut out, 0, &v, &d, &n, &sv, &an, &av, &dt, &info, false)?`.
     #[allow(clippy::too_many_arguments)]
-    pub fn write_info_stream(
+    pub(super) fn write_info_stream(
         stream: &mut IoStream,
         object_count: i32,
         storage_version: &AsciiString,
@@ -147,7 +138,7 @@ impl BinaryFile {
 
     /// Writes the comment section and returns its byte size.
     /// Example: `BinaryFile::write_comment_stream(&mut out, &comments, false)?`.
-    pub fn write_comment_stream(
+    pub(super) fn write_comment_stream(
         stream: &mut IoStream,
         comments: &Sequence<ExtendedString>,
         only_count: bool,
@@ -159,18 +150,9 @@ impl BinaryFile {
         Ok(size)
     }
 
-    /// Reads the comment section, appending comments while the stream is good.
-    /// Example: `BinaryFile::read_comment_stream(&mut input, &mut comments)?`.
-    pub fn read_comment_stream(
-        stream: &mut IoStream,
-        comments: &mut Sequence<ExtendedString>,
-    ) -> Result<(), Failure> {
-        input_fields::comments(&mut OwnedReadSource(stream), comments)
-    }
-
     /// Reads the info section into locals, then stores them in `header`.
     /// Example: `BinaryFile::read_header_data(&mut input, &header)?`.
-    pub fn read_header_data(
+    pub(super) fn read_header_data(
         stream: &mut IoStream,
         header: &Handle<HeaderData>,
     ) -> Result<(), Failure> {
@@ -178,46 +160,16 @@ impl BinaryFile {
     }
 }
 
+#[cfg(test)]
 impl BinaryFile {
-    /// Reads the type section size; `BinaryFile::type_section_size_stream(&mut input)?`.
-    pub fn type_section_size_stream(stream: &mut IoStream) -> Result<i32, Failure> {
-        input_fields::section_size(&mut OwnedReadSource(stream))
-    }
-
-    /// Reads one type entry: its number and its name.
-    /// Example: `BinaryFile::read_type_informations_stream(&mut input, &mut n, &mut name)?`.
-    pub fn read_type_informations_stream(
-        stream: &mut IoStream,
-        number: &mut i32,
-        name: &mut AsciiString,
-    ) -> Result<(), Failure> {
-        input_fields::type_entry(&mut OwnedReadSource(stream), number, name)
-    }
-
-    /// Reads the root section size; `BinaryFile::root_section_size_stream(&mut input)?`.
-    pub fn root_section_size_stream(stream: &mut IoStream) -> Result<i32, Failure> {
-        input_fields::section_size(&mut OwnedReadSource(stream))
-    }
-
-    /// Reads one root entry: reference, name, type name.
-    /// Example: `BinaryFile::read_root_stream(&mut input, &mut name, &mut r, &mut ty)?`.
-    pub fn read_root_stream(
-        stream: &mut IoStream,
-        name: &mut AsciiString,
-        reference: &mut i32,
-        type_name: &mut AsciiString,
-    ) -> Result<(), Failure> {
-        input_fields::root_entry(&mut OwnedReadSource(stream), name, reference, type_name)
-    }
-
     /// Reads the reference section size; `BinaryFile::ref_section_size_stream(&mut input)?`.
-    pub fn ref_section_size_stream(stream: &mut IoStream) -> Result<i32, Failure> {
+    pub(super) fn ref_section_size_stream(stream: &mut IoStream) -> Result<i32, Failure> {
         input_fields::section_size(&mut OwnedReadSource(stream))
     }
 
     /// Reads one reference entry: its reference and type numbers.
     /// Example: `BinaryFile::read_reference_type_stream(&mut input, &mut r, &mut t)?`.
-    pub fn read_reference_type_stream(
+    pub(super) fn read_reference_type_stream(
         stream: &mut IoStream,
         reference: &mut i32,
         type_number: &mut i32,
@@ -227,22 +179,39 @@ impl BinaryFile {
 
     /// Records `tellp()` as the info section end.
     /// Example: `driver.end_write_info_section_stream(&mut out)`.
-    pub fn end_write_info_section_stream(&mut self, stream: &mut IoStream) -> StorageError {
+    pub(super) fn end_write_info_section_stream(&mut self, stream: &mut IoStream) -> StorageError {
         self.header.end_info = stream.tellp() as i32;
         StorageError::Ok
     }
 
     /// Records `tellp()` as the comment section start.
     /// Example: `driver.begin_write_comment_section_stream(&mut out)`.
-    pub fn begin_write_comment_section_stream(&mut self, stream: &mut IoStream) -> StorageError {
+    pub(super) fn begin_write_comment_section_stream(
+        &mut self,
+        stream: &mut IoStream,
+    ) -> StorageError {
         self.header.begin_comment = stream.tellp() as i32;
         StorageError::Ok
     }
 
     /// Records `tellp()` as the comment section end.
     /// Example: `driver.end_write_comment_section_stream(&mut out)`.
-    pub fn end_write_comment_section_stream(&mut self, stream: &mut IoStream) -> StorageError {
+    pub(super) fn end_write_comment_section_stream(
+        &mut self,
+        stream: &mut IoStream,
+    ) -> StorageError {
         self.header.end_comment = stream.tellp() as i32;
         StorageError::Ok
+    }
+}
+
+impl BinaryFile {
+    /// Reads the file header; a short read stops at that field.
+    /// Example: `BinaryFile::read_header_stream(&mut input, &mut header)?`.
+    pub fn read_header_stream(
+        stream: &mut IoStream,
+        header: &mut FileHeader,
+    ) -> Result<(), Failure> {
+        input_fields::header(&mut OwnedReadSource(stream), header)
     }
 }

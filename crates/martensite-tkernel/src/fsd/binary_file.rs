@@ -213,3 +213,10 @@ impl BaseDriver for BinaryFile {
         Ok(StorageError::Ok)
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/fsd_api_behavior/binary_stream.rs"]
+mod binary_stream_tests;
+#[cfg(test)]
+#[path = "../../tests/fsd_api_behavior/binary_string_hooks.rs"]
+mod binary_string_tests;

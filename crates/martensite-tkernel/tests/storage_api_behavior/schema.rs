@@ -44,9 +44,10 @@ fn write_runs_every_section_and_stamps_the_header() {
         "EndWriteDataSection",
     ];
     assert_eq!(driver.log, expected);
-    assert_eq!(set.creation_date().as_bytes(), b"03/02/2001");
-    assert_eq!(set.storage_version().as_bytes(), b"1.3");
-    assert_eq!(set.schema_version().as_bytes(), b"2");
+    let header = set.header_data();
+    assert_eq!(header.creation_date().as_bytes(), b"03/02/2001");
+    assert_eq!(header.storage_version().as_bytes(), b"1.3");
+    assert_eq!(header.schema_version().as_bytes(), b"2");
     assert_eq!(set.error_status(), StorageError::Ok);
 }
 

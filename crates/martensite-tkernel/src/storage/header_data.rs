@@ -7,39 +7,38 @@ use std::sync::{PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 /// The fields of the header, lent by [`HeaderData::fields`] and [`HeaderData::change_fields`].
 #[derive(Default)]
-pub struct HeaderFields {
+struct HeaderFields {
     /// The number of stored objects.
-    pub number_of_objects: i32,
+    number_of_objects: i32,
     /// The storage format version.
-    pub storage_version: AsciiString,
+    storage_version: AsciiString,
     /// The schema version.
-    pub schema_version: AsciiString,
+    schema_version: AsciiString,
     /// The schema name.
-    pub schema_name: AsciiString,
+    schema_name: AsciiString,
     /// The application version.
-    pub application_version: AsciiString,
+    application_version: AsciiString,
     /// The application name.
-    pub application_name: ExtendedString,
+    application_name: ExtendedString,
     /// The data type.
-    pub data_type: ExtendedString,
+    data_type: ExtendedString,
     /// The creation date.
-    pub date: AsciiString,
+    date: AsciiString,
     /// The user info lines.
-    pub user_info: Sequence<AsciiString>,
+    user_info: Sequence<AsciiString>,
     /// The comments.
-    pub comments: Sequence<ExtendedString>,
+    comments: Sequence<ExtendedString>,
     /// The section status and its extension.
-    pub status: SectionStatus,
+    status: SectionStatus,
 }
 
 /// Header of a set of stored data, shared by handles like any transient.
 ///
 /// ```
 /// use martensite_tkernel::storage::HeaderData;
-/// use martensite_tkernel::tcollection::AsciiString;
 /// let header = HeaderData::default();
-/// header.set_schema_name(&AsciiString::new("Schema"));
-/// assert_eq!(header.schema_name().as_bytes(), b"Schema");
+/// header.set_number_of_objects(3);
+/// assert_eq!(header.number_of_objects(), 3);
 /// ```
 #[derive(Default)]
 pub struct HeaderData {
@@ -48,12 +47,12 @@ pub struct HeaderData {
 
 impl HeaderData {
     /// Read access to every field; `header.fields().comments.len()`.
-    pub fn fields(&self) -> RwLockReadGuard<'_, HeaderFields> {
+    fn fields(&self) -> RwLockReadGuard<'_, HeaderFields> {
         self.fields.read().unwrap_or_else(PoisonError::into_inner)
     }
 
     /// Write access seen by every handle holder; `header.change_fields().number_of_objects = 1`.
-    pub fn change_fields(&self) -> RwLockWriteGuard<'_, HeaderFields> {
+    fn change_fields(&self) -> RwLockWriteGuard<'_, HeaderFields> {
         self.fields.write().unwrap_or_else(PoisonError::into_inner)
     }
 
@@ -153,7 +152,7 @@ impl HeaderData {
     }
 
     /// Example: `header.set_application_version(&version)`.
-    pub fn set_application_version(&self, version: &AsciiString) {
+    pub(crate) fn set_application_version(&self, version: &AsciiString) {
         self.change_fields().application_version = version.clone();
     }
 
@@ -163,7 +162,7 @@ impl HeaderData {
     }
 
     /// Example: `header.set_application_name(&name)`.
-    pub fn set_application_name(&self, name: &ExtendedString) {
+    pub(crate) fn set_application_name(&self, name: &ExtendedString) {
         self.change_fields().application_name = name.clone();
     }
 
@@ -173,7 +172,7 @@ impl HeaderData {
     }
 
     /// Example: `header.set_data_type(&data_type)`.
-    pub fn set_data_type(&self, data_type: &ExtendedString) {
+    pub(crate) fn set_data_type(&self, data_type: &ExtendedString) {
         self.change_fields().data_type = data_type.clone();
     }
 
@@ -183,7 +182,7 @@ impl HeaderData {
     }
 
     /// Example: `header.add_to_user_info(&line)`.
-    pub fn add_to_user_info(&self, info: &AsciiString) {
+    pub(crate) fn add_to_user_info(&self, info: &AsciiString) {
         self.change_fields().user_info.append(info.clone());
     }
 
@@ -193,7 +192,7 @@ impl HeaderData {
     }
 
     /// Example: `header.add_to_comments(&comment)`.
-    pub fn add_to_comments(&self, comment: &ExtendedString) {
+    pub(crate) fn add_to_comments(&self, comment: &ExtendedString) {
         self.change_fields().comments.append(comment.clone());
     }
 
@@ -230,22 +229,23 @@ impl HeaderData {
     }
 
     /// Example: `header.set_storage_version(&v)`.
-    pub fn set_storage_version(&self, version: &AsciiString) {
+    pub(crate) fn set_storage_version(&self, version: &AsciiString) {
         self.change_fields().storage_version = version.clone();
     }
 
     /// Sets the storage version from an `int`, stored in decimal; `header.set_storage_version_number(3)`.
-    pub fn set_storage_version_number(&self, version: i32) {
+    #[cfg(test)]
+    pub(crate) fn set_storage_version_number(&self, version: i32) {
         self.set_storage_version(&AsciiString::from_integer(version));
     }
 
     /// Example: `header.set_creation_date(&date)`.
-    pub fn set_creation_date(&self, date: &AsciiString) {
+    pub(crate) fn set_creation_date(&self, date: &AsciiString) {
         self.change_fields().date = date.clone();
     }
 
     /// Example: `header.set_schema_version(&version)`.
-    pub fn set_schema_version(&self, version: &AsciiString) {
+    pub(crate) fn set_schema_version(&self, version: &AsciiString) {
         self.change_fields().schema_version = version.clone();
     }
 
