@@ -29,7 +29,7 @@ fn direction(along: [f64; 3]) -> Direction3 {
 /// Example: `plane(s, "p", [2., 0., 0.], [1., 0., 0.])`.
 pub fn plane(s: &mut FeatScript<'_>, name: &str, at: [f64; 3], normal: [f64; 3]) {
     let frame = checked(Axis3::from_normal(point(at), direction(normal)));
-    s.set_surface(name, Handle::new(GeomPlane::new(frame)).cast());
+    s.set_surface(name, Handle::new(GeomPlane::new(frame)).into_upcast());
 }
 
 /// `plane name`: the XY plane at the origin; `plane_xoy(s, "test_plane")`.
@@ -52,7 +52,7 @@ pub fn plane_with_x(
     ));
     s.set_surface(
         name,
-        Handle::new(GeomPlane::new(Axis3::from_axis2(frame))).cast(),
+        Handle::new(GeomPlane::new(Axis3::from_axis2(frame))).into_upcast(),
     );
 }
 
@@ -86,7 +86,7 @@ pub fn trim(s: &mut FeatScript<'_>, name: &str, base: &str, [u1, u2, v1, v2]: [f
         (v1, v2),
         (true, true),
     ));
-    s.set_surface(name, Handle::new(trimmed).cast());
+    s.set_surface(name, Handle::new(trimmed).into_upcast());
 }
 
 /// `mkface name surface`; `mkface(s, "ff", "sf")`.
@@ -132,7 +132,8 @@ pub fn circle(
         direction(normal),
         direction(x_axis),
     ));
-    let curve: Handle<dyn GeomCurve> = Handle::new(checked(GeomCircle::new(frame, radius))).cast();
+    let curve: Handle<dyn GeomCurve> =
+        Handle::new(checked(GeomCircle::new(frame, radius))).into_upcast();
     s.set_curve(name, curve);
 }
 
