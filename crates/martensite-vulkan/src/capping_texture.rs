@@ -6,6 +6,7 @@ use crate::{
     surface_texture::{SurfaceSamplerPolicy, SurfaceTextureStyle, SurfaceTextureUnavailable},
 };
 use martensite_tkernel::{ncollection::Mat4, standard::Handle};
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSource;
 use martensite_tkservice::graphic3d::*;
 pub(crate) fn apply_cap_texture(
     draw: &mut PrimitiveDraw,
@@ -13,7 +14,7 @@ pub(crate) fn apply_cap_texture(
     cache: &RetainedTextureImages,
     scene: &CappingScene<'_>,
     orientation: Mat4<f32>,
-    plane: &Handle<Graphic3dClipPlane>,
+    plane: &Handle<dyn Graphic3dClipPlaneSource>,
 ) -> Result<(), RenderError> {
     let coordinates = cache.coordinate_pipeline.effective(
         scene.elements.context_state().fixed_function_lighting,
@@ -54,7 +55,7 @@ fn prepare_cap_image(
     draw: &mut PrimitiveDraw,
     aspect: &dyn Graphic3dAspectsSource,
     cache: &RetainedTextureImages,
-    plane: &Handle<Graphic3dClipPlane>,
+    plane: &Handle<dyn Graphic3dClipPlaneSource>,
     coordinates: crate::RenderTextureCoordinatePipeline,
 ) -> Result<Option<crate::retained_cap_textures::CapTextureSnapshot>, RenderError> {
     if !aspect.to_map_texture() {

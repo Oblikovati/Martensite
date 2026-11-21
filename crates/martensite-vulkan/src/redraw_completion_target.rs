@@ -1,10 +1,11 @@
 //! Owned identity/revisions of the target selected for an actual redraw attempt.
 use super::*;
+use martensite_tkernel::standard::Transient;
 
 #[derive(Clone)]
 pub(crate) struct RedrawTargetStamp {
     pub(crate) lighting: crate::driver_lighting_capability::LightingSelection,
-    fbo: Handle<StandardTransient>,
+    fbo: Handle<dyn Transient>,
     binding: Arc<()>,
     viewport: Option<([i32; 4], Arc<()>)>,
     window: Handle<dyn AspectWindow>,

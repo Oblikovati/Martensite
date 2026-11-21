@@ -8,13 +8,13 @@ use crate::{
     view_scene::frame_for_view,
     view_target::{RenderFrameBuffer, capture_extent},
 };
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::{aspect::*, graphic3d::*, image::ImagePixMap};
 use std::sync::Arc;
 /// Renderer-backed Graphic3d view; `view.cast::<Graphic3dRenderView>().capture()?`.
 pub struct Graphic3dRenderView {
-    transient: StandardTransient,
     pub(crate) retained: crate::view_statistics::RenderRetainedView,
     pub(crate) this: SharedState<martensite_tkernel::standard::WeakHandle<Self>>,
     pub(crate) device: SharedRenderDevice,
@@ -46,9 +46,8 @@ pub struct Graphic3dRenderView {
     raytrace_observation: SharedState<crate::raytrace_input_observation::ViewRayInputs>,
     redraw_target: SharedState<Option<redraw_completion::RedrawPublicationTarget>>,
 }
-martensite_tkernel::impl_transient!(Graphic3dRenderView, "Martensite_RenderView", StandardTransient, transient, interfaces:[dyn Graphic3dCView, dyn Graphic3dDataStructureManager]);
+martensite_tkernel::impl_transient!(Graphic3dRenderView, "Martensite_RenderView", StandardTransient, interfaces:[dyn Graphic3dCView, dyn Graphic3dDataStructureManager]);
 type RenderViewCreationInputs = (
-    StandardTransient,
     crate::view_output_modes::OutputModeRetainedView,
     SharedRenderDevice,
     u32,
@@ -75,7 +74,6 @@ impl Graphic3dRenderView {
         gui_surface: crate::RenderGuiSurfacePolicy,
     ) -> Result<Handle<Self>, Failure> {
         let inputs = (
-            StandardTransient::default(),
             crate::view_output_modes::OutputModeRetainedView::new(Graphic3dRetainedView::new(
                 manager, layers,
             )?),
@@ -91,7 +89,6 @@ impl Graphic3dRenderView {
     }
     fn initialized_gui_view(inputs: RenderViewCreationInputs) -> Self {
         let (
-            transient,
             retained,
             device,
             limit,
@@ -99,7 +96,6 @@ impl Graphic3dRenderView {
             gui_surface,
         ) = inputs;
         Self {
-            transient,
             retained: crate::view_statistics::RenderRetainedView::new(retained),
             this: SharedState::default(),
             device,
@@ -388,21 +384,21 @@ impl Graphic3dCView for Graphic3dRenderView {
         );
         copied
     }
-    fn fbo_create(&self, width: i32, height: i32) -> Handle<StandardTransient> {
+    fn fbo_create(&self, width: i32, height: i32) -> Handle<dyn Transient> {
         RenderFrameBuffer::create(width, height, self.limit)
     }
-    fn fbo_release(&self, fbo: &mut Handle<StandardTransient>) {
+    fn fbo_release(&self, fbo: &mut Handle<dyn Transient>) {
         // Native FBORelease ignores a handle that is not a framebuffer of the driver.
         if !fbo.cast::<RenderFrameBuffer>().is_null() {
             *fbo = Handle::default();
         }
     }
-    fn fbo_get_dimensions(&self, fbo: &Handle<StandardTransient>) -> [i32; 4] {
+    fn fbo_get_dimensions(&self, fbo: &Handle<dyn Transient>) -> [i32; 4] {
         fbo.cast::<RenderFrameBuffer>()
             .get()
             .map_or([0; 4], RenderFrameBuffer::dimensions)
     }
-    fn fbo_change_viewport(&self, fbo: &Handle<StandardTransient>, width: i32, height: i32) {
+    fn fbo_change_viewport(&self, fbo: &Handle<dyn Transient>, width: i32, height: i32) {
         if let Some(target) = fbo.cast::<RenderFrameBuffer>().get() {
             target.change_viewport(width, height);
         }

@@ -1,5 +1,6 @@
 //! Logical framebuffer targets let V3d's dump lifecycle select offscreen dimensions.
 use crate::{RenderError, error::rejected};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::{Handle, SharedState, StandardTransient};
 use martensite_tkservice::graphic3d::Graphic3dCView;
 /// An offscreen framebuffer of a view (`GlFrameBuffer` as `Graphic3dCView::FBOCreate`
@@ -8,7 +9,6 @@ use martensite_tkservice::graphic3d::Graphic3dCView;
 /// rendered into it. Example:
 /// `view.fbo_create(64, 48).cast::<RenderFrameBuffer>.get.map(|fbo| fbo.size)`.
 pub struct RenderFrameBuffer {
-    transient: StandardTransient,
     viewport: SharedState<([i32; 2], std::sync::Arc<()>)>,
     size: [i32; 2],
     init_viewport: [i32; 2],
@@ -16,25 +16,23 @@ pub struct RenderFrameBuffer {
 martensite_tkernel::impl_transient!(
     RenderFrameBuffer,
     "Martensite_RenderFrameBuffer",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 impl RenderFrameBuffer {
     /// `FBOCreate`: a non-positive side allocates 2 pixels (native `GlFrameBuffer::Init`)
     /// and keeps the given viewport; a side beyond the device image limit is refused (null).
-    pub(crate) fn create(width: i32, height: i32, limit: u32) -> Handle<StandardTransient> {
+    pub(crate) fn create(width: i32, height: i32, limit: u32) -> Handle<dyn Transient> {
         let allocated = |side: i32| if side > 0 { side } else { 2 };
         let size = [allocated(width), allocated(height)];
         if size.iter().any(|&side| side as u32 > limit) {
             return Handle::default();
         }
         Handle::new(Self {
-            transient: StandardTransient::default(),
             viewport: SharedState::new(([width, height], std::sync::Arc::new(()))),
             size,
             init_viewport: [width, height],
         })
-        .cast()
+        .into_upcast()
     }
     /// `FBOGetDimensions`: viewport width and height, then allocated width and height.
     pub(crate) fn dimensions(&self) -> [i32; 4] {

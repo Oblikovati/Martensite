@@ -16,7 +16,6 @@ use martensite_tkservice::{aspect::AspectWindow, graphic3d::*};
 use std::sync::Arc;
 /// A Graphic3d driver with an injected device; `Graphic3dRenderDriver::new(VulkanOptions::default())?`.
 pub struct Graphic3dRenderDriver {
-    transient: StandardTransient,
     base: Graphic3dGraphicDriverBase,
     device: SharedRenderDevice,
     text_source: Arc<dyn crate::TextLayoutSource>,
@@ -43,7 +42,7 @@ struct DriverBuildInputs {
     selection: RenderPipelinePolicies,
     line_widths: crate::RenderLineWidthPolicy,
 }
-martensite_tkernel::impl_transient!(Graphic3dRenderDriver, "Martensite_RenderDriver", StandardTransient, transient, interfaces:[dyn Graphic3dGraphicDriver]);
+martensite_tkernel::impl_transient!(Graphic3dRenderDriver, "Martensite_RenderDriver", StandardTransient, interfaces:[dyn Graphic3dGraphicDriver]);
 impl Graphic3dRenderDriver {
     /// Create a Vulkan 1.3 driver; `Graphic3dRenderDriver::new(options)?`.
     pub fn new(options: VulkanOptions) -> Result<Handle<Self>, RenderError> {
@@ -237,7 +236,6 @@ impl Graphic3dRenderDriver {
             RetainedTextureImages::with_coordinate_pipeline(inputs.selection.texture_coordinates);
         let texture_images = Arc::new(retained);
         Handle::new(Self {
-            transient: StandardTransient::default(),
             base: Graphic3dGraphicDriverBase::new(&Handle::default()),
             device: Arc::new(SharedState::new(inputs.backend)),
             text_source: inputs.text_source,

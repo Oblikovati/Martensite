@@ -4,6 +4,7 @@ use crate::{
     surface_texture::SurfaceTextureImage,
 };
 use martensite_tkernel::standard::{Handle, WeakHandle};
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSource;
 use martensite_tkservice::graphic3d::*;
 use std::{
     collections::BTreeMap,
@@ -16,7 +17,7 @@ pub(crate) struct CapTextureSnapshot {
     pub resource_id: Vec<u8>,
 }
 struct CapTextureReadiness {
-    owner: WeakHandle<Graphic3dClipPlane>,
+    owner: WeakHandle<dyn Graphic3dClipPlaneSource>,
     aspect_revision: u32,
     snapshot: CapTextureSnapshot,
 }
@@ -41,7 +42,7 @@ impl RetainedCapTextures {
     }
     pub fn snapshot(
         &self,
-        plane: &Handle<Graphic3dClipPlane>,
+        plane: &Handle<dyn Graphic3dClipPlaneSource>,
         texture: &Handle<dyn Graphic3dTextureMap>,
         images: &RetainedTextureImages,
     ) -> Result<CapTextureSnapshot, RenderError> {
@@ -65,7 +66,7 @@ impl CapTextureReadiness {
     }
 
     fn new(
-        plane: &Handle<Graphic3dClipPlane>,
+        plane: &Handle<dyn Graphic3dClipPlaneSource>,
         texture: &Handle<dyn Graphic3dTextureMap>,
         images: &RetainedTextureImages,
     ) -> Result<Self, RenderError> {

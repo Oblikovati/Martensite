@@ -3,7 +3,8 @@ use crate::{
     RenderError, RenderFrame, RenderLayer, driver_structure::Graphic3dRenderStructure,
     error::rejected, render_element_pass::RenderElementPass,
 };
-use martensite_tkernel::standard::{Handle, HandleObserver, HandleReference};
+use martensite_tkernel::standard::{Handle, HandleReference};
+use martensite_tkservice::graphic3d::Graphic3dClipPlaneSequenceSource;
 use martensite_tkservice::graphic3d::*;
 pub(crate) fn frame_for_view(
     view: &dyn Graphic3dCView,
@@ -141,7 +142,7 @@ pub(crate) fn scene_extent(
 }
 struct ViewLayerInputs<'a> {
     camera: &'a Graphic3dCamera,
-    clipping: HandleObserver<Graphic3dSequenceOfHClipPlane>,
+    clipping: Handle<dyn Graphic3dClipPlaneSequenceSource>,
     rendering: Graphic3dRenderingParams,
     extent: [u32; 2],
     view_id: i32,
@@ -167,9 +168,7 @@ impl<'a> ViewLayerInputs<'a> {
         // Culling updates before the clip planes reset; capture this owned field afterward.
         Ok(Self {
             camera,
-            clipping: clipping
-                .observe()
-                .observe_as::<Graphic3dSequenceOfHClipPlane>(),
+            clipping: clipping.clone_handle(),
             context: frame_context_state(view, raster, &rendering, limits),
             rendering,
             extent: raster,
@@ -355,7 +354,7 @@ fn layer_pass(
     view_id: i32,
     extent: [u32; 2],
     rendering: &Graphic3dRenderingParams,
-    clipping: &Handle<Graphic3dSequenceOfHClipPlane>,
+    clipping: &Handle<dyn Graphic3dClipPlaneSequenceSource>,
     (environment, skip_trsf_persistence, raytraced, context): LayerPassFrame<'_>,
 ) -> Result<RenderLayer, RenderError> {
     let settings = layer.layer_settings();
@@ -422,7 +421,7 @@ struct StructureInputs<'a> {
     view_id: i32,
     extent: [u32; 2],
     rendering: &'a Graphic3dRenderingParams,
-    clipping: &'a Handle<Graphic3dSequenceOfHClipPlane>,
+    clipping: &'a Handle<dyn Graphic3dClipPlaneSequenceSource>,
 }
 fn layer_program(
     layer: &Graphic3dLayer,

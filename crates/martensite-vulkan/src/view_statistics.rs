@@ -6,6 +6,7 @@
 //! swaps and ABA cannot certify an earlier target. Every other call dereferences to the output-mode wrapper
 //! (flip output, draw-to-front) and through it to the shared view.
 use crate::{Graphic3dRenderView, RenderFrameStats, RenderImageMemory};
+use martensite_tkernel::standard::Transient;
 use martensite_tkernel::standard::{Handle, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkservice::graphic3d::{
@@ -44,7 +45,7 @@ impl RenderRetainedView {
         }
     }
     /// Keep forwarded FBO bindings observable, including same-owner round trips.
-    pub(crate) fn set_fbo(&self, fbo: &Handle<martensite_tkernel::standard::StandardTransient>) {
+    pub(crate) fn set_fbo(&self, fbo: &Handle<dyn Transient>) {
         //  held the new revision lease across final SDK-owner release.
         let retired;
         {
@@ -60,12 +61,7 @@ impl RenderRetainedView {
         self.fbo_revision.try_write().is_some()
     }
     /// Retain the actual selected owner and its binding revision without callbacks.
-    pub(crate) fn fbo_binding_stamp(
-        &self,
-    ) -> (
-        Handle<martensite_tkernel::standard::StandardTransient>,
-        std::sync::Arc<()>,
-    ) {
+    pub(crate) fn fbo_binding_stamp(&self) -> (Handle<dyn Transient>, std::sync::Arc<()>) {
         let revision = self.fbo_revision.read();
         (self.view.fbo(), revision.clone())
     }

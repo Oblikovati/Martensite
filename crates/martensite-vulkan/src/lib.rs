@@ -1,4 +1,11 @@
 //! Martensite's Vulkan 1.3 renderer with immutable submissions and offscreen captures.
+//!
+//! # Rust-native handles (#592)
+//!
+//! Renderer classes keep their native descriptor names and use typed shared owners.
+//! Framebuffer identities use `Handle<dyn Transient>`; images, primitive arrays and
+//! clipping collections use TKService's state-lending interfaces. A layer captures
+//! an owning clipping snapshot after culling, before building its draw passes.
 #![cfg_attr(test, allow(clippy::duplicate_mod))] // Unit tests share scene fixtures by path.
 #[allow(unsafe_code)]
 mod backend;
