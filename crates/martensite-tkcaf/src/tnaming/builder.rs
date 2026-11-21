@@ -36,7 +36,7 @@ impl TNamingBuilder {
         let mut attribute: Handle<TNamingNamedShape> = Handle::default();
         if !label.find_attribute_as(&TNamingNamedShape::get_id(), &mut attribute)? {
             attribute = Handle::new(TNamingNamedShape::new());
-            label.add_attribute(&attribute.cast(), true)?;
+            label.add_attribute(&attribute.upcast(), true)?;
         } else {
             let named = live(&attribute, "TNamingBuilder")?;
             named.backup()?;
@@ -162,7 +162,7 @@ fn find_or_add_used_shapes(label: &TdfLabel) -> Result<Handle<TNamingUsedShapes>
     let mut shapes: Handle<TNamingUsedShapes> = Handle::default();
     if !root.find_attribute_as(&TNamingUsedShapes::get_id(), &mut shapes)? {
         shapes = Handle::new(TNamingUsedShapes::new());
-        root.add_attribute(&shapes.cast(), true)?;
+        root.add_attribute(&shapes.upcast(), true)?;
     }
     Ok(shapes)
 }

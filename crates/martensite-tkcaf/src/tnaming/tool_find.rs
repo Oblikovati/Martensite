@@ -71,7 +71,7 @@ fn external_arguments(
         if attribute.dynamic_type().map(|t| t.name()) != Some("TNamingNamedShape") {
             continue;
         }
-        let current = TNamingTool::current_named_shape(&attribute.cast())?;
+        let current = TNamingTool::current_named_shape(&attribute.downcast())?;
         if current.get().is_some_and(|current| !current.is_empty()) {
             arguments.push(current);
         }

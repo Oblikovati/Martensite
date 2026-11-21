@@ -4,7 +4,7 @@ use martensite_tkcaf::tnaming::{TNaming, TNamingBuilder};
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tklcaf::{
     tdf::TdfLabel,
@@ -18,10 +18,9 @@ use martensite_tktopalgo::{
 /// The real box computation driver, not a mock geometry/history producer.
 #[derive(Default)]
 pub struct NamingBoxDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(NamingBoxDriver, "DNamingBoxDriver", dyn TFunctionDriver, transient,
+impl_transient!(NamingBoxDriver, "DNamingBoxDriver", dyn TFunctionDriver,
     interfaces: [dyn TFunctionDriver]);
 
 fn argument_sizes(function: &Handle<TFunctionFunction>) -> Result<[f64; 3], Failure> {

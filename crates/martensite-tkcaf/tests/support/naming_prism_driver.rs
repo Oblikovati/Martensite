@@ -10,7 +10,7 @@ use martensite_tkbrep::topods::{Shape, ShapeIterator};
 use martensite_tkcaf::tnaming::TNaming;
 use martensite_tkernel::{
     impl_transient, precision,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tklcaf::{
@@ -24,10 +24,9 @@ use values::optional_failure as failed;
 /// Real document prism driver; `NamingPrismDriver::default()`.
 #[derive(Default)]
 pub struct NamingPrismDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(NamingPrismDriver, "DNamingPrismDriver", dyn TFunctionDriver, transient, interfaces: [dyn TFunctionDriver]);
+impl_transient!(NamingPrismDriver, "DNamingPrismDriver", dyn TFunctionDriver, interfaces: [dyn TFunctionDriver]);
 struct PrismInputs {
     basis: Shape,
     context: Shape,

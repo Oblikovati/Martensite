@@ -8,3 +8,6 @@
 pub mod app_std;
 pub mod tdata_xtd;
 pub mod tnaming;
+
+#[cfg(test)]
+mod object_model_contracts;

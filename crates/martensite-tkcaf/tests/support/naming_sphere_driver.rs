@@ -6,7 +6,7 @@ use martensite_tkcaf::tnaming::{TNaming, TNamingNamedShape};
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkg3d::top_abs::ShapeEnum;
 use martensite_tklcaf::{
@@ -25,10 +25,9 @@ use super::naming_function_values as values;
 /// Computes spheres and their stable face/meridian labels; `NamingSphereDriver::default()`.
 #[derive(Default)]
 pub struct NamingSphereDriver {
-    transient: StandardTransient,
     base: TFunctionDriverBase,
 }
-impl_transient!(NamingSphereDriver, "DNamingSphereDriver", dyn TFunctionDriver, transient,
+impl_transient!(NamingSphereDriver, "DNamingSphereDriver", dyn TFunctionDriver,
     interfaces: [dyn TFunctionDriver]);
 
 fn center_point(named: &Handle<TNamingNamedShape>) -> Result<Option<Point3>, Failure> {
