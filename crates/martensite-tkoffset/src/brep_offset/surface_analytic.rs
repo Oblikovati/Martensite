@@ -20,13 +20,13 @@ pub(super) fn analytic_surface(
         .dynamic_type()
         .expect("BRepOffset::Surface: null input; expected a non-null Geom_Surface");
     match kind.name() {
-        "Geom_Plane" => plane_surface(&input.cast(), offset),
-        "Geom_CylindricalSurface" => cylinder_surface(&input.cast(), offset),
-        "Geom_ConicalSurface" => cone_surface(&input.cast(), offset),
-        "Geom_SphericalSurface" => sphere_surface(&input.cast(), offset),
-        "Geom_ToroidalSurface" => torus_surface(&input.cast(), offset),
+        "Geom_Plane" => plane_surface(&input.downcast(), offset),
+        "Geom_CylindricalSurface" => cylinder_surface(&input.downcast(), offset),
+        "Geom_ConicalSurface" => cone_surface(&input.downcast(), offset),
+        "Geom_SphericalSurface" => sphere_surface(&input.downcast(), offset),
+        "Geom_ToroidalSurface" => torus_surface(&input.downcast(), offset),
         "Geom_RectangularTrimmedSurface" => trimmed_surface(
-            &input.cast::<GeomRectangularTrimmedSurface>(),
+            &input.downcast::<GeomRectangularTrimmedSurface>(),
             offset,
             allow_c0,
         ),
@@ -38,7 +38,7 @@ fn plane_surface(input: &GeomPlane, offset: f64) -> Result<SurfaceOffset, Failur
     let frame = input.position();
     let normal = Vector3::from(frame.x_direction()).crossed(Vector3::from(frame.y_direction()));
     let moved = input.translated(normal.scaled(offset))?;
-    Ok((moved.cast(), BRepOffsetStatus::Good))
+    Ok((moved.into_cast(), BRepOffsetStatus::Good))
 }
 
 fn signed_radius(frame: Axis3, radius: f64, offset: f64) -> Result<f64, Failure> {
@@ -69,7 +69,7 @@ fn cylinder_surface(input: &GeomCylindricalSurface, offset: f64) -> Result<Surfa
         frame.rotate(frame.axis(), PI)?;
     }
     let result = GeomCylindricalSurface::new(frame, radius.abs())?;
-    Ok((Handle::new(result).cast(), status))
+    Ok((Handle::new(result).into_upcast(), status))
 }
 
 // Reference tests Radius >= 0, so NaN follows the reversal branch too.
@@ -86,7 +86,7 @@ fn cone_surface(input: &GeomConicalSurface, offset: f64) -> Result<SurfaceOffset
         angle = -angle;
     }
     let result = GeomConicalSurface::new(frame, angle, radius)?;
-    Ok((Handle::new(result).cast(), BRepOffsetStatus::Good))
+    Ok((Handle::new(result).into_upcast(), BRepOffsetStatus::Good))
 }
 
 fn sphere_surface(input: &GeomSphericalSurface, offset: f64) -> Result<SurfaceOffset, Failure> {
@@ -101,7 +101,7 @@ fn sphere_surface(input: &GeomSphericalSurface, offset: f64) -> Result<SurfaceOf
         frame.z_reverse();
     }
     let result = GeomSphericalSurface::new(frame, radius.abs())?;
-    Ok((Handle::new(result).cast(), status))
+    Ok((Handle::new(result).into_upcast(), status))
 }
 
 // Preserve the reference strict comparison, including unordered radii.
@@ -118,5 +118,5 @@ fn torus_surface(input: &GeomToroidalSurface, offset: f64) -> Result<SurfaceOffs
         return Ok((Handle::default(), status));
     }
     let result = GeomToroidalSurface::new(frame, major, minor)?;
-    Ok((Handle::new(result).cast(), status))
+    Ok((Handle::new(result).into_upcast(), status))
 }

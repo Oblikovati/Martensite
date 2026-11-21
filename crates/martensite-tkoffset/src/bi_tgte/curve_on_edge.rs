@@ -95,11 +95,11 @@ impl BiTgteCurveOnEdge {
         let mut s = self.state.write();
         s.my_edge = edge.clone();
         let (c, f, l) = BRepTool::curve(&s.my_edge)?;
-        s.my_curv = Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).cast();
+        s.my_curv = Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).into_upcast();
 
         s.my_eon_f = eon_f.clone();
         let (c, f, l) = BRepTool::curve(&s.my_eon_f)?;
-        s.my_con_f = Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).cast();
+        s.my_con_f = Handle::new(GeomTrimmedCurve::new(&c, f, l, true, true)?).into_upcast();
 
         // peut on generer un cercle de rayon nul
         let curv = GeomAdaptorCurve::with_curve(&s.my_curv)?;
@@ -134,7 +134,7 @@ impl Adaptor3dCurve for BiTgteCurveOnEdge {
         let copy = Self {
             state: SharedState::new(self.state.snapshot()),
         };
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
 
     fn first_parameter(&self) -> Result<f64, Failure> {

@@ -25,7 +25,7 @@ pub(super) fn perform_plan(wire: &Wire, pres_pln: f64, face: &mut Face) -> Resul
     }
     let searcher = BRepBuilderAPIFindPlane::from_shape(wire.as_ref(), pres_pln)?;
     if searcher.found() {
-        let plane: Handle<dyn GeomSurface> = searcher.plane().cast();
+        let plane: Handle<dyn GeomSurface> = searcher.plane().into_upcast();
         if plane.is_null() {
             return Err(null_plane());
         }

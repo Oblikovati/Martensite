@@ -74,11 +74,9 @@ pub(super) fn untrimmed_surface(
     s: &Handle<dyn GeomSurface>,
 ) -> Result<Handle<dyn GeomSurface>, Failure> {
     if live(s, "surface")?.is_instance_name("Geom_RectangularTrimmedSurface") {
-        return Ok(live(
-            &s.clone().cast::<GeomRectangularTrimmedSurface>(),
-            "surface",
-        )?
-        .basis_surface());
+        return Ok(
+            live(&s.downcast::<GeomRectangularTrimmedSurface>(), "surface")?.basis_surface(),
+        );
     }
     Ok(s.clone())
 }
@@ -86,7 +84,7 @@ pub(super) fn untrimmed_surface(
 /// The basis of a trimmed curve (`dynamic_type() ==`), else the curve.
 pub(super) fn untrimmed_curve(c: &Handle<dyn GeomCurve>) -> Result<Handle<dyn GeomCurve>, Failure> {
     if live(c, "curve")?.is_instance_name("Geom_TrimmedCurve") {
-        return Ok(live(&c.clone().cast::<GeomTrimmedCurve>(), "curve")?.basis_curve());
+        return Ok(live(&c.downcast::<GeomTrimmedCurve>(), "curve")?.basis_curve());
     }
     Ok(c.clone())
 }
@@ -94,7 +92,7 @@ pub(super) fn untrimmed_curve(c: &Handle<dyn GeomCurve>) -> Result<Handle<dyn Ge
 /// The basis of a trimmed curve when the handle down casts to one (`down_cast`, a null
 /// curve stays null), else the curve.
 pub(super) fn down_cast_basis(c: &Handle<dyn GeomCurve>) -> Handle<dyn GeomCurve> {
-    match c.clone().cast::<GeomTrimmedCurve>().get() {
+    match c.downcast::<GeomTrimmedCurve>().get() {
         Some(t) => t.basis_curve(),
         None => c.clone(),
     }
@@ -495,28 +493,21 @@ impl BRepToolsModification for DraftModification {
             let tc = GeomTrimmedCurve::new(einf.geometry(), fp, lp, true, true)?;
             fp = tc.first_parameter();
             lp = tc.last_parameter();
-            let tc: Handle<dyn GeomCurve> = Handle::new(tc).cast();
+            let tc: Handle<dyn GeomCurve> = Handle::new(tc).into_upcast();
             BRepBuilder::default().range(new_edge, fp, lp, false)?;
             (*curve, *tolerance) =
                 geom_proj_lib::curve2d_range_tolerance(&tc, (fp, lp), &sb, *tolerance)?;
         }
 
         if live(&sb, "surface")?.is_instance_name("Geom_RectangularTrimmedSurface") {
-            sb = live(
-                &sb.clone().cast::<GeomRectangularTrimmedSurface>(),
-                "surface",
-            )?
-            .basis_surface();
+            sb = live(&sb.downcast::<GeomRectangularTrimmedSurface>(), "surface")?.basis_surface();
         }
         let surface = live(&sb, "surface")?;
 
         let mut je_recadre = false;
         if surface.is_instance_name("Geom_SurfaceOfLinearExtrusion") {
-            let a_c = live(
-                &sb.clone().cast::<GeomSurfaceOfLinearExtrusion>(),
-                "surface",
-            )?
-            .basis_curve();
+            let a_c =
+                live(&sb.downcast::<GeomSurfaceOfLinearExtrusion>(), "surface")?.basis_curve();
             if live(&a_c, "curve")?.is_instance_name("Geom_Circle") {
                 je_recadre = true;
             }

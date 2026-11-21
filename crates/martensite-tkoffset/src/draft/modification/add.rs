@@ -30,7 +30,7 @@ pub(super) fn located_surface(face: &Face) -> Result<Handle<dyn GeomSurface>, Fa
     let (s, lo) = BRepTool::surface_with_location(face)?;
     Ok(live(&s, "surface")?
         .transformed(lo.transformation())?
-        .cast())
+        .into_cast())
 }
 
 /// The transformed copy of the 3d curve of an edge.
@@ -38,7 +38,7 @@ pub(super) fn located_curve(edge: &Edge) -> Result<Handle<dyn GeomCurve>, Failur
     let c = BRepTool::curve_with_location(edge)?;
     Ok(live(&c.curve, "curve")?
         .transformed(c.location.transformation())?
-        .cast())
+        .into_cast())
 }
 
 /// The trimmed copy of a surface in `[0, umax] x [vmin, vmax]`.
@@ -54,7 +54,7 @@ pub(super) fn trimmed(
         (vmin, vmax),
         (true, true),
     )?)
-    .cast())
+    .into_upcast())
 }
 
 impl DraftState {
@@ -85,8 +85,8 @@ impl DraftState {
             {
                 let mut cir: Circle3;
                 if surface.is_instance_name("Geom_CylindricalSurface") {
-                    let cyl = live(&s.clone().cast::<GeomCylindricalSurface>(), "cylinder")?
-                        .cylinder()?;
+                    let cyl =
+                        live(&s.downcast::<GeomCylindricalSurface>(), "cylinder")?.cylinder()?;
                     let axcyl = cyl.axis();
                     cir = elslib::cylinder_v_iso(cyl.position(), cyl.radius(), 0.);
                     let vv = Vector3::between(cyl.location(), neutral_plane.location());
@@ -94,7 +94,7 @@ impl DraftState {
                         Vector3::from(axcyl.direction()) * vv.dot(Vector3::from(axcyl.direction())),
                     );
                 } else {
-                    let extrusion = s.clone().cast::<GeomSurfaceOfLinearExtrusion>();
+                    let extrusion = s.downcast::<GeomSurfaceOfLinearExtrusion>();
                     let extrusion = live(&extrusion, "extrusion")?;
                     let mut cbas = extrusion.basis_curve();
                     let the_dirextr = extrusion.direction();
@@ -103,7 +103,7 @@ impl DraftState {
                         cbas = untrimmed_curve(&cbas)?;
                     }
                     if live(&cbas, "curve")?.is_kind_name("Geom_Circle") {
-                        cir = live(&cbas.clone().cast::<GeomCircle>(), "circle")?.circ()?;
+                        cir = live(&cbas.downcast::<GeomCircle>(), "circle")?.circ()?;
                         let dircir = cir.axis().direction();
                         if !direction.is_parallel(dircir, precision::angular()) {
                             self.bad_shape = f.clone().into_shape();
@@ -124,7 +124,7 @@ impl DraftState {
                     cir.translate(vv);
                 }
 
-                the_circle = Handle::new(GeomCircle::from_circ(cir)).cast();
+                the_circle = Handle::new(GeomCircle::from_circ(cir)).into_upcast();
             } else {
                 postponed = false;
             }
@@ -152,7 +152,7 @@ impl DraftState {
                         let co = live(
                             &new_s
                                 .clone()
-                                .cast::<martensite_tkg3d::geom::GeomConicalSurface>(),
+                                .into_downcast::<martensite_tkg3d::geom::GeomConicalSurface>(),
                             "cone",
                         )?
                         .cone()?;
@@ -241,7 +241,7 @@ impl DraftState {
                         e_inf.add(&other_f)?;
 
                         // find fixed point
-                        let a_local_geom = c.clone().cast::<GeomLine>();
+                        let a_local_geom = c.downcast::<GeomLine>();
                         match a_local_geom.get() {
                             None => {
                                 self.bad_shape = edg.clone().into_shape();
@@ -377,8 +377,9 @@ impl DraftState {
                 let f = topods::face(it)?;
                 if !self.my_f_map.contains(&f) {
                     let (s, l) = BRepTool::surface_with_location(&f)?;
-                    let mut new_s: Handle<dyn GeomSurface> =
-                        live(&s, "surface")?.transformed(l.transformation())?.cast();
+                    let mut new_s: Handle<dyn GeomSurface> = live(&s, "surface")?
+                        .transformed(l.transformation())?
+                        .into_cast();
 
                     let typs = live(&s, "surface")?;
                     if typs.is_instance_name("Geom_CylindricalSurface")
@@ -422,29 +423,28 @@ impl DraftState {
                 if !s1_surface.is_kind_name("Geom_Plane") {
                     if curve.is_kind_name("Geom_Conic") {
                         let the_pl = Axis3::from_axis2(
-                            live(&c.clone().cast::<dyn GeomConic>(), "conic")?.position(),
+                            live(&c.cast::<dyn GeomConic>(), "conic")?.position(),
                         );
-                        s2 = Handle::new(GeomPlane::new(the_pl)).cast();
+                        s2 = Handle::new(GeomPlane::new(the_pl)).into_upcast();
                     } else if curve.is_instance_name("Geom_Line") {
-                        let axis: Axis1 =
-                            if s1_surface.is_instance_name("Geom_RectangularTrimmedSurface") {
-                                let basis = live(
-                                    &s1.clone().cast::<GeomRectangularTrimmedSurface>(),
-                                    "surface",
-                                )?
-                                .basis_surface();
-                                live(
-                                    &basis.cast::<dyn GeomElementarySurface>(),
-                                    "elementary surface",
-                                )?
-                                .axis()
-                            } else {
-                                live(
-                                    &s1.clone().cast::<dyn GeomElementarySurface>(),
-                                    "elementary surface",
-                                )?
-                                .axis()
-                            };
+                        let axis: Axis1 = if s1_surface
+                            .is_instance_name("Geom_RectangularTrimmedSurface")
+                        {
+                            let basis =
+                                live(&s1.downcast::<GeomRectangularTrimmedSurface>(), "surface")?
+                                    .basis_surface();
+                            live(
+                                &basis.cast::<dyn GeomElementarySurface>(),
+                                "elementary surface",
+                            )?
+                            .axis()
+                        } else {
+                            live(
+                                &s1.cast::<dyn GeomElementarySurface>(),
+                                "elementary surface",
+                            )?
+                            .axis()
+                        };
                         let they = Vector3::between(axis.location(), curve.value(0.)?);
                         let axz =
                             Direction3::from_vector(Vector3::from(axis.direction()).crossed(they))?;
@@ -453,7 +453,7 @@ impl DraftState {
                             axz,
                             axis.direction(),
                         )?))
-                        .cast();
+                        .into_upcast();
                     } else {
                         self.bad_shape = ek.into_shape();
                         self.err_stat = DraftErrorStatus::EdgeRecomputation;
@@ -488,46 +488,43 @@ impl DraftState {
                             if vinf.more_edge() {
                                 let mut c2 = located_curve(&vinf.edge()?)?;
                                 c2 = untrimmed_curve(&c2)?;
-                                let (h_cur, direc): (Handle<dyn GeomCurve>, Direction3) =
-                                    if curve.is_instance_name("Geom_Line") {
-                                        (
-                                            c2.clone(),
-                                            live(&c.clone().cast::<GeomLine>(), "line")?
-                                                .lin()
-                                                .direction(),
-                                        )
-                                    } else if live(&c2, "curve")?.is_instance_name("Geom_Line") {
-                                        (
-                                            c.clone(),
-                                            live(&c2.clone().cast::<GeomLine>(), "line")?
-                                                .lin()
-                                                .direction(),
-                                        )
-                                    } else {
-                                        self.bad_shape = ek.clone().into_shape();
-                                        self.err_stat = DraftErrorStatus::EdgeRecomputation;
-                                        break; // leave from while
-                                    };
+                                let (h_cur, direc): (Handle<dyn GeomCurve>, Direction3) = if curve
+                                    .is_instance_name("Geom_Line")
+                                {
+                                    (
+                                        c2.clone(),
+                                        live(&c.downcast::<GeomLine>(), "line")?.lin().direction(),
+                                    )
+                                } else if live(&c2, "curve")?.is_instance_name("Geom_Line") {
+                                    (
+                                        c.clone(),
+                                        live(&c2.downcast::<GeomLine>(), "line")?.lin().direction(),
+                                    )
+                                } else {
+                                    self.bad_shape = ek.clone().into_shape();
+                                    self.err_stat = DraftErrorStatus::EdgeRecomputation;
+                                    break; // leave from while
+                                };
                                 let h_cur_adaptor =
                                     Handle::new(GeomAdaptorCurve::with_curve(&h_cur)?);
                                 let sle =
                                     GeomAdaptorSurfaceOfLinearExtrusion::with_curve_and_direction(
-                                        &h_cur_adaptor.clone().cast(),
+                                        &h_cur_adaptor.upcast(),
                                         direc,
                                     );
                                 s2 = match sle.get_type()? {
                                     SurfaceType::Plane => {
-                                        Handle::new(GeomPlane::from_pln(sle.plane()?)).cast()
+                                        Handle::new(GeomPlane::from_pln(sle.plane()?)).into_upcast()
                                     }
                                     SurfaceType::Cylinder => Handle::new(
                                         GeomCylindricalSurface::from_cylinder(sle.cylinder()?),
                                     )
-                                    .cast(),
+                                    .into_upcast(),
                                     _ => Handle::new(GeomSurfaceOfLinearExtrusion::new(
                                         &live(&h_cur_adaptor, "adaptor")?.curve(),
                                         direc,
                                     )?)
-                                    .cast(),
+                                    .into_upcast(),
                                 };
                             } else {
                                 self.bad_shape = ek.clone().into_shape();

@@ -117,7 +117,7 @@ fn make_face(
         } else {
             Direction2::new(0., 1.)?
         };
-        Ok(Handle::new(Geom2dLine::from_point(Point2::new(x, y), d)).cast())
+        Ok(Handle::new(Geom2dLine::from_point(Point2::new(x, y), d)).into_upcast())
     };
     let lumin = if umininf {
         Handle::default()
@@ -251,14 +251,10 @@ fn cone_apex_degeneracy(
     let (mut vmindegen, mut vmaxdegen) = (flags.is_vmin_degen, flags.is_vmax_degen);
     let mut the_surf = s.clone();
     if s.is_instance_name("Geom_RectangularTrimmedSurface") {
-        the_surf = live(
-            &s.clone().cast::<GeomRectangularTrimmedSurface>(),
-            "surface",
-        )?
-        .basis_surface();
+        the_surf = live(&s.downcast::<GeomRectangularTrimmedSurface>(), "surface")?.basis_surface();
     }
     if the_surf.is_instance_name("Geom_ConicalSurface") {
-        let the_cone = live(&the_surf.clone().cast::<GeomConicalSurface>(), "cone")?.cone()?;
+        let the_cone = live(&the_surf.downcast::<GeomConicalSurface>(), "cone")?.cone()?;
         let (_, vapex) = elslib::parameters(&the_cone, the_cone.apex());
         if (vmin - vapex).abs() <= precision::confusion() {
             vmindegen = true;
@@ -398,7 +394,7 @@ fn enlarge_geometry(
         return enlarge_trimmed(s, box_, degen, o);
     }
     if s.is_instance_name("Geom_OffsetSurface") {
-        let offset = s.clone().cast::<GeomOffsetSurface>();
+        let offset = s.downcast::<GeomOffsetSurface>();
         let mut surf = live(&offset, "surface")?.basis_surface();
         let change = enlarge_geometry(&mut surf, box_, degen, o)?;
         live(&offset, "surface")?.set_basis_surface(&surf, false)?;
@@ -428,11 +424,7 @@ fn enlarge_trimmed(
     degen: (&mut bool, &mut bool),
     o: EnlargeOptions,
 ) -> Result<bool, Failure> {
-    let mut bs = live(
-        &s.clone().cast::<GeomRectangularTrimmedSurface>(),
-        "surface",
-    )?
-    .basis_surface();
+    let mut bs = live(&s.downcast::<GeomRectangularTrimmedSurface>(), "surface")?.basis_surface();
     enlarge_geometry(&mut bs, box_, degen, o)?;
     if !o.enlarge_vfirst {
         box_[2] = o.face[2];
@@ -447,7 +439,7 @@ fn enlarge_trimmed(
             (box_[2], box_[3]),
             (true, true),
         )?;
-        *s = Handle::new(trimmed).cast();
+        *s = Handle::new(trimmed).into_upcast();
     } else {
         *s = bs;
     }
@@ -507,7 +499,7 @@ fn enlarge_swept(
     let mut a_surf: Handle<dyn GeomBoundedSurface> = Handle::new(
         GeomRectangularTrimmedSurface::new(s, (u1, u2), (v1, v2), (true, true))?,
     )
-    .cast();
+    .into_upcast();
     let extensions = [
         (
             enlarge_u && enlarge_ufirst && du_first != 0.,
@@ -535,7 +527,7 @@ fn enlarge_swept(
         ),
     ];
     extend_sides(&mut a_surf, &extensions)?;
-    *s = a_surf.cast();
+    *s = a_surf.upcast();
     let (b0, b1, b2, b3) = live(s, "surface")?.bounds();
     *box_ = [b0, b1, b2, b3];
     Ok(true)
@@ -601,7 +593,7 @@ fn enlarge_spline(
             *is_v2degen = true;
         }
     }
-    let mut a_surf: Handle<dyn GeomBoundedSurface> = s.clone().cast();
+    let mut a_surf: Handle<dyn GeomBoundedSurface> = s.cast();
     let extensions = [
         (
             enlarge_u && enlarge_ufirst && uf1 - u1 < duf && du_first != 0.,
@@ -629,7 +621,7 @@ fn enlarge_spline(
         ),
     ];
     extend_sides(&mut a_surf, &extensions)?;
-    *s = a_surf.cast();
+    *s = a_surf.upcast();
     let (b0, b1, b2, b3) = live(s, "surface")?.bounds();
     *box_ = [b0, b1, b2, b3];
     Ok(true)
@@ -698,11 +690,9 @@ fn compact_uv_bounds(f: &Face) -> Result<Bounds, Failure> {
 /// The basis of a rectangular trimmed surface, any other surface unchanged.
 fn untrimmed(s: Handle<dyn GeomSurface>) -> Result<Handle<dyn GeomSurface>, Failure> {
     if s.is_instance_name("Geom_RectangularTrimmedSurface") {
-        return Ok(live(
-            &s.clone().cast::<GeomRectangularTrimmedSurface>(),
-            "surface",
-        )?
-        .basis_surface());
+        return Ok(
+            live(&s.downcast::<GeomRectangularTrimmedSurface>(), "surface")?.basis_surface(),
+        );
     }
     Ok(s)
 }
@@ -713,10 +703,10 @@ fn pcurve_line(an_edge: &Edge, f: &Face) -> Result<Option<Handle<Geom2dLine>>, F
     let pc = BRepTool::curve_on_face(an_edge, f)?;
     let mut a_curve = pc.pcurve;
     if a_curve.is_instance_name("Geom2d_TrimmedCurve") {
-        a_curve = live(&a_curve.clone().cast::<Geom2dTrimmedCurve>(), "pcurve")?.basis_curve();
+        a_curve = live(&a_curve.downcast::<Geom2dTrimmedCurve>(), "pcurve")?.basis_curve();
     }
     if a_curve.is_instance_name("Geom2d_Line") {
-        return Ok(Some(a_curve.cast()));
+        return Ok(Some(a_curve.downcast()));
     }
     if a_curve.is_instance_name("Geom2d_BezierCurve")
         || a_curve.is_instance_name("Geom2d_BSplineCurve")
@@ -1021,7 +1011,7 @@ fn cone_apex_limit(
     if !the_surf.is_instance_name("Geom_ConicalSurface") {
         return Ok(());
     }
-    let the_cone = live(&the_surf.clone().cast::<GeomConicalSurface>(), "cone")?.cone()?;
+    let the_cone = live(&the_surf.downcast::<GeomConicalSurface>(), "cone")?.cone()?;
     let (_, vapex) = elslib::parameters(&the_cone, the_cone.apex());
     if box_[2] < vapex && vapex < box_[3] {
         if vapex - vf1 >= TOL_APEX || vapex - vf2 >= TOL_APEX {

@@ -33,7 +33,7 @@ pub(super) fn loft_wall(
 
 fn trimmed_edge_curve(edge: &Edge) -> Result<Handle<dyn GeomCurve>, Failure> {
     let (curve, first, last) = BRepTool::curve(edge)?;
-    Ok(Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, true)?).cast())
+    Ok(Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, true)?).into_upcast())
 }
 
 fn line(coordinate: f64, vertical: bool) -> Handle<dyn Geom2dCurve> {
@@ -48,7 +48,7 @@ fn line(coordinate: f64, vertical: bool) -> Handle<dyn Geom2dCurve> {
             Direction2::new(1.0, 0.0).unwrap(),
         )
     };
-    Handle::new(Geom2dLine::new(Axis2d::new(point, direction))).cast()
+    Handle::new(Geom2dLine::new(Axis2d::new(point, direction))).into_upcast()
 }
 
 fn set_wall_pcurve(

@@ -116,12 +116,12 @@ fn validate_curve_pair(
     surface: &Handle<dyn GeomSurface>,
 ) -> Result<f64, Failure> {
     let curve2d = Geom2dAdaptorCurve::with_range(&pcurve.pcurve, pcurve.first, pcurve.last)?;
-    let curve2d: Handle<dyn Adaptor2dCurve2d> = Handle::new(curve2d).cast();
+    let curve2d: Handle<dyn Adaptor2dCurve2d> = Handle::new(curve2d).into_upcast();
     let surface = GeomAdaptorSurface::with_surface(surface)?;
-    let surface: Handle<dyn Adaptor3dSurface> = Handle::new(surface).cast();
+    let surface: Handle<dyn Adaptor3dSurface> = Handle::new(surface).into_upcast();
     let on_surface = Handle::new(Adaptor3dCurveOnSurface::with_curve(&curve2d, &surface)?);
     let reference = GeomAdaptorCurve::with_range(curve, pcurve.first, pcurve.last)?;
-    let reference: Handle<dyn Adaptor3dCurve> = Handle::new(reference).cast();
+    let reference: Handle<dyn Adaptor3dCurve> = Handle::new(reference).into_upcast();
     let mut validator = BRepLibValidateEdge::new(&reference, &on_surface, true);
     validator.process()?;
     Ok(if validator.is_done() {

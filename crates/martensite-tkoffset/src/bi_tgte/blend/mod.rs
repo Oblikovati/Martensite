@@ -292,7 +292,7 @@ impl BiTgteBlend {
         let mut c: Handle<dyn GeomCurve> = Handle::default();
         if !BRepTool::degenerated(&e)? {
             let (curve, f, l) = BRepTool::curve(&e)?;
-            c = Handle::new(GeomTrimmedCurve::new(&curve, f, l, true, true)?).cast();
+            c = Handle::new(GeomTrimmedCurve::new(&curve, f, l, true, true)?).into_upcast();
         }
         Ok(c)
     }

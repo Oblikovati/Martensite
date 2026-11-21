@@ -28,7 +28,7 @@ struct SurfaceSidePole {
 /// use martensite_tkernel::standard::Handle;
 /// use martensite_tkmath::gp::Axis3;
 /// use martensite_tkoffset::brep_offset::collapse_singularities;
-/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).cast();
+/// let plane: Handle<dyn GeomSurface> = Handle::new(GeomPlane::new(Axis3::default())).into_upcast();
 /// let collapsed = collapse_singularities(&plane, &Face::default(), 1.0e-7).unwrap();
 /// assert_eq!(collapsed.object_address(), plane.object_address());
 /// ```
@@ -40,7 +40,7 @@ pub fn collapse_singularities(
     if !surface.is_instance(GeomBSplineSurface::static_type()) {
         return Ok(surface.clone());
     }
-    let bspline_handle: Handle<GeomBSplineSurface> = surface.cast();
+    let bspline_handle: Handle<GeomBSplineSurface> = surface.downcast();
     let Some(bspline) = bspline_handle.get() else {
         return Ok(surface.clone());
     };
@@ -189,7 +189,7 @@ fn copy_with_collapsed_sides(
     }
     let copy = GeomBSplineSurface::copy_of(surface)?;
     set_collapsed_side_poles(&copy, collapsed_sides)?;
-    Ok(Handle::new(copy).cast())
+    Ok(Handle::new(copy).into_upcast())
 }
 
 fn set_collapsed_side_poles(

@@ -32,7 +32,7 @@ use std::f64::consts::PI;
 
 /// The surface as a plane, when it is one.
 fn as_plane(s: &Handle<dyn GeomSurface>) -> Handle<GeomPlane> {
-    s.clone().cast::<GeomPlane>()
+    s.downcast::<GeomPlane>()
 }
 
 impl DraftState {
@@ -122,16 +122,13 @@ impl DraftState {
                 let mut dir_ref = Direction3::default();
                 let rs = live(&ref_surf, "surface")?;
                 if rs.is_instance_name("Geom_CylindricalSurface") {
-                    let axe_ref = live(
-                        &ref_surf.clone().cast::<GeomCylindricalSurface>(),
-                        "cylinder",
-                    )?
-                    .cylinder()?
-                    .position();
+                    let axe_ref = live(&ref_surf.downcast::<GeomCylindricalSurface>(), "cylinder")?
+                        .cylinder()?
+                        .position();
                     dir_ref = axe_ref.direction();
                 } else if rs.is_instance_name("Geom_SurfaceOfLinearExtrusion") {
                     dir_ref = live(
-                        &ref_surf.clone().cast::<GeomSurfaceOfLinearExtrusion>(),
+                        &ref_surf.downcast::<GeomSurfaceOfLinearExtrusion>(),
                         "extrusion",
                     )?
                     .direction();
@@ -143,9 +140,9 @@ impl DraftState {
 
                 // it is possible to accelerate speed by storing the info during
                 // InternalAdd --> modification of FaceInfo to preserve the circle
-                let ccir: Handle<dyn GeomCurve> = ccir_curve.cast::<GeomCircle>().cast();
+                let ccir: Handle<dyn GeomCurve> = ccir_curve.downcast::<GeomCircle>().into_upcast();
                 let mut new_s: Handle<dyn GeomSurface> =
-                    Handle::new(GeomSurfaceOfLinearExtrusion::new(&ccir, extrdir)?).cast();
+                    Handle::new(GeomSurfaceOfLinearExtrusion::new(&ccir, extrdir)?).into_upcast();
 
                 let (_umin, _umax, mut vmin, mut vmax) = brep_tools::uv_bounds(&fk)?;
                 if !precision::is_negative_infinite(vmin) && !precision::is_positive_infinite(vmax)
@@ -276,7 +273,7 @@ impl DraftState {
         {
             k_part = true;
             axis = live(&as_plane(&s2), "plane")?.pln().position();
-            let extrusion = s1.clone().cast::<GeomSurfaceOfLinearExtrusion>();
+            let extrusion = s1.downcast::<GeomSurfaceOfLinearExtrusion>();
             let extrusion = live(&extrusion, "extrusion")?;
             the_new_curve = extrusion.basis_curve();
             the_dir_extr = extrusion.direction();
@@ -286,12 +283,12 @@ impl DraftState {
             k_part = true;
             pc1 = false;
             axis = live(&as_plane(&s1), "plane")?.pln().position();
-            let extrusion = s2.clone().cast::<GeomSurfaceOfLinearExtrusion>();
+            let extrusion = s2.downcast::<GeomSurfaceOfLinearExtrusion>();
             let extrusion = live(&extrusion, "extrusion")?;
             the_new_curve = extrusion.basis_curve();
             the_dir_extr = extrusion.direction();
         }
-        let a_circ = the_new_curve.clone().cast::<GeomCircle>();
+        let a_circ = the_new_curve.downcast::<GeomCircle>();
         if k_part {
             // very temporary on circles !!!
             match a_circ.get() {
@@ -311,13 +308,13 @@ impl DraftState {
                 .dot(Vector3::from(axis.direction()));
             let cos = the_dir_extr.dot(axis.direction());
             let vv = Vector3::from(the_dir_extr) * (a_local_real / cos);
-            new_c = live(&the_new_curve, "curve")?.translated(vv)?.cast();
+            new_c = live(&the_new_curve, "curve")?.translated(vv)?.into_cast();
             // it is possible to calculate PCurve
             let l2d: Handle<dyn Geom2dCurve> = Handle::new(Geom2dLine::from_point(
                 Point2::new(0., a_local_real / cos),
                 Direction2::new(1., 0.)?,
             ))
-            .cast();
+            .into_upcast();
 
             let einf = self.my_e_map.change_from_index(ii)?;
             if pc1 {
@@ -417,7 +414,7 @@ impl DraftState {
                                             elslib::plane_parameters(pl.position(), pfvprim);
                                     } else if ts.is_instance_name("Geom_CylindricalSurface") {
                                         let cy = live(
-                                            &s2.clone().cast::<GeomCylindricalSurface>(),
+                                            &s2.downcast::<GeomCylindricalSurface>(),
                                             "cylinder",
                                         )?
                                         .cylinder()?;
@@ -627,7 +624,7 @@ impl DraftState {
                 }
 
                 let bounded = |c: &Handle<dyn GeomCurve>| -> Handle<dyn GeomBoundedCurve> {
-                    c.clone().cast::<GeomBSplineCurve>().cast()
+                    c.downcast::<GeomBSplineCurve>().into_upcast()
                 };
                 let mut concat = CompCurveToBSplineCurve::with_curve(
                     &bounded(&first_curve),
@@ -637,7 +634,7 @@ impl DraftState {
                     concat.add(&bounded(glued), precision::confusion(), true, true, 0)?;
                 }
 
-                new_c = concat.bspline_curve().cast();
+                new_c = concat.bspline_curve().into_upcast();
 
                 let the_curve = GeomAdaptorCurve::with_curve(&new_c)?;
                 let my_ext_pc = ExtPC::with_curve(pfv, &the_curve, 1.0e-10)?;
@@ -700,12 +697,9 @@ impl DraftState {
         let (ls1, ls2) = (live(&a_local_s1, "surface")?, live(&a_local_s2, "surface")?);
         let circle_pcurve =
             |s: &Handle<dyn GeomSurface>| -> Result<Option<Handle<dyn Geom2dCurve>>, Failure> {
-                let sel = live(
-                    &s.clone().cast::<GeomSurfaceOfLinearExtrusion>(),
-                    "extrusion",
-                )?
-                .basis_curve();
-                match sel.cast::<GeomCircle>().get() {
+                let sel =
+                    live(&s.downcast::<GeomSurfaceOfLinearExtrusion>(), "extrusion")?.basis_curve();
+                match sel.downcast::<GeomCircle>().get() {
                     Some(gcir) => {
                         let u = elclib::parameter(&gcir.circ()?, ptfixe)?;
                         Ok(Some(
@@ -713,22 +707,19 @@ impl DraftState {
                                 Point2::new(u, 0.),
                                 Direction2::new(0., 1.)?,
                             ))
-                            .cast(),
+                            .into_upcast(),
                         ))
                     }
                     None => Ok(None),
                 }
             };
         if ls1.is_instance_name("Geom_CylindricalSurface") {
-            let cyl = live(
-                &a_local_s1.clone().cast::<GeomCylindricalSurface>(),
-                "cylinder",
-            )?
-            .cylinder()?;
+            let cyl =
+                live(&a_local_s1.downcast::<GeomCylindricalSurface>(), "cylinder")?.cylinder()?;
             dirextr = cyl.axis().direction();
         } else if ls1.is_instance_name("Geom_SurfaceOfLinearExtrusion") {
             dirextr = live(
-                &a_local_s1.clone().cast::<GeomSurfaceOfLinearExtrusion>(),
+                &a_local_s1.downcast::<GeomSurfaceOfLinearExtrusion>(),
                 "extrusion",
             )?
             .direction();
@@ -737,15 +728,12 @@ impl DraftState {
                 *einf.change_first_pc() = pc1;
             }
         } else if ls2.is_instance_name("Geom_CylindricalSurface") {
-            let cyl = live(
-                &a_local_s2.clone().cast::<GeomCylindricalSurface>(),
-                "cylinder",
-            )?
-            .cylinder()?;
+            let cyl =
+                live(&a_local_s2.downcast::<GeomCylindricalSurface>(), "cylinder")?.cylinder()?;
             dirextr = cyl.axis().direction();
         } else if ls2.is_instance_name("Geom_SurfaceOfLinearExtrusion") {
             dirextr = live(
-                &a_local_s2.clone().cast::<GeomSurfaceOfLinearExtrusion>(),
+                &a_local_s2.downcast::<GeomSurfaceOfLinearExtrusion>(),
                 "extrusion",
             )?
             .direction();
@@ -755,7 +743,7 @@ impl DraftState {
             }
         }
         let new_c: Handle<dyn GeomCurve> =
-            Handle::new(GeomLine::from_point(ptfixe, dirextr)).cast();
+            Handle::new(GeomLine::from_point(ptfixe, dirextr)).into_upcast();
 
         let (_, d1fv) = live(c, "curve")?.d1(0.)?;
         let (_, newd1) = live(&new_c, "curve")?.d1(0.)?;
@@ -850,8 +838,8 @@ impl DraftState {
 
             let ac = Handle::new(ac);
             let as_adaptor = Handle::new(GeomAdaptorSurface::with_surface(&as_surface)?);
-            let hac: Handle<dyn Adaptor3dCurve> = ac.clone().cast();
-            let has: Handle<dyn Adaptor3dSurface> = as_adaptor.clone().cast();
+            let hac: Handle<dyn Adaptor3dCurve> = ac.upcast();
+            let has: Handle<dyn Adaptor3dSurface> = as_adaptor.upcast();
             let mut myintcs = HInter::default();
             myintcs.perform(&hac, &has)?;
             if !myintcs.is_done() {

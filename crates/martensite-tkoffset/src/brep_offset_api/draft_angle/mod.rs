@@ -58,7 +58,7 @@ impl BRepOffsetAPIDraftAngle {
     }
 
     fn set_modification(&mut self, modification: Handle<DraftModification>) {
-        self.modify.my_modification = modification.clone().cast::<dyn BRepToolsModification>();
+        self.modify.my_modification = modification.upcast::<dyn BRepToolsModification>();
         self.draft = modification;
     }
 

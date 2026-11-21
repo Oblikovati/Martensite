@@ -157,7 +157,8 @@ impl BRepOffsetMakeOffset {
                     )?;
                     the_sphere.set_radius(self.my_offset)?;
                     the_sphere.set_position(Axis3::from_axis2(an_ax2));
-                    a_sph_surf = Handle::new(GeomSphericalSurface::from_sphere(the_sphere)).cast();
+                    a_sph_surf =
+                        Handle::new(GeomSphericalSurface::from_sphere(the_sphere)).into_upcast();
                     first_point = f_pnt;
                     the_first_vertex = BRepLibMakeVertex::new(f_pnt)?.vertex()?;
                     cur_first_vertex = the_first_vertex.clone();
@@ -185,13 +186,15 @@ impl BRepOffsetMakeOffset {
                 }
                 let a_curv = live(&a_sph_surf, "sphere")?.v_iso(vf)?;
                 let a_trim_curv: Handle<dyn GeomCurve> =
-                    Handle::new(GeomTrimmedCurve::new(&a_curv, uf, ul, true, true)?).cast();
+                    Handle::new(GeomTrimmedCurve::new(&a_curv, uf, ul, true, true)?).into_upcast();
                 builder.update_edge_curve(&cur_edge, &a_trim_curv, precision::confusion())?;
                 builder.range(&cur_edge, uf, ul, true)?;
                 let the_lin2d: Handle<dyn Geom2dCurve> =
-                    Handle::new(Geom2dLine::from_point(Point2::new(0., vf), Direction2::X)).cast();
+                    Handle::new(Geom2dLine::from_point(Point2::new(0., vf), Direction2::X))
+                        .into_upcast();
                 let the_trim_lin2d: Handle<dyn Geom2dCurve> =
-                    Handle::new(Geom2dTrimmedCurve::new(&the_lin2d, uf, ul, true, true)?).cast();
+                    Handle::new(Geom2dTrimmedCurve::new(&the_lin2d, uf, ul, true, true)?)
+                        .into_upcast();
                 builder.update_edge_pcurve(
                     &cur_edge,
                     &the_trim_lin2d,
