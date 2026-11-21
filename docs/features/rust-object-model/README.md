@@ -1,6 +1,6 @@
 # Rust-native object model
 
-Status: foundation migration in progress. Decided by the maintainer on 2026-11-21.
+Status: downstream toolkit migration in progress. Decided by the maintainer on 2026-11-21.
 Tracking issue: #592.
 
 Martensite's object model copies C++: classes inherit by embedding their parent struct
@@ -116,9 +116,8 @@ and measurements guide the raw `Sequence` and `List` node changes (#586).
 
 ## Migration order
 
-Each step migrates one crate, builds and tests it together with the crates already migrated,
-and does not run the tests of crates not migrated yet (maintainer instruction). Order by
-dependency level, from `cargo metadata`:
+Each step migrates one crate and runs its own suite once its workspace dependencies have
+migrated. The order below follows dependency levels from `cargo metadata`.
 
 1. `martensite-tkernel` (`martensite-cmath` has no object model)
 2. `tkmath`, `process-policy`, `tkcdf`, `tkexpress`
