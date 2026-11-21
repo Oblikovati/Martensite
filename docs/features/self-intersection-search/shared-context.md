@@ -4,7 +4,9 @@ PR #503 made the body self-intersection check run its tasks in parallel and capp
 the workers at eight. It was merged into its stacked base branch,
 `fix/496-line-on-2s-storage`, twelve seconds after that base had merged into
 `main`. Its commits `4b013360` and `e16ee94a` never reached `main` or
-`release/next`. This change restores them and fixes the memory cost they had.
+`release/next`. #577 restored them and fixed the memory cost of one check. Across
+a long operation the parallel check still raised peak memory, so the self-check is
+serial again (#580); see the last section.
 
 ## What went wrong with one context per worker
 
@@ -38,9 +40,10 @@ added worker: 255 MB serial, 422 MB with two workers, 626 MB with four and
   lock and inserted under the write lock, unless another worker inserted it
   first; every caller then shares the first inserted service. Before, the build
   ran under the write lock, so one slow build stalled every lookup in that cache.
-- The self-check runs on at most four workers. `Options` carry the bound to every
-  pave-filler and self-check stage, so it is part of the operation, not a global
-  setting. Boolean operations keep one worker per task, as before.
+- When the self-check runs in parallel, it uses at most four workers. `Options`
+  carry the bound to every pave-filler and self-check stage, so it is part of the
+  operation, not a global setting. Boolean operations keep one worker per task,
+  as before. Since #580 the production self-check is serial.
 
 Parallel mode stays off by default. Only callers that enable it are affected: the
 self-intersection check and the Boolean case runner.
@@ -110,3 +113,23 @@ geometry stages (1.3 s) and pave-block construction (0.8 s).
   needs its own measurement.
 - The timings come from one fixture on a host with other work running. Repeated
   runs of one configuration varied by up to 4%.
+
+## Memory across many checks (#580)
+
+A single check stayed inside the memory tradeoff. The complete attached cone-text
+test, which runs about 19 checks (18 tool members and the final solid), did not.
+Debug build, CI build settings, all CPUs:
+
+| Build | API time | Peak RSS (KiB) |
+| --- | ---: | ---: |
+| before #577 (`5161ffc6`) | 98.6 s, 95.3 s | 308,648, 309,896 |
+| parallel check | 60.5 s, 62.0 s | 469,968, 473,808 |
+| parallel check, `MALLOC_ARENA_MAX=2` | 59.3 s | 419,584 |
+| parallel check, `MALLOC_ARENA_MAX=1` | 59.9 s | 316,156 |
+
+With one allocator arena the time is the same and the peak returns to the
+baseline, so the growth is freed memory that glibc keeps in the worker threads'
+arenas between checks, not live data. A library cannot set the process's arena
+policy, so the production check runs serially until its parallel path fits the
+tradeoff. #580 tracks where the retained memory is allocated: long-lived cached
+services built on worker threads, or short-lived task allocations.

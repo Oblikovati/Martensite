@@ -197,6 +197,16 @@ fn completed_single_walk_is_scoped_to_its_actual_execution() {
     );
 }
 
+// #580: the production check is serial until its parallel path fits the memory tradeoff.
+#[test]
+fn the_production_self_check_runs_serially() {
+    use crate::bop_algo::Parallelism;
+    let shape = converted_box();
+    let production =
+        super::self_check::configured_checker(&shape, super::self_check::SELF_CHECK_PARALLEL);
+    assert_eq!(production.options().parallelism(), Parallelism::SERIAL);
+}
+
 // The check bounds its workers; serial stays serial (#496).
 #[test]
 fn the_self_check_runs_on_at_most_four_workers() {
