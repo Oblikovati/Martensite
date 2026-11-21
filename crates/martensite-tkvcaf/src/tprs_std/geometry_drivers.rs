@@ -13,7 +13,7 @@ use martensite_tklcaf::tdf::TdfLabel;
 use martensite_tkmath::gp::{Circle3, Ellipse3, Line3, Point3};
 use martensite_tktopalgo::brep_builder_api::{BRepBuilderAPIMakeEdge, BRepBuilderAPIMakeShape};
 use martensite_tkv3d::ais::{
-    AisCircle, AisInteractiveObject, AisLine, AisShape, AisShapeParameters,
+    AisCircle, AisInteractiveObject, AisLine, AisShape, AisShapeParameters, AisShapeSource,
 };
 use martensite_tkv3d::prs_dim::prs_dim_units_api;
 use martensite_tkv3d::prs_mgr::{PrsMgrPresentableObject, PrsMgrPresentableObjectMembers};
@@ -87,7 +87,7 @@ fn point_presentation(
     if !TDataXtdGeometry::point_of_label(label, &mut point)? {
         return Ok(None);
     }
-    let object: Handle<dyn AisInteractiveObject> = point_object(ais, point)?.cast();
+    let object: Handle<dyn AisInteractiveObject> = point_object(ais, point)?.into_upcast();
     martensite_tklcaf::live(&object, "TPrsStdGeometryDriver")?.set_color(red())?;
     Ok(Some(object))
 }
@@ -153,19 +153,19 @@ fn ellipse_presentation(
         return Ok(None);
     }
     let edge = maker.shape()?.clone();
-    let kept = ais.cast::<AisShape>();
+    let kept = ais.view::<dyn AisShapeSource>();
     let object = match kept.get() {
         Some(object) => {
             object.reset_transformation()?;
             object.set(&edge);
             object.set_to_update_all();
             object.update_selection(-1);
-            kept.clone()
+            ais.clone()
         }
-        None => AisShape::new(&edge),
+        None => AisShape::new(&edge).into_upcast(),
     };
     object.set_color(red())?;
-    Ok(Some(object.cast()))
+    Ok(Some(object))
 }
 
 /// `Shape::Infinite()` (the shape is not null here).
@@ -191,7 +191,7 @@ impl TPrsStdDriver for TPrsStdNamedShapeDriver {
         if shape.is_null() {
             return Ok(false);
         }
-        let kept = ais.cast::<AisShape>();
+        let kept = ais.view::<dyn AisShapeSource>();
         let object = match kept.get() {
             Some(object) => {
                 if object.shape() != shape {
@@ -200,16 +200,16 @@ impl TPrsStdDriver for TPrsStdNamedShapeDriver {
                     object.update_selection(-1);
                     object.set_to_update_all();
                 }
-                kept.clone()
+                ais.clone()
             }
-            None => AisShape::new(&shape),
+            None => AisShape::new(&shape).into_upcast(),
         };
         // At, SetInfiniteState belongs to the non-null input branch, not
         // only the successful downcast branch. Null input retains AisShape defaults.
         if !ais.is_null() {
             object.set_infinite_state(shape_is_infinite(&shape));
         }
-        *ais = object.cast();
+        *ais = object;
         Ok(true)
     }
 }
