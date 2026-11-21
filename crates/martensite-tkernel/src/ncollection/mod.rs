@@ -73,6 +73,7 @@ pub use base_list::{
     BaseListBasicIterator, BaseListRawIterator, BaseListStorage, BasicListNode, BasicListNodeMut,
     DelListNode,
 };
+mod detached_observation;
 #[allow(unsafe_code)]
 mod list;
 #[allow(unsafe_code)]

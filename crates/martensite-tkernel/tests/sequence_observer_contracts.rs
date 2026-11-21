@@ -111,3 +111,20 @@ fn check_parallel_cache_pair(
         assert_eq!(observed.cached_node, addresses[observed.cached_index - 1]);
     }
 }
+
+#[test]
+fn sequence_allocator_owner_is_transferred_to_the_last_detached_observer() {
+    let allocator = martensite_tkernel::ncollection::BaseAllocator::fresh_heap();
+    let outside = allocator.ref_count();
+    let mut collection = Sequence::with_allocator(allocator.clone());
+    collection.append(7);
+    let observer = collection.observer();
+    let retained = observer.clone();
+    assert_eq!(allocator.ref_count(), outside + 1);
+    drop(collection);
+    assert_eq!(allocator.ref_count(), outside + 1);
+    drop(observer);
+    assert_eq!(allocator.ref_count(), outside + 1);
+    drop(retained);
+    assert_eq!(allocator.ref_count(), outside);
+}

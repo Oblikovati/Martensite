@@ -4,7 +4,7 @@ Option A keeps one address-stable allocation per item. The list or sequence owns
 
 A detached cursor can reuse its pointers when they belong to the same chain revision. Across an edit that may invalidate its position, it resolves the address from the owning chain and uses the provenance found there. Same-resource splits and splices leave surviving node addresses intact. The usual borrowed iterators follow the links directly.
 
-A sequence's lookup cache publishes a pointer to a live node. The node contains its index, which stays fixed during shared reads. An exclusive edit imports the current cache pair before changing the base and publishes the resulting pair afterward. Explicit `base_access()` guards keep the borrowed base and its allocator identity and serialize inspection of the raw cache fields. Indexed reads use the separate cache and structural fields. Detached observers hold synchronized copies of the metadata and can read it during destruction.
+A sequence's lookup cache publishes a pointer to a live node. The node contains its index, which stays fixed during shared reads. An exclusive edit imports the current cache pair before changing the base and publishes the resulting pair afterward. Explicit `base_access()` guards keep the borrowed base and its allocator identity and serialize inspection of the raw cache fields. Indexed reads use the separate cache and structural fields. Detached observers hold synchronized copies of the metadata and can read it during destruction. At teardown the original allocator moves to the observer state and remains owned until the last observer drops.
 
 Controlled sequence clear (#77) leaves historical endpoints and size visible while nodes are destroyed. This path builds a temporary liveness index. If an append reuses a retired address, the index resolves the new allocation's pointer. The mutable iterator tracks yielded addresses during this phase so a reused address cannot produce two exclusive references. Once the clear traversal retires a node, splitting or splicing the historical topology returns a typed failure before sharing ownership with another chain. Ordinary destruction follows the owned links and advances its cleanup guard before calling each destructor.
 
@@ -41,3 +41,9 @@ Default sequence nodes also carry the raw heap allocation header and cache index
 ## Verification
 
 All 5,306 `tkernel` tests passed with eight existing skips, and all-target Clippy passed with warnings denied. Miri covered controlled clear, inspection during a concurrent read, addressed node retirement and mixed-allocator splicing. The ThreadSanitizer startup fixture exited with SIGSEGV before running its controls.
+
+## Detached allocator lifetime
+
+After the chain is destroyed, a surviving observer retains the original allocator until the last observer drops. The sequence keeps its base in place and uses a new unregistered policy as the replacement at teardown. This avoids changing the process-wide common handle count.
+
+A CPU 23 release benchmark of 65,536 prepared empty sequences, each with an observer, measured the time to drop the owner, take the final snapshot and drop the observer. The median of three seven-run rounds was 174.87 ns per sequence on `5fb67dbc` and 163.77 ns with safe replacement. Paired indexed lookups took 5.91 ns per item at `ebd221a1` and 5.35 ns after the lifetime change. The latter comparison counted 3.704 and 3.620 billion user-space instructions across the full benchmark process.

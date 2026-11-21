@@ -1,11 +1,12 @@
 //! Raw links stay in the owner. Detached observers retain metadata only.
 use super::{BaseAllocator, BaseListStorage, NodeRevision, address};
-use std::sync::{Arc, Mutex, OnceLock, PoisonError};
+use crate::ncollection::detached_observation::DetachedObservation;
+use std::sync::{Arc, OnceLock};
 
 pub(super) struct ListTopology {
-    base: BaseListStorage,
+    base: Option<BaseListStorage>,
     revision: NodeRevision,
-    observer: OnceLock<Arc<Mutex<ListObservation>>>,
+    observer: OnceLock<Arc<DetachedObservation<ListObservation>>>,
 }
 
 /// Read-only access to an owner's actual metadata, including during item Drop.
@@ -13,7 +14,7 @@ pub(super) struct ListTopology {
 /// Node identities are opaque and may name already destroyed nodes during clearing.
 #[derive(Clone)]
 pub struct ListObserver {
-    shared: Arc<Mutex<ListObservation>>,
+    shared: Arc<DetachedObservation<ListObservation>>,
 }
 
 #[derive(Clone, Copy)]
@@ -35,14 +36,13 @@ impl From<&BaseListStorage> for ListObservation {
 
 struct PublishListEdit<'a> {
     base: &'a mut BaseListStorage,
-    observer: Option<&'a Arc<Mutex<ListObservation>>>,
+    observer: Option<&'a Arc<DetachedObservation<ListObservation>>>,
 }
 
 impl Drop for PublishListEdit<'_> {
     fn drop(&mut self) {
         if let Some(observer) = self.observer {
-            *observer.lock().unwrap_or_else(PoisonError::into_inner) =
-                ListObservation::from(&*self.base);
+            observer.publish(|| ListObservation::from(&*self.base));
         }
     }
 }
@@ -50,13 +50,13 @@ impl Drop for PublishListEdit<'_> {
 impl ListTopology {
     pub(super) fn new(allocator: BaseAllocator) -> Self {
         Self {
-            base: BaseListStorage::new(Some(allocator)),
+            base: Some(BaseListStorage::new(Some(allocator))),
             revision: NodeRevision::new(),
             observer: OnceLock::new(),
         }
     }
     pub(super) fn base(&self) -> &BaseListStorage {
-        &self.base
+        self.base.as_ref().expect("live list owns its base")
     }
     pub(super) fn revision(&self) -> NodeRevision {
         self.revision
@@ -70,7 +70,7 @@ impl ListTopology {
         edit: impl FnOnce(&mut BaseListStorage) -> R,
     ) -> R {
         let publish = PublishListEdit {
-            base: &mut self.base,
+            base: self.base.as_mut().expect("live list owns its base"),
             observer: self.observer.get(),
         };
         edit(publish.base)
@@ -88,16 +88,24 @@ impl ListTopology {
     pub(super) fn observer(&self) -> ListObserver {
         let observation = self
             .observer
-            .get_or_init(|| Arc::new(Mutex::new(ListObservation::from(&self.base))));
+            .get_or_init(|| Arc::new(DetachedObservation::new(ListObservation::from(self.base()))));
         ListObserver {
             shared: observation.clone(),
         }
     }
 }
 
+impl Drop for ListTopology {
+    fn drop(&mut self) {
+        if let (Some(base), Some(observer)) = (self.base.take(), self.observer.get()) {
+            observer.retain_final_allocator(base.allocator);
+        }
+    }
+}
+
 impl ListObserver {
     fn snapshot(&self) -> ListObservation {
-        *self.shared.lock().unwrap_or_else(PoisonError::into_inner)
+        self.shared.read()
     }
     /// Reads the size, including its intermediate destructor value; `observer.size()`.
     pub fn size(&self) -> usize {

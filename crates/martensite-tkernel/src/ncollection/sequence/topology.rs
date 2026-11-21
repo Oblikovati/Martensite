@@ -4,6 +4,7 @@ use super::{
     base_storage::{SequenceNodeLiveness, SequenceSearch},
     lookup_cache::SequenceLookupCache,
 };
+use crate::ncollection::detached_observation::DetachedObservation;
 use std::{
     cell::UnsafeCell,
     sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError},
@@ -13,7 +14,7 @@ pub(super) struct SequenceTopology {
     base: UnsafeCell<BaseSequence>,
     revision: NodeRevision,
     cache: SequenceLookupCache,
-    observer: OnceLock<Arc<Mutex<SequenceObservation>>>,
+    observer: OnceLock<Arc<DetachedObservation<SequenceObservation>>>,
     inspection: Mutex<()>,
 }
 
@@ -154,7 +155,7 @@ impl SequenceTopology {
     pub(super) fn observer(&self) -> SequenceObserver {
         let observation = self
             .observer
-            .get_or_init(|| Arc::new(Mutex::new(self.observation())));
+            .get_or_init(|| Arc::new(DetachedObservation::new(self.observation())));
         // A concurrent reader may have published while the observer cell was initializing.
         self.publish_observation();
         SequenceObserver {
@@ -163,7 +164,7 @@ impl SequenceTopology {
     }
     fn publish_observation(&self) {
         if let Some(observer) = self.observer.get() {
-            *observer.lock().unwrap_or_else(PoisonError::into_inner) = self.observation();
+            observer.publish(|| self.observation());
         }
     }
     fn observation(&self) -> SequenceObservation {
@@ -212,11 +213,27 @@ impl SequenceTopology {
     }
 }
 
+impl Drop for SequenceTopology {
+    fn drop(&mut self) {
+        let Some(observer) = self.observer.get() else {
+            return;
+        };
+        if Arc::strong_count(observer) == 1 {
+            return;
+        }
+        // Use an unregistered spare policy so teardown does not temporarily add an owner
+        // to the process-wide common allocator. Only a surviving observer needs this move.
+        let allocator = &mut self.base.get_mut().allocator;
+        let original = std::mem::replace(allocator, BaseAllocator::common_policy());
+        observer.retain_final_allocator(original);
+    }
+}
+
 /// Read-only metadata access, including during destruction.
 /// Example: `let observer = sequence.observer(); assert_eq!(observer.snapshot().size, 2)`.
 #[derive(Clone)]
 pub struct SequenceObserver {
-    shared: Arc<Mutex<SequenceObservation>>,
+    shared: Arc<DetachedObservation<SequenceObservation>>,
 }
 /// One synchronized read of canonical metadata, never used as authoritative container state.
 /// Example: `let observed = sequence.observer().snapshot(); assert_eq!(observed.cached_index, 1)`.
@@ -237,6 +254,6 @@ pub struct SequenceObservation {
 impl SequenceObserver {
     /// Copies synchronized metadata; `observer.snapshot().size`.
     pub fn snapshot(&self) -> SequenceObservation {
-        *self.shared.lock().unwrap_or_else(PoisonError::into_inner)
+        self.shared.read()
     }
 }
