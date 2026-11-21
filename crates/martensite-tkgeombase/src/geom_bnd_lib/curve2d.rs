@@ -8,7 +8,9 @@ use super::offset_curve2d::OffsetCurve2d;
 use super::other_curve::OtherCurve2d;
 use super::parabola::Parabola2d;
 use super::spline_curve2d::{BSplineCurve2d, BezierCurve2d};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, exceptions};
+use martensite_tkernel::standard::{
+    Failure, Handle, RuntimeTyped, Transient, exceptions, project_concrete,
+};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg2d::geom2d::{
     Geom2dBSplineCurve, Geom2dBezierCurve, Geom2dCircle, Geom2dCurve, Geom2dEllipse,
@@ -63,8 +65,8 @@ macro_rules! dispatch {
 
 // `tryEmplaceEvaluator`: the `occ::down_cast` chain of the handle constructor.
 fn detect(curve: &Handle<dyn Geom2dCurve>) -> Option<(CurveType, Evaluator)> {
-    fn kind<T: RuntimeTyped>(curve: &Handle<dyn Geom2dCurve>) -> Option<Handle<T>> {
-        let typed: Handle<T> = curve.cast::<T>();
+    fn kind<T: Transient>(curve: &Handle<dyn Geom2dCurve>) -> Option<Handle<T>> {
+        let typed: Handle<T> = curve.downcast::<T>();
         (!typed.is_null()).then_some(typed)
     }
     if let Some(h) = kind::<Geom2dLine>(curve) {
@@ -135,7 +137,7 @@ fn from_adaptor_kind(
 
 // `dynamic_cast<const Geom2dAdaptorCurve*>` then `occ::down_cast<OffsetCurve>`.
 fn adaptor_offset(curve: &dyn Adaptor2dCurve2d) -> Option<Evaluator> {
-    let geom_adaptor = Geom2dAdaptorCurve::project_from(curve)?;
+    let geom_adaptor = project_concrete::<Geom2dAdaptorCurve>(curve)?;
     let offset: Handle<Geom2dOffsetCurve> = geom_adaptor.curve().cast();
     (!offset.is_null()).then(|| Evaluator::Offset(OffsetCurve2d::new(offset)))
 }

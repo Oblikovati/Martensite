@@ -255,7 +255,7 @@ fn approximated_pcurve(approx: &AdvApproxApproxAFunction) -> Result<Approximated
     let adaptor = Geom2dAdaptorCurve::with_curve(&curve.clone().cast())?;
     Ok(Approximated {
         curve,
-        adaptor: Handle::new(adaptor).cast(),
+        adaptor: Handle::new(adaptor).into_upcast(),
     })
 }
 

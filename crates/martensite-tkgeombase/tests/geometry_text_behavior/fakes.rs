@@ -3,7 +3,7 @@
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{ProgressIndicatorHooks, ProgressScope};
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkernel::storage::IoStream;
 use martensite_tkg3d::geom::{GeomBSplineCurve, GeomCircle, GeomCurve, GeomLine};
 use martensite_tkg3d::geom_eval::GeomEvalCircularHelixCurve;
@@ -77,20 +77,17 @@ impl ProgressIndicatorHooks for BreakingIndicator {
 
 /// A handler that stores the GeomEval helix under type code 42 and fails on code 13.
 pub struct HelixHandler {
-    parent: StandardTransient,
     base: UndefinedTypeHandlerBase,
 }
 impl_transient!(
     HelixHandler,
     "HelixHandler",
-    StandardTransient,
-    parent,
+    dyn Transient,
     interfaces: [dyn UndefinedTypeHandler]
 );
 impl HelixHandler {
     pub fn new(console: Arc<dyn ConsoleOutput>) -> Self {
         Self {
-            parent: StandardTransient::default(),
             base: UndefinedTypeHandlerBase::with_console(console),
         }
     }

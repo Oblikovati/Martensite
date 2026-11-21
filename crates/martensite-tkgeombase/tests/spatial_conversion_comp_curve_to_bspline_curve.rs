@@ -46,10 +46,10 @@ fn bspline(
     Handle::new(GeomBSplineCurve::new(poles, knots, mults, 3, false).unwrap())
 }
 
-fn bounded<T: GeomBoundedCurve + martensite_tkernel::standard::RuntimeTyped + ?Sized>(
+fn bounded<T: martensite_tkernel::standard::HandleUpcast<dyn GeomBoundedCurve> + ?Sized>(
     curve: &Handle<T>,
 ) -> Handle<dyn GeomBoundedCurve> {
-    curve.cast::<dyn GeomBoundedCurve>()
+    curve.upcast()
 }
 
 //=================================================================================================

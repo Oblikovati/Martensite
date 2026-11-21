@@ -8,7 +8,9 @@ use super::offset_curve::OffsetCurve;
 use super::other_curve::OtherCurve;
 use super::parabola::Parabola;
 use super::spline_curve::{BSplineCurve, BezierCurve};
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped, exceptions};
+use martensite_tkernel::standard::{
+    Failure, Handle, RuntimeTyped, Transient, exceptions, project_concrete,
+};
 use martensite_tkg3d::adaptor3d::Adaptor3dCurve;
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomBezierCurve, GeomCircle, GeomCurve, GeomEllipse, GeomHyperbola, GeomLine,
@@ -63,8 +65,8 @@ macro_rules! dispatch {
 
 // `tryEmplaceEvaluator`: the `occ::down_cast` chain of the handle constructor.
 fn detect(curve: &Handle<dyn GeomCurve>) -> Option<(CurveType, Evaluator)> {
-    fn kind<T: RuntimeTyped>(curve: &Handle<dyn GeomCurve>) -> Option<Handle<T>> {
-        let typed: Handle<T> = curve.cast::<T>();
+    fn kind<T: Transient>(curve: &Handle<dyn GeomCurve>) -> Option<Handle<T>> {
+        let typed: Handle<T> = curve.downcast::<T>();
         (!typed.is_null()).then_some(typed)
     }
     if let Some(h) = kind::<GeomLine>(curve) {
@@ -135,7 +137,7 @@ fn from_adaptor_kind(
 
 // `dynamic_cast<const GeomAdaptorCurve*>` then `occ::down_cast<OffsetCurve>`.
 fn adaptor_offset(curve: &dyn Adaptor3dCurve) -> Option<Evaluator> {
-    let geom_adaptor = GeomAdaptorCurve::project_from(curve)?;
+    let geom_adaptor = project_concrete::<GeomAdaptorCurve>(curve)?;
     let offset: Handle<GeomOffsetCurve> = geom_adaptor.curve().cast();
     (!offset.is_null()).then(|| Evaluator::Offset(OffsetCurve::new(offset)))
 }

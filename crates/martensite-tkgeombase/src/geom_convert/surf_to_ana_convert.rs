@@ -106,7 +106,7 @@ impl SurfToAnaSurf {
             return Ok(None);
         }
         let plane: Handle<dyn GeomSurface> =
-            Handle::new(GeomPlane::from_pln(planar.plan()?)).cast();
+            Handle::new(GeomPlane::from_pln(planar.plan()?)).into_upcast();
         candidates.gaps[0] = compute_gap(temp_s, bounds, &plane, REAL_LAST)?;
         candidates.surfaces[0] = plane;
         if self.my_conv_type == ConvType::Simplest || target_plane {
@@ -293,15 +293,19 @@ fn elementary_copy(
     s_type: SurfaceType,
 ) -> Result<Option<Handle<dyn GeomSurface>>, Failure> {
     let copy: Handle<dyn GeomSurface> = match s_type {
-        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(adaptor.plane()?)).cast(),
+        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(adaptor.plane()?)).into_upcast(),
         SurfaceType::Cylinder => {
-            Handle::new(GeomCylindricalSurface::from_cylinder(adaptor.cylinder()?)).cast()
+            Handle::new(GeomCylindricalSurface::from_cylinder(adaptor.cylinder()?)).into_upcast()
         }
-        SurfaceType::Cone => Handle::new(GeomConicalSurface::from_cone(adaptor.cone()?)).cast(),
+        SurfaceType::Cone => {
+            Handle::new(GeomConicalSurface::from_cone(adaptor.cone()?)).into_upcast()
+        }
         SurfaceType::Sphere => {
-            Handle::new(GeomSphericalSurface::from_sphere(adaptor.sphere()?)).cast()
+            Handle::new(GeomSphericalSurface::from_sphere(adaptor.sphere()?)).into_upcast()
         }
-        SurfaceType::Torus => Handle::new(GeomToroidalSurface::from_torus(adaptor.torus()?)).cast(),
+        SurfaceType::Torus => {
+            Handle::new(GeomToroidalSurface::from_torus(adaptor.torus()?)).into_upcast()
+        }
         _ => return Ok(None),
     };
     Ok(Some(copy))
@@ -360,7 +364,7 @@ fn working_surface(
         return Ok(bz.cast());
     }
     let trimmed = GeomRectangularTrimmedSurface::new(surf, (u1, u2), (v1, v2), (true, true))?;
-    Ok(Handle::new(trimmed).cast())
+    Ok(Handle::new(trimmed).into_upcast())
 }
 
 // The tolerance limited to a thousandth of the "diagonal" from (U1, V1) to

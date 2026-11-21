@@ -105,7 +105,7 @@ pub(super) fn try_cyliner_cone(
     // cylinder
     if (r2 - r1).abs() < toler && (r3 - r1).abs() < toler && (r3 - r2).abs() < toler {
         let axes = Axis3::from_normal(p1, Direction3::from_vector(Vector3::between(p1, p3))?)?;
-        return Ok(Handle::new(GeomCylindricalSurface::new(axes, r1)?).cast());
+        return Ok(Handle::new(GeomCylindricalSurface::new(axes, r1)?).into_upcast());
     }
     // cone
     if (r1.abs() > r2.abs() && r2.abs() > r3.abs()) || (r3.abs() > r2.abs() && r2.abs() > r1.abs())
@@ -137,7 +137,7 @@ fn cone_through(
             Axis3::from_normal(p1, Direction3::from_vector(Vector3::between(p1, p3))?)?,
         )
     };
-    Ok(Handle::new(GeomConicalSurface::new(axes, semiangle, radius)?).cast())
+    Ok(Handle::new(GeomConicalSurface::new(axes, semiangle, radius)?).into_upcast())
 }
 
 /// `TryTorusSphere(theSurf, circle, otherCircle, Param1, Param2, aParam1ToCrv,
@@ -181,7 +181,7 @@ pub(super) fn try_torus_sphere(
         // compute sphere
         let main_dir: Direction3 = circ_of(other_circle)?.axis().direction();
         let axes = Axis3::from_normal(minor.location(), main_dir)?;
-        return Ok(Handle::new(GeomSphericalSurface::new(axes, r)?).cast());
+        return Ok(Handle::new(GeomSphericalSurface::new(axes, r)?).into_upcast());
     }
     let mut circ = Circle3::default();
     if !CurveToAnaCurve::get_circle(&mut circ, pnt1, pnt2, pnt3)? {
@@ -190,7 +190,7 @@ pub(super) fn try_torus_sphere(
     let center: Point3 = circ.location();
     let dir = Direction3::from_xyz((pnt1.xyz() - center.xyz()).crossed(pnt3.xyz() - center.xyz()))?;
     let ax3 = Axis3::from_normal(center, dir)?;
-    Ok(Handle::new(GeomToroidalSurface::new(ax3, circ.radius(), r)?).cast())
+    Ok(Handle::new(GeomToroidalSurface::new(ax3, circ.radius(), r)?).into_upcast())
 }
 
 /// The elementary surface of a candidate, for the projections of ComputeGap.

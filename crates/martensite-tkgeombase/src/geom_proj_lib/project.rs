@@ -30,11 +30,11 @@ pub fn project(
 ) -> Result<Handle<dyn GeomCurve>, Failure> {
     let adapted_curve = GeomAdaptorCurve::with_curve(curve)?;
     let adapted_surface = GeomAdaptorSurface::with_surface(surface)?;
-    let hc: Handle<dyn Adaptor3dCurve> = Handle::new(adapted_curve).cast();
+    let hc: Handle<dyn Adaptor3dCurve> = Handle::new(adapted_curve).into_upcast();
     if adapted_surface.get_type()? == SurfaceType::Plane {
         return project_on_plane_surface(curve, &hc, adapted_surface.plane()?.position());
     }
-    let hs: Handle<dyn Adaptor3dSurface> = Handle::new(adapted_surface).cast();
+    let hs: Handle<dyn Adaptor3dSurface> = Handle::new(adapted_surface).into_upcast();
     project_by_approximation(&hc, &hs)
 }
 
@@ -53,7 +53,7 @@ fn project_on_plane_surface(
     let Some((u1, u2)) = trimmed_range(curve) else {
         return Ok(projected);
     };
-    Ok(Handle::new(GeomTrimmedCurve::new(&projected, u1, u2, true, true)?).cast())
+    Ok(Handle::new(GeomTrimmedCurve::new(&projected, u1, u2, true, true)?).into_upcast())
 }
 
 // The first CompProjectedCurve part, trimmed to its bounds, approximated in 3D
@@ -98,7 +98,7 @@ pub fn project_on_plane(
     keep_parametrization: bool,
 ) -> Result<Handle<dyn GeomCurve>, Failure> {
     let adapted_curve = GeomAdaptorCurve::with_curve(curve)?;
-    let hc: Handle<dyn Adaptor3dCurve> = Handle::new(adapted_curve).cast();
+    let hc: Handle<dyn Adaptor3dCurve> = Handle::new(adapted_curve).into_upcast();
     let geom_plane: &GeomPlane = plane.get().ok_or_else(|| null_input("the plane"))?;
     let projection = ProjectOnPlane::with_direction(&geom_plane.position(), direction);
     projection.load(&hc, precision::approximation(), keep_parametrization)?;
@@ -109,19 +109,23 @@ pub fn project_on_plane(
         return Ok(projected);
     }
     let (u1, u2) = (projection.first_parameter()?, projection.last_parameter()?);
-    Ok(Handle::new(GeomTrimmedCurve::new(&projected, u1, u2, true, true)?).cast())
+    Ok(Handle::new(GeomTrimmedCurve::new(&projected, u1, u2, true, true)?).into_upcast())
 }
 
 // The Geom curve of the projection kind; None for the other kinds (the retained
 // `default: return GC;`). The Bezier and B-spline results are those of the adaptor.
 fn typed_curve3d(projection: &ProjectOnPlane) -> Result<Option<Handle<dyn GeomCurve>>, Failure> {
     let curve: Handle<dyn GeomCurve> = match projection.get_type()? {
-        CurveType::Line => Handle::new(GeomLine::from_lin(projection.line()?)).cast(),
-        CurveType::Circle => Handle::new(GeomCircle::from_circ(projection.circle()?)).cast(),
-        CurveType::Ellipse => Handle::new(GeomEllipse::from_elips(projection.ellipse()?)).cast(),
-        CurveType::Parabola => Handle::new(GeomParabola::from_parab(projection.parabola()?)).cast(),
+        CurveType::Line => Handle::new(GeomLine::from_lin(projection.line()?)).into_upcast(),
+        CurveType::Circle => Handle::new(GeomCircle::from_circ(projection.circle()?)).into_upcast(),
+        CurveType::Ellipse => {
+            Handle::new(GeomEllipse::from_elips(projection.ellipse()?)).into_upcast()
+        }
+        CurveType::Parabola => {
+            Handle::new(GeomParabola::from_parab(projection.parabola()?)).into_upcast()
+        }
         CurveType::Hyperbola => {
-            Handle::new(GeomHyperbola::from_hypr(projection.hyperbola()?)).cast()
+            Handle::new(GeomHyperbola::from_hypr(projection.hyperbola()?)).into_upcast()
         }
         CurveType::BezierCurve => projection.bezier()?.cast(),
         CurveType::BSplineCurve => projection.bspline()?.cast(),

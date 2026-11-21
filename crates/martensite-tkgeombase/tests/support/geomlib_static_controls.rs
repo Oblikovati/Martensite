@@ -10,7 +10,7 @@ use martensite_tkg2d::{
 use martensite_tkg3d::{
     adaptor3d::Adaptor3dSurface,
     geom::{GeomBSplineSurface, GeomBoundedCurve, GeomBoundedSurface, GeomCurve, GeomSurface},
-    geom_adaptor::{GeomAdaptorCurve, GeomAdaptorSurface},
+    geom_adaptor::{GeomAdaptorCurve, GeomAdaptorSurface, GeomAdaptorSurfaceOfLinearExtrusion},
 };
 use martensite_tkgeombase::geom_lib as gl;
 use martensite_tkmath::{
@@ -162,6 +162,21 @@ fn plane_isoline_and_general_builder_agree_with_the_affine_map() {
         }
     }
 }
+#[test]
+fn isoline_preserves_swept_adaptor_kind_failure() {
+    let swept: Handle<dyn Adaptor3dSurface> =
+        Handle::new(GeomAdaptorSurfaceOfLinearExtrusion::default()).into_upcast();
+    let iso = gl::IsoLine {
+        is_u: true,
+        param: 0.,
+        is_forward: true,
+    };
+    let failure =
+        gl::build_c3d_on_iso_line(&Handle::default(), &swept, (0., 1.), 1e-9, iso).unwrap_err();
+    assert_eq!(failure.exception_type(), "Standard_NullObject");
+    assert!(failure.message().contains("no basis curve"));
+}
+
 #[test]
 fn identical_curve_distance_reports_the_source_tolerance_floor_separately() {
     let curve = build::curve(&mut Reader::new(&[1., 0., 0., 0., 1., 0., 0.])).unwrap();

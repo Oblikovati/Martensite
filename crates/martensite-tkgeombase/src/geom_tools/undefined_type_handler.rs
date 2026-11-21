@@ -1,9 +1,9 @@
 //! `UndefinedTypeHandler`: the extension point the GeomTools printers and
 //! readers call for a geometry class, or a type code, they do not know.
 use super::console::{ConsoleOutput, stdout_console};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeType, RuntimeTyped, Transient};
 use martensite_tkernel::storage::IoStream;
-use martensite_tkernel::{impl_transient, impl_transient_interface};
+use martensite_tkernel::{impl_transient, impl_transient_interface_target};
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::geom::{GeomCurve, GeomSurface};
 use std::sync::Arc;
@@ -98,11 +98,15 @@ pub trait UndefinedTypeHandler: Transient {
         Ok(Handle::default())
     }
 }
-impl_transient_interface!(
-    dyn UndefinedTypeHandler,
-    "GeomTools_UndefinedTypeHandler",
-    StandardTransient
-);
+// The default implementation and its interface share the persisted class.
+impl RuntimeTyped for dyn UndefinedTypeHandler {
+    const TYPE_NAME: &'static str = UndefinedTypeHandlerBase::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        UndefinedTypeHandlerBase::static_type()
+    }
+}
+impl_transient_interface_target!(dyn UndefinedTypeHandler);
 
 /// The retained base behaviour of the print members: the dump gets the line, while the
 /// compact form writes it to standard output and leaves the stream untouched.
@@ -124,14 +128,12 @@ fn report_unknown(console: &dyn ConsoleOutput, stream: &mut IoStream, compact: b
 /// assert!(handler.is_instance_name("GeomTools_UndefinedTypeHandler"));
 /// ```
 pub struct UndefinedTypeHandlerBase {
-    parent: StandardTransient,
     console: Arc<dyn ConsoleOutput>,
 }
 impl_transient!(
     UndefinedTypeHandlerBase,
     "GeomTools_UndefinedTypeHandler",
-    StandardTransient,
-    parent,
+    dyn Transient,
     interfaces: [dyn UndefinedTypeHandler]
 );
 
@@ -146,10 +148,7 @@ impl UndefinedTypeHandlerBase {
     /// The retained handler with its `std::cout` writes sent to `console`;
     /// `UndefinedTypeHandlerBase::with_console(Arc::new(StdoutConsole))`.
     pub fn with_console(console: Arc<dyn ConsoleOutput>) -> Self {
-        Self {
-            parent: StandardTransient::default(),
-            console,
-        }
+        Self { console }
     }
 }
 

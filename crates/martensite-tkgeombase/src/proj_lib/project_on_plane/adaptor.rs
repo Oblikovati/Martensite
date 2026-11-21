@@ -58,7 +58,7 @@ fn live(curve: &Handle<dyn Adaptor3dCurve>) -> Result<&dyn Adaptor3dCurve, Failu
 impl Adaptor3dCurve for ProjectOnPlane {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
         let copy: OnPlaneState = self.snapshot().shallow_copy()?;
-        Ok(Handle::new(ProjectOnPlane::from_state(copy)).cast())
+        Ok(Handle::new(ProjectOnPlane::from_state(copy)).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         let state: OnPlaneState = self.snapshot();

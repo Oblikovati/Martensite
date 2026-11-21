@@ -31,7 +31,7 @@ pub fn to_3d(
         let cc: Handle<dyn GeomCurve> = to_3d(position, &ct.basis_curve())?;
         let curve =
             GeomTrimmedCurve::new(&cc, ct.first_parameter(), ct.last_parameter(), true, true)?;
-        return Ok(Handle::new(curve).cast());
+        return Ok(Handle::new(curve).into_upcast());
     }
     if let Some(co) = curve_2d.cast::<Geom2dOffsetCurve>().get() {
         let cc: Handle<dyn GeomCurve> = to_3d(position, &co.basis_curve())?;
@@ -41,7 +41,7 @@ pub fn to_3d(
             position.direction(),
             false,
         )?)
-        .cast());
+        .into_upcast());
     }
     if let Some(bezier) = curve_2d.cast::<Geom2dBezierCurve>().get() {
         return bezier_to_3d(position, bezier);
@@ -74,7 +74,7 @@ fn bezier_to_3d(
         Some(weights) if bezier.is_rational() => GeomBezierCurve::with_weights(&poles, &weights)?,
         _ => GeomBezierCurve::new(&poles)?,
     };
-    Ok(Handle::new(curve).cast())
+    Ok(Handle::new(curve).into_upcast())
 }
 
 fn bspline_to_3d(
@@ -90,7 +90,7 @@ fn bspline_to_3d(
     } else {
         GeomBSplineCurve::new(&poles, &knots, &mults, degree, periodic)?
     };
-    Ok(Handle::new(curve).cast())
+    Ok(Handle::new(curve).into_upcast())
 }
 
 // The line and the four conics, through the ElCLib embeddings.
@@ -103,35 +103,35 @@ fn conic_to_3d(
             position,
             line.lin2d(),
         )?))
-        .cast());
+        .into_upcast());
     }
     if let Some(circle) = curve_2d.cast::<Geom2dCircle>().get() {
         return Ok(Handle::new(GeomCircle::from_circ(elclib::to3d_circle(
             position,
             circle.circ2d()?,
         )?))
-        .cast());
+        .into_upcast());
     }
     if let Some(ellipse) = curve_2d.cast::<Geom2dEllipse>().get() {
         return Ok(Handle::new(GeomEllipse::from_elips(elclib::to3d_ellipse(
             position,
             ellipse.elips2d()?,
         )?))
-        .cast());
+        .into_upcast());
     }
     if let Some(parabola) = curve_2d.cast::<Geom2dParabola>().get() {
         return Ok(Handle::new(GeomParabola::from_parab(elclib::to3d_parabola(
             position,
             parabola.parab2d()?,
         )?))
-        .cast());
+        .into_upcast());
     }
     if let Some(hyperbola) = curve_2d.cast::<Geom2dHyperbola>().get() {
         return Ok(Handle::new(GeomHyperbola::from_hypr(elclib::to3d_hyperbola(
             position,
             hyperbola.hypr2d()?,
         )?))
-        .cast());
+        .into_upcast());
     }
     Err(failure(
         "Standard_NotImplemented",

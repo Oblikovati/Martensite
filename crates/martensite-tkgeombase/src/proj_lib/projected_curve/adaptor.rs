@@ -60,7 +60,7 @@ fn bezier_of(state: &ProjectedState) -> Result<Handle<Geom2dBezierCurve>, Failur
 
 impl Adaptor2dCurve2d for ProjectedCurve {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor2dCurve2d>, Failure> {
-        Ok(Handle::new(self.shallow_projection()?).cast())
+        Ok(Handle::new(self.shallow_projection()?).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         live_curve(&self.snapshot().curve)?.first_parameter()

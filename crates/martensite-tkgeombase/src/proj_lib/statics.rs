@@ -120,16 +120,18 @@ pub fn project_circle_on_torus(torus: &Torus3, circle: &Circle3) -> Result<Line2
 /// Bezier or another kind; `make_pcurve_of_type(&projected)?`.
 pub fn make_pcurve_of_type(projected: &ProjectedCurve) -> Result<Handle<dyn Geom2dCurve>, Failure> {
     match projected.get_type()? {
-        CurveType::Line => Ok(Handle::new(Geom2dLine::from_lin2d(projected.line()?)).cast()),
-        CurveType::Circle => Ok(Handle::new(Geom2dCircle::from_circ2d(projected.circle()?)).cast()),
+        CurveType::Line => Ok(Handle::new(Geom2dLine::from_lin2d(projected.line()?)).into_upcast()),
+        CurveType::Circle => {
+            Ok(Handle::new(Geom2dCircle::from_circ2d(projected.circle()?)).into_upcast())
+        }
         CurveType::Ellipse => {
-            Ok(Handle::new(Geom2dEllipse::from_elips2d(projected.ellipse()?)).cast())
+            Ok(Handle::new(Geom2dEllipse::from_elips2d(projected.ellipse()?)).into_upcast())
         }
         CurveType::Parabola => {
-            Ok(Handle::new(Geom2dParabola::from_parab2d(projected.parabola()?)).cast())
+            Ok(Handle::new(Geom2dParabola::from_parab2d(projected.parabola()?)).into_upcast())
         }
         CurveType::Hyperbola => {
-            Ok(Handle::new(Geom2dHyperbola::from_hypr2d(projected.hyperbola()?)).cast())
+            Ok(Handle::new(Geom2dHyperbola::from_hypr2d(projected.hyperbola()?)).into_upcast())
         }
         CurveType::BSplineCurve => Ok(projected.bspline()?.cast()),
         _ => Err(failure(

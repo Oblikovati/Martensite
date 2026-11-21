@@ -227,7 +227,8 @@ fn project_basis_curve(
             return Ok(false);
         }
         let (first, last) = (trimmed.first_parameter(), trimmed.last_parameter());
-        *curve2d = Handle::new(Geom2dTrimmedCurve::new(&basis2d, first, last, true, true)?).cast();
+        *curve2d =
+            Handle::new(Geom2dTrimmedCurve::new(&basis2d, first, last, true, true)?).into_upcast();
         return Ok(true);
     }
     if let Some(line) = curve.cast::<GeomLine>().get() {
@@ -253,7 +254,7 @@ fn project_basis_line(
     }
     *plane = Plane3::from_position(Axis3::new(lin.location(), normal, lin.direction())?);
     let projected = projlib::project_line_on_plane(plane, &lin)?;
-    *curve2d = Handle::new(Geom2dLine::new(projected.position())).cast();
+    *curve2d = Handle::new(Geom2dLine::new(projected.position())).into_upcast();
     Ok(true)
 }
 
@@ -270,7 +271,7 @@ fn project_basis_conic(
             *plane = Plane3::from_position(Axis3::from_axis2(circ.position()));
             let c = projlib::project_circle_on_plane(plane, &circ)?;
             return Ok(Some(
-                Handle::new(Geom2dCircle::new(c.position(), c.radius())?).cast(),
+                Handle::new(Geom2dCircle::new(c.position(), c.radius())?).into_upcast(),
             ));
         }
     }
@@ -280,7 +281,7 @@ fn project_basis_conic(
             *plane = Plane3::from_position(Axis3::from_axis2(elips.position()));
             let e = projlib::project_ellipse_on_plane(plane, &elips)?;
             let geom = Geom2dEllipse::new(e.axis(), e.major_radius(), e.minor_radius())?;
-            return Ok(Some(Handle::new(geom).cast()));
+            return Ok(Some(Handle::new(geom).into_upcast()));
         }
     }
     project_basis_open_conic(curve, normal, plane)
@@ -298,7 +299,7 @@ fn project_basis_open_conic(
             *plane = Plane3::from_position(Axis3::from_axis2(hypr.position()));
             let h = projlib::project_hyperbola_on_plane(plane, &hypr)?;
             let geom = Geom2dHyperbola::new(h.axis(), h.major_radius(), h.minor_radius())?;
-            return Ok(Some(Handle::new(geom).cast()));
+            return Ok(Some(Handle::new(geom).into_upcast()));
         }
     }
     if let Some(parabola) = curve.cast::<GeomParabola>().get() {
@@ -307,7 +308,7 @@ fn project_basis_open_conic(
             *plane = Plane3::from_position(Axis3::from_axis2(parab.position()));
             let p = projlib::project_parabola_on_plane(plane, &parab)?;
             return Ok(Some(
-                Handle::new(Geom2dParabola::new(p.axis(), p.focal())?).cast(),
+                Handle::new(Geom2dParabola::new(p.axis(), p.focal())?).into_upcast(),
             ));
         }
     }

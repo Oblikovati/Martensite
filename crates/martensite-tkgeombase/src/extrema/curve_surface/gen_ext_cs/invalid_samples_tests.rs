@@ -1,18 +1,11 @@
 //! A public generic search must refuse negative grid counts rather than panic (#535).
 use super::sampling_contract_tests::{RecordingGridSurface, initialize};
 use super::*;
-use martensite_tkernel::{impl_transient, standard::StandardTransient};
+use martensite_tkernel::{impl_transient, standard::Transient};
 
 #[derive(Default)]
-struct GenericGridCurve {
-    parent: StandardTransient,
-}
-impl_transient!(
-    GenericGridCurve,
-    "GenericGridCurve535",
-    StandardTransient,
-    parent
-);
+struct GenericGridCurve {}
+impl_transient!(GenericGridCurve, "GenericGridCurve535", dyn Transient);
 
 impl Adaptor3dCurve for GenericGridCurve {
     fn get_type(&self) -> Result<CurveType, Failure> {

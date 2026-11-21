@@ -1,7 +1,7 @@
 //! `SparseMatrix`: the abstract symmetric sparse matrix of the FEmTool
 //! assembly.
 use martensite_tkernel::impl_transient_interface;
-use martensite_tkernel::standard::{Failure, StandardTransient, Transient};
+use martensite_tkernel::standard::{Failure, Transient};
 use martensite_tkmath::math::Vector;
 use std::ops::{Deref, DerefMut};
 
@@ -80,4 +80,4 @@ pub trait SparseMatrix: Transient {
     /// `ColNumber()`; `matrix.col_number()`.
     fn col_number(&self) -> i32;
 }
-impl_transient_interface!(dyn SparseMatrix, "FEmTool_SparseMatrix", StandardTransient);
+impl_transient_interface!(dyn SparseMatrix, "FEmTool_SparseMatrix", dyn Transient);
