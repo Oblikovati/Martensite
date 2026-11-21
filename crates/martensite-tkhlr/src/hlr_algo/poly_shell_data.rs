@@ -32,18 +32,12 @@ pub struct ShellIndices {
 /// assert_eq!(shell.edges().len(), 0);
 /// ```
 pub struct PolyShellData {
-    base: StandardTransient,
     indices: SharedState<ShellIndices>,
     polyg: SharedState<Array1<'static, Handle<PolyData>>>,
     h_pol_hi: SharedState<Array1<'static, Handle<PolyData>>>,
     seg_list: SharedState<List<BiPoint>>,
 }
-impl_transient!(
-    PolyShellData,
-    "HLRAlgo_PolyShellData",
-    StandardTransient,
-    base
-);
+impl_transient!(PolyShellData, "HLRAlgo_PolyShellData", StandardTransient);
 
 impl PolyShellData {
     /// HLRAlgo_PolyShellData(nbFace): `nb_face` null faces, no hiding face, no segment;
@@ -53,7 +47,6 @@ impl PolyShellData {
             "HLRAlgo_PolyShellData::HLRAlgo_PolyShellData",
         ))?;
         Ok(Self {
-            base: StandardTransient::default(),
             indices: SharedState::default(),
             polyg: SharedState::new(polyg),
             h_pol_hi: SharedState::new(Array1::default()),

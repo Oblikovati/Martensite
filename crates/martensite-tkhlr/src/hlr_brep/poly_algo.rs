@@ -113,10 +113,9 @@ pub(super) struct PolyState {
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct PolyAlgo {
-    base: StandardTransient,
     pub(super) state: SharedState<PolyState>,
 }
-impl_transient!(PolyAlgo, "HLRBRep_PolyAlgo", StandardTransient, base);
+impl_transient!(PolyAlgo, "HLRBRep_PolyAlgo", StandardTransient);
 
 impl PolyAlgo {
     /// HLRBRep_PolyAlgo(): no shape, the tolerances 0.1 and 0.001; `PolyAlgo::new()?`.
@@ -140,7 +139,6 @@ impl PolyAlgo {
             pc: BRepAdaptorCurve2d::default(),
         };
         Ok(Self {
-            base: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }

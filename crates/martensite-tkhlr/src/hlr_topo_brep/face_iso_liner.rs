@@ -93,7 +93,7 @@ fn add_element(
         return hatcher.add_element_curve(&pc.pcurve, orientation);
     }
     let tpc: Handle<dyn Geom2dCurve> =
-        Handle::new(Geom2dTrimmedCurve::new(&pc.pcurve, u1, u2, true, true)?).cast();
+        Handle::new(Geom2dTrimmedCurve::new(&pc.pcurve, u1, u2, true, true)?).into_upcast();
     Ok(hatcher.add_element(Geom2dAdaptorCurve::with_curve(&tpc)?, orientation))
 }
 
@@ -235,7 +235,7 @@ impl FaceIsoLiner {
         v1.set_orientation(Orientation::Forward);
         v2.set_orientation(Orientation::Reversed);
         b.make_edge(&mut e)?;
-        b.update_edge_pcurve_on_face(&e, &iso.clone().cast(), f, tol)?;
+        b.update_edge_pcurve_on_face(&e, &iso.upcast(), f, tol)?;
         b.add(&mut e, &*v1)?;
         b.update_vertex_on_edge(v1, u1, &e, tol)?;
         b.add(&mut e, &*v2)?;

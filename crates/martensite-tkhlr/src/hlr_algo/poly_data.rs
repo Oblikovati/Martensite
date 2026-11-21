@@ -58,11 +58,10 @@ struct PolyDataArrays {
 /// ```
 #[derive(Default)]
 pub struct PolyData {
-    base: StandardTransient,
     face_indices: SharedState<FaceIndices>,
     arrays: SharedState<PolyDataArrays>,
 }
-impl_transient!(PolyData, "HLRAlgo_PolyData", StandardTransient, base);
+impl_transient!(PolyData, "HLRAlgo_PolyData", StandardTransient);
 
 /// The array behind `handle`, or the null failure of `member`.
 fn shared_array<T: Send + Sync + 'static>(

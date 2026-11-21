@@ -130,12 +130,7 @@ impl DSFiller {
                 false,
             )?);
         }
-        let poly = (
-            app_c.clone().cast(),
-            app_c2d.clone().cast(),
-            1.,
-            f64::from(nbp),
-        );
+        let poly = (app_c.upcast(), app_c2d.upcast(), 1., f64::from(nbp));
         if ip_l - ip_f < 5 {
             return Ok(Some(poly));
         }
@@ -188,8 +183,8 @@ impl DSFiller {
         let c2d = Geom2dBSplineCurve::new(&poles2d, &knots2, &mults2, app_val2.degree()?, false)?;
         let (first, last) = (c2d.first_parameter(), c2d.last_parameter());
         Ok(Some((
-            Handle::new(c).cast(),
-            Handle::new(c2d).cast(),
+            Handle::new(c).into_upcast(),
+            Handle::new(c2d).into_upcast(),
             first,
             last,
         )))

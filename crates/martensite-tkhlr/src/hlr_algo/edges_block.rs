@@ -52,10 +52,9 @@ struct EdgesBlockState {
 /// assert!(block.out_line(2).unwrap() && !block.double(2).unwrap());
 /// ```
 pub struct EdgesBlock {
-    base: StandardTransient,
     state: SharedState<EdgesBlockState>,
 }
-impl_transient!(EdgesBlock, "HLRAlgo_EdgesBlock", StandardTransient, base);
+impl_transient!(EdgesBlock, "HLRAlgo_EdgesBlock", StandardTransient);
 
 impl EdgesBlock {
     /// HLRAlgo_EdgesBlock(NbEdges): a block of `nb_edges` edges; Standard_RangeError
@@ -68,7 +67,6 @@ impl EdgesBlock {
             min_max: MinMaxIndices::default(),
         };
         Ok(Self {
-            base: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }
