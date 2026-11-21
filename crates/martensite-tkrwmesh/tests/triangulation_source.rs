@@ -2,7 +2,7 @@
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Vec3;
 use martensite_tkernel::osd::FileSystemHandle;
-use martensite_tkernel::standard::{StandardTransient, Transient as _};
+use martensite_tkernel::standard::Transient as _;
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkmath::gp::{Point2, Point3};
 use martensite_tkmath::poly::{Triangle, Triangulation};
@@ -15,12 +15,11 @@ use std::sync::Arc;
 /// A reader of one triangle, which can also fail.
 #[derive(Default)]
 struct OneTriangleReader {
-    transient: StandardTransient,
     base: RwMeshTriangulationReaderBase,
     to_fail: bool,
 }
 
-impl_transient!(OneTriangleReader, "OneTriangleReader", dyn RwMeshTriangulationReader, transient, interfaces: [dyn RwMeshTriangulationReader]);
+impl_transient!(OneTriangleReader, "OneTriangleReader", dyn RwMeshTriangulationReader, interfaces: [dyn RwMeshTriangulationReader]);
 
 impl RwMeshTriangulationReader for OneTriangleReader {
     fn reader_base(&self) -> &RwMeshTriangulationReaderBase {

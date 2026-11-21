@@ -1,7 +1,6 @@
 //! Unique material keys and the texture files of a map.
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::quantity::{Color, NamedColor};
-use martensite_tkernel::standard::StandardTransient;
 use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkrwmesh::rw_mesh::{RwMeshMaterialMap, RwMeshMaterialMapBase, RwMeshStyleKey};
@@ -11,12 +10,11 @@ use martensite_tkxcaf::xcaf_prs::XCAFPrsStyle;
 
 /// A map that records what it is asked to define.
 struct RecordingMap {
-    transient: StandardTransient,
     base: RwMeshMaterialMapBase,
     defined: Vec<(String, String)>,
 }
 
-impl_transient!(RecordingMap, "RecordingMap", dyn RwMeshMaterialMap, transient, interfaces: [dyn RwMeshMaterialMap]);
+impl_transient!(RecordingMap, "RecordingMap", dyn RwMeshMaterialMap, interfaces: [dyn RwMeshMaterialMap]);
 
 impl RwMeshMaterialMap for RecordingMap {
     fn material_base(&self) -> &RwMeshMaterialMapBase {
@@ -39,7 +37,6 @@ impl RwMeshMaterialMap for RecordingMap {
 
 fn map_at(file: &str) -> RecordingMap {
     RecordingMap {
-        transient: StandardTransient::default(),
         base: RwMeshMaterialMapBase::new(&AsciiString::new(file)),
         defined: Vec::new(),
     }
