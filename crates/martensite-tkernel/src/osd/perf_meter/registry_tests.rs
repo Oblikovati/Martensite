@@ -1,5 +1,5 @@
 //! Deterministic clock fixtures isolate registry state from scheduling.
-use martensite_tkernel::osd::{CpuClock, PerfMeter, PerfRegistry};
+use super::{CpuClock, PerfMeter, PerfRegistry};
 use std::{cell::Cell, rc::Rc};
 #[derive(Default)]
 struct FakeCpuClock {

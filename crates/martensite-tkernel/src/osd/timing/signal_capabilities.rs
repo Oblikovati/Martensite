@@ -14,13 +14,8 @@ pub(super) const FLOATING_POINT_TRAP_CONTROL: bool = cfg!(any(
 ));
 
 /// Native signal mechanisms exposed by OSD on the current target.
-///
-/// ```
-/// let capabilities = martensite_tkernel::osd::Osd::signal_capabilities();
-/// assert!(!capabilities.recoverable_native_faults);
-/// ```
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct SignalCapabilities {
+pub(crate) struct SignalCapabilities {
     /// SIGINT or console Ctrl-C/Ctrl-Break can arm the ordinary cancellation flag.
     pub console_interruptions: bool,
     /// The calling thread's floating-point trap mask can be configured and read.
@@ -41,6 +36,13 @@ mod tests {
         require_send_sync::<SignalCapabilities>();
         let before = (Osd::signal_mode(), Osd::to_catch_floating_signals());
         let capabilities = Osd::signal_capabilities();
+        assert_eq!(capabilities.console_interruptions, cfg!(any(windows, unix)));
+        assert_eq!(
+            capabilities.floating_point_trap_control,
+            FLOATING_POINT_TRAP_CONTROL
+        );
+        #[cfg(windows)]
+        assert!(capabilities.floating_point_trap_control);
         assert!(!capabilities.recoverable_native_faults);
         assert_eq!(
             before,

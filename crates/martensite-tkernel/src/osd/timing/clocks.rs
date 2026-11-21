@@ -33,7 +33,7 @@ pub trait WallClock: Send + Sync {
 /// The host wall clock: Unix `gettimeofday` relative to the first call's second,
 /// Windows `QueryPerformanceCounter`; `NativeWallClock.now()`.
 #[derive(Clone, Copy, Debug, Default)]
-pub struct NativeWallClock;
+pub(crate) struct NativeWallClock;
 impl WallClock for NativeWallClock {
     fn now(&self) -> f64 {
         wall_native::wall_clock_seconds()

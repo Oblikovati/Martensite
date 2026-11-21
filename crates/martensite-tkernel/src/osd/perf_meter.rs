@@ -3,7 +3,10 @@ use crate::{ncollection::DataMap, tcollection::AsciiString};
 use std::{cell::RefCell, rc::Rc};
 mod clock;
 mod meter;
-pub use clock::NativeCpuClock;
+#[path = "perf_meter/native_tests.rs"]
+mod native_tests;
+#[path = "perf_meter/registry_tests.rs"]
+mod registry_tests;
 /// Clock dependency giving thread CPU user seconds.
 pub trait CpuClock {
     /// Read absolute CPU seconds; `clock.now()`; clock failures return zero.

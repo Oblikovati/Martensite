@@ -5,7 +5,6 @@
 //! members it overrides in a fixed call order.
 use super::{Chronometer, CpuTimes, NativeWallClock, WallClock};
 use crate::c_format::format_g;
-use crate::standard::Failure;
 use std::{ops::Deref, sync::Arc};
 
 /// A timer; `let mut timer = Timer::new(false); timer.start(); timer.elapsed_time()`.
@@ -67,10 +66,6 @@ impl Timer {
         self.reset();
         self.start();
     }
-    /// Prints [`Timer::show_to`] on standard output; `timer.show()`.
-    pub fn show(&self) {
-        print!("{}", self.show_to());
-    }
     /// Elapsed hours, minutes and seconds, then the CPU lines,
     /// at stream precision 12; `Timer::new(false).show_to()` starts "Elapsed time: 0 Hours".
     pub fn show_to(&self) -> String {
@@ -107,10 +102,6 @@ impl Timer {
             return self.time_cumul;
         }
         self.time_cumul + self.wall.now() - self.time_start
-    }
-    /// Sets the inherited thread-only flag; fails while running; `timer.set_this_thread_only(true)?`.
-    pub fn set_this_thread_only(&mut self, this_thread_only: bool) -> Result<(), Failure> {
-        self.chronometer.set_this_thread_only(this_thread_only)
     }
 }
 impl Deref for Timer {

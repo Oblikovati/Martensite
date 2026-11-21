@@ -62,7 +62,7 @@ impl ResourceIo for NativeResourceIo {
     }
 }
 /// Standard output, the default destination of resource manager traces.
-pub struct NativeResourceConsole;
+pub(crate) struct NativeResourceConsole;
 impl ResourceConsole for NativeResourceConsole {
     fn write(&self, bytes: &[u8]) {
         // Trace output ignores stream failures.
@@ -75,11 +75,11 @@ impl ResourceConsole for NativeResourceConsole {
 #[derive(Clone)]
 pub struct ResourceHost {
     /// File access for Load and Save.
-    pub io: Arc<dyn ResourceIo>,
+    pub(crate) io: Arc<dyn ResourceIo>,
     /// Environment lookup for `CSF_<Name>Defaults` and the trace switches.
-    pub environment: Arc<dyn ResourceEnvironment>,
+    pub(crate) environment: Arc<dyn ResourceEnvironment>,
     /// Destination of verbose and debug traces.
-    pub console: Arc<dyn ResourceConsole>,
+    pub(crate) console: Arc<dyn ResourceConsole>,
 }
 impl ResourceHost {
     /// Bundles injected seams; `ResourceHost::new(io, environment, console)`.

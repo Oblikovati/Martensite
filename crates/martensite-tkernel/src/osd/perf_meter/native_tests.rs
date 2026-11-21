@@ -1,7 +1,7 @@
 //! Full legacy meter suite with a fresh injected registry per fixture.
 #![allow(non_snake_case, unused_mut)]
-use martensite_tkernel::osd::{NativeCpuClock, PerfMeter, PerfRegistry};
-use martensite_tkernel::tcollection::AsciiString;
+use super::{PerfMeter, PerfRegistry, clock::NativeCpuClock};
+use crate::tcollection::AsciiString;
 use std::{hint::black_box, rc::Rc};
 fn work(registry: &PerfRegistry, duration: f64) {
     let meter = PerfMeter::new(registry.clone(), "WorkMeter", true);

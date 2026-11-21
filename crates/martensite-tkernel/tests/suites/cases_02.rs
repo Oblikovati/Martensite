@@ -99,8 +99,6 @@ pub mod osd_parallel;
 pub mod osd_path;
 #[path = "../osd_path_api_behavior.rs"]
 pub mod osd_path_api_behavior;
-#[path = "../osd_perf_meter.rs"]
-pub mod osd_perf_meter;
 #[path = "../osd_process_api_behavior.rs"]
 pub mod osd_process_api_behavior;
 #[path = "../osd_process_resources_api_behavior.rs"]
@@ -127,8 +125,6 @@ pub mod packed_map_protected_helpers;
 pub mod packed_map_supplemental;
 #[path = "../path_supplemental.rs"]
 pub mod path_supplemental;
-#[path = "../perf_meter_supplemental.rs"]
-pub mod perf_meter_supplemental;
 #[path = "../precision_behavior.rs"]
 pub mod precision_behavior;
 #[path = "../quantity_api_behavior.rs"]

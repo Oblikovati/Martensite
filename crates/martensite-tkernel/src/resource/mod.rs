@@ -1,12 +1,16 @@
 //! Resource files with injected host services,
 //! and the Unicode text conversions with their exact code tables.
+#[cfg(test)]
+use crate::tcollection::ExtendedString;
 use crate::{
     impl_transient,
     ncollection::DataMap,
     standard::{Failure, StandardTransient},
-    tcollection::{AsciiString, ExtendedString},
+    tcollection::AsciiString,
 };
 use std::sync::atomic::{AtomicBool, Ordering};
+#[cfg(test)]
+mod access_tests;
 mod cjk;
 mod code_page;
 mod convert_unicode;
@@ -24,9 +28,10 @@ mod values;
 pub(crate) use exceptions::RESOURCE_HIERARCHY;
 use exceptions::no_such_resource;
 pub use format_type::FormatType;
+pub(crate) use host::NativeResourceConsole;
 pub use host::{
-    NativeResourceConsole, NativeResourceEnvironment, NativeResourceIo, ResourceConsole,
-    ResourceEnvironment, ResourceHost, ResourceIo,
+    NativeResourceEnvironment, NativeResourceIo, ResourceConsole, ResourceEnvironment,
+    ResourceHost, ResourceIo,
 };
 pub use unicode::ResourceUnicode;
 
@@ -51,6 +56,7 @@ pub struct ResourceManager {
     name: AsciiString,
     reference: DataMap<AsciiString, AsciiString>,
     user: DataMap<AsciiString, AsciiString>,
+    #[cfg(test)]
     extended: DataMap<AsciiString, ExtendedString>,
     verbose: bool,
     initialized: bool,
@@ -80,7 +86,8 @@ impl ResourceManager {
     }
     /// Loads `<directory>/<name>` for each nonempty directory;
     /// `ResourceManager::with_directories("App", "defs", "user", false, host)?`.
-    pub fn with_directories(
+    #[cfg(test)]
+    pub(crate) fn with_directories(
         name: &str,
         defaults: &str,
         user_defaults: &str,
@@ -111,6 +118,7 @@ impl ResourceManager {
             name: c_string(name),
             reference: DataMap::default(),
             user: DataMap::default(),
+            #[cfg(test)]
             extended: DataMap::default(),
             verbose,
             initialized: false,
