@@ -5,8 +5,8 @@ use crate::geom::{
     GeomOffsetCurve,
 };
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient, Transient};
-use martensite_tkernel::{impl_transient, impl_transient_interface};
+use martensite_tkernel::standard::{Failure, Handle, RuntimeType, RuntimeTyped, Transient};
+use martensite_tkernel::{impl_transient, impl_transient_interface_target};
 use martensite_tkmath::geom_abs::{CurveType, Shape};
 use martensite_tkmath::gp::{Circle3, Ellipse3, Hyperbola3, Line3, Parabola3, Point3, Vector3};
 
@@ -171,21 +171,26 @@ pub trait Adaptor3dCurve: Transient {
         Err(not_implemented("Adaptor3d_Curve::EvalDN"))
     }
 }
-impl_transient_interface!(dyn Adaptor3dCurve, "Adaptor3d_Curve", StandardTransient);
+// The constructible base and its interface are the same native class.
+impl RuntimeTyped for dyn Adaptor3dCurve {
+    const TYPE_NAME: &'static str = Adaptor3dCurveBase::TYPE_NAME;
+
+    fn static_type() -> &'static RuntimeType {
+        Adaptor3dCurveBase::static_type()
+    }
+}
+impl_transient_interface_target!(dyn Adaptor3dCurve);
 
 /// An instance of the non-abstract retained base class itself, whose members all raise
 /// StandardNotImplemented; `Handle::new(Adaptor3dCurveBase::default())`.
 ///
 /// Its dynamic type is `Adaptor3dCurve`, as for `new Adaptor3dCurve()`.
 #[derive(Default)]
-pub struct Adaptor3dCurveBase {
-    parent: StandardTransient,
-}
+pub struct Adaptor3dCurveBase;
 impl_transient!(
     Adaptor3dCurveBase,
     "Adaptor3d_Curve",
-    StandardTransient,
-    parent,
+    dyn Transient,
     interfaces: [dyn Adaptor3dCurve]
 );
 impl Adaptor3dCurve for Adaptor3dCurveBase {}

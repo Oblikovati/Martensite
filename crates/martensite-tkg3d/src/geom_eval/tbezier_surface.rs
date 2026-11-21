@@ -8,7 +8,7 @@ use evaluation::TBezierSurfaceView;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array2;
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, StandardTransient};
+use martensite_tkernel::standard::Failure;
 use martensite_tkmath::gp::Point3;
 
 const CLASS: &str = "GeomEval_TBezierSurface";
@@ -17,7 +17,6 @@ const CLASS: &str = "GeomEval_TBezierSurface";
 /// immutable like every eval surface (reversal, iso extraction and `Transform` raise
 /// StandardNotImplemented); `Handle::new(GeomEvalTBezierSurface::new(&poles, 1.0, 1.0)?)`.
 pub struct GeomEvalTBezierSurface {
-    parent: StandardTransient,
     poles: Array2<'static, Point3>,
     weights: Array2<'static, f64>,
     alpha_u: f64,
@@ -28,7 +27,6 @@ impl_transient!(
     GeomEvalTBezierSurface,
     "GeomEval_TBezierSurface",
     dyn crate::geom::GeomBoundedSurface,
-    parent,
     interfaces: [
         dyn crate::geom::GeomGeometry,
         dyn crate::geom::GeomSurface,
@@ -108,7 +106,6 @@ impl GeomEvalTBezierSurface {
         rational: bool,
     ) -> Self {
         Self {
-            parent: StandardTransient::default(),
             poles: owned_grid(poles),
             weights,
             alpha_u,

@@ -17,7 +17,7 @@ use super::curve::Adaptor3dCurve;
 use super::surface::Adaptor3dSurface;
 use crate::geom::errors::null_object;
 use martensite_tkernel::impl_transient;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkmath::geom_abs::{CurveType, Shape, SurfaceType};
 use martensite_tkmath::gp::{Circle3, Line3};
@@ -70,14 +70,12 @@ impl CosState {
 /// `Adaptor3dCurveOnSurface::with_curve(&curve2d, &surface)?`.
 #[derive(Default)]
 pub struct Adaptor3dCurveOnSurface {
-    parent: StandardTransient,
     state: SharedState<CosState>,
 }
 impl_transient!(
     Adaptor3dCurveOnSurface,
     "Adaptor3d_CurveOnSurface",
     dyn Adaptor3dCurve,
-    parent,
     interfaces: [dyn Adaptor3dCurve]
 );
 
@@ -109,7 +107,6 @@ impl Adaptor3dCurveOnSurface {
     }
     fn from_state(state: CosState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

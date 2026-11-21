@@ -14,7 +14,7 @@ pub trait GeomBoundedCurve: GeomCurve {
     /// Point of the first parameter (`StartPoint`); `curve.start_point()?`.
     fn start_point(&self) -> Result<Point3, Failure>;
 }
-impl_transient_interface!(dyn GeomBoundedCurve, "Geom_BoundedCurve", dyn GeomCurve);
+impl_transient_interface!(dyn GeomBoundedCurve, "Geom_BoundedCurve", dyn GeomCurve, upcasts: [dyn GeomCurve]);
 
 /// `GeomBoundedCurve::DumpJson`; `dump_bounded_curve(&mut stream, -1)?`.
 pub fn dump_bounded_curve(stream: &mut DumpStream, depth: i32) -> io::Result<()> {

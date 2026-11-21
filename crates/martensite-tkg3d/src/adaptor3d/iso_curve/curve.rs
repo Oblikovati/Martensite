@@ -15,7 +15,7 @@ impl Adaptor3dCurve for Adaptor3dIsoCurve {
         if let Some(surface) = copy.surface.get() {
             copy.surface = surface.shallow_copy()?;
         }
-        Ok(Handle::new(Self::from_state(copy)).cast())
+        Ok(Handle::new(Self::from_state(copy)).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         Ok(self.snapshot().first)
@@ -42,7 +42,7 @@ impl Adaptor3dCurve for Adaptor3dIsoCurve {
         let state: IsoState = self.snapshot();
         let copy = Self::from_state(state.clone());
         copy.load_iso_range(state.iso, state.parameter, (first, last))?;
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn is_closed(&self) -> Result<bool, Failure> {
         shape::is_closed(&self.snapshot())

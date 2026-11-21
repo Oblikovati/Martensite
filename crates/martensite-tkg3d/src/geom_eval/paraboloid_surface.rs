@@ -7,9 +7,9 @@ use super::elementary_eval::{
 use crate::geom::quadric::frame_rows;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
+use martensite_tkernel::standard::Failure;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, StandardTransient};
 use martensite_tkmath::gp::{Axis3, Vector3, Xyz};
 use std::f64::consts::{FRAC_PI_2, PI};
 use std::io;
@@ -26,14 +26,12 @@ struct ParaboloidState {
 /// `VReverse`, the isos and `Transform` raise StandardNotImplemented;
 /// `GeomEvalParaboloidSurface::new(Axis3::default(), 1.0)?`.
 pub struct GeomEvalParaboloidSurface {
-    parent: StandardTransient,
     state: SharedState<ParaboloidState>,
 }
 impl_transient!(
     GeomEvalParaboloidSurface,
     "GeomEval_ParaboloidSurface",
     dyn crate::geom::GeomElementarySurface,
-    parent,
     interfaces: [
         dyn crate::geom::GeomGeometry,
         dyn crate::geom::GeomSurface,
@@ -50,7 +48,6 @@ impl Clone for GeomEvalParaboloidSurface {
 impl GeomEvalParaboloidSurface {
     fn stored(state: ParaboloidState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }

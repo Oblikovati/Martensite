@@ -32,17 +32,23 @@ pub fn make_curve(adaptor: &dyn Adaptor3dCurve) -> Result<Handle<dyn GeomCurve>,
             return Ok(curve);
         }
     }
-    Ok(Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, true)?).cast())
+    Ok(Handle::new(GeomTrimmedCurve::new(&curve, first, last, true, true)?).into_upcast())
 }
 
 // The untrimmed curve of the adaptor's kind.
 fn curve_of_kind(adaptor: &dyn Adaptor3dCurve) -> Result<Handle<dyn GeomCurve>, Failure> {
     Ok(match adaptor.get_type()? {
-        CurveType::Line => Handle::new(GeomLine::from_lin(adaptor.line()?)).cast(),
-        CurveType::Circle => Handle::new(GeomCircle::from_circ(adaptor.circle()?)).cast(),
-        CurveType::Ellipse => Handle::new(GeomEllipse::from_elips(adaptor.ellipse()?)).cast(),
-        CurveType::Parabola => Handle::new(GeomParabola::from_parab(adaptor.parabola()?)).cast(),
-        CurveType::Hyperbola => Handle::new(GeomHyperbola::from_hypr(adaptor.hyperbola()?)).cast(),
+        CurveType::Line => Handle::new(GeomLine::from_lin(adaptor.line()?)).into_upcast(),
+        CurveType::Circle => Handle::new(GeomCircle::from_circ(adaptor.circle()?)).into_upcast(),
+        CurveType::Ellipse => {
+            Handle::new(GeomEllipse::from_elips(adaptor.ellipse()?)).into_upcast()
+        }
+        CurveType::Parabola => {
+            Handle::new(GeomParabola::from_parab(adaptor.parabola()?)).into_upcast()
+        }
+        CurveType::Hyperbola => {
+            Handle::new(GeomHyperbola::from_hypr(adaptor.hyperbola()?)).into_upcast()
+        }
         CurveType::BezierCurve => live(&adaptor.bezier()?, "Bezier")?.copy()?.cast(),
         CurveType::BSplineCurve => live(&adaptor.bspline()?, "BSpline")?.copy()?.cast(),
         _ => return Err(domain("GeomAdaptor::MakeCurve : OtherCurve")),
@@ -77,21 +83,25 @@ pub fn make_surface(
     }
     let (u1, u2, v1, v2) = bounds;
     let trimmed = GeomRectangularTrimmedSurface::new(&surface, (u1, u2), (v1, v2), (true, true))?;
-    Ok(Handle::new(trimmed).cast())
+    Ok(Handle::new(trimmed).into_upcast())
 }
 
 // The untrimmed surface of the adaptor's kind.
 fn surface_of_kind(adaptor: &dyn Adaptor3dSurface) -> Result<Handle<dyn GeomSurface>, Failure> {
     Ok(match adaptor.get_type()? {
-        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(adaptor.plane()?)).cast(),
+        SurfaceType::Plane => Handle::new(GeomPlane::from_pln(adaptor.plane()?)).into_upcast(),
         SurfaceType::Cylinder => {
-            Handle::new(GeomCylindricalSurface::from_cylinder(adaptor.cylinder()?)).cast()
+            Handle::new(GeomCylindricalSurface::from_cylinder(adaptor.cylinder()?)).into_upcast()
         }
-        SurfaceType::Cone => Handle::new(GeomConicalSurface::from_cone(adaptor.cone()?)).cast(),
+        SurfaceType::Cone => {
+            Handle::new(GeomConicalSurface::from_cone(adaptor.cone()?)).into_upcast()
+        }
         SurfaceType::Sphere => {
-            Handle::new(GeomSphericalSurface::from_sphere(adaptor.sphere()?)).cast()
+            Handle::new(GeomSphericalSurface::from_sphere(adaptor.sphere()?)).into_upcast()
         }
-        SurfaceType::Torus => Handle::new(GeomToroidalSurface::from_torus(adaptor.torus()?)).cast(),
+        SurfaceType::Torus => {
+            Handle::new(GeomToroidalSurface::from_torus(adaptor.torus()?)).into_upcast()
+        }
         SurfaceType::BezierSurface => live(&adaptor.bezier()?, "Bezier")?.copy()?.cast(),
         SurfaceType::BSplineSurface => live(&adaptor.bspline()?, "BSpline")?.copy()?.cast(),
         SurfaceType::SurfaceOfRevolution => swept_revolution(adaptor)?,
@@ -101,7 +111,7 @@ fn surface_of_kind(adaptor: &dyn Adaptor3dSurface) -> Result<Handle<dyn GeomSurf
             let basis_surface: Handle<dyn GeomSurface> =
                 make_surface(live(&basis, "BasisSurface")?, true)?;
             let offset = GeomOffsetSurface::new(&basis_surface, adaptor.offset_value()?, false)?;
-            Handle::new(offset).cast()
+            Handle::new(offset).into_upcast()
         }
         SurfaceType::OtherSurface => {
             return Err(domain("GeomAdaptor::MakeSurface : OtherSurface"));
@@ -113,14 +123,14 @@ fn swept_revolution(adaptor: &dyn Adaptor3dSurface) -> Result<Handle<dyn GeomSur
     let basis: Handle<dyn Adaptor3dCurve> = adaptor.basis_curve()?;
     let curve: Handle<dyn GeomCurve> = make_curve(live(&basis, "BasisCurve")?)?;
     let surface = GeomSurfaceOfRevolution::new(&curve, adaptor.axe_of_revolution()?)?;
-    Ok(Handle::new(surface).cast())
+    Ok(Handle::new(surface).into_upcast())
 }
 
 fn swept_extrusion(adaptor: &dyn Adaptor3dSurface) -> Result<Handle<dyn GeomSurface>, Failure> {
     let basis: Handle<dyn Adaptor3dCurve> = adaptor.basis_curve()?;
     let curve: Handle<dyn GeomCurve> = make_curve(live(&basis, "BasisCurve")?)?;
     let surface = GeomSurfaceOfLinearExtrusion::new(&curve, adaptor.direction()?)?;
-    Ok(Handle::new(surface).cast())
+    Ok(Handle::new(surface).into_upcast())
 }
 
 // The object behind a handle an adaptor returned; natively a null one is

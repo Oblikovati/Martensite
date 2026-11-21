@@ -63,7 +63,7 @@ pub trait GeomConic: GeomCurve {
         Axis1::new(position.location(), position.y_direction())
     }
 }
-impl_transient_interface!(dyn GeomConic, "Geom_Conic", dyn GeomCurve);
+impl_transient_interface!(dyn GeomConic, "Geom_Conic", dyn GeomCurve, upcasts: [dyn GeomCurve]);
 
 /// `GeomConic::Reverse`: reverse the main direction of the local system, which
 /// reverses its Y direction too; `reverse_conic_position(&mut position)?`.

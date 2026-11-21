@@ -11,7 +11,7 @@ use crate::geom::{
     GeomSurfaceOfRevolution, GeomSweptSurface, GeomToroidalSurface,
 };
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Failure, Handle, Transient};
 use martensite_tkmath::gp::{Axis1, Cone3, Cylinder3, Direction3, Plane3, Sphere3, Torus3};
 use std::f64::consts::PI;
 
@@ -32,12 +32,11 @@ fn half_ratio(r3d: f64, radius: f64) -> f64 {
 }
 
 // The radius of the loaded Geom surface of class `T` (natively a down cast of mySurface).
-fn radius_of<T: RuntimeTyped>(
+fn radius_of<T: Transient>(
     state: &SurfaceState,
     radius: impl Fn(&T) -> f64,
 ) -> Result<f64, Failure> {
-    let surface: Handle<T> = state.surface.cast();
-    surface.get().map(radius).ok_or_else(|| {
+    state.surface.downcast_ref().map(radius).ok_or_else(|| {
         no_such_object("GeomAdaptor_Surface: the loaded surface does not match its kind")
     })
 }
@@ -246,7 +245,7 @@ pub(super) fn basis_curve(state: &SurfaceState) -> Result<Handle<dyn Adaptor3dCu
     match (&state.data, swept.get()) {
         (SurfaceData::Extrusion(_) | SurfaceData::Revolution(_), Some(surface)) => {
             let curve = GeomAdaptorCurve::with_curve(&surface.basis_curve())?;
-            Ok(Handle::new(curve).cast())
+            Ok(Handle::new(curve).into_upcast())
         }
         _ => Err(not_this_kind("BasisCurve")),
     }
@@ -265,6 +264,10 @@ pub(super) fn basis_surface_adaptor(state: &SurfaceState) -> Result<GeomAdaptorS
     }
 }
 /// `OffsetValue`; the retained message names BasisSurface; `offset_value(&state)?`.
+pub(super) fn basis_surface(state: &SurfaceState) -> Result<Handle<dyn Adaptor3dSurface>, Failure> {
+    Ok(Handle::new(basis_surface_adaptor(state)?).into_upcast())
+}
+
 pub(super) fn offset_value(state: &SurfaceState) -> Result<f64, Failure> {
     let offset: Handle<GeomOffsetSurface> = state.surface.cast();
     match (&state.data, offset.get()) {

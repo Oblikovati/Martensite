@@ -14,7 +14,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name};
 use martensite_tkmath::elslib;
 use martensite_tkmath::geom_abs::Shape;
@@ -33,14 +33,12 @@ struct PlaneState {
 
 /// A plane; `Handle::new(GeomPlane::new(frame))`.
 pub struct GeomPlane {
-    parent: StandardTransient,
     state: SharedState<PlaneState>,
 }
 impl_transient!(
     GeomPlane,
     "Geom_Plane",
     dyn GeomElementarySurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface, dyn GeomElementarySurface]
 );
 impl Clone for GeomPlane {
@@ -58,7 +56,6 @@ impl GeomPlane {
     /// `GeomPlane::new(frame)`.
     pub fn new(frame: Axis3) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(PlaneState { pos: frame }),
         }
     }
@@ -100,7 +97,7 @@ impl GeomGeometry for GeomPlane {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let pos: Axis3 = self.pos();
@@ -157,11 +154,11 @@ impl GeomSurface for GeomPlane {
     }
     fn u_iso(&self, u: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
         let line = GeomLine::from_lin(elslib::plane_u_iso(self.pos(), u));
-        Ok(Handle::new(line).cast())
+        Ok(Handle::new(line).into_upcast())
     }
     fn v_iso(&self, v: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
         let line = GeomLine::from_lin(elslib::plane_v_iso(self.pos(), v));
-        Ok(Handle::new(line).cast())
+        Ok(Handle::new(line).into_upcast())
     }
     fn continuity(&self) -> Shape {
         Shape::CN

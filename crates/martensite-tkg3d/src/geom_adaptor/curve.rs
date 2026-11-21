@@ -10,7 +10,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::geom_abs::{CurveType, Shape};
 use martensite_tkmath::gp::{Circle3, Ellipse3, Hyperbola3, Line3, Parabola3, Point3, Vector3};
 
@@ -24,14 +24,12 @@ use martensite_tkmath::gp::{Circle3, Ellipse3, Hyperbola3, Line3, Parabola3, Poi
 /// `GeomAdaptorCurve::with_range(&curve, 0.0, 1.0)?`.
 #[derive(Default)]
 pub struct GeomAdaptorCurve {
-    parent: StandardTransient,
     state: SharedState<AdaptorState>,
 }
 impl Clone for GeomAdaptorCurve {
     /// Copies adaptor values and retains geometry/cache owners; `let copied = source.clone();`.
     fn clone(&self) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(self.state.read().clone()),
         }
     }
@@ -41,7 +39,6 @@ impl_transient!(
     GeomAdaptorCurve,
     "GeomAdaptor_Curve",
     dyn Adaptor3dCurve,
-    parent,
     interfaces: [dyn Adaptor3dCurve]
 );
 
@@ -94,7 +91,6 @@ impl GeomAdaptorCurve {
     pub fn shallow_adaptor(&self) -> Result<Self, Failure> {
         let copy: AdaptorState = state::shallow_state(&self.state.read())?;
         Ok(Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(copy),
         })
     }
@@ -106,7 +102,7 @@ impl GeomAdaptorCurve {
 
 impl Adaptor3dCurve for GeomAdaptorCurve {
     fn shallow_copy(&self) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
-        Ok(Handle::new(self.shallow_adaptor()?).cast())
+        Ok(Handle::new(self.shallow_adaptor()?).into_upcast())
     }
     fn first_parameter(&self) -> Result<f64, Failure> {
         Ok(self.bounds().0)
@@ -129,7 +125,7 @@ impl Adaptor3dCurve for GeomAdaptorCurve {
         last: f64,
         _tolerance: f64,
     ) -> Result<Handle<dyn Adaptor3dCurve>, Failure> {
-        Ok(Handle::new(Self::with_range(&self.curve(), first, last)?).cast())
+        Ok(Handle::new(Self::with_range(&self.curve(), first, last)?).into_upcast())
     }
     fn is_closed(&self) -> Result<bool, Failure> {
         let (first, last) = self.bounds();

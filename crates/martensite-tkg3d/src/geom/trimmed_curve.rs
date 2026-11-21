@@ -7,7 +7,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::trim_bounds::{TrimBasis, TrimmedBounds};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name, dump_field};
 use martensite_tkmath::geom_abs::Shape;
@@ -40,14 +40,12 @@ impl TrimBasis for dyn GeomCurve {
 ///
 /// The basis curve is a private copy, so its lock is never this object's lock.
 pub struct GeomTrimmedCurve {
-    parent: StandardTransient,
     state: SharedState<TrimmedState>,
 }
 impl_transient!(
     GeomTrimmedCurve,
     "Geom_TrimmedCurve",
     dyn GeomBoundedCurve,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomCurve, dyn GeomBoundedCurve]
 );
 
@@ -83,7 +81,6 @@ impl GeomTrimmedCurve {
         };
         state.set_trim(u1, u2, sense, adjust_periodic, CLASS)?;
         Ok(Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         })
     }
@@ -118,7 +115,7 @@ impl GeomGeometry for GeomTrimmedCurve {
         // theAdjustPeriodic, so periodic bounds are adjusted again.
         let state = self.state.read();
         let copy = Self::new(&state.basis, state.u_trim1, state.u_trim2, true, true)?;
-        Ok(Handle::new(copy).cast())
+        Ok(Handle::new(copy).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state = self.state.read();

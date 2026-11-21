@@ -109,12 +109,12 @@ pub fn clone_surface_desc(
     Ok(
         match (source.kind(), source.max_deriv_order(), source.mapping()) {
             (RepCurveKind::DerivBounded, Some(order), _) => {
-                Handle::new(RepSurfaceDescDerivBounded::new(copy, order)).cast()
+                Handle::new(RepSurfaceDescDerivBounded::new(copy, order)).into_upcast()
             }
             (RepCurveKind::Mapped, Some(order), Some((domain, map))) => {
-                Handle::new(RepSurfaceDescMapped::new(copy, order, domain, map)).cast()
+                Handle::new(RepSurfaceDescMapped::new(copy, order, domain, map)).into_upcast()
             }
-            _ => Handle::new(RepSurfaceDescFull::new(copy)).cast(),
+            _ => Handle::new(RepSurfaceDescFull::new(copy)).into_upcast(),
         },
     )
 }

@@ -19,7 +19,7 @@ use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::{self, DumpStream};
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name};
 use martensite_tkmath::elslib;
 use martensite_tkmath::geom_abs::Shape;
@@ -35,14 +35,12 @@ struct CylinderState {
 
 /// A cylinder; `Handle::new(GeomCylindricalSurface::new(frame, 2.0)?)`.
 pub struct GeomCylindricalSurface {
-    parent: StandardTransient,
     state: SharedState<CylinderState>,
 }
 impl_transient!(
     GeomCylindricalSurface,
     "Geom_CylindricalSurface",
     dyn GeomElementarySurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface, dyn GeomElementarySurface]
 );
 impl Clone for GeomCylindricalSurface {
@@ -63,7 +61,6 @@ fn checked_radius(radius: f64, member: &str) -> Result<f64, Failure> {
 impl GeomCylindricalSurface {
     fn stored(state: CylinderState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -121,7 +118,7 @@ impl GeomGeometry for GeomCylindricalSurface {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state: CylinderState = self.snapshot();
@@ -174,12 +171,12 @@ impl GeomSurface for GeomCylindricalSurface {
     fn u_iso(&self, u: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
         let state: CylinderState = self.snapshot();
         let line = elslib::cylinder_u_iso(state.pos, state.radius, u);
-        Ok(Handle::new(GeomLine::from_lin(line)).cast())
+        Ok(Handle::new(GeomLine::from_lin(line)).into_upcast())
     }
     fn v_iso(&self, v: f64) -> Result<Handle<dyn GeomCurve>, Failure> {
         let state: CylinderState = self.snapshot();
         let circle = elslib::cylinder_v_iso(state.pos, state.radius, v);
-        Ok(Handle::new(GeomCircle::from_circ(circle)).cast())
+        Ok(Handle::new(GeomCircle::from_circ(circle)).into_upcast())
     }
     fn continuity(&self) -> Shape {
         Shape::CN

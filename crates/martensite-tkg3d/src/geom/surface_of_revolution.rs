@@ -15,7 +15,7 @@ use crate::geom_eval::{RepSurfaceDesc, rep_utils};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::SharedState;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d::{dump_base, dump_class_name, dump_field};
 use martensite_tkmath::geom_abs::Shape;
 use martensite_tkmath::gp::{
@@ -36,14 +36,12 @@ struct RevolutionState {
 /// A surface of revolution; the basis curve is a private copy;
 /// `Handle::new(GeomSurfaceOfRevolution::new(&curve, axis)?)`.
 pub struct GeomSurfaceOfRevolution {
-    parent: StandardTransient,
     state: SharedState<RevolutionState>,
 }
 impl_transient!(
     GeomSurfaceOfRevolution,
     "Geom_SurfaceOfRevolution",
     dyn GeomSweptSurface,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomSurface, dyn GeomSweptSurface]
 );
 
@@ -53,7 +51,6 @@ impl GeomSurfaceOfRevolution {
     pub fn new(curve: &Handle<dyn GeomCurve>, axis: Axis1) -> Result<Self, Failure> {
         let (basis, smooth) = copied_basis(curve)?;
         Ok(Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(RevolutionState {
                 basis,
                 direction: axis.direction(),
@@ -168,7 +165,7 @@ impl GeomGeometry for GeomSurfaceOfRevolution {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(Self::copy_of(self)?).cast())
+        Ok(Handle::new(Self::copy_of(self)?).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let state = self.state.read();
@@ -250,7 +247,7 @@ impl GeomSurface for GeomSurfaceOfRevolution {
         let pc: Point3 = basis.value(v)?;
         let rad: f64 = Line3::from_axis(axis).distance(pc);
         let frame: Axis2 = iso_frame(pc, axis.location(), axis.direction(), rad)?;
-        Ok(Handle::new(GeomCircle::new(frame, rad)?).cast())
+        Ok(Handle::new(GeomCircle::new(frame, rad)?).into_upcast())
     }
     fn continuity(&self) -> Shape {
         self.state.read().smooth

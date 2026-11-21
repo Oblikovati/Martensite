@@ -5,7 +5,7 @@ use super::geometry::GeomGeometry;
 use super::protected::ProtectedAccess;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::standard::SharedState;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkmath::gp::{Axis1, Axis2, Direction3, Point3, Transform3};
 
 #[derive(Clone, Copy)]
@@ -17,14 +17,12 @@ struct FrameState {
 
 /// A coordinate frame; `Handle::new(GeomAxis2Placement::new(frame))`.
 pub struct GeomAxis2Placement {
-    parent: StandardTransient,
     state: SharedState<FrameState>,
 }
 impl_transient!(
     GeomAxis2Placement,
     "Geom_Axis2Placement",
     dyn GeomAxisPlacement,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomAxisPlacement]
 );
 impl Clone for GeomAxis2Placement {
@@ -37,7 +35,6 @@ impl Clone for GeomAxis2Placement {
 impl GeomAxis2Placement {
     fn stored(state: FrameState) -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(state),
         }
     }
@@ -116,7 +113,7 @@ impl GeomGeometry for GeomAxis2Placement {
         Ok(())
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.clone()).cast())
+        Ok(Handle::new(self.clone()).into_upcast())
     }
 }
 impl GeomAxisPlacement for GeomAxis2Placement {

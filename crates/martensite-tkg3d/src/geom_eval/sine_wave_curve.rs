@@ -6,7 +6,7 @@ use crate::geom::{GeomCurve, GeomCurveD1, GeomCurveD2, GeomCurveD3, GeomGeometry
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::precision;
 use martensite_tkernel::standard::dump::DumpStream;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkg2d::geom2d_eval::eval_basis::pow_int;
 use martensite_tkmath::gp::{Axis2, Point3, Transform3, Vector3, Xyz};
 use std::f64::consts::PI;
@@ -19,7 +19,6 @@ const CLASS: &str = "GeomEval_SineWaveCurve";
 /// Eval curves have no mutators: `Reverse` and `Transform` raise StandardNotImplemented,
 /// so the object needs no lock; `Handle::new(GeomEvalSineWaveCurve::new(axis, 2.0, 3.0, 0.0)?)`.
 pub struct GeomEvalSineWaveCurve {
-    parent: StandardTransient,
     position: Axis2,
     amplitude: f64,
     omega: f64,
@@ -29,7 +28,6 @@ impl_transient!(
     GeomEvalSineWaveCurve,
     "GeomEval_SineWaveCurve",
     dyn GeomCurve,
-    parent,
     interfaces: [dyn GeomGeometry, dyn GeomCurve]
 );
 impl Clone for GeomEvalSineWaveCurve {
@@ -71,7 +69,7 @@ impl GeomGeometry for GeomEvalSineWaveCurve {
         Err(unsupported("GeomEval_SineWaveCurve::Transform", ""))
     }
     fn copy(&self) -> Result<Handle<dyn GeomGeometry>, Failure> {
-        Ok(Handle::new(self.copied()).cast())
+        Ok(Handle::new(self.copied()).into_upcast())
     }
     fn dump_json(&self, stream: &mut DumpStream, depth: i32) -> io::Result<()> {
         let fields = [

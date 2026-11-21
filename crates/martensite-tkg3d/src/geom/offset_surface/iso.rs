@@ -122,7 +122,7 @@ fn bspline_from(approx: &AdvApproxApproxAFunction) -> Result<Handle<dyn GeomCurv
         ));
     };
     let curve = GeomBSplineCurve::new(&poles, knots, mults, approx.degree(), false)?;
-    Ok(Handle::new(curve).cast())
+    Ok(Handle::new(curve).into_upcast())
 }
 
 impl GeomOffsetSurface {

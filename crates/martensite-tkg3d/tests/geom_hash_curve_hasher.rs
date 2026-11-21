@@ -1,7 +1,7 @@
 //! Hash curve hasher construction and evaluation contracts.
 #![allow(non_snake_case)]
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Handle, RuntimeTyped};
+use martensite_tkernel::standard::{Handle, HandleUpcast, RuntimeTyped};
 use martensite_tkg3d::geom::{
     GeomBSplineCurve, GeomBezierCurve, GeomCircle, GeomCurve, GeomEllipse, GeomGeometry,
     GeomHyperbola, GeomLine, GeomOffsetCurve, GeomParabola, GeomTrimmedCurve,
@@ -15,8 +15,8 @@ fn SetUp() -> GeomHashCurveHasher {
 }
 
 // The implicit `occ::handle<T>` to `occ::handle<GeomCurve>` conversion at each call.
-fn curve<T: ?Sized + RuntimeTyped>(handle: &Handle<T>) -> Handle<dyn GeomCurve> {
-    handle.cast()
+fn curve<T: ?Sized + HandleUpcast<dyn GeomCurve>>(handle: &Handle<T>) -> Handle<dyn GeomCurve> {
+    handle.upcast()
 }
 
 // `occ::down_cast<T>(theCurve->Copy())`.

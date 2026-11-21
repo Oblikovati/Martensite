@@ -11,7 +11,7 @@ use crate::geom::errors::{domain, not_implemented, null_object};
 use crate::top_abs::{Orientation, State};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Array1;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState, Transient};
 use martensite_tkg2d::adaptor2d::{Adaptor2dCurve2d, Adaptor2dLine2d};
 use martensite_tkmath::gp::{Cone3, Point2, Point3};
 
@@ -67,23 +67,16 @@ impl TopolState {
 /// . The vertices dispatch through the
 /// `Adaptor3dHVertex` trait; `Adaptor3dTopolTool::with_surface(&surface)?`.
 pub struct Adaptor3dTopolTool {
-    parent: StandardTransient,
     state: SharedState<TopolState>,
 }
 impl Default for Adaptor3dTopolTool {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(TopolState::zeroed(-1)),
         }
     }
 }
-impl_transient!(
-    Adaptor3dTopolTool,
-    "Adaptor3d_TopolTool",
-    StandardTransient,
-    parent
-);
+impl_transient!(Adaptor3dTopolTool, "Adaptor3d_TopolTool", dyn Transient);
 
 impl Adaptor3dTopolTool {
     /// A tool on `surface` (`Adaptor3dTopolTool(S)`); the fields the constructor does
@@ -91,7 +84,6 @@ impl Adaptor3dTopolTool {
     /// `Adaptor3dTopolTool::with_surface(&surface)?`.
     pub fn with_surface(surface: &Handle<dyn Adaptor3dSurface>) -> Result<Self, Failure> {
         let tool = Self {
-            parent: StandardTransient::default(),
             state: SharedState::new(TopolState::zeroed(0)),
         };
         tool.initialize_surface(surface)?;
