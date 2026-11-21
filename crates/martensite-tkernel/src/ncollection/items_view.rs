@@ -90,12 +90,18 @@ impl<'a, M: ItemsSource<E> + ?Sized, E> ItemsView<'a, M, E> {
     }
 
     /// Constructs the default exhausted cursor; `view.begin() == view.end()` for an empty map.
-    pub fn end(&self) -> ItemsIterator<impl Iterator<Item = M::Item<'a>> + Clone + use<'a, M, E>> {
+    #[cfg(test)]
+    pub(crate) fn end(
+        &self,
+    ) -> ItemsIterator<impl Iterator<Item = M::Item<'a>> + Clone + use<'a, M, E>> {
         self.cursor(false)
     }
 
     /// Constructs the const-qualified end cursor; `view.cbegin() == view.cend()`.
-    pub fn cend(&self) -> ItemsIterator<impl Iterator<Item = M::Item<'a>> + Clone + use<'a, M, E>> {
+    #[cfg(test)]
+    pub(crate) fn cend(
+        &self,
+    ) -> ItemsIterator<impl Iterator<Item = M::Item<'a>> + Clone + use<'a, M, E>> {
         self.end()
     }
 
@@ -135,17 +141,20 @@ impl<'a, M: ItemsSourceMut<E> + ?Sized, E> ItemsViewMut<'a, M, E> {
     }
 
     /// Retains writable values, as a mutable view's `cbegin` does; `view.cbegin()`.
-    pub fn cbegin(&mut self) -> impl Iterator<Item = M::ItemMut<'_>> {
+    #[cfg(test)]
+    pub(crate) fn cbegin(&mut self) -> impl Iterator<Item = M::ItemMut<'_>> {
         self.begin()
     }
 
     /// Returns an exhausted mutable range without borrowing any entries; `view.end()`.
-    pub fn end(&mut self) -> std::iter::Empty<M::ItemMut<'_>> {
+    #[cfg(test)]
+    pub(crate) fn end(&mut self) -> std::iter::Empty<M::ItemMut<'_>> {
         std::iter::empty()
     }
 
     /// Returns an exhausted const-qualified mutable range; `view.cend()`.
-    pub fn cend(&mut self) -> std::iter::Empty<M::ItemMut<'_>> {
+    #[cfg(test)]
+    pub(crate) fn cend(&mut self) -> std::iter::Empty<M::ItemMut<'_>> {
         self.end()
     }
 

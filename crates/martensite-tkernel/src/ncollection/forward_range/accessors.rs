@@ -15,16 +15,9 @@ pub struct Missing;
 /// Declares an implemented accessor; `Present<ValueAccessor>`.
 pub struct Present<A>(PhantomData<A>);
 /// Compile-checked accessor availability; `Present<A>` requires `A:ReadAccessor<I>`.
-pub trait AccessorPresence<I> {
-    /// Whether the associated host method exists; `Present<A>::PRESENT`.
-    const PRESENT: bool;
-}
-impl<I> AccessorPresence<I> for Missing {
-    const PRESENT: bool = false;
-}
-impl<I, A: ReadAccessor<I>> AccessorPresence<I> for Present<A> {
-    const PRESENT: bool = true;
-}
+trait AccessorPresence<I> {}
+impl<I> AccessorPresence<I> for Missing {}
+impl<I, A: ReadAccessor<I>> AccessorPresence<I> for Present<A> {}
 /// Accessors in Value, Current, CurrentId priority order; `AccessorSet<Missing,Present<A>,Missing>`.
 pub struct AccessorSet<V, C, D>(PhantomData<(V, C, D)>);
 /// Availability metadata for the declared accessor set; `HAS_VALUE`.

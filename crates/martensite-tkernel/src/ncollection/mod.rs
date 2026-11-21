@@ -90,9 +90,7 @@ pub use list::{
 pub use list_node::{ListLinkNode, ListValueNode};
 
 mod sparse_array;
-pub use sparse_array::{
-    SparseArray, SparseArrayCursor, SparseArrayCursorMut, SparseArrayLegacyCursor,
-};
+pub use sparse_array::{SparseArray, SparseArrayCursor, SparseArrayCursorMut};
 
 mod sequence;
 pub use sequence::{
@@ -154,7 +152,8 @@ pub use ordered_data_map::{
     OrderedDataValuesMut,
 };
 
-pub mod forward_range;
+#[cfg(test)]
+pub(crate) mod forward_range;
 
 mod cell_filter;
 pub use cell_filter::{

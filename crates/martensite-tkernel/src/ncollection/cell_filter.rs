@@ -80,7 +80,8 @@ impl<I: CellGeometry> CellFilter<I> {
         }
     }
     /// Remove all equal targets in one cell; `filter.remove(&target, &point)`.
-    pub fn remove(&mut self, target: &I::CellTarget, point: &I::CellPoint) {
+    #[cfg(test)]
+    pub(crate) fn remove(&mut self, target: &I::CellTarget, point: &I::CellPoint) {
         self.retain_cell(&self.indices(point), |stored| {
             !I::targets_equal(stored, target)
         });
