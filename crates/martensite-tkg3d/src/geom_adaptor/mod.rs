@@ -32,6 +32,8 @@ mod surface_of_revolution;
 pub use surface_of_revolution::GeomAdaptorSurfaceOfRevolution;
 mod transformed_surface;
 pub use transformed_surface::GeomAdaptorTransformedSurface;
+mod transformed_surface_source;
+pub use transformed_surface_source::GeomTransformedSurfaceSource;
 mod make;
 pub use make::{make_curve, make_surface};
 mod transformed_curve;

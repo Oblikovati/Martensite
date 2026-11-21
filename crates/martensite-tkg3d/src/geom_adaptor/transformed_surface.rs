@@ -6,6 +6,7 @@
 //! until the surface or the transformation changes.
 use super::surface::GeomAdaptorSurface;
 use super::surface_state::LoadRange;
+use super::transformed_surface_source::GeomTransformedSurfaceSource;
 use crate::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
 use crate::geom::{
     GeomBSplineSurface, GeomBezierSurface, GeomConicalSurface, GeomCylindricalSurface, GeomPlane,
@@ -56,7 +57,7 @@ impl_transient!(
     GeomAdaptorTransformedSurface,
     "GeomAdaptor_TransformedSurface",
     dyn Adaptor3dSurface,
-    interfaces: [dyn Adaptor3dSurface]
+    interfaces: [dyn Adaptor3dSurface, dyn GeomTransformedSurfaceSource]
 );
 
 impl GeomAdaptorTransformedSurface {

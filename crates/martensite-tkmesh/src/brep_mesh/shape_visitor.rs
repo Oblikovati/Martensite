@@ -13,7 +13,7 @@ use martensite_tkernel::{
     impl_transient,
     ncollection::{BaseAllocator, DataMap},
     precision,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkg3d::top_abs::{Orientation, ShapeEnum};
 use martensite_tkshhealing::{
@@ -22,11 +22,10 @@ use martensite_tkshhealing::{
 };
 /// Native visitor building face/wire/pcurve incidence; `BRepMeshShapeVisitor::new(&model)`.
 pub struct BRepMeshShapeVisitor {
-    transient: StandardTransient,
     model: Handle<dyn MeshModel>,
     edge_indices: SharedState<DataMap<Shape, i32, ShapeMapHasher>>,
 }
-impl_transient!(BRepMeshShapeVisitor,"BRepMesh_ShapeVisitor",dyn ShapeVisitor,transient,interfaces:[dyn ShapeVisitor]);
+impl_transient!(BRepMeshShapeVisitor,"BRepMesh_ShapeVisitor",dyn ShapeVisitor,interfaces:[dyn ShapeVisitor]);
 impl BRepMeshShapeVisitor {
     /// Retain the model and allocate the native edge lookup arena; `BRepMeshShapeVisitor::new(&model)`.
     pub fn new(model: &Handle<dyn MeshModel>) -> Self {
@@ -36,7 +35,6 @@ impl BRepMeshShapeVisitor {
             BaseAllocator::incremental(MEMORY_BLOCK_SIZE_HUGE),
         );
         Self {
-            transient: StandardTransient::default(),
             model: model.clone(),
             edge_indices: SharedState::new(indices),
         }

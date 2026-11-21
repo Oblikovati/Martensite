@@ -23,13 +23,12 @@ use martensite_tkmath::poly::{Polygon3D, PolygonOnTriangulation, Triangulation};
 /// assert_eq!(modification.trsf_modification().trsf().scale_factor(), 1.0);
 /// ```
 pub struct ShapeCustomTrsfModification {
-    parent: TrsfModification,
+    transform: TrsfModification,
 }
 impl_transient!(
     ShapeCustomTrsfModification,
     "ShapeCustom_TrsfModification",
     TrsfModification,
-    parent,
     interfaces: [dyn BRepToolsModification]
 );
 
@@ -37,26 +36,26 @@ impl ShapeCustomTrsfModification {
     /// Initialize the transformation modifier; `ShapeCustomTrsfModification::new(trsf)`.
     pub fn new(trsf: Transform3) -> Self {
         Self {
-            parent: TrsfModification::new(trsf),
+            transform: TrsfModification::new(trsf),
         }
     }
 
-    /// The inherited `TrsfModification` part (`Trsf()`, `IsCopyMesh()`);
+    /// The shared transformation implementation (`Trsf()`, `IsCopyMesh()`);
     /// `modification.trsf_modification().trsf()`.
     pub fn trsf_modification(&self) -> &TrsfModification {
-        &self.parent
+        &self.transform
     }
 
     /// `|Trsf().ScaleFactor()|`.
     fn abs_scale(&self) -> f64 {
-        self.parent.trsf().scale_factor().abs()
+        self.transform.trsf().scale_factor().abs()
     }
 }
 
 impl BRepToolsModification for ShapeCustomTrsfModification {
     /// The inherited result, with the TFace tolerance times `|ScaleFactor|`.
     fn new_surface(&self, face: &Face, result: &mut NewSurface) -> Result<bool, Failure> {
-        let done = self.parent.new_surface(face, result)?;
+        let done = self.transform.new_surface(face, result)?;
         result.tolerance = face_tshape(face, "ShapeCustom_TrsfModification::NewSurface")?
             .tolerance()
             * self.abs_scale();
@@ -68,18 +67,18 @@ impl BRepToolsModification for ShapeCustomTrsfModification {
         face: &Face,
         triangulation: &mut Handle<Triangulation>,
     ) -> Result<bool, Failure> {
-        self.parent.new_triangulation(face, triangulation)
+        self.transform.new_triangulation(face, triangulation)
     }
 
     /// The inherited result, with the TEdge tolerance times `|ScaleFactor|`.
     fn new_curve(&self, edge: &Edge, result: &mut NewCurve) -> Result<bool, Failure> {
-        let done = self.parent.new_curve(edge, result)?;
+        let done = self.transform.new_curve(edge, result)?;
         result.tolerance = edge_tolerance(edge, "NewCurve")? * self.abs_scale();
         Ok(done)
     }
 
     fn new_polygon(&self, edge: &Edge, polygon: &mut Handle<Polygon3D>) -> Result<bool, Failure> {
-        self.parent.new_polygon(edge, polygon)
+        self.transform.new_polygon(edge, polygon)
     }
 
     fn new_polygon_on_triangulation(
@@ -88,7 +87,7 @@ impl BRepToolsModification for ShapeCustomTrsfModification {
         face: &Face,
         polygon: &mut Handle<PolygonOnTriangulation>,
     ) -> Result<bool, Failure> {
-        self.parent
+        self.transform
             .new_polygon_on_triangulation(edge, face, polygon)
     }
 
@@ -99,7 +98,7 @@ impl BRepToolsModification for ShapeCustomTrsfModification {
         point: &mut Point3,
         tolerance: &mut f64,
     ) -> Result<bool, Failure> {
-        let done = self.parent.new_point(vertex, point, tolerance)?;
+        let done = self.transform.new_point(vertex, point, tolerance)?;
         *tolerance = vertex_tolerance(vertex, "NewPoint")? * self.abs_scale();
         Ok(done)
     }
@@ -115,7 +114,7 @@ impl BRepToolsModification for ShapeCustomTrsfModification {
         tolerance: &mut f64,
     ) -> Result<bool, Failure> {
         let done = self
-            .parent
+            .transform
             .new_curve2d(edge, face, new_edge, new_face, curve, tolerance)?;
         *tolerance = edge_tolerance(edge, "NewCurve2d")? * self.abs_scale();
         Ok(done)
@@ -131,7 +130,7 @@ impl BRepToolsModification for ShapeCustomTrsfModification {
         tolerance: &mut f64,
     ) -> Result<bool, Failure> {
         let done = self
-            .parent
+            .transform
             .new_parameter(vertex, edge, parameter, tolerance)?;
         *tolerance = vertex_tolerance(vertex, "NewParameter")? * self.abs_scale();
         Ok(done)
@@ -146,7 +145,7 @@ impl BRepToolsModification for ShapeCustomTrsfModification {
         new_face1: &Face,
         new_face2: &Face,
     ) -> Result<Continuity, Failure> {
-        self.parent
+        self.transform
             .continuity(edge, face1, face2, new_edge, new_face1, new_face2)
     }
 }

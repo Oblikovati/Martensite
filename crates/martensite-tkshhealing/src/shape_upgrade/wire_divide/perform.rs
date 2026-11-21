@@ -1,5 +1,6 @@
 //! Context application, edge dispatch and final wire replacement preserve native ordering.
 use super::*;
+use crate::shape_upgrade::EdgeDivider;
 use martensite_tkbrep::{
     topexp::Explorer,
     topods::{self, Shape, ShapeIterator},
@@ -10,7 +11,7 @@ pub(super) struct WireSupport {
     pub surface: Handle<dyn GeomSurface>,
     pub location: Location,
     pub context: Handle<ShapeBuildReShape>,
-    pub criterion: Handle<ShapeUpgradeEdgeDivide>,
+    pub criterion: Handle<dyn EdgeDivider>,
 }
 pub(super) fn perform<T: WireDivider + ?Sized>(tool: &T) -> Result<(), Failure> {
     tool.wire_divide_data().with_mut(|fields| fields.status = 0);
@@ -49,7 +50,7 @@ fn prepare_support<T: WireDivider + ?Sized>(tool: &T, face: Face) -> Result<Wire
 }
 fn configure_criterion<T: WireDivider + ?Sized>(
     tool: &T,
-    criterion: &Handle<ShapeUpgradeEdgeDivide>,
+    criterion: &Handle<dyn EdgeDivider>,
     face: &Face,
     mode: i32,
 ) {
@@ -79,7 +80,7 @@ fn divide_child<T: WireDivider + ?Sized>(
             BRepBuilder::default().add(result, &edge)?;
             continue;
         }
-        if !support.criterion.cast::<dyn EdgeDivider>().compute(&edge)? {
+        if !support.criterion.compute(&edge)? {
             BRepBuilder::default().add(result, &edge)?;
             continue;
         }

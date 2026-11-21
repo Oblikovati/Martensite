@@ -10,7 +10,7 @@ use martensite_tkbrep::topods::{Edge, Face, Vertex};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{Gravity, Msg};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle};
 use martensite_tkernel::tcollection::AsciiString;
 use martensite_tkg2d::geom2d::Geom2dCurve;
 use martensite_tkg3d::adaptor3d::{Adaptor3dCurve, Adaptor3dSurface};
@@ -39,14 +39,12 @@ use martensite_tkmath::gp::{Point3, Vector2, Vector3};
 /// ```
 #[derive(Default)]
 pub struct ShapeCustomSweptToElementary {
-    parent: StandardTransient,
     messages: ShapeCustomModificationFields,
 }
 impl_transient!(
     ShapeCustomSweptToElementary,
     "ShapeCustom_SweptToElementary",
     dyn ShapeCustomModification,
-    parent,
     interfaces: [dyn BRepToolsModification, dyn ShapeCustomModification]
 );
 

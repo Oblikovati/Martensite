@@ -2,6 +2,11 @@
 //! keeps everything, and a saved resource with every provider value changed reaches the nodes and
 //! saves back unchanged. The values below are the ones the recorded replay printed.
 mod support;
+use martensite_tkde::de::{
+    DeSectionGlobal, DeShapeFixConfigurationNode,
+    DeShapeFixConfigurationNodeBase,
+};
+use support::probe_node::probe_node;
 use support::reference_round_trip::{
     ChangedValues, changed_values, empty_load_after_values, empty_load_at_defaults,
 };
@@ -86,4 +91,30 @@ fn every_provider_value_changed_to_zero_saves_back_unchanged() {
 fn a_load_that_does_not_reach_the_nodes_does_not_match() {
     assert!(!changed_values("1").shallow_same);
     assert!(!changed_values("0").shallow_same);
+}
+
+
+#[test]
+fn shape_fix_copy_borrows_effective_settings_and_leaves_self_unbound() {
+    let source = probe_node("STEP", "ACME", "step", true, true, "")
+        .into_upcast::<dyn DeShapeFixConfigurationNode>();
+    let units = DeSectionGlobal {
+        length_unit: 25.4,
+        system_unit: 0.001,
+    };
+    source.set_global_parameters(units);
+    source.set_enabled(false);
+    let mut parameters = source.shape_fix_parameters();
+    parameters.tolerance3d = 0.5;
+    source.set_shape_fix_parameters(parameters);
+
+    let copy = DeShapeFixConfigurationNodeBase::copied_from(&source).unwrap();
+    assert_eq!(source.ref_count(), 1);
+    source.set_enabled(true);
+    parameters.tolerance3d = 0.25;
+    source.set_shape_fix_parameters(parameters);
+    assert!(!copy.configuration_node_base().is_enabled());
+    assert_eq!(copy.configuration_node_base().global_parameters(), units);
+    assert!(copy.configuration_node_base().this().is_err());
+    assert_eq!(copy.shape_fix_parameters().tolerance3d, 0.5);
 }

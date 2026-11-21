@@ -16,7 +16,7 @@ mod split_wire;
 
 use crate::shape_analysis::{ShapeAnalysisTransferParametersProj, TransferParameters};
 use crate::shape_extend::{ShapeExtend, ShapeExtendCompositeSurface};
-use crate::shape_fix::{FixRoot, FixRootData, ShapeFixRoot, ShapeFixWireSegment};
+use crate::shape_fix::{FixRoot, FixRootData, ShapeFixWireSegment};
 use martensite_tkbrep::topods::{Face, Shape};
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::ncollection::Sequence;
@@ -55,8 +55,7 @@ impl Default for ComposeShellFields {
             status: 0,
             u_resolution: martensite_tkernel::precision::infinite(),
             v_resolution: martensite_tkernel::precision::infinite(),
-            transfer_tool: Handle::new(ShapeAnalysisTransferParametersProj::new())
-                .cast::<dyn TransferParameters>(),
+            transfer_tool: Handle::new(ShapeAnalysisTransferParametersProj::new()).into_upcast(),
             invert_edge_status: true,
             closed_mode: false,
             u_closed: false,
@@ -70,22 +69,21 @@ impl Default for ComposeShellFields {
 /// Splits a face's wires on a composite surface and builds patch faces.
 /// `let compose = ShapeFixComposeShell::new();`
 pub struct ShapeFixComposeShell {
-    parent: ShapeFixRoot,
+    root: FixRootData,
     fields: SharedState<ComposeShellFields>,
 }
 
 impl_transient!(
     ShapeFixComposeShell,
     "ShapeFix_ComposeShell",
-    ShapeFixRoot,
-    parent,
+    dyn FixRoot,
     interfaces: [dyn FixRoot]
 );
 
 impl Default for ShapeFixComposeShell {
     fn default() -> Self {
         Self {
-            parent: ShapeFixRoot::default(),
+            root: FixRootData::default(),
             fields: SharedState::new(ComposeShellFields::default()),
         }
     }
@@ -93,7 +91,7 @@ impl Default for ShapeFixComposeShell {
 
 impl FixRoot for ShapeFixComposeShell {
     fn fix_root_data(&self) -> &FixRootData {
-        self.parent.fix_root_data()
+        &self.root
     }
 }
 
@@ -125,7 +123,7 @@ impl ShapeFixComposeShell {
         Self::default()
     }
 
-    /// Initializes a composite grid, supimplementation face, and precision.
+    /// Initializes a composite grid, support face, and precision.
     /// `composer.init(&grid, &location, &face, 1e-7)?`.
     pub fn init(
         &self,

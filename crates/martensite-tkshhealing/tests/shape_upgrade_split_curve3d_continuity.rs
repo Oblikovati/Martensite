@@ -7,9 +7,8 @@ use martensite_tkmath::{
     geom_abs::Shape,
     gp::{Axis1, Direction3, Point3},
 };
-use martensite_tkshhealing::shape_upgrade::{
-    ShapeUpgradeSplitCurve3d, ShapeUpgradeSplitCurve3dContinuity, SplitCurve,
-};
+use martensite_tkshhealing::shape_upgrade::SplitCurve3d;
+use martensite_tkshhealing::shape_upgrade::{ShapeUpgradeSplitCurve3dContinuity, SplitCurve};
 
 fn polyline_point(corner: bool, index: usize) -> Point3 {
     if corner && index > 1 {
@@ -136,7 +135,7 @@ fn corrected_curve_is_private_and_parent_projection_shares_state() {
     assert!(splitter.curve().is_null());
     assert!(splitter.curves().is_null());
     splitter.init_curve(&original).unwrap();
-    let base = splitter.cast::<ShapeUpgradeSplitCurve3d>();
+    let base = splitter.upcast::<dyn SplitCurve3d>();
     let dispatched = splitter.cast::<dyn SplitCurve>();
     dispatched.compute().unwrap();
     assert_eq!(original.cast::<GeomBSplineCurve>().nb_knots(), 3);

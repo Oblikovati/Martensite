@@ -1,6 +1,6 @@
 //! `ShapeProcessContext::load_resource_manager`: the process-wide cache of the last loaded
 //! resource file, reloaded when its name or the modification time of its files changes.
-use super::{ShapeProcessContext, ShapeProcessResource};
+use super::{ShapeProcessContextData, ShapeProcessResource};
 use martensite_tkernel::resource::{ResourceHost, ResourceManager};
 use martensite_tkernel::standard::{Failure, SharedState};
 use martensite_tkernel::tcollection::AsciiString;
@@ -60,7 +60,7 @@ impl ResourceCache {
     }
 }
 
-impl ShapeProcessContext {
+impl ShapeProcessContextData {
     /// a copy of the cached manager of the resource file
     /// `name` (`$CSF_<name>Defaults` and `$CSF_<name>UserDefaults`), reloaded when the
     /// name or a file time changed ("file is load only once and reloaded only if file date

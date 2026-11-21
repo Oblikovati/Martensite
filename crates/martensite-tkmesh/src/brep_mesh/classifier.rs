@@ -33,15 +33,9 @@ struct ClassifierWires {
 /// ```
 #[derive(Default)]
 pub struct BRepMeshClassifier {
-    transient: StandardTransient,
     wires: SharedState<ClassifierWires>,
 }
-impl_transient!(
-    BRepMeshClassifier,
-    "BRepMesh_Classifier",
-    StandardTransient,
-    transient
-);
+impl_transient!(BRepMeshClassifier, "BRepMesh_Classifier", StandardTransient);
 
 impl BRepMeshClassifier {
     /// Create a classifier without registered wires; `BRepMeshClassifier::new()`.

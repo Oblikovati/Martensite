@@ -15,7 +15,7 @@ mod unify_same_domain;
 pub use package::{BoundedCurve2dSequence, BoundedCurveSequence, ShapeUpgrade};
 pub use remove_locations::{ShapeReplacements, ShapeUpgradeRemoveLocations};
 pub use split_curve::{ShapeUpgradeSplitCurve, SplitCurve, SplitCurveData, SplitCurveFields};
-pub use tool::ShapeUpgradeTool;
+pub use tool::{ShapeUpgradeTool, UpgradeTool, UpgradeToolData};
 pub use unify_same_domain::{
     DataMapOfFacePlane, DataMapOfShapeMapOfShape, ShapeUpgradeUnifySameDomain,
 };
@@ -24,7 +24,7 @@ mod shell_sewing;
 pub use shell_sewing::ShapeUpgradeShellSewing;
 
 mod split_curve_3d;
-pub use split_curve_3d::{ShapeUpgradeSplitCurve3d, SplitCurves3d};
+pub use split_curve_3d::{CurveSplit3dData, ShapeUpgradeSplitCurve3d, SplitCurve3d, SplitCurves3d};
 
 mod split_surface;
 pub use split_surface::{
@@ -34,7 +34,7 @@ pub use split_surface::{
 
 mod split_curve_2d;
 mod split_curve_geometry;
-pub use split_curve_2d::{ShapeUpgradeSplitCurve2d, SplitCurves2d};
+pub use split_curve_2d::{CurveSplit2dData, ShapeUpgradeSplitCurve2d, SplitCurve2d, SplitCurves2d};
 mod convert_curve2d_to_bezier;
 pub use convert_curve2d_to_bezier::ShapeUpgradeConvertCurve2dToBezier;
 mod convert_curve3d_to_bezier;

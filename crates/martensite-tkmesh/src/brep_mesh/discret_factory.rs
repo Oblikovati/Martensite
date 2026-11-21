@@ -34,7 +34,7 @@ fn registry() -> &'static RwLock<Vec<FactoryHandle>> {
     static REGISTRY: OnceLock<RwLock<Vec<FactoryHandle>>> = OnceLock::new();
     REGISTRY.get_or_init(|| {
         RwLock::new(vec![
-            Handle::new(BRepMeshIncrementalMeshFactory::unregistered()).cast(),
+            Handle::new(BRepMeshIncrementalMeshFactory::unregistered()).into_upcast(),
         ])
     })
 }
@@ -104,17 +104,15 @@ fn same_name(factory: &FactoryHandle, name: &str) -> bool {
 /// assert_eq!(find_factory("fastdiscret").get().map(|f| f.name()), Some("FastDiscret"));
 /// ```
 #[derive(Default)]
-pub struct BRepMeshIncrementalMeshFactory {
-    transient: StandardTransient,
-}
-impl_transient!(BRepMeshIncrementalMeshFactory, "BRepMesh_IncrementalMeshFactory", dyn BRepMeshDiscretAlgoFactory, transient, interfaces: [dyn BRepMeshDiscretAlgoFactory]);
+pub struct BRepMeshIncrementalMeshFactory {}
+impl_transient!(BRepMeshIncrementalMeshFactory, "BRepMesh_IncrementalMeshFactory", dyn BRepMeshDiscretAlgoFactory, interfaces: [dyn BRepMeshDiscretAlgoFactory]);
 
 impl BRepMeshIncrementalMeshFactory {
     /// Create a factory registered as preferred;
     /// `BRepMeshIncrementalMeshFactory::new()`.
     pub fn new() -> Handle<Self> {
         let factory = Handle::new(Self::unregistered());
-        register_factory(&factory.clone().cast(), true);
+        register_factory(&factory.upcast(), true);
         factory
     }
 

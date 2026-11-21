@@ -16,7 +16,7 @@ use martensite_tkg2d::geom2d::{
 pub(super) fn compute(tool: &ShapeUpgradeConvertCurve2dToBezier) -> Result<(), Failure> {
     clear_outputs(tool);
     let (first, last) = endpoints(tool)?;
-    let curve = tool.parent.source_curve();
+    let curve = tool.geometry.source_curve();
     if try_linear_bezier(tool, &curve, first, last)? {
         return Ok(());
     }
@@ -148,7 +148,7 @@ fn compute_bezier(
 ) -> Result<(), Failure> {
     initialize_direct(tool, first, last)?;
     if first < precision::p_confusion() && last > 1. - precision::p_confusion() {
-        append_segment(tool, tool.parent.source_curve());
+        append_segment(tool, tool.geometry.source_curve());
         set_status(tool, ShapeExtendStatus::Ok);
         return Ok(());
     }
@@ -166,7 +166,7 @@ fn compute_line(
     last: f64,
 ) -> Result<(), Failure> {
     initialize_direct(tool, first, last)?;
-    let curve = tool.parent.source_curve();
+    let curve = tool.geometry.source_curve();
     let bezier = line_bezier(&curve, first, last)?;
     append_segment(tool, Handle::new(bezier).cast());
     set_status(tool, ShapeExtendStatus::Done1);

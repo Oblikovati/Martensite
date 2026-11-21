@@ -3,7 +3,7 @@
 mod record;
 pub(super) mod statistics;
 
-use super::ShapeProcessContext;
+use super::{ShapeProcessContextData, ShapeProcessContextSource};
 use crate::shape_extend::ShapeExtendMsgRegistrator;
 use martensite_tkbrep::topods::Shape;
 use martensite_tkbrep::toptools::ShapeMapHasher;
@@ -39,20 +39,26 @@ struct ShapeContextFields {
 /// assert_eq!(context.trace_level(), 1);
 /// ```
 pub struct ShapeProcessShapeContext {
-    parent: ShapeProcessContext,
+    context: ShapeProcessContextData,
     fields: SharedState<ShapeContextFields>,
 }
 impl_transient!(
     ShapeProcessShapeContext,
     "ShapeProcess_ShapeContext",
-    ShapeProcessContext,
-    parent
+    dyn ShapeProcessContextSource,
+    interfaces: [dyn ShapeProcessContextSource]
 );
 
+impl ShapeProcessContextSource for ShapeProcessShapeContext {
+    fn context_data(&self) -> &ShapeProcessContextData {
+        &self.context
+    }
+}
+
 impl std::ops::Deref for ShapeProcessShapeContext {
-    type Target = ShapeProcessContext;
+    type Target = ShapeProcessContextData;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        self.context_data()
     }
 }
 
@@ -61,7 +67,7 @@ impl ShapeProcessShapeContext {
     /// detalisation FACE, manifold mode; `ShapeProcessShapeContext::new("DE", "read")?`.
     pub fn new(file: &str, scope: &str) -> Result<Self, Failure> {
         Ok(Self {
-            parent: ShapeProcessContext::with_file(file, scope)?,
+            context: ShapeProcessContextData::with_file(file, scope)?,
             fields: SharedState::new(ShapeContextFields {
                 shape: Shape::default(),
                 result: Shape::default(),

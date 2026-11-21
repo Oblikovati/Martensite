@@ -3,7 +3,7 @@ use crate::imesh_data::{EdgeHandle, FaceHandle};
 use martensite_tkbrep::{brep_adaptor::BRepAdaptorCurve, topods};
 use martensite_tkernel::{
     precision,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState},
 };
 use martensite_tkg2d::adaptor2d::Adaptor2dCurve2d;
 use martensite_tkg3d::{adaptor3d::Adaptor3dCurve, top_abs::Orientation};
@@ -38,7 +38,6 @@ impl Default for ParameterProjectionState {
 }
 /// Parameters of a discrete edge on its face; `provider.parameter(index, point)?`.
 pub struct EdgeParameterProvider {
-    transient: StandardTransient,
     adaptor: Handle<BRepAdaptorCurve>,
     state: SharedState<ParameterProjectionState>,
 }
@@ -46,7 +45,6 @@ impl EdgeParameterProvider {
     /// Empty native provider; `EdgeParameterProvider::new()`.
     pub fn new() -> Self {
         Self {
-            transient: StandardTransient::default(),
             adaptor: Handle::new(BRepAdaptorCurve::default()),
             state: SharedState::new(ParameterProjectionState::default()),
         }
@@ -120,7 +118,7 @@ impl ParameterProjectionState {
             self.scale = (last - self.first) / (old_last - self.old_first);
         }
         self.projector.initialize_owned(
-            adaptor.cast(),
+            adaptor.upcast(),
             (adaptor.first_parameter()?, adaptor.last_parameter()?),
             precision::p_confusion(),
         )

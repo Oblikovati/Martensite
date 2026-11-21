@@ -7,9 +7,8 @@ use martensite_tkmath::{
     geom_abs::Shape,
     gp::{Axis2d, Point2},
 };
-use martensite_tkshhealing::shape_upgrade::{
-    ShapeUpgradeSplitCurve2d, ShapeUpgradeSplitCurve2dContinuity, SplitCurve,
-};
+use martensite_tkshhealing::shape_upgrade::SplitCurve2d;
+use martensite_tkshhealing::shape_upgrade::{ShapeUpgradeSplitCurve2dContinuity, SplitCurve};
 
 fn polyline_point(corner: bool, index: usize) -> Point2 {
     if corner && index > 1 {
@@ -182,7 +181,7 @@ fn continuity_dispatch_uses_the_private_curve_and_shared_base_state() {
     assert!(splitter.curve().is_null());
     assert!(splitter.curves().is_null());
     splitter.init_curve(&original).unwrap();
-    let base = splitter.cast::<ShapeUpgradeSplitCurve2d>();
+    let base = splitter.upcast::<dyn SplitCurve2d>();
     let dispatched = splitter.cast::<dyn SplitCurve>();
     dispatched.compute().unwrap();
     assert_eq!(original.cast::<Geom2dBSplineCurve>().nb_knots(), 3);

@@ -7,7 +7,7 @@ use martensite_tkbrep::{
 };
 use martensite_tkernel::{
     impl_transient, precision,
-    standard::{Failure, Handle, SharedState, StandardTransient},
+    standard::{Failure, Handle, SharedState, Transient},
 };
 use martensite_tkg3d::geom::GeomSurface;
 use martensite_tkmath::toploc::Location;
@@ -54,19 +54,12 @@ struct WireAnalysisFields {
 /// wire analyzer foundation; `ShapeAnalysisWire::from_wire(&wire, &face, 1e-7)?`.
 /// Implements state initialization, ordering and connection checks.
 pub struct ShapeAnalysisWire {
-    parent: StandardTransient,
     fields: SharedState<WireAnalysisFields>,
 }
-impl_transient!(
-    ShapeAnalysisWire,
-    "ShapeAnalysis_Wire",
-    StandardTransient,
-    parent
-);
+impl_transient!(ShapeAnalysisWire, "ShapeAnalysis_Wire", dyn Transient);
 impl Default for ShapeAnalysisWire {
     fn default() -> Self {
         Self {
-            parent: StandardTransient::default(),
             fields: SharedState::new(WireAnalysisFields {
                 wire: Handle::default(),
                 face: Face::default(),

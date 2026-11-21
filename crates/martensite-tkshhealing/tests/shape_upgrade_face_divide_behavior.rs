@@ -16,8 +16,8 @@ use martensite_tkmath::gp::{Axis3, Plane3};
 use martensite_tkshhealing::{
     shape_extend::ShapeExtendStatus,
     shape_upgrade::{
-        FaceDivider, ShapeUpgradeFaceDivide, ShapeUpgradeSplitSurface,
-        ShapeUpgradeSplitSurfaceAngle, SplitSurface, SplitSurfaceData,
+        FaceDivider, ShapeUpgradeFaceDivide, ShapeUpgradeSplitSurfaceAngle, SplitSurface,
+        SplitSurfaceData,
     },
 };
 use martensite_tktopalgo::brep_builder_api::BRepBuilderAPIMakeFace;
@@ -58,7 +58,7 @@ fn configured_divider(face: &Face, mode: usize) -> ShapeUpgradeFaceDivide {
     if mode == 7 {
         divider.set_split_surface_tool(
             &Handle::new(MarkModifiedSurface {
-                parent: ShapeUpgradeSplitSurface::new(),
+                state: SplitSurfaceData::default(),
             })
             .cast(),
         );
@@ -128,12 +128,12 @@ fn configured_face_subdivision_matches_native_results_and_flags() {
 }
 
 struct MarkModifiedSurface {
-    parent: ShapeUpgradeSplitSurface,
+    state: SplitSurfaceData,
 }
-impl_transient!(MarkModifiedSurface, "MarkModifiedSurface", ShapeUpgradeSplitSurface, parent, interfaces:[dyn SplitSurface]);
+impl_transient!(MarkModifiedSurface, "MarkModifiedSurface", dyn SplitSurface, interfaces:[dyn SplitSurface]);
 impl SplitSurface for MarkModifiedSurface {
     fn split_surface_data(&self) -> &SplitSurfaceData {
-        self.parent.split_surface_data()
+        &self.state
     }
     fn compute(&self, _segment: bool) -> Result<(), Failure> {
         self.split_surface_data().with_mut(|fields| {

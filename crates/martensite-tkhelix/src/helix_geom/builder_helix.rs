@@ -96,7 +96,7 @@ impl HelixGeomBuilderHelix {
         let curve: &dyn GeomCurve = c1.get().ok_or_else(|| null_object("aC1"))?;
         let p1: Point3 = curve.d0(curve.first_parameter())?;
         let pi = Point3::new(p1.x(), p1.y(), p1.z() + f64::from(i - 1) * self.base.pitch);
-        let ci: Handle<dyn GeomCurve> = curve.translated_between(p1, pi)?.cast();
+        let ci: Handle<dyn GeomCurve> = curve.translated_between(p1, pi)?.into_cast();
         self.base.approx.curves.append(ci);
         Ok(())
     }

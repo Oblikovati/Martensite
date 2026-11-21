@@ -2,9 +2,7 @@
 use martensite_tkernel::standard::Handle;
 use martensite_tkg3d::geom::{GeomCylindricalSurface, GeomPlane, GeomSurface};
 use martensite_tkmath::gp::Axis3;
-use martensite_tkshhealing::shape_upgrade::{
-    ShapeUpgradeSplitSurface, ShapeUpgradeSplitSurfaceArea, SplitSurface,
-};
+use martensite_tkshhealing::shape_upgrade::{ShapeUpgradeSplitSurfaceArea, SplitSurface};
 
 #[derive(Clone, Copy)]
 struct Fixture {
@@ -169,9 +167,9 @@ fn run_fixture_with_measures(
     seed_measures(&criterion, measures);
     let (u_values, v_values) = (criterion.u_split_values(), criterion.v_split_values());
     compute_fixture(&criterion, fixture.repeat);
-    let area = criterion.cast::<ShapeUpgradeSplitSurfaceArea>();
+    let area = criterion.downcast::<ShapeUpgradeSplitSurfaceArea>();
     assert_area_dynamic_type(&area);
-    assert_parent_sequences(&criterion, &u_values, &v_values);
+    assert_parent_sequences(&area, &u_values, &v_values);
     (area.nb_parts(), snapshot(&u_values), snapshot(&v_values))
 }
 
@@ -198,12 +196,13 @@ fn assert_area_dynamic_type(area: &Handle<ShapeUpgradeSplitSurfaceArea>) {
 }
 
 fn assert_parent_sequences(
-    criterion: &Handle<dyn SplitSurface>,
+    criterion: &Handle<ShapeUpgradeSplitSurfaceArea>,
     u_values: &Handle<martensite_tkernel::ncollection::HSequence<f64>>,
     v_values: &Handle<martensite_tkernel::ncollection::HSequence<f64>>,
 ) {
-    let parent = criterion.cast::<ShapeUpgradeSplitSurface>();
+    let parent = criterion.upcast::<dyn SplitSurface>();
     assert!(parent.is_kind_name("ShapeUpgrade_SplitSurface"));
+    assert_eq!(parent.object_address(), criterion.object_address());
     assert_eq!(
         parent.u_split_values().object_address(),
         u_values.object_address()

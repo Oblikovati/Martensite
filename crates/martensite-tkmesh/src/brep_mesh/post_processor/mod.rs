@@ -7,16 +7,14 @@ use martensite_tkbrep::brep::BRepTool;
 use martensite_tkernel::{
     impl_transient,
     message::ProgressRange,
-    standard::{Failure, Handle, StandardTransient},
+    standard::{Failure, Handle},
 };
 use martensite_tkmath::poly::{TriangulationParameters, mesh_purpose};
 mod polygons;
 /// Publishes discrete curves and mesh parameters; `processor.perform(&model, &parameters, &range)`.
 #[derive(Default)]
-pub struct BRepMeshModelPostProcessor {
-    transient: StandardTransient,
-}
-impl_transient!(BRepMeshModelPostProcessor,"BRepMesh_ModelPostProcessor",dyn ModelAlgo,transient,interfaces:[dyn ModelAlgo]);
+pub struct BRepMeshModelPostProcessor {}
+impl_transient!(BRepMeshModelPostProcessor,"BRepMesh_ModelPostProcessor",dyn ModelAlgo,interfaces:[dyn ModelAlgo]);
 impl BRepMeshModelPostProcessor {
     /// Empty stateless postprocessor; `BRepMeshModelPostProcessor::new()`.
     pub fn new() -> Self {

@@ -290,20 +290,16 @@ fn virtual_face_tool_is_fresh_and_contains_continuity_children() {
 
 fn child_tools(
     face: &martensite_tkernel::standard::Handle<
-        martensite_tkshhealing::shape_upgrade::ShapeUpgradeFaceDivide,
+        dyn martensite_tkshhealing::shape_upgrade::FaceDivider,
     >,
 ) -> (
     Handle<ShapeUpgradeSplitCurve2dContinuity>,
     Handle<ShapeUpgradeSplitCurve3dContinuity>,
     Handle<ShapeUpgradeSplitSurfaceContinuity>,
 ) {
-    use martensite_tkshhealing::shape_upgrade::{FaceDivider, WireDivider};
-    let face_policy = face.cast::<dyn FaceDivider>();
-    let face_policy = face_policy.get().unwrap();
-    let wire_policy = face_policy.wire_divide_tool().cast::<dyn WireDivider>();
-    let wire_policy = wire_policy.get().unwrap();
+    let wire_policy = face.wire_divide_tool();
     let curve_2d = wire_policy.split_curve_2d_tool().cast();
     let curve_3d = wire_policy.split_curve_3d_tool().cast();
-    let surface = face_policy.split_surface_tool();
+    let surface = face.split_surface_tool();
     (curve_2d, curve_3d, surface.cast())
 }

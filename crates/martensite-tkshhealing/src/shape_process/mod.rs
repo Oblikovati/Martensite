@@ -6,7 +6,9 @@ mod operator;
 mod package;
 mod shape_context;
 
-pub use context::{ShapeProcessContext, ShapeProcessResource};
+pub use context::{
+    ShapeProcessContext, ShapeProcessContextData, ShapeProcessContextSource, ShapeProcessResource,
+};
 pub use oper_library::ShapeProcessOperLibrary;
 pub use operator::{ShapeProcessOperFunc, ShapeProcessOperator, ShapeProcessUOperator};
 pub use package::{ShapeProcess, ShapeProcessOperation, ShapeProcessOperationsFlags};

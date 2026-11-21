@@ -9,7 +9,7 @@ use martensite_tkbrep::topods::Shape;
 use martensite_tkernel::impl_transient;
 use martensite_tkernel::message::{ProgressRange, ProgressScope};
 use martensite_tkernel::precision;
-use martensite_tkernel::standard::{Failure, Handle, SharedState, StandardTransient};
+use martensite_tkernel::standard::{Failure, Handle, SharedState};
 use std::sync::RwLockWriteGuard;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -31,13 +31,12 @@ static IS_IN_PARALLEL: AtomicBool = AtomicBool::new(false);
 /// # Ok::<(), martensite_tkernel::standard::Failure>(())
 /// ```
 pub struct BRepMeshIncrementalMesh {
-    transient: StandardTransient,
     root: DiscretRootBase,
     parameters: SharedState<MeshParameters>,
     modified: SharedState<bool>,
     status: SharedState<i32>,
 }
-impl_transient!(BRepMeshIncrementalMesh, "BRepMesh_IncrementalMesh", dyn BRepMeshDiscretRoot, transient, interfaces: [dyn BRepMeshDiscretRoot]);
+impl_transient!(BRepMeshIncrementalMesh, "BRepMesh_IncrementalMesh", dyn BRepMeshDiscretRoot, interfaces: [dyn BRepMeshDiscretRoot]);
 
 impl Default for BRepMeshIncrementalMesh {
     fn default() -> Self {
@@ -54,7 +53,6 @@ impl BRepMeshIncrementalMesh {
 
     fn with_parameter_state(parameters: MeshParameters) -> Self {
         Self {
-            transient: StandardTransient::default(),
             root: DiscretRootBase::default(),
             parameters: SharedState::new(parameters),
             modified: SharedState::new(false),
@@ -183,7 +181,7 @@ impl BRepMeshIncrementalMesh {
             parameters.in_parallel = Self::is_parallel_default();
         }
         algo.set_shape(shape);
-        (0, Handle::new(algo).cast())
+        (0, Handle::new(algo).into_upcast())
     }
 
     /// `IsParallelDefault()`; `BRepMeshIncrementalMesh::is_parallel_default()`.
@@ -203,7 +201,7 @@ impl BRepMeshDiscretRoot for BRepMeshIncrementalMesh {
     /// `Perform(theRange)`: through a new BRepMeshContext of the parameters' type.
     fn perform(&self, range: &ProgressRange<'_>) -> Result<(), Failure> {
         let context = BRepMeshContext::new(self.parameters().mesh_algo)?;
-        self.perform_with_context(&Handle::new(context).cast(), range)
+        self.perform_with_context(&Handle::new(context).into_upcast(), range)
     }
 }
 

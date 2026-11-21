@@ -1,5 +1,5 @@
 //! The parameter getters of `ShapeProcessContext`.
-use super::ShapeProcessContext;
+use super::ShapeProcessContextData;
 use martensite_tkernel::standard::Failure;
 use martensite_tkernel::tcollection::AsciiString;
 
@@ -10,7 +10,7 @@ enum Number {
     Integer,
 }
 
-impl ShapeProcessContext {
+impl ShapeProcessContextData {
     /// a manager is loaded and holds the scoped parameter.
     /// Example: `context.is_param_set("Tolerance3d")`.
     pub fn is_param_set(&self, param: &str) -> bool {

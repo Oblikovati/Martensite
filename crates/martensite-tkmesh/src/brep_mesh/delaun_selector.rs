@@ -16,20 +16,17 @@ struct DelaunSelection {
 /// Accumulating native neighborhood selection; `BRepMeshSelectorOfDataStructureOfDelaun::new(&mesh)`.
 #[derive(Default)]
 pub struct BRepMeshSelectorOfDataStructureOfDelaun {
-    transient: StandardTransient,
     selection: SharedState<DelaunSelection>,
 }
 impl_transient!(
     BRepMeshSelectorOfDataStructureOfDelaun,
     "BRepMesh_SelectorOfDataStructureOfDelaun",
-    StandardTransient,
-    transient
+    StandardTransient
 );
 impl BRepMeshSelectorOfDataStructureOfDelaun {
     /// Retain the shared mesh without selecting anything; `BRepMeshSelectorOfDataStructureOfDelaun::new(&mesh)`.
     pub fn new(mesh: &Handle<BRepMeshDataStructureOfDelaun>) -> Self {
         Self {
-            transient: StandardTransient::default(),
             selection: SharedState::new(DelaunSelection {
                 mesh: mesh.clone(),
                 ..Default::default()

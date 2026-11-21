@@ -104,3 +104,6 @@ fn surface_value_copy_retains_warm_values_and_shallow_copy_rebuilds() {
     assert_eq!(copied.value(0.25, 0.5).unwrap(), Point3::new(0.25, 0.5, 0.));
     assert_eq!(source.value(0.25, 0.5).unwrap(), expected);
 }
+
+#[path = "adaptor_value_copy/transformed_grid.rs"]
+mod transformed_grid;

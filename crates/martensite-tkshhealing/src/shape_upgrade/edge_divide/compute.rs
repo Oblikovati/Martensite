@@ -6,7 +6,7 @@ use martensite_tkbrep::brep::BRepTool;
 pub(super) fn spatial_knots<T: EdgeDivider + ?Sized>(
     divider: &T,
     edge: &Edge,
-) -> Result<Handle<ShapeUpgradeSplitCurve3d>, Failure> {
+) -> Result<Handle<dyn SplitCurve3d>, Failure> {
     let (curve, first, last) = BRepTool::curve(edge)?;
     divider
         .edge_divide_data()
@@ -15,19 +15,18 @@ pub(super) fn spatial_knots<T: EdgeDivider + ?Sized>(
     if curve.is_null() {
         return Ok(tool);
     }
-    require_tool(&tool.cast())?;
+    require_tool(&tool)?;
     tool.init_curve_range(&curve, first, last)?;
-    let criterion = tool.cast::<dyn SplitCurve>();
-    criterion.compute()?;
+    tool.compute()?;
     divider
         .edge_divide_data()
-        .with_mut(|fields| fields.knots_3d = criterion.split_values());
+        .with_mut(|fields| fields.knots_3d = tool.split_values());
     Ok(tool)
 }
 pub(super) fn planar_knots<T: EdgeDivider + ?Sized>(
     divider: &T,
     edge: &Edge,
-) -> Result<Handle<ShapeUpgradeSplitCurve2d>, Failure> {
+) -> Result<Handle<dyn SplitCurve2d>, Failure> {
     let (curve, first, last) = edge_pcurve(divider, edge)?;
     divider
         .edge_divide_data()
@@ -36,20 +35,19 @@ pub(super) fn planar_knots<T: EdgeDivider + ?Sized>(
     if curve.is_null() {
         return Ok(tool);
     }
-    require_tool(&tool.cast())?;
+    require_tool(&tool)?;
     tool.init_curve_range(&curve, first, last)?;
-    let criterion = tool.cast::<dyn SplitCurve>();
-    criterion.compute()?;
+    tool.compute()?;
     divider
         .edge_divide_data()
-        .with_mut(|fields| fields.knots_2d = criterion.split_values());
+        .with_mut(|fields| fields.knots_2d = tool.split_values());
     Ok(tool)
 }
-pub(super) fn curve_done(tool: &Handle<dyn SplitCurve>) -> Result<bool, Failure> {
+pub(super) fn curve_done(tool: &Handle<impl SplitCurve + ?Sized>) -> Result<bool, Failure> {
     require_tool(tool)?;
     Ok(tool.status_flag(ShapeExtendStatus::Done))
 }
-fn require_tool(tool: &Handle<dyn SplitCurve>) -> Result<(), Failure> {
+fn require_tool(tool: &Handle<impl SplitCurve + ?Sized>) -> Result<(), Failure> {
     if tool.is_null() {
         return Err(Failure::with_type(
             "Standard_NullObject",

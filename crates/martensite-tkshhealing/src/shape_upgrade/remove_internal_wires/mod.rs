@@ -1,7 +1,7 @@
 //! `ShapeUpgradeRemoveInternalWires`.
 mod perform;
 
-use super::ShapeUpgradeTool;
+use super::{UpgradeTool, UpgradeToolData};
 use crate::shape_build::ShapeBuildReShape;
 use crate::shape_extend::{ShapeExtend, ShapeExtendStatus};
 use martensite_tkbrep::brep_tools::ReShape;
@@ -45,19 +45,19 @@ impl Default for RemoveInternalWiresFields {
 /// Removes internal face wires whose sampled contour area falls below the configured bound.
 /// `let remover = ShapeUpgradeRemoveInternalWires::new();`
 pub struct ShapeUpgradeRemoveInternalWires {
-    parent: ShapeUpgradeTool,
+    tool: UpgradeToolData,
     fields: SharedState<RemoveInternalWiresFields>,
 }
 impl_transient!(
     ShapeUpgradeRemoveInternalWires,
     "ShapeUpgrade_RemoveInternalWires",
-    ShapeUpgradeTool,
-    parent
+    dyn UpgradeTool,
+    interfaces: [dyn UpgradeTool]
 );
 impl std::ops::Deref for ShapeUpgradeRemoveInternalWires {
-    type Target = ShapeUpgradeTool;
+    type Target = UpgradeToolData;
     fn deref(&self) -> &Self::Target {
-        &self.parent
+        &self.tool
     }
 }
 
@@ -70,11 +70,11 @@ impl Default for ShapeUpgradeRemoveInternalWires {
 impl ShapeUpgradeRemoveInternalWires {
     /// Creates the context and default settings; `ShapeUpgradeRemoveInternalWires::new()`.
     pub fn new() -> Self {
-        let parent = ShapeUpgradeTool::new();
+        let tool = UpgradeToolData::default();
         let context = Handle::new(ShapeBuildReShape::new());
-        parent.set_context(&context);
+        tool.set_context(&context);
         Self {
-            parent,
+            tool,
             fields: SharedState::new(RemoveInternalWiresFields::default()),
         }
     }
@@ -89,7 +89,7 @@ impl ShapeUpgradeRemoveInternalWires {
     /// Initializes input topology, preserving the reshape context; `remover.init(&shape)?`.
     pub fn init(&self, shape: &Shape) -> Result<(), Failure> {
         self.fields.write().shape = shape.clone();
-        let context_handle = self.parent.context();
+        let context_handle = self.tool.context();
         context_handle
             .get()
             .ok_or_else(null_context)?
@@ -157,4 +157,10 @@ fn null_context() -> Failure {
         "Standard_NullObject",
         "ShapeUpgrade_RemoveInternalWires: null context; expected ShapeBuild_ReShape",
     )
+}
+
+impl UpgradeTool for ShapeUpgradeRemoveInternalWires {
+    fn upgrade_tool_data(&self) -> &UpgradeToolData {
+        &self.tool
+    }
 }
